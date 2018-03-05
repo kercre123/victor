@@ -55,7 +55,7 @@ T* GetFromMap(const BEIComponentMap& map, const BEIComponentID componentID) {
     return static_cast<T*>(it->second);
   }
   return nullptr;
-}     
+}
 
 }
 
@@ -89,7 +89,7 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
 
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TestBehaviorFramework::TestBehaviorFramework(int robotID,
                                              Anki::Cozmo::CozmoContext* context)
@@ -110,7 +110,7 @@ TestBehaviorFramework::~TestBehaviorFramework()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseBehavior,
-                                         std::function<void(const BehaviorComponent::CompononentPtr&)> initializeBehavior,
+                                         std::function<void(const BehaviorComponent::ComponentPtr&)> initializeBehavior,
                                          bool shouldCallInitOnBase)
 {
   BehaviorContainer* empty = nullptr;
@@ -121,7 +121,7 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseBehavior,
-                                                                std::function<void(const BehaviorComponent::CompononentPtr&)> initializeBehavior,
+                                                                std::function<void(const BehaviorComponent::ComponentPtr&)> initializeBehavior,
                                                                 bool shouldCallInitOnBase,
                                                                 BehaviorContainer*& customContainer)
 {
@@ -132,7 +132,7 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
     _behaviorContainer = std::make_unique<BehaviorContainer>(
                              cozmoContext->GetDataLoader()->GetBehaviorJsons());
   }
-  
+
   // stack is unused - put an arbitrary behavior on it
   if(baseBehavior == nullptr){
     baseBehavior = _behaviorContainer->FindBehaviorByID(BEHAVIOR_ID(Wait)).get();
@@ -140,14 +140,14 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
                "TestBehaviorFramework.InitializeStandardBehaviorComponent.NoDefaultBehaviorInContainer");
     shouldCallInitOnBase = false;
   }
-  
+
   // swap out the robot's ai component for a custom one
   {
     {
       auto aiComp = new AIComponent();
       _robot->DevReplaceAIComponent(aiComp, true);
     }
-    
+
     auto entity = std::make_unique<BehaviorComponent::EntityType>();
 
     entity->AddDependentComponent(BCComponentID::AIComponent, _robot->GetComponentPtr<AIComponent>(), false);
@@ -165,7 +165,7 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
     DependencyManagedEntity<AIComponentID> dependentComps;
     _behaviorComponent->InitDependent(_robot.get(), dependentComps);
   }
-  
+
   if(shouldCallInitOnBase){
     auto& bei = _behaviorComponent->GetComponent<BehaviorExternalInterface>();
     baseBehavior->Init(bei);
@@ -178,10 +178,10 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
   if(initializeBehavior != nullptr){
     initializeBehavior(_behaviorComponent->_comps);
   }
-  
+
   DependencyManagedEntity<AIComponentID> dependentComps;
   _behaviorComponent->UpdateDependent(dependentComps);
-  
+
   // Grab components from the behaviorComponent
   {
     auto& bei = _behaviorComponent->GetComponent<BehaviorExternalInterface>();
@@ -210,7 +210,7 @@ void DoBehaviorComponentTicks(Robot& robot, ICozmoBehavior& behavior, BehaviorCo
   }
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DoBehaviorInterfaceTicks(Robot& robot, ICozmoBehavior& behavior, int num)
 {
@@ -233,7 +233,7 @@ void InjectBehaviorIntoStack(ICozmoBehavior& injectBehavior, TestBehaviorFramewo
   if(ANKI_VERIFY(!behaviorStack.empty(),"InjectBehaviorIntoStack.NoBaseBehavior","")){
     IBehavior* lastEntry = behaviorStack.back();
     auto& delegatesMap = bsm._behaviorStack->_delegatesMap;
-    delegatesMap[lastEntry].insert(&injectBehavior);    
+    delegatesMap[lastEntry].insert(&injectBehavior);
     bsm.Delegate(lastEntry, &injectBehavior);
   }
 }
@@ -250,19 +250,19 @@ void IncrementBaseStationTimerTicks(int numTicks)
 void InjectValidDelegateIntoBSM(TestBehaviorFramework& testFramework,
                                 IBehavior* delegator,
                                 IBehavior* delegated,
-                                bool shouldMarkAsEnterdScope){
+                                bool shouldMarkAsEnteredScope){
   auto& bsm = testFramework.GetBehaviorSystemManager();
   auto iter = bsm._behaviorStack->_delegatesMap.find(delegator);
-  if(iter == bsm._behaviorStack->_delegatesMap.end()){
+  if (iter == bsm._behaviorStack->_delegatesMap.end()) {
     // Stack must be empty - inject anyways
     DEV_ASSERT(bsm._behaviorStack->_behaviorStack.empty(),
                "TestBehaviorFramework.InjectValidDelegate.StackNotEmptyButDelegatMapMiss");
     bsm._behaviorStack->_delegatesMap[delegator].insert(delegated);
-  }else{
+  } else{
     iter->second.insert(delegated);
   }
-  
-  if(shouldMarkAsEnterdScope){
+
+  if (shouldMarkAsEnteredScope) {
     delegated->OnEnteredActivatableScope();
     delegated->WantsToBeActivated();
   }
@@ -280,11 +280,11 @@ void InjectAndDelegate(TestBehaviorFramework& testFramework,
   EXPECT_TRUE(bsm.Delegate(delegator, delegated));
 }
 
-  
+
 //////////
 /// Setup a test behavior class that tracks data for testing
 //////////
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestSuperPoweredBehavior::GetAllDelegates(std::set<IBehavior*>& delegates) const {
   for(auto& entry: _bc->_idToBehaviorMap){
@@ -295,19 +295,19 @@ void TestSuperPoweredBehavior::GetAllDelegates(std::set<IBehavior*>& delegates) 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestSuperPoweredBehavior::InitInternal() {
-  
+
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestSuperPoweredBehavior::OnEnteredActivatableScopeInternal() {
-  
+
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestSuperPoweredBehavior::UpdateInternal() {
-  
+
 }
 
 
@@ -319,19 +319,19 @@ bool TestSuperPoweredBehavior::WantsToBeActivatedInternal() const {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestSuperPoweredBehavior::OnActivatedInternal() {
-  
+
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestSuperPoweredBehavior::OnDeactivatedInternal() {
-  
+
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestSuperPoweredBehavior::OnLeftActivatableScopeInternal() {
-  
+
 }
 
 
@@ -405,7 +405,7 @@ bool TestBehavior::CallDelegateIfInControl(Robot& robot, bool& actionCompleteRef
 {
   WaitForLambdaAction* action =
   new WaitForLambdaAction([&actionCompleteRef](Robot& r){ return actionCompleteRef; });
-  
+
   return DelegateIfInControl(action);
 }
 
@@ -417,7 +417,7 @@ bool TestBehavior::CallDelegateIfInControlExternalCallback1(Robot& robot,
 {
   WaitForLambdaAction* action =
   new WaitForLambdaAction([&actionCompleteRef](Robot& r){ return actionCompleteRef; });
-  
+
   return DelegateIfInControl(action, callback);
 }
 
@@ -429,7 +429,7 @@ bool TestBehavior::CallDelegateIfInControlExternalCallback2(Robot& robot,
 {
   WaitForLambdaAction* action =
   new WaitForLambdaAction([&actionCompleteRef](Robot& r){ return actionCompleteRef; });
-  
+
   return DelegateIfInControl(action, callback);
 }
 
@@ -440,7 +440,7 @@ bool TestBehavior::CallDelegateIfInControlInternalCallbackVoid(Robot& robot,
 {
   WaitForLambdaAction* action =
   new WaitForLambdaAction([&actionCompleteRef](Robot& r){ return actionCompleteRef; });
-  
+
   return DelegateIfInControl(action, &TestBehavior::Foo);
 }
 
@@ -451,11 +451,9 @@ bool TestBehavior::CallDelegateIfInControlInternalCallbackRobot(Robot& robot,
 {
   WaitForLambdaAction* action =
   new WaitForLambdaAction([&actionCompleteRef](Robot& r){ return actionCompleteRef; });
-  
+
   return DelegateIfInControl(action, &TestBehavior::Bar);
 }
-  
+
 }
 }
-
-

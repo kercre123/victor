@@ -56,7 +56,7 @@ class IBehavior;
 class Robot;
 class UserIntentComponent;
 class BehaviorEventComponent;
-  
+
 namespace Audio {
 class BehaviorAudioComponent;
 }
@@ -68,7 +68,7 @@ public:
   BaseBehaviorWrapper(IBehavior* baseBehavior)
   : IDependencyManagedComponent(this, BCComponentID::BaseBehaviorWrapper)
   , _baseBehavior(baseBehavior){}
-  
+
   virtual ~BaseBehaviorWrapper(){}
 
 
@@ -81,17 +81,17 @@ public:
 
 };
 
-class BehaviorComponent : public IBehaviorMessageSubscriber, 
-                          public IDependencyManagedComponent<AIComponentID>,  
+class BehaviorComponent : public IBehaviorMessageSubscriber,
+                          public IDependencyManagedComponent<AIComponentID>,
                           private Util::noncopyable
 {
 public:
   BehaviorComponent();
   ~BehaviorComponent();
-  
+
   using EntityType = DependencyManagedEntity<BCComponentID>;
-  using CompononentPtr = std::unique_ptr<EntityType>;
-  
+  using ComponentPtr = std::unique_ptr<EntityType>;
+
   // IDependencyManagedComponent<AIComponentID> functions
   virtual void InitDependent(Robot* robot, const AICompMap& dependentComponents) override;
 
@@ -109,10 +109,10 @@ public:
   // Pass in any components that have already been initialized as part of the entity
   // all other required components will be automatically generated
   static void GenerateManagedComponents(Robot& robot,
-                                        CompononentPtr& entity);
-  
+                                        ComponentPtr& entity);
+
   // NOTE: BehaviorComponent
-  void SetComponents(CompononentPtr&& components);
+  void SetComponents(ComponentPtr&& components);
 
 
   template<typename T>
@@ -121,19 +121,19 @@ public:
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageGameToEngineTag>&& tags) const override;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<ExternalInterface::MessageEngineToGameTag>&& tags) const override;
   virtual void SubscribeToTags(IBehavior* subscriber, std::set<RobotInterface::RobotToEngineTag>&& tags) const override;
-  
+
 protected:
   // Support legacy cozmo code
   friend class Robot;
   friend class AIComponent;
   friend class DevBehaviorComponentMessageHandler;
   friend class TestBehaviorFramework; // for testing access to internals
-  
+
   // For test only
   BehaviorContainer& GetBehaviorContainer();
-  
+
 private:
-  CompononentPtr _comps;
+  ComponentPtr _comps;
 };
 
 } // namespace Cozmo
@@ -141,4 +141,3 @@ private:
 
 
 #endif // __Cozmo_Basestation_BehaviorSystem_BehaviorComponent_H__
-

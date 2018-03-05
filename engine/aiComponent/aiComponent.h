@@ -45,11 +45,11 @@ class TimerUtility;
 
 
 // AIComponent is updated at the robot component level, same as BehaviorComponent
-// Therefore BCComponents (which are managed by BehaviorComponent) can't declare dependencies on AIComponent 
-// since when it's Init/Update relative to BehaviorComponent must be declared by BehaviorComponent explicitly, 
+// Therefore BCComponents (which are managed by BehaviorComponent) can't declare dependencies on AIComponent
+// since when it's Init/Update relative to BehaviorComponent must be declared by BehaviorComponent explicitly,
 // not by individual components within BehaviorComponent
-class AIComponent :  public UnreliableComponent<BCComponentID>, 
-                     public IDependencyManagedComponent<RobotComponentID>,  
+class AIComponent :  public UnreliableComponent<BCComponentID>,
+                     public IDependencyManagedComponent<RobotComponentID>,
                      private Util::noncopyable
 {
 public:
@@ -99,7 +99,7 @@ public:
 
   template<typename T>
   T* GetBasePtr() const {assert(_aiComponents); return _aiComponents->GetBasePtr<T>();}
-  
+
   #if ANKI_DEV_CHEATS
   // For test only
   BehaviorContainer& GetBehaviorContainer();
@@ -111,21 +111,21 @@ public:
 
   void OnRobotDelocalized();
   void OnRobotRelocalized();
-  
+
   ////////////////////////////////////////////////////////////////////////////////
   // Accessors
   ////////////////////////////////////////////////////////////////////////////////
-  
+
   inline bool IsSuddenObstacleDetected() const { return _suddenObstacleDetected; }
 
 private:
   Robot* _robot = nullptr;
   using EntityType = DependencyManagedEntity<AIComponentID>;
-  using CompononentPtr = std::unique_ptr<EntityType>;
+  using ComponentPtr = std::unique_ptr<EntityType>;
 
-  CompononentPtr _aiComponents;
+  ComponentPtr _aiComponents;
   bool   _suddenObstacleDetected;
-  
+
   void CheckForSuddenObstacle(Robot& robot);
 };
 

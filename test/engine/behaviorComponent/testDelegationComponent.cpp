@@ -37,23 +37,23 @@ TEST(DelegationComponent, TestDelegationVariants)
 {
   std::unique_ptr<TestSuperPoweredBehavior> baseBehavior = std::make_unique<TestSuperPoweredBehavior>();
   TestBehaviorFramework testFramework(1, nullptr);
-  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::CompononentPtr& comps){
+  auto initializeBehavior = [&baseBehavior](const BehaviorComponent::ComponentPtr& comps) {
     baseBehavior->SetBehaviorContainer(comps->GetComponent(BCComponentID::BehaviorContainer).GetValue<BehaviorContainer>());
   };
   testFramework.InitializeStandardBehaviorComponent(baseBehavior.get(),initializeBehavior);
-  
+
   BehaviorSystemManager& bsm = testFramework.GetBehaviorSystemManager();
   BehaviorExternalInterface& bei = testFramework.GetBehaviorExternalInterface();
   BehaviorContainer& behaviorContainer = testFramework.GetBehaviorContainer();
   ASSERT_TRUE(bei.HasDelegationComponent());
   DelegationComponent& delegationComp = bei.GetDelegationComponent();
-  
+
   // Check to make sure that the stack exists and control is appropriately delegated
   IBehavior* behaviorDelegating = bsm._behaviorStack->GetTopOfStack();
   ASSERT_NE(behaviorDelegating, nullptr);
   EXPECT_FALSE(delegationComp.IsControlDelegated(behaviorDelegating));
-  
-  
+
+
   // Build up an arbitrarily large stack of delegates
   const int arbitraryDelegationNumber = 50;
   std::vector<std::unique_ptr<TestSuperPoweredBehavior>> bunchOfBehaviors;
@@ -68,13 +68,13 @@ TEST(DelegationComponent, TestDelegationVariants)
       toDelegate->OnEnteredActivatableScope();
       toDelegate->WantsToBeActivated();
       InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, toDelegate.get());
-      
+
       ASSERT_TRUE(delegationComp.HasDelegator(behaviorDelegating));
       auto& delegatorComp = delegationComp.GetDelegator(behaviorDelegating);
-      
+
       EXPECT_TRUE(delegatorComp.Delegate(behaviorDelegating,
                                          toDelegate.get()));
-      
+
       // Assert control is delegated properly
       for(auto& entry: bunchOfBehaviors){
         if(entry == bunchOfBehaviors.back()){
@@ -83,11 +83,11 @@ TEST(DelegationComponent, TestDelegationVariants)
           EXPECT_TRUE(delegationComp.IsControlDelegated(entry.get()));
         }
       }
-      
+
       behaviorDelegating = bunchOfBehaviors.back().get();
     }
   }
-  
+
   // Delegate an arbitrarily large number of times to cozmoBehaviors
   {
     Json::Value empty = ICozmoBehavior::CreateDefaultBehaviorConfig(BEHAVIOR_CLASS(Wait), BEHAVIOR_ID(Wait));
@@ -98,13 +98,13 @@ TEST(DelegationComponent, TestDelegationVariants)
       toDelegate->OnEnteredActivatableScope();
       toDelegate->WantsToBeActivated();
       InjectValidDelegateIntoBSM(testFramework, behaviorDelegating, toDelegate.get());
-      
+
       ASSERT_TRUE(delegationComp.HasDelegator(behaviorDelegating));
       auto& delegatorComp = delegationComp.GetDelegator(behaviorDelegating);
-      
+
       EXPECT_TRUE(delegatorComp.Delegate(behaviorDelegating,
                                          toDelegate.get()));
-      
+
       // Assert control is delegated properly
       for(auto& entry: bunchOfCozmoBehaviors){
         if(entry == bunchOfCozmoBehaviors.back()){
@@ -113,11 +113,11 @@ TEST(DelegationComponent, TestDelegationVariants)
           EXPECT_TRUE(delegationComp.IsControlDelegated(entry.get()));
         }
       }
-      
+
       behaviorDelegating = bunchOfCozmoBehaviors.back().get();
     }
   }
-  
+
   // Delegate to an action
   {
     DriveStraightAction* action = new DriveStraightAction(0);
@@ -133,11 +133,11 @@ TEST(DelegationComponent, TestDelegationVariants)
       EXPECT_TRUE(delegationComp.IsControlDelegated(entry.get()));
     }
   }
-  
+
   // Test Canceling a behavior in the middle of the stack's delegates
   delegationComp.CancelDelegates(bunchOfCozmoBehaviors.front().get());
   ASSERT_FALSE(delegationComp.IsControlDelegated(bunchOfCozmoBehaviors.back().get()));
-  
+
   // Cancel a behavior in the middle of the stack
   delegationComp.CancelSelf(bunchOfBehaviors.back().get());
   ASSERT_FALSE(delegationComp.IsControlDelegated(bunchOfBehaviors.back().get()));
@@ -155,7 +155,7 @@ TEST(DelegationComponent, TestDelegationVariants)
     delegationComp.CancelDelegates(bunchOfBehaviors.back().get());
     ASSERT_FALSE(delegationComp.IsControlDelegated(bunchOfBehaviors.back().get()));
   }
-  
+
   // Cancel the bottom of the stack
   std::vector<IBehavior*>& behaviorStack = testFramework.GetBehaviorSystemManager()._behaviorStack->_behaviorStack;
   IBehavior* bottomElement = behaviorStack.front();
