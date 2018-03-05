@@ -33,5 +33,14 @@ namespace Anki {
 
 } // namespace Anki
 
-#endif // #if ANKICORETECH_EMBEDDED_USE_MATLAB || ANKICORETECH_USE_MATLAB
+#else
 
+//
+// Define a dummy symbol to silence linker warnings such as
+//   "blah.cpp.o has no symbols"
+//
+// This symbol is never actually used and may be discarded during final linkage.
+//
+int coretech_common_shared_matlabConverters = 0;
+
+#endif // #if ANKICORETECH_EMBEDDED_USE_MATLAB || ANKICORETECH_USE_MATLAB
