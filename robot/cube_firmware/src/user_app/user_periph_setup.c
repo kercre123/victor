@@ -140,7 +140,7 @@ void periph_init(void)
 
   // Disable things
   GPIO_INIT_PIN(BOOST_EN, OUTPUT, PID_GPIO, 0, GPIO_POWER_RAIL_1V );
-  GPIO_INIT_PIN(ACC_CS,  OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
+  GPIO_INIT_PIN(ACC_CS,  OUTPUT, PID_GPIO, 0, GPIO_POWER_RAIL_3V );
   GPIO_INIT_PIN(D0, OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
   GPIO_INIT_PIN(D1, OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
   GPIO_INIT_PIN(D2, OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
@@ -154,8 +154,10 @@ void periph_init(void)
   GPIO_INIT_PIN(D10, OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
   GPIO_INIT_PIN(D11, OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
 
-  GPIO_INIT_PIN(ACC_CS, OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
-  GPIO_INIT_PIN(ACC_SCK, OUTPUT, PID_GPIO, 1, GPIO_POWER_RAIL_3V );
+  GPIO_INIT_PIN(CAPO, OUTPUT, PID_GPIO, 0, GPIO_POWER_RAIL_3V );
+
+  GPIO_INIT_PIN(ACC_CS, OUTPUT, PID_GPIO, 0, GPIO_POWER_RAIL_3V );
+  GPIO_INIT_PIN(ACC_SCK, OUTPUT, PID_GPIO, 0, GPIO_POWER_RAIL_3V );
   GPIO_INIT_PIN(ACC_SDA, OUTPUT, PID_GPIO, 0, GPIO_POWER_RAIL_3V );
 
   static bool first_boot = true;
@@ -174,11 +176,15 @@ void periph_init(void)
 
     // Blink pattern
     GPIO_SET(BOOST_EN);
+		//GPIO_SetInactive(LEDs[8].port, LEDs[8].pin);
     for (int p = 0; p < 12; p++) {
       GPIO_SetInactive(LEDs[p].port, LEDs[p].pin);
       for (int i = 0; i < 200000; i++) __nop();
       GPIO_SetActive(LEDs[p].port, LEDs[p].pin);
+			for (int i = 0; i < 200000; i++) __nop();
     }
+		
+		
     
     GPIO_CLR(BOOST_EN);
     GPIO_PIN_FUNC(D0, INPUT, PID_GPIO);
@@ -193,5 +199,6 @@ void periph_init(void)
     GPIO_PIN_FUNC(D9, INPUT, PID_GPIO);
     GPIO_PIN_FUNC(D10, INPUT, PID_GPIO);
     GPIO_PIN_FUNC(D11, INPUT, PID_GPIO);
-  }
+  
+	}
 }
