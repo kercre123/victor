@@ -20,6 +20,7 @@
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/sayTextStyles.clad"
+#include "clad/types/switchboardToRobot.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -578,6 +579,10 @@ union EngineToRobot
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
   TextToSpeechStart             textToSpeechStart           = 0x92,
   TextToSpeechStop              textToSpeechStop            = 0x93,
+
+  SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
+  SwitchboardInterface::SetBLEName          setBLEName          = 0xA1,
+  SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA2,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

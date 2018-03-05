@@ -1,0 +1,13 @@
+// Messages from engine to be handled by switchboard
+
+namespace Anki {
+namespace Cozmo {
+namespace SwitchboardInterface {
+
+message EnterPairing
+{
+}
+
+}
+}
+}

@@ -343,7 +343,7 @@ namespace Cozmo {
       anim->SetGrayscale(isGrayscale);
     }
     
-    anim->AddFrame(faceImg);
+    anim->AddFrame(faceImg, (holdTime_ms == 0));
     
     if(holdTime_ms > ANIM_TIME_STEP_MS) {
       const s32 numFramesToAdd = holdTime_ms / ANIM_TIME_STEP_MS - 1;
@@ -367,17 +367,34 @@ namespace Cozmo {
     } else {
       FaceAnimation& anim = animIter->second;
       
-      if ((animName == ProceduralAnimName)) {
-        if (anim.GetNumFrames() == 0) {
+      if ((animName == ProceduralAnimName)) 
+      {
+        if(anim.GetNumFrames() == 0)
+        {
           return false;
         }
+
         anim.GetFrame(0, frame);
-        PopFront();
+
+        // Pop front if the anim is not holding or
+        // it is holding and there is more than one frame left
+        const bool shouldPop = !anim.ShouldHold() ||
+                               (anim.ShouldHold() && anim.GetNumFrames() > 1);
+
+        if(shouldPop)
+        {
+          PopFront();
+        }
+
         return !frame.IsEmpty();
-      } else if(frameNum < anim.GetNumFrames()) {
+      } 
+      else if(frameNum < anim.GetNumFrames()) 
+      {
         anim.GetFrame(frameNum, frame);
         return true;
-      } else {
+      } 
+      else
+      {
         PRINT_NAMED_ERROR("FaceAnimationManager.GetFrame",
                           "Requested frame number %d is invalid. "
                           "Only %lu frames available in animation %s.",

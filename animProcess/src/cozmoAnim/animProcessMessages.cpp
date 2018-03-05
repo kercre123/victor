@@ -20,11 +20,13 @@
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animEngine.h"
+#include "cozmoAnim/connectionFlow.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceDebugDraw.h"
 #include "cozmoAnim/micDataProcessor.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
+#include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
@@ -349,6 +351,22 @@ void Process_textToSpeechStop(const RobotInterface::TextToSpeechStop& msg)
 {
   _animEngine->HandleMessage(msg);
 }
+
+void Process_setConnectionStatus(const Anki::Cozmo::SwitchboardInterface::SetConnectionStatus& msg)
+{
+  UpdateConnectionFlow(std::move(msg), _animStreamer);
+}
+
+void Process_setBLEName(const Anki::Cozmo::SwitchboardInterface::SetBLEName& msg)
+{
+  SetBLEName(msg.name);
+}
+
+void Process_setBLEPin(const Anki::Cozmo::SwitchboardInterface::SetBLEPin& msg)
+{
+  SetBLEPin(msg.pin);
+}
+
 
 
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
