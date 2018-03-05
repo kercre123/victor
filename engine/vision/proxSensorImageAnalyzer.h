@@ -46,6 +46,8 @@ protected:
                            const float col, Vision::ImageRGB& debugImage,
                            DebugImageList <Anki::Vision::ImageRGB>& debugImageRGBs) const;
 
+  Vision::Image ProcessClassifiedImage(const Vision::Image &binaryImage) const;
+
   std::unique_ptr<OnlineGrowingForestClassifier> _onlineClf;
 };
 

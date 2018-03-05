@@ -59,6 +59,21 @@ ProxSensorImageAnalyzer::~ProxSensorImageAnalyzer()
 
 }
 
+Vision::Image ProxSensorImageAnalyzer::ProcessClassifiedImage(const Vision::Image& binaryImage) const
+{
+  cv::Mat_<u8> cvImage = binaryImage.get_CvMat_();
+
+  // TODO these values should be parameters
+  cv::morphologyEx(cvImage, cvImage,
+                   cv::MORPH_CLOSE,
+                   cv::getStructuringElement(cv::MORPH_RECT, cv::Size(10,10)),
+                   cv::Point(-1, -1),
+                   2
+  );
+
+  return Vision::Image(cvImage);
+}
+
 Result ProxSensorImageAnalyzer::Update(const Vision::ImageRGB& image, const VisionPoseData& crntPoseData,
                                        const VisionPoseData& prevPoseData,
                                        DebugImageList <Anki::Vision::ImageRGB>& debugImageRGBs) const
@@ -151,16 +166,26 @@ Result ProxSensorImageAnalyzer::Update(const Vision::ImageRGB& image, const Visi
 
   } // if (hist.WasProxSensorValid())
 
+  // Get the classifier image
+  Vision::Image rawClassifiedImage(groundPlaneImage.GetNumRows(), groundPlaneImage.GetNumCols(), u8(0));
+  MeanFeaturesExtractor featuresExtractor(padding);
+  ClassifyImage(*(_onlineClf.get()), featuresExtractor, groundPlaneImage, rawClassifiedImage);
+  // all the 1s become 255s
+  rawClassifiedImage *= 255;
+  const Vision::Image classifiedMask = ProcessClassifiedImage(rawClassifiedImage);
+
+  // find the leading edges
+  OverheadEdgeFrame edgeFrame = extractOverheadEdgeFrame(groundPlaneROI, classifiedMask);
+  const OverheadEdgeChainVector& candidateChains = edgeFrame.chains;
+
   if (DEBUG_VISUALIZATION) {
     debugImageRGBs.emplace_back("ProxSensorOnGroundPlane", imageToDisplay);
+//    debugImageRGBs.emplace_back("OnlineClassifierImage", Vision::ImageRGB(rawClassifiedImage));
 
-    // get the classification image from the classifier
-    Vision::Image rawClassifiedImage(groundPlaneImage.GetNumRows(), groundPlaneImage.GetNumCols(), u8(0));
-    MeanFeaturesExtractor featuresExtractor(padding);
-    ClassifyImage(*(_onlineClf.get()), featuresExtractor, groundPlaneImage, rawClassifiedImage);
-    // all the 1s become 255s
-    rawClassifiedImage *= 255;
-    debugImageRGBs.emplace_back("OnlineClassifierImage", Vision::ImageRGB(rawClassifiedImage));
+    // leading edges
+    Vision::ImageRGB leadingEdgeDisp(rawClassifiedImage);
+    displayLeadingEdges(groundPlaneROI, candidateChains, leadingEdgeDisp);
+    debugImageRGBs.emplace_back("LeadingEdges", std::move(leadingEdgeDisp));
   }
 
   return RESULT_OK;
