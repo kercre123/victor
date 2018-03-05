@@ -10,8 +10,8 @@
 *
 **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorEyeContact_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorEyeContact_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorObservingEyeContact_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorObservingEyeContact_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
@@ -21,7 +21,6 @@ namespace Cozmo {
 class BehaviorObservingEyeContact : public ICozmoBehavior
 {
 protected:
-  // Enforce creation through BehaviorContainer
   friend class BehaviorFactory;
   BehaviorObservingEyeContact(const Json::Value& config);
   
@@ -42,4 +41,4 @@ protected:
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorEyeContact_H__
+#endif // __Cozmo_Basestation_Behaviors_BehaviorObservingEyeContact_H__
