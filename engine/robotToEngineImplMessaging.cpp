@@ -195,6 +195,12 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                                 temp_degC);
                                                        robot->SetImuTemperature(temp_degC);
                                                      }));
+
+  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::enterPairing,
+                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                       // Forward to switchboard
+                                                       robot->Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::EnterPairing()));
+                                                     }));
   
   if (robot->HasExternalInterface())
   {

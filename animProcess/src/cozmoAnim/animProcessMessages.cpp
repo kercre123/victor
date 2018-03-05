@@ -408,15 +408,58 @@ static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
   }
 }
 
+void CheckForDoublePress(bool buttonReleased)
+{
+  // Time window in which to consider a second press as a double press
+  const  u32 kDoublePressWindow_ms   = 700;
+  static u32 buttonTappedCount       = 0;
+  static u32 timeDoublePressStart_ms = 0;
+
+  const u32 curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+
+  // If the button has been released
+  if(buttonReleased)
+  {
+    // If this is the first release set timeDoublePressStart
+    if(buttonTappedCount == 0)
+    {
+      timeDoublePressStart_ms = curTime_ms;
+    }
+
+    buttonTappedCount++;
+  }
+
+  // If the button has been released twice then broadcast a double pressed message
+  if(buttonTappedCount == 2)
+  {
+    LOG_INFO("AnimProcessMessages.CheckForDoublePress.GotDoublePress", "Entering pairing");
+    RobotInterface::SendAnimToEngine(SwitchboardInterface::EnterPairing());
+
+    timeDoublePressStart_ms = 0;
+    buttonTappedCount = 0;
+  }
+
+  // If it has been too long since the first button release then
+  // reset time and buttonTappedCount
+  if(timeDoublePressStart_ms > 0 && 
+     curTime_ms - timeDoublePressStart_ms > kDoublePressWindow_ms)
+  {
+    timeDoublePressStart_ms = 0;
+    buttonTappedCount = 0;
+  }
+}
+
 static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
 {
   FaceDisplay::GetDebugDraw()->DrawStateInfo(robotState);
 
   static bool buttonWasPressed = false;
   const auto buttonIsPressed = static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::IS_BUTTON_PRESSED);
-  const auto buttonPressedEvent = !buttonWasPressed && buttonIsPressed;
-  const auto buttonReleasedEvent = buttonWasPressed && !buttonIsPressed;
+  const bool buttonPressedEvent = !buttonWasPressed && buttonIsPressed;
+  const bool buttonReleasedEvent = buttonWasPressed && !buttonIsPressed;
   buttonWasPressed = buttonIsPressed;
+
+  CheckForDoublePress(buttonReleasedEvent);
 
   const auto currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(); 
 
