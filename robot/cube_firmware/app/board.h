@@ -15,12 +15,6 @@
 static const uint32_t SYSTEM_CLOCK = 16*1000000;
 
 //-----------------------------------------------------------
-//        Board API
-//-----------------------------------------------------------
-
-void board_init(void);
-
-//-----------------------------------------------------------
 //        pin defines
 //-----------------------------------------------------------
 #include "gpio.h"
@@ -29,9 +23,9 @@ void board_init(void);
   static const GPIO_PORT  NAME##_PORT = (GPIO_PORT)(PORT); \
   static const GPIO_PIN   NAME##_PIN = (GPIO_PIN)(PIN);
 
-GPIO_DEFINE(GPIO_PORT_0, 0, ACC_CS);
-GPIO_DEFINE(GPIO_PORT_0, 1, CAPI);
-GPIO_DEFINE(GPIO_PORT_0, 2, CAPO);
+GPIO_DEFINE(GPIO_PORT_0, 0, ACC_nCS);
+//GPIO_DEFINE(GPIO_PORT_0, 1, xxx);
+GPIO_DEFINE(GPIO_PORT_0, 2, ACC_PWR);
 GPIO_DEFINE(GPIO_PORT_0, 3, ACC_SCK);
 GPIO_DEFINE(GPIO_PORT_0, 4, UTX);
 GPIO_DEFINE(GPIO_PORT_0, 5, URX);
@@ -40,13 +34,10 @@ GPIO_DEFINE(GPIO_PORT_0, 7, D1);
 
 GPIO_DEFINE(GPIO_PORT_1, 0, D7);
 GPIO_DEFINE(GPIO_PORT_1, 1, D10);
-GPIO_DEFINE(GPIO_PORT_1, 2, NC_P12);
-GPIO_DEFINE(GPIO_PORT_1, 3, NC_P13);
-GPIO_DEFINE(GPIO_PORT_1, 4, SWCLK); //reset PD
-GPIO_DEFINE(GPIO_PORT_1, 5, SWDIO); //reset PU
+//GPIO_DEFINE(GPIO_PORT_1, 2, xxx); // DO NOT USE CORRUPTS 16M
+//GPIO_DEFINE(GPIO_PORT_1, 3, xxx); // DO NOT USE CORRUPTS 16M
 
 GPIO_DEFINE(GPIO_PORT_2, 0, BOOST_EN);
-GPIO_DEFINE(GPIO_PORT_2, 0, BOOST); //P0.0 alias; backwards compat for v2.0 hw
 GPIO_DEFINE(GPIO_PORT_2, 1, D0);
 GPIO_DEFINE(GPIO_PORT_2, 2, D2);
 GPIO_DEFINE(GPIO_PORT_2, 3, D11);

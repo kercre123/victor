@@ -1,0 +1,60 @@
+#ifndef __BMA253
+#define __BMA253
+
+static const uint8_t BGW_CHIPID = 0x00;
+static const uint8_t ACCD_X_LSB = 0x02;
+static const uint8_t ACCD_X_MSB = 0x03;
+static const uint8_t ACCD_Y_LSB = 0x04;
+static const uint8_t ACCD_Y_MSB = 0x05;
+static const uint8_t ACCD_Z_LSB = 0x06;
+static const uint8_t ACCD_Z_MSB = 0x07;
+static const uint8_t ACCD_TEMP = 0x08;
+static const uint8_t INT_STATUS_0 = 0x09;
+static const uint8_t INT_STATUS_1 = 0x0A;
+static const uint8_t INT_STATUS_2 = 0x0B;
+static const uint8_t INT_STATUS_3 = 0x0C;
+static const uint8_t FIFO_STATUS = 0x0E;
+static const uint8_t PMU_RANGE = 0x0F;
+static const uint8_t PMU_BW = 0x10;
+static const uint8_t PMU_LPW = 0x11;
+static const uint8_t PMU_LOW_POWER = 0x12;
+static const uint8_t ACCD_HBW = 0x13;
+static const uint8_t BGW_SOFTRESET = 0x14;
+static const uint8_t INT_EN_0 = 0x16;
+static const uint8_t INT_EN_1 = 0x17;
+static const uint8_t INT_EN_2 = 0x18;
+static const uint8_t INT_MAP_0 = 0x19;
+static const uint8_t INT_MAP_1 = 0x1A;
+static const uint8_t INT_MAP_2 = 0x1B;
+static const uint8_t INT_SRC = 0x1E;
+static const uint8_t INT_OUT_CTRL = 0x20;
+static const uint8_t INT_RST_LATCH = 0x21;
+static const uint8_t INT_0 = 0x22;
+static const uint8_t INT_1 = 0x23;
+static const uint8_t INT_2 = 0x24;
+static const uint8_t INT_3 = 0x25;
+static const uint8_t INT_4 = 0x26;
+static const uint8_t INT_5 = 0x27;
+static const uint8_t INT_6 = 0x28;
+static const uint8_t INT_7 = 0x29;
+static const uint8_t INT_8 = 0x2A;
+static const uint8_t INT_9 = 0x2B;
+static const uint8_t INT_A = 0x2C;
+static const uint8_t INT_B = 0x2D;
+static const uint8_t INT_C = 0x2E;
+static const uint8_t INT_D = 0x2F;
+static const uint8_t FIFO_CONFIG_0 = 0x30;
+static const uint8_t PMU_SELF_TEST = 0x32;
+static const uint8_t TRIM_NVM_CTRL = 0x33;
+static const uint8_t BGW_SPI3_WDT = 0x34;
+static const uint8_t OFC_CTRL = 0x36;
+static const uint8_t OFC_SETTING = 0x37;
+static const uint8_t OFC_OFFSET_X = 0x38;
+static const uint8_t OFC_OFFSET_Y = 0x39;
+static const uint8_t OFC_OFFSET_Z = 0x3A;
+static const uint8_t TRIM_GP0 = 0x3B;
+static const uint8_t TRIM_GP1 = 0x3C;
+static const uint8_t FIFO_CONFIG_1 = 0x3E;
+static const uint8_t FIFO_DATA = 0x3F;
+
+#endif
