@@ -9,6 +9,7 @@ macro(__anki_setup_go_environment target_basedir)
   file(RELATIVE_PATH __gobuild_basedir ${CMAKE_CURRENT_BINARY_DIR} "${__gobuild_basedir}")
 
   set(__go_compile_env "CGO_ENABLED=1")
+  list(APPEND __go_compile_env "GOPATH=${GOPATH}")
   set(__go_build_flags "")
   set(__go_deps "")
 
@@ -46,7 +47,7 @@ macro(__anki_run_go_build target_name)
   add_custom_command(
     OUTPUT ${__gobuild_out}
     COMMAND ${CMAKE_COMMAND} -E env ${__go_compile_env} ${__include_env} ${__link_env}
-                             $ENV{GOROOT}/bin/go build ${__go_build_flags} ${__ldflags_str} ${__go_build_ldflags} ${__gobuild_basedir}
+                             ${GOROOT}/bin/go build ${__go_build_flags} ${__ldflags_str} ${__go_build_ldflags} ${__gobuild_basedir}
     DEPENDS ${SRCS} ${_ab_PLATFORM_SRCS} ${__go_deps}
   )
 endmacro()

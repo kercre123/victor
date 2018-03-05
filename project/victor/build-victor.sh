@@ -191,10 +191,10 @@ case ${GENERATOR} in
     "Xcode")
         PROJECT_FILE="cozmo.xcodeproj"
         ;;
-    "Makefile") 
-        PROJECT_FILE="Makefile" 
+    "Makefile")
+        PROJECT_FILE="Makefile"
         GENERATOR="CodeBlocks - Unix Makefiles"
-      ;; 
+      ;;
     "*")
         PROJECT_FILE=""
         ;;
@@ -347,9 +347,11 @@ if [ $CONFIGURE -eq 1 ]; then
         -G"${GENERATOR}" \
         -DCMAKE_BUILD_TYPE=${CONFIGURATION} \
         -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} \
+        -DGOPATH=${GOPATH} \
+        -DGOROOT=${GOROOT} \
         ${EXPORT_FLAGS} \
         ${FEATURE_FLAGS} \
-        "${PLATFORM_ARGS[@]}" 
+        "${PLATFORM_ARGS[@]}"
 fi
 
 if [ $RUN_BUILD -ne 1 ]; then
