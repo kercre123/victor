@@ -611,7 +611,7 @@ uchar DTRawPixelsClassifier::PredictClass(const std::vector<FeatureType>& values
   //DTree requires Mat_<float> as input
 
   cv::Mat_<float> inputRow;
-  if (typeid(FeatureType) == typeid(float)) {
+  if (typeid(RawPixelsClassifier::FeatureType) == typeid(float)) {
     inputRow = cv::Mat_<float>(values).reshape(1, 1); // make it a single row
   }
   else {
@@ -714,6 +714,7 @@ bool DTRawPixelsClassifier::DeSerialize(const char *filename)
 
 std::vector<uchar> DTRawPixelsClassifier::PredictClass(const Array2d<RawPixelsClassifier::FeatureType>& features) const
 {
+  // TODO this function should be modified so that 0 value features are not classified
   DEV_ASSERT(features.GetNumCols() == _dtree->getVarCount(), "DTRawPixelsClassifier.PredictClass.WrongInputSize");
 
   cv::Mat cvFeatures = features.get_CvMat_(); // intentionally not taking const reference here, might need to re-assign
@@ -729,9 +730,18 @@ std::vector<uchar> DTRawPixelsClassifier::PredictClass(const Array2d<RawPixelsCl
   tree.predict(cvFeatures, output);
 
   // now convert to a std::vector uchar optionally changing 1 to 255 (for visualization)
-  std::vector<uchar> toRet;
+  // 0 valued features are predicted as 0
+  std::vector<uchar> toRet(static_cast<unsigned long>(output.rows), 0);
   const double scale = _scaleOutput ? 255.0 : 1.0;
-  output.convertTo(toRet, CV_8U, scale);
+  cv::Point3f* point3fPtr = cvFeatures.ptr<cv::Point3f>(0);
+  DEV_ASSERT(output.type() == CV_32F, "DTRawPixelsClassifier.PredictClass.WrongOutputType");
+  float* outputPtr = output.ptr<float>(0);
+  for (int i = 0; i < output.rows; ++i) {
+    if (point3fPtr[i] != cv::Point3f(0,0,0)) {
+      toRet[i] = cv::saturate_cast<uchar>(outputPtr[i] * scale);
+    }
+  }
+//  output.convertTo(toRet, CV_8U, scale);
   return toRet;
 }
 
