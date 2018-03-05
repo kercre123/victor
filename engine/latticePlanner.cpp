@@ -91,7 +91,7 @@ namespace Cozmo {
 
 // max number of obstacles to import from the navMap, excluding active objects
 CONSOLE_VAR(u32, kMaxNumObstacles, "LatticePlanner", 16);
-CONSOLE_VAR(bool, kDisableVisionObstacles, "LatticePlanner", false);
+CONSOLE_VAR(bool, kDisableVisionObstacles, "LatticePlanner", true);
 
 using namespace Planning;
 
