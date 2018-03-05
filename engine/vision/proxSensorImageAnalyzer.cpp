@@ -179,9 +179,6 @@ Result ProxSensorImageAnalyzer::Update(const Vision::ImageRGB& image, const Visi
   OverheadEdgeFrame edgeFrame = extractOverheadEdgeFrame(groundPlaneROI, classifiedMask);
   const OverheadEdgeChainVector& candidateChains = edgeFrame.chains;
 
-  // Actually return the resulting edges in the provided list
-  outEdges.emplace_back(std::move(edgeFrame));
-
   if (DEBUG_VISUALIZATION) {
     debugImageRGBs.emplace_back("ProxSensorOnGroundPlane", imageToDisplay);
 //    debugImageRGBs.emplace_back("OnlineClassifierImage", Vision::ImageRGB(rawClassifiedImage));
@@ -191,6 +188,9 @@ Result ProxSensorImageAnalyzer::Update(const Vision::ImageRGB& image, const Visi
     displayLeadingEdges(groundPlaneROI, candidateChains, leadingEdgeDisp);
     debugImageRGBs.emplace_back("LeadingEdges", std::move(leadingEdgeDisp));
   }
+
+  // Actually return the resulting edges in the provided list
+  outEdges.emplace_back(std::move(edgeFrame));
 
   return RESULT_OK;
 }
