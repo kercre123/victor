@@ -1230,7 +1230,7 @@
     },
     {
       "CladEvent": "ListeningOnCharger",
-      "AnimName": "ag_reacttocharger"
+      "AnimName": "ag_vc_listening"
     },
     {
       "CladEvent": "LookDownForLaser",
