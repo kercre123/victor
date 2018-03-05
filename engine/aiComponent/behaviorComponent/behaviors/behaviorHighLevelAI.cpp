@@ -21,10 +21,15 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/faceWorld.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Cozmo {
 
+// speed up high level AI with this. Be careful -- some conditions that check for time
+// within a short interval [a,b] may not be met if you choose too fast a speedup factor
+CONSOLE_VAR_RANGED(float, kTimeMultiplier, "BehaviorHighLevelAI", 10.0f, 1.0f, 300.0f);
+  
 namespace {
 
 constexpr const char* kDebugName = "BehaviorHighLevelAI";
@@ -64,7 +69,7 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
       "CloseFaceForSocializing",
       {
         [this](BehaviorExternalInterface& behaviorExternalInterface) {
-          if( !StateExitCooldownExpired(GetStateID("Socializing"), _params.socializeKnownFaceCooldown_s) ) {
+          if( !StateExitCooldownExpired(GetStateID("Socializing"), _params.socializeKnownFaceCooldown_s / kTimeMultiplier) ) {
             // still on cooldown
             return false;
           }
@@ -102,7 +107,7 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
           }
           
           const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-          if( GetLastTimeStarted( GetStateID("ObservingOnCharger") ) + _params.goToSleepTimeout_s <= currTime_s ) {
+          if( GetLastTimeStarted( GetStateID("ObservingOnCharger") ) + (_params.goToSleepTimeout_s / kTimeMultiplier) <= currTime_s ) {
 
             // only go to sleep if we haven't recently seen a face
             auto& faceWorld = behaviorExternalInterface.GetFaceWorld();
@@ -111,7 +116,7 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
             const TimeStamp_t lastFaceTime = faceWorld.GetLastObservedFace(waste, inRobotOriginOnly);
             const TimeStamp_t lastImgTime = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
             if( lastFaceTime < lastImgTime &&
-                lastImgTime - lastFaceTime > _params.minFaceAgeToAllowSleep_ms ) {
+                kTimeMultiplier*(lastImgTime - lastFaceTime) > _params.minFaceAgeToAllowSleep_ms ) {
               return true;
             }
           }
@@ -151,7 +156,7 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
               robotInfo.GetLastMsgTimestamp() - lastChargeTime :
               0;
 
-            return timeSinceNotCharging >= _params.needsToChargeTime_ms;
+            return timeSinceNotCharging * kTimeMultiplier >= _params.needsToChargeTime_ms;
           }
           return false;
         },
@@ -172,10 +177,10 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
           // again.
           const bool valueIfNeverRun = false;
           const bool hasntDrivenOffChargerForPlay = StateExitCooldownExpired(GetStateID("DriveOffChargerIntoPlay"),
-                                                                            _params.playWithCubeOnChargerCooldown_s,
+                                                                            _params.playWithCubeOnChargerCooldown_s / kTimeMultiplier,
                                                                             valueIfNeverRun);
           const auto& timer = GetBEI().GetBehaviorTimerManager().GetTimer( BehaviorTimerTypes::PlayingWithCube );
-          const bool hasntPlayed = timer.HasCooldownExpired(_params.playWithCubeCooldown_s, valueIfNeverRun);
+          const bool hasntPlayed = timer.HasCooldownExpired(_params.playWithCubeCooldown_s / kTimeMultiplier, valueIfNeverRun);
           
           return hasntDrivenOffChargerForPlay && hasntPlayed;
         },
@@ -188,7 +193,7 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
         [this](BehaviorExternalInterface& behaviorExternalInterface) {
 
           const auto& timer = GetBEI().GetBehaviorTimerManager().GetTimer( BehaviorTimerTypes::PlayingWithCube );
-          if( !timer.HasCooldownExpired(_params.playWithCubeCooldown_s) ) {
+          if( !timer.HasCooldownExpired(_params.playWithCubeCooldown_s / kTimeMultiplier) ) {
             // still on cooldown
             return false;
           }

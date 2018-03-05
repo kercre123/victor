@@ -15,10 +15,13 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "json/json.h"
+#include "util/console/consoleInterface.h"
 #include "util/random/randomGenerator.h"
 
 namespace Anki {
 namespace Cozmo {
+  
+CONSOLE_VAR_EXTERN(float, kTimeMultiplier);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCooldownInfo::BehaviorCooldownInfo(float cooldownLength_s, float randomFactor)
@@ -34,6 +37,8 @@ BehaviorCooldownInfo::BehaviorCooldownInfo(const Json::Value& config)
                                                "cooldown_s",
                                                "BehaviorCooldownInfo.Cooldown");
   const float randomFactor = config.get("cooldown_random_factor", 0.0f).asFloat();
+  
+  _ignoreFastForward = config.get("ignoreFastForward", false).asBool();
 
   _cooldown_s = cooldown;
   _randomCooldownFactor = randomFactor;
@@ -67,6 +72,9 @@ void BehaviorCooldownInfo::StartCooldown(Util::RandomGenerator& rng)
                                         (1.0f + _randomCooldownFactor) * _cooldown_s );
     }
     
+    if( !_ignoreFastForward ) {
+      cooldown_s /= kTimeMultiplier;
+    }
     _onCooldownUntil_s = currTime_s + cooldown_s;
   }
 }

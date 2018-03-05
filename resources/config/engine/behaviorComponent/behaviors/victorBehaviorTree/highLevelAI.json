@@ -3,12 +3,12 @@
   "behaviorClass" : "HighLevelAI",
 
   
-  "socializeKnownFaceCooldown_s": 600.0,
-  "playWithCubeCooldown_s": 60.0,
-  "playWithCubeOnChargerCooldown_s": 600.0,
-  "goToSleepTimeout_s": 240.0,
-  "minFaceAgeToAllowSleep_ms": 5000,
-  "needsToChargeTime_ms": 300000,
+  "socializeKnownFaceCooldown_s": 6000.0,
+  "playWithCubeCooldown_s": 600.0,
+  "playWithCubeOnChargerCooldown_s": 6000.0,
+  "goToSleepTimeout_s": 2400.0,
+  "minFaceAgeToAllowSleep_ms": 50000,
+  "needsToChargeTime_ms": 3000000,
   "maxFaceDistanceToSocialize_mm": 1000.0,
 
   "initialState": "ObservingOnCharger",
@@ -102,7 +102,7 @@
           "to": "DriveOffChargerIntoObserving",
           "condition": {
             "conditionType": "TimerInRange",
-            "begin_s": 600.0
+            "begin_s": 6000.0
           }
         },
         {
@@ -135,7 +135,7 @@
           "to": "ObservingOnCharger",
           "condition": {
             "conditionType": "TimerInRange",
-            "begin_s": 120.0
+            "begin_s": 1200.0
           }
         }
       ]
@@ -271,7 +271,7 @@
           "to": "WakingUp",
           "condition": {
             "conditionType": "TimerInRange",
-            "begin_s": 300.0
+            "begin_s": 3000.0
           }
         }
       ]

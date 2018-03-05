@@ -19,7 +19,7 @@
       "behaviors": [    
         {
           "behavior": "ObservingLookAtFaces",
-          "cooldown_s": 30.0,
+          "cooldown_s": 300.0,
           "cooldown_random_factor": 0.5
         },
         {

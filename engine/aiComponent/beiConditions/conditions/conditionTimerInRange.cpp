@@ -15,10 +15,13 @@
 
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/engine/jsonTools.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Cozmo {
 
+CONSOLE_VAR_EXTERN(float, kTimeMultiplier);
+  
 namespace {
 
 // const char* kManualResetKey = "manualResetOnly";
@@ -50,17 +53,19 @@ bool ConditionTimerInRange::AreConditionsMetInternal(BehaviorExternalInterface& 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const float timerVal = currTime_s - _timeReset;
 
-  return _params._rangeBegin_s <= timerVal && timerVal < _params._rangeEnd_s;
+  const float ffwdTime = kTimeMultiplier * timerVal;
+  return _params._rangeBegin_s <= ffwdTime && ffwdTime < _params._rangeEnd_s;
 }
   
 IBEICondition::DebugFactorsList ConditionTimerInRange::GetDebugFactors() const
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const float timerVal = currTime_s - _timeReset;
+  const float ffwdTime = kTimeMultiplier * timerVal;
   DebugFactorsList ret
     = { {"min_t", std::to_string(_params._rangeBegin_s)},
         {"max_t", std::to_string(_params._rangeEnd_s)},
-        {"cur_t", std::to_string(timerVal)} };
+        {"cur_t", std::to_string(ffwdTime)} };
   return ret;
 }
   

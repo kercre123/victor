@@ -37,8 +37,16 @@
 #include "util/math/math.h"
 #include "util/console/consoleInterface.h"
 
+namespace Anki {
+namespace Cozmo {
+CONSOLE_VAR_EXTERN(float, kTimeMultiplier);
+}
+}
+
 using namespace Anki;
 using namespace Anki::Cozmo;
+
+
 
 namespace {
 
@@ -222,6 +230,8 @@ TEST(BeiConditions, Frustration)
 
 TEST(BeiConditions, Timer)
 {
+  const float oldVal = kTimeMultiplier;
+  kTimeMultiplier = 1.0f;
   BaseStationTimer::getInstance()->UpdateTime(0);
   
   const std::string json = R"json(
@@ -283,6 +293,8 @@ TEST(BeiConditions, Timer)
 
   BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(resetTime_s + 80.0f));
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  
+  kTimeMultiplier = oldVal;
 }
 
 TEST(BeiConditions, Negate)
@@ -369,6 +381,9 @@ TEST(BeiConditions, NegateTrue)
 
 TEST(BeiConditions, NegateTimerInRange)
 {
+  const float oldVal = kTimeMultiplier;
+  kTimeMultiplier = 1.0f;
+  
   BaseStationTimer::getInstance()->UpdateTime(0);
   
   const std::string json = R"json(
@@ -433,6 +448,8 @@ TEST(BeiConditions, NegateTimerInRange)
 
   BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(resetTime_s + 80.0f));
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  
+  kTimeMultiplier = oldVal;
 }
 
 TEST(BeiConditions, OnCharger)
