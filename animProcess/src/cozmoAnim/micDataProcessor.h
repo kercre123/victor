@@ -65,11 +65,15 @@ public:
   void SetForceRecordClip(bool newValue) { _forceRecordClip = newValue; }
 #endif
 
+  void ResetMicListenDirection();
+
 private:
   std::string _writeLocationDir = "";
   // Members for caching off lookup indices for mic processing results
   int _bestSearchBeamIndex = 0;
   int _bestSearchBeamConfidence = 0;
+  int _selectedSearchBeamIndex = 0;
+  int _selectedSearchBeamConfidence = 0;
   int _searchConfidenceState = 0;
 
   // Members for the the mic processing/recording/streaming jobs
@@ -124,6 +128,9 @@ private:
   // Members for holding outgoing messages
   std::vector<std::unique_ptr<RobotInterface::RobotToEngine>> _msgsToEngine;
   std::mutex _msgsMutex;
+
+  // Mutex for different accessing signal essence software
+  std::mutex _seInteractMutex;
 
   void InitVAD();
   void TriggerWordDetectCallback(const char* resultFound, float score);

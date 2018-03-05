@@ -116,7 +116,7 @@ void FaceDebugDraw::DrawConfidenceClock(
   // of these default values change the server gets them too
 
   const auto& confList = micData.confidenceList;
-  const auto& winningIndex = micData.direction;
+  const auto& winningIndex = micData.selectedDirection;
   auto maxCurConf = (float)micData.confidence;
   for (int i=0; i<12; ++i)
   {

@@ -142,6 +142,8 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
 
   _bestSearchBeamIndex = SEDiagGetIndex("fdsearch_best_beam_index");
   _bestSearchBeamConfidence = SEDiagGetIndex("fdsearch_best_beam_confidence");
+  _selectedSearchBeamIndex = SEDiagGetIndex("search_result_best_beam_index");
+  _selectedSearchBeamConfidence = SEDiagGetIndex("search_result_best_beam_confidence");
   _searchConfidenceState = SEDiagGetIndex("fdsearch_confidence_state");
   
   
@@ -230,9 +232,17 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
     _msgsToEngine.push_back(std::move(engineMessage));
   }
 
+  // Tell signal essence software to lock in on the current direction if it's known
+  const auto currentDirection = _micImmediateDirection->GetDominantDirection();
+  if (currentDirection != kDirectionUnknown)
+  {
+    std::lock_guard<std::mutex> lock(_seInteractMutex);
+    PolicySetKeyPhraseDirection(currentDirection);
+  }
+
   PRINT_NAMED_INFO("MicDataProcessor.TWCallback",
                     "Direction index %d at timestamp %d",
-                    _micImmediateDirection->GetDominantDirection(),
+                    currentDirection,
                     mostRecentTimestamp);
 }
 
@@ -316,6 +326,8 @@ void MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
     newMessage.timestamp = timestamp;
     newMessage.direction = directionResult.winningDirection;
     newMessage.confidence = directionResult.winningConfidence;
+    newMessage.selectedDirection = directionResult.selectedDirection;
+    newMessage.selectedConfidence = directionResult.selectedConfidence;
     newMessage.activeState = directionResult.activeState;
     std::copy(
       directionResult.confidenceList.begin(),
@@ -338,6 +350,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
                                                         uint32_t robotStatus,
                                                         float robotAngle)
 {
+  std::lock_guard<std::mutex> lock(_seInteractMutex);
   PolicySetAbsoluteOrientation(robotAngle);
   // Note that currently we are only monitoring the moving flag. We _could_ also discard mic data when the robot
   // is picked up, but that is being evaluated with design before implementation, see VIC-1219
@@ -392,9 +405,13 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   {
     const auto latestDirection = SEDiagGetUInt16(_bestSearchBeamIndex);
     const auto latestConf = SEDiagGetInt16(_bestSearchBeamConfidence);
+    const auto selectedDirection = SEDiagGetUInt16(_selectedSearchBeamIndex);
+    const auto selectedConf = SEDiagGetInt16(_selectedSearchBeamConfidence);
     const auto* searchConfState = SEDiagGet(_searchConfidenceState);
     result.winningDirection = latestDirection;
     result.winningConfidence = latestConf;
+    result.selectedDirection = selectedDirection;
+    result.selectedConfidence = selectedConf;
     const auto* confListSrc = reinterpret_cast<const float*>(searchConfState->u.vp);
     // NOTE currently SE only calculates the 12 main directions (not "unknown" or directly above the mics)
     // so we only copy the 12 main directions
@@ -800,13 +817,23 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
 
 void MicDataProcessor::ClearCurrentStreamingJob()
 {
-  std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
-  _currentlyStreaming = false;
-  if (_currentStreamingJob != nullptr)
   {
-    _currentStreamingJob->SetTimeToRecord(0);
-    _currentStreamingJob = nullptr;
+    std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
+    _currentlyStreaming = false;
+    if (_currentStreamingJob != nullptr)
+    {
+      _currentStreamingJob->SetTimeToRecord(0);
+      _currentStreamingJob = nullptr;
+    }
   }
+  
+  ResetMicListenDirection();
+}
+
+void MicDataProcessor::ResetMicListenDirection()
+{
+  std::lock_guard<std::mutex> lock(_seInteractMutex);
+  PolicyDoAutoSearch();
 }
 
 float MicDataProcessor::GetIncomingMicDataPercentUsed()

@@ -56,6 +56,8 @@ namespace MicData {
     int                   activeState = 0;
     DirectionIndex        winningDirection = 0;
     DirectionConfidence   winningConfidence = 0;
+    DirectionIndex        selectedDirection = 0;
+    DirectionConfidence   selectedConfidence = 0;
     DirectionConfidences  confidenceList{};
   };
 } // namespace MicData

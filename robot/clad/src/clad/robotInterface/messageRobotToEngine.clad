@@ -40,6 +40,8 @@ message MicDirection
   uint_32   timestamp,
   uint_16   direction,
   int_16    confidence,
+  uint_16   selectedDirection,
+  int_16    selectedConfidence,
   float_32  confidenceList[13],
   int_32  activeState,
 }

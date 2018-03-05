@@ -358,6 +358,12 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
   bool forwardToRobot = false;
   switch (msg.tag)
   {
+    case RobotInterface::EngineToRobot::Tag_absLocalizationUpdate:
+    {
+      forwardToRobot = true;
+      _context->GetMicDataProcessor()->ResetMicListenDirection();
+      break;
+    }
 
 #include "clad/robotInterface/messageEngineToRobot_switch_from_0x50_to_0xAF.def"
 
