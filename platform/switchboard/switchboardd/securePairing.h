@@ -87,26 +87,13 @@ namespace Switchboard {
     SendEncrypted(const T& message);
 
     template<typename T, typename... Args>
-    int SendRtsMessage(Args&&... args) {
-      Anki::Victor::ExternalComms::ExternalComms msg = Anki::Victor::ExternalComms::ExternalComms(Anki::Victor::ExternalComms::RtsConnection(T(std::forward<Args>(args)...)));
-      std::vector<uint8_t> messageData(msg.Size());
-      const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
-
-      if(_commsState == CommsState::Clad) {
-        return _stream->SendPlainText(messageData.data(), packedSize);
-      } else if(_commsState == CommsState::SecureClad) {
-        return _stream->SendEncrypted(messageData.data(), packedSize);
-      }
-
-      return -1;
-    }
+    int SendRtsMessage(Args&&... args);
     
     // Methods
     void Init();
     void Reset(bool forced=false);
     
     void HandleMessageReceived(uint8_t* bytes, uint32_t length);
-    void HandleEncryptedMessageReceived(uint8_t* bytes, uint32_t length);
     void HandleDecryptionFailed();
     bool HandleHandshake(uint16_t version);
     void HandleInitialPair(uint8_t* bytes, uint32_t length);
@@ -117,6 +104,10 @@ namespace Switchboard {
     void HandleChallengeResponse(uint8_t* bytes, uint32_t length);
 
     void SubscribeToCladMessages();
+    
+    inline bool AssertState(CommsState state) {
+      return state != _commsState;
+    }
     
     void SendHandshake();
     void SendPublicKey();

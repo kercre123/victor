@@ -28,6 +28,10 @@ void Anki::Switchboard::KeyExchange::Reset() {
 }
 
 std::string Anki::Switchboard::KeyExchange::GeneratePin() {
+  if(_numPinDigits == 0) {
+    return "";
+  }
+
   // @seichert
   std::random_device rd;
   std::mt19937 gen(rd());
