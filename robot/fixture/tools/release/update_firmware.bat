@@ -13,24 +13,26 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 REM caller specify a firmware .safe file?
-set ARG1=%1
+set ARG1=%~1
 if "%ARG1%" NEQ "" (
-  set FILENAME=%ARG1%
+  set FILEPATH=%ARG1%
+  set FILENAME=%~n1%~x1
 ) else (
+  set FILEPATH=fixture.safe
   set FILENAME=fixture.safe
 )
-if not exist %FILENAME% (
-  echo could not find firmware file: %FILENAME%
+if not exist %FILEPATH% (
+  echo could not find firmware file: %FILEPATH%
   exit 1
 )
-echo update firmware to: %FILENAME%
+echo update firmware to: %FILEPATH% (%FILENAME%)
 
 REM create fixture directory, if it doesn't exist
 adb shell -x "mkdir -p data/local/fixture"
 
 REM load updated helper files
 adb push dfu data/local/fixture/
-adb push %FILENAME% data/local/fixture/
+adb push %FILEPATH% data/local/fixture/
 adb shell -x "cd data/local/fixture && chmod +x dfu"
 
 REM send firmware to bootloader
