@@ -43,6 +43,12 @@ namespace Vision {
     Result ComputeExposureAdjustment(const Vision::Image& image, const Vision::Image& weightMask, f32& adjustmentFraction);
     
     Result ComputeExposureAdjustment(const std::vector<Vision::Image>& imageROIs, f32& adjustmentFraction);
+
+    // Computes adjusted red, green, and blue gains for WhiteBalance using the gray world assumption
+    Result ComputeWhiteBalanceAdjustment(const Vision::ImageRGB& image, 
+                                         f32& gainR,
+                                         f32& gainG,
+                                         f32& gainB);
     
     Result Linearize(const Vision::Image& image, Vision::Image& linearizedImage) const;
     

@@ -5,6 +5,7 @@
 
 #include "clad/robotInterface/messageFromAnimProcess.clad"
 #include "clad/types/robotStatusAndActions.clad"
+#include "clad/types/cameraParams.clad"
 #include "clad/types/imageTypes.clad"
 #include "clad/types/objectTypes.clad"
 #include "clad/types/vizTypes.clad"
@@ -287,11 +288,10 @@ message DockingErrorSignal
   float_32 angle,
 }
 
-// VizCameraInfo
-message CameraInfo
+// VizCameraParams
+message CameraParams
 {
-  float_32 gain,
-  uint_16  exposure_ms
+  Anki::Cozmo::CameraParams cameraParams
 }
 
 // VizVisionMarker

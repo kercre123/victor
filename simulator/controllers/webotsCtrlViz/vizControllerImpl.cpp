@@ -101,8 +101,8 @@ void VizControllerImpl::Init()
     std::bind(&VizControllerImpl::ProcessSaveImages, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::SaveState,
     std::bind(&VizControllerImpl::ProcessSaveState, this, std::placeholders::_1));
-  Subscribe(VizInterface::MessageVizTag::CameraInfo,
-    std::bind(&VizControllerImpl::ProcessCameraInfo, this, std::placeholders::_1));
+  Subscribe(VizInterface::MessageVizTag::CameraParams,
+    std::bind(&VizControllerImpl::ProcessCameraParams, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::ObjectConnectionState,
     std::bind(&VizControllerImpl::ProcessObjectConnectionState, this, std::placeholders::_1));
   Subscribe(VizInterface::MessageVizTag::ObjectMovingState,
@@ -703,22 +703,29 @@ void VizControllerImpl::ProcessVizDisplayImageMessage(const AnkiEvent<VizInterfa
   _encodedImages.erase(_encodedImages.begin(), ++encImgIter);
 }
 
-void VizControllerImpl::ProcessCameraInfo(const AnkiEvent<VizInterface::MessageViz>& msg)
+void VizControllerImpl::ProcessCameraParams(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
-  const auto& payload = msg.GetData().Get_CameraInfo();
-  
-  _exposure = payload.exposure_ms;
-  _gain     = payload.gain;
+  const auto& payload = msg.GetData().Get_CameraParams();
+  _cameraParams = payload.cameraParams;
 }
 
 void VizControllerImpl::DisplayCameraInfo(const TimeStamp_t timestamp)
 {
   // Print values
-  char text[24];
-  snprintf(text, sizeof(text), "Exp:%u Gain:%.3f\n", _exposure, _gain);
+  char text[42];
+  snprintf(text, sizeof(text), "Exp:%u Gain:%.3f\n", 
+           _cameraParams.exposureTime_ms, _cameraParams.gain);
   SetColorHelper(_camDisp, NamedColors::RED);
   _camDisp->drawText(std::to_string(timestamp), 1, _camDisp->getHeight()-9); // display timestamp at lower left
   _camDisp->drawText(text, _camDisp->getWidth()-144, _camDisp->getHeight()-9); //display exposure in bottom right
+
+
+  snprintf(text, sizeof(text), "AWB:%.3f %.3f %.3f\n", 
+           _cameraParams.whiteBalanceGainR, 
+           _cameraParams.whiteBalanceGainG, 
+           _cameraParams.whiteBalanceGainB);
+  SetColorHelper(_camDisp, NamedColors::RED);
+  _camDisp->drawText(text, _camDisp->getWidth()-180, _camDisp->getHeight()-18);
 }
 
 

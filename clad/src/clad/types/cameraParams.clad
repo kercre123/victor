@@ -1,0 +1,19 @@
+/** Clad message definitions for the messages sent from the WiFi to the engine.
+ */
+
+namespace Anki {
+namespace Cozmo {
+
+  structure CameraParams
+  {
+    // Use < 0 to indicate "no change"
+    int_32   exposureTime_ms,
+    float_32 gain,
+
+    float_32 whiteBalanceGainR,
+    float_32 whiteBalanceGainG,
+    float_32 whiteBalanceGainB
+  }
+      
+} // namespace Cozmo
+} // namespace Anki

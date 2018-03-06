@@ -16,6 +16,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
+#include "clad/types/cameraParams.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -158,10 +159,7 @@ private:
   State _state = State::Inactive;
   
   // So that we can restore when done
-  struct {
-    s32  exposureTime_ms;
-    f32  gain;
-  } _originalCameraSettings;
+  CameraParams _originalCameraSettings;
   
   // reset everything for when the behavior is finished
   void Cleanup();
