@@ -23,8 +23,8 @@ namespace Cozmo {
 
   CONSOLE_VAR(bool,       kProcFace_UseAntiAliasedLines,      CONSOLE_GROUP, true); // Only affects OpenCV drawing, not post-smoothing
   CONSOLE_VAR_RANGED(f32, kProcFace_GlowSizeMultiplier,       CONSOLE_GROUP, 1.f, 0.f, 1.f);
-  CONSOLE_VAR_RANGED(f32, kProcFace_EyeBrightnessMultiplier,  CONSOLE_GROUP, 1.f, 0.f, 10.f);
-  CONSOLE_VAR_RANGED(f32, kProcFace_GlowBrightnessMultiplier, CONSOLE_GROUP, 1.f, 0.f, 10.f);
+  CONSOLE_VAR_RANGED(f32, kProcFace_EyeLightnessMultiplier,   CONSOLE_GROUP, 1.f, 0.f, 10.f);
+  CONSOLE_VAR_RANGED(f32, kProcFace_GlowLightnessMultiplier,  CONSOLE_GROUP, 1.f, 0.f, 10.f);
 
   CONSOLE_VAR(bool,       kProcFace_RenderInnerOuterGlow,     CONSOLE_GROUP, false); // Render glow
   CONSOLE_VAR_RANGED(f32, kProcFace_InnerGlowFrac,            CONSOLE_GROUP, 0.4f, 0.05f, 1.f);
@@ -536,11 +536,11 @@ namespace Cozmo {
               const bool isPartOfEye = (eyeValue >= glowValue); // (and not part of glow)
               if(isPartOfEye)
               {
-                newValue *= kProcFace_EyeBrightnessMultiplier;
+                newValue *= kProcFace_EyeLightnessMultiplier;
               }
               else
               {
-                newValue *= kProcFace_GlowBrightnessMultiplier;
+                newValue *= kProcFace_GlowLightnessMultiplier;
               }
               
               // Put the final value into the face image

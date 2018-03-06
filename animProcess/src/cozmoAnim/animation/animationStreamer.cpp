@@ -593,8 +593,8 @@ namespace Cozmo {
           NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NoiseFraction");
           NativeAnkiUtilConsoleResetValueToDefault("ProcFace_UseAntiAliasedLines");
           NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowSizeMultiplier");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_EyeBrightnessMultiplier");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowBrightnessMultiplier");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_EyeLightnessMultiplier");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowLightnessMultiplier");
           NativeAnkiUtilConsoleResetValueToDefault("ProcFace_RenderInnerOuterGlow");
           NativeAnkiUtilConsoleResetValueToDefault("ProcFace_InnerGlowFrac");
           NativeAnkiUtilConsoleResetValueToDefault("ProcFace_ApplyGlowFilter");
