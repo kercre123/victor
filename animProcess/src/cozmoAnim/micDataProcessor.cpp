@@ -399,7 +399,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
 
   if (robotIsMoving)
   {
-    result.winningDirection = kDirectionUnknown;
+    result.winningDirection = result.selectedDirection = kDirectionUnknown;
   }
   else
   {
