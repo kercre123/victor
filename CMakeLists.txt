@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.6)
 
 list(APPEND CMAKE_MODULE_PATH
+  ${CMAKE_CURRENT_SOURCE_DIR}/victor-sdk-clad/cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/util/cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/build/cmake
@@ -110,13 +111,21 @@ endif()
 #    message(FATAL_ERROR "breakpad_client not defined")
 #endif()
 
-import(clad "tools/message-buffers")
+#### import(clad "tools/message-buffers")
 # BRC-TODO: Make this top-level include into an "interface"
 # lib so that other target can depend on it, instead of manually injecting
 # include dirs
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 if(VICOS)
+  ####
+  set(CLAD_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/externalInterface/tools/message-buffers")
+  set(CLAD_VICTOR_EMITTER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/externalInterface/victorEmitters")
+  set(CLAD_OUTPUT_DIR_CPP "${CMAKE_CURRENT_SOURCE_DIR}/generated/clad/externalInterface")
+  set(CLAD_OUTPUT_DIR_PYTHON "${CMAKE_CURRENT_SOURCE_DIR}/generated/cladPython/externalInterface")
+  set(CLAD_OUTPUT_DIR_CSHARP "${CMAKE_CURRENT_SOURCE_DIR}/generated/cladCSharp/externalInterface")
+  add_subdirectory("victor-sdk-clad")
+  ####
   add_subdirectory("platform/switchboard")
 else()
   import(util "lib/util")
