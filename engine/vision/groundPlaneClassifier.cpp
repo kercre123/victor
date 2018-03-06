@@ -42,11 +42,11 @@ void ClassifyImage(const RawPixelsClassifier& clf, const Anki::Cozmo::IFeaturesE
              "ClassifyImage.ResultArraySizeMismatch");
 
   // Get the features and pass them to the classifier
-  auto featuresList = extractor.Extract(image);
+  const Array2d<RawPixelsClassifier::FeatureType> featuresList = extractor.Extract(image);
   std::vector<uchar> classes = clf.PredictClass(featuresList);
 
   // convert into a binary image
-  //need to copy data here, the vector will go out of scope
+  // need to copy data here, the vector will go out of scope
   cv::Mat(classes, true).reshape(1, image.GetNumRows()).copyTo(outputMask.get_CvMat_());
 
   // That's all folks!
