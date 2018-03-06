@@ -313,10 +313,10 @@ bool QuadTree::ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& proces
     // create new children
     const float chHalfLen = rootHalfLen*0.5f;
       
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopLeft , this) ); // up L
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopRight, this) ); // up R
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotLeft , this) ); // lo L
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotRight, this) ); // lo R
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::PlusXPlusY , this) ); // up L
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::PlusXMinusY, this) ); // up R
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::MinusXPlusY , this) ); // lo L
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::MinusXMinusY, this) ); // lo R
 
     // typedef to cast quadrant enum to the underlaying type (that can be assigned to size_t)
     using Q2N = std::underlying_type<EQuadrant>::type; // Q2N stands for "Quadrant To Number", it makes code below easier to read
@@ -338,7 +338,7 @@ bool QuadTree::ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& proces
                       v                                           v
      
        Since the root can't expand anymore, we move it in the direction we would want to expand. Note in the example
-       how TopLeft becomes BottomRight in the new root. We want to preserve the children of that direct child (old TL), but
+       how PlusXPlusY becomes BottomRight in the new root. We want to preserve the children of that direct child (old TL), but
        we need to hook them to a different child (new BR). That's essentially what the rest of this method does.
      
     */
@@ -352,20 +352,20 @@ bool QuadTree::ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& proces
       if ( xPlusAxisReq ) {
         if ( yPlusAxisReq ) {
           // we are moving along +x +y axes, top left becomes bottom right of the new root
-          _childrenPtr[(Q2N)EQuadrant::BotRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopLeft].get(), processor);
+          _childrenPtr[(Q2N)EQuadrant::MinusXMinusY]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::PlusXPlusY].get(), processor);
         } else {
           // we are moving along +x -y axes, top right becomes bottom left of the new root
-          _childrenPtr[(Q2N)EQuadrant::BotLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopRight].get(), processor);
+          _childrenPtr[(Q2N)EQuadrant::MinusXPlusY ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::PlusXMinusY].get(), processor);
         }
       }
       else
       {
         if ( yPlusAxisReq ) {
           // we are moving along -x +y axes, bottom left becomes top right of the new root
-          _childrenPtr[(Q2N)EQuadrant::TopRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotLeft].get(), processor);
+          _childrenPtr[(Q2N)EQuadrant::PlusXMinusY]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::MinusXPlusY].get(), processor);
         } else {
           // we are moving along -x -y axes, bottom right becomes top left of the new root
-          _childrenPtr[(Q2N)EQuadrant::TopLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotRight].get(), processor);
+          _childrenPtr[(Q2N)EQuadrant::PlusXPlusY ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::MinusXMinusY].get(), processor);
         }
       }
     }
@@ -375,14 +375,14 @@ bool QuadTree::ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& proces
       if ( xPlusAxisReq )
       {
         // we are moving along +x axis, top children are preserved, but they become the bottom ones
-        _childrenPtr[(Q2N)EQuadrant::BotLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopLeft].get(), processor );
-        _childrenPtr[(Q2N)EQuadrant::BotRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopRight].get(), processor);
+        _childrenPtr[(Q2N)EQuadrant::MinusXPlusY ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::PlusXPlusY].get(), processor );
+        _childrenPtr[(Q2N)EQuadrant::MinusXMinusY]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::PlusXMinusY].get(), processor);
       }
       else
       {
         // we are moving along -x axis, bottom children are preserved, but they become the top ones
-        _childrenPtr[(Q2N)EQuadrant::TopLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotLeft].get(), processor);
-        _childrenPtr[(Q2N)EQuadrant::TopRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotRight].get(), processor);
+        _childrenPtr[(Q2N)EQuadrant::PlusXPlusY ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::MinusXPlusY].get(), processor);
+        _childrenPtr[(Q2N)EQuadrant::PlusXMinusY]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::MinusXMinusY].get(), processor);
       }
     }
     else if ( yShift )
@@ -391,14 +391,14 @@ bool QuadTree::ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& proces
       if ( yPlusAxisReq )
       {
         // we are moving along +y axis, left children are preserved, but they become the right ones
-        _childrenPtr[(Q2N)EQuadrant::TopRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopLeft].get(), processor);
-        _childrenPtr[(Q2N)EQuadrant::BotRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotLeft].get(), processor);
+        _childrenPtr[(Q2N)EQuadrant::PlusXMinusY]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::PlusXPlusY].get(), processor);
+        _childrenPtr[(Q2N)EQuadrant::MinusXMinusY]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::MinusXPlusY].get(), processor);
       }
       else
       {
         // we are moving along -y axis, right children are preserved, but they become the left ones
-        _childrenPtr[(Q2N)EQuadrant::TopLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopRight].get(), processor);
-        _childrenPtr[(Q2N)EQuadrant::BotLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotRight].get(), processor);
+        _childrenPtr[(Q2N)EQuadrant::PlusXPlusY ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::PlusXMinusY].get(), processor);
+        _childrenPtr[(Q2N)EQuadrant::MinusXPlusY ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::MinusXMinusY].get(), processor);
       }
     }
     
@@ -437,10 +437,10 @@ bool QuadTree::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, 
   _center.y() = _center.y() + (yPlus ? oldHalfLen : -oldHalfLen);
 
   // create new children
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopLeft , this) ); // up L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopRight, this) ); // up R
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotLeft , this) ); // lo L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotRight, this) ); // lo R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::PlusXPlusY , this) ); // up L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::PlusXMinusY, this) ); // up R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::MinusXPlusY , this) ); // lo L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::MinusXMinusY, this) ); // lo R
 
   // calculate the child that takes my place by using the opposite direction to expansion
   size_t childIdx = 0;

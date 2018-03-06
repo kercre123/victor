@@ -49,10 +49,10 @@ enum class FoldDirection { DepthFirst, BreadthFirst };
 
 // position with respect to the parent
 enum class EQuadrant : uint8_t {
-  TopLeft  = 0,
-  TopRight = 1,
-  BotLeft  = 2,
-  BotRight = 3,
+  PlusXPlusY   = 0,
+  PlusXMinusY  = 1,
+  MinusXPlusY  = 2,
+  MinusXMinusY = 3,
   Root     = 4, // needed for the root node, who has no parent
   Invalid  = 255
 };

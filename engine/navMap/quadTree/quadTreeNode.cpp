@@ -117,10 +117,10 @@ void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
   const float quarterLen = halfLen * 0.50f;
   const uint8_t cLevel = _level-1;
 
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopLeft , this) ); // up L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopRight, this) ); // up R
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotLeft , this) ); // lo L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotRight, this) ); // lo E
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::PlusXPlusY , this) ); // up L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::PlusXMinusY, this) ); // up R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::MinusXPlusY , this) ); // lo L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::MinusXMinusY, this) ); // lo E
 
   // our children may change later on, but until they do, assume they have our old content
   for ( auto& childPtr : _childrenPtr )
@@ -241,31 +241,31 @@ const QuadTreeNode::MoveInfo* QuadTreeNode::GetDestination(EQuadrant from, EDire
   static MoveInfo quadrantAndDirection[4][4] =
   {
     {
-    /*quadrantAndDirection[EQuadrant::TopLeft][EDirection::North]  =*/ {EQuadrant::BotLeft , false},
-    /*quadrantAndDirection[EQuadrant::TopLeft][EDirection::East ]  =*/ {EQuadrant::TopRight, true },
-    /*quadrantAndDirection[EQuadrant::TopLeft][EDirection::South]  =*/ {EQuadrant::BotLeft , true },
-    /*quadrantAndDirection[EQuadrant::TopLeft][EDirection::West ]  =*/ {EQuadrant::TopRight, false}
+    /*quadrantAndDirection[EQuadrant::PlusXPlusY][EDirection::North]  =*/ {EQuadrant::MinusXPlusY , false},
+    /*quadrantAndDirection[EQuadrant::PlusXPlusY][EDirection::East ]  =*/ {EQuadrant::PlusXMinusY, true },
+    /*quadrantAndDirection[EQuadrant::PlusXPlusY][EDirection::South]  =*/ {EQuadrant::MinusXPlusY , true },
+    /*quadrantAndDirection[EQuadrant::PlusXPlusY][EDirection::West ]  =*/ {EQuadrant::PlusXMinusY, false}
     },
 
     {
-    /*quadrantAndDirection[EQuadrant::TopRight][EDirection::North] =*/ {EQuadrant::BotRight, false},
-    /*quadrantAndDirection[EQuadrant::TopRight][EDirection::East ] =*/ {EQuadrant::TopLeft , false},
-    /*quadrantAndDirection[EQuadrant::TopRight][EDirection::South] =*/ {EQuadrant::BotRight, true},
-    /*quadrantAndDirection[EQuadrant::TopRight][EDirection::West ] =*/ {EQuadrant::TopLeft , true}
+    /*quadrantAndDirection[EQuadrant::PlusXMinusY][EDirection::North] =*/ {EQuadrant::MinusXMinusY, false},
+    /*quadrantAndDirection[EQuadrant::PlusXMinusY][EDirection::East ] =*/ {EQuadrant::PlusXPlusY , false},
+    /*quadrantAndDirection[EQuadrant::PlusXMinusY][EDirection::South] =*/ {EQuadrant::MinusXMinusY, true},
+    /*quadrantAndDirection[EQuadrant::PlusXMinusY][EDirection::West ] =*/ {EQuadrant::PlusXPlusY , true}
     },
 
     {
-    /*quadrantAndDirection[EQuadrant::BotLeft][EDirection::North]  =*/ {EQuadrant::TopLeft , true},
-    /*quadrantAndDirection[EQuadrant::BotLeft][EDirection::East ]  =*/ {EQuadrant::BotRight, true},
-    /*quadrantAndDirection[EQuadrant::BotLeft][EDirection::South]  =*/ {EQuadrant::TopLeft , false},
-    /*quadrantAndDirection[EQuadrant::BotLeft][EDirection::West ]  =*/ {EQuadrant::BotRight, false}
+    /*quadrantAndDirection[EQuadrant::MinusXPlusY][EDirection::North]  =*/ {EQuadrant::PlusXPlusY , true},
+    /*quadrantAndDirection[EQuadrant::MinusXPlusY][EDirection::East ]  =*/ {EQuadrant::MinusXMinusY, true},
+    /*quadrantAndDirection[EQuadrant::MinusXPlusY][EDirection::South]  =*/ {EQuadrant::PlusXPlusY , false},
+    /*quadrantAndDirection[EQuadrant::MinusXPlusY][EDirection::West ]  =*/ {EQuadrant::MinusXMinusY, false}
     },
 
     {
-    /*quadrantAndDirection[EQuadrant::BotRight][EDirection::North] =*/ {EQuadrant::TopRight, true},
-    /*quadrantAndDirection[EQuadrant::BotRight][EDirection::East ] =*/ {EQuadrant::BotLeft , false},
-    /*quadrantAndDirection[EQuadrant::BotRight][EDirection::South] =*/ {EQuadrant::TopRight, false},
-    /*quadrantAndDirection[EQuadrant::BotRight][EDirection::West ] =*/ {EQuadrant::BotLeft , true}
+    /*quadrantAndDirection[EQuadrant::MinusXMinusY][EDirection::North] =*/ {EQuadrant::PlusXMinusY, true},
+    /*quadrantAndDirection[EQuadrant::MinusXMinusY][EDirection::East ] =*/ {EQuadrant::MinusXPlusY , false},
+    /*quadrantAndDirection[EQuadrant::MinusXMinusY][EDirection::South] =*/ {EQuadrant::PlusXMinusY, false},
+    /*quadrantAndDirection[EQuadrant::MinusXMinusY][EDirection::West ] =*/ {EQuadrant::MinusXPlusY , true}
     }
   };
   
@@ -304,26 +304,26 @@ void QuadTreeNode::AddSmallestDescendants(EDirection direction, EClockDirection 
     switch (direction) {
       case EDirection::North:
       {
-        firstChild  = isCW ? EQuadrant::TopLeft  : EQuadrant::TopRight;
-        secondChild = isCW ? EQuadrant::TopRight : EQuadrant::TopLeft;
+        firstChild  = isCW ? EQuadrant::PlusXPlusY  : EQuadrant::PlusXMinusY;
+        secondChild = isCW ? EQuadrant::PlusXMinusY : EQuadrant::PlusXPlusY;
       }
       break;
       case EDirection::East:
       {
-        firstChild  = isCW ? EQuadrant::TopRight : EQuadrant::BotRight;
-        secondChild = isCW ? EQuadrant::BotRight : EQuadrant::TopRight;
+        firstChild  = isCW ? EQuadrant::PlusXMinusY : EQuadrant::MinusXMinusY;
+        secondChild = isCW ? EQuadrant::MinusXMinusY : EQuadrant::PlusXMinusY;
       }
       break;
       case EDirection::South:
       {
-        firstChild  = isCW ? EQuadrant::BotRight : EQuadrant::BotLeft;
-        secondChild = isCW ? EQuadrant::BotLeft  : EQuadrant::BotRight;
+        firstChild  = isCW ? EQuadrant::MinusXMinusY : EQuadrant::MinusXPlusY;
+        secondChild = isCW ? EQuadrant::MinusXPlusY  : EQuadrant::MinusXMinusY;
       }
       break;
       case EDirection::West:
       {
-        firstChild  = isCW ? EQuadrant::BotLeft : EQuadrant::TopLeft;
-        secondChild = isCW ? EQuadrant::TopLeft : EQuadrant::BotLeft;
+        firstChild  = isCW ? EQuadrant::MinusXPlusY : EQuadrant::PlusXPlusY;
+        secondChild = isCW ? EQuadrant::PlusXPlusY : EQuadrant::MinusXPlusY;
       }
       break;
       case EDirection::Invalid:
