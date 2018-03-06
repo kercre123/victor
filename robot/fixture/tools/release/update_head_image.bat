@@ -24,7 +24,9 @@ adb shell -x "mkdir -p data/local/fixture"
 REM update head scripts & image files
 adb push headprogram data/local/fixture/
 adb shell -x "cd data/local/fixture && chmod +x headprogram"
-adb shell -x "cd data/local/fixture && rm -rf emmcdl && mkdir emmcdl"
+REM adb shell -x "cd data/local/fixture && rm -rf emmcdl && mkdir emmcdl"
+adb shell -x "rm -rf /data/local/fixture/emmcdl/ && sleep 2"
+adb shell -x "mkdir /data/local/fixture/emmcdl/"
 adb push emmcdl data/local/fixture/
 adb push bin/emmcdl data/local/fixture/emmcdl/
 adb shell -x "cd data/local/fixture/emmcdl && chmod +x emmcdl"
