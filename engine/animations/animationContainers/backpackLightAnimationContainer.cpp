@@ -93,6 +93,7 @@ Result BackpackLightAnimationContainer::DefineFromJson(const Json::Value& jsonRo
   AddBackpackLightStateValues("Charging",   jsonRoot["charging"]);
   AddBackpackLightStateValues("Charged",    jsonRoot["charged"]);
   AddBackpackLightStateValues("BadCharger", jsonRoot["badCharger"]);
+  AddBackpackLightStateValues("Idle_09",    jsonRoot["idle_09"]);
   return RESULT_OK;
 }
 

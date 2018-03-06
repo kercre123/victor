@@ -355,6 +355,11 @@ message SetBackpackLights
   uint_8 layer = 0      // 0 is BPL_USER
 }
 
+message SetSystemLight
+{
+  LightState light
+}
+
 message StartRecordingMics
 {
   uint_32 duration_ms,
@@ -511,6 +516,7 @@ union EngineToRobot
   // Lights
   BackpackSetLayer              setBackpackLayer            = 0x1D,
   SetBackpackLights             setBackpackLights           = 0x1E,
+  SetSystemLight                setSystemLight              = 0x1F,
 
   // Path messages
   ClearPath                     clearPath                   = 0x20,

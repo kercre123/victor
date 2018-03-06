@@ -151,6 +151,8 @@ namespace Anki {
 
       // Lights
       webots::LED* leds_[NUM_BACKPACK_LEDS] = {0};
+
+      webots::LED* sysLed_ = nullptr;
       
       // MicData
       // Use the mac mic as input with AudioCaptureSystem
@@ -387,6 +389,8 @@ namespace Anki {
       leds_[LED_BACKPACK_FRONT] = webotRobot_.getLED("backpackLED1");
       leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("backpackLED2");
       leds_[LED_BACKPACK_BACK] = webotRobot_.getLED("backpackLED3");
+
+      sysLed_ = webotRobot_.getLED("backpackLED0");
       
       // Audio Input
       audioCaptureSystem_.SetCallback(std::bind(&AudioInputCallback, std::placeholders::_1, std::placeholders::_2));
@@ -725,6 +729,18 @@ namespace Anki {
         leds_[led_id]->set( color >> 8 ); // RGBA -> 0RGB
       } else {
         PRINT_NAMED_ERROR("simHAL.SetLED.UnhandledLED", "%d", led_id);
+      }
+    }
+
+    void HAL::SetSystemLED(u32 color)
+    {
+      if(sysLed_ != nullptr)
+      {
+        sysLed_->set(color >> 8);
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("simHAL.SetSystemLED.Nullptr", "");
       }
     }
 

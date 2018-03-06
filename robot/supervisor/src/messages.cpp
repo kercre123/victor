@@ -574,6 +574,7 @@ namespace Anki {
       {
         SteeringController::RecordHeading();
       }
+
       void Process_turnToRecordedHeading(RobotInterface::TurnToRecordedHeading const& msg)
       {
         SteeringController::ExecutePointTurnToRecordedHeading(DEG_TO_RAD_F32(msg.offset_deg),
@@ -584,11 +585,16 @@ namespace Anki {
                                                               msg.numHalfRevs,
                                                               msg.useShortestDir);
       }
+
       void Process_setBackpackLights(RobotInterface::SetBackpackLights const& msg)
       {
         BackpackLightController::SetParams(msg);
       }
       
+      void Process_setSystemLight(RobotInterface::SetSystemLight const& msg)
+      {
+        BackpackLightController::SetParams(msg);
+      }
 
       void Process_getMfgInfo(const RobotInterface::GetManufacturingInfo& msg)
       {

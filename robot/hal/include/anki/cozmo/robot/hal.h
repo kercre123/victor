@@ -236,6 +236,7 @@ enum {
  * @param[in] color 32 bit RGBA
  */
 void SetLED(const LEDId led_id, const u32 color);
+void SetSystemLED(u32 color);
 
 /************************************************************************
  * \section Power management

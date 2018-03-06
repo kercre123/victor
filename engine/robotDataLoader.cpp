@@ -95,14 +95,14 @@ void RobotDataLoader::LoadNonConfigData()
     REMOTE_CONSOLE_ENABLED_ONLY( stressTester.Start() );
   }
   
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");
+    CollectAnimFiles();
+  }
+
   // Don't load these if this is the factory test
   if(!FACTORY_TEST)
   {
-    {
-      ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");
-      CollectAnimFiles();
-    }
-
     {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationGroups");
       LoadAnimationGroups();
@@ -141,6 +141,11 @@ void RobotDataLoader::LoadNonConfigData()
       ANKI_CPU_PROFILE("RobotDataLoader::LoadDasBlacklistedAnimationTriggers");
       LoadDasBlacklistedAnimationTriggers();
     }
+  }
+
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
+    LoadBackpackLightAnimations();
   }
 
   {
@@ -188,7 +193,16 @@ void RobotDataLoader::CollectAnimFiles()
 {
   // animations
   {
-    const std::vector<std::string> paths = {"assets/animations/", "config/engine/animations/"};
+    std::vector<std::string> paths;
+    if(FACTORY_TEST)
+    {
+      paths = {"config/engine/animations/"};
+    }
+    else
+    {
+      paths = {"assets/animations/", "config/engine/animations/"};
+    }
+
     for (const auto& path : paths) {
       WalkAnimationDir(path, _animFileTimestamps, [this] (const std::string& filename) {
         _jsonFiles[FileType::Animation].push_back(filename);
@@ -210,11 +224,14 @@ void RobotDataLoader::CollectAnimFiles()
     });
   }
 
-  // animation groups
+  if(!FACTORY_TEST)
   {
-    WalkAnimationDir("assets/animationGroups/", _groupAnimFileTimestamps, [this] (const std::string& filename) {
-      _jsonFiles[FileType::AnimationGroup].push_back(filename);
-    });
+    // animation groups
+    {
+      WalkAnimationDir("assets/animationGroups/", _groupAnimFileTimestamps, [this] (const std::string& filename) {
+        _jsonFiles[FileType::AnimationGroup].push_back(filename);
+      });
+    }
   }
 
   // print results
