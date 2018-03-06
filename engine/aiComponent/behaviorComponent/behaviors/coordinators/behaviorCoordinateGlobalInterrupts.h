@@ -20,6 +20,7 @@ namespace Anki {
 namespace Cozmo {
 
 // forward declarations
+class BehaviorHighLevelAI;
 class BehaviorTimerUtilityCoordinator;
 
 
@@ -49,6 +50,8 @@ private:
     ICozmoBehaviorPtr wakeWordBehavior;
     ICozmoBehaviorPtr globalInterruptsBehavior;
     std::shared_ptr<BehaviorTimerUtilityCoordinator> timerCoordBehavior;
+    ICozmoBehaviorPtr highLevelAIBehavior;
+    ICozmoBehaviorPtr sleepingBehavior;
   };
 
   struct DynamicVariables{

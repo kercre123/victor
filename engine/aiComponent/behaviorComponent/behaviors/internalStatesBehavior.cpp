@@ -40,6 +40,7 @@ namespace {
 
 constexpr const char* kStateConfgKey = "states";
 constexpr const char* kStateNameConfgKey = "name";
+constexpr const char* kResumeReplacementsKey = "resumeReplacements";
 
 
 static const BackpackLights kLightsOff = {
@@ -239,6 +240,16 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config, PreDef
     _currState = stateIt->second;
     _defaultState = stateIt->second;
   }
+  
+  // fill out _resumeReplacements with any state replacements to be made when re-activating the behavior
+  if( !config[kResumeReplacementsKey].isNull() ) {
+    const auto& replacementsList = config[kResumeReplacementsKey];
+    const auto& fromList = replacementsList.getMemberNames();
+    for( const auto& from : fromList ) {
+      StateID toId = GetStateID( replacementsList[from].asString() );
+      _resumeReplacements.emplace_back( GetStateID(from), toId );
+    }
+  }
 
 }
   
@@ -250,8 +261,6 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config)
 InternalStatesBehavior::~InternalStatesBehavior()
 {
 }
-
-
 
 void InternalStatesBehavior::InitBehavior()
 {
@@ -302,6 +311,18 @@ void InternalStatesBehavior::OnBehaviorActivated()
     // force an update
     _debugLightsDirty = true;
   }
+  
+  if( !_firstRun ) {
+    // resuming this behavior -- see if we should be resuming in a different state than when we were
+    // previously de-activated
+    const auto it = std::find_if(_resumeReplacements.begin(), _resumeReplacements.end(), [this](const auto& p) {
+      return p.first == _currState;
+    });
+    if( it != _resumeReplacements.end() ) {
+      _currState = it->second;
+    }
+  }
+  _firstRun = false;
 
   // keep the state the same (either set from constructor or the last run)
   if( ANKI_VERIFY( _currState != InvalidStateID,

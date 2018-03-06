@@ -1,0 +1,11 @@
+{
+  "behaviorClass": "AnimSequence",
+  "behaviorID": "ReactToGoodNight",
+
+  "animTriggers": ["ReactToGoodNight"],
+  "respondToUserIntents": [
+    {
+      "type": "greeting_goodnight"
+    }
+  ]
+}

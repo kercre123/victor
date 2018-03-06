@@ -17,6 +17,8 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
 
@@ -51,6 +53,11 @@ BehaviorLookForFaceAndCube::BehaviorLookForFaceAndCube(const Json::Value& config
       EngineToGameTag::RobotObservedFace,
     });
   }
+  if( _configParams.stopBehaviorOnCube ) {
+    SubscribeToTags({
+      EngineToGameTag::RobotObservedObject
+    });
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -61,7 +68,12 @@ BehaviorLookForFaceAndCube::~BehaviorLookForFaceAndCube()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorLookForFaceAndCube::WantsToBeActivatedBehavior() const
 {
-  // can run as long as it's not carrying a cube (potentially it could, but may look weird), which is handled in base
+  // if stopBehaviorOnCube and we already know where a cube is, don't even start
+  if( _configParams.stopBehaviorOnCube && DoesCubeExist() ) {
+    return false;
+  }
+  
+  // otherwise, can run as long as it's not carrying a cube (potentially it could, but may look weird), which is handled in base
   return true;
 }
 
@@ -87,6 +99,7 @@ void BehaviorLookForFaceAndCube::LoadConfig(const Json::Value& config)
   _configParams.cube_bodyAngleRelRangeMin_rad = DEG_TO_RAD( ParseFloat(config, "cube_bodyAngleRelRangeMin_rad", debugName) );;
   _configParams.cube_bodyAngleRelRangeMax_rad = DEG_TO_RAD( ParseFloat(config, "cube_bodyAngleRelRangeMax_rad", debugName) );;
   _configParams.cube_sidePicks = ParseUint8(config, "cube_sidePicks", debugName);
+  _configParams.stopBehaviorOnCube = config.get("stopBehaviorOnCube", false).asBool();
   
   _configParams.verifySeenFaces = ParseBool(config, "verifySeenFaces", debugName);
   _configParams.stopBehaviorOnAnyFace = ParseBool(config, "stopBehaviorOnAnyFace", debugName);
@@ -241,6 +254,11 @@ void BehaviorLookForFaceAndCube::HandleWhileActivated(const EngineToGameEvent& e
       // since we aren't verifying, stop the behavior now, if needed
       StopBehaviorOnFaceIfNeeded(msg.faceID);
     }
+  } else if( event.GetData().GetTag() == EngineToGameTag::RobotObservedObject ) {
+    
+    if( _configParams.stopBehaviorOnCube && DoesCubeExist() ) {
+      CancelSelf();
+    }
   }
 }
 
@@ -285,6 +303,18 @@ void BehaviorLookForFaceAndCube::StopBehaviorOnFaceIfNeeded(FaceID_t observedID)
       }
     }
   }
+}
+ 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorLookForFaceAndCube::DoesCubeExist() const
+{
+  BlockWorldFilter filter;
+  filter.AddAllowedFamily(ObjectFamily::LightCube);
+  filter.SetFilterFcn(nullptr);
+  
+  std::vector<const ObservableObject*> objects;
+  GetBEI().GetBlockWorld().FindLocatedMatchingObjects(filter, objects);
+  return !objects.empty();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -15,9 +15,12 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
+#include "util/helpers/boundedWhile.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -53,6 +56,9 @@ void BehaviorCoordinateGlobalInterrupts::InitBehavior()
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(TimerUtilityCoordinator),
                                  BEHAVIOR_CLASS(TimerUtilityCoordinator),
                                  _iConfig.timerCoordBehavior);
+  
+  _iConfig.highLevelAIBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(HighLevelAI));
+  _iConfig.sleepingBehavior    = BC.FindBehaviorByID(BEHAVIOR_ID(Sleeping));
 
   _iConfig.triggerWordPendingCond = BEIConditionFactory::CreateBEICondition(BEIConditionType::TriggerWordPending, GetDebugLabel());
   _iConfig.triggerWordPendingCond->Init(GetBEI());
@@ -97,6 +103,26 @@ void BehaviorCoordinateGlobalInterrupts::BehaviorUpdate()
   if(triggerWordPending && isTimerRinging){
     // Timer is ringing and will handle the pending trigger word instead of the wake word behavior
     _iConfig.wakeWordBehavior->SetDontActivateThisTick(GetDebugLabel());
+  }
+  
+  if( triggerWordPending ) {
+    bool highLevelRunning = false;
+    const IBehavior* behavior = _iConfig.globalInterruptsBehavior.get();
+    BOUNDED_WHILE( 100, (behavior != nullptr) && "Stack too deep to find sleeping" ) {
+      behavior = GetBEI().GetDelegationComponent().GetBehaviorDelegatedTo( behavior );
+      if( highLevelRunning && (behavior == _iConfig.sleepingBehavior.get()) ) {
+        // High level AI is running the Sleeping behavior (probably through the Napping state).
+        // Wake word serves as the wakeup for a napping robot, so disable the wake word behavior and let
+        // high level AI resume. It will clear the pending trigger and resume in some other state. (The
+        // wake up animation is the getout for napping)
+        _iConfig.wakeWordBehavior->SetDontActivateThisTick(GetDebugLabel());
+        
+        break;
+      }
+      if( behavior == _iConfig.highLevelAIBehavior.get() ) {
+        highLevelRunning = true;
+      }
+    }
   }
 }
 

@@ -122,6 +122,8 @@ private:
   StateID _currState = InvalidStateID;
 
   StateID _defaultState = InvalidStateID;
+  
+  std::vector<std::pair<StateID,StateID>> _resumeReplacements;
 
   BackpackLights _currDebugLights;
   bool _debugLightsDirty = false;
@@ -130,6 +132,8 @@ private:
   
   std::unique_ptr<Anki::Util::IConsoleFunction> _consoleFunc;
   StateID _consoleFuncState = InvalidStateID;
+  
+  bool _firstRun = true;
 };
 
 }

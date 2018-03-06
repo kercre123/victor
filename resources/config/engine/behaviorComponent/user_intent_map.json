@@ -21,6 +21,14 @@
       "user_intent": "greeting_goodbye"
     },
     {
+      "cloud_intent": "intent_greeting_goodmorning",
+      "user_intent": "greeting_goodmorning"
+    },
+    {
+      "cloud_intent": "intent_greeting_goodnight",
+      "user_intent": "greeting_goodnight"
+    },
+    {
       "cloud_intent": "intent_greeting_hello",
       "user_intent": "greeting_hello"
     },
@@ -43,10 +51,6 @@
     {
       "cloud_intent": "intent_system_sleep",
       "user_intent": "system_sleep"
-    },
-    {
-      "cloud_intent": "intent_system_wake",
-      "user_intent": "system_wake"
     },
     {
       "cloud_intent": "intent_play_specific",

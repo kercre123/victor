@@ -62,6 +62,10 @@ enum uint_8 BehaviorID {
   // reactions
   ReactToCliff,
   ReactToCubeMoved,
+  ReactToGoodBye,
+  ReactToGoodMorning,
+  ReactToGoodNight,
+  ReactToGreeting,
   ReactToPet,
 
   // singing
@@ -172,6 +176,7 @@ enum uint_8 BehaviorID {
   PlayRollBlock,
   PlayWithCube,
   PopAWheelie,
+  RollCubeVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates
   PounceOnMotion_Socialize,
@@ -210,6 +215,7 @@ enum uint_8 BehaviorID {
   StackBlocks,
 
   // victorBehaviorTree/highLevelDelegates/voiceCommands
+  DoATrickVoiceCommand,
   FistBumpVoiceCommand,
 
   // victorBehaviorTree

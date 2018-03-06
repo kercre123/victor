@@ -135,6 +135,7 @@ private:
     // early stopping
     bool stopBehaviorOnAnyFace = false; // leave the behavior as soon as any face is seen
     bool stopBehaviorOnNamedFace = false; // leave the behavior as soon as a named face is seen
+    bool stopBehaviorOnCube = false; // leave the behavior as soon as a cube is seen
     
   };
   
@@ -153,6 +154,9 @@ private:
 
   // stop the behavior if desired based on observing the given face
   void StopBehaviorOnFaceIfNeeded(FaceID_t observedFace);
+  
+  // true if a cube is in blockworld
+  bool DoesCubeExist() const;
 
   // cancel the current action and do a verify face action instead
   void CancelActionAndVerifyFace(FaceID_t observedFace);

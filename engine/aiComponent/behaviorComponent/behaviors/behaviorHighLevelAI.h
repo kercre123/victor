@@ -38,8 +38,12 @@ protected:
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     modifiers.behaviorAlwaysDelegates = false;
   }
+  
+  virtual void BehaviorUpdate() override;
 
 private:
+  
+  bool IsBehaviorActive( BehaviorID behaviorID ) const;
   
   struct {
     float socializeKnownFaceCooldown_s;

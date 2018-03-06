@@ -51,6 +51,8 @@ union dupes_allowed UserIntent
   // thank you in advance for caring
 
   UserIntent_Void          greeting_goodbye,
+  UserIntent_Void          greeting_goodmorning,
+  UserIntent_Void          greeting_goodnight,
   UserIntent_Void          greeting_hello,
   UserIntent_Void          imperative_come,
   UserIntent_Void          imperative_quiet,
@@ -62,7 +64,6 @@ union dupes_allowed UserIntent
   UserIntent_Void          system_charger,
   UserIntent_Void          status_feeling,
   UserIntent_Void          system_sleep,
-  UserIntent_Void          system_wake,
 
 
   // for tests

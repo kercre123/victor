@@ -13,6 +13,10 @@
 
   "initialState": "ObservingOnCharger",
 
+  "resumeReplacements": {
+    "Napping" : "ObservingOnCharger"
+  },
+
   "states": [
     {
       "name": "ObservingOnCharger",
@@ -52,9 +56,15 @@
       "debugColor": "DARKGREEN"
     },
     {
+      "name": "RollCube",
+      "behavior": "RollCubeVoiceCommand",
+      "clearIntent": "play_specific"
+    },
+    {
       "name": "Napping",
       "behavior": "Sleeping",
-      "debugColor": "GREEN"
+      "debugColor": "GREEN",
+      "clearIntent": "system_sleep"
     },
     {
       "name": "NappingOnCharger",
@@ -78,7 +88,8 @@
     {
       "name": "FistBump",
       "behavior": "FistBumpVoiceCommand",
-      "debugColor": "WHITE"
+      "debugColor": "WHITE",
+      "clearIntent": "play_specific"
     }
   ],
 
@@ -269,6 +280,12 @@
               "conditionType": "OnCharger"
             }
           }
+        },
+        {
+          "to": "ObservingOnCharger",
+          "condition": {
+            "conditionType": "TriggerWordPending"
+          }
         }
       ],
       "nonInterruptingTransitions": [
@@ -372,6 +389,18 @@
       ]
     },
 
+    {
+      "from": "RollCube",
+      "exitTransitions": [
+        {
+          "to": "Observing",
+          "condition": {
+            "conditionType": "TrueCondition"
+          }
+        }
+      ]
+    },
+
     //***************************
     // VOICE COMMANDS   
     //*************************** 
@@ -385,7 +414,8 @@
         "FistBump",
         "Observing",
         "ReturningToCharger", // to avoid unclaimed intent
-        "Socializing"
+        "Socializing",
+        "RollCube"
       ],
       "interruptingTransitions": [
         {
@@ -440,9 +470,6 @@
               {
                 "type": "play_specific",
                 "entity_behavior": "fist_bump"
-              },
-              {
-                "type": "play_anytrick"
               }
             ]
           }
@@ -451,7 +478,8 @@
     },
     {
       "from": [
-        "PlayingWithCube"
+        "PlayingWithCube",
+        "RollCube"
       ],
       "nonInterruptingTransitions": [
         {
@@ -462,15 +490,111 @@
               {
                 "type": "play_specific",
                 "entity_behavior": "fist_bump"
-              },
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    // go to sleep
+    {
+      "from": [
+        "ObservingOnCharger",
+        "ObservingOnChargerRecentlyPlaced",
+        "DriveOffChargerIntoObserving",
+        "DriveOffChargerIntoSocializing",
+        "DriveOffChargerIntoPlay",
+        "FistBump",
+        "Observing",
+        "Socializing",
+        "WakingUp",
+        "ReturningToCharger",
+        "FailedToFindCharger",
+        "PlayingWithCube",
+        "RollCube"
+      ],
+      "interruptingTransitions": [
+        {
+          "to": "Napping",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {"type": "system_sleep"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "from": [
+        "PlayingWithCube",
+        "RollCube"
+      ],
+      "nonInterruptingTransitions": [
+        {
+          "to": "Napping",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {"type": "system_sleep"}
+            ]
+          }
+        }
+      ]
+    },
+
+    // roll cube
+    {
+      "from": [
+        "ObservingOnCharger",
+        "ObservingOnChargerRecentlyPlaced",
+        "DriveOffChargerIntoObserving",
+        "DriveOffChargerIntoSocializing",
+        "DriveOffChargerIntoPlay",
+        "Observing",
+        "Socializing",
+        "WakingUp",
+        "ReturningToCharger",
+        "FailedToFindCharger",
+        "PlayingWithCube",
+        "RollCube"
+      ],
+      "interruptingTransitions": [
+        {
+          "to": "RollCube",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
               {
-                "type": "play_anytrick"
+                "type": "play_specific",
+                "entity_behavior": "roll_cube"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "from": [
+        "FistBump"
+      ],
+      "nonInterruptingTransitions": [
+        {
+          "to": "RollCube",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {
+                "type": "play_specific",
+                "entity_behavior": "roll_cube"
               }
             ]
           }
         }
       ]
     }
+    
   ]
 
 }

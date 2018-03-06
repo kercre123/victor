@@ -1351,6 +1351,22 @@
     {
       "CladEvent": "ReactToUnclaimedIntent",
       "AnimName": "ag_pounceonmotionfail"
+    },
+    {
+      "CladEvent": "ReactToGoodBye",
+      "AnimName": "ag_vc_goodbye"
+    },
+    {
+      "CladEvent": "ReactToGoodMorning",
+      "AnimName": "ag_vc_goodmorning"
+    },
+    {
+      "CladEvent": "ReactToGoodNight",
+      "AnimName": "ag_vc_goodnight"
+    },
+    {
+      "CladEvent": "ReactToGreeting",
+      "AnimName": "ag_vc_greeting"
     }
     
   ]

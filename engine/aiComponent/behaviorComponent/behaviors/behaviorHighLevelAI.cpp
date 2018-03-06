@@ -16,12 +16,16 @@
 #include "clad/types/behaviorComponent/behaviorTimerTypes.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/faceWorld.h"
 #include "util/console/consoleInterface.h"
+#include "util/helpers/boundedWhile.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -58,6 +62,38 @@ BehaviorHighLevelAI::BehaviorHighLevelAI(const Json::Value& config)
   
 BehaviorHighLevelAI::~BehaviorHighLevelAI()
 {
+  
+}
+
+bool BehaviorHighLevelAI::IsBehaviorActive( BehaviorID behaviorID ) const
+{
+  const auto& BC = GetBEI().GetBehaviorContainer();
+  const ICozmoBehaviorPtr targetBehavior = BC.FindBehaviorByID( behaviorID );
+  if( targetBehavior != nullptr ) {
+    const IBehavior* behavior = this;
+    BOUNDED_WHILE( 100, (behavior != nullptr) && "Stack too deep to find behavior" ) {
+      behavior = GetBEI().GetDelegationComponent().GetBehaviorDelegatedTo( behavior );
+      if( behavior == targetBehavior.get() ) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+  
+void BehaviorHighLevelAI::BehaviorUpdate()
+{
+  const bool wasSleepingActive = IsBehaviorActive( BEHAVIOR_ID(Sleeping) );
+  
+  InternalStatesBehavior::BehaviorUpdate();
+  
+  const bool triggerWordPending = GetBehaviorComp<UserIntentComponent>().IsTriggerWordPending();
+  if( triggerWordPending && wasSleepingActive ) {
+    DEV_ASSERT( !IsBehaviorActive( BEHAVIOR_ID(Sleeping) ), "Expected a transition out of sleeping" );
+    // the global interrupts coordinator is letting us handle the trigger word, since it should wake
+    // the robot. The above behavior robot should have woken the robot
+    GetBehaviorComp<UserIntentComponent>().ClearPendingTriggerWord();
+  }
   
 }
 
