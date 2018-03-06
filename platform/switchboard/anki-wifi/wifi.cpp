@@ -11,6 +11,9 @@
  **/
 
 #include "connmanbus.h"
+#include <netdb.h> //hostent
+#include <arpa/inet.h>
+#include <sys/socket.h>
 #include "exec_command.h"
 #include "fileutils.h"
 #include "log.h"
@@ -361,23 +364,35 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
                                   nullptr,
                                   &error);
 
-  conn_man_bus_service_call_connect(service, nullptr, cb, userData);
+  //conn_man_bus_service_call_connect(service, nullptr, cb, userData);
 
-  //gboolean didConnect = conn_man_bus_service_call_connect_sync (
-  //                                service,
-  //                                nullptr,
-  //                                &error);
+  /*GAsyncResult result;
 
-  // if(!didConnect && error != nullptr) {
-  //   // 24 -- timeout ? wrong password
-  //   // 36 -- Already connected
-  //   printf("Error code: %d domain: %d\n", error->code, error->domain);
+  gboolean didConnect = conn_man_bus_service_call_connect_finish (
+    service,
+    &result,
+    &error);
 
-  //   printf(std::string(error->message).c_str());
-  // }  
+  printf("Did connect? %d\n", didConnect);
 
-  //return (bool)didConnect;
-  return true;
+  if(error != nullptr) {
+    printf("Did connect? %s\n",error->message);
+  }*/
+
+  gboolean didConnect = conn_man_bus_service_call_connect_sync (
+                                 service,
+                                 nullptr,
+                                 &error);
+
+  if(!didConnect && error != nullptr) {
+    // 24 -- timeout ? wrong password
+    // 36 -- Already connected
+    printf("Error code: %d domain: %d\n", error->code, error->domain);
+
+    printf(std::string(error->message).c_str());
+  }  
+
+  return (bool)didConnect;
 }
 
 void EnableWiFiInterface(const bool enable, ExecCommandCallback callback) {
@@ -446,5 +461,58 @@ void SetWiFiConfig(const std::map<std::string, std::string> networks, ExecComman
   ExecCommandInBackground({"ifconfig", "wlan0"}, callback, 15L * 1000L);
 }
 
+bool CanConnectToHostName(char* hostName) {
+  struct sockaddr_in addr;
+
+  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
+  addr.sin_family = AF_INET;
+  addr.sin_port = htons(80);
+
+  char ipAddr[50];
+  bool gotIp = GetIpFromHostName(hostName, ipAddr);
+
+  if(!gotIp) {
+    return false;
+  }
+
+  if(inet_pton(AF_INET, ipAddr, &addr.sin_addr) <= 0) {
+    // can't resolve google.com
+    return false;
+  }
+
+  if(connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+    // can't connect to google
+    return false;
+  }
+
+  close(sockfd);
+  return true;
+}
+
+bool GetIpFromHostName(char* hostName, char* ipAddressOut) {
+  struct hostent* hostEntry;
+  struct in_addr** ip;
+
+  hostEntry = gethostbyname(hostName);
+
+  if(hostEntry == nullptr) {
+    return false;
+  }
+
+  ip = (struct in_addr**)hostEntry->h_addr_list;
+
+  if(ip[0] == nullptr) {
+    return false;
+  }
+
+  strcpy(ipAddressOut, inet_ntoa(*ip[0]));
+
+  return true;
+}
+
+bool HasInternet() {
+  return CanConnectToHostName("google.com") || CanConnectToHostName("amazon.com");
+}
 
 } // namespace Anki

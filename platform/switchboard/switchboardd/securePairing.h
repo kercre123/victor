@@ -101,12 +101,13 @@ namespace Switchboard {
     void HandleCancelSetup();
     void HandleNonceAck();
     void HandleTimeout();
+    void HandleInternetTimerTick();
     void HandleChallengeResponse(uint8_t* bytes, uint32_t length);
 
     void SubscribeToCladMessages();
     
     inline bool AssertState(CommsState state) {
-      return state != _commsState;
+      return state == _commsState;
     }
     
     void SendHandshake();
@@ -153,6 +154,8 @@ namespace Switchboard {
     const uint8_t kMaxPairingAttempts = 10;
     const uint32_t kMaxAbnormalityCount = 5;
     const uint16_t kPairingTimeout_s = 60;
+    const uint8_t kInternetInterval_s = 1;
+    const uint8_t kInternetTimerTimeout_s = 15;
     const uint8_t kNumPinDigits = 6;
     const uint8_t kMinMessageSize = 2;
     
@@ -162,6 +165,7 @@ namespace Switchboard {
     uint8_t _numPinDigits;
     uint32_t _pingChallenge;
     uint32_t _abnormalityCount;
+    uint8_t _inetTimerCount;
     
     CommsState _commsState;
     INetworkStream* _stream;
@@ -176,6 +180,7 @@ namespace Switchboard {
     Signal::SmartHandle _onFailedDecryptionHandle;
 
     PairingTimeoutSignal _pairingTimeoutSignal;
+    PairingTimeoutSignal _internetTimerSignal;
     
     struct ev_loop* _loop;
     ev_timer _timer;
@@ -184,6 +189,8 @@ namespace Switchboard {
       ev_timer timer;
       PairingTimeoutSignal* signal;
     } _handleTimeoutTimer;
+
+    struct ev_TimerStruct _handleInternet;
     
     UpdatedPinSignal _updatedPinSignal;
     ReceivedWifiCredentialsSignal _receivedWifiCredentialSignal;

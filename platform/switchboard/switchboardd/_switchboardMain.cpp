@@ -89,7 +89,6 @@ void Anki::Switchboard::Daemon::OnConnected(int connId, INetworkStream* stream) 
     if(sSecurePairing == nullptr) {
       sSecurePairing = new Anki::Switchboard::SecurePairing(stream, sLoop);
       sSecurePairing->OnUpdatedPinEvent().SubscribeForever(OnPinUpdated);
-      ///sWifiHandle = sSecurePairing->OnReceivedWifiCredentialsEvent().ScopedSubscribe(OnReceiveWifiCredentials);
     }
     
     // Initiate pairing process

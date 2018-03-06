@@ -26,6 +26,7 @@ _totalPairingAttempts(0),
 _numPinDigits(0),
 _pingChallenge(0),
 _abnormalityCount(0),
+_inetTimerCount(0),
 _commsState(CommsState::Raw),
 _stream(stream),
 _loop(evloop)
@@ -46,6 +47,7 @@ _loop(evloop)
   
   // Register with private events
   _pairingTimeoutSignal.SubscribeForever(std::bind(&SecurePairing::HandleTimeout, this));
+  _internetTimerSignal.SubscribeForever(std::bind(&SecurePairing::HandleInternetTimerTick, this));
   
   // Initialize the key exchange object
   _keyExchange = std::make_unique<KeyExchange>(kNumPinDigits);
@@ -61,6 +63,9 @@ _loop(evloop)
   Log::Write("[timer] init");
   ev_timer_init(&_handleTimeoutTimer.timer, &SecurePairing::sEvTimerHandler, kPairingTimeout_s, kPairingTimeout_s);
   _handleTimeoutTimer.signal = &_pairingTimeoutSignal;
+
+  ev_timer_init(&_handleInternet.timer, &SecurePairing::sEvTimerHandler, kInternetInterval_s, kInternetInterval_s);
+  _handleInternet.signal = &_internetTimerSignal;
   
   Log::Write("SecurePairing starting up.");
 }
@@ -99,6 +104,7 @@ void Anki::Switchboard::SecurePairing::Init() {
   // Clear field values
   _challengeAttempts = 0;
   _abnormalityCount = 0;
+  _inetTimerCount = 0;
   
   // Generate a random number with kNumPinDigits digits
   _pin = _keyExchange->GeneratePin();
@@ -184,7 +190,7 @@ void Anki::Switchboard::SecurePairing::SendHandshake() {
 }
 
 void Anki::Switchboard::SecurePairing::SendPublicKey() {
-  if(!AssertState(CommsState::Clad)) {
+  if(!AssertState(CommsState::Raw)) {
     return;
   }
 
@@ -218,7 +224,7 @@ void Anki::Switchboard::SecurePairing::SendNonce() {
 }
 
 void Anki::Switchboard::SecurePairing::SendChallenge() {
-  if(!AssertState(CommsState::SecureClad)) {
+  if(!AssertState(CommsState::Clad)) {
     return;
   }
 
@@ -273,7 +279,7 @@ void Anki::Switchboard::SecurePairing::SendWifiConnectResult(bool success) {
   }
 
   // Send challenge and update state
-  SendRtsMessage<RtsWifiConnectResponse>((uint8_t)success);
+  SendRtsMessage<RtsWifiConnectResponse>(success? 1 : 0);
 }
 
 void Anki::Switchboard::SecurePairing::SendCancelPairing() {
@@ -324,10 +330,6 @@ void Anki::Switchboard::SecurePairing::HandleRtsChallengeMessage(const Victor::E
   }
 }
 
-void HandleWifiResult(GObject* sourceObject, GAsyncResult* result, gpointer userData) {
-  printf("wtf\n");
-}
-
 void Anki::Switchboard::SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::RtsConnection& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
@@ -335,12 +337,17 @@ void Anki::Switchboard::SecurePairing::HandleRtsWifiConnectRequest(const Victor:
 
   if(_state == PairingState::ConfirmedSharedSecret) {
     Anki::Victor::ExternalComms::RtsWifiConnectRequest challengeMessage = msg.Get_RtsWifiConnectRequest();
-    
-    gpointer userData;
 
-    bool connected = Anki::ConnectWiFiBySsid(challengeMessage.ssid, challengeMessage.password, HandleWifiResult, userData);
-    
-    SendWifiConnectResult(connected);
+    bool connected = Anki::ConnectWiFiBySsid(challengeMessage.ssid, 
+      challengeMessage.password,
+      nullptr,
+      nullptr);
+
+    if(Anki::HasInternet()) {
+      SendWifiConnectResult(connected);
+    } else {
+      ev_timer_again(_loop, &_handleInternet.timer);
+    }
 
     if(connected) {
       Log::Write("Connected to wifi.");
@@ -566,6 +573,18 @@ void Anki::Switchboard::SecurePairing::IncrementAbnormalityCount() {
   }
   
   Log::Write("Abnormality recorded.");
+}
+
+void Anki::Switchboard::SecurePairing::HandleInternetTimerTick() {
+  _inetTimerCount++;
+
+  if(Anki::HasInternet()) {
+    ev_timer_stop(_loop, &_handleInternet.timer);
+    SendWifiConnectResult(true);
+  } else if(_inetTimerCount > kInternetTimerTimeout_s) {
+    ev_timer_stop(_loop, &_handleInternet.timer);
+    SendWifiConnectResult(false);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

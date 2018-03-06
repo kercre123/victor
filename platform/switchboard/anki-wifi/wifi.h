@@ -18,7 +18,6 @@
 #include <map>
 #include <string>
 #include <vector>
-
 #include <glib.h>
 #include <glib-object.h>
 #include <gio/gio.h>
@@ -52,5 +51,7 @@ void EnableWiFiInterface(const bool enable, ExecCommandCallback callback);
 std::map<std::string, std::string> UnPackWiFiConfig(const std::vector<uint8_t>& packed);
 void SetWiFiConfig(const std::map<std::string, std::string> networks, ExecCommandCallback);
 void HandleOutputCallback(int rc, const std::string& output);
+bool HasInternet();
+bool GetIpFromHostName(char* hostname, char* ip);
 
 } // namespace Anki
