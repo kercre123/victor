@@ -158,7 +158,8 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         break;
       }
       case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiConnectResponse: {
-        //
+        Anki::Victor::ExternalComms::RtsWifiConnectResponse msg = rtsMsg.Get_RtsWifiConnectResponse();
+        printf("Is victor connected to the internet? %d\n", msg.statusCode); // 1 = yes, 0 = no
         break;
       }
       case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiIpResponse: {
