@@ -20,11 +20,9 @@ static const int MAX_TRANSFER = 0x1000;
 
 
 #define GPIO_LCD_WRX   110
-#define GPIO_LCD_RESET1 96
-#define GPIO_LCD_RESET2 55
+#define GPIO_LCD_RESET 55
 
-static GPIO RESET_PIN1;
-static GPIO RESET_PIN2;
+static GPIO RESET_PIN;
 static GPIO DnC_PIN;
 
 
@@ -166,8 +164,7 @@ int lcd_init(void) {
   // IO Setup
   DnC_PIN = gpio_create(GPIO_LCD_WRX, gpio_DIR_OUTPUT, gpio_HIGH);
 
-  RESET_PIN1 = gpio_create_open_drain_output(GPIO_LCD_RESET1, gpio_HIGH);
-  RESET_PIN2 = gpio_create_open_drain_output(GPIO_LCD_RESET2, gpio_HIGH);
+  RESET_PIN = gpio_create_open_drain_output(GPIO_LCD_RESET, gpio_HIGH);
 
   // SPI setup
 
@@ -175,11 +172,9 @@ int lcd_init(void) {
 
   // Send reset signal
   microwait(50);
-  gpio_set_value(RESET_PIN1, 0);
-  gpio_set_value(RESET_PIN2, 0);
+  gpio_set_value(RESET_PIN, 0);
   microwait(50);
-  gpio_set_value(RESET_PIN1, 1);
-  gpio_set_value(RESET_PIN2, 1);
+  gpio_set_value(RESET_PIN, 1);
   microwait(50);
 
   lcd_device_init();
@@ -201,11 +196,8 @@ void lcd_shutdown(void) {
   if (DnC_PIN) {
     gpio_close(DnC_PIN);
   }
-  if (RESET_PIN1) {
-    gpio_close(RESET_PIN1);
-  }
-  if (RESET_PIN2) {
-    gpio_close(RESET_PIN2);
+  if (RESET_PIN) {
+    gpio_close(RESET_PIN);
   }
 
 }
