@@ -13,7 +13,7 @@
                 "currentCostume": 0,
                 "direction": 90,
                 "draggable": false,
-                "id": "Y2C~tejc{1M9|1]79SGK",
+                "id": "U5,oVqx./npC)].@FjVr",
                 "isStage": true,
                 "lists": {},
                 "name": "Stage",
@@ -73,7 +73,7 @@
                         "id": "DG]McJ^9.B^vvjK7?-Po",
                         "name": "Cozmo est sur le dos.",
                         "type": "",
-                        "value": "1"
+                        "value": "0"
                     },
                     "K:lEEN{a-Pk24+%=kK^q": {
                         "id": "K:lEEN{a-Pk24+%=kK^q",
@@ -85,13 +85,13 @@
                         "id": "NaZQ.NV)OP*8F~ISJ^I=",
                         "name": "deviner le nombre",
                         "type": "",
-                        "value": "0"
+                        "value": 1
                     },
                     "TCE^eUf};Pvh6]9BDMny": {
                         "id": "TCE^eUf};Pvh6]9BDMny",
                         "name": "mode Entr\u00e9e",
                         "type": "",
-                        "value": "1"
+                        "value": "0"
                     },
                     "UdMm0.SuvuD-]@[UA{4:": {
                         "id": "UdMm0.SuvuD-]@[UA{4:",
@@ -151,13 +151,13 @@
                         "id": "uqJONWA$*ttc7?y%heu,",
                         "name": "retourner",
                         "type": "",
-                        "value": 1
+                        "value": "0"
                     },
                     "x(-N%PHu_7lvBm;Sf6gz": {
                         "id": "x(-N%PHu_7lvBm;Sf6gz",
                         "name": "mettre sur le dos",
                         "type": "",
-                        "value": 3
+                        "value": 4
                     },
                     "yY|A;94ZvRzOiD.fUOFO": {
                         "id": "yY|A;94ZvRzOiD.fUOFO",
@@ -342,8 +342,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 461,
-                        "y": 1973
+                        "x": 469.54117647058825,
+                        "y": 1897.5529411764705
                     },
                     "*-rclw_J5G-8D;9*,VbJ": {
                         "fields": {
@@ -590,11 +590,26 @@
                         },
                         "next": "?8gMswZG8t5Yt#X8zhjv",
                         "opcode": "cozmo_vert_cube_anim",
-                        "parent": "aNV:Tk2g*M$Pl#4mw]@)",
+                        "parent": "bi$ok,eFHfq{YbK=c7BF",
                         "shadow": false,
                         "topLevel": false,
-                        "x": 1682.4588235294118,
-                        "y": 903.7529411764706
+                        "x": 1399.1764705882354,
+                        "y": 929.3764705882353
+                    },
+                    "/)O0vvnzc!CB)IcNgWHm": {
+                        "fields": {
+                            "ANIMATION_SELECT": {
+                                "name": "ANIMATION_SELECT",
+                                "value": "14"
+                            }
+                        },
+                        "id": "/)O0vvnzc!CB)IcNgWHm",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_animation_select_menu",
+                        "parent": "0iJ=$B8J+eHk.JG0Vfpm",
+                        "shadow": true,
+                        "topLevel": false
                     },
                     "/YCA:9|=RLKMOW[b:$ak": {
                         "fields": {
@@ -669,6 +684,24 @@
                         "topLevel": false,
                         "x": "1637",
                         "y": "1305"
+                    },
+                    "0iJ=$B8J+eHk.JG0Vfpm": {
+                        "fields": {},
+                        "id": "0iJ=$B8J+eHk.JG0Vfpm",
+                        "inputs": {
+                            "ANIMATION": {
+                                "block": "/)O0vvnzc!CB)IcNgWHm",
+                                "name": "ANIMATION",
+                                "shadow": "/)O0vvnzc!CB)IcNgWHm"
+                            }
+                        },
+                        "next": "U1a#DUqC,KgX%FA5d2wS",
+                        "opcode": "cozmo_play_animation_from_dropdown",
+                        "parent": "xxK`7a+Pf[1F_bNelIha",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "263",
+                        "y": "1726"
                     },
                     "0od?!~MrDZ(A~E_+UkM)": {
                         "fields": {
@@ -1179,7 +1212,7 @@
                         },
                         "next": "-MVw}?vJJpeh,=aJ1qL5",
                         "opcode": "cozmo_play_animation_from_dropdown",
-                        "parent": "O|*1X,9(.;+Zj96ET]!q",
+                        "parent": "aNV:Tk2g*M$Pl#4mw]@)",
                         "shadow": false,
                         "topLevel": false,
                         "x": 1328.0000000000005,
@@ -1290,8 +1323,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 467,
-                        "y": 1893
+                        "x": 468.4235294117647,
+                        "y": 1836.0588235294117
                     },
                     "?8gMswZG8t5Yt#X8zhjv": {
                         "fields": {
@@ -2171,7 +2204,7 @@
                                 "shadow": "IAFP@p_|?OPkE.cSevKq"
                             }
                         },
-                        "next": ":6-$)!{:)Yyh5o|(9:iD",
+                        "next": "aNV:Tk2g*M$Pl#4mw]@)",
                         "opcode": "cozmo_sound_play",
                         "parent": "ukkZLfP~TOmQa:MNh=o}",
                         "shadow": false,
@@ -2437,7 +2470,7 @@
                         },
                         "next": null,
                         "opcode": "control_wait",
-                        "parent": "xxK`7a+Pf[1F_bNelIha",
+                        "parent": "0iJ=$B8J+eHk.JG0Vfpm",
                         "shadow": false,
                         "topLevel": false,
                         "x": "208",
@@ -2601,6 +2634,23 @@
                         "topLevel": false,
                         "x": "762",
                         "y": "1631"
+                    },
+                    "X*!K{BE7V7I_`Ko6I~ys": {
+                        "fields": {
+                            "ANIMATION_TRACK": {
+                                "name": "ANIMATION_TRACK",
+                                "value": "head"
+                            }
+                        },
+                        "id": "X*!K{BE7V7I_`Ko6I~ys",
+                        "inputs": {},
+                        "next": "xxK`7a+Pf[1F_bNelIha",
+                        "opcode": "cozmo_vert_disable_animation_track",
+                        "parent": "_c2B|[Z=_{7uOUOL}^jx",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "264",
+                        "y": "2364"
                     },
                     "X533*fXcEm!l_k+k,gfq": {
                         "fields": {
@@ -2949,7 +2999,7 @@
                                 "shadow": "82(3/6n0#ieu-vrJB6oe"
                             }
                         },
-                        "next": "xxK`7a+Pf[1F_bNelIha",
+                        "next": "X*!K{BE7V7I_`Ko6I~ys",
                         "opcode": "cozmo_vert_cube_anim",
                         "parent": "se~#Rm6R=|Ini~m_CO!Q",
                         "shadow": false,
@@ -3076,13 +3126,13 @@
                                 "shadow": "L6BUE[T8.Ih.)0MWV9_j"
                             }
                         },
-                        "next": ".OCw*%mGu-L(R$^Rb#Ec",
+                        "next": ":6-$)!{:)Yyh5o|(9:iD",
                         "opcode": "cozmo_play_animation_by_name",
-                        "parent": "bi$ok,eFHfq{YbK=c7BF",
+                        "parent": "O|*1X,9(.;+Zj96ET]!q",
                         "shadow": false,
                         "topLevel": false,
-                        "x": "894",
-                        "y": "646"
+                        "x": 1399.1764705882354,
+                        "y": 881.3764705882353
                     },
                     "avS+[RJ@x@VUIL}Kf))v": {
                         "fields": {
@@ -3141,7 +3191,7 @@
                                 "shadow": null
                             },
                             "SUBSTACK": {
-                                "block": "aNV:Tk2g*M$Pl#4mw]@)",
+                                "block": ".OCw*%mGu-L(R$^Rb#Ec",
                                 "name": "SUBSTACK",
                                 "shadow": null
                             },
@@ -4181,14 +4231,14 @@
                                 "shadow": null
                             },
                             "SUBSTACK": {
-                                "block": "U1a#DUqC,KgX%FA5d2wS",
+                                "block": "0iJ=$B8J+eHk.JG0Vfpm",
                                 "name": "SUBSTACK",
                                 "shadow": null
                             }
                         },
                         "next": null,
                         "opcode": "control_repeat_until",
-                        "parent": "_c2B|[Z=_{7uOUOL}^jx",
+                        "parent": "X*!K{BE7V7I_`Ko6I~ys",
                         "shadow": false,
                         "topLevel": false,
                         "x": "208",
@@ -4697,7 +4747,7 @@
                 "currentCostume": 0,
                 "direction": 90,
                 "draggable": false,
-                "id": "EQUGdVw+}291UR0d@ey-",
+                "id": "Lz5!IufL{q2*k+h_c.-{",
                 "isStage": false,
                 "lists": {},
                 "name": "Sprite1",

@@ -561,14 +561,14 @@
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_guessTheNumber",
     "LeftTintColor": [
-      212,
-      172,
-      3
+      203,
+      105,
+      0
     ],
     "RightTintColor": [
-      255,
-      220,
-      26
+      241,
+      136,
+      1
     ],
     "CodeLabData": {
       "ShowButton": true,
@@ -593,14 +593,14 @@
     "IconAssetBundleName": "whats_new_icon_sprites",
     "IconAssetName": "icon_wakeUpCozmo",
     "LeftTintColor": [
-      195,
-      50,
-      50
+      93,
+      197,
+      21
     ],
     "RightTintColor": [
-      253,
-      78,
-      93
+      157,
+      227,
+      53
     ],
     "CodeLabData": {
       "ShowButton": true,
