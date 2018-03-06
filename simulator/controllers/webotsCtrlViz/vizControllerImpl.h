@@ -12,13 +12,19 @@
 #ifndef __WebotsCtrlViz_VizControllerImpl_H__
 #define __WebotsCtrlViz_VizControllerImpl_H__
 
-#include "clad/vizInterface/messageViz.h"
-#include "clad/types/emotionTypes.h"
+
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
-#include "engine/events/ankiEventMgr.h"
-#include "coretech/vision/engine/image.h"
 #include "engine/encodedImage.h"
+#include "engine/events/ankiEventMgr.h"
+
+#include "coretech/vision/engine/image.h"
+
 #include "util/container/circularBuffer.h"
+
+#include "clad/types/cameraParams.h"
+#include "clad/types/emotionTypes.h"
+#include "clad/vizInterface/messageViz.h"
+
 #include <webots/Supervisor.hpp>
 #include <webots/ImageRef.hpp>
 #include <webots/Display.hpp>
@@ -94,7 +100,7 @@ private:
   void ProcessVizTrackerQuadMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizRobotStateMessage(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessVizCurrentAnimation(const AnkiEvent<VizInterface::MessageViz>& msg);
-  void ProcessCameraInfo(const AnkiEvent<VizInterface::MessageViz>& msg);
+  void ProcessCameraParams(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessObjectConnectionState(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessObjectMovingState(const AnkiEvent<VizInterface::MessageViz>& msg);
   void ProcessObjectUpAxisState(const AnkiEvent<VizInterface::MessageViz>& msg);
@@ -207,8 +213,7 @@ private:
   std::vector<DebugImage> _debugImages;
   
   // Camera info
-  u16           _exposure = 0;
-  f32           _gain = 0.f;
+  CameraParams _cameraParams;
   
   // For saving state
   bool          _saveState = false;

@@ -33,6 +33,31 @@ typedef enum {
 // custom toolchain, or we will move the camera system back into the
 // engine instead of using a separate process.
 
+//
+// IPC Message Protocol
+//
+typedef enum {
+  ANKI_CAMERA_MSG_C2S_HEARTBEAT,
+  ANKI_CAMERA_MSG_C2S_CLIENT_REGISTER,
+  ANKI_CAMERA_MSG_C2S_CLIENT_UNREGISTER,
+  ANKI_CAMERA_MSG_C2S_START,
+  ANKI_CAMERA_MSG_C2S_STOP,
+  ANKI_CAMERA_MSG_C2S_PARAMS,
+  ANKI_CAMERA_MSG_S2C_STATUS,
+  ANKI_CAMERA_MSG_S2C_BUFFER,
+  ANKI_CAMERA_MSG_S2C_HEARTBEAT,
+} anki_camera_msg_id_t;
+
+#define ANKI_CAMERA_MSG_PAYLOAD_LEN 128
+
+struct anki_camera_msg {
+  anki_camera_msg_id_t msg_id;
+  uint32_t version;
+  uint32_t client_id;
+  int fd;
+  uint8_t payload[ANKI_CAMERA_MSG_PAYLOAD_LEN];
+};
+
 typedef struct {
   uint64_t timestamp;
   uint32_t frame_id;
@@ -50,6 +75,22 @@ typedef struct {
   uint16_t exposure_ms;
   float gain;
 } anki_camera_exposure_t;
+
+typedef struct {
+  float r_gain;
+  float g_gain;
+  float b_gain;
+} anki_camera_awb_t;
+
+typedef enum {
+  ANKI_CAMERA_MSG_C2S_PARAMS_ID_EXP,
+  ANKI_CAMERA_MSG_C2S_PARAMS_ID_AWB,
+} anki_camera_params_id_t;
+
+typedef struct {
+  anki_camera_params_id_t id;
+  uint8_t data[sizeof(((struct anki_camera_msg*)0)->payload) - sizeof(anki_camera_params_id_t)];
+} anki_camera_msg_params_payload_t;
 
 // END: shared types
 
@@ -80,6 +121,8 @@ int camera_frame_acquire(struct anki_camera_handle* camera, anki_camera_frame_t*
 int camera_frame_release(struct anki_camera_handle* camera, uint32_t frame_id);
 
 int camera_set_exposure(struct anki_camera_handle* camera, uint16_t exposure_ms, float gain);
+
+int camera_set_awb(struct anki_camera_handle* camera, float r_gain, float g_gain, float b_gain);
 
 // Get current status of camera system
 anki_camera_status_t camera_status(struct anki_camera_handle* camera);

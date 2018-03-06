@@ -200,8 +200,7 @@ void BehaviorTrackLaser::InitHelper()
   _haveEverConfirmedLaser = false;
   _shouldSendTrackingObjectiveAchieved = false;
   
-  _originalCameraSettings.exposureTime_ms = GetBEI().GetVisionComponent().GetCurrentCameraExposureTime_ms();
-  _originalCameraSettings.gain = GetBEI().GetVisionComponent().GetCurrentCameraGain();
+  _originalCameraSettings = GetBEI().GetVisionComponent().GetCurrentCameraParams();
   
   // disable all vision except what's needed laser point detection and confirmation
   const bool kUseDefaultsForUnspecified = false;

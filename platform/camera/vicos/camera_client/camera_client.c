@@ -48,31 +48,7 @@ static const uint64_t HEARTBEAT_INTERVAL_US = 200000;
 // engine instead of using a separate process.
 
 #define ANKI_CAMERA_MAX_PACKETS 8
-#define ANKI_CAMERA_MSG_PAYLOAD_LEN 128
 #define ANKI_CAMERA_MAX_FRAME_COUNT 6
-
-//
-// IPC Message Protocol
-//
-typedef enum {
-  ANKI_CAMERA_MSG_C2S_HEARTBEAT,
-  ANKI_CAMERA_MSG_C2S_CLIENT_REGISTER,
-  ANKI_CAMERA_MSG_C2S_CLIENT_UNREGISTER,
-  ANKI_CAMERA_MSG_C2S_START,
-  ANKI_CAMERA_MSG_C2S_STOP,
-  ANKI_CAMERA_MSG_C2S_PARAMS,
-  ANKI_CAMERA_MSG_S2C_STATUS,
-  ANKI_CAMERA_MSG_S2C_BUFFER,
-  ANKI_CAMERA_MSG_S2C_HEARTBEAT,
-} anki_camera_msg_id_t;
-
-struct anki_camera_msg {
-  anki_camera_msg_id_t msg_id;
-  uint32_t version;
-  uint32_t client_id;
-  int fd;
-  uint8_t payload[ANKI_CAMERA_MSG_PAYLOAD_LEN];
-};
 
 //
 // ION memory management info
@@ -921,9 +897,25 @@ int camera_set_exposure(struct anki_camera_handle* camera, uint16_t exposure_ms,
   exposure.exposure_ms = exposure_ms;
   exposure.gain = gain;
   
-  uint8_t buf[sizeof(anki_camera_exposure_t)];
-  memcpy(buf, &exposure, sizeof(anki_camera_exposure_t));
+  anki_camera_msg_params_payload_t payload;
+  payload.id = ANKI_CAMERA_MSG_C2S_PARAMS_ID_EXP;
+  memcpy(payload.data, &exposure, sizeof(exposure));
 
   return enqueue_message_with_payload(&CAMERA_HANDLE_P(camera)->camera_client, 
-                                      ANKI_CAMERA_MSG_C2S_PARAMS, buf, sizeof(buf));
+                                      ANKI_CAMERA_MSG_C2S_PARAMS, &payload, sizeof(payload));
+}
+
+int camera_set_awb(struct anki_camera_handle* camera, float r_gain, float g_gain, float b_gain)
+{
+  anki_camera_awb_t awb;
+  awb.r_gain = r_gain;
+  awb.g_gain = g_gain;
+  awb.b_gain = b_gain;
+  
+  anki_camera_msg_params_payload_t payload;
+  payload.id = ANKI_CAMERA_MSG_C2S_PARAMS_ID_AWB;
+  memcpy(payload.data, &awb, sizeof(awb));
+
+  return enqueue_message_with_payload(&CAMERA_HANDLE_P(camera)->camera_client, 
+                                      ANKI_CAMERA_MSG_C2S_PARAMS, &payload, sizeof(payload));
 }

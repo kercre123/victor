@@ -71,6 +71,7 @@ namespace Anki
 
       // Sets the camera parameters (non-blocking call)
       void CameraSetParameters(u16 exposure_ms, f32 gain);
+      void CameraSetWhiteBalanceParameters(f32 r_gain, f32 g_gain, f32 b_gain);
 
       // Points provided frame to a buffer of image data if available.
       // Returns true if image available.

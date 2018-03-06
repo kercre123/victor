@@ -22,6 +22,7 @@
 #include "util/helpers/ankiDefines.h"
 #include "coretech/planning/shared/path.h"
 #include "coretech/messaging/shared/UdpClient.h"
+#include "clad/types/cameraParams.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/vizTypes.h"
 #include "clad/types/objectTypes.h"
@@ -368,7 +369,7 @@ namespace Anki {
       // ==== Misc. Debug functions =====
       void SetDockingError(const f32 x_dist, const f32 y_dist, const f32 z_dist, const f32 angle);
       
-      void SendCameraInfo(const u16 exposure_ms, const f32 gain);
+      void SendCameraParams(const CameraParams& params);
 
       void EnableImageSend(bool tf) { _sendImages = tf; }
       /*

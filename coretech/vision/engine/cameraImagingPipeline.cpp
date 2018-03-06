@@ -28,6 +28,8 @@ namespace Vision {
 // before computing the desired exposure. Should be more accurate, but may not
 // be super necessary.
 CONSOLE_VAR(bool, kLinearizeForAutoExposure, "Vision.PreProcessing", false);
+
+CONSOLE_VAR(float, kMaxWhiteBalanceGainChange, "Vision.PreProcessing", 0.05);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ImagingPipeline::SetExposureParameters(u8  targetMidValue,
@@ -290,6 +292,55 @@ Result ImagingPipeline::ComputeExposureAdjustment(const std::vector<Vision::Imag
     adjustmentFraction = CLIP(adjustmentFraction, 1.f - _maxChangeFraction, 1.f + _maxChangeFraction);
   }
   
+  return RESULT_OK;
+}
+
+Result ImagingPipeline::ComputeWhiteBalanceAdjustment(const Vision::ImageRGB& image, 
+                                                      f32& gainR,
+                                                      f32& gainG,
+                                                      f32& gainB)
+{
+  f32 avgR = 0.f;
+  f32 avgG = 0.f;
+  f32 avgB = 0.f;
+
+  const u32 numRows = image.GetNumRows();
+  const u32 numCols = image.GetNumCols();
+
+  // Calculate the average value for each of the three color channels
+  for(u32 i = 0; i < numRows; i += _subSample)
+  {
+    const Vision::PixelRGB* image_i = image.GetRow(i);
+    for(u32 j = 0; j < numCols; j += _subSample)
+    {
+      avgR += image_i[j].r();
+      avgG += image_i[j].g();
+      avgB += image_i[j].b();
+    }
+  }
+
+  const u32 numPixels = numRows * numCols;
+  avgR /= numPixels;
+  avgG /= numPixels;
+  avgB /= numPixels;
+
+  // Red and blue gain default to 2.0 in camera driver
+  static f32 prevGainR = 2.0;
+  static f32 prevGainB = 2.0;
+
+  // Adjust red and blue gains so their channel's average value match green's
+  gainR = (Util::IsNearZero(avgR) ? 1.f : avgG/avgR);
+  gainB = (Util::IsNearZero(avgB) ? 1.f : avgG/avgB);
+  // Green gain is fixed at 1 since we need something to compute the Red and Blue gains relative to
+  gainG = 1.f;
+
+  // Limit how fast the WhiteBalance gain can change
+  gainR = prevGainR + Util::Clamp(gainR - prevGainR, -kMaxWhiteBalanceGainChange, kMaxWhiteBalanceGainChange);
+  gainB = prevGainB + Util::Clamp(gainB - prevGainB, -kMaxWhiteBalanceGainChange, kMaxWhiteBalanceGainChange);
+
+  prevGainR = gainR;
+  prevGainB = gainB;
+
   return RESULT_OK;
 }
   

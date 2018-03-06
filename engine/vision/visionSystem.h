@@ -47,6 +47,7 @@
 
 #include "clad/vizInterface/messageViz.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/types/cameraParams.h"
 #include "clad/types/faceEnrollmentPoses.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/loadedKnownFace.h"
@@ -91,9 +92,8 @@ namespace Cozmo {
     Util::BitFlags32<VisionMode> modesProcessed;
     
     ImageQuality imageQuality;
-    s32 exposureTime_ms;  // Use < 0 to indicate "no change", ignored if imageQuality==Unchecked
-    f32 cameraGain;       // Use < 0 to indicate "no change", ignored if imageQuality==Unchecked
-    u8  imageMean;        // Only valid if VisionMode::ComputingStatistics enabled
+    CameraParams cameraParams;
+    u8 imageMean;
     
     std::list<ExternalInterface::RobotObservedMotion>           observedMotions;
     std::list<Vision::ObservedMarker>                           observedMarkers;
@@ -209,7 +209,10 @@ namespace Cozmo {
                                  const f32 maxChangeFraction);
     
     // Just specify what the current values are (don't actually change the robot's camera)
-    Result SetNextCameraParams(s32 exposure_ms, f32 gain);
+    Result SetNextCameraExposure(s32 exposure_ms, f32 gain);
+    Result SetNextCameraWhiteBalance(f32 whiteBalanceGainR, 
+                                     f32 whiteBalanceGainG, 
+                                     f32 whiteBalanceGainB);
     
     // When SavingImages mode is enabled:
     //  saveMode: SingleShot=save one image and wait for this call again
@@ -219,8 +222,7 @@ namespace Cozmo {
     //  quality: -1=PNG, 0-100=JPEG quality
     void SetSaveParameters(const ImageSendMode saveMode, const std::string& path, const int8_t quality);
 
-    s32 GetCurrentCameraExposureTime_ms() const;
-    f32 GetCurrentCameraGain() const;
+    CameraParams GetCurrentCameraParams() const;
   
     bool CheckMailbox(VisionProcessingResult& result);
     
@@ -271,12 +273,8 @@ namespace Cozmo {
     f32 _minCameraGain     = 0.1f; 
     f32 _maxCameraGain     = 3.8f;
     
-    struct CameraParams {
-      s32  exposure_ms;
-      f32  gain;
-    };
-    CameraParams _currentCameraParams{31, 1.0};
-    std::pair<bool,CameraParams> _nextCameraParams; // bool represents if set but not yet sent
+    CameraParams _currentCameraParams{31, 1.0, 2.0, 1.0, 2.0};
+    std::pair<bool,CameraParams> _nextCameraParams{false, _currentCameraParams}; // bool represents if set but not yet sent
     
     Util::BitFlags32<VisionMode> _mode;
     std::queue<std::pair<VisionMode, bool>> _nextModes;
