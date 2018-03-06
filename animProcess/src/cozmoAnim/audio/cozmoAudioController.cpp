@@ -207,7 +207,6 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     // If we're using the audio engine, assert that it was successfully initialized.
     DEV_ASSERT(IsInitialized(), "CozmoAudioController.Initialize Audio Engine fail");
   }
-#endif // USE_AUDIO_ENGINE
 
   // The audio engine was initialized correctly, so now let's setup everything else
   if ( IsInitialized() )
@@ -241,6 +240,9 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
   else {
     PRINT_NAMED_ERROR("CozmoAudioController", "sThis.NotNull");
   }
+#else
+  PRINT_NAMED_WARNING("CozmoAudioController", "Audio Engine is disabled - EXCLUDE_ANKI_AUDIO_LIBS flag is set");
+#endif // USE_AUDIO_ENGINE
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
