@@ -28,7 +28,6 @@ enum uint_8 BehaviorID {
   DockingTestSimple,
   FactoryCentroidExtractor,
   LiftLoadTest,
-  Petting,
 
   // devBehaviors/playpen
   PlaypenCameraCalibration,
@@ -202,6 +201,7 @@ enum uint_8 BehaviorID {
   SleepingWakeUp,
 
   // victorBehaviorTree/highLevelDelegates/socialize
+  DriveOffChargerIntoSocializing,
   FindFaces_socialize,
   Socialize,
   SocializeGame,
@@ -213,6 +213,7 @@ enum uint_8 BehaviorID {
   FistBumpVoiceCommand,
 
   // victorBehaviorTree
+  Petting,
   ReactToSoundAsleep,
   ReactToSoundAwake,
   ReactToUnclaimedIntent,

@@ -69,7 +69,10 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
       "CloseFaceForSocializing",
       {
         [this](BehaviorExternalInterface& behaviorExternalInterface) {
-          if( !StateExitCooldownExpired(GetStateID("Socializing"), _params.socializeKnownFaceCooldown_s / kTimeMultiplier) ) {
+          const bool valueIfNeverRun = true;
+          const auto& timer = GetBEI().GetBehaviorTimerManager().GetTimer( BehaviorTimerTypes::Socializing );
+          const bool cooldownExpired = timer.HasCooldownExpired( _params.socializeKnownFaceCooldown_s / kTimeMultiplier, valueIfNeverRun );
+          if( !cooldownExpired ) {
             // still on cooldown
             return false;
           }

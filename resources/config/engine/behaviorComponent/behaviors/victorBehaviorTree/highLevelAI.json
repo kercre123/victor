@@ -30,7 +30,7 @@
     },
     {
       "name": "DriveOffChargerIntoSocializing",
-      "behavior": "DriveOffCharger"
+      "behavior": "DriveOffChargerIntoSocializing"
     },
     {
       "name": "DriveOffChargerIntoPlay",
@@ -53,6 +53,11 @@
     },
     {
       "name": "Napping",
+      "behavior": "Sleeping",
+      "debugColor": "GREEN"
+    },
+    {
+      "name": "NappingOnCharger",
       "behavior": "Sleeping",
       "debugColor": "GREEN"
     },
@@ -110,7 +115,7 @@
           "preDefinedStrategyName": "NeedsToLeaveChargerForPlay"
         },
         {
-          "to": "Napping",
+          "to": "NappingOnCharger",
           "preDefinedStrategyName": "WantsToSleep"
         }
       ]
@@ -254,7 +259,7 @@
     },
     
     {
-      "from": "Napping",
+      "from": "NappingOnCharger",
       "interruptingTransitions": [
         {
           "to": "WakingUp",
@@ -272,6 +277,18 @@
           "condition": {
             "conditionType": "TimerInRange",
             "begin_s": 3000.0
+          }
+        }
+      ]
+    },
+
+    {
+      "from": "Napping",
+      "interruptingTransitions": [
+        {
+          "to": "WakingUp",
+          "condition": {
+            "conditionType": "OnCharger"
           }
         }
       ]
@@ -300,18 +317,20 @@
           }
         }
       ],
+      "nonInterruptingTransitions": [
+        {
+          "to": "FailedToFindCharger",
+          "condition": {
+            "conditionType": "TimerInRange",
+            "begin_s": 1200.0
+          }
+        }
+      ],
       "exitTransitions": [
         {
           "to": "ObservingOnChargerRecentlyPlaced",
           "condition": {
             "conditionType": "OnCharger"
-          }
-        },
-        {
-          // TODO:(bn) this doesn't work right now because FindAndGoToHome never stops unless it find a charger
-          "to": "FailedToFindCharger",
-          "condition": {
-            "conditionType": "TrueCondition" 
           }
         }
       ]
@@ -408,7 +427,6 @@
         "FistBump",
         "Observing",
         "Socializing",
-        "Napping",
         "WakingUp",
         "ReturningToCharger",
         "FailedToFindCharger"

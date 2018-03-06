@@ -100,13 +100,14 @@ TEST(BehaviorHighLevelAI, VoiceIntentsHandled)
   // COMPLETED TAGS and EXCEPTIONS: the user intents you _think_ youre done hooking up, and the list
   // of state names that should intentionally not be responding to that intent
   CompletedList completedTags = {
-    { USER_INTENT(play_specific), {} },
-    { USER_INTENT(play_anytrick), {} },
+    { USER_INTENT(play_specific), {"Napping", "NappingOnCharger"} },
+    { USER_INTENT(play_anytrick), {"Napping", "NappingOnCharger"} },
     { USER_INTENT(system_charger), {"ObservingOnCharger",
                                     "ObservingOnChargerRecentlyPlaced",
-                                    "Napping", // napping on charger is not a state yet. these
-                                    "WakingUp",  // will
-                                    "FailedToFindCharger" // change
+                                    "Napping",
+                                    "NappingOnCharger",
+                                    "WakingUp",
+                                    "FailedToFindCharger"
                                     } }
   };
   
