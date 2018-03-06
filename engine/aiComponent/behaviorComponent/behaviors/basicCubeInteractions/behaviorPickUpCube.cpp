@@ -36,6 +36,22 @@ namespace{
 const char* kPickupRetryCountKey = "retryCount";
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorPickUpCube::InstanceConfig::InstanceConfig()
+{
+  pickupRetryCount = 1;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorPickUpCube::DynamicVariables::DynamicVariables()
+{
+  idSetExternally = false;
+  pickupRetryCount = 0;
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPickUpCube::BehaviorPickUpCube(const Json::Value& config)
 : ICozmoBehavior(config)

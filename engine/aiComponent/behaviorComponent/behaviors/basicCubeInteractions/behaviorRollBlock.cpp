@@ -42,8 +42,26 @@ static const float kMaxDistCozmoIsRollingCube_mm = 120;
 CONSOLE_VAR(f32, kBRB_ScoreIncreaseForAction, "Behavior.RollBlock", 0.8f);
   
 }
-  
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorRollBlock::InstanceConfig::InstanceConfig()
+{
+  isBlockRotationImportant = false;
+  rollRetryCount           = 1;
+};
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorRollBlock::DynamicVariables::DynamicVariables()
+{
+  didAttemptDock        = false;
+  upAxisOnBehaviorStart = AxisName::X_POS;
+  behaviorState         = State::RollingBlock;
+  rollRetryCount        = 0;
+};
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorRollBlock::BehaviorRollBlock(const Json::Value& config)
 : ICozmoBehavior(config)

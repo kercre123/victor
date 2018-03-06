@@ -68,13 +68,15 @@ private:
   };
 
   struct InstanceConfig{
-    int pickupRetryCount = 1;
+    InstanceConfig();
+    int pickupRetryCount;
   };
 
   struct DynamicVariables{
+    DynamicVariables();
     ObjectID targetBlockID;
-    bool idSetExternally = false;
-    int pickupRetryCount = 0;
+    bool     idSetExternally;
+    int      pickupRetryCount;
   };
 
   InstanceConfig _iConfig;

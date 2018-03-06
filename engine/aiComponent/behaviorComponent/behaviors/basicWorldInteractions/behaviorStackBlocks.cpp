@@ -55,6 +55,24 @@ static const f32   kDistToBackupOnStackFailure_mm  = 40;
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorStackBlocks::InstanceConfig::InstanceConfig()
+{
+    stackInAnyOrientation = false;
+    placeRetryCount = 1;
+    pickupID = BehaviorID::Wait;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorStackBlocks::DynamicVariables::DynamicVariables()
+{
+  behaviorState = State::PickingUpBlock;
+  hasBottomTargetSwitched = false;
+  placeRetryCount = 0;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorStackBlocks::BehaviorStackBlocks(const Json::Value& config)
 : ICozmoBehavior(config)
 {

@@ -39,7 +39,18 @@ protected:
   virtual void OnBehaviorDeactivated() override;
   
 private:
-  mutable SmartFaceID _targetFace;
+  struct InstanceConfig {
+    InstanceConfig();
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    mutable SmartFaceID targetFace;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
   
 };
   

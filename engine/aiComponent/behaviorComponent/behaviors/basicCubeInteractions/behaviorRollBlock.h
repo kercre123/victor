@@ -49,16 +49,18 @@ private:
   };
 
   struct InstanceConfig{
-    bool isBlockRotationImportant = false;
-    int rollRetryCount = 1;
+    InstanceConfig();
+    bool isBlockRotationImportant;
+    int  rollRetryCount;
   };
 
   struct DynamicVariables{
+    DynamicVariables();
     ObjectID targetID;
-    bool     didAttemptDock        = false;
-    AxisName upAxisOnBehaviorStart = AxisName::X_POS;
-    State    behaviorState         = State::RollingBlock;
-    int rollRetryCount             = 0;
+    bool     didAttemptDock;
+    AxisName upAxisOnBehaviorStart;
+    State    behaviorState;
+    int      rollRetryCount;
   };
 
   InstanceConfig _iConfig;

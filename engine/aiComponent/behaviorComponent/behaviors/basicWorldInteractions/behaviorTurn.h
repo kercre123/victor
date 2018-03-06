@@ -34,9 +34,17 @@ protected:
   
   
 private:
-  struct {
-    float turnRad = 0.f;
-  } _params;
+  struct InstanceConfig {
+    InstanceConfig();
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    float turnRad;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
 
 }; // class __Cozmo_Basestation_Behaviors_BehaviorTurn_H__
 

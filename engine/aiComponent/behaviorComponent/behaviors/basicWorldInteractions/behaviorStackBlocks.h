@@ -52,19 +52,21 @@ private:
   };
 
   struct InstanceConfig{
-    bool stackInAnyOrientation = false;
-    int placeRetryCount = 1;
-    BehaviorID pickupID = BehaviorID::Wait;
+    InstanceConfig();
     std::shared_ptr<BehaviorPickUpCube> pickupBehavior;
+    bool       stackInAnyOrientation;
+    int        placeRetryCount;
+    BehaviorID pickupID;
   };
 
   struct DynamicVariables{
+    DynamicVariables();
     ObjectID targetBlockTop;
     ObjectID targetBlockBottom;
 
-    State behaviorState = State::PickingUpBlock;
-    bool hasBottomTargetSwitched = false;
-    int placeRetryCount = 0;
+    State behaviorState;
+    bool  hasBottomTargetSwitched;
+    int   placeRetryCount;
   };
 
   InstanceConfig _iConfig;

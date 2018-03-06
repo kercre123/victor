@@ -43,6 +43,14 @@ protected:
   virtual void OnBehaviorActivated() override;
   
 private:
+  struct InstanceConfig {
+    InstanceConfig();
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+  };
+
 
   void LookDownAtBlock();
 

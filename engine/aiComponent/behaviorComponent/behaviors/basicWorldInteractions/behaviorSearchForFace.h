@@ -41,8 +41,19 @@ private:
     SearchingForFace,
     FoundFace
   };
+
+  struct InstanceConfig {
+    InstanceConfig();
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    State behaviorState;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
   
-  State    _behaviorState;
   
   void TransitionToSearchingAnimation();
   void TransitionToFoundFace();

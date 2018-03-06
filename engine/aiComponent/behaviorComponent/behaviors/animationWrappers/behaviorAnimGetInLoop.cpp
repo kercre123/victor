@@ -35,6 +35,27 @@ const char* kCheckEndCondKey             = "shouldCheckEndCondDuringAnim";
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorAnimGetInLoop::InstanceConfig::InstanceConfig()
+{
+  getInTrigger                = AnimationTrigger::Count;
+  loopTrigger                 = AnimationTrigger::Count;
+  getOutTrigger               = AnimationTrigger::Count;
+  emergencyGetOutTrigger      = AnimationTrigger::Count;
+  loopInterval_s              = 0;
+  checkEndConditionDuringAnim = true;
+};
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorAnimGetInLoop::DynamicVariables::DynamicVariables() 
+{
+  stage = BehaviorStage::GetIn;
+  shouldLoopEnd = false;
+  nextLoopTime_s = 0;
+};
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAnimGetInLoop::BehaviorAnimGetInLoop(const Json::Value& config)
 : ICozmoBehavior(config)
 {
@@ -70,6 +91,7 @@ BehaviorAnimGetInLoop::BehaviorAnimGetInLoop(const Json::Value& config)
   if(config.isMember(kLoopIntervalKey)){
     std::string debugStr = "BehaviorAnimGetInLoop.Constructor.LoopInterval";
     _iConfig.loopInterval_s = JsonTools::ParseFloat(config, kLoopIntervalKey, debugStr);
+
   }
 
 }
@@ -112,6 +134,7 @@ void BehaviorAnimGetInLoop::BehaviorUpdate()
   if(!IsActivated()){
     return;
   }
+
   if(_iConfig.checkEndConditionDuringAnim){
     _dVars.shouldLoopEnd |= _iConfig.endLoopCondition->AreConditionsMet(GetBEI());
   }
@@ -124,7 +147,6 @@ void BehaviorAnimGetInLoop::BehaviorUpdate()
     TransitionToGetOut();
   }
   
-
   const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if((_dVars.stage <= BehaviorStage::GetOut) &&
      (_dVars.nextLoopTime_s  < currentTime_sec)){

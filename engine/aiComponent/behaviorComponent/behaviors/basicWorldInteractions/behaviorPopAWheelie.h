@@ -39,20 +39,27 @@ protected:
   virtual bool WantsToBeActivatedBehavior() const override;
 
 private:
-  
-  // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
-  // UpdateWhileNotRunning
-  mutable ObjectID _targetBlock;
-  ObjectID _lastBlockReactedTo;
-  
-  s32 _numPopAWheelieActionRetries = 0;
-  
-  bool _hasDisabledcliff = false;
-        
   enum class DebugState {
     ReactingToBlock,
     PerformingAction
   };
+
+  struct InstanceConfig {
+    InstanceConfig();
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
+    // UpdateWhileNotRunning
+    mutable ObjectID targetBlock;
+    ObjectID         lastBlockReactedTo;
+    s32              numPopAWheelieActionRetries;
+    bool             hasDisabledcliff;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
         
   void TransitionToReactingToBlock();
   void TransitionToPerformingAction();

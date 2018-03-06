@@ -38,19 +38,59 @@ const char* kRaiseLiftAnimKey   = "raiseLiftAnimTrigger";
 const char* kNuzzleAnimKey      = "nuzzleAnimTrigger";
 }
   
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorGoHome::InstanceConfig::InstanceConfig()
+{
+  useCliffSensorCorrection = true;
+  leftTurnAnimTrigger      = AnimationTrigger::Count;
+  rightTurnAnimTrigger     = AnimationTrigger::Count;
+  backupStartAnimTrigger   = AnimationTrigger::Count;
+  backupEndAnimTrigger     = AnimationTrigger::Count;
+  backupLoopAnimTrigger    = AnimationTrigger::Count;
+  raiseLiftAnimTrigger     = AnimationTrigger::Count;
+  nuzzleAnimTrigger        = AnimationTrigger::Count;
+  homeFilter               = std::make_unique<BlockWorldFilter>();
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorGoHome::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
+{  
+  useCliffSensorCorrection = JsonTools::ParseBool(config, kUseCliffSensorsKey, debugName);
+  leftTurnAnimTrigger      = JsonTools::ParseAnimationTrigger(config, kLeftTurnAnimKey, debugName);
+  rightTurnAnimTrigger     = JsonTools::ParseAnimationTrigger(config, kRightTurnAnimKey, debugName);
+  backupStartAnimTrigger   = JsonTools::ParseAnimationTrigger(config, kBackupStartAnimKey, debugName);
+  backupEndAnimTrigger     = JsonTools::ParseAnimationTrigger(config, kBackupEndAnimKey, debugName);
+  backupLoopAnimTrigger    = JsonTools::ParseAnimationTrigger(config, kBackupLoopAnimKey, debugName);
+  raiseLiftAnimTrigger     = JsonTools::ParseAnimationTrigger(config, kRaiseLiftAnimKey, debugName);
+  nuzzleAnimTrigger        = JsonTools::ParseAnimationTrigger(config, kNuzzleAnimKey, debugName);
+  homeFilter               = std::make_unique<BlockWorldFilter>();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorGoHome::DynamicVariables::DynamicVariables()
+{
+  drivingAnimsPushed = false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorGoHome::BehaviorGoHome(const Json::Value& config)
   : ICozmoBehavior(config)
-  , _homeFilter(std::make_unique<BlockWorldFilter>())
 {
-  LoadConfig(config["params"]);
+  const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
+  _iConfig = InstanceConfig(config["params"], debugName);
   
   // Set up block world filter for finding Home object
-  _homeFilter->AddAllowedFamily(ObjectFamily::Charger);
-  _homeFilter->AddAllowedType(ObjectType::Charger_Basic);
+  _iConfig.homeFilter->AddAllowedFamily(ObjectFamily::Charger);
+  _iConfig.homeFilter->AddAllowedType(ObjectType::Charger_Basic);
 }
- 
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorGoHome::WantsToBeActivatedBehavior() const
 {
   const bool isOnCharger = GetBEI().GetRobotInfo().IsOnChargerPlatform();
@@ -61,7 +101,7 @@ bool BehaviorGoHome::WantsToBeActivatedBehavior() const
   // If we have a located Home/charger, then we can be activated.
   
   std::vector<const ObservableObject*> locatedHomes;
-  GetBEI().GetBlockWorld().FindLocatedMatchingObjects(*_homeFilter, locatedHomes);
+  GetBEI().GetBlockWorld().FindLocatedMatchingObjects(*_iConfig.homeFilter, locatedHomes);
   
   const bool hasAHome = !locatedHomes.empty();
   
@@ -69,10 +109,11 @@ bool BehaviorGoHome::WantsToBeActivatedBehavior() const
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::OnBehaviorActivated()
 {
   const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
-  const auto* object = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_homeFilter);
+  const auto* object = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_iConfig.homeFilter);
   
   if (object == nullptr) {
     PRINT_NAMED_ERROR("BehaviorGoHome.OnBehaviorActivated", "No homes found!");
@@ -82,9 +123,9 @@ void BehaviorGoHome::OnBehaviorActivated()
   // Push driving animations
   PushDrivingAnims();
   
-  _chargerID = object->GetID();
+  _dVars.chargerID = object->GetID();
   
-  auto driveToAction = new DriveToObjectAction(_chargerID, PreActionPose::ActionType::DOCKING);
+  auto driveToAction = new DriveToObjectAction(_dVars.chargerID, PreActionPose::ActionType::DOCKING);
   driveToAction->SetPreActionPoseAngleTolerance(DEG_TO_RAD(15.f));
   DelegateIfInControl(driveToAction,
                       [this](ActionResult result) {
@@ -97,18 +138,20 @@ void BehaviorGoHome::OnBehaviorActivated()
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::OnBehaviorDeactivated()
 {
   PopDrivingAnims();
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::TransitionToTurn()
 {
   // Turn to align with the charger
-  DelegateIfInControl(new TurnToAlignWithChargerAction(_chargerID,
-                                                       _params.leftTurnAnimTrigger,
-                                                       _params.rightTurnAnimTrigger),
+  DelegateIfInControl(new TurnToAlignWithChargerAction(_dVars.chargerID,
+                                                       _iConfig.leftTurnAnimTrigger,
+                                                       _iConfig.rightTurnAnimTrigger),
                       [this](ActionResult result) {
                         if (result == ActionResult::SUCCESS) {
                           TransitionToMountCharger();
@@ -119,12 +162,13 @@ void BehaviorGoHome::TransitionToTurn()
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::TransitionToMountCharger()
 {
   // Play the animations to raise lift, then mount the charger
   auto* action = new CompoundActionSequential();
-  action->AddAction(new TriggerAnimationAction(_params.raiseLiftAnimTrigger));
-  action->AddAction(new MountChargerAction(_chargerID, _params.useCliffSensorCorrection));
+  action->AddAction(new TriggerAnimationAction(_iConfig.raiseLiftAnimTrigger));
+  action->AddAction(new MountChargerAction(_dVars.chargerID, _iConfig.useCliffSensorCorrection));
   
   DelegateIfInControl(action,
                       [this](ActionResult result) {
@@ -137,69 +181,59 @@ void BehaviorGoHome::TransitionToMountCharger()
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::TransitionToPlayingNuzzleAnim()
 {
   // Remove driving animations
   PopDrivingAnims();
   
-  DelegateIfInControl(new TriggerAnimationAction(_params.nuzzleAnimTrigger),
+  DelegateIfInControl(new TriggerAnimationAction(_iConfig.nuzzleAnimTrigger),
                       &BehaviorGoHome::TransitionToOnChargerCheck);
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::TransitionToOnChargerCheck()
 {
   // If we've somehow wiggled off the charge contacts, try the backup
   // onto charger action again to get us back onto the contacts
   if (!GetBEI().GetRobotInfo().IsOnChargerContacts()) {
-    DelegateIfInControl(new BackupOntoChargerAction(_chargerID, true));
+    DelegateIfInControl(new BackupOntoChargerAction(_dVars.chargerID, true));
   }
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::ActionFailure()
 {
   PRINT_NAMED_WARNING("BehaviorGoHome.ActionFailure",
                       "BehaviorGoHome ending due to an action failure");
 }
-  
-  
-void BehaviorGoHome::LoadConfig(const Json::Value& config)
-{
-  const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
-  
-  _params.useCliffSensorCorrection = JsonTools::ParseBool(config, kUseCliffSensorsKey, debugName);
-  _params.leftTurnAnimTrigger      = JsonTools::ParseAnimationTrigger(config, kLeftTurnAnimKey, debugName);
-  _params.rightTurnAnimTrigger     = JsonTools::ParseAnimationTrigger(config, kRightTurnAnimKey, debugName);
-  _params.backupStartAnimTrigger   = JsonTools::ParseAnimationTrigger(config, kBackupStartAnimKey, debugName);
-  _params.backupEndAnimTrigger     = JsonTools::ParseAnimationTrigger(config, kBackupEndAnimKey, debugName);
-  _params.backupLoopAnimTrigger    = JsonTools::ParseAnimationTrigger(config, kBackupLoopAnimKey, debugName);
-  _params.raiseLiftAnimTrigger     = JsonTools::ParseAnimationTrigger(config, kRaiseLiftAnimKey, debugName);
-  _params.nuzzleAnimTrigger        = JsonTools::ParseAnimationTrigger(config, kNuzzleAnimKey, debugName);
-}
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::PushDrivingAnims()
 {
-  DEV_ASSERT(!_drivingAnimsPushed, "BehaviorGoHome.PushDrivingAnims.AnimsAlreadyPushed");
+  DEV_ASSERT(!_dVars.drivingAnimsPushed, "BehaviorGoHome.PushDrivingAnims.AnimsAlreadyPushed");
   
-  if (!_drivingAnimsPushed) {
+  if (!_dVars.drivingAnimsPushed) {
     auto& drivingAnimHandler = GetBEI().GetRobotInfo().GetDrivingAnimationHandler();
-    drivingAnimHandler.PushDrivingAnimations({_params.backupStartAnimTrigger,
-                                              _params.backupLoopAnimTrigger,
-                                              _params.backupEndAnimTrigger},
+    drivingAnimHandler.PushDrivingAnimations({_iConfig.backupStartAnimTrigger,
+                                              _iConfig.backupLoopAnimTrigger,
+                                              _iConfig.backupEndAnimTrigger},
                                              GetDebugLabel());
-    _drivingAnimsPushed = true;
+    _dVars.drivingAnimsPushed = true;
   }
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::PopDrivingAnims()
 {
-  if (_drivingAnimsPushed) {
+  if (_dVars.drivingAnimsPushed) {
     auto& drivingAnimHandler = GetBEI().GetRobotInfo().GetDrivingAnimationHandler();
     drivingAnimHandler.RemoveDrivingAnimations(GetDebugLabel());
-    _drivingAnimsPushed = false;
+    _dVars.drivingAnimsPushed = false;
   }
 }
 

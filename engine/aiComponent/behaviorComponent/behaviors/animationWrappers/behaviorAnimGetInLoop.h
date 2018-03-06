@@ -59,19 +59,22 @@ private:
   };
 
   struct InstanceConfig {
-    AnimationTrigger getInTrigger                = AnimationTrigger::Count;
-    AnimationTrigger loopTrigger                 = AnimationTrigger::Count;
-    AnimationTrigger getOutTrigger               = AnimationTrigger::Count;
-    AnimationTrigger emergencyGetOutTrigger      = AnimationTrigger::Count;
-    float            loopInterval_s              = 0;
-    bool             checkEndConditionDuringAnim = true;
+    InstanceConfig();
+    AnimationTrigger getInTrigger;
+    AnimationTrigger loopTrigger;
+    AnimationTrigger getOutTrigger;
+    AnimationTrigger emergencyGetOutTrigger;
+    float            loopInterval_s;
+    bool             checkEndConditionDuringAnim;
+
     IBEIConditionPtr endLoopCondition;
   };
 
   struct DynamicVariables {
-    BehaviorStage stage  = BehaviorStage::GetIn;
-    bool shouldLoopEnd   = false;
-    float nextLoopTime_s = 0;
+    DynamicVariables();
+    BehaviorStage stage;
+    bool shouldLoopEnd;
+    float nextLoopTime_s;
   };
 
   InstanceConfig   _iConfig;

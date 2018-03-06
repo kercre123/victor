@@ -18,20 +18,21 @@
 namespace Anki {
 namespace Cozmo {
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAnimSequenceWithFace::BehaviorAnimSequenceWithFace(const Json::Value& config)
 : BaseClass(config)
 {
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAnimSequenceWithFace::OnBehaviorActivated()
 {
   // attempt to turn towards last face, and even if fails, move on to the animations
   DelegateIfInControl(new TurnTowardsLastFacePoseAction(), [this]() {
       BaseClass::StartPlayingAnimations();
-    });
-
-        
+    });      
 }
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki

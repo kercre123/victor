@@ -23,26 +23,43 @@ namespace Anki {
 namespace Cozmo {
   
 namespace {
-  const char* kObjectTypeKey = "objectType";
+const char* kObjectTypeKey = "objectType";
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+BehaviorAnimSequenceWithObject::InstanceConfig::InstanceConfig() 
+{
+  objectType = ObjectType::UnknownObject;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
+BehaviorAnimSequenceWithObject::DynamicVariables::DynamicVariables() 
+{
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  
 BehaviorAnimSequenceWithObject::BehaviorAnimSequenceWithObject(const Json::Value& config)
 : BaseClass(config)
 {
   std::string objectTypeStr;
   if (JsonTools::GetValueOptional(config, kObjectTypeKey, objectTypeStr)) {
-    _objectType = ObjectTypeFromString(objectTypeStr);
+    _iConfig.objectType = ObjectTypeFromString(objectTypeStr);
   }
 }
   
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 bool BehaviorAnimSequenceWithObject::WantsToBeActivatedBehavior() const
 {
   return (GetLocatedObject() != nullptr);
 }
   
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAnimSequenceWithObject::OnBehaviorActivated()
 {
   const auto* obj = GetLocatedObject();
@@ -58,12 +75,13 @@ void BehaviorAnimSequenceWithObject::OnBehaviorActivated()
 }
   
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const ObservableObject* BehaviorAnimSequenceWithObject::GetLocatedObject() const
 {
   // Find matching objects
   BlockWorldFilter filter;
-  if (_objectType != ObjectType::UnknownObject) {
-    filter.AddAllowedType(_objectType);
+  if (_iConfig.objectType != ObjectType::UnknownObject) {
+    filter.AddAllowedType(_iConfig.objectType);
   }
   const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
   const auto* object = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, filter);
@@ -71,5 +89,5 @@ const ObservableObject* BehaviorAnimSequenceWithObject::GetLocatedObject() const
   return object;
 }
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
