@@ -17,6 +17,11 @@
 
 static headid_t headnfo;
 
+static uint32_t m_previous_esn = 0;
+uint32_t TestHeadGetPrevESN(void) {
+  return m_previous_esn;
+}
+
 bool TestHeadDetect(void)
 {
   memset( &headnfo, 0, sizeof(headnfo) );
@@ -85,6 +90,7 @@ void TestHeadDutProgram(void)
   
   //provision ESN
   headnfo.esn = fixtureGetSerial();
+  m_previous_esn = headnfo.esn; //even if programming fails, report the (now unusable) ESN
   
   //helper head does the rest
   cmdSend(CMD_IO_HELPER, snformat(b,bz,"dutprogram %u %08x", timeout_s, headnfo.esn), (timeout_s+10)*1000, HEAD_CMD_OPTS | CMD_OPTS_ALLOW_STATUS_ERRS );

@@ -24,6 +24,7 @@ TestFunction* TestBody2GetTests(void);
 TestFunction* TestBody3GetTests(void);
 
 //Head
+uint32_t      TestHeadGetPrevESN(void);
 bool          TestHeadDetect(void);
 void          TestHeadCleanup(void);
 TestFunction* TestHead1GetTests(void);
