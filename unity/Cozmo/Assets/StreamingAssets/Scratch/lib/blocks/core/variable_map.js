@@ -253,9 +253,20 @@ Blockly.VariableMap.prototype.deleteVariableById = function(id) {
     var map = this;
     if (uses.length > 1) {
       // Confirm before deleting multiple blocks.
-      var confirmText = Blockly.Msg.DELETE_VARIABLE_CONFIRMATION.
+
+      // *** ANKI CHANGE *** 
+      // Make dialog text refer to list if appropriate instead of variable
+      var confirmText;
+      if (variable.type == "list") {
+        confirmText = Blockly.Msg.DELETE_LIST_CONFIRMATION.
           replace('%1', String(uses.length)).
           replace('%2', variableName);
+      }
+      else {
+        confirmText = Blockly.Msg.DELETE_VARIABLE_CONFIRMATION.
+          replace('%1', String(uses.length)).
+          replace('%2', variableName);
+      }
       Blockly.confirm(confirmText,
           function(ok) {
             if (ok) {

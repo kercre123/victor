@@ -683,5 +683,8 @@
   },
   "codeLabVertical.DELETE_LIST": {
     "translation" : "%1リストを削除する"
+  },
+  "codeLabVertical.DELETE_LIST_CONFIRMATION": {
+    "translation": "%1か所で使われている変数 '%2' を削除しますか？"
   }
 }

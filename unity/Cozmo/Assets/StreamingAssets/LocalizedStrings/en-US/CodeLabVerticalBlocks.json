@@ -689,5 +689,8 @@
   },
   "codeLabVertical.DELETE_LIST": {
     "translation": "Delete the '%1' list"
+  },
+  "codeLabVertical.DELETE_LIST_CONFIRMATION": {
+    "translation": "Delete %1 uses of the '%2' list?"
   }
 }
