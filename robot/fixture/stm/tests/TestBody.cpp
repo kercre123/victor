@@ -216,6 +216,11 @@ static void BodyBootcheckProductionFirmware(void)
 {
   mcu_power_down_();
   
+  //DEBUG: console bridge, manual testing
+  if( g_fixmode < FIXMODE_BODY1 ) {
+    TestCommon::consoleBridge(TO_CONTACTS,3000);
+  }
+  
   //Power up and test comms
   Board::powerOn(PWR_VEXT,0); //must provide VEXT to wake up the mcu
   if( g_fixmode < FIXMODE_BODY3 )
@@ -301,7 +306,8 @@ TestFunction* TestBody0GetTests(void)
   static TestFunction m_tests_0a[] = {
     ShortCircuitTest,
     //BodyTryReadSerial, --skip serial read. forces blank state
-    BodyLoadTestFirmware,
+    //BodyLoadTestFirmware,
+    BodyBootcheckProductionFirmware,
     //BodyChargeContactElectricalDebug,
     NULL,
   };
