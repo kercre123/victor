@@ -23,151 +23,151 @@
                 "variables": {
                     ",9=yzv7zR:zeE$;JXyyO": {
                         "id": ",9=yzv7zR:zeE$;JXyyO",
-                        "name": "codelabfeaturedproject.guessthenumber.display_guess",
+                        "name": "afficher la supposition",
                         "type": "broadcast_msg",
                         "value": "display guess"
                     },
                     "2bncxZXZ/NkerG~*iGe#": {
                         "id": "2bncxZXZ/NkerG~*iGe#",
-                        "name": "codelabfeaturedproject.guessthenumber.lower_number_cube_is_tapped",
+                        "name": "Un cube d'un nombre inf\u00e9rieur a \u00e9t\u00e9 touch\u00e9.",
                         "type": "",
                         "value": 0
                     },
                     "5!ob.k8xwW~C26msLyLS": {
                         "id": "5!ob.k8xwW~C26msLyLS",
-                        "name": "codelabfeaturedproject.guessthenumber.turn_off_the_backpack_light",
+                        "name": "D\u00e9sactive les voyants dorsaux.",
                         "type": "",
                         "value": 0
                     },
                     "5Ij(~W_P0A1U@J7t;}|U": {
                         "id": "5Ij(~W_P0A1U@J7t;}|U",
-                        "name": "codelabfeaturedproject.guessthenumber.started",
+                        "name": "commenc\u00e9",
                         "type": "",
                         "value": "1"
                     },
                     "7eq/8yclar7y~EO+ZtPY": {
                         "id": "7eq/8yclar7y~EO+ZtPY",
-                        "name": "codelabfeaturedproject.guessthenumber.higher_number_cube_is_tapped",
+                        "name": "Un cube d'un nombre sup\u00e9rieur a \u00e9t\u00e9 touch\u00e9.",
                         "type": "",
                         "value": 0
                     },
                     "9lsmE|?rn+UvD|de-8z4": {
                         "id": "9lsmE|?rn+UvD|de-8z4",
-                        "name": "codelabfeaturedproject.guessthenumber.cozmo_has_guessed_the_number_so_end_the_game",
+                        "name": "Fin de la partie, Cozmo a devin\u00e9 le nombre.",
                         "type": "",
                         "value": 0
                     },
                     "AhO~eVWZFAdF8)lihXK=": {
                         "id": "AhO~eVWZFAdF8)lihXK=",
-                        "name": "codelabfeaturedproject.guessthenumber.initialize_the_game_and_give_instructions",
+                        "name": "Initialiser le jeu et donner des instructions.",
                         "type": "",
                         "value": 0
                     },
                     "C944iSq$Ka@@otR58d]3": {
                         "id": "C944iSq$Ka@@otR58d]3",
-                        "name": "codelabfeaturedproject.guessthenumber.start_and_end_game_cube_is_tapped",
+                        "name": "Le cube de d\u00e9but et de fin de partie a \u00e9t\u00e9 touch\u00e9.",
                         "type": "",
                         "value": 0
                     },
                     "E_Mb7Urs{p8,^U+7FF1d": {
                         "id": "E_Mb7Urs{p8,^U+7FF1d",
-                        "name": "codelabfeaturedproject.guessthenumber.end_game",
+                        "name": "fin de la partie",
                         "type": "broadcast_msg",
                         "value": "end game"
                     },
                     "FL)wle7,1#do71s3J]_z": {
                         "id": "FL)wle7,1#do71s3J]_z",
-                        "name": "codelabfeaturedproject.guessthenumber.spin_lights",
+                        "name": "illuminer les voyants",
                         "type": "broadcast_msg",
                         "value": "spin lights"
                     },
                     "H@p,^b(S38y[O}#k}}I|": {
                         "id": "H@p,^b(S38y[O}#k}}I|",
-                        "name": "codelabfeaturedproject.guessthenumber.reset_lights",
+                        "name": "r\u00e9initialiser les voyants",
                         "type": "broadcast_msg",
                         "value": "reset lights"
                     },
                     "I]C.SU[:`mS]Fm)I:p4q": {
                         "id": "I]C.SU[:`mS]Fm)I:p4q",
-                        "name": "codelabfeaturedproject.guessthenumber.max",
+                        "name": "max.",
                         "type": "",
                         "value": 46
                     },
                     "V2rWPMh}?bCZTB/jIKWD": {
                         "id": "V2rWPMh}?bCZTB/jIKWD",
-                        "name": "codelabfeaturedproject.guessthenumber.guess",
+                        "name": "deviner",
                         "type": "",
                         "value": 44
                     },
                     "^(T~92_uxQ0;_cHe4ZC#": {
                         "id": "^(T~92_uxQ0;_cHe4ZC#",
-                        "name": "codelabfeaturedproject.guessthenumber.after_incorrect_guess_play_sad_animation_and_reguess",
+                        "name": "Une animation triste appara\u00eet si Cozmo se trompe. Retentons notre chance.",
                         "type": "",
                         "value": 0
                     },
                     "fiIc.L.}KtXO4vW]@|,f": {
                         "id": "fiIc.L.}KtXO4vW]@|,f",
-                        "name": "codelabfeaturedproject.guessthenumber.display_the_guess_cozmo_has_made",
+                        "name": "Afficher la supposition de Cozmo.",
                         "type": "",
                         "value": 0
                     },
                     "jVQK4N12~ZZ}g=5Y+~Rk": {
                         "id": "jVQK4N12~ZZ}g=5Y+~Rk",
-                        "name": "codelabfeaturedproject.guessthenumber.new_guess",
+                        "name": "nouvelle tentative",
                         "type": "broadcast_msg",
                         "value": "new guess"
                     },
                     "k6+o/oNDW2O68R,D.+c(": {
                         "id": "k6+o/oNDW2O68R,D.+c(",
-                        "name": "codelabfeaturedproject.guessthenumber.reset_the_cube_lights_to_the_colors_used_for_gameplay",
+                        "name": "R\u00e9initialise les voyants du cube utilis\u00e9s pour le jeu.",
                         "type": "",
                         "value": 0
                     },
                     "kf;Ezn.ORl:3j.v:.v`$": {
                         "id": "kf;Ezn.ORl:3j.v:.v`$",
-                        "name": "codelabfeaturedproject.guessthenumber.min",
+                        "name": "min.",
                         "type": "",
                         "value": 42
                     },
                     "oij$a?yKBJb+o5+Ol.=,": {
                         "id": "oij$a?yKBJb+o5+Ol.=,",
-                        "name": "codelabfeaturedproject.guessthenumber.cozmo_gives_instructions",
+                        "name": "Cozmo donne des instructions.",
                         "type": "",
                         "value": 0
                     },
                     "qURdyL-v$_9]]+;ox,ya": {
                         "id": "qURdyL-v$_9]]+;ox,ya",
-                        "name": "codelabfeaturedproject.guessthenumber.totalguesses",
+                        "name": "nombre total de suppositions",
                         "type": "",
                         "value": 6
                     },
                     "uj1v/FX)*u*BPrq$mv:a": {
                         "id": "uj1v/FX)*u*BPrq$mv:a",
-                        "name": "codelabfeaturedproject.guessthenumber.give_instructions",
+                        "name": "donner des instructions",
                         "type": "broadcast_msg",
                         "value": "give instructions"
                     },
                     "wLTe)C4A2H}E=Hl-SA1!": {
                         "id": "wLTe)C4A2H}E=Hl-SA1!",
-                        "name": "codelabfeaturedproject.guessthenumber.gameover",
+                        "name": "Partie termin\u00e9e",
                         "type": "",
                         "value": "1"
                     },
                     "x)KbWLPvpKhh@|L?hp.T": {
                         "id": "x)KbWLPvpKhh@|L?hp.T",
-                        "name": "codelabfeaturedproject.guessthenumber.turn_off_backpack",
+                        "name": "d\u00e9sactiver les voyants dorsaux",
                         "type": "broadcast_msg",
                         "value": "turn off backpack"
                     },
                     "}[neTF)o8A@8u%1[?`BN": {
                         "id": "}[neTF)o8A@8u%1[?`BN",
-                        "name": "codelabfeaturedproject.guessthenumber.tapon",
+                        "name": "toucher",
                         "type": "",
                         "value": "0"
                     },
                     "~S9R6L^F[.MO15G:THcj": {
                         "id": "~S9R6L^F[.MO15G:THcj",
-                        "name": "codelabfeaturedproject.guessthenumber.spin_all_of_the_cube_lights_in_white",
+                        "name": "Illumine tous les voyants du cube en blanc.",
                         "type": "",
                         "value": 0
                     }
@@ -183,7 +183,7 @@
                             "VARIABLE": {
                                 "id": "5Ij(~W_P0A1U@J7t;}|U",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.started"
+                                "value": "commenc\u00e9"
                             }
                         },
                         "id": "!R.=n-Kv2~s#|.IPW=]s",
@@ -216,7 +216,7 @@
                             "VARIABLE": {
                                 "id": "k6+o/oNDW2O68R,D.+c(",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.reset_the_cube_lights_to_the_colors_used_for_gameplay",
+                                "value": "R\u00e9initialise les voyants du cube utilis\u00e9s pour le jeu.",
                                 "variableType": ""
                             }
                         },
@@ -250,7 +250,7 @@
                             "VARIABLE": {
                                 "id": "C944iSq$Ka@@otR58d]3",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.start_and_end_game_cube_is_tapped",
+                                "value": "Le cube de d\u00e9but et de fin de partie a \u00e9t\u00e9 touch\u00e9.",
                                 "variableType": ""
                             }
                         },
@@ -297,7 +297,7 @@
                             "VARIABLE": {
                                 "id": "V2rWPMh}?bCZTB/jIKWD",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                                "value": "deviner"
                             }
                         },
                         "id": "(,Snp(2?h=+D@MBL4;b)",
@@ -330,7 +330,7 @@
                             "VARIABLE": {
                                 "id": "2bncxZXZ/NkerG~*iGe#",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.lower_number_cube_is_tapped",
+                                "value": "Un cube d'un nombre inf\u00e9rieur a \u00e9t\u00e9 touch\u00e9.",
                                 "variableType": ""
                             }
                         },
@@ -440,7 +440,7 @@
                             "VARIABLE": {
                                 "id": "wLTe)C4A2H}E=Hl-SA1!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.gameover"
+                                "value": "Partie termin\u00e9e"
                             }
                         },
                         "id": "+.}UkpYDdzvo1|SMY+|u",
@@ -517,7 +517,7 @@
                             "VARIABLE": {
                                 "id": "5Ij(~W_P0A1U@J7t;}|U",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.started"
+                                "value": "commenc\u00e9"
                             }
                         },
                         "id": "-$;If}w{9c8FhMPg*gY=",
@@ -622,7 +622,7 @@
                             "VARIABLE": {
                                 "id": "I]C.SU[:`mS]Fm)I:p4q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.max"
+                                "value": "max."
                             }
                         },
                         "id": ".D,eXwW:,q4`HsMEVf-?",
@@ -658,7 +658,7 @@
                             "VARIABLE": {
                                 "id": "}[neTF)o8A@8u%1[?`BN",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.tapon"
+                                "value": "toucher"
                             }
                         },
                         "id": ".c#1;B~6|G+?~T|?[}Ro",
@@ -717,7 +717,7 @@
                             "VARIABLE": {
                                 "id": "V2rWPMh}?bCZTB/jIKWD",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.guess",
+                                "value": "deviner",
                                 "variableType": ""
                             }
                         },
@@ -862,7 +862,7 @@
                             "VARIABLE": {
                                 "id": "7eq/8yclar7y~EO+ZtPY",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.higher_number_cube_is_tapped",
+                                "value": "Un cube d'un nombre sup\u00e9rieur a \u00e9t\u00e9 touch\u00e9.",
                                 "variableType": ""
                             }
                         },
@@ -1168,7 +1168,7 @@
                             "VARIABLE": {
                                 "id": "I]C.SU[:`mS]Fm)I:p4q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.max"
+                                "value": "max."
                             }
                         },
                         "id": "7UE#rwLIOV,$;JF*[7ih",
@@ -1324,7 +1324,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.guessthenumber.hi"
+                                "value": "Bonjour"
                             }
                         },
                         "id": "9fCz{F73[.!uHT}U0.O3",
@@ -1393,7 +1393,7 @@
                             "VARIABLE": {
                                 "id": "}[neTF)o8A@8u%1[?`BN",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.tapon",
+                                "value": "toucher",
                                 "variableType": ""
                             }
                         },
@@ -1436,7 +1436,7 @@
                             "VARIABLE": {
                                 "id": "wLTe)C4A2H}E=Hl-SA1!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.gameover"
+                                "value": "Partie termin\u00e9e"
                             }
                         },
                         "id": ";:NX6h=Sxzibw171Vs8#",
@@ -1493,7 +1493,7 @@
                             "VARIABLE": {
                                 "id": "kf;Ezn.ORl:3j.v:.v`$",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.min"
+                                "value": "min."
                             }
                         },
                         "id": "?UeSNJ9]{$;s_Tv%AzAt",
@@ -1614,7 +1614,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.guessthenumber.think_of_a_number_between_1_and_100_and_tap_purple_to_continue"
+                                "value": "Penser \u00e0 un nombre compris entre 1\u00a0et\u00a0100, puis toucher les voyants violets pour continuer."
                             }
                         },
                         "id": "A6Q!9gD`NzQFU#7jg*i@",
@@ -1814,7 +1814,7 @@
                             "VARIABLE": {
                                 "id": "V2rWPMh}?bCZTB/jIKWD",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                                "value": "deviner"
                             }
                         },
                         "id": "C@^Q_6s{HpT[MmSr2MJf",
@@ -1870,7 +1870,7 @@
                             "VARIABLE": {
                                 "id": "qURdyL-v$_9]]+;ox,ya",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.totalguesses"
+                                "value": "nombre total de suppositions"
                             }
                         },
                         "id": "Cm#sw5b@Kl-BGJD5x`RI",
@@ -1991,7 +1991,7 @@
                             "VARIABLE": {
                                 "id": "5!ob.k8xwW~C26msLyLS",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.turn_off_the_backpack_light",
+                                "value": "D\u00e9sactive les voyants dorsaux.",
                                 "variableType": ""
                             }
                         },
@@ -2180,7 +2180,7 @@
                             "VARIABLE": {
                                 "id": "fiIc.L.}KtXO4vW]@|,f",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.display_the_guess_cozmo_has_made",
+                                "value": "Afficher la supposition de Cozmo.",
                                 "variableType": ""
                             }
                         },
@@ -2199,7 +2199,7 @@
                             "VARIABLE": {
                                 "id": "I]C.SU[:`mS]Fm)I:p4q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.max"
+                                "value": "max."
                             }
                         },
                         "id": "I=^J0^5yesDH?MVd=-,Q",
@@ -2216,7 +2216,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.guessthenumber._guesses"
+                                "value": " Devinettes\u00a0!"
                             }
                         },
                         "id": "I`GO4Jh)])#_`oBen(a4",
@@ -2232,7 +2232,7 @@
                             "VARIABLE": {
                                 "id": "kf;Ezn.ORl:3j.v:.v`$",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.min"
+                                "value": "min."
                             }
                         },
                         "id": "J!D4$lU*L=5GE+r*38Fx",
@@ -2317,7 +2317,7 @@
                             "VARIABLE": {
                                 "id": "V2rWPMh}?bCZTB/jIKWD",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.guess",
+                                "value": "deviner",
                                 "variableType": ""
                             }
                         },
@@ -2366,7 +2366,7 @@
                             "VARIABLE": {
                                 "id": "qURdyL-v$_9]]+;ox,ya",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.totalguesses"
+                                "value": "nombre total de suppositions"
                             }
                         },
                         "id": "KlRPAcuAG09H#j+;*)R~",
@@ -2899,7 +2899,7 @@
                             "VARIABLE": {
                                 "id": "qURdyL-v$_9]]+;ox,ya",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.totalguesses",
+                                "value": "nombre total de suppositions",
                                 "variableType": ""
                             }
                         },
@@ -2959,7 +2959,7 @@
                             "VARIABLE": {
                                 "id": "^(T~92_uxQ0;_cHe4ZC#",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.after_incorrect_guess_play_sad_animation_and_reguess"
+                                "value": "Une animation triste appara\u00eet si Cozmo se trompe. Retentons notre chance."
                             }
                         },
                         "id": "X+#RV|xm,a=GqA{H#:KY",
@@ -3033,7 +3033,7 @@
                             "VARIABLE": {
                                 "id": "kf;Ezn.ORl:3j.v:.v`$",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.min"
+                                "value": "min."
                             }
                         },
                         "id": "X[1of$L-h|uXfAUna!%|",
@@ -3106,7 +3106,7 @@
                             "VARIABLE": {
                                 "id": "oij$a?yKBJb+o5+Ol.=,",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.cozmo_gives_instructions",
+                                "value": "Cozmo donne des instructions.",
                                 "variableType": ""
                             }
                         },
@@ -3237,7 +3237,7 @@
                             "VARIABLE": {
                                 "id": "}[neTF)o8A@8u%1[?`BN",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.tapon"
+                                "value": "toucher"
                             }
                         },
                         "id": "]Q:n)?{ju,EA~F%F^4vP",
@@ -3283,7 +3283,7 @@
                             "VARIABLE": {
                                 "id": "5Ij(~W_P0A1U@J7t;}|U",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.started"
+                                "value": "commenc\u00e9"
                             }
                         },
                         "id": "^-WvN[[+j;U4i3H?j[4Z",
@@ -3346,7 +3346,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.guessthenumber.is"
+                                "value": "Est-ce que"
                             }
                         },
                         "id": "^XnV(OB5A)SI^NWIIxZg",
@@ -3363,7 +3363,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.guessthenumber.i_guessed_your_number_in_"
+                                "value": "J'ai devin\u00e9 ton nombre en "
                             }
                         },
                         "id": "_4A)e`?obCOga1L(F,HI",
@@ -3580,7 +3580,7 @@
                             "VARIABLE": {
                                 "id": "wLTe)C4A2H}E=Hl-SA1!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.gameover"
+                                "value": "Partie termin\u00e9e"
                             }
                         },
                         "id": "dyFi}]K?w3[~p4$r0PL7",
@@ -3630,7 +3630,7 @@
                             "VARIABLE": {
                                 "id": "}[neTF)o8A@8u%1[?`BN",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.tapon"
+                                "value": "toucher"
                             }
                         },
                         "id": "f6)^*Bt)2(jM:TqbZSe~",
@@ -3682,7 +3682,7 @@
                             "VARIABLE": {
                                 "id": "}[neTF)o8A@8u%1[?`BN",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.tapon"
+                                "value": "toucher"
                             }
                         },
                         "id": "g5d9#(frH?jkQklb,Ig/",
@@ -3706,7 +3706,7 @@
                             "VARIABLE": {
                                 "id": "V2rWPMh}?bCZTB/jIKWD",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                                "value": "deviner"
                             }
                         },
                         "id": "gOr,VIf)OU0;Xz(.Orj%",
@@ -3834,7 +3834,7 @@
                             "VARIABLE": {
                                 "id": "}[neTF)o8A@8u%1[?`BN",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.tapon"
+                                "value": "toucher"
                             }
                         },
                         "id": "l09F2OOZXi{W.63.Q[-$",
@@ -3894,7 +3894,7 @@
                             "VARIABLE": {
                                 "id": "V2rWPMh}?bCZTB/jIKWD",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                                "value": "deviner"
                             }
                         },
                         "id": "m%g/@zgl+,R_DHaCtyPr",
@@ -3933,7 +3933,7 @@
                             "VARIABLE": {
                                 "id": "5Ij(~W_P0A1U@J7t;}|U",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.started"
+                                "value": "commenc\u00e9"
                             }
                         },
                         "id": "m4994wMRG#gXI(EeU6P|",
@@ -3957,7 +3957,7 @@
                             "VARIABLE": {
                                 "id": "I]C.SU[:`mS]Fm)I:p4q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.max"
+                                "value": "max."
                             }
                         },
                         "id": "m7JqS=N.riYov?S,SAr5",
@@ -3997,7 +3997,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.guessthenumber.is_your_number_"
+                                "value": "Est-ce que ton nombre est "
                             }
                         },
                         "id": "nCS-bL-8B]s!M-MJ7HPe",
@@ -4147,7 +4147,7 @@
                             "VARIABLE": {
                                 "id": "V2rWPMh}?bCZTB/jIKWD",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                                "value": "deviner"
                             }
                         },
                         "id": "r;yFKAGGE,*FK!)?%TNt",
@@ -4223,7 +4223,7 @@
                             "VARIABLE": {
                                 "id": "V2rWPMh}?bCZTB/jIKWD",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                                "value": "deviner"
                             }
                         },
                         "id": "sU8]3rEbIx2Qh8X;X[5v",
@@ -4247,7 +4247,7 @@
                             "VARIABLE": {
                                 "id": "}[neTF)o8A@8u%1[?`BN",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.tapon"
+                                "value": "toucher"
                             }
                         },
                         "id": "s_7CopE;=3~hoGG(E?I4",
@@ -4349,7 +4349,7 @@
                             "VARIABLE": {
                                 "id": "~S9R6L^F[.MO15G:THcj",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.spin_all_of_the_cube_lights_in_white",
+                                "value": "Illumine tous les voyants du cube en blanc.",
                                 "variableType": ""
                             }
                         },
@@ -4428,7 +4428,7 @@
                             "VARIABLE": {
                                 "id": "9lsmE|?rn+UvD|de-8z4",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.cozmo_has_guessed_the_number_so_end_the_game",
+                                "value": "Fin de la partie, Cozmo a devin\u00e9 le nombre.",
                                 "variableType": ""
                             }
                         },
@@ -4705,7 +4705,7 @@
                             "VARIABLE": {
                                 "id": "AhO~eVWZFAdF8)lihXK=",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.initialize_the_game_and_give_instructions",
+                                "value": "Initialiser le jeu et donner des instructions.",
                                 "variableType": ""
                             }
                         },
@@ -4741,7 +4741,7 @@
                             "VARIABLE": {
                                 "id": "kf;Ezn.ORl:3j.v:.v`$",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.min"
+                                "value": "min."
                             }
                         },
                         "id": "}Q_zY;xd+Nu6~nstf6Fa",

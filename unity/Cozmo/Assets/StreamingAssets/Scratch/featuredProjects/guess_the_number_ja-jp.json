@@ -23,151 +23,151 @@
                 "variables": {
                     ",9=yzv7zR:zeE$;JXyyO": {
                         "id": ",9=yzv7zR:zeE$;JXyyO",
-                        "name": "codelabfeaturedproject.guessthenumber.display_guess",
+                        "name": "\u3088\u305d\u3046\u3092\u3072\u3087\u3046\u3058\u3059\u308b",
                         "type": "broadcast_msg",
                         "value": "display guess"
                     },
                     "2bncxZXZ/NkerG~*iGe#": {
                         "id": "2bncxZXZ/NkerG~*iGe#",
-                        "name": "codelabfeaturedproject.guessthenumber.lower_number_cube_is_tapped",
+                        "name": "\u3059\u3046\u3058\u306e\u3061\u3044\u3055\u306a\u30ad\u30e5\u30fc\u30d6\u304c\u30bf\u30c3\u30d7\u3055\u308c\u307e\u3057\u305f\u3002",
                         "type": "",
                         "value": 0
                     },
                     "5!ob.k8xwW~C26msLyLS": {
                         "id": "5!ob.k8xwW~C26msLyLS",
-                        "name": "codelabfeaturedproject.guessthenumber.turn_off_the_backpack_light",
+                        "name": "LED\u30e9\u30a4\u30c8\u3092\u3051\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     },
                     "5Ij(~W_P0A1U@J7t;}|U": {
                         "id": "5Ij(~W_P0A1U@J7t;}|U",
-                        "name": "codelabfeaturedproject.guessthenumber.started",
+                        "name": "\u306f\u3058\u3081\u308b",
                         "type": "",
                         "value": "1"
                     },
                     "7eq/8yclar7y~EO+ZtPY": {
                         "id": "7eq/8yclar7y~EO+ZtPY",
-                        "name": "codelabfeaturedproject.guessthenumber.higher_number_cube_is_tapped",
+                        "name": "\u3059\u3046\u3058\u306e\u304a\u304a\u304d\u306a\u30ad\u30e5\u30fc\u30d6\u304c\u30bf\u30c3\u30d7\u3055\u308c\u307e\u3057\u305f\u3002",
                         "type": "",
                         "value": 0
                     },
                     "9lsmE|?rn+UvD|de-8z4": {
                         "id": "9lsmE|?rn+UvD|de-8z4",
-                        "name": "codelabfeaturedproject.guessthenumber.cozmo_has_guessed_the_number_so_end_the_game",
+                        "name": "COZMO\u304c\u3059\u3046\u3058\u3092\u3042\u3066\u305f\u306e\u3067\u3001\u30b2\u30fc\u30e0\u306f\u3057\u3085\u3046\u308a\u3087\u3046\u3067\u3059\u3002",
                         "type": "",
                         "value": 0
                     },
                     "AhO~eVWZFAdF8)lihXK=": {
                         "id": "AhO~eVWZFAdF8)lihXK=",
-                        "name": "codelabfeaturedproject.guessthenumber.initialize_the_game_and_give_instructions",
+                        "name": "\u30b2\u30fc\u30e0\u3092\u3057\u3087\u304d\u304b\u3057\u3066\u3001\u3057\u3058\u3092\u3060\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     },
                     "C944iSq$Ka@@otR58d]3": {
                         "id": "C944iSq$Ka@@otR58d]3",
-                        "name": "codelabfeaturedproject.guessthenumber.start_and_end_game_cube_is_tapped",
+                        "name": "\u30b2\u30fc\u30e0\u3092\u306f\u3058\u3081\u308b\u3068\u304d\u3068\u304a\u308f\u308b\u3068\u304d\u306f\u3001\u30ad\u30e5\u30fc\u30d6\u3092\u30bf\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     },
                     "E_Mb7Urs{p8,^U+7FF1d": {
                         "id": "E_Mb7Urs{p8,^U+7FF1d",
-                        "name": "codelabfeaturedproject.guessthenumber.end_game",
+                        "name": "\u30b2\u30fc\u30e0\u3057\u3085\u3046\u308a\u3087\u3046",
                         "type": "broadcast_msg",
                         "value": "end game"
                     },
                     "FL)wle7,1#do71s3J]_z": {
                         "id": "FL)wle7,1#do71s3J]_z",
-                        "name": "codelabfeaturedproject.guessthenumber.spin_lights",
+                        "name": "\u30e9\u30a4\u30c8\u3092\u304b\u3044\u3066\u3093\u3055\u305b\u308b",
                         "type": "broadcast_msg",
                         "value": "spin lights"
                     },
                     "H@p,^b(S38y[O}#k}}I|": {
                         "id": "H@p,^b(S38y[O}#k}}I|",
-                        "name": "codelabfeaturedproject.guessthenumber.reset_lights",
+                        "name": "\u30e9\u30a4\u30c8\u3092\u30ea\u30bb\u30c3\u30c8\u3059\u308b",
                         "type": "broadcast_msg",
                         "value": "reset lights"
                     },
                     "I]C.SU[:`mS]Fm)I:p4q": {
                         "id": "I]C.SU[:`mS]Fm)I:p4q",
-                        "name": "codelabfeaturedproject.guessthenumber.max",
+                        "name": "\u3055\u3044\u3060\u3044",
                         "type": "",
                         "value": 46
                     },
                     "V2rWPMh}?bCZTB/jIKWD": {
                         "id": "V2rWPMh}?bCZTB/jIKWD",
-                        "name": "codelabfeaturedproject.guessthenumber.guess",
+                        "name": "\u3088\u305d\u3046\u3059\u308b",
                         "type": "",
                         "value": 44
                     },
                     "^(T~92_uxQ0;_cHe4ZC#": {
                         "id": "^(T~92_uxQ0;_cHe4ZC#",
-                        "name": "codelabfeaturedproject.guessthenumber.after_incorrect_guess_play_sad_animation_and_reguess",
+                        "name": "\u3088\u305d\u3046\u304c\u306f\u305a\u308c\u305f\u3089\u304b\u306a\u3057\u3044\u30a2\u30cb\u30e1\u3092\u30d7\u30ec\u30a4\u3057\u3001\u3082\u3046\u3044\u3061\u3069\u3088\u305d\u3046\u3057\u307e\u3059\u3002",
                         "type": "",
                         "value": 0
                     },
                     "fiIc.L.}KtXO4vW]@|,f": {
                         "id": "fiIc.L.}KtXO4vW]@|,f",
-                        "name": "codelabfeaturedproject.guessthenumber.display_the_guess_cozmo_has_made",
+                        "name": "COZMO\u304c\u304a\u3053\u306a\u3063\u305f\u3088\u305d\u3046\u3092\u3072\u3087\u3046\u3058\u3057\u307e\u3059\u3002",
                         "type": "",
                         "value": 0
                     },
                     "jVQK4N12~ZZ}g=5Y+~Rk": {
                         "id": "jVQK4N12~ZZ}g=5Y+~Rk",
-                        "name": "codelabfeaturedproject.guessthenumber.new_guess",
+                        "name": "\u3042\u305f\u3089\u3057\u3044\u3088\u305d\u3046",
                         "type": "broadcast_msg",
                         "value": "new guess"
                     },
                     "k6+o/oNDW2O68R,D.+c(": {
                         "id": "k6+o/oNDW2O68R,D.+c(",
-                        "name": "codelabfeaturedproject.guessthenumber.reset_the_cube_lights_to_the_colors_used_for_gameplay",
+                        "name": "\u30ad\u30e5\u30fc\u30d6\u306e\u30e9\u30a4\u30c8\u3092\u3001\u30b2\u30fc\u30e0\u306b\u3064\u304b\u3063\u305f\u3044\u308d\u306b\u30ea\u30bb\u30c3\u30c8\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     },
                     "kf;Ezn.ORl:3j.v:.v`$": {
                         "id": "kf;Ezn.ORl:3j.v:.v`$",
-                        "name": "codelabfeaturedproject.guessthenumber.min",
+                        "name": "\u3055\u3044\u3057\u3087\u3046",
                         "type": "",
                         "value": 42
                     },
                     "oij$a?yKBJb+o5+Ol.=,": {
                         "id": "oij$a?yKBJb+o5+Ol.=,",
-                        "name": "codelabfeaturedproject.guessthenumber.cozmo_gives_instructions",
+                        "name": "COZMO\u304c\u3057\u3058\u3092\u3060\u3057\u307e\u3059\u3002",
                         "type": "",
                         "value": 0
                     },
                     "qURdyL-v$_9]]+;ox,ya": {
                         "id": "qURdyL-v$_9]]+;ox,ya",
-                        "name": "codelabfeaturedproject.guessthenumber.totalguesses",
+                        "name": "\u305c\u3093\u305f\u3044\u306e\u3088\u305d\u3046",
                         "type": "",
                         "value": 6
                     },
                     "uj1v/FX)*u*BPrq$mv:a": {
                         "id": "uj1v/FX)*u*BPrq$mv:a",
-                        "name": "codelabfeaturedproject.guessthenumber.give_instructions",
+                        "name": "\u3057\u3058\u3092\u3060\u3059",
                         "type": "broadcast_msg",
                         "value": "give instructions"
                     },
                     "wLTe)C4A2H}E=Hl-SA1!": {
                         "id": "wLTe)C4A2H}E=Hl-SA1!",
-                        "name": "codelabfeaturedproject.guessthenumber.gameover",
+                        "name": "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc",
                         "type": "",
                         "value": "1"
                     },
                     "x)KbWLPvpKhh@|L?hp.T": {
                         "id": "x)KbWLPvpKhh@|L?hp.T",
-                        "name": "codelabfeaturedproject.guessthenumber.turn_off_backpack",
+                        "name": "LED\u30e9\u30a4\u30c8\u3092\u3051\u3059",
                         "type": "broadcast_msg",
                         "value": "turn off backpack"
                     },
                     "}[neTF)o8A@8u%1[?`BN": {
                         "id": "}[neTF)o8A@8u%1[?`BN",
-                        "name": "codelabfeaturedproject.guessthenumber.tapon",
+                        "name": "\u30bf\u30c3\u30d7\u3059\u308b",
                         "type": "",
                         "value": "0"
                     },
                     "~S9R6L^F[.MO15G:THcj": {
                         "id": "~S9R6L^F[.MO15G:THcj",
-                        "name": "codelabfeaturedproject.guessthenumber.spin_all_of_the_cube_lights_in_white",
+                        "name": "\u30ad\u30e5\u30fc\u30d6\u306e\u3059\u3079\u3066\u306e\u30e9\u30a4\u30c8\u3092\u30db\u30ef\u30a4\u30c8\u3067\u304b\u3044\u3066\u3093\u3055\u305b\u3066\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     }
@@ -183,7 +183,7 @@
                             "VARIABLE": {
                                 "id": "5Ij(~W_P0A1U@J7t;}|U",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.started"
+                                "value": "\u306f\u3058\u3081\u308b"
                             }
                         },
                         "id": "!R.=n-Kv2~s#|.IPW=]s",
@@ -216,7 +216,7 @@
                             "VARIABLE": {
                                 "id": "k6+o/oNDW2O68R,D.+c(",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.reset_the_cube_lights_to_the_colors_used_for_gameplay",
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u306e\u30e9\u30a4\u30c8\u3092\u3001\u30b2\u30fc\u30e0\u306b\u3064\u304b\u3063\u305f\u3044\u308d\u306b\u30ea\u30bb\u30c3\u30c8\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -250,7 +250,7 @@
                             "VARIABLE": {
                                 "id": "C944iSq$Ka@@otR58d]3",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.start_and_end_game_cube_is_tapped",
+                                "value": "\u30b2\u30fc\u30e0\u3092\u306f\u3058\u3081\u308b\u3068\u304d\u3068\u304a\u308f\u308b\u3068\u304d\u306f\u3001\u30ad\u30e5\u30fc\u30d6\u3092\u30bf\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -297,7 +297,7 @@
                             "VARIABLE": {
                                 "id": "V2rWPMh}?bCZTB/jIKWD",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                                "value": "\u3088\u305d\u3046\u3059\u308b"
                             }
                         },
                         "id": "(,Snp(2?h=+D@MBL4;b)",
@@ -330,7 +330,7 @@
                             "VARIABLE": {
                                 "id": "2bncxZXZ/NkerG~*iGe#",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.lower_number_cube_is_tapped",
+                                "value": "\u3059\u3046\u3058\u306e\u3061\u3044\u3055\u306a\u30ad\u30e5\u30fc\u30d6\u304c\u30bf\u30c3\u30d7\u3055\u308c\u307e\u3057\u305f\u3002",
                                 "variableType": ""
                             }
                         },
@@ -440,7 +440,7 @@
                             "VARIABLE": {
                                 "id": "wLTe)C4A2H}E=Hl-SA1!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.gameover"
+                                "value": "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc"
                             }
                         },
                         "id": "+.}UkpYDdzvo1|SMY+|u",
@@ -517,7 +517,7 @@
                             "VARIABLE": {
                                 "id": "5Ij(~W_P0A1U@J7t;}|U",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.started"
+                                "value": "\u306f\u3058\u3081\u308b"
                             }
                         },
                         "id": "-$;If}w{9c8FhMPg*gY=",
@@ -622,7 +622,7 @@
                             "VARIABLE": {
                                 "id": "I]C.SU[:`mS]Fm)I:p4q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.max"
+                                "value": "\u3055\u3044\u3060\u3044"
                             }
                         },
                         "id": ".D,eXwW:,q4`HsMEVf-?",
@@ -658,7 +658,7 @@
                             "VARIABLE": {
                                 "id": "}[neTF)o8A@8u%1[?`BN",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.tapon"
+                                "value": "\u30bf\u30c3\u30d7\u3059\u308b"
                             }
                         },
                         "id": ".c#1;B~6|G+?~T|?[}Ro",
@@ -717,7 +717,7 @@
                             "VARIABLE": {
                                 "id": "V2rWPMh}?bCZTB/jIKWD",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.guess",
+                                "value": "\u3088\u305d\u3046\u3059\u308b",
                                 "variableType": ""
                             }
                         },
@@ -862,7 +862,7 @@
                             "VARIABLE": {
                                 "id": "7eq/8yclar7y~EO+ZtPY",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.higher_number_cube_is_tapped",
+                                "value": "\u3059\u3046\u3058\u306e\u304a\u304a\u304d\u306a\u30ad\u30e5\u30fc\u30d6\u304c\u30bf\u30c3\u30d7\u3055\u308c\u307e\u3057\u305f\u3002",
                                 "variableType": ""
                             }
                         },
@@ -1168,7 +1168,7 @@
                             "VARIABLE": {
                                 "id": "I]C.SU[:`mS]Fm)I:p4q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.max"
+                                "value": "\u3055\u3044\u3060\u3044"
                             }
                         },
                         "id": "7UE#rwLIOV,$;JF*[7ih",
@@ -1324,7 +1324,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.guessthenumber.hi"
+                                "value": "\u3053\u3093\u306b\u3061\u306f"
                             }
                         },
                         "id": "9fCz{F73[.!uHT}U0.O3",
@@ -1393,7 +1393,7 @@
                             "VARIABLE": {
                                 "id": "}[neTF)o8A@8u%1[?`BN",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.tapon",
+                                "value": "\u30bf\u30c3\u30d7\u3059\u308b",
                                 "variableType": ""
                             }
                         },
@@ -1436,7 +1436,7 @@
                             "VARIABLE": {
                                 "id": "wLTe)C4A2H}E=Hl-SA1!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.gameover"
+                                "value": "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc"
                             }
                         },
                         "id": ";:NX6h=Sxzibw171Vs8#",
@@ -1493,7 +1493,7 @@
                             "VARIABLE": {
                                 "id": "kf;Ezn.ORl:3j.v:.v`$",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.min"
+                                "value": "\u3055\u3044\u3057\u3087\u3046"
                             }
                         },
                         "id": "?UeSNJ9]{$;s_Tv%AzAt",
@@ -1614,7 +1614,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.guessthenumber.think_of_a_number_between_1_and_100_and_tap_purple_to_continue"
+                                "value": "1\u304b\u3089100\u306e\u306a\u304b\u304b\u3089\u3072\u3068\u3064\u3059\u3046\u3058\u3092\u3048\u3089\u3073\u3001\u30d1\u30fc\u30d7\u30eb\u3092\u30bf\u30c3\u30d7\u3057\u3066\u3064\u3065\u3051\u307e\u3059\u3002"
                             }
                         },
                         "id": "A6Q!9gD`NzQFU#7jg*i@",
@@ -1814,7 +1814,7 @@
                             "VARIABLE": {
                                 "id": "V2rWPMh}?bCZTB/jIKWD",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                                "value": "\u3088\u305d\u3046\u3059\u308b"
                             }
                         },
                         "id": "C@^Q_6s{HpT[MmSr2MJf",
@@ -1870,7 +1870,7 @@
                             "VARIABLE": {
                                 "id": "qURdyL-v$_9]]+;ox,ya",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.totalguesses"
+                                "value": "\u305c\u3093\u305f\u3044\u306e\u3088\u305d\u3046"
                             }
                         },
                         "id": "Cm#sw5b@Kl-BGJD5x`RI",
@@ -1991,7 +1991,7 @@
                             "VARIABLE": {
                                 "id": "5!ob.k8xwW~C26msLyLS",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.turn_off_the_backpack_light",
+                                "value": "LED\u30e9\u30a4\u30c8\u3092\u3051\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -2180,7 +2180,7 @@
                             "VARIABLE": {
                                 "id": "fiIc.L.}KtXO4vW]@|,f",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.display_the_guess_cozmo_has_made",
+                                "value": "COZMO\u304c\u304a\u3053\u306a\u3063\u305f\u3088\u305d\u3046\u3092\u3072\u3087\u3046\u3058\u3057\u307e\u3059\u3002",
                                 "variableType": ""
                             }
                         },
@@ -2199,7 +2199,7 @@
                             "VARIABLE": {
                                 "id": "I]C.SU[:`mS]Fm)I:p4q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.max"
+                                "value": "\u3055\u3044\u3060\u3044"
                             }
                         },
                         "id": "I=^J0^5yesDH?MVd=-,Q",
@@ -2216,7 +2216,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.guessthenumber._guesses"
+                                "value": " \u3042\u3066\u3066\u307f\u3066\uff01"
                             }
                         },
                         "id": "I`GO4Jh)])#_`oBen(a4",
@@ -2232,7 +2232,7 @@
                             "VARIABLE": {
                                 "id": "kf;Ezn.ORl:3j.v:.v`$",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.min"
+                                "value": "\u3055\u3044\u3057\u3087\u3046"
                             }
                         },
                         "id": "J!D4$lU*L=5GE+r*38Fx",
@@ -2317,7 +2317,7 @@
                             "VARIABLE": {
                                 "id": "V2rWPMh}?bCZTB/jIKWD",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.guess",
+                                "value": "\u3088\u305d\u3046\u3059\u308b",
                                 "variableType": ""
                             }
                         },
@@ -2366,7 +2366,7 @@
                             "VARIABLE": {
                                 "id": "qURdyL-v$_9]]+;ox,ya",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.totalguesses"
+                                "value": "\u305c\u3093\u305f\u3044\u306e\u3088\u305d\u3046"
                             }
                         },
                         "id": "KlRPAcuAG09H#j+;*)R~",
@@ -2899,7 +2899,7 @@
                             "VARIABLE": {
                                 "id": "qURdyL-v$_9]]+;ox,ya",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.totalguesses",
+                                "value": "\u305c\u3093\u305f\u3044\u306e\u3088\u305d\u3046",
                                 "variableType": ""
                             }
                         },
@@ -2959,7 +2959,7 @@
                             "VARIABLE": {
                                 "id": "^(T~92_uxQ0;_cHe4ZC#",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.after_incorrect_guess_play_sad_animation_and_reguess"
+                                "value": "\u3088\u305d\u3046\u304c\u306f\u305a\u308c\u305f\u3089\u304b\u306a\u3057\u3044\u30a2\u30cb\u30e1\u3092\u30d7\u30ec\u30a4\u3057\u3001\u3082\u3046\u3044\u3061\u3069\u3088\u305d\u3046\u3057\u307e\u3059\u3002"
                             }
                         },
                         "id": "X+#RV|xm,a=GqA{H#:KY",
@@ -3033,7 +3033,7 @@
                             "VARIABLE": {
                                 "id": "kf;Ezn.ORl:3j.v:.v`$",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.min"
+                                "value": "\u3055\u3044\u3057\u3087\u3046"
                             }
                         },
                         "id": "X[1of$L-h|uXfAUna!%|",
@@ -3106,7 +3106,7 @@
                             "VARIABLE": {
                                 "id": "oij$a?yKBJb+o5+Ol.=,",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.cozmo_gives_instructions",
+                                "value": "COZMO\u304c\u3057\u3058\u3092\u3060\u3057\u307e\u3059\u3002",
                                 "variableType": ""
                             }
                         },
@@ -3237,7 +3237,7 @@
                             "VARIABLE": {
                                 "id": "}[neTF)o8A@8u%1[?`BN",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.tapon"
+                                "value": "\u30bf\u30c3\u30d7\u3059\u308b"
                             }
                         },
                         "id": "]Q:n)?{ju,EA~F%F^4vP",
@@ -3283,7 +3283,7 @@
                             "VARIABLE": {
                                 "id": "5Ij(~W_P0A1U@J7t;}|U",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.started"
+                                "value": "\u306f\u3058\u3081\u308b"
                             }
                         },
                         "id": "^-WvN[[+j;U4i3H?j[4Z",
@@ -3346,7 +3346,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.guessthenumber.is"
+                                "value": "\u306f"
                             }
                         },
                         "id": "^XnV(OB5A)SI^NWIIxZg",
@@ -3363,7 +3363,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.guessthenumber.i_guessed_your_number_in_"
+                                "value": "\u2605\u306e\u3042\u306a\u305f\u306e\u3059\u3046\u3058\u3092\u3042\u3066\u307e\u3059\u3002 "
                             }
                         },
                         "id": "_4A)e`?obCOga1L(F,HI",
@@ -3580,7 +3580,7 @@
                             "VARIABLE": {
                                 "id": "wLTe)C4A2H}E=Hl-SA1!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.gameover"
+                                "value": "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc"
                             }
                         },
                         "id": "dyFi}]K?w3[~p4$r0PL7",
@@ -3630,7 +3630,7 @@
                             "VARIABLE": {
                                 "id": "}[neTF)o8A@8u%1[?`BN",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.tapon"
+                                "value": "\u30bf\u30c3\u30d7\u3059\u308b"
                             }
                         },
                         "id": "f6)^*Bt)2(jM:TqbZSe~",
@@ -3682,7 +3682,7 @@
                             "VARIABLE": {
                                 "id": "}[neTF)o8A@8u%1[?`BN",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.tapon"
+                                "value": "\u30bf\u30c3\u30d7\u3059\u308b"
                             }
                         },
                         "id": "g5d9#(frH?jkQklb,Ig/",
@@ -3706,7 +3706,7 @@
                             "VARIABLE": {
                                 "id": "V2rWPMh}?bCZTB/jIKWD",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                                "value": "\u3088\u305d\u3046\u3059\u308b"
                             }
                         },
                         "id": "gOr,VIf)OU0;Xz(.Orj%",
@@ -3834,7 +3834,7 @@
                             "VARIABLE": {
                                 "id": "}[neTF)o8A@8u%1[?`BN",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.tapon"
+                                "value": "\u30bf\u30c3\u30d7\u3059\u308b"
                             }
                         },
                         "id": "l09F2OOZXi{W.63.Q[-$",
@@ -3894,7 +3894,7 @@
                             "VARIABLE": {
                                 "id": "V2rWPMh}?bCZTB/jIKWD",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                                "value": "\u3088\u305d\u3046\u3059\u308b"
                             }
                         },
                         "id": "m%g/@zgl+,R_DHaCtyPr",
@@ -3933,7 +3933,7 @@
                             "VARIABLE": {
                                 "id": "5Ij(~W_P0A1U@J7t;}|U",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.started"
+                                "value": "\u306f\u3058\u3081\u308b"
                             }
                         },
                         "id": "m4994wMRG#gXI(EeU6P|",
@@ -3957,7 +3957,7 @@
                             "VARIABLE": {
                                 "id": "I]C.SU[:`mS]Fm)I:p4q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.max"
+                                "value": "\u3055\u3044\u3060\u3044"
                             }
                         },
                         "id": "m7JqS=N.riYov?S,SAr5",
@@ -3997,7 +3997,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.guessthenumber.is_your_number_"
+                                "value": "\u3042\u306a\u305f\u306e\u3059\u3046\u3058\u306f\u2605\u3067\u3059\u304b\uff1f "
                             }
                         },
                         "id": "nCS-bL-8B]s!M-MJ7HPe",
@@ -4147,7 +4147,7 @@
                             "VARIABLE": {
                                 "id": "V2rWPMh}?bCZTB/jIKWD",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                                "value": "\u3088\u305d\u3046\u3059\u308b"
                             }
                         },
                         "id": "r;yFKAGGE,*FK!)?%TNt",
@@ -4223,7 +4223,7 @@
                             "VARIABLE": {
                                 "id": "V2rWPMh}?bCZTB/jIKWD",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.guess"
+                                "value": "\u3088\u305d\u3046\u3059\u308b"
                             }
                         },
                         "id": "sU8]3rEbIx2Qh8X;X[5v",
@@ -4247,7 +4247,7 @@
                             "VARIABLE": {
                                 "id": "}[neTF)o8A@8u%1[?`BN",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.tapon"
+                                "value": "\u30bf\u30c3\u30d7\u3059\u308b"
                             }
                         },
                         "id": "s_7CopE;=3~hoGG(E?I4",
@@ -4349,7 +4349,7 @@
                             "VARIABLE": {
                                 "id": "~S9R6L^F[.MO15G:THcj",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.spin_all_of_the_cube_lights_in_white",
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u306e\u3059\u3079\u3066\u306e\u30e9\u30a4\u30c8\u3092\u30db\u30ef\u30a4\u30c8\u3067\u304b\u3044\u3066\u3093\u3055\u305b\u3066\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -4428,7 +4428,7 @@
                             "VARIABLE": {
                                 "id": "9lsmE|?rn+UvD|de-8z4",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.cozmo_has_guessed_the_number_so_end_the_game",
+                                "value": "COZMO\u304c\u3059\u3046\u3058\u3092\u3042\u3066\u305f\u306e\u3067\u3001\u30b2\u30fc\u30e0\u306f\u3057\u3085\u3046\u308a\u3087\u3046\u3067\u3059\u3002",
                                 "variableType": ""
                             }
                         },
@@ -4705,7 +4705,7 @@
                             "VARIABLE": {
                                 "id": "AhO~eVWZFAdF8)lihXK=",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.initialize_the_game_and_give_instructions",
+                                "value": "\u30b2\u30fc\u30e0\u3092\u3057\u3087\u304d\u304b\u3057\u3066\u3001\u3057\u3058\u3092\u3060\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -4741,7 +4741,7 @@
                             "VARIABLE": {
                                 "id": "kf;Ezn.ORl:3j.v:.v`$",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.guessthenumber.min"
+                                "value": "\u3055\u3044\u3057\u3087\u3046"
                             }
                         },
                         "id": "}Q_zY;xd+Nu6~nstf6Fa",

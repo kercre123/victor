@@ -943,40 +943,40 @@
     "translation" : "Déclenche ce bloc de code et exécute ceux situés sous celui-ci chaque fois que le cube [#] spécifié est déplacé. Astuce : déplacer un cube, c'est le placer dans une position ou à un emplacement légèrement différent. Toucher un cube, c'est lui donner délibérément un petit coup rapide."
   },
   "codeLabGlossary.block_definitions.title.event_whenbroadcastreceived" : {
-    "translation" : "quand [message#] est reçu"
+    "translation" : "quand [message] est reçu"
   },
   "codeLabGlossary.block_definitions.description.event_whenbroadcastreceived" : {
     "translation" : "Déclenche ce bloc de code et exécute les blocs de code sous celui-ci chaque fois qu'un autre bloc de code diffuse le message correspondant. Astuce : pour les programmeurs expérimentés, considérez les messages comme des fonctions."
   },
   "codeLabGlossary.block_definitions.title.event_broadcast" : {
-    "translation" : "diffuser [message#]"
+    "translation" : "diffuser [message]"
   },
   "codeLabGlossary.block_definitions.description.event_broadcast" : {
-    "translation" : "Diffuse (envoie) un message pour déclencher le bloc « quand [message#] est reçu ». Astuce : une fois le message diffusé, le bloc figurant sous le présent bloc continuera à s'exécuter. Ainsi, cette pile initiale de blocs et les blocs figurant sous « quand [message#] est reçu » s'exécutent en parallèle. Pour les programmeurs expérimentés, considérez ce cas comme l'exécution d'un nouveau thread dans la plupart des langages de programmation."
+    "translation" : "Diffuse (envoie) un message pour déclencher le bloc « quand [message] est reçu ». Astuce : une fois le message diffusé, les blocs figurant sous le présent bloc continueront à s'exécuter. Ainsi, cette pile initiale de blocs et les blocs figurant sous « quand [message] est reçu » s'exécutent en parallèle. Pour les programmeurs expérimentés, considérez ce cas comme l'exécution d'un nouveau thread dans la plupart des langages de programmation."
   },
   "codeLabGlossary.block_definitions.title.event_broadcastandwait" : {
-    "translation" : "diffuser [message#] et attendre qu'il s'achève"
+    "translation" : "diffuser [message] et attendre qu'il s'achève"
   },
   "codeLabGlossary.block_definitions.description.event_broadcastandwait" : {
-    "translation" : "Diffuse (envoie) un message pour déclencher le bloc « quand [message#] est reçu », puis attend que les blocs figurant sous ce dernier s'exécutent intégralement avant de poursuivre. Astuce : pour les programmeurs expérimentés, considérez ce cas comme un appel de fonction dans la plupart des langages de programmation."
+    "translation" : "Diffuse (envoie) un message pour déclencher le bloc « quand [message] est reçu », puis attend que les blocs figurant sous ce dernier s'exécutent intégralement avant de poursuivre. Astuce : pour les programmeurs expérimentés, considérez ce cas comme un appel de fonction dans la plupart des langages de programmation."
   },
   "codeLabGlossary.block_definitions.title.event_whenbroadcastreceived_with_broadcast_input" : {
-    "translation" : "when [message#] received"
+    "translation" : "quand [message] est reçu"
   },
   "codeLabGlossary.block_definitions.description.event_whenbroadcastreceived_with_broadcast_input" : {
-    "translation" : "Triggers this code block and runs the code blocks underneath it whenever another code block broadcasts the corresponding message. Tip: For experienced coders, think of messages like functions."
+    "translation" : "Déclenche ce bloc de code et exécute les blocs de code sous celui-ci chaque fois qu'un autre bloc de code diffuse le message correspondant. Astuce : pour les programmeurs expérimentés, considérez les messages comme des fonctions."
   },
   "codeLabGlossary.block_definitions.title.event_broadcast_with_broadcast_input" : {
-    "translation" : "broadcast [message#]"
+    "translation" : "diffuser [message]"
   },
   "codeLabGlossary.block_definitions.description.event_broadcast_with_broadcast_input" : {
-    "translation" : "Broadcasts (sends) a message to trigger the \"when [message#] received\" block. Tip: After broadcasting a message, the blocks under this block will continue to execute. Therefore, both this original stack of blocks and the blocks underneath the \"when [message#] received\" block will run in parallel. For experienced coders, think of this like starting a new thread in most programming languages."
+    "translation" : "Diffuse (envoie) un message pour déclencher le bloc « quand [message] est reçu ». Astuce : une fois le message diffusé, les blocs figurant sous le présent bloc continueront à s'exécuter. Ainsi, cette pile initiale de blocs et les blocs figurant sous « quand [message] est reçu » s'exécutent en parallèle. Pour les programmeurs expérimentés, considérez ce cas comme l'exécution d'un nouveau thread dans la plupart des langages de programmation."
   },
   "codeLabGlossary.block_definitions.title.event_broadcastandwait_with_broadcast_input" : {
-    "translation" : "broadcast [message#] and wait to complete"
+    "translation" : "diffuser [message] et attendre qu'il s'achève"
   },
   "codeLabGlossary.block_definitions.description.event_broadcastandwait_with_broadcast_input" : {
-    "translation" : "Broadcasts (sends) a message to trigger the \"when [message#] received\" block, and then waits for the blocks under the \"when [message#] received\" to fully execute before continuing on. Tip: For experienced coders, think of this like a function call in most programming languages."
+    "translation" : "Diffuse (envoie) un message pour déclencher le bloc « quand [message] est reçu », puis attend que les blocs figurant sous ce dernier s'exécutent intégralement avant de poursuivre. Astuce : pour les programmeurs expérimentés, considérez ce cas comme un appel de fonction dans la plupart des langages de programmation."
   },
   "codeLabGlossary.block_definitions.title.control_wait" : {
     "translation" : "attendre [X] secondes"
@@ -1372,7 +1372,7 @@
     "translation" : "Souris pour déclencher ton laser ! Bouge ta tête pour viser."
   },
   "codeLabFeaturedProject_ComplimentGenerator.projectName" : {
-    "translation" : "Générateur de compliment"
+    "translation" : "Les Cozmopliments"
   },
   "codeLabFeaturedProject_ComplimentGenerator.projectDescription" : {
     "translation" : "Fête la journée mondiale des compliments avec Cozmo !"
@@ -1390,7 +1390,7 @@
     "translation" : "1. Lorsque tu appuies sur le drapeau de départ, Cozmo est prêt à décoller !\u000a\u000a2. Prends-le et fais-le voler dans la pièce.\u000a\u000a3. Profite de son thème musical et de ses réactions !"
   },
   "codeLabFeaturedProject_RemoteControlRacer.projectName" : {
-    "translation" : "Télécommande de course"
+    "translation" : "Manette de Course"
   },
   "codeLabFeaturedProject_RemoteControlRacer.projectDescription" : {
     "translation" : "Vroum, vroum ! Conduis Cozmo à la vitesse maximale."
@@ -1399,7 +1399,7 @@
     "translation" : "1. Lorsque tu appuies sur le drapeau de départ, ton téléphone ou ta tablette devient une télécommande.\u000a\u000a2. Incline ton appareil vers le haut/bas et à gauche/droite pour déplacer Cozmo à la vitesse maximale !"
   },
   "codeLabFeaturedProject_PuttPutt.projectName" : {
-    "translation" : "Droit dedans"
+    "translation" : "Mini-golf"
   },
   "codeLabFeaturedProject_PuttPutt.projectDescription" : {
     "translation" : "Peux-tu faire un trou en un coup ?"
@@ -1417,7 +1417,7 @@
     "translation" : "1. Appuie sur le drapeau de départ et Cozmo t'offrira ses vœux pour la Saint-Valentin !"
   },
   "codeLabFeaturedProject_ShakeIt.projectName" : {
-    "translation" : "Secoue-les !"
+    "translation" : "Maracas !"
   },
   "codeLabFeaturedProject_ShakeIt.projectDescription" : {
     "translation" : "Fais bouger les choses avec ce nouveau jeu."
@@ -1438,10 +1438,10 @@
     "translation" : "Fête le jour de l'astronomie avec des constellations cosmiques."
   },
   "codeLabFeaturedConstellations.projectInstructions" : {
-    "translation" : "1. Touche le drapeau de départ et observe les étoiles qui se connectent pour former une constellation.\u000a\u000a2. Rejoue pour les voir toutes !"
+    "translation" : "1. S'assurer que Cozmo a suffisamment d'espace pour circuler.\u000a\u000a2. Appuyer sur le drapeau de départ et observer les étoiles se connecter pour former une constellation.3. Rejouer pour toutes les voir !"
   },
   "codeLabFeaturedDrivingInCircles.projectName" : {
-    "translation" : "Conduis en cercles"
+    "translation" : "Tourne en rond"
   },
   "codeLabFeaturedDrivingInCircles.projectDescription" : {
     "translation" : "Fais des cercles pour la journée de Pi !"
@@ -1450,7 +1450,7 @@
     "translation" : "1. Le 14 mars est la journée mondiale de Pi !\u000a\u000a2. Place l'un des cubes de Cozmo à un endroit où il peut le voir.\u000a\u000a3. Lorsque tu appuies sur le drapeau de départ, Cozmo utilise Pi et des calculs mathématiques pour faire des cercles autour de ses cubes."
   },
   "codeLabFeaturedComplimentGenerator.projectName" : {
-    "translation" : "Générateur de compliment"
+    "translation" : "Les Cozmopliments"
   },
   "codeLabFeaturedComplimentGenerator.projectDescription" : {
     "translation" : "Cozmo a quelque chose d'agréable à dire !"
@@ -1468,12 +1468,66 @@
     "translation" : "1. Après avoir appuyé sur le drapeau de départ, déplace ta tête vers le haut et le bas pour contrôler la raquette.\u000a\u000a2. Pour marquer des points, fais rebondir la balle au-delà de la raquette de Cozmo. Essaye d'empêcher Cozmo de marquer des points en faisant rebondir la balle au-delà de la tienne.\u000a\u000a3. Ta raquette est à gauche et celle de Cozmo à droite.\u000a\u000a4. Le premier qui marque 3 points gagne !"
   },
   "codeLabFeaturedPotOGoldDetector.projectName" : {
-    "translation" : "Détecteur de trésor"
+    "translation" : "Chasse au trésor"
   },
   "codeLabFeaturedPotOGoldDetector.projectDescription" : {
     "translation" : "La chasse au trésor ultime de la St Patrick !"
   },
   "codeLabFeaturedPotOGoldDetector.projectInstructions" : {
     "translation" : "1. Lorsque tu appuies sur le drapeau de départ, un trésor apparaît à un emplacement secret près de Cozmo.\u000a\u000a2. À toi d'utiliser ton appareil pour déplacer Cozmo vers le trésor caché.\u000a\u000a3. Pour déplacer Cozmo, incline ton écran vers le haut et le bas ainsi que vers la gauche et la droite.\u000a\u000a4. Écoute les bips du détecteur de trésor de Cozmo qui s'accélèrent au fur et à mesure qu'il s'approche du trésor."
+  },
+  "codeLabFeaturedCozmosGarden.projectName" : {
+    "translation" : "Le jardin de Cozmo"
+  },
+  "codeLabFeaturedCozmosGarden.projectDescription" : {
+    "translation" : "Célèbre la Journée de la Terre en faisant du jardinage avec Cozmo !"
+  },
+  "codeLabFeaturedCozmosGarden.projectInstructions" : {
+    "translation" : "1. Aligner les cubes de Cozmo devant toi.\u000a\u000a2. Lorsque tu appuies sur le drapeau de départ, Cozmo choisit 3 plantes à faire pousser en utilisant les voyants de ses cubes.\u000a\u000a3. À chaque tour, suis ses instructions pour favoriser la croissance des plantes.\u000a\u000a4. Illumine les 4 voyants pour les récolter. Récolte 3 plantes pour gagner la partie !"
+  },
+  "codeLabFeaturedGuessTheNumber.projectName" : {
+    "translation" : "Devine le nombre"
+  },
+  "codeLabFeaturedGuessTheNumber.projectDescription" : {
+    "translation" : "SOUMIS PAR JDFIGHT⏎⏎Véritable devin, Cozmo va deviner le nombre !"
+  },
+  "codeLabFeaturedGuessTheNumber.projectInstructions" : {
+    "translation" : "1. Aligne les cubes de Cozmo devant toi.\u000a\u000a2. Appuie sur le drapeau de départ et suis les instructions de Cozmo pour jouer.\u000a\u000a3. Donne-lui des indices en touchant ses cubes.\u000a\u000a4. Robinet rouge si votre numéro est inférieur, vert s’il est supérieur, et violet si elle est correcte.Soumis par jdfight.\u000a\u000aRien ne nous fait plus plaisir que de voir vos incroyables créations Code Lab prendre vie. En fait, nous les aimons tellement que nous allons les partager avec toute la communauté Cozmo. Continuons à créer ensemble.\u000a\u000aComment puis-je envoyer ma propre création Code Lab ?\u000a\u000aUne fois votre projet terminé, appuyez sur le bouton Exporter situé en haut à gauche de l'espace de travail. Suivez ensuite les instructions à l'écran. Nous avons hâte de voir ce que vous avez concocté !"
+  },
+  "codeLabFeaturedWakeUpCozmo.projectName" : {
+    "translation" : "Réveille-toi Cozmo !"
+  },
+  "codeLabFeaturedWakeUpCozmo.projectDescription" : {
+    "translation" : "Qui ose perturber la sieste de Cozmo ?"
+  },
+  "codeLabFeaturedWakeUpCozmo.projectInstructions" : {
+    "translation" : "1. Aligne les cubes de Cozmo devant toi.\u000a\u000a2. Trouve un ami avec qui t'amuser ou joue tout seul.\u000a\u000a3. Appuie sur le drapeau de départ et mets Cozmo sur le dos quand il te le demande.\u000a\u000a4. Lorsque les voyants de son cube deviennent bleus, touche-les pour lui donner un petit coup. Celui qui réveille Cozmo a perdu !"
+  },
+  "codeLab.toomanyprojectsDialog.dialogTitle" : {
+    "translation" : "Vous avez atteint le nombre maximal de projets. Merci d'en supprimer un avant de travailler sur une nouvelle création."
+  },
+  "codeLabGlossary.block_definitions.title.cozmo_sound_song_play_all_notes" : {
+    "translation" : "play all notes in song"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_sound_song_play_all_notes" : {
+    "translation" : "You can compose songs for Cozmo to sing. This blocks will play all notes that you've previously added to his song. Note that if you haven't added notes, he won't sing anything. He can sing 4 bars (the length of 16 whole notes) of music at a time, so consider splitting up your song into smaller chunks if it's longer than 4 bars."
+  },
+  "codeLabGlossary.block_definitions.title.cozmo_sound_song_clear_all_notes" : {
+    "translation" : "clear all notes in song"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_sound_song_clear_all_notes" : {
+    "translation" : "This removes all notes from the song you're composing for Cozmo to sing."
+  },
+  "codeLabGlossary.block_definitions.title.cozmo_sound_song_add_note" : {
+    "translation" : "add note to song: [pitch] pitch, [duration] duration"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_sound_song_add_note" : {
+    "translation" : "This adds a note to the song you're composing for Cozmo to sing. Pitch controls how high or low the note is. Duration controls how long the note is."
+  },
+  "codeLabGlossary.block_definitions.title.cozmo_sound_song_add_rest" : {
+    "translation" : "add rest to song: [duration] duration"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_sound_song_add_rest" : {
+    "translation" : "This adds a rest to the song you're composing for Cozmo to sing. Duration controls how long the rest is."
   }
 }

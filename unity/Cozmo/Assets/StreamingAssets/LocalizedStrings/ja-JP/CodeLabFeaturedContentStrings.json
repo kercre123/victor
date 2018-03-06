@@ -108,8 +108,35 @@
   "codeLabFeaturedProject.ComplimentGenerator.youre_the_most_" : {
     "translation" : "あなたがさいこうに "
   },
-  "codeLabFeaturedProject.Constellations.cassiopeia_" : {
-    "translation" : "カシオペアざ "
+  "codeLabFeaturedProject.Constellations.ask_to_play_again" : {
+    "translation" : "もういちどプレイするようおねがいする"
+  },
+  "codeLabFeaturedProject.Constellations.cassiopeia" : {
+    "translation" : "カシオペアざ"
+  },
+  "codeLabFeaturedProject.Constellations.cassiopeia_can_be_seen_all_year_from_the_northern_hemisphere" : {
+    "translation" : "カシオペヤざは、きたはんきゅうから、いちねんじゅうかんそくできます。"
+  },
+  "codeLabFeaturedProject.Constellations.cassiopeia_used_to_be_called_the_lady_of_the_chair" : {
+    "translation" : "カシオペヤざは、「いすにすわるおうじょ」ともよばれていました。"
+  },
+  "codeLabFeaturedProject.Constellations.cassiopeias_brightest_star_shines_40_times_brighter_than_the_sun" : {
+    "translation" : "カシオペヤざのいちばんあかるいほしは、たいようの40ばいのあかるさです。"
+  },
+  "codeLabFeaturedProject.Constellations.choices" : {
+    "translation" : "せんたくし"
+  },
+  "codeLabFeaturedProject.Constellations.choose_constellation" : {
+    "translation" : "せいざをえらぶ"
+  },
+  "codeLabFeaturedProject.Constellations.choose_which_constellation_to_get_the_data_for" : {
+    "translation" : "どのせいざのデータをしゅとくするか、えらんでください。"
+  },
+  "codeLabFeaturedProject.Constellations.clear_all_data_from_the_project_lists" : {
+    "translation" : "プロジェクトリストからすべてのデータをしょうきょしてください。"
+  },
+  "codeLabFeaturedProject.Constellations.constellation_count" : {
+    "translation" : "せいざのかず"
   },
   "codeLabFeaturedProject.Constellations.constellation_name" : {
     "translation" : "星座名"
@@ -120,59 +147,188 @@
   "codeLabFeaturedProject.Constellations.count" : {
     "translation" : "数"
   },
-  "codeLabFeaturedProject.Constellations.cozmo_says_the_name_of_the_constellation" : {
-    "translation" : "Cozmo says the name of the constellation."
-  },
   "codeLabFeaturedProject.Constellations.distance_multiplier" : {
     "translation" : "距離の倍率"
   },
   "codeLabFeaturedProject.Constellations.draw_dot" : {
-    "translation" : "draw dot"
+    "translation" : "てんをえがく"
   },
   "codeLabFeaturedProject.Constellations.draw_line" : {
-    "translation" : "draw line"
+    "translation" : "せんをえがく"
   },
-  "codeLabFeaturedProject.Constellations.draw_the_stars_of_the_constellation_on_cozmos_face" : {
-    "translation" : "Draw the stars of the constellation on Cozmos face."
+  "codeLabFeaturedProject.Constellations.drive_and_draw_constellation" : {
+    "translation" : "うごいてせいざをえがく"
   },
   "codeLabFeaturedProject.Constellations.drive_distance" : {
     "translation" : "走行距離"
   },
-  "codeLabFeaturedProject.Constellations.gemini" : {
-    "translation" : "Gemini"
+  "codeLabFeaturedProject.Constellations.drive_speed" : {
+    "translation" : "運転の速度"
+  },
+  "codeLabFeaturedProject.Constellations.enable_cube_taps_and_cozmo_gives_instruction_to_see_the_next_constellation" : {
+    "translation" : "キューブのタップをゆうこうかすると、COZMOがつぎのせいざをみるようしじします。"
+  },
+  "codeLabFeaturedProject.Constellations.factoids" : {
+    "translation" : "ざつがく"
+  },
+  "codeLabFeaturedProject.Constellations.fill_up_the_choices_list_with_constellation_numbers" : {
+    "translation" : "せんたくしリストに、せいざのばんごうをにゅうりょくしてください。"
+  },
+  "codeLabFeaturedProject.Constellations.get_distance" : {
+    "translation" : "きょりをはかる"
+  },
+  "codeLabFeaturedProject.Constellations.get_instructions" : {
+    "translation" : "しじをうけとる"
   },
   "codeLabFeaturedProject.Constellations.get_the_distance_between_two_coordinates" : {
-    "translation" : "Get the distance between two coordinates."
+    "translation" : "２つのざひょうのきょりをはかってください。"
+  },
+  "codeLabFeaturedProject.Constellations.get_the_next_constellation_in_the_list_or_start_from_the_beginning" : {
+    "translation" : "リストでつぎのせいざをえらぶか、さいしょからスタートしてください。"
+  },
+  "codeLabFeaturedProject.Constellations.get_turn_angle" : {
+    "translation" : "かいてんかくどをはかる"
   },
   "codeLabFeaturedProject.Constellations.hi" : {
     "translation" : "こんにちは"
   },
+  "codeLabFeaturedProject.Constellations.id_like_to_visit_libra_someday_and_see_if_they_have_good_tacos" : {
+    "translation" : "いつかてんびんざへいって、おいしいタコスがあるかみてみたい。"
+  },
+  "codeLabFeaturedProject.Constellations.in_ancient_greek_stories_scorpius_beat_orion_in_a_fight" : {
+    "translation" : "こだいギリシャのおはなしによると、さそりざはオリオンざとのたたかいにしょうりしました。"
+  },
+  "codeLabFeaturedProject.Constellations.in_hawaii_scorpius_is_known_as_mauis_fishhook" : {
+    "translation" : "ハワイでは、さそりざは「マウイのつりばり」としてしられています。"
+  },
+  "codeLabFeaturedProject.Constellations.initialize_variables_and_start_the_activity" : {
+    "translation" : "へんすうをしょきかして、アクティビティをかいししてください。"
+  },
+  "codeLabFeaturedProject.Constellations.input_enabled" : {
+    "translation" : "にゅうりょくをゆうこうか"
+  },
   "codeLabFeaturedProject.Constellations.instructions" : {
-    "translation" : "instructions"
+    "translation" : "てじゅん"
   },
   "codeLabFeaturedProject.Constellations.instructions_count" : {
-    "translation" : "instructions count"
+    "translation" : "てじゅんのかいすう"
   },
   "codeLabFeaturedProject.Constellations.leo" : {
     "translation" : "ししざ"
   },
+  "codeLabFeaturedProject.Constellations.leo_can_be_seen_in_the_night_sky_from_late_march_through_may" : {
+    "translation" : "ししざは、３がつのおわりから５がつにかけて、よぞらでかんそくできます。"
+  },
+  "codeLabFeaturedProject.Constellations.leo_is_one_of_the_earliest_recognized_constellations" : {
+    "translation" : "ししざは、いちばんはやくかくにんされたせいざのひとつです。"
+  },
+  "codeLabFeaturedProject.Constellations.libra" : {
+    "translation" : "てんびんざ"
+  },
+  "codeLabFeaturedProject.Constellations.libra_is_best_seen_in_the_june_night_sky" : {
+    "translation" : "てんびんざは、６がつのよぞらでいちばんよくみえるせいざです。"
+  },
   "codeLabFeaturedProject.Constellations.line_distance" : {
     "translation" : "線の距離"
   },
-  "codeLabFeaturedProject.Constellations.ordered_pair_x" : {
-    "translation" : "並んだペアx"
+  "codeLabFeaturedProject.Constellations.loop_through_sets_of_coordinates_to_drive_and_draw_lines_and_dots" : {
+    "translation" : "ざひょうのくみをループさせてうごかし、てんとせんをえがいてください。"
   },
-  "codeLabFeaturedProject.Constellations.ordered_pair_y" : {
-    "translation" : "並んだペアy"
+  "codeLabFeaturedProject.Constellations.my_cousins_name_is_cassiopeia_shes_a_keyboard" : {
+    "translation" : "いとこのなまえはカシオペヤです。かのじょはキーボードをもっています。"
   },
-  "codeLabFeaturedProject.Constellations.pi" : {
-    "translation" : "円周率"
+  "codeLabFeaturedProject.Constellations.next_constellation" : {
+    "translation" : "つぎのせいざ"
   },
-  "codeLabFeaturedProject.Constellations.set_variables_and_choose_a_constellation" : {
-    "translation" : "Set variables and choose a constellation."
+  "codeLabFeaturedProject.Constellations.orion" : {
+    "translation" : "オリオンざ"
   },
-  "codeLabFeaturedProject.Constellations.set_x_and_y_coordinates_for_the_next_point_in_the_constellation" : {
-    "translation" : "Set x and y coordinates for the next point in the constellation."
+  "codeLabFeaturedProject.Constellations.orion_is_a_warrior_from_ancient_greek_stories" : {
+    "translation" : "オリオンは、こだいギリシャのおはなしにとうじょうするせんしです。"
+  },
+  "codeLabFeaturedProject.Constellations.orion_is_best_seen_in_the_january_night_sky" : {
+    "translation" : "オリオンざは、１がつのよぞらでいちばんよくみえるせいざです。"
+  },
+  "codeLabFeaturedProject.Constellations.orion_is_one_of_the_most_recognizable_constellations" : {
+    "translation" : "オリオンざは、もっともみえやすいせいざのひとつです。"
+  },
+  "codeLabFeaturedProject.Constellations.pair_x" : {
+    "translation" : "xのくみ"
+  },
+  "codeLabFeaturedProject.Constellations.pair_y" : {
+    "translation" : "yのくみ"
+  },
+  "codeLabFeaturedProject.Constellations.populate_choices" : {
+    "translation" : "せんたくしをつくる"
+  },
+  "codeLabFeaturedProject.Constellations.randomly_choose_a_fact_for_cozmo_to_say" : {
+    "translation" : "COZMOがいうないようをランダムにえらびます。"
+  },
+  "codeLabFeaturedProject.Constellations.reset_choices" : {
+    "translation" : "せんたくしをリセットする"
+  },
+  "codeLabFeaturedProject.Constellations.reset_lists" : {
+    "translation" : "リストをリセットする"
+  },
+  "codeLabFeaturedProject.Constellations.say_factoid" : {
+    "translation" : "ざつがくをはなす"
+  },
+  "codeLabFeaturedProject.Constellations.scorpius" : {
+    "translation" : "さそりざ"
+  },
+  "codeLabFeaturedProject.Constellations.scorpius_is_best_seen_in_the_july_night_sky" : {
+    "translation" : "さそりざは、７がつのよぞらでいちばんよくみえるせいざです。"
+  },
+  "codeLabFeaturedProject.Constellations.scorpius_was_discovered_by_a_man_named_ptolemy_say_that_three_times_fast" : {
+    "translation" : "さそりざはプトレマイオスというひとがはっけんしました。はやくちで３かいいってください！"
+  },
+  "codeLabFeaturedProject.Constellations.set_cassiopeia_data" : {
+    "translation" : "カシオペヤざのデータをせっていする"
+  },
+  "codeLabFeaturedProject.Constellations.set_leo_data" : {
+    "translation" : "ししざのデータをせっていする"
+  },
+  "codeLabFeaturedProject.Constellations.set_libra_data" : {
+    "translation" : "てんびんざのデータをせっていする"
+  },
+  "codeLabFeaturedProject.Constellations.set_orion_data" : {
+    "translation" : "オリオンざのデータをせっていする"
+  },
+  "codeLabFeaturedProject.Constellations.set_scorpius_data" : {
+    "translation" : "さそりざのデータをせっていする"
+  },
+  "codeLabFeaturedProject.Constellations.set_up_the_data_for_the_cassiopeia_constellation" : {
+    "translation" : "カシオペヤざのデータをセットアップしてください。"
+  },
+  "codeLabFeaturedProject.Constellations.set_up_the_data_for_the_leo_constellation" : {
+    "translation" : "ししざのデータをセットアップしてください。"
+  },
+  "codeLabFeaturedProject.Constellations.set_up_the_data_for_the_libra_constellation" : {
+    "translation" : "てんびんざのデータをセットアップしてください。"
+  },
+  "codeLabFeaturedProject.Constellations.set_up_the_data_for_the_orion_constellation" : {
+    "translation" : "オリオンざのデータをセットアップしてください。"
+  },
+  "codeLabFeaturedProject.Constellations.set_up_the_data_for_the_scorpius_constellation" : {
+    "translation" : "さそりざのデータをセットアップしてください。"
+  },
+  "codeLabFeaturedProject.Constellations.shuffle_choice" : {
+    "translation" : "せんたくしをシャッフルする"
+  },
+  "codeLabFeaturedProject.Constellations.shuffle_choices" : {
+    "translation" : "せんたくしをシャッフルする"
+  },
+  "codeLabFeaturedProject.Constellations.shuffle_count" : {
+    "translation" : "シャッフルのかいすう"
+  },
+  "codeLabFeaturedProject.Constellations.shuffle_random" : {
+    "translation" : "ランダムにシャッフルする"
+  },
+  "codeLabFeaturedProject.Constellations.shuffle_the_constellation_choices_list" : {
+    "translation" : "せいざのせんたくしリストをシャッフルしてください。"
+  },
+  "codeLabFeaturedProject.Constellations.since_ancient_times_libra_has_been_a_sign_of_fairness" : {
+    "translation" : "てんびんざは、こだいからこうへいさのしょうちょうです。"
   },
   "codeLabFeaturedProject.Constellations.slope1" : {
     "translation" : "傾き1"
@@ -180,17 +336,35 @@
   "codeLabFeaturedProject.Constellations.slope2" : {
     "translation" : "傾き2"
   },
+  "codeLabFeaturedProject.Constellations.some_of_libras_stars_could_have_livable_planets_pretty_cool" : {
+    "translation" : "てんびんざにはにんげんがすめるかもしれないわくせいがあります。すごい！"
+  },
+  "codeLabFeaturedProject.Constellations.tap_a_cube_for_another_constellation_" : {
+    "translation" : "べつのせいざをみるにはキューブをタップしてください。 "
+  },
+  "codeLabFeaturedProject.Constellations.the_constellation_is_named_leo_because_it_looks_just_like_a_lion" : {
+    "translation" : "このせいざは、ライオンのようにみえるので、ししざとなづけられました。"
+  },
   "codeLabFeaturedProject.Constellations.turn_angle" : {
     "translation" : "回転角"
   },
-  "codeLabFeaturedProject.Constellations.use_a_set_of_three_coordinates_to_drive_and_draw_lines_in_the_constellation" : {
-    "translation" : "Use a set of three coordinates to drive and draw lines in the constellation."
+  "codeLabFeaturedProject.Constellations.turn_cozmo_back_to_his_starting_position" : {
+    "translation" : "COZMOをスタートポジションへバックさせます。"
   },
-  "codeLabFeaturedProject.Constellations.use_the_constellation_instructions_variable_to_determine_whether_to_draw_a_dot_a_line_both_or_none" : {
-    "translation" : "Use the constellation instructions variable to determine whether to draw a dot, a line, both, or none."
+  "codeLabFeaturedProject.Constellations.turn_speed" : {
+    "translation" : "回転速度"
+  },
+  "codeLabFeaturedProject.Constellations.turn_to_starting_angle" : {
+    "translation" : "さいしょのかどにむかう"
+  },
+  "codeLabFeaturedProject.Constellations.use_the_data_from_the_instructions_list_to_decide_whether_to_draw_a_dot_a_line_both_or_neither" : {
+    "translation" : "てじゅんリストのデータをつかって、てん、せん、そのりょうほうのどれかをえがくか、またはどれもえがかないことをきめてください。"
   },
   "codeLabFeaturedProject.Constellations.use_the_slopes_of_two_intersecting_lines_to_get_turn_degrees_for_cozmo" : {
     "translation" : "交差する2つの線の傾きからCOZMOの回転角度を計算します。"
+  },
+  "codeLabFeaturedProject.Constellations.when_the_user_taps_a_cube_get_the_next_constellation" : {
+    "translation" : "ユーザーがキューブをタップすると、つぎのせいざへすすみます。"
   },
   "codeLabFeaturedProject.Constellations.x1" : {
     "translation" : "x1"
@@ -215,6 +389,9 @@
   },
   "codeLabFeaturedProject.Constellations.y_coordinates" : {
     "translation" : "y座標"
+  },
+  "codeLabFeaturedProject.Constellations.you_can_recognize_orion_by_his_belt_very_fashionable" : {
+    "translation" : "オリオンざは、ベルトでかくにんすることができます。おしゃれ！"
   },
   "codeLabFeaturedProject.CozmoFlies.cozmo_asks_to_be_picked_up_and_waits" : {
     "translation" : "COZMOは持ち上げてもらいたいようです。"
@@ -1340,5 +1517,635 @@
   },
   "codeLabFeaturedProject.text" : {
     "translation" : "テキスト"
+  },
+  "codeLabFeaturedProject.CozmosGarden.0055ff" : {
+    "translation" : "#0055ff"
+  },
+  "codeLabFeaturedProject.CozmosGarden.00ffbb" : {
+    "translation" : "#00ffbb"
+  },
+  "codeLabFeaturedProject.CozmosGarden.029900" : {
+    "translation" : "#029900"
+  },
+  "codeLabFeaturedProject.CozmosGarden._3_plants" : {
+    "translation" : " 3つのしょくぶつ"
+  },
+  "codeLabFeaturedProject.CozmosGarden._out_of_" : {
+    "translation" : " out of "
+  },
+  "codeLabFeaturedProject.CozmosGarden._rounds" : {
+    "translation" : " ラウンド"
+  },
+  "codeLabFeaturedProject.CozmosGarden.activate_sun" : {
+    "translation" : "たいようをアクティブにする"
+  },
+  "codeLabFeaturedProject.CozmosGarden.active_plant" : {
+    "translation" : "げんきなしょくぶつ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.add_or_subtract_points_from_a_plant" : {
+    "translation" : "しょくぶつにポイントをたすか、ポイントをひきます。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.all_the_plants_were_harvested_successfully" : {
+    "translation" : "すべてのしょくぶつはぶじしゅうかくされました。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.and" : {
+    "translation" : "そして"
+  },
+  "codeLabFeaturedProject.CozmosGarden.bb00ff" : {
+    "translation" : "#bb00ff"
+  },
+  "codeLabFeaturedProject.CozmosGarden.blueberries" : {
+    "translation" : "ブルーベリー"
+  },
+  "codeLabFeaturedProject.CozmosGarden.broccoli" : {
+    "translation" : "ブロッコリー"
+  },
+  "codeLabFeaturedProject.CozmosGarden.bug_plant" : {
+    "translation" : "むしがいるしょくぶつ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.bug_plants" : {
+    "translation" : "むしがいるしょくぶつ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.bugs_count" : {
+    "translation" : "むしのかず"
+  },
+  "codeLabFeaturedProject.CozmosGarden.bugs_want_to_eat_our_plants" : {
+    "translation" : "むしがわたしたちのしょくぶつをたべようとしています！"
+  },
+  "codeLabFeaturedProject.CozmosGarden.card_count" : {
+    "translation" : "カードのかず"
+  },
+  "codeLabFeaturedProject.CozmosGarden.card_growth_amounts" : {
+    "translation" : "しょくぶつのせいちょうどカード"
+  },
+  "codeLabFeaturedProject.CozmosGarden.check_for_bugs" : {
+    "translation" : "むしをチェックする"
+  },
+  "codeLabFeaturedProject.CozmosGarden.check_harvest" : {
+    "translation" : "しゅうかくをチェックする"
+  },
+  "codeLabFeaturedProject.CozmosGarden.check_to_see_if_any_plants_are_ready_to_harvest" : {
+    "translation" : "しょくぶつのしゅうかくじゅんびがととのったかどうか、たしかめてください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.check_to_see_whether_the_player_has_successfully_squashed_the_bugs" : {
+    "translation" : "プレイヤーがむしをぶじにやっつけたかどうか、たしかめてください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.choose_and_initialize_plants_to_grow_in_the_garden" : {
+    "translation" : "にわでそだてるしょくぶつをえらび、しょきせっていしてください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.clear_all_data_from_lists" : {
+    "translation" : "リストのすべてのデータをしょうきょしてください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.clear_all_data_from_the_bug_plants_list" : {
+    "translation" : "むしがいるしょくぶつのリストからすべてのデータをしょうきょしてください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.clear_all_data_from_the_plants_to_harvest_list" : {
+    "translation" : "しゅうかくリストにあるしょくぶつの、すべてのデータをしょうきょしてください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.clear_bug_plants" : {
+    "translation" : "むしがいるしょくぶつをしょうきょ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.clear_lists" : {
+    "translation" : "リストをしょうきょ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.clear_plants_to_harvest" : {
+    "translation" : "しゅうかくするしょくぶつをしょうきょ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.constrain_plant_growth" : {
+    "translation" : "しょくぶつのせいちょうをおさえる"
+  },
+  "codeLabFeaturedProject.CozmosGarden.count" : {
+    "translation" : "数"
+  },
+  "codeLabFeaturedProject.CozmosGarden.cozmo_displays_a_sun_on_his_face" : {
+    "translation" : "COZMOのかおにたいようがひょうじされます。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.cozmo_displays_bugs_on_his_face" : {
+    "translation" : "COZMOのかおにむしがひょうじされます。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.cozmo_displays_water_on_his_face" : {
+    "translation" : "COZMOのかおにみずがひょうじされます。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.create_garden" : {
+    "translation" : "にわをつくる"
+  },
+  "codeLabFeaturedProject.CozmosGarden.current_card" : {
+    "translation" : "げんざいのカード"
+  },
+  "codeLabFeaturedProject.CozmosGarden.darn_just_missed_them" : {
+    "translation" : "しまった！　にがした！"
+  },
+  "codeLabFeaturedProject.CozmosGarden.deck" : {
+    "translation" : "デッキ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.determine_which_plants_to_grow" : {
+    "translation" : "どのしょくぶつをそだてるかきめてください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.disable_the_backpack_light" : {
+    "translation" : "LEDライトをむこうかしてください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.dont_give_up_lets_try_again" : {
+    "translation" : "あきらめないで！　もういちどいちょうせんしよう。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.draw_a_drop_of_water" : {
+    "translation" : "すいてきをえがきます。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.draw_bugs" : {
+    "translation" : "むしをえがく"
+  },
+  "codeLabFeaturedProject.CozmosGarden.draw_drop" : {
+    "translation" : "ドロップをえがく"
+  },
+  "codeLabFeaturedProject.CozmosGarden.draw_mode" : {
+    "translation" : "ドローモード"
+  },
+  "codeLabFeaturedProject.CozmosGarden.draw_next_card" : {
+    "translation" : "つぎのカードをひく"
+  },
+  "codeLabFeaturedProject.CozmosGarden.draw_sun" : {
+    "translation" : "たいようをえがく"
+  },
+  "codeLabFeaturedProject.CozmosGarden.draw_the_next_card_from_the_deck" : {
+    "translation" : "デッキからつぎのカードをひいてください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.draw_water" : {
+    "translation" : "みずをえがく"
+  },
+  "codeLabFeaturedProject.CozmosGarden.drop_line_position_y" : {
+    "translation" : "ドロップせんのいちy"
+  },
+  "codeLabFeaturedProject.CozmosGarden.drop_line_width" : {
+    "translation" : "ドロップせんのはば"
+  },
+  "codeLabFeaturedProject.CozmosGarden.drop_radius" : {
+    "translation" : "ドロップのはんけい"
+  },
+  "codeLabFeaturedProject.CozmosGarden.drop_scale" : {
+    "translation" : "ドロップのおおきさ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.drop_x" : {
+    "translation" : "ドロップx"
+  },
+  "codeLabFeaturedProject.CozmosGarden.drop_y" : {
+    "translation" : "ドロップy"
+  },
+  "codeLabFeaturedProject.CozmosGarden.ff0000" : {
+    "translation" : "#ff0000"
+  },
+  "codeLabFeaturedProject.CozmosGarden.ff7700" : {
+    "translation" : "#ff7700"
+  },
+  "codeLabFeaturedProject.CozmosGarden.ffff00" : {
+    "translation" : "#ffff00"
+  },
+  "codeLabFeaturedProject.CozmosGarden.fill_up_the_deck_of_cards_list" : {
+    "translation" : "カードリストのデッキをにゅうりょくしてください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.fill_up_the_plant_types_and_plant_colors_lists" : {
+    "translation" : "しょくぶつのしゅるいとしょくぶつのいろのリストをにゅうりょくしてください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.game_over_lose" : {
+    "translation" : "ゲームオーバー　まけ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.game_over_win" : {
+    "translation" : "ゲームオーバー　かち"
+  },
+  "codeLabFeaturedProject.CozmosGarden.garden_plants" : {
+    "translation" : "にわのしょくぶつ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.garden_plants_active" : {
+    "translation" : "にわのげんきなしょくぶつ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.garden_plants_colors" : {
+    "translation" : "にわのしょくぶつのいろ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.garden_plants_growth" : {
+    "translation" : "にわのしょくぶつのせいちょう"
+  },
+  "codeLabFeaturedProject.CozmosGarden.garden_plants_to_harvest" : {
+    "translation" : "しゅうかくするにわのしょくぶつ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.got_em" : {
+    "translation" : "つかまえた！"
+  },
+  "codeLabFeaturedProject.CozmosGarden.grapes" : {
+    "translation" : "ぶどう"
+  },
+  "codeLabFeaturedProject.CozmosGarden.grow_active_plant" : {
+    "translation" : "げんきなしょくぶつをそだてる"
+  },
+  "codeLabFeaturedProject.CozmosGarden.grow_plants" : {
+    "translation" : "しょくぶつをそだてる"
+  },
+  "codeLabFeaturedProject.CozmosGarden.growth_mode" : {
+    "translation" : "せいちょうモード"
+  },
+  "codeLabFeaturedProject.CozmosGarden.haha_squished_em" : {
+    "translation" : "やった！　やっつけた！"
+  },
+  "codeLabFeaturedProject.CozmosGarden.harvest_active_plant" : {
+    "translation" : "げんきなしょくぶつをしゅうかくする"
+  },
+  "codeLabFeaturedProject.CozmosGarden.harvest_mode" : {
+    "translation" : "しゅうかくモード"
+  },
+  "codeLabFeaturedProject.CozmosGarden.harvested_plants" : {
+    "translation" : "しゅうかくしたしょくぶつ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.hey_no_fair_bugs" : {
+    "translation" : "ずるいむしめ！"
+  },
+  "codeLabFeaturedProject.CozmosGarden.hi" : {
+    "translation" : "こんにちは"
+  },
+  "codeLabFeaturedProject.CozmosGarden.hooray_we_harvested_all_the_plants_in_" : {
+    "translation" : "やったー！　★のすべてのしょくぶつをしゅうかくしました。 "
+  },
+  "codeLabFeaturedProject.CozmosGarden.initialize_game_data_and_begin" : {
+    "translation" : "ゲームのデータをしょきかして、かいししてください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.input_mode" : {
+    "translation" : "にゅうりょくモード"
+  },
+  "codeLabFeaturedProject.CozmosGarden.instructions_max_amount" : {
+    "translation" : "てじゅん　さいだいりょう"
+  },
+  "codeLabFeaturedProject.CozmosGarden.lemons" : {
+    "translation" : "レモン"
+  },
+  "codeLabFeaturedProject.CozmosGarden.lets_grow" : {
+    "translation" : "そだてよう"
+  },
+  "codeLabFeaturedProject.CozmosGarden.lettuce" : {
+    "translation" : "レタス"
+  },
+  "codeLabFeaturedProject.CozmosGarden.make_sure_no_plant_can_have_less_than_0_or_more_than_4_points" : {
+    "translation" : "しょくぶつは、0みまんまたは4いじょうのポイントはとれません。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.make_the_sun_shine_on_all_the_plants" : {
+    "translation" : "すべてのしょくぶつに、たいようのひかりをあててください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.mode" : {
+    "translation" : "モード"
+  },
+  "codeLabFeaturedProject.CozmosGarden.new_growth" : {
+    "translation" : "あたらしいせいちょう"
+  },
+  "codeLabFeaturedProject.CozmosGarden.not_this_time_bugs" : {
+    "translation" : "つぎはつかまえるぞ！"
+  },
+  "codeLabFeaturedProject.CozmosGarden.one_plant_is_better_than_none" : {
+    "translation" : "たったひとつのしょくぶつでも、ぜんぜんないよりずっといい！"
+  },
+  "codeLabFeaturedProject.CozmosGarden.ooh_those_sneaky_bugs" : {
+    "translation" : "こそくなむしめ！"
+  },
+  "codeLabFeaturedProject.CozmosGarden.oranges" : {
+    "translation" : "オレンジ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.plant_colors" : {
+    "translation" : "しょくぶつのいろ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.plant_roll" : {
+    "translation" : "しょくぶつロール"
+  },
+  "codeLabFeaturedProject.CozmosGarden.plant_types" : {
+    "translation" : "しょくぶつのしゅるい"
+  },
+  "codeLabFeaturedProject.CozmosGarden.play_bugs_card" : {
+    "translation" : "むしのカードをプレイ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.play_sun_card" : {
+    "translation" : "たいようのカードをプレイ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.play_water_card" : {
+    "translation" : "みずのカードをプレイ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.player_activated" : {
+    "translation" : "プレイヤーをアクティブかする"
+  },
+  "codeLabFeaturedProject.CozmosGarden.populate_deck" : {
+    "translation" : "デッキをつくる"
+  },
+  "codeLabFeaturedProject.CozmosGarden.populate_plant_list" : {
+    "translation" : "しょくぶつリストをつくる"
+  },
+  "codeLabFeaturedProject.CozmosGarden.present_card" : {
+    "translation" : "カードをだす"
+  },
+  "codeLabFeaturedProject.CozmosGarden.present_the_next_drawn_card" : {
+    "translation" : "つぎにひくカードをだしてください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.put_the_events_of_the_bugs_card_into_action" : {
+    "translation" : "むしのカードのイベントをじっこうしてください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.put_the_events_of_the_sun_card_into_action" : {
+    "translation" : "たいようのカードのイベントをじっこうしてください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.put_the_events_of_the_water_card_into_action" : {
+    "translation" : "みずのカードのイベントをじっこうしてください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.ran_out_of_cards_before_all_plants_were_harvested" : {
+    "translation" : "すべてのしょくぶつをしゅうかくするまえにカードをつかいはたしました。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.randomly_choose_a_phrase_for_cozmo_to_say_when_the_bugs_were_hit" : {
+    "translation" : "むしをつかまえたときにCOZMOがいうことばをランダムにえらんでください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.randomly_choose_a_phrase_for_cozmo_to_say_when_the_bugs_were_missed" : {
+    "translation" : "むしをにがしたときにCOZMOがいうことばをランダムにえらんでください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.ready_set_grow" : {
+    "translation" : "いちについて、よーい、おおきくなれ！"
+  },
+  "codeLabFeaturedProject.CozmosGarden.round_" : {
+    "translation" : "ラウンド "
+  },
+  "codeLabFeaturedProject.CozmosGarden.say_got_bugs_phrase" : {
+    "translation" : "「むしをつかまえた」という"
+  },
+  "codeLabFeaturedProject.CozmosGarden.say_missed_bugs_phrase" : {
+    "translation" : "「むしをにがした」という"
+  },
+  "codeLabFeaturedProject.CozmosGarden.set_a_plant_to_the_harvested_state_and_spin_the_cube_lights" : {
+    "translation" : "しょくぶつをしゅうかくずみにセットし、キューブのライトをかいてんさせます。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.show_and_check_harvest" : {
+    "translation" : "しゅうかくをひょうじしたしかめる"
+  },
+  "codeLabFeaturedProject.CozmosGarden.show_plant_growth" : {
+    "translation" : "しょくぶつのせいちょうをひょうじする"
+  },
+  "codeLabFeaturedProject.CozmosGarden.show_plant_growth_and_check_if_plants_are_ready_for_harvest" : {
+    "translation" : "しょくぶつのせいちょうをひょうじし、しょくぶつのしゅうかくじゅんびがととのったかどうか、たしかめます。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.shuffle_card" : {
+    "translation" : "カードをシャッフルする"
+  },
+  "codeLabFeaturedProject.CozmosGarden.shuffle_deck" : {
+    "translation" : "デッキをシャッフルする"
+  },
+  "codeLabFeaturedProject.CozmosGarden.shuffle_random" : {
+    "translation" : "ランダムにシャッフルする"
+  },
+  "codeLabFeaturedProject.CozmosGarden.shuffle_the_deck_of_cards" : {
+    "translation" : "カードデッキをシャッフルしてください。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.smile_to_shine_the_sun_on_our_plants" : {
+    "translation" : "えがおをつくってたいようのひかりをしょくぶつにあてる"
+  },
+  "codeLabFeaturedProject.CozmosGarden.sun" : {
+    "translation" : "たいよう"
+  },
+  "codeLabFeaturedProject.CozmosGarden.sun_count" : {
+    "translation" : "たいようのひかりのりょう"
+  },
+  "codeLabFeaturedProject.CozmosGarden.tap_a_plant_to_guess_where_the_bugs_are" : {
+    "translation" : "しょくぶつをタップして、どこにむしがいるかあててください！"
+  },
+  "codeLabFeaturedProject.CozmosGarden.tap_a_plant_to_water_it" : {
+    "translation" : "しょくぶつをタップしてみずをやる"
+  },
+  "codeLabFeaturedProject.CozmosGarden.thing" : {
+    "translation" : "もの"
+  },
+  "codeLabFeaturedProject.CozmosGarden.tomatoes" : {
+    "translation" : "トマト"
+  },
+  "codeLabFeaturedProject.CozmosGarden.use_cube_lights_to_show_the_current_state_of_growth_for_plants_that_have_not_been_harvested" : {
+    "translation" : "キューブのライトをつかって、まだしゅうかくされていないしょくぶつの、げんざいのせいちょうじょうたいをひょうじします。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.water_active_plant" : {
+    "translation" : "げんきなしょくぶつにみずをやる"
+  },
+  "codeLabFeaturedProject.CozmosGarden.water_count" : {
+    "translation" : "みずやりのかいすう"
+  },
+  "codeLabFeaturedProject.CozmosGarden.water_the_plant_the_player_has_chosen" : {
+    "translation" : "プレイヤーがえらんだしょくぶつにみずをやります。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.watering_can" : {
+    "translation" : "じょうろ"
+  },
+  "codeLabFeaturedProject.CozmosGarden.we_harvested_" : {
+    "translation" : "★をしゅうかくしました "
+  },
+  "codeLabFeaturedProject.CozmosGarden.we_harvested_the_" : {
+    "translation" : "★をしゅうかくしました "
+  },
+  "codeLabFeaturedProject.CozmosGarden.were_pretty_good_at_this" : {
+    "translation" : "これはかなりうまくいきました！"
+  },
+  "codeLabFeaturedProject.CozmosGarden.when_cozmo_sees_the_player_smile_activate_the_sun" : {
+    "translation" : "COZMOがプレイヤーのえがおをみると、たいようがさどうします。"
+  },
+  "codeLabFeaturedProject.CozmosGarden.when_the_cube_is_tapped_activate_the_relevant_action" : {
+    "translation" : "キューブをたっぷすると、かんれんするアクションがさどうします。"
+  },
+  "codeLabFeaturedProject.GuessTheNumber._guesses" : {
+    "translation" : " あててみて！"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.after_incorrect_guess_play_sad_animation_and_reguess" : {
+    "translation" : "よそうがはずれたらかなしいアニメをプレイし、もういちどよそうします。"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.cozmo_gives_instructions" : {
+    "translation" : "COZMOがしじをだします。"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.cozmo_has_guessed_the_number_so_end_the_game" : {
+    "translation" : "COZMOがすうじをあてたので、ゲームはしゅうりょうです。"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.display_guess" : {
+    "translation" : "よそうをひょうじする"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.display_the_guess_cozmo_has_made" : {
+    "translation" : "COZMOがおこなったよそうをひょうじします。"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.end_game" : {
+    "translation" : "ゲームしゅうりょう"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.gameover" : {
+    "translation" : "ゲームオーバー"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.give_instructions" : {
+    "translation" : "しじをだす"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.guess" : {
+    "translation" : "よそうする"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.hi" : {
+    "translation" : "こんにちは"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.higher_number_cube_is_tapped" : {
+    "translation" : "すうじのおおきなキューブがタップされました。"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.i_guessed_your_number_in_" : {
+    "translation" : "★のあなたのすうじをあてます。 "
+  },
+  "codeLabFeaturedProject.GuessTheNumber.if_i_guess_correctly_tap_purple_if_your_number_is_higher_tap_green_if_it_is_lower_tap_red" : {
+    "translation" : "よそうがあたったら、パープルをタップしてください。すうじがよそうよりもおおきかったら、グリーンをタップしてください。すうじがよそうよりもちいさかったら、レッドをタップしてください。"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.initialize_the_game_and_give_instructions" : {
+    "translation" : "ゲームをしょきかして、しじをだしてください。"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.is" : {
+    "translation" : "は"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.is_your_number_" : {
+    "translation" : "あなたのすうじは★ですか？ "
+  },
+  "codeLabFeaturedProject.GuessTheNumber.lower_number_cube_is_tapped" : {
+    "translation" : "すうじのちいさなキューブがタップされました。"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.max" : {
+    "translation" : "さいだい"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.min" : {
+    "translation" : "さいしょう"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.new_guess" : {
+    "translation" : "あたらしいよそう"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.reset_lights" : {
+    "translation" : "ライトをリセットする"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.reset_the_cube_lights_to_the_colors_used_for_gameplay" : {
+    "translation" : "キューブのライトを、ゲームにつかったいろにリセットしてください。"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.spin_all_of_the_cube_lights_in_white" : {
+    "translation" : "キューブのすべてのライトをホワイトでかいてんさせてください。"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.spin_lights" : {
+    "translation" : "ライトをかいてんさせる"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.start_and_end_game_cube_is_tapped" : {
+    "translation" : "ゲームをはじめるときとおわるときは、キューブをタップしてください。"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.started" : {
+    "translation" : "はじめる"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.tapon" : {
+    "translation" : "タップする"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.think_of_a_number_between_1_and_100_and_tap_purple_to_continue" : {
+    "translation" : "1から100のなかからひとつすうじをえらび、パープルをタップしてつづけます。"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.totalguesses" : {
+    "translation" : "ぜんたいのよそう"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.turn_off_backpack" : {
+    "translation" : "LEDライトをけす"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.turn_off_the_backpack_light" : {
+    "translation" : "LEDライトをけしてください。"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.advance_to_the_next_turn_and_enable_cubes_for_input" : {
+    "translation" : "つぎのゲームにすすみ、キューブのにゅうりょくをゆうこうかします。"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.ahhh_goodnight" : {
+    "translation" : "ああ、おやすみ！"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.check_if_cozmo_is_upside_down" : {
+    "translation" : "COZMOがさかさまになっていないかたしかめる"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.choose_a_random_phrase_for_cozmo_to_say_at_the_start_of_the_game" : {
+    "translation" : "ゲームのはじめにCOZMOがいうランダムなことばをえらんでください。"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.choose_a_random_phrase_for_cozmo_to_say_when_he_continues_sleeping" : {
+    "translation" : "COZMOがねむっているあいだにいうランダムなことばをえらんでください。"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.choose_a_random_phrase_for_cozmo_to_say_when_he_wakes_up" : {
+    "translation" : "COZMOがめざめたときにいうランダムなことばをえらんでください。"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.choose_bedtime_phrase" : {
+    "translation" : "ねるまえにいうことばをえらぶ"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.choose_sleeping_phrase" : {
+    "translation" : "ねむっているあいだにいうことばをえらぶ"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.choose_wake_up_phrase" : {
+    "translation" : "めざめたときにいうことばをえらぶ"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.cozmo_asks_to_be_turned_upside_down_to_begin" : {
+    "translation" : "COZMOがさいしょに、ひっくりかえすようおねがいします。"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.cozmo_is_upside_down" : {
+    "translation" : "COZMOはひっくりかえっています"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.disable_cubes" : {
+    "translation" : "キューブをむこうかする"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.disable_cubes_input_and_turn_the_lights_off" : {
+    "translation" : "キューブのにゅうりょくをむこうかしてライトけしてください。"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.flip_cozmo" : {
+    "translation" : "COZMOをひっくりかえす"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.flip_me_over_to_play_again" : {
+    "translation" : "COZMOをひっくりかえしてもういちどプレイする"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.flip_turn" : {
+    "translation" : "ひっくりかえす"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.game_number" : {
+    "translation" : "ゲームばんごう"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.hey_im_too_tired_for_this" : {
+    "translation" : "ねえ！　すごくつかれたよ"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.hey_now_im_wide_awake" : {
+    "translation" : "ねえ！　とってもめがさえてるよ！"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.i_need_a_nap" : {
+    "translation" : "おひるねしたいな"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.if_cozmo_has_been_turned_over_the_game_can_begin" : {
+    "translation" : "COZMOをひっくりかえすと、ゲームがはじまります。"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.im_so_tired" : {
+    "translation" : "すごくつかれたよ"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.initialize_variables_and_start_the_game" : {
+    "translation" : "へんすうをしょきかして、ゲームをかいししてください。"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.input_mode" : {
+    "translation" : "にゅうりょくモード"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.its_exhausting_being_me" : {
+    "translation" : "ぼくでいるのはつかれるよ"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.let_sleeping_robots_lie" : {
+    "translation" : "ねたロボットをおこすな"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.next_turn" : {
+    "translation" : "つぎのじゅんばん"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.no_i_didnt_get_enough_sleep" : {
+    "translation" : "やだ！　もっとねむりたい！"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.once_the_game_is_over_reset_and_offer_to_play_again" : {
+    "translation" : "ゲームがおわったらリセットして、もういちどプレイにさそってください。"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.play_again" : {
+    "translation" : "もう一度プレイ"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.player_activated" : {
+    "translation" : "プレイヤーをアクティブかしました"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.random_number" : {
+    "translation" : "ランダムなばんごう"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.shh_im_trying_to_sleep" : {
+    "translation" : "シーッ、いまねようとしているの。"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.turn" : {
+    "translation" : "ひっくりかえす"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.turn_me_upside_down_so_i_can_sleep" : {
+    "translation" : "ひっくりかえるとねむれるんだ。"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.when_a_cube_is_tapped_check_to_see_if_cozmo_is_woken_up_or_not" : {
+    "translation" : "キューブをタップしたとき、COZMOがおきているかどうかたしかめてください。"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.who_woke_me_up" : {
+    "translation" : "ぼくをおこしたのはだれ？"
   }
 }

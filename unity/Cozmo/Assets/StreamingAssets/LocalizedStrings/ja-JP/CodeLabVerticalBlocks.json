@@ -6,71 +6,71 @@
     "placeholder_format_custom" : ["%[0-9]+"],
     "source_key_paths" : ["/{*}"]
   },
-  "codeLabVertical.SONG_ADD_NOTE": {
-    "translation": "add note %1 with duration %2"
+  "codeLabVertical.SONG_ADD_NOTE" : {
+    "translation" : "add note to song: %1 pitch, %2 duration"
   },
-  "codeLabVertical.NOTE_C2": {
-    "translation": "C"
+  "codeLabVertical.NOTE_C2" : {
+    "translation" : "C"
   },
-  "codeLabVertical.NOTE_C2_SHARP": {
-    "translation": "C#/Db"
+  "codeLabVertical.NOTE_C2_SHARP" : {
+    "translation" : "C#/Db"
   },
-  "codeLabVertical.NOTE_D2": {
-    "translation": "D"
+  "codeLabVertical.NOTE_D2" : {
+    "translation" : "D"
   },
-  "codeLabVertical.NOTE_D2_SHARP": {
-    "translation": "D#/Eb"
+  "codeLabVertical.NOTE_D2_SHARP" : {
+    "translation" : "D#/Eb"
   },
-  "codeLabVertical.NOTE_E2": {
-    "translation": "E"
+  "codeLabVertical.NOTE_E2" : {
+    "translation" : "E"
   },
-  "codeLabVertical.NOTE_F2": {
-    "translation": "F"
+  "codeLabVertical.NOTE_F2" : {
+    "translation" : "F"
   },
-  "codeLabVertical.NOTE_F2_SHARP": {
-    "translation": "F#/Gb"
+  "codeLabVertical.NOTE_F2_SHARP" : {
+    "translation" : "F#/Gb"
   },
-  "codeLabVertical.NOTE_G2": {
-    "translation": "G"
+  "codeLabVertical.NOTE_G2" : {
+    "translation" : "G"
   },
-  "codeLabVertical.NOTE_G2_SHARP": {
-    "translation": "G#/Ab"
+  "codeLabVertical.NOTE_G2_SHARP" : {
+    "translation" : "G#/Ab"
   },
-  "codeLabVertical.NOTE_A2": {
-    "translation": "A"
+  "codeLabVertical.NOTE_A2" : {
+    "translation" : "A"
   },
-  "codeLabVertical.NOTE_A2_SHARP": {
-    "translation": "A#/Bb"
+  "codeLabVertical.NOTE_A2_SHARP" : {
+    "translation" : "A#/Bb"
   },
-  "codeLabVertical.NOTE_B2": {
-    "translation": "B"
+  "codeLabVertical.NOTE_B2" : {
+    "translation" : "B"
   },
-  "codeLabVertical.NOTE_C3": {
-    "translation": "C"
+  "codeLabVertical.NOTE_C3" : {
+    "translation" : "C"
   },
-  "codeLabVertical.NOTE_C3_SHARP": {
-    "translation": "C#/Db"
+  "codeLabVertical.NOTE_C3_SHARP" : {
+    "translation" : "C#/Db"
   },
-  "codeLabVertical.SONG_ADD_REST": {
-    "translation": "add rest with duration %1"
+  "codeLabVertical.SONG_ADD_REST" : {
+    "translation" : "add rest to song: %1 duration"
   },
-  "codeLabVertical.NOTE_DURATION_QUARTER": {
-    "translation": "1/4"
+  "codeLabVertical.NOTE_DURATION_QUARTER" : {
+    "translation" : "quarter"
   },
-  "codeLabVertical.NOTE_DURATION_HALF": {
-    "translation": "1/2"
+  "codeLabVertical.NOTE_DURATION_HALF" : {
+    "translation" : "half"
   },
-  "codeLabVertical.NOTE_DURATION_THREE_QUARTER": {
-    "translation": "3/4"
+  "codeLabVertical.NOTE_DURATION_THREE_QUARTER" : {
+    "translation" : "three-quarter"
   },
-  "codeLabVertical.NOTE_DURATION_WHOLE": {
-    "translation": "Whole"
+  "codeLabVertical.NOTE_DURATION_WHOLE" : {
+    "translation" : "whole"
   },
-  "codeLabVertical.CLEAR_ALL_NOTES": {
-    "translation": "clear all notes"
+  "codeLabVertical.CLEAR_ALL_NOTES" : {
+    "translation" : "clear all notes in song"
   },
-  "codeLabVertical.PLAY_ALL_NOTES": {
-    "translation": "play all notes (4 measures max)"
+  "codeLabVertical.PLAY_ALL_NOTES" : {
+    "translation" : "play all notes in song"
   },
   "codeLabVertical.COZMO_VERT_DRIVE" : {
     "translation" : "%2mm/sで%1mm進む"
@@ -657,11 +657,11 @@
   "codeLabVertical.PLAY_ANIMATION_BY_TRIGGER_NAME_BLOCK" : {
     "translation" : "上級： %1 SDKアニメーショングループを再生"
   },
-  "codeLabVertical.EVENTS_BROADCAST_SCRATCH_2_LEGACY": {
-    "translation": "broadcast %1 - legacy"
+  "codeLabVertical.EVENTS_BROADCAST_SCRATCH_2_LEGACY" : {
+    "translation" : "%1 をはっしん - レガシー"
   },
-  "codeLabVertical.EVENTS_BROADCAST_HAT_LEGACY": {
-    "translation": "when %1 received - legacy"
+  "codeLabVertical.EVENTS_BROADCAST_HAT_LEGACY" : {
+    "translation" : "%1 をじゅしんしたら- レガシー"
   },
   "codeLabVertical.EVENTS_BROADCAST_HAT" : {
     "translation" : " %1 を受信したら"
@@ -669,13 +669,13 @@
   "codeLabVertical.EVENTS_BROADCAST_AND_WAIT" : {
     "translation" : " %1 を発信し完了まで待機"
   },
-  "codeLabVertical.EVENTS_BROADCAST_AND_WAIT_LEGACY": {
-    "translation": "broadcast %1 and wait to complete - legacy"
+  "codeLabVertical.EVENTS_BROADCAST_AND_WAIT_LEGACY" : {
+    "translation" : "%1 をはっしんし、かんりょうまでたいき - レガシー"
   },
-  "codeLabVertical.LIST_ALREADY_EXISTS": {
-    "translation": "A list named \"%1\" already exists."
+  "codeLabVertical.LIST_ALREADY_EXISTS" : {
+    "translation" : "\"%1\"というなまえのリストはすでにあります。"
   },
-  "codeLabVertical.RENAME_LIST_TITLE": {
-    "translation": "Rename all \"%1\" lists to:"
+  "codeLabVertical.RENAME_LIST_TITLE" : {
+    "translation" : "すべての\"%1\"リストのなまえをつぎにへんこうします："
   }
 }

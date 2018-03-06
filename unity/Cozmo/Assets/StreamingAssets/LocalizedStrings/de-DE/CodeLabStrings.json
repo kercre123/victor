@@ -943,40 +943,40 @@
     "translation" : "Löst diesen Codeblock aus und führt die darunter liegenden Codeblöcke aus, wenn der angegebene Cube [#] bewegt wird. Tipp: Als \"bewegen\" gilt es, wenn ein Cube in einer etwas anderen Position oder an einem etwas anderen Ort platziert wird. \"tippen\" bedeutet, dass der Cube vom Spieler bewusst kurz angetippt wird."
   },
   "codeLabGlossary.block_definitions.title.event_whenbroadcastreceived" : {
-    "translation" : "Wenn [Nachricht#] erhalten wird"
+    "translation" : "Wenn [Nachricht] erhalten wird"
   },
   "codeLabGlossary.block_definitions.description.event_whenbroadcastreceived" : {
     "translation" : "Löst diesen Codeblock aus und führt die darunter liegenden Codeblöcke aus, wenn ein anderer Codeblock die entsprechende Nachricht sendet. Tipp: Wenn du bereits mehr Programmiererfahrung hast, kannst du dir Nachrichten wie Funktionen vorstellen."
   },
   "codeLabGlossary.block_definitions.title.event_broadcast" : {
-    "translation" : "[Nachricht#] senden"
+    "translation" : "[Nachricht] senden"
   },
   "codeLabGlossary.block_definitions.description.event_broadcast" : {
-    "translation" : "Sendet eine Nachricht, die den Block \"Wenn [Nachricht#] erhalten wird\" auslöst. Tipp: Nachdem eine Nachricht gesendet wurde, werden die Blöcke unter diesem Block weiterhin ausgeführt. Daher werden der ursprüngliche Stapel von Blöcken und die Blöcke unter \"Wenn [Nachricht#] erhalten wird\" zeitgleich ausgeführt. Wenn du bereits mehr Programmiererfahrung hast, kannst du dir das wie das Starten eines neuen Threads in den meisten Programmiersprachen vorstellen."
+    "translation" : "Sendet eine Nachricht, die den Block \"Wenn [Nachricht] erhalten wird\" auslöst. Tipp: Nachdem eine Nachricht gesendet wurde, werden die Blöcke unter diesem Block weiterhin ausgeführt. Daher werden der ursprüngliche Stapel von Blöcken und die Blöcke unter \"Wenn [Nachricht] erhalten wird\" zeitgleich ausgeführt. Wenn du bereits mehr Programmiererfahrung hast, kannst du dir das wie das Starten eines neuen Threads in den meisten Programmiersprachen vorstellen."
   },
   "codeLabGlossary.block_definitions.title.event_broadcastandwait" : {
-    "translation" : "[Nachricht#] senden und warten, bis der Vorgang abgeschlossen ist"
+    "translation" : "[Nachricht] senden und warten, bis der Vorgang abgeschlossen ist"
   },
   "codeLabGlossary.block_definitions.description.event_broadcastandwait" : {
-    "translation" : "Sendet eine Nachricht, die den Block \"Wenn [Nachricht#] erhalten wird\" auslöst, und wartet dann vor dem Fortfahren, bis die Blöcke unter dem Block \"Wenn [Nachricht#] erhalten wird\" vollständig ausgeführt wurden. Tipp: Wenn du bereits mehr Programmiererfahrung hast, kannst du dir das wie einen Funktionsaufruf in den meisten Programmiersprachen vorstellen."
+    "translation" : "Sendet eine Nachricht, die den Block \"Wenn [Nachricht] erhalten wird\" auslöst, und wartet dann vor dem Fortfahren, bis die Blöcke unter dem Block \"Wenn [Nachricht] erhalten wird\" vollständig ausgeführt wurden. Tipp: Wenn du bereits mehr Programmiererfahrung hast, kannst du dir das wie einen Funktionsaufruf in den meisten Programmiersprachen vorstellen."
   },
   "codeLabGlossary.block_definitions.title.event_whenbroadcastreceived_with_broadcast_input" : {
-    "translation" : "when [message#] received"
+    "translation" : "Wenn [Nachricht] erhalten wird"
   },
   "codeLabGlossary.block_definitions.description.event_whenbroadcastreceived_with_broadcast_input" : {
-    "translation" : "Triggers this code block and runs the code blocks underneath it whenever another code block broadcasts the corresponding message. Tip: For experienced coders, think of messages like functions."
+    "translation" : "Löst diesen Codeblock aus und führt die darunter liegenden Codeblöcke aus, wenn ein anderer Codeblock die entsprechende Nachricht sendet. Tipp: Wenn du bereits mehr Programmiererfahrung hast, kannst du dir Nachrichten wie Funktionen vorstellen."
   },
   "codeLabGlossary.block_definitions.title.event_broadcast_with_broadcast_input" : {
-    "translation" : "broadcast [message#]"
+    "translation" : "[Nachricht] senden"
   },
   "codeLabGlossary.block_definitions.description.event_broadcast_with_broadcast_input" : {
-    "translation" : "Broadcasts (sends) a message to trigger the \"when [message#] received\" block. Tip: After broadcasting a message, the blocks under this block will continue to execute. Therefore, both this original stack of blocks and the blocks underneath the \"when [message#] received\" block will run in parallel. For experienced coders, think of this like starting a new thread in most programming languages."
+    "translation" : "Sendet eine Nachricht, die den Block \"Wenn [Nachricht] erhalten wird\" auslöst. Tipp: Nachdem eine Nachricht gesendet wurde, werden die Blöcke unter diesem Block weiterhin ausgeführt. Daher werden der ursprüngliche Stapel von Blöcken und die Blöcke unter \"Wenn [Nachricht] erhalten wird\" zeitgleich ausgeführt. Wenn du bereits mehr Programmiererfahrung hast, kannst du dir das wie das Starten eines neuen Threads in den meisten Programmiersprachen vorstellen."
   },
   "codeLabGlossary.block_definitions.title.event_broadcastandwait_with_broadcast_input" : {
-    "translation" : "broadcast [message#] and wait to complete"
+    "translation" : "[Nachricht] senden und warten, bis der Vorgang abgeschlossen ist"
   },
   "codeLabGlossary.block_definitions.description.event_broadcastandwait_with_broadcast_input" : {
-    "translation" : "Broadcasts (sends) a message to trigger the \"when [message#] received\" block, and then waits for the blocks under the \"when [message#] received\" to fully execute before continuing on. Tip: For experienced coders, think of this like a function call in most programming languages."
+    "translation" : "Sendet eine Nachricht, die den Block \"Wenn [Nachricht] erhalten wird\" auslöst, und wartet dann vor dem Fortfahren, bis die Blöcke unter dem Block \"Wenn [Nachricht] erhalten wird\" vollständig ausgeführt wurden. Tipp: Wenn du bereits mehr Programmiererfahrung hast, kannst du dir das wie einen Funktionsaufruf in den meisten Programmiersprachen vorstellen."
   },
   "codeLabGlossary.block_definitions.title.control_wait" : {
     "translation" : "[X] s warten"
@@ -1438,7 +1438,7 @@
     "translation" : "Feiere den Astronomietag mit kosmischen Sternbildern."
   },
   "codeLabFeaturedConstellations.projectInstructions" : {
-    "translation" : "1. Tipp die Startflagge an und sieh zu, wie sich die Sterne zu einem Sternbild verbinden.\u000a\u000a2. Wiederhole das Ganze, um alle zu sehen."
+    "translation" : "1. Stelle sicher, dass Cozmo ausreichend Platz zum Herumfahren zur Verfügung steht.\u000a\u000a2. Tipp die Startflagge an und sieh zu, wie sich die Sterne zu einem Sternbild verbinden.\u000a\u000a3. Wiederhole das Ganze, um alle zu sehen."
   },
   "codeLabFeaturedDrivingInCircles.projectName" : {
     "translation" : "Im Kreis fahren"
@@ -1475,5 +1475,59 @@
   },
   "codeLabFeaturedPotOGoldDetector.projectInstructions" : {
     "translation" : "1. Wenn du die Startflagge angetippt hast, taucht an einem geheimen Ort in der Nähe von Cozmo ein Schatz auf.\u000a\u000a2. Du kannst dann mit deinem Gerät Cozmo zum versteckten Schatz führen.\u000a\u000a3. Kippe den Bildschirm nach oben und unten und nach links und rechts, um Cozmo zu bewegen.\u000a\u000a4. Die Signale von Cozmos Schatzdetektor werden umso schneller, je näher er dem Schatz kommt."
+  },
+  "codeLabFeaturedCozmosGarden.projectName" : {
+    "translation" : "Cozmos Garten"
+  },
+  "codeLabFeaturedCozmosGarden.projectDescription" : {
+    "translation" : "Feiere den Tag der Erde, indem du mit Cozmo einen Garten anpflanzst!"
+  },
+  "codeLabFeaturedCozmosGarden.projectInstructions" : {
+    "translation" : "1. Stelle die Cubes von Cozmo in einer Reihe vor dir auf.\u000a\u000a2. Sobald du auf die Startfahne getippt hast, wählt Cozmo drei Pflanzen aus, die mithilfe der Cube-Lichter angeplanzt werden sollen.\u000a\u000a3. Befolge bei jedem Zug die Anweisungen von Cozmo, damit die Pflanzen besser wachsen.\u000a\u000a4. Wenn alle vier Lichter leuchten, kannst du eine Pflanze ernten. Um zu gewinnen, musst du alle drei Pflanzen ernten!"
+  },
+  "codeLabFeaturedGuessTheNumber.projectName" : {
+    "translation" : "Zahlenraten"
+  },
+  "codeLabFeaturedGuessTheNumber.projectDescription" : {
+    "translation" : "EINGEREICHT VON JDFIGHT\u000a\u000aDer mystische und allwissende Cozmo wird deine Zahl erraten!"
+  },
+  "codeLabFeaturedGuessTheNumber.projectInstructions" : {
+    "translation" : "1. Stelle die Cubes von Cozmo in einer Reihe vor dir auf.\u000a\u000a2. Drücke die Startfahne, und befolge dann die Spielanweisungen von Cozmo.\u000a\u000a3. Tippe die Cubes von Cozmo an, um ihm Hinweise zu geben. \u000a\u000a4. Tippen Sie auf rot, wenn Ihre Zahl geringer ist grün, wenn es ist höher und lila, ob es korrekt ist.Eingereicht vom Benutzer jdfight.\u000a\u000aNichts ist für uns schöner, als eure einzigartigen Code Lab-Kreationen zu spielen. Wir lieben sie sogar so sehr, dass wir diese hervorragenden Projekte dem Rest der Cozmo-Community zur Verfügung stellen. Wir freuen uns auf weitere kreative Ideen von euch.\u000a\u000aWie reiche ich ein Code Lab-Projekt ein?\u000a\u000aNachdem du dein Projekt fertiggestellt hast, kannst du oben links in deinem Arbeitsbereich auf die Exportschalftläche klicken und die Anweisungen auf dem Bildschirm befolgen. Wir können kaum erwarten, welche Projekte du dir ausdenken wirst."
+  },
+  "codeLabFeaturedWakeUpCozmo.projectName" : {
+    "translation" : "Wach auf, Cozmo!"
+  },
+  "codeLabFeaturedWakeUpCozmo.projectDescription" : {
+    "translation" : "Wer wagt es, Cozmo bei seinem Nickerchen zu stören?"
+  },
+  "codeLabFeaturedWakeUpCozmo.projectInstructions" : {
+    "translation" : "1. Stelle die Cubes von Cozmo in einer Reihe vor dir auf.\u000a\u000a2. Du kannst abwechselnd mit einem Freund oder alleine spielen.\u000a\u000a3. Tippe auf die Startfahne, und lege Cozmo dann auf den Rücken, wenn er dich darum bittet.\u000a\u000a4. Wenn sich die Cube-Lichter von Cozmo blau drehen, tippe darauf, um ihn zu stuppsen. Es verliert derjenige Spieler, bei dem Cozmo aufwacht!"
+  },
+  "codeLab.toomanyprojectsDialog.dialogTitle" : {
+    "translation" : "Du hast die maximale Anzahl von Projekten erreicht. Lösche ein Projekt, bevor du ein neues erstellst."
+  },
+  "codeLabGlossary.block_definitions.title.cozmo_sound_song_play_all_notes" : {
+    "translation" : "play all notes in song"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_sound_song_play_all_notes" : {
+    "translation" : "You can compose songs for Cozmo to sing. This blocks will play all notes that you've previously added to his song. Note that if you haven't added notes, he won't sing anything. He can sing 4 bars (the length of 16 whole notes) of music at a time, so consider splitting up your song into smaller chunks if it's longer than 4 bars."
+  },
+  "codeLabGlossary.block_definitions.title.cozmo_sound_song_clear_all_notes" : {
+    "translation" : "clear all notes in song"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_sound_song_clear_all_notes" : {
+    "translation" : "This removes all notes from the song you're composing for Cozmo to sing."
+  },
+  "codeLabGlossary.block_definitions.title.cozmo_sound_song_add_note" : {
+    "translation" : "add note to song: [pitch] pitch, [duration] duration"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_sound_song_add_note" : {
+    "translation" : "This adds a note to the song you're composing for Cozmo to sing. Pitch controls how high or low the note is. Duration controls how long the note is."
+  },
+  "codeLabGlossary.block_definitions.title.cozmo_sound_song_add_rest" : {
+    "translation" : "add rest to song: [duration] duration"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_sound_song_add_rest" : {
+    "translation" : "This adds a rest to the song you're composing for Cozmo to sing. Duration controls how long the rest is."
   }
 }

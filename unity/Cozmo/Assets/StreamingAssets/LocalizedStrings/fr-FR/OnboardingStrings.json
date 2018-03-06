@@ -149,5 +149,11 @@
   },
   "onboarding.notificationpreprompt.body" : {
     "translation" : "Veux-tu que Cozmo t'envoie des messages quand il a besoin de toi ?"
+  },
+  "onboarding.teachermode.on" : {
+    "translation" : "Configuration rapide : ON"
+  },
+  "onboarding.teachermode.off" : {
+    "translation" : "Configuration rapide : OFF"
   }
 }

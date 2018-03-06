@@ -16,7 +16,7 @@
     "translation" : " au monde."
   },
   "codeLabFeaturedProject.ComplimentGenerator._you_are" : {
-    "translation" : " ."
+    "translation" : " Tu es"
   },
   "codeLabFeaturedProject.ComplimentGenerator.adjective" : {
     "translation" : "adjectif"
@@ -108,8 +108,35 @@
   "codeLabFeaturedProject.ComplimentGenerator.youre_the_most_" : {
     "translation" : "Tu es l'être le plus "
   },
-  "codeLabFeaturedProject.Constellations.cassiopeia_" : {
-    "translation" : "Cassiopée "
+  "codeLabFeaturedProject.Constellations.ask_to_play_again" : {
+    "translation" : "demander à rejouer"
+  },
+  "codeLabFeaturedProject.Constellations.cassiopeia" : {
+    "translation" : "Cassiopée"
+  },
+  "codeLabFeaturedProject.Constellations.cassiopeia_can_be_seen_all_year_from_the_northern_hemisphere" : {
+    "translation" : "Cassiopée est visible toute l'année dans l'hémisphère nord."
+  },
+  "codeLabFeaturedProject.Constellations.cassiopeia_used_to_be_called_the_lady_of_the_chair" : {
+    "translation" : "Sa forme lui vaut parfois le surnom de Trône de la Reine."
+  },
+  "codeLabFeaturedProject.Constellations.cassiopeias_brightest_star_shines_40_times_brighter_than_the_sun" : {
+    "translation" : "Son étoile la plus brillante est 40 fois plus lumineuse que le soleil lui-même."
+  },
+  "codeLabFeaturedProject.Constellations.choices" : {
+    "translation" : "choix"
+  },
+  "codeLabFeaturedProject.Constellations.choose_constellation" : {
+    "translation" : "choisir une constellation"
+  },
+  "codeLabFeaturedProject.Constellations.choose_which_constellation_to_get_the_data_for" : {
+    "translation" : "Choisir la constellation dont vous souhaitez obtenir les données."
+  },
+  "codeLabFeaturedProject.Constellations.clear_all_data_from_the_project_lists" : {
+    "translation" : "Effacer toutes les données des listes de projets."
+  },
+  "codeLabFeaturedProject.Constellations.constellation_count" : {
+    "translation" : "nombre de constellations"
   },
   "codeLabFeaturedProject.Constellations.constellation_name" : {
     "translation" : "nom de la constellation"
@@ -120,59 +147,188 @@
   "codeLabFeaturedProject.Constellations.count" : {
     "translation" : "total"
   },
-  "codeLabFeaturedProject.Constellations.cozmo_says_the_name_of_the_constellation" : {
-    "translation" : "Cozmo says the name of the constellation."
-  },
   "codeLabFeaturedProject.Constellations.distance_multiplier" : {
     "translation" : "multiplicateur de distance"
   },
   "codeLabFeaturedProject.Constellations.draw_dot" : {
-    "translation" : "draw dot"
+    "translation" : "dessiner un point"
   },
   "codeLabFeaturedProject.Constellations.draw_line" : {
-    "translation" : "draw line"
+    "translation" : "dessiner une ligne"
   },
-  "codeLabFeaturedProject.Constellations.draw_the_stars_of_the_constellation_on_cozmos_face" : {
-    "translation" : "Draw the stars of the constellation on Cozmos face."
+  "codeLabFeaturedProject.Constellations.drive_and_draw_constellation" : {
+    "translation" : "piloter et dessiner une constellation"
   },
   "codeLabFeaturedProject.Constellations.drive_distance" : {
     "translation" : "distance à parcourir"
   },
-  "codeLabFeaturedProject.Constellations.gemini" : {
-    "translation" : "Gemini"
+  "codeLabFeaturedProject.Constellations.drive_speed" : {
+    "translation" : "vitesse"
+  },
+  "codeLabFeaturedProject.Constellations.enable_cube_taps_and_cozmo_gives_instruction_to_see_the_next_constellation" : {
+    "translation" : "Toucher un cube pour que Cozmo dise comment voir la prochaine constellation."
+  },
+  "codeLabFeaturedProject.Constellations.factoids" : {
+    "translation" : "anecdotes"
+  },
+  "codeLabFeaturedProject.Constellations.fill_up_the_choices_list_with_constellation_numbers" : {
+    "translation" : "Compléter la liste de choix avec les numéros de constellation."
+  },
+  "codeLabFeaturedProject.Constellations.get_distance" : {
+    "translation" : "obtenir la distance"
+  },
+  "codeLabFeaturedProject.Constellations.get_instructions" : {
+    "translation" : "obtenir des instructions"
   },
   "codeLabFeaturedProject.Constellations.get_the_distance_between_two_coordinates" : {
-    "translation" : "Get the distance between two coordinates."
+    "translation" : "Obtenir la distance entre les deux coordonnées."
+  },
+  "codeLabFeaturedProject.Constellations.get_the_next_constellation_in_the_list_or_start_from_the_beginning" : {
+    "translation" : "Passer à la constellation suivante de la liste ou commencer depuis le début."
+  },
+  "codeLabFeaturedProject.Constellations.get_turn_angle" : {
+    "translation" : "obtenir l'angle de braquage"
   },
   "codeLabFeaturedProject.Constellations.hi" : {
     "translation" : "Bonjour"
   },
+  "codeLabFeaturedProject.Constellations.id_like_to_visit_libra_someday_and_see_if_they_have_good_tacos" : {
+    "translation" : "J'aimerais bien visiter la constellation de la Balance pour voir si je peux y trouver de bons tacos."
+  },
+  "codeLabFeaturedProject.Constellations.in_ancient_greek_stories_scorpius_beat_orion_in_a_fight" : {
+    "translation" : "Dans la mythologie grecque, un scorpion géant tua Orion par son venin."
+  },
+  "codeLabFeaturedProject.Constellations.in_hawaii_scorpius_is_known_as_mauis_fishhook" : {
+    "translation" : "À Hawaï, la constellation du Scorpion porte le nom d'« hameçon de Maui »."
+  },
+  "codeLabFeaturedProject.Constellations.initialize_variables_and_start_the_activity" : {
+    "translation" : "Initialiser les variables et commencer l'activité."
+  },
+  "codeLabFeaturedProject.Constellations.input_enabled" : {
+    "translation" : "entrée activée"
+  },
   "codeLabFeaturedProject.Constellations.instructions" : {
-    "translation" : "instructions"
+    "translation" : "Instructions"
   },
   "codeLabFeaturedProject.Constellations.instructions_count" : {
-    "translation" : "instructions count"
+    "translation" : "nombre d'instructions"
   },
   "codeLabFeaturedProject.Constellations.leo" : {
     "translation" : "Lion"
   },
+  "codeLabFeaturedProject.Constellations.leo_can_be_seen_in_the_night_sky_from_late_march_through_may" : {
+    "translation" : "La constellation du Lion peut être observée dans le ciel nocturne de fin mars à mai."
+  },
+  "codeLabFeaturedProject.Constellations.leo_is_one_of_the_earliest_recognized_constellations" : {
+    "translation" : "Il s'agit de l'une des toutes premières constellations découvertes."
+  },
+  "codeLabFeaturedProject.Constellations.libra" : {
+    "translation" : "Balance"
+  },
+  "codeLabFeaturedProject.Constellations.libra_is_best_seen_in_the_june_night_sky" : {
+    "translation" : "Le ciel nocturne de juin est idéal pour observer la constellation de la Balance."
+  },
   "codeLabFeaturedProject.Constellations.line_distance" : {
     "translation" : "distance entre les lignes"
   },
-  "codeLabFeaturedProject.Constellations.ordered_pair_x" : {
+  "codeLabFeaturedProject.Constellations.loop_through_sets_of_coordinates_to_drive_and_draw_lines_and_dots" : {
+    "translation" : "Utiliser les coordonnées pour que Cozmo puisse dessiner des lignes et des points en se déplaçant."
+  },
+  "codeLabFeaturedProject.Constellations.my_cousins_name_is_cassiopeia_shes_a_keyboard" : {
+    "translation" : "Ma cousine s'appelle Cassiopée. C'est un clavier."
+  },
+  "codeLabFeaturedProject.Constellations.next_constellation" : {
+    "translation" : "constellation suivante"
+  },
+  "codeLabFeaturedProject.Constellations.orion" : {
+    "translation" : "Orion"
+  },
+  "codeLabFeaturedProject.Constellations.orion_is_a_warrior_from_ancient_greek_stories" : {
+    "translation" : "Orion est un chasseur de la mythologie grecque."
+  },
+  "codeLabFeaturedProject.Constellations.orion_is_best_seen_in_the_january_night_sky" : {
+    "translation" : "Le ciel nocturne de janvier est idéal pour observer la constellation d'Orion."
+  },
+  "codeLabFeaturedProject.Constellations.orion_is_one_of_the_most_recognizable_constellations" : {
+    "translation" : "Elle est très facilement reconnaissable."
+  },
+  "codeLabFeaturedProject.Constellations.pair_x" : {
     "translation" : "couple x"
   },
-  "codeLabFeaturedProject.Constellations.ordered_pair_y" : {
+  "codeLabFeaturedProject.Constellations.pair_y" : {
     "translation" : "couple y"
   },
-  "codeLabFeaturedProject.Constellations.pi" : {
-    "translation" : "Pi"
+  "codeLabFeaturedProject.Constellations.populate_choices" : {
+    "translation" : "insérer les choix"
   },
-  "codeLabFeaturedProject.Constellations.set_variables_and_choose_a_constellation" : {
-    "translation" : "Set variables and choose a constellation."
+  "codeLabFeaturedProject.Constellations.randomly_choose_a_fact_for_cozmo_to_say" : {
+    "translation" : "Choisir au hasard un fait raconté par Cozmo."
   },
-  "codeLabFeaturedProject.Constellations.set_x_and_y_coordinates_for_the_next_point_in_the_constellation" : {
-    "translation" : "Set x and y coordinates for the next point in the constellation."
+  "codeLabFeaturedProject.Constellations.reset_choices" : {
+    "translation" : "réinitialiser les choix"
+  },
+  "codeLabFeaturedProject.Constellations.reset_lists" : {
+    "translation" : "réinitialiser les listes"
+  },
+  "codeLabFeaturedProject.Constellations.say_factoid" : {
+    "translation" : "raconter une anecdote"
+  },
+  "codeLabFeaturedProject.Constellations.scorpius" : {
+    "translation" : "Scorpion"
+  },
+  "codeLabFeaturedProject.Constellations.scorpius_is_best_seen_in_the_july_night_sky" : {
+    "translation" : "Le ciel nocturne de juillet est idéal pour observer la constellation du Scorpion."
+  },
+  "codeLabFeaturedProject.Constellations.scorpius_was_discovered_by_a_man_named_ptolemy_say_that_three_times_fast" : {
+    "translation" : "Elle a été découverte par un astronome grec nommé Ptolémée. Dis-le trois fois rapidement !"
+  },
+  "codeLabFeaturedProject.Constellations.set_cassiopeia_data" : {
+    "translation" : "définir les données de Cassiopée"
+  },
+  "codeLabFeaturedProject.Constellations.set_leo_data" : {
+    "translation" : "définir les données du Lion"
+  },
+  "codeLabFeaturedProject.Constellations.set_libra_data" : {
+    "translation" : "définir les données de la Balance"
+  },
+  "codeLabFeaturedProject.Constellations.set_orion_data" : {
+    "translation" : "définir les données d'Orion"
+  },
+  "codeLabFeaturedProject.Constellations.set_scorpius_data" : {
+    "translation" : "définir les données du Scorpion"
+  },
+  "codeLabFeaturedProject.Constellations.set_up_the_data_for_the_cassiopeia_constellation" : {
+    "translation" : "Définir les données de Cassiopée."
+  },
+  "codeLabFeaturedProject.Constellations.set_up_the_data_for_the_leo_constellation" : {
+    "translation" : "Définir les données du Lion."
+  },
+  "codeLabFeaturedProject.Constellations.set_up_the_data_for_the_libra_constellation" : {
+    "translation" : "Définir les données de la Balance."
+  },
+  "codeLabFeaturedProject.Constellations.set_up_the_data_for_the_orion_constellation" : {
+    "translation" : "Définir les données d'Orion."
+  },
+  "codeLabFeaturedProject.Constellations.set_up_the_data_for_the_scorpius_constellation" : {
+    "translation" : "Définir les données du Scorpion."
+  },
+  "codeLabFeaturedProject.Constellations.shuffle_choice" : {
+    "translation" : "mélanger le choix"
+  },
+  "codeLabFeaturedProject.Constellations.shuffle_choices" : {
+    "translation" : "mélanger les choix"
+  },
+  "codeLabFeaturedProject.Constellations.shuffle_count" : {
+    "translation" : "mélanger le nombre"
+  },
+  "codeLabFeaturedProject.Constellations.shuffle_random" : {
+    "translation" : "mélanger au hasard"
+  },
+  "codeLabFeaturedProject.Constellations.shuffle_the_constellation_choices_list" : {
+    "translation" : "Mélanger la liste de choix de constellations."
+  },
+  "codeLabFeaturedProject.Constellations.since_ancient_times_libra_has_been_a_sign_of_fairness" : {
+    "translation" : "Depuis l'Antiquité, la balance est un symbole d'équité."
   },
   "codeLabFeaturedProject.Constellations.slope1" : {
     "translation" : "pente1"
@@ -180,17 +336,35 @@
   "codeLabFeaturedProject.Constellations.slope2" : {
     "translation" : "pente2"
   },
+  "codeLabFeaturedProject.Constellations.some_of_libras_stars_could_have_livable_planets_pretty_cool" : {
+    "translation" : "Certaines étoiles de la constellation de la Balance pourraient comporter des planètes habitables. Plutôt cool, non ?"
+  },
+  "codeLabFeaturedProject.Constellations.tap_a_cube_for_another_constellation_" : {
+    "translation" : "Toucher un cube pour découvrir une autre constellation. "
+  },
+  "codeLabFeaturedProject.Constellations.the_constellation_is_named_leo_because_it_looks_just_like_a_lion" : {
+    "translation" : "Elle s'appelle ainsi car elle ressemble tout simplement à un lion."
+  },
   "codeLabFeaturedProject.Constellations.turn_angle" : {
     "translation" : "angle de braquage"
   },
-  "codeLabFeaturedProject.Constellations.use_a_set_of_three_coordinates_to_drive_and_draw_lines_in_the_constellation" : {
-    "translation" : "Use a set of three coordinates to drive and draw lines in the constellation."
+  "codeLabFeaturedProject.Constellations.turn_cozmo_back_to_his_starting_position" : {
+    "translation" : "Ramener Cozmo à sa position de départ."
   },
-  "codeLabFeaturedProject.Constellations.use_the_constellation_instructions_variable_to_determine_whether_to_draw_a_dot_a_line_both_or_none" : {
-    "translation" : "Use the constellation instructions variable to determine whether to draw a dot, a line, both, or none."
+  "codeLabFeaturedProject.Constellations.turn_speed" : {
+    "translation" : "vitesse de braquage"
+  },
+  "codeLabFeaturedProject.Constellations.turn_to_starting_angle" : {
+    "translation" : "tourner à l'angle de départ"
+  },
+  "codeLabFeaturedProject.Constellations.use_the_data_from_the_instructions_list_to_decide_whether_to_draw_a_dot_a_line_both_or_neither" : {
+    "translation" : "Utiliser les données de la liste d'instructions pour déterminer s'il faut dessiner un point, une ligne, les deux ou ni l'un ni l'autre."
   },
   "codeLabFeaturedProject.Constellations.use_the_slopes_of_two_intersecting_lines_to_get_turn_degrees_for_cozmo" : {
     "translation" : "Utilise les pentes de deux lignes d'intersection pour obtenir les degrés de braquage de Cozmo."
+  },
+  "codeLabFeaturedProject.Constellations.when_the_user_taps_a_cube_get_the_next_constellation" : {
+    "translation" : "Toucher un cube pour passer à la constellation suivante."
   },
   "codeLabFeaturedProject.Constellations.x1" : {
     "translation" : "x1"
@@ -215,6 +389,9 @@
   },
   "codeLabFeaturedProject.Constellations.y_coordinates" : {
     "translation" : "coordonnées y"
+  },
+  "codeLabFeaturedProject.Constellations.you_can_recognize_orion_by_his_belt_very_fashionable" : {
+    "translation" : "Orion est reconnaissable à sa ceinture. Super tendance !"
   },
   "codeLabFeaturedProject.CozmoFlies.cozmo_asks_to_be_picked_up_and_waits" : {
     "translation" : "Cozmo demande à être pris et attend."
@@ -1340,5 +1517,635 @@
   },
   "codeLabFeaturedProject.text" : {
     "translation" : "texte"
+  },
+  "codeLabFeaturedProject.CozmosGarden.0055ff" : {
+    "translation" : "#0055ff"
+  },
+  "codeLabFeaturedProject.CozmosGarden.00ffbb" : {
+    "translation" : "#00ffbb"
+  },
+  "codeLabFeaturedProject.CozmosGarden.029900" : {
+    "translation" : "#029900"
+  },
+  "codeLabFeaturedProject.CozmosGarden._3_plants" : {
+    "translation" : " 3 plantes"
+  },
+  "codeLabFeaturedProject.CozmosGarden._out_of_" : {
+    "translation" : " sur "
+  },
+  "codeLabFeaturedProject.CozmosGarden._rounds" : {
+    "translation" : " tours"
+  },
+  "codeLabFeaturedProject.CozmosGarden.activate_sun" : {
+    "translation" : "activer le soleil"
+  },
+  "codeLabFeaturedProject.CozmosGarden.active_plant" : {
+    "translation" : "activer la plante"
+  },
+  "codeLabFeaturedProject.CozmosGarden.add_or_subtract_points_from_a_plant" : {
+    "translation" : "Ajouter ou soustraire des points d'une plante."
+  },
+  "codeLabFeaturedProject.CozmosGarden.all_the_plants_were_harvested_successfully" : {
+    "translation" : "Toutes les plantes ont été récoltées avec succès."
+  },
+  "codeLabFeaturedProject.CozmosGarden.and" : {
+    "translation" : "et"
+  },
+  "codeLabFeaturedProject.CozmosGarden.bb00ff" : {
+    "translation" : "#bb00ff"
+  },
+  "codeLabFeaturedProject.CozmosGarden.blueberries" : {
+    "translation" : "Les myrtilles"
+  },
+  "codeLabFeaturedProject.CozmosGarden.broccoli" : {
+    "translation" : "Brocoli"
+  },
+  "codeLabFeaturedProject.CozmosGarden.bug_plant" : {
+    "translation" : "plante infestée"
+  },
+  "codeLabFeaturedProject.CozmosGarden.bug_plants" : {
+    "translation" : "plantes infestées"
+  },
+  "codeLabFeaturedProject.CozmosGarden.bugs_count" : {
+    "translation" : "nombre d'insectes"
+  },
+  "codeLabFeaturedProject.CozmosGarden.bugs_want_to_eat_our_plants" : {
+    "translation" : "Des insectes veulent manger nos plantes !"
+  },
+  "codeLabFeaturedProject.CozmosGarden.card_count" : {
+    "translation" : "nombre de cartes"
+  },
+  "codeLabFeaturedProject.CozmosGarden.card_growth_amounts" : {
+    "translation" : "carte Ampleur de croissance"
+  },
+  "codeLabFeaturedProject.CozmosGarden.check_for_bugs" : {
+    "translation" : "rechercher des insectes"
+  },
+  "codeLabFeaturedProject.CozmosGarden.check_harvest" : {
+    "translation" : "vérifier la récolte"
+  },
+  "codeLabFeaturedProject.CozmosGarden.check_to_see_if_any_plants_are_ready_to_harvest" : {
+    "translation" : "Vérifier si des plantes peuvent être récoltées."
+  },
+  "codeLabFeaturedProject.CozmosGarden.check_to_see_whether_the_player_has_successfully_squashed_the_bugs" : {
+    "translation" : "Vérifier si les insectes ont bien été écrasés."
+  },
+  "codeLabFeaturedProject.CozmosGarden.choose_and_initialize_plants_to_grow_in_the_garden" : {
+    "translation" : "Choisir et initialiser les plantes à faire pousser dans le jardin."
+  },
+  "codeLabFeaturedProject.CozmosGarden.clear_all_data_from_lists" : {
+    "translation" : "Effacer toutes les données des listes."
+  },
+  "codeLabFeaturedProject.CozmosGarden.clear_all_data_from_the_bug_plants_list" : {
+    "translation" : "Effacer toutes les données de la liste des plantes infestées."
+  },
+  "codeLabFeaturedProject.CozmosGarden.clear_all_data_from_the_plants_to_harvest_list" : {
+    "translation" : "Effacer toutes les données de la liste des plantes à récolter."
+  },
+  "codeLabFeaturedProject.CozmosGarden.clear_bug_plants" : {
+    "translation" : "effacer les plantes infestées"
+  },
+  "codeLabFeaturedProject.CozmosGarden.clear_lists" : {
+    "translation" : "effacer les listes"
+  },
+  "codeLabFeaturedProject.CozmosGarden.clear_plants_to_harvest" : {
+    "translation" : "effacer les plantes à récolter"
+  },
+  "codeLabFeaturedProject.CozmosGarden.constrain_plant_growth" : {
+    "translation" : "limiter la croissance des plantes"
+  },
+  "codeLabFeaturedProject.CozmosGarden.count" : {
+    "translation" : "total"
+  },
+  "codeLabFeaturedProject.CozmosGarden.cozmo_displays_a_sun_on_his_face" : {
+    "translation" : "La tête de Cozmo affiche un soleil."
+  },
+  "codeLabFeaturedProject.CozmosGarden.cozmo_displays_bugs_on_his_face" : {
+    "translation" : "La tête de Cozmo affiche des insectes."
+  },
+  "codeLabFeaturedProject.CozmosGarden.cozmo_displays_water_on_his_face" : {
+    "translation" : "La tête de Cozmo affiche de l'eau."
+  },
+  "codeLabFeaturedProject.CozmosGarden.create_garden" : {
+    "translation" : "créer un jardin"
+  },
+  "codeLabFeaturedProject.CozmosGarden.current_card" : {
+    "translation" : "carte actuelle"
+  },
+  "codeLabFeaturedProject.CozmosGarden.darn_just_missed_them" : {
+    "translation" : "Zut ! C'est raté !"
+  },
+  "codeLabFeaturedProject.CozmosGarden.deck" : {
+    "translation" : "paquet"
+  },
+  "codeLabFeaturedProject.CozmosGarden.determine_which_plants_to_grow" : {
+    "translation" : "Définir les plantes à faire pousser."
+  },
+  "codeLabFeaturedProject.CozmosGarden.disable_the_backpack_light" : {
+    "translation" : "Désactiver les voyants dorsaux."
+  },
+  "codeLabFeaturedProject.CozmosGarden.dont_give_up_lets_try_again" : {
+    "translation" : "N'abandonne pas ! Essayons encore."
+  },
+  "codeLabFeaturedProject.CozmosGarden.draw_a_drop_of_water" : {
+    "translation" : "Dessiner une goutte d'eau."
+  },
+  "codeLabFeaturedProject.CozmosGarden.draw_bugs" : {
+    "translation" : "dessiner des insectes"
+  },
+  "codeLabFeaturedProject.CozmosGarden.draw_drop" : {
+    "translation" : "dessiner une goutte"
+  },
+  "codeLabFeaturedProject.CozmosGarden.draw_mode" : {
+    "translation" : "mode Pioche"
+  },
+  "codeLabFeaturedProject.CozmosGarden.draw_next_card" : {
+    "translation" : "piocher la prochaine carte"
+  },
+  "codeLabFeaturedProject.CozmosGarden.draw_sun" : {
+    "translation" : "dessiner le soleil"
+  },
+  "codeLabFeaturedProject.CozmosGarden.draw_the_next_card_from_the_deck" : {
+    "translation" : "Piocher la prochaine carte du paquet."
+  },
+  "codeLabFeaturedProject.CozmosGarden.draw_water" : {
+    "translation" : "dessiner de l'eau"
+  },
+  "codeLabFeaturedProject.CozmosGarden.drop_line_position_y" : {
+    "translation" : "position y de la ligne verticale"
+  },
+  "codeLabFeaturedProject.CozmosGarden.drop_line_width" : {
+    "translation" : "largeur de la ligne verticale"
+  },
+  "codeLabFeaturedProject.CozmosGarden.drop_radius" : {
+    "translation" : "rayon de la goutte"
+  },
+  "codeLabFeaturedProject.CozmosGarden.drop_scale" : {
+    "translation" : "échelle de la goutte"
+  },
+  "codeLabFeaturedProject.CozmosGarden.drop_x" : {
+    "translation" : "goutte x"
+  },
+  "codeLabFeaturedProject.CozmosGarden.drop_y" : {
+    "translation" : "goutte y"
+  },
+  "codeLabFeaturedProject.CozmosGarden.ff0000" : {
+    "translation" : "#ff0000"
+  },
+  "codeLabFeaturedProject.CozmosGarden.ff7700" : {
+    "translation" : "#ff7700"
+  },
+  "codeLabFeaturedProject.CozmosGarden.ffff00" : {
+    "translation" : "#ffff00"
+  },
+  "codeLabFeaturedProject.CozmosGarden.fill_up_the_deck_of_cards_list" : {
+    "translation" : "Compléter la liste du paquet de cartes."
+  },
+  "codeLabFeaturedProject.CozmosGarden.fill_up_the_plant_types_and_plant_colors_lists" : {
+    "translation" : "Compléter les listes de types et de couleurs de plantes."
+  },
+  "codeLabFeaturedProject.CozmosGarden.game_over_lose" : {
+    "translation" : "game over"
+  },
+  "codeLabFeaturedProject.CozmosGarden.game_over_win" : {
+    "translation" : "victoire"
+  },
+  "codeLabFeaturedProject.CozmosGarden.garden_plants" : {
+    "translation" : "plantes du jardin"
+  },
+  "codeLabFeaturedProject.CozmosGarden.garden_plants_active" : {
+    "translation" : "plantes du jardin actives"
+  },
+  "codeLabFeaturedProject.CozmosGarden.garden_plants_colors" : {
+    "translation" : "couleurs des plantes du jardin"
+  },
+  "codeLabFeaturedProject.CozmosGarden.garden_plants_growth" : {
+    "translation" : "croissance des plantes du jardin"
+  },
+  "codeLabFeaturedProject.CozmosGarden.garden_plants_to_harvest" : {
+    "translation" : "plantes du jardin à récolter"
+  },
+  "codeLabFeaturedProject.CozmosGarden.got_em" : {
+    "translation" : "Tu les as eus !"
+  },
+  "codeLabFeaturedProject.CozmosGarden.grapes" : {
+    "translation" : "Raisin"
+  },
+  "codeLabFeaturedProject.CozmosGarden.grow_active_plant" : {
+    "translation" : "faire pousser la plante active"
+  },
+  "codeLabFeaturedProject.CozmosGarden.grow_plants" : {
+    "translation" : "faire pousser les plantes"
+  },
+  "codeLabFeaturedProject.CozmosGarden.growth_mode" : {
+    "translation" : "mode Croissance"
+  },
+  "codeLabFeaturedProject.CozmosGarden.haha_squished_em" : {
+    "translation" : "Haha ! Tu n'en as fait qu'une bouchée !"
+  },
+  "codeLabFeaturedProject.CozmosGarden.harvest_active_plant" : {
+    "translation" : "récolter la plante active"
+  },
+  "codeLabFeaturedProject.CozmosGarden.harvest_mode" : {
+    "translation" : "mode Récolte"
+  },
+  "codeLabFeaturedProject.CozmosGarden.harvested_plants" : {
+    "translation" : "plantes récoltées"
+  },
+  "codeLabFeaturedProject.CozmosGarden.hey_no_fair_bugs" : {
+    "translation" : "Hé ! Ce n'est pas juste !"
+  },
+  "codeLabFeaturedProject.CozmosGarden.hi" : {
+    "translation" : "Bonjour"
+  },
+  "codeLabFeaturedProject.CozmosGarden.hooray_we_harvested_all_the_plants_in_" : {
+    "translation" : "Hourra ! Nous avons récolté toutes les plantes en "
+  },
+  "codeLabFeaturedProject.CozmosGarden.initialize_game_data_and_begin" : {
+    "translation" : "Initialiser les données du jeu et commencer la partie."
+  },
+  "codeLabFeaturedProject.CozmosGarden.input_mode" : {
+    "translation" : "mode Entrée"
+  },
+  "codeLabFeaturedProject.CozmosGarden.instructions_max_amount" : {
+    "translation" : "nombre max. d'instructions"
+  },
+  "codeLabFeaturedProject.CozmosGarden.lemons" : {
+    "translation" : "Citrons"
+  },
+  "codeLabFeaturedProject.CozmosGarden.lets_grow" : {
+    "translation" : "Faisons pousser tout ça !"
+  },
+  "codeLabFeaturedProject.CozmosGarden.lettuce" : {
+    "translation" : "Salade"
+  },
+  "codeLabFeaturedProject.CozmosGarden.make_sure_no_plant_can_have_less_than_0_or_more_than_4_points" : {
+    "translation" : "S'assurer que le score de chaque plante soit compris entre 0 et 4 points."
+  },
+  "codeLabFeaturedProject.CozmosGarden.make_the_sun_shine_on_all_the_plants" : {
+    "translation" : "Faire briller le soleil sur toutes les plantes."
+  },
+  "codeLabFeaturedProject.CozmosGarden.mode" : {
+    "translation" : "mode"
+  },
+  "codeLabFeaturedProject.CozmosGarden.new_growth" : {
+    "translation" : "nouvelle pousse"
+  },
+  "codeLabFeaturedProject.CozmosGarden.not_this_time_bugs" : {
+    "translation" : "Pas cette fois mes chers insectes !"
+  },
+  "codeLabFeaturedProject.CozmosGarden.one_plant_is_better_than_none" : {
+    "translation" : "Une plante vaut mieux que pas de plante du tout !"
+  },
+  "codeLabFeaturedProject.CozmosGarden.ooh_those_sneaky_bugs" : {
+    "translation" : "Ooh, ces satanés insectes !"
+  },
+  "codeLabFeaturedProject.CozmosGarden.oranges" : {
+    "translation" : "Oranges"
+  },
+  "codeLabFeaturedProject.CozmosGarden.plant_colors" : {
+    "translation" : "couleurs de plantes"
+  },
+  "codeLabFeaturedProject.CozmosGarden.plant_roll" : {
+    "translation" : "choix aléatoire de plantes"
+  },
+  "codeLabFeaturedProject.CozmosGarden.plant_types" : {
+    "translation" : "types de plantes"
+  },
+  "codeLabFeaturedProject.CozmosGarden.play_bugs_card" : {
+    "translation" : "jouer une carte Insectes"
+  },
+  "codeLabFeaturedProject.CozmosGarden.play_sun_card" : {
+    "translation" : "jouer une carte Soleil"
+  },
+  "codeLabFeaturedProject.CozmosGarden.play_water_card" : {
+    "translation" : "jouer une carte Eau"
+  },
+  "codeLabFeaturedProject.CozmosGarden.player_activated" : {
+    "translation" : "joueur activé"
+  },
+  "codeLabFeaturedProject.CozmosGarden.populate_deck" : {
+    "translation" : "compléter le paquet"
+  },
+  "codeLabFeaturedProject.CozmosGarden.populate_plant_list" : {
+    "translation" : "compléter la liste des plantes"
+  },
+  "codeLabFeaturedProject.CozmosGarden.present_card" : {
+    "translation" : "déposer la carte"
+  },
+  "codeLabFeaturedProject.CozmosGarden.present_the_next_drawn_card" : {
+    "translation" : "Déposer la prochaine carte tirée."
+  },
+  "codeLabFeaturedProject.CozmosGarden.put_the_events_of_the_bugs_card_into_action" : {
+    "translation" : "Activer les effets de la carte Insectes."
+  },
+  "codeLabFeaturedProject.CozmosGarden.put_the_events_of_the_sun_card_into_action" : {
+    "translation" : "Activer les effets de la carte Soleil."
+  },
+  "codeLabFeaturedProject.CozmosGarden.put_the_events_of_the_water_card_into_action" : {
+    "translation" : "Activer les effets de la carte Eau."
+  },
+  "codeLabFeaturedProject.CozmosGarden.ran_out_of_cards_before_all_plants_were_harvested" : {
+    "translation" : "À court de cartes avant que toutes les plantes aient été récoltées."
+  },
+  "codeLabFeaturedProject.CozmosGarden.randomly_choose_a_phrase_for_cozmo_to_say_when_the_bugs_were_hit" : {
+    "translation" : "Choisir au hasard une phrase que Cozmo dit lorsque les insectes sont écrasés."
+  },
+  "codeLabFeaturedProject.CozmosGarden.randomly_choose_a_phrase_for_cozmo_to_say_when_the_bugs_were_missed" : {
+    "translation" : "Choisir au hasard une phrase que Cozmo dit lorsque les insectes sont manqués."
+  },
+  "codeLabFeaturedProject.CozmosGarden.ready_set_grow" : {
+    "translation" : "À vos marques, prêts, poussez !"
+  },
+  "codeLabFeaturedProject.CozmosGarden.round_" : {
+    "translation" : "Tour "
+  },
+  "codeLabFeaturedProject.CozmosGarden.say_got_bugs_phrase" : {
+    "translation" : "dire la phrase lorsque les insectes ont été écrasés"
+  },
+  "codeLabFeaturedProject.CozmosGarden.say_missed_bugs_phrase" : {
+    "translation" : "dire la phrase lorsque les insectes ont été manqués"
+  },
+  "codeLabFeaturedProject.CozmosGarden.set_a_plant_to_the_harvested_state_and_spin_the_cube_lights" : {
+    "translation" : "Marquer une plante comme « récoltée » et illuminer les voyants du cube."
+  },
+  "codeLabFeaturedProject.CozmosGarden.show_and_check_harvest" : {
+    "translation" : "afficher et vérifier la récolte"
+  },
+  "codeLabFeaturedProject.CozmosGarden.show_plant_growth" : {
+    "translation" : "afficher la croissance des plantes"
+  },
+  "codeLabFeaturedProject.CozmosGarden.show_plant_growth_and_check_if_plants_are_ready_for_harvest" : {
+    "translation" : "Afficher la croissance des plantes et vérifier si elles peuvent être récoltées."
+  },
+  "codeLabFeaturedProject.CozmosGarden.shuffle_card" : {
+    "translation" : "mélanger la carte"
+  },
+  "codeLabFeaturedProject.CozmosGarden.shuffle_deck" : {
+    "translation" : "mélanger le paquet"
+  },
+  "codeLabFeaturedProject.CozmosGarden.shuffle_random" : {
+    "translation" : "mélanger au hasard"
+  },
+  "codeLabFeaturedProject.CozmosGarden.shuffle_the_deck_of_cards" : {
+    "translation" : "Mélanger le paquet de cartes."
+  },
+  "codeLabFeaturedProject.CozmosGarden.smile_to_shine_the_sun_on_our_plants" : {
+    "translation" : "Sourire pour faire briller le soleil sur nos plantes."
+  },
+  "codeLabFeaturedProject.CozmosGarden.sun" : {
+    "translation" : "Soleil"
+  },
+  "codeLabFeaturedProject.CozmosGarden.sun_count" : {
+    "translation" : "quantité d'ensoleillement"
+  },
+  "codeLabFeaturedProject.CozmosGarden.tap_a_plant_to_guess_where_the_bugs_are" : {
+    "translation" : "Appuyer sur une plante pour deviner où se cachent les insectes !"
+  },
+  "codeLabFeaturedProject.CozmosGarden.tap_a_plant_to_water_it" : {
+    "translation" : "Appuyer sur une plante pour l'arroser."
+  },
+  "codeLabFeaturedProject.CozmosGarden.thing" : {
+    "translation" : "objet"
+  },
+  "codeLabFeaturedProject.CozmosGarden.tomatoes" : {
+    "translation" : "Les tomates"
+  },
+  "codeLabFeaturedProject.CozmosGarden.use_cube_lights_to_show_the_current_state_of_growth_for_plants_that_have_not_been_harvested" : {
+    "translation" : "Utiliser les voyants du cube pour afficher la croissance actuelle des plantes qui n'ont pas été récoltées."
+  },
+  "codeLabFeaturedProject.CozmosGarden.water_active_plant" : {
+    "translation" : "arroser la plante active"
+  },
+  "codeLabFeaturedProject.CozmosGarden.water_count" : {
+    "translation" : "quantité d'eau"
+  },
+  "codeLabFeaturedProject.CozmosGarden.water_the_plant_the_player_has_chosen" : {
+    "translation" : "Arroser la plante choisie par le joueur."
+  },
+  "codeLabFeaturedProject.CozmosGarden.watering_can" : {
+    "translation" : "Arrosoir"
+  },
+  "codeLabFeaturedProject.CozmosGarden.we_harvested_" : {
+    "translation" : "Nous avons récolté "
+  },
+  "codeLabFeaturedProject.CozmosGarden.we_harvested_the_" : {
+    "translation" : "Nous avons récolté "
+  },
+  "codeLabFeaturedProject.CozmosGarden.were_pretty_good_at_this" : {
+    "translation" : "Nous sommes plutôt bons à ce jeu !"
+  },
+  "codeLabFeaturedProject.CozmosGarden.when_cozmo_sees_the_player_smile_activate_the_sun" : {
+    "translation" : "Sourire à Cozmo pour qu'il active le soleil."
+  },
+  "codeLabFeaturedProject.CozmosGarden.when_the_cube_is_tapped_activate_the_relevant_action" : {
+    "translation" : "Toucher le cube pour activer l'action correspondante."
+  },
+  "codeLabFeaturedProject.GuessTheNumber._guesses" : {
+    "translation" : " Devinettes !"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.after_incorrect_guess_play_sad_animation_and_reguess" : {
+    "translation" : "Une animation triste apparaît si Cozmo se trompe. Retentons notre chance."
+  },
+  "codeLabFeaturedProject.GuessTheNumber.cozmo_gives_instructions" : {
+    "translation" : "Cozmo donne des instructions."
+  },
+  "codeLabFeaturedProject.GuessTheNumber.cozmo_has_guessed_the_number_so_end_the_game" : {
+    "translation" : "Fin de la partie, Cozmo a deviné le nombre."
+  },
+  "codeLabFeaturedProject.GuessTheNumber.display_guess" : {
+    "translation" : "afficher la supposition"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.display_the_guess_cozmo_has_made" : {
+    "translation" : "Afficher la supposition de Cozmo."
+  },
+  "codeLabFeaturedProject.GuessTheNumber.end_game" : {
+    "translation" : "fin de la partie"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.gameover" : {
+    "translation" : "Partie terminée"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.give_instructions" : {
+    "translation" : "donner des instructions"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.guess" : {
+    "translation" : "deviner"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.hi" : {
+    "translation" : "Bonjour"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.higher_number_cube_is_tapped" : {
+    "translation" : "Un cube d'un nombre supérieur a été touché."
+  },
+  "codeLabFeaturedProject.GuessTheNumber.i_guessed_your_number_in_" : {
+    "translation" : "J'ai deviné ton nombre en "
+  },
+  "codeLabFeaturedProject.GuessTheNumber.if_i_guess_correctly_tap_purple_if_your_number_is_higher_tap_green_if_it_is_lower_tap_red" : {
+    "translation" : "Si je ne me trompe pas, il faut toucher les voyants violets. S'il est supérieur, toucher les voyants verts. S'il est inférieur, toucher les voyants rouges."
+  },
+  "codeLabFeaturedProject.GuessTheNumber.initialize_the_game_and_give_instructions" : {
+    "translation" : "Initialiser le jeu et donner des instructions."
+  },
+  "codeLabFeaturedProject.GuessTheNumber.is" : {
+    "translation" : "Est-ce que"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.is_your_number_" : {
+    "translation" : "Est-ce que ton nombre est "
+  },
+  "codeLabFeaturedProject.GuessTheNumber.lower_number_cube_is_tapped" : {
+    "translation" : "Un cube d'un nombre inférieur a été touché."
+  },
+  "codeLabFeaturedProject.GuessTheNumber.max" : {
+    "translation" : "max."
+  },
+  "codeLabFeaturedProject.GuessTheNumber.min" : {
+    "translation" : "min."
+  },
+  "codeLabFeaturedProject.GuessTheNumber.new_guess" : {
+    "translation" : "nouvelle tentative"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.reset_lights" : {
+    "translation" : "réinitialiser les voyants"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.reset_the_cube_lights_to_the_colors_used_for_gameplay" : {
+    "translation" : "Réinitialise les voyants du cube utilisés pour le jeu."
+  },
+  "codeLabFeaturedProject.GuessTheNumber.spin_all_of_the_cube_lights_in_white" : {
+    "translation" : "Illumine tous les voyants du cube en blanc."
+  },
+  "codeLabFeaturedProject.GuessTheNumber.spin_lights" : {
+    "translation" : "illuminer les voyants"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.start_and_end_game_cube_is_tapped" : {
+    "translation" : "Le cube de début et de fin de partie a été touché."
+  },
+  "codeLabFeaturedProject.GuessTheNumber.started" : {
+    "translation" : "commencé"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.tapon" : {
+    "translation" : "toucher"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.think_of_a_number_between_1_and_100_and_tap_purple_to_continue" : {
+    "translation" : "Penser à un nombre compris entre 1 et 100, puis toucher les voyants violets pour continuer."
+  },
+  "codeLabFeaturedProject.GuessTheNumber.totalguesses" : {
+    "translation" : "nombre total de suppositions"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.turn_off_backpack" : {
+    "translation" : "désactiver les voyants dorsaux"
+  },
+  "codeLabFeaturedProject.GuessTheNumber.turn_off_the_backpack_light" : {
+    "translation" : "Désactive les voyants dorsaux."
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.advance_to_the_next_turn_and_enable_cubes_for_input" : {
+    "translation" : "Passe au tour suivant et active l'entrée des cubes."
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.ahhh_goodnight" : {
+    "translation" : "Haaaa. Bonne nuit !"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.check_if_cozmo_is_upside_down" : {
+    "translation" : "vérifier si Cozmo est sur le dos"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.choose_a_random_phrase_for_cozmo_to_say_at_the_start_of_the_game" : {
+    "translation" : "Choisir une phrase aléatoire que Cozmo dit au début de la partie."
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.choose_a_random_phrase_for_cozmo_to_say_when_he_continues_sleeping" : {
+    "translation" : "Choisir une phrase aléatoire que Cozmo dit lorsqu'il continue à dormir."
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.choose_a_random_phrase_for_cozmo_to_say_when_he_wakes_up" : {
+    "translation" : "Choisir une phrase aléatoire que Cozmo dit lorsqu'il se réveille."
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.choose_bedtime_phrase" : {
+    "translation" : "choisir une phrase pour l'heure du coucher"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.choose_sleeping_phrase" : {
+    "translation" : "choisir une phrase pour le sommeil"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.choose_wake_up_phrase" : {
+    "translation" : "choisir une phrase pour le réveil"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.cozmo_asks_to_be_turned_upside_down_to_begin" : {
+    "translation" : "Cozmo demande à être mis sur le dos pour commencer."
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.cozmo_is_upside_down" : {
+    "translation" : "Cozmo est sur le dos."
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.disable_cubes" : {
+    "translation" : "désactiver les cubes"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.disable_cubes_input_and_turn_the_lights_off" : {
+    "translation" : "Désactiver l'entrée des cubes et éteindre les voyants."
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.flip_cozmo" : {
+    "translation" : "mettre Cozmo sur le dos"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.flip_me_over_to_play_again" : {
+    "translation" : "Me mettre sur le dos pour rejouer."
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.flip_turn" : {
+    "translation" : "mettre sur le dos"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.game_number" : {
+    "translation" : "deviner le nombre"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.hey_im_too_tired_for_this" : {
+    "translation" : "Hé ! Je suis trop fatigué pour ça !"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.hey_now_im_wide_awake" : {
+    "translation" : "Hé ! Je suis tout à fait réveillé maintenant !"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.i_need_a_nap" : {
+    "translation" : "J'ai besoin d'une sieste."
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.if_cozmo_has_been_turned_over_the_game_can_begin" : {
+    "translation" : "Si Cozmo est sur le dos, la partie peut commencer."
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.im_so_tired" : {
+    "translation" : "Je suis si fatigué."
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.initialize_variables_and_start_the_game" : {
+    "translation" : "Initialiser les variables et commencer à jouer."
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.input_mode" : {
+    "translation" : "mode Entrée"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.its_exhausting_being_me" : {
+    "translation" : "C'est épuisant d'être moi."
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.let_sleeping_robots_lie" : {
+    "translation" : "Laisser les petits robots fatigués se reposer."
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.next_turn" : {
+    "translation" : "prochain tour"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.no_i_didnt_get_enough_sleep" : {
+    "translation" : "Non ! Je n'ai pas assez dormi !"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.once_the_game_is_over_reset_and_offer_to_play_again" : {
+    "translation" : "À la fin de la partie, réinitialiser et proposer de rejouer."
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.play_again" : {
+    "translation" : "REJOUER"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.player_activated" : {
+    "translation" : "joueur activé"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.random_number" : {
+    "translation" : "nombre aléatoire"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.shh_im_trying_to_sleep" : {
+    "translation" : "Chut ! J'essaie de dormir."
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.turn" : {
+    "translation" : "retourner"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.turn_me_upside_down_so_i_can_sleep" : {
+    "translation" : "Me retourner pour que je puisse dormir"
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.when_a_cube_is_tapped_check_to_see_if_cozmo_is_woken_up_or_not" : {
+    "translation" : "Lorsqu'un joueur touche un cube, vérifier si Cozmo est réveillé ou non."
+  },
+  "codeLabFeaturedProject.WakeUpCozmo.who_woke_me_up" : {
+    "translation" : "Qui a osé me réveiller ?"
   }
 }

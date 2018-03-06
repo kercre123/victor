@@ -23,151 +23,151 @@
                 "variables": {
                     "$S8$I=50KH}6]bhktY%$": {
                         "id": "$S8$I=50KH}6]bhktY%$",
-                        "name": "codelabfeaturedproject.wakeupcozmo.check_if_cozmo_is_upside_down",
+                        "name": "v\u00e9rifier si Cozmo est sur le dos",
                         "type": "broadcast_msg",
                         "value": "check if Cozmo is upside down"
                     },
                     "$|Cx6`%@1/|)Nt0}Tv-O": {
                         "id": "$|Cx6`%@1/|)Nt0}Tv-O",
-                        "name": "codelabfeaturedproject.wakeupcozmo.initialize_variables_and_start_the_game",
+                        "name": "Initialiser les variables et commencer \u00e0 jouer.",
                         "type": "",
                         "value": 0
                     },
                     "%|DMxBS{6[~~tL}]wPw~": {
                         "id": "%|DMxBS{6[~~tL}]wPw~",
-                        "name": "codelabfeaturedproject.wakeupcozmo.player_activated",
+                        "name": "joueur activ\u00e9",
                         "type": "",
                         "value": "1"
                     },
                     ".%Eqy6~KlTl}r4~qkW;z": {
                         "id": ".%Eqy6~KlTl}r4~qkW;z",
-                        "name": "codelabfeaturedproject.wakeupcozmo.flip_cozmo",
+                        "name": "mettre Cozmo sur le dos",
                         "type": "broadcast_msg",
                         "value": "flip Cozmo"
                     },
                     "3Bx%jDs6drNus1XUPfF;": {
                         "id": "3Bx%jDs6drNus1XUPfF;",
-                        "name": "codelabfeaturedproject.wakeupcozmo.choose_a_random_phrase_for_cozmo_to_say_at_the_start_of_the_game",
+                        "name": "Choisir une phrase al\u00e9atoire que Cozmo dit au d\u00e9but de la partie.",
                         "type": "",
                         "value": 0
                     },
                     ";HUdjT[@e9N0FRR.f5J^": {
                         "id": ";HUdjT[@e9N0FRR.f5J^",
-                        "name": "codelabfeaturedproject.wakeupcozmo.when_a_cube_is_tapped_check_to_see_if_cozmo_is_woken_up_or_not",
+                        "name": "Lorsqu'un joueur touche un cube, v\u00e9rifier si Cozmo est r\u00e9veill\u00e9 ou non.",
                         "type": "",
                         "value": 0
                     },
                     "A+Jeyve1)AqQy+k}),{^": {
                         "id": "A+Jeyve1)AqQy+k}),{^",
-                        "name": "codelabfeaturedproject.wakeupcozmo.random_number",
+                        "name": "nombre al\u00e9atoire",
                         "type": "",
                         "value": 1
                     },
                     "B/A4@k-9jYO1@T!$zTBZ": {
                         "id": "B/A4@k-9jYO1@T!$zTBZ",
-                        "name": "codelabfeaturedproject.wakeupcozmo.play_again",
+                        "name": "REJOUER",
                         "type": "broadcast_msg",
                         "value": "play again"
                     },
                     "DG]McJ^9.B^vvjK7?-Po": {
                         "id": "DG]McJ^9.B^vvjK7?-Po",
-                        "name": "codelabfeaturedproject.wakeupcozmo.cozmo_is_upside_down",
+                        "name": "Cozmo est sur le dos.",
                         "type": "",
                         "value": "1"
                     },
                     "K:lEEN{a-Pk24+%=kK^q": {
                         "id": "K:lEEN{a-Pk24+%=kK^q",
-                        "name": "codelabfeaturedproject.wakeupcozmo.choose_wake_up_phrase",
+                        "name": "choisir une phrase pour le r\u00e9veil",
                         "type": "broadcast_msg",
                         "value": "choose wake up phrase"
                     },
                     "NaZQ.NV)OP*8F~ISJ^I=": {
                         "id": "NaZQ.NV)OP*8F~ISJ^I=",
-                        "name": "codelabfeaturedproject.wakeupcozmo.game_number",
+                        "name": "deviner le nombre",
                         "type": "",
                         "value": "0"
                     },
                     "TCE^eUf};Pvh6]9BDMny": {
                         "id": "TCE^eUf};Pvh6]9BDMny",
-                        "name": "codelabfeaturedproject.wakeupcozmo.input_mode",
+                        "name": "mode Entr\u00e9e",
                         "type": "",
                         "value": "1"
                     },
                     "UdMm0.SuvuD-]@[UA{4:": {
                         "id": "UdMm0.SuvuD-]@[UA{4:",
-                        "name": "codelabfeaturedproject.wakeupcozmo.choose_bedtime_phrase",
+                        "name": "choisir une phrase pour l'heure du coucher",
                         "type": "broadcast_msg",
                         "value": "choose bedtime phrase"
                     },
                     "X%l,N0)L~Gx/I#P].UjO": {
                         "id": "X%l,N0)L~Gx/I#P].UjO",
-                        "name": "codelabfeaturedproject.wakeupcozmo.disable_cubes_input_and_turn_the_lights_off",
+                        "name": "D\u00e9sactiver l'entr\u00e9e des cubes et \u00e9teindre les voyants.",
                         "type": "",
                         "value": 0
                     },
                     "]@A3AZ1*=`7E[JXk7_Ea": {
                         "id": "]@A3AZ1*=`7E[JXk7_Ea",
-                        "name": "codelabfeaturedproject.wakeupcozmo.advance_to_the_next_turn_and_enable_cubes_for_input",
+                        "name": "Passe au tour suivant et active l'entr\u00e9e des cubes.",
                         "type": "",
                         "value": 0
                     },
                     "`Go~.|Ued.~#+H3`e4ZZ": {
                         "id": "`Go~.|Ued.~#+H3`e4ZZ",
-                        "name": "codelabfeaturedproject.wakeupcozmo.cozmo_asks_to_be_turned_upside_down_to_begin",
+                        "name": "Cozmo demande \u00e0 \u00eatre mis sur le dos pour commencer.",
                         "type": "",
                         "value": 0
                     },
                     "ac9vv19Xi5iCFWN8o%WC": {
                         "id": "ac9vv19Xi5iCFWN8o%WC",
-                        "name": "codelabfeaturedproject.wakeupcozmo.choose_a_random_phrase_for_cozmo_to_say_when_he_continues_sleeping",
+                        "name": "Choisir une phrase al\u00e9atoire que Cozmo dit lorsqu'il continue \u00e0 dormir.",
                         "type": "",
                         "value": 0
                     },
                     "cyS{4_L3`Y6j3ER7NUpn": {
                         "id": "cyS{4_L3`Y6j3ER7NUpn",
-                        "name": "codelabfeaturedproject.wakeupcozmo.choose_sleeping_phrase",
+                        "name": "choisir une phrase pour le sommeil",
                         "type": "broadcast_msg",
                         "value": "choose sleeping phrase"
                     },
                     "fL?zga~sb8P%X4)qYMAC": {
                         "id": "fL?zga~sb8P%X4)qYMAC",
-                        "name": "codelabfeaturedproject.wakeupcozmo.disable_cubes",
+                        "name": "d\u00e9sactiver les cubes",
                         "type": "broadcast_msg",
                         "value": "disable Cubes"
                     },
                     "fRAJA.^P-l,$diwyY5Z2": {
                         "id": "fRAJA.^P-l,$diwyY5Z2",
-                        "name": "codelabfeaturedproject.wakeupcozmo.next_turn",
+                        "name": "prochain tour",
                         "type": "broadcast_msg",
                         "value": "next turn"
                     },
                     "m%^FUNOwI/a~8adX!IZ+": {
                         "id": "m%^FUNOwI/a~8adX!IZ+",
-                        "name": "codelabfeaturedproject.wakeupcozmo.choose_a_random_phrase_for_cozmo_to_say_when_he_wakes_up",
+                        "name": "Choisir une phrase al\u00e9atoire que Cozmo dit lorsqu'il se r\u00e9veille.",
                         "type": "",
                         "value": 0
                     },
                     "uqJONWA$*ttc7?y%heu,": {
                         "id": "uqJONWA$*ttc7?y%heu,",
-                        "name": "codelabfeaturedproject.wakeupcozmo.turn",
+                        "name": "retourner",
                         "type": "",
                         "value": 1
                     },
                     "x(-N%PHu_7lvBm;Sf6gz": {
                         "id": "x(-N%PHu_7lvBm;Sf6gz",
-                        "name": "codelabfeaturedproject.wakeupcozmo.flip_turn",
+                        "name": "mettre sur le dos",
                         "type": "",
                         "value": 3
                     },
                     "yY|A;94ZvRzOiD.fUOFO": {
                         "id": "yY|A;94ZvRzOiD.fUOFO",
-                        "name": "codelabfeaturedproject.wakeupcozmo.once_the_game_is_over_reset_and_offer_to_play_again",
+                        "name": "\u00c0 la fin de la partie, r\u00e9initialiser et proposer de rejouer.",
                         "type": "",
                         "value": 0
                     },
                     "~b#Im`7TLYW?84kuQ7HS": {
                         "id": "~b#Im`7TLYW?84kuQ7HS",
-                        "name": "codelabfeaturedproject.wakeupcozmo.if_cozmo_has_been_turned_over_the_game_can_begin",
+                        "name": "Si Cozmo est sur le dos, la partie peut commencer.",
                         "type": "",
                         "value": 0
                     }
@@ -312,7 +312,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
+                                "value": "nombre al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -350,7 +350,7 @@
                             "VARIABLE": {
                                 "id": "uqJONWA$*ttc7?y%heu,",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.turn",
+                                "value": "retourner",
                                 "variableType": ""
                             }
                         },
@@ -495,7 +495,7 @@
                             "VARIABLE": {
                                 "id": "uqJONWA$*ttc7?y%heu,",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.turn",
+                                "value": "retourner",
                                 "variableType": ""
                             }
                         },
@@ -656,7 +656,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
+                                "value": "nombre al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -675,7 +675,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
+                                "value": "nombre al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -804,7 +804,7 @@
                             "VARIABLE": {
                                 "id": "%|DMxBS{6[~~tL}]wPw~",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.player_activated",
+                                "value": "joueur activ\u00e9",
                                 "variableType": ""
                             }
                         },
@@ -882,7 +882,7 @@
                             "VARIABLE": {
                                 "id": "NaZQ.NV)OP*8F~ISJ^I=",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.game_number",
+                                "value": "deviner le nombre",
                                 "variableType": ""
                             }
                         },
@@ -1016,7 +1016,7 @@
                             "VARIABLE": {
                                 "id": "%|DMxBS{6[~~tL}]wPw~",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.player_activated",
+                                "value": "joueur activ\u00e9",
                                 "variableType": ""
                             }
                         },
@@ -1058,7 +1058,7 @@
                             "VARIABLE": {
                                 "id": ";HUdjT[@e9N0FRR.f5J^",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.when_a_cube_is_tapped_check_to_see_if_cozmo_is_woken_up_or_not",
+                                "value": "Lorsqu'un joueur touche un cube, v\u00e9rifier si Cozmo est r\u00e9veill\u00e9 ou non.",
                                 "variableType": ""
                             }
                         },
@@ -1130,7 +1130,7 @@
                             "VARIABLE": {
                                 "id": "DG]McJ^9.B^vvjK7?-Po",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.cozmo_is_upside_down",
+                                "value": "Cozmo est sur le dos.",
                                 "variableType": ""
                             }
                         },
@@ -1279,7 +1279,7 @@
                             "VARIABLE": {
                                 "id": "]@A3AZ1*=`7E[JXk7_Ea",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.advance_to_the_next_turn_and_enable_cubes_for_input",
+                                "value": "Passe au tour suivant et active l'entr\u00e9e des cubes.",
                                 "variableType": ""
                             }
                         },
@@ -1365,7 +1365,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.wakeupcozmo.hey_now_im_wide_awake"
+                                "value": "H\u00e9\u00a0! Je suis tout \u00e0 fait r\u00e9veill\u00e9 maintenant\u00a0!"
                             }
                         },
                         "id": "@%8u1=@BOmG$16X|9j!B",
@@ -1494,7 +1494,7 @@
                             "VARIABLE": {
                                 "id": "yY|A;94ZvRzOiD.fUOFO",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.once_the_game_is_over_reset_and_offer_to_play_again",
+                                "value": "\u00c0 la fin de la partie, r\u00e9initialiser et proposer de rejouer.",
                                 "variableType": ""
                             }
                         },
@@ -1513,7 +1513,7 @@
                             "VARIABLE": {
                                 "id": "X%l,N0)L~Gx/I#P].UjO",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.disable_cubes_input_and_turn_the_lights_off",
+                                "value": "D\u00e9sactiver l'entr\u00e9e des cubes et \u00e9teindre les voyants.",
                                 "variableType": ""
                             }
                         },
@@ -1572,7 +1572,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
+                                "value": "nombre al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -1597,7 +1597,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
+                                "value": "nombre al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -1667,7 +1667,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
+                                "value": "nombre al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -1753,7 +1753,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.wakeupcozmo.who_woke_me_up"
+                                "value": "Qui a os\u00e9 me r\u00e9veiller\u00a0?"
                             }
                         },
                         "id": "G`Q}3{pni0)wWD;S6rIN",
@@ -1769,7 +1769,7 @@
                             "VARIABLE": {
                                 "id": "TCE^eUf};Pvh6]9BDMny",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.input_mode",
+                                "value": "mode Entr\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -1793,7 +1793,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.wakeupcozmo.its_exhausting_being_me"
+                                "value": "C'est \u00e9puisant d'\u00eatre moi."
                             }
                         },
                         "id": "H)T+:ffMC7EGNc6lj~B-",
@@ -1838,7 +1838,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.wakeupcozmo.no_i_didnt_get_enough_sleep"
+                                "value": "Non\u00a0! Je n'ai pas assez dormi\u00a0!"
                             }
                         },
                         "id": "IkYqqk*G[Hho9UwT#(*?",
@@ -1854,7 +1854,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
+                                "value": "nombre al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -1914,7 +1914,7 @@
                             "VARIABLE": {
                                 "id": "ac9vv19Xi5iCFWN8o%WC",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.choose_a_random_phrase_for_cozmo_to_say_when_he_continues_sleeping",
+                                "value": "Choisir une phrase al\u00e9atoire que Cozmo dit lorsqu'il continue \u00e0 dormir.",
                                 "variableType": ""
                             }
                         },
@@ -1932,7 +1932,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.wakeupcozmo.hey_im_too_tired_for_this"
+                                "value": "H\u00e9\u00a0! Je suis trop fatigu\u00e9 pour \u00e7a\u00a0!"
                             }
                         },
                         "id": "K7PA|p8D4LCav)`a/?[x",
@@ -2084,7 +2084,7 @@
                             "VARIABLE": {
                                 "id": "DG]McJ^9.B^vvjK7?-Po",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.cozmo_is_upside_down",
+                                "value": "Cozmo est sur le dos.",
                                 "variableType": ""
                             }
                         },
@@ -2283,7 +2283,7 @@
                             "VARIABLE": {
                                 "id": "TCE^eUf};Pvh6]9BDMny",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.input_mode",
+                                "value": "mode Entr\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -2308,7 +2308,7 @@
                             "VARIABLE": {
                                 "id": "uqJONWA$*ttc7?y%heu,",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.turn",
+                                "value": "retourner",
                                 "variableType": ""
                             }
                         },
@@ -2333,7 +2333,7 @@
                             "VARIABLE": {
                                 "id": "~b#Im`7TLYW?84kuQ7HS",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.if_cozmo_has_been_turned_over_the_game_can_begin",
+                                "value": "Si Cozmo est sur le dos, la partie peut commencer.",
                                 "variableType": ""
                             }
                         },
@@ -2448,7 +2448,7 @@
                             "VARIABLE": {
                                 "id": "$|Cx6`%@1/|)Nt0}Tv-O",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.initialize_variables_and_start_the_game",
+                                "value": "Initialiser les variables et commencer \u00e0 jouer.",
                                 "variableType": ""
                             }
                         },
@@ -2467,7 +2467,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
+                                "value": "nombre al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -2531,7 +2531,7 @@
                             "VARIABLE": {
                                 "id": "`Go~.|Ued.~#+H3`e4ZZ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.cozmo_asks_to_be_turned_upside_down_to_begin",
+                                "value": "Cozmo demande \u00e0 \u00eatre mis sur le dos pour commencer.",
                                 "variableType": ""
                             }
                         },
@@ -2588,7 +2588,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
+                                "value": "nombre al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -2607,7 +2607,7 @@
                             "VARIABLE": {
                                 "id": "DG]McJ^9.B^vvjK7?-Po",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.cozmo_is_upside_down",
+                                "value": "Cozmo est sur le dos.",
                                 "variableType": ""
                             }
                         },
@@ -2708,7 +2708,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.wakeupcozmo.im_so_tired"
+                                "value": "Je suis si fatigu\u00e9."
                             }
                         },
                         "id": "Y;jbzxWgkJGm:e:}Avf(",
@@ -2741,7 +2741,7 @@
                             "VARIABLE": {
                                 "id": "NaZQ.NV)OP*8F~ISJ^I=",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.game_number",
+                                "value": "deviner le nombre",
                                 "variableType": ""
                             }
                         },
@@ -2854,7 +2854,7 @@
                             "VARIABLE": {
                                 "id": "x(-N%PHu_7lvBm;Sf6gz",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.flip_turn",
+                                "value": "mettre sur le dos",
                                 "variableType": ""
                             }
                         },
@@ -3088,7 +3088,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.wakeupcozmo.let_sleeping_robots_lie"
+                                "value": "Laisser les petits robots fatigu\u00e9s se reposer."
                             }
                         },
                         "id": "avS+[RJ@x@VUIL}Kf))v",
@@ -3103,7 +3103,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.wakeupcozmo.turn_me_upside_down_so_i_can_sleep"
+                                "value": "Me retourner pour que je puisse dormir"
                             }
                         },
                         "id": "b)p2(bKbda.LqdYStnLK",
@@ -3255,7 +3255,7 @@
                             "VARIABLE": {
                                 "id": "uqJONWA$*ttc7?y%heu,",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.turn",
+                                "value": "retourner",
                                 "variableType": ""
                             }
                         },
@@ -3322,7 +3322,7 @@
                             "VARIABLE": {
                                 "id": "%|DMxBS{6[~~tL}]wPw~",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.player_activated",
+                                "value": "joueur activ\u00e9",
                                 "variableType": ""
                             }
                         },
@@ -3396,7 +3396,7 @@
                             "VARIABLE": {
                                 "id": "NaZQ.NV)OP*8F~ISJ^I=",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.game_number",
+                                "value": "deviner le nombre",
                                 "variableType": ""
                             }
                         },
@@ -3444,7 +3444,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
+                                "value": "nombre al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -3659,7 +3659,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
+                                "value": "nombre al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -3701,7 +3701,7 @@
                             "VARIABLE": {
                                 "id": "x(-N%PHu_7lvBm;Sf6gz",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.flip_turn",
+                                "value": "mettre sur le dos",
                                 "variableType": ""
                             }
                         },
@@ -3783,7 +3783,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.wakeupcozmo.i_need_a_nap"
+                                "value": "J'ai besoin d'une sieste."
                             }
                         },
                         "id": "qvrHsZcR@/0UM[3]S5uS",
@@ -3798,7 +3798,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.wakeupcozmo.flip_me_over_to_play_again"
+                                "value": "Me mettre sur le dos pour rejouer."
                             }
                         },
                         "id": "r(%Pd:m4W{MeuTNmmu}t",
@@ -3826,7 +3826,7 @@
                             "VARIABLE": {
                                 "id": "TCE^eUf};Pvh6]9BDMny",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.input_mode",
+                                "value": "mode Entr\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -3845,7 +3845,7 @@
                             "VARIABLE": {
                                 "id": "A+Jeyve1)AqQy+k}),{^",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.random_number",
+                                "value": "nombre al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -3892,7 +3892,7 @@
                             "VARIABLE": {
                                 "id": "DG]McJ^9.B^vvjK7?-Po",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.cozmo_is_upside_down",
+                                "value": "Cozmo est sur le dos.",
                                 "variableType": ""
                             }
                         },
@@ -3977,7 +3977,7 @@
                             "VARIABLE": {
                                 "id": "3Bx%jDs6drNus1XUPfF;",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.choose_a_random_phrase_for_cozmo_to_say_at_the_start_of_the_game",
+                                "value": "Choisir une phrase al\u00e9atoire que Cozmo dit au d\u00e9but de la partie.",
                                 "variableType": ""
                             }
                         },
@@ -4045,7 +4045,7 @@
                             "VARIABLE": {
                                 "id": "m%^FUNOwI/a~8adX!IZ+",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.choose_a_random_phrase_for_cozmo_to_say_when_he_wakes_up",
+                                "value": "Choisir une phrase al\u00e9atoire que Cozmo dit lorsqu'il se r\u00e9veille.",
                                 "variableType": ""
                             }
                         },
@@ -4233,7 +4233,7 @@
                             "VARIABLE": {
                                 "id": "TCE^eUf};Pvh6]9BDMny",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.wakeupcozmo.input_mode",
+                                "value": "mode Entr\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -4505,7 +4505,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.wakeupcozmo.shh_im_trying_to_sleep"
+                                "value": "Chut\u00a0! J'essaie de dormir."
                             }
                         },
                         "id": "|x):3n2m,b-f2QL-|nOq",

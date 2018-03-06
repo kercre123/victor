@@ -943,40 +943,40 @@
     "translation" : "このコードブロックをトリガーすると、特定のキューブ[#]が動くたびにその下位のコードブロックが実行されます。ヒント：「キューブが動く」というのは、キューブが少し違う位置や場所に置かれるという意味です。「キューブをタップする」というのは、キューブを意図的にすばやくタップするという意味です。"
   },
   "codeLabGlossary.block_definitions.title.event_whenbroadcastreceived" : {
-    "translation" : "[メッセージ#]を受信したら"
+    "translation" : "[メッセージ]をじゅしんしたら"
   },
   "codeLabGlossary.block_definitions.description.event_whenbroadcastreceived" : {
     "translation" : "このコードブロックをトリガーすれば別のコードブロックが該当するメッセージを発信するたびにその下位のコードブロックを実行します。ヒント：経験豊富なプログラマーの方はメッセージを関数のようなものと考えてください。"
   },
   "codeLabGlossary.block_definitions.title.event_broadcast" : {
-    "translation" : "[メッセージ#]を発信"
+    "translation" : "[メッセージ]をはっしん"
   },
   "codeLabGlossary.block_definitions.description.event_broadcast" : {
-    "translation" : "「[メッセージ#]を受信したら」ブロックをトリガーするメッセージを発信（送信）します。ヒント：メッセージを発信した後、このブロックの下位ブロックは実行され続けます。よってこの元のブロックの集合と「[メッセージ#]を受信したら」ブロックの下位ブロックは並行して実行されます。経験豊富なプログラマーの方は、一般的なプログラミング言語で新しいスレッドを開始するようなものだと考えてください。"
+    "translation" : "「[メッセージ]をじゅしんしたら」ブロックをトリガーするメッセージを、はっしん（そうしん）します。ヒント：メッセージをはっしんしたあと、このブロックのかいブロックは、じっこうされつづけます。よって、このもとのブロックのしゅうごうと「[メッセージ]をじゅしんしたら」ブロックのかいブロックは、へいこうしてじっこうされます。けいけんほうふなプログラマーのかたは、いっぱんてきなプログラミングげんごであたらしいスレッドをかいしするようなものだとかんがえてください。"
   },
   "codeLabGlossary.block_definitions.title.event_broadcastandwait" : {
-    "translation" : "[メッセージ#]を発信し完了まで待機"
+    "translation" : "[メッセージ]をはっしんし、かんりょうまでたいき"
   },
   "codeLabGlossary.block_definitions.description.event_broadcastandwait" : {
-    "translation" : "[メッセージ#]を受信したら」ブロックをトリガーするメッセージを発信（送信）し、そのまま続行する前に[メッセージ#]を受信したら」の下位ブロックの実行が完了するのを待ちます。ヒント：経験豊富なプログラマーの方はこれを一般的なプログラミング言語における関数呼び出しのようなものだと考えてください。"
+    "translation" : "[メッセージ]をじゅしんしたら」ブロックをトリガーするメッセージをはっしん（そうしん）し、そのままぞっこうするまえに、[メッセージ]をじゅしんしたら」のかいブロックのじっこうがかんりょうするのをまちます。ヒント：けいけんほうふなプログラマーのかたは、これをいっぱんてきなプログラミングげんごにおける、かんすうよびだしのようなものだとかんがえてください。"
   },
   "codeLabGlossary.block_definitions.title.event_whenbroadcastreceived_with_broadcast_input" : {
-    "translation" : "when [message#] received"
+    "translation" : "[メッセージ]をじゅしんしたら"
   },
   "codeLabGlossary.block_definitions.description.event_whenbroadcastreceived_with_broadcast_input" : {
-    "translation" : "Triggers this code block and runs the code blocks underneath it whenever another code block broadcasts the corresponding message. Tip: For experienced coders, think of messages like functions."
+    "translation" : "このコードブロックをトリガーすれば別のコードブロックが該当するメッセージを発信するたびにその下位のコードブロックを実行します。ヒント：経験豊富なプログラマーの方はメッセージを関数のようなものと考えてください。"
   },
   "codeLabGlossary.block_definitions.title.event_broadcast_with_broadcast_input" : {
-    "translation" : "broadcast [message#]"
+    "translation" : "[メッセージ]をはっしん"
   },
   "codeLabGlossary.block_definitions.description.event_broadcast_with_broadcast_input" : {
-    "translation" : "Broadcasts (sends) a message to trigger the \"when [message#] received\" block. Tip: After broadcasting a message, the blocks under this block will continue to execute. Therefore, both this original stack of blocks and the blocks underneath the \"when [message#] received\" block will run in parallel. For experienced coders, think of this like starting a new thread in most programming languages."
+    "translation" : "「[メッセージ]をじゅしんしたら」ブロックをトリガーするメッセージを、はっしん（そうしん）します。ヒント：メッセージをはっしんしたあと、このブロックのかいブロックはじっこうされつづけます。よって、このもとのブロックのしゅうごうと「[メッセージ]をじゅしんしたら」ブロックのかいブロックは、へいこうしてじっこうされます。けいけんほうふなプログラマーのかたは、いっぱんてきなプログラミングげんごで、あたらしいスレッドをかいしするようなものだとかんがえてください。"
   },
   "codeLabGlossary.block_definitions.title.event_broadcastandwait_with_broadcast_input" : {
-    "translation" : "broadcast [message#] and wait to complete"
+    "translation" : "[メッセージ]をはっしんし、かんりょうまでたいき"
   },
   "codeLabGlossary.block_definitions.description.event_broadcastandwait_with_broadcast_input" : {
-    "translation" : "Broadcasts (sends) a message to trigger the \"when [message#] received\" block, and then waits for the blocks under the \"when [message#] received\" to fully execute before continuing on. Tip: For experienced coders, think of this like a function call in most programming languages."
+    "translation" : "[メッセージ]をじゅしんしたら」ブロックをトリガーするメッセージをはっしん（そうしん）し、そのままぞっこうするまえに、[メッセージ]をじゅしんしたら」のかいブロックのじっこうがかんりょうするのをまちます。ヒント：けいけんなプログラマーのかたは、これをいっぱんてきなプログラミングげんごにおける、かんすうよびだしのようなものだとかんがえてください。"
   },
   "codeLabGlossary.block_definitions.title.control_wait" : {
     "translation" : "[X]秒待機"
@@ -1405,7 +1405,7 @@
     "translation" : "ホールインワンを決められるかな？"
   },
   "codeLabFeaturedProject_PuttPutt.projectInstructions" : {
-    "translation" : "1.スタートフラグをタップしたら、\u000aＣＯＺＭＯを持ち上げて、顔が天井を\u000a向くように傾けてください。\u000a\u000a2. ＣＯＺＭＯの顔にボールとホールが\u000a表示されます。ＣＯＺＭＯを傾けてボール\u000aをホールへ転がします。\u000a\u000a3. 全ホールを何秒でクリアー\u000aできるかな？COZMOを傾けてボールをホールへ転がします。"
+    "translation" : "1.スタートフラグをタップしたら、\u000aＣＯＺＭＯを持ち上げて、顔が天井を\u000a向くように傾けてください。\u000a\u000a2. ＣＯＺＭＯの顔にボールとホールが\u000a表示されます。ＣＯＺＭＯを傾けてボール\u000aをホールへ転がします。COZMOを傾けてボールをホールへ転がします。"
   },
   "codeLabFeaturedProject_ValentinesCozmogram.projectName" : {
     "translation" : "バレンタインのコズモグラム"
@@ -1438,7 +1438,7 @@
     "translation" : "「天文学の日」を天空の星座でお祝いしましょう。"
   },
   "codeLabFeaturedConstellations.projectInstructions" : {
-    "translation" : "1. スタートフラグをタップしたら、星と星がつながって星座を作る様子を眺めましょう。\u000a\u000a2. リプレイすると最初からみることができます！"
+    "translation" : "1. COZMOがはしりまわれるスペースをかくほします。\u000a\u000a2. スタートフラグをタップし、ほしとほしがつながってせいざをつくるようすをながめましょう。\u000a\u000a3. リプレイすると、さいしょからみることができます！"
   },
   "codeLabFeaturedDrivingInCircles.projectName" : {
     "translation" : "円を描いてドライブ"
@@ -1475,5 +1475,59 @@
   },
   "codeLabFeaturedPotOGoldDetector.projectInstructions" : {
     "translation" : "1. スタートフラグをタップすると、COZMOの近くの秘密の場所に宝物が現れます。\u000a\u000a2. あなたのデバイスでCOZMOを動かし、隠れた宝物を探し当てましょう。\u000a\u000a3. デバイスの画面を上下左右に傾けると、COZMOが動きます。\u000a\u000a4. 宝物に近づくと、COZMOの「宝物探知機」のセンサー音が速くなるので、よく聞いてください。"
+  },
+  "codeLabFeaturedCozmosGarden.projectName" : {
+    "translation" : "COZMOのにわ"
+  },
+  "codeLabFeaturedCozmosGarden.projectDescription" : {
+    "translation" : "にわをそだててCOZMOとアースデイをいわおう！"
+  },
+  "codeLabFeaturedCozmosGarden.projectInstructions" : {
+    "translation" : "1. COZMOのキューブをじぶんのめのまえにならべてください。\u000a\u000a2. スタートフラグをタップすると、COZMOがキューブのライトをつかってそだてる3つのしょくぶつをえらびます。3. じぶんのじゅんばんがきたら、COZMOのしじにしたがって、しょくぶつのせいちょうをたすけてください。\u000a\u000a4. しゅうかくするときは、4つのライトをすべててんとうさせます。3つのしょくぶつをすべてしゅうかくすると、かちです！"
+  },
+  "codeLabFeaturedGuessTheNumber.projectName" : {
+    "translation" : "数を推測"
+  },
+  "codeLabFeaturedGuessTheNumber.projectDescription" : {
+    "translation" : "JDFIGHT の提案で、神秘的で全てを知るCozmoがあなたの数を推測します！"
+  },
+  "codeLabFeaturedGuessTheNumber.projectInstructions" : {
+    "translation" : "1. COZMOのキューブをじぶんのめのまえにならべてください。\u000a\u000a2. スタートフラグをタップしたら、COZMOのしじにしたがってプレイします。\u000a\u000a3. COZMOのキューブをタップして、COZMOにヒントをだします。\u000a\u000a4. タップ赤数値が低い場合緑の場合は、より高い、と紫が正しい場合。jdfightをつかったユーザーおうぼオリジナルのコードラボであそんでいただけると、うれしいです。すばらしいプロジェクトはCozmoコミュニティのほかのひとたちにきょうゆうするつもりです。いっしょにさくせいをつづけましょう。オリジナルのコードラボプロジェクトをおうぼするには？プロジェクトがかんりょうしたら、ワークスペースのひだりうえにある「エクスポート」ボタンをおして、がめんのしじにしたがってください。あなたのアイデアをたのしみにしています。"
+  },
+  "codeLabFeaturedWakeUpCozmo.projectName" : {
+    "translation" : "COZMO、おきて！"
+  },
+  "codeLabFeaturedWakeUpCozmo.projectDescription" : {
+    "translation" : "ねているCOZMOをじゃまするのはだれ？"
+  },
+  "codeLabFeaturedWakeUpCozmo.projectInstructions" : {
+    "translation" : "1. COZMOのキューブをじぶんのめのまえにならべてください。\u000a\u000a2. おともだちとじゅんばんにプレイするか、または、ひとりでプレイします。\u000a\u000a3. スタートフラグをタップしたら、COZMOからおねがいされたときに、COZMOをあおむけにします。\u000a\u000a4. COZMOのキューブのブルーのライトがかいてんしたら、キューブをタップしてCOZMＯをじゃましてください。COZMOをおこしたひとのまけです！"
+  },
+  "codeLab.toomanyprojectsDialog.dialogTitle" : {
+    "translation" : "プロジェクトのさいだいすうにたっしました。あたらしいぷろじぇくとをさくせいするときは、さきにふるいプロジェクトをさくじょしてください。"
+  },
+  "codeLabGlossary.block_definitions.title.cozmo_sound_song_play_all_notes" : {
+    "translation" : "play all notes in song"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_sound_song_play_all_notes" : {
+    "translation" : "You can compose songs for Cozmo to sing. This blocks will play all notes that you've previously added to his song. Note that if you haven't added notes, he won't sing anything. He can sing 4 bars (the length of 16 whole notes) of music at a time, so consider splitting up your song into smaller chunks if it's longer than 4 bars."
+  },
+  "codeLabGlossary.block_definitions.title.cozmo_sound_song_clear_all_notes" : {
+    "translation" : "clear all notes in song"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_sound_song_clear_all_notes" : {
+    "translation" : "This removes all notes from the song you're composing for Cozmo to sing."
+  },
+  "codeLabGlossary.block_definitions.title.cozmo_sound_song_add_note" : {
+    "translation" : "add note to song: [pitch] pitch, [duration] duration"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_sound_song_add_note" : {
+    "translation" : "This adds a note to the song you're composing for Cozmo to sing. Pitch controls how high or low the note is. Duration controls how long the note is."
+  },
+  "codeLabGlossary.block_definitions.title.cozmo_sound_song_add_rest" : {
+    "translation" : "add rest to song: [duration] duration"
+  },
+  "codeLabGlossary.block_definitions.description.cozmo_sound_song_add_rest" : {
+    "translation" : "This adds a rest to the song you're composing for Cozmo to sing. Duration controls how long the rest is."
   }
 }

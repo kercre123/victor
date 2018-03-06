@@ -23,103 +23,103 @@
                 "variables": {
                     "!hqcO7sxGTk3dT=^bmFR": {
                         "id": "!hqcO7sxGTk3dT=^bmFR",
-                        "name": "codelabfeaturedproject.cozmosgarden.new_growth",
+                        "name": "nouvelle pousse",
                         "type": "",
                         "value": 0
                     },
                     "!t2*wl}jsG2/4K4WHF2.": {
                         "id": "!t2*wl}jsG2/4K4WHF2.",
-                        "name": "codelabfeaturedproject.cozmosgarden.choose_and_initialize_plants_to_grow_in_the_garden",
+                        "name": "Choisir et initialiser les plantes \u00e0 faire pousser dans le jardin.",
                         "type": "",
                         "value": 0
                     },
                     "#?`cDM;MD.XO=(EWN3Ul": {
                         "id": "#?`cDM;MD.XO=(EWN3Ul",
-                        "name": "codelabfeaturedproject.cozmosgarden.disable_the_backpack_light",
+                        "name": "D\u00e9sactiver les voyants dorsaux.",
                         "type": "",
                         "value": 0
                     },
                     "#S$Wc8r3%eOcceXS4Dw:": {
                         "id": "#S$Wc8r3%eOcceXS4Dw:",
-                        "name": "codelabfeaturedproject.cozmosgarden.water_count",
+                        "name": "quantit\u00e9 d'eau",
                         "type": "",
                         "value": 2
                     },
                     "$=KIQ~,oZOX|V]~~B59q": {
                         "id": "$=KIQ~,oZOX|V]~~B59q",
-                        "name": "codelabfeaturedproject.cozmosgarden.show_plant_growth",
+                        "name": "afficher la croissance des plantes",
                         "type": "broadcast_msg",
                         "value": "show plant growth"
                     },
                     "$MDgR.*G2QJ[*pF@*F=1": {
                         "id": "$MDgR.*G2QJ[*pF@*F=1",
-                        "name": "codelabfeaturedproject.cozmosgarden.check_to_see_if_any_plants_are_ready_to_harvest",
+                        "name": "V\u00e9rifier si des plantes peuvent \u00eatre r\u00e9colt\u00e9es.",
                         "type": "",
                         "value": 0
                     },
                     "$MhV4:Z+J;d]{#}}:M=f": {
                         "id": "$MhV4:Z+J;d]{#}}:M=f",
-                        "name": "codelabfeaturedproject.cozmosgarden.present_the_next_drawn_card",
+                        "name": "D\u00e9poser la prochaine carte tir\u00e9e.",
                         "type": "",
                         "value": 0
                     },
                     "$bNZF03Sa-KG!=B9[/`c": {
                         "id": "$bNZF03Sa-KG!=B9[/`c",
-                        "name": "codelabfeaturedproject.cozmosgarden.harvest_active_plant",
+                        "name": "r\u00e9colter la plante active",
                         "type": "broadcast_msg",
                         "value": "harvest active plant"
                     },
                     "%L-3Ev.(rOhz7[?pASC*": {
                         "id": "%L-3Ev.(rOhz7[?pASC*",
-                        "name": "codelabfeaturedproject.cozmosgarden.check_to_see_whether_the_player_has_successfully_squashed_the_bugs",
+                        "name": "V\u00e9rifier si les insectes ont bien \u00e9t\u00e9 \u00e9cras\u00e9s.",
                         "type": "",
                         "value": 0
                     },
                     "(qvYN#BCX8e$0+:P7.cO": {
                         "id": "(qvYN#BCX8e$0+:P7.cO",
-                        "name": "codelabfeaturedproject.cozmosgarden.check_harvest",
+                        "name": "v\u00e9rifier la r\u00e9colte",
                         "type": "broadcast_msg",
                         "value": "check harvest"
                     },
                     "(z5^A=e-~iC+IlSDF#/g": {
                         "id": "(z5^A=e-~iC+IlSDF#/g",
-                        "name": "codelabfeaturedproject.cozmosgarden.clear_lists",
+                        "name": "effacer les listes",
                         "type": "broadcast_msg",
                         "value": "clear lists"
                     },
                     "*FIp.ND~==_]F6_%czy5": {
                         "id": "*FIp.ND~==_]F6_%czy5",
-                        "name": "codelabfeaturedproject.cozmosgarden.plant_roll",
+                        "name": "choix al\u00e9atoire de plantes",
                         "type": "",
                         "value": 4
                     },
                     "+ula(hNT/T]F91h-O%a}": {
                         "id": "+ula(hNT/T]F91h-O%a}",
-                        "name": "codelabfeaturedproject.cozmosgarden.harvest_mode",
+                        "name": "mode R\u00e9colte",
                         "type": "",
                         "value": "3"
                     },
                     ",46m3td#h$(R%#Mz8?`X": {
                         "id": ",46m3td#h$(R%#Mz8?`X",
-                        "name": "codelabfeaturedproject.cozmosgarden.check_for_bugs",
+                        "name": "rechercher des insectes",
                         "type": "broadcast_msg",
                         "value": "check for bugs"
                     },
                     ",eN`//QizFGb}+EDxiR%": {
                         "id": ",eN`//QizFGb}+EDxiR%",
-                        "name": "codelabfeaturedproject.cozmosgarden.clear_plants_to_harvest",
+                        "name": "effacer les plantes \u00e0 r\u00e9colter",
                         "type": "broadcast_msg",
                         "value": "clear plants to harvest"
                     },
                     ",u;#GEb0e3:8z2#_ZKd;": {
                         "id": ",u;#GEb0e3:8z2#_ZKd;",
-                        "name": "codelabfeaturedproject.cozmosgarden.when_the_cube_is_tapped_activate_the_relevant_action",
+                        "name": "Toucher le cube pour activer l'action correspondante.",
                         "type": "",
                         "value": 0
                     },
                     ".4MW*A#gY}Go*}@Pf2|R": {
                         "id": ".4MW*A#gY}Go*}@Pf2|R",
-                        "name": "codelabfeaturedproject.cozmosgarden.plant_colors",
+                        "name": "couleurs de plantes",
                         "type": "list",
                         "value": [
                             "#ff0000",
@@ -130,133 +130,133 @@
                     },
                     "0p7w#LMTnxvRF*%jP7#1": {
                         "id": "0p7w#LMTnxvRF*%jP7#1",
-                        "name": "codelabfeaturedproject.cozmosgarden.put_the_events_of_the_bugs_card_into_action",
+                        "name": "Activer les effets de la carte Insectes.",
                         "type": "",
                         "value": 0
                     },
                     "2N:5I_;4VlUNw.k%-(6a": {
                         "id": "2N:5I_;4VlUNw.k%-(6a",
-                        "name": "codelabfeaturedproject.cozmosgarden.make_sure_no_plant_can_have_less_than_0_or_more_than_4_points",
+                        "name": "S'assurer que le score de chaque plante soit compris entre 0\u00a0et 4\u00a0points.",
                         "type": "",
                         "value": 0
                     },
                     "2gnVz@?4j@r6|2TIPqcd": {
                         "id": "2gnVz@?4j@r6|2TIPqcd",
-                        "name": "codelabfeaturedproject.cozmosgarden.input_mode",
+                        "name": "mode Entr\u00e9e",
                         "type": "",
                         "value": "1"
                     },
                     "2i9Zv9bn?{Nm=2]EG_FI": {
                         "id": "2i9Zv9bn?{Nm=2]EG_FI",
-                        "name": "codelabfeaturedproject.cozmosgarden.play_bugs_card",
+                        "name": "jouer une carte Insectes",
                         "type": "broadcast_msg",
                         "value": "play bugs card"
                     },
                     "2jA3LAU:%AapT7`@~rT=": {
                         "id": "2jA3LAU:%AapT7`@~rT=",
-                        "name": "codelabfeaturedproject.cozmosgarden.game_over_lose",
+                        "name": "game over",
                         "type": "broadcast_msg",
                         "value": "game over lose"
                     },
                     "3H7ZJ[(#z1$P~(H7g[!4": {
                         "id": "3H7ZJ[(#z1$P~(H7g[!4",
-                        "name": "codelabfeaturedproject.cozmosgarden.growth_mode",
+                        "name": "mode Croissance",
                         "type": "",
                         "value": "2"
                     },
                     "3Z$bIz*%0xDp[-pa(~.q": {
                         "id": "3Z$bIz*%0xDp[-pa(~.q",
-                        "name": "codelabfeaturedproject.cozmosgarden.clear_all_data_from_the_plants_to_harvest_list",
+                        "name": "Effacer toutes les donn\u00e9es de la liste des plantes \u00e0 r\u00e9colter.",
                         "type": "",
                         "value": 0
                     },
                     "4Px-k}[HPsJfarx*W@)O": {
                         "id": "4Px-k}[HPsJfarx*W@)O",
-                        "name": "codelabfeaturedproject.cozmosgarden.draw_water",
+                        "name": "dessiner de l'eau",
                         "type": "broadcast_msg",
                         "value": "draw water"
                     },
                     "4tMRoXYifi0E?G=b`h([": {
                         "id": "4tMRoXYifi0E?G=b`h([",
-                        "name": "codelabfeaturedproject.cozmosgarden.water_active_plant",
+                        "name": "arroser la plante active",
                         "type": "broadcast_msg",
                         "value": "water active plant"
                     },
                     "5FUn|bxv:,H[b;8twf4[": {
                         "id": "5FUn|bxv:,H[b;8twf4[",
-                        "name": "codelabfeaturedproject.cozmosgarden.card_count",
+                        "name": "nombre de cartes",
                         "type": "",
                         "value": 8
                     },
                     "8-6,Lo%c^`WxW@i|fCNc": {
                         "id": "8-6,Lo%c^`WxW@i|fCNc",
-                        "name": "codelabfeaturedproject.cozmosgarden.fill_up_the_deck_of_cards_list",
+                        "name": "Compl\u00e9ter la liste du paquet de cartes.",
                         "type": "",
                         "value": 0
                     },
                     "85iC(8DU8ZNx_,BC#`8u": {
                         "id": "85iC(8DU8ZNx_,BC#`8u",
-                        "name": "codelabfeaturedproject.cozmosgarden.show_plant_growth_and_check_if_plants_are_ready_for_harvest",
+                        "name": "Afficher la croissance des plantes et v\u00e9rifier si elles peuvent \u00eatre r\u00e9colt\u00e9es.",
                         "type": "",
                         "value": 0
                     },
                     "8V;?o-k@CeoBBVUEc?fj": {
                         "id": "8V;?o-k@CeoBBVUEc?fj",
-                        "name": "codelabfeaturedproject.cozmosgarden.clear_all_data_from_lists",
+                        "name": "Effacer toutes les donn\u00e9es des listes.",
                         "type": "",
                         "value": 0
                     },
                     ":Ayhx{zFdO;72hw9gc$E": {
                         "id": ":Ayhx{zFdO;72hw9gc$E",
-                        "name": "codelabfeaturedproject.cozmosgarden.draw_sun",
+                        "name": "dessiner le soleil",
                         "type": "broadcast_msg",
                         "value": "draw sun"
                     },
                     ":z}pMyXWX{Eq,S7v6i59": {
                         "id": ":z}pMyXWX{Eq,S7v6i59",
-                        "name": "codelabfeaturedproject.cozmosgarden.initialize_game_data_and_begin",
+                        "name": "Initialiser les donn\u00e9es du jeu et commencer la partie.",
                         "type": "",
                         "value": 0
                     },
                     ";+*#0q-sr+ySOOu$OZHF": {
                         "id": ";+*#0q-sr+ySOOu$OZHF",
-                        "name": "codelabfeaturedproject.cozmosgarden.garden_plants_to_harvest",
+                        "name": "plantes du jardin \u00e0 r\u00e9colter",
                         "type": "list",
                         "value": []
                     },
                     "=2kLEANAg1;LybuGj2U)": {
                         "id": "=2kLEANAg1;LybuGj2U)",
-                        "name": "codelabfeaturedproject.cozmosgarden.fill_up_the_plant_types_and_plant_colors_lists",
+                        "name": "Compl\u00e9ter les listes de types et de couleurs de plantes.",
                         "type": "",
                         "value": 0
                     },
                     "?4gR)yJr1o7N#9y{K5If": {
                         "id": "?4gR)yJr1o7N#9y{K5If",
-                        "name": "codelabfeaturedproject.cozmosgarden.mode",
+                        "name": "mode",
                         "type": "",
                         "value": "0"
                     },
                     "?6b^BN!47boC7#DTyqUN": {
                         "id": "?6b^BN!47boC7#DTyqUN",
-                        "name": "codelabfeaturedproject.cozmosgarden.drop_y",
+                        "name": "goutte y",
                         "type": "",
                         "value": "30"
                     },
                     "?Nu$DseVL+)x.PQ40lAV": {
                         "id": "?Nu$DseVL+)x.PQ40lAV",
-                        "name": "codelabfeaturedproject.cozmosgarden.drop_radius",
+                        "name": "rayon de la goutte",
                         "type": "",
                         "value": 7
                     },
                     "?_lH+b)Lc`b9p$GT~A}3": {
                         "id": "?_lH+b)Lc`b9p$GT~A}3",
-                        "name": "codelabfeaturedproject.cozmosgarden.set_a_plant_to_the_harvested_state_and_spin_the_cube_lights",
+                        "name": "Marquer une plante comme \u00ab\u00a0r\u00e9colt\u00e9e\u00a0\u00bb et illuminer les voyants du cube.",
                         "type": "",
                         "value": 0
                     },
                     "?vJWZD3z-EW)5pq#b^?[": {
                         "id": "?vJWZD3z-EW)5pq#b^?[",
-                        "name": "codelabfeaturedproject.cozmosgarden.bug_plants",
+                        "name": "plantes infest\u00e9es",
                         "type": "list",
                         "value": [
                             3
@@ -264,19 +264,19 @@
                     },
                     "@QLd(geF*za%S1n[a-4!": {
                         "id": "@QLd(geF*za%S1n[a-4!",
-                        "name": "codelabfeaturedproject.cozmosgarden.active_plant",
+                        "name": "activer la plante",
                         "type": "",
                         "value": 3
                     },
                     "A#~,`~zK@C~wQsYk3_XK": {
                         "id": "A#~,`~zK@C~wQsYk3_XK",
-                        "name": "codelabfeaturedproject.cozmosgarden.draw_the_next_card_from_the_deck",
+                        "name": "Piocher la prochaine carte du paquet.",
                         "type": "",
                         "value": 0
                     },
                     "BDsd%q7VV~3ApAylm|Ef": {
                         "id": "BDsd%q7VV~3ApAylm|Ef",
-                        "name": "codelabfeaturedproject.cozmosgarden.garden_plants_growth",
+                        "name": "croissance des plantes du jardin",
                         "type": "list",
                         "value": [
                             4,
@@ -286,73 +286,73 @@
                     },
                     "BJ@[qkF)Brtx-@a3?cZL": {
                         "id": "BJ@[qkF)Brtx-@a3?cZL",
-                        "name": "codelabfeaturedproject.cozmosgarden.shuffle_card",
+                        "name": "m\u00e9langer la carte",
                         "type": "",
                         "value": "3"
                     },
                     "Bgbc~L#XrP]M.IGwPWsJ": {
                         "id": "Bgbc~L#XrP]M.IGwPWsJ",
-                        "name": "codelabfeaturedproject.cozmosgarden.draw_mode",
+                        "name": "mode Pioche",
                         "type": "",
                         "value": "0"
                     },
                     "Bo`gd`mGMQZcwa?J|TY#": {
                         "id": "Bo`gd`mGMQZcwa?J|TY#",
-                        "name": "codelabfeaturedproject.cozmosgarden.show_and_check_harvest",
+                        "name": "afficher et v\u00e9rifier la r\u00e9colte",
                         "type": "broadcast_msg",
                         "value": "show and check harvest"
                     },
                     "BqQ^DVuhUe{c*IHT9H@q": {
                         "id": "BqQ^DVuhUe{c*IHT9H@q",
-                        "name": "codelabfeaturedproject.cozmosgarden.harvested_plants",
+                        "name": "plantes r\u00e9colt\u00e9es",
                         "type": "",
                         "value": 3
                     },
                     "Dd-9#:O!-Q3f;(kjJ9lY": {
                         "id": "Dd-9#:O!-Q3f;(kjJ9lY",
-                        "name": "codelabfeaturedproject.cozmosgarden.shuffle_deck",
+                        "name": "m\u00e9langer le paquet",
                         "type": "broadcast_msg",
                         "value": "shuffle deck"
                     },
                     "E6ZC4o^I=7R`yR^qWyt*": {
                         "id": "E6ZC4o^I=7R`yR^qWyt*",
-                        "name": "codelabfeaturedproject.cozmosgarden.use_cube_lights_to_show_the_current_state_of_growth_for_plants_that_have_not_been_harvested",
+                        "name": "Utiliser les voyants du cube pour afficher la croissance actuelle des plantes qui n'ont pas \u00e9t\u00e9 r\u00e9colt\u00e9es.",
                         "type": "",
                         "value": 0
                     },
                     "ESi]bm*/2%==av=mlpvq": {
                         "id": "ESi]bm*/2%==av=mlpvq",
-                        "name": "codelabfeaturedproject.cozmosgarden.game_over_win",
+                        "name": "victoire",
                         "type": "broadcast_msg",
                         "value": "game over win"
                     },
                     "FB_wjTS9HqxfJrRL+A;b": {
                         "id": "FB_wjTS9HqxfJrRL+A;b",
-                        "name": "codelabfeaturedproject.cozmosgarden.put_the_events_of_the_water_card_into_action",
+                        "name": "Activer les effets de la carte Eau.",
                         "type": "",
                         "value": 0
                     },
                     "FQ1)Iej(}dU1CaZwQB7[": {
                         "id": "FQ1)Iej(}dU1CaZwQB7[",
-                        "name": "codelabfeaturedproject.cozmosgarden.cozmo_displays_bugs_on_his_face",
+                        "name": "La t\u00eate de Cozmo affiche des insectes.",
                         "type": "",
                         "value": 0
                     },
                     "FQqy(E(g_^DdwWduBSbE": {
                         "id": "FQqy(E(g_^DdwWduBSbE",
-                        "name": "codelabfeaturedproject.cozmosgarden.draw_bugs",
+                        "name": "dessiner des insectes",
                         "type": "broadcast_msg",
                         "value": "draw bugs"
                     },
                     "F_D79IB}b:Ecf:0m^U}a": {
                         "id": "F_D79IB}b:Ecf:0m^U}a",
-                        "name": "codelabfeaturedproject.cozmosgarden.count",
+                        "name": "total",
                         "type": "",
                         "value": 4
                     },
                     "G31Q;U-x(u/6@)Hr1MIb": {
                         "id": "G31Q;U-x(u/6@)Hr1MIb",
-                        "name": "codelabfeaturedproject.cozmosgarden.plant_types",
+                        "name": "types de plantes",
                         "type": "list",
                         "value": [
                             "Tomatoes",
@@ -363,7 +363,7 @@
                     },
                     "GXkRYqxr_m^txJ#Q63y}": {
                         "id": "GXkRYqxr_m^txJ#Q63y}",
-                        "name": "codelabfeaturedproject.cozmosgarden.garden_plants",
+                        "name": "plantes du jardin",
                         "type": "list",
                         "value": [
                             "Lemons",
@@ -373,127 +373,127 @@
                     },
                     "Ign$qg(xXsR@.h)W/,v0": {
                         "id": "Ign$qg(xXsR@.h)W/,v0",
-                        "name": "codelabfeaturedproject.cozmosgarden.player_activated",
+                        "name": "joueur activ\u00e9",
                         "type": "",
                         "value": "1"
                     },
                     "Ip86u5Ta|m`@#q5lKe#0": {
                         "id": "Ip86u5Ta|m`@#q5lKe#0",
-                        "name": "codelabfeaturedproject.cozmosgarden.shuffle_random",
+                        "name": "m\u00e9langer au hasard",
                         "type": "",
                         "value": 1
                     },
                     "KEsOIz}vieQT{+0zZihe": {
                         "id": "KEsOIz}vieQT{+0zZihe",
-                        "name": "codelabfeaturedproject.cozmosgarden.drop_line_width",
+                        "name": "largeur de la ligne verticale",
                         "type": "",
                         "value": -0.5
                     },
                     "MM2bKXch7d@*6G)54oJ1": {
                         "id": "MM2bKXch7d@*6G)54oJ1",
-                        "name": "codelabfeaturedproject.cozmosgarden.instructions_max_amount",
+                        "name": "nombre max. d'instructions",
                         "type": "",
                         "value": "2"
                     },
                     "PEdlr[J4sVtEOv1=3g3V": {
                         "id": "PEdlr[J4sVtEOv1=3g3V",
-                        "name": "codelabfeaturedproject.cozmosgarden.randomly_choose_a_phrase_for_cozmo_to_say_when_the_bugs_were_hit",
+                        "name": "Choisir au hasard une phrase que Cozmo dit lorsque les insectes sont \u00e9cras\u00e9s.",
                         "type": "",
                         "value": 0
                     },
                     "Q]8XOLmHF*2qnP%Vg]TP": {
                         "id": "Q]8XOLmHF*2qnP%Vg]TP",
-                        "name": "codelabfeaturedproject.cozmosgarden.cozmo_displays_water_on_his_face",
+                        "name": "La t\u00eate de Cozmo affiche de l'eau.",
                         "type": "",
                         "value": 0
                     },
                     "T^PguIZROp!C~_1!QJ$!": {
                         "id": "T^PguIZROp!C~_1!QJ$!",
-                        "name": "codelabfeaturedproject.cozmosgarden.bug_plant",
+                        "name": "plante infest\u00e9e",
                         "type": "",
                         "value": 3
                     },
                     "U9ev_+GYPyOo$?uG4eAE": {
                         "id": "U9ev_+GYPyOo$?uG4eAE",
-                        "name": "codelabfeaturedproject.cozmosgarden.clear_bug_plants",
+                        "name": "effacer les plantes infest\u00e9es",
                         "type": "broadcast_msg",
                         "value": "clear bug plants"
                     },
                     "XWi|$W/H?r*io8iAbbEz": {
                         "id": "XWi|$W/H?r*io8iAbbEz",
-                        "name": "codelabfeaturedproject.cozmosgarden.present_card",
+                        "name": "d\u00e9poser la carte",
                         "type": "broadcast_msg",
                         "value": "present card"
                     },
                     "Z$Y11U8C`{CpTYU8^Y}*": {
                         "id": "Z$Y11U8C`{CpTYU8^Y}*",
-                        "name": "codelabfeaturedproject.cozmosgarden.constrain_plant_growth",
+                        "name": "limiter la croissance des plantes",
                         "type": "broadcast_msg",
                         "value": "constrain plant growth"
                     },
                     "]3u(n[21w(Sgnwn$.LYs": {
                         "id": "]3u(n[21w(Sgnwn$.LYs",
-                        "name": "codelabfeaturedproject.cozmosgarden.sun_count",
+                        "name": "quantit\u00e9 d'ensoleillement",
                         "type": "",
                         "value": 2
                     },
                     "]yh]`BdZ/jKJe@vxv*JS": {
                         "id": "]yh]`BdZ/jKJe@vxv*JS",
-                        "name": "codelabfeaturedproject.cozmosgarden.ran_out_of_cards_before_all_plants_were_harvested",
+                        "name": "\u00c0 court de cartes avant que toutes les plantes aient \u00e9t\u00e9 r\u00e9colt\u00e9es.",
                         "type": "",
                         "value": 0
                     },
                     "^!biIU_5^XvRMfwz+H}b": {
                         "id": "^!biIU_5^XvRMfwz+H}b",
-                        "name": "codelabfeaturedproject.cozmosgarden.draw_next_card",
+                        "name": "piocher la prochaine carte",
                         "type": "broadcast_msg",
                         "value": "draw next card"
                     },
                     "^:7On02M-mju0+n^MC.a": {
                         "id": "^:7On02M-mju0+n^MC.a",
-                        "name": "codelabfeaturedproject.cozmosgarden.clear_all_data_from_the_bug_plants_list",
+                        "name": "Effacer toutes les donn\u00e9es de la liste des plantes infest\u00e9es.",
                         "type": "",
                         "value": 0
                     },
                     "_?:G#puRTun+hrHQc~W7": {
                         "id": "_?:G#puRTun+hrHQc~W7",
-                        "name": "codelabfeaturedproject.cozmosgarden.say_got_bugs_phrase",
+                        "name": "dire la phrase lorsque les insectes ont \u00e9t\u00e9 \u00e9cras\u00e9s",
                         "type": "broadcast_msg",
                         "value": "say got bugs phrase"
                     },
                     "_l0SC,-IC8xK=bn^VV,E": {
                         "id": "_l0SC,-IC8xK=bn^VV,E",
-                        "name": "codelabfeaturedproject.cozmosgarden.water_the_plant_the_player_has_chosen",
+                        "name": "Arroser la plante choisie par le joueur.",
                         "type": "",
                         "value": 0
                     },
                     "aQ3K|1wu3aUP1-BB)qI{": {
                         "id": "aQ3K|1wu3aUP1-BB)qI{",
-                        "name": "codelabfeaturedproject.cozmosgarden.put_the_events_of_the_sun_card_into_action",
+                        "name": "Activer les effets de la carte Soleil.",
                         "type": "",
                         "value": 0
                     },
                     "bU5pE2VN(GUYGZqKml-h": {
                         "id": "bU5pE2VN(GUYGZqKml-h",
-                        "name": "codelabfeaturedproject.cozmosgarden.drop_x",
+                        "name": "goutte x",
                         "type": "",
                         "value": "75"
                     },
                     "b|_|xQqr[4T97I(@^`8k": {
                         "id": "b|_|xQqr[4T97I(@^`8k",
-                        "name": "codelabfeaturedproject.cozmosgarden.populate_deck",
+                        "name": "compl\u00e9ter le paquet",
                         "type": "broadcast_msg",
                         "value": "populate deck"
                     },
                     "dZdRU]:2;1`I1B`lngut": {
                         "id": "dZdRU]:2;1`I1B`lngut",
-                        "name": "codelabfeaturedproject.cozmosgarden.make_the_sun_shine_on_all_the_plants",
+                        "name": "Faire briller le soleil sur toutes les plantes.",
                         "type": "",
                         "value": 0
                     },
                     "e+u[%+8BJyt~@4R;)k0H": {
                         "id": "e+u[%+8BJyt~@4R;)k0H",
-                        "name": "codelabfeaturedproject.cozmosgarden.garden_plants_active",
+                        "name": "plantes du jardin actives",
                         "type": "list",
                         "value": [
                             "0",
@@ -503,25 +503,25 @@
                     },
                     "eu*Pwdz}CSE*[qpJ$cFo": {
                         "id": "eu*Pwdz}CSE*[qpJ$cFo",
-                        "name": "codelabfeaturedproject.cozmosgarden.cozmo_displays_a_sun_on_his_face",
+                        "name": "La t\u00eate de Cozmo affiche un soleil.",
                         "type": "",
                         "value": 0
                     },
                     "ft]~y%u1kn-r@^}#LdCy": {
                         "id": "ft]~y%u1kn-r@^}#LdCy",
-                        "name": "codelabfeaturedproject.cozmosgarden.current_card",
+                        "name": "carte actuelle",
                         "type": "",
                         "value": "2"
                     },
                     "g*4F*+kX[Hu6m/HOi=X/": {
                         "id": "g*4F*+kX[Hu6m/HOi=X/",
-                        "name": "codelabfeaturedproject.cozmosgarden.play_sun_card",
+                        "name": "jouer une carte Soleil",
                         "type": "broadcast_msg",
                         "value": "play sun card"
                     },
                     "geM=Avc_)(c[AsXen^d(": {
                         "id": "geM=Avc_)(c[AsXen^d(",
-                        "name": "codelabfeaturedproject.cozmosgarden.card_growth_amounts",
+                        "name": "carte Ampleur de croissance",
                         "type": "list",
                         "value": [
                             "1",
@@ -531,13 +531,13 @@
                     },
                     "hE#nyCv2b|oe*5jPRIx+": {
                         "id": "hE#nyCv2b|oe*5jPRIx+",
-                        "name": "codelabfeaturedproject.cozmosgarden.add_or_subtract_points_from_a_plant",
+                        "name": "Ajouter ou soustraire des points d'une plante.",
                         "type": "",
                         "value": 0
                     },
                     "i-C]NntbJ,ZEs^2=bO9z": {
                         "id": "i-C]NntbJ,ZEs^2=bO9z",
-                        "name": "codelabfeaturedproject.cozmosgarden.deck",
+                        "name": "paquet",
                         "type": "list",
                         "value": [
                             "1",
@@ -555,37 +555,37 @@
                     },
                     "j9+V(%A!9snN((Y4AUro": {
                         "id": "j9+V(%A!9snN((Y4AUro",
-                        "name": "codelabfeaturedproject.cozmosgarden.grow_plants",
+                        "name": "faire pousser les plantes",
                         "type": "broadcast_msg",
                         "value": "grow plants"
                     },
                     "lUG)A9oz=}]WCb-m+NLG": {
                         "id": "lUG)A9oz=}]WCb-m+NLG",
-                        "name": "codelabfeaturedproject.cozmosgarden.when_cozmo_sees_the_player_smile_activate_the_sun",
+                        "name": "Sourire \u00e0 Cozmo pour qu'il active le soleil.",
                         "type": "",
                         "value": 0
                     },
                     "m2)95;pl$dYTaapR4YRR": {
                         "id": "m2)95;pl$dYTaapR4YRR",
-                        "name": "codelabfeaturedproject.cozmosgarden.draw_drop",
+                        "name": "dessiner une goutte",
                         "type": "broadcast_msg",
                         "value": "draw drop"
                     },
                     "mM{POto4=dOfKq).cIm;": {
                         "id": "mM{POto4=dOfKq).cIm;",
-                        "name": "codelabfeaturedproject.cozmosgarden.drop_scale",
+                        "name": "\u00e9chelle de la goutte",
                         "type": "",
                         "value": "0.7"
                     },
                     "mugM~nQLp%D7`s5}SPB7": {
                         "id": "mugM~nQLp%D7`s5}SPB7",
-                        "name": "codelabfeaturedproject.cozmosgarden.populate_plant_list",
+                        "name": "compl\u00e9ter la liste des plantes",
                         "type": "broadcast_msg",
                         "value": "populate plant list"
                     },
                     "qW=|:3S]U]7U:|W%S}0/": {
                         "id": "qW=|:3S]U]7U:|W%S}0/",
-                        "name": "codelabfeaturedproject.cozmosgarden.garden_plants_colors",
+                        "name": "couleurs des plantes du jardin",
                         "type": "list",
                         "value": [
                             "#ffff00",
@@ -595,73 +595,73 @@
                     },
                     "r0z]Bf^/|kkr@#qTtWJH": {
                         "id": "r0z]Bf^/|kkr@#qTtWJH",
-                        "name": "codelabfeaturedproject.cozmosgarden.create_garden",
+                        "name": "cr\u00e9er un jardin",
                         "type": "broadcast_msg",
                         "value": "create garden"
                     },
                     "t+y)3`kp_riT3=uXD%9j": {
                         "id": "t+y)3`kp_riT3=uXD%9j",
-                        "name": "codelabfeaturedproject.cozmosgarden.determine_which_plants_to_grow",
+                        "name": "D\u00e9finir les plantes \u00e0 faire pousser.",
                         "type": "",
                         "value": 0
                     },
                     "tX-tEBzb5eQ)Rb=u[9Zq": {
                         "id": "tX-tEBzb5eQ)Rb=u[9Zq",
-                        "name": "codelabfeaturedproject.cozmosgarden.all_the_plants_were_harvested_successfully",
+                        "name": "Toutes les plantes ont \u00e9t\u00e9 r\u00e9colt\u00e9es avec succ\u00e8s.",
                         "type": "",
                         "value": 0
                     },
                     "tay$]p*cGG#{LnHknd8|": {
                         "id": "tay$]p*cGG#{LnHknd8|",
-                        "name": "codelabfeaturedproject.cozmosgarden.drop_line_position_y",
+                        "name": "position y de la ligne verticale",
                         "type": "",
                         "value": 15.5
                     },
                     "w;|cA6ScT/?q_G_HjV*s": {
                         "id": "w;|cA6ScT/?q_G_HjV*s",
-                        "name": "codelabfeaturedproject.cozmosgarden.draw_a_drop_of_water",
+                        "name": "Dessiner une goutte d'eau.",
                         "type": "",
                         "value": 0
                     },
                     "xt0V)?U#msmhV{oeh|T?": {
                         "id": "xt0V)?U#msmhV{oeh|T?",
-                        "name": "codelabfeaturedproject.cozmosgarden.play_water_card",
+                        "name": "jouer une carte Eau",
                         "type": "broadcast_msg",
                         "value": "play water card"
                     },
                     "yZvd/|bn!}Ls}@l$;R|A": {
                         "id": "yZvd/|bn!}Ls}@l$;R|A",
-                        "name": "codelabfeaturedproject.cozmosgarden.say_missed_bugs_phrase",
+                        "name": "dire la phrase lorsque les insectes ont \u00e9t\u00e9 manqu\u00e9s",
                         "type": "broadcast_msg",
                         "value": "say missed bugs phrase"
                     },
                     "{,J/{q^f$s1n|]x(54Xe": {
                         "id": "{,J/{q^f$s1n|]x(54Xe",
-                        "name": "codelabfeaturedproject.cozmosgarden.activate_sun",
+                        "name": "activer le soleil",
                         "type": "broadcast_msg",
                         "value": "activate sun"
                     },
                     "|6+AIN+3kwd|.}CSu-%f": {
                         "id": "|6+AIN+3kwd|.}CSu-%f",
-                        "name": "codelabfeaturedproject.cozmosgarden.shuffle_the_deck_of_cards",
+                        "name": "M\u00e9langer le paquet de cartes.",
                         "type": "",
                         "value": 0
                     },
                     "|P94tIm9d@~m)Vuxvz0W": {
                         "id": "|P94tIm9d@~m)Vuxvz0W",
-                        "name": "codelabfeaturedproject.cozmosgarden.bugs_count",
+                        "name": "nombre d'insectes",
                         "type": "",
                         "value": 2
                     },
                     "~PQJ5,EK~hja4[qoyy/-": {
                         "id": "~PQJ5,EK~hja4[qoyy/-",
-                        "name": "codelabfeaturedproject.cozmosgarden.grow_active_plant",
+                        "name": "faire pousser la plante active",
                         "type": "broadcast_msg",
                         "value": "grow active plant"
                     },
                     "~p+ld(4Qy^6(zaJqr*k(": {
                         "id": "~p+ld(4Qy^6(zaJqr*k(",
-                        "name": "codelabfeaturedproject.cozmosgarden.randomly_choose_a_phrase_for_cozmo_to_say_when_the_bugs_were_missed",
+                        "name": "Choisir au hasard une phrase que Cozmo dit lorsque les insectes sont manqu\u00e9s.",
                         "type": "",
                         "value": 0
                     }
@@ -784,7 +784,7 @@
                             "VARIABLE": {
                                 "id": "*FIp.ND~==_]F6_%czy5",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.plant_roll",
+                                "value": "choix al\u00e9atoire de plantes",
                                 "variableType": ""
                             }
                         },
@@ -828,7 +828,7 @@
                             "VARIABLE": {
                                 "id": "t+y)3`kp_riT3=uXD%9j",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.determine_which_plants_to_grow",
+                                "value": "D\u00e9finir les plantes \u00e0 faire pousser.",
                                 "variableType": ""
                             }
                         },
@@ -892,7 +892,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -927,7 +927,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden._3_plants"
+                                "value": " 3\u00a0plantes"
                             }
                         },
                         "id": "#*1O*Jvm.dc0#$bY?pb*",
@@ -992,7 +992,7 @@
                             "VARIABLE": {
                                 "id": ",u;#GEb0e3:8z2#_ZKd;",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.when_the_cube_is_tapped_activate_the_relevant_action",
+                                "value": "Toucher le cube pour activer l'action correspondante.",
                                 "variableType": ""
                             }
                         },
@@ -1119,7 +1119,7 @@
                             "VARIABLE": {
                                 "id": "eu*Pwdz}CSE*[qpJ$cFo",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.cozmo_displays_a_sun_on_his_face",
+                                "value": "La t\u00eate de Cozmo affiche un soleil.",
                                 "variableType": ""
                             }
                         },
@@ -1157,7 +1157,7 @@
                             "VARIABLE": {
                                 "id": "hE#nyCv2b|oe*5jPRIx+",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.add_or_subtract_points_from_a_plant",
+                                "value": "Ajouter ou soustraire des points d'une plante.",
                                 "variableType": ""
                             }
                         },
@@ -1591,7 +1591,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.shuffle_random",
+                                "value": "m\u00e9langer au hasard",
                                 "variableType": ""
                             }
                         },
@@ -1610,7 +1610,7 @@
                             "VARIABLE": {
                                 "id": "8-6,Lo%c^`WxW@i|fCNc",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.fill_up_the_deck_of_cards_list",
+                                "value": "Compl\u00e9ter la liste du paquet de cartes.",
                                 "variableType": ""
                             }
                         },
@@ -1760,7 +1760,7 @@
                             "VARIABLE": {
                                 "id": "ft]~y%u1kn-r@^}#LdCy",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.current_card",
+                                "value": "carte actuelle",
                                 "variableType": ""
                             }
                         },
@@ -1779,7 +1779,7 @@
                             "VARIABLE": {
                                 "id": "BJ@[qkF)Brtx-@a3?cZL",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.shuffle_card",
+                                "value": "m\u00e9langer la carte",
                                 "variableType": ""
                             }
                         },
@@ -1972,7 +1972,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.sun"
+                                "value": "Soleil"
                             }
                         },
                         "id": ")^QM`jS}X@2kom;mrxX9",
@@ -2016,7 +2016,7 @@
                             "VARIABLE": {
                                 "id": "#S$Wc8r3%eOcceXS4Dw:",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.water_count",
+                                "value": "quantit\u00e9 d'eau",
                                 "variableType": ""
                             }
                         },
@@ -2078,7 +2078,7 @@
                             "VARIABLE": {
                                 "id": "?4gR)yJr1o7N#9y{K5If",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.mode",
+                                "value": "mode",
                                 "variableType": ""
                             }
                         },
@@ -2096,7 +2096,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.ff7700"
+                                "value": "#ff7700"
                             }
                         },
                         "id": ")uT/]YFt)iwJ[ifYG;B!",
@@ -2195,7 +2195,7 @@
                             "VARIABLE": {
                                 "id": "lUG)A9oz=}]WCb-m+NLG",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.when_cozmo_sees_the_player_smile_activate_the_sun",
+                                "value": "Sourire \u00e0 Cozmo pour qu'il active le soleil.",
                                 "variableType": ""
                             }
                         },
@@ -2390,7 +2390,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -2432,7 +2432,7 @@
                             "VARIABLE": {
                                 "id": "2gnVz@?4j@r6|2TIPqcd",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.input_mode",
+                                "value": "mode Entr\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -2468,7 +2468,7 @@
                             "VARIABLE": {
                                 "id": "MM2bKXch7d@*6G)54oJ1",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.instructions_max_amount",
+                                "value": "nombre max. d'instructions",
                                 "variableType": ""
                             }
                         },
@@ -2510,7 +2510,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -2718,7 +2718,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.tomatoes"
+                                "value": "Les tomates"
                             }
                         },
                         "id": "+M!fg@rHy_ZiIHqnfy9s",
@@ -2772,7 +2772,7 @@
                             "VARIABLE": {
                                 "id": "?4gR)yJr1o7N#9y{K5If",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.mode",
+                                "value": "mode",
                                 "variableType": ""
                             }
                         },
@@ -2891,7 +2891,7 @@
                             "VARIABLE": {
                                 "id": "2gnVz@?4j@r6|2TIPqcd",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.input_mode",
+                                "value": "mode Entr\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -2910,7 +2910,7 @@
                             "VARIABLE": {
                                 "id": "MM2bKXch7d@*6G)54oJ1",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.instructions_max_amount",
+                                "value": "nombre max. d'instructions",
                                 "variableType": ""
                             }
                         },
@@ -3025,7 +3025,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -3044,7 +3044,7 @@
                             "VARIABLE": {
                                 "id": "Ign$qg(xXsR@.h)W/,v0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.player_activated",
+                                "value": "joueur activ\u00e9",
                                 "variableType": ""
                             }
                         },
@@ -3069,7 +3069,7 @@
                             "VARIABLE": {
                                 "id": "Ign$qg(xXsR@.h)W/,v0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.player_activated",
+                                "value": "joueur activ\u00e9",
                                 "variableType": ""
                             }
                         },
@@ -3144,7 +3144,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -3220,7 +3220,7 @@
                             "VARIABLE": {
                                 "id": "T^PguIZROp!C~_1!QJ$!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.bug_plant",
+                                "value": "plante infest\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -3299,7 +3299,7 @@
                             "VARIABLE": {
                                 "id": ":z}pMyXWX{Eq,S7v6i59",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.initialize_game_data_and_begin",
+                                "value": "Initialiser les donn\u00e9es du jeu et commencer la partie.",
                                 "variableType": ""
                             }
                         },
@@ -3347,7 +3347,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.ooh_those_sneaky_bugs"
+                                "value": "Ooh, ces satan\u00e9s insectes\u00a0!"
                             }
                         },
                         "id": ".=ucrW/WbZFUaMQq6_f$",
@@ -3504,7 +3504,7 @@
                             "VARIABLE": {
                                 "id": "PEdlr[J4sVtEOv1=3g3V",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.randomly_choose_a_phrase_for_cozmo_to_say_when_the_bugs_were_hit",
+                                "value": "Choisir au hasard une phrase que Cozmo dit lorsque les insectes sont \u00e9cras\u00e9s.",
                                 "variableType": ""
                             }
                         },
@@ -3623,7 +3623,7 @@
                             "VARIABLE": {
                                 "id": "|P94tIm9d@~m)Vuxvz0W",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.bugs_count",
+                                "value": "nombre d'insectes",
                                 "variableType": ""
                             }
                         },
@@ -3657,7 +3657,7 @@
                             "VARIABLE": {
                                 "id": "2N:5I_;4VlUNw.k%-(6a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.make_sure_no_plant_can_have_less_than_0_or_more_than_4_points",
+                                "value": "S'assurer que le score de chaque plante soit compris entre 0\u00a0et 4\u00a0points.",
                                 "variableType": ""
                             }
                         },
@@ -3783,7 +3783,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -3937,7 +3937,7 @@
                             "VARIABLE": {
                                 "id": "?6b^BN!47boC7#DTyqUN",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_y",
+                                "value": "goutte y",
                                 "variableType": ""
                             }
                         },
@@ -4128,7 +4128,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.lettuce"
+                                "value": "Salade"
                             }
                         },
                         "id": "1)nB{1`pMIA1I-gCitf3",
@@ -4143,7 +4143,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.haha_squished_em"
+                                "value": "Haha\u00a0! Tu n'en as fait qu'une bouch\u00e9e\u00a0!"
                             }
                         },
                         "id": "10T_[V@K35j)sFzq@Hol",
@@ -4173,7 +4173,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden._rounds"
+                                "value": " tours"
                             }
                         },
                         "id": "16j|QhNSeyY-F~#{3}+N",
@@ -4189,7 +4189,7 @@
                             "VARIABLE": {
                                 "id": "T^PguIZROp!C~_1!QJ$!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.bug_plant",
+                                "value": "plante infest\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -4278,7 +4278,7 @@
                             "VARIABLE": {
                                 "id": "Ign$qg(xXsR@.h)W/,v0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.player_activated",
+                                "value": "joueur activ\u00e9",
                                 "variableType": ""
                             }
                         },
@@ -4303,7 +4303,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -4381,7 +4381,7 @@
                             "VARIABLE": {
                                 "id": "]3u(n[21w(Sgnwn$.LYs",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.sun_count",
+                                "value": "quantit\u00e9 d'ensoleillement",
                                 "variableType": ""
                             }
                         },
@@ -4622,7 +4622,7 @@
                             "VARIABLE": {
                                 "id": "?4gR)yJr1o7N#9y{K5If",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.mode",
+                                "value": "mode",
                                 "variableType": ""
                             }
                         },
@@ -4683,7 +4683,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -4742,7 +4742,7 @@
                             "VARIABLE": {
                                 "id": "KEsOIz}vieQT{+0zZihe",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_line_width",
+                                "value": "largeur de la ligne verticale",
                                 "variableType": ""
                             }
                         },
@@ -4790,7 +4790,7 @@
                             "VARIABLE": {
                                 "id": "|P94tIm9d@~m)Vuxvz0W",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.bugs_count",
+                                "value": "nombre d'insectes",
                                 "variableType": ""
                             }
                         },
@@ -4889,7 +4889,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -5067,7 +5067,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -5190,7 +5190,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.were_pretty_good_at_this"
+                                "value": "Nous sommes plut\u00f4t bons \u00e0 ce jeu\u00a0!"
                             }
                         },
                         "id": "4WYg42`$K+^HyFUy-v@j",
@@ -5253,7 +5253,7 @@
                             "VARIABLE": {
                                 "id": "FB_wjTS9HqxfJrRL+A;b",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.put_the_events_of_the_water_card_into_action",
+                                "value": "Activer les effets de la carte Eau.",
                                 "variableType": ""
                             }
                         },
@@ -5272,7 +5272,7 @@
                             "VARIABLE": {
                                 "id": "]yh]`BdZ/jKJe@vxv*JS",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.ran_out_of_cards_before_all_plants_were_harvested",
+                                "value": "\u00c0 court de cartes avant que toutes les plantes aient \u00e9t\u00e9 r\u00e9colt\u00e9es.",
                                 "variableType": ""
                             }
                         },
@@ -5385,7 +5385,7 @@
                             "VARIABLE": {
                                 "id": "Bgbc~L#XrP]M.IGwPWsJ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.draw_mode",
+                                "value": "mode Pioche",
                                 "variableType": ""
                             }
                         },
@@ -5466,7 +5466,7 @@
                             "VARIABLE": {
                                 "id": "5FUn|bxv:,H[b;8twf4[",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.card_count",
+                                "value": "nombre de cartes",
                                 "variableType": ""
                             }
                         },
@@ -5543,7 +5543,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.we_harvested_the_"
+                                "value": "Nous avons r\u00e9colt\u00e9 "
                             }
                         },
                         "id": "5fng;]V,QvJPfmeV/SYN",
@@ -5559,7 +5559,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -5977,7 +5977,7 @@
                             "VARIABLE": {
                                 "id": "?Nu$DseVL+)x.PQ40lAV",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_radius",
+                                "value": "rayon de la goutte",
                                 "variableType": ""
                             }
                         },
@@ -6031,7 +6031,7 @@
                             "VARIABLE": {
                                 "id": "Q]8XOLmHF*2qnP%Vg]TP",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.cozmo_displays_water_on_his_face",
+                                "value": "La t\u00eate de Cozmo affiche de l'eau.",
                                 "variableType": ""
                             }
                         },
@@ -6097,7 +6097,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.broccoli"
+                                "value": "Brocoli"
                             }
                         },
                         "id": "7=2Zq:]Fr*f7u50CnUG~",
@@ -6169,7 +6169,7 @@
                             "VARIABLE": {
                                 "id": "+ula(hNT/T]F91h-O%a}",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.harvest_mode",
+                                "value": "mode R\u00e9colte",
                                 "variableType": ""
                             }
                         },
@@ -6243,7 +6243,7 @@
                             "VARIABLE": {
                                 "id": "KEsOIz}vieQT{+0zZihe",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_line_width",
+                                "value": "largeur de la ligne verticale",
                                 "variableType": ""
                             }
                         },
@@ -6349,7 +6349,7 @@
                             "VARIABLE": {
                                 "id": "|6+AIN+3kwd|.}CSu-%f",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.shuffle_the_deck_of_cards",
+                                "value": "M\u00e9langer le paquet de cartes.",
                                 "variableType": ""
                             }
                         },
@@ -6368,7 +6368,7 @@
                             "VARIABLE": {
                                 "id": "*FIp.ND~==_]F6_%czy5",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.plant_roll",
+                                "value": "choix al\u00e9atoire de plantes",
                                 "variableType": ""
                             }
                         },
@@ -6490,7 +6490,7 @@
                             "VARIABLE": {
                                 "id": "BqQ^DVuhUe{c*IHT9H@q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.harvested_plants",
+                                "value": "plantes r\u00e9colt\u00e9es",
                                 "variableType": ""
                             }
                         },
@@ -6597,7 +6597,7 @@
                             "VARIABLE": {
                                 "id": "tay$]p*cGG#{LnHknd8|",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_line_position_y",
+                                "value": "position y de la ligne verticale",
                                 "variableType": ""
                             }
                         },
@@ -6648,7 +6648,7 @@
                             "VARIABLE": {
                                 "id": "?4gR)yJr1o7N#9y{K5If",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.mode",
+                                "value": "mode",
                                 "variableType": ""
                             }
                         },
@@ -6759,7 +6759,7 @@
                             "VARIABLE": {
                                 "id": "*FIp.ND~==_]F6_%czy5",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.plant_roll",
+                                "value": "choix al\u00e9atoire de plantes",
                                 "variableType": ""
                             }
                         },
@@ -6861,7 +6861,7 @@
                             "VARIABLE": {
                                 "id": "3H7ZJ[(#z1$P~(H7g[!4",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.growth_mode",
+                                "value": "mode Croissance",
                                 "variableType": ""
                             }
                         },
@@ -6922,7 +6922,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -7051,7 +7051,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -7210,7 +7210,7 @@
                             "VARIABLE": {
                                 "id": "#S$Wc8r3%eOcceXS4Dw:",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.water_count",
+                                "value": "quantit\u00e9 d'eau",
                                 "variableType": ""
                             }
                         },
@@ -7413,7 +7413,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -7524,7 +7524,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -7689,7 +7689,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -7859,7 +7859,7 @@
                             "VARIABLE": {
                                 "id": "ft]~y%u1kn-r@^}#LdCy",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.current_card",
+                                "value": "carte actuelle",
                                 "variableType": ""
                             }
                         },
@@ -7878,7 +7878,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -7960,7 +7960,7 @@
                             "VARIABLE": {
                                 "id": "ft]~y%u1kn-r@^}#LdCy",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.current_card",
+                                "value": "carte actuelle",
                                 "variableType": ""
                             }
                         },
@@ -8054,7 +8054,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.shuffle_random",
+                                "value": "m\u00e9langer au hasard",
                                 "variableType": ""
                             }
                         },
@@ -8102,7 +8102,7 @@
                             "VARIABLE": {
                                 "id": "|P94tIm9d@~m)Vuxvz0W",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.bugs_count",
+                                "value": "nombre d'insectes",
                                 "variableType": ""
                             }
                         },
@@ -8283,7 +8283,7 @@
                             "VARIABLE": {
                                 "id": "0p7w#LMTnxvRF*%jP7#1",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.put_the_events_of_the_bugs_card_into_action",
+                                "value": "Activer les effets de la carte Insectes.",
                                 "variableType": ""
                             }
                         },
@@ -8422,7 +8422,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -8441,7 +8441,7 @@
                             "VARIABLE": {
                                 "id": "bU5pE2VN(GUYGZqKml-h",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_x",
+                                "value": "goutte x",
                                 "variableType": ""
                             }
                         },
@@ -8460,7 +8460,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -8498,7 +8498,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -8653,7 +8653,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -8747,7 +8747,7 @@
                             "VARIABLE": {
                                 "id": "8V;?o-k@CeoBBVUEc?fj",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.clear_all_data_from_lists",
+                                "value": "Effacer toutes les donn\u00e9es des listes.",
                                 "variableType": ""
                             }
                         },
@@ -8799,7 +8799,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.tap_a_plant_to_guess_where_the_bugs_are"
+                                "value": "Appuyer sur une plante pour deviner o\u00f9 se cachent les insectes\u00a0!"
                             }
                         },
                         "id": "DgT(NKvGGW#t!y$4r=}|",
@@ -8846,7 +8846,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.thing"
+                                "value": "objet"
                             }
                         },
                         "id": "D|rQAN6qC^FysR;!IwX}",
@@ -8864,7 +8864,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.shuffle_random",
+                                "value": "m\u00e9langer au hasard",
                                 "variableType": ""
                             }
                         },
@@ -8883,7 +8883,7 @@
                             "VARIABLE": {
                                 "id": "bU5pE2VN(GUYGZqKml-h",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_x",
+                                "value": "goutte x",
                                 "variableType": ""
                             }
                         },
@@ -8940,7 +8940,7 @@
                             "VARIABLE": {
                                 "id": "?4gR)yJr1o7N#9y{K5If",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.mode",
+                                "value": "mode",
                                 "variableType": ""
                             }
                         },
@@ -8976,7 +8976,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -9027,7 +9027,7 @@
                             "VARIABLE": {
                                 "id": "tay$]p*cGG#{LnHknd8|",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_line_position_y",
+                                "value": "position y de la ligne verticale",
                                 "variableType": ""
                             }
                         },
@@ -9067,7 +9067,7 @@
                             "VARIABLE": {
                                 "id": "T^PguIZROp!C~_1!QJ$!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.bug_plant",
+                                "value": "plante infest\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -9152,7 +9152,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.blueberries"
+                                "value": "Les myrtilles"
                             }
                         },
                         "id": "En$^,-3uq6emm9#EK!Zq",
@@ -9168,7 +9168,7 @@
                             "VARIABLE": {
                                 "id": "_l0SC,-IC8xK=bn^VV,E",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.water_the_plant_the_player_has_chosen",
+                                "value": "Arroser la plante choisie par le joueur.",
                                 "variableType": ""
                             }
                         },
@@ -9187,7 +9187,7 @@
                             "VARIABLE": {
                                 "id": "2gnVz@?4j@r6|2TIPqcd",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.input_mode",
+                                "value": "mode Entr\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -9305,7 +9305,7 @@
                             "VARIABLE": {
                                 "id": "tay$]p*cGG#{LnHknd8|",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_line_position_y",
+                                "value": "position y de la ligne verticale",
                                 "variableType": ""
                             }
                         },
@@ -9385,7 +9385,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.lemons"
+                                "value": "Citrons"
                             }
                         },
                         "id": "FuEIQx0kWNGm/y]]_qtT",
@@ -9480,7 +9480,7 @@
                             "VARIABLE": {
                                 "id": "aQ3K|1wu3aUP1-BB)qI{",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.put_the_events_of_the_sun_card_into_action",
+                                "value": "Activer les effets de la carte Soleil.",
                                 "variableType": ""
                             }
                         },
@@ -9514,7 +9514,7 @@
                             "VARIABLE": {
                                 "id": "ft]~y%u1kn-r@^}#LdCy",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.current_card",
+                                "value": "carte actuelle",
                                 "variableType": ""
                             }
                         },
@@ -9571,7 +9571,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -9589,7 +9589,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.got_em"
+                                "value": "Tu les as eus\u00a0!"
                             }
                         },
                         "id": "GQ,F%}!R!8ToP+RA?Dbn",
@@ -9605,7 +9605,7 @@
                             "VARIABLE": {
                                 "id": "]3u(n[21w(Sgnwn$.LYs",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.sun_count",
+                                "value": "quantit\u00e9 d'ensoleillement",
                                 "variableType": ""
                             }
                         },
@@ -9645,7 +9645,7 @@
                             "VARIABLE": {
                                 "id": "?4gR)yJr1o7N#9y{K5If",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.mode",
+                                "value": "mode",
                                 "variableType": ""
                             }
                         },
@@ -9711,7 +9711,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.00ffbb"
+                                "value": "#00ffbb"
                             }
                         },
                         "id": "H!Vx,WRe+|*2Ej,ezIjy",
@@ -9759,7 +9759,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.hi"
+                                "value": "Bonjour"
                             }
                         },
                         "id": "H+{`pV~D4M.9Z#cIA%LF",
@@ -9878,7 +9878,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -10022,7 +10022,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -10064,7 +10064,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -10222,7 +10222,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.oranges"
+                                "value": "Oranges"
                             }
                         },
                         "id": "J=OY+9S{}gO55,RT]x)(",
@@ -10238,7 +10238,7 @@
                             "VARIABLE": {
                                 "id": "MM2bKXch7d@*6G)54oJ1",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.instructions_max_amount",
+                                "value": "nombre max. d'instructions",
                                 "variableType": ""
                             }
                         },
@@ -10272,7 +10272,7 @@
                             "VARIABLE": {
                                 "id": "tay$]p*cGG#{LnHknd8|",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_line_position_y",
+                                "value": "position y de la ligne verticale",
                                 "variableType": ""
                             }
                         },
@@ -10479,7 +10479,7 @@
                             "VARIABLE": {
                                 "id": "?4gR)yJr1o7N#9y{K5If",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.mode",
+                                "value": "mode",
                                 "variableType": ""
                             }
                         },
@@ -10559,7 +10559,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -10593,7 +10593,7 @@
                             "VARIABLE": {
                                 "id": "bU5pE2VN(GUYGZqKml-h",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_x",
+                                "value": "goutte x",
                                 "variableType": ""
                             }
                         },
@@ -10653,7 +10653,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -10697,7 +10697,7 @@
                             "VARIABLE": {
                                 "id": "#S$Wc8r3%eOcceXS4Dw:",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.water_count",
+                                "value": "quantit\u00e9 d'eau",
                                 "variableType": ""
                             }
                         },
@@ -10737,7 +10737,7 @@
                             "VARIABLE": {
                                 "id": "mM{POto4=dOfKq).cIm;",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_scale",
+                                "value": "\u00e9chelle de la goutte",
                                 "variableType": ""
                             }
                         },
@@ -10777,7 +10777,7 @@
                             "VARIABLE": {
                                 "id": "+ula(hNT/T]F91h-O%a}",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.harvest_mode",
+                                "value": "mode R\u00e9colte",
                                 "variableType": ""
                             }
                         },
@@ -10813,7 +10813,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -10895,7 +10895,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -10943,7 +10943,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -10979,7 +10979,7 @@
                             "VARIABLE": {
                                 "id": "Ign$qg(xXsR@.h)W/,v0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.player_activated",
+                                "value": "joueur activ\u00e9",
                                 "variableType": ""
                             }
                         },
@@ -11029,7 +11029,7 @@
                             "VARIABLE": {
                                 "id": "w;|cA6ScT/?q_G_HjV*s",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.draw_a_drop_of_water",
+                                "value": "Dessiner une goutte d'eau.",
                                 "variableType": ""
                             }
                         },
@@ -11110,7 +11110,7 @@
                             "VARIABLE": {
                                 "id": "%L-3Ev.(rOhz7[?pASC*",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.check_to_see_whether_the_player_has_successfully_squashed_the_bugs",
+                                "value": "V\u00e9rifier si les insectes ont bien \u00e9t\u00e9 \u00e9cras\u00e9s.",
                                 "variableType": ""
                             }
                         },
@@ -11129,7 +11129,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.shuffle_random",
+                                "value": "m\u00e9langer au hasard",
                                 "variableType": ""
                             }
                         },
@@ -11169,7 +11169,7 @@
                             "VARIABLE": {
                                 "id": "KEsOIz}vieQT{+0zZihe",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_line_width",
+                                "value": "largeur de la ligne verticale",
                                 "variableType": ""
                             }
                         },
@@ -11218,7 +11218,7 @@
                             "VARIABLE": {
                                 "id": "]3u(n[21w(Sgnwn$.LYs",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.sun_count",
+                                "value": "quantit\u00e9 d'ensoleillement",
                                 "variableType": ""
                             }
                         },
@@ -11357,7 +11357,7 @@
                             "VARIABLE": {
                                 "id": "ft]~y%u1kn-r@^}#LdCy",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.current_card",
+                                "value": "carte actuelle",
                                 "variableType": ""
                             }
                         },
@@ -11471,7 +11471,7 @@
                             "VARIABLE": {
                                 "id": "?6b^BN!47boC7#DTyqUN",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_y",
+                                "value": "goutte y",
                                 "variableType": ""
                             }
                         },
@@ -11531,7 +11531,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.bb00ff"
+                                "value": "#bb00ff"
                             }
                         },
                         "id": "NjQ$!z+|{T?|I(3_Zjj;",
@@ -11570,7 +11570,7 @@
                             "VARIABLE": {
                                 "id": "ft]~y%u1kn-r@^}#LdCy",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.current_card",
+                                "value": "carte actuelle",
                                 "variableType": ""
                             }
                         },
@@ -11639,7 +11639,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.tap_a_plant_to_water_it"
+                                "value": "Appuyer sur une plante pour l'arroser."
                             }
                         },
                         "id": "O.hA`@JxpJjeKpw;8MB|",
@@ -11815,7 +11815,7 @@
                             "VARIABLE": {
                                 "id": "85iC(8DU8ZNx_,BC#`8u",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.show_plant_growth_and_check_if_plants_are_ready_for_harvest",
+                                "value": "Afficher la croissance des plantes et v\u00e9rifier si elles peuvent \u00eatre r\u00e9colt\u00e9es.",
                                 "variableType": ""
                             }
                         },
@@ -11851,7 +11851,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -11959,7 +11959,7 @@
                             "VARIABLE": {
                                 "id": "5FUn|bxv:,H[b;8twf4[",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.card_count",
+                                "value": "nombre de cartes",
                                 "variableType": ""
                             }
                         },
@@ -12116,7 +12116,7 @@
                             "VARIABLE": {
                                 "id": "Ign$qg(xXsR@.h)W/,v0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.player_activated",
+                                "value": "joueur activ\u00e9",
                                 "variableType": ""
                             }
                         },
@@ -12218,7 +12218,7 @@
                             "VARIABLE": {
                                 "id": "5FUn|bxv:,H[b;8twf4[",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.card_count",
+                                "value": "nombre de cartes",
                                 "variableType": ""
                             }
                         },
@@ -12279,7 +12279,7 @@
                             "VARIABLE": {
                                 "id": "KEsOIz}vieQT{+0zZihe",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_line_width",
+                                "value": "largeur de la ligne verticale",
                                 "variableType": ""
                             }
                         },
@@ -12298,7 +12298,7 @@
                             "VARIABLE": {
                                 "id": "Ign$qg(xXsR@.h)W/,v0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.player_activated",
+                                "value": "joueur activ\u00e9",
                                 "variableType": ""
                             }
                         },
@@ -12336,7 +12336,7 @@
                             "VARIABLE": {
                                 "id": "tX-tEBzb5eQ)Rb=u[9Zq",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.all_the_plants_were_harvested_successfully",
+                                "value": "Toutes les plantes ont \u00e9t\u00e9 r\u00e9colt\u00e9es avec succ\u00e8s.",
                                 "variableType": ""
                             }
                         },
@@ -12428,7 +12428,7 @@
                             "VARIABLE": {
                                 "id": "2gnVz@?4j@r6|2TIPqcd",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.input_mode",
+                                "value": "mode Entr\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -12515,7 +12515,7 @@
                             "VARIABLE": {
                                 "id": "BqQ^DVuhUe{c*IHT9H@q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.harvested_plants",
+                                "value": "plantes r\u00e9colt\u00e9es",
                                 "variableType": ""
                             }
                         },
@@ -12540,7 +12540,7 @@
                             "VARIABLE": {
                                 "id": "3Z$bIz*%0xDp[-pa(~.q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.clear_all_data_from_the_plants_to_harvest_list",
+                                "value": "Effacer toutes les donn\u00e9es de la liste des plantes \u00e0 r\u00e9colter.",
                                 "variableType": ""
                             }
                         },
@@ -12650,7 +12650,7 @@
                             "VARIABLE": {
                                 "id": "KEsOIz}vieQT{+0zZihe",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_line_width",
+                                "value": "largeur de la ligne verticale",
                                 "variableType": ""
                             }
                         },
@@ -12675,7 +12675,7 @@
                             "VARIABLE": {
                                 "id": "2gnVz@?4j@r6|2TIPqcd",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.input_mode",
+                                "value": "mode Entr\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -12883,7 +12883,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.shuffle_random",
+                                "value": "m\u00e9langer au hasard",
                                 "variableType": ""
                             }
                         },
@@ -13021,7 +13021,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -13086,7 +13086,7 @@
                             "VARIABLE": {
                                 "id": "=2kLEANAg1;LybuGj2U)",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.fill_up_the_plant_types_and_plant_colors_lists",
+                                "value": "Compl\u00e9ter les listes de types et de couleurs de plantes.",
                                 "variableType": ""
                             }
                         },
@@ -13543,7 +13543,7 @@
                             "VARIABLE": {
                                 "id": "5FUn|bxv:,H[b;8twf4[",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.card_count",
+                                "value": "nombre de cartes",
                                 "variableType": ""
                             }
                         },
@@ -13600,7 +13600,7 @@
                             "VARIABLE": {
                                 "id": "^:7On02M-mju0+n^MC.a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.clear_all_data_from_the_bug_plants_list",
+                                "value": "Effacer toutes les donn\u00e9es de la liste des plantes infest\u00e9es.",
                                 "variableType": ""
                             }
                         },
@@ -13619,7 +13619,7 @@
                             "VARIABLE": {
                                 "id": "2gnVz@?4j@r6|2TIPqcd",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.input_mode",
+                                "value": "mode Entr\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -13684,7 +13684,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.one_plant_is_better_than_none"
+                                "value": "Une plante vaut mieux que pas de plante du tout\u00a0!"
                             }
                         },
                         "id": "V3QpmGufDpKk%*1~dfrE",
@@ -13740,7 +13740,7 @@
                             "VARIABLE": {
                                 "id": "2gnVz@?4j@r6|2TIPqcd",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.input_mode",
+                                "value": "mode Entr\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -13759,7 +13759,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -13829,7 +13829,7 @@
                             "VARIABLE": {
                                 "id": "?_lH+b)Lc`b9p$GT~A}3",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.set_a_plant_to_the_harvested_state_and_spin_the_cube_lights",
+                                "value": "Marquer une plante comme \u00ab\u00a0r\u00e9colt\u00e9e\u00a0\u00bb et illuminer les voyants du cube.",
                                 "variableType": ""
                             }
                         },
@@ -13848,7 +13848,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -13920,7 +13920,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -13960,7 +13960,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -14077,7 +14077,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.shuffle_random",
+                                "value": "m\u00e9langer au hasard",
                                 "variableType": ""
                             }
                         },
@@ -14113,7 +14113,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -14132,7 +14132,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -14216,7 +14216,7 @@
                             "VARIABLE": {
                                 "id": "BqQ^DVuhUe{c*IHT9H@q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.harvested_plants",
+                                "value": "plantes r\u00e9colt\u00e9es",
                                 "variableType": ""
                             }
                         },
@@ -14241,7 +14241,7 @@
                             "VARIABLE": {
                                 "id": "?4gR)yJr1o7N#9y{K5If",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.mode",
+                                "value": "mode",
                                 "variableType": ""
                             }
                         },
@@ -14516,7 +14516,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -14671,7 +14671,7 @@
                             "VARIABLE": {
                                 "id": "2gnVz@?4j@r6|2TIPqcd",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.input_mode",
+                                "value": "mode Entr\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -14833,7 +14833,7 @@
                             "VARIABLE": {
                                 "id": "bU5pE2VN(GUYGZqKml-h",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_x",
+                                "value": "goutte x",
                                 "variableType": ""
                             }
                         },
@@ -14902,7 +14902,7 @@
                             "VARIABLE": {
                                 "id": "ft]~y%u1kn-r@^}#LdCy",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.current_card",
+                                "value": "carte actuelle",
                                 "variableType": ""
                             }
                         },
@@ -14921,7 +14921,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -14957,7 +14957,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -14975,7 +14975,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.hey_no_fair_bugs"
+                                "value": "H\u00e9\u00a0! Ce n'est pas juste\u00a0!"
                             }
                         },
                         "id": "Y|i0-[8R#1r6O).vp9U~",
@@ -15028,7 +15028,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.ffff00"
+                                "value": "#ffff00"
                             }
                         },
                         "id": "ZAN/b[c[Ty!}5vU?T/MF",
@@ -15061,7 +15061,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.shuffle_random",
+                                "value": "m\u00e9langer au hasard",
                                 "variableType": ""
                             }
                         },
@@ -15097,7 +15097,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -15228,7 +15228,7 @@
                             "VARIABLE": {
                                 "id": "]3u(n[21w(Sgnwn$.LYs",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.sun_count",
+                                "value": "quantit\u00e9 d'ensoleillement",
                                 "variableType": ""
                             }
                         },
@@ -15291,7 +15291,7 @@
                             "VARIABLE": {
                                 "id": "T^PguIZROp!C~_1!QJ$!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.bug_plant",
+                                "value": "plante infest\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -15328,7 +15328,7 @@
                             "VARIABLE": {
                                 "id": "bU5pE2VN(GUYGZqKml-h",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_x",
+                                "value": "goutte x",
                                 "variableType": ""
                             }
                         },
@@ -15346,7 +15346,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden._out_of_"
+                                "value": " sur "
                             }
                         },
                         "id": "ZrRLWD8KICwP].#5U*`8",
@@ -15583,7 +15583,7 @@
                             "VARIABLE": {
                                 "id": "bU5pE2VN(GUYGZqKml-h",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_x",
+                                "value": "goutte x",
                                 "variableType": ""
                             }
                         },
@@ -15601,7 +15601,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.and"
+                                "value": "et"
                             }
                         },
                         "id": "]#8Q3N9BTDne)Bp5Bhe7",
@@ -15695,7 +15695,7 @@
                             "VARIABLE": {
                                 "id": ",u;#GEb0e3:8z2#_ZKd;",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.when_the_cube_is_tapped_activate_the_relevant_action",
+                                "value": "Toucher le cube pour activer l'action correspondante.",
                                 "variableType": ""
                             }
                         },
@@ -15836,7 +15836,7 @@
                             "VARIABLE": {
                                 "id": "$MhV4:Z+J;d]{#}}:M=f",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.present_the_next_drawn_card",
+                                "value": "D\u00e9poser la prochaine carte tir\u00e9e.",
                                 "variableType": ""
                             }
                         },
@@ -15902,7 +15902,7 @@
                             "VARIABLE": {
                                 "id": "dZdRU]:2;1`I1B`lngut",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.make_the_sun_shine_on_all_the_plants",
+                                "value": "Faire briller le soleil sur toutes les plantes.",
                                 "variableType": ""
                             }
                         },
@@ -16224,7 +16224,7 @@
                             "VARIABLE": {
                                 "id": "ft]~y%u1kn-r@^}#LdCy",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.current_card",
+                                "value": "carte actuelle",
                                 "variableType": ""
                             }
                         },
@@ -16243,7 +16243,7 @@
                             "VARIABLE": {
                                 "id": "?Nu$DseVL+)x.PQ40lAV",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_radius",
+                                "value": "rayon de la goutte",
                                 "variableType": ""
                             }
                         },
@@ -16384,7 +16384,7 @@
                             "VARIABLE": {
                                 "id": "ft]~y%u1kn-r@^}#LdCy",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.current_card",
+                                "value": "carte actuelle",
                                 "variableType": ""
                             }
                         },
@@ -16592,7 +16592,7 @@
                             "VARIABLE": {
                                 "id": "?4gR)yJr1o7N#9y{K5If",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.mode",
+                                "value": "mode",
                                 "variableType": ""
                             }
                         },
@@ -16650,7 +16650,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -16669,7 +16669,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -16712,7 +16712,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.grapes"
+                                "value": "Raisin"
                             }
                         },
                         "id": "`a?(l~dJ]j=[{C{|BZUO",
@@ -16764,7 +16764,7 @@
                             "VARIABLE": {
                                 "id": "BqQ^DVuhUe{c*IHT9H@q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.harvested_plants",
+                                "value": "plantes r\u00e9colt\u00e9es",
                                 "variableType": ""
                             }
                         },
@@ -16782,7 +16782,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.not_this_time_bugs"
+                                "value": "Pas cette fois mes chers insectes\u00a0!"
                             }
                         },
                         "id": "`h)^{EQc}GC/Y)UMrCx{",
@@ -16885,7 +16885,7 @@
                             "VARIABLE": {
                                 "id": "~p+ld(4Qy^6(zaJqr*k(",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.randomly_choose_a_phrase_for_cozmo_to_say_when_the_bugs_were_missed",
+                                "value": "Choisir au hasard une phrase que Cozmo dit lorsque les insectes sont manqu\u00e9s.",
                                 "variableType": ""
                             }
                         },
@@ -17046,7 +17046,7 @@
                             "VARIABLE": {
                                 "id": "bU5pE2VN(GUYGZqKml-h",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_x",
+                                "value": "goutte x",
                                 "variableType": ""
                             }
                         },
@@ -17197,7 +17197,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -17215,7 +17215,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.029900"
+                                "value": "#029900"
                             }
                         },
                         "id": "ajjdHnQVMJbE~c$0p$px",
@@ -17231,7 +17231,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -17415,7 +17415,7 @@
                             "VARIABLE": {
                                 "id": "?Nu$DseVL+)x.PQ40lAV",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_radius",
+                                "value": "rayon de la goutte",
                                 "variableType": ""
                             }
                         },
@@ -17604,7 +17604,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -17747,7 +17747,7 @@
                             "VARIABLE": {
                                 "id": "E6ZC4o^I=7R`yR^qWyt*",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.use_cube_lights_to_show_the_current_state_of_growth_for_plants_that_have_not_been_harvested",
+                                "value": "Utiliser les voyants du cube pour afficher la croissance actuelle des plantes qui n'ont pas \u00e9t\u00e9 r\u00e9colt\u00e9es.",
                                 "variableType": ""
                             }
                         },
@@ -17855,7 +17855,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -17888,7 +17888,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.0055ff"
+                                "value": "#0055ff"
                             }
                         },
                         "id": "coMagYY{No9Zkbwn^u^G",
@@ -18052,7 +18052,7 @@
                             "VARIABLE": {
                                 "id": "5FUn|bxv:,H[b;8twf4[",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.card_count",
+                                "value": "nombre de cartes",
                                 "variableType": ""
                             }
                         },
@@ -18260,7 +18260,7 @@
                             "VARIABLE": {
                                 "id": "ft]~y%u1kn-r@^}#LdCy",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.current_card",
+                                "value": "carte actuelle",
                                 "variableType": ""
                             }
                         },
@@ -18321,7 +18321,7 @@
                             "VARIABLE": {
                                 "id": "BJ@[qkF)Brtx-@a3?cZL",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.shuffle_card",
+                                "value": "m\u00e9langer la carte",
                                 "variableType": ""
                             }
                         },
@@ -18387,7 +18387,7 @@
                             "VARIABLE": {
                                 "id": "A#~,`~zK@C~wQsYk3_XK",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.draw_the_next_card_from_the_deck",
+                                "value": "Piocher la prochaine carte du paquet.",
                                 "variableType": ""
                             }
                         },
@@ -18405,7 +18405,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.hooray_we_harvested_all_the_plants_in_"
+                                "value": "Hourra\u00a0! Nous avons r\u00e9colt\u00e9 toutes les plantes en "
                             }
                         },
                         "id": "ecFq:!l4Tsu$!B;}z,Dq",
@@ -18421,7 +18421,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -18446,7 +18446,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -18490,7 +18490,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.shuffle_random",
+                                "value": "m\u00e9langer au hasard",
                                 "variableType": ""
                             }
                         },
@@ -18575,7 +18575,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -18600,7 +18600,7 @@
                             "VARIABLE": {
                                 "id": "3H7ZJ[(#z1$P~(H7g[!4",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.growth_mode",
+                                "value": "mode Croissance",
                                 "variableType": ""
                             }
                         },
@@ -18686,7 +18686,7 @@
                             "VARIABLE": {
                                 "id": "|P94tIm9d@~m)Vuxvz0W",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.bugs_count",
+                                "value": "nombre d'insectes",
                                 "variableType": ""
                             }
                         },
@@ -18812,7 +18812,7 @@
                             "VARIABLE": {
                                 "id": "Ign$qg(xXsR@.h)W/,v0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.player_activated",
+                                "value": "joueur activ\u00e9",
                                 "variableType": ""
                             }
                         },
@@ -18830,7 +18830,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.we_harvested_"
+                                "value": "Nous avons r\u00e9colt\u00e9 "
                             }
                         },
                         "id": "gOHM2RY22E%hIfbpN%2{",
@@ -18939,7 +18939,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.lets_grow"
+                                "value": "Faisons pousser tout \u00e7a\u00a0!"
                             }
                         },
                         "id": "g_tX4WmZ_1E?X!5bwf1.",
@@ -19008,7 +19008,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.shuffle_random",
+                                "value": "m\u00e9langer au hasard",
                                 "variableType": ""
                             }
                         },
@@ -19033,7 +19033,7 @@
                             "VARIABLE": {
                                 "id": "MM2bKXch7d@*6G)54oJ1",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.instructions_max_amount",
+                                "value": "nombre max. d'instructions",
                                 "variableType": ""
                             }
                         },
@@ -19051,7 +19051,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.thing"
+                                "value": "objet"
                             }
                         },
                         "id": "gp]$[S@Ot4.%V+O.9874",
@@ -19158,7 +19158,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -19282,7 +19282,7 @@
                             "VARIABLE": {
                                 "id": "tay$]p*cGG#{LnHknd8|",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_line_position_y",
+                                "value": "position y de la ligne verticale",
                                 "variableType": ""
                             }
                         },
@@ -19301,7 +19301,7 @@
                             "VARIABLE": {
                                 "id": "BqQ^DVuhUe{c*IHT9H@q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.harvested_plants",
+                                "value": "plantes r\u00e9colt\u00e9es",
                                 "variableType": ""
                             }
                         },
@@ -19393,7 +19393,7 @@
                             "VARIABLE": {
                                 "id": "?4gR)yJr1o7N#9y{K5If",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.mode",
+                                "value": "mode",
                                 "variableType": ""
                             }
                         },
@@ -19824,7 +19824,7 @@
                             "VARIABLE": {
                                 "id": "BqQ^DVuhUe{c*IHT9H@q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.harvested_plants",
+                                "value": "plantes r\u00e9colt\u00e9es",
                                 "variableType": ""
                             }
                         },
@@ -19943,7 +19943,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.thing"
+                                "value": "objet"
                             }
                         },
                         "id": "k7;aE8mS}UI]ZV*hSCVg",
@@ -19961,7 +19961,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -20022,7 +20022,7 @@
                             "VARIABLE": {
                                 "id": "?4gR)yJr1o7N#9y{K5If",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.mode",
+                                "value": "mode",
                                 "variableType": ""
                             }
                         },
@@ -20245,7 +20245,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -20303,7 +20303,7 @@
                             "VARIABLE": {
                                 "id": "mM{POto4=dOfKq).cIm;",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_scale",
+                                "value": "\u00e9chelle de la goutte",
                                 "variableType": ""
                             }
                         },
@@ -20337,7 +20337,7 @@
                             "VARIABLE": {
                                 "id": "BqQ^DVuhUe{c*IHT9H@q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.harvested_plants",
+                                "value": "plantes r\u00e9colt\u00e9es",
                                 "variableType": ""
                             }
                         },
@@ -20424,7 +20424,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.shuffle_random",
+                                "value": "m\u00e9langer au hasard",
                                 "variableType": ""
                             }
                         },
@@ -20443,7 +20443,7 @@
                             "VARIABLE": {
                                 "id": "Ign$qg(xXsR@.h)W/,v0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.player_activated",
+                                "value": "joueur activ\u00e9",
                                 "variableType": ""
                             }
                         },
@@ -20617,7 +20617,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -20727,7 +20727,7 @@
                             "VARIABLE": {
                                 "id": "*FIp.ND~==_]F6_%czy5",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.plant_roll",
+                                "value": "choix al\u00e9atoire de plantes",
                                 "variableType": ""
                             }
                         },
@@ -20746,7 +20746,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -20771,7 +20771,7 @@
                             "VARIABLE": {
                                 "id": "ft]~y%u1kn-r@^}#LdCy",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.current_card",
+                                "value": "carte actuelle",
                                 "variableType": ""
                             }
                         },
@@ -20991,7 +20991,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -21111,7 +21111,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -21159,7 +21159,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -21348,7 +21348,7 @@
                             "VARIABLE": {
                                 "id": "*FIp.ND~==_]F6_%czy5",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.plant_roll",
+                                "value": "choix al\u00e9atoire de plantes",
                                 "variableType": ""
                             }
                         },
@@ -21387,7 +21387,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.round_"
+                                "value": "Tour "
                             }
                         },
                         "id": "pj?UHO_]vlL[y8v8oSrj",
@@ -21450,7 +21450,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -21513,7 +21513,7 @@
                             "VARIABLE": {
                                 "id": "?6b^BN!47boC7#DTyqUN",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_y",
+                                "value": "goutte y",
                                 "variableType": ""
                             }
                         },
@@ -21686,7 +21686,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.shuffle_random",
+                                "value": "m\u00e9langer au hasard",
                                 "variableType": ""
                             }
                         },
@@ -21722,7 +21722,7 @@
                             "VARIABLE": {
                                 "id": "5FUn|bxv:,H[b;8twf4[",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.card_count",
+                                "value": "nombre de cartes",
                                 "variableType": ""
                             }
                         },
@@ -21893,7 +21893,7 @@
                             "VARIABLE": {
                                 "id": ",u;#GEb0e3:8z2#_ZKd;",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.when_the_cube_is_tapped_activate_the_relevant_action",
+                                "value": "Toucher le cube pour activer l'action correspondante.",
                                 "variableType": ""
                             }
                         },
@@ -21912,7 +21912,7 @@
                             "VARIABLE": {
                                 "id": "?Nu$DseVL+)x.PQ40lAV",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_radius",
+                                "value": "rayon de la goutte",
                                 "variableType": ""
                             }
                         },
@@ -21946,7 +21946,7 @@
                             "VARIABLE": {
                                 "id": "#S$Wc8r3%eOcceXS4Dw:",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.water_count",
+                                "value": "quantit\u00e9 d'eau",
                                 "variableType": ""
                             }
                         },
@@ -22070,7 +22070,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.ready_set_grow"
+                                "value": "\u00c0 vos marques, pr\u00eats, poussez\u00a0!"
                             }
                         },
                         "id": "s#G,(Yprof(IAcTkTD8n",
@@ -22085,7 +22085,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.smile_to_shine_the_sun_on_our_plants"
+                                "value": "Sourire pour faire briller le soleil sur nos plantes."
                             }
                         },
                         "id": "s-CeD(M+^#C^H2epcfKw",
@@ -22123,7 +22123,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.dont_give_up_lets_try_again"
+                                "value": "N'abandonne pas\u00a0! Essayons encore."
                             }
                         },
                         "id": "s9Ow)i}Trr({r?Ag3fPV",
@@ -22138,7 +22138,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.darn_just_missed_them"
+                                "value": "Zut\u00a0! C'est rat\u00e9\u00a0!"
                             }
                         },
                         "id": "s:EqYhaRjLx0zh}z9eY7",
@@ -22178,7 +22178,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.hi"
+                                "value": "Bonjour"
                             }
                         },
                         "id": "sL=#hbD_VG+iI!71Is2s",
@@ -22245,7 +22245,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.hi"
+                                "value": "Bonjour"
                             }
                         },
                         "id": "s`I%:FcMHcU((A`3-(re",
@@ -22313,7 +22313,7 @@
                             "VARIABLE": {
                                 "id": "?6b^BN!47boC7#DTyqUN",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_y",
+                                "value": "goutte y",
                                 "variableType": ""
                             }
                         },
@@ -22450,7 +22450,7 @@
                             "VARIABLE": {
                                 "id": "Ign$qg(xXsR@.h)W/,v0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.player_activated",
+                                "value": "joueur activ\u00e9",
                                 "variableType": ""
                             }
                         },
@@ -22684,7 +22684,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.watering_can"
+                                "value": "Arrosoir"
                             }
                         },
                         "id": "u#y4G@UI3ipIC1t#Cq[z",
@@ -22902,7 +22902,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.thing"
+                                "value": "objet"
                             }
                         },
                         "id": "u^:4M-93V*(RO*BvB|*b",
@@ -22953,7 +22953,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -23074,7 +23074,7 @@
                             "VARIABLE": {
                                 "id": "tay$]p*cGG#{LnHknd8|",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_line_position_y",
+                                "value": "position y de la ligne verticale",
                                 "variableType": ""
                             }
                         },
@@ -23158,7 +23158,7 @@
                             "VARIABLE": {
                                 "id": "!t2*wl}jsG2/4K4WHF2.",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.choose_and_initialize_plants_to_grow_in_the_garden",
+                                "value": "Choisir et initialiser les plantes \u00e0 faire pousser dans le jardin.",
                                 "variableType": ""
                             }
                         },
@@ -23194,7 +23194,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.active_plant",
+                                "value": "activer la plante",
                                 "variableType": ""
                             }
                         },
@@ -23495,7 +23495,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -23579,7 +23579,7 @@
                             "VARIABLE": {
                                 "id": "FQ1)Iej(}dU1CaZwQB7[",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.cozmo_displays_bugs_on_his_face",
+                                "value": "La t\u00eate de Cozmo affiche des insectes.",
                                 "variableType": ""
                             }
                         },
@@ -23834,7 +23834,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -23948,7 +23948,7 @@
                             "VARIABLE": {
                                 "id": "Ign$qg(xXsR@.h)W/,v0",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.player_activated",
+                                "value": "joueur activ\u00e9",
                                 "variableType": ""
                             }
                         },
@@ -24086,7 +24086,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.ff0000"
+                                "value": "#ff0000"
                             }
                         },
                         "id": "zHkI)84.v~H1bTm@,aav",
@@ -24214,7 +24214,7 @@
                             "VARIABLE": {
                                 "id": "F_D79IB}b:Ecf:0m^U}a",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.count",
+                                "value": "total",
                                 "variableType": ""
                             }
                         },
@@ -24268,7 +24268,7 @@
                             "VARIABLE": {
                                 "id": "mM{POto4=dOfKq).cIm;",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.drop_scale",
+                                "value": "\u00e9chelle de la goutte",
                                 "variableType": ""
                             }
                         },
@@ -24293,7 +24293,7 @@
                             "VARIABLE": {
                                 "id": "$MDgR.*G2QJ[*pF@*F=1",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.check_to_see_if_any_plants_are_ready_to_harvest",
+                                "value": "V\u00e9rifier si des plantes peuvent \u00eatre r\u00e9colt\u00e9es.",
                                 "variableType": ""
                             }
                         },
@@ -24380,7 +24380,7 @@
                             "VARIABLE": {
                                 "id": "Bgbc~L#XrP]M.IGwPWsJ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.draw_mode",
+                                "value": "mode Pioche",
                                 "variableType": ""
                             }
                         },
@@ -24405,7 +24405,7 @@
                             "VARIABLE": {
                                 "id": "ft]~y%u1kn-r@^}#LdCy",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.current_card",
+                                "value": "carte actuelle",
                                 "variableType": ""
                             }
                         },
@@ -25028,7 +25028,7 @@
                             "VARIABLE": {
                                 "id": "ft]~y%u1kn-r@^}#LdCy",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.cozmosgarden.current_card",
+                                "value": "carte actuelle",
                                 "variableType": ""
                             }
                         },
@@ -25158,7 +25158,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.cozmosgarden.bugs_want_to_eat_our_plants"
+                                "value": "Des insectes veulent manger nos plantes\u00a0!"
                             }
                         },
                         "id": "~%hhms/uaw|;9d.K-;zT",

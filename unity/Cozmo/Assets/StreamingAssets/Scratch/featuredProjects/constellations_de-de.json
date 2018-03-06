@@ -55,7 +55,7 @@
                     },
                     "#3%4J0D$LQ,#{{O9o;SZ": {
                         "id": "#3%4J0D$LQ,#{{O9o;SZ",
-                        "name": "codelabfeaturedproject.constellations.turn_speed",
+                        "name": "Lenkgeschwindigkeit",
                         "type": "",
                         "value": "60"
                     },
@@ -67,7 +67,7 @@
                     },
                     "#zAde}MYuoTYt:UOy0R-": {
                         "id": "#zAde}MYuoTYt:UOy0R-",
-                        "name": "codelabfeaturedproject.constellations.factoids",
+                        "name": "Fakten",
                         "type": "list",
                         "value": [
                             "Scorpius is best seen in the July night sky.",
@@ -84,37 +84,37 @@
                     },
                     "(@_tdwd4*,bDFr5Uu|Uu": {
                         "id": "(@_tdwd4*,bDFr5Uu|Uu",
-                        "name": "codelabfeaturedproject.constellations.set_scorpius_data",
+                        "name": "Skorpion-Daten festlegen",
                         "type": "broadcast_msg",
                         "value": "set scorpius data"
                     },
                     "*o3H?Ensy20R;*Fc]p#H": {
                         "id": "*o3H?Ensy20R;*Fc]p#H",
-                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_libra_constellation",
+                        "name": "Richte die Daten f\u00fcr das Sternbild Waage ein.",
                         "type": "",
                         "value": 0
                     },
                     ",XK)bGY2Hv`0@P:wW(n*": {
                         "id": ",XK)bGY2Hv`0@P:wW(n*",
-                        "name": "codelabfeaturedproject.constellations.fill_up_the_choices_list_with_constellation_numbers",
+                        "name": "F\u00fclle die Liste der Auswahlm\u00f6glichkeiten mit Sternbildnummern.",
                         "type": "",
                         "value": 0
                     },
                     ".G{_CxSWHuZHI5M/,zvQ": {
                         "id": ".G{_CxSWHuZHI5M/,zvQ",
-                        "name": "codelabfeaturedproject.constellations.reset_lists",
+                        "name": "Listen zur\u00fccksetzen",
                         "type": "broadcast_msg",
                         "value": "reset lists"
                     },
                     ".ZT=AbOh!zZTgYj{=mja": {
                         "id": ".ZT=AbOh!zZTgYj{=mja",
-                        "name": "codelabfeaturedproject.constellations.next_constellation",
+                        "name": "N\u00e4chstes Sternbild",
                         "type": "broadcast_msg",
                         "value": "next constellation"
                     },
                     "/R[dl]o6#IX]bW^b33Gc": {
                         "id": "/R[dl]o6#IX]bW^b33Gc",
-                        "name": "codelabfeaturedproject.constellations.drive_and_draw_constellation",
+                        "name": "Fahren und Sternbild zeichnen",
                         "type": "broadcast_msg",
                         "value": "drive and draw constellation"
                     },
@@ -138,31 +138,31 @@
                     },
                     ":l/#YnDX^0_JtNeNiZP*": {
                         "id": ":l/#YnDX^0_JtNeNiZP*",
-                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_cassiopeia_constellation",
+                        "name": "Richte die Daten f\u00fcr das Sternbild Kassiopeia ein.",
                         "type": "",
                         "value": 0
                     },
                     "=#a$yb2Q#eU4|mLH(O6|": {
                         "id": "=#a$yb2Q#eU4|mLH(O6|",
-                        "name": "codelabfeaturedproject.constellations.initialize_variables_and_start_the_activity",
+                        "name": "Initialisiere die Variablen und starte die Aktivit\u00e4t.",
                         "type": "",
                         "value": 0
                     },
                     "=]facy.O4s|fFWhv;edh": {
                         "id": "=]facy.O4s|fFWhv;edh",
-                        "name": "codelabfeaturedproject.constellations.set_orion_data",
+                        "name": "Orion-Daten festlegen",
                         "type": "broadcast_msg",
                         "value": "set orion data"
                     },
                     "?XVmzOUgYiz(QA-:KvAt": {
                         "id": "?XVmzOUgYiz(QA-:KvAt",
-                        "name": "codelabfeaturedproject.constellations.turn_cozmo_back_to_his_starting_position",
+                        "name": "Drehe Cozmo an seine Ausgangsposition.",
                         "type": "",
                         "value": 0
                     },
                     "@2(]LhemBX7l_IQQaJ^%": {
                         "id": "@2(]LhemBX7l_IQQaJ^%",
-                        "name": "codelabfeaturedproject.constellations.clear_all_data_from_the_project_lists",
+                        "name": "L\u00f6sche alle Daten aus den Projektlisten.",
                         "type": "",
                         "value": 0
                     },
@@ -174,13 +174,13 @@
                     },
                     "ANzBheuzB(vk`Iqw!t*e": {
                         "id": "ANzBheuzB(vk`Iqw!t*e",
-                        "name": "codelabfeaturedproject.constellations.shuffle_choices",
+                        "name": "Auswahlm\u00f6glichkeiten vermischen",
                         "type": "broadcast_msg",
                         "value": "shuffle choices"
                     },
                     "C#^%+V)*-.nw0+Cm*bpb": {
                         "id": "C#^%+V)*-.nw0+Cm*bpb",
-                        "name": "codelabfeaturedproject.constellations.ask_to_play_again",
+                        "name": "Um ein weiteres Spiel bitten",
                         "type": "broadcast_msg",
                         "value": "ask to play again"
                     },
@@ -211,44 +211,44 @@
                     },
                     "Ci+:O30f9-PMiC+N0L:1": {
                         "id": "Ci+:O30f9-PMiC+N0L:1",
-                        "name": "draw dot",
+                        "name": "Punkt zeichnen",
                         "type": "",
                         "value": "1"
                     },
                     "E:lZ(.7FH3avR,3`.)a_": {
                         "id": "E:lZ(.7FH3avR,3`.)a_",
                         "isCloud": false,
-                        "name": "codelabfeaturedproject.constellations.set_cassiopeia_data",
+                        "name": "Kassiopeia-Daten festlegen",
                         "type": "broadcast_msg",
                         "value": "set cassiopeia data"
                     },
                     "ELj5b9R.r9xIAms-CQwE": {
                         "id": "ELj5b9R.r9xIAms-CQwE",
-                        "name": "codelabfeaturedproject.constellations.use_the_data_from_the_instructions_list_to_decide_whether_to_draw_a_dot_a_line_both_or_neither",
+                        "name": "Verwende Daten aus der Anweisungsliste, um zu entscheiden, ob ein Punkt, eine Linie, beides oder keines von beidem gezeichnet werden soll.",
                         "type": "",
                         "value": 0
                     },
                     "G6GZ#oDR{k7gqSv)T3{e": {
                         "id": "G6GZ#oDR{k7gqSv)T3{e",
-                        "name": "codelabfeaturedproject.constellations.say_factoid",
+                        "name": "Fakt sagen",
                         "type": "broadcast_msg",
                         "value": "say factoid"
                     },
                     "Gl-dVUy+!0LaE8+C{=V]": {
                         "id": "Gl-dVUy+!0LaE8+C{=V]",
-                        "name": "codelabfeaturedproject.constellations.set_leo_data",
+                        "name": "L\u00f6we-Daten festlegen",
                         "type": "broadcast_msg",
                         "value": "set leo data"
                     },
                     "H.2~:/d@bF{e]}?}WaPH": {
                         "id": "H.2~:/d@bF{e]}?}WaPH",
-                        "name": "codelabfeaturedproject.constellations.get_instructions",
+                        "name": "Anweisungen erhalten",
                         "type": "broadcast_msg",
                         "value": "get instructions"
                     },
                     "IjmT4tKwvwBovYbhxb-]": {
                         "id": "IjmT4tKwvwBovYbhxb-]",
-                        "name": "codelabfeaturedproject.constellations.get_distance",
+                        "name": "Entfernung ermitteln",
                         "type": "broadcast_msg",
                         "value": "get distance"
                     },
@@ -260,25 +260,25 @@
                     },
                     "KnNs`9drP[R4!ji(G;lL": {
                         "id": "KnNs`9drP[R4!ji(G;lL",
-                        "name": "codelabfeaturedproject.constellations.constellation_count",
+                        "name": "Anzahl der Sternbilder",
                         "type": "",
                         "value": 2
                     },
                     "LNj8/]aCE+Z4]wMQHDzn": {
                         "id": "LNj8/]aCE+Z4]wMQHDzn",
-                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_scorpius_constellation",
+                        "name": "Richte die Daten f\u00fcr das Sternbild Skorpion ein.",
                         "type": "",
                         "value": 0
                     },
                     "Lz[@^]l31Y^VXU#+mb3A": {
                         "id": "Lz[@^]l31Y^VXU#+mb3A",
-                        "name": "codelabfeaturedproject.constellations.enable_cube_taps_and_cozmo_gives_instruction_to_see_the_next_constellation",
+                        "name": "Wenn du das Antippen von Cubes aktivierst, zeigt Cozmo dir, wie du zum n\u00e4chsten Sternbild wechselst.",
                         "type": "",
                         "value": 0
                     },
                     "QMIEL.M@_GPc|Ut7@#;Q": {
                         "id": "QMIEL.M@_GPc|Ut7@#;Q",
-                        "name": "codelabfeaturedproject.constellations.pair_y",
+                        "name": "Paar\u00a0y",
                         "type": "",
                         "value": 10
                     },
@@ -290,13 +290,13 @@
                     },
                     "V?p[M:HVR!Q^*rGSidH$": {
                         "id": "V?p[M:HVR!Q^*rGSidH$",
-                        "name": "draw line",
+                        "name": "Linie zeichnen",
                         "type": "",
                         "value": "1"
                     },
                     "VHX(-cXWv~FiBj#,f7yh": {
                         "id": "VHX(-cXWv~FiBj#,f7yh",
-                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_orion_constellation",
+                        "name": "Richte die Daten f\u00fcr das Sternbild Orion ein.",
                         "type": "",
                         "value": 0
                     },
@@ -308,25 +308,25 @@
                     },
                     "X:Idv9SkW;_?cN7:]OFJ": {
                         "id": "X:Idv9SkW;_?cN7:]OFJ",
-                        "name": "codelabfeaturedproject.constellations.shuffle_count",
+                        "name": "Anzahl vermischen",
                         "type": "",
                         "value": 0
                     },
                     "YX1O$xWZ]?zPBjOD)/@x": {
                         "id": "YX1O$xWZ]?zPBjOD)/@x",
-                        "name": "codelabfeaturedproject.constellations.choose_which_constellation_to_get_the_data_for",
+                        "name": "W\u00e4hle das Sternbild aus, dessen Daten du abrufen m\u00f6chtest.",
                         "type": "",
                         "value": 0
                     },
                     "Yb#:(Xe{$B*ZiJhpsvYY": {
                         "id": "Yb#:(Xe{$B*ZiJhpsvYY",
-                        "name": "codelabfeaturedproject.constellations.get_the_next_constellation_in_the_list_or_start_from_the_beginning",
+                        "name": "Rufe das n\u00e4chste Sternbild in der Liste ab, oder beginne von vorne.",
                         "type": "",
                         "value": 0
                     },
                     "YuqIV|BhYSs@so$WZ/F]": {
                         "id": "YuqIV|BhYSs@so$WZ/F]",
-                        "name": "codelabfeaturedproject.constellations.input_enabled",
+                        "name": "Eingabe aktiviert",
                         "type": "",
                         "value": "0"
                     },
@@ -338,13 +338,13 @@
                     },
                     "ZG=|W.TfM3U87b_uo.b{": {
                         "id": "ZG=|W.TfM3U87b_uo.b{",
-                        "name": "codelabfeaturedproject.constellations.set_libra_data",
+                        "name": "Waage-Daten festlegen",
                         "type": "broadcast_msg",
                         "value": "set libra data"
                     },
                     "]@}+e|%V2_oSrWDLLRpa": {
                         "id": "]@}+e|%V2_oSrWDLLRpa",
-                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_leo_constellation",
+                        "name": "Richte die Daten f\u00fcr das Sternbild L\u00f6we ein.",
                         "type": "",
                         "value": 0
                     },
@@ -376,25 +376,25 @@
                     },
                     "`D(U_1^VDw40cu=}fg08": {
                         "id": "`D(U_1^VDw40cu=}fg08",
-                        "name": "codelabfeaturedproject.constellations.when_the_user_taps_a_cube_get_the_next_constellation",
+                        "name": "Wechsle zum n\u00e4chsten Sternbild, wenn der Benutzer einen Cube antippt.",
                         "type": "",
                         "value": 0
                     },
                     "aqN|xXe_n~f^|26av^2A": {
                         "id": "aqN|xXe_n~f^|26av^2A",
-                        "name": "codelabfeaturedproject.constellations.shuffle_the_constellation_choices_list",
+                        "name": "Vermische die Liste mit den verf\u00fcgbaren Sternbildern.",
                         "type": "",
                         "value": 0
                     },
                     "arBPhf~)-D8x67M7i/e4": {
                         "id": "arBPhf~)-D8x67M7i/e4",
-                        "name": "codelabfeaturedproject.constellations.loop_through_sets_of_coordinates_to_drive_and_draw_lines_and_dots",
+                        "name": "Schleife S\u00e4tze mit Koordinaten zum Fahren und zum Zeichen von Linien und Punkten durch.",
                         "type": "",
                         "value": 0
                     },
                     "b5ZZbxuiC|*pF9VNej4d": {
                         "id": "b5ZZbxuiC|*pF9VNej4d",
-                        "name": "codelabfeaturedproject.constellations.turn_to_starting_angle",
+                        "name": "Zu Ausgangswinkel drehen",
                         "type": "broadcast_msg",
                         "value": "turn to starting angle"
                     },
@@ -406,13 +406,13 @@
                     },
                     "gdnsE-41V27N~XVzaR~/": {
                         "id": "gdnsE-41V27N~XVzaR~/",
-                        "name": "codelabfeaturedproject.constellations.get_turn_angle",
+                        "name": "Einschlagswinkel abrufen",
                         "type": "broadcast_msg",
                         "value": "get turn angle"
                     },
                     "gpZ+sHST8X#$E@$v9{?_": {
                         "id": "gpZ+sHST8X#$E@$v9{?_",
-                        "name": "codelabfeaturedproject.constellations.pair_x",
+                        "name": "Paar\u00a0x",
                         "type": "",
                         "value": 3
                     },
@@ -424,50 +424,50 @@
                     },
                     "oLO]runH8=u/*t{cwPeh": {
                         "id": "oLO]runH8=u/*t{cwPeh",
-                        "name": "codelabfeaturedproject.constellations.choose_constellation",
+                        "name": "Sternbild ausw\u00e4hlen",
                         "type": "broadcast_msg",
                         "value": "choose constellation"
                     },
                     "p-izhJ]MUP_NJ%0P@I,n": {
                         "id": "p-izhJ]MUP_NJ%0P@I,n",
-                        "name": "codelabfeaturedproject.constellations.shuffle_random",
+                        "name": "Zuf\u00e4llig vermischen",
                         "type": "",
                         "value": 4
                     },
                     "q?n=nV;:q8w7ae`f[g/z": {
                         "id": "q?n=nV;:q8w7ae`f[g/z",
-                        "name": "codelabfeaturedproject.constellations.populate_choices",
+                        "name": "Auswahlm\u00f6glichkeiten f\u00fcllen",
                         "type": "broadcast_msg",
                         "value": "populate choices"
                     },
                     "rfbbNRv%Xk={1sCFms+r": {
                         "id": "rfbbNRv%Xk={1sCFms+r",
-                        "name": "Get the distance between two coordinates.",
+                        "name": "Ermittle die Entfernung zwischen zwei Koordinaten.",
                         "type": "",
                         "value": 0
                     },
                     "vA)9-FHNND6-@A+8KAev": {
                         "id": "vA)9-FHNND6-@A+8KAev",
-                        "name": "instructions count",
+                        "name": "Anzahl der Anweisungen",
                         "type": "",
                         "value": 4
                     },
                     "v|JfUTGMW4^p31Z4Lkn_": {
                         "id": "v|JfUTGMW4^p31Z4Lkn_",
                         "isCloud": false,
-                        "name": "codelabfeaturedproject.constellations.reset_choices",
+                        "name": "Auswahlm\u00f6glichkeiten zur\u00fccksetzen",
                         "type": "broadcast_msg",
                         "value": "reset choices"
                     },
                     "x=yOYlHq#-h-_A*irBzd": {
                         "id": "x=yOYlHq#-h-_A*irBzd",
-                        "name": "codelabfeaturedproject.constellations.drive_speed",
+                        "name": "Fahrgeschwindigkeit",
                         "type": "",
                         "value": "80"
                     },
                     "ykQSnN*:~q(ES;;,zbX+": {
                         "id": "ykQSnN*:~q(ES;;,zbX+",
-                        "name": "codelabfeaturedproject.constellations.choices",
+                        "name": "Auswahlm\u00f6glichkeiten",
                         "type": "list",
                         "value": [
                             "2",
@@ -491,7 +491,7 @@
                     },
                     "|rP_=L{NHb1P!g19QCKx": {
                         "id": "|rP_=L{NHb1P!g19QCKx",
-                        "name": "codelabfeaturedproject.constellations.shuffle_choice",
+                        "name": "Auswahlm\u00f6glichkeit vermischen",
                         "type": "",
                         "value": "4"
                     },
@@ -503,7 +503,7 @@
                     },
                     "~a=Oa2eRZ)gmuu-Mcsn~": {
                         "id": "~a=Oa2eRZ)gmuu-Mcsn~",
-                        "name": "codelabfeaturedproject.constellations.randomly_choose_a_fact_for_cozmo_to_say",
+                        "name": "W\u00e4hle zuf\u00e4llig einen Fakt auf, den Cozmo sagen soll.",
                         "type": "",
                         "value": 0
                     }
@@ -645,7 +645,7 @@
                             "VARIABLE": {
                                 "id": "vA)9-FHNND6-@A+8KAev",
                                 "name": "VARIABLE",
-                                "value": "instructions count",
+                                "value": "Anzahl der Anweisungen",
                                 "variableType": ""
                             }
                         },
@@ -971,7 +971,7 @@
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.constellation_count",
+                                "value": "Anzahl der Sternbilder",
                                 "variableType": ""
                             }
                         },
@@ -1188,7 +1188,7 @@
                             "VARIABLE": {
                                 "id": "p-izhJ]MUP_NJ%0P@I,n",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_random",
+                                "value": "Zuf\u00e4llig vermischen",
                                 "variableType": ""
                             }
                         },
@@ -1235,7 +1235,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.since_ancient_times_libra_has_been_a_sign_of_fairness"
+                                "value": "Das Sternbild Waage ist seit der Antike ein Zeichen f\u00fcr die Gerechtigkeit."
                             }
                         },
                         "id": "%%#TU]U}zQf91[)@T=gH",
@@ -1316,7 +1316,7 @@
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.constellation_count",
+                                "value": "Anzahl der Sternbilder",
                                 "variableType": ""
                             }
                         },
@@ -1457,7 +1457,7 @@
                             "VARIABLE": {
                                 "id": "YuqIV|BhYSs@so$WZ/F]",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.input_enabled",
+                                "value": "Eingabe aktiviert",
                                 "variableType": ""
                             }
                         },
@@ -2093,7 +2093,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.cassiopeia_used_to_be_called_the_lady_of_the_chair"
+                                "value": "Kassiopeia war in der griechischen Mythologie eine K\u00f6nigsgemahlin."
                             }
                         },
                         "id": "*F[Y9J#,ol^lyuiuJ5bE",
@@ -3120,7 +3120,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.cassiopeias_brightest_star_shines_40_times_brighter_than_the_sun"
+                                "value": "Der hellste Stern dieses Sternbilds strahlt 40\u00a0Mal heller als die Sonne."
                             }
                         },
                         "id": ".xiJZM`#%,W3Bgz-}b~P",
@@ -3416,7 +3416,7 @@
                             "VARIABLE": {
                                 "id": "p-izhJ]MUP_NJ%0P@I,n",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_random",
+                                "value": "Zuf\u00e4llig vermischen",
                                 "variableType": ""
                             }
                         },
@@ -3740,7 +3740,7 @@
                             "VARIABLE": {
                                 "id": "*o3H?Ensy20R;*Fc]p#H",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_libra_constellation",
+                                "value": "Richte die Daten f\u00fcr das Sternbild Waage ein.",
                                 "variableType": ""
                             }
                         },
@@ -3822,7 +3822,7 @@
                             "VARIABLE": {
                                 "id": "?XVmzOUgYiz(QA-:KvAt",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.turn_cozmo_back_to_his_starting_position",
+                                "value": "Drehe Cozmo an seine Ausgangsposition.",
                                 "variableType": ""
                             }
                         },
@@ -4026,7 +4026,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.scorpius_is_best_seen_in_the_july_night_sky"
+                                "value": "Das Sternbild Skorpion l\u00e4sst sich am besten im Juli im Nachthimmel beobachten."
                             }
                         },
                         "id": "2.xw/u^4-0QjN0t75G`T",
@@ -4154,7 +4154,7 @@
                             "VARIABLE": {
                                 "id": "YX1O$xWZ]?zPBjOD)/@x",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.choose_which_constellation_to_get_the_data_for",
+                                "value": "W\u00e4hle das Sternbild aus, dessen Daten du abrufen m\u00f6chtest.",
                                 "variableType": ""
                             }
                         },
@@ -4646,7 +4646,7 @@
                             "VARIABLE": {
                                 "id": "LNj8/]aCE+Z4]wMQHDzn",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_scorpius_constellation",
+                                "value": "Richte die Daten f\u00fcr das Sternbild Skorpion ein.",
                                 "variableType": ""
                             }
                         },
@@ -5193,7 +5193,7 @@
                             "VARIABLE": {
                                 "id": "vA)9-FHNND6-@A+8KAev",
                                 "name": "VARIABLE",
-                                "value": "instructions count",
+                                "value": "Anzahl der Anweisungen",
                                 "variableType": ""
                             }
                         },
@@ -5275,7 +5275,7 @@
                             "VARIABLE": {
                                 "id": "|rP_=L{NHb1P!g19QCKx",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_choice",
+                                "value": "Auswahlm\u00f6glichkeit vermischen",
                                 "variableType": ""
                             }
                         },
@@ -5314,7 +5314,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.libra"
+                                "value": "Waage"
                             }
                         },
                         "id": "7|jj$Dll(zI_(S)VLoEL",
@@ -5604,7 +5604,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.my_cousins_name_is_cassiopeia_shes_a_keyboard"
+                                "value": "Meine Cousine hei\u00dft Kassiopeia. Sie ist ein Keyboard."
                             }
                         },
                         "id": "9EV.JQ~/H*Kze$/-p9bv",
@@ -6010,7 +6010,7 @@
                             "VARIABLE": {
                                 "id": "QMIEL.M@_GPc|Ut7@#;Q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.pair_y",
+                                "value": "Paar\u00a0y",
                                 "variableType": ""
                             }
                         },
@@ -6079,7 +6079,7 @@
                             "VARIABLE": {
                                 "id": "#3%4J0D$LQ,#{{O9o;SZ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.turn_speed",
+                                "value": "Lenkgeschwindigkeit",
                                 "variableType": ""
                             }
                         },
@@ -6285,7 +6285,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "Linie zeichnen",
                                 "variableType": ""
                             }
                         },
@@ -6498,7 +6498,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_count",
+                                "value": "Anzahl vermischen",
                                 "variableType": ""
                             }
                         },
@@ -6541,7 +6541,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.tap_a_cube_for_another_constellation_"
+                                "value": "Cube antippen, um ein anderes Sternbild aufzurufen "
                             }
                         },
                         "id": "=W.NI.C6z(,dWp6Hu3/i",
@@ -6786,7 +6786,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "Punkt zeichnen",
                                 "variableType": ""
                             }
                         },
@@ -7057,7 +7057,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.scorpius_was_discovered_by_a_man_named_ptolemy_say_that_three_times_fast"
+                                "value": "Es wurde von Ptolem\u00e4us entdeckt. Versuche, diesen Namen drei Mal schnell hintereinander zu sagen!"
                             }
                         },
                         "id": "AWf,z.mycu,Qfv^{F={1",
@@ -7252,7 +7252,7 @@
                             "VARIABLE": {
                                 "id": "`D(U_1^VDw40cu=}fg08",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.when_the_user_taps_a_cube_get_the_next_constellation",
+                                "value": "Wechsle zum n\u00e4chsten Sternbild, wenn der Benutzer einen Cube antippt.",
                                 "variableType": ""
                             }
                         },
@@ -7393,7 +7393,7 @@
                             "VARIABLE": {
                                 "id": "vA)9-FHNND6-@A+8KAev",
                                 "name": "VARIABLE",
-                                "value": "instructions count",
+                                "value": "Anzahl der Anweisungen",
                                 "variableType": ""
                             }
                         },
@@ -7588,7 +7588,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "Punkt zeichnen",
                                 "variableType": ""
                             }
                         },
@@ -8757,7 +8757,7 @@
                             "VARIABLE": {
                                 "id": "x=yOYlHq#-h-_A*irBzd",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.drive_speed",
+                                "value": "Fahrgeschwindigkeit",
                                 "variableType": ""
                             }
                         },
@@ -8946,7 +8946,7 @@
                             "VARIABLE": {
                                 "id": "Yb#:(Xe{$B*ZiJhpsvYY",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.get_the_next_constellation_in_the_list_or_start_from_the_beginning",
+                                "value": "Rufe das n\u00e4chste Sternbild in der Liste ab, oder beginne von vorne.",
                                 "variableType": ""
                             }
                         },
@@ -8964,7 +8964,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.orion_is_best_seen_in_the_january_night_sky"
+                                "value": "Das Sternbild Orion l\u00e4sst sich am besten im Januar im Nachthimmel beobachten."
                             }
                         },
                         "id": "IN7DIxzZX-M2MyZuQj?N",
@@ -9037,7 +9037,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_count",
+                                "value": "Anzahl vermischen",
                                 "variableType": ""
                             }
                         },
@@ -9080,7 +9080,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.libra_is_best_seen_in_the_june_night_sky"
+                                "value": "Das Sternbild Waage l\u00e4sst sich am besten im Juni im Nachthimmel beobachten."
                             }
                         },
                         "id": "JBt*q+kehvscRlfXkl_W",
@@ -9195,7 +9195,7 @@
                             "VARIABLE": {
                                 "id": "x=yOYlHq#-h-_A*irBzd",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.drive_speed",
+                                "value": "Fahrgeschwindigkeit",
                                 "variableType": ""
                             }
                         },
@@ -9345,7 +9345,7 @@
                             "VARIABLE": {
                                 "id": ",XK)bGY2Hv`0@P:wW(n*",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.fill_up_the_choices_list_with_constellation_numbers",
+                                "value": "F\u00fclle die Liste der Auswahlm\u00f6glichkeiten mit Sternbildnummern.",
                                 "variableType": ""
                             }
                         },
@@ -9448,7 +9448,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.orion"
+                                "value": "Orion"
                             }
                         },
                         "id": "L,d;~5u3+0twO7jDy{g`",
@@ -9647,7 +9647,7 @@
                             "VARIABLE": {
                                 "id": "gpZ+sHST8X#$E@$v9{?_",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.pair_x",
+                                "value": "Paar\u00a0x",
                                 "variableType": ""
                             }
                         },
@@ -9951,7 +9951,7 @@
                             "VARIABLE": {
                                 "id": ":l/#YnDX^0_JtNeNiZP*",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_cassiopeia_constellation",
+                                "value": "Richte die Daten f\u00fcr das Sternbild Kassiopeia ein.",
                                 "variableType": ""
                             }
                         },
@@ -9987,7 +9987,7 @@
                             "VARIABLE": {
                                 "id": "=#a$yb2Q#eU4|mLH(O6|",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.initialize_variables_and_start_the_activity",
+                                "value": "Initialisiere die Variablen und starte die Aktivit\u00e4t.",
                                 "variableType": ""
                             }
                         },
@@ -10120,7 +10120,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "Punkt zeichnen",
                                 "variableType": ""
                             }
                         },
@@ -10420,7 +10420,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_count",
+                                "value": "Anzahl vermischen",
                                 "variableType": ""
                             }
                         },
@@ -11005,7 +11005,7 @@
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.constellation_count",
+                                "value": "Anzahl der Sternbilder",
                                 "variableType": ""
                             }
                         },
@@ -11024,7 +11024,7 @@
                             "VARIABLE": {
                                 "id": "|rP_=L{NHb1P!g19QCKx",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_choice",
+                                "value": "Auswahlm\u00f6glichkeit vermischen",
                                 "variableType": ""
                             }
                         },
@@ -11230,7 +11230,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "Punkt zeichnen",
                                 "variableType": ""
                             }
                         },
@@ -11747,7 +11747,7 @@
                             "VARIABLE": {
                                 "id": "x=yOYlHq#-h-_A*irBzd",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.drive_speed",
+                                "value": "Fahrgeschwindigkeit",
                                 "variableType": ""
                             }
                         },
@@ -12049,7 +12049,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.cassiopeia_can_be_seen_all_year_from_the_northern_hemisphere"
+                                "value": "Kassiopeia ist auf der Nordhalbkugel ganzj\u00e4hrig sichtbar."
                             }
                         },
                         "id": "VT?zb/`Qo~Mo]6vC5Ags",
@@ -12103,7 +12103,7 @@
                             "VARIABLE": {
                                 "id": "#3%4J0D$LQ,#{{O9o;SZ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.turn_speed",
+                                "value": "Lenkgeschwindigkeit",
                                 "variableType": ""
                             }
                         },
@@ -12837,7 +12837,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "Punkt zeichnen",
                                 "variableType": ""
                             }
                         },
@@ -13487,7 +13487,7 @@
                             "VARIABLE": {
                                 "id": "gpZ+sHST8X#$E@$v9{?_",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.pair_x",
+                                "value": "Paar\u00a0x",
                                 "variableType": ""
                             }
                         },
@@ -13585,7 +13585,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "Linie zeichnen",
                                 "variableType": ""
                             }
                         },
@@ -13664,7 +13664,7 @@
                             "VARIABLE": {
                                 "id": "]@}+e|%V2_oSrWDLLRpa",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_leo_constellation",
+                                "value": "Richte die Daten f\u00fcr das Sternbild L\u00f6we ein.",
                                 "variableType": ""
                             }
                         },
@@ -13723,7 +13723,7 @@
                             "VARIABLE": {
                                 "id": "vA)9-FHNND6-@A+8KAev",
                                 "name": "VARIABLE",
-                                "value": "instructions count",
+                                "value": "Anzahl der Anweisungen",
                                 "variableType": ""
                             }
                         },
@@ -14044,7 +14044,7 @@
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.constellation_count",
+                                "value": "Anzahl der Sternbilder",
                                 "variableType": ""
                             }
                         },
@@ -14283,7 +14283,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "Punkt zeichnen",
                                 "variableType": ""
                             }
                         },
@@ -14365,7 +14365,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "Linie zeichnen",
                                 "variableType": ""
                             }
                         },
@@ -14476,7 +14476,7 @@
                             "VARIABLE": {
                                 "id": "p-izhJ]MUP_NJ%0P@I,n",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_random",
+                                "value": "Zuf\u00e4llig vermischen",
                                 "variableType": ""
                             }
                         },
@@ -14857,7 +14857,7 @@
                             "VARIABLE": {
                                 "id": "QMIEL.M@_GPc|Ut7@#;Q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.pair_y",
+                                "value": "Paar\u00a0y",
                                 "variableType": ""
                             }
                         },
@@ -14895,7 +14895,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "Linie zeichnen",
                                 "variableType": ""
                             }
                         },
@@ -14914,7 +14914,7 @@
                             "VARIABLE": {
                                 "id": "Lz[@^]l31Y^VXU#+mb3A",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.enable_cube_taps_and_cozmo_gives_instruction_to_see_the_next_constellation",
+                                "value": "Wenn du das Antippen von Cubes aktivierst, zeigt Cozmo dir, wie du zum n\u00e4chsten Sternbild wechselst.",
                                 "variableType": ""
                             }
                         },
@@ -15374,7 +15374,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.in_hawaii_scorpius_is_known_as_mauis_fishhook"
+                                "value": "Auf Hawaii ist Skorpion als Mauis Angelhaken bekannt."
                             }
                         },
                         "id": "dhp~:W}a*`Ty_OHUG3|S",
@@ -15566,7 +15566,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.cassiopeia"
+                                "value": "Cassiopeia"
                             }
                         },
                         "id": "ew{f3R6m@^=.eH8w0+q)",
@@ -15745,7 +15745,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.in_ancient_greek_stories_scorpius_beat_orion_in_a_fight"
+                                "value": "In der griechischen Mythologie t\u00f6tete ein Skorpion den J\u00e4ger Orion."
                             }
                         },
                         "id": "fWM9H{L}iMiS8|B`g3c[",
@@ -16009,7 +16009,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.some_of_libras_stars_could_have_livable_planets_pretty_cool"
+                                "value": "Einige seiner Sterne verf\u00fcgen \u00fcber Planeten, auf denen Leben m\u00f6glich sein k\u00f6nnte. Cool, oder?"
                             }
                         },
                         "id": "gP^8/KD{mt7)xjQ`/C9r",
@@ -16039,7 +16039,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.orion_is_one_of_the_most_recognizable_constellations"
+                                "value": "Es ist eines der am einfachsten zu erkennenden Sternbilder."
                             }
                         },
                         "id": "gZx5yQq172-k0(TZcI8,",
@@ -17017,7 +17017,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.id_like_to_visit_libra_someday_and_see_if_they_have_good_tacos"
+                                "value": "Das Sternbild Waage w\u00fcrde ich ich gerne eines Tages besuchen. Vielleicht gibt es dort gute Tacos."
                             }
                         },
                         "id": "kJ4L_bob^pQ(]T0lo^90",
@@ -17238,7 +17238,7 @@
                             "VARIABLE": {
                                 "id": "@2(]LhemBX7l_IQQaJ^%",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.clear_all_data_from_the_project_lists",
+                                "value": "L\u00f6sche alle Daten aus den Projektlisten.",
                                 "variableType": ""
                             }
                         },
@@ -17274,7 +17274,7 @@
                             "VARIABLE": {
                                 "id": "arBPhf~)-D8x67M7i/e4",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.loop_through_sets_of_coordinates_to_drive_and_draw_lines_and_dots",
+                                "value": "Schleife S\u00e4tze mit Koordinaten zum Fahren und zum Zeichen von Linien und Punkten durch.",
                                 "variableType": ""
                             }
                         },
@@ -17574,7 +17574,7 @@
                             "VARIABLE": {
                                 "id": "YuqIV|BhYSs@so$WZ/F]",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.input_enabled",
+                                "value": "Eingabe aktiviert",
                                 "variableType": ""
                             }
                         },
@@ -17592,7 +17592,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.you_can_recognize_orion_by_his_belt_very_fashionable"
+                                "value": "Das Sternbild Orion erkennst du an seinem G\u00fcrtel. Sehr schick!"
                             }
                         },
                         "id": "mU(n!J^xMfH4]tVpkpi:",
@@ -17625,7 +17625,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "Punkt zeichnen",
                                 "variableType": ""
                             }
                         },
@@ -17649,7 +17649,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.leo_can_be_seen_in_the_night_sky_from_late_march_through_may"
+                                "value": "Das Sternbild L\u00f6we ist von Ende M\u00e4rz bis Mai am Nachthimmel sichtbar."
                             }
                         },
                         "id": "m]INwUq^:J5+R0uZaIii",
@@ -17665,7 +17665,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "Linie zeichnen",
                                 "variableType": ""
                             }
                         },
@@ -18194,7 +18194,7 @@
                             "VARIABLE": {
                                 "id": "rfbbNRv%Xk={1sCFms+r",
                                 "name": "VARIABLE",
-                                "value": "Get the distance between two coordinates.",
+                                "value": "Ermittle die Entfernung zwischen zwei Koordinaten.",
                                 "variableType": ""
                             }
                         },
@@ -18483,7 +18483,7 @@
                             "VARIABLE": {
                                 "id": "~a=Oa2eRZ)gmuu-Mcsn~",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.randomly_choose_a_fact_for_cozmo_to_say",
+                                "value": "W\u00e4hle zuf\u00e4llig einen Fakt auf, den Cozmo sagen soll.",
                                 "variableType": ""
                             }
                         },
@@ -18566,7 +18566,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.orion_is_a_warrior_from_ancient_greek_stories"
+                                "value": "Orion ist ein J\u00e4ger aus der griechischen Mythologie."
                             }
                         },
                         "id": "r/ehZrIa/BdggyY-=Z*5",
@@ -18661,7 +18661,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.the_constellation_is_named_leo_because_it_looks_just_like_a_lion"
+                                "value": "Dieses Sternbild hei\u00dft \"L\u00f6we\", weil es wie ein L\u00f6we aussieht."
                             }
                         },
                         "id": "rFsGu7lug57(k#M_AAVT",
@@ -18784,7 +18784,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "Linie zeichnen",
                                 "variableType": ""
                             }
                         },
@@ -18824,7 +18824,7 @@
                             "VARIABLE": {
                                 "id": "ELj5b9R.r9xIAms-CQwE",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.use_the_data_from_the_instructions_list_to_decide_whether_to_draw_a_dot_a_line_both_or_neither",
+                                "value": "Verwende Daten aus der Anweisungsliste, um zu entscheiden, ob ein Punkt, eine Linie, beides oder keines von beidem gezeichnet werden soll.",
                                 "variableType": ""
                             }
                         },
@@ -19066,7 +19066,7 @@
                             "VARIABLE": {
                                 "id": "aqN|xXe_n~f^|26av^2A",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_the_constellation_choices_list",
+                                "value": "Vermische die Liste mit den verf\u00fcgbaren Sternbildern.",
                                 "variableType": ""
                             }
                         },
@@ -19324,7 +19324,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_count",
+                                "value": "Anzahl vermischen",
                                 "variableType": ""
                             }
                         },
@@ -19343,7 +19343,7 @@
                             "VARIABLE": {
                                 "id": "gpZ+sHST8X#$E@$v9{?_",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.pair_x",
+                                "value": "Paar\u00a0x",
                                 "variableType": ""
                             }
                         },
@@ -19511,7 +19511,7 @@
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.constellation_count",
+                                "value": "Anzahl der Sternbilder",
                                 "variableType": ""
                             }
                         },
@@ -19941,7 +19941,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "Linie zeichnen",
                                 "variableType": ""
                             }
                         },
@@ -20093,7 +20093,7 @@
                             "VARIABLE": {
                                 "id": "#3%4J0D$LQ,#{{O9o;SZ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.turn_speed",
+                                "value": "Lenkgeschwindigkeit",
                                 "variableType": ""
                             }
                         },
@@ -20363,7 +20363,7 @@
                             "VARIABLE": {
                                 "id": "VHX(-cXWv~FiBj#,f7yh",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_orion_constellation",
+                                "value": "Richte die Daten f\u00fcr das Sternbild Orion ein.",
                                 "variableType": ""
                             }
                         },
@@ -20595,7 +20595,7 @@
                             "VARIABLE": {
                                 "id": "vA)9-FHNND6-@A+8KAev",
                                 "name": "VARIABLE",
-                                "value": "instructions count",
+                                "value": "Anzahl der Anweisungen",
                                 "variableType": ""
                             }
                         },
@@ -20820,7 +20820,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.leo_is_one_of_the_earliest_recognized_constellations"
+                                "value": "Es ist eines der am fr\u00fchesten erkannten Sternbilder."
                             }
                         },
                         "id": "{[q5[EtArdLTwtkW??30",
@@ -20921,7 +20921,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_count",
+                                "value": "Anzahl vermischen",
                                 "variableType": ""
                             }
                         },
@@ -20969,7 +20969,7 @@
                             "VARIABLE": {
                                 "id": "vA)9-FHNND6-@A+8KAev",
                                 "name": "VARIABLE",
-                                "value": "instructions count",
+                                "value": "Anzahl der Anweisungen",
                                 "variableType": ""
                             }
                         },
@@ -21342,7 +21342,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.scorpius"
+                                "value": "Skorpion"
                             }
                         },
                         "id": "~@@UUf5YTC#^)`@qZQ=C",
@@ -21455,7 +21455,7 @@
                             "VARIABLE": {
                                 "id": "YuqIV|BhYSs@so$WZ/F]",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.input_enabled",
+                                "value": "Eingabe aktiviert",
                                 "variableType": ""
                             }
                         },
@@ -21495,7 +21495,7 @@
                             "VARIABLE": {
                                 "id": "QMIEL.M@_GPc|Ut7@#;Q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.pair_y",
+                                "value": "Paar\u00a0y",
                                 "variableType": ""
                             }
                         },

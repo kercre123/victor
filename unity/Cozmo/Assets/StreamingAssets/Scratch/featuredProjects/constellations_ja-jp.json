@@ -55,7 +55,7 @@
                     },
                     "#3%4J0D$LQ,#{{O9o;SZ": {
                         "id": "#3%4J0D$LQ,#{{O9o;SZ",
-                        "name": "codelabfeaturedproject.constellations.turn_speed",
+                        "name": "\u56de\u8ee2\u901f\u5ea6",
                         "type": "",
                         "value": "60"
                     },
@@ -67,7 +67,7 @@
                     },
                     "#zAde}MYuoTYt:UOy0R-": {
                         "id": "#zAde}MYuoTYt:UOy0R-",
-                        "name": "codelabfeaturedproject.constellations.factoids",
+                        "name": "\u3056\u3064\u304c\u304f",
                         "type": "list",
                         "value": [
                             "Scorpius is best seen in the July night sky.",
@@ -84,37 +84,37 @@
                     },
                     "(@_tdwd4*,bDFr5Uu|Uu": {
                         "id": "(@_tdwd4*,bDFr5Uu|Uu",
-                        "name": "codelabfeaturedproject.constellations.set_scorpius_data",
+                        "name": "\u3055\u305d\u308a\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                         "type": "broadcast_msg",
                         "value": "set scorpius data"
                     },
                     "*o3H?Ensy20R;*Fc]p#H": {
                         "id": "*o3H?Ensy20R;*Fc]p#H",
-                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_libra_constellation",
+                        "name": "\u3066\u3093\u3073\u3093\u3056\u306e\u30c7\u30fc\u30bf\u3092\u30bb\u30c3\u30c8\u30a2\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     },
                     ",XK)bGY2Hv`0@P:wW(n*": {
                         "id": ",XK)bGY2Hv`0@P:wW(n*",
-                        "name": "codelabfeaturedproject.constellations.fill_up_the_choices_list_with_constellation_numbers",
+                        "name": "\u305b\u3093\u305f\u304f\u3057\u30ea\u30b9\u30c8\u306b\u3001\u305b\u3044\u3056\u306e\u3070\u3093\u3054\u3046\u3092\u306b\u3085\u3046\u308a\u3087\u304f\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     },
                     ".G{_CxSWHuZHI5M/,zvQ": {
                         "id": ".G{_CxSWHuZHI5M/,zvQ",
-                        "name": "codelabfeaturedproject.constellations.reset_lists",
+                        "name": "\u30ea\u30b9\u30c8\u3092\u30ea\u30bb\u30c3\u30c8\u3059\u308b",
                         "type": "broadcast_msg",
                         "value": "reset lists"
                     },
                     ".ZT=AbOh!zZTgYj{=mja": {
                         "id": ".ZT=AbOh!zZTgYj{=mja",
-                        "name": "codelabfeaturedproject.constellations.next_constellation",
+                        "name": "\u3064\u304e\u306e\u305b\u3044\u3056",
                         "type": "broadcast_msg",
                         "value": "next constellation"
                     },
                     "/R[dl]o6#IX]bW^b33Gc": {
                         "id": "/R[dl]o6#IX]bW^b33Gc",
-                        "name": "codelabfeaturedproject.constellations.drive_and_draw_constellation",
+                        "name": "\u3046\u3054\u3044\u3066\u305b\u3044\u3056\u3092\u3048\u304c\u304f",
                         "type": "broadcast_msg",
                         "value": "drive and draw constellation"
                     },
@@ -138,31 +138,31 @@
                     },
                     ":l/#YnDX^0_JtNeNiZP*": {
                         "id": ":l/#YnDX^0_JtNeNiZP*",
-                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_cassiopeia_constellation",
+                        "name": "\u30ab\u30b7\u30aa\u30da\u30e4\u3056\u306e\u30c7\u30fc\u30bf\u3092\u30bb\u30c3\u30c8\u30a2\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     },
                     "=#a$yb2Q#eU4|mLH(O6|": {
                         "id": "=#a$yb2Q#eU4|mLH(O6|",
-                        "name": "codelabfeaturedproject.constellations.initialize_variables_and_start_the_activity",
+                        "name": "\u3078\u3093\u3059\u3046\u3092\u3057\u3087\u304d\u304b\u3057\u3066\u3001\u30a2\u30af\u30c6\u30a3\u30d3\u30c6\u30a3\u3092\u304b\u3044\u3057\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     },
                     "=]facy.O4s|fFWhv;edh": {
                         "id": "=]facy.O4s|fFWhv;edh",
-                        "name": "codelabfeaturedproject.constellations.set_orion_data",
+                        "name": "\u30aa\u30ea\u30aa\u30f3\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                         "type": "broadcast_msg",
                         "value": "set orion data"
                     },
                     "?XVmzOUgYiz(QA-:KvAt": {
                         "id": "?XVmzOUgYiz(QA-:KvAt",
-                        "name": "codelabfeaturedproject.constellations.turn_cozmo_back_to_his_starting_position",
+                        "name": "COZMO\u3092\u30b9\u30bf\u30fc\u30c8\u30dd\u30b8\u30b7\u30e7\u30f3\u3078\u30d0\u30c3\u30af\u3055\u305b\u307e\u3059\u3002",
                         "type": "",
                         "value": 0
                     },
                     "@2(]LhemBX7l_IQQaJ^%": {
                         "id": "@2(]LhemBX7l_IQQaJ^%",
-                        "name": "codelabfeaturedproject.constellations.clear_all_data_from_the_project_lists",
+                        "name": "\u30d7\u30ed\u30b8\u30a7\u30af\u30c8\u30ea\u30b9\u30c8\u304b\u3089\u3059\u3079\u3066\u306e\u30c7\u30fc\u30bf\u3092\u3057\u3087\u3046\u304d\u3087\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     },
@@ -174,13 +174,13 @@
                     },
                     "ANzBheuzB(vk`Iqw!t*e": {
                         "id": "ANzBheuzB(vk`Iqw!t*e",
-                        "name": "codelabfeaturedproject.constellations.shuffle_choices",
+                        "name": "\u305b\u3093\u305f\u304f\u3057\u3092\u30b7\u30e3\u30c3\u30d5\u30eb\u3059\u308b",
                         "type": "broadcast_msg",
                         "value": "shuffle choices"
                     },
                     "C#^%+V)*-.nw0+Cm*bpb": {
                         "id": "C#^%+V)*-.nw0+Cm*bpb",
-                        "name": "codelabfeaturedproject.constellations.ask_to_play_again",
+                        "name": "\u3082\u3046\u3044\u3061\u3069\u30d7\u30ec\u30a4\u3059\u308b\u3088\u3046\u304a\u306d\u304c\u3044\u3059\u308b",
                         "type": "broadcast_msg",
                         "value": "ask to play again"
                     },
@@ -211,44 +211,44 @@
                     },
                     "Ci+:O30f9-PMiC+N0L:1": {
                         "id": "Ci+:O30f9-PMiC+N0L:1",
-                        "name": "draw dot",
+                        "name": "\u3066\u3093\u3092\u3048\u304c\u304f",
                         "type": "",
                         "value": "1"
                     },
                     "E:lZ(.7FH3avR,3`.)a_": {
                         "id": "E:lZ(.7FH3avR,3`.)a_",
                         "isCloud": false,
-                        "name": "codelabfeaturedproject.constellations.set_cassiopeia_data",
+                        "name": "\u30ab\u30b7\u30aa\u30da\u30e4\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                         "type": "broadcast_msg",
                         "value": "set cassiopeia data"
                     },
                     "ELj5b9R.r9xIAms-CQwE": {
                         "id": "ELj5b9R.r9xIAms-CQwE",
-                        "name": "codelabfeaturedproject.constellations.use_the_data_from_the_instructions_list_to_decide_whether_to_draw_a_dot_a_line_both_or_neither",
+                        "name": "\u3066\u3058\u3085\u3093\u30ea\u30b9\u30c8\u306e\u30c7\u30fc\u30bf\u3092\u3064\u304b\u3063\u3066\u3001\u3066\u3093\u3001\u305b\u3093\u3001\u305d\u306e\u308a\u3087\u3046\u307b\u3046\u306e\u3069\u308c\u304b\u3092\u3048\u304c\u304f\u304b\u3001\u307e\u305f\u306f\u3069\u308c\u3082\u3048\u304c\u304b\u306a\u3044\u3053\u3068\u3092\u304d\u3081\u3066\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     },
                     "G6GZ#oDR{k7gqSv)T3{e": {
                         "id": "G6GZ#oDR{k7gqSv)T3{e",
-                        "name": "codelabfeaturedproject.constellations.say_factoid",
+                        "name": "\u3056\u3064\u304c\u304f\u3092\u306f\u306a\u3059",
                         "type": "broadcast_msg",
                         "value": "say factoid"
                     },
                     "Gl-dVUy+!0LaE8+C{=V]": {
                         "id": "Gl-dVUy+!0LaE8+C{=V]",
-                        "name": "codelabfeaturedproject.constellations.set_leo_data",
+                        "name": "\u3057\u3057\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                         "type": "broadcast_msg",
                         "value": "set leo data"
                     },
                     "H.2~:/d@bF{e]}?}WaPH": {
                         "id": "H.2~:/d@bF{e]}?}WaPH",
-                        "name": "codelabfeaturedproject.constellations.get_instructions",
+                        "name": "\u3057\u3058\u3092\u3046\u3051\u3068\u308b",
                         "type": "broadcast_msg",
                         "value": "get instructions"
                     },
                     "IjmT4tKwvwBovYbhxb-]": {
                         "id": "IjmT4tKwvwBovYbhxb-]",
-                        "name": "codelabfeaturedproject.constellations.get_distance",
+                        "name": "\u304d\u3087\u308a\u3092\u306f\u304b\u308b",
                         "type": "broadcast_msg",
                         "value": "get distance"
                     },
@@ -260,25 +260,25 @@
                     },
                     "KnNs`9drP[R4!ji(G;lL": {
                         "id": "KnNs`9drP[R4!ji(G;lL",
-                        "name": "codelabfeaturedproject.constellations.constellation_count",
+                        "name": "\u305b\u3044\u3056\u306e\u304b\u305a",
                         "type": "",
                         "value": 2
                     },
                     "LNj8/]aCE+Z4]wMQHDzn": {
                         "id": "LNj8/]aCE+Z4]wMQHDzn",
-                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_scorpius_constellation",
+                        "name": "\u3055\u305d\u308a\u3056\u306e\u30c7\u30fc\u30bf\u3092\u30bb\u30c3\u30c8\u30a2\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     },
                     "Lz[@^]l31Y^VXU#+mb3A": {
                         "id": "Lz[@^]l31Y^VXU#+mb3A",
-                        "name": "codelabfeaturedproject.constellations.enable_cube_taps_and_cozmo_gives_instruction_to_see_the_next_constellation",
+                        "name": "\u30ad\u30e5\u30fc\u30d6\u306e\u30bf\u30c3\u30d7\u3092\u3086\u3046\u3053\u3046\u304b\u3059\u308b\u3068\u3001COZMO\u304c\u3064\u304e\u306e\u305b\u3044\u3056\u3092\u307f\u308b\u3088\u3046\u3057\u3058\u3057\u307e\u3059\u3002",
                         "type": "",
                         "value": 0
                     },
                     "QMIEL.M@_GPc|Ut7@#;Q": {
                         "id": "QMIEL.M@_GPc|Ut7@#;Q",
-                        "name": "codelabfeaturedproject.constellations.pair_y",
+                        "name": "y\u306e\u304f\u307f",
                         "type": "",
                         "value": 10
                     },
@@ -290,13 +290,13 @@
                     },
                     "V?p[M:HVR!Q^*rGSidH$": {
                         "id": "V?p[M:HVR!Q^*rGSidH$",
-                        "name": "draw line",
+                        "name": "\u305b\u3093\u3092\u3048\u304c\u304f",
                         "type": "",
                         "value": "1"
                     },
                     "VHX(-cXWv~FiBj#,f7yh": {
                         "id": "VHX(-cXWv~FiBj#,f7yh",
-                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_orion_constellation",
+                        "name": "\u30aa\u30ea\u30aa\u30f3\u3056\u306e\u30c7\u30fc\u30bf\u3092\u30bb\u30c3\u30c8\u30a2\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     },
@@ -308,25 +308,25 @@
                     },
                     "X:Idv9SkW;_?cN7:]OFJ": {
                         "id": "X:Idv9SkW;_?cN7:]OFJ",
-                        "name": "codelabfeaturedproject.constellations.shuffle_count",
+                        "name": "\u30b7\u30e3\u30c3\u30d5\u30eb\u306e\u304b\u3044\u3059\u3046",
                         "type": "",
                         "value": 0
                     },
                     "YX1O$xWZ]?zPBjOD)/@x": {
                         "id": "YX1O$xWZ]?zPBjOD)/@x",
-                        "name": "codelabfeaturedproject.constellations.choose_which_constellation_to_get_the_data_for",
+                        "name": "\u3069\u306e\u305b\u3044\u3056\u306e\u30c7\u30fc\u30bf\u3092\u3057\u3085\u3068\u304f\u3059\u308b\u304b\u3001\u3048\u3089\u3093\u3067\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     },
                     "Yb#:(Xe{$B*ZiJhpsvYY": {
                         "id": "Yb#:(Xe{$B*ZiJhpsvYY",
-                        "name": "codelabfeaturedproject.constellations.get_the_next_constellation_in_the_list_or_start_from_the_beginning",
+                        "name": "\u30ea\u30b9\u30c8\u3067\u3064\u304e\u306e\u305b\u3044\u3056\u3092\u3048\u3089\u3076\u304b\u3001\u3055\u3044\u3057\u3087\u304b\u3089\u30b9\u30bf\u30fc\u30c8\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     },
                     "YuqIV|BhYSs@so$WZ/F]": {
                         "id": "YuqIV|BhYSs@so$WZ/F]",
-                        "name": "codelabfeaturedproject.constellations.input_enabled",
+                        "name": "\u306b\u3085\u3046\u308a\u3087\u304f\u3092\u3086\u3046\u3053\u3046\u304b",
                         "type": "",
                         "value": "0"
                     },
@@ -338,13 +338,13 @@
                     },
                     "ZG=|W.TfM3U87b_uo.b{": {
                         "id": "ZG=|W.TfM3U87b_uo.b{",
-                        "name": "codelabfeaturedproject.constellations.set_libra_data",
+                        "name": "\u3066\u3093\u3073\u3093\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                         "type": "broadcast_msg",
                         "value": "set libra data"
                     },
                     "]@}+e|%V2_oSrWDLLRpa": {
                         "id": "]@}+e|%V2_oSrWDLLRpa",
-                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_leo_constellation",
+                        "name": "\u3057\u3057\u3056\u306e\u30c7\u30fc\u30bf\u3092\u30bb\u30c3\u30c8\u30a2\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     },
@@ -376,25 +376,25 @@
                     },
                     "`D(U_1^VDw40cu=}fg08": {
                         "id": "`D(U_1^VDw40cu=}fg08",
-                        "name": "codelabfeaturedproject.constellations.when_the_user_taps_a_cube_get_the_next_constellation",
+                        "name": "\u30e6\u30fc\u30b6\u30fc\u304c\u30ad\u30e5\u30fc\u30d6\u3092\u30bf\u30c3\u30d7\u3059\u308b\u3068\u3001\u3064\u304e\u306e\u305b\u3044\u3056\u3078\u3059\u3059\u307f\u307e\u3059\u3002",
                         "type": "",
                         "value": 0
                     },
                     "aqN|xXe_n~f^|26av^2A": {
                         "id": "aqN|xXe_n~f^|26av^2A",
-                        "name": "codelabfeaturedproject.constellations.shuffle_the_constellation_choices_list",
+                        "name": "\u305b\u3044\u3056\u306e\u305b\u3093\u305f\u304f\u3057\u30ea\u30b9\u30c8\u3092\u30b7\u30e3\u30c3\u30d5\u30eb\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     },
                     "arBPhf~)-D8x67M7i/e4": {
                         "id": "arBPhf~)-D8x67M7i/e4",
-                        "name": "codelabfeaturedproject.constellations.loop_through_sets_of_coordinates_to_drive_and_draw_lines_and_dots",
+                        "name": "\u3056\u3072\u3087\u3046\u306e\u304f\u307f\u3092\u30eb\u30fc\u30d7\u3055\u305b\u3066\u3046\u3054\u304b\u3057\u3001\u3066\u3093\u3068\u305b\u3093\u3092\u3048\u304c\u3044\u3066\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     },
                     "b5ZZbxuiC|*pF9VNej4d": {
                         "id": "b5ZZbxuiC|*pF9VNej4d",
-                        "name": "codelabfeaturedproject.constellations.turn_to_starting_angle",
+                        "name": "\u3055\u3044\u3057\u3087\u306e\u304b\u3069\u306b\u3080\u304b\u3046",
                         "type": "broadcast_msg",
                         "value": "turn to starting angle"
                     },
@@ -406,13 +406,13 @@
                     },
                     "gdnsE-41V27N~XVzaR~/": {
                         "id": "gdnsE-41V27N~XVzaR~/",
-                        "name": "codelabfeaturedproject.constellations.get_turn_angle",
+                        "name": "\u304b\u3044\u3066\u3093\u304b\u304f\u3069\u3092\u306f\u304b\u308b",
                         "type": "broadcast_msg",
                         "value": "get turn angle"
                     },
                     "gpZ+sHST8X#$E@$v9{?_": {
                         "id": "gpZ+sHST8X#$E@$v9{?_",
-                        "name": "codelabfeaturedproject.constellations.pair_x",
+                        "name": "x\u306e\u304f\u307f",
                         "type": "",
                         "value": 3
                     },
@@ -424,50 +424,50 @@
                     },
                     "oLO]runH8=u/*t{cwPeh": {
                         "id": "oLO]runH8=u/*t{cwPeh",
-                        "name": "codelabfeaturedproject.constellations.choose_constellation",
+                        "name": "\u305b\u3044\u3056\u3092\u3048\u3089\u3076",
                         "type": "broadcast_msg",
                         "value": "choose constellation"
                     },
                     "p-izhJ]MUP_NJ%0P@I,n": {
                         "id": "p-izhJ]MUP_NJ%0P@I,n",
-                        "name": "codelabfeaturedproject.constellations.shuffle_random",
+                        "name": "\u30e9\u30f3\u30c0\u30e0\u306b\u30b7\u30e3\u30c3\u30d5\u30eb\u3059\u308b",
                         "type": "",
                         "value": 4
                     },
                     "q?n=nV;:q8w7ae`f[g/z": {
                         "id": "q?n=nV;:q8w7ae`f[g/z",
-                        "name": "codelabfeaturedproject.constellations.populate_choices",
+                        "name": "\u305b\u3093\u305f\u304f\u3057\u3092\u3064\u304f\u308b",
                         "type": "broadcast_msg",
                         "value": "populate choices"
                     },
                     "rfbbNRv%Xk={1sCFms+r": {
                         "id": "rfbbNRv%Xk={1sCFms+r",
-                        "name": "Get the distance between two coordinates.",
+                        "name": "\uff12\u3064\u306e\u3056\u3072\u3087\u3046\u306e\u304d\u3087\u308a\u3092\u306f\u304b\u3063\u3066\u304f\u3060\u3055\u3044\u3002",
                         "type": "",
                         "value": 0
                     },
                     "vA)9-FHNND6-@A+8KAev": {
                         "id": "vA)9-FHNND6-@A+8KAev",
-                        "name": "instructions count",
+                        "name": "\u3066\u3058\u3085\u3093\u306e\u304b\u3044\u3059\u3046",
                         "type": "",
                         "value": 4
                     },
                     "v|JfUTGMW4^p31Z4Lkn_": {
                         "id": "v|JfUTGMW4^p31Z4Lkn_",
                         "isCloud": false,
-                        "name": "codelabfeaturedproject.constellations.reset_choices",
+                        "name": "\u305b\u3093\u305f\u304f\u3057\u3092\u30ea\u30bb\u30c3\u30c8\u3059\u308b",
                         "type": "broadcast_msg",
                         "value": "reset choices"
                     },
                     "x=yOYlHq#-h-_A*irBzd": {
                         "id": "x=yOYlHq#-h-_A*irBzd",
-                        "name": "codelabfeaturedproject.constellations.drive_speed",
+                        "name": "\u904b\u8ee2\u306e\u901f\u5ea6",
                         "type": "",
                         "value": "80"
                     },
                     "ykQSnN*:~q(ES;;,zbX+": {
                         "id": "ykQSnN*:~q(ES;;,zbX+",
-                        "name": "codelabfeaturedproject.constellations.choices",
+                        "name": "\u305b\u3093\u305f\u304f\u3057",
                         "type": "list",
                         "value": [
                             "2",
@@ -491,7 +491,7 @@
                     },
                     "|rP_=L{NHb1P!g19QCKx": {
                         "id": "|rP_=L{NHb1P!g19QCKx",
-                        "name": "codelabfeaturedproject.constellations.shuffle_choice",
+                        "name": "\u305b\u3093\u305f\u304f\u3057\u3092\u30b7\u30e3\u30c3\u30d5\u30eb\u3059\u308b",
                         "type": "",
                         "value": "4"
                     },
@@ -503,7 +503,7 @@
                     },
                     "~a=Oa2eRZ)gmuu-Mcsn~": {
                         "id": "~a=Oa2eRZ)gmuu-Mcsn~",
-                        "name": "codelabfeaturedproject.constellations.randomly_choose_a_fact_for_cozmo_to_say",
+                        "name": "COZMO\u304c\u3044\u3046\u306a\u3044\u3088\u3046\u3092\u30e9\u30f3\u30c0\u30e0\u306b\u3048\u3089\u3073\u307e\u3059\u3002",
                         "type": "",
                         "value": 0
                     }
@@ -645,7 +645,7 @@
                             "VARIABLE": {
                                 "id": "vA)9-FHNND6-@A+8KAev",
                                 "name": "VARIABLE",
-                                "value": "instructions count",
+                                "value": "\u3066\u3058\u3085\u3093\u306e\u304b\u3044\u3059\u3046",
                                 "variableType": ""
                             }
                         },
@@ -971,7 +971,7 @@
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.constellation_count",
+                                "value": "\u305b\u3044\u3056\u306e\u304b\u305a",
                                 "variableType": ""
                             }
                         },
@@ -1188,7 +1188,7 @@
                             "VARIABLE": {
                                 "id": "p-izhJ]MUP_NJ%0P@I,n",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_random",
+                                "value": "\u30e9\u30f3\u30c0\u30e0\u306b\u30b7\u30e3\u30c3\u30d5\u30eb\u3059\u308b",
                                 "variableType": ""
                             }
                         },
@@ -1235,7 +1235,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.since_ancient_times_libra_has_been_a_sign_of_fairness"
+                                "value": "\u3066\u3093\u3073\u3093\u3056\u306f\u3001\u3053\u3060\u3044\u304b\u3089\u3053\u3046\u3078\u3044\u3055\u306e\u3057\u3087\u3046\u3061\u3087\u3046\u3067\u3059\u3002"
                             }
                         },
                         "id": "%%#TU]U}zQf91[)@T=gH",
@@ -1316,7 +1316,7 @@
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.constellation_count",
+                                "value": "\u305b\u3044\u3056\u306e\u304b\u305a",
                                 "variableType": ""
                             }
                         },
@@ -1457,7 +1457,7 @@
                             "VARIABLE": {
                                 "id": "YuqIV|BhYSs@so$WZ/F]",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.input_enabled",
+                                "value": "\u306b\u3085\u3046\u308a\u3087\u304f\u3092\u3086\u3046\u3053\u3046\u304b",
                                 "variableType": ""
                             }
                         },
@@ -2093,7 +2093,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.cassiopeia_used_to_be_called_the_lady_of_the_chair"
+                                "value": "\u30ab\u30b7\u30aa\u30da\u30e4\u3056\u306f\u3001\u300c\u3044\u3059\u306b\u3059\u308f\u308b\u304a\u3046\u3058\u3087\u300d\u3068\u3082\u3088\u3070\u308c\u3066\u3044\u307e\u3057\u305f\u3002"
                             }
                         },
                         "id": "*F[Y9J#,ol^lyuiuJ5bE",
@@ -3120,7 +3120,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.cassiopeias_brightest_star_shines_40_times_brighter_than_the_sun"
+                                "value": "\u30ab\u30b7\u30aa\u30da\u30e4\u3056\u306e\u3044\u3061\u3070\u3093\u3042\u304b\u308b\u3044\u307b\u3057\u306f\u3001\u305f\u3044\u3088\u3046\u306e40\u3070\u3044\u306e\u3042\u304b\u308b\u3055\u3067\u3059\u3002"
                             }
                         },
                         "id": ".xiJZM`#%,W3Bgz-}b~P",
@@ -3416,7 +3416,7 @@
                             "VARIABLE": {
                                 "id": "p-izhJ]MUP_NJ%0P@I,n",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_random",
+                                "value": "\u30e9\u30f3\u30c0\u30e0\u306b\u30b7\u30e3\u30c3\u30d5\u30eb\u3059\u308b",
                                 "variableType": ""
                             }
                         },
@@ -3740,7 +3740,7 @@
                             "VARIABLE": {
                                 "id": "*o3H?Ensy20R;*Fc]p#H",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_libra_constellation",
+                                "value": "\u3066\u3093\u3073\u3093\u3056\u306e\u30c7\u30fc\u30bf\u3092\u30bb\u30c3\u30c8\u30a2\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -3822,7 +3822,7 @@
                             "VARIABLE": {
                                 "id": "?XVmzOUgYiz(QA-:KvAt",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.turn_cozmo_back_to_his_starting_position",
+                                "value": "COZMO\u3092\u30b9\u30bf\u30fc\u30c8\u30dd\u30b8\u30b7\u30e7\u30f3\u3078\u30d0\u30c3\u30af\u3055\u305b\u307e\u3059\u3002",
                                 "variableType": ""
                             }
                         },
@@ -4026,7 +4026,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.scorpius_is_best_seen_in_the_july_night_sky"
+                                "value": "\u3055\u305d\u308a\u3056\u306f\u3001\uff17\u304c\u3064\u306e\u3088\u305e\u3089\u3067\u3044\u3061\u3070\u3093\u3088\u304f\u307f\u3048\u308b\u305b\u3044\u3056\u3067\u3059\u3002"
                             }
                         },
                         "id": "2.xw/u^4-0QjN0t75G`T",
@@ -4154,7 +4154,7 @@
                             "VARIABLE": {
                                 "id": "YX1O$xWZ]?zPBjOD)/@x",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.choose_which_constellation_to_get_the_data_for",
+                                "value": "\u3069\u306e\u305b\u3044\u3056\u306e\u30c7\u30fc\u30bf\u3092\u3057\u3085\u3068\u304f\u3059\u308b\u304b\u3001\u3048\u3089\u3093\u3067\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -4646,7 +4646,7 @@
                             "VARIABLE": {
                                 "id": "LNj8/]aCE+Z4]wMQHDzn",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_scorpius_constellation",
+                                "value": "\u3055\u305d\u308a\u3056\u306e\u30c7\u30fc\u30bf\u3092\u30bb\u30c3\u30c8\u30a2\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -5193,7 +5193,7 @@
                             "VARIABLE": {
                                 "id": "vA)9-FHNND6-@A+8KAev",
                                 "name": "VARIABLE",
-                                "value": "instructions count",
+                                "value": "\u3066\u3058\u3085\u3093\u306e\u304b\u3044\u3059\u3046",
                                 "variableType": ""
                             }
                         },
@@ -5275,7 +5275,7 @@
                             "VARIABLE": {
                                 "id": "|rP_=L{NHb1P!g19QCKx",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_choice",
+                                "value": "\u305b\u3093\u305f\u304f\u3057\u3092\u30b7\u30e3\u30c3\u30d5\u30eb\u3059\u308b",
                                 "variableType": ""
                             }
                         },
@@ -5314,7 +5314,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.libra"
+                                "value": "\u3066\u3093\u3073\u3093\u3056"
                             }
                         },
                         "id": "7|jj$Dll(zI_(S)VLoEL",
@@ -5604,7 +5604,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.my_cousins_name_is_cassiopeia_shes_a_keyboard"
+                                "value": "\u3044\u3068\u3053\u306e\u306a\u307e\u3048\u306f\u30ab\u30b7\u30aa\u30da\u30e4\u3067\u3059\u3002\u304b\u306e\u3058\u3087\u306f\u30ad\u30fc\u30dc\u30fc\u30c9\u3092\u3082\u3063\u3066\u3044\u307e\u3059\u3002"
                             }
                         },
                         "id": "9EV.JQ~/H*Kze$/-p9bv",
@@ -6010,7 +6010,7 @@
                             "VARIABLE": {
                                 "id": "QMIEL.M@_GPc|Ut7@#;Q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.pair_y",
+                                "value": "y\u306e\u304f\u307f",
                                 "variableType": ""
                             }
                         },
@@ -6079,7 +6079,7 @@
                             "VARIABLE": {
                                 "id": "#3%4J0D$LQ,#{{O9o;SZ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.turn_speed",
+                                "value": "\u56de\u8ee2\u901f\u5ea6",
                                 "variableType": ""
                             }
                         },
@@ -6285,7 +6285,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "\u305b\u3093\u3092\u3048\u304c\u304f",
                                 "variableType": ""
                             }
                         },
@@ -6498,7 +6498,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_count",
+                                "value": "\u30b7\u30e3\u30c3\u30d5\u30eb\u306e\u304b\u3044\u3059\u3046",
                                 "variableType": ""
                             }
                         },
@@ -6541,7 +6541,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.tap_a_cube_for_another_constellation_"
+                                "value": "\u3079\u3064\u306e\u305b\u3044\u3056\u3092\u307f\u308b\u306b\u306f\u30ad\u30e5\u30fc\u30d6\u3092\u30bf\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002 "
                             }
                         },
                         "id": "=W.NI.C6z(,dWp6Hu3/i",
@@ -6786,7 +6786,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "\u3066\u3093\u3092\u3048\u304c\u304f",
                                 "variableType": ""
                             }
                         },
@@ -7057,7 +7057,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.scorpius_was_discovered_by_a_man_named_ptolemy_say_that_three_times_fast"
+                                "value": "\u3055\u305d\u308a\u3056\u306f\u30d7\u30c8\u30ec\u30de\u30a4\u30aa\u30b9\u3068\u3044\u3046\u3072\u3068\u304c\u306f\u3063\u3051\u3093\u3057\u307e\u3057\u305f\u3002\u306f\u3084\u304f\u3061\u3067\uff13\u304b\u3044\u3044\u3063\u3066\u304f\u3060\u3055\u3044\uff01"
                             }
                         },
                         "id": "AWf,z.mycu,Qfv^{F={1",
@@ -7252,7 +7252,7 @@
                             "VARIABLE": {
                                 "id": "`D(U_1^VDw40cu=}fg08",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.when_the_user_taps_a_cube_get_the_next_constellation",
+                                "value": "\u30e6\u30fc\u30b6\u30fc\u304c\u30ad\u30e5\u30fc\u30d6\u3092\u30bf\u30c3\u30d7\u3059\u308b\u3068\u3001\u3064\u304e\u306e\u305b\u3044\u3056\u3078\u3059\u3059\u307f\u307e\u3059\u3002",
                                 "variableType": ""
                             }
                         },
@@ -7393,7 +7393,7 @@
                             "VARIABLE": {
                                 "id": "vA)9-FHNND6-@A+8KAev",
                                 "name": "VARIABLE",
-                                "value": "instructions count",
+                                "value": "\u3066\u3058\u3085\u3093\u306e\u304b\u3044\u3059\u3046",
                                 "variableType": ""
                             }
                         },
@@ -7588,7 +7588,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "\u3066\u3093\u3092\u3048\u304c\u304f",
                                 "variableType": ""
                             }
                         },
@@ -8757,7 +8757,7 @@
                             "VARIABLE": {
                                 "id": "x=yOYlHq#-h-_A*irBzd",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.drive_speed",
+                                "value": "\u904b\u8ee2\u306e\u901f\u5ea6",
                                 "variableType": ""
                             }
                         },
@@ -8946,7 +8946,7 @@
                             "VARIABLE": {
                                 "id": "Yb#:(Xe{$B*ZiJhpsvYY",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.get_the_next_constellation_in_the_list_or_start_from_the_beginning",
+                                "value": "\u30ea\u30b9\u30c8\u3067\u3064\u304e\u306e\u305b\u3044\u3056\u3092\u3048\u3089\u3076\u304b\u3001\u3055\u3044\u3057\u3087\u304b\u3089\u30b9\u30bf\u30fc\u30c8\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -8964,7 +8964,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.orion_is_best_seen_in_the_january_night_sky"
+                                "value": "\u30aa\u30ea\u30aa\u30f3\u3056\u306f\u3001\uff11\u304c\u3064\u306e\u3088\u305e\u3089\u3067\u3044\u3061\u3070\u3093\u3088\u304f\u307f\u3048\u308b\u305b\u3044\u3056\u3067\u3059\u3002"
                             }
                         },
                         "id": "IN7DIxzZX-M2MyZuQj?N",
@@ -9037,7 +9037,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_count",
+                                "value": "\u30b7\u30e3\u30c3\u30d5\u30eb\u306e\u304b\u3044\u3059\u3046",
                                 "variableType": ""
                             }
                         },
@@ -9080,7 +9080,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.libra_is_best_seen_in_the_june_night_sky"
+                                "value": "\u3066\u3093\u3073\u3093\u3056\u306f\u3001\uff16\u304c\u3064\u306e\u3088\u305e\u3089\u3067\u3044\u3061\u3070\u3093\u3088\u304f\u307f\u3048\u308b\u305b\u3044\u3056\u3067\u3059\u3002"
                             }
                         },
                         "id": "JBt*q+kehvscRlfXkl_W",
@@ -9195,7 +9195,7 @@
                             "VARIABLE": {
                                 "id": "x=yOYlHq#-h-_A*irBzd",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.drive_speed",
+                                "value": "\u904b\u8ee2\u306e\u901f\u5ea6",
                                 "variableType": ""
                             }
                         },
@@ -9345,7 +9345,7 @@
                             "VARIABLE": {
                                 "id": ",XK)bGY2Hv`0@P:wW(n*",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.fill_up_the_choices_list_with_constellation_numbers",
+                                "value": "\u305b\u3093\u305f\u304f\u3057\u30ea\u30b9\u30c8\u306b\u3001\u305b\u3044\u3056\u306e\u3070\u3093\u3054\u3046\u3092\u306b\u3085\u3046\u308a\u3087\u304f\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -9448,7 +9448,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.orion"
+                                "value": "\u30aa\u30ea\u30aa\u30f3\u3056"
                             }
                         },
                         "id": "L,d;~5u3+0twO7jDy{g`",
@@ -9647,7 +9647,7 @@
                             "VARIABLE": {
                                 "id": "gpZ+sHST8X#$E@$v9{?_",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.pair_x",
+                                "value": "x\u306e\u304f\u307f",
                                 "variableType": ""
                             }
                         },
@@ -9951,7 +9951,7 @@
                             "VARIABLE": {
                                 "id": ":l/#YnDX^0_JtNeNiZP*",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_cassiopeia_constellation",
+                                "value": "\u30ab\u30b7\u30aa\u30da\u30e4\u3056\u306e\u30c7\u30fc\u30bf\u3092\u30bb\u30c3\u30c8\u30a2\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -9987,7 +9987,7 @@
                             "VARIABLE": {
                                 "id": "=#a$yb2Q#eU4|mLH(O6|",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.initialize_variables_and_start_the_activity",
+                                "value": "\u3078\u3093\u3059\u3046\u3092\u3057\u3087\u304d\u304b\u3057\u3066\u3001\u30a2\u30af\u30c6\u30a3\u30d3\u30c6\u30a3\u3092\u304b\u3044\u3057\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -10120,7 +10120,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "\u3066\u3093\u3092\u3048\u304c\u304f",
                                 "variableType": ""
                             }
                         },
@@ -10420,7 +10420,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_count",
+                                "value": "\u30b7\u30e3\u30c3\u30d5\u30eb\u306e\u304b\u3044\u3059\u3046",
                                 "variableType": ""
                             }
                         },
@@ -11005,7 +11005,7 @@
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.constellation_count",
+                                "value": "\u305b\u3044\u3056\u306e\u304b\u305a",
                                 "variableType": ""
                             }
                         },
@@ -11024,7 +11024,7 @@
                             "VARIABLE": {
                                 "id": "|rP_=L{NHb1P!g19QCKx",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_choice",
+                                "value": "\u305b\u3093\u305f\u304f\u3057\u3092\u30b7\u30e3\u30c3\u30d5\u30eb\u3059\u308b",
                                 "variableType": ""
                             }
                         },
@@ -11230,7 +11230,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "\u3066\u3093\u3092\u3048\u304c\u304f",
                                 "variableType": ""
                             }
                         },
@@ -11747,7 +11747,7 @@
                             "VARIABLE": {
                                 "id": "x=yOYlHq#-h-_A*irBzd",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.drive_speed",
+                                "value": "\u904b\u8ee2\u306e\u901f\u5ea6",
                                 "variableType": ""
                             }
                         },
@@ -12049,7 +12049,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.cassiopeia_can_be_seen_all_year_from_the_northern_hemisphere"
+                                "value": "\u30ab\u30b7\u30aa\u30da\u30e4\u3056\u306f\u3001\u304d\u305f\u306f\u3093\u304d\u3085\u3046\u304b\u3089\u3001\u3044\u3061\u306d\u3093\u3058\u3085\u3046\u304b\u3093\u305d\u304f\u3067\u304d\u307e\u3059\u3002"
                             }
                         },
                         "id": "VT?zb/`Qo~Mo]6vC5Ags",
@@ -12103,7 +12103,7 @@
                             "VARIABLE": {
                                 "id": "#3%4J0D$LQ,#{{O9o;SZ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.turn_speed",
+                                "value": "\u56de\u8ee2\u901f\u5ea6",
                                 "variableType": ""
                             }
                         },
@@ -12837,7 +12837,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "\u3066\u3093\u3092\u3048\u304c\u304f",
                                 "variableType": ""
                             }
                         },
@@ -13487,7 +13487,7 @@
                             "VARIABLE": {
                                 "id": "gpZ+sHST8X#$E@$v9{?_",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.pair_x",
+                                "value": "x\u306e\u304f\u307f",
                                 "variableType": ""
                             }
                         },
@@ -13585,7 +13585,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "\u305b\u3093\u3092\u3048\u304c\u304f",
                                 "variableType": ""
                             }
                         },
@@ -13664,7 +13664,7 @@
                             "VARIABLE": {
                                 "id": "]@}+e|%V2_oSrWDLLRpa",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_leo_constellation",
+                                "value": "\u3057\u3057\u3056\u306e\u30c7\u30fc\u30bf\u3092\u30bb\u30c3\u30c8\u30a2\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -13723,7 +13723,7 @@
                             "VARIABLE": {
                                 "id": "vA)9-FHNND6-@A+8KAev",
                                 "name": "VARIABLE",
-                                "value": "instructions count",
+                                "value": "\u3066\u3058\u3085\u3093\u306e\u304b\u3044\u3059\u3046",
                                 "variableType": ""
                             }
                         },
@@ -14044,7 +14044,7 @@
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.constellation_count",
+                                "value": "\u305b\u3044\u3056\u306e\u304b\u305a",
                                 "variableType": ""
                             }
                         },
@@ -14283,7 +14283,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "\u3066\u3093\u3092\u3048\u304c\u304f",
                                 "variableType": ""
                             }
                         },
@@ -14365,7 +14365,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "\u305b\u3093\u3092\u3048\u304c\u304f",
                                 "variableType": ""
                             }
                         },
@@ -14476,7 +14476,7 @@
                             "VARIABLE": {
                                 "id": "p-izhJ]MUP_NJ%0P@I,n",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_random",
+                                "value": "\u30e9\u30f3\u30c0\u30e0\u306b\u30b7\u30e3\u30c3\u30d5\u30eb\u3059\u308b",
                                 "variableType": ""
                             }
                         },
@@ -14857,7 +14857,7 @@
                             "VARIABLE": {
                                 "id": "QMIEL.M@_GPc|Ut7@#;Q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.pair_y",
+                                "value": "y\u306e\u304f\u307f",
                                 "variableType": ""
                             }
                         },
@@ -14895,7 +14895,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "\u305b\u3093\u3092\u3048\u304c\u304f",
                                 "variableType": ""
                             }
                         },
@@ -14914,7 +14914,7 @@
                             "VARIABLE": {
                                 "id": "Lz[@^]l31Y^VXU#+mb3A",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.enable_cube_taps_and_cozmo_gives_instruction_to_see_the_next_constellation",
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u306e\u30bf\u30c3\u30d7\u3092\u3086\u3046\u3053\u3046\u304b\u3059\u308b\u3068\u3001COZMO\u304c\u3064\u304e\u306e\u305b\u3044\u3056\u3092\u307f\u308b\u3088\u3046\u3057\u3058\u3057\u307e\u3059\u3002",
                                 "variableType": ""
                             }
                         },
@@ -15374,7 +15374,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.in_hawaii_scorpius_is_known_as_mauis_fishhook"
+                                "value": "\u30cf\u30ef\u30a4\u3067\u306f\u3001\u3055\u305d\u308a\u3056\u306f\u300c\u30de\u30a6\u30a4\u306e\u3064\u308a\u3070\u308a\u300d\u3068\u3057\u3066\u3057\u3089\u308c\u3066\u3044\u307e\u3059\u3002"
                             }
                         },
                         "id": "dhp~:W}a*`Ty_OHUG3|S",
@@ -15566,7 +15566,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.cassiopeia"
+                                "value": "\u30ab\u30b7\u30aa\u30da\u30a2\u3056"
                             }
                         },
                         "id": "ew{f3R6m@^=.eH8w0+q)",
@@ -15745,7 +15745,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.in_ancient_greek_stories_scorpius_beat_orion_in_a_fight"
+                                "value": "\u3053\u3060\u3044\u30ae\u30ea\u30b7\u30e3\u306e\u304a\u306f\u306a\u3057\u306b\u3088\u308b\u3068\u3001\u3055\u305d\u308a\u3056\u306f\u30aa\u30ea\u30aa\u30f3\u3056\u3068\u306e\u305f\u305f\u304b\u3044\u306b\u3057\u3087\u3046\u308a\u3057\u307e\u3057\u305f\u3002"
                             }
                         },
                         "id": "fWM9H{L}iMiS8|B`g3c[",
@@ -16009,7 +16009,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.some_of_libras_stars_could_have_livable_planets_pretty_cool"
+                                "value": "\u3066\u3093\u3073\u3093\u3056\u306b\u306f\u306b\u3093\u3052\u3093\u304c\u3059\u3081\u308b\u304b\u3082\u3057\u308c\u306a\u3044\u308f\u304f\u305b\u3044\u304c\u3042\u308a\u307e\u3059\u3002\u3059\u3054\u3044\uff01"
                             }
                         },
                         "id": "gP^8/KD{mt7)xjQ`/C9r",
@@ -16039,7 +16039,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.orion_is_one_of_the_most_recognizable_constellations"
+                                "value": "\u30aa\u30ea\u30aa\u30f3\u3056\u306f\u3001\u3082\u3063\u3068\u3082\u307f\u3048\u3084\u3059\u3044\u305b\u3044\u3056\u306e\u3072\u3068\u3064\u3067\u3059\u3002"
                             }
                         },
                         "id": "gZx5yQq172-k0(TZcI8,",
@@ -17017,7 +17017,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.id_like_to_visit_libra_someday_and_see_if_they_have_good_tacos"
+                                "value": "\u3044\u3064\u304b\u3066\u3093\u3073\u3093\u3056\u3078\u3044\u3063\u3066\u3001\u304a\u3044\u3057\u3044\u30bf\u30b3\u30b9\u304c\u3042\u308b\u304b\u307f\u3066\u307f\u305f\u3044\u3002"
                             }
                         },
                         "id": "kJ4L_bob^pQ(]T0lo^90",
@@ -17238,7 +17238,7 @@
                             "VARIABLE": {
                                 "id": "@2(]LhemBX7l_IQQaJ^%",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.clear_all_data_from_the_project_lists",
+                                "value": "\u30d7\u30ed\u30b8\u30a7\u30af\u30c8\u30ea\u30b9\u30c8\u304b\u3089\u3059\u3079\u3066\u306e\u30c7\u30fc\u30bf\u3092\u3057\u3087\u3046\u304d\u3087\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -17274,7 +17274,7 @@
                             "VARIABLE": {
                                 "id": "arBPhf~)-D8x67M7i/e4",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.loop_through_sets_of_coordinates_to_drive_and_draw_lines_and_dots",
+                                "value": "\u3056\u3072\u3087\u3046\u306e\u304f\u307f\u3092\u30eb\u30fc\u30d7\u3055\u305b\u3066\u3046\u3054\u304b\u3057\u3001\u3066\u3093\u3068\u305b\u3093\u3092\u3048\u304c\u3044\u3066\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -17574,7 +17574,7 @@
                             "VARIABLE": {
                                 "id": "YuqIV|BhYSs@so$WZ/F]",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.input_enabled",
+                                "value": "\u306b\u3085\u3046\u308a\u3087\u304f\u3092\u3086\u3046\u3053\u3046\u304b",
                                 "variableType": ""
                             }
                         },
@@ -17592,7 +17592,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.you_can_recognize_orion_by_his_belt_very_fashionable"
+                                "value": "\u30aa\u30ea\u30aa\u30f3\u3056\u306f\u3001\u30d9\u30eb\u30c8\u3067\u304b\u304f\u306b\u3093\u3059\u308b\u3053\u3068\u304c\u3067\u304d\u307e\u3059\u3002\u304a\u3057\u3083\u308c\uff01"
                             }
                         },
                         "id": "mU(n!J^xMfH4]tVpkpi:",
@@ -17625,7 +17625,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "\u3066\u3093\u3092\u3048\u304c\u304f",
                                 "variableType": ""
                             }
                         },
@@ -17649,7 +17649,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.leo_can_be_seen_in_the_night_sky_from_late_march_through_may"
+                                "value": "\u3057\u3057\u3056\u306f\u3001\uff13\u304c\u3064\u306e\u304a\u308f\u308a\u304b\u3089\uff15\u304c\u3064\u306b\u304b\u3051\u3066\u3001\u3088\u305e\u3089\u3067\u304b\u3093\u305d\u304f\u3067\u304d\u307e\u3059\u3002"
                             }
                         },
                         "id": "m]INwUq^:J5+R0uZaIii",
@@ -17665,7 +17665,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "\u305b\u3093\u3092\u3048\u304c\u304f",
                                 "variableType": ""
                             }
                         },
@@ -18194,7 +18194,7 @@
                             "VARIABLE": {
                                 "id": "rfbbNRv%Xk={1sCFms+r",
                                 "name": "VARIABLE",
-                                "value": "Get the distance between two coordinates.",
+                                "value": "\uff12\u3064\u306e\u3056\u3072\u3087\u3046\u306e\u304d\u3087\u308a\u3092\u306f\u304b\u3063\u3066\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -18483,7 +18483,7 @@
                             "VARIABLE": {
                                 "id": "~a=Oa2eRZ)gmuu-Mcsn~",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.randomly_choose_a_fact_for_cozmo_to_say",
+                                "value": "COZMO\u304c\u3044\u3046\u306a\u3044\u3088\u3046\u3092\u30e9\u30f3\u30c0\u30e0\u306b\u3048\u3089\u3073\u307e\u3059\u3002",
                                 "variableType": ""
                             }
                         },
@@ -18566,7 +18566,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.orion_is_a_warrior_from_ancient_greek_stories"
+                                "value": "\u30aa\u30ea\u30aa\u30f3\u306f\u3001\u3053\u3060\u3044\u30ae\u30ea\u30b7\u30e3\u306e\u304a\u306f\u306a\u3057\u306b\u3068\u3046\u3058\u3087\u3046\u3059\u308b\u305b\u3093\u3057\u3067\u3059\u3002"
                             }
                         },
                         "id": "r/ehZrIa/BdggyY-=Z*5",
@@ -18661,7 +18661,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.the_constellation_is_named_leo_because_it_looks_just_like_a_lion"
+                                "value": "\u3053\u306e\u305b\u3044\u3056\u306f\u3001\u30e9\u30a4\u30aa\u30f3\u306e\u3088\u3046\u306b\u307f\u3048\u308b\u306e\u3067\u3001\u3057\u3057\u3056\u3068\u306a\u3065\u3051\u3089\u308c\u307e\u3057\u305f\u3002"
                             }
                         },
                         "id": "rFsGu7lug57(k#M_AAVT",
@@ -18784,7 +18784,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "\u305b\u3093\u3092\u3048\u304c\u304f",
                                 "variableType": ""
                             }
                         },
@@ -18824,7 +18824,7 @@
                             "VARIABLE": {
                                 "id": "ELj5b9R.r9xIAms-CQwE",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.use_the_data_from_the_instructions_list_to_decide_whether_to_draw_a_dot_a_line_both_or_neither",
+                                "value": "\u3066\u3058\u3085\u3093\u30ea\u30b9\u30c8\u306e\u30c7\u30fc\u30bf\u3092\u3064\u304b\u3063\u3066\u3001\u3066\u3093\u3001\u305b\u3093\u3001\u305d\u306e\u308a\u3087\u3046\u307b\u3046\u306e\u3069\u308c\u304b\u3092\u3048\u304c\u304f\u304b\u3001\u307e\u305f\u306f\u3069\u308c\u3082\u3048\u304c\u304b\u306a\u3044\u3053\u3068\u3092\u304d\u3081\u3066\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -19066,7 +19066,7 @@
                             "VARIABLE": {
                                 "id": "aqN|xXe_n~f^|26av^2A",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_the_constellation_choices_list",
+                                "value": "\u305b\u3044\u3056\u306e\u305b\u3093\u305f\u304f\u3057\u30ea\u30b9\u30c8\u3092\u30b7\u30e3\u30c3\u30d5\u30eb\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -19324,7 +19324,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_count",
+                                "value": "\u30b7\u30e3\u30c3\u30d5\u30eb\u306e\u304b\u3044\u3059\u3046",
                                 "variableType": ""
                             }
                         },
@@ -19343,7 +19343,7 @@
                             "VARIABLE": {
                                 "id": "gpZ+sHST8X#$E@$v9{?_",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.pair_x",
+                                "value": "x\u306e\u304f\u307f",
                                 "variableType": ""
                             }
                         },
@@ -19511,7 +19511,7 @@
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.constellation_count",
+                                "value": "\u305b\u3044\u3056\u306e\u304b\u305a",
                                 "variableType": ""
                             }
                         },
@@ -19941,7 +19941,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "\u305b\u3093\u3092\u3048\u304c\u304f",
                                 "variableType": ""
                             }
                         },
@@ -20093,7 +20093,7 @@
                             "VARIABLE": {
                                 "id": "#3%4J0D$LQ,#{{O9o;SZ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.turn_speed",
+                                "value": "\u56de\u8ee2\u901f\u5ea6",
                                 "variableType": ""
                             }
                         },
@@ -20363,7 +20363,7 @@
                             "VARIABLE": {
                                 "id": "VHX(-cXWv~FiBj#,f7yh",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_orion_constellation",
+                                "value": "\u30aa\u30ea\u30aa\u30f3\u3056\u306e\u30c7\u30fc\u30bf\u3092\u30bb\u30c3\u30c8\u30a2\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002",
                                 "variableType": ""
                             }
                         },
@@ -20595,7 +20595,7 @@
                             "VARIABLE": {
                                 "id": "vA)9-FHNND6-@A+8KAev",
                                 "name": "VARIABLE",
-                                "value": "instructions count",
+                                "value": "\u3066\u3058\u3085\u3093\u306e\u304b\u3044\u3059\u3046",
                                 "variableType": ""
                             }
                         },
@@ -20820,7 +20820,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.leo_is_one_of_the_earliest_recognized_constellations"
+                                "value": "\u3057\u3057\u3056\u306f\u3001\u3044\u3061\u3070\u3093\u306f\u3084\u304f\u304b\u304f\u306b\u3093\u3055\u308c\u305f\u305b\u3044\u3056\u306e\u3072\u3068\u3064\u3067\u3059\u3002"
                             }
                         },
                         "id": "{[q5[EtArdLTwtkW??30",
@@ -20921,7 +20921,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_count",
+                                "value": "\u30b7\u30e3\u30c3\u30d5\u30eb\u306e\u304b\u3044\u3059\u3046",
                                 "variableType": ""
                             }
                         },
@@ -20969,7 +20969,7 @@
                             "VARIABLE": {
                                 "id": "vA)9-FHNND6-@A+8KAev",
                                 "name": "VARIABLE",
-                                "value": "instructions count",
+                                "value": "\u3066\u3058\u3085\u3093\u306e\u304b\u3044\u3059\u3046",
                                 "variableType": ""
                             }
                         },
@@ -21342,7 +21342,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.scorpius"
+                                "value": "\u3055\u305d\u308a\u3056"
                             }
                         },
                         "id": "~@@UUf5YTC#^)`@qZQ=C",
@@ -21455,7 +21455,7 @@
                             "VARIABLE": {
                                 "id": "YuqIV|BhYSs@so$WZ/F]",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.input_enabled",
+                                "value": "\u306b\u3085\u3046\u308a\u3087\u304f\u3092\u3086\u3046\u3053\u3046\u304b",
                                 "variableType": ""
                             }
                         },
@@ -21495,7 +21495,7 @@
                             "VARIABLE": {
                                 "id": "QMIEL.M@_GPc|Ut7@#;Q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.pair_y",
+                                "value": "y\u306e\u304f\u307f",
                                 "variableType": ""
                             }
                         },

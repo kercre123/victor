@@ -121,7 +121,7 @@
     "translation" : "COZMOは遊びたがっています..."
   },
   "onboarding.SparkScreenRollACube" : {
-    "translation" : "COZMOがころがするのを見てください..."
+    "translation" : "COZMOがころがすのを見てください..."
   },
   "onboarding.RepairIntro" : {
     "translation" : "<b>COZMOはチューンアップする必要があります。</b>赤いバーが少ない場合、<b><color=#fe5641>チューンアップ</color></b>ボタンをタップしてCOZMOをスキャンします。"
@@ -149,5 +149,11 @@
   },
   "onboarding.notificationpreprompt.body" : {
     "translation" : "COZMOがあなたを必要とするとき、COZMOからメッセージを送信しますか？"
+  },
+  "onboarding.teachermode.on" : {
+    "translation" : "クイックセットアップ：オン"
+  },
+  "onboarding.teachermode.off" : {
+    "translation" : "クイックセットアップ：オフ"
   }
 }

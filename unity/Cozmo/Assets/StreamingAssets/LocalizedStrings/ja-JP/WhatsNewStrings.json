@@ -103,9 +103,27 @@
     "translation" : "COZMOと対戦しましょう。使うのはあなたの頭！"
   },
   "whatsNew.CodeLab_Constellations.title" : {
-    "translation" : "Constellations"
+    "translation" : "星座"
   },
   "whatsNew.CodeLab_Constellations.description" : {
-    "translation" : "Celebrate Astronomy Day with cosmic constellations."
+    "translation" : "「天文学の日」を天空の星座でお祝いしましょう。"
+  },
+  "whatsNew.CodeLab_CozmosGarden.title" : {
+    "translation" : "COZMOのにわ"
+  },
+  "whatsNew.CodeLab_CozmosGarden.description" : {
+    "translation" : "にわをそだててCOZMOとアースデイをいわおう！"
+  },
+  "whatsNew.CodeLab_GuessTheNumber.title" : {
+    "translation" : "数を推測"
+  },
+  "whatsNew.CodeLab_GuessTheNumber.description" : {
+    "translation" : "JDFIGHT の提案で、神秘的で全てを知るCozmoがあなたの数を推測します！"
+  },
+  "whatsNew.CodeLab_WakeUpCozmo.title" : {
+    "translation" : "COZMO、おきて！"
+  },
+  "whatsNew.CodeLab_WakeUpCozmo.description" : {
+    "translation" : "ねているCOZMOをじゃまするのはだれ？"
   }
 }

@@ -55,7 +55,7 @@
                     },
                     "#3%4J0D$LQ,#{{O9o;SZ": {
                         "id": "#3%4J0D$LQ,#{{O9o;SZ",
-                        "name": "codelabfeaturedproject.constellations.turn_speed",
+                        "name": "vitesse de braquage",
                         "type": "",
                         "value": "60"
                     },
@@ -67,7 +67,7 @@
                     },
                     "#zAde}MYuoTYt:UOy0R-": {
                         "id": "#zAde}MYuoTYt:UOy0R-",
-                        "name": "codelabfeaturedproject.constellations.factoids",
+                        "name": "anecdotes",
                         "type": "list",
                         "value": [
                             "Scorpius is best seen in the July night sky.",
@@ -84,37 +84,37 @@
                     },
                     "(@_tdwd4*,bDFr5Uu|Uu": {
                         "id": "(@_tdwd4*,bDFr5Uu|Uu",
-                        "name": "codelabfeaturedproject.constellations.set_scorpius_data",
+                        "name": "d\u00e9finir les donn\u00e9es du Scorpion",
                         "type": "broadcast_msg",
                         "value": "set scorpius data"
                     },
                     "*o3H?Ensy20R;*Fc]p#H": {
                         "id": "*o3H?Ensy20R;*Fc]p#H",
-                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_libra_constellation",
+                        "name": "D\u00e9finir les donn\u00e9es de la Balance.",
                         "type": "",
                         "value": 0
                     },
                     ",XK)bGY2Hv`0@P:wW(n*": {
                         "id": ",XK)bGY2Hv`0@P:wW(n*",
-                        "name": "codelabfeaturedproject.constellations.fill_up_the_choices_list_with_constellation_numbers",
+                        "name": "Compl\u00e9ter la liste de choix avec les num\u00e9ros de constellation.",
                         "type": "",
                         "value": 0
                     },
                     ".G{_CxSWHuZHI5M/,zvQ": {
                         "id": ".G{_CxSWHuZHI5M/,zvQ",
-                        "name": "codelabfeaturedproject.constellations.reset_lists",
+                        "name": "r\u00e9initialiser les listes",
                         "type": "broadcast_msg",
                         "value": "reset lists"
                     },
                     ".ZT=AbOh!zZTgYj{=mja": {
                         "id": ".ZT=AbOh!zZTgYj{=mja",
-                        "name": "codelabfeaturedproject.constellations.next_constellation",
+                        "name": "constellation suivante",
                         "type": "broadcast_msg",
                         "value": "next constellation"
                     },
                     "/R[dl]o6#IX]bW^b33Gc": {
                         "id": "/R[dl]o6#IX]bW^b33Gc",
-                        "name": "codelabfeaturedproject.constellations.drive_and_draw_constellation",
+                        "name": "piloter et dessiner une constellation",
                         "type": "broadcast_msg",
                         "value": "drive and draw constellation"
                     },
@@ -138,31 +138,31 @@
                     },
                     ":l/#YnDX^0_JtNeNiZP*": {
                         "id": ":l/#YnDX^0_JtNeNiZP*",
-                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_cassiopeia_constellation",
+                        "name": "D\u00e9finir les donn\u00e9es de Cassiop\u00e9e.",
                         "type": "",
                         "value": 0
                     },
                     "=#a$yb2Q#eU4|mLH(O6|": {
                         "id": "=#a$yb2Q#eU4|mLH(O6|",
-                        "name": "codelabfeaturedproject.constellations.initialize_variables_and_start_the_activity",
+                        "name": "Initialiser les variables et commencer l'activit\u00e9.",
                         "type": "",
                         "value": 0
                     },
                     "=]facy.O4s|fFWhv;edh": {
                         "id": "=]facy.O4s|fFWhv;edh",
-                        "name": "codelabfeaturedproject.constellations.set_orion_data",
+                        "name": "d\u00e9finir les donn\u00e9es d'Orion",
                         "type": "broadcast_msg",
                         "value": "set orion data"
                     },
                     "?XVmzOUgYiz(QA-:KvAt": {
                         "id": "?XVmzOUgYiz(QA-:KvAt",
-                        "name": "codelabfeaturedproject.constellations.turn_cozmo_back_to_his_starting_position",
+                        "name": "Ramener Cozmo \u00e0 sa position de d\u00e9part.",
                         "type": "",
                         "value": 0
                     },
                     "@2(]LhemBX7l_IQQaJ^%": {
                         "id": "@2(]LhemBX7l_IQQaJ^%",
-                        "name": "codelabfeaturedproject.constellations.clear_all_data_from_the_project_lists",
+                        "name": "Effacer toutes les donn\u00e9es des listes de projets.",
                         "type": "",
                         "value": 0
                     },
@@ -174,13 +174,13 @@
                     },
                     "ANzBheuzB(vk`Iqw!t*e": {
                         "id": "ANzBheuzB(vk`Iqw!t*e",
-                        "name": "codelabfeaturedproject.constellations.shuffle_choices",
+                        "name": "m\u00e9langer les choix",
                         "type": "broadcast_msg",
                         "value": "shuffle choices"
                     },
                     "C#^%+V)*-.nw0+Cm*bpb": {
                         "id": "C#^%+V)*-.nw0+Cm*bpb",
-                        "name": "codelabfeaturedproject.constellations.ask_to_play_again",
+                        "name": "demander \u00e0 rejouer",
                         "type": "broadcast_msg",
                         "value": "ask to play again"
                     },
@@ -211,44 +211,44 @@
                     },
                     "Ci+:O30f9-PMiC+N0L:1": {
                         "id": "Ci+:O30f9-PMiC+N0L:1",
-                        "name": "draw dot",
+                        "name": "dessiner un point",
                         "type": "",
                         "value": "1"
                     },
                     "E:lZ(.7FH3avR,3`.)a_": {
                         "id": "E:lZ(.7FH3avR,3`.)a_",
                         "isCloud": false,
-                        "name": "codelabfeaturedproject.constellations.set_cassiopeia_data",
+                        "name": "d\u00e9finir les donn\u00e9es de Cassiop\u00e9e",
                         "type": "broadcast_msg",
                         "value": "set cassiopeia data"
                     },
                     "ELj5b9R.r9xIAms-CQwE": {
                         "id": "ELj5b9R.r9xIAms-CQwE",
-                        "name": "codelabfeaturedproject.constellations.use_the_data_from_the_instructions_list_to_decide_whether_to_draw_a_dot_a_line_both_or_neither",
+                        "name": "Utiliser les donn\u00e9es de la liste d'instructions pour d\u00e9terminer s'il faut dessiner un point, une ligne, les deux ou ni l'un ni l'autre.",
                         "type": "",
                         "value": 0
                     },
                     "G6GZ#oDR{k7gqSv)T3{e": {
                         "id": "G6GZ#oDR{k7gqSv)T3{e",
-                        "name": "codelabfeaturedproject.constellations.say_factoid",
+                        "name": "raconter une anecdote",
                         "type": "broadcast_msg",
                         "value": "say factoid"
                     },
                     "Gl-dVUy+!0LaE8+C{=V]": {
                         "id": "Gl-dVUy+!0LaE8+C{=V]",
-                        "name": "codelabfeaturedproject.constellations.set_leo_data",
+                        "name": "d\u00e9finir les donn\u00e9es du Lion",
                         "type": "broadcast_msg",
                         "value": "set leo data"
                     },
                     "H.2~:/d@bF{e]}?}WaPH": {
                         "id": "H.2~:/d@bF{e]}?}WaPH",
-                        "name": "codelabfeaturedproject.constellations.get_instructions",
+                        "name": "obtenir des instructions",
                         "type": "broadcast_msg",
                         "value": "get instructions"
                     },
                     "IjmT4tKwvwBovYbhxb-]": {
                         "id": "IjmT4tKwvwBovYbhxb-]",
-                        "name": "codelabfeaturedproject.constellations.get_distance",
+                        "name": "obtenir la distance",
                         "type": "broadcast_msg",
                         "value": "get distance"
                     },
@@ -260,25 +260,25 @@
                     },
                     "KnNs`9drP[R4!ji(G;lL": {
                         "id": "KnNs`9drP[R4!ji(G;lL",
-                        "name": "codelabfeaturedproject.constellations.constellation_count",
+                        "name": "nombre de constellations",
                         "type": "",
                         "value": 2
                     },
                     "LNj8/]aCE+Z4]wMQHDzn": {
                         "id": "LNj8/]aCE+Z4]wMQHDzn",
-                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_scorpius_constellation",
+                        "name": "D\u00e9finir les donn\u00e9es du Scorpion.",
                         "type": "",
                         "value": 0
                     },
                     "Lz[@^]l31Y^VXU#+mb3A": {
                         "id": "Lz[@^]l31Y^VXU#+mb3A",
-                        "name": "codelabfeaturedproject.constellations.enable_cube_taps_and_cozmo_gives_instruction_to_see_the_next_constellation",
+                        "name": "Toucher un cube pour que Cozmo dise comment voir la prochaine constellation.",
                         "type": "",
                         "value": 0
                     },
                     "QMIEL.M@_GPc|Ut7@#;Q": {
                         "id": "QMIEL.M@_GPc|Ut7@#;Q",
-                        "name": "codelabfeaturedproject.constellations.pair_y",
+                        "name": "couple y",
                         "type": "",
                         "value": 10
                     },
@@ -290,13 +290,13 @@
                     },
                     "V?p[M:HVR!Q^*rGSidH$": {
                         "id": "V?p[M:HVR!Q^*rGSidH$",
-                        "name": "draw line",
+                        "name": "dessiner une ligne",
                         "type": "",
                         "value": "1"
                     },
                     "VHX(-cXWv~FiBj#,f7yh": {
                         "id": "VHX(-cXWv~FiBj#,f7yh",
-                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_orion_constellation",
+                        "name": "D\u00e9finir les donn\u00e9es d'Orion.",
                         "type": "",
                         "value": 0
                     },
@@ -308,25 +308,25 @@
                     },
                     "X:Idv9SkW;_?cN7:]OFJ": {
                         "id": "X:Idv9SkW;_?cN7:]OFJ",
-                        "name": "codelabfeaturedproject.constellations.shuffle_count",
+                        "name": "m\u00e9langer le nombre",
                         "type": "",
                         "value": 0
                     },
                     "YX1O$xWZ]?zPBjOD)/@x": {
                         "id": "YX1O$xWZ]?zPBjOD)/@x",
-                        "name": "codelabfeaturedproject.constellations.choose_which_constellation_to_get_the_data_for",
+                        "name": "Choisir la constellation dont vous souhaitez obtenir les donn\u00e9es.",
                         "type": "",
                         "value": 0
                     },
                     "Yb#:(Xe{$B*ZiJhpsvYY": {
                         "id": "Yb#:(Xe{$B*ZiJhpsvYY",
-                        "name": "codelabfeaturedproject.constellations.get_the_next_constellation_in_the_list_or_start_from_the_beginning",
+                        "name": "Passer \u00e0 la constellation suivante de la liste ou commencer depuis le d\u00e9but.",
                         "type": "",
                         "value": 0
                     },
                     "YuqIV|BhYSs@so$WZ/F]": {
                         "id": "YuqIV|BhYSs@so$WZ/F]",
-                        "name": "codelabfeaturedproject.constellations.input_enabled",
+                        "name": "entr\u00e9e activ\u00e9e",
                         "type": "",
                         "value": "0"
                     },
@@ -338,13 +338,13 @@
                     },
                     "ZG=|W.TfM3U87b_uo.b{": {
                         "id": "ZG=|W.TfM3U87b_uo.b{",
-                        "name": "codelabfeaturedproject.constellations.set_libra_data",
+                        "name": "d\u00e9finir les donn\u00e9es de la Balance",
                         "type": "broadcast_msg",
                         "value": "set libra data"
                     },
                     "]@}+e|%V2_oSrWDLLRpa": {
                         "id": "]@}+e|%V2_oSrWDLLRpa",
-                        "name": "codelabfeaturedproject.constellations.set_up_the_data_for_the_leo_constellation",
+                        "name": "D\u00e9finir les donn\u00e9es du Lion.",
                         "type": "",
                         "value": 0
                     },
@@ -376,25 +376,25 @@
                     },
                     "`D(U_1^VDw40cu=}fg08": {
                         "id": "`D(U_1^VDw40cu=}fg08",
-                        "name": "codelabfeaturedproject.constellations.when_the_user_taps_a_cube_get_the_next_constellation",
+                        "name": "Toucher un cube pour passer \u00e0 la constellation suivante.",
                         "type": "",
                         "value": 0
                     },
                     "aqN|xXe_n~f^|26av^2A": {
                         "id": "aqN|xXe_n~f^|26av^2A",
-                        "name": "codelabfeaturedproject.constellations.shuffle_the_constellation_choices_list",
+                        "name": "M\u00e9langer la liste de choix de constellations.",
                         "type": "",
                         "value": 0
                     },
                     "arBPhf~)-D8x67M7i/e4": {
                         "id": "arBPhf~)-D8x67M7i/e4",
-                        "name": "codelabfeaturedproject.constellations.loop_through_sets_of_coordinates_to_drive_and_draw_lines_and_dots",
+                        "name": "Utiliser les coordonn\u00e9es pour que Cozmo puisse dessiner des lignes et des points en se d\u00e9pla\u00e7ant.",
                         "type": "",
                         "value": 0
                     },
                     "b5ZZbxuiC|*pF9VNej4d": {
                         "id": "b5ZZbxuiC|*pF9VNej4d",
-                        "name": "codelabfeaturedproject.constellations.turn_to_starting_angle",
+                        "name": "tourner \u00e0 l'angle de d\u00e9part",
                         "type": "broadcast_msg",
                         "value": "turn to starting angle"
                     },
@@ -406,13 +406,13 @@
                     },
                     "gdnsE-41V27N~XVzaR~/": {
                         "id": "gdnsE-41V27N~XVzaR~/",
-                        "name": "codelabfeaturedproject.constellations.get_turn_angle",
+                        "name": "obtenir l'angle de braquage",
                         "type": "broadcast_msg",
                         "value": "get turn angle"
                     },
                     "gpZ+sHST8X#$E@$v9{?_": {
                         "id": "gpZ+sHST8X#$E@$v9{?_",
-                        "name": "codelabfeaturedproject.constellations.pair_x",
+                        "name": "couple x",
                         "type": "",
                         "value": 3
                     },
@@ -424,50 +424,50 @@
                     },
                     "oLO]runH8=u/*t{cwPeh": {
                         "id": "oLO]runH8=u/*t{cwPeh",
-                        "name": "codelabfeaturedproject.constellations.choose_constellation",
+                        "name": "choisir une constellation",
                         "type": "broadcast_msg",
                         "value": "choose constellation"
                     },
                     "p-izhJ]MUP_NJ%0P@I,n": {
                         "id": "p-izhJ]MUP_NJ%0P@I,n",
-                        "name": "codelabfeaturedproject.constellations.shuffle_random",
+                        "name": "m\u00e9langer au hasard",
                         "type": "",
                         "value": 4
                     },
                     "q?n=nV;:q8w7ae`f[g/z": {
                         "id": "q?n=nV;:q8w7ae`f[g/z",
-                        "name": "codelabfeaturedproject.constellations.populate_choices",
+                        "name": "ins\u00e9rer les choix",
                         "type": "broadcast_msg",
                         "value": "populate choices"
                     },
                     "rfbbNRv%Xk={1sCFms+r": {
                         "id": "rfbbNRv%Xk={1sCFms+r",
-                        "name": "Get the distance between two coordinates.",
+                        "name": "Obtenir la distance entre les deux coordonn\u00e9es.",
                         "type": "",
                         "value": 0
                     },
                     "vA)9-FHNND6-@A+8KAev": {
                         "id": "vA)9-FHNND6-@A+8KAev",
-                        "name": "instructions count",
+                        "name": "nombre d'instructions",
                         "type": "",
                         "value": 4
                     },
                     "v|JfUTGMW4^p31Z4Lkn_": {
                         "id": "v|JfUTGMW4^p31Z4Lkn_",
                         "isCloud": false,
-                        "name": "codelabfeaturedproject.constellations.reset_choices",
+                        "name": "r\u00e9initialiser les choix",
                         "type": "broadcast_msg",
                         "value": "reset choices"
                     },
                     "x=yOYlHq#-h-_A*irBzd": {
                         "id": "x=yOYlHq#-h-_A*irBzd",
-                        "name": "codelabfeaturedproject.constellations.drive_speed",
+                        "name": "vitesse",
                         "type": "",
                         "value": "80"
                     },
                     "ykQSnN*:~q(ES;;,zbX+": {
                         "id": "ykQSnN*:~q(ES;;,zbX+",
-                        "name": "codelabfeaturedproject.constellations.choices",
+                        "name": "choix",
                         "type": "list",
                         "value": [
                             "2",
@@ -491,7 +491,7 @@
                     },
                     "|rP_=L{NHb1P!g19QCKx": {
                         "id": "|rP_=L{NHb1P!g19QCKx",
-                        "name": "codelabfeaturedproject.constellations.shuffle_choice",
+                        "name": "m\u00e9langer le choix",
                         "type": "",
                         "value": "4"
                     },
@@ -503,7 +503,7 @@
                     },
                     "~a=Oa2eRZ)gmuu-Mcsn~": {
                         "id": "~a=Oa2eRZ)gmuu-Mcsn~",
-                        "name": "codelabfeaturedproject.constellations.randomly_choose_a_fact_for_cozmo_to_say",
+                        "name": "Choisir au hasard un fait racont\u00e9 par Cozmo.",
                         "type": "",
                         "value": 0
                     }
@@ -645,7 +645,7 @@
                             "VARIABLE": {
                                 "id": "vA)9-FHNND6-@A+8KAev",
                                 "name": "VARIABLE",
-                                "value": "instructions count",
+                                "value": "nombre d'instructions",
                                 "variableType": ""
                             }
                         },
@@ -971,7 +971,7 @@
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.constellation_count",
+                                "value": "nombre de constellations",
                                 "variableType": ""
                             }
                         },
@@ -1188,7 +1188,7 @@
                             "VARIABLE": {
                                 "id": "p-izhJ]MUP_NJ%0P@I,n",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_random",
+                                "value": "m\u00e9langer au hasard",
                                 "variableType": ""
                             }
                         },
@@ -1235,7 +1235,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.since_ancient_times_libra_has_been_a_sign_of_fairness"
+                                "value": "Depuis l'Antiquit\u00e9, la balance est un symbole d'\u00e9quit\u00e9."
                             }
                         },
                         "id": "%%#TU]U}zQf91[)@T=gH",
@@ -1316,7 +1316,7 @@
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.constellation_count",
+                                "value": "nombre de constellations",
                                 "variableType": ""
                             }
                         },
@@ -1457,7 +1457,7 @@
                             "VARIABLE": {
                                 "id": "YuqIV|BhYSs@so$WZ/F]",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.input_enabled",
+                                "value": "entr\u00e9e activ\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -2093,7 +2093,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.cassiopeia_used_to_be_called_the_lady_of_the_chair"
+                                "value": "Sa forme lui vaut parfois le surnom de Tr\u00f4ne de la Reine."
                             }
                         },
                         "id": "*F[Y9J#,ol^lyuiuJ5bE",
@@ -3120,7 +3120,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.cassiopeias_brightest_star_shines_40_times_brighter_than_the_sun"
+                                "value": "Son \u00e9toile la plus brillante est 40\u00a0fois plus lumineuse que le soleil lui-m\u00eame."
                             }
                         },
                         "id": ".xiJZM`#%,W3Bgz-}b~P",
@@ -3416,7 +3416,7 @@
                             "VARIABLE": {
                                 "id": "p-izhJ]MUP_NJ%0P@I,n",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_random",
+                                "value": "m\u00e9langer au hasard",
                                 "variableType": ""
                             }
                         },
@@ -3740,7 +3740,7 @@
                             "VARIABLE": {
                                 "id": "*o3H?Ensy20R;*Fc]p#H",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_libra_constellation",
+                                "value": "D\u00e9finir les donn\u00e9es de la Balance.",
                                 "variableType": ""
                             }
                         },
@@ -3822,7 +3822,7 @@
                             "VARIABLE": {
                                 "id": "?XVmzOUgYiz(QA-:KvAt",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.turn_cozmo_back_to_his_starting_position",
+                                "value": "Ramener Cozmo \u00e0 sa position de d\u00e9part.",
                                 "variableType": ""
                             }
                         },
@@ -4026,7 +4026,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.scorpius_is_best_seen_in_the_july_night_sky"
+                                "value": "Le ciel nocturne de juillet est id\u00e9al pour observer la constellation du Scorpion."
                             }
                         },
                         "id": "2.xw/u^4-0QjN0t75G`T",
@@ -4154,7 +4154,7 @@
                             "VARIABLE": {
                                 "id": "YX1O$xWZ]?zPBjOD)/@x",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.choose_which_constellation_to_get_the_data_for",
+                                "value": "Choisir la constellation dont vous souhaitez obtenir les donn\u00e9es.",
                                 "variableType": ""
                             }
                         },
@@ -4646,7 +4646,7 @@
                             "VARIABLE": {
                                 "id": "LNj8/]aCE+Z4]wMQHDzn",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_scorpius_constellation",
+                                "value": "D\u00e9finir les donn\u00e9es du Scorpion.",
                                 "variableType": ""
                             }
                         },
@@ -5193,7 +5193,7 @@
                             "VARIABLE": {
                                 "id": "vA)9-FHNND6-@A+8KAev",
                                 "name": "VARIABLE",
-                                "value": "instructions count",
+                                "value": "nombre d'instructions",
                                 "variableType": ""
                             }
                         },
@@ -5275,7 +5275,7 @@
                             "VARIABLE": {
                                 "id": "|rP_=L{NHb1P!g19QCKx",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_choice",
+                                "value": "m\u00e9langer le choix",
                                 "variableType": ""
                             }
                         },
@@ -5314,7 +5314,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.libra"
+                                "value": "Balance"
                             }
                         },
                         "id": "7|jj$Dll(zI_(S)VLoEL",
@@ -5604,7 +5604,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.my_cousins_name_is_cassiopeia_shes_a_keyboard"
+                                "value": "Ma cousine s'appelle Cassiop\u00e9e. C'est un clavier."
                             }
                         },
                         "id": "9EV.JQ~/H*Kze$/-p9bv",
@@ -6010,7 +6010,7 @@
                             "VARIABLE": {
                                 "id": "QMIEL.M@_GPc|Ut7@#;Q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.pair_y",
+                                "value": "couple y",
                                 "variableType": ""
                             }
                         },
@@ -6079,7 +6079,7 @@
                             "VARIABLE": {
                                 "id": "#3%4J0D$LQ,#{{O9o;SZ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.turn_speed",
+                                "value": "vitesse de braquage",
                                 "variableType": ""
                             }
                         },
@@ -6285,7 +6285,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "dessiner une ligne",
                                 "variableType": ""
                             }
                         },
@@ -6498,7 +6498,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_count",
+                                "value": "m\u00e9langer le nombre",
                                 "variableType": ""
                             }
                         },
@@ -6541,7 +6541,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.tap_a_cube_for_another_constellation_"
+                                "value": "Toucher un cube pour d\u00e9couvrir une autre constellation. "
                             }
                         },
                         "id": "=W.NI.C6z(,dWp6Hu3/i",
@@ -6786,7 +6786,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "dessiner un point",
                                 "variableType": ""
                             }
                         },
@@ -7057,7 +7057,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.scorpius_was_discovered_by_a_man_named_ptolemy_say_that_three_times_fast"
+                                "value": "Elle a \u00e9t\u00e9 d\u00e9couverte par un astronome grec nomm\u00e9 Ptol\u00e9m\u00e9e. Dis-le trois fois rapidement\u00a0!"
                             }
                         },
                         "id": "AWf,z.mycu,Qfv^{F={1",
@@ -7252,7 +7252,7 @@
                             "VARIABLE": {
                                 "id": "`D(U_1^VDw40cu=}fg08",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.when_the_user_taps_a_cube_get_the_next_constellation",
+                                "value": "Toucher un cube pour passer \u00e0 la constellation suivante.",
                                 "variableType": ""
                             }
                         },
@@ -7393,7 +7393,7 @@
                             "VARIABLE": {
                                 "id": "vA)9-FHNND6-@A+8KAev",
                                 "name": "VARIABLE",
-                                "value": "instructions count",
+                                "value": "nombre d'instructions",
                                 "variableType": ""
                             }
                         },
@@ -7588,7 +7588,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "dessiner un point",
                                 "variableType": ""
                             }
                         },
@@ -8757,7 +8757,7 @@
                             "VARIABLE": {
                                 "id": "x=yOYlHq#-h-_A*irBzd",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.drive_speed",
+                                "value": "vitesse",
                                 "variableType": ""
                             }
                         },
@@ -8946,7 +8946,7 @@
                             "VARIABLE": {
                                 "id": "Yb#:(Xe{$B*ZiJhpsvYY",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.get_the_next_constellation_in_the_list_or_start_from_the_beginning",
+                                "value": "Passer \u00e0 la constellation suivante de la liste ou commencer depuis le d\u00e9but.",
                                 "variableType": ""
                             }
                         },
@@ -8964,7 +8964,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.orion_is_best_seen_in_the_january_night_sky"
+                                "value": "Le ciel nocturne de janvier est id\u00e9al pour observer la constellation d'Orion."
                             }
                         },
                         "id": "IN7DIxzZX-M2MyZuQj?N",
@@ -9037,7 +9037,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_count",
+                                "value": "m\u00e9langer le nombre",
                                 "variableType": ""
                             }
                         },
@@ -9080,7 +9080,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.libra_is_best_seen_in_the_june_night_sky"
+                                "value": "Le ciel nocturne de juin est id\u00e9al pour observer la constellation de la Balance."
                             }
                         },
                         "id": "JBt*q+kehvscRlfXkl_W",
@@ -9195,7 +9195,7 @@
                             "VARIABLE": {
                                 "id": "x=yOYlHq#-h-_A*irBzd",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.drive_speed",
+                                "value": "vitesse",
                                 "variableType": ""
                             }
                         },
@@ -9345,7 +9345,7 @@
                             "VARIABLE": {
                                 "id": ",XK)bGY2Hv`0@P:wW(n*",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.fill_up_the_choices_list_with_constellation_numbers",
+                                "value": "Compl\u00e9ter la liste de choix avec les num\u00e9ros de constellation.",
                                 "variableType": ""
                             }
                         },
@@ -9448,7 +9448,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.orion"
+                                "value": "Orion"
                             }
                         },
                         "id": "L,d;~5u3+0twO7jDy{g`",
@@ -9647,7 +9647,7 @@
                             "VARIABLE": {
                                 "id": "gpZ+sHST8X#$E@$v9{?_",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.pair_x",
+                                "value": "couple x",
                                 "variableType": ""
                             }
                         },
@@ -9951,7 +9951,7 @@
                             "VARIABLE": {
                                 "id": ":l/#YnDX^0_JtNeNiZP*",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_cassiopeia_constellation",
+                                "value": "D\u00e9finir les donn\u00e9es de Cassiop\u00e9e.",
                                 "variableType": ""
                             }
                         },
@@ -9987,7 +9987,7 @@
                             "VARIABLE": {
                                 "id": "=#a$yb2Q#eU4|mLH(O6|",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.initialize_variables_and_start_the_activity",
+                                "value": "Initialiser les variables et commencer l'activit\u00e9.",
                                 "variableType": ""
                             }
                         },
@@ -10120,7 +10120,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "dessiner un point",
                                 "variableType": ""
                             }
                         },
@@ -10420,7 +10420,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_count",
+                                "value": "m\u00e9langer le nombre",
                                 "variableType": ""
                             }
                         },
@@ -11005,7 +11005,7 @@
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.constellation_count",
+                                "value": "nombre de constellations",
                                 "variableType": ""
                             }
                         },
@@ -11024,7 +11024,7 @@
                             "VARIABLE": {
                                 "id": "|rP_=L{NHb1P!g19QCKx",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_choice",
+                                "value": "m\u00e9langer le choix",
                                 "variableType": ""
                             }
                         },
@@ -11230,7 +11230,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "dessiner un point",
                                 "variableType": ""
                             }
                         },
@@ -11747,7 +11747,7 @@
                             "VARIABLE": {
                                 "id": "x=yOYlHq#-h-_A*irBzd",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.drive_speed",
+                                "value": "vitesse",
                                 "variableType": ""
                             }
                         },
@@ -12049,7 +12049,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.cassiopeia_can_be_seen_all_year_from_the_northern_hemisphere"
+                                "value": "Cassiop\u00e9e est visible toute l'ann\u00e9e dans l'h\u00e9misph\u00e8re nord."
                             }
                         },
                         "id": "VT?zb/`Qo~Mo]6vC5Ags",
@@ -12103,7 +12103,7 @@
                             "VARIABLE": {
                                 "id": "#3%4J0D$LQ,#{{O9o;SZ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.turn_speed",
+                                "value": "vitesse de braquage",
                                 "variableType": ""
                             }
                         },
@@ -12837,7 +12837,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "dessiner un point",
                                 "variableType": ""
                             }
                         },
@@ -13487,7 +13487,7 @@
                             "VARIABLE": {
                                 "id": "gpZ+sHST8X#$E@$v9{?_",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.pair_x",
+                                "value": "couple x",
                                 "variableType": ""
                             }
                         },
@@ -13585,7 +13585,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "dessiner une ligne",
                                 "variableType": ""
                             }
                         },
@@ -13664,7 +13664,7 @@
                             "VARIABLE": {
                                 "id": "]@}+e|%V2_oSrWDLLRpa",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_leo_constellation",
+                                "value": "D\u00e9finir les donn\u00e9es du Lion.",
                                 "variableType": ""
                             }
                         },
@@ -13723,7 +13723,7 @@
                             "VARIABLE": {
                                 "id": "vA)9-FHNND6-@A+8KAev",
                                 "name": "VARIABLE",
-                                "value": "instructions count",
+                                "value": "nombre d'instructions",
                                 "variableType": ""
                             }
                         },
@@ -14044,7 +14044,7 @@
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.constellation_count",
+                                "value": "nombre de constellations",
                                 "variableType": ""
                             }
                         },
@@ -14283,7 +14283,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "dessiner un point",
                                 "variableType": ""
                             }
                         },
@@ -14365,7 +14365,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "dessiner une ligne",
                                 "variableType": ""
                             }
                         },
@@ -14476,7 +14476,7 @@
                             "VARIABLE": {
                                 "id": "p-izhJ]MUP_NJ%0P@I,n",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_random",
+                                "value": "m\u00e9langer au hasard",
                                 "variableType": ""
                             }
                         },
@@ -14857,7 +14857,7 @@
                             "VARIABLE": {
                                 "id": "QMIEL.M@_GPc|Ut7@#;Q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.pair_y",
+                                "value": "couple y",
                                 "variableType": ""
                             }
                         },
@@ -14895,7 +14895,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "dessiner une ligne",
                                 "variableType": ""
                             }
                         },
@@ -14914,7 +14914,7 @@
                             "VARIABLE": {
                                 "id": "Lz[@^]l31Y^VXU#+mb3A",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.enable_cube_taps_and_cozmo_gives_instruction_to_see_the_next_constellation",
+                                "value": "Toucher un cube pour que Cozmo dise comment voir la prochaine constellation.",
                                 "variableType": ""
                             }
                         },
@@ -15374,7 +15374,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.in_hawaii_scorpius_is_known_as_mauis_fishhook"
+                                "value": "\u00c0 Hawa\u00ef, la constellation du Scorpion porte le nom d'\u00ab\u00a0hame\u00e7on de Maui\u00a0\u00bb."
                             }
                         },
                         "id": "dhp~:W}a*`Ty_OHUG3|S",
@@ -15566,7 +15566,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.cassiopeia"
+                                "value": "Cassiop\u00e9e"
                             }
                         },
                         "id": "ew{f3R6m@^=.eH8w0+q)",
@@ -15745,7 +15745,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.in_ancient_greek_stories_scorpius_beat_orion_in_a_fight"
+                                "value": "Dans la mythologie grecque, un scorpion g\u00e9ant tua Orion par son venin."
                             }
                         },
                         "id": "fWM9H{L}iMiS8|B`g3c[",
@@ -16009,7 +16009,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.some_of_libras_stars_could_have_livable_planets_pretty_cool"
+                                "value": "Certaines \u00e9toiles de la constellation de la Balance pourraient comporter des plan\u00e8tes habitables. Plut\u00f4t cool, non\u00a0?"
                             }
                         },
                         "id": "gP^8/KD{mt7)xjQ`/C9r",
@@ -16039,7 +16039,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.orion_is_one_of_the_most_recognizable_constellations"
+                                "value": "Elle est tr\u00e8s facilement reconnaissable."
                             }
                         },
                         "id": "gZx5yQq172-k0(TZcI8,",
@@ -17017,7 +17017,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.id_like_to_visit_libra_someday_and_see_if_they_have_good_tacos"
+                                "value": "J'aimerais bien visiter la constellation de la Balance pour voir si je peux y trouver de bons tacos."
                             }
                         },
                         "id": "kJ4L_bob^pQ(]T0lo^90",
@@ -17238,7 +17238,7 @@
                             "VARIABLE": {
                                 "id": "@2(]LhemBX7l_IQQaJ^%",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.clear_all_data_from_the_project_lists",
+                                "value": "Effacer toutes les donn\u00e9es des listes de projets.",
                                 "variableType": ""
                             }
                         },
@@ -17274,7 +17274,7 @@
                             "VARIABLE": {
                                 "id": "arBPhf~)-D8x67M7i/e4",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.loop_through_sets_of_coordinates_to_drive_and_draw_lines_and_dots",
+                                "value": "Utiliser les coordonn\u00e9es pour que Cozmo puisse dessiner des lignes et des points en se d\u00e9pla\u00e7ant.",
                                 "variableType": ""
                             }
                         },
@@ -17574,7 +17574,7 @@
                             "VARIABLE": {
                                 "id": "YuqIV|BhYSs@so$WZ/F]",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.input_enabled",
+                                "value": "entr\u00e9e activ\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -17592,7 +17592,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.you_can_recognize_orion_by_his_belt_very_fashionable"
+                                "value": "Orion est reconnaissable \u00e0 sa ceinture. Super tendance\u00a0!"
                             }
                         },
                         "id": "mU(n!J^xMfH4]tVpkpi:",
@@ -17625,7 +17625,7 @@
                             "VARIABLE": {
                                 "id": "Ci+:O30f9-PMiC+N0L:1",
                                 "name": "VARIABLE",
-                                "value": "draw dot",
+                                "value": "dessiner un point",
                                 "variableType": ""
                             }
                         },
@@ -17649,7 +17649,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.leo_can_be_seen_in_the_night_sky_from_late_march_through_may"
+                                "value": "La constellation du Lion peut \u00eatre observ\u00e9e dans le ciel nocturne de fin mars \u00e0 mai."
                             }
                         },
                         "id": "m]INwUq^:J5+R0uZaIii",
@@ -17665,7 +17665,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "dessiner une ligne",
                                 "variableType": ""
                             }
                         },
@@ -18194,7 +18194,7 @@
                             "VARIABLE": {
                                 "id": "rfbbNRv%Xk={1sCFms+r",
                                 "name": "VARIABLE",
-                                "value": "Get the distance between two coordinates.",
+                                "value": "Obtenir la distance entre les deux coordonn\u00e9es.",
                                 "variableType": ""
                             }
                         },
@@ -18483,7 +18483,7 @@
                             "VARIABLE": {
                                 "id": "~a=Oa2eRZ)gmuu-Mcsn~",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.randomly_choose_a_fact_for_cozmo_to_say",
+                                "value": "Choisir au hasard un fait racont\u00e9 par Cozmo.",
                                 "variableType": ""
                             }
                         },
@@ -18566,7 +18566,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.orion_is_a_warrior_from_ancient_greek_stories"
+                                "value": "Orion est un chasseur de la mythologie grecque."
                             }
                         },
                         "id": "r/ehZrIa/BdggyY-=Z*5",
@@ -18661,7 +18661,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.the_constellation_is_named_leo_because_it_looks_just_like_a_lion"
+                                "value": "Elle s'appelle ainsi car elle ressemble tout simplement \u00e0 un lion."
                             }
                         },
                         "id": "rFsGu7lug57(k#M_AAVT",
@@ -18784,7 +18784,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "dessiner une ligne",
                                 "variableType": ""
                             }
                         },
@@ -18824,7 +18824,7 @@
                             "VARIABLE": {
                                 "id": "ELj5b9R.r9xIAms-CQwE",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.use_the_data_from_the_instructions_list_to_decide_whether_to_draw_a_dot_a_line_both_or_neither",
+                                "value": "Utiliser les donn\u00e9es de la liste d'instructions pour d\u00e9terminer s'il faut dessiner un point, une ligne, les deux ou ni l'un ni l'autre.",
                                 "variableType": ""
                             }
                         },
@@ -19066,7 +19066,7 @@
                             "VARIABLE": {
                                 "id": "aqN|xXe_n~f^|26av^2A",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_the_constellation_choices_list",
+                                "value": "M\u00e9langer la liste de choix de constellations.",
                                 "variableType": ""
                             }
                         },
@@ -19324,7 +19324,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_count",
+                                "value": "m\u00e9langer le nombre",
                                 "variableType": ""
                             }
                         },
@@ -19343,7 +19343,7 @@
                             "VARIABLE": {
                                 "id": "gpZ+sHST8X#$E@$v9{?_",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.pair_x",
+                                "value": "couple x",
                                 "variableType": ""
                             }
                         },
@@ -19511,7 +19511,7 @@
                             "VARIABLE": {
                                 "id": "KnNs`9drP[R4!ji(G;lL",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.constellation_count",
+                                "value": "nombre de constellations",
                                 "variableType": ""
                             }
                         },
@@ -19941,7 +19941,7 @@
                             "VARIABLE": {
                                 "id": "V?p[M:HVR!Q^*rGSidH$",
                                 "name": "VARIABLE",
-                                "value": "draw line",
+                                "value": "dessiner une ligne",
                                 "variableType": ""
                             }
                         },
@@ -20093,7 +20093,7 @@
                             "VARIABLE": {
                                 "id": "#3%4J0D$LQ,#{{O9o;SZ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.turn_speed",
+                                "value": "vitesse de braquage",
                                 "variableType": ""
                             }
                         },
@@ -20363,7 +20363,7 @@
                             "VARIABLE": {
                                 "id": "VHX(-cXWv~FiBj#,f7yh",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.set_up_the_data_for_the_orion_constellation",
+                                "value": "D\u00e9finir les donn\u00e9es d'Orion.",
                                 "variableType": ""
                             }
                         },
@@ -20595,7 +20595,7 @@
                             "VARIABLE": {
                                 "id": "vA)9-FHNND6-@A+8KAev",
                                 "name": "VARIABLE",
-                                "value": "instructions count",
+                                "value": "nombre d'instructions",
                                 "variableType": ""
                             }
                         },
@@ -20820,7 +20820,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.leo_is_one_of_the_earliest_recognized_constellations"
+                                "value": "Il s'agit de l'une des toutes premi\u00e8res constellations d\u00e9couvertes."
                             }
                         },
                         "id": "{[q5[EtArdLTwtkW??30",
@@ -20921,7 +20921,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.shuffle_count",
+                                "value": "m\u00e9langer le nombre",
                                 "variableType": ""
                             }
                         },
@@ -20969,7 +20969,7 @@
                             "VARIABLE": {
                                 "id": "vA)9-FHNND6-@A+8KAev",
                                 "name": "VARIABLE",
-                                "value": "instructions count",
+                                "value": "nombre d'instructions",
                                 "variableType": ""
                             }
                         },
@@ -21342,7 +21342,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "codelabfeaturedproject.constellations.scorpius"
+                                "value": "Scorpion"
                             }
                         },
                         "id": "~@@UUf5YTC#^)`@qZQ=C",
@@ -21455,7 +21455,7 @@
                             "VARIABLE": {
                                 "id": "YuqIV|BhYSs@so$WZ/F]",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.input_enabled",
+                                "value": "entr\u00e9e activ\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -21495,7 +21495,7 @@
                             "VARIABLE": {
                                 "id": "QMIEL.M@_GPc|Ut7@#;Q",
                                 "name": "VARIABLE",
-                                "value": "codelabfeaturedproject.constellations.pair_y",
+                                "value": "couple y",
                                 "variableType": ""
                             }
                         },

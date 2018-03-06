@@ -61,37 +61,37 @@
     "translation" : "Offre un cadeau de Saint-Valentin façon Cozmo."
   },
   "whatsNew.CodeLab_PuttPutt.title" : {
-    "translation" : "Droit dedans"
+    "translation" : "Mini-golf"
   },
   "whatsNew.CodeLab_PuttPutt.description" : {
     "translation" : "Peux-tu faire un trou en un coup ?"
   },
   "whatsNew.CodeLab_ShakeIt.title" : {
-    "translation" : "Secoue-les !"
+    "translation" : "Maracas !"
   },
   "whatsNew.CodeLab_ShakeIt.description" : {
     "translation" : "Fais bouger les choses avec ce nouveau jeu."
   },
   "whatsNew.CodeLab_RemoteControlRacer.title" : {
-    "translation" : "Télécommande de course"
+    "translation" : "Manette de Course"
   },
   "whatsNew.CodeLab_RemoteControlRacer.description" : {
     "translation" : "Vroum, vroum ! Conduis Cozmo à la vitesse maximale."
   },
   "whatsNew.CodeLab_ComplimentGenerator.title" : {
-    "translation" : "Générateur de compliment"
+    "translation" : "Les Cozmopliments"
   },
   "whatsNew.CodeLab_ComplimentGenerator.description" : {
     "translation" : "Cozmo a quelque chose d'agréable à dire !"
   },
   "whatsNew.CodeLab_PotOGoldDetector.title" : {
-    "translation" : "Détecteur de trésor"
+    "translation" : "Chasse au trésor"
   },
   "whatsNew.CodeLab_PotOGoldDetector.description" : {
     "translation" : "La chasse au trésor ultime de la St Patrick !"
   },
   "whatsNew.CodeLab_DrivingInCircles.title" : {
-    "translation" : "Conduis en cercles"
+    "translation" : "Tourne en rond"
   },
   "whatsNew.CodeLab_DrivingInCircles.description" : {
     "translation" : "Fais des cercles pour la journée de Pi !"
@@ -106,6 +106,24 @@
     "translation" : "Constellations"
   },
   "whatsNew.CodeLab_Constellations.description" : {
-    "translation" : "Celebrate Astronomy Day with cosmic constellations."
+    "translation" : "Fête le jour de l'astronomie avec des constellations cosmiques."
+  },
+  "whatsNew.CodeLab_CozmosGarden.title" : {
+    "translation" : "Le jardin de Cozmo"
+  },
+  "whatsNew.CodeLab_CozmosGarden.description" : {
+    "translation" : "Célèbre la Journée de la Terre en faisant du jardinage avec Cozmo !"
+  },
+  "whatsNew.CodeLab_GuessTheNumber.title" : {
+    "translation" : "Devine le nombre"
+  },
+  "whatsNew.CodeLab_GuessTheNumber.description" : {
+    "translation" : "SOUMIS PAR JDFIGHT⏎⏎Véritable devin, Cozmo va deviner le nombre !"
+  },
+  "whatsNew.CodeLab_WakeUpCozmo.title" : {
+    "translation" : "Réveille-toi Cozmo !"
+  },
+  "whatsNew.CodeLab_WakeUpCozmo.description" : {
+    "translation" : "Qui ose perturber la sieste de Cozmo ?"
   }
 }

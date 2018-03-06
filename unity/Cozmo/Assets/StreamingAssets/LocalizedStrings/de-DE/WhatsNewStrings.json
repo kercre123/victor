@@ -103,9 +103,27 @@
     "translation" : "Fordere Cozmo zu einem Match auf. Hier ist Köpfchen gefragt!"
   },
   "whatsNew.CodeLab_Constellations.title" : {
-    "translation" : "Constellations"
+    "translation" : "Sternbilder"
   },
   "whatsNew.CodeLab_Constellations.description" : {
-    "translation" : "Celebrate Astronomy Day with cosmic constellations."
+    "translation" : "Feiere den Astronomietag mit kosmischen Sternbildern."
+  },
+  "whatsNew.CodeLab_CozmosGarden.title" : {
+    "translation" : "Cozmos Garten"
+  },
+  "whatsNew.CodeLab_CozmosGarden.description" : {
+    "translation" : "Feiere den Tag der Erde, indem du mit Cozmo einen Garten anpflanzt!"
+  },
+  "whatsNew.CodeLab_GuessTheNumber.title" : {
+    "translation" : "Zahlenraten"
+  },
+  "whatsNew.CodeLab_GuessTheNumber.description" : {
+    "translation" : "EINGEREICHT VON JDFIGHT\u000a\u000aDer mystische und allwissende Cozmo wird deine Zahl erraten!"
+  },
+  "whatsNew.CodeLab_WakeUpCozmo.title" : {
+    "translation" : "Wach auf, Cozmo!"
+  },
+  "whatsNew.CodeLab_WakeUpCozmo.description" : {
+    "translation" : "Wer wagt es, Cozmo bei seinem Nickerchen zu stören?"
   }
 }
