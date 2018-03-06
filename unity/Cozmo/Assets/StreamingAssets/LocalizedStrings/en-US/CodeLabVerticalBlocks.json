@@ -683,5 +683,11 @@
   },
   "codeLabVertical.RENAME_LIST_TITLE": {
     "translation": "Rename all \"%1\" lists to:"
+  },
+  "codeLabVertical.RENAME_LIST": {
+    "translation": "Rename list..."
+  },
+  "codeLabVertical.DELETE_LIST": {
+    "translation": "Delete the '%1' list"
   }
 }

@@ -300,6 +300,14 @@ Blockly.FieldVariable.dropdownCreate = function() {
   }
   if (this.defaultType_ == Blockly.BROADCAST_MESSAGE_VARIABLE_TYPE) {
     options.push([Blockly.Msg.NEW_BROADCAST_MESSAGE, Blockly.NEW_BROADCAST_MESSAGE_ID]);
+
+  // *** ANKI CHANGE ***
+  // Add text to menu so that text refers to lists instead of variables: "Rename list" and "Delete the x list"
+  } else if (this.defaultType_ == Blockly.LIST_VARIABLE_TYPE) {    
+    options.push([Blockly.Msg.RENAME_LIST, Blockly.RENAME_VARIABLE_ID]);
+    options.push([Blockly.Msg.DELETE_LIST.replace('%1', name),
+        Blockly.DELETE_VARIABLE_ID]);
+
   } else {
     options.push([Blockly.Msg.RENAME_VARIABLE, Blockly.RENAME_VARIABLE_ID]);
     if (Blockly.Msg.DELETE_VARIABLE) {
