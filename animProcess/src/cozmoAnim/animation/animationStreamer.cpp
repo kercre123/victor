@@ -52,7 +52,11 @@ namespace Cozmo {
 
   CONSOLE_VAR(bool, kProcFace_OverrideEyeParams,        "ProceduralFace", false); // Override procedural face with ConsoleVars edited version
   CONSOLE_VAR(bool, kProcFace_OverrideRightEyeParams,   "ProceduralFace", false); // Make left and right eyes override in unison
+#if PROCEDURALFACE_NOISE_FEATURE
   CONSOLE_VAR(bool, kProcFace_UseNoise,                 "ProceduralFace", false); // Victor vs Cozmo effect, no noise = lazy updates
+#else
+  static constexpr bool kProcFace_UseNoise = false;
+#endif
 
   static ProceduralFace s_faceDataOverride; // incoming values from console var system
   static ProceduralFace s_faceDataBaseline; // baseline to compare against, differences mean override the incoming animation

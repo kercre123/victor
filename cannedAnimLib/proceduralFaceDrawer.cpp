@@ -112,6 +112,7 @@ namespace Cozmo {
 #   undef NUM_FAST_EXP_TERMS
   }
   
+#if PROCEDURALFACE_NOISE_FEATURE
   inline Array2d<f32> CreateNoiseImage(const Util::RandomGenerator& rng)
   {
     Array2d<f32> noiseImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
@@ -122,7 +123,7 @@ namespace Cozmo {
     }
     return noiseImg;
   }
-  
+
   const Array2d<f32>& ProceduralFaceDrawer::GetNoiseImage(const Util::RandomGenerator& rng)
   {
     // NOTE: Since this is called separately for each eye, this looks better if we use an odd number of images
@@ -148,7 +149,8 @@ namespace Cozmo {
     
     return noiseImg;
   }
-  
+#endif // PROCEDURALFACE_NOISE_FEATURE
+
   void ProceduralFaceDrawer::DrawEye(const ProceduralFace& faceData, WhichEye whichEye, const Util::RandomGenerator& rng,
                                      Vision::ImageRGB& faceImg, Rectangle<f32>& eyeBoundingBox)
   {
@@ -495,8 +497,10 @@ namespace Cozmo {
       // Draw the eye into the face image, adding outer glow, noise, and stylized scanlines
       {
         ANKI_CPU_PROFILE("DrawEyePixels");
+#if PROCEDURALFACE_NOISE_FEATURE
         const Array2d<f32>& noiseImg = GetNoiseImage(rng);
-        
+#endif
+
         for(s32 i=upperLeft.y(); i<=bottomRight.y(); ++i)
         {
           //DEV_ASSERT_MSG(i>=0 && i<faceImg.GetNumRows(), "ProceduralFaceDrawer.DrawEye.BadRow", "%d", i);
@@ -504,8 +508,10 @@ namespace Cozmo {
           Vision::PixelRGB* faceImg_i = faceImg.GetRow(i);
           const u8*  eyeShape_i = _eyeShape.GetRow(i);
           const u8*  glowImg_i  = _glowImg.GetRow(i);
+#if PROCEDURALFACE_NOISE_FEATURE
           const f32* noiseImg_i = noiseImg.GetRow(i);
-          
+#endif
+
           for(s32 j=upperLeft.x(); j<=bottomRight.x(); ++j)
           {
             //DEV_ASSERT_MSG(j>=0 && j<faceImg.GetNumCols(), "ProceduralFaceDrawer.DrawEye.BadCol", "%d", j);
@@ -520,8 +526,12 @@ namespace Cozmo {
               // Combine everything together: noise, scanline, inner glow falloff, and the antialiasing / glow value.
               // Note that the value in glowImg/eyeShape is already [0,255]
               f32 newValue = static_cast<f32>(std::max(glowValue,eyeValue));
+#if PROCEDURALFACE_NOISE_FEATURE
               newValue *= noiseImg_i[j] * eyeLightness;
-              
+#else
+              newValue *= eyeLightness;
+#endif
+
               // Don't do scanlines in the glow region.
               const bool isPartOfEye = (eyeValue >= glowValue); // (and not part of glow)
               if(isPartOfEye)
