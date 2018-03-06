@@ -13,12 +13,28 @@ else()
   set(chipper_flags "-X \\\\\'anki/cloudproc.ChipperSecret=${chipper_flags}\\\\\'")
 endif()
 
+if (ANDROID)
+  set(__opus_build_dir ${CORETECH_EXTERNAL_DIR}/build/opus-linux)
+  add_library(opus SHARED IMPORTED)
+  set_target_properties(opus PROPERTIES IMPORTED_LOCATION ${__opus_build_dir}/lib/libopus.so)
+else()
+  set(__opus_build_dir ${CORETECH_EXTERNAL_DIR}/build/opus-mac)
+  add_library(opus STATIC IMPORTED)
+  set_target_properties(opus PROPERTIES IMPORTED_LOCATION ${__opus_build_dir}/lib/libopus.a)
+endif()
+
+macro(_add_chipper_flags target_name)
+  anki_go_set_ldflags(${target_name} ${chipper_flags})
+  anki_go_add_include_dir(${target_name} ${__opus_build_dir}/include/opus)
+  anki_go_add_c_library(${target_name} opus)
+endmacro()
+
 # voicetest project (mac only)
 if (MACOSX)
 
   # create Go target
   anki_build_go_c_library(voicego VOICEGO_HEADER ${ANKI_SRCLIST_DIR})
-  anki_go_set_ldflags(voicego ${chipper_flags})
+  _add_chipper_flags(voicego)
   get_filename_component(VOICEGO_HEADER_DIR ${VOICEGO_HEADER} DIRECTORY)
 
   # create C target
@@ -48,13 +64,16 @@ if (MACOSX)
 
   # proctest - test victor audio process w/ laptop mic
   anki_build_go_c_library(proctest_go PROCTEST_GO_HEADER ${ANKI_SRCLIST_DIR})
-  anki_go_set_ldflags(proctest_go ${chipper_flags})
+  _add_chipper_flags(proctest_go)
   get_filename_component(PROCTEST_HEADER_DIR ${PROCTEST_GO_HEADER} DIRECTORY)
   anki_build_cxx_executable(proctest ${ANKI_SRCLIST_DIR} ${PROCTEST_GO_HEADER})
   target_include_directories(proctest PUBLIC ${PROCTEST_HEADER_DIR})
   target_compile_definitions(proctest PUBLIC "HEADER_NAME=\"proctest_go.h\"")
   target_link_libraries(proctest PRIVATE util_audio proctest_go ${SECURITY_FRAMEWORK})
   anki_disable_default_build(proctest)
+
+  anki_build_go_executable(opusupload ${ANKI_SRCLIST_DIR})
+  _add_chipper_flags(opusupload)
 
 endif()
 
@@ -71,7 +90,14 @@ anki_disable_default_build(servbench)
 
 # cloud process
 anki_build_go_executable(vic-cloud ${ANKI_SRCLIST_DIR})
-anki_go_set_ldflags(vic-cloud ${chipper_flags})
+_add_chipper_flags(vic-cloud)
+# copy opusfile to lib dir
+if (ANDROID)
+  configure_file(${__opus_build_dir}/lib/libopus.so ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} COPYONLY)
+endif()
 
 anki_build_go_executable(wavtest ${ANKI_SRCLIST_DIR})
-anki_go_set_ldflags(wavtest ${chipper_flags})
+_add_chipper_flags(wavtest)
+
+anki_build_go_executable(opusenc ${ANKI_SRCLIST_DIR})
+_add_chipper_flags(opusenc)

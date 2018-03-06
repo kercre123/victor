@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"anki/opus"
+
 	pb "github.com/anki/sai-chipper-voice/grpc/pb2"
 
 	"github.com/gwatts/rootcerts"
@@ -38,15 +40,28 @@ type Conn struct {
 	device string
 }
 
-type StreamOpts struct {
-	SessionId string
-}
-
 type Stream struct {
 	conn    *Conn
 	stream  pb.ChipperGrpc_StreamingIntentClient
 	session string
 	opts    *StreamOpts
+	encoder *opus.OggStream
+}
+
+type StreamOpts struct {
+	CompressOpts
+	SessionId string
+	Handler   pb.IntentService
+}
+
+// CompressOpts specifies whether compression should be used and, if so, allows
+// the specification of parameters related to it
+type CompressOpts struct {
+	Compress   bool
+	Bitrate    uint
+	Complexity uint
+	FrameSize  float32
+	PreEncoded bool
 }
 
 func NewConn(serverUrl string, appKey string, deviceId string) (*Conn, error) {
@@ -77,10 +92,21 @@ func (c *Conn) NewStream(opts StreamOpts) (*Stream, error) {
 		return nil, err
 	}
 
+	var encoder *opus.OggStream
+	if opts.Compress {
+		encoder = &opus.OggStream{
+			SampleRate: 16000,
+			Channels:   1,
+			FrameSize:  opts.FrameSize,
+			Bitrate:    opts.Bitrate,
+			Complexity: opts.Complexity}
+	}
+
 	return &Stream{
-		conn:   c,
-		stream: stream,
-		opts:   &opts}, nil
+		conn:    c,
+		stream:  stream,
+		opts:    &opts,
+		encoder: encoder}, nil
 }
 
 func (c *Conn) Close() error {
@@ -88,15 +114,31 @@ func (c *Conn) Close() error {
 }
 
 func (c *Stream) SendAudio(audioData []byte) error {
+	encoding := pb.AudioEncoding_LINEAR_PCM
+
+	if c.opts.Compress {
+		encoding = pb.AudioEncoding_OGG_OPUS
+		var err error
+		audioData, err = c.encoder.EncodeBytes(audioData)
+		if err != nil {
+			return err
+		}
+		flushData := c.encoder.Flush()
+		audioData = append(audioData, flushData...)
+	} else if c.opts.PreEncoded {
+		encoding = pb.AudioEncoding_OGG_OPUS
+	}
+
 	return c.stream.Send(
 		&pb.StreamingIntentRequest{
 			DeviceId:        c.conn.device,
 			Session:         c.opts.SessionId,
 			LanguageCode:    pb.LanguageCode_ENGLISH_US,
 			SingleUtterance: true,
-			IntentService:   pb.IntentService_DIALOGFLOW,
+			IntentService:   c.opts.Handler,
 			AppKey:          c.conn.appKey,
-			InputAudio:      audioData})
+			InputAudio:      audioData,
+			AudioEncoding:   encoding})
 }
 
 func (c *Stream) WaitForIntent() (*IntentResult, error) {

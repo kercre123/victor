@@ -26,16 +26,12 @@ type socketMsg struct {
 }
 
 const (
-	// ChunkHz defines how many times per second samples should be sent
-	ChunkHz = 10
+	// DefaultChunkMs is the default value for how often audio is sent to the cloud
+	DefaultChunkMs = 120
 	// SampleRate defines how many samples per second should be sent
 	SampleRate = 16000
 	// SampleBits defines how many bits each sample should contain
 	SampleBits = 16
-	// ChunkSamples is the number of samples that should be in each chunk
-	ChunkSamples = SampleRate / ChunkHz
-	// StreamSize is the size in bytes of each chunk
-	StreamSize = ChunkSamples * (SampleBits / 8)
 	// HotwordMessage is the sequence of bytes that defines a hotword signal over IPC
 	HotwordMessage = "hotword"
 )
@@ -49,6 +45,7 @@ type Process struct {
 	kill      chan struct{}
 	hotword   chan struct{}
 	audio     chan socketMsg
+	opts      *Options
 }
 
 // AddReceiver adds the given Receiver to the list of sources the
@@ -103,6 +100,13 @@ func (p *Process) Run(stop <-chan struct{}) {
 	if verbose {
 		fmt.Println("Verbose logging enabled")
 	}
+	// set default options if not provided
+	if p.opts == nil {
+		p.opts = &Options{}
+	}
+	if p.opts.chunkMs == 0 {
+		p.opts.chunkMs = DefaultChunkMs
+	}
 
 	cloudChan := make(chan string)
 
@@ -125,14 +129,20 @@ procloop:
 					return
 				}
 				stream, err = chipperConn.NewStream(chipper.StreamOpts{
-					SessionId: uuid.New().String()[:16]})
+					CompressOpts: chipper.CompressOpts{
+						Compress:   p.opts.compress,
+						Bitrate:    66 * 1024,
+						Complexity: 0,
+						FrameSize:  60},
+					SessionId: uuid.New().String()[:16],
+					Handler:   p.opts.handler})
 			})
 			if err != nil {
 				fmt.Println("Error creating Chipper:", err)
 				continue
 			}
 
-			ctx = newVoiceContext(stream, cloudChan)
+			ctx = p.newVoiceContext(stream, cloudChan)
 
 			logVerbose("Received hotword event, created context in", int(ctxTime), "ms")
 
@@ -179,6 +189,25 @@ procloop:
 			break procloop
 		}
 	}
+}
+
+// SetOptions assigns the given options to this instance
+func (p *Process) SetOptions(o *Options) {
+	if o == nil {
+		return
+	}
+	p.opts = new(Options)
+	*p.opts = *o
+}
+
+// ChunkSamples is the number of samples that should be in each chunk
+func (p *Process) ChunkSamples() int {
+	return SampleRate * int(p.opts.chunkMs) / 1000
+}
+
+// StreamSize is the size in bytes of each chunk
+func (p *Process) StreamSize() int {
+	return p.ChunkSamples() * (SampleBits / 8)
 }
 
 // SetVerbose enables or disables verbose logging

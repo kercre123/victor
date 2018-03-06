@@ -165,7 +165,7 @@ function updateDeps(args) {
       console.error('could not find dep ' + args[0] + ' to update');
       return;
     }
-    changed = updateDep(dep);
+    changed = updateDep(args[0], dep);
   }
   if (changed) {
     console.log('wrote updates to ' + filename + ', run \'execute\' command to check out updated commits');

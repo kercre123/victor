@@ -3,6 +3,7 @@ package main
 import (
 	"anki/cloudproc"
 	"anki/ipc"
+	"flag"
 	"fmt"
 	"time"
 )
@@ -50,7 +51,9 @@ func main() {
 	// flag.BoolVar(&verbose, "verbose", false, "enable verbose logging")
 	// var test bool
 	// flag.BoolVar(&test, "test", false, "enable test channel")
-	// flag.Parse()
+
+	ms := flag.Bool("ms", false, "force microsoft handling on the server end")
+	flag.Parse()
 
 	micSock := getSocketWithRetry(ipc.GetSocketPath("mic_sock"), "cp_mic")
 	defer micSock.Close()
@@ -82,5 +85,10 @@ func main() {
 		process.AddReceiver(testRecv)
 	}
 	process.AddIntentWriter(aiSock)
+	opts := new(cloudproc.Options).SetCompression(true).SetChunkMs(120)
+	if *ms {
+		opts.SetHandler(cloudproc.HandlerMicrosoft)
+	}
+	process.SetOptions(opts)
 	process.Run(nil)
 }

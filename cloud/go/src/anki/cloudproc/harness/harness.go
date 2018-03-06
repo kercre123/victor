@@ -95,7 +95,7 @@ func (h *memHarness) ReadIntent() (string, error) {
 	return string(<-h.intent), nil
 }
 
-func CreateMemProcess() (Harness, error) {
+func CreateMemProcess(o *cloudproc.Options) (Harness, error) {
 	kill := make(chan struct{})
 
 	intentResult := make(chan []byte)
@@ -104,6 +104,7 @@ func CreateMemProcess() (Harness, error) {
 	process := &cloudproc.Process{}
 	process.AddReceiver(receiver)
 	process.AddIntentWriter(util.NewChanWriter(intentResult))
+	process.SetOptions(o)
 	go process.Run(kill)
 
 	return &memHarness{

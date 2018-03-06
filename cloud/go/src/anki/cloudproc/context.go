@@ -11,6 +11,7 @@ import (
 
 type voiceContext struct {
 	stream      *chipper.Stream
+	process     *Process
 	samples     []byte
 	audioStream chan []byte
 	once        sync.Once
@@ -18,11 +19,12 @@ type voiceContext struct {
 
 func (ctx *voiceContext) addSamples(samples []byte) {
 	ctx.samples = append(ctx.samples, samples...)
-	if len(ctx.samples) >= StreamSize {
+	streamSize := ctx.process.StreamSize()
+	if len(ctx.samples) >= streamSize {
 		// we have enough samples to stream - slice them off and pass them to another
 		// thread for sending to server
-		samples := ctx.samples[:StreamSize]
-		ctx.samples = ctx.samples[StreamSize:]
+		samples := ctx.samples[:streamSize]
+		ctx.samples = ctx.samples[streamSize:]
 		ctx.audioStream <- samples
 	}
 }
@@ -33,11 +35,12 @@ func (ctx *voiceContext) close() error {
 	return err.Error()
 }
 
-func newVoiceContext(stream *chipper.Stream, cloudChan chan<- string) *voiceContext {
+func (p *Process) newVoiceContext(stream *chipper.Stream, cloudChan chan<- string) *voiceContext {
 	audioStream := make(chan []byte, 10)
 	ctx := &voiceContext{
 		stream:      stream,
-		samples:     make([]byte, 0, StreamSize*2),
+		process:     p,
+		samples:     make([]byte, 0, p.StreamSize()*2),
 		audioStream: audioStream}
 
 	go func() {
