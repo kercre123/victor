@@ -85,54 +85,58 @@ void HelperLcdClear(void)
 }
 
 // Show the name of the fixture and version information
+extern int HelperTempC;
 void SetFixtureText(bool reinit=0);
 void SetFixtureText(bool reinit)
 {
   //const bool fcc = false;
   char b[50]; int bz = sizeof(b);
   static bool inited = 0;
+  if( reinit )
+    inited = 0;
   
-  if( !inited || reinit )
-  {
+  if( !inited )
     HelperLcdClear();
-    
-    //Dev builds show compile date-time across the top
-    #if NOT_FOR_FACTORY
-      HelperLcdSetLine(1, (__DATE__ " " __TIME__) );
-    //HelperLcdSetLine(2, "DEV-NOT FOR FACTORY!");
-    #endif
-    
-    //mode-specific info
-    if( g_fixmode == FIXMODE_HEAD1 || g_fixmode == FIXMODE_HEAD2 ) {
-      HelperLcdSetLine(7, snformat(b,bz,"emmcdl: %s", cmdGetEmmcdlVersion()) );
-    }
-    
-    //show build info and version
-    HelperLcdSetLine(8, snformat(b,bz,"%-15s v%03u", BUILD_INFO, g_fixtureReleaseVersion) );
-  }
   
-  /*/==========================DEBUG==========================================
-  static int ci = 0;  
-  typedef struct { char color; const char *desc; } dbg_display_t;
-  const dbg_display_t display[] = { 
-    {'r', "---RED---"},
-    {'g', "---GREEN---"},
-    {'b', "---BLUE---"},
-    {'w', "---WHITE---"} };
-  
-  ci = ci+1 < sizeof(display)/sizeof(dbg_display_t) ? ci+1 : 0;
-  HelperLcdSetLine(2, display[ci].desc ); //write color description to the display
-  HelperLcdShow(0,0, display[ci].color, (char*)fixtureName()); //set display text/color
-  inited = 1;
-  return;
-  //========================================================================*/
-  
-  //debug builds show last error code
+  //different colors for debug builds
   char color = 'b';
-  if( !g_isReleaseBuild ) {
-    HelperLcdSetLine(2, snformat(b,bz,"DEBUG e%03i %u.%03us", m_last_error, m_last_time_ms/1000, m_last_time_ms%1000 ) );
+  if( !g_isReleaseBuild )
     color = m_last_error == ERROR_OK ? 'g' : 'r';
-  }
+  
+  //for head programming fixtures, show last written ESN on the display
+  if( g_fixmode >= FIXMODE_HEAD1 && g_fixmode <= FIXMODE_HEAD2 )
+    HelperLcdSetLine(1, snformat(b,bz,"prev esn: 0x%08x", TestHeadGetPrevESN()) );
+  else if( !inited && !g_isReleaseBuild )
+    HelperLcdSetLine(1, "DEV-NOT FOR FACTORY!");
+  
+  //debug builds show last error code and test time (color coded)
+  if( !g_isReleaseBuild )
+    HelperLcdSetLine(2, snformat(b,bz,"DEBUG e%03i %u.%03us", m_last_error, m_last_time_ms/1000, m_last_time_ms%1000 ) );
+  
+  //Dev builds show compile date-time
+  if( !inited && !g_isReleaseBuild )
+    HelperLcdSetLine(3, (__DATE__ " " __TIME__) );
+  
+  //show helper head internal temperature  
+  int tempC = HelperTempC;
+  /*tempC = tempC < -9 ? -9 : (tempC > 99 ? 99 : tempC); //bounded for 2-char display space
+  if( tempC < 0 ) { //read error
+    HelperLcdSetLine(4, snformat(b,bz,"                   -") );
+    HelperLcdSetLine(5, snformat(b,bz,"                   %u", (-1)*tempC) );
+  } else {
+    HelperLcdSetLine(4, snformat(b,bz,"                   %u", tempC/10) );
+    HelperLcdSetLine(5, snformat(b,bz,"                   %u", tempC%10) );
+  }//-*/
+  int temp_line = (g_fixmode >= FIXMODE_HEAD1 && g_fixmode <= FIXMODE_HEAD2) ? 6 : 7; //shift up for head modes (make space for os version info)
+  HelperLcdSetLine(temp_line, snformat(b,bz,"%iC", tempC) );
+  
+  //mode-specific info
+  if( !inited && (g_fixmode == FIXMODE_HEAD1 || g_fixmode == FIXMODE_HEAD2) )
+    HelperLcdSetLine(7, snformat(b,bz,"os-ver %s", cmdGetEmmcdlVersion()) );
+  
+  //show build info and version
+  if( !inited )
+    HelperLcdSetLine(8, snformat(b,bz,"%-15s v%03u", BUILD_INFO, g_fixtureReleaseVersion) );
   
   HelperLcdShow(0,0, color, (char*)fixtureName());
   inited = 1;
@@ -328,6 +332,24 @@ inline void dbgBtnHandler(void)
   }
 }
 
+static uint32_t TtempUpdate = 0;
+int HelperTempC = INT_MIN;
+void helper_temp_manage(bool force_update)
+{
+  bool update = force_update || Timer::elapsedUs(TtempUpdate) > 60*1000*1000;
+  bool changed = 0;
+  
+  if( update ) {
+    int tempC = cmdGetHelperTempC(); //read new temp
+    changed = tempC != HelperTempC;
+    HelperTempC = tempC;
+    TtempUpdate = Timer::get();
+  }
+  
+  if( changed )
+    SetFixtureText();
+}
+
 // Repeatedly scan for a device, then run through the tests when it appears
 static void MainExecution()
 {
@@ -387,16 +409,10 @@ static void MainExecution()
     Board::ledOff(Board::LED_GREEN);
     Board::ledOff(Board::LED_YLW);
   }
+  helper_temp_manage(start); //force immediate temp read after test completion
   
   //DEBUG
   dbgBtnHandler();
-  
-  /*/DEBUG: periodic display refresh
-  static uint32_t Tstart = Timer::get();
-  if( Timer::elapsedUs(Tstart) > 5*1000*1000 ) {
-    Tstart = Timer::get();
-    SetFixtureText();
-  }//-*/
 }
 
 // Fetch flash parameters - done once on boot up
@@ -459,6 +475,7 @@ int main(void)
   
   ConsolePrintf("\n----- Victor Test Fixture: -----\n");
   printFixtureInfo();
+  helper_temp_manage(1);
   SetFixtureText();
   
   //DEBUG: runtime validation of the fixmode array
