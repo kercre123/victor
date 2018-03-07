@@ -18,6 +18,7 @@
 namespace Anki {
 namespace Cozmo {
 
+class AnimContext;
 class AnimationStreamer;
 
 namespace SwitchboardInterface {
@@ -27,8 +28,11 @@ namespace SwitchboardInterface {
 void SetBLEName(const std::string& name);
 void SetBLEPin(uint32_t pin);
 
+void InitConnectionFlow(AnimationStreamer* animStreamer);
+
 void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
-                          AnimationStreamer* animStreamer);
+                          AnimationStreamer* animStreamer,
+                          const AnimContext* context);
 
 }
 }

@@ -37,9 +37,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#if FACTORY_TEST
 #include "anki/cozmo/shared/factory/emrHelper.h"
-#endif
 
 #include "osState/osState.h"
 
@@ -354,7 +352,7 @@ void Process_textToSpeechStop(const RobotInterface::TextToSpeechStop& msg)
 
 void Process_setConnectionStatus(const Anki::Cozmo::SwitchboardInterface::SetConnectionStatus& msg)
 {
-  UpdateConnectionFlow(std::move(msg), _animStreamer);
+  UpdateConnectionFlow(std::move(msg), _animStreamer, _context);
 }
 
 void Process_setBLEName(const Anki::Cozmo::SwitchboardInterface::SetBLEName& msg)
@@ -459,7 +457,12 @@ static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
   const bool buttonReleasedEvent = buttonWasPressed && !buttonIsPressed;
   buttonWasPressed = buttonIsPressed;
 
-  CheckForDoublePress(buttonReleasedEvent);
+  // Only check for double press after passing packout and while on charger
+  if(Factory::GetEMR()->PACKED_OUT_FLAG && 
+     robotState.status & EnumToUnderlyingType(RobotStatusFlag::IS_ON_CHARGER))
+  {
+    CheckForDoublePress(buttonReleasedEvent);
+  }
 
   const auto currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(); 
 
@@ -550,6 +553,8 @@ Result AnimProcessMessages::Init(AnimEngine* animEngine,
   _animStreamer = animStreamer;
   _audioInput   = audioInput;
   _context      = context;
+
+  InitConnectionFlow(_animStreamer);
 
   return RESULT_OK;
 }

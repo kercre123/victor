@@ -119,7 +119,7 @@ namespace Factory {
 
   static const Factory::EMR* const GetEMR()
   {
-    #if defined(ANKI_PLATFORM_OSX)
+    #if defined(SIMULATOR)
       static Factory::EMR emr;
       return &emr;
     #endif

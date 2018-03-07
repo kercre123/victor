@@ -36,8 +36,8 @@ public:
   size_t GetNumFrames() const { return _isGrayscale ? _framesGray.size() : _framesRGB565.size(); }
   
   // Add frames of the given type
-  void AddFrame(const Vision::Image& img, bool hold = false);
-  void AddFrame(const Vision::ImageRGB565& img, bool hold = false);
+  template<class ImageType>
+  void AddFrame(const ImageType& img, bool hold = false);
   
   // Get a frame with the given index
   void GetFrame(const u32 index, Vision::Image& img);
@@ -56,7 +56,6 @@ private:
   std::deque<Vision::Image> _framesGray;         // underlying image container if isGrayscale == true
   std::deque<Vision::ImageRGB565> _framesRGB565; // underlying image container if images are color
 };
-
   
 } // namespace Cozmo
 } // namespace Anki

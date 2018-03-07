@@ -1002,7 +1002,7 @@ namespace Vision {
 
       for(; c < numCols; c++)
       {
-        f32 h = (f32)row[0] * (360/255.f) * (1/60.f);
+        f32 h = (f32)row[0] * (360/256.f) * (1/60.f);
         f32 s = (f32)row[1] * (1/255.f);
         f32 v = (f32)row[2] * (1/255.f);
 

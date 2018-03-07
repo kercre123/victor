@@ -12,9 +12,13 @@
 #include "cozmoAnim/connectionFlow.h"
 
 #include "cozmoAnim/animation/animationStreamer.h"
+#include "cozmoAnim/animComms.h"
+#include "cozmoAnim/animContext.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 
 #include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataScope.h"
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/image_impl.h"
 
@@ -26,6 +30,8 @@
 #include "opencv2/imgproc.hpp"
 #include "opencv2/highgui.hpp"
 
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -33,7 +39,7 @@ namespace {
 std::string _name = "Vector 0000";
 u32 _pin = 123456;
 
-const std::string kURL = "vector.anki.com";
+const std::string kURL = "anki.com/v";
 const ColorRGBA   kColor(0.7f, 0.7f, 0.7f, 1.f);
 }
 
@@ -131,10 +137,11 @@ void DrawStartPairingScreen(AnimationStreamer* animStreamer)
 }
 
 // Draws BLE name, key icon, and BLE pin to screen
-void DrawShowPinScreen(AnimationStreamer* animStreamer)
+void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* context)
 {
   Vision::ImageRGB key;
-  key.Load("/anki/data/assets/cozmo_resources/config/facePNGs/key.png");
+  key.Load(context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, 
+                                                      "config/facePNGs/pairing_icon_key.png"));
 
   Vision::ImageRGB img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
   img.FillWith(0);
@@ -148,7 +155,7 @@ void DrawShowPinScreen(AnimationStreamer* animStreamer)
 
   DrawTextCenteredHorizontally(_name, CV_FONT_NORMAL, 0.5f, 1, i, kColor, 0, false);
 
-  DrawTextCenteredHorizontally(std::to_string(_pin), CV_FONT_NORMAL, 0.6f, 1, i, kColor, FACE_DISPLAY_HEIGHT-15, false);
+  DrawTextCenteredHorizontally(std::to_string(_pin), CV_FONT_NORMAL, 0.6f, 1, i, kColor, FACE_DISPLAY_HEIGHT-20, false);
 
   animStreamer->SetFaceImage(i, 0);
 }
@@ -156,34 +163,19 @@ void DrawShowPinScreen(AnimationStreamer* animStreamer)
 // Uses a png sequence animation to draw wifi icon to screen
 void DrawWifiScreen(AnimationStreamer* animStreamer)
 {
-  // Taking advantage of a "feature" of the neon hsv2rgb565 converter
-  // where a hue of 255 outputs white since we don't have control over
-  // face saturation and value in order to achieve white nor do we currently
-  // support non-grayscale png sequences
-  ProceduralFace::SetHue(255);
-  animStreamer->Abort();
-  // TODO(Al): Shouldn't need to lock tracks since actual animations won't move them
-  animStreamer->SetLockedTracks((u8)AnimTrackFlag::ALL_TRACKS);
-  animStreamer->UnlockTrack(AnimTrackFlag::FACE_IMAGE_TRACK);
-  animStreamer->SetStreamingAnimation("anim_timerset_getin_01", 0, 0);
+  animStreamer->SetStreamingAnimation("anim_pairing_icon_wifi", 0, 0);
 }
 
 // Uses a png sequence animation to draw os updating icon to screen
 void DrawUpdatingOSScreen(AnimationStreamer* animStreamer)
 {
-  animStreamer->Abort();
-  animStreamer->SetLockedTracks((u8)AnimTrackFlag::ALL_TRACKS);
-  animStreamer->UnlockTrack(AnimTrackFlag::FACE_IMAGE_TRACK);
-  animStreamer->SetStreamingAnimation("anim_timerset_getin_02", 0, 0);
+  animStreamer->SetStreamingAnimation("anim_pairing_icon_update", 0, 0);
 }
 
 // Uses a png sequence animation to draw waiting for app icon to screen
 void DrawWaitingForAppScreen(AnimationStreamer* animStreamer)
 {
-  animStreamer->Abort();
-  animStreamer->SetLockedTracks((u8)AnimTrackFlag::ALL_TRACKS);
-  animStreamer->UnlockTrack(AnimTrackFlag::FACE_IMAGE_TRACK);
-  animStreamer->SetStreamingAnimation("anim_bored_event_04", 0, 0);
+  animStreamer->SetStreamingAnimation("anim_pairing_icon_awaitingapp", 0, 0);
 }
 
 void SetBLEName(const std::string& name)
@@ -196,9 +188,27 @@ void SetBLEPin(uint32_t pin)
   _pin = pin;
 }
 
-void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
-                          AnimationStreamer* animStreamer)
+void InitConnectionFlow(AnimationStreamer* animStreamer)
 {
+  // Don't start connection flow if not packed out
+  if(!Factory::GetEMR()->PACKED_OUT_FLAG)
+  {
+    return;
+  }
+
+  DrawStartPairingScreen(animStreamer);
+}
+
+void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
+                          AnimationStreamer* animStreamer,
+                          const AnimContext* context)
+{
+  // Don't start connection flow if not packed out
+  if(!Factory::GetEMR()->PACKED_OUT_FLAG)
+  {
+    return;
+  }
+
   using namespace SwitchboardInterface;
 
   switch(msg.status)
@@ -217,12 +227,38 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
     break;
     case ConnectionStatus::SHOW_PIN:
     {
-      DrawShowPinScreen(animStreamer);
+      DrawShowPinScreen(animStreamer, context);
+
+      // Start system pairing light (pulsing orange/green)
+      RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
+        .light = {
+          .onColor = 0xFFFF0000,
+          .offColor = 0x00000000,
+          .onFrames = 16,
+          .offFrames = 16,
+          .transitionOnFrames = 16,
+          .transitionOffFrames = 16,
+          .offset = 0
+      }}));
+      AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
     }
     break;
     case ConnectionStatus::SETTING_WIFI:
     {
       DrawWifiScreen(animStreamer);
+
+      // Turn off system pairing light
+      RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
+        .light = {
+          .onColor = 0x00000000,
+          .offColor = 0x00000000,
+          .onFrames = 1,
+          .offFrames = 1,
+          .transitionOnFrames = 0,
+          .transitionOffFrames = 0,
+          .offset = 0
+      }}));
+      AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
     }
     break;
     case ConnectionStatus::UPDATING_OS:
@@ -238,11 +274,32 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
     case ConnectionStatus::END_PAIRING:
     {
       NativeAnkiUtilConsoleSetValueWithString("DisplayThermalThrottling", "true");
-      // Reset hue back to default because it gets changed by Draw(Wifi/OS/App)Screen
-      ProceduralFace::ResetHueToDefault();
       animStreamer->Abort();
-      // Reenable keep face alive
-      animStreamer->EnableKeepFaceAlive(true, 0);
+
+      // Probably will never get here because we will restart
+      // while updating os
+      if(FACTORY_TEST)
+      {
+        DrawStartPairingScreen(animStreamer);
+      }
+      else
+      {
+        // Reenable keep face alive
+        animStreamer->EnableKeepFaceAlive(true, 0);
+      }
+
+      // Safe guard to make sure system pairing light is turned off
+      RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
+        .light = {
+          .onColor = 0x00000000,
+          .offColor = 0x00000000,
+          .onFrames = 1,
+          .offFrames = 1,
+          .transitionOnFrames = 0,
+          .transitionOffFrames = 0,
+          .offset = 0
+      }}));
+      AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
     }
     break;
     case ConnectionStatus::COUNT:

@@ -15,7 +15,7 @@
 namespace Anki {
 namespace Cozmo {
 
-
+template<>
 void FaceAnimation::AddFrame(const Vision::Image& img, bool hold)
 {
   DEV_ASSERT(!_hold, "FaceAnimation.AddFrame.AddFrameToHoldingAnim");
@@ -30,6 +30,7 @@ void FaceAnimation::AddFrame(const Vision::Image& img, bool hold)
   _hold = hold;
 }
 
+template<>
 void FaceAnimation::AddFrame(const Vision::ImageRGB565& img, bool hold)
 {
   DEV_ASSERT(!_hold, "FaceAnimation.AddFrame.AddFrameToHoldingAnim");
