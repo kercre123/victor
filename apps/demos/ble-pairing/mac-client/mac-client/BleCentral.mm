@@ -308,7 +308,8 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 
 - (void)peripheral:(CBPeripheral *)peripheral
 didDiscoverServices:(NSError *)error {
-  [peripheral discoverCharacteristics:@[_readUuid, _writeUuid] forService:peripheral.services[0]];
+  [peripheral discoverCharacteristics:nil forService:peripheral.services[0]];
+  //[peripheral discoverCharacteristics:@[_readUuid, _writeUuid, _readSecureUuid, _writeSecureUuid] forService:peripheral.services[0]];
 }
 
 - (void)peripheral:(CBPeripheral *)peripheral
@@ -320,9 +321,12 @@ didDiscoverCharacteristicsForService:(CBService *)service
     if([characteristic.UUID.UUIDString isEqualToString:_writeUuid.UUIDString]) {
       NSLog(@"Am I trying to subscribe to something?");
       [peripheral setNotifyValue:true forCharacteristic:characteristic];
+    } else if ([characteristic.UUID.UUIDString isEqualToString:_writeSecureUuid.UUIDString]) {
+      NSLog(@"Am I trying to subscribe to something?");
+      [peripheral setNotifyValue:true forCharacteristic:characteristic];
     }
     
-    NSLog(@"Did discover services: %@.", characteristic.UUID.UUIDString);
+    NSLog(@"Did discover CHAR: %@.", characteristic.UUID.UUIDString);
   }
   
   NSLog(@"Did discover characteristics.");
