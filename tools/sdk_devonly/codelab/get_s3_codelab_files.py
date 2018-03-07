@@ -67,7 +67,7 @@ except KeyError:
 
 
 def get_unverified_codelab_filelist():
-  unverified_codelab_file_pattern = r'(^production/[a-zA-Z\d]{23}/[a-fA-F\d]{26}/[a-fA-F\d]{26}.codelab$)'
+  unverified_codelab_file_pattern = r'(^production/[a-zA-Z\d]{23}/[a-fA-F\d]{26}/[a-fA-F\d]{26}_file.codelab$)'
   unverified_codelab_file_pattern = re.compile(unverified_codelab_file_pattern, re.IGNORECASE)
 
   contents = None
@@ -214,7 +214,7 @@ def rename_files_to_human_readable(args, codelab_filepath, codelab_json_filepath
 
 def download_codelab_file_and_json(args, codelab_file):
   makedirs_exist_ok('{}/{}'.format(args.output_dir, os.path.dirname(codelab_file)))
-  codelab_json_file = str(codelab_file).replace('.codelab', '_metadata.json')
+  codelab_json_file = str(codelab_file).replace('_file.codelab', '_metadata.json')
   codelab_filepath = os.path.join(args.output_dir, codelab_file)
   codelab_json_filepath = os.path.join(args.output_dir, codelab_json_file)
   try:
