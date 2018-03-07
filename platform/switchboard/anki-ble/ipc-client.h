@@ -13,6 +13,7 @@
 #pragma once
 
 #include "ipc.h"
+#include "ble_advertise_settings.h"
 
 #include <deque>
 #include <mutex>
@@ -38,8 +39,11 @@ class IPCClient : public IPCEndpoint {
                    const bool reliable,
                    const std::vector<uint8_t>& value);
   void Disconnect(const int connection_id);
-  void StartAdvertising();
+  void StartAdvertising(const BLEAdvertiseSettings& settings);
   void StopAdvertising();
+  void StartScan(const std::string& serviceUUID);
+  void StopScan();
+  void ConnectToPeripheral(const std::string& address);
 
  protected:
   virtual void OnReceiveIPCMessage(const int sockfd,
@@ -53,6 +57,11 @@ class IPCClient : public IPCEndpoint {
                                        const int connection_id,
                                        const int connected,
                                        const bool congested) {}
+  virtual void OnScanResults(int error, const std::vector<ScanResultRecord>& records) {}
+  virtual void OnOutboundConnectionChange(const std::string& address,
+                                          const int connected,
+                                          const int connection_id,
+                                          const std::vector<GattDbRecord>& records) {}
 
  private:
   void ConnectWatcherCallback(ev::io& w, int revents);

@@ -16,7 +16,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <string>
-
+#include <vector>
 
 namespace Anki {
 
@@ -36,6 +36,9 @@ int CreateDirectory(const std::string& path,
                     mode_t mode = kModeUserReadWriteExecute,
                     uid_t owner = kRootUid,
                     gid_t group = kRootGid);
+
+bool ReadFileIntoVector(const std::string& pathToFile,
+                        std::vector<uint8_t>& data);
 
 
 } // namespace Anki

@@ -25,6 +25,8 @@
 //#include <glib.h>
 
 #include "anki-ble/log.h"
+#include "anki-ble/anki_ble_uuids.h"
+#include "anki-ble/ble_advertise_settings.h"
 #include "switchboardd/_switchboardMain.h"
 #include "anki-wifi/wifi.h"
 
@@ -77,7 +79,12 @@ void Anki::Switchboard::Daemon::InitializeBle() {
   sBleClient->OnConnectedEvent().SubscribeForever(OnConnected);
   sBleClient->OnDisconnectedEvent().SubscribeForever(OnDisconnected);
   sBleClient->Connect();
-  sBleClient->StartAdvertising();
+
+  Anki::BLEAdvertiseSettings settings;
+  settings.GetAdvertisement().SetServiceUUID(Anki::kAnkiBLEService_128_BIT_UUID);
+  settings.GetScanResponse().SetIncludeDeviceName(true);
+  settings.GetScanResponse().SetIncludeTxPowerLevel(true);
+  sBleClient->StartAdvertising(settings);
 
   Log::Write("Initialize BLE");
 }

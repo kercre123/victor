@@ -10,7 +10,8 @@
  *
  **/
 
-#include "anki-ble/log.h"
+#include "log.h"
+#include "strlcpy.h"
 #include <iostream>
 #include <stdio.h>
 #include <string.h>
@@ -29,8 +30,7 @@ int __android_log_write(int prio, const char *tag, const char *msg) {
   if (prio >= sMinLogLevel) {
     std::cout << msg << std::endl;
   }
-
-  return 0;
+  return 1;
 }
 #endif
 
@@ -43,7 +43,7 @@ void enableAndroidLogging(const bool enable) {
 }
 
 void setAndroidLoggingTag(const char* tag) {
-  strncpy(sAndroidLoggingTag, tag, sizeof(sAndroidLoggingTag));
+  (void) strlcpy(sAndroidLoggingTag, tag, sizeof(sAndroidLoggingTag));
 }
 
 int getMinLogLevel() {

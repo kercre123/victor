@@ -47,7 +47,7 @@ void Anki::Switchboard::BleClient::OnReceiveMessage(const int connection_id,
 }
 
 void Anki::Switchboard::BleClient::OnInboundConnectionChange(int connection_id, int connected) {
-  bool isConnectedToCentral = (bool)connected;
+  bool isConnectedToCentral = (bool)connected && (connection_id != -1);
 
   printf("connection_id [%d] connected [%d]\n", connection_id, connected);
 

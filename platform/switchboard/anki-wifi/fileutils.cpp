@@ -13,6 +13,7 @@
 #include "fileutils.h"
 #include "log.h"
 #include <fstream>
+#include <iterator>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -80,6 +81,31 @@ int CreateDirectory(const std::string& path,
     return rc;
   }
   return 0;
+}
+
+bool ReadFileIntoVector(const std::string& pathToFile,
+                        std::vector<uint8_t>& data)
+{
+  data.clear();
+  std::ifstream fileIn;
+  fileIn.open(pathToFile, std::ios::in | std::ifstream::binary);
+  if (!fileIn.is_open()) {
+    return false;
+  }
+  fileIn.unsetf(std::ios::skipws);
+
+  std::streampos fileSize;
+
+  fileIn.seekg(0, std::ios::end);
+  fileSize = fileIn.tellg();
+  fileIn.seekg(0, std::ios::beg);
+
+  data.reserve(fileSize);
+  data.insert(data.begin(),
+              std::istream_iterator<uint8_t>(fileIn),
+              std::istream_iterator<uint8_t>());
+  fileIn.close();
+  return true;
 }
 
 } // namespace Anki

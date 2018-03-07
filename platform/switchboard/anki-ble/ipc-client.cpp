@@ -10,10 +10,11 @@
  *
  **/
 
-#include "anki-ble/ipc-client.h"
-#include "anki-ble/log.h"
-#include "anki-ble/memutils.h"
+#include "ipc-client.h"
 #include "libev/libev.h"
+#include "log.h"
+#include "memutils.h"
+#include "strlcpy.h"
 
 #include <algorithm>
 
@@ -118,6 +119,35 @@ void IPCClient::OnReceiveIPCMessage(const int sockfd,
                          value);
       }
       break;
+    case IPCMessageType::OnScanResults:
+      {
+        logv("ipc-client: OnScanResults");
+        OnScanResultsArgs* args = (OnScanResultsArgs *) data.data();
+        std::vector<ScanResultRecord> records;
+        for (int i = 0 ; i < args->record_count; i++) {
+          ScanResultRecord record;
+          memcpy(&record, &(args->records[i]), sizeof(record));
+          records.push_back(record);
+        }
+        OnScanResults(args->error, records);
+      }
+      break;
+    case IPCMessageType::OnOutboundConnectionChange:
+      {
+        logv("ipc-client: OnOutboundConnectionChange");
+        OnOutboundConnectionChangeArgs* args = (OnOutboundConnectionChangeArgs *) data.data();
+        std::vector<GattDbRecord> records;
+        for (int i = 0 ; i < args->num_gatt_db_records ; i++) {
+          GattDbRecord record = {0};
+          memcpy(&record, &(args->records[i]), sizeof(record));
+          records.push_back(record);
+        }
+        OnOutboundConnectionChange(std::string(args->address),
+                                   args->connected,
+                                   args->connection_id,
+                                   records);
+      }
+      break;
     default:
       loge("ipc-client: Unknown IPC message : %d", (int) type);
       break;
@@ -133,9 +163,9 @@ void IPCClient::SendMessage(const int connection_id,
   uint32_t args_length = sizeof(*args) + value.size();
   args = (SendMessageArgs *) malloc_zero(args_length);
   args->connection_id = connection_id;
-  strncpy(args->characteristic_uuid,
-          characteristic_uuid.c_str(),
-          sizeof(args->characteristic_uuid) - 1);
+  (void) strlcpy(args->characteristic_uuid,
+                 characteristic_uuid.c_str(),
+                 sizeof(args->characteristic_uuid));
   args->reliable = reliable;
   args->length = (uint32_t) value.size();
   memcpy(args->value, value.data(), value.size());
@@ -154,14 +184,84 @@ void IPCClient::Disconnect(const int connection_id)
                          (uint8_t *) &args);
 }
 
-void IPCClient::StartAdvertising()
+void IPCClient::StartAdvertising(const BLEAdvertiseSettings& settings)
 {
-  SendIPCMessageToServer(IPCMessageType::StartAdvertising);
+  StartAdvertisingArgs args = {0};
+  args.appearance = settings.GetAppearance();
+  args.min_interval = settings.GetMinInterval();
+  args.max_interval = settings.GetMaxInterval();
+
+  const std::vector<const BLEAdvertiseData*>
+      ble_ad_data = {&(settings.GetAdvertisement()), &(settings.GetScanResponse())};
+  std::vector<AdvertisingData*> ad_data = {&(args.advertisement), &(args.scan_response)};
+
+  for (int i = 0 ; i < ble_ad_data.size(); i++) {
+    const BLEAdvertiseData* src = ble_ad_data[i];
+    AdvertisingData* dst = ad_data[i];
+
+    dst->include_device_name = src->GetIncludeDeviceName();
+    dst->include_tx_power_level = src->GetIncludeTxPowerLevel();
+    const std::vector<uint8_t>& manufacturer_data = src->GetManufacturerData();
+    dst->manufacturer_data_len =
+        std::min(manufacturer_data.size(), sizeof(dst->manufacturer_data));
+    if (dst->manufacturer_data_len > 0) {
+      if (manufacturer_data.size() > dst->manufacturer_data_len) {
+        logw("Truncating manufacturer_data from %zu bytes to %d bytes",
+             manufacturer_data.size(), dst->manufacturer_data_len);
+      }
+      (void) memcpy(dst->manufacturer_data,
+                    manufacturer_data.data(),
+                    dst->manufacturer_data_len);
+    }
+    const std::vector<uint8_t>& service_data = src->GetServiceData();
+    dst->service_data_len =
+        std::min(service_data.size(), sizeof(dst->service_data));
+    if (dst->service_data_len > 0) {
+      if (service_data.size() > dst->service_data_len) {
+        logw("Truncating service_data from %zu bytes to %d bytes",
+             service_data.size(), dst->service_data_len);
+      }
+      (void) memcpy(dst->service_data,
+                    service_data.data(),
+                    dst->service_data_len);
+    }
+    dst->have_service_uuid = !src->GetServiceUUID().empty();
+    if (dst->have_service_uuid) {
+      strlcpy(dst->service_uuid, src->GetServiceUUID().c_str(), sizeof(dst->service_uuid));
+    }
+  }
+
+  SendIPCMessageToServer(IPCMessageType::StartAdvertising,
+                         sizeof(args),
+                         (uint8_t *) &args);
 }
 
 void IPCClient::StopAdvertising()
 {
   SendIPCMessageToServer(IPCMessageType::StopAdvertising);
+}
+
+void IPCClient::StartScan(const std::string& serviceUUID)
+{
+  StartScanArgs args = {0};
+  (void) strlcpy(args.service_uuid, serviceUUID.c_str(), sizeof(args.service_uuid));
+  SendIPCMessageToServer(IPCMessageType::StartScan,
+                         sizeof(args),
+                         (uint8_t *) &args);
+}
+
+void IPCClient::ConnectToPeripheral(const std::string& address)
+{
+  ConnectToPeripheralArgs args = {0};
+  (void) strlcpy(args.address, address.c_str(), sizeof(args.address));
+  SendIPCMessageToServer(IPCMessageType::ConnectToPeripheral,
+                         sizeof(args),
+                         (uint8_t *) &args);
+}
+
+void IPCClient::StopScan()
+{
+  SendIPCMessageToServer(IPCMessageType::StopScan);
 }
 
 IPCClient::~IPCClient()
