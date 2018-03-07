@@ -679,12 +679,12 @@
     "translation" : "Renommer toutes les listes « %1 » :"
   },
   "codeLabVertical.RENAME_LIST" : {
-    "translation" : "Rename list..."
+    "translation" : "Renommer une liste de..."
   },
   "codeLabVertical.DELETE_LIST" : {
-    "translation" : "Delete the '%1' list"
+    "translation" : "Supprimer le '%1' liste"
   },
   "codeLabVertical.DELETE_LIST_CONFIRMATION" : {
-    "translation" : "Delete %1 uses of the '%2' list?"
+    "translation" : "Supprimer %1 utilise de la '%2' liste ?"
   }
 }
