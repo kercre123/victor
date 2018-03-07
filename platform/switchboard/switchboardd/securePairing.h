@@ -106,7 +106,7 @@ namespace Switchboard {
     void SubscribeToCladMessages();
     
     inline bool AssertState(CommsState state) {
-      return state != _commsState;
+      return state == _commsState;
     }
     
     void SendHandshake();

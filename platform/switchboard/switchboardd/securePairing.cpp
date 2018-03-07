@@ -179,7 +179,6 @@ void Anki::Switchboard::SecurePairing::SendHandshake() {
   uint8_t handshakeMessage[kHandshakeMessageLength];
   handshakeMessage[0] = SetupMessage::MSG_HANDSHAKE;
   *(uint32_t*)(&handshakeMessage[1]) = PairingProtocolVersion::CURRENT;
-
   _stream->SendPlainText(handshakeMessage, sizeof(handshakeMessage));
 }
 
@@ -190,8 +189,6 @@ void Anki::Switchboard::SecurePairing::SendPublicKey() {
 
   // Generate public, private key
   uint8_t* publicKey = (uint8_t*)_keyExchange->GenerateKeys();
-
-  _commsState = CommsState::Clad;
   std::array<uint8_t, crypto_kx_PUBLICKEYBYTES> publicKeyArray;
   memcpy(std::begin(publicKeyArray), publicKey, crypto_kx_PUBLICKEYBYTES);
   SendRtsMessage<RtsConnRequest>(publicKeyArray);
@@ -225,7 +222,6 @@ void Anki::Switchboard::SecurePairing::SendChallenge() {
   // Tell the stream that we can now send over encrypted channel
   _stream->SetEncryptedChannelEstablished(true);
   // Update state to secureClad
-  _commsState = CommsState::SecureClad;
   _state = PairingState::AwaitingChallengeResponse;
   
   // Create random challenge value
@@ -458,6 +454,7 @@ void Anki::Switchboard::SecurePairing::HandleDecryptionFailed() {
 
 void Anki::Switchboard::SecurePairing::HandleNonceAck() {
   // Send challenge to user
+  _commsState = CommsState::SecureClad;
   SendChallenge();
   
   Log::Write("Client acked nonce, sending challenge.");
@@ -517,6 +514,7 @@ void Anki::Switchboard::SecurePairing::HandleMessageReceived(uint8_t* bytes, uin
           bool handleHandshake = HandleHandshake(clientVersion);
           
           if(handleHandshake) {
+            _commsState = CommsState::Clad;
             SendPublicKey();
             _state = PairingState::AwaitingPublicKey;
           } else {
