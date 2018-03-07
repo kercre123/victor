@@ -22,7 +22,7 @@
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
-#include "webServerProcess/src/webService.h"
+// #include "webServerProcess/src/webService.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -30,7 +30,7 @@ namespace Cozmo {
 namespace {
 using namespace ExternalInterface;
 const char* kConditionTypeKey = "conditionType";
-const char* kWebVizModuleName = "behaviorconds";
+// const char* kWebVizModuleName = "behaviorconds";
 }
 
   
@@ -56,7 +56,7 @@ BEIConditionType IBEICondition::ExtractConditionType(const Json::Value& config)
 IBEICondition::IBEICondition(const Json::Value& config)
 : _conditionType(ExtractConditionType(config))
 , _debugLabel( MakeUniqueDebugLabel() )
-, _previouslyMet( false )
+// , _previouslyMet( false )
 {
 }
 
@@ -112,47 +112,47 @@ bool IBEICondition::AreConditionsMet(BehaviorExternalInterface& behaviorExternal
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBEICondition::SendConditionsToWebViz( bool conditionsMet, BehaviorExternalInterface& bei ) const
 {
-  auto factors = GetDebugFactors();
-  std::sort(factors.begin(), factors.end(), [](const DebugFactors& a, const DebugFactors& b) {
-    return a.name < b.name;
-  });
-  if( _firstRun
-     || (factors != _previousDebugFactorsList)
-     || (conditionsMet != _previouslyMet) )
-  {
-    _firstRun = false;
-    _previousDebugFactorsList = factors;
-    _previouslyMet = conditionsMet;
+  // auto factors = GetDebugFactors();
+  // std::sort(factors.begin(), factors.end(), [](const DebugFactors& a, const DebugFactors& b) {
+  //   return a.name < b.name;
+  // });
+  // if( _firstRun
+  //    || (factors != _previousDebugFactorsList)
+  //    || (conditionsMet != _previouslyMet) )
+  // {
+  //   _firstRun = false;
+  //   _previousDebugFactorsList = factors;
+  //   _previouslyMet = conditionsMet;
     
-    Json::Value json;
-    json["changed"] = "factors";
-    json["time"] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    json["owner"] = _ownerLabel;
-    json["name"] = GetDebugLabel();
-    json["value"] = _previouslyMet;
-    auto& list = json["list"];
-    for( const auto& factor : GetDebugFactors() ) {
-      Json::Value elem;
-      elem["name"] = factor.name;
-      elem["value"] = factor.value;
-      list.append( elem );
-    }
-    const auto* webService = bei.GetRobotInfo().GetContext()->GetWebService();
-    webService->SendToWebViz(kWebVizModuleName, json);
-  }
+  //   Json::Value json;
+  //   json["changed"] = "factors";
+  //   json["time"] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  //   json["owner"] = _ownerLabel;
+  //   json["name"] = GetDebugLabel();
+  //   json["value"] = _previouslyMet;
+  //   auto& list = json["list"];
+  //   for( const auto& factor : GetDebugFactors() ) {
+  //     Json::Value elem;
+  //     elem["name"] = factor.name;
+  //     elem["value"] = factor.value;
+  //     list.append( elem );
+  //   }
+  //   const auto* webService = bei.GetRobotInfo().GetContext()->GetWebService();
+  //   webService->SendToWebViz(kWebVizModuleName, json);
+  // }
 }
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBEICondition::SendInactiveToWebViz( BehaviorExternalInterface& bei ) const
 {
-  Json::Value json;
-  json["changed"] = "inactive";
-  json["time"] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  json["name"] = GetDebugLabel();
-  json["owner"] = _ownerLabel;
-  const auto* webService = bei.GetRobotInfo().GetContext()->GetWebService();
-  webService->SendToWebViz(kWebVizModuleName, json);
+  // Json::Value json;
+  // json["changed"] = "inactive";
+  // json["time"] = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  // json["name"] = GetDebugLabel();
+  // json["owner"] = _ownerLabel;
+  // const auto* webService = bei.GetRobotInfo().GetContext()->GetWebService();
+  // webService->SendToWebViz(kWebVizModuleName, json);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -33,7 +33,7 @@
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/voiceCommands/voiceCommandComponent.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
-#include "webServerProcess/src/webService.h"
+// #include "webServerProcess/src/webService.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -213,8 +213,8 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   SetEngineState(EngineState::LoadingData);
 
-  _context->GetWebService()->Start(_context->GetDataPlatform(),
-                                   _context->GetDataLoader()->GetWebServerEngineConfig());
+  // _context->GetWebService()->Start(_context->GetDataPlatform(),
+  //                                  _context->GetDataLoader()->GetWebServerEngineConfig());
 
   // DAS Event: "cozmo_engine.init.build_configuration"
   // s_val: Build configuration
@@ -322,7 +322,7 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   
   _context->GetVoiceCommandComponent()->Update();
 
-  _context->GetWebService()->Update();
+  // _context->GetWebService()->Update();
 
   // Handle UI
   if (!_uiWasConnected && _uiMsgHandler->HasDesiredNumUiDevices()) {
