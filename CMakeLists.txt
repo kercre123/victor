@@ -111,57 +111,57 @@ endif()
 #    message(FATAL_ERROR "breakpad_client not defined")
 #endif()
 
-#### import(clad "tools/message-buffers")
-# BRC-TODO: Make this top-level include into an "interface"
-# lib so that other target can depend on it, instead of manually injecting
-# include dirs
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
 if(VICOS)
-  ####
   set(CLAD_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/externalInterface/tools/message-buffers")
   set(CLAD_VICTOR_EMITTER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/externalInterface/victorEmitters")
   set(CLAD_OUTPUT_DIR_CPP "${CMAKE_CURRENT_SOURCE_DIR}/generated/clad/externalInterface")
   set(CLAD_OUTPUT_DIR_PYTHON "${CMAKE_CURRENT_SOURCE_DIR}/generated/cladPython/externalInterface")
   set(CLAD_OUTPUT_DIR_CSHARP "${CMAKE_CURRENT_SOURCE_DIR}/generated/cladCSharp/externalInterface")
   add_subdirectory("victor-sdk-clad")
-  ####
   add_subdirectory("platform/switchboard")
 else()
-  import(util "lib/util")
-  include(audio) # See ./cmake/audio.cmake for definitions and lib
-  import(ble_cozmo "lib/BLECozmo")
-  import(DAS "lib/das-client")
+import(clad "tools/message-buffers")
+import(util "lib/util")
+include(audio) # See ./cmake/audio.cmake for definitions and lib
+import(ble_cozmo "lib/BLECozmo")
+import(DAS "lib/das-client")
 
-  import(coretech "coretech")
-  add_subdirectory("clad")
-  add_subdirectory("cloud")
-  add_subdirectory("cubeBleClient")
-  add_subdirectory("osState")
-  add_subdirectory("cannedAnimLib")
-  add_subdirectory("animProcess")
-  add_subdirectory("webServerProcess")
-  add_subdirectory("lib/signalEssence")
-  add_subdirectory("platform")
+# BRC-TODO: Make this top-level include into an "interface"
+# lib so that other target can depend on it, instead of manually injecting
+# include dirs
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-  target_include_directories(victor_anim PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
-  )
+import(coretech "coretech")
+add_subdirectory("clad")
+add_subdirectory("cloud")
+add_subdirectory("cubeBleClient")
+add_subdirectory("osState")
+add_subdirectory("cannedAnimLib")
+add_subdirectory("animProcess")
+add_subdirectory("webServerProcess")
+add_subdirectory("lib/signalEssence")
+add_subdirectory("platform")
 
-  target_include_directories(victor_web_library PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
-  )
+target_include_directories(victor_anim PRIVATE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
+)
 
-  add_subdirectory("robot")
+target_include_directories(victor_web_library PRIVATE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
+)
 
-  import(cozmo_engine "engine")
+add_subdirectory("robot")
 
-  target_include_directories(cozmo_engine PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
-  )
+import(cozmo_engine "engine")
 
-  add_subdirectory("resources")
-endif()
+target_include_directories(cozmo_engine PRIVATE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
+)
+
+add_subdirectory("resources")
+endif(VICOS)
 
 if (ANDROID)
     add_subdirectory("project/victor/tools")
