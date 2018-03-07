@@ -122,7 +122,9 @@ uint32_t   cmdRobotGmr(uint8_t idx);
 //                  Additional Cmd + response parsing
 //-----------------------------------------------------------------------------
 
+#define DEFAULT_TEMP_ZONE 4
 char* cmdGetEmmcdlVersion(int timeout_ms = CMD_DEFAULT_TIMEOUT);
+int   cmdGetHelperTempC(int zone = DEFAULT_TEMP_ZONE);
 
 #endif //CMD_H
 

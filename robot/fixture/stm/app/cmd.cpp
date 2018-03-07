@@ -586,3 +586,42 @@ char* cmdGetEmmcdlVersion(int timeout_ms)
   return (char*)estring;
 }
 
+enum temp_errs_e {
+  TEMP_ERR_HELPER_READ_FAULT  = -1, //returned by helper on file read err, bad zone etc.
+  TEMP_ERR_HELPER_NO_RESPONSE = -2, //didn't receive matching zone# response from helper
+  TEMP_ERR_HELPER_CMD_ERR     = -3, //helper returned error code to cmd
+  TEMP_ERR_LOCAL_PARSE_FAULT  = -4, //internal parsing failed
+  TEMP_ERR_LOCAL_PARSE_CNT    = -5, //parser unexpected response count
+};
+
+static int tempC, temp_cnt, temp_zone;
+
+void temperature_handler(char* s) {
+  temp_cnt++;
+  int zone = cmdParseInt32( cmdGetArg(s,0) );
+  if( zone == temp_zone ) {
+    tempC = cmdParseInt32( cmdGetArg(s,1) );
+    if( tempC == INT_MIN ) //parse failed
+      tempC = TEMP_ERR_LOCAL_PARSE_FAULT;
+  }
+}
+
+int cmdGetHelperTempC(int zone)
+{
+  char b[40]; const int bz = sizeof(b);
+  snformat(b,bz, (zone >= 0 ? "get_temperature %i" : "get_temperature 0 1 2 3 4 5 6 7 8 9"), zone);
+  
+  temp_cnt = 0;
+  temp_zone = zone >= 0 ? zone : DEFAULT_TEMP_ZONE;
+  tempC = TEMP_ERR_HELPER_NO_RESPONSE;
+  cmdSend(CMD_IO_HELPER, b, CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN, temperature_handler);
+  
+  if( cmdStatus() != 0 )
+    return TEMP_ERR_HELPER_CMD_ERR;
+  
+  if( (zone < 0 && temp_cnt != 10) || (zone >= 0 && temp_cnt != 1) )
+    return TEMP_ERR_LOCAL_PARSE_CNT;
+  
+  return tempC > 1000 ? tempC/1000 : tempC; //some zones given in mC
+}
+

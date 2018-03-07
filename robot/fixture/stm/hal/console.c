@@ -401,6 +401,15 @@ static void emmcdlVersionCmd(void)
   }
 }
 
+static void GetTemperatureCmd(void)
+{
+  int zone = DEFAULT_TEMP_ZONE;
+  try { zone = strtol(GetArgument(1),0,0); } catch (int e) { }
+  
+  int tempC = cmdGetHelperTempC(zone);
+  ConsolePrintf("zone %i: %iC\n", zone >= 0 ? zone : DEFAULT_TEMP_ZONE, tempC);
+}
+
 static void DutProgCmd_(void)
 {
   int enable = 0;
@@ -464,6 +473,7 @@ static CommandFunction m_functions[] =
   {"GetSerial", GetSerialCmd, FALSE},
   {"BinVersion", BinVersionCmd, FALSE},
   {"emmcdlVersion", emmcdlVersionCmd, FALSE},
+  {"GetTemp", GetTemperatureCmd, FALSE},
   {"SetDateCode", SetDateCode, FALSE},
   {"SetLotCode", SetLotCode, FALSE},
   {"SetMode", SetMode, FALSE},
