@@ -98,19 +98,25 @@ namespace TestCommon
     e[2] = which == TO_DUT_UART ? DUT_UART::getRxFramingErrors() : Contacts::getRxFramingErrors();
   }
   
-  void consoleBridge(bridge_target_e which, int inactivity_delay_ms, int timeout_ms)
+  void consoleBridge(bridge_target_e which, int inactivity_delay_ms, int timeout_ms, int opts)
   {
     const char cmd_exit[5] = "exit";    int exit_idx = 0;
     const char cmd_echo[5] = "echo";    int echo_idx = 0;
+    const char cmd_buff[5] = "buff";    int buff_idx = 0;
     const char cmd_stats[6] = "stats";  int stats_idx = 0;
-    int c;
-    bool echo = 0;
+    
+    bool echo = opts & BRIDGE_OPT_LOCAL_ECHO;
+    bool bufmode = opts & BRIDGE_OPT_LINEBUFFER;
+    const  int  line_maxlen = 40;
+    int  line_len = 0, recall_len = 0;
+    char line[line_maxlen+1];
     
     ConsolePrintf("Console Bridge <-> %s for %ims,inactive:%ims [or type 'exit']\n", which_s_(which), timeout_ms, inactivity_delay_ms);
     
     if( which == TO_CONTACTS )
       Contacts::setModeRx(); //explicit mode change required?
     
+    int c;
     uint32_t Tstart = Timer::get();
     while(1)
     {
@@ -132,11 +138,51 @@ namespace TestCommon
         }
       } while( c > -1 );
       
+      //process console input
       if( (c = ConsoleReadChar()) > -1 )
       {
         inactivity_delay_ms = 0; //disabled on activity
-        if( echo ) { ConsolePutChar(c); }
-        bridge_putchar_(which, c);
+        if( !bufmode ) { //normal mode
+          if( echo )
+            ConsolePutChar(c);
+          bridge_putchar_(which, c); //immediate write
+        }
+        else //use line buffering
+        {
+          if( c > 0 && c < 0x80 ) //ignore null and non-ascii
+          {
+            if( c == '\r' || c == '\n' ) { //enter or return
+              ConsolePutChar(c);
+              if( line_len > 0 ) {
+                line[line_len] = '\0';
+                for(int x=0; x<line_len; x++)
+                  bridge_putchar_(which, line[x]); //dump the entire line
+                bridge_putchar_(which, '\n');
+                recall_len = line_len; //save length for recall
+                line_len = 0;
+              }
+            } else if( c == 0x1B ) { //ESC
+              if( recall_len > 0 ) {
+                for(int x=0; x<recall_len; x++)
+                  ConsolePutChar(line[x]); //re-print last command on the console
+                line_len = recall_len; //restore buffer point
+                recall_len = 0;
+              }
+            } else if (c == 0x7F || c == 8) {  //delete or backspace
+              if( line_len > 0 ) {
+                ConsolePutChar(c);      //overwrite the onscreen char with a space
+                ConsolePutChar(' ');    //"
+                ConsolePutChar(c);      //"
+                line[--line_len] = 0;
+              }
+            } else if( line_len < line_maxlen ) {
+              ConsolePutChar(c);
+              line[line_len++] = c;
+              recall_len = 0;
+            }
+            //else, whoops! drop data we don't have room for
+          }
+        }
         
         //track 'exit' cmd
         if( (c == '\r' || c == '\n') && exit_idx == sizeof(cmd_exit)-1 ) //cmd match w/ EOL
@@ -152,15 +198,24 @@ namespace TestCommon
         } else
           echo_idx = (c == cmd_echo[echo_idx]) ? echo_idx+1 : 0; //index track
         
+        //track 'buff' cmd
+        if( (c == '\r' || c == '\n') && buff_idx == sizeof(cmd_buff)-1 ) { //cmd match w/ EOL
+          bufmode = !bufmode;
+          ConsolePrintf("linebuffer %s\n", bufmode ? "enabled" : "disabled");
+          buff_idx = 0;
+        } else
+          buff_idx = (c == cmd_buff[buff_idx]) ? buff_idx+1 : 0; //index track
+        
         //track 'stats' cmd
         if( (c == '\r' || c == '\n') && stats_idx == sizeof(cmd_stats)-1 ) { //cmd match w/ EOL
           struct { int dropped_chars; int overflow; int framing; } e;
           bridge_get_errs_(which, (int*)&e );
-          ConsolePrintf("\ndrop:%i ovf:%i frame:%i\n", e.dropped_chars, e.overflow, e.framing );
+          ConsolePrintf("drop:%i ovf:%i frame:%i\n", e.dropped_chars, e.overflow, e.framing );
           stats_idx = 0;
         } else
           stats_idx = (c == cmd_stats[stats_idx]) ? stats_idx+1 : 0; //index track
-      }
+        
+      }//c > -1
       
     }
     
