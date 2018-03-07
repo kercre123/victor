@@ -131,6 +131,12 @@ set -e
 # startup rsync daemon
 $ADB shell "${DEVICE_RSYNC_BIN_DIR}/rsync.bin --daemon --config=${DEVICE_RSYNC_CONF_DIR}/${RSYNCD_CONF}"
 
+#
+# Stop any victor services. If services are allowed to run during deployment, exe and shared library 
+# files can't be released.  This may tie up enough disk space to prevent deployment of replacement files.
+# 
+$ADB shell "/bin/systemctl stop victor.target"
+
 pushd ${BUILD_ROOT} > /dev/null 2>&1
 
 # Since invoking rsync multiple times is expensive.
@@ -143,7 +149,11 @@ find bin -type f -not -name '*.full' >> ${RSYNC_LIST}
 find etc >> ${RSYNC_LIST}
 find data >> ${RSYNC_LIST}
 
-rsync -rlptD -uzvP --delete --files-from=${RSYNC_LIST} ./ rsync://${DEVICE_IP_ADDRESS}/anki_root/
+#
+# Use --inplace to avoid consuming temp space & minimize number of writes
+# Use --delete to purge files that are no longer present in build tree
+#
+rsync -rlptD -uzvP --inplace --delete --files-from=${RSYNC_LIST} ./ rsync://${DEVICE_IP_ADDRESS}/anki_root/
 
 rm -f ${BUILD_ROOT}/rsync.*.lst
 
