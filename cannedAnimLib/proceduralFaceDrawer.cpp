@@ -14,32 +14,38 @@
 #include "util/math/numericCast.h"
 #include "util/random/randomGenerator.h"
 
+
 namespace Anki {
 namespace Cozmo {
   
   #define CONSOLE_GROUP "ProceduralFace"
 
-  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseFraction,            CONSOLE_GROUP, 0.15f, 0.f, 1.f); // TODO: Tie to audio
+#if PROCEDURALFACE_NOISE_FEATURE
+  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseFraction,              CONSOLE_GROUP, 0.15f, 0.f, 1.f); // TODO: Tie to audio
+#endif
 
-  CONSOLE_VAR(bool,       kProcFace_UseAntiAliasedLines,      CONSOLE_GROUP, true); // Only affects OpenCV drawing, not post-smoothing
-  CONSOLE_VAR_RANGED(f32, kProcFace_GlowSizeMultiplier,       CONSOLE_GROUP, 1.f, 0.f, 1.f);
-  CONSOLE_VAR_RANGED(f32, kProcFace_EyeLightnessMultiplier,   CONSOLE_GROUP, 1.f, 0.f, 10.f);
-  CONSOLE_VAR_RANGED(f32, kProcFace_GlowLightnessMultiplier,  CONSOLE_GROUP, 1.f, 0.f, 10.f);
+  CONSOLE_VAR(bool,       kProcFace_UseAntiAliasedLines,        CONSOLE_GROUP, true); // Only affects OpenCV drawing, not post-smoothing
+  CONSOLE_VAR_RANGED(f32, kProcFace_EyeLightnessMultiplier,     CONSOLE_GROUP, 1.f, 0.f, 10.f);
 
-  CONSOLE_VAR(bool,       kProcFace_RenderInnerOuterGlow,     CONSOLE_GROUP, false); // Render glow
-  CONSOLE_VAR_RANGED(f32, kProcFace_InnerGlowFrac,            CONSOLE_GROUP, 0.4f, 0.05f, 1.f);
-  CONSOLE_VAR(bool,       kProcFace_ApplyGlowFilter,          CONSOLE_GROUP, false); // Gausssian or boxfilter for glow
-  CONSOLE_VAR(bool,       kProcFace_GaussianGlowFilter,       CONSOLE_GROUP, false); // simpler box filter if not
-  CONSOLE_VAR_RANGED(s32, kProcFace_AntiAliasingSize,         CONSOLE_GROUP, 0, 0, 63); // full image antialiasing
+  CONSOLE_VAR(bool,       kProcFace_HotspotRender,              CONSOLE_GROUP, true); // Render glow
+  CONSOLE_VAR_RANGED(f32, kProcFace_HotspotFalloff,             CONSOLE_GROUP, 0.85f, 0.05f, 1.f);
+
+  CONSOLE_VAR(bool,       kProcFace_GlowRender,                 CONSOLE_GROUP, false);
+  CONSOLE_VAR_RANGED(f32, kProcFace_GlowSizeMultiplier,         CONSOLE_GROUP, 1.f, 0.f, 1.f);
+  CONSOLE_VAR_RANGED(f32, kProcFace_GlowLightnessMultiplier,    CONSOLE_GROUP, 1.f, 0.f, 10.f);
+  CONSOLE_VAR(bool,       kProcFace_GlowGaussianFilter,         CONSOLE_GROUP, false); // Gausssian or boxfilter for glow
+
+  CONSOLE_VAR_RANGED(s32, kProcFace_AntiAliasingSize,           CONSOLE_GROUP, 5, 0, 63); // full image antialiasing
+  CONSOLE_VAR(bool,       kProcFace_AntiAliasingGaussianFilter, CONSOLE_GROUP, false); // simpler box filter if not
 
   static void VictorFaceRenderer(ConsoleFunctionContextRef context)
   {
-    kProcFace_RenderInnerOuterGlow = kProcFace_ApplyGlowFilter = true;
+    kProcFace_HotspotRender = true;
     kProcFace_AntiAliasingSize = 5;
   }
   static void CozmoFaceRenderer(ConsoleFunctionContextRef context)
   {
-    kProcFace_RenderInnerOuterGlow = kProcFace_ApplyGlowFilter = false;
+    kProcFace_HotspotRender = false;
     kProcFace_AntiAliasingSize = 0;
   }
   CONSOLE_FUNC(VictorFaceRenderer, CONSOLE_GROUP);
@@ -399,10 +405,10 @@ namespace Cozmo {
       // Inner Glow = the brighter glow at the center of the eye that falls off radially towards the edge of the eye
       // Outer Glow = the "halo" effect around the outside of the eye shape
       // Add inner glow to the eye shape, before we compute the outer glow, so that boundaries conditions match.
-      if(kProcFace_RenderInnerOuterGlow) {
+      if(kProcFace_HotspotRender) {
         ANKI_CPU_PROFILE("RenderInnerOuterGlow");
-        const f32 sigmaX = kProcFace_InnerGlowFrac*scaledEyeWidth;
-        const f32 sigmaY = kProcFace_InnerGlowFrac*scaledEyeHeight;
+        const f32 sigmaX = kProcFace_HotspotFalloff*scaledEyeWidth;
+        const f32 sigmaY = kProcFace_HotspotFalloff*scaledEyeHeight;
         const f32 invInnerGlowSigmaX_sq = 1.f / (2.f * (sigmaX*sigmaX));
         const f32 invInnerGlowSigmaY_sq = 1.f / (2.f * (sigmaY*sigmaY));
         for(s32 i=upperLeft.y(); i<=bottomRight.y(); ++i)
@@ -438,8 +444,8 @@ namespace Cozmo {
       _glowImg.Allocate(faceImg.GetNumRows(), faceImg.GetNumCols());
       _glowImg.FillWith(0);
 
-      if(kProcFace_ApplyGlowFilter) {
-        ANKI_CPU_PROFILE("ApplyGlowFilter");
+      if(kProcFace_GlowRender) {
+        ANKI_CPU_PROFILE("GlowRender");
         if(Util::IsFltGTZero(glowFraction))
         {
           Vision::Image glowImgROI  = _glowImg.GetROI(eyeBoundingBoxS32);
@@ -455,7 +461,7 @@ namespace Cozmo {
             ++glowSizeY;
           }
 
-          if(kProcFace_GaussianGlowFilter) {
+          if(kProcFace_GlowGaussianFilter) {
             cv::GaussianBlur(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), cv::Size(glowSizeX,glowSizeY),
                              (f32)glowSizeX, (f32)glowSizeY);
           } else {
@@ -470,7 +476,7 @@ namespace Cozmo {
         if(kProcFace_AntiAliasingSize % 2 == 0) {
           ++kProcFace_AntiAliasingSize; // Antialiasing filter size should be odd
         }
-        if(kProcFace_GaussianGlowFilter) {
+        if(kProcFace_AntiAliasingGaussianFilter) {
           const f32 kAntiAliasingSigmaFraction = 0.5f;
           cv::GaussianBlur(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize),
                            (f32)kProcFace_AntiAliasingSize * kAntiAliasingSigmaFraction);

@@ -318,7 +318,7 @@ namespace Cozmo {
     bool GetFaceImageHelper(ImageType& img);
     
     std::string  _animName;
-    float        _scanlineOpacity = 0.7f;
+    float        _scanlineOpacity = 1.f;
     s32          _curFrame = 0;
     
   }; // class FaceAnimationKeyFrame
