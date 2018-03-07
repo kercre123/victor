@@ -105,6 +105,8 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
             //
             break;
           }
+          default:
+            break;
         }
       }
       
@@ -306,7 +308,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 
 - (void)peripheral:(CBPeripheral *)peripheral
 didDiscoverServices:(NSError *)error {
-  [peripheral discoverCharacteristics:@[_readUuid, _writeUuid, _readSecureUuid, _writeSecureUuid] forService:peripheral.services[0]];
+  [peripheral discoverCharacteristics:@[_readUuid, _writeUuid] forService:peripheral.services[0]];
 }
 
 - (void)peripheral:(CBPeripheral *)peripheral
@@ -315,10 +317,25 @@ didDiscoverCharacteristicsForService:(CBService *)service
   for(int i = 0; i < service.characteristics.count; i++) {
     CBCharacteristic* characteristic = service.characteristics[i];
     [_characteristics setObject:characteristic forKey:characteristic.UUID.UUIDString];
-    [peripheral setNotifyValue:true forCharacteristic:characteristic];
+    if([characteristic.UUID.UUIDString isEqualToString:_writeUuid.UUIDString]) {
+      NSLog(@"Am I trying to subscribe to something?");
+      [peripheral setNotifyValue:true forCharacteristic:characteristic];
+    }
+    
+    NSLog(@"Did discover services: %@.", characteristic.UUID.UUIDString);
   }
   
   NSLog(@"Did discover characteristics.");
+}
+
+- (void)peripheral:(CBPeripheral *)peripheral
+didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic
+             error:(NSError *)error {
+  if(error == nil) {
+    NSLog(@"We think we subscribed correctly");
+  } else {
+    NSLog(@"error subbing");
+  }
 }
 
 // ----------------------------------------------------------------------------------------------------------------
