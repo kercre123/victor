@@ -13,7 +13,7 @@
                 "currentCostume": 0,
                 "direction": 90,
                 "draggable": false,
-                "id": "r+}Yko`]^HYxXdFa_V~x",
+                "id": "}b7rtx^.q*V0sYo(Ra(e",
                 "isStage": true,
                 "lists": {},
                 "name": "Stage",
@@ -26,6 +26,18 @@
                         "name": "Geratene Zahl anzeigen",
                         "type": "broadcast_msg",
                         "value": "display guess"
+                    },
+                    "0ay{8luN^LB3TRxhL=cC": {
+                        "id": "0ay{8luN^LB3TRxhL=cC",
+                        "name": "Tippen auf",
+                        "type": "",
+                        "value": "0"
+                    },
+                    "2=0Mat0?Wb@mMVboB@3/": {
+                        "id": "2=0Mat0?Wb@mMVboB@3/",
+                        "name": "Rateversuche insgesamt",
+                        "type": "",
+                        "value": 1
                     },
                     "2bncxZXZ/NkerG~*iGe#": {
                         "id": "2bncxZXZ/NkerG~*iGe#",
@@ -91,13 +103,13 @@
                         "id": "I]C.SU[:`mS]Fm)I:p4q",
                         "name": "maximal",
                         "type": "",
-                        "value": 46
+                        "value": "100"
                     },
-                    "V2rWPMh}?bCZTB/jIKWD": {
-                        "id": "V2rWPMh}?bCZTB/jIKWD",
-                        "name": "Raten",
+                    "W,+T/$83Li9T31KxF^cz": {
+                        "id": "W,+T/$83Li9T31KxF^cz",
+                        "name": "Spiel beendet",
                         "type": "",
-                        "value": 44
+                        "value": "1"
                     },
                     "^(T~92_uxQ0;_cHe4ZC#": {
                         "id": "^(T~92_uxQ0;_cHe4ZC#",
@@ -127,7 +139,7 @@
                         "id": "kf;Ezn.ORl:3j.v:.v`$",
                         "name": "minimal",
                         "type": "",
-                        "value": 42
+                        "value": "1"
                     },
                     "oij$a?yKBJb+o5+Ol.=,": {
                         "id": "oij$a?yKBJb+o5+Ol.=,",
@@ -135,23 +147,11 @@
                         "type": "",
                         "value": 0
                     },
-                    "qURdyL-v$_9]]+;ox,ya": {
-                        "id": "qURdyL-v$_9]]+;ox,ya",
-                        "name": "Rateversuche insgesamt",
-                        "type": "",
-                        "value": 6
-                    },
                     "uj1v/FX)*u*BPrq$mv:a": {
                         "id": "uj1v/FX)*u*BPrq$mv:a",
                         "name": "Anweisungen geben",
                         "type": "broadcast_msg",
                         "value": "give instructions"
-                    },
-                    "wLTe)C4A2H}E=Hl-SA1!": {
-                        "id": "wLTe)C4A2H}E=Hl-SA1!",
-                        "name": "Spiel beendet",
-                        "type": "",
-                        "value": "1"
                     },
                     "x)KbWLPvpKhh@|L?hp.T": {
                         "id": "x)KbWLPvpKhh@|L?hp.T",
@@ -159,11 +159,12 @@
                         "type": "broadcast_msg",
                         "value": "turn off backpack"
                     },
-                    "}[neTF)o8A@8u%1[?`BN": {
-                        "id": "}[neTF)o8A@8u%1[?`BN",
-                        "name": "Tippen auf",
+                    "})@_[V6faFP/HGW^2Qi#": {
+                        "id": "})@_[V6faFP/HGW^2Qi#",
+                        "isCloud": false,
+                        "name": "Zahl raten",
                         "type": "",
-                        "value": "0"
+                        "value": 80
                     },
                     "~S9R6L^F[.MO15G:THcj": {
                         "id": "~S9R6L^F[.MO15G:THcj",
@@ -211,6 +212,40 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "#X;mL%ZS*PD/u]O$bEBs": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "})@_[V6faFP/HGW^2Qi#",
+                                "name": "VARIABLE",
+                                "value": "Zahl raten",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "#X;mL%ZS*PD/u]O$bEBs",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "?Vf?5DP/Om+5LXL_32YL",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-255",
+                        "y": "1519"
+                    },
+                    "#Yr5(h1|AY-z]^.:Ju22": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "Ich habe deine Zahl erraten in "
+                            }
+                        },
+                        "id": "#Yr5(h1|AY-z]^.:Ju22",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "DSG5DMD|r?G@TpHjU5JK",
+                        "shadow": true,
+                        "topLevel": false
+                    },
                     "#uM+v4QH1)!7yP1)^SFK": {
                         "fields": {
                             "VARIABLE": {
@@ -227,8 +262,31 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 396,
-                        "y": 2992
+                        "x": 388,
+                        "y": 3142
+                    },
+                    "$c)BlebE;rL@df[`ZJ9y": {
+                        "fields": {},
+                        "id": "$c)BlebE;rL@df[`ZJ9y",
+                        "inputs": {
+                            "STRING1": {
+                                "block": "aWE8ZHGZ;x8B5YA5,aW(",
+                                "name": "STRING1",
+                                "shadow": "B%UQFBsNT64Ul~Pv$-oU"
+                            },
+                            "STRING2": {
+                                "block": "nxrU7({w4J^`bqlh{x2f",
+                                "name": "STRING2",
+                                "shadow": "nxrU7({w4J^`bqlh{x2f"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_join",
+                        "parent": "DSG5DMD|r?G@TpHjU5JK",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-671",
+                        "y": "2350"
                     },
                     "$zk,T-mqS@A+0Id{4NMv": {
                         "fields": {
@@ -269,7 +327,7 @@
                         "id": "%J@.E^$f:HnDG_En.f]O",
                         "inputs": {
                             "TEXT": {
-                                "block": "gOr,VIf)OU0;Xz(.Orj%",
+                                "block": "+KO^.{?vBlxc.*I43.yq",
                                 "name": "TEXT",
                                 "shadow": "FQZ*J?qHIC;gXh)%HjuV"
                             },
@@ -291,24 +349,6 @@
                         "topLevel": false,
                         "x": -333.5914219447545,
                         "y": 2371.7257385253906
-                    },
-                    "(,Snp(2?h=+D@MBL4;b)": {
-                        "fields": {
-                            "VARIABLE": {
-                                "id": "V2rWPMh}?bCZTB/jIKWD",
-                                "name": "VARIABLE",
-                                "value": "Raten"
-                            }
-                        },
-                        "id": "(,Snp(2?h=+D@MBL4;b)",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "data_variable",
-                        "parent": "F2y}#|g:oSW562C67bbG",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": "-381",
-                        "y": "446"
                     },
                     "(XRtzO]f22t0JB4vz+2M": {
                         "fields": {
@@ -341,8 +381,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 394,
-                        "y": 1584
+                        "x": 389,
+                        "y": 1655
                     },
                     "(s6gY6~pRl?X@g/i8u1w": {
                         "fields": {
@@ -358,6 +398,25 @@
                         "parent": "{=/QcZ4_.;|$;Gz$y^R/",
                         "shadow": true,
                         "topLevel": false
+                    },
+                    ")`^gg58?eQ{(s4=0.Gg}": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "})@_[V6faFP/HGW^2Qi#",
+                                "name": "VARIABLE",
+                                "value": "Zahl raten",
+                                "variableType": ""
+                            }
+                        },
+                        "id": ")`^gg58?eQ{(s4=0.Gg}",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "^BZ0`wp(?X_[1m]usg)1",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-379",
+                        "y": "2464"
                     },
                     ")c[Fj``W0MQq*qqkY(_J": {
                         "fields": {},
@@ -382,7 +441,7 @@
                         "id": ")}6.,q%CL2$/j.^o)EF{",
                         "inputs": {
                             "OPERAND1": {
-                                "block": "]Q:n)?{ju,EA~F%F^4vP",
+                                "block": "jV$p4`M7J6EpDCJphN#e",
                                 "name": "OPERAND1",
                                 "shadow": "B`z!-Da9%6VR%sZhz-0+"
                             },
@@ -414,8 +473,8 @@
                         "parent": null,
                         "shadow": true,
                         "topLevel": true,
-                        "x": 408.42427280970986,
-                        "y": 721.7799944196428
+                        "x": 462,
+                        "y": 699
                     },
                     "*ywFe?VCsy}~Nu|F[Fog": {
                         "fields": {},
@@ -438,7 +497,7 @@
                     "+.}UkpYDdzvo1|SMY+|u": {
                         "fields": {
                             "VARIABLE": {
-                                "id": "wLTe)C4A2H}E=Hl-SA1!",
+                                "id": "W,+T/$83Li9T31KxF^cz",
                                 "name": "VARIABLE",
                                 "value": "Spiel beendet"
                             }
@@ -453,11 +512,11 @@
                         },
                         "next": "tVIhCsiff|@#{:!w0ahf",
                         "opcode": "data_setvariableto",
-                        "parent": "7qE!6,pmR.|7@#D*;g@6",
+                        "parent": "1x*I:xMM?q1]`wZ8z@L6",
                         "shadow": false,
                         "topLevel": false,
-                        "x": -410.73999459402904,
-                        "y": 1769.9942626953125
+                        "x": -146.11764705882354,
+                        "y": 2211.329411764706
                     },
                     "+7:8OnEis~%F3%Z-IehS": {
                         "fields": {},
@@ -477,22 +536,24 @@
                         "x": 768.929411764706,
                         "y": 25.55294117647059
                     },
-                    "+OR%xGTd,{+]hid8x870": {
+                    "+KO^.{?vBlxc.*I43.yq": {
                         "fields": {
-                            "BROADCAST_OPTION": {
-                                "id": ",9=yzv7zR:zeE$;JXyyO",
-                                "name": "BROADCAST_OPTION",
-                                "value": "display guess",
-                                "variableType": "broadcast_msg"
+                            "VARIABLE": {
+                                "id": "})@_[V6faFP/HGW^2Qi#",
+                                "name": "VARIABLE",
+                                "value": "Zahl raten",
+                                "variableType": ""
                             }
                         },
-                        "id": "+OR%xGTd,{+]hid8x870",
+                        "id": "+KO^.{?vBlxc.*I43.yq",
                         "inputs": {},
                         "next": null,
-                        "opcode": "event_broadcast_menu_with_broadcast_input",
-                        "parent": "WIM%V]BQX-Fi]4n*TY2z",
-                        "shadow": true,
-                        "topLevel": false
+                        "opcode": "data_variable",
+                        "parent": "%J@.E^$f:HnDG_En.f]O",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-565",
+                        "y": "3131"
                     },
                     ",Hm=X)#8:Z4}_6T_2RL:": {
                         "fields": {},
@@ -567,8 +628,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": -381,
-                        "y": 1983
+                        "x": -372,
+                        "y": 2045
                     },
                     "-QqVI6)e^g#;A=b6LUuw": {
                         "fields": {
@@ -599,8 +660,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 394,
-                        "y": 643
+                        "x": 392,
+                        "y": 758
                     },
                     ".Al-C12PZv`BD;%-(zLy": {
                         "fields": {
@@ -653,24 +714,6 @@
                         "x": -93.83712768554689,
                         "y": 321.6300136021205
                     },
-                    ".c#1;B~6|G+?~T|?[}Ro": {
-                        "fields": {
-                            "VARIABLE": {
-                                "id": "}[neTF)o8A@8u%1[?`BN",
-                                "name": "VARIABLE",
-                                "value": "Tippen auf"
-                            }
-                        },
-                        "id": ".c#1;B~6|G+?~T|?[}Ro",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "data_variable",
-                        "parent": "dU`YaB]NjXma}dncyFDf",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": "-103",
-                        "y": "1086"
-                    },
                     ".i{pwqVIVTQb4wePidS!": {
                         "fields": {},
                         "id": ".i{pwqVIVTQb4wePidS!",
@@ -694,6 +737,23 @@
                         "x": 38.67629514421728,
                         "y": 856.7242933000838
                     },
+                    "/P^W.W/)A|(T[mnQl]Yf": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "Cozmo"
+                            }
+                        },
+                        "id": "/P^W.W/)A|(T[mnQl]Yf",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": -209.06399917602545,
+                        "y": 2231.0000000000005
+                    },
                     "/TCI8U7EO0:tbo75LUEG": {
                         "fields": {},
                         "id": "/TCI8U7EO0:tbo75LUEG",
@@ -711,25 +771,6 @@
                         "topLevel": false,
                         "x": -293.66705882352943,
                         "y": 838.4258823529411
-                    },
-                    "/r#iu:?n/)h#g4A{wjh_": {
-                        "fields": {
-                            "VARIABLE": {
-                                "id": "V2rWPMh}?bCZTB/jIKWD",
-                                "name": "VARIABLE",
-                                "value": "Raten",
-                                "variableType": ""
-                            }
-                        },
-                        "id": "/r#iu:?n/)h#g4A{wjh_",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "data_variable",
-                        "parent": "7rxrt89{OiEk?=Jt-RQ,",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": "-69",
-                        "y": "816"
                     },
                     "0BJ%y!)-@u7fMxKarKM!": {
                         "fields": {},
@@ -806,7 +847,7 @@
                         "id": "1;nB+tOIcG}nX#+Xo/fy",
                         "inputs": {
                             "OPERAND1": {
-                                "block": "KN|DcOkkV;5#O0^T}CDy",
+                                "block": "JP~[*i$OoTKfDV@H0_$W",
                                 "name": "OPERAND1",
                                 "shadow": "DEv?=}R:G:*N#WAn~B.k"
                             },
@@ -839,6 +880,23 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "1Xpns6@`+_`tq%n4idt:": {
+                        "fields": {
+                            "BROADCAST_OPTION": {
+                                "id": ",9=yzv7zR:zeE$;JXyyO",
+                                "name": "BROADCAST_OPTION",
+                                "value": "display guess",
+                                "variableType": "broadcast_msg"
+                            }
+                        },
+                        "id": "1Xpns6@`+_`tq%n4idt:",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "event_broadcast_menu_with_broadcast_input",
+                        "parent": "8S%~s-`@%S$mH3cJ/@fq",
+                        "shadow": true,
+                        "topLevel": false
+                    },
                     "1d~;=$KOb$P*]9RWPqT0": {
                         "fields": {},
                         "id": "1d~;=$KOb$P*]9RWPqT0",
@@ -851,11 +909,11 @@
                         },
                         "next": "+7:8OnEis~%F3%Z-IehS",
                         "opcode": "event_broadcast_with_broadcast_input",
-                        "parent": "nMzq3hzgVNB*|hIXP#91",
+                        "parent": "Z)G;#-]KPaD)S5ge^p?t",
                         "shadow": false,
                         "topLevel": false,
-                        "x": "-35",
-                        "y": "403"
+                        "x": 726.2235294117647,
+                        "y": -59.45882352941177
                     },
                     "1l{dId/`gQkj|ccTK=K:": {
                         "fields": {
@@ -873,8 +931,36 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 391,
-                        "y": 560
+                        "x": 388,
+                        "y": 683
+                    },
+                    "1x*I:xMM?q1]`wZ8z@L6": {
+                        "fields": {},
+                        "id": "1x*I:xMM?q1]`wZ8z@L6",
+                        "inputs": {
+                            "CONDITION": {
+                                "block": "D8#(`G8NWy-}m9BJ[4!4",
+                                "name": "CONDITION",
+                                "shadow": null
+                            },
+                            "SUBSTACK": {
+                                "block": "7qE!6,pmR.|7@#D*;g@6",
+                                "name": "SUBSTACK",
+                                "shadow": null
+                            },
+                            "SUBSTACK2": {
+                                "block": "{6/w3A)|}hy?H`h^X!#g",
+                                "name": "SUBSTACK2",
+                                "shadow": null
+                            }
+                        },
+                        "next": "+.}UkpYDdzvo1|SMY+|u",
+                        "opcode": "control_if_else",
+                        "parent": "X4UR^ZTR2[2Z?3`V3tFW",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": -584.9282352941176,
+                        "y": 2296.5800000000004
                     },
                     "2((7VD2O-JRhUBmy4?wu": {
                         "fields": {
@@ -928,7 +1014,7 @@
                         "id": "2v+Y`5@p2,yp2jOH~~mO",
                         "inputs": {
                             "OPERAND1": {
-                                "block": "s_7CopE;=3~hoGG(E?I4",
+                                "block": "eW4?[PQ=ECg1ZSXMC!%p",
                                 "name": "OPERAND1",
                                 "shadow": "*KX2:JG%m2{XJ`PQ~Lgr"
                             },
@@ -960,8 +1046,8 @@
                         "parent": null,
                         "shadow": true,
                         "topLevel": true,
-                        "x": 182.9413386753627,
-                        "y": 1084.548592703683
+                        "x": -18.850936889648438,
+                        "y": 2091
                     },
                     "4+4I[[yKk%-|p=}O*eMr": {
                         "fields": {},
@@ -1063,8 +1149,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 399,
-                        "y": 1665
+                        "x": 389,
+                        "y": 1730
                     },
                     "6rg/@R9]8.6^{vG$WMdx": {
                         "fields": {
@@ -1080,8 +1166,8 @@
                         "parent": null,
                         "shadow": true,
                         "topLevel": true,
-                        "x": -102.18391091482985,
-                        "y": 322.72858537946416
+                        "x": -253.35999298095703,
+                        "y": 377
                     },
                     "6x5?!HPfVG-ea_/?x!R=": {
                         "fields": {},
@@ -1142,8 +1228,8 @@
                         "parent": null,
                         "shadow": true,
                         "topLevel": true,
-                        "x": 399.3014003208706,
-                        "y": 1011.1599818638393
+                        "x": 467,
+                        "y": 1721
                     },
                     "7M$5l-I1?z+*Q+z#DK$4": {
                         "fields": {},
@@ -1232,20 +1318,20 @@
                                 "shadow": "9fCz{F73[.!uHT}U0.O3"
                             }
                         },
-                        "next": "+.}UkpYDdzvo1|SMY+|u",
+                        "next": null,
                         "opcode": "cozmo_says",
-                        "parent": "X4UR^ZTR2[2Z?3`V3tFW",
+                        "parent": "1x*I:xMM?q1]`wZ8z@L6",
                         "shadow": false,
                         "topLevel": false,
-                        "x": -332.6685834612165,
-                        "y": 1321.1285574776784
+                        "x": -146.11764705882354,
+                        "y": 2147.329411764706
                     },
                     "7rxrt89{OiEk?=Jt-RQ,": {
                         "fields": {},
                         "id": "7rxrt89{OiEk?=Jt-RQ,",
                         "inputs": {
                             "OPERAND1": {
-                                "block": "/r#iu:?n/)h#g4A{wjh_",
+                                "block": "m3K%CRdVT-$ZMyE|SuFC",
                                 "name": "OPERAND1",
                                 "shadow": "7xhmd_m%t+W#55n5)j9="
                             },
@@ -1277,8 +1363,8 @@
                         "parent": null,
                         "shadow": true,
                         "topLevel": true,
-                        "x": 695.4305934906006,
-                        "y": 707
+                        "x": 476,
+                        "y": 870
                     },
                     "84,Eqag{L):.XMq4hQ__": {
                         "fields": {
@@ -1294,8 +1380,8 @@
                         "parent": null,
                         "shadow": true,
                         "topLevel": true,
-                        "x": 522.6340547289166,
-                        "y": 1026.8871198381698
+                        "x": 576.8357639312744,
+                        "y": 2042
                     },
                     "8HcrRh6;*|q*d0GO33pP": {
                         "fields": {},
@@ -1319,6 +1405,24 @@
                         "topLevel": false,
                         "x": -262.8114275251117,
                         "y": 1180.9257354736333
+                    },
+                    "8S%~s-`@%S$mH3cJ/@fq": {
+                        "fields": {},
+                        "id": "8S%~s-`@%S$mH3cJ/@fq",
+                        "inputs": {
+                            "BROADCAST_INPUT": {
+                                "block": "1Xpns6@`+_`tq%n4idt:",
+                                "name": "BROADCAST_INPUT",
+                                "shadow": "1Xpns6@`+_`tq%n4idt:"
+                            }
+                        },
+                        "next": "l09F2OOZXi{W.63.Q[-$",
+                        "opcode": "event_broadcastandwait_with_broadcast_input",
+                        "parent": "T?$mBtxg0wxwvpwpCyh?",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-550",
+                        "y": "1855"
                     },
                     "9fCz{F73[.!uHT}U0.O3": {
                         "fields": {
@@ -1364,7 +1468,7 @@
                         },
                         "next": null,
                         "opcode": "control_wait_until",
-                        "parent": "AhPudUcGwS]pCN#9(_LB",
+                        "parent": "w01V.PfZ!nW}2y/3o{|F",
                         "shadow": false,
                         "topLevel": false,
                         "x": "-290",
@@ -1391,7 +1495,7 @@
                     ";#QZ*mo:T~#/f2?L7d{x": {
                         "fields": {
                             "VARIABLE": {
-                                "id": "}[neTF)o8A@8u%1[?`BN",
+                                "id": "0ay{8luN^LB3TRxhL=cC",
                                 "name": "VARIABLE",
                                 "value": "Tippen auf",
                                 "variableType": ""
@@ -1407,11 +1511,11 @@
                         },
                         "next": "6{/EyPW4c1_v`o:`X)N2",
                         "opcode": "data_setvariableto",
-                        "parent": "Z)G;#-]KPaD)S5ge^p?t",
+                        "parent": "r~|K,l8v@kki(IOFak{)",
                         "shadow": false,
                         "topLevel": false,
-                        "x": "-387",
-                        "y": "688"
+                        "x": 402,
+                        "y": 276
                     },
                     ";+=[G|F0d^(-dbsvHPD|": {
                         "fields": {},
@@ -1431,10 +1535,29 @@
                         "x": "-518",
                         "y": "2800"
                     },
+                    ";2p2sJEBOfTnOQHo.3}q": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "2=0Mat0?Wb@mMVboB@3/",
+                                "name": "VARIABLE",
+                                "value": "Rateversuche insgesamt",
+                                "variableType": ""
+                            }
+                        },
+                        "id": ";2p2sJEBOfTnOQHo.3}q",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "Y$LCnfFS)M`P+HkdtXFK",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-618",
+                        "y": "2268"
+                    },
                     ";:NX6h=Sxzibw171Vs8#": {
                         "fields": {
                             "VARIABLE": {
-                                "id": "wLTe)C4A2H}E=Hl-SA1!",
+                                "id": "W,+T/$83Li9T31KxF^cz",
                                 "name": "VARIABLE",
                                 "value": "Spiel beendet"
                             }
@@ -1469,6 +1592,25 @@
                         "parent": "vyO|]2R-x(Fc/~eLH::E",
                         "shadow": true,
                         "topLevel": false
+                    },
+                    "=}tX4PA,jKa-Y%r*eB/O": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "0ay{8luN^LB3TRxhL=cC",
+                                "name": "VARIABLE",
+                                "value": "Tippen auf",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "=}tX4PA,jKa-Y%r*eB/O",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "dU`YaB]NjXma}dncyFDf",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-278",
+                        "y": "2327"
                     },
                     "?0|aqO-k)[.K4y4`OWP-": {
                         "fields": {},
@@ -1511,7 +1653,7 @@
                         "id": "?Vf?5DP/Om+5LXL_32YL",
                         "inputs": {
                             "NUM1": {
-                                "block": "r;yFKAGGE,*FK!)?%TNt",
+                                "block": "#X;mL%ZS*PD/u]O$bEBs",
                                 "name": "NUM1",
                                 "shadow": "Xfz,^gPvUqhv]n[R33DE"
                             },
@@ -1675,7 +1817,7 @@
                                 "shadow": "1B4CM$w`)KGIwvzGFDMo"
                             }
                         },
-                        "next": ":P)T?9h,0rlf*k8m*x=N",
+                        "next": "w01V.PfZ!nW}2y/3o{|F",
                         "opcode": "cozmo_vert_set_headangle",
                         "parent": "@Y?bRuIeiTa!uA4S6*Uj",
                         "shadow": false,
@@ -1716,6 +1858,23 @@
                         "topLevel": true,
                         "x": -361,
                         "y": 1097
+                    },
+                    "B%UQFBsNT64Ul~Pv$-oU": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "Anki"
+                            }
+                        },
+                        "id": "B%UQFBsNT64Ul~Pv$-oU",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": -2.8509368896484375,
+                        "y": 2235
                     },
                     "B.LiYT@@57-lPv-op[g%": {
                         "fields": {},
@@ -1789,8 +1948,8 @@
                         "parent": null,
                         "shadow": true,
                         "topLevel": true,
-                        "x": 424.37428501674106,
-                        "y": 496.54001508440297
+                        "x": 470,
+                        "y": 172
                     },
                     "C#r_/@.]TPZzZ;Z5ZTpr": {
                         "fields": {
@@ -1808,24 +1967,6 @@
                         "parent": "H,nH*R$v/-a65.k{`cyB",
                         "shadow": true,
                         "topLevel": false
-                    },
-                    "C@^Q_6s{HpT[MmSr2MJf": {
-                        "fields": {
-                            "VARIABLE": {
-                                "id": "V2rWPMh}?bCZTB/jIKWD",
-                                "name": "VARIABLE",
-                                "value": "Raten"
-                            }
-                        },
-                        "id": "C@^Q_6s{HpT[MmSr2MJf",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "data_variable",
-                        "parent": "^BZ0`wp(?X_[1m]usg)1",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": 566.6340547289166,
-                        "y": 1070.8871198381698
                     },
                     "CHF_xv6w7W[bxfi2wM:#": {
                         "fields": {},
@@ -1868,7 +2009,7 @@
                     "Cm#sw5b@Kl-BGJD5x`RI": {
                         "fields": {
                             "VARIABLE": {
-                                "id": "qURdyL-v$_9]]+;ox,ya",
+                                "id": "2=0Mat0?Wb@mMVboB@3/",
                                 "name": "VARIABLE",
                                 "value": "Rateversuche insgesamt"
                             }
@@ -1904,6 +2045,29 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "D8#(`G8NWy-}m9BJ[4!4": {
+                        "fields": {},
+                        "id": "D8#(`G8NWy-}m9BJ[4!4",
+                        "inputs": {
+                            "OPERAND1": {
+                                "block": "g}M:}qI+/+2(Bm%F_1CA",
+                                "name": "OPERAND1",
+                                "shadow": "Dfno7P.^#V9dqp_6bq;|"
+                            },
+                            "OPERAND2": {
+                                "block": "{CxNo+~cCB_B[k3Y2Qx=",
+                                "name": "OPERAND2",
+                                "shadow": "{CxNo+~cCB_B[k3Y2Qx="
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_gt",
+                        "parent": "1x*I:xMM?q1]`wZ8z@L6",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-671",
+                        "y": "2109"
+                    },
                     "DEv?=}R:G:*N#WAn~B.k": {
                         "fields": {
                             "TEXT": {
@@ -1918,8 +2082,31 @@
                         "parent": null,
                         "shadow": true,
                         "topLevel": true,
-                        "x": 483.38823529411764,
-                        "y": 1777.7294117647061
+                        "x": 473,
+                        "y": 1842
+                    },
+                    "DSG5DMD|r?G@TpHjU5JK": {
+                        "fields": {},
+                        "id": "DSG5DMD|r?G@TpHjU5JK",
+                        "inputs": {
+                            "STRING1": {
+                                "block": "#Yr5(h1|AY-z]^.:Ju22",
+                                "name": "STRING1",
+                                "shadow": "#Yr5(h1|AY-z]^.:Ju22"
+                            },
+                            "STRING2": {
+                                "block": "$c)BlebE;rL@df[`ZJ9y",
+                                "name": "STRING2",
+                                "shadow": "/P^W.W/)A|(T[mnQl]Yf"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_join",
+                        "parent": "{6/w3A)|}hy?H`h^X!#g",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-671",
+                        "y": "2315"
                     },
                     "DauzG_R-(i9z#}@bovxH": {
                         "fields": {},
@@ -1938,6 +2125,23 @@
                         "topLevel": false,
                         "x": 842.8705882352941,
                         "y": 1317.5764705882352
+                    },
+                    "Dfno7P.^#V9dqp_6bq;|": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": ""
+                            }
+                        },
+                        "id": "Dfno7P.^#V9dqp_6bq;|",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": -312.99999999999994,
+                        "y": 2086.9999999999995
                     },
                     "DsY%h9r2X#d~UZ,Lpc41": {
                         "fields": {
@@ -2022,7 +2226,7 @@
                         "shadow": false,
                         "topLevel": true,
                         "x": 394,
-                        "y": 2643
+                        "y": 2748
                     },
                     "E[qkbR9X-S(A|[my]w=j": {
                         "fields": {
@@ -2094,7 +2298,7 @@
                                 "shadow": "nCS-bL-8B]s!M-MJ7HPe"
                             },
                             "STRING2": {
-                                "block": "(,Snp(2?h=+D@MBL4;b)",
+                                "block": "Q%udY2.PG%j]@q1URsE:",
                                 "name": "STRING2",
                                 "shadow": "xEvquv`EK}W1ZWsSPdDn"
                             }
@@ -2121,8 +2325,8 @@
                         "parent": null,
                         "shadow": true,
                         "topLevel": true,
-                        "x": -303.8726921081543,
-                        "y": 2218
+                        "x": -327.00799560546875,
+                        "y": 3000
                     },
                     "FYKUM$06,K;k2n~gaN=t": {
                         "fields": {
@@ -2191,8 +2395,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": -378,
-                        "y": 2398
+                        "x": -372,
+                        "y": 2678
                     },
                     "I=^J0^5yesDH?MVd=-,Q": {
                         "fields": {
@@ -2269,6 +2473,25 @@
                         "x": 931.6094117647059,
                         "y": 35.22588235294117
                     },
+                    "JP~[*i$OoTKfDV@H0_$W": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "})@_[V6faFP/HGW^2Qi#",
+                                "name": "VARIABLE",
+                                "value": "Zahl raten",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "JP~[*i$OoTKfDV@H0_$W",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "1;nB+tOIcG}nX#+Xo/fy",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-379",
+                        "y": "2464"
+                    },
                     "JR[ch;3Cvay2)_.SJtXL": {
                         "fields": {
                             "CUBE_SELECT": {
@@ -2312,25 +2535,6 @@
                         "x": 354.24823529411765,
                         "y": 2555.3164705882355
                     },
-                    "KN|DcOkkV;5#O0^T}CDy": {
-                        "fields": {
-                            "VARIABLE": {
-                                "id": "V2rWPMh}?bCZTB/jIKWD",
-                                "name": "VARIABLE",
-                                "value": "Raten",
-                                "variableType": ""
-                            }
-                        },
-                        "id": "KN|DcOkkV;5#O0^T}CDy",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "data_variable",
-                        "parent": "1;nB+tOIcG}nX#+Xo/fy",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": 827.2423581964829,
-                        "y": 1500.8117647058825
-                    },
                     "K]EVL].yu2kK8vWN,7d:": {
                         "fields": {
                             "COLOUR": {
@@ -2360,24 +2564,6 @@
                         "parent": "8HcrRh6;*|q*d0GO33pP",
                         "shadow": true,
                         "topLevel": false
-                    },
-                    "KlRPAcuAG09H#j+;*)R~": {
-                        "fields": {
-                            "VARIABLE": {
-                                "id": "qURdyL-v$_9]]+;ox,ya",
-                                "name": "VARIABLE",
-                                "value": "Rateversuche insgesamt"
-                            }
-                        },
-                        "id": "KlRPAcuAG09H#j+;*)R~",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "data_variable",
-                        "parent": "Y$LCnfFS)M`P+HkdtXFK",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": "-228",
-                        "y": "1192"
                     },
                     "L(m|arqO6rxGY(ccIAg(": {
                         "fields": {},
@@ -2691,6 +2877,25 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "Q%udY2.PG%j]@q1URsE:": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "})@_[V6faFP/HGW^2Qi#",
+                                "name": "VARIABLE",
+                                "value": "Zahl raten",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "Q%udY2.PG%j]@q1URsE:",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "F2y}#|g:oSW562C67bbG",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-551",
+                        "y": "1786"
+                    },
                     "QKBCT6V_MyQ.;)/DF/?u": {
                         "fields": {},
                         "id": "QKBCT6V_MyQ.;)/DF/?u",
@@ -2713,6 +2918,23 @@
                         "topLevel": false,
                         "x": 54.81517686282888,
                         "y": 1552.6470588235295
+                    },
+                    "QZs_?}FM$:JGwSyf-zDi": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "Hallo"
+                            }
+                        },
+                        "id": "QZs_?}FM$:JGwSyf-zDi",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": -317,
+                        "y": 2231
                     },
                     "Q]:$~T!?59y(u,96DWR/": {
                         "fields": {
@@ -2774,7 +2996,7 @@
                         "shadow": false,
                         "topLevel": true,
                         "x": 397,
-                        "y": 3088
+                        "y": 3227
                     },
                     "SN]$Z)3huBO2{2y,sB0;": {
                         "fields": {},
@@ -2814,7 +3036,7 @@
                         "id": "T/,;XadOL:sz,83QN,MM",
                         "inputs": {
                             "OPERAND1": {
-                                "block": "dyFi}]K?w3[~p4$r0PL7",
+                                "block": "mm3!/nMPnnae%Q!SEjc}",
                                 "name": "OPERAND1",
                                 "shadow": "6rg/@R9]8.6^{vG$WMdx"
                             },
@@ -2854,7 +3076,7 @@
                                 "shadow": "^XnV(OB5A)SI^NWIIxZg"
                             }
                         },
-                        "next": "WIM%V]BQX-Fi]4n*TY2z",
+                        "next": "8S%~s-`@%S$mH3cJ/@fq",
                         "opcode": "cozmo_says",
                         "parent": "U}#.HB8NGlZV+Yc=Q{*6",
                         "shadow": false,
@@ -2897,7 +3119,7 @@
                     "U}#.HB8NGlZV+Yc=Q{*6": {
                         "fields": {
                             "VARIABLE": {
-                                "id": "qURdyL-v$_9]]+;ox,ya",
+                                "id": "2=0Mat0?Wb@mMVboB@3/",
                                 "name": "VARIABLE",
                                 "value": "Rateversuche insgesamt",
                                 "variableType": ""
@@ -2935,24 +3157,6 @@
                         "parent": "7M$5l-I1?z+*Q+z#DK$4",
                         "shadow": true,
                         "topLevel": false
-                    },
-                    "WIM%V]BQX-Fi]4n*TY2z": {
-                        "fields": {},
-                        "id": "WIM%V]BQX-Fi]4n*TY2z",
-                        "inputs": {
-                            "BROADCAST_INPUT": {
-                                "block": "+OR%xGTd,{+]hid8x870",
-                                "name": "BROADCAST_INPUT",
-                                "shadow": "+OR%xGTd,{+]hid8x870"
-                            }
-                        },
-                        "next": "l09F2OOZXi{W.63.Q[-$",
-                        "opcode": "event_broadcast_with_broadcast_input",
-                        "parent": "T?$mBtxg0wxwvpwpCyh?",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": "-495",
-                        "y": "1775"
                     },
                     "X+#RV|xm,a=GqA{H#:KY": {
                         "fields": {
@@ -3002,7 +3206,7 @@
                                 "shadow": "!RD%1,s^q8P:2+4)!md?"
                             }
                         },
-                        "next": "7qE!6,pmR.|7@#D*;g@6",
+                        "next": "1x*I:xMM?q1]`wZ8z@L6",
                         "opcode": "cozmo_vert_set_headangle",
                         "parent": "-:ay0Y^J*V|t$YaM+Wa2",
                         "shadow": false,
@@ -3060,15 +3264,15 @@
                         "parent": null,
                         "shadow": true,
                         "topLevel": true,
-                        "x": 524.9426100594656,
-                        "y": 738.7157658168247
+                        "x": 576.4687061309814,
+                        "y": 1070
                     },
                     "Y$LCnfFS)M`P+HkdtXFK": {
                         "fields": {},
                         "id": "Y$LCnfFS)M`P+HkdtXFK",
                         "inputs": {
                             "STRING1": {
-                                "block": "KlRPAcuAG09H#j+;*)R~",
+                                "block": ";2p2sJEBOfTnOQHo.3}q",
                                 "name": "STRING1",
                                 "shadow": "352WtSL{;7!i1ciH+;sx"
                             },
@@ -3130,7 +3334,7 @@
                                 "shadow": null
                             },
                             "SUBSTACK": {
-                                "block": ";#QZ*mo:T~#/f2?L7d{x",
+                                "block": "1d~;=$KOb$P*]9RWPqT0",
                                 "name": "SUBSTACK",
                                 "shadow": null
                             },
@@ -3142,11 +3346,11 @@
                         },
                         "next": null,
                         "opcode": "control_if_else",
-                        "parent": "r~|K,l8v@kki(IOFak{)",
+                        "parent": "nMzq3hzgVNB*|hIXP#91",
                         "shadow": false,
                         "topLevel": false,
-                        "x": "-146",
-                        "y": "607"
+                        "x": 329.05882352941177,
+                        "y": 76.4
                     },
                     "Z.KEro1[J8WZZFkr3+DN": {
                         "fields": {
@@ -3232,24 +3436,6 @@
                         "x": -79.27172906058183,
                         "y": 1099.9500165666855
                     },
-                    "]Q:n)?{ju,EA~F%F^4vP": {
-                        "fields": {
-                            "VARIABLE": {
-                                "id": "}[neTF)o8A@8u%1[?`BN",
-                                "name": "VARIABLE",
-                                "value": "Tippen auf"
-                            }
-                        },
-                        "id": "]Q:n)?{ju,EA~F%F^4vP",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "data_variable",
-                        "parent": ")}6.,q%CL2$/j.^o)EF{",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": "-69",
-                        "y": "635"
-                    },
                     "]wJDJ4jpiT}%/iUnLqKc": {
                         "fields": {},
                         "id": "]wJDJ4jpiT}%/iUnLqKc",
@@ -3301,7 +3487,7 @@
                         "id": "^BZ0`wp(?X_[1m]usg)1",
                         "inputs": {
                             "NUM1": {
-                                "block": "C@^Q_6s{HpT[MmSr2MJf",
+                                "block": ")`^gg58?eQ{(s4=0.Gg}",
                                 "name": "NUM1",
                                 "shadow": "84,Eqag{L):.XMq4hQ__"
                             },
@@ -3439,6 +3625,25 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "aWE8ZHGZ;x8B5YA5,aW(": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "2=0Mat0?Wb@mMVboB@3/",
+                                "name": "VARIABLE",
+                                "value": "Rateversuche insgesamt",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "aWE8ZHGZ;x8B5YA5,aW(",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "$c)BlebE;rL@df[`ZJ9y",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-671",
+                        "y": "2373"
+                    },
                     "b)Wd/T!h#*!:na%567mf": {
                         "fields": {
                             "BROADCAST_OPTION": {
@@ -3557,7 +3762,7 @@
                         "id": "dU`YaB]NjXma}dncyFDf",
                         "inputs": {
                             "OPERAND1": {
-                                "block": ".c#1;B~6|G+?~T|?[}Ro",
+                                "block": "=}tX4PA,jKa-Y%r*eB/O",
                                 "name": "OPERAND1",
                                 "shadow": "79L_d~,S97K#$J.U)C`f"
                             },
@@ -3575,23 +3780,24 @@
                         "x": 774.2588235294118,
                         "y": 1676.1764705882354
                     },
-                    "dyFi}]K?w3[~p4$r0PL7": {
+                    "eW4?[PQ=ECg1ZSXMC!%p": {
                         "fields": {
                             "VARIABLE": {
-                                "id": "wLTe)C4A2H}E=Hl-SA1!",
+                                "id": "0ay{8luN^LB3TRxhL=cC",
                                 "name": "VARIABLE",
-                                "value": "Spiel beendet"
+                                "value": "Tippen auf",
+                                "variableType": ""
                             }
                         },
-                        "id": "dyFi}]K?w3[~p4$r0PL7",
+                        "id": "eW4?[PQ=ECg1ZSXMC!%p",
                         "inputs": {},
                         "next": null,
                         "opcode": "data_variable",
-                        "parent": "T/,;XadOL:sz,83QN,MM",
+                        "parent": "2v+Y`5@p2,yp2jOH~~mO",
                         "shadow": false,
                         "topLevel": false,
-                        "x": "-290",
-                        "y": "130"
+                        "x": "-211",
+                        "y": "1171"
                     },
                     "eeDg$,Za*]QCFk9-2-1-": {
                         "fields": {
@@ -3628,7 +3834,7 @@
                     "f6)^*Bt)2(jM:TqbZSe~": {
                         "fields": {
                             "VARIABLE": {
-                                "id": "}[neTF)o8A@8u%1[?`BN",
+                                "id": "0ay{8luN^LB3TRxhL=cC",
                                 "name": "VARIABLE",
                                 "value": "Tippen auf"
                             }
@@ -3680,7 +3886,7 @@
                     "g5d9#(frH?jkQklb,Ig/": {
                         "fields": {
                             "VARIABLE": {
-                                "id": "}[neTF)o8A@8u%1[?`BN",
+                                "id": "0ay{8luN^LB3TRxhL=cC",
                                 "name": "VARIABLE",
                                 "value": "Tippen auf"
                             }
@@ -3701,23 +3907,24 @@
                         "x": "-595",
                         "y": "1135"
                     },
-                    "gOr,VIf)OU0;Xz(.Orj%": {
+                    "g}M:}qI+/+2(Bm%F_1CA": {
                         "fields": {
                             "VARIABLE": {
-                                "id": "V2rWPMh}?bCZTB/jIKWD",
+                                "id": "2=0Mat0?Wb@mMVboB@3/",
                                 "name": "VARIABLE",
-                                "value": "Raten"
+                                "value": "Rateversuche insgesamt",
+                                "variableType": ""
                             }
                         },
-                        "id": "gOr,VIf)OU0;Xz(.Orj%",
+                        "id": "g}M:}qI+/+2(Bm%F_1CA",
                         "inputs": {},
                         "next": null,
                         "opcode": "data_variable",
-                        "parent": "%J@.E^$f:HnDG_En.f]O",
+                        "parent": "D8#(`G8NWy-}m9BJ[4!4",
                         "shadow": false,
                         "topLevel": false,
-                        "x": -10.292750222342477,
-                        "y": 2453.932874407088
+                        "x": "-671",
+                        "y": "2457"
                     },
                     "hq;*YEX]dU6O#+rV.K{e": {
                         "fields": {},
@@ -3768,6 +3975,25 @@
                         "topLevel": true,
                         "x": 317.42881475176125,
                         "y": 743.6799817766463
+                    },
+                    "jV$p4`M7J6EpDCJphN#e": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "0ay{8luN^LB3TRxhL=cC",
+                                "name": "VARIABLE",
+                                "value": "Tippen auf",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "jV$p4`M7J6EpDCJphN#e",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": ")}6.,q%CL2$/j.^o)EF{",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-207",
+                        "y": "602"
                     },
                     "j`y?]BM`P{SGnJlx6Chc": {
                         "fields": {
@@ -3832,7 +4058,7 @@
                     "l09F2OOZXi{W.63.Q[-$": {
                         "fields": {
                             "VARIABLE": {
-                                "id": "}[neTF)o8A@8u%1[?`BN",
+                                "id": "0ay{8luN^LB3TRxhL=cC",
                                 "name": "VARIABLE",
                                 "value": "Tippen auf"
                             }
@@ -3847,11 +4073,11 @@
                         },
                         "next": null,
                         "opcode": "data_setvariableto",
-                        "parent": "WIM%V]BQX-Fi]4n*TY2z",
+                        "parent": "8S%~s-`@%S$mH3cJ/@fq",
                         "shadow": false,
                         "topLevel": false,
-                        "x": 74.59225223295181,
-                        "y": 1548.5764747342455
+                        "x": -328.25882352941176,
+                        "y": 1825.2588235294118
                     },
                     "l3rk6yCl6LdrT5Y3ji.o": {
                         "fields": {
@@ -3892,9 +4118,9 @@
                     "m%g/@zgl+,R_DHaCtyPr": {
                         "fields": {
                             "VARIABLE": {
-                                "id": "V2rWPMh}?bCZTB/jIKWD",
+                                "id": "})@_[V6faFP/HGW^2Qi#",
                                 "name": "VARIABLE",
-                                "value": "Raten"
+                                "value": "Zahl raten"
                             }
                         },
                         "id": "m%g/@zgl+,R_DHaCtyPr",
@@ -3927,6 +4153,25 @@
                         "parent": "M]RVkIywp4U^70`i0?m/",
                         "shadow": true,
                         "topLevel": false
+                    },
+                    "m3K%CRdVT-$ZMyE|SuFC": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "})@_[V6faFP/HGW^2Qi#",
+                                "name": "VARIABLE",
+                                "value": "Zahl raten",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "m3K%CRdVT-$ZMyE|SuFC",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "7rxrt89{OiEk?=Jt-RQ,",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-255",
+                        "y": "1519"
                     },
                     "m4994wMRG#gXI(EeU6P|": {
                         "fields": {
@@ -3993,6 +4238,25 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "mm3!/nMPnnae%Q!SEjc}": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "W,+T/$83Li9T31KxF^cz",
+                                "name": "VARIABLE",
+                                "value": "Spiel beendet",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "mm3!/nMPnnae%Q!SEjc}",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "data_variable",
+                        "parent": "T/,;XadOL:sz,83QN,MM",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-546",
+                        "y": "211"
+                    },
                     "nCS-bL-8B]s!M-MJ7HPe": {
                         "fields": {
                             "TEXT": {
@@ -4017,7 +4281,7 @@
                         },
                         "id": "nMzq3hzgVNB*|hIXP#91",
                         "inputs": {},
-                        "next": "1d~;=$KOb$P*]9RWPqT0",
+                        "next": "Z)G;#-]KPaD)S5ge^p?t",
                         "opcode": "cozmo_event_on_cube_tap",
                         "parent": null,
                         "shadow": false,
@@ -4061,6 +4325,21 @@
                         "x": "-130",
                         "y": "934"
                     },
+                    "nxrU7({w4J^`bqlh{x2f": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "Raten!"
+                            }
+                        },
+                        "id": "nxrU7({w4J^`bqlh{x2f",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "$c)BlebE;rL@df[`ZJ9y",
+                        "shadow": true,
+                        "topLevel": false
+                    },
                     "oS?:T$oMG,6R*ji^qKlX": {
                         "fields": {
                             "NUM": {
@@ -4093,7 +4372,7 @@
                         "shadow": false,
                         "topLevel": true,
                         "x": -380,
-                        "y": 2479
+                        "y": 2752
                     },
                     "p6yn)=:_/q(23c,SK#vi": {
                         "fields": {
@@ -4142,24 +4421,6 @@
                         "shadow": true,
                         "topLevel": false
                     },
-                    "r;yFKAGGE,*FK!)?%TNt": {
-                        "fields": {
-                            "VARIABLE": {
-                                "id": "V2rWPMh}?bCZTB/jIKWD",
-                                "name": "VARIABLE",
-                                "value": "Raten"
-                            }
-                        },
-                        "id": "r;yFKAGGE,*FK!)?%TNt",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "data_variable",
-                        "parent": "?Vf?5DP/Om+5LXL_32YL",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": 568.9426100594657,
-                        "y": 782.7157658168248
-                    },
                     "ryo]r$mn?EMMiH.1k,$w": {
                         "fields": {
                             "CUBE_SELECT": {
@@ -4190,7 +4451,7 @@
                                 "shadow": null
                             },
                             "SUBSTACK2": {
-                                "block": "Z)G;#-]KPaD)S5ge^p?t",
+                                "block": ";#QZ*mo:T~#/f2?L7d{x",
                                 "name": "SUBSTACK2",
                                 "shadow": null
                             }
@@ -4200,8 +4461,8 @@
                         "parent": "+7:8OnEis~%F3%Z-IehS",
                         "shadow": false,
                         "topLevel": false,
-                        "x": 695.0257088797433,
-                        "y": 7.701446533203125
+                        "x": 595.2588235294118,
+                        "y": 470.71764705882356
                     },
                     "sDPRsEAj}[wYR]:{P22o": {
                         "fields": {
@@ -4221,9 +4482,9 @@
                     "sU8]3rEbIx2Qh8X;X[5v": {
                         "fields": {
                             "VARIABLE": {
-                                "id": "V2rWPMh}?bCZTB/jIKWD",
+                                "id": "})@_[V6faFP/HGW^2Qi#",
                                 "name": "VARIABLE",
-                                "value": "Raten"
+                                "value": "Zahl raten"
                             }
                         },
                         "id": "sU8]3rEbIx2Qh8X;X[5v",
@@ -4241,24 +4502,6 @@
                         "topLevel": false,
                         "x": -294.8114275251117,
                         "y": 1096.9257354736328
-                    },
-                    "s_7CopE;=3~hoGG(E?I4": {
-                        "fields": {
-                            "VARIABLE": {
-                                "id": "}[neTF)o8A@8u%1[?`BN",
-                                "name": "VARIABLE",
-                                "value": "Tippen auf"
-                            }
-                        },
-                        "id": "s_7CopE;=3~hoGG(E?I4",
-                        "inputs": {},
-                        "next": null,
-                        "opcode": "data_variable",
-                        "parent": "2v+Y`5@p2,yp2jOH~~mO",
-                        "shadow": false,
-                        "topLevel": false,
-                        "x": "-104",
-                        "y": "950"
                     },
                     "sw[(b4+Mm-h.U^*tNg$W": {
                         "fields": {},
@@ -4361,7 +4604,7 @@
                         "shadow": false,
                         "topLevel": true,
                         "x": 391,
-                        "y": 2566
+                        "y": 2668
                     },
                     "v*n?KGN__n)orN_$9btN": {
                         "fields": {
@@ -4439,8 +4682,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": -386,
-                        "y": 1901
+                        "x": -380,
+                        "y": 1969
                     },
                     "vS`OEH`Gq@^^X@|b5vv/": {
                         "fields": {
@@ -4510,6 +4753,31 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "w01V.PfZ!nW}2y/3o{|F": {
+                        "fields": {
+                            "VARIABLE": {
+                                "id": "0ay{8luN^LB3TRxhL=cC",
+                                "name": "VARIABLE",
+                                "value": "Tippen auf",
+                                "variableType": ""
+                            }
+                        },
+                        "id": "w01V.PfZ!nW}2y/3o{|F",
+                        "inputs": {
+                            "VALUE": {
+                                "block": "zW3Gw%KJrowEU*7X0gkS",
+                                "name": "VALUE",
+                                "shadow": "zW3Gw%KJrowEU*7X0gkS"
+                            }
+                        },
+                        "next": ":P)T?9h,0rlf*k8m*x=N",
+                        "opcode": "data_setvariableto",
+                        "parent": "AhPudUcGwS]pCN#9(_LB",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-497",
+                        "y": "707"
+                    },
                     "w1kHaYA5K)uL3:A34Tkl": {
                         "fields": {
                             "SOUND_MENU": {
@@ -4554,8 +4822,8 @@
                         "parent": null,
                         "shadow": true,
                         "topLevel": true,
-                        "x": 49.46625518798828,
-                        "y": 829.3714425223216
+                        "x": -122.14458465576172,
+                        "y": 1641
                     },
                     "xVD8ypY01MPvzev/=/[P": {
                         "fields": {
@@ -4650,6 +4918,39 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "zW3Gw%KJrowEU*7X0gkS": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "1"
+                            }
+                        },
+                        "id": "zW3Gw%KJrowEU*7X0gkS",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "w01V.PfZ!nW}2y/3o{|F",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "{6/w3A)|}hy?H`h^X!#g": {
+                        "fields": {},
+                        "id": "{6/w3A)|}hy?H`h^X!#g",
+                        "inputs": {
+                            "STRING": {
+                                "block": "DSG5DMD|r?G@TpHjU5JK",
+                                "name": "STRING",
+                                "shadow": "QZs_?}FM$:JGwSyf-zDi"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "cozmo_says",
+                        "parent": "1x*I:xMM?q1]`wZ8z@L6",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "-671",
+                        "y": "1722"
+                    },
                     "{=/QcZ4_.;|$;Gz$y^R/": {
                         "fields": {},
                         "id": "{=/QcZ4_.;|$;Gz$y^R/",
@@ -4680,6 +4981,21 @@
                         "next": null,
                         "opcode": "math_number",
                         "parent": "%J@.E^$f:HnDG_En.f]O",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "{CxNo+~cCB_B[k3Y2Qx=": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "1"
+                            }
+                        },
+                        "id": "{CxNo+~cCB_B[k3Y2Qx=",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "D8#(`G8NWy-}m9BJ[4!4",
                         "shadow": true,
                         "topLevel": false
                     },
@@ -4766,7 +5082,7 @@
                 "currentCostume": 0,
                 "direction": 90,
                 "draggable": false,
-                "id": "0i5AocyP`Wxe5|nuc7*I",
+                "id": "S#yG,Yud.BmVmb#pLJ~p",
                 "isStage": false,
                 "lists": {},
                 "name": "Sprite1",

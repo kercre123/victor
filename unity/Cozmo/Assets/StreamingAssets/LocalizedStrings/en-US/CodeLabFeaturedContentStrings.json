@@ -1917,6 +1917,9 @@
     "codeLabFeaturedProject.CozmosGarden.tap_a_plant_to_water_it": {
         "translation": "Tap a plant to water it"
     },
+    "codeLabFeaturedProject.CozmosGarden.tap_on": {
+        "translation": "tap on"
+    },
     "codeLabFeaturedProject.CozmosGarden.thing": {
         "translation": "thing"
     },
@@ -1974,14 +1977,14 @@
     "codeLabFeaturedProject.GuessTheNumber.end_game": {
         "translation": "end game"
     },
-    "codeLabFeaturedProject.GuessTheNumber.gameover": {
-        "translation": "gameOver"
+    "codeLabFeaturedProject.GuessTheNumber.game_over": {
+        "translation": "game over"
     },
     "codeLabFeaturedProject.GuessTheNumber.give_instructions": {
         "translation": "give instructions"
     },
     "codeLabFeaturedProject.GuessTheNumber.guess": {
-        "translation": "guess"
+        "translation": "Guess!"
     },
     "codeLabFeaturedProject.GuessTheNumber.hi": {
         "translation": "Hi"
@@ -2016,6 +2019,9 @@
     "codeLabFeaturedProject.GuessTheNumber.new_guess": {
         "translation": "new guess"
     },
+    "codeLabFeaturedProject.GuessTheNumber.number_guess": {
+        "translation": "number guess"
+    },
     "codeLabFeaturedProject.GuessTheNumber.reset_lights": {
         "translation": "reset lights"
     },
@@ -2034,14 +2040,14 @@
     "codeLabFeaturedProject.GuessTheNumber.started": {
         "translation": "started"
     },
-    "codeLabFeaturedProject.GuessTheNumber.tapon": {
-        "translation": "tapOn"
+    "codeLabFeaturedProject.GuessTheNumber.tap_on": {
+        "translation": "tap on"
     },
     "codeLabFeaturedProject.GuessTheNumber.think_of_a_number_between_1_and_100_and_tap_purple_to_continue": {
         "translation": "Think of a number between 1 and 100 and tap purple to continue."
     },
-    "codeLabFeaturedProject.GuessTheNumber.totalguesses": {
-        "translation": "totalGuesses"
+    "codeLabFeaturedProject.GuessTheNumber.total_guesses": {
+        "translation": "total guesses"
     },
     "codeLabFeaturedProject.GuessTheNumber.turn_off_backpack": {
         "translation": "turn off backpack"

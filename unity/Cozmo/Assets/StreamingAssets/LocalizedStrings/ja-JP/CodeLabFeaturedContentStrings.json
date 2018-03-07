@@ -1905,6 +1905,9 @@
   "codeLabFeaturedProject.CozmosGarden.tap_a_plant_to_water_it" : {
     "translation" : "しょくぶつをタップしてみずをやる"
   },
+  "codeLabFeaturedProject.CozmosGarden.tap_on": {
+        "translation": "タップする"
+  },
   "codeLabFeaturedProject.CozmosGarden.thing" : {
     "translation" : "もの"
   },
@@ -1962,14 +1965,14 @@
   "codeLabFeaturedProject.GuessTheNumber.end_game" : {
     "translation" : "ゲームしゅうりょう"
   },
-  "codeLabFeaturedProject.GuessTheNumber.gameover" : {
+  "codeLabFeaturedProject.GuessTheNumber.game_over" : {
     "translation" : "ゲームオーバー"
   },
   "codeLabFeaturedProject.GuessTheNumber.give_instructions" : {
     "translation" : "しじをだす"
   },
   "codeLabFeaturedProject.GuessTheNumber.guess" : {
-    "translation" : "よそうする"
+    "translation" : "よそうする!"
   },
   "codeLabFeaturedProject.GuessTheNumber.hi" : {
     "translation" : "こんにちは"
@@ -2004,6 +2007,9 @@
   "codeLabFeaturedProject.GuessTheNumber.new_guess" : {
     "translation" : "あたらしいよそう"
   },
+  "codeLabFeaturedProject.GuessTheNumber.number_guess": {
+        "translation": "ムばんごう よそうする"
+  },
   "codeLabFeaturedProject.GuessTheNumber.reset_lights" : {
     "translation" : "ライトをリセットする"
   },
@@ -2022,13 +2028,13 @@
   "codeLabFeaturedProject.GuessTheNumber.started" : {
     "translation" : "はじめる"
   },
-  "codeLabFeaturedProject.GuessTheNumber.tapon" : {
+  "codeLabFeaturedProject.GuessTheNumber.tap_on" : {
     "translation" : "タップする"
   },
   "codeLabFeaturedProject.GuessTheNumber.think_of_a_number_between_1_and_100_and_tap_purple_to_continue" : {
     "translation" : "1から100のなかからひとつすうじをえらび、パープルをタップしてつづけます。"
   },
-  "codeLabFeaturedProject.GuessTheNumber.totalguesses" : {
+  "codeLabFeaturedProject.GuessTheNumber.total_guesses" : {
     "translation" : "ぜんたいのよそう"
   },
   "codeLabFeaturedProject.GuessTheNumber.turn_off_backpack" : {

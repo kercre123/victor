@@ -1905,6 +1905,9 @@
   "codeLabFeaturedProject.CozmosGarden.tap_a_plant_to_water_it" : {
     "translation" : "Tippe eine Pflanze an, um sie zu gießen"
   },
+  "codeLabFeaturedProject.CozmosGarden.tap_on": {
+        "translation": "Tippen auf"
+  },
   "codeLabFeaturedProject.CozmosGarden.thing" : {
     "translation" : "Ding"
   },
@@ -1962,14 +1965,14 @@
   "codeLabFeaturedProject.GuessTheNumber.end_game" : {
     "translation" : "Spiel beenden"
   },
-  "codeLabFeaturedProject.GuessTheNumber.gameover" : {
+  "codeLabFeaturedProject.GuessTheNumber.game_over" : {
     "translation" : "Spiel beendet"
   },
   "codeLabFeaturedProject.GuessTheNumber.give_instructions" : {
     "translation" : "Anweisungen geben"
   },
   "codeLabFeaturedProject.GuessTheNumber.guess" : {
-    "translation" : "Raten"
+    "translation" : "Raten!"
   },
   "codeLabFeaturedProject.GuessTheNumber.hi" : {
     "translation" : "Hallo"
@@ -2004,6 +2007,9 @@
   "codeLabFeaturedProject.GuessTheNumber.new_guess" : {
     "translation" : "Noch einmal raten"
   },
+  "codeLabFeaturedProject.GuessTheNumber.number_guess": {
+        "translation": "Zahl raten"
+  },
   "codeLabFeaturedProject.GuessTheNumber.reset_lights" : {
     "translation" : "Lichter zurücksetzen"
   },
@@ -2022,13 +2028,13 @@
   "codeLabFeaturedProject.GuessTheNumber.started" : {
     "translation" : "Begonnen"
   },
-  "codeLabFeaturedProject.GuessTheNumber.tapon" : {
+  "codeLabFeaturedProject.GuessTheNumber.tap_on" : {
     "translation" : "Tippen auf"
   },
   "codeLabFeaturedProject.GuessTheNumber.think_of_a_number_between_1_and_100_and_tap_purple_to_continue" : {
     "translation" : "Denke an eine Zahl zwischen 1 und 100, und tippe den lilafarbenen Cube an, um fortzufahren."
   },
-  "codeLabFeaturedProject.GuessTheNumber.totalguesses" : {
+  "codeLabFeaturedProject.GuessTheNumber.total_guesses" : {
     "translation" : "Rateversuche insgesamt"
   },
   "codeLabFeaturedProject.GuessTheNumber.turn_off_backpack" : {
