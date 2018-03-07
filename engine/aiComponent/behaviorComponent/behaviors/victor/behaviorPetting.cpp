@@ -40,7 +40,6 @@ namespace {
   const int kAudioVolumeUpIncrementNonbliss = 1;
   
   // animation control constants
-  const int kPlayAnimForever = 0; // value for number of loops argument for infinitely playing anim
   const int kPlayAnimOnce = 1;    // value for number of loops argument for playing anim once
   const bool kCanAnimationInterrupt = true; // value for whether starting the animation can interrupt
 }
@@ -48,7 +47,8 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPetting::BehaviorPetting(const Json::Value& config)
 : ICozmoBehavior(config)
-, _animTrigPetting()
+, _animPettingResponse()
+, _animPettingGetout()
 , _timeTilTouchCheck(5.0f)
 , _blissTimeout(5.0f)
 , _nonBlissTimeout(5.0f)
@@ -71,11 +71,16 @@ BehaviorPetting::BehaviorPetting(const Json::Value& config)
   std::vector<std::string> tmp;
   ANKI_VERIFY(JsonTools::GetVectorOptional(config, "animGroupNames", tmp),"BehaviorPetting.Ctor.MissingVectorOfAnimTriggers","");
   for(const auto& t : tmp) {
-    _animTrigPetting.push_back( AnimationTriggerFromString(t) );
+    _animPettingResponse.push_back( AnimationTriggerFromString(t) );
   }
   
-  _animTrigPettingGetin = AnimationTriggerFromString(JsonTools::ParseString(config, "animGroupGetin",kDebugStr));
-  _animTrigPettingGetout = AnimationTriggerFromString(JsonTools::ParseString(config, "animGroupGetout",kDebugStr));
+  tmp.clear();
+  ANKI_VERIFY(JsonTools::GetVectorOptional(config, "animGroupNamesGetout", tmp),"BehaviorPetting.Ctor.MissingVectorOfAnimTriggersGetout","");
+  for(const auto& t : tmp) {
+    _animPettingGetout.push_back( AnimationTriggerFromString(t) );
+  }
+  
+  _animPettingResponseGetin = AnimationTriggerFromString(JsonTools::ParseString(config, "animGroupGetin",kDebugStr));
   
   bool animBodyTrackEnabled = JsonTools::ParseBool(config, "animBodyTrackEnabled",kDebugStr);
   bool animHeadTrackEnabled = JsonTools::ParseBool(config, "animHeadTrackEnabled",kDebugStr);
@@ -143,7 +148,7 @@ void BehaviorPetting::InitBehavior()
 void BehaviorPetting::OnBehaviorActivated()
 {
   // GETIN
-  TriggerAnimationAction* action = new TriggerAnimationAction( _animTrigPettingGetin, kPlayAnimOnce, kCanAnimationInterrupt, _tracksToLock);
+  TriggerAnimationAction* action = new TriggerAnimationAction( _animPettingResponseGetin, kPlayAnimOnce, kCanAnimationInterrupt, _tracksToLock);
   CancelAndPlayAction(action);
 }
 
@@ -186,6 +191,21 @@ void BehaviorPetting::CancelAndPlayAction(TriggerAnimationAction* action, bool d
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPetting::PlayBlissLoopAnimation()
+{
+  TriggerAnimationAction* action = new TriggerAnimationAction(_animPettingResponse.back(),
+                                                              kPlayAnimOnce,
+                                                              kCanAnimationInterrupt,
+                                                              _tracksToLock);
+  
+  ActionResultCallback cb = [this](ActionResult result)->void {
+    this->PlayBlissLoopAnimation();
+  };
+  
+  DelegateIfInControl(action, cb);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPetting::BehaviorUpdate()
 {
   if(!IsActivated()){
@@ -206,11 +226,11 @@ void BehaviorPetting::BehaviorUpdate()
   }
   
   // NOTE: do not purr when playing getin
-  if ((_currBlissLevel > 0) && (_currBlissLevel < _animTrigPetting.size()-1)) {
+  if ((_currBlissLevel > 0) && (_currBlissLevel < _animPettingResponse.size()-1)) {
     // rising bliss petting mode sounds
-    int audioVolUpTickPeriod = int(_animTrigPetting.size()-_currBlissLevel)*2;
+    int audioVolUpTickPeriod = int(_animPettingResponse.size()-_currBlissLevel)*2;
     AudioStateMachine(audioVolUpTickPeriod, kAudioVolumeUpIncrementNonbliss);
-  } else if( _currBlissLevel == _animTrigPetting.size()-1 ) {
+  } else if( _currBlissLevel == _animPettingResponse.size()-1 ) {
     // blissful purring (when touched)
     AudioStateMachine(kAudioVolumeUpTickPeriodBliss, kAudioVolumeUpIncrementBliss); // faster and louder
   }
@@ -226,13 +246,18 @@ void BehaviorPetting::BehaviorUpdate()
       
       // currently playing bliss loop
       // => play the "bliss" specific getout
-      TriggerAnimationAction* action = new TriggerAnimationAction( _animTrigPettingGetout,
+      auto& lastAnimTrigger = _animPettingGetout[_animPettingGetout.size()-1];
+      TriggerAnimationAction* action = new TriggerAnimationAction(lastAnimTrigger,
                                                                   kPlayAnimOnce,
                                                                   kCanAnimationInterrupt,
                                                                   _tracksToLock);
       CancelAndPlayAction(action, true);
     } else {
-      CancelSelf();
+      TriggerAnimationAction* action = new TriggerAnimationAction(_animPettingGetout[_currBlissLevel],
+                                                                  kPlayAnimOnce,
+                                                                  kCanAnimationInterrupt,
+                                                                  _tracksToLock);
+      CancelAndPlayAction(action, true);
     }
     
   } else if( (willCheckForTransition && _isPressed) || (_numPressesAtCurrentBlissLevel > _minNumPetsToAdvanceBliss) ) {
@@ -242,17 +267,15 @@ void BehaviorPetting::BehaviorUpdate()
     // => interrupt the current animation with the next sequential rising bliss anim
     // note: if we are at bliss do not interrupt
     
-    if(_currBlissLevel == _animTrigPetting.size()-1) {
+    if(_currBlissLevel == _animPettingResponse.size()-1) {
       if(!_reachedBliss) {
-        // indicates we've played this already and we want to let it loop
-        TriggerAnimationAction* action = new TriggerAnimationAction( _animTrigPetting[_currBlissLevel], kPlayAnimForever, kCanAnimationInterrupt, _tracksToLock);
-        CancelAndPlayAction(action);
+        PlayBlissLoopAnimation();
         _numPressesAtCurrentBlissLevel = 0;
         _reachedBliss = true;
       }
     } else {
       _checkForTransitionTime = now + _timeTilTouchCheck; // update the time to check for next transition, after each state transition
-      TriggerAnimationAction* action = new TriggerAnimationAction( _animTrigPetting[_currBlissLevel],
+      TriggerAnimationAction* action = new TriggerAnimationAction( _animPettingResponse[_currBlissLevel],
                                                                   kPlayAnimOnce, kCanAnimationInterrupt, _tracksToLock);
       _currBlissLevel++;
       CancelAndPlayAction(action);

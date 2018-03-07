@@ -889,6 +889,26 @@
       "AnimName": "ag_petting_bliss_getout"
     },
     {
+      "CladEvent": "PettingLevel4",
+      "AnimName": "ag_petting_lvl4"
+    },
+    {
+      "CladEvent": "PettingLevel1Getout",
+      "AnimName": "ag_petting_lvl1_getout"
+    },
+    {
+      "CladEvent": "PettingLevel2Getout",
+      "AnimName": "ag_petting_lvl2_getout"
+    },
+    {
+      "CladEvent": "PettingLevel3Getout",
+      "AnimName": "ag_petting_lvl3_getout"
+    },
+    {
+      "CladEvent": "PettingLevel4Getout",
+      "AnimName": "ag_petting_lvl4_getout"
+    },
+    {
       "CladEvent":"PickupCubePreperation",
       "AnimName": "ag_reacttoblock_react_short"
     },

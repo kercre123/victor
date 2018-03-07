@@ -53,13 +53,16 @@ protected:
   
   void CancelAndPlayAction(TriggerAnimationAction* action, bool doCancelSelf = false);
   
+  // helper method to play maximum bliss looping animations
+  void PlayBlissLoopAnimation();
+  
 private:
 
   // - - - - - - - - - - - - - -
   // constants
-  std::vector<AnimationTrigger> _animTrigPetting;
-  AnimationTrigger _animTrigPettingGetin;
-  AnimationTrigger _animTrigPettingGetout;
+  std::vector<AnimationTrigger> _animPettingResponse;
+  std::vector<AnimationTrigger> _animPettingGetout;
+  AnimationTrigger _animPettingResponseGetin;
   
   // duration of time to wait before checking
   // for state transition conditions for bliss
