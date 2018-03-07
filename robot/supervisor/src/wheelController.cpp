@@ -131,7 +131,11 @@ namespace Anki {
     //Run the wheel controller
     void Run()
     {
-      if(1) {
+      const bool skipActiveControl = NEAR_ZERO(desiredWheelSpeedL_) &&
+                                     NEAR_ZERO(desiredWheelSpeedR_) &&
+                                     !AreWheelsPowered();
+
+      if(!skipActiveControl) {
 //      if(!coastMode_ && !coastUntilStop_) {
 
 #if(DEBUG_WHEEL_CONTROLLER)

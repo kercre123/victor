@@ -16,8 +16,8 @@
 
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animation/animationStreamer.h"
-#include "cozmoAnim/faceDisplay/faceDebugDraw.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
+#include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/textToSpeech/textToSpeechComponent.h"
 
@@ -99,10 +99,10 @@ Result AnimEngine::Init()
   // Set up message handler
   auto * audioInput = static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput(regId));
   AnimProcessMessages::Init(this, _animationStreamer.get(), audioInput, _context.get());
-
+  
   _context->GetWebService()->Start(_context->GetDataPlatform(),
                                    _context->GetDataLoader()->GetWebServerAnimConfig());
-  FaceDisplay::GetDebugDraw()->SetWebService( _context->GetWebService() );
+  FaceInfoScreenManager::getInstance()->Init(_context.get(), _animationStreamer.get());
 
   LOG_INFO("AnimEngine.Init.Success","Success");
   _isInitialized = true;

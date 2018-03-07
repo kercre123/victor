@@ -15,6 +15,7 @@
 #include "cozmoAnim/animComms.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
+#include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -203,12 +204,6 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
                           AnimationStreamer* animStreamer,
                           const AnimContext* context)
 {
-  // Don't start connection flow if not packed out
-  if(!Factory::GetEMR()->PACKED_OUT_FLAG)
-  {
-    return;
-  }
-
   using namespace SwitchboardInterface;
 
   switch(msg.status)
@@ -220,6 +215,8 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
     break;
     case ConnectionStatus::START_PAIRING:
     {
+      FaceInfoScreenManager::getInstance()->EnablePairingScreen(true);
+
       // Throttling square is annoying when trying to inspect the display so disable
       NativeAnkiUtilConsoleSetValueWithString("DisplayThermalThrottling", "false");
       DrawStartPairingScreen(animStreamer);
@@ -287,6 +284,8 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
         // Reenable keep face alive
         animStreamer->EnableKeepFaceAlive(true, 0);
       }
+      FaceInfoScreenManager::getInstance()->EnablePairingScreen(false);
+
 
       // Safe guard to make sure system pairing light is turned off
       RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({

@@ -14,7 +14,7 @@
 
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceDisplayImpl.h"
-#include "cozmoAnim/faceDisplay/faceDebugDraw.h"
+#include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/vision/engine/image.h"
 #include "util/threading/threadPriority.h"
@@ -26,7 +26,6 @@ namespace Cozmo {
 
 FaceDisplay::FaceDisplay()
   : _displayImpl(new FaceDisplayImpl())
-  , _faceDebugDraw(new FaceDebugDraw())
 {
   // Set up our thread running data
   _faceDrawImg[0].reset(new Vision::ImageRGB565());
@@ -44,7 +43,9 @@ FaceDisplay::~FaceDisplay()
 
 void FaceDisplay::DrawToFaceDebug(const Vision::ImageRGB565& img)
 {
-  if (_faceDebugDraw->GetDrawState() == FaceDebugDraw::DrawState::None)
+  // We want to allow FaceInfoScreenManager to draw in the None screen in particular
+  // in order to clear since there are no eyes to clear it for us.
+  if (!FACTORY_TEST && !FaceInfoScreenManager::getInstance()->IsActivelyDrawingToScreen())
   {
     return;
   }
@@ -54,7 +55,7 @@ void FaceDisplay::DrawToFaceDebug(const Vision::ImageRGB565& img)
 
 void FaceDisplay::DrawToFace(const Vision::ImageRGB565& img)
 {
-  if (_faceDebugDraw->GetDrawState() != FaceDebugDraw::DrawState::None)
+  if (FaceInfoScreenManager::getInstance()->IsActivelyDrawingToScreen())
   {
     return;
   }

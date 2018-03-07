@@ -9,6 +9,10 @@ message EnterPairing
 {
 }
 
+message ExitPairing
+{
+}
+
 }
 }
 }

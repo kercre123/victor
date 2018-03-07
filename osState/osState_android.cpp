@@ -46,6 +46,7 @@ namespace {
   const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
   const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone7/temp";
   const char* kBatteryVoltageFile = "/sys/devices/soc/qpnp-linear-charger-8/power_supply/battery/voltage_now";
+  const char* kMACAddressFile = "/sys/class/net/wlan0/address";
 
   // System vars
   uint32_t _cpuFreq_kHz; // CPU freq
@@ -237,6 +238,19 @@ std::string OSState::GetIPAddressInternal()
 
   struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
   return std::string(inet_ntoa(ipaddr->sin_addr));
+}
+
+std::string OSState::GetMACAddress() const
+{
+  std::ifstream macFile;
+  macFile.open(kMACAddressFile);
+  if (macFile.is_open()) {
+    std::string macStr;
+    macFile >> macStr;
+    macFile.close();
+    return macStr;
+  }
+  return "";
 }
 
 } // namespace Cozmo

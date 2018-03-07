@@ -22,7 +22,7 @@
 #include "cozmoAnim/animEngine.h"
 #include "cozmoAnim/connectionFlow.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
-#include "cozmoAnim/faceDisplay/faceDebugDraw.h"
+#include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/micDataProcessor.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
@@ -36,7 +36,6 @@
 #include "clad/robotInterface/messageEngineToRobot_sendAnimToRobot_helper.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include "osState/osState.h"
@@ -66,14 +65,6 @@ namespace {
   Anki::Cozmo::AnimationStreamer*            _animStreamer = nullptr;
   Anki::Cozmo::Audio::EngineRobotAudioInput* _audioInput = nullptr;
   const Anki::Cozmo::AnimContext*       _context = nullptr;
-
-  // Amount of time the backpack button must be held before sync() is called
-  const f32 kButtonHoldTimeForSync_s = 1.f;
-
-  // Time at which sync() should be called
-  f32 syncTime_s = 0.f;
-
-  CONSOLE_VAR(bool, kDebugFaceDraw_CycleWithButton, "DebugFaceDraw", true);   
 
   static void ListAnimations(ConsoleFunctionContextRef context)
   {
@@ -312,7 +303,7 @@ void Process_startRecordingMics(const Anki::Cozmo::RobotInterface::StartRecordin
 
 void Process_drawTextOnScreen(const Anki::Cozmo::RobotInterface::DrawTextOnScreen& msg)
 {
-  FaceDisplay::GetDebugDraw()->SetCustomText(msg);
+  FaceInfoScreenManager::getInstance()->SetCustomText(msg);
 }
   
 void Process_runDebugConsoleFuncMessage(const Anki::Cozmo::RobotInterface::RunDebugConsoleFuncMessage& msg)
@@ -397,7 +388,7 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
 
 static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
 {
-  FaceDisplay::GetDebugDraw()->DrawMicInfo(payload);
+  FaceInfoScreenManager::getInstance()->DrawMicInfo(payload);
 
   auto * micDataProcessor = _context->GetMicDataProcessor();
   if (micDataProcessor != nullptr)
@@ -406,88 +397,10 @@ static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
   }
 }
 
-void CheckForDoublePress(bool buttonReleased)
-{
-  // Time window in which to consider a second press as a double press
-  const  u32 kDoublePressWindow_ms   = 700;
-  static u32 buttonTappedCount       = 0;
-  static u32 timeDoublePressStart_ms = 0;
-
-  const u32 curTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-
-  // If the button has been released
-  if(buttonReleased)
-  {
-    // If this is the first release set timeDoublePressStart
-    if(buttonTappedCount == 0)
-    {
-      timeDoublePressStart_ms = curTime_ms;
-    }
-
-    buttonTappedCount++;
-  }
-
-  // If the button has been released twice then broadcast a double pressed message
-  if(buttonTappedCount == 2)
-  {
-    LOG_INFO("AnimProcessMessages.CheckForDoublePress.GotDoublePress", "Entering pairing");
-    RobotInterface::SendAnimToEngine(SwitchboardInterface::EnterPairing());
-
-    timeDoublePressStart_ms = 0;
-    buttonTappedCount = 0;
-  }
-
-  // If it has been too long since the first button release then
-  // reset time and buttonTappedCount
-  if(timeDoublePressStart_ms > 0 && 
-     curTime_ms - timeDoublePressStart_ms > kDoublePressWindow_ms)
-  {
-    timeDoublePressStart_ms = 0;
-    buttonTappedCount = 0;
-  }
-}
-
 static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
 {
-  FaceDisplay::GetDebugDraw()->DrawStateInfo(robotState);
-
-  static bool buttonWasPressed = false;
-  const auto buttonIsPressed = static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::IS_BUTTON_PRESSED);
-  const bool buttonPressedEvent = !buttonWasPressed && buttonIsPressed;
-  const bool buttonReleasedEvent = buttonWasPressed && !buttonIsPressed;
-  buttonWasPressed = buttonIsPressed;
-
-  // Only check for double press after passing packout and while on charger
-  if(Factory::GetEMR()->PACKED_OUT_FLAG && 
-     robotState.status & EnumToUnderlyingType(RobotStatusFlag::IS_ON_CHARGER))
-  {
-    CheckForDoublePress(buttonReleasedEvent);
-  }
-
-  const auto currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(); 
-
-  if (buttonPressedEvent) {
-    // Get ready to sync(), in case we end up getting power
-    // pulled by long button press, to make sure all 
-    // pending writes are flushed.
-    syncTime_s = currentTime_s + kButtonHoldTimeForSync_s;
-  }
-
-  if (buttonIsPressed) {
-    if (syncTime_s > 0.f && (currentTime_s > syncTime_s)) {
-      sync();
-      syncTime_s = 0.f;
-    }
-  }
-
-  if (buttonReleasedEvent)
-  {
-    if(kDebugFaceDraw_CycleWithButton)
-    {
-      FaceDisplay::GetDebugDraw()->ChangeDrawState();
-    }
-  }
-
+  FaceInfoScreenManager::getInstance()->Update(robotState);
+  
 #if ANKI_DEV_CHEATS
   auto * micDataProcessor = _context->GetMicDataProcessor();
   if (micDataProcessor != nullptr)
@@ -645,11 +558,11 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
     ProcessMessageFromRobot(msg);
   }
 
-// TODO(Al): Remove the !FACTORY_TEST condition once all robots have EMRs
-#if defined(SIMULATOR) || !FACTORY_TEST
-  FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(false);
+#if defined(SIMULATOR)
+  // Simulator never has EMR
+  FaceInfoScreenManager::getInstance()->SetShouldDrawFAC(false);
 #else
-  FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!Factory::GetEMR()->PACKED_OUT_FLAG);
+  FaceInfoScreenManager::getInstance()->SetShouldDrawFAC(!Factory::GetEMR()->PACKED_OUT_FLAG);
 #endif
 
   return RESULT_OK;

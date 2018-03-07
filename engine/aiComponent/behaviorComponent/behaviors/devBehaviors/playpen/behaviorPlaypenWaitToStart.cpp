@@ -93,8 +93,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInterna
   // or this is sim
   const bool buttonGood = !PlaypenConfig::kUseButtonToStart || 
                           (PlaypenConfig::kUseButtonToStart &&
-                           _buttonPressed) || 
-                          !robot.IsPhysical();
+                           _buttonPressed);
 
   if(touchGood && buttonGood && (robot.IsOnCharger() || robot.IsCharging()))
   {
@@ -130,6 +129,9 @@ void BehaviorPlaypenWaitToStart::OnBehaviorDeactivated()
   };
 
   robot.GetBodyLightComponent().SetBackpackLights(robot.GetBodyLightComponent().GetOffBackpackLights());
+
+  // Request exit pairing mode to switchboard in case we're in it
+  robot.Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::ExitPairing()));
 }
 
 }

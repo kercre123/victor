@@ -123,6 +123,11 @@ std::string OSState::GetIPAddressInternal()
   return _ipAddress;
 }
 
+std::string OSState::GetMACAddress() const
+{
+  return "00:00:00:00:00:00";
+}
+
 } // namespace Cozmo
 } // namespace Anki
 

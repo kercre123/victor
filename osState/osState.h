@@ -85,6 +85,8 @@ public:
     return _ipAddress;
   }
 
+  std::string GetMACAddress() const;
+
   u32 GetSerialNumber()
   {
     const std::string& serialNum = GetSerialNumberAsString();

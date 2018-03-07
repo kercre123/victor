@@ -20,8 +20,8 @@
 #include "coretech/messaging/shared/LocalUdpServer.h"
 
 #include "cozmoAnim/animProcessMessages.h"
-#include "cozmoAnim/faceDisplay/faceDebugDraw.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
+#include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/micDataProcessor.h"
 #include "cozmoAnim/micDataInfo.h"
 #include "cozmoAnim/micImmediateDirection.h"
@@ -580,7 +580,7 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
     }
   }
 
-  const bool isMicFace = FaceDisplay::GetDebugDraw()->GetDrawState() == FaceDebugDraw::DrawState::MicDirectionClock;
+  const bool isMicFace = FaceInfoScreenManager::getInstance()->GetCurrScreenName() == ScreenName::MicDirectionClock;
   if (!isMicFace)
   {
     _forceRecordClip = false;
@@ -723,7 +723,7 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
   #if ANKI_DEV_CHEATS
     if (updatedMicDirection || recordingSecondsRemaining != 0)
     {
-      FaceDisplay::GetDebugDraw()->DrawConfidenceClock(
+      FaceInfoScreenManager::getInstance()->DrawConfidenceClock(
         micDirectionData,
         GetIncomingMicDataPercentUsed(),
         recordingSecondsRemaining,

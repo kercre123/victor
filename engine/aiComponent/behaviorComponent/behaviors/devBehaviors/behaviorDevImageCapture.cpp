@@ -102,7 +102,7 @@ BehaviorDevImageCapture::~BehaviorDevImageCapture()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 static inline void EnableDebugFaceDrawButton(BehaviorExternalInterface& bei, bool enable)
 {
-  // Gross way to make sure the FaceDebugDraw doesn't hijack the button, using console interface to talk to
+  // Gross way to make sure the FaceInfoScreenManager doesn't hijack the button, using console interface to talk to
   // animation process
   using namespace ExternalInterface;
   const char* enableStr = (enable ? "1" : "0");

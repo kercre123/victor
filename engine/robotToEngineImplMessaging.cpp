@@ -123,6 +123,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribe(RobotInterface::RobotToEngineTag::dockingStatus,                             &RobotToEngineImplMessaging::HandleDockingStatus);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::micDirection,                   &RobotToEngineImplMessaging::HandleMicDirection);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::streamCameraImages,             &RobotToEngineImplMessaging::HandleStreamCameraImages);  
   
   // lambda wrapper to call internal handler
   GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::state,
@@ -984,6 +985,12 @@ void RobotToEngineImplMessaging::HandleMicDirection(const AnkiEvent<RobotInterfa
 {
   const auto & payload = message.GetData().Get_micDirection();
   robot->GetMicDirectionHistory().AddDirectionSample(payload.timestamp, payload.direction, payload.confidence);
+}
+
+void RobotToEngineImplMessaging::HandleStreamCameraImages(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  const auto & payload = message.GetData().Get_streamCameraImages();
+  robot->GetVisionComponent().EnableDrawImagesToScreen(payload.enable);
 }
 
 } // end namespace Cozmo

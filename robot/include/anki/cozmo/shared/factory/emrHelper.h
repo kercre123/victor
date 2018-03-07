@@ -14,6 +14,7 @@
 #define FACTORY_EMR_H
 
 #include "emr.h"
+#include "util/logging/logging.h"
 
 #include <sys/mman.h>
 #include <unistd.h>
@@ -57,7 +58,7 @@ namespace Factory {
         
         if(fd == -1)
         {
-          printf("ERROR: Failed to open EMR %d\n", errno);
+          LOG_ERROR("Factory.ReadEMR.OpenFailed", "%d", errno);
           return; // exit instead? will probably end up crashing in WriteEMR or GetEMR will return null
         }
         
@@ -77,7 +78,7 @@ namespace Factory {
         if(_emr == MAP_FAILED)
         {
           _emr == nullptr;
-          printf("ERROR: mmap failed %d\n", errno);
+          LOG_ERROR("Factory.ReadEMR.MmapFailed", "%d", errno);
           return; // exit instead? will probably end up crashing in WriteEMR or GetEMR will return null
         }
       }
@@ -89,6 +90,10 @@ namespace Factory {
   //     to write buf in the playpen member of the EMR
   static void WriteEMR(size_t offset, void* data, size_t len)
   {
+    #ifdef SIMULATOR
+    return;
+    #endif
+
     // Attempt to read the EMR, will do nothing if it has already been read
     ReadEMR();
 
@@ -98,12 +103,16 @@ namespace Factory {
     }
     else
     {
-      printf("Failed to write to EMR not factory test\n");
+      LOG_WARNING("Factory.WriteEMR.FailedWrite", "Failed to write to EMR not factory test");
     }
   }
 
   static void WriteEMR(size_t offset, uint32_t data)
   {
+    #ifdef SIMULATOR
+    return;
+    #endif
+
     // Attempt to read the EMR, will do nothing if it has already been read
     ReadEMR();
 
@@ -113,13 +122,13 @@ namespace Factory {
     }
     else
     {
-      printf("Failed to write to EMR not factory test\n");
+      LOG_WARNING("Factory.WriteEMR.FailedWrite", "Failed to write to EMR not factory test");
     }
   }
 
   static const Factory::EMR* const GetEMR()
   {
-    #if defined(SIMULATOR)
+    #ifdef SIMULATOR
       static Factory::EMR emr;
       return &emr;
     #endif
@@ -131,7 +140,7 @@ namespace Factory {
 
     if(_emr == nullptr)
     {
-      printf("EMR is null, is /factory writable?");
+      LOG_WARNING("Factory.GetEMR.NullEMR", "EMR is null, is /factory writable?");
     }
 
     return _emr;

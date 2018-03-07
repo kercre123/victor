@@ -165,6 +165,8 @@ union RobotToEngine {
   TextToSpeechEvent          textToSpeechEvent      = 0xDB,
 
   SwitchboardInterface::EnterPairing  enterPairing  = 0xDC,
+  SwitchboardInterface::ExitPairing   exitPairing   = 0xDD,  
+  StreamCameraImages         streamCameraImages     = 0xDE,
 
   // Audio
   AudioEngine::Multiplexer::AudioCallbackDuration audioCallbackDuration = 0xE0,
