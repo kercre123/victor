@@ -29,7 +29,7 @@
                     },
                     "2bncxZXZ/NkerG~*iGe#": {
                         "id": "2bncxZXZ/NkerG~*iGe#",
-                        "name": "Der Benutzer tippt den Cube f\u00fcr eine niedrigere Zahl an.",
+                        "name": "Eine niedrigere Zahl wird angetippt.",
                         "type": "",
                         "value": 0
                     },
@@ -65,7 +65,7 @@
                     },
                     "C944iSq$Ka@@otR58d]3": {
                         "id": "C944iSq$Ka@@otR58d]3",
-                        "name": "Der Benutzer tippt den Cube zum Starten und Beenden des Spiels an.",
+                        "name": "Cube wird zum Starten und Beenden des Spiels angetippt.",
                         "type": "",
                         "value": 0
                     },
@@ -250,7 +250,7 @@
                             "VARIABLE": {
                                 "id": "C944iSq$Ka@@otR58d]3",
                                 "name": "VARIABLE",
-                                "value": "Der Benutzer tippt den Cube zum Starten und Beenden des Spiels an.",
+                                "value": "Cube wird zum Starten und Beenden des Spiels angetippt.",
                                 "variableType": ""
                             }
                         },
@@ -330,7 +330,7 @@
                             "VARIABLE": {
                                 "id": "2bncxZXZ/NkerG~*iGe#",
                                 "name": "VARIABLE",
-                                "value": "Der Benutzer tippt den Cube f\u00fcr eine niedrigere Zahl an.",
+                                "value": "Eine niedrigere Zahl wird angetippt.",
                                 "variableType": ""
                             }
                         },

@@ -388,7 +388,7 @@
                     },
                     "arBPhf~)-D8x67M7i/e4": {
                         "id": "arBPhf~)-D8x67M7i/e4",
-                        "name": "Schleife S\u00e4tze mit Koordinaten zum Fahren und zum Zeichen von Linien und Punkten durch.",
+                        "name": "Durchlaufe eine Reihe Koordinaten zum Fahren und zum Zeichnen von Linien und Punkten.",
                         "type": "",
                         "value": 0
                     },
@@ -17274,7 +17274,7 @@
                             "VARIABLE": {
                                 "id": "arBPhf~)-D8x67M7i/e4",
                                 "name": "VARIABLE",
-                                "value": "Schleife S\u00e4tze mit Koordinaten zum Fahren und zum Zeichen von Linien und Punkten durch.",
+                                "value": "Durchlaufe eine Reihe Koordinaten zum Fahren und zum Zeichnen von Linien und Punkten.",
                                 "variableType": ""
                             }
                         },

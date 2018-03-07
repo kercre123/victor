@@ -1438,7 +1438,7 @@
     "translation" : "Fête le jour de l'astronomie avec des constellations cosmiques."
   },
   "codeLabFeaturedConstellations.projectInstructions" : {
-    "translation" : "1. S'assurer que Cozmo a suffisamment d'espace pour circuler.\u000a\u000a2. Appuyer sur le drapeau de départ et observer les étoiles se connecter pour former une constellation.3. Rejouer pour toutes les voir !"
+    "translation" : "1. Assure-toi que Cozmo a suffisamment d'espace pour circuler.\u000a\u000a2. Appuie sur le drapeau de départ et observe les étoiles se connecter pour former une constellation.\u000a\u000a3. Rejoue pour admirer toutes les constellations !"
   },
   "codeLabFeaturedDrivingInCircles.projectName" : {
     "translation" : "Tourne en rond"
@@ -1483,13 +1483,13 @@
     "translation" : "Célèbre la Journée de la Terre en faisant du jardinage avec Cozmo !"
   },
   "codeLabFeaturedCozmosGarden.projectInstructions" : {
-    "translation" : "1. Aligner les cubes de Cozmo devant toi.\u000a\u000a2. Lorsque tu appuies sur le drapeau de départ, Cozmo choisit 3 plantes à faire pousser en utilisant les voyants de ses cubes.\u000a\u000a3. À chaque tour, suis ses instructions pour favoriser la croissance des plantes.\u000a\u000a4. Illumine les 4 voyants pour les récolter. Récolte 3 plantes pour gagner la partie !"
+    "translation" : "1. Aligne les cubes de Cozmo devant toi.\u000a\u000a2. Lorsque tu appuies sur le drapeau de départ, Cozmo choisit 3 plantes à faire pousser en utilisant les voyants de ses cubes.\u000a\u000a3. À chaque tour, suis ses instructions pour favoriser la croissance des plantes.\u000a\u000a4. Illumine les 4 voyants pour les récolter. Récolte 3 plantes pour gagner la partie !"
   },
   "codeLabFeaturedGuessTheNumber.projectName" : {
     "translation" : "Devine le nombre"
   },
   "codeLabFeaturedGuessTheNumber.projectDescription" : {
-    "translation" : "SOUMIS PAR JDFIGHT⏎⏎Véritable devin, Cozmo va deviner le nombre !"
+    "translation" : "SOUMIS PAR JDFIGHT\u000aVéritable devin, Cozmo va deviner le nombre !"
   },
   "codeLabFeaturedGuessTheNumber.projectInstructions" : {
     "translation" : "1. Aligne les cubes de Cozmo devant toi.\u000a\u000a2. Appuie sur le drapeau de départ et suis les instructions de Cozmo pour jouer.\u000a\u000a3. Donne-lui des indices en touchant ses cubes.\u000a\u000a4. Robinet rouge si votre numéro est inférieur, vert s’il est supérieur, et violet si elle est correcte.Soumis par jdfight.\u000a\u000aRien ne nous fait plus plaisir que de voir vos incroyables créations Code Lab prendre vie. En fait, nous les aimons tellement que nous allons les partager avec toute la communauté Cozmo. Continuons à créer ensemble.\u000a\u000aComment puis-je envoyer ma propre création Code Lab ?\u000a\u000aUne fois votre projet terminé, appuyez sur le bouton Exporter situé en haut à gauche de l'espace de travail. Suivez ensuite les instructions à l'écran. Nous avons hâte de voir ce que vous avez concocté !"

@@ -927,7 +927,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": " 3\u3064\u306e\u3057\u3087\u304f\u3076\u3064"
+                                "value": " \u3092\u3057\u3085\u3046\u304b\u304f\u3057\u307e\u3057\u305f"
                             }
                         },
                         "id": "#*1O*Jvm.dc0#$bY?pb*",
@@ -5543,7 +5543,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "\u2605\u3092\u3057\u3085\u3046\u304b\u304f\u3057\u307e\u3057\u305f "
+                                "value": "\u3092\u3057\u3085\u3046\u304b\u304f\u3057\u307e\u3057\u305f "
                             }
                         },
                         "id": "5fng;]V,QvJPfmeV/SYN",
@@ -15346,7 +15346,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": " out of "
+                                "value": " \u304b\u3076 "
                             }
                         },
                         "id": "ZrRLWD8KICwP].#5U*`8",
@@ -18830,7 +18830,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "\u2605\u3092\u3057\u3085\u3046\u304b\u304f\u3057\u307e\u3057\u305f "
+                                "value": "3\u304b\u3076\u306e\u3057\u3087\u304f\u3076\u3064\u306e\u3046\u3061 "
                             }
                         },
                         "id": "gOHM2RY22E%hIfbpN%2{",

@@ -29,13 +29,13 @@
                     },
                     "!t2*wl}jsG2/4K4WHF2.": {
                         "id": "!t2*wl}jsG2/4K4WHF2.",
-                        "name": "Choisir et initialiser les plantes \u00e0 faire pousser dans le jardin.",
+                        "name": "Choisit et initialise les plantes \u00e0 faire pousser dans le jardin.",
                         "type": "",
                         "value": 0
                     },
                     "#?`cDM;MD.XO=(EWN3Ul": {
                         "id": "#?`cDM;MD.XO=(EWN3Ul",
-                        "name": "D\u00e9sactiver les voyants dorsaux.",
+                        "name": "D\u00e9sactive les voyants dorsaux.",
                         "type": "",
                         "value": 0
                     },
@@ -53,13 +53,13 @@
                     },
                     "$MDgR.*G2QJ[*pF@*F=1": {
                         "id": "$MDgR.*G2QJ[*pF@*F=1",
-                        "name": "V\u00e9rifier si des plantes peuvent \u00eatre r\u00e9colt\u00e9es.",
+                        "name": "V\u00e9rifie si des plantes peuvent \u00eatre r\u00e9colt\u00e9es.",
                         "type": "",
                         "value": 0
                     },
                     "$MhV4:Z+J;d]{#}}:M=f": {
                         "id": "$MhV4:Z+J;d]{#}}:M=f",
-                        "name": "D\u00e9poser la prochaine carte tir\u00e9e.",
+                        "name": "Joue la prochaine carte tir\u00e9e.",
                         "type": "",
                         "value": 0
                     },
@@ -71,7 +71,7 @@
                     },
                     "%L-3Ev.(rOhz7[?pASC*": {
                         "id": "%L-3Ev.(rOhz7[?pASC*",
-                        "name": "V\u00e9rifier si les insectes ont bien \u00e9t\u00e9 \u00e9cras\u00e9s.",
+                        "name": "V\u00e9rifie si les insectes ont bien \u00e9t\u00e9 \u00e9cras\u00e9s.",
                         "type": "",
                         "value": 0
                     },
@@ -113,7 +113,7 @@
                     },
                     ",u;#GEb0e3:8z2#_ZKd;": {
                         "id": ",u;#GEb0e3:8z2#_ZKd;",
-                        "name": "Toucher le cube pour activer l'action correspondante.",
+                        "name": "Active l'action appropri\u00e9e lorsque le cube est touch\u00e9.",
                         "type": "",
                         "value": 0
                     },
@@ -130,13 +130,13 @@
                     },
                     "0p7w#LMTnxvRF*%jP7#1": {
                         "id": "0p7w#LMTnxvRF*%jP7#1",
-                        "name": "Activer les effets de la carte Insectes.",
+                        "name": "Active les effets de la carte Insectes.",
                         "type": "",
                         "value": 0
                     },
                     "2N:5I_;4VlUNw.k%-(6a": {
                         "id": "2N:5I_;4VlUNw.k%-(6a",
-                        "name": "S'assurer que le score de chaque plante soit compris entre 0\u00a0et 4\u00a0points.",
+                        "name": "S'assure que le score de chaque plante soit compris entre 0\u00a0et 4\u00a0points.",
                         "type": "",
                         "value": 0
                     },
@@ -154,7 +154,7 @@
                     },
                     "2jA3LAU:%AapT7`@~rT=": {
                         "id": "2jA3LAU:%AapT7`@~rT=",
-                        "name": "game over",
+                        "name": "d\u00e9faite",
                         "type": "broadcast_msg",
                         "value": "game over lose"
                     },
@@ -166,7 +166,7 @@
                     },
                     "3Z$bIz*%0xDp[-pa(~.q": {
                         "id": "3Z$bIz*%0xDp[-pa(~.q",
-                        "name": "Effacer toutes les donn\u00e9es de la liste des plantes \u00e0 r\u00e9colter.",
+                        "name": "Efface toutes les donn\u00e9es de la liste des plantes \u00e0 r\u00e9colter.",
                         "type": "",
                         "value": 0
                     },
@@ -190,19 +190,19 @@
                     },
                     "8-6,Lo%c^`WxW@i|fCNc": {
                         "id": "8-6,Lo%c^`WxW@i|fCNc",
-                        "name": "Compl\u00e9ter la liste du paquet de cartes.",
+                        "name": "Remplit la liste du paquet de cartes.",
                         "type": "",
                         "value": 0
                     },
                     "85iC(8DU8ZNx_,BC#`8u": {
                         "id": "85iC(8DU8ZNx_,BC#`8u",
-                        "name": "Afficher la croissance des plantes et v\u00e9rifier si elles peuvent \u00eatre r\u00e9colt\u00e9es.",
+                        "name": "Affiche la croissance des plantes et v\u00e9rifier si elles peuvent \u00eatre r\u00e9colt\u00e9es.",
                         "type": "",
                         "value": 0
                     },
                     "8V;?o-k@CeoBBVUEc?fj": {
                         "id": "8V;?o-k@CeoBBVUEc?fj",
-                        "name": "Effacer toutes les donn\u00e9es des listes.",
+                        "name": "Efface toutes les donn\u00e9es des listes.",
                         "type": "",
                         "value": 0
                     },
@@ -214,7 +214,7 @@
                     },
                     ":z}pMyXWX{Eq,S7v6i59": {
                         "id": ":z}pMyXWX{Eq,S7v6i59",
-                        "name": "Initialiser les donn\u00e9es du jeu et commencer la partie.",
+                        "name": "Initialise les donn\u00e9es du jeu et commence la partie.",
                         "type": "",
                         "value": 0
                     },
@@ -226,7 +226,7 @@
                     },
                     "=2kLEANAg1;LybuGj2U)": {
                         "id": "=2kLEANAg1;LybuGj2U)",
-                        "name": "Compl\u00e9ter les listes de types et de couleurs de plantes.",
+                        "name": "Remplit les listes de types et de couleurs de plantes.",
                         "type": "",
                         "value": 0
                     },
@@ -250,7 +250,7 @@
                     },
                     "?_lH+b)Lc`b9p$GT~A}3": {
                         "id": "?_lH+b)Lc`b9p$GT~A}3",
-                        "name": "Marquer une plante comme \u00ab\u00a0r\u00e9colt\u00e9e\u00a0\u00bb et illuminer les voyants du cube.",
+                        "name": "Marque une plante comme \u00ab\u00a0r\u00e9colt\u00e9e\u00a0\u00bb et illumine les voyants du cube.",
                         "type": "",
                         "value": 0
                     },
@@ -264,13 +264,13 @@
                     },
                     "@QLd(geF*za%S1n[a-4!": {
                         "id": "@QLd(geF*za%S1n[a-4!",
-                        "name": "activer la plante",
+                        "name": "plante active",
                         "type": "",
                         "value": 3
                     },
                     "A#~,`~zK@C~wQsYk3_XK": {
                         "id": "A#~,`~zK@C~wQsYk3_XK",
-                        "name": "Piocher la prochaine carte du paquet.",
+                        "name": "Pioche la prochaine carte du paquet.",
                         "type": "",
                         "value": 0
                     },
@@ -286,7 +286,7 @@
                     },
                     "BJ@[qkF)Brtx-@a3?cZL": {
                         "id": "BJ@[qkF)Brtx-@a3?cZL",
-                        "name": "m\u00e9langer la carte",
+                        "name": "carte al\u00e9atoire",
                         "type": "",
                         "value": "3"
                     },
@@ -316,7 +316,7 @@
                     },
                     "E6ZC4o^I=7R`yR^qWyt*": {
                         "id": "E6ZC4o^I=7R`yR^qWyt*",
-                        "name": "Utiliser les voyants du cube pour afficher la croissance actuelle des plantes qui n'ont pas \u00e9t\u00e9 r\u00e9colt\u00e9es.",
+                        "name": "Utilise les voyants du cube pour afficher la croissance actuelle des plantes qui n'ont pas \u00e9t\u00e9 r\u00e9colt\u00e9es.",
                         "type": "",
                         "value": 0
                     },
@@ -328,13 +328,13 @@
                     },
                     "FB_wjTS9HqxfJrRL+A;b": {
                         "id": "FB_wjTS9HqxfJrRL+A;b",
-                        "name": "Activer les effets de la carte Eau.",
+                        "name": "Active les effets de la carte Eau.",
                         "type": "",
                         "value": 0
                     },
                     "FQ1)Iej(}dU1CaZwQB7[": {
                         "id": "FQ1)Iej(}dU1CaZwQB7[",
-                        "name": "La t\u00eate de Cozmo affiche des insectes.",
+                        "name": "Le visage de Cozmo affiche des insectes.",
                         "type": "",
                         "value": 0
                     },
@@ -379,13 +379,13 @@
                     },
                     "Ip86u5Ta|m`@#q5lKe#0": {
                         "id": "Ip86u5Ta|m`@#q5lKe#0",
-                        "name": "m\u00e9langer au hasard",
+                        "name": "choix al\u00e9atoire",
                         "type": "",
                         "value": 1
                     },
                     "KEsOIz}vieQT{+0zZihe": {
                         "id": "KEsOIz}vieQT{+0zZihe",
-                        "name": "largeur de la ligne verticale",
+                        "name": "largeur de la ligne de la goutte",
                         "type": "",
                         "value": -0.5
                     },
@@ -397,13 +397,13 @@
                     },
                     "PEdlr[J4sVtEOv1=3g3V": {
                         "id": "PEdlr[J4sVtEOv1=3g3V",
-                        "name": "Choisir au hasard une phrase que Cozmo dit lorsque les insectes sont \u00e9cras\u00e9s.",
+                        "name": "Choisit au hasard une phrase que Cozmo dit lorsque les insectes sont \u00e9cras\u00e9s.",
                         "type": "",
                         "value": 0
                     },
                     "Q]8XOLmHF*2qnP%Vg]TP": {
                         "id": "Q]8XOLmHF*2qnP%Vg]TP",
-                        "name": "La t\u00eate de Cozmo affiche de l'eau.",
+                        "name": "Le visage de Cozmo affiche de l'eau.",
                         "type": "",
                         "value": 0
                     },
@@ -421,7 +421,7 @@
                     },
                     "XWi|$W/H?r*io8iAbbEz": {
                         "id": "XWi|$W/H?r*io8iAbbEz",
-                        "name": "d\u00e9poser la carte",
+                        "name": "jouer la carte",
                         "type": "broadcast_msg",
                         "value": "present card"
                     },
@@ -451,7 +451,7 @@
                     },
                     "^:7On02M-mju0+n^MC.a": {
                         "id": "^:7On02M-mju0+n^MC.a",
-                        "name": "Effacer toutes les donn\u00e9es de la liste des plantes infest\u00e9es.",
+                        "name": "Efface toutes les donn\u00e9es de la liste des plantes infest\u00e9es.",
                         "type": "",
                         "value": 0
                     },
@@ -463,13 +463,13 @@
                     },
                     "_l0SC,-IC8xK=bn^VV,E": {
                         "id": "_l0SC,-IC8xK=bn^VV,E",
-                        "name": "Arroser la plante choisie par le joueur.",
+                        "name": "Arrose la plante choisie par le joueur.",
                         "type": "",
                         "value": 0
                     },
                     "aQ3K|1wu3aUP1-BB)qI{": {
                         "id": "aQ3K|1wu3aUP1-BB)qI{",
-                        "name": "Activer les effets de la carte Soleil.",
+                        "name": "Active les effets de la carte Soleil.",
                         "type": "",
                         "value": 0
                     },
@@ -481,13 +481,13 @@
                     },
                     "b|_|xQqr[4T97I(@^`8k": {
                         "id": "b|_|xQqr[4T97I(@^`8k",
-                        "name": "compl\u00e9ter le paquet",
+                        "name": "remplir le paquet de cartes",
                         "type": "broadcast_msg",
                         "value": "populate deck"
                     },
                     "dZdRU]:2;1`I1B`lngut": {
                         "id": "dZdRU]:2;1`I1B`lngut",
-                        "name": "Faire briller le soleil sur toutes les plantes.",
+                        "name": "Fait briller le soleil sur toutes les plantes.",
                         "type": "",
                         "value": 0
                     },
@@ -503,7 +503,7 @@
                     },
                     "eu*Pwdz}CSE*[qpJ$cFo": {
                         "id": "eu*Pwdz}CSE*[qpJ$cFo",
-                        "name": "La t\u00eate de Cozmo affiche un soleil.",
+                        "name": "Le visage de Cozmo affiche un soleil.",
                         "type": "",
                         "value": 0
                     },
@@ -531,7 +531,7 @@
                     },
                     "hE#nyCv2b|oe*5jPRIx+": {
                         "id": "hE#nyCv2b|oe*5jPRIx+",
-                        "name": "Ajouter ou soustraire des points d'une plante.",
+                        "name": "Ajoute ou soustrait des points d'une plante.",
                         "type": "",
                         "value": 0
                     },
@@ -561,7 +561,7 @@
                     },
                     "lUG)A9oz=}]WCb-m+NLG": {
                         "id": "lUG)A9oz=}]WCb-m+NLG",
-                        "name": "Sourire \u00e0 Cozmo pour qu'il active le soleil.",
+                        "name": "Active le soleil lorsque le joueur sourit \u00e0 Cozmo.",
                         "type": "",
                         "value": 0
                     },
@@ -579,7 +579,7 @@
                     },
                     "mugM~nQLp%D7`s5}SPB7": {
                         "id": "mugM~nQLp%D7`s5}SPB7",
-                        "name": "compl\u00e9ter la liste des plantes",
+                        "name": "remplir la liste des plantes",
                         "type": "broadcast_msg",
                         "value": "populate plant list"
                     },
@@ -601,7 +601,7 @@
                     },
                     "t+y)3`kp_riT3=uXD%9j": {
                         "id": "t+y)3`kp_riT3=uXD%9j",
-                        "name": "D\u00e9finir les plantes \u00e0 faire pousser.",
+                        "name": "D\u00e9finit les plantes \u00e0 faire pousser.",
                         "type": "",
                         "value": 0
                     },
@@ -613,13 +613,13 @@
                     },
                     "tay$]p*cGG#{LnHknd8|": {
                         "id": "tay$]p*cGG#{LnHknd8|",
-                        "name": "position y de la ligne verticale",
+                        "name": "position y de la ligne de la goutte",
                         "type": "",
                         "value": 15.5
                     },
                     "w;|cA6ScT/?q_G_HjV*s": {
                         "id": "w;|cA6ScT/?q_G_HjV*s",
-                        "name": "Dessiner une goutte d'eau.",
+                        "name": "Dessine une goutte d'eau.",
                         "type": "",
                         "value": 0
                     },
@@ -643,7 +643,7 @@
                     },
                     "|6+AIN+3kwd|.}CSu-%f": {
                         "id": "|6+AIN+3kwd|.}CSu-%f",
-                        "name": "M\u00e9langer le paquet de cartes.",
+                        "name": "M\u00e9lange le paquet de cartes.",
                         "type": "",
                         "value": 0
                     },
@@ -661,7 +661,7 @@
                     },
                     "~p+ld(4Qy^6(zaJqr*k(": {
                         "id": "~p+ld(4Qy^6(zaJqr*k(",
-                        "name": "Choisir au hasard une phrase que Cozmo dit lorsque les insectes sont manqu\u00e9s.",
+                        "name": "Choisit au hasard une phrase que Cozmo dit lorsque les insectes sont manqu\u00e9s.",
                         "type": "",
                         "value": 0
                     }
@@ -828,7 +828,7 @@
                             "VARIABLE": {
                                 "id": "t+y)3`kp_riT3=uXD%9j",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9finir les plantes \u00e0 faire pousser.",
+                                "value": "D\u00e9finit les plantes \u00e0 faire pousser.",
                                 "variableType": ""
                             }
                         },
@@ -992,7 +992,7 @@
                             "VARIABLE": {
                                 "id": ",u;#GEb0e3:8z2#_ZKd;",
                                 "name": "VARIABLE",
-                                "value": "Toucher le cube pour activer l'action correspondante.",
+                                "value": "Active l'action appropri\u00e9e lorsque le cube est touch\u00e9.",
                                 "variableType": ""
                             }
                         },
@@ -1119,7 +1119,7 @@
                             "VARIABLE": {
                                 "id": "eu*Pwdz}CSE*[qpJ$cFo",
                                 "name": "VARIABLE",
-                                "value": "La t\u00eate de Cozmo affiche un soleil.",
+                                "value": "Le visage de Cozmo affiche un soleil.",
                                 "variableType": ""
                             }
                         },
@@ -1157,7 +1157,7 @@
                             "VARIABLE": {
                                 "id": "hE#nyCv2b|oe*5jPRIx+",
                                 "name": "VARIABLE",
-                                "value": "Ajouter ou soustraire des points d'une plante.",
+                                "value": "Ajoute ou soustrait des points d'une plante.",
                                 "variableType": ""
                             }
                         },
@@ -1591,7 +1591,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer au hasard",
+                                "value": "choix al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -1610,7 +1610,7 @@
                             "VARIABLE": {
                                 "id": "8-6,Lo%c^`WxW@i|fCNc",
                                 "name": "VARIABLE",
-                                "value": "Compl\u00e9ter la liste du paquet de cartes.",
+                                "value": "Remplit la liste du paquet de cartes.",
                                 "variableType": ""
                             }
                         },
@@ -1779,7 +1779,7 @@
                             "VARIABLE": {
                                 "id": "BJ@[qkF)Brtx-@a3?cZL",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer la carte",
+                                "value": "carte al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -2195,7 +2195,7 @@
                             "VARIABLE": {
                                 "id": "lUG)A9oz=}]WCb-m+NLG",
                                 "name": "VARIABLE",
-                                "value": "Sourire \u00e0 Cozmo pour qu'il active le soleil.",
+                                "value": "Active le soleil lorsque le joueur sourit \u00e0 Cozmo.",
                                 "variableType": ""
                             }
                         },
@@ -2510,7 +2510,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -2718,7 +2718,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Les tomates"
+                                "value": "Des tomates"
                             }
                         },
                         "id": "+M!fg@rHy_ZiIHqnfy9s",
@@ -3144,7 +3144,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -3299,7 +3299,7 @@
                             "VARIABLE": {
                                 "id": ":z}pMyXWX{Eq,S7v6i59",
                                 "name": "VARIABLE",
-                                "value": "Initialiser les donn\u00e9es du jeu et commencer la partie.",
+                                "value": "Initialise les donn\u00e9es du jeu et commence la partie.",
                                 "variableType": ""
                             }
                         },
@@ -3504,7 +3504,7 @@
                             "VARIABLE": {
                                 "id": "PEdlr[J4sVtEOv1=3g3V",
                                 "name": "VARIABLE",
-                                "value": "Choisir au hasard une phrase que Cozmo dit lorsque les insectes sont \u00e9cras\u00e9s.",
+                                "value": "Choisit au hasard une phrase que Cozmo dit lorsque les insectes sont \u00e9cras\u00e9s.",
                                 "variableType": ""
                             }
                         },
@@ -3657,7 +3657,7 @@
                             "VARIABLE": {
                                 "id": "2N:5I_;4VlUNw.k%-(6a",
                                 "name": "VARIABLE",
-                                "value": "S'assurer que le score de chaque plante soit compris entre 0\u00a0et 4\u00a0points.",
+                                "value": "S'assure que le score de chaque plante soit compris entre 0\u00a0et 4\u00a0points.",
                                 "variableType": ""
                             }
                         },
@@ -3783,7 +3783,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -4128,7 +4128,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Salade"
+                                "value": "De la salade"
                             }
                         },
                         "id": "1)nB{1`pMIA1I-gCitf3",
@@ -4303,7 +4303,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -4683,7 +4683,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -4742,7 +4742,7 @@
                             "VARIABLE": {
                                 "id": "KEsOIz}vieQT{+0zZihe",
                                 "name": "VARIABLE",
-                                "value": "largeur de la ligne verticale",
+                                "value": "largeur de la ligne de la goutte",
                                 "variableType": ""
                             }
                         },
@@ -4889,7 +4889,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -5253,7 +5253,7 @@
                             "VARIABLE": {
                                 "id": "FB_wjTS9HqxfJrRL+A;b",
                                 "name": "VARIABLE",
-                                "value": "Activer les effets de la carte Eau.",
+                                "value": "Active les effets de la carte Eau.",
                                 "variableType": ""
                             }
                         },
@@ -6031,7 +6031,7 @@
                             "VARIABLE": {
                                 "id": "Q]8XOLmHF*2qnP%Vg]TP",
                                 "name": "VARIABLE",
-                                "value": "La t\u00eate de Cozmo affiche de l'eau.",
+                                "value": "Le visage de Cozmo affiche de l'eau.",
                                 "variableType": ""
                             }
                         },
@@ -6097,7 +6097,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Brocoli"
+                                "value": "Des brocolis"
                             }
                         },
                         "id": "7=2Zq:]Fr*f7u50CnUG~",
@@ -6243,7 +6243,7 @@
                             "VARIABLE": {
                                 "id": "KEsOIz}vieQT{+0zZihe",
                                 "name": "VARIABLE",
-                                "value": "largeur de la ligne verticale",
+                                "value": "largeur de la ligne de la goutte",
                                 "variableType": ""
                             }
                         },
@@ -6349,7 +6349,7 @@
                             "VARIABLE": {
                                 "id": "|6+AIN+3kwd|.}CSu-%f",
                                 "name": "VARIABLE",
-                                "value": "M\u00e9langer le paquet de cartes.",
+                                "value": "M\u00e9lange le paquet de cartes.",
                                 "variableType": ""
                             }
                         },
@@ -6597,7 +6597,7 @@
                             "VARIABLE": {
                                 "id": "tay$]p*cGG#{LnHknd8|",
                                 "name": "VARIABLE",
-                                "value": "position y de la ligne verticale",
+                                "value": "position y de la ligne de la goutte",
                                 "variableType": ""
                             }
                         },
@@ -7524,7 +7524,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -8054,7 +8054,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer au hasard",
+                                "value": "choix al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -8283,7 +8283,7 @@
                             "VARIABLE": {
                                 "id": "0p7w#LMTnxvRF*%jP7#1",
                                 "name": "VARIABLE",
-                                "value": "Activer les effets de la carte Insectes.",
+                                "value": "Active les effets de la carte Insectes.",
                                 "variableType": ""
                             }
                         },
@@ -8747,7 +8747,7 @@
                             "VARIABLE": {
                                 "id": "8V;?o-k@CeoBBVUEc?fj",
                                 "name": "VARIABLE",
-                                "value": "Effacer toutes les donn\u00e9es des listes.",
+                                "value": "Efface toutes les donn\u00e9es des listes.",
                                 "variableType": ""
                             }
                         },
@@ -8799,7 +8799,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Appuyer sur une plante pour deviner o\u00f9 se cachent les insectes\u00a0!"
+                                "value": "Appuie sur une plante pour deviner o\u00f9 se cachent les insectes\u00a0!"
                             }
                         },
                         "id": "DgT(NKvGGW#t!y$4r=}|",
@@ -8864,7 +8864,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer au hasard",
+                                "value": "choix al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -9027,7 +9027,7 @@
                             "VARIABLE": {
                                 "id": "tay$]p*cGG#{LnHknd8|",
                                 "name": "VARIABLE",
-                                "value": "position y de la ligne verticale",
+                                "value": "position y de la ligne de la goutte",
                                 "variableType": ""
                             }
                         },
@@ -9152,7 +9152,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Les myrtilles"
+                                "value": "Des myrtilles"
                             }
                         },
                         "id": "En$^,-3uq6emm9#EK!Zq",
@@ -9168,7 +9168,7 @@
                             "VARIABLE": {
                                 "id": "_l0SC,-IC8xK=bn^VV,E",
                                 "name": "VARIABLE",
-                                "value": "Arroser la plante choisie par le joueur.",
+                                "value": "Arrose la plante choisie par le joueur.",
                                 "variableType": ""
                             }
                         },
@@ -9305,7 +9305,7 @@
                             "VARIABLE": {
                                 "id": "tay$]p*cGG#{LnHknd8|",
                                 "name": "VARIABLE",
-                                "value": "position y de la ligne verticale",
+                                "value": "position y de la ligne de la goutte",
                                 "variableType": ""
                             }
                         },
@@ -9385,7 +9385,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Citrons"
+                                "value": "Des citrons"
                             }
                         },
                         "id": "FuEIQx0kWNGm/y]]_qtT",
@@ -9480,7 +9480,7 @@
                             "VARIABLE": {
                                 "id": "aQ3K|1wu3aUP1-BB)qI{",
                                 "name": "VARIABLE",
-                                "value": "Activer les effets de la carte Soleil.",
+                                "value": "Active les effets de la carte Soleil.",
                                 "variableType": ""
                             }
                         },
@@ -10064,7 +10064,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -10222,7 +10222,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Oranges"
+                                "value": "Des oranges"
                             }
                         },
                         "id": "J=OY+9S{}gO55,RT]x)(",
@@ -10272,7 +10272,7 @@
                             "VARIABLE": {
                                 "id": "tay$]p*cGG#{LnHknd8|",
                                 "name": "VARIABLE",
-                                "value": "position y de la ligne verticale",
+                                "value": "position y de la ligne de la goutte",
                                 "variableType": ""
                             }
                         },
@@ -10895,7 +10895,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -11029,7 +11029,7 @@
                             "VARIABLE": {
                                 "id": "w;|cA6ScT/?q_G_HjV*s",
                                 "name": "VARIABLE",
-                                "value": "Dessiner une goutte d'eau.",
+                                "value": "Dessine une goutte d'eau.",
                                 "variableType": ""
                             }
                         },
@@ -11110,7 +11110,7 @@
                             "VARIABLE": {
                                 "id": "%L-3Ev.(rOhz7[?pASC*",
                                 "name": "VARIABLE",
-                                "value": "V\u00e9rifier si les insectes ont bien \u00e9t\u00e9 \u00e9cras\u00e9s.",
+                                "value": "V\u00e9rifie si les insectes ont bien \u00e9t\u00e9 \u00e9cras\u00e9s.",
                                 "variableType": ""
                             }
                         },
@@ -11129,7 +11129,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer au hasard",
+                                "value": "choix al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -11169,7 +11169,7 @@
                             "VARIABLE": {
                                 "id": "KEsOIz}vieQT{+0zZihe",
                                 "name": "VARIABLE",
-                                "value": "largeur de la ligne verticale",
+                                "value": "largeur de la ligne de la goutte",
                                 "variableType": ""
                             }
                         },
@@ -11639,7 +11639,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Appuyer sur une plante pour l'arroser."
+                                "value": "Appuie sur une plante pour l'arroser."
                             }
                         },
                         "id": "O.hA`@JxpJjeKpw;8MB|",
@@ -11815,7 +11815,7 @@
                             "VARIABLE": {
                                 "id": "85iC(8DU8ZNx_,BC#`8u",
                                 "name": "VARIABLE",
-                                "value": "Afficher la croissance des plantes et v\u00e9rifier si elles peuvent \u00eatre r\u00e9colt\u00e9es.",
+                                "value": "Affiche la croissance des plantes et v\u00e9rifier si elles peuvent \u00eatre r\u00e9colt\u00e9es.",
                                 "variableType": ""
                             }
                         },
@@ -12279,7 +12279,7 @@
                             "VARIABLE": {
                                 "id": "KEsOIz}vieQT{+0zZihe",
                                 "name": "VARIABLE",
-                                "value": "largeur de la ligne verticale",
+                                "value": "largeur de la ligne de la goutte",
                                 "variableType": ""
                             }
                         },
@@ -12540,7 +12540,7 @@
                             "VARIABLE": {
                                 "id": "3Z$bIz*%0xDp[-pa(~.q",
                                 "name": "VARIABLE",
-                                "value": "Effacer toutes les donn\u00e9es de la liste des plantes \u00e0 r\u00e9colter.",
+                                "value": "Efface toutes les donn\u00e9es de la liste des plantes \u00e0 r\u00e9colter.",
                                 "variableType": ""
                             }
                         },
@@ -12650,7 +12650,7 @@
                             "VARIABLE": {
                                 "id": "KEsOIz}vieQT{+0zZihe",
                                 "name": "VARIABLE",
-                                "value": "largeur de la ligne verticale",
+                                "value": "largeur de la ligne de la goutte",
                                 "variableType": ""
                             }
                         },
@@ -12883,7 +12883,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer au hasard",
+                                "value": "choix al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -13086,7 +13086,7 @@
                             "VARIABLE": {
                                 "id": "=2kLEANAg1;LybuGj2U)",
                                 "name": "VARIABLE",
-                                "value": "Compl\u00e9ter les listes de types et de couleurs de plantes.",
+                                "value": "Remplit les listes de types et de couleurs de plantes.",
                                 "variableType": ""
                             }
                         },
@@ -13600,7 +13600,7 @@
                             "VARIABLE": {
                                 "id": "^:7On02M-mju0+n^MC.a",
                                 "name": "VARIABLE",
-                                "value": "Effacer toutes les donn\u00e9es de la liste des plantes infest\u00e9es.",
+                                "value": "Efface toutes les donn\u00e9es de la liste des plantes infest\u00e9es.",
                                 "variableType": ""
                             }
                         },
@@ -13829,7 +13829,7 @@
                             "VARIABLE": {
                                 "id": "?_lH+b)Lc`b9p$GT~A}3",
                                 "name": "VARIABLE",
-                                "value": "Marquer une plante comme \u00ab\u00a0r\u00e9colt\u00e9e\u00a0\u00bb et illuminer les voyants du cube.",
+                                "value": "Marque une plante comme \u00ab\u00a0r\u00e9colt\u00e9e\u00a0\u00bb et illumine les voyants du cube.",
                                 "variableType": ""
                             }
                         },
@@ -13848,7 +13848,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -13920,7 +13920,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -13960,7 +13960,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -14077,7 +14077,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer au hasard",
+                                "value": "choix al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -14132,7 +14132,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -15061,7 +15061,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer au hasard",
+                                "value": "choix al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -15097,7 +15097,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -15695,7 +15695,7 @@
                             "VARIABLE": {
                                 "id": ",u;#GEb0e3:8z2#_ZKd;",
                                 "name": "VARIABLE",
-                                "value": "Toucher le cube pour activer l'action correspondante.",
+                                "value": "Active l'action appropri\u00e9e lorsque le cube est touch\u00e9.",
                                 "variableType": ""
                             }
                         },
@@ -15836,7 +15836,7 @@
                             "VARIABLE": {
                                 "id": "$MhV4:Z+J;d]{#}}:M=f",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9poser la prochaine carte tir\u00e9e.",
+                                "value": "Joue la prochaine carte tir\u00e9e.",
                                 "variableType": ""
                             }
                         },
@@ -15902,7 +15902,7 @@
                             "VARIABLE": {
                                 "id": "dZdRU]:2;1`I1B`lngut",
                                 "name": "VARIABLE",
-                                "value": "Faire briller le soleil sur toutes les plantes.",
+                                "value": "Fait briller le soleil sur toutes les plantes.",
                                 "variableType": ""
                             }
                         },
@@ -16650,7 +16650,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -16712,7 +16712,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Raisin"
+                                "value": "Du raisin"
                             }
                         },
                         "id": "`a?(l~dJ]j=[{C{|BZUO",
@@ -16885,7 +16885,7 @@
                             "VARIABLE": {
                                 "id": "~p+ld(4Qy^6(zaJqr*k(",
                                 "name": "VARIABLE",
-                                "value": "Choisir au hasard une phrase que Cozmo dit lorsque les insectes sont manqu\u00e9s.",
+                                "value": "Choisit au hasard une phrase que Cozmo dit lorsque les insectes sont manqu\u00e9s.",
                                 "variableType": ""
                             }
                         },
@@ -17747,7 +17747,7 @@
                             "VARIABLE": {
                                 "id": "E6ZC4o^I=7R`yR^qWyt*",
                                 "name": "VARIABLE",
-                                "value": "Utiliser les voyants du cube pour afficher la croissance actuelle des plantes qui n'ont pas \u00e9t\u00e9 r\u00e9colt\u00e9es.",
+                                "value": "Utilise les voyants du cube pour afficher la croissance actuelle des plantes qui n'ont pas \u00e9t\u00e9 r\u00e9colt\u00e9es.",
                                 "variableType": ""
                             }
                         },
@@ -17855,7 +17855,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -18321,7 +18321,7 @@
                             "VARIABLE": {
                                 "id": "BJ@[qkF)Brtx-@a3?cZL",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer la carte",
+                                "value": "carte al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -18387,7 +18387,7 @@
                             "VARIABLE": {
                                 "id": "A#~,`~zK@C~wQsYk3_XK",
                                 "name": "VARIABLE",
-                                "value": "Piocher la prochaine carte du paquet.",
+                                "value": "Pioche la prochaine carte du paquet.",
                                 "variableType": ""
                             }
                         },
@@ -18421,7 +18421,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -18490,7 +18490,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer au hasard",
+                                "value": "choix al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -18575,7 +18575,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -19008,7 +19008,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer au hasard",
+                                "value": "choix al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -19158,7 +19158,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -19282,7 +19282,7 @@
                             "VARIABLE": {
                                 "id": "tay$]p*cGG#{LnHknd8|",
                                 "name": "VARIABLE",
-                                "value": "position y de la ligne verticale",
+                                "value": "position y de la ligne de la goutte",
                                 "variableType": ""
                             }
                         },
@@ -19961,7 +19961,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -20245,7 +20245,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -20424,7 +20424,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer au hasard",
+                                "value": "choix al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -20617,7 +20617,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -21159,7 +21159,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -21450,7 +21450,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -21686,7 +21686,7 @@
                             "VARIABLE": {
                                 "id": "Ip86u5Ta|m`@#q5lKe#0",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer au hasard",
+                                "value": "choix al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -21893,7 +21893,7 @@
                             "VARIABLE": {
                                 "id": ",u;#GEb0e3:8z2#_ZKd;",
                                 "name": "VARIABLE",
-                                "value": "Toucher le cube pour activer l'action correspondante.",
+                                "value": "Active l'action appropri\u00e9e lorsque le cube est touch\u00e9.",
                                 "variableType": ""
                             }
                         },
@@ -22085,7 +22085,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Sourire pour faire briller le soleil sur nos plantes."
+                                "value": "Souris pour faire briller le soleil sur nos plantes."
                             }
                         },
                         "id": "s-CeD(M+^#C^H2epcfKw",
@@ -23074,7 +23074,7 @@
                             "VARIABLE": {
                                 "id": "tay$]p*cGG#{LnHknd8|",
                                 "name": "VARIABLE",
-                                "value": "position y de la ligne verticale",
+                                "value": "position y de la ligne de la goutte",
                                 "variableType": ""
                             }
                         },
@@ -23158,7 +23158,7 @@
                             "VARIABLE": {
                                 "id": "!t2*wl}jsG2/4K4WHF2.",
                                 "name": "VARIABLE",
-                                "value": "Choisir et initialiser les plantes \u00e0 faire pousser dans le jardin.",
+                                "value": "Choisit et initialise les plantes \u00e0 faire pousser dans le jardin.",
                                 "variableType": ""
                             }
                         },
@@ -23194,7 +23194,7 @@
                             "VARIABLE": {
                                 "id": "@QLd(geF*za%S1n[a-4!",
                                 "name": "VARIABLE",
-                                "value": "activer la plante",
+                                "value": "plante active",
                                 "variableType": ""
                             }
                         },
@@ -23579,7 +23579,7 @@
                             "VARIABLE": {
                                 "id": "FQ1)Iej(}dU1CaZwQB7[",
                                 "name": "VARIABLE",
-                                "value": "La t\u00eate de Cozmo affiche des insectes.",
+                                "value": "Le visage de Cozmo affiche des insectes.",
                                 "variableType": ""
                             }
                         },
@@ -24293,7 +24293,7 @@
                             "VARIABLE": {
                                 "id": "$MDgR.*G2QJ[*pF@*F=1",
                                 "name": "VARIABLE",
-                                "value": "V\u00e9rifier si des plantes peuvent \u00eatre r\u00e9colt\u00e9es.",
+                                "value": "V\u00e9rifie si des plantes peuvent \u00eatre r\u00e9colt\u00e9es.",
                                 "variableType": ""
                             }
                         },

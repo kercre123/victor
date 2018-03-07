@@ -678,13 +678,13 @@
   "codeLabVertical.RENAME_LIST_TITLE" : {
     "translation" : "すべての\"%1\"リストのなまえをつぎにへんこうします："
   },
-  "codeLabVertical.RENAME_LIST": {
-    "translation": "リストの名前を変更する"
+  "codeLabVertical.RENAME_LIST" : {
+    "translation" : "Rename list..."
   },
-  "codeLabVertical.DELETE_LIST": {
-    "translation" : "%1リストを削除する"
+  "codeLabVertical.DELETE_LIST" : {
+    "translation" : "Delete the '%1' list"
   },
-  "codeLabVertical.DELETE_LIST_CONFIRMATION": {
-    "translation": "%1か所で使われている変数 '%2' を削除しますか？"
+  "codeLabVertical.DELETE_LIST_CONFIRMATION" : {
+    "translation" : "Delete %1 uses of the '%2' list?"
   }
 }

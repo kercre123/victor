@@ -232,7 +232,7 @@
     "translation" : "Abstand der Linien"
   },
   "codeLabFeaturedProject.Constellations.loop_through_sets_of_coordinates_to_drive_and_draw_lines_and_dots" : {
-    "translation" : "Schleife Sätze mit Koordinaten zum Fahren und zum Zeichen von Linien und Punkten durch."
+    "translation" : "Durchlaufe eine Reihe Koordinaten zum Fahren und zum Zeichnen von Linien und Punkten."
   },
   "codeLabFeaturedProject.Constellations.my_cousins_name_is_cassiopeia_shes_a_keyboard" : {
     "translation" : "Meine Cousine heißt Kassiopeia. Sie ist ein Keyboard."
@@ -1576,7 +1576,7 @@
     "translation" : "Anzahl der Karten"
   },
   "codeLabFeaturedProject.CozmosGarden.card_growth_amounts" : {
-    "translation" : "Kartenwachstum"
+    "translation" : "Karte für Wachstumsrate"
   },
   "codeLabFeaturedProject.CozmosGarden.check_for_bugs" : {
     "translation" : "Auf Käfer prüfen"
@@ -1672,22 +1672,22 @@
     "translation" : "Wasser zeichnen"
   },
   "codeLabFeaturedProject.CozmosGarden.drop_line_position_y" : {
-    "translation" : "Linienposition y löschen"
+    "translation" : "Linienposition y des Tropfens"
   },
   "codeLabFeaturedProject.CozmosGarden.drop_line_width" : {
-    "translation" : "Linienbreite löschen"
+    "translation" : "Linienbreite des Tropfens"
   },
   "codeLabFeaturedProject.CozmosGarden.drop_radius" : {
-    "translation" : "Radius löschen"
+    "translation" : "Radius des Tropfens"
   },
   "codeLabFeaturedProject.CozmosGarden.drop_scale" : {
-    "translation" : "Skala löschen"
+    "translation" : "Skala des Tropfens"
   },
   "codeLabFeaturedProject.CozmosGarden.drop_x" : {
-    "translation" : "x löschen"
+    "translation" : "Tropfen x"
   },
   "codeLabFeaturedProject.CozmosGarden.drop_y" : {
-    "translation" : "y löschen"
+    "translation" : "Tropfen y"
   },
   "codeLabFeaturedProject.CozmosGarden.ff0000" : {
     "translation" : "#ff0000"
@@ -1993,7 +1993,7 @@
     "translation" : "Lautet deine Zahl "
   },
   "codeLabFeaturedProject.GuessTheNumber.lower_number_cube_is_tapped" : {
-    "translation" : "Der Benutzer tippt den Cube für eine niedrigere Zahl an."
+    "translation" : "Eine niedrigere Zahl wird angetippt."
   },
   "codeLabFeaturedProject.GuessTheNumber.max" : {
     "translation" : "maximal"
@@ -2017,7 +2017,7 @@
     "translation" : "Lichter drehen"
   },
   "codeLabFeaturedProject.GuessTheNumber.start_and_end_game_cube_is_tapped" : {
-    "translation" : "Der Benutzer tippt den Cube zum Starten und Beenden des Spiels an."
+    "translation" : "Cube wird zum Starten und Beenden des Spiels angetippt."
   },
   "codeLabFeaturedProject.GuessTheNumber.started" : {
     "translation" : "Begonnen"
@@ -2038,7 +2038,7 @@
     "translation" : "Schalte das Rucksack-Licht aus."
   },
   "codeLabFeaturedProject.WakeUpCozmo.advance_to_the_next_turn_and_enable_cubes_for_input" : {
-    "translation" : "Wechsle zum nächsten Zug und aktiviere die die Cubes für die Eingabe."
+    "translation" : "Wechsle zum nächsten Zug und aktiviere die Cubes für die Eingabe."
   },
   "codeLabFeaturedProject.WakeUpCozmo.ahhh_goodnight" : {
     "translation" : "Ah! Gute Nacht!"
@@ -2056,10 +2056,10 @@
     "translation" : "Wähle einen zufälligen Satz aus, den Cozmo sagen soll, wenn er aufwacht."
   },
   "codeLabFeaturedProject.WakeUpCozmo.choose_bedtime_phrase" : {
-    "translation" : "Satz zum Schlafengehen auswählen"
+    "translation" : "Satz zur Schlafenszeit auswählen"
   },
   "codeLabFeaturedProject.WakeUpCozmo.choose_sleeping_phrase" : {
-    "translation" : "Satz zum Schlafen auswählen"
+    "translation" : "Satz beim Einschlafen auswählen"
   },
   "codeLabFeaturedProject.WakeUpCozmo.choose_wake_up_phrase" : {
     "translation" : "Satz zum Aufstehen auswählen"

@@ -90,13 +90,13 @@
                     },
                     "*o3H?Ensy20R;*Fc]p#H": {
                         "id": "*o3H?Ensy20R;*Fc]p#H",
-                        "name": "D\u00e9finir les donn\u00e9es de la Balance.",
+                        "name": "D\u00e9finit les donn\u00e9es de la Balance.",
                         "type": "",
                         "value": 0
                     },
                     ",XK)bGY2Hv`0@P:wW(n*": {
                         "id": ",XK)bGY2Hv`0@P:wW(n*",
-                        "name": "Compl\u00e9ter la liste de choix avec les num\u00e9ros de constellation.",
+                        "name": "Remplit la liste de choix avec les num\u00e9ros de constellation.",
                         "type": "",
                         "value": 0
                     },
@@ -138,13 +138,13 @@
                     },
                     ":l/#YnDX^0_JtNeNiZP*": {
                         "id": ":l/#YnDX^0_JtNeNiZP*",
-                        "name": "D\u00e9finir les donn\u00e9es de Cassiop\u00e9e.",
+                        "name": "D\u00e9finit les donn\u00e9es de Cassiop\u00e9e.",
                         "type": "",
                         "value": 0
                     },
                     "=#a$yb2Q#eU4|mLH(O6|": {
                         "id": "=#a$yb2Q#eU4|mLH(O6|",
-                        "name": "Initialiser les variables et commencer l'activit\u00e9.",
+                        "name": "Initialise les variables et commence l'activit\u00e9.",
                         "type": "",
                         "value": 0
                     },
@@ -156,13 +156,13 @@
                     },
                     "?XVmzOUgYiz(QA-:KvAt": {
                         "id": "?XVmzOUgYiz(QA-:KvAt",
-                        "name": "Ramener Cozmo \u00e0 sa position de d\u00e9part.",
+                        "name": "Ram\u00e8ne Cozmo \u00e0 sa position de d\u00e9part.",
                         "type": "",
                         "value": 0
                     },
                     "@2(]LhemBX7l_IQQaJ^%": {
                         "id": "@2(]LhemBX7l_IQQaJ^%",
-                        "name": "Effacer toutes les donn\u00e9es des listes de projets.",
+                        "name": "Efface toutes les donn\u00e9es des listes de projets.",
                         "type": "",
                         "value": 0
                     },
@@ -224,7 +224,7 @@
                     },
                     "ELj5b9R.r9xIAms-CQwE": {
                         "id": "ELj5b9R.r9xIAms-CQwE",
-                        "name": "Utiliser les donn\u00e9es de la liste d'instructions pour d\u00e9terminer s'il faut dessiner un point, une ligne, les deux ou ni l'un ni l'autre.",
+                        "name": "Utilise les donn\u00e9es de la liste d'instructions pour d\u00e9terminer s'il faut dessiner un point, une ligne, les deux ou ni l'un ni l'autre.",
                         "type": "",
                         "value": 0
                     },
@@ -236,7 +236,7 @@
                     },
                     "Gl-dVUy+!0LaE8+C{=V]": {
                         "id": "Gl-dVUy+!0LaE8+C{=V]",
-                        "name": "d\u00e9finir les donn\u00e9es du Lion",
+                        "name": "D\u00e9finir les donn\u00e9es du Lion",
                         "type": "broadcast_msg",
                         "value": "set leo data"
                     },
@@ -266,13 +266,13 @@
                     },
                     "LNj8/]aCE+Z4]wMQHDzn": {
                         "id": "LNj8/]aCE+Z4]wMQHDzn",
-                        "name": "D\u00e9finir les donn\u00e9es du Scorpion.",
+                        "name": "D\u00e9finit les donn\u00e9es du Scorpion.",
                         "type": "",
                         "value": 0
                     },
                     "Lz[@^]l31Y^VXU#+mb3A": {
                         "id": "Lz[@^]l31Y^VXU#+mb3A",
-                        "name": "Toucher un cube pour que Cozmo dise comment voir la prochaine constellation.",
+                        "name": "Active l'interaction avec les cubes et Cozmo explique comment voir la prochaine constellation.",
                         "type": "",
                         "value": 0
                     },
@@ -296,7 +296,7 @@
                     },
                     "VHX(-cXWv~FiBj#,f7yh": {
                         "id": "VHX(-cXWv~FiBj#,f7yh",
-                        "name": "D\u00e9finir les donn\u00e9es d'Orion.",
+                        "name": "D\u00e9finit les donn\u00e9es d'Orion.",
                         "type": "",
                         "value": 0
                     },
@@ -314,19 +314,19 @@
                     },
                     "YX1O$xWZ]?zPBjOD)/@x": {
                         "id": "YX1O$xWZ]?zPBjOD)/@x",
-                        "name": "Choisir la constellation dont vous souhaitez obtenir les donn\u00e9es.",
+                        "name": "Choisit la constellation pour laquelle obtenir les donn\u00e9es.",
                         "type": "",
                         "value": 0
                     },
                     "Yb#:(Xe{$B*ZiJhpsvYY": {
                         "id": "Yb#:(Xe{$B*ZiJhpsvYY",
-                        "name": "Passer \u00e0 la constellation suivante de la liste ou commencer depuis le d\u00e9but.",
+                        "name": "Passe \u00e0 la constellation suivante de la liste ou commence depuis le d\u00e9but.",
                         "type": "",
                         "value": 0
                     },
                     "YuqIV|BhYSs@so$WZ/F]": {
                         "id": "YuqIV|BhYSs@so$WZ/F]",
-                        "name": "entr\u00e9e activ\u00e9e",
+                        "name": "interaction activ\u00e9e",
                         "type": "",
                         "value": "0"
                     },
@@ -338,13 +338,13 @@
                     },
                     "ZG=|W.TfM3U87b_uo.b{": {
                         "id": "ZG=|W.TfM3U87b_uo.b{",
-                        "name": "d\u00e9finir les donn\u00e9es de la Balance",
+                        "name": "D\u00e9finir les donn\u00e9es de la Balance",
                         "type": "broadcast_msg",
                         "value": "set libra data"
                     },
                     "]@}+e|%V2_oSrWDLLRpa": {
                         "id": "]@}+e|%V2_oSrWDLLRpa",
-                        "name": "D\u00e9finir les donn\u00e9es du Lion.",
+                        "name": "D\u00e9finit les donn\u00e9es du Lion.",
                         "type": "",
                         "value": 0
                     },
@@ -376,19 +376,19 @@
                     },
                     "`D(U_1^VDw40cu=}fg08": {
                         "id": "`D(U_1^VDw40cu=}fg08",
-                        "name": "Toucher un cube pour passer \u00e0 la constellation suivante.",
+                        "name": "Passe \u00e0 la constellation suivante lorsqu'un cube est touch\u00e9.",
                         "type": "",
                         "value": 0
                     },
                     "aqN|xXe_n~f^|26av^2A": {
                         "id": "aqN|xXe_n~f^|26av^2A",
-                        "name": "M\u00e9langer la liste de choix de constellations.",
+                        "name": "M\u00e9lange la liste de choix de constellations.",
                         "type": "",
                         "value": 0
                     },
                     "arBPhf~)-D8x67M7i/e4": {
                         "id": "arBPhf~)-D8x67M7i/e4",
-                        "name": "Utiliser les coordonn\u00e9es pour que Cozmo puisse dessiner des lignes et des points en se d\u00e9pla\u00e7ant.",
+                        "name": "Utilise les coordonn\u00e9es pour piloter Cozmo et dessiner des lignes et des points.",
                         "type": "",
                         "value": 0
                     },
@@ -442,7 +442,7 @@
                     },
                     "rfbbNRv%Xk={1sCFms+r": {
                         "id": "rfbbNRv%Xk={1sCFms+r",
-                        "name": "Obtenir la distance entre les deux coordonn\u00e9es.",
+                        "name": "Calcule la distance entre les deux coordonn\u00e9es.",
                         "type": "",
                         "value": 0
                     },
@@ -503,7 +503,7 @@
                     },
                     "~a=Oa2eRZ)gmuu-Mcsn~": {
                         "id": "~a=Oa2eRZ)gmuu-Mcsn~",
-                        "name": "Choisir au hasard un fait racont\u00e9 par Cozmo.",
+                        "name": "Choisit au hasard un fait racont\u00e9 par Cozmo.",
                         "type": "",
                         "value": 0
                     }
@@ -1457,7 +1457,7 @@
                             "VARIABLE": {
                                 "id": "YuqIV|BhYSs@so$WZ/F]",
                                 "name": "VARIABLE",
-                                "value": "entr\u00e9e activ\u00e9e",
+                                "value": "interaction activ\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -3740,7 +3740,7 @@
                             "VARIABLE": {
                                 "id": "*o3H?Ensy20R;*Fc]p#H",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9finir les donn\u00e9es de la Balance.",
+                                "value": "D\u00e9finit les donn\u00e9es de la Balance.",
                                 "variableType": ""
                             }
                         },
@@ -3822,7 +3822,7 @@
                             "VARIABLE": {
                                 "id": "?XVmzOUgYiz(QA-:KvAt",
                                 "name": "VARIABLE",
-                                "value": "Ramener Cozmo \u00e0 sa position de d\u00e9part.",
+                                "value": "Ram\u00e8ne Cozmo \u00e0 sa position de d\u00e9part.",
                                 "variableType": ""
                             }
                         },
@@ -4154,7 +4154,7 @@
                             "VARIABLE": {
                                 "id": "YX1O$xWZ]?zPBjOD)/@x",
                                 "name": "VARIABLE",
-                                "value": "Choisir la constellation dont vous souhaitez obtenir les donn\u00e9es.",
+                                "value": "Choisit la constellation pour laquelle obtenir les donn\u00e9es.",
                                 "variableType": ""
                             }
                         },
@@ -4646,7 +4646,7 @@
                             "VARIABLE": {
                                 "id": "LNj8/]aCE+Z4]wMQHDzn",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9finir les donn\u00e9es du Scorpion.",
+                                "value": "D\u00e9finit les donn\u00e9es du Scorpion.",
                                 "variableType": ""
                             }
                         },
@@ -7252,7 +7252,7 @@
                             "VARIABLE": {
                                 "id": "`D(U_1^VDw40cu=}fg08",
                                 "name": "VARIABLE",
-                                "value": "Toucher un cube pour passer \u00e0 la constellation suivante.",
+                                "value": "Passe \u00e0 la constellation suivante lorsqu'un cube est touch\u00e9.",
                                 "variableType": ""
                             }
                         },
@@ -8946,7 +8946,7 @@
                             "VARIABLE": {
                                 "id": "Yb#:(Xe{$B*ZiJhpsvYY",
                                 "name": "VARIABLE",
-                                "value": "Passer \u00e0 la constellation suivante de la liste ou commencer depuis le d\u00e9but.",
+                                "value": "Passe \u00e0 la constellation suivante de la liste ou commence depuis le d\u00e9but.",
                                 "variableType": ""
                             }
                         },
@@ -9345,7 +9345,7 @@
                             "VARIABLE": {
                                 "id": ",XK)bGY2Hv`0@P:wW(n*",
                                 "name": "VARIABLE",
-                                "value": "Compl\u00e9ter la liste de choix avec les num\u00e9ros de constellation.",
+                                "value": "Remplit la liste de choix avec les num\u00e9ros de constellation.",
                                 "variableType": ""
                             }
                         },
@@ -9951,7 +9951,7 @@
                             "VARIABLE": {
                                 "id": ":l/#YnDX^0_JtNeNiZP*",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9finir les donn\u00e9es de Cassiop\u00e9e.",
+                                "value": "D\u00e9finit les donn\u00e9es de Cassiop\u00e9e.",
                                 "variableType": ""
                             }
                         },
@@ -9987,7 +9987,7 @@
                             "VARIABLE": {
                                 "id": "=#a$yb2Q#eU4|mLH(O6|",
                                 "name": "VARIABLE",
-                                "value": "Initialiser les variables et commencer l'activit\u00e9.",
+                                "value": "Initialise les variables et commence l'activit\u00e9.",
                                 "variableType": ""
                             }
                         },
@@ -13664,7 +13664,7 @@
                             "VARIABLE": {
                                 "id": "]@}+e|%V2_oSrWDLLRpa",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9finir les donn\u00e9es du Lion.",
+                                "value": "D\u00e9finit les donn\u00e9es du Lion.",
                                 "variableType": ""
                             }
                         },
@@ -14914,7 +14914,7 @@
                             "VARIABLE": {
                                 "id": "Lz[@^]l31Y^VXU#+mb3A",
                                 "name": "VARIABLE",
-                                "value": "Toucher un cube pour que Cozmo dise comment voir la prochaine constellation.",
+                                "value": "Active l'interaction avec les cubes et Cozmo explique comment voir la prochaine constellation.",
                                 "variableType": ""
                             }
                         },
@@ -17238,7 +17238,7 @@
                             "VARIABLE": {
                                 "id": "@2(]LhemBX7l_IQQaJ^%",
                                 "name": "VARIABLE",
-                                "value": "Effacer toutes les donn\u00e9es des listes de projets.",
+                                "value": "Efface toutes les donn\u00e9es des listes de projets.",
                                 "variableType": ""
                             }
                         },
@@ -17274,7 +17274,7 @@
                             "VARIABLE": {
                                 "id": "arBPhf~)-D8x67M7i/e4",
                                 "name": "VARIABLE",
-                                "value": "Utiliser les coordonn\u00e9es pour que Cozmo puisse dessiner des lignes et des points en se d\u00e9pla\u00e7ant.",
+                                "value": "Utilise les coordonn\u00e9es pour piloter Cozmo et dessiner des lignes et des points.",
                                 "variableType": ""
                             }
                         },
@@ -17574,7 +17574,7 @@
                             "VARIABLE": {
                                 "id": "YuqIV|BhYSs@so$WZ/F]",
                                 "name": "VARIABLE",
-                                "value": "entr\u00e9e activ\u00e9e",
+                                "value": "interaction activ\u00e9e",
                                 "variableType": ""
                             }
                         },
@@ -18194,7 +18194,7 @@
                             "VARIABLE": {
                                 "id": "rfbbNRv%Xk={1sCFms+r",
                                 "name": "VARIABLE",
-                                "value": "Obtenir la distance entre les deux coordonn\u00e9es.",
+                                "value": "Calcule la distance entre les deux coordonn\u00e9es.",
                                 "variableType": ""
                             }
                         },
@@ -18483,7 +18483,7 @@
                             "VARIABLE": {
                                 "id": "~a=Oa2eRZ)gmuu-Mcsn~",
                                 "name": "VARIABLE",
-                                "value": "Choisir au hasard un fait racont\u00e9 par Cozmo.",
+                                "value": "Choisit au hasard un fait racont\u00e9 par Cozmo.",
                                 "variableType": ""
                             }
                         },
@@ -18824,7 +18824,7 @@
                             "VARIABLE": {
                                 "id": "ELj5b9R.r9xIAms-CQwE",
                                 "name": "VARIABLE",
-                                "value": "Utiliser les donn\u00e9es de la liste d'instructions pour d\u00e9terminer s'il faut dessiner un point, une ligne, les deux ou ni l'un ni l'autre.",
+                                "value": "Utilise les donn\u00e9es de la liste d'instructions pour d\u00e9terminer s'il faut dessiner un point, une ligne, les deux ou ni l'un ni l'autre.",
                                 "variableType": ""
                             }
                         },
@@ -19066,7 +19066,7 @@
                             "VARIABLE": {
                                 "id": "aqN|xXe_n~f^|26av^2A",
                                 "name": "VARIABLE",
-                                "value": "M\u00e9langer la liste de choix de constellations.",
+                                "value": "M\u00e9lange la liste de choix de constellations.",
                                 "variableType": ""
                             }
                         },
@@ -20363,7 +20363,7 @@
                             "VARIABLE": {
                                 "id": "VHX(-cXWv~FiBj#,f7yh",
                                 "name": "VARIABLE",
-                                "value": "D\u00e9finir les donn\u00e9es d'Orion.",
+                                "value": "D\u00e9finit les donn\u00e9es d'Orion.",
                                 "variableType": ""
                             }
                         },
@@ -21455,7 +21455,7 @@
                             "VARIABLE": {
                                 "id": "YuqIV|BhYSs@so$WZ/F]",
                                 "name": "VARIABLE",
-                                "value": "entr\u00e9e activ\u00e9e",
+                                "value": "interaction activ\u00e9e",
                                 "variableType": ""
                             }
                         },

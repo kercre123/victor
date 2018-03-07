@@ -1528,10 +1528,10 @@
     "translation" : "#029900"
   },
   "codeLabFeaturedProject.CozmosGarden._3_plants" : {
-    "translation" : " 3つのしょくぶつ"
+    "translation" : " をしゅうかくしました"
   },
   "codeLabFeaturedProject.CozmosGarden._out_of_" : {
-    "translation" : " out of "
+    "translation" : " かぶ "
   },
   "codeLabFeaturedProject.CozmosGarden._rounds" : {
     "translation" : " ラウンド"
@@ -1927,10 +1927,10 @@
     "translation" : "じょうろ"
   },
   "codeLabFeaturedProject.CozmosGarden.we_harvested_" : {
-    "translation" : "★をしゅうかくしました "
+    "translation" : "3かぶのしょくぶつのうち "
   },
   "codeLabFeaturedProject.CozmosGarden.we_harvested_the_" : {
-    "translation" : "★をしゅうかくしました "
+    "translation" : "をしゅうかくしました "
   },
   "codeLabFeaturedProject.CozmosGarden.were_pretty_good_at_this" : {
     "translation" : "これはかなりうまくいきました！"

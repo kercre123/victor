@@ -238,13 +238,13 @@
                     },
                     "?6b^BN!47boC7#DTyqUN": {
                         "id": "?6b^BN!47boC7#DTyqUN",
-                        "name": "y l\u00f6schen",
+                        "name": "Tropfen y",
                         "type": "",
                         "value": "30"
                     },
                     "?Nu$DseVL+)x.PQ40lAV": {
                         "id": "?Nu$DseVL+)x.PQ40lAV",
-                        "name": "Radius l\u00f6schen",
+                        "name": "Radius des Tropfens",
                         "type": "",
                         "value": 7
                     },
@@ -385,7 +385,7 @@
                     },
                     "KEsOIz}vieQT{+0zZihe": {
                         "id": "KEsOIz}vieQT{+0zZihe",
-                        "name": "Linienbreite l\u00f6schen",
+                        "name": "Linienbreite des Tropfens",
                         "type": "",
                         "value": -0.5
                     },
@@ -475,7 +475,7 @@
                     },
                     "bU5pE2VN(GUYGZqKml-h": {
                         "id": "bU5pE2VN(GUYGZqKml-h",
-                        "name": "x l\u00f6schen",
+                        "name": "Tropfen x",
                         "type": "",
                         "value": "75"
                     },
@@ -521,7 +521,7 @@
                     },
                     "geM=Avc_)(c[AsXen^d(": {
                         "id": "geM=Avc_)(c[AsXen^d(",
-                        "name": "Kartenwachstum",
+                        "name": "Karte f\u00fcr Wachstumsrate",
                         "type": "list",
                         "value": [
                             "1",
@@ -573,7 +573,7 @@
                     },
                     "mM{POto4=dOfKq).cIm;": {
                         "id": "mM{POto4=dOfKq).cIm;",
-                        "name": "Skala l\u00f6schen",
+                        "name": "Skala des Tropfens",
                         "type": "",
                         "value": "0.7"
                     },
@@ -613,7 +613,7 @@
                     },
                     "tay$]p*cGG#{LnHknd8|": {
                         "id": "tay$]p*cGG#{LnHknd8|",
-                        "name": "Linienposition\u00a0y l\u00f6schen",
+                        "name": "Linienposition\u00a0y des Tropfens",
                         "type": "",
                         "value": 15.5
                     },
@@ -3937,7 +3937,7 @@
                             "VARIABLE": {
                                 "id": "?6b^BN!47boC7#DTyqUN",
                                 "name": "VARIABLE",
-                                "value": "y l\u00f6schen",
+                                "value": "Tropfen y",
                                 "variableType": ""
                             }
                         },
@@ -4742,7 +4742,7 @@
                             "VARIABLE": {
                                 "id": "KEsOIz}vieQT{+0zZihe",
                                 "name": "VARIABLE",
-                                "value": "Linienbreite l\u00f6schen",
+                                "value": "Linienbreite des Tropfens",
                                 "variableType": ""
                             }
                         },
@@ -5977,7 +5977,7 @@
                             "VARIABLE": {
                                 "id": "?Nu$DseVL+)x.PQ40lAV",
                                 "name": "VARIABLE",
-                                "value": "Radius l\u00f6schen",
+                                "value": "Radius des Tropfens",
                                 "variableType": ""
                             }
                         },
@@ -6243,7 +6243,7 @@
                             "VARIABLE": {
                                 "id": "KEsOIz}vieQT{+0zZihe",
                                 "name": "VARIABLE",
-                                "value": "Linienbreite l\u00f6schen",
+                                "value": "Linienbreite des Tropfens",
                                 "variableType": ""
                             }
                         },
@@ -6597,7 +6597,7 @@
                             "VARIABLE": {
                                 "id": "tay$]p*cGG#{LnHknd8|",
                                 "name": "VARIABLE",
-                                "value": "Linienposition\u00a0y l\u00f6schen",
+                                "value": "Linienposition\u00a0y des Tropfens",
                                 "variableType": ""
                             }
                         },
@@ -8441,7 +8441,7 @@
                             "VARIABLE": {
                                 "id": "bU5pE2VN(GUYGZqKml-h",
                                 "name": "VARIABLE",
-                                "value": "x l\u00f6schen",
+                                "value": "Tropfen x",
                                 "variableType": ""
                             }
                         },
@@ -8883,7 +8883,7 @@
                             "VARIABLE": {
                                 "id": "bU5pE2VN(GUYGZqKml-h",
                                 "name": "VARIABLE",
-                                "value": "x l\u00f6schen",
+                                "value": "Tropfen x",
                                 "variableType": ""
                             }
                         },
@@ -9027,7 +9027,7 @@
                             "VARIABLE": {
                                 "id": "tay$]p*cGG#{LnHknd8|",
                                 "name": "VARIABLE",
-                                "value": "Linienposition\u00a0y l\u00f6schen",
+                                "value": "Linienposition\u00a0y des Tropfens",
                                 "variableType": ""
                             }
                         },
@@ -9305,7 +9305,7 @@
                             "VARIABLE": {
                                 "id": "tay$]p*cGG#{LnHknd8|",
                                 "name": "VARIABLE",
-                                "value": "Linienposition\u00a0y l\u00f6schen",
+                                "value": "Linienposition\u00a0y des Tropfens",
                                 "variableType": ""
                             }
                         },
@@ -10272,7 +10272,7 @@
                             "VARIABLE": {
                                 "id": "tay$]p*cGG#{LnHknd8|",
                                 "name": "VARIABLE",
-                                "value": "Linienposition\u00a0y l\u00f6schen",
+                                "value": "Linienposition\u00a0y des Tropfens",
                                 "variableType": ""
                             }
                         },
@@ -10593,7 +10593,7 @@
                             "VARIABLE": {
                                 "id": "bU5pE2VN(GUYGZqKml-h",
                                 "name": "VARIABLE",
-                                "value": "x l\u00f6schen",
+                                "value": "Tropfen x",
                                 "variableType": ""
                             }
                         },
@@ -10737,7 +10737,7 @@
                             "VARIABLE": {
                                 "id": "mM{POto4=dOfKq).cIm;",
                                 "name": "VARIABLE",
-                                "value": "Skala l\u00f6schen",
+                                "value": "Skala des Tropfens",
                                 "variableType": ""
                             }
                         },
@@ -11169,7 +11169,7 @@
                             "VARIABLE": {
                                 "id": "KEsOIz}vieQT{+0zZihe",
                                 "name": "VARIABLE",
-                                "value": "Linienbreite l\u00f6schen",
+                                "value": "Linienbreite des Tropfens",
                                 "variableType": ""
                             }
                         },
@@ -11471,7 +11471,7 @@
                             "VARIABLE": {
                                 "id": "?6b^BN!47boC7#DTyqUN",
                                 "name": "VARIABLE",
-                                "value": "y l\u00f6schen",
+                                "value": "Tropfen y",
                                 "variableType": ""
                             }
                         },
@@ -12279,7 +12279,7 @@
                             "VARIABLE": {
                                 "id": "KEsOIz}vieQT{+0zZihe",
                                 "name": "VARIABLE",
-                                "value": "Linienbreite l\u00f6schen",
+                                "value": "Linienbreite des Tropfens",
                                 "variableType": ""
                             }
                         },
@@ -12650,7 +12650,7 @@
                             "VARIABLE": {
                                 "id": "KEsOIz}vieQT{+0zZihe",
                                 "name": "VARIABLE",
-                                "value": "Linienbreite l\u00f6schen",
+                                "value": "Linienbreite des Tropfens",
                                 "variableType": ""
                             }
                         },
@@ -14833,7 +14833,7 @@
                             "VARIABLE": {
                                 "id": "bU5pE2VN(GUYGZqKml-h",
                                 "name": "VARIABLE",
-                                "value": "x l\u00f6schen",
+                                "value": "Tropfen x",
                                 "variableType": ""
                             }
                         },
@@ -15328,7 +15328,7 @@
                             "VARIABLE": {
                                 "id": "bU5pE2VN(GUYGZqKml-h",
                                 "name": "VARIABLE",
-                                "value": "x l\u00f6schen",
+                                "value": "Tropfen x",
                                 "variableType": ""
                             }
                         },
@@ -15583,7 +15583,7 @@
                             "VARIABLE": {
                                 "id": "bU5pE2VN(GUYGZqKml-h",
                                 "name": "VARIABLE",
-                                "value": "x l\u00f6schen",
+                                "value": "Tropfen x",
                                 "variableType": ""
                             }
                         },
@@ -16243,7 +16243,7 @@
                             "VARIABLE": {
                                 "id": "?Nu$DseVL+)x.PQ40lAV",
                                 "name": "VARIABLE",
-                                "value": "Radius l\u00f6schen",
+                                "value": "Radius des Tropfens",
                                 "variableType": ""
                             }
                         },
@@ -17046,7 +17046,7 @@
                             "VARIABLE": {
                                 "id": "bU5pE2VN(GUYGZqKml-h",
                                 "name": "VARIABLE",
-                                "value": "x l\u00f6schen",
+                                "value": "Tropfen x",
                                 "variableType": ""
                             }
                         },
@@ -17415,7 +17415,7 @@
                             "VARIABLE": {
                                 "id": "?Nu$DseVL+)x.PQ40lAV",
                                 "name": "VARIABLE",
-                                "value": "Radius l\u00f6schen",
+                                "value": "Radius des Tropfens",
                                 "variableType": ""
                             }
                         },
@@ -19282,7 +19282,7 @@
                             "VARIABLE": {
                                 "id": "tay$]p*cGG#{LnHknd8|",
                                 "name": "VARIABLE",
-                                "value": "Linienposition\u00a0y l\u00f6schen",
+                                "value": "Linienposition\u00a0y des Tropfens",
                                 "variableType": ""
                             }
                         },
@@ -20303,7 +20303,7 @@
                             "VARIABLE": {
                                 "id": "mM{POto4=dOfKq).cIm;",
                                 "name": "VARIABLE",
-                                "value": "Skala l\u00f6schen",
+                                "value": "Skala des Tropfens",
                                 "variableType": ""
                             }
                         },
@@ -21513,7 +21513,7 @@
                             "VARIABLE": {
                                 "id": "?6b^BN!47boC7#DTyqUN",
                                 "name": "VARIABLE",
-                                "value": "y l\u00f6schen",
+                                "value": "Tropfen y",
                                 "variableType": ""
                             }
                         },
@@ -21912,7 +21912,7 @@
                             "VARIABLE": {
                                 "id": "?Nu$DseVL+)x.PQ40lAV",
                                 "name": "VARIABLE",
-                                "value": "Radius l\u00f6schen",
+                                "value": "Radius des Tropfens",
                                 "variableType": ""
                             }
                         },
@@ -22313,7 +22313,7 @@
                             "VARIABLE": {
                                 "id": "?6b^BN!47boC7#DTyqUN",
                                 "name": "VARIABLE",
-                                "value": "y l\u00f6schen",
+                                "value": "Tropfen y",
                                 "variableType": ""
                             }
                         },
@@ -23074,7 +23074,7 @@
                             "VARIABLE": {
                                 "id": "tay$]p*cGG#{LnHknd8|",
                                 "name": "VARIABLE",
-                                "value": "Linienposition\u00a0y l\u00f6schen",
+                                "value": "Linienposition\u00a0y des Tropfens",
                                 "variableType": ""
                             }
                         },
@@ -24268,7 +24268,7 @@
                             "VARIABLE": {
                                 "id": "mM{POto4=dOfKq).cIm;",
                                 "name": "VARIABLE",
-                                "value": "Skala l\u00f6schen",
+                                "value": "Skala des Tropfens",
                                 "variableType": ""
                             }
                         },

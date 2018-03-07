@@ -95,7 +95,7 @@
                     },
                     "UdMm0.SuvuD-]@[UA{4:": {
                         "id": "UdMm0.SuvuD-]@[UA{4:",
-                        "name": "Satz zum Schlafengehen ausw\u00e4hlen",
+                        "name": "Satz zur Schlafenszeit ausw\u00e4hlen",
                         "type": "broadcast_msg",
                         "value": "choose bedtime phrase"
                     },
@@ -107,7 +107,7 @@
                     },
                     "]@A3AZ1*=`7E[JXk7_Ea": {
                         "id": "]@A3AZ1*=`7E[JXk7_Ea",
-                        "name": "Wechsle zum n\u00e4chsten Zug und aktiviere die die Cubes f\u00fcr die Eingabe.",
+                        "name": "Wechsle zum n\u00e4chsten Zug und aktiviere die Cubes f\u00fcr die Eingabe.",
                         "type": "",
                         "value": 0
                     },
@@ -125,7 +125,7 @@
                     },
                     "cyS{4_L3`Y6j3ER7NUpn": {
                         "id": "cyS{4_L3`Y6j3ER7NUpn",
-                        "name": "Satz zum Schlafen ausw\u00e4hlen",
+                        "name": "Satz beim Einschlafen ausw\u00e4hlen",
                         "type": "broadcast_msg",
                         "value": "choose sleeping phrase"
                     },
@@ -1312,7 +1312,7 @@
                             "VARIABLE": {
                                 "id": "]@A3AZ1*=`7E[JXk7_Ea",
                                 "name": "VARIABLE",
-                                "value": "Wechsle zum n\u00e4chsten Zug und aktiviere die die Cubes f\u00fcr die Eingabe.",
+                                "value": "Wechsle zum n\u00e4chsten Zug und aktiviere die Cubes f\u00fcr die Eingabe.",
                                 "variableType": ""
                             }
                         },
