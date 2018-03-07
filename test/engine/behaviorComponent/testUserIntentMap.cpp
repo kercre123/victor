@@ -56,10 +56,10 @@ const std::string& testMapConfig = R"json(
       "cloud_intent": "cloud_time_intent_substitution",
       "user_intent": "test_timeWithUnits",
       "cloud_substitutions": {
-        "timer-duration.time": "time",
-        "timer-duration.units": "units"
+        "timer_duration.time": "time",
+        "timer_duration.units": "units"
       },
-      "cloud_numerics": ["timer-duration.time"]
+      "cloud_numerics": ["timer_duration.time"]
     },
     {
       "app_intent": "intent_meet_victor",
@@ -425,8 +425,8 @@ TEST(UserIntentMap, ExtraData)
   {
     "intent": "cloud_time_intent_substitution",
     "params": {
-      "timer-duration.time": "60",
-      "timer-duration.units": "s"
+      "timer_duration.time": "60",
+      "timer_duration.units": "s"
     }
   })json"));
   EXPECT_TRUE(comp->IsAnyUserIntentPending());
