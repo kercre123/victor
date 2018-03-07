@@ -274,7 +274,8 @@ size_t RtsNonceMessage::Pack(uint8_t* buff, size_t len) const
 
 size_t RtsNonceMessage::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
-  buffer.WriteFArray<uint8_t, 24>(this->nonce);
+  buffer.WriteFArray<uint8_t, 24>(this->toRobotNonce);
+  buffer.WriteFArray<uint8_t, 24>(this->toDeviceNonce);
   const size_t bytesWritten {buffer.GetBytesWritten()};
   return bytesWritten;
 }
@@ -287,21 +288,25 @@ size_t RtsNonceMessage::Unpack(const uint8_t* buff, const size_t len)
 
 size_t RtsNonceMessage::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
-  buffer.ReadFArray<uint8_t, 24>(this->nonce);
+  buffer.ReadFArray<uint8_t, 24>(this->toRobotNonce);
+  buffer.ReadFArray<uint8_t, 24>(this->toDeviceNonce);
   return buffer.GetBytesRead();
 }
 
 size_t RtsNonceMessage::Size() const
 {
   size_t result = 0;
-  // nonce
+  // toRobotNonce
+  result += 1 * 24; // uint_8 * 24
+  // toDeviceNonce
   result += 1 * 24; // uint_8 * 24
   return result;
 }
 
 bool RtsNonceMessage::operator==(const RtsNonceMessage& other) const
 {
-  return (this->nonce == other.nonce);
+  return (this->toRobotNonce == other.toRobotNonce &&
+    this->toDeviceNonce == other.toDeviceNonce);
 }
 
 bool RtsNonceMessage::operator!=(const RtsNonceMessage& other) const
@@ -310,10 +315,10 @@ bool RtsNonceMessage::operator!=(const RtsNonceMessage& other) const
 }
 
 
-const char* RtsNonceMessageVersionHashStr = "c1089f0c5a20db4ef88fcedfcea68615";
+const char* RtsNonceMessageVersionHashStr = "cb42948e43bdd6385450ae851e493e2a";
 
 const uint8_t RtsNonceMessageVersionHash[16] = { 
-    0xc1, 0x8, 0x9f, 0xc, 0x5a, 0x20, 0xdb, 0x4e, 0xf8, 0x8f, 0xce, 0xdf, 0xce, 0xa6, 0x86, 0x15 
+    0xcb, 0x42, 0x94, 0x8e, 0x43, 0xbd, 0xd6, 0x38, 0x54, 0x50, 0xae, 0x85, 0x1e, 0x49, 0x3e, 0x2a 
 };
 
 // MESSAGE RtsAck
@@ -990,8 +995,8 @@ size_t RtsWifiScanResponse::Pack(uint8_t* buff, size_t len) const
 size_t RtsWifiScanResponse::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
   buffer.Write(this->statusCode);
-  buffer.Write(static_cast<uint8_t>(result.size()));
-  for (const Anki::Victor::ExternalComms::RtsWifiScanResult& m : result) {
+  buffer.Write(static_cast<uint8_t>(scanResult.size()));
+  for (const Anki::Victor::ExternalComms::RtsWifiScanResult& m : scanResult) {
     m.Pack(buffer);
   }
   const size_t bytesWritten {buffer.GetBytesWritten()};
@@ -1007,7 +1012,7 @@ size_t RtsWifiScanResponse::Unpack(const uint8_t* buff, const size_t len)
 size_t RtsWifiScanResponse::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
   buffer.Read(this->statusCode);
-  buffer.ReadCompoundTypeVArray<Anki::Victor::ExternalComms::RtsWifiScanResult, uint8_t>(this->result);
+  buffer.ReadCompoundTypeVArray<Anki::Victor::ExternalComms::RtsWifiScanResult, uint8_t>(this->scanResult);
   return buffer.GetBytesRead();
 }
 
@@ -1016,9 +1021,9 @@ size_t RtsWifiScanResponse::Size() const
   size_t result = 0;
   // statusCode
   result += 1; // uint_8
-  // result
+  // scanResult
   result += 1; // uint_8 (array length)
-  for (const Anki::Victor::ExternalComms::RtsWifiScanResult& m : this->result) {
+  for (const Anki::Victor::ExternalComms::RtsWifiScanResult& m : this->scanResult) {
     result += m.Size();
   }
   return result;
@@ -1027,7 +1032,7 @@ size_t RtsWifiScanResponse::Size() const
 bool RtsWifiScanResponse::operator==(const RtsWifiScanResponse& other) const
 {
   return (this->statusCode == other.statusCode &&
-    this->result == other.result);
+    this->scanResult == other.scanResult);
 }
 
 bool RtsWifiScanResponse::operator!=(const RtsWifiScanResponse& other) const
@@ -1036,10 +1041,10 @@ bool RtsWifiScanResponse::operator!=(const RtsWifiScanResponse& other) const
 }
 
 
-const char* RtsWifiScanResponseVersionHashStr = "0860282003dd63311fa44a6f3b61dc54";
+const char* RtsWifiScanResponseVersionHashStr = "ab3dab446cbe21302e1b1f76fc17c330";
 
 const uint8_t RtsWifiScanResponseVersionHash[16] = { 
-    0x8, 0x60, 0x28, 0x20, 0x3, 0xdd, 0x63, 0x31, 0x1f, 0xa4, 0x4a, 0x6f, 0x3b, 0x61, 0xdc, 0x54 
+    0xab, 0x3d, 0xab, 0x44, 0x6c, 0xbe, 0x21, 0x30, 0x2e, 0x1b, 0x1f, 0x76, 0xfc, 0x17, 0xc3, 0x30 
 };
 
 // MESSAGE RtsOtaUpdateRequest

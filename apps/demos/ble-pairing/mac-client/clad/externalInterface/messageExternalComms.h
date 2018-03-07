@@ -189,7 +189,8 @@ extern const uint8_t RtsConnResponseVersionHash[16];
 // MESSAGE RtsNonceMessage
 struct RtsNonceMessage
 {
-  std::array<uint8_t, 24> nonce;
+  std::array<uint8_t, 24> toRobotNonce;
+  std::array<uint8_t, 24> toDeviceNonce;
   
   /**** Constructors ****/
   RtsNonceMessage() = default;
@@ -199,8 +200,10 @@ struct RtsNonceMessage
   RtsNonceMessage& operator=(const RtsNonceMessage& other) = default;
   RtsNonceMessage& operator=(RtsNonceMessage&& other) = default;
   
-  explicit RtsNonceMessage(const std::array<uint8_t, 24>& nonce)
-  : nonce(nonce)
+  explicit RtsNonceMessage(const std::array<uint8_t, 24>& toRobotNonce,
+    const std::array<uint8_t, 24>& toDeviceNonce)
+  : toRobotNonce(toRobotNonce)
+  , toDeviceNonce(toDeviceNonce)
   {}
   
   explicit RtsNonceMessage(const uint8_t* buff, size_t len);
@@ -221,7 +224,7 @@ struct RtsNonceMessage
   
   template <typename Callable>
   void Invoke(Callable&& func) const {
-     func(nonce);
+     func(toRobotNonce, toDeviceNonce);
   }
 };
 
@@ -653,7 +656,7 @@ extern const uint8_t RtsWifiScanRequestVersionHash[16];
 struct RtsWifiScanResponse
 {
   uint8_t statusCode;
-  std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult> result;
+  std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult> scanResult;
   
   /**** Constructors ****/
   RtsWifiScanResponse() = default;
@@ -664,9 +667,9 @@ struct RtsWifiScanResponse
   RtsWifiScanResponse& operator=(RtsWifiScanResponse&& other) = default;
   
   explicit RtsWifiScanResponse(uint8_t statusCode,
-    const std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult>& result)
+    const std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult>& scanResult)
   : statusCode(statusCode)
-  , result(result)
+  , scanResult(scanResult)
   {}
   
   explicit RtsWifiScanResponse(const uint8_t* buff, size_t len);
@@ -687,7 +690,7 @@ struct RtsWifiScanResponse
   
   template <typename Callable>
   void Invoke(Callable&& func) const {
-     func(statusCode, result);
+     func(statusCode, scanResult);
   }
 };
 

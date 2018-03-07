@@ -270,8 +270,8 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 
 - (void) HandleReceiveNonce:(const Anki::Victor::ExternalComms::RtsNonceMessage &)msg {
   NSLog(@"Received nonce from Victor");
-  memcpy(_nonceIn, msg.nonce.data(), crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
-  memcpy(_nonceOut, msg.nonce.data(), crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+  memcpy(_nonceIn, msg.toDeviceNonce.data(), crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+  memcpy(_nonceOut, msg.toRobotNonce.data(), crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
   
   NSLog(@"Sending ack");
   Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsAck>(self, (uint8_t)Anki::Victor::ExternalComms::RtsConnectionTag::RtsNonceMessage);
@@ -293,8 +293,8 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 
 - (void) HandleWifiScanResponse:(const Anki::Victor::ExternalComms::RtsWifiScanResponse&)msg {
   NSLog(@"Wifi scan results:");
-  for(int i = 0; i < msg.result.size(); i++) {
-    NSLog(@"%d: %d %d %s", i, msg.result[i].signalStrength, msg.result[i].authType, msg.result[i].ssid.c_str());
+  for(int i = 0; i < msg.scanResult.size(); i++) {
+    NSLog(@"%d: %d %d %s", i, msg.scanResult[i].signalStrength, msg.scanResult[i].authType, msg.scanResult[i].ssid.c_str());
   }
   
   char ssid[32];
