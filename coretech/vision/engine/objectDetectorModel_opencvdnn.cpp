@@ -1,3 +1,4 @@
+#if !FACTORY_TEST
 /**
  * File: objectDetectorModel_opencvdnn.cpp
  *
@@ -323,3 +324,4 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<ObjectDetector:
 
 //#endif // #if !defined(USE_TENSORFLOW) || !USE_TENSORFLOW
 
+#endif

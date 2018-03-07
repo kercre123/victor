@@ -31,8 +31,8 @@ set(OPENCV_LIBS
     video
     flann
     imgcodecs
-    ml
-    dnn
+    #ml
+    #dnn
     videoio)
 
 # Static libs for mac, shared for android

@@ -154,12 +154,12 @@ if (ANDROID)
     include(android-ndk-stl-config)
 endif()
 
-if (MACOSX)
-  add_subdirectory("test")
-  add_subdirectory("simulator") # webots
+#if (MACOSX)
+#  add_subdirectory("test")
+#  add_subdirectory("simulator") # webots
 
-  enable_testing()
+#  enable_testing()
 
-endif()
+#endif()
 
 clean_clad_targets()

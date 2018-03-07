@@ -1,3 +1,4 @@
+#if !FACTORY_TEST
 /**
  * File: objectDetector.cpp
  *
@@ -35,7 +36,7 @@
 //#elif USE_TENSORFLOW_LITE
 //#  include "objectDetectorModel_tensorflow_lite.cpp"
 //#else
-#  include "objectDetectorModel_opencvdnn.cpp"
+// #  include "objectDetectorModel_opencvdnn.cpp"
 //#endif
 
 namespace Anki {
@@ -191,3 +192,4 @@ bool ObjectDetector::GetObjects(std::list<DetectedObject>& objects_out)
   
 } // namespace Vision
 } // namespace Anki
+#endif

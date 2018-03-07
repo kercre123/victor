@@ -1,3 +1,4 @@
+#if !FACTORY_TEST
 /**
  * File: GroundPlaneClassifier.cpp
  *
@@ -399,3 +400,4 @@ Array2d<RawPixelsClassifier::FeatureType> SinglePixelFeaturesExtraction::Extract
 }
 } // namespace Cozmo
 } // namespace Anki
+#endif
