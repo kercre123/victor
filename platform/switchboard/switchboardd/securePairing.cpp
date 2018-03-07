@@ -203,15 +203,22 @@ void Anki::Switchboard::SecurePairing::SendNonce() {
   const uint8_t NONCE_BYTES = crypto_aead_xchacha20poly1305_ietf_NPUBBYTES;
   
   // Generate a nonce
-  uint8_t* nonce = _keyExchange->GetNonce();
-  randombytes_buf(nonce, NONCE_BYTES);
+  uint8_t* toRobotNonce = _keyExchange->GetToRobotNonce();
+  randombytes_buf(toRobotNonce, NONCE_BYTES);
+
+  uint8_t* toDeviceNonce = _keyExchange->GetToDeviceNonce();
+  randombytes_buf(toDeviceNonce, NONCE_BYTES);
   
   // Give our nonce to the network stream
-  _stream->SetNonce(nonce);
+  _stream->SetNonce(toRobotNonce, toDeviceNonce);
   
-  std::array<uint8_t, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES> nonceArray;
-  memcpy(std::begin(nonceArray), nonce, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
-  SendRtsMessage<RtsNonceMessage>(nonceArray);
+  std::array<uint8_t, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES> toRobotNonceArray;
+  memcpy(std::begin(toRobotNonceArray), toRobotNonce, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+
+  std::array<uint8_t, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES> toDeviceNonceArray;
+  memcpy(std::begin(toDeviceNonceArray), toDeviceNonce, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+
+  SendRtsMessage<RtsNonceMessage>(toRobotNonceArray, toDeviceNonceArray);
 }
 
 void Anki::Switchboard::SecurePairing::SendChallenge() {

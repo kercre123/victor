@@ -56,9 +56,9 @@ namespace Switchboard {
       memcpy(_DecryptKey, decryptKey, crypto_kx_SESSIONKEYBYTES);
     }
     
-    void SetNonce(uint8_t* nonce) {
-      memcpy(_EncryptNonce, nonce, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
-      memcpy(_DecryptNonce, nonce, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+    void SetNonce(uint8_t* toRobotNonce, uint8_t* toDeviceNonce) {
+      memcpy(_EncryptNonce, toDeviceNonce, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+      memcpy(_DecryptNonce, toRobotNonce, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
     }
     
     void SetEncryptedChannelEstablished(bool canCommunicateSecurely) {

@@ -42,8 +42,12 @@ namespace Switchboard {
       return &_numPinDigits;
     }
     
-    uint8_t* GetNonce() {
-      return _initialNonce;
+    uint8_t* GetToRobotNonce() {
+      return _initialToRobotNonce;
+    }
+
+    uint8_t* GetToDeviceNonce() {
+      return _initialToDeviceNonce;
     }
     
     uint8_t* GetVerificationHash() {
@@ -67,7 +71,8 @@ namespace Switchboard {
     uint8_t _remotePublicKey [crypto_kx_PUBLICKEYBYTES];  // partner's public key
     uint8_t _publicKey [crypto_kx_PUBLICKEYBYTES];   // our public key
     uint8_t _hashedKey [crypto_kx_SESSIONKEYBYTES];  // size of code
-    uint8_t _initialNonce [crypto_aead_xchacha20poly1305_ietf_NPUBBYTES];
+    uint8_t _initialToRobotNonce [crypto_aead_xchacha20poly1305_ietf_NPUBBYTES];
+    uint8_t _initialToDeviceNonce [crypto_aead_xchacha20poly1305_ietf_NPUBBYTES];
     uint8_t _numPinDigits = 6;
   };
 } // Switchboard
