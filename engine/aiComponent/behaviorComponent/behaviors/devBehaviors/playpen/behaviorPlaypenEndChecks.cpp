@@ -45,7 +45,7 @@ Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  const float batteryVolts = robot.GetBatteryComponent().GetRawBatteryVolts();
+  const float batteryVolts = robot.GetBatteryComponent().GetBatteryVoltsRaw();
   if(batteryVolts < PlaypenConfig::kMinBatteryVoltage)
   {
     PRINT_NAMED_WARNING("BehaviorPlaypenEndChecks.OnActivated.BatteryTooLow", "%fv", batteryVolts);

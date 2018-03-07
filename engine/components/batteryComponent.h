@@ -22,6 +22,9 @@
 #include "util/helpers/noncopyable.h"
 
 namespace Anki {
+namespace Util {
+  class LowPassFilterSimple;
+}
 namespace Cozmo {
 
 class BlockWorldFilter;
@@ -44,7 +47,13 @@ public:
   
   void NotifyOfRobotState(const RobotState& msg);
   
-  float GetRawBatteryVolts() const { return _rawBatteryVolts; }
+  // Returns the low-pass filtered filtered battery voltage
+  float GetBatteryVolts() const { return _batteryVoltsFilt; }
+  
+  // Returns raw battery voltage as reported by the robot.
+  // Note that this will be quite noisy and not super useful
+  // for most use cases.
+  float GetBatteryVoltsRaw() const { return _batteryVoltsRaw; }
   
   // Indicates that the robot has its charge circuit enabled. Note that
   // this will remain true even after the battery is fully charged.
@@ -73,7 +82,9 @@ private:
   
   Robot* _robot = nullptr;
   
-  float _rawBatteryVolts = 0.f;
+  float _batteryVoltsRaw = 0.f;
+  
+  float _batteryVoltsFilt = 0.f;
 
   bool _isCharging = false;
   bool _isOnChargerContacts = false;
@@ -85,6 +96,8 @@ private:
   TimeStamp_t _lastMsgTimestamp = 0;
   
   std::unique_ptr<BlockWorldFilter> _chargerFilter;
+  
+  std::unique_ptr<Util::LowPassFilterSimple> _batteryVoltsFilter;
 };
 
 

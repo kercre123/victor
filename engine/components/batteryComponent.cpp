@@ -20,15 +20,28 @@
 #include "engine/charger.h"
 #include "engine/robot.h"
 
+#include "anki/cozmo/shared/cozmoConfig.h"
+
 #include "clad/types/robotStatusAndActions.h"
+
+#include "util/filters/lowPassFilterSimple.h"
 
 namespace Anki {
 namespace Cozmo {
-  
+
+namespace {
+  const float kBatteryVoltsFilterTimeConstant_sec = 1.0f;
+}
+
 BatteryComponent::BatteryComponent()
   : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::Battery)
   , _chargerFilter(std::make_unique<BlockWorldFilter>())
 {
+  // setup battery voltage low pass filter (samples come in at RobotState frequency)
+  const float kSamplePeriod_sec = Util::MilliSecToSec((float) TIME_STEP * STATE_MESSAGE_FREQUENCY);
+  _batteryVoltsFilter = std::make_unique<Util::LowPassFilterSimple>(kSamplePeriod_sec,
+                                                                    kBatteryVoltsFilterTimeConstant_sec);
+  
   // setup block world filter to find chargers:
   _chargerFilter->AddAllowedFamily(ObjectFamily::Charger);
   _chargerFilter->AddAllowedType(ObjectType::Charger_Basic);
@@ -43,7 +56,9 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 {
   _lastMsgTimestamp = msg.timestamp;
   
-  _rawBatteryVolts = msg.batteryVoltage;
+  _batteryVoltsRaw = msg.batteryVoltage;
+  
+  _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
   
   SetOnChargeContacts(msg.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
   SetIsCharging(msg.status & (uint32_t)RobotStatusFlag::IS_CHARGING);

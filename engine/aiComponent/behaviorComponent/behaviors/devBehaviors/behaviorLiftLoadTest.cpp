@@ -101,7 +101,7 @@ namespace Anki {
       const RobotInterface::FWVersionInfo& fw = robot.GetRobotToEngineImplMessaging().GetFWVersionInfo();
       std::stringstream ss;
       ss << "RobotSN: " << robot.GetHeadSerialNumber() << "\n";
-      ss << "Battery(V): " << robot.GetBatteryComponent().GetRawBatteryVolts() << "\n\n";
+      ss << "Battery(V): " << robot.GetBatteryComponent().GetBatteryVoltsRaw() << "\n\n";
       ss << "Firmware Version\n";
       ss << "Body Version: " << std::hex << fw.bodyVersion << "\n";
       ss << "RTIP Version: " << std::hex << fw.rtipVersion << "\n";

@@ -2580,7 +2580,7 @@ ExternalInterface::RobotState Robot::GetRobotState() const
       
   msg.localizedToObjectID = GetLocalizedTo();
 
-  msg.batteryVoltage = GetBatteryComponent().GetRawBatteryVolts();
+  msg.batteryVoltage = GetBatteryComponent().GetBatteryVolts();
       
   msg.lastImageTimeStamp = GetVisionComponent().GetLastProcessedImageTimeStamp();
       

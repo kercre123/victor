@@ -56,7 +56,7 @@ Result BehaviorPlaypenInitChecks::OnBehaviorActivatedInternal()
   }
   
   // Battery voltage should be relatively high as we are on the charger
-  const float batteryVolts = robot.GetBatteryComponent().GetRawBatteryVolts();
+  const float batteryVolts = robot.GetBatteryComponent().GetBatteryVoltsRaw();
   if(batteryVolts < PlaypenConfig::kMinBatteryVoltage)
   {
     PRINT_NAMED_WARNING("BehaviorPlaypenInitChecks.OnActivated.BatteryTooLow", "%fv", batteryVolts);

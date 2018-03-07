@@ -130,7 +130,7 @@ void PerfMetric::Update(const float tickDuration_ms,
 
     Robot* robot = _cozmoContext->GetRobotManager()->GetRobot();
 
-    frame._batteryVoltage = robot == nullptr ? 0.0f : robot->GetBatteryComponent().GetRawBatteryVolts();
+    frame._batteryVoltage = robot == nullptr ? 0.0f : robot->GetBatteryComponent().GetBatteryVolts();
 
     strncpy(frame._state, robot == nullptr ? "" : robot->GetBehaviorDebugString().c_str(), sizeof(frame._state));
     frame._state[FrameMetric::kStateStringMaxSize - 1] = '\0'; // Ensure string is null terminated
