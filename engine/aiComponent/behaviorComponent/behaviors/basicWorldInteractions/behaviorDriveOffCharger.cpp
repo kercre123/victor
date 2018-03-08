@@ -30,17 +30,31 @@ namespace Cozmo {
 namespace{
 static const char* const kExtraDriveDistKey = "extraDistanceToDrive_mm";
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDriveOffCharger::InstanceConfig::InstanceConfig()
+{
+  distToDrive_mm = 0.0f;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDriveOffCharger::DynamicVariables::DynamicVariables()
+{
+  pushedIdleAnimation = false;
+}
+
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDriveOffCharger::BehaviorDriveOffCharger(const Json::Value& config)
 : ICozmoBehavior(config)
 {
   float extraDist_mm = config.get(kExtraDriveDistKey, 0.0f).asFloat();
-  _distToDrive_mm = Charger::GetLength() + extraDist_mm;
+  _iConfig.distToDrive_mm = Charger::GetLength() + extraDist_mm;
   
   PRINT_CH_DEBUG("Behaviors", "BehaviorDriveOffCharger.DriveDist",
                  "Driving %fmm off the charger (%f length + %f extra)",
-                 _distToDrive_mm,
+                 _iConfig.distToDrive_mm,
                  Charger::GetLength(),
                  extraDist_mm);
 }
@@ -68,14 +82,14 @@ bool BehaviorDriveOffCharger::WantsToBeActivatedBehavior() const
 void BehaviorDriveOffCharger::OnBehaviorActivated()
 {
   
-  _pushedIdleAnimation = false;
+  _dVars.pushedIdleAnimation = false;
   auto& robotInfo = GetBEI().GetRobotInfo();
   robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(
           {AnimationTrigger::DriveStartLaunch,
           AnimationTrigger::DriveLoopLaunch,
           AnimationTrigger::DriveEndLaunch},
           GetDebugLabel());
-  _pushedIdleAnimation = true;
+  _dVars.pushedIdleAnimation = true;
 
   const bool onTreads = GetBEI().GetOffTreadsState() == OffTreadsState::OnTreads;
   if( onTreads ) {
@@ -92,7 +106,7 @@ void BehaviorDriveOffCharger::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveOffCharger::OnBehaviorDeactivated()
 {
-  if(_pushedIdleAnimation){
+  if(_dVars.pushedIdleAnimation){
     auto& robotInfo = GetBEI().GetRobotInfo();
     robotInfo.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetDebugLabel());
   }
@@ -139,7 +153,7 @@ void BehaviorDriveOffCharger::TransitionToDrivingForward()
   if( robotInfo.IsOnChargerPlatform() )
   {
     // probably interrupted by getting off the charger platform
-    DriveStraightAction* action = new DriveStraightAction(_distToDrive_mm);
+    DriveStraightAction* action = new DriveStraightAction(_iConfig.distToDrive_mm);
     DelegateIfInControl(action,[this](ActionResult res){
       if(res == ActionResult::SUCCESS){
         BehaviorObjectiveAchieved(BehaviorObjective::DroveAsIntended);

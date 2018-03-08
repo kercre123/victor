@@ -28,6 +28,20 @@ namespace Cozmo {
 namespace{
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorCoordinateGlobalInterrupts::InstanceConfig::InstanceConfig()
+{
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorCoordinateGlobalInterrupts::DynamicVariables::DynamicVariables()
+{
+}
+
+
 ///////////
 /// BehaviorCoordinateGlobalInterrupts
 ///////////

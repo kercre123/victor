@@ -47,7 +47,23 @@ protected:
     modifiers.behaviorAlwaysDelegates = false;
   }
 
-private:    
+private:
+  struct InstanceConfig {
+    InstanceConfig();
+    FactoryTestLogger factoryTestLogger;
+
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    bool waitingForDots;
+    bool headCalibrated;
+    bool liftCalibrated;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 
@@ -57,14 +73,10 @@ private:
   
   virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
   
-  bool _waitingForDots = false;
-  bool _headCalibrated = false;
-  bool _liftCalibrated = false;
-  
-  FactoryTestLogger _factoryTestLogger;
 };
-}
-}
+
+} // namespace Cozmo
+} // namespace Anki
 
 
 

@@ -46,6 +46,7 @@ protected:
 
 private:
   struct InstanceConfig{
+    InstanceConfig();
     IBEIConditionPtr  triggerWordPendingCond;
     ICozmoBehaviorPtr wakeWordBehavior;
     ICozmoBehaviorPtr globalInterruptsBehavior;
@@ -55,6 +56,7 @@ private:
   };
 
   struct DynamicVariables{
+    DynamicVariables();
   };
 
   InstanceConfig   _iConfig;

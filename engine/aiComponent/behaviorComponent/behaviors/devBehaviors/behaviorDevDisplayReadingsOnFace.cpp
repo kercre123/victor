@@ -23,7 +23,24 @@ namespace Cozmo {
 namespace {
 static const float kMagicNumberSpaceBetweenText = 20.f;
 static const float kMagicNumberTextScale = 0.5f;
+static constexpr float kTopLeftCornerMagicNumber = 15.f;
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDevDisplayReadingsOnFace::InstanceConfig::InstanceConfig()
+{
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDevDisplayReadingsOnFace::DynamicVariables::DynamicVariables()
+{
+  image = Vision::Image(FACE_DISPLAY_HEIGHT,FACE_DISPLAY_WIDTH, NamedColors::BLACK);
+  autoLayoutPoint = Point2f(0, kTopLeftCornerMagicNumber);
+  motionIsValid = false;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevDisplayReadingsOnFace::BehaviorDevDisplayReadingsOnFace(const Json::Value& config)

@@ -20,6 +20,20 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDispatcherStrictPriorityWithCooldown::InstanceConfig::InstanceConfig()
+{
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDispatcherStrictPriorityWithCooldown::DynamicVariables::DynamicVariables()
+{
+  lastDesiredBehaviorIdx = 0;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcherStrictPriorityWithCooldown(const Json::Value& config)
   : BaseClass(config)
 {
@@ -36,33 +50,33 @@ BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcherStrictPriorityWi
       
       IBehaviorDispatcher::AddPossibleDispatch(behaviorIDStr);
 
-      _cooldownInfo.emplace_back( BehaviorCooldownInfo{behaviorDefinitionGroup} );
+      _iConfig.cooldownInfo.emplace_back( BehaviorCooldownInfo{behaviorDefinitionGroup} );
     }
   }
 
   // initialize last idx to invalid value
-  _lastDesiredBehaviorIdx = _cooldownInfo.size();
+  _dVars.lastDesiredBehaviorIdx = _iConfig.cooldownInfo.size();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehaviorPtr BehaviorDispatcherStrictPriorityWithCooldown::GetDesiredBehavior()
 {
-  DEV_ASSERT_MSG( _cooldownInfo.size() == IBehaviorDispatcher::GetAllPossibleDispatches().size(),
+  DEV_ASSERT_MSG( _iConfig.cooldownInfo.size() == IBehaviorDispatcher::GetAllPossibleDispatches().size(),
                   "BehaviorDispatcherStrictPriorityWithCooldown.SizeMismatch",
                   "have %zu cooldown infos, buts %zu possible dispatches",
-                  _cooldownInfo.size(),
+                  _iConfig.cooldownInfo.size(),
                   IBehaviorDispatcher::GetAllPossibleDispatches().size());
 
-  const size_t numBehaviors = _cooldownInfo.size();
+  const size_t numBehaviors = _iConfig.cooldownInfo.size();
 
   for( size_t idx = 0; idx < numBehaviors; ++idx ) {
-    auto& cooldownInfo = _cooldownInfo.at(idx);
+    auto& cooldownInfo = _iConfig.cooldownInfo.at(idx);
     const auto& behavior = IBehaviorDispatcher::GetAllPossibleDispatches().at(idx);
 
     if( !cooldownInfo.OnCooldown() &&
         ( behavior->IsActivated() ||
           behavior->WantsToBeActivated() ) ) {
-      _lastDesiredBehaviorIdx = idx;
+      _dVars.lastDesiredBehaviorIdx = idx;
       return behavior;
     }
   }
@@ -75,16 +89,16 @@ ICozmoBehaviorPtr BehaviorDispatcherStrictPriorityWithCooldown::GetDesiredBehavi
 void BehaviorDispatcherStrictPriorityWithCooldown::DispatcherUpdate()
 {
   if( IsActivated() &&
-      _lastDesiredBehaviorIdx < _cooldownInfo.size() &&
+      _dVars.lastDesiredBehaviorIdx < _iConfig.cooldownInfo.size() &&
       !IsControlDelegated() ) {
     // the last behavior must have stopped, so start its cooldown now
     PRINT_CH_INFO("Behaviors",
                   "BehaviorDispatcherStrictPriorityWithCooldown.LastBehaviorStopped.StartCooldown",
                   "Behavior idx %zu '%s' seems to have stopped, start cooldown",
-                  _lastDesiredBehaviorIdx,
-                  IBehaviorDispatcher::GetAllPossibleDispatches()[_lastDesiredBehaviorIdx]->GetDebugLabel().c_str());
-    _cooldownInfo[ _lastDesiredBehaviorIdx ].StartCooldown(GetRNG());
-    _lastDesiredBehaviorIdx = _cooldownInfo.size();
+                  _dVars.lastDesiredBehaviorIdx,
+                  IBehaviorDispatcher::GetAllPossibleDispatches()[_dVars.lastDesiredBehaviorIdx]->GetDebugLabel().c_str());
+    _iConfig.cooldownInfo[ _dVars.lastDesiredBehaviorIdx ].StartCooldown(GetRNG());
+    _dVars.lastDesiredBehaviorIdx = _iConfig.cooldownInfo.size();
   }  
 }
 
@@ -93,16 +107,16 @@ void BehaviorDispatcherStrictPriorityWithCooldown::DispatcherUpdate()
 void BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcher_OnActivated()
 {
   // reset last dispatched behavior
-  _lastDesiredBehaviorIdx = _cooldownInfo.size();
+  _dVars.lastDesiredBehaviorIdx = _iConfig.cooldownInfo.size();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcher_OnDeactivated()
 {
   // if we are stopped while a behavior was active, put it on cooldown
-  if( _lastDesiredBehaviorIdx < _cooldownInfo.size() ) {
-    _cooldownInfo[ _lastDesiredBehaviorIdx ].StartCooldown(GetRNG());
-    _lastDesiredBehaviorIdx = _cooldownInfo.size();
+  if( _dVars.lastDesiredBehaviorIdx < _iConfig.cooldownInfo.size() ) {
+    _iConfig.cooldownInfo[ _dVars.lastDesiredBehaviorIdx ].StartCooldown(GetRNG());
+    _dVars.lastDesiredBehaviorIdx = _iConfig.cooldownInfo.size();
   }   
 }
 

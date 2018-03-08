@@ -44,7 +44,6 @@ public:
   virtual void BehaviorUpdate() override;
   
 private:
-
   enum class StoppingCondition {
     Invalid,
     None,    // Simply let the search behavior finish on its own
@@ -52,29 +51,35 @@ private:
     NewFace, // Stop searching as soon as a _new_ face is seen
     Timeout, // Stop searching after a configurable timeout
   };
+
+  struct InstanceConfig {
+    InstanceConfig();   
+    std::string searchBehaviorStr;
+    ICozmoBehaviorPtr searchBehavior;
+    
+    u32 maxFaceAgeToLook_ms;
+    StoppingCondition stoppingCondition;
+
+    // Behavior timeout (used only for StoppingCondition::Timeout)
+    float timeout_sec;
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    bool searchingForFaces;
+    // The robot's image timestamp at the time the behavior was activated
+    // (used to determine if new faces have been observed since the behavior started)
+    TimeStamp_t imageTimestampWhenActivated;
+    std::set<Vision::FaceID_t> startingFaces;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
   
-  StoppingCondition _stoppingCondition = StoppingCondition::Invalid;
   StoppingCondition StoppingConditionFromString(const std::string&) const;
   const char* StoppingConditionToString(StoppingCondition) const;
-  
-  std::string _searchBehaviorStr;
-  ICozmoBehaviorPtr _searchBehavior;
-  
-  bool _searchingForFaces = false;
-  
-  // The robot's image timestamp at the time the behavior was activated
-  // (used to determine if new faces have been observed since the behavior started)
-  TimeStamp_t _imageTimestampWhenActivated = 0;
-  
-  std::set<Vision::FaceID_t> _startingFaces;
-  
-  u32 _maxFaceAgeToLook_ms = 0;
-  
-  // Behavior timeout (used only for StoppingCondition::Timeout)
-  float _timeout_sec = 0.f;
 };
   
-
 } // namespace Cozmo
 } // namespace Anki
 

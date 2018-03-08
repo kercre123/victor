@@ -51,6 +51,36 @@ protected:
 
   void InitBehavior() override;
 private:
+  enum class State {
+    Init,           // Main test loop
+    WaitForPutdown, // Robot was picked up, now waiting for putdown
+    TestComplete    // Test complete
+  };
+
+
+  struct InstanceConfig {
+    InstanceConfig();
+    std::unique_ptr<Util::RollingFileLogger> logger;
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    State currentState;
+    bool  abortTest;
+    bool  canRun;
+
+    // Stats for test/attempts
+    int  numLiftRaises;
+    int  numHadLoad;
+    bool loadStatusReceived;
+    bool hasLoad;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
+
+  void Write(const std::string& s);
 
   virtual void OnBehaviorActivated() override;
 
@@ -65,32 +95,10 @@ private:
 
   void PrintStats();
 
-  enum class State {
-    Init,           // Main test loop
-    WaitForPutdown, // Robot was picked up, now waiting for putdown
-    TestComplete    // Test complete
-  };
-
   void SetCurrState(State s);
   const char* StateToString(const State m);
   void UpdateStateName();
 
-  State _currentState = State::Init;
-
-  Signal::SmartHandle _signalHandle;
-
-  void Write(const std::string& s);
-
-  std::unique_ptr<Util::RollingFileLogger> _logger;
-
-  bool _abortTest = false;
-  bool _canRun    = true;
-
-  // Stats for test/attempts
-  int _numLiftRaises        = 0;
-  int _numHadLoad           = 0;
-  bool _loadStatusReceived = false;
-  bool _hasLoad            = false;
 };
 }
 }

@@ -20,6 +20,18 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDispatcherStrictPriority::InstanceConfig::InstanceConfig()
+{
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDispatcherStrictPriority::DynamicVariables::DynamicVariables()
+{
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDispatcherStrictPriority::BehaviorDispatcherStrictPriority(const Json::Value& config)
   : IBehaviorDispatcher(config)
 {
@@ -48,5 +60,5 @@ ICozmoBehaviorPtr BehaviorDispatcherStrictPriority::GetDesiredBehavior()
   return ICozmoBehaviorPtr{};
 }
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki

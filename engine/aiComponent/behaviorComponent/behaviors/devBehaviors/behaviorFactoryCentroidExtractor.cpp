@@ -38,7 +38,6 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
-}
 
 // Backpack lights
 static const BackpackLights passLights = {
@@ -66,7 +65,25 @@ static const BackpackLEDArray fail_onColorOrange{{NamedColors::ORANGE,NamedColor
 static const BackpackLEDArray fail_onColorMagenta{{NamedColors::MAGENTA,NamedColors::MAGENTA,NamedColors::MAGENTA}};
 static const BackpackLEDArray fail_onColorBlue{{NamedColors::BLUE,NamedColors::BLUE,NamedColors::BLUE}};
 static const BackpackLEDArray fail_offColor{{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}};
+}
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorFactoryCentroidExtractor::InstanceConfig::InstanceConfig()
+{
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorFactoryCentroidExtractor::DynamicVariables::DynamicVariables()
+{
+  waitingForDots = false;
+  headCalibrated = false;
+  liftCalibrated = false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFactoryCentroidExtractor::BehaviorFactoryCentroidExtractor(const Json::Value& config)
 : ICozmoBehavior(config)
 {
@@ -77,24 +94,28 @@ BehaviorFactoryCentroidExtractor::BehaviorFactoryCentroidExtractor(const Json::V
   }});
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorFactoryCentroidExtractor::WantsToBeActivatedBehavior() const
 {
-  return !IsControlDelegated() && !_waitingForDots;
+  return !IsControlDelegated() && !_dVars.waitingForDots;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFactoryCentroidExtractor::OnBehaviorActivated()
 {
   Robot& robot = GetBEI().GetRobotInfo()._robot;
   std::stringstream serialNumString;
   serialNumString << std::hex << robot.GetHeadSerialNumber();
-  _factoryTestLogger.StartLog(serialNumString.str() + "_centroids", true, robot.GetContextDataPlatform());
+  _iConfig.factoryTestLogger.StartLog(serialNumString.str() + "_centroids", true, robot.GetContextDataPlatform());
   PRINT_NAMED_INFO("BehaviorFactoryCentroidExtractor.WillLogToDevice",
                     "Log name: %s",
-                    _factoryTestLogger.GetLogName().c_str());
+                    _iConfig.factoryTestLogger.GetLogName().c_str());
   
-  _waitingForDots = false;
-  _headCalibrated = false;
-  _liftCalibrated = false;
+  _dVars.waitingForDots = false;
+  _dVars.headCalibrated = false;
+  _dVars.liftCalibrated = false;
   
   robot.GetActionList().Cancel();
       
@@ -104,13 +125,15 @@ void BehaviorFactoryCentroidExtractor::OnBehaviorActivated()
   
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFactoryCentroidExtractor::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
   }
 
-  if(_waitingForDots || !_liftCalibrated || !_headCalibrated)
+  if(_dVars.waitingForDots || !_dVars.liftCalibrated || !_dVars.headCalibrated)
   {
     return;
   }
@@ -120,13 +143,17 @@ void BehaviorFactoryCentroidExtractor::BehaviorUpdate()
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFactoryCentroidExtractor::OnBehaviorDeactivated()
 {
-  _waitingForDots = false;
-  _liftCalibrated = false;
-  _headCalibrated = false;
+  _dVars.waitingForDots = false;
+  _dVars.liftCalibrated = false;
+  _dVars.headCalibrated = false;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFactoryCentroidExtractor::TransitionToMovingHead(Robot& robot)
 {
   MoveHeadToAngleAction* action = new MoveHeadToAngleAction(0);
@@ -134,7 +161,7 @@ void BehaviorFactoryCentroidExtractor::TransitionToMovingHead(Robot& robot)
               {
                 if(res == ActionResult::SUCCESS)
                 {
-                  _waitingForDots = true;
+                  _dVars.waitingForDots = true;
                   robot.GetVisionComponent().UseNextImageForFactoryDotTest();
                 }
                 else
@@ -146,6 +173,8 @@ void BehaviorFactoryCentroidExtractor::TransitionToMovingHead(Robot& robot)
               });
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFactoryCentroidExtractor::HandleWhileActivated(const EngineToGameEvent& event)
 {
   Robot& robot = GetBEI().GetRobotInfo()._robot;
@@ -222,7 +251,7 @@ void BehaviorFactoryCentroidExtractor::HandleWhileActivated(const EngineToGameEv
         }
       }
     }
-    _factoryTestLogger.Append(msg);
+    _iConfig.factoryTestLogger.Append(msg);
   }
   else if(event.GetData().GetTag() == EngineToGameTag::MotorCalibration)
   {
@@ -232,16 +261,16 @@ void BehaviorFactoryCentroidExtractor::HandleWhileActivated(const EngineToGameEv
     {
       if(msg.motorID == MotorID::MOTOR_HEAD)
       {
-        _headCalibrated = true;
-        if(_liftCalibrated)
+        _dVars.headCalibrated = true;
+        if(_dVars.liftCalibrated)
         {
           TransitionToMovingHead(robot);
         }
       }
       if(msg.motorID == MotorID::MOTOR_LIFT)
       {
-        _liftCalibrated = true;
-        if(_headCalibrated)
+        _dVars.liftCalibrated = true;
+        if(_dVars.headCalibrated)
         {
           TransitionToMovingHead(robot);
         }
@@ -254,5 +283,6 @@ void BehaviorFactoryCentroidExtractor::HandleWhileActivated(const EngineToGameEv
                         "Received event with tag %hhu not handling", event.GetData().GetTag());
   }
 }
-}
-}
+
+} // namespace Cozmo
+} // namespace Anki

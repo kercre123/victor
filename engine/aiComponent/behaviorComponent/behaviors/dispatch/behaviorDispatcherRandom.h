@@ -36,19 +36,27 @@ protected:
   virtual void DispatcherUpdate() override;
 
 private:
+  struct InstanceConfig {
+    InstanceConfig();
+    // index here matches the index in IBehaviorDispatcher::GetAllPossibleDispatches()
+    std::vector< float > weights;
+    std::vector< BehaviorCooldownInfo > cooldownInfo;
+  };
 
-  // index here matches the index in IBehaviorDispatcher::GetAllPossibleDispatches()
-  std::vector< BehaviorCooldownInfo > _cooldownInfo;
-  std::vector< float > _weights;
+  struct DynamicVariables {
+    DynamicVariables();
+    bool shouldEndAfterBehavior;
+    // keep track of which behavior we last requested so that we can properly start the cooldown when the
+    // behavior ends
+    size_t lastDesiredBehaviorIdx;
+  };
 
-  bool _shouldEndAfterBehavior = false;
-  
-  // keep track of which behavior we last requested so that we can properly start the cooldown when the
-  // behavior ends
-  size_t _lastDesiredBehaviorIdx = 0;
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
 };
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 
-#endif
+#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_Dispatch_BehaviorDispatcherRandom_H__

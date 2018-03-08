@@ -48,6 +48,9 @@
 
 #define END_TEST_IN_HANDLER(RESULT, NAME) EndAttempt(robot, RESULT, NAME); return;
 
+namespace Anki {
+namespace Cozmo {
+
 namespace{
 // This macro uses PRINT_NAMED_INFO if the supplied define (first arg) evaluates to true, and PRINT_NAMED_DEBUG otherwise
 // All args following the first are passed directly to the chosen print macro
@@ -55,13 +58,6 @@ namespace{
 if ((_BEHAVIORDEF)) { PRINT_NAMED_INFO( __VA_ARGS__ ); } \
 else { PRINT_NAMED_DEBUG( __VA_ARGS__ ); } \
 } while(0) \
-
-}
-
-
-
-namespace Anki {
-namespace Cozmo {
 
 CONSOLE_VAR(u32, kMaxNumAttempts,              "DockingTest", 30);
 CONSOLE_VAR(u32, kMaxConsecFails,              "DockingTest", 3);
@@ -92,6 +88,7 @@ static const f32 kObstacleRangeXmax_mm = 120;
 static const Point3f kObstacleSize_mm = {10, 10, 50};
 
 static const u32 kExpectedNumPreDockPoses = 1;
+static const f32 kInvalidAngle = 1000;
 
 static const BackpackLights passLights = {
   .onColors               = {{NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN}},
@@ -113,10 +110,44 @@ static const BackpackLights failLights = {
   .offset                 = {{0,0,0}}
 };
 
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDockingTestSimple::InstanceConfig::InstanceConfig()
+{
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDockingTestSimple::DynamicVariables::DynamicVariables()
+: initialVisionMarker(Vision::MARKER_UNKNOWN)
+, markerBeingSeen(Vision::MARKER_UNKNOWN)
+{
+  currentState = State::Init;
+
+  initialPreActionPoseAngle_rad = kInvalidAngle;
+  reset                  = false;
+  yellForHelp            = false;
+  yellForCompletion      = false;
+  endingFromFailedAction = false;
+  numSawObject           = 0;
+
+  // Stats for test/attempts
+  numFails                     = 0;
+  numDockingRetries            = 0;
+  numAttempts                  = 0;
+  numExtraAttemptsDueToFailure = 0;
+  numConsecFails               = 0;
+  didHM                        = false;
+  failedCurrentAttempt         = false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDockingTestSimple::BehaviorDockingTestSimple(const Json::Value& config)
 : ICozmoBehavior(config)
-, _initialVisionMarker(Vision::MARKER_UNKNOWN)
-, _markerBeingSeen(Vision::MARKER_UNKNOWN)
 {
   SubscribeToTags({{
     EngineToGameTag::RobotCompletedAction,
@@ -128,45 +159,50 @@ BehaviorDockingTestSimple::BehaviorDockingTestSimple(const Json::Value& config)
 
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDockingTestSimple::InitBehavior()
 {
-  _logger = std::make_unique<Util::RollingFileLogger>(nullptr, 
+  _iConfig.logger = std::make_unique<Util::RollingFileLogger>(nullptr, 
         GetBEI().GetRobotInfo()._robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "dockingTest"));
 
   const Robot& robot = GetBEI().GetRobotInfo()._robot;
   if(nullptr != robot.GetContext()->GetRobotManager() &&
       robot.GetContext()->GetRobotManager()->GetMsgHandler() != nullptr)
   {
-    _signalHandle = (robot.GetContext()->GetRobotManager()->GetMsgHandler()->Subscribe(RobotInterface::RobotToEngineTag::dockingStatus,
+    _iConfig.signalHandle = (robot.GetContext()->GetRobotManager()->GetMsgHandler()->Subscribe(RobotInterface::RobotToEngineTag::dockingStatus,
                                                                                         std::bind(&BehaviorDockingTestSimple::HandleDockingStatus, this, std::placeholders::_1)));
   }
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDockingTestSimple::WantsToBeActivatedBehavior() const
 {
-  return _currentState == State::Init;
+  return _dVars.currentState == State::Init;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDockingTestSimple::OnBehaviorActivated()
 {
   Robot& robot = GetBEI().GetRobotInfo()._robot;
-  _cubePlacementPose = Pose3d(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, robot.GetWorldOrigin());
+  _dVars.cubePlacementPose = Pose3d(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, robot.GetWorldOrigin());
 
   // force the default speeds
   PathMotionProfile motionProfile;
   motionProfile.isCustom = true;
   SmartSetMotionProfile(motionProfile);
   
-  _currentState = State::Init;
-  _numFails = 0;
-  _numDockingRetries = 0;
-  _numAttempts = 0;
-  _numConsecFails = 0;
-  _didHM = false;
-  _failedCurrentAttempt = false;
+  _dVars.currentState = State::Init;
+  _dVars.numFails = 0;
+  _dVars.numDockingRetries = 0;
+  _dVars.numAttempts = 0;
+  _dVars.numConsecFails = 0;
+  _dVars.didHM = false;
+  _dVars.failedCurrentAttempt = false;
   
-  _actionCallbackMap.clear();
+  _dVars.actionCallbackMap.clear();
   robot.GetActionList().Cancel();
   
   time_t t = time(0);
@@ -201,15 +237,17 @@ void BehaviorDockingTestSimple::OnBehaviorActivated()
   {
     std::stringstream ss;
     ss << "images_" << now->tm_mon+1 << "-" << now->tm_mday << "-" << now->tm_hour << "." << now->tm_min;
-    _imageFolder = ss.str();
+    _iConfig.imageFolder = ss.str();
     robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Stream, ss.str());
   }      
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDockingTestSimple::BehaviorUpdate()
 {
   Robot& robot = GetBEI().GetRobotInfo()._robot;
-  if(_numAttempts == kMaxNumAttempts && _currentState != State::ManualReset)
+  if(_dVars.numAttempts == kMaxNumAttempts && _dVars.currentState != State::ManualReset)
   {
     Write("\nTest Completed Successfully");
     
@@ -220,7 +258,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
       robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Stream);
     }
     
-    _yellForCompletion = true;
+    _dVars.yellForCompletion = true;
     SetCurrStateAndFlashLights(State::ManualReset, robot);
   }
   
@@ -232,29 +270,29 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
   DEV_ASSERT(robot.IsPoseInWorldOrigin(robot.GetPose()),
               "BehaviorDockingTestSimple.UpdateInternal_Legacy.BadRobotPoseOrigin");
   
-  switch(_currentState)
+  switch(_dVars.currentState)
   {
     case State::Init:
     {
       // Cancel all actions
-      for (const auto& tag : _actionCallbackMap) {
+      for (const auto& tag : _dVars.actionCallbackMap) {
         robot.GetActionList().Cancel(tag.first);
       }
-      _actionCallbackMap.clear();
+      _dVars.actionCallbackMap.clear();
       
       if(robot.GetContext()->GetVizManager() != nullptr)
       {
-        robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Stream, _imageFolder);
+        robot.GetContext()->GetVizManager()->SendSaveImages(ImageSendMode::Stream, _iConfig.imageFolder);
       }
       
       // Turn off backpack lights in case we needed to be manually reset
       robot.GetBodyLightComponent().SetBackpackLights(failLights);
       
-      _blockObjectIDPickup.UnSet();
+      _dVars.blockObjectIDPickup.UnSet();
       
-      _cubePlacementPose = Pose3d(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, robot.GetWorldOrigin());
+      _dVars.cubePlacementPose = Pose3d(Radians(DEG_TO_RAD(0)), Z_AXIS_3D(), {176, 0, 22}, robot.GetWorldOrigin());
       
-      _initialPreActionPoseAngle_rad = kInvalidAngle;
+      _dVars.initialPreActionPoseAngle_rad = kInvalidAngle;
       
       CompoundActionSequential* action = new CompoundActionSequential({new MoveHeadToAngleAction(0, DEG_TO_RAD(1), 0), new WaitAction(2)});
       DelegateIfInControl(robot, action,
@@ -271,11 +309,11 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
     }
     case State::Inactive:
     {
-      _numAttempts++;
-      _didHM = false;
-      _numDockingRetries = 0;
-      _failedCurrentAttempt = false;
-      _attemptStartTime = robot.GetRobotState().lastImageTimeStamp;
+      _dVars.numAttempts++;
+      _dVars.didHM = false;
+      _dVars.numDockingRetries = 0;
+      _dVars.failedCurrentAttempt = false;
+      _dVars.attemptStartTime = robot.GetRobotState().lastImageTimeStamp;
       
       if(kRollInsteadOfPickup)
       {
@@ -285,14 +323,14 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
       {
         SetCurrState(State::PickupLow);
       }
-      _numSawObject = 0;
+      _dVars.numSawObject = 0;
       break;
     }
     case State::Roll:
     {
-      if(_blockObjectIDPickup.IsSet())
+      if(_dVars.blockObjectIDPickup.IsSet())
       {
-        ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_blockObjectIDPickup);
+        ObservableObject* object = robot.GetBlockWorld().GetLocatedObjectByID(_dVars.blockObjectIDPickup);
         if(nullptr == object)
         {
           EndAttempt(robot, ActionResult::ABORT, "PickupObjectIsNull", true);
@@ -300,29 +338,29 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
           return;
         }
         
-        _initialCubePose = object->GetPose();
-        _initialRobotPose = robot.GetPose();
+        _dVars.initialCubePose = object->GetPose();
+        _dVars.initialRobotPose = robot.GetPose();
         
         Block* block = dynamic_cast<Block*>(object);
         Pose3d junk;
-        _initialVisionMarker = const_cast<Vision::KnownMarker&>(block->GetTopMarker(junk));
+        _dVars.initialVisionMarker = const_cast<Vision::KnownMarker&>(block->GetTopMarker(junk));
         
         
-        DriveToObjectAction* driveAction = new DriveToObjectAction(_blockObjectIDPickup, PreActionPose::ROLLING);
+        DriveToObjectAction* driveAction = new DriveToObjectAction(_dVars.blockObjectIDPickup, PreActionPose::ROLLING);
         DelegateIfInControl(robot, driveAction,
                     [this, &robot](const ActionResult& result, const ActionCompletedUnion& completionUnion){
                       if(result == ActionResult::SUCCESS)
                       {
-                        _initialRobotPose = robot.GetPose();
+                        _dVars.initialRobotPose = robot.GetPose();
                         
-                        RollObjectAction* action = new RollObjectAction(_blockObjectIDPickup);
+                        RollObjectAction* action = new RollObjectAction(_dVars.blockObjectIDPickup);
                         action->SetDockingMethod((DockingMethod)kTestDockingMethod);
                         action->EnableDeepRoll(kDoDeepRoll);
                         
                         DelegateIfInControl(robot, action,
                                     [this, &robot](const ActionResult& result, const ActionCompletedUnion& completedUnion){
                                       if (result != ActionResult::SUCCESS) {
-                                        if(_numSawObject < 5)
+                                        if(_dVars.numSawObject < 5)
                                         {
                                           EndAttempt(robot, result, "RollNotSeeingObject", true);
                                         }
@@ -349,16 +387,16 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
       else
       {
         Write("\nPickupBlockID never set");
-        _yellForHelp = true;
+        _dVars.yellForHelp = true;
         SetCurrStateAndFlashLights(State::ManualReset, robot);
       }
       break;
     }
     case State::PickupLow:
     {
-      if(_blockObjectIDPickup.IsSet())
+      if(_dVars.blockObjectIDPickup.IsSet())
       {
-        const ObservableObject* blockToPickup = robot.GetBlockWorld().GetLocatedObjectByID(_blockObjectIDPickup);
+        const ObservableObject* blockToPickup = robot.GetBlockWorld().GetLocatedObjectByID(_dVars.blockObjectIDPickup);
         if(nullptr == blockToPickup)
         {
           EndAttempt(robot, ActionResult::ABORT, "BlockToPickupNull", true);
@@ -374,14 +412,14 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
           return;
         }
         
-        // Get the preAction poses corresponding with _initialVisionMarker
+        // Get the preAction poses corresponding with _dVars.initialVisionMarker
         std::vector<PreActionPose> preActionPoses;
         std::vector<std::pair<Quad2f, ObjectID> > obstacles;
         robot.GetBlockWorld().GetObstacles(obstacles);
         aObject->GetCurrentPreActionPoses(preActionPoses,
                                           robot.GetPose(),
                                           {(kRollInsteadOfPickup ? PreActionPose::ROLLING : PreActionPose::DOCKING)},
-                                          {_initialVisionMarker.GetCode()},
+                                          {_dVars.initialVisionMarker.GetCode()},
                                           obstacles,
                                           nullptr);
         
@@ -394,9 +432,9 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
         
         // Store the angle of the preAction pose so we can use it as the approach angle for
         // the driveTo/dock actions so that we will always approach the object from the same angle
-        if(_initialPreActionPoseAngle_rad == kInvalidAngle)
+        if(_dVars.initialPreActionPoseAngle_rad == kInvalidAngle)
         {
-          _initialPreActionPoseAngle_rad = preActionPose.GetRotation().GetAngleAroundZaxis().ToFloat();
+          _dVars.initialPreActionPoseAngle_rad = preActionPose.GetRotation().GetAngleAroundZaxis().ToFloat();
         }
       
         // If we are adding random obstacles
@@ -408,7 +446,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
           filter.AddAllowedFamily(ObjectFamily::CustomObject);
           robot.GetBlockWorld().DeleteLocatedObjects(filter);
         
-          // Add new obstacles at random poses around the preDock pose corresponding with _initialVisionMarker
+          // Add new obstacles at random poses around the preDock pose corresponding with _dVars.initialVisionMarker
           for(u32 i = 0; i < kNumRandomObstacles; ++i)
           {
             f32 x = preActionPose.GetTranslation().x();
@@ -442,19 +480,19 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
           }
         }
         
-        _initialCubePose = blockToPickup->GetPose();
-        _initialRobotPose = robot.GetPose();
+        _dVars.initialCubePose = blockToPickup->GetPose();
+        _dVars.initialRobotPose = robot.GetPose();
         
         // If we are just doing a straight pickup without driving to the preDock pose
         if(kJustPickup)
         {
-          PickupObjectAction* action = new PickupObjectAction(_blockObjectIDPickup);
+          PickupObjectAction* action = new PickupObjectAction(_dVars.blockObjectIDPickup);
           action->SetDockingMethod((DockingMethod)kTestDockingMethod);
           action->SetDoNearPredockPoseCheck(false);
           DelegateIfInControl(robot, action,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         if (result != ActionResult::SUCCESS) {
-                          if(_numSawObject < 5)
+                          if(_dVars.numSawObject < 5)
                           {
                             EndAttempt(robot, result, "PickupNotSeeingObject", true);
                           }
@@ -479,7 +517,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
             // By aligning to the LIFT_PLATE and then moving the lift up we should
             // pickup the object
             action = new CompoundActionSequential(
-              {new DriveToAlignWithObjectAction(_blockObjectIDPickup,
+              {new DriveToAlignWithObjectAction(_dVars.blockObjectIDPickup,
                                                 0,
                                                 false,
                                                 0,
@@ -491,16 +529,16 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
           else
           {
             action = new DriveToPickupObjectAction(
-                                                    _blockObjectIDPickup,
+                                                    _dVars.blockObjectIDPickup,
                                                     true,
-                                                    _initialPreActionPoseAngle_rad);
+                                                    _dVars.initialPreActionPoseAngle_rad);
             static_cast<DriveToPickupObjectAction*>(action)->SetDockingMethod((DockingMethod)kTestDockingMethod);
           }
           
           DelegateIfInControl(robot, action,
                       [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                         if (result != ActionResult::SUCCESS) {
-                          if(_numSawObject < 5)
+                          if(_dVars.numSawObject < 5)
                           {
                             EndAttempt(robot, result, "DriveToAndPickupNotSeeingObject", true);
                           }
@@ -512,7 +550,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
                         }
                         if(kAlignInsteadOfPickup)
                         {
-                          robot.GetCarryingComponent().SetCarryingObject(_blockObjectIDPickup, _markerBeingSeen.GetCode());
+                          robot.GetCarryingComponent().SetCarryingObject(_dVars.blockObjectIDPickup, _dVars.markerBeingSeen.GetCode());
                         }
                         
                         SetCurrState(State::PlaceLow);
@@ -522,22 +560,22 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
         else
         {
           DriveToObjectAction* driveAction = new DriveToObjectAction(
-                                                                      _blockObjectIDPickup,
+                                                                      _dVars.blockObjectIDPickup,
                                                                       PreActionPose::DOCKING,
                                                                       0,
                                                                       true,
-                                                                      _initialPreActionPoseAngle_rad);
+                                                                      _dVars.initialPreActionPoseAngle_rad);
           DelegateIfInControl(robot, driveAction,
                       [this, &robot](const ActionResult& result, const ActionCompletedUnion& completionUnion){
                         if(result == ActionResult::SUCCESS)
                         {
-                          _initialRobotPose = robot.GetPose();
-                          PickupObjectAction* action = new PickupObjectAction(_blockObjectIDPickup);
+                          _dVars.initialRobotPose = robot.GetPose();
+                          PickupObjectAction* action = new PickupObjectAction(_dVars.blockObjectIDPickup);
                           action->SetDockingMethod((DockingMethod)kTestDockingMethod);
                           DelegateIfInControl(robot, action,
                                       [this, &robot](const ActionResult& result, const ActionCompletedUnion& completedUnion){
                                         if (result != ActionResult::SUCCESS) {
-                                          if(_numSawObject < 5)
+                                          if(_dVars.numSawObject < 5)
                                           {
                                             EndAttempt(robot, result, "PickupNotSeeingObject", true);
                                           }
@@ -564,7 +602,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
       else
       {
         Write("\nPickupBlockID never set");
-        _yellForHelp = true;
+        _dVars.yellForHelp = true;
         SetCurrStateAndFlashLights(State::ManualReset, robot);
       }
       break;
@@ -572,7 +610,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
     case State::PlaceLow:
     {
       PlaceObjectOnGroundAtPoseAction* action = new PlaceObjectOnGroundAtPoseAction(
-                                                                                    _cubePlacementPose,
+                                                                                    _dVars.cubePlacementPose,
                                                                                     true);
       DelegateIfInControl(robot, action,
                   [this,&robot](const ActionResult& result, const ActionCompletedUnion& completionInfo){
@@ -621,7 +659,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
       }
       
       // Get the preActionPose relating to the marker we
-      ActionableObject* aObject = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetLocatedObjectByID(_blockObjectIDPickup));
+      ActionableObject* aObject = dynamic_cast<ActionableObject*>(robot.GetBlockWorld().GetLocatedObjectByID(_dVars.blockObjectIDPickup));
       
       if(aObject == nullptr)
       {
@@ -636,7 +674,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
       aObject->GetCurrentPreActionPoses(preActionPoses,
                                         robot.GetPose(),
                                         {(kRollInsteadOfPickup ? PreActionPose::ROLLING : PreActionPose::DOCKING)},
-                                        {_initialVisionMarker.GetCode()},
+                                        {_dVars.initialVisionMarker.GetCode()},
                                         obstacles,
                                         nullptr);
       
@@ -649,7 +687,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
           aObject->GetCurrentPreActionPoses(preActionPoses,
                                             robot.GetPose(),
                                             {(kRollInsteadOfPickup ? PreActionPose::ROLLING : PreActionPose::DOCKING)},
-                                            {_markerBeingSeen.GetCode()},
+                                            {_dVars.markerBeingSeen.GetCode()},
                                             obstacles,
                                             nullptr);
           
@@ -658,7 +696,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
             PRINT_NAMED_ERROR("BehaviorDockingTest.Reset.RollingBadNumPreActionPoses",
                               "Found %i preActionPoses for marker %s",
                               (int)preActionPoses.size(),
-                              _markerBeingSeen.GetCodeName());
+                              _dVars.markerBeingSeen.GetCodeName());
             CancelSelf();
             return;
           }
@@ -668,7 +706,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
           PRINT_NAMED_ERROR("BehaviorDockingTest.Reset.BadNumPreActionPoses",
                             "Found %i preActionPoses for marker %s",
                             (int)preActionPoses.size(),
-                            _initialVisionMarker.GetCodeName());
+                            _dVars.initialVisionMarker.GetCodeName());
           CancelSelf();
           return;
         }
@@ -682,14 +720,14 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
       
       // If we are reseting due to an action failing then we shouldn't go to a random offset
       // and we should not count this reset pickup as an attempt
-      if(_endingFromFailedAction)
+      if(_dVars.endingFromFailedAction)
       {
         randX = 0;
         randY = 0;
         randA = 0;
-        _endingFromFailedAction = false;
-        _numAttempts--;
-        _numExtraAttemptsDueToFailure++;
+        _dVars.endingFromFailedAction = false;
+        _dVars.numAttempts--;
+        _dVars.numExtraAttemptsDueToFailure++;
       }
       
       Pose3d p(Radians(angle + randA), Z_AXIS_3D(), {x + randX, y + randY, 0}, robot.GetWorldOrigin());
@@ -700,7 +738,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
       if(robot.GetCarryingComponent().IsCarryingObject())
       {
         PlaceObjectOnGroundAtPoseAction* placeAction = new PlaceObjectOnGroundAtPoseAction(
-                                                                                            _cubePlacementPose,
+                                                                                            _dVars.cubePlacementPose,
                                                                                             true);
         action->AddAction(placeAction);
       }
@@ -716,10 +754,10 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
                       return false;
                     }
                     SetCurrState(State::Inactive);
-                    if(!_failedCurrentAttempt)
+                    if(!_dVars.failedCurrentAttempt)
                     {
                       RecordAttempt(result, "");
-                      _numConsecFails = 0;
+                      _dVars.numConsecFails = 0;
                     }
                     return true;
                   });
@@ -727,11 +765,11 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
     }
     case State::ManualReset:
     {
-      _reset = true;
+      _dVars.reset = true;
       
-      if(_yellForCompletion)
+      if(_dVars.yellForCompletion)
       {
-        _yellForCompletion = false;
+        _dVars.yellForCompletion = false;
         
         if(robot.GetContext()->GetVizManager() != nullptr)
         {
@@ -743,14 +781,14 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
                     [this](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                       if(result == ActionResult::SUCCESS)
                       {
-                        _yellForCompletion = true;
+                        _dVars.yellForCompletion = true;
                       }
                       return true;
                     });
       }
-      else if(_yellForHelp)
+      else if(_dVars.yellForHelp)
       {
-        _yellForHelp = false;
+        _dVars.yellForHelp = false;
         
         if(robot.GetContext()->GetVizManager() != nullptr)
         {
@@ -762,7 +800,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
                     [this](const ActionResult& result, const ActionCompletedUnion& completionInfo){
                       if(result == ActionResult::SUCCESS)
                       {
-                        _yellForHelp = true;
+                        _dVars.yellForHelp = true;
                       }
                       return true;
                     });
@@ -772,22 +810,24 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
     }
     default:
     {
-      PRINT_NAMED_ERROR("BehaviorDockingTest.Update.UnknownState", "Reached unknown state %d", (u32)_currentState);
+      PRINT_NAMED_ERROR("BehaviorDockingTest.Update.UnknownState", "Reached unknown state %d", (u32)_dVars.currentState);
       CancelSelf();
       return;
     }
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDockingTestSimple::OnBehaviorDeactivated()
 {
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   // Cancel all actions
-  for (const auto& tag : _actionCallbackMap) {
+  for (const auto& tag : _dVars.actionCallbackMap) {
     robot.GetActionList().Cancel(tag.first);
   }
-  _actionCallbackMap.clear();
+  _dVars.actionCallbackMap.clear();
   
   PrintStats();
   
@@ -797,9 +837,11 @@ void BehaviorDockingTestSimple::OnBehaviorDeactivated()
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDockingTestSimple::SetCurrState(State s)
 {
-  _currentState = s;
+  _dVars.currentState = s;
   
   UpdateStateName();
   
@@ -807,19 +849,23 @@ void BehaviorDockingTestSimple::SetCurrState(State s)
                           "set state to '%s'", GetDebugStateName().c_str());
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDockingTestSimple::SetCurrStateAndFlashLights(State s, Robot& robot)
 {
-  if(_yellForHelp)
+  if(_dVars.yellForHelp)
   {
     robot.GetBodyLightComponent().SetBackpackLights(failLights);
   }
-  else if(_yellForCompletion)
+  else if(_dVars.yellForCompletion)
   {
     robot.GetBodyLightComponent().SetBackpackLights(passLights);
   }
   SetCurrState(s);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const char* BehaviorDockingTestSimple::StateToString(const State m)
 {
   switch(m) {
@@ -843,13 +889,15 @@ const char* BehaviorDockingTestSimple::StateToString(const State m)
   return nullptr;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDockingTestSimple::UpdateStateName()
 {
-  std::string name = StateToString(_currentState);
+  std::string name = StateToString(_dVars.currentState);
   
-  name += std::to_string(_numAttempts+_numExtraAttemptsDueToFailure);
+  name += std::to_string(_dVars.numAttempts+_dVars.numExtraAttemptsDueToFailure);
   
-  if(_currentState == State::Reset && _endingFromFailedAction)
+  if(_dVars.currentState == State::Reset && _dVars.endingFromFailedAction)
   {
     name += "FromFailure";
   }
@@ -864,6 +912,8 @@ void BehaviorDockingTestSimple::UpdateStateName()
   SetDebugStateName(name);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDockingTestSimple::HandleWhileActivated(const EngineToGameEvent& event)
 {
   Robot& robot = GetBEI().GetRobotInfo()._robot;
@@ -884,24 +934,24 @@ void BehaviorDockingTestSimple::HandleWhileActivated(const EngineToGameEvent& ev
     case EngineToGameTag::RobotOffTreadsStateChanged:
     {
       if(event.GetData().Get_RobotOffTreadsStateChanged().treadsState == OffTreadsState::OnTreads){
-        _currentState = State::Init;
+        _dVars.currentState = State::Init;
         
-        _numDockingRetries = 0;
-        _numConsecFails = 0;
-        _didHM = false;
-        _failedCurrentAttempt = false;
+        _dVars.numDockingRetries = 0;
+        _dVars.numConsecFails = 0;
+        _dVars.didHM = false;
+        _dVars.failedCurrentAttempt = false;
         
         
-        if(_reset)
+        if(_dVars.reset)
         {
           Write("\n\n------Test Manually Reset------\n");
         }
         
-        _yellForCompletion = false;
-        _yellForHelp = false;
-        _reset = false;
+        _dVars.yellForCompletion = false;
+        _dVars.yellForHelp = false;
+        _dVars.reset = false;
         
-        _cubePlacementPose.SetParent(robot.GetWorldOrigin());
+        _dVars.cubePlacementPose.SetParent(robot.GetWorldOrigin());
       }
       break;
     }
@@ -913,6 +963,8 @@ void BehaviorDockingTestSimple::HandleWhileActivated(const EngineToGameEvent& ev
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDockingTestSimple::HandleActionCompleted(Robot& robot,
                                                       const ExternalInterface::RobotCompletedAction &msg)
 {
@@ -921,9 +973,9 @@ void BehaviorDockingTestSimple::HandleActionCompleted(Robot& robot,
     return;
   }
   
-  auto callback = _actionCallbackMap.find(msg.idTag);
+  auto callback = _dVars.actionCallbackMap.find(msg.idTag);
   
-  if(callback == _actionCallbackMap.end())
+  if(callback == _dVars.actionCallbackMap.end())
   {
     BEHAVIOR_VERBOSE_PRINT(DEBUG_DOCKING_TEST_BEHAVIOR, "BehaviorDockingTest.HandleActionCompleted.OtherAction",
                             "finished action id=%d type=%s but don't care",
@@ -935,36 +987,40 @@ void BehaviorDockingTestSimple::HandleActionCompleted(Robot& robot,
     {
       callback->second(msg.result, msg.completionInfo);
     }
-    _actionCallbackMap.erase(callback);
+    _dVars.actionCallbackMap.erase(callback);
   }
   
 } // HandleActionCompleted()
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDockingTestSimple::EndAttempt(Robot& robot, ActionResult result, std::string name, bool endingFromFailedAction)
 {
-  _endingFromFailedAction = endingFromFailedAction;
+  _dVars.endingFromFailedAction = endingFromFailedAction;
   RecordAttempt(result, name);
   SetCurrState(State::Reset);
   if(result != ActionResult::SUCCESS)
   {
-    if(!_failedCurrentAttempt)
+    if(!_dVars.failedCurrentAttempt)
     {
-      _numFails++;
+      _dVars.numFails++;
     }
-    _failedCurrentAttempt = true;
-    if(++_numConsecFails >= kMaxConsecFails)
+    _dVars.failedCurrentAttempt = true;
+    if(++_dVars.numConsecFails >= kMaxConsecFails)
     {
       Write("\nReached max number of consecutive failed attempts");
-      _yellForHelp = true;
+      _dVars.yellForHelp = true;
       SetCurrStateAndFlashLights(State::ManualReset, robot);
     }
   }
   else
   {
-    _numConsecFails = 0;
+    _dVars.numConsecFails = 0;
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDockingTestSimple::HandleObservedObject(Robot& robot,
                                                       const ExternalInterface::RobotObservedObject &msg)
 {
@@ -980,37 +1036,37 @@ void BehaviorDockingTestSimple::HandleObservedObject(Robot& robot,
   
   if(oObject->GetFamily() == ObjectFamily::LightCube)
   {
-    if(_blockObjectIDPickup.IsSet() && _blockObjectIDPickup == objectID)
+    if(_dVars.blockObjectIDPickup.IsSet() && _dVars.blockObjectIDPickup == objectID)
     {
-      _numSawObject++;
+      _dVars.numSawObject++;
       
       std::vector<const Vision::KnownMarker*> observedMarkers;
       oObject->GetObservedMarkers(observedMarkers);
       if(observedMarkers.size() == 1)
       {
-        _markerBeingSeen = observedMarkers.front()->GetCode();
+        _dVars.markerBeingSeen = observedMarkers.front()->GetCode();
       }
       else
       {
         PRINT_NAMED_INFO("BehaviorDockingTest.HandleObservedObject", "Saw more than one marker");
-        _yellForHelp = true;
+        _dVars.yellForHelp = true;
         END_TEST_IN_HANDLER(ActionResult::ABORT, "SawMoreThanOneMarkerOnInit");
       }
       return;
     }
-    else if(!_blockObjectIDPickup.IsSet())
+    else if(!_dVars.blockObjectIDPickup.IsSet())
     {
-      _blockObjectIDPickup = objectID;
+      _dVars.blockObjectIDPickup = objectID;
       std::vector<const Vision::KnownMarker*> observedMarkers;
       oObject->GetObservedMarkers(observedMarkers);
       if(observedMarkers.size() == 1)
       {
-        _initialVisionMarker = observedMarkers.front()->GetCode();
+        _dVars.initialVisionMarker = observedMarkers.front()->GetCode();
       }
       else
       {
         PRINT_NAMED_INFO("BehaviorDockingTest.HandleObservedObject", "Saw more than one marker");
-        _yellForHelp = true;
+        _dVars.yellForHelp = true;
         END_TEST_IN_HANDLER(ActionResult::ABORT, "SawMoreThanOneMarkerOnInit");
       }
       return;
@@ -1018,25 +1074,29 @@ void BehaviorDockingTestSimple::HandleObservedObject(Robot& robot,
     else
     {
       PRINT_NAMED_WARNING("BehaviorDockingTest.HandleObservedObject.UnexpectedBlock", "ID: %d, Type: %d", objectID.GetValue(), oObject->GetType());
-      _yellForHelp = true;
+      _dVars.yellForHelp = true;
       END_TEST_IN_HANDLER(ActionResult::ABORT, "UnexpectedBlock");
     }
   }
   else
   {
     PRINT_NAMED_WARNING("BehaviorDockingTest.HandleObservedObject.UnexpectedObservedObject", "ID: %d, Type: %d", objectID.GetValue(), oObject->GetType());
-    _yellForHelp = true;
+    _dVars.yellForHelp = true;
     END_TEST_IN_HANDLER(ActionResult::ABORT, "UnexpectedObject");
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDockingTestSimple::HandleRobotStopped(Robot& robot, const ExternalInterface::RobotStopped &msg)
 {
   EndAttempt(robot, ActionResult::ABORT, "RobotStopped");
-  _yellForHelp = true;
+  _dVars.yellForHelp = true;
   SetCurrStateAndFlashLights(State::ManualReset, robot);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDockingTestSimple::HandleDockingStatus(const AnkiEvent<RobotInterface::RobotToEngine>& message)
 {
   const DockingStatus& payload = message.GetData().Get_dockingStatus();
@@ -1044,63 +1104,67 @@ void BehaviorDockingTestSimple::HandleDockingStatus(const AnkiEvent<RobotInterfa
   {
     case(Anki::Cozmo::Status::STATUS_BACKING_UP):
     {
-      _numDockingRetries++;
+      _dVars.numDockingRetries++;
       break;
     }
     case(Anki::Cozmo::Status::STATUS_DOING_HANNS_MANEUVER):
     {
-      _didHM = true;
+      _dVars.didHM = true;
       break;
     }
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDockingTestSimple::DelegateIfInControl(Robot& robot, IActionRunner* action, ActionResultCallback callback)
 {
-  assert(_actionCallbackMap.count(action->GetTag()) == 0);
+  assert(_dVars.actionCallbackMap.count(action->GetTag()) == 0);
   
   if (robot.GetActionList().QueueAction(QueueActionPosition::NOW, action) == RESULT_OK) {
-    _actionCallbackMap[action->GetTag()] = callback;
+    _dVars.actionCallbackMap[action->GetTag()] = callback;
   } else {
     PRINT_NAMED_WARNING("BehaviorDockingTest.DelegateIfInControl.QueueActionFailed", "Action type %s", EnumToString(action->GetType()));
     EndAttempt(robot, ActionResult::ABORT, "QueueActionFailed");
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDockingTestSimple::RecordAttempt(ActionResult result, std::string name)
 {
   std::stringstream ss;
-  ss << "Attempt: " << _numAttempts+_numExtraAttemptsDueToFailure << " TimeStarted: " << _attemptStartTime << " Result: " << EnumToString(result);
+  ss << "Attempt: " << _dVars.numAttempts+_dVars.numExtraAttemptsDueToFailure << " TimeStarted: " << _dVars.attemptStartTime << " Result: " << EnumToString(result);
   ss << " " << name << " DockingMethod: " << (int)kTestDockingMethod;
-  ss << " HM: " << _didHM << " NumDockingRetries: " << _numDockingRetries << "\n\t\t";
+  ss << " HM: " << _dVars.didHM << " NumDockingRetries: " << _dVars.numDockingRetries << "\n\t\t";
   
   char buf[300];
   sprintf(buf, "Translation=(%f, %f %f), RotVec=(%f, %f, %f), RotAng=%frad (%.1fdeg)",
-          _initialRobotPose.GetTranslation().x(),
-          _initialRobotPose.GetTranslation().y(),
-          _initialRobotPose.GetTranslation().z(),
-          _initialRobotPose.GetRotationAxis().x(),
-          _initialRobotPose.GetRotationAxis().y(),
-          _initialRobotPose.GetRotationAxis().z(),
-          _initialRobotPose.GetRotationAngle().ToFloat(),
-          _initialRobotPose.GetRotationAngle().getDegrees());
+          _dVars.initialRobotPose.GetTranslation().x(),
+          _dVars.initialRobotPose.GetTranslation().y(),
+          _dVars.initialRobotPose.GetTranslation().z(),
+          _dVars.initialRobotPose.GetRotationAxis().x(),
+          _dVars.initialRobotPose.GetRotationAxis().y(),
+          _dVars.initialRobotPose.GetRotationAxis().z(),
+          _dVars.initialRobotPose.GetRotationAngle().ToFloat(),
+          _dVars.initialRobotPose.GetRotationAngle().getDegrees());
   
   ss << "InitialRobotPose " << buf << "\n\t\t";
   
   sprintf(buf, "Translation=(%f, %f %f), RotVec=(%f, %f, %f), RotAng=%frad (%.1fdeg)",
-          _initialCubePose.GetTranslation().x(),
-          _initialCubePose.GetTranslation().y(),
-          _initialCubePose.GetTranslation().z(),
-          _initialCubePose.GetRotationAxis().x(),
-          _initialCubePose.GetRotationAxis().y(),
-          _initialCubePose.GetRotationAxis().z(),
-          _initialCubePose.GetRotationAngle().ToFloat(),
-          _initialCubePose.GetRotationAngle().getDegrees());
+          _dVars.initialCubePose.GetTranslation().x(),
+          _dVars.initialCubePose.GetTranslation().y(),
+          _dVars.initialCubePose.GetTranslation().z(),
+          _dVars.initialCubePose.GetRotationAxis().x(),
+          _dVars.initialCubePose.GetRotationAxis().y(),
+          _dVars.initialCubePose.GetRotationAxis().z(),
+          _dVars.initialCubePose.GetRotationAngle().ToFloat(),
+          _dVars.initialCubePose.GetRotationAngle().getDegrees());
   
   ss << "InitialCubePose " << buf << "\n\t\t";
   
   Pose3d p;
-  _initialCubePose.GetWithRespectTo(_initialRobotPose, p);
+  _dVars.initialCubePose.GetWithRespectTo(_dVars.initialRobotPose, p);
   sprintf(buf, "Translation=(%f, %f %f), RotVec=(%f, %f, %f), RotAng=%frad (%.1fdeg)",
           p.GetTranslation().x(),
           p.GetTranslation().y(),
@@ -1122,40 +1186,45 @@ void BehaviorDockingTestSimple::RecordAttempt(ActionResult result, std::string n
           p.GetTranslation().y(),
           p.GetRotationAngle().ToFloat(),
           (int)kTestDockingMethod,
-          _didHM,
-          _numDockingRetries,
-          _numSawObject);
+          _dVars.didHM,
+          _dVars.numDockingRetries,
+          _dVars.numSawObject);
   ss << buf << "\n";
   
   Write(ss.str());
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDockingTestSimple::Write(const std::string& s)
 {
-  if(_logger != nullptr){
-    _logger->Write(s + "\n");
+  if(_iConfig.logger != nullptr){
+    _iConfig.logger->Write(s + "\n");
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDockingTestSimple::PrintStats()
 {
   // If we aren't stopping cleanly then don't count this run as an attempt
-  if(_currentState != State::ManualReset)
+  if(_dVars.currentState != State::ManualReset)
   {
     std::stringstream ss;
-    ss << "Attempt: " << _numAttempts << " Stopped while running";
+    ss << "Attempt: " << _dVars.numAttempts << " Stopped while running";
     Write(ss.str());
-    _numAttempts--;
+    _dVars.numAttempts--;
   }
   
   std::stringstream ss;
   ss << "*****************\n";
-  ss << "Successful Runs: " << _numAttempts-_numFails+_numExtraAttemptsDueToFailure << " (";
-  ss << ((_numAttempts-_numFails+_numExtraAttemptsDueToFailure)/(1.0*_numAttempts+_numExtraAttemptsDueToFailure))*100 << "%)\n";
-  ss << "Failed Runs: " << _numFails << " (" << (_numFails/(1.0*_numAttempts+_numExtraAttemptsDueToFailure))*100 << "%)\n";
-  ss << "Total Runs: " << _numAttempts+_numExtraAttemptsDueToFailure;
+  ss << "Successful Runs: " << _dVars.numAttempts-_dVars.numFails+_dVars.numExtraAttemptsDueToFailure << " (";
+  ss << ((_dVars.numAttempts-_dVars.numFails+_dVars.numExtraAttemptsDueToFailure)/(1.0*_dVars.numAttempts+_dVars.numExtraAttemptsDueToFailure))*100 << "%)\n";
+  ss << "Failed Runs: " << _dVars.numFails << " (" << (_dVars.numFails/(1.0*_dVars.numAttempts+_dVars.numExtraAttemptsDueToFailure))*100 << "%)\n";
+  ss << "Total Runs: " << _dVars.numAttempts+_dVars.numExtraAttemptsDueToFailure;
   Write(ss.str());
   Write("=====End DockingTestSimple=====");
 }
-}
-}
+
+} // namespace Cozmo
+} // namespace Anki

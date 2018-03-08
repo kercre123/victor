@@ -45,31 +45,25 @@ protected:
   
   
 private:
+  struct InstanceConfig {
+    InstanceConfig();
+    float distToDrive_mm;
+  };
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Types
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  using BaseClass = ICozmoBehavior;
+  struct DynamicVariables {
+    DynamicVariables();
+    bool pushedIdleAnimation;
+  };
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Methods
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
+
   void TransitionToDrivingForward();
-  
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Attributes
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  float _distToDrive_mm = 0.0f;
-  bool _pushedIdleAnimation = false;
-
 };
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorDriveOffCharger_H__

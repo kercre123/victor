@@ -15,6 +15,17 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+${class_name}::InstanceConfig::InstanceConfig()
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+${class_name}::DynamicVariables::DynamicVariables()
+{
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ${class_name}::${class_name}(const Json::Value& config)

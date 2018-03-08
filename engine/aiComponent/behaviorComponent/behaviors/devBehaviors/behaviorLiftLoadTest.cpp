@@ -56,6 +56,26 @@ static const f32 DEFAULT_LIFT_SPEED_RAD_PER_SEC = 1.5;
 static const f32 DEFAULT_LIFT_ACCEL_RAD_PER_SEC2 = 10;
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorLiftLoadTest::InstanceConfig::InstanceConfig()
+{
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorLiftLoadTest::DynamicVariables::DynamicVariables()
+{
+  currentState       = State::Init;
+  abortTest          = false;
+  canRun             = true;
+  numLiftRaises      = 0;
+  numHadLoad         = 0;
+  loadStatusReceived = false;
+  hasLoad            = false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorLiftLoadTest::BehaviorLiftLoadTest(const Json::Value& config)
 : ICozmoBehavior(config)
 {
@@ -73,26 +93,31 @@ BehaviorLiftLoadTest::BehaviorLiftLoadTest(const Json::Value& config)
   });
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLiftLoadTest::InitBehavior()
 {
-  _logger = std::make_unique<Util::RollingFileLogger>(nullptr, 
+  _iConfig.logger = std::make_unique<Util::RollingFileLogger>(nullptr, 
     GetBEI().GetRobotInfo()._robot.GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, "liftLoadTest"));
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorLiftLoadTest::WantsToBeActivatedBehavior() const
 {
-  return _canRun && (_currentState == State::Init || _currentState == State::TestComplete);
+  return _dVars.canRun && (_dVars.currentState == State::Init || _dVars.currentState == State::TestComplete);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLiftLoadTest::OnBehaviorActivated()
 {
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  _abortTest = false;
-  _currentState = State::Init;
-  _numLiftRaises = 0;
-  _numHadLoad = 0;
+  _dVars.abortTest = false;
+  _dVars.currentState = State::Init;
+  _dVars.numLiftRaises = 0;
+  _dVars.numHadLoad = 0;
 
   robot.GetActionList().Cancel();
   
@@ -120,26 +145,28 @@ void BehaviorLiftLoadTest::OnBehaviorActivated()
   Write(ss.str());
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLiftLoadTest::BehaviorUpdate()
 {
   if(!IsActivated()){
     return;
   }
 
-  if(_numLiftRaises == kNumLiftRaises || _abortTest)
+  if(_dVars.numLiftRaises == kNumLiftRaises || _dVars.abortTest)
   {
-    if (_numLiftRaises == kNumLiftRaises) {
-      PRINT_CH_INFO("Behaviors", "BehaviorLiftLoadTest.UpdateInternal_Legacy.TestComplete", "%d", _numLiftRaises);
+    if (_dVars.numLiftRaises == kNumLiftRaises) {
+      PRINT_CH_INFO("Behaviors", "BehaviorLiftLoadTest.UpdateInternal_Legacy.TestComplete", "%d", _dVars.numLiftRaises);
       Write("\nTest Completed Successfully");
     } else {
-      PRINT_CH_INFO("Behaviors", "BehaviorLiftLoadTest.UpdateInternal_Legacy.TestAborted", "%d", _numLiftRaises);
+      PRINT_CH_INFO("Behaviors", "BehaviorLiftLoadTest.UpdateInternal_Legacy.TestAborted", "%d", _dVars.numLiftRaises);
       Write("\nTest Aborted");
     }
     
     PrintStats();
-    _abortTest = false;
-    _numLiftRaises = 0;
-    _canRun = false;
+    _dVars.abortTest = false;
+    _dVars.numLiftRaises = 0;
+    _dVars.canRun = false;
     
     SetCurrState(State::TestComplete);
     CancelSelf();
@@ -151,7 +178,7 @@ void BehaviorLiftLoadTest::BehaviorUpdate()
     return;
   }
   
-  switch(_currentState)
+  switch(_dVars.currentState)
   {
     case State::Init:
     {
@@ -173,9 +200,9 @@ void BehaviorLiftLoadTest::BehaviorUpdate()
                       robot.SendRobotMessage<RobotInterface::CheckLiftLoad>();
                       
                       PRINT_CH_INFO("Behaviors", "BehaviorLiftLoadTest.WaitingForLiftLoadMsg", "");
-                      _loadStatusReceived = false;
+                      _dVars.loadStatusReceived = false;
                       auto waitForLiftLoadMsgLambda = [this](Robot& robot) {
-                        return _loadStatusReceived;
+                        return _dVars.loadStatusReceived;
                       };
                       auto waitAction = new WaitForLambdaAction(waitForLiftLoadMsgLambda);
                       DelegateIfInControl(waitAction);
@@ -192,7 +219,7 @@ void BehaviorLiftLoadTest::BehaviorUpdate()
     case State::WaitForPutdown:
     {
       if(GetBEI().GetOffTreadsState() == OffTreadsState::OnTreads){
-        _abortTest = true;
+        _dVars.abortTest = true;
       }
       break;
     }
@@ -203,20 +230,24 @@ void BehaviorLiftLoadTest::BehaviorUpdate()
     }
     default:
     {
-      PRINT_NAMED_ERROR("BehaviorLiftLoadTest.Update.UnknownState", "Reached unknown state %d", (u32)_currentState);
+      PRINT_NAMED_ERROR("BehaviorLiftLoadTest.Update.UnknownState", "Reached unknown state %d", (u32)_dVars.currentState);
       CancelSelf();
       return;
     }
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLiftLoadTest::OnBehaviorDeactivated()
 {
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLiftLoadTest::SetCurrState(State s)
 {
-  _currentState = s;
+  _dVars.currentState = s;
   
   UpdateStateName();
   
@@ -225,6 +256,7 @@ void BehaviorLiftLoadTest::SetCurrState(State s)
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const char* BehaviorLiftLoadTest::StateToString(const State m)
 {
   switch(m) {
@@ -239,11 +271,13 @@ const char* BehaviorLiftLoadTest::StateToString(const State m)
   return nullptr;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLiftLoadTest::UpdateStateName()
 {
-  std::string name = StateToString(_currentState);
+  std::string name = StateToString(_dVars.currentState);
   
-  name += std::to_string(_numLiftRaises);
+  name += std::to_string(_dVars.numLiftRaises);
   
   if( IsControlDelegated() ) {
     name += '*';
@@ -255,6 +289,8 @@ void BehaviorLiftLoadTest::UpdateStateName()
   SetDebugStateName(name);
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLiftLoadTest::HandleWhileActivated(const EngineToGameEvent& event)
 {
   switch(event.GetData().GetTag())
@@ -274,13 +310,15 @@ void BehaviorLiftLoadTest::HandleWhileActivated(const EngineToGameEvent& event)
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLiftLoadTest::AlwaysHandleInScope(const GameToEngineEvent& event)
 {
   switch(event.GetData().GetTag())
   {
     case GameToEngineTag::SetLiftLoadTestAsActivatable:
     {
-      _canRun = true;
+      _dVars.canRun = true;
       break;
     }
     default:
@@ -292,6 +330,8 @@ void BehaviorLiftLoadTest::AlwaysHandleInScope(const GameToEngineEvent& event)
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLiftLoadTest::HandleWhileActivated(const RobotToEngineEvent& event)
 {
   switch(event.GetData().GetTag()) {
@@ -299,13 +339,13 @@ void BehaviorLiftLoadTest::HandleWhileActivated(const RobotToEngineEvent& event)
     {
       const RobotInterface::LiftLoad& payload = event.GetData().Get_liftLoad();
       
-      _loadStatusReceived = true;
-      _hasLoad = payload.hasLoad;
-      if (_hasLoad) {
-        ++_numHadLoad;
+      _dVars.loadStatusReceived = true;
+      _dVars.hasLoad = payload.hasLoad;
+      if (_dVars.hasLoad) {
+        ++_dVars.numHadLoad;
       }
-      ++_numLiftRaises;
-      PRINT_NAMED_DEBUG("BehaviorLiftLoadTest.HandleLiftLoad.HasLoad", "%d / %d", _numHadLoad, _numLiftRaises);
+      ++_dVars.numLiftRaises;
+      PRINT_NAMED_DEBUG("BehaviorLiftLoadTest.HandleLiftLoad.HasLoad", "%d / %d", _dVars.numHadLoad, _dVars.numLiftRaises);
       break;
     }
     default:
@@ -317,26 +357,31 @@ void BehaviorLiftLoadTest::HandleWhileActivated(const RobotToEngineEvent& event)
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLiftLoadTest::Write(const std::string& s)
 {
-  if(_logger != nullptr){
-    _logger->Write(s + "\n");
+  if(_iConfig.logger != nullptr){
+    _iConfig.logger->Write(s + "\n");
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLiftLoadTest::PrintStats()
 {
-  u32 loadPercent = (100*_numHadLoad) / _numLiftRaises;
+  u32 loadPercent = (100*_dVars.numHadLoad) / _dVars.numLiftRaises;
   
   PRINT_NAMED_DEBUG("BehaviorLiftLoadTest.PrintStats.LoadRate", "%d", loadPercent);
   
   std::stringstream ss;
   ss << "*****************\n";
-  ss << "Load Detected:    " << _numHadLoad << "\n";
-  ss << "No load detected: " << _numLiftRaises - _numHadLoad << "\n";
+  ss << "Load Detected:    " << _dVars.numHadLoad << "\n";
+  ss << "No load detected: " << _dVars.numLiftRaises - _dVars.numHadLoad << "\n";
   ss << "LoadRate:         " << loadPercent << "%\n";
   Write(ss.str());
   Write("=====End LiftLoadTest=====");
 }
-}
-}
+
+} // namespace Cozmo
+} // namespace Anki

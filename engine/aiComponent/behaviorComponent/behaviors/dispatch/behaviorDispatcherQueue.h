@@ -32,12 +32,21 @@ protected:
   virtual void DispatcherUpdate() override;
 
 private:
+  struct InstanceConfig {
+    InstanceConfig();
+  };
 
-  size_t _currIdx = 0;
+  struct DynamicVariables {
+    DynamicVariables();
+    size_t currIdx = 0;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
 };
 
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 
-#endif
+#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_Dispatch_BehaviorDispatcherQueue_H__

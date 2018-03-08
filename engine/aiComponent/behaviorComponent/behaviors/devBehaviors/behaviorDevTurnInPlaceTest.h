@@ -58,6 +58,27 @@ private:
       nTimesRun = 0;
     }
   };
+
+  struct InstanceConfig {
+    InstanceConfig();
+    // Holds all of the tests to run
+    std::vector<sTest> tests;
+
+    // Optional gap between tests
+    float   gapBetweenTests_s;
+    // How many times to run each test?
+    uint8_t nRunsPerTest;
+    bool    loopForever;
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    // Current test index
+    int testInd = 0;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
   
   virtual void OnBehaviorActivated() override;
 
@@ -68,26 +89,10 @@ private:
   CompoundActionSequential* GenerateTestAction(const Pose3d& robotPose, const int testInd) const;
   
   void ActionCallback();
-
-  // member variables:
-  
-  // Holds all of the tests to run
-  std::vector<sTest> _tests;
-  
-  // Current test index
-  int _testInd = 0;
-  
-  // Optional gap between tests
-  float _gapBetweenTests_s = 0.f;
-  
-  // How many times to run each test?
-  uint8_t _nRunsPerTest = 1;
-  
-  bool _loopForever = false;
   
 };
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorDevTurnInPlaceTest_H__

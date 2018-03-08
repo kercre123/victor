@@ -39,10 +39,12 @@ protected:
 private:
 
   struct InstanceConfig {
+    InstanceConfig();
     // TODO: put configuration variables here
   };
 
   struct DynamicVariables {
+    DynamicVariables();
     // TODO: put member variables here
   };
 
@@ -51,7 +53,7 @@ private:
   
 };
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 
-#endif
+#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_${class_name}__

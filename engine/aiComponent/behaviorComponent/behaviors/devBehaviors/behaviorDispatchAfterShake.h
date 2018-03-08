@@ -41,17 +41,25 @@ protected:
   virtual void BehaviorUpdate() override;
   
 private:
+  struct InstanceConfig {
+    InstanceConfig();
+    std::vector<BehaviorID>        delegateIDs;
+    std::vector<ICozmoBehaviorPtr> delegates;
+  };
 
-  std::vector<BehaviorID> _delegateIDs;
-  std::vector<ICozmoBehaviorPtr> _delegates;
-  
-  size_t _countShaken = 0;
-  bool _shakingSession = false; // with memory, not instantaneous
-  float _lastChangeTime_s = 0.0f; // either the last time it was shaken, or the last time it was stopped
+  struct DynamicVariables {
+    DynamicVariables();
+    size_t countShaken;
+    bool   shakingSession; // with memory, not instantaneous
+    float  lastChangeTime_s; // either the last time it was shaken, or the last time it was stopped
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
 };
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 
 
-#endif
+#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_DevBehaviors_BehaviorDispatchAfterShake_H__

@@ -38,13 +38,25 @@ protected:
   virtual void BehaviorDispatcher_OnDeactivated() override;
   
 private:
-  // indexes of scoringTracker correspond to the dispatchers stored in IBehaviorDispatcher
-  std::vector<BehaviorScoringWrapper> _scoringTracker;
-  ICozmoBehaviorPtr _currentDispatch;
-  BehaviorScoringWrapper* _currentScoringTracker = nullptr;  
+  struct InstanceConfig {
+    InstanceConfig();
+    // indexes of scoringTracker correspond to the dispatchers stored in IBehaviorDispatcher
+    std::vector<BehaviorScoringWrapper> scoringTracker;
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    BehaviorScoringWrapper* currentScoringTracker;  
+    ICozmoBehaviorPtr       currentDispatch;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
+
 };
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 
-#endif
+#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_Dispatch_BehaviorDispatcherScoring_H__

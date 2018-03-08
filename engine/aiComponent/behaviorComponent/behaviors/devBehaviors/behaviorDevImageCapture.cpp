@@ -60,16 +60,38 @@ static const BackpackLights kLightsOff = {
 
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDevImageCapture::InstanceConfig::InstanceConfig()
+{
+  useCapTouch = false;
+  saveSensorData = false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDevImageCapture::DynamicVariables::DynamicVariables()
+{
+  touchStartedTime_s = -1.0f; 
+
+  blinkOn = false;
+  timeToBlink = -1.0f;
+
+  isStreaming = false;
+  wasLiftUp = false;
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
   : ICozmoBehavior(config)
 {
-  _imageSavePath = JsonTools::ParseString(config, "save_path", "BehaviorDevImageCapture");
-  _imageSaveQuality = JsonTools::ParseInt8(config, "quality", "BehaviorDevImageCapture");
-  _useCapTouch = JsonTools::ParseBool(config, "use_capacitive_touch", "BehaviorDevImageCapture");
+  _iConfig.imageSavePath = JsonTools::ParseString(config, "save_path", "BehaviorDevImageCapture");
+  _iConfig.imageSaveQuality = JsonTools::ParseInt8(config, "quality", "BehaviorDevImageCapture");
+  _iConfig.useCapTouch = JsonTools::ParseBool(config, "use_capacitive_touch", "BehaviorDevImageCapture");
 
   if (config.isMember("save_sensor_data")) {
-    _saveSensorData = config["save_sensor_data"].asBool();
+    _iConfig.saveSensorData = config["save_sensor_data"].asBool();
   }
 
   if(config.isMember("class_names"))
@@ -79,25 +101,27 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
     {
       for(Json::ArrayIndex index=0; index < classNames.size(); ++index)
       {
-        _classNames.push_back(classNames[index].asString());
+        _iConfig.classNames.push_back(classNames[index].asString());
       }
     }
     else if(classNames.isString())
     {
-      _classNames.push_back(classNames.asString());
+      _iConfig.classNames.push_back(classNames.asString());
     }
     else 
     {
       PRINT_NAMED_WARNING("BehaviorDevImageCapture.Constructor.InvalidClassNames", "");
     }
   }
-  _currentClassIter = _classNames.begin();
+  _dVars.currentClassIter = _iConfig.classNames.begin();
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevImageCapture::~BehaviorDevImageCapture()
 {
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 static inline void EnableDebugFaceDrawButton(BehaviorExternalInterface& bei, bool enable)
@@ -110,13 +134,14 @@ static inline void EnableDebugFaceDrawButton(BehaviorExternalInterface& bei, boo
                                                                                                          enableStr)));
 }
   
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevImageCapture::OnBehaviorActivated()
 {
-  _touchStartedTime_s = -1.0f;
-  _isStreaming = false;
-  _timeToBlink = -1.0f;
-  _blinkOn = false;
+  _dVars.touchStartedTime_s = -1.0f;
+  _dVars.isStreaming = false;
+  _dVars.timeToBlink = -1.0f;
+  _dVars.blinkOn = false;
 
   auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
   visionComponent.EnableDrawImagesToScreen(true);
@@ -134,6 +159,7 @@ void BehaviorDevImageCapture::OnBehaviorActivated()
   EnableDebugFaceDrawButton(GetBEI(), false);
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevImageCapture::OnBehaviorDeactivated()
 {
@@ -149,29 +175,32 @@ void BehaviorDevImageCapture::OnBehaviorDeactivated()
   EnableDebugFaceDrawButton(GetBEI(), true);
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevImageCapture::SwitchToNextClass()
 {
-  if(!_classNames.empty())
+  if(!_iConfig.classNames.empty())
   {
-    ++_currentClassIter; 
-    if(_currentClassIter == _classNames.end())
+    ++_dVars.currentClassIter; 
+    if(_dVars.currentClassIter == _iConfig.classNames.end())
     {
-      _currentClassIter = _classNames.begin();
+      _dVars.currentClassIter = _iConfig.classNames.begin();
     }
   }
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string BehaviorDevImageCapture::GetSavePath() const
 {
-  if(_currentClassIter == _classNames.end())
+  if(_dVars.currentClassIter == _iConfig.classNames.end())
   {
-    return _imageSavePath;
+    return _iConfig.imageSavePath;
   }
   
-  return Util::FileUtils::FullFilePath({_imageSavePath, *_currentClassIter});
+  return Util::FileUtils::FullFilePath({_iConfig.imageSavePath, *_dVars.currentClassIter});
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevImageCapture::BehaviorUpdate()
@@ -185,21 +214,21 @@ void BehaviorDevImageCapture::BehaviorUpdate()
   auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
 
   // update light blinking if needed
-  if( _timeToBlink > 0.0f ) {
-    if( currTime_s >= _timeToBlink ) {
+  if( _dVars.timeToBlink > 0.0f ) {
+    if( currTime_s >= _dVars.timeToBlink ) {
       BlinkLight();
     }
   }
 
   // Switch classes when lift is lowered
   const bool isLiftUp = (GetBEI().GetRobotInfo().GetLiftHeight() > LIFT_HEIGHT_HIGHDOCK);
-  if(_wasLiftUp && !isLiftUp)
+  if(_dVars.wasLiftUp && !isLiftUp)
   {
     SwitchToNextClass();    
   }
-  _wasLiftUp = isLiftUp;
+  _dVars.wasLiftUp = isLiftUp;
 
-  if(_currentClassIter != _classNames.end())
+  if(_dVars.currentClassIter != _iConfig.classNames.end())
   {
     // Note this root path is simply copied from what vision component uses. Ideally we'd share it
     // rather than assuming this is where the images go, but hey, this is a dev behavior, so good
@@ -211,46 +240,46 @@ void BehaviorDevImageCapture::BehaviorUpdate()
     
     std::function<void(Vision::ImageRGB&)> drawClassName = [this,numFiles](Vision::ImageRGB& img)
     {
-      img.DrawText({1,14}, *_currentClassIter + ":" + std::to_string(numFiles), NamedColors::YELLOW, 0.6f, true);
+      img.DrawText({1,14}, *_dVars.currentClassIter + ":" + std::to_string(numFiles), NamedColors::YELLOW, 0.6f, true);
     };
     visionComponent.AddDrawScreenModifier(drawClassName);
   }
 
-  const bool wasTouched = (_touchStartedTime_s >= 0.0f);
+  const bool wasTouched = (_dVars.touchStartedTime_s >= 0.0f);
 
-  const bool isTouched = (_useCapTouch ? 
+  const bool isTouched = (_iConfig.useCapTouch ? 
                           GetBEI().GetTouchSensorComponent().GetIsPressed() :
                           GetBEI().GetRobotInfo().IsPowerButtonPressed());
 
   if( wasTouched && !isTouched ) {
     // just "released", see if it's been long enough to count as a "hold"
-    if( currTime_s >= _touchStartedTime_s + kHoldTimeForStreaming_s ) {
+    if( currTime_s >= _dVars.touchStartedTime_s + kHoldTimeForStreaming_s ) {
       PRINT_CH_DEBUG("Behaviors", "BehaviorDevImageCapture.touch.longPress", "long press release");
         
       // toggle streaming
-      _isStreaming = !_isStreaming;
+      _dVars.isStreaming = !_dVars.isStreaming;
 
-      const ImageSendMode sendMode = _isStreaming ? ImageSendMode::Stream : ImageSendMode::Off;
+      const ImageSendMode sendMode = _dVars.isStreaming ? ImageSendMode::Stream : ImageSendMode::Off;
       visionComponent.SetSaveImageParameters(sendMode,
                                              GetSavePath(),
-                                             _imageSaveQuality);
+                                             _iConfig.imageSaveQuality);
       
-      if( _isStreaming ) {
+      if( _dVars.isStreaming ) {
         BlinkLight();
       }
     }
     else {
       PRINT_CH_DEBUG("Behaviors", "BehaviorDevImageCapture.touch.shortPress", "short press release");
       // take single photo
-      if (_saveSensorData) {
+      if (_iConfig.saveSensorData) {
         visionComponent.SetSaveImageParameters(ImageSendMode::SingleShotWithSensorData,
                                                GetSavePath(),
-                                               _imageSaveQuality);
+                                               _iConfig.imageSaveQuality);
       }
       else {
         visionComponent.SetSaveImageParameters(ImageSendMode::SingleShot,
                                                GetSavePath(),
-                                               _imageSaveQuality);
+                                               _iConfig.imageSaveQuality);
       }
 
       BlinkLight();
@@ -258,42 +287,42 @@ void BehaviorDevImageCapture::BehaviorUpdate()
   }
   else if( !wasTouched && isTouched ) {
     PRINT_CH_DEBUG("Behaviors", "BehaviorDevImageCapture.touch.newTouch", "new press");
-    _touchStartedTime_s = currTime_s;
+    _dVars.touchStartedTime_s = currTime_s;
 
-    if( _isStreaming ) {
+    if( _dVars.isStreaming ) {
       // we were streaming but now should stop because there was a new touch
       visionComponent.SetSaveImageParameters(ImageSendMode::Off,
                                              GetSavePath(),
-                                             _imageSaveQuality);
+                                             _iConfig.imageSaveQuality);
 
-      _isStreaming = false;
+      _dVars.isStreaming = false;
     }
   }
 
   if( !isTouched ) {
-    _touchStartedTime_s = -1.0f;
+    _dVars.touchStartedTime_s = -1.0f;
   }
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevImageCapture::BlinkLight()
 {
-  _blinkOn = !_blinkOn;
+  _dVars.blinkOn = !_dVars.blinkOn;
 
-  GetBEI().GetBodyLightComponent().SetBackpackLights( _blinkOn ? kLightsOn : kLightsOff );
+  GetBEI().GetBodyLightComponent().SetBackpackLights( _dVars.blinkOn ? kLightsOn : kLightsOff );
   
   // always blink if we are streaming, and set up another blink for single photo if we need to turn off the
   // light
-  if( _blinkOn || _isStreaming ) {
+  if( _dVars.blinkOn || _dVars.isStreaming ) {
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     // need to do another blink after this one
-    _timeToBlink = currTime_s + kLightBlinkPeriod_s;
+    _dVars.timeToBlink = currTime_s + kLightBlinkPeriod_s;
   }
   else {
-    _timeToBlink = -1.0f;
+    _dVars.timeToBlink = -1.0f;
   }
 }
 
-}
-}
-
+} // namespace Cozmo
+} // namespace Anki
