@@ -2,7 +2,7 @@ include(generate_clad)
 
 file(STRINGS "${ANKI_SRCLIST_DIR}/engine_clad.srcs.lst" SRCS)
 
-set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/tools/message-buffers")
+set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/victor-clad/tools/message-buffers")
 set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
 set(CLAD_CPP "${CLAD_EMITTER_DIR}/CPP_emitter.py")
 set(CLAD_CS "${CLAD_EMMITER_DIR}/CSharp_emitter.py")
@@ -192,6 +192,7 @@ target_include_directories(engine_clad
 target_link_libraries(engine_clad
     clad
     robot_clad
+    sdk_clad_cpp
     cti_common_clad
     cti_vision_clad
     util_clad

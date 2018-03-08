@@ -89,7 +89,6 @@ function(generate_clad_cpplite)
     set(multiValueArgs SRCS INCLUDES FLAGS OUTPUT_SRCS)
     cmake_parse_arguments(genclad "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/tools/message-buffers")
     set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
 
     set(CLAD_CPP "${CLAD_EMITTER_DIR}/CPPLite_emitter.py")
@@ -149,27 +148,96 @@ function(generate_clad_cpplite)
     endif()
 endfunction()
 
-# calls generate_clad using each of the C++ emitters used for cozmoEngine
-function(generate_clad_cpp)
+function(generate_clad_c)
     set(options "")
     set(oneValueArgs LIBRARY RELATIVE_SRC_DIR OUTPUT_DIR)
     set(multiValueArgs SRCS INCLUDES FLAGS OUTPUT_SRCS)
     cmake_parse_arguments(genclad "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/tools/message-buffers")
+    set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
+
+    set(CLAD_C "${CLAD_EMITTER_DIR}/C_emitter.py")
+    set(CLAD_C_EXTS ".h" ".c")
+    set(CLAD_C_FLAGS "${genclad_FLAGS}")
+
+    set(EMITTERS ${CLAD_C})
+    set(EXTS CLAD_C_EXTS)
+    set(FLAGS CLAD_C_FLAGS)
+    list(LENGTH EMITTERS EMITTER_COUNT)
+    math(EXPR EMITTER_COUNT "${EMITTER_COUNT} - 1")
+
+    set(CLAD_GEN_OUTPUTS "")
+
+    #message(STATUS "EMITTERS : ${EMITTERS}")
+    #message(STATUS "    EXTS : ${EXTS}")
+    #message(STATUS "     LEN : ${EMITTER_COUNT}")
+
+    foreach(IDX RANGE ${EMITTER_COUNT})
+        list(GET EMITTERS ${IDX} EMITTER)
+
+        list(GET EXTS ${IDX} EXT_LIST_SYM)
+        set(EMITTER_EXTS "${${EXT_LIST_SYM}}")
+
+        if (FLAGS)
+            list(GET FLAGS ${IDX} FLAG_LIST_SYM)
+            set(EMITTER_FLAGS "${${FLAG_LIST_SYM}}")
+        else()
+            set(EMITTER_FLAGS "")
+        endif()
+
+        # message(STATUS "${IDX} :: ${EMITTER} -- ${EMITTER_EXTS} -- ${EMITTER_FLAGS}")
+
+        generate_clad(
+            SRCS ${genclad_SRCS}
+            RELATIVE_SRC_DIR ${genclad_RELATIVE_SRC_DIR}
+            OUTPUT_DIR ${genclad_OUTPUT_DIR}
+            EMITTER ${EMITTER}
+            OUTPUT_EXTS ${EMITTER_EXTS}
+            FLAGS ${EMITTER_FLAGS}
+            INCLUDES ${genclad_INCLUDES}
+            OUTPUT_SRCS CLAD_GEN_SRCS
+        )
+
+        #message(STATUS "CLAD_GEN_SRCS :: ${CLAD_GEN_SRCS}")
+        list(APPEND CLAD_GEN_OUTPUTS ${CLAD_GEN_SRCS})
+    endforeach()
+
+    set(${genclad_OUTPUT_SRCS} ${CLAD_GEN_OUTPUTS} PARENT_SCOPE)
+
+    if (genclad_LIBRARY)
+        add_library(${genclad_LIBRARY} STATIC
+            ${CLAD_GEN_OUTPUTS}
+        )
+    endif()
+endfunction()
+
+# calls generate_clad using each of the C++ emitters used for cozmoEngine
+function(generate_clad_cpp)
+    set(options EXCLUDE_JSON)
+    set(oneValueArgs LIBRARY RELATIVE_SRC_DIR OUTPUT_DIR)
+    set(multiValueArgs SRCS INCLUDES FLAGS OUTPUT_SRCS)
+    cmake_parse_arguments(genclad "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
     set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
 
     set(CLAD_CPP "${CLAD_EMITTER_DIR}/CPP_emitter.py")
     set(CLAD_CPP_EXTS ".h" ".cpp")
+
+    set(OUTPUT_JSON "")
+    if(NOT genclad_EXCLUDE_JSON)
+    set(OUTPUT_JSON "--output-json")
+    endif(NOT genclad_EXCLUDE_JSON)
+
     set(CLAD_CPP_FLAGS
         "--output-union-helper-constructors"
+        "${OUTPUT_JSON}"
         "${genclad_FLAGS}")
 
-    set(CLAD_CPP_DECL "${CMAKE_SOURCE_DIR}/robot/clad/cozmo_CPP_declarations_emitter.py")
+    set(CLAD_CPP_DECL "${CLAD_VICTOR_EMITTER_DIR}/cozmo_CPP_declarations_emitter.py")
     set(CLAD_CPP_DECL_EXTS "_declarations.def")
     set(CLAD_CPP_DECL_FLAGS "")
 
-    set(CLAD_CPP_SWITCH "${CMAKE_SOURCE_DIR}/clad/cozmo_CPP_switch_emitter.py")
+    set(CLAD_CPP_SWITCH "${CLAD_VICTOR_EMITTER_DIR}/cozmo_CPP_switch_emitter.py")
     set(CLAD_CPP_SWITCH_EXTS "_switch.def")
     set(CLAD_CPP_SWITCH_FLAGS "")
 
@@ -236,14 +304,13 @@ function(generate_clad_py)
     set(multiValueArgs SRCS INCLUDES FLAGS OUTPUT_SRCS)
     cmake_parse_arguments(genclad "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/tools/message-buffers")
     set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
 
     set(CLAD_PY "${CLAD_EMITTER_DIR}/Python_emitter.py")
     set(CLAD_PY_EXTS ".py")
     set(CLAD_PY_FLAGS "${genclad_FLAGS}")
 
-    set(CLAD_PY_DECL "${CMAKE_SOURCE_DIR}/robot/clad/cozmo_Python_declarations_emitter.py")
+    set(CLAD_PY_DECL "${CLAD_VICTOR_EMITTER_DIR}/cozmo_Python_declarations_emitter.py")
     set(CLAD_PY_DECL_EXTS "_declarations.def")
     set(CLAD_PY_DECL_FLAGS "")
 
@@ -302,14 +369,13 @@ function(generate_clad_cs)
     set(multiValueArgs SRCS INCLUDES FLAGS OUTPUT_SRCS)
     cmake_parse_arguments(genclad "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/tools/message-buffers")
     set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
 
     set(CLAD_CS "${CLAD_EMITTER_DIR}/CSharp_emitter.py")
     set(CLAD_CS_EXTS ".cs")
     set(CLAD_CS_FLAGS "${genclad_FLAGS}")
 
-    set(CLAD_CS_DECL "${CMAKE_SOURCE_DIR}/robot/clad/cozmo_CSharp_declarations_emitter.py")
+    set(CLAD_CS_DECL "${CLAD_VICTOR_EMITTER_DIR}/cozmo_CSharp_declarations_emitter.py")
     set(CLAD_CS_DECL_EXTS "_declarations.def")
     set(CLAD_CS_DECL_FLAGS "")
 
