@@ -1,0 +1,17 @@
+[Unit]
+Description=Victor log manager daemon
+SourcePath=/anki/bin/vic-logmgr.sh
+PartOf=anki-robot.target
+
+Wants=vic-init.service
+After=vic-init.service
+
+ConditionFileIsExecutable=/anki/bin/vic-logmgr.sh
+
+[Service]
+EnvironmentFile=/anki/etc/vic-logmgr.env
+Restart=always
+ExecStart=/bin/sh /anki/bin/vic-logmgr.sh $VIC_LOGMGR_OPTS
+
+[Install]
+WantedBy=anki-robot.target
