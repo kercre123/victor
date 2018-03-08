@@ -14,8 +14,6 @@
 #ifndef __COMMON_BASESTATION_MATH_FASTPOLYGON2D_H__
 #define __COMMON_BASESTATION_MATH_FASTPOLYGON2D_H__
 
-#include "coretech/common/engine/math/polygon.h"
-#include "coretech/common/engine/math/point.h"
 #include "coretech/common/engine/math/lineSegment2d.h"
 #include "coretech/common/engine/math/convexPolygon2d.h"
 
@@ -40,7 +38,9 @@
 
 namespace Anki {
 
-class FastPolygon : public ConvexPolygon
+// TODO: ConvexPolygon should inherit from ConvexPointSet, but that requires moving Contains
+//       and InHalfplane checks to ConvexPolygon class.
+class FastPolygon : public ConvexPolygon, public ConvexPointSet<2, f32>
 {
 public:
 
@@ -51,8 +51,11 @@ public:
   bool Contains(float x, float y) const;
 
   // convenience function
-  bool Contains(const Point2f& pt) const;
-
+  virtual bool Contains(const Point2f& pt) const override;
+  
+  // returns true if the convex polygon is fully contained by the halfplane H
+  virtual bool InHalfPlane(const Halfplane2f& H) const override;
+  
   const std::vector<LineSegment>& GetEdgeSegments() const { return _edgeSegments; }
   
   // getters for testing / plotting

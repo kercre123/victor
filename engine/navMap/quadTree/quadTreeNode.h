@@ -21,9 +21,6 @@
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
 #include "engine/navMap/memoryMap/data/memoryMapData.h"
 
-#include "coretech/common/engine/math/point.h"
-#include "coretech/common/engine/math/triangle.h"
-#include "coretech/common/engine/math/lineSegment2d.h"
 #include "coretech/common/engine/math/fastPolygon2d.h"
 
 #include "util/helpers/noncopyable.h"
@@ -128,7 +125,7 @@ public:
   bool Contains(const FastPolygon& poly) const;
 
   // returns true if the given poly FULLY contains this node (this assumes `poly` is convex)
-  bool IsContainedBy(const FastPolygon& poly) const;
+  bool IsContainedBy(const ConvexPointSet2f& set) const;
   
 private:
 
@@ -136,10 +133,16 @@ private:
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  struct AxisAlignedQuad {
+  struct AxisAlignedQuad : public ConvexPointSet<2, f32> {
     AxisAlignedQuad(const Point2f& p, const Point2f& q);
-    bool Contains(const Point2f& p) const;
-    
+
+    // check if a point is contained in AABB
+    virtual bool Contains(const Point2f& p) const override;
+
+    // check if this quad is fully in the halfplane defined by l
+    virtual bool InHalfPlane(const Halfplane2f& H) const override;
+            bool InNegativeHalfPlane(const Line2f& l) const;
+
     // sorted in CW order for convenience
     inline const Point2f& GetLowerLeft()  const { return corners[0]; }
     inline const Point2f& GetUpperLeft()  const { return corners[1]; }
@@ -189,7 +192,7 @@ private:
   static void DestroyNodes(ChildrenVector& nodes, QuadTreeProcessor& processor);
 
   // run the provided accumulator function recursively over the tree for all nodes intersecting with region (if provided).
-  // NOTE: any recursive call through the QTN should be implemented by fold so all collision checks happen in a consistant manner
+  // NOTE: mutable recursive calls should remain private to ensure tree invariants are held
   void Fold(FoldFunctor accumulator, FoldDirection dir = FoldDirection::BreadthFirst);
   
   template <class ConvexType>

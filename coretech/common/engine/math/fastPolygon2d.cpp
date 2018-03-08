@@ -135,6 +135,11 @@ bool FastPolygon::Contains(const Point2f& pt) const
 #endif
 }
 
+bool FastPolygon::InHalfPlane(const Halfplane2f& H) const 
+{
+  return std::all_of(begin(), end(), [&H](const Point2f& p) { return H.Contains(p); });
+}
+
 float FastPolygon::GetCircumscribedRadius() const
 {
   return std::sqrt(_circumscribedRadiusSquared);

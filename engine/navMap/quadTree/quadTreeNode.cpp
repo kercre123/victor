@@ -62,6 +62,18 @@ bool QuadTreeNode::AxisAlignedQuad::Contains(const Point2f& p) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool QuadTreeNode::AxisAlignedQuad::InHalfPlane(const Halfplane2f& H) const
+{
+  return std::all_of(corners.begin(), corners.end(), [&H](const Point2f& p) { return H.Contains(p); }); 
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool QuadTreeNode::AxisAlignedQuad::InNegativeHalfPlane(const Line2f& l) const
+{
+  return std::all_of(corners.begin(), corners.end(), [&l](const Point2f& p) { return FLT_LT(l.Evaluate(p), 0.f); }); 
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTreeNode::Contains(const FastPolygon& poly) const
 {
   // return true if all of the vertices of poly are contained by the bounding box
@@ -69,10 +81,9 @@ bool QuadTreeNode::Contains(const FastPolygon& poly) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::IsContainedBy(const FastPolygon& poly) const
+bool QuadTreeNode::IsContainedBy(const ConvexPointSet2f& set) const
 {
-  // return true if all of the vertices of bounding box are contained by the poly
-  return std::all_of(_boundingBox.corners.begin(), _boundingBox.corners.end(),[&](auto& p) {return poly.Contains(p);});
+  return std::all_of(_boundingBox.corners.begin(), _boundingBox.corners.end(),[&](auto& p) {return set.Contains(p);});
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -84,14 +95,11 @@ bool QuadTreeNode::Intersects(const FastPolygon& poly) const
   if ( poly.GetMinY() > _boundingBox.GetUpperRight().y() ) { return false; }
   if ( poly.GetMaxY() < _boundingBox.GetLowerLeft().y()  ) { return false; }
 
-  // FastPolygon LineSegments should always be orientated CW, so if all node corners
-  // have a negative dot product with a line segment, then a separating axis exists
-  auto IsSeparatingAxis = [&](const LineSegment& l) {
-    return std::all_of(_boundingBox.corners.begin(), _boundingBox.corners.end(), [&l](const Point2f& p) { return FLT_LT(l.Dot(p), 0.f); }); 
-  };
-
-  // if one of the poly lines is a separating axis, then there is no intersection
-  return std::none_of(poly.GetEdgeSegments().begin(), poly.GetEdgeSegments().end(), IsSeparatingAxis);
+  // fastPolygon line segments define the halfplane boundary of points in the polygon.
+  // Therefore, we should check if the boundingBox is in the negative halfplane
+  // defined by FastPolygon edge segements
+  return std::none_of(poly.GetEdgeSegments().begin(), poly.GetEdgeSegments().end(), 
+                      [&](const auto& l) { return _boundingBox.InNegativeHalfPlane(l); });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
