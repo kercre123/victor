@@ -39,6 +39,14 @@ static int CalculateSignalLevel(const int strength, const int min, const int max
 
 std::vector<WiFiScanResult> ScanForWiFiAccessPoints() {
   std::vector<WiFiScanResult> results;
+
+  bool disabledApMode = DisableAccessPointMode();
+  if(!disabledApMode) {
+    Log::Write("Not in access point mode or could not disable AccessPoint mode");
+  } else {
+    Log::Write("Disabled AccessPoint mode.");
+  }
+
   ConnManBusTechnology* tech_proxy;
   GError* error;
 

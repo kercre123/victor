@@ -118,6 +118,7 @@ namespace Switchboard {
     void SendChallengeSuccess();
     void SendWifiScanResult();
     void SendWifiConnectResult(bool connect);
+    void SendWifiAccessPointResponse(bool success, std::string ssid, std::string pw);
     
     void IncrementAbnormalityCount();
     void IncrementChallengeCount();
@@ -161,6 +162,7 @@ namespace Switchboard {
     const uint8_t kInternetTimerTimeout_s = 15;
     const uint8_t kNumPinDigits = 6;
     const uint8_t kMinMessageSize = 2;
+    const uint8_t kWifiApPasswordSize = 8;
     
     std::string _pin;
     uint8_t _challengeAttempts;

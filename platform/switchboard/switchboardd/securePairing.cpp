@@ -14,6 +14,7 @@
 #include "anki-wifi/wifi.h"
 #include "switchboardd/savedSessionManager.h"
 #include "switchboardd/securePairing.h"
+#include <cutils/properties.h>
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Constructors
@@ -290,6 +291,15 @@ void Anki::Switchboard::SecurePairing::SendWifiConnectResult(bool success) {
   SendRtsMessage<RtsWifiConnectResponse>(success? 1 : 0);
 }
 
+void Anki::Switchboard::SecurePairing::SendWifiAccessPointResponse(bool success, std::string ssid, std::string pw) {
+  if(!AssertState(CommsState::SecureClad)) {
+    return;
+  }
+
+  // Send challenge and update state
+  SendRtsMessage<RtsWifiAccessPointResponse>(success, ssid, pw);
+}
+
 void Anki::Switchboard::SecurePairing::SendCancelPairing() {
   // Send challenge and update state
   SendRtsMessage<RtsCancelPairing>();
@@ -404,8 +414,30 @@ void Anki::Switchboard::SecurePairing::HandleRtsWifiAccessPointRequest(const Vic
     return;
   }
 
-  //bool enabled = Anki::
-  Log::Write("Received request to enter wifi access point mode.");
+  if(_state == PairingState::ConfirmedSharedSecret) {
+    Anki::Victor::ExternalComms::RtsWifiAccessPointRequest accessPointMessage = msg.Get_RtsWifiAccessPointRequest();
+    if(accessPointMessage.enable) {
+      // enable access point mode on Victor
+      char vicName[PROPERTY_VALUE_MAX] = {0};
+      (void)property_get("persist.anki.robot.name", vicName, "");
+
+      std::string ssid(vicName);
+      std::string password = _keyExchange->GeneratePin(kWifiApPasswordSize);
+
+      bool success = Anki::EnableAccessPointMode(ssid, password);
+
+      SendWifiAccessPointResponse(success, ssid, password);
+
+      Log::Write("Received request to enter wifi access point mode.");
+    } else {
+      // disable access point mode on Victor
+      bool success = Anki::DisableAccessPointMode();
+
+      SendWifiAccessPointResponse(success, "", "");
+
+      Log::Write("Received request to disable access point mode.");
+    }
+  }
 }
 
 void Anki::Switchboard::SecurePairing::HandleRtsCancelPairing(const Victor::ExternalComms::RtsConnection& msg) {

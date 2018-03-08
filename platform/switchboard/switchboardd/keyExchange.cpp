@@ -27,8 +27,12 @@ void Anki::Switchboard::KeyExchange::Reset() {
   memset(_publicKey, 0, crypto_kx_PUBLICKEYBYTES);
 }
 
-std::string Anki::Switchboard::KeyExchange::GeneratePin() {
-  if(_numPinDigits == 0) {
+std::string Anki::Switchboard::KeyExchange::GeneratePin() const {
+  return GeneratePin(_numPinDigits);
+}
+
+std::string Anki::Switchboard::KeyExchange::GeneratePin(int digits) const {
+  if(digits == 0) {
     return "";
   }
 
@@ -39,7 +43,7 @@ std::string Anki::Switchboard::KeyExchange::GeneratePin() {
   int minValue = 1;
 
   // add _numPinDigits 0s to minValue
-  for(int i = 0; i < _numPinDigits - 1; i++) {
+  for(int i = 0; i < digits - 1; i++) {
     minValue *= 10;
   }
 

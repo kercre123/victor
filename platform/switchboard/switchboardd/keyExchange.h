@@ -58,7 +58,9 @@ namespace Switchboard {
     
     // Method Declarations
     uint8_t* GenerateKeys();
-    std::string GeneratePin();
+
+    std::string GeneratePin(int digits) const;
+    std::string GeneratePin() const;
     void Reset();
     void SetRemotePublicKey(const uint8_t* pubKey);
     bool CalculateSharedKeys(const uint8_t* pin);
