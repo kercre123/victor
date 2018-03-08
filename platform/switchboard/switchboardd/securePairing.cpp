@@ -12,6 +12,7 @@
 
 #include <sstream>
 #include "anki-wifi/wifi.h"
+#include "switchboardd/savedSessionManager.h"
 #include "switchboardd/securePairing.h"
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -107,8 +108,8 @@ void Anki::Switchboard::SecurePairing::Init() {
   // Update our state
   _state = PairingState::Initial;
   
-  // Send public key
-  Log::Write("Sending public key to client.");
+  // Send Handshake
+  Log::Write("Sending Handshake to Client.");
   
   ev_timer_again(_loop, &_handleTimeoutTimer.timer);
   
@@ -192,6 +193,9 @@ void Anki::Switchboard::SecurePairing::SendPublicKey() {
   std::array<uint8_t, crypto_kx_PUBLICKEYBYTES> publicKeyArray;
   memcpy(std::begin(publicKeyArray), publicKey, crypto_kx_PUBLICKEYBYTES);
   SendRtsMessage<RtsConnRequest>(publicKeyArray);
+
+  // Save public key to file
+  Anki::Switchboard::SavedSessionManager::SavePublicKey(publicKey);
 }
 
 void Anki::Switchboard::SecurePairing::SendNonce() {
@@ -432,6 +436,12 @@ void Anki::Switchboard::SecurePairing::HandleInitialPair(uint8_t* publicKey, uin
   
   // Give our shared keys to the network stream
   _stream->SetCryptoKeys(
+    _keyExchange->GetEncryptKey(),
+    _keyExchange->GetDecryptKey());
+
+  // Save keys to file
+  Anki::Switchboard::SavedSessionManager::SaveSession(
+    publicKey,
     _keyExchange->GetEncryptKey(),
     _keyExchange->GetDecryptKey());
   
