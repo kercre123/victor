@@ -25,11 +25,6 @@ message SetConnectionStatus
   ConnectionStatus status
 }
 
-message SetBLEName
-{
-  string name
-}
-
 message SetBLEPin
 {
   uint_32 pin

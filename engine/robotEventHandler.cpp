@@ -1059,7 +1059,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
 
     // Messages from switchboard
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetConnectionStatus>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBLEName>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBLEPin>();
       
     // EngineToGame: (in alphabetical order)
@@ -1757,21 +1756,6 @@ void RobotEventHandler::HandleMessage(const SwitchboardInterface::SetConnectionS
 
     // Forward to robot
     robot->SendRobotMessage<SwitchboardInterface::SetConnectionStatus>(msg.status);
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void RobotEventHandler::HandleMessage(const SwitchboardInterface::SetBLEName& msg)
-{
-  Robot* robot = _context->GetRobotManager()->GetRobot();
-  
-  if (nullptr == robot) {
-    PRINT_NAMED_WARNING("RobotEventHandler.SwitchboardSetBLEName.InvalidRobotID", 
-                        "Failed to find robot");
-  } else {
-    // Forward to robot
-    robot->SendRobotMessage<SwitchboardInterface::SetBLEName>(msg.name);
   }
 }
 

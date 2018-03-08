@@ -135,6 +135,7 @@ enum uint_8 FactoryTestResultCode {
   NO_FFT_RESULT,
   TOUCH_VALUES_OOR,
   DISTANCE_SENSOR_OOR,
+  CERT_CHECK_FAILED,
 
   // ==== New result codes should be added at the end ========
   // ==== Never delete codes, even if they are deprecated! ===

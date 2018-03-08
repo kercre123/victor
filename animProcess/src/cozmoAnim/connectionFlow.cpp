@@ -33,11 +33,13 @@
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
+#include "osState/osState.h"
+
 namespace Anki {
 namespace Cozmo {
 
 namespace {
-std::string _name = "Vector 0000";
+const std::string _name = OSState::getInstance()->GetRobotName();
 u32 _pin = 123456;
 
 const std::string kURL = "anki.com/v";
@@ -177,11 +179,6 @@ void DrawUpdatingOSScreen(AnimationStreamer* animStreamer)
 void DrawWaitingForAppScreen(AnimationStreamer* animStreamer)
 {
   animStreamer->SetStreamingAnimation("anim_pairing_icon_awaitingapp", 0, 0);
-}
-
-void SetBLEName(const std::string& name)
-{
-  _name = name;
 }
 
 void SetBLEPin(uint32_t pin)

@@ -85,8 +85,10 @@ public:
     return _ipAddress;
   }
 
+  // Returns our mac address
   std::string GetMACAddress() const;
 
+  // Returns the ESN (electronic serial number) as a u32
   u32 GetSerialNumber()
   {
     const std::string& serialNum = GetSerialNumberAsString();
@@ -98,9 +100,16 @@ public:
     return 0;
   }
 
+  // Returns the ESN (electronic serial number) as a string
   const std::string& GetSerialNumberAsString();
 
+  // Returns the os build version (time of build)
   const std::string& GetOSBuildVersion();
+
+  // Returns the semi-unique name of this robot, Vector_XYXY
+  // Where X is a letter and Y is a digit
+  // The name can change over the lifetime of the roobt
+  std::string GetRobotName() const;
 
 private:
   // private ctor

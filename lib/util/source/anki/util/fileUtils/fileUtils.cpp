@@ -110,6 +110,19 @@ void FileUtils::RemoveDirectory(const std::string &path)
   }
 }
 
+ssize_t FileUtils::GetDirectorySize(const std::string& path)
+{
+  ssize_t size = 0;
+
+  const auto files = FilesInDirectory(path, false, nullptr, true);
+  for(const auto& file : files)
+  {
+    size += GetFileSize(file);
+  }
+
+  return size;
+}
+
 std::vector<std::string> FileUtils::FilesInDirectory(const std::string& path,
                                                      bool useFullPath,
                                                      const char* withExtension,
