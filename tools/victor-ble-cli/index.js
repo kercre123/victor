@@ -77,6 +77,8 @@ var onBLEServiceDiscovery = function (peripheral, error, services, characteristi
         // Locate Victor service ID
         if (service.uuid === Victor.SERVICE_UUID) {
             victorService = service;
+        } else if (service.uuid === Victor.OLD_SERVICE_UUID) {
+            victorService = service;
         }
     });
     if (!victorService) {
@@ -111,7 +113,7 @@ var onBLEServiceDiscovery = function (peripheral, error, services, characteristi
 var onBLEConnect = function (peripheral) {
     peripheral.once('disconnect', onBLEDisconnect.bind(this, peripheral));
     outputResponse("Connected to " + peripheral.advertisement.localName);
-    var serviceUUIDs = [Victor.SERVICE_UUID];
+    var serviceUUIDs = [Victor.SERVICE_UUID, Victor.OLD_SERVICE_UUID];
     var characteristicUUIDs = [Victor.RECV_CHAR_UUID,
                                Victor.SEND_CHAR_UUID,
                                Victor.RECV_ENC_CHAR_UUID];
