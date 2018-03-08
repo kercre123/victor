@@ -15,6 +15,7 @@
 
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "cozmoAnim/animation/animationStreamer.h"
 //#include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 
@@ -44,6 +45,8 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 
+#include "jo_gif/jo_gif.h"
+
 #define DEBUG_ANIMATION_STREAMING 0
 #define DEBUG_ANIMATION_STREAMING_AUDIO 0
 
@@ -60,8 +63,11 @@ namespace Cozmo {
 
   static ProceduralFace s_faceDataOverride; // incoming values from console var system
   static ProceduralFace s_faceDataBaseline; // baseline to compare against, differences mean override the incoming animation
+  static const AnimContext* s_context; // copy of this, needed for GetDataPlatform
   static bool s_faceDataOverrideRegistered = false;
   static bool s_faceDataReset = false;
+  static int s_framesToCapture = 0;
+  static jo_gif_t s_gif;
 
   void ResetFace(ConsoleFunctionContextRef context)
   {
@@ -69,6 +75,26 @@ namespace Cozmo {
   }
   
   CONSOLE_FUNC(ResetFace, "ProceduralFace");
+
+  static void CaptureFace(ConsoleFunctionContextRef context)
+  {
+    if(s_framesToCapture == 0) {
+      const std::string filename = ConsoleArg_GetOptional_String(context, "filename", "eyes.gif");
+      const int numFrames = ConsoleArg_GetOptional_Int(context, "numFrames", 1);
+
+      const Util::Data::DataPlatform* dataPlatform = s_context->GetDataPlatform();
+      const std::string cacheFilename = dataPlatform->pathToResource(Util::Data::Scope::Cache, filename);
+
+      s_gif = jo_gif_start(cacheFilename.c_str(), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, 0, 32);
+      s_framesToCapture = numFrames;
+      const std::string html = std::string("<html>\n") + "Capturing frames as <a href=\"/cache/"+filename+"\">"+filename+"\n" + "</html>\n";
+      context->channel->WriteLog(html.c_str());
+    } else {
+      context->channel->WriteLog("CaptureFace already in progress.");
+    }
+  }
+
+  CONSOLE_FUNC(CaptureFace, "ProceduralFace", optional const char* filename, optional int numFrames);
 
   namespace{
     
@@ -134,6 +160,7 @@ namespace Cozmo {
 
     if(ANKI_DEV_CHEATS) {
       if (!s_faceDataOverrideRegistered) {
+        s_context = context;
         s_faceDataOverride.RegisterFaceWithConsoleVars();
         s_faceDataOverrideRegistered = true;
       }
@@ -659,6 +686,28 @@ namespace Cozmo {
                    faceImg565.GetNumCols(), faceImg565.GetNumRows(),
                    FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
     
+
+    if(s_framesToCapture > 0) {
+      static unsigned char frame[FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*4];
+      const u16* srcPtr = faceImg565.GetRawDataPointer();
+      unsigned char* dstPtr = frame;
+      for(int i = 0; i < FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT; ++i) {
+        u16 col = *srcPtr++;
+        u8 red = (col>>11) & 0x1f;
+        u8 green = (col>>5) & 0x3f;
+        u8 blue = (col>>0) & 0x1f;
+        *dstPtr++ = (red << 3)|(red >> 2);
+        *dstPtr++ = (green << 2)|(green >> 4);
+        *dstPtr++ = (blue << 3)|(blue >> 2);
+        *dstPtr++ = 0xff;
+      }
+      jo_gif_frame(&s_gif, frame, 3, false);
+
+      --s_framesToCapture;
+      if(s_framesToCapture == 0) {
+        jo_gif_end(&s_gif);
+      }
+    }
 
     // Draw red square in corner of face if thermal issues
     const bool isCPUThrottling = OSState::getInstance()->IsCPUThrottling();
