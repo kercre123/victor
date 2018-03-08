@@ -151,15 +151,16 @@ esac
 #
 # Enable feature flags
 #
-FEATURE_FLAGS="-DFACTORY_TEST=0"
+FEATURE_FLAGS="-DFACTORY_TEST=1"
 
 for feature in ${FEATURES} ; do
   case $feature in
     factoryTest)
-      FEATURE_FLAGS="${FEATURE_FLAGS} -DFACTORY_TEST=1"
+      # Note FACTORY_TEST is on by default
       ;;
     factoryTestDev)
-      FEATURE_FLAGS="${FEATURE_FLAGS} -DFACTORY_TEST=1 -DFACTORY_TEST_DEV=1"
+      # Note FACTORY_TEST is on by default
+      FEATURE_FLAGS="${FEATURE_FLAGS} -DFACTORY_TEST_DEV=1"
       ;;
     *)
       echo "${SCRIPT_NAME}: Unknown feature '${feature}'"
