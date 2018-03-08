@@ -21,3 +21,13 @@ if [ "$active" != "active" ]; then
   fi
 fi
 
+#
+# FACTORY_TEST
+#
+# VIC-1500: Enable vic-logmgr.service for factory test
+#
+active=`/bin/systemctl is-active vic-logmgr.service`
+if [ "$active" == "unknown" ]; then
+  echo "Enable vic-logmgr.service"
+  /bin/systemctl enable --now /anki/etc/systemd/system/vic-logmgr.service
+fi
