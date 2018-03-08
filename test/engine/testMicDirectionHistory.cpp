@@ -34,8 +34,8 @@ using namespace Anki::Cozmo;
 
 TEST(SUITE, MicDirectionHistory_RecentDirection_simple)
 {
-  const auto directionUnknown = MicDirectionHistory::kDirectionUnknown;
-  const auto directionFirst = MicDirectionHistory::kFirstIndex;
+  const auto directionUnknown = kMicDirectionUnknown;
+  const auto directionFirst = kFirstMicDirectionIndex;
   const auto directionSecond = directionFirst + 1;
   const auto maxTimeLength_ms = std::numeric_limits<uint32_t>::max();
 
@@ -75,7 +75,7 @@ TEST(SUITE, MicDirectionHistory_RecentDirection_simple)
 
 TEST(SUITE, MicDirectionHistory_RecentDirection_complex)
 {
-  const auto directionFirst = MicDirectionHistory::kFirstIndex;
+  const auto directionFirst = kFirstMicDirectionIndex;
   const auto directionSecond = directionFirst + 1;
   const auto directionThird = directionFirst + 2;
   const auto historyLen = MicDirectionHistory::kMicDirectionHistoryLen;
@@ -116,7 +116,7 @@ TEST(SUITE, MicDirectionHistory_RecentDirection_complex)
 
 TEST(SUITE, MicDirectionHistory_GetDirectionAtTime)
 {
-  const auto directionFirst = MicDirectionHistory::kFirstIndex;
+  const auto directionFirst = kFirstMicDirectionIndex;
   const auto directionSecond = directionFirst + 1;
   const auto directionThird = directionFirst + 2;
   const auto maxTimeLength_ms = std::numeric_limits<uint32_t>::max();
@@ -141,8 +141,8 @@ TEST(SUITE, MicDirectionHistory_GetDirectionAtTime)
 
 TEST(SUITE, MicDirectionHistory_GetRecentHistory)
 {
-  // const auto directionUnknown = MicDirectionHistory::kDirectionUnknown;
-  const auto directionFirst = MicDirectionHistory::kFirstIndex;
+  // const auto directionUnknown = kMicDirectionUnknown;
+  const auto directionFirst = kFirstMicDirectionIndex;
   const auto directionSecond = directionFirst + 1;
   const auto maxTimeLength_ms = std::numeric_limits<uint32_t>::max();
 
@@ -150,7 +150,7 @@ TEST(SUITE, MicDirectionHistory_GetRecentHistory)
   MicDirectionHistory newHistory{};
 
   // Verify empty history comes back as empty
-  MicDirectionHistory::NodeList history;
+  MicDirectionNodeList history;
   history = newHistory.GetRecentHistory(0);
   ASSERT_TRUE(history.empty());
   history = newHistory.GetRecentHistory(maxTimeLength_ms);
@@ -213,7 +213,7 @@ TEST(SUITE, MicDirectionHistory_GetRecentHistory)
 
 TEST(SUITE, MicDirectionHistory_GetHistoryAtTime)
 {
-  const auto directionFirst = MicDirectionHistory::kFirstIndex;
+  const auto directionFirst = kFirstMicDirectionIndex;
   const auto directionSecond = directionFirst + 1;
   const auto directionThird = directionFirst + 2;
   const auto historyLen = MicDirectionHistory::kMicDirectionHistoryLen;
@@ -227,7 +227,7 @@ TEST(SUITE, MicDirectionHistory_GetHistoryAtTime)
   for (uint32_t i=0; i<20; ++i) { newHistory.AddDirectionSample(nextT(), directionSecond, 200); } // ts 110 : 300
   for (uint32_t i=0; i<31; ++i) { newHistory.AddDirectionSample(nextT(), directionFirst, 200); } // ts 310 : 600
 
-  MicDirectionHistory::NodeList history;
+  MicDirectionNodeList history;
   // History before beginning of time is empty
   history = newHistory.GetHistoryAtTime(0, 0);
   ASSERT_TRUE(history.empty());

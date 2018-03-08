@@ -14,7 +14,7 @@
 #define __Cozmo__BehaviorReactToSound_h__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/micDirectionHistory.h"
+#include "engine/micDirectionTypes.h"
 
 #include <vector>
 
@@ -35,7 +35,7 @@ public:
   // data corresponding to what sounds will trigger a reaction
   struct DirectionTrigger
   {
-    MicDirectionHistory::DirectionConfidence  threshold;
+    MicDirectionConfidence  threshold;
   };
 
   // data corresponding to our response to a valid trigger
@@ -68,11 +68,11 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Helper Functions
 
-  MicDirectionHistory::NodeList GetLatestMicDirectionData() const;
-  DirectionTrigger GetTriggerData( MicDirectionHistory::DirectionIndex index ) const;
-  DirectionResponse GetResponseData( MicDirectionHistory::DirectionIndex index ) const;
+  MicDirectionNodeList GetLatestMicDirectionData() const;
+  DirectionTrigger GetTriggerData( MicDirectionIndex index ) const;
+  DirectionResponse GetResponseData( MicDirectionIndex index ) const;
 
-  bool HeardValidSound( MicDirectionHistory::DirectionIndex& outIndex ) const;
+  bool HeardValidSound( MicDirectionIndex& outIndex ) const;
 
   void RespondToSound();
   void OnResponseComplete();
@@ -108,10 +108,10 @@ private:
   // Member Data
 
 
-  static const MicDirectionHistory::DirectionIndex kInvalidDirectionIndex;
+  static const MicDirectionIndex kInvalidDirectionIndex;
 
   EObservationStatus                    _observationStatus        = EObservationStatus::EObservationStatus_Awake;
-  MicDirectionHistory::DirectionIndex   _triggeredDirection       = kInvalidDirectionIndex;
+  MicDirectionIndex                     _triggeredDirection       = kInvalidDirectionIndex;
 
   TimeStamp_t                           _reactionTriggeredTime    = 0;
   TimeStamp_t                           _reactionEndedTime        = 0;

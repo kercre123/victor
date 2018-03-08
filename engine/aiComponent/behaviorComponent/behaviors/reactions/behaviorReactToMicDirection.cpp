@@ -24,7 +24,6 @@
 #include "util/logging/logging.h"
 
 #include <algorithm>
-#include <chrono>
 
 
 #define DEBUG_MIC_OBSERVING_VERBOSE 0 // add some verbose debugging if trying to track down issues
@@ -33,34 +32,32 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-  using MicDirectionConfidence    = MicDirectionHistory::DirectionConfidence;
-  using MicDirectionIndex         = MicDirectionHistory::DirectionIndex;
-}
-
-namespace {
 
   const std::string kKeyResponseList        = "reaction_list";
   const std::string kKeyDefaultReaction     = "Default";
   const std::string kKeyReactionAnimation   = "anim";
   const std::string kKeyReactionDirection   = "dir";
+
+  constexpr AnimationTrigger kInvalidAnimationTrigger = AnimationTrigger::Count;
+  constexpr float kDegreesPerDirection                = 360.0f / (float)kNumMicDirections;
+  constexpr float kMinDegreesToTurn                   = 5.0f;
 }
 
-const AnimationTrigger kInvalidAnimationTrigger = AnimationTrigger::Count;
 const BehaviorReactToMicDirection::DynamicStateReaction BehaviorReactToMicDirection::kFallbackReaction
 {
   {
-    { kInvalidAnimationTrigger, ((float)EClockDirection::TwelveOClock * kRadsPerDirection) },
-    { kInvalidAnimationTrigger, ((float)EClockDirection::OneOClock * kRadsPerDirection) },
-    { kInvalidAnimationTrigger, ((float)EClockDirection::TwoOClock * kRadsPerDirection) },
-    { kInvalidAnimationTrigger, ((float)EClockDirection::ThreeOClock * kRadsPerDirection) },
-    { kInvalidAnimationTrigger, ((float)EClockDirection::FourOClock * kRadsPerDirection) },
-    { kInvalidAnimationTrigger, ((float)EClockDirection::FiveOClock * kRadsPerDirection) },
-    { kInvalidAnimationTrigger, ((float)EClockDirection::SixOClock * kRadsPerDirection) },
-    { kInvalidAnimationTrigger, ((float)EClockDirection::SevenOClock * kRadsPerDirection) },
-    { kInvalidAnimationTrigger, ((float)EClockDirection::EightOClock * kRadsPerDirection) },
-    { kInvalidAnimationTrigger, ((float)EClockDirection::NineOClock * kRadsPerDirection) },
-    { kInvalidAnimationTrigger, ((float)EClockDirection::TenOClock * kRadsPerDirection) },
-    { kInvalidAnimationTrigger, ((float)EClockDirection::ElevenOClock * kRadsPerDirection) },
+    { kInvalidAnimationTrigger, -((float)EClockDirection::TwelveOClock * kDegreesPerDirection) },
+    { kInvalidAnimationTrigger, -((float)EClockDirection::OneOClock * kDegreesPerDirection) },
+    { kInvalidAnimationTrigger, -((float)EClockDirection::TwoOClock * kDegreesPerDirection) },
+    { kInvalidAnimationTrigger, -((float)EClockDirection::ThreeOClock * kDegreesPerDirection) },
+    { kInvalidAnimationTrigger, -((float)EClockDirection::FourOClock * kDegreesPerDirection) },
+    { kInvalidAnimationTrigger, -((float)EClockDirection::FiveOClock * kDegreesPerDirection) },
+    { kInvalidAnimationTrigger, -((float)EClockDirection::SixOClock * kDegreesPerDirection) },
+    { kInvalidAnimationTrigger, -((float)EClockDirection::SevenOClock * kDegreesPerDirection) },
+    { kInvalidAnimationTrigger, -((float)EClockDirection::EightOClock * kDegreesPerDirection) },
+    { kInvalidAnimationTrigger, -((float)EClockDirection::NineOClock * kDegreesPerDirection) },
+    { kInvalidAnimationTrigger, -((float)EClockDirection::TenOClock * kDegreesPerDirection) },
+    { kInvalidAnimationTrigger, -((float)EClockDirection::ElevenOClock * kDegreesPerDirection) },
   }
 };
 
@@ -117,16 +114,21 @@ void BehaviorReactToMicDirection::LoadDynamicReactionStateData( const Json::Valu
     for ( uint state = 0; state < EDynamicReactionState::Num; ++state )
     {
       // default everything to null, which tells the behavior to fallback to the default values
+      _instanceVars.reactionEnabled[state] = true;
       _instanceVars.reactions[state] = nullptr;
 
       const std::string stateName = ConvertReactionStateToString( static_cast<EDynamicReactionState>(state) );
       const Json::Value& reactionElement( config[stateName] );
       if ( !reactionElement.isNull() )
       {
-        DynamicStateReaction* newReaction = new DynamicStateReaction();
-        LoadDynamicStateReactions( reactionElement, *newReaction );
+        JsonTools::GetValueOptional( reactionElement, "enabled", _instanceVars.reactionEnabled[state] );
+        if ( _instanceVars.reactionEnabled[state] )
+        {
+          DynamicStateReaction* newReaction = new DynamicStateReaction();
+          LoadDynamicStateReactions( reactionElement, *newReaction );
 
-        _instanceVars.reactions[state] = newReaction;
+          _instanceVars.reactions[state] = newReaction;
+        }
       }
     }
   }
@@ -170,18 +172,29 @@ void BehaviorReactToMicDirection::LoadDirectionResponse( const Json::Value& conf
 void BehaviorReactToMicDirection::GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const
 {
   modifiers.wantsToBeActivatedWhenCarryingObject  = true;
-  modifiers.behaviorAlwaysDelegates               = true;
   modifiers.wantsToBeActivatedWhenOnCharger       = true;
+  modifiers.wantsToBeActivatedWhenOffTreads       = true;
+  modifiers.behaviorAlwaysDelegates               = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorReactToMicDirection::EClockDirection BehaviorReactToMicDirection::ConvertMicDirectionToClockDirection( MicDirectionHistory::DirectionIndex dir ) const
+BehaviorReactToMicDirection::EClockDirection BehaviorReactToMicDirection::ConvertMicDirectionToClockDirection( MicDirectionIndex dir ) const
 {
-  ASSERT_NAMED_EVENT( dir < static_cast<MicDirectionHistory::DirectionIndex>(EClockDirection::NumDirections),
-                     "BehaviorReactToMicDirection.ConvertMicDirectionToClockDirection",
-                     "Attempting to convert an invalid mic direction" );
+  if ( dir < static_cast<MicDirectionIndex>(EClockDirection::NumDirections) )
+  {
+    return static_cast<EClockDirection>(dir);
+  }
+  else
+  {
+    // the only direction we'll accept that isn't a clock direction is the
+    // "unknown" direction
+    ASSERT_NAMED_EVENT( dir == kMicDirectionUnknown,
+                       "BehaviorReactToMicDirection.ConvertMicDirectionToClockDirection",
+                       "Attempting to convert an invalid mic direction" );
 
-  return static_cast<EClockDirection>(dir);
+    // we'll treat all of these exceptions as simply coming from the twelve o'clock direction
+    return EClockDirection::TwelveOClock;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -241,7 +254,7 @@ std::string BehaviorReactToMicDirection::ConvertClockDirectionToString( EClockDi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToMicDirection::SetReactDirection( MicDirectionHistory::DirectionIndex dir )
+void BehaviorReactToMicDirection::SetReactDirection( MicDirectionIndex dir )
 {
   _dynamicVars.reactionDirection = ConvertMicDirectionToClockDirection( dir );
 }
@@ -257,7 +270,13 @@ bool BehaviorReactToMicDirection::WantsToBeActivatedBehavior() const
 {
   // we heard a sound that we want to focus on, so let's activate our behavior so that we can respond to this
   // setting reactionDirection will cause us to activate
-  return ( EClockDirection::Invalid != _dynamicVars.reactionDirection );
+  if ( EClockDirection::Invalid != _dynamicVars.reactionDirection )
+  {
+    const EDynamicReactionState currentState = GetCurrentReactionState();
+    return _instanceVars.reactionEnabled[currentState];
+  }
+
+  return false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -281,12 +300,25 @@ void BehaviorReactToMicDirection::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const BehaviorReactToMicDirection::DirectionResponse& BehaviorReactToMicDirection::GetResponseData( EClockDirection dir ) const
 {  
+  // we need to update what set of "sound response data" to use depending on Victor's status.
+  // victor can resond differently depeding on his current state (on/off charger, picked up, etc)
+  const EDynamicReactionState currentState = GetCurrentReactionState();
+
+  // if we have a reaction for this speciic state, use it, else fall back to the default response
+  const DynamicStateReaction* result = _instanceVars.reactions[currentState];
+  return ( nullptr != result ) ? result->directionalResponseList[dir] :
+                                 _instanceVars.defaultReaction.directionalResponseList[dir];
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorReactToMicDirection::EDynamicReactionState BehaviorReactToMicDirection::GetCurrentReactionState() const
+{
   const BEIRobotInfo& robotInfo = GetBEI().GetRobotInfo();
 
   // we need to update what set of "sound response data" to use depending on Victor's status.
   // victor can resond differently depeding on his current state (on/off charger, picked up, etc)
   EDynamicReactionState currentState = EDynamicReactionState::OnSurface;
-  if ( robotInfo.IsOnCharger() )
+  if ( robotInfo.IsOnChargerPlatform() )
   {
     currentState = EDynamicReactionState::OnCharger;
   }
@@ -295,10 +327,7 @@ const BehaviorReactToMicDirection::DirectionResponse& BehaviorReactToMicDirectio
     currentState = EDynamicReactionState::OffTreads;
   }
 
-  // if we have a reaction for this speciic state, use it, else fall back to the default response
-  const DynamicStateReaction* result = _instanceVars.reactions[currentState];
-  return ( nullptr != result ) ? result->directionalResponseList[dir] :
-                                 _instanceVars.defaultReaction.directionalResponseList[dir];
+  return currentState;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -313,11 +342,16 @@ void BehaviorReactToMicDirection::RespondToSound()
     const DirectionResponse& response = GetResponseData( _dynamicVars.reactionDirection );
     if ( kInvalidAnimationTrigger != response.animation )
     {
-      DelegateIfInControl( new TriggerAnimationAction( response.animation ) );
+      DelegateIfInControl( new TriggerLiftSafeAnimationAction( response.animation ) );
     }
     else
     {
-      DelegateIfInControl( new TurnInPlaceAction( response.facing, false ) );
+      if ( std::abs( response.facing ) >= kMinDegreesToTurn )
+      {
+        // convert degrees to radians
+        const Radians rads = DEG_TO_RAD( response.facing );
+        DelegateIfInControl( new TurnInPlaceAction( rads.ToFloat(), false ) );
+      }
     }
   }
 }
@@ -326,7 +360,7 @@ void BehaviorReactToMicDirection::RespondToSound()
 void BehaviorReactToMicDirection::OnResponseComplete()
 {
   // reset any response we may have been carrying out and start cooldowns
-  ClearReactDirection();
+  _dynamicVars = DynamicVariables();
 }
 
 }

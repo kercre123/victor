@@ -119,6 +119,11 @@ public:
   // replace the current pending user intent (if any) with this one. 
   void SetUserIntentPending(UserIntent&& userIntent);
 
+  // this allows us to temporarilty disable the warning when we haven't responded to a pending intent
+  // useful when we know a behavior down the line will consume the intent, but we still
+  // have some work to do at the moment
+  // note: this is re-enabled with each new intent
+  void SetUserIntentTimeoutEnabled(bool isEnabled);
   
   // convert the passed in cloud intent to a user intent and set it pending. This will assert in dev
   // if the resulting user intent requires data, in which case you should call SetCloudIntentPendingFromJSON
@@ -162,6 +167,7 @@ private:
   // for debugging -- intents should be processed within one tick so track the ticks here
   size_t _pendingTriggerTick = 0;
   size_t _pendingIntentTick = 0;
+  bool _pendingIntentTimeoutEnabled = true;
   
   // holds cloud and trigger word event handles
   std::vector<::Signal::SmartHandle> _eventHandles;

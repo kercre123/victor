@@ -2,5 +2,5 @@
   "behaviorClass": "ReactToVoiceCommand",
   "behaviorID": "TriggerWordDetected",
 
-  "anim_unmatched": "PounceFail" 
+  "leesFeelings" : "lee_sad",
 }

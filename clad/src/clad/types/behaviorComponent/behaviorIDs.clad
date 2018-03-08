@@ -68,6 +68,13 @@ enum uint_8 BehaviorID {
   ReactToGreeting,
   ReactToPet,
 
+  // audio reactions (sound and trigger word)
+  ReactToSoundAwake,
+  ReactToSoundAsleep,
+  TriggerWordDetected,
+  ReactToTriggerDirectionAwake,
+  ProceduralTurnToMicDirection,
+
   // singing
   Singing_AbaDaba,
   Singing_BeautifulDreamer,
@@ -168,7 +175,6 @@ enum uint_8 BehaviorID {
   ObservingLookAtFaces,
   ObservingOnCharger,
   ObservingOnChargerIdle,
-  ReactToSoundAwake,
 
   // victorBehaviorTree/highLevelDelegates
   PickupCube,
@@ -202,7 +208,6 @@ enum uint_8 BehaviorID {
   GoToSleep,
   Sleeping,
   SleepingWakeUp,
-  ReactToSoundAsleep,
 
   // victorBehaviorTree/highLevelDelegates/socialize
   DriveOffChargerIntoSocializing,
@@ -219,10 +224,8 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree
   Petting,
-  ReactToTriggerDirectionAwake,
   ReactToUnclaimedIntent,
   SingletonICantDoThat,
-  TriggerWordDetected,
 }
 
 }

@@ -22,23 +22,23 @@ namespace Cozmo {
 static_assert(std::is_same<decltype(RobotInterface::MicDirection::timestamp), TimeStamp_t>::value,
               "Expecting type of MicDirection::timestamp to match TimeStamp_t");
 static_assert(std::is_same<decltype(RobotInterface::MicDirection::direction),
-                           MicDirectionHistory::DirectionIndex>::value,
-              "Expecting type of MicDirection::direction to match MicDirectionHistory::DirectionIndex");
+                           MicDirectionIndex>::value,
+              "Expecting type of MicDirection::direction to match MicDirectionIndex");
 static_assert(std::is_same<decltype(RobotInterface::MicDirection::confidence),
-                           MicDirectionHistory::DirectionConfidence>::value,
-              "Expecting type of MicDirection::confidence to match MicDirectionHistory::DirectionConfidence");
+                           MicDirectionConfidence>::value,
+              "Expecting type of MicDirection::confidence to match MicDirectionConfidence");
 
 void MicDirectionHistory::PrintNodeData(uint32_t index) const
 {
-  const MicDirectionHistory::DirectionNode& node = _micDirectionBuffer[GetPrevNodeIdx(GetNextNodeIdx(index))];
+  const MicDirectionNode& node = _micDirectionBuffer[GetPrevNodeIdx(GetNextNodeIdx(index))];
   PRINT_NAMED_INFO("MicDirectionHistory::PrintNodeData", 
                    "idx: %d ts: %d dir: %d confAvg: %d count: %d",
                    index, node.timestampEnd, node.directionIndex, node.confidenceAvg, node.count);
 }
 
 void MicDirectionHistory::AddDirectionSample(TimeStamp_t timestamp, 
-                                             MicDirectionHistory::DirectionIndex newDirection,
-                                             DirectionConfidence newConf)
+                                             MicDirectionIndex newDirection,
+                                             MicDirectionConfidence newConf)
 {
   if (_micDirectionBuffer[_micDirectionBufferIndex].directionIndex == newDirection)
   {
@@ -53,7 +53,7 @@ void MicDirectionHistory::AddDirectionSample(TimeStamp_t timestamp,
 
     const auto curAvgConf = static_cast<uint32_t>(currentEntry.confidenceAvg);
     const auto weightedConf = Util::numeric_cast<uint32_t>((curAvgConf * currentEntry.count) + newConf);
-    const auto newAvgConf = Util::numeric_cast<DirectionConfidence>(weightedConf / (currentEntry.count + 1));
+    const auto newAvgConf = Util::numeric_cast<MicDirectionConfidence>(weightedConf / (currentEntry.count + 1));
     currentEntry.confidenceAvg = newAvgConf;
 
     ++currentEntry.count;
@@ -81,7 +81,7 @@ uint32_t MicDirectionHistory::GetPrevNodeIdx(uint32_t nodeIndex) const
   return (nodeIndex == 0) ? (kMicDirectionHistoryLen - 1) : (nodeIndex - 1);
 }
 
-MicDirectionHistory::DirectionIndex MicDirectionHistory::GetDirectionAtTime(TimeStamp_t timestampEnd, 
+MicDirectionIndex MicDirectionHistory::GetDirectionAtTime(TimeStamp_t timestampEnd,
                                                                             TimeStamp_t timeLength_ms) const
 {
   // Special case where we're asked for time after or at the end of history
@@ -132,7 +132,7 @@ MicDirectionHistory::DirectionIndex MicDirectionHistory::GetDirectionAtTime(Time
   return GetBestDirection(directionCount);
 }
 
-MicDirectionHistory::DirectionIndex MicDirectionHistory::GetRecentDirection(TimeStamp_t timeLength_ms) const
+MicDirectionIndex MicDirectionHistory::GetRecentDirection(TimeStamp_t timeLength_ms) const
 {
   const auto startIndex = _micDirectionBufferIndex;
 
@@ -182,11 +182,11 @@ MicDirectionHistory::DirectionHistoryCount MicDirectionHistory::GetDirectionCoun
   return directionCount;
 }
 
-MicDirectionHistory::DirectionIndex MicDirectionHistory::GetBestDirection(const DirectionHistoryCount& directionCount)
+MicDirectionIndex MicDirectionHistory::GetBestDirection(const DirectionHistoryCount& directionCount)
 {
-  auto bestIndex = kDirectionUnknown;
+  MicDirectionIndex bestIndex = kMicDirectionUnknown;
   uint32_t bestCount = 0;
-  for (auto i = kFirstIndex; i <= kLastIndex; ++i)
+  for (MicDirectionIndex i = kFirstMicDirectionIndex; i <= kLastMicDirectionIndex; ++i)
   {
     if (directionCount[i] > bestCount)
     {
@@ -197,14 +197,14 @@ MicDirectionHistory::DirectionIndex MicDirectionHistory::GetBestDirection(const 
   return bestIndex;
 }
 
-MicDirectionHistory::NodeList MicDirectionHistory::GetRecentHistory(TimeStamp_t timeLength_ms) const
+MicDirectionNodeList MicDirectionHistory::GetRecentHistory(TimeStamp_t timeLength_ms) const
 {
   const auto startIndex = _micDirectionBufferIndex;
 
   // Special case for requesting just the most recent bit of history
   if (timeLength_ms == 0)
   {
-    NodeList results;
+    MicDirectionNodeList results;
     const auto& node = _micDirectionBuffer[startIndex];
     if (node.IsValid())
     {
@@ -216,7 +216,7 @@ MicDirectionHistory::NodeList MicDirectionHistory::GetRecentHistory(TimeStamp_t 
   return GetHistoryAtIndex(startIndex, timeLength_ms);
 }
 
-MicDirectionHistory::NodeList MicDirectionHistory::GetHistoryAtTime(TimeStamp_t timestampEnd, 
+MicDirectionNodeList MicDirectionHistory::GetHistoryAtTime(TimeStamp_t timestampEnd,
                                                                     TimeStamp_t timeLength_ms) const
 {
   // Special case where we're asked for time after or at the end of history
@@ -245,7 +245,7 @@ MicDirectionHistory::NodeList MicDirectionHistory::GetHistoryAtTime(TimeStamp_t 
   // Did we hit the end of history?
   if (prevToEndingIndex == _micDirectionBufferIndex)
   {
-    NodeList results;
+    MicDirectionNodeList results;
     if (endingNode.IsValid())
     {
       results.push_front(endingNode);
@@ -257,7 +257,7 @@ MicDirectionHistory::NodeList MicDirectionHistory::GetHistoryAtTime(TimeStamp_t 
   const auto timeSpentInEndNode = timestampEnd - _micDirectionBuffer[prevToEndingIndex].timestampEnd;
   if (timeSpentInEndNode >= timeLength_ms)
   {
-    NodeList results;
+    MicDirectionNodeList results;
     if (endingNode.IsValid())
     {
       results.push_front(endingNode);
@@ -267,7 +267,7 @@ MicDirectionHistory::NodeList MicDirectionHistory::GetHistoryAtTime(TimeStamp_t 
 
   // Start with the count from before the ending node
   const auto timePrevToNode = timeLength_ms - timeSpentInEndNode;
-  NodeList results = GetHistoryAtIndex(prevToEndingIndex, timePrevToNode);
+  MicDirectionNodeList results = GetHistoryAtIndex(prevToEndingIndex, timePrevToNode);
   if (endingNode.IsValid())
   {
     results.push_back(endingNode);
@@ -276,10 +276,10 @@ MicDirectionHistory::NodeList MicDirectionHistory::GetHistoryAtTime(TimeStamp_t 
   return results;
 }
 
-MicDirectionHistory::NodeList MicDirectionHistory::GetHistoryAtIndex(uint32_t startIndex, 
+MicDirectionNodeList MicDirectionHistory::GetHistoryAtIndex(uint32_t startIndex,
                                                                      TimeStamp_t timeLength_ms) const
 {
-  NodeList results;
+  MicDirectionNodeList results;
   uint32_t curIndex = startIndex;
   while (timeLength_ms > 0)
   {

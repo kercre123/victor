@@ -69,7 +69,7 @@ void BehaviorComeHere::TurnTowardsMicDirection()
 {
   DEBUG_SET_STATE(TurnTowardsMicDirection);
   // Calculate radians to turn based on mic data
-  MicDirectionHistory::DirectionIndex dirIdx = GetBEI().GetMicDirectionHistory().GetRecentDirection();
+  MicDirectionIndex dirIdx = GetBEI().GetMicDirectionHistory().GetRecentDirection();
   dirIdx = dirIdx < 6 ? dirIdx : -(dirIdx - 6);
   const float radiansPerIdx = (2.0f/12.0f);
   const bool isAbsolute = false;

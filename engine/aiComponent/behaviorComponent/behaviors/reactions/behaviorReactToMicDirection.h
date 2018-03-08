@@ -14,7 +14,7 @@
 #define __Cozmo__BehaviorReactToMicDirection_h__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/micDirectionHistory.h"
+#include "engine/micDirectionTypes.h"
 
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/helpers/templateHelpers.h"
@@ -28,7 +28,7 @@ namespace Cozmo {
 class BehaviorReactToMicDirection : public ICozmoBehavior
 {
   // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  friend class BehaviorFactory;
   BehaviorReactToMicDirection( const Json::Value& config );
 
 
@@ -52,7 +52,7 @@ public:
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const override;
 
-  void SetReactDirection( MicDirectionHistory::DirectionIndex dir );
+  void SetReactDirection( MicDirectionIndex dir );
   void ClearReactDirection();
 
 
@@ -72,7 +72,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Internal Data Structure Definitions ...
 
-  // Corresponds direction with MicDirectionHistory::DirectionIndex but gives data
+  // Corresponds direction with MicDirectionIndex but gives data
   // a bit more readability
   enum EClockDirection
   {
@@ -109,7 +109,6 @@ private:
     DirectionResponse      directionalResponseList[EClockDirection::NumDirections];
   };
 
-  static constexpr float kRadsPerDirection = ( ( 2.0f * M_PI_F ) / (float)EClockDirection::NumDirections );
   static const DynamicStateReaction kFallbackReaction;
 
 
@@ -122,9 +121,10 @@ private:
   void LoadDirectionResponse( const Json::Value&, DirectionResponse& );
 
   const DirectionResponse& GetResponseData( EClockDirection dir ) const;
+  EDynamicReactionState GetCurrentReactionState() const;
 
   // Helpers ...
-  EClockDirection ConvertMicDirectionToClockDirection( MicDirectionHistory::DirectionIndex dir ) const;
+  EClockDirection ConvertMicDirectionToClockDirection( MicDirectionIndex dir ) const;
   std::string ConvertReactionStateToString( EDynamicReactionState state ) const;
   std::string ConvertClockDirectionToString( EClockDirection dir ) const;
 
@@ -138,8 +138,9 @@ private:
   struct InstanceConfig
   {
     // list of the reactions
-    DynamicStateReaction defaultReaction;
-    DynamicStateReaction* reactions[EDynamicReactionState::Num];
+    DynamicStateReaction    defaultReaction;
+    DynamicStateReaction*   reactions[EDynamicReactionState::Num];
+    bool                    reactionEnabled[EDynamicReactionState::Num];
   } _instanceVars;
 
   struct DynamicVariables

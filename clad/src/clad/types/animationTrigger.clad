@@ -138,7 +138,6 @@ enum int_32 AnimationTrigger
   LaserFace,
   LaserGetOut,
   LaserPounce,
-  ListeningOnCharger,
   LookDownForLaser,
   LookInPlaceForFacesBodyPause,
   LookInPlaceForFacesHeadMovePause,
@@ -322,7 +321,12 @@ enum int_32 AnimationTrigger
   TurtleRoll,  
   UnitTestAnim,
 
-  VC_Listening,
+  VC_ListeningGetIn,
+  VC_ListeningLoop,
+  VC_ListeningGetOut,
+  VC_IntentHeard,
+  VC_IntentUnknown,
+  VC_NoIntentHeard,
   VC_NoFollowupCommand_NoFace,
   VC_NoFollowupCommand_WithFace,
 

@@ -1033,8 +1033,28 @@
       "AnimName": "ag_askforblock"
     },
     {	
-      "CladEvent": "VC_Listening",	
-      "AnimName": "ag_vc_listening"	
+      "CladEvent": "VC_ListeningGetIn",
+      "AnimName": "ag_generic_look_up_01"
+    },
+    {
+      "CladEvent": "VC_ListeningLoop",
+      "AnimName": "ag_generic_look_up_idle"
+    },
+    {
+      "CladEvent": "VC_ListeningGetOut",
+      "AnimName": "ag_generic_look_stright_01"
+    },
+    {
+      "CladEvent": "VC_IntentHeard",
+      "AnimName": "ag_vc_reaction_yesfaceheardyou"
+    },
+    {
+      "CladEvent": "VC_IntentUnknown",
+      "AnimName": "ag_vc_reaction_whatwasthat"
+    },
+    {
+      "CladEvent": "VC_NoIntentHeard",
+      "AnimName": "ag_vc_reaction_whatwasthat"
     },
     {	
       "CladEvent": "VC_NoFollowupCommand_NoFace",	
@@ -1071,10 +1091,6 @@
     {
       "CladEvent": "ObservingIdleWithHeadLookingStraight",
       "AnimName": "ag_keepalive_eyesandhead_loop_01"
-    },
-    {
-      "CladEvent": "ListeningOnCharger",
-      "AnimName": "ag_vc_listening"
     },
     {
       "CladEvent": "LookDownForLaser",
