@@ -10,8 +10,8 @@
 *
 **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorObservingEyeContact_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorObservingEyeContact_H__
+#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorObservingEyeContact_H__
+#define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorObservingEyeContact_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
@@ -44,4 +44,4 @@ protected:
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorObservingEyeContact_H__
+#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorObservingEyeContact_H__
