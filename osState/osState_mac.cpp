@@ -61,6 +61,7 @@ OSState::OSState()
   _serialNumString = "12345";
   _osBuildVersion = "12345";
   _ipAddress = "127.0.0.1";
+  _buildSha = ANKI_BUILD_SHA;
 }
 
 OSState::~OSState()
@@ -116,6 +117,11 @@ const std::string& OSState::GetSerialNumberAsString()
 const std::string& OSState::GetOSBuildVersion()
 {
   return _osBuildVersion;
+}
+  
+const std::string& OSState::GetBuildSha()
+{
+  return _buildSha;
 }
 
 std::string OSState::GetIPAddressInternal()

@@ -170,6 +170,11 @@ for feature in ${FEATURES} ; do
 done
 
 #
+# Get short commit sha
+#
+export ANKI_BUILD_SHA=`git rev-parse --short HEAD`
+
+#
 # Enable export flags
 #
 EXPORT_FLAGS=""
@@ -349,6 +354,7 @@ if [ $CONFIGURE -eq 1 ]; then
         -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} \
         -DGOPATH=${GOPATH} \
         -DGOROOT=${GOROOT} \
+        -DANKI_BUILD_SHA=${ANKI_BUILD_SHA} \
         ${EXPORT_FLAGS} \
         ${FEATURE_FLAGS} \
         "${PLATFORM_ARGS[@]}"

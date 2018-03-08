@@ -85,6 +85,8 @@ OSState::OSState()
   
   _cpuFreq_kHz = kNominalCPUFreq_kHz;
   _cpuTemp_C = 0;
+
+  _buildSha = ANKI_BUILD_SHA;
 }
 
 OSState::~OSState()
@@ -288,6 +290,11 @@ const std::string& OSState::GetOSBuildVersion()
   }
   
   return _osBuildVersion;
+}
+
+const std::string& OSState::GetBuildSha() 
+{
+  return _buildSha;
 }
   
 std::string OSState::GetIPAddressInternal()

@@ -62,6 +62,8 @@ else()
   add_definitions(-DFACTORY_TEST_DEV=0)
 endif()
 
+add_definitions(-DANKI_BUILD_SHA="${ANKI_BUILD_SHA}")
+
 if (ANDROID)
   # Build for Android system without ART (*NO* JNI available)
   add_definitions(

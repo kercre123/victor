@@ -100,6 +100,8 @@ public:
   const std::string& GetSerialNumberAsString();
 
   const std::string& GetOSBuildVersion();
+  
+  const std::string& GetBuildSha();
 
 private:
   // private ctor
@@ -130,6 +132,7 @@ private:
   std::string _ipAddress       = "";
   std::string _serialNumString = "";
   std::string _osBuildVersion  = "";
+  std::string _buildSha        = "";
 
 }; // class OSState
   

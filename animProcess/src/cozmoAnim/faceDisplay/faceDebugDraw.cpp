@@ -369,8 +369,9 @@ void FaceDebugDraw::DrawStateInfo(const RobotState& state)
     const std::string ip       = OSState::getInstance()->GetIPAddress();
     const std::string serialNo = OSState::getInstance()->GetSerialNumberAsString();
     const std::string osVer    = OSState::getInstance()->GetOSBuildVersion();
+    const std::string sha      = OSState::getInstance()->GetBuildSha();
 
-    std::vector<std::string> text = {ip, serialNo, osVer};
+    std::vector<std::string> text = {ip, serialNo, osVer, sha};
 
     if(FACTORY_TEST)
     {
@@ -381,7 +382,7 @@ void FaceDebugDraw::DrawStateInfo(const RobotState& state)
                      NamedColors::WHITE, 
                      NamedColors::BLACK, 
                      {0, 30}, 
-                     20, 
+                     15,
                      0.5f);
   }
   else if(drawState == DrawState::SensorInfo1)
