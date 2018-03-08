@@ -784,6 +784,96 @@ struct RtsOtaUpdateResponse
 extern const char* RtsOtaUpdateResponseVersionHashStr;
 extern const uint8_t RtsOtaUpdateResponseVersionHash[16];
 
+// MESSAGE RtsWifiAccessPointRequest
+struct RtsWifiAccessPointRequest
+{
+  bool enable;
+  
+  /**** Constructors ****/
+  RtsWifiAccessPointRequest() = default;
+  RtsWifiAccessPointRequest(const RtsWifiAccessPointRequest& other) = default;
+  RtsWifiAccessPointRequest(RtsWifiAccessPointRequest& other) = default;
+  RtsWifiAccessPointRequest(RtsWifiAccessPointRequest&& other) noexcept = default;
+  RtsWifiAccessPointRequest& operator=(const RtsWifiAccessPointRequest& other) = default;
+  RtsWifiAccessPointRequest& operator=(RtsWifiAccessPointRequest&& other) = default;
+  
+  explicit RtsWifiAccessPointRequest(bool enable)
+  : enable(enable)
+  {}
+  
+  explicit RtsWifiAccessPointRequest(const uint8_t* buff, size_t len);
+  explicit RtsWifiAccessPointRequest(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsWifiAccessPointRequest& other) const;
+  bool operator!=(const RtsWifiAccessPointRequest& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(enable);
+  }
+};
+
+extern const char* RtsWifiAccessPointRequestVersionHashStr;
+extern const uint8_t RtsWifiAccessPointRequestVersionHash[16];
+
+// MESSAGE RtsWifiAccessPointResponse
+struct RtsWifiAccessPointResponse
+{
+  bool enabled;
+  std::string ssid;
+  std::string pw;
+  
+  /**** Constructors ****/
+  RtsWifiAccessPointResponse() = default;
+  RtsWifiAccessPointResponse(const RtsWifiAccessPointResponse& other) = default;
+  RtsWifiAccessPointResponse(RtsWifiAccessPointResponse& other) = default;
+  RtsWifiAccessPointResponse(RtsWifiAccessPointResponse&& other) noexcept = default;
+  RtsWifiAccessPointResponse& operator=(const RtsWifiAccessPointResponse& other) = default;
+  RtsWifiAccessPointResponse& operator=(RtsWifiAccessPointResponse&& other) = default;
+  
+  explicit RtsWifiAccessPointResponse(bool enabled,
+    const std::string& ssid,
+    const std::string& pw)
+  : enabled(enabled)
+  , ssid(ssid)
+  , pw(pw)
+  {}
+  
+  explicit RtsWifiAccessPointResponse(const uint8_t* buff, size_t len);
+  explicit RtsWifiAccessPointResponse(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsWifiAccessPointResponse& other) const;
+  bool operator!=(const RtsWifiAccessPointResponse& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(enabled, ssid, pw);
+  }
+};
+
+extern const char* RtsWifiAccessPointResponseVersionHashStr;
+extern const uint8_t RtsWifiAccessPointResponseVersionHash[16];
+
 // MESSAGE RtsCancelPairing
 struct RtsCancelPairing
 {
@@ -975,6 +1065,14 @@ template<>
 struct RtsConnection_TagToType<RtsConnectionTag::RtsAck> {
   using type = Anki::Victor::ExternalComms::RtsAck;
 };
+template<>
+struct RtsConnection_TagToType<RtsConnectionTag::RtsWifiAccessPointRequest> {
+  using type = Anki::Victor::ExternalComms::RtsWifiAccessPointRequest;
+};
+template<>
+struct RtsConnection_TagToType<RtsConnectionTag::RtsWifiAccessPointResponse> {
+  using type = Anki::Victor::ExternalComms::RtsWifiAccessPointResponse;
+};
 
 // UNION RtsConnection
 class RtsConnection
@@ -1135,6 +1233,20 @@ public:
   void Set_RtsAck(const Anki::Victor::ExternalComms::RtsAck& new_RtsAck);
   void Set_RtsAck(Anki::Victor::ExternalComms::RtsAck&& new_RtsAck);
   
+  /** RtsWifiAccessPointRequest **/
+  static RtsConnection CreateRtsWifiAccessPointRequest(Anki::Victor::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
+  explicit RtsConnection(Anki::Victor::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
+  const Anki::Victor::ExternalComms::RtsWifiAccessPointRequest& Get_RtsWifiAccessPointRequest() const;
+  void Set_RtsWifiAccessPointRequest(const Anki::Victor::ExternalComms::RtsWifiAccessPointRequest& new_RtsWifiAccessPointRequest);
+  void Set_RtsWifiAccessPointRequest(Anki::Victor::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest);
+  
+  /** RtsWifiAccessPointResponse **/
+  static RtsConnection CreateRtsWifiAccessPointResponse(Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
+  explicit RtsConnection(Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
+  const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse& Get_RtsWifiAccessPointResponse() const;
+  void Set_RtsWifiAccessPointResponse(const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse& new_RtsWifiAccessPointResponse);
+  void Set_RtsWifiAccessPointResponse(Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
+  
   size_t Unpack(const uint8_t* buff, const size_t len);
   size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
   
@@ -1169,6 +1281,8 @@ private:
     Anki::Victor::ExternalComms::RtsCancelPairing _RtsCancelPairing;
     Anki::Victor::ExternalComms::RtsForceDisconnect _RtsForceDisconnect;
     Anki::Victor::ExternalComms::RtsAck _RtsAck;
+    Anki::Victor::ExternalComms::RtsWifiAccessPointRequest _RtsWifiAccessPointRequest;
+    Anki::Victor::ExternalComms::RtsWifiAccessPointResponse _RtsWifiAccessPointResponse;
   };
 };
 extern const char* RtsConnectionVersionHashStr;

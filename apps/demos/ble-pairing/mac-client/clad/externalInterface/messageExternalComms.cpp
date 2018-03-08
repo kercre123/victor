@@ -1179,6 +1179,144 @@ const uint8_t RtsOtaUpdateResponseVersionHash[16] = {
     0x9d, 0xcf, 0xf4, 0x49, 0x1, 0x4c, 0x85, 0xb0, 0xad, 0xf3, 0xb7, 0x12, 0xba, 0x74, 0x2a, 0x92 
 };
 
+// MESSAGE RtsWifiAccessPointRequest
+
+RtsWifiAccessPointRequest::RtsWifiAccessPointRequest(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsWifiAccessPointRequest::RtsWifiAccessPointRequest(const uint8_t* buff, size_t len)
+: RtsWifiAccessPointRequest::RtsWifiAccessPointRequest({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsWifiAccessPointRequest::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsWifiAccessPointRequest::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  buffer.Write(this->enable);
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsWifiAccessPointRequest::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsWifiAccessPointRequest::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  buffer.Read(this->enable);
+  return buffer.GetBytesRead();
+}
+
+size_t RtsWifiAccessPointRequest::Size() const
+{
+  size_t result = 0;
+  // enable
+  result += 1; // bool
+  return result;
+}
+
+bool RtsWifiAccessPointRequest::operator==(const RtsWifiAccessPointRequest& other) const
+{
+  return (this->enable == other.enable);
+}
+
+bool RtsWifiAccessPointRequest::operator!=(const RtsWifiAccessPointRequest& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsWifiAccessPointRequestVersionHashStr = "3c3da793135710edb20ccf6cdb219090";
+
+const uint8_t RtsWifiAccessPointRequestVersionHash[16] = { 
+    0x3c, 0x3d, 0xa7, 0x93, 0x13, 0x57, 0x10, 0xed, 0xb2, 0xc, 0xcf, 0x6c, 0xdb, 0x21, 0x90, 0x90 
+};
+
+// MESSAGE RtsWifiAccessPointResponse
+
+RtsWifiAccessPointResponse::RtsWifiAccessPointResponse(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsWifiAccessPointResponse::RtsWifiAccessPointResponse(const uint8_t* buff, size_t len)
+: RtsWifiAccessPointResponse::RtsWifiAccessPointResponse({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsWifiAccessPointResponse::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsWifiAccessPointResponse::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  buffer.Write(this->enabled);
+  buffer.WritePString<uint8_t>(this->ssid);
+  buffer.WritePString<uint8_t>(this->pw);
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsWifiAccessPointResponse::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsWifiAccessPointResponse::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  buffer.Read(this->enabled);
+  buffer.ReadPString<uint8_t>(this->ssid);
+  buffer.ReadPString<uint8_t>(this->pw);
+  return buffer.GetBytesRead();
+}
+
+size_t RtsWifiAccessPointResponse::Size() const
+{
+  size_t result = 0;
+  // enabled
+  result += 1; // bool
+  // ssid
+  result += 1; // uint_8 (string length)
+  result += this->ssid.length(); // uint_8
+  // pw
+  result += 1; // uint_8 (string length)
+  result += this->pw.length(); // uint_8
+  return result;
+}
+
+bool RtsWifiAccessPointResponse::operator==(const RtsWifiAccessPointResponse& other) const
+{
+  return (this->enabled == other.enabled &&
+    this->ssid == other.ssid &&
+    this->pw == other.pw);
+}
+
+bool RtsWifiAccessPointResponse::operator!=(const RtsWifiAccessPointResponse& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsWifiAccessPointResponseVersionHashStr = "cab459d3822b11ff3ea01fc4d25794a7";
+
+const uint8_t RtsWifiAccessPointResponseVersionHash[16] = { 
+    0xca, 0xb4, 0x59, 0xd3, 0x82, 0x2b, 0x11, 0xff, 0x3e, 0xa0, 0x1f, 0xc4, 0xd2, 0x57, 0x94, 0xa7 
+};
+
 // MESSAGE RtsCancelPairing
 
 RtsCancelPairing::RtsCancelPairing(const CLAD::SafeMessageBuffer& buffer)
@@ -1432,6 +1570,12 @@ RtsConnection::RtsConnection(const RtsConnection& other)
   case Tag::RtsAck:
     new(&(this->_RtsAck)) Anki::Victor::ExternalComms::RtsAck(other._RtsAck);
     break;
+  case Tag::RtsWifiAccessPointRequest:
+    new(&(this->_RtsWifiAccessPointRequest)) Anki::Victor::ExternalComms::RtsWifiAccessPointRequest(other._RtsWifiAccessPointRequest);
+    break;
+  case Tag::RtsWifiAccessPointResponse:
+    new(&(this->_RtsWifiAccessPointResponse)) Anki::Victor::ExternalComms::RtsWifiAccessPointResponse(other._RtsWifiAccessPointResponse);
+    break;
   default:
     _tag = Tag::INVALID;
     break;
@@ -1498,6 +1642,12 @@ RtsConnection::RtsConnection(RtsConnection&& other) noexcept
     break;
   case Tag::RtsAck:
     new(&(this->_RtsAck)) Anki::Victor::ExternalComms::RtsAck(std::move(other._RtsAck));
+    break;
+  case Tag::RtsWifiAccessPointRequest:
+    new(&(this->_RtsWifiAccessPointRequest)) Anki::Victor::ExternalComms::RtsWifiAccessPointRequest(std::move(other._RtsWifiAccessPointRequest));
+    break;
+  case Tag::RtsWifiAccessPointResponse:
+    new(&(this->_RtsWifiAccessPointResponse)) Anki::Victor::ExternalComms::RtsWifiAccessPointResponse(std::move(other._RtsWifiAccessPointResponse));
     break;
   default:
     _tag = Tag::INVALID;
@@ -1569,6 +1719,12 @@ RtsConnection& RtsConnection::operator=(const RtsConnection& other)
   case Tag::RtsAck:
     new(&(this->_RtsAck)) Anki::Victor::ExternalComms::RtsAck(other._RtsAck);
     break;
+  case Tag::RtsWifiAccessPointRequest:
+    new(&(this->_RtsWifiAccessPointRequest)) Anki::Victor::ExternalComms::RtsWifiAccessPointRequest(other._RtsWifiAccessPointRequest);
+    break;
+  case Tag::RtsWifiAccessPointResponse:
+    new(&(this->_RtsWifiAccessPointResponse)) Anki::Victor::ExternalComms::RtsWifiAccessPointResponse(other._RtsWifiAccessPointResponse);
+    break;
   default:
     _tag = Tag::INVALID;
     break;
@@ -1638,6 +1794,12 @@ RtsConnection& RtsConnection::operator=(RtsConnection&& other) noexcept
     break;
   case Tag::RtsAck:
     new(&(this->_RtsAck)) Anki::Victor::ExternalComms::RtsAck(std::move(other._RtsAck));
+    break;
+  case Tag::RtsWifiAccessPointRequest:
+    new(&(this->_RtsWifiAccessPointRequest)) Anki::Victor::ExternalComms::RtsWifiAccessPointRequest(std::move(other._RtsWifiAccessPointRequest));
+    break;
+  case Tag::RtsWifiAccessPointResponse:
+    new(&(this->_RtsWifiAccessPointResponse)) Anki::Victor::ExternalComms::RtsWifiAccessPointResponse(std::move(other._RtsWifiAccessPointResponse));
     break;
   default:
     _tag = Tag::INVALID;
@@ -2711,6 +2873,118 @@ void RtsConnection::Set_RtsAck(Anki::Victor::ExternalComms::RtsAck&& new_RtsAck)
   }
 }
 
+RtsConnection RtsConnection::CreateRtsWifiAccessPointRequest(Anki::Victor::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest)
+{
+  RtsConnection m;
+  m.Set_RtsWifiAccessPointRequest(new_RtsWifiAccessPointRequest);
+  return m;
+}
+
+RtsConnection::RtsConnection(Anki::Victor::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest)
+{
+  new(&this->_RtsWifiAccessPointRequest) Anki::Victor::ExternalComms::RtsWifiAccessPointRequest(std::move(new_RtsWifiAccessPointRequest));
+  _tag = Tag::RtsWifiAccessPointRequest;
+}
+
+const Anki::Victor::ExternalComms::RtsWifiAccessPointRequest& RtsConnection::Get_RtsWifiAccessPointRequest() const
+{
+  assert(_tag == Tag::RtsWifiAccessPointRequest);
+  return this->_RtsWifiAccessPointRequest;
+}
+
+void RtsConnection::Set_RtsWifiAccessPointRequest(const Anki::Victor::ExternalComms::RtsWifiAccessPointRequest& new_RtsWifiAccessPointRequest)
+{
+  if(this->_tag == Tag::RtsWifiAccessPointRequest) {
+    this->_RtsWifiAccessPointRequest = new_RtsWifiAccessPointRequest;
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsWifiAccessPointRequest) Anki::Victor::ExternalComms::RtsWifiAccessPointRequest(new_RtsWifiAccessPointRequest);
+    _tag = Tag::RtsWifiAccessPointRequest;
+  }
+}
+
+template<>
+const Anki::Victor::ExternalComms::RtsWifiAccessPointRequest& RtsConnection::Get_<RtsConnection::Tag::RtsWifiAccessPointRequest>() const
+{
+  assert(_tag == Tag::RtsWifiAccessPointRequest);
+  return this->_RtsWifiAccessPointRequest;
+}
+
+template<>
+RtsConnection RtsConnection::Create_<RtsConnection::Tag::RtsWifiAccessPointRequest>(Anki::Victor::ExternalComms::RtsWifiAccessPointRequest member)
+{
+  return CreateRtsWifiAccessPointRequest(std::move(member));
+}
+
+void RtsConnection::Set_RtsWifiAccessPointRequest(Anki::Victor::ExternalComms::RtsWifiAccessPointRequest&& new_RtsWifiAccessPointRequest)
+{
+  if (this->_tag == Tag::RtsWifiAccessPointRequest) {
+    this->_RtsWifiAccessPointRequest = std::move(new_RtsWifiAccessPointRequest);
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsWifiAccessPointRequest) Anki::Victor::ExternalComms::RtsWifiAccessPointRequest(std::move(new_RtsWifiAccessPointRequest));
+    _tag = Tag::RtsWifiAccessPointRequest;
+  }
+}
+
+RtsConnection RtsConnection::CreateRtsWifiAccessPointResponse(Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse)
+{
+  RtsConnection m;
+  m.Set_RtsWifiAccessPointResponse(new_RtsWifiAccessPointResponse);
+  return m;
+}
+
+RtsConnection::RtsConnection(Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse)
+{
+  new(&this->_RtsWifiAccessPointResponse) Anki::Victor::ExternalComms::RtsWifiAccessPointResponse(std::move(new_RtsWifiAccessPointResponse));
+  _tag = Tag::RtsWifiAccessPointResponse;
+}
+
+const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse& RtsConnection::Get_RtsWifiAccessPointResponse() const
+{
+  assert(_tag == Tag::RtsWifiAccessPointResponse);
+  return this->_RtsWifiAccessPointResponse;
+}
+
+void RtsConnection::Set_RtsWifiAccessPointResponse(const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse& new_RtsWifiAccessPointResponse)
+{
+  if(this->_tag == Tag::RtsWifiAccessPointResponse) {
+    this->_RtsWifiAccessPointResponse = new_RtsWifiAccessPointResponse;
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsWifiAccessPointResponse) Anki::Victor::ExternalComms::RtsWifiAccessPointResponse(new_RtsWifiAccessPointResponse);
+    _tag = Tag::RtsWifiAccessPointResponse;
+  }
+}
+
+template<>
+const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse& RtsConnection::Get_<RtsConnection::Tag::RtsWifiAccessPointResponse>() const
+{
+  assert(_tag == Tag::RtsWifiAccessPointResponse);
+  return this->_RtsWifiAccessPointResponse;
+}
+
+template<>
+RtsConnection RtsConnection::Create_<RtsConnection::Tag::RtsWifiAccessPointResponse>(Anki::Victor::ExternalComms::RtsWifiAccessPointResponse member)
+{
+  return CreateRtsWifiAccessPointResponse(std::move(member));
+}
+
+void RtsConnection::Set_RtsWifiAccessPointResponse(Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse)
+{
+  if (this->_tag == Tag::RtsWifiAccessPointResponse) {
+    this->_RtsWifiAccessPointResponse = std::move(new_RtsWifiAccessPointResponse);
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsWifiAccessPointResponse) Anki::Victor::ExternalComms::RtsWifiAccessPointResponse(std::move(new_RtsWifiAccessPointResponse));
+    _tag = Tag::RtsWifiAccessPointResponse;
+  }
+}
+
 size_t RtsConnection::Unpack(const uint8_t* buff, const size_t len)
 {
   const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -2878,6 +3152,22 @@ size_t RtsConnection::Unpack(const CLAD::SafeMessageBuffer& buffer)
       this->_RtsAck.Unpack(buffer);
     }
     break;
+  case Tag::RtsWifiAccessPointRequest:
+    if (newTag != oldTag) {
+      new(&(this->_RtsWifiAccessPointRequest)) Anki::Victor::ExternalComms::RtsWifiAccessPointRequest(buffer);
+    }
+    else {
+      this->_RtsWifiAccessPointRequest.Unpack(buffer);
+    }
+    break;
+  case Tag::RtsWifiAccessPointResponse:
+    if (newTag != oldTag) {
+      new(&(this->_RtsWifiAccessPointResponse)) Anki::Victor::ExternalComms::RtsWifiAccessPointResponse(buffer);
+    }
+    else {
+      this->_RtsWifiAccessPointResponse.Unpack(buffer);
+    }
+    break;
   default:
     break;
   }
@@ -2952,6 +3242,12 @@ size_t RtsConnection::Pack(CLAD::SafeMessageBuffer& buffer) const
   case Tag::RtsAck:
     this->_RtsAck.Pack(buffer);
     break;
+  case Tag::RtsWifiAccessPointRequest:
+    this->_RtsWifiAccessPointRequest.Pack(buffer);
+    break;
+  case Tag::RtsWifiAccessPointResponse:
+    this->_RtsWifiAccessPointResponse.Pack(buffer);
+    break;
   default:
     break;
   }
@@ -3019,6 +3315,12 @@ size_t RtsConnection::Size() const
   case Tag::RtsAck:
     result += this->_RtsAck.Size(); // RtsAck
     break;
+  case Tag::RtsWifiAccessPointRequest:
+    result += this->_RtsWifiAccessPointRequest.Size(); // RtsWifiAccessPointRequest
+    break;
+  case Tag::RtsWifiAccessPointResponse:
+    result += this->_RtsWifiAccessPointResponse.Size(); // RtsWifiAccessPointResponse
+    break;
   default:
     break;
   }
@@ -3069,6 +3371,10 @@ bool RtsConnection::operator==(const RtsConnection& other) const
     return this->_RtsForceDisconnect == other._RtsForceDisconnect;
   case Tag::RtsAck:
     return this->_RtsAck == other._RtsAck;
+  case Tag::RtsWifiAccessPointRequest:
+    return this->_RtsWifiAccessPointRequest == other._RtsWifiAccessPointRequest;
+  case Tag::RtsWifiAccessPointResponse:
+    return this->_RtsWifiAccessPointResponse == other._RtsWifiAccessPointResponse;
   default:
     return true;
   }
@@ -3139,6 +3445,12 @@ void RtsConnection::ClearCurrent()
   case Tag::RtsAck:
     _RtsAck.~RtsAck();
     break;
+  case Tag::RtsWifiAccessPointRequest:
+    _RtsWifiAccessPointRequest.~RtsWifiAccessPointRequest();
+    break;
+  case Tag::RtsWifiAccessPointResponse:
+    _RtsWifiAccessPointResponse.~RtsWifiAccessPointResponse();
+    break;
   default:
     break;
   }
@@ -3185,15 +3497,19 @@ const char* RtsConnectionTagToString(const RtsConnectionTag tag) {
     return "RtsForceDisconnect";
   case RtsConnectionTag::RtsAck:
     return "RtsAck";
+  case RtsConnectionTag::RtsWifiAccessPointRequest:
+    return "RtsWifiAccessPointRequest";
+  case RtsConnectionTag::RtsWifiAccessPointResponse:
+    return "RtsWifiAccessPointResponse";
   default:
     return "INVALID";
   }
 }
 
-const char* RtsConnectionVersionHashStr = "5d7e6fe1c6fe205c836ceed7bff7516e";
+const char* RtsConnectionVersionHashStr = "73760b8fb1ab7309580640f379fdf295";
 
 const uint8_t RtsConnectionVersionHash[16] = { 
-    0x5d, 0x7e, 0x6f, 0xe1, 0xc6, 0xfe, 0x20, 0x5c, 0x83, 0x6c, 0xee, 0xd7, 0xbf, 0xf7, 0x51, 0x6e 
+    0x73, 0x76, 0xb, 0x8f, 0xb1, 0xab, 0x73, 0x9, 0x58, 0x6, 0x40, 0xf3, 0x79, 0xfd, 0xf2, 0x95 
 };
 
 const char* EnumToString(const RobotStatus m)

@@ -63,6 +63,12 @@ case Anki::Victor::ExternalComms::RtsConnection::Tag::RtsForceDisconnect:
 case Anki::Victor::ExternalComms::RtsConnection::Tag::RtsAck:
   Process_RtsAck(msg.Get_RtsAck());
   break;
+case Anki::Victor::ExternalComms::RtsConnection::Tag::RtsWifiAccessPointRequest:
+  Process_RtsWifiAccessPointRequest(msg.Get_RtsWifiAccessPointRequest());
+  break;
+case Anki::Victor::ExternalComms::RtsConnection::Tag::RtsWifiAccessPointResponse:
+  Process_RtsWifiAccessPointResponse(msg.Get_RtsWifiAccessPointResponse());
+  break;
 }
 switch(msg.GetTag()) {
 default:

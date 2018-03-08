@@ -177,6 +177,11 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         [self HandleWifiScanResponse:msg];
         break;
       }
+      case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiAccessPointResponse: {
+        Anki::Victor::ExternalComms::RtsWifiAccessPointResponse msg = rtsMsg.Get_RtsWifiAccessPointResponse();
+        [self HandleReceiveAccessPointResponse:msg];
+        break;
+      }
       case Anki::Victor::ExternalComms::RtsConnectionTag::RtsOtaUpdateResponse: {
         //
         break;
@@ -289,6 +294,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 - (void) HandleChallengeSuccessMessage:(const Anki::Victor::ExternalComms::RtsChallengeSuccessMessage&)msg {
   [self printSuccess:"### Successfully Created Encrypted Channel ###"];
   Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiScanRequest>(self);
+  //Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiAccessPointRequest>(self, true);
 }
 
 - (void) HandleWifiScanResponse:(const Anki::Victor::ExternalComms::RtsWifiScanResponse&)msg {
@@ -304,6 +310,10 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   scanf("%32s %64s", ssid, pw);
   
   Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiConnectRequest>(self, std::string(ssid), std::string(pw));
+}
+
+- (void) HandleWifiAccessPointResponse:(const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&)msg {
+  NSLog(@"Access point enabled with SSID: [%s] PW: [%s]", msg.ssid.c_str(), msg.pw.c_str());
 }
 
 - (void)peripheral:(CBPeripheral *)peripheral

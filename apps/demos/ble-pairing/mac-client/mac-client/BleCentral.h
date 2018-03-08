@@ -61,6 +61,7 @@ enum RtsState {
 - (void) HandleChallengeSuccessMessage:(const Anki::Victor::ExternalComms::RtsChallengeSuccessMessage&)msg;
 - (void) HandleWifiScanResponse:(const Anki::Victor::ExternalComms::RtsWifiScanResponse&)msg;
 - (void) HandleWifiConnectResponse:(const Anki::Victor::ExternalComms::RtsWifiConnectResponse&)msg;
+- (void) HandleReceiveAccessPointResponse:(const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&)msg;
 
 - (void) send:(const void*)bytes length:(int)n;
 - (void) sendSecure:(const void*)bytes length:(int)n;

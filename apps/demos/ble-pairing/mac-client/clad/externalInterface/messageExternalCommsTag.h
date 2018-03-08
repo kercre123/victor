@@ -33,6 +33,8 @@ enum class RtsConnectionTag : uint8_t {
   RtsCancelPairing           = 0x10, // 16
   RtsForceDisconnect         = 0x11, // 17
   RtsAck                     = 0x12, // 18
+  RtsWifiAccessPointRequest  = 0x13, // 19
+  RtsWifiAccessPointResponse = 0x14, // 20
   INVALID                    = 255
 };
 
