@@ -14,6 +14,7 @@
 #include <netdb.h> //hostent
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <glib.h>
 #include "exec_command.h"
 #include "fileutils.h"
 #include "log.h"
@@ -205,6 +206,16 @@ void HandleOutputCallback(int rc, const std::string& output) {
   // noop
 }
 
+static GMutex connectMutex;
+
+void connectCallback(GObject *source_object, GAsyncResult *res, gpointer user_data)
+{
+  GCond *cond = (GCond *)user_data;
+
+  loge("%s called\n", __func__);
+  g_cond_signal(cond);
+}
+
 bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb, gpointer userData) {
   ConnManBusTechnology* tech_proxy;
   GError* error;
@@ -364,25 +375,28 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
                                   nullptr,
                                   &error);
 
-  //conn_man_bus_service_call_connect(service, nullptr, cb, userData);
 
-  /*GAsyncResult result;
+  GCond connectCond;
+
+  g_cond_init(&connectCond);
+  GAsyncResult *result;
+
+  g_mutex_lock(&connectMutex);
+  conn_man_bus_service_call_connect(service, nullptr, connectCallback, (gpointer)&connectCond);
+
+  g_cond_wait(&connectCond, &connectMutex);
+  g_mutex_unlock(&connectMutex);
 
   gboolean didConnect = conn_man_bus_service_call_connect_finish (
     service,
-    &result,
+    result,
     &error);
 
   printf("Did connect? %d\n", didConnect);
 
   if(error != nullptr) {
     printf("Did connect? %s\n",error->message);
-  }*/
-
-  gboolean didConnect = conn_man_bus_service_call_connect_sync (
-                                 service,
-                                 nullptr,
-                                 &error);
+  }
 
   if(!didConnect && error != nullptr) {
     // 24 -- timeout ? wrong password
