@@ -23,7 +23,7 @@
   _writeSecureUuid =
     [CBUUID UUIDWithString:@"28C35E4C-B218-43CB-9718-3D7EDE9B5316"];
   
-  _localName = @"VICTOR_1dd99b69";
+  _localName = @"Vector B4H3";
   _connecting = false;
   _rtsState = Raw;
   
