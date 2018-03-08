@@ -59,12 +59,26 @@ static bool kUseButtonToStart             = true;
 // How long to record touch sensor data
 static u32  kDurationOfTouchToRecord_ms   = 0;
 
+// Whether or not to check for cloud cert
+static bool kCheckForCert                 = false;
+
+// Path of cloud cert
+static std::string kCertPath              = "/factory/cloud/something.pem";
+
+// The cloud cert should be at least this large
+static ssize_t     kMinCertSize_bytes     = 1000;
+
+// Path to data directory
+static std::string kDataDirPath           = "/data/data/com.anki.victor";
+
+// If data dir is larger than this size, it is deleted
+static ssize_t     kMaxDataDirSize_bytes  = 200000000;
+
 // ----------InitChecks----------
 // Whether or not to check firmware version
 static bool      kCheckFirmwareVersion = true;
 
 // Minimum battery voltage the robot should have at the start and end of playpen
-// TODO(Al): Reenable
 static f32       kMinBatteryVoltage    = 3.6;
 
 // Minimum firmare version we are looking for
