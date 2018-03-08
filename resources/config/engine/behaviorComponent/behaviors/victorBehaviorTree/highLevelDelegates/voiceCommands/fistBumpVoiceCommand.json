@@ -2,13 +2,6 @@
   "behaviorID" : "FistBumpVoiceCommand",
   "behaviorClass" : "DispatcherQueue",
 
-  "respondToUserIntents": [
-    {
-      "type": "play_specific",
-      "entity_behavior": "fist_bump"
-    }
-  ],
-
   "behaviors": [
     "DriveOffCharger",
     "FistBumpInternal"
