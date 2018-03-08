@@ -587,8 +587,7 @@ union EngineToRobot
   TextToSpeechStop              textToSpeechStop            = 0x93,
 
   SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
-  SwitchboardInterface::SetBLEName          setBLEName          = 0xA1,
-  SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA2,
+  SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA1,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

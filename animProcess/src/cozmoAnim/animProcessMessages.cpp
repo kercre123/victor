@@ -346,11 +346,6 @@ void Process_setConnectionStatus(const Anki::Cozmo::SwitchboardInterface::SetCon
   UpdateConnectionFlow(std::move(msg), _animStreamer, _context);
 }
 
-void Process_setBLEName(const Anki::Cozmo::SwitchboardInterface::SetBLEName& msg)
-{
-  SetBLEName(msg.name);
-}
-
 void Process_setBLEPin(const Anki::Cozmo::SwitchboardInterface::SetBLEPin& msg)
 {
   SetBLEPin(msg.pin);

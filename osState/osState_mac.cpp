@@ -128,6 +128,11 @@ std::string OSState::GetMACAddress() const
   return "00:00:00:00:00:00";
 }
 
+std::string OSState::GetRobotName() const
+{
+  return "Vector_0000";
+}
+
 } // namespace Cozmo
 } // namespace Anki
 
