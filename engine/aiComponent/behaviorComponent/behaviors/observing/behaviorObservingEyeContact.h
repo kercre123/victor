@@ -30,9 +30,12 @@ public:
   
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
-    modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
-    modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingGaze, EVisionUpdateFrequency::Standard });
-    modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingBlinkAmount, EVisionUpdateFrequency::Standard });
+    modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingFaces,
+                                                     EVisionUpdateFrequency::Standard });
+    modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingGaze,
+                                                     EVisionUpdateFrequency::Standard });
+    modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingBlinkAmount,
+                                                     EVisionUpdateFrequency::Standard });
   }
 
   virtual void OnBehaviorActivated() override;
