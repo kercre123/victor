@@ -98,7 +98,7 @@ namespace TestCommon
     e[2] = which == TO_DUT_UART ? DUT_UART::getRxFramingErrors() : Contacts::getRxFramingErrors();
   }
   
-  void consoleBridge(bridge_target_e which, int inactivity_delay_ms, int timeout_ms, int opts)
+  void consoleBridge(bridge_target_e which, int inactivity_delay_ms, int timeout_ms, int opts, bridge_hook_sendline_t hook_sendline )
   {
     const char cmd_exit[5] = "exit";    int exit_idx = 0;
     const char cmd_echo[5] = "echo";    int echo_idx = 0;
@@ -153,13 +153,35 @@ namespace TestCommon
           {
             if( c == '\r' || c == '\n' ) { //enter or return
               ConsolePutChar(c);
-              if( line_len > 0 ) {
+              if( line_len > 0 )
+              {
                 line[line_len] = '\0';
-                for(int x=0; x<line_len; x++)
-                  bridge_putchar_(which, line[x]); //dump the entire line
-                bridge_putchar_(which, '\n');
-                recall_len = line_len; //save length for recall
-                line_len = 0;
+                bool allow_send = 1;
+                
+                if( hook_sendline != NULL ) //hook for external alias/substitutions
+                {
+                  const char* sub_line = hook_sendline(line, line_len);
+                  int sub_len = sub_line != NULL ? strlen(sub_line) : 0;
+                  if( sub_line && sub_len > 0 )
+                  {
+                    sub_len = sub_len > line_maxlen ? line_maxlen : sub_len; //limit to our buffer size
+                    memcpy(line, sub_line, sub_len);
+                    line_len = sub_len;
+                    line[line_len] = '\0';
+                    
+                    for(int x=0; x<line_len; x++) //be helpful and type the substitute line into the console
+                      ConsolePutChar(line[x]);
+                    allow_send = 0; //don't send this now; leave in console for user to modify
+                  }
+                }
+                
+                if( allow_send ) {
+                  for(int x=0; x<line_len; x++)
+                    bridge_putchar_(which, line[x]); //dump the entire line
+                  bridge_putchar_(which, '\n');
+                  recall_len = line_len; //save length for recall
+                  line_len = 0;
+                }
               }
             } else if( c == 0x1B ) { //ESC
               if( recall_len > 0 ) {

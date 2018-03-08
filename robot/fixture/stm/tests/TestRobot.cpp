@@ -55,6 +55,27 @@ char* cmdSend_DBG_(cmd_io io, const char* scmd, int timeout_ms, int opts )
   return rsp;
 }
 
+const char* DBG_cmd_substitution(const char *line, int len)
+{
+  static char buf[25];
+  
+  if( !strcmp(line, "esn") )
+    return ">>esn 00 00 00 00 00 00";
+  if( !strcmp(line, "bsv") )
+    return ">>bsv 00 00 00 00 00 00";
+  if( !strcmp(line, "mot") )
+    return ">>mot 1f 00";
+  if( !strcmp(line, "get") )
+    return ">>get 02 00";
+  if( !strncmp(line,"smr",3) || !strncmp(line,"gmr",3) || !strncmp(line,"rlg",3) || !strncmp(line,"eng",3) || !strncmp(line,"lfe",3) || !strncmp(line,"fcc",3) ) {
+    int nargs = cmdNumArgs((char*)line);
+    int ix  = nargs >= 2 ? cmdParseInt32(cmdGetArg((char*)line,1)) : 0;
+    int val = nargs >= 3 ? cmdParseInt32(cmdGetArg((char*)line,2)) : 0;
+    return snformat(buf,sizeof(buf),">>%c%c%c %02x %02x %02x %02x %02x 00", line[0],line[1],line[2], ix, val&0xFF, (val>>8)&0xff, (val>>16)&0xff, (val>>24)&0xff);
+  }
+  return 0;
+}
+
 //always run this first after detect, to get into comms mode
 void TestRobotInfo(void)
 {
@@ -81,7 +102,7 @@ void TestRobotInfo(void)
   
   //DEBUG: console bridge, manual testing
   if( g_fixmode == FIXMODE_ROBOT0 )
-    TestCommon::consoleBridge(TO_CONTACTS, 0);
+    TestCommon::consoleBridge(TO_CONTACTS, 0, 0, BRIDGE_OPT_LINEBUFFER, DBG_cmd_substitution);
   if( g_fixmode == FIXMODE_ROBOT1 )
     TestCommon::consoleBridge(TO_CONTACTS, 3000);
   //-*/
