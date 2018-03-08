@@ -466,10 +466,18 @@ bool CanConnectToHostName(char* hostName) {
 
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
+  // we will try to make tcp connection using IPv4
   addr.sin_family = AF_INET;
   addr.sin_port = htons(80);
 
-  char ipAddr[50];
+  char ipAddr[100];
+
+  if(strlen(hostName) > 100) {
+    // don't allow host names larger than 100 chars
+    return false;
+  }
+
+  // Try to get IP from host name (will do DNS resolve)
   bool gotIp = GetIpFromHostName(hostName, ipAddr);
 
   if(!gotIp) {
@@ -477,16 +485,18 @@ bool CanConnectToHostName(char* hostName) {
   }
 
   if(inet_pton(AF_INET, ipAddr, &addr.sin_addr) <= 0) {
-    // can't resolve google.com
+    // can't resolve hostname
     return false;
   }
 
   if(connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-    // can't connect to google
+    // can't connect to hostname
     return false;
   }
 
   close(sockfd);
+  
+  // success, return true!
   return true;
 }
 
@@ -506,6 +516,7 @@ bool GetIpFromHostName(char* hostName, char* ipAddressOut) {
     return false;
   }
 
+  // we have an ip!
   strcpy(ipAddressOut, inet_ntoa(*ip[0]));
 
   return true;

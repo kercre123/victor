@@ -32,22 +32,22 @@ std::string Anki::Switchboard::KeyExchange::GeneratePin() {
     return "";
   }
 
-  // @seichert
   std::random_device rd;
   std::mt19937 gen(rd());
-  
-  std::string pinStr;
-  
-  // The first digit cannot be 0, must be between 1 and 9
-  std::uniform_int_distribution<> dis('1', '9');
-  pinStr.push_back((char) dis(gen));
-  
-  // Subsequent digits can be between 0 and 9
-  dis.param(std::uniform_int_distribution<>::param_type('0','9'));
-  for (int i = 1 ; i < _numPinDigits; i++) {
-    pinStr.push_back((char) dis(gen));
+
+  // min (inclusive) value
+  int minValue = 1;
+
+  // add _numPinDigits 0s to minValue
+  for(int i = 0; i < _numPinDigits - 1; i++) {
+    minValue *= 10;
   }
-  return pinStr;
+
+  // max (inclusive) value. append a 0, and subtract 1
+  int maxValue = (minValue * 10) - 1;
+
+  std::uniform_int_distribution<> dis(minValue, maxValue);
+  return std::to_string(dis(gen));
 }
 
 void Anki::Switchboard::KeyExchange::SetRemotePublicKey(const uint8_t* pubKey) {
