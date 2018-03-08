@@ -64,6 +64,7 @@ protected:
   float _boredomMultiplier = 0.8f;
   float _maxTimeBeforeRotate = 5.f;
   float _oddsOfPouncingOnTurn = 0.0f;
+  bool  _dontPounceUnlessMotion = false;
   
   
 private:

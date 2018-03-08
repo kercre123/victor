@@ -41,6 +41,7 @@ static const char* kMaxNoMotionBeforeBored_notRunning_Sec = "maxNoGroundMotionBe
 static const char* kMaxTimeBehaviorTimeout_Sec            = "maxTimeBehaviorTimeout_Sec";
 static const char* kTimeBeforeRotate_Sec                  = "timeBeforeRotate_Sec";
 static const char* kOddsOfPouncingOnTurn                  = "oddsOfPouncingOnTurn";
+static const char* kDontPounceUnlessMotion                = "dontPounceUnlessMotion";  
 static const char* kBoredomMultiplier                     = "boredomMultiplier";
 static const char* kSearchAmplitudeDeg                    = "searchAmplitudeDeg";
 static const char* kSkipGetOutAnim                        = "skipGetOutAnim";
@@ -100,6 +101,9 @@ BehaviorPounceOnMotion::BehaviorPounceOnMotion(const Json::Value& config)
   _oddsOfPouncingOnTurn = config.get(kOddsOfPouncingOnTurn, 0.0).asFloat();
   _searchAmplitude_rad = Radians(DEG_TO_RAD(config.get(kSearchAmplitudeDeg, 45).asFloat()));
   _skipGetOutAnim = config.get(kSkipGetOutAnim, false).asBool();
+  _dontPounceUnlessMotion = config.get(kDontPounceUnlessMotion, false).asBool();
+  
+  DEV_ASSERT( !((_oddsOfPouncingOnTurn > 0.0f) && _dontPounceUnlessMotion), "Don't supply both" );
 
   SET_STATE(Inactive);
   _lastMotionTime = -1000.f;
@@ -186,7 +190,7 @@ void BehaviorPounceOnMotion::TransitionToInitialPounce()
   }
   
   // Skip the initial pounce and go straight to search if streamlined
-  if(ShouldStreamline())
+  if(ShouldStreamline() || _dontPounceUnlessMotion)
   {
     TransitionToInitialSearch();
   }
@@ -310,8 +314,9 @@ void BehaviorPounceOnMotion::TransitionToRotateToWatchingNewArea()
   IActionRunner* panAction = new PanAndTiltAction(panAngle, tiltRads, false, false);
   
   //if we are above the threshold percentage, pounce and pan - otherwise, just pan
+  // (just in case someone changed _oddsOfPouncingOnTurn or _dontPounceUnlessMotion, check both)
   const float shouldPounceOnTurn = GetRNG().RandDblInRange(0, 1);
-  if(shouldPounceOnTurn < _oddsOfPouncingOnTurn){
+  if( (shouldPounceOnTurn < _oddsOfPouncingOnTurn) && !_dontPounceUnlessMotion ){
     PounceOnMotionWithCallback(&BehaviorPounceOnMotion::TransitionToWaitForMotion, panAction);
   }else{
     DelegateIfInControl(panAction, &BehaviorPounceOnMotion::TransitionToWaitForMotion);
@@ -381,6 +386,7 @@ void BehaviorPounceOnMotion::TransitionToTurnToMotion(int16_t motion_img_x, int1
   
   auto callback = &BehaviorPounceOnMotion::TransitionToCreepForward;
   // steadily increase the chance we'll pounce if we haven't pounced while seeing motion in a while
+  // (ignore _dontPounceUnlessMotion here since this method is called only if motion was seen)
   const bool shouldPounceNoMatterWhat = _motionObservedNoPounceCount > kMotionObservedCountBeforePossiblePounce &&
                                            (_motionObservedNoPounceCount * .2) > GetRNG().RandDblInRange(0, 1);
   
