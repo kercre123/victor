@@ -47,6 +47,7 @@ private:
   void TransitionToMountCharger();
   void TransitionToPlayingNuzzleAnim();
   void TransitionToOnChargerCheck();
+  void ActionFailure();
   
   void PushDrivingAnims();
   void PopDrivingAnims();

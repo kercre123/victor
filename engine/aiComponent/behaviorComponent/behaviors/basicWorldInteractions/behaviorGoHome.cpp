@@ -86,7 +86,14 @@ void BehaviorGoHome::OnBehaviorActivated()
   
   auto driveToAction = new DriveToObjectAction(_chargerID, PreActionPose::ActionType::DOCKING);
   driveToAction->SetPreActionPoseAngleTolerance(DEG_TO_RAD(15.f));
-  DelegateIfInControl(driveToAction, &BehaviorGoHome::TransitionToTurn);
+  DelegateIfInControl(driveToAction,
+                      [this](ActionResult result) {
+                        if (result == ActionResult::SUCCESS) {
+                          TransitionToTurn();
+                        } else {
+                          ActionFailure();
+                        }
+                      });
 }
 
 
@@ -102,7 +109,13 @@ void BehaviorGoHome::TransitionToTurn()
   DelegateIfInControl(new TurnToAlignWithChargerAction(_chargerID,
                                                        _params.leftTurnAnimTrigger,
                                                        _params.rightTurnAnimTrigger),
-                      &BehaviorGoHome::TransitionToMountCharger);
+                      [this](ActionResult result) {
+                        if (result == ActionResult::SUCCESS) {
+                          TransitionToMountCharger();
+                        } else {
+                          ActionFailure();
+                        }
+                      });
 }
 
 
@@ -113,7 +126,14 @@ void BehaviorGoHome::TransitionToMountCharger()
   action->AddAction(new TriggerAnimationAction(_params.raiseLiftAnimTrigger));
   action->AddAction(new MountChargerAction(_chargerID, _params.useCliffSensorCorrection));
   
-  DelegateIfInControl(action, &BehaviorGoHome::TransitionToPlayingNuzzleAnim);
+  DelegateIfInControl(action,
+                      [this](ActionResult result) {
+                        if (result == ActionResult::SUCCESS) {
+                          TransitionToPlayingNuzzleAnim();
+                        } else {
+                          ActionFailure();
+                        }
+                      });
 }
 
 
@@ -134,6 +154,13 @@ void BehaviorGoHome::TransitionToOnChargerCheck()
   if (!GetBEI().GetRobotInfo().IsOnChargerContacts()) {
     DelegateIfInControl(new BackupOntoChargerAction(_chargerID, true));
   }
+}
+
+
+void BehaviorGoHome::ActionFailure()
+{
+  PRINT_NAMED_WARNING("BehaviorGoHome.ActionFailure",
+                      "BehaviorGoHome ending due to an action failure");
 }
   
   
