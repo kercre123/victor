@@ -34,7 +34,7 @@ bool BehaviorObservingEyeContact::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorObservingEyeContact::OnBehaviorActivated()
 {
-    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::HikingSquintStart));
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::HikingSquintStart));
 }
 
 } // namespace Cozmo
