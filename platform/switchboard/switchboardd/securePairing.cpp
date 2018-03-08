@@ -190,7 +190,7 @@ void Anki::Switchboard::SecurePairing::SendHandshake() {
 }
 
 void Anki::Switchboard::SecurePairing::SendPublicKey() {
-  if(!AssertState(CommsState::Raw)) {
+  if(!AssertState(CommsState::Clad)) {
     return;
   }
 
@@ -232,7 +232,7 @@ void Anki::Switchboard::SecurePairing::SendNonce() {
 }
 
 void Anki::Switchboard::SecurePairing::SendChallenge() {
-  if(!AssertState(CommsState::Clad)) {
+  if(!AssertState(CommsState::SecureClad)) {
     return;
   }
 
