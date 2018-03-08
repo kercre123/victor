@@ -5,12 +5,12 @@
   "behaviors" : [
     {
       "behavior": "PounceOnMotion_Socialize",
-      "cooldown_s": 9000.0,
+      "cooldown_s": 2400.0,
       "weight": 0.2
     },
     {
       "behavior": "FistBump",
-      "cooldown_s": 5000.0,
+      "cooldown_s": 1200.0,
       "weight": 0.4
     }
   ]

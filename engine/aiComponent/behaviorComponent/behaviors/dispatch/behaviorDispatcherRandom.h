@@ -32,6 +32,7 @@ protected:
 
   virtual ICozmoBehaviorPtr GetDesiredBehavior() override;
   virtual void BehaviorDispatcher_OnActivated() override;
+  virtual void BehaviorDispatcher_OnDeactivated() override;
   virtual void DispatcherUpdate() override;
 
 private:
@@ -41,6 +42,10 @@ private:
   std::vector< float > _weights;
 
   bool _shouldEndAfterBehavior = false;
+  
+  // keep track of which behavior we last requested so that we can properly start the cooldown when the
+  // behavior ends
+  size_t _lastDesiredBehaviorIdx = 0;
 };
 
 }

@@ -49,8 +49,8 @@ BehaviorHighLevelAI::BehaviorHighLevelAI(const Json::Value& config)
   _params.playWithCubeCooldown_s = JsonTools::ParseFloat(config, "playWithCubeCooldown_s", kDebugName);
   _params.playWithCubeOnChargerCooldown_s = JsonTools::ParseFloat(config, "playWithCubeOnChargerCooldown_s", kDebugName);
   _params.goToSleepTimeout_s = JsonTools::ParseFloat(config, "goToSleepTimeout_s", kDebugName);
-  _params.minFaceAgeToAllowSleep_ms = JsonTools::ParseUInt32(config, "minFaceAgeToAllowSleep_ms", kDebugName);
-  _params.needsToChargeTime_ms = JsonTools::ParseUInt32(config, "needsToChargeTime_ms", kDebugName);
+  _params.minFaceTimeToAllowSleep_s = JsonTools::ParseFloat(config, "minFaceTimeToAllowSleep_s", kDebugName);
+  _params.needsToChargeTime_s = JsonTools::ParseFloat(config, "needsToChargeTime_s", kDebugName);
   _params.maxFaceDistanceToSocialize_mm = JsonTools::ParseFloat(config, "maxFaceDistanceToSocialize_mm", kDebugName);
   
   MakeMemberTunable( _params.socializeKnownFaceCooldown_s, "socializeKnownFaceCooldown_s" );
@@ -155,7 +155,7 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
             const TimeStamp_t lastFaceTime = faceWorld.GetLastObservedFace(waste, inRobotOriginOnly);
             const TimeStamp_t lastImgTime = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
             if( lastFaceTime < lastImgTime &&
-                kTimeMultiplier*(lastImgTime - lastFaceTime) > _params.minFaceAgeToAllowSleep_ms ) {
+                (1000*kTimeMultiplier*(lastImgTime - lastFaceTime) > _params.minFaceTimeToAllowSleep_s) ) {
               return true;
             }
           }
@@ -190,12 +190,12 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
           const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
           if( !robotInfo.IsCharging() ) {
             const TimeStamp_t lastChargeTime = robotInfo.GetLastChargingStateChangeTimestamp();
-            const TimeStamp_t timeSinceNotCharging =
+            const TimeStamp_t timeSinceNotCharging_ms =
               robotInfo.GetLastMsgTimestamp() > lastChargeTime ?
               robotInfo.GetLastMsgTimestamp() - lastChargeTime :
               0;
 
-            return timeSinceNotCharging * kTimeMultiplier >= _params.needsToChargeTime_ms;
+            return timeSinceNotCharging_ms * kTimeMultiplier >= 1000 * _params.needsToChargeTime_s;
           }
           return false;
         },

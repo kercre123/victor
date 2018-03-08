@@ -26,6 +26,7 @@
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/unitTestKey.h"
 #include "util/console/consoleFunction.h"
@@ -85,7 +86,7 @@ public:
   void AddNonInterruptingTransition(StateID toState, IBEIConditionPtr condition );
   void AddExitTransition(StateID toState, IBEIConditionPtr condition);
 
-  void OnActivated(BehaviorExternalInterface& bei);
+  void OnActivated(BehaviorExternalInterface& bei, bool isResuming);
   void OnDeactivated(BehaviorExternalInterface& bei);
   // TODO:(bn) add asserts for these
 
@@ -322,7 +323,6 @@ void InternalStatesBehavior::OnBehaviorActivated()
       _currState = it->second;
     }
   }
-  _firstRun = false;
 
   // keep the state the same (either set from constructor or the last run)
   if( ANKI_VERIFY( _currState != InvalidStateID,
@@ -333,6 +333,8 @@ void InternalStatesBehavior::OnBehaviorActivated()
   else {
     TransitionToState(_defaultState);
   }
+  
+  _firstRun = false;
 }
 
 void InternalStatesBehavior::OnBehaviorDeactivated()
@@ -483,6 +485,8 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
 
   // TODO:(bn) don't de- and re-activate behaviors if switching states doesn't change the behavior  
 
+  const bool isResuming = (targetState == _currState) && !_firstRun;
+  
   if( _currState != InvalidStateID ) {
     _states->at(_currState).OnDeactivated(GetBEI());
     const bool allowCallback = false;
@@ -504,7 +508,7 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
   if( _currState != InvalidStateID ) {
     State& state = _states->at(_currState);
 
-    state.OnActivated(GetBEI());
+    state.OnActivated(GetBEI(), isResuming);
 
     if( _useDebugLights ) {
       if( _currDebugLights.onColors[kDebugStateLED] != state._debugColor ) {
@@ -586,7 +590,7 @@ void InternalStatesBehavior::State::AddExitTransition(StateID toState, IBEICondi
   _exitTransitions.emplace_back(toState, condition);
 }
 
-void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei)
+void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei, bool isResuming)
 {
   if( _clearIntent != USER_INTENT(INVALID) ) {
     auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
@@ -594,17 +598,34 @@ void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei)
       uic.ClearUserIntent( _clearIntent );
     }
   }
+  
+  auto resetTimer = [](const IBEIConditionPtr& condition) {
+    auto timerCondition = std::dynamic_pointer_cast<ConditionTimerInRange>( condition );
+    if( timerCondition != nullptr ) {
+      timerCondition->Reset();
+    }
+  };
+  
   for( const auto& transitionPair : _interruptingTransitions ) {
     const auto& iConditionPtr = transitionPair.second;
     iConditionPtr->SetActive(bei, true);
+    if( !isResuming && (iConditionPtr->GetConditionType() == BEIConditionType::TimerInRange) ) {
+      resetTimer( iConditionPtr );
+    }
   }
   for( const auto& transitionPair : _nonInterruptingTransitions ) {
     const auto& iConditionPtr = transitionPair.second;
     iConditionPtr->SetActive(bei, true);
+    if( !isResuming && (iConditionPtr->GetConditionType() == BEIConditionType::TimerInRange) ) {
+      resetTimer( iConditionPtr );
+    }
   }
   for( const auto& transitionPair : _exitTransitions ) {
     const auto& iConditionPtr = transitionPair.second;
     iConditionPtr->SetActive(bei, true);
+    if( !isResuming && (iConditionPtr->GetConditionType() == BEIConditionType::TimerInRange) ) {
+      resetTimer( iConditionPtr );
+    }
   }
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();

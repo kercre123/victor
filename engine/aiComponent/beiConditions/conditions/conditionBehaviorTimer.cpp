@@ -17,8 +17,12 @@
 
 #include "coretech/common/engine/jsonTools.h"
 
+#include "util/console/consoleInterface.h"
+
 namespace Anki {
 namespace Cozmo {
+  
+CONSOLE_VAR_EXTERN(float, kTimeMultiplier);
 
 namespace{
 const char* kTimerNameKey = "timerName";
@@ -51,7 +55,7 @@ bool ConditionBehaviorTimer::AreConditionsMetInternal(BehaviorExternalInterface&
   const auto timerType = BehaviorTimerManager::BehaviorTimerFromString( _timerName );
   const auto& timer = behaviorExternalInterface.GetBehaviorTimerManager().GetTimer( timerType );
   const bool valueIfNoReset = true;
-  const bool expired = timer.HasCooldownExpired( _cooldown_s, valueIfNoReset );
+  const bool expired = timer.HasCooldownExpired( _cooldown_s / kTimeMultiplier, valueIfNoReset );
   return expired;
 }
 

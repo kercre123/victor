@@ -33,6 +33,10 @@ public:
   virtual void SetActiveInternal(BehaviorExternalInterface& bei, bool setActive) override;
   
   virtual DebugFactorsList GetDebugFactors() const override;
+  
+  // for use when _manualResetOnly
+  void Reset();
+  
 
 private:
 
@@ -40,6 +44,7 @@ private:
   struct Params {
     float _rangeBegin_s = 0.0f;
     float _rangeEnd_s = std::numeric_limits<float>::max();
+    bool _manualResetOnly = false; // if true, SetActive() doesn't touch the timer, and public methods are used instead
   };
 
   Params _params;

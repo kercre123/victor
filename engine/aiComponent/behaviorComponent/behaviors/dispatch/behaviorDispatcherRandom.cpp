@@ -44,12 +44,26 @@ BehaviorDispatcherRandom::BehaviorDispatcherRandom(const Json::Value& config)
                                                  
     }
   }
+  
+  // initialize last idx to invalid value
+  _lastDesiredBehaviorIdx = _cooldownInfo.size();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherRandom::BehaviorDispatcher_OnActivated()
 {
   _shouldEndAfterBehavior = false;
+  _lastDesiredBehaviorIdx = _cooldownInfo.size();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherRandom::BehaviorDispatcher_OnDeactivated()
+{
+  // if we are stopped while a behavior was active, put it on cooldown
+  if( _lastDesiredBehaviorIdx < _cooldownInfo.size() ) {
+    _cooldownInfo[ _lastDesiredBehaviorIdx ].StartCooldown(GetRNG());
+    _lastDesiredBehaviorIdx = _cooldownInfo.size();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -69,7 +83,7 @@ ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior()
   // after the behavior we delegate to here finishes, we should cancel ourselves
   _shouldEndAfterBehavior = true;
   
-  Util::RandomVectorSampler<ICozmoBehaviorPtr> availableBehaviors;
+  Util::RandomVectorSampler<size_t> availableBehaviorIdxs;
 
   const size_t numBehaviors = _cooldownInfo.size();
   for( size_t idx = 0; idx < numBehaviors; ++idx ) {
@@ -79,7 +93,7 @@ ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior()
     if( !cooldownInfo.OnCooldown() &&
         ( behavior->IsActivated() ||
           behavior->WantsToBeActivated() ) ) {
-      availableBehaviors.PushBack(behavior, _weights[idx]);
+      availableBehaviorIdxs.PushBack(idx, _weights[idx]);
 
       PRINT_CH_DEBUG("Behaviors", "BehaviorDispatcherRandom.ConsiderBehavior",
                      "%s: considering '%s' with weight %f",
@@ -95,8 +109,10 @@ ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior()
     }
   }
 
-  if( !availableBehaviors.Empty() ) {
-    return availableBehaviors.Sample(GetRNG());
+  if( !availableBehaviorIdxs.Empty() ) {
+    size_t idx = availableBehaviorIdxs.Sample(GetRNG());
+    _lastDesiredBehaviorIdx = idx;
+    return IBehaviorDispatcher::GetAllPossibleDispatches().at(idx);
   }
   else {
     
@@ -115,6 +131,7 @@ ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior()
         if( remCooldown < minCooldownRemaining ) {
           minCooldownRemaining = remCooldown;
           bestBehavior = behavior;
+          _lastDesiredBehaviorIdx = idx;
         }
       }
     }
@@ -140,6 +157,20 @@ void BehaviorDispatcherRandom::DispatcherUpdate()
       IsActivated() )
   {
     CancelSelf();
+  }
+  
+  if( IsActivated()
+      && (_lastDesiredBehaviorIdx < _cooldownInfo.size())
+      && !IsControlDelegated() )
+  {
+    // the last behavior must have stopped, so start its cooldown now
+    PRINT_CH_INFO("Behaviors",
+                  "BehaviorDispatcherRandom.LastBehaviorStopped.StartCooldown",
+                  "Behavior idx %zu '%s' seems to have stopped, start cooldown",
+                  _lastDesiredBehaviorIdx,
+                  IBehaviorDispatcher::GetAllPossibleDispatches()[_lastDesiredBehaviorIdx]->GetDebugLabel().c_str());
+    _cooldownInfo[ _lastDesiredBehaviorIdx ].StartCooldown(GetRNG());
+    _lastDesiredBehaviorIdx = _cooldownInfo.size();
   }
 }
 

@@ -14,7 +14,7 @@
       "behaviorName" : "ObservingInternal",
       "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
     
-      "interruptActiveBehavior": false,
+      "interruptActiveBehavior": true,
     
       "behaviors": [    
         {

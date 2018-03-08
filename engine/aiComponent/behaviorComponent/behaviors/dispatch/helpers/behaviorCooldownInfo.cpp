@@ -16,6 +16,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "json/json.h"
 #include "util/console/consoleInterface.h"
+#include "util/math/math.h"
 #include "util/random/randomGenerator.h"
 
 namespace Anki {
@@ -68,8 +69,8 @@ void BehaviorCooldownInfo::StartCooldown(Util::RandomGenerator& rng)
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     float cooldown_s = _cooldown_s;
     if( _randomCooldownFactor > 0.0f ) {
-      cooldown_s *= rng.RandDblInRange( (1.0f - _randomCooldownFactor) * _cooldown_s,
-                                        (1.0f + _randomCooldownFactor) * _cooldown_s );
+      cooldown_s *= rng.RandDblInRange( Anki::Util::Max(0.0f, 1.0f - _randomCooldownFactor),
+                                        1.0f + _randomCooldownFactor );
     }
     
     if( !_ignoreFastForward ) {

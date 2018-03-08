@@ -24,7 +24,7 @@ CONSOLE_VAR_EXTERN(float, kTimeMultiplier);
   
 namespace {
 
-// const char* kManualResetKey = "manualResetOnly";
+const char* kManualResetKey = "manualResetOnly";
 const char* kBeginRangeKey = "begin_s";
 const char* kEndRangeKey = "end_s";
 
@@ -35,7 +35,7 @@ ConditionTimerInRange::ConditionTimerInRange(const Json::Value& config)
 {
   const bool gotBegin = JsonTools::GetValueOptional(config, kBeginRangeKey, _params._rangeBegin_s);
   const bool gotEnd = JsonTools::GetValueOptional(config, kEndRangeKey, _params._rangeEnd_s);
-  // JsonTools::GetValueOptional(config, kManualResetKey, _params._resetOnSetActive);
+  JsonTools::GetValueOptional(config, kManualResetKey, _params._manualResetOnly);
 
   ANKI_VERIFY( gotBegin || gotEnd, "ConditionTimerInRange.BadConfig", "Need to specify at least one of '%s' or '%s'",
                kBeginRangeKey,
@@ -43,6 +43,13 @@ ConditionTimerInRange::ConditionTimerInRange(const Json::Value& config)
 }
 
 void ConditionTimerInRange::SetActiveInternal(BehaviorExternalInterface& bei, bool setActive)
+{
+  if( !_params._manualResetOnly ) {
+    Reset();
+  }
+}
+  
+void ConditionTimerInRange::Reset()
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _timeReset = currTime_s;

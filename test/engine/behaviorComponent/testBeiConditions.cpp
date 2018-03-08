@@ -723,6 +723,9 @@ TEST(BeiConditions, BehaviorTimer)
 {
   BaseStationTimer::getInstance()->UpdateTime(0.0);
   
+  const float oldVal = kTimeMultiplier;
+  kTimeMultiplier = 1.0f;
+  
   const std::string json = R"json(
   {
     "conditionType": "BehaviorTimer",
@@ -776,6 +779,8 @@ TEST(BeiConditions, BehaviorTimer)
   
   BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(resetTime2 + 15.0001));
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  
+  kTimeMultiplier = oldVal;
 }
 
 

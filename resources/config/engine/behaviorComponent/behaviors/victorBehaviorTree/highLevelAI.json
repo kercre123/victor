@@ -3,13 +3,13 @@
   "behaviorClass" : "HighLevelAI",
 
   
-  "socializeKnownFaceCooldown_s": 6000.0,
+  "socializeKnownFaceCooldown_s": 1800.0,
   "playWithCubeCooldown_s": 600.0,
-  "playWithCubeOnChargerCooldown_s": 6000.0,
-  "goToSleepTimeout_s": 2400.0,
-  "minFaceAgeToAllowSleep_ms": 50000,
-  "needsToChargeTime_ms": 3000000,
-  "maxFaceDistanceToSocialize_mm": 1000.0,
+  "playWithCubeOnChargerCooldown_s": 2400.0,
+  "goToSleepTimeout_s": 1200.0,
+  "minFaceTimeToAllowSleep_s": 600.0,
+  "needsToChargeTime_s": 900.0,
+  "maxFaceDistanceToSocialize_mm": 500.0,
 
   "initialState": "ObservingOnCharger",
 
@@ -69,7 +69,8 @@
     {
       "name": "NappingOnCharger",
       "behavior": "Sleeping",
-      "debugColor": "GREEN"
+      "debugColor": "GREEN",
+      "clearIntent": "system_sleep"
     },
     {
       "name": "WakingUp",
@@ -118,7 +119,8 @@
           "to": "DriveOffChargerIntoObserving",
           "condition": {
             "conditionType": "TimerInRange",
-            "begin_s": 6000.0
+            "begin_s": 1100.0,
+            "manualResetOnly": true
           }
         },
         {
@@ -151,7 +153,8 @@
           "to": "ObservingOnCharger",
           "condition": {
             "conditionType": "TimerInRange",
-            "begin_s": 1200.0
+            "begin_s": 1200.0,
+            "manualResetOnly": true
           }
         }
       ]
@@ -293,7 +296,8 @@
           "to": "WakingUp",
           "condition": {
             "conditionType": "TimerInRange",
-            "begin_s": 3000.0
+            "begin_s": 14400.0,
+            "manualResetOnly": true
           }
         }
       ]
@@ -339,7 +343,8 @@
           "to": "FailedToFindCharger",
           "condition": {
             "conditionType": "TimerInRange",
-            "begin_s": 1200.0
+            "begin_s": 300.0,
+            "manualResetOnly": true
           }
         }
       ],
@@ -497,11 +502,9 @@
       ]
     },
 
-    // go to sleep
+    // go to sleep off charger
     {
       "from": [
-        "ObservingOnCharger",
-        "ObservingOnChargerRecentlyPlaced",
         "DriveOffChargerIntoObserving",
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
@@ -534,6 +537,25 @@
       "nonInterruptingTransitions": [
         {
           "to": "Napping",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {"type": "system_sleep"}
+            ]
+          }
+        }
+      ]
+    },
+
+    // go to sleep on charger
+    {
+      "from": [
+        "ObservingOnCharger",
+        "ObservingOnChargerRecentlyPlaced"
+      ],
+      "interruptingTransitions": [
+        {
+          "to": "NappingOnCharger",
           "condition": {
             "conditionType": "UserIntentPending",
             "list": [
