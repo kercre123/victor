@@ -40,9 +40,9 @@
       "cloud_intent" : "intent_clock_settimer",
       "user_intent"  : "set_timer",
       "cloud_substitutions": {
-        "timer_duration.amount": "time_s"
+        "timer_duration": "time_s"
       },
-      "cloud_numerics": ["timer_duration.amount"]
+      "cloud_numerics": ["timer_duration"]
     },
     {
       "cloud_intent": "intent_system_charger",
