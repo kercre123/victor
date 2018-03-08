@@ -12,18 +12,27 @@ if %ERRORLEVEL% NEQ 0 (
   exit 2
 )
 
-REM create fixture directory, if it doesn't exist
-adb shell -x "mkdir -p data/local/fixture"
+echo stop helper process...
+adb shell "pkill helper && sleep 1"
+REM adb shell "ps | grep helper"
 
-REM load updated helper files
+REM create fixture directory, if it doesn't exist
+adb shell -x "mkdir -p data/local/fixture && sync"
+
+echo load updated helper files...
 adb push helper data/local/fixture/
 adb push helpify data/local/fixture/
 adb push display data/local/fixture/
 adb shell -x "cd data/local/fixture && chmod +x helper"
 adb shell -x "cd data/local/fixture && chmod +x helpify"
 adb shell -x "cd data/local/fixture && chmod +x display"
+adb shell "sync"
 
 REM enable helper auto-start
 adb shell -x "cd data/local/fixture && ./helpify"
+adb shell "sync"
 
-echo ----- please power cycle the fixture (do NOT use adb reboot!) -----
+REM adb reboot
+echo -------- POWER CYCLE NOW --------
+pause
+

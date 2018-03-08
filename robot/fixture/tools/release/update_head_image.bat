@@ -12,22 +12,22 @@ if %ERRORLEVEL% NEQ 0 (
   exit 2
 )
 
-REM manual step - copy updated emmcdl files to release path
 if not exist "emmcdl" (
   echo could not find head image directory
   exit 1
 )
 
 REM create fixture directory, if it doesn't exist
-adb shell -x "mkdir -p data/local/fixture"
+adb shell -x "mkdir -p data/local/fixture && sync"
 
 REM update head scripts & image files
 adb push headprogram data/local/fixture/
 adb shell -x "cd data/local/fixture && chmod +x headprogram"
-REM adb shell -x "cd data/local/fixture && rm -rf emmcdl && mkdir emmcdl"
-adb shell -x "rm -rf /data/local/fixture/emmcdl/ && sleep 2"
-adb shell -x "mkdir /data/local/fixture/emmcdl/"
+adb shell -x "rm -rf /data/local/fixture/emmcdl/ && sync && sleep 1 && mkdir /data/local/fixture/emmcdl/"
 adb push emmcdl data/local/fixture/
 adb push bin/emmcdl data/local/fixture/emmcdl/
 adb shell -x "cd data/local/fixture/emmcdl && chmod +x emmcdl"
+adb shell "sync"
 
+echo Done!
+pause

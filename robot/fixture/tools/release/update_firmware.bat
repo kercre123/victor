@@ -28,20 +28,20 @@ if not exist %FILEPATH% (
 echo update firmware to: %FILEPATH% (%FILENAME%)
 
 REM create fixture directory, if it doesn't exist
-adb shell -x "mkdir -p data/local/fixture"
+adb shell -x "mkdir -p data/local/fixture && sync"
 
 REM load updated helper files
 adb push dfu data/local/fixture/
 adb push %FILEPATH% data/local/fixture/
 adb shell -x "cd data/local/fixture && chmod +x dfu"
+adb shell "sync"
 
 REM send firmware to bootloader
 echo updating firmware...
-adb shell -x "pkill helper"
+adb shell -x "pkill helper && sleep 1"
 adb shell -x "cd data/local/fixture && ./dfu %FILENAME%"
 
 REM echo restarting helper
 echo restarting helper
 adb shell "/data/local/fixture/helper > /dev/null 2>&1 &"
 
-echo ----- please power cycle the fixture (do NOT use adb reboot!) -----
