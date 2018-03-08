@@ -17,7 +17,7 @@ table ProceduralFace {
   faceScaleY:float = 1.0;
   leftEye:[float];
   rightEye:[float];
-  scanlineOpacity:float = 0.7;
+  scanlineOpacity:float = 1.0;
 }
 
 table HeadAngle {
@@ -46,7 +46,7 @@ table BackpackLights {
 table FaceAnimation {
   triggerTime_ms:uint;
   animName:string (required);
-  scanlineOpacity:float = 0.7;
+  scanlineOpacity:float = 1.0;
 }
 
 table Event {

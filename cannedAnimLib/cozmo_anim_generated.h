@@ -102,7 +102,7 @@ struct ProceduralFace FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   float faceScaleY() const { return GetField<float>(VT_FACESCALEY, 1.0f); }
   const flatbuffers::Vector<float> *leftEye() const { return GetPointer<const flatbuffers::Vector<float> *>(VT_LEFTEYE); }
   const flatbuffers::Vector<float> *rightEye() const { return GetPointer<const flatbuffers::Vector<float> *>(VT_RIGHTEYE); }
-  float scanlineOpacity() const { return GetField<float>(VT_SCANLINEOPACITY, 0.7f); }
+  float scanlineOpacity() const { return GetField<float>(VT_SCANLINEOPACITY, 1.0f); }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_TRIGGERTIME_MS) &&
@@ -131,7 +131,7 @@ struct ProceduralFaceBuilder {
   void add_faceScaleY(float faceScaleY) { fbb_.AddElement<float>(ProceduralFace::VT_FACESCALEY, faceScaleY, 1.0f); }
   void add_leftEye(flatbuffers::Offset<flatbuffers::Vector<float>> leftEye) { fbb_.AddOffset(ProceduralFace::VT_LEFTEYE, leftEye); }
   void add_rightEye(flatbuffers::Offset<flatbuffers::Vector<float>> rightEye) { fbb_.AddOffset(ProceduralFace::VT_RIGHTEYE, rightEye); }
-  void add_scanlineOpacity(float scanlineOpacity) { fbb_.AddElement<float>(ProceduralFace::VT_SCANLINEOPACITY, scanlineOpacity, 0.7f); }
+  void add_scanlineOpacity(float scanlineOpacity) { fbb_.AddElement<float>(ProceduralFace::VT_SCANLINEOPACITY, scanlineOpacity, 1.0f); }
   ProceduralFaceBuilder(flatbuffers::FlatBufferBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
   ProceduralFaceBuilder &operator=(const ProceduralFaceBuilder &);
   flatbuffers::Offset<ProceduralFace> Finish() {
@@ -149,7 +149,7 @@ inline flatbuffers::Offset<ProceduralFace> CreateProceduralFace(flatbuffers::Fla
     float faceScaleY = 1.0f,
     flatbuffers::Offset<flatbuffers::Vector<float>> leftEye = 0,
     flatbuffers::Offset<flatbuffers::Vector<float>> rightEye = 0,
-    float scanlineOpacity = 0.7f) {
+    float scanlineOpacity = 1.0f) {
   ProceduralFaceBuilder builder_(_fbb);
   builder_.add_scanlineOpacity(scanlineOpacity);
   builder_.add_rightEye(rightEye);
@@ -172,7 +172,7 @@ inline flatbuffers::Offset<ProceduralFace> CreateProceduralFaceDirect(flatbuffer
     float faceScaleY = 1.0f,
     const std::vector<float> *leftEye = nullptr,
     const std::vector<float> *rightEye = nullptr,
-    float scanlineOpacity = 0.7f) {
+    float scanlineOpacity = 1.0f) {
   return CreateProceduralFace(_fbb, triggerTime_ms, faceAngle, faceCenterX, faceCenterY, faceScaleX, faceScaleY, leftEye ? _fbb.CreateVector<float>(*leftEye) : 0, rightEye ? _fbb.CreateVector<float>(*rightEye) : 0, scanlineOpacity);
 }
 
@@ -367,7 +367,7 @@ struct FaceAnimation FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   };
   uint32_t triggerTime_ms() const { return GetField<uint32_t>(VT_TRIGGERTIME_MS, 0); }
   const flatbuffers::String *animName() const { return GetPointer<const flatbuffers::String *>(VT_ANIMNAME); }
-  float scanlineOpacity() const { return GetField<float>(VT_SCANLINEOPACITY, 0.7f); }
+  float scanlineOpacity() const { return GetField<float>(VT_SCANLINEOPACITY, 1.0f); }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_TRIGGERTIME_MS) &&
@@ -383,7 +383,7 @@ struct FaceAnimationBuilder {
   flatbuffers::uoffset_t start_;
   void add_triggerTime_ms(uint32_t triggerTime_ms) { fbb_.AddElement<uint32_t>(FaceAnimation::VT_TRIGGERTIME_MS, triggerTime_ms, 0); }
   void add_animName(flatbuffers::Offset<flatbuffers::String> animName) { fbb_.AddOffset(FaceAnimation::VT_ANIMNAME, animName); }
-  void add_scanlineOpacity(float scanlineOpacity) { fbb_.AddElement<float>(FaceAnimation::VT_SCANLINEOPACITY, scanlineOpacity, 0.7f); }
+  void add_scanlineOpacity(float scanlineOpacity) { fbb_.AddElement<float>(FaceAnimation::VT_SCANLINEOPACITY, scanlineOpacity, 1.0f); }
   FaceAnimationBuilder(flatbuffers::FlatBufferBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
   FaceAnimationBuilder &operator=(const FaceAnimationBuilder &);
   flatbuffers::Offset<FaceAnimation> Finish() {
@@ -396,7 +396,7 @@ struct FaceAnimationBuilder {
 inline flatbuffers::Offset<FaceAnimation> CreateFaceAnimation(flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t triggerTime_ms = 0,
     flatbuffers::Offset<flatbuffers::String> animName = 0,
-    float scanlineOpacity = 0.7f) {
+    float scanlineOpacity = 1.0f) {
   FaceAnimationBuilder builder_(_fbb);
   builder_.add_scanlineOpacity(scanlineOpacity);
   builder_.add_animName(animName);
@@ -407,7 +407,7 @@ inline flatbuffers::Offset<FaceAnimation> CreateFaceAnimation(flatbuffers::FlatB
 inline flatbuffers::Offset<FaceAnimation> CreateFaceAnimationDirect(flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t triggerTime_ms = 0,
     const char *animName = nullptr,
-    float scanlineOpacity = 0.7f) {
+    float scanlineOpacity = 1.0f) {
   return CreateFaceAnimation(_fbb, triggerTime_ms, animName ? _fbb.CreateString(animName) : 0, scanlineOpacity);
 }
 
