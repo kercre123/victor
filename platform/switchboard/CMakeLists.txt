@@ -13,6 +13,7 @@ anki_build_cxx_executable(vic-switchboard ${ANKI_SRCLIST_DIR})
 target_compile_options(vic-switchboard
 PRIVATE
   -std=c14 # needed for make_unique
+  #-Wl,-rpath=${vicos_root}/sysroot/usr/lib
 )
 
 set(PLATFORM_LIBS "")
@@ -39,6 +40,7 @@ PRIVATE
   libresolv.so.2
   libgmodule-2.0.so.0
   libpcre.so.1
+  libcutils.so.0
 )
 
 target_compile_definitions(vic-switchboard
@@ -55,6 +57,7 @@ target_include_directories(vic-switchboard
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/switchboardd>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/cutils>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/anki-ble>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/anki-wifi>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libev>
