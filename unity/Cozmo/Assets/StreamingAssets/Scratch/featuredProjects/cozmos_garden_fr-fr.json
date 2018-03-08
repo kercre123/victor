@@ -143,7 +143,7 @@
                     },
                     "2gnVz@?4j@r6|2TIPqcd": {
                         "id": "2gnVz@?4j@r6|2TIPqcd",
-                        "name": "mode Entr\u00e9e",
+                        "name": "mode Interaction",
                         "type": "",
                         "value": "1"
                     },
@@ -426,7 +426,7 @@
                     "Y,5#~Pm}EsnG}moG4h%o": {
                         "id": "Y,5#~Pm}EsnG}moG4h%o",
                         "isCloud": false,
-                        "name": "toucher",
+                        "name": "Touche le bouton",
                         "type": "",
                         "value": "0"
                     },
@@ -996,7 +996,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "toucher",
+                                "value": "Touche le bouton",
                                 "variableType": ""
                             }
                         },
@@ -2495,7 +2495,7 @@
                             "VARIABLE": {
                                 "id": "2gnVz@?4j@r6|2TIPqcd",
                                 "name": "VARIABLE",
-                                "value": "mode Entr\u00e9e",
+                                "value": "mode Interaction",
                                 "variableType": ""
                             }
                         },
@@ -2954,7 +2954,7 @@
                             "VARIABLE": {
                                 "id": "2gnVz@?4j@r6|2TIPqcd",
                                 "name": "VARIABLE",
-                                "value": "mode Entr\u00e9e",
+                                "value": "mode Interaction",
                                 "variableType": ""
                             }
                         },
@@ -4950,7 +4950,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "toucher",
+                                "value": "Touche le bouton",
                                 "variableType": ""
                             }
                         },
@@ -6654,7 +6654,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "toucher",
+                                "value": "Touche le bouton",
                                 "variableType": ""
                             }
                         },
@@ -8677,7 +8677,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "toucher",
+                                "value": "Touche le bouton",
                                 "variableType": ""
                             }
                         },
@@ -9410,7 +9410,7 @@
                             "VARIABLE": {
                                 "id": "2gnVz@?4j@r6|2TIPqcd",
                                 "name": "VARIABLE",
-                                "value": "mode Entr\u00e9e",
+                                "value": "mode Interaction",
                                 "variableType": ""
                             }
                         },
@@ -12402,7 +12402,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "toucher",
+                                "value": "Touche le bouton",
                                 "variableType": ""
                             }
                         },
@@ -12729,7 +12729,7 @@
                             "VARIABLE": {
                                 "id": "2gnVz@?4j@r6|2TIPqcd",
                                 "name": "VARIABLE",
-                                "value": "mode Entr\u00e9e",
+                                "value": "mode Interaction",
                                 "variableType": ""
                             }
                         },
@@ -12976,7 +12976,7 @@
                             "VARIABLE": {
                                 "id": "2gnVz@?4j@r6|2TIPqcd",
                                 "name": "VARIABLE",
-                                "value": "mode Entr\u00e9e",
+                                "value": "mode Interaction",
                                 "variableType": ""
                             }
                         },
@@ -13077,7 +13077,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "toucher",
+                                "value": "Touche le bouton",
                                 "variableType": ""
                             }
                         },
@@ -13709,7 +13709,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "toucher",
+                                "value": "Touche le bouton",
                                 "variableType": ""
                             }
                         },
@@ -13839,7 +13839,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "toucher",
+                                "value": "Touche le bouton",
                                 "variableType": ""
                             }
                         },
@@ -14027,7 +14027,7 @@
                             "VARIABLE": {
                                 "id": "2gnVz@?4j@r6|2TIPqcd",
                                 "name": "VARIABLE",
-                                "value": "mode Entr\u00e9e",
+                                "value": "mode Interaction",
                                 "variableType": ""
                             }
                         },
@@ -14148,7 +14148,7 @@
                             "VARIABLE": {
                                 "id": "2gnVz@?4j@r6|2TIPqcd",
                                 "name": "VARIABLE",
-                                "value": "mode Entr\u00e9e",
+                                "value": "mode Interaction",
                                 "variableType": ""
                             }
                         },
@@ -14192,7 +14192,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "toucher",
+                                "value": "Touche le bouton",
                                 "variableType": ""
                             }
                         },
@@ -15121,7 +15121,7 @@
                             "VARIABLE": {
                                 "id": "2gnVz@?4j@r6|2TIPqcd",
                                 "name": "VARIABLE",
-                                "value": "mode Entr\u00e9e",
+                                "value": "mode Interaction",
                                 "variableType": ""
                             }
                         },
@@ -21921,7 +21921,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "toucher",
+                                "value": "Touche le bouton",
                                 "variableType": ""
                             }
                         },
@@ -25643,7 +25643,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "toucher",
+                                "value": "Touche le bouton",
                                 "variableType": ""
                             }
                         },

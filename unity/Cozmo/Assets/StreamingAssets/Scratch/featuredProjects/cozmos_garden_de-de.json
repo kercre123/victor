@@ -426,7 +426,7 @@
                     "Y,5#~Pm}EsnG}moG4h%o": {
                         "id": "Y,5#~Pm}EsnG}moG4h%o",
                         "isCloud": false,
-                        "name": "Tippen auf",
+                        "name": "Tippe auf die Taste",
                         "type": "",
                         "value": "0"
                     },
@@ -996,7 +996,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "Tippen auf",
+                                "value": "Tippe auf die Taste",
                                 "variableType": ""
                             }
                         },
@@ -4950,7 +4950,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "Tippen auf",
+                                "value": "Tippe auf die Taste",
                                 "variableType": ""
                             }
                         },
@@ -6654,7 +6654,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "Tippen auf",
+                                "value": "Tippe auf die Taste",
                                 "variableType": ""
                             }
                         },
@@ -8677,7 +8677,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "Tippen auf",
+                                "value": "Tippe auf die Taste",
                                 "variableType": ""
                             }
                         },
@@ -9069,7 +9069,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Ding"
+                                "value": "Objekt"
                             }
                         },
                         "id": "D|rQAN6qC^FysR;!IwX}",
@@ -12402,7 +12402,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "Tippen auf",
+                                "value": "Tippe auf die Taste",
                                 "variableType": ""
                             }
                         },
@@ -13077,7 +13077,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "Tippen auf",
+                                "value": "Tippe auf die Taste",
                                 "variableType": ""
                             }
                         },
@@ -13709,7 +13709,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "Tippen auf",
+                                "value": "Tippe auf die Taste",
                                 "variableType": ""
                             }
                         },
@@ -13839,7 +13839,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "Tippen auf",
+                                "value": "Tippe auf die Taste",
                                 "variableType": ""
                             }
                         },
@@ -14192,7 +14192,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "Tippen auf",
+                                "value": "Tippe auf die Taste",
                                 "variableType": ""
                             }
                         },
@@ -19569,7 +19569,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Ding"
+                                "value": "Objekt"
                             }
                         },
                         "id": "gp]$[S@Ot4.%V+O.9874",
@@ -20461,7 +20461,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Ding"
+                                "value": "Objekt"
                             }
                         },
                         "id": "k7;aE8mS}UI]ZV*hSCVg",
@@ -21921,7 +21921,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "Tippen auf",
+                                "value": "Tippe auf die Taste",
                                 "variableType": ""
                             }
                         },
@@ -23483,7 +23483,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Ding"
+                                "value": "Objekt"
                             }
                         },
                         "id": "u^:4M-93V*(RO*BvB|*b",
@@ -25643,7 +25643,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "Tippen auf",
+                                "value": "Tippe auf die Taste",
                                 "variableType": ""
                             }
                         },

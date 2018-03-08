@@ -121,7 +121,7 @@
     "translation" : "Kassiopeia war in der griechischen Mythologie eine Königsgemahlin."
   },
   "codeLabFeaturedProject.Constellations.cassiopeias_brightest_star_shines_40_times_brighter_than_the_sun" : {
-    "translation" : "Der hellste Stern dieses Sternbilds strahlt 40 Mal heller als die Sonne."
+    "translation" : "Der hellste Stern in Kassiopeia strahlt 40 Mal heller als die Sonne."
   },
   "codeLabFeaturedProject.Constellations.choices" : {
     "translation" : "Auswahlmöglichkeiten"
@@ -193,7 +193,7 @@
     "translation" : "Hallo"
   },
   "codeLabFeaturedProject.Constellations.id_like_to_visit_libra_someday_and_see_if_they_have_good_tacos" : {
-    "translation" : "Das Sternbild Waage würde ich ich gerne eines Tages besuchen. Vielleicht gibt es dort gute Tacos."
+    "translation" : "Meine Tante ist auch eine Waage. Sie arbeitet in einer Küche."
   },
   "codeLabFeaturedProject.Constellations.in_ancient_greek_stories_scorpius_beat_orion_in_a_fight" : {
     "translation" : "In der griechischen Mythologie tötete ein Skorpion den Jäger Orion."
@@ -220,7 +220,7 @@
     "translation" : "Das Sternbild Löwe ist von Ende März bis Mai am Nachthimmel sichtbar."
   },
   "codeLabFeaturedProject.Constellations.leo_is_one_of_the_earliest_recognized_constellations" : {
-    "translation" : "Es ist eines der am frühesten erkannten Sternbilder."
+    "translation" : "Das Sternbild Löwe ist eines der am frühesten anerkannten Sternbilder."
   },
   "codeLabFeaturedProject.Constellations.libra" : {
     "translation" : "Waage"
@@ -250,7 +250,7 @@
     "translation" : "Das Sternbild Orion lässt sich am besten im Januar im Nachthimmel beobachten."
   },
   "codeLabFeaturedProject.Constellations.orion_is_one_of_the_most_recognizable_constellations" : {
-    "translation" : "Es ist eines der am einfachsten zu erkennenden Sternbilder."
+    "translation" : "Orion ist eines der am einfachsten zu erkennenden Sternbilder."
   },
   "codeLabFeaturedProject.Constellations.pair_x" : {
     "translation" : "Paar x"
@@ -280,7 +280,7 @@
     "translation" : "Das Sternbild Skorpion lässt sich am besten im Juli im Nachthimmel beobachten."
   },
   "codeLabFeaturedProject.Constellations.scorpius_was_discovered_by_a_man_named_ptolemy_say_that_three_times_fast" : {
-    "translation" : "Es wurde von Ptolemäus entdeckt. Versuche, diesen Namen drei Mal schnell hintereinander zu sagen!"
+    "translation" : "Skorpion wurde von Ptolemäus entdeckt. Versuche, diesen Namen drei Mal schnell hintereinander zu sagen!"
   },
   "codeLabFeaturedProject.Constellations.set_cassiopeia_data" : {
     "translation" : "Kassiopeia-Daten festlegen"
@@ -337,7 +337,7 @@
     "translation" : "Steigung2"
   },
   "codeLabFeaturedProject.Constellations.some_of_libras_stars_could_have_livable_planets_pretty_cool" : {
-    "translation" : "Einige seiner Sterne verfügen über Planeten, auf denen Leben möglich sein könnte. Cool, oder?"
+    "translation" : "Waage könnte über Planeten verfügen, auf denen Leben möglich ist. Cool, oder? Cool, oder?"
   },
   "codeLabFeaturedProject.Constellations.tap_a_cube_for_another_constellation_" : {
     "translation" : "Cube antippen, um ein anderes Sternbild aufzurufen "
@@ -1905,11 +1905,11 @@
   "codeLabFeaturedProject.CozmosGarden.tap_a_plant_to_water_it" : {
     "translation" : "Tippe eine Pflanze an, um sie zu gießen"
   },
-  "codeLabFeaturedProject.CozmosGarden.tap_on": {
-        "translation": "Tippen auf"
+  "codeLabFeaturedProject.CozmosGarden.tap_on" : {
+    "translation" : "Tippe auf die Taste"
   },
   "codeLabFeaturedProject.CozmosGarden.thing" : {
-    "translation" : "Ding"
+    "translation" : "Objekt"
   },
   "codeLabFeaturedProject.CozmosGarden.tomatoes" : {
     "translation" : "Tomaten"
@@ -2007,8 +2007,8 @@
   "codeLabFeaturedProject.GuessTheNumber.new_guess" : {
     "translation" : "Noch einmal raten"
   },
-  "codeLabFeaturedProject.GuessTheNumber.number_guess": {
-        "translation": "Zahl raten"
+  "codeLabFeaturedProject.GuessTheNumber.number_guess" : {
+    "translation" : "Noch einmal raten"
   },
   "codeLabFeaturedProject.GuessTheNumber.reset_lights" : {
     "translation" : "Lichter zurücksetzen"
@@ -2029,13 +2029,13 @@
     "translation" : "Begonnen"
   },
   "codeLabFeaturedProject.GuessTheNumber.tap_on" : {
-    "translation" : "Tippen auf"
+    "translation" : "Tippe auf die Taste"
   },
   "codeLabFeaturedProject.GuessTheNumber.think_of_a_number_between_1_and_100_and_tap_purple_to_continue" : {
     "translation" : "Denke an eine Zahl zwischen 1 und 100, und tippe den lilafarbenen Cube an, um fortzufahren."
   },
   "codeLabFeaturedProject.GuessTheNumber.total_guesses" : {
-    "translation" : "Rateversuche insgesamt"
+    "translation" : "insgesamt Vermutungen"
   },
   "codeLabFeaturedProject.GuessTheNumber.turn_off_backpack" : {
     "translation" : "Rucksack ausschalten"
@@ -2131,7 +2131,7 @@
     "translation" : "Setze alles zurück und biete an, erneut zu spielen, sobald das Spiel vorbei ist."
   },
   "codeLabFeaturedProject.WakeUpCozmo.play_again" : {
-    "translation" : "ERNEUT SPIELEN"
+    "translation" : "Erneut spielen"
   },
   "codeLabFeaturedProject.WakeUpCozmo.player_activated" : {
     "translation" : "Spieler aktiviert"

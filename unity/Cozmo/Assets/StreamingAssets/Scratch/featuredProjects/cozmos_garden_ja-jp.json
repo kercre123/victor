@@ -426,7 +426,7 @@
                     "Y,5#~Pm}EsnG}moG4h%o": {
                         "id": "Y,5#~Pm}EsnG}moG4h%o",
                         "isCloud": false,
-                        "name": "\u30bf\u30c3\u30d7\u3059\u308b",
+                        "name": "\u30dc\u30bf\u30f3\u3092\u30bf\u30c3\u30d7\u3057",
                         "type": "",
                         "value": "0"
                     },
@@ -996,7 +996,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "\u30bf\u30c3\u30d7\u3059\u308b",
+                                "value": "\u30dc\u30bf\u30f3\u3092\u30bf\u30c3\u30d7\u3057",
                                 "variableType": ""
                             }
                         },
@@ -4236,7 +4236,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": " \u30e9\u30a6\u30f3\u30c9"
+                                "value": " \u30e9\u30a6\u30f3\u30c9\u3067"
                             }
                         },
                         "id": "16j|QhNSeyY-F~#{3}+N",
@@ -4950,7 +4950,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "\u30bf\u30c3\u30d7\u3059\u308b",
+                                "value": "\u30dc\u30bf\u30f3\u3092\u30bf\u30c3\u30d7\u3057",
                                 "variableType": ""
                             }
                         },
@@ -6654,7 +6654,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "\u30bf\u30c3\u30d7\u3059\u308b",
+                                "value": "\u30dc\u30bf\u30f3\u3092\u30bf\u30c3\u30d7\u3057",
                                 "variableType": ""
                             }
                         },
@@ -8677,7 +8677,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "\u30bf\u30c3\u30d7\u3059\u308b",
+                                "value": "\u30dc\u30bf\u30f3\u3092\u30bf\u30c3\u30d7\u3057",
                                 "variableType": ""
                             }
                         },
@@ -12402,7 +12402,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "\u30bf\u30c3\u30d7\u3059\u308b",
+                                "value": "\u30dc\u30bf\u30f3\u3092\u30bf\u30c3\u30d7\u3057",
                                 "variableType": ""
                             }
                         },
@@ -13077,7 +13077,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "\u30bf\u30c3\u30d7\u3059\u308b",
+                                "value": "\u30dc\u30bf\u30f3\u3092\u30bf\u30c3\u30d7\u3057",
                                 "variableType": ""
                             }
                         },
@@ -13709,7 +13709,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "\u30bf\u30c3\u30d7\u3059\u308b",
+                                "value": "\u30dc\u30bf\u30f3\u3092\u30bf\u30c3\u30d7\u3057",
                                 "variableType": ""
                             }
                         },
@@ -13839,7 +13839,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "\u30bf\u30c3\u30d7\u3059\u308b",
+                                "value": "\u30dc\u30bf\u30f3\u3092\u30bf\u30c3\u30d7\u3057",
                                 "variableType": ""
                             }
                         },
@@ -14192,7 +14192,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "\u30bf\u30c3\u30d7\u3059\u308b",
+                                "value": "\u30dc\u30bf\u30f3\u3092\u30bf\u30c3\u30d7\u3057",
                                 "variableType": ""
                             }
                         },
@@ -18908,7 +18908,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "\u3084\u3063\u305f\u30fc\uff01\u3000\u2605\u306e\u3059\u3079\u3066\u306e\u3057\u3087\u304f\u3076\u3064\u3092\u3057\u3085\u3046\u304b\u304f\u3057\u307e\u3057\u305f\u3002 "
+                                "value": "\u3084\u3063\u305f\u30fc\uff01\u3000\u3059\u3079\u3066\u306e\u3057\u3087\u304f\u3076\u3064\u3092\u3057\u3085\u3046\u304b\u304f\u3057\u307e\u3057\u305f\u3002 "
                             }
                         },
                         "id": "ecFq:!l4Tsu$!B;}z,Dq",
@@ -21921,7 +21921,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "\u30bf\u30c3\u30d7\u3059\u308b",
+                                "value": "\u30dc\u30bf\u30f3\u3092\u30bf\u30c3\u30d7\u3057",
                                 "variableType": ""
                             }
                         },
@@ -25643,7 +25643,7 @@
                             "VARIABLE": {
                                 "id": "Y,5#~Pm}EsnG}moG4h%o",
                                 "name": "VARIABLE",
-                                "value": "\u30bf\u30c3\u30d7\u3059\u308b",
+                                "value": "\u30dc\u30bf\u30f3\u3092\u30bf\u30c3\u30d7\u3057",
                                 "variableType": ""
                             }
                         },

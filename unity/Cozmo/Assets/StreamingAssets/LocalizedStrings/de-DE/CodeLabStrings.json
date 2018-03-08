@@ -1489,10 +1489,10 @@
     "translation" : "Zahlenraten"
   },
   "codeLabFeaturedGuessTheNumber.projectDescription" : {
-    "translation" : "EINGEREICHT VON JDFIGHT⏎⏎Der mystische und allwissende Cozmo wird deine Zahl erraten!"
+    "translation" : "EINGEREICHT VON JDFIGHT\u000a\u000aDer mystische und allwissende Cozmo wird deine Zahl erraten!"
   },
   "codeLabFeaturedGuessTheNumber.projectInstructions" : {
-    "translation" : "1. Stelle die Cubes von Cozmo in einer Reihe vor dir auf.\u000a\u000a2. Drücke die Startfahne, und befolge dann die Spielanweisungen von Cozmo.\u000a\u000a3. Tippe die Cubes von Cozmo an, um ihm Hinweise zu geben. \u000a\u000a4. Tippen Sie auf rot, wenn Ihre Zahl geringer ist grün, wenn es ist höher und lila, ob es korrekt ist.Eingereicht vom Benutzer jdfight.\u000a\u000aNichts ist für uns schöner, als eure einzigartigen Code Lab-Kreationen zu spielen. Wir lieben sie sogar so sehr, dass wir diese hervorragenden Projekte dem Rest der Cozmo-Community zur Verfügung stellen. Wir freuen uns auf weitere kreative Ideen von euch.\u000a\u000aWie reiche ich ein Code Lab-Projekt ein?\u000a\u000aNachdem du dein Projekt fertiggestellt hast, kannst du oben links in deinem Arbeitsbereich auf die Exportschalftläche klicken und die Anweisungen auf dem Bildschirm befolgen. Wir können kaum erwarten, welche Projekte du dir ausdenken wirst."
+    "translation" : "1. Stelle die Cubes von Cozmo in einer Reihe vor dir auf.\u000a\u000a2. Drücke die Startfahne, und befolge dann die Spielanweisungen von Cozmo.\u000a\u000a3. Tippe die Cubes von Cozmo an, um ihm Hinweise zu geben. \u000a\u000a4. Tippe den roten Cube an, wenn deine Zahl niedriger ist, und den grünen, wenn deine Zahl höher ist. Wenn Cozmo die korrekte Zahl errät, tippst du den lilafarbenen Cube an.\u000a\u000aEingereicht vom Benutzer jdfight.\u000a\u000aNichts ist für uns schöner, als eure einzigartigen Code Lab-Kreationen zu spielen. Wir lieben sie sogar so sehr, dass wir diese hervorragenden Projekte dem Rest der Cozmo-Community zur Verfügung stellen. Wir freuen uns auf weitere kreative Ideen von euch.\u000a\u000aWie reiche ich ein Code Lab-Projekt ein?\u000a\u000aNachdem du dein Projekt fertiggestellt hast, kannst du oben links in deinem Arbeitsbereich auf die Exportschalftläche klicken und die Anweisungen auf dem Bildschirm befolgen. Wir können kaum erwarten, welche Projekte du dir ausdenken wirst."
   },
   "codeLabFeaturedWakeUpCozmo.projectName" : {
     "translation" : "Wach auf, Cozmo!"

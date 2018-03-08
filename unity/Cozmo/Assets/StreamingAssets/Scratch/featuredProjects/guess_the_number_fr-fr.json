@@ -29,19 +29,19 @@
                     },
                     "0ay{8luN^LB3TRxhL=cC": {
                         "id": "0ay{8luN^LB3TRxhL=cC",
-                        "name": "toucher",
+                        "name": "Touche le bouton",
                         "type": "",
                         "value": "0"
                     },
                     "2=0Mat0?Wb@mMVboB@3/": {
                         "id": "2=0Mat0?Wb@mMVboB@3/",
-                        "name": "nombre total de suppositions",
+                        "name": "total des conjectures",
                         "type": "",
                         "value": 1
                     },
                     "2bncxZXZ/NkerG~*iGe#": {
                         "id": "2bncxZXZ/NkerG~*iGe#",
-                        "name": "Un cube d'un nombre inf\u00e9rieur a \u00e9t\u00e9 touch\u00e9.",
+                        "name": "Le cube pour nombre inf\u00e9rieur a \u00e9t\u00e9 touch\u00e9.",
                         "type": "",
                         "value": 0
                     },
@@ -59,7 +59,7 @@
                     },
                     "7eq/8yclar7y~EO+ZtPY": {
                         "id": "7eq/8yclar7y~EO+ZtPY",
-                        "name": "Un cube d'un nombre sup\u00e9rieur a \u00e9t\u00e9 touch\u00e9.",
+                        "name": "Le cube pour nombre sup\u00e9rieur a \u00e9t\u00e9 touch\u00e9.",
                         "type": "",
                         "value": 0
                     },
@@ -71,7 +71,7 @@
                     },
                     "AhO~eVWZFAdF8)lihXK=": {
                         "id": "AhO~eVWZFAdF8)lihXK=",
-                        "name": "Initialiser le jeu et donner des instructions.",
+                        "name": "Initialise le jeu et donne des instructions.",
                         "type": "",
                         "value": 0
                     },
@@ -113,13 +113,13 @@
                     },
                     "^(T~92_uxQ0;_cHe4ZC#": {
                         "id": "^(T~92_uxQ0;_cHe4ZC#",
-                        "name": "Une animation triste appara\u00eet si Cozmo se trompe. Retentons notre chance.",
+                        "name": "Lit une animation triste et r\u00e9essaye de deviner apr\u00e8s une mauvaise r\u00e9ponse.",
                         "type": "",
                         "value": 0
                     },
                     "fiIc.L.}KtXO4vW]@|,f": {
                         "id": "fiIc.L.}KtXO4vW]@|,f",
-                        "name": "Afficher la supposition de Cozmo.",
+                        "name": "Affiche la supposition de Cozmo.",
                         "type": "",
                         "value": 0
                     },
@@ -131,7 +131,7 @@
                     },
                     "k6+o/oNDW2O68R,D.+c(": {
                         "id": "k6+o/oNDW2O68R,D.+c(",
-                        "name": "R\u00e9initialise les voyants du cube utilis\u00e9s pour le jeu.",
+                        "name": "R\u00e9initialise les voyants des cubes aux couleurs utilis\u00e9es pour le jeu.",
                         "type": "",
                         "value": 0
                     },
@@ -149,7 +149,7 @@
                     },
                     "uj1v/FX)*u*BPrq$mv:a": {
                         "id": "uj1v/FX)*u*BPrq$mv:a",
-                        "name": "donner des instructions",
+                        "name": "donner les instructions",
                         "type": "broadcast_msg",
                         "value": "give instructions"
                     },
@@ -162,13 +162,13 @@
                     "})@_[V6faFP/HGW^2Qi#": {
                         "id": "})@_[V6faFP/HGW^2Qi#",
                         "isCloud": false,
-                        "name": "nombre deviner",
+                        "name": "nouvelle tentative",
                         "type": "",
                         "value": 80
                     },
                     "~S9R6L^F[.MO15G:THcj": {
                         "id": "~S9R6L^F[.MO15G:THcj",
-                        "name": "Illumine tous les voyants du cube en blanc.",
+                        "name": "Illumine tous les voyants des cubes en blanc.",
                         "type": "",
                         "value": 0
                     }
@@ -217,7 +217,7 @@
                             "VARIABLE": {
                                 "id": "})@_[V6faFP/HGW^2Qi#",
                                 "name": "VARIABLE",
-                                "value": "nombre deviner",
+                                "value": "nouvelle tentative",
                                 "variableType": ""
                             }
                         },
@@ -251,7 +251,7 @@
                             "VARIABLE": {
                                 "id": "k6+o/oNDW2O68R,D.+c(",
                                 "name": "VARIABLE",
-                                "value": "R\u00e9initialise les voyants du cube utilis\u00e9s pour le jeu.",
+                                "value": "R\u00e9initialise les voyants des cubes aux couleurs utilis\u00e9es pour le jeu.",
                                 "variableType": ""
                             }
                         },
@@ -370,7 +370,7 @@
                             "VARIABLE": {
                                 "id": "2bncxZXZ/NkerG~*iGe#",
                                 "name": "VARIABLE",
-                                "value": "Un cube d'un nombre inf\u00e9rieur a \u00e9t\u00e9 touch\u00e9.",
+                                "value": "Le cube pour nombre inf\u00e9rieur a \u00e9t\u00e9 touch\u00e9.",
                                 "variableType": ""
                             }
                         },
@@ -404,7 +404,7 @@
                             "VARIABLE": {
                                 "id": "})@_[V6faFP/HGW^2Qi#",
                                 "name": "VARIABLE",
-                                "value": "nombre deviner",
+                                "value": "nouvelle tentative",
                                 "variableType": ""
                             }
                         },
@@ -541,7 +541,7 @@
                             "VARIABLE": {
                                 "id": "})@_[V6faFP/HGW^2Qi#",
                                 "name": "VARIABLE",
-                                "value": "nombre deviner",
+                                "value": "nouvelle tentative",
                                 "variableType": ""
                             }
                         },
@@ -920,7 +920,7 @@
                             "VARIABLE": {
                                 "id": "7eq/8yclar7y~EO+ZtPY",
                                 "name": "VARIABLE",
-                                "value": "Un cube d'un nombre sup\u00e9rieur a \u00e9t\u00e9 touch\u00e9.",
+                                "value": "Le cube pour nombre sup\u00e9rieur a \u00e9t\u00e9 touch\u00e9.",
                                 "variableType": ""
                             }
                         },
@@ -1497,7 +1497,7 @@
                             "VARIABLE": {
                                 "id": "0ay{8luN^LB3TRxhL=cC",
                                 "name": "VARIABLE",
-                                "value": "toucher",
+                                "value": "Touche le bouton",
                                 "variableType": ""
                             }
                         },
@@ -1540,7 +1540,7 @@
                             "VARIABLE": {
                                 "id": "2=0Mat0?Wb@mMVboB@3/",
                                 "name": "VARIABLE",
-                                "value": "nombre total de suppositions",
+                                "value": "total des conjectures",
                                 "variableType": ""
                             }
                         },
@@ -1598,7 +1598,7 @@
                             "VARIABLE": {
                                 "id": "0ay{8luN^LB3TRxhL=cC",
                                 "name": "VARIABLE",
-                                "value": "toucher",
+                                "value": "Touche le bouton",
                                 "variableType": ""
                             }
                         },
@@ -1756,7 +1756,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Penser \u00e0 un nombre compris entre 1\u00a0et\u00a0100, puis toucher les voyants violets pour continuer."
+                                "value": "Pense \u00e0 un nombre entre 1\u00a0et\u00a0100, puis touche le cube violet pour continuer."
                             }
                         },
                         "id": "A6Q!9gD`NzQFU#7jg*i@",
@@ -2011,7 +2011,7 @@
                             "VARIABLE": {
                                 "id": "2=0Mat0?Wb@mMVboB@3/",
                                 "name": "VARIABLE",
-                                "value": "nombre total de suppositions"
+                                "value": "total des conjectures"
                             }
                         },
                         "id": "Cm#sw5b@Kl-BGJD5x`RI",
@@ -2384,7 +2384,7 @@
                             "VARIABLE": {
                                 "id": "fiIc.L.}KtXO4vW]@|,f",
                                 "name": "VARIABLE",
-                                "value": "Afficher la supposition de Cozmo.",
+                                "value": "Affiche la supposition de Cozmo.",
                                 "variableType": ""
                             }
                         },
@@ -2420,7 +2420,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": " Devinettes\u00a0!"
+                                "value": " coups\u00a0!"
                             }
                         },
                         "id": "I`GO4Jh)])#_`oBen(a4",
@@ -2478,7 +2478,7 @@
                             "VARIABLE": {
                                 "id": "})@_[V6faFP/HGW^2Qi#",
                                 "name": "VARIABLE",
-                                "value": "nombre deviner",
+                                "value": "nouvelle tentative",
                                 "variableType": ""
                             }
                         },
@@ -2882,7 +2882,7 @@
                             "VARIABLE": {
                                 "id": "})@_[V6faFP/HGW^2Qi#",
                                 "name": "VARIABLE",
-                                "value": "nombre deviner",
+                                "value": "nouvelle tentative",
                                 "variableType": ""
                             }
                         },
@@ -3121,7 +3121,7 @@
                             "VARIABLE": {
                                 "id": "2=0Mat0?Wb@mMVboB@3/",
                                 "name": "VARIABLE",
-                                "value": "nombre total de suppositions",
+                                "value": "total des conjectures",
                                 "variableType": ""
                             }
                         },
@@ -3163,7 +3163,7 @@
                             "VARIABLE": {
                                 "id": "^(T~92_uxQ0;_cHe4ZC#",
                                 "name": "VARIABLE",
-                                "value": "Une animation triste appara\u00eet si Cozmo se trompe. Retentons notre chance."
+                                "value": "Lit une animation triste et r\u00e9essaye de deviner apr\u00e8s une mauvaise r\u00e9ponse."
                             }
                         },
                         "id": "X+#RV|xm,a=GqA{H#:KY",
@@ -3630,7 +3630,7 @@
                             "VARIABLE": {
                                 "id": "2=0Mat0?Wb@mMVboB@3/",
                                 "name": "VARIABLE",
-                                "value": "nombre total de suppositions",
+                                "value": "total des conjectures",
                                 "variableType": ""
                             }
                         },
@@ -3785,7 +3785,7 @@
                             "VARIABLE": {
                                 "id": "0ay{8luN^LB3TRxhL=cC",
                                 "name": "VARIABLE",
-                                "value": "toucher",
+                                "value": "Touche le bouton",
                                 "variableType": ""
                             }
                         },
@@ -3836,7 +3836,7 @@
                             "VARIABLE": {
                                 "id": "0ay{8luN^LB3TRxhL=cC",
                                 "name": "VARIABLE",
-                                "value": "toucher"
+                                "value": "Touche le bouton"
                             }
                         },
                         "id": "f6)^*Bt)2(jM:TqbZSe~",
@@ -3888,7 +3888,7 @@
                             "VARIABLE": {
                                 "id": "0ay{8luN^LB3TRxhL=cC",
                                 "name": "VARIABLE",
-                                "value": "toucher"
+                                "value": "Touche le bouton"
                             }
                         },
                         "id": "g5d9#(frH?jkQklb,Ig/",
@@ -3912,7 +3912,7 @@
                             "VARIABLE": {
                                 "id": "2=0Mat0?Wb@mMVboB@3/",
                                 "name": "VARIABLE",
-                                "value": "nombre total de suppositions",
+                                "value": "total des conjectures",
                                 "variableType": ""
                             }
                         },
@@ -3981,7 +3981,7 @@
                             "VARIABLE": {
                                 "id": "0ay{8luN^LB3TRxhL=cC",
                                 "name": "VARIABLE",
-                                "value": "toucher",
+                                "value": "Touche le bouton",
                                 "variableType": ""
                             }
                         },
@@ -4060,7 +4060,7 @@
                             "VARIABLE": {
                                 "id": "0ay{8luN^LB3TRxhL=cC",
                                 "name": "VARIABLE",
-                                "value": "toucher"
+                                "value": "Touche le bouton"
                             }
                         },
                         "id": "l09F2OOZXi{W.63.Q[-$",
@@ -4120,7 +4120,7 @@
                             "VARIABLE": {
                                 "id": "})@_[V6faFP/HGW^2Qi#",
                                 "name": "VARIABLE",
-                                "value": "nombre deviner"
+                                "value": "nouvelle tentative"
                             }
                         },
                         "id": "m%g/@zgl+,R_DHaCtyPr",
@@ -4159,7 +4159,7 @@
                             "VARIABLE": {
                                 "id": "})@_[V6faFP/HGW^2Qi#",
                                 "name": "VARIABLE",
-                                "value": "nombre deviner",
+                                "value": "nouvelle tentative",
                                 "variableType": ""
                             }
                         },
@@ -4329,7 +4329,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Deviner!"
+                                "value": "Devinez!"
                             }
                         },
                         "id": "nxrU7({w4J^`bqlh{x2f",
@@ -4484,7 +4484,7 @@
                             "VARIABLE": {
                                 "id": "})@_[V6faFP/HGW^2Qi#",
                                 "name": "VARIABLE",
-                                "value": "nombre deviner"
+                                "value": "nouvelle tentative"
                             }
                         },
                         "id": "sU8]3rEbIx2Qh8X;X[5v",
@@ -4592,7 +4592,7 @@
                             "VARIABLE": {
                                 "id": "~S9R6L^F[.MO15G:THcj",
                                 "name": "VARIABLE",
-                                "value": "Illumine tous les voyants du cube en blanc.",
+                                "value": "Illumine tous les voyants des cubes en blanc.",
                                 "variableType": ""
                             }
                         },
@@ -4758,7 +4758,7 @@
                             "VARIABLE": {
                                 "id": "0ay{8luN^LB3TRxhL=cC",
                                 "name": "VARIABLE",
-                                "value": "toucher",
+                                "value": "Touche le bouton",
                                 "variableType": ""
                             }
                         },
@@ -5021,7 +5021,7 @@
                             "VARIABLE": {
                                 "id": "AhO~eVWZFAdF8)lihXK=",
                                 "name": "VARIABLE",
-                                "value": "Initialiser le jeu et donner des instructions.",
+                                "value": "Initialise le jeu et donne des instructions.",
                                 "variableType": ""
                             }
                         },

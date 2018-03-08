@@ -1492,7 +1492,7 @@
     "translation" : "SOUMIS PAR JDFIGHT\u000a\u000aVéritable devin, Cozmo va deviner le nombre !"
   },
   "codeLabFeaturedGuessTheNumber.projectInstructions" : {
-    "translation" : "1. Aligne les cubes de Cozmo devant toi.\u000a\u000a2. Appuie sur le drapeau de départ et suis les instructions de Cozmo pour jouer.\u000a\u000a3. Donne-lui des indices en touchant ses cubes.\u000a\u000a4. Robinet rouge si votre numéro est inférieur, vert s’il est supérieur, et violet si elle est correcte.Soumis par jdfight.\u000a\u000aRien ne nous fait plus plaisir que de voir vos incroyables créations Code Lab prendre vie. En fait, nous les aimons tellement que nous allons les partager avec toute la communauté Cozmo. Continuons à créer ensemble.\u000a\u000aComment puis-je envoyer ma propre création Code Lab ?\u000a\u000aUne fois votre projet terminé, appuyez sur le bouton Exporter situé en haut à gauche de l'espace de travail. Suivez ensuite les instructions à l'écran. Nous avons hâte de voir ce que vous avez concocté !"
+    "translation" : "1. Aligne les cubes de Cozmo devant toi.\u000a\u000a2. Appuie sur le drapeau de départ et suis les instructions de Cozmo pour jouer.\u000a\u000a3. Donne-lui des indices en touchant ses cubes.\u000a\u000a4. Touche le rouge si ton nombre est inférieur, vert s’il est supérieur, et violet si c'est la bonne réponse.Soumis par jdfight.\u000a\u000aRien ne nous fait plus plaisir que de voir vos incroyables créations Code Lab prendre vie. En fait, nous les aimons tellement que nous allons les partager avec toute la communauté Cozmo. Continuons à créer ensemble.\u000a\u000aComment puis-je envoyer ma propre création Code Lab ?\u000a\u000aUne fois votre projet terminé, appuyez sur le bouton Exporter situé en haut à gauche de l'espace de travail. Suivez ensuite les instructions à l'écran. Nous avons hâte de voir ce que vous avez concocté !"
   },
   "codeLabFeaturedWakeUpCozmo.projectName" : {
     "translation" : "Réveille-toi Cozmo !"
@@ -1501,7 +1501,7 @@
     "translation" : "Qui ose perturber la sieste de Cozmo ?"
   },
   "codeLabFeaturedWakeUpCozmo.projectInstructions" : {
-    "translation" : "1. Aligne les cubes de Cozmo devant toi.\u000a\u000a2. Trouve un ami avec qui t'amuser ou joue tout seul.\u000a\u000a3. Appuie sur le drapeau de départ et mets Cozmo sur le dos quand il te le demande.\u000a\u000a4. Lorsque les voyants de son cube deviennent bleus, touche-les pour lui donner un petit coup. Celui qui réveille Cozmo a perdu !"
+    "translation" : "1. Aligne les cubes de Cozmo devant toi.\u000a\u000a2. Trouve un ami avec qui t'amuser ou joue tout seul.\u000a\u000a3. Appuie sur le drapeau de départ et mets Cozmo sur le dos quand il te le demande.\u000a\u000a4. Lorsque les voyants de ses cubes deviennent bleus, touche-les pour le titiller. Celui qui réveille Cozmo a perdu !"
   },
   "codeLab.toomanyprojectsDialog.dialogTitle" : {
     "translation" : "Vous avez atteint le nombre maximal de projets. Merci d'en supprimer un avant de travailler sur une nouvelle création."

@@ -112,7 +112,7 @@
     "translation" : "もういちどプレイするようおねがいする"
   },
   "codeLabFeaturedProject.Constellations.cassiopeia" : {
-    "translation" : "カシオペアざ"
+    "translation" : "カシオペヤざ"
   },
   "codeLabFeaturedProject.Constellations.cassiopeia_can_be_seen_all_year_from_the_northern_hemisphere" : {
     "translation" : "カシオペヤざは、きたはんきゅうから、いちねんじゅうかんそくできます。"
@@ -193,7 +193,7 @@
     "translation" : "こんにちは"
   },
   "codeLabFeaturedProject.Constellations.id_like_to_visit_libra_someday_and_see_if_they_have_good_tacos" : {
-    "translation" : "いつかてんびんざへいって、おいしいタコスがあるかみてみたい。"
+    "translation" : "てんびんざといえば、キラキラひかるよろいをきたむかしのアニメをおもいだす。"
   },
   "codeLabFeaturedProject.Constellations.in_ancient_greek_stories_scorpius_beat_orion_in_a_fight" : {
     "translation" : "こだいギリシャのおはなしによると、さそりざはオリオンざとのたたかいにしょうりしました。"
@@ -1534,7 +1534,7 @@
     "translation" : " かぶ "
   },
   "codeLabFeaturedProject.CozmosGarden._rounds" : {
-    "translation" : " ラウンド"
+    "translation" : " ラウンドで"
   },
   "codeLabFeaturedProject.CozmosGarden.activate_sun" : {
     "translation" : "たいようをアクティブにする"
@@ -1759,7 +1759,7 @@
     "translation" : "こんにちは"
   },
   "codeLabFeaturedProject.CozmosGarden.hooray_we_harvested_all_the_plants_in_" : {
-    "translation" : "やったー！　★のすべてのしょくぶつをしゅうかくしました。 "
+    "translation" : "やったー！　すべてのしょくぶつをしゅうかくしました。 "
   },
   "codeLabFeaturedProject.CozmosGarden.initialize_game_data_and_begin" : {
     "translation" : "ゲームのデータをしょきかして、かいししてください。"
@@ -1905,8 +1905,8 @@
   "codeLabFeaturedProject.CozmosGarden.tap_a_plant_to_water_it" : {
     "translation" : "しょくぶつをタップしてみずをやる"
   },
-  "codeLabFeaturedProject.CozmosGarden.tap_on": {
-        "translation": "タップする"
+  "codeLabFeaturedProject.CozmosGarden.tap_on" : {
+    "translation" : "ボタンをタップし"
   },
   "codeLabFeaturedProject.CozmosGarden.thing" : {
     "translation" : "もの"
@@ -1945,7 +1945,7 @@
     "translation" : "キューブをたっぷすると、かんれんするアクションがさどうします。"
   },
   "codeLabFeaturedProject.GuessTheNumber._guesses" : {
-    "translation" : " あててみて！"
+    "translation" : " かい"
   },
   "codeLabFeaturedProject.GuessTheNumber.after_incorrect_guess_play_sad_animation_and_reguess" : {
     "translation" : "よそうがはずれたらかなしいアニメをプレイし、もういちどよそうします。"
@@ -1972,7 +1972,7 @@
     "translation" : "しじをだす"
   },
   "codeLabFeaturedProject.GuessTheNumber.guess" : {
-    "translation" : "よそうする!"
+    "translation" : "かい"
   },
   "codeLabFeaturedProject.GuessTheNumber.hi" : {
     "translation" : "こんにちは"
@@ -2007,14 +2007,14 @@
   "codeLabFeaturedProject.GuessTheNumber.new_guess" : {
     "translation" : "あたらしいよそう"
   },
-  "codeLabFeaturedProject.GuessTheNumber.number_guess": {
-        "translation": "ムばんごう よそうする"
+  "codeLabFeaturedProject.GuessTheNumber.number_guess" : {
+    "translation" : "あたらしいよそう"
   },
   "codeLabFeaturedProject.GuessTheNumber.reset_lights" : {
     "translation" : "ライトをリセットする"
   },
   "codeLabFeaturedProject.GuessTheNumber.reset_the_cube_lights_to_the_colors_used_for_gameplay" : {
-    "translation" : "キューブのライトを、ゲームにつかったいろにリセットしてください。"
+    "translation" : "キューブのライトを、ゲームでつかったいろにリセットしてください。"
   },
   "codeLabFeaturedProject.GuessTheNumber.spin_all_of_the_cube_lights_in_white" : {
     "translation" : "キューブのすべてのライトをホワイトでかいてんさせてください。"
@@ -2029,13 +2029,13 @@
     "translation" : "はじめる"
   },
   "codeLabFeaturedProject.GuessTheNumber.tap_on" : {
-    "translation" : "タップする"
+    "translation" : "ボタンをタップし"
   },
   "codeLabFeaturedProject.GuessTheNumber.think_of_a_number_between_1_and_100_and_tap_purple_to_continue" : {
     "translation" : "1から100のなかからひとつすうじをえらび、パープルをタップしてつづけます。"
   },
   "codeLabFeaturedProject.GuessTheNumber.total_guesses" : {
-    "translation" : "ぜんたいのよそう"
+    "translation" : "すいそくのごうけい"
   },
   "codeLabFeaturedProject.GuessTheNumber.turn_off_backpack" : {
     "translation" : "LEDライトをけす"

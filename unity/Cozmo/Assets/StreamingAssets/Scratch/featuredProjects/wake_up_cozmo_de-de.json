@@ -65,7 +65,7 @@
                     },
                     "B/A4@k-9jYO1@T!$zTBZ": {
                         "id": "B/A4@k-9jYO1@T!$zTBZ",
-                        "name": "ERNEUT SPIELEN",
+                        "name": "Erneut spielen",
                         "type": "broadcast_msg",
                         "value": "play again"
                     },

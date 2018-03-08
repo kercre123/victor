@@ -308,7 +308,7 @@
                     },
                     "X:Idv9SkW;_?cN7:]OFJ": {
                         "id": "X:Idv9SkW;_?cN7:]OFJ",
-                        "name": "m\u00e9langer le nombre",
+                        "name": "nombre de choix",
                         "type": "",
                         "value": 0
                     },
@@ -430,13 +430,13 @@
                     },
                     "p-izhJ]MUP_NJ%0P@I,n": {
                         "id": "p-izhJ]MUP_NJ%0P@I,n",
-                        "name": "m\u00e9langer au hasard",
+                        "name": "nombre al\u00e9atoire",
                         "type": "",
                         "value": 4
                     },
                     "q?n=nV;:q8w7ae`f[g/z": {
                         "id": "q?n=nV;:q8w7ae`f[g/z",
-                        "name": "ins\u00e9rer les choix",
+                        "name": "remplir la liste de choix",
                         "type": "broadcast_msg",
                         "value": "populate choices"
                     },
@@ -491,7 +491,7 @@
                     },
                     "|rP_=L{NHb1P!g19QCKx": {
                         "id": "|rP_=L{NHb1P!g19QCKx",
-                        "name": "m\u00e9langer le choix",
+                        "name": "choix al\u00e9atoire",
                         "type": "",
                         "value": "4"
                     },
@@ -1188,7 +1188,7 @@
                             "VARIABLE": {
                                 "id": "p-izhJ]MUP_NJ%0P@I,n",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer au hasard",
+                                "value": "nombre al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -2093,7 +2093,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Sa forme lui vaut parfois le surnom de Tr\u00f4ne de la Reine."
+                                "value": "La forme de Cassiop\u00e9e lui vaut parfois le surnom de Tr\u00f4ne de la Reine."
                             }
                         },
                         "id": "*F[Y9J#,ol^lyuiuJ5bE",
@@ -3120,7 +3120,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Son \u00e9toile la plus brillante est 40\u00a0fois plus lumineuse que le soleil lui-m\u00eame."
+                                "value": "L'\u00e9toile la plus brillante de Cassiop\u00e9e est 40\u00a0fois plus lumineuse que le soleil lui-m\u00eame."
                             }
                         },
                         "id": ".xiJZM`#%,W3Bgz-}b~P",
@@ -3416,7 +3416,7 @@
                             "VARIABLE": {
                                 "id": "p-izhJ]MUP_NJ%0P@I,n",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer au hasard",
+                                "value": "nombre al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -5275,7 +5275,7 @@
                             "VARIABLE": {
                                 "id": "|rP_=L{NHb1P!g19QCKx",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer le choix",
+                                "value": "choix al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -6498,7 +6498,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer le nombre",
+                                "value": "nombre de choix",
                                 "variableType": ""
                             }
                         },
@@ -6541,7 +6541,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Toucher un cube pour d\u00e9couvrir une autre constellation. "
+                                "value": "Touche un cube pour d\u00e9couvrir une autre constellation. "
                             }
                         },
                         "id": "=W.NI.C6z(,dWp6Hu3/i",
@@ -7057,7 +7057,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Elle a \u00e9t\u00e9 d\u00e9couverte par un astronome grec nomm\u00e9 Ptol\u00e9m\u00e9e. Dis-le trois fois rapidement\u00a0!"
+                                "value": "La constellation du Scorpion a \u00e9t\u00e9 d\u00e9couverte par un astronome grec nomm\u00e9 Ptol\u00e9m\u00e9e. Dis-le trois fois rapidement\u00a0!"
                             }
                         },
                         "id": "AWf,z.mycu,Qfv^{F={1",
@@ -9037,7 +9037,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer le nombre",
+                                "value": "nombre de choix",
                                 "variableType": ""
                             }
                         },
@@ -10420,7 +10420,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer le nombre",
+                                "value": "nombre de choix",
                                 "variableType": ""
                             }
                         },
@@ -11024,7 +11024,7 @@
                             "VARIABLE": {
                                 "id": "|rP_=L{NHb1P!g19QCKx",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer le choix",
+                                "value": "choix al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -14476,7 +14476,7 @@
                             "VARIABLE": {
                                 "id": "p-izhJ]MUP_NJ%0P@I,n",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer au hasard",
+                                "value": "nombre al\u00e9atoire",
                                 "variableType": ""
                             }
                         },
@@ -15745,7 +15745,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Dans la mythologie grecque, un scorpion g\u00e9ant tua Orion par son venin."
+                                "value": "Dans la mythologie grecque, un scorpion monstrueux tua Orion avec son venin."
                             }
                         },
                         "id": "fWM9H{L}iMiS8|B`g3c[",
@@ -16039,7 +16039,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Elle est tr\u00e8s facilement reconnaissable."
+                                "value": "Orion est l'une des constellations les plus reconnaissables."
                             }
                         },
                         "id": "gZx5yQq172-k0(TZcI8,",
@@ -17017,7 +17017,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "J'aimerais bien visiter la constellation de la Balance pour voir si je peux y trouver de bons tacos."
+                                "value": "Il para\u00eet qu'il existe une armure en or provenant de la constellation de la balance. C'est mon amie Doroth\u00e9e qui me l'a dit."
                             }
                         },
                         "id": "kJ4L_bob^pQ(]T0lo^90",
@@ -18661,7 +18661,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Elle s'appelle ainsi car elle ressemble tout simplement \u00e0 un lion."
+                                "value": "La constellation s'appelle ainsi car elle ressemble tout simplement \u00e0 un lion."
                             }
                         },
                         "id": "rFsGu7lug57(k#M_AAVT",
@@ -19324,7 +19324,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer le nombre",
+                                "value": "nombre de choix",
                                 "variableType": ""
                             }
                         },
@@ -20820,7 +20820,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Il s'agit de l'une des toutes premi\u00e8res constellations d\u00e9couvertes."
+                                "value": "La constellation du Lion est l'une des toutes premi\u00e8res constellations d\u00e9couvertes."
                             }
                         },
                         "id": "{[q5[EtArdLTwtkW??30",
@@ -20921,7 +20921,7 @@
                             "VARIABLE": {
                                 "id": "X:Idv9SkW;_?cN7:]OFJ",
                                 "name": "VARIABLE",
-                                "value": "m\u00e9langer le nombre",
+                                "value": "nombre de choix",
                                 "variableType": ""
                             }
                         },
