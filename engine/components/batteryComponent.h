@@ -45,15 +45,35 @@ public:
   };
   // end IDependencyManagedComponent functions
   
+  // Updates things when a RobotState message is received from the robot
   void NotifyOfRobotState(const RobotState& msg);
   
-  // Returns the low-pass filtered filtered battery voltage
+  enum class EBatteryLevel {
+    // Low battery - should charge as soon as possible
+    Low,
+    
+    Nominal,
+    
+    // Battery is fully charged. Note that the battery will continue to charge
+    // beyond this point, but at this point the robot is charged enough to be
+    // able to wander off the charger and do stuff.
+    Full
+  };
+  
+  const char* BatteryLevelToString(EBatteryLevel level) const;
+  
+  EBatteryLevel GetBatteryLevel() const { return _batteryLevel; }
+  
+  // Returns the low-pass filtered battery voltage
   float GetBatteryVolts() const { return _batteryVoltsFilt; }
   
   // Returns raw battery voltage as reported by the robot.
   // Note that this will be quite noisy and not super useful
   // for most use cases.
   float GetBatteryVoltsRaw() const { return _batteryVoltsRaw; }
+  
+  bool IsBatteryLow() const { return _batteryLevel == EBatteryLevel::Low; }
+  bool IsBatteryFull() const { return _batteryLevel == EBatteryLevel::Full; }
   
   // Indicates that the robot has its charge circuit enabled. Note that
   // this will remain true even after the battery is fully charged.
@@ -71,6 +91,14 @@ public:
   // Return the message timestamp of the last time the value of IsCharging changed
   TimeStamp_t GetLastChargingStateChangeTimestamp() const { return _lastChargingChange_ms; }
   
+  // Returns how long the "fully charged" state has been active. Returns 0
+  // if not currently fully charged.
+  float GetFullyChargedTimeSec() const;
+  
+  // Returns how long the "low battery" state has been active. Returns 0
+  // if not currently in a low battery state.
+  float GetLowBatteryTimeSec() const;
+  
   void SetOnChargerPlatform(bool onPlatform);
   
 private:
@@ -82,15 +110,20 @@ private:
   
   Robot* _robot = nullptr;
   
-  float _batteryVoltsRaw = 0.f;
+  float _lastBatteryVoltsUpdate_sec = 0.f;
   
+  float _batteryVoltsRaw = 0.f;
   float _batteryVoltsFilt = 0.f;
 
+  EBatteryLevel _batteryLevel = EBatteryLevel::Full;
+  
   bool _isCharging = false;
   bool _isOnChargerContacts = false;
   bool _isOnChargerPlatform = false;
   
   TimeStamp_t _lastChargingChange_ms = 0;
+  
+  float _lastBatteryLevelChange_sec = 0;
   
   // The timestamp of the RobotState message with the latest data
   TimeStamp_t _lastMsgTimestamp = 0;

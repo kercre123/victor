@@ -787,11 +787,12 @@ namespace Anki {
                                     const u8  lockedTracks,
                                     const u8  tracksInUse,                                    
                                     const f32 imuTemperature_degC,
-                                    std::array<uint16_t, 4> cliffThresholds
+                                    std::array<uint16_t, 4> cliffThresholds,
+                                    const float batteryVolts
                                     )
     {
       ANKI_CPU_PROFILE("VizManager::SendRobotState");
-      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, imuTemperature_degC, numProcAnimFaceKeyframes, cliffThresholds, videoFrameRateHz, imageProcFrameRateHz, lockedTracks, tracksInUse)));
+      SendMessage(VizInterface::MessageViz(VizInterface::RobotStateMessage(msg, imuTemperature_degC, numProcAnimFaceKeyframes, cliffThresholds, videoFrameRateHz, imageProcFrameRateHz, lockedTracks, tracksInUse, batteryVolts)));
     }
 
     void VizManager::SendCurrentAnimation(const std::string& animName, u8 animTag)

@@ -112,6 +112,9 @@ void OSState::Update()
 
       // Update temperature reading
       UpdateTemperature_C();
+      
+      // Update battery voltage
+      UpdateBatteryVoltage_uV();
 
       const auto now = steady_clock::now();
       const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
@@ -205,8 +208,6 @@ uint32_t OSState::GetTemperature_C() const
 
 uint32_t OSState::GetBatteryVoltage_uV() const
 {
-  // Better to have this relatively expensive call as on-demand only
-  DEV_ASSERT(_updatePeriod_ms == 0, "OSState.GetBatteryVoltage_uV.NonZeroUpdate");
   if (_updatePeriod_ms == 0) {
     UpdateBatteryVoltage_uV();
   }

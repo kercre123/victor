@@ -387,7 +387,8 @@ namespace Anki {
                           const u8  lockedTracks,
                           const u8  tracksInUse,
                           const f32 imuTemperature_degC,
-                          std::array<uint16_t, 4> cliffThresholds);
+                          std::array<uint16_t, 4> cliffThresholds,
+                          const float batteryVolts);
       
       void SendCurrentAnimation(const std::string& animName, u8 animTag);
 

@@ -24,22 +24,35 @@
 
 #include "clad/types/robotStatusAndActions.h"
 
+#include "osState/osState.h"
+
 #include "util/filters/lowPassFilterSimple.h"
 
 namespace Anki {
 namespace Cozmo {
 
 namespace {
-  const float kBatteryVoltsFilterTimeConstant_sec = 1.0f;
+  // How often we call into the system to get the current voltage.
+  // This is expensive since it requires file access, so this rate
+  // should be relatively slow.
+  const float kBatteryVoltsUpdatePeriod_sec = 0.5f;
+  
+  // Time constant of the low-pass filter for battery voltage
+  const float kBatteryVoltsFilterTimeConstant_sec = 6.0f;
+  
+  // Voltage above which the battery is considered fully charged
+  const float kFullyChargedThresholdVolts = 4.0f;
+  
+  // Voltage below which battery is considered in a low charge state
+  const float kLowBatteryThresholdVolts = 3.5f;
 }
 
 BatteryComponent::BatteryComponent()
   : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::Battery)
   , _chargerFilter(std::make_unique<BlockWorldFilter>())
 {
-  // setup battery voltage low pass filter (samples come in at RobotState frequency)
-  const float kSamplePeriod_sec = Util::MilliSecToSec((float) TIME_STEP * STATE_MESSAGE_FREQUENCY);
-  _batteryVoltsFilter = std::make_unique<Util::LowPassFilterSimple>(kSamplePeriod_sec,
+  // setup battery voltage low pass filter (samples come in at kBatteryVoltsUpdatePeriod_sec)
+  _batteryVoltsFilter = std::make_unique<Util::LowPassFilterSimple>(kBatteryVoltsUpdatePeriod_sec,
                                                                     kBatteryVoltsFilterTimeConstant_sec);
   
   // setup block world filter to find chargers:
@@ -56,13 +69,60 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 {
   _lastMsgTimestamp = msg.timestamp;
   
-  _batteryVoltsRaw = msg.batteryVoltage;
+  // Poll the system voltage if it's the appropriate time
+  const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  if (now - _lastBatteryVoltsUpdate_sec > kBatteryVoltsUpdatePeriod_sec) {
+    _batteryVoltsRaw = OSState::getInstance()->GetBatteryVoltage_uV() / 1'000'000.f;
+    _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
+    _lastBatteryVoltsUpdate_sec = now;
+  }
   
-  _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
-  
+  // Update isCharging / isOnChargerContacts
   SetOnChargeContacts(msg.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
   SetIsCharging(msg.status & (uint32_t)RobotStatusFlag::IS_CHARGING);
+  
+  // Update battery charge level
+  EBatteryLevel level = EBatteryLevel::Nominal;
+  if (_batteryVoltsFilt > kFullyChargedThresholdVolts) {
+    level = EBatteryLevel::Full;
+  } else if (_batteryVoltsFilt < kLowBatteryThresholdVolts) {
+    level = EBatteryLevel::Low;
+  }
+  
+  if (level != _batteryLevel) {
+    const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    PRINT_NAMED_INFO("BatteryComponent.BatteryLevelChanged",
+                     "New battery level %s (previously %s for %f seconds)",
+                     BatteryLevelToString(level),
+                     BatteryLevelToString(_batteryLevel),
+                     now - _lastBatteryLevelChange_sec);
+    _lastBatteryLevelChange_sec = now;
+    _batteryLevel = level;
+  }
 }
+
+
+float BatteryComponent::GetFullyChargedTimeSec() const
+{
+  float timeSinceFullyCharged_sec = 0.f;
+  if (_batteryLevel == EBatteryLevel::Full) {
+    const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    timeSinceFullyCharged_sec = now - _lastBatteryLevelChange_sec;
+  }
+  return timeSinceFullyCharged_sec;
+}
+
+
+float BatteryComponent::GetLowBatteryTimeSec() const
+{
+  float timeSinceLowBattery_sec = 0.f;
+  if (_batteryLevel == EBatteryLevel::Low) {
+    const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    timeSinceLowBattery_sec = now - _lastBatteryLevelChange_sec;
+  }
+  return timeSinceLowBattery_sec;
+}
+
 
 void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
 {
@@ -127,6 +187,16 @@ void BatteryComponent::SetIsCharging(const bool isCharging)
   if (isCharging != _isCharging) {
     _lastChargingChange_ms = _lastMsgTimestamp;
     _isCharging = isCharging;
+  }
+}
+
+
+const char* BatteryComponent::BatteryLevelToString(EBatteryLevel level) const
+{
+  switch (level) {
+    case EBatteryLevel::Low:     return "Low";
+    case EBatteryLevel::Nominal: return "Nominal";
+    case EBatteryLevel::Full:    return "Full";
   }
 }
 

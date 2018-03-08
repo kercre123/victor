@@ -63,7 +63,7 @@ public:
   // Returns temperature in Celsius
   uint32_t GetTemperature_C() const;
 
-  // Returns battery charge in volts
+  // Returns battery charge in microvolts
   uint32_t GetBatteryVoltage_uV() const;
 
   // Returns uptime (and idle time) in seconds

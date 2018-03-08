@@ -108,7 +108,15 @@ uint32_t OSState::GetTemperature_C() const
   // on physical robot
   return 65;  
 }
-  
+
+
+uint32_t OSState::GetBatteryVoltage_uV() const
+{
+  // 4.15V: randomly chosen voltage which corresponds to "fully charged"
+  return 4'150'000;
+}
+
+
 const std::string& OSState::GetSerialNumberAsString()
 {
   return _serialNumString;

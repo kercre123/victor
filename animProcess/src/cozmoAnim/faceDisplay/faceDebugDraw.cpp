@@ -404,10 +404,12 @@ void FaceDebugDraw::DrawStateInfo(const RobotState& state)
             state.rwheel_speed_mmps);
     const std::string motors = temp;
 
+    const float batteryVolts = OSState::getInstance()->GetBatteryVoltage_uV() / 1'000'000.f;
+    
     sprintf(temp, 
             "%u %0.2fv", 
             state.backpackTouchSensorRaw,
-            state.batteryVoltage);
+            batteryVolts);
     const std::string touchAndBat = temp;
 
     sprintf(temp, 
