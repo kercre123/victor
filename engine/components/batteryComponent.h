@@ -16,6 +16,8 @@
 
 #include "engine/robotComponents_fwd.h"
 
+#include "clad/types/batteryTypes.h"
+
 #include "coretech/common/shared/types.h"
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
@@ -48,21 +50,7 @@ public:
   // Updates things when a RobotState message is received from the robot
   void NotifyOfRobotState(const RobotState& msg);
   
-  enum class EBatteryLevel {
-    // Low battery - should charge as soon as possible
-    Low,
-    
-    Nominal,
-    
-    // Battery is fully charged. Note that the battery will continue to charge
-    // beyond this point, but at this point the robot is charged enough to be
-    // able to wander off the charger and do stuff.
-    Full
-  };
-  
-  const char* BatteryLevelToString(EBatteryLevel level) const;
-  
-  EBatteryLevel GetBatteryLevel() const { return _batteryLevel; }
+  BatteryLevel GetBatteryLevel() const { return _batteryLevel; }
   
   // Returns the low-pass filtered battery voltage
   float GetBatteryVolts() const { return _batteryVoltsFilt; }
@@ -72,8 +60,13 @@ public:
   // for most use cases.
   float GetBatteryVoltsRaw() const { return _batteryVoltsRaw; }
   
-  bool IsBatteryLow() const { return _batteryLevel == EBatteryLevel::Low; }
-  bool IsBatteryFull() const { return _batteryLevel == EBatteryLevel::Full; }
+  // Low battery - should charge as soon as possible
+  bool IsBatteryLow() const { return _batteryLevel == BatteryLevel::Low; }
+  
+  // Battery is fully charged. Note that the battery will continue to charge
+  // beyond this point, but at this point the robot is charged enough to be
+  // able to wander off the charger and do stuff.
+  bool IsBatteryFull() const { return _batteryLevel == BatteryLevel::Full; }
   
   // Indicates that the robot has its charge circuit enabled. Note that
   // this will remain true even after the battery is fully charged.
@@ -115,7 +108,7 @@ private:
   float _batteryVoltsRaw = 0.f;
   float _batteryVoltsFilt = 0.f;
 
-  EBatteryLevel _batteryLevel = EBatteryLevel::Full;
+  BatteryLevel _batteryLevel = BatteryLevel::Unknown;
   
   bool _isCharging = false;
   bool _isOnChargerContacts = false;

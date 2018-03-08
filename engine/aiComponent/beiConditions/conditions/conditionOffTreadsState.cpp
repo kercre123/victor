@@ -22,16 +22,17 @@ namespace Cozmo {
 ConditionOffTreadsState::ConditionOffTreadsState(const Json::Value& config)
   : IBEICondition(config)
 {
-
   const std::string& targetStateStr = JsonTools::ParseString(config, "targetState", "ConditionOffTreadsState.Config");  
-  _targetState = OffTreadsStateFromString(targetStateStr);
+  ANKI_VERIFY(OffTreadsStateFromString(targetStateStr, _targetState),
+              "ConditionOffTreadsState.Config.IncorrectString",
+              "%s is not a valid OffTreadsState",
+              targetStateStr.c_str());
 }
 
 bool ConditionOffTreadsState::AreConditionsMetInternal(BehaviorExternalInterface& bei) const
 {
   const OffTreadsState currState = bei.GetRobotInfo().GetOffTreadsState();
   return (currState == _targetState);
-  
 }
 
 }

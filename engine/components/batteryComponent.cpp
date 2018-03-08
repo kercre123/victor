@@ -82,11 +82,11 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   SetIsCharging(msg.status & (uint32_t)RobotStatusFlag::IS_CHARGING);
   
   // Update battery charge level
-  EBatteryLevel level = EBatteryLevel::Nominal;
+  BatteryLevel level = BatteryLevel::Nominal;
   if (_batteryVoltsFilt > kFullyChargedThresholdVolts) {
-    level = EBatteryLevel::Full;
+    level = BatteryLevel::Full;
   } else if (_batteryVoltsFilt < kLowBatteryThresholdVolts) {
-    level = EBatteryLevel::Low;
+    level = BatteryLevel::Low;
   }
   
   if (level != _batteryLevel) {
@@ -105,7 +105,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 float BatteryComponent::GetFullyChargedTimeSec() const
 {
   float timeSinceFullyCharged_sec = 0.f;
-  if (_batteryLevel == EBatteryLevel::Full) {
+  if (_batteryLevel == BatteryLevel::Full) {
     const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     timeSinceFullyCharged_sec = now - _lastBatteryLevelChange_sec;
   }
@@ -116,7 +116,7 @@ float BatteryComponent::GetFullyChargedTimeSec() const
 float BatteryComponent::GetLowBatteryTimeSec() const
 {
   float timeSinceLowBattery_sec = 0.f;
-  if (_batteryLevel == EBatteryLevel::Low) {
+  if (_batteryLevel == BatteryLevel::Low) {
     const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     timeSinceLowBattery_sec = now - _lastBatteryLevelChange_sec;
   }
@@ -187,16 +187,6 @@ void BatteryComponent::SetIsCharging(const bool isCharging)
   if (isCharging != _isCharging) {
     _lastChargingChange_ms = _lastMsgTimestamp;
     _isCharging = isCharging;
-  }
-}
-
-
-const char* BatteryComponent::BatteryLevelToString(EBatteryLevel level) const
-{
-  switch (level) {
-    case EBatteryLevel::Low:     return "Low";
-    case EBatteryLevel::Nominal: return "Nominal";
-    case EBatteryLevel::Full:    return "Full";
   }
 }
 
