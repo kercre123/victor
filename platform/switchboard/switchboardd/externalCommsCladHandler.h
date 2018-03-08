@@ -34,6 +34,10 @@ namespace Switchboard {
     RtsConnectionSignal& OnReceiveRtsOtaUpdateRequest() {
       return _receiveRtsOtaUpdateRequest;
     }
+
+    RtsConnectionSignal& OnReceiveRtsWifiAccessPointRequest() {
+      return _receiveRtsWifiAccessPointRequest;
+    }
     
     RtsConnectionSignal& OnReceiveCancelPairingRequest() {
       return _receiveRtsCancelPairing;
@@ -86,6 +90,10 @@ namespace Switchboard {
             _receiveRtsOtaUpdateRequest.emit(rtsMsg);
             break;
           }
+          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiAccessPointRequest: {
+            _receiveRtsWifiAccessPointRequest.emit(rtsMsg);
+            break;
+          }
           case Anki::Victor::ExternalComms::RtsConnectionTag::RtsCancelPairing: {
             _receiveRtsCancelPairing.emit(rtsMsg);
             break;
@@ -120,6 +128,7 @@ namespace Switchboard {
       RtsConnectionSignal _receiveRtsStatusRequest;
       RtsConnectionSignal _receiveRtsWifiScanRequest;
       RtsConnectionSignal _receiveRtsOtaUpdateRequest;
+      RtsConnectionSignal _receiveRtsWifiAccessPointRequest;
       RtsConnectionSignal _receiveRtsCancelPairing;
       RtsConnectionSignal _receiveRtsAck;
   };

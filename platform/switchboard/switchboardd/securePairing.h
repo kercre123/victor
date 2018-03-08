@@ -143,6 +143,9 @@ namespace Switchboard {
     Signal::SmartHandle _rtsOtaUpdateRequestHandle;
     void HandleRtsOtaUpdateRequest(const Victor::ExternalComms::RtsConnection& msg);
 
+    Signal::SmartHandle _rtsWifiAccessPointRequestHandle;
+    void HandleRtsWifiAccessPointRequest(const Victor::ExternalComms::RtsConnection& msg);
+
     Signal::SmartHandle _rtsCancelPairingHandle;
     void HandleRtsCancelPairing(const Victor::ExternalComms::RtsConnection& msg);
 

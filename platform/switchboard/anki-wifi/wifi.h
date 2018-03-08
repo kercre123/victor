@@ -53,5 +53,7 @@ void SetWiFiConfig(const std::map<std::string, std::string> networks, ExecComman
 void HandleOutputCallback(int rc, const std::string& output);
 bool HasInternet();
 bool GetIpFromHostName(char* hostname, char* ip);
+bool EnableAccessPointMode(std::string ssid, std::string pw);
+bool DisableAccessPointMode();
 
 } // namespace Anki

@@ -364,21 +364,6 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
                                   nullptr,
                                   &error);
 
-  //conn_man_bus_service_call_connect(service, nullptr, cb, userData);
-
-  /*GAsyncResult result;
-
-  gboolean didConnect = conn_man_bus_service_call_connect_finish (
-    service,
-    &result,
-    &error);
-
-  printf("Did connect? %d\n", didConnect);
-
-  if(error != nullptr) {
-    printf("Did connect? %s\n",error->message);
-  }*/
-
   gboolean didConnect = conn_man_bus_service_call_connect_sync (
                                  service,
                                  nullptr,
@@ -524,6 +509,100 @@ bool GetIpFromHostName(char* hostName, char* ipAddressOut) {
 
 bool HasInternet() {
   return CanConnectToHostName("google.com") || CanConnectToHostName("amazon.com");
+}
+
+bool EnableAccessPointMode(std::string ssid, std::string pw) {
+  ConnManBusManager* manager_proxy;
+  GError* error = nullptr;
+
+  GVariant* ssid_s = g_variant_new_string(ssid.c_str());
+  GVariant* ssid_v = g_variant_new_variant(ssid_s);
+
+  GVariant* pw_s = g_variant_new_string(pw.c_str());
+  GVariant* pw_v = g_variant_new_variant(pw_s);
+
+  GVariant* enable_b = g_variant_new_boolean(true);
+  GVariant* enable_v = g_variant_new_variant(enable_b);
+
+  ConnManBusTechnology* tech_proxy = nullptr;
+  tech_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
+                                                              G_DBUS_PROXY_FLAGS_NONE,
+                                                              "net.connman",
+                                                              "/net/connman/technology/wifi",
+                                                              nullptr,
+                                                              &error);
+
+  if(error != nullptr) {
+    return false;
+  }
+
+  conn_man_bus_technology_call_set_property_sync (
+    tech_proxy,
+    "TetheringIdentifier",
+    ssid_v,
+    nullptr,
+    &error);
+
+  if(error != nullptr) {
+    return false;
+  }
+
+  conn_man_bus_technology_call_set_property_sync (
+    tech_proxy,
+    "TetheringPassphrase",
+    pw_v,
+    nullptr,
+    &error);
+
+  if(error != nullptr) {
+    return false;
+  }
+
+  conn_man_bus_technology_call_set_property_sync (
+    tech_proxy,
+    "Tethering",
+    enable_v,
+    nullptr,
+    &error);
+
+  if(error != nullptr) {
+    return false;
+  }
+
+  return true;
+}
+
+bool DisableAccessPointMode() {
+  ConnManBusManager* manager_proxy;
+  GError* error = nullptr;
+
+  GVariant* enable_b = g_variant_new_boolean(false);
+  GVariant* enable_v = g_variant_new_variant(enable_b);
+
+  ConnManBusTechnology* tech_proxy = nullptr;
+  tech_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
+                                                              G_DBUS_PROXY_FLAGS_NONE,
+                                                              "net.connman",
+                                                              "/net/connman/technology/wifi",
+                                                              nullptr,
+                                                              &error);
+
+  if(error != nullptr) {
+    return false;
+  }
+
+  conn_man_bus_technology_call_set_property_sync (
+    tech_proxy,
+    "Tethering",
+    enable_v,
+    nullptr,
+    &error);
+
+  if(error != nullptr) {
+    return false;
+  }
+
+  return true;
 }
 
 } // namespace Anki

@@ -132,6 +132,7 @@ void Anki::Switchboard::SecurePairing::SubscribeToCladMessages() {
   _rtsRtsStatusRequestHandle = _cladHandler->OnReceiveRtsStatusRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsStatusRequest, this, std::placeholders::_1));
   _rtsWifiScanRequestHandle = _cladHandler->OnReceiveRtsWifiScanRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsWifiScanRequest, this, std::placeholders::_1));
   _rtsOtaUpdateRequestHandle = _cladHandler->OnReceiveRtsOtaUpdateRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsOtaUpdateRequest, this, std::placeholders::_1));
+  _rtsWifiAccessPointRequestHandle = _cladHandler->OnReceiveRtsWifiAccessPointRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsWifiAccessPointRequest, this, std::placeholders::_1));
   _rtsCancelPairingHandle = _cladHandler->OnReceiveCancelPairingRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsCancelPairing, this, std::placeholders::_1));
   _rtsAckHandle = _cladHandler->OnReceiveRtsAck().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsAck, this, std::placeholders::_1));
 }
@@ -396,6 +397,15 @@ void Anki::Switchboard::SecurePairing::HandleRtsOtaUpdateRequest(const Victor::E
   }
   
   Log::Write("Todo: Execute Rts Ota Update request.");
+}
+
+void Anki::Switchboard::SecurePairing::HandleRtsWifiAccessPointRequest(const Victor::ExternalComms::RtsConnection& msg) {
+  if(!AssertState(CommsState::SecureClad)) {
+    return;
+  }
+
+  //bool enabled = Anki::
+  Log::Write("Received request to enter wifi access point mode.");
 }
 
 void Anki::Switchboard::SecurePairing::HandleRtsCancelPairing(const Victor::ExternalComms::RtsConnection& msg) {
