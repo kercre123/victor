@@ -362,7 +362,6 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
   }
 
   std::string s = std::string(objectPath);
-  printf("Trying to connect to %s\n", s.c_str());
 
   ConnManBusService* service = conn_man_bus_service_proxy_new_for_bus_sync(
                                   G_BUS_TYPE_SYSTEM,

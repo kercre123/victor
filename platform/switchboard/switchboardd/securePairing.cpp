@@ -356,6 +356,7 @@ void Anki::Switchboard::SecurePairing::HandleRtsWifiConnectRequest(const Victor:
   if(_state == PairingState::ConfirmedSharedSecret) {
     Anki::Victor::ExternalComms::RtsWifiConnectRequest challengeMessage = msg.Get_RtsWifiConnectRequest();
 
+    Log::Write("Trying to connect to wifi network.");
     bool connected = Anki::ConnectWiFiBySsid(challengeMessage.ssid, 
       challengeMessage.password,
       nullptr,
