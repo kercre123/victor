@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.6)
 
 list(APPEND CMAKE_MODULE_PATH
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/victor-clad/cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/util/cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/build/cmake
 )
@@ -108,8 +109,9 @@ endif()
 #    message(FATAL_ERROR "breakpad_client not defined")
 #endif()
 
-
-import(clad "tools/message-buffers")
+set(CLAD_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/victor-clad/tools/message-buffers")
+set(CLAD_VICTOR_EMITTER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/victor-clad/victorEmitters")
+add_subdirectory("victor-clad") # includes clad via message-buffers
 import(util "lib/util")
 include(audio) # See ./cmake/audio.cmake for definitions and lib
 import(ble_cozmo "lib/BLECozmo")

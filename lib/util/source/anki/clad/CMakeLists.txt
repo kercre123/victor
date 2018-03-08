@@ -26,14 +26,6 @@ generate_clad_cpp(
     OUTPUT_SRCS CLAD_CPP_GEN_UTIL_SRCS
 )
 
-generate_clad_py(
-    TARGET "util_clad_python"
-    SRCS ${UTIL_SRCS}
-    RELATIVE_SRC_DIR "."
-    OUTPUT_DIR "${PY_OUTPUT_DIR}"
-    OUTPUT_SRCS CLAD_PY_GEN_UTIL_SRCS
-)
-
 add_library(util_clad STATIC
     ${CLAD_CPP_GEN_UTIL_SRCS}
     ${CLAD_PY_GEN_UTIL_SRCS}
@@ -50,3 +42,10 @@ target_link_libraries(util_clad
 
 android_strip(TARGET util_clad)
 
+generate_clad_py(
+    TARGET "util_clad_python"
+    SRCS ${UTIL_SRCS}
+    RELATIVE_SRC_DIR "."
+    OUTPUT_DIR "${PY_OUTPUT_DIR}"
+    OUTPUT_SRCS CLAD_PY_GEN_UTIL_SRCS
+)
