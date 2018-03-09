@@ -70,14 +70,9 @@ void BodyLightComponent::UpdateChargingLightConfig()
   BackpackLightsState state = BackpackLightsState::OffCharger;
   if(_robot->GetBatteryComponent().IsOnChargerContacts())
   {
-    if(_robot->GetBatteryComponent().IsCharging())
-    {
-      state = BackpackLightsState::Charging;
-    }
-    else
-    {
-      state = BackpackLightsState::Charged;
-    }
+    state = _robot->GetBatteryComponent().IsBatteryFull() ?
+            BackpackLightsState::Charged :
+            BackpackLightsState::Charging;
   }
   else if(_robot->GetBatteryComponent().IsBatteryLow())
   {
