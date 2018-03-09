@@ -1,0 +1,5 @@
+cxx_project(
+  name = 'vic-switchboard',
+  srcs = cxx_src_glob(['switchboardd', 'anki-ble', 'anki-wifi', 'signals', 'libsodium/**']),
+  headers = cxx_header_glob(['switchboardd', 'anki-ble', 'anki-wifi', 'signals', 'libsodium/**'])
+)
