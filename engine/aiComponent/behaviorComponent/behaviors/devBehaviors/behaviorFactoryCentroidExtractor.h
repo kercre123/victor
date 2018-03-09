@@ -28,41 +28,41 @@
 namespace Anki {
 namespace Cozmo {
   
-  class BehaviorFactoryCentroidExtractor : public ICozmoBehavior
-  {
-  protected:
-    
-    friend class BehaviorFactory;
-    BehaviorFactoryCentroidExtractor(const Json::Value& config);
-    
-  public:
-    
-    virtual ~BehaviorFactoryCentroidExtractor() { }
-    
-    virtual bool WantsToBeActivatedBehavior() const override;
-    
-  protected:
-    virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
-      modifiers.wantsToBeActivatedWhenCarryingObject = true;
-      modifiers.behaviorAlwaysDelegates = false;
-    }
+class BehaviorFactoryCentroidExtractor : public ICozmoBehavior
+{
+protected:
+  
+  friend class BehaviorFactory;
+  BehaviorFactoryCentroidExtractor(const Json::Value& config);
+  
+public:
+  
+  virtual ~BehaviorFactoryCentroidExtractor() { }
+  
+  virtual bool WantsToBeActivatedBehavior() const override;
+  
+protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+    modifiers.behaviorAlwaysDelegates = false;
+  }
 
-  private:    
-    virtual void OnBehaviorActivated() override;
-    virtual void BehaviorUpdate() override;
+private:    
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
 
-    virtual void OnBehaviorDeactivated() override;
-    
-    void TransitionToMovingHead(Robot& robot);
-    
-    virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
-    
-    bool _waitingForDots = false;
-    bool _headCalibrated = false;
-    bool _liftCalibrated = false;
-    
-    FactoryTestLogger _factoryTestLogger;
-  };
+  virtual void OnBehaviorDeactivated() override;
+  
+  void TransitionToMovingHead(Robot& robot);
+  
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
+  
+  bool _waitingForDots = false;
+  bool _headCalibrated = false;
+  bool _liftCalibrated = false;
+  
+  FactoryTestLogger _factoryTestLogger;
+};
 }
 }
 
