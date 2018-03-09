@@ -88,7 +88,7 @@ namespace Anki {
 CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enabled in non-SHIPPING apps, for internal dev
     
 
-#define ANKI_ENABLE_SDK_OVER_TCP  1
+#define ANKI_ENABLE_SDK_OVER_TCP  0
     
     
     IMPLEMENT_ENUM_INCREMENT_OPERATORS(UiConnectionType);
@@ -107,6 +107,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case UiConnectionType::UI:          return false;
         case UiConnectionType::SdkOverUdp:  return true;
         case UiConnectionType::SdkOverTcp:  return true;
+        case UiConnectionType::Switchboard: return false;
         default:
         {
           PRINT_NAMED_ERROR("IsExternalSdkConnection.BadType", "type = %d", (int)type);
@@ -150,6 +151,13 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         #else
           return nullptr;
         #endif
+        }
+        case UiConnectionType::Switchboard:
+        {
+          ISocketComms* comms = new TcpSocketComms(true);
+          // Disable ping timeout disconnects
+          comms->SetPingTimeoutForDisconnect(0, nullptr);
+          return comms;
         }
         default:
         {
@@ -269,6 +277,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case UiConnectionType::UI:          return kAcceptMessagesFromUI;
         case UiConnectionType::SdkOverUdp:  return kAcceptMessagesFromSDK;
         case UiConnectionType::SdkOverTcp:  return kAcceptMessagesFromSDK;
+        case UiConnectionType::Switchboard: return true;
         default:
         {
           assert(0);
@@ -331,6 +340,24 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         
         while (connectionType < UiConnectionType::Count)
         {
+          // Only allow Enter/ExitPairing messages to be sent to switchboard
+          if(connectionType == UiConnectionType::Switchboard)
+          {
+            if(message.GetTag() != ExternalInterface::MessageEngineToGameTag::EnterPairing &&
+               message.GetTag() != ExternalInterface::MessageEngineToGameTag::ExitPairing)
+            {
+              if(sendToEveryone)
+              {
+                ++connectionType;
+                continue;
+              }
+              else
+              {
+                return;
+              }
+            }
+          }
+
           ISocketComms* socketComms = GetSocketComms(connectionType);
           if (socketComms)
           {

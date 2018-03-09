@@ -203,6 +203,12 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                        robot->Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::EnterPairing()));
                                                      }));
   
+  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::exitPairing,
+                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                       // Forward to switchboard
+                                                       robot->Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::ExitPairing()));
+                                                     }));
+
   if (robot->HasExternalInterface())
   {
     using namespace ExternalInterface;

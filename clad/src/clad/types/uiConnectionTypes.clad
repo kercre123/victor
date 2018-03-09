@@ -13,6 +13,7 @@ enum uint_8 UiConnectionType {
     UI = 0,
     SdkOverUdp,
     SdkOverTcp,
+    Switchboard,
     Count
 }
 
