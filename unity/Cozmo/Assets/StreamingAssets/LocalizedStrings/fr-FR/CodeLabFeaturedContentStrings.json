@@ -1543,7 +1543,7 @@
     "translation" : "plante active"
   },
   "codeLabFeaturedProject.CozmosGarden.add_or_subtract_points_from_a_plant" : {
-    "translation" : "Ajoute ou soustrait des points d'une plante."
+    "translation" : "Ajoute ou soustrait des points dune plante."
   },
   "codeLabFeaturedProject.CozmosGarden.all_the_plants_were_harvested_successfully" : {
     "translation" : "Toutes les plantes ont été récoltées avec succès."
@@ -1567,7 +1567,7 @@
     "translation" : "plantes infestées"
   },
   "codeLabFeaturedProject.CozmosGarden.bugs_count" : {
-    "translation" : "nombre d'insectes"
+    "translation" : "nombre dinsectes"
   },
   "codeLabFeaturedProject.CozmosGarden.bugs_want_to_eat_our_plants" : {
     "translation" : "Des insectes veulent manger nos plantes !"
@@ -1624,7 +1624,7 @@
     "translation" : "Le visage de Cozmo affiche des insectes."
   },
   "codeLabFeaturedProject.CozmosGarden.cozmo_displays_water_on_his_face" : {
-    "translation" : "Le visage de Cozmo affiche de l'eau."
+    "translation" : "Le visage de Cozmo affiche de leau."
   },
   "codeLabFeaturedProject.CozmosGarden.create_garden" : {
     "translation" : "créer un jardin"
@@ -1633,7 +1633,7 @@
     "translation" : "carte actuelle"
   },
   "codeLabFeaturedProject.CozmosGarden.darn_just_missed_them" : {
-    "translation" : "Zut ! C'est raté !"
+    "translation" : "Zut ! Cest raté !"
   },
   "codeLabFeaturedProject.CozmosGarden.deck" : {
     "translation" : "paquet"
@@ -1645,10 +1645,10 @@
     "translation" : "Désactive les voyants dorsaux."
   },
   "codeLabFeaturedProject.CozmosGarden.dont_give_up_lets_try_again" : {
-    "translation" : "N'abandonne pas ! Essayons encore."
+    "translation" : "Nabandonne pas ! Essayons encore."
   },
   "codeLabFeaturedProject.CozmosGarden.draw_a_drop_of_water" : {
-    "translation" : "Dessine une goutte d'eau."
+    "translation" : "Dessine une goutte deau."
   },
   "codeLabFeaturedProject.CozmosGarden.draw_bugs" : {
     "translation" : "dessiner des insectes"
@@ -1669,7 +1669,7 @@
     "translation" : "Pioche la prochaine carte du paquet."
   },
   "codeLabFeaturedProject.CozmosGarden.draw_water" : {
-    "translation" : "dessiner de l'eau"
+    "translation" : "dessiner de leau"
   },
   "codeLabFeaturedProject.CozmosGarden.drop_line_position_y" : {
     "translation" : "position y de la ligne de la goutte"
@@ -1741,7 +1741,7 @@
     "translation" : "mode Croissance"
   },
   "codeLabFeaturedProject.CozmosGarden.haha_squished_em" : {
-    "translation" : "Haha ! Tu n'en as fait qu'une bouchée !"
+    "translation" : "Haha ! Tu nen as fait quune bouchée !"
   },
   "codeLabFeaturedProject.CozmosGarden.harvest_active_plant" : {
     "translation" : "récolter la plante active"
@@ -1753,7 +1753,7 @@
     "translation" : "plantes récoltées"
   },
   "codeLabFeaturedProject.CozmosGarden.hey_no_fair_bugs" : {
-    "translation" : "Hé ! Ce n'est pas juste !"
+    "translation" : "Hé ! Ce nest pas juste !"
   },
   "codeLabFeaturedProject.CozmosGarden.hi" : {
     "translation" : "Bonjour"
@@ -1768,7 +1768,7 @@
     "translation" : "mode Interaction"
   },
   "codeLabFeaturedProject.CozmosGarden.instructions_max_amount" : {
-    "translation" : "nombre max. d'instructions"
+    "translation" : "nombre max. dinstructions"
   },
   "codeLabFeaturedProject.CozmosGarden.lemons" : {
     "translation" : "Des citrons"
@@ -1780,7 +1780,7 @@
     "translation" : "De la salade"
   },
   "codeLabFeaturedProject.CozmosGarden.make_sure_no_plant_can_have_less_than_0_or_more_than_4_points" : {
-    "translation" : "S'assure que le score de chaque plante soit compris entre 0 et 4 points."
+    "translation" : "Sassure que le score de chaque plante soit compris entre 0 et 4 points."
   },
   "codeLabFeaturedProject.CozmosGarden.make_the_sun_shine_on_all_the_plants" : {
     "translation" : "Fait briller le soleil sur toutes les plantes."
@@ -1972,7 +1972,7 @@
     "translation" : "donner les instructions"
   },
   "codeLabFeaturedProject.GuessTheNumber.guess" : {
-    "translation" : "Devinez!"
+    "translation" : "Devinez !"
   },
   "codeLabFeaturedProject.GuessTheNumber.hi" : {
     "translation" : "Bonjour"
@@ -1981,10 +1981,10 @@
     "translation" : "Le cube pour nombre supérieur a été touché."
   },
   "codeLabFeaturedProject.GuessTheNumber.i_guessed_your_number_in_" : {
-    "translation" : "J'ai deviné ton nombre en "
+    "translation" : "Jai deviné ton nombre en "
   },
   "codeLabFeaturedProject.GuessTheNumber.if_i_guess_correctly_tap_purple_if_your_number_is_higher_tap_green_if_it_is_lower_tap_red" : {
-    "translation" : "Si j'ai bien deviné, touche le cube violet. Si ton nombre est supérieur, touche le cube vert. S'il est inférieur, touche le cube rouge."
+    "translation" : "Si jai bien deviné, touche le cube violet. Si ton nombre est supérieur, touche le cube vert. Sil est inférieur, touche le cube rouge."
   },
   "codeLabFeaturedProject.GuessTheNumber.initialize_the_game_and_give_instructions" : {
     "translation" : "Initialise le jeu et donne des instructions."

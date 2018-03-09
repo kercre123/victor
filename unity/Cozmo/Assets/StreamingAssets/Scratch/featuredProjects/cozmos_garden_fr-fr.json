@@ -137,7 +137,7 @@
                     },
                     "2N:5I_;4VlUNw.k%-(6a": {
                         "id": "2N:5I_;4VlUNw.k%-(6a",
-                        "name": "S'assure que le score de chaque plante soit compris entre 0\u00a0et 4\u00a0points.",
+                        "name": "Sassure que le score de chaque plante soit compris entre 0\u00a0et 4\u00a0points.",
                         "type": "",
                         "value": 0
                     },
@@ -173,7 +173,7 @@
                     },
                     "4Px-k}[HPsJfarx*W@)O": {
                         "id": "4Px-k}[HPsJfarx*W@)O",
-                        "name": "dessiner de l'eau",
+                        "name": "dessiner de leau",
                         "type": "broadcast_msg",
                         "value": "draw water"
                     },
@@ -389,7 +389,7 @@
                     },
                     "MM2bKXch7d@*6G)54oJ1": {
                         "id": "MM2bKXch7d@*6G)54oJ1",
-                        "name": "nombre max. d'instructions",
+                        "name": "nombre max. dinstructions",
                         "type": "",
                         "value": "2"
                     },
@@ -401,7 +401,7 @@
                     },
                     "Q]8XOLmHF*2qnP%Vg]TP": {
                         "id": "Q]8XOLmHF*2qnP%Vg]TP",
-                        "name": "Le visage de Cozmo affiche de l'eau.",
+                        "name": "Le visage de Cozmo affiche de leau.",
                         "type": "",
                         "value": 0
                     },
@@ -535,7 +535,7 @@
                     },
                     "hE#nyCv2b|oe*5jPRIx+": {
                         "id": "hE#nyCv2b|oe*5jPRIx+",
-                        "name": "Ajoute ou soustrait des points d'une plante.",
+                        "name": "Ajoute ou soustrait des points dune plante.",
                         "type": "",
                         "value": 0
                     },
@@ -623,7 +623,7 @@
                     },
                     "w;|cA6ScT/?q_G_HjV*s": {
                         "id": "w;|cA6ScT/?q_G_HjV*s",
-                        "name": "Dessine une goutte d'eau.",
+                        "name": "Dessine une goutte deau.",
                         "type": "",
                         "value": 0
                     },
@@ -653,7 +653,7 @@
                     },
                     "|P94tIm9d@~m)Vuxvz0W": {
                         "id": "|P94tIm9d@~m)Vuxvz0W",
-                        "name": "nombre d'insectes",
+                        "name": "nombre dinsectes",
                         "type": "",
                         "value": "0"
                     },
@@ -1186,7 +1186,7 @@
                             "VARIABLE": {
                                 "id": "hE#nyCv2b|oe*5jPRIx+",
                                 "name": "VARIABLE",
-                                "value": "Ajoute ou soustrait des points d'une plante.",
+                                "value": "Ajoute ou soustrait des points dune plante.",
                                 "variableType": ""
                             }
                         },
@@ -2531,7 +2531,7 @@
                             "VARIABLE": {
                                 "id": "MM2bKXch7d@*6G)54oJ1",
                                 "name": "VARIABLE",
-                                "value": "nombre max. d'instructions",
+                                "value": "nombre max. dinstructions",
                                 "variableType": ""
                             }
                         },
@@ -2973,7 +2973,7 @@
                             "VARIABLE": {
                                 "id": "MM2bKXch7d@*6G)54oJ1",
                                 "name": "VARIABLE",
-                                "value": "nombre max. d'instructions",
+                                "value": "nombre max. dinstructions",
                                 "variableType": ""
                             }
                         },
@@ -3686,7 +3686,7 @@
                             "VARIABLE": {
                                 "id": "|P94tIm9d@~m)Vuxvz0W",
                                 "name": "VARIABLE",
-                                "value": "nombre d'insectes",
+                                "value": "nombre dinsectes",
                                 "variableType": ""
                             }
                         },
@@ -3720,7 +3720,7 @@
                             "VARIABLE": {
                                 "id": "2N:5I_;4VlUNw.k%-(6a",
                                 "name": "VARIABLE",
-                                "value": "S'assure que le score de chaque plante soit compris entre 0\u00a0et 4\u00a0points.",
+                                "value": "Sassure que le score de chaque plante soit compris entre 0\u00a0et 4\u00a0points.",
                                 "variableType": ""
                             }
                         },
@@ -4206,7 +4206,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Haha\u00a0! Tu n'en as fait qu'une bouch\u00e9e\u00a0!"
+                                "value": "Haha\u00a0! Tu nen as fait quune bouch\u00e9e\u00a0!"
                             }
                         },
                         "id": "10T_[V@K35j)sFzq@Hol",
@@ -4868,7 +4868,7 @@
                             "VARIABLE": {
                                 "id": "|P94tIm9d@~m)Vuxvz0W",
                                 "name": "VARIABLE",
-                                "value": "nombre d'insectes",
+                                "value": "nombre dinsectes",
                                 "variableType": ""
                             }
                         },
@@ -6180,7 +6180,7 @@
                             "VARIABLE": {
                                 "id": "Q]8XOLmHF*2qnP%Vg]TP",
                                 "name": "VARIABLE",
-                                "value": "Le visage de Cozmo affiche de l'eau.",
+                                "value": "Le visage de Cozmo affiche de leau.",
                                 "variableType": ""
                             }
                         },
@@ -8300,7 +8300,7 @@
                             "VARIABLE": {
                                 "id": "|P94tIm9d@~m)Vuxvz0W",
                                 "name": "VARIABLE",
-                                "value": "nombre d'insectes",
+                                "value": "nombre dinsectes",
                                 "variableType": ""
                             }
                         },
@@ -10499,7 +10499,7 @@
                             "VARIABLE": {
                                 "id": "MM2bKXch7d@*6G)54oJ1",
                                 "name": "VARIABLE",
-                                "value": "nombre max. d'instructions",
+                                "value": "nombre max. dinstructions",
                                 "variableType": ""
                             }
                         },
@@ -11290,7 +11290,7 @@
                             "VARIABLE": {
                                 "id": "w;|cA6ScT/?q_G_HjV*s",
                                 "name": "VARIABLE",
-                                "value": "Dessine une goutte d'eau.",
+                                "value": "Dessine une goutte deau.",
                                 "variableType": ""
                             }
                         },
@@ -15425,7 +15425,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "H\u00e9\u00a0! Ce n'est pas juste\u00a0!"
+                                "value": "H\u00e9\u00a0! Ce nest pas juste\u00a0!"
                             }
                         },
                         "id": "Y|i0-[8R#1r6O).vp9U~",
@@ -19204,7 +19204,7 @@
                             "VARIABLE": {
                                 "id": "|P94tIm9d@~m)Vuxvz0W",
                                 "name": "VARIABLE",
-                                "value": "nombre d'insectes",
+                                "value": "nombre dinsectes",
                                 "variableType": ""
                             }
                         },
@@ -19551,7 +19551,7 @@
                             "VARIABLE": {
                                 "id": "MM2bKXch7d@*6G)54oJ1",
                                 "name": "VARIABLE",
-                                "value": "nombre max. d'instructions",
+                                "value": "nombre max. dinstructions",
                                 "variableType": ""
                             }
                         },
@@ -22704,7 +22704,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "N'abandonne pas\u00a0! Essayons encore."
+                                "value": "Nabandonne pas\u00a0! Essayons encore."
                             }
                         },
                         "id": "s9Ow)i}Trr({r?Ag3fPV",
@@ -22719,7 +22719,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Zut\u00a0! C'est rat\u00e9\u00a0!"
+                                "value": "Zut\u00a0! Cest rat\u00e9\u00a0!"
                             }
                         },
                         "id": "s:EqYhaRjLx0zh}z9eY7",
