@@ -25,10 +25,10 @@ CompositeImageLayout::CompositeImageLayout(const Json::Value& templateSpec)
   const std::string templateDebugStr = "CompositeImageBuilder.BuildCompositeImage.TemplateKey";
   for(auto& entry: templateSpec){
     const std::string qName = JsonTools::ParseString(entry, kQuadrantNameKey, templateDebugStr);
-    const int x = JsonTools::ParseUInt32(entry, kCornerXKey, templateDebugStr);
-    const int y = JsonTools::ParseUInt32(entry, kCornerYKey, templateDebugStr);
-    const int width = JsonTools::ParseUInt32(entry, kWidthKey, templateDebugStr);
-    const int height = JsonTools::ParseUInt32(entry, kHeightKey, templateDebugStr);
+    const int x             = JsonTools::ParseInt32(entry, kCornerXKey, templateDebugStr);
+    const int y             = JsonTools::ParseInt32(entry, kCornerYKey, templateDebugStr);
+    const int width         = JsonTools::ParseInt32(entry, kWidthKey, templateDebugStr);
+    const int height        = JsonTools::ParseInt32(entry, kHeightKey, templateDebugStr);
     _quadrants.emplace_back(QuadrantDefinition(qName, Point2i(x, y), width, height));
   }
 }
