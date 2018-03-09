@@ -90,39 +90,34 @@ void TestRobotInfo(void)
   //test all DVT2 supported commands - make sure they return a valid response
   if( g_fixmode > FIXMODE_ROBOT0 && g_fixmode <= FIXMODE_ROBOT3 ) //skip this in debug mode
   {
-    static int msd = 999999;
-    msd += 250;
-    if( msd > 6000 )
-      msd = 0;
-    
     ConsolePrintf("\n=====================================================================\n");
-    ConsolePrintf("cmd delay: %ums\n", msd);
     
-    cmdRobotEsn(); Timer::delayMs(msd);
-    cmdRobotBsv(); Timer::delayMs(msd);
-    cmdRobotBsv(); Timer::delayMs(msd);
-    cmdRobotGet(1, CCC_SENSOR_BATTERY); Timer::delayMs(msd);
-    cmdRobotGet(1, CCC_SENSOR_CLIFF); Timer::delayMs(msd);
-    cmdRobotGet(1, CCC_SENSOR_MOT_LEFT); Timer::delayMs(msd);
-    cmdRobotGet(1, CCC_SENSOR_MOT_RIGHT); Timer::delayMs(msd);
-    cmdRobotGet(1, CCC_SENSOR_MOT_LIFT); Timer::delayMs(msd);
-    cmdRobotGet(1, CCC_SENSOR_MOT_HEAD); Timer::delayMs(msd);
-    cmdRobotGet(1, CCC_SENSOR_PROX_TOF); Timer::delayMs(msd);
-    cmdRobotGet(1, CCC_SENSOR_BTN_TOUCH); Timer::delayMs(msd);
-    cmdRobotGet(1, CCC_SENSOR_RSSI); Timer::delayMs(msd);
-    cmdRobotGet(1, CCC_SENSOR_RX_PKT); Timer::delayMs(msd);
+    cmdRobotEsn(); ConsolePutChar('\n');
+    //cmdRobotBsv(); ConsolePutChar('\n');
+    //cmdRobotBsv(); ConsolePutChar('\n');
+    cmdRobotGet(1, 1, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
+    cmdRobotGet(1, 1, CCC_SENSOR_CLIFF); ConsolePutChar('\n');
+    cmdRobotGet(1, 1, CCC_SENSOR_MOT_LEFT); ConsolePutChar('\n');
+    cmdRobotGet(1, 1, CCC_SENSOR_MOT_RIGHT); ConsolePutChar('\n');
+    cmdRobotGet(1, 1, CCC_SENSOR_MOT_LIFT); ConsolePutChar('\n');
+    cmdRobotGet(1, 1, CCC_SENSOR_MOT_HEAD); ConsolePutChar('\n');
+    cmdRobotGet(1, 1, CCC_SENSOR_PROX_TOF); ConsolePutChar('\n');
+    cmdRobotGet(1, 1, CCC_SENSOR_BTN_TOUCH); ConsolePutChar('\n');
+    cmdRobotGet(1, 1, CCC_SENSOR_RSSI); ConsolePutChar('\n');
+    cmdRobotGet(1, 1, CCC_SENSOR_RX_PKT); ConsolePutChar('\n');
     
-    cmdRobotMot(100, CCC_SENSOR_MOT_LEFT, 127, 0, 0, 0); Timer::delayMs(msd);
-    cmdRobotMot(100, CCC_SENSOR_MOT_RIGHT, 0, -127, 0, 0); Timer::delayMs(msd);
-    cmdRobotMot(50, CCC_SENSOR_MOT_LIFT, 0, 0, 100, 0); Timer::delayMs(msd);
-    cmdRobotMot(75, CCC_SENSOR_MOT_LIFT, 0, 0, -100, 0); Timer::delayMs(msd);
-    cmdRobotMot(50, CCC_SENSOR_MOT_HEAD, 0, 0, 0, 100); Timer::delayMs(msd);
-    cmdRobotMot(75, CCC_SENSOR_MOT_HEAD, 0, 0, 0, -100); Timer::delayMs(msd);
+    cmdRobotMot(100, 20, CCC_SENSOR_MOT_LEFT, 127, 0, 0, 0); ConsolePutChar('\n');
+    cmdRobotMot(100, 20, CCC_SENSOR_MOT_RIGHT, 0, -127, 0, 0); ConsolePutChar('\n');
+    cmdRobotMot(50,  15, CCC_SENSOR_MOT_LIFT, 0, 0, 100, 0); ConsolePutChar('\n');
+    cmdRobotMot(75,  20, CCC_SENSOR_MOT_LIFT, 0, 0, -100, 0); ConsolePutChar('\n');
+    cmdRobotMot(50,  20, CCC_SENSOR_MOT_HEAD, 0, 0, 0, 100); ConsolePutChar('\n');
+    cmdRobotMot(75,  20, CCC_SENSOR_MOT_HEAD, 0, 0, 0, -100); ConsolePutChar('\n');
     
-    uint32_t esn = cmdRobotGmr(0); Timer::delayMs(msd);
-    uint32_t hw_ver = cmdRobotGmr(1); Timer::delayMs(msd);
-    uint32_t model = cmdRobotGmr(2); Timer::delayMs(msd);
-    uint32_t lot_code = cmdRobotGmr(3); Timer::delayMs(msd);
+    uint32_t esn = cmdRobotGmr(0); ConsolePutChar('\n');
+    uint32_t hw_ver = cmdRobotGmr(1); ConsolePutChar('\n');
+    uint32_t model = cmdRobotGmr(2); ConsolePutChar('\n');
+    uint32_t lot_code = cmdRobotGmr(3); ConsolePutChar('\n');
+    
     ConsolePrintf("\n=====================================================================\n");
   }
   
