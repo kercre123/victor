@@ -28,9 +28,23 @@ class Log {
     //std::thread::id threadId = std::this_thread::get_id();
     //printf("[thread %d]\t\t", threadId);
     char buffer [200];
-    snprintf(buffer, 200, "%s", std::forward<Args>(args)...);
+    snprintf(buffer, 200, std::forward<Args>(args)...);
     printf("ankiswitchboardd: %s\n", buffer);
 #endif
+  }
+
+  template<typename... Args>
+  static void Green(Args&&... args) {
+    char buffer [200];
+    snprintf(buffer, 200, "%s", std::forward<Args>(args)...);
+    printf("ankiswitchboardd: \033[42;30m%s\033[0m\n", buffer);
+  }
+
+  template<typename... Args>
+  static void Blue(Args&&... args) {
+    char buffer [200];
+    snprintf(buffer, 200, "%s", std::forward<Args>(args)...);
+    printf("ankiswitchboardd: \033[44;37m%s\033[0m\n", buffer);
   }
 };
 

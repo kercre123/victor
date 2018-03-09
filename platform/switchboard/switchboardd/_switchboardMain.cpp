@@ -63,9 +63,12 @@ void Anki::Switchboard::Daemon::InitializeBle() {
   _bleClient->Connect();
 
   Anki::BLEAdvertiseSettings settings;
-  settings.GetAdvertisement().SetServiceUUID(Anki::kAnkiBLEService_128_BIT_UUID);
-  settings.GetScanResponse().SetIncludeDeviceName(true);
-  settings.GetScanResponse().SetIncludeTxPowerLevel(true);
+  settings.GetAdvertisement().SetServiceUUID(Anki::kAnkiSingleMessageService_128_BIT_UUID);
+  settings.GetAdvertisement().SetIncludeDeviceName(true);
+  std::vector<uint8_t> mdata = Anki::kAnkiBluetoothSIGCompanyIdentifier;
+  mdata.push_back(Anki::kVictorProductIdentifier); // distinguish from future Anki products
+  mdata.push_back('p'); // to indicate we are in "pairing" mode
+  settings.GetAdvertisement().SetManufacturerData(mdata);
   _bleClient->StartAdvertising(settings);
 
   Log::Write("Initialize BLE");
@@ -74,7 +77,7 @@ void Anki::Switchboard::Daemon::InitializeBle() {
 void Anki::Switchboard::Daemon::OnConnected(int connId, INetworkStream* stream) {
   Log::Write("OnConnected");
   _taskExecutor->Wake([stream, this](){
-    Log::Write("Connected to a BLE central.\n");
+    Log::Write("Connected to a BLE central.");
     if(_securePairing == nullptr) {
       _securePairing = std::make_unique<Anki::Switchboard::SecurePairing>(stream, _loop);
       _securePairing->OnUpdatedPinEvent().SubscribeForever(std::bind(&Daemon::OnPinUpdated, this, std::placeholders::_1));
@@ -82,9 +85,9 @@ void Anki::Switchboard::Daemon::OnConnected(int connId, INetworkStream* stream) 
     
     // Initiate pairing process
     _securePairing->BeginPairing();
-    Log::Write("Done task\n");
+    Log::Write("Done task");
   });
-  Log::Write("Done OnConnected\n");
+  Log::Write("Done OnConnected");
 }
 
 void Anki::Switchboard::Daemon::OnDisconnected(int connId, INetworkStream* stream) {
@@ -95,7 +98,7 @@ void Anki::Switchboard::Daemon::OnDisconnected(int connId, INetworkStream* strea
 }
 
 void Anki::Switchboard::Daemon::OnPinUpdated(std::string pin) {
-  Log::Write(pin.c_str());
+  Log::Blue((" " + pin + " ").c_str());
 }
 
 void Anki::Switchboard::Daemon::Tick(struct ev_loop* loop, struct ev_timer* w, int revents) {  

@@ -13,7 +13,7 @@
 
 - (id)init {
   _victorService =
-    [CBUUID UUIDWithString:@"D55E356B-59CC-4265-9D5F-3C61E9DFD70F"];
+    [CBUUID UUIDWithString:@"FEE3"];
   _readUuid =
     [CBUUID UUIDWithString:@"7D2A4BDA-D29B-4152-B725-2491478C5CD7"];
   _writeUuid =
@@ -52,9 +52,9 @@
 }
 
 - (void)printSuccess:(const char *)txt {
-  NSLog(@"\033[0;32m");
+  printf("\033[0;32m");
   NSLog(@"%s", txt);
-  NSLog(@"\033[0m");
+  printf("\033[0m");
 }
 
 // ----------------------------------------------------------------------------------------------------------------

@@ -362,7 +362,7 @@ void Anki::Switchboard::SecurePairing::HandleRtsWifiConnectRequest(const Victor:
   if(_state == PairingState::ConfirmedSharedSecret) {
     Anki::Victor::ExternalComms::RtsWifiConnectRequest challengeMessage = msg.Get_RtsWifiConnectRequest();
 
-    Log::Write("Trying to connect to wifi network.");
+    Log::Write("Trying to connect to wifi network [%s].", challengeMessage.ssid.c_str());
     bool connected = Anki::ConnectWiFiBySsid(challengeMessage.ssid, 
       challengeMessage.password,
       nullptr,
@@ -481,7 +481,7 @@ bool Anki::Switchboard::SecurePairing::HandleHandshake(uint16_t version) {
   }
   else if(version == PairingProtocolVersion::INVALID) {
     // Client should never send us this message.
-    Log::Write("Client reported incompatible version.");
+    Log::Write("Client reported incompatible version [%d]. Our version is [%d]", version, PairingProtocolVersion::CURRENT);
     return false;
   }
   
@@ -535,7 +535,7 @@ void Anki::Switchboard::SecurePairing::HandleNonceAck() {
   _commsState = CommsState::SecureClad;
   SendChallenge();
   
-  Log::Write("Client acked nonce, sending challenge.");
+  Log::Write("Client acked nonce, sending challenge [%d].", _pingChallenge);
 }
 
 inline bool isChallengeSuccess(uint32_t challenge, uint32_t answer) {
@@ -558,7 +558,7 @@ void Anki::Switchboard::SecurePairing::HandleChallengeResponse(uint8_t* pingChal
     // update our state
     SendChallengeSuccess();
     _state = PairingState::ConfirmedSharedSecret;
-    Log::Write("Challenge answer was accepted. Encrypted channel established.");
+    Log::Green("Challenge answer was accepted. Encrypted channel established.");
   } else {
     // Increment our abnormality and attack counter, and
     // if at or above max attempts reset.
@@ -574,7 +574,6 @@ void Anki::Switchboard::SecurePairing::HandleChallengeResponse(uint8_t* pingChal
 
 void Anki::Switchboard::SecurePairing::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
   _taskExecutor->WakeSync([this, bytes, length]() {
-    Log::Write("Handling plain text message received.");
     if(length < kMinMessageSize) {
       Log::Write("Length is less than kMinMessageSize.");
       return;
@@ -612,7 +611,6 @@ void Anki::Switchboard::SecurePairing::HandleMessageReceived(uint8_t* bytes, uin
         Log::Write("Internal state machine error. Assuming raw message, but state is not initial.");
       }
     } else {
-      Log::Write("CommsState is Clad or SecureClad.");
       _cladHandler->ReceiveExternalCommsMsg(bytes, length);
     }
   });
