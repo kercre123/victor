@@ -13,7 +13,13 @@ alias victor_start='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor
 alias victor_stop='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_stop.sh'
 
 alias victor_build='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build.sh'
+alias victor_build_release='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build.sh -c Release'
+alias victor_build_debug='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build.sh -c Debug'
+alias victor_build_debugo2='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build.sh -c Debug -O2'
+alias victor_build_xcode='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build.sh -c Debug -p mac -g Xcode -C'
 alias victor_deploy='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_deploy.sh'
+alias victor_deploy_release='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_deploy.sh -c Release'
+alias victor_deploy_debug='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_deploy.sh -c Debug'
 alias victor_deploy_run='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_deploy_run.sh'
 alias victor_build_run='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build_run.sh'
 
