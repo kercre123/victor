@@ -412,8 +412,9 @@ void cmdDbgParseTestbench(void)
 //                  Robot (Charge Contacts)
 //-----------------------------------------------------------------------------
 
-#define CCC_DEBUG 0
+#define CCC_DEBUG 1
 #define CCC_ERROR_HANDLE(e) if( CCC_DEBUG > 0 ) { return 0; } else { throw (e); }
+#define CCC_CMD_DELAY()     if( CCC_DEBUG > 0 ) { Timer::delayMs(10); }
 
 #include "emrf.h"
 
@@ -421,6 +422,7 @@ static struct { //result of most recent command
   error_t ccr_err;
   int handler_cnt;
   int sr_cnt;
+  int nn_read;
   union { ccr_esn_t esn; ccr_bsv_t bsv; ccr_sr_t  sr; } rsp;
 } m_dat;
 
@@ -440,6 +442,7 @@ void esn_bsv_handler_(char* s)
 
 ccr_esn_t* cmdRobotEsn()
 {
+  CCC_CMD_DELAY();
   memset( &m_dat, 0, sizeof(m_dat) );
   const char *cmd = "esn 00 00 00 00 00 00";
   cmdSend(CMD_IO_CONTACTS, cmd, 150, CMD_OPTS_DEFAULT, esn_bsv_handler_);
@@ -457,6 +460,7 @@ ccr_esn_t* cmdRobotEsn()
 
 ccr_bsv_t* cmdRobotBsv()
 {
+  CCC_CMD_DELAY();
   memset( &m_dat, 0, sizeof(m_dat) );
   const char *cmd = "bsv 00 00 00 00 00 00";
   cmdSend(CMD_IO_CONTACTS, cmd, 500, CMD_OPTS_DEFAULT, esn_bsv_handler_);
@@ -475,24 +479,30 @@ ccr_bsv_t* cmdRobotBsv()
 }
 
 void sensor_handler_(char* s) {
-  m_dat.handler_cnt++;
-  for(int x=0; x < m_dat.sr_cnt; x++) {
-    m_dat.rsp.sr.val[x] = cmdParseInt32( cmdGetArg(s,x) );
-    m_dat.ccr_err = errno != 0 ? ERROR_TESTPORT_RSP_BAD_ARG : m_dat.ccr_err;
+  if( ++m_dat.handler_cnt == m_dat.nn_read ) { //get this value!
+    for(int x=0; x < m_dat.sr_cnt; x++) {
+      m_dat.rsp.sr.val[x] = cmdParseInt32( cmdGetArg(s,x) );
+      m_dat.ccr_err = errno != 0 ? ERROR_TESTPORT_RSP_BAD_ARG : m_dat.ccr_err;
+    }
   }
 }
 
-static ccr_sr_t* cmdRobot_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, const char* cmd)
+static ccr_sr_t* cmdRobot_MotGet_(uint8_t NN, uint8_t NNread, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, const char* cmd)
 {
+  CCC_CMD_DELAY();
   memset( &m_dat, 0, sizeof(m_dat) );
   char b[22]; const int bz = sizeof(b);
   snformat(b,bz,"%s %02x %02x %02x %02x %02x %02x", cmd, NN, sensor, (uint8_t)treadL, (uint8_t)treadR, (uint8_t)lift, (uint8_t)head);
   
   m_dat.sr_cnt = sensor >= sizeof(ccr_sr_cnt) ? 0 : ccr_sr_cnt[sensor]; //expected number of sensor values per drop/line
+  m_dat.nn_read = NNread; //which sensor reading to save
+  if( NNread > NN ) //will always return 0s!
+    throw ERROR_BAD_ARG;
+  
   cmdSend(CMD_IO_CONTACTS, b, 150 + (int)NN*6, CMD_OPTS_DEFAULT, sensor_handler_);
   
   #if CCC_DEBUG > 0
-  ConsolePrintf("sr vals %i %i %i %i\n", m_dat.rsp.sr.val[0], m_dat.rsp.sr.val[1], m_dat.rsp.sr.val[2], m_dat.rsp.sr.val[3] );
+  ConsolePrintf("NN=%u sr vals %i %i %i %i\n", NNread, m_dat.rsp.sr.val[0], m_dat.rsp.sr.val[1], m_dat.rsp.sr.val[2], m_dat.rsp.sr.val[3] );
   #endif
   
   if( m_dat.handler_cnt != NN || m_dat.ccr_err != ERROR_OK ) {
@@ -501,46 +511,48 @@ static ccr_sr_t* cmdRobot_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int
   }
   return &m_dat.rsp.sr;
 }
-ccr_sr_t* cmdRobotMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head) {
-  return cmdRobot_MotGet_(NN, sensor, treadL, treadR, lift, head, "mot");
+ccr_sr_t* cmdRobotMot(uint8_t NN, uint8_t NNread, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head) {
+  return cmdRobot_MotGet_(NN, NNread, sensor, treadL, treadR, lift, head, "mot");
 }
-ccr_sr_t* cmdRobotGet(uint8_t NN, uint8_t sensor) {
-  return cmdRobot_MotGet_(NN, sensor, 0, 0, 0, 0, "get");
+ccr_sr_t* cmdRobotGet(uint8_t NN, uint8_t NNread, uint8_t sensor) {
+  return cmdRobot_MotGet_(NN, NNread, sensor, 0, 0, 0, 0, "get");
 }
 
 void cmdRobotFcc(uint8_t mode, uint8_t cn) {
+  CCC_CMD_DELAY();
+  memset( &m_dat, 0, sizeof(m_dat) );
   char b[22]; const int bz = sizeof(b);
   cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"fcc %02x %02x 00 00 00 00", mode, cn), 150);
 }
 
 void cmdRobotRlg(uint8_t idx) {
+  CCC_CMD_DELAY();
+  memset( &m_dat, 0, sizeof(m_dat) );
   ConsolePrintf("XXX: rlg not implemented\n");
   throw ERROR_EMPTY_COMMAND;
 }
 
-void cmdRobot_IdxVal32_(uint8_t idx, uint32_t val, const char* cmd) {
+void cmdRobot_IdxVal32_(uint8_t idx, uint32_t val, const char* cmd, void(*handler)(char*) ) {
+  CCC_CMD_DELAY();
+  memset( &m_dat, 0, sizeof(m_dat) );
   char b[22]; const int bz = sizeof(b);
   snformat(b,bz,"%s %02x %02x %02x %02x %02x 00", cmd, idx, (val>>0)&0xFF, (val>>8)&0xFF, (val>>16)&0xFF, (val>>24)&0xFF );
-  cmdSend(CMD_IO_CONTACTS, b, 150);
+  cmdSend(CMD_IO_CONTACTS, b, 150, CMD_OPTS_DEFAULT, handler );
 }
-void cmdRobotEng(uint8_t idx, uint32_t val) { cmdRobot_IdxVal32_(idx, val, "eng"); }
-void cmdRobotLfe(uint8_t idx, uint32_t val) { cmdRobot_IdxVal32_(idx, val, "lfe"); }
-void cmdRobotSmr(uint8_t idx, uint32_t val) { cmdRobot_IdxVal32_(idx, val, "smr"); }
+void cmdRobotEng(uint8_t idx, uint32_t val) { cmdRobot_IdxVal32_(idx, val, "eng", 0); }
+void cmdRobotLfe(uint8_t idx, uint32_t val) { cmdRobot_IdxVal32_(idx, val, "lfe", 0); }
+void cmdRobotSmr(uint8_t idx, uint32_t val) { cmdRobot_IdxVal32_(idx, val, "smr", 0); }
 
 void gmr_handler_(char* s) {
   m_dat.handler_cnt++;
-  m_dat.rsp.esn.esn = cmdParseHex32(cmdGetArg(s,0));
-  if( errno != 0 )
-    m_dat.ccr_err = ERROR_TESTPORT_RSP_BAD_ARG;
+  m_dat.rsp.esn.esn = cmdParseHex32( cmdGetArg(s,0) );
+  m_dat.ccr_err = errno != 0 ? ERROR_TESTPORT_RSP_BAD_ARG : m_dat.ccr_err;
 }
 
 ////#define EMR_FIELD_OFS(fieldname)    offsetof((fieldname),Anki::Cozmo::Factory::EMR)
 uint32_t cmdRobotGmr(uint8_t idx)
 {
-  memset( &m_dat, 0, sizeof(m_dat) );
-  char b[22]; const int bz = sizeof(b);
-  cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"gmr %02x 00 00 00 00 00", idx), 150, CMD_OPTS_DEFAULT, gmr_handler_);
-  
+  cmdRobot_IdxVal32_(idx, 0, "gmr", gmr_handler_);
   ConsolePrintf("gmr=%08x\n", m_dat.rsp.esn.esn);
   
   if( m_dat.handler_cnt != 1 || m_dat.ccr_err != ERROR_OK ) {
