@@ -15,6 +15,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/robotDataLoader.h"
+#include "clad/types/behaviorComponent/userIntent.h"
 
 
 extern Anki::Cozmo::CozmoContext* cozmoContext;
@@ -81,6 +82,42 @@ public:
   BehaviorExternalInterface& GetBehaviorExternalInterface(){ assert(_behaviorExternalInterface); return *_behaviorExternalInterface;}
   BehaviorSystemManager& GetBehaviorSystemManager(){ assert(_behaviorSystemManager); return *_behaviorSystemManager; }
   BehaviorContainer& GetBehaviorContainer(){ assert(_behaviorContainer); return *_behaviorContainer;}
+   
+  ///////
+  // Functions which alter the behavior stack
+  ///////
+  
+  // Grabs the data defined base behavior used in the victor experience
+  void SetDefaultBaseBehavior();
+  // returns the current behavior stack
+  std::vector<IBehavior*> GetCurrentBehaviorStack();
+  // Destroy the current behavior stack and replaces it with the new stack
+  void ReplaceBehaviorStack(std::vector<IBehavior*> newStack);
+  // Add a valid delegate to the stack
+  void AddDelegateToStack(IBehavior* delegate);
+  
+  // Delegate through all valid tree states
+  // TreeCallback is called after each delegation
+  void FullTreeWalk(std::map<IBehavior*,std::set<IBehavior*>>& delegateMap,
+                    std::function<void(void)> evaluateTreeCallback = nullptr);
+
+  // Walks the full freeplay tree to see whether the stack can occur
+  static bool CanStackOccurDuringFreeplay(const std::vector<IBehavior*>& stackToBuild);
+
+  ///////
+  // Functions related to user intents
+  ///////
+
+  // Pass in:
+  //  1) Initial Behavior Stack
+  //  2) User intent to send
+  //  3) Behavior expected to handle the intent
+  // Returns true if from the initial stack the user intent results in the 
+  // expected behavior taking control of the stack
+  // False otherwise
+  bool TestUserIntentTransition(const std::vector<IBehavior*>& initialStack,
+                                UserIntent intentToSend,
+                                BehaviorID expectedIntentHandlerID);
 
 private:
   std::unique_ptr<BehaviorContainer> _behaviorContainer;

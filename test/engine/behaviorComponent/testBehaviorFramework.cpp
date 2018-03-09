@@ -29,6 +29,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
@@ -195,6 +196,185 @@ void TestBehaviorFramework::InitializeStandardBehaviorComponent(IBehavior* baseB
     auto& aiComp = _behaviorComponent->GetComponent<AIComponent>();
     _aiComponent = &aiComp;
   }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehaviorFramework::SetDefaultBaseBehavior()
+{
+  std::vector<IBehavior*> newStack;
+  // Load base behavior in from data
+  {
+    IBehavior* baseBehavior = nullptr;
+    auto dataLoader = GetRobot().GetContext()->GetDataLoader();
+    
+    Json::Value blankActivitiesConfig;
+
+    const Json::Value& behaviorSystemConfig = (dataLoader != nullptr) ?
+           dataLoader->GetVictorFreeplayBehaviorConfig() : blankActivitiesConfig;
+
+    BehaviorID baseBehaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(behaviorSystemConfig);
+    
+    auto& bc = GetBehaviorContainer();
+    baseBehavior = bc.FindBehaviorByID(baseBehaviorID).get();
+    DEV_ASSERT(baseBehavior != nullptr,
+               "BehaviorComponent.Init.InvalidbaseBehavior");
+    newStack.push_back(baseBehavior);
+  }
+  
+  ReplaceBehaviorStack(newStack);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::vector<IBehavior*> TestBehaviorFramework::GetCurrentBehaviorStack()
+{
+  return GetBehaviorSystemManager()._behaviorStack->_behaviorStack;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehaviorFramework::ReplaceBehaviorStack(std::vector<IBehavior*> newStack)
+{
+  BehaviorSystemManager& bsm = GetBehaviorSystemManager();
+  bsm._behaviorStack->ClearStack();
+
+  if(newStack.size() > 0){
+    auto baseBehaviorIter = newStack.begin();
+    bsm._behaviorStack->InitBehaviorStack(*baseBehaviorIter);
+    newStack.erase(baseBehaviorIter);
+  }
+  
+  // Add all delegates to the stack one by one
+  for(auto& delegate: newStack){
+    AddDelegateToStack(delegate);
+    auto& delegationComponent = GetBehaviorExternalInterface().GetDelegationComponent();
+    delegationComponent.CancelDelegates(delegate);
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehaviorFramework::AddDelegateToStack(IBehavior* delegate)
+{
+  auto& bsm = GetBehaviorSystemManager();
+  IBehavior* topOfStack = bsm._behaviorStack->GetTopOfStack();
+
+  // cancel all delegates (including actions) because the behaviors OnActivated may have delegated to
+  // something
+  auto& delegationComponent = GetBehaviorExternalInterface().GetDelegationComponent();
+  delegationComponent.CancelDelegates(topOfStack);
+  
+  delegate->WantsToBeActivated();
+  bsm.Delegate(topOfStack, delegate);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehaviorFramework::FullTreeWalk(std::map<IBehavior*,std::set<IBehavior*>>& delegateMap,
+                                         std::function<void(void)> evaluateTreeCallback)
+{
+  if(delegateMap.empty()){
+    return;
+  }else{
+    auto& bsm = GetBehaviorSystemManager();
+    IBehavior* topOfStack = bsm._behaviorStack->GetTopOfStack();
+    auto iter = delegateMap.find(topOfStack);
+    if(iter != delegateMap.end()){
+      for(auto& delegate: iter->second){
+        AddDelegateToStack(delegate);
+        // Cancel any behaviors delegated to on activation
+        // we'll push them on manually later
+        bsm.CancelDelegates(delegate);
+        if(evaluateTreeCallback != nullptr){
+          evaluateTreeCallback();
+        }
+        FullTreeWalk(delegateMap, evaluateTreeCallback);
+      }
+      delegateMap.erase(iter);
+      bsm.CancelSelf(topOfStack);
+    }else{
+      std::set<IBehavior*> tmpDelegates;
+      topOfStack->GetAllDelegates(tmpDelegates);
+      delegateMap.insert(std::make_pair(topOfStack, std::move(tmpDelegates)));
+      FullTreeWalk(delegateMap, evaluateTreeCallback);
+    }
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool TestBehaviorFramework::CanStackOccurDuringFreeplay(const std::vector<IBehavior*>& stackToBuild)
+{
+  // stack comparison helper
+  auto compareStacks = [](const std::vector<IBehavior*>& stackOne,
+                          const std::vector<IBehavior*>& stackTwo){
+    // check sizes match
+    if(stackOne.size() != stackTwo.size()){
+      return false;
+    }
+
+    // check all behavior IDs match
+    auto iterTwo = stackTwo.begin();
+    for(auto& behaviorOne : stackOne){
+      auto castBehaviorOne = dynamic_cast<ICozmoBehavior*>(behaviorOne);
+      auto castBehaviorTwo = dynamic_cast<ICozmoBehavior*>(*iterTwo);
+      if(castBehaviorOne->_id != castBehaviorTwo->_id){
+        return false;
+      }
+      iterTwo++;
+    }
+
+    return true;
+  };
+
+  // Get the base behavior for default stack
+  TestBehaviorFramework tbf;
+  tbf.InitializeStandardBehaviorComponent();
+  tbf.SetDefaultBaseBehavior();
+  auto currentStack = tbf.GetCurrentBehaviorStack();  
+  DEV_ASSERT(1 == currentStack.size(), "CanStackOccurDuringFreeplay.SizeMismatch");
+  IBehavior* base = currentStack.front();
+
+  // Get ready for a full tree walk to compare stacks 
+  std::map<IBehavior*,std::set<IBehavior*>> delegateMap;
+  std::set<IBehavior*> tmpDelegates;
+  base->GetAllDelegates(tmpDelegates);
+  delegateMap.insert(std::make_pair(base, tmpDelegates));
+
+  bool sawMatch = false;
+  // tree walk callback
+  auto evaluateTree = [&sawMatch, &stackToBuild, &tbf, &compareStacks](){
+    auto currentStack = tbf.GetCurrentBehaviorStack();
+    sawMatch |= compareStacks(stackToBuild, currentStack);
+  };
+
+  tbf.FullTreeWalk(delegateMap, evaluateTree);
+  return sawMatch;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool TestBehaviorFramework::TestUserIntentTransition(const std::vector<IBehavior*>& initialStack,
+                                                     UserIntent intentToSend,
+                                                     BehaviorID expectedIntentHandlerID)
+{
+  ReplaceBehaviorStack(initialStack);
+  
+  // Send user intent
+  auto& uic = GetBehaviorComponent().GetComponent<UserIntentComponent>();
+  uic.SetUserIntentPending(std::move(intentToSend));
+
+  // Tick the behavior component so that the behavior can respond to the intent
+  AICompMap emptyMap;
+  GetBehaviorComponent().UpdateDependent(emptyMap);
+
+  // Check the result
+  BehaviorSystemManager& bsm = GetBehaviorSystemManager();
+  IBehavior* topOfStack = bsm._behaviorStack->GetTopOfStack();
+  auto castTopOfStack = dynamic_cast<ICozmoBehavior*>(topOfStack);
+
+  return castTopOfStack->_id == expectedIntentHandlerID;
 }
 
 
