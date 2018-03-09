@@ -38,6 +38,13 @@ PROTO CozmoBot2 [
 
   # Press backpack button
   field SFBool backpackButtonPressed FALSE
+  
+  # Robot battery voltage
+  field SFFloat batteryVolts  4.3
+  
+  # Rates at which battery voltage changes while on/off the charger
+  field SFFloat batteryChargeRate_voltsPerMin     0.09
+  field SFFloat batteryDischargeRate_voltsPerMin -0.03
 ]
 {
 

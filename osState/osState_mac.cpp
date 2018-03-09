@@ -15,6 +15,7 @@
 #include "osState/osState.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/logging/logging.h"
+#include "util/math/numericCast.h"
 
 #include <webots/Supervisor.hpp>
 
@@ -40,6 +41,12 @@ namespace {
   bool _supervisorIsSet = false;
   webots::Supervisor *_supervisor = nullptr;
 
+  // Pointer to the CozmoBot node in the scene tree
+  webots::Node *_robotNode = nullptr;
+  
+  // Pointer to the CozmoBot batteryVolts field
+  webots::Field* _batteryVoltsField = nullptr;
+  
   RobotID_t _robotID = DEFAULT_ROBOT_ID;
 
   uint32_t _updatePeriod_ms = 0;
@@ -55,6 +62,20 @@ OSState::OSState()
     const auto* robotIDField = _supervisor->getSelf()->getField("robotID");
     DEV_ASSERT(robotIDField != nullptr, "OSState.Ctor.MissingRobotIDField");
     _robotID = robotIDField->getSFInt32();
+    
+    // Grab a pointer to the CozmoBot node
+    const auto* rootChildren = _supervisor->getRoot()->getField("children");
+    for (int i=0 ; i < rootChildren->getCount() ; i++) {
+      webots::Node* nd = rootChildren->getMFNode(i);
+      if (nd->getTypeName() == "CozmoBot2") {
+        _robotNode = nd;
+        break;
+      }
+    }
+    
+    DEV_ASSERT(_robotNode != nullptr, "OSState.Ctor.NullRobotNode");
+    _batteryVoltsField = _robotNode->getField("batteryVolts");
+    DEV_ASSERT(_batteryVoltsField != nullptr, "OSState.Ctor.NullBatteryVoltsField");
   }
   
   // Set simulated attributes
@@ -112,8 +133,7 @@ uint32_t OSState::GetTemperature_C() const
 
 uint32_t OSState::GetBatteryVoltage_uV() const
 {
-  // 4.15V: randomly chosen voltage which corresponds to "fully charged"
-  return 4'150'000;
+  return Util::numeric_cast<uint32_t>(_batteryVoltsField->getSFFloat() * 1'000'000.f);
 }
 
 

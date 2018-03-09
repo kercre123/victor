@@ -43,6 +43,7 @@
 #include "audioUtil/audioCaptureSystem.h"
 #include "util/container/fixedCircularBuffer.h"
 #include "util/logging/logging.h"
+#include "util/math/math.h"
 #include "util/math/numericCast.h"
 #include "messages.h"
 #include "wheelController.h"
@@ -97,6 +98,8 @@ namespace Anki {
 
       bool isInitialized = false;
 
+      u32 tickCnt_ = 0; // increments each robot step (TIME_STEP)
+      
       webots::Supervisor webotRobot_;
 
       s32 robotID_ = -1;
@@ -151,6 +154,13 @@ namespace Anki {
 
       // Lights
       webots::LED* leds_[NUM_BACKPACK_LEDS] = {0};
+      
+      // Simulated Battery
+      webots::Field *batteryVoltsField_ = nullptr;
+      const webots::Field *batteryChargeRateField_ = nullptr;
+      const webots::Field *batteryDischargeRateField_ = nullptr;
+      
+      const u32 batteryUpdateRate_tics_ = 50; // How often to update the simulated battery voltage (in robot ticks)
       
       // MicData
       // Use the mac mic as input with AudioCaptureSystem
@@ -225,6 +235,29 @@ namespace Anki {
             motorPrevPositions_[i] = pos;
           }
         }
+      }
+      
+      void UpdateSimBatteryVolts()
+      {
+        // Grab the charge rate
+        const auto* chargeRateField = HAL::BatteryIsCharging() ?
+                                      batteryChargeRateField_ :
+                                      batteryDischargeRateField_;
+        const float batteryIncreaseRate_voltsPerMin = chargeRateField->getSFFloat();
+        
+        // Compute delta volts
+        const float updateTime_sec = Util::MilliSecToSec((float) batteryUpdateRate_tics_ * TIME_STEP);;
+        const float batteryDeltaVolts = (batteryIncreaseRate_voltsPerMin / 60.f) * updateTime_sec;
+        float batteryVolts = batteryVoltsField_->getSFFloat() + batteryDeltaVolts;
+        
+        // Clamp to logical voltages
+        const float minBatteryVolts = 3.0f;
+        const float maxBatteryVolts = 4.3f;
+        batteryVolts = Util::Clamp(batteryVolts,
+                                   minBatteryVolts,
+                                   maxBatteryVolts);
+        
+        batteryVoltsField_->setSFFloat(batteryVolts);
       }
       
       void AudioInputCallback(const AudioUtil::AudioSample* data, uint32_t numSamples)
@@ -387,6 +420,16 @@ namespace Anki {
       leds_[LED_BACKPACK_FRONT] = webotRobot_.getLED("backpackLED1");
       leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("backpackLED2");
       leds_[LED_BACKPACK_BACK] = webotRobot_.getLED("backpackLED3");
+      
+      // Simulated Battery
+      batteryVoltsField_ = webotRobot_.getSelf()->getField("batteryVolts");
+      DEV_ASSERT(batteryVoltsField_ != nullptr, "simHAL.Init.MissingBatteryVoltsField");
+      
+      batteryChargeRateField_ = webotRobot_.getSelf()->getField("batteryChargeRate_voltsPerMin");
+      DEV_ASSERT(batteryChargeRateField_ != nullptr, "simHAL.Init.MissingBatteryChargeRateField");
+      
+      batteryDischargeRateField_ = webotRobot_.getSelf()->getField("batteryDischargeRate_voltsPerMin");
+      DEV_ASSERT(batteryDischargeRateField_ != nullptr, "simHAL.Init.MissingBatteryDischargeRateField");
       
       // Audio Input
       audioCaptureSystem_.SetCallback(std::bind(&AudioInputCallback, std::placeholders::_1, std::placeholders::_2));
@@ -688,6 +731,11 @@ namespace Anki {
           wasOnCharger_ = false;
         }
 
+        if ((tickCnt_ % batteryUpdateRate_tics_) == 0) {
+          UpdateSimBatteryVolts();
+        }
+        
+        ++tickCnt_;
         return RESULT_OK;
       }
 

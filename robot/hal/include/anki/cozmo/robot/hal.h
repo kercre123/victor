@@ -198,7 +198,10 @@ u16 GetButtonState(const ButtonID button_id);
  * \section Battery
  */
 
-/// Get the battery voltage in volts
+/// Get the battery voltage in volts.
+// Note: To get a more accurate battery voltage, use the linux system
+//       voltage available from the OSState library. This is a voltage
+//       estimate from syscon which is not as accurate as the system voltage.
 f32 BatteryGetVoltage();
 
 /// Return whether or not the battery is charging
