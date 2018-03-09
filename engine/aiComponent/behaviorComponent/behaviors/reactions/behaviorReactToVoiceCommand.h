@@ -34,6 +34,7 @@ private:
   
 public:
   virtual bool WantsToBeActivatedBehavior() const override;
+  virtual void GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const override;
   
   // Empty override of AddListener because the strategy that controls this behavior is a listener
   // The strategy controls multiple different behaviors and listeners are necessary for the other behaviors
@@ -60,11 +61,6 @@ protected:
   };
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override
-  {
-    modifiers.wantsToBeActivatedWhenCarryingObject = true;
-  }
 
   // specific default values can be used to easily set all of our different
   // playtest options.  "Lee Happiness" refers to how happy/sad each of the

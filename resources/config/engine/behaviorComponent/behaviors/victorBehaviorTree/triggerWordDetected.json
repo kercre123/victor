@@ -2,5 +2,7 @@
   "behaviorClass": "ReactToVoiceCommand",
   "behaviorID": "TriggerWordDetected",
 
-  "leesFeelings" : "lee_sad",
+  "behaviorOnTrigger" : "ReactToTriggerDirectionAwake",
+
+  "leesFeelings" : "lee_sad"
 }

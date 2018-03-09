@@ -6,50 +6,28 @@
   {
     "OnSurface" :
     {
-      "TwelveOClock"  : { "anim": "ReactToSoundOffChargerObserveFront" },
-      "OneOClock"     : { "anim": "ReactToSoundOffChargerObserveFront" },
-      "TwoOClock"     : { "anim": "ReactToSoundOffChargerObserveFront" },
-      "ThreeOClock"   : { "anim": "ReactToSoundOffChargerObserveRight" },
-      "FourOClock"    : { "anim": "ReactToSoundOffChargerObserveRight" },
-      "FiveOClock"    : { "anim": "ReactToSoundOffChargerObserveRight" },
-      "SixOClock"     : { "anim": "ReactToSoundOffChargerObserveBehind" },
-      "SevenOClock"   : { "anim": "ReactToSoundOffChargerObserveLeft" },
-      "EightOClock"   : { "anim": "ReactToSoundOffChargerObserveLeft" },
-      "NineOClock"    : { "anim": "ReactToSoundOffChargerObserveLeft" },
-      "TenOClock"     : { "anim": "ReactToSoundOffChargerObserveFront" },
-      "ElevenOClock"  : { "anim": "ReactToSoundOffChargerObserveFront" }
+      "TwelveOClock"  : { "anim": "ReactToTriggerWordOffChargerFrontRight" },
+      "OneOClock"     : { "anim": "ReactToTriggerWordOffChargerFrontRight" },
+      "TwoOClock"     : { "anim": "ReactToTriggerWordOffChargerFrontRight" },
+      "ThreeOClock"   : { "anim": "ReactToTriggerWordOffChargerRight" },
+      "FourOClock"    : { "anim": "ReactToTriggerWordOffChargerRight" },
+      "FiveOClock"    : { "anim": "ReactToTriggerWordOffChargerBehindRight" },
+      "SixOClock"     : { "anim": "ReactToTriggerWordOffChargerBehind" },
+      "SevenOClock"   : { "anim": "ReactToTriggerWordOffChargerBehindLeft" },
+      "EightOClock"   : { "anim": "ReactToTriggerWordOffChargerLeft" },
+      "NineOClock"    : { "anim": "ReactToTriggerWordOffChargerLeft" },
+      "TenOClock"     : { "anim": "ReactToTriggerWordOffChargerLeft" },
+      "ElevenOClock"  : { "anim": "ReactToTriggerWordOffChargerFrontLeft" }
     },
 
     "OnCharger" :
     {
-      "TwelveOClock"  : { "anim": "ReactToSoundOnChargerObserveFront" },
-      "OneOClock"     : { "anim": "ReactToSoundOnChargerObserveFront" },
-      "TwoOClock"     : { "anim": "ReactToSoundOnChargerObserveRight" },
-      "ThreeOClock"   : { "anim": "ReactToSoundOnChargerObserveRight" },
-      "FourOClock"    : { "anim": "ReactToSoundOnChargerObserveRight" },
-      "FiveOClock"    : { "anim": "ReactToSoundOnChargerObserveBehind" },
-      "SixOClock"     : { "anim": "ReactToSoundOnChargerObserveBehind" },
-      "SevenOClock"   : { "anim": "ReactToSoundOnChargerObserveBehind" },
-      "EightOClock"   : { "anim": "ReactToSoundOnChargerObserveLeft" },
-      "NineOClock"    : { "anim": "ReactToSoundOnChargerObserveLeft" },
-      "TenOClock"     : { "anim": "ReactToSoundOnChargerObserveLeft" },
-      "ElevenOClock"  : { "anim": "ReactToSoundOnChargerObserveFront" }
+      "enabled" : false
     },
 
     "OffTreads" :
     {
-      "TwelveOClock"  : { "anim": "ReactToSoundOnChargerObserveFront" },
-      "OneOClock"     : { "anim": "ReactToSoundOnChargerObserveFront" },
-      "TwoOClock"     : { "anim": "ReactToSoundOnChargerObserveRight" },
-      "ThreeOClock"   : { "anim": "ReactToSoundOnChargerObserveRight" },
-      "FourOClock"    : { "anim": "ReactToSoundOnChargerObserveRight" },
-      "FiveOClock"    : { "anim": "ReactToSoundOnChargerObserveBehind" },
-      "SixOClock"     : { "anim": "ReactToSoundOnChargerObserveBehind" },
-      "SevenOClock"   : { "anim": "ReactToSoundOnChargerObserveBehind" },
-      "EightOClock"   : { "anim": "ReactToSoundOnChargerObserveLeft" },
-      "NineOClock"    : { "anim": "ReactToSoundOnChargerObserveLeft" },
-      "TenOClock"     : { "anim": "ReactToSoundOnChargerObserveLeft" },
-      "ElevenOClock"  : { "anim": "ReactToSoundOnChargerObserveFront" }
+      "enabled" : false
     }
   }
 }

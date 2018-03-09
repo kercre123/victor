@@ -1034,15 +1034,15 @@
     },
     {	
       "CladEvent": "VC_ListeningGetIn",
-      "AnimName": "ag_generic_look_up_01"
+      "AnimName": "ag_vc_listening"
     },
     {
       "CladEvent": "VC_ListeningLoop",
-      "AnimName": "ag_generic_look_up_idle"
+      "AnimName": "ag_vc_listening_loop"
     },
     {
       "CladEvent": "VC_ListeningGetOut",
-      "AnimName": "ag_generic_look_stright_01"
+      "AnimName": "ag_vc_listening_getout"
     },
     {
       "CladEvent": "VC_IntentHeard",
@@ -1207,6 +1207,34 @@
     {
       "CladEvent": "ReactToSoundOnChargerObserveBehind",
       "AnimName": "ag_rtsound_oncharger_observe_behind"
+    },
+    {
+      "CladEvent": "ReactToTriggerWordOffChargerFrontLeft",
+      "AnimName": "ag_vc_wakeword_turnleft_45degrees"
+    },
+    {
+      "CladEvent": "ReactToTriggerWordOffChargerFrontRight",
+      "AnimName": "ag_vc_wakeword_turnright_45degrees"
+    },
+    {
+      "CladEvent": "ReactToTriggerWordOffChargerLeft",
+      "AnimName": "ag_vc_wakeword_turnleft"
+    },
+    {
+      "CladEvent": "ReactToTriggerWordOffChargerRight",
+      "AnimName": "ag_vc_wakeword_turnright"
+    },
+    {
+      "CladEvent": "ReactToTriggerWordOffChargerBehind",
+      "AnimName": "ag_vc_wakeword_turn_behind_left"
+    },
+    {
+      "CladEvent": "ReactToTriggerWordOffChargerBehindLeft",
+      "AnimName": "ag_vc_wakeword_turnleft_135degrees"
+    },
+    {
+      "CladEvent": "ReactToTriggerWordOffChargerBehindRight",
+      "AnimName": "ag_vc_wakeword_turnright_135degrees"
     },
     {
       "CladEvent": "ReactToUnclaimedIntent",

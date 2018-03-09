@@ -126,7 +126,7 @@ void BehaviorReactToVoiceCommand::LoadLeeHappinessValues( const Json::Value& con
       // movement and noise after hearing the intent
 
       _instanceVars.earConBegin       = false;
-      _instanceVars.earConEnd         = true;
+      _instanceVars.earConEnd         = false;
       _instanceVars.turnOnTrigger     = false;
       _instanceVars.turnOnIntent      = true;
     }
@@ -135,8 +135,8 @@ void BehaviorReactToVoiceCommand::LoadLeeHappinessValues( const Json::Value& con
       // noise but no movement prior to hearing the intent
       // movement and noise after hearing the intent
 
-      _instanceVars.earConBegin       = true;
-      _instanceVars.earConEnd         = true;
+      _instanceVars.earConBegin       = false;
+      _instanceVars.earConEnd         = false;
       _instanceVars.turnOnTrigger     = false;
       _instanceVars.turnOnIntent      = true;
     }
@@ -145,8 +145,8 @@ void BehaviorReactToVoiceCommand::LoadLeeHappinessValues( const Json::Value& con
       // movement and noise prior to hearing the intent
       // noise but no movement after hearing the intent
 
-      _instanceVars.earConBegin       = true;
-      _instanceVars.earConEnd         = true;
+      _instanceVars.earConBegin       = false;
+      _instanceVars.earConEnd         = false;
       _instanceVars.turnOnTrigger     = true;
       _instanceVars.turnOnIntent      = false;
     }
@@ -203,6 +203,15 @@ void BehaviorReactToVoiceCommand::GetAllDelegates( std::set<IBehavior*>& delegat
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToMicDirection::GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const
+{
+  modifiers.wantsToBeActivatedWhenCarryingObject  = true;
+  modifiers.wantsToBeActivatedWhenOnCharger       = true;
+  modifiers.wantsToBeActivatedWhenOffTreads       = true;
+  modifiers.behaviorAlwaysDelegates               = true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior() const
 {
   return kRespondsToTriggerWord;
@@ -225,7 +234,9 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
   robotInfo.GetMoveComponent().StopAllMotors();
 
   // Trigger word is heard (since we've been activated) ...
-  PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand", "Trigger Word Detected, resonding ..." );
+  PRINT_CH_INFO( "MicData", "BehaviorReactToVoiceCommand",
+                 "Trigger Word Detected from direction [%d], resonding ...",
+                 (int)_dynamicVars.reactionDirection );
 
   // we start streaming audio as soon as we've played the trigger word
   OnStreamingBegin();
@@ -429,23 +440,29 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
 {
   _dynamicVars.state = EState::Thinking;
 
-  // Play a reaction behavior if we were told to ...
-  if ( _instanceVars.turnOnIntent && _instanceVars.reactionBehavior )
+  auto callback = [this]()
   {
-    const MicDirectionIndex triggerDirection = GetReactionDirection();
-    _instanceVars.reactionBehavior->SetReactDirection( triggerDirection );
-
-    // allow the reaction to not want to run in certain directions/states
-    if ( _instanceVars.reactionBehavior->WantsToBeActivated() )
+    // Play a reaction behavior if we were told to ...
+    if ( _instanceVars.turnOnIntent && _instanceVars.reactionBehavior )
     {
-      DelegateIfInControl( _instanceVars.reactionBehavior.get(), &BehaviorReactToVoiceCommand::TransitionToIntentReceived );
-    }
-  }
+      const MicDirectionIndex triggerDirection = GetReactionDirection();
+      _instanceVars.reactionBehavior->SetReactDirection( triggerDirection );
 
-  if ( !IsControlDelegated() )
-  {
-    TransitionToIntentReceived();
-  }
+      // allow the reaction to not want to run in certain directions/states
+      if ( _instanceVars.reactionBehavior->WantsToBeActivated() )
+      {
+        DelegateIfInControl( _instanceVars.reactionBehavior.get(), &BehaviorReactToVoiceCommand::TransitionToIntentReceived );
+      }
+    }
+
+    if ( !IsControlDelegated() )
+    {
+      TransitionToIntentReceived();
+    }
+  };
+
+  // we need to get out of our listening loop anim before we react
+  DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::VC_ListeningGetOut ), callback );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
