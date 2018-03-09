@@ -4,7 +4,7 @@
 
   "behaviors" : [
     {
-      "behavior": "PounceOnMotion_Socialize",
+      "behavior": "SingletonPounceDispatcher",
       "cooldown_s": 2400.0,
       "weight": 0.2
     },

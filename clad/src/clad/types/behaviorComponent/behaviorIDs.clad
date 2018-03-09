@@ -140,7 +140,6 @@ enum uint_8 BehaviorID {
   Hiking_FirstLookWakeUp,
   Hiking_LookInPlace360,
   Hiking_LookInPlaceForUnknown,
-  Hiking_PounceOnMotion,
   Hiking_RollCube,
   Hiking_ThinkAboutBeacons,
   Hiking_VisitInterestingEdge,
@@ -178,15 +177,12 @@ enum uint_8 BehaviorID {
   PopAWheelie,
   RollCubeVoiceCommand,
 
-  // victorBehaviorTree/highLevelDelegates
-  PounceOnMotion_Socialize,
-
   // victorBehaviorTree/highLevelDelegates/pounceWithProx
-  PounceApproachWithProx,
-  PounceDispatcher,
-  PounceQuickLeft,
-  PounceQuickRight,
-  PounceWithProx,
+  SingletonPounceApproachWithProx,
+  SingletonPounceDispatcher,
+  SingletonPounceTurnLeft,
+  SingletonPounceTurnRight,
+  SingletonPounceWithProx,
 
   // victorBehaviorTree/highLevelDelegates
   PutDownBlock,

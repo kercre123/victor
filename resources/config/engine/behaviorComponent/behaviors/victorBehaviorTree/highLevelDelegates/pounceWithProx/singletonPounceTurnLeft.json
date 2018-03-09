@@ -1,14 +1,15 @@
 {
-  "behaviorID": "PounceQuickRight",  
+  "behaviorID": "SingletonPounceTurnLeft",  
   "behaviorClass" : "Turn",
-  "shouldTurnClockwise": true,
+  "shouldTurnClockwise": false,
   "turnDegrees" : 20,
-
+  
   "wantsToBeActivatedConditions": [
     {
       "conditionType" : "MotionDetected",
-      "motionArea"    : "Right",
+      "motionArea"    : "Left",
       "motionLevel"   : "High"
     }
-  ]
+  ]  
+
 }
