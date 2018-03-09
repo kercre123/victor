@@ -21,6 +21,8 @@ enum class ScreenName {
   None = 0,
   FAC  = 1, // Needs to be after None
 
+  Recovery,
+
   Pairing,
     
   Main,

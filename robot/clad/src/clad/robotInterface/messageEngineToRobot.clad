@@ -197,6 +197,11 @@ message SyncTime
   float_32 driveCenterOffset
 }
 
+// Tells syscon to pull the plug
+message Shutdown
+{
+}
+
 message ControllerGains
 {
   float_32 kp,
@@ -491,6 +496,7 @@ union EngineToRobot
   // Init
   GetManufacturingInfo          getMfgInfo                  = 0x01,
   SyncTime                      syncTime                    = 0x02,
+  Shutdown                      shutdown                    = 0x03,
 
   // Debug / Test
   StartControllerTestMode       startControllerTestMode     = 0x0A,

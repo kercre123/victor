@@ -133,6 +133,11 @@ std::string OSState::GetRobotName() const
   return "Vector_0000";
 }
 
+bool OSState::IsInRecoveryMode()
+{
+  return false;
+}
+
 } // namespace Cozmo
 } // namespace Anki
 
