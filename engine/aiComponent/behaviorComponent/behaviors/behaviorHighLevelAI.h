@@ -51,7 +51,6 @@ private:
     float playWithCubeOnChargerCooldown_s;
     float goToSleepTimeout_s;
     float minFaceTimeToAllowSleep_s;
-    float needsToChargeTime_s;
     float maxFaceDistanceToSocialize_mm;
   } _params;
   

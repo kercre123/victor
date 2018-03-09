@@ -50,7 +50,6 @@ BehaviorHighLevelAI::BehaviorHighLevelAI(const Json::Value& config)
   _params.playWithCubeOnChargerCooldown_s = JsonTools::ParseFloat(config, "playWithCubeOnChargerCooldown_s", kDebugName);
   _params.goToSleepTimeout_s = JsonTools::ParseFloat(config, "goToSleepTimeout_s", kDebugName);
   _params.minFaceTimeToAllowSleep_s = JsonTools::ParseFloat(config, "minFaceTimeToAllowSleep_s", kDebugName);
-  _params.needsToChargeTime_s = JsonTools::ParseFloat(config, "needsToChargeTime_s", kDebugName);
   _params.maxFaceDistanceToSocialize_mm = JsonTools::ParseFloat(config, "maxFaceDistanceToSocialize_mm", kDebugName);
   
   MakeMemberTunable( _params.socializeKnownFaceCooldown_s, "socializeKnownFaceCooldown_s" );
@@ -181,25 +180,6 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
         {
           { VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low }
         }
-      }
-    },
-    {
-      "NeedsToCharge",
-      {
-        [this](BehaviorExternalInterface& behaviorExternalInterface) {
-          const auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
-          if( !robotInfo.IsCharging() ) {
-            const TimeStamp_t lastChargeTime = robotInfo.GetLastChargingStateChangeTimestamp();
-            const TimeStamp_t timeSinceNotCharging_ms =
-              robotInfo.GetLastMsgTimestamp() > lastChargeTime ?
-              robotInfo.GetLastMsgTimestamp() - lastChargeTime :
-              0;
-
-            return timeSinceNotCharging_ms * kTimeMultiplier >= 1000 * _params.needsToChargeTime_s;
-          }
-          return false;
-        },
-        {/* Empty Set:: No Vision Requirements*/ }
       }
     },
     {

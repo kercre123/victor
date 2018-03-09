@@ -8,7 +8,6 @@
   "playWithCubeOnChargerCooldown_s": 2400.0,
   "goToSleepTimeout_s": 1200.0,
   "minFaceTimeToAllowSleep_s": 600.0,
-  "needsToChargeTime_s": 900.0,
   "maxFaceDistanceToSocialize_mm": 500.0,
 
   "initialState": "ObservingOnCharger",
@@ -181,7 +180,10 @@
       "nonInterruptingTransitions": [
         {
           "to": "ReturningToCharger",
-          "preDefinedStrategyName": "NeedsToCharge"
+          "condition": {
+            "conditionType": "BatteryLevel",
+            "targetBatteryLevel": "Low"
+          }
         }
       ]
     },
