@@ -104,12 +104,20 @@ typedef struct __attribute__ ((__packed__)) AdvertisingData {
   uint8_t service_data[kServiceDataMaxSize];
   bool have_service_uuid;
   char service_uuid[k128BitUUIDSize];
+<<<<<<< HEAD
   int min_interval;
   int max_interval;
+=======
+>>>>>>> a7c8502f2d... VIC-1296 Utils/3rd Party/Code from Stu
 } AdvertisingData;
 
 typedef struct __attribute__ ((__packed__)) StartAdvertisingArgs {
   int appearance;
+<<<<<<< HEAD
+=======
+  int min_interval;
+  int max_interval;
+>>>>>>> a7c8502f2d... VIC-1296 Utils/3rd Party/Code from Stu
   AdvertisingData advertisement;
   AdvertisingData scan_response;
 } StartAdvertisingArgs;

@@ -188,6 +188,11 @@ void IPCClient::StartAdvertising(const BLEAdvertiseSettings& settings)
 {
   StartAdvertisingArgs args = {0};
   args.appearance = settings.GetAppearance();
+<<<<<<< HEAD
+=======
+  args.min_interval = settings.GetMinInterval();
+  args.max_interval = settings.GetMaxInterval();
+>>>>>>> a7c8502f2d... VIC-1296 Utils/3rd Party/Code from Stu
 
   const std::vector<const BLEAdvertiseData*>
       ble_ad_data = {&(settings.GetAdvertisement()), &(settings.GetScanResponse())};
@@ -227,8 +232,11 @@ void IPCClient::StartAdvertising(const BLEAdvertiseSettings& settings)
     if (dst->have_service_uuid) {
       strlcpy(dst->service_uuid, src->GetServiceUUID().c_str(), sizeof(dst->service_uuid));
     }
+<<<<<<< HEAD
     dst->min_interval = src->GetMinInterval();
     dst->max_interval = src->GetMaxInterval();
+=======
+>>>>>>> a7c8502f2d... VIC-1296 Utils/3rd Party/Code from Stu
   }
 
   SendIPCMessageToServer(IPCMessageType::StartAdvertising,
