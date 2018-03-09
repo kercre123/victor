@@ -12,7 +12,7 @@ function usage() {
     echo "  -h                      print this message"
     echo "  -v                      print verbose output"
     echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
-    echo "  -p [PLATFORM]           build target platform {android,mac}"
+    echo "  -p [PLATFORM]           build target platform {android,mac,vicos}"
     echo "  -a                      append cmake platform argument {arg}"
     echo "  -g [GENERATOR]          CMake generator {Ninja,Xcode,Makefile}"
     echo "  -f                      force-run filelist updates and cmake configure before building"
@@ -315,6 +315,7 @@ if [ $CONFIGURE -eq 1 ]; then
         PLATFORM_ARGS=(
             -DMACOSX=1
             -DANDROID=0
+            -DVICOS=0
         )
     elif [ "$PLATFORM" == "android" ]; then
         #
@@ -327,6 +328,7 @@ if [ $CONFIGURE -eq 1 ]; then
         PLATFORM_ARGS=(
             -DMACOSX=0
             -DANDROID=1
+            -DVICOS=0
             -DANDROID_NDK="${ANDROID_NDK}"
             -DCMAKE_TOOLCHAIN_FILE="${CMAKE_MODULE_DIR}/android.toolchain.patched.cmake"
             -DANDROID_TOOLCHAIN_NAME=clang
@@ -336,6 +338,16 @@ if [ $CONFIGURE -eq 1 ]; then
             -DANDROID_STL=c++_shared
             -DANDROID_CPP_FEATURES='rtti exceptions'
         )
+
+    elif [ "$PLATFORM" == "vicos" ]; then
+        # vicos toolchain
+        PLATFORM_ARGS=(
+            -DMACOSX=0
+            -DANDROID=0
+            -DVICOS=1
+            -DCMAKE_TOOLCHAIN_FILE="${CMAKE_MODULE_DIR}/vicos.toolchain.cmake"
+        )
+
     else
         echo "unknown platform: ${PLATFORM}"
         exit 1

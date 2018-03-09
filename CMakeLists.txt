@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.6)
 
 list(APPEND CMAKE_MODULE_PATH
+  ${CMAKE_CURRENT_SOURCE_DIR}/victor-sdk-clad/cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/util/cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/build/cmake
@@ -37,6 +38,8 @@ if (ANDROID)
   set(SYMBOL_VISIBILITY_FLAGS "-fvisibility=hidden")
 elseif(MACOSX)
   set(ANKI_PLATFORM_NAME "mac")
+elseif(VICOS)
+  set(ANKI_PLATFORM_NAME "vicos")
 else()
   message(FATAL_ERROR "unsupported platform: ${ANKI_PLATFORM_NAME}")
 endif()
@@ -108,7 +111,23 @@ endif()
 #    message(FATAL_ERROR "breakpad_client not defined")
 #endif()
 
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
+set(CLAD_VICTOR_EMITTER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/victor-sdk-clad/victorEmitters")
+set(CLAD_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/victor-sdk-clad/tools/message-buffers")
+
+if(VICOS)
+  add_definitions(-DVICOS)
+  set(DISABLE_JSON true)
+  import(cti_messaging "coretech/messaging")
+  add_subdirectory("clad")
+  add_subdirectory("lib/util/source/anki/clad")
+  add_subdirectory("coretech/common/clad")
+  add_subdirectory("coretech/vision/clad")
+  add_subdirectory("robot/clad")
+  add_subdirectory("victor-sdk-clad")
+  add_subdirectory("platform/switchboard")
+else()
 import(clad "tools/message-buffers")
 import(util "lib/util")
 include(audio) # See ./cmake/audio.cmake for definitions and lib
@@ -148,6 +167,7 @@ target_include_directories(cozmo_engine PRIVATE
 )
 
 add_subdirectory("resources")
+endif(VICOS)
 
 if (ANDROID)
     add_subdirectory("project/victor/tools")
