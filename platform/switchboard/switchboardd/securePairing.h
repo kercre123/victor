@@ -102,6 +102,7 @@ namespace Switchboard {
     void HandleNonceAck();
     void HandleTimeout();
     void HandleInternetTimerTick();
+    void HandleOtaRequest();
     void HandleChallengeResponse(uint8_t* bytes, uint32_t length);
 
     void SubscribeToCladMessages();

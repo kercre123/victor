@@ -10,10 +10,12 @@
  *
  **/
 
-#include <sstream>
 #include "anki-wifi/wifi.h"
 #include "switchboardd/savedSessionManager.h"
 #include "switchboardd/securePairing.h"
+#include "exec_command.h"
+
+#include <sstream>
 #include <cutils/properties.h>
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -188,7 +190,11 @@ void Anki::Switchboard::SecurePairing::SendHandshake() {
   uint8_t handshakeMessage[kHandshakeMessageLength];
   handshakeMessage[0] = SetupMessage::MSG_HANDSHAKE;
   *(uint32_t*)(&handshakeMessage[1]) = PairingProtocolVersion::CURRENT;
-  _stream->SendPlainText(handshakeMessage, sizeof(handshakeMessage));
+  int result = _stream->SendPlainText(handshakeMessage, sizeof(handshakeMessage));
+
+  if(result != 0) {
+    Log::Write("Unable to send message.");
+  }
 }
 
 void Anki::Switchboard::SecurePairing::SendPublicKey() {
@@ -406,8 +412,13 @@ void Anki::Switchboard::SecurePairing::HandleRtsOtaUpdateRequest(const Victor::E
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
+
+  if(_state == PairingState::ConfirmedSharedSecret) {
+    Anki::Victor::ExternalComms::RtsOtaUpdateRequest otaMessage = msg.Get_RtsOtaUpdateRequest();
+    ExecCommandInBackground({"/bin/update-engine", otaMessage.url}, nullptr);
+  }
   
-  Log::Write("Todo: Execute Rts Ota Update request.");
+  Log::Write("Starting OTA update.");
 }
 
 void Anki::Switchboard::SecurePairing::HandleRtsWifiAccessPointRequest(const Victor::ExternalComms::RtsConnection& msg) {

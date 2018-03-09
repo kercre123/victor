@@ -102,6 +102,9 @@ namespace Switchboard {
             _receiveRtsAck.emit(rtsMsg);
             break;
           }
+          default:
+            // unhandled messages
+            break;
         }
       }
 

@@ -379,9 +379,8 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
   if(!didConnect && error != nullptr) {
     // 24 -- timeout ? wrong password
     // 36 -- Already connected
-    printf("Error code: %d domain: %d\n", error->code, error->domain);
-
-    printf(std::string(error->message).c_str());
+    //printf("Error code: %d domain: %d\n", error->code, error->domain);
+    //printf(std::string(error->message).c_str());
   }  
 
   return (bool)didConnect;
@@ -515,11 +514,12 @@ bool GetIpFromHostName(char* hostName, char* ipAddressOut) {
 }
 
 bool HasInternet() {
-  return CanConnectToHostName("google.com") || CanConnectToHostName("amazon.com");
+  std::string google = "google.com";
+  std::string amazon = "amazon.com";
+  return CanConnectToHostName((char*)google.c_str()) || CanConnectToHostName((char*)amazon.c_str());
 }
 
 bool EnableAccessPointMode(std::string ssid, std::string pw) {
-  ConnManBusManager* manager_proxy;
   GError* error = nullptr;
 
   GVariant* ssid_s = g_variant_new_string(ssid.c_str());
@@ -580,7 +580,6 @@ bool EnableAccessPointMode(std::string ssid, std::string pw) {
 }
 
 bool DisableAccessPointMode() {
-  ConnManBusManager* manager_proxy;
   GError* error = nullptr;
 
   GVariant* enable_b = g_variant_new_boolean(false);

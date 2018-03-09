@@ -25,10 +25,10 @@ class Log {
   template<typename... Args>
   static void Write(Args&&... args) {
 #ifdef debug_logging
-    std::thread::id threadId = std::this_thread::get_id();
-    printf("[thread %d]\t\t", threadId);
+    //std::thread::id threadId = std::this_thread::get_id();
+    //printf("[thread %d]\t\t", threadId);
     char buffer [200];
-    snprintf(buffer, 200, std::forward<Args>(args)...);
+    snprintf(buffer, 200, "%s", std::forward<Args>(args)...);
     printf("ankiswitchboardd: %s\n", buffer);
 #endif
   }
