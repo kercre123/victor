@@ -51,7 +51,7 @@ protected:
 
   void AudioStateMachine(int ticksVolumeIncFreq, int volumeLevelInc) const;
   
-  void CancelAndPlayAction(TriggerAnimationAction* action, bool doCancelSelf = false);
+  void CancelAndPlayAnimation(AnimationTrigger anim);
   
   // helper method to play maximum bliss looping animations
   void PlayBlissLoopAnimation();
@@ -60,8 +60,14 @@ private:
 
   // - - - - - - - - - - - - - -
   // constants
+  
+  // ordered list of petting transition animations (all levels, incl. maxbliss)
   std::vector<AnimationTrigger> _animPettingResponse;
+  
+  // ordered list of petting getout animations (corresponds to above list)
   std::vector<AnimationTrigger> _animPettingGetout;
+  
+  // getin animation for the first touch, lacks corresponding getout
   AnimationTrigger _animPettingResponseGetin;
   
   // duration of time to wait before checking
@@ -89,26 +95,39 @@ private:
   // - - - - - - - - - - - - -
   // mutable attributes
   
+  enum PettingResponseState {
+    PlayTransitionToLevel,
+    PlayGetoutFromLevel,
+    Done,
+  };
+  PettingResponseState _currResponseState;
+  
+  // future time after which we can end petting session (in the max bliss state)
   float _checkForTimeoutTimeBliss;
   
+  // future time after which we can end petting session (in the non max-bliss state)
   float _checkForTimeoutTimeNonbliss;
   
-  // touch event bookmarked time (used to determine
-  // when it is possible to start checking the
-  // state transition conditions for the bliss state
-  // machine)
+  // future time after which we can check for transitions to higher bliss levels
   float _checkForTransitionTime;
   
+  // tracking variable -- represents the current level of animation requested:
+  // value 0 implies only the getin has been played
+  // value 1-(N-1) maps to the petting transition animations, and their respective getout
+  // value N maps to the maxbliss animation cycle, and its getout
   u32 _currBlissLevel;
   
+  // tracking variable -- counting individual press/release pairs per bliss level
   u32 _numPressesAtCurrentBlissLevel;
   
+  // counter for tracking ticks while pressed for audio purring
+  // TODO: remove this in a future pass when audio system is setup
   u32 _numTicksPressed;
   
+  // press state for the current tick
   bool _isPressed;
   
-  bool _reachedBliss;
-  
+  // press state for the previous tick
   bool _isPressedPrevTick;
 };
 

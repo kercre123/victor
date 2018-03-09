@@ -54,6 +54,7 @@ BehaviorPetting::BehaviorPetting(const Json::Value& config)
 , _nonBlissTimeout(5.0f)
 , _minNumPetsToAdvanceBliss(2)
 , _tracksToLock(0)
+, _currResponseState(Done)
 , _checkForTimeoutTimeBliss(std::numeric_limits<float>::max())
 , _checkForTimeoutTimeNonbliss(std::numeric_limits<float>::max())
 , _checkForTransitionTime(std::numeric_limits<float>::max())
@@ -61,7 +62,6 @@ BehaviorPetting::BehaviorPetting(const Json::Value& config)
 , _numPressesAtCurrentBlissLevel(0)
 , _numTicksPressed(0)
 , _isPressed(false)
-, _reachedBliss(false)
 , _isPressedPrevTick(false)
 {
   const char* kDebugStr = "BehaviorPetting.Ctor";
@@ -138,7 +138,6 @@ bool BehaviorPetting::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPetting::InitBehavior()
 {
-  _reachedBliss = false;
   _numPressesAtCurrentBlissLevel = 0;
   _currBlissLevel = 0;
 }
@@ -147,11 +146,13 @@ void BehaviorPetting::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPetting::OnBehaviorActivated()
 {
-  // GETIN
-  TriggerAnimationAction* action = new TriggerAnimationAction( _animPettingResponseGetin, kPlayAnimOnce, kCanAnimationInterrupt, _tracksToLock);
-  CancelAndPlayAction(action);
+  CancelAndPlayAnimation(_animPettingResponseGetin);
+  
+  // starts the state machine to check for updates
+  _currResponseState = PettingResponseState::PlayTransitionToLevel;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPetting::AudioStateMachine(int ticksVolumeIncPeriod,
                                                      int volumeLevelInc) const
 {
@@ -179,15 +180,14 @@ void BehaviorPetting::AudioStateMachine(int ticksVolumeIncPeriod,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPetting::CancelAndPlayAction(TriggerAnimationAction* action, bool doCancelSelf)
+void BehaviorPetting::CancelAndPlayAnimation(AnimationTrigger anim)
 {
+  TriggerAnimationAction* action = new TriggerAnimationAction(anim,
+                                                              kPlayAnimOnce,
+                                                              kCanAnimationInterrupt,
+                                                              _tracksToLock);
   CancelDelegates();
-  DelegateIfInControl(action,
-                      [this,doCancelSelf](ActionResult result) {
-                        if(doCancelSelf) {
-                          CancelSelf();
-                        }
-                      });
+  DelegateIfInControl(action);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -199,7 +199,12 @@ void BehaviorPetting::PlayBlissLoopAnimation()
                                                               _tracksToLock);
   
   ActionResultCallback cb = [this](ActionResult result)->void {
-    this->PlayBlissLoopAnimation();
+    // note: since Update() waits for animations to finish before
+    //       playing any corresponding getout, animation is not
+    //       re-queued if a getout is requested
+    if( this->_currResponseState!=PlayGetoutFromLevel ) {
+      this->PlayBlissLoopAnimation();
+    }
   };
   
   DelegateIfInControl(action, cb);
@@ -211,77 +216,116 @@ void BehaviorPetting::BehaviorUpdate()
   if(!IsActivated()){
     return;
   }
-
-  const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
-  const bool willBlissTimeout = now > _checkForTimeoutTimeBliss;
-  const bool willNonBlissTimeout =  now > _checkForTimeoutTimeNonbliss;
-  
-  const bool willCheckForTransition = now > _checkForTransitionTime;
-  
+  //-----------------------------------------------------------------------------
+  // update the transition trigger variables
+  const float now            = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const bool reachedMaxBliss = (_currBlissLevel == _animPettingResponse.size());
   if(_isPressed) {
     _numTicksPressed++;
   } else {
     _numTicksPressed = 0;
   }
   
+  //-----------------------------------------------------------------------------
+  // state machine for the petting response
+  switch(_currResponseState) {
+    case PlayTransitionToLevel:
+    {
+      const bool willBlissTimeout    = reachedMaxBliss  && (now > _checkForTimeoutTimeBliss);
+      const bool willNonblissTimeout = !reachedMaxBliss && (now > _checkForTimeoutTimeNonbliss);
+      const bool willTransition      = (_isPressed && (now > _checkForTransitionTime)) ||
+                                       (_numPressesAtCurrentBlissLevel > _minNumPetsToAdvanceBliss);
+      if (!_isPressed && (willBlissTimeout || willNonblissTimeout)) {
+        // a Getout is requested; it will be played in the following tick
+        _currResponseState            = PlayGetoutFromLevel;
+        _checkForTimeoutTimeBliss     = now + _blissTimeout;
+        _checkForTimeoutTimeNonbliss  = now + _nonBlissTimeout;
+      } else if (!reachedMaxBliss && willTransition) {
+        _currResponseState = PlayTransitionToLevel;
+        // after the transition, we reset the conditions
+        // for triggering the next transition
+        _checkForTransitionTime = now + _timeTilTouchCheck;
+        _numPressesAtCurrentBlissLevel = 0;
+
+        // play the appropriate animation for the level
+        const bool willTransitionToMaxBliss = _currBlissLevel==(_animPettingResponse.size()-1);
+        if(willTransitionToMaxBliss) {
+          // note: this method handles cycling through
+          //       all variations of max bliss animation
+          PlayBlissLoopAnimation();
+        } else {
+          const auto animIdx = _currBlissLevel;
+          CancelAndPlayAnimation(_animPettingResponse[animIdx]);
+        }
+        
+        // important: increase the bliss level AFTER getting the animation index
+        // reasoning:
+        // - value of 0 for _currBlissLevel implies only the getin has been played
+        // - values 1-N for _currBlissLevel are for indexing the correct animation for the level
+        // thus the animation's index is _currBlissLevel-1
+        // this keeps it consistent with how we pick the getout animation index
+        _currBlissLevel = MIN(_currBlissLevel+1, (int)_animPettingResponse.size());
+      }
+      break;
+    }
+    case PlayGetoutFromLevel:
+    {
+      // - stay in this state, until a getout can be played
+      // - when a getout is played, transition to Done
+      // - after the animation finishes, the behavior will
+      //   automatically deactivate
+      const bool wasPlayingGetin = _currBlissLevel == 0;
+      if(wasPlayingGetin) {
+        // previously in PlayGetin, currently in PlayGetoutFromLevel
+        // no corresponding getout animation exists for this state
+        CancelSelf();
+      } else {
+        // - previously was in PlayTransitionToLevel, now play appropriate getout
+        // - expected flow:
+        //      Update()      | entered bliss (in PlayTransitionToLevel)
+        //                    |
+        //      PlayBlissLoop | bliss animation plays and checks to requeue
+        //                    |
+        //      Update()      | getout requested (in PlayGetoutFromLevel)
+        //                    | cannot play getout because animation is playing
+        //                    |
+        //      PlayBlissLoop | bliss animation cannot requeue because getout requested
+        //                    |
+        //      Update()      | Update() no animation playing, getout plays
+        if(!IsControlDelegated()) {
+          const auto animIdx = _currBlissLevel-1; // bliss levels are +1 wrt animation indexes
+          CancelAndPlayAnimation(_animPettingGetout[animIdx]);
+          
+          // ensures we wait for the getout to finish before ending the behavior
+          _currResponseState = Done;
+        }
+      }
+      break;
+    }
+    case Done:
+    {
+      // - initial inactive state for petting
+      // - also terminal state when waiting for getouts to finish
+      // - when getout animation is finished, we deactivate the behavior
+      if(!IsControlDelegated()) {
+        CancelSelf();
+      }
+      break;
+    }
+  }
+
+  //-----------------------------------------------------------------------------
+  // audio for purring hack
+  
   // NOTE: do not purr when playing getin
-  if ((_currBlissLevel > 0) && (_currBlissLevel < _animPettingResponse.size()-1)) {
+  if ((_currBlissLevel > 0) && (_currBlissLevel < _animPettingResponse.size())) {
     // rising bliss petting mode sounds
     int audioVolUpTickPeriod = int(_animPettingResponse.size()-_currBlissLevel)*2;
     AudioStateMachine(audioVolUpTickPeriod, kAudioVolumeUpIncrementNonbliss);
-  } else if( _currBlissLevel == _animPettingResponse.size()-1 ) {
+  } else if( _currBlissLevel == _animPettingResponse.size() ) {
     // blissful purring (when touched)
     AudioStateMachine(kAudioVolumeUpTickPeriodBliss, kAudioVolumeUpIncrementBliss); // faster and louder
-  }
-  
-  if (((_reachedBliss && willBlissTimeout) || (!_reachedBliss && willNonBlissTimeout)) && !_isPressed)
-  {
-    // petting session should end (==> this behavior de-activates), but first, if bliss was
-    // achieved, play an animation
-    if( _reachedBliss ) {
-      // prevent spamming this getout state transition once it has been started
-      _checkForTimeoutTimeBliss = now + _blissTimeout;
-      _checkForTimeoutTimeNonbliss = now + _nonBlissTimeout;
-      
-      // currently playing bliss loop
-      // => play the "bliss" specific getout
-      auto& lastAnimTrigger = _animPettingGetout[_animPettingGetout.size()-1];
-      TriggerAnimationAction* action = new TriggerAnimationAction(lastAnimTrigger,
-                                                                  kPlayAnimOnce,
-                                                                  kCanAnimationInterrupt,
-                                                                  _tracksToLock);
-      CancelAndPlayAction(action, true);
-    } else {
-      TriggerAnimationAction* action = new TriggerAnimationAction(_animPettingGetout[_currBlissLevel],
-                                                                  kPlayAnimOnce,
-                                                                  kCanAnimationInterrupt,
-                                                                  _tracksToLock);
-      CancelAndPlayAction(action, true);
-    }
-    
-  } else if( (willCheckForTransition && _isPressed) || (_numPressesAtCurrentBlissLevel > _minNumPetsToAdvanceBliss) ) {
-    // RISING BLISS
-    
-    // we are currently experiencing contact
-    // => interrupt the current animation with the next sequential rising bliss anim
-    // note: if we are at bliss do not interrupt
-    
-    if(_currBlissLevel == _animPettingResponse.size()-1) {
-      if(!_reachedBliss) {
-        PlayBlissLoopAnimation();
-        _numPressesAtCurrentBlissLevel = 0;
-        _reachedBliss = true;
-      }
-    } else {
-      _checkForTransitionTime = now + _timeTilTouchCheck; // update the time to check for next transition, after each state transition
-      TriggerAnimationAction* action = new TriggerAnimationAction( _animPettingResponse[_currBlissLevel],
-                                                                  kPlayAnimOnce, kCanAnimationInterrupt, _tracksToLock);
-      _currBlissLevel++;
-      CancelAndPlayAction(action);
-      _reachedBliss = false;
-      _numPressesAtCurrentBlissLevel = 0;
-    }
   }
   
   _isPressedPrevTick = _isPressed;
@@ -291,12 +335,12 @@ void BehaviorPetting::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPetting::OnBehaviorDeactivated()
 {
-  _numPressesAtCurrentBlissLevel = 0;
-  _currBlissLevel = 0;
-  _reachedBliss = false;
-  _checkForTimeoutTimeNonbliss = std::numeric_limits<float>::max();
-  _checkForTransitionTime = std::numeric_limits<float>::max();
-  _checkForTimeoutTimeBliss = std::numeric_limits<float>::max();
+  _currResponseState              = Done;
+  _numPressesAtCurrentBlissLevel  = 0;
+  _currBlissLevel                 = 0;
+  _checkForTimeoutTimeNonbliss    = std::numeric_limits<float>::max();
+  _checkForTransitionTime         = std::numeric_limits<float>::max();
+  _checkForTimeoutTimeBliss       = std::numeric_limits<float>::max();
 }
 
 } // Cozmo
