@@ -139,17 +139,17 @@ void BehaviorAnimGetInLoop::BehaviorUpdate()
     _dVars.shouldLoopEnd |= _iConfig.endLoopCondition->AreConditionsMet(GetBEI());
   }
 
-  if(IsControlDelegated()){
+  if(IsControlDelegated() || (_dVars.stage == BehaviorStage::GetOut)){
     return;
   }
 
   if(_dVars.shouldLoopEnd){
     TransitionToGetOut();
+    return;
   }
   
   const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if((_dVars.stage <= BehaviorStage::GetOut) &&
-     (_dVars.nextLoopTime_s  < currentTime_sec)){
+  if(_dVars.nextLoopTime_s  < currentTime_sec){
     _dVars.nextLoopTime_s = currentTime_sec + _iConfig.loopInterval_s;
     TransitionToLoop();
   }
