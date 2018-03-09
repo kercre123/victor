@@ -53,7 +53,6 @@ BehaviorPetting::BehaviorPetting(const Json::Value& config)
 , _blissTimeout(5.0f)
 , _nonBlissTimeout(5.0f)
 , _minNumPetsToAdvanceBliss(2)
-, _tracksToLock(0)
 , _currResponseState(Done)
 , _checkForTimeoutTimeBliss(std::numeric_limits<float>::max())
 , _checkForTimeoutTimeNonbliss(std::numeric_limits<float>::max())
@@ -81,15 +80,6 @@ BehaviorPetting::BehaviorPetting(const Json::Value& config)
   }
   
   _animPettingResponseGetin = AnimationTriggerFromString(JsonTools::ParseString(config, "animGroupGetin",kDebugStr));
-  
-  bool animBodyTrackEnabled = JsonTools::ParseBool(config, "animBodyTrackEnabled",kDebugStr);
-  bool animHeadTrackEnabled = JsonTools::ParseBool(config, "animHeadTrackEnabled",kDebugStr);
-  bool animLiftTrackEnabled = JsonTools::ParseBool(config, "animLiftTrackEnabled",kDebugStr);
-  
-  // TODO(agm) dev feature to lock tracks while testing out different animation stubs for easier access to touch-sensor
-  _tracksToLock = u8(animBodyTrackEnabled ? AnimTrackFlag::NO_TRACKS : AnimTrackFlag::BODY_TRACK) |
-                  u8(animHeadTrackEnabled ? AnimTrackFlag::NO_TRACKS : AnimTrackFlag::HEAD_TRACK) |
-                  u8(animLiftTrackEnabled ? AnimTrackFlag::NO_TRACKS : AnimTrackFlag::LIFT_TRACK);
   
   _blissTimeout = JsonTools::ParseFloat(config, "timeTilBlissGetout",kDebugStr);
   _nonBlissTimeout = JsonTools::ParseFloat(config, "timeTilNonBlissGetout",kDebugStr);
@@ -184,8 +174,7 @@ void BehaviorPetting::CancelAndPlayAnimation(AnimationTrigger anim)
 {
   TriggerAnimationAction* action = new TriggerAnimationAction(anim,
                                                               kPlayAnimOnce,
-                                                              kCanAnimationInterrupt,
-                                                              _tracksToLock);
+                                                              kCanAnimationInterrupt);
   CancelDelegates();
   DelegateIfInControl(action);
 }
@@ -195,8 +184,7 @@ void BehaviorPetting::PlayBlissLoopAnimation()
 {
   TriggerAnimationAction* action = new TriggerAnimationAction(_animPettingResponse.back(),
                                                               kPlayAnimOnce,
-                                                              kCanAnimationInterrupt,
-                                                              _tracksToLock);
+                                                              kCanAnimationInterrupt);
   
   ActionResultCallback cb = [this](ActionResult result)->void {
     // note: since Update() waits for animations to finish before

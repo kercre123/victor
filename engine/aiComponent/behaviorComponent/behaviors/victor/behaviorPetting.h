@@ -88,10 +88,6 @@ private:
   // bliss level
   int _minNumPetsToAdvanceBliss;
   
-  // internal setting to prevent certain tracks
-  // in the animation reactions from playing
-  u8 _tracksToLock;
-  
   // - - - - - - - - - - - - -
   // mutable attributes
   
