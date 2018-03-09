@@ -116,6 +116,7 @@ class DependencyInstaller(object):
     return True
 
   def install(self):
+    environ["PIP_REQUIRE_VIRTUALENV"] = ""
     homebrew_deps = self.options.deps
 
     python2_deps = self.options.python2_deps
