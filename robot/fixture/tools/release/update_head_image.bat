@@ -29,5 +29,9 @@ adb push bin/emmcdl data/local/fixture/emmcdl/
 adb shell -x "cd data/local/fixture/emmcdl && chmod +x emmcdl"
 adb shell "sync"
 
+echo restart helper process...
+adb shell -x "pkill helper && sleep 1"
+adb shell "/data/local/fixture/helper > /dev/null 2>&1 &"
+
 echo Done!
 pause
