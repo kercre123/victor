@@ -28,32 +28,34 @@ namespace Anki {
 namespace Switchboard {
   class Daemon {
     public:
-      static void Start();
-      static void Stop();
+      Daemon(struct ev_loop* loop, ev_timer timer) :
+        _loop(loop),
+        _timer(timer)
+      {}
+
+      void Start();
+      void Stop();
     
     private:
-      static void InitializeBle();
-      static void Tick(struct ev_loop* loop, struct ev_timer* w, int revents);
-      static void OnConnected(int connId, INetworkStream* stream);
-      static void OnDisconnected(int connId, INetworkStream* stream);
-      static void OnPinUpdated(std::string pin);
+      void InitializeBle();
+      void Tick(struct ev_loop* loop, struct ev_timer* w, int revents);
+      void OnConnected(int connId, INetworkStream* stream);
+      void OnDisconnected(int connId, INetworkStream* stream);
+      void OnPinUpdated(std::string pin);
 
       // External Interfaces
-      static void HandleButtonDoubleTap();  // todo
-      static void DrawScreen();             // todo
+      void HandleButtonDoubleTap();  // todo
+      void DrawScreen();             // todo
 
-      static int sConnectionId;
+      int _connectionId = -1;
 
-      static inline bool IsConnected() {
-        return sConnectionId != -1;
-      }
+      inline bool IsConnected() { return _connectionId != -1; }
 
-      const static uint32_t kTick_s = 30;
-      static struct ev_loop* sLoop;
-      static ev_timer sTimer;
-      static Anki::TaskExecutor* sTaskExecutor;
-      static BleClient* sBleClient;
-      static SecurePairing* sSecurePairing;
+      struct ev_loop* _loop;
+      ev_timer _timer;
+      std::unique_ptr<TaskExecutor> _taskExecutor;
+      std::unique_ptr<BleClient> _bleClient;
+      std::unique_ptr<SecurePairing> _securePairing;
   };
 }
 }

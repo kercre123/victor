@@ -36,70 +36,52 @@
 // @paluri
 // --------------------------------------------------------------------------------------------------------------------
 
-// Static Variables
-struct ev_loop* Anki::Switchboard::Daemon::sLoop;
-const uint32_t Anki::Switchboard::Daemon::kTick_s;
-ev_timer Anki::Switchboard::Daemon::sTimer;
-Anki::TaskExecutor* Anki::Switchboard::Daemon::sTaskExecutor;
-int Anki::Switchboard::Daemon::sConnectionId = -1;
-
-Anki::Switchboard::BleClient* Anki::Switchboard::Daemon::sBleClient;
-Anki::Switchboard::SecurePairing* Anki::Switchboard::Daemon::sSecurePairing;
-
 void Test();
 void OnPinUpdated(std::string pin);
 void OnConnected(int connId, Anki::Switchboard::INetworkStream* stream);
 void OnDisconnected(int connId, Anki::Switchboard::INetworkStream* stream);
 
 void Anki::Switchboard::Daemon::Start() {
-  sLoop = ev_default_loop(0);
-  sTaskExecutor = new Anki::TaskExecutor(sLoop);
+  Log::Write("Loading up Switchboard Daemon");
+  _loop = ev_default_loop(0);
+  _taskExecutor = std::make_unique<Anki::TaskExecutor>(_loop);
 
   InitializeBle();
-
-  ev_timer_init(&sTimer, Tick, kTick_s, kTick_s);
-  ev_timer_start(sLoop, &sTimer);
-  ev_loop(sLoop, 0);
 }
 
 void Anki::Switchboard::Daemon::Stop() {
-  if(sBleClient != nullptr) {
-    sBleClient->Disconnect(sConnectionId);
-    sBleClient->StopAdvertising();
-
-    //delete sBleClient;
+  if(_bleClient != nullptr) {
+    _bleClient->Disconnect(_connectionId);
+    _bleClient->StopAdvertising();
   }
-
-  ev_timer_stop(sLoop, &sTimer);
-  ev_unloop(sLoop, EVBREAK_ALL);
 }
 
 void Anki::Switchboard::Daemon::InitializeBle() {
-  sBleClient = new Anki::Switchboard::BleClient(sLoop);
-  sBleClient->OnConnectedEvent().SubscribeForever(OnConnected);
-  sBleClient->OnDisconnectedEvent().SubscribeForever(OnDisconnected);
-  sBleClient->Connect();
+  _bleClient = std::make_unique<Anki::Switchboard::BleClient>(_loop);
+  _bleClient->OnConnectedEvent().SubscribeForever(std::bind(&Daemon::OnConnected, this, std::placeholders::_1, std::placeholders::_2));
+  _bleClient->OnDisconnectedEvent().SubscribeForever(std::bind(&Daemon::OnDisconnected, this, std::placeholders::_1, std::placeholders::_2));
+  _bleClient->Connect();
 
   Anki::BLEAdvertiseSettings settings;
   settings.GetAdvertisement().SetServiceUUID(Anki::kAnkiBLEService_128_BIT_UUID);
   settings.GetScanResponse().SetIncludeDeviceName(true);
   settings.GetScanResponse().SetIncludeTxPowerLevel(true);
-  sBleClient->StartAdvertising(settings);
+  _bleClient->StartAdvertising(settings);
 
   Log::Write("Initialize BLE");
 }
 
 void Anki::Switchboard::Daemon::OnConnected(int connId, INetworkStream* stream) {
   Log::Write("OnConnected");
-  sTaskExecutor->Wake([stream](){
+  _taskExecutor->Wake([stream, this](){
     Log::Write("Connected to a BLE central.\n");
-    if(sSecurePairing == nullptr) {
-      sSecurePairing = new Anki::Switchboard::SecurePairing(stream, sLoop);
-      sSecurePairing->OnUpdatedPinEvent().SubscribeForever(OnPinUpdated);
+    if(_securePairing == nullptr) {
+      _securePairing = std::make_unique<Anki::Switchboard::SecurePairing>(stream, _loop);
+      _securePairing->OnUpdatedPinEvent().SubscribeForever(std::bind(&Daemon::OnPinUpdated, this, std::placeholders::_1));
     }
     
     // Initiate pairing process
-    sSecurePairing->BeginPairing();
+    _securePairing->BeginPairing();
     Log::Write("Done task\n");
   });
   Log::Write("Done OnConnected\n");
@@ -107,8 +89,8 @@ void Anki::Switchboard::Daemon::OnConnected(int connId, INetworkStream* stream) 
 
 void Anki::Switchboard::Daemon::OnDisconnected(int connId, INetworkStream* stream) {
   // do any clean up needed
-  if(sSecurePairing != nullptr) {
-    sSecurePairing->StopPairing();
+  if(_securePairing != nullptr) {
+    _securePairing->StopPairing();
   }
 }
 
@@ -123,7 +105,47 @@ void Anki::Switchboard::Daemon::Tick(struct ev_loop* loop, struct ev_timer* w, i
 // ####################################################################################################################
 // Entry Point
 // ####################################################################################################################
+static struct ev_signal sIntSig;
+static struct ev_signal sTermSig;
+static ev_timer sTimer;
+static struct ev_loop* sLoop;
+const static uint32_t kTick_s = 30;
+
+static void ExitHandler(int status = 0) {
+  // todo: smoothly handle termination
+  _exit(status);
+}
+
+static void SignalCallback(struct ev_loop* loop, struct ev_signal* w, int revents)
+{
+  logi("Exiting for signal %d", w->signum);
+  ev_timer_stop(sLoop, &sTimer);
+  ev_unloop(sLoop, EVUNLOOP_ALL);
+  ExitHandler();
+}
+
+static void Tick(struct ev_loop* loop, struct ev_timer* w, int revents) {  
+  // noop
+}
+
 int main() {
-  Anki::Switchboard::Daemon::Start();
+  sLoop = ev_default_loop(0);
+  std::unique_ptr<Anki::Switchboard::Daemon> daemon;
+
+  ev_signal_init(&sIntSig, SignalCallback, SIGINT);
+  ev_signal_start(sLoop, &sIntSig);
+  ev_signal_init(&sTermSig, SignalCallback, SIGTERM);
+  ev_signal_start(sLoop, &sTermSig);
+  
+  // initialize daemon
+  daemon = std::make_unique<Anki::Switchboard::Daemon>(sLoop, sTimer);
+  daemon->Start();
+
+  // exit
+  ev_timer_init(&sTimer, Tick, kTick_s, kTick_s);
+  ev_timer_start(sLoop, &sTimer);
+  ev_loop(sLoop, 0);
+  ExitHandler();
+  return 0;
 }
 // ####################################################################################################################
