@@ -14,7 +14,7 @@
 
 - (id)init {
   _victorService =
-    [CBUUID UUIDWithString:@"D55E356B-59CC-4265-9D5F-3C61E9DFD70F"];
+    [CBUUID UUIDWithString:@"FEE3"];
   _readUuid =
     [CBUUID UUIDWithString:@"7D2A4BDA-D29B-4152-B725-2491478C5CD7"];
   _writeUuid =
@@ -41,7 +41,21 @@
   
   NSLog(@"Init bleCentral");
   
+  NSData* publicKey = [[NSUserDefaults standardUserDefaults] dataForKey:@"publicKey"];
+  NSLog(@"data: %@", publicKey);
+  
+  //[self resetDefaults];
+  
   return [super init];
+}
+
+- (void)resetDefaults {
+  NSUserDefaults * defs = [NSUserDefaults standardUserDefaults];
+  NSDictionary * dict = [defs dictionaryRepresentation];
+  for (id key in dict) {
+    [defs removeObjectForKey:key];
+  }
+  [defs synchronize];
 }
 
 - (void)StartScanning {
@@ -53,9 +67,9 @@
 }
 
 - (void)printSuccess:(const char *)txt {
-  NSLog(@"\033[0;32m");
+  printf("\033[0;32m");
   NSLog(@"%s", txt);
-  NSLog(@"\033[0m");
+  printf("\033[0m");
 }
 
 // ----------------------------------------------------------------------------------------------------------------
@@ -264,6 +278,21 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   free(cipherText);
 }
 
+- (NSData*) GetPublicKey {
+  NSData* publicKey =  [[NSUserDefaults standardUserDefaults] dataForKey:@"publicKey"];
+  return publicKey;
+}
+- (NSArray*) GetSession: (NSString*)key {
+  NSArray* session = [[NSUserDefaults standardUserDefaults] arrayForKey:key];
+  return session;
+}
+- (bool) HasSavedPublicKey {
+  return [[NSUserDefaults standardUserDefaults] dataForKey:@"publicKey"] != nil;
+}
+- (bool) HasSavedSession: (NSString*)key {
+  return [[NSUserDefaults standardUserDefaults] arrayForKey:key] != nil;
+}
+
 - (void) HandleReceiveHandshake:(const void*)bytes length:(int)n {
   NSLog(@"Received handshake");
   uint8_t* msg = (uint8_t*)bytes;
@@ -292,29 +321,66 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 
 - (void) HandleReceivePublicKey:(const Anki::Victor::ExternalComms::RtsConnRequest&)msg {
   NSLog(@"Received public key from Victor");
-  crypto_kx_keypair(_publicKey, _secretKey);
-  memcpy(_remotePublicKey, msg.publicKey.data(), sizeof(_remotePublicKey));
+  const void* bytes = (const void*)msg.publicKey.data();
+  int n = (int)msg.publicKey.size();
+  NSData* remoteKeyData = [NSData dataWithBytes:bytes length:n];
+  NSMutableString* remoteKey = [[NSMutableString alloc] init];
   
-  std::array<uint8_t, crypto_kx_PUBLICKEYBYTES> publicKeyArray;
-  memcpy(std::begin(publicKeyArray), _publicKey, crypto_kx_PUBLICKEYBYTES);
+  for(int i = 0; i < n; i++) {
+    [remoteKey appendString:[NSString stringWithFormat:@"%x", ((uint8_t*)bytes)[i]]];
+  }
+  //[[NSString alloc] initWithData:remoteKeyData encoding:NSUTF8StringEncoding];
+  NSLog(@"Remote key data: %@", remoteKeyData);
+  NSLog(@"Remote key: %@", remoteKey);
   
-  crypto_kx_client_session_keys(_decryptKey, _encryptKey, _publicKey, _secretKey, _remotePublicKey);
+  if([self HasSavedSession:remoteKey] && !_victorIsPairing) {
+    std::array<uint8_t, crypto_kx_PUBLICKEYBYTES> publicKeyArray;
+    memcpy(std::begin(publicKeyArray), [[self GetPublicKey] bytes], crypto_kx_PUBLICKEYBYTES);
+    
+    NSArray* arr = [self GetSession:remoteKey];
+    NSData* encKey = (NSData*)arr[0];
+    NSData* decKey = (NSData*)arr[1];
+    memcpy(_decryptKey, [decKey bytes], crypto_kx_SESSIONKEYBYTES);
+    memcpy(_encryptKey, [encKey bytes], crypto_kx_SESSIONKEYBYTES);
+    NSLog(@"Trying to renew connection");
+    
+    Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsConnResponse>(self, Anki::Victor::ExternalComms::RtsConnType::Reconnection,
+                                                                       publicKeyArray);
+  } else {
+    crypto_kx_keypair(_publicKey, _secretKey);
+    memcpy(_remotePublicKey, msg.publicKey.data(), sizeof(_remotePublicKey));
   
-  char pin[6];
-  NSLog(@"Enter pin:");
-  scanf("%6s",pin);
+    std::array<uint8_t, crypto_kx_PUBLICKEYBYTES> publicKeyArray;
+    memcpy(std::begin(publicKeyArray), _publicKey, crypto_kx_PUBLICKEYBYTES);
+    
+    crypto_kx_client_session_keys(_decryptKey, _encryptKey, _publicKey, _secretKey, _remotePublicKey);
+    
+    uint8_t tmpDecryptKey[crypto_kx_SESSIONKEYBYTES];
+    memcpy(tmpDecryptKey, _decryptKey, crypto_kx_SESSIONKEYBYTES);
+    uint8_t tmpEncryptKey[crypto_kx_SESSIONKEYBYTES];
+    memcpy(tmpEncryptKey, _encryptKey, crypto_kx_SESSIONKEYBYTES);
   
-  uint8_t tmpDecryptKey[crypto_kx_SESSIONKEYBYTES];
-  memcpy(tmpDecryptKey, _decryptKey, crypto_kx_SESSIONKEYBYTES);
-  uint8_t tmpEncryptKey[crypto_kx_SESSIONKEYBYTES];
-  memcpy(tmpEncryptKey, _encryptKey, crypto_kx_SESSIONKEYBYTES);
-  
-  // Hash mix of pin and decryptKey to form new decryptKey
-  crypto_generichash(_decryptKey, crypto_kx_SESSIONKEYBYTES, tmpDecryptKey, crypto_kx_SESSIONKEYBYTES, (uint8_t*)pin, 6);
-  crypto_generichash(_encryptKey, crypto_kx_SESSIONKEYBYTES, tmpEncryptKey, crypto_kx_SESSIONKEYBYTES, (uint8_t*)pin, 6);
-  
-  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsConnResponse>(self, Anki::Victor::ExternalComms::RtsConnType::FirstTimePair,
-                                                                     publicKeyArray);
+    // Hash mix of pin and decryptKey to form new decryptKey
+    
+    Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsConnResponse>(self, Anki::Victor::ExternalComms::RtsConnType::FirstTimePair,
+                                                                       publicKeyArray);
+    char pin[6];
+    NSLog(@"Enter pin:");
+    scanf("%6s",pin);
+    crypto_generichash(_decryptKey, crypto_kx_SESSIONKEYBYTES, tmpDecryptKey, crypto_kx_SESSIONKEYBYTES, (uint8_t*)pin, 6);
+    crypto_generichash(_encryptKey, crypto_kx_SESSIONKEYBYTES, tmpEncryptKey, crypto_kx_SESSIONKEYBYTES, (uint8_t*)pin, 6);
+    
+    // save settings
+    NSData* publicKeyData = [NSData dataWithBytes:_publicKey length:sizeof(_publicKey)];
+    NSData* encData = [NSData dataWithBytes:_encryptKey length:sizeof(_encryptKey)];
+    NSData* decData = [NSData dataWithBytes:_decryptKey length:sizeof(_decryptKey)];
+    
+    [[NSUserDefaults standardUserDefaults] setValue:publicKeyData forKey:@"publicKey"];
+    NSMutableArray* arr = [[NSMutableArray alloc] initWithObjects:encData, decData, nil];
+    [[NSUserDefaults standardUserDefaults] setValue:arr forKey:remoteKey];
+    [[NSUserDefaults standardUserDefaults] synchronize];
+    NSLog(@"Theoretically saving stuff.");
+  }
 }
 
 - (void) HandleReceiveNonce:(const Anki::Victor::ExternalComms::RtsNonceMessage &)msg {
@@ -414,13 +480,27 @@ didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic
   bool isVictor = ((uint8_t*)data.bytes)[2] == 0x76;
   
   bool isPairing = false;
+  bool knownName = false;
   
   if(data.length > 3) {
     isPairing = ((uint8_t*)data.bytes)[3] == 0x70;
   }
   
-  if((isAnki && isVictor && isPairing) && !_connecting) {
-     NSLog(@"Connecting to %@", peripheral.name);
+  // set global bool
+  _victorIsPairing = isPairing;
+  
+  NSString* savedName = [[NSUserDefaults standardUserDefaults] stringForKey:@"victorName"];
+  knownName = [savedName isEqualToString:peripheral.name];
+  
+  NSLog(@"[%@] isPairing:%d knownName:%d isAnki:%d", peripheral.name, isPairing, knownName, isAnki);
+  
+  if([peripheral.name containsString:@"R3H6"]) {
+    return;
+  }
+  
+  if((isAnki && isVictor && (isPairing || knownName)) && !_connecting) {
+    NSLog(@"Connecting to %@", peripheral.name);
+    [[NSUserDefaults standardUserDefaults] setValue:peripheral.name forKey:@"victorName"];
     _peripheral = peripheral;
     peripheral.delegate = self;
     [_centralManager connectPeripheral:peripheral options:nullptr];

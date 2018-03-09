@@ -47,6 +47,7 @@ enum RtsState {
   
   enum RtsState _rtsState;
   
+  bool _victorIsPairing;
   bool _connecting;
 }
 
@@ -70,6 +71,13 @@ enum RtsState {
 - (void) StopScanning;
 
 - (void) printSuccess:(const char*) txt;
+
+// for reconnection
+- (bool) HasSavedPublicKey;
+- (bool) HasSavedSession: (NSString*)key;
+- (NSData*) GetPublicKey;
+- (NSArray*) GetSession: (NSString*)key;
+- (void)resetDefaults;
 
 @end
 
