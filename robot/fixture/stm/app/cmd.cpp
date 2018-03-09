@@ -31,6 +31,13 @@ uint32_t cmdTimeMs() {
 //          Master/Send
 //-----------------------------------------------------------------------------
 
+typedef struct { int rxDroppedChars; int rxOverflowErrors; int rxFramingErrors; } io_err_t;
+static void get_errs_(cmd_io io, io_err_t *ioe) {
+  ioe->rxDroppedChars   = io==CMD_IO_DUT_UART ? DUT_UART::getRxDroppedChars()   : (io==CMD_IO_CONTACTS ? Contacts::getRxDroppedChars()   : 0);
+  ioe->rxOverflowErrors = io==CMD_IO_DUT_UART ? DUT_UART::getRxOverflowErrors() : (io==CMD_IO_CONTACTS ? Contacts::getRxOverflowErrors() : 0);
+  ioe->rxFramingErrors  = io==CMD_IO_DUT_UART ? DUT_UART::getRxFramingErrors()  : (io==CMD_IO_CONTACTS ? Contacts::getRxFramingErrors()  : 0);
+}
+
 static int rsp_len = 0;
 static void flush_(cmd_io io)
 {
@@ -52,6 +59,10 @@ static void flush_(cmd_io io)
     case CMD_IO_SIMULATOR:
       break;
   }
+  
+  //read errors to clear
+  io_err_t ioerrs;
+  get_errs_(io, &ioerrs);
 }
 
 static char* getline_(cmd_io io, int timeout_us)
@@ -132,7 +143,7 @@ void cmdTickCallback(uint32_t interval_ms, void(*tick_handler)(void) ) {
 
 char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async_handler)(char*) )
 {
-  char b[40]; int bz = sizeof(b); //str buffer
+  char b[80]; int bz = sizeof(b); //str buffer
   
   //check if we should insert newlines?
   bool newline = scmd[strlen(scmd)-1] != '\n';
@@ -173,6 +184,15 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
         if( opts & CMD_OPTS_DBG_PRINT_RSP_TIME )
           write_(CMD_IO_CONSOLE, snformat(b,bz," [%ums]", m_time_ms));
         write_(CMD_IO_CONSOLE, "\n");
+        
+        //check for rx errors
+        io_err_t ioerr;
+        get_errs_(io, &ioerr);
+        if( ioerr.rxOverflowErrors > 0 || ioerr.rxDroppedChars > 0 ) {
+          write_(CMD_IO_CONSOLE, snformat(b,bz,"--> IO ERROR ovfl=%i dropRx=%i frame=%i", ioerr.rxOverflowErrors, ioerr.rxDroppedChars, ioerr.rxFramingErrors));
+          ERROR_HANDLE("IO_ERROR\n", ERROR_TESTPORT_RX_ERROR);
+          //return NULL; //if no exception, allow cmd validation to continue
+        }
         
         //make sure response matches our command word
         int nargs = cmdNumArgs(rsp);

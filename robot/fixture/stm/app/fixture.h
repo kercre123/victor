@@ -213,6 +213,7 @@ typedef int error_t;
 #define ERROR_TESTPORT_RSP_MISSING_ARGS   402 //response is missing required arguments
 #define ERROR_TESTPORT_RSP_BAD_ARG        403 //response arg incorrect or improperly formatted
 #define ERROR_TESTPORT_CMD_FAILED         404 //returned fail code
+#define ERROR_TESTPORT_RX_ERROR           405 //driver (uart) overflow or dropped chars detected
 
 //<export heading> SWD Errors (mcu programming interface)
 //#define ERROR_SWD_IDCODE            450   // IDCODE is unrecognized
