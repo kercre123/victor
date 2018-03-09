@@ -1,0 +1,16 @@
+crypto_scalarmult/libsodium_la-crypto_scalarmult.lo: \
+  crypto_scalarmult/crypto_scalarmult.c \
+  include/sodium/crypto_scalarmult.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/stddef.h \
+  /Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/__stddef_max_align_t.h \
+  include/sodium/crypto_scalarmult_curve25519.h include/sodium/export.h
+
+include/sodium/crypto_scalarmult.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/stddef.h:
+
+/Users/paul/Downloads/vicos-sdk-apq8009_robot_le_3_18_66-r01-x86_64-apple-darwin/prebuilt/lib/clang/5.0.0/include/__stddef_max_align_t.h:
+
+include/sodium/crypto_scalarmult_curve25519.h:
+
+include/sodium/export.h:
