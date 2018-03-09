@@ -49,7 +49,7 @@
                         "id": "$=KIQ~,oZOX|V]~~B59q",
                         "name": "\u3057\u3087\u304f\u3076\u3064\u306e\u305b\u3044\u3061\u3087\u3046\u3092\u3072\u3087\u3046\u3058\u3059\u308b",
                         "type": "broadcast_msg",
-                        "value": "show plant growth"
+                        "value": "\u3057\u3087\u304f\u3076\u3064\u306e\u305b\u3044\u3061\u3087\u3046\u3092\u3072\u3087\u3046\u3058\u3059\u308b"
                     },
                     "$MDgR.*G2QJ[*pF@*F=1": {
                         "id": "$MDgR.*G2QJ[*pF@*F=1",
@@ -67,7 +67,7 @@
                         "id": "$bNZF03Sa-KG!=B9[/`c",
                         "name": "\u3052\u3093\u304d\u306a\u3057\u3087\u304f\u3076\u3064\u3092\u3057\u3085\u3046\u304b\u304f\u3059\u308b",
                         "type": "broadcast_msg",
-                        "value": "harvest active plant"
+                        "value": "\u3052\u3093\u304d\u306a\u3057\u3087\u304f\u3076\u3064\u3092\u3057\u3085\u3046\u304b\u304f\u3059\u308b"
                     },
                     "%L-3Ev.(rOhz7[?pASC*": {
                         "id": "%L-3Ev.(rOhz7[?pASC*",
@@ -79,13 +79,13 @@
                         "id": "(qvYN#BCX8e$0+:P7.cO",
                         "name": "\u3057\u3085\u3046\u304b\u304f\u3092\u30c1\u30a7\u30c3\u30af\u3059\u308b",
                         "type": "broadcast_msg",
-                        "value": "check harvest"
+                        "value": "\u3057\u3085\u3046\u304b\u304f\u3092\u30c1\u30a7\u30c3\u30af\u3059\u308b"
                     },
                     "(z5^A=e-~iC+IlSDF#/g": {
                         "id": "(z5^A=e-~iC+IlSDF#/g",
                         "name": "\u30ea\u30b9\u30c8\u3092\u3057\u3087\u3046\u304d\u3087",
                         "type": "broadcast_msg",
-                        "value": "clear lists"
+                        "value": "\u30ea\u30b9\u30c8\u3092\u3057\u3087\u3046\u304d\u3087"
                     },
                     "*FIp.ND~==_]F6_%czy5": {
                         "id": "*FIp.ND~==_]F6_%czy5",
@@ -103,13 +103,13 @@
                         "id": ",46m3td#h$(R%#Mz8?`X",
                         "name": "\u3080\u3057\u3092\u30c1\u30a7\u30c3\u30af\u3059\u308b",
                         "type": "broadcast_msg",
-                        "value": "check for bugs"
+                        "value": "\u3080\u3057\u3092\u30c1\u30a7\u30c3\u30af\u3059\u308b"
                     },
                     ",eN`//QizFGb}+EDxiR%": {
                         "id": ",eN`//QizFGb}+EDxiR%",
                         "name": "\u3057\u3085\u3046\u304b\u304f\u3059\u308b\u3057\u3087\u304f\u3076\u3064\u3092\u3057\u3087\u3046\u304d\u3087",
                         "type": "broadcast_msg",
-                        "value": "clear plants to harvest"
+                        "value": "\u3057\u3085\u3046\u304b\u304f\u3059\u308b\u3057\u3087\u304f\u3076\u3064\u3092\u3057\u3087\u3046\u304d\u3087"
                     },
                     ",u;#GEb0e3:8z2#_ZKd;": {
                         "id": ",u;#GEb0e3:8z2#_ZKd;",
@@ -151,13 +151,13 @@
                         "id": "2i9Zv9bn?{Nm=2]EG_FI",
                         "name": "\u3080\u3057\u306e\u30ab\u30fc\u30c9\u3092\u30d7\u30ec\u30a4",
                         "type": "broadcast_msg",
-                        "value": "play bugs card"
+                        "value": "\u3080\u3057\u306e\u30ab\u30fc\u30c9\u3092\u30d7\u30ec\u30a4"
                     },
                     "2jA3LAU:%AapT7`@~rT=": {
                         "id": "2jA3LAU:%AapT7`@~rT=",
                         "name": "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc\u3000\u307e\u3051",
                         "type": "broadcast_msg",
-                        "value": "game over lose"
+                        "value": "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc\u3000\u307e\u3051"
                     },
                     "3H7ZJ[(#z1$P~(H7g[!4": {
                         "id": "3H7ZJ[(#z1$P~(H7g[!4",
@@ -175,13 +175,13 @@
                         "id": "4Px-k}[HPsJfarx*W@)O",
                         "name": "\u307f\u305a\u3092\u3048\u304c\u304f",
                         "type": "broadcast_msg",
-                        "value": "draw water"
+                        "value": "\u307f\u305a\u3092\u3048\u304c\u304f"
                     },
                     "4tMRoXYifi0E?G=b`h([": {
                         "id": "4tMRoXYifi0E?G=b`h([",
                         "name": "\u3052\u3093\u304d\u306a\u3057\u3087\u304f\u3076\u3064\u306b\u307f\u305a\u3092\u3084\u308b",
                         "type": "broadcast_msg",
-                        "value": "water active plant"
+                        "value": "\u3052\u3093\u304d\u306a\u3057\u3087\u304f\u3076\u3064\u306b\u307f\u305a\u3092\u3084\u308b"
                     },
                     "5FUn|bxv:,H[b;8twf4[": {
                         "id": "5FUn|bxv:,H[b;8twf4[",
@@ -211,7 +211,7 @@
                         "id": ":Ayhx{zFdO;72hw9gc$E",
                         "name": "\u305f\u3044\u3088\u3046\u3092\u3048\u304c\u304f",
                         "type": "broadcast_msg",
-                        "value": "draw sun"
+                        "value": "\u305f\u3044\u3088\u3046\u3092\u3048\u304c\u304f"
                     },
                     ":z}pMyXWX{Eq,S7v6i59": {
                         "id": ":z}pMyXWX{Eq,S7v6i59",
@@ -298,7 +298,7 @@
                         "id": "Bo`gd`mGMQZcwa?J|TY#",
                         "name": "\u3057\u3085\u3046\u304b\u304f\u3092\u3072\u3087\u3046\u3058\u3057\u305f\u3057\u304b\u3081\u308b",
                         "type": "broadcast_msg",
-                        "value": "show and check harvest"
+                        "value": "\u3057\u3085\u3046\u304b\u304f\u3092\u3072\u3087\u3046\u3058\u3057\u305f\u3057\u304b\u3081\u308b"
                     },
                     "BqQ^DVuhUe{c*IHT9H@q": {
                         "id": "BqQ^DVuhUe{c*IHT9H@q",
@@ -310,7 +310,7 @@
                         "id": "Dd-9#:O!-Q3f;(kjJ9lY",
                         "name": "\u30c7\u30c3\u30ad\u3092\u30b7\u30e3\u30c3\u30d5\u30eb\u3059\u308b",
                         "type": "broadcast_msg",
-                        "value": "shuffle deck"
+                        "value": "\u30c7\u30c3\u30ad\u3092\u30b7\u30e3\u30c3\u30d5\u30eb\u3059\u308b"
                     },
                     "E6ZC4o^I=7R`yR^qWyt*": {
                         "id": "E6ZC4o^I=7R`yR^qWyt*",
@@ -322,7 +322,7 @@
                         "id": "ESi]bm*/2%==av=mlpvq",
                         "name": "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc\u3000\u304b\u3061",
                         "type": "broadcast_msg",
-                        "value": "game over win"
+                        "value": "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc\u3000\u304b\u3061"
                     },
                     "FB_wjTS9HqxfJrRL+A;b": {
                         "id": "FB_wjTS9HqxfJrRL+A;b",
@@ -340,7 +340,7 @@
                         "id": "FQqy(E(g_^DdwWduBSbE",
                         "name": "\u3080\u3057\u3092\u3048\u304c\u304f",
                         "type": "broadcast_msg",
-                        "value": "draw bugs"
+                        "value": "\u3080\u3057\u3092\u3048\u304c\u304f"
                     },
                     "F_D79IB}b:Ecf:0m^U}a": {
                         "id": "F_D79IB}b:Ecf:0m^U}a",
@@ -415,13 +415,13 @@
                         "id": "U9ev_+GYPyOo$?uG4eAE",
                         "name": "\u3080\u3057\u304c\u3044\u308b\u3057\u3087\u304f\u3076\u3064\u3092\u3057\u3087\u3046\u304d\u3087",
                         "type": "broadcast_msg",
-                        "value": "clear bug plants"
+                        "value": "\u3080\u3057\u304c\u3044\u308b\u3057\u3087\u304f\u3076\u3064\u3092\u3057\u3087\u3046\u304d\u3087"
                     },
                     "XWi|$W/H?r*io8iAbbEz": {
                         "id": "XWi|$W/H?r*io8iAbbEz",
                         "name": "\u30ab\u30fc\u30c9\u3092\u3060\u3059",
                         "type": "broadcast_msg",
-                        "value": "present card"
+                        "value": "\u30ab\u30fc\u30c9\u3092\u3060\u3059"
                     },
                     "Y,5#~Pm}EsnG}moG4h%o": {
                         "id": "Y,5#~Pm}EsnG}moG4h%o",
@@ -434,7 +434,7 @@
                         "id": "Z$Y11U8C`{CpTYU8^Y}*",
                         "name": "\u3057\u3087\u304f\u3076\u3064\u306e\u305b\u3044\u3061\u3087\u3046\u3092\u304a\u3055\u3048\u308b",
                         "type": "broadcast_msg",
-                        "value": "constrain plant growth"
+                        "value": "\u3057\u3087\u304f\u3076\u3064\u306e\u305b\u3044\u3061\u3087\u3046\u3092\u304a\u3055\u3048\u308b"
                     },
                     "]3u(n[21w(Sgnwn$.LYs": {
                         "id": "]3u(n[21w(Sgnwn$.LYs",
@@ -452,7 +452,7 @@
                         "id": "^!biIU_5^XvRMfwz+H}b",
                         "name": "\u3064\u304e\u306e\u30ab\u30fc\u30c9\u3092\u3072\u304f",
                         "type": "broadcast_msg",
-                        "value": "draw next card"
+                        "value": "\u3064\u304e\u306e\u30ab\u30fc\u30c9\u3092\u3072\u304f"
                     },
                     "^:7On02M-mju0+n^MC.a": {
                         "id": "^:7On02M-mju0+n^MC.a",
@@ -464,7 +464,7 @@
                         "id": "_?:G#puRTun+hrHQc~W7",
                         "name": "\u300c\u3080\u3057\u3092\u3064\u304b\u307e\u3048\u305f\u300d\u3068\u3044\u3046",
                         "type": "broadcast_msg",
-                        "value": "say got bugs phrase"
+                        "value": "\u300c\u3080\u3057\u3092\u3064\u304b\u307e\u3048\u305f\u300d\u3068\u3044\u3046"
                     },
                     "_l0SC,-IC8xK=bn^VV,E": {
                         "id": "_l0SC,-IC8xK=bn^VV,E",
@@ -488,7 +488,7 @@
                         "id": "b|_|xQqr[4T97I(@^`8k",
                         "name": "\u30c7\u30c3\u30ad\u3092\u3064\u304f\u308b",
                         "type": "broadcast_msg",
-                        "value": "populate deck"
+                        "value": "\u30c7\u30c3\u30ad\u3092\u3064\u304f\u308b"
                     },
                     "dZdRU]:2;1`I1B`lngut": {
                         "id": "dZdRU]:2;1`I1B`lngut",
@@ -521,7 +521,7 @@
                         "id": "g*4F*+kX[Hu6m/HOi=X/",
                         "name": "\u305f\u3044\u3088\u3046\u306e\u30ab\u30fc\u30c9\u3092\u30d7\u30ec\u30a4",
                         "type": "broadcast_msg",
-                        "value": "play sun card"
+                        "value": "\u305f\u3044\u3088\u3046\u306e\u30ab\u30fc\u30c9\u3092\u30d7\u30ec\u30a4"
                     },
                     "geM=Avc_)(c[AsXen^d(": {
                         "id": "geM=Avc_)(c[AsXen^d(",
@@ -562,7 +562,7 @@
                         "id": "j9+V(%A!9snN((Y4AUro",
                         "name": "\u3057\u3087\u304f\u3076\u3064\u3092\u305d\u3060\u3066\u308b",
                         "type": "broadcast_msg",
-                        "value": "grow plants"
+                        "value": "\u3057\u3087\u304f\u3076\u3064\u3092\u305d\u3060\u3066\u308b"
                     },
                     "lUG)A9oz=}]WCb-m+NLG": {
                         "id": "lUG)A9oz=}]WCb-m+NLG",
@@ -574,7 +574,7 @@
                         "id": "m2)95;pl$dYTaapR4YRR",
                         "name": "\u30c9\u30ed\u30c3\u30d7\u3092\u3048\u304c\u304f",
                         "type": "broadcast_msg",
-                        "value": "draw drop"
+                        "value": "\u30c9\u30ed\u30c3\u30d7\u3092\u3048\u304c\u304f"
                     },
                     "mM{POto4=dOfKq).cIm;": {
                         "id": "mM{POto4=dOfKq).cIm;",
@@ -586,7 +586,7 @@
                         "id": "mugM~nQLp%D7`s5}SPB7",
                         "name": "\u3057\u3087\u304f\u3076\u3064\u30ea\u30b9\u30c8\u3092\u3064\u304f\u308b",
                         "type": "broadcast_msg",
-                        "value": "populate plant list"
+                        "value": "\u3057\u3087\u304f\u3076\u3064\u30ea\u30b9\u30c8\u3092\u3064\u304f\u308b"
                     },
                     "qW=|:3S]U]7U:|W%S}0/": {
                         "id": "qW=|:3S]U]7U:|W%S}0/",
@@ -601,7 +601,7 @@
                         "id": "r0z]Bf^/|kkr@#qTtWJH",
                         "name": "\u306b\u308f\u3092\u3064\u304f\u308b",
                         "type": "broadcast_msg",
-                        "value": "create garden"
+                        "value": "\u306b\u308f\u3092\u3064\u304f\u308b"
                     },
                     "t+y)3`kp_riT3=uXD%9j": {
                         "id": "t+y)3`kp_riT3=uXD%9j",
@@ -631,19 +631,19 @@
                         "id": "xt0V)?U#msmhV{oeh|T?",
                         "name": "\u307f\u305a\u306e\u30ab\u30fc\u30c9\u3092\u30d7\u30ec\u30a4",
                         "type": "broadcast_msg",
-                        "value": "play water card"
+                        "value": "\u307f\u305a\u306e\u30ab\u30fc\u30c9\u3092\u30d7\u30ec\u30a4"
                     },
                     "yZvd/|bn!}Ls}@l$;R|A": {
                         "id": "yZvd/|bn!}Ls}@l$;R|A",
                         "name": "\u300c\u3080\u3057\u3092\u306b\u304c\u3057\u305f\u300d\u3068\u3044\u3046",
                         "type": "broadcast_msg",
-                        "value": "say missed bugs phrase"
+                        "value": "\u300c\u3080\u3057\u3092\u306b\u304c\u3057\u305f\u300d\u3068\u3044\u3046"
                     },
                     "{,J/{q^f$s1n|]x(54Xe": {
                         "id": "{,J/{q^f$s1n|]x(54Xe",
                         "name": "\u305f\u3044\u3088\u3046\u3092\u30a2\u30af\u30c6\u30a3\u30d6\u306b\u3059\u308b",
                         "type": "broadcast_msg",
-                        "value": "activate sun"
+                        "value": "\u305f\u3044\u3088\u3046\u3092\u30a2\u30af\u30c6\u30a3\u30d6\u306b\u3059\u308b"
                     },
                     "|6+AIN+3kwd|.}CSu-%f": {
                         "id": "|6+AIN+3kwd|.}CSu-%f",
@@ -661,7 +661,7 @@
                         "id": "~PQJ5,EK~hja4[qoyy/-",
                         "name": "\u3052\u3093\u304d\u306a\u3057\u3087\u304f\u3076\u3064\u3092\u305d\u3060\u3066\u308b",
                         "type": "broadcast_msg",
-                        "value": "grow active plant"
+                        "value": "\u3052\u3093\u304d\u306a\u3057\u3087\u304f\u3076\u3064\u3092\u305d\u3060\u3066\u308b"
                     },
                     "~p+ld(4Qy^6(zaJqr*k(": {
                         "id": "~p+ld(4Qy^6(zaJqr*k(",
@@ -681,7 +681,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "_?:G#puRTun+hrHQc~W7",
                                 "name": "BROADCAST_OPTION",
-                                "value": "say got bugs phrase",
+                                "value": "\u300c\u3080\u3057\u3092\u3064\u304b\u307e\u3048\u305f\u300d\u3068\u3044\u3046",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -962,7 +962,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "xt0V)?U#msmhV{oeh|T?",
                                 "name": "BROADCAST_OPTION",
-                                "value": "play water card",
+                                "value": "\u307f\u305a\u306e\u30ab\u30fc\u30c9\u3092\u30d7\u30ec\u30a4",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -1605,7 +1605,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "ESi]bm*/2%==av=mlpvq",
                                 "name": "BROADCAST_OPTION",
-                                "value": "game over win",
+                                "value": "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc\u3000\u304b\u3061",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -2019,7 +2019,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "_?:G#puRTun+hrHQc~W7",
                                 "name": "BROADCAST_OPTION",
-                                "value": "say got bugs phrase",
+                                "value": "\u300c\u3080\u3057\u3092\u3064\u304b\u307e\u3048\u305f\u300d\u3068\u3044\u3046",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -2419,7 +2419,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "Z$Y11U8C`{CpTYU8^Y}*",
                                 "name": "BROADCAST_OPTION",
-                                "value": "constrain plant growth",
+                                "value": "\u3057\u3087\u304f\u3076\u3064\u306e\u305b\u3044\u3061\u3087\u3046\u3092\u304a\u3055\u3048\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -2685,7 +2685,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "(z5^A=e-~iC+IlSDF#/g",
                                 "name": "BROADCAST_OPTION",
-                                "value": "clear lists",
+                                "value": "\u30ea\u30b9\u30c8\u3092\u3057\u3087\u3046\u304d\u3087",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -2922,7 +2922,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "g*4F*+kX[Hu6m/HOi=X/",
                                 "name": "BROADCAST_OPTION",
-                                "value": "play sun card",
+                                "value": "\u305f\u3044\u3088\u3046\u306e\u30ab\u30fc\u30c9\u3092\u30d7\u30ec\u30a4",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3157,7 +3157,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "4tMRoXYifi0E?G=b`h([",
                                 "name": "BROADCAST_OPTION",
-                                "value": "water active plant",
+                                "value": "\u3052\u3093\u304d\u306a\u3057\u3087\u304f\u3076\u3064\u306b\u307f\u305a\u3092\u3084\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3264,7 +3264,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "xt0V)?U#msmhV{oeh|T?",
                                 "name": "BROADCAST_OPTION",
-                                "value": "play water card",
+                                "value": "\u307f\u305a\u306e\u30ab\u30fc\u30c9\u3092\u30d7\u30ec\u30a4",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3302,7 +3302,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "2i9Zv9bn?{Nm=2]EG_FI",
                                 "name": "BROADCAST_OPTION",
-                                "value": "play bugs card",
+                                "value": "\u3080\u3057\u306e\u30ab\u30fc\u30c9\u3092\u30d7\u30ec\u30a4",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3550,7 +3550,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "^!biIU_5^XvRMfwz+H}b",
                                 "name": "BROADCAST_OPTION",
-                                "value": "draw next card",
+                                "value": "\u3064\u304e\u306e\u30ab\u30fc\u30c9\u3092\u3072\u304f",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3917,7 +3917,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "FQqy(E(g_^DdwWduBSbE",
                                 "name": "BROADCAST_OPTION",
-                                "value": "draw bugs",
+                                "value": "\u3080\u3057\u3092\u3048\u304c\u304f",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -4683,7 +4683,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "m2)95;pl$dYTaapR4YRR",
                                 "name": "BROADCAST_OPTION",
-                                "value": "draw drop",
+                                "value": "\u30c9\u30ed\u30c3\u30d7\u3092\u3048\u304c\u304f",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -4908,7 +4908,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "4Px-k}[HPsJfarx*W@)O",
                                 "name": "BROADCAST_OPTION",
-                                "value": "draw water",
+                                "value": "\u307f\u305a\u3092\u3048\u304c\u304f",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -5752,7 +5752,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ",46m3td#h$(R%#Mz8?`X",
                                 "name": "BROADCAST_OPTION",
-                                "value": "check for bugs",
+                                "value": "\u3080\u3057\u3092\u30c1\u30a7\u30c3\u30af\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -6069,7 +6069,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "yZvd/|bn!}Ls}@l$;R|A",
                                 "name": "BROADCAST_OPTION",
-                                "value": "say missed bugs phrase",
+                                "value": "\u300c\u3080\u3057\u3092\u306b\u304c\u3057\u305f\u300d\u3068\u3044\u3046",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -6343,7 +6343,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "j9+V(%A!9snN((Y4AUro",
                                 "name": "BROADCAST_OPTION",
-                                "value": "grow plants",
+                                "value": "\u3057\u3087\u304f\u3076\u3064\u3092\u305d\u3060\u3066\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -6551,7 +6551,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "Bo`gd`mGMQZcwa?J|TY#",
                                 "name": "BROADCAST_OPTION",
-                                "value": "show and check harvest",
+                                "value": "\u3057\u3085\u3046\u304b\u304f\u3092\u3072\u3087\u3046\u3058\u3057\u305f\u3057\u304b\u3081\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -6593,7 +6593,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "XWi|$W/H?r*io8iAbbEz",
                                 "name": "BROADCAST_OPTION",
-                                "value": "present card",
+                                "value": "\u30ab\u30fc\u30c9\u3092\u3060\u3059",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -6763,7 +6763,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ",46m3td#h$(R%#Mz8?`X",
                                 "name": "BROADCAST_OPTION",
-                                "value": "check for bugs",
+                                "value": "\u3080\u3057\u3092\u30c1\u30a7\u30c3\u30af\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -7175,7 +7175,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "^!biIU_5^XvRMfwz+H}b",
                                 "name": "BROADCAST_OPTION",
-                                "value": "draw next card",
+                                "value": "\u3064\u304e\u306e\u30ab\u30fc\u30c9\u3092\u3072\u304f",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -7507,7 +7507,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "r0z]Bf^/|kkr@#qTtWJH",
                                 "name": "BROADCAST_OPTION",
-                                "value": "create garden",
+                                "value": "\u306b\u308f\u3092\u3064\u304f\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -7741,7 +7741,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "2jA3LAU:%AapT7`@~rT=",
                                 "name": "BROADCAST_OPTION",
-                                "value": "game over lose",
+                                "value": "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc\u3000\u307e\u3051",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -7772,7 +7772,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "mugM~nQLp%D7`s5}SPB7",
                                 "name": "BROADCAST_OPTION",
-                                "value": "populate plant list",
+                                "value": "\u3057\u3087\u304f\u3076\u3064\u30ea\u30b9\u30c8\u3092\u3064\u304f\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -7819,7 +7819,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "U9ev_+GYPyOo$?uG4eAE",
                                 "name": "BROADCAST_OPTION",
-                                "value": "clear bug plants",
+                                "value": "\u3080\u3057\u304c\u3044\u308b\u3057\u3087\u304f\u3076\u3064\u3092\u3057\u3087\u3046\u304d\u3087",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -8340,7 +8340,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "U9ev_+GYPyOo$?uG4eAE",
                                 "name": "BROADCAST_OPTION",
-                                "value": "clear bug plants",
+                                "value": "\u3080\u3057\u304c\u3044\u308b\u3057\u3087\u304f\u3076\u3064\u3092\u3057\u3087\u3046\u304d\u3087",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -8538,7 +8538,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "j9+V(%A!9snN((Y4AUro",
                                 "name": "BROADCAST_OPTION",
-                                "value": "grow plants",
+                                "value": "\u3057\u3087\u304f\u3076\u3064\u3092\u305d\u3060\u3066\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -8702,7 +8702,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "mugM~nQLp%D7`s5}SPB7",
                                 "name": "BROADCAST_OPTION",
-                                "value": "populate plant list",
+                                "value": "\u3057\u3087\u304f\u3076\u3064\u30ea\u30b9\u30c8\u3092\u3064\u304f\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -9038,7 +9038,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "$=KIQ~,oZOX|V]~~B59q",
                                 "name": "BROADCAST_OPTION",
-                                "value": "show plant growth",
+                                "value": "\u3057\u3087\u304f\u3076\u3064\u306e\u305b\u3044\u3061\u3087\u3046\u3092\u3072\u3087\u3046\u3058\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -10442,7 +10442,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "m2)95;pl$dYTaapR4YRR",
                                 "name": "BROADCAST_OPTION",
-                                "value": "draw drop",
+                                "value": "\u30c9\u30ed\u30c3\u30d7\u3092\u3048\u304c\u304f",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -11309,7 +11309,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ":Ayhx{zFdO;72hw9gc$E",
                                 "name": "BROADCAST_OPTION",
-                                "value": "draw sun",
+                                "value": "\u305f\u3044\u3088\u3046\u3092\u3048\u304c\u304f",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -11774,7 +11774,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "4tMRoXYifi0E?G=b`h([",
                                 "name": "BROADCAST_OPTION",
-                                "value": "water active plant",
+                                "value": "\u3052\u3093\u304d\u306a\u3057\u3087\u304f\u3076\u3064\u306b\u307f\u305a\u3092\u3084\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -12131,7 +12131,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "Dd-9#:O!-Q3f;(kjJ9lY",
                                 "name": "BROADCAST_OPTION",
-                                "value": "shuffle deck",
+                                "value": "\u30c7\u30c3\u30ad\u3092\u30b7\u30e3\u30c3\u30d5\u30eb\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -12603,7 +12603,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "{,J/{q^f$s1n|]x(54Xe",
                                 "name": "BROADCAST_OPTION",
-                                "value": "activate sun",
+                                "value": "\u305f\u3044\u3088\u3046\u3092\u30a2\u30af\u30c6\u30a3\u30d6\u306b\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -12656,7 +12656,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "Bo`gd`mGMQZcwa?J|TY#",
                                 "name": "BROADCAST_OPTION",
-                                "value": "show and check harvest",
+                                "value": "\u3057\u3085\u3046\u304b\u304f\u3092\u3072\u3087\u3046\u3058\u3057\u305f\u3057\u304b\u3081\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -12767,7 +12767,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "j9+V(%A!9snN((Y4AUro",
                                 "name": "BROADCAST_OPTION",
-                                "value": "grow plants",
+                                "value": "\u3057\u3087\u304f\u3076\u3064\u3092\u305d\u3060\u3066\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -13096,7 +13096,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ",46m3td#h$(R%#Mz8?`X",
                                 "name": "BROADCAST_OPTION",
-                                "value": "check for bugs",
+                                "value": "\u3080\u3057\u3092\u30c1\u30a7\u30c3\u30af\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -13312,7 +13312,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "^!biIU_5^XvRMfwz+H}b",
                                 "name": "BROADCAST_OPTION",
-                                "value": "draw next card",
+                                "value": "\u3064\u304e\u306e\u30ab\u30fc\u30c9\u3092\u3072\u304f",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -13554,7 +13554,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "(z5^A=e-~iC+IlSDF#/g",
                                 "name": "BROADCAST_OPTION",
-                                "value": "clear lists",
+                                "value": "\u30ea\u30b9\u30c8\u3092\u3057\u3087\u3046\u304d\u3087",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -13822,7 +13822,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "Z$Y11U8C`{CpTYU8^Y}*",
                                 "name": "BROADCAST_OPTION",
-                                "value": "constrain plant growth",
+                                "value": "\u3057\u3087\u304f\u3076\u3064\u306e\u305b\u3044\u3061\u3087\u3046\u3092\u304a\u3055\u3048\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -13917,7 +13917,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "$=KIQ~,oZOX|V]~~B59q",
                                 "name": "BROADCAST_OPTION",
-                                "value": "show plant growth",
+                                "value": "\u3057\u3087\u304f\u3076\u3064\u306e\u305b\u3044\u3061\u3087\u3046\u3092\u3072\u3087\u3046\u3058\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -14453,7 +14453,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "$=KIQ~,oZOX|V]~~B59q",
                                 "name": "BROADCAST_OPTION",
-                                "value": "show plant growth",
+                                "value": "\u3057\u3087\u304f\u3076\u3064\u306e\u305b\u3044\u3061\u3087\u3046\u3092\u3072\u3087\u3046\u3058\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -14602,7 +14602,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "$=KIQ~,oZOX|V]~~B59q",
                                 "name": "BROADCAST_OPTION",
-                                "value": "show plant growth",
+                                "value": "\u3057\u3087\u304f\u3076\u3064\u306e\u305b\u3044\u3061\u3087\u3046\u3092\u3072\u3087\u3046\u3058\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -15031,7 +15031,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "~PQJ5,EK~hja4[qoyy/-",
                                 "name": "BROADCAST_OPTION",
-                                "value": "grow active plant",
+                                "value": "\u3052\u3093\u304d\u306a\u3057\u3087\u304f\u3076\u3064\u3092\u305d\u3060\u3066\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -15251,7 +15251,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "(qvYN#BCX8e$0+:P7.cO",
                                 "name": "BROADCAST_OPTION",
-                                "value": "check harvest",
+                                "value": "\u3057\u3085\u3046\u304b\u304f\u3092\u30c1\u30a7\u30c3\u30af\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -15494,7 +15494,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ",46m3td#h$(R%#Mz8?`X",
                                 "name": "BROADCAST_OPTION",
-                                "value": "check for bugs",
+                                "value": "\u3080\u3057\u3092\u30c1\u30a7\u30c3\u30af\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -15646,7 +15646,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "4Px-k}[HPsJfarx*W@)O",
                                 "name": "BROADCAST_OPTION",
-                                "value": "draw water",
+                                "value": "\u307f\u305a\u3092\u3048\u304c\u304f",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -15984,7 +15984,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "XWi|$W/H?r*io8iAbbEz",
                                 "name": "BROADCAST_OPTION",
-                                "value": "present card",
+                                "value": "\u30ab\u30fc\u30c9\u3092\u3060\u3059",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -16179,7 +16179,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ":Ayhx{zFdO;72hw9gc$E",
                                 "name": "BROADCAST_OPTION",
-                                "value": "draw sun",
+                                "value": "\u305f\u3044\u3088\u3046\u3092\u3048\u304c\u304f",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -16506,7 +16506,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "^!biIU_5^XvRMfwz+H}b",
                                 "name": "BROADCAST_OPTION",
-                                "value": "draw next card",
+                                "value": "\u3064\u304e\u306e\u30ab\u30fc\u30c9\u3092\u3072\u304f",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -16599,7 +16599,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "b|_|xQqr[4T97I(@^`8k",
                                 "name": "BROADCAST_OPTION",
-                                "value": "populate deck",
+                                "value": "\u30c7\u30c3\u30ad\u3092\u3064\u304f\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -16916,7 +16916,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "U9ev_+GYPyOo$?uG4eAE",
                                 "name": "BROADCAST_OPTION",
-                                "value": "clear bug plants",
+                                "value": "\u3080\u3057\u304c\u3044\u308b\u3057\u3087\u304f\u3076\u3064\u3092\u3057\u3087\u3046\u304d\u3087",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -17001,7 +17001,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "FQqy(E(g_^DdwWduBSbE",
                                 "name": "BROADCAST_OPTION",
-                                "value": "draw bugs",
+                                "value": "\u3080\u3057\u3092\u3048\u304c\u304f",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -17233,7 +17233,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "g*4F*+kX[Hu6m/HOi=X/",
                                 "name": "BROADCAST_OPTION",
-                                "value": "play sun card",
+                                "value": "\u305f\u3044\u3088\u3046\u306e\u30ab\u30fc\u30c9\u3092\u30d7\u30ec\u30a4",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -17356,7 +17356,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "{,J/{q^f$s1n|]x(54Xe",
                                 "name": "BROADCAST_OPTION",
-                                "value": "activate sun",
+                                "value": "\u305f\u3044\u3088\u3046\u3092\u30a2\u30af\u30c6\u30a3\u30d6\u306b\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -17410,7 +17410,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "^!biIU_5^XvRMfwz+H}b",
                                 "name": "BROADCAST_OPTION",
-                                "value": "draw next card",
+                                "value": "\u3064\u304e\u306e\u30ab\u30fc\u30c9\u3092\u3072\u304f",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -17630,7 +17630,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "$=KIQ~,oZOX|V]~~B59q",
                                 "name": "BROADCAST_OPTION",
-                                "value": "show plant growth",
+                                "value": "\u3057\u3087\u304f\u3076\u3064\u306e\u305b\u3044\u3061\u3087\u3046\u3092\u3072\u3087\u3046\u3058\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -18307,7 +18307,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "4tMRoXYifi0E?G=b`h([",
                                 "name": "BROADCAST_OPTION",
-                                "value": "water active plant",
+                                "value": "\u3052\u3093\u304d\u306a\u3057\u3087\u304f\u3076\u3064\u306b\u307f\u305a\u3092\u3084\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -18805,7 +18805,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "Dd-9#:O!-Q3f;(kjJ9lY",
                                 "name": "BROADCAST_OPTION",
-                                "value": "shuffle deck",
+                                "value": "\u30c7\u30c3\u30ad\u3092\u30b7\u30e3\u30c3\u30d5\u30eb\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -18989,7 +18989,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "$bNZF03Sa-KG!=B9[/`c",
                                 "name": "BROADCAST_OPTION",
-                                "value": "harvest active plant",
+                                "value": "\u3052\u3093\u304d\u306a\u3057\u3087\u304f\u3076\u3064\u3092\u3057\u3085\u3046\u304b\u304f\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -19298,7 +19298,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "m2)95;pl$dYTaapR4YRR",
                                 "name": "BROADCAST_OPTION",
-                                "value": "draw drop",
+                                "value": "\u30c9\u30ed\u30c3\u30d7\u3092\u3048\u304c\u304f",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -19396,7 +19396,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "~PQJ5,EK~hja4[qoyy/-",
                                 "name": "BROADCAST_OPTION",
-                                "value": "grow active plant",
+                                "value": "\u3052\u3093\u304d\u306a\u3057\u3087\u304f\u3076\u3064\u3092\u305d\u3060\u3066\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -19507,7 +19507,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "(qvYN#BCX8e$0+:P7.cO",
                                 "name": "BROADCAST_OPTION",
-                                "value": "check harvest",
+                                "value": "\u3057\u3085\u3046\u304b\u304f\u3092\u30c1\u30a7\u30c3\u30af\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -19587,7 +19587,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "$bNZF03Sa-KG!=B9[/`c",
                                 "name": "BROADCAST_OPTION",
-                                "value": "harvest active plant",
+                                "value": "\u3052\u3093\u304d\u306a\u3057\u3087\u304f\u3076\u3064\u3092\u3057\u3085\u3046\u304b\u304f\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -19838,7 +19838,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "yZvd/|bn!}Ls}@l$;R|A",
                                 "name": "BROADCAST_OPTION",
-                                "value": "say missed bugs phrase",
+                                "value": "\u300c\u3080\u3057\u3092\u306b\u304c\u3057\u305f\u300d\u3068\u3044\u3046",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -19857,7 +19857,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "ESi]bm*/2%==av=mlpvq",
                                 "name": "BROADCAST_OPTION",
-                                "value": "game over win",
+                                "value": "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc\u3000\u304b\u3061",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -19936,7 +19936,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "{,J/{q^f$s1n|]x(54Xe",
                                 "name": "BROADCAST_OPTION",
-                                "value": "activate sun",
+                                "value": "\u305f\u3044\u3088\u3046\u3092\u30a2\u30af\u30c6\u30a3\u30d6\u306b\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -20179,7 +20179,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ",46m3td#h$(R%#Mz8?`X",
                                 "name": "BROADCAST_OPTION",
-                                "value": "check for bugs",
+                                "value": "\u3080\u3057\u3092\u30c1\u30a7\u30c3\u30af\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -20281,7 +20281,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "~PQJ5,EK~hja4[qoyy/-",
                                 "name": "BROADCAST_OPTION",
-                                "value": "grow active plant",
+                                "value": "\u3052\u3093\u304d\u306a\u3057\u3087\u304f\u3076\u3064\u3092\u305d\u3060\u3066\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -20300,7 +20300,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "~PQJ5,EK~hja4[qoyy/-",
                                 "name": "BROADCAST_OPTION",
-                                "value": "grow active plant",
+                                "value": "\u3052\u3093\u304d\u306a\u3057\u3087\u304f\u3076\u3064\u3092\u305d\u3060\u3066\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -20703,7 +20703,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "b|_|xQqr[4T97I(@^`8k",
                                 "name": "BROADCAST_OPTION",
-                                "value": "populate deck",
+                                "value": "\u30c7\u30c3\u30ad\u3092\u3064\u304f\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -21602,7 +21602,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "j9+V(%A!9snN((Y4AUro",
                                 "name": "BROADCAST_OPTION",
-                                "value": "grow plants",
+                                "value": "\u3057\u3087\u304f\u3076\u3064\u3092\u305d\u3060\u3066\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -21761,7 +21761,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ",eN`//QizFGb}+EDxiR%",
                                 "name": "BROADCAST_OPTION",
-                                "value": "clear plants to harvest",
+                                "value": "\u3057\u3085\u3046\u304b\u304f\u3059\u308b\u3057\u3087\u304f\u3076\u3064\u3092\u3057\u3087\u3046\u304d\u3087",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -22210,7 +22210,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "4tMRoXYifi0E?G=b`h([",
                                 "name": "BROADCAST_OPTION",
-                                "value": "water active plant",
+                                "value": "\u3052\u3093\u304d\u306a\u3057\u3087\u304f\u3076\u3064\u306b\u307f\u305a\u3092\u3084\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -22586,7 +22586,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "~PQJ5,EK~hja4[qoyy/-",
                                 "name": "BROADCAST_OPTION",
-                                "value": "grow active plant",
+                                "value": "\u3052\u3093\u304d\u306a\u3057\u3087\u304f\u3076\u3064\u3092\u305d\u3060\u3066\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -23621,7 +23621,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "r0z]Bf^/|kkr@#qTtWJH",
                                 "name": "BROADCAST_OPTION",
-                                "value": "create garden",
+                                "value": "\u306b\u308f\u3092\u3064\u304f\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -24197,7 +24197,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "2jA3LAU:%AapT7`@~rT=",
                                 "name": "BROADCAST_OPTION",
-                                "value": "game over lose",
+                                "value": "\u30b2\u30fc\u30e0\u30aa\u30fc\u30d0\u30fc\u3000\u307e\u3051",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -25005,7 +25005,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ",eN`//QizFGb}+EDxiR%",
                                 "name": "BROADCAST_OPTION",
-                                "value": "clear plants to harvest",
+                                "value": "\u3057\u3085\u3046\u304b\u304f\u3059\u308b\u3057\u3087\u304f\u3076\u3064\u3092\u3057\u3087\u3046\u304d\u3087",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -25111,7 +25111,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ",eN`//QizFGb}+EDxiR%",
                                 "name": "BROADCAST_OPTION",
-                                "value": "clear plants to harvest",
+                                "value": "\u3057\u3085\u3046\u304b\u304f\u3059\u308b\u3057\u3087\u304f\u3076\u3064\u3092\u3057\u3087\u3046\u304d\u3087",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -25402,7 +25402,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "2i9Zv9bn?{Nm=2]EG_FI",
                                 "name": "BROADCAST_OPTION",
-                                "value": "play bugs card",
+                                "value": "\u3080\u3057\u306e\u30ab\u30fc\u30c9\u3092\u30d7\u30ec\u30a4",
                                 "variableType": "broadcast_msg"
                             }
                         },

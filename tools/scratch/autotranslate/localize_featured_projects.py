@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 
-# Nicolas Kent 10-20-17
-#
-
 # This script is expected to be run in it's containing folder from the command line
 #  command line parameters:
 # PROJECT MASKING:
@@ -39,27 +36,31 @@
 #  2) The translated projects are exported to a project folder with modified localized values, and all non-localizeable values unchanged
 #
 
+
 import argparse
 import collections
 import copy
 import json
 import os
-from pprint import pprint
 import random
 import re
 import sys
 import zipfile
 
+
 LOCALIZATION_ROOT_PATH = "LocalizedStrings"
 LOCALIZATION_TARGET_FILES = [ "CodeLabStrings.json", "CodeLabFeaturedContentStrings.json" ]
 
 # Plenty of string fields contain these values 
-# but even if they were to be localization translations, it might break a lot ot reverse key them
+# but even if they were to be localization translations, it might break a lot to reverse key them
 IGNORE_TEXT_KEYS = ['', 'True', 'False', 'true', 'false']
 
 # Certain keys should be treated as project agnostic so they are only translated once
 # These are primarily default fields that can be buried under variables.
 PROJECT_AGNOSTIC_KEYS = ['text', 'anki', 'cozmo']
+
+BROADCAST_MSG_TYPE = "broadcast_msg"
+
 
 def parse_command_args():
     arg_parser = argparse.ArgumentParser()
@@ -181,6 +182,11 @@ class FilterVariable:
             except ValueError:
                 if string not in IGNORE_TEXT_KEYS:
                     src['name'] = transform(string, context)
+                    try:
+                        if src['type'] in [BROADCAST_MSG_TYPE]:
+                            src['value'] = src['name']
+                    except KeyError:
+                        pass
 
 # the vast majority of user editable strings are represented in scratch using this json structure
 class FilterField:
@@ -188,7 +194,7 @@ class FilterField:
         pass
 
     def test_and_apply_transform(self, src, context, transform):
-        for key in ['TEXT', 'VARIABLE']:
+        for key in ['TEXT', 'VARIABLE', 'BROADCAST_OPTION']:
             if type(src) == dict and 'fields' in src and key in src['fields']:
                 string = src['fields'][key]['value']
                 try:
@@ -236,7 +242,7 @@ allFilters = [FilterVariable(), FilterField(), FilterSDKAnimation()]
 def translate(string, context):
     if string in context['loc']:
         # uncomment the print statement to get a verbose log of everything translated
-        #print(string + ' -> ' + context['loc'][string] + '\n')
+        #print(string + ' -> ' + context['loc'][string])
         return context['loc'][string]
     return string
 
@@ -246,7 +252,7 @@ def translate_lower(string, context):
     lowercasedString = string.lower()
     if lowercasedString in context['loc']:
         # uncomment the print statement to get a verbose log of everything translated
-        #print(string + ' -> ' + context['loc'][lowercasedString] + '\n')
+        #print(string + ' -> ' + context['loc'][lowercasedString])
         return context['loc'][lowercasedString]
     return lowercasedString
 
@@ -294,7 +300,6 @@ def translate_project(project, sourceLanguageTable, destinationLanguageTable):
 
     return newProject
 
-
 def pull_string(string, context):
     if string not in context['outputList']:
         context['outputList'].append(string)
@@ -316,7 +321,6 @@ def run_translation_target(target, loc_table):
     with open(target['target_file_name'], 'w', encoding='utf8') as output_file:
         json.dump(translated, output_file, indent=4, sort_keys=True)
         output_file.write('\n')
-
     return True
 
 def execute_translations_on_project(project, source_language, loc_table):
@@ -337,7 +341,9 @@ def execute_translations_on_project(project, source_language, loc_table):
             targets.append(target_entry)
 
     for target in targets:
-        print('translating ' + project['project_name'] + ' ' + source_project_file + ' -> ' + target['target_file_name'] + ' using ' + target['source_language'] + ' -> ' + target['target_language'] + ' mapping')
+        print('translating ' + project['project_name'] + ' ' + source_project_file + ' -> ' +
+              target['target_file_name'] + ' using ' + target['source_language'] + ' -> ' +
+              target['target_language'] + ' mapping')
         if not run_translation_target(target, loc_table):
             return False
 
@@ -429,7 +435,8 @@ def load_and_build_localization_dictionary(streaming_assets_path, target_project
             resultDict[language] = load_localization_for_language(loc_path, language, target_project['project_name'])
     return resultDict
 
-def build_project_translation_queue(streaming_assets_path, project_config_file, project_folder, specified_project, use_all_projects, blacklist):
+def build_project_translation_queue(streaming_assets_path, project_config_file, project_folder,
+                                    specified_project, use_all_projects, blacklist):
     result = []
 
     with open(project_config_file, 'r', encoding='utf8') as json_data:
@@ -512,7 +519,12 @@ def main():
     if not command_args.scan_project and not command_args.translate_project and not command_args.list_project:
         sys.exit("Must specify either list, scan or translate")
 
-    project_list = build_project_translation_queue(command_args.streaming_assets_path, command_args.project_config_file, command_args.project_folder, command_args.project, command_args.all_projects, command_args.blacklist)
+    project_list = build_project_translation_queue(command_args.streaming_assets_path,
+                                                   command_args.project_config_file,
+                                                   command_args.project_folder,
+                                                   command_args.project,
+                                                   command_args.all_projects,
+                                                   command_args.blacklist)
 
     if len(project_list) <= 0:
         sys.exit("Could not find source project %s" % command_args.project)
@@ -523,7 +535,9 @@ def main():
 
         generated_json = {}
         for project_entry in project_list:
-            generated_json.update( scan_project(project_entry, command_args.source_language, command_args.scan_output_path, command_args.exclude_project_agnostic_strings) )
+            generated_json.update(scan_project(project_entry, command_args.source_language,
+                                                              command_args.scan_output_path,
+                                                              command_args.exclude_project_agnostic_strings))
         print(str(len(project_list)) + ' project(s) scanned')
 
         if command_args.scan_loc_target:
@@ -548,3 +562,5 @@ def main():
 
 if __name__ == "__main__": 
     main()
+
+

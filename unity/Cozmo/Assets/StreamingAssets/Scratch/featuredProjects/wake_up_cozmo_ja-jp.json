@@ -25,7 +25,7 @@
                         "id": "$S8$I=50KH}6]bhktY%$",
                         "name": "COZMO\u304c\u3055\u304b\u3055\u307e\u306b\u306a\u3063\u3066\u3044\u306a\u3044\u304b\u305f\u3057\u304b\u3081\u308b",
                         "type": "broadcast_msg",
-                        "value": "check if Cozmo is upside down"
+                        "value": "COZMO\u304c\u3055\u304b\u3055\u307e\u306b\u306a\u3063\u3066\u3044\u306a\u3044\u304b\u305f\u3057\u304b\u3081\u308b"
                     },
                     "$|Cx6`%@1/|)Nt0}Tv-O": {
                         "id": "$|Cx6`%@1/|)Nt0}Tv-O",
@@ -43,7 +43,7 @@
                         "id": ".%Eqy6~KlTl}r4~qkW;z",
                         "name": "COZMO\u3092\u3072\u3063\u304f\u308a\u304b\u3048\u3059",
                         "type": "broadcast_msg",
-                        "value": "flip Cozmo"
+                        "value": "COZMO\u3092\u3072\u3063\u304f\u308a\u304b\u3048\u3059"
                     },
                     "3Bx%jDs6drNus1XUPfF;": {
                         "id": "3Bx%jDs6drNus1XUPfF;",
@@ -67,7 +67,7 @@
                         "id": "B/A4@k-9jYO1@T!$zTBZ",
                         "name": "\u3082\u3046\u4e00\u5ea6\u30d7\u30ec\u30a4",
                         "type": "broadcast_msg",
-                        "value": "play again"
+                        "value": "\u3082\u3046\u4e00\u5ea6\u30d7\u30ec\u30a4"
                     },
                     "DG]McJ^9.B^vvjK7?-Po": {
                         "id": "DG]McJ^9.B^vvjK7?-Po",
@@ -79,7 +79,7 @@
                         "id": "K:lEEN{a-Pk24+%=kK^q",
                         "name": "\u3081\u3056\u3081\u305f\u3068\u304d\u306b\u3044\u3046\u3053\u3068\u3070\u3092\u3048\u3089\u3076",
                         "type": "broadcast_msg",
-                        "value": "choose wake up phrase"
+                        "value": "\u3081\u3056\u3081\u305f\u3068\u304d\u306b\u3044\u3046\u3053\u3068\u3070\u3092\u3048\u3089\u3076"
                     },
                     "NaZQ.NV)OP*8F~ISJ^I=": {
                         "id": "NaZQ.NV)OP*8F~ISJ^I=",
@@ -97,7 +97,7 @@
                         "id": "UdMm0.SuvuD-]@[UA{4:",
                         "name": "\u306d\u308b\u307e\u3048\u306b\u3044\u3046\u3053\u3068\u3070\u3092\u3048\u3089\u3076",
                         "type": "broadcast_msg",
-                        "value": "choose bedtime phrase"
+                        "value": "\u306d\u308b\u307e\u3048\u306b\u3044\u3046\u3053\u3068\u3070\u3092\u3048\u3089\u3076"
                     },
                     "X%l,N0)L~Gx/I#P].UjO": {
                         "id": "X%l,N0)L~Gx/I#P].UjO",
@@ -127,19 +127,19 @@
                         "id": "cyS{4_L3`Y6j3ER7NUpn",
                         "name": "\u306d\u3080\u3063\u3066\u3044\u308b\u3042\u3044\u3060\u306b\u3044\u3046\u3053\u3068\u3070\u3092\u3048\u3089\u3076",
                         "type": "broadcast_msg",
-                        "value": "choose sleeping phrase"
+                        "value": "\u306d\u3080\u3063\u3066\u3044\u308b\u3042\u3044\u3060\u306b\u3044\u3046\u3053\u3068\u3070\u3092\u3048\u3089\u3076"
                     },
                     "fL?zga~sb8P%X4)qYMAC": {
                         "id": "fL?zga~sb8P%X4)qYMAC",
                         "name": "\u30ad\u30e5\u30fc\u30d6\u3092\u3080\u3053\u3046\u304b\u3059\u308b",
                         "type": "broadcast_msg",
-                        "value": "disable Cubes"
+                        "value": "\u30ad\u30e5\u30fc\u30d6\u3092\u3080\u3053\u3046\u304b\u3059\u308b"
                     },
                     "fRAJA.^P-l,$diwyY5Z2": {
                         "id": "fRAJA.^P-l,$diwyY5Z2",
                         "name": "\u3064\u304e\u306e\u3058\u3085\u3093\u3070\u3093",
                         "type": "broadcast_msg",
-                        "value": "next turn"
+                        "value": "\u3064\u304e\u306e\u3058\u3085\u3093\u3070\u3093"
                     },
                     "m%^FUNOwI/a~8adX!IZ+": {
                         "id": "m%^FUNOwI/a~8adX!IZ+",
@@ -331,7 +331,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "fRAJA.^P-l,$diwyY5Z2",
                                 "name": "BROADCAST_OPTION",
-                                "value": "next turn",
+                                "value": "\u3064\u304e\u306e\u3058\u3085\u3093\u3070\u3093",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -773,7 +773,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "B/A4@k-9jYO1@T!$zTBZ",
                                 "name": "BROADCAST_OPTION",
-                                "value": "play again",
+                                "value": "\u3082\u3046\u4e00\u5ea6\u30d7\u30ec\u30a4",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -1246,7 +1246,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "$S8$I=50KH}6]bhktY%$",
                                 "name": "BROADCAST_OPTION",
-                                "value": "check if Cozmo is upside down",
+                                "value": "COZMO\u304c\u3055\u304b\u3055\u307e\u306b\u306a\u3063\u3066\u3044\u306a\u3044\u304b\u305f\u3057\u304b\u3081\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -1265,7 +1265,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "fRAJA.^P-l,$diwyY5Z2",
                                 "name": "BROADCAST_OPTION",
-                                "value": "next turn",
+                                "value": "\u3064\u304e\u306e\u3058\u3085\u3093\u3070\u3093",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -1414,7 +1414,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ".%Eqy6~KlTl}r4~qkW;z",
                                 "name": "BROADCAST_OPTION",
-                                "value": "flip Cozmo",
+                                "value": "COZMO\u3092\u3072\u3063\u304f\u308a\u304b\u3048\u3059",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -2052,7 +2052,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "B/A4@k-9jYO1@T!$zTBZ",
                                 "name": "BROADCAST_OPTION",
-                                "value": "play again",
+                                "value": "\u3082\u3046\u4e00\u5ea6\u30d7\u30ec\u30a4",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -2159,7 +2159,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "UdMm0.SuvuD-]@[UA{4:",
                                 "name": "BROADCAST_OPTION",
-                                "value": "choose bedtime phrase",
+                                "value": "\u306d\u308b\u307e\u3048\u306b\u3044\u3046\u3053\u3068\u3070\u3092\u3048\u3089\u3076",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -2816,7 +2816,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "cyS{4_L3`Y6j3ER7NUpn",
                                 "name": "BROADCAST_OPTION",
-                                "value": "choose sleeping phrase",
+                                "value": "\u306d\u3080\u3063\u3066\u3044\u308b\u3042\u3044\u3060\u306b\u3044\u3046\u3053\u3068\u3070\u3092\u3048\u3089\u3076",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3231,7 +3231,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "$S8$I=50KH}6]bhktY%$",
                                 "name": "BROADCAST_OPTION",
-                                "value": "check if Cozmo is upside down",
+                                "value": "COZMO\u304c\u3055\u304b\u3055\u307e\u306b\u306a\u3063\u3066\u3044\u306a\u3044\u304b\u305f\u3057\u304b\u3081\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3248,7 +3248,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "K:lEEN{a-Pk24+%=kK^q",
                                 "name": "BROADCAST_OPTION",
-                                "value": "choose wake up phrase",
+                                "value": "\u3081\u3056\u3081\u305f\u3068\u304d\u306b\u3044\u3046\u3053\u3068\u3070\u3092\u3048\u3089\u3076",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3429,7 +3429,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ".%Eqy6~KlTl}r4~qkW;z",
                                 "name": "BROADCAST_OPTION",
-                                "value": "flip Cozmo",
+                                "value": "COZMO\u3092\u3072\u3063\u304f\u308a\u304b\u3048\u3059",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3634,7 +3634,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ".%Eqy6~KlTl}r4~qkW;z",
                                 "name": "BROADCAST_OPTION",
-                                "value": "flip Cozmo",
+                                "value": "COZMO\u3092\u3072\u3063\u304f\u308a\u304b\u3048\u3059",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3734,7 +3734,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "fL?zga~sb8P%X4)qYMAC",
                                 "name": "BROADCAST_OPTION",
-                                "value": "disable Cubes",
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u3092\u3080\u3053\u3046\u304b\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3982,7 +3982,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "K:lEEN{a-Pk24+%=kK^q",
                                 "name": "BROADCAST_OPTION",
-                                "value": "choose wake up phrase",
+                                "value": "\u3081\u3056\u3081\u305f\u3068\u304d\u306b\u3044\u3046\u3053\u3068\u3070\u3092\u3048\u3089\u3076",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -4061,7 +4061,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "UdMm0.SuvuD-]@[UA{4:",
                                 "name": "BROADCAST_OPTION",
-                                "value": "choose bedtime phrase",
+                                "value": "\u306d\u308b\u307e\u3048\u306b\u3044\u3046\u3053\u3068\u3070\u3092\u3048\u3089\u3076",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -4184,7 +4184,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "fL?zga~sb8P%X4)qYMAC",
                                 "name": "BROADCAST_OPTION",
-                                "value": "disable Cubes",
+                                "value": "\u30ad\u30e5\u30fc\u30d6\u3092\u3080\u3053\u3046\u304b\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -4521,7 +4521,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "fRAJA.^P-l,$diwyY5Z2",
                                 "name": "BROADCAST_OPTION",
-                                "value": "next turn",
+                                "value": "\u3064\u304e\u306e\u3058\u3085\u3093\u3070\u3093",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -4672,7 +4672,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "cyS{4_L3`Y6j3ER7NUpn",
                                 "name": "BROADCAST_OPTION",
-                                "value": "choose sleeping phrase",
+                                "value": "\u306d\u3080\u3063\u3066\u3044\u308b\u3042\u3044\u3060\u306b\u3044\u3046\u3053\u3068\u3070\u3092\u3048\u3089\u3076",
                                 "variableType": "broadcast_msg"
                             }
                         },

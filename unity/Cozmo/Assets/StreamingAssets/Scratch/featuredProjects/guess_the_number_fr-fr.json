@@ -25,7 +25,7 @@
                         "id": ",9=yzv7zR:zeE$;JXyyO",
                         "name": "afficher la supposition",
                         "type": "broadcast_msg",
-                        "value": "display guess"
+                        "value": "afficher la supposition"
                     },
                     "0ay{8luN^LB3TRxhL=cC": {
                         "id": "0ay{8luN^LB3TRxhL=cC",
@@ -85,19 +85,19 @@
                         "id": "E_Mb7Urs{p8,^U+7FF1d",
                         "name": "fin de la partie",
                         "type": "broadcast_msg",
-                        "value": "end game"
+                        "value": "fin de la partie"
                     },
                     "FL)wle7,1#do71s3J]_z": {
                         "id": "FL)wle7,1#do71s3J]_z",
                         "name": "illuminer les voyants",
                         "type": "broadcast_msg",
-                        "value": "spin lights"
+                        "value": "illuminer les voyants"
                     },
                     "H@p,^b(S38y[O}#k}}I|": {
                         "id": "H@p,^b(S38y[O}#k}}I|",
                         "name": "r\u00e9initialiser les voyants",
                         "type": "broadcast_msg",
-                        "value": "reset lights"
+                        "value": "r\u00e9initialiser les voyants"
                     },
                     "I]C.SU[:`mS]Fm)I:p4q": {
                         "id": "I]C.SU[:`mS]Fm)I:p4q",
@@ -127,7 +127,7 @@
                         "id": "jVQK4N12~ZZ}g=5Y+~Rk",
                         "name": "nouvelle tentative",
                         "type": "broadcast_msg",
-                        "value": "new guess"
+                        "value": "nouvelle tentative"
                     },
                     "k6+o/oNDW2O68R,D.+c(": {
                         "id": "k6+o/oNDW2O68R,D.+c(",
@@ -151,13 +151,13 @@
                         "id": "uj1v/FX)*u*BPrq$mv:a",
                         "name": "donner les instructions",
                         "type": "broadcast_msg",
-                        "value": "give instructions"
+                        "value": "donner les instructions"
                     },
                     "x)KbWLPvpKhh@|L?hp.T": {
                         "id": "x)KbWLPvpKhh@|L?hp.T",
                         "name": "d\u00e9sactiver les voyants dorsaux",
                         "type": "broadcast_msg",
-                        "value": "turn off backpack"
+                        "value": "d\u00e9sactiver les voyants dorsaux"
                     },
                     "})@_[V6faFP/HGW^2Qi#": {
                         "id": "})@_[V6faFP/HGW^2Qi#",
@@ -617,7 +617,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "E_Mb7Urs{p8,^U+7FF1d",
                                 "name": "BROADCAST_OPTION",
-                                "value": "end game",
+                                "value": "fin de la partie",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -885,7 +885,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ",9=yzv7zR:zeE$;JXyyO",
                                 "name": "BROADCAST_OPTION",
-                                "value": "display guess",
+                                "value": "afficher la supposition",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -1123,7 +1123,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "FL)wle7,1#do71s3J]_z",
                                 "name": "BROADCAST_OPTION",
-                                "value": "spin lights",
+                                "value": "illuminer les voyants",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -1278,7 +1278,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "uj1v/FX)*u*BPrq$mv:a",
                                 "name": "BROADCAST_OPTION",
-                                "value": "give instructions",
+                                "value": "donner les instructions",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -1845,7 +1845,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "jVQK4N12~ZZ}g=5Y+~Rk",
                                 "name": "BROADCAST_OPTION",
-                                "value": "new guess",
+                                "value": "nouvelle tentative",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -1956,7 +1956,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "x)KbWLPvpKhh@|L?hp.T",
                                 "name": "BROADCAST_OPTION",
-                                "value": "turn off backpack",
+                                "value": "d\u00e9sactiver les voyants dorsaux",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -2214,7 +2214,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "FL)wle7,1#do71s3J]_z",
                                 "name": "BROADCAST_OPTION",
-                                "value": "spin lights",
+                                "value": "illuminer les voyants",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -2716,7 +2716,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "uj1v/FX)*u*BPrq$mv:a",
                                 "name": "BROADCAST_OPTION",
-                                "value": "give instructions",
+                                "value": "donner les instructions",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -2768,7 +2768,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "jVQK4N12~ZZ}g=5Y+~Rk",
                                 "name": "BROADCAST_OPTION",
-                                "value": "new guess",
+                                "value": "nouvelle tentative",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -2835,7 +2835,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "x)KbWLPvpKhh@|L?hp.T",
                                 "name": "BROADCAST_OPTION",
-                                "value": "turn off backpack",
+                                "value": "d\u00e9sactiver les voyants dorsaux",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -2941,7 +2941,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "x)KbWLPvpKhh@|L?hp.T",
                                 "name": "BROADCAST_OPTION",
-                                "value": "turn off backpack",
+                                "value": "d\u00e9sactiver les voyants dorsaux",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -2984,7 +2984,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "H@p,^b(S38y[O}#k}}I|",
                                 "name": "BROADCAST_OPTION",
-                                "value": "reset lights",
+                                "value": "r\u00e9initialiser les voyants",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3089,7 +3089,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "jVQK4N12~ZZ}g=5Y+~Rk",
                                 "name": "BROADCAST_OPTION",
-                                "value": "new guess",
+                                "value": "nouvelle tentative",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3146,7 +3146,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "x)KbWLPvpKhh@|L?hp.T",
                                 "name": "BROADCAST_OPTION",
-                                "value": "turn off backpack",
+                                "value": "d\u00e9sactiver les voyants dorsaux",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3357,7 +3357,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "FL)wle7,1#do71s3J]_z",
                                 "name": "BROADCAST_OPTION",
-                                "value": "spin lights",
+                                "value": "illuminer les voyants",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3374,7 +3374,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "H@p,^b(S38y[O}#k}}I|",
                                 "name": "BROADCAST_OPTION",
-                                "value": "reset lights",
+                                "value": "r\u00e9initialiser les voyants",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3613,7 +3613,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "jVQK4N12~ZZ}g=5Y+~Rk",
                                 "name": "BROADCAST_OPTION",
-                                "value": "new guess",
+                                "value": "nouvelle tentative",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3649,7 +3649,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "FL)wle7,1#do71s3J]_z",
                                 "name": "BROADCAST_OPTION",
-                                "value": "spin lights",
+                                "value": "illuminer les voyants",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -4043,7 +4043,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "x)KbWLPvpKhh@|L?hp.T",
                                 "name": "BROADCAST_OPTION",
-                                "value": "turn off backpack",
+                                "value": "d\u00e9sactiver les voyants dorsaux",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -4226,7 +4226,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "H@p,^b(S38y[O}#k}}I|",
                                 "name": "BROADCAST_OPTION",
-                                "value": "reset lights",
+                                "value": "r\u00e9initialiser les voyants",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -4360,7 +4360,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ",9=yzv7zR:zeE$;JXyyO",
                                 "name": "BROADCAST_OPTION",
-                                "value": "display guess",
+                                "value": "afficher la supposition",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -5004,7 +5004,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "E_Mb7Urs{p8,^U+7FF1d",
                                 "name": "BROADCAST_OPTION",
-                                "value": "end game",
+                                "value": "fin de la partie",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -5040,7 +5040,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "x)KbWLPvpKhh@|L?hp.T",
                                 "name": "BROADCAST_OPTION",
-                                "value": "turn off backpack",
+                                "value": "d\u00e9sactiver les voyants dorsaux",
                                 "variableType": "broadcast_msg"
                             }
                         },

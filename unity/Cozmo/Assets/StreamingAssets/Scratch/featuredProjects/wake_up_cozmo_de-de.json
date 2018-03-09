@@ -25,7 +25,7 @@
                         "id": "$S8$I=50KH}6]bhktY%$",
                         "name": "\u00dcberpr\u00fcfen, ob Cozmo auf dem Kopf steht",
                         "type": "broadcast_msg",
-                        "value": "check if Cozmo is upside down"
+                        "value": "\u00dcberpr\u00fcfen, ob Cozmo auf dem Kopf steht"
                     },
                     "$|Cx6`%@1/|)Nt0}Tv-O": {
                         "id": "$|Cx6`%@1/|)Nt0}Tv-O",
@@ -43,7 +43,7 @@
                         "id": ".%Eqy6~KlTl}r4~qkW;z",
                         "name": "Cozmo umdrehen",
                         "type": "broadcast_msg",
-                        "value": "flip Cozmo"
+                        "value": "Cozmo umdrehen"
                     },
                     "3Bx%jDs6drNus1XUPfF;": {
                         "id": "3Bx%jDs6drNus1XUPfF;",
@@ -67,7 +67,7 @@
                         "id": "B/A4@k-9jYO1@T!$zTBZ",
                         "name": "Erneut spielen",
                         "type": "broadcast_msg",
-                        "value": "play again"
+                        "value": "Erneut spielen"
                     },
                     "DG]McJ^9.B^vvjK7?-Po": {
                         "id": "DG]McJ^9.B^vvjK7?-Po",
@@ -79,7 +79,7 @@
                         "id": "K:lEEN{a-Pk24+%=kK^q",
                         "name": "Satz zum Aufstehen ausw\u00e4hlen",
                         "type": "broadcast_msg",
-                        "value": "choose wake up phrase"
+                        "value": "Satz zum Aufstehen ausw\u00e4hlen"
                     },
                     "NaZQ.NV)OP*8F~ISJ^I=": {
                         "id": "NaZQ.NV)OP*8F~ISJ^I=",
@@ -97,7 +97,7 @@
                         "id": "UdMm0.SuvuD-]@[UA{4:",
                         "name": "Satz zur Schlafenszeit ausw\u00e4hlen",
                         "type": "broadcast_msg",
-                        "value": "choose bedtime phrase"
+                        "value": "Satz zur Schlafenszeit ausw\u00e4hlen"
                     },
                     "X%l,N0)L~Gx/I#P].UjO": {
                         "id": "X%l,N0)L~Gx/I#P].UjO",
@@ -127,19 +127,19 @@
                         "id": "cyS{4_L3`Y6j3ER7NUpn",
                         "name": "Satz beim Einschlafen ausw\u00e4hlen",
                         "type": "broadcast_msg",
-                        "value": "choose sleeping phrase"
+                        "value": "Satz beim Einschlafen ausw\u00e4hlen"
                     },
                     "fL?zga~sb8P%X4)qYMAC": {
                         "id": "fL?zga~sb8P%X4)qYMAC",
                         "name": "Cubes deaktivieren",
                         "type": "broadcast_msg",
-                        "value": "disable Cubes"
+                        "value": "Cubes deaktivieren"
                     },
                     "fRAJA.^P-l,$diwyY5Z2": {
                         "id": "fRAJA.^P-l,$diwyY5Z2",
                         "name": "N\u00e4chster Zug",
                         "type": "broadcast_msg",
-                        "value": "next turn"
+                        "value": "N\u00e4chster Zug"
                     },
                     "m%^FUNOwI/a~8adX!IZ+": {
                         "id": "m%^FUNOwI/a~8adX!IZ+",
@@ -331,7 +331,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "fRAJA.^P-l,$diwyY5Z2",
                                 "name": "BROADCAST_OPTION",
-                                "value": "next turn",
+                                "value": "N\u00e4chster Zug",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -773,7 +773,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "B/A4@k-9jYO1@T!$zTBZ",
                                 "name": "BROADCAST_OPTION",
-                                "value": "play again",
+                                "value": "Erneut spielen",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -1246,7 +1246,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "$S8$I=50KH}6]bhktY%$",
                                 "name": "BROADCAST_OPTION",
-                                "value": "check if Cozmo is upside down",
+                                "value": "\u00dcberpr\u00fcfen, ob Cozmo auf dem Kopf steht",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -1265,7 +1265,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "fRAJA.^P-l,$diwyY5Z2",
                                 "name": "BROADCAST_OPTION",
-                                "value": "next turn",
+                                "value": "N\u00e4chster Zug",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -1414,7 +1414,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ".%Eqy6~KlTl}r4~qkW;z",
                                 "name": "BROADCAST_OPTION",
-                                "value": "flip Cozmo",
+                                "value": "Cozmo umdrehen",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -2052,7 +2052,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "B/A4@k-9jYO1@T!$zTBZ",
                                 "name": "BROADCAST_OPTION",
-                                "value": "play again",
+                                "value": "Erneut spielen",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -2159,7 +2159,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "UdMm0.SuvuD-]@[UA{4:",
                                 "name": "BROADCAST_OPTION",
-                                "value": "choose bedtime phrase",
+                                "value": "Satz zur Schlafenszeit ausw\u00e4hlen",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -2816,7 +2816,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "cyS{4_L3`Y6j3ER7NUpn",
                                 "name": "BROADCAST_OPTION",
-                                "value": "choose sleeping phrase",
+                                "value": "Satz beim Einschlafen ausw\u00e4hlen",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3231,7 +3231,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "$S8$I=50KH}6]bhktY%$",
                                 "name": "BROADCAST_OPTION",
-                                "value": "check if Cozmo is upside down",
+                                "value": "\u00dcberpr\u00fcfen, ob Cozmo auf dem Kopf steht",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3248,7 +3248,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "K:lEEN{a-Pk24+%=kK^q",
                                 "name": "BROADCAST_OPTION",
-                                "value": "choose wake up phrase",
+                                "value": "Satz zum Aufstehen ausw\u00e4hlen",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3429,7 +3429,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ".%Eqy6~KlTl}r4~qkW;z",
                                 "name": "BROADCAST_OPTION",
-                                "value": "flip Cozmo",
+                                "value": "Cozmo umdrehen",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3634,7 +3634,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ".%Eqy6~KlTl}r4~qkW;z",
                                 "name": "BROADCAST_OPTION",
-                                "value": "flip Cozmo",
+                                "value": "Cozmo umdrehen",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3734,7 +3734,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "fL?zga~sb8P%X4)qYMAC",
                                 "name": "BROADCAST_OPTION",
-                                "value": "disable Cubes",
+                                "value": "Cubes deaktivieren",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3982,7 +3982,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "K:lEEN{a-Pk24+%=kK^q",
                                 "name": "BROADCAST_OPTION",
-                                "value": "choose wake up phrase",
+                                "value": "Satz zum Aufstehen ausw\u00e4hlen",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -4061,7 +4061,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "UdMm0.SuvuD-]@[UA{4:",
                                 "name": "BROADCAST_OPTION",
-                                "value": "choose bedtime phrase",
+                                "value": "Satz zur Schlafenszeit ausw\u00e4hlen",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -4184,7 +4184,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "fL?zga~sb8P%X4)qYMAC",
                                 "name": "BROADCAST_OPTION",
-                                "value": "disable Cubes",
+                                "value": "Cubes deaktivieren",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -4521,7 +4521,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "fRAJA.^P-l,$diwyY5Z2",
                                 "name": "BROADCAST_OPTION",
-                                "value": "next turn",
+                                "value": "N\u00e4chster Zug",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -4672,7 +4672,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "cyS{4_L3`Y6j3ER7NUpn",
                                 "name": "BROADCAST_OPTION",
-                                "value": "choose sleeping phrase",
+                                "value": "Satz beim Einschlafen ausw\u00e4hlen",
                                 "variableType": "broadcast_msg"
                             }
                         },

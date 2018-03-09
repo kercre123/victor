@@ -86,7 +86,7 @@
                         "id": "(@_tdwd4*,bDFr5Uu|Uu",
                         "name": "\u3055\u305d\u308a\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                         "type": "broadcast_msg",
-                        "value": "set scorpius data"
+                        "value": "\u3055\u305d\u308a\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b"
                     },
                     "*o3H?Ensy20R;*Fc]p#H": {
                         "id": "*o3H?Ensy20R;*Fc]p#H",
@@ -104,19 +104,19 @@
                         "id": ".G{_CxSWHuZHI5M/,zvQ",
                         "name": "\u30ea\u30b9\u30c8\u3092\u30ea\u30bb\u30c3\u30c8\u3059\u308b",
                         "type": "broadcast_msg",
-                        "value": "reset lists"
+                        "value": "\u30ea\u30b9\u30c8\u3092\u30ea\u30bb\u30c3\u30c8\u3059\u308b"
                     },
                     ".ZT=AbOh!zZTgYj{=mja": {
                         "id": ".ZT=AbOh!zZTgYj{=mja",
                         "name": "\u3064\u304e\u306e\u305b\u3044\u3056",
                         "type": "broadcast_msg",
-                        "value": "next constellation"
+                        "value": "\u3064\u304e\u306e\u305b\u3044\u3056"
                     },
                     "/R[dl]o6#IX]bW^b33Gc": {
                         "id": "/R[dl]o6#IX]bW^b33Gc",
                         "name": "\u3046\u3054\u3044\u3066\u305b\u3044\u3056\u3092\u3048\u304c\u304f",
                         "type": "broadcast_msg",
-                        "value": "drive and draw constellation"
+                        "value": "\u3046\u3054\u3044\u3066\u305b\u3044\u3056\u3092\u3048\u304c\u304f"
                     },
                     "/f(9DGKhF5n8^Z:UA2C}": {
                         "id": "/f(9DGKhF5n8^Z:UA2C}",
@@ -152,7 +152,7 @@
                         "id": "=]facy.O4s|fFWhv;edh",
                         "name": "\u30aa\u30ea\u30aa\u30f3\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                         "type": "broadcast_msg",
-                        "value": "set orion data"
+                        "value": "\u30aa\u30ea\u30aa\u30f3\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b"
                     },
                     "?XVmzOUgYiz(QA-:KvAt": {
                         "id": "?XVmzOUgYiz(QA-:KvAt",
@@ -176,13 +176,13 @@
                         "id": "ANzBheuzB(vk`Iqw!t*e",
                         "name": "\u305b\u3093\u305f\u304f\u3057\u3092\u30b7\u30e3\u30c3\u30d5\u30eb\u3059\u308b",
                         "type": "broadcast_msg",
-                        "value": "shuffle choices"
+                        "value": "\u305b\u3093\u305f\u304f\u3057\u3092\u30b7\u30e3\u30c3\u30d5\u30eb\u3059\u308b"
                     },
                     "C#^%+V)*-.nw0+Cm*bpb": {
                         "id": "C#^%+V)*-.nw0+Cm*bpb",
                         "name": "\u3082\u3046\u3044\u3061\u3069\u30d7\u30ec\u30a4\u3059\u308b\u3088\u3046\u304a\u306d\u304c\u3044\u3059\u308b",
                         "type": "broadcast_msg",
-                        "value": "ask to play again"
+                        "value": "\u3082\u3046\u3044\u3061\u3069\u30d7\u30ec\u30a4\u3059\u308b\u3088\u3046\u304a\u306d\u304c\u3044\u3059\u308b"
                     },
                     "Ce6|Voi2?n[$cRp,jY8F": {
                         "id": "Ce6|Voi2?n[$cRp,jY8F",
@@ -220,7 +220,7 @@
                         "isCloud": false,
                         "name": "\u30ab\u30b7\u30aa\u30da\u30e4\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                         "type": "broadcast_msg",
-                        "value": "set cassiopeia data"
+                        "value": "\u30ab\u30b7\u30aa\u30da\u30e4\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b"
                     },
                     "ELj5b9R.r9xIAms-CQwE": {
                         "id": "ELj5b9R.r9xIAms-CQwE",
@@ -232,25 +232,25 @@
                         "id": "G6GZ#oDR{k7gqSv)T3{e",
                         "name": "\u3056\u3064\u304c\u304f\u3092\u306f\u306a\u3059",
                         "type": "broadcast_msg",
-                        "value": "say factoid"
+                        "value": "\u3056\u3064\u304c\u304f\u3092\u306f\u306a\u3059"
                     },
                     "Gl-dVUy+!0LaE8+C{=V]": {
                         "id": "Gl-dVUy+!0LaE8+C{=V]",
                         "name": "\u3057\u3057\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                         "type": "broadcast_msg",
-                        "value": "set leo data"
+                        "value": "\u3057\u3057\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b"
                     },
                     "H.2~:/d@bF{e]}?}WaPH": {
                         "id": "H.2~:/d@bF{e]}?}WaPH",
                         "name": "\u3057\u3058\u3092\u3046\u3051\u3068\u308b",
                         "type": "broadcast_msg",
-                        "value": "get instructions"
+                        "value": "\u3057\u3058\u3092\u3046\u3051\u3068\u308b"
                     },
                     "IjmT4tKwvwBovYbhxb-]": {
                         "id": "IjmT4tKwvwBovYbhxb-]",
                         "name": "\u304d\u3087\u308a\u3092\u306f\u304b\u308b",
                         "type": "broadcast_msg",
-                        "value": "get distance"
+                        "value": "\u304d\u3087\u308a\u3092\u306f\u304b\u308b"
                     },
                     "J(hMMQ3~)A?r9u7lY6XP": {
                         "id": "J(hMMQ3~)A?r9u7lY6XP",
@@ -340,7 +340,7 @@
                         "id": "ZG=|W.TfM3U87b_uo.b{",
                         "name": "\u3066\u3093\u3073\u3093\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                         "type": "broadcast_msg",
-                        "value": "set libra data"
+                        "value": "\u3066\u3093\u3073\u3093\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b"
                     },
                     "]@}+e|%V2_oSrWDLLRpa": {
                         "id": "]@}+e|%V2_oSrWDLLRpa",
@@ -396,7 +396,7 @@
                         "id": "b5ZZbxuiC|*pF9VNej4d",
                         "name": "\u3055\u3044\u3057\u3087\u306e\u304b\u3069\u306b\u3080\u304b\u3046",
                         "type": "broadcast_msg",
-                        "value": "turn to starting angle"
+                        "value": "\u3055\u3044\u3057\u3087\u306e\u304b\u3069\u306b\u3080\u304b\u3046"
                     },
                     "cd*G@i9bt?0)}f5Pj%Th": {
                         "id": "cd*G@i9bt?0)}f5Pj%Th",
@@ -408,7 +408,7 @@
                         "id": "gdnsE-41V27N~XVzaR~/",
                         "name": "\u304b\u3044\u3066\u3093\u304b\u304f\u3069\u3092\u306f\u304b\u308b",
                         "type": "broadcast_msg",
-                        "value": "get turn angle"
+                        "value": "\u304b\u3044\u3066\u3093\u304b\u304f\u3069\u3092\u306f\u304b\u308b"
                     },
                     "gpZ+sHST8X#$E@$v9{?_": {
                         "id": "gpZ+sHST8X#$E@$v9{?_",
@@ -426,7 +426,7 @@
                         "id": "oLO]runH8=u/*t{cwPeh",
                         "name": "\u305b\u3044\u3056\u3092\u3048\u3089\u3076",
                         "type": "broadcast_msg",
-                        "value": "choose constellation"
+                        "value": "\u305b\u3044\u3056\u3092\u3048\u3089\u3076"
                     },
                     "p-izhJ]MUP_NJ%0P@I,n": {
                         "id": "p-izhJ]MUP_NJ%0P@I,n",
@@ -438,7 +438,7 @@
                         "id": "q?n=nV;:q8w7ae`f[g/z",
                         "name": "\u305b\u3093\u305f\u304f\u3057\u3092\u3064\u304f\u308b",
                         "type": "broadcast_msg",
-                        "value": "populate choices"
+                        "value": "\u305b\u3093\u305f\u304f\u3057\u3092\u3064\u304f\u308b"
                     },
                     "rfbbNRv%Xk={1sCFms+r": {
                         "id": "rfbbNRv%Xk={1sCFms+r",
@@ -457,7 +457,7 @@
                         "isCloud": false,
                         "name": "\u305b\u3093\u305f\u304f\u3057\u3092\u30ea\u30bb\u30c3\u30c8\u3059\u308b",
                         "type": "broadcast_msg",
-                        "value": "reset choices"
+                        "value": "\u305b\u3093\u305f\u304f\u3057\u3092\u30ea\u30bb\u30c3\u30c8\u3059\u308b"
                     },
                     "x=yOYlHq#-h-_A*irBzd": {
                         "id": "x=yOYlHq#-h-_A*irBzd",
@@ -954,7 +954,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "b5ZZbxuiC|*pF9VNej4d",
                                 "name": "BROADCAST_OPTION",
-                                "value": "turn to starting angle",
+                                "value": "\u3055\u3044\u3057\u3087\u306e\u304b\u3069\u306b\u3080\u304b\u3046",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -1816,7 +1816,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "q?n=nV;:q8w7ae`f[g/z",
                                 "name": "BROADCAST_OPTION",
-                                "value": "populate choices",
+                                "value": "\u305b\u3093\u305f\u304f\u3057\u3092\u3064\u304f\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -1985,7 +1985,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "IjmT4tKwvwBovYbhxb-]",
                                 "name": "BROADCAST_OPTION",
-                                "value": "get distance",
+                                "value": "\u304d\u3087\u308a\u3092\u306f\u304b\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3382,7 +3382,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "IjmT4tKwvwBovYbhxb-]",
                                 "name": "BROADCAST_OPTION",
-                                "value": "get distance",
+                                "value": "\u304d\u3087\u308a\u3092\u306f\u304b\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3660,7 +3660,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "v|JfUTGMW4^p31Z4Lkn_",
                                 "name": "BROADCAST_OPTION",
-                                "value": "reset choices",
+                                "value": "\u305b\u3093\u305f\u304f\u3057\u3092\u30ea\u30bb\u30c3\u30c8\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -3991,7 +3991,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "oLO]runH8=u/*t{cwPeh",
                                 "name": "BROADCAST_OPTION",
-                                "value": "choose constellation",
+                                "value": "\u305b\u3044\u3056\u3092\u3048\u3089\u3076",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -4061,7 +4061,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "/R[dl]o6#IX]bW^b33Gc",
                                 "name": "BROADCAST_OPTION",
-                                "value": "drive and draw constellation",
+                                "value": "\u3046\u3054\u3044\u3066\u305b\u3044\u3056\u3092\u3048\u304c\u304f",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -4822,7 +4822,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ".G{_CxSWHuZHI5M/,zvQ",
                                 "name": "BROADCAST_OPTION",
-                                "value": "reset lists",
+                                "value": "\u30ea\u30b9\u30c8\u3092\u30ea\u30bb\u30c3\u30c8\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -6811,7 +6811,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "gdnsE-41V27N~XVzaR~/",
                                 "name": "BROADCAST_OPTION",
-                                "value": "get turn angle",
+                                "value": "\u304b\u3044\u3066\u3093\u304b\u304f\u3069\u3092\u306f\u304b\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -7496,7 +7496,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "oLO]runH8=u/*t{cwPeh",
                                 "name": "BROADCAST_OPTION",
-                                "value": "choose constellation",
+                                "value": "\u305b\u3044\u3056\u3092\u3048\u3089\u3076",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -7939,7 +7939,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "=]facy.O4s|fFWhv;edh",
                                 "name": "BROADCAST_OPTION",
-                                "value": "set orion data",
+                                "value": "\u30aa\u30ea\u30aa\u30f3\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -8713,7 +8713,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "H.2~:/d@bF{e]}?}WaPH",
                                 "name": "BROADCAST_OPTION",
-                                "value": "get instructions",
+                                "value": "\u3057\u3058\u3092\u3046\u3051\u3068\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -8862,7 +8862,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "ZG=|W.TfM3U87b_uo.b{",
                                 "name": "BROADCAST_OPTION",
-                                "value": "set libra data",
+                                "value": "\u3066\u3093\u3073\u3093\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -9489,7 +9489,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "Gl-dVUy+!0LaE8+C{=V]",
                                 "name": "BROADCAST_OPTION",
-                                "value": "set leo data",
+                                "value": "\u3057\u3057\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -9556,7 +9556,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "ANzBheuzB(vk`Iqw!t*e",
                                 "name": "BROADCAST_OPTION",
-                                "value": "shuffle choices",
+                                "value": "\u305b\u3093\u305f\u304f\u3057\u3092\u30b7\u30e3\u30c3\u30d5\u30eb\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -9600,7 +9600,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "(@_tdwd4*,bDFr5Uu|Uu",
                                 "name": "BROADCAST_OPTION",
-                                "value": "set scorpius data",
+                                "value": "\u3055\u305d\u308a\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -10969,7 +10969,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "Gl-dVUy+!0LaE8+C{=V]",
                                 "name": "BROADCAST_OPTION",
-                                "value": "set leo data",
+                                "value": "\u3057\u3057\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -11121,7 +11121,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "=]facy.O4s|fFWhv;edh",
                                 "name": "BROADCAST_OPTION",
-                                "value": "set orion data",
+                                "value": "\u30aa\u30ea\u30aa\u30f3\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -11601,7 +11601,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "/R[dl]o6#IX]bW^b33Gc",
                                 "name": "BROADCAST_OPTION",
-                                "value": "drive and draw constellation",
+                                "value": "\u3046\u3054\u3044\u3066\u305b\u3044\u3056\u3092\u3048\u304c\u304f",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -12531,7 +12531,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "C#^%+V)*-.nw0+Cm*bpb",
                                 "name": "BROADCAST_OPTION",
-                                "value": "ask to play again",
+                                "value": "\u3082\u3046\u3044\u3061\u3069\u30d7\u30ec\u30a4\u3059\u308b\u3088\u3046\u304a\u306d\u304c\u3044\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -12580,7 +12580,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ".ZT=AbOh!zZTgYj{=mja",
                                 "name": "BROADCAST_OPTION",
-                                "value": "next constellation",
+                                "value": "\u3064\u304e\u306e\u305b\u3044\u3056",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -12597,7 +12597,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "q?n=nV;:q8w7ae`f[g/z",
                                 "name": "BROADCAST_OPTION",
-                                "value": "populate choices",
+                                "value": "\u305b\u3093\u305f\u304f\u3057\u3092\u3064\u304f\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -13041,7 +13041,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ".G{_CxSWHuZHI5M/,zvQ",
                                 "name": "BROADCAST_OPTION",
-                                "value": "reset lists",
+                                "value": "\u30ea\u30b9\u30c8\u3092\u30ea\u30bb\u30c3\u30c8\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -13468,7 +13468,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "(@_tdwd4*,bDFr5Uu|Uu",
                                 "name": "BROADCAST_OPTION",
-                                "value": "set scorpius data",
+                                "value": "\u3055\u305d\u308a\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -13547,7 +13547,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ".ZT=AbOh!zZTgYj{=mja",
                                 "name": "BROADCAST_OPTION",
-                                "value": "next constellation",
+                                "value": "\u3064\u304e\u306e\u305b\u3044\u3056",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -14165,7 +14165,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "C#^%+V)*-.nw0+Cm*bpb",
                                 "name": "BROADCAST_OPTION",
-                                "value": "ask to play again",
+                                "value": "\u3082\u3046\u3044\u3061\u3069\u30d7\u30ec\u30a4\u3059\u308b\u3088\u3046\u304a\u306d\u304c\u3044\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -14184,7 +14184,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "H.2~:/d@bF{e]}?}WaPH",
                                 "name": "BROADCAST_OPTION",
-                                "value": "get instructions",
+                                "value": "\u3057\u3058\u3092\u3046\u3051\u3068\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -14823,7 +14823,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "b5ZZbxuiC|*pF9VNej4d",
                                 "name": "BROADCAST_OPTION",
-                                "value": "turn to starting angle",
+                                "value": "\u3055\u3044\u3057\u3087\u306e\u304b\u3069\u306b\u3080\u304b\u3046",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -15445,7 +15445,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ".ZT=AbOh!zZTgYj{=mja",
                                 "name": "BROADCAST_OPTION",
-                                "value": "next constellation",
+                                "value": "\u3064\u304e\u306e\u305b\u3044\u3056",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -15582,7 +15582,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "v|JfUTGMW4^p31Z4Lkn_",
                                 "name": "BROADCAST_OPTION",
-                                "value": "reset choices",
+                                "value": "\u305b\u3093\u305f\u304f\u3057\u3092\u30ea\u30bb\u30c3\u30c8\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -16353,7 +16353,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "G6GZ#oDR{k7gqSv)T3{e",
                                 "name": "BROADCAST_OPTION",
-                                "value": "say factoid",
+                                "value": "\u3056\u3064\u304c\u304f\u3092\u306f\u306a\u3059",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -16904,7 +16904,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "G6GZ#oDR{k7gqSv)T3{e",
                                 "name": "BROADCAST_OPTION",
-                                "value": "say factoid",
+                                "value": "\u3056\u3064\u304c\u304f\u3092\u306f\u306a\u3059",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -17147,7 +17147,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "IjmT4tKwvwBovYbhxb-]",
                                 "name": "BROADCAST_OPTION",
-                                "value": "get distance",
+                                "value": "\u304d\u3087\u308a\u3092\u306f\u304b\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -17515,7 +17515,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "ZG=|W.TfM3U87b_uo.b{",
                                 "name": "BROADCAST_OPTION",
-                                "value": "set libra data",
+                                "value": "\u3066\u3093\u3073\u3093\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -17690,7 +17690,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "E:lZ(.7FH3avR,3`.)a_",
                                 "name": "BROADCAST_OPTION",
-                                "value": "set cassiopeia data",
+                                "value": "\u30ab\u30b7\u30aa\u30da\u30e4\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -18177,7 +18177,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "ANzBheuzB(vk`Iqw!t*e",
                                 "name": "BROADCAST_OPTION",
-                                "value": "shuffle choices",
+                                "value": "\u305b\u3093\u305f\u304f\u3057\u3092\u30b7\u30e3\u30c3\u30d5\u30eb\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -19085,7 +19085,7 @@
                             "BROADCAST_OPTION": {
                                 "id": ".G{_CxSWHuZHI5M/,zvQ",
                                 "name": "BROADCAST_OPTION",
-                                "value": "reset lists",
+                                "value": "\u30ea\u30b9\u30c8\u3092\u30ea\u30bb\u30c3\u30c8\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -20036,7 +20036,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "E:lZ(.7FH3avR,3`.)a_",
                                 "name": "BROADCAST_OPTION",
-                                "value": "set cassiopeia data",
+                                "value": "\u30ab\u30b7\u30aa\u30da\u30e4\u3056\u306e\u30c7\u30fc\u30bf\u3092\u305b\u3063\u3066\u3044\u3059\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -20382,7 +20382,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "gdnsE-41V27N~XVzaR~/",
                                 "name": "BROADCAST_OPTION",
-                                "value": "get turn angle",
+                                "value": "\u304b\u3044\u3066\u3093\u304b\u304f\u3069\u3092\u306f\u304b\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -21110,7 +21110,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "H.2~:/d@bF{e]}?}WaPH",
                                 "name": "BROADCAST_OPTION",
-                                "value": "get instructions",
+                                "value": "\u3057\u3058\u3092\u3046\u3051\u3068\u308b",
                                 "variableType": "broadcast_msg"
                             }
                         },
