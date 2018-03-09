@@ -13,6 +13,7 @@ type Receiver struct {
 	hotword chan struct{}
 	audio   chan socketMsg
 	writer  io.Writer
+	isTest  bool
 }
 
 func (r *Receiver) writeBack(buf []byte) (int, error) {

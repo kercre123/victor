@@ -193,7 +193,11 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
   {
     std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
     // Ignore extra triggers during streaming
-    if (nullptr != _currentStreamingJob)
+    if (nullptr != _currentStreamingJob
+    #if ANKI_DEV_CHEATS
+      || _fakeStreamingState
+    #endif
+    )
     {
       return;
     }
@@ -646,6 +650,40 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
   bool receivedStopMessage = false;
   static constexpr int kMaxReceiveBytes = 2000;
   char receiveArray[kMaxReceiveBytes];
+  
+  const ssize_t bytesReceived = _udpServer->Recv(receiveArray, kMaxReceiveBytes);
+  if (bytesReceived == 2)
+  {
+    if (receiveArray[0] == 0 && receiveArray[1] == 0)
+    {
+      PRINT_NAMED_INFO("MicDataProcessor.Update.RecvCloudProcess.StopSignal", "");
+      receivedStopMessage = true;
+    }
+#if ANKI_DEV_CHEATS
+    else if (receiveArray[0] == 0 && receiveArray[1] == 1)
+    {
+      PRINT_NAMED_INFO("MicDataProcessor.Update.RecvCloudProcess.FakeTrigger", "");
+      _fakeStreamingState = true;
+
+      // Set up a message to send out about the triggerword
+      RobotInterface::TriggerWordDetected twDetectedMessage;
+      const auto mostRecentTimestamp = _immediateAudioBuffer.back().timestamp;
+      twDetectedMessage.timestamp = mostRecentTimestamp;
+      twDetectedMessage.direction = _micImmediateDirection->GetDominantDirection();
+      auto engineMessage = std::unique_ptr<RobotInterface::RobotToEngine>(
+        new RobotInterface::RobotToEngine(std::move(twDetectedMessage)));
+      {
+        std::lock_guard<std::mutex> lock(_msgsMutex);
+        _msgsToEngine.push_back(std::move(engineMessage));
+      }
+    } 
+#endif
+    else
+    {
+      PRINT_NAMED_INFO("MicDataProcessor.Update.RecvCloudProcess.UnexpectedSignal", "0x%x 0x%x", receiveArray[0], receiveArray[1]);
+      receivedStopMessage = true;
+    }
+  }
 
 #if ANKI_DEV_CHEATS
   uint32_t recordingSecondsRemaining = 0;
@@ -684,39 +722,27 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
       _saveJob = _micProcessingJobs.back();
     }
   }
-#endif
-  
-  const ssize_t bytesReceived = _udpServer->Recv(receiveArray, kMaxReceiveBytes);
-  if (bytesReceived == 2)
+
+  // Minimum length of time to display the "trigger heard" symbol on the mic data debug screen
+  // (is extended by streaming)
+  constexpr uint32_t kTriggerDisplayTime_ns = 1000 * 1000 * 2000; // 2 seconds
+  static BaseStationTime_t endTriggerDispTime_ns = 0;
+  if (endTriggerDispTime_ns > 0 && endTriggerDispTime_ns < currTime_nanosec)
   {
-    if (receiveArray[0] != '\0' || receiveArray[1] != '\0')
-    {
-      PRINT_NAMED_INFO("MicDataProcessor.Update.RecvCloudProcess.UnexpectedSignal", "0x%x 0x%x", receiveArray[0], receiveArray[1]);
-    }
-    else
-    {
-      PRINT_NAMED_INFO("MicDataProcessor.Update.RecvCloudProcess.StopSignal", "");
-    }
-    receivedStopMessage = true;
+    endTriggerDispTime_ns = 0;
   }
+#endif
 
-  #if ANKI_DEV_CHEATS
-    // Minimum length of time to display the "trigger heard" symbol on the mic data debug screen
-    // (is extended by streaming)
-    constexpr uint32_t kTriggerDisplayTime_ns = 1000 * 1000 * 2000; // 2 seconds
-    static BaseStationTime_t endTriggerDispTime_ns = 0;
-    if (endTriggerDispTime_ns > 0 && endTriggerDispTime_ns < currTime_nanosec)
-    {
-      endTriggerDispTime_ns = 0;
-    }
-  #endif
-
-  static size_t streamingAudioIndex = 0;
   // lock the job mutex
   {
     std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
     // check if the pointer to the currently streaming job is valid
-    if (!_currentlyStreaming && _currentStreamingJob != nullptr)
+    if (!_currentlyStreaming 
+      && (_currentStreamingJob != nullptr
+      #if ANKI_DEV_CHEATS
+        || _fakeStreamingState
+      #endif
+    ))
     {
       #if ANKI_DEV_CHEATS
         endTriggerDispTime_ns = currTime_nanosec + kTriggerDisplayTime_ns;
@@ -724,7 +750,7 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
       if (_udpServer->HasClient())
       {
         _currentlyStreaming = true;
-        streamingAudioIndex = 0;
+        _streamingAudioIndex = 0;
   
         // Send out the message announcing the trigger word has been detected
         static const char* const hotwordSignal = "hotword";
@@ -744,24 +770,29 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
       // Are we done with what we want to stream?
       static constexpr size_t kMaxRecordTime_ms = 10000;
       static constexpr size_t kMaxRecordNumChunks = (kMaxRecordTime_ms / (kTimePerChunk_ms * kChunksPerSEBlock)) + 1;
-      if (receivedStopMessage || streamingAudioIndex >= kMaxRecordNumChunks)
+      if (receivedStopMessage || _streamingAudioIndex >= kMaxRecordNumChunks)
       {
         ClearCurrentStreamingJob();
-        PRINT_NAMED_INFO("MicDataProcessor.Update.StreamingEnd", "%zu ms", streamingAudioIndex * kTimePerChunk_ms * kChunksPerSEBlock);
+        PRINT_NAMED_INFO("MicDataProcessor.Update.StreamingEnd", "%zu ms", _streamingAudioIndex * kTimePerChunk_ms * kChunksPerSEBlock);
       }
       else
       {
-        // Copy any new data that has been pushed onto the currently streaming job
-        AudioUtil::AudioChunkList newAudio = _currentStreamingJob->GetProcessedAudio(streamingAudioIndex);
-        streamingAudioIndex += newAudio.size();
-    
-        // Send the audio to any clients we've got
-        if (_udpServer->HasClient())
+      #if ANKI_DEV_CHEATS
+        if (!_fakeStreamingState)
+      #endif
         {
-          for(const auto& audioChunk : newAudio)
+          // Copy any new data that has been pushed onto the currently streaming job
+          AudioUtil::AudioChunkList newAudio = _currentStreamingJob->GetProcessedAudio(_streamingAudioIndex);
+          _streamingAudioIndex += newAudio.size();
+      
+          // Send the audio to any clients we've got
+          if (_udpServer->HasClient())
           {
-            const auto entrySize = !audioChunk.empty() ? sizeof(audioChunk[0]) : 0;
-            _udpServer->Send((char*)audioChunk.data(), Util::numeric_cast<int>(audioChunk.size() * entrySize));
+            for(const auto& audioChunk : newAudio)
+            {
+              const auto entrySize = !audioChunk.empty() ? sizeof(audioChunk[0]) : 0;
+              _udpServer->Send((char*)audioChunk.data(), Util::numeric_cast<int>(audioChunk.size() * entrySize));
+            }
           }
         }
       }

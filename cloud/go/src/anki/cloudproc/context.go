@@ -10,11 +10,17 @@ import (
 )
 
 type voiceContext struct {
+	conn        *chipper.Conn
 	stream      *chipper.Stream
 	process     *Process
 	samples     []byte
 	audioStream chan []byte
 	once        sync.Once
+}
+
+type cloudChans struct {
+	intent chan<- string
+	err    chan<- string
 }
 
 func (ctx *voiceContext) addSamples(samples []byte) {
@@ -32,12 +38,14 @@ func (ctx *voiceContext) addSamples(samples []byte) {
 func (ctx *voiceContext) close() error {
 	var err util.Errors
 	err.Append(ctx.stream.Close())
+	err.Append(ctx.conn.Close())
 	return err.Error()
 }
 
-func (p *Process) newVoiceContext(stream *chipper.Stream, cloudChan chan<- string) *voiceContext {
+func (p *Process) newVoiceContext(conn *chipper.Conn, stream *chipper.Stream, cloudChan cloudChans) *voiceContext {
 	audioStream := make(chan []byte, 10)
 	ctx := &voiceContext{
+		conn:        conn,
 		stream:      stream,
 		process:     p,
 		samples:     make([]byte, 0, p.StreamSize()*2),
@@ -52,13 +60,14 @@ func (p *Process) newVoiceContext(stream *chipper.Stream, cloudChan chan<- strin
 	return ctx
 }
 
-func (ctx *voiceContext) sendAudio(samples []byte, cloudChan chan<- string) {
+func (ctx *voiceContext) sendAudio(samples []byte, cloudChan cloudChans) {
 	var err error
 	sendTime := util.TimeFuncMs(func() {
 		err = ctx.stream.SendAudio(samples)
 	})
 	if err != nil {
 		fmt.Println("Cloud error:", err)
+		cloudChan.err <- err.Error()
 		return
 	}
 	logVerbose("Sent", len(samples), "bytes to Chipper (call took", int(sendTime), "ms)")
@@ -69,7 +78,7 @@ func (ctx *voiceContext) sendAudio(samples []byte, cloudChan chan<- string) {
 			resp, err := ctx.stream.WaitForIntent()
 			if err != nil {
 				fmt.Println("CCE error:", err)
-				cloudChan <- ""
+				cloudChan.err <- err.Error()
 				return
 			}
 			fmt.Println("Intent response ->", resp)
@@ -78,7 +87,7 @@ func (ctx *voiceContext) sendAudio(samples []byte, cloudChan chan<- string) {
 	})
 }
 
-func sendJSONResponse(resp *chipper.IntentResult, cloudChan chan<- string) {
+func sendJSONResponse(resp *chipper.IntentResult, cloudChan cloudChans) {
 	outResponse := make(map[string]interface{})
 	outResponse["intent"] = resp.Action
 	if resp.Parameters != nil && len(resp.Parameters) > 0 {
@@ -88,8 +97,8 @@ func sendJSONResponse(resp *chipper.IntentResult, cloudChan chan<- string) {
 	encoder := json.NewEncoder(&buf)
 	if err := encoder.Encode(outResponse); err != nil {
 		fmt.Println("JSON encode error:", err)
-		cloudChan <- ""
+		cloudChan.err <- "json"
 		return
 	}
-	cloudChan <- buf.String()
+	cloudChan.intent <- buf.String()
 }

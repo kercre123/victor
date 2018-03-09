@@ -81,6 +81,10 @@ private:
   std::shared_ptr<MicDataInfo> _currentStreamingJob;
   std::recursive_mutex _dataRecordJobMutex;
   bool _currentlyStreaming = false;
+#if ANKI_DEV_CHEATS
+  bool _fakeStreamingState = false;
+#endif
+  size_t _streamingAudioIndex = 0;
 
   // Members for general purpose processing and state
   std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> _inProcessAudioBlock;

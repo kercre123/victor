@@ -3,6 +3,7 @@ package cloudproc
 import (
 	"anki/chipper"
 	"anki/util"
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -43,7 +44,7 @@ type Process struct {
 	receivers []*Receiver
 	intents   []io.Writer
 	kill      chan struct{}
-	hotword   chan struct{}
+	hotword   chan hotwordEvent
 	audio     chan socketMsg
 	opts      *Options
 }
@@ -53,22 +54,28 @@ type Process struct {
 func (p *Process) AddReceiver(r *Receiver) {
 	if p.receivers == nil {
 		p.receivers = make([]*Receiver, 0, 4)
+		p.hotword = make(chan hotwordEvent)
+		p.audio = make(chan socketMsg)
 	}
 	if p.kill == nil {
 		p.kill = make(chan struct{})
 	}
-	if len(p.receivers) == 0 {
-		p.hotword = r.hotword
-		p.audio = r.audio
-	} else {
-		if len(p.receivers) == 1 {
-			p.hotword = make(chan struct{})
-			p.audio = make(chan socketMsg)
-			p.addMultiplexRoutine(p.receivers[0])
-		}
-		p.addMultiplexRoutine(r)
-	}
+	p.addMultiplexRoutine(r)
 	p.receivers = append(p.receivers, r)
+}
+
+// AddTestReceiver adds the given Receiver to the list of sources the
+// cloud process will listen to for data. Additionally, it will be
+// marked as a test receiver, which means that data sent on this
+// receiver will send a message to the mic requesting it notify the
+// AI of a hotword event on our behalf.
+func (p *Process) AddTestReceiver(r *Receiver) {
+	r.isTest = true
+	p.AddReceiver(r)
+}
+
+type hotwordEvent struct {
+	isTest bool
 }
 
 func (p *Process) addMultiplexRoutine(r *Receiver) {
@@ -78,7 +85,7 @@ func (p *Process) addMultiplexRoutine(r *Receiver) {
 			case <-p.kill:
 				return
 			case <-r.hotword:
-				p.hotword <- struct{}{}
+				p.hotword <- hotwordEvent{isTest: r.isTest}
 			case msg := <-r.audio:
 				p.audio <- msg
 			}
@@ -108,17 +115,27 @@ func (p *Process) Run(stop <-chan struct{}) {
 		p.opts.chunkMs = DefaultChunkMs
 	}
 
-	cloudChan := make(chan string)
+	cloudIntent := make(chan string)
+	cloudError := make(chan string)
+	cloudChan := cloudChans{intent: cloudIntent, err: cloudError}
 
 	var ctx *voiceContext
 procloop:
 	for {
 		select {
-		case <-p.hotword:
+		case hw := <-p.hotword:
 			// hotword = get ready to stream data
 			if ctx != nil {
 				fmt.Println("Got hotword event while already streaming, weird...")
+				close(ctx.audioStream)
+				ctx.close()
 			}
+
+			// if this is from a test receiver, notify the mic to send the AI a hotword on our behalf
+			if hw.isTest {
+				p.writeMic([]byte{0, 1})
+			}
+
 			var stream *chipper.Stream
 			var chipperConn *chipper.Conn
 			var err error
@@ -126,6 +143,7 @@ procloop:
 				chipperConn, err = chipper.NewConn(ChipperURL, ChipperSecret, "device-id")
 				if err != nil {
 					fmt.Println("Error getting chipper connection:", err)
+					p.writeError("connecting")
 					return
 				}
 				stream, err = chipperConn.NewStream(chipper.StreamOpts{
@@ -136,13 +154,16 @@ procloop:
 						FrameSize:  60},
 					SessionId: uuid.New().String()[:16],
 					Handler:   p.opts.handler})
+				if err != nil {
+					p.writeError("newstream")
+				}
 			})
 			if err != nil {
 				fmt.Println("Error creating Chipper:", err)
 				continue
 			}
 
-			ctx = p.newVoiceContext(stream, cloudChan)
+			ctx = p.newVoiceContext(chipperConn, stream, cloudChan)
 
 			logVerbose("Received hotword event, created context in", int(ctxTime), "ms")
 
@@ -155,32 +176,27 @@ procloop:
 				logVerbose("No active context, discarding", len(msg.buf), "bytes")
 			}
 
-		case intent := <-cloudChan:
+		case intent := <-cloudIntent:
 			logVerbose("Received intent from cloud:", intent)
 			// we got an answer from the cloud, tell mic to stop...
-			for _, r := range p.receivers {
-				n, err := r.writeBack([]byte{0, 0})
-				if n != 2 || err != nil {
-					fmt.Println("Mic write error:", n, err)
-				}
-			}
-
-			if intent == "" {
-				intent = "error"
-			}
+			p.signalMicStop()
 
 			// send intent to AI
-			for _, r := range p.intents {
-				n, err := r.Write([]byte(intent))
-				if n != len(intent) || err != nil {
-					fmt.Println("AI write error:", n, err)
-				}
-			}
+			p.writeResponse([]byte(intent))
 
 			// stop streaming until we get another hotword event
 			close(ctx.audioStream)
 			ctx.close()
 			ctx = nil
+
+		case err := <-cloudError:
+			logVerbose("Received error from cloud:", err)
+			p.signalMicStop()
+			p.writeError("server")
+			close(ctx.audioStream)
+			ctx.close()
+			ctx = nil
+
 		case <-stop:
 			logVerbose("Received stop notification")
 			if p.kill != nil {
@@ -213,6 +229,37 @@ func (p *Process) StreamSize() int {
 // SetVerbose enables or disables verbose logging
 func SetVerbose(value bool) {
 	verbose = value
+}
+
+func (p *Process) writeError(reason string) {
+	jsonMap := map[string]string{"error": reason}
+	buf, err := json.Marshal(jsonMap)
+	if err != nil {
+		fmt.Println("Couldn't encode json error for "+reason+": ", err)
+	}
+	p.writeResponse(buf)
+}
+
+func (p *Process) writeResponse(response []byte) {
+	for _, r := range p.intents {
+		n, err := r.Write(response)
+		if n != len(response) || err != nil {
+			fmt.Println("AI write error:", n, err)
+		}
+	}
+}
+
+func (p *Process) signalMicStop() {
+	p.writeMic([]byte{0, 0})
+}
+
+func (p *Process) writeMic(buf []byte) {
+	for _, r := range p.receivers {
+		n, err := r.writeBack(buf)
+		if n != len(buf) || err != nil {
+			fmt.Println("Mic write error:", n, err)
+		}
+	}
 }
 
 func logVerbose(a ...interface{}) {

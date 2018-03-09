@@ -82,7 +82,7 @@ func main() {
 	process := &cloudproc.Process{}
 	process.AddReceiver(receiver)
 	if testRecv != nil {
-		process.AddReceiver(testRecv)
+		process.AddTestReceiver(testRecv)
 	}
 	process.AddIntentWriter(aiSock)
 	//opts := new(cloudproc.Options).SetCompression(true).SetChunkMs(120)
