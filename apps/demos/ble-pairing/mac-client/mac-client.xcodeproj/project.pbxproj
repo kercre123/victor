@@ -1,0 +1,368 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 48;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		DA5470702047985E004FDA9F /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA54706F2047985E004FDA9F /* main.mm */; };
+		DA54707720479890004FDA9F /* BleCentral.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA54707620479890004FDA9F /* BleCentral.mm */; };
+		DA54707B20479928004FDA9F /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA54707A20479928004FDA9F /* CoreBluetooth.framework */; };
+		DAE361C62049D1500053ED2F /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DAE361C52049D1500053ED2F /* libsodium.a */; };
+		DAE361CF2049D27B0053ED2F /* libclad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DAE361CE2049D27B0053ED2F /* libclad.a */; };
+		DAE361D52049D4AE0053ED2F /* bleMessageProtocol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAE361D32049D4AE0053ED2F /* bleMessageProtocol.cpp */; };
+		DAE361EC2049DF030053ED2F /* messageExternalComms.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAE361E72049DF030053ED2F /* messageExternalComms.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		DA54706A2047985E004FDA9F /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		DA54706C2047985E004FDA9F /* mac-client */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "mac-client"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DA54706F2047985E004FDA9F /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		DA54707620479890004FDA9F /* BleCentral.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = BleCentral.mm; sourceTree = "<group>"; };
+		DA5470782047989C004FDA9F /* BleCentral.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BleCentral.h; sourceTree = "<group>"; };
+		DA54707A20479928004FDA9F /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
+		DAE361C42049D1410053ED2F /* include */ = {isa = PBXFileReference; lastKnownFileType = folder; path = include; sourceTree = "<group>"; };
+		DAE361C52049D1500053ED2F /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libsodium.a; sourceTree = "<group>"; };
+		DAE361CE2049D27B0053ED2F /* libclad.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libclad.a; sourceTree = "<group>"; };
+		DAE361D32049D4AE0053ED2F /* bleMessageProtocol.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = bleMessageProtocol.cpp; sourceTree = "<group>"; };
+		DAE361D42049D4AE0053ED2F /* bleMessageProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bleMessageProtocol.h; sourceTree = "<group>"; };
+		DAE361D62049D5250053ED2F /* simpleSignal_fwd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = simpleSignal_fwd.h; sourceTree = "<group>"; };
+		DAE361D72049D5250053ED2F /* simpleSignal.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = simpleSignal.hpp; sourceTree = "<group>"; };
+		DAE361D82049D5250053ED2F /* signalHolder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = signalHolder.h; sourceTree = "<group>"; };
+		DAE361E72049DF030053ED2F /* messageExternalComms.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = messageExternalComms.cpp; sourceTree = "<group>"; };
+		DAE361E82049DF030053ED2F /* messageExternalComms_declarations.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = messageExternalComms_declarations.def; sourceTree = "<group>"; };
+		DAE361E92049DF030053ED2F /* messageExternalComms_switch.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = messageExternalComms_switch.def; sourceTree = "<group>"; };
+		DAE361EA2049DF030053ED2F /* messageExternalComms.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = messageExternalComms.h; sourceTree = "<group>"; };
+		DAE361EB2049DF030053ED2F /* messageExternalCommsTag.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = messageExternalCommsTag.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		DA5470692047985E004FDA9F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DAE361C62049D1500053ED2F /* libsodium.a in Frameworks */,
+				DAE361CF2049D27B0053ED2F /* libclad.a in Frameworks */,
+				DA54707B20479928004FDA9F /* CoreBluetooth.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		DA5470632047985E004FDA9F = {
+			isa = PBXGroup;
+			children = (
+				DAE361D92049DE4D0053ED2F /* clad */,
+				DA54706E2047985E004FDA9F /* mac-client */,
+				DA54706D2047985E004FDA9F /* Products */,
+				DA54707920479928004FDA9F /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		DA54706D2047985E004FDA9F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				DA54706C2047985E004FDA9F /* mac-client */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DA54706E2047985E004FDA9F /* mac-client */ = {
+			isa = PBXGroup;
+			children = (
+				DAE361D32049D4AE0053ED2F /* bleMessageProtocol.cpp */,
+				DAE361D42049D4AE0053ED2F /* bleMessageProtocol.h */,
+				DAE361C82049D1940053ED2F /* signals */,
+				DAE361C32049D12B0053ED2F /* sodium */,
+				DA54706F2047985E004FDA9F /* main.mm */,
+				DA5470782047989C004FDA9F /* BleCentral.h */,
+				DA54707620479890004FDA9F /* BleCentral.mm */,
+			);
+			path = "mac-client";
+			sourceTree = "<group>";
+		};
+		DA54707920479928004FDA9F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				DAE361CE2049D27B0053ED2F /* libclad.a */,
+				DAE361C52049D1500053ED2F /* libsodium.a */,
+				DA54707A20479928004FDA9F /* CoreBluetooth.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		DAE361C32049D12B0053ED2F /* sodium */ = {
+			isa = PBXGroup;
+			children = (
+				DAE361C42049D1410053ED2F /* include */,
+			);
+			path = sodium;
+			sourceTree = "<group>";
+		};
+		DAE361C82049D1940053ED2F /* signals */ = {
+			isa = PBXGroup;
+			children = (
+				DAE361D82049D5250053ED2F /* signalHolder.h */,
+				DAE361D62049D5250053ED2F /* simpleSignal_fwd.h */,
+				DAE361D72049D5250053ED2F /* simpleSignal.hpp */,
+			);
+			path = signals;
+			sourceTree = "<group>";
+		};
+		DAE361D92049DE4D0053ED2F /* clad */ = {
+			isa = PBXGroup;
+			children = (
+				DAE361E02049DEA00053ED2F /* externalInterface */,
+			);
+			path = clad;
+			sourceTree = "<group>";
+		};
+		DAE361E02049DEA00053ED2F /* externalInterface */ = {
+			isa = PBXGroup;
+			children = (
+				DAE361E82049DF030053ED2F /* messageExternalComms_declarations.def */,
+				DAE361E92049DF030053ED2F /* messageExternalComms_switch.def */,
+				DAE361E72049DF030053ED2F /* messageExternalComms.cpp */,
+				DAE361EA2049DF030053ED2F /* messageExternalComms.h */,
+				DAE361EB2049DF030053ED2F /* messageExternalCommsTag.h */,
+			);
+			path = externalInterface;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		DA54706B2047985E004FDA9F /* mac-client */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DA5470732047985E004FDA9F /* Build configuration list for PBXNativeTarget "mac-client" */;
+			buildPhases = (
+				DA5470682047985E004FDA9F /* Sources */,
+				DA5470692047985E004FDA9F /* Frameworks */,
+				DA54706A2047985E004FDA9F /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "mac-client";
+			productName = "mac-client";
+			productReference = DA54706C2047985E004FDA9F /* mac-client */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		DA5470642047985E004FDA9F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0920;
+				ORGANIZATIONNAME = "Paul Aluri";
+				TargetAttributes = {
+					DA54706B2047985E004FDA9F = {
+						CreatedOnToolsVersion = 9.2;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = DA5470672047985E004FDA9F /* Build configuration list for PBXProject "mac-client" */;
+			compatibilityVersion = "Xcode 8.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = DA5470632047985E004FDA9F;
+			productRefGroup = DA54706D2047985E004FDA9F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DA54706B2047985E004FDA9F /* mac-client */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		DA5470682047985E004FDA9F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DAE361EC2049DF030053ED2F /* messageExternalComms.cpp in Sources */,
+				DAE361D52049D4AE0053ED2F /* bleMessageProtocol.cpp in Sources */,
+				DA5470702047985E004FDA9F /* main.mm in Sources */,
+				DA54707720479890004FDA9F /* BleCentral.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		DA5470712047985E004FDA9F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		DA5470722047985E004FDA9F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		DA5470742047985E004FDA9F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 6N4JN4E7V7;
+				HEADER_SEARCH_PATHS = "/Users/paul/Development/victor-code/victor/tools/message-buffers/support/cpp/include/**";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		DA5470752047985E004FDA9F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 6N4JN4E7V7;
+				HEADER_SEARCH_PATHS = "/Users/paul/Development/victor-code/victor/tools/message-buffers/support/cpp/include/**";
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		DA5470672047985E004FDA9F /* Build configuration list for PBXProject "mac-client" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DA5470712047985E004FDA9F /* Debug */,
+				DA5470722047985E004FDA9F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DA5470732047985E004FDA9F /* Build configuration list for PBXNativeTarget "mac-client" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DA5470742047985E004FDA9F /* Debug */,
+				DA5470752047985E004FDA9F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = DA5470642047985E004FDA9F /* Project object */;
+}
