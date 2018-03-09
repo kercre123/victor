@@ -64,9 +64,9 @@ const char* DBG_cmd_substitution(const char *line, int len)
   if( !strcmp(line, "bsv") )
     return ">>bsv 00 00 00 00 00 00";
   if( !strcmp(line, "mot") )
-    return ">>mot 1f 00";
+    return ">>mot ff 03";
   if( !strcmp(line, "get") )
-    return ">>get 02 00";
+    return ">>get 01 00";
   if( !strncmp(line,"smr",3) || !strncmp(line,"gmr",3) || !strncmp(line,"rlg",3) || !strncmp(line,"eng",3) || !strncmp(line,"lfe",3) || !strncmp(line,"fcc",3) ) {
     int nargs = cmdNumArgs((char*)line);
     int ix  = nargs >= 2 ? cmdParseInt32(cmdGetArg((char*)line,1)) : 0;
@@ -90,21 +90,47 @@ void TestRobotInfo(void)
   //test all DVT2 supported commands - make sure they return a valid response
   if( g_fixmode > FIXMODE_ROBOT0 && g_fixmode <= FIXMODE_ROBOT3 ) //skip this in debug mode
   {
-    int opts = CMD_OPTS_DEFAULT; //& ~CMD_OPTS_EXCEPTION_EN; //~(CMD_OPTS_LOG_ERRORS | CMD_OPTS_EXCEPTION_EN));
-    cmdSend_DBG_(CMD_IO_CONTACTS, "esn",   100, opts);
-    cmdSend_DBG_(CMD_IO_CONTACTS, "bat",   100, opts);
-    cmdSend_DBG_(CMD_IO_CONTACTS, "cliff", 100, opts);
-    cmdSend_DBG_(CMD_IO_CONTACTS, "enc",   100, opts);
-    cmdSend_DBG_(CMD_IO_CONTACTS, "speed", 100, opts);
-    cmdSend_DBG_(CMD_IO_CONTACTS, "prox",  100, opts);
-    cmdSend_DBG_(CMD_IO_CONTACTS, "touch", 100, opts);
+    static int msd = 999999;
+    msd += 250;
+    if( msd > 6000 )
+      msd = 0;
+    
+    ConsolePrintf("\n=====================================================================\n");
+    ConsolePrintf("cmd delay: %ums\n", msd);
+    
+    cmdRobotEsn(); Timer::delayMs(msd);
+    cmdRobotBsv(); Timer::delayMs(msd);
+    cmdRobotBsv(); Timer::delayMs(msd);
+    cmdRobotGet(1, CCC_SENSOR_BATTERY); Timer::delayMs(msd);
+    cmdRobotGet(1, CCC_SENSOR_CLIFF); Timer::delayMs(msd);
+    cmdRobotGet(1, CCC_SENSOR_MOT_LEFT); Timer::delayMs(msd);
+    cmdRobotGet(1, CCC_SENSOR_MOT_RIGHT); Timer::delayMs(msd);
+    cmdRobotGet(1, CCC_SENSOR_MOT_LIFT); Timer::delayMs(msd);
+    cmdRobotGet(1, CCC_SENSOR_MOT_HEAD); Timer::delayMs(msd);
+    cmdRobotGet(1, CCC_SENSOR_PROX_TOF); Timer::delayMs(msd);
+    cmdRobotGet(1, CCC_SENSOR_BTN_TOUCH); Timer::delayMs(msd);
+    cmdRobotGet(1, CCC_SENSOR_RSSI); Timer::delayMs(msd);
+    cmdRobotGet(1, CCC_SENSOR_RX_PKT); Timer::delayMs(msd);
+    
+    cmdRobotMot(100, CCC_SENSOR_MOT_LEFT, 127, 0, 0, 0); Timer::delayMs(msd);
+    cmdRobotMot(100, CCC_SENSOR_MOT_RIGHT, 0, -127, 0, 0); Timer::delayMs(msd);
+    cmdRobotMot(50, CCC_SENSOR_MOT_LIFT, 0, 0, 100, 0); Timer::delayMs(msd);
+    cmdRobotMot(75, CCC_SENSOR_MOT_LIFT, 0, 0, -100, 0); Timer::delayMs(msd);
+    cmdRobotMot(50, CCC_SENSOR_MOT_HEAD, 0, 0, 0, 100); Timer::delayMs(msd);
+    cmdRobotMot(75, CCC_SENSOR_MOT_HEAD, 0, 0, 0, -100); Timer::delayMs(msd);
+    
+    uint32_t esn = cmdRobotGmr(0); Timer::delayMs(msd);
+    uint32_t hw_ver = cmdRobotGmr(1); Timer::delayMs(msd);
+    uint32_t model = cmdRobotGmr(2); Timer::delayMs(msd);
+    uint32_t lot_code = cmdRobotGmr(3); Timer::delayMs(msd);
+    ConsolePrintf("\n=====================================================================\n");
   }
   
   //DEBUG: console bridge, manual testing
   if( g_fixmode == FIXMODE_ROBOT0 )
     TestCommon::consoleBridge(TO_CONTACTS, 0, 0, BRIDGE_OPT_LINEBUFFER, DBG_cmd_substitution);
   if( g_fixmode == FIXMODE_ROBOT1 )
-    TestCommon::consoleBridge(TO_CONTACTS, 3000);
+    TestCommon::consoleBridge(TO_CONTACTS, 5000, 0, BRIDGE_OPT_LINEBUFFER, DBG_cmd_substitution);
   //-*/
 }
 
