@@ -503,7 +503,7 @@
                     },
                     "~a=Oa2eRZ)gmuu-Mcsn~": {
                         "id": "~a=Oa2eRZ)gmuu-Mcsn~",
-                        "name": "W\u00e4hle zuf\u00e4llig einen Fakt auf, den Cozmo sagen soll.",
+                        "name": "W\u00e4hle zuf\u00e4llig einen Fakt aus, den Cozmo sagen soll.",
                         "type": "",
                         "value": 0
                     }
@@ -15566,7 +15566,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Cassiopeia"
+                                "value": "Kassiopeia"
                             }
                         },
                         "id": "ew{f3R6m@^=.eH8w0+q)",
@@ -16009,7 +16009,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Waage k\u00f6nnte \u00fcber Planeten verf\u00fcgen, auf denen Leben m\u00f6glich ist. Cool, oder? Cool, oder?"
+                                "value": "Waage k\u00f6nnte \u00fcber Planeten verf\u00fcgen, auf denen Leben m\u00f6glich ist. Cool, oder?"
                             }
                         },
                         "id": "gP^8/KD{mt7)xjQ`/C9r",
@@ -18483,7 +18483,7 @@
                             "VARIABLE": {
                                 "id": "~a=Oa2eRZ)gmuu-Mcsn~",
                                 "name": "VARIABLE",
-                                "value": "W\u00e4hle zuf\u00e4llig einen Fakt auf, den Cozmo sagen soll.",
+                                "value": "W\u00e4hle zuf\u00e4llig einen Fakt aus, den Cozmo sagen soll.",
                                 "variableType": ""
                             }
                         },
@@ -18661,7 +18661,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "Das Sternbild ist Leo genannt, weil es wie ein L\u00f6we aussieht."
+                                "value": "Dieses Sternbild hei\u00dft L\u00f6we, weil es wie ein L\u00f6we aussieht."
                             }
                         },
                         "id": "rFsGu7lug57(k#M_AAVT",
