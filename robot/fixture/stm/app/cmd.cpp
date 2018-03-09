@@ -267,8 +267,9 @@ static char* nextArg_(char* s)
   return s; //now pointing to first char of next arg (maybe an opening ")
 }
 
-int cmdParseInt32(char *s)
+int32_t cmdParseInt32(char *s)
 {
+  errno = -1;
   if(s)
   {
     errno = 0;
@@ -276,7 +277,7 @@ int cmdParseInt32(char *s)
     long val = strtol(s, &endptr, 10); //enforce base10
 
     //check conversion errs, limit numerical range, and verify entire arg was parsed (stops at whitespace, invalid chars...)
-    if( errno == 0 && val <= INT_MAX && val >= INT_MIN+1 && endptr > s && *endptr == '\0' )
+    if( errno == 0 && val <= INT_MAX && val >= INT_MIN/*+1*/ && endptr > s && *endptr == '\0' )
       return val;
   }
   return INT_MIN; //parse error
@@ -284,6 +285,7 @@ int cmdParseInt32(char *s)
 
 uint32_t cmdParseHex32(char* s)
 {
+  errno = -1;
   if(s)
   {
     int len = strlen(s);
@@ -295,13 +297,15 @@ uint32_t cmdParseHex32(char* s)
       
       errno = 0;
       uint32_t low = strtol(buf+len-4,0,16); //last 4 chars
-      buf[len-4] = '\0'; //remove low
-      uint32_t high = strtol(buf,0,16);
-      
-      return (high << 16) | low;
+      if( errno == 0 )
+      {
+        buf[len-4] = '\0'; //remove low
+        uint32_t high = strtol(buf,0,16);
+        if( errno == 0 )
+          return (high << 16) | low;
+      }
     }
   }
-  errno = -1;
   return 0; //parse error
 }
 
@@ -408,85 +412,73 @@ void cmdDbgParseTestbench(void)
 //                  Robot (Charge Contacts)
 //-----------------------------------------------------------------------------
 
+#define CCC_DEBUG 0
+#define CCC_ERROR_HANDLE(e) if( CCC_DEBUG > 0 ) { return 0; } else { throw (e); }
+
 #include "emrf.h"
 
 static struct { //result of most recent command
   error_t ccr_err;
   int handler_cnt;
   int sr_cnt;
-  union {
-    ccr_esn_t esn;
-    ccr_bsv_t bsv;
-    ccr_sr_t  sr;
-  }rsp;
+  union { ccr_esn_t esn; ccr_bsv_t bsv; ccr_sr_t  sr; } rsp;
 } m_dat;
 
-void esn_handler_(char* s) {
-  m_dat.handler_cnt++;
-  m_dat.rsp.esn.esn = cmdParseHex32(cmdGetArg(s,0));
-  if( errno != 0 )
-    m_dat.ccr_err = ERROR_TESTPORT_RSP_BAD_ARG;
+void esn_bsv_handler_(char* s)
+{
+  uint32_t *dat = (uint32_t*)&m_dat.rsp; //esn,bsv are both uint32_t arrays
+  const int nwords_max = sizeof(m_dat.rsp)/sizeof(uint32_t);
+  
+  if( m_dat.handler_cnt <= nwords_max-2 ) {
+    dat[m_dat.handler_cnt+0] = cmdParseHex32( cmdGetArg(s,0) );
+    m_dat.ccr_err = errno != 0 ? ERROR_TESTPORT_RSP_BAD_ARG: m_dat.ccr_err;
+    dat[m_dat.handler_cnt+1] = cmdParseHex32(cmdGetArg(s,1));
+    m_dat.ccr_err = errno != 0 ? ERROR_TESTPORT_RSP_BAD_ARG: m_dat.ccr_err;
+  }
+  m_dat.handler_cnt += 2;
 }
 
 ccr_esn_t* cmdRobotEsn()
 {
   memset( &m_dat, 0, sizeof(m_dat) );
   const char *cmd = "esn 00 00 00 00 00 00";
-  cmdSend(CMD_IO_CONTACTS, cmd, 150, CMD_OPTS_DEFAULT, esn_handler_);
+  cmdSend(CMD_IO_CONTACTS, cmd, 150, CMD_OPTS_DEFAULT, esn_bsv_handler_);
   
-  ConsolePrintf("esn=%08x\n", m_dat.rsp.esn.esn);
+  #if CCC_DEBUG > 0
+  ConsolePrintf("esn=%08x os-version=%08x\n", m_dat.rsp.esn.esn, m_dat.rsp.esn.osver );
+  #endif
   
-  if( m_dat.handler_cnt != 1 || m_dat.ccr_err != ERROR_OK ) {
+  if( m_dat.handler_cnt != 2 || m_dat.ccr_err != ERROR_OK ) {
     ConsolePrintf("ESN ERROR %i, handler cnt %i\n", m_dat.ccr_err, m_dat.handler_cnt);
-    //throw m_dat.ccr_err;
-    return 0;
+    CCC_ERROR_HANDLE(m_dat.ccr_err);
   }
   return &m_dat.rsp.esn;
-}
-
-void bsv_handler_(char* s)
-{
-  uint32_t *dat = (uint32_t*)&m_dat.rsp.bsv;
-  if( m_dat.handler_cnt <= 8 )
-  {
-    dat[m_dat.handler_cnt+0] = cmdParseHex32(cmdGetArg(s,0));
-    if( errno != 0 )
-      m_dat.ccr_err = ERROR_TESTPORT_RSP_BAD_ARG;
-    
-    dat[m_dat.handler_cnt+1] = cmdParseHex32(cmdGetArg(s,1));
-    if( errno != 0 )
-      m_dat.ccr_err = ERROR_TESTPORT_RSP_BAD_ARG;
-  }
-  m_dat.handler_cnt += 2;
 }
 
 ccr_bsv_t* cmdRobotBsv()
 {
   memset( &m_dat, 0, sizeof(m_dat) );
-  cmdSend(CMD_IO_CONTACTS, "bsv 00 00 00 00 00 00", 200, CMD_OPTS_DEFAULT, bsv_handler_);
+  const char *cmd = "bsv 00 00 00 00 00 00";
+  cmdSend(CMD_IO_CONTACTS, cmd, 500, CMD_OPTS_DEFAULT, esn_bsv_handler_);
   
+  #if CCC_DEBUG > 0
   ConsolePrintf("bsv hw.rev,model %u %u\n", m_dat.rsp.bsv.hw_rev, m_dat.rsp.bsv.hw_model );
   ConsolePrintf("bsv ein %08x %08x %08x %08x\n", m_dat.rsp.bsv.ein[0], m_dat.rsp.bsv.ein[1], m_dat.rsp.bsv.ein[2], m_dat.rsp.bsv.ein[3] );
   ConsolePrintf("bsv app vers %08x %08x %08x %08x\n", m_dat.rsp.bsv.app_version[0], m_dat.rsp.bsv.app_version[1], m_dat.rsp.bsv.app_version[2], m_dat.rsp.bsv.app_version[3] );
+  #endif
   
   if( m_dat.handler_cnt != 10 || m_dat.ccr_err != ERROR_OK ) {
     ConsolePrintf("BSV ERROR %i, handler cnt %i\n", m_dat.ccr_err, m_dat.handler_cnt);
-    //throw m_dat.ccr_err;
-    return 0;
+    CCC_ERROR_HANDLE(m_dat.ccr_err);
   }
   return &m_dat.rsp.bsv;
 }
 
-void sensor_handler_(char* s)
-{
+void sensor_handler_(char* s) {
   m_dat.handler_cnt++;
-  //m_dat.ccr_err = ERROR_OK; //we only care about the final reading
-  
   for(int x=0; x < m_dat.sr_cnt; x++) {
-    uint32_t dat = cmdParseHex32(cmdGetArg(s,x));
-    m_dat.rsp.sr.val[x] = dat;
-    if( dat > 0xffff || errno != 0 )
-      m_dat.ccr_err = ERROR_TESTPORT_RSP_BAD_ARG;
+    m_dat.rsp.sr.val[x] = cmdParseInt32( cmdGetArg(s,x) );
+    m_dat.ccr_err = errno != 0 ? ERROR_TESTPORT_RSP_BAD_ARG : m_dat.ccr_err;
   }
 }
 
@@ -495,16 +487,17 @@ static ccr_sr_t* cmdRobot_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int
   memset( &m_dat, 0, sizeof(m_dat) );
   char b[22]; const int bz = sizeof(b);
   snformat(b,bz,"%s %02x %02x %02x %02x %02x %02x", cmd, NN, sensor, (uint8_t)treadL, (uint8_t)treadR, (uint8_t)lift, (uint8_t)head);
-
-  m_dat.sr_cnt = sensor > 8 ? 0 : ccr_sr_cnt[sensor]; //expected number of sensor values per drop/line
+  
+  m_dat.sr_cnt = sensor >= sizeof(ccr_sr_cnt) ? 0 : ccr_sr_cnt[sensor]; //expected number of sensor values per drop/line
   cmdSend(CMD_IO_CONTACTS, b, 150 + (int)NN*6, CMD_OPTS_DEFAULT, sensor_handler_);
   
-  ConsolePrintf("sr vals %04x %04x %04x %04x\n", m_dat.rsp.sr.val[0], m_dat.rsp.sr.val[1], m_dat.rsp.sr.val[2], m_dat.rsp.sr.val[3] );
+  #if CCC_DEBUG > 0
+  ConsolePrintf("sr vals %i %i %i %i\n", m_dat.rsp.sr.val[0], m_dat.rsp.sr.val[1], m_dat.rsp.sr.val[2], m_dat.rsp.sr.val[3] );
+  #endif
   
   if( m_dat.handler_cnt != NN || m_dat.ccr_err != ERROR_OK ) {
     ConsolePrintf("SR ERROR %i, handler cnt %i/%i\n", m_dat.ccr_err, m_dat.handler_cnt, NN);
-    //throw m_dat.ccr_err;
-    return 0;
+    CCC_ERROR_HANDLE(m_dat.ccr_err);
   }
   return &m_dat.rsp.sr;
 }
@@ -552,8 +545,7 @@ uint32_t cmdRobotGmr(uint8_t idx)
   
   if( m_dat.handler_cnt != 1 || m_dat.ccr_err != ERROR_OK ) {
     ConsolePrintf("GMR ERROR %i, handler cnt %i\n", m_dat.ccr_err, m_dat.handler_cnt);
-    //throw m_dat.ccr_err;
-    return 0;
+    CCC_ERROR_HANDLE(m_dat.ccr_err);
   }
   return m_dat.rsp.esn.esn;
 }
