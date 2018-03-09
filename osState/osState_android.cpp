@@ -105,7 +105,7 @@ void OSState::Update()
     if (now_ms - _lastUpdateTime_ms > _updatePeriod_ms) {
       
       using namespace std::chrono;
-      const auto startTime = steady_clock::now();
+      // const auto startTime = steady_clock::now();
 
       // Update cpu freq
       UpdateCPUFreq_kHz();
@@ -116,9 +116,9 @@ void OSState::Update()
       // Update battery voltage
       UpdateBatteryVoltage_uV();
 
-      const auto now = steady_clock::now();
-      const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
-      PRINT_NAMED_INFO("OSState", "Update took %lld microseconds", elapsed_us);
+      // const auto now = steady_clock::now();
+      // const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
+      // PRINT_NAMED_INFO("OSState", "Update took %lld microseconds", elapsed_us);
 
       _lastUpdateTime_ms = now_ms;
     }

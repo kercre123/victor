@@ -13,8 +13,6 @@
 #ifndef WEB_SERVICE_H
 #define WEB_SERVICE_H
 
-#include "util/export/export.h"
-
 #include "json/json.h"
 
 #include <string>
@@ -110,6 +108,7 @@ public:
   std::mutex _requestMutex;
 
   const Json::Value& GetConfig() { return _config; }
+  const Anki::Util::Data::DataPlatform* GetPlatform() { return _platform; }
 
 private:
 
@@ -144,6 +143,7 @@ private:
   std::vector<Request*> _requests;
 
   Json::Value _config;
+  Anki::Util::Data::DataPlatform* _platform;
  
   std::unordered_map<std::string, OnWebVizSubscribedType> _webVizSubscribedSignals;
   std::unordered_map<std::string, OnWebVizDataType> _webVizDataSignals;

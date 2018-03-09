@@ -48,6 +48,11 @@
         '3':{ prevUsedTime:0, prevTotalTime:0 }
     };
 
+    var procAutoUpdate = false;
+    var procAutoUpdatePeriod_ms = 1000;
+    var procAutoUpdatePeriodMin_ms = 1000;   // Minimum auto update period
+    var procAutoUpdateTimerId = 0;
+
     function ClearAllPages() {
         $('div[id^="page_"]').hide();
         $(':button[name^="page_"]').each(function () {
@@ -62,6 +67,10 @@
         if (curPageName == "page_perf") {
             if (perfAutoUpdate) {
                 clearTimeout(perfAutoUpdateTimerId);
+            }
+        } else if (curPageName == "page_processes") {
+            if (procAutoUpdate) {
+                clearTimeout(procAutoUpdateTimerId);
             }
         }
 
@@ -88,8 +97,8 @@
                 })
             }
         } else if (pageName == "page_perf") {
-            UpdatePerfHeader();
             if (allowPerfPage && !connectedToWebotsSim) {
+                UpdatePerfHeader();
                 $("#perf_page_disabled").hide();
                 $("#perf_page_disabled_webots").hide();
                 var numItems = perfItems.length;
@@ -122,6 +131,19 @@
                     $("#perf_page_disabled_webots").hide();
                     $("#perf_page_disabled").show();
                 }
+            }
+        } else if (pageName == "page_processes") {
+            if (!connectedToWebotsSim) {
+                UpdateProcHeader();
+                $("#proc_page_disabled_webots").hide();
+                if (procAutoUpdate) {
+                    // When entering processes page and auto-update is on, do the first update immediately
+                    procAutoUpdateTimerId = setTimeout(SendProcUpdateRequest, 0, true);
+                }
+            }
+            else {
+                $("#proc_main_section").hide();
+                $("#proc_page_disabled_webots").show();
             }
         }
     }
@@ -227,11 +249,76 @@
         prev["prevTotalTime"] = totalTime;
     }
 
+    function UpdateProcHeader() {
+        $("#proc_auto_update").html("Auto update is " + (procAutoUpdate ? "ON" : "off"));
+        $("#proc_cur_update_period").html("Update period: " + procAutoUpdatePeriod_ms + "ms");
+        $('#proc_update_freq_value').val(procAutoUpdatePeriod_ms);
+    }
+    function ButtonHandler_ProcToggleAutoUpdate() {
+        procAutoUpdate = !procAutoUpdate;
+        UpdateProcHeader();
+        if (procAutoUpdate) {
+            procAutoUpdateTimerId = setTimeout(SendProcUpdateRequest, 0, true);
+        } else {
+            clearTimeout(procAutoUpdateTimerId);
+        }
+    }
+    function ButtonHandler_ProcSetUpdatePeriod() {
+        var v = $("#proc_update_freq_value").val();
+        procAutoUpdatePeriod_ms = Math.max(v, procAutoUpdatePeriodMin_ms);
+        UpdateProcHeader();
+    }
+    function ButtonHandler_ProcUpdateNow() {
+        SendProcUpdateRequest(false);
+    }
+    function ButtonHandler_Processes() {
+        // This is for the start/stop/restart buttons for each process
+        var action = $(this).html().toLowerCase();
+        var procName = $(this).parent().parent().attr("id");
+        var request = "/systemctl?proc=" + procName + "&" + action;
+        $.post(request, function(data) {
+            // AFTER we've processed the request, start an update request
+            // for the process statuses, so we see the results of the
+            // change soon
+            if (procAutoUpdate) {
+                clearTimeout(procAutoUpdateTimerId);
+                procAutoUpdateTimerId = setTimeout(SendProcUpdateRequest, 0, true);
+
+            } else {
+                SendProcUpdateRequest(false);
+            }
+        });
+    }
+    function SendProcUpdateRequest(triggeredByTimer) {
+        var query = "";
+        $('#table_processes tr').each(function() {
+            if (query != "") {
+                query += "&";
+            }
+            query += this.id;
+        });
+        $.post("/getprocessstatus?proc=" + query, function(data) {
+            var payload = data.split("\n");
+            for (var i = 0; i < payload.length; i++) {
+                var procData = payload[i].split('=');
+                $('#' + procData[0]).find('#status').html(procData[1]);
+            }
+        });
+        if (procAutoUpdate && triggeredByTimer) {
+            procAutoUpdateTimerId = setTimeout(SendProcUpdateRequest, procAutoUpdatePeriod_ms, true);
+        }
+    }
+
+
     $(document).ready(function() {
         ClearAllPages();
         $("#btn_toggle_auto_update").click(ButtonHandler_ToggleAutoUpdate);
         $("#btn_set_update_period").click(ButtonHandler_SetUpdatePeriod);
         $("#btn_update_now").click(ButtonHandler_UpdateNow);
+        $("#btn_proc_toggle_auto_update").click(ButtonHandler_ProcToggleAutoUpdate);
+        $("#btn_proc_set_update_period").click(ButtonHandler_ProcSetUpdatePeriod);
+        $("#btn_proc_update_now").click(ButtonHandler_ProcUpdateNow);
+        $('#table_processes').on('click', 'button', ButtonHandler_Processes);
 
         $.post("getinitialconfig", function(data) {
             var payload = data.split("\n");
@@ -294,8 +381,8 @@
             <button type="button" name="page_consolevars">CONSOLE VARS/FUNCS</button>&nbsp&nbsp&nbsp
             <button type="button" name="page_perf">PERF</button>&nbsp&nbsp&nbsp
             <button type="button" name="page_files">FILES</button>&nbsp&nbsp&nbsp
-<!--             <button type="button" name="page_processes">PROCESSES</button>&nbsp&nbsp&nbsp
- -->        </div>
+            <button type="button" name="page_processes">PROCESSES</button>&nbsp&nbsp&nbsp
+        </div>
         <hr>
 
         <div id="page_main">
@@ -378,6 +465,55 @@
             </div>
             <div id='perf_page_disabled'>The perf page is disabled in the Anim webserver.  Use the standalone or engine webserver instead.</div>
             <div id='perf_page_disabled_webots'>The perf page is disabled in pure webots sim, since it is for actual robot stats.</div>
+        </div>
+
+        <div id="page_processes">
+            <br>
+            <div id='proc_main_section'>
+                <button id='btn_proc_update_now'>Update NOW</button>&nbsp&nbsp&nbsp&nbsp
+                <input  id='proc_update_freq_value' type='number' max='100000'></input>
+                <button id='btn_proc_set_update_period'>Set update period (ms)</button>
+                <span   id='proc_cur_update_period'></span>&nbsp&nbsp&nbsp&nbsp
+                <button id='btn_proc_toggle_auto_update'>Toggle Auto Update</button>
+                <span   id='proc_auto_update'></span>
+                <br><br>
+                <table id='table_processes' border=1>
+                    <tr>
+                        <th>Process:</th><th>Status:</th><th>Controls:</th>
+                    </tr>
+                    <tr id='vic-webserver'>
+                        <td width='120px'>Webserver</td><td id='status' width='120px'></td>
+                        <td>&nbsp&nbsp<button id='btn_proc_stop' style='width:80px'>STOP</button>
+                        &nbsp<button id='btn_proc_start' style='width:80px'>START</button>
+                        &nbsp<button id='btn_proc_restart' style='width:80px'>RESTART</button>&nbsp&nbsp</td>
+                    </tr>
+                    <tr id='vic-cloud'>
+                        <td width='120px'>Cloud</td><td id='status' width='120px'></td>
+                        <td>&nbsp&nbsp<button id='btn_proc_stop' style='width:80px'>STOP</button>
+                        &nbsp<button id='btn_proc_start' style='width:80px'>START</button>
+                        &nbsp<button id='btn_proc_restart' style='width:80px'>RESTART</button>&nbsp&nbsp</td>
+                    </tr>
+                    <tr id='vic-engine'>
+                        <td width='120px'>Engine</td><td id='status' width='120px'></td>
+                        <td>&nbsp&nbsp<button id='btn_proc_stop' style='width:80px'>STOP</button>
+                        &nbsp<button id='btn_proc_start' style='width:80px'>START</button>
+                        &nbsp<button id='btn_proc_restart' style='width:80px'>RESTART</button>&nbsp&nbsp</td>
+                    </tr>
+                    <tr id='vic-anim'>
+                        <td width='120px'>Anim</td><td id='status' width='120px'></td>
+                        <td>&nbsp&nbsp<button id='btn_proc_stop' style='width:80px'>STOP</button>
+                        &nbsp<button id='btn_proc_start' style='width:80px'>START</button>
+                        &nbsp<button id='btn_proc_restart' style='width:80px'>RESTART</button>&nbsp&nbsp</td>
+                    </tr>
+                    <tr id='vic-robot'>
+                        <td width='120px'>Robot</td><td id='status' width='120px'></td>
+                        <td>&nbsp&nbsp<button id='btn_proc_stop' style='width:80px'>STOP</button>
+                        &nbsp<button id='btn_proc_start' style='width:80px'>START</button>
+                        &nbsp<button id='btn_proc_restart' style='width:80px'>RESTART</button>&nbsp&nbsp</td>
+                    </tr>
+                </table>
+            </div>
+            <div id='proc_page_disabled_webots'>The processes page is disabled in pure webots sim, since it is for the actual robot processes.</div>
         </div>
 
         <div id="page_files">

@@ -41,8 +41,16 @@
 #include <fstream>
 #include <iomanip>
 
+#define LOG_CHANNEL "WebService"
+
 using namespace Anki::Cozmo;
 
+namespace {
+#ifndef SIMULATOR
+  bool s_WaitingForProcessStatus = false;
+  std::vector<std::string> s_ProcessStatuses;
+#endif
+}
 
 // Used websockets codes, see websocket RFC pg 29
 // http://tools.ietf.org/html/rfc6455#section-5.2
@@ -153,7 +161,7 @@ private:
 static int
 LogMessage(const struct mg_connection *conn, const char *message)
 {
-  PRINT_NAMED_INFO("WebService", "%s", message);
+  LOG_INFO("WebService.LogMessage", "%s", message);
   return 1;
 }
 
@@ -171,8 +179,43 @@ LogHandler(struct mg_connection *conn, void *cbdata)
 }
 
 
+void ExecCommand(const std::vector<std::string>& args)
+{
+  LOG_INFO("WebService.ExecCommand", "Called with cmd: %s (and %i arguments)",
+                   args[0].c_str(), (int)(args.size() - 1));
+
+  pid_t pID = fork();
+  if (pID == 0) // child
+  {
+    char* argv_child[args.size() + 1];
+
+    for (size_t i = 0; i < args.size(); i++) {
+      argv_child[i] = (char *) malloc(args[i].size() + 1);
+      strcpy(argv_child[i], args[i].c_str());
+    }
+    argv_child[args.size()] = nullptr;
+
+    execv(argv_child[0], argv_child);
+
+    // We'll only get here if execv fails
+    for (size_t i = 0 ; i < args.size() + 1 ; ++i) {
+      free(argv_child[i]);
+    }
+    exit(0);
+  }
+  else if (pID < 0) // fail
+  {
+    LOG_INFO("Webservice.ExecCommand.FailedFork", "Failed fork!");
+  }
+  else  // parent
+  {
+    // We don't wait for child to complete or do anything special
+  }
+}
+
+
 static int
-ProcessRequest(struct mg_connection *conn, Anki::Cozmo::WebService::WebService::RequestType requestType,
+ProcessRequest(struct mg_connection *conn, WebService::WebService::RequestType requestType,
                const std::string& param1, const std::string& param2, const std::string& param3 = "", bool waitAndSendResponse = true)
 {
   WebService::WebService::Request* requestPtr = new WebService::WebService::Request(requestType, param1, param2, param3);
@@ -304,7 +347,7 @@ ConsoleFuncList(struct mg_connection *conn, void *cbdata)
     }
   }
 
-  const int returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleFuncList, key, "");
+  const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleFuncList, key, "");
 
   return returnCode;
 }
@@ -384,7 +427,7 @@ TempAppToEngine(struct mg_connection *conn, void *cbdata)
 {
   return ProcessRequestFromQueryString( conn,
                                         cbdata,
-                                        Anki::Cozmo::WebService::WebService::RequestType::RT_TempAppToEngine );
+                                        WebService::WebService::RequestType::RT_TempAppToEngine );
 }
 
 static int
@@ -392,7 +435,7 @@ TempEngineToApp(struct mg_connection *conn, void *cbdata)
 {
   return ProcessRequestFromQueryString( conn,
                                         cbdata,
-                                        Anki::Cozmo::WebService::WebService::RequestType::RT_TempEngineToApp );
+                                        WebService::WebService::RequestType::RT_TempEngineToApp );
 }
 
 
@@ -409,7 +452,7 @@ WebService::WebService::Request::Request(RequestType rt,
   _resultReady = false;
   _done = false;
 }
-Anki::Cozmo::WebService::WebService::Request::Request(RequestType rt, const std::string& param1, const std::string& param2)
+WebService::WebService::Request::Request(RequestType rt, const std::string& param1, const std::string& param2)
   : Request(rt, param1, param2, "")
 {
   
@@ -525,6 +568,7 @@ static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
 
 
 #ifndef SIMULATOR
+
 static int GetPerfStats(struct mg_connection *conn, void *cbdata)
 {
   using namespace std::chrono;
@@ -633,7 +677,7 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
 
   const auto now = steady_clock::now();
   const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
-  PRINT_NAMED_INFO("WebService", "GetPerfStats took %lld microseconds to read", elapsed_us);
+  LOG_INFO("WebService.Perf", "GetPerfStats took %lld microseconds to read", elapsed_us);
 
   mg_printf(conn,
             "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
@@ -656,6 +700,153 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
 
   return 1;
 }
+
+
+static int SystemCtl(struct mg_connection *conn, void *cbdata)
+{
+  using namespace std::chrono;
+  const auto startTime = steady_clock::now();
+
+  const mg_request_info* info = mg_get_request_info(conn);
+  const std::string query = info->query_string ? info->query_string : "";
+  if (query.substr(0, 5) == "proc=")
+  {
+    const size_t amp = query.find('&');
+    if (amp != std::string::npos)
+    {
+      const std::string action = query.substr(amp + 1);
+      const std::string procName = query.substr(5, amp - 5);
+
+      std::vector<std::string> args;
+      args.push_back("/bin/systemctl");
+      args.push_back(action);
+      args.push_back(procName);
+
+      ExecCommand(args);
+
+      const auto now = steady_clock::now();
+      const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
+      LOG_INFO("WebService.Systemctl", "SystemCtl took %lld microseconds", elapsed_us);
+    }
+  }
+  mg_printf(conn,
+            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
+            "close\r\n\r\n");
+  mg_printf(conn, "\n");
+
+  return 1;
+}
+
+
+static int GetProcessStatus(struct mg_connection *conn, void *cbdata)
+{
+  std::string resultsString;
+
+  using namespace std::chrono;
+  const auto startTime = steady_clock::now();
+
+  const mg_request_info* info = mg_get_request_info(conn);
+  const std::string query = info->query_string ? info->query_string : "";
+  if (query.substr(0, 5) == "proc=")
+  {
+    struct mg_context* ctx = mg_get_context(conn);
+    Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
+
+    std::string remainder = query.substr(5);
+    std::vector<std::string> args;
+
+    args.push_back("/bin/sh");
+    args.push_back("/anki/bin/vic-getprocessstatus.sh");
+    args.push_back(that->GetConfig()["port"].asString());
+
+    // Loop and pull out all requested process names, separated by ampersands
+    while (!remainder.empty()) {
+      const size_t amp = remainder.find('&');
+      if (amp != std::string::npos) {
+        args.push_back(remainder.substr(0, amp));
+        remainder = remainder.substr(amp + 1);
+      }
+      else {
+        args.push_back(remainder);
+        break;
+      }
+    }
+
+    s_WaitingForProcessStatus = true;
+    ExecCommand(args);
+
+    static const double kTimeoutDuration_s = 10.0;
+    const auto startWaitTime = steady_clock::now();
+    bool timedOut = false;
+    do
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      const auto now = steady_clock::now();
+      const auto elapsed_s = duration_cast<seconds>(now - startWaitTime).count();
+      if (elapsed_s > kTimeoutDuration_s)
+      {
+        timedOut = true;
+        break;
+      }
+    } while (s_WaitingForProcessStatus);
+
+    // We check if result is there because we just slept and it may have come in
+    // just before the timeout
+    if (timedOut && s_WaitingForProcessStatus)
+    {
+      LOG_INFO("WebService.GetProcessStatus", "GetProcessStatus timed out after %f seconds", kTimeoutDuration_s);
+    }
+
+    bool firstDone = false;
+    for (const auto& result : s_ProcessStatuses) {
+      if (firstDone) {
+        resultsString += "\n";
+      }
+      resultsString += result;
+      firstDone = true;
+    }
+  }
+  mg_printf(conn,
+            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
+            "close\r\n\r\n");
+  mg_printf(conn, "%s", resultsString.c_str());
+
+  const auto now = steady_clock::now();
+  const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
+  LOG_INFO("WebService.GetProcessStatus.Time", "GetProcessStatus took %lld microseconds", elapsed_us);
+
+  return 1;
+}
+
+
+static int ProcessStatus(struct mg_connection *conn, void *cbdata)
+{
+  const mg_request_info* info = mg_get_request_info(conn);
+  std::string results = info->query_string ? info->query_string : "";
+
+  s_ProcessStatuses.clear();
+  while (!results.empty()) {
+    const size_t amp = results.find('&');
+    if (amp != std::string::npos) {
+      s_ProcessStatuses.push_back(results.substr(0, amp));
+      results = results.substr(amp + 1);
+    }
+    else {
+      s_ProcessStatuses.push_back(results);
+      break;
+    }
+  }
+
+  s_WaitingForProcessStatus = false;
+
+  mg_printf(conn,
+            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
+            "close\r\n\r\n");
+  mg_printf(conn, "\n");
+
+  return 1;
+}
+
 #endif  // #ifndef SIMULATOR
 
 
@@ -683,6 +874,7 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   }
 
   _config = config;
+  _platform = platform;
 
   const std::string portNumString = _config["port"].asString();
 
@@ -756,7 +948,11 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   mg_set_request_handler(_ctx, "/getmainrobotinfo", GetMainRobotInfo, 0);
 #ifndef SIMULATOR
   mg_set_request_handler(_ctx, "/getperfstats", GetPerfStats, 0);
+  mg_set_request_handler(_ctx, "/systemctl", SystemCtl, 0);
+  mg_set_request_handler(_ctx, "/getprocessstatus", GetProcessStatus, 0);
+  mg_set_request_handler(_ctx, "/processstatus", ProcessStatus, 0);
 #endif
+
 
   // todo (VIC-1398): remove
   if( ANKI_DEV_CHEATS ) { 
@@ -852,7 +1048,7 @@ void WebService::Update()
                 if (consoleVar) {
                   if (consoleVar->ParseText(value.c_str() )) {
                     // success
-                    PRINT_NAMED_INFO("WebService", "CONSOLE_VAR %s %s", key.c_str(), value.c_str());
+                    LOG_INFO("WebService", "CONSOLE_VAR %s %s", key.c_str(), value.c_str());
                     requestPtr->_result += consoleVar->ToString() + "<br>";
                   }
                   else {
@@ -924,16 +1120,16 @@ void WebService::Update()
 
               bool success = consoleSystem.ParseConsoleFunctionCall(consoleFunc, args.c_str(), consoleChannel);
               if (success) {
-                PRINT_NAMED_INFO("WebService", "CONSOLE_FUNC %s %s success", func.c_str(), args.c_str());
+                LOG_INFO("WebService.FuncCallSuccess", "CONSOLE_FUNC %s %s success", func.c_str(), args.c_str());
                 requestPtr->_result += outText;
               }
               else {
-                PRINT_NAMED_INFO("WebService", "CONSOLE_FUNC %s %s failed %s", func.c_str(), args.c_str(), outText);
+                LOG_INFO("WebService.FuncCallFailure", "CONSOLE_FUNC %s %s failed %s", func.c_str(), args.c_str(), outText);
                 requestPtr->_result += outText;
               }
             }
             else {
-              PRINT_NAMED_INFO("WebService", "CONSOLE_FUNC %s %s not found", func.c_str(), args.c_str());
+              LOG_INFO("WebService.FuncCallNotFound", "CONSOLE_FUNC %s %s not found", func.c_str(), args.c_str());
             }
           }
           break;
@@ -1282,7 +1478,7 @@ void WebService::OnReceiveWebSocket(struct mg_connection* conn, const Json::Valu
         
         const bool waitAndSendResponse = false;
         ProcessRequest(conn,
-                       Anki::Cozmo::WebService::WebService::RequestType::RT_WebsocketOnSubscribe,
+                       WebService::WebService::RequestType::RT_WebsocketOnSubscribe,
                        moduleName,
                        std::to_string(idx),
                        "",
@@ -1296,7 +1492,7 @@ void WebService::OnReceiveWebSocket(struct mg_connection* conn, const Json::Valu
         std::stringstream ss;
         ss << data["data"];
         ProcessRequest(conn,
-                       Anki::Cozmo::WebService::WebService::RequestType::RT_WebsocketOnData,
+                       WebService::WebService::RequestType::RT_WebsocketOnData,
                        moduleName,
                        std::to_string(idx),
                        ss.str(),
@@ -1307,7 +1503,7 @@ void WebService::OnReceiveWebSocket(struct mg_connection* conn, const Json::Valu
   } else {
     std::stringstream ss;
     ss << data;
-    PRINT_NAMED_ERROR("Webservice.OnReceiveWebSocket","No connection for data %s", ss.str().c_str());
+    LOG_ERROR("Webservice.OnReceiveWebSocket", "No connection for data %s", ss.str().c_str());
   }
 }
   
