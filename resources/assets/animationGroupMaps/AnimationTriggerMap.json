@@ -522,7 +522,7 @@
     },
     {
       "CladEvent": "ICantDoThat",
-      "AnimName": "ag_hiccups"
+      "AnimName": "ag_timer_emote"
     },
     {
       "CladEvent": "IdleOnCharger",
