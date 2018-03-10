@@ -4410,7 +4410,7 @@
                         "fields": {
                             "TEXT": {
                                 "name": "TEXT",
-                                "value": "if i guess correctly tap purple. if your number is higher, tap green. if it is lower, tap red."
+                                "value": "\u3088\u305d\u3046\u304c\u3042\u305f\u3063\u305f\u3089\u3001\u30d1\u30fc\u30d7\u30eb\u3092\u30bf\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002\u3059\u3046\u3058\u304c\u3088\u305d\u3046\u3088\u308a\u3082\u304a\u304a\u304d\u304b\u3063\u305f\u3089\u3001\u30b0\u30ea\u30fc\u30f3\u3092\u30bf\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002\u3059\u3046\u3058\u304c\u3088\u305d\u3046\u3088\u308a\u3082\u3061\u3044\u3055\u304b\u3063\u305f\u3089\u3001\u30ec\u30c3\u30c9\u3092\u30bf\u30c3\u30d7\u3057\u3066\u304f\u3060\u3055\u3044\u3002"
                             }
                         },
                         "id": "r$a8,*a{Z}+2+Ty?+Hs%",

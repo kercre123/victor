@@ -4406,7 +4406,7 @@
                     "fields": {
                         "TEXT": {
                             "name": "TEXT",
-                            "value": "If I guess correctly tap purple. If your number is higher, tap green. If it is lower, tap red."
+                            "value": "If I guess correctly, tap purple. If your number is higher, tap green. If it is lower, tap red."
                         }
                     },
                     "id": "r$a8,*a{Z}+2+Ty?+Hs%",
