@@ -115,39 +115,39 @@ if (MACOSX)
   # cti_common_test_engine
   #
 
-  #anki_build_cxx_executable(cti_common_test_engine ${ANKI_SRCLIST_DIR})
+  anki_build_cxx_executable(cti_common_test_engine ${ANKI_SRCLIST_DIR})
 
-  #target_compile_definitions(cti_common_test_engine
-  #  PRIVATE
-  #  TEST_DATA_PATH=${CORETECH}
-  #)
+  target_compile_definitions(cti_common_test_engine
+    PRIVATE
+    TEST_DATA_PATH=${CORETECH}
+  )
 
-  #target_link_libraries(cti_common_test_engine
-  #  PRIVATE
-  #  cti_common
-  #  util
-  #  gtest
-  #  ${OPENCV_LIBS}
-  #)
+  target_link_libraries(cti_common_test_engine
+    PRIVATE
+    cti_common
+    util
+    gtest
+    ${OPENCV_LIBS}
+  )
 
   #
   # test harness
   #
-  #enable_testing()
+  enable_testing()
 
-  #add_test(NAME cti_common_test_shared COMMAND cti_common_test_shared)
+  add_test(NAME cti_common_test_shared COMMAND cti_common_test_shared)
 
-  #set_tests_properties(cti_common_test_shared
-  #  PROPERTIES
-  #  ENVIRONMENT "GTEST_OUTPUT=xml:ctiCommonSharedGoogleTest.xml"
-  #)
+  set_tests_properties(cti_common_test_shared
+    PROPERTIES
+    ENVIRONMENT "GTEST_OUTPUT=xml:ctiCommonSharedGoogleTest.xml"
+  )
 
-  #add_test(NAME cti_common_test_engine COMMAND cti_common_test_engine)
+  add_test(NAME cti_common_test_engine COMMAND cti_common_test_engine)
 
-  #set_tests_properties(cti_common_test_engine
-  #  PROPERTIES
-  #  ENVIRONMENT "GTEST_OUTPUT=xml:ctiCommonEngineGoogleTest.xml"
-  #)
+  set_tests_properties(cti_common_test_engine
+    PROPERTIES
+    ENVIRONMENT "GTEST_OUTPUT=xml:ctiCommonEngineGoogleTest.xml"
+  )
 
 endif()
 

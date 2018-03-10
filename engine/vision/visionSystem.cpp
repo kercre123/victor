@@ -35,9 +35,7 @@
 #include "coretech/vision/engine/image_impl.h"
 #include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/markerDetector.h"
-#if !FACTORY_TEST
 #include "coretech/vision/engine/objectDetector.h"
-#endif
 #include "coretech/vision/engine/petTracker.h"
 
 #include "clad/vizInterface/messageViz.h"
@@ -127,9 +125,7 @@ namespace Cozmo {
   , _overheadEdgeDetector(new OverheadEdgesDetector(_camera, _vizManager, *this))
   , _cameraCalibrator(new CameraCalibrator(*this))
   , _benchmark(new Vision::Benchmark())
-  #if !FACTORY_TEST
   , _generalObjectDetector(new Vision::ObjectDetector())
-  #endif
   , _clahe(cv::createCLAHE())
   {
     DEV_ASSERT(_context != nullptr, "VisionSystem.Constructor.NullContext");
@@ -221,9 +217,7 @@ namespace Cozmo {
     _overheadMap.reset(new OverheadMap(config["OverheadMap"], _context));
 
     // TODO check config entry here
-    #if !FACTORY_TEST
     _groundPlaneClassifier.reset(new GroundPlaneClassifier(config["GroundPlaneClassifier"], _context));
-    #endif
 
     const Result petTrackerInitResult = _petTracker->Init(config);
     if(RESULT_OK != petTrackerInitResult) {
@@ -238,7 +232,7 @@ namespace Cozmo {
         return RESULT_FAIL;
       }
       
-      #if !FACTORY_TEST
+      
       const std::string modelPath = Util::FileUtils::FullFilePath({dataPath, "dnn_models"});
       if(Util::FileUtils::DirectoryExists(modelPath)) // TODO: Remove once DNN models are checked in somewhere (VIC-1071)
       {
@@ -249,7 +243,6 @@ namespace Cozmo {
           PRINT_NAMED_ERROR("VisionSystem.Init.ObjectDetectorInitFailed", "");
         }
       }
-      #endif
     }
     
     // Default processing modes should are set in vision_config.json
@@ -966,12 +959,9 @@ namespace Cozmo {
 
   Result VisionSystem::UpdateGroundPlaneClassifier(const Vision::ImageRGB& image)
   {
-    #if !FACTORY_TEST
     Result result = _groundPlaneClassifier->Update(image, _poseData, _currentResult.debugImageRGBs,
                                                    _currentResult.visualObstacles);
     return result;
-    #endif
-    return RESULT_OK;
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1299,7 +1289,6 @@ namespace Cozmo {
   
   void VisionSystem::CheckForGeneralObjectDetections()
   {
-    #if !FACTORY_TEST
     std::list<Vision::ObjectDetector::DetectedObject> objects;
     const bool resultReady = _generalObjectDetector->GetObjects(objects);
     if(resultReady)
@@ -1320,7 +1309,6 @@ namespace Cozmo {
       _results.emplace(std::move(detectionResult));
       _mutex.unlock();
     }
-    #endif
   }
   
   Result VisionSystem::Update(const VisionPoseData&   poseData,
@@ -1601,20 +1589,16 @@ namespace Cozmo {
     // Check for any objects from the detector. It runs asynchronously, so these objects
     // will be from a different image than the one in the cache and will use their own
     // VisionProcessingResult.
-    #if !FACTORY_TEST
     CheckForGeneralObjectDetections();
-    #endif
-
+    
     if(ShouldProcessVisionMode(VisionMode::DetectingGeneralObjects))
     {
-      #if !FACTORY_TEST
       const bool started = _generalObjectDetector->StartProcessingIfIdle(imageCache);
       if(started)
       {
         // Remember the timestamp of the image used to do object detection
         _generalObjectDetectionTimestamp = imageCache.GetTimeStamp();
       }
-      #endif
     }
     
     // NOTE: This should come after any detectors that add things to "detectionRects"

@@ -15,6 +15,7 @@
 #include "osState/osState.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/console/consoleInterface.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
@@ -47,7 +48,8 @@ namespace {
   const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone7/temp";
   const char* kBatteryVoltageFile = "/sys/devices/soc/qpnp-linear-charger-8/power_supply/battery/voltage_now";
   const char* kMACAddressFile = "/sys/class/net/wlan0/address";
-
+  const char* kRecoveryModeFile = "/data/unbrick";
+  
   // System vars
   uint32_t _cpuFreq_kHz; // CPU freq
   uint32_t _cpuTemp_C;   // Temperature in Celsius
@@ -286,6 +288,11 @@ std::string OSState::GetMACAddress() const
     return macStr;
   }
   return "";
+}
+
+bool OSState::IsInRecoveryMode()
+{
+  return Util::FileUtils::FileExists(kRecoveryModeFile);
 }
 
 } // namespace Cozmo

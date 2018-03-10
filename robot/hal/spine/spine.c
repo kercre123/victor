@@ -543,6 +543,12 @@ ssize_t spine_set_mode(spine_ctx_t spine, int new_mode)
   return r;
 }
 
+ssize_t spine_shutdown(spine_ctx_t spine)
+{
+  ssize_t r = spine_write_frame(spine, PAYLOAD_SHUT_DOWN, NULL, 0);
+  spine_debug_x("spine_shutdown return %d\n", r);
+  return r;
+}
 
 //
 // TEST

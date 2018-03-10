@@ -1,4 +1,3 @@
-#if !FACTORY_TEST
 /**
  * File: rawPixelsClassifier.cpp
  *
@@ -734,4 +733,3 @@ std::vector<uchar> DTRawPixelsClassifier::PredictClass(const Array2d<RawPixelsCl
 
 } // namespace Cozmo
 } // namespace Anki
-#endif

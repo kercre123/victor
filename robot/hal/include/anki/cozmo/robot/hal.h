@@ -55,6 +55,8 @@ static const f32 MOTOR_MAX_POWER = 1.0f;
 Result Init(void);
 Result Step(void);
 
+void Shutdown();
+
 /************************************************************************
  * \section Time
  */
@@ -259,7 +261,6 @@ typedef enum
  * @warning Some power states will power off the android processor
  */
 void PowerSetMode(const PowerState state);
-
 
 /************************************************************************
  * \section "Radio" comms to/from engine

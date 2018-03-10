@@ -118,7 +118,6 @@ Result spine_wait_for_first_frame(spine_ctx_t spine)
   return RESULT_OK;
 }
 
-
 Result HAL::Init()
 {
   // Set ID
@@ -387,6 +386,11 @@ u8 HAL::GetWatchdogResetCounter()
 {
   // not (yet) implemented in HAL in V2
   return 0;//bodyData_->status.watchdogCount;
+}
+
+void HAL::Shutdown()
+{
+  spine_shutdown(&spine_);
 }
 
 } // namespace Cozmo

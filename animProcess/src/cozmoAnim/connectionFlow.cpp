@@ -39,7 +39,6 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-const std::string _name = OSState::getInstance()->GetRobotName();
 u32 _pin = 123456;
 
 const std::string kURL = "anki.com/v";
@@ -129,7 +128,7 @@ void DrawStartPairingScreen(AnimationStreamer* animStreamer)
   Vision::ImageRGB565 img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
   img.FillWith(Vision::PixelRGB565(0, 0, 0));
 
-  DrawTextCenteredHorizontally(_name, CV_FONT_NORMAL, 0.5f, 1, img, kColor, 0, false);
+  DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, 0.5f, 1, img, kColor, 0, false);
 
   cv::Size textSize;
   float scale = 0;
@@ -156,7 +155,7 @@ void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* conte
   Vision::ImageRGB565 i;
   i.SetFromImageRGB(img);
 
-  DrawTextCenteredHorizontally(_name, CV_FONT_NORMAL, 0.5f, 1, i, kColor, 0, false);
+  DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, 0.5f, 1, i, kColor, 0, false);
 
   DrawTextCenteredHorizontally(std::to_string(_pin), CV_FONT_NORMAL, 0.6f, 1, i, kColor, FACE_DISPLAY_HEIGHT-20, false);
 

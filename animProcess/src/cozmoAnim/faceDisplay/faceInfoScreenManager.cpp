@@ -116,6 +116,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   #define ADD_MENU_ITEM_WITH_ACTION(screen, itemText, action) \
     GetScreen(ScreenName::screen)->AppendMenuItem(itemText, action);
 
+  ADD_SCREEN_WITH_TEXT(Recovery, Recovery, {"RECOVERY MODE"});
   ADD_SCREEN(None, Main);
   ADD_SCREEN_WITH_TEXT(Pairing, None, {"PAIRING STUB"});
   ADD_SCREEN(FAC, Main);
@@ -131,11 +132,32 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_SCREEN(MicInfo, MicDirectionClock);
   ADD_SCREEN(MicDirectionClock, None);
   ADD_SCREEN(CustomText, None);
-  
+
+  // Recovery screen
+  FaceInfoScreen::MenuItemAction rebootAction = []() {
+    LOG_WARNING("FaceInfoScreenManager.Recovery.Reboot", "");
+
+    // Send shutdown command to syscon
+    RobotInterface::SendAnimToRobot(RobotInterface::Shutdown());
+
+    return ScreenName::Recovery;
+  };
+  ADD_MENU_ITEM_WITH_ACTION(Recovery, "Exit", rebootAction);
+  ADD_MENU_ITEM(Recovery, "Continue", None);
+  GetScreen(ScreenName::Recovery)->SetTimeout(0.f, ScreenName::Recovery);  // Never timeout
+
+  // Pairing screen
+  // Never timeout. Let switchboard handle timeouts.
+  GetScreen(ScreenName::Pairing)->SetTimeout(0.f, ScreenName::None);
+
   // Main screen menu
   ADD_MENU_ITEM(Main, "Exit", None);
+  // ADD_MENU_ITEM(Main, "Self Test", SelfTest);   // TODO: VIC-1498
   ADD_MENU_ITEM(Main, "Clear User Data", ClearUserData);
-  //ADD_MENU_ITEM(Main, "Self Test", SelfTest);
+  
+  // Self test screen
+  ADD_MENU_ITEM(SelfTest, "Exit", Main);
+  ADD_MENU_ITEM(SelfTest, "Confirm", Main);        // TODO: VIC-1498
   
   // Clear User Data menu
   FaceInfoScreen::MenuItemAction confirmClearUserData = [context]() {
@@ -175,7 +197,13 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   GetScreen(ScreenName::Camera)->SetEnterScreenAction(cameraEnterAction);
   GetScreen(ScreenName::Camera)->SetExitScreenAction(cameraExitAction);
 
-  _currScreen = GetScreen(ScreenName::None);
+  // Check if we booted in recovery mode
+  if (OSState::getInstance()->IsInRecoveryMode()) {
+    LOG_WARNING("FaceInfoScreenManager.Init.RecoveryModeFileFound", "Going into recovery mode");
+    SetScreen(ScreenName::Recovery);
+  } else {
+    SetScreen(ScreenName::None);
+  }
 }
   
 FaceInfoScreen* FaceInfoScreenManager::GetScreen(ScreenName name)
@@ -209,7 +237,7 @@ void FaceInfoScreenManager::SetShouldDrawFAC(bool draw)
   bool changed = (_drawFAC != draw);
   _drawFAC = draw; 
 
-  if(changed) 
+  if(changed && GetCurrScreenName() != ScreenName::Recovery) 
   { 
     if(draw)
     {
@@ -224,11 +252,16 @@ void FaceInfoScreenManager::SetShouldDrawFAC(bool draw)
   
 void FaceInfoScreenManager::SetScreen(ScreenName screen)
 {
-  // If currScreen is null, you probably haven't called Init yet!
-  DEV_ASSERT(_currScreen != nullptr, "FaceInfoScreenManager.SetScreen.NullCurrScreen");
-  
-  _currScreen->ExitScreen();
+  // Call ExitScreen
+  // _currScreen may be null on the first call of this function
+  if (_currScreen != nullptr) {
+    _currScreen->ExitScreen();
+  }
+
   _currScreen = GetScreen(screen);
+
+  // If currScreen is null now, you probably haven't called Init yet!
+  DEV_ASSERT(_currScreen != nullptr, "FaceInfoScreenManager.SetScreen.NullCurrScreen");
 
   // Special handling for FAC screen to takeover None screen
   if(_drawFAC && GetCurrScreenName() == ScreenName::None)
@@ -621,13 +654,15 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
     }
   }
 
+  const ScreenName currScreenName = GetCurrScreenName();
+
   // Check for conditions to enter BLE pairing mode
   if (isOnCharger && 
       // Only enter pairing from these three screens which include
       // screens that are normally active during playpen test
-      (GetCurrScreenName() == ScreenName::None || 
-       GetCurrScreenName() == ScreenName::FAC  || 
-       GetCurrScreenName() == ScreenName::CustomText) && 
+      (currScreenName == ScreenName::None || 
+       currScreenName == ScreenName::FAC  || 
+       currScreenName == ScreenName::CustomText) && 
       CheckForDoublePress(buttonReleasedEvent)) {
     LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.GotDoublePress", "Entering pairing");
     RobotInterface::SendAnimToEngine(SwitchboardInterface::EnterPairing());
@@ -643,7 +678,8 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
   if (kDebugFaceDraw_CycleWithButton) {   // TODO: Get rid of this console var? It's only used by DevImageCapture
     // Transition to next debug screen as long as we're not on the pairing screen
     if (buttonReleasedEvent) {
-      if (_debugInfoScreensUnlocked && GetCurrScreenName() != ScreenName::Pairing ) {
+      if (_debugInfoScreensUnlocked && 
+          (currScreenName != ScreenName::Pairing && currScreenName != ScreenName::Recovery) ) {
         SetScreen(_currScreen->GetButtonGotoScreen());
       }
     }
@@ -695,7 +731,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
     }
   }
 
-  if (_currScreen->HasMenu() || GetCurrScreenName() == ScreenName::Pairing) {
+  if (_currScreen->HasMenu() || currScreenName == ScreenName::Pairing) {
     // Process lift motion for confirming current menu selection
     const auto liftAngle = state.liftAngle;
     if (liftAngle > kMenuLiftHighThresh_rad) {
@@ -716,7 +752,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
 
   
   // Process head motion for going from Main screen to "hidden" debug info screens
-  if (GetCurrScreenName() == ScreenName::Main) {
+  if (currScreenName == ScreenName::Main) {
     const auto headAngle = state.headAngle;
     if (headAngle > kMenuHeadHighThresh_rad) {
       _headTriggerReady = true;
@@ -961,8 +997,10 @@ void FaceInfoScreenManager::DrawTextOnScreen(const std::vector<std::string>& tex
 void FaceInfoScreenManager::EnablePairingScreen(bool enable)
 {
   if (enable && GetCurrScreenName() != ScreenName::None) {
+    LOG_INFO("FaceInfoScreenManager.EnablePairingScreen.Enable", "");
     SetScreen(ScreenName::Pairing);
   } else if (!enable && GetCurrScreenName() == ScreenName::Pairing) {
+    LOG_INFO("FaceInfoScreenManager.EnablePairingScreen.Disable", "");
     SetScreen(ScreenName::None);
   }
 }
