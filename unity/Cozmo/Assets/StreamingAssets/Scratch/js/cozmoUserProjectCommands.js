@@ -53,11 +53,11 @@
     }
 
     window.ensureGreenFlagIsOnWorkspaceRequest = function () {
-        // Adding delay as calling this too early during workspace loading is causing the
+        // TODO HACK Adding delay as calling this too early during workspace loading is causing the
         // green flag not to be recognized by the vm, and the project not to be saved.
         setTimeout(function(){
           window.ensureGreenFlagIsOnWorkspace();
-        }, 1000);    
+        }, 750);    
     }
 
     // Put green flag in its location in the upper left corner of the workspace if no green flag is on workspace.
@@ -262,7 +262,7 @@
         //console.log("ANKIPERFTEST top openCozmoProjectJSON");
         window.currentProjectUsesJSONFormat = true;
         try {
-            window.openCozmoProject(cozmoProjectJSON.projectUUID, cozmoProjectJSON.projectName, cozmoProjectJSON.versionNum, cozmoProjectJSON.projectJSON, null, cozmoProjectJSON.isSampleStr);
+            window.openCozmoProjectRequest(cozmoProjectJSON.projectUUID, cozmoProjectJSON.projectName, cozmoProjectJSON.versionNum, cozmoProjectJSON.projectJSON, null, cozmoProjectJSON.isSampleStr);
         }
         catch(err) {
             window.cozmoDASError("Codelab.OpenCozmoProjectJSON.JavaScriptError", err.message);
@@ -274,7 +274,7 @@
     window.openCozmoProjectXML = function(projectUUID, projectName, projectVersionNum, projectXML, isCozmoSampleProjectStr) {
         //console.log("ANKIPERFTEST top openCozmoProjectXML");
         window.currentProjectUsesJSONFormat = false;
-        window.openCozmoProject(projectUUID, projectName, projectVersionNum, null, projectXML, isCozmoSampleProjectStr);
+        window.openCozmoProjectRequest(projectUUID, projectName, projectVersionNum, null, projectXML, isCozmoSampleProjectStr);
     }
 
     // Don't call this method directly. Please call openCozmoProjectJSON instead.
@@ -332,6 +332,14 @@
         }
 
         //console.log("ANKIPERFTEST end openCozmoProject for projectName = " + projectName);
+    }
+
+    // TODO HACK Adding delay as calling this too early during workspace loading is causing the green flag
+    // not to be recognized for horizontal and vertical sample projects.
+    window.openCozmoProjectRequest = function(projectUUID, projectName, projectVersionNum, projectJSON, projectXML, isCozmoSampleProjectStr) {
+        setTimeout(function(){
+          window.openCozmoProject(projectUUID, projectName, projectVersionNum, projectJSON, projectXML, isCozmoSampleProjectStr);
+        }, 250);
     }
 
     window.newProjectCreated = function(projectUUID, projectName) {
