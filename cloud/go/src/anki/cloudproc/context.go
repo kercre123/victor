@@ -2,10 +2,10 @@ package cloudproc
 
 import (
 	"anki/chipper"
+	"anki/log"
 	"anki/util"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"sync"
 )
 
@@ -66,7 +66,7 @@ func (ctx *voiceContext) sendAudio(samples []byte, cloudChan cloudChans) {
 		err = ctx.stream.SendAudio(samples)
 	})
 	if err != nil {
-		fmt.Println("Cloud error:", err)
+		log.Println("Cloud error:", err)
 		cloudChan.err <- err.Error()
 		return
 	}
@@ -77,11 +77,11 @@ func (ctx *voiceContext) sendAudio(samples []byte, cloudChan cloudChans) {
 		go func() {
 			resp, err := ctx.stream.WaitForIntent()
 			if err != nil {
-				fmt.Println("CCE error:", err)
+				log.Println("CCE error:", err)
 				cloudChan.err <- err.Error()
 				return
 			}
-			fmt.Println("Intent response ->", resp)
+			log.Println("Intent response ->", resp)
 			sendJSONResponse(resp, cloudChan)
 		}()
 	})
@@ -96,7 +96,7 @@ func sendJSONResponse(resp *chipper.IntentResult, cloudChan cloudChans) {
 	buf := bytes.Buffer{}
 	encoder := json.NewEncoder(&buf)
 	if err := encoder.Encode(outResponse); err != nil {
-		fmt.Println("JSON encode error:", err)
+		log.Println("JSON encode error:", err)
 		cloudChan.err <- "json"
 		return
 	}

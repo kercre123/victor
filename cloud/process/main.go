@@ -3,8 +3,8 @@ package main
 import (
 	"anki/cloudproc"
 	"anki/ipc"
+	"anki/log"
 	"flag"
-	"fmt"
 	"time"
 )
 
@@ -14,7 +14,7 @@ func getSocketWithRetry(name string, client string) ipc.Conn {
 	for {
 		sock, err := ipc.NewUnixgramClient(name, client)
 		if err != nil {
-			fmt.Println("Couldn't create socket", name, "- retrying:", err)
+			log.Println("Couldn't create socket", name, "- retrying:", err)
 			time.Sleep(5 * time.Second)
 		} else {
 			return sock
@@ -42,7 +42,7 @@ func testReader(serv ipc.Server, send cloudproc.Sender) {
 }
 
 func main() {
-	fmt.Println("Hello, world!")
+	log.Println("Hello, world!")
 
 	// don't yet have control over process startup on DVT2, set these as default
 	verbose = true
@@ -65,16 +65,16 @@ func main() {
 	if test {
 		testSock, err := ipc.NewUnixgramServer(ipc.GetSocketPath("cp_test"))
 		if err != nil {
-			fmt.Println("Server create error:", err)
+			log.Println("Server create error:", err)
 		}
 		defer testSock.Close()
 
 		var testSend cloudproc.Sender
 		testSend, testRecv = cloudproc.NewMemPipe()
 		go testReader(testSock, testSend)
-		fmt.Println("Test channel created")
+		log.Println("Test channel created")
 	}
-	fmt.Println("Sockets successfully created")
+	log.Println("Sockets successfully created")
 
 	cloudproc.SetVerbose(verbose)
 	receiver := cloudproc.NewIpcReceiver(micSock, nil)

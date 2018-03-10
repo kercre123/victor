@@ -2,9 +2,9 @@ package cloudproc
 
 import (
 	"anki/chipper"
+	"anki/log"
 	"anki/util"
 	"encoding/json"
-	"fmt"
 	"io"
 
 	"github.com/google/uuid"
@@ -105,7 +105,7 @@ func (p *Process) AddIntentWriter(w io.Writer) {
 // Run starts the cloud process, which will run until stopped on the given channel
 func (p *Process) Run(stop <-chan struct{}) {
 	if verbose {
-		fmt.Println("Verbose logging enabled")
+		log.Println("Verbose logging enabled")
 	}
 	// set default options if not provided
 	if p.opts == nil {
@@ -126,7 +126,7 @@ procloop:
 		case hw := <-p.hotword:
 			// hotword = get ready to stream data
 			if ctx != nil {
-				fmt.Println("Got hotword event while already streaming, weird...")
+				log.Println("Got hotword event while already streaming, weird...")
 				close(ctx.audioStream)
 				ctx.close()
 			}
@@ -142,7 +142,7 @@ procloop:
 			ctxTime := util.TimeFuncMs(func() {
 				chipperConn, err = chipper.NewConn(ChipperURL, ChipperSecret, "device-id")
 				if err != nil {
-					fmt.Println("Error getting chipper connection:", err)
+					log.Println("Error getting chipper connection:", err)
 					p.writeError("connecting")
 					return
 				}
@@ -159,7 +159,7 @@ procloop:
 				}
 			})
 			if err != nil {
-				fmt.Println("Error creating Chipper:", err)
+				log.Println("Error creating Chipper:", err)
 				continue
 			}
 
@@ -170,7 +170,6 @@ procloop:
 		case msg := <-p.audio:
 			// add samples to our buffer
 			if ctx != nil {
-				logVerbose("Received", len(msg.buf), "bytes from mic")
 				ctx.addSamples(msg.buf)
 			} else {
 				logVerbose("No active context, discarding", len(msg.buf), "bytes")
@@ -235,7 +234,7 @@ func (p *Process) writeError(reason string) {
 	jsonMap := map[string]string{"error": reason}
 	buf, err := json.Marshal(jsonMap)
 	if err != nil {
-		fmt.Println("Couldn't encode json error for "+reason+": ", err)
+		log.Println("Couldn't encode json error for "+reason+": ", err)
 	}
 	p.writeResponse(buf)
 }
@@ -244,7 +243,7 @@ func (p *Process) writeResponse(response []byte) {
 	for _, r := range p.intents {
 		n, err := r.Write(response)
 		if n != len(response) || err != nil {
-			fmt.Println("AI write error:", n, err)
+			log.Println("AI write error:", n, err)
 		}
 	}
 }
@@ -257,7 +256,7 @@ func (p *Process) writeMic(buf []byte) {
 	for _, r := range p.receivers {
 		n, err := r.writeBack(buf)
 		if n != len(buf) || err != nil {
-			fmt.Println("Mic write error:", n, err)
+			log.Println("Mic write error:", n, err)
 		}
 	}
 }
@@ -266,5 +265,5 @@ func logVerbose(a ...interface{}) {
 	if !verbose {
 		return
 	}
-	fmt.Println(a...)
+	log.Println(a...)
 }
