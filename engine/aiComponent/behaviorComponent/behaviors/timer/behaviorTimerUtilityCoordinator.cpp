@@ -261,7 +261,7 @@ bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const
   bool timeToRunAntic = false;
   if(auto handle = GetTimerUtility().GetTimerHandle()){
     int maxTimeTillAntic_s = INT_MAX;
-    bool timeToRunAntic = _iParams.anticTracker->GetMaxTimeTillNextAntic(GetBEI(), handle, maxTimeTillAntic_s);
+    timeToRunAntic = _iParams.anticTracker->GetMaxTimeTillNextAntic(GetBEI(), handle, maxTimeTillAntic_s);
     timeToRunAntic &= (maxTimeTillAntic_s == 0);
   }
 
