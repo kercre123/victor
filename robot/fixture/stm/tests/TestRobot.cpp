@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include "app.h"
 #include "board.h"
 #include "cmd.h"
@@ -35,26 +36,6 @@ void TestRobotCleanup(void)
   Board::powerOff(PWR_VBAT);
 }
 
-//TEMP debug wrapper for cmdSend(), add retry reliability to buggy charge comms
-char* cmdSend_DBG_(cmd_io io, const char* scmd, int timeout_ms, int opts )
-{
-  //XXX: remove retries before production - we want things to fail if there are problems
-  int retries = 5;
-  bool exception_en = opts & CMD_OPTS_EXCEPTION_EN;
-  
-  char *rsp = NULL;
-  while( retries-- ) {
-    rsp = cmdSend(io, scmd, timeout_ms, opts & ~CMD_OPTS_EXCEPTION_EN );
-    if( rsp && cmdStatus() == 0 ) //cmd succeeded
-      return rsp;
-  }
-  
-  if( exception_en )
-    throw ERROR_TESTPORT_CMD_FAILED;
-  
-  return rsp;
-}
-
 const char* DBG_cmd_substitution(const char *line, int len)
 {
   static char buf[25];
@@ -87,14 +68,34 @@ void TestRobotInfo(void)
   Board::powerOff(PWR_VEXT, 500); //turn power off to disable charging
   Contacts::setModeRx();
   
-  //test all DVT2 supported commands - make sure they return a valid response
-  if( g_fixmode > FIXMODE_ROBOT0 && g_fixmode <= FIXMODE_ROBOT3 ) //skip this in debug mode
+  try { //DEBUG, cmd doesn't always succeed in dev builds
+  cmdRobotEsn();
+  //cmdRobotBsv(); //XXX: broken in current build
+  } catch(int e) {}
+  
+  //DEBUG: console bridge, manual testing
+  if( g_fixmode == FIXMODE_ROBOT0 )
+    TestCommon::consoleBridge(TO_CONTACTS, 0, 0, BRIDGE_OPT_LINEBUFFER, DBG_cmd_substitution);
+  if( g_fixmode == FIXMODE_ROBOT1 )
+    TestCommon::consoleBridge(TO_CONTACTS, 1000, 0, BRIDGE_OPT_LINEBUFFER, DBG_cmd_substitution);
+  //-*/
+}
+
+void DBG_RobotCmdTest(void)
+{
+  //test all supported commands - make sure they return a valid response
+  if( g_fixmode > FIXMODE_ROBOT0 && g_fixmode <= FIXMODE_ROBOT2 )
   {
     ConsolePrintf("\n=====================================================================\n");
     
     cmdRobotEsn(); ConsolePutChar('\n');
-    //cmdRobotBsv(); ConsolePutChar('\n');
-    //cmdRobotBsv(); ConsolePutChar('\n');
+    cmdRobotEsn(); ConsolePutChar('\n');
+    cmdRobotBsv(); ConsolePutChar('\n');
+    cmdRobotBsv(); ConsolePutChar('\n');
+    cmdRobotEsn(); ConsolePutChar('\n');
+    
+    cmdRobotGet(1, 1, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
+    cmdRobotGet(1, 1, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
     cmdRobotGet(1, 1, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
     cmdRobotGet(1, 1, CCC_SENSOR_CLIFF); ConsolePutChar('\n');
     cmdRobotGet(1, 1, CCC_SENSOR_MOT_LEFT); ConsolePutChar('\n');
@@ -113,20 +114,66 @@ void TestRobotInfo(void)
     cmdRobotMot(50,  20, CCC_SENSOR_MOT_HEAD, 0, 0, 0, 100); ConsolePutChar('\n');
     cmdRobotMot(75,  20, CCC_SENSOR_MOT_HEAD, 0, 0, 0, -100); ConsolePutChar('\n');
     
-    uint32_t esn = cmdRobotGmr(0); ConsolePutChar('\n');
-    uint32_t hw_ver = cmdRobotGmr(1); ConsolePutChar('\n');
-    uint32_t model = cmdRobotGmr(2); ConsolePutChar('\n');
-    uint32_t lot_code = cmdRobotGmr(3); ConsolePutChar('\n');
+    //uint32_t esn = cmdRobotGmr(0); ConsolePutChar('\n');
+    //uint32_t hw_ver = cmdRobotGmr(1); ConsolePutChar('\n');
+    //uint32_t model = cmdRobotGmr(2); ConsolePutChar('\n');
+    //uint32_t lot_code = cmdRobotGmr(3); ConsolePutChar('\n');
+    
+    //test set/get some EMR fields
+    srand(Timer::get());
+    for(uint8_t idx = 0; idx < 8; idx++)
+    {
+      uint32_t val = cmdRobotGmr(idx); //ConsolePutChar('\n');
+      val = 0x80000000 | rand(); //((rand()&0xffff) << 16) | (rand()&0xffff);
+      cmdRobotSmr(idx, val);
+      uint32_t val2 = cmdRobotGmr(idx);
+      cmdRobotSmr(idx, 0);
+      
+      if( val != val2 )
+        ConsolePrintf("========MISMATCH========\n");
+      ConsolePutChar('\n');
+    }
     
     ConsolePrintf("\n=====================================================================\n");
   }
+}
+
+void DBG_RobotEMRTest(void)
+{
+  static uint32_t m_emr[256]; int idx;
   
-  //DEBUG: console bridge, manual testing
-  if( g_fixmode == FIXMODE_ROBOT0 )
-    TestCommon::consoleBridge(TO_CONTACTS, 0, 0, BRIDGE_OPT_LINEBUFFER, DBG_cmd_substitution);
-  if( g_fixmode == FIXMODE_ROBOT1 )
-    TestCommon::consoleBridge(TO_CONTACTS, 5000, 0, BRIDGE_OPT_LINEBUFFER, DBG_cmd_substitution);
-  //-*/
+  if( g_fixmode > FIXMODE_ROBOT0 && g_fixmode <= FIXMODE_ROBOT2 )
+  {
+    ConsolePrintf("\n======== Full EMR Test =============\n");
+    
+    //set EMR to random values, store locally for compare
+    srand(Timer::get());
+    for(idx=0; idx < 256; idx++) {
+      uint32_t val = ((rand()&0xffff) << 16) | (rand()&0xffff);
+      cmdRobotSmr(idx, val);
+      m_emr[idx] = val;
+    }
+    
+    //readback verify
+    int mismatch = 0;
+    for(idx=0; idx < 256; idx++) {
+      uint32_t val = cmdRobotGmr(idx);
+      if( val != m_emr[idx] ) {
+        mismatch++;
+        ConsolePrintf("-------> EMR MISMATCH @[%u]: %08x != %08x\n", idx, val, m_emr[idx]);
+      }
+    }
+    
+    //results!
+    ConsolePrintf("======== EMR test %s: %u errors =============\n", mismatch > 0 ? "FAILED" : "passed", mismatch);
+    
+    //reset EMR to blank
+    for(idx=0; idx < 256; idx++)
+      cmdRobotSmr(idx, 0);
+    
+    //results (again)
+    ConsolePrintf("======== EMR test %s: %u errors =============\n", mismatch > 0 ? "FAILED" : "passed", mismatch);
+  }
 }
 
 //read battery voltage
@@ -381,6 +428,7 @@ TestFunction* TestRobot0GetTests(void)
 {
   static TestFunction m_tests[] = {
     TestRobotInfo,
+    DBG_RobotCmdTest,
     //ChargeTest,
     NULL
   };
@@ -391,6 +439,7 @@ TestFunction* TestRobot1GetTests(void)
 {
   static TestFunction m_tests[] = {
     TestRobotInfo,
+    DBG_RobotCmdTest,
     ChargeTest,
     NULL,
   };
@@ -401,7 +450,8 @@ TestFunction* TestRobot2GetTests(void)
 {
   static TestFunction m_tests[] = {
     TestRobotInfo,
-    ChargeTest,
+    DBG_RobotEMRTest,
+    //ChargeTest,
     NULL
   };
   return m_tests;
