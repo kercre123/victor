@@ -44,11 +44,15 @@ public:
   static constexpr uint32_t kTimePerDirectionUpdate_ms = 10;
   static constexpr uint32_t kMicDirectionHistoryLen = kMicDirectionHistory_ms / kTimePerDirectionUpdate_ms;
 
-  void AddDirectionSample(TimeStamp_t timestamp, MicDirectionIndex newIndex, MicDirectionConfidence newConf);
+  void AddDirectionSample(TimeStamp_t timestamp,
+                          MicDirectionIndex newIndex, MicDirectionConfidence newConf,
+                          MicDirectionIndex selectedDirection);
 
   // Interface for requesting the "best" direction
   MicDirectionIndex GetRecentDirection(TimeStamp_t timeLength_ms = 0) const;
   MicDirectionIndex GetDirectionAtTime(TimeStamp_t timestampEnd, TimeStamp_t timeLength_ms) const;
+
+  MicDirectionIndex GetSelectedDirection() const { return _mostRecentSelectedDirection; }
 
   MicDirectionNodeList GetRecentHistory(TimeStamp_t timeLength_ms) const;
   MicDirectionNodeList GetHistoryAtTime(TimeStamp_t timestampEnd, TimeStamp_t timeLength_ms) const;
@@ -56,6 +60,9 @@ public:
 private:
   std::array<MicDirectionNode, kMicDirectionHistoryLen> _micDirectionBuffer;
   uint32_t _micDirectionBufferIndex = 0;
+
+  // direction that we're currently focusing our mics
+  MicDirectionIndex _mostRecentSelectedDirection = kMicDirectionUnknown;
 
   using DirectionHistoryCount = std::array<uint32_t, (kLastMicDirectionIndex - kFirstMicDirectionIndex + 1)>;
 

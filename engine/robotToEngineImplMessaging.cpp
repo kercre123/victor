@@ -978,7 +978,9 @@ void RobotToEngineImplMessaging::HandleObjectPowerLevel(const ObjectPowerLevel& 
 void RobotToEngineImplMessaging::HandleMicDirection(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
   const auto & payload = message.GetData().Get_micDirection();
-  robot->GetMicDirectionHistory().AddDirectionSample(payload.timestamp, payload.direction, payload.confidence);
+  robot->GetMicDirectionHistory().AddDirectionSample(payload.timestamp,
+                                                     payload.direction, payload.confidence,
+                                                     payload.selectedDirection);
 }
 
 } // end namespace Cozmo

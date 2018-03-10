@@ -6,18 +6,18 @@
   {
     "OnSurface" :
     {
-      "TwelveOClock"  : { "anim": "ReactToTriggerWordOffChargerFrontRight" },
-      "OneOClock"     : { "anim": "ReactToTriggerWordOffChargerFrontRight" },
+      "TwelveOClock"  : { "enabled" : false },
+      "OneOClock"     : { "enabled" : false },
       "TwoOClock"     : { "anim": "ReactToTriggerWordOffChargerFrontRight" },
       "ThreeOClock"   : { "anim": "ReactToTriggerWordOffChargerRight" },
-      "FourOClock"    : { "anim": "ReactToTriggerWordOffChargerRight" },
+      "FourOClock"    : { "anim": "ReactToTriggerWordOffChargerBehindRight" },
       "FiveOClock"    : { "anim": "ReactToTriggerWordOffChargerBehindRight" },
       "SixOClock"     : { "anim": "ReactToTriggerWordOffChargerBehind" },
       "SevenOClock"   : { "anim": "ReactToTriggerWordOffChargerBehindLeft" },
-      "EightOClock"   : { "anim": "ReactToTriggerWordOffChargerLeft" },
+      "EightOClock"   : { "anim": "ReactToTriggerWordOffChargerBehindLeft" },
       "NineOClock"    : { "anim": "ReactToTriggerWordOffChargerLeft" },
-      "TenOClock"     : { "anim": "ReactToTriggerWordOffChargerLeft" },
-      "ElevenOClock"  : { "anim": "ReactToTriggerWordOffChargerFrontLeft" }
+      "TenOClock"     : { "anim": "ReactToTriggerWordOffChargerFrontLeft" },
+      "ElevenOClock"  : { "enabled" : false }
     },
 
     "OnCharger" :

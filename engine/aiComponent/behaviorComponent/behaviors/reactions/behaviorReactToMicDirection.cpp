@@ -26,17 +26,18 @@
 #include <algorithm>
 
 
-#define DEBUG_MIC_OBSERVING_VERBOSE 0 // add some verbose debugging if trying to track down issues
+#define DEBUG_MIC_REACTION_VERBOSE 0 // add some verbose debugging if trying to track down issues
 
 namespace Anki {
 namespace Cozmo {
 
 namespace {
 
-  const std::string kKeyResponseList        = "reaction_list";
-  const std::string kKeyDefaultReaction     = "Default";
-  const std::string kKeyReactionAnimation   = "anim";
-  const std::string kKeyReactionDirection   = "dir";
+  const char* kKeyResponseList        = "reaction_list";
+  const char* kKeyDefaultReaction     = "Default";
+  const char* kKeyEnabled             = "enabled";
+  const char* kKeyReactionAnimation   = "anim";
+  const char* kKeyReactionDirection   = "dir";
 
   constexpr AnimationTrigger kInvalidAnimationTrigger = AnimationTrigger::Count;
   constexpr float kDegreesPerDirection                = 360.0f / (float)kNumMicDirections;
@@ -121,7 +122,7 @@ void BehaviorReactToMicDirection::LoadDynamicReactionStateData( const Json::Valu
       const Json::Value& reactionElement( config[stateName] );
       if ( !reactionElement.isNull() )
       {
-        JsonTools::GetValueOptional( reactionElement, "enabled", _instanceVars.reactionEnabled[state] );
+        JsonTools::GetValueOptional( reactionElement, kKeyEnabled, _instanceVars.reactionEnabled[state] );
         if ( _instanceVars.reactionEnabled[state] )
         {
           DynamicStateReaction* newReaction = new DynamicStateReaction();
@@ -153,18 +154,28 @@ void BehaviorReactToMicDirection::LoadDynamicStateReactions( const Json::Value& 
 void BehaviorReactToMicDirection::LoadDirectionResponse( const Json::Value& config, DirectionResponse& outResponse )
 {
   // all json values are optional ...
-
-  JsonTools::GetValueOptional( config, kKeyReactionDirection, outResponse.facing );
-
-  std::string animString;
-  if ( JsonTools::GetValueOptional( config, kKeyReactionAnimation, animString ) )
   {
-    if ( !EnumFromString( animString, outResponse.animation ) )
+    JsonTools::GetValueOptional( config, kKeyReactionDirection, outResponse.facing );
+
+    std::string animString;
+    if ( JsonTools::GetValueOptional( config, kKeyReactionAnimation, animString ) )
     {
-      PRINT_NAMED_ERROR( "BehaviorReactToMicDirection.LoadDirectionResponse",
-                         "Invalid AnimationTrigger value supplied in the config [%s]",
-                         animString.c_str() );
+      if ( !EnumFromString( animString, outResponse.animation ) )
+      {
+        PRINT_NAMED_ERROR( "BehaviorReactToMicDirection.LoadDirectionResponse",
+                           "Invalid AnimationTrigger value supplied in the config [%s]",
+                           animString.c_str() );
+      }
     }
+  }
+
+  // if the user specifically disables this direction, "zero" it else
+  // note: if the direction is purposely left blank, the "default" value will be used
+  bool enabled = true;
+  if ( JsonTools::GetValueOptional( config, kKeyEnabled, enabled ) && !enabled)
+  {
+    outResponse.animation = kInvalidAnimationTrigger;
+    outResponse.facing = 0;
   }
 }
 
@@ -336,13 +347,20 @@ void BehaviorReactToMicDirection::RespondToSound()
   // normally we would play an animation, but currently we don't have animation ready, so for now we'll just turn to sound
   if ( EClockDirection::Invalid != _dynamicVars.reactionDirection )
   {
-    PRINT_CH_DEBUG( "MicData", "BehaviorReactToMicDirection", "Responding to sound from direction [%u]", _dynamicVars.reactionDirection );
+    PRINT_CH_DEBUG( "MicData", "BehaviorReactToMicDirection.Reacting", "Responding to sound from direction [%u]", _dynamicVars.reactionDirection );
 
     // if an animation was specified, use it, else procedurally turn to the facing direction
     const DirectionResponse& response = GetResponseData( _dynamicVars.reactionDirection );
     if ( kInvalidAnimationTrigger != response.animation )
     {
       DelegateIfInControl( new TriggerLiftSafeAnimationAction( response.animation ) );
+
+      #if DEBUG_MIC_REACTION_VERBOSE
+      {
+        PRINT_CH_DEBUG( "MicData", "BehaviorReactToMicDirection.Debug", "Playing reaction anim [%s]",
+                        AnimationTriggerToString(response.animation) );
+      }
+      #endif
     }
     else
     {
@@ -351,6 +369,13 @@ void BehaviorReactToMicDirection::RespondToSound()
         // convert degrees to radians
         const Radians rads = DEG_TO_RAD( response.facing );
         DelegateIfInControl( new TurnInPlaceAction( rads.ToFloat(), false ) );
+
+        #if DEBUG_MIC_REACTION_VERBOSE
+        {
+          PRINT_CH_DEBUG( "MicData", "BehaviorReactToMicDirection.Debug", "Playing reaction turn to [%d] degrees",
+                          (int)RAD_TO_DEG(rads.ToFloat()) );
+        }
+        #endif
       }
     }
   }

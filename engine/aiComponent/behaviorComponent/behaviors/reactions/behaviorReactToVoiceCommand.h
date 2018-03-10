@@ -68,14 +68,23 @@ protected:
   void LoadLeeHappinessValues( const Json::Value& config );
   
   virtual void InitBehavior() override;
-  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
+  virtual void GetAllDelegates( std::set<IBehavior*>& delegates ) const override;
+  virtual void AlwaysHandleInScope( const RobotToEngineEvent& event ) override;
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
-  void SetReactionDirection();
+  // reaction direction functions ...
+
+  // cache the direction we want to react to
+  void ComputeReactionDirection();
+  // get the direction we want to react to
   MicDirectionIndex GetReactionDirection() const;
+  // get the "selected direction" from the mic history
+  // this should be the "locked direction" upon trigger word detected
+  MicDirectionIndex GetSelectedDirectionFromMicHistory() const;
+  
   void SetUserIntentStatus();
 
   // state / transition functions
@@ -85,9 +94,12 @@ protected:
   void TransitionToThinking();
   void TransitionToIntentReceived();
 
+  // coincide with the begin/end of the anim process recording the intent audio
   void OnStreamingBegin();
   void OnStreamingEnd();
 
+  // this is the state when victor is "listening" for the users intent
+  // and should therefore cue the user to speak
   void OnVictorListeningBegin();
   void OnVictorListeningEnd();
 
@@ -98,11 +110,12 @@ private:
   {
     InstanceConfig();
 
-    bool earConBegin;
+    bool earConBegin; // earcon is an audible cue to tell the user victor is listening
     bool earConEnd;
-    bool turnOnTrigger;
-    bool turnOnIntent;
-    bool exitOnIntents;
+    bool turnOnTrigger; // do we turn to the user when we hear the trigger word
+    bool turnOnIntent; // do we turn to the user when we hear the intent
+    bool playListeningGetInAnim; // do we want to play the get-in to listening loop
+    bool exitOnIntents; // do we bail as soon as we have an intent from the cloud
 
     bool backpackLights;
 
@@ -124,7 +137,10 @@ private:
     EIntentStatus             intentStatus;
 
   } _dynamicVars;
-  
+
+  // these are dynamic vars that live beyond the activation scope ...
+  MicDirectionIndex         _triggerDirection;
+
 }; // class BehaviorReactToVoiceCommand
 
 } // namespace Cozmo

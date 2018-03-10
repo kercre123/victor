@@ -38,7 +38,8 @@ void MicDirectionHistory::PrintNodeData(uint32_t index) const
 
 void MicDirectionHistory::AddDirectionSample(TimeStamp_t timestamp, 
                                              MicDirectionIndex newDirection,
-                                             MicDirectionConfidence newConf)
+                                             MicDirectionConfidence newConf,
+                                             MicDirectionIndex selectedDirection)
 {
   if (_micDirectionBuffer[_micDirectionBufferIndex].directionIndex == newDirection)
   {
@@ -68,6 +69,14 @@ void MicDirectionHistory::AddDirectionSample(TimeStamp_t timestamp,
     newEntry.confidenceMax = newConf;
     newEntry.timestampAtMax = timestamp;
     newEntry.count = 1;
+  }
+
+  // only store the selected direction when it is known
+  // note: when the robot is moving, selected direction is set to unknown
+  //       when no focus direction is set, this will be the same as newDirection
+  if (selectedDirection != kMicDirectionUnknown)
+  {
+    _mostRecentSelectedDirection = selectedDirection;
   }
 }
 
