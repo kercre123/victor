@@ -16,6 +16,7 @@ enum uint_8 BEIConditionType {
   CliffDetected,
   ConsoleVar,
   BehaviorTimer,
+  EyeContact,
   FacePositionUpdated,
   Frustration,
   Lambda,

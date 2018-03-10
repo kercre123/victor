@@ -1,0 +1,11 @@
+{
+  "behaviorClass": "AnimSequenceWithObject",
+  "behaviorID": "TestEyeContact",
+  "displayNameKey":"behavior.TestEyeContact",
+
+  "animTriggers" : ["HikingSquintStart"],
+
+  "wantsToBeActivatedCondition": {
+    "conditionType" : "EyeContact" }
+
+}

@@ -18,16 +18,11 @@
     
       "behaviors": [    
         {
-          "behavior": "ObservingLookAtFaces",
-          "cooldown_s": 300.0,
-          "cooldown_random_factor": 0.5
-        },
-        {
-          "behavior": "ObservingEyeContact",
+          "behavior": "TestEyeContact",
           "cooldown_s": 15.0
         },
         {
-          "behavior": "NothingToDo_Idle",
+          "behavior": "Wait",
           "cooldown_s": 0.0
         }
       ]

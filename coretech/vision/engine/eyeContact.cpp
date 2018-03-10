@@ -15,6 +15,7 @@
 #include "coretech/common/shared/types.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/logging/logging.h"
 
 namespace Anki {
 namespace Vision {
@@ -44,6 +45,7 @@ EyeContact::EyeContact()
 void EyeContact::Update(const TrackedFace& face,
                         const TimeStamp_t timeStamp)
 {
+  PRINT_NAMED_INFO("EyeContact.Update", "updating");
   _face = face;
   _lastUpdated = timeStamp;
 
@@ -136,6 +138,7 @@ bool EyeContact::DetermineMakingEyeContact()
     // because the distance is from (0,0)
     float distance = _gazeAverage.LengthSq();
     if ((distance < kEyeContactDistanceSq) && _initialized && SecondaryContraints()) {
+        PRINT_NAMED_INFO("EyeContact.DetermineMakingEyeContact", " is making eye contact");
         eyeContact = true;
     }
   }
@@ -158,7 +161,7 @@ bool EyeContact::SecondaryContraints()
 
   const bool near = (_face.GetHeadPose().GetTranslation().LengthSq() < kDistanceFromCameraThresholdSq_mm);
 
-  return (headRotationInCone && blinking && near);
+  return ((headRotationInCone && blinking && near) || true);
 }
 
 bool EyeContact::GetExpired(const TimeStamp_t currentTime) const
