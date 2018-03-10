@@ -2,7 +2,10 @@
   "behaviorClass": "AnimSequence",
   "behaviorID": "ExamplePetInitialDetection",
   "animTriggers": ["AcknowledgeObject"],
-  "wantsToBeActivatedCondition": {
-    "conditionType" : "PetInitialDetection"
-  }  
+  "wantsToBeActivatedConditions": 
+  [ 
+    {
+      "conditionType" : "PetInitialDetection"
+    }
+  ]  
 }

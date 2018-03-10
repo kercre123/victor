@@ -459,6 +459,7 @@ private:
   // only used if we aren't using the BSM
   u32 _lastActionTag = 0;
   std::vector<IBEIConditionPtr> _wantsToBeActivatedConditions;
+  std::vector<IBEIConditionPtr> _wantsToCancelSelfConditions;
   BehaviorOperationModifiers _operationModifiers;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed

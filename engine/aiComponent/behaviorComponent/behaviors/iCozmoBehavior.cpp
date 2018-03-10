@@ -66,7 +66,8 @@ static const char* kRequiredDriveOffChargerKey       = "requiredRecentDriveOffCh
 static const char* kRequiredParentSwitchKey          = "requiredRecentSwitchToParent_sec";
 static const char* kExecutableBehaviorTypeKey        = "executableBehaviorType";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
-static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedCondition";
+static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedConditions";
+static const char* kWantsToCancelSelfConfigKey       = "wantsToCancelSelfConditions";
 static const char* kRespondToUserIntentsKey          = "respondToUserIntents";
 static const char* kClaimUserIntentDataKey           = "claimUserIntentData";
 static const char* kRespondToTriggerWordKey          = "respondToTriggerWord";
@@ -242,9 +243,21 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   
   JsonTools::GetValueOptional(config, kAlwaysStreamlineKey, _alwaysStreamline);
   
+  // Add WantsToBeActivated conditions
   if(config.isMember(kWantsToBeActivatedCondConfigKey)){
-    _wantsToBeActivatedConditions.push_back(
-      BEIConditionFactory::CreateBEICondition( config[kWantsToBeActivatedCondConfigKey], GetDebugLabel() ) );
+    for(auto& strategy : config[kWantsToCancelSelfConfigKey]){
+      _wantsToBeActivatedConditions.push_back(
+        BEIConditionFactory::CreateBEICondition(strategy, GetDebugLabel() ) );
+    }
+  }
+
+  // Add WantsToCancelSelf conditions
+  if(config.isMember(kWantsToCancelSelfConfigKey)){
+    for(auto& strategy : config[kWantsToCancelSelfConfigKey]){
+      _wantsToCancelSelfConditions.push_back(
+        BEIConditionFactory::CreateBEICondition( strategy, GetDebugLabel() )
+      );
+    }
   }
 
   if(config.isMember(kAnonymousBehaviorMapKey)){
@@ -289,6 +302,10 @@ void ICozmoBehavior::InitInternal()
 
   {
     for( auto& strategy : _wantsToBeActivatedConditions ) {
+      strategy->Init(GetBEI());
+    }
+    
+    for( auto& strategy : _wantsToCancelSelfConditions ) {
       strategy->Init(GetBEI());
     }
 
@@ -632,10 +649,16 @@ void ICozmoBehavior::OnActivatedInternal()
       *_operationModifiers.visionModesForActiveScope);
   }
 
-  // Manage state for any IBEIConditions used by this Behavior
+  // Manage state for any WantsToBeActivated conditions used by this Behavior
   // Conditions may not be evaluted when the behavior is Active
   for(auto& strategy: _wantsToBeActivatedConditions){
     strategy->SetActive(GetBEI(), false);
+  }
+
+  // Manage state for any WantsToCancelSelf conditions used by this Behavior
+  // Conditions will be evaluated while the behavior is activated
+  for(auto& strategy: _wantsToCancelSelfConditions){
+    strategy->SetActive(GetBEI(), true);
   }
   
   // reset any timers
@@ -712,10 +735,16 @@ void ICozmoBehavior::OnDeactivatedInternal()
       *_operationModifiers.visionModesForActivatableScope);
   }
 
-  // Manage state for any IBEIConditions used by this Behavior:
+  // Manage state for any WantsToBeActivated conditions used by this Behavior:
   // Conditions may be evaluted when inactive, if in Activatable scope
   for(auto& strategy: _wantsToBeActivatedConditions){
     strategy->SetActive(GetBEI(), true);
+  }
+
+  // Manage state for any WantsToCancelSelf conditions used by this Behavior
+  // Conditions will be evaluated while the behavior is activated
+  for(auto& strategy: _wantsToCancelSelfConditions){
+    strategy->SetActive(GetBEI(), false);
   }
 
   // clear the path component motion profile if it was set by the behavior
@@ -880,16 +909,39 @@ void ICozmoBehavior::UpdateInternal()
   // Tick behavior update
   BehaviorUpdate();
 
-  // Check whether we should cancel the behavior if control is no longer delegated
+
   if(IsActivated()){
+    bool shouldCancelSelf = false;
+    std::string baseDebugStr = "ICozmoBehavior.UpdateInternal.DataDefinedCancelSelf.";
+
+    // Check whether we should cancel the behavior if control is no longer delegated
     if(_operationModifiers.behaviorAlwaysDelegates && !IsControlDelegated()){
+      shouldCancelSelf = true;
+      PRINT_NAMED_INFO((baseDebugStr + "ControlNotDelegated").c_str(),
+                       "Behavior always delegates, so cancel self");
+    }
+
+    // Check wants to cancel self strategies
+    for(auto& strategy: _wantsToCancelSelfConditions){
+      if(strategy->AreConditionsMet(GetBEI())){
+        shouldCancelSelf = true;
+        PRINT_NAMED_INFO((baseDebugStr + "WantsToCancelSelfStrategy").c_str(),
+                         "Strategy %s wants behavior %s to cancel itself",
+                         strategy->GetDebugLabel().c_str(),
+                         GetDebugLabel().c_str());
+      }
+    }
+
+    // Actually cancel the behavior
+    if(shouldCancelSelf){
       if(GetBEI().HasDelegationComponent()){
         auto& delegationComponent = GetBEI().GetDelegationComponent();
         delegationComponent.CancelSelf(this);
+        return;
       }
     }
-  }
-  
+
+  } // end IsActivated
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
