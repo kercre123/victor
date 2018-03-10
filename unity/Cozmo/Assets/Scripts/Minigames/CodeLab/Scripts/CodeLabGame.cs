@@ -3456,7 +3456,7 @@ namespace CodeLab {
       switch (_RequestToOpenProjectOnWorkspace) {
       case RequestToOpenProjectOnWorkspace.CreateNewProject:
         // Open workspace and display only a green flag on the workspace.
-        this.EvaluateJS("window.ensureGreenFlagIsOnWorkspace();");
+        this.EvaluateJS("window.ensureGreenFlagIsOnWorkspaceRequest();");
         break;
 
       case RequestToOpenProjectOnWorkspace.DisplayUserProject:

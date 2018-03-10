@@ -29,7 +29,7 @@
           measuredTextWidth = Math.max(context.measureText(lines[j]).width, measuredTextWidth);
         }
         
-        // If the element is hidden, it's width will be 0.
+        // If the element is hidden, its width will be 0.
         // We should handle that case by not setting the white space style.
         if (measuredTextWidth > maxTextWidth && maxTextWidth != 0) {
           title.style.whiteSpace = 'initial';
