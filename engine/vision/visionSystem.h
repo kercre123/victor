@@ -317,10 +317,8 @@ namespace Cozmo {
     std::unique_ptr<GroundPlaneClassifier>  _groundPlaneClassifier;
 
     std::unique_ptr<Vision::Benchmark>      _benchmark;
-    #if !FACTORY_TEST
     std::unique_ptr<Vision::ObjectDetector> _generalObjectDetector;
-    #endif
-
+    
     TimeStamp_t                   _generalObjectDetectionTimestamp = 0;
     
     // Tool code stuff

@@ -73,27 +73,27 @@ endif()
 # cti_vision_test
 #
 
-#if (MACOSX)
+if (MACOSX)
 
-#  enable_testing()
+  enable_testing()
 
-#  include(gtest)
+  include(gtest)
 
-#  anki_build_cxx_executable(cti_vision_test ${ANKI_SRCLIST_DIR})
+  anki_build_cxx_executable(cti_vision_test ${ANKI_SRCLIST_DIR})
 
-#  target_link_libraries(cti_vision_test
-#    PRIVATE
-#    cti_vision
-#    gtest
-#  )
+  target_link_libraries(cti_vision_test
+    PRIVATE
+    cti_vision
+    gtest
+  )
 
-#  add_test(NAME cti_vision_test COMMAND cti_vision_test)
+  add_test(NAME cti_vision_test COMMAND cti_vision_test)
 
-#  set_tests_properties(cti_vision_test
-#    PROPERTIES
-#    ENVIRONMENT "GTEST_OUTPUT=xml:ctiVisionGoogleTest.xml"
-#    ENVIRONMENT "TEST_DATA_PATH=${CMAKE_CURRENT_SOURCE_DIR}"
-#  )
+  set_tests_properties(cti_vision_test
+    PROPERTIES
+    ENVIRONMENT "GTEST_OUTPUT=xml:ctiVisionGoogleTest.xml"
+    ENVIRONMENT "TEST_DATA_PATH=${CMAKE_CURRENT_SOURCE_DIR}"
+  )
 
-#endif()
+endif()
 

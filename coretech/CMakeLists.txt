@@ -55,6 +55,6 @@ import(cti_messaging messaging)
 #  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/generated/clad/types>
 #)
 
-#if (MACOSX)
-#  enable_testing()
-#endif(MACOSX)
+if (MACOSX)
+  enable_testing()
+endif(MACOSX)

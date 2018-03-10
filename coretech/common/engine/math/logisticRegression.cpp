@@ -23,8 +23,6 @@
   Third party copyrights are property of their respective owners.
 */
 
-#if defined(FACTORY_TEST) && !FACTORY_TEST
-
 #include "coretech/common/engine/math/logisticRegression.h"
 
 #if ANKICORETECH_USE_OPENCV
@@ -583,5 +581,3 @@ void WeightedLogisticRegression::read(const FileNode& fn)
 } // namespace Anki
 
 #endif // ANKICORETECH_USE_OPENCV
-
-#endif // FACTORY_TEST
