@@ -503,3 +503,125 @@ Overhead  Command          Tid    Shared Object             Symbol
   90%,         3.2GB, 196785    ippMalloc
    4%,         156MB,  61374    Cozmo::AnimEngine::Update
 ```
+
+# Performance costs of features in face rendering
+
+Sampled over 60 seconds on DVT2, Victor was shaken.
+
+Key             |Options
+----------------|-------
+COZMO RENDERING | none of the new Victor features
+VICTOR RENDERING| all of the Victor features enabled
+X-glowfilt      | all Victor features enabled except kProcFace_ApplyGlowFilter
+X-aliasing      | all Victor features enabled except kProcFace_AntiAliasingSize
+X-outerglow     | all Victor features enabled except kProcFace_RenderInnerOuterGlow
+X-noise         | all Victor features enabled except kProcFace_UseNoise
+
+## Notes
+
+vic-anim process is dominated by the MicDataThread, 47%.
+Cozmo rendering costs 2.35% per eye
+Victor rendering costs 4.87% per eye
+OpenCV filtering costs ~2%
+Worst case cost ~22% (4.87% + 4.87% + 3.75% + 2.97% + 1.83% + 1.62% + 1.09% + 0.87% + 0.87%)
+
+## Suggestions
+
+ApplyScanlines NEONized
+Test rendering quality with lines AA or not
+Triangle rasterization NEONized
+
+```
+47.07%    VICTOR RENDERING X-glowfilt   MicDataProc      u139y
+46.90%    VICTOR RENDERING X-aliasing   MicDataProc      u139y
+44.54%    VICTOR RENDERING X-outerglow  MicDataProc      u139y
+40.33%    COZMO RENDERING               MicDataProc      u139y
+35.11%    VICTOR RENDERING X-noise      MicDataProc      u139y
+34.35%    VICTOR RENDERING              MicDataProc      u139y
+
+6.17%     COZMO RENDERING               MicDataProc      .i_loop_no_load
+5.88%     VICTOR RENDERING              MicDataProc      .i_loop_no_load
+5.76%     VICTOR RENDERING X-noise      MicDataProc      .i_loop_no_load
+5.48%     VICTOR RENDERING X-outerglow  MicDataProc      .i_loop_no_load
+5.28%     VICTOR RENDERING X-glowfilt   MicDataProc      .i_loop_no_load
+4.77%     VICTOR RENDERING X-aliasing   MicDataProc      .i_loop_no_load
+
+4.87%     VICTOR RENDERING X-noise      vic-anim         Anki::Cozmo::ProceduralFaceDrawer::DrawEye(Anki::Cozmo::ProceduralFace const&, Anki::Cozmo::ProceduralFace::WhichEye, Anki::Util::RandomGenerator const&, Anki::Vision::ImageRGB&, Anki::Rectangle<float>&)
+4.81%     VICTOR RENDERING              vic-anim         Anki::Cozmo::ProceduralFaceDrawer::DrawEye(Anki::Cozmo::ProceduralFace const&, Anki::Cozmo::ProceduralFace::WhichEye, Anki::Util::RandomGenerator const&, Anki::Vision::ImageRGB&, Anki::Rectangle<float>&)
+2.72%     VICTOR RENDERING X-aliasing   vic-anim         Anki::Cozmo::ProceduralFaceDrawer::DrawEye(Anki::Cozmo::ProceduralFace const&, Anki::Cozmo::ProceduralFace::WhichEye, Anki::Util::RandomGenerator const&, Anki::Vision::ImageRGB&, Anki::Rectangle<float>&)
+2.47%     VICTOR RENDERING X-outerglow  vic-anim         Anki::Cozmo::ProceduralFaceDrawer::DrawEye(Anki::Cozmo::ProceduralFace const&, Anki::Cozmo::ProceduralFace::WhichEye, Anki::Util::RandomGenerator const&, Anki::Vision::ImageRGB&, Anki::Rectangle<float>&)
+2.39%     VICTOR RENDERING X-glowfilt   vic-anim         Anki::Cozmo::ProceduralFaceDrawer::DrawEye(Anki::Cozmo::ProceduralFace const&, Anki::Cozmo::ProceduralFace::WhichEye, Anki::Util::RandomGenerator const&, Anki::Vision::ImageRGB&, Anki::Rectangle<float>&)
+2.35%     COZMO RENDERING               vic-anim         Anki::Cozmo::ProceduralFaceDrawer::DrawEye(Anki::Cozmo::ProceduralFace const&, Anki::Cozmo::ProceduralFace::WhichEye, Anki::Util::RandomGenerator const&, Anki::Vision::ImageRGB&, Anki::Rectangle<float>&)
+
+3.75%     COZMO RENDERING               vic-anim         Anki::Vision::ImageRGB::ConvertHSV2RGB565(Anki::Vision::ImageRGB565&)
+3.48%     VICTOR RENDERING X-noise      vic-anim         Anki::Vision::ImageRGB::ConvertHSV2RGB565(Anki::Vision::ImageRGB565&)
+3.44%     VICTOR RENDERING              vic-anim         Anki::Vision::ImageRGB::ConvertHSV2RGB565(Anki::Vision::ImageRGB565&)
+2.84%     VICTOR RENDERING X-outerglow  vic-anim         Anki::Vision::ImageRGB::ConvertHSV2RGB565(Anki::Vision::ImageRGB565&)
+2.47%     VICTOR RENDERING X-glowfilt   vic-anim         Anki::Vision::ImageRGB::ConvertHSV2RGB565(Anki::Vision::ImageRGB565&)
+2.37%     VICTOR RENDERING X-aliasing   vic-anim         Anki::Vision::ImageRGB::ConvertHSV2RGB565(Anki::Vision::ImageRGB565&)
+
+2.97%     COZMO RENDERING               vic-anim         void cv::remapNearest<unsigned char>(cv::Mat const&, cv::Mat&, cv::Mat const&, int, cv::Scalar_<double> const&)
+2.78%     VICTOR RENDERING X-noise      vic-anim         void cv::remapNearest<unsigned char>(cv::Mat const&, cv::Mat&, cv::Mat const&, int, cv::Scalar_<double> const&)
+2.69%     VICTOR RENDERING              vic-anim         void cv::remapNearest<unsigned char>(cv::Mat const&, cv::Mat&, cv::Mat const&, int, cv::Scalar_<double> const&)
+2.09%     VICTOR RENDERING X-glowfilt   vic-anim         void cv::remapNearest<unsigned char>(cv::Mat const&, cv::Mat&, cv::Mat const&, int, cv::Scalar_<double> const&)
+2.06%     VICTOR RENDERING X-outerglow  vic-anim         void cv::remapNearest<unsigned char>(cv::Mat const&, cv::Mat&, cv::Mat const&, int, cv::Scalar_<double> const&)
+2.04%     VICTOR RENDERING X-aliasing   vic-anim         void cv::remapNearest<unsigned char>(cv::Mat const&, cv::Mat&, cv::Mat const&, int, cv::Scalar_<double> const&)
+
+1.83%     VICTOR RENDERING X-noise      vic-anim         floorf
+1.76%     VICTOR RENDERING              vic-anim         floorf
+1.04%     VICTOR RENDERING X-outerglow  vic-anim         floorf
+0.90%     COZMO RENDERING               vic-anim         floorf
+0.85%     VICTOR RENDERING X-aliasing   vic-anim         floorf
+0.74%     VICTOR RENDERING X-glowfilt   vic-anim         floorf
+
+1.62%     VICTOR RENDERING              vic-anim         roundf
+1.60%     VICTOR RENDERING X-noise      vic-anim         roundf
+0.89%     VICTOR RENDERING X-outerglow  vic-anim         roundf
+0.73%     VICTOR RENDERING X-aliasing   vic-anim         roundf
+0.71%     COZMO RENDERING               vic-anim         roundf
+0.62%     VICTOR RENDERING X-glowfilt   vic-anim         roundf
+
+1.09%     VICTOR RENDERING X-noise      vic-anim         cv::ColumnSum<unsigned short, unsigned char>::operator()(unsigned char const**, unsigned char*, int, int, int)
+1.05%     VICTOR RENDERING              vic-anim         cv::ColumnSum<unsigned short, unsigned char>::operator()(unsigned char const**, unsigned char*, int, int, int)
+0.76%     VICTOR RENDERING X-outerglow  vic-anim         cv::ColumnSum<unsigned short, unsigned char>::operator()(unsigned char const**, unsigned char*, int, int, int)
+0.38%     VICTOR RENDERING X-outerglow  vic-anim         cv::ColumnSum<int, unsigned char>::operator()(unsigned char const**, unsigned char*, int, int, int)
+0.37%     VICTOR RENDERING X-aliasing   vic-anim         cv::ColumnSum<unsigned short, unsigned char>::operator()(unsigned char const**, unsigned char*, int, int, int)
+0.36%     VICTOR RENDERING X-glowfilt   vic-anim         cv::ColumnSum<unsigned short, unsigned char>::operator()(unsigned char const**, unsigned char*, int, int, int)
+
+0.87%     COZMO RENDERING               vic-anim         Anki::Cozmo::ProceduralFaceDrawer::ApplyScanlines(Anki::Vision::ImageRGB&, float)
+0.80%     VICTOR RENDERING X-noise      vic-anim         Anki::Cozmo::ProceduralFaceDrawer::ApplyScanlines(Anki::Vision::ImageRGB&, float)
+0.80%     VICTOR RENDERING              vic-anim         Anki::Cozmo::ProceduralFaceDrawer::ApplyScanlines(Anki::Vision::ImageRGB&, float)
+0.60%     VICTOR RENDERING X-outerglow  vic-anim         Anki::Cozmo::ProceduralFaceDrawer::ApplyScanlines(Anki::Vision::ImageRGB&, float)
+0.60%     VICTOR RENDERING X-glowfilt   vic-anim         Anki::Cozmo::ProceduralFaceDrawer::ApplyScanlines(Anki::Vision::ImageRGB&, float)
+0.60%     VICTOR RENDERING X-aliasing   vic-anim         Anki::Cozmo::ProceduralFaceDrawer::ApplyScanlines(Anki::Vision::ImageRGB&, float)
+
+0.87%     COZMO RENDERING               vic-anim         cv::LineAA(cv::Mat&, cv::Point_<long long>, cv::Point_<long long>, void const*)
+0.80%     VICTOR RENDERING              vic-anim         cv::LineAA(cv::Mat&, cv::Point_<long long>, cv::Point_<long long>, void const*)
+0.78%     VICTOR RENDERING X-noise      vic-anim         cv::LineAA(cv::Mat&, cv::Point_<long long>, cv::Point_<long long>, void const*)
+0.63%     VICTOR RENDERING X-outerglow  vic-anim         cv::LineAA(cv::Mat&, cv::Point_<long long>, cv::Point_<long long>, void const*)
+0.62%     VICTOR RENDERING X-glowfilt   vic-anim         cv::LineAA(cv::Mat&, cv::Point_<long long>, cv::Point_<long long>, void const*)
+0.61%     VICTOR RENDERING X-aliasing   vic-anim         cv::LineAA(cv::Mat&, cv::Point_<long long>, cv::Point_<long long>, void const*)
+
+0.73%     COZMO RENDERING               vic-anim         cv::WarpAffineInvoker::operator()(cv::Range const&) const
+0.68%     VICTOR RENDERING              vic-anim         cv::WarpAffineInvoker::operator()(cv::Range const&) const
+0.65%     VICTOR RENDERING X-noise      vic-anim         cv::WarpAffineInvoker::operator()(cv::Range const&) const
+0.49%     VICTOR RENDERING X-glowfilt   vic-anim         cv::WarpAffineInvoker::operator()(cv::Range const&) const
+0.49%     VICTOR RENDERING X-aliasing   vic-anim         cv::WarpAffineInvoker::operator()(cv::Range const&) const
+0.48%     VICTOR RENDERING X-outerglow  vic-anim         cv::WarpAffineInvoker::operator()(cv::Range const&) const
+
+0.97%     VICTOR RENDERING X-noise      vic-anim         memcpy
+0.95%     VICTOR RENDERING              vic-anim         memcpy
+0.89%     COZMO RENDERING               vic-anim         memcpy
+0.74%     VICTOR RENDERING X-outerglow  vic-anim         memcpy
+0.67%     VICTOR RENDERING X-aliasing   vic-anim         memcpy
+0.65%     VICTOR RENDERING X-glowfilt   vic-anim         memcpy
+
+0.32%     VICTOR RENDERING              vic-anim         cv::FilterEngine::proceed(unsigned char const*, int, int, unsigned char*, int)
+0.27%     VICTOR RENDERING X-outerglow  vic-anim         cv::FilterEngine::proceed(unsigned char const*, int, int, unsigned char*, int)
+
+0.90%     VICTOR RENDERING X-noise      vic-anim         cv::RowSum<unsigned char, unsigned short>::operator()(unsigned char const*, unsigned char*, int, int)
+0.90%     VICTOR RENDERING              vic-anim         cv::RowSum<unsigned char, unsigned short>::operator()(unsigned char const*, unsigned char*, int, int)
+0.65%     VICTOR RENDERING X-outerglow  vic-anim         cv::RowSum<unsigned char, unsigned short>::operator()(unsigned char const*, unsigned char*, int, int)
+0.38%     VICTOR RENDERING X-aliasing   vic-anim         cv::RowSum<unsigned char, unsigned short>::operator()(unsigned char const*, unsigned char*, int, int)
+0.25%     VICTOR RENDERING X-glowfilt   vic-anim         cv::RowSum<unsigned char, unsigned short>::operator()(unsigned char const*, unsigned char*, int, int)
+```
