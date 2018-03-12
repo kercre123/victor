@@ -336,13 +336,16 @@ static uint32_t TtempUpdate = 0;
 int HelperTempC = INT_MIN;
 void helper_temp_manage(bool force_update)
 {
-  bool update = force_update || Timer::elapsedUs(TtempUpdate) > 60*1000*1000;
+  static bool last_update_successful = 1;
+  int update_interval = last_update_successful ? 10*1000*1000 : 60*1000*1000; //throttle down for debug if not connected to helper head
+  bool update = force_update || Timer::elapsedUs(TtempUpdate) > update_interval;
   bool changed = 0;
   
   if( update ) {
     int tempC = cmdGetHelperTempC(); //read new temp
+    last_update_successful = tempC >= 0;
     changed = tempC != HelperTempC;
-    HelperTempC = tempC;
+    HelperTempC = tempC; //still process failures to display error code
     TtempUpdate = Timer::get();
   }
   
