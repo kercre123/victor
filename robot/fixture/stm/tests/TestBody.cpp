@@ -305,9 +305,9 @@ TestFunction* TestBody0GetTests(void)
 {
   static TestFunction m_tests_0a[] = {
     ShortCircuitTest,
-    //BodyTryReadSerial, --skip serial read. forces blank state
+    BodyTryReadSerial, //--skip serial read to force blank state
     //BodyLoadTestFirmware,
-    BodyBootcheckProductionFirmware,
+    //BodyBootcheckProductionFirmware,
     //BodyChargeContactElectricalDebug,
     NULL,
   };
