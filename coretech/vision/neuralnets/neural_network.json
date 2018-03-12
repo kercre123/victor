@@ -1,0 +1,21 @@
+{
+    "graph"  : "mobilenet_keras_0.5_224_optimized2.pb",
+    "memoryMapGraph": 0,
+
+    "labels" : "mobilenet_labels.txt", 
+    "architecture"   : "custom",
+    "input" : "input_5", 
+    "output" : "output_node0",
+    "use_float_input" : 1, 
+
+    "input_width" : 224, 
+    "input_height": 224, 
+    "input_mean_R": 0, 
+    "input_mean_G": 0, 
+    "input_mean_B": 0, 
+    "input_std": 255, 
+    "top_K": 1, 
+    "min_score": 0.1,
+
+    "verbose" : 1
+}

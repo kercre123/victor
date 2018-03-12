@@ -1,0 +1,16 @@
+{
+    "graph" : "mobilenet_keras_0.5_224_optimized2.pb",
+
+    "labels" : "mobilenet_labels.txt",
+    "architecture"   : "classification",
+    "input_width" : 224,
+    "input_height" : 224,
+    "input_mean_R" : 0, 
+    "input_mean_G" : 0,
+    "input_mean_B" : 0,
+    "input_std"    : 255,
+    "top_K" : 1,
+    "min_score" : 0.01,
+
+    "verbose" : 1
+}

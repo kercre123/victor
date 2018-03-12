@@ -10,8 +10,8 @@
 #include "tensorflow/core/lib/core/threadpool.h"
 #include "tensorflow/core/lib/io/path.h"
 #include "tensorflow/core/lib/strings/stringprintf.h"
+#include "tensorflow/core/platform/logging.h" 
 #include "tensorflow/core/platform/init_main.h"
-#include "tensorflow/core/platform/logging.h"
 #include "tensorflow/core/platform/types.h"
 #include "tensorflow/core/public/session.h"
 #include "tensorflow/core/util/command_line_flags.h"
@@ -90,6 +90,24 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
     _outputLayerNames = {"MobilenetV1/Predictions/Softmax"};
     _useFloatInput = true;
   }
+  else if("custom" == _params.architecture)
+  {
+    if(!config.isMember("input") || !config.isMember("output") || !config.isMember("use_float_input"))
+    {
+      PRINT_NAMED_ERROR("ObjectDetector.LoadModel.MissingInputOutput", 
+                        "Custom architecture requires input/output names and use_float_input to be specified");
+      return RESULT_FAIL;
+    }
+    SetFromConfigHelper(config["input"], _inputLayerName);
+    _outputLayerNames.resize(1);
+    SetFromConfigHelper(config["output"], _outputLayerNames[0]);
+    SetFromConfigHelper(config["use_float_input"], _useFloatInput);
+
+    if(config.isMember("use_grayscale"))
+    {
+      SetFromConfigHelper(config["use_grayscale"], _useGrayscale);
+    }
+  }
   else
   {
     PRINT_NAMED_ERROR("ObjectDetector.LoadModel.UnrecognizedArchitecture", "%s", 
@@ -99,7 +117,10 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
 
   if(_params.verbose)
   {
-    std::cout << "Input: " << _inputLayerName << ", Outputs: ";
+    std::cout << "Arch: " << _params.architecture << 
+      (_useGrayscale ? ", Color " : ", Grayscale ") << 
+      "Input: " << _inputLayerName << ", Outputs: ";
+
     for(auto const& outputLayerName : _outputLayerNames)
     {
       std::cout << outputLayerName << " ";
@@ -326,14 +347,21 @@ Result ObjectDetector::Detect(cv::Mat& img, std::list<DetectedObject>& objects)
 {
   tensorflow::Tensor image_tensor;
 
+  if(_useGrayscale)
+  {
+    cv::cvtColor(img, img, CV_BGR2GRAY);
+  }
+
+  const char* typeStr = (_useFloatInput ? "FLOAT" : "UINT8");
+
+  if(_params.verbose)
+  {
+    std::cout << "Resizing " << img.cols << "x" << img.rows << "x" << img.channels() << " image into " << 
+      _params.input_width << "x" << _params.input_height << " " << typeStr << " tensor" << std::endl;
+  }
+
   if(_useFloatInput)
   {
-    if(_params.verbose)
-    {
-      std::cout << "Resizing " << img.cols << "x" << img.rows << " image into " << 
-        _params.input_width << "x" << _params.input_height << " FLOAT tensor" << std::endl;
-    }
-
     // TODO: Resize and convert directly into the tensor
     cv::resize(img, img, cv::Size(_params.input_width,_params.input_height), 0, 0, CV_INTER_AREA);
     assert(img.isContinuous());
@@ -342,7 +370,7 @@ Result ObjectDetector::Detect(cv::Mat& img, std::list<DetectedObject>& objects)
       1, _params.input_height, _params.input_width, img.channels()
     });
 
-    img.convertTo(img, CV_32FC3, 1.f/255.f);
+    img.convertTo(img, (img.channels() == 1 ? CV_32FC1 : CV_32FC3), 1.f/255.f);
     memcpy(image_tensor.tensor<float, 4>().data(), img.data, img.rows*img.cols*img.channels()*sizeof(float));
 
     // float* tensor_data = image_tensor.tensor<float,4>().data();
@@ -361,18 +389,13 @@ Result ObjectDetector::Detect(cv::Mat& img, std::list<DetectedObject>& objects)
   }
   else 
   {
-    if(_params.verbose)
-    {
-      std::cout << "Resizing " << img.cols << "x" << img.rows << " image into " << 
-        _params.input_width << "x" << _params.input_height << " UINT8 tensor" << std::endl;
-    }
-
     image_tensor = tensorflow::Tensor(tensorflow::DT_UINT8, {
       1, _params.input_height, _params.input_width, img.channels()
     });
 
     // Resize input image directly into the tensor data    
-    cv::Mat cvTensor(_params.input_height, _params.input_width, CV_8UC3, 
+    cv::Mat cvTensor(_params.input_height, _params.input_width, 
+                     (img.channels() == 1 ? CV_8UC1 : CV_8UC3),
                      image_tensor.tensor<uint8_t, 4>().data());
 
     cv::resize(img, cvTensor, cv::Size(_params.input_width,_params.input_height), 0, 0, CV_INTER_AREA);
@@ -380,7 +403,8 @@ Result ObjectDetector::Detect(cv::Mat& img, std::list<DetectedObject>& objects)
     
   if(_params.verbose)
   {
-    std::cout << "Running session with input dtype=" << image_tensor.dtype() << " and " << _outputLayerNames.size() << " outputs" << std::endl;
+    std::cout << "Running session: Input=(" << img.cols << "x" << img.rows << "x" << img.channels() << "), " << 
+      typeStr << ", " << _outputLayerNames.size() << " outputs(s)" << std::endl;
   }
 
   std::vector<tensorflow::Tensor> output_tensors;

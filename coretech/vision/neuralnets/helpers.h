@@ -42,7 +42,7 @@ static inline void PRINT_NAMED_ERROR(const char* eventName, const char* format, 
   // TODO: log it
   //LogError(eventName, keyValues, logString);
 
-  std::cerr << "ERROR: " << logString << std::endl;
+  std::cerr << "ERROR: " << eventName << ": " << logString << std::endl;
 }
 
 #endif /* __Anki_ObjectDetector_TensorFlow_Helpers_H__ */

@@ -197,8 +197,7 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
     return RESULT_FAIL;
   }
   
-  PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Model.OpenCvDNN.LoadedGraph",
-                "%s: %s", modelType.c_str(), _params.graph.c_str());
+  std::cout << "ObjectDetector.Model.OpenCvDNN.LoadedGraph: " << modelType << ": " << _params.graph << std::endl;
   
   // Report network complexity in FLOPS
   {

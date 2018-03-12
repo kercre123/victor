@@ -24,7 +24,11 @@ fi
 CC=g++
 
 ${CC} --std=c++11 \
-  -I${TENSORFLOW_PATH}/lib/python2.7/site-packages/tensorflow/include \
+  -DTENSORFLOW \
+  -I${TENSORFLOW_PATH} \
+  -I${TENSORFLOW_PATH}/bazel-tensorflow/external/eigen_archive \
+  -I${TENSORFLOW_PATH}/bazel-genfiles \
+  -I${TENSORFLOW_PATH}/bazel-tensorflow/external/protobuf_archive/src \
   -I${TENSORFLOW_PATH}/tensorflow/contrib/makefile/downloads/nsync/public \
   -I${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/mac \
   -I${CORETECH_EXTERNAL_DIR}/opencv-3.4.0/modules/core/include \

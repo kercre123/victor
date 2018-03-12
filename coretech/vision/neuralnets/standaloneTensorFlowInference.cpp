@@ -10,8 +10,15 @@
  * Copyright: Anki, Inc. 2018
  **/
 
-
-#include "objectDetector_tensorflow.h"
+#if defined(TENSORFLOW)
+#  include "objectDetector_tensorflow.h"
+#elif defined(CAFFE2)
+#  include "objectDetector_caffe2.h"
+#elif defined(OPENCV_DNN)
+#  include "objectDetector_opencvdnn.h"
+#else 
+#  error TENSORFLOW or CAFFE2 or OPENCVDNN must be defined
+#endif
 
 #include <atomic>
 #include <chrono>
@@ -54,7 +61,7 @@ int main(int argc, char **argv)
 
   if(argc < 4)
   {
-    std::cout << "Usage: " << argv[0] << " <configFile>.json modelPath cachePath" << std::endl;
+    std::cout << "Usage: " << argv[0] << " <configFile>.json modelPath cachePath <imageFile>" << std::endl;
     return -1;
   }
   
@@ -75,7 +82,12 @@ int main(int argc, char **argv)
     }
   }
 
-  const std::string imageFilename = FullFilePath(cachePath, "objectDetectionImage.png");
+  const bool imageFileProvided = (argc > 4);
+
+  const std::string imageFilename = (imageFileProvided ? 
+                                     argv[4] :
+                                     FullFilePath(cachePath, "objectDetectionImage.png"));
+
   const int kPollFrequency_ms = 10;
 
   // Initialize the detector
@@ -118,9 +130,15 @@ int main(int argc, char **argv)
       
       // Convert the results to JSON
       {
+        if(!objects.empty())
+        {
+          std::cout << "Detected " << objects.size() << " objects: ";
+        }
+
         Json::Value& objectsJSON = detectionResults["objects"];
         for(auto const& object : objects)
         {
+          std::cout << object.name << "[" << (int)round(100.f*object.score) << "] ";
           Json::Value json;
           json["timestamp"] = object.timestamp;
           json["score"]     = object.score;
@@ -131,7 +149,12 @@ int main(int argc, char **argv)
           json["ymax"]      = object.ymax;
           
           objectsJSON.append(json);
-        }          
+        }  
+
+        if(!objects.empty())
+        {
+          std::cout << std::endl;
+        }        
       }
 
       // Write out the Json
@@ -155,12 +178,25 @@ int main(int argc, char **argv)
       }
       Toc(startTime, "WriteJSON");
 
-      // Remove the image file we were working with
-      if(detector.IsVerbose())
+      
+      if(imageFileProvided)
       {
-        std::cout << "Deleting image file: " << imageFilename << std::endl;
+        break;
       }
-      remove(imageFilename.c_str());
+      else
+      {
+        // Remove the image file we were working with
+        if(detector.IsVerbose())
+        {
+          std::cout << "Deleting image file: " << imageFilename << std::endl;
+        }
+        remove(imageFilename.c_str());
+      }
+    }
+    else if(imageFileProvided)
+    {
+      std::cerr << imageFilename << " does not exist!" << std::endl;
+      break;
     }
     else 
     {

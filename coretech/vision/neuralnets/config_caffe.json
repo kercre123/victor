@@ -1,0 +1,17 @@
+{
+    "graph"  : "squeezenet",
+    "memoryMapGraph": 1,
+
+    "labels" : "squeezenet_labels.txt", 
+    "architecture"   : "mobilenet",
+    "input_width" : 227, 
+    "input_height": 227, 
+    "input_mean_R": 128, 
+    "input_mean_G": 128, 
+    "input_mean_B": 128, 
+    "input_std": 1, 
+    "top_K": 1, 
+    "min_score": 0.01,
+
+    "verbose" : 1
+}
