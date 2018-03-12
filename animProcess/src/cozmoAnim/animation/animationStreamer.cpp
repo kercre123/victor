@@ -47,6 +47,9 @@
 
 #include "jo_gif/jo_gif.h"
 
+#include <stdio.h>
+#include <time.h>
+
 #define DEBUG_ANIMATION_STREAMING 0
 #define DEBUG_ANIMATION_STREAMING_AUDIO 0
 
@@ -66,8 +69,11 @@ namespace Cozmo {
   static const AnimContext* s_context; // copy of this, needed for GetDataPlatform
   static bool s_faceDataOverrideRegistered = false;
   static bool s_faceDataReset = false;
+  static int s_frame = 0;
   static int s_framesToCapture = 0;
   static jo_gif_t s_gif;
+  static clock_t s_frameStart;
+  static FILE* s_tga;
 
   void ResetFace(ConsoleFunctionContextRef context)
   {
@@ -79,19 +85,28 @@ namespace Cozmo {
   static void CaptureFace(ConsoleFunctionContextRef context)
   {
     if(s_framesToCapture == 0) {
-      const std::string filename = ConsoleArg_GetOptional_String(context, "filename", "eyes.gif");
+      const std::string filename = ConsoleArg_GetOptional_String(context, "filename", "screenshot.tga");
       const int numFrames = ConsoleArg_GetOptional_Int(context, "numFrames", 1);
 
       const Util::Data::DataPlatform* dataPlatform = s_context->GetDataPlatform();
       const std::string cacheFilename = dataPlatform->pathToResource(Util::Data::Scope::Cache, filename);
 
-      s_gif = jo_gif_start(cacheFilename.c_str(), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, 0, 32);
-      s_framesToCapture = numFrames;
+      if(filename.find(".gif") != std::string::npos) {
+        s_gif = jo_gif_start(cacheFilename.c_str(), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, 0, 255);
+        s_frame = 0;
+        s_framesToCapture = numFrames;
+      } else {
+        s_tga = fopen(cacheFilename.c_str(), "wb");
+        s_frame = 0;
+        s_framesToCapture = 1;
+      }
       const std::string html = std::string("<html>\n") + "Capturing frames as <a href=\"/cache/"+filename+"\">"+filename+"\n" + "</html>\n";
       context->channel->WriteLog(html.c_str());
     } else {
       context->channel->WriteLog("CaptureFace already in progress.");
     }
+
+    s_frameStart = clock();
   }
 
   CONSOLE_FUNC(CaptureFace, "ProceduralFace", optional const char* filename, optional int numFrames);
@@ -685,27 +700,71 @@ namespace Cozmo {
                    "Got %d x %d. Expected %d x %d",
                    faceImg565.GetNumCols(), faceImg565.GetNumRows(),
                    FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
-    
 
     if(s_framesToCapture > 0) {
-      static unsigned char frame[FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*4];
+      clock_t end = clock();
+      float elapsed = (end - s_frameStart)/float(CLOCKS_PER_SEC);
+      s_frameStart = end;
+
+      static uint8_t frame[FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*4];
       const u16* srcPtr = faceImg565.GetRawDataPointer();
       unsigned char* dstPtr = frame;
       for(int i = 0; i < FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT; ++i) {
+        // col fedcba9876543210
+        //     RRRRR            >> 11
+        //          GGGGGG      >> 5
+        //                BBBBB >> 0
         u16 col = *srcPtr++;
+
+        // shift and mask to low bits
+        //    red 000RRRrr
+        //  green 00GGgggg
+        //   blue 000BBBbb
         u8 red = (col>>11) & 0x1f;
         u8 green = (col>>5) & 0x3f;
         u8 blue = (col>>0) & 0x1f;
-        *dstPtr++ = (red << 3)|(red >> 2);
-        *dstPtr++ = (green << 2)|(green >> 4);
-        *dstPtr++ = (blue << 3)|(blue >> 2);
+
+        // shift for brightness, populate bottom bits from top bits for noise
+        //    red RRRrrRRR
+        //  green GGggggGG
+        //   blue BBBbbBBB
+        red = (red << 3)|(red >> 2);
+        green = (green << 2)|(green >> 4);
+        blue = (blue << 3)|(blue >> 2);
+
+        *dstPtr++ = red;
+        *dstPtr++ = green;
+        *dstPtr++ = blue;
         *dstPtr++ = 0xff;
       }
-      jo_gif_frame(&s_gif, frame, 3, false);
 
-      --s_framesToCapture;
-      if(s_framesToCapture == 0) {
-        jo_gif_end(&s_gif);
+      if(s_tga != NULL) {
+        if(s_frame == 0) {
+          uint8_t head[18] = {0};
+          head[ 2] = 2; // uncompressed, true-color image
+          head[12] = FACE_DISPLAY_WIDTH & 0xff;
+          head[13] = (FACE_DISPLAY_WIDTH >> 8) & 0xff;
+          head[14] = FACE_DISPLAY_HEIGHT & 0xff;
+          head[15] = (FACE_DISPLAY_HEIGHT >> 8) & 0xff;
+          head[16] = 32;   /** 32 bits depth **/
+          head[17] = 0x28; /** top-down flag, 8 bits alpha **/
+          fwrite(head, sizeof(uint8_t), 18, s_tga);
+        }
+        fwrite(frame, sizeof(uint8_t), FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*4, s_tga);
+
+        ++s_frame;
+        if(s_frame == s_framesToCapture) {
+          fclose(s_tga);
+          s_framesToCapture = 0;
+        }
+      } else {
+        jo_gif_frame(&s_gif, frame, elapsed/100.f, false);
+
+        ++s_frame;
+        if(s_frame == s_framesToCapture) {
+          jo_gif_end(&s_gif);
+          s_framesToCapture = 0;
+        }
       }
     }
 
