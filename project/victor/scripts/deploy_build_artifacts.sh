@@ -3,8 +3,10 @@
 set -e
 set -u
 
-# Go to directory of this script
+# Get directory of this script, then normalize to absolute path
 SCRIPT_PATH=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))
+SCRIPT_PATH=$(cd ${SCRIPT_PATH}; echo ${PWD})
+
 SCRIPT_NAME=$(basename ${0})
 TOPLEVEL=$SCRIPT_PATH
 
