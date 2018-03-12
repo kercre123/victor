@@ -331,14 +331,15 @@ void BehaviorTimerUtilityCoordinator::CheckShouldCancelRinging()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTimerUtilityCoordinator::CheckShouldSetTimer()
 {
-  if(_iParams.setTimerBehavior->WantsToBeActivated()){
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  if(uic.IsUserIntentPending(USER_INTENT(set_timer))){
+    uic.ClearUserIntent(USER_INTENT(set_timer));
+
     int requestedTime_s = _lParams.setTimerIntent->Get_set_timer().time_s;
     const bool isTimerInRange = (_iParams.minValidTimer_s <= requestedTime_s) && 
                                 (requestedTime_s          <= _iParams.maxValidTimer_s);
 
     if(GetTimerUtility().GetTimerHandle() != nullptr){
-      auto& uic = GetBehaviorComp<UserIntentComponent>();
-      uic.ClearUserIntent(USER_INTENT(set_timer));
       // Timer already set - can't set another
       TransitionToTimerAlreadySet();
     }else if(isTimerInRange){
@@ -386,6 +387,7 @@ void BehaviorTimerUtilityCoordinator::CheckShouldPlayAntic()
 void BehaviorTimerUtilityCoordinator::TransitionToSetTimer()
 {
   _iParams.anticTracker->PlayingAntic(GetBEI());
+  _iParams.setTimerBehavior->WantsToBeActivated();
   DelegateNow(_iParams.setTimerBehavior.get());
 }
 
@@ -394,6 +396,7 @@ void BehaviorTimerUtilityCoordinator::TransitionToSetTimer()
 void BehaviorTimerUtilityCoordinator::TransitionToPlayAntic()
 {
   _iParams.anticTracker->PlayingAntic(GetBEI());
+  _iParams.timerAnticBehavior->WantsToBeActivated();
   DelegateNow(_iParams.timerAnticBehavior.get());
 }
 
