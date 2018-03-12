@@ -232,8 +232,7 @@ namespace Cozmo {
     
     // For keep face alive animations
     std::map<KeepFaceAliveParameter, f32> _keepFaceAliveParams;
-    bool _enableKeepFaceAlive = true;
-
+    
     std::unique_ptr<Audio::AnimationAudioClient> _audioClient;
     
     // Time to wait before forcing KeepFaceAlive() after the latest stream has stopped

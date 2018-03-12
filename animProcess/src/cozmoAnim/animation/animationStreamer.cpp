@@ -67,7 +67,7 @@ namespace Cozmo {
 
   static ProceduralFace s_faceDataOverride; // incoming values from console var system
   static ProceduralFace s_faceDataBaseline; // baseline to compare against, differences mean override the incoming animation
-  static const AnimContext* s_context; // copy of this, needed for GetDataPlatform
+  static const AnimContext* s_context; // copy of AnimContext in first constructed AnimationStreamer, needed for GetDataPlatform
   static bool s_faceDataOverrideRegistered = false;
   static bool s_faceDataReset = false;
   static int s_frame = 0;
@@ -159,6 +159,19 @@ namespace Cozmo {
   // Overrides whatever faces we're sending with a 3-stripe test pattern
   // (seems more related to the other ProceduralFace console vars, so putting it in that group instead)
   CONSOLE_VAR(bool, kProcFace_DisplayTestPattern, "ProceduralFace", false);
+  
+  // Allows easy disabling of KeepFaceAlive using the console system (i.e., without a message interface)
+  // This is useful for the animators to disable KeepFaceAlive while testing eye shapes, etc.
+  static bool s_enableKeepFaceAlive = true;
+  void ToggleKeepFaceAlive(ConsoleFunctionContextRef context)
+  {
+    s_enableKeepFaceAlive = !s_enableKeepFaceAlive;
+    PRINT_CH_INFO(kLogChannelName, "ConsoleFunc.ToggleKeepFaceAlive", "KeepFaceAlive now %s",
+                  (s_enableKeepFaceAlive ? "ON" : "OFF"));
+  }
+  
+  CONSOLE_FUNC(ToggleKeepFaceAlive, "ProceduralFace");
+    
     
   } // namespace
   
@@ -1179,7 +1192,7 @@ namespace Cozmo {
         _wasAnimationInterruptedWithNothing = false;
       }
       
-      if(_enableKeepFaceAlive && !FACTORY_TEST)
+      if(s_enableKeepFaceAlive && !FACTORY_TEST)
       {
         _trackLayerComponent->KeepFaceAlive(_keepFaceAliveParams);
       }
@@ -1259,10 +1272,10 @@ namespace Cozmo {
   
   void AnimationStreamer::EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms)
   {
-    if (_enableKeepFaceAlive && !enable) {
+    if (s_enableKeepFaceAlive && !enable) {
       _trackLayerComponent->RemoveKeepFaceAlive(disableTimeout_ms);
     }
-    _enableKeepFaceAlive = enable;
+    s_enableKeepFaceAlive = enable;
   }
   
   void AnimationStreamer::SetDefaultKeepFaceAliveParams()

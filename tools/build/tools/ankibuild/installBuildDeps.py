@@ -123,7 +123,7 @@ class DependencyInstaller(object):
       if result:
         print("error: failed to install python{0} package {1}!".format(version, package))
         return False
-      if not self.ispythonpackageinstalled(package, version):
+      if not self.isPythonPackageInstalled(package, version):
         print("error: python{0} package {1} still not installed!".format(version, package))
         return False
     return True
