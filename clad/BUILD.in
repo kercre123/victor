@@ -11,17 +11,6 @@ cxx_project(
 )
 
 cxx_project(
-    name = 'sdk_clad',
-    srcs = glob(['sdk/clad/**/*.clad']),
-    platform_srcs = [],
-    headers = [
-        'sdk/clad/externalInterface/messageRobotToDevice.clad',
-        'sdk/clad/externalInterface/messageDeviceToRobot.clad',
-    ],
-    platform_headers = [],
-)
-
-cxx_project(
     name = 'viz_clad',
     srcs = glob(['vizSrc/clad/**/*.clad']),
     platform_srcs = [],

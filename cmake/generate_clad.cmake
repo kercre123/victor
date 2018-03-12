@@ -163,7 +163,6 @@ function(generate_clad_cpp)
     set(CLAD_CPP_EXTS ".h" ".cpp")
     set(CLAD_CPP_FLAGS
         "--output-union-helper-constructors"
-        "--output-json"
         "${genclad_FLAGS}")
 
     set(CLAD_CPP_DECL "${CMAKE_SOURCE_DIR}/robot/clad/cozmo_CPP_declarations_emitter.py")
