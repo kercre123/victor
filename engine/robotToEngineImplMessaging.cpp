@@ -56,6 +56,8 @@
 #include "util/helpers/includeFstream.h"
 #include "util/signals/signalHolder.h"
 
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
 #include <functional>
 
 #define LOG_CHANNEL "RobotState"
@@ -911,6 +913,15 @@ void RobotToEngineImplMessaging::HandleSyncTimeAck(const AnkiEvent<RobotInterfac
   ANKI_CPU_PROFILE("Robot::HandleSyncTimeAck");
   LOG_INFO("Robot.HandleSyncTimeAck","");
   robot->SetTimeSynced();
+
+  // Move the head up when we sync time so that the customer can see the face easily
+  if(FACTORY_TEST && Factory::GetEMR()->PACKED_OUT_FLAG)
+  {
+    const f32 kLookUpSpeed_radps = 2;
+    robot->GetMoveComponent().MoveHeadToAngle(MAX_HEAD_ANGLE, 
+                                              kLookUpSpeed_radps, 
+                                              MAX_HEAD_ACCEL_RAD_PER_S2);
+  }
 }
 
 void RobotToEngineImplMessaging::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
