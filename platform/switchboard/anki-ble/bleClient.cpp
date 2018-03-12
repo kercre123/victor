@@ -9,17 +9,22 @@
  * Copyright: Anki, Inc. 2018
  *
  **/
+
+#include "anki_ble_uuids.h"
 #include "anki-ble/bleClient.h"
 
-bool Anki::Switchboard::BleClient::SendPlainText(uint8_t* msg, size_t length) {
-  return Send(msg, length, kPlainTextWriteCharacteristicUUID);
+namespace Anki {
+namespace Switchboard {
+
+bool BleClient::SendPlainText(uint8_t* msg, size_t length) {
+  return Send(msg, length, kAppReadCharacteristicUUID.c_str());
 }
 
-bool Anki::Switchboard::BleClient::SendEncrypted(uint8_t* msg, size_t length) {
-  return Send(msg, length, kEncryptedWriteCharacteristicUUID);
+bool BleClient::SendEncrypted(uint8_t* msg, size_t length) {
+  return Send(msg, length, kAppReadCharacteristicUUID.c_str());
 }
 
-bool Anki::Switchboard::BleClient::Send(uint8_t* msg, size_t length, std::string charUuid) {
+bool BleClient::Send(uint8_t* msg, size_t length, std::string charUuid) {
   if(_connectionId == -1) {
     return false;
   }
@@ -34,19 +39,19 @@ bool Anki::Switchboard::BleClient::Send(uint8_t* msg, size_t length, std::string
   return true;
 }
 
-void Anki::Switchboard::BleClient::OnReceiveMessage(const int connection_id,
+void BleClient::OnReceiveMessage(const int connection_id,
                                  const std::string& characteristic_uuid,
                                  const std::vector<uint8_t>& value) {
-  if(characteristic_uuid == kPlainTextReadCharacteristicUUID) {
+  if(characteristic_uuid == kAppWriteCharacteristicUUID) {
     // We are receiving input to read stream
     ((Anki::Switchboard::INetworkStream*)_stream)->ReceivePlainText((uint8_t*)&value[0], value.size());
-  } else if(characteristic_uuid == kEncryptedReadCharacteristicUUID) {
+  } else if(characteristic_uuid == kAppWriteCharacteristicUUID) {
     // We are receiving input to read stream
     ((Anki::Switchboard::INetworkStream*)_stream)->ReceiveEncrypted((uint8_t*)&value[0], value.size());
   }
 }
 
-void Anki::Switchboard::BleClient::OnInboundConnectionChange(int connection_id, int connected) {
+void BleClient::OnInboundConnectionChange(int connection_id, int connected) {
   bool isConnectedToCentral = (bool)connected && (connection_id != -1);
 
   printf("connection_id [%d] connected [%d]\n", connection_id, connected);
@@ -72,7 +77,7 @@ void Anki::Switchboard::BleClient::OnInboundConnectionChange(int connection_id, 
   }
 }
 
-void Anki::Switchboard::BleClient::OnPeripheralStateUpdate(const bool advertising,
+void BleClient::OnPeripheralStateUpdate(const bool advertising,
                                         const int connection_id,
                                         const int connected,
                                         const bool congested) {
@@ -81,3 +86,6 @@ void Anki::Switchboard::BleClient::OnPeripheralStateUpdate(const bool advertisin
 
   _advertisingUpdateSignal.emit(advertising);
 }
+
+} // Switchboard
+} // Anki

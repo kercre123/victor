@@ -1,22 +1,47 @@
+/**
+ * File: savedSessionManager.cpp
+ *
+ * Author: paluri
+ * Created: 3/7/2018
+ *
+ * Description: Saved and load public key / session key information
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
+
 #include "savedSessionManager.h"
 #include <sodium.h>
 #include <sys/stat.h>
+#include "log.h"
 #include "switchboardd/pairingMessages.h"
 
-const std::string Anki::Switchboard::SavedSessionManager::kSaveFolder = "/data/switchboard";
-const std::string Anki::Switchboard::SavedSessionManager::kPublicKeyPath = "id_vec.pub";
-const std::string Anki::Switchboard::SavedSessionManager::kKnownSessionsPath = "known_clients";
-const std::ios_base::openmode Anki::Switchboard::SavedSessionManager::kWriteMode = std::ios_base::binary | std::ios_base::trunc;
-const std::ios_base::openmode Anki::Switchboard::SavedSessionManager::kReadMode = std::ios_base::binary | std::ios_base::in;
-const char* Anki::Switchboard::SavedSessionManager::kPrefix = "ANKIBITS";
+namespace Anki {
+namespace Switchboard {
 
-void Anki::Switchboard::SavedSessionManager::SavePublicKey(const uint8_t* publicKey) {
+const std::string SavedSessionManager::kSaveFolder = "/data/switchboard";
+const std::string SavedSessionManager::kPublicKeyPath = "id_vec.pub";
+const std::string SavedSessionManager::kKnownSessionsPath = "known_clients";
+const std::ios_base::openmode SavedSessionManager::kWriteMode = std::ios_base::binary | std::ios_base::trunc;
+const std::ios_base::openmode SavedSessionManager::kReadMode = std::ios_base::binary | std::ios_base::in;
+const char* SavedSessionManager::kPrefix = "ANKIBITS";
+
+void SavedSessionManager::SavePublicKey(const uint8_t* publicKey) {
   std::ofstream fout;
 
   // Make Directory if not exist
-  int n = MakeDirectory();
+  bool makeDirSuccess = MakeDirectory();
 
-  fout.open(kSaveFolder + "/" + kPublicKeyPath, kWriteMode);
+  if(!makeDirSuccess) {
+    Log::Write("Could not successfully make directory.");
+  }
+
+  fout.open(kSaveFolder + "/" + kPublicKeyPath + ".tmp", kWriteMode);
+
+  if(!fout.is_open()) {
+    Log::Write("Could not open file.");
+    return;
+  }
 
   uint32_t version = SB_PAIRING_PROTOCOL_VERSION;
   fout.write(kPrefix, strlen(kPrefix));
@@ -24,9 +49,17 @@ void Anki::Switchboard::SavedSessionManager::SavePublicKey(const uint8_t* public
   fout.write((char*)publicKey, crypto_kx_PUBLICKEYBYTES);
 
   fout.close();
+
+  // Rename tmp file to actual file
+  int renameStatus = rename((kSaveFolder + "/" + kPublicKeyPath + ".tmp").c_str(), 
+    (kSaveFolder + "/" + kPublicKeyPath).c_str());
+
+  if(renameStatus != 0) {
+    Log::Write("Could not move tmp file to actual file.");
+  }
 }
 
-uint32_t Anki::Switchboard::SavedSessionManager::LoadPublicKey(uint8_t* publicKey) {
+uint32_t SavedSessionManager::LoadPublicKey(uint8_t* publicKey) {
   std::ifstream fin;
 
   fin.open(kSaveFolder + "/" + kPublicKeyPath, kReadMode);
@@ -55,10 +88,22 @@ uint32_t Anki::Switchboard::SavedSessionManager::LoadPublicKey(uint8_t* publicKe
   return version;
 }
 
-void Anki::Switchboard::SavedSessionManager::SaveSession(const uint8_t* clientPublicKey, const uint8_t* sessionKeyEncrypt, const uint8_t* sessionKeyDecrypt) {
+void SavedSessionManager::SaveSession(const uint8_t* clientPublicKey, const uint8_t* sessionKeyEncrypt, const uint8_t* sessionKeyDecrypt) {
   std::ofstream fout;
 
-  fout.open(kSaveFolder + "/" + kKnownSessionsPath, kWriteMode);
+  // Make Directory if not exist
+  bool makeDirSuccess = MakeDirectory();
+
+  if(!makeDirSuccess) {
+    Log::Write("Could not successfully make directory.");
+  }
+
+  fout.open(kSaveFolder + "/" + kKnownSessionsPath + ".tmp", kWriteMode);
+
+  if(!fout.is_open()) {
+    Log::Write("Could not open file.");
+    return;
+  }
 
   uint32_t version = SB_PAIRING_PROTOCOL_VERSION;
   uint32_t numClients = 1; // for v1, this is hard coded
@@ -71,9 +116,17 @@ void Anki::Switchboard::SavedSessionManager::SaveSession(const uint8_t* clientPu
   fout.write((char*)sessionKeyDecrypt, crypto_kx_SESSIONKEYBYTES);
   
   fout.close();
+
+  // Rename tmp file to actual file
+  int renameStatus = rename((kSaveFolder + "/" + kKnownSessionsPath + ".tmp").c_str(), 
+    (kSaveFolder + "/" + kKnownSessionsPath).c_str());
+
+  if(renameStatus != 0) {
+    Log::Write("Could not move tmp file to actual file.");
+  }
 }
 
-uint32_t Anki::Switchboard::SavedSessionManager::LoadSession(uint8_t* clientPublicKeyOut, uint8_t* sessionKeyEncryptOut, uint8_t* sessionKeyDecryptOut) {
+uint32_t SavedSessionManager::LoadSession(uint8_t* clientPublicKeyOut, uint8_t* sessionKeyEncryptOut, uint8_t* sessionKeyDecryptOut) {
   std::ifstream fin;
 
   fin.open(kSaveFolder + "/" + kPublicKeyPath, kReadMode);
@@ -106,6 +159,15 @@ uint32_t Anki::Switchboard::SavedSessionManager::LoadSession(uint8_t* clientPubl
   return version;
 }
 
-int Anki::Switchboard::SavedSessionManager::MakeDirectory() {
-  return mkdir(kSaveFolder.c_str(), S_IRUSR | S_IWUSR);
+bool SavedSessionManager::MakeDirectory() {
+  int status = mkdir(kSaveFolder.c_str(), S_IRUSR | S_IWUSR);
+
+  if(status != -1 || errno == EEXIST) {
+    return true;
+  } else {
+    return false;
+  }
 }
+
+} // Switchboard
+} // Anki

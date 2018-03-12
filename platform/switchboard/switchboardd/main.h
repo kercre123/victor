@@ -23,6 +23,7 @@
 #include "anki-ble/bleClient.h"
 #include "switchboardd/securePairing.h"
 #include "switchboardd/taskExecutor.h"
+#include "switchboardd/engineMessagingClient.h"
 
 namespace Anki {
 namespace Switchboard {
@@ -37,11 +38,16 @@ namespace Switchboard {
       void Stop();
     
     private:
-      void InitializeBle();
-      void Tick(struct ev_loop* loop, struct ev_timer* w, int revents);
+      void InitializeEngineComms();
+      void InitializeBleComms();
+      static void HandleEngineTimer(struct ev_loop* loop, struct ev_timer* w, int revents);
       void OnConnected(int connId, INetworkStream* stream);
       void OnDisconnected(int connId, INetworkStream* stream);
       void OnPinUpdated(std::string pin);
+      void OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame message);
+      bool TryConnectToEngineServer();
+
+      void UpdateAdvertisement(bool pairing);
 
       // External Interfaces
       void HandleButtonDoubleTap();  // todo
@@ -53,9 +59,16 @@ namespace Switchboard {
 
       struct ev_loop* _loop;
       ev_timer _timer;
+
+      struct ev_EngineTimerStruct {
+        ev_timer timer;
+        Daemon* daemon;
+      } _engineTimer;
+
       std::unique_ptr<TaskExecutor> _taskExecutor;
       std::unique_ptr<BleClient> _bleClient;
       std::unique_ptr<SecurePairing> _securePairing;
+      std::shared_ptr<EngineMessagingClient> _engineMessagingClient;
   };
 }
 }

@@ -10,8 +10,7 @@
  *
  **/
 
-#ifndef KeyExchange_h
-#define KeyExchange_h
+#pragma once
 
 #include <string>
 #include <sodium.h>
@@ -79,5 +78,3 @@ namespace Switchboard {
   };
 } // Switchboard
 } // Anki
-
-#endif /* KeyExchange_h */

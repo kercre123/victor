@@ -47,6 +47,11 @@ namespace Switchboard {
       return _receiveRtsAck;
     }
 
+    // RtsSsh
+    RtsConnectionSignal& OnReceiveRtsSsh() {
+      return _DEV_ReceiveSshKey;
+    }
+
     Anki::Victor::ExternalComms::ExternalComms ReceiveExternalCommsMsg(uint8_t* buffer, size_t length) {
       Anki::Victor::ExternalComms::ExternalComms extComms;
 
@@ -102,6 +107,11 @@ namespace Switchboard {
             _receiveRtsAck.emit(rtsMsg);
             break;
           }
+          // RtsSsh
+          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsSshRequest: {
+            _DEV_ReceiveSshKey.emit(rtsMsg);
+            break;
+          }
           default:
             // unhandled messages
             break;
@@ -134,6 +144,9 @@ namespace Switchboard {
       RtsConnectionSignal _receiveRtsWifiAccessPointRequest;
       RtsConnectionSignal _receiveRtsCancelPairing;
       RtsConnectionSignal _receiveRtsAck;
+
+      // RtsSsh 
+      RtsConnectionSignal _DEV_ReceiveSshKey;
   };
 } // Switchboard
 } // Anki

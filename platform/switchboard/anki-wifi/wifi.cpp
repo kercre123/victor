@@ -14,6 +14,7 @@
 #include <netdb.h> //hostent
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <ifaddrs.h>
 #include "exec_command.h"
 #include "fileutils.h"
 #include "log.h"
@@ -332,7 +333,7 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
 
       if(serviceOnline) {
         // early out--we are already connected!
-        //return true;
+        return true;
       }
     }
   }
@@ -377,10 +378,7 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
                                  &error);
 
   if(!didConnect && error != nullptr) {
-    // 24 -- timeout ? wrong password
-    // 36 -- Already connected
-    //printf("Error code: %d domain: %d\n", error->code, error->domain);
-    //printf(std::string(error->message).c_str());
+    Log::Write("Error connecting to wifi: %s", error->message);
   }  
 
   return (bool)didConnect;
@@ -389,8 +387,6 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
 void EnableWiFiInterface(const bool enable, ExecCommandCallback callback) {
   if (enable) {
     ExecCommandInBackground({"connmanctl", "enable", "wifi"}, callback);
-    ExecCommandInBackground({"echo", "Give me about 15 seconds to start WiFi and get an IP...."}, callback);
-    ExecCommandInBackground({"ifconfig", "wlan0"}, callback, 15L * 1000L);
   } else {
     ExecCommandInBackground({"connmanctl", "disable", "wifi"}, callback);
     ExecCommandInBackground({"ifconfig", "wlan0"}, callback);
@@ -448,14 +444,16 @@ void SetWiFiConfig(const std::map<std::string, std::string> networks, ExecComman
   }
 
   ExecCommandInBackground({"connmanctl", "enable", "wifi"}, callback);
-  ExecCommandInBackground({"echo", "Give me about 15 seconds to setup WiFi...."}, callback);
-  ExecCommandInBackground({"ifconfig", "wlan0"}, callback, 15L * 1000L);
 }
 
 bool CanConnectToHostName(char* hostName) {
-  struct sockaddr_in addr;
+  struct sockaddr_in addr = {0};
 
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
+  if(sockfd == -1) {
+    return false;
+  }
 
   // we will try to make tcp connection using IPv4
   addr.sin_family = AF_INET;
@@ -465,6 +463,7 @@ bool CanConnectToHostName(char* hostName) {
 
   if(strlen(hostName) > 100) {
     // don't allow host names larger than 100 chars
+    close(sockfd);
     return false;
   }
 
@@ -472,16 +471,19 @@ bool CanConnectToHostName(char* hostName) {
   bool gotIp = GetIpFromHostName(hostName, ipAddr);
 
   if(!gotIp) {
+    close(sockfd);
     return false;
   }
 
   if(inet_pton(AF_INET, ipAddr, &addr.sin_addr) <= 0) {
     // can't resolve hostname
+    close(sockfd);
     return false;
   }
 
   if(connect(sockfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
     // can't connect to hostname
+    close(sockfd);
     return false;
   }
 
@@ -609,6 +611,60 @@ bool DisableAccessPointMode() {
   }
 
   return true;
+}
+
+int GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {
+  struct ifaddrs* ifaddrs;
+
+  // get ifaddrs
+  getifaddrs(&ifaddrs);
+
+  struct ifaddrs* current = ifaddrs;
+
+  // clear memory
+  memset(ipv4_32bits, 0, 4);
+  memset(ipv6_128bits, 0, 16);
+
+  while(current != nullptr) {
+    int s, n;
+    int family = current->ifa_addr->sa_family;
+
+    if ((family == AF_INET || family == AF_INET6) && (strcmp(current->ifa_name, "wlan0") == 0)) {
+      char host[NI_MAXHOST];
+
+      s = getnameinfo(current->ifa_addr,
+              (family == AF_INET) ? sizeof(struct sockaddr_in) :
+                                    sizeof(struct sockaddr_in6),
+              host, NI_MAXHOST,
+              NULL, 0, NI_NUMERICHOST);
+      if (s != 0) {
+        //printf("getnameinfo() failed: %s\n", gai_strerror(s));
+        //exit(EXIT_FAILURE);
+        return -1;
+      }
+
+      // printf("\t\tname: %s\n", current->ifa_name);
+      // printf("\t\taddress: <%s>\n", host);
+
+      if(family == AF_INET) {
+        inet_pton(AF_INET, host, ipv4_32bits);
+      } else {
+        // Handle IPv6
+        /*struct sockaddr_in6 sa6;
+        inet_pton(AF_INET6, host, &(sa6.sin6_addr));
+        for(int i = 0; i < 16; i++) {
+          printf("%x ", *(((uint8_t*)&sa6.sin6_addr)+i));
+        } printf("\n");*/
+      }
+    }
+
+    current = current->ifa_next;
+  }
+
+  // free ifaddrs
+  freeifaddrs(ifaddrs);
+
+  return 0;
 }
 
 } // namespace Anki

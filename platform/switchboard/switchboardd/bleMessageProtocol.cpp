@@ -12,7 +12,10 @@
 
 #include "switchboardd/bleMessageProtocol.h"
 
-Anki::Switchboard::BleMessageProtocol::BleMessageProtocol(size_t size)
+namespace Anki {
+namespace Switchboard {
+
+BleMessageProtocol::BleMessageProtocol(size_t size)
 : _maxSize(size),
   _receiveState(kMsgStart)
 {
@@ -21,7 +24,7 @@ Anki::Switchboard::BleMessageProtocol::BleMessageProtocol(size_t size)
   }
 }
 
-void Anki::Switchboard::BleMessageProtocol::ReceiveRawBuffer(uint8_t* buffer, size_t size) {
+void BleMessageProtocol::ReceiveRawBuffer(uint8_t* buffer, size_t size) {
   if(size < 1) {
     return;
   }
@@ -95,7 +98,7 @@ void Anki::Switchboard::BleMessageProtocol::ReceiveRawBuffer(uint8_t* buffer, si
   }
 }
 
-void Anki::Switchboard::BleMessageProtocol::SendMessage(uint8_t* buffer, size_t size) {
+void BleMessageProtocol::SendMessage(uint8_t* buffer, size_t size) {
   size_t sizeRemaining = size;
   
   if(size < _maxSize) {
@@ -123,3 +126,6 @@ void Anki::Switchboard::BleMessageProtocol::SendMessage(uint8_t* buffer, size_t 
     }
   }
 }
+
+} // Switchboard
+} // Anki

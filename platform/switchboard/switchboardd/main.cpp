@@ -22,13 +22,11 @@
 #include <sodium.h>
 #include <signals/simpleSignal.hpp>
 
-//#include <glib.h>
-
 #include "anki-ble/log.h"
 #include "anki-ble/anki_ble_uuids.h"
 #include "anki-ble/ble_advertise_settings.h"
-#include "switchboardd/_switchboardMain.h"
 #include "anki-wifi/wifi.h"
+#include "switchboardd/main.h"
 
 // --------------------------------------------------------------------------------------------------------------------
 // Switchboard Daemon
@@ -36,50 +34,95 @@
 // @paluri
 // --------------------------------------------------------------------------------------------------------------------
 
+namespace Anki {
+namespace Switchboard {
+
 void Test();
 void OnPinUpdated(std::string pin);
 void OnConnected(int connId, Anki::Switchboard::INetworkStream* stream);
 void OnDisconnected(int connId, Anki::Switchboard::INetworkStream* stream);
 
-void Anki::Switchboard::Daemon::Start() {
+void Daemon::Start() {
   Log::Write("Loading up Switchboard Daemon");
   _loop = ev_default_loop(0);
   _taskExecutor = std::make_unique<Anki::TaskExecutor>(_loop);
 
-  InitializeBle();
+  InitializeEngineComms();
+  Log::Write("Finished Starting");
 }
 
-void Anki::Switchboard::Daemon::Stop() {
+void Daemon::Stop() {
   if(_bleClient != nullptr) {
     _bleClient->Disconnect(_connectionId);
     _bleClient->StopAdvertising();
   }
+
+  if(_engineMessagingClient != nullptr) {
+    Log::Write("End pairing state.");
+    _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+  }
 }
 
-void Anki::Switchboard::Daemon::InitializeBle() {
+void Daemon::InitializeEngineComms() {
+  _engineMessagingClient = std::make_shared<EngineMessagingClient>(_loop);
+  _engineMessagingClient->Init();
+  _engineMessagingClient->OnReceivePairingStatus().SubscribeForever(std::bind(&Daemon::OnPairingStatus, this, std::placeholders::_1));
+  _engineTimer.daemon = this;
+  ev_timer_init(&_engineTimer.timer, HandleEngineTimer, 0.1f, 0.1f);
+  ev_timer_start(_loop, &_engineTimer.timer);
+}
+
+bool Daemon::TryConnectToEngineServer() {
+  bool connected = _engineMessagingClient->Connect();
+
+  if (connected) {
+    Log::Write("Initialize EngineMessagingClient");
+  } else {
+    Log::Write("Failed to Initialize EngineMessagingClient ... trying again.");
+  }
+
+  return connected;
+}
+
+void Daemon::InitializeBleComms() {
+  Log::Write("Initialize BLE");
   _bleClient = std::make_unique<Anki::Switchboard::BleClient>(_loop);
   _bleClient->OnConnectedEvent().SubscribeForever(std::bind(&Daemon::OnConnected, this, std::placeholders::_1, std::placeholders::_2));
   _bleClient->OnDisconnectedEvent().SubscribeForever(std::bind(&Daemon::OnDisconnected, this, std::placeholders::_1, std::placeholders::_2));
-  _bleClient->Connect();
 
-  Anki::BLEAdvertiseSettings settings;
-  settings.GetAdvertisement().SetServiceUUID(Anki::kAnkiSingleMessageService_128_BIT_UUID);
-  settings.GetAdvertisement().SetIncludeDeviceName(true);
-  std::vector<uint8_t> mdata = Anki::kAnkiBluetoothSIGCompanyIdentifier;
-  mdata.push_back(Anki::kVictorProductIdentifier); // distinguish from future Anki products
-  mdata.push_back('p'); // to indicate we are in "pairing" mode
-  settings.GetAdvertisement().SetManufacturerData(mdata);
-  _bleClient->StartAdvertising(settings);
+  bool connected = _bleClient->Connect();
 
-  Log::Write("Initialize BLE");
+  if(connected) {
+    UpdateAdvertisement(false);
+  } else {
+    Log::Write("Fatal error. Could not connect to ankibluetoothd.");
+    // todo:// should probably exit program so that systemd will restart?
+  }
 }
 
-void Anki::Switchboard::Daemon::OnConnected(int connId, INetworkStream* stream) {
+void Daemon::UpdateAdvertisement(bool pairing) {
+  if(_bleClient == nullptr || !_bleClient->IsConnected()) {
+    Log::Write("Tried to update BLE advertisement when not connected to ankibluetoothd.");
+    return;
+  }
+
+  Anki::BLEAdvertiseSettings settings;
+  std::vector<uint8_t> mdata;
+  settings.GetAdvertisement().SetServiceUUID(Anki::kAnkiSingleMessageService_128_BIT_UUID);
+  settings.GetAdvertisement().SetIncludeDeviceName(true);
+  mdata = Anki::kAnkiBluetoothSIGCompanyIdentifier;
+  mdata.push_back(Anki::kVictorProductIdentifier); // distinguish from future Anki products
+  mdata.push_back(pairing?'p':0x00); // to indicate whether we are pairing
+  settings.GetAdvertisement().SetManufacturerData(mdata);
+  _bleClient->StartAdvertising(settings);
+}
+
+void Daemon::OnConnected(int connId, INetworkStream* stream) {
   Log::Write("OnConnected");
   _taskExecutor->Wake([stream, this](){
     Log::Write("Connected to a BLE central.");
     if(_securePairing == nullptr) {
-      _securePairing = std::make_unique<Anki::Switchboard::SecurePairing>(stream, _loop);
+      _securePairing = std::make_unique<Anki::Switchboard::SecurePairing>(stream, _loop, _engineMessagingClient);
       _securePairing->OnUpdatedPinEvent().SubscribeForever(std::bind(&Daemon::OnPinUpdated, this, std::placeholders::_1));
     }
     
@@ -90,20 +133,62 @@ void Anki::Switchboard::Daemon::OnConnected(int connId, INetworkStream* stream) 
   Log::Write("Done OnConnected");
 }
 
-void Anki::Switchboard::Daemon::OnDisconnected(int connId, INetworkStream* stream) {
+void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
   // do any clean up needed
   if(_securePairing != nullptr) {
     _securePairing->StopPairing();
+    UpdateAdvertisement(false);
+    _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+    Log::Write("Destroying secure pairing object.");
+    _securePairing = nullptr;
   }
 }
 
-void Anki::Switchboard::Daemon::OnPinUpdated(std::string pin) {
+void Daemon::OnPinUpdated(std::string pin) {
+  _engineMessagingClient->SetPairingPin(pin);
+  _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::START_PAIRING);
+  _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SHOW_PIN);
   Log::Blue((" " + pin + " ").c_str());
 }
 
-void Anki::Switchboard::Daemon::Tick(struct ev_loop* loop, struct ev_timer* w, int revents) {  
-  // noop
+void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame message) {
+  Anki::Cozmo::ExternalInterface::MessageEngineToGameTag tag = message.GetTag();
+
+  switch(tag){
+    case Anki::Cozmo::ExternalInterface::MessageEngineToGameTag::EnterPairing: {
+      printf("Enter pairing: %hhu\n", tag);    
+      UpdateAdvertisement(true);
+      _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::START_PAIRING);
+      break;
+    }
+    case Anki::Cozmo::ExternalInterface::MessageEngineToGameTag::ExitPairing: {
+      printf("Exit pairing: %hhu\n", tag);
+      UpdateAdvertisement(false);
+      if(_securePairing != nullptr) {
+        _securePairing->StopPairing();
+      }
+      _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+      break;
+    }
+    default: {
+      printf("Unknown Tag: %hhu\n", tag);
+      break;
+    }
+  }
 }
+
+void Daemon::HandleEngineTimer(struct ev_loop* loop, struct ev_timer* w, int revents) {
+  ev_EngineTimerStruct* t = (ev_EngineTimerStruct*)w;
+  bool connected = t->daemon->TryConnectToEngineServer();
+
+  if(connected) {
+    ev_timer_stop(loop, &t->timer);
+    t->daemon->InitializeBleComms();
+  }
+}
+
+} // Switchboard
+} // Anki
 
 // ####################################################################################################################
 // Entry Point
@@ -113,6 +198,7 @@ static struct ev_signal sTermSig;
 static ev_timer sTimer;
 static struct ev_loop* sLoop;
 const static uint32_t kTick_s = 30;
+std::unique_ptr<Anki::Switchboard::Daemon> _daemon;
 
 static void ExitHandler(int status = 0) {
   // todo: smoothly handle termination
@@ -122,6 +208,11 @@ static void ExitHandler(int status = 0) {
 static void SignalCallback(struct ev_loop* loop, struct ev_signal* w, int revents)
 {
   logi("Exiting for signal %d", w->signum);
+
+  if(_daemon != nullptr) {
+    _daemon->Stop();
+  }
+
   ev_timer_stop(sLoop, &sTimer);
   ev_unloop(sLoop, EVUNLOOP_ALL);
   ExitHandler();
@@ -133,7 +224,6 @@ static void Tick(struct ev_loop* loop, struct ev_timer* w, int revents) {
 
 int main() {
   sLoop = ev_default_loop(0);
-  std::unique_ptr<Anki::Switchboard::Daemon> daemon;
 
   ev_signal_init(&sIntSig, SignalCallback, SIGINT);
   ev_signal_start(sLoop, &sIntSig);
@@ -141,8 +231,8 @@ int main() {
   ev_signal_start(sLoop, &sTermSig);
   
   // initialize daemon
-  daemon = std::make_unique<Anki::Switchboard::Daemon>(sLoop, sTimer);
-  daemon->Start();
+  _daemon = std::make_unique<Anki::Switchboard::Daemon>(sLoop, sTimer);
+  _daemon->Start();
 
   // exit
   ev_timer_init(&sTimer, Tick, kTick_s, kTick_s);

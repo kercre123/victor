@@ -47,13 +47,13 @@ namespace Switchboard {
     }
     
     void ClearCryptoKeys() {
-      memset(_EncryptKey, 0, crypto_kx_SESSIONKEYBYTES);
-      memset(_DecryptKey, 0, crypto_kx_SESSIONKEYBYTES);
+      memset(_EncryptKey, 0, sizeof(_EncryptKey));
+      memset(_DecryptKey, 0, sizeof(_DecryptKey));
     }
     
     void SetCryptoKeys(uint8_t* encryptKey, uint8_t* decryptKey) {
-      memcpy(_EncryptKey, encryptKey, crypto_kx_SESSIONKEYBYTES);
-      memcpy(_DecryptKey, decryptKey, crypto_kx_SESSIONKEYBYTES);
+      memcpy(_EncryptKey, encryptKey, sizeof(_EncryptKey));
+      memcpy(_DecryptKey, decryptKey, sizeof(_DecryptKey));
     }
     
     void SetNonce(uint8_t* toRobotNonce, uint8_t* toDeviceNonce) {

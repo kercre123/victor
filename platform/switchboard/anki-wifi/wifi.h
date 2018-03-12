@@ -55,5 +55,6 @@ bool HasInternet();
 bool GetIpFromHostName(char* hostname, char* ip);
 bool EnableAccessPointMode(std::string ssid, std::string pw);
 bool DisableAccessPointMode();
+int GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits);
 
 } // namespace Anki

@@ -10,8 +10,7 @@
  *
  **/
 
-#ifndef messages_hpp
-#define messages_hpp
+#pragma once
 
 #include <cstdio>
 #include <stdlib.h>
@@ -56,13 +55,11 @@ namespace Switchboard {
     }
     
     void SendRawMessage(uint8_t multipart, uint8_t* buffer, size_t msgSize) {
-      uint8_t* msgBuffer = (uint8_t*)malloc(msgSize + 1);
+      uint8_t msgBuffer[msgSize + 1];
       
       msgBuffer[0] = GetHeaderByte(multipart, msgSize);
       memcpy(msgBuffer + 1, buffer, msgSize);
       _sendRawBufferSignal.emit(msgBuffer, msgSize + 1);
-      
-      free(msgBuffer);
     }
     
     static inline uint8_t GetMultipartBits(uint8_t msgSize) {
@@ -83,5 +80,3 @@ namespace Switchboard {
   };
 } // Switchboard
 } // Anki
-
-#endif /* messages_hpp */

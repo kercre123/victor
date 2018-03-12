@@ -13,25 +13,28 @@
 #include <random>
 #include "switchboardd/keyExchange.h"
 
-uint8_t* Anki::Switchboard::KeyExchange::GenerateKeys() {
+namespace Anki {
+namespace Switchboard {
+
+uint8_t* KeyExchange::GenerateKeys() {
   crypto_kx_keypair(_publicKey, _secretKey);
   return _publicKey;
 };
 
-void Anki::Switchboard::KeyExchange::Reset() {
+void KeyExchange::Reset() {
   // set all keys to 0
-  memset(_secretKey, 0, crypto_kx_SECRETKEYBYTES);
-  memset(_decryptKey, 0, crypto_kx_SESSIONKEYBYTES);
-  memset(_encryptKey, 0, crypto_kx_SESSIONKEYBYTES);
-  memset(_remotePublicKey, 0, crypto_kx_PUBLICKEYBYTES);
-  memset(_publicKey, 0, crypto_kx_PUBLICKEYBYTES);
+  memset(_secretKey, 0, sizeof(_secretKey));
+  memset(_decryptKey, 0, sizeof(_decryptKey));
+  memset(_encryptKey, 0, sizeof(_encryptKey));
+  memset(_remotePublicKey, 0, sizeof(_remotePublicKey));
+  memset(_publicKey, 0, sizeof(_publicKey));
 }
 
-std::string Anki::Switchboard::KeyExchange::GeneratePin() const {
+std::string KeyExchange::GeneratePin() const {
   return GeneratePin(_numPinDigits);
 }
 
-std::string Anki::Switchboard::KeyExchange::GeneratePin(int digits) const {
+std::string KeyExchange::GeneratePin(int digits) const {
   if(digits == 0) {
     return "";
   }
@@ -54,26 +57,39 @@ std::string Anki::Switchboard::KeyExchange::GeneratePin(int digits) const {
   return std::to_string(dis(gen));
 }
 
-void Anki::Switchboard::KeyExchange::SetRemotePublicKey(const uint8_t* pubKey) {
+void KeyExchange::SetRemotePublicKey(const uint8_t* pubKey) {
   // Copy in public key
   memcpy(_remotePublicKey, pubKey, crypto_kx_PUBLICKEYBYTES);
 }
 
-bool Anki::Switchboard::KeyExchange::CalculateSharedKeys(const uint8_t* pin) {
+bool KeyExchange::CalculateSharedKeys(const uint8_t* pin) {
   //
   // Messages from the robot will be encrypted with a hash that incorporates
   // a random pin
   // server_tx (encryptKey) needs to be sha-256'ed
   // client_rx (client's decrypt key) needs to be sha-256'ed
   //
-  bool success = crypto_kx_server_session_keys(_decryptKey, _encryptKey, _publicKey, _secretKey, _remotePublicKey) == 0;
+  bool success = crypto_kx_server_session_keys(
+    _decryptKey, _encryptKey, _publicKey, _secretKey, _remotePublicKey) == 0;
   
   // Save tmp version of encryptKey
-  uint8_t tmpEncryptKey[crypto_kx_SESSIONKEYBYTES];
-  memcpy(tmpEncryptKey, _encryptKey, crypto_kx_SESSIONKEYBYTES);
+  std::vector<uint8_t> tmpEncryptKey(_encryptKey, _encryptKey + sizeof(_encryptKey));
+
+  // Save tmp version of encryptKey
+  std::vector<uint8_t> tmpDecryptKey(_decryptKey, _decryptKey + sizeof(_decryptKey));
   
   // Hash mix of pin and encryptKey to form new encryptKey
-  crypto_generichash(_encryptKey, crypto_kx_SESSIONKEYBYTES, tmpEncryptKey, crypto_kx_SESSIONKEYBYTES, pin, _numPinDigits);
+  crypto_generichash(_encryptKey, crypto_kx_SESSIONKEYBYTES, 
+    tmpEncryptKey.data(), crypto_kx_SESSIONKEYBYTES, 
+    pin, _numPinDigits);
+
+  // Hash mix of pin and decryptKey to form new decryptKey
+  crypto_generichash(_decryptKey, crypto_kx_SESSIONKEYBYTES, 
+    tmpDecryptKey.data(), crypto_kx_SESSIONKEYBYTES, 
+    pin, _numPinDigits);
   
   return success;
 }
+
+} // Switchboard
+} // Anki

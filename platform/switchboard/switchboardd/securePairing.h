@@ -23,6 +23,7 @@
 #include "switchboardd/pairingMessages.h"
 #include "switchboardd/taskExecutor.h"
 #include "switchboardd/externalCommsCladHandler.h"
+#include "switchboardd/engineMessagingClient.h"
 
 namespace Anki {
 namespace Switchboard {
@@ -48,7 +49,7 @@ namespace Switchboard {
     using UpdatedPinSignal = Signal::Signal<void (std::string)>;
     
     // Constructors
-    SecurePairing(INetworkStream* stream, struct ev_loop* evloop);
+    SecurePairing(INetworkStream* stream, struct ev_loop* evloop, std::shared_ptr<EngineMessagingClient> engineClient);
     ~SecurePairing();
     
     // Methods
@@ -78,14 +79,6 @@ namespace Switchboard {
     using PairingTimeoutSignal = Signal::Signal<void ()>;
     
     // Template Methods
-    template <class T>
-    typename std::enable_if<std::is_base_of<Anki::Switchboard::Message, T>::value, int>::type
-    SendPlainText(const T& message);
-    
-    template <class T>
-    typename std::enable_if<std::is_base_of<Anki::Switchboard::Message, T>::value, int>::type
-    SendEncrypted(const T& message);
-
     template<typename T, typename... Args>
     int SendRtsMessage(Args&&... args);
     
@@ -153,17 +146,20 @@ namespace Switchboard {
 
     Signal::SmartHandle _rtsAckHandle;
     void HandleRtsAck(const Victor::ExternalComms::RtsConnection& msg);
+
+    Signal::SmartHandle _rtsSshHandle;
+    void HandleRtsSsh(const Victor::ExternalComms::RtsConnection& msg);
     
     // Variables
     const uint8_t kMaxMatchAttempts = 5;
-    const uint8_t kMaxPairingAttempts = 10;
+    const uint8_t kMaxPairingAttempts = 3;
     const uint32_t kMaxAbnormalityCount = 5;
     const uint16_t kPairingTimeout_s = 60;
-    const uint8_t kInternetInterval_s = 1;
-    const uint8_t kInternetTimerTimeout_s = 15;
     const uint8_t kNumPinDigits = 6;
     const uint8_t kMinMessageSize = 2;
     const uint8_t kWifiApPasswordSize = 8;
+    const uint8_t kWifiConnectMinTimeout_s = 1;
+    const uint8_t kWifiConnectInterval_s = 1;
     
     std::string _pin;
     uint8_t _challengeAttempts;
@@ -172,6 +168,7 @@ namespace Switchboard {
     uint32_t _pingChallenge;
     uint32_t _abnormalityCount;
     uint8_t _inetTimerCount;
+    uint8_t _wifiConnectTimeout_s;
     
     CommsState _commsState;
     INetworkStream* _stream;
@@ -200,6 +197,7 @@ namespace Switchboard {
     
     UpdatedPinSignal _updatedPinSignal;
     ReceivedWifiCredentialsSignal _receivedWifiCredentialSignal;
+    std::shared_ptr<EngineMessagingClient> _engineClient;
   };
 } // Switchboard
 } // Anki

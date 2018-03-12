@@ -16,8 +16,7 @@
 #include <stdlib.h>
 #include <fstream>
 
-#ifndef SavedSessionManager_h
-#define SavedSessionManager_h
+#pragma once
 
 namespace Anki {
 namespace Switchboard {
@@ -31,7 +30,7 @@ public:
   static uint32_t LoadSession(uint8_t* clientPublicKeyOut, uint8_t* sessionKeyEncryptOut, uint8_t* sessionKeyDecryptOut);
 
 private:
-  static int MakeDirectory();
+  static bool MakeDirectory();
   
   static const std::string kSaveFolder;
   static const std::string kPublicKeyPath;
@@ -43,5 +42,3 @@ private:
 
 } // Switchboard
 } // Anki
-
-#endif

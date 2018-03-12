@@ -12,17 +12,20 @@
 
 #include "anki-ble/ipcBleStream.h"
 
+namespace Anki {
+namespace Switchboard {
+
 const uint8_t Anki::Switchboard::IpcBleStream::kMaxPacketSize;
 
-void Anki::Switchboard::IpcBleStream::HandleSendRawPlainText(uint8_t* buffer, size_t size){
+void IpcBleStream::HandleSendRawPlainText(uint8_t* buffer, size_t size){
   _sendSignal.emit(buffer, (int)size, false);
 }
 
-void Anki::Switchboard::IpcBleStream::HandleSendRawEncrypted(uint8_t* buffer, size_t size){
+void IpcBleStream::HandleSendRawEncrypted(uint8_t* buffer, size_t size){
   _sendSignal.emit(buffer, (int)size, true);
 }
 
-void Anki::Switchboard::IpcBleStream::HandleReceivePlainText(uint8_t* buffer, size_t size) {
+void IpcBleStream::HandleReceivePlainText(uint8_t* buffer, size_t size) {
   if(_encryptedChannelEstablished) {
     INetworkStream::ReceiveEncrypted(buffer, (int)size);
   } else {
@@ -30,11 +33,11 @@ void Anki::Switchboard::IpcBleStream::HandleReceivePlainText(uint8_t* buffer, si
   }
 }
 
-void Anki::Switchboard::IpcBleStream::HandleReceiveEncrypted(uint8_t* buffer, size_t size) {
+void IpcBleStream::HandleReceiveEncrypted(uint8_t* buffer, size_t size) {
   INetworkStream::ReceiveEncrypted(buffer, (int)size);
 }
 
-int Anki::Switchboard::IpcBleStream::SendPlainText(uint8_t* bytes, int length) {
+int IpcBleStream::SendPlainText(uint8_t* bytes, int length) {
   if(_encryptedChannelEstablished) {
     return SendEncrypted(bytes, length);
   } else {
@@ -43,7 +46,7 @@ int Anki::Switchboard::IpcBleStream::SendPlainText(uint8_t* bytes, int length) {
   return 0;
 }
 
-int Anki::Switchboard::IpcBleStream::SendEncrypted(uint8_t* bytes, int length) {
+int IpcBleStream::SendEncrypted(uint8_t* bytes, int length) {
   uint8_t* bytesWithExtension = (uint8_t*)malloc(length + crypto_aead_xchacha20poly1305_ietf_ABYTES);
   
   uint64_t encryptedLength = 0;
@@ -51,6 +54,7 @@ int Anki::Switchboard::IpcBleStream::SendEncrypted(uint8_t* bytes, int length) {
   int encryptResult = Encrypt(bytes, length, bytesWithExtension, &encryptedLength);
   
   if(encryptResult != ENCRYPTION_SUCCESS) {
+    free(bytesWithExtension);
     return NetworkResult::MsgFailure;
   }
   
@@ -60,7 +64,7 @@ int Anki::Switchboard::IpcBleStream::SendEncrypted(uint8_t* bytes, int length) {
   return 0;
 }
 
-void Anki::Switchboard::IpcBleStream::ReceivePlainText(uint8_t* bytes, int length) {
+void IpcBleStream::ReceivePlainText(uint8_t* bytes, int length) {
   if(_encryptedChannelEstablished) {
     _bleMessageProtocolEncrypted->ReceiveRawBuffer(bytes, (size_t)length);
   } else {
@@ -68,6 +72,9 @@ void Anki::Switchboard::IpcBleStream::ReceivePlainText(uint8_t* bytes, int lengt
   }
 }
 
-void Anki::Switchboard::IpcBleStream::ReceiveEncrypted(uint8_t* bytes, int length) {
+void IpcBleStream::ReceiveEncrypted(uint8_t* bytes, int length) {
   _bleMessageProtocolEncrypted->ReceiveRawBuffer(bytes, (size_t)length);
 }
+
+} // Switchboard
+} // Anki
