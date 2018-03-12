@@ -34,6 +34,11 @@ public:
 
   bool IsTimerRinging();
 
+  #if ANKI_DEV_CHEATS
+  void DevSetForceAntic() { _lParams.shouldForceAntic = true; };
+
+  void DevAdvanceAnticSeconds();
+  #endif
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;  
@@ -66,6 +71,7 @@ private:
 
   struct LifetimeParams{
     LifetimeParams();
+    bool shouldForceAntic;
     std::unique_ptr<UserIntent> setTimerIntent;
   };
 

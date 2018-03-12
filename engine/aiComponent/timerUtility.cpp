@@ -14,6 +14,8 @@
 #include "engine/aiComponent/timerUtility.h"
 #include "coretech/common/engine/utils/timer.h"
 
+#include "util/console/consoleInterface.h"
+
 #include <ctime>
 #include <ratio>
 #include <chrono>
@@ -22,8 +24,20 @@ namespace Anki {
 namespace Cozmo {
   
 namespace{
-  
+Anki::Cozmo::TimerUtility* sTimerUtility = nullptr;
 }
+
+CONSOLE_VAR(u32, kAdvanceTimerSeconds,   "TimerUtility.AdvanceTimerSeconds", 60);
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AdvanceTimer(ConsoleFunctionContextRef context)
+{  
+  if(sTimerUtility != nullptr){
+    sTimerUtility->AdvanceTimeBySeconds(kAdvanceTimerSeconds);
+  }
+}
+
+CONSOLE_FUNC(AdvanceTimer, "TimerUtility.AdvanceTimer");
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int TimerHandle::GetSystemTime_s()
@@ -38,12 +52,16 @@ int TimerHandle::GetSystemTime_s()
 // TimerUtility
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TimerUtility::TimerUtility()
-: IDependencyManagedComponent<AIComponentID>(this, AIComponentID::TimerUtility){}
+: IDependencyManagedComponent<AIComponentID>(this, AIComponentID::TimerUtility){
+  ANKI_VERIFY(sTimerUtility == nullptr, "TimerUtility.Constructor.MultipleInstances","");
+  sTimerUtility = this;
+
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TimerUtility::~TimerUtility()
 {
-
+  sTimerUtility = nullptr;
 }
 
 

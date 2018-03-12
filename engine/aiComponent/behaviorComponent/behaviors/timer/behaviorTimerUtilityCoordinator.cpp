@@ -26,6 +26,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 
+#include "util/console/consoleInterface.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -39,7 +41,42 @@ const char* kRecurIntervalMinKey = "recurIntervalMin_s";
 const char* kRecurIntervalMaxKey = "recurIntervalMax_s";
 const char* kRuleMinKey = "ruleMin_s";
 const char* kRuleMaxKey = "ruleMax_s";
+
+Anki::Cozmo::BehaviorTimerUtilityCoordinator* sCoordinator = nullptr;
 }
+
+
+///////////
+/// Dev/testing functions
+///////////
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ForceAntic(ConsoleFunctionContextRef context)
+{  
+  if(sCoordinator != nullptr){
+    sCoordinator->DevSetForceAntic();
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AdvanceAntic(ConsoleFunctionContextRef context)
+{  
+  if(sCoordinator != nullptr){
+    sCoordinator->DevAdvanceAnticSeconds();
+  }
+}
+
+  
+CONSOLE_FUNC(ForceAntic, "TimerUtility.ForceAntic");
+
+
+CONSOLE_VAR(u32, kAdvanceAnticSeconds,   "TimerUtility.AdvanceAnticSeconds", 10);
+CONSOLE_FUNC(AdvanceAntic, "TimerUtility.AdvanceAntic");
+
+///////////
+/// AnticTracker
+///////////
 
 class AnticTracker{
 public:
@@ -52,6 +89,12 @@ public:
   bool GetMaxTimeTillNextAntic(BehaviorExternalInterface& bei, 
                                const TimerUtility::SharedHandle timer, 
                                int& outTime_s) const;
+
+
+  #if ANKI_DEV_CHEATS
+  // "Advance" time by moving the last antic played back in time
+  void AdvanceAnticBySeconds(u32 secondsToAdvance){ _lastAnticPlayed_s -= secondsToAdvance;}
+  #endif 
 
 private:
   // Antic recurrances are defined using two criteria: 
@@ -72,9 +115,7 @@ private:
 };
 
 
-///////////
-/// AnticTracker
-///////////
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AnticTracker::AnticTracker(const Json::Value& config)
@@ -181,10 +222,21 @@ auto AnticTracker::GetApplicableRule(const TimerUtility::SharedHandle timer) con
 /// BehaviorTimerUtilityCoordinator
 ///////////
 
+#if ANKI_DEV_CHEATS
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorTimerUtilityCoordinator::DevAdvanceAnticSeconds()
+{
+  _iParams.anticTracker->AdvanceAnticBySeconds(kAdvanceAnticSeconds);
+}
+
+
+#endif
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorTimerUtilityCoordinator::LifetimeParams::LifetimeParams()
 {
   setTimerIntent = std::make_unique<UserIntent>();
+  shouldForceAntic = true;
 }
 
 
@@ -202,13 +254,18 @@ BehaviorTimerUtilityCoordinator::BehaviorTimerUtilityCoordinator(const Json::Val
   std::string debugStr = "BehaviorTimerUtilityCoordinator.Constructor.MissingConfig.";
   _iParams.minValidTimer_s = JsonTools::ParseUInt32(config, kMinValidTimerKey, debugStr + "MinTimer");
   _iParams.maxValidTimer_s = JsonTools::ParseUInt32(config, kMaxValidTimerKey, debugStr + "MaxTimer");
+
+  // Theoretically we can allow multiple instances, but with current force antic implementation we
+  // can't and will assert here
+  ANKI_VERIFY(sCoordinator == nullptr, "BehaviorTimerUtilityCoordinator.Constructor.MultipleInstances", "");
+  sCoordinator = this;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorTimerUtilityCoordinator::~BehaviorTimerUtilityCoordinator()
 {
-  
+  sCoordinator = nullptr;
 }
 
 
@@ -266,16 +323,19 @@ bool BehaviorTimerUtilityCoordinator::WantsToBeActivatedBehavior() const
   }
 
 
-  return cancelTimerPending || setTimerWantsToRun || timeToRunAntic || timerShouldRing;
+  return cancelTimerPending || setTimerWantsToRun || timeToRunAntic || timerShouldRing || _lParams.shouldForceAntic;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTimerUtilityCoordinator::OnBehaviorActivated() 
 {
-  auto* persistIntentData = _lParams.setTimerIntent.release();
+  auto* persistIntentData       = _lParams.setTimerIntent.release();
+  bool  persistShouldForceAntic = _lParams.shouldForceAntic;
   _lParams = LifetimeParams();
+
   _lParams.setTimerIntent.reset(persistIntentData);
+  _lParams.shouldForceAntic = persistShouldForceAntic;
 }
 
 
@@ -376,8 +436,9 @@ void BehaviorTimerUtilityCoordinator::CheckShouldPlayAntic()
     const bool validAnticTime = _iParams.anticTracker->GetMinTimeTillNextAntic(GetBEI(), handle, minTimeTillAntic_s);
 
     // set clock digit quadrants
-    if(validAnticTime && (minTimeTillAntic_s == 0) &&
-      _iParams.timerAnticBehavior->WantsToBeActivated()){
+    if((validAnticTime && (minTimeTillAntic_s == 0)) ||
+       _lParams.shouldForceAntic){
+      _lParams.shouldForceAntic = false;
       TransitionToPlayAntic();
     }
   }

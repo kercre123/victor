@@ -14,6 +14,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_TimerUtility_H__
 #define __Cozmo_Basestation_BehaviorSystem_TimerUtility_H__
 
+#include "coretech/common/shared/types.h"
 #include "engine/aiComponent/aiComponents_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
@@ -54,12 +55,19 @@ class TimerHandle{
     int GetDisplayHoursRemaining()   const { return SecondsToDisplayHours(GetTimeRemaining_s());}
     int GetDisplayMinutesRemaining() const { return SecondsToDisplayMinutes(GetTimeRemaining_s());}
     int GetDisplaySecondsRemaining() const { return SecondsToDisplaySeconds(GetTimeRemaining_s());}
+
+
+    #if ANKI_DEV_CHEATS
+    // "Advance" time by shortening the time remaining
+    void AdvanceTimeBySeconds(u32 secondsToAdvance){_endTime_s -= secondsToAdvance;}
+    #endif
+
   private:
     // helper for easy access to current time
     static int GetSystemTime_s();
 
     const int _timerLength;
-    const int _endTime_s;
+    int _endTime_s;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -79,9 +87,12 @@ public:
   SharedHandle StartTimer(int timerLength_s);
   void ClearTimer();
 
-
-
   int GetSystemTime_s() const;
+
+    #if ANKI_DEV_CHEATS
+    // "Advance" time by shortening the time remaining
+    void AdvanceTimeBySeconds(u32 secondsToAdvance){ if(_activeTimer != nullptr){_activeTimer->AdvanceTimeBySeconds(secondsToAdvance); }}
+    #endif
 
 private:
   SharedHandle _activeTimer;
