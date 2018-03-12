@@ -11,16 +11,20 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/processing.js/1.6.6/processing.min.js"></script>
 
   <script>
-    var modules = { 
-      // add new modules here, which also become the tab
-      // names. The (case-insensitive) key should match
-      // the moduleName used when your c++ code passes
-      // data to the webservice.
+    // add new modules here, which also become the tab
+    // names. The (case-insensitive) key should match
+    // the moduleName used when your c++ code passes
+    // data to the webservice.
+    var modules8888 = { 
       Behaviors : 'webVizModules/behaviors.js',
-      MicData : 'webVizModules/micData.js',
       Intents : 'webVizModules/intents.js',
       BehaviorConds : 'webVizModules/behaviorConditions.js',
-      VisionScheduleMediator : 'webVizModules/visionScheduleMediator.js'
+      VisionScheduleMediator : 'webVizModules/visionScheduleMediator.js',
+      ObservedObjects : 'webVizModules/observedObjects.js'
+    }
+    var modules8889 = {
+      MicData : 'webVizModules/micData.js',
+      Animations: 'webVizModules/animations.js'
     }
   </script>
 
@@ -152,6 +156,9 @@
     #tab-overview p {
       padding:10px;
     }
+    #tab-overview h3 {
+      padding:10px;
+    }
 
     #status {
       position:fixed;
@@ -216,6 +223,8 @@
 
 
   <script>
+
+    var modules;
 
     var kUpdatePeriod_ms = 200; // todo: maybe a module should request its period?
 
@@ -413,6 +422,17 @@
     var moduleMethods = {}; // global passed to modules
     var moduleSendDataFunc; // global passed to modules
     $(function(){
+
+      modules = modules8888;
+      var missingTabsStr = '<h3>Looking for ';
+      if( location.port == 8889 ) {
+        modules = modules8889;
+        missingTabsStr += Object.keys(modules8888).join(' or ') + '? Change the port to 8888</h3>';
+      } else {
+        missingTabsStr += Object.keys(modules8889).join(' or ') + '? Change the port to 8889</h3>';
+      } 
+      $('#tab-overview').append( missingTabsStr );
+
 
       // load module data
       var moduleIndex = 0;

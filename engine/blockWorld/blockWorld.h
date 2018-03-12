@@ -507,7 +507,10 @@ namespace Anki
       
       void SetupEventHandlers(IExternalInterface& externalInterface);
       
-      Result SanityCheckBookkeeping() const;    
+      Result SanityCheckBookkeeping() const;
+      
+      void SendObjectUpdateToWebViz( const ExternalInterface::RobotDeletedLocatedObject& msg ) const;
+      void SendObjectUpdateToWebViz( const ExternalInterface::RobotObservedObject& msg ) const;
       
       //
       // Member Variables

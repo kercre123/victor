@@ -36,6 +36,7 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
+#include "webServerProcess/src/webService.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -842,6 +843,10 @@ namespace Cozmo {
   
     _startOfAnimationSent = true;
     _endOfAnimationSent = false;
+    
+    if( ANKI_DEV_CHEATS ) {
+      SendAnimationToWebViz( true );
+    }
 
     return RESULT_OK;
   }
@@ -877,6 +882,10 @@ namespace Cozmo {
     
     _endOfAnimationSent = true;
     _startOfAnimationSent = false;
+    
+    if( ANKI_DEV_CHEATS ) {
+      SendAnimationToWebViz( false );
+    }
     
     // Every time we end an animation we should also re-enable BPL_USER layer on robot
     EnableBackpackAnimationLayer(false);
@@ -1356,6 +1365,19 @@ namespace Cozmo {
       result = SetStreamingAnimation(_proceduralAnimation, 0);
     }
     return result;
+  }
+  
+  void AnimationStreamer::SendAnimationToWebViz( bool starting ) const
+  {
+    if( _context != nullptr ) {
+      auto* webService = _context->GetWebService();
+      if( (webService != nullptr) && (_streamingAnimation != nullptr) ) {
+        Json::Value data;
+        data["type"] = starting ? "start" : "stop";
+        data["animation"] = _streamingAnimation->GetName();
+        webService->SendToWebViz("animations", data);
+      }
+    }
   }
   
   

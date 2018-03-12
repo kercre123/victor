@@ -157,6 +157,9 @@ namespace Cozmo {
     template<typename ImageType>
     Result SetFaceImageHelper(const ImageType& img, const u32 duration_ms);
     
+    // pass the started/stopped animation name to webviz
+    void SendAnimationToWebViz( bool starting ) const;
+    
     const AnimContext* _context = nullptr;
     
     Animation*  _streamingAnimation = nullptr;
