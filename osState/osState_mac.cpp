@@ -157,6 +157,11 @@ std::string OSState::GetIPAddressInternal()
   return _ipAddress;
 }
 
+std::string OSState::GetRobotName() const
+{
+  return "Vector_0000";
+}
+
 } // namespace Cozmo
 } // namespace Anki
 

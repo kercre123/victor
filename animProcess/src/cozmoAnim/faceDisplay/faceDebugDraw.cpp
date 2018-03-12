@@ -366,12 +366,13 @@ void FaceDebugDraw::DrawStateInfo(const RobotState& state)
 
   if(drawState == DrawState::GeneralInfo)
   {
-    const std::string ip       = OSState::getInstance()->GetIPAddress();
-    const std::string serialNo = OSState::getInstance()->GetSerialNumberAsString();
-    const std::string osVer    = OSState::getInstance()->GetOSBuildVersion();
-    const std::string sha      = OSState::getInstance()->GetBuildSha();
+    const std::string ip        = OSState::getInstance()->GetIPAddress();
+    const std::string serialNo  = OSState::getInstance()->GetSerialNumberAsString();
+    const std::string osVer     = OSState::getInstance()->GetOSBuildVersion();
+    const std::string sha       = OSState::getInstance()->GetBuildSha();
+    const std::string robotName = OSState::getInstance()->GetRobotName();
 
-    std::vector<std::string> text = {ip, serialNo, osVer, sha};
+    std::vector<std::string> text = {ip, serialNo, robotName, osVer, sha};
 
     if(FACTORY_TEST)
     {

@@ -351,7 +351,6 @@ void Process_textToSpeechStop(const RobotInterface::TextToSpeechStop& msg)
   _animEngine->HandleMessage(msg);
 }
 
-
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
 {
   //LOG_WARNING("AnimProcessMessages.ProcessMessageFromEngine", "%d", msg.tag);
