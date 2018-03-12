@@ -69,6 +69,8 @@ bool TcpClient::Connect(const char *host_address, const unsigned short port)
   status = connect(socketfd, host_info_list->ai_addr, host_info_list->ai_addrlen);
   if (status == -1) {
     std::cout << "connect error\n" ;
+    close(socketfd);
+    socketfd = -1;
     return false;
   }
 
