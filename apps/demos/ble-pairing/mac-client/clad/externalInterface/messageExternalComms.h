@@ -357,6 +357,7 @@ struct RtsWifiConnectRequest
 {
   std::string ssid;
   std::string password;
+  uint8_t timeout;
   
   /**** Constructors ****/
   RtsWifiConnectRequest() = default;
@@ -367,9 +368,11 @@ struct RtsWifiConnectRequest
   RtsWifiConnectRequest& operator=(RtsWifiConnectRequest&& other) = default;
   
   explicit RtsWifiConnectRequest(const std::string& ssid,
-    const std::string& password)
+    const std::string& password,
+    uint8_t timeout)
   : ssid(ssid)
   , password(password)
+  , timeout(timeout)
   {}
   
   explicit RtsWifiConnectRequest(const uint8_t* buff, size_t len);
@@ -390,7 +393,7 @@ struct RtsWifiConnectRequest
   
   template <typename Callable>
   void Invoke(Callable&& func) const {
-     func(ssid, password);
+     func(ssid, password, timeout);
   }
 };
 
@@ -948,6 +951,85 @@ struct RtsForceDisconnect
 extern const char* RtsForceDisconnectVersionHashStr;
 extern const uint8_t RtsForceDisconnectVersionHash[16];
 
+// MESSAGE RtsSshRequest
+struct RtsSshRequest
+{
+  std::vector<std::string> sshAuthorizedKeyBytes;
+  
+  /**** Constructors ****/
+  RtsSshRequest() = default;
+  RtsSshRequest(const RtsSshRequest& other) = default;
+  RtsSshRequest(RtsSshRequest& other) = default;
+  RtsSshRequest(RtsSshRequest&& other) noexcept = default;
+  RtsSshRequest& operator=(const RtsSshRequest& other) = default;
+  RtsSshRequest& operator=(RtsSshRequest&& other) = default;
+  
+  explicit RtsSshRequest(const std::vector<std::string>& sshAuthorizedKeyBytes)
+  : sshAuthorizedKeyBytes(sshAuthorizedKeyBytes)
+  {}
+  
+  explicit RtsSshRequest(const uint8_t* buff, size_t len);
+  explicit RtsSshRequest(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsSshRequest& other) const;
+  bool operator!=(const RtsSshRequest& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(sshAuthorizedKeyBytes);
+  }
+};
+
+extern const char* RtsSshRequestVersionHashStr;
+extern const uint8_t RtsSshRequestVersionHash[16];
+
+// MESSAGE RtsSshResponse
+struct RtsSshResponse
+{
+  
+  /**** Constructors ****/
+  RtsSshResponse() = default;
+  RtsSshResponse(const RtsSshResponse& other) = default;
+  RtsSshResponse(RtsSshResponse& other) = default;
+  RtsSshResponse(RtsSshResponse&& other) noexcept = default;
+  RtsSshResponse& operator=(const RtsSshResponse& other) = default;
+  RtsSshResponse& operator=(RtsSshResponse&& other) = default;
+  
+  explicit RtsSshResponse(const uint8_t* buff, size_t len);
+  explicit RtsSshResponse(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsSshResponse& other) const;
+  bool operator!=(const RtsSshResponse& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func();
+  }
+};
+
+extern const char* RtsSshResponseVersionHashStr;
+extern const uint8_t RtsSshResponseVersionHash[16];
+
 // MESSAGE Error
 struct Error
 {
@@ -1072,6 +1154,14 @@ struct RtsConnection_TagToType<RtsConnectionTag::RtsWifiAccessPointRequest> {
 template<>
 struct RtsConnection_TagToType<RtsConnectionTag::RtsWifiAccessPointResponse> {
   using type = Anki::Victor::ExternalComms::RtsWifiAccessPointResponse;
+};
+template<>
+struct RtsConnection_TagToType<RtsConnectionTag::RtsSshRequest> {
+  using type = Anki::Victor::ExternalComms::RtsSshRequest;
+};
+template<>
+struct RtsConnection_TagToType<RtsConnectionTag::RtsSshResponse> {
+  using type = Anki::Victor::ExternalComms::RtsSshResponse;
 };
 
 // UNION RtsConnection
@@ -1247,6 +1337,20 @@ public:
   void Set_RtsWifiAccessPointResponse(const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse& new_RtsWifiAccessPointResponse);
   void Set_RtsWifiAccessPointResponse(Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&& new_RtsWifiAccessPointResponse);
   
+  /** RtsSshRequest **/
+  static RtsConnection CreateRtsSshRequest(Anki::Victor::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
+  explicit RtsConnection(Anki::Victor::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
+  const Anki::Victor::ExternalComms::RtsSshRequest& Get_RtsSshRequest() const;
+  void Set_RtsSshRequest(const Anki::Victor::ExternalComms::RtsSshRequest& new_RtsSshRequest);
+  void Set_RtsSshRequest(Anki::Victor::ExternalComms::RtsSshRequest&& new_RtsSshRequest);
+  
+  /** RtsSshResponse **/
+  static RtsConnection CreateRtsSshResponse(Anki::Victor::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
+  explicit RtsConnection(Anki::Victor::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
+  const Anki::Victor::ExternalComms::RtsSshResponse& Get_RtsSshResponse() const;
+  void Set_RtsSshResponse(const Anki::Victor::ExternalComms::RtsSshResponse& new_RtsSshResponse);
+  void Set_RtsSshResponse(Anki::Victor::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
+  
   size_t Unpack(const uint8_t* buff, const size_t len);
   size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
   
@@ -1283,6 +1387,8 @@ private:
     Anki::Victor::ExternalComms::RtsAck _RtsAck;
     Anki::Victor::ExternalComms::RtsWifiAccessPointRequest _RtsWifiAccessPointRequest;
     Anki::Victor::ExternalComms::RtsWifiAccessPointResponse _RtsWifiAccessPointResponse;
+    Anki::Victor::ExternalComms::RtsSshRequest _RtsSshRequest;
+    Anki::Victor::ExternalComms::RtsSshResponse _RtsSshResponse;
   };
 };
 extern const char* RtsConnectionVersionHashStr;

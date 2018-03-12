@@ -35,6 +35,8 @@ enum class RtsConnectionTag : uint8_t {
   RtsAck                     = 0x12, // 18
   RtsWifiAccessPointRequest  = 0x13, // 19
   RtsWifiAccessPointResponse = 0x14, // 20
+  RtsSshRequest              = 0x15, // 21
+  RtsSshResponse             = 0x16, // 22
   INVALID                    = 255
 };
 

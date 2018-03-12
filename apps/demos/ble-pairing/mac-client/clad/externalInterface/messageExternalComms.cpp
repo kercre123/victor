@@ -529,6 +529,7 @@ size_t RtsWifiConnectRequest::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
   buffer.WritePString<uint8_t>(this->ssid);
   buffer.WritePString<uint8_t>(this->password);
+  buffer.Write(this->timeout);
   const size_t bytesWritten {buffer.GetBytesWritten()};
   return bytesWritten;
 }
@@ -543,6 +544,7 @@ size_t RtsWifiConnectRequest::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
   buffer.ReadPString<uint8_t>(this->ssid);
   buffer.ReadPString<uint8_t>(this->password);
+  buffer.Read(this->timeout);
   return buffer.GetBytesRead();
 }
 
@@ -555,13 +557,16 @@ size_t RtsWifiConnectRequest::Size() const
   // password
   result += 1; // uint_8 (string length)
   result += this->password.length(); // uint_8
+  // timeout
+  result += 1; // uint_8
   return result;
 }
 
 bool RtsWifiConnectRequest::operator==(const RtsWifiConnectRequest& other) const
 {
   return (this->ssid == other.ssid &&
-    this->password == other.password);
+    this->password == other.password &&
+    this->timeout == other.timeout);
 }
 
 bool RtsWifiConnectRequest::operator!=(const RtsWifiConnectRequest& other) const
@@ -570,10 +575,10 @@ bool RtsWifiConnectRequest::operator!=(const RtsWifiConnectRequest& other) const
 }
 
 
-const char* RtsWifiConnectRequestVersionHashStr = "62b9cf7b3dcc996b7fc09be89c05aa5a";
+const char* RtsWifiConnectRequestVersionHashStr = "c16165b3db0733ce2c9a814425847ce7";
 
 const uint8_t RtsWifiConnectRequestVersionHash[16] = { 
-    0x62, 0xb9, 0xcf, 0x7b, 0x3d, 0xcc, 0x99, 0x6b, 0x7f, 0xc0, 0x9b, 0xe8, 0x9c, 0x5, 0xaa, 0x5a 
+    0xc1, 0x61, 0x65, 0xb3, 0xdb, 0x7, 0x33, 0xce, 0x2c, 0x9a, 0x81, 0x44, 0x25, 0x84, 0x7c, 0xe7 
 };
 
 // MESSAGE RtsWifiConnectResponse
@@ -1435,6 +1440,132 @@ const uint8_t RtsForceDisconnectVersionHash[16] = {
     0x36, 0x87, 0xf5, 0xbf, 0xb7, 0xd6, 0x8b, 0x28, 0x35, 0xd9, 0xc9, 0x4d, 0x6a, 0xe5, 0xa3, 0x7c 
 };
 
+// MESSAGE RtsSshRequest
+
+RtsSshRequest::RtsSshRequest(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsSshRequest::RtsSshRequest(const uint8_t* buff, size_t len)
+: RtsSshRequest::RtsSshRequest({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsSshRequest::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsSshRequest::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  buffer.WritePStringVArray<uint16_t, uint8_t>(this->sshAuthorizedKeyBytes);
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsSshRequest::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsSshRequest::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  buffer.ReadPStringVArray<uint16_t, uint8_t>(this->sshAuthorizedKeyBytes);
+  return buffer.GetBytesRead();
+}
+
+size_t RtsSshRequest::Size() const
+{
+  size_t result = 0;
+  // sshAuthorizedKeyBytes
+  result += 2; // uint_16 (array length)
+  result += 1 * this->sshAuthorizedKeyBytes.size(); // uint_8 (string lengths)
+  for (const std::string& m : this->sshAuthorizedKeyBytes) {
+    result += m.length();
+  }
+  return result;
+}
+
+bool RtsSshRequest::operator==(const RtsSshRequest& other) const
+{
+  return (this->sshAuthorizedKeyBytes == other.sshAuthorizedKeyBytes);
+}
+
+bool RtsSshRequest::operator!=(const RtsSshRequest& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsSshRequestVersionHashStr = "c8a7af695d56ef99d2a87e476aa01134";
+
+const uint8_t RtsSshRequestVersionHash[16] = { 
+    0xc8, 0xa7, 0xaf, 0x69, 0x5d, 0x56, 0xef, 0x99, 0xd2, 0xa8, 0x7e, 0x47, 0x6a, 0xa0, 0x11, 0x34 
+};
+
+// MESSAGE RtsSshResponse
+
+RtsSshResponse::RtsSshResponse(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsSshResponse::RtsSshResponse(const uint8_t* buff, size_t len)
+: RtsSshResponse::RtsSshResponse({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsSshResponse::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsSshResponse::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsSshResponse::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsSshResponse::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  return buffer.GetBytesRead();
+}
+
+size_t RtsSshResponse::Size() const
+{
+  size_t result = 0;
+  return result;
+}
+
+bool RtsSshResponse::operator==(const RtsSshResponse& other) const
+{
+return true;
+}
+
+bool RtsSshResponse::operator!=(const RtsSshResponse& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsSshResponseVersionHashStr = "cb0eb98b103a38cf34a24f4422209711";
+
+const uint8_t RtsSshResponseVersionHash[16] = { 
+    0xcb, 0xe, 0xb9, 0x8b, 0x10, 0x3a, 0x38, 0xcf, 0x34, 0xa2, 0x4f, 0x44, 0x22, 0x20, 0x97, 0x11 
+};
+
 // MESSAGE Error
 
 Error::Error(const CLAD::SafeMessageBuffer& buffer)
@@ -1576,6 +1707,12 @@ RtsConnection::RtsConnection(const RtsConnection& other)
   case Tag::RtsWifiAccessPointResponse:
     new(&(this->_RtsWifiAccessPointResponse)) Anki::Victor::ExternalComms::RtsWifiAccessPointResponse(other._RtsWifiAccessPointResponse);
     break;
+  case Tag::RtsSshRequest:
+    new(&(this->_RtsSshRequest)) Anki::Victor::ExternalComms::RtsSshRequest(other._RtsSshRequest);
+    break;
+  case Tag::RtsSshResponse:
+    new(&(this->_RtsSshResponse)) Anki::Victor::ExternalComms::RtsSshResponse(other._RtsSshResponse);
+    break;
   default:
     _tag = Tag::INVALID;
     break;
@@ -1648,6 +1785,12 @@ RtsConnection::RtsConnection(RtsConnection&& other) noexcept
     break;
   case Tag::RtsWifiAccessPointResponse:
     new(&(this->_RtsWifiAccessPointResponse)) Anki::Victor::ExternalComms::RtsWifiAccessPointResponse(std::move(other._RtsWifiAccessPointResponse));
+    break;
+  case Tag::RtsSshRequest:
+    new(&(this->_RtsSshRequest)) Anki::Victor::ExternalComms::RtsSshRequest(std::move(other._RtsSshRequest));
+    break;
+  case Tag::RtsSshResponse:
+    new(&(this->_RtsSshResponse)) Anki::Victor::ExternalComms::RtsSshResponse(std::move(other._RtsSshResponse));
     break;
   default:
     _tag = Tag::INVALID;
@@ -1725,6 +1868,12 @@ RtsConnection& RtsConnection::operator=(const RtsConnection& other)
   case Tag::RtsWifiAccessPointResponse:
     new(&(this->_RtsWifiAccessPointResponse)) Anki::Victor::ExternalComms::RtsWifiAccessPointResponse(other._RtsWifiAccessPointResponse);
     break;
+  case Tag::RtsSshRequest:
+    new(&(this->_RtsSshRequest)) Anki::Victor::ExternalComms::RtsSshRequest(other._RtsSshRequest);
+    break;
+  case Tag::RtsSshResponse:
+    new(&(this->_RtsSshResponse)) Anki::Victor::ExternalComms::RtsSshResponse(other._RtsSshResponse);
+    break;
   default:
     _tag = Tag::INVALID;
     break;
@@ -1800,6 +1949,12 @@ RtsConnection& RtsConnection::operator=(RtsConnection&& other) noexcept
     break;
   case Tag::RtsWifiAccessPointResponse:
     new(&(this->_RtsWifiAccessPointResponse)) Anki::Victor::ExternalComms::RtsWifiAccessPointResponse(std::move(other._RtsWifiAccessPointResponse));
+    break;
+  case Tag::RtsSshRequest:
+    new(&(this->_RtsSshRequest)) Anki::Victor::ExternalComms::RtsSshRequest(std::move(other._RtsSshRequest));
+    break;
+  case Tag::RtsSshResponse:
+    new(&(this->_RtsSshResponse)) Anki::Victor::ExternalComms::RtsSshResponse(std::move(other._RtsSshResponse));
     break;
   default:
     _tag = Tag::INVALID;
@@ -2985,6 +3140,118 @@ void RtsConnection::Set_RtsWifiAccessPointResponse(Anki::Victor::ExternalComms::
   }
 }
 
+RtsConnection RtsConnection::CreateRtsSshRequest(Anki::Victor::ExternalComms::RtsSshRequest&& new_RtsSshRequest)
+{
+  RtsConnection m;
+  m.Set_RtsSshRequest(new_RtsSshRequest);
+  return m;
+}
+
+RtsConnection::RtsConnection(Anki::Victor::ExternalComms::RtsSshRequest&& new_RtsSshRequest)
+{
+  new(&this->_RtsSshRequest) Anki::Victor::ExternalComms::RtsSshRequest(std::move(new_RtsSshRequest));
+  _tag = Tag::RtsSshRequest;
+}
+
+const Anki::Victor::ExternalComms::RtsSshRequest& RtsConnection::Get_RtsSshRequest() const
+{
+  assert(_tag == Tag::RtsSshRequest);
+  return this->_RtsSshRequest;
+}
+
+void RtsConnection::Set_RtsSshRequest(const Anki::Victor::ExternalComms::RtsSshRequest& new_RtsSshRequest)
+{
+  if(this->_tag == Tag::RtsSshRequest) {
+    this->_RtsSshRequest = new_RtsSshRequest;
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsSshRequest) Anki::Victor::ExternalComms::RtsSshRequest(new_RtsSshRequest);
+    _tag = Tag::RtsSshRequest;
+  }
+}
+
+template<>
+const Anki::Victor::ExternalComms::RtsSshRequest& RtsConnection::Get_<RtsConnection::Tag::RtsSshRequest>() const
+{
+  assert(_tag == Tag::RtsSshRequest);
+  return this->_RtsSshRequest;
+}
+
+template<>
+RtsConnection RtsConnection::Create_<RtsConnection::Tag::RtsSshRequest>(Anki::Victor::ExternalComms::RtsSshRequest member)
+{
+  return CreateRtsSshRequest(std::move(member));
+}
+
+void RtsConnection::Set_RtsSshRequest(Anki::Victor::ExternalComms::RtsSshRequest&& new_RtsSshRequest)
+{
+  if (this->_tag == Tag::RtsSshRequest) {
+    this->_RtsSshRequest = std::move(new_RtsSshRequest);
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsSshRequest) Anki::Victor::ExternalComms::RtsSshRequest(std::move(new_RtsSshRequest));
+    _tag = Tag::RtsSshRequest;
+  }
+}
+
+RtsConnection RtsConnection::CreateRtsSshResponse(Anki::Victor::ExternalComms::RtsSshResponse&& new_RtsSshResponse)
+{
+  RtsConnection m;
+  m.Set_RtsSshResponse(new_RtsSshResponse);
+  return m;
+}
+
+RtsConnection::RtsConnection(Anki::Victor::ExternalComms::RtsSshResponse&& new_RtsSshResponse)
+{
+  new(&this->_RtsSshResponse) Anki::Victor::ExternalComms::RtsSshResponse(std::move(new_RtsSshResponse));
+  _tag = Tag::RtsSshResponse;
+}
+
+const Anki::Victor::ExternalComms::RtsSshResponse& RtsConnection::Get_RtsSshResponse() const
+{
+  assert(_tag == Tag::RtsSshResponse);
+  return this->_RtsSshResponse;
+}
+
+void RtsConnection::Set_RtsSshResponse(const Anki::Victor::ExternalComms::RtsSshResponse& new_RtsSshResponse)
+{
+  if(this->_tag == Tag::RtsSshResponse) {
+    this->_RtsSshResponse = new_RtsSshResponse;
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsSshResponse) Anki::Victor::ExternalComms::RtsSshResponse(new_RtsSshResponse);
+    _tag = Tag::RtsSshResponse;
+  }
+}
+
+template<>
+const Anki::Victor::ExternalComms::RtsSshResponse& RtsConnection::Get_<RtsConnection::Tag::RtsSshResponse>() const
+{
+  assert(_tag == Tag::RtsSshResponse);
+  return this->_RtsSshResponse;
+}
+
+template<>
+RtsConnection RtsConnection::Create_<RtsConnection::Tag::RtsSshResponse>(Anki::Victor::ExternalComms::RtsSshResponse member)
+{
+  return CreateRtsSshResponse(std::move(member));
+}
+
+void RtsConnection::Set_RtsSshResponse(Anki::Victor::ExternalComms::RtsSshResponse&& new_RtsSshResponse)
+{
+  if (this->_tag == Tag::RtsSshResponse) {
+    this->_RtsSshResponse = std::move(new_RtsSshResponse);
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsSshResponse) Anki::Victor::ExternalComms::RtsSshResponse(std::move(new_RtsSshResponse));
+    _tag = Tag::RtsSshResponse;
+  }
+}
+
 size_t RtsConnection::Unpack(const uint8_t* buff, const size_t len)
 {
   const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -3168,6 +3435,22 @@ size_t RtsConnection::Unpack(const CLAD::SafeMessageBuffer& buffer)
       this->_RtsWifiAccessPointResponse.Unpack(buffer);
     }
     break;
+  case Tag::RtsSshRequest:
+    if (newTag != oldTag) {
+      new(&(this->_RtsSshRequest)) Anki::Victor::ExternalComms::RtsSshRequest(buffer);
+    }
+    else {
+      this->_RtsSshRequest.Unpack(buffer);
+    }
+    break;
+  case Tag::RtsSshResponse:
+    if (newTag != oldTag) {
+      new(&(this->_RtsSshResponse)) Anki::Victor::ExternalComms::RtsSshResponse(buffer);
+    }
+    else {
+      this->_RtsSshResponse.Unpack(buffer);
+    }
+    break;
   default:
     break;
   }
@@ -3248,6 +3531,12 @@ size_t RtsConnection::Pack(CLAD::SafeMessageBuffer& buffer) const
   case Tag::RtsWifiAccessPointResponse:
     this->_RtsWifiAccessPointResponse.Pack(buffer);
     break;
+  case Tag::RtsSshRequest:
+    this->_RtsSshRequest.Pack(buffer);
+    break;
+  case Tag::RtsSshResponse:
+    this->_RtsSshResponse.Pack(buffer);
+    break;
   default:
     break;
   }
@@ -3321,6 +3610,12 @@ size_t RtsConnection::Size() const
   case Tag::RtsWifiAccessPointResponse:
     result += this->_RtsWifiAccessPointResponse.Size(); // RtsWifiAccessPointResponse
     break;
+  case Tag::RtsSshRequest:
+    result += this->_RtsSshRequest.Size(); // RtsSshRequest
+    break;
+  case Tag::RtsSshResponse:
+    result += this->_RtsSshResponse.Size(); // RtsSshResponse
+    break;
   default:
     break;
   }
@@ -3375,6 +3670,10 @@ bool RtsConnection::operator==(const RtsConnection& other) const
     return this->_RtsWifiAccessPointRequest == other._RtsWifiAccessPointRequest;
   case Tag::RtsWifiAccessPointResponse:
     return this->_RtsWifiAccessPointResponse == other._RtsWifiAccessPointResponse;
+  case Tag::RtsSshRequest:
+    return this->_RtsSshRequest == other._RtsSshRequest;
+  case Tag::RtsSshResponse:
+    return this->_RtsSshResponse == other._RtsSshResponse;
   default:
     return true;
   }
@@ -3451,6 +3750,12 @@ void RtsConnection::ClearCurrent()
   case Tag::RtsWifiAccessPointResponse:
     _RtsWifiAccessPointResponse.~RtsWifiAccessPointResponse();
     break;
+  case Tag::RtsSshRequest:
+    _RtsSshRequest.~RtsSshRequest();
+    break;
+  case Tag::RtsSshResponse:
+    _RtsSshResponse.~RtsSshResponse();
+    break;
   default:
     break;
   }
@@ -3501,15 +3806,19 @@ const char* RtsConnectionTagToString(const RtsConnectionTag tag) {
     return "RtsWifiAccessPointRequest";
   case RtsConnectionTag::RtsWifiAccessPointResponse:
     return "RtsWifiAccessPointResponse";
+  case RtsConnectionTag::RtsSshRequest:
+    return "RtsSshRequest";
+  case RtsConnectionTag::RtsSshResponse:
+    return "RtsSshResponse";
   default:
     return "INVALID";
   }
 }
 
-const char* RtsConnectionVersionHashStr = "73760b8fb1ab7309580640f379fdf295";
+const char* RtsConnectionVersionHashStr = "efc842b541f451de9f35433db66ae25e";
 
 const uint8_t RtsConnectionVersionHash[16] = { 
-    0x73, 0x76, 0xb, 0x8f, 0xb1, 0xab, 0x73, 0x9, 0x58, 0x6, 0x40, 0xf3, 0x79, 0xfd, 0xf2, 0x95 
+    0xef, 0xc8, 0x42, 0xb5, 0x41, 0xf4, 0x51, 0xde, 0x9f, 0x35, 0x43, 0x3d, 0xb6, 0x6a, 0xe2, 0x5e 
 };
 
 const char* EnumToString(const RobotStatus m)

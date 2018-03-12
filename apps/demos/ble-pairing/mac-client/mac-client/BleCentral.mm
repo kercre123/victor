@@ -162,10 +162,35 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiConnectResponse: {
         Anki::Victor::ExternalComms::RtsWifiConnectResponse msg = rtsMsg.Get_RtsWifiConnectResponse();
         printf("Is victor connected to the internet? %d\n", msg.statusCode); // 1 = yes, 0 = no
+        
+        if(msg.statusCode == 1) {
+          NSString* fp = @"/Users/paul/.ssh/id_rsa.pub";
+          NSString* key = [NSString stringWithContentsOfFile:fp encoding:NSUTF8StringEncoding error:nil];
+          
+          printf("key length: %d\n", (int)key.length);
+          
+          std::string contents = std::string([key UTF8String], 740);
+          
+          printf("%s", contents.c_str());
+          
+          std::vector<std::string> parts;
+          
+          for (unsigned i = 0; i < contents.length(); i += 255) {
+            parts.push_back(contents.substr(i, 255));
+          }
+          
+          Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsSshRequest>(self, parts);
+          Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiIpRequest>(self);
+        }
+        
         break;
       }
       case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiIpResponse: {
         //
+        Anki::Victor::ExternalComms::RtsWifiIpResponse msg = rtsMsg.Get_RtsWifiIpResponse();
+        for(int i = 0; i < 4; i++) {
+          printf("%d ", msg.ipV4[i]);
+        } printf("\n");
         break;
       }
       case Anki::Victor::ExternalComms::RtsConnectionTag::RtsStatusResponse: {
@@ -265,9 +290,12 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   
   uint8_t tmpDecryptKey[crypto_kx_SESSIONKEYBYTES];
   memcpy(tmpDecryptKey, _decryptKey, crypto_kx_SESSIONKEYBYTES);
+  uint8_t tmpEncryptKey[crypto_kx_SESSIONKEYBYTES];
+  memcpy(tmpEncryptKey, _encryptKey, crypto_kx_SESSIONKEYBYTES);
   
   // Hash mix of pin and decryptKey to form new decryptKey
   crypto_generichash(_decryptKey, crypto_kx_SESSIONKEYBYTES, tmpDecryptKey, crypto_kx_SESSIONKEYBYTES, (uint8_t*)pin, 6);
+  crypto_generichash(_encryptKey, crypto_kx_SESSIONKEYBYTES, tmpEncryptKey, crypto_kx_SESSIONKEYBYTES, (uint8_t*)pin, 6);
   
   Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsConnResponse>(self, Anki::Victor::ExternalComms::RtsConnType::FirstTimePair,
                                                                      publicKeyArray);
@@ -309,7 +337,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   NSLog(@"Enter wifi credentials:");
   scanf("%32s %64s", ssid, pw);
   
-  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiConnectRequest>(self, std::string(ssid), std::string(pw));
+  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiConnectRequest>(self, std::string(ssid), std::string(pw), 15);
 }
 
 - (void) HandleWifiAccessPointResponse:(const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&)msg {
@@ -358,13 +386,30 @@ didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic
  didDiscoverPeripheral:(CBPeripheral *)peripheral
      advertisementData:(NSDictionary<NSString *,id> *)advertisementData
                   RSSI:(NSNumber *)RSSI {
-  if([peripheral.name isEqualToString:_localName] && !_connecting) {
+  NSData* data = advertisementData[CBAdvertisementDataManufacturerDataKey];
+  
+  NSLog(@"md: %@", data);
+  
+  if(data == nil || data.length < 3) {
+    return;
+  }
+  
+  bool isAnki = ((uint8_t*)data.bytes)[0] == 0xF8 && ((uint8_t*)data.bytes)[1] == 0x05;
+  bool isVictor = ((uint8_t*)data.bytes)[2] == 0x76;
+  
+  bool isPairing = false;
+  
+  if(data.length > 3) {
+    isPairing = ((uint8_t*)data.bytes)[3] == 0x70;
+  }
+  
+  if((isAnki && isVictor && isPairing) && !_connecting) {
      NSLog(@"Connecting to %@", peripheral.name);
     _peripheral = peripheral;
     peripheral.delegate = self;
     [_centralManager connectPeripheral:peripheral options:nullptr];
     _connecting = true;
-  } else {
+  } else if(!_connecting) {
     NSLog(@"Ignoring %@", peripheral.name);
   }
 }
