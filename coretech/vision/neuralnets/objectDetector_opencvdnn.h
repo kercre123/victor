@@ -1,9 +1,10 @@
-#ifndef __Anki_Vision_ObjectDetector_TensorFlow_H__
-#define __Anki_Vision_ObjectDetector_TensorFlow_H__
+#ifndef __Anki_Vision_ObjectDetector_OpenCV_DNN_H__
+#define __Anki_Vision_ObjectDetector_OpenCV_DNN_H__
 
 #include "json/json.h"
 
 #include "opencv2/core/core.hpp"
+#include "opencv2/dnn/dnn.hpp"
 #include "opencv2/imgcodecs/imgcodecs.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
 
@@ -14,13 +15,6 @@
 
 // In lieu of using full Anki::Util
 #include "helpers.h"
-
-// Forward declarations:
-namespace tensorflow {
-  class MemmappedEnv;
-  class Session;
-  class Tensor;
-}
 
 class ObjectDetector
 {
@@ -47,16 +41,17 @@ private:
 
   static Result ReadLabelsFile(const std::string& fileName, std::vector<std::string>& labels_out);
 
-  void GetClassification(const tensorflow::Tensor& output_tensor, TimeStamp_t timestamp, 
+  void GetClassification(const cv::Mat& detections,
+                         TimeStamp_t timestamp, 
                          std::list<DetectedObject>& objects);
 
+/*
   void GetDetectedObjects(const std::vector<tensorflow::Tensor>& output_tensors, TimeStamp_t timestamp,
                           std::list<DetectedObject>& objects);
-
+*/
   struct 
   {
     std::string   graph; // = "tensorflow/examples/label_image/data/inception_v3_2016_08_28_frozen.pb";
-    std::string   architecture; // "classification" or "detection"
     std::string   labels; // = "tensorflow/examples/label_image/data/imagenet_slim_labels.txt";
     
     int32_t       input_width; // = 299;
@@ -69,21 +64,11 @@ private:
     float         min_score; // in [0,1]
     
     bool          verbose;
-
-    bool          memoryMapGraph;
-
   } _params;
 
-  std::string                          _inputLayerName;
-  std::vector<std::string>             _outputLayerNames;
-  bool                                 _useFloatInput = false;
-  bool                                 _useGrayscale = false;
-  
-  std::unique_ptr<tensorflow::Session>      _session;
-  std::unique_ptr<tensorflow::MemmappedEnv> _memmapped_env;
-  std::unique_ptr<tensorflow::Session>      _imageReadSession;
-  std::vector<std::string>                  _labels;
+  cv::dnn::Net                         _network;
+  std::vector<std::string>             _labels;
   
 }; // class ObjectDetector
 
-#endif /* __Anki_Vision_ObjectDetector_TensorFlow_H__ */
+#endif /* __Anki_Vision_ObjectDetector_OpenCV_DNN_H__ */

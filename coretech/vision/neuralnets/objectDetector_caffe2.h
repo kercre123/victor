@@ -1,7 +1,9 @@
-#ifndef __Anki_Vision_ObjectDetector_TensorFlow_H__
-#define __Anki_Vision_ObjectDetector_TensorFlow_H__
+#ifndef __Anki_Vision_ObjectDetector_Caffe2_H__
+#define __Anki_Vision_ObjectDetector_Caffe2_H__
 
 #include "json/json.h"
+
+#include "caffe2/core/predictor.h"
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgcodecs/imgcodecs.hpp"
@@ -14,13 +16,6 @@
 
 // In lieu of using full Anki::Util
 #include "helpers.h"
-
-// Forward declarations:
-namespace tensorflow {
-  class MemmappedEnv;
-  class Session;
-  class Tensor;
-}
 
 class ObjectDetector
 {
@@ -47,12 +42,14 @@ private:
 
   static Result ReadLabelsFile(const std::string& fileName, std::vector<std::string>& labels_out);
 
-  void GetClassification(const tensorflow::Tensor& output_tensor, TimeStamp_t timestamp, 
+  void GetClassification(const caffe2::Predictor::TensorVector& output_vec, 
+                         TimeStamp_t timestamp, 
                          std::list<DetectedObject>& objects);
 
+/*
   void GetDetectedObjects(const std::vector<tensorflow::Tensor>& output_tensors, TimeStamp_t timestamp,
                           std::list<DetectedObject>& objects);
-
+*/
   struct 
   {
     std::string   graph; // = "tensorflow/examples/label_image/data/inception_v3_2016_08_28_frozen.pb";
@@ -77,12 +74,9 @@ private:
   std::string                          _inputLayerName;
   std::vector<std::string>             _outputLayerNames;
   bool                                 _useFloatInput = false;
-  bool                                 _useGrayscale = false;
-  
-  std::unique_ptr<tensorflow::Session>      _session;
-  std::unique_ptr<tensorflow::MemmappedEnv> _memmapped_env;
-  std::unique_ptr<tensorflow::Session>      _imageReadSession;
-  std::vector<std::string>                  _labels;
+
+  caffe2::unique_ptr<caffe2::Predictor>      _predictor;
+  std::vector<std::string>                   _labels;
   
 }; // class ObjectDetector
 

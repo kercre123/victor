@@ -1,0 +1,30 @@
+{
+    "graph"  : "model_opt.pb",
+    "memoryMapGraph": 0,
+
+
+    "labels" : "mobilenet_labels.txt",
+    "architecture" : "custom", 
+    "use_grayscale" : 0, 
+    "use_float_input" : 1, 
+    "input" : "input_6", 
+    "output" : "output_node0",
+
+    //"labels" : "mnist_labels.txt", 
+    //"architecture"   : "custom",
+    //"input" : "conv2d_1_input",
+    //"output" : "output_node0",
+    //"use_float_input" : 1,
+    //"use_grayscale" : 1,
+
+    "input_width" : 128, 
+    "input_height": 128, 
+    "input_mean_R": 0, 
+    "input_mean_G": 0, 
+    "input_mean_B": 0, 
+    "input_std": 255, 
+    "top_K": 1, 
+    "min_score": 0.01,
+
+    "verbose" : 1
+}
