@@ -13,6 +13,7 @@
 #ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToVoiceCommand_H__
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToVoiceCommand_H__
 
+#include "clad/audio/audioEventTypes.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/bodyLightComponentTypes.h"
 #include "engine/micDirectionTypes.h"
@@ -110,8 +111,10 @@ private:
   {
     InstanceConfig();
 
-    bool earConBegin; // earcon is an audible cue to tell the user victor is listening
-    bool earConEnd;
+    // earcon is an audible cue to tell the user victor is listening
+    AudioMetaData::GameEvent::GenericEvent earConBegin;
+    AudioMetaData::GameEvent::GenericEvent earConEnd;
+
     bool turnOnTrigger; // do we turn to the user when we hear the trigger word
     bool turnOnIntent; // do we turn to the user when we hear the intent
     bool playListeningGetInAnim; // do we want to play the get-in to listening loop

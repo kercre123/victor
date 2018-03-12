@@ -49,8 +49,8 @@ namespace Cozmo {
 namespace {
   const char* kLeesFeelings                     = "leesFeelings";
   const char* kExitOnIntentsKey                 = "exitOnIntents";
-  const char* kEarConBegin                      = "animEarConBegin";
-  const char* kEarConEnd                        = "animEarConEnd";
+  const char* kEarConBegin                      = "earConAudioEventBegin";
+  const char* kEarConEnd                        = "earConAudioEventEnd";
   const char* kTriggerBehaviorKey               = "behaviorOnTrigger";
   const char* kIntentBehaviorKey                = "behaviorOnIntent";
   const char* kIntentListenGetIn                = "playListeningGetInAnim";
@@ -68,8 +68,8 @@ namespace {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToVoiceCommand::InstanceConfig::InstanceConfig() :
-  earConBegin( true ),
-  earConEnd( true ),
+  earConBegin( AudioMetaData::GameEvent::GenericEvent::Invalid ),
+  earConEnd( AudioMetaData::GameEvent::GenericEvent::Invalid ),
   turnOnTrigger( true ),
   turnOnIntent( !turnOnTrigger && true ),
   playListeningGetInAnim( true ),
@@ -97,8 +97,18 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
   _instanceVars.exitOnIntents = config.get( kExitOnIntentsKey, true ).asBool();
 
   // do we play ear-con sounds to notify the user when Victor is listening
-  _instanceVars.earConBegin = config.get( kEarConBegin, true ).asBool();
-  _instanceVars.earConEnd = config.get( kEarConEnd, true ).asBool();
+  {
+    std::string earConString;
+    if ( JsonTools::GetValueOptional( config, kEarConBegin, earConString ) )
+    {
+      _instanceVars.earConBegin = AudioMetaData::GameEvent::GenericEventFromString( earConString );
+    }
+
+    if ( JsonTools::GetValueOptional( config, kEarConEnd, earConString ) )
+    {
+      _instanceVars.earConEnd = AudioMetaData::GameEvent::GenericEventFromString( earConString );
+    }
+  }
 
   // do we play the backpack lights from the behavior, else assume anims will handle it
   _instanceVars.backpackLights = config.get( kProceduralBackpackLights, false ).asBool();
@@ -106,15 +116,16 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
   // by supplying either kTriggerBehaviorKey XOR kIntentBehaviorKey, we're
   // telling the behavior we want to turn to the mic direction either when hearing
   // the trigger word or when receiving the intent
-  std::string behaviorString;
-  _instanceVars.turnOnIntent = JsonTools::GetValueOptional( config, kIntentBehaviorKey, _instanceVars.reactionBehaviorString );
-  _instanceVars.turnOnTrigger = JsonTools::GetValueOptional( config, kTriggerBehaviorKey, _instanceVars.reactionBehaviorString );
-
-  if ( _instanceVars.turnOnTrigger && _instanceVars.turnOnIntent )
   {
-    _instanceVars.turnOnIntent = false;
-    PRINT_NAMED_WARNING( "BehaviorReactToVoiceCommand.Init",
-                        "Cannot define BOTH %s and %s", kTriggerBehaviorKey, kIntentBehaviorKey );
+    _instanceVars.turnOnIntent = JsonTools::GetValueOptional( config, kIntentBehaviorKey, _instanceVars.reactionBehaviorString );
+    _instanceVars.turnOnTrigger = JsonTools::GetValueOptional( config, kTriggerBehaviorKey, _instanceVars.reactionBehaviorString );
+
+    if ( _instanceVars.turnOnTrigger && _instanceVars.turnOnIntent )
+    {
+      _instanceVars.turnOnIntent = false;
+      PRINT_NAMED_WARNING( "BehaviorReactToVoiceCommand.Init",
+                          "Cannot define BOTH %s and %s", kTriggerBehaviorKey, kIntentBehaviorKey );
+    }
   }
 
   _instanceVars.playListeningGetInAnim = config.get( kIntentListenGetIn, true ).asBool();
@@ -127,6 +138,8 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::LoadLeeHappinessValues( const Json::Value& config )
 {
+  using namespace AudioMetaData::GameEvent;
+
   std::string leesFeelings;
   if ( JsonTools::GetValueOptional( config, kLeesFeelings, leesFeelings ) )
   {
@@ -135,8 +148,8 @@ void BehaviorReactToVoiceCommand::LoadLeeHappinessValues( const Json::Value& con
       // no noise or movement prior to hearing the intent
       // movement and noise after hearing the intent
 
-      _instanceVars.earConBegin             = false;
-      _instanceVars.earConEnd               = true;
+      _instanceVars.earConBegin             = GenericEvent::Invalid;
+      _instanceVars.earConEnd               = GenericEvent::Stop__Robot_Vic_Sfx__Scan_Loop_Stop;
       _instanceVars.turnOnTrigger           = false;
       _instanceVars.turnOnIntent            = true;
       _instanceVars.playListeningGetInAnim  = false;
@@ -146,8 +159,8 @@ void BehaviorReactToVoiceCommand::LoadLeeHappinessValues( const Json::Value& con
       // noise but no movement prior to hearing the intent
       // movement and noise after hearing the intent
 
-      _instanceVars.earConBegin             = true;
-      _instanceVars.earConEnd               = true;
+      _instanceVars.earConBegin             = GenericEvent::Play__Robot_Vic_Sfx__Scan_Loop_Play;
+      _instanceVars.earConEnd               = GenericEvent::Stop__Robot_Vic_Sfx__Scan_Loop_Stop;
       _instanceVars.turnOnTrigger           = false;
       _instanceVars.turnOnIntent            = true;
       _instanceVars.playListeningGetInAnim  = true;
@@ -157,8 +170,8 @@ void BehaviorReactToVoiceCommand::LoadLeeHappinessValues( const Json::Value& con
       // movement and noise prior to hearing the intent
       // noise but no movement after hearing the intent
 
-      _instanceVars.earConBegin             = true;
-      _instanceVars.earConEnd               = true;
+      _instanceVars.earConBegin             = GenericEvent::Play__Robot_Vic_Sfx__Scan_Loop_Play;
+      _instanceVars.earConEnd               = GenericEvent::Stop__Robot_Vic_Sfx__Scan_Loop_Stop;
       _instanceVars.turnOnTrigger           = true;
       _instanceVars.turnOnIntent            = false;
       _instanceVars.playListeningGetInAnim  = true;
@@ -489,22 +502,24 @@ void BehaviorReactToVoiceCommand::StopListening()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnVictorListeningBegin()
 {
-  if ( _instanceVars.earConBegin )
+  using namespace AudioMetaData::GameEvent;
+
+  if ( GenericEvent::Invalid != _instanceVars.earConBegin )
   {
     // Play earcon begin audio
-    GetBEI().GetRobotAudioClient().PostEvent( AudioMetaData::GameEvent::GenericEvent::Play__Codelab__Sfx_Shared_Timer_Click,
-                                              AudioMetaData::GameObjectType::SFX );
+    GetBEI().GetRobotAudioClient().PostEvent( _instanceVars.earConBegin, AudioMetaData::GameObjectType::SFX );
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnVictorListeningEnd()
 {
-  if ( _instanceVars.earConEnd )
+  using namespace AudioMetaData::GameEvent;
+
+  if ( GenericEvent::Invalid != _instanceVars.earConEnd )
   {
     // Play earcon end audio
-    GetBEI().GetRobotAudioClient().PostEvent( AudioMetaData::GameEvent::GenericEvent::Play__Codelab__Sfx_Shared_Timer_End,
-                                              AudioMetaData::GameObjectType::SFX );
+    GetBEI().GetRobotAudioClient().PostEvent( _instanceVars.earConEnd, AudioMetaData::GameObjectType::SFX );
   }
 
   // Note: this is currently decoupled with the actual stream from the AnimProcess
