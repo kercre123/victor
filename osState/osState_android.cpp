@@ -27,8 +27,11 @@
 #include <net/if.h>
 #include <netinet/in.h>
 
+#include <linux/wireless.h>
+
 #include <fstream>
 #include <array>
+#include <stdlib.h>
 
 #ifdef SIMULATOR
 #error SIMULATOR should NOT be defined by any target using osState_android.cpp
@@ -248,7 +251,7 @@ std::string OSState::GetRobotName() const
   return (name.empty() ? "Vector_0000" : name);
 }
   
-std::string OSState::GetIPAddressInternal()
+void OSState::UpdateWifiInfo()
 {
   // Open a socket to figure out the ip adress of the wlan0 (wifi) interface
   const char* const if_name = "wlan0";
@@ -271,10 +274,49 @@ std::string OSState::GetIPAddressInternal()
     close(fd);
     ASSERT_NAMED_EVENT(false, "OSState.GetIPAddress.IoctlError", "%s", strerror(temp_errno));
   }
-  close(fd);
 
   struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
-  return std::string(inet_ntoa(ipaddr->sin_addr));
+  _ipAddress = std::string(inet_ntoa(ipaddr->sin_addr));
+
+  // Get SSID
+  iwreq req;
+  strcpy(req.ifr_name, if_name);
+  req.u.data.pointer = (iw_statistics*)malloc(sizeof(iw_statistics));
+  req.u.data.length = sizeof(iw_statistics);
+  
+  const int kSSIDBufferSize = 32;
+  char buffer[kSSIDBufferSize];
+  memset(buffer, 0, sizeof(buffer));
+  req.u.essid.pointer = buffer;
+  req.u.essid.length = kSSIDBufferSize;
+  if(ioctl(fd, SIOCGIWESSID, &req) == -1)
+  {
+    close(fd);
+    ASSERT_NAMED_EVENT(false, "OSState.UpdateWifiInfo.FailedToGetSSID","%s", strerror(errno));
+  }
+  close(fd);
+
+  _ssid = std::string(buffer);
+}
+
+const std::string& OSState::GetIPAddress(bool update)
+{
+  if(_ipAddress.empty() || update)
+  {
+    UpdateWifiInfo();
+  }
+
+  return _ipAddress;
+}
+
+const std::string& OSState::GetSSID(bool update)
+{
+  if(_ssid.empty() || update)
+  {
+    UpdateWifiInfo();
+  }
+
+  return _ssid;
 }
 
 std::string OSState::GetMACAddress() const

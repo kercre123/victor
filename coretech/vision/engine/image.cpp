@@ -276,6 +276,13 @@ namespace Vision {
   }
   
   template<typename T>
+  Vec2f ImageBase<T>::GetTextSize(const std::string& str, f32 scale, int thickness)
+  {
+    auto sz = cv::getTextSize(str, CV_FONT_NORMAL, scale, thickness, nullptr);
+    return Vec2f(sz.width, sz.height);
+  }
+
+  template<typename T>
   void ImageBase<T>::Resize(f32 scaleFactor, ResizeMethod method)
   {
     cv::resize(this->get_CvMat_(), this->get_CvMat_(), cv::Size(), scaleFactor, scaleFactor,

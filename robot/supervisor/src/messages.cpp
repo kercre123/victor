@@ -176,7 +176,7 @@ namespace Anki {
 
       void Process_shutdown(const RobotInterface::Shutdown& msg)
       {
-        //HAL::Shutdown();  // TODO: Uncomment when https://github.com/anki/victor/pull/898 is merged
+        HAL::Shutdown();
       }
 
       void Process_absLocalizationUpdate(const RobotInterface::AbsoluteLocalizationUpdate& msg)

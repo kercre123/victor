@@ -115,6 +115,7 @@ private:
   // Internal draw functions that
   void DrawFAC();
   void DrawMain();
+  void DrawNetwork();
   void DrawSensorInfo(const RobotState& state);
   void DrawIMUInfo(const RobotState& state);
   void DrawMotorInfo(const RobotState& state);
@@ -123,15 +124,35 @@ private:
   // Draw the _scratchDrawingImg to the face
   void DrawScratch();
 
+  
+  static const Point2f kDefaultTextStartingLoc_pix;
+  static const u32 kDefaultTextSpacing_pix;
+  static const f32 kDefaultTextScale;
+
   // Helper methods for drawing debug data to face
-  void ClearFace();
   void DrawTextOnScreen(const std::vector<std::string>& textVec, 
                         const ColorRGBA& textColor = NamedColors::WHITE,
                         const ColorRGBA& bgColor = NamedColors::BLACK,
-                        const Point2f& loc = {0, 10},
-                        u32 textSpacing_pix = 11,
-                        f32 textScale = 0.4f);
-  
+                        const Point2f& loc = kDefaultTextStartingLoc_pix,
+                        u32 textSpacing_pix = kDefaultTextSpacing_pix,
+                        f32 textScale = kDefaultTextScale);
+
+  struct ColoredText {
+    ColoredText(const std::string& text, const ColorRGBA& color = NamedColors::WHITE)
+    : text(text)
+    , color(color)
+    {}
+
+    const std::string text;
+    const ColorRGBA color;
+  };
+
+  using ColoredTextLines = std::vector<std::vector<ColoredText> >;
+  void DrawTextOnScreen(const ColoredTextLines& lines, 
+                        const ColorRGBA& bgColor = NamedColors::BLACK,
+                        const Point2f& loc = kDefaultTextStartingLoc_pix,
+                        u32 textSpacing_pix = kDefaultTextSpacing_pix,
+                        f32 textScale = kDefaultTextScale);
 
   RobotInterface::DrawTextOnScreen _customText;
   WebService::WebService* _webService;

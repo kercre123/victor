@@ -126,6 +126,10 @@ namespace Vision {
                   bool dropShadow = false, 
                   int thickness = 1);
 
+    // Returns the bounding box dimensions of the text that would be drawn
+    // if the same parameters were passed into DrawText()
+    static Vec2f GetTextSize(const std::string& str, f32 scale, int thickness);
+
     // DrawSubImage also exists - see derived class for implemetation
     
     using Array2d<T>::GetDataPointer;

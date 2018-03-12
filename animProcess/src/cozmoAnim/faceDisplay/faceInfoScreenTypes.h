@@ -30,6 +30,7 @@ enum class ScreenName {
   ClearUserDataSuccess,
   ClearUserDataNoop,
   SelfTest,
+  Network,
   SensorInfo,
   IMUInfo,
   MotorInfo,

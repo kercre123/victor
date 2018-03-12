@@ -29,6 +29,7 @@
 #include "util/console/consoleSystem.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/internetUtils/internetUtils.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot_sendAnimToRobot_helper.h"
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
@@ -51,6 +52,11 @@
 namespace Anki {
 namespace Cozmo {
 
+// Default values for text rendering
+const Point2f FaceInfoScreenManager::kDefaultTextStartingLoc_pix = {0,10};
+const u32 FaceInfoScreenManager::kDefaultTextSpacing_pix = 11;
+const f32 FaceInfoScreenManager::kDefaultTextScale = 0.4f;
+
 namespace {
   // Number of tics that a wheel needs to be moving for before it registers
   // as a signal to move the menu cursor
@@ -68,9 +74,7 @@ namespace {
   const f32 kButtonHoldTimeForSync_s = 1.f;
   
   // Time at which sync() should be called
-  f32 syncTime_s = 0.f;
-  
-  CONSOLE_VAR(bool, kDebugFaceDraw_CycleWithButton, "FaceInfoScreenManager", true);    
+  f32 syncTime_s = 0.f; 
 }
 
   
@@ -116,22 +120,41 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   #define ADD_MENU_ITEM_WITH_ACTION(screen, itemText, action) \
     GetScreen(ScreenName::screen)->AppendMenuItem(itemText, action);
 
+  #define SET_TIMEOUT(screen, timeout_sec, timeoutScreen) \
+    GetScreen(ScreenName::screen)->SetTimeout(timeout_sec, ScreenName::timeoutScreen);
+
+  #define DISABLE_TIMEOUT(screen) \
+    GetScreen(ScreenName::screen)->SetTimeout(0.f, ScreenName::screen);
+
+
+  // Screens we don't want users to have access to
+  // * Microphone visualization
+  // * Camera
+  const bool hideSpecialDebugScreens = (FACTORY_TEST && Factory::GetEMR()->PLAYPEN_PASSED_FLAG) || !ANKI_DEV_CHEATS;
+
   ADD_SCREEN_WITH_TEXT(Recovery, Recovery, {"RECOVERY MODE"});
-  ADD_SCREEN(None, Main);
+  ADD_SCREEN(None, None);
   ADD_SCREEN_WITH_TEXT(Pairing, None, {"PAIRING STUB"});
-  ADD_SCREEN(FAC, Main);
-  ADD_SCREEN(Main, SensorInfo);
-  ADD_SCREEN_WITH_TEXT(ClearUserData, Main, {"Clear User Data?"});
+  ADD_SCREEN(FAC, None);
+  ADD_SCREEN(CustomText, None);
+  ADD_SCREEN(Main, Network);
+  ADD_SCREEN_WITH_TEXT(ClearUserData, Main, {"CLEAR USER DATA?"});
   ADD_SCREEN_WITH_TEXT(ClearUserDataSuccess, Main, {"SUCCESS"});
-  ADD_SCREEN_WITH_TEXT(ClearUserDataNoop, Main, {"No data to erase"});
-  ADD_SCREEN_WITH_TEXT(SelfTest, Main, {"Execute Self Test?"});
+  ADD_SCREEN_WITH_TEXT(ClearUserDataNoop, Main, {"NO DATA TO ERASE"});
+  ADD_SCREEN_WITH_TEXT(SelfTest, Main, {"START SELF TEST?"});
+  ADD_SCREEN(Network, SensorInfo);
   ADD_SCREEN(SensorInfo, IMUInfo);
   ADD_SCREEN(IMUInfo, MotorInfo);
-  ADD_SCREEN(MotorInfo, Camera);
-  ADD_SCREEN(Camera, MicInfo);
-  ADD_SCREEN(MicInfo, MicDirectionClock);
-  ADD_SCREEN(MicDirectionClock, None);
-  ADD_SCREEN(CustomText, None);
+  ADD_SCREEN(MotorInfo, MicInfo);
+
+  if (hideSpecialDebugScreens) {
+    ADD_SCREEN(MicInfo, Main); // Last screen cycles back to Main
+  } else {
+    ADD_SCREEN(MicInfo, MicDirectionClock);
+  }
+
+  ADD_SCREEN(MicDirectionClock, Camera);  
+  ADD_SCREEN(Camera, Main);    // Last screen cycles back to Main
 
   // Recovery screen
   FaceInfoScreen::MenuItemAction rebootAction = []() {
@@ -142,22 +165,25 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
 
     return ScreenName::Recovery;
   };
-  ADD_MENU_ITEM_WITH_ACTION(Recovery, "Exit", rebootAction);
-  ADD_MENU_ITEM(Recovery, "Continue", None);
-  GetScreen(ScreenName::Recovery)->SetTimeout(0.f, ScreenName::Recovery);  // Never timeout
+  ADD_MENU_ITEM_WITH_ACTION(Recovery, "EXIT", rebootAction);
+  ADD_MENU_ITEM(Recovery, "CONTINUE", None);
+  DISABLE_TIMEOUT(Recovery);
+
+  // FAC screen
+  DISABLE_TIMEOUT(FAC);
 
   // Pairing screen
   // Never timeout. Let switchboard handle timeouts.
-  GetScreen(ScreenName::Pairing)->SetTimeout(0.f, ScreenName::None);
+  DISABLE_TIMEOUT(Pairing);
 
   // Main screen menu
-  ADD_MENU_ITEM(Main, "Exit", None);
+  ADD_MENU_ITEM(Main, "EXIT", None);
   // ADD_MENU_ITEM(Main, "Self Test", SelfTest);   // TODO: VIC-1498
-  ADD_MENU_ITEM(Main, "Clear User Data", ClearUserData);
+  ADD_MENU_ITEM(Main, "CLEAR USER DATA", ClearUserData);
   
   // Self test screen
-  ADD_MENU_ITEM(SelfTest, "Exit", Main);
-  ADD_MENU_ITEM(SelfTest, "Confirm", Main);        // TODO: VIC-1498
+  ADD_MENU_ITEM(SelfTest, "EXIT", Main);
+  ADD_MENU_ITEM(SelfTest, "CONFIRM", Main);        // TODO: VIC-1498
   
   // Clear User Data menu
   FaceInfoScreen::MenuItemAction confirmClearUserData = [context]() {
@@ -176,10 +202,10 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
     }
     return ScreenName::ClearUserDataNoop;
   };
-  ADD_MENU_ITEM(ClearUserData, "Exit", Main);
-  ADD_MENU_ITEM_WITH_ACTION(ClearUserData, "Confirm", confirmClearUserData);
-  GetScreen(ScreenName::ClearUserDataSuccess)->SetTimeout(2, ScreenName::Main);
-  GetScreen(ScreenName::ClearUserDataNoop)->SetTimeout(2, ScreenName::Main);
+  ADD_MENU_ITEM(ClearUserData, "EXIT", Main);
+  ADD_MENU_ITEM_WITH_ACTION(ClearUserData, "CONFIRM", confirmClearUserData);
+  SET_TIMEOUT(ClearUserDataSuccess, 2.f, Main);
+  SET_TIMEOUT(ClearUserDataNoop, 2.f, Main);
   
   // Camera screen
   FaceInfoScreen::ScreenAction cameraEnterAction = [animStreamer]() {
@@ -282,11 +308,11 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   SendAnimToRobot(std::move(msg));
 #endif
   
-  LOG_INFO("FaceInfoScreenManager.SetScreen.EnteringScreen", "%d", GetCurrScreenName());
-  _currScreen->EnterScreen();
-
   _scratchDrawingImg->FillWith(0);
   DrawScratch();
+
+  LOG_INFO("FaceInfoScreenManager.SetScreen.EnteringScreen", "%d", GetCurrScreenName());
+  _currScreen->EnterScreen();
 
   // Clear menu navigation triggers
   _headTriggerReady = false;
@@ -298,6 +324,9 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   switch(GetCurrScreenName()) {
     case ScreenName::Main:
       DrawMain();
+      break;
+    case ScreenName::Network:
+      DrawNetwork();
       break;
     case ScreenName::FAC:
       DrawFAC();
@@ -674,14 +703,14 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
     }
   }
 
-  // Check for button press to go to next screen
-  if (kDebugFaceDraw_CycleWithButton) {   // TODO: Get rid of this console var? It's only used by DevImageCapture
-    // Transition to next debug screen as long as we're not on the pairing screen
-    if (buttonReleasedEvent) {
-      if (_debugInfoScreensUnlocked && 
-          (currScreenName != ScreenName::Pairing && currScreenName != ScreenName::Recovery) ) {
-        SetScreen(_currScreen->GetButtonGotoScreen());
-      }
+  // Check for button press to go to next debug screen
+  if (buttonReleasedEvent) {
+    if (_debugInfoScreensUnlocked && 
+        (currScreenName != ScreenName::None &&
+          currScreenName != ScreenName::FAC &&
+          currScreenName != ScreenName::Pairing && 
+          currScreenName != ScreenName::Recovery) ) {
+      SetScreen(_currScreen->GetButtonGotoScreen());
     }
   }
   
@@ -800,19 +829,64 @@ void FaceInfoScreenManager::Update(const RobotState& state)
 void FaceInfoScreenManager::DrawMain()
 {
   auto *osstate = OSState::getInstance();
-  const std::string ip       = "IP: "  + osstate->GetIPAddress(true);
-  const std::string mac      = "MAC: " + osstate->GetMACAddress();
-  const std::string serialNo = "ESN: " + osstate->GetSerialNumberAsString();
-  const std::string osVer    = "OS: "  + osstate->GetOSBuildVersion();
+  const std::string serialNo = "ESN: "  + osstate->GetSerialNumberAsString();
+  const std::string osVer    = "OS: "   + osstate->GetOSBuildVersion() + (FACTORY_TEST ? " (V3)" : "");
+  const std::string ssid     = "SSID: " + osstate->GetSSID(true);
 
-  std::vector<std::string> text = {ip, mac, serialNo, osVer};
-
-  if(FACTORY_TEST)
-  {
-    text.push_back("Factory V3");
+  std::string ip             = osstate->GetIPAddress();
+  if (ip.empty()) {
+    ip = "XXX.XXX.XXX.XXX";
   }
 
-  DrawTextOnScreen(text);
+  const bool hasInternet = Util::InternetUtils::HasInternet();
+
+  ColoredTextLines lines = { {serialNo}, 
+                             {osVer}, 
+                             {ssid}, 
+                             { {"IP: "}, {ip, (hasInternet ? NamedColors::GREEN : NamedColors::RED)} }
+                           };
+   
+  DrawTextOnScreen(lines);
+}
+
+
+void FaceInfoScreenManager::DrawNetwork()
+{
+  auto osstate = OSState::getInstance();
+  const std::string ble      = "BLE ID: " + osstate->GetRobotName();
+  const std::string mac      = "MAC: "  + osstate->GetMACAddress();
+  const std::string ssid     = "SSID: " + osstate->GetSSID(true);
+
+  std::string ip             = osstate->GetIPAddress();
+  if (ip.empty()) {
+    ip = "XXX.XXX.XXX.XXX";
+  }
+
+  const bool hasInternet = Util::InternetUtils::HasInternet();
+
+  // TODO: Check actual hosts for connectivity. But which ones?
+  const bool hasAuthAccess  = false;
+  const bool hasOTAAccess   = false;
+  const bool hasVoiceAccess = Util::InternetUtils::CanConnectToHostName("chipper-dev.api.anki.com", 443);
+
+  const ColoredText online("ONLINE", NamedColors::GREEN);
+  const ColoredText offline("OFFLINE", NamedColors::RED);
+
+  const ColoredText authStatus  = hasAuthAccess  ? online : offline;
+  const ColoredText otaStatus   = hasOTAAccess   ? online : offline;
+  const ColoredText voiceStatus = hasVoiceAccess ? online : offline;
+
+  ColoredTextLines lines = { {ble}, 
+                             {mac}, 
+                             {ssid}, 
+                             { {"IP: "}, {ip, (hasInternet ? NamedColors::GREEN : NamedColors::RED)} },
+                             { },
+                             { {"AUTH: "}, authStatus },
+                             { {"OTA: "}, otaStatus },
+                             { {"VOICE: "}, voiceStatus }
+                           };
+
+  DrawTextOnScreen(lines);
 }
 
 
@@ -994,6 +1068,39 @@ void FaceInfoScreenManager::DrawTextOnScreen(const std::vector<std::string>& tex
   DrawScratch();
 }
 
+void FaceInfoScreenManager::DrawTextOnScreen(const ColoredTextLines& lines, 
+                                             const ColorRGBA& bgColor,
+                                             const Point2f& loc,
+                                             u32 textSpacing_pix,
+                                             f32 textScale)
+{
+  _scratchDrawingImg->FillWith( {bgColor.r(), bgColor.g(), bgColor.b()} );
+
+  const u8  textLineThickness = 8;
+
+  f32 textLocY = loc.y();
+  for(const auto& line : lines) 
+  {
+    f32 textLocX = loc.x();
+    for(const auto& coloredText : line)
+    {
+      _scratchDrawingImg->DrawText(
+        {textLocX, textLocY},
+        coloredText.text.c_str(),
+        coloredText.color,
+        textScale,
+        textLineThickness);
+
+      auto bbox = _scratchDrawingImg->GetTextSize(coloredText.text.c_str(), textScale, textLineThickness);
+      textLocX += bbox.x();
+    }
+    textLocY += textSpacing_pix;
+  }
+
+  DrawScratch();
+}
+
+
 void FaceInfoScreenManager::EnablePairingScreen(bool enable)
 {
   if (enable && GetCurrScreenName() != ScreenName::None) {
@@ -1009,18 +1116,15 @@ void FaceInfoScreenManager::DrawScratch()
 {
   _currScreen->DrawMenu(*_scratchDrawingImg);
 
-  if (_debugInfoScreensUnlocked) {
+  // Draw white pixel in top-right corner of main customer support screen
+  // to indicate that debug screens are unlocked
+  const bool drawDebugScreensEnabledPixel = _debugInfoScreensUnlocked &&
+                                            GetCurrScreenName() == ScreenName::Main;
+  if (drawDebugScreensEnabledPixel) {
     Rectangle<f32> rect(FACE_DISPLAY_WIDTH - 2, 0, 2, 2);
     _scratchDrawingImg->DrawFilledRect(rect, NamedColors::WHITE);
   }
   
-  FaceDisplay::getInstance()->DrawToFaceDebug(*_scratchDrawingImg);
-}
-
-void FaceInfoScreenManager::ClearFace()
-{
-  const auto& clearColor = NamedColors::BLACK;
-  _scratchDrawingImg->FillWith( {clearColor.r(), clearColor.g(), clearColor.b()} );
   FaceDisplay::getInstance()->DrawToFaceDebug(*_scratchDrawingImg);
 }
 

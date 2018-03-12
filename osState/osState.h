@@ -75,15 +75,10 @@ public:
   uint32_t GetTemperature_C() const;
 
   // Returns our ip address
-  const std::string& GetIPAddress(bool update = false)
-  {
-    if(_ipAddress.empty() || update)
-    {
-      _ipAddress = GetIPAddressInternal();
-    }
+  const std::string& GetIPAddress(bool update = false);
 
-    return _ipAddress;
-  }
+  // Returns the SSID of the connected wifi network
+  const std::string& GetSSID(bool update = false);
 
   // Returns our mac address
   std::string GetMACAddress() const;
@@ -120,11 +115,12 @@ private:
   // private ctor
   OSState();
 
-  std::string GetIPAddressInternal();
+  void UpdateWifiInfo();
   
   uint32_t kNominalCPUFreq_kHz = 800000;
 
   std::string _ipAddress       = "";
+  std::string _ssid            = "";
   std::string _serialNumString = "";
   std::string _osBuildVersion  = "";
 
