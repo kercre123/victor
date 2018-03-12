@@ -32,7 +32,7 @@ namespace Cozmo {
 
 // speed up high level AI with this. Be careful -- some conditions that check for time
 // within a short interval [a,b] may not be met if you choose too fast a speedup factor
-CONSOLE_VAR_RANGED(float, kTimeMultiplier, "BehaviorHighLevelAI", 10.0f, 1.0f, 300.0f);
+CONSOLE_VAR_RANGED(float, kTimeMultiplier, "BehaviorHighLevelAI", 1.0f, 1.0f, 300.0f);
   
 namespace {
 
