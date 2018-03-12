@@ -462,9 +462,9 @@
                     },
                     "_?:G#puRTun+hrHQc~W7": {
                         "id": "_?:G#puRTun+hrHQc~W7",
-                        "name": "\u300c\u3080\u3057\u3092\u3064\u304b\u307e\u3048\u305f\u300d\u3068\u3044\u3046",
+                        "name": "\u3080\u3057\u3092\u3064\u304b\u307e\u3048\u305f\u300d\u3068\u3044\u3046",
                         "type": "broadcast_msg",
-                        "value": "\u300c\u3080\u3057\u3092\u3064\u304b\u307e\u3048\u305f\u300d\u3068\u3044\u3046"
+                        "value": "\u3080\u3057\u3092\u3064\u304b\u307e\u3048\u305f\u300d\u3068\u3044\u3046"
                     },
                     "_l0SC,-IC8xK=bn^VV,E": {
                         "id": "_l0SC,-IC8xK=bn^VV,E",
@@ -635,9 +635,9 @@
                     },
                     "yZvd/|bn!}Ls}@l$;R|A": {
                         "id": "yZvd/|bn!}Ls}@l$;R|A",
-                        "name": "\u300c\u3080\u3057\u3092\u306b\u304c\u3057\u305f\u300d\u3068\u3044\u3046",
+                        "name": "\u3080\u3057\u3092\u306b\u304c\u3057\u305f\u300d\u3068\u3044\u3046",
                         "type": "broadcast_msg",
-                        "value": "\u300c\u3080\u3057\u3092\u306b\u304c\u3057\u305f\u300d\u3068\u3044\u3046"
+                        "value": "\u3080\u3057\u3092\u306b\u304c\u3057\u305f\u300d\u3068\u3044\u3046"
                     },
                     "{,J/{q^f$s1n|]x(54Xe": {
                         "id": "{,J/{q^f$s1n|]x(54Xe",
@@ -681,7 +681,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "_?:G#puRTun+hrHQc~W7",
                                 "name": "BROADCAST_OPTION",
-                                "value": "\u300c\u3080\u3057\u3092\u3064\u304b\u307e\u3048\u305f\u300d\u3068\u3044\u3046",
+                                "value": "\u3080\u3057\u3092\u3064\u304b\u307e\u3048\u305f\u300d\u3068\u3044\u3046",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -2019,7 +2019,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "_?:G#puRTun+hrHQc~W7",
                                 "name": "BROADCAST_OPTION",
-                                "value": "\u300c\u3080\u3057\u3092\u3064\u304b\u307e\u3048\u305f\u300d\u3068\u3044\u3046",
+                                "value": "\u3080\u3057\u3092\u3064\u304b\u307e\u3048\u305f\u300d\u3068\u3044\u3046",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -6069,7 +6069,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "yZvd/|bn!}Ls}@l$;R|A",
                                 "name": "BROADCAST_OPTION",
-                                "value": "\u300c\u3080\u3057\u3092\u306b\u304c\u3057\u305f\u300d\u3068\u3044\u3046",
+                                "value": "\u3080\u3057\u3092\u306b\u304c\u3057\u305f\u300d\u3068\u3044\u3046",
                                 "variableType": "broadcast_msg"
                             }
                         },
@@ -19838,7 +19838,7 @@
                             "BROADCAST_OPTION": {
                                 "id": "yZvd/|bn!}Ls}@l$;R|A",
                                 "name": "BROADCAST_OPTION",
-                                "value": "\u300c\u3080\u3057\u3092\u306b\u304c\u3057\u305f\u300d\u3068\u3044\u3046",
+                                "value": "\u3080\u3057\u3092\u306b\u304c\u3057\u305f\u300d\u3068\u3044\u3046",
                                 "variableType": "broadcast_msg"
                             }
                         },

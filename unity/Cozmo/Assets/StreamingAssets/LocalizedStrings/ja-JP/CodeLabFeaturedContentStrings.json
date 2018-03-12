@@ -1861,10 +1861,10 @@
     "translation" : "ラウンド "
   },
   "codeLabFeaturedProject.CozmosGarden.say_got_bugs_phrase" : {
-    "translation" : "「むしをつかまえた」という"
+    "translation" : "むしをつかまえた」という"
   },
   "codeLabFeaturedProject.CozmosGarden.say_missed_bugs_phrase" : {
-    "translation" : "「むしをにがした」という"
+    "translation" : "むしをにがした」という"
   },
   "codeLabFeaturedProject.CozmosGarden.set_a_plant_to_the_harvested_state_and_spin_the_cube_lights" : {
     "translation" : "しょくぶつをしゅうかくずみにセットし、キューブのライトをかいてんさせます。"
