@@ -157,7 +157,7 @@ void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* conte
 
   DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, 0.5f, 1, i, kColor, 0, false);
 
-  DrawTextCenteredHorizontally(std::to_string(_pin), CV_FONT_NORMAL, 0.6f, 1, i, kColor, FACE_DISPLAY_HEIGHT-20, false);
+  DrawTextCenteredHorizontally(std::to_string(_pin), CV_FONT_NORMAL, 0.7f, 1, i, kColor, FACE_DISPLAY_HEIGHT-20, false);
 
   animStreamer->SetFaceImage(i, 0);
 }
