@@ -1,11 +1,13 @@
 (function () {
+    'use strict';
+    
     const Scratch = window.Scratch = window.Scratch || {};
 
     // If project being loaded is JSON, value is true.
     // If project being loaded is XML, value is false.
     window.currentProjectUsesJSONFormat = true;
 
-    addLeadingZeros = function(inNum, desiredLength) {
+    function addLeadingZeros(inNum, desiredLength) {
         var paddedString = "" + inNum;
         while (paddedString.length < desiredLength) {
             paddedString = "0" + paddedString;
@@ -31,7 +33,7 @@
         var days = Math.floor(hours / 24);
         hours -= (days * 24)
 
-        timeStamp = addLeadingZeros(hours, 2) + ":" + addLeadingZeros(minutes,2) + ":" + addLeadingZeros(seconds, 2) + "." + addLeadingZeros(milliseconds,3);
+        var timeStamp = addLeadingZeros(hours, 2) + ":" + addLeadingZeros(minutes,2) + ":" + addLeadingZeros(seconds, 2) + "." + addLeadingZeros(milliseconds,3);
         return timeStamp;
     }
 

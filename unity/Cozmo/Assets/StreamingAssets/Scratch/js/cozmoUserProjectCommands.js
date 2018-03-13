@@ -1,4 +1,6 @@
 (function () {
+    'use strict';
+    
     function unescapedText(str) {
         if (str === null || str === undefined) {
             return str;

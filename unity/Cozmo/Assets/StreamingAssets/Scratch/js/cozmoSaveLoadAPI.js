@@ -1,4 +1,5 @@
 (function () {
+    'use strict';
 
     // cozmoSaveLoadAPI.js is a list of calls for the save/load UI page and should not contain any references to
     // code in Scratch/lib (i.e., Blockly, scratch-blocks or scratch-vm code).
