@@ -36,6 +36,35 @@ void TestRobotCleanup(void)
   Board::powerOff(PWR_VBAT);
 }
 
+static int m_debug[4];
+static void run_debug(void)
+{
+  srand(Timer::get());
+  ConsolePrintf("DEBUG %i %i %i %i\n", m_debug[0], m_debug[1], m_debug[2], m_debug[3]);
+  
+  if( m_debug[0] == 1 )
+  {
+    int nloops = m_debug[1];
+    int rlim = m_debug[2]<=0 ? 255 : m_debug[2]&0xff; //limit for random generator
+    ConsolePrintf("===== STRESS TEST COMMS: %i loops, rlim=%i =====\n", nloops, rlim);
+    for(int x = 0; x < nloops; x++) {
+      cmdRobotEsn(); cmdRobotBsv();
+      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BATTERY);
+      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BATTERY);
+      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BATTERY);
+      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_CLIFF);
+      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_LEFT);
+      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_RIGHT);
+      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_LIFT);
+      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_HEAD);
+      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_PROX_TOF);
+      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BTN_TOUCH);
+      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_RSSI);
+      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_RX_PKT);
+    }
+  }
+}
+
 const char* DBG_cmd_substitution(const char *line, int len)
 {
   static char buf[25];
@@ -53,6 +82,13 @@ const char* DBG_cmd_substitution(const char *line, int len)
     int ix  = nargs >= 2 ? cmdParseInt32(cmdGetArg((char*)line,1)) : 0;
     int val = nargs >= 3 ? cmdParseInt32(cmdGetArg((char*)line,2)) : 0;
     return snformat(buf,sizeof(buf),">>%c%c%c %02x %02x %02x %02x %02x 00", line[0],line[1],line[2], ix, val&0xFF, (val>>8)&0xff, (val>>16)&0xff, (val>>24)&0xff);
+  }
+  if( !strncmp(line,"debug",5) ) {
+    int nargs = cmdNumArgs((char*)line);
+    for(int x=0; x<sizeof(m_debug)/4; x++)
+      m_debug[x] = nargs > x+1 ? cmdParseInt32(cmdGetArg((char*)line,x+1) ) : 0;
+    run_debug();
+    return ""; //send null
   }
   return 0;
 }
@@ -146,6 +182,13 @@ void DBG_RobotEMRTest(void)
   {
     ConsolePrintf("\n======== Full EMR Test =============\n");
     
+    //reset EMR to blank
+    for(idx=0; idx < 256; idx++)
+      cmdRobotSmr(idx, 0);
+    
+    ConsolePrintf("======== EMR Blank =============\n");
+    Timer::delayMs(1000);
+    
     //set EMR to random values, store locally for compare
     srand(Timer::get());
     for(idx=0; idx < 256; idx++) {
@@ -153,6 +196,9 @@ void DBG_RobotEMRTest(void)
       cmdRobotSmr(idx, val);
       m_emr[idx] = val;
     }
+    
+    ConsolePrintf("======== EMR Set Ok =============\n");
+    Timer::delayMs(1000);
     
     //readback verify
     int mismatch = 0;
@@ -166,13 +212,16 @@ void DBG_RobotEMRTest(void)
     
     //results!
     ConsolePrintf("======== EMR test %s: %u errors =============\n", mismatch > 0 ? "FAILED" : "passed", mismatch);
+    Timer::delayMs(1000);
     
     //reset EMR to blank
     for(idx=0; idx < 256; idx++)
       cmdRobotSmr(idx, 0);
     
     //results (again)
+    ConsolePrintf("======== EMR Blank =============\n");
     ConsolePrintf("======== EMR test %s: %u errors =============\n", mismatch > 0 ? "FAILED" : "passed", mismatch);
+    Timer::delayMs(1000);
   }
 }
 
