@@ -57,23 +57,40 @@ static constexpr u32 kMaxTimeInPastToHaveObservedFace_ms   = 1000;
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorFistBump::InstanceConfig::InstanceConfig(const Json::Value& config)
+{
+  // default values
+  maxTimeToLookForFace_s   = 0.f;
+  abortIfNoFaceFound       = true;
+  updateLastCompletionTime = false;
+
+  // load alt values in from JSON
+  JsonTools::GetValueOptional(config, kMaxTimeToLookForFaceKey,     maxTimeToLookForFace_s);
+  JsonTools::GetValueOptional(config, kAbortIfNoFaceFoundKey,       abortIfNoFaceFound);
+  JsonTools::GetValueOptional(config, kUpdateLastCompletionTimeKey, updateLastCompletionTime);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorFistBump::DynamicVariables::DynamicVariables()
+{
+  state = State::LookForFace;
+
+  startLookingForFaceTime_s = 0.f;
+  nextGazeChangeTime_s      = 0.f;
+  nextGazeChangeIndex       = 0;
+  waitStartTime_s           = 0.f;
+  fistBumpRequestCnt        = 0;
+  liftWaitingAngle_rad      = 0.f;
+  lastTimeOffTreads_s       = 0.f;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFistBump::BehaviorFistBump(const Json::Value& config)
 : ICozmoBehavior(config)
-, _startLookingForFaceTime_s(0.f)
-, _nextGazeChangeTime_s(0.f)
-, _nextGazeChangeIndex(0)
-, _maxTimeToLookForFace_s(0.f)
-, _abortIfNoFaceFound(true)
-, _waitStartTime_s(0.f)
-, _fistBumpRequestCnt(0)
-, _liftWaitingAngle_rad(0.f)
-, _lastTimeOffTreads_s(0.f)
-, _updateLastCompletionTime(false)
+, _iConfig(config)
 {
-  
-  JsonTools::GetValueOptional(config, kMaxTimeToLookForFaceKey,     _maxTimeToLookForFace_s);
-  JsonTools::GetValueOptional(config, kAbortIfNoFaceFoundKey,       _abortIfNoFaceFound);
-  JsonTools::GetValueOptional(config, kUpdateLastCompletionTimeKey, _updateLastCompletionTime);
 }
 
 
@@ -89,18 +106,13 @@ void BehaviorFistBump::OnBehaviorActivated()
 {
   // Disable idle animation
   SmartPushIdleAnimation(AnimationTrigger::Count);
-  
-  _fistBumpRequestCnt = 0;
-  _startLookingForFaceTime_s = 0.f;
-  _nextGazeChangeTime_s = 0.f;
-  _nextGazeChangeIndex = 0;
-  _lastTimeOffTreads_s = 0.f;
-  
+  _dVars = DynamicVariables();
+
   const auto& robotInfo = GetBEI().GetRobotInfo();
   if (robotInfo.GetCarryingComponent().IsCarryingObject()) {
-    _state = State::PutdownObject;
+    _dVars.state = State::PutdownObject;
   } else {
-    _state = State::LookForFace;
+    _dVars.state = State::LookForFace;
   }
 
   
@@ -118,20 +130,20 @@ void BehaviorFistBump::BehaviorUpdate()
   
   // Check if should exit because of pickup
   if (GetBEI().GetOffTreadsState() != OffTreadsState::OnTreads) {
-    if (_lastTimeOffTreads_s == 0) {
-      _lastTimeOffTreads_s = now;
-    } else if (now > _lastTimeOffTreads_s + kMaxPickedupDurationBeforeExit_s) {
+    if (_dVars.lastTimeOffTreads_s == 0) {
+      _dVars.lastTimeOffTreads_s = now;
+    } else if (now > _dVars.lastTimeOffTreads_s + kMaxPickedupDurationBeforeExit_s) {
       CancelSelf();
       return;
     }
   } else {
-    _lastTimeOffTreads_s = 0;
+    _dVars.lastTimeOffTreads_s = 0;
   }
   
   
   // If no action currently running, return Running, unless the state is
   // WaitingForMotorsToSettle or WaitingForBump in which case we loop the idle animation.
-  switch(_state) {
+  switch(_dVars.state) {
     case State::WaitingForMotorsToSettle:
     case State::WaitingForBump:
     {
@@ -146,11 +158,11 @@ void BehaviorFistBump::BehaviorUpdate()
   }
   
 
-  switch(_state) {
+  switch(_dVars.state) {
     case State::PutdownObject:
     {
       DelegateIfInControl(new PlaceObjectOnGroundAction());
-      _state = State::LookForFace;
+      _dVars.state = State::LookForFace;
       break;
     }
     case State::LookForFace:
@@ -160,11 +172,11 @@ void BehaviorFistBump::BehaviorUpdate()
       turnToFace->SetRequireFaceConfirmation(true);
       DelegateIfInControl(turnToFace, [this](ActionResult result) {
         if (result == ActionResult::NO_FACE) {
-          _startLookingForFaceTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-          _state = State::LookingForFace;
+          _dVars.startLookingForFaceTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          _dVars.state = State::LookingForFace;
         } else {
           ResetFistBumpTimer();
-          _state = State::RequestInitialFistBump;
+          _dVars.state = State::RequestInitialFistBump;
         }
       });
       break;
@@ -172,12 +184,12 @@ void BehaviorFistBump::BehaviorUpdate()
     case State::LookingForFace:
     {
       // Check if time to stop looking for face
-      if (now > _startLookingForFaceTime_s + _maxTimeToLookForFace_s) {
-        if (_abortIfNoFaceFound) {
-          _state = State::Complete;
+      if (now > _dVars.startLookingForFaceTime_s + _iConfig.maxTimeToLookForFace_s) {
+        if (_iConfig.abortIfNoFaceFound) {
+          _dVars.state = State::Complete;
         } else {
           ResetFistBumpTimer();
-          _state = State::RequestInitialFistBump;
+          _dVars.state = State::RequestInitialFistBump;
         }
         break;
       }
@@ -189,19 +201,19 @@ void BehaviorFistBump::BehaviorUpdate()
       if (lastObservedFaceTime > 0 && (robotInfo.GetLastMsgTimestamp() - lastObservedFaceTime < kMaxTimeInPastToHaveObservedFace_ms)) {
         DelegateIfInControl(new TurnTowardsLastFacePoseAction());
         ResetFistBumpTimer();
-        _state = State::RequestInitialFistBump;
+        _dVars.state = State::RequestInitialFistBump;
         break;
       }
       
       // Check if time to adjust gaze
-      if (now > _nextGazeChangeTime_s) {
-        PanAndTiltAction* ptAction = new PanAndTiltAction(kLookForFaceAngleChanges_rad[_nextGazeChangeIndex], kLookForFaceHeadAngle, false, true);
+      if (now > _dVars.nextGazeChangeTime_s) {
+        PanAndTiltAction* ptAction = new PanAndTiltAction(kLookForFaceAngleChanges_rad[_dVars.nextGazeChangeIndex], kLookForFaceHeadAngle, false, true);
         DelegateIfInControl(ptAction);
         
         // Set next gaze change time
-        _nextGazeChangeTime_s = now + Util::numeric_cast<float>(GetRNG().RandDblInRange(kMinTimeBeforeGazeChange_s, kMaxTimeBeforeGazeChange_s));
-        if (++_nextGazeChangeIndex >= kLookForFaceAngleChanges_rad.size()) {
-          _nextGazeChangeIndex = 0;
+        _dVars.nextGazeChangeTime_s = now + Util::numeric_cast<float>(GetRNG().RandDblInRange(kMinTimeBeforeGazeChange_s, kMaxTimeBeforeGazeChange_s));
+        if (++_dVars.nextGazeChangeIndex >= kLookForFaceAngleChanges_rad.size()) {
+          _dVars.nextGazeChangeIndex = 0;
         }
       }
       
@@ -210,20 +222,20 @@ void BehaviorFistBump::BehaviorUpdate()
     case State::RequestInitialFistBump:
     {
       DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpRequestOnce));
-      _state = State::RequestingFistBump;
+      _dVars.state = State::RequestingFistBump;
       break;
     }
     case State::RequestingFistBump:
     {
       auto& robotInfo = GetBEI().GetRobotInfo();
-      _waitStartTime_s = now;
+      _dVars.waitStartTime_s = now;
       robotInfo.GetMoveComponent().EnableLiftPower(false);
       robotInfo.GetMoveComponent().EnableHeadPower(false);
       
       // Play idle anim
       DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpIdle));
       
-      _state = State::WaitingForMotorsToSettle;
+      _dVars.state = State::WaitingForMotorsToSettle;
       break;
     }
     case State::WaitingForMotorsToSettle:
@@ -231,11 +243,11 @@ void BehaviorFistBump::BehaviorUpdate()
       auto& robotInfo = GetBEI().GetRobotInfo();
       if (!robotInfo.GetMoveComponent().IsLiftMoving() &&
           !robotInfo.GetMoveComponent().IsHeadMoving()) {
-        _liftWaitingAngle_rad = robotInfo.GetLiftAngle();
-        _waitingAccelX_mmps2 = robotInfo.GetHeadAccelData().x;
-        _state = State::WaitingForBump;
-        if (now - _waitStartTime_s > kMaxTimeForMotorSettling_s) {
-          PRINT_NAMED_WARNING("BehaviorFistBump.UpdateInternal_Legacy.MotorSettleTimeTooLong", "%f", now - _waitStartTime_s);
+        _dVars.liftWaitingAngle_rad = robotInfo.GetLiftAngle();
+        _dVars.waitingAccelX_mmps2 = robotInfo.GetHeadAccelData().x;
+        _dVars.state = State::WaitingForBump;
+        if (now - _dVars.waitStartTime_s > kMaxTimeForMotorSettling_s) {
+          PRINT_NAMED_WARNING("BehaviorFistBump.UpdateInternal_Legacy.MotorSettleTimeTooLong", "%f", now - _dVars.waitStartTime_s);
         }
       }
       break;
@@ -248,19 +260,19 @@ void BehaviorFistBump::BehaviorUpdate()
         robotInfo.GetMoveComponent().EnableLiftPower(true);
         robotInfo.GetMoveComponent().EnableHeadPower(true);
         DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpSuccess));
-        _state = State::CompleteSuccess;
+        _dVars.state = State::CompleteSuccess;
       }
       
       // When idle anim is complete, retry or fail
       if (!IsControlDelegated()) {
         robotInfo.GetMoveComponent().EnableLiftPower(true);
         robotInfo.GetMoveComponent().EnableHeadPower(true);
-        if (++_fistBumpRequestCnt < kMaxNumAttempts) {
+        if (++_dVars.fistBumpRequestCnt < kMaxNumAttempts) {
           DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpRequestRetry));
-          _state = State::RequestingFistBump;
+          _dVars.state = State::RequestingFistBump;
         } else {
           DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FistBumpLeftHanging));
-          _state = State::CompleteFail;
+          _dVars.state = State::CompleteFail;
         }
       }
       
@@ -274,13 +286,13 @@ void BehaviorFistBump::BehaviorUpdate()
     {
       // Should only be sending FistBumpSuccess or FistBumpLeftHanging if this not the sparks Fist bump
       // since we don't want the sparks fist bumps to reset the cooldown timer in the trigger strategy.
-      BehaviorObjectiveAchieved(_state == State::CompleteSuccess ?
+      BehaviorObjectiveAchieved(_dVars.state == State::CompleteSuccess ?
                                 BehaviorObjective::FistBumpSuccess :
                                 BehaviorObjective::FistBumpLeftHanging);
 
       if(GetBEI().HasMoodManager()){
         auto& moodManager = GetBEI().GetMoodManager();
-        moodManager.TriggerEmotionEvent(_state == State::CompleteSuccess ?
+        moodManager.TriggerEmotionEvent(_dVars.state == State::CompleteSuccess ?
                                         "FistBumpSuccess" :
                                         "FistBumpLeftHanging",
                                         MoodManager::GetCurrentTimeInSeconds());
@@ -291,7 +303,7 @@ void BehaviorFistBump::BehaviorUpdate()
     }
     case State::Complete:
     {
-      ResetTrigger(_updateLastCompletionTime);
+      ResetTrigger(_iConfig.updateLastCompletionTime);
       BehaviorObjectiveAchieved(BehaviorObjective::FistBumpComplete);
       CancelSelf();
       return;
@@ -315,9 +327,9 @@ void BehaviorFistBump::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorFistBump::CheckForBump(const BEIRobotInfo& robotInfo)
 {
-  bool liftBumped = std::fabsf(robotInfo.GetLiftAngle() - _liftWaitingAngle_rad) > kLiftAngleBumpThresh_radps;
+  bool liftBumped = std::fabsf(robotInfo.GetLiftAngle() - _dVars.liftWaitingAngle_rad) > kLiftAngleBumpThresh_radps;
   bool gyroBumped = std::fabsf(robotInfo.GetHeadGyroData().y) > kGyroYBumpThresh_radps;
-  bool accelBumped = std::fabsf(robotInfo.GetHeadAccelData().x - _waitingAccelX_mmps2) > kAccelXBumpThresh_mmps2;
+  bool accelBumped = std::fabsf(robotInfo.GetHeadAccelData().x - _dVars.waitingAccelX_mmps2) > kAccelXBumpThresh_mmps2;
 
   return liftBumped || gyroBumped || accelBumped;
 }
@@ -326,14 +338,14 @@ bool BehaviorFistBump::CheckForBump(const BEIRobotInfo& robotInfo)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFistBump::AddListener(IFistBumpListener* listener)
 {
-  _fistBumpListeners.insert(listener);
+  _iConfig.fistBumpListeners.insert(listener);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFistBump::ResetTrigger(bool updateLastCompletionTime)
 {
-  for (auto &listener : _fistBumpListeners) {
+  for (auto &listener : _iConfig.fistBumpListeners) {
     listener->ResetTrigger(updateLastCompletionTime);
   }
 }
