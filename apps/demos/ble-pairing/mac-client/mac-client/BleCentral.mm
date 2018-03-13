@@ -8,6 +8,7 @@
 
 #import <Foundation/Foundation.h>
 #include "BleCentral.h"
+#include <stdio.h>
 
 @implementation BleCentral
 
@@ -164,23 +165,24 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         printf("Is victor connected to the internet? %d\n", msg.statusCode); // 1 = yes, 0 = no
         
         if(msg.statusCode == 1) {
-          NSString* fp = @"/Users/paul/.ssh/id_rsa.pub";
-          NSString* key = [NSString stringWithContentsOfFile:fp encoding:NSUTF8StringEncoding error:nil];
-          
-          printf("key length: %d\n", (int)key.length);
-          
-          std::string contents = std::string([key UTF8String], 740);
-          
-          printf("%s", contents.c_str());
-          
-          std::vector<std::string> parts;
-          
-          for (unsigned i = 0; i < contents.length(); i += 255) {
-            parts.push_back(contents.substr(i, 255));
-          }
-          
-          Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsSshRequest>(self, parts);
-          Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiIpRequest>(self);
+//          NSString* fp = @"/Users/paul/.ssh/id_rsa.pub";
+//          NSString* key = [NSString stringWithContentsOfFile:fp encoding:NSUTF8StringEncoding error:nil];
+//
+//          printf("key length: %d\n", (int)key.length);
+//
+//          std::string contents = std::string([key UTF8String], 740);
+//
+//          printf("%s", contents.c_str());
+//
+//          std::vector<std::string> parts;
+//
+//          for (unsigned i = 0; i < contents.length(); i += 255) {
+//            parts.push_back(contents.substr(i, 255));
+//          }
+//
+//          Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsSshRequest>(self, parts);
+//          Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiIpRequest>(self);
+          Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsOtaUpdateRequest>(self, "aluri.hoogle");
         }
         
         break;
@@ -208,7 +210,21 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         break;
       }
       case Anki::Victor::ExternalComms::RtsConnectionTag::RtsOtaUpdateResponse: {
-        //
+        Anki::Victor::ExternalComms::RtsOtaUpdateResponse msg = rtsMsg.Get_RtsOtaUpdateResponse();
+        int c = msg.current;
+        int t = msg.expected;
+        
+        int size = 100;
+        int progress = (int)(((float)c/(float)t) * size);
+        std::string bar = "";
+        
+        for(int i = 0; i < size; i++) {
+          if(i <= progress) bar += "▓";
+          else bar += "_";
+        }
+        
+        printf("%s %d%\r", bar.c_str(), progress);
+        fflush(stdout);
         break;
       }
       case Anki::Victor::ExternalComms::RtsConnectionTag::RtsCancelPairing: {

@@ -746,7 +746,8 @@ extern const uint8_t RtsOtaUpdateRequestVersionHash[16];
 struct RtsOtaUpdateResponse
 {
   uint8_t status;
-  uint8_t progress;
+  uint32_t current;
+  uint32_t expected;
   
   /**** Constructors ****/
   RtsOtaUpdateResponse() = default;
@@ -757,9 +758,11 @@ struct RtsOtaUpdateResponse
   RtsOtaUpdateResponse& operator=(RtsOtaUpdateResponse&& other) = default;
   
   explicit RtsOtaUpdateResponse(uint8_t status,
-    uint8_t progress)
+    uint32_t current,
+    uint32_t expected)
   : status(status)
-  , progress(progress)
+  , current(current)
+  , expected(expected)
   {}
   
   explicit RtsOtaUpdateResponse(const uint8_t* buff, size_t len);
@@ -780,7 +783,7 @@ struct RtsOtaUpdateResponse
   
   template <typename Callable>
   void Invoke(Callable&& func) const {
-     func(status, progress);
+     func(status, current, expected);
   }
 };
 

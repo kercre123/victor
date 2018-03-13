@@ -1138,7 +1138,8 @@ size_t RtsOtaUpdateResponse::Pack(uint8_t* buff, size_t len) const
 size_t RtsOtaUpdateResponse::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
   buffer.Write(this->status);
-  buffer.Write(this->progress);
+  buffer.Write(this->current);
+  buffer.Write(this->expected);
   const size_t bytesWritten {buffer.GetBytesWritten()};
   return bytesWritten;
 }
@@ -1152,7 +1153,8 @@ size_t RtsOtaUpdateResponse::Unpack(const uint8_t* buff, const size_t len)
 size_t RtsOtaUpdateResponse::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
   buffer.Read(this->status);
-  buffer.Read(this->progress);
+  buffer.Read(this->current);
+  buffer.Read(this->expected);
   return buffer.GetBytesRead();
 }
 
@@ -1161,15 +1163,18 @@ size_t RtsOtaUpdateResponse::Size() const
   size_t result = 0;
   // status
   result += 1; // uint_8
-  // progress
-  result += 1; // uint_8
+  // current
+  result += 4; // uint_32
+  // expected
+  result += 4; // uint_32
   return result;
 }
 
 bool RtsOtaUpdateResponse::operator==(const RtsOtaUpdateResponse& other) const
 {
   return (this->status == other.status &&
-    this->progress == other.progress);
+    this->current == other.current &&
+    this->expected == other.expected);
 }
 
 bool RtsOtaUpdateResponse::operator!=(const RtsOtaUpdateResponse& other) const
@@ -1178,10 +1183,10 @@ bool RtsOtaUpdateResponse::operator!=(const RtsOtaUpdateResponse& other) const
 }
 
 
-const char* RtsOtaUpdateResponseVersionHashStr = "9dcff449014c85b0adf3b712ba742a92";
+const char* RtsOtaUpdateResponseVersionHashStr = "0f07229632ce380ee53ea450664d7539";
 
 const uint8_t RtsOtaUpdateResponseVersionHash[16] = { 
-    0x9d, 0xcf, 0xf4, 0x49, 0x1, 0x4c, 0x85, 0xb0, 0xad, 0xf3, 0xb7, 0x12, 0xba, 0x74, 0x2a, 0x92 
+    0xf, 0x7, 0x22, 0x96, 0x32, 0xce, 0x38, 0xe, 0xe5, 0x3e, 0xa4, 0x50, 0x66, 0x4d, 0x75, 0x39 
 };
 
 // MESSAGE RtsWifiAccessPointRequest
