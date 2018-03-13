@@ -23,6 +23,10 @@
           "cooldown_random_factor": 0.5
         },
         {
+          "behavior": "ObservingEyeContact",
+          "cooldown_s": 15.0
+        },
+        {
           "behavior": "NothingToDo_Idle",
           "cooldown_s": 0.0
         }

@@ -162,6 +162,7 @@ enum uint_8 BehaviorID {
   DriveOffChargerIntoObserving,
   DriveOffChargerIntoPlay,
   Observing,
+  ObservingEyeContact,
   ObservingFailedToFindCharger,
   ObservingFindFaces,
   ObservingLookAtFaces,

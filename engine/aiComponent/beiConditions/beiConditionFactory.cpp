@@ -16,6 +16,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionBehaviorTimer.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCliffDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionConsoleVar.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionEyeContact.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFrustration.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
@@ -72,6 +73,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::ConsoleVar:
     {
       strategy = std::make_shared<ConditionConsoleVar>(config);
+      break;
+    }
+    case BEIConditionType::EyeContact:
+    {
+      strategy = std::make_shared<ConditionEyeContact>(config);
       break;
     }
     case BEIConditionType::FacePositionUpdated:
