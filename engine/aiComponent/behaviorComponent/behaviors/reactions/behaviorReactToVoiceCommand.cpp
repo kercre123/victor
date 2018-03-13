@@ -71,7 +71,7 @@ BehaviorReactToVoiceCommand::InstanceConfig::InstanceConfig() :
   earConBegin( AudioMetaData::GameEvent::GenericEvent::Invalid ),
   earConEnd( AudioMetaData::GameEvent::GenericEvent::Invalid ),
   turnOnTrigger( true ),
-  turnOnIntent( !turnOnTrigger && true ),
+  turnOnIntent( !turnOnTrigger ),
   playListeningGetInAnim( true ),
   exitOnIntents( true )
 {
@@ -307,11 +307,6 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
   {
     StartListening();
   }
-
-  // NOTE: Probably not needed?!?
-//  Anki::Util::sEvent("voice_command.responding_to_command", {}, EnumToString(VoiceCommandType::HeyCozmo));
-//  robotInfo.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommand(VoiceCommandType::HeyCozmo));
-//  robotInfo.GetContext()->GetVoiceCommandComponent()->BroadcastVoiceEvent(RespondingToCommandStart(VoiceCommandType::HeyCozmo));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
