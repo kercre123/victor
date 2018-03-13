@@ -21,9 +21,9 @@ namespace Json {
 }
 
 namespace Anki {
-  
+
 namespace Cozmo {
-  
+
 // Forward declarations:
 namespace RobotInterface {
 class MessageHandler;
@@ -40,27 +40,28 @@ class RobotManager : Util::noncopyable
 public:
 
   RobotManager(const CozmoContext* context);
-  
+
   ~RobotManager();
-  
+
   void Init(const Json::Value& config);
+  void Shutdown();
 
   // Return raw pointer to robot
   Robot* GetRobot();
-  
+
   // Check whether a robot exists
   bool DoesRobotExist(const RobotID_t withID) const;
-  
+
   // Add / remove robot
   void AddRobot(const RobotID_t withID);
   void RemoveRobot(bool robotRejectedConnection);
-  
+
   // Call Robot's Update() function
   void UpdateRobot();
-  
+
   // Update robot connection state
   Result UpdateRobotConnection();
-  
+
   RobotInterface::MessageHandler* GetMsgHandler() const { return _robotMessageHandler.get(); }
 
   bool ShouldFilterMessage(RobotInterface::RobotToEngineTag msgType) const;

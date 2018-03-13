@@ -41,7 +41,7 @@ namespace Comms {
 }
 
 namespace Cozmo {
-  
+
 class CozmoAudienceTags;
 class CozmoExperiments;
 class CozmoFeatureGate;
@@ -61,13 +61,13 @@ namespace VoiceCommand {
 }
 
 class ThreadIDInternal;
-  
+
 enum class SdkStatusType : uint8_t;
-  
+
 namespace RobotInterface {
   class MessageHandler;
 }
-  
+
 } // namespace Cozmo
 } // namespace Anki
 
@@ -78,7 +78,7 @@ namespace RobotInterface {
 // Here begins the actual namespace and interface for CozmoContext
 namespace Anki {
 namespace Cozmo {
-  
+
 class CozmoContext : private Util::noncopyable
 {
 
@@ -86,7 +86,7 @@ public:
   CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInterface* externalInterface);
   CozmoContext();
   virtual ~CozmoContext();
-  
+
   IExternalInterface*                   GetExternalInterface() const { return _externalInterface; }
   Util::Data::DataPlatform*             GetDataPlatform() const { return _dataPlatform; }
 
@@ -104,9 +104,9 @@ public:
 
   bool  IsInSdkMode() const;
   void  SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const;
-  
+
   void SetRandomSeed(uint32_t seed);
-  
+
   void SetLocale(const std::string& locale);
 
   // Tell the context that this is the main thread
@@ -114,13 +114,16 @@ public:
 
   // Returns true if the current thread is the "main" one. Requires SetMainThread to have been called
   bool IsMainThread() const;
-  
+
+  // Perform orderly shutdown of components
+  void Shutdown();
+
 private:
   // This is passed in and held onto, but not owned by the context (yet.
   // It really should be, and that refactoring will have to happen soon).
   IExternalInterface*                                     _externalInterface = nullptr;
   Util::Data::DataPlatform*                               _dataPlatform = nullptr;
-  
+
   // Context holds onto these things for everybody:
   std::unique_ptr<CozmoFeatureGate>                     _featureGate;
   std::unique_ptr<Util::RandomGenerator>                _random;
@@ -140,7 +143,7 @@ private:
   // for holding the thread id (and avoiding needed to include the .h here)
   std::unique_ptr<ThreadIDInternal> _threadIdHolder;
 };
-  
+
 
 } // namespace Cozmo
 } // namespace Anki

@@ -28,19 +28,22 @@
 using namespace Anki;
 using namespace Anki::Cozmo;
 
+#define LOG_CHANNEL "CozmoWebServer"
+
 namespace {
 WebService::WebService* cozmoWebServer = nullptr;
 }
 
-void Cleanup(int signum)
+static void Cleanup(int signum)
 {
-  if(cozmoWebServer != nullptr)
+  LOG_INFO("CozmoWebServer.Cleanup", "exit on signal %d", signum);
+
+  if (cozmoWebServer != nullptr)
   {
     delete cozmoWebServer;
     cozmoWebServer = nullptr;
   }
-  
-  exit(signum);
+  exit(0);
 }
 
 Anki::Util::Data::DataPlatform* createPlatform(const std::string& persistentPath,
@@ -83,7 +86,7 @@ Anki::Util::Data::DataPlatform* createPlatform()
   std::string persistentPath;
   std::string cachePath;
   std::string resourcesPath;
-  
+
   if (config.isMember("DataPlatformPersistentPath")) {
     persistentPath = config["DataPlatformPersistentPath"].asCString();
   } else {
@@ -99,7 +102,7 @@ Anki::Util::Data::DataPlatform* createPlatform()
   if (config.isMember("DataPlatformResourcesPath")) {
     resourcesPath = config["DataPlatformResourcesPath"].asCString();
   } else {
-    PRINT_NAMED_ERROR("cozmoWebServerMain.createPlatform.DataPlatformResourcesPathUndefined", "");    
+    PRINT_NAMED_ERROR("cozmoWebServerMain.createPlatform.DataPlatformResourcesPathUndefined", "");
   }
 
   Util::Data::DataPlatform* dataPlatform =
@@ -111,7 +114,7 @@ Anki::Util::Data::DataPlatform* createPlatform()
 int main(void)
 {
   signal(SIGTERM, Cleanup);
-  
+
   // - create and set logger
   Util::AndroidLogPrintLogger logPrintLogger("webserver");
   Util::gLoggerProvider = &logPrintLogger;
@@ -130,20 +133,20 @@ int main(void)
   }
   cozmoWebServer = new WebService::WebService();
   cozmoWebServer->Start(dataPlatform, wsConfig);
-  
+
   using namespace std::chrono;
   using TimeClock = steady_clock;
 
   const auto runStart = TimeClock::now();
-  
+
   // Set the target time for the end of the first frame
   auto targetEndFrameTime = runStart + (microseconds)(WEB_SERVER_TIME_STEP_US);
-  
+
 
   while (1)
   {
     cozmoWebServer->Update();
-    
+
     const auto tickNow = TimeClock::now();
     const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickNow);
 
@@ -153,7 +156,7 @@ int main(void)
       PRINT_NAMED_WARNING("cozmoWebServer.overtime", "Update() (%dms max) is behind by %.3fms",
                           WEB_SERVER_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
     }
-    
+
     // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
     // allows other threads to run
     static const auto minimumSleepTime_us = microseconds((long)0);
@@ -161,7 +164,7 @@ int main(void)
 
     // Set the target end time for the next frame
     targetEndFrameTime += (microseconds)(WEB_SERVER_TIME_STEP_US);
-    
+
     // See if we've fallen very far behind (this happens e.g. after a 5-second blocking
     // load operation); if so, compensate by catching the target frame end time up somewhat.
     // This is so that we don't spend the next SEVERAL frames catching up.
