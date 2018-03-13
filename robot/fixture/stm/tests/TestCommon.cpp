@@ -109,6 +109,7 @@ namespace TestCommon
     const char cmd_echo[5] = "echo";    int echo_idx = 0;
     const char cmd_buff[5] = "buff";    int buff_idx = 0;
     const char cmd_stats[6] = "stats";  int stats_idx = 0;
+    const char cmd_charge[7] = "charge"; int charge_idx = 0;
     
     bool echo = opts & BRIDGE_OPT_LOCAL_ECHO;
     bool bufmode = opts & BRIDGE_OPT_LINEBUFFER;
@@ -117,6 +118,7 @@ namespace TestCommon
     char line[line_maxlen+1];
     const int charge_idle_ms = 30*1000; //delay before enabling robot charging
     int idle_ms = 0;
+    bool charge_en = (opts & BRIDGE_OPT_CHG_DISABLE) == 0;
     
     ConsolePrintf("Console Bridge <-> %s for %ims,inactive:%ims [or type 'exit']\n", which_s_(which), timeout_ms, inactivity_delay_ms);
     
@@ -135,10 +137,11 @@ namespace TestCommon
           break;
         if( inactivity_delay_ms > 0 && --inactivity_delay_ms == 0 )
           break;        
-        if( which == TO_CONTACTS ) { 
+        if( which == TO_CONTACTS && charge_en ) {
           if( ++idle_ms >= charge_idle_ms && !Contacts::powerIsOn() ) {
             //ConsolePrintf("idle timeout. charging enabled\n");
             Contacts::powerOn(); //Note: prevents rx from contacts until console is re-actviated
+            Board::ledOn(Board::LED_GREEN);
           }
         }
       }
@@ -157,11 +160,12 @@ namespace TestCommon
       if( (c = ConsoleReadChar()) > -1 )
       {
         inactivity_delay_ms = 0; //disabled on activity
-        if( which == TO_CONTACTS ) { 
+        if( which == TO_CONTACTS && charge_en ) {
           idle_ms = 0; //reset idle counter
           if( Contacts::powerIsOn() ) {
             //ConsolePrintf("charging disabled\n");
             Contacts::setModeRx(); //re-enable contact uart
+            Board::ledOff(Board::LED_GREEN);
           }
         }
         
@@ -185,16 +189,27 @@ namespace TestCommon
                 {
                   const char* sub_line = hook_sendline(line, line_len);
                   int sub_len = sub_line != NULL ? strlen(sub_line) : 0;
-                  if( sub_line && sub_len > 0 )
+                  if( sub_line /*&& sub_len > 0*/ )
                   {
                     sub_len = sub_len > line_maxlen ? line_maxlen : sub_len; //limit to our buffer size
                     memcpy(line, sub_line, sub_len);
                     line_len = sub_len;
                     line[line_len] = '\0';
                     
-                    for(int x=0; x<line_len; x++) //be helpful and type the substitute line into the console
-                      ConsolePutChar(line[x]);
+                    /*/DEBUG
+                    ConsolePrintf(".sub line '");
+                    for(int x=0; x<line_len; x++) {
+                      if( line[x] == '\n' ) ConsolePrintf("/n");
+                      else ConsolePutChar( line[x] >= ' ' && line[x] < '~' ? line[x] : '*');
+                    } ConsolePrintf("' (%i)\n", line_len);
+                    //-*/
+                    
                     allow_send = 0; //don't send this now; leave in console for user to modify
+                    for(int x=0; x<line_len; x++) { //be helpful and type the substitute line into the console
+                      ConsolePutChar(line[x]);
+                      if( line[x] == '\n' )
+                        allow_send = 1; //send if requested!
+                    }
                   }
                 }
                 
@@ -260,10 +275,26 @@ namespace TestCommon
         } else
           stats_idx = (c == cmd_stats[stats_idx]) ? stats_idx+1 : 0; //index track
         
+        //track 'charge' cmd
+        if( (c == '\r' || c == '\n') && charge_idx == sizeof(cmd_charge)-1 ) { //cmd match w/ EOL
+          charge_en = !charge_en;
+          ConsolePrintf("charge_en=%u\n", charge_en);
+          if( which == TO_CONTACTS && !charge_en && Contacts::powerIsOn() ) {
+            Contacts::setModeRx(); //re-enable contact uart
+            Board::ledOff(Board::LED_GREEN);
+          }
+          charge_idx = 0;
+        } else
+          charge_idx = (c == cmd_charge[charge_idx]) ? charge_idx+1 : 0; //index track
+        
       }//c > -1
       
     }
     
+    if( which == TO_CONTACTS ) {
+      Contacts::setModeRx(); //return to idle state
+      Board::ledOff(Board::LED_GREEN);
+    }
     ConsolePrintf("Console restored\n");
   }
 }

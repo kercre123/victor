@@ -14,6 +14,7 @@ enum bridge_target_e {
 };
 #define BRIDGE_OPT_LOCAL_ECHO   0x1   /*echo chars from the console*/
 #define BRIDGE_OPT_LINEBUFFER   0x2   /*behave as buffered console input: cached line written on enter*/
+#define BRIDGE_OPT_CHG_DISABLE  0x4   /*for charge contact comms, disable 'charge while idle' behavior*/
 typedef const char*(*bridge_hook_sendline_t)(const char *line, int len);
 
 namespace TestCommon

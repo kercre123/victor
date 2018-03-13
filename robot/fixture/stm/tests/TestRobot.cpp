@@ -94,7 +94,7 @@ const char* DBG_cmd_substitution(const char *line, int len)
     for(int x=0; x<sizeof(m_debug)/4; x++)
       m_debug[x] = nargs > x+1 ? cmdParseInt32(cmdGetArg((char*)line,x+1) ) : 0;
     run_debug();
-    return ""; //send null
+    return "\n";
   }
   return 0;
 }
