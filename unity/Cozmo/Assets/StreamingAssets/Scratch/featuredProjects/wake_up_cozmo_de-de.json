@@ -13,7 +13,7 @@
                 "currentCostume": 0,
                 "direction": 90,
                 "draggable": false,
-                "id": "U5,oVqx./npC)].@FjVr",
+                "id": "I?^~3p}:i@!Hq[pjL-e8",
                 "isStage": true,
                 "lists": {},
                 "name": "Stage",
@@ -61,7 +61,7 @@
                         "id": "A+Jeyve1)AqQy+k}),{^",
                         "name": "Zufallszahl",
                         "type": "",
-                        "value": 1
+                        "value": 3
                     },
                     "B/A4@k-9jYO1@T!$zTBZ": {
                         "id": "B/A4@k-9jYO1@T!$zTBZ",
@@ -85,7 +85,7 @@
                         "id": "NaZQ.NV)OP*8F~ISJ^I=",
                         "name": "Nummer des Spieles",
                         "type": "",
-                        "value": 1
+                        "value": "0"
                     },
                     "TCE^eUf};Pvh6]9BDMny": {
                         "id": "TCE^eUf};Pvh6]9BDMny",
@@ -307,6 +307,18 @@
                         "x": 972.5695294117638,
                         "y": 1279.2647058823509
                     },
+                    "%NXjtX2xTB42/7CY^pzk": {
+                        "fields": {},
+                        "id": "%NXjtX2xTB42/7CY^pzk",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_vert_get_roll",
+                        "parent": "I^B]AE77sv3cf151v(Ig",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "1261",
+                        "y": "3077"
+                    },
                     "%heY7$:Hj9%o@Qw^T~ND": {
                         "fields": {
                             "VARIABLE": {
@@ -342,8 +354,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 469.54117647058825,
-                        "y": 1897.5529411764705
+                        "x": 473,
+                        "y": 1467
                     },
                     "*-rclw_J5G-8D;9*,VbJ": {
                         "fields": {
@@ -762,11 +774,11 @@
                         },
                         "next": null,
                         "opcode": "operator_and",
-                        "parent": "}E7X3!Bi2?/%w2b1|_FG",
+                        "parent": "u17noiNo#]S(JI]Q])uj",
                         "shadow": false,
                         "topLevel": false,
-                        "x": "254",
-                        "y": "1218"
+                        "x": 1642.5882352941176,
+                        "y": 2644.5176470588235
                     },
                     "1up)fxnx54[*3_h`]f6;": {
                         "fields": {
@@ -1257,8 +1269,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 470,
-                        "y": 1448
+                        "x": 1298,
+                        "y": 2850
                     },
                     ";6azOqGsSfZlaVs@a{r(": {
                         "fields": {
@@ -1323,8 +1335,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 468.4235294117647,
-                        "y": 1836.0588235294117
+                        "x": 469,
+                        "y": 1387
                     },
                     "?8gMswZG8t5Yt#X8zhjv": {
                         "fields": {
@@ -1557,8 +1569,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 449,
-                        "y": 2579
+                        "x": 468,
+                        "y": 2218
                     },
                     "Cic^U[mWg[K!F@bi;h]P": {
                         "fields": {},
@@ -1867,6 +1879,29 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "I^B]AE77sv3cf151v(Ig": {
+                        "fields": {},
+                        "id": "I^B]AE77sv3cf151v(Ig",
+                        "inputs": {
+                            "OPERAND1": {
+                                "block": "%NXjtX2xTB42/7CY^pzk",
+                                "name": "OPERAND1",
+                                "shadow": "KT2?Xm*;8;zU.JJ5El:V"
+                            },
+                            "OPERAND2": {
+                                "block": "_@tn/MAeKi,QdXkR$m+|",
+                                "name": "OPERAND2",
+                                "shadow": "_@tn/MAeKi,QdXkR$m+|"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_lt",
+                        "parent": "[|@dhCSH{bBvpzC=57dH",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "1223",
+                        "y": "3021"
+                    },
                     "IkYqqk*G[Hho9UwT#(*?": {
                         "fields": {
                             "TEXT": {
@@ -1961,6 +1996,18 @@
                         "x": 2162,
                         "y": 129
                     },
+                    "K/+Nbs(h_6Sn7bR_+AN6": {
+                        "fields": {},
+                        "id": "K/+Nbs(h_6Sn7bR_+AN6",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "cozmo_vert_get_roll",
+                        "parent": "VaFfv8CueGJL{cBAgB2u",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "1261",
+                        "y": "3084"
+                    },
                     "K7PA|p8D4LCav)`a/?[x": {
                         "fields": {
                             "TEXT": {
@@ -1975,6 +2022,23 @@
                         "parent": "|V`Fh%xk;^JgaswdD[4_",
                         "shadow": true,
                         "topLevel": false
+                    },
+                    "KT2?Xm*;8;zU.JJ5El:V": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": ""
+                            }
+                        },
+                        "id": "KT2?Xm*;8;zU.JJ5El:V",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 1945.610135942347,
+                        "y": 2918.1764705882356
                     },
                     "L-!HK++3K$BfzBf39V!W": {
                         "fields": {},
@@ -2377,8 +2441,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 468,
-                        "y": 1375
+                        "x": 1287,
+                        "y": 2760
                     },
                     "RqohItYC/XpjZ2]xiar5": {
                         "fields": {},
@@ -2592,6 +2656,29 @@
                         "parent": "{YSl`au904X~JAM4gGJw",
                         "shadow": true,
                         "topLevel": false
+                    },
+                    "VaFfv8CueGJL{cBAgB2u": {
+                        "fields": {},
+                        "id": "VaFfv8CueGJL{cBAgB2u",
+                        "inputs": {
+                            "OPERAND1": {
+                                "block": "K/+Nbs(h_6Sn7bR_+AN6",
+                                "name": "OPERAND1",
+                                "shadow": "tAw7.uDOm+^LLscmjbm6"
+                            },
+                            "OPERAND2": {
+                                "block": "pEs4/5%nrLVW3OF_yol@",
+                                "name": "OPERAND2",
+                                "shadow": "pEs4/5%nrLVW3OF_yol@"
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_gt",
+                        "parent": "[|@dhCSH{bBvpzC=57dH",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "1223",
+                        "y": "3132"
                     },
                     "W%Em6!=Qj$5GL|bpaq$/": {
                         "fields": {},
@@ -2858,6 +2945,29 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "[|@dhCSH{bBvpzC=57dH": {
+                        "fields": {},
+                        "id": "[|@dhCSH{bBvpzC=57dH",
+                        "inputs": {
+                            "OPERAND1": {
+                                "block": "I^B]AE77sv3cf151v(Ig",
+                                "name": "OPERAND1",
+                                "shadow": null
+                            },
+                            "OPERAND2": {
+                                "block": "VaFfv8CueGJL{cBAgB2u",
+                                "name": "OPERAND2",
+                                "shadow": null
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_and",
+                        "parent": "u17noiNo#]S(JI]Q])uj",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "1179",
+                        "y": "3184"
+                    },
                     "],na?*GLUwjU7SuDEL+z": {
                         "fields": {},
                         "id": "],na?*GLUwjU7SuDEL+z",
@@ -2976,6 +3086,21 @@
                         "next": null,
                         "opcode": "text",
                         "parent": "OBz;|-F`E*?|!`KicxpU",
+                        "shadow": true,
+                        "topLevel": false
+                    },
+                    "_@tn/MAeKi,QdXkR$m+|": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "-160"
+                            }
+                        },
+                        "id": "_@tn/MAeKi,QdXkR$m+|",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "I^B]AE77sv3cf151v(Ig",
                         "shadow": true,
                         "topLevel": false
                     },
@@ -3771,6 +3896,21 @@
                         "x": 744.6341176470587,
                         "y": 583.0376470588235
                     },
+                    "pEs4/5%nrLVW3OF_yol@": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": "-200"
+                            }
+                        },
+                        "id": "pEs4/5%nrLVW3OF_yol@",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": "VaFfv8CueGJL{cBAgB2u",
+                        "shadow": true,
+                        "topLevel": false
+                    },
                     "p^Ifhl-]ks[PZ!s019z7": {
                         "fields": {},
                         "id": "p^Ifhl-]ks[PZ!s019z7",
@@ -3977,6 +4117,23 @@
                         "shadow": true,
                         "topLevel": false
                     },
+                    "tAw7.uDOm+^LLscmjbm6": {
+                        "fields": {
+                            "TEXT": {
+                                "name": "TEXT",
+                                "value": ""
+                            }
+                        },
+                        "id": "tAw7.uDOm+^LLscmjbm6",
+                        "inputs": {},
+                        "next": null,
+                        "opcode": "text",
+                        "parent": null,
+                        "shadow": true,
+                        "topLevel": true,
+                        "x": 2215.1141470965217,
+                        "y": 2918.176470588235
+                    },
                     "tZ8@neenwXi+NIbCWsy_": {
                         "fields": {
                             "BROADCAST_OPTION": {
@@ -3993,6 +4150,29 @@
                         "parent": "-MVw}?vJJpeh,=aJ1qL5",
                         "shadow": true,
                         "topLevel": false
+                    },
+                    "u17noiNo#]S(JI]Q])uj": {
+                        "fields": {},
+                        "id": "u17noiNo#]S(JI]Q])uj",
+                        "inputs": {
+                            "OPERAND1": {
+                                "block": "15v$Y?;ggOSC3D~`6fk~",
+                                "name": "OPERAND1",
+                                "shadow": null
+                            },
+                            "OPERAND2": {
+                                "block": "[|@dhCSH{bBvpzC=57dH",
+                                "name": "OPERAND2",
+                                "shadow": null
+                            }
+                        },
+                        "next": null,
+                        "opcode": "operator_or",
+                        "parent": "}E7X3!Bi2?/%w2b1|_FG",
+                        "shadow": false,
+                        "topLevel": false,
+                        "x": "1179",
+                        "y": "3240"
                     },
                     "ukkZLfP~TOmQa:MNh=o}": {
                         "fields": {
@@ -4195,8 +4375,8 @@
                         "parent": null,
                         "shadow": false,
                         "topLevel": true,
-                        "x": 455,
-                        "y": 2658
+                        "x": 472,
+                        "y": 2324
                     },
                     "xSD=vdMUWtnD./qK%WB8": {
                         "fields": {},
@@ -4634,7 +4814,7 @@
                         "id": "}E7X3!Bi2?/%w2b1|_FG",
                         "inputs": {
                             "CONDITION": {
-                                "block": "15v$Y?;ggOSC3D~`6fk~",
+                                "block": "u17noiNo#]S(JI]Q])uj",
                                 "name": "CONDITION",
                                 "shadow": null
                             },
@@ -4747,7 +4927,7 @@
                 "currentCostume": 0,
                 "direction": 90,
                 "draggable": false,
-                "id": "Lz5!IufL{q2*k+h_c.-{",
+                "id": "7;vm54WAM]+l)fwxq7pN",
                 "isStage": false,
                 "lists": {},
                 "name": "Sprite1",

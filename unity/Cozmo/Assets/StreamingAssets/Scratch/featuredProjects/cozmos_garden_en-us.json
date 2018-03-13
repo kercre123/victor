@@ -9,7 +9,7 @@
             "currentCostume": 0,
             "direction": 90,
             "draggable": false,
-            "id": "(0/[)T`4n/W0;5TWttpW",
+            "id": "Ti~jTR:?aAS4cvbx_?:^",
             "isStage": true,
             "lists": {},
             "name": "Stage",
@@ -87,7 +87,7 @@
                     "id": "*FIp.ND~==_]F6_%czy5",
                     "name": "plant roll",
                     "type": "",
-                    "value": 3
+                    "value": 1
                 },
                 "+ula(hNT/T]F91h-O%a}": {
                     "id": "+ula(hNT/T]F91h-O%a}",
@@ -118,8 +118,9 @@
                     "name": "plant colors",
                     "type": "list",
                     "value": [
-                        "#ff0000",
                         "#ff7700",
+                        "#ffff00",
+                        "#029900",
                         "#00ffbb",
                         "#0055ff",
                         "#bb00ff"
@@ -183,7 +184,7 @@
                     "id": "5FUn|bxv:,H[b;8twf4[",
                     "name": "card count",
                     "type": "",
-                    "value": 4
+                    "value": 13
                 },
                 "8-6,Lo%c^`WxW@i|fCNc": {
                     "id": "8-6,Lo%c^`WxW@i|fCNc",
@@ -231,7 +232,7 @@
                     "id": "?4gR)yJr1o7N#9y{K5If",
                     "name": "mode",
                     "type": "",
-                    "value": "1"
+                    "value": "0"
                 },
                 "?6b^BN!47boC7#DTyqUN": {
                     "id": "?6b^BN!47boC7#DTyqUN",
@@ -261,7 +262,7 @@
                     "id": "@QLd(geF*za%S1n[a-4!",
                     "name": "active plant",
                     "type": "",
-                    "value": "3"
+                    "value": 3
                 },
                 "A#~,`~zK@C~wQsYk3_XK": {
                     "id": "A#~,`~zK@C~wQsYk3_XK",
@@ -274,7 +275,6 @@
                     "name": "garden plants growth",
                     "type": "list",
                     "value": [
-                        "1",
                         "1"
                     ]
                 },
@@ -282,7 +282,7 @@
                     "id": "BJ@[qkF)Brtx-@a3?cZL",
                     "name": "shuffle card",
                     "type": "",
-                    "value": "3"
+                    "value": "1"
                 },
                 "Bgbc~L#XrP]M.IGwPWsJ": {
                     "id": "Bgbc~L#XrP]M.IGwPWsJ",
@@ -342,15 +342,16 @@
                     "id": "F_D79IB}b:Ecf:0m^U}a",
                     "name": "count",
                     "type": "",
-                    "value": 2
+                    "value": "1"
                 },
                 "G31Q;U-x(u/6@)Hr1MIb": {
                     "id": "G31Q;U-x(u/6@)Hr1MIb",
                     "name": "plant types",
                     "type": "list",
                     "value": [
-                        "Tomatoes",
                         "Oranges",
+                        "Lemons",
+                        "Broccoli",
                         "Lettuce",
                         "Blueberries",
                         "Grapes"
@@ -361,8 +362,7 @@
                     "name": "garden plants",
                     "type": "list",
                     "value": [
-                        "Lemons",
-                        "Broccoli"
+                        "Tomatoes"
                     ]
                 },
                 "Ign$qg(xXsR@.h)W/,v0": {
@@ -375,7 +375,7 @@
                     "id": "Ip86u5Ta|m`@#q5lKe#0",
                     "name": "shuffle random",
                     "type": "",
-                    "value": 7
+                    "value": 2
                 },
                 "KEsOIz}vieQT{+0zZihe": {
                     "id": "KEsOIz}vieQT{+0zZihe",
@@ -421,7 +421,6 @@
                 },
                 "Y,5#~Pm}EsnG}moG4h%o": {
                     "id": "Y,5#~Pm}EsnG}moG4h%o",
-                    "isCloud": false,
                     "name": "tap on",
                     "type": "",
                     "value": "0"
@@ -497,7 +496,6 @@
                     "name": "garden plants active",
                     "type": "list",
                     "value": [
-                        "1",
                         "1"
                     ]
                 },
@@ -511,7 +509,7 @@
                     "id": "ft]~y%u1kn-r@^}#LdCy",
                     "name": "current card",
                     "type": "",
-                    "value": "3"
+                    "value": "1"
                 },
                 "g*4F*+kX[Hu6m/HOi=X/": {
                     "id": "g*4F*+kX[Hu6m/HOi=X/",
@@ -540,18 +538,18 @@
                     "name": "deck",
                     "type": "list",
                     "value": [
-                        "3",
                         "2",
-                        "3",
-                        "2",
-                        "2",
-                        "2",
-                        "3",
                         "1",
                         "1",
                         "3",
+                        "3",
                         "2",
-                        "3"
+                        "2",
+                        "2",
+                        "3",
+                        "3",
+                        "3",
+                        "2"
                     ]
                 },
                 "j9+V(%A!9snN((Y4AUro": {
@@ -589,8 +587,7 @@
                     "name": "garden plants colors",
                     "type": "list",
                     "value": [
-                        "#ffff00",
-                        "#029900"
+                        "#ff0000"
                     ]
                 },
                 "r0z]Bf^/|kkr@#qTtWJH": {
@@ -1028,8 +1025,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 2124,
-                    "y": 1879
+                    "x": 2101.2633882352943,
+                    "y": 2064.682329411765
                 },
                 "#py#8T6HOQJ|6.nu9iE+": {
                     "fields": {
@@ -1499,6 +1496,24 @@
                     "x": "-745",
                     "y": "1390"
                 },
+                "%^KxE]ljBzD``D`n+Uu*": {
+                    "fields": {},
+                    "id": "%^KxE]ljBzD``D`n+Uu*",
+                    "inputs": {
+                        "COLOR": {
+                            "block": "{unibRop6-{oG-n(i:t6",
+                            "name": "COLOR",
+                            "shadow": "{unibRop6-{oG-n(i:t6"
+                        }
+                    },
+                    "next": "GdAfKo,nD*q)|~,j]dq(",
+                    "opcode": "cozmo_vert_setbackpackcolor",
+                    "parent": "`nfx$G!h@uaared|+r(U",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "1048",
+                    "y": "1114"
+                },
                 "%^g9$4[WKa,}XCK-j#x;": {
                     "fields": {
                         "TEXT": {
@@ -1775,6 +1790,24 @@
                     "topLevel": false,
                     "x": "131",
                     "y": "1552"
+                },
+                "(oxlv^G4M56!]4Qi=ouW": {
+                    "fields": {},
+                    "id": "(oxlv^G4M56!]4Qi=ouW",
+                    "inputs": {
+                        "DURATION": {
+                            "block": "g}.M!efB4N[Pigsios!E",
+                            "name": "DURATION",
+                            "shadow": "g}.M!efB4N[Pigsios!E"
+                        }
+                    },
+                    "next": "BA%R7Wg!sJj7PX2na4NR",
+                    "opcode": "control_wait",
+                    "parent": "7Dmznr=}SAlJhfKU:^0K",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "2007",
+                    "y": "3139"
                 },
                 "(vGI0G`:duF6?XklY{+^": {
                     "fields": {},
@@ -2792,7 +2825,7 @@
                     "fields": {
                         "NUM": {
                             "name": "NUM",
-                            "value": "2"
+                            "value": "1"
                         }
                     },
                     "id": "+Ty.Qt8V4H@((S2;,5,d",
@@ -3021,8 +3054,8 @@
                     "parent": "ARhA/6(zp4T|2;prg@gm",
                     "shadow": false,
                     "topLevel": false,
-                    "x": 4701.470588235292,
-                    "y": 1632.9176470588236
+                    "x": 4997.363929411765,
+                    "y": 1591.4728588235294
                 },
                 ",qr_bW?^?tTT]mqM.llG": {
                     "fields": {
@@ -3115,7 +3148,7 @@
                             "shadow": "r{?F{7q?0pB1R|jh)d]6"
                         }
                     },
-                    "next": "K.4)zEDq!}5]/~.UJ)B}",
+                    "next": "hFATIm48SELqT6MGXeYI",
                     "opcode": "data_setvariableto",
                     "parent": "H3SP5Vga|%%)^x8L)x8f",
                     "shadow": false,
@@ -3140,7 +3173,7 @@
                             "shadow": "i~rd_@yr5M-}AqbKdZ:2"
                         }
                     },
-                    "next": "U@#CFQIRZmf1IsUS`?LT",
+                    "next": "I10eJ|i1GO|bqC[]5Tfg",
                     "opcode": "data_setvariableto",
                     "parent": "hi;(|pvhd/_o_BCR]v0p",
                     "shadow": false,
@@ -3942,6 +3975,23 @@
                     "shadow": true,
                     "topLevel": false
                 },
+                "0*=}b9V_8yL[^yCIlQ?j": {
+                    "fields": {
+                        "NUM": {
+                            "name": "NUM",
+                            "value": ""
+                        }
+                    },
+                    "id": "0*=}b9V_8yL[^yCIlQ?j",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "math_number",
+                    "parent": null,
+                    "shadow": true,
+                    "topLevel": true,
+                    "x": 4284.3143157958975,
+                    "y": -481.00000000000006
+                },
                 "0.*BK{p.#M**`*{fm?cR": {
                     "fields": {
                         "NUM": {
@@ -4077,7 +4127,7 @@
                             "shadow": null
                         }
                     },
-                    "next": "_[nbi;PA,/bFsm^[nyyW",
+                    "next": ";BW|{q07}njD6^1e?@H7",
                     "opcode": "control_if_else",
                     "parent": "p+=C-u?T}@]HgrL`|2Ln",
                     "shadow": false,
@@ -4364,7 +4414,7 @@
                             "shadow": "3{|FkVp:|.[fJjjR)X|i"
                         }
                     },
-                    "next": "3_r@+$ggji()iA2!Y$9{",
+                    "next": "BI)ZVpemoWE!r1+ws4Ah",
                     "opcode": "data_setvariableto",
                     "parent": "`MwWA8yhgQxsowN2u]xo",
                     "shadow": false,
@@ -4958,9 +5008,9 @@
                             "shadow": "SEk{-m?zCFgQsB]iRW*]"
                         }
                     },
-                    "next": "BI)ZVpemoWE!r1+ws4Ah",
+                    "next": "u@aiuxpz!))3wSBy#3!R",
                     "opcode": "data_setvariableto",
-                    "parent": "1jtv`K1/uz#T7!-(]nTP",
+                    "parent": "BI)ZVpemoWE!r1+ws4Ah",
                     "shadow": false,
                     "topLevel": false,
                     "x": "3290",
@@ -5365,7 +5415,7 @@
                             "shadow": null
                         },
                         "SUBSTACK": {
-                            "block": "PhUq=oMI,*L/%+FeK?*|",
+                            "block": "Pay=u}{YGrGW]PqDmw=/",
                             "name": "SUBSTACK",
                             "shadow": null
                         }
@@ -6301,7 +6351,7 @@
                             "shadow": null
                         }
                     },
-                    "next": "BA%R7Wg!sJj7PX2na4NR",
+                    "next": "(oxlv^G4M56!]4Qi=ouW",
                     "opcode": "control_if",
                     "parent": "gf6`A_oIm5BU:3f{O1`h",
                     "shadow": false,
@@ -6700,11 +6750,11 @@
                     },
                     "next": "m:m0PxmkN^gn!@/y7nWq",
                     "opcode": "control_if",
-                    "parent": "m8Fly_gU(4RN!FhktPr,",
+                    "parent": "WEdO0eZ1v.1H,P{0=f@3",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "1937",
-                    "y": "2292"
+                    "x": 2563.574858823529,
+                    "y": 2372.841529411765
                 },
                 "8V4yI4yDZ^$,vq[T.dRF": {
                     "fields": {},
@@ -7169,9 +7219,9 @@
                 ":D^38+.2jXP]%O{(3Xn(": {
                     "fields": {
                         "BROADCAST_OPTION": {
-                            "id": "^!biIU_5^XvRMfwz+H}b",
+                            "id": "Bo`gd`mGMQZcwa?J|TY#",
                             "name": "BROADCAST_OPTION",
-                            "value": "draw next card",
+                            "value": "show and check harvest",
                             "variableType": "broadcast_msg"
                         }
                     },
@@ -7463,6 +7513,24 @@
                     "parent": "VMX]xJk2j|DOM3vEwxs2",
                     "shadow": true,
                     "topLevel": false
+                },
+                ";BW|{q07}njD6^1e?@H7": {
+                    "fields": {},
+                    "id": ";BW|{q07}njD6^1e?@H7",
+                    "inputs": {
+                        "BROADCAST_INPUT": {
+                            "block": "x?k}8J=)R1{=kXUVL,h`",
+                            "name": "BROADCAST_INPUT",
+                            "shadow": "x?k}8J=)R1{=kXUVL,h`"
+                        }
+                    },
+                    "next": null,
+                    "opcode": "event_broadcastandwait_with_broadcast_input",
+                    "parent": "0qa#iR^,ONUxUl8!1z}W",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "296",
+                    "y": "4556"
                 },
                 ";E}WH^wDugboVPq}{qd#": {
                     "fields": {
@@ -8220,11 +8288,11 @@
                     },
                     "next": ",df085:s@(c`:t+~w1bC",
                     "opcode": "cozmo_play_animation_from_dropdown",
-                    "parent": "I10eJ|i1GO|bqC[]5Tfg",
+                    "parent": "x|L6M^:w#Nlg53#K!YaZ",
                     "shadow": false,
                     "topLevel": false,
-                    "x": 4975.623529411765,
-                    "y": 1720.7176470588236
+                    "x": 4997.363929411765,
+                    "y": 1543.4728588235294
                 },
                 "AS~Cj3C$ipB%UzL_r%`w": {
                     "fields": {
@@ -8433,7 +8501,7 @@
                     },
                     "next": null,
                     "opcode": "event_broadcast_with_broadcast_input",
-                    "parent": "7Dmznr=}SAlJhfKU:^0K",
+                    "parent": "(oxlv^G4M56!]4Qi=ouW",
                     "shadow": false,
                     "topLevel": false,
                     "x": 3414.6823529411763,
@@ -8449,13 +8517,13 @@
                             "shadow": "U4_-blhICST%q6U]k(e="
                         }
                     },
-                    "next": "u@aiuxpz!))3wSBy#3!R",
+                    "next": "3_r@+$ggji()iA2!Y$9{",
                     "opcode": "cozmo_vert_setbackpackcolor",
-                    "parent": "3_r@+$ggji()iA2!Y$9{",
+                    "parent": "1jtv`K1/uz#T7!-(]nTP",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "3223",
-                    "y": "1811"
+                    "x": 3906.5227647058823,
+                    "y": 1500.1584705882353
                 },
                 "BLy:p|]U(@HOF`*s(dY1": {
                     "fields": {
@@ -8557,6 +8625,21 @@
                     "topLevel": false,
                     "x": "-892",
                     "y": "1170"
+                },
+                "BpFPmBf5Fi?x6BDb_14%": {
+                    "fields": {
+                        "NUM": {
+                            "name": "NUM",
+                            "value": "1"
+                        }
+                    },
+                    "id": "BpFPmBf5Fi?x6BDb_14%",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "math_number",
+                    "parent": "}QrrOui(zbGJg*SYpBd}",
+                    "shadow": true,
+                    "topLevel": false
                 },
                 "BuZ!E4)q1d=;V~WYhCi)": {
                     "fields": {
@@ -9505,11 +9588,11 @@
                     },
                     "next": "U-h0eSyn/{JwqAAEziY*",
                     "opcode": "control_if",
-                    "parent": "Pay=u}{YGrGW]PqDmw=/",
+                    "parent": "l9G]4$j[N4Z(H?a}DJK7",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "2502",
-                    "y": "2368"
+                    "x": 3814.2043647058827,
+                    "y": 2416.5799647058825
                 },
                 "F]7^ch+dgLn.^*C]u)13": {
                     "fields": {},
@@ -9893,7 +9976,7 @@
                     },
                     "next": "USj|Fw=PGBn`U@HUTF@Y",
                     "opcode": "data_setvariableto",
-                    "parent": "`nfx$G!h@uaared|+r(U",
+                    "parent": "%^KxE]ljBzD``D`n+Uu*",
                     "shadow": false,
                     "topLevel": false,
                     "x": "732",
@@ -10222,13 +10305,13 @@
                             "shadow": ")CpFD!i-h7Ird`JyX[~{"
                         }
                     },
-                    "next": "ARhA/6(zp4T|2;prg@gm",
+                    "next": "U@#CFQIRZmf1IsUS`?LT",
                     "opcode": "cozmo_vert_setbackpackcolor",
-                    "parent": "x|L6M^:w#Nlg53#K!YaZ",
+                    "parent": "-71H?3?%/~jJROAvPQ3w",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "4056",
-                    "y": "1880"
+                    "x": 4997.363929411765,
+                    "y": 1495.4728588235294
                 },
                 "I3fin|s=X#}OXbU1Bc6q": {
                     "fields": {
@@ -10457,7 +10540,7 @@
                     "id": "J8}l2eX:.B[VcFbPBw61",
                     "inputs": {
                         "STRING1": {
-                            "block": "de8y:1uMG~)D^dBr43(^",
+                            "block": "}QrrOui(zbGJg*SYpBd}",
                             "name": "STRING1",
                             "shadow": "hhGCXBMZ+^]AP}u!E.lg"
                         },
@@ -10730,31 +10813,6 @@
                     "topLevel": false,
                     "x": 4554,
                     "y": 655.4564705882353
-                },
-                "K.4)zEDq!}5]/~.UJ)B}": {
-                    "fields": {
-                        "VARIABLE": {
-                            "id": "?4gR)yJr1o7N#9y{K5If",
-                            "name": "VARIABLE",
-                            "value": "mode",
-                            "variableType": ""
-                        }
-                    },
-                    "id": "K.4)zEDq!}5]/~.UJ)B}",
-                    "inputs": {
-                        "VALUE": {
-                            "block": "Y[RbTJkzPl5C#FD!lV=}",
-                            "name": "VALUE",
-                            "shadow": "Y[RbTJkzPl5C#FD!lV=}"
-                        }
-                    },
-                    "next": "hFATIm48SELqT6MGXeYI",
-                    "opcode": "data_setvariableto",
-                    "parent": "-5LkUH=JTLQZmF*QUNBF",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": "1154",
-                    "y": "2319"
                 },
                 "K5+D?WYfH.nVA;/h[!qy": {
                     "fields": {},
@@ -11189,11 +11247,11 @@
                     },
                     "next": "iBnLul]USD!K,v.JlF3e",
                     "opcode": "control_if",
-                    "parent": "LloU5o}k2)KY^SwKN!M2",
+                    "parent": "efnFuZ5G`Sm[g]9;aO4(",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "3695",
-                    "y": "2304"
+                    "x": 4213.317305882353,
+                    "y": 2523.2615647058824
                 },
                 "LcM123vh7T#zt,2w,tws": {
                     "fields": {
@@ -11228,8 +11286,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 2128,
-                    "y": 1956
+                    "x": 2105.2633882352943,
+                    "y": 2149.2612
                 },
                 "LloU5o}k2)KY^SwKN!M2": {
                     "fields": {
@@ -11248,13 +11306,13 @@
                             "shadow": "RA`g9t8n%0dSFqaUZGaY"
                         }
                     },
-                    "next": "L^rT|wS]K-%/R^BnJ3K0",
+                    "next": "peMgOwCThqM;4?Y}HvKa",
                     "opcode": "data_setvariableto",
-                    "parent": "efnFuZ5G`Sm[g]9;aO4(",
+                    "parent": "qfR0iTWZGDJaZwxVjt?1",
                     "shadow": false,
                     "topLevel": false,
-                    "x": 4353.636470588235,
-                    "y": 2095.478003524464
+                    "x": 4213.317305882353,
+                    "y": 2475.2615647058824
                 },
                 "Lnr{jaFm]2n{hAJaXEkd": {
                     "fields": {
@@ -12385,13 +12443,13 @@
                             "shadow": "o.@w14t`/CHPtK~P9gS6"
                         }
                     },
-                    "next": "F[xE2=}gc=Emc|;7YkST",
+                    "next": "PhUq=oMI,*L/%+FeK?*|",
                     "opcode": "data_setvariableto",
-                    "parent": "l9G]4$j[N4Z(H?a}DJK7",
+                    "parent": "4`$+5);C!xnF=gZsyn)n",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "2763",
-                    "y": "2758"
+                    "x": 3814.2043647058827,
+                    "y": 2368.5799647058825
                 },
                 "PhUq=oMI,*L/%+FeK?*|": {
                     "fields": {
@@ -12412,7 +12470,7 @@
                     },
                     "next": "{lmac~NI*Q3[DiK58SuL",
                     "opcode": "data_setvariableto",
-                    "parent": "4`$+5);C!xnF=gZsyn)n",
+                    "parent": "Pay=u}{YGrGW]PqDmw=/",
                     "shadow": false,
                     "topLevel": false,
                     "x": "2613",
@@ -12644,23 +12702,6 @@
                     "next": null,
                     "opcode": "text",
                     "parent": "HpXUuUS}En=Gz/,C^P82",
-                    "shadow": true,
-                    "topLevel": false
-                },
-                "Qv:Ka`-,.P.RyvYNWWHz": {
-                    "fields": {
-                        "BROADCAST_OPTION": {
-                            "id": "Bo`gd`mGMQZcwa?J|TY#",
-                            "name": "BROADCAST_OPTION",
-                            "value": "show and check harvest",
-                            "variableType": "broadcast_msg"
-                        }
-                    },
-                    "id": "Qv:Ka`-,.P.RyvYNWWHz",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "event_broadcast_menu_with_broadcast_input",
-                    "parent": "_[nbi;PA,/bFsm^[nyyW",
                     "shadow": true,
                     "topLevel": false
                 },
@@ -13849,7 +13890,7 @@
                     },
                     "next": "x|L6M^:w#Nlg53#K!YaZ",
                     "opcode": "data_setvariableto",
-                    "parent": "-71H?3?%/~jJROAvPQ3w",
+                    "parent": "I10eJ|i1GO|bqC[]5Tfg",
                     "shadow": false,
                     "topLevel": false,
                     "x": "4118",
@@ -14202,7 +14243,7 @@
                     },
                     "next": "iKEFEeQA1@Cx|Ad/|Ojr",
                     "opcode": "data_setvariableto",
-                    "parent": "_?u@q^iJt*7FX!g3HMPp",
+                    "parent": "m8Fly_gU(4RN!FhktPr,",
                     "shadow": false,
                     "topLevel": false,
                     "x": "1904",
@@ -14401,7 +14442,7 @@
                             "shadow": "(wbwc}T?APul)6/n#7Fw"
                         }
                     },
-                    "next": "m8Fly_gU(4RN!FhktPr,",
+                    "next": "8U8RG;-,JIVhPyy1zgAC",
                     "opcode": "data_setvariableto",
                     "parent": "iKEFEeQA1@Cx|Ad/|Ojr",
                     "shadow": false,
@@ -15256,21 +15297,6 @@
                     "next": null,
                     "opcode": "event_broadcast_menu_with_broadcast_input",
                     "parent": "nOsw!J[ziLGIZgA80vg,",
-                    "shadow": true,
-                    "topLevel": false
-                },
-                "Y[RbTJkzPl5C#FD!lV=}": {
-                    "fields": {
-                        "TEXT": {
-                            "name": "TEXT",
-                            "value": "-1"
-                        }
-                    },
-                    "id": "Y[RbTJkzPl5C#FD!lV=}",
-                    "inputs": {},
-                    "next": null,
-                    "opcode": "text",
-                    "parent": "K.4)zEDq!}5]/~.UJ)B}",
                     "shadow": true,
                     "topLevel": false
                 },
@@ -16728,7 +16754,7 @@
                             "shadow": null
                         },
                         "SUBSTACK": {
-                            "block": "VN|cRZD@+:%sCI5A=f)a",
+                            "block": "m8Fly_gU(4RN!FhktPr,",
                             "name": "SUBSTACK",
                             "shadow": null
                         }
@@ -16829,24 +16855,6 @@
                     "topLevel": false,
                     "x": "117",
                     "y": "3813"
-                },
-                "_[nbi;PA,/bFsm^[nyyW": {
-                    "fields": {},
-                    "id": "_[nbi;PA,/bFsm^[nyyW",
-                    "inputs": {
-                        "BROADCAST_INPUT": {
-                            "block": "Qv:Ka`-,.P.RyvYNWWHz",
-                            "name": "BROADCAST_INPUT",
-                            "shadow": "Qv:Ka`-,.P.RyvYNWWHz"
-                        }
-                    },
-                    "next": null,
-                    "opcode": "event_broadcast_with_broadcast_input",
-                    "parent": "0qa#iR^,ONUxUl8!1z}W",
-                    "shadow": false,
-                    "topLevel": false,
-                    "x": 441.7776470588235,
-                    "y": 3577.4042495259487
                 },
                 "_lEq;2*#M|HhGG**^MIm": {
                     "fields": {
@@ -17412,7 +17420,7 @@
                     },
                     "id": "`nfx$G!h@uaared|+r(U",
                     "inputs": {},
-                    "next": "GdAfKo,nD*q)|~,j]dq(",
+                    "next": "%^KxE]ljBzD``D`n+Uu*",
                     "opcode": "event_whenbroadcastreceived_with_broadcast_input",
                     "parent": null,
                     "shadow": false,
@@ -18559,11 +18567,11 @@
                     "inputs": {},
                     "next": null,
                     "opcode": "data_variable",
-                    "parent": "J8}l2eX:.B[VcFbPBw61",
+                    "parent": "}QrrOui(zbGJg*SYpBd}",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "3484",
-                    "y": "-515"
+                    "x": 4191.262586384134,
+                    "y": -295.5282352941176
                 },
                 "djI@7po,ErjsQ}bB|+_[": {
                     "fields": {
@@ -18932,7 +18940,7 @@
                             "shadow": "BY@k,bSdhDqyUosw%T-K"
                         }
                     },
-                    "next": "LloU5o}k2)KY^SwKN!M2",
+                    "next": "L^rT|wS]K-%/R^BnJ3K0",
                     "opcode": "data_setvariableto",
                     "parent": "Zm+g_!TU|7P?O,wR6_-Z",
                     "shadow": false,
@@ -19514,8 +19522,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 2946,
-                    "y": 3092
+                    "x": 2950,
+                    "y": 3077
                 },
                 "gf6vFetlw+]U1e*7nDg/": {
                     "fields": {
@@ -19637,6 +19645,21 @@
                     "x": "150",
                     "y": "1275"
                 },
+                "g}.M!efB4N[Pigsios!E": {
+                    "fields": {
+                        "NUM": {
+                            "name": "NUM",
+                            "value": "1"
+                        }
+                    },
+                    "id": "g}.M!efB4N[Pigsios!E",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "math_positive_number",
+                    "parent": "(oxlv^G4M56!]4Qi=ouW",
+                    "shadow": true,
+                    "topLevel": false
+                },
                 "g~/Wbei(1A{7PDgQowKq": {
                     "fields": {
                         "NUM": {
@@ -19745,11 +19768,11 @@
                     },
                     "next": null,
                     "opcode": "event_broadcast_with_broadcast_input",
-                    "parent": "K.4)zEDq!}5]/~.UJ)B}",
+                    "parent": "-5LkUH=JTLQZmF*QUNBF",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "1108",
-                    "y": "2598"
+                    "x": 926.4988752941176,
+                    "y": 2141.673515294118
                 },
                 "hL$;G;~L8wE}|)OsTzQ_": {
                     "fields": {
@@ -19899,8 +19922,8 @@
                     "parent": null,
                     "shadow": true,
                     "topLevel": true,
-                    "x": 4375.351669311523,
-                    "y": -498
+                    "x": 4280.314315795898,
+                    "y": -485
                 },
                 "hi;(|pvhd/_o_BCR]v0p": {
                     "fields": {
@@ -20771,7 +20794,7 @@
                             "shadow": "oet1470*!2:@(uX,:[0C"
                         }
                     },
-                    "next": "Pay=u}{YGrGW]PqDmw=/",
+                    "next": "F[xE2=}gc=Emc|;7YkST",
                     "opcode": "data_setvariableto",
                     "parent": "{lmac~NI*Q3[DiK58SuL",
                     "shadow": false,
@@ -20969,13 +20992,13 @@
                             "shadow": "D-%BZ?jfv9y]h|I9H)(k"
                         }
                     },
-                    "next": "8U8RG;-,JIVhPyy1zgAC",
+                    "next": "VN|cRZD@+:%sCI5A=f)a",
                     "opcode": "data_setvariableto",
-                    "parent": "WEdO0eZ1v.1H,P{0=f@3",
+                    "parent": "_?u@q^iJt*7FX!g3HMPp",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "1937",
-                    "y": "2720"
+                    "x": 2563.574858823529,
+                    "y": 2324.841529411765
                 },
                 "m:m0PxmkN^gn!@/y7nWq": {
                     "fields": {},
@@ -21931,7 +21954,7 @@
                     },
                     "next": "Zm+g_!TU|7P?O,wR6_-Z",
                     "opcode": "data_setvariableto",
-                    "parent": "qfR0iTWZGDJaZwxVjt?1",
+                    "parent": "LloU5o}k2)KY^SwKN!M2",
                     "shadow": false,
                     "topLevel": false,
                     "x": "3655",
@@ -22372,7 +22395,7 @@
                             "shadow": null
                         },
                         "SUBSTACK": {
-                            "block": "peMgOwCThqM;4?Y}HvKa",
+                            "block": "LloU5o}k2)KY^SwKN!M2",
                             "name": "SUBSTACK",
                             "shadow": null
                         }
@@ -23412,11 +23435,11 @@
                     },
                     "next": "WRg6s8.^@V4JH%4`.Bi,",
                     "opcode": "control_wait",
-                    "parent": "BI)ZVpemoWE!r1+ws4Ah",
+                    "parent": "3_r@+$ggji()iA2!Y$9{",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "2702",
-                    "y": "1163"
+                    "x": 3792.839705882353,
+                    "y": 1676.9992705882353
                 },
                 "uClm(nLD|^{!zmcc?$Yh": {
                     "fields": {
@@ -24027,6 +24050,23 @@
                     "x": "1004",
                     "y": "3376"
                 },
+                "x?k}8J=)R1{=kXUVL,h`": {
+                    "fields": {
+                        "BROADCAST_OPTION": {
+                            "id": "Bo`gd`mGMQZcwa?J|TY#",
+                            "name": "BROADCAST_OPTION",
+                            "value": "show and check harvest",
+                            "variableType": "broadcast_msg"
+                        }
+                    },
+                    "id": "x?k}8J=)R1{=kXUVL,h`",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "event_broadcast_menu_with_broadcast_input",
+                    "parent": ";BW|{q07}njD6^1e?@H7",
+                    "shadow": true,
+                    "topLevel": false
+                },
                 "xEqGZFhV7wNQ$;8{9uPn": {
                     "fields": {
                         "NUM": {
@@ -24277,7 +24317,7 @@
                             "shadow": null
                         }
                     },
-                    "next": "I10eJ|i1GO|bqC[]5Tfg",
+                    "next": "ARhA/6(zp4T|2;prg@gm",
                     "opcode": "control_if",
                     "parent": "U@#CFQIRZmf1IsUS`?LT",
                     "shadow": false,
@@ -25174,6 +25214,21 @@
                     "shadow": true,
                     "topLevel": false
                 },
+                "{unibRop6-{oG-n(i:t6": {
+                    "fields": {
+                        "COLOUR": {
+                            "name": "COLOUR",
+                            "value": "#000000"
+                        }
+                    },
+                    "id": "{unibRop6-{oG-n(i:t6",
+                    "inputs": {},
+                    "next": null,
+                    "opcode": "colour_picker",
+                    "parent": "%^KxE]ljBzD``D`n+Uu*",
+                    "shadow": true,
+                    "topLevel": false
+                },
                 "{zB[gA^~nfq?)AO8O%Ah": {
                     "fields": {
                         "NUM": {
@@ -25559,6 +25614,29 @@
                     "topLevel": false,
                     "x": "-745",
                     "y": "1390"
+                },
+                "}QrrOui(zbGJg*SYpBd}": {
+                    "fields": {},
+                    "id": "}QrrOui(zbGJg*SYpBd}",
+                    "inputs": {
+                        "NUM1": {
+                            "block": "de8y:1uMG~)D^dBr43(^",
+                            "name": "NUM1",
+                            "shadow": "0*=}b9V_8yL[^yCIlQ?j"
+                        },
+                        "NUM2": {
+                            "block": "BpFPmBf5Fi?x6BDb_14%",
+                            "name": "NUM2",
+                            "shadow": "BpFPmBf5Fi?x6BDb_14%"
+                        }
+                    },
+                    "next": null,
+                    "opcode": "operator_subtract",
+                    "parent": "J8}l2eX:.B[VcFbPBw61",
+                    "shadow": false,
+                    "topLevel": false,
+                    "x": "3100",
+                    "y": "-714"
                 },
                 "}SsSj9f,+xON{!E4~WXO": {
                     "fields": {
@@ -25960,7 +26038,7 @@
             "currentCostume": 0,
             "direction": 90,
             "draggable": false,
-            "id": ";;f.Wy8]!RRr3]~KiadN",
+            "id": "!WRC~IrL5W.t5!goQq8A",
             "isStage": false,
             "lists": {},
             "name": "Sprite1",
