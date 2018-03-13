@@ -11,6 +11,7 @@
 
 #include "engine/cozmoEngine.h"
 #include "engine/cozmoContext.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/robotInterface/messageHandler.h"
@@ -78,6 +79,46 @@
 
 namespace Anki {
 namespace Cozmo {
+
+int GetEngineStatsWebServerHandler(struct mg_connection *conn, void *cbdata)
+{
+  using namespace std::chrono;
+  const auto startTime = steady_clock::now();
+
+  // We ignore the query string because overhead is minimal
+  auto* cozmoEngine = static_cast<CozmoEngine*>(cbdata);
+  const auto& robot = cozmoEngine->GetRobot();
+
+  const auto& batteryComponent = robot->GetBatteryComponent();
+  std::stringstream ss;
+  ss << std::fixed << std::setprecision(3) << batteryComponent.GetBatteryVolts();
+  const std::string stat_batteryVoltsFiltered = ss.str();
+  std::stringstream ss2;
+  ss2 << std::fixed << std::setprecision(3) << batteryComponent.GetBatteryVoltsRaw();
+  const std::string stat_batteryVoltsRaw = ss2.str();
+  const std::string stat_batteryLevel = EnumToString(batteryComponent.GetBatteryLevel());
+  const std::string stat_batteryIsCharging = batteryComponent.IsCharging() ? "true" : "false";
+  const std::string stat_batteryIsOnChargerContacts = batteryComponent.IsOnChargerContacts() ? "true" : "false";
+  const std::string stat_batteryIsOnChargerPlatform = batteryComponent.IsOnChargerPlatform() ? "true" : "false";
+  const std::string stat_batteryFullyChargedTime_s = std::to_string(static_cast<int>(batteryComponent.GetFullyChargedTimeSec()));
+  const std::string stat_batteryLowBatteryTime_s = std::to_string(static_cast<int>(batteryComponent.GetLowBatteryTimeSec()));
+
+  mg_printf(conn,
+            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
+            "close\r\n\r\n");
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
+            stat_batteryVoltsFiltered.c_str(), stat_batteryVoltsRaw.c_str(),
+            stat_batteryLevel.c_str(), stat_batteryIsCharging.c_str(),
+            stat_batteryIsOnChargerContacts.c_str(), stat_batteryIsOnChargerPlatform.c_str(),
+            stat_batteryFullyChargedTime_s.c_str(), stat_batteryLowBatteryTime_s.c_str());
+
+  const auto now = steady_clock::now();
+  const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
+  LOG_INFO("CozmoEngine.GetEngineStatsWebServerHandler.Time", "GetEngineStatsWebServerHandler took %lld microseconds", elapsed_us);
+
+  return 1;
+}
+
 
 CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort* messagePipe)
   : _uiMsgHandler(new UiMessageHandler(1, messagePipe))
@@ -213,8 +254,10 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   SetEngineState(EngineState::LoadingData);
 
-  _context->GetWebService()->Start(_context->GetDataPlatform(),
-                                   _context->GetDataLoader()->GetWebServerEngineConfig());
+  const auto& webService = _context->GetWebService();
+  webService->Start(_context->GetDataPlatform(),
+                    _context->GetDataLoader()->GetWebServerEngineConfig());
+  webService->RegisterRequestHandler("/getenginestats", GetEngineStatsWebServerHandler, this);
 
   // DAS Event: "cozmo_engine.init.build_configuration"
   // s_val: Build configuration

@@ -17,8 +17,6 @@
 #include "DAS/DAS.h"
 #endif
 
-#include "civetweb.h"
-
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "util/logging/logging.h"
 #include "util/console/consoleSystem.h"
@@ -511,9 +509,11 @@ static int GetInitialConfig(struct mg_connection *conn, void *cbdata)
   const std::string webotsSim = "false";
 #endif
   const std::string allowPerfPage = that->GetConfig()["allowPerfPage"].asString();
+  const std::string whichWebServer = std::to_string(that->GetConfig()["whichWebServer"].asInt());
 
-  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n", title0.c_str(), title1.c_str(),
-            startPage.c_str(), webotsSim.c_str(), allowPerfPage.c_str());
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n", title0.c_str(), title1.c_str(),
+            startPage.c_str(), webotsSim.c_str(), allowPerfPage.c_str(),
+            whichWebServer.c_str());
   return 1;
 }
 
@@ -627,7 +627,7 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
     const uint32_t batteryVoltage_uV = osState->GetBatteryVoltage_uV();
     const float batteryVoltage_V = batteryVoltage_uV * 0.000001f;
     std::stringstream ss;
-    ss << std::fixed << std::setprecision(6) << batteryVoltage_V;
+    ss << std::fixed << std::setprecision(3) << batteryVoltage_V;
     stat_batteryVoltage = ss.str();
   }
 
@@ -1203,6 +1203,12 @@ void WebService::AddRequest(Request* requestPtr)
 {
   std::lock_guard<std::mutex> lock(_requestMutex);
   _requests.push_back(requestPtr);
+}
+
+
+void WebService::RegisterRequestHandler(std::string uri, mg_request_handler handler, void* cbdata)
+{
+  mg_set_request_handler(_ctx, uri.c_str(), handler, cbdata);
 }
 
 

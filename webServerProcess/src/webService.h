@@ -13,6 +13,8 @@
 #ifndef WEB_SERVICE_H
 #define WEB_SERVICE_H
 
+#include "civetweb/include/civetweb.h"
+
 #include "json/json.h"
 
 #include <string>
@@ -75,6 +77,13 @@ public:
   
   const std::string& getConsoleVarsTemplate();
 
+  enum class WhichWebServer
+  {
+    Standalone = 0,
+    Engine     = 1,
+    Anim       = 2
+  };
+
   enum RequestType
   {
     RT_ConsoleVarsUI,
@@ -109,6 +118,8 @@ public:
 
   const Json::Value& GetConfig() { return _config; }
   const Anki::Util::Data::DataPlatform* GetPlatform() { return _platform; }
+
+  void RegisterRequestHandler(std::string uri, mg_request_handler handler, void* cbdata);
 
 private:
 
