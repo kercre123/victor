@@ -44,12 +44,10 @@ namespace {
 
   std::ifstream _cpuFile;
   std::ifstream _tempFile;
-  std::ifstream _batteryVoltageFile;
 
   const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
   const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
   const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone7/temp";
-  const char* kBatteryVoltageFile = "/sys/devices/soc/qpnp-linear-charger-8/power_supply/battery/voltage_now";
   const char* kMACAddressFile = "/sys/class/net/wlan0/address";
   const char* kRecoveryModeFile = "/data/unbrick";
   
@@ -123,7 +121,6 @@ OSState::OSState()
 
   _tempFile.open(kTemperatureFile, std::ifstream::in);
   _cpuFile.open(kCPUFreqFile, std::ifstream::in);
-  _batteryVoltageFile.open(kBatteryVoltageFile, std::ifstream::in);
 }
 
 OSState::~OSState()
@@ -133,9 +130,6 @@ OSState::~OSState()
   }
   if (_cpuFile.is_open()) {
     _cpuFile.close();
-  }
-  if (_batteryVoltageFile.is_open()) {
-    _batteryVoltageFile.close();
   }
 }
 
@@ -182,15 +176,6 @@ uint32_t OSState::UpdateTemperature_C() const
   _tempFile.seekg(0, _tempFile.beg);
   _tempFile >> cpuTemp_C;
   return cpuTemp_C;
-}
-
-uint32_t OSState::UpdateBatteryVoltage_uV() const
-{
-  // Update battery voltage reading
-  uint32_t batteryVoltage_uV;
-  _batteryVoltageFile.seekg(0, _batteryVoltageFile.beg);
-  _batteryVoltageFile >> batteryVoltage_uV;
-  return batteryVoltage_uV;
 }
 
 uint32_t OSState::GetCPUFreq_kHz() const

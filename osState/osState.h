@@ -63,9 +63,6 @@ public:
   // Reads the temperature in Celsius and returns it
   uint32_t UpdateTemperature_C() const;
 
-  // Reads the battery voltage in microvolts and returns it
-  uint32_t UpdateBatteryVoltage_uV() const;
-
   // Returns current CPU frequency
   // Asserts if update rate is 0
   uint32_t GetCPUFreq_kHz() const;

@@ -577,12 +577,14 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
 
   std::string stat_batteryVoltage;
   if (active[2]) {
-    // Battery voltage
-    const uint32_t batteryVoltage_uV = osState->UpdateBatteryVoltage_uV();
-    const float batteryVoltage_V = batteryVoltage_uV * 0.000001f;
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(6) << batteryVoltage_V;
-    stat_batteryVoltage = ss.str();
+    // NOTE: Can no longer (if not now then soon) access battery voltage via OSState.
+    //       Engine's BatteryComponent could possibly send updates to webserver.
+    // // Battery voltage
+    // const uint32_t batteryVoltage_uV = osState->UpdateBatteryVoltage_uV();
+    // const float batteryVoltage_V = batteryVoltage_uV * 0.000001f;
+    // std::stringstream ss;
+    // ss << std::fixed << std::setprecision(6) << batteryVoltage_V;
+    // stat_batteryVoltage = ss.str();
   }
 
 #endif
