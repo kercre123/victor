@@ -132,6 +132,7 @@ add_subdirectory("osState")
 add_subdirectory("cannedAnimLib")
 add_subdirectory("animProcess")
 add_subdirectory("webServerProcess")
+add_subdirectory("lib/micData")
 add_subdirectory("lib/signalEssence")
 add_subdirectory("platform")
 

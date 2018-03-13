@@ -31,6 +31,7 @@ MicImmediateDirection::MicImmediateDirection()
 
 void MicImmediateDirection::AddDirectionSample(const MicDirectionData& newSample)
 {
+  std::lock_guard<std::mutex> lock(_mutex);
   // Update our index to the next oldest sample
   _micDirectionBufferIndex = (_micDirectionBufferIndex + 1) % kMicDirectionBufferLen;
 
@@ -53,6 +54,7 @@ void MicImmediateDirection::AddDirectionSample(const MicDirectionData& newSample
 
 DirectionIndex MicImmediateDirection::GetDominantDirection() const
 {
+  std::lock_guard<std::mutex> lock(_mutex);
   // Loop through our stored direction counts and pick the direction with the higest count
   // Does not currently consider confidence level
   auto bestIndex = kDirectionUnknown;
@@ -69,8 +71,9 @@ DirectionIndex MicImmediateDirection::GetDominantDirection() const
   return bestIndex;
 }
 
-const MicDirectionData& MicImmediateDirection::GetLatestSample() const
+MicDirectionData MicImmediateDirection::GetLatestSample() const
 {
+  std::lock_guard<std::mutex> lock(_mutex);
   return _micDirectionBuffer[_micDirectionBufferIndex];
 }
 

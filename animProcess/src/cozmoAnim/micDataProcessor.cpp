@@ -145,24 +145,6 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
   _selectedSearchBeamIndex = SEDiagGetIndex("search_result_best_beam_index");
   _selectedSearchBeamConfidence = SEDiagGetIndex("search_result_best_beam_confidence");
   _searchConfidenceState = SEDiagGetIndex("fdsearch_confidence_state");
-  
-  
-  // Enable this to test a repeating recording job.
-  static constexpr bool enableCircularRecordingJob = false;
-  if (enableCircularRecordingJob)
-  {
-    MicDataInfo* newJob = new MicDataInfo{};
-    newJob->_typesToRecord.SetBitFlag(MicDataType::Raw, true);
-    newJob->_typesToRecord.SetBitFlag(MicDataType::Processed, true);
-    newJob->_writeLocationDir = _writeLocationDir;
-    newJob->SetTimeToRecord(kSecondsPerFile * 1000);
-    newJob->_doFFTProcess = false;
-    newJob->_repeating = true;
-    {
-      std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
-      _micProcessingJobs.push_back(std::shared_ptr<MicDataInfo>(newJob));
-    }
-  }
 
   const RobotID_t robotID = OSState::getInstance()->GetRobotID();
   const std::string sockName = std::string{LOCAL_SOCKET_PATH} + "mic_sock" + (robotID == 0 ? "" : std::to_string(robotID));
@@ -184,7 +166,7 @@ void MicDataProcessor::InitVAD()
   /* set up VAD */
   SVadSetDefaultConfig(_sVadConfig.get(), kSamplesPerBlock, (float)AudioUtil::kSampleRate_hz);
   _sVadConfig->AbsThreshold = 250.0f; // was 400
-  _sVadConfig->HangoverCountDownStart = 60;  // was 25, make 25 blocks (1/4 second) to see it actually end a couple times
+  _sVadConfig->HangoverCountDownStart = 10;  // was 25, make 25 blocks (1/4 second) to see it actually end a couple times
   SVadInit(_sVadObject.get(), _sVadConfig.get());
 }
 
@@ -211,11 +193,19 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
   newJob->_typesToRecord.SetBitFlag(MicDataType::Raw, false);
   newJob->SetTimeToRecord(MicDataInfo::kMaxRecordTime_ms);
 
-  // Copy the current audio chunks in the trigger overlap buffer
-  for (uint32_t i=0; i<_immediateAudioBuffer.size(); ++i)
+  TimeStamp_t mostRecentTimestamp;
   {
-    const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
-    newJob->CollectProcessedAudio(audioBlock.data(), audioBlock.size());
+    std::lock_guard<std::mutex> lock(_procAudioXferMutex);
+    DEV_ASSERT(_procAudioRawComplete >= _procAudioXferCount,
+               "MicDataProcessor.TriggerWordDetectCallback.AudioProcIdx");
+    const auto maxIndex = _procAudioRawComplete - _procAudioXferCount;
+    // Copy the current audio chunks in the trigger overlap buffer
+    for (size_t i=0; i<maxIndex; ++i)
+    {
+      const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
+      newJob->CollectProcessedAudio(audioBlock.data(), audioBlock.size());
+    }
+    mostRecentTimestamp = _immediateAudioBuffer[_procAudioRawComplete-1].timestamp;
   }
 
   {
@@ -224,11 +214,12 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
     _currentStreamingJob = _micProcessingJobs.back();
   }
 
+  const auto currentDirection = _micImmediateDirection->GetDominantDirection();
+
   // Set up a message to send out about the triggerword
   RobotInterface::TriggerWordDetected twDetectedMessage;
-  const auto mostRecentTimestamp = _immediateAudioBuffer.back().timestamp;
   twDetectedMessage.timestamp = mostRecentTimestamp;
-  twDetectedMessage.direction = _micImmediateDirection->GetDominantDirection();
+  twDetectedMessage.direction = currentDirection;
   auto engineMessage = std::unique_ptr<RobotInterface::RobotToEngine>(
     new RobotInterface::RobotToEngine(std::move(twDetectedMessage)));
   {
@@ -237,7 +228,6 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
   }
 
   // Tell signal essence software to lock in on the current direction if it's known
-  const auto currentDirection = _micImmediateDirection->GetDominantDirection();
   if (currentDirection != kDirectionUnknown)
   {
     std::lock_guard<std::mutex> lock(_seInteractMutex);
@@ -294,7 +284,7 @@ void MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
 
       std::unique_lock<std::mutex> lock(_procAudioXferMutex);
       auto xferAvailableCheck = [this] () {
-        return _processThreadStop || _procAudioXferCount < _xferAudioBuffer.capacity();
+        return _processThreadStop || _procAudioXferCount < _immediateAudioBuffer.capacity();
       };
       _xferAvailableCondition.wait(lock, xferAvailableCheck);
 
@@ -304,7 +294,15 @@ void MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
       }
 
       // Now we can be sure we have a free slot, so go ahead and grab it
-      nextSampleSpot = &_xferAudioBuffer.push_back();
+      if (_immediateAudioBuffer.size() < _immediateAudioBuffer.capacity())
+      {
+         _procAudioRawComplete = _immediateAudioBuffer.size();
+      }
+      else
+      {
+         _procAudioRawComplete = _immediateAudioBuffer.size() - 1;
+      }
+      nextSampleSpot = &_immediateAudioBuffer.push_back();
     }
 
     TimedMicData& nextSample = *nextSampleSpot;
@@ -319,6 +317,7 @@ void MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
     {
       std::lock_guard<std::mutex> lock(_procAudioXferMutex);
       ++_procAudioXferCount;
+      _procAudioRawComplete = _immediateAudioBuffer.size();
     }
     _dataReadyCondition.notify_all();
 
@@ -531,21 +530,12 @@ void MicDataProcessor::ProcessTriggerLoop()
         return;
       }
 
-      // Grab a handle to the next available data. Note the producer only fills up to capacity-1,
-      // leaving the last spot untouched so we can copy the data out without holding the mutex
-      readyDataSpot = &_xferAudioBuffer.front();
+      // Grab a handle to the next available data that's been processed out of raw but not yet
+      // "transferred" to the trigger word recognition processing
+      readyDataSpot = &_immediateAudioBuffer[_procAudioRawComplete - _procAudioXferCount];
     }
 
-    // Copy the data (can be done without the mutex), then let it go by decrementing the count
-    _immediateAudioBuffer.push_back() = *readyDataSpot;
-    {
-      std::lock_guard<std::mutex> lock(_procAudioXferMutex);
-      _xferAudioBuffer.pop_front();
-      --_procAudioXferCount;
-    }
-    _xferAvailableCondition.notify_all();
-
-    const auto& processedAudio = _immediateAudioBuffer.back().audioBlock;
+    const auto& processedAudio = readyDataSpot->audioBlock;
     std::deque<std::shared_ptr<MicDataInfo>> jobs;
     {
       std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
@@ -562,8 +552,22 @@ void MicDataProcessor::ProcessTriggerLoop()
       _currentTriggerSearchIndex = kMicData_NextTriggerIndex;
       _recognizer->SetRecognizerIndex(_currentTriggerSearchIndex);
     }
-    // Run the trigger detection, which will use the callback defined above
+
+    // Keep a counter from the last active vad flag. When it hits 0 don't bother doing
+    // the trigger recognition, then reset the counter when the flag is active again
+    constexpr uint32_t kVadCountdown_ms = 4 * 1000;
+    constexpr uint32_t kVadCountdownLimit = kVadCountdown_ms / kTimePerSEBlock_ms;
     if (_micImmediateDirection->GetLatestSample().activeState != 0)
+    {
+      _vadCountdown = kVadCountdownLimit;
+    }
+    else if (_vadCountdown > 0)
+    {
+      --_vadCountdown;
+    }
+
+    // Run the trigger detection, which will use the callback defined above
+    if (_vadCountdown != 0)
     {
       ANKI_CPU_PROFILE("RecognizeTriggerWord");
       bool streamingInProgress = false;
@@ -576,6 +580,13 @@ void MicDataProcessor::ProcessTriggerLoop()
         _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
       }
     }
+
+    // Now we're done using this audio with the recognizer, so let it go
+    {
+      std::lock_guard<std::mutex> lock(_procAudioXferMutex);
+      --_procAudioXferCount;
+    }
+    _xferAvailableCondition.notify_all();
   }
 }
   
@@ -769,11 +780,11 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
     {
       // Are we done with what we want to stream?
       static constexpr size_t kMaxRecordTime_ms = 10000;
-      static constexpr size_t kMaxRecordNumChunks = (kMaxRecordTime_ms / (kTimePerChunk_ms * kChunksPerSEBlock)) + 1;
+      static constexpr size_t kMaxRecordNumChunks = (kMaxRecordTime_ms / kTimePerSEBlock_ms) + 1;
       if (receivedStopMessage || _streamingAudioIndex >= kMaxRecordNumChunks)
       {
         ClearCurrentStreamingJob();
-        PRINT_NAMED_INFO("MicDataProcessor.Update.StreamingEnd", "%zu ms", _streamingAudioIndex * kTimePerChunk_ms * kChunksPerSEBlock);
+        PRINT_NAMED_INFO("MicDataProcessor.Update.StreamingEnd", "%zu ms", _streamingAudioIndex * kTimePerSEBlock_ms);
       }
       else
       {

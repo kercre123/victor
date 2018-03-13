@@ -146,7 +146,7 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
   // Check against a min recording length. If we're not recording raw and our recorded processed time
   // is too short, we're going to abandon saving it.
   if (_rawAudioData.empty() && 
-      (_processedAudioData.size() * kTimePerChunk_ms * kChunksPerSEBlock) < kMinAudioSizeToSave_ms)
+      (_processedAudioData.size() * kTimePerSEBlock_ms) < kMinAudioSizeToSave_ms)
   {
     return;
   }

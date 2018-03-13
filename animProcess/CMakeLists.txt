@@ -48,6 +48,7 @@ target_link_libraries(victor_anim
   audio_engine
   audio_multiplexer_robot
   osState
+  micdata
   # vendor
   ${OPENCV_LIBS}
   ${FLATBUFFERS_LIBS} 

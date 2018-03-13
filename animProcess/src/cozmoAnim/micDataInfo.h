@@ -13,7 +13,8 @@
 #ifndef __AnimProcess_CozmoAnim_MicDataInfo_H_
 #define __AnimProcess_CozmoAnim_MicDataInfo_H_
 
-#include "cozmoAnim/micDataTypes.h"
+#include "micDataTypes.h"
+#include "audioUtil/audioDataTypes.h"
 #include "util/bitFlags/bitFlags.h"
 
 #include <cstdint>
@@ -29,6 +30,9 @@ namespace MicData {
 class MicDataInfo
 {
 public:
+  static constexpr uint32_t kDefaultFilesToCapture = 15;
+  static constexpr uint32_t kMinAudioSizeToSave_ms = kTriggerOverlapSize_ms + 100;
+
   Util::BitFlags8<MicDataType>  _typesToRecord;
   bool                          _doFFTProcess     = false;
   bool                          _repeating        = false;

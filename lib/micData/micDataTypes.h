@@ -10,10 +10,8 @@
 *
 */
 
-#ifndef __AnimProcess_CozmoAnim_MicDataTypes_H_
-#define __AnimProcess_CozmoAnim_MicDataTypes_H_
-
-#include "audioUtil/audioDataTypes.h"
+#ifndef __MicData_MicDataTypes_H_
+#define __MicData_MicDataTypes_H_
 
 #include <array>
 #include <cstdint>
@@ -35,11 +33,9 @@ namespace MicData {
   static constexpr uint32_t kTimePerChunk_ms          = 5;
   static constexpr uint32_t kChunksPerSEBlock         = 2;
   static constexpr uint32_t kSamplesPerBlock          = kSamplesPerChunkIncoming * kChunksPerSEBlock;
-  static constexpr uint32_t kSecondsPerFile           = 20;
-  static constexpr uint32_t kDefaultFilesToCapture    = 15;
+  static constexpr uint32_t kTimePerSEBlock_ms        = kTimePerChunk_ms * kChunksPerSEBlock;
   static constexpr uint32_t kRawAudioChunkSize        = kSamplesPerChunkIncoming * kNumInputChannels;
   static constexpr uint32_t kTriggerOverlapSize_ms    = 140;
-  static constexpr uint32_t kMinAudioSizeToSave_ms    = kTriggerOverlapSize_ms + 100;
 
   using DirectionIndex = uint16_t;
   using DirectionConfidence = int16_t;
@@ -64,4 +60,4 @@ namespace MicData {
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __AnimProcess_CozmoAnim_MicDataTypes_H_
+#endif // __MicData_MicDataTypes_H_

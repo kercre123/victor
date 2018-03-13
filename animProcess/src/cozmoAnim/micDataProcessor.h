@@ -16,8 +16,9 @@
 
 #include "svad.h"
 
-#include "cozmoAnim/micDataTypes.h"
+#include "micDataTypes.h"
 #include "coretech/common/shared/types.h"
+#include "audioUtil/audioDataTypes.h"
 #include "util/container/fixedCircularBuffer.h"
 #include "util/global/globalDefinitions.h"
 
@@ -26,6 +27,7 @@
 #include <array>
 #include <condition_variable>
 #include <cstdint>
+#include <deque>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -94,6 +96,7 @@ private:
   std::unique_ptr<MicImmediateDirection> _micImmediateDirection;
   std::unique_ptr<SVadConfig_t> _sVadConfig;
   std::unique_ptr<SVadObject_t> _sVadObject;
+  uint32_t _vadCountdown = 0;
 #if ANKI_DEV_CHEATS
   bool _forceRecordClip = false;
 #endif
@@ -123,11 +126,11 @@ private:
     TimeStamp_t timestamp;
   };
   Util::FixedCircularBuffer<TimedMicData, kImmediateBufferSize> _immediateAudioBuffer;
-  Util::FixedCircularBuffer<TimedMicData, kImmediateBufferSize> _xferAudioBuffer;
   std::mutex _procAudioXferMutex;
   std::condition_variable _dataReadyCondition;
   std::condition_variable _xferAvailableCondition;
-  uint32_t _procAudioXferCount = 0;
+  size_t _procAudioRawComplete = 0;
+  size_t _procAudioXferCount = 0;
 
   // Members for holding outgoing messages
   std::vector<std::unique_ptr<RobotInterface::RobotToEngine>> _msgsToEngine;
