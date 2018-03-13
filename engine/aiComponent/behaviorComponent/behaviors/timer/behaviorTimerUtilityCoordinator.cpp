@@ -236,7 +236,7 @@ void BehaviorTimerUtilityCoordinator::DevAdvanceAnticSeconds()
 BehaviorTimerUtilityCoordinator::LifetimeParams::LifetimeParams()
 {
   setTimerIntent = std::make_unique<UserIntent>();
-  shouldForceAntic = true;
+  shouldForceAntic = false;
 }
 
 
@@ -359,6 +359,8 @@ void BehaviorTimerUtilityCoordinator::BehaviorUpdate()
   CheckShouldSetTimer();
   CheckShouldCancelTimer();
   CheckShouldPlayAntic();
+  
+  _lParams.shouldForceAntic = false;
 }
 
 
@@ -438,7 +440,6 @@ void BehaviorTimerUtilityCoordinator::CheckShouldPlayAntic()
     // set clock digit quadrants
     if((validAnticTime && (minTimeTillAntic_s == 0)) ||
        _lParams.shouldForceAntic){
-      _lParams.shouldForceAntic = false;
       TransitionToPlayAntic();
     }
   }
