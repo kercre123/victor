@@ -23,17 +23,19 @@ namespace Switchboard {
 
 class SavedSessionManager {
 public:
-  static void SavePublicKey(const uint8_t* publicKey);
-  static uint32_t LoadPublicKey(uint8_t* publicKeyOut);
+  static void SaveKey(const uint8_t* key, size_t size, const std::string& path);
+  static uint32_t LoadKey(uint8_t* keyOut, size_t size, const std::string& path);
 
   static void SaveSession(const uint8_t* clientPublicKey, const uint8_t* sessionKeyEncrypt, const uint8_t* sessionKeyDecrypt); 
   static uint32_t LoadSession(uint8_t* clientPublicKeyOut, uint8_t* sessionKeyEncryptOut, uint8_t* sessionKeyDecryptOut);
+
+  static const std::string kPublicKeyPath;
+  static const std::string kPrivateKeyPath;
 
 private:
   static bool MakeDirectory();
   
   static const std::string kSaveFolder;
-  static const std::string kPublicKeyPath;
   static const std::string kKnownSessionsPath;
   static const std::ios_base::openmode kWriteMode;
   static const std::ios_base::openmode kReadMode;

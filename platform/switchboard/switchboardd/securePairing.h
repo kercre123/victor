@@ -47,17 +47,28 @@ namespace Switchboard {
     // Types
     using ReceivedWifiCredentialsSignal = Signal::Signal<void (std::string, std::string)>;
     using UpdatedPinSignal = Signal::Signal<void (std::string)>;
+    using OtaUpdateSignal = Signal::Signal<void (std::string)>;
     
     // Constructors
-    SecurePairing(INetworkStream* stream, struct ev_loop* evloop, std::shared_ptr<EngineMessagingClient> engineClient);
+    SecurePairing(INetworkStream* stream, struct ev_loop* evloop, std::shared_ptr<EngineMessagingClient> engineClient, bool isPairing, bool isOtaUpdating);
     ~SecurePairing();
     
     // Methods
     void BeginPairing();
     void StopPairing();
+    void SendOtaProgress(int status, int progress, int expectedTotal);
     
     std::string GetPin() {
       return _pin;
+    }
+
+    void SetOtaUpdating(bool updating) {
+      _isOtaUpdating = updating;
+    }
+
+    void SetIsPairing(bool pairing) {
+      Log::Write("Set isPairing:%s", pairing?"true":"false");
+      _isPairing = pairing;
     }
     
     // WiFi Receive Event
@@ -68,6 +79,10 @@ namespace Switchboard {
     // PIN Update Event
     UpdatedPinSignal& OnUpdatedPinEvent() {
       return _updatedPinSignal;
+    }
+
+    OtaUpdateSignal& OnOtaUpdateRequestEvent() {
+      return _otaUpdateRequestSignal;
     }
     
   private:
@@ -198,6 +213,9 @@ namespace Switchboard {
     UpdatedPinSignal _updatedPinSignal;
     ReceivedWifiCredentialsSignal _receivedWifiCredentialSignal;
     std::shared_ptr<EngineMessagingClient> _engineClient;
+    bool _isPairing = false;
+    bool _isOtaUpdating = false;
+    OtaUpdateSignal _otaUpdateRequestSignal;
   };
 } // Switchboard
 } // Anki

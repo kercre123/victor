@@ -20,13 +20,14 @@ namespace Anki {
 namespace Switchboard {
 
 const std::string SavedSessionManager::kSaveFolder = "/data/switchboard";
-const std::string SavedSessionManager::kPublicKeyPath = "id_vec.pub";
+const std::string SavedSessionManager::kPublicKeyPath = "id_rts.pub";
+const std::string SavedSessionManager::kPrivateKeyPath = "id_rts";
 const std::string SavedSessionManager::kKnownSessionsPath = "known_clients";
 const std::ios_base::openmode SavedSessionManager::kWriteMode = std::ios_base::binary | std::ios_base::trunc;
 const std::ios_base::openmode SavedSessionManager::kReadMode = std::ios_base::binary | std::ios_base::in;
 const char* SavedSessionManager::kPrefix = "ANKIBITS";
 
-void SavedSessionManager::SavePublicKey(const uint8_t* publicKey) {
+void SavedSessionManager::SaveKey(const uint8_t* key, size_t size, const std::string& path) {
   std::ofstream fout;
 
   // Make Directory if not exist
@@ -36,7 +37,7 @@ void SavedSessionManager::SavePublicKey(const uint8_t* publicKey) {
     Log::Write("Could not successfully make directory.");
   }
 
-  fout.open(kSaveFolder + "/" + kPublicKeyPath + ".tmp", kWriteMode);
+  fout.open(kSaveFolder + "/" + path + ".tmp", kWriteMode);
 
   if(!fout.is_open()) {
     Log::Write("Could not open file.");
@@ -46,25 +47,33 @@ void SavedSessionManager::SavePublicKey(const uint8_t* publicKey) {
   uint32_t version = SB_PAIRING_PROTOCOL_VERSION;
   fout.write(kPrefix, strlen(kPrefix));
   fout.write((char*)&version, sizeof(uint32_t));
-  fout.write((char*)publicKey, crypto_kx_PUBLICKEYBYTES);
+  fout.write((char*)key, size);
 
   fout.close();
 
   // Rename tmp file to actual file
-  int renameStatus = rename((kSaveFolder + "/" + kPublicKeyPath + ".tmp").c_str(), 
-    (kSaveFolder + "/" + kPublicKeyPath).c_str());
+  int renameStatus = rename((kSaveFolder + "/" + path + ".tmp").c_str(), 
+    (kSaveFolder + "/" + path).c_str());
 
   if(renameStatus != 0) {
     Log::Write("Could not move tmp file to actual file.");
   }
 }
 
-uint32_t SavedSessionManager::LoadPublicKey(uint8_t* publicKey) {
+uint32_t SavedSessionManager::LoadKey(uint8_t* key, size_t size, const std::string& path) {
   std::ifstream fin;
 
-  fin.open(kSaveFolder + "/" + kPublicKeyPath, kReadMode);
+  fin.open(kSaveFolder + "/" + path, kReadMode);
 
   if(!fin.is_open()) {
+    return -1;
+  }
+
+  fin.seekg (0, fin.end);
+  size_t fileSize = fin.tellg();
+  fin.seekg (0, fin.beg);
+
+  if(fileSize != (strlen(kPrefix) + sizeof(uint32_t) + sizeof(size))) {
     return -1;
   }
 
@@ -72,15 +81,24 @@ uint32_t SavedSessionManager::LoadPublicKey(uint8_t* publicKey) {
   char prefix[strlen(kPrefix)];
 
   fin.read(prefix, strlen(kPrefix));
+  if(fin.fail()) {
+    return -1;
+  }
 
   if(strcmp(prefix, kPrefix) != 0) {
     return -1;
   }
 
   fin.read((char*)&version, sizeof(version));
+  if(fin.fail()) {
+    return -1;
+  }
 
   if(version == SB_PAIRING_PROTOCOL_VERSION) {
-   fin.read((char*)publicKey, crypto_kx_PUBLICKEYBYTES);
+    fin.read((char*)key, size);
+    if(fin.fail()) {
+      return -1;
+    }
   }
 
   fin.close();

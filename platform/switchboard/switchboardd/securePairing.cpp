@@ -28,7 +28,11 @@ namespace Switchboard {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 long long SecurePairing::sTimeStarted;
 
-SecurePairing::SecurePairing(INetworkStream* stream, struct ev_loop* evloop, std::shared_ptr<EngineMessagingClient> engineClient) :
+SecurePairing::SecurePairing(INetworkStream* stream, 
+  struct ev_loop* evloop,
+  std::shared_ptr<EngineMessagingClient> engineClient,
+  bool isPairing, 
+  bool isOtaUpdating) :
 _pin(""),
 _challengeAttempts(0),
 _totalPairingAttempts(0),
@@ -40,8 +44,11 @@ _wifiConnectTimeout_s(15),
 _commsState(CommsState::Raw),
 _stream(stream),
 _loop(evloop),
-_engineClient(engineClient)
+_engineClient(engineClient),
+_isPairing(isPairing),
+_isOtaUpdating(isOtaUpdating)
 {
+  Log::Write("Instantiate with isPairing:%s", isPairing?"true":"false");
   sTimeStarted = std::time(0);
   
   // Register with stream events
@@ -72,11 +79,11 @@ _engineClient(engineClient)
   
   // Initialize ev timer
   Log::Write("[timer] init");
-  ev_timer_init(&_handleTimeoutTimer.timer, &SecurePairing::sEvTimerHandler, kPairingTimeout_s, kPairingTimeout_s);
   _handleTimeoutTimer.signal = &_pairingTimeoutSignal;
+  ev_timer_init(&_handleTimeoutTimer.timer, &SecurePairing::sEvTimerHandler, kPairingTimeout_s, kPairingTimeout_s);
 
-  ev_timer_init(&_handleInternet.timer, &SecurePairing::sEvTimerHandler, kWifiConnectInterval_s, kWifiConnectInterval_s);
   _handleInternet.signal = &_internetTimerSignal;
+  ev_timer_init(&_handleInternet.timer, &SecurePairing::sEvTimerHandler, kWifiConnectInterval_s, kWifiConnectInterval_s);
   
   Log::Write("SecurePairing starting up.");
 }
@@ -161,6 +168,9 @@ void SecurePairing::Reset(bool forced) {
   
   // Send cancel message
   SendCancelPairing();
+
+  // Stop timers
+  ev_timer_stop(_loop, &_handleInternet.timer);
   
   // Put us back in initial state
   if(forced) {
@@ -213,14 +223,33 @@ void SecurePairing::SendPublicKey() {
   }
 
   // Generate public, private key
-  uint8_t* publicKey = (uint8_t*)_keyExchange->GenerateKeys();
+  uint8_t* publicKey;
+
+  uint8_t publicKeyBuffer[crypto_kx_PUBLICKEYBYTES];
+  uint8_t privateKeyBuffer[crypto_kx_SECRETKEYBYTES];
+  uint32_t fileVersion = SavedSessionManager::LoadKey(&publicKeyBuffer[0], crypto_kx_PUBLICKEYBYTES, SavedSessionManager::kPublicKeyPath);
+  uint32_t fileVPrivate = SavedSessionManager::LoadKey(&privateKeyBuffer[0], crypto_kx_SECRETKEYBYTES, SavedSessionManager::kPrivateKeyPath);
+
+  if(fileVersion == SB_PAIRING_PROTOCOL_VERSION && fileVPrivate == SB_PAIRING_PROTOCOL_VERSION) {
+    publicKey = &publicKeyBuffer[0];
+    _keyExchange->SetKeys(publicKey, &privateKeyBuffer[0]);
+
+    Log::Write("Loading key pair from file.");
+  } else {
+    publicKey = (uint8_t*)_keyExchange->GenerateKeys();
+
+    // Save keys to file
+    SavedSessionManager::SaveKey(publicKey, crypto_kx_PUBLICKEYBYTES, SavedSessionManager::kPublicKeyPath);
+    SavedSessionManager::SaveKey(_keyExchange->GetPrivateKey(), crypto_kx_SECRETKEYBYTES, SavedSessionManager::kPrivateKeyPath);
+    Log::Write("Generating new key pair.");
+  }
+
   std::array<uint8_t, crypto_kx_PUBLICKEYBYTES> publicKeyArray;
   memcpy(std::begin(publicKeyArray), publicKey, crypto_kx_PUBLICKEYBYTES);
   SendRtsMessage<RtsConnRequest>(publicKeyArray);
 
   // Save public key to file
   Log::Write("Sending public key to client.");
-  SavedSessionManager::SavePublicKey(publicKey);
 }
 
 void SecurePairing::SendNonce() {
@@ -323,6 +352,12 @@ void SecurePairing::SendCancelPairing() {
   Log::Write("Canceling pairing.");
 }
 
+void SecurePairing::SendOtaProgress(int status, int progress, int expectedTotal) {
+  // Send Ota Progress
+  SendRtsMessage<RtsOtaUpdateResponse>(status, progress, expectedTotal);
+  Log::Write("Sending OTA Progress Update");
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Event handling methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -336,7 +371,11 @@ void SecurePairing::HandleRtsConnResponse(const Anki::Victor::ExternalComms::Rts
     Anki::Victor::ExternalComms::RtsConnResponse connResponse = msg.Get_RtsConnResponse();
 
     if(connResponse.connectionType == Anki::Victor::ExternalComms::RtsConnType::FirstTimePair) {    
-      HandleInitialPair((uint8_t*)connResponse.publicKey.data(), crypto_kx_PUBLICKEYBYTES);
+      if(_isPairing && !_isOtaUpdating) {
+        HandleInitialPair((uint8_t*)connResponse.publicKey.data(), crypto_kx_PUBLICKEYBYTES);
+      } else {
+        Log::Write("Client tried to initial pair while not in pairing mode.");
+      }
     } else {
       SendNonce();
       Log::Write("Received renew connection request.");
@@ -438,10 +477,10 @@ void SecurePairing::HandleRtsOtaUpdateRequest(const Victor::ExternalComms::RtsCo
     return;
   }
 
-  if(_state == PairingState::ConfirmedSharedSecret) {
-    _engineClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::UPDATING_OS);
+  if(_state == PairingState::ConfirmedSharedSecret && !_isOtaUpdating) {
     Anki::Victor::ExternalComms::RtsOtaUpdateRequest otaMessage = msg.Get_RtsOtaUpdateRequest();
-    ExecCommandInBackground({"/bin/update-engine", otaMessage.url}, nullptr);
+    _otaUpdateRequestSignal.emit(otaMessage.url);
+    _isOtaUpdating = true;
   }
   
   Log::Write("Starting OTA update.");

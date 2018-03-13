@@ -36,6 +36,15 @@ namespace Switchboard {
     uint8_t* GetPublicKey() {
       return _publicKey;
     }
+
+    uint8_t* GetPrivateKey() {
+      return _secretKey;
+    }
+
+    void SetKeys(uint8_t* publicKey, uint8_t* privateKey) {
+      memcpy(_secretKey, privateKey, sizeof(_secretKey));
+      memcpy(_publicKey, publicKey, sizeof(_publicKey));
+    }
     
     uint8_t* GetPinLengthPtr() {
       return &_numPinDigits;

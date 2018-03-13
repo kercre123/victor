@@ -18,9 +18,13 @@
  * Copyright: Anki, Inc. 2018
  *
  **/
+#include <unistd.h>
 #include <stdio.h> 
 #include <sodium.h>
 #include <signals/simpleSignal.hpp>
+#include <linux/reboot.h>
+#include <sys/reboot.h>
+#include <fstream>
 
 #include "anki-ble/log.h"
 #include "anki-ble/anki_ble_uuids.h"
@@ -37,11 +41,6 @@
 namespace Anki {
 namespace Switchboard {
 
-void Test();
-void OnPinUpdated(std::string pin);
-void OnConnected(int connId, Anki::Switchboard::INetworkStream* stream);
-void OnDisconnected(int connId, Anki::Switchboard::INetworkStream* stream);
-
 void Daemon::Start() {
   Log::Write("Loading up Switchboard Daemon");
   _loop = ev_default_loop(0);
@@ -49,6 +48,11 @@ void Daemon::Start() {
 
   InitializeEngineComms();
   Log::Write("Finished Starting");
+
+  // Initialize Ota Timer
+  _handleOtaTimer.signal = &_otaUpdateTimerSignal;
+  _otaUpdateTimerSignal.SubscribeForever(std::bind(&Daemon::HandleOtaUpdateProgress, this));
+  ev_timer_init(&_handleOtaTimer.timer, &Daemon::sEvTimerHandler, kOtaUpdateInterval_s, kOtaUpdateInterval_s);
 }
 
 void Daemon::Stop() {
@@ -61,6 +65,8 @@ void Daemon::Stop() {
     Log::Write("End pairing state.");
     _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
   }
+
+  ev_timer_stop(_loop, &_handleOtaTimer.timer);
 }
 
 void Daemon::InitializeEngineComms() {
@@ -93,6 +99,7 @@ void Daemon::InitializeBleComms() {
   bool connected = _bleClient->Connect();
 
   if(connected) {
+    Log::Write("Ble IPC client connected.");
     UpdateAdvertisement(false);
   } else {
     Log::Write("Fatal error. Could not connect to ankibluetoothd.");
@@ -104,6 +111,13 @@ void Daemon::UpdateAdvertisement(bool pairing) {
   if(_bleClient == nullptr || !_bleClient->IsConnected()) {
     Log::Write("Tried to update BLE advertisement when not connected to ankibluetoothd.");
     return;
+  }
+
+  // update state
+  _isPairing = pairing;
+
+  if(_securePairing != nullptr) {
+    _securePairing->SetIsPairing(pairing);
   }
 
   Anki::BLEAdvertiseSettings settings;
@@ -122,8 +136,9 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
   _taskExecutor->Wake([stream, this](){
     Log::Write("Connected to a BLE central.");
     if(_securePairing == nullptr) {
-      _securePairing = std::make_unique<Anki::Switchboard::SecurePairing>(stream, _loop, _engineMessagingClient);
+      _securePairing = std::make_unique<Anki::Switchboard::SecurePairing>(stream, _loop, _engineMessagingClient, _isPairing, _isOtaUpdating);
       _securePairing->OnUpdatedPinEvent().SubscribeForever(std::bind(&Daemon::OnPinUpdated, this, std::placeholders::_1));
+      _securePairing->OnOtaUpdateRequestEvent().SubscribeForever(std::bind(&Daemon::OnOtaUpdatedRequest, this, std::placeholders::_1));
     }
     
     // Initiate pairing process
@@ -137,6 +152,7 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
   // do any clean up needed
   if(_securePairing != nullptr) {
     _securePairing->StopPairing();
+    Log::Write("BLE Central disconnected.");
     UpdateAdvertisement(false);
     _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
     Log::Write("Destroying secure pairing object.");
@@ -151,12 +167,101 @@ void Daemon::OnPinUpdated(std::string pin) {
   Log::Blue((" " + pin + " ").c_str());
 }
 
+void Daemon::HandleOtaUpdateProgress() {
+  if(_securePairing != nullptr) {
+    // Update connected client of status
+    int progressVal = 0;
+    int expectedVal = 0;
+
+    int status = GetOtaProgress(&progressVal, &expectedVal);
+
+    if(status == -1) {
+      _securePairing->SendOtaProgress(254, progressVal, expectedVal);
+      return;  
+    }
+
+    Log::Write("Downloaded %d/%d bytes.", progressVal, expectedVal);
+    _securePairing->SendOtaProgress(0, progressVal, expectedVal);
+  }
+}
+
+int Daemon::GetOtaProgress(int* progressVal, int* expectedVal) {
+  // read values from files
+  std::string progress;
+  std::string expected;
+
+  std::ifstream progressFile;
+  std::ifstream expectedFile;
+
+  progressFile.open("/data/update-engine/progress");
+  expectedFile.open("/data/update-engine/expected-size");
+
+  if(!progressFile.is_open() || !expectedFile.is_open()) {
+    return -1;
+  }
+
+  getline(progressFile, progress);
+  getline(expectedFile, expected);
+
+  *progressVal = stoi(progress);
+  *expectedVal = stoi(expected);
+
+  return 0;
+}
+
+void Daemon::HandleOtaUpdateExit(int rc, const std::string& output) {
+  if(rc == 0) {
+    // todo: inform client of status before rebooting
+    if(_securePairing != nullptr) {
+      _securePairing->SendOtaProgress(0, 100, 100);
+    }
+
+    sync(); sync(); sync();
+    reboot(LINUX_REBOOT_CMD_RESTART);
+  } else {
+    // error happened while downloading OTA update
+    if(_securePairing != nullptr) {
+      _securePairing->SendOtaProgress(255, 0, 0);
+    }
+  }
+
+  if(_securePairing != nullptr) {
+    _securePairing->SetOtaUpdating(false);
+  }
+
+  ev_timer_stop(_loop, &_handleOtaTimer.timer);
+  _isOtaUpdating = false;
+  _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+}
+
+void Daemon::OnOtaUpdatedRequest(std::string url) {
+  if(_isOtaUpdating) {
+    // handle
+    return;
+  }
+
+  _isOtaUpdating = true;
+  ev_timer_again(_loop, &_handleOtaTimer.timer);
+  _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::UPDATING_OS);
+
+  // remove progress files if exist
+  Log::Write("Ota Update Initialized...");
+  std::string stdout = "";
+  int c = ExecCommand({"./bin/update-engine"}, stdout);
+
+  Log::Write("Cleared files? %s", stdout.c_str());
+  ExecCommandInBackground({"./bin/update-engine", url}, std::bind(&Daemon::HandleOtaUpdateExit, this, std::placeholders::_1, std::placeholders::_2));
+}
+
 void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame message) {
   Anki::Cozmo::ExternalInterface::MessageEngineToGameTag tag = message.GetTag();
 
   switch(tag){
     case Anki::Cozmo::ExternalInterface::MessageEngineToGameTag::EnterPairing: {
       printf("Enter pairing: %hhu\n", tag);    
+      if(_securePairing != nullptr) {
+        _securePairing->SetIsPairing(true);
+      }
       UpdateAdvertisement(true);
       _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::START_PAIRING);
       break;
@@ -185,6 +290,12 @@ void Daemon::HandleEngineTimer(struct ev_loop* loop, struct ev_timer* w, int rev
     ev_timer_stop(loop, &t->timer);
     t->daemon->InitializeBleComms();
   }
+}
+
+void Daemon::sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents)
+{  
+  struct ev_TimerStruct *wData = (struct ev_TimerStruct*)w;
+  wData->signal->emit();
 }
 
 } // Switchboard
