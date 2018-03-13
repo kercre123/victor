@@ -47,21 +47,27 @@ static void run_debug(void)
     int nloops = m_debug[1];
     int rlim = m_debug[2]<=0 ? 255 : m_debug[2]&0xff; //limit for random generator
     ConsolePrintf("===== STRESS TEST COMMS: %i loops, rlim=%i =====\n", nloops, rlim);
-    for(int x = 0; x < nloops; x++) {
-      cmdRobotEsn(); cmdRobotBsv();
-      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BATTERY);
-      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BATTERY);
-      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BATTERY);
-      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_CLIFF);
-      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_LEFT);
-      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_RIGHT);
-      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_LIFT);
-      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_HEAD);
-      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_PROX_TOF);
-      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BTN_TOUCH);
-      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_RSSI);
-      cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_RX_PKT);
+    //Timer::delayMs(1000);
+    try {
+      for(int x = 0; x < nloops; x++) {
+        cmdRobotEsn(); cmdRobotBsv();
+        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BATTERY);
+        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BATTERY);
+        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BATTERY);
+        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_CLIFF);
+        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_LEFT);
+        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_RIGHT);
+        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_LIFT);
+        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_HEAD);
+        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_PROX_TOF);
+        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BTN_TOUCH);
+        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_RSSI);
+        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_RX_PKT);
+      }
+    } catch(int e){
+      ConsolePrintf("===== STRESS TEST FAIL e%03d =====\n", e );
     }
+    ConsolePrintf("===== DONE =====\n");
   }
 }
 
