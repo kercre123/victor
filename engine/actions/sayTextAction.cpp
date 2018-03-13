@@ -144,7 +144,9 @@ SayTextAction::SayTextAction(const std::string& text, const SayTextIntent intent
 SayTextAction::~SayTextAction()
 {
   // If TTS did not reach a terminal state, cancel it now
-  if (_ttsState != TextToSpeechState::Invalid && _ttsState != TextToSpeechState::Done) {
+  if (HasRobot() &&
+      (_ttsState != TextToSpeechState::Invalid) && 
+      (_ttsState != TextToSpeechState::Done)) {
     LOG_DEBUG("SayTextAction.Destructor", "Cancel ttsID %d", _ttsID);
     RobotInterface::TextToSpeechStop msg;
     msg.ttsID = _ttsID;

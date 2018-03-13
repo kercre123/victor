@@ -95,7 +95,7 @@ namespace Anki {
     
     DriveToObjectAction::~DriveToObjectAction()
     {
-      if(_lightsSet)
+      if(HasRobot() && _lightsSet)
       {
         PRINT_CH_INFO("Actions", "DriveToObjectAction.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
                       GetName().c_str(), GetTag(),
