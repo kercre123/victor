@@ -167,11 +167,7 @@ void BehaviorProceduralClock::TransitionToGetIn()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorProceduralClock::TransitionToShowClock()
-{
-  // start an animation that will move the body a little while the update loop
-  // handles displaying the clock
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ObservingIdleWithHeadLookingUp ,0));
-  
+{  
   if(_instanceParams.showClockCallback != nullptr){
     _instanceParams.showClockCallback();
   }
