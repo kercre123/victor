@@ -96,12 +96,11 @@ void animation_index(const MapCommand* map) {
 }
 
 void animation_tick(void) {
-  static const int TARGET_FREQ = 30;
-  static const int INPUT_FREQ = 200;
+  static const int DIVIDER = 6;
   static int overflow = 0;
 
-  if ((overflow += TARGET_FREQ) < INPUT_FREQ) return ;
-  overflow -= INPUT_FREQ;
+  if (++overflow < DIVIDER) return ;
+  overflow = 0;
 
   uint8_t* target = intensity;
   
