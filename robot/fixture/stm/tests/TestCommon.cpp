@@ -80,7 +80,7 @@ namespace TestCommon
   static inline int bridge_getchar_(bridge_target_e which) {
     switch(which) {
       case TO_DUT_UART: return DUT_UART::getchar(); //break;
-      case TO_CONTACTS: return Contacts::getchar(); //break;
+      case TO_CONTACTS: return !Contacts::powerIsOn() ? Contacts::getchar() : -1; //break;
       default: return -1; //break;
     }
   }
@@ -88,7 +88,12 @@ namespace TestCommon
   static inline void bridge_putchar_(bridge_target_e which, char c) {
     switch(which) {
       case TO_DUT_UART: DUT_UART::putchar(c); break;
-      case TO_CONTACTS: Contacts::putchar(c); Contacts::setModeRx(); /*back to rx immediately*/ break;
+      case TO_CONTACTS: 
+        if( !Contacts::powerIsOn() ) { 
+          Contacts::putchar(c); 
+          Contacts::setModeRx(); /*back to rx immediately*/ 
+        }
+        break;
     }
   }
   
@@ -110,6 +115,8 @@ namespace TestCommon
     const  int  line_maxlen = 40;
     int  line_len = 0, recall_len = 0;
     char line[line_maxlen+1];
+    const int charge_idle_ms = 30*1000; //delay before enabling robot charging
+    int idle_ms = 0;
     
     ConsolePrintf("Console Bridge <-> %s for %ims,inactive:%ims [or type 'exit']\n", which_s_(which), timeout_ms, inactivity_delay_ms);
     
@@ -127,14 +134,22 @@ namespace TestCommon
         if( timeout_ms > 0 && --timeout_ms == 0 )
           break;
         if( inactivity_delay_ms > 0 && --inactivity_delay_ms == 0 )
-          break;
+          break;        
+        if( which == TO_CONTACTS ) { 
+          if( ++idle_ms >= charge_idle_ms && !Contacts::powerIsOn() ) {
+            //ConsolePrintf("idle timeout. charging enabled\n");
+            Contacts::powerOn(); //Note: prevents rx from contacts until console is re-actviated
+          }
+        }
       }
       
       //be the bridge you were born to be
       do {        
         if( (c = bridge_getchar_(which)) > -1 ) {
-          if( c > 0 && c <= 0x7f ) //limit to ascii, ignore null. getline() methods usually do this.
+          if( c > 0 && c <= 0x7f ) { //limit to ascii, ignore null. getline() methods usually do this.
+            idle_ms = 0;
             ConsolePutChar(c);
+          }
         }
       } while( c > -1 );
       
@@ -142,6 +157,14 @@ namespace TestCommon
       if( (c = ConsoleReadChar()) > -1 )
       {
         inactivity_delay_ms = 0; //disabled on activity
+        if( which == TO_CONTACTS ) { 
+          idle_ms = 0; //reset idle counter
+          if( Contacts::powerIsOn() ) {
+            //ConsolePrintf("charging disabled\n");
+            Contacts::setModeRx(); //re-enable contact uart
+          }
+        }
+        
         if( !bufmode ) { //normal mode
           if( echo )
             ConsolePutChar(c);
