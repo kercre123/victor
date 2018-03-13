@@ -681,6 +681,11 @@
               <FileType>8</FileType>
               <FilePath>.\hal\bdaddr.c</FilePath>
             </File>
+            <File>
+              <FileName>flexflow.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\flexflow.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
