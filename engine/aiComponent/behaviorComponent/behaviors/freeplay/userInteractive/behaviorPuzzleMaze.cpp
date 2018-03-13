@@ -428,7 +428,7 @@ void BehaviorPuzzleMaze::BehaviorUpdate()
     case MazeState::GetIn:
     {
       if (!IsControlDelegated()) {
-        StartAnimation(AnimationTrigger::BouncerGetIn, MazeState::MazeStep);
+        StartAnimation(AnimationTrigger::CubePounceGetIn, MazeState::MazeStep);
       }
       break;
     }
@@ -442,7 +442,7 @@ void BehaviorPuzzleMaze::BehaviorUpdate()
     case MazeState::GetOut:
     {
       if (!IsControlDelegated()) {
-        StartAnimation(AnimationTrigger::BouncerGetOut, MazeState::Complete);
+        StartAnimation(AnimationTrigger::CubePounceGetOut, MazeState::Complete);
       }
       break;
     }

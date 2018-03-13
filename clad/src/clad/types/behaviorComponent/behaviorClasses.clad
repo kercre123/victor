@@ -98,7 +98,6 @@ enum uint_8 BehaviorClass {
   LookForFaceAndCube,
 
   // freeplay/userInteractive
-  Bouncer,
   FistBump,
   PounceWithProx,
   PuzzleMaze,

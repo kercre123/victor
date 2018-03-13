@@ -67,7 +67,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/oneShots/behaviorDance.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/oneShots/behaviorSinging.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/putDownDispatch/behaviorLookForFaceAndCube.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorBouncer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorFistBump.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPounceWithProx.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPuzzleMaze.h"
@@ -464,12 +463,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::LookForFaceAndCube:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorLookForFaceAndCube(config));
-      break;
-    }
-    
-    case BehaviorClass::Bouncer:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorBouncer(config));
       break;
     }
     
