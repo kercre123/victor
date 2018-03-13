@@ -38,6 +38,7 @@ static void get_errs_(cmd_io io, io_err_t *ioe) {
   ioe->rxFramingErrors  = io==CMD_IO_DUT_UART ? DUT_UART::getRxFramingErrors()  : (io==CMD_IO_CONTACTS ? Contacts::getRxFramingErrors()  : 0);
 }
 
+static char rsp_buf[100];
 static int rsp_len = 0;
 static void flush_(cmd_io io)
 {
@@ -67,7 +68,6 @@ static void flush_(cmd_io io)
 
 static char* getline_(cmd_io io, int timeout_us)
 {
-  static char rsp_buf[100];
   char* rsp;
   int out_len;
   
@@ -94,6 +94,26 @@ static char* getline_(cmd_io io, int timeout_us)
   }
   
   return rsp;
+}
+
+static char* getline_raw_(cmd_io io, int *out_len) //buffer scraps for debug when cmd times out
+{
+  switch(io)
+  {
+    case CMD_IO_DUT_UART:
+      if( out_len )
+        *out_len = rsp_len;
+      return rsp_buf;
+    case CMD_IO_CONTACTS:
+      return Contacts::getlinebuffer(out_len);
+    default:
+    case CMD_IO_SIMULATOR:
+    case CMD_IO_CONSOLE: //XXX: dummy buffer for console (too lazy to update API)
+      if( out_len )
+        *out_len = 0;
+      rsp_buf[0] = '\0';
+      return rsp_buf;
+  }
 }
 
 static void write__(cmd_io io, const char* s)
@@ -143,7 +163,7 @@ void cmdTickCallback(uint32_t interval_ms, void(*tick_handler)(void) ) {
 
 char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async_handler)(char*) )
 {
-  char b[80]; int bz = sizeof(b); //str buffer
+  char b[80]; const int bz = sizeof(b); //str buffer
   
   //check if we should insert newlines?
   bool newline = scmd[strlen(scmd)-1] != '\n';
@@ -244,6 +264,25 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
       if( active_tick_handler != NULL )
         active_tick_handler();
     }
+  }
+  
+  //DEBUG: see what's leftover in the rx buffer
+  int rlen;
+  char* rawline = getline_raw_(io, &rlen);
+  if( rlen > 0 ) {
+    write_(CMD_IO_CONSOLE, ".DBG RX PARTIAL '");
+    for(int x=0; x<rlen; x++)
+      write_(CMD_IO_CONSOLE, snformat(b,bz,"%c", rawline[x] >= ' ' && rawline[x] < '~' ? rawline[x] : '*'));
+    write_(CMD_IO_CONSOLE, snformat(b,bz,"' (%i)\n", rlen));
+  }
+  
+  //check for rx errors
+  io_err_t ioerr;
+  get_errs_(io, &ioerr);
+  if( ioerr.rxOverflowErrors > 0 || ioerr.rxDroppedChars > 0 ) {
+    write_(CMD_IO_CONSOLE, snformat(b,bz,"--> IO ERROR ovfl=%i dropRx=%i frame=%i", ioerr.rxOverflowErrors, ioerr.rxDroppedChars, ioerr.rxFramingErrors));
+    ERROR_HANDLE("IO_ERROR\n", ERROR_TESTPORT_RX_ERROR);
+    //return NULL; //if no exception, allow cmd validation to continue
   }
   
   m_time_ms = timeout_ms;
@@ -446,7 +485,31 @@ static struct { //result of most recent command
   union { ccr_esn_t esn; ccr_bsv_t bsv; ccr_sr_t  sr; } rsp;
 } m_dat;
 
-void esn_bsv_handler_(char* s)
+void esn_handler_(char* s) {
+  m_dat.rsp.esn.esn = cmdParseHex32( cmdGetArg(s,0) );
+  m_dat.ccr_err = errno != 0 ? ERROR_TESTPORT_RSP_BAD_ARG: m_dat.ccr_err;
+  m_dat.handler_cnt++;
+}
+
+ccr_esn_t* cmdRobotEsn()
+{
+  CCC_CMD_DELAY();
+  memset( &m_dat, 0, sizeof(m_dat) );
+  const char *cmd = "esn 00 00 00 00 00 00";
+  cmdSend(CMD_IO_CONTACTS, cmd, 500, CMD_OPTS_DEFAULT, esn_handler_);
+  
+  #if CCC_DEBUG > 0
+  ConsolePrintf("esn=%08x\n", m_dat.rsp.esn.esn );
+  #endif
+  
+  if( m_dat.handler_cnt != 1 || m_dat.ccr_err != ERROR_OK ) {
+    ConsolePrintf("ESN ERROR %i, handler cnt %i\n", m_dat.ccr_err, m_dat.handler_cnt);
+    CCC_ERROR_HANDLE(m_dat.ccr_err);
+  }
+  return &m_dat.rsp.esn;
+}
+
+void bsv_handler_(char* s)
 {
   uint32_t *dat = (uint32_t*)&m_dat.rsp; //esn,bsv are both uint32_t arrays
   const int nwords_max = sizeof(m_dat.rsp)/sizeof(uint32_t);
@@ -460,30 +523,12 @@ void esn_bsv_handler_(char* s)
   m_dat.handler_cnt += 2;
 }
 
-ccr_esn_t* cmdRobotEsn()
-{
-  CCC_CMD_DELAY();
-  memset( &m_dat, 0, sizeof(m_dat) );
-  const char *cmd = "esn 00 00 00 00 00 00";
-  cmdSend(CMD_IO_CONTACTS, cmd, 150, CMD_OPTS_DEFAULT, esn_bsv_handler_);
-  
-  #if CCC_DEBUG > 0
-  ConsolePrintf("esn=%08x os-version=%08x\n", m_dat.rsp.esn.esn, m_dat.rsp.esn.osver );
-  #endif
-  
-  if( m_dat.handler_cnt != 2 || m_dat.ccr_err != ERROR_OK ) {
-    ConsolePrintf("ESN ERROR %i, handler cnt %i\n", m_dat.ccr_err, m_dat.handler_cnt);
-    CCC_ERROR_HANDLE(m_dat.ccr_err);
-  }
-  return &m_dat.rsp.esn;
-}
-
 ccr_bsv_t* cmdRobotBsv()
 {
   CCC_CMD_DELAY();
   memset( &m_dat, 0, sizeof(m_dat) );
   const char *cmd = "bsv 00 00 00 00 00 00";
-  cmdSend(CMD_IO_CONTACTS, cmd, 500, CMD_OPTS_DEFAULT, esn_bsv_handler_);
+  cmdSend(CMD_IO_CONTACTS, cmd, 500, CMD_OPTS_DEFAULT, bsv_handler_);
   
   #if CCC_DEBUG > 0
   ConsolePrintf("bsv hw.rev,model %u %u\n", m_dat.rsp.bsv.hw_rev, m_dat.rsp.bsv.hw_model );
@@ -519,7 +564,7 @@ static ccr_sr_t* cmdRobot_MotGet_(uint8_t NN, uint8_t NNread, uint8_t sensor, in
   if( NNread > NN ) //will always return 0s!
     throw ERROR_BAD_ARG;
   
-  cmdSend(CMD_IO_CONTACTS, b, 150 + (int)NN*6, CMD_OPTS_DEFAULT, sensor_handler_);
+  cmdSend(CMD_IO_CONTACTS, b, 500 + (int)NN*6, CMD_OPTS_DEFAULT, sensor_handler_);
   
   #if CCC_DEBUG > 0
   ConsolePrintf("NN=%u sr vals %i %i %i %i\n", NNread, m_dat.rsp.sr.val[0], m_dat.rsp.sr.val[1], m_dat.rsp.sr.val[2], m_dat.rsp.sr.val[3] );
@@ -542,7 +587,7 @@ void cmdRobotFcc(uint8_t mode, uint8_t cn) {
   CCC_CMD_DELAY();
   memset( &m_dat, 0, sizeof(m_dat) );
   char b[22]; const int bz = sizeof(b);
-  cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"fcc %02x %02x 00 00 00 00", mode, cn), 150);
+  cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"fcc %02x %02x 00 00 00 00", mode, cn), 500);
 }
 
 void cmdRobotRlg(uint8_t idx) {
@@ -557,7 +602,7 @@ void cmdRobot_IdxVal32_(uint8_t idx, uint32_t val, const char* cmd, void(*handle
   memset( &m_dat, 0, sizeof(m_dat) );
   char b[22]; const int bz = sizeof(b);
   snformat(b,bz,"%s %02x %02x %02x %02x %02x 00", cmd, idx, (val>>0)&0xFF, (val>>8)&0xFF, (val>>16)&0xFF, (val>>24)&0xFF );
-  cmdSend(CMD_IO_CONTACTS, b, 150, CMD_OPTS_DEFAULT, handler );
+  cmdSend(CMD_IO_CONTACTS, b, 500, CMD_OPTS_DEFAULT, handler );
 }
 void cmdRobotEng(uint8_t idx, uint32_t val) { cmdRobot_IdxVal32_(idx, val, "eng", 0); }
 void cmdRobotLfe(uint8_t idx, uint32_t val) { cmdRobot_IdxVal32_(idx, val, "lfe", 0); }

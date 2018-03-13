@@ -96,7 +96,6 @@ const int ccr_sr_cnt[11] = {0,2,4,2,2,2,2,4,2,1,1}; //number of sensor fields fo
 
 typedef struct {
   uint32_t esn;
-  uint32_t osver;
 } ccr_esn_t;
 
 typedef struct {
