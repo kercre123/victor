@@ -17,6 +17,7 @@
 
 #include <cmath>
 #include <cfloat>
+#include <algorithm>
 
 namespace Anki {
   
@@ -77,4 +78,79 @@ void ConvexPolygon::RadialExpand(f32 d) {
     PRINT_NAMED_WARNING("ConvexPolygon.RadialExpand", "called expand with a negative distance.");
   }
 }
+
+// Given a set of points, computes the convex hull using Graham scan algorithm:
+// https://en.wikipedia.org/wiki/Graham_scan
+ConvexPolygon ConvexPolygon::ConvexHull(std::vector<Point2f>&& points)
+{
+  Poly2f outPoly;
+  outPoly.reserve(points.size());
+  
+  // check if there are not enough points for Graham scan
+  const size_t numPoints = points.size();
+  if ( numPoints <= 2 )
+  {
+    for (const auto pt : points) {
+      outPoly.push_back(pt);
+    }
+    return ConvexPolygon(outPoly);
+  }
+
+  // Graham scan algorithm on points
+  // make the first element in the sorted list the one with the lowest Y
+  std::nth_element(points.begin(), points.begin(), points.end(), 
+    [](const Point2f &p, const Point2f &q) {
+      return FLT_NEAR(p.y(), q.y()) ? FLT_LT(p.x(), q.x()) : FLT_LT(p.y(), q.y());
+    });
+  
+  // grabbing a reference since it should not change while sorting
+  const Point2f& p0 = points[0]; 
+
+  // cross product for quick checking of interior angle
+  const auto crossProd = [](const Point2f& p0, const Point2f& p1, const Point2f& p2) -> float
+  {   
+    return (p1.x() - p0.x()) * (p2.y() - p0.y()) - (p2.x() - p0.x()) * (p1.y() - p0.y());
+  };
+
+  // sort function for sorting all points relative to their angle with the start point
+  const auto compareCounterClockwise = [&p0, &crossProd](const Point2f& p1, const Point2f& p2) -> bool
+  {
+    const float o = crossProd(p0,p1,p2);
+    if ( NEAR_ZERO(o) ) {
+      // if collinear, pick closest
+      const Vec2f& originTo1 = p1 - p0;
+      const Vec2f& originTo2 = p2 - p0;
+      const bool p1Closer = FLT_LT(originTo1.LengthSq(),originTo2.LengthSq());
+      return p1Closer;
+    }
+    
+    return FLT_GE_ZERO(o);
+  };
+  
+  // sort clockwise
+  std::sort(points.begin()+1, points.end(), compareCounterClockwise);
+  
+  // add first 2 points
+  outPoly.emplace_back( std::move(points[0]) );
+  outPoly.emplace_back( std::move(points[1]) );
+  
+  // iterate all other candidate points
+  for(size_t i=2; i<numPoints; ++i)
+  {
+    // calculate orientation we would obtain adding the point to the current convex hull
+    size_t curPolyTop = outPoly.size()-1;
+    float newOrientation = crossProd(outPoly[curPolyTop-1], outPoly[curPolyTop], points[i]);
+    while( FLT_LE(newOrientation, 0.f) && curPolyTop > 0) {
+      --curPolyTop;
+      outPoly.pop_back();
+      newOrientation = crossProd(outPoly[curPolyTop-1], outPoly[curPolyTop], points[i]);
+    }
+    
+    // now this point becomes part of the convex hull
+    outPoly.emplace_back( std::move(points[i]) );
+  }
+  
+  return ConvexPolygon(outPoly);
 }
+
+} // end namespace

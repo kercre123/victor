@@ -1216,7 +1216,7 @@ FastPolygon xythetaEnvironment::ExpandCSpace(const ConvexPolygon& obstacle,
   Point2f curr = obstacle[0] - robot[robotStart];
 
   // now merge based on angle
-  Poly2f expansion;
+  std::vector<Point2f> expansion;
 
   expansion.push_back(curr);
 
@@ -1270,7 +1270,8 @@ FastPolygon xythetaEnvironment::ExpandCSpace(const ConvexPolygon& obstacle,
   // CoreTechPrint("c-space obstacle: ");
   // expansion.Print();
 
-  return FastPolygon{ expansion };
+  // VIC-1702: Minkowski sum implementation is subject to floating point errors, so take the convex hull for now
+  return FastPolygon{ ConvexPolygon::ConvexHull(std::move(expansion)) };
 }
 
 

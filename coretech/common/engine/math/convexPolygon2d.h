@@ -34,7 +34,11 @@ public:
   void SetClockDirection(EClockDirection d) { _currDirection = d; };
   EClockDirection GetClockDirection() const { return _currDirection; }
     
+  // check if the given polygon is convex  
   static bool IsConvex(const Poly2f& poly);
+  
+  // get the convex hull for the provided set of points
+  static ConvexPolygon ConvexHull(std::vector<Point2f>&& points);
   
   void RadialExpand(f32 d);
   
