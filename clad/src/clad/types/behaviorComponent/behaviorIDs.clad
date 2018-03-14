@@ -146,6 +146,7 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates
   InteractWithFaces,
+  Keepaway,
   LookInPlaceHeadUp,
 
   // victorBehaviorTree/highLevelDelegates/meetVictor
@@ -214,6 +215,7 @@ enum uint_8 BehaviorID {
   // victorBehaviorTree/highLevelDelegates/voiceCommands
   DoATrickVoiceCommand,
   FistBumpVoiceCommand,
+  KeepawayVoiceCommand,
 
   // victorBehaviorTree
   Petting,

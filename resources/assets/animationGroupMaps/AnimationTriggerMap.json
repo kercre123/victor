@@ -169,6 +169,10 @@
       "AnimName": "ag_keepaway_getout"
     },
     {
+      "CladEvent": "CubePounceGetOutBored",
+      "AnimName": "ag_keepaway_getout_bored"
+    },
+    {
       "CladEvent": "CubePounceGetReady",
       "AnimName": "ag_keepaway_getready"
     },

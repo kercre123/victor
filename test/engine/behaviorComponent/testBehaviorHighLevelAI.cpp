@@ -121,6 +121,10 @@ TEST(BehaviorHighLevelAI, VoiceIntentsHandled)
     })json", {"Napping", "NappingOnCharger"}},
     {R"json({
       "intent": "intent_play_specific",
+      "params": { "entity_behavior": "keep_away" }
+    })json", {"Napping", "NappingOnCharger"}}, 
+    {R"json({
+      "intent": "intent_play_specific",
       "params": { "entity_behavior": "roll_cube" }
     })json", {"Napping", "NappingOnCharger"}},
     {R"json({

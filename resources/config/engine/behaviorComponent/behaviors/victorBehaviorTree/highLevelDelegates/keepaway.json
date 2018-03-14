@@ -1,0 +1,29 @@
+{
+  "behaviorClass": "Keepaway",
+  "behaviorID": "Keepaway",
+
+  "naturalGameEndTimeout_s":          180.0, // Game will end after the next point when this expires
+  "targetUnmovedGameEndTimeout_s":    20.0, // Game will end with "Bored" if the cube is unmoved for this long  
+  "noVisibleTargetGameEndTimeout_s":  20.0, // Game will end with "Bored" if the cube goes this long unseen
+  "noPointsEarnedTimeout_s":          90.0, // Game will end with "Bored" if no-one has a point yet
+  "targetVisibleTimeout_s":           1.0, // Timeout to allow brief target occlusion (e.g. finger on marker)
+  "animDistanceOffset_mm":            13.0, // Tuneable value to compensate animations vs. physical distances
+  "inPlayDistance_mm":                190.0, // If the cube moves beyond here, victor goes to a standby posture
+  "outOfPlayDistance_mm":             210.0, // If the cube is closer than this, victor gets ready to strike
+  "targetUnmovedDistance_mm":         4.0, // If the cube moves less than this in a frame, we consider it static
+  "targetUnmovedAngle_deg":           5.0, // If the cube rotates less than this in a frame, we consider it static
+  "allowablePointingError_deg":       7.5, // Victor will turn to face the target if the angle to it is larger
+  "targetUnmovedCreepTimeout_s":      4.5, // Victor will creep up on a cube that hasn't moved in this long
+  "creepDistanceMin_mm":              5.0,
+  "creepDistanceMax_mm":              30.0,
+  "creepDelayTimeMin_s":              1.0, // Min time victor will wait before creeping after the unmoved timeout
+  "creepDelayTimeMax_s":              3.5, // Max time victor will wait before creeping after the unmoved timeout
+  "pounceDelayTimeMin_s":             0.5, // Once primed, min time victor waits to pounce
+  "pounceDelayTimeMax_s":             1.5, // Once primed, max time victor waits to pounce
+  "basePounceChance":                 0.5, // Base probability that victor will pounce vs. fakeout
+  "pounceChanceIncrement":            0.15, // Amount by which probability of fakeout is reduced after each fakeout
+  "nominalPounceDistance_mm":         55.0, // Cube must be closer than this to pounce
+  "instaPounceDistance_mm":           35.0, // If the cube is closer than this, pounce with zero delay
+  "pounceSuccessPitchDiff_deg":       5.0,
+  "pointsToWin":                      3
+}

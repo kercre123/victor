@@ -90,6 +90,12 @@
       "behavior": "FistBumpVoiceCommand",
       "debugColor": "WHITE",
       "clearIntent": "play_specific"
+    },
+    {
+      "name": "Keepaway",
+      "behavior": "KeepawayVoiceCommand",
+      "debugColor": "YELLOW",
+      "clearIntent": "play_specific"
     }
   ],
 
@@ -397,6 +403,18 @@
     },
 
     {
+      "from": "Keepaway",
+      "exitTransitions": [
+        {
+          "to": "Socializing",
+          "condition": {
+            "conditionType": "TrueCondition"
+          }
+        }
+      ]
+    },
+
+    {
       "from": "RollCube",
       "exitTransitions": [
         {
@@ -419,10 +437,12 @@
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
         "FistBump",
+        "Keepaway",
         "Observing",
         "ReturningToCharger", // to avoid unclaimed intent
         "Socializing",
-        "RollCube"
+        "RollCube",
+        "Keepaway"
       ],
       "interruptingTransitions": [
         {
@@ -462,6 +482,7 @@
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
         "FistBump",
+        "Keepaway",
         "Observing",
         "Socializing",
         "WakingUp",
@@ -504,6 +525,59 @@
       ]
     },
 
+    // Play Keepaway
+    {
+      "from": [
+        "ObservingOnCharger",
+        "ObservingOnChargerRecentlyPlaced",
+        "DriveOffChargerIntoObserving",
+        "DriveOffChargerIntoSocializing",
+        "DriveOffChargerIntoPlay",
+        "FistBump",
+        "Keepaway",
+        "Observing",
+        "Socializing",
+        "WakingUp",
+        "ReturningToCharger",
+        "FailedToFindCharger"
+      ],
+      "interruptingTransitions": [
+        {
+          "to": "Keepaway",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {
+                "type": "play_specific",
+                "entity_behavior": "keep_away"
+              }
+            ]
+          }
+        }
+      ]
+
+    },
+    {
+      "from": [
+        "PlayingWithCube",
+        "RollCube"
+      ],
+      "nonInterruptingTransitions": [
+        {
+          "to": "Keepaway",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {
+                "type": "play_specific",
+                "entity_behavior": "keep_away"
+              }
+            ]
+          }
+        }
+      ]
+    },
+
     // go to sleep off charger
     {
       "from": [
@@ -511,6 +585,7 @@
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
         "FistBump",
+        "Keepaway",
         "Observing",
         "Socializing",
         "WakingUp",
@@ -576,6 +651,8 @@
         "DriveOffChargerIntoObserving",
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
+        "FistBump",
+        "Keepaway",
         "Observing",
         "Socializing",
         "WakingUp",
@@ -601,7 +678,8 @@
     },
     {
       "from": [
-        "FistBump"
+        "FistBump",
+        "Keepaway"
       ],
       "nonInterruptingTransitions": [
         {
@@ -617,6 +695,7 @@
           }
         }
       ]
+
     }
     
   ]
