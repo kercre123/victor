@@ -40,7 +40,7 @@ void write_multiple(int targets, const char* textstring, int len)
   if( targets & SEND_LOG ) {
     fixture_log_write(textstring, len);
   }
-  if( (targets & SEND_SERIAL) && gSerialFd > 0 ) {
+  if( (targets & SEND_SERIAL) && gSerialFd >= 0 ) {
     serial_write(gSerialFd, (uint8_t*)textstring, len);
   }
 }
@@ -419,7 +419,7 @@ int user_terminal(void) {
 
 void on_exit(void)
 {
-  if (gSerialFd) {
+  if (gSerialFd >= 0) {
     close(gSerialFd);
   }
   fixture_log_terminate();
