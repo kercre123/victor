@@ -54,7 +54,7 @@ echo $(printf timestamp:%s "$(date +'%m/%d/%Y %H:%M:%S')") > $manifest
 echo $(printf version:%d $version) >> $manifest
 echo $(printf "build-time-ms:%d" $(($Tend-$Tstart))) >> $manifest
 echo $(printf build-err:%d $builderr) >> $manifest
-echo $(printf branch:%s $(git rev-parse --abbrev-ref HEAD)) > $manifest
+echo $(printf branch:%s $(git rev-parse --abbrev-ref HEAD)) >> $manifest
 echo $(printf sha-1:%s $(git rev-parse HEAD)) >> $manifest
 #if [ "$(git diff-index --cached --quiet HEAD --ignore-submodules --)" == "0" ]; then isclean=1; else isclean=0; fi
 #echo $(printf working-tree-clean:%d $isclean) >> $manifest
