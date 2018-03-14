@@ -13,28 +13,9 @@
 #define PRESENT_CURRENT_MA  10
 #define DETECT_CURRENT_MA   100
 
-int detect_ma = 0;
-bool TestRobotDetect(void)
-{
-  Board::powerOn(PWR_VEXT,0);
-  //Board::powerOn(PWR_VBAT); //XXX DEBUG
-  
-  int i_ma = Meter::getCurrentMa(PWR_VEXT,0);
-  
-  //running average filter, len=2^oversample
-  const int oversample = 6;
-  detect_ma = ( ((1<<oversample)-1)*detect_ma + i_ma ) >> oversample;
-  
-  // Hysteresis for shut-down robots
-  return i_ma > DETECT_CURRENT_MA || (i_ma > PRESENT_CURRENT_MA && g_isDevicePresent);
-}
-
-void TestRobotCleanup(void)
-{
-  detect_ma = 0;
-  Board::powerOff(PWR_VEXT); //Contacts::powerOff();
-  Board::powerOff(PWR_VBAT);
-}
+//-----------------------------------------------------------------------------
+//                  Debug
+//-----------------------------------------------------------------------------
 
 static int m_debug[4];
 static void run_debug(void)
@@ -97,6 +78,33 @@ const char* DBG_cmd_substitution(const char *line, int len)
     return "\n";
   }
   return 0;
+}
+
+//-----------------------------------------------------------------------------
+//                  Robot
+//-----------------------------------------------------------------------------
+
+int detect_ma = 0;
+bool TestRobotDetect(void)
+{
+  Board::powerOn(PWR_VEXT,0);
+  //Board::powerOn(PWR_VBAT); //XXX DEBUG
+  
+  int i_ma = Meter::getCurrentMa(PWR_VEXT,0);
+  
+  //running average filter, len=2^oversample
+  const int oversample = 6;
+  detect_ma = ( ((1<<oversample)-1)*detect_ma + i_ma ) >> oversample;
+  
+  // Hysteresis for shut-down robots
+  return i_ma > DETECT_CURRENT_MA || (i_ma > PRESENT_CURRENT_MA && g_isDevicePresent);
+}
+
+void TestRobotCleanup(void)
+{
+  detect_ma = 0;
+  Board::powerOff(PWR_VEXT); //Contacts::powerOff();
+  Board::powerOff(PWR_VBAT);
 }
 
 //always run this first after detect, to get into comms mode
