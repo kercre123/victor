@@ -34,8 +34,8 @@ expect {
 
 sleep 1
 set timeout 180
-send "wifi-set-config AnkiTest2 password\r"
-expect "wpa_state=COMPLETED"
+send "wifi-set-config psk false AnkiTest2 password\r"
+expect "wlan0"
 
 sleep 1
 send "quit\r"

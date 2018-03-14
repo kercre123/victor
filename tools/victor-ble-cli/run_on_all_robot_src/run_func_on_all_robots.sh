@@ -118,7 +118,7 @@ proc run_on_all_robots func {
 
     # Configure to connect to the AnkiTest2 network
     sleep 2
-    send "wifi-set-config AndroidAP ftej1581\r"
+    send "wifi-set-config psk false AndroidAP ftej1581\r"
     set timeout 30
     expect "ip_address="
     expect {

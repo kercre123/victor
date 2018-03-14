@@ -15,50 +15,48 @@ First, power on the victor and wait about 1 minute to get it to start advertisin
 bash$ node ./index.js
 victor-ble-cli$ scan
 
+Please power on your Bluetooth adapter to start scanning.
+victor-ble-cli$
 Scanning started.....
 victor-ble-cli$
-Found VICTOR_553261a
-victor-ble-cli$ connect
+Found Vector T7R9 (RSSI = -51)
+victor-ble-cli$ connect "Vector T7R9"
 
-Trying to connect to VICTOR_553261a....
+Scanning stopped.
 victor-ble-cli$
-Connected to VICTOR_553261a
+Trying to connect to Vector T7R9....
 victor-ble-cli$
-Services discovered for VICTOR_553261a
+Connected to Vector T7R9
 victor-ble-cli$
-Fully connected to VICTOR_553261a
-victor-ble-cli$ wifi-set-config SSID PASSWORD
+Services discovered for Vector T7R9
 victor-ble-cli$
-Using interface 'wlan0'
-OK
-
+Fully connected to Vector T7R9
+victor-ble-cli$ wifi-set-config psk false SSID PASSWORD
 victor-ble-cli$
-Heartbeat 0
-victor-ble-cli$
+Error wifi: Already enabled
 
 victor-ble-cli$
-Using interface 'wlan0'
-bssid=80:2a:a8:84:51:62
-freq=2462
-ssid=stu
-id=0
-mode=station
-pairwise_cipher=CCMP
-group_cipher=CCMP
-key_mgmt=WPA2-PSK
-wpa_state=COMPLETED
-ip_address=192.168.77.70
-p2p_device_address=00:0a:f5:4c:98:68
-address=00:0a:f5:4c:98:68
-uuid=d03a0a30-5470-5fbb-80ff-a569b6f53782
+Give me about 15 seconds to setup WiFi....
+
+victor-ble-cli$
+wlan0     Link encap:Ethernet  HWaddr 00:0A:F5:6D:41:90
+          inet addr:192.168.77.83  Bcast:192.168.77.255  Mask:255.255.255.0
+          inet6 addr: fe80::20a:f5ff:fe6d:4190/64 Scope:Link
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:2775 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:636 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000
+          RX bytes:637267 (622.3 KiB)  TX bytes:68110 (66.5 KiB)
+
+
 
 ```
 
-Note that whitespace characters in the SSID or password are not currently supported.
+Note that whitespace characters in the SSID or password need to be enclosed in double quotes.
 
 ## Wifi Connection
 
-To connect your robot to wifi, run the script 
+To connect your robot to wifi, run the script
 ```sh
 ./vic_join_wifi.sh <VICTOR_NNNNNNNN>
 ```
