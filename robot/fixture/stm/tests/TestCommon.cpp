@@ -85,13 +85,14 @@ namespace TestCommon
     }
   }
   
-  static inline void bridge_putchar_(bridge_target_e which, char c) {
+  static inline void bridge_putchar_(bridge_target_e which, char c, bool half_duplex_stay_tx_mode) {
     switch(which) {
       case TO_DUT_UART: DUT_UART::putchar(c); break;
       case TO_CONTACTS: 
         if( !Contacts::powerIsOn() ) { 
-          Contacts::putchar(c); 
-          Contacts::setModeRx(); /*back to rx immediately*/ 
+          Contacts::putchar(c);
+          if( !half_duplex_stay_tx_mode )
+            Contacts::setModeRx(); /*back to rx immediately*/ 
         }
         break;
     }
@@ -172,7 +173,7 @@ namespace TestCommon
         if( !bufmode ) { //normal mode
           if( echo )
             ConsolePutChar(c);
-          bridge_putchar_(which, c); //immediate write
+          bridge_putchar_(which, c, 0); //immediate write
         }
         else //use line buffering
         {
@@ -215,8 +216,8 @@ namespace TestCommon
                 
                 if( allow_send ) {
                   for(int x=0; x<line_len; x++)
-                    bridge_putchar_(which, line[x]); //dump the entire line
-                  bridge_putchar_(which, '\n');
+                    bridge_putchar_(which, line[x], 1); //dump the entire line (hold TX mode in half-duplex)
+                  bridge_putchar_(which, '\n', 0); //print final char and return to RX mode
                   recall_len = line_len; //save length for recall
                   line_len = 0;
                 }
