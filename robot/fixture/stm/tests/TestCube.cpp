@@ -8,6 +8,7 @@
 #include "crc32.h"
 #include "dut_uart.h"
 #include "fixture.h"
+#include "flexflow.h"
 #include "hwid.h"
 #include "meter.h"
 #include "portable.h"
@@ -20,46 +21,58 @@
 static const int CURRENT_HW_REV = CUBEID_HWREV_DVT3;
 
 //generate signature for the cube bootloader binary
-uint32_t cubebootSignature(bool dbg_print)
+uint32_t cubebootSignature(bool dbg_print=0, int *out_cubeboot_size=0);
+uint32_t cubebootSignature(bool dbg_print, int *out_cubeboot_size)
 {
-  //OTP stub contains nested cubeboot.bin application. location/size info is reported at hard-coded addresses...
-  uint32_t cubeboot_magic = ((uint32_t*)g_CubeStub)[40];
-  uint32_t cubeboot_start = ((uint32_t*)g_CubeStub)[41] & 0x0FFFffff; //ignore dialog's OTP/Ram section placements
-  uint32_t cubeboot_end   = ((uint32_t*)g_CubeStub)[42] & 0x0FFFffff; //ignore dialog's OTP/Ram section placements
-  int cubeboot_size = cubeboot_end - cubeboot_start;
-  int cubestub_size = g_CubeStubEnd - g_CubeStub;
+  static bool crc_init = 0;
+  static uint32_t crc;
+  static int m_cubeboot_size = -1;
   
-  //validate header
-  if( cubeboot_magic != 0xc0beb007 || cubeboot_size < 4000 || cubeboot_size >= cubestub_size || cubeboot_start >= cubestub_size || cubeboot_end >= cubestub_size ) {
-    ConsolePrintf("CubeStub[CubeBoot] bad header:\n");
-    ConsolePrintf("  g_CubeStub: %08x-%08x (%i)\n", 0, cubestub_size-1, cubestub_size);
-    ConsolePrintf("  g_CubeBoot: %08x-%08x (%i) magic %08x\n", cubeboot_start, cubeboot_end-1, cubeboot_size, cubeboot_magic);
-    throw ERROR_CUBE_BAD_BINARY;
-    //return 0;
-  }
-  
-  //DEBUG: byte-for-byte compare to actual binary
-  const int cubeboot_raw_size = g_CubeBootEnd-g_CubeBoot;
-  if( cubeboot_raw_size > 0 ) //must be included by 'binaries.s'. Development check.
+  if( !crc_init) //cache crc. hard-coded bins won't change at runtime, I pinky-swear
   {
-    int mismatch_cnt = 0;
-    ConsolePrintf("CubeStub[CubeBoot] binary compare to cubeboot.bin:\n");
-    ConsolePrintf("  size: %u, %u(raw) %s\n", cubeboot_size, cubeboot_raw_size, cubeboot_size != cubeboot_raw_size ? "--MISMATCH--" : "" );
+    //OTP stub contains nested cubeboot.bin application. location/size info is reported at hard-coded addresses...
+    uint32_t cubeboot_magic = ((uint32_t*)g_CubeStub)[40];
+    uint32_t cubeboot_start = ((uint32_t*)g_CubeStub)[41] & 0x0FFFffff; //ignore dialog's OTP/Ram section placements
+    uint32_t cubeboot_end   = ((uint32_t*)g_CubeStub)[42] & 0x0FFFffff; //ignore dialog's OTP/Ram section placements
+    int cubeboot_size = cubeboot_end - cubeboot_start;
+    int cubestub_size = g_CubeStubEnd - g_CubeStub;
     
-    for( int x=0; x < MIN(cubeboot_size,cubeboot_raw_size); x++ ) {
-      if( g_CubeStub[cubeboot_start+x] != g_CubeBoot[x] ) {
-        ConsolePrintf(" MISMATCH @ %08x: %02x,%02x\n", x, g_CubeStub[cubeboot_start+x], g_CubeBoot[x] );
-        if( ++mismatch_cnt > 20 )
-          break;
-      }
+    //validate header
+    if( cubeboot_magic != 0xc0beb007 || cubeboot_size < 4000 || cubeboot_size >= cubestub_size || cubeboot_start >= cubestub_size || cubeboot_end >= cubestub_size ) {
+      ConsolePrintf("CubeStub[CubeBoot] bad header:\n");
+      ConsolePrintf("  g_CubeStub: %08x-%08x (%i)\n", 0, cubestub_size-1, cubestub_size);
+      ConsolePrintf("  g_CubeBoot: %08x-%08x (%i) magic %08x\n", cubeboot_start, cubeboot_end-1, cubeboot_size, cubeboot_magic);
+      throw ERROR_CUBE_BAD_BINARY;
+      //return 0;
     }
     
-    if( cubeboot_size != cubeboot_raw_size || mismatch_cnt > 0 )
-      throw ERROR_CUBE_BAD_BINARY; //return 0;
+    //DEBUG: byte-for-byte compare to actual binary
+    const int cubeboot_raw_size = g_CubeBootEnd-g_CubeBoot;
+    if( cubeboot_raw_size > 0 ) //must be included by 'binaries.s'. Development check.
+    {
+      int mismatch_cnt = 0;
+      ConsolePrintf("CubeStub[CubeBoot] binary compare to cubeboot.bin:\n");
+      ConsolePrintf("  size: %u, %u(raw) %s\n", cubeboot_size, cubeboot_raw_size, cubeboot_size != cubeboot_raw_size ? "--MISMATCH--" : "" );
+      
+      for( int x=0; x < MIN(cubeboot_size,cubeboot_raw_size); x++ ) {
+        if( g_CubeStub[cubeboot_start+x] != g_CubeBoot[x] ) {
+          ConsolePrintf(" MISMATCH @ %08x: %02x,%02x\n", x, g_CubeStub[cubeboot_start+x], g_CubeBoot[x] );
+          if( ++mismatch_cnt > 20 )
+            break;
+        }
+      }
+      
+      if( cubeboot_size != cubeboot_raw_size || mismatch_cnt > 0 )
+        throw ERROR_CUBE_BAD_BINARY; //return 0;
+    }
+    
+    m_cubeboot_size = cubeboot_size; //cache size after successful checks
+    crc = crc32(0xFFFFffff, g_CubeStub+cubeboot_start, cubeboot_size );
+    crc_init = 1;
   }
   
-  //XXX: crc initial value??
-  uint32_t crc = crc32(0xFFFFffff, g_CubeStub+cubeboot_start, cubeboot_size );
+  if( out_cubeboot_size )
+    *out_cubeboot_size = m_cubeboot_size;
   if( dbg_print )
     ConsolePrintf("cubeboot crc32=%08x\n", crc);
   return crc;
@@ -183,7 +196,7 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
           ConsolePrintf("Cube Found: esn=%08x hwrev=%u model=%u crc=%08x\n", info.esn, info.hwrev, info.model, info.crc);
           ConsolePrintf("Cube Addr : %s\n", bdaddr2str(bdaddr));
           
-          uint32_t crc_current = cubebootSignature(0);
+          uint32_t crc_current = cubebootSignature();
           uint32_t expected_model = g_fixmode == FIXMODE_CUBE2 ? CUBEID_MODEL_CUBE2 : CUBEID_MODEL_CUBE1;
           if( info.hwrev != CURRENT_HW_REV || info.model != expected_model || info.crc != crc_current ) {
             if( info.crc != crc_current )
@@ -314,14 +327,13 @@ static void CubeTest(void)
   Timer::delayMs(250); //wait for ROM+app reboot sequence
   DUT_UART::init(57600);
   
+  //DEBUG:
+  if( g_fixmode < FIXMODE_CUBE1 ) {
+    TestCommon::consoleBridge(TO_DUT_UART,3000);
+  }
+  
   cmdSend(CMD_IO_DUT_UART, "getvers");
   cmdSend(CMD_IO_DUT_UART, "vbat");
-  //cmdSend(CMD_IO_DUT_UART, "delay 500", 600);
-  
-  /*/DEBUG: console bridge, manual testing
-  cmdSend(CMD_IO_DUT_UART, "echo on");
-  TestCommon::consoleBridge(TO_DUT_UART,2000);
-  //-*/
   
   //measure LED current draws
   cmdSend(CMD_IO_DUT_UART, "vled 1");
@@ -369,11 +381,6 @@ static void CubeTest(void)
   if( cmdStatus() != 0 ) // == 11
     throw ERROR_CUBE_ACCEL;
   //cmdSend(CMD_IO_DUT_UART, "vled 0");
-  
-  /*/DEBUG: console bridge, manual testing
-  cmdSend(CMD_IO_DUT_UART, "echo on");
-  TestCommon::consoleBridge(TO_DUT_UART,2000);
-  //-*/
 }
 
 static void OTPbootloader(void)
@@ -384,7 +391,18 @@ static void OTPbootloader(void)
   Timer::delayMs(250); //wait for ROM+app reboot sequence
   DUT_UART::init(57600);
   
+  //DEBUG:
+  if( g_fixmode <= FIXMODE_CUBE0 ) {
+    TestCommon::consoleBridge(TO_DUT_UART,3000);
+  }
+  
   cmdSend(CMD_IO_DUT_UART, "getvers");
+  
+  //only burn OTP for valid cube types (0/debug bail out here)
+  if( g_fixmode != FIXMODE_CUBE1 && g_fixmode != FIXMODE_CUBE2 ) {
+    throw ERROR_UNKNOWN_MODE;
+    //return;
+  }
   
   //Generate bd address
   bdaddr_t bdaddr;
@@ -399,7 +417,7 @@ static void OTPbootloader(void)
   //if( g_isReleaseBuild )
     cubeid.esn = fixtureGetSerial(); //get next 12.20 esn in the sequence
   
-  uint32_t crc = cubebootSignature(0);
+  uint32_t crc = cubebootSignature();
   
   //XXX: how long should this take?
   int write_result = -1;
@@ -408,11 +426,6 @@ static void OTPbootloader(void)
     char *cmd = snformat(b,bz,"otp write %s %08x %u %u %08x", bdaddr2str(&bdaddr), cubeid.esn, cubeid.hwrev, cubeid.model, crc);
     cmdSend(CMD_IO_DUT_UART, cmd, 60*1000, (CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS) & ~CMD_OPTS_EXCEPTION_EN );
     write_result = cmdStatus();
-    
-    /*/DEBUG: console bridge, manual testing
-    //cmdSend(CMD_IO_DUT_UART, "echo on");
-    TestCommon::consoleBridge(TO_DUT_UART,2000);
-    //-*/
   }
   Board::powerOff(PWR_DUTPROG);
   
@@ -430,7 +443,16 @@ void CubeBootDebug(void)
 
 static void CubeFlexFlowReport(void)
 {
-  ConsolePrintf("<flex> ESN %08x\n", cubeid.esn);
+  char b[80]; const int bz = sizeof(b);
+  snformat(b,bz,"<flex> ESN,%08x,HwRev,%u,Model,%u\n", cubeid.esn, cubeid.hwrev, cubeid.model);
+  ConsoleWrite(b);
+  FLEXFLOW::write(b);
+  
+  int bootSize;
+  uint32_t crc = cubebootSignature(0,&bootSize);
+  snformat(b,bz,"<flex> BootSize,%i,CRC,%08x\n", bootSize, crc);
+  ConsoleWrite(b);
+  FLEXFLOW::write(b);
 }
 
 TestFunction* TestCube0GetTests(void)
@@ -438,6 +460,7 @@ TestFunction* TestCube0GetTests(void)
   static TestFunction m_tests[] = {
     ShortCircuitTest,
     CubeTest,
+    OTPbootloader,
     //CubeBootDebug,
     NULL,
   };
@@ -456,16 +479,9 @@ TestFunction* TestCube1GetTests(void)
   return m_tests;
 }
 
-TestFunction* TestCube2GetTests(void)
-{
-  static TestFunction m_tests[] = {
-    ShortCircuitTest,
-    CubeTest,
-    OTPbootloader,
-    CubeFlexFlowReport,
-    NULL,
-  };
-  return m_tests;
+TestFunction* TestCube2GetTests(void) {
+  //CUBE2 needs to be same as CUBE1. cube id changes based on g_fixmode (1->2)
+  return TestCube1GetTests();
 }
 
 bool TestCubeFinishDetect(void)

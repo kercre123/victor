@@ -7,6 +7,7 @@
 #include "console.h"
 #include "contacts.h"
 #include "fixture.h"
+#include "flexflow.h"
 #include "hwid.h"
 #include "meter.h"
 #include "portable.h"
@@ -161,14 +162,15 @@ static void BodyLoadTestFirmware(void)
   Timer::delayMs(150); //wait for systest to boot into main and enable battery power
   Contacts::setModeRx(); //switch to comms mode
   
-  //DEBUG: console bridge, manual testing
+  //DEBUG:
   if( g_fixmode < FIXMODE_BODY1 ) {
-    //cmdSend(CMD_IO_CONTACTS, "echo on", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
     TestCommon::consoleBridge(TO_CONTACTS,5000);
   }
   
   //Run some tests
   cmdSend(CMD_IO_CONTACTS, "getvers");
+  
+  //XXX: --- add hardware tests here ---
   
   Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT);
@@ -218,19 +220,20 @@ static void BodyBootcheckProductionFirmware(void)
 {
   mcu_power_down_();
   
-  //DEBUG: console bridge, manual testing
+  //DEBUG:
   if( g_fixmode < FIXMODE_BODY1 ) {
+    //only works if body has a battery?
     TestCommon::consoleBridge(TO_CONTACTS,3000);
   }
   
   //Power up and test comms
   Board::powerOn(PWR_VEXT,0); //must provide VEXT to wake up the mcu
-  if( g_fixmode < FIXMODE_BODY3 )
+  if( g_fixmode < FIXMODE_BODY3 ) //BODY3 has battery installed
     Board::powerOn(PWR_VBAT, 0);
   Timer::delayMs(150); //wait for mcu to boot into main and enable battery power
   Contacts::setModeRx(); //switch to comms mode
   
-  bool allow_skip = g_fixmode <= FIXMODE_BODY0; //BODY debug modes
+  bool allow_skip = g_fixmode < FIXMODE_BODY1; //DEBUG
   ConsolePrintf("listening for syscon boot message. %s\n", (allow_skip ? "press a key to skip" : "") );
   
   while( ConsoleReadChar() > -1 );
@@ -257,7 +260,10 @@ static void BodyBootcheckProductionFirmware(void)
 
 static void BodyFlexFlowReport(void)
 {
-  ConsolePrintf("<flex> ESN %08x\n", bodyid.esn);
+  char b[80]; const int bz = sizeof(b);
+  snformat(b,bz,"<flex> ESN,%08x,HwRev,%u,Model,%u\n", bodyid.esn, bodyid.hwrev, bodyid.model);
+  ConsoleWrite(b);
+  FLEXFLOW::write(b);
 }
 
 /*static void BodyChargeContactElectricalDebug(void)
