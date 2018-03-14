@@ -37,7 +37,6 @@ GEN_SRC_ONLY=0
 RM_BUILD_ASSETS=0
 RUN_BUILD=1
 CMAKE_TARGET=""
-CMAKE_EXE="${HOME}/.anki/cmake/dist/3.9.6/CMake.app/Contents/bin/cmake"
 EXPORT_COMPILE_COMMANDS=0
 IGNORE_EXTERNAL_DEPENDENCIES=0
 BUILD_SHARED_LIBS=1
@@ -121,6 +120,10 @@ shift $(($OPTIND - 1))
 #
 # settings
 #
+
+if [ -z "${CMAKE_EXE+x}" ]; then
+    CMAKE_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/cmake.py --install-cmake 3.9.6`
+fi
 
 if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
   echo "Attempting to run fetch-build-deps.sh"

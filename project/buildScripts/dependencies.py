@@ -1,7 +1,8 @@
-#!/usr/bin/env python2 -u
+#!/usr/bin/env python2
 
 import os
 import os.path
+import platform
 import subprocess
 import re
 import shutil
@@ -17,6 +18,22 @@ import glob
 import binary_conversion
 import validate_anim_data
 
+# configure unbuffered output
+# https://stackoverflow.com/a/107717/217431
+class Unbuffered(object):
+   def __init__(self, stream):
+       self.stream = stream
+   def write(self, data):
+       self.stream.write(data)
+       self.stream.flush()
+   def writelines(self, datas):
+       self.stream.writelines(datas)
+       self.stream.flush()
+   def __getattr__(self, attr):
+       return getattr(self.stream, attr)
+
+# This is a work-around for not passing -u via /usr/bin/env on linux
+sys.stdout = Unbuffered(sys.stdout)
 
 VERBOSE = True
 # Replace True for name of log file if desired.
@@ -44,6 +61,7 @@ MANIFEST_LENGTH_KEY = "length_ms"
 # Since one of the validation steps is to confirm that all audio used in animations is in
 # fact available, we trigger that validation if either the animation or the audio is updated.
 ASSET_VALIDATION_TRIGGERS = ["victor-animation-assets", "victor-audio-assets"]
+
 
 
 def is_tool(name):
@@ -160,6 +178,27 @@ def get_file_stats(which_dir):
         file_stats[file_ext] += 1
   return file_stats
 
+def get_flatc_dir():
+  """Determine flatc executable location for platform"""
+  platform_map = {
+    'Darwin': 'x86_64-apple-darwin',
+    'Linux': 'x86_64-linux-gnu',
+  }
+  platform_name = platform.system()
+  target_triple = platform_map.get(platform_name)
+
+  if target_triple:
+    flatc_dir = os.path.join(DEPENDENCY_LOCATION, 'coretech_external',
+                             'flatbuffers', 'host-prebuilts',
+                             'current', target_triple, 'bin')
+  else: 
+    # default
+    flatc_dir = os.path.join(DEPENDENCY_LOCATION, 'coretech_external',
+                             'flatbuffers', 'ios', 'Release')
+ 
+  return flatc_dir
+  
+
 
 def convert_json_to_binary(json_files, bin_name, dest_dir, flatc_dir):
     tmp_json_files = []
@@ -195,7 +234,7 @@ def unpack_tarball(tar_file, file_types=[], put_in_subdir=False, add_metadata=Fa
   # so we need to specify the path to the directory that contains that FlatBuffers tool. See
   # https://google.github.io/flatbuffers/flatbuffers_guide_using_schema_compiler.html for additional
   # info about the "flatc" schema compiler.
-  flatc_dir = os.path.join(DEPENDENCY_LOCATION, 'coretech_external', 'flatbuffers', 'ios', 'Release')
+  flatc_dir = get_flatc_dir()
 
   # Set the destination directory where the contents of the .tar file will be unpacked.
   dest_dir = os.path.dirname(tar_file)
