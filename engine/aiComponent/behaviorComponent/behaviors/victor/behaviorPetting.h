@@ -48,8 +48,6 @@ protected:
   virtual void BehaviorUpdate() override;
   
   virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
-
-  void AudioStateMachine(int ticksVolumeIncFreq, int volumeLevelInc) const;
   
   void CancelAndPlayAnimation(AnimationTrigger anim);
   

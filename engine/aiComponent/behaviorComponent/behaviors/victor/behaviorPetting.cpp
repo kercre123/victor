@@ -34,11 +34,6 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-  const int kAudioVolumeUpTickPeriodBliss = 1;
-  const int kAudioVolumeUpIncrementBliss = 2;
-  
-  const int kAudioVolumeUpIncrementNonbliss = 1;
-  
   // animation control constants
   const int kPlayAnimOnce = 1;    // value for number of loops argument for playing anim once
   const bool kCanAnimationInterrupt = true; // value for whether starting the animation can interrupt
@@ -143,33 +138,6 @@ void BehaviorPetting::OnBehaviorActivated()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPetting::AudioStateMachine(int ticksVolumeIncPeriod,
-                                                     int volumeLevelInc) const
-{
-  using AMD_GE_GE = AudioMetaData::GameEvent::GenericEvent;
-  using AMD_GOT = AudioMetaData::GameObjectType;
-  
-  // lambda helper to modulate volume increases
-  const auto upVolume = [this,volumeLevelInc]() {
-    for(int i=0; i<volumeLevelInc; ++i) {
-      GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Play__Robot_Vic_Sfx__Purr_Increase_Level, AMD_GOT::Cozmo_OnDevice);
-    }
-  };
-  
-  if (_numTicksPressed == 1) {
-    // acknowledge touch
-    GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Play__Robot_Vic_Sfx__Purr_Loop_Play, AMD_GOT::Cozmo_OnDevice);
-    upVolume();
-  } else if ( (_numTicksPressed > 0) && (_numTicksPressed % ticksVolumeIncPeriod==0) ) {
-    // increase loudness steadily
-    upVolume();
-  } else if ( !_isPressed && _isPressedPrevTick ) {
-    // halt purring, fade out
-    GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Stop__Robot_Vic_Sfx__Purr_Loop_Stop, AMD_GOT::Cozmo_OnDevice);
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPetting::CancelAndPlayAnimation(AnimationTrigger anim)
 {
   TriggerAnimationAction* action = new TriggerAnimationAction(anim,
@@ -201,6 +169,9 @@ void BehaviorPetting::PlayBlissLoopAnimation()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPetting::BehaviorUpdate()
 {
+  using AMD_GE_GE = AudioMetaData::GameEvent::GenericEvent;
+  using AMD_GOT = AudioMetaData::GameObjectType;
+  
   if(!IsActivated()){
     return;
   }
@@ -247,6 +218,13 @@ void BehaviorPetting::BehaviorUpdate()
           CancelAndPlayAnimation(_animPettingResponse[animIdx]);
         }
         
+        // audio for petting purring
+        if(_currBlissLevel==0) {
+          GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Play__Robot_Vic_Sfx__Purr_Loop_Play, AMD_GOT::Cozmo_OnDevice);
+        } else {
+          GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Play__Robot_Vic_Sfx__Purr_Increase_Level, AMD_GOT::Cozmo_OnDevice);
+        }
+        
         // important: increase the bliss level AFTER getting the animation index
         // reasoning:
         // - value of 0 for _currBlissLevel implies only the getin has been played
@@ -285,6 +263,9 @@ void BehaviorPetting::BehaviorUpdate()
           const auto animIdx = _currBlissLevel-1; // bliss levels are +1 wrt animation indexes
           CancelAndPlayAnimation(_animPettingGetout[animIdx]);
           
+          
+          GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Stop__Robot_Vic_Sfx__Purr_Loop_Stop, AMD_GOT::Cozmo_OnDevice);
+          
           // ensures we wait for the getout to finish before ending the behavior
           _currResponseState = Done;
         }
@@ -301,19 +282,6 @@ void BehaviorPetting::BehaviorUpdate()
       }
       break;
     }
-  }
-
-  //-----------------------------------------------------------------------------
-  // audio for purring hack
-  
-  // NOTE: do not purr when playing getin
-  if ((_currBlissLevel > 0) && (_currBlissLevel < _animPettingResponse.size())) {
-    // rising bliss petting mode sounds
-    int audioVolUpTickPeriod = int(_animPettingResponse.size()-_currBlissLevel)*2;
-    AudioStateMachine(audioVolUpTickPeriod, kAudioVolumeUpIncrementNonbliss);
-  } else if( _currBlissLevel == _animPettingResponse.size() ) {
-    // blissful purring (when touched)
-    AudioStateMachine(kAudioVolumeUpTickPeriodBliss, kAudioVolumeUpIncrementBliss); // faster and louder
   }
   
   _isPressedPrevTick = _isPressed;
