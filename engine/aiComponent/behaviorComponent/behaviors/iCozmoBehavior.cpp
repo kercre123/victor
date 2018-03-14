@@ -245,7 +245,7 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   
   // Add WantsToBeActivated conditions
   if(config.isMember(kWantsToBeActivatedCondConfigKey)){
-    for(auto& strategy : config[kWantsToCancelSelfConfigKey]){
+    for(auto& strategy : config[kWantsToBeActivatedCondConfigKey]){
       _wantsToBeActivatedConditions.push_back(
         BEIConditionFactory::CreateBEICondition(strategy, GetDebugLabel() ) );
     }
