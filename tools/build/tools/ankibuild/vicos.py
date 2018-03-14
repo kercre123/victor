@@ -34,7 +34,7 @@ def install_vicos_sdk(version):
     if platform_name == 'linux':
         import lsb_release
         subver = lsb_release.get_lsb_information().get('RELEASE')
-        subver_tag = '-{}'.format(subver)
+        subver_tag = '-ubuntu-{}'.format(subver)
 
     platform_tag = '{}{}'.format(platform_map.get(platform_name), subver_tag)
 

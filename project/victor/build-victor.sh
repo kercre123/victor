@@ -351,7 +351,7 @@ if [ $CONFIGURE -eq 1 ]; then
         # If VICOS_SDK is set, use it, else provide default location
         #
         if [ -z "${VICOS_SDK+x}" ]; then
-            VICOS_SDK=$(${TOPLEVEL}/tools/build/tools/ankibuild/vicos.py --install 0.8.0-r01)
+            VICOS_SDK=$(${TOPLEVEL}/tools/build/tools/ankibuild/vicos.py --install 0.8.0-r01 | tail -1)
         fi
 
         VICOS_STAGING=0
