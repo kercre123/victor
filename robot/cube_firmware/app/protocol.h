@@ -1,7 +1,9 @@
 #ifndef __PROTOCOL_H
 #define __PROTOCOL_H
 
-#pragma anon_unions
+#ifdef __ARMCC_VERSION
+  #pragma anon_unions
+#endif
 
 #define MAX_KEYFRAMES 256
 #define ANIMATION_CHANNELS 4

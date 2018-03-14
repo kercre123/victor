@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "protocol.h"
 #include "animation.h"
 
 // Execution State
@@ -34,7 +33,7 @@ static AnimationFrame animation[MAX_KEYFRAMES];
 static AnimationFrame staging[MAX_KEYFRAMES];
 
 extern uint8_t intensity[ANIMATION_CHANNELS * COLOR_CHANNELS];
-static uint32_t div_tbl[0x100];
+static uint32_t div_tbl[0x100] = { 0xFFFFFFFF };
 
 static void setup_frame(int index, const AnimationFrame* frame) {
   AnimationChannel* channel = &state[index];
@@ -57,7 +56,7 @@ void animation_init(void) {
   memset(&animation, 0, sizeof(animation));
   memset(&staging, 0, sizeof(staging));
 
-  for (int i = 0; i < 0x100; i++) {
+  for (int i = 1; i < 0x100; i++) {
     div_tbl[i] = 0x1000000 / i;
   }
 
