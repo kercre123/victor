@@ -10,7 +10,7 @@
 #ifdef __cplusplus
 namespace FLEXFLOW
 {
-  void init(int baud = 1000000);
+  void init(int baud = 3000000);
   void deinit();
   
   int  printf(const char * format, ... );

@@ -14,7 +14,6 @@
 #include "motorled.h"
 #include "nvReset.h"
 #include "timer.h"
-#include "uart.h"
 
 // Which character to escape into command code
 #define ESCAPE_CODE 27
@@ -226,8 +225,6 @@ void InitConsole(void)
   USART_DMACmd(UART4, USART_DMAReq_Rx, ENABLE);
   DMA_ITConfig(DMA1_Stream2, DMA_IT_TC, DISABLE);
   DMA_Cmd(DMA1_Stream2, ENABLE);
-  
-  SlowPutString("Console Initialized\n");
   
   //restore console mode from reset data
   m_isInConsoleMode = g_app_reset.valid && g_app_reset.console.isInConsoleMode;

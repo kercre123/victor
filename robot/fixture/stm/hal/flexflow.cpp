@@ -58,7 +58,12 @@ void FLEXFLOW::init(int baud)
 }
 
 void FLEXFLOW::deinit(void)
-{  
+{
+  if( current_baud > 0 ) {
+    while( !(USART1->SR & USART_SR_TXE) ); //dat moved to shift register (ok to write a new data)
+    while( !(USART1->SR & USART_SR_TC)  ); //wait for transmit complete
+  }
+  
   //Enable peripheral clocks
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
@@ -100,7 +105,7 @@ void FLEXFLOW::putchar(char c)
   {
     while( !(USART1->SR & USART_SR_TXE) ); //dat moved to shift register (ok to write a new data)
     
-    //volatile int junk = USART1->SR; //TC bit is cleared by 'read from the USART_SR register followed by a write to the USART_DR register'
+    volatile int junk = USART1->SR; //TC bit is cleared by 'read from the USART_SR register followed by a write to the USART_DR register'
     USART1->DR = c;
     //while( !(USART1->SR & USART_SR_TXE) ); //dat moved to shift register (ok to write a new data)
     //while( !(USART1->SR & USART_SR_TC)  ); //wait for transmit complete

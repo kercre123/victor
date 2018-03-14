@@ -11,13 +11,13 @@
 #include "contacts.h"
 #include "fixture.h"
 #include "flash.h"
+#include "flexflow.h"
 #include "meter.h"
 #include "nvReset.h"
 #include "portable.h"
 #include "random.h"
 #include "tests.h"
 #include "timer.h"
-#include "uart.h"
 
 //Set this flag to modify display info - indicates a debug/test build
 #include "app_build_flags.h"
@@ -456,7 +456,7 @@ int main(void)
   g_app_reset.valid = sizeof(g_app_reset) == nvResetGet( (u8*)&g_app_reset, sizeof(g_app_reset) );
   
   Timer::init();
-  InitUART();
+  FLEXFLOW::init();
   FetchParams(); //g_flashParams = flash backup (saved via 'setmode' console cmd)
   InitConsole();
   InitRandom();

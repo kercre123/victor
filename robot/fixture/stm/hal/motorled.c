@@ -7,7 +7,6 @@
 #include "motorled.h"
 #include "portable.h"
 #include "timer.h"
-#include "uart.h"
 
 #define MOTOR_PWM_MAXVAL 3000
 

@@ -14,7 +14,6 @@
 #include "random.h"
 #include "tests.h"
 #include "timer.h"
-#include "uart.h"
 
 //global fixture data
 int g_fixmode = FIXMODE_NONE;

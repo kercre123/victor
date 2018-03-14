@@ -5,7 +5,6 @@
 #include "flash.h"
 #include "fixture.h"
 #include "timer.h"
-#include "uart.h"
 
 FlashParams g_flashParams;
 
@@ -77,7 +76,7 @@ void DecodeAndFlash(void)
       __enable_irq();
       
       FlashProgress(100);
-      SlowPutString("Resetting\n\n");
+      //SlowPutString("Resetting\n\n");
       
       // Force reset
       SCB->VTOR = FLASH_BOOTLOADER;
@@ -86,6 +85,6 @@ void DecodeAndFlash(void)
     m_bitMap[blockIndex] = 1;
     m_blocksDone++;
   } else {
-    SlowPutString("Bad flash block\n");
+    //SlowPutString("Bad flash block\n");
   }
 }

@@ -11,9 +11,7 @@
 #include "contacts.h"
 #include "dut_uart.h"
 #include "fixture.h"
-//#include "portable.h"
 #include "timer.h"
-#include "uart.h"
 
 #define CMD_DEBUG 0
 
