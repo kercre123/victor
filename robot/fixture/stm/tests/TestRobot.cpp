@@ -112,7 +112,7 @@ void TestRobotInfo(void)
   
   try { //DEBUG, cmd doesn't always succeed in dev builds
   cmdRobotEsn();
-  //cmdRobotBsv(); //XXX: broken in current build
+  cmdRobotBsv();
   } catch(int e) {}
   
   //DEBUG: console bridge, manual testing
@@ -130,15 +130,15 @@ void DBG_RobotCmdTest(void)
   {
     ConsolePrintf("\n=====================================================================\n");
     
-    cmdRobotEsn(); ConsolePutChar('\n');
-    cmdRobotEsn(); ConsolePutChar('\n');
-    cmdRobotBsv(); ConsolePutChar('\n');
-    cmdRobotBsv(); ConsolePutChar('\n');
-    cmdRobotEsn(); ConsolePutChar('\n');
+    cmdRobotEsn(); //ConsolePutChar('\n');
+    cmdRobotBsv(); //ConsolePutChar('\n');
+    cmdRobotEsn(); //ConsolePutChar('\n');
+    cmdRobotBsv(); //ConsolePutChar('\n');
+    cmdRobotEsn(); //ConsolePutChar('\n');
     
     cmdRobotGet(1, 1, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
-    cmdRobotGet(1, 1, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
-    cmdRobotGet(1, 1, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
+    cmdRobotGet(3, 3, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
+    cmdRobotGet(5, 3, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
     cmdRobotGet(1, 1, CCC_SENSOR_CLIFF); ConsolePutChar('\n');
     cmdRobotGet(1, 1, CCC_SENSOR_MOT_LEFT); ConsolePutChar('\n');
     cmdRobotGet(1, 1, CCC_SENSOR_MOT_RIGHT); ConsolePutChar('\n');
@@ -156,12 +156,12 @@ void DBG_RobotCmdTest(void)
     cmdRobotMot(50,  20, CCC_SENSOR_MOT_HEAD, 0, 0, 0, 100); ConsolePutChar('\n');
     cmdRobotMot(75,  20, CCC_SENSOR_MOT_HEAD, 0, 0, 0, -100); ConsolePutChar('\n');
     
-    //uint32_t esn = cmdRobotGmr(0); ConsolePutChar('\n');
-    //uint32_t hw_ver = cmdRobotGmr(1); ConsolePutChar('\n');
-    //uint32_t model = cmdRobotGmr(2); ConsolePutChar('\n');
-    //uint32_t lot_code = cmdRobotGmr(3); ConsolePutChar('\n');
+    uint32_t esn = cmdRobotGmr(0); //ConsolePutChar('\n');
+    uint32_t hw_ver = cmdRobotGmr(1); //ConsolePutChar('\n');
+    uint32_t model = cmdRobotGmr(2); //ConsolePutChar('\n');
+    uint32_t lot_code = cmdRobotGmr(3); //ConsolePutChar('\n');
     
-    //test set/get some EMR fields
+    /*/test set/get some EMR fields
     srand(Timer::get());
     for(uint8_t idx = 0; idx < 8; idx++)
     {
@@ -174,7 +174,7 @@ void DBG_RobotCmdTest(void)
       if( val != val2 )
         ConsolePrintf("========MISMATCH========\n");
       ConsolePutChar('\n');
-    }
+    }//-*/
     
     ConsolePrintf("\n=====================================================================\n");
   }
@@ -199,6 +199,8 @@ void DBG_RobotEMRTest(void)
     srand(Timer::get());
     for(idx=0; idx < 256; idx++) {
       uint32_t val = ((rand()&0xffff) << 16) | (rand()&0xffff);
+      if( idx == 4 || idx == 5 || idx == 6 ) //PLAYPEN_READY_FLAG, PLAYPEN_PASSED_FLAG, PACKED_OUT_FLAG
+        val = 0; //keep 0 to prevent strange robot behavior
       cmdRobotSmr(idx, val);
       m_emr[idx] = val;
     }
@@ -483,9 +485,9 @@ TestFunction* TestRobot0GetTests(void)
 {
   static TestFunction m_tests[] = {
     TestRobotInfo,
-    DBG_RobotCmdTest,
+    //DBG_RobotCmdTest,
     //ChargeTest,
-    NULL
+    NULL,
   };
   return m_tests;
 }
@@ -495,7 +497,7 @@ TestFunction* TestRobot1GetTests(void)
   static TestFunction m_tests[] = {
     TestRobotInfo,
     DBG_RobotCmdTest,
-    ChargeTest,
+    //ChargeTest,
     NULL,
   };
   return m_tests;
@@ -507,7 +509,7 @@ TestFunction* TestRobot2GetTests(void)
     TestRobotInfo,
     DBG_RobotEMRTest,
     //ChargeTest,
-    NULL
+    NULL,
   };
   return m_tests;
 }
@@ -517,7 +519,7 @@ TestFunction* TestRobot3GetTests(void)
   static TestFunction m_tests[] = {
     TestRobotInfo,
     ChargeTest,
-    NULL
+    NULL,
   };
   return m_tests;
 }
@@ -526,7 +528,7 @@ TestFunction* TestRobotPlaypenGetTests(void)
 {
   static TestFunction m_tests[] = {
     TestRobotInfo,
-    NULL
+    NULL,
   };
   return m_tests;
 }
@@ -536,7 +538,7 @@ TestFunction* TestRobotPackoutGetTests(void)
   static TestFunction m_tests[] = {
     TestRobotInfo,
     ChargeTest,
-    NULL
+    NULL,
   };
   return m_tests;
 }
@@ -545,7 +547,7 @@ TestFunction* TestRobotLifetestGetTests(void)
 {
   static TestFunction m_tests[] = {
     TestRobotInfo,
-    NULL
+    NULL,
   };
   return m_tests;
 }
@@ -555,7 +557,7 @@ TestFunction* TestRobotRecharge0GetTests(void)
   static TestFunction m_tests[] = {
     TestRobotInfo,
     Recharge,
-    NULL
+    NULL,
   };
   return m_tests;
 }
@@ -565,7 +567,7 @@ TestFunction* TestRobotRecharge1GetTests(void)
   static TestFunction m_tests[] = {
     TestRobotInfo,
     Recharge,
-    NULL
+    NULL,
   };
   return m_tests;
 }
@@ -574,7 +576,7 @@ TestFunction* TestRobotSoundGetTests(void)
 {
   static TestFunction m_tests[] = {
     TestRobotInfo,
-    NULL
+    NULL,
   };
   return m_tests;
 }
@@ -583,7 +585,7 @@ TestFunction* TestRobotFacRevertGetTests(void)
 {
   static TestFunction m_tests[] = {
     TestRobotInfo,
-    NULL
+    NULL,
   };
   return m_tests;
 }
@@ -592,7 +594,7 @@ TestFunction* TestRobotEMGetTests(void)
 {
   static TestFunction m_tests[] = {
     TestRobotInfo,
-    NULL
+    NULL,
   };
   return m_tests;
 }
