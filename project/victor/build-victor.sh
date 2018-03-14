@@ -318,6 +318,8 @@ if [ $CONFIGURE -eq 1 ]; then
         PLATFORM_ARGS=(
             -DMACOSX=1
             -DANDROID=0
+            -DVICOS=0
+            -DVICOS_STAGING=0
         )
     elif [ "$PLATFORM" == "android" ]; then
         #
@@ -330,6 +332,8 @@ if [ $CONFIGURE -eq 1 ]; then
         PLATFORM_ARGS=(
             -DMACOSX=0
             -DANDROID=1
+            -DVICOS=0
+            -DVICOS_STAGING=0
             -DANDROID_NDK="${ANDROID_NDK}"
             -DCMAKE_TOOLCHAIN_FILE="${CMAKE_MODULE_DIR}/android.toolchain.patched.cmake"
             -DANDROID_TOOLCHAIN_NAME=clang
@@ -339,6 +343,29 @@ if [ $CONFIGURE -eq 1 ]; then
             -DANDROID_STL=c++_shared
             -DANDROID_CPP_FEATURES='rtti exceptions'
         )
+    elif [ "$PLATFORM" == "vicos" ] || [ "$PLATFORM" == "vicos-staging" ] ; then
+        #
+        # If VICOS_SDK is set, use it, else provide default location
+        #
+        if [ -z "${VICOS_SDK+x}" ]; then
+            VICOS_SDK=$(${TOPLEVEL}/tools/build/tools/ankibuild/vicos.py --install 0.8.0-r01)
+        fi
+
+        VICOS_STAGING=0
+        if [ "$PLATFORM" == "vicos-staging" ]; then
+            VICOS_STAGING=1
+        fi
+
+        PLATFORM_ARGS=(
+            -DMACOSX=0
+            -DANDROID=0
+            -DVICOS=1
+            -DVICOS_STAGING=${VICOS_STAGING}
+            -DVICOS_SDK="${VICOS_SDK}"
+            -DCMAKE_TOOLCHAIN_FILE="${CMAKE_MODULE_DIR}/vicos.oelinux.toolchain.cmake"
+            -DVICOS_CPP_FEATURES='rtti exceptions'
+        )
+        echo "${PLATFORM_ARGS[@]}"
     else
         echo "unknown platform: ${PLATFORM}"
         exit 1

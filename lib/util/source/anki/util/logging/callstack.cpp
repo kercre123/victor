@@ -26,7 +26,7 @@
 #if defined(__MACH__) && defined(__APPLE__)
 #include <execinfo.h>
 #include <cxxabi.h>
-#elif defined(ANDROID) || defined(LINUX)
+#elif defined(ANDROID) || defined(LINUX) || defined(VICOS)
 
 #else
 #error "Unsupported platform"
