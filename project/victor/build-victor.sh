@@ -12,7 +12,7 @@ function usage() {
     echo "  -h                      print this message"
     echo "  -v                      print verbose output"
     echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
-    echo "  -p [PLATFORM]           build target platform {android,mac,vicos}"
+    echo "  -p [PLATFORM]           build target platform {android,mac}"
     echo "  -a                      append cmake platform argument {arg}"
     echo "  -g [GENERATOR]          CMake generator {Ninja,Xcode,Makefile}"
     echo "  -f                      force-run filelist updates and cmake configure before building"
@@ -151,16 +151,15 @@ esac
 #
 # Enable feature flags
 #
-FEATURE_FLAGS="-DFACTORY_TEST=1"
+FEATURE_FLAGS="-DFACTORY_TEST=0"
 
 for feature in ${FEATURES} ; do
   case $feature in
     factoryTest)
-      # Note FACTORY_TEST is on by default
+      FEATURE_FLAGS="${FEATURE_FLAGS} -DFACTORY_TEST=1"
       ;;
     factoryTestDev)
-      # Note FACTORY_TEST is on by default
-      FEATURE_FLAGS="${FEATURE_FLAGS} -DFACTORY_TEST_DEV=1"
+      FEATURE_FLAGS="${FEATURE_FLAGS} -DFACTORY_TEST=1 -DFACTORY_TEST_DEV=1"
       ;;
     *)
       echo "${SCRIPT_NAME}: Unknown feature '${feature}'"
@@ -169,6 +168,11 @@ for feature in ${FEATURES} ; do
       ;;
   esac
 done
+
+#
+# Get short commit sha
+#
+export ANKI_BUILD_SHA=`git rev-parse --short HEAD`
 
 #
 # Enable export flags
@@ -192,10 +196,10 @@ case ${GENERATOR} in
     "Xcode")
         PROJECT_FILE="cozmo.xcodeproj"
         ;;
-    "Makefile") 
-        PROJECT_FILE="Makefile" 
+    "Makefile")
+        PROJECT_FILE="Makefile"
         GENERATOR="CodeBlocks - Unix Makefiles"
-      ;; 
+      ;;
     "*")
         PROJECT_FILE=""
         ;;
@@ -227,6 +231,7 @@ if [ -z "${GOROOT+x}" ]; then
 else
     GO_EXE=$GOROOT/bin/go
 fi
+export GOPATH=${TOPLEVEL}/cloud/go
 
 if [ ! -f ${GO_EXE} ]; then
   echo "Missing Go executable: ${GO_EXE}"
@@ -269,10 +274,8 @@ if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
   ${BUILD_TOOLS}/metabuild/metabuild.py --go-output \
       -o ${GEN_SRC_DIR} \
       ${METABUILD_INPUTS}
-  # Run go get to pull dependencies
-  ${TOPLEVEL}/project/victor/scripts/run-go-get.sh -d ${GEN_SRC_DIR}
   # Check out specified revisions of repositories we've versioned
-  (cd ${TOPLEVEL}; GOPATH=$(pwd)/cloud/go PATH="$PATH:$(dirname $GO_EXE)" ./godeps.js execute ${GEN_SRC_DIR})
+  (cd ${TOPLEVEL}; PATH="$PATH:$(dirname $GO_EXE)" ./godeps.js execute ${GEN_SRC_DIR})
 else
   echo "Ignore Go dependencies"
 fi
@@ -316,6 +319,7 @@ if [ $CONFIGURE -eq 1 ]; then
             -DMACOSX=1
             -DANDROID=0
             -DVICOS=0
+            -DVICOS_STAGING=0
         )
     elif [ "$PLATFORM" == "android" ]; then
         #
@@ -329,6 +333,7 @@ if [ $CONFIGURE -eq 1 ]; then
             -DMACOSX=0
             -DANDROID=1
             -DVICOS=0
+            -DVICOS_STAGING=0
             -DANDROID_NDK="${ANDROID_NDK}"
             -DCMAKE_TOOLCHAIN_FILE="${CMAKE_MODULE_DIR}/android.toolchain.patched.cmake"
             -DANDROID_TOOLCHAIN_NAME=clang
@@ -338,16 +343,29 @@ if [ $CONFIGURE -eq 1 ]; then
             -DANDROID_STL=c++_shared
             -DANDROID_CPP_FEATURES='rtti exceptions'
         )
+    elif [ "$PLATFORM" == "vicos" ] || [ "$PLATFORM" == "vicos-staging" ] ; then
+        #
+        # If VICOS_SDK is set, use it, else provide default location
+        #
+        if [ -z "${VICOS_SDK+x}" ]; then
+            VICOS_SDK=$(${TOPLEVEL}/tools/build/tools/ankibuild/vicos.py --install 0.8.0-r01)
+        fi
 
-    elif [ "$PLATFORM" == "vicos" ]; then
-        # vicos toolchain
+        VICOS_STAGING=0
+        if [ "$PLATFORM" == "vicos-staging" ]; then
+            VICOS_STAGING=1
+        fi
+
         PLATFORM_ARGS=(
             -DMACOSX=0
             -DANDROID=0
             -DVICOS=1
-            -DCMAKE_TOOLCHAIN_FILE="${CMAKE_MODULE_DIR}/vicos.toolchain.cmake"
+            -DVICOS_STAGING=${VICOS_STAGING}
+            -DVICOS_SDK="${VICOS_SDK}"
+            -DCMAKE_TOOLCHAIN_FILE="${CMAKE_MODULE_DIR}/vicos.oelinux.toolchain.cmake"
+            -DVICOS_CPP_FEATURES='rtti exceptions'
         )
-
+        echo "${PLATFORM_ARGS[@]}"
     else
         echo "unknown platform: ${PLATFORM}"
         exit 1
@@ -361,9 +379,12 @@ if [ $CONFIGURE -eq 1 ]; then
         -G"${GENERATOR}" \
         -DCMAKE_BUILD_TYPE=${CONFIGURATION} \
         -DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} \
+        -DGOPATH=${GOPATH} \
+        -DGOROOT=${GOROOT} \
+        -DANKI_BUILD_SHA=${ANKI_BUILD_SHA} \
         ${EXPORT_FLAGS} \
         ${FEATURE_FLAGS} \
-        "${PLATFORM_ARGS[@]}" 
+        "${PLATFORM_ARGS[@]}"
 fi
 
 if [ $RUN_BUILD -ne 1 ]; then

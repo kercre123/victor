@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.6)
 
 project(cameraService)
 
-if (ANDROID)
+if (ANDROID OR VICOS)
 
 add_library(camera_client STATIC
     vicos/camera_client/camera_client.h
@@ -31,7 +31,7 @@ PRIVATE
 
 set_target_properties(camera_client PROPERTIES LINKER_LANGUAGE C)
 
-endif(ANDROID)
+endif()
 
 include(anki_build_cxx)
 
@@ -40,7 +40,7 @@ anki_build_cxx_library(cameraService ${ANKI_SRCLIST_DIR})
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
-if (ANDROID)
+if (ANDROID OR VICOS)
     set(PLATFORM_LIBS
         log
         camera_client)

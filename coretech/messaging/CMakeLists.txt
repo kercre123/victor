@@ -12,7 +12,6 @@ set_target_properties(cti_messaging PROPERTIES
 
 target_link_libraries(cti_messaging
   clad
-  util
 )
 
 target_include_directories(cti_messaging 

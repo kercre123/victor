@@ -44,6 +44,9 @@ vlog "Android SDK"
 vlog "Android NDK"
 ./tools/build/tools/ankibuild/android.py --install-ndk r15b
 
+vlog "vicos SDK"
+./tools/build/tools/ankibuild/vicos.py --install 0.8.0-r01
+
 vlog "CMake"
 ./tools/build/tools/ankibuild/cmake.py
 
