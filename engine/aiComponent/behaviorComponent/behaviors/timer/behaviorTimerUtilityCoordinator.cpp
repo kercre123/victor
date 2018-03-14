@@ -531,48 +531,68 @@ void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions() const
   _iParams.setTimerBehavior->SetShowClockCallback(startTimerCallback);
 
   std::map<DigitID, std::function<int()>> timerFuncs;
-  // Ten Mins Digit
+  // Tens Digit (left of colon)
   {
     auto tenMinsFunc = [&timerUtility](){
       if(auto timerHandle = timerUtility.GetTimerHandle()){
-        const int minsRemaining = timerHandle->GetDisplayMinutesRemaining();
-        return minsRemaining/10;
+        if(timerHandle->GetDisplayHoursRemaining() > 0){
+          const int hoursRemaining = timerHandle->GetDisplayHoursRemaining();
+          return hoursRemaining/10;
+        }else{
+          const int minsRemaining = timerHandle->GetDisplayMinutesRemaining();
+          return minsRemaining/10;
+        }
       }else{
         return 0;
       }
     };
     timerFuncs.emplace(std::make_pair(DigitID::DigitOne, tenMinsFunc));
   }
-  // One Mins Digit
+  // Ones Digit (left of colon)
   {
     auto oneMinsFunc = [&timerUtility](){
       if(auto timerHandle = timerUtility.GetTimerHandle()){
-        const int minsRemaining = timerHandle->GetDisplayMinutesRemaining();
-        return minsRemaining % 10;
+        if(timerHandle->GetDisplayHoursRemaining() > 0){
+          const int hoursRemaining = timerHandle->GetDisplayHoursRemaining();
+          return hoursRemaining % 10;
+        }else{
+          const int minsRemaining = timerHandle->GetDisplayMinutesRemaining();
+          return minsRemaining % 10;
+        }
       }else{
         return 0;
       }
     };
     timerFuncs.emplace(std::make_pair(DigitID::DigitTwo, oneMinsFunc));
   }
-  // Ten seconds digit
+  // Tens Digit (right of colon)
   {
     auto tenSecsFunc = [&timerUtility](){
       if(auto timerHandle = timerUtility.GetTimerHandle()){
-        const int secsRemaining = timerHandle->GetDisplaySecondsRemaining();
-        return secsRemaining/10;
+        if(timerHandle->GetDisplayHoursRemaining() > 0){
+          const int minsRemaining = timerHandle->GetDisplayMinutesRemaining();
+          return minsRemaining/10;
+        }else{
+          const int secsRemaining = timerHandle->GetDisplaySecondsRemaining();
+          return secsRemaining/10;
+        }
       }else{
         return 0;
       }
     };
     timerFuncs.emplace(std::make_pair(DigitID::DigitThree, tenSecsFunc));
   }
-  // One seconds digit
+  // Ones Digit (right of colon)
   {
     auto oneSecsFunc = [&timerUtility](){
       if(auto timerHandle = timerUtility.GetTimerHandle()){
-        const int secsRemaining = timerHandle->GetDisplaySecondsRemaining();
-        return secsRemaining % 10;
+        if(timerHandle->GetDisplayHoursRemaining() > 0){
+          const int minsRemaining = timerHandle->GetDisplayMinutesRemaining();
+          return minsRemaining % 10;
+        }else{
+          const int secsRemaining = timerHandle->GetDisplaySecondsRemaining();
+          return secsRemaining % 10;
+        }
       }else{
         return 0;
       }
