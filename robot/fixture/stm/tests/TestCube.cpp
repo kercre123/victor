@@ -16,7 +16,9 @@
 #include "testcommon.h"
 #include "tests.h"
 #include "timer.h"
-  
+
+static const int CURRENT_HW_REV = CUBEID_HWREV_DVT3;
+
 //generate signature for the cube bootloader binary
 uint32_t cubebootSignature(bool dbg_print)
 {
@@ -66,8 +68,6 @@ uint32_t cubebootSignature(bool dbg_print)
 //-----------------------------------------------------------------------------
 //                  Dialog Load
 //-----------------------------------------------------------------------------
-
-static const int CURRENT_HW_REV = CUBEID_HWREV_DVT3;
 
 //Dialog DA14580, AN-B-001, Table 5: UART boot protocol
 //  Byte nr.  DA1458x UTX     DA1458x URX
