@@ -1,10 +1,10 @@
 #!/bin/bash
 
-if [ ! -e $adb ]; then echo $adb does not exist; exit 1; fi
+#if [ ! -e $adb ]; then echo $adb does not exist; exit 1; fi
 
-adb shell "echo shell connection established"
-shell_status=$?
-if [ $shell_status -ne 0 ]; then echo adb not connected to a device, e=$shell_status; exit $shell_status; fi
+#adb shell "echo shell connection established"
+#shell_status=$?
+#if [ $shell_status -ne 0 ]; then echo adb not connected to a device, e=$shell_status; exit $shell_status; fi
 
 #find highest version firmware package in this directory
 fwver=0; fwzip="x"
