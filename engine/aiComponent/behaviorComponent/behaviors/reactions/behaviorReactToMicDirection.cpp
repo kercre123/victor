@@ -84,7 +84,7 @@ BehaviorReactToMicDirection::BehaviorReactToMicDirection( const Json::Value& con
   // initialize our default data to our fallback data ...
   std::copy( std::begin( kFallbackReaction.directionalResponseList ),
              std::end( kFallbackReaction.directionalResponseList ),
-             std::begin( _instanceVars.defaultReaction.directionalResponseList ) );
+             std::begin( _iVars.defaultReaction.directionalResponseList ) );
 
   LoadDynamicReactionStateData( allResponses );
 }
@@ -94,7 +94,7 @@ BehaviorReactToMicDirection::~BehaviorReactToMicDirection()
 {
   for ( uint state = 0; state < EDynamicReactionState::Num; ++state )
   {
-    Util::SafeDelete( _instanceVars.reactions[state] );
+    Util::SafeDelete( _iVars.reactions[state] );
   }
 }
 
@@ -106,7 +106,7 @@ void BehaviorReactToMicDirection::LoadDynamicReactionStateData( const Json::Valu
     const Json::Value& reactionElement( config[kKeyDefaultReaction] );
     if ( !reactionElement.isNull() )
     {
-      LoadDynamicStateReactions( reactionElement, _instanceVars.defaultReaction );
+      LoadDynamicStateReactions( reactionElement, _iVars.defaultReaction );
     }
   }
 
@@ -115,20 +115,20 @@ void BehaviorReactToMicDirection::LoadDynamicReactionStateData( const Json::Valu
     for ( uint state = 0; state < EDynamicReactionState::Num; ++state )
     {
       // default everything to null, which tells the behavior to fallback to the default values
-      _instanceVars.reactionEnabled[state] = true;
-      _instanceVars.reactions[state] = nullptr;
+      _iVars.reactionEnabled[state] = true;
+      _iVars.reactions[state] = nullptr;
 
       const std::string stateName = ConvertReactionStateToString( static_cast<EDynamicReactionState>(state) );
       const Json::Value& reactionElement( config[stateName] );
       if ( !reactionElement.isNull() )
       {
-        JsonTools::GetValueOptional( reactionElement, kKeyEnabled, _instanceVars.reactionEnabled[state] );
-        if ( _instanceVars.reactionEnabled[state] )
+        JsonTools::GetValueOptional( reactionElement, kKeyEnabled, _iVars.reactionEnabled[state] );
+        if ( _iVars.reactionEnabled[state] )
         {
           DynamicStateReaction* newReaction = new DynamicStateReaction();
           LoadDynamicStateReactions( reactionElement, *newReaction );
 
-          _instanceVars.reactions[state] = newReaction;
+          _iVars.reactions[state] = newReaction;
         }
       }
     }
@@ -145,7 +145,7 @@ void BehaviorReactToMicDirection::LoadDynamicStateReactions( const Json::Value& 
                        "Direction missing from list of reactions [%s]", directionString.c_str() );
 
     // default our values
-    reactionState.directionalResponseList[dir] = _instanceVars.defaultReaction.directionalResponseList[dir];
+    reactionState.directionalResponseList[dir] = _iVars.defaultReaction.directionalResponseList[dir];
     LoadDirectionResponse( responseConfig, reactionState.directionalResponseList[dir] );
   }
 }
@@ -267,13 +267,13 @@ std::string BehaviorReactToMicDirection::ConvertClockDirectionToString( EClockDi
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToMicDirection::SetReactDirection( MicDirectionIndex dir )
 {
-  _dynamicVars.reactionDirection = ConvertMicDirectionToClockDirection( dir );
+  _dVars.reactionDirection = ConvertMicDirectionToClockDirection( dir );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToMicDirection::ClearReactDirection()
 {
-  _dynamicVars.reactionDirection = EClockDirection::Invalid;
+  _dVars.reactionDirection = EClockDirection::Invalid;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -281,10 +281,10 @@ bool BehaviorReactToMicDirection::WantsToBeActivatedBehavior() const
 {
   // we heard a sound that we want to focus on, so let's activate our behavior so that we can respond to this
   // setting reactionDirection will cause us to activate
-  if ( EClockDirection::Invalid != _dynamicVars.reactionDirection )
+  if ( EClockDirection::Invalid != _dVars.reactionDirection )
   {
     const EDynamicReactionState currentState = GetCurrentReactionState();
-    return _instanceVars.reactionEnabled[currentState];
+    return _iVars.reactionEnabled[currentState];
   }
 
   return false;
@@ -316,9 +316,9 @@ const BehaviorReactToMicDirection::DirectionResponse& BehaviorReactToMicDirectio
   const EDynamicReactionState currentState = GetCurrentReactionState();
 
   // if we have a reaction for this speciic state, use it, else fall back to the default response
-  const DynamicStateReaction* result = _instanceVars.reactions[currentState];
+  const DynamicStateReaction* result = _iVars.reactions[currentState];
   return ( nullptr != result ) ? result->directionalResponseList[dir] :
-                                 _instanceVars.defaultReaction.directionalResponseList[dir];
+                                 _iVars.defaultReaction.directionalResponseList[dir];
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -345,12 +345,12 @@ BehaviorReactToMicDirection::EDynamicReactionState BehaviorReactToMicDirection::
 void BehaviorReactToMicDirection::RespondToSound()
 {
   // normally we would play an animation, but currently we don't have animation ready, so for now we'll just turn to sound
-  if ( EClockDirection::Invalid != _dynamicVars.reactionDirection )
+  if ( EClockDirection::Invalid != _dVars.reactionDirection )
   {
-    PRINT_CH_DEBUG( "MicData", "BehaviorReactToMicDirection.Reacting", "Responding to sound from direction [%u]", _dynamicVars.reactionDirection );
+    PRINT_CH_DEBUG( "MicData", "BehaviorReactToMicDirection.Reacting", "Responding to sound from direction [%u]", _dVars.reactionDirection );
 
     // if an animation was specified, use it, else procedurally turn to the facing direction
-    const DirectionResponse& response = GetResponseData( _dynamicVars.reactionDirection );
+    const DirectionResponse& response = GetResponseData( _dVars.reactionDirection );
     if ( kInvalidAnimationTrigger != response.animation )
     {
       DelegateIfInControl( new TriggerLiftSafeAnimationAction( response.animation ) );
@@ -385,7 +385,7 @@ void BehaviorReactToMicDirection::RespondToSound()
 void BehaviorReactToMicDirection::OnResponseComplete()
 {
   // reset any response we may have been carrying out and start cooldowns
-  _dynamicVars = DynamicVariables();
+  _dVars = DynamicVariables();
 }
 
 }

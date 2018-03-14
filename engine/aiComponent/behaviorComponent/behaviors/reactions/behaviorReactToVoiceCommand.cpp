@@ -94,41 +94,41 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
   _triggerDirection( kMicDirectionUnknown )
 {
   // do we exit once we've received an intent from the cloud?
-  _instanceVars.exitOnIntents = config.get( kExitOnIntentsKey, true ).asBool();
+  _iVars.exitOnIntents = config.get( kExitOnIntentsKey, true ).asBool();
 
   // do we play ear-con sounds to notify the user when Victor is listening
   {
     std::string earConString;
     if ( JsonTools::GetValueOptional( config, kEarConBegin, earConString ) )
     {
-      _instanceVars.earConBegin = AudioMetaData::GameEvent::GenericEventFromString( earConString );
+      _iVars.earConBegin = AudioMetaData::GameEvent::GenericEventFromString( earConString );
     }
 
     if ( JsonTools::GetValueOptional( config, kEarConEnd, earConString ) )
     {
-      _instanceVars.earConEnd = AudioMetaData::GameEvent::GenericEventFromString( earConString );
+      _iVars.earConEnd = AudioMetaData::GameEvent::GenericEventFromString( earConString );
     }
   }
 
   // do we play the backpack lights from the behavior, else assume anims will handle it
-  _instanceVars.backpackLights = config.get( kProceduralBackpackLights, false ).asBool();
+  _iVars.backpackLights = config.get( kProceduralBackpackLights, false ).asBool();
 
   // by supplying either kTriggerBehaviorKey XOR kIntentBehaviorKey, we're
   // telling the behavior we want to turn to the mic direction either when hearing
   // the trigger word or when receiving the intent
   {
-    _instanceVars.turnOnIntent = JsonTools::GetValueOptional( config, kIntentBehaviorKey, _instanceVars.reactionBehaviorString );
-    _instanceVars.turnOnTrigger = JsonTools::GetValueOptional( config, kTriggerBehaviorKey, _instanceVars.reactionBehaviorString );
+    _iVars.turnOnIntent = JsonTools::GetValueOptional( config, kIntentBehaviorKey, _iVars.reactionBehaviorString );
+    _iVars.turnOnTrigger = JsonTools::GetValueOptional( config, kTriggerBehaviorKey, _iVars.reactionBehaviorString );
 
-    if ( _instanceVars.turnOnTrigger && _instanceVars.turnOnIntent )
+    if ( _iVars.turnOnTrigger && _iVars.turnOnIntent )
     {
-      _instanceVars.turnOnIntent = false;
+      _iVars.turnOnIntent = false;
       PRINT_NAMED_WARNING( "BehaviorReactToVoiceCommand.Init",
                           "Cannot define BOTH %s and %s", kTriggerBehaviorKey, kIntentBehaviorKey );
     }
   }
 
-  _instanceVars.playListeningGetInAnim = config.get( kIntentListenGetIn, true ).asBool();
+  _iVars.playListeningGetInAnim = config.get( kIntentListenGetIn, true ).asBool();
 
   // this will possibly override all of our loaded values
   LoadLeeHappinessValues( config );
@@ -148,33 +148,33 @@ void BehaviorReactToVoiceCommand::LoadLeeHappinessValues( const Json::Value& con
       // no noise or movement prior to hearing the intent
       // movement and noise after hearing the intent
 
-      _instanceVars.earConBegin             = GenericEvent::Invalid;
-      _instanceVars.earConEnd               = GenericEvent::Stop__Robot_Vic_Sfx__Scan_Loop_Stop;
-      _instanceVars.turnOnTrigger           = false;
-      _instanceVars.turnOnIntent            = true;
-      _instanceVars.playListeningGetInAnim  = false;
+      _iVars.earConBegin             = GenericEvent::Invalid;
+      _iVars.earConEnd               = GenericEvent::Stop__Robot_Vic_Sfx__Scan_Loop_Stop;
+      _iVars.turnOnTrigger           = false;
+      _iVars.turnOnIntent            = true;
+      _iVars.playListeningGetInAnim  = false;
     }
     else if ( leesFeelings == "lee_meh" )
     {
       // noise but no movement prior to hearing the intent
       // movement and noise after hearing the intent
 
-      _instanceVars.earConBegin             = GenericEvent::Play__Robot_Vic_Sfx__Scan_Loop_Play;
-      _instanceVars.earConEnd               = GenericEvent::Stop__Robot_Vic_Sfx__Scan_Loop_Stop;
-      _instanceVars.turnOnTrigger           = false;
-      _instanceVars.turnOnIntent            = true;
-      _instanceVars.playListeningGetInAnim  = true;
+      _iVars.earConBegin             = GenericEvent::Play__Robot_Vic_Sfx__Scan_Loop_Play;
+      _iVars.earConEnd               = GenericEvent::Stop__Robot_Vic_Sfx__Scan_Loop_Stop;
+      _iVars.turnOnTrigger           = false;
+      _iVars.turnOnIntent            = true;
+      _iVars.playListeningGetInAnim  = true;
     }
     else if ( leesFeelings == "lee_sad" )
     {
       // movement and noise prior to hearing the intent
       // noise but no movement after hearing the intent
 
-      _instanceVars.earConBegin             = GenericEvent::Play__Robot_Vic_Sfx__Scan_Loop_Play;
-      _instanceVars.earConEnd               = GenericEvent::Stop__Robot_Vic_Sfx__Scan_Loop_Stop;
-      _instanceVars.turnOnTrigger           = true;
-      _instanceVars.turnOnIntent            = false;
-      _instanceVars.playListeningGetInAnim  = true;
+      _iVars.earConBegin             = GenericEvent::Play__Robot_Vic_Sfx__Scan_Loop_Play;
+      _iVars.earConEnd               = GenericEvent::Stop__Robot_Vic_Sfx__Scan_Loop_Stop;
+      _iVars.turnOnTrigger           = true;
+      _iVars.turnOnIntent            = false;
+      _iVars.playListeningGetInAnim  = true;
     }
     else
     {
@@ -185,9 +185,9 @@ void BehaviorReactToVoiceCommand::LoadLeeHappinessValues( const Json::Value& con
 
     // make sure we have a reaction behavior if none was specified
     // this default will be a simple procedural turn towards the mic direction
-    if ( _instanceVars.reactionBehaviorString.empty() )
+    if ( _iVars.reactionBehaviorString.empty() )
     {
-      _instanceVars.reactionBehaviorString = "ProceduralTurnToMicDirection";
+      _iVars.reactionBehaviorString = "ProceduralTurnToMicDirection";
     }
   }
 }
@@ -196,26 +196,26 @@ void BehaviorReactToVoiceCommand::LoadLeeHappinessValues( const Json::Value& con
 void BehaviorReactToVoiceCommand::InitBehavior()
 {
   // grab our reaction behavior ...
-  if ( !_instanceVars.reactionBehaviorString.empty() )
+  if ( !_iVars.reactionBehaviorString.empty() )
   {
     ICozmoBehaviorPtr reactionBehavior;
     // try grabbing it from anonymous behaviors first, else we'll grab it from the behavior id
-    reactionBehavior = FindAnonymousBehaviorByName( _instanceVars.reactionBehaviorString );
+    reactionBehavior = FindAnonymousBehaviorByName( _iVars.reactionBehaviorString );
     if ( nullptr == reactionBehavior )
     {
       // no match, try behavior IDs
-      const BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString( _instanceVars.reactionBehaviorString );
+      const BehaviorID behaviorID = BehaviorTypesWrapper::BehaviorIDFromString( _iVars.reactionBehaviorString );
       reactionBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID( behaviorID );
     }
 
     // downcast to a BehaviorReactToMicDirection since we're forcing all reactions to be of this behavior
     DEV_ASSERT_MSG( reactionBehavior != nullptr, "BehaviorReactToVoiceCommand.Init",
-                     "Reaction behavior not found: %s", _instanceVars.reactionBehaviorString.c_str());
+                     "Reaction behavior not found: %s", _iVars.reactionBehaviorString.c_str());
     DEV_ASSERT_MSG( reactionBehavior->GetClass() == BehaviorClass::ReactToMicDirection,
                     "BehaviorReactToVoiceCommand.Init",
                     "Reaction behavior specified is not of valid class BehaviorClass::ReactToMicDirection");
 
-    _instanceVars.reactionBehavior = std::static_pointer_cast<BehaviorReactToMicDirection>(reactionBehavior);
+    _iVars.reactionBehavior = std::static_pointer_cast<BehaviorReactToMicDirection>(reactionBehavior);
   }
 
   SubscribeToTags({
@@ -226,9 +226,9 @@ void BehaviorReactToVoiceCommand::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::GetAllDelegates( std::set<IBehavior*>& delegates ) const
 {
-  if ( _instanceVars.reactionBehavior )
+  if ( _iVars.reactionBehavior )
   {
-    delegates.insert( _instanceVars.reactionBehavior.get() );
+    delegates.insert( _iVars.reactionBehavior.get() );
   }
 }
 
@@ -266,7 +266,7 @@ void BehaviorReactToVoiceCommand::AlwaysHandleInScope( const RobotToEngineEvent&
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnBehaviorActivated()
 {
-  _dynamicVars = DynamicVariables();
+  _dVars = DynamicVariables();
 
   // cache our reaction direction at the start in case we were told to turn
   // upon hearing the trigger word
@@ -291,15 +291,15 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
   OnStreamingBegin();
 
   // Play a reaction behavior if we were told to ...
-  if ( _instanceVars.turnOnTrigger && _instanceVars.reactionBehavior )
+  if ( _iVars.turnOnTrigger && _iVars.reactionBehavior )
   {
     const MicDirectionIndex triggerDirection = GetReactionDirection();
-    _instanceVars.reactionBehavior->SetReactDirection( triggerDirection );
+    _iVars.reactionBehavior->SetReactDirection( triggerDirection );
 
     // allow the reaction to not want to run in certain directions/states
-    if ( _instanceVars.reactionBehavior->WantsToBeActivated() )
+    if ( _iVars.reactionBehavior->WantsToBeActivated() )
     {
-      DelegateIfInControl( _instanceVars.reactionBehavior.get(), &BehaviorReactToVoiceCommand::StartListening );
+      DelegateIfInControl( _iVars.reactionBehavior.get(), &BehaviorReactToVoiceCommand::StartListening );
     }
   }
 
@@ -329,7 +329,7 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::BehaviorUpdate()
 {
-  if ( _dynamicVars.state == EState::Listening )
+  if ( _dVars.state == EState::Listening )
   {
     // since this "listening loop" is decoupled from the actual anim process recording,
     // this means we're exiting the listening state based on a computed engine process time,
@@ -337,7 +337,7 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
     // error between the two, let's add a bit of buffer to make sure we don't compute
     // the reaction direction AFTER the anim process has "unlocked" the selected direction
     const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    if ( currentTime < ( _dynamicVars.streamingBeginTime + kMaxRecordTime_s - kListeningBuffer_s ) )
+    if ( currentTime < ( _dVars.streamingBeginTime + kMaxRecordTime_s - kListeningBuffer_s ) )
     {
       // we need to constantly update our reaction direction in case the robot
       // is rotating ... there appears to be a bit of lag in the update from SE
@@ -346,7 +346,7 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
     }
 
     const bool isIntentPending = GetBehaviorComp<UserIntentComponent>().IsAnyUserIntentPending();
-    if ( _instanceVars.exitOnIntents && isIntentPending)
+    if ( _iVars.exitOnIntents && isIntentPending)
     {
       // kill delegates, we'll handle next steps with callbacks
       // note: passing true to CancelDelegatees did NOT in fact call my callback,
@@ -355,7 +355,7 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
       BehaviorReactToVoiceCommand::StopListening();
     }
   }
-  else if ( _dynamicVars.state == EState::Thinking )
+  else if ( _dVars.state == EState::Thinking )
   {
     // we may receive an intent AFTER we're done listening for various reasons,
     // so poll for it while we're in the thinking state
@@ -375,12 +375,12 @@ void BehaviorReactToVoiceCommand::ComputeReactionDirection()
   // soooooo, the anim process should be doing this automatically by sending us an
   // updated "selected direction" after the robot is done moving, so let's just use that
   // if we find this is not working, we can do a bit of pose math and figure shit out
-  _dynamicVars.reactionDirection = GetSelectedDirectionFromMicHistory();
+  _dVars.reactionDirection = GetSelectedDirectionFromMicHistory();
 
   #if DEBUG_TRIGGER_WORD_VERBOSE
   {
     PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Debug",
-                   "Computing selected direction [%d]", (int)_dynamicVars.reactionDirection );
+                   "Computing selected direction [%d]", (int)_dVars.reactionDirection );
   }
   #endif
 }
@@ -388,7 +388,7 @@ void BehaviorReactToVoiceCommand::ComputeReactionDirection()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MicDirectionIndex BehaviorReactToVoiceCommand::GetReactionDirection() const
 {
-  MicDirectionIndex direction = _dynamicVars.reactionDirection;
+  MicDirectionIndex direction = _dVars.reactionDirection;
   if ( kMicDirectionUnknown == direction )
   {
     // fallback to our trigger direction
@@ -429,22 +429,22 @@ void BehaviorReactToVoiceCommand::OnStreamingBegin()
     .offset                 = {{0,0,0}}
   };
 
-  if ( _instanceVars.backpackLights )
+  if ( _iVars.backpackLights )
   {
     BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
-    blc.StartLoopingBackpackLights( kStreamingLights, BackpackLightSource::Behavior, _dynamicVars.lightsHandle );
+    blc.StartLoopingBackpackLights( kStreamingLights, BackpackLightSource::Behavior, _dVars.lightsHandle );
   }
 
-  _dynamicVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnStreamingEnd()
 {
-  if ( _instanceVars.backpackLights )
+  if ( _iVars.backpackLights )
   {
     BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
-    blc.StopLoopingBackpackLights( _dynamicVars.lightsHandle );
+    blc.StopLoopingBackpackLights( _dVars.lightsHandle );
   }
 }
 
@@ -460,18 +460,18 @@ void BehaviorReactToVoiceCommand::StartListening()
   {
     // have our looping anim abort 10s after streaming started
     const float elapsed = ( BaseStationTimer::getInstance()->GetCurrentTimeInSeconds()
-                             - _dynamicVars.streamingBeginTime );
+                             - _dVars.streamingBeginTime );
     const float timeout = ( kMaxRecordTime_s - elapsed );
     DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::VC_ListeningLoop,
                                                      0, true, (uint8_t)AnimTrackFlag::NO_TRACKS,
                                                      std::max( timeout, 1.0f ) ),
                          &BehaviorReactToVoiceCommand::StopListening );
 
-    _dynamicVars.state = EState::Listening;
+    _dVars.state = EState::Listening;
     OnVictorListeningBegin();
   };
 
-  if ( _instanceVars.playListeningGetInAnim )
+  if ( _iVars.playListeningGetInAnim )
   {
     DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::VC_ListeningGetIn ), callback );
   }
@@ -484,9 +484,9 @@ void BehaviorReactToVoiceCommand::StartListening()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::StopListening()
 {
-  ASSERT_NAMED_EVENT( _dynamicVars.state == EState::Listening,
+  ASSERT_NAMED_EVENT( _dVars.state == EState::Listening,
                       "BehaviorReactToVoiceCommand.State",
-                      "Transitioning to EState::IntentReceived from invalid state [%hhu]", _dynamicVars.state );
+                      "Transitioning to EState::IntentReceived from invalid state [%hhu]", _dVars.state );
 
   OnVictorListeningEnd();
   SetUserIntentStatus();
@@ -499,10 +499,10 @@ void BehaviorReactToVoiceCommand::OnVictorListeningBegin()
 {
   using namespace AudioMetaData::GameEvent;
 
-  if ( GenericEvent::Invalid != _instanceVars.earConBegin )
+  if ( GenericEvent::Invalid != _iVars.earConBegin )
   {
     // Play earcon begin audio
-    GetBEI().GetRobotAudioClient().PostEvent( _instanceVars.earConBegin, AudioMetaData::GameObjectType::SFX );
+    GetBEI().GetRobotAudioClient().PostEvent( _iVars.earConBegin, AudioMetaData::GameObjectType::SFX );
   }
 }
 
@@ -511,10 +511,10 @@ void BehaviorReactToVoiceCommand::OnVictorListeningEnd()
 {
   using namespace AudioMetaData::GameEvent;
 
-  if ( GenericEvent::Invalid != _instanceVars.earConEnd )
+  if ( GenericEvent::Invalid != _iVars.earConEnd )
   {
     // Play earcon end audio
-    GetBEI().GetRobotAudioClient().PostEvent( _instanceVars.earConEnd, AudioMetaData::GameObjectType::SFX );
+    GetBEI().GetRobotAudioClient().PostEvent( _iVars.earConEnd, AudioMetaData::GameObjectType::SFX );
   }
 
   // Note: this is currently decoupled with the actual stream from the AnimProcess
@@ -526,18 +526,18 @@ void BehaviorReactToVoiceCommand::OnVictorListeningEnd()
 void BehaviorReactToVoiceCommand::SetUserIntentStatus()
 {
   UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
-  if ( ( _dynamicVars.intentStatus == EIntentStatus::NoIntentHeard ) && uic.IsAnyUserIntentPending() )
+  if ( ( _dVars.intentStatus == EIntentStatus::NoIntentHeard ) && uic.IsAnyUserIntentPending() )
   {
     // next behavior is going to deal with the intent, but we still have more shit to do
     uic.SetUserIntentTimeoutEnabled( false );
 
-    _dynamicVars.intentStatus = EIntentStatus::IntentHeard;
+    _dVars.intentStatus = EIntentStatus::IntentHeard;
 
     static const UserIntentTag unmatched = USER_INTENT(unmatched_intent);
     if ( uic.IsUserIntentPending( unmatched ) )
     {
       uic.ClearUserIntent( unmatched );
-      _dynamicVars.intentStatus = EIntentStatus::IntentUnknown;
+      _dVars.intentStatus = EIntentStatus::IntentUnknown;
     }
   }
 }
@@ -545,20 +545,20 @@ void BehaviorReactToVoiceCommand::SetUserIntentStatus()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::TransitionToThinking()
 {
-  _dynamicVars.state = EState::Thinking;
+  _dVars.state = EState::Thinking;
 
   auto callback = [this]()
   {
     // Play a reaction behavior if we were told to ...
-    if ( _instanceVars.turnOnIntent && _instanceVars.reactionBehavior )
+    if ( _iVars.turnOnIntent && _iVars.reactionBehavior )
     {
       const MicDirectionIndex triggerDirection = GetReactionDirection();
-      _instanceVars.reactionBehavior->SetReactDirection( triggerDirection );
+      _iVars.reactionBehavior->SetReactDirection( triggerDirection );
 
       // allow the reaction to not want to run in certain directions/states
-      if ( _instanceVars.reactionBehavior->WantsToBeActivated() )
+      if ( _iVars.reactionBehavior->WantsToBeActivated() )
       {
-        DelegateIfInControl( _instanceVars.reactionBehavior.get(), &BehaviorReactToVoiceCommand::TransitionToIntentReceived );
+        DelegateIfInControl( _iVars.reactionBehavior.get(), &BehaviorReactToVoiceCommand::TransitionToIntentReceived );
       }
     }
 
@@ -575,11 +575,11 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
 {
-  _dynamicVars.state = EState::IntentReceived;
+  _dVars.state = EState::IntentReceived;
 
   AnimationTrigger intentReaction = kInvalidAnimation;
 
-  switch ( _dynamicVars.intentStatus )
+  switch ( _dVars.intentStatus )
   {
     case EIntentStatus::IntentHeard:
       // no animation for valid intent, go straight into the intent behavior

@@ -141,7 +141,7 @@ private:
     DynamicStateReaction    defaultReaction;
     DynamicStateReaction*   reactions[EDynamicReactionState::Num];
     bool                    reactionEnabled[EDynamicReactionState::Num];
-  } _instanceVars;
+  } _iVars;
 
   struct DynamicVariables
   {
@@ -149,7 +149,7 @@ private:
     
     // this is the direction we've been told to react to
     EClockDirection   reactionDirection;
-  } _dynamicVars;
+  } _dVars;
 };
 
 }

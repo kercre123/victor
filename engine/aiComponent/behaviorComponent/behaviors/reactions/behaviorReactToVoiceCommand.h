@@ -126,7 +126,7 @@ private:
     std::string reactionBehaviorString;
     std::shared_ptr<BehaviorReactToMicDirection> reactionBehavior;
 
-  } _instanceVars;
+  } _iVars;
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   struct DynamicVariables
@@ -139,7 +139,7 @@ private:
     float                     streamingBeginTime;
     EIntentStatus             intentStatus;
 
-  } _dynamicVars;
+  } _dVars;
 
   // these are dynamic vars that live beyond the activation scope ...
   MicDirectionIndex         _triggerDirection;
