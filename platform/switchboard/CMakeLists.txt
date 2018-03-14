@@ -4,9 +4,8 @@ if (VICOS)
 
 project(vic-switchboard)
 
-include(vicos.toolchain)
 include(anki_build_cxx)
-#include(sodium)
+include(sodium)
 
 anki_build_cxx_executable(vic-switchboard ${ANKI_SRCLIST_DIR})
 
@@ -32,7 +31,8 @@ PRIVATE
   robot_clad_cpplite
   cti_messaging
   engine_clad
-  #${SODIUM_LIBS}
+  ${SODIUM_LIBS}
+  jsoncpp
   libglib-2.0.so
   libgio-2.0.so
   libgobject-2.0.so
@@ -65,13 +65,10 @@ target_include_directories(vic-switchboard
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/anki-wifi>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libev>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/signals>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libsodium/libsodium/include>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libsodium/libsodium/include/sodium>
-  $<BUILD_INTERFACE:${vicos_root}/sysroot/usr/include/gio-unix-2.0>
-  $<BUILD_INTERFACE:${vicos_root}/sysroot/usr/include/glib-2.0>
-  $<BUILD_INTERFACE:${vicos_root}/sysroot/usr/lib/glib-2.0/include>
-  $<BUILD_INTERFACE:${vicos_root}/generated/clad/clad/externalInterface>
-  $<BUILD_INTERFACE:${vicos_root}/generated/clad/engine>
+  $<BUILD_INTERFACE:${CORETECH_EXTERNAL_DIR}/build/libsodium/vicos/include>
+  $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/include/gio-unix-2.0>
+  $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/include/glib-2.0>
+  $<BUILD_INTERFACE:${VICOS_SDK}/sysroot/usr/lib/glib-2.0/include>
   ${PLATFORM_INCLUDES}
 )
 
