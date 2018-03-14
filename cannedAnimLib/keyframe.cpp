@@ -949,7 +949,10 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     #if CAN_STREAM
       RobotInterface::EngineToRobot* RecordHeadingKeyFrame::GetStreamMessage()
       {
-        return new RobotInterface::EngineToRobot(_streamMsg);
+        if (GetCurrentTime() == 0) {
+          return new RobotInterface::EngineToRobot(_streamMsg);
+        }
+        return nullptr;
       }
     #endif
     
@@ -1067,7 +1070,10 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     #if CAN_STREAM
       RobotInterface::EngineToRobot* TurnToRecordedHeadingKeyFrame::GetStreamMessage()
       {
-        return new RobotInterface::EngineToRobot(_streamMsg);
+        if (GetCurrentTime() == 0) {
+          return new RobotInterface::EngineToRobot(_streamMsg);
+        }
+        return nullptr;
       }
     #endif
     
