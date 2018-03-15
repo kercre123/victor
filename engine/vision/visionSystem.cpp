@@ -364,19 +364,44 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  Result VisionSystem::SetNextCameraParams(s32 exposure_ms, f32 gain)
+  Result VisionSystem::SetNextCameraExposure(s32 exposure_ms, f32 gain)
   {
     bool& nextParamsSet = _nextCameraParams.first;
     if(nextParamsSet)
     {
       PRINT_NAMED_WARNING("VisionSystem.SetNextCameraParams.OverwritingPreviousParams",
                           "Params already requested (%dms,%.2f) but not sent. Replacing with (%dms,%.2f)",
-                          _nextCameraParams.second.exposure_ms, _nextCameraParams.second.gain,
+                          _nextCameraParams.second.exposureTime_ms, _nextCameraParams.second.gain,
                           exposure_ms, gain);
     }
     
-    _nextCameraParams.second.exposure_ms = exposure_ms;
+    _nextCameraParams.second.exposureTime_ms = exposure_ms;
     _nextCameraParams.second.gain = gain;
+    nextParamsSet = true;
+    
+    return RESULT_OK;
+  }
+
+  Result VisionSystem::SetNextCameraWhiteBalance(f32 whiteBalanceGainR, 
+                                                 f32 whiteBalanceGainG, 
+                                                 f32 whiteBalanceGainB)
+  {
+    bool& nextParamsSet = _nextCameraParams.first;
+    if(nextParamsSet)
+    {
+      PRINT_NAMED_WARNING("VisionSystem.SetNextCameraWhiteBalance.OverwritingPreviousParams",
+                          "Params already requested (%.2f,%.2f,%.2f) but not sent. Replacing with (%.2f,%.2f,%.2f)",
+                          _nextCameraParams.second.whiteBalanceGainR,
+                          _nextCameraParams.second.whiteBalanceGainG,
+                          _nextCameraParams.second.whiteBalanceGainB,
+                          whiteBalanceGainR,
+                          whiteBalanceGainG,
+                          whiteBalanceGainB);
+    }
+    
+    _nextCameraParams.second.whiteBalanceGainR = whiteBalanceGainR;
+    _nextCameraParams.second.whiteBalanceGainG = whiteBalanceGainG;
+    _nextCameraParams.second.whiteBalanceGainB = whiteBalanceGainB;
     nextParamsSet = true;
     
     return RESULT_OK;
@@ -581,7 +606,7 @@ namespace Cozmo {
                                          const std::vector<Anki::Rectangle<s32>>& detections)
   {
 #   define DEBUG_IMAGE_HISTOGRAM 0
-    
+
     // Compute the exposure we would like to have
     f32 exposureAdjFrac = 1.f;
     
@@ -663,15 +688,15 @@ namespace Cozmo {
     // Desired exposure settings are what they already were.
     _currentResult.imageQuality = ImageQuality::Good;
     
-    s32 desiredExposureTime_ms = _currentCameraParams.exposure_ms;
+    s32 desiredExposureTime_ms = _currentCameraParams.exposureTime_ms;
     f32 desiredGain = _currentCameraParams.gain;
     
     if(FLT_LT(exposureAdjFrac, 1.f))
     {
       // Want to bring brightness down: reduce exposure first, if possible
-      if(_currentCameraParams.exposure_ms > _minCameraExposureTime_ms)
+      if(_currentCameraParams.exposureTime_ms > _minCameraExposureTime_ms)
       {
-        desiredExposureTime_ms = std::round(static_cast<f32>(_currentCameraParams.exposure_ms) * exposureAdjFrac);
+        desiredExposureTime_ms = std::round(static_cast<f32>(_currentCameraParams.exposureTime_ms) * exposureAdjFrac);
         desiredExposureTime_ms = std::max(_minCameraExposureTime_ms, desiredExposureTime_ms);
       }
       else if(FLT_GT(_currentCameraParams.gain, _minCameraGain))
@@ -699,10 +724,10 @@ namespace Cozmo {
         desiredGain *= exposureAdjFrac;
         desiredGain = std::min(_maxCameraGain, desiredGain);
       }
-      else if(_currentCameraParams.exposure_ms < _maxCameraExposureTime_ms)
+      else if(_currentCameraParams.exposureTime_ms < _maxCameraExposureTime_ms)
       {
         // Already at max gain; increase exposure
-        desiredExposureTime_ms = std::round(static_cast<f32>(_currentCameraParams.exposure_ms) * exposureAdjFrac);
+        desiredExposureTime_ms = std::round(static_cast<f32>(_currentCameraParams.exposureTime_ms) * exposureAdjFrac);
         desiredExposureTime_ms = std::min(_maxCameraExposureTime_ms, desiredExposureTime_ms);
       }
       else
@@ -733,9 +758,9 @@ namespace Cozmo {
       }
     }
     
-    _currentResult.exposureTime_ms = desiredExposureTime_ms;
-    _currentResult.cameraGain      = desiredGain;
-    
+    _currentResult.cameraParams.exposureTime_ms = desiredExposureTime_ms;
+    _currentResult.cameraParams.gain = desiredGain;
+
     return RESULT_OK;
   }
 
@@ -942,7 +967,7 @@ namespace Cozmo {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result VisionSystem::DetectLaserPoints(Vision::ImageCache& imageCache)
   {
-    const bool isDarkExposure = (Util::IsNear(_currentCameraParams.exposure_ms, _minCameraExposureTime_ms) &&
+    const bool isDarkExposure = (Util::IsNear(_currentCameraParams.exposureTime_ms, _minCameraExposureTime_ms) &&
                                  Util::IsNear(_currentCameraParams.gain, _minCameraGain));
     
     Result result = _laserPointDetector->Detect(imageCache, _poseData, isDarkExposure,
@@ -1334,7 +1359,7 @@ namespace Cozmo {
     VisionProcessingResult result;
     result.timestamp = inputImageGray.GetTimestamp();
     result.imageQuality = ImageQuality::Unchecked;
-    result.exposureTime_ms = -1;
+    result.cameraParams.exposureTime_ms = -1;
     std::swap(result, _currentResult);
     
     auto& visionModesProcessed = _currentResult.modesProcessed;
@@ -1590,6 +1615,22 @@ namespace Cozmo {
       }
       visionModesProcessed.SetBitFlag(VisionMode::CheckingQuality, true);
     }
+
+    if(ShouldProcessVisionMode(VisionMode::CheckingWhiteBalance))
+    {
+      Tic("CheckingWhiteBalance");
+      lastResult = _imagingPipeline->ComputeWhiteBalanceAdjustment(imageCache.GetRGB(),
+                                                                   _currentResult.cameraParams.whiteBalanceGainR,
+                                                                   _currentResult.cameraParams.whiteBalanceGainG,
+                                                                   _currentResult.cameraParams.whiteBalanceGainB);
+      Toc("CheckingWhiteBalance");
+      
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.CheckWhiteBalanceFailed", "");
+        return lastResult;
+      }
+      visionModesProcessed.SetBitFlag(VisionMode::CheckingWhiteBalance, true);
+    }
     
     if(ShouldProcessVisionMode(VisionMode::Benchmarking))
     {
@@ -1723,14 +1764,10 @@ bool VisionSystem::ShouldProcessVisionMode(VisionMode mode)
   return isTimeToProcess;
 }
 
-s32 VisionSystem::GetCurrentCameraExposureTime_ms() const
+CameraParams VisionSystem::GetCurrentCameraParams() const
 {
-  return _currentCameraParams.exposure_ms;
-}
-
-f32 VisionSystem::GetCurrentCameraGain() const
-{
-  return _currentCameraParams.gain;
+  // Return nextParams if they have not been set yet otherwise use currentParams
+  return (_nextCameraParams.first ? _nextCameraParams.second : _currentCameraParams);
 }
 
 Result VisionSystem::SetAutoExposureParams(const s32 subSample,
@@ -1762,17 +1799,17 @@ Result VisionSystem::SetCameraExposureParams(const s32 currentExposureTime_ms,
   // TODO: Expose these x values ("knee locations") somewhere. These are specific to the camera.
   // (So I'm keeping them out of Vision::ImagingPipeline and defined in Cozmo namespace)
   static const std::vector<u8> kKneeLocations{
-      0, 8, 16, 24, 32, 40, 48, 64, 80, 96, 112, 128, 144, 160, 192, 224, 255
+    0, 8, 16, 24, 32, 40, 48, 64, 80, 96, 112, 128, 144, 160, 192, 224, 255
   };
-
+  
   std::vector<u8> gammaVector(gammaCurve.begin(), gammaCurve.end());
-
+  
   Result result = _imagingPipeline->SetGammaTable(kKneeLocations, gammaVector);
   if(RESULT_OK != result)
   {
     PRINT_NAMED_WARNING("VisionSystem.SetCameraExposureParams.BadGammaCurve", "");
   }
-
+  
   if(minExposureTime_ms <= 0)
   {
     PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.SetCameraExposureParams.ZeroMinExposureTime",
@@ -1783,14 +1820,14 @@ Result VisionSystem::SetCameraExposureParams(const s32 currentExposureTime_ms,
   {
     _minCameraExposureTime_ms = minExposureTime_ms;
   }
-
+  
   _maxCameraExposureTime_ms = maxExposureTime_ms;
-
+  
   _minCameraGain     = minGain;
   _maxCameraGain     = maxGain;
-
-  SetNextCameraParams(currentExposureTime_ms, currentGain);
-
+  
+  SetNextCameraExposure(currentExposureTime_ms, currentGain);
+  
   PRINT_CH_INFO(kLogChannelName, "VisionSystem.SetCameraExposureParams.Success",
                 "Current Gain:%dms Limits:[%d %d], Current Exposure:%.3f Limits:[%.3f %.3f]",
                 currentExposureTime_ms, minExposureTime_ms, maxExposureTime_ms,

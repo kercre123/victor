@@ -122,6 +122,7 @@ private:
     Charging,
     Charged,
     BadCharger,
+    Idle_09,
   };
   
   BackpackLightsState             _curBackpackChargeState = BackpackLightsState::OffCharger;

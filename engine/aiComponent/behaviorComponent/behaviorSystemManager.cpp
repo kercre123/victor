@@ -26,6 +26,8 @@
 #include "engine/robotDataLoader.h"
 #include "engine/viz/vizManager.h"
 
+#include "osState/osState.h"
+
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
@@ -90,7 +92,7 @@ Result BehaviorSystemManager::InitConfiguration(Robot& robot,
   // If this is the factory test forcibly set baseBehavior as playpen as long as the robot has not been through packout
   bool startInPlaypen = false;
 #if FACTORY_TEST
-  startInPlaypen = !Factory::GetEMR()->PACKED_OUT_FLAG;
+  startInPlaypen = !Factory::GetEMR()->PACKED_OUT_FLAG && !OSState::getInstance()->IsInRecoveryMode();
 #endif
   if(startInPlaypen)
   {

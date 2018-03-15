@@ -20,11 +20,13 @@
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animEngine.h"
+#include "cozmoAnim/connectionFlow.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
-#include "cozmoAnim/faceDisplay/faceDebugDraw.h"
+#include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/micDataProcessor.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
+#include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
@@ -34,10 +36,7 @@
 #include "clad/robotInterface/messageEngineToRobot_sendAnimToRobot_helper.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-
-#if FACTORY_TEST
 #include "anki/cozmo/shared/factory/emrHelper.h"
-#endif
 
 #include "osState/osState.h"
 
@@ -66,14 +65,6 @@ namespace {
   Anki::Cozmo::AnimationStreamer*            _animStreamer = nullptr;
   Anki::Cozmo::Audio::EngineRobotAudioInput* _audioInput = nullptr;
   const Anki::Cozmo::AnimContext*       _context = nullptr;
-
-  // Amount of time the backpack button must be held before sync() is called
-  const f32 kButtonHoldTimeForSync_s = 1.f;
-
-  // Time at which sync() should be called
-  f32 syncTime_s = 0.f;
-
-  CONSOLE_VAR(bool, kDebugFaceDraw_CycleWithButton, "DebugFaceDraw", true);   
 
   static void ListAnimations(ConsoleFunctionContextRef context)
   {
@@ -312,7 +303,7 @@ void Process_startRecordingMics(const Anki::Cozmo::RobotInterface::StartRecordin
 
 void Process_drawTextOnScreen(const Anki::Cozmo::RobotInterface::DrawTextOnScreen& msg)
 {
-  FaceDisplay::GetDebugDraw()->SetCustomText(msg);
+  FaceInfoScreenManager::getInstance()->SetCustomText(msg);
 }
   
 void Process_runDebugConsoleFuncMessage(const Anki::Cozmo::RobotInterface::RunDebugConsoleFuncMessage& msg)
@@ -350,6 +341,17 @@ void Process_textToSpeechStop(const RobotInterface::TextToSpeechStop& msg)
   _animEngine->HandleMessage(msg);
 }
 
+void Process_setConnectionStatus(const Anki::Cozmo::SwitchboardInterface::SetConnectionStatus& msg)
+{
+  UpdateConnectionFlow(std::move(msg), _animStreamer, _context);
+}
+
+void Process_setBLEPin(const Anki::Cozmo::SwitchboardInterface::SetBLEPin& msg)
+{
+  SetBLEPin(msg.pin);
+}
+
+
 
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
 {
@@ -381,7 +383,7 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
 
 static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
 {
-  FaceDisplay::GetDebugDraw()->DrawMicInfo(payload);
+  FaceInfoScreenManager::getInstance()->DrawMicInfo(payload);
 
   auto * micDataProcessor = _context->GetMicDataProcessor();
   if (micDataProcessor != nullptr)
@@ -392,38 +394,8 @@ static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
 
 static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
 {
-  FaceDisplay::GetDebugDraw()->DrawStateInfo(robotState);
-
-  static bool buttonWasPressed = false;
-  const auto buttonIsPressed = static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::IS_BUTTON_PRESSED);
-  const auto buttonPressedEvent = !buttonWasPressed && buttonIsPressed;
-  const auto buttonReleasedEvent = buttonWasPressed && !buttonIsPressed;
-  buttonWasPressed = buttonIsPressed;
-
-  const auto currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds(); 
-
-  if (buttonPressedEvent) {
-    // Get ready to sync(), in case we end up getting power
-    // pulled by long button press, to make sure all 
-    // pending writes are flushed.
-    syncTime_s = currentTime_s + kButtonHoldTimeForSync_s;
-  }
-
-  if (buttonIsPressed) {
-    if (syncTime_s > 0.f && (currentTime_s > syncTime_s)) {
-      sync();
-      syncTime_s = 0.f;
-    }
-  }
-
-  if (buttonReleasedEvent)
-  {
-    if(kDebugFaceDraw_CycleWithButton)
-    {
-      FaceDisplay::GetDebugDraw()->ChangeDrawState();
-    }
-  }
-
+  FaceInfoScreenManager::getInstance()->Update(robotState);
+  
 #if ANKI_DEV_CHEATS
   auto * micDataProcessor = _context->GetMicDataProcessor();
   if (micDataProcessor != nullptr)
@@ -489,6 +461,8 @@ Result AnimProcessMessages::Init(AnimEngine* animEngine,
   _animStreamer = animStreamer;
   _audioInput   = audioInput;
   _context      = context;
+
+  InitConnectionFlow(_animStreamer);
 
   return RESULT_OK;
 }
@@ -579,11 +553,11 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
     ProcessMessageFromRobot(msg);
   }
 
-// TODO(Al): Remove the !FACTORY_TEST condition once all robots have EMRs
-#if defined(SIMULATOR) || !FACTORY_TEST
-  FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(false);
+#if defined(SIMULATOR)
+  // Simulator never has EMR
+  FaceInfoScreenManager::getInstance()->SetShouldDrawFAC(false);
 #else
-  FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!Factory::GetEMR()->PACKED_OUT_FLAG);
+  FaceInfoScreenManager::getInstance()->SetShouldDrawFAC(!Factory::GetEMR()->PACKED_OUT_FLAG);
 #endif
 
   return RESULT_OK;

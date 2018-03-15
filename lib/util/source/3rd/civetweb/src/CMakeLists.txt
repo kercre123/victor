@@ -224,27 +224,36 @@ if (CIVETWEB_ENABLE_LUA)
   target_link_libraries(c-library ${LUA_LIBRARIES})
 endif()
 
+#
 # The web server executable
-add_executable(c-executable main.c)
-set_target_properties(c-executable PROPERTIES
-  OUTPUT_NAME "civetweb"
-)
-install(
-  TARGETS c-executable
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-  COMPONENT server)
-if (BUILD_SHARED_LIBS)
-  target_compile_definitions(c-executable PRIVATE CIVETWEB_DLL_IMPORTS)
-endif()
-target_include_directories(
-  c-executable PUBLIC
-  ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(c-executable c-library)
-if (LIBRT_FOUND)
-  target_link_libraries(c-executable LIBRT::LIBRT)
-endif()
+#
+# <anki> Don't build it unless we need it </anki>
+#
+
+option(CIVETWEB_ENABLE_EXE "Build standalone server executable" OFF)
+
+if (CIVETWEB_ENABLE_EXE)
+  add_executable(c-executable main.c)
+  set_target_properties(c-executable PROPERTIES
+    OUTPUT_NAME "civetweb"
+  )
+  install(
+    TARGETS c-executable
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+    COMPONENT server)
+  if (BUILD_SHARED_LIBS)
+    target_compile_definitions(c-executable PRIVATE CIVETWEB_DLL_IMPORTS)
+  endif()
+  target_include_directories(
+    c-executable PUBLIC
+    ${PROJECT_SOURCE_DIR}/include)
+  target_link_libraries(c-executable c-library)
+  if (LIBRT_FOUND)
+    target_link_libraries(c-executable LIBRT::LIBRT)
+  endif()
+endif(CIVETWEB_ENABLE_EXE)
 
 if (CIVETWEB_ENABLE_LUA)
   add_library(lua-library third_party/lfs.c third_party/lsqlite3.c third_party/LuaXML_lib.c third_party/sqlite3.c)

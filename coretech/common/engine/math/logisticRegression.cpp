@@ -580,4 +580,4 @@ void WeightedLogisticRegression::read(const FileNode& fn)
 
 } // namespace Anki
 
-#endif //ANKICORETECH_USE_OPENCV
+#endif // ANKICORETECH_USE_OPENCV

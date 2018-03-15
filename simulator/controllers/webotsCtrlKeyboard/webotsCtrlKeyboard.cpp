@@ -1848,6 +1848,24 @@ namespace Cozmo {
   {
     _pressBackpackButton = true;
   }
+
+  void WebotsKeyboardController::CycleConnectionFlowState()
+  {
+    static u8 status = 0;
+
+    SwitchboardInterface::SetConnectionStatus s;
+    s.status = static_cast<SwitchboardInterface::ConnectionStatus>(status);
+    
+    status++;
+    if(status >= static_cast<u8>(SwitchboardInterface::ConnectionStatus::COUNT))
+    {
+      status = 0;
+    }
+
+    ExternalInterface::MessageGameToEngine message;
+    message.Set_SetConnectionStatus(s);
+    SendMessage(message);
+  }
   
   // ===== End of key press functions ====
 
@@ -2040,7 +2058,7 @@ namespace Cozmo {
 //      REGISTER_KEY_FCN('I', MOD_ALT,       , "");
 //      REGISTER_KEY_FCN('I', MOD_ALT_SHIFT, , "");
     
-//      REGISTER_KEY_FCN('J', MOD_NONE,      , "");
+     REGISTER_KEY_FCN('J', MOD_NONE,     CycleConnectionFlowState, "Cycle connection flow states");
 //      REGISTER_KEY_FCN('J', MOD_SHIFT,     , "");
 //      REGISTER_KEY_FCN('J', MOD_ALT,       , "");
 //      REGISTER_KEY_FCN('J', MOD_ALT_SHIFT, , "");

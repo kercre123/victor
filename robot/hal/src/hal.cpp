@@ -118,7 +118,6 @@ Result spine_wait_for_first_frame(spine_ctx_t spine)
   return RESULT_OK;
 }
 
-
 Result HAL::Init()
 {
   // Set ID
@@ -289,6 +288,17 @@ void HAL::SetLED(LEDId led_id, u32 color)
   headData_.ledColors[ledIdx * LED_CHANEL_CT + LED0_BLUE] = b;
 }
 
+void HAL::SetSystemLED(u32 color)
+{
+  uint8_t r = (color >> LED_RED_SHIFT) & LED_CHANNEL_MASK;
+  uint8_t g = (color >> LED_GRN_SHIFT) & LED_CHANNEL_MASK;
+  uint8_t b = (color >> LED_BLU_SHIFT) & LED_CHANNEL_MASK;
+  headData_.ledColors[LED3_RED] = r;
+  // Technically have no control over green, it is always on
+  headData_.ledColors[LED3_GREEN] = g;
+  headData_.ledColors[LED3_BLUE] = b;
+}
+
 u32 HAL::GetID()
 {
   return robotID_;
@@ -376,6 +386,11 @@ u8 HAL::GetWatchdogResetCounter()
 {
   // not (yet) implemented in HAL in V2
   return 0;//bodyData_->status.watchdogCount;
+}
+
+void HAL::Shutdown()
+{
+  spine_shutdown(&spine_);
 }
 
 } // namespace Cozmo

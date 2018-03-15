@@ -30,12 +30,14 @@ public:
   
   time_t GetLastLoadedTime() const { return _lastLoadedTime; }
   void SetLastLoadedTime(const time_t t) { _lastLoadedTime = t; }
+
+  bool ShouldHold() const { return _hold; }
   
   size_t GetNumFrames() const { return _isGrayscale ? _framesGray.size() : _framesRGB565.size(); }
   
   // Add frames of the given type
-  void AddFrame(const Vision::Image& img);
-  void AddFrame(const Vision::ImageRGB565& img);
+  template<class ImageType>
+  void AddFrame(const ImageType& img, bool hold = false);
   
   // Get a frame with the given index
   void GetFrame(const u32 index, Vision::Image& img);
@@ -50,10 +52,10 @@ public:
 private:
   bool _isGrayscale;
   time_t _lastLoadedTime;
+  bool _hold = false;
   std::deque<Vision::Image> _framesGray;         // underlying image container if isGrayscale == true
   std::deque<Vision::ImageRGB565> _framesRGB565; // underlying image container if images are color
 };
-
   
 } // namespace Cozmo
 } // namespace Anki

@@ -20,7 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/viz/vizManager.h"
 #include "util/logging/logging.h"
-#include "webServerProcess/src/webService.h"
+// #include "webServerProcess/src/webService.h"
 
 // TODO:(bn) put viz manager in BehaviorExternalInterface, then remove these includes
 #include "engine/cozmoContext.h"
@@ -240,10 +240,10 @@ void BehaviorStack::SendDebugBehaviorTreeToWebViz(BehaviorExternalInterface& beh
   
   const auto* context = behaviorExternalInterface.GetRobotInfo().GetContext();
   if( context != nullptr ) {
-    const auto* webService = context->GetWebService();
-    if( webService != nullptr ){
-      webService->SendToWebViz( kWebVizModuleName, data );
-    }
+    // const auto* webService = context->GetWebService();
+    // if( webService != nullptr ){
+      // webService->SendToWebViz( kWebVizModuleName, data );
+    // }
   }
 }
 

@@ -88,7 +88,7 @@
             <nStopA1X>0</nStopA1X>
             <nStopA2X>0</nStopA2X>
           </AfterMake>
-          <SelectedForBatchBuild>1</SelectedForBatchBuild>
+          <SelectedForBatchBuild>0</SelectedForBatchBuild>
           <SVCSIdString></SVCSIdString>
         </TargetCommonOption>
         <CommonProperty>
@@ -791,6 +791,11 @@
               <FileName>user_peripheral.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\src\user_app\user_peripheral.c</FilePath>
+            </File>
+            <File>
+              <FileName>firstboot.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\user_app\firstboot.c</FilePath>
             </File>
           </Files>
         </Group>

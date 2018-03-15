@@ -333,6 +333,7 @@ namespace Anki {
                 break;
               case DockAction::DA_BACKUP_ONTO_CHARGER:
               case DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF:
+                ProxSensors::EnableCliffDetector(false);
                 SteeringController::ExecuteDirectDrive(kChargerDockingSpeedHigh, kChargerDockingSpeedHigh);
                 transitionTime_ = HAL::GetTimeStamp() + 8000;
                 useCliffSensorAlignment_ = (action_ == DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF);
@@ -818,6 +819,12 @@ namespace Anki {
               AnkiEvent( "PAP.BACKUP_ON_CHARGER.Timeout", "");
               SendChargerMountCompleteMessage(false);
               Reset();
+            } else if (ProxSensors::GetCliffDetectedFlags() == ((1<<HAL::CLIFF_BL) | (1<<HAL::CLIFF_BR))) {
+              // Cliff detection is disabled now, so double check that we are not seeing a cliff
+              // on BOTH rear cliff sensors (which may indicate a real cliff and not a spurious trip)
+              AnkiEvent( "PAP.BACKUP_ON_CHARGER.Cliff", "");
+              SendChargerMountCompleteMessage(false);
+              Reset();
             } else if (IMUFilter::GetPitch() < TILT_FAILURE_ANGLE_RAD) {
               // Check for excessive tilt
               if (tiltedOnChargerStartTime_ == 0) {
@@ -827,6 +834,7 @@ namespace Anki {
                 AnkiEvent( "PAP.BACKUP_ON_CHARGER.Tilted", "");
                 SteeringController::ExecuteDirectDrive(40, 40);
                 transitionTime_ = HAL::GetTimeStamp() + 2500;
+                ProxSensors::EnableCliffDetector(true);
                 mode_ = DRIVE_FORWARD;
               }
             } else if (HAL::BatteryIsOnCharger()) {

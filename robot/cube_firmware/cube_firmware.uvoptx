@@ -150,32 +150,22 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>cert</ItemText>
+          <ItemText>param</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
           <WinNumber>1</WinNumber>
-          <ItemText>(uint8_t*)value</ItemText>
+          <ItemText>param-&gt;length &amp; 3</ItemText>
         </Ww>
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>data</ItemText>
+          <ItemText>app_current-&gt;nonce</ItemText>
         </Ww>
         <Ww>
           <count>3</count>
           <WinNumber>1</WinNumber>
-          <ItemText>crc</ItemText>
-        </Ww>
-        <Ww>
-          <count>4</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>param</ItemText>
-        </Ww>
-        <Ww>
-          <count>5</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>((uint8_t*)param-&gt;value)[1]</ItemText>
+          <ItemText>offset  /4.0</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
@@ -1038,7 +1028,7 @@
 
   <Group>
     <GroupName>user_config</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -1142,7 +1132,7 @@
 
   <Group>
     <GroupName>user_app</GroupName>
-    <tvExp>0</tvExp>
+    <tvExp>1</tvExp>
     <tvExpOptDlg>0</tvExpOptDlg>
     <cbSel>0</cbSel>
     <RteFlg>0</RteFlg>
@@ -1174,7 +1164,7 @@
       <GroupNumber>9</GroupNumber>
       <FileNumber>74</FileNumber>
       <FileType>1</FileType>
-      <tvExp>1</tvExp>
+      <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\src\user_app\user_periph_setup.c</PathWithFileName>
@@ -1191,6 +1181,18 @@
       <bDave2>0</bDave2>
       <PathWithFileName>.\src\user_app\user_peripheral.c</PathWithFileName>
       <FilenameWithoutPath>user_peripheral.c</FilenameWithoutPath>
+      <RteFlg>0</RteFlg>
+      <bShared>0</bShared>
+    </File>
+    <File>
+      <GroupNumber>9</GroupNumber>
+      <FileNumber>76</FileNumber>
+      <FileType>1</FileType>
+      <tvExp>0</tvExp>
+      <tvExpOptDlg>0</tvExpOptDlg>
+      <bDave2>0</bDave2>
+      <PathWithFileName>.\src\user_app\firstboot.c</PathWithFileName>
+      <FilenameWithoutPath>firstboot.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
     </File>

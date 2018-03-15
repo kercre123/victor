@@ -82,6 +82,8 @@ ssize_t spine_write_h2b_frame(spine_ctx_t spine, const struct HeadToBody* h2b_pa
 // write message to change mode
 ssize_t spine_set_mode(spine_ctx_t spine, int new_mode);
 
+// write shutdown message
+ssize_t spine_shutdown(spine_ctx_t spine);
 
 // Attempt to parse and return a frame from the internal buffer.
 // On success, returns the length of the complete frame and copies data into outbuf.

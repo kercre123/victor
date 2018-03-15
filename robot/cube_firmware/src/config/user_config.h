@@ -65,10 +65,10 @@ static const struct advertise_configuration user_adv_conf = {
     .renew_dur = 0,
 
     /// Minimum interval for advertising
-    .intv_min = 1600,                   // 100ms (160*0.625ms)
+    .intv_min = 160,                   // 100ms (160*0.625ms)
 
     /// Maximum interval for advertising
-    .intv_max = 3200,                   // 100ms (160*0.625ms)
+    .intv_max = 160,                   // 100ms (160*0.625ms)
 
     /// Advertising channel map
     .channel_map = 0x7,
@@ -140,7 +140,7 @@ static const struct advertise_configuration user_adv_conf = {
 #define USER_ADVERTISE_SCAN_RESPONSE_DATA_LEN (sizeof(USER_ADVERTISE_SCAN_RESPONSE_DATA)-1)
 
 /// Device name to be placed in advertising or scan response data
-#define USER_DEVICE_NAME    ("Cozmo Cube")
+#define USER_DEVICE_NAME    ("Cube DVT3")
 
 /// Device name length
 #define USER_DEVICE_NAME_LEN (sizeof(USER_DEVICE_NAME)-1)

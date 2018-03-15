@@ -28,6 +28,7 @@ const char* kLoopAnimationKey   = "loopAnimation";
 const char* kGetOutAnimationKey = "getOut";
 const char* kEmergencyGetOutAnimationKey = "emergencyGetOut";
 const char* kLoopEndConditionKey = "loopEndCondition";
+const char* kCheckEndCondKey     = "shouldCheckEndCondDuringAnim";
 }
 
 
@@ -58,6 +59,12 @@ BehaviorAnimGetInLoop::BehaviorAnimGetInLoop(const Json::Value& config)
                "BehaviorAnimGetInLoop.Constructor.InvalidEndLoopCondition",
                "End loop condition specified, but did not build properly");
   }
+
+  if(config.isMember(kCheckEndCondKey)){
+    std::string debugStr = "BehaviorAnimGetInLoop.Constructor.CheckEndCondIssue";
+    _instanceParams.checkEndConditionDuringAnim = JsonTools::ParseBool(config, kLoopEndConditionKey, debugStr);
+  }
+
 }
   
   
@@ -89,6 +96,18 @@ void BehaviorAnimGetInLoop::OnBehaviorActivated()
   _instanceParams.endLoopCondition->SetActive(GetBEI(), true);
   _lifetimeParams = LifetimeParams();
   TransitionToGetIn();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAnimGetInLoop::BehaviorUpdate() 
+{
+  if(!IsActivated()){
+    return;
+  }
+  if(_instanceParams.checkEndConditionDuringAnim){
+    _lifetimeParams.shouldLoopEnd |= _instanceParams.endLoopCondition->AreConditionsMet(GetBEI());
+  }
 }
 
 

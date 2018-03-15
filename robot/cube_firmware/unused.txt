@@ -1,4 +1,4 @@
-;#<FEEDBACK># ARM Linker, 5060183: Last Updated: Wed Jan 31 13:49:07 2018
+;#<FEEDBACK># ARM Linker, 5060183: Last Updated: Thu Mar 01 14:43:39 2018
 ;VERSION 0.2
 ;FILE adc.o
 adc_calibrate <= USED 0
@@ -103,6 +103,7 @@ battery_get_lvl <= USED 0
 ;FILE custom_common.o
 ;FILE custs1.o
 ;FILE diss.o
+;FILE firstboot.o
 ;FILE gapc_task.obj
 ;FILE gapm_util.obj
 ;FILE gpio.o
@@ -147,8 +148,6 @@ syscntl_set_dcdc_vbat3v_level <= USED 0
 ;FILE system_armcm0.o
 ;FILE trng.o
 ;FILE user_custs1_impl.o
-user_custs1_app_read_ntf_cfm_handler <= USED 0
-user_custs1_loaded_app_ntf_cfm_handler <= USED 0
 ;FILE user_periph_setup.o
 ;FILE user_peripheral.o
 ;FILE wkupct_quadec.o

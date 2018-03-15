@@ -153,6 +153,8 @@ protected:
   
   void ExecuteRobotTestMode();
   void PressBackButton();
+
+  void CycleConnectionFlowState();
   
   // ==== End of key press functions ====
   

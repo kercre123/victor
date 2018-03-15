@@ -173,6 +173,12 @@ namespace Anki {
         AnkiEvent( "watchdog_reset_count", "%d", HAL::GetWatchdogResetCounter());
       } // ProcessRobotInit()
 
+
+      void Process_shutdown(const RobotInterface::Shutdown& msg)
+      {
+        HAL::Shutdown();
+      }
+
       void Process_absLocalizationUpdate(const RobotInterface::AbsoluteLocalizationUpdate& msg)
       {
         // Don't modify localization while running path following test.
@@ -574,6 +580,7 @@ namespace Anki {
       {
         SteeringController::RecordHeading();
       }
+
       void Process_turnToRecordedHeading(RobotInterface::TurnToRecordedHeading const& msg)
       {
         SteeringController::ExecutePointTurnToRecordedHeading(DEG_TO_RAD_F32(msg.offset_deg),
@@ -584,11 +591,16 @@ namespace Anki {
                                                               msg.numHalfRevs,
                                                               msg.useShortestDir);
       }
+
       void Process_setBackpackLights(RobotInterface::SetBackpackLights const& msg)
       {
         BackpackLightController::SetParams(msg);
       }
       
+      void Process_setSystemLight(RobotInterface::SetSystemLight const& msg)
+      {
+        BackpackLightController::SetParams(msg);
+      }
 
       void Process_getMfgInfo(const RobotInterface::GetManufacturingInfo& msg)
       {

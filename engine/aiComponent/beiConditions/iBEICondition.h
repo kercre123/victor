@@ -109,8 +109,8 @@ private:
   std::string _ownerLabel;
   
   mutable DebugFactorsList _previousDebugFactorsList;
-  mutable bool _previouslyMet;
-  mutable bool _firstRun = true;
+  // mutable bool _previouslyMet;
+  // mutable bool _firstRun = true;
 };
 
 } // namespace Cozmo

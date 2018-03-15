@@ -73,5 +73,5 @@ anki_disable_default_build(servbench)
 anki_build_go_executable(vic-cloud ${ANKI_SRCLIST_DIR})
 anki_go_set_ldflags(vic-cloud ${chipper_flags})
 
-anki_build_go_executable(wavtest ${ANKI_SRCLIST_DIR})
-anki_go_set_ldflags(wavtest ${chipper_flags})
+#anki_build_go_executable(wavtest ${ANKI_SRCLIST_DIR})
+#anki_go_set_ldflags(wavtest ${chipper_flags})

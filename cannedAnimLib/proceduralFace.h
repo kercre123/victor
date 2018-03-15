@@ -125,6 +125,7 @@ public:
   // Set the global hue of all faces
   static void  SetHue(Value hue); 
   static Value GetHue();
+  static void ResetHueToDefault();
   
   // Get an image filled with the current hue value
   static Vision::Image& GetHueImage();
@@ -287,6 +288,10 @@ inline void ProceduralFace::SetHue(Value hue) {
 
 inline ProceduralFace::Value ProceduralFace::GetHue() {
   return _hue;
+}
+
+inline void ProceduralFace::ResetHueToDefault() {
+  _hue = DefaultHue;
 }
   
 inline Vision::Image& ProceduralFace::GetHueImage() {

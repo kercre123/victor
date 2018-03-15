@@ -305,7 +305,7 @@ namespace Cozmo {
     bool GetFaceImage(Vision::ImageRGB565& img);
 
     // Resets the keyframe so that the next call to GetFaceImage returns the first image of the set
-    void Reset() { _curFrame = 0; }
+    void Reset() { _curFrame = 0; _currentTime_ms = 0; _nextFrameTime_ms = _frameDuration_ms; }
     
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
     
@@ -320,6 +320,10 @@ namespace Cozmo {
     std::string  _animName;
     float        _scanlineOpacity = 0.7f;
     s32          _curFrame = 0;
+
+    u32          _frameDuration_ms = ANIM_TIME_STEP_MS;
+    u32          _nextFrameTime_ms = 0;
+    u32          _currentTime_ms   = 0;
     
   }; // class FaceAnimationKeyFrame
   

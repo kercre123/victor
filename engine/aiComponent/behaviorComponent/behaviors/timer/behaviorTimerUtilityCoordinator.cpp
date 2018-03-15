@@ -14,14 +14,15 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 
+#include "coretech/common/engine/jsonTools.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
-#include "coretech/common/engine/jsonTools.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -266,7 +267,9 @@ void BehaviorTimerUtilityCoordinator::BehaviorUpdate()
   }
 
   auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
-  if(IsTimerRinging() && uic.IsTriggerWordPending()){
+  const bool robotPickedUp = GetBEI().GetRobotInfo().GetOffTreadsState() != OffTreadsState::OnTreads;
+  const bool shouldCancelTimer = robotPickedUp || uic.IsTriggerWordPending();
+  if(IsTimerRinging() && shouldCancelTimer){
     // Clear the pending trigger word and cancel the ringing timer
     // Its emergency get out will still play
     uic.ClearPendingTriggerWord();

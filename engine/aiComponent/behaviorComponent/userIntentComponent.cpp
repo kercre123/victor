@@ -26,7 +26,7 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 
-#include "webServerProcess/src/webService.h"
+// #include "webServerProcess/src/webService.h"
 
 
 #include "json/json.h"
@@ -482,39 +482,39 @@ std::vector<std::string> UserIntentComponent::DevGetAppIntentsList() const
   
 void UserIntentComponent::SendWebVizIntents()
 {
-  if( _context != nullptr ) {
-    const auto* webService = _context->GetWebService();
+  // if( _context != nullptr ) {
+  //   const auto* webService = _context->GetWebService();
     
-    Json::Value toSend = Json::arrayValue;
+  //   Json::Value toSend = Json::arrayValue;
     
-    {
-      Json::Value blob;
-      blob["intentType"] = "user";
-      blob["type"] = "current-intent";
-      blob["value"] = UserIntentTagToString( _pendingIntent->GetTag() );
-      toSend.append(blob);
-    }
+  //   {
+  //     Json::Value blob;
+  //     blob["intentType"] = "user";
+  //     blob["type"] = "current-intent";
+  //     blob["value"] = UserIntentTagToString( _pendingIntent->GetTag() );
+  //     toSend.append(blob);
+  //   }
     
-    if( !_devLastReceivedCloudIntent.empty() ) {
-      Json::Value blob;
-      blob["intentType"] = "cloud";
-      blob["type"] = "current-intent";
-      blob["value"] = _devLastReceivedCloudIntent;
-      toSend.append(blob);
-      _devLastReceivedCloudIntent.clear();
-    }
+  //   if( !_devLastReceivedCloudIntent.empty() ) {
+  //     Json::Value blob;
+  //     blob["intentType"] = "cloud";
+  //     blob["type"] = "current-intent";
+  //     blob["value"] = _devLastReceivedCloudIntent;
+  //     toSend.append(blob);
+  //     _devLastReceivedCloudIntent.clear();
+  //   }
     
-    if( !_devLastReceivedAppIntent.empty() ) {
-      Json::Value blob;
-      blob["intentType"] = "app";
-      blob["type"] = "current-intent";
-      blob["value"] = _devLastReceivedAppIntent;
-      toSend.append(blob);
-      _devLastReceivedAppIntent.clear();
-    }
+  //   if( !_devLastReceivedAppIntent.empty() ) {
+  //     Json::Value blob;
+  //     blob["intentType"] = "app";
+  //     blob["type"] = "current-intent";
+  //     blob["value"] = _devLastReceivedAppIntent;
+  //     toSend.append(blob);
+  //     _devLastReceivedAppIntent.clear();
+  //   }
     
-    webService->SendToWebViz( "intents", toSend );
-  }
+  //   // webService->SendToWebViz( "intents", toSend );
+  // }
 }
 
 }

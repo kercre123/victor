@@ -61,6 +61,7 @@ OSState::OSState()
   _serialNumString = "12345";
   _osBuildVersion = "12345";
   _ipAddress = "127.0.0.1";
+  _ssid = "AnkiNetwork";
 }
 
 OSState::~OSState()
@@ -118,9 +119,29 @@ const std::string& OSState::GetOSBuildVersion()
   return _osBuildVersion;
 }
 
-std::string OSState::GetIPAddressInternal()
+std::string OSState::GetMACAddress() const
+{
+  return "00:00:00:00:00:00";
+}
+
+const std::string& OSState::GetIPAddress(bool update)
 {
   return _ipAddress;
+}
+
+const std::string& OSState::GetSSID(bool update)
+{
+  return _ssid;
+}
+
+std::string OSState::GetRobotName() const
+{
+  return "Vector_0000";
+}
+
+bool OSState::IsInRecoveryMode()
+{
+  return false;
 }
 
 } // namespace Cozmo

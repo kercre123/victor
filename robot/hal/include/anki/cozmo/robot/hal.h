@@ -55,6 +55,8 @@ static const f32 MOTOR_MAX_POWER = 1.0f;
 Result Init(void);
 Result Step(void);
 
+void Shutdown();
+
 /************************************************************************
  * \section Time
  */
@@ -236,6 +238,7 @@ enum {
  * @param[in] color 32 bit RGBA
  */
 void SetLED(const LEDId led_id, const u32 color);
+void SetSystemLED(u32 color);
 
 /************************************************************************
  * \section Power management
@@ -258,7 +261,6 @@ typedef enum
  * @warning Some power states will power off the android processor
  */
 void PowerSetMode(const PowerState state);
-
 
 /************************************************************************
  * \section "Radio" comms to/from engine

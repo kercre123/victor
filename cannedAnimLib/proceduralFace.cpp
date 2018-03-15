@@ -419,22 +419,20 @@ inline static ProceduralFace::Value BlendAngleHelper(const ProceduralFace::Value
     return angle1_deg;
   }
 
-  const float angle1_rad = DEG_TO_RAD(static_cast<float>(angle1_deg));
-  const float angle2_rad = DEG_TO_RAD(static_cast<float>(angle2_deg));
+  float start_deg = angle1_deg;
+  float end_deg = angle2_deg;
 
-  float fromAngle = fmodf(angle1_rad + M_TWO_PI_F, M_TWO_PI_F);
-  float toAngle = fmodf(angle2_rad + M_TWO_PI_F, M_TWO_PI_F);
-
-  const float diff = fabsf(fromAngle - toAngle);
-  if (diff >= M_PI) {
-      if (fromAngle > toAngle) {
-          fromAngle -= M_TWO_PI_F;
-      } else {
-          toAngle -= M_TWO_PI_F;
-      }
+  float diff = fabsf(end_deg - start_deg);
+  if (diff > 180) {
+    if (end_deg > start_deg) {
+      start_deg += 360;
+    }
+    else {
+      end_deg += 360;
+    }
   }
-  const float result = LinearBlendHelper(fromAngle, toAngle, blendFraction);
-  return static_cast<ProceduralFace::Value>(RAD_TO_DEG(result));
+  const float result = LinearBlendHelper(start_deg, end_deg, blendFraction);
+  return static_cast<ProceduralFace::Value>(result);
 }
   
 void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFace& face2,

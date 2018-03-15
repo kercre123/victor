@@ -15,17 +15,34 @@
 namespace Anki {
 namespace Cozmo {
 
-
-void FaceAnimation::AddFrame(const Vision::Image& img)
+template<>
+void FaceAnimation::AddFrame(const Vision::Image& img, bool hold)
 {
+  DEV_ASSERT(!_hold, "FaceAnimation.AddFrame.AddFrameToHoldingAnim");
   DEV_ASSERT(_isGrayscale, "AvailableAnim.AddFrame.InvalidType");
   _framesGray.push_back(img);
+
+  if(hold)
+  {
+    _framesGray.push_back(Vision::Image());
+  }
+
+  _hold = hold;
 }
 
-void FaceAnimation::AddFrame(const Vision::ImageRGB565& img)
+template<>
+void FaceAnimation::AddFrame(const Vision::ImageRGB565& img, bool hold)
 {
+  DEV_ASSERT(!_hold, "FaceAnimation.AddFrame.AddFrameToHoldingAnim");
   DEV_ASSERT(!_isGrayscale, "AvailableAnim.AddFrame.InvalidType");
   _framesRGB565.push_back(img);
+
+  if(hold)
+  {
+    _framesRGB565.push_back(Vision::ImageRGB565());
+  }
+
+  _hold = hold;
 }
 
 void FaceAnimation::PopFront()

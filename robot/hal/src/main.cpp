@@ -8,6 +8,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/cozmoBot.h"
+#include "anki/cozmo/shared/factory/emrHelper.h"
 
 // For development purposes, while HW is scarce, it's useful to be able to run on phones
 #ifdef HAL_DUMMY_BODY
@@ -46,6 +47,7 @@ int main(int argc, const char* argv[])
   Anki::Cozmo::Robot::Init();
 
   auto start = std::chrono::steady_clock::now();
+  auto stoppedCharging = start;
 
   for (;;) {
     //HAL::Step should never return !OK, but if it does, best not to trust its data.
@@ -66,6 +68,24 @@ int main(int argc, const char* argv[])
     //printf("TS: %d\n", Anki::Cozmo::HAL::GetTimeStamp() );
     start = end;
 
+    if (shutdownSignal == 0) {
+      if (Anki::Cozmo::Factory::GetEMR()->PACKED_OUT_FLAG) {
+        if (Anki::Cozmo::HAL::BatteryIsOnCharger()) {
+          stoppedCharging = end;
+        } else {
+          auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - stoppedCharging);
+          if (elapsed > std::chrono::seconds(15)) {
+            Anki::Cozmo::Robot::Destroy();
+
+            sync();
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+            Anki::Cozmo::HAL::Shutdown();
+            break;
+          }
+        }
+      }
+    }
 
     if (shutdownSignal != 0 && --shutdownCounter == 0) {
       sync();

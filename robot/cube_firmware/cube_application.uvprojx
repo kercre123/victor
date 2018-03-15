@@ -80,9 +80,9 @@
           </BeforeMake>
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
-            <RunUserProg2>0</RunUserProg2>
-            <UserProg1Name>fromelf --bin build\app\cube_application.axf --output cube_application.bin</UserProg1Name>
-            <UserProg2Name></UserProg2Name>
+            <RunUserProg2>1</RunUserProg2>
+            <UserProg1Name>fromelf --bin build\app\cube_application.axf --output build\app\cube_application.bin</UserProg1Name>
+            <UserProg2Name>c:\cygwin\bin\bash -c "python3 ./tools/sign.py build/app/cube_application.bin build/cube.dfu"</UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
             <nStopA1X>0</nStopA1X>
@@ -310,7 +310,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>1</Optim>
+            <Optim>3</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -322,7 +322,7 @@
             <wLevel>2</wLevel>
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
-            <uC99>0</uC99>
+            <uC99>1</uC99>
             <useXO>0</useXO>
             <v6Lang>1</v6Lang>
             <v6LangP>1</v6LangP>
@@ -331,7 +331,7 @@
             <v6Lto>0</v6Lto>
             <v6WtE>0</v6WtE>
             <VariousControls>
-              <MiscControls>--c99 --thumb -c --bss_threshold=0</MiscControls>
+              <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
               <IncludePath>./sdk/platform/driver/gpio;./sdk/platform/arch/;./sdk/platform/arch/compiler/rvds/;./sdk/platform/arch/ll/rvds/;./sdk/platform/include/;./sdk/platform/driver/reg/;./src/config;./sdk/platform/core_modules/rwip/api;./sdk/common_project_files/</IncludePath>
@@ -383,14 +383,14 @@
               <FilePath>.\app\boot.s</FilePath>
             </File>
             <File>
-              <FileName>main.c</FileName>
+              <FileName>accel.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\app\main.c</FilePath>
+              <FilePath>.\app\accel.c</FilePath>
             </File>
             <File>
-              <FileName>board.c</FileName>
+              <FileName>animation.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\app\board.c</FilePath>
+              <FilePath>.\app\animation.c</FilePath>
             </File>
             <File>
               <FileName>lights.c</FileName>
@@ -398,9 +398,14 @@
               <FilePath>.\app\lights.c</FilePath>
             </File>
             <File>
-              <FileName>animation.c</FileName>
+              <FileName>main.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\app\animation.c</FilePath>
+              <FilePath>.\app\main.c</FilePath>
+            </File>
+            <File>
+              <FileName>uart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\app\uart.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -226,6 +226,11 @@ namespace Anki {
 
     } // HAL::CameraSetParameters()
 
+    void CameraService::CameraSetWhiteBalanceParameters(f32 r_gain, f32 g_gain, f32 b_gain)
+    {
+      return;
+    }
+
 
     void CameraService::InitCamera()
     {

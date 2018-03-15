@@ -15,6 +15,7 @@
 #include "osState/osState.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/console/consoleInterface.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
@@ -26,8 +27,11 @@
 #include <net/if.h>
 #include <netinet/in.h>
 
+#include <linux/wireless.h>
+
 #include <fstream>
 #include <array>
+#include <stdlib.h>
 
 #ifdef SIMULATOR
 #error SIMULATOR should NOT be defined by any target using osState_android.cpp
@@ -40,13 +44,13 @@ namespace {
 
   std::ifstream _cpuFile;
   std::ifstream _tempFile;
-  std::ifstream _batteryVoltageFile;
 
   const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
   const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
   const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone7/temp";
-  const char* kBatteryVoltageFile = "/sys/devices/soc/qpnp-linear-charger-8/power_supply/battery/voltage_now";
-
+  const char* kMACAddressFile = "/sys/class/net/wlan0/address";
+  const char* kRecoveryModeFile = "/data/unbrick";
+  
   // System vars
   uint32_t _cpuFreq_kHz; // CPU freq
   uint32_t _cpuTemp_C;   // Temperature in Celsius
@@ -56,6 +60,48 @@ namespace {
   uint32_t _lastUpdateTime_ms = 0;
 
 } // namespace
+
+// Searches the .prop property files for the given key and returns the value
+// __system_get_property() from sys/system_properties.h does
+// not work for some reason so we have to read the files manually
+std::string GetProperty(const std::string& key)
+{
+  static const std::string kProp = key + "=";
+
+  // First check the regular build.prop
+  std::ifstream infile("/build.prop");
+
+  std::string line;
+  while(std::getline(infile, line))
+  {
+    size_t index = line.find(kProp);
+    if(index != std::string::npos)
+    {
+      infile.close();
+      return line.substr(kProp.length());
+    }
+  }
+
+  infile.close();
+
+  // If the key wasn't found in /build.prop, then
+  // check the persistent build.prop
+  infile.open("/data/persist/build.prop");
+
+  while(std::getline(infile, line))
+  {
+    size_t index = line.find(kProp);
+    if(index != std::string::npos)
+    {
+      infile.close();
+      return line.substr(kProp.length());
+    }
+  }
+
+  infile.close();
+  
+  return "";
+}
 
 OSState::OSState()
 {
@@ -75,7 +121,6 @@ OSState::OSState()
 
   _tempFile.open(kTemperatureFile, std::ifstream::in);
   _cpuFile.open(kCPUFreqFile, std::ifstream::in);
-  _batteryVoltageFile.open(kBatteryVoltageFile, std::ifstream::in);
 }
 
 OSState::~OSState()
@@ -85,9 +130,6 @@ OSState::~OSState()
   }
   if (_cpuFile.is_open()) {
     _cpuFile.close();
-  }
-  if (_batteryVoltageFile.is_open()) {
-    _batteryVoltageFile.close();
   }
 }
 
@@ -136,15 +178,6 @@ uint32_t OSState::UpdateTemperature_C() const
   return cpuTemp_C;
 }
 
-uint32_t OSState::UpdateBatteryVoltage_uV() const
-{
-  // Update battery voltage reading
-  uint32_t batteryVoltage_uV;
-  _batteryVoltageFile.seekg(0, _batteryVoltageFile.beg);
-  _batteryVoltageFile >> batteryVoltage_uV;
-  return batteryVoltage_uV;
-}
-
 uint32_t OSState::GetCPUFreq_kHz() const
 {
   DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetCPUFreq_kHz.ZeroUpdate");
@@ -191,26 +224,19 @@ const std::string& OSState::GetOSBuildVersion()
 {
   if(_osBuildVersion.empty())
   {
-    std::ifstream infile("/build.prop");
-
-    std::string line;
-    while(std::getline(infile, line))
-    {
-      static const std::string kProp = "ro.build.version.release=";
-      size_t index = line.find(kProp);
-      if(index != std::string::npos)
-      {
-        _osBuildVersion = line.substr(kProp.length(), 12);
-      }
-    }
-
-    infile.close();
+    _osBuildVersion = GetProperty("ro.build.version.release");
   }
   
   return _osBuildVersion;
 }
+
+std::string OSState::GetRobotName() const
+{
+  static std::string name = GetProperty("persist.anki.robot.name");
+  return (name.empty() ? "Vector_0000" : name);
+}
   
-std::string OSState::GetIPAddressInternal()
+void OSState::UpdateWifiInfo()
 {
   // Open a socket to figure out the ip adress of the wlan0 (wifi) interface
   const char* const if_name = "wlan0";
@@ -233,10 +259,67 @@ std::string OSState::GetIPAddressInternal()
     close(fd);
     ASSERT_NAMED_EVENT(false, "OSState.GetIPAddress.IoctlError", "%s", strerror(temp_errno));
   }
-  close(fd);
 
   struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
-  return std::string(inet_ntoa(ipaddr->sin_addr));
+  _ipAddress = std::string(inet_ntoa(ipaddr->sin_addr));
+
+  // Get SSID
+  iwreq req;
+  strcpy(req.ifr_name, if_name);
+  req.u.data.pointer = (iw_statistics*)malloc(sizeof(iw_statistics));
+  req.u.data.length = sizeof(iw_statistics);
+  
+  const int kSSIDBufferSize = 32;
+  char buffer[kSSIDBufferSize];
+  memset(buffer, 0, sizeof(buffer));
+  req.u.essid.pointer = buffer;
+  req.u.essid.length = kSSIDBufferSize;
+  if(ioctl(fd, SIOCGIWESSID, &req) == -1)
+  {
+    close(fd);
+    ASSERT_NAMED_EVENT(false, "OSState.UpdateWifiInfo.FailedToGetSSID","%s", strerror(errno));
+  }
+  close(fd);
+
+  _ssid = std::string(buffer);
+}
+
+const std::string& OSState::GetIPAddress(bool update)
+{
+  if(_ipAddress.empty() || update)
+  {
+    UpdateWifiInfo();
+  }
+
+  return _ipAddress;
+}
+
+const std::string& OSState::GetSSID(bool update)
+{
+  if(_ssid.empty() || update)
+  {
+    UpdateWifiInfo();
+  }
+
+  return _ssid;
+}
+
+std::string OSState::GetMACAddress() const
+{
+  std::ifstream macFile;
+  macFile.open(kMACAddressFile);
+  if (macFile.is_open()) {
+    std::string macStr;
+    macFile >> macStr;
+    macFile.close();
+    return macStr;
+  }
+  return "";
+}
+
+bool OSState::IsInRecoveryMode()
+{
+  return Util::FileUtils::FileExists(kRecoveryModeFile);
 }
 
 } // namespace Cozmo

@@ -142,6 +142,11 @@ namespace Anki {
       camera_set_exposure(_camera, exposure_ms, gain);
     }
 
+    void CameraService::CameraSetWhiteBalanceParameters(f32 r_gain, f32 g_gain, f32 b_gain)
+    {
+      camera_set_awb(_camera, r_gain, g_gain, b_gain);
+    }
+
     bool CameraService::CameraGetFrame(u8*& frame, u32& imageID, TimeStamp_t& imageCaptureSystemTimestamp_ms)
     {
       std::lock_guard<std::mutex> lock(_lock);

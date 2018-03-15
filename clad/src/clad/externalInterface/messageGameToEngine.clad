@@ -30,6 +30,7 @@
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/unlockTypes.clad"
 #include "clad/types/visionModes.clad"
+#include "clad/types/switchboardToRobot.clad"
 #include "util/ankiLab/ankiLabDef.clad"
 
 

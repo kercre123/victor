@@ -77,6 +77,8 @@ var onBLEServiceDiscovery = function (peripheral, error, services, characteristi
         // Locate Victor service ID
         if (service.uuid === Victor.SERVICE_UUID) {
             victorService = service;
+        } else if (service.uuid === Victor.OLD_SERVICE_UUID) {
+            victorService = service;
         }
     });
     if (!victorService) {
@@ -111,7 +113,7 @@ var onBLEServiceDiscovery = function (peripheral, error, services, characteristi
 var onBLEConnect = function (peripheral) {
     peripheral.once('disconnect', onBLEDisconnect.bind(this, peripheral));
     outputResponse("Connected to " + peripheral.advertisement.localName);
-    var serviceUUIDs = [Victor.SERVICE_UUID];
+    var serviceUUIDs = [Victor.SERVICE_UUID, Victor.OLD_SERVICE_UUID];
     var characteristicUUIDs = [Victor.RECV_CHAR_UUID,
                                Victor.SEND_CHAR_UUID,
                                Victor.RECV_ENC_CHAR_UUID];
@@ -137,7 +139,7 @@ var onBLEDiscover = function (peripheral) {
     if (!localName) {
         return;
     }
-    if (!localName.startsWith("VICTOR")) {
+    if (!(localName.startsWith("VICTOR") || localName.startsWith("Vector"))) {
         return;
     }
 
@@ -155,7 +157,18 @@ noble.on('scanStop', function () {
 
 var handleInput = function (line) {
     var trimmedLine = line.trim();
-    var args = trimmedLine.split(/(\s+)/);
+    var r = /[^\s"]+|"([^"]*)"/gi;
+    var args = [];
+    do {
+        //Each call to exec returns the next regex match as an array
+        var match = r.exec(trimmedLine);
+        if (match != null)
+        {
+            //Index 1 in the array is the captured group if it exists
+            //Index 0 is the matched text, which we use if no captured group exists
+            args.push(match[1] ? match[1] : match[0]);
+        }
+    } while (match != null);
     args = args.filter(function(entry) {return /\S/.test(entry); });
     if (args.length > 0) {
         switch(args[0]) {

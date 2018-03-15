@@ -23,7 +23,7 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
-#include "webServerProcess/src/webService.h"
+// #include "webServerProcess/src/webService.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -170,129 +170,129 @@ ICozmoBehaviorPtr DevBehaviorComponentMessageHandler::WrapRequestedBehaviorInDis
 
 void DevBehaviorComponentMessageHandler::SubscribeToWebViz(BehaviorExternalInterface& bei, const BehaviorSystemManager& bsm)
 {
-  DEV_ASSERT( _eventHandles.empty(), "only call once" );
+  // DEV_ASSERT( _eventHandles.empty(), "only call once" );
   
-  const auto* context = _robot.GetContext();
-  if( context != nullptr ) {
-    auto* webService = context->GetWebService();
-    if( webService != nullptr ) {
+  // const auto* context = _robot.GetContext();
+  // if( context != nullptr ) {
+  //   auto* webService = context->GetWebService();
+  //   if( webService != nullptr ) {
       
-      auto onSubscribedBehaviors = [&bei, &bsm](const std::function<void(const Json::Value&)>& sendToClient) {
-        // resend just that client the new tree
-        Json::Value data = bsm.BuildDebugBehaviorTree( bei );
-        sendToClient( data );
+  //     auto onSubscribedBehaviors = [&bei, &bsm](const std::function<void(const Json::Value&)>& sendToClient) {
+  //       // resend just that client the new tree
+  //       Json::Value data = bsm.BuildDebugBehaviorTree( bei );
+  //       sendToClient( data );
         
-        // also send them the list of behaviorIDs that can be created
-        Json::Value allBehaviors;
-        auto& list = allBehaviors["list"];
-        for( uint8_t i=0; i<BehaviorTypesWrapper::GetBehaviorIDNumEntries(); ++i ) {
-          list.append( EnumToString( static_cast<BehaviorID>(i) ) );
-        }
-        sendToClient( list );
-      };
-      auto onDataBehaviors = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
-        // client wants us to run a specific behavior
-        const auto& name = data["behaviorName"];
-        if( name.isString() ) {
-          PRINT_CH_DEBUG("BehaviorSystem",
-                         "BehaviorStack.SubscribeToWebViz.Transition",
-                         "WebViz just instructed us to transition to '%s'",
-                         name.asString().c_str());
-          auto* ei = _robot.GetExternalInterface();
-          const int numRuns = 1;
-          using namespace ExternalInterface;
-          ei->Broadcast(MessageGameToEngine(ExecuteBehaviorByID( name.asString(), numRuns )));
-        }
-      };
+  //       // also send them the list of behaviorIDs that can be created
+  //       Json::Value allBehaviors;
+  //       auto& list = allBehaviors["list"];
+  //       for( uint8_t i=0; i<BehaviorTypesWrapper::GetBehaviorIDNumEntries(); ++i ) {
+  //         list.append( EnumToString( static_cast<BehaviorID>(i) ) );
+  //       }
+  //       sendToClient( list );
+  //     };
+  //     auto onDataBehaviors = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
+  //       // client wants us to run a specific behavior
+  //       const auto& name = data["behaviorName"];
+  //       if( name.isString() ) {
+  //         PRINT_CH_DEBUG("BehaviorSystem",
+  //                        "BehaviorStack.SubscribeToWebViz.Transition",
+  //                        "WebViz just instructed us to transition to '%s'",
+  //                        name.asString().c_str());
+  //         auto* ei = _robot.GetExternalInterface();
+  //         const int numRuns = 1;
+  //         using namespace ExternalInterface;
+  //         ei->Broadcast(MessageGameToEngine(ExecuteBehaviorByID( name.asString(), numRuns )));
+  //       }
+  //     };
       
-      _eventHandles.emplace_back( webService->OnWebVizSubscribed( kWebVizModuleNameBehaviors ).ScopedSubscribe( onSubscribedBehaviors ) );
-      _eventHandles.emplace_back( webService->OnWebVizData( kWebVizModuleNameBehaviors ).ScopedSubscribe( onDataBehaviors ) );
+  //     _eventHandles.emplace_back( webService->OnWebVizSubscribed( kWebVizModuleNameBehaviors ).ScopedSubscribe( onSubscribedBehaviors ) );
+  //     _eventHandles.emplace_back( webService->OnWebVizData( kWebVizModuleNameBehaviors ).ScopedSubscribe( onDataBehaviors ) );
       
-      // now for user/cloud intents
+  //     // now for user/cloud intents
       
-      auto onSubscribedIntents = [this](const std::function<void(const Json::Value&)>& sendToClient) {
-        // client just connected, send all {user/cloud} intents and current pending {user/cloud} intent
+  //     auto onSubscribedIntents = [this](const std::function<void(const Json::Value&)>& sendToClient) {
+  //       // client just connected, send all {user/cloud} intents and current pending {user/cloud} intent
         
-        auto& uic = _robot.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  //       auto& uic = _robot.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
         
-        Json::Value allCloudIntents = Json::arrayValue;
-        std::vector<std::string> allCloudIntentsStr = uic.DevGetCloudIntentsList();
-        for( const auto& elem : allCloudIntentsStr ) {
-          allCloudIntents.append( elem );
-        }
+  //       Json::Value allCloudIntents = Json::arrayValue;
+  //       std::vector<std::string> allCloudIntentsStr = uic.DevGetCloudIntentsList();
+  //       for( const auto& elem : allCloudIntentsStr ) {
+  //         allCloudIntents.append( elem );
+  //       }
         
-        Json::Value allUserIntents = Json::arrayValue;
-        const char* currentUserIntent = nullptr;
-        using Tag = std::underlying_type<UserIntentTag>::type;
-        for( Tag i{0}; i<static_cast<Tag>( USER_INTENT(test_SEPARATOR) ); ++i ) {
-          UserIntentTag intent = static_cast<UserIntentTag>( i );
-          const char* const intentStr = UserIntentTagToString( intent );
-          allUserIntents.append( intentStr );
+  //       Json::Value allUserIntents = Json::arrayValue;
+  //       const char* currentUserIntent = nullptr;
+  //       using Tag = std::underlying_type<UserIntentTag>::type;
+  //       for( Tag i{0}; i<static_cast<Tag>( USER_INTENT(test_SEPARATOR) ); ++i ) {
+  //         UserIntentTag intent = static_cast<UserIntentTag>( i );
+  //         const char* const intentStr = UserIntentTagToString( intent );
+  //         allUserIntents.append( intentStr );
           
-          if( uic.IsUserIntentPending( intent ) ) {
-            currentUserIntent = UserIntentTagToString( intent );
-          }
-        }
+  //         if( uic.IsUserIntentPending( intent ) ) {
+  //           currentUserIntent = UserIntentTagToString( intent );
+  //         }
+  //       }
         
-        // send everything we've got!
-        Json::Value toSend = Json::arrayValue;
+  //       // send everything we've got!
+  //       Json::Value toSend = Json::arrayValue;
         
-        if( currentUserIntent != nullptr ) {
-          Json::Value blob;
-          blob["intentType"] = "user";
-          blob["type"] = "current-intent";
-          blob["value"] = currentUserIntent;
-          toSend.append( blob );
-        }
+  //       if( currentUserIntent != nullptr ) {
+  //         Json::Value blob;
+  //         blob["intentType"] = "user";
+  //         blob["type"] = "current-intent";
+  //         blob["value"] = currentUserIntent;
+  //         toSend.append( blob );
+  //       }
         
-        if( !allUserIntents.isNull() ) {
-          Json::Value blob;
-          blob["intentType"] = "user";
-          blob["type"] = "all-intents";
-          blob["list"] = allUserIntents;
-          toSend.append( blob );
-        }
+  //       if( !allUserIntents.isNull() ) {
+  //         Json::Value blob;
+  //         blob["intentType"] = "user";
+  //         blob["type"] = "all-intents";
+  //         blob["list"] = allUserIntents;
+  //         toSend.append( blob );
+  //       }
         
-        if( !allCloudIntents.isNull() ) {
-          Json::Value blob;
-          blob["intentType"] = "cloud";
-          blob["type"] = "all-intents";
-          blob["list"] = allCloudIntents;
-          toSend.append( blob );
-        }
+  //       if( !allCloudIntents.isNull() ) {
+  //         Json::Value blob;
+  //         blob["intentType"] = "cloud";
+  //         blob["type"] = "all-intents";
+  //         blob["list"] = allCloudIntents;
+  //         toSend.append( blob );
+  //       }
         
-        sendToClient( toSend );
-      };
-      auto onDataIntents = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
-        auto& uic = _robot.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
-        const auto& type = data["intentType"].asString();
-        const auto& request = data["request"].asString();
-        if( type == "user" ) {
-          UserIntentTag tag;
-          if( UserIntentTagFromString(request, tag) ) {
-            uic.SetUserIntentPending( tag );
-          } else {
-            PRINT_CH_INFO("BehaviorSystem",
-                          "DevBehaviorComponentMessageHandler.WebVizUserIntentReceived.Invalid",
-                          "Invalid intent '%s'",
-                          request.c_str());
-          }
-        } else if( type == "cloud" ) {
-          if( (request.find("{") != std::string::npos) // super awesome json detection
-             && (request.find("}") != std::string::npos) )
-          {
-            uic.SetCloudIntentPendingFromJSON( request );
-          } else {
-            std::string jsonIntent = "{\"intent\": \"" + request + "\"}";
-            uic.SetCloudIntentPendingFromJSON( jsonIntent );
-          }
-        }
-      };
+  //       sendToClient( toSend );
+  //     };
+  //     auto onDataIntents = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
+  //       auto& uic = _robot.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  //       const auto& type = data["intentType"].asString();
+  //       const auto& request = data["request"].asString();
+  //       if( type == "user" ) {
+  //         UserIntentTag tag;
+  //         if( UserIntentTagFromString(request, tag) ) {
+  //           uic.SetUserIntentPending( tag );
+  //         } else {
+  //           PRINT_CH_INFO("BehaviorSystem",
+  //                         "DevBehaviorComponentMessageHandler.WebVizUserIntentReceived.Invalid",
+  //                         "Invalid intent '%s'",
+  //                         request.c_str());
+  //         }
+  //       } else if( type == "cloud" ) {
+  //         if( (request.find("{") != std::string::npos) // super awesome json detection
+  //            && (request.find("}") != std::string::npos) )
+  //         {
+  //           uic.SetCloudIntentPendingFromJSON( request );
+  //         } else {
+  //           std::string jsonIntent = "{\"intent\": \"" + request + "\"}";
+  //           uic.SetCloudIntentPendingFromJSON( jsonIntent );
+  //         }
+  //       }
+  //     };
       
-      _eventHandles.emplace_back( webService->OnWebVizSubscribed( kWebVizModuleNameIntents ).ScopedSubscribe( onSubscribedIntents ) );
-      _eventHandles.emplace_back( webService->OnWebVizData( kWebVizModuleNameIntents ).ScopedSubscribe( onDataIntents ) );
-    }
-  }
+  //     _eventHandles.emplace_back( webService->OnWebVizSubscribed( kWebVizModuleNameIntents ).ScopedSubscribe( onSubscribedIntents ) );
+  //     _eventHandles.emplace_back( webService->OnWebVizData( kWebVizModuleNameIntents ).ScopedSubscribe( onDataIntents ) );
+  //   }
+  // }
 }
 
   

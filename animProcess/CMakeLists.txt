@@ -57,7 +57,7 @@ target_link_libraries(victor_anim
   # platform
   ${PLATFORM_LIBS}
   PUBLIC
-  victor_web_library
+  #victor_web_library
   robot_interface  # Needs to be public for cozmoConfig.h
 )
 

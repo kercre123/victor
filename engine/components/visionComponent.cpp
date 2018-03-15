@@ -969,6 +969,7 @@ namespace Cozmo {
         tryAndReport(&VisionComponent::UpdateToolCode,            VisionMode::ReadingToolCode);
         tryAndReport(&VisionComponent::UpdateComputedCalibration, VisionMode::ComputingCalibration);
         tryAndReport(&VisionComponent::UpdateImageQuality,        VisionMode::CheckingQuality);
+        tryAndReport(&VisionComponent::UpdateWhiteBalance,        VisionMode::CheckingWhiteBalance);
         tryAndReport(&VisionComponent::UpdateLaserPoints,         VisionMode::DetectingLaserPoints);
         tryAndReport(&VisionComponent::UpdateDetectedObjects,     VisionMode::Count); // Use Count here to always call UpdateDetectedObjects
         tryAndReport(&VisionComponent::UpdateVisualObstacles,     VisionMode::DetectingVisualObstacles);
@@ -1392,7 +1393,8 @@ namespace Cozmo {
     // If auto exposure is not enabled don't set camera settings
     if(_enableAutoExposure)
     {
-      SetCameraSettings(procResult.exposureTime_ms, procResult.cameraGain);
+      SetExposureSettings(procResult.cameraParams.exposureTime_ms, 
+                          procResult.cameraParams.gain);
     }
 
     if(procResult.imageQuality != _lastImageQuality || _currentQualityBeginTime_ms==0)
@@ -1452,6 +1454,18 @@ namespace Cozmo {
     }
 
     _lastImageQuality = procResult.imageQuality;
+
+    return RESULT_OK;
+  }
+
+  Result VisionComponent::UpdateWhiteBalance(const VisionProcessingResult& procResult)
+  {
+    if(_robot->IsPhysical() && _enableWhiteBalance)
+    {
+      SetWhiteBalanceSettings(procResult.cameraParams.whiteBalanceGainR, 
+                              procResult.cameraParams.whiteBalanceGainG, 
+                              procResult.cameraParams.whiteBalanceGainB);
+    }
 
     return RESULT_OK;
   }
@@ -2286,14 +2300,9 @@ namespace Cozmo {
     _lastProcessedImageTimeStamp_ms = t;
   }
 
-  s32 VisionComponent::GetCurrentCameraExposureTime_ms() const
+  CameraParams VisionComponent::GetCurrentCameraParams() const
   {
-    return _visionSystem->GetCurrentCameraExposureTime_ms();
-  }
-
-  f32 VisionComponent::GetCurrentCameraGain() const
-  {
-    return _visionSystem->GetCurrentCameraGain();
+    return _visionSystem->GetCurrentCameraParams();
   }
 
   void VisionComponent::EnableAutoExposure(bool enable)
@@ -2302,13 +2311,25 @@ namespace Cozmo {
     _visionSystem->SetNextMode(VisionMode::CheckingQuality, enable);
   }
 
+  void VisionComponent::EnableWhiteBalance(bool enable)
+  {
+    _enableWhiteBalance = enable;
+    _visionSystem->SetNextMode(VisionMode::CheckingWhiteBalance, enable);
+  }
+
   void VisionComponent::SetAndDisableAutoExposure(u16 exposure_ms, f32 gain)
   {
-    SetCameraSettings(exposure_ms, gain);
+    SetExposureSettings(exposure_ms, gain);
     EnableAutoExposure(false);
   }
 
-  void VisionComponent::SetCameraSettings(const s32 exposure_ms, const f32 gain)
+  void VisionComponent::SetAndDisableWhiteBalance(f32 gainR, f32 gainG, f32 gainB)
+  {
+    SetWhiteBalanceSettings(gainR, gainG, gainB);
+    EnableWhiteBalance(false);
+  }
+
+  void VisionComponent::SetExposureSettings(const s32 exposure_ms, const f32 gain)
   {
     if(!_visionSystem->IsExposureValid(exposure_ms) || !_visionSystem->IsGainValid(gain))
     {
@@ -2323,15 +2344,38 @@ namespace Cozmo {
                   exposure_ms,
                   gain);
 
-    _vizManager->SendCameraInfo(exposure_ms_u16, gain);
+    _visionSystem->SetNextCameraExposure(exposure_ms, gain);
 
-    _visionSystem->SetNextCameraParams(exposure_ms, gain);
+    _vizManager->SendCameraParams(_visionSystem->GetCurrentCameraParams());
 
     auto cameraService = CameraService::getInstance();
     cameraService->CameraSetParameters(exposure_ms_u16, gain);
 
     _robot->Broadcast(ExternalInterface::MessageEngineToGame(
                         ExternalInterface::CurrentCameraParams(gain, exposure_ms_u16, _enableAutoExposure) ));
+  }
+
+  void VisionComponent::SetWhiteBalanceSettings(f32 gainR, f32 gainG, f32 gainB)
+  {
+    if(!_visionSystem->IsGainValid(gainR) || 
+       !_visionSystem->IsGainValid(gainG) ||
+       !_visionSystem->IsGainValid(gainB))
+    {
+      return;
+    }
+
+    PRINT_CH_INFO("VisionComponent",
+                  "VisionComponent.SetWhiteBalanceSettings",
+                  "GainR:%f GainG:%f GainB:%f",
+                  gainR, gainG, gainB);
+
+    _visionSystem->SetNextCameraWhiteBalance(gainR, gainG, gainB);
+
+    auto cameraService = CameraService::getInstance();
+    cameraService->CameraSetWhiteBalanceParameters(gainR, gainG, gainB);
+
+    _vizManager->SendCameraParams(_visionSystem->GetCurrentCameraParams());
+
   }
 
   s32 VisionComponent::GetMinCameraExposureTime_ms() const
@@ -2523,7 +2567,7 @@ namespace Cozmo {
     // If we are not enabling auto exposure (we are disabling it) then set the exposure and gain
     if(!payload.enableAutoExposure)
     {
-      SetCameraSettings(payload.exposure_ms, payload.gain);
+      SetExposureSettings(payload.exposure_ms, payload.gain);
     }
   }
 

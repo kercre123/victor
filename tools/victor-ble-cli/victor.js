@@ -257,7 +257,8 @@ Object.defineProperty(Victor, 'MSG_B2V_MULTIPART_FINAL', {value: 0xF2, writable:
 Object.defineProperty(Victor, 'MSG_V2B_MULTIPART_START', {value: 0xF3, writable: false});
 Object.defineProperty(Victor, 'MSG_V2B_MULTIPART_CONTINUE', {value: 0xF4, writable: false});
 Object.defineProperty(Victor, 'MSG_V2B_MULTIPART_FINAL', {value: 0xF5, writable: false});
-Object.defineProperty(Victor, 'SERVICE_UUID', {value: "d55e356b59cc42659d5f3c61e9dfd70f", writable: false});
+Object.defineProperty(Victor, 'OLD_SERVICE_UUID', {value: "d55e356b59cc42659d5f3c61e9dfd70f", writable: false});
+Object.defineProperty(Victor, 'SERVICE_UUID', {value: "fee3", writable: false});
 Object.defineProperty(Victor, 'RECV_CHAR_UUID', {value: "30619f2d0f5441bda65a7588d8c85b45", writable: false});
 Object.defineProperty(Victor, 'SEND_CHAR_UUID', {value: "7d2a4bdad29b4152b7252491478c5cd7", writable: false});
 Object.defineProperty(Victor, 'RECV_ENC_CHAR_UUID', {value: "28c35e4cb21843cb97183d7ede9b5316", writable: false});

@@ -14,6 +14,7 @@
 #include "clad/robotInterface/messageFromAnimProcess.clad"
 #include "clad/types/pathEventTypes.clad"
 #include "clad/types/factoryFWOnly.clad"
+#include "clad/types/robotToSwitchboard.clad"
 
 
 namespace Anki {
@@ -162,6 +163,10 @@ union RobotToEngine {
   MicDirection               micDirection           = 0xDA,
   
   TextToSpeechEvent          textToSpeechEvent      = 0xDB,
+
+  SwitchboardInterface::EnterPairing  enterPairing  = 0xDC,
+  SwitchboardInterface::ExitPairing   exitPairing   = 0xDD,  
+  StreamCameraImages         streamCameraImages     = 0xDE,
 
   // Audio
   AudioEngine::Multiplexer::AudioCallbackDuration audioCallbackDuration = 0xE0,

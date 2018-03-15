@@ -7,6 +7,6 @@
   "emergencyGetOut"  : "TimerRingGetOut",
   "loopEndCondition" : {
     "conditionType"  : "RobotTouched",
-    "minTouchTime"   : 2.0
+    "minTouchTime"   : 0.2
   }
 }

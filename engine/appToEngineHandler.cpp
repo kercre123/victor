@@ -21,7 +21,7 @@
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
 #include "util/string/stringUtils.h"
-#include "webServerProcess/src/webService.h"
+// #include "webServerProcess/src/webService.h"
 
 #include "json/json.h"
 
@@ -166,9 +166,9 @@ AppToEngineHandler::AppToEngineHandler()
  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AppToEngineHandler::Init(WebService::WebService* ws, IExternalInterface* ei)
+void AppToEngineHandler::Init(/*WebService::WebService* ws, */IExternalInterface* ei)
 {
-  _webService = ws;
+  // _webService = ws;
   _externalInterface = ei;
   
   // message from engine to game ==> forward to app
@@ -178,14 +178,14 @@ void AppToEngineHandler::Init(WebService::WebService* ws, IExternalInterface* ei
   }
 
   // webservice receives app data ==> parse it and send a game to engine message
-  _signalHandles.push_back( _webService->OnAppToEngineOnData().ScopedSubscribe( [this](const std::string& params) {
-    return ParseAppToEngineRequest( params );
-  }) );
+  // _signalHandles.push_back( _webService->OnAppToEngineOnData().ScopedSubscribe( [this](const std::string& params) {
+  //   return ParseAppToEngineRequest( params );
+  // }) );
   
-  // webservice says app requests engine to game messages ==> give it what it wants
-  _signalHandles.push_back( _webService->OnAppToEngineRequestData().ScopedSubscribe( [this]() {
-    return GetPendingEngineToAppMessages();
-  }) );
+  // // webservice says app requests engine to game messages ==> give it what it wants
+  // _signalHandles.push_back( _webService->OnAppToEngineRequestData().ScopedSubscribe( [this]() {
+  //   return GetPendingEngineToAppMessages();
+  // }) );
 }
   
   

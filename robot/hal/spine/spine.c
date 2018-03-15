@@ -391,7 +391,7 @@ ssize_t spine_parse_frame(spine_ctx_t spine, void *out_buf, size_t out_buf_len, 
     // Invalid CRC
     if (true_crc != expected_crc) {
         // throw away header
-        LOGE("invalid crc: expected=%x | observed=%x %02x %02x %02x %02x\n", expected_crc, true_crc, crc_bytes[0], crc_bytes[1], crc_bytes[2], crc_bytes[3]);
+        LOGW("invalid crc: expected=%x | observed=%x %02x %02x %02x %02x\n", expected_crc, true_crc, crc_bytes[0], crc_bytes[1], crc_bytes[2], crc_bytes[3]);
         spine_set_rx_cursor(spine, sync_index + sizeof(SYNC_BODY_TO_HEAD));
         return -1;
     }
@@ -543,6 +543,12 @@ ssize_t spine_set_mode(spine_ctx_t spine, int new_mode)
   return r;
 }
 
+ssize_t spine_shutdown(spine_ctx_t spine)
+{
+  ssize_t r = spine_write_frame(spine, PAYLOAD_SHUT_DOWN, NULL, 0);
+  spine_debug_x("spine_shutdown return %d\n", r);
+  return r;
+}
 
 //
 // TEST
