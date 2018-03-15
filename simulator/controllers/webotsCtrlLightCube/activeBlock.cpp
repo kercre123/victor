@@ -59,7 +59,7 @@ namespace {
   // once we start moving, we have to stop for this long to send StoppedMoving message
   const double STOPPED_MOVING_TIME_SEC = 0.5f;
   
-  constexpr int NUM_CUBE_LEDS = 4;
+  constexpr int kNumCubeLeds = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
   constexpr auto NumAxes = Util::EnumToUnderlying(UpAxis::NumAxes);
   
   webots::Receiver* receiver_;
@@ -98,7 +98,7 @@ namespace {
   BlockState state_ = NORMAL;
   
   // Pointers to the LED object to set the simulated cube's lights
-  webots::LED* led_[NUM_CUBE_LEDS];
+  webots::LED* led_[kNumCubeLeds];
   
   // Pointer to the webots MFVec3f field which mirrors the current LED
   // colors so that the webots tests can monitor the current color.
@@ -111,10 +111,10 @@ namespace {
   // Parameters for setting individual LEDs on this cube
   struct LedParams
   {
-    std::array<Anki::Cozmo::LightState, NUM_CUBE_LEDS> lightStates;
+    std::array<Anki::Cozmo::LightState, kNumCubeLeds> lightStates;
     
     // Keep track of where we are in the phase cycle for each LED
-    std::array<TimeStamp_t, NUM_CUBE_LEDS> phases;
+    std::array<TimeStamp_t, kNumCubeLeds> phases;
     
     u8 rotationPeriod = 0;
     TimeStamp_t lastRotation = 0;
@@ -140,7 +140,7 @@ namespace {
   // as if it were oriented front-side up.
   // When the top marker is facing down, these positions are with respect to the marker
   // as if you were looking down on it (through the top of the block).
-  const u8 ledIndexLUT[NumAxes][NUM_CUBE_LEDS] =
+  const u8 ledIndexLUT[NumAxes][kNumCubeLeds] =
   {
     // Xneg (Front Face on top)
     {0, 1, 2, 3},
@@ -291,7 +291,7 @@ Result Init()
   
   
   // Get all LED handles
-  for (int i=0; i<NUM_CUBE_LEDS; ++i) {
+  for (int i=0; i<kNumCubeLeds; ++i) {
     char led_name[32];
     sprintf(led_name, "led%d", i);
     led_[i] = active_object_controller.getLED(led_name);
@@ -426,7 +426,7 @@ void SetLED(WhichCubeLEDs whichLEDs, u32 color)
 {
   static const u8 FIRST_BIT = 0x01;
   u8 shiftedLEDs = static_cast<u8>(whichLEDs);
-  for(u8 i=0; i<NUM_CUBE_LEDS; ++i) {
+  for(u8 i=0; i<kNumCubeLeds; ++i) {
     if(shiftedLEDs & FIRST_BIT) {
       SetLED_helper(ledIndexLUT[Util::EnumToUnderlying(prevUpAxis_)][i], color);
     }
@@ -441,7 +441,7 @@ inline void SetLED(u32 ledIndex, u32 color)
 
 
 void SetAllLEDs(u32 color) {
-  for(int i=0; i<NUM_CUBE_LEDS; ++i) {
+  for(int i=0; i<kNumCubeLeds; ++i) {
     SetLED_helper(i, color);
   }
 }
@@ -516,17 +516,17 @@ void ApplyLEDParams()
   {
     ledParams_.lastRotation = currentTime;
     ++ledParams_.rotationOffset;
-    if(ledParams_.rotationOffset >= NUM_CUBE_LEDS) {
+    if(ledParams_.rotationOffset >= kNumCubeLeds) {
       ledParams_.rotationOffset = 0;
     }
   }
 
-  for(u8 i=0; i<NUM_CUBE_LEDS; ++i) {
+  for(u8 i=0; i<kNumCubeLeds; ++i) {
     const u32 newColor = GetCurrentLEDcolor(ledParams_.lightStates[i],
                                             currentTime,
                                             ledParams_.phases[i],
                                             CUBE_LED_FRAME_LENGTH_MS);
-    const u32 index = (i + ledParams_.rotationOffset) % NUM_CUBE_LEDS;
+    const u32 index = (i + ledParams_.rotationOffset) % kNumCubeLeds;
     SetLED_helper(index, newColor);
   }
 }

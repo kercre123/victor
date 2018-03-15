@@ -30,7 +30,9 @@ namespace Cozmo {
 class Robot;
 template <typename Type>
 class AnkiEvent;
+struct CubeLightKeyframeChunk;
 struct CubeLights;
+struct CubeLightSequence;
 struct ObjectAvailable;
 struct ObjectAccel;
 namespace BlockMessages {
@@ -88,7 +90,13 @@ private:
   
   // Handles for grabbing GameToEngine messages
   std::vector<Signal::SmartHandle> _signalHandles;
-    
+  
+  // From the given CubeLights struct, generates a set of cube light messages
+  // to be sent over BLE to a cube.
+  void GenerateCubeLightMessages(const CubeLights& cubeLights,
+                                 CubeLightSequence& cubeLightSequence,
+                                 std::vector<CubeLightKeyframeChunk>& cubeLightKeyframeChunks);
+  
   // Handlers for messages from CubeBleClient:
   
   // Handler for ObjectAvailable advertisement message
