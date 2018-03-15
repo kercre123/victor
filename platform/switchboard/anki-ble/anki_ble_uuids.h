@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 
-=======
->>>>>>> a7c8502f2d... VIC-1296 Utils/3rd Party/Code from Stu
 /**
  * File: anki_ble_uuids.h
  *
@@ -16,10 +13,7 @@
 
 #pragma once
 
-<<<<<<< HEAD
 #include <vector>
-=======
->>>>>>> a7c8502f2d... VIC-1296 Utils/3rd Party/Code from Stu
 #include <string>
 
 // This header defines constants specific to the Anki BLE GATT Service.
@@ -27,15 +21,11 @@
 namespace Anki {
 
 // For Victor
-<<<<<<< HEAD
 const std::string kAnkiSingleMessageService_128_BIT_UUID("0000FEE3-0000-1000-8000-00805F9B34FB");
 const std::string kAnkiSingleMessageService_16_BIT_UUID("FEE3");
 // TODO: VIC-1639 - replace kAnkiBluetoothSIGCompanyIdentifier with final assigned number
 const std::vector<uint8_t> kAnkiBluetoothSIGCompanyIdentifier({0xF8, 0x05});
 const uint8_t kVictorProductIdentifier = (uint8_t) 'v';
-=======
-const std::string kAnkiBLEService_128_BIT_UUID("D55E356B-59CC-4265-9D5F-3C61E9DFD70F");
->>>>>>> a7c8502f2d... VIC-1296 Utils/3rd Party/Code from Stu
 const std::string kAppWriteCharacteristicUUID("7D2A4BDA-D29B-4152-B725-2491478C5CD7");
 const std::string kAppReadCharacteristicUUID("30619F2D-0F54-41BD-A65A-7588D8C85B45");
 

@@ -22,11 +22,8 @@ class BLEAdvertiseData {
   BLEAdvertiseData()
       : include_device_name_(false)
       , include_tx_power_level_(false)
-<<<<<<< HEAD
       , min_interval_(0)
       , max_interval_(0)
-=======
->>>>>>> a7c8502f2d... VIC-1296 Utils/3rd Party/Code from Stu
   { }
   ~BLEAdvertiseData() = default;
 
@@ -50,7 +47,6 @@ class BLEAdvertiseData {
   void SetServiceUUID(const std::string uuid) {service_uuid_ = uuid;}
   const std::string& GetServiceUUID() const { return service_uuid_; }
 
-<<<<<<< HEAD
   // The min and max interval are for the slave connection interval range
   // advertisement.  Leave set at 0 to NOT include the
   // slave connection interval range in the advertisements.
@@ -70,19 +66,14 @@ class BLEAdvertiseData {
             && !max_interval_);
   }
 
-=======
->>>>>>> a7c8502f2d... VIC-1296 Utils/3rd Party/Code from Stu
  private:
   bool include_device_name_;
   bool include_tx_power_level_;
   std::vector<uint8_t> manufacturer_data_;
   std::vector<uint8_t> service_data_;
   std::string service_uuid_;
-<<<<<<< HEAD
   int min_interval_;
   int max_interval_;
-=======
->>>>>>> a7c8502f2d... VIC-1296 Utils/3rd Party/Code from Stu
 };
 
 } // namespace Anki
