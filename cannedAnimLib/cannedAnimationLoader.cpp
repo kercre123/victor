@@ -97,7 +97,7 @@ void CannedAnimationLoader::CollectAnimFiles()
     {
       paths = {"assets/animations/", "config/engine/animations/"};
     }
-    
+
     for (const auto& path : paths) {
       WalkAnimationDir(path, _animFileTimestamps, [this] (const std::string& filename) {
         _jsonFiles.push_back(filename);
@@ -106,15 +106,10 @@ void CannedAnimationLoader::CollectAnimFiles()
   }
 
   // print results
-  {
-    for (const auto& fileListPair : _jsonFiles) {
-      LOG_INFO("CannedAnimationLoader.CollectAnimFiles.Results", "Found %zu animation files",
-               fileListPair.size());
-    }
-  }
+  LOG_INFO("CannedAnimationLoader.CollectAnimFiles.Results", "Found %zu animation files", _jsonFiles.size());
+
 }
 
- 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CannedAnimationLoader::AddToLoadingRatio(float delta)
 {
@@ -132,7 +127,7 @@ void CannedAnimationLoader::LoadAnimationsInternal()
   // Disable super-verbose warnings about clipping face parameters in json files
   // To help find bad/deprecated animations, try removing this.
   ProceduralFace::EnableClippingWarning(false);
-  
+
   using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
   MyDispatchWorker::FunctionType loadFileFunc = std::bind(&CannedAnimationLoader::LoadAnimationFile, this, std::placeholders::_1);
   MyDispatchWorker myWorker(loadFileFunc);
@@ -142,7 +137,7 @@ void CannedAnimationLoader::LoadAnimationsInternal()
     myWorker.PushJob(_jsonFiles[i]);
     //LOG_DEBUG("CannedAnimationLoader.LoadAnimations", "loaded regular anim %d of %zu", i, size);
   }
-  
+
   _perAnimationLoadingRatio = kAnimationsLoadingRatio * 1.0f / Util::numeric_cast<float>(size);
   myWorker.Process();
 
@@ -199,7 +194,7 @@ void CannedAnimationLoader::WalkAnimationDir(const std::string& animationDir, Ti
   }
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CannedAnimationLoader::LoadFaceAnimations()
 {
