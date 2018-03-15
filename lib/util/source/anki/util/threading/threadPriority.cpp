@@ -136,7 +136,7 @@ bool SetThreadName(std::thread::native_handle_type inThread, const char* threadN
   
   // RETURN VALUE - On success, these functions return 0; on error, they return a nonzero  error number.
   int returnValue = 0;
-#if defined(LINUX) || defined(ANDROID)
+#if defined(LINUX) || defined(ANDROID) || defined(VICOS)
   returnValue = pthread_setname_np(inThread, threadName);
 #else
   // Mac OS X: must be set from within the thread (can't specify thread ID)

@@ -208,7 +208,7 @@ set(CMAKE_TRY_COMPILE_PLATFORM_VARIABLES
 
 # Standard cross-compiling stuff.
 set(ANDROID TRUE)
-set(VICOS TRUE)
+set(VICOS_LA TRUE)
 set(CMAKE_SYSTEM_NAME Android)
 set(CMAKE_SYSTEM_VERSION ${ANDROID_PLATFORM_LEVEL})
 set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
@@ -369,7 +369,7 @@ set(ANDROID_LINKER_FLAGS_EXE)
 list(APPEND ANDROID_COMPILER_FLAGS
 	-gsplit-dwarf
 	-DANDROID
-	-DVICOS
+	-DVICOS_LA
 	-ffunction-sections
 	-fdata-sections
 	-funwind-tables

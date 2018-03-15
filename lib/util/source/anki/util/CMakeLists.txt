@@ -21,7 +21,7 @@ target_include_directories(util
 set (PLATFORM_LIBS "")
 
 if (ANDROID)
-  set(PLATFORM_LIBS android log)
+  set(PLATFORM_LIBS log)
 elseif (MACOSX)
   find_library(FOUNDATION Foundation)
   set(PLATFORM_LIBS ${FOUNDATION})
