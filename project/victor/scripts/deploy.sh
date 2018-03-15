@@ -140,7 +140,7 @@ RSYNC_LIST="${BUILD_ROOT}/rsync.$$.lst"
 touch ${RSYNC_LIST}
 
 if [ -d lib ]; then
-  find lib -type f -name '*.so' >> ${RSYNC_LIST}
+  find lib -type f -name '*.so' -or -name '*.so.1' >> ${RSYNC_LIST}
 fi
 
 if [ -d bin ]; then
