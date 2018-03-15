@@ -182,8 +182,7 @@ void CubeCommsComponent::GenerateCubeLightMessages(const CubeLights& cubeLights,
   DEV_ASSERT(cubeLightKeyframeChunks.empty(), "CubeCommsComponent.GenerateCubeLightMessages.CubeLightKeyframeChunksNotEmpty");
   cubeLightKeyframeChunks.clear();
   
-  const bool useRotation = cubeLights.rotationPeriod_frames != 0;
-  DEV_ASSERT(!(cubeLights.playOnce && useRotation), "CubeCommsComponent.GenerateCubeLightMessages.CannotHaveBothPlayOnceAndRotation");
+  DEV_ASSERT(!(cubeLights.playOnce && cubeLights.rotate), "CubeCommsComponent.GenerateCubeLightMessages.CannotHaveBothPlayOnceAndRotation");
   
   int baseIndex = 0;
   std::vector<LedAnimation> animations;
@@ -203,7 +202,7 @@ void CubeCommsComponent::GenerateCubeLightMessages(const CubeLights& cubeLights,
   
   // If rotation is specified, then link the animations appropriately,
   // wrapping around if necessary.
-  if (useRotation) {
+  if (cubeLights.rotate) {
     for (int i=0 ; i<kNumCubeLeds ; i++) {
       animations[(i + 1) % kNumCubeLeds].LinkToOther(animations[i]);
     }

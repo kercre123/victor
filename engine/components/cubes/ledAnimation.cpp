@@ -27,39 +27,36 @@ namespace Cozmo {
 LedAnimation::LedAnimation(const LightState& lightState, const int baseIndex)
 {
   const bool hasOffset = lightState.offset != 0;
-
   // Re-used temporary keyframe:
   CubeLightKeyframe keyframe;
-  
-  size_t currKeyFrameIndex = 0;
   
   if (hasOffset) {
     keyframe.color.fill(0);
     keyframe.holdFrames = lightState.offset;
     keyframe.decayFrames = 0;
     _keyframes.push_back(keyframe);
-    ++currKeyFrameIndex;
   }
   
-  keyframe.color = RGBA_TO_RGB_ARRAY(lightState.offColor);
-  keyframe.holdFrames = 0;
-  keyframe.decayFrames = lightState.transitionOnFrames;
-  keyframe.nextIndex = currKeyFrameIndex + 1;
-  _keyframes.push_back(keyframe);
-  ++currKeyFrameIndex;
+  if (lightState.transitionOnFrames != 0) {
+    keyframe.color = RGBA_TO_RGB_ARRAY(lightState.offColor);
+    keyframe.holdFrames = 0;
+    keyframe.decayFrames = lightState.transitionOnFrames;
+    _keyframes.push_back(keyframe);
+  }
   
-  keyframe.color = RGBA_TO_RGB_ARRAY(lightState.onColor);
-  keyframe.holdFrames = lightState.onFrames;
-  keyframe.decayFrames = lightState.transitionOffFrames;
-  keyframe.nextIndex = currKeyFrameIndex + 1;
-  _keyframes.push_back(keyframe);
-  ++currKeyFrameIndex;
+  if ((lightState.onFrames != 0) || (lightState.transitionOffFrames != 0)) {
+    keyframe.color = RGBA_TO_RGB_ARRAY(lightState.onColor);
+    keyframe.holdFrames = lightState.onFrames;
+    keyframe.decayFrames = lightState.transitionOffFrames;
+    _keyframes.push_back(keyframe);
+  }
   
-  keyframe.color = RGBA_TO_RGB_ARRAY(lightState.offColor);
-  keyframe.holdFrames = lightState.offFrames;
-  keyframe.decayFrames = 0;
-  keyframe.nextIndex = hasOffset ? 1 : 0; // If there is an offset frame in the front, don't go back to it
-  _keyframes.push_back(keyframe);
+  if (lightState.offFrames != 0) {
+    keyframe.color = RGBA_TO_RGB_ARRAY(lightState.offColor);
+    keyframe.holdFrames = lightState.offFrames;
+    keyframe.decayFrames = 0;
+    _keyframes.push_back(keyframe);
+  }
   
   // Handle the special case of all lightState times being zero,
   // indicating that we should keep OnColor indefinitely
@@ -82,6 +79,11 @@ LedAnimation::LedAnimation(const LightState& lightState, const int baseIndex)
   for (int i=0 ; i < _keyframes.size()-1 ; i++) {
     _keyframes[i].nextIndex = i + 1 + baseIndex;
   }
+  
+  // Link final keyframe appropriately
+  _keyframes.back().nextIndex = hasOffset ?
+                                  1 + baseIndex :
+                                  0 + baseIndex;
   
   _baseIndex = baseIndex;
 }

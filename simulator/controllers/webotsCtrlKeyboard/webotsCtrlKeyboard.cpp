@@ -949,7 +949,7 @@ namespace Cozmo {
       msg.transitionOffPeriod_ms = 100;
       msg.turnOffUnspecifiedLEDs = 1;
       msg.offset = 0;
-      msg.rotationPeriod_ms = 0;
+      msg.rotate = false;
       
       if(_shiftKeyPressed) {
         printf("Updating active block edge\n");

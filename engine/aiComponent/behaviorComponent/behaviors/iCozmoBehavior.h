@@ -244,6 +244,8 @@ protected:
   virtual void OnEnteredActivatableScopeInternal() override;
   virtual void OnLeftActivatableScopeInternal() override;
 
+  virtual void OnBehaviorEnteredActivatableScope() { };
+  
   virtual void OnBehaviorActivated() = 0;
   
   void InitInternal() override final;

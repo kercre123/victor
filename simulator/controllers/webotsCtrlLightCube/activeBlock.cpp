@@ -119,7 +119,6 @@ inline void SetLED_helper(u32 index, u32 rgbColor) {
   pendingLedColors_[index] = {{red, green, blue}};
 }
 
-
 void ProcessMessage(const MessageEngineToCube& msg)
 {
   const auto tag = msg.GetTag();

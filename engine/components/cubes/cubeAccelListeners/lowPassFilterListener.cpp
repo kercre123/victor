@@ -12,6 +12,7 @@
 
 #include "engine/components/cubes/cubeAccelListeners/lowPassFilterListener.h"
 
+#include "coretech/common/engine/math/point_impl.h"
 #include "clad/types/activeObjectAccel.h"
 
 #include "util/logging/logging.h"

@@ -206,8 +206,8 @@ void BehaviorFeedingEat::OnBehaviorDeactivated()
   GetBEI().GetRobotInfo().EnableStopOnCliff(true);
   
   // Release the cube accel listener
-  _iConfig.cubeMovementListener.reset();
-  _dVars.targetID.UnSet();
+  //_iConfig.cubeMovementListener.reset();
+  //_dVars.targetID.UnSet();
 }
 
 

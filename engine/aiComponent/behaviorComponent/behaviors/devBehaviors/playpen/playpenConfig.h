@@ -45,7 +45,7 @@ static f32  kDefaultTimeout_ms    = 20000;
 static f32  kTimeToDisplayResultOnFace_ms = 10000;
 
 // Whether or not to skip checking we have heard from an active object
-static bool kSkipActiveObjectCheck        = true;
+static bool kSkipActiveObjectCheck        = false;
 
 // Whether or not to need touch to start playpen
 static bool kUseTouchToStart              = false;

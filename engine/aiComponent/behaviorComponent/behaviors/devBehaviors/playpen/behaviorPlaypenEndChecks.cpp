@@ -15,7 +15,6 @@
 
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
-#include "engine/components/batteryComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"

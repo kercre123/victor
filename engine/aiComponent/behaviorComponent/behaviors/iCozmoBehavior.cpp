@@ -667,6 +667,7 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
     strategy->SetActive(GetBEI(), true);
   }
 
+  OnBehaviorEnteredActivatableScope();
 }
 
 

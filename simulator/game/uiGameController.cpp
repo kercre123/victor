@@ -1728,7 +1728,7 @@ namespace Anki {
                                                    const u32 transitionOnPeriod_ms,
                                                    const u32 transitionOffPeriod_ms,
                                                    const s32 offset,
-                                                   const u32 rotationPeriod_ms,
+                                                   const bool rotate,
                                                    const f32 relativeToX,
                                                    const f32 relativeToY,
                                                    const WhichCubeLEDs whichLEDs,
@@ -1744,9 +1744,9 @@ namespace Anki {
         transitionOnPeriod_ms,
         transitionOffPeriod_ms,
         offset,
-        rotationPeriod_ms,
         relativeToX,
         relativeToY,
+        rotate,
         whichLEDs,
         makeRelative,
         turnOffUnspecifiedLEDs
@@ -1763,7 +1763,7 @@ namespace Anki {
                                                       const std::array<u32, 4> transitionOnPeriod_ms,
                                                       const std::array<u32, 4> transitionOffPeriod_ms,
                                                       const std::array<s32, 4> offset,
-                                                      const u32 rotationPeriod_ms,
+                                                      const bool rotate,
                                                       const f32 relativeToX,
                                                       const f32 relativeToY,
                                                       const MakeRelativeMode makeRelative)
@@ -1777,9 +1777,9 @@ namespace Anki {
         transitionOnPeriod_ms,
         transitionOffPeriod_ms,
         offset,
-        rotationPeriod_ms,
         relativeToX,
         relativeToY,
+        rotate,
         makeRelative
       );
 
