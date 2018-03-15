@@ -167,13 +167,6 @@ void ConsoleSystem::Register( const std::string& keystring, IConsoleVariable* va
 //------------------------------------------------------------------------------------------------------------------------------
 void ConsoleSystem::Register( const std::string& keystring, ConsoleFunc function, const char* categoryName, const std::string& args )
 {
-  if (_isInitializationComplete)
-  {
-    // Most funcs are added in static init (way before ini load), some are added manually but they should be added as
-    // early as possible!
-    LOG_WARNING("ConsoleSystem.RegisterFunc", "Adding func '%s' after initialization!", keystring.c_str());
-  }
-
   // The IConsoleVariable will register itself within its constructor.
   IConsoleFunction* func = new IConsoleFunction( keystring, function, categoryName, args );
   allocatedFunctions_.push_back( func );
@@ -182,13 +175,6 @@ void ConsoleSystem::Register( const std::string& keystring, ConsoleFunc function
 //------------------------------------------------------------------------------------------------------------------------------
 void ConsoleSystem::Register( const std::string& keystring, IConsoleFunction* function )
 {
-  if (_isInitializationComplete)
-  {
-    // Most funcs are added in static init (way before ini load), some are added manually but they should be added as
-    // early as possible!
-    LOG_WARNING("ConsoleSystem.RegisterFunc", "Adding func '%s' after initialization!", keystring.c_str());
-  }
-
   const StringID key = GetSearchKey( keystring );
   pair<FunctionDatabase::iterator, bool> result;
   result = consolefunctions_.emplace( key, function );
