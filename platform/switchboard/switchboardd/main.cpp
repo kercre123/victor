@@ -187,13 +187,16 @@ void Daemon::HandleOtaUpdateProgress() {
   }
 }
 
-int Daemon::GetOtaProgress(int* progressVal, int* expectedVal) {
+int Daemon::GetOtaProgress(uint64_t* progressVal, uint64_t* expectedVal) {
   // read values from files
   std::string progress;
   std::string expected;
 
   std::ifstream progressFile;
   std::ifstream expectedFile;
+
+  *progressVal = 0;
+  *expectedVal = 0;
 
   progressFile.open("/data/update-engine/progress");
   expectedFile.open("/data/update-engine/expected-size");
@@ -205,13 +208,24 @@ int Daemon::GetOtaProgress(int* progressVal, int* expectedVal) {
   getline(progressFile, progress);
   getline(expectedFile, expected);
 
-  try {
-    *progressVal = stoi(progress);
-    *expectedVal = stoi(expected);
-  } catch(...) {
-    // handle int/string parsing issue
+  long int strtol (const char* str, char** endptr, int base);
+
+  long int progressLong = strtol(progress.c_str(), progress.c_str() + progress.length(), 10);
+  long int expectedLong = strtol(expected.c_str(), expected.c_str() + expected.length(), 10);
+
+  if(progressLong == LONG_MAX || progressLong == LONG_MIN) {
+    // 0, LONG_MAX, LONG_MIN are error cases from strtol
+    progressLong = 0;
+  }
+
+  if(expectedLong == LONG_MAX || expectedLong == LONG_MIN || expectedLong == 0) {
+    // 0, LONG_MAX, LONG_MIN are error cases from strtol
+    // if our expected size (denominator) is screwed, we shouldn't send progress
     return -1;
   }
+
+  *progressVal = (unsigned)progressLong;
+  *expectedVal = (unsigned)expectedLong;
 
   return 0;
 }

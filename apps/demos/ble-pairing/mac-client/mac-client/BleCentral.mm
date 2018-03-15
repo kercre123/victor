@@ -46,6 +46,7 @@
   
   //[self resetDefaults];
   _victorsDiscovered = [[NSMutableDictionary alloc] init];
+  _reconnection = false;
   
   return [super init];
 }
@@ -344,7 +345,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     memcpy(_decryptKey, [decKey bytes], crypto_kx_SESSIONKEYBYTES);
     memcpy(_encryptKey, [encKey bytes], crypto_kx_SESSIONKEYBYTES);
     NSLog(@"Trying to renew connection");
-    
+    _reconnection = true;
     Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsConnResponse>(self, Anki::Victor::ExternalComms::RtsConnType::Reconnection,
                                                                        publicKeyArray);
   } else {
@@ -404,7 +405,10 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 
 - (void) HandleChallengeSuccessMessage:(const Anki::Victor::ExternalComms::RtsChallengeSuccessMessage&)msg {
   [self printSuccess:"### Successfully Created Encrypted Channel ###"];
-  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiScanRequest>(self);
+  
+  if(_reconnection == false) {
+    Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiScanRequest>(self);
+  }
   //Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiAccessPointRequest>(self, true);
 }
 

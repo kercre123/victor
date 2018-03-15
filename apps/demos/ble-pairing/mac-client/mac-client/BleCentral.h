@@ -46,6 +46,7 @@ enum RtsState {
   uint8_t _nonceOut [crypto_aead_xchacha20poly1305_ietf_NPUBBYTES];
   
   enum RtsState _rtsState;
+  bool _reconnection;
   
   NSMutableDictionary* _victorsDiscovered;
   bool _connecting;
