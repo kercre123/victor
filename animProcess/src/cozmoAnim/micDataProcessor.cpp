@@ -148,6 +148,7 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
 
   const RobotID_t robotID = OSState::getInstance()->GetRobotID();
   const std::string sockName = std::string{LOCAL_SOCKET_PATH} + "mic_sock" + (robotID == 0 ? "" : std::to_string(robotID));
+  _udpServer->SetBindClients(false);
   const bool udpSuccess = _udpServer->StartListening(sockName);
   ANKI_VERIFY(udpSuccess,
               "MicDataProcessor.Constructor.UdpStartListening",

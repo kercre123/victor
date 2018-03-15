@@ -33,11 +33,12 @@ public:
   // Client management
   bool HasClient() const { return !_peername.empty(); }
   void Disconnect();
+  void SetBindClients(bool value) { _bindClients = value; }
 
   // Client transport
   ssize_t Send(const char* data, int size);
   ssize_t Recv(char* data, int maxSize);
-  
+
 private:
 
   // Listening socket descriptor
@@ -46,6 +47,9 @@ private:
   // Socket names
   std::string _sockname;
   std::string _peername;
+
+  bool _bindClients;
+  sockaddr_un _client;
 
   // Returns true if client successfully added
   bool AddClient(const struct sockaddr_un &saddr, socklen_t saddrlen);

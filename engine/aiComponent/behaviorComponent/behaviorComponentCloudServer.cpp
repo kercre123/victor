@@ -37,11 +37,14 @@ void BehaviorComponentCloudServer::RunThread(std::string sockName)
 {
   Anki::Util::SetThreadName(pthread_self(), "BehaviorServer");
   // Start UDP server
+  _server.SetBindClients(false);
   _server.StartListening(LOCAL_SOCKET_PATH + sockName);
   char buf[512];
   while (!_shutdown) {
     const ssize_t received = _server.Recv(buf, sizeof(buf));
-    if (received > 0) {
+    // ignore an empty reconnect packet that LocalUdpServer might forward
+    const bool isReconnect = (received == 1 && buf[0] == '\0');
+    if (received > 0 && !isReconnect) {
       std::string msg{buf, buf+received};
       _callback(std::move(msg));
     }

@@ -43,6 +43,7 @@ static std::string to_string(const struct sockaddr_un & saddr, socklen_t saddrle
 
 LocalUdpServer::LocalUdpServer()
 {
+  _bindClients = true;
   _socketfd = -1;
 }
 
@@ -159,8 +160,15 @@ ssize_t LocalUdpServer::Send(const char* data, int size)
   }
 
   //LOG_DEBUG("LocalUdpServer.Send", "Sending %d bytes to %s", size, _peername.c_str());
+  ssize_t bytes_sent = 0;
+  if (_bindClients) {
+    bytes_sent = send(_socketfd, data, size, 0);
+  }
+  else {
+    const socklen_t socklen = (socklen_t) SUN_LEN(&_client);
+    bytes_sent = sendto(_socketfd, data, size, 0, (sockaddr*)&_client, socklen);
+  }
 
-  const ssize_t bytes_sent = send(_socketfd, data, size, 0);
   if (bytes_sent != size) {
     // If send fails, log it and report it to caller.  It is caller's responsibility to retry at
     // some appropriate interval.
@@ -177,7 +185,7 @@ ssize_t LocalUdpServer::Recv(char* data, int maxSize)
   socklen_t saddrlen = sizeof(saddr);
 
   const ssize_t bytes_received = recvfrom(_socketfd, data, maxSize, 0, (struct sockaddr *)&saddr, &saddrlen);
-  
+
   if (bytes_received <= 0) {
     if (errno == EWOULDBLOCK) {
       //LOG_DEBUG("LocalUdpServer.Recv", "No data available");
@@ -191,7 +199,7 @@ ssize_t LocalUdpServer::Recv(char* data, int maxSize)
   //LOG_DEBUG("LocalUdpServer.Recv", "Received %zd bytes from %s", bytes_received, to_string(saddr, saddrlen).c_str());
 
   // Connect to new client?
-  if (!HasClient()) {
+  if (!HasClient() || !_bindClients) {
     if (AddClient(saddr, saddrlen) && bytes_received == 1) {
       // If client was newly added, the first datagram (as long as it's only 1 byte long)
       // is assumed to be a "connection packet".
@@ -206,12 +214,23 @@ ssize_t LocalUdpServer::Recv(char* data, int maxSize)
 bool LocalUdpServer::AddClient(const struct sockaddr_un &saddr, socklen_t saddrlen)
 {
   const std::string & peername = to_string(saddr, saddrlen);
+  if (_bindClients) {
+    LOG_DEBUG("LocalUdpServer.AddClient", "Adding client %s", peername.c_str());
 
-  LOG_DEBUG("LocalUdpServer.AddClient", "Adding client %s", peername.c_str());
+    if (connect(_socketfd, (struct sockaddr *) &saddr, saddrlen) != 0) {
+      LOG_ERROR("LocalUdpServer.AddClient", "Unable to connect to %s (%s)", peername.c_str(), strerror(errno));
+      return false;
+    }
+  }
+  else {
+    if (memcmp(&_client, &saddr, saddrlen) == 0) {
+      return false;
+    }
 
-  if (connect(_socketfd, (struct sockaddr *) &saddr, saddrlen) != 0) {
-    LOG_ERROR("LocalUdpServer.AddClient", "Unable to connect to %s (%s)", peername.c_str(), strerror(errno));
-    return false;
+    LOG_INFO("ASDFASDFloud", "cloud adding serv %s", peername.c_str());
+
+    _client = saddr;
+    _client.sun_path[saddrlen - (sizeof(saddr) - sizeof(saddr.sun_path))] = 0;
   }
   _peername = peername;
   return true;
@@ -227,13 +246,15 @@ void LocalUdpServer::Disconnect()
 
   LOG_DEBUG("LocalUdpServer.Disconnect", "Disconnect from peer %s", _peername.c_str());
 
-  // Undo effects of connect() by resetting peer to an unspecified address
-  struct sockaddr saddr;
-  saddr.sa_family = AF_UNSPEC;
-  if (connect(_socketfd, &saddr, sizeof(saddr)) != 0) {
-    // MacOS returns ENOENT but operation has desired effect regardless.
-    if (errno != ENOENT) {
-      LOG_ERROR("LocalUdpServer.Disconnect", "Failed to disconnect (%s)", strerror(errno));
+  if (_bindClients) {
+    // Undo effects of connect() by resetting peer to an unspecified address
+    struct sockaddr saddr;
+    saddr.sa_family = AF_UNSPEC;
+    if (connect(_socketfd, &saddr, sizeof(saddr)) != 0) {
+      // MacOS returns ENOENT but operation has desired effect regardless.
+      if (errno != ENOENT) {
+        LOG_ERROR("LocalUdpServer.Disconnect", "Failed to disconnect (%s)", strerror(errno));
+      }
     }
   }
 
