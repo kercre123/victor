@@ -174,7 +174,7 @@ bool xythetaPlannerImpl::CheckGoal(const std::pair<GoalID,State_c>& goal, StateI
     return false;
   }
 
-  State goalState = _context.env.State_c2State( goal_c );
+  GraphState goalState = _context.env.State_c2State( goal_c );
   if( _context.env.IsInCollision( goalState ) ){
     if( ! _context.env.RoundSafe( goal_c, goalState ) ) {
       PRINT_NAMED_INFO("xythetaPlanner.Goal.Invalid", "all possible discrete states of goal %d are in collision!", (int)goalID);
@@ -216,7 +216,7 @@ bool xythetaPlannerImpl::CheckContextGoals(GoalStateIDPairs& goalStateIDs,
   for( const auto& goalPair : validGoals_c) {
     const GoalID& goalID = goalPair.first;
     const State_c& goal_c = goalPair.second;
-    State goal = _context.env.State_c2State( goal_c );
+    GraphState goal = _context.env.State_c2State( goal_c );
     if( _context.env.IsInCollision( goal ) ){
       if( ! _context.env.RoundSafe( goal_c, goal ) ) {
         PRINT_NAMED_INFO("xythetaPlanner.Goal.Invalid",
@@ -265,12 +265,12 @@ bool xythetaPlannerImpl::GoalIsValid(const std::pair<GoalID, State_c>& goal_cPai
 
 bool xythetaPlannerImpl::StartIsValid() const
 {
-  State waste;
+  GraphState waste;
 
   return CheckContextStart(waste);
 }
 
-bool xythetaPlannerImpl::CheckContextStart(State& start) const
+bool xythetaPlannerImpl::CheckContextStart(GraphState& start) const
 {
   if( _context.env.IsInCollision( _context.start ) ) {
     PRINT_NAMED_INFO("xythetaPlanner.Start.Invalid", "start is in collision");
@@ -513,7 +513,7 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions, volatile bool* 
   assert(!_goalStateIDs.empty());
   
 
-  State newStart;
+  GraphState newStart;
   if( ! CheckContextStart( newStart ) ) {
     // invalid start
     return false;
@@ -601,7 +601,7 @@ bool xythetaPlannerImpl::ComputePath(unsigned int maxExpansions, volatile bool* 
     }
 
     if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
-      State_c c = _context.env.State2State_c(State(sid));
+      State_c c = _context.env.State2State_c(GraphState(sid));
       fprintf(_debugExpPlotFile, "%f %f %f %d\n",
                   c.x_mm,
                   c.y_mm,
@@ -728,7 +728,7 @@ Cost xythetaPlannerImpl::heur(StateID sid)
 
 Cost xythetaPlannerImpl::heur_internal(StateID sid)
 {
-  State s(sid);
+  GraphState s(sid);
   size_t len = _goals_c.size();
   
   Cost minCost = FLT_MAX;

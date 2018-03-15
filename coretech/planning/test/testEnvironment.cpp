@@ -25,21 +25,21 @@ using namespace Anki::Planning;
 
 GTEST_TEST(TestEnvironment, StateIDPacking)
 {
-  vector<State> states;
-  states.push_back(State(0,0,0));
-  states.push_back(State(0,0,1));
-  states.push_back(State(0,0,15));
-  states.push_back(State(-34, 12, 7));
-  states.push_back(State(-1034, -221, 14));
-  states.push_back(State(1097, -208, 3));
-  states.push_back(State(1234, 4321, 4));
+  vector<GraphState> states;
+  states.push_back(GraphState(0,0,0));
+  states.push_back(GraphState(0,0,1));
+  states.push_back(GraphState(0,0,15));
+  states.push_back(GraphState(-34, 12, 7));
+  states.push_back(GraphState(-1034, -221, 14));
+  states.push_back(GraphState(1097, -208, 3));
+  states.push_back(GraphState(1234, 4321, 4));
 
   for(size_t i=0; i<states.size(); ++i) {
     StateID id = states[i].GetStateID();
     EXPECT_EQ(id.s.x, states[i].x);
     EXPECT_EQ(id.s.y, states[i].y);
     EXPECT_EQ(id.s.theta, states[i].theta);
-    State newState(id);
+    GraphState newState(id);
     EXPECT_EQ(states[i], newState);
   }
 }
@@ -54,14 +54,14 @@ GTEST_TEST(TestEnvironment, State2c)
   ASSERT_FLOAT_EQ(1.0 / env.resolution_mm_, env.oneOverResolution_);
   ASSERT_FLOAT_EQ(1.0 / env.radiansPerAngle_, env.oneOverRadiansPerAngle_);
 
-  State s(0, 0, 0);
+  GraphState s(0, 0, 0);
   State_c c = env.State2State_c(s);
 
   EXPECT_FLOAT_EQ(c.x_mm, 0.0);
   EXPECT_FLOAT_EQ(c.y_mm, 0.0);
   EXPECT_FLOAT_EQ(c.theta, 0.0);
   
-  State s2 = env.State_c2State(c);
+  GraphState s2 = env.State_c2State(c);
   EXPECT_EQ(s, s2);
 
   s.x = 234;
@@ -139,7 +139,7 @@ GTEST_TEST(TestEnvironment, SuccessorsFromZero)
 
   EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
-  State curr(0,0,0);
+  GraphState curr(0,0,0);
 
   SuccessorIterator it = env.GetSuccessors(curr.GetStateID(), 0.0);
 
@@ -205,7 +205,7 @@ GTEST_TEST(TestEnvironment, SuccessorsFromNonzero)
 
   EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
-  State curr(-14,107,15);
+  GraphState curr(-14,107,15);
 
   SuccessorIterator it = env.GetSuccessors(curr.GetStateID(), 0.0);
 
@@ -271,7 +271,7 @@ GTEST_TEST(TestEnvironment, ReverseSuccessorsMatch)
 
   EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
-  State curr(-14,107,15);
+  GraphState curr(-14,107,15);
 
   SuccessorIterator it = env.GetSuccessors(curr.GetStateID(), 0.0, false);
 
@@ -320,7 +320,7 @@ GTEST_TEST(TestEnvironment, ReverseSuccessorsMatch_WithObstacle)
   env.PrepareForPlanning();
 
   State_c curr_c(-14,107,15);
-  State curr = env.State_c2State(curr_c);
+  GraphState curr = env.State_c2State(curr_c);
 
   SuccessorIterator it = env.GetSuccessors(curr.GetStateID(), 5.0, false);
 

@@ -772,7 +772,7 @@ GTEST_TEST(TestPlanner, DISABLED_ClosestSegmentToPose_straight)
 
   xythetaPlanner planner(context);
 
-  planner._impl->_plan.start_ = State(0, 0, 0);
+  planner._impl->_plan.start_ = GraphState(0, 0, 0);
 
   ASSERT_EQ(context.env.GetRawMotionPrimitive(0, 0).endStateOffset.x, 1) << "invalid action";
   ASSERT_EQ(context.env.GetRawMotionPrimitive(0, 0).endStateOffset.y, 0) << "invalid action";
@@ -825,10 +825,10 @@ void TestPlanner_ClosestSegmentToPoseHelper(xythetaPlannerContext& context, xyth
   printf("manually created plan:\n");
   context.env.PrintPlan(planner.GetPlan());
 
-  State start = planner._impl->_plan.start_;
+  GraphState start = planner._impl->_plan.start_;
 
   // go through each intermediate point, perturb it a bit, and make sure it returns correctly
-  State curr = start;
+  GraphState curr = start;
 
   size_t planSize = planner._impl->_plan.Size();
   for(size_t planIdx = 0; planIdx < planSize; ++planIdx) {
@@ -867,7 +867,7 @@ void TestPlanner_ClosestSegmentToPoseHelper(xythetaPlannerContext& context, xyth
 
     StateID currID(curr);
     context.env.ApplyAction(planner._impl->_plan.GetAction(planIdx), currID, false);
-    curr = State(currID);
+    curr = GraphState(currID);
   }
 }
 
@@ -881,7 +881,7 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_straight2)
 
   xythetaPlanner planner(context);
 
-  planner._impl->_plan.start_ = State(0, 0, 0);
+  planner._impl->_plan.start_ = GraphState(0, 0, 0);
 
   ASSERT_EQ(context.env.GetRawMotionPrimitive(0, 0).endStateOffset.x, 1) << "invalid action";
   ASSERT_EQ(context.env.GetRawMotionPrimitive(0, 0).endStateOffset.y, 0) << "invalid action";
@@ -905,7 +905,7 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_wiggle)
   xythetaPlanner planner(context);
 
   // bunch of random actions, no turn in place
-  planner._impl->_plan.start_ = State(0, 0, 6);
+  planner._impl->_plan.start_ = GraphState(0, 0, 6);
   planner._impl->_plan.Push(0, 0.0);
   planner._impl->_plan.Push(2, 0.0);
   planner._impl->_plan.Push(2, 0.0);
@@ -937,7 +937,7 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_turnLineTurn)
     xythetaPlanner planner(context);
 
     // turn in place, straight (and some turns) , turn in place
-    planner._impl->_plan.start_ = State(0, 0, startAngle);
+    planner._impl->_plan.start_ = GraphState(0, 0, startAngle);
     planner._impl->_plan.Push(5, 0.0);
     planner._impl->_plan.Push(5, 0.0);
     planner._impl->_plan.Push(5, 0.0);
@@ -970,7 +970,7 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_custom)
   xythetaPlanner planner(context);
 
   // bunch of random actions, no turn in place
-  planner._impl->_plan.start_ = State(0, 0, 7);
+  planner._impl->_plan.start_ = GraphState(0, 0, 7);
   planner._impl->_plan.Push(4, 0.0);
   planner._impl->_plan.Push(4, 0.0);
   planner._impl->_plan.Push(4, 0.0);
@@ -1000,7 +1000,7 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_initial)
     xythetaPlanner planner(context);
 
     // bunch of random actions, no turn in place
-    State start = State(0, 0, startAngle);
+    GraphState start = GraphState(0, 0, startAngle);
     planner._impl->_plan.start_ = start;
     planner._impl->_plan.Push(4, 0.0);
     planner._impl->_plan.Push(4, 0.0);

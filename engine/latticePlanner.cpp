@@ -439,7 +439,7 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
           State_c target_c(targetPoses[i].GetTranslation().x(),
                            targetPoses[i].GetTranslation().y(),
                            targetPoses[i].GetRotationAngle<'Z'>().ToFloat());
-          State target(_impl->_context.env.State_c2State(target_c));
+          GraphState target(_impl->_context.env.State_c2State(target_c));
           
           if(_impl->_context.env.GetCollisionPenalty(target) < maxPenalty) {
             closestDist2 = dist2;
@@ -606,7 +606,7 @@ void LatticePlannerImpl::DoPlanning()
 
     // verify that the append will be correct
     if(_totalPlan.Size() > 0) {
-      State endState = _context.env.GetPlanFinalState(_totalPlan);
+      GraphState endState = _context.env.GetPlanFinalState(_totalPlan);
       if(endState != _planner.GetPlan().start_) {
         PRINT_STREAM_ERROR("LatticePlanner.PlanMismatch",
                            "trying to append a plan with a mismatching state!\n"
@@ -850,8 +850,8 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     unsigned int numAdded = 0;
     unsigned int vizID = startIdx;
 
-    Planning::StateTheta numAngles = (StateTheta) _context.env.GetNumAngles();
-    for(StateTheta theta=0; theta < numAngles; ++theta) {
+    Planning::GraphTheta numAngles = (GraphTheta) _context.env.GetNumAngles();
+    for(GraphTheta theta=0; theta < numAngles; ++theta) {
 
       float thetaRads = _context.env.GetTheta_c(theta);
 
