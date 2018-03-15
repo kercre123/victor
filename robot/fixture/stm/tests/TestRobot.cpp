@@ -4,6 +4,7 @@
 #include "cmd.h"
 #include "console.h"
 #include "contacts.h"
+#include "emrf.h"
 #include "meter.h"
 #include "portable.h"
 #include "testcommon.h"
@@ -19,14 +20,11 @@
 
 static void dbg_test_all_(void)
 {
-  //test all supported commands - make sure they return a valid response
-  ConsolePrintf("\n=====================================================================\n");
-  
+  //test all supported commands
   cmdRobotEsn(); //ConsolePutChar('\n');
   cmdRobotBsv(); //ConsolePutChar('\n');
   cmdRobotEsn(); //ConsolePutChar('\n');
   cmdRobotBsv(); //ConsolePutChar('\n');
-  cmdRobotEsn(); //ConsolePutChar('\n');
   
   cmdRobotGet(1, 1, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
   cmdRobotGet(3, 3, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
@@ -52,53 +50,38 @@ static void dbg_test_all_(void)
   uint32_t hw_ver = cmdRobotGmr(1); //ConsolePutChar('\n');
   uint32_t model = cmdRobotGmr(2); //ConsolePutChar('\n');
   uint32_t lot_code = cmdRobotGmr(3); //ConsolePutChar('\n');
-  
-  /*/test set/get some EMR fields
-  srand(Timer::get());
-  for(uint8_t idx = 0; idx < 8; idx++)
-  {
-    uint32_t val = cmdRobotGmr(idx); //ConsolePutChar('\n');
-    val = 0x80000000 | rand(); //((rand()&0xffff) << 16) | (rand()&0xffff);
-    cmdRobotSmr(idx, val);
-    uint32_t val2 = cmdRobotGmr(idx);
-    cmdRobotSmr(idx, 0);
-    
-    if( val != val2 )
-      ConsolePrintf("========MISMATCH========\n");
-    ConsolePutChar('\n');
-  }//-*/
-  
-  ConsolePrintf("\n=====================================================================\n");
 }
 
 static void dbg_test_emr_(bool blank_only=0, bool dont_clear=0);
 static void dbg_test_emr_(bool blank_only, bool dont_clear)
 {
   static uint32_t m_emr[256]; int idx;
-  
-  ConsolePrintf("\n======== Full EMR Test =============\n");
+  ConsolePrintf("EMR READ/WRITE TEST\n");
   
   //reset EMR to blank
   for(idx=0; idx < 256; idx++)
     cmdRobotSmr(idx, 0);
-  
-  ConsolePrintf("======== EMR Blank =============\n");
-  Timer::delayMs(1000);
   if( blank_only )
     return;
   
   //set EMR to random values, store locally for compare
   srand(Timer::get());
-  for(idx=0; idx < 256; idx++) {
+  for(idx=0; idx < 256; idx++)
+  {
     uint32_t val = ((rand()&0xffff) << 16) | (rand()&0xffff);
-    if( idx == 4 || idx == 5 || idx == 6 ) //PLAYPEN_READY_FLAG, PLAYPEN_PASSED_FLAG, PACKED_OUT_FLAG
-      val = 0; //keep 0 to prevent strange robot behavior
+    
+    //keep some fields 0 to prevent strange robot behavior
+    if( idx == EMR_FIELD_OFS(PLAYPEN_READY_FLAG) || 
+        idx == EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) ||
+        idx == EMR_FIELD_OFS(PACKED_OUT_FLAG) ||
+        (idx >= EMR_FIELD_OFS(playpen[0]) && idx <= EMR_FIELD_OFS(playpen[7])) )
+    {
+      val = 0;
+    }
+    
     cmdRobotSmr(idx, val);
     m_emr[idx] = val;
   }
-  
-  ConsolePrintf("======== EMR Set Ok =============\n");
-  Timer::delayMs(1000);
   
   //readback verify
   int mismatch = 0;
@@ -111,8 +94,8 @@ static void dbg_test_emr_(bool blank_only, bool dont_clear)
   }
   
   //results!
-  ConsolePrintf("======== EMR test %s: %u errors =============\n", mismatch > 0 ? "FAILED" : "passed", mismatch);
-  Timer::delayMs(1000);
+  ConsolePrintf("EMR test %s: %u errors\n", mismatch > 0 ? "FAILED" : "passed", mismatch);
+  Timer::delayMs(2000); //so we can see it before blanking emr (which might fail...)
   if( dont_clear )
     return;
   
@@ -120,48 +103,38 @@ static void dbg_test_emr_(bool blank_only, bool dont_clear)
   for(idx=0; idx < 256; idx++)
     cmdRobotSmr(idx, 0);
   
-  //results (again)
-  ConsolePrintf("======== EMR Blank =============\n");
-  ConsolePrintf("======== EMR test %s: %u errors =============\n", mismatch > 0 ? "FAILED" : "passed", mismatch);
-  Timer::delayMs(1000);
+  ConsolePrintf("EMR test %s: %u errors\n", mismatch > 0 ? "FAILED" : "passed", mismatch);
+}
+
+static void dbg_test_comm_loop_(int nloops, int rlim)
+{
+  rlim = rlim<=0 ? 255 : rlim&0xff; //limit for random generator
+  ConsolePrintf("STRESS TEST COMMS: %i loops, rlim=%i\n", nloops, rlim);
+  
+  srand(Timer::get());
+  for(int x = 0; x < nloops; x++) {
+    cmdRobotEsn(); cmdRobotBsv();
+    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BATTERY);
+    //cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BATTERY);
+    //cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BATTERY);
+    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_CLIFF);
+    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_LEFT);
+    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_RIGHT);
+    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_LIFT);
+    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_HEAD);
+    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_PROX_TOF);
+    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BTN_TOUCH);
+    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_RSSI);
+    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_RX_PKT);
+  }
 }
 
 static void run_debug(int arg[])
 {
-  srand(Timer::get());
-  ConsolePrintf("DEBUG %i %i %i %i\n", arg[0], arg[1], arg[2], arg[3]);
-  
   if( arg[0] == 1 )
-  {
-    int nloops = arg[1];
-    int rlim = arg[2]<=0 ? 255 : arg[2]&0xff; //limit for random generator
-    ConsolePrintf("===== STRESS TEST COMMS: %i loops, rlim=%i =====\n", nloops, rlim);
-    //Timer::delayMs(1000);
-    try {
-      for(int x = 0; x < nloops; x++) {
-        cmdRobotEsn(); cmdRobotBsv();
-        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BATTERY);
-        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BATTERY);
-        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BATTERY);
-        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_CLIFF);
-        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_LEFT);
-        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_RIGHT);
-        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_LIFT);
-        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_HEAD);
-        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_PROX_TOF);
-        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BTN_TOUCH);
-        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_RSSI);
-        cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_RX_PKT);
-      }
-    } catch(int e){
-      ConsolePrintf("===== STRESS TEST FAIL e%03d =====\n", e );
-    }
-    ConsolePrintf("===== DONE =====\n");
-  }
-  
-  if( arg[0] == 2 )
     dbg_test_all_();
-  
+  if( arg[0] == 2 )
+    dbg_test_comm_loop_(arg[1], arg[2]);
   if( arg[0] == 3 )
     dbg_test_emr_( arg[1], arg[2] );
 }
@@ -169,7 +142,6 @@ static void run_debug(int arg[])
 const char* DBG_cmd_substitution(const char *line, int len)
 {
   static char buf[25];
-  int dbgArg[4];
   
   if( !strcmp(line, "esn") )
     return ">>esn 00 00 00 00 00 00";
@@ -185,11 +157,18 @@ const char* DBG_cmd_substitution(const char *line, int len)
     int val = nargs >= 3 ? cmdParseInt32(cmdGetArg((char*)line,2)) : 0;
     return snformat(buf,sizeof(buf),">>%c%c%c %02x %02x %02x %02x %02x 00", line[0],line[1],line[2], ix, val&0xFF, (val>>8)&0xff, (val>>16)&0xff, (val>>24)&0xff);
   }
-  if( !strncmp(line,"debug",5) ) {
+  if( !strncmp(line,"debug",5) )
+  {
+    int arg[4];
     int nargs = cmdNumArgs((char*)line);
-    for(int x=0; x<sizeof(dbgArg)/4; x++)
-      dbgArg[x] = nargs > x+1 ? cmdParseInt32(cmdGetArg((char*)line,x+1) ) : 0;
-    try { run_debug(dbgArg); } catch(int e) {}
+    for(int x=0; x<sizeof(arg)/4; x++)
+      arg[x] = nargs > x+1 ? cmdParseInt32(cmdGetArg((char*)line,x+1) ) : 0;
+    
+    int dbgErr = 0;
+    ConsolePrintf("========== DEBUG %i %i %i %i ==========\n", arg[0], arg[1], arg[2], arg[3]);
+    try { run_debug(arg); } catch(int e) { dbgErr = e; }
+    ConsolePrintf("========== DEBUG %s e%03d ==========\n", !dbgErr ? "OK" : "FAIL", dbgErr);
+    
     return "\n";
   }
   return 0;
