@@ -12,6 +12,8 @@
 #include "spine_crc.h"
 #include "spine_hal.h"
 
+
+
 #define SKIP_CRC_CHECK 0
 
 #define SPINE_MAX_BYTES 1280
@@ -87,6 +89,8 @@ SpineErr hal_serial_open(const char* devicename, long baudrate)
       hal_serial_close();
       return spine_error(err_TERMIOS_FAIL, "tcgetattr() failed");
     }
+
+
 //?    memcpy(gHal.oldcfg,cfg,sizeof(gHal.oldcfg)); //make backup;
 
     cfmakeraw(&cfg);
@@ -97,10 +101,12 @@ SpineErr hal_serial_open(const char* devicename, long baudrate)
 
     LOGD("configuring port %s (fd=%d)", devicename, gHal.fd);
 
+
     if (tcsetattr(gHal.fd, TCSANOW, &cfg)) {
       hal_serial_close();
       return spine_error(err_TERMIOS_FAIL, "tcsetattr() failed");
     }
+
   }
   spine_debug("serial port OK\n");
   return err_OK;
