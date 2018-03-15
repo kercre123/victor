@@ -47,7 +47,7 @@
 #define LOG_CHANNEL    "FaceInfoScreenManager"
 
 // Remove this when BLE switchboard is working
-#define FORCE_TRANSITION_TO_PAIRING 1
+#define FORCE_TRANSITION_TO_PAIRING 0
 
 namespace Anki {
 namespace Cozmo {
@@ -134,7 +134,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
 
   ADD_SCREEN_WITH_TEXT(Recovery, Recovery, {"RECOVERY MODE"});
   ADD_SCREEN(None, None);
-  ADD_SCREEN_WITH_TEXT(Pairing, None, {"PAIRING STUB"});
+  ADD_SCREEN(Pairing, Pairing);
   ADD_SCREEN(FAC, None);
   ADD_SCREEN(CustomText, None);
   ADD_SCREEN(Main, Network);

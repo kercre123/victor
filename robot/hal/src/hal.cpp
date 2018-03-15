@@ -60,6 +60,15 @@ void ProcessIMUEvents();
 void ProcessTouchLevel(void);
 void PrintConsoleOutput(void);
 
+
+extern "C" {
+  ssize_t spine_write_frame(spine_ctx_t spine, PayloadId type, const void* data, int len);
+  void record_body_version( const struct VersionInfo* info);
+  void request_version(void) {
+    spine_write_frame(&spine_, PAYLOAD_VERSION, NULL, 0);
+  }
+}
+
 ssize_t robot_io(spine_ctx_t spine, uint32_t sleepTimeMicroSec = 1000)
 {
   usleep(sleepTimeMicroSec);
@@ -97,8 +106,11 @@ Result spine_wait_for_first_frame(spine_ctx_t spine)
         ccc_data_process( (ContactData*)(hdr+1) );
         continue;
       }
+      else if (hdr->payload_type == PAYLOAD_VERSION) {
+        record_body_version( (VersionInfo*)(hdr+1) );
+      }
       else {
-        LOGD("Unknown Frame Type\n");
+        LOGD("Unknown Frame Type %x\n", hdr->payload_type);
       }
 
     } else {
@@ -123,7 +135,6 @@ Result HAL::Init()
   // Set ID
   robotID_ = Anki::Cozmo::DEFAULT_ROBOT_ID;
 
-//#if IMU_WORKING
   InitIMU();
 
   if (InitRadio() != RESULT_OK) {
@@ -152,6 +163,7 @@ Result HAL::Init()
     // Do we need to check for errors here?
     AnkiDebug("HAL.Init.WaitingForDataFrame", "");
     (void) spine_wait_for_first_frame(&spine_);
+    request_version();  //get version so we have it when we need it.
   }
 #else
   bodyData_ = &dummyBodyData_;
@@ -167,6 +179,18 @@ Result HAL::Init()
   return RESULT_OK;
 }  // Init()
 
+void handle_payload_data(const uint8_t frame_buffer[]) {
+
+  memcpy(frameBuffer_, frame_buffer, sizeof(frameBuffer_));
+  bodyData_ = (BodyToHead*)(frameBuffer_ + sizeof(struct SpineMessageHeader));
+
+  if (ccc_commander_is_active()) {
+    ccc_payload_process(bodyData_);
+  }
+
+}
+
+
 Result spine_get_frame() {
   Result result = RESULT_FAIL_IO_TIMEOUT;
   uint8_t frame_buffer[SPINE_B2H_FRAME_LEN];
@@ -180,13 +204,22 @@ Result spine_get_frame() {
     } else if (r > 0) {
       const struct SpineMessageHeader* hdr = (const struct SpineMessageHeader*)frame_buffer;
       if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
-        memcpy(frameBuffer_, frame_buffer, sizeof(frameBuffer_));
-        bodyData_ = (BodyToHead*)(frameBuffer_ + sizeof(struct SpineMessageHeader));
+        handle_payload_data(frame_buffer);  //payload starts immediately after header
         result = RESULT_OK;
         continue;
       }
+      else if (hdr->payload_type == PAYLOAD_CONT_DATA) {
+         LOGD("Handling CD payload type %x\n", hdr->payload_type);
+        ccc_data_process( (ContactData*)(hdr+1) );
+        result = RESULT_OK;
+        continue;
+      }
+      else if (hdr->payload_type == PAYLOAD_VERSION) {
+         LOGD("Handling VR payload type %x\n", hdr->payload_type);
+        record_body_version( (VersionInfo*)(hdr+1) );
+      }
       else {
-        LOGD("Unknown Frame Type\n");
+        LOGD("Unknown Frame Type %x\n", hdr->payload_type);
       }
 
     } else {
@@ -200,43 +233,55 @@ Result spine_get_frame() {
 
 
 extern "C"  ssize_t spine_write_ccc_frame(spine_ctx_t spine, const struct ContactData* ccc_payload);
+#define MIN_CCC_XMIT_SPACING_US 5000
 
 Result HAL::Step(void)
 {
-  Result result = RESULT_OK;
+  static uint32_t last_packet_send = 0;
+  uint32_t now = GetMicroCounter();
 
-#ifndef HAL_DUMMY_BODY
+  Result result = RESULT_OK;
+  bool commander_is_active;
+
+#ifdef HAL_DUMMY_BODY
+  ProcessIMUEvents();
+  dummyBodyData_.framecounter++;
+
+#else
+
   headData_.framecounter++;
 
-  //check if the charge contact commander is active,
-  //if so, override normal operation
-  bool commander_is_active = ccc_commander_is_active();
-  //  struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
-  struct HeadToBody* h2bp =  &headData_;
+  //Packet throttle.
+  if (now-last_packet_send >= MIN_CCC_XMIT_SPACING_US ) {
 
-  spine_write_h2b_frame(&spine_, h2bp);
+    //check if the charge contact commander is active,
+    //if so, override normal operation
+    commander_is_active = ccc_commander_is_active();
+    struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
 
-  struct ContactData* ccc_response = ccc_text_response();
-  if (ccc_response) {
-    spine_write_ccc_frame(&spine_, ccc_response);
+    spine_write_h2b_frame(&spine_, h2bp);
+
+    struct ContactData* ccc_response = ccc_text_response();
+    if (ccc_response) {
+      spine_write_ccc_frame(&spine_, ccc_response);
+    }
+    last_packet_send = now;
   }
-#endif // #ifndef HAL_DUMMY_BODY
 
   ProcessIMUEvents();
 
-#ifndef HAL_DUMMY_BODY
   do {
     result = spine_get_frame();
   } while(result != RESULT_OK);
-#else
-  dummyBodyData_.framecounter++;
+
 #endif // #ifndef HAL_DUMMY_BODY
 
   ProcessTouchLevel(); // filter invalid values from touch sensor
 
   PrintConsoleOutput();
 
-  return result;
+  //return a fail code if commander is active to prevent robotics from getting confused
+  return (commander_is_active) ? RESULT_FAIL_IO_UNSYNCHRONIZED : result;
 }
 
 void ProcessTouchLevel(void)

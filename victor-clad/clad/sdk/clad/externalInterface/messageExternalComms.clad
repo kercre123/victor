@@ -1,0 +1,266 @@
+// Messages to be communicated over the wire from Victor to an External Device.
+//  for the C-Like Abstract Data language
+// Author: Nicolas Kent
+// Copyright: Anki Inc (c) 2018
+
+namespace Anki {
+namespace Victor {
+namespace ExternalComms {
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Actions
+
+// ====================================================
+//          Robot Transport Security Messages
+// ====================================================
+
+// Request initial pairing, supplying the robot's highest pairing protocol
+// version
+enum uint_8 RtsMode {
+    RAW,
+    CLAD,
+    CLAD_ENCRYPTED,
+}
+
+enum uint_8 RtsConnType {
+    FirstTimePair,
+    Reconnection,
+}
+
+message RtsWifiScanResult {
+    uint_8      authType,
+    uint_8      signalStrength,
+    string      ssid,
+}
+
+message RtsConnRequest {
+    uint_8      publicKey[32]
+}
+
+message RtsConnResponse {
+    RtsConnType connectionType,
+    uint_8      publicKey[32]
+}
+
+message RtsNonceMessage {
+    uint_8      toRobotNonce[24],
+    uint_8      toDeviceNonce[24]
+}
+
+message RtsAck {
+    uint_8      rtsConnectionTag
+}
+
+message RtsChallengeMessage {
+    uint_32     number
+}
+
+message RtsChallengeSuccessMessage {
+    //
+}
+
+message RtsWifiConnectRequest {
+    string      ssid,
+    string      password,
+    uint_8      timeout,
+}
+
+message RtsWifiConnectResponse {
+    uint_8      statusCode
+}
+
+message RtsWifiIpRequest {
+    //
+}
+
+message RtsWifiIpResponse {
+    uint_8      hasIpV4,
+    uint_8      hasIpV6,
+    uint_8      ipV4[4],
+    uint_8      ipV6[16],
+}
+
+message RtsStatusRequest {
+    //
+}
+
+message RtsStatusResponse {
+    string      wifiSsid,
+    uint_8      wifiState,
+    uint_8      bleState,
+    uint_8      batteryState,
+}
+
+message RtsWifiScanRequest {
+    //
+}
+
+message RtsWifiScanResponse {
+    uint_8                  statusCode,
+    RtsWifiScanResult       scanResult[uint_8],
+}
+
+message RtsOtaUpdateRequest {
+    string      url
+}
+
+message RtsOtaUpdateResponse {
+    uint_8      status,
+    uint_64     current,
+    uint_64     expected,
+}
+
+message RtsWifiAccessPointRequest {
+    bool        enable,
+}
+
+message RtsWifiAccessPointResponse {
+    bool        enabled,
+    string      ssid,
+    string      pw,
+}
+
+message RtsCancelPairing {
+    //
+}
+
+message RtsForceDisconnect {
+    //
+}
+
+message RtsSshRequest {
+    string      sshAuthorizedKeyBytes[uint_16],
+}
+
+message RtsSshResponse {
+    
+}
+
+message Error {
+    //
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+union RtsConnection {
+    Error                           Error                       = 0x00,
+    RtsConnRequest                  RtsConnRequest              = 0x01,
+    RtsConnResponse                 RtsConnResponse             = 0x02,
+    RtsNonceMessage                 RtsNonceMessage             = 0x03,
+    RtsChallengeMessage             RtsChallengeMessage         = 0x04,
+    RtsChallengeSuccessMessage      RtsChallengeSuccessMessage  = 0x05,
+    RtsWifiConnectRequest           RtsWifiConnectRequest       = 0x06,
+    RtsWifiConnectResponse          RtsWifiConnectResponse      = 0x07,
+    RtsWifiIpRequest                RtsWifiIpRequest            = 0x08,
+    RtsWifiIpResponse               RtsWifiIpResponse           = 0x09,
+    RtsStatusRequest                RtsStatusRequest            = 0x0A,
+    RtsStatusResponse               RtsStatusResponse           = 0x0B,
+    RtsWifiScanRequest              RtsWifiScanRequest          = 0x0C,
+    RtsWifiScanResponse             RtsWifiScanResponse         = 0x0D,
+    RtsOtaUpdateRequest             RtsOtaUpdateRequest         = 0x0E,
+    RtsOtaUpdateResponse            RtsOtaUpdateResponse        = 0x0F,
+    RtsCancelPairing                RtsCancelPairing            = 0x10,
+    RtsForceDisconnect              RtsForceDisconnect          = 0x11,
+    RtsAck                          RtsAck                      = 0x12,
+    RtsWifiAccessPointRequest       RtsWifiAccessPointRequest   = 0x13,
+    RtsWifiAccessPointResponse      RtsWifiAccessPointResponse  = 0x14,
+    RtsSshRequest                   RtsSshRequest               = 0x15,
+    RtsSshResponse                  RtsSshResponse              = 0x16,
+}
+
+// ====================================================
+//                      App General
+// ====================================================
+
+enum uint_16 RobotStatus {
+  Exploring,
+}
+
+// Tell the app the robot's ui exposed status
+message RobotStatusRequest {
+    //
+}
+
+// Tell the app the robot's ui exposed status
+message RobotStatusResponse {
+    RobotStatus     response
+}
+
+union AppGeneral {
+    Error                       Error                       = 0x00,
+    RobotStatusRequest          RobotStatusRequest          = 0x01,
+    RobotStatusResponse         RobotStatusResponse         = 0x02,
+}
+
+// ====================================================
+//                      Meet Victor
+// ====================================================
+
+// Request the robot enter the Meet Victor UX flow
+message MeetVictorRequest
+{
+}
+
+// Tell the app that the robot is ready to enter the Meet Victor UX flow with
+// a face ID
+message MeetVictorReadyResponse
+{
+    string  faceID
+}
+
+// Tell the app the robot is starting a facial scan for the Meet Victor UX flow
+message MeetVictorFaceScanStarted
+{
+}
+
+// Tell the app the robot is finishing a facial scan for the Meet Victor UX flow
+message MeetVictorFaceScanComplete
+{
+}
+
+// Specify a name for a given face ID in the meet victor UX flow
+message MeetVictorSetUserName
+{
+    string  faceID,
+    string  name
+}
+
+// Finish the meet victor UX flow, communicating success or failure
+message MeetVictorComplete
+{
+    bool    success
+}
+
+// Tell the app the robot encountered an error during the Meet Victor UX flow
+message MeetVictorError
+{
+    string  errorString // most likely enum, change when we figure the enums out
+}
+
+union MeetVictor {
+    Error                       Error                       = 0x00,
+    MeetVictorRequest           MeetVictorRequest           = 0x01,
+    MeetVictorReadyResponse     MeetVictorReadyResponse     = 0x02,
+    MeetVictorFaceScanStarted   MeetVictorFaceScanStarted   = 0x03,
+    MeetVictorFaceScanComplete  MeetVictorFaceScanComplete  = 0x04,
+    MeetVictorSetUserName       MeetVictorSetUserName       = 0x05,
+    MeetVictorComplete          MeetVictorComplete          = 0x06,
+    MeetVictorError             MeetVictorError             = 0x07,
+}
+
+// ====================================================
+//                      Outer Union
+// ====================================================
+
+union ExternalComms {
+    Error                       Error                       = 0x00,
+    RtsConnection               RtsConnection               = 0x01,
+    AppGeneral                  AppGeneral                  = 0x02,
+    MeetVictor                  MeetVictor                  = 0x03,
+}
+
+} // namespace ExternalComms
+} // namespace Victor
+} // namespace Anki

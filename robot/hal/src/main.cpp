@@ -8,6 +8,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/cozmoBot.h"
+#include  "../spine/cc_commander.h"
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
 // For development purposes, while HW is scarce, it's useful to be able to run on phones
@@ -24,7 +25,7 @@ void Cleanup(int signum)
   Anki::Cozmo::Robot::Destroy();
 
   // Need to HAL::Step() in order for light commands to go down to robot
-  // so set shutdownSignal here to signal process shutdown after 
+  // so set shutdownSignal here to signal process shutdown after
   // shutdownCounter more tics of main loop.
   shutdownSignal = signum;
 }
@@ -39,6 +40,11 @@ int main(int argc, const char* argv[])
   sched_setscheduler(0, SCHED_FIFO, &params);
 
   signal(SIGTERM, Cleanup);
+
+  if (argc > 1) {
+    ccc_set_shutdown_function(Cleanup);
+    ccc_parse_command_line(argc-1, argv+1);
+  }
 
   AnkiEvent("robot.main", "Starting robot process");
 

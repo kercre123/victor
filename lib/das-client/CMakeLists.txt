@@ -25,7 +25,7 @@ if (ANDROID)
     android/DASNativeLib/jni/dasLogMacros.h
     android/DASNativeLib/jni/dasPlatform_android.cpp
   )
-elseif (MACOSX)
+elseif (MACOSX OR VICOS)
   set(PLATFORM_SRCS
     unix/dasLocalAppenderFactory.cpp
     unix/dasLocalAppenderImpl.cpp
@@ -38,6 +38,8 @@ endif()
 set(PLATFORM_LIBS "")
 if (ANDROID)
   set(PLATFORM_LIBS android log)
+elseif(VICOS)
+  set(PLATFORM_LIBS log)
 endif()
 
 add_library(DAS
@@ -53,7 +55,7 @@ if (ANDROID)
   # needed to workaround localeconv issue with c++_shared on android
   target_compile_definitions(DAS PRIVATE -DNO_LOCALE_SUPPORT=1)
   set(PLATFORM_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/android/DASNativeLib/jni)
-elseif (MACOSX)
+elseif (MACOSX OR VICOS)
   set(PLATFORM_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/unix)
 endif()
 

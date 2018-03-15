@@ -70,12 +70,14 @@ def download_and_install(archive_url,
     final_extract_path = os.path.join(dist_path, version)
     safe_rmdir(tmp_extract_path)
     safe_rmdir(final_extract_path)
-    final_path = tmp_extract_path + ".tar.gz"
+
+    archive_file = os.path.basename(archive_url)
+
+    final_path = os.path.join(downloads_path, archive_file)
     download_path = final_path + ".tmp"
     safe_rmfile(final_path)
     safe_rmfile(download_path)
 
-    archive_file = os.path.basename(archive_url)
 
     # see if hash_url is actually already a hash
     m = re.match('^[a-fA-F0-9]+$', hash_url)

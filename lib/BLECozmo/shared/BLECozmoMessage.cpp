@@ -78,9 +78,9 @@ uint8_t BLECozmoMessage::ChunkifyMessage(const uint8_t* bytes, const uint32_t nu
   if (lastNumBytesWritten < kMessageChunkSize)
   {
     //TODO:  Add android version of this function.  
-#ifndef ANDROID
+#ifdef HAVE_GET_RANDOM_BYTES
     BLECozmoGetRandomBytes(_messageChunks[chunkIndex] + lastNumBytesWritten, kMessageChunkSize - lastNumBytesWritten);
-#endif 
+#endif
   }
   
   _messageChunks[chunkIndex][flagIndex] |= MESSAGE_END;
