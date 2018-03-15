@@ -274,6 +274,7 @@ enum int_32 AnimationTrigger
   ReactToSoundOnChargerObserveLeft,
   ReactToSoundOnChargerObserveRight,
   ReactToSoundOnChargerObserveBehind,
+  ReactToTouchInitial,
   ReactToTriggerWordOffChargerFrontLeft,
   ReactToTriggerWordOffChargerFrontRight,
   ReactToTriggerWordOffChargerLeft,

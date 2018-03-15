@@ -60,6 +60,7 @@ enum uint_8 BehaviorID {
   ExamplePetInitialDetection,
 
   // reactions
+  ProceduralTurnToMicDirection,
   ReactToCliff,
   ReactToCubeMoved,
   ReactToGoodBye,
@@ -67,13 +68,9 @@ enum uint_8 BehaviorID {
   ReactToGoodNight,
   ReactToGreeting,
   ReactToPet,
-
-  // audio reactions (sound and trigger word)
-  ReactToSoundAwake,
   ReactToSoundAsleep,
-  TriggerWordDetected,
+  ReactToSoundAwake,
   ReactToTriggerDirectionAwake,
-  ProceduralTurnToMicDirection,
 
   // singing
   Singing_AbaDaba,
@@ -225,9 +222,12 @@ enum uint_8 BehaviorID {
   KeepawayVoiceCommand,
 
   // victorBehaviorTree
-  Petting,
+  ReactToTouchDispatcher,
+  ReactToTouchInitial,
+  ReactToTouchPetting,
   ReactToUnclaimedIntent,
   SingletonICantDoThat,
+  TriggerWordDetected,
 }
 
 }

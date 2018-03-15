@@ -1,17 +1,19 @@
 /**
- * File: BehaviorPetting.cpp
+ * File: BehaviorReactToTouchPetting.cpp
  *
  * Author: Arjun Menon
  * Date:   09/12/2017
  *
- * Description: simple test behavior to respond to touch
- *              and petting input. Does nothing until a
- *              touch event comes in for it to react to
+ * Description: The robot's core reactions to repeated touches in the form of
+ *              petting.
+ *              This is embodied by increasing levels of bliss, with a getout
+ *              for each level, and a final bliss cycle that loops forever until
+ *              no more incoming touches
  *
  * Copyright: Anki, Inc. 2017
  **/
 
-#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorPetting.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToTouchPetting.h"
 
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/engine/jsonTools.h"
@@ -40,7 +42,7 @@ namespace {
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorPetting::BehaviorPetting(const Json::Value& config)
+BehaviorReactToTouchPetting::BehaviorReactToTouchPetting(const Json::Value& config)
 : ICozmoBehavior(config)
 , _animPettingResponse()
 , _animPettingGetout()
@@ -58,23 +60,21 @@ BehaviorPetting::BehaviorPetting(const Json::Value& config)
 , _isPressed(false)
 , _isPressedPrevTick(false)
 {
-  const char* kDebugStr = "BehaviorPetting.Ctor";
+  const char* kDebugStr = "BehaviorReactToTouchPetting.Ctor";
   
   _timeTilTouchCheck = JsonTools::ParseFloat( config, "timeTilTouchCheck", kDebugStr);
   
   std::vector<std::string> tmp;
-  ANKI_VERIFY(JsonTools::GetVectorOptional(config, "animGroupNames", tmp),"BehaviorPetting.Ctor.MissingVectorOfAnimTriggers","");
+  ANKI_VERIFY(JsonTools::GetVectorOptional(config, "animGroupNames", tmp),"BehaviorReactToTouchPetting.Ctor.MissingVectorOfAnimTriggers","");
   for(const auto& t : tmp) {
     _animPettingResponse.push_back( AnimationTriggerFromString(t) );
   }
   
   tmp.clear();
-  ANKI_VERIFY(JsonTools::GetVectorOptional(config, "animGroupNamesGetout", tmp),"BehaviorPetting.Ctor.MissingVectorOfAnimTriggersGetout","");
+  ANKI_VERIFY(JsonTools::GetVectorOptional(config, "animGroupNamesGetout", tmp),"BehaviorReactToTouchPetting.Ctor.MissingVectorOfAnimTriggersGetout","");
   for(const auto& t : tmp) {
     _animPettingGetout.push_back( AnimationTriggerFromString(t) );
   }
-  
-  _animPettingResponseGetin = AnimationTriggerFromString(JsonTools::ParseString(config, "animGroupGetin",kDebugStr));
   
   _blissTimeout = JsonTools::ParseFloat(config, "timeTilBlissGetout",kDebugStr);
   _nonBlissTimeout = JsonTools::ParseFloat(config, "timeTilNonBlissGetout",kDebugStr);
@@ -86,7 +86,7 @@ BehaviorPetting::BehaviorPetting(const Json::Value& config)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPetting::AlwaysHandleInScope(const EngineToGameEvent& event)
+void BehaviorReactToTouchPetting::AlwaysHandleInScope(const EngineToGameEvent& event)
 {
   const EngineToGameTag& tag = event.GetData().GetTag();
   switch( tag )
@@ -106,7 +106,7 @@ void BehaviorPetting::AlwaysHandleInScope(const EngineToGameEvent& event)
     }
       break;
     default: {
-      PRINT_NAMED_ERROR("BehaviorPetting.AlwaysHandle.InvalidEvent",
+      PRINT_NAMED_ERROR("BehaviorReactToTouchPetting.AlwaysHandle.InvalidEvent",
                         "%s", MessageEngineToGameTagToString(tag));
       break;
     }
@@ -114,14 +114,14 @@ void BehaviorPetting::AlwaysHandleInScope(const EngineToGameEvent& event)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorPetting::WantsToBeActivatedBehavior() const
+bool BehaviorReactToTouchPetting::WantsToBeActivatedBehavior() const
 {
   return _isPressed;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPetting::InitBehavior()
+void BehaviorReactToTouchPetting::InitBehavior()
 {
   _numPressesAtCurrentBlissLevel = 0;
   _currBlissLevel = 0;
@@ -129,16 +129,14 @@ void BehaviorPetting::InitBehavior()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPetting::OnBehaviorActivated()
+void BehaviorReactToTouchPetting::OnBehaviorActivated()
 {
-  CancelAndPlayAnimation(_animPettingResponseGetin);
-  
   // starts the state machine to check for updates
   _currResponseState = PettingResponseState::PlayTransitionToLevel;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPetting::CancelAndPlayAnimation(AnimationTrigger anim)
+void BehaviorReactToTouchPetting::CancelAndPlayAnimation(AnimationTrigger anim)
 {
   TriggerAnimationAction* action = new TriggerAnimationAction(anim,
                                                               kPlayAnimOnce,
@@ -148,7 +146,7 @@ void BehaviorPetting::CancelAndPlayAnimation(AnimationTrigger anim)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPetting::PlayBlissLoopAnimation()
+void BehaviorReactToTouchPetting::PlayBlissLoopAnimation()
 {
   TriggerAnimationAction* action = new TriggerAnimationAction(_animPettingResponse.back(),
                                                               kPlayAnimOnce,
@@ -167,7 +165,7 @@ void BehaviorPetting::PlayBlissLoopAnimation()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPetting::BehaviorUpdate()
+void BehaviorReactToTouchPetting::BehaviorUpdate()
 {
   using AMD_GE_GE = AudioMetaData::GameEvent::GenericEvent;
   using AMD_GOT = AudioMetaData::GameObjectType;
@@ -289,7 +287,7 @@ void BehaviorPetting::BehaviorUpdate()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPetting::OnBehaviorDeactivated()
+void BehaviorReactToTouchPetting::OnBehaviorDeactivated()
 {
   _currResponseState              = Done;
   _numPressesAtCurrentBlissLevel  = 0;

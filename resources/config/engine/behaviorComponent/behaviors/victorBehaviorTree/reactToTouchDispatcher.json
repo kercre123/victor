@@ -1,0 +1,24 @@
+{
+  "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
+  "behaviorID"    : "ReactToTouchDispatcher",
+  "interruptActiveBehavior": true,  
+
+  "wantsToBeActivatedConditions": [                                             
+    {                                                                           
+      "conditionType" : "RobotTouched",
+      "minTouchTime"  : 0.2
+    }                                                                           
+  ],
+  
+  "behaviors" : [                                                               
+    {
+      "behavior" : "ReactToTouchInitial",
+      "cooldown_s" : 8.0,
+      "cooldown_random_factor" : 0.0
+    },
+    {
+      "behavior" : "ReactToTouchPetting",
+      "cooldown_s" : 0.0
+    }
+  ]                                                                            
+}

@@ -1259,7 +1259,10 @@
     {
       "CladEvent": "ReactToGreeting",
       "AnimName": "ag_vc_greeting"
+    },
+    {
+      "CladEvent": "ReactToTouchInitial",
+      "AnimName": "ag_petting_reacttotouch_01"
     }
-    
   ]
 }

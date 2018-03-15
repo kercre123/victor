@@ -98,7 +98,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorPetting.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToTouchPetting.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToUnclaimedIntent.h"
 
 #include "clad/types/behaviorComponent/behaviorTypes.h"
@@ -473,7 +473,7 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       newBehavior = ICozmoBehaviorPtr(new BehaviorFistBump(config));
       break;
     }
-
+    
     case BehaviorClass::Keepaway:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorKeepaway(config));
@@ -558,6 +558,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::ReactToMicDirection:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToMicDirection(config));
+      break;
+    }
+    
     case BehaviorClass::ReactToMotorCalibration:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToMotorCalibration(config));
@@ -606,6 +612,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::ReactToSound:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToSound(config));
+      break;
+    }
+    
     case BehaviorClass::ReactToUnexpectedMovement:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToUnexpectedMovement(config));
@@ -642,21 +654,9 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::Petting:
+    case BehaviorClass::ReactToTouchPetting:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorPetting(config));
-      break;
-    }
-    
-    case BehaviorClass::ReactToSound:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToSound(config));
-      break;
-    }
-
-    case BehaviorClass::ReactToMicDirection:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToMicDirection(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToTouchPetting(config));
       break;
     }
     

@@ -1,7 +1,6 @@
 {
-  "behaviorClass" : "Petting",
-  "behaviorID"    : "Petting",
-  "animGroupGetin" : "PettingGetin",
+  "behaviorClass" : "ReactToTouchPetting",
+  "behaviorID"    : "ReactToTouchPetting",
   "animGroupNames" : ["PettingLevel1", "PettingLevel2", "PettingLevel3","PettingLevel4","PettingBlissLoop"],
   "animGroupNamesGetout" : [ "PettingLevel1Getout", "PettingLevel2Getout", "PettingLevel3Getout", "PettingLevel4Getout","PettingBlissGetout"],
   "timeTilTouchCheck" : 5.0,

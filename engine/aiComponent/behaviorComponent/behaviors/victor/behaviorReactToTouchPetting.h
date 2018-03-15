@@ -1,18 +1,21 @@
 /**
- * File: BehaviorPetting.h
+ * File: BehaviorReactToTouchPetting.h
  *
  * Author: Arjun Menon
  * Date:   09/12/2017
  *
- * Description: simple test behavior to respond to touch
- *              and petting input. Does nothing until a
- *              touch event comes in for it to react to
+ * Description: The robot's core reactions to repeated touches in the form of
+ *              petting.
+ *              This is embodied by increasing levels of bliss, with a getout
+ *              for each level, and a final bliss cycle that loops forever until
+ *              no more incoming touches
+ *
  *
  * Copyright: Anki, Inc. 2017
  **/
 
-#ifndef __Cozmo_Basestation_Behaviors_BehaviorPetting_H__
-#define __Cozmo_Basestation_Behaviors_BehaviorPetting_H__
+#ifndef __Cozmo_Basestation_Behaviors_BehaviorReactToTouchPetting_H__
+#define __Cozmo_Basestation_Behaviors_BehaviorReactToTouchPetting_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include <vector>
@@ -23,17 +26,17 @@ namespace Cozmo {
 class IBEICondition;
 class TriggerAnimationAction;
   
-class BehaviorPetting : public ICozmoBehavior
+class BehaviorReactToTouchPetting : public ICozmoBehavior
 {
 public:
   
-  virtual ~BehaviorPetting() { }
+  virtual ~BehaviorReactToTouchPetting() { }
   virtual bool WantsToBeActivatedBehavior() const override;
   
 protected:
   
   friend class BehaviorFactory;
-  BehaviorPetting(const Json::Value& config);
+  BehaviorReactToTouchPetting(const Json::Value& config);
   
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.behaviorAlwaysDelegates = false;
@@ -64,9 +67,6 @@ private:
   
   // ordered list of petting getout animations (corresponds to above list)
   std::vector<AnimationTrigger> _animPettingGetout;
-  
-  // getin animation for the first touch, lacks corresponding getout
-  AnimationTrigger _animPettingResponseGetin;
   
   // duration of time to wait before checking
   // for state transition conditions for bliss
@@ -128,4 +128,4 @@ private:
 }
 }
 
-#endif // __Cozmo_Basestation_Behaviors_BehaviorPetting_H__
+#endif // __Cozmo_Basestation_Behaviors_BehaviorReactToTouchPetting_H__
