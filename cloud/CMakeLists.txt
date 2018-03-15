@@ -98,8 +98,19 @@ if (ANDROID)
   configure_file(${__opus_build_dir}/lib/libopus.so ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} COPYONLY)
 endif()
 
+#
+# wavtest
+#
 anki_build_go_executable(wavtest ${ANKI_SRCLIST_DIR})
 _add_chipper_flags(wavtest)
 
+if (ANDROID)
+  anki_disable_default_build(wavtest)
+endif()
+
+#
+# opusenc
+#
 anki_build_go_executable(opusenc ${ANKI_SRCLIST_DIR})
 _add_chipper_flags(opusenc)
+anki_disable_default_build(opusenc)
