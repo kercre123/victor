@@ -169,16 +169,13 @@ void BehaviorSystemManager::UpdateDependent(const BCCompMap& dependentComponents
 void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& behaviorExternalInterface, const std::set<IBehavior*>& tickedInStack)
 {
   // This is innefficient and should be replaced, but not overengineering right now
-  std::set<IBehavior*> allInActivatableScope;
-  const BehaviorStack::DelegatesMap& delegatesMap = _behaviorStack->GetDelegatesMap();
-  for(auto& entry: delegatesMap){
-    for(auto& behavior : entry.second){
-      if(tickedInStack.find(behavior)  == tickedInStack.end()){
-          allInActivatableScope.insert(behavior);
-      }
-    }
-  }
+  const auto& allInActivatableScope = _behaviorStack->GetBehaviorsInActivatableScope();;
+
   for(auto& entry: allInActivatableScope){
+    if(tickedInStack.find(entry) != tickedInStack.end()){
+      continue;
+    }
+    
     behaviorExternalInterface.GetBehaviorEventComponent()._gameToEngineEvents.clear();
     behaviorExternalInterface.GetBehaviorEventComponent()._engineToGameEvents.clear();
     behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents.clear();
@@ -247,10 +244,7 @@ bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
   
   {
     // Ensure that the delegated behavior is in the delegates map
-    const BehaviorStack::DelegatesMap& delegatesMap =  _behaviorStack->GetDelegatesMap();
-    auto iter = delegatesMap.find(delegator);
-    if(!ANKI_VERIFY((iter != delegatesMap.end()) &&
-                    (iter->second.find(delegated) != iter->second.end()),
+    if(!ANKI_VERIFY(_behaviorStack->IsValidDelegation(delegator, delegated),
                    "BehaviorSystemManager.Delegate.DelegateNotInAvailableDelegateMap",
                    "Delegator %s asked to delegate to %s which is not in available delegates map",
                    delegator->GetDebugLabel().c_str(),

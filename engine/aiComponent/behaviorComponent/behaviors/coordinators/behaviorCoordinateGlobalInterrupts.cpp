@@ -48,7 +48,7 @@ BehaviorCoordinateGlobalInterrupts::DynamicVariables::DynamicVariables()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCoordinateGlobalInterrupts::BehaviorCoordinateGlobalInterrupts(const Json::Value& config)
-: ICozmoBehavior(config)
+: BehaviorDispatcherPassThrough(config)
 {
 }
 
@@ -61,10 +61,9 @@ BehaviorCoordinateGlobalInterrupts::~BehaviorCoordinateGlobalInterrupts()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCoordinateGlobalInterrupts::InitBehavior()
+void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
-  _iConfig.globalInterruptsBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(GlobalInterruptions));
   _iConfig.wakeWordBehavior         = BC.FindBehaviorByID(BEHAVIOR_ID(TriggerWordDetected));
 
   BC.FindBehaviorByIDAndDowncast(BEHAVIOR_ID(TimerUtilityCoordinator),
@@ -80,34 +79,14 @@ void BehaviorCoordinateGlobalInterrupts::InitBehavior()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCoordinateGlobalInterrupts::GetAllDelegates(std::set<IBehavior*>& delegates) const
-{
-  delegates.insert(_iConfig.globalInterruptsBehavior.get());
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorCoordinateGlobalInterrupts::WantsToBeActivatedBehavior() const 
-{
-  // always wants to be activated 
-  return true;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCoordinateGlobalInterrupts::OnBehaviorActivated() 
+void BehaviorCoordinateGlobalInterrupts::OnPassThroughActivated() 
 {
   _iConfig.triggerWordPendingCond->SetActive(GetBEI(), true);
-  // for now strict priority always wants to run
-  ANKI_VERIFY(_iConfig.globalInterruptsBehavior->WantsToBeActivated(),
-              "BehaviorCoordinateGlobalInterrupts.OnBehaviorActivated.NoDelegationAvailable",
-              "");
-  DelegateIfInControl(_iConfig.globalInterruptsBehavior.get());
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCoordinateGlobalInterrupts::BehaviorUpdate()
+void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
 {
   if(!IsActivated()){
     return;
@@ -121,7 +100,7 @@ void BehaviorCoordinateGlobalInterrupts::BehaviorUpdate()
   
   if( triggerWordPending ) {
     bool highLevelRunning = false;
-    const IBehavior* behavior = _iConfig.globalInterruptsBehavior.get();
+    const IBehavior* behavior = this;
     BOUNDED_WHILE( 100, (behavior != nullptr) && "Stack too deep to find sleeping" ) {
       behavior = GetBEI().GetDelegationComponent().GetBehaviorDelegatedTo( behavior );
       if( highLevelRunning && (behavior == _iConfig.sleepingBehavior.get()) ) {
@@ -142,7 +121,7 @@ void BehaviorCoordinateGlobalInterrupts::BehaviorUpdate()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCoordinateGlobalInterrupts::OnBehaviorDeactivated()
+void BehaviorCoordinateGlobalInterrupts::OnPassThroughDeactivated()
 {
   _iConfig.triggerWordPendingCond->SetActive(GetBEI(), false);
 }

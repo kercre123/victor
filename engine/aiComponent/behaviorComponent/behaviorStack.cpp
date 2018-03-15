@@ -19,6 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/viz/vizManager.h"
+#include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
 #include "webServerProcess/src/webService.h"
 
@@ -137,9 +138,9 @@ void BehaviorStack::UpdateBehaviorStack(BehaviorExternalInterface& behaviorExter
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const IBehavior* BehaviorStack::GetBehaviorInStackAbove(const IBehavior* behavior) const
 {
-  const auto it = _behaviorToIndexMap.find(behavior);
-  if( it != _behaviorToIndexMap.end() ) {
-    const int idxAbove = it->second + 1;
+  const auto it = _stackMetadataMap.find(behavior);
+  if( it != _stackMetadataMap.end() ) {
+    const int idxAbove = it->second.indexInStack + 1;
     if( _behaviorStack.size() > idxAbove ) {
       return _behaviorStack[idxAbove];
     }
@@ -152,9 +153,10 @@ const IBehavior* BehaviorStack::GetBehaviorInStackAbove(const IBehavior* behavio
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStack::PushOntoStack(IBehavior* behavior)
 {
-  _behaviorToIndexMap.insert(std::make_pair(behavior, _behaviorStack.size()));
+  StackMetadataEntry metadata(behavior, static_cast<int>(_behaviorStack.size()));
+  _stackMetadataMap.insert(std::make_pair(behavior, std::move(metadata)));
   _behaviorStack.push_back(behavior);
-  
+
   PrepareDelegatesToEnterScope(behavior);
   behavior->OnActivated();
   
@@ -169,38 +171,69 @@ void BehaviorStack::PopStack()
 
   _behaviorStack.back()->OnDeactivated();
   
-  _behaviorToIndexMap.erase(_behaviorStack.back());
+  _stackMetadataMap.erase(_behaviorStack.back());
   _behaviorStack.pop_back();
   
   behaviorWebVizDirty = true;
+}
+  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::set<IBehavior*> BehaviorStack::GetBehaviorsInActivatableScope()
+{
+  std::set<IBehavior*> activatableScope;
+  // Add all delegates/linked scope
+  for(auto& entry: _stackMetadataMap){
+    for(auto& behavior: entry.second.delegates){
+      activatableScope.insert(behavior);
+    }
+    for(auto& behavior: entry.second.linkedActivationScope){
+      activatableScope.insert(behavior);
+    }
+  }
+  
+  // Remove all "active" behaviors
+  activatableScope.erase(_behaviorStack.begin(), _behaviorStack.end());
+  return activatableScope;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorStack::IsValidDelegation(IBehavior* delegator, IBehavior* delegated)
+{
+  auto iter = _stackMetadataMap.find(delegator);
+  if(iter != _stackMetadataMap.end()){
+    return (iter->second.delegates.find(delegated) != iter->second.delegates.end());
+  }
+  return false;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStack::PrepareDelegatesToEnterScope(IBehavior* delegated)
 {
-  // Add the new available delegates to the map
-  std::set<IBehavior*> newAvailableDelegates;
-  delegated->GetAllDelegates(newAvailableDelegates);
-  for(auto& entry: newAvailableDelegates){
+  for(auto& entry: _stackMetadataMap.find(delegated)->second.delegates){
     entry->OnEnteredActivatableScope();
   }
   
-  _delegatesMap.insert(std::make_pair(delegated, std::move(newAvailableDelegates)));
+  for(auto& entry: _stackMetadataMap.find(delegated)->second.linkedActivationScope){
+    entry->OnEnteredActivatableScope();
+  }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStack::PrepareDelegatesForRemovalFromStack(IBehavior* delegated)
 {
-  auto availableDelegates = _delegatesMap.find(delegated);
-  DEV_ASSERT(availableDelegates != _delegatesMap.end(),
+  auto iter = _stackMetadataMap.find(delegated);
+  DEV_ASSERT(iter != _stackMetadataMap.end(),
              "BehaviorStack.PrepareDelegateForRemovalFromStack.DelegateNotFound");
-  for(auto& entry: availableDelegates->second){
+  for(auto& entry: iter->second.delegates){
     entry->OnLeftActivatableScope();
   }
-  
-  _delegatesMap.erase(delegated);
+  for(auto& entry: iter->second.linkedActivationScope){
+    entry->OnLeftActivatableScope();
+  }
 }
   
   
@@ -257,8 +290,8 @@ Json::Value BehaviorStack::BuildDebugBehaviorTree(BehaviorExternalInterface& beh
   auto& stack = data["stack"];
   
   // construct flat table of tree relationships
-  for( const auto& elem : _delegatesMap ) {
-    for( const auto& child : elem.second ) {
+  for( const auto& elem : _stackMetadataMap ) {
+    for( const auto& child : elem.second.delegates ) {
       Json::Value relationship;
       relationship["behaviorID"] = child->GetDebugLabel();
       relationship["parent"] = elem.first->GetDebugLabel();
@@ -276,6 +309,50 @@ Json::Value BehaviorStack::BuildDebugBehaviorTree(BehaviorExternalInterface& beh
   }
   
   return data;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorStack::StackMetadataEntry::StackMetadataEntry(IBehavior* behavior, int indexInStack)
+: behavior(behavior)
+, indexInStack(indexInStack)
+{
+  if(behavior != nullptr){
+    behavior->GetAllDelegates(delegates);
+    for(auto& delegate: delegates){
+      RecursivelyGatherLinkedBehaviors(delegate, linkedActivationScope);
+    }
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorStack::StackMetadataEntry::RecursivelyGatherLinkedBehaviors(IBehavior* baseBehavior,
+                                                                         std::set<IBehavior*>& linkedBehaviors)
+{
+  std::set<IBehavior*> rawBehaviors;
+  baseBehavior->GetLinkedActivatableScopeBehaviors(rawBehaviors);
+  BOUNDED_WHILE(1000, !rawBehaviors.empty()){
+    auto bIter = rawBehaviors.begin();
+    auto res = linkedBehaviors.insert(*bIter);
+    // If insertion was successful this is a new behavior that needs link checking
+    if(res.second){
+      // Anki dev cheats - make sure no one erases behavior set passed in existing behaviors
+      if(ANKI_DEV_CHEATS){
+        std::set<IBehavior*> dupSet = rawBehaviors;
+        (*bIter)->GetLinkedActivatableScopeBehaviors(dupSet);
+        for(auto& rBehavior : rawBehaviors){
+          ANKI_VERIFY(dupSet.find(rBehavior) != dupSet.end(),
+                      "BehaviorStack.RecursivelyGatherLinkedBehaviors.BehaviorErasedLinkedSet",
+                      "Behavior %s erased the behavior set when asked for linked behaviors",
+                      (*bIter)->GetDebugLabel().c_str());
+        }
+      }
+
+      (*bIter)->GetLinkedActivatableScopeBehaviors(rawBehaviors);
+    }
+    rawBehaviors.erase(bIter);
+  }
 }
 
 
