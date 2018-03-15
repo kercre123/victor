@@ -495,6 +495,15 @@ int main(void)
     MainErrorLoop(); //process console so we can bootload back to safetey
   }
   
+  //validate cube bin
+  int cubeErr = ERROR_OK;
+  try { cubebootSignature(0); /*supress dbg print*/ } catch(int e) { cubeErr=e; }
+  if( cubeErr != ERROR_OK ) {
+    try { cubebootSignature(1); /*print error detail*/ } catch(int e) {}
+    SetErrorText( cubeErr );
+    MainErrorLoop(); //process console so we can bootload back to safetey
+  }
+  
   //prevent test from running if device is connected at POR (require re-insert)
   #if USE_START_BTN < 1
   g_forceStart = 0;

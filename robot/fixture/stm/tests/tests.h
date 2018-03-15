@@ -46,6 +46,7 @@ TestFunction* TestCubeFinish1GetTests(void);
 TestFunction* TestCubeFinish2GetTests(void);
 TestFunction* TestCubeFinish3GetTests(void);
 TestFunction* TestCubeFinishXGetTests(void);
+uint32_t cubebootSignature(bool dbg_print=0, int *out_cubeboot_size=0);
 
 //Robot
 bool          TestRobotDetect(void);

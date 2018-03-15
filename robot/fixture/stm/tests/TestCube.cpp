@@ -21,7 +21,6 @@
 static const int CURRENT_HW_REV = CUBEID_HWREV_DVT3;
 
 //generate signature for the cube bootloader binary
-uint32_t cubebootSignature(bool dbg_print=0, int *out_cubeboot_size=0);
 uint32_t cubebootSignature(bool dbg_print, int *out_cubeboot_size)
 {
   static bool crc_init = 0;
@@ -38,12 +37,16 @@ uint32_t cubebootSignature(bool dbg_print, int *out_cubeboot_size)
     int cubestub_size = g_CubeStubEnd - g_CubeStub;
     
     //validate header
-    if( cubeboot_magic != 0xc0beb007 || cubeboot_size < 4000 || cubeboot_size >= cubestub_size || cubeboot_start >= cubestub_size || cubeboot_end >= cubestub_size ) {
-      ConsolePrintf("CubeStub[CubeBoot] bad header:\n");
+    bool bad_header = cubeboot_magic != 0xc0beb007 || cubeboot_size < 4000 || cubeboot_size >= cubestub_size || cubeboot_start >= cubestub_size || cubeboot_end >= cubestub_size;
+    if( bad_header || dbg_print ) {
+      ConsolePrintf("CubeStub[CubeBoot] header:\n");
       ConsolePrintf("  g_CubeStub: %08x-%08x (%i)\n", 0, cubestub_size-1, cubestub_size);
       ConsolePrintf("  g_CubeBoot: %08x-%08x (%i) magic %08x\n", cubeboot_start, cubeboot_end-1, cubeboot_size, cubeboot_magic);
-      throw ERROR_CUBE_BAD_BINARY;
-      //return 0;
+      if( bad_header ) {
+        ConsolePrintf("bad header\n");
+        throw ERROR_CUBE_BAD_BINARY;
+        //return 0;
+      }
     }
     
     //DEBUG: byte-for-byte compare to actual binary
@@ -52,18 +55,19 @@ uint32_t cubebootSignature(bool dbg_print, int *out_cubeboot_size)
     {
       int mismatch_cnt = 0;
       ConsolePrintf("CubeStub[CubeBoot] binary compare to cubeboot.bin:\n");
-      ConsolePrintf("  size: %u, %u(raw) %s\n", cubeboot_size, cubeboot_raw_size, cubeboot_size != cubeboot_raw_size ? "--MISMATCH--" : "" );
+      ConsolePrintf(".size: %u, %u(raw) %s\n", cubeboot_size, cubeboot_raw_size, cubeboot_size != cubeboot_raw_size ? "--MISMATCH--" : "" );
       
       for( int x=0; x < MIN(cubeboot_size,cubeboot_raw_size); x++ ) {
         if( g_CubeStub[cubeboot_start+x] != g_CubeBoot[x] ) {
-          ConsolePrintf(" MISMATCH @ %08x: %02x,%02x\n", x, g_CubeStub[cubeboot_start+x], g_CubeBoot[x] );
+          ConsolePrintf(".MISMATCH @ %08x: %02x,%02x\n", x, g_CubeStub[cubeboot_start+x], g_CubeBoot[x] );
           if( ++mismatch_cnt > 20 )
             break;
         }
       }
-      
       if( cubeboot_size != cubeboot_raw_size || mismatch_cnt > 0 )
         throw ERROR_CUBE_BAD_BINARY; //return 0;
+      
+      ConsolePrintf(".OK\n");
     }
     
     m_cubeboot_size = cubeboot_size; //cache size after successful checks
