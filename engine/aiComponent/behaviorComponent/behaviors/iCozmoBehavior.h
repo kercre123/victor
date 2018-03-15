@@ -637,7 +637,7 @@ template<typename T>
 bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate, void(T::*callback)())
 {
   return DelegateIfInControl(delegate,
-                             std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
+                             std::bind(callback, static_cast<T*>(this)));
 }
 
 

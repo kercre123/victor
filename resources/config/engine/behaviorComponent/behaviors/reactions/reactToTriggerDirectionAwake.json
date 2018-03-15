@@ -1,0 +1,33 @@
+{
+  "behaviorClass" : "ReactToMicDirection",
+  "behaviorID" : "ReactToTriggerDirectionAwake",
+
+  "reaction_list" :
+  {
+    "OnSurface" :
+    {
+      "TwelveOClock"  : { "enabled" : false },
+      "OneOClock"     : { "enabled" : false },
+      "TwoOClock"     : { "anim": "ReactToTriggerWordOffChargerFrontRight" },
+      "ThreeOClock"   : { "anim": "ReactToTriggerWordOffChargerRight" },
+      "FourOClock"    : { "anim": "ReactToTriggerWordOffChargerBehindRight" },
+      "FiveOClock"    : { "anim": "ReactToTriggerWordOffChargerBehindRight" },
+      "SixOClock"     : { "anim": "ReactToTriggerWordOffChargerBehind" },
+      "SevenOClock"   : { "anim": "ReactToTriggerWordOffChargerBehindLeft" },
+      "EightOClock"   : { "anim": "ReactToTriggerWordOffChargerBehindLeft" },
+      "NineOClock"    : { "anim": "ReactToTriggerWordOffChargerLeft" },
+      "TenOClock"     : { "anim": "ReactToTriggerWordOffChargerFrontLeft" },
+      "ElevenOClock"  : { "enabled" : false }
+    },
+
+    "OnCharger" :
+    {
+      "enabled" : false
+    },
+
+    "OffTreads" :
+    {
+      "enabled" : false
+    }
+  }
+}

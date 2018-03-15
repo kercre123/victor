@@ -1037,8 +1037,28 @@
       "AnimName": "ag_askforblock"
     },
     {	
-      "CladEvent": "VC_Listening",	
-      "AnimName": "ag_vc_listening"	
+      "CladEvent": "VC_ListeningGetIn",
+      "AnimName": "ag_vc_listening"
+    },
+    {
+      "CladEvent": "VC_ListeningLoop",
+      "AnimName": "ag_vc_listening_loop"
+    },
+    {
+      "CladEvent": "VC_ListeningGetOut",
+      "AnimName": "ag_vc_listening_getout"
+    },
+    {
+      "CladEvent": "VC_IntentHeard",
+      "AnimName": "ag_vc_reaction_yesfaceheardyou"
+    },
+    {
+      "CladEvent": "VC_IntentUnknown",
+      "AnimName": "ag_vc_reaction_whatwasthat"
+    },
+    {
+      "CladEvent": "VC_NoIntentHeard",
+      "AnimName": "ag_vc_reaction_whatwasthat"
     },
     {	
       "CladEvent": "VC_NoFollowupCommand_NoFace",	
@@ -1075,10 +1095,6 @@
     {
       "CladEvent": "ObservingIdleWithHeadLookingStraight",
       "AnimName": "ag_keepalive_eyesandhead_loop_01"
-    },
-    {
-      "CladEvent": "ListeningOnCharger",
-      "AnimName": "ag_vc_listening"
     },
     {
       "CladEvent": "LookDownForLaser",
@@ -1195,6 +1211,34 @@
     {
       "CladEvent": "ReactToSoundOnChargerObserveBehind",
       "AnimName": "ag_rtsound_oncharger_observe_behind"
+    },
+    {
+      "CladEvent": "ReactToTriggerWordOffChargerFrontLeft",
+      "AnimName": "ag_vc_wakeword_turnleft_45degrees"
+    },
+    {
+      "CladEvent": "ReactToTriggerWordOffChargerFrontRight",
+      "AnimName": "ag_vc_wakeword_turnright_45degrees"
+    },
+    {
+      "CladEvent": "ReactToTriggerWordOffChargerLeft",
+      "AnimName": "ag_vc_wakeword_turnleft"
+    },
+    {
+      "CladEvent": "ReactToTriggerWordOffChargerRight",
+      "AnimName": "ag_vc_wakeword_turnright"
+    },
+    {
+      "CladEvent": "ReactToTriggerWordOffChargerBehind",
+      "AnimName": "ag_vc_wakeword_turn_behind_left"
+    },
+    {
+      "CladEvent": "ReactToTriggerWordOffChargerBehindLeft",
+      "AnimName": "ag_vc_wakeword_turnleft_135degrees"
+    },
+    {
+      "CladEvent": "ReactToTriggerWordOffChargerBehindRight",
+      "AnimName": "ag_vc_wakeword_turnright_135degrees"
     },
     {
       "CladEvent": "ReactToUnclaimedIntent",
