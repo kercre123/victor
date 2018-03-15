@@ -94,10 +94,10 @@ bool ReadFileIntoVector(const std::string& pathToFile,
   }
   fileIn.unsetf(std::ios::skipws);
 
-  std::streampos fileSize;
+  size_t fileSize;
 
   fileIn.seekg(0, std::ios::end);
-  fileSize = fileIn.tellg();
+  fileSize = static_cast<size_t>(fileIn.tellg());
   fileIn.seekg(0, std::ios::beg);
 
   data.reserve(fileSize);

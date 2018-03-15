@@ -47,7 +47,6 @@ private:
   // anything that isn't pairing status should be attached to a different signal
 
   struct ev_loop* loop_;
-  ev_timer _timer;
   struct ev_EngineMessageTimerStruct {
     ev_timer timer;
     TcpClient* client;

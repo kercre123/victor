@@ -29,9 +29,8 @@ namespace Anki {
 namespace Switchboard {
   class Daemon {
     public:
-      Daemon(struct ev_loop* loop, ev_timer timer) :
+      Daemon(struct ev_loop* loop) :
         _loop(loop),
-        _timer(timer),
         _isPairing(false),
         _isOtaUpdating(false),
         _taskExecutor(nullptr),
@@ -73,7 +72,6 @@ namespace Switchboard {
       EvTimerSignal _otaUpdateTimerSignal;
 
       struct ev_loop* _loop;
-      ev_timer _timer;
       bool _isPairing;
       bool _isOtaUpdating;
 

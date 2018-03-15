@@ -626,7 +626,7 @@ int GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {
   memset(ipv6_128bits, 0, 16);
 
   while(current != nullptr) {
-    int s, n;
+    int s;
     int family = current->ifa_addr->sa_family;
 
     if ((family == AF_INET || family == AF_INET6) && (strcmp(current->ifa_name, "wlan0") == 0)) {

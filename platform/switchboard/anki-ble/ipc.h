@@ -27,8 +27,8 @@
 // Forward declarations for libev
 struct ev_loop;
 namespace ev {
-class io;
-class timer;
+struct io;
+struct timer;
 } // namespace ev
 
 namespace Anki {

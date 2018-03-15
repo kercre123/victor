@@ -74,7 +74,6 @@ void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct
   uint8_t bytes_recvd;
   do {
     bytes_recvd = wData->client->Recv((char*)sMessageData, sizeof(sMessageData));
-    uint8_t bytes_remaining = bytes_recvd;
     // Read all the messages that were returned
     size_t index = 0;
     while (bytes_recvd >= index + kMessageHeaderLength) {

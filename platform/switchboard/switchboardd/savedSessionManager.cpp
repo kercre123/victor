@@ -71,7 +71,7 @@ uint32_t SavedSessionManager::LoadKey(uint8_t* key, size_t size, const std::stri
   }
 
   fin.seekg (0, fin.end);
-  size_t fileSize = fin.tellg();
+  size_t fileSize = static_cast<size_t>(fin.tellg());
   fin.seekg (0, fin.beg);
 
   if(fileSize != (strlen(kPrefix) + sizeof(uint32_t) + size)) {
@@ -90,7 +90,7 @@ uint32_t SavedSessionManager::LoadKey(uint8_t* key, size_t size, const std::stri
     return -1;
   }
 
-  if(strncmp(prefix, kPrefix, sizeof(kPrefix)) != 0) {
+  if(strncmp(prefix, kPrefix, strlen(kPrefix)) != 0) {
     Log::Error("Prefix strings do not match.");
     fin.close();
     return -1;
@@ -171,7 +171,7 @@ uint32_t SavedSessionManager::LoadSession(uint8_t* clientPublicKeyOut, uint8_t* 
 
   fin.read(prefix, strlen(kPrefix));
 
-  if(strncmp(prefix, kPrefix, sizeof(kPrefix)) != 0) {
+  if(strncmp(prefix, kPrefix, strlen(kPrefix)) != 0) {
     Log::Error("File prefix does not match.");
     fin.close();
     return -1;

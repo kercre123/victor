@@ -250,7 +250,7 @@ void Daemon::OnOtaUpdatedRequest(std::string url) {
   // remove progress files if exist
   Log::Write("Ota Update Initialized...");
   std::string stdout = "";
-  int c = ExecCommand({"./bin/update-engine"}, stdout);
+  (void) ExecCommand({"./bin/update-engine"}, stdout);
 
   Log::Write("Cleared files? %s", stdout.c_str());
   ExecCommandInBackground({"./bin/update-engine", url}, std::bind(&Daemon::HandleOtaUpdateExit, this, std::placeholders::_1, std::placeholders::_2));
@@ -351,7 +351,7 @@ int main() {
   ev_signal_start(sLoop, &sTermSig);
   
   // initialize daemon
-  _daemon = std::make_unique<Anki::Switchboard::Daemon>(sLoop, sTimer);
+  _daemon = std::make_unique<Anki::Switchboard::Daemon>(sLoop);
   _daemon->Start();
 
   // exit
