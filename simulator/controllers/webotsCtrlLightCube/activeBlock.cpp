@@ -209,7 +209,7 @@ void Process_cubeLights(const CubeLights& msg)
   ledParams_.lightStates = msg.lights;
   ledParams_.phases.fill(currTimestamp);
   
-  ledParams_.rotationPeriod = msg.rotationPeriod_frames;
+  ledParams_.rotationPeriod = 0;//msg.rotationPeriod_frames;
   ledParams_.lastRotation = currTimestamp;
   ledParams_.rotationOffset = 0;
 }

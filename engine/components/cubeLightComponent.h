@@ -57,7 +57,7 @@ struct ObjectLights {
   ObjectLEDArray transitionOnPeriod_ms{};
   ObjectLEDArray transitionOffPeriod_ms{};
   std::array<s32, 4> offset{};
-  u32 rotationPeriod_ms = 0;
+  bool rotate = false;
   MakeRelativeMode makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
   Point2f relativePoint;
   
@@ -169,7 +169,7 @@ public:
                          const bool turnOffUnspecifiedLEDs,
                          const MakeRelativeMode makeRelative,
                          const Point2f& relativeToPoint,
-                         const u32 rotationPeriod_ms);
+                         const bool rotate);
   
   // We don't want to expose Animation layers outside of the cubeLightComponent
   // but there are scenarios where game takes over control of lights and clears
@@ -303,7 +303,7 @@ private:
   
   const char* LayerToString(const AnimLayerEnum& layer) const;
   
-  Result SetLights(const ActiveObject* object, const u32 rotationPeriod_ms);
+  Result SetLights(const ActiveObject* object, const bool rotate);
   
   // Applies white balancing to a color
   ColorRGBA WhiteBalanceColor(const ColorRGBA& color) const;

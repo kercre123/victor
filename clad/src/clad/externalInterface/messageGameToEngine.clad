@@ -789,9 +789,9 @@ message SetActiveObjectLEDs {
     uint_32  transitionOnPeriod_ms,  // The fade period from off color to on color
     uint_32  transitionOffPeriod_ms,  // The fade period from on color to off color
     int_32   offset = 0,
-    uint_32  rotationPeriod_ms = 0,
     float_32 relativeToX,  // ignored if makeRelative is RELATIVE_LED_MODE_OFF
     float_32 relativeToY,  // ignored if makeRelative is RELATIVE_LED_MODE_OFF
+    bool     rotate = 0,   // Should the pattern rotate through all LEDS on the cube?
     WhichCubeLEDs   whichLEDs,
     MakeRelativeMode   makeRelative,
     uint_8   turnOffUnspecifiedLEDs, // whether to augment current pattern, or turn off everything but what's specified
@@ -808,9 +808,9 @@ message SetAllActiveObjectLEDs {
   uint_32  transitionOnPeriod_ms[4],
   uint_32  transitionOffPeriod_ms[4],
   int_32   offset[4],
-  uint_32  rotationPeriod_ms,
   float_32 relativeToX,
   float_32 relativeToY,
+  bool     rotate = 0,
   MakeRelativeMode makeRelative
 }
 

@@ -719,7 +719,7 @@ message CubeLightsStateTransition {
   // Colors are encoded as uint with 5 bits per color
   // To convert from frames to seconds divide by 30 (30 frames per second)
   LightState lights[4],
-  uint_32 lightRotation_ms
+  bool lightRotation
 }
 
 ///////////////////////////////////////////////////////////////////////////////
