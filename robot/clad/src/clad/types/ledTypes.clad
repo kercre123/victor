@@ -106,5 +106,11 @@ enum uint_8 MakeRelativeMode
   RELATIVE_LED_MODE_BY_SIDE
 }
 
+enum int_32 CubeConstants 
+{
+  NUM_CUBE_LEDS = 4,
+}
+
+
 } // namespace Cozmo
 } // namespace Anki

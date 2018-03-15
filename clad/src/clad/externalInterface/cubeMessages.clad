@@ -1,0 +1,61 @@
+/** Messages for engine to talk to cubes over BLE (or in simulation)
+ *
+ */
+
+namespace Anki {
+namespace Cozmo {
+
+// new messages:
+
+enum uint_8 CubeMessageIndex
+{
+  STARTING_SEQUENCE  = 0,
+  KEYFRAME_CHUNK     = 1,
+  ACCEL_DATA         = 2,
+  ACCEL_FAILURE      = 3
+}
+
+
+structure CubeLightKeyframe
+{
+  uint_8 color[3],    // RGB color
+  uint_8 holdFrames,  // frames to hold the color for
+  uint_8 decayFrames, // frames for which to blend into the next keyframe
+  uint_8 nextIndex,   // index of the next keyframe
+}
+
+// from cube:
+message CubeAccelData
+{
+  uint_8 flags,
+  int_16 axis[3],  // accelerometer readings on the 3 axes
+  int_16 tap_pos,
+  int_16 tap_neg,
+  uint_8 tap_count,
+  uint_8 tap_time,
+}
+
+
+// to cube:
+
+message CubeLightKeyframeChunk
+{
+  uint_8 startingIndex,
+  CubeLightKeyframe keyframes[3]
+}
+
+message CubeLightSequence
+{
+  uint_8 flags,
+  uint_8 initialIndex[4]
+}
+
+union CubeMessage
+{
+  CubeLightSequence      lightSequence  = 0,
+  CubeLightKeyframeChunk lightKeyframes = 1,
+  CubeAccelData          accelData      = 2,
+}
+
+} // namespace Cozmo
+} // namespace Anki

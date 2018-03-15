@@ -49,11 +49,11 @@
 // Scales colors by this factor when applying white balancing
 static constexpr f32 kWhiteBalanceScale = 0.6f;
 
-static constexpr int kNumCubeLeds = 4;
-
 namespace Anki {
 namespace Cozmo {
 
+static constexpr int kNumCubeLeds = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
+  
 static const ObjectLights kCubeLightsOff = {
   .onColors               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
   .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},

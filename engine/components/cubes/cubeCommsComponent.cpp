@@ -14,6 +14,7 @@
 
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/cubeAccelComponent.h"
+#include "engine/components/cubes/ledAnimation.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -21,6 +22,7 @@
 
 #include "coretech/common/engine/utils/timer.h"
 
+#include "clad/externalInterface/cubeMessages.h"
 #include "clad/externalInterface/lightCubeMessage.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
@@ -36,6 +38,8 @@ namespace {
   
   // How long must the object be disconnected before we really remove it from the list of connected objects
   const float kDisconnectTimeout_sec = 2.0f;
+  
+  const int kNumCubeLeds = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
 }
 
   
@@ -213,6 +217,70 @@ bool CubeCommsComponent::SetStreamObjectAccel(const ActiveID& activeId, const bo
     return _cubeBleClient->SendMessageToLightCube(cube->factoryId, msg);
   }
   return false;
+}
+
+
+void CubeCommsComponent::GenerateCubeLightMessages(const CubeLights& cubeLights,
+                                                   CubeLightSequence& cubeLightSequence,
+                                                   std::vector<CubeLightKeyframeChunk>& cubeLightKeyframeChunks)
+{
+  DEV_ASSERT(cubeLightKeyframeChunks.empty(), "CubeCommsComponent.GenerateCubeLightMessages.CubeLightKeyframeChunksNotEmpty");
+  cubeLightKeyframeChunks.clear();
+  
+  const bool useRotation = cubeLights.rotationPeriod_frames != 0;
+  DEV_ASSERT(!(cubeLights.playOnce && useRotation), "CubeCommsComponent.GenerateCubeLightMessages.CannotHaveBothPlayOnceAndRotation");
+  
+  int baseIndex = 0;
+  std::vector<LedAnimation> animations;
+  for (const auto& lightState : cubeLights.lights) {
+    LedAnimation anim(lightState, baseIndex);
+    if (cubeLights.playOnce) {
+      anim.SetPlayOnce();
+    }
+    animations.push_back(anim);
+    // Increment baseIndex so that the next LedAnimation is created
+    // with the proper base index
+    baseIndex += anim.GetKeyframes().size();
+  }
+  
+  // There should be one LedAnimation for each LED on the cube
+  DEV_ASSERT(animations.size() == kNumCubeLeds, "CubeCommsComponent.GenerateCubeLightMessages.WrongNumAnimations");
+  
+  // If rotation is specified, then link the animations appropriately,
+  // wrapping around if necessary.
+  if (useRotation) {
+    for (int i=0 ; i<kNumCubeLeds ; i++) {
+      animations[i].LinkToOther(animations[(i + 1) % kNumCubeLeds]);
+    }
+  }
+  
+  // Create CubeLightSequence message, which indicates the starting keyframe
+  // indices for each LED.
+  cubeLightSequence.flags = 0;
+  size_t ledIndex = 0;
+  for (const auto& anim : animations) {
+    cubeLightSequence.initialIndex[ledIndex++] = anim.GetStartingIndex();
+  }
+  
+  // Loop over all led animations, and separate chunks of 3 into messages. This
+  // essentially concatenates the keyframes of all 4 LED animations then separates
+  // the entire list into chunks of 3 for sending over the wire.
+  const int chunkSize = 3;
+  int keyframeIndex = 0;
+  for (const auto& animation : animations) {
+    for (const auto& keyframe : animation.GetKeyframes()) {
+      const int innerIndex = (keyframeIndex % chunkSize);
+      if (innerIndex == 0) {
+        // Time to append a new CubeLightKeyframeChunk message
+        cubeLightKeyframeChunks.emplace_back();
+        cubeLightKeyframeChunks.back().startingIndex = keyframeIndex;
+      }
+      CubeLightKeyframeChunk& currChunk = cubeLightKeyframeChunks.back();
+      currChunk.keyframes[innerIndex] = keyframe;
+      
+      ++keyframeIndex;
+    }
+  }
 }
 
 
