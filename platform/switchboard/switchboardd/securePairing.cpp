@@ -171,14 +171,12 @@ void SecurePairing::Reset(bool forced) {
   // Put us back in initial state
   if(forced) {
     Log::Write("Client disconnected. Stopping pairing.");
-    _engineClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
     ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
   } else if(++_totalPairingAttempts < kMaxPairingAttempts) {
     Init();
     Log::Write("SecurePairing restarting.");
   } else {
     Log::Write("SecurePairing ending due to multiple failures. Requires external restart.");
-    _engineClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
     ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
   }
 }
@@ -349,7 +347,7 @@ void SecurePairing::SendCancelPairing() {
   Log::Write("Canceling pairing.");
 }
 
-void SecurePairing::SendOtaProgress(int status, int progress, int expectedTotal) {
+void SecurePairing::SendOtaProgress(int status, uint64_t progress, uint64_t expectedTotal) {
   // Send Ota Progress
   SendRtsMessage<RtsOtaUpdateResponse>(status, progress, expectedTotal);
   Log::Write("Sending OTA Progress Update");

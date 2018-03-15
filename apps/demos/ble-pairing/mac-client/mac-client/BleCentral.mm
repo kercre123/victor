@@ -197,7 +197,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 //
 //          Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsSshRequest>(self, parts);
 //          Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiIpRequest>(self);
-          Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsOtaUpdateRequest>(self, "aluri.hoogle");
+          Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsOtaUpdateRequest>(self, "http://sai-general.s3.amazonaws.com/build-assets/ota-test.tar");
         }
         
         break;
@@ -226,8 +226,8 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       }
       case Anki::Victor::ExternalComms::RtsConnectionTag::RtsOtaUpdateResponse: {
         Anki::Victor::ExternalComms::RtsOtaUpdateResponse msg = rtsMsg.Get_RtsOtaUpdateResponse();
-        int c = msg.current;
-        int t = msg.expected;
+        uint64_t c = msg.current;
+        uint64_t t = msg.expected;
         
         int size = 100;
         int progress = (int)(((float)c/(float)t) * size);
@@ -238,7 +238,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           else bar += "_";
         }
         
-        printf("%s %d%\r", bar.c_str(), progress);
+        printf("%100s [%d%%] [%llu/%llu] \r", bar.c_str(), progress, msg.current, msg.expected);
         fflush(stdout);
         break;
       }
@@ -495,7 +495,7 @@ didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic
   
   NSLog(@"[%@] isPairing:%d knownName:%d isAnki:%d", peripheral.name, isPairing, knownName, isAnki);
   
-  if([peripheral.name containsString:@"R3H6"]) {
+  if([peripheral.name containsString:@"T9D3"]) {
     return;
   }
   

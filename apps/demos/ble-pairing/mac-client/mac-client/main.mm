@@ -14,6 +14,13 @@ int main(int argc, const char * argv[]) {
     // insert code here...
     BleCentral* central = [[BleCentral alloc] init];
     
+//    char pin[100];
+//    scanf("%100s",pin);
+//    printf("Another log....\n");
+//    fflush(stdout);
+//    
+//    printf("READ: %s\n", pin);
+    
     [central StartScanning];
     dispatch_main();
   }

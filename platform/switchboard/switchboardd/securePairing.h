@@ -56,7 +56,7 @@ namespace Switchboard {
     // Methods
     void BeginPairing();
     void StopPairing();
-    void SendOtaProgress(int status, int progress, int expectedTotal);
+    void SendOtaProgress(int status, uint64_t progress, uint64_t expectedTotal);
     
     std::string GetPin() {
       return _pin;

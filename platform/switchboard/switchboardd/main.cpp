@@ -154,7 +154,9 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
     _securePairing->StopPairing();
     Log::Write("BLE Central disconnected.");
     UpdateAdvertisement(false);
-    _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+    if(!_isOtaUpdating) {
+      _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+    }
     Log::Write("Destroying secure pairing object.");
     _securePairing = nullptr;
   }
@@ -203,8 +205,13 @@ int Daemon::GetOtaProgress(int* progressVal, int* expectedVal) {
   getline(progressFile, progress);
   getline(expectedFile, expected);
 
-  *progressVal = stoi(progress);
-  *expectedVal = stoi(expected);
+  try {
+    *progressVal = stoi(progress);
+    *expectedVal = stoi(expected);
+  } catch(...) {
+    // handle int/string parsing issue
+    return -1;
+  }
 
   return 0;
 }
@@ -226,6 +233,7 @@ void Daemon::HandleOtaUpdateExit(int rc, const std::string& output) {
     if(_securePairing != nullptr) {
       _securePairing->SendOtaProgress(255, 0, 0);
     }
+    Log::Write("Update filed with error code: %d", rc);
   }
 
   if(_securePairing != nullptr) {
@@ -250,10 +258,15 @@ void Daemon::OnOtaUpdatedRequest(std::string url) {
   // remove progress files if exist
   Log::Write("Ota Update Initialized...");
   std::string stdout = "";
-  (void) ExecCommand({"./bin/update-engine"}, stdout);
+  int clearFilesStatus = ExecCommand({"/bin/update-engine"}, stdout);
+
+  if(clearFilesStatus != 0) {
+    // we *shouldn't* let progress file errors keep us from trying to update
+    Log::Write("Couldn't clear progress files. Continuing update anyway.");
+  }
 
   Log::Write("Cleared files? %s", stdout.c_str());
-  ExecCommandInBackground({"./bin/update-engine", url}, std::bind(&Daemon::HandleOtaUpdateExit, this, std::placeholders::_1, std::placeholders::_2));
+  ExecCommandInBackground({"/bin/update-engine", url}, std::bind(&Daemon::HandleOtaUpdateExit, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame message) {

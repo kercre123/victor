@@ -106,8 +106,8 @@ message RtsOtaUpdateRequest {
 
 message RtsOtaUpdateResponse {
     uint_8      status,
-    uint_32     current,
-    uint_32     expected,
+    uint_64     current,
+    uint_64     expected,
 }
 
 message RtsWifiAccessPointRequest {
