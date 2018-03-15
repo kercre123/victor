@@ -1,4 +1,5 @@
 #include <string.h>
+#include <ctype.h>
 #include "app.h"
 #include "bdaddr.h"
 #include "binaries.h"
@@ -102,8 +103,10 @@ uint32_t cubebootSignature(bool dbg_print, int *out_cubeboot_size)
 static void da14580_load_program_(const uint8_t *bin, int size, const char* name)
 {
   ConsolePrintf("da14580 load %s: %ikB (%u)\n", (name ? name : "program"), CEILDIV(size,1024), size );
-  DUT_RESET::init(MODE_INPUT, PULL_NONE);
+  TestCubeCleanup();
   Board::powerOn(PWR_CUBEBAT, 0);
+  DUT_RESET::write(1); //hold in reset
+  DUT_RESET::init(MODE_OUTPUT, PULL_NONE, TYPE_PUSHPULL);
   
   //wait for cube Vcc to stabilize
   ConsolePrintf("VBAT3V=");
@@ -283,11 +286,11 @@ bool TestCubeDetect(void)
 
 void TestCubeCleanup(void)
 {
-  Board::powerOff(PWR_CUBEBAT,100);
-  Board::powerOff(PWR_DUTPROG);
   DUT_VDD::init(MODE_INPUT, PULL_NONE);
   DUT_UART::deinit();
   DUT_RESET::init(MODE_INPUT, PULL_NONE);
+  Board::powerOff(PWR_CUBEBAT,100);
+  Board::powerOff(PWR_DUTPROG);
 }
 
 static void ShortCircuitTest(void)
@@ -372,8 +375,19 @@ static void CubeTest(void)
     if( !pass )
       e = ledtest[n].e;
   }
+  
+  //DEBUG
+  if( e != ERROR_OK && g_fixmode == FIXMODE_CUBE0 ) {
+    ConsolePrintf("CUBE LED ERROR: %i -- press a key to approve\n", e);
+    while( ConsoleReadChar() > -1 );
+    uint32_t Tstart = Timer::get();
+    while( Timer::elapsedUs(Tstart) < 2*1000*1000 ) {
+      if( ConsoleReadChar() > -1 ) { e = ERROR_OK; break; }
+    }
+  }
+  
   if( e != ERROR_OK )
-    throw e;
+      throw e;
   
   //Accelerometer (ref: status error codes in cubetest::cmd.h)
   //cmdSend(CMD_IO_DUT_UART, "leds 0x1 static"); //pull some led current for typical usecase
@@ -397,7 +411,7 @@ static void OTPbootloader(void)
   
   //DEBUG:
   if( g_fixmode <= FIXMODE_CUBE0 ) {
-    TestCommon::consoleBridge(TO_DUT_UART,3000);
+    TestCommon::consoleBridge(TO_DUT_UART,2000);
   }
   
   cmdSend(CMD_IO_DUT_UART, "getvers");
