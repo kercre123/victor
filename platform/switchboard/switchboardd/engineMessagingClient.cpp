@@ -85,7 +85,7 @@ void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct
         const EMessageTag messageTag = *(EMessageTag*)(sMessageData + index);
         if (messageTag == EMessageTag::EnterPairing || messageTag == EMessageTag::ExitPairing) {
           EMessage message;
-          message.Unpack(sMessageData + index, bytes_recvd - index);
+          message.Unpack(sMessageData + index, message_size);
           wData->signal->emit(message);
         }
       }
@@ -97,7 +97,7 @@ void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct
 void EngineMessagingClient::SendMessage(const GMessage& message) {
   uint16_t message_size = message.Size();
   uint8_t buffer[message_size + kMessageHeaderLength];
-  message.Pack(buffer + kMessageHeaderLength, sizeof(buffer) - kMessageHeaderLength);
+  message.Pack(buffer + kMessageHeaderLength, message_size);
   memcpy(buffer, &message_size, kMessageHeaderLength);
 
   client.Send((char*)buffer, sizeof(buffer));

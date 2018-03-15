@@ -172,8 +172,8 @@ void Daemon::OnPinUpdated(std::string pin) {
 void Daemon::HandleOtaUpdateProgress() {
   if(_securePairing != nullptr) {
     // Update connected client of status
-    int progressVal = 0;
-    int expectedVal = 0;
+    uint64_t progressVal = 0;
+    uint64_t expectedVal = 0;
 
     int status = GetOtaProgress(&progressVal, &expectedVal);
 
@@ -209,9 +209,19 @@ int Daemon::GetOtaProgress(uint64_t* progressVal, uint64_t* expectedVal) {
   getline(expectedFile, expected);
 
   long int strtol (const char* str, char** endptr, int base);
+  char* progressEndptr;
+  char* expectedEndptr;
 
-  long int progressLong = strtol(progress.c_str(), progress.c_str() + progress.length(), 10);
-  long int expectedLong = strtol(expected.c_str(), expected.c_str() + expected.length(), 10);
+  long int progressLong = std::strtol(progress.c_str(), &progressEndptr, 10);
+  long int expectedLong = std::strtol(expected.c_str(), &expectedEndptr, 10);
+
+  if(progressEndptr == progress.c_str()) {
+    progressLong = 0;
+  }
+
+  if(expectedEndptr == expected.c_str()) {
+    return -1;
+  }
 
   if(progressLong == LONG_MAX || progressLong == LONG_MIN) {
     // 0, LONG_MAX, LONG_MIN are error cases from strtol

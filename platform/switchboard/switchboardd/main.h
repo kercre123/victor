@@ -59,7 +59,7 @@ namespace Switchboard {
       bool TryConnectToEngineServer();
       void HandleOtaUpdateExit(int rc, const std::string& output);
       void HandleOtaUpdateProgress();
-      int GetOtaProgress(int* progress, int* expected);
+      int GetOtaProgress(uint64_t* progress, uint64_t* expected);
 
       void UpdateAdvertisement(bool pairing);
 
