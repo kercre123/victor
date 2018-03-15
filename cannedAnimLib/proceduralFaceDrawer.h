@@ -6,7 +6,7 @@
 #include "cannedAnimLib/proceduralFace.h"
 #include "coretech/vision/engine/image.h"
 
-#define PROCEDURALFACE_NOISE_FEATURE 0
+#define PROCEDURALFACE_NOISE_FEATURE 1 // feature capable but disabled as num frames = 0
 
 namespace Anki {
   

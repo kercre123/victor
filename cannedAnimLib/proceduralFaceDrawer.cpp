@@ -14,16 +14,21 @@
 #include "util/math/numericCast.h"
 #include "util/random/randomGenerator.h"
 
-
 namespace Anki {
 namespace Cozmo {
   
   #define CONSOLE_GROUP "ProceduralFace"
 
 #if PROCEDURALFACE_NOISE_FEATURE
-  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseFraction,              CONSOLE_GROUP, 0.15f, 0.f, 1.f); // TODO: Tie to audio
-#endif
+  static const s32 kNumNoiseImages = 7;
 
+  CONSOLE_VAR_RANGED(s32, kProcFace_NoiseNumFrames,     "ProceduralFace", 0, 0, kNumNoiseImages);
+  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMinLightness,  "ProceduralFace", 1.f-0.15f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
+  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMaxLightness,  "ProceduralFace", 1.f+0.15f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
+
+  CONSOLE_VAR_EXTERN(s32, kProcFace_NoiseNumFrames);
+#endif
+    
   CONSOLE_VAR(bool,       kProcFace_UseAntiAliasedLines,        CONSOLE_GROUP, true); // Only affects OpenCV drawing, not post-smoothing
   CONSOLE_VAR_RANGED(f32, kProcFace_EyeLightnessMultiplier,     CONSOLE_GROUP, 1.f, 0.f, 10.f);
 
@@ -125,7 +130,7 @@ namespace Cozmo {
     f32* noiseImg_i = noiseImg.GetRow(0);
     for(s32 j=0; j<noiseImg.GetNumElements(); ++j)
     {
-      noiseImg_i[j] = rng.RandDblInRange(1.f - kProcFace_NoiseFraction, 1.f + kProcFace_NoiseFraction);
+      noiseImg_i[j] = rng.RandDblInRange(kProcFace_NoiseMinLightness, kProcFace_NoiseMaxLightness);
     }
     return noiseImg;
   }
@@ -133,9 +138,8 @@ namespace Cozmo {
   const Array2d<f32>& ProceduralFaceDrawer::GetNoiseImage(const Util::RandomGenerator& rng)
   {
     // NOTE: Since this is called separately for each eye, this looks better if we use an odd number of images
-    static const s32 kNumNoiseImages = 7;
     static_assert(kNumNoiseImages % 2 == 1, "Use odd number of noise images");
-    static const std::array<Array2d<f32>, kNumNoiseImages> kNoiseImages{{
+    static std::array<Array2d<f32>, kNumNoiseImages> kNoiseImages{{
       CreateNoiseImage(rng),
       CreateNoiseImage(rng),
       CreateNoiseImage(rng),
@@ -144,16 +148,30 @@ namespace Cozmo {
       CreateNoiseImage(rng),
       CreateNoiseImage(rng),
     }};
-    
-    // Cycle circularly through the set of noise images
-    static auto iter = kNoiseImages.begin();
-    const Array2d<f32>& noiseImg = *iter;
-    ++iter;
-    if(iter == kNoiseImages.end()) {
-      iter = kNoiseImages.begin();
+
+    kProcFace_NoiseMinLightness = Anki::Util::Clamp(kProcFace_NoiseMinLightness, 0.f, kProcFace_NoiseMaxLightness);
+    kProcFace_NoiseMaxLightness = Anki::Util::Clamp(kProcFace_NoiseMaxLightness, kProcFace_NoiseMinLightness, 2.f);
+
+    static f32 kProcFace_NoiseMinLightness_old = kProcFace_NoiseMinLightness;
+    static f32 kProcFace_NoiseMaxLightness_old = kProcFace_NoiseMaxLightness;
+    if(kProcFace_NoiseMinLightness_old != kProcFace_NoiseMinLightness || kProcFace_NoiseMaxLightness_old != kProcFace_NoiseMaxLightness) {
+      for(auto& currentNoiseImage : kNoiseImages) {
+        Array2d<f32> noiseImg = CreateNoiseImage(rng);
+        std::swap(currentNoiseImage, noiseImg);
+      }
+
+      kProcFace_NoiseMinLightness_old = kProcFace_NoiseMinLightness;
+      kProcFace_NoiseMaxLightness_old = kProcFace_NoiseMaxLightness;
     }
     
-    return noiseImg;
+    if(kProcFace_NoiseNumFrames == 0) {
+      return kNoiseImages[0];
+    } else {
+      // Cycle circularly through the set of noise images
+      static s32 index = 0;
+      index = (index + 1) % kProcFace_NoiseNumFrames;
+      return kNoiseImages[index];
+    }
   }
 #endif // PROCEDURALFACE_NOISE_FEATURE
 
@@ -533,10 +551,13 @@ namespace Cozmo {
               // Note that the value in glowImg/eyeShape is already [0,255]
               f32 newValue = static_cast<f32>(std::max(glowValue,eyeValue));
 #if PROCEDURALFACE_NOISE_FEATURE
-              newValue *= noiseImg_i[j] * eyeLightness;
-#else
-              newValue *= eyeLightness;
+              if (kProcFace_NoiseNumFrames > 0) {
+                newValue *= noiseImg_i[j] * eyeLightness;
+              } else
 #endif
+              {
+                newValue *= eyeLightness;
+              }
 
               // Don't do scanlines in the glow region.
               const bool isPartOfEye = (eyeValue >= glowValue); // (and not part of glow)

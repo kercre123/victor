@@ -60,9 +60,7 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kProcFace_OverrideEyeParams,        "ProceduralFace", false); // Override procedural face with ConsoleVars edited version
   CONSOLE_VAR(bool, kProcFace_OverrideRightEyeParams,   "ProceduralFace", false); // Make left and right eyes override in unison
 #if PROCEDURALFACE_NOISE_FEATURE
-  CONSOLE_VAR(bool, kProcFace_UseNoise,                 "ProceduralFace", false); // Victor vs Cozmo effect, no noise = lazy updates
-#else
-  static constexpr bool kProcFace_UseNoise = false;
+  CONSOLE_VAR_EXTERN(s32, kProcFace_NoiseNumFrames);
 #endif
 
   static ProceduralFace s_faceDataOverride; // incoming values from console var system
@@ -627,14 +625,14 @@ namespace Cozmo {
     }
     else
     {
-      if(!kProcFace_UseNoise) {
+      if(!PROCEDURALFACE_NOISE_FEATURE || (kProcFace_NoiseNumFrames == 0)) {
         static ProceduralFace previousFace;
         if (previousFace == procFace) {
           return;
         }
         previousFace = procFace;
       }
-
+        
       DEV_ASSERT(_context != nullptr, "AnimationStreamer.BufferFaceToSend.NoContext");
       DEV_ASSERT(_context->GetRandom() != nullptr, "AnimationStreamer.BufferFaceToSend.NoRNGinContext");
 
