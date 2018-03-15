@@ -1,16 +1,6 @@
 var moment = require('moment-timezone');
 const { StringDecoder } = require('string_decoder');
-
-const WiFiAuth = {
-    AUTH_NONE_OPEN : {value: 0, name: "None" },
-    AUTH_NONE_WEP :  {value: 1, name: "WEP" },
-    AUTH_NONE_WEP_SHARED : {value: 2, name: "WEP Shared"},
-    AUTH_IEEE8021X: {value: 3, name: "IEEE8021X"},
-    AUTH_WPA_PSK: {value: 4, name: "WPA PSK"},
-    AUTH_WPA_EAP: {value: 5, name: "WPA EAP"},
-    AUTH_WPA2_PSK: {value: 6, name: "WPA2 PSK"},
-    AUTH_WPA2_EAP: {value: 7, name: "WPA2 EAP"}
-};
+const WiFiAuth = require('./wifiauth.js');
 
 class Victor {
     constructor(peripheral, service, send, read, outputCallback) {
@@ -76,10 +66,10 @@ class Victor {
                     offset = end + 1;
                     switch (auth) {
                     case WiFiAuth.AUTH_NONE_OPEN.value:
-                        results += WiFiAuth.AUTH_NONE_OPEN.name;
+                        results += WiFiAuth.AUTH_NONE_OPEN.name + "    ";
                         break;
                     case WiFiAuth.AUTH_NONE_WEP.value:
-                        results += WiFiAuth.AUTH_NONE_WEP.name;
+                        results += WiFiAuth.AUTH_NONE_WEP.name + "     ";
                         break;
                     case WiFiAuth.AUTH_NONE_WEP_SHARED.value:
                         results += WiFiAuth.AUTH_NONE_WEP_SHARED.name;
@@ -245,6 +235,7 @@ Object.defineProperty(Victor, 'MSG_B2V_WIFI_STOP', {value: 0x1B, writable: false
 Object.defineProperty(Victor, 'MSG_B2V_WIFI_SET_CONFIG', {value: 0x1C, writable: false});
 Object.defineProperty(Victor, 'MSG_B2V_WIFI_SCAN', {value: 0x1D, writable: false});
 Object.defineProperty(Victor, 'MSG_V2B_WIFI_SCAN_RESULTS', {value: 0x1E, writable: false});
+Object.defineProperty(Victor, 'MSG_B2V_WIFI_SET_CONFIG_EXT', {value: 0x1F, writable: false});
 Object.defineProperty(Victor, 'MSG_B2V_SSH_SET_AUTHORIZED_KEYS', {value: 0x80, writable: false});
 Object.defineProperty(Victor, 'MSG_B2V_DEV_PING_WITH_DATA_REQUEST', {value: 0x91, writable: false});
 Object.defineProperty(Victor, 'MSG_V2B_DEV_PING_WITH_DATA_RESPONSE', {value: 0x92, writable: false});

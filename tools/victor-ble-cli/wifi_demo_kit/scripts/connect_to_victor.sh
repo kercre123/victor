@@ -108,7 +108,7 @@ proc wifi_connection_and_test {} {
 
 	while { $wifi_connect_attempts > 0 } {
 		sleep $sleep_duration
-		send "wifi-set-config $SSID $password\r"
+		send "wifi-set-config psk false $SSID $password\r"
 		set timeout $wifi_connect_timeout
 		expect {
 			"ip_address=" {

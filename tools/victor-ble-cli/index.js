@@ -3,6 +3,7 @@ const readline = require("readline");
 const Victor = require("./victor.js");
 const fs = require('fs');
 const sleep = require('system-sleep');
+const WiFiAuth = require('./wifiauth.js');
 
 var quitting = false;
 var victorAds = {};
@@ -55,7 +56,11 @@ function printHelp() {
     ssh-set-authorized-keys file          -  Use file as the ssh authorized_keys file on Victor
     sync-time                             -  Set the clock on Victor to match the host clock
     wifi-scan                             -  Ask Victor to scan for WiFi access points
-    wifi-set-config ssid psk [ssid2 psk2] -  Overwrite and set wifi config on victor
+    wifi-set-config <none|wep|psk> <hidden> <ssid> <passphrase> - Set WiFi access point config to Victor
+       ex. wifi-set-config psk false AnkiGuest ThePassword
+       ex. wifi-set-config wep false dd-wrt 7A41B23F69
+       ex. wifi-set-config none false coffeeshop
+       ex. wifi-set-config psk true TopSecret ThePassword
     wifi-start                            -  Bring WiFi interface up
     wifi-stop                             -  Bring WiFi interface down
     wpa_cli args                          -  Execute wpa_cli with arguments on Victor
@@ -154,6 +159,14 @@ noble.on('scanStart', function () {
 noble.on('scanStop', function () {
     outputResponse("Scanning stopped.");
 });
+
+function asciiStringToHexString(str) {
+    var hexString = '';
+    for (var i = 0; i < str.length ; i++) {
+        hexString += ''+str.charCodeAt(i).toString(16);
+    }
+    return hexString;
+}
 
 var handleInput = function (line) {
     var trimmedLine = line.trim();
@@ -310,11 +323,53 @@ var handleInput = function (line) {
             if (!connectedVictor) {
                 outputResponse("Not connected to a Victor");
             } else {
-                var buf = Buffer.alloc(0);
-                for (var i = 1 ; i < args.length ; i++) {
-                    buf = Buffer.concat([buf, Buffer.from(args[i]), Buffer.from([0])]);
+                if (args.length < 4) {
+                    outputResponse("wifi-set-config <none|wep|psk> <hidden> <ssid> <passphrase>");
+                    outputResponse("passphrase required for wep and psk. ignored for none");
+                    return;
                 }
-                connectedVictor.send(Victor.MSG_B2V_WIFI_SET_CONFIG, buf);
+                var buf = Buffer.alloc(2);
+                switch (args[1]) {
+                case 'wep':
+                    buf[0] = WiFiAuth.AUTH_NONE_WEP.value;
+                    break;
+                case 'psk':
+                    buf[0] = WiFiAuth.AUTH_WPA2_PSK.value;
+                    break;
+                case 'none':
+                    buf[0] = WiFiAuth.AUTH_NONE_OPEN.value;
+                    break;
+                default:
+                    outputResponse("valid security types are wep, psk, and none");
+                    return;
+                    break;
+                }
+                if (buf[0] != WiFiAuth.AUTH_NONE_OPEN.value && args.length < 5) {
+                    outputResponse("passphrase is required if security type is wep or psk");
+                    return;
+                }
+                const true_set = new Set(["true", "True", "TRUE", "1", "on", "hidden", true, 1]);
+                if (true_set.has(args[2])) {
+                    buf[1] = 0x01;
+                }
+                var hex_ssid = asciiStringToHexString(args[3]);
+                buf = Buffer.concat([buf, Buffer.from(hex_ssid), Buffer.from([0])]);
+                if (buf[0] != WiFiAuth.AUTH_NONE_OPEN.value) {
+                    buf = Buffer.concat([buf, Buffer.from(args[4]), Buffer.from([0])]);
+                } else {
+                    buf = Buffer.concat([buf, Buffer.from([0])]);
+                }
+
+                if (buf[0] == WiFiAuth.AUTH_WPA2_PSK.value && buf[1] == 0x00) {
+                    // Send the old configuration for old robots that have not been updated
+                    // to support MSG_B2V_WIFI_SET_CONFIG_EXT
+                    var old_buf = Buffer.alloc(0);
+                    old_buf = Buffer.concat([Buffer.from(args[3]), Buffer.from([0]),
+                                             Buffer.from(args[4]), Buffer.from([0])]);
+                    connectedVictor.send(Victor.MSG_B2V_WIFI_SET_CONFIG, old_buf);
+                }
+
+                connectedVictor.send(Victor.MSG_B2V_WIFI_SET_CONFIG_EXT, buf);
             }
             break;
         case 'wifi-start':

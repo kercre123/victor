@@ -7,4 +7,4 @@ if [ ! -d "node_modules" ]; then
   ./install.sh
 fi
 
-expect -f vic_show_ip.expect $1
+expect -f vic_show_ip.expect "$1"

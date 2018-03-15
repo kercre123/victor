@@ -21,7 +21,7 @@ expect {
     }
 }
 
-send "connect $robot\r"
+send "connect \"$robot\"\r"
 set timeout 10
 expect {
   "Fully connected to $robot" {}
