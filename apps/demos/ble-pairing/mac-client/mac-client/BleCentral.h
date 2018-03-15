@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include "bleMessageProtocol.h"
 #include "messageExternalComms.h"
-#include "sodium/include/sodium.h"
+#include <sodium.h>
 
 enum RtsState {
   Raw         = 0,

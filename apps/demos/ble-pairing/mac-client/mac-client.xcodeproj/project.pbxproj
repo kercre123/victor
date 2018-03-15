@@ -7,14 +7,28 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		700A714B205A647F00B518CD /* SafeMessageBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 700A7144205A647F00B518CD /* SafeMessageBuffer.h */; };
+		700A714C205A647F00B518CD /* json-forwards.h in Headers */ = {isa = PBXBuildFile; fileRef = 700A7146205A647F00B518CD /* json-forwards.h */; };
+		700A714D205A647F00B518CD /* json.h in Headers */ = {isa = PBXBuildFile; fileRef = 700A7147205A647F00B518CD /* json.h */; };
+		700A714E205A647F00B518CD /* SafeMessageBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 700A7149205A647F00B518CD /* SafeMessageBuffer.cpp */; };
+		700A714F205A647F00B518CD /* jsoncpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 700A714A205A647F00B518CD /* jsoncpp.cpp */; };
+		700A7152205A649800B518CD /* libclad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 700A7138205A639E00B518CD /* libclad.a */; };
 		DA5470702047985E004FDA9F /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA54706F2047985E004FDA9F /* main.mm */; };
 		DA54707720479890004FDA9F /* BleCentral.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA54707620479890004FDA9F /* BleCentral.mm */; };
 		DA54707B20479928004FDA9F /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA54707A20479928004FDA9F /* CoreBluetooth.framework */; };
-		DAE361C62049D1500053ED2F /* libsodium.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DAE361C52049D1500053ED2F /* libsodium.a */; };
-		DAE361CF2049D27B0053ED2F /* libclad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = DAE361CE2049D27B0053ED2F /* libclad.a */; };
 		DAE361D52049D4AE0053ED2F /* bleMessageProtocol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAE361D32049D4AE0053ED2F /* bleMessageProtocol.cpp */; };
 		DAE361EC2049DF030053ED2F /* messageExternalComms.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAE361E72049DF030053ED2F /* messageExternalComms.cpp */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		700A7150205A649300B518CD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DA5470642047985E004FDA9F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 700A7137205A639E00B518CD;
+			remoteInfo = clad;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		DA54706A2047985E004FDA9F /* CopyFiles */ = {
@@ -29,12 +43,17 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		700A7138205A639E00B518CD /* libclad.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libclad.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		700A7144205A647F00B518CD /* SafeMessageBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SafeMessageBuffer.h; sourceTree = "<group>"; };
+		700A7146205A647F00B518CD /* json-forwards.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "json-forwards.h"; sourceTree = "<group>"; };
+		700A7147205A647F00B518CD /* json.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = json.h; sourceTree = "<group>"; };
+		700A7149205A647F00B518CD /* SafeMessageBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SafeMessageBuffer.cpp; sourceTree = "<group>"; };
+		700A714A205A647F00B518CD /* jsoncpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = jsoncpp.cpp; sourceTree = "<group>"; };
 		DA54706C2047985E004FDA9F /* mac-client */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "mac-client"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA54706F2047985E004FDA9F /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		DA54707620479890004FDA9F /* BleCentral.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = BleCentral.mm; sourceTree = "<group>"; };
 		DA5470782047989C004FDA9F /* BleCentral.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BleCentral.h; sourceTree = "<group>"; };
 		DA54707A20479928004FDA9F /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
-		DAE361C42049D1410053ED2F /* include */ = {isa = PBXFileReference; lastKnownFileType = folder; path = include; sourceTree = "<group>"; };
 		DAE361C52049D1500053ED2F /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libsodium.a; sourceTree = "<group>"; };
 		DAE361CE2049D27B0053ED2F /* libclad.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libclad.a; sourceTree = "<group>"; };
 		DAE361D32049D4AE0053ED2F /* bleMessageProtocol.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = bleMessageProtocol.cpp; sourceTree = "<group>"; };
@@ -50,12 +69,18 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		700A7135205A639E00B518CD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DA5470692047985E004FDA9F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				DAE361C62049D1500053ED2F /* libsodium.a in Frameworks */,
-				DAE361CF2049D27B0053ED2F /* libclad.a in Frameworks */,
+				700A7152205A649800B518CD /* libclad.a in Frameworks */,
 				DA54707B20479928004FDA9F /* CoreBluetooth.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -63,6 +88,59 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		700A713C205A63BF00B518CD /* support */ = {
+			isa = PBXGroup;
+			children = (
+				700A7141205A647F00B518CD /* cpp */,
+			);
+			path = support;
+			sourceTree = "<group>";
+		};
+		700A7141205A647F00B518CD /* cpp */ = {
+			isa = PBXGroup;
+			children = (
+				700A7142205A647F00B518CD /* include */,
+				700A7148205A647F00B518CD /* source */,
+			);
+			name = cpp;
+			path = "../../../../../../victor-clad/tools/message-buffers/support/cpp";
+			sourceTree = "<group>";
+		};
+		700A7142205A647F00B518CD /* include */ = {
+			isa = PBXGroup;
+			children = (
+				700A7143205A647F00B518CD /* CLAD */,
+				700A7145205A647F00B518CD /* json */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		700A7143205A647F00B518CD /* CLAD */ = {
+			isa = PBXGroup;
+			children = (
+				700A7144205A647F00B518CD /* SafeMessageBuffer.h */,
+			);
+			path = CLAD;
+			sourceTree = "<group>";
+		};
+		700A7145205A647F00B518CD /* json */ = {
+			isa = PBXGroup;
+			children = (
+				700A7146205A647F00B518CD /* json-forwards.h */,
+				700A7147205A647F00B518CD /* json.h */,
+			);
+			path = json;
+			sourceTree = "<group>";
+		};
+		700A7148205A647F00B518CD /* source */ = {
+			isa = PBXGroup;
+			children = (
+				700A7149205A647F00B518CD /* SafeMessageBuffer.cpp */,
+				700A714A205A647F00B518CD /* jsoncpp.cpp */,
+			);
+			path = source;
+			sourceTree = "<group>";
+		};
 		DA5470632047985E004FDA9F = {
 			isa = PBXGroup;
 			children = (
@@ -77,6 +155,7 @@
 			isa = PBXGroup;
 			children = (
 				DA54706C2047985E004FDA9F /* mac-client */,
+				700A7138205A639E00B518CD /* libclad.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -87,7 +166,6 @@
 				DAE361D32049D4AE0053ED2F /* bleMessageProtocol.cpp */,
 				DAE361D42049D4AE0053ED2F /* bleMessageProtocol.h */,
 				DAE361C82049D1940053ED2F /* signals */,
-				DAE361C32049D12B0053ED2F /* sodium */,
 				DA54706F2047985E004FDA9F /* main.mm */,
 				DA5470782047989C004FDA9F /* BleCentral.h */,
 				DA54707620479890004FDA9F /* BleCentral.mm */,
@@ -105,14 +183,6 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		DAE361C32049D12B0053ED2F /* sodium */ = {
-			isa = PBXGroup;
-			children = (
-				DAE361C42049D1410053ED2F /* include */,
-			);
-			path = sodium;
-			sourceTree = "<group>";
-		};
 		DAE361C82049D1940053ED2F /* signals */ = {
 			isa = PBXGroup;
 			children = (
@@ -126,6 +196,7 @@
 		DAE361D92049DE4D0053ED2F /* clad */ = {
 			isa = PBXGroup;
 			children = (
+				700A713C205A63BF00B518CD /* support */,
 				DAE361E02049DEA00053ED2F /* externalInterface */,
 			);
 			path = clad;
@@ -145,7 +216,37 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXHeadersBuildPhase section */
+		700A7136205A639E00B518CD /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				700A714D205A647F00B518CD /* json.h in Headers */,
+				700A714C205A647F00B518CD /* json-forwards.h in Headers */,
+				700A714B205A647F00B518CD /* SafeMessageBuffer.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
 /* Begin PBXNativeTarget section */
+		700A7137205A639E00B518CD /* clad */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 700A7139205A639E00B518CD /* Build configuration list for PBXNativeTarget "clad" */;
+			buildPhases = (
+				700A7134205A639E00B518CD /* Sources */,
+				700A7135205A639E00B518CD /* Frameworks */,
+				700A7136205A639E00B518CD /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = clad;
+			productName = clad;
+			productReference = 700A7138205A639E00B518CD /* libclad.a */;
+			productType = "com.apple.product-type.library.static";
+		};
 		DA54706B2047985E004FDA9F /* mac-client */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = DA5470732047985E004FDA9F /* Build configuration list for PBXNativeTarget "mac-client" */;
@@ -157,6 +258,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				700A7151205A649300B518CD /* PBXTargetDependency */,
 			);
 			name = "mac-client";
 			productName = "mac-client";
@@ -172,6 +274,10 @@
 				LastUpgradeCheck = 0920;
 				ORGANIZATIONNAME = "Paul Aluri";
 				TargetAttributes = {
+					700A7137205A639E00B518CD = {
+						CreatedOnToolsVersion = 9.2;
+						ProvisioningStyle = Automatic;
+					};
 					DA54706B2047985E004FDA9F = {
 						CreatedOnToolsVersion = 9.2;
 						ProvisioningStyle = Automatic;
@@ -191,11 +297,21 @@
 			projectRoot = "";
 			targets = (
 				DA54706B2047985E004FDA9F /* mac-client */,
+				700A7137205A639E00B518CD /* clad */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		700A7134205A639E00B518CD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				700A714E205A647F00B518CD /* SafeMessageBuffer.cpp in Sources */,
+				700A714F205A647F00B518CD /* jsoncpp.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DA5470682047985E004FDA9F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -209,7 +325,37 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		700A7151205A649300B518CD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 700A7137205A639E00B518CD /* clad */;
+			targetProxy = 700A7150205A649300B518CD /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		700A713A205A639E00B518CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = BEJF9NAYCL;
+				EXECUTABLE_PREFIX = lib;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/../../../../victor-clad/tools/message-buffers/support/cpp/include";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		700A713B205A639E00B518CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = BEJF9NAYCL;
+				EXECUTABLE_PREFIX = lib;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/../../../../victor-clad/tools/message-buffers/support/cpp/include";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		DA5470712047985E004FDA9F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -316,13 +462,19 @@
 		DA5470742047985E004FDA9F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 6N4JN4E7V7;
-				HEADER_SEARCH_PATHS = "/Users/paul/Development/victor-code/victor/tools/message-buffers/support/cpp/include/**";
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/../../../../tools/message-buffers/support/cpp/include/**",
+					"$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/mac/include",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/mac/lib",
 				);
+				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/mac/lib/libsodium.a";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -330,13 +482,19 @@
 		DA5470752047985E004FDA9F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 6N4JN4E7V7;
-				HEADER_SEARCH_PATHS = "/Users/paul/Development/victor-code/victor/tools/message-buffers/support/cpp/include/**";
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/../../../../tools/message-buffers/support/cpp/include/**",
+					"$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/mac/include",
+				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/mac/lib",
 				);
+				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/mac/lib/libsodium.a";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -344,6 +502,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		700A7139205A639E00B518CD /* Build configuration list for PBXNativeTarget "clad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				700A713A205A639E00B518CD /* Debug */,
+				700A713B205A639E00B518CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		DA5470672047985E004FDA9F /* Build configuration list for PBXProject "mac-client" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
