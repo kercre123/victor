@@ -110,6 +110,7 @@ void app_recv_target(uint8_t length, const void* data) {
  */
 
 void user_custs1_connected() {
+  write_offset = 0;
   app_send_version();
   app_start();
 }
@@ -163,6 +164,12 @@ void user_custs1_ota_target_wr_ind_handler(ke_msg_id_t const msgid,
   write_offset += length;
 
   if (param->length & 3) {
+    // We didn't receive nearly enough data
+    if (write_offset < 0x34) {
+      write_offset = 0;
+      return ;
+    }
+
     // Erase upper memory (anti-hack)
     memset(&app_write_address[write_offset], 0, sizeof(ApplicationMap) - write_offset);
     xxtea((uint32_t*)app_location, write_offset / sizeof(uint32_t), (const uint32_t*)&xxtea_key);

@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "protocol.h"
 #include "animation.h"
 
 // Execution State
@@ -28,11 +27,13 @@ typedef struct {
   uint8_t index;
 } AnimationChannel;
 
-static AnimationFrame animation[MAX_KEYFRAMES];
-static AnimationFrame staging[MAX_KEYFRAMES];
 static AnimationChannel state[ANIMATION_CHANNELS];
 
+static AnimationFrame animation[MAX_KEYFRAMES];
+static AnimationFrame staging[MAX_KEYFRAMES];
+
 extern uint8_t intensity[ANIMATION_CHANNELS * COLOR_CHANNELS];
+static uint32_t div_tbl[0x100] = { 0xFFFFFFFF };
 
 static void setup_frame(int index, const AnimationFrame* frame) {
   AnimationChannel* channel = &state[index];
@@ -46,7 +47,7 @@ static void setup_frame(int index, const AnimationFrame* frame) {
   } else {
     channel->state = STATE_STATIC;
   }
-
+  
   // Initial color
   memcpy(&intensity[index * COLOR_CHANNELS], channel->current->colors, sizeof(channel->current->colors));
 }
@@ -54,6 +55,10 @@ static void setup_frame(int index, const AnimationFrame* frame) {
 void animation_init(void) {
   memset(&animation, 0, sizeof(animation));
   memset(&staging, 0, sizeof(staging));
+
+  for (int i = 1; i < 0x100; i++) {
+    div_tbl[i] = 0x1000000 / i;
+  }
 
   for (int i = 0; i < MAX_KEYFRAMES; i++) {
     animation[i].next = &animation[0];
@@ -65,38 +70,37 @@ void animation_init(void) {
 }
 
 void animation_frames(const FrameCommand* frames) {
-  AnimationFrame* target = &staging[frames->flags * FRAMES_PER_COMMAND];
   const KeyFrame* source = frames->frames;
-
+  uint8_t index = frames->flags;
   
-  for (int i = 0; i < FRAMES_PER_COMMAND; i++, target++, source++) {
+  for (int i = 0; i < FRAMES_PER_COMMAND; i++, source++) {
+    AnimationFrame* target = &staging[index++];
+
+    // Unpack our solid color
+    memcpy(target->colors, source->colors, sizeof(target->colors));
+
     // Animation settings
     target->decay = source->decay;
     target->hold = source->hold;
-
-    // Unpack our solid color
-    target->colors[0] = (source->color & 0xF800) * 0x21 >> 13;
-    target->colors[1] = (source->color & 0x07E0) * 0x41 >>  9;
-    target->colors[2] = (source->color & 0x001F) * 0x21 >>  2;
+    target->next = &animation[source->link];
   }
 }
 
 void animation_index(const MapCommand* map) {
-  AnimationFrame* target = animation;
   memcpy(animation, staging, sizeof(animation));
-  
-  for (int i = 0; i < MAX_KEYFRAMES / 2; i++) {
-    uint8_t index = map->frame_map[i];
-    (target++)->next = &animation[index & 0xF];
-    (target++)->next = &animation[index >> 4];
-  }
 
-  for (int i = 0, c = 0; c < 4; i += 4, c++) {
-    setup_frame(c, &animation[(map->initial >> i) & 0xF]);
+  for (int c = 0; c < 4; c++) {
+    setup_frame(c, &animation[map->initial[c]]);
   }
 }
 
 void animation_tick(void) {
+  static const int DIVIDER = 6;
+  static int overflow = 0;
+
+  if (++overflow < DIVIDER) return ;
+  overflow = 0;
+
   uint8_t* target = intensity;
   
   for (int i = 0; i < ANIMATION_CHANNELS; i++) {
@@ -106,11 +110,10 @@ void animation_tick(void) {
     switch (channel->state) {
     case STATE_DECAY:
       {
-        int lerp = channel->index * 0x100 / current->decay;
+        int lerp = channel->index * div_tbl[current->decay];
         
         for (int c = 0; c < COLOR_CHANNELS; c++) {
-          int value = (current->colors[c] * (0x100 - lerp)) + (current->next->colors[c] * lerp);
-          *(target++) = value >> 8;
+          *(target++) = ((current->colors[c] * (0x1000000 - lerp)) + (current->next->colors[c] * lerp)) >> 24;
         }
       }
 

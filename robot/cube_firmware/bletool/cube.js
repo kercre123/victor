@@ -23,14 +23,14 @@ class Cube extends EventEmitter {
       	this._ota_target = char;
       	break ;
     	case APP_VERSION_UUID:
-    		char.on('data', (data) => this._versionData(data));
+    		char.on('data', (data) =>  this.emit('version', data.toString('utf8')));
     		char.read();
       	break ;
     	case APP_WRITE_UUID:
       	this._app_write = char;
       	break ;
     	case APP_READ_UUID:
-      	char.on('data', (data) => this._appRead(data));
+      	char.on('data', (data) => this.emit('data', data));
       	break ;
 			}
     });
@@ -40,43 +40,25 @@ class Cube extends EventEmitter {
     });
 	}
 
-	_versionData(data) {
-    this.emit('version', data.toString('utf8'));
-	}
-
-	_appRead(data) {
-		this.emit('data', data);
-	}
-
 	send(packet) {
 		this._app_write.write(packet);
 	}
 
-	upload(data) {
+  send_ota(packet) {
     return new Promise((accept, reject) => {
-  		let offset = 0x10;
-
-  		let next = (err) => {
-  			if (err) {
-  				console.log(err);
-  				return ;
-  			}
-
-  			if (offset < data.length) {
-  				let packet = data.slice(offset, offset + MAX_BYTES_PER_PACKET);
-          offset += packet.length;
-
-          console.log(packet);
-  				this._ota_target.write(packet, false, next);
-  			} else {
-  				accept();
-  			}
-  		}
-
-      // send an 'erase'
-  		//this._ota_target.write(new Buffer([0xFF]), false, next);
-      next();
+      console.log(packet);
+      this._ota_target.write(packet, false, accept);
     });
+  }
+
+  async upload(data) {
+		let offset = 0x10;
+
+		while (offset < data.length) {
+      const packet = data.slice(offset, offset + MAX_BYTES_PER_PACKET);
+      await this.send_ota(packet);
+      offset += packet.length;
+		}
   }
 }
 

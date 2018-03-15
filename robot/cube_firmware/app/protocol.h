@@ -1,12 +1,14 @@
 #ifndef __PROTOCOL_H
 #define __PROTOCOL_H
 
-#pragma anon_unions
+#ifdef __ARMCC_VERSION
+  #pragma anon_unions
+#endif
 
-#define MAX_KEYFRAMES 16
+#define MAX_KEYFRAMES 256
 #define ANIMATION_CHANNELS 4
 #define COLOR_CHANNELS 3
-#define FRAMES_PER_COMMAND 4
+#define FRAMES_PER_COMMAND 3
 
 enum {
   COMMAND_LIGHT_INDEX = 0,
@@ -21,13 +23,14 @@ typedef uint8_t CubeCommand;
 typedef struct {
   CubeCommand command;
   uint8_t flags;
-  uint16_t data[10];
+  uint8_t data[20];
 } BaseCommand;
 
 typedef struct {
-  uint16_t color;
+  uint8_t colors[3];
   uint8_t hold;
   uint8_t decay;
+  uint8_t link;
 } KeyFrame;
 
 typedef struct {
@@ -49,8 +52,7 @@ typedef struct {
 typedef struct {
   CubeCommand command;
   uint8_t flags;
-  uint16_t initial;  // Starting indexes for channels 0..3
-  uint8_t  frame_map[MAX_KEYFRAMES / 2]; 
+  uint8_t initial[ANIMATION_CHANNELS];
 } MapCommand;
 
 #endif
