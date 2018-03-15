@@ -6,6 +6,7 @@
 
 #ifdef __cplusplus
 
+#pragma anon_unions
 #include "../../../include/anki/cozmo/shared/factory/emr.h" //common emr structure
 
 #define EMR_FIELD_OFS(fieldname)  \
