@@ -1,3 +1,17 @@
+/**
+ * File: externalCommsCladHandler.h
+ *
+ * Author: Paul Aluri (@paluri)
+ * Created: 3/15/2018
+ *
+ * Description: File for handling clad messages from
+ * external devices and processing them into listenable
+ * events.
+ *
+ * Copyright: Anki, Inc. 2018
+ *
+ **/
+
 #include "signals/simpleSignal.hpp"
 #include "clad/externalInterface/messageExternalComms.h"
 
@@ -58,6 +72,7 @@ namespace Switchboard {
       const size_t unpackSize = extComms.Unpack(buffer, length);
       if(unpackSize != length) {
         // bugs
+        Log::Write("externalCommsCladHandler - Somehow our bytes didn't pack to the proper size.");
       }
       
       if(extComms.GetTag() == Anki::Victor::ExternalComms::ExternalCommsTag::RtsConnection) {
@@ -128,6 +143,7 @@ namespace Switchboard {
 
       if(packedSize != msg.Size()) {
         // bugs
+        Log::Write("externalCommsCladHandler - Somehow our bytes didn't pack to the proper size.");
       }
 
       return messageData;
