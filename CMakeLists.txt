@@ -173,7 +173,7 @@ else()
   add_subdirectory("osState")
   add_subdirectory("cannedAnimLib")
   add_subdirectory("animProcess")
-  add_subdirectory("webServerProcess")
+  #add_subdirectory("webServerProcess")
   add_subdirectory("lib/signalEssence")
   add_subdirectory("platform")
 
@@ -181,9 +181,9 @@ else()
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
   )
 
-  target_include_directories(victor_web_library PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
-  )
+  # target_include_directories(victor_web_library PRIVATE
+  #   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
+  # )
 
   add_subdirectory("robot")
 

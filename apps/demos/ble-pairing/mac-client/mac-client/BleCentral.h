@@ -47,7 +47,7 @@ enum RtsState {
   
   enum RtsState _rtsState;
   
-  bool _victorIsPairing;
+  NSMutableDictionary* _victorsDiscovered;
   bool _connecting;
 }
 

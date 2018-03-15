@@ -45,6 +45,7 @@
   NSLog(@"data: %@", publicKey);
   
   //[self resetDefaults];
+  _victorsDiscovered = [[NSMutableDictionary alloc] init];
   
   return [super init];
 }
@@ -333,7 +334,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   NSLog(@"Remote key data: %@", remoteKeyData);
   NSLog(@"Remote key: %@", remoteKey);
   
-  if([self HasSavedSession:remoteKey] && !_victorIsPairing) {
+  if([self HasSavedSession:remoteKey] && !([[_victorsDiscovered objectForKey:_peripheral.name] boolValue])) {
     std::array<uint8_t, crypto_kx_PUBLICKEYBYTES> publicKeyArray;
     memcpy(std::begin(publicKeyArray), [[self GetPublicKey] bytes], crypto_kx_PUBLICKEYBYTES);
     
@@ -487,7 +488,7 @@ didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic
   }
   
   // set global bool
-  _victorIsPairing = isPairing;
+  [_victorsDiscovered setValue:[NSNumber numberWithBool:isPairing] forKey:peripheral.name];
   
   NSString* savedName = [[NSUserDefaults standardUserDefaults] stringForKey:@"victorName"];
   knownName = [savedName isEqualToString:peripheral.name];
