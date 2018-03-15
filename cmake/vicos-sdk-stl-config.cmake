@@ -9,9 +9,9 @@
 #   find_package(ndk-stl REQUIRED PATHS ".")
 
 function(configure_shared_stl lib_path so_lib)
-  message(STATUS "Configuring STL ${so_base} for vicos")
+  message(STATUS "Configuring STL ${so_lib} for vicos")
   configure_file(
-    "${VICOS_SDK}/${lib_path}/libc++.so.1"
+    "${VICOS_SDK}/${lib_path}/${so_lib}"
     "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${so_lib}" 
     COPYONLY)
 endfunction()
