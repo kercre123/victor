@@ -71,7 +71,8 @@ static void dbg_test_all_(void)
   ConsolePrintf("\n=====================================================================\n");
 }
 
-static void dbg_test_emr_(void)
+static void dbg_test_emr_(bool blank_only=0, bool dont_clear=0);
+static void dbg_test_emr_(bool blank_only, bool dont_clear)
 {
   static uint32_t m_emr[256]; int idx;
   
@@ -83,6 +84,8 @@ static void dbg_test_emr_(void)
   
   ConsolePrintf("======== EMR Blank =============\n");
   Timer::delayMs(1000);
+  if( blank_only )
+    return;
   
   //set EMR to random values, store locally for compare
   srand(Timer::get());
@@ -110,6 +113,8 @@ static void dbg_test_emr_(void)
   //results!
   ConsolePrintf("======== EMR test %s: %u errors =============\n", mismatch > 0 ? "FAILED" : "passed", mismatch);
   Timer::delayMs(1000);
+  if( dont_clear )
+    return;
   
   //reset EMR to blank
   for(idx=0; idx < 256; idx++)
@@ -121,16 +126,15 @@ static void dbg_test_emr_(void)
   Timer::delayMs(1000);
 }
 
-static int m_debug[4];
-static void run_debug(void)
+static void run_debug(int arg[])
 {
   srand(Timer::get());
-  ConsolePrintf("DEBUG %i %i %i %i\n", m_debug[0], m_debug[1], m_debug[2], m_debug[3]);
+  ConsolePrintf("DEBUG %i %i %i %i\n", arg[0], arg[1], arg[2], arg[3]);
   
-  if( m_debug[0] == 1 )
+  if( arg[0] == 1 )
   {
-    int nloops = m_debug[1];
-    int rlim = m_debug[2]<=0 ? 255 : m_debug[2]&0xff; //limit for random generator
+    int nloops = arg[1];
+    int rlim = arg[2]<=0 ? 255 : arg[2]&0xff; //limit for random generator
     ConsolePrintf("===== STRESS TEST COMMS: %i loops, rlim=%i =====\n", nloops, rlim);
     //Timer::delayMs(1000);
     try {
@@ -155,16 +159,17 @@ static void run_debug(void)
     ConsolePrintf("===== DONE =====\n");
   }
   
-  if( m_debug[0] == 2 )
+  if( arg[0] == 2 )
     dbg_test_all_();
   
-  if( m_debug[0] == 3 )
-    dbg_test_emr_();
+  if( arg[0] == 3 )
+    dbg_test_emr_( arg[1], arg[2] );
 }
 
 const char* DBG_cmd_substitution(const char *line, int len)
 {
   static char buf[25];
+  int dbgArg[4];
   
   if( !strcmp(line, "esn") )
     return ">>esn 00 00 00 00 00 00";
@@ -182,9 +187,9 @@ const char* DBG_cmd_substitution(const char *line, int len)
   }
   if( !strncmp(line,"debug",5) ) {
     int nargs = cmdNumArgs((char*)line);
-    for(int x=0; x<sizeof(m_debug)/4; x++)
-      m_debug[x] = nargs > x+1 ? cmdParseInt32(cmdGetArg((char*)line,x+1) ) : 0;
-    try { run_debug(); } catch(int e) {}
+    for(int x=0; x<sizeof(dbgArg)/4; x++)
+      dbgArg[x] = nargs > x+1 ? cmdParseInt32(cmdGetArg((char*)line,x+1) ) : 0;
+    try { run_debug(dbgArg); } catch(int e) {}
     return "\n";
   }
   return 0;
