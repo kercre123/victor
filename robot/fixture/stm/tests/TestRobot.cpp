@@ -17,6 +17,110 @@
 //                  Debug
 //-----------------------------------------------------------------------------
 
+static void dbg_test_all_(void)
+{
+  //test all supported commands - make sure they return a valid response
+  ConsolePrintf("\n=====================================================================\n");
+  
+  cmdRobotEsn(); //ConsolePutChar('\n');
+  cmdRobotBsv(); //ConsolePutChar('\n');
+  cmdRobotEsn(); //ConsolePutChar('\n');
+  cmdRobotBsv(); //ConsolePutChar('\n');
+  cmdRobotEsn(); //ConsolePutChar('\n');
+  
+  cmdRobotGet(1, 1, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
+  cmdRobotGet(3, 3, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
+  cmdRobotGet(5, 3, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
+  cmdRobotGet(1, 1, CCC_SENSOR_CLIFF); ConsolePutChar('\n');
+  cmdRobotGet(1, 1, CCC_SENSOR_MOT_LEFT); ConsolePutChar('\n');
+  cmdRobotGet(1, 1, CCC_SENSOR_MOT_RIGHT); ConsolePutChar('\n');
+  cmdRobotGet(1, 1, CCC_SENSOR_MOT_LIFT); ConsolePutChar('\n');
+  cmdRobotGet(1, 1, CCC_SENSOR_MOT_HEAD); ConsolePutChar('\n');
+  cmdRobotGet(1, 1, CCC_SENSOR_PROX_TOF); ConsolePutChar('\n');
+  cmdRobotGet(1, 1, CCC_SENSOR_BTN_TOUCH); ConsolePutChar('\n');
+  cmdRobotGet(1, 1, CCC_SENSOR_RSSI); ConsolePutChar('\n');
+  cmdRobotGet(1, 1, CCC_SENSOR_RX_PKT); ConsolePutChar('\n');
+  
+  cmdRobotMot(100, 20, CCC_SENSOR_MOT_LEFT, 127, 0, 0, 0); ConsolePutChar('\n');
+  cmdRobotMot(100, 20, CCC_SENSOR_MOT_RIGHT, 0, -127, 0, 0); ConsolePutChar('\n');
+  cmdRobotMot(50,  15, CCC_SENSOR_MOT_LIFT, 0, 0, 100, 0); ConsolePutChar('\n');
+  cmdRobotMot(75,  20, CCC_SENSOR_MOT_LIFT, 0, 0, -100, 0); ConsolePutChar('\n');
+  cmdRobotMot(50,  20, CCC_SENSOR_MOT_HEAD, 0, 0, 0, 100); ConsolePutChar('\n');
+  cmdRobotMot(75,  20, CCC_SENSOR_MOT_HEAD, 0, 0, 0, -100); ConsolePutChar('\n');
+  
+  uint32_t esn = cmdRobotGmr(0); //ConsolePutChar('\n');
+  uint32_t hw_ver = cmdRobotGmr(1); //ConsolePutChar('\n');
+  uint32_t model = cmdRobotGmr(2); //ConsolePutChar('\n');
+  uint32_t lot_code = cmdRobotGmr(3); //ConsolePutChar('\n');
+  
+  /*/test set/get some EMR fields
+  srand(Timer::get());
+  for(uint8_t idx = 0; idx < 8; idx++)
+  {
+    uint32_t val = cmdRobotGmr(idx); //ConsolePutChar('\n');
+    val = 0x80000000 | rand(); //((rand()&0xffff) << 16) | (rand()&0xffff);
+    cmdRobotSmr(idx, val);
+    uint32_t val2 = cmdRobotGmr(idx);
+    cmdRobotSmr(idx, 0);
+    
+    if( val != val2 )
+      ConsolePrintf("========MISMATCH========\n");
+    ConsolePutChar('\n');
+  }//-*/
+  
+  ConsolePrintf("\n=====================================================================\n");
+}
+
+static void dbg_test_emr_(void)
+{
+  static uint32_t m_emr[256]; int idx;
+  
+  ConsolePrintf("\n======== Full EMR Test =============\n");
+  
+  //reset EMR to blank
+  for(idx=0; idx < 256; idx++)
+    cmdRobotSmr(idx, 0);
+  
+  ConsolePrintf("======== EMR Blank =============\n");
+  Timer::delayMs(1000);
+  
+  //set EMR to random values, store locally for compare
+  srand(Timer::get());
+  for(idx=0; idx < 256; idx++) {
+    uint32_t val = ((rand()&0xffff) << 16) | (rand()&0xffff);
+    if( idx == 4 || idx == 5 || idx == 6 ) //PLAYPEN_READY_FLAG, PLAYPEN_PASSED_FLAG, PACKED_OUT_FLAG
+      val = 0; //keep 0 to prevent strange robot behavior
+    cmdRobotSmr(idx, val);
+    m_emr[idx] = val;
+  }
+  
+  ConsolePrintf("======== EMR Set Ok =============\n");
+  Timer::delayMs(1000);
+  
+  //readback verify
+  int mismatch = 0;
+  for(idx=0; idx < 256; idx++) {
+    uint32_t val = cmdRobotGmr(idx);
+    if( val != m_emr[idx] ) {
+      mismatch++;
+      ConsolePrintf("-------> EMR MISMATCH @[%u]: %08x != %08x\n", idx, val, m_emr[idx]);
+    }
+  }
+  
+  //results!
+  ConsolePrintf("======== EMR test %s: %u errors =============\n", mismatch > 0 ? "FAILED" : "passed", mismatch);
+  Timer::delayMs(1000);
+  
+  //reset EMR to blank
+  for(idx=0; idx < 256; idx++)
+    cmdRobotSmr(idx, 0);
+  
+  //results (again)
+  ConsolePrintf("======== EMR Blank =============\n");
+  ConsolePrintf("======== EMR test %s: %u errors =============\n", mismatch > 0 ? "FAILED" : "passed", mismatch);
+  Timer::delayMs(1000);
+}
+
 static int m_debug[4];
 static void run_debug(void)
 {
@@ -50,6 +154,12 @@ static void run_debug(void)
     }
     ConsolePrintf("===== DONE =====\n");
   }
+  
+  if( m_debug[0] == 2 )
+    dbg_test_all_();
+  
+  if( m_debug[0] == 3 )
+    dbg_test_emr_();
 }
 
 const char* DBG_cmd_substitution(const char *line, int len)
@@ -131,116 +241,6 @@ void TestRobotInfo(void)
   //-*/
 }
 
-void DBG_RobotCmdTest(void)
-{
-  //test all supported commands - make sure they return a valid response
-  if( g_fixmode > FIXMODE_ROBOT0 && g_fixmode <= FIXMODE_ROBOT2 )
-  {
-    ConsolePrintf("\n=====================================================================\n");
-    
-    cmdRobotEsn(); //ConsolePutChar('\n');
-    cmdRobotBsv(); //ConsolePutChar('\n');
-    cmdRobotEsn(); //ConsolePutChar('\n');
-    cmdRobotBsv(); //ConsolePutChar('\n');
-    cmdRobotEsn(); //ConsolePutChar('\n');
-    
-    cmdRobotGet(1, 1, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
-    cmdRobotGet(3, 3, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
-    cmdRobotGet(5, 3, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
-    cmdRobotGet(1, 1, CCC_SENSOR_CLIFF); ConsolePutChar('\n');
-    cmdRobotGet(1, 1, CCC_SENSOR_MOT_LEFT); ConsolePutChar('\n');
-    cmdRobotGet(1, 1, CCC_SENSOR_MOT_RIGHT); ConsolePutChar('\n');
-    cmdRobotGet(1, 1, CCC_SENSOR_MOT_LIFT); ConsolePutChar('\n');
-    cmdRobotGet(1, 1, CCC_SENSOR_MOT_HEAD); ConsolePutChar('\n');
-    cmdRobotGet(1, 1, CCC_SENSOR_PROX_TOF); ConsolePutChar('\n');
-    cmdRobotGet(1, 1, CCC_SENSOR_BTN_TOUCH); ConsolePutChar('\n');
-    cmdRobotGet(1, 1, CCC_SENSOR_RSSI); ConsolePutChar('\n');
-    cmdRobotGet(1, 1, CCC_SENSOR_RX_PKT); ConsolePutChar('\n');
-    
-    cmdRobotMot(100, 20, CCC_SENSOR_MOT_LEFT, 127, 0, 0, 0); ConsolePutChar('\n');
-    cmdRobotMot(100, 20, CCC_SENSOR_MOT_RIGHT, 0, -127, 0, 0); ConsolePutChar('\n');
-    cmdRobotMot(50,  15, CCC_SENSOR_MOT_LIFT, 0, 0, 100, 0); ConsolePutChar('\n');
-    cmdRobotMot(75,  20, CCC_SENSOR_MOT_LIFT, 0, 0, -100, 0); ConsolePutChar('\n');
-    cmdRobotMot(50,  20, CCC_SENSOR_MOT_HEAD, 0, 0, 0, 100); ConsolePutChar('\n');
-    cmdRobotMot(75,  20, CCC_SENSOR_MOT_HEAD, 0, 0, 0, -100); ConsolePutChar('\n');
-    
-    uint32_t esn = cmdRobotGmr(0); //ConsolePutChar('\n');
-    uint32_t hw_ver = cmdRobotGmr(1); //ConsolePutChar('\n');
-    uint32_t model = cmdRobotGmr(2); //ConsolePutChar('\n');
-    uint32_t lot_code = cmdRobotGmr(3); //ConsolePutChar('\n');
-    
-    /*/test set/get some EMR fields
-    srand(Timer::get());
-    for(uint8_t idx = 0; idx < 8; idx++)
-    {
-      uint32_t val = cmdRobotGmr(idx); //ConsolePutChar('\n');
-      val = 0x80000000 | rand(); //((rand()&0xffff) << 16) | (rand()&0xffff);
-      cmdRobotSmr(idx, val);
-      uint32_t val2 = cmdRobotGmr(idx);
-      cmdRobotSmr(idx, 0);
-      
-      if( val != val2 )
-        ConsolePrintf("========MISMATCH========\n");
-      ConsolePutChar('\n');
-    }//-*/
-    
-    ConsolePrintf("\n=====================================================================\n");
-  }
-}
-
-void DBG_RobotEMRTest(void)
-{
-  static uint32_t m_emr[256]; int idx;
-  
-  if( g_fixmode > FIXMODE_ROBOT0 && g_fixmode <= FIXMODE_ROBOT2 )
-  {
-    ConsolePrintf("\n======== Full EMR Test =============\n");
-    
-    //reset EMR to blank
-    for(idx=0; idx < 256; idx++)
-      cmdRobotSmr(idx, 0);
-    
-    ConsolePrintf("======== EMR Blank =============\n");
-    Timer::delayMs(1000);
-    
-    //set EMR to random values, store locally for compare
-    srand(Timer::get());
-    for(idx=0; idx < 256; idx++) {
-      uint32_t val = ((rand()&0xffff) << 16) | (rand()&0xffff);
-      if( idx == 4 || idx == 5 || idx == 6 ) //PLAYPEN_READY_FLAG, PLAYPEN_PASSED_FLAG, PACKED_OUT_FLAG
-        val = 0; //keep 0 to prevent strange robot behavior
-      cmdRobotSmr(idx, val);
-      m_emr[idx] = val;
-    }
-    
-    ConsolePrintf("======== EMR Set Ok =============\n");
-    Timer::delayMs(1000);
-    
-    //readback verify
-    int mismatch = 0;
-    for(idx=0; idx < 256; idx++) {
-      uint32_t val = cmdRobotGmr(idx);
-      if( val != m_emr[idx] ) {
-        mismatch++;
-        ConsolePrintf("-------> EMR MISMATCH @[%u]: %08x != %08x\n", idx, val, m_emr[idx]);
-      }
-    }
-    
-    //results!
-    ConsolePrintf("======== EMR test %s: %u errors =============\n", mismatch > 0 ? "FAILED" : "passed", mismatch);
-    Timer::delayMs(1000);
-    
-    //reset EMR to blank
-    for(idx=0; idx < 256; idx++)
-      cmdRobotSmr(idx, 0);
-    
-    //results (again)
-    ConsolePrintf("======== EMR Blank =============\n");
-    ConsolePrintf("======== EMR test %s: %u errors =============\n", mismatch > 0 ? "FAILED" : "passed", mismatch);
-    Timer::delayMs(1000);
-  }
-}
-
 //read battery voltage
 int robot_get_battVolt100x(void)
 {
@@ -261,6 +261,10 @@ int robot_get_battVolt100x(void)
   //return vBatFilt100x; //return filtered vBat
   return -1;
 }
+
+//-----------------------------------------------------------------------------
+//                  Recharge
+//-----------------------------------------------------------------------------
 
 enum {
   RECHARGE_STATUS_OK = 0,
@@ -480,6 +484,10 @@ void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
   throw ERROR_BAT_CHARGER;
 }
 
+//-----------------------------------------------------------------------------
+//                  Get Tests
+//-----------------------------------------------------------------------------
+
 TestFunction* TestRobotInfoGetTests(void)
 {
   static TestFunction m_tests[] = {
@@ -500,23 +508,23 @@ TestFunction* TestRobot0GetTests(void)
   return m_tests;
 }
 
+void DBG_test_all(void) { dbg_test_all_(); }
 TestFunction* TestRobot1GetTests(void)
 {
   static TestFunction m_tests[] = {
     TestRobotInfo,
-    DBG_RobotCmdTest,
-    //ChargeTest,
+    DBG_test_all,
     NULL,
   };
   return m_tests;
 }
 
+void DBG_test_emr(void) { dbg_test_emr_(); }
 TestFunction* TestRobot2GetTests(void)
 {
   static TestFunction m_tests[] = {
     TestRobotInfo,
-    DBG_RobotEMRTest,
-    //ChargeTest,
+    DBG_test_emr,
     NULL,
   };
   return m_tests;
