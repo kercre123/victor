@@ -182,7 +182,7 @@ void Daemon::HandleOtaUpdateProgress() {
       return;  
     }
 
-    Log::Write("Downloaded %d/%d bytes.", progressVal, expectedVal);
+    Log::Write("Downloaded %llu/%llu bytes.", progressVal, expectedVal);
     _securePairing->SendOtaProgress(0, progressVal, expectedVal);
   }
 }
