@@ -9,18 +9,12 @@ include(sodium)
 
 anki_build_cxx_executable(vic-switchboard ${ANKI_SRCLIST_DIR})
 
-target_compile_options(vic-switchboard
-PRIVATE
-  -std=c14 # needed for make_unique
-  #-Wl,-rpath=${vicos_root}/sysroot/usr/lib
-)
-
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
   
 set(PLATFORM_LIBS
-  #log
+  log
   c
 )
 
@@ -49,11 +43,6 @@ PRIVATE
 target_compile_definitions(vic-switchboard
   PRIVATE
   ${PLATFORM_COMPILE_DEFS}
-)
-
-target_compile_options(vic-switchboard
-  PRIVATE
-  -Wno-error
 )
 
 target_include_directories(vic-switchboard
