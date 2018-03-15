@@ -212,8 +212,8 @@ int Daemon::GetOtaProgress(uint64_t* progressVal, uint64_t* expectedVal) {
   char* progressEndptr;
   char* expectedEndptr;
 
-  long int progressLong = std::strtol(progress.c_str(), &progressEndptr, 10);
-  long int expectedLong = std::strtol(expected.c_str(), &expectedEndptr, 10);
+  long long int progressLong = std::strtoll(progress.c_str(), &progressEndptr, 10);
+  long long int expectedLong = std::strtoll(expected.c_str(), &expectedEndptr, 10);
 
   if(progressEndptr == progress.c_str()) {
     progressLong = 0;
