@@ -47,7 +47,7 @@ namespace {
 
   const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
   const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
-  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone7/temp";
+  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone0/temp";
   const char* kMACAddressFile = "/sys/class/net/wlan0/address";
   const char* kRecoveryModeFile = "/data/unbrick";
   
