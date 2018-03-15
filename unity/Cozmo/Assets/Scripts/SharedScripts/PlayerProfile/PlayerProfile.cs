@@ -76,7 +76,10 @@ namespace DataPersistence {
 
     // $phys DAS global
     public string RobotPhysicalId;
-
+    
+    // Track the number of attempts the device has made at the initial loading of resources
+    public int NumLoadingAttempts = 0;
+        
     public PlayerProfile() {
       FirstTimeUserFlow = true;
       DataCollectionEnabled = true;
@@ -119,6 +122,9 @@ namespace DataPersistence {
       MostRecentNotificationClicked = null;
       NumTimesToolTipNotifTapped = 0;
       WhatsNewFeaturesSeen = new List<string>();
+#if UNITY_ANDROID && !UNITY_EDITOR
+      NumLoadingAttempts = 0;
+#endif
     }
   }
 }

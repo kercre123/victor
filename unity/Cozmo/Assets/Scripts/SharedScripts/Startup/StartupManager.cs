@@ -166,6 +166,7 @@ public class StartupManager : MonoBehaviour {
 #endif
 
     Screen.orientation = ScreenOrientation.LandscapeLeft;
+    
     Localization.LoadLocaleAndCultureInfo(DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.OverrideLanguage,
                                           DataPersistence.DataPersistenceManager.Instance.Data.DebugPrefs.LanguageSettingOverride);
 
@@ -717,11 +718,34 @@ public class StartupManager : MonoBehaviour {
 
     Debug.Log("Starting resource extraction");
 
+
+    
     // define how many parallel loads we allow
     // in the results of my testing, 8 was the smallest number at which we basically didn't get any faster
     // by increasing the number any higher (was ~33% faster than 4, roughly same speed as 16)
-    const int maxLoadCount = 8;
-
+    int maxLoadCount;
+    // Sam C. 14 March 2018 - COZMO-16548
+    // After the Unity 2017 upgrade, some devices are crashing during loading due to a bug in Unity's WWW class
+    // when multiple files are being loaded simultaneously. The crash isn't guaranteed, but the probability of it happening
+    // increases with the number of simultaneous loads happening. We'll give the app 2 chances at loading at faster speeds
+    // before we drop down to single threaded loading. 
+    // This counter is reset once we've successfully loaded, so future load attempts (which will only copy new/updated files)
+    // aren't impacted, on the chance this bug gets fixed.
+    switch (DataPersistenceManager.Instance.Data.DefaultProfile.NumLoadingAttempts) {
+      case 0:
+        maxLoadCount = 8;
+        break;
+      case 1:
+        maxLoadCount = 3; // Magic number from testing
+        break;
+      default:
+        maxLoadCount = 1;
+        break;
+    }
+    
+    DataPersistenceManager.Instance.Data.DefaultProfile.NumLoadingAttempts++;
+    DataPersistenceManager.Instance.Save();
+    
     float totalFiles = (float)filesToLoad.Count;
     LinkedList<LoadWrapper> wwws = new LinkedList<LoadWrapper>();
     while (filesToLoad.Count > 0 || wwws.Count > 0) {
@@ -752,7 +776,11 @@ public class StartupManager : MonoBehaviour {
     }
 
     progressUpdater(1.0f);
-
+    
+    // Reset counter so that if the OBB updates we don't force slow loading
+    DataPersistenceManager.Instance.Data.DefaultProfile.NumLoadingAttempts = 0;
+    DataPersistenceManager.Instance.Save();
+    
     Debug.Log("Done with resource extraction");
 
     resourcesWWW.Dispose();
