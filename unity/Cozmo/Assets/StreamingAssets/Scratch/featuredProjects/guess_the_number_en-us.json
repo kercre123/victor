@@ -9,7 +9,7 @@
             "currentCostume": 0,
             "direction": 90,
             "draggable": false,
-            "id": "#oHCHvVxBfOCD*U7=3)Y",
+            "id": "VVH_7J;a=z#n3yRmbh)L",
             "isStage": true,
             "lists": {},
             "name": "Stage",
@@ -159,7 +159,7 @@
                     "id": "})@_[V6faFP/HGW^2Qi#",
                     "name": "number guess",
                     "type": "",
-                    "value": 64
+                    "value": 76
                 },
                 "~S9R6L^F[.MO15G:THcj": {
                     "id": "~S9R6L^F[.MO15G:THcj",
@@ -257,8 +257,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 388,
-                    "y": 3142
+                    "x": 392.2705882352941,
+                    "y": 3321.364705882353
                 },
                 "$c)BlebE;rL@df[`ZJ9y": {
                     "fields": {},
@@ -376,8 +376,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 389,
-                    "y": 1655
+                    "x": 390.4235294117647,
+                    "y": 1875.6470588235295
                 },
                 "(s6gY6~pRl?X@g/i8u1w": {
                     "fields": {
@@ -486,8 +486,8 @@
                     "parent": "B.LiYT@@57-lPv-op[g%",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "-111",
-                    "y": "1994"
+                    "x": 880.8,
+                    "y": 2426.3176470588232
                 },
                 "+.}UkpYDdzvo1|SMY+|u": {
                     "fields": {
@@ -565,8 +565,8 @@
                     "parent": "6x5?!HPfVG-ea_/?x!R=",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "-130",
-                    "y": "934"
+                    "x": 942.1647058823529,
+                    "y": 1378.8705882352936
                 },
                 "-$;If}w{9c8FhMPg*gY=": {
                     "fields": {
@@ -670,8 +670,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 392,
-                    "y": 758
+                    "x": 397.6941176470588,
+                    "y": 869.035294117647
                 },
                 ".Al-C12PZv`BD;%-(zLy": {
                     "fields": {
@@ -941,8 +941,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 388,
-                    "y": 683
+                    "x": 390.84705882352944,
+                    "y": 786.9176470588235
                 },
                 "1x*I:xMM?q1]`wZ8z@L6": {
                     "fields": {},
@@ -1174,8 +1174,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 389,
-                    "y": 1730
+                    "x": 386.15294117647056,
+                    "y": 1956.3411764705882
                 },
                 "6rg/@R9]8.6^{vG$WMdx": {
                     "fields": {
@@ -1204,7 +1204,7 @@
                             "shadow": null
                         },
                         "SUBSTACK": {
-                            "block": "xi[cqtCpm-d]1SOL+R^2",
+                            "block": "d[:X3*,WPDy($LFq7R~B",
                             "name": "SUBSTACK",
                             "shadow": null
                         },
@@ -1216,11 +1216,11 @@
                     },
                     "next": null,
                     "opcode": "control_if_else",
-                    "parent": "d[:X3*,WPDy($LFq7R~B",
+                    "parent": "jz~qv(}1vm!_5_|?`%)6",
                     "shadow": false,
                     "topLevel": false,
-                    "x": 821.3999999999999,
-                    "y": 728.0941176470589
+                    "x": 809.4352941176471,
+                    "y": 1320.8588235294117
                 },
                 "6{/EyPW4c1_v`o:`X)N2": {
                     "fields": {
@@ -1553,7 +1553,7 @@
                     },
                     "next": "DauzG_R-(i9z#}@bovxH",
                     "opcode": "event_broadcast_with_broadcast_input",
-                    "parent": "B.LiYT@@57-lPv-op[g%",
+                    "parent": "yX5[3bgEGdcRVV(UFs?d",
                     "shadow": false,
                     "topLevel": false,
                     "x": 874.330588235294,
@@ -1953,7 +1953,7 @@
                             "shadow": null
                         },
                         "SUBSTACK": {
-                            "block": ":P1Zp^|a~EBuJ4GYIWGo",
+                            "block": "yX5[3bgEGdcRVV(UFs?d",
                             "name": "SUBSTACK",
                             "shadow": null
                         },
@@ -1965,11 +1965,11 @@
                     },
                     "next": null,
                     "opcode": "control_if_else",
-                    "parent": "yX5[3bgEGdcRVV(UFs?d",
+                    "parent": "]wJDJ4jpiT}%/iUnLqKc",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "-150",
-                    "y": "1933"
+                    "x": 533.1176470588235,
+                    "y": 2396.776470588235
                 },
                 "B/UpI2AxVW830wk!C;8^": {
                     "fields": {
@@ -2292,8 +2292,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 394,
-                    "y": 2748
+                    "x": 386.88235294117646,
+                    "y": 2999.964705882353
                 },
                 "E[qkbR9X-S(A|[my]w=j": {
                     "fields": {
@@ -3124,7 +3124,7 @@
                     "shadow": false,
                     "topLevel": true,
                     "x": 397,
-                    "y": 3227
+                    "y": 3404.9411764705883
                 },
                 "SN]$Z)3huBO2{2y,sB0;": {
                     "fields": {},
@@ -3597,7 +3597,7 @@
                             "shadow": null
                         },
                         "SUBSTACK": {
-                            "block": "yX5[3bgEGdcRVV(UFs?d",
+                            "block": "B.LiYT@@57-lPv-op[g%",
                             "name": "SUBSTACK",
                             "shadow": null
                         },
@@ -3973,13 +3973,13 @@
                             "shadow": "V#HK^9U4n?#V$DU0P]7C"
                         }
                     },
-                    "next": "6x5?!HPfVG-ea_/?x!R=",
+                    "next": "xi[cqtCpm-d]1SOL+R^2",
                     "opcode": "data_setvariableto",
-                    "parent": "jz~qv(}1vm!_5_|?`%)6",
+                    "parent": "6x5?!HPfVG-ea_/?x!R=",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "-57",
-                    "y": "1497"
+                    "x": 809.4352941176471,
+                    "y": 1272.8588235294117
                 },
                 "eW4?[PQ=ECg1ZSXMC!%p": {
                     "fields": {
@@ -4197,7 +4197,7 @@
                             "shadow": null
                         },
                         "SUBSTACK": {
-                            "block": "d[:X3*,WPDy($LFq7R~B",
+                            "block": "6x5?!HPfVG-ea_/?x!R=",
                             "name": "SUBSTACK",
                             "shadow": null
                         },
@@ -4837,8 +4837,8 @@
                     "parent": null,
                     "shadow": false,
                     "topLevel": true,
-                    "x": 391,
-                    "y": 2668
+                    "x": 388.15294117647056,
+                    "y": 2927.0823529411764
                 },
                 "v*n?KGN__n)orN_$9btN": {
                     "fields": {
@@ -5101,7 +5101,7 @@
                     },
                     "next": "ACp[04h5A_wc|{)C,iW1",
                     "opcode": "event_broadcast_with_broadcast_input",
-                    "parent": "6x5?!HPfVG-ea_/?x!R=",
+                    "parent": "d[:X3*,WPDy($LFq7R~B",
                     "shadow": false,
                     "topLevel": false,
                     "x": 410,
@@ -5124,13 +5124,13 @@
                             "shadow": "-;,cKS9JX{dX2rwT$]kn"
                         }
                     },
-                    "next": "B.LiYT@@57-lPv-op[g%",
+                    "next": ":P1Zp^|a~EBuJ4GYIWGo",
                     "opcode": "data_setvariableto",
-                    "parent": "]wJDJ4jpiT}%/iUnLqKc",
+                    "parent": "B.LiYT@@57-lPv-op[g%",
                     "shadow": false,
                     "topLevel": false,
-                    "x": "-54",
-                    "y": "2470"
+                    "x": 402.15294117647056,
+                    "y": 2068.341176470588
                 },
                 "yZD`NswK|#X$LX.%}r)A": {
                     "fields": {
@@ -5392,7 +5392,7 @@
             "currentCostume": 0,
             "direction": 90,
             "draggable": false,
-            "id": "}p;9p5QQ/*FDmsk0:Oq3",
+            "id": "%Ju(vsp6yZ3U2KCIC)~8",
             "isStage": false,
             "lists": {},
             "name": "Sprite1",
