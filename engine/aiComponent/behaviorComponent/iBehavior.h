@@ -63,13 +63,6 @@ public:
   
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const = 0;
 
-  // Sometimes behaviors (like dispatchers) want to maintain the same scope as one of their delegates
-  // even if they are in Activatable scope (i.e. their delegates are still out of scope )
-  // This allows them to pass calls to WantsToBeActivated or maintain proper vision mode settings
-  // Behaviors returned from this function will be moved into activatable scope in lock step
-  // with the behaivor that overrides them
-  virtual void GetLinkedActivatableScopeBehaviors(std::set<IBehavior*>& delegates) const {};
-
 protected:
 
   // Called once after this behavior is constructed

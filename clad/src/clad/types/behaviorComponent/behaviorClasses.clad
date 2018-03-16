@@ -69,7 +69,6 @@ enum uint_8 BehaviorClass {
   PlaypenWaitToStart,
 
   // dispatch
-  DispatcherPassThrough,
   DispatcherQueue,
   DispatcherRandom,
   DispatcherRerun,

@@ -412,8 +412,8 @@ void InjectBehaviorIntoStack(ICozmoBehavior& injectBehavior, TestBehaviorFramewo
   auto& behaviorStack = bsm._behaviorStack->_behaviorStack;
   if(ANKI_VERIFY(!behaviorStack.empty(),"InjectBehaviorIntoStack.NoBaseBehavior","")){
     IBehavior* lastEntry = behaviorStack.back();
-    auto& delegatesMap = bsm._behaviorStack->_stackMetadataMap;
-    delegatesMap.find(lastEntry)->second.delegates.insert(&injectBehavior);
+    auto& delegatesMap = bsm._behaviorStack->_delegatesMap;
+    delegatesMap[lastEntry].insert(&injectBehavior);
     bsm.Delegate(lastEntry, &injectBehavior);
   }
 }
@@ -432,15 +432,14 @@ void InjectValidDelegateIntoBSM(TestBehaviorFramework& testFramework,
                                 IBehavior* delegated,
                                 bool shouldMarkAsEnteredScope){
   auto& bsm = testFramework.GetBehaviorSystemManager();
-  auto iter = bsm._behaviorStack->_stackMetadataMap.find(delegator);
-  if(iter == bsm._behaviorStack->_stackMetadataMap.end()){
+  auto iter = bsm._behaviorStack->_delegatesMap.find(delegator);
+  if (iter == bsm._behaviorStack->_delegatesMap.end()) {
     // Stack must be empty - inject anyways
     DEV_ASSERT(bsm._behaviorStack->_behaviorStack.empty(),
                "TestBehaviorFramework.InjectValidDelegate.StackNotEmptyButDelegatMapMiss");
-    bsm._behaviorStack->_stackMetadataMap[delegator] = BehaviorStack::StackMetadataEntry(delegator, static_cast<int>(bsm._behaviorStack->_behaviorStack.size()));
-    bsm._behaviorStack->_stackMetadataMap[delegator].delegates.insert(delegated);
-  }else{
-    iter->second.delegates.insert(delegated);
+    bsm._behaviorStack->_delegatesMap[delegator].insert(delegated);
+  } else{
+    iter->second.insert(delegated);
   }
 
   if (shouldMarkAsEnteredScope) {

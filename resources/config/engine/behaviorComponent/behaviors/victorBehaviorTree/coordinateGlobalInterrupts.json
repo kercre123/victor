@@ -1,6 +1,4 @@
 {
   "behaviorClass" : "CoordinateGlobalInterrupts",
-  "behaviorID" : "CoordinateGlobalInterrupts",
-
-  "delegateID": "GlobalInterruptions"
+  "behaviorID" : "CoordinateGlobalInterrupts"
 }

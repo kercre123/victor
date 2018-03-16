@@ -54,7 +54,7 @@ public:
                            std::set<IBehavior*>& tickedInStack);
   
   inline IBehavior* GetTopOfStack(){ return _behaviorStack.empty() ? nullptr : _behaviorStack.back();}
-  inline bool IsInStack(const IBehavior* behavior) { return _stackMetadataMap.find(behavior) != _stackMetadataMap.end();}
+  inline bool IsInStack(const IBehavior* behavior) { return _behaviorToIndexMap.find(behavior) != _behaviorToIndexMap.end();}
   
   // if the passed in behavior is in the stack, return a pointer to the behavior which is above it in the
   // stack, or null if it is at the top or not in the stack
@@ -63,9 +63,8 @@ public:
   void PushOntoStack(IBehavior* behavior);
   void PopStack();
   
-  std::set<IBehavior*> GetBehaviorsInActivatableScope();
-
-  bool IsValidDelegation(IBehavior* delegator, IBehavior* delegated);
+  using DelegatesMap = std::map<IBehavior*,std::set<IBehavior*>>;
+  const DelegatesMap& GetDelegatesMap(){ return _delegatesMap;}
   
   // for debug only, prints stack info
   void DebugPrintStack(const std::string& debugStr) const;
@@ -73,26 +72,12 @@ public:
   Json::Value BuildDebugBehaviorTree(BehaviorExternalInterface& behaviorExternalInterface) const;
   
 private:
-  struct StackMetadataEntry{
-    IBehavior* behavior;
-    int        indexInStack = -1; // negative = not in stack
-    std::set<IBehavior*> delegates;
-    std::set<IBehavior*> linkedActivationScope;
-    
-    StackMetadataEntry(){}
-    StackMetadataEntry(IBehavior* behavior, int indexInStack);
-    // Recursively grab all behaviors that need to have linked scope
-    static void RecursivelyGatherLinkedBehaviors(IBehavior* baseBehavior,
-                                                 std::set<IBehavior*>& linkedBehaviors);
-  };
-  
   std::vector<IBehavior*> _behaviorStack;
-  std::unordered_map<const IBehavior*, StackMetadataEntry> _stackMetadataMap;
+  std::unordered_map<const IBehavior*, int> _behaviorToIndexMap;
+  std::map<IBehavior*,std::set<IBehavior*>> _delegatesMap;
   
   bool behaviorWebVizDirty = false;
   
-
-
   // calls all appropriate functions to prep the delegates of something about to be added to the stack
   void PrepareDelegatesToEnterScope(IBehavior* delegated);
   
