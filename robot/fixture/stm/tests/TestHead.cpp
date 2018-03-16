@@ -6,6 +6,7 @@
 #include "console.h"
 #include "contacts.h"
 #include "fixture.h"
+#include "flexflow.h"
 #include "hwid.h"
 #include "meter.h"
 #include "portable.h"
@@ -109,7 +110,10 @@ void TestHeadDutProgram(void)
 
 static void HeadFlexFlowReport(void)
 {
-  ConsolePrintf("<flex> ESN %08x\n", headnfo.esn);
+  char b[80]; const int bz = sizeof(b);
+  snformat(b,bz,"<flex> ESN %08x\n", headnfo.esn);
+  ConsoleWrite(b);
+  FLEXFLOW::write(b);
 }
 
 TestFunction* TestHead1GetTests(void)

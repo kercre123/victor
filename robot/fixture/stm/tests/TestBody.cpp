@@ -261,7 +261,7 @@ static void BodyBootcheckProductionFirmware(void)
 static void BodyFlexFlowReport(void)
 {
   char b[80]; const int bz = sizeof(b);
-  snformat(b,bz,"<flex> ESN,%08x,HwRev,%u,Model,%u\n", bodyid.esn, bodyid.hwrev, bodyid.model);
+  snformat(b,bz,"<flex> ESN %08x HwRev %u Model %u\n", bodyid.esn, bodyid.hwrev, bodyid.model);
   ConsoleWrite(b);
   FLEXFLOW::write(b);
 }
