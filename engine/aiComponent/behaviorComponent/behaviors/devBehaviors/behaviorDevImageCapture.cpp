@@ -145,11 +145,6 @@ void BehaviorDevImageCapture::OnBehaviorActivated()
 
   auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
   visionComponent.EnableDrawImagesToScreen(true);
-
-  const bool kUseDefaultsForUnspecified = false;
-  GetBEI().GetVisionComponent().PushNextModeSchedule(AllVisionModesSchedule({
-    {VisionMode::SavingImages, VisionModeSchedule(true)},
-  }, kUseDefaultsForUnspecified));
   
   auto& robotInfo = GetBEI().GetRobotInfo();
   // wait for the lift to relax 
@@ -169,7 +164,6 @@ void BehaviorDevImageCapture::OnBehaviorDeactivated()
 
   auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
   visionComponent.EnableDrawImagesToScreen(false);
-  visionComponent.PopCurrentModeSchedule();
 
   // Relinquish the button
   EnableDebugFaceDrawButton(GetBEI(), true);

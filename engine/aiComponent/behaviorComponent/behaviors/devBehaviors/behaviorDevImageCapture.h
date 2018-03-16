@@ -39,6 +39,7 @@ protected:
     modifiers.wantsToBeActivatedWhenOffTreads = true;
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     modifiers.behaviorAlwaysDelegates = false;
+    modifiers.visionModesForActiveScope->insert({VisionMode::SavingImages, EVisionUpdateFrequency::High});
   }
 
   virtual void OnBehaviorActivated() override;

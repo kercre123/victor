@@ -1,3 +1,3 @@
 #!/bin/bash
 
-adb pull /data/data/com.anki.cozmoengine/cache/camera/images/$1
+adb pull /data/data/com.anki.victor/cache/camera/images/$1
