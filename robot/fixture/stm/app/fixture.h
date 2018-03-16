@@ -186,24 +186,24 @@ typedef int error_t;
 //<export heading> ANKI VICTOR FIXTURE ERROR CODES
 
 //<export heading> General Motor Errors
-//#define ERROR_MOTOR_LEFT            310   // Problem driving left motor (sticky or broken wire)
+#define ERROR_MOTOR_LEFT            310   // Problem driving left motor (sticky or broken wire)
 //#define ERROR_MOTOR_LEFT_SPEED      311   // Problem driving left motor at full speed
 //#define ERROR_MOTOR_LEFT_JAM        316   // Jamming test failed on left motor
 
-//#define ERROR_MOTOR_RIGHT           320   // Problem driving right motor (sticky or broken wire)
+#define ERROR_MOTOR_RIGHT           320   // Problem driving right motor (sticky or broken wire)
 //#define ERROR_MOTOR_RIGHT_SPEED     321   // Problem driving right motor at full speed
 //#define ERROR_MOTOR_RIGHT_JAM       326   // Jamming test failed on right motor
 
-//#define ERROR_MOTOR_LIFT            330   // Problem driving lift motor (sticky or broken wire)
-//#define ERROR_MOTOR_LIFT_RANGE      331   // Lift can't reach full range (bad encoder/mechanical blockage)
-//#define ERROR_MOTOR_LIFT_BACKWARD   332   // Lift is wired backward
-//#define ERROR_MOTOR_LIFT_NOSTOP     333   // Lift does not hit stop (bad encoder/missing lift arm)
+#define ERROR_MOTOR_LIFT            330   // Problem driving lift motor (sticky or broken wire)
+#define ERROR_MOTOR_LIFT_RANGE      331   // Lift can't reach full range (bad encoder/mechanical blockage)
+#define ERROR_MOTOR_LIFT_BACKWARD   332   // Lift is wired backward
+#define ERROR_MOTOR_LIFT_NOSTOP     333   // Lift does not hit stop (bad encoder/missing lift arm)
 //#define ERROR_MOTOR_LIFT_JAM        336   // Jamming test failed on lift motor
 
-//#define ERROR_MOTOR_HEAD            340   // Problem driving head motor (sticky or broken wire)
-//#define ERROR_MOTOR_HEAD_RANGE      341   // Head can't reach full range (bad encoder/mechanical blockage)
-//#define ERROR_MOTOR_HEAD_BACKWARD   342   // Head is wired backward
-//#define ERROR_MOTOR_HEAD_NOSTOP     343   // Head does not hit stop (bad encoder/missing head arm)
+#define ERROR_MOTOR_HEAD            340   // Problem driving head motor (sticky or broken wire)
+#define ERROR_MOTOR_HEAD_RANGE      341   // Head can't reach full range (bad encoder/mechanical blockage)
+#define ERROR_MOTOR_HEAD_BACKWARD   342   // Head is wired backward
+#define ERROR_MOTOR_HEAD_NOSTOP     343   // Head does not hit stop (bad encoder/missing head arm)
 //#define ERROR_MOTOR_HEAD_SLOW_RANGE 345   // Head can't reach full range when run at low voltage
 //#define ERROR_MOTOR_HEAD_JAM        346   // Jamming test failed on head motor
 

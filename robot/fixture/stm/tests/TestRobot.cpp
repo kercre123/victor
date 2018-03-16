@@ -213,9 +213,38 @@ void TestRobotInfo(void)
   Contacts::setModeRx();
   
   try { //DEBUG, cmd doesn't always succeed in dev builds
-  cmdRobotEsn();
-  cmdRobotBsv();
-  } catch(int e) {}
+    cmdRobotEsn();
+    cmdRobotBsv();
+  } catch(int e){
+  }
+  
+  /*/DEBUG: test EMR_FIELD_OFS macro
+  ConsolePrintf("EMR_FIELD_OFS(%s)=%u\n", "ESN", EMR_FIELD_OFS(ESN) );
+  ConsolePrintf("EMR_FIELD_OFS(%s)=%u\n", "HW_VER", EMR_FIELD_OFS(HW_VER) );
+  ConsolePrintf("EMR_FIELD_OFS(%s)=%u\n", "MODEL", EMR_FIELD_OFS(MODEL) );
+  ConsolePrintf("EMR_FIELD_OFS(%s)=%u\n", "LOT_CODE", EMR_FIELD_OFS(LOT_CODE) );
+  ConsolePrintf("EMR_FIELD_OFS(%s)=%u\n", "PLAYPEN_READY_FLAG", EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
+  ConsolePrintf("EMR_FIELD_OFS(%s)=%u\n", "PLAYPEN_PASSED_FLAG", EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
+  ConsolePrintf("EMR_FIELD_OFS(%s)=%u\n", "PACKED_OUT_FLAG", EMR_FIELD_OFS(PACKED_OUT_FLAG) );
+  ConsolePrintf("EMR_FIELD_OFS(%s)=%u\n", "PACKED_OUT_DATE", EMR_FIELD_OFS(PACKED_OUT_DATE) );
+  //-*/
+  
+  try { //DEBUG, cmd doesn't always succeed in dev builds
+    uint32_t esn      = cmdRobotGmr( EMR_FIELD_OFS(ESN) );
+    uint32_t hwver    = cmdRobotGmr( EMR_FIELD_OFS(HW_VER) );
+    uint32_t model    = cmdRobotGmr( EMR_FIELD_OFS(MODEL) );
+    uint32_t lot_code = cmdRobotGmr( EMR_FIELD_OFS(LOT_CODE) );
+    uint32_t playpenready = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
+    uint32_t playpenpass  = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
+    uint32_t packedout    = cmdRobotGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
+    uint32_t packoutdate  = cmdRobotGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
+    ConsolePrintf("\n");
+    ConsolePrintf("esn=%08x hwVer=%u model=%u lotCode=%u\n", esn, hwver, model, lot_code);
+    ConsolePrintf("playpenready=%u playpenpass=%u\n", playpenready, playpenpass);
+    ConsolePrintf("packedout=%u packout-date=%u\n", packedout, packoutdate);
+    ConsolePrintf("\n");
+  } catch(int e){
+  }
   
   //DEBUG: console bridge, manual testing
   if( g_fixmode == FIXMODE_ROBOT0 )
@@ -223,6 +252,80 @@ void TestRobotInfo(void)
   if( g_fixmode == FIXMODE_ROBOT1 )
     TestCommon::consoleBridge(TO_CONTACTS, 1000, 0, BRIDGE_OPT_LINEBUFFER, DBG_cmd_substitution);
   //-*/
+}
+
+void TestRobotSensors(void)
+{
+  ccr_sr_t bat    = *cmdRobotGet(3, 2, CCC_SENSOR_BATTERY);
+  ccr_sr_t cliff  = *cmdRobotGet(3, 2, CCC_SENSOR_CLIFF);
+  ccr_sr_t prox   = *cmdRobotGet(3, 2, CCC_SENSOR_PROX_TOF);
+  ccr_sr_t btn    = *cmdRobotGet(3, 2, CCC_SENSOR_BTN_TOUCH);
+  ccr_sr_t rssi   = *cmdRobotGet(3, 2, CCC_SENSOR_RSSI);
+  ccr_sr_t pktcnt = *cmdRobotGet(3, 2, CCC_SENSOR_RX_PKT);
+  
+  ConsolePrintf("Sensor Values:\n");
+  ConsolePrintf(".battery = %i.%03iV\n", bat.bat.raw/1000, bat.bat.raw%1000);
+  ConsolePrintf(".cliff = fL:%i fR:%i bL:%i bR:%i\n", cliff.cliff.fL, cliff.cliff.fR, cliff.cliff.bL, cliff.cliff.bR);
+  ConsolePrintf(".prox = %imm sigRate:%i spad:%i ambientRate:%i\n", prox.prox.rangeMM, prox.prox.signalRate, prox.prox.spadCnt, prox.prox.ambientRate);
+  ConsolePrintf(".btn = %i touch=%i\n", btn.btn.btn, btn.btn.touch);
+  ConsolePrintf(".rf = %idBm %i packets\n", rssi.fccRssi.rssi, rssi.fccRx.pktCnt);
+  
+  //XXX: what should "good" sensor values look like?
+}
+
+void TestRobotMotors(void)
+{
+  //ccr_sr_t* psr; //sensor values
+  
+  int tread[4];
+  tread[0] = ( cmdRobotMot(100, 50, CCC_SENSOR_MOT_LEFT, 127, 0, 0, 0) )->enc.speed;
+  tread[1] = ( cmdRobotMot(100, 50, CCC_SENSOR_MOT_LEFT, -127, 0, 0, 0) )->enc.speed;
+  tread[2] = ( cmdRobotMot(100, 50, CCC_SENSOR_MOT_RIGHT, 0, -127, 0, 0) )->enc.speed;
+  tread[3] = ( cmdRobotMot(100, 50, CCC_SENSOR_MOT_RIGHT, 0, 127, 0, 0) )->enc.speed;
+  
+  //check range of motion
+  int lift_start = ( cmdRobotMot(50, 50, CCC_SENSOR_MOT_LIFT, 0, 0, 100, 0) )->enc.pos;
+  int lift_end   = ( cmdRobotMot(75, 75, CCC_SENSOR_MOT_LIFT, 0, 0, -100, 0) )->enc.pos;
+  int head_start = ( cmdRobotMot(50, 50, CCC_SENSOR_MOT_HEAD, 0, 0, 0, 100) )->enc.pos;
+  int head_end   = ( cmdRobotMot(75, 75, CCC_SENSOR_MOT_HEAD, 0, 0, 0, -100) )->enc.pos;
+  int lift_travel = lift_end - lift_start;
+  int head_travel = head_end - head_start;
+  
+  ConsolePutChar('\n');
+  ConsolePrintf("tread speed LEFT : %i %i\n", tread[0], tread[1]);
+  ConsolePrintf("tread speed RIGHT: %i %i\n", tread[2], tread[3]);
+  ConsolePrintf("lift pos: start %i end %i travel %i\n", lift_start, lift_end, lift_travel);
+  ConsolePrintf("head pos: start %i end %i travel %i\n", head_start, head_end, head_travel);
+  ConsolePutChar('\n');
+  
+  const int min_speed = 1500; //we normally see 1700-1900
+  
+  if( tread[0] < min_speed || (-1)*tread[1] < min_speed ) {
+    ConsolePrintf("insufficient LEFT tread speed %i %i\n", tread[0], tread[1]);
+    throw ERROR_MOTOR_LEFT; //ERROR_MOTOR_LEFT_SPEED
+  }
+  if( tread[2] < min_speed || (-1)*tread[3] < min_speed ) {
+    ConsolePrintf("insufficient RIGHT tread speed %i %i\n", tread[2], tread[3]);
+    throw ERROR_MOTOR_RIGHT; //ERROR_MOTOR_RIGHT_SPEED
+  }
+  
+  if( (-1)*lift_travel > 20 )
+    throw ERROR_MOTOR_LIFT_BACKWARD;
+  else if( lift_travel < 20 )
+    throw ERROR_MOTOR_LIFT; //can't move?
+  else if( lift_travel < 100 )
+    throw ERROR_MOTOR_LIFT_RANGE; //moves, but not enough...
+  else if( lift_travel > 400 )
+    throw ERROR_MOTOR_LIFT_NOSTOP; //moves too much!
+  
+  if( (-1)*head_travel > 20 )
+    throw ERROR_MOTOR_HEAD_BACKWARD;
+  else if( head_travel < 20 )
+    throw ERROR_MOTOR_HEAD; //can't move?
+  else if( head_travel < 100 )
+    throw ERROR_MOTOR_HEAD_RANGE; //moves, but not enough...
+  else if( head_travel > 400 )
+    throw ERROR_MOTOR_HEAD_NOSTOP; //moves too much!
 }
 
 //read battery voltage
@@ -518,6 +621,8 @@ TestFunction* TestRobot3GetTests(void)
 {
   static TestFunction m_tests[] = {
     TestRobotInfo,
+    TestRobotSensors,
+    TestRobotMotors,
     ChargeTest,
     NULL,
   };
@@ -537,6 +642,8 @@ TestFunction* TestRobotPackoutGetTests(void)
 {
   static TestFunction m_tests[] = {
     TestRobotInfo,
+    TestRobotSensors,
+    TestRobotMotors,
     ChargeTest,
     NULL,
   };
