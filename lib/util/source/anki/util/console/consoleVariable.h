@@ -20,6 +20,7 @@
 #include "util/math/math.h"
 #include "util/math/numericCast.h"
 #include <string>
+#include <vector>
 #include <assert.h>
 
 namespace Anki{ namespace Util {
@@ -59,7 +60,9 @@ public:
   virtual bool IsToggleable() const = 0;
   virtual bool IsIntegerType() const = 0; // i.e. not a floating point type
   virtual bool IsSignedType() const = 0;
-  
+  virtual bool IsEnumType() const = 0;
+  virtual const std::vector<std::string>& EnumValues() const = 0;
+
 protected:
   std::string id_;
   std::string category_;
@@ -93,6 +96,24 @@ public:
   {
   }
   
+  ConsoleVar( T& value, const char* id, const char* category, const char* values, bool unregisterInDestructor )
+    : IConsoleVariable( id, category, unregisterInDestructor )
+    , _value( value )
+    , _minValue( 0 )
+    , _maxValue( 0 )
+    , _defaultValue( value )
+  {
+    std::stringstream ss(values);
+
+    while(ss.good()) {
+        std::string substr;
+        getline(ss, substr, ',');
+        _enumValues.push_back(substr);
+    }
+
+    _maxValue = (T)_enumValues.size();
+  }
+
   //----------------------------------------------------------------------------------------------------------------------------
   // These should implemented by each specialization;
   virtual bool ParseText( const char* text ) override;
@@ -117,16 +138,19 @@ public:
   virtual bool IsToggleable()  const override { return (std::numeric_limits<T>::digits == 1); }
   virtual bool IsIntegerType() const override { return (std::numeric_limits<T>::is_integer);  }
   virtual bool IsSignedType()  const override { return (std::numeric_limits<T>::is_signed);   }
+  virtual bool IsEnumType()  const override { return !_enumValues.empty();                     }
+  virtual const std::vector<std::string>& EnumValues() const override { return _enumValues;            }
 
 protected:
   std::string ToString( T value ) const;
-  
+
   //----------------------------------------------------------------------------------------------------------------------------
 protected:
   T& _value;
   T  _minValue;
   T  _maxValue;
   T  _defaultValue;
+  std::vector<std::string> _enumValues;
   
   ConsoleVar();
   ConsoleVar( const ConsoleVar& );
@@ -150,6 +174,12 @@ inline std::string ConsoleVar<T>::ToString( T value ) const
 template<typename T>
 inline bool ConsoleVar<T>::ParseText( const char* text )
 {
+  const std::vector<std::string>::iterator found = std::find(_enumValues.begin(), _enumValues.end(), text);
+  if(found != _enumValues.end()) {
+    _value = (T)(found - _enumValues.begin());
+    return true;
+  }
+  
   std::istringstream is( text );
   
   T temp;

@@ -1250,6 +1250,18 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
       category_html[cat] += "                </div>\n";
       category_html[cat] += "                <br>\n";
     }
+    else if (it->second->IsEnumType()) {
+      category_html[cat] += "                <div>\n";
+      category_html[cat] += "                    <label for=\""+label+"\">"+label+"</label>\n";
+      category_html[cat] += "                    <select name=\""+label+"\" id=\""+label+"\" class=\"listbox\">\n";
+      const auto& values = it->second->EnumValues();
+      for(const auto& item : values) {
+        category_html[cat] += "                        <option>"+item+"</option>\n";
+      }
+      category_html[cat] += "                    </select>\n";
+      category_html[cat] += "                </div>\n";
+      category_html[cat] += "                <br>\n";
+    }
     else {
       char sliderRange[200];
       char inputRange[200];

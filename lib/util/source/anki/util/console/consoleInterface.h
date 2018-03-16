@@ -54,6 +54,12 @@
       static Anki::Util::ConsoleVar<type> cvar_##name( name, #name, path, minVal, maxVal, false ); \
     }
 
+  #define CONSOLE_VAR_ENUM( type, name, path, default, values ) \
+    type name = default; \
+    namespace { \
+      static Anki::Util::ConsoleVar<type> cvar_##name( name, #name, path, values, false ); \
+    }
+
   #define CONSOLE_FUNC( name, path, args... ) \
     namespace { \
       Anki::Util::IConsoleFunction cfunc_##name( #name, &name, path, #args ); \
@@ -74,6 +80,9 @@
   #define WRAP_EXTERN_CONSOLE_VAR( type, name, path )
 
   #define CONSOLE_VAR_RANGED( type, name, path, default, minVal, maxVal ) \
+    extern const type name = default;
+
+  #define CONSOLE_VAR_ENUM( type, name, path, default, values ) \
     extern const type name = default;
 
   #define CONSOLE_FUNC( ... )
