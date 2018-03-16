@@ -49,7 +49,6 @@ private:
     Searching,
     Stalking,
     Creeping,
-    Primed,
     Pouncing,
     FakeOut,
     Reacting,
@@ -70,11 +69,6 @@ private:
   void UpdateStalking();
 
   void TransitionToCreeping();
-  void UpdateCreeping();
-
-  void TransitionToPrimed();
-  void UpdatePrimed();
-
   void TransitionToPouncing();
   void TransitionToFakeOut();
   void TransitionToReacting();
@@ -88,6 +82,9 @@ private:
   void UpdateTargetMotion();
   bool TargetHasMoved(const ObservableObject* object);
   bool PitchIndicatesPounceSuccess() const;
+
+  void StartIdleAnimation(const AnimationTrigger& idleAnimationTrigger);
+  void StopIdleAnimation();
 
   float GetCurrentTimeInSeconds() const;
 
@@ -148,6 +145,7 @@ private:
     float            pounceSuccessPitch_deg;
     uint8_t          victorPoints;
     uint8_t          userPoints;
+    bool             isIdling;
     bool             victorGotLastPoint;
     bool             gameOver;
     bool             victorIsBored;

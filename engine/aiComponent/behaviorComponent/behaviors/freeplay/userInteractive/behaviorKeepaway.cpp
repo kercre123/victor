@@ -33,6 +33,7 @@ const char* kDebugName = "BehaviorKeepaway";
 const char* kLogChannelName = "Behaviors";
 // Distance past nominalPounceDist that we allow victor to creep. Helps ensure he eventually pounces.
 const float kCreepOverlapDist_mm = 3.0f;
+const bool kAllowCallback = false;
 }
 
 BehaviorKeepaway::InstanceConfig::InstanceConfig(const Json::Value& config)
@@ -85,6 +86,7 @@ BehaviorKeepaway::DynamicVariables::DynamicVariables(const InstanceConfig& iConf
 , pounceSuccessPitch_deg(0.0f)
 , victorPoints(0)
 , userPoints(0)
+, isIdling(0)
 , victorGotLastPoint(false)
 , gameOver(false)
 , victorIsBored(false)
@@ -158,6 +160,7 @@ void BehaviorKeepaway::BehaviorUpdate()
   }
 
   if(_dVars.victorIsBored){
+    StopIdleAnimation();
     if(!IsControlDelegated()){
       DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceGetOutBored),
                           [this](){
@@ -187,16 +190,6 @@ void BehaviorKeepaway::BehaviorUpdate()
       UpdateStalking();
       break;
     }
-    case KeepawayState::Creeping:
-    {
-      UpdateCreeping();
-      break;
-    }
-    case KeepawayState::Primed:
-    {
-      UpdatePrimed();
-      break;
-    }
     case KeepawayState::Pouncing:
     {
       // Check whether we've hit anything throughout the pounce
@@ -205,11 +198,11 @@ void BehaviorKeepaway::BehaviorUpdate()
       }
       break;
     }
+    case KeepawayState::Creeping:
     case KeepawayState::FakeOut:
     case KeepawayState::Reacting:
     case KeepawayState::GetOut:
     {
-      // Just basic delegations in 'TransitionTo...' functions, no updated functionality
       break;
     }
     default:
@@ -254,20 +247,30 @@ void BehaviorKeepaway::UpdateSearching(){
 
 void BehaviorKeepaway::TransitionToStalking()
 {
-  SET_STATE(KeepawayState::Stalking);
+  // Recompute the next creep and pounce times here as the SOONEST we will execute these actions
+  // creepTime will get overwritten from UpdateTargetMotion() if the target moves
+  float creepDelay = GetRNG().RandDblInRange(_iConfig.creepDelayTimeMin_s, _iConfig.creepDelayTimeMax_s);
+  _dVars.creepTime = GetCurrentTimeInSeconds() + creepDelay;
+  // pounceTime will get overwritten from UpdateTargetDistance() if the target enters pounce range
+  float pounceDelay = GetRNG().RandDblInRange(_iConfig.pounceDelayTimeMin_s, _iConfig.pounceDelayTimeMax_s);
+  _dVars.pounceTime = GetCurrentTimeInSeconds() + pounceDelay;
+  
+  SET_STATE(KeepawayState::Stalking);  
 }
 
 void BehaviorKeepaway::UpdateStalking()
 {
-  if(!IsControlDelegated()){
+  if(!IsControlDelegated() || _dVars.isIdling){
 
     if(!_dVars.target.isValid || !_dVars.target.isVisible){
       // If the target goes out of sight, don't change the ready state
+      StopIdleAnimation();
       TransitionToSearching();
       return;
     }
 
     if(_dVars.target.isOffCenter){
+      StopIdleAnimation();
       DelegateIfInControl(new TurnTowardsObjectAction(_dVars.targetID));
       return;
     }
@@ -277,15 +280,26 @@ void BehaviorKeepaway::UpdateStalking()
       {
         if(!_dVars.target.isInPlay){
           // If the target goes outOfPlay but not outOfSight, TransitionToUnready
-          // TODO:(str) switch Idle animations to lift down 
+          StopIdleAnimation();
           DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceGetUnready),
                               [this](){
                                 _dVars.pounceReadyState = PounceReadyState::Unready;
                               });
-        } else if(_dVars.target.isInPounceRange){
-          TransitionToPrimed();
-        } else if (_dVars.target.isNotMoving){
+        } else if(_dVars.target.isInInstaPounceRange){
+          StopIdleAnimation();
+          TransitionToPouncing();
+        } else if(_dVars.target.isInPounceRange && (GetCurrentTimeInSeconds() > _dVars.pounceTime)){
+          StopIdleAnimation();
+          if(GetRNG().RandDbl() < _dVars.pounceChance){
+            TransitionToPouncing();
+          } else {
+            TransitionToFakeOut();
+          }
+        } else if (_dVars.target.isNotMoving && (GetCurrentTimeInSeconds() > _dVars.creepTime)){
+          StopIdleAnimation();
           TransitionToCreeping();
+        } else if(!_dVars.isIdling){
+          StartIdleAnimation(AnimationTrigger::CubePounceIdleLiftUp);
         }
         break;
       }
@@ -293,11 +307,13 @@ void BehaviorKeepaway::UpdateStalking()
       {
         if(_dVars.target.isInPlay){
           // When the target comes back into play, TransitionToReady
-          // TODO:(str) switch Idle animations to lift up
+          StopIdleAnimation();
           DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceGetReady),
                               [this](){
                                 _dVars.pounceReadyState = PounceReadyState::Ready;
                               });
+        } else if (!_dVars.isIdling){
+          StartIdleAnimation(AnimationTrigger::CubePounceIdleLiftDown);
         }
         break;
       }
@@ -307,57 +323,21 @@ void BehaviorKeepaway::UpdateStalking()
 
 void BehaviorKeepaway::TransitionToCreeping()
 {
-  float creepDelay = GetRNG().RandDblInRange(_iConfig.creepDelayTimeMin_s, _iConfig.creepDelayTimeMax_s);
-  _dVars.creepTime = GetCurrentTimeInSeconds() + creepDelay;
-  SET_STATE(KeepawayState::Creeping);
-}
-
-void BehaviorKeepaway::UpdateCreeping()
-{
-  if(!IsControlDelegated()){
-    if(GetCurrentTimeInSeconds() >= _dVars.creepTime){
-      float maxCreepDistance = _dVars.targetDistance - _iConfig.nominalPounceDistance_mm + kCreepOverlapDist_mm;
-      float creepDistance = 0.0f;
-      if(maxCreepDistance <= 0.0f){
-        TransitionToStalking();
-        return; 
-      } else if(maxCreepDistance < _iConfig.creepDistanceMin_mm){
-        creepDistance = maxCreepDistance;
-      } else {
-        maxCreepDistance = std::min(maxCreepDistance, _iConfig.creepDistanceMax_mm);
-        creepDistance = GetRNG().RandDblInRange(_iConfig.creepDistanceMin_mm,
-                                                      maxCreepDistance);
-      }
-
-      DelegateIfInControl(new DriveStraightAction(creepDistance), &BehaviorKeepaway::TransitionToStalking);
-    }
-  }
-}
-
-void BehaviorKeepaway::TransitionToPrimed()
-{
-  float pounceDelay = GetRNG().RandDblInRange(_iConfig.pounceDelayTimeMin_s, _iConfig.pounceDelayTimeMax_s);
-  _dVars.pounceTime = GetCurrentTimeInSeconds() + pounceDelay;
-  SET_STATE(KeepawayState::Primed);
-}
-
-void BehaviorKeepaway::UpdatePrimed()
-{
-  if(!_dVars.target.isValid || !_dVars.target.isVisible){
-    TransitionToSearching();
-  } else if (!_dVars.target.isInPounceRange) {
+  float maxCreepDistance = _dVars.targetDistance - _iConfig.nominalPounceDistance_mm + kCreepOverlapDist_mm;
+  float creepDistance = 0.0f;
+  if(maxCreepDistance <= 0.0f){
     TransitionToStalking();
+    return; 
+  } else if(maxCreepDistance < _iConfig.creepDistanceMin_mm){
+    creepDistance = maxCreepDistance;
+  } else {
+    maxCreepDistance = std::min(maxCreepDistance, _iConfig.creepDistanceMax_mm);
+    creepDistance = GetRNG().RandDblInRange(_iConfig.creepDistanceMin_mm,
+                                                  maxCreepDistance);
   }
-  
-  if(_dVars.target.isInInstaPounceRange){
-    TransitionToPouncing();
-  } else if(GetCurrentTimeInSeconds() >= _dVars.pounceTime){
-    if(GetRNG().RandDbl() < _dVars.pounceChance){
-      TransitionToPouncing();
-    } else {
-      TransitionToFakeOut();
-    }
-  }
+
+  DelegateIfInControl(new DriveStraightAction(creepDistance), &BehaviorKeepaway::TransitionToStalking);
+  SET_STATE(KeepawayState::Creeping);
 }
 
 void BehaviorKeepaway::TransitionToPouncing()
@@ -523,8 +503,14 @@ void BehaviorKeepaway::UpdateTargetDistance()
     _dVars.target.isInPlay = true;
   }
 
-  _dVars.target.isInPounceRange =
-    _dVars.targetDistance < _iConfig.animDistanceOffset_mm + _iConfig.nominalPounceDistance_mm;
+  if((_dVars.targetDistance < _iConfig.animDistanceOffset_mm + _iConfig.nominalPounceDistance_mm) &&
+     (!_dVars.target.isInPounceRange)){
+    _dVars.target.isInPounceRange = true;
+    float pounceDelay = GetRNG().RandDblInRange(_iConfig.pounceDelayTimeMin_s, _iConfig.pounceDelayTimeMax_s);
+    _dVars.pounceTime = GetCurrentTimeInSeconds() + pounceDelay;
+  } else {
+    _dVars.target.isInPounceRange = false;
+  }
 
   _dVars.target.isInInstaPounceRange = 
     _dVars.targetDistance < _iConfig.animDistanceOffset_mm + _iConfig.instaPounceDistance_mm;
@@ -542,6 +528,14 @@ void BehaviorKeepaway::UpdateTargetMotion()
   } else {
     float timeSinceTargetMoved = GetCurrentTimeInSeconds() - _dVars.targetLastMovedTime_s;
     _dVars.target.isNotMoving = timeSinceTargetMoved > _iConfig.targetUnmovedCreepTimeout_s;
+
+    // If the target just stopped moving, computed a random creep delay to drive the transition from Stalking 
+    if((timeSinceTargetMoved > _iConfig.targetUnmovedCreepTimeout_s) &&
+       (false == _dVars.target.isNotMoving)){
+      _dVars.target.isNotMoving = true;
+      float creepDelay = GetRNG().RandDblInRange(_iConfig.creepDelayTimeMin_s, _iConfig.creepDelayTimeMax_s);
+      _dVars.creepTime = GetCurrentTimeInSeconds() + creepDelay;
+    }
 
     // Also check if we want to end the game due to player inactivity
     if((_dVars.target.isNotMoving) && 
@@ -584,6 +578,31 @@ bool BehaviorKeepaway::PitchIndicatesPounceSuccess() const
     return true;
   }
   return false;
+}
+
+void BehaviorKeepaway::StartIdleAnimation(const AnimationTrigger& idleAnimationTrigger)
+{
+  if(IsControlDelegated()){
+    PRINT_NAMED_ERROR("BehaviorKeepaway.InvalidStartIdleAnimationCall",
+                      "Attempted to loop an idle animation while the behavior had already delegated control");
+    _dVars.isIdling = false;
+    return;
+  }
+  DelegateIfInControl(new TriggerAnimationAction(idleAnimationTrigger),
+                      [this, idleAnimationTrigger](){
+                        if(!IsControlDelegated()){
+                          StartIdleAnimation(idleAnimationTrigger);
+                        }
+                      });
+  _dVars.isIdling = true;
+}
+
+void BehaviorKeepaway::StopIdleAnimation()
+{
+  if(_dVars.isIdling){
+    CancelDelegates(kAllowCallback);
+    _dVars.isIdling = false;
+  }
 }
 
 float BehaviorKeepaway::GetCurrentTimeInSeconds() const
