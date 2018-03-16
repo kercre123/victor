@@ -188,7 +188,7 @@ void SetBLEPin(uint32_t pin)
 void InitConnectionFlow(AnimationStreamer* animStreamer)
 {
   // Don't start connection flow if not packed out
-  if(!Factory::GetEMR()->PACKED_OUT_FLAG)
+  if(!Factory::GetEMR()->fields.PACKED_OUT_FLAG)
   {
     return;
   }

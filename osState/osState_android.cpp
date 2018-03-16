@@ -47,7 +47,7 @@ namespace {
 
   const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
   const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
-  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone0/temp";
+  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone3/temp";
   const char* kMACAddressFile = "/sys/class/net/wlan0/address";
   const char* kRecoveryModeFile = "/data/unbrick";
   
@@ -66,7 +66,7 @@ namespace {
 // not work for some reason so we have to read the files manually
 std::string GetProperty(const std::string& key)
 {
-  static const std::string kProp = key + "=";
+  const std::string kProp = key + "=";
 
   // First check the regular build.prop
   std::ifstream infile("/build.prop");

@@ -75,7 +75,7 @@ int main(int argc, const char* argv[])
     start = end;
 
     if (shutdownSignal == 0) {
-      if (Anki::Cozmo::Factory::GetEMR()->PACKED_OUT_FLAG) {
+      if (Anki::Cozmo::Factory::GetEMR()->fields.PACKED_OUT_FLAG) {
         if (Anki::Cozmo::HAL::BatteryIsOnCharger()) {
           stoppedCharging = end;
         } else {

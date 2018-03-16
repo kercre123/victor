@@ -21,7 +21,7 @@ namespace Cozmo {
 namespace Factory {
 
   union EMR {
-    struct {
+    struct Fields {
       uint32_t ESN;
       uint32_t HW_VER;
       uint32_t MODEL;
@@ -33,11 +33,7 @@ namespace Factory {
       uint32_t reserved[48];
       uint32_t playpen[8];
       uint32_t fixture[192];
-    #ifdef __GNUC__
-    };
-    #else
-    }field; //anonymous union not allowed by arm compiler
-    #endif
+    } fields;
     
     uint32_t data[256];
   };

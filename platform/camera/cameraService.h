@@ -86,6 +86,8 @@ namespace Anki
       u16 CameraGetHeight() const {return _imageCaptureHeight;}
       u16 CameraGetWidth()  const {return _imageCaptureWidth; }
 
+      bool HaveGottenFrame() const { return _imageFrameID > 1; }
+
     private:
 
       CameraService();
