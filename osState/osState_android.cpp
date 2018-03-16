@@ -66,7 +66,7 @@ namespace {
 // not work for some reason so we have to read the files manually
 std::string GetProperty(const std::string& key)
 {
-  static const std::string kProp = key + "=";
+  const std::string kProp = key + "=";
 
   // First check the regular build.prop
   std::ifstream infile("/build.prop");
