@@ -687,20 +687,6 @@ message EraseQuad {
 // Animation Commands
 ///////////////////////////////////////////////////////////////////////////////
 
-// PushIdleAnimation
-//  Switches the idle animation (the one played in a continuous loop while no other
-//  animation is requested via PlayAnimation) to the one specified.
-message PushIdleAnimation {
-  AnimationTrigger animTrigger,
-  string lockName
-}
-
-// PopIdleAnimation
-//  Stops using the last pushed idle animation and goes back to whatever was
-//  previously the idle.
-message RemoveIdleAnimation {
-  string lockName
-}
 
 // ReadFaceAnimationDir
 message ReadFaceAnimationDir {

@@ -238,10 +238,6 @@ public interface IRobot : IDisposable {
 
   uint SendAnimationTrigger(AnimationTrigger animTriggerEvent, RobotCallback callback = null, QueueActionPosition queueActionPosition = QueueActionPosition.NOW, bool useSafeLiftMotion = true, bool ignoreBodyTrack = false, bool ignoreHeadTrack = false, bool ignoreLiftTrack = false, uint loops = 1);
 
-  void PushIdleAnimation(AnimationTrigger default_anim, string lockName);
-
-  void RemoveIdleAnimation(string lockName);
-
   void PushDrivingAnimations(AnimationTrigger drivingStartAnim, AnimationTrigger drivingLoopAnim, AnimationTrigger drivingEndAnim, string lockName);
 
   void RemoveDrivingAnimations(string lockName);

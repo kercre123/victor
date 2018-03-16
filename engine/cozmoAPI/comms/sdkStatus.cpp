@@ -22,11 +22,6 @@
 namespace Anki {
 namespace Cozmo {
   
-namespace{
-const char* kSDKLockName = "sdk_mode_obfusc8te";
-}
-
-  
 SdkStatus::SdkStatus(IExternalInterface* externalInterface)
   : _recentCommands(10)
   , _externalInterface(externalInterface)
@@ -120,9 +115,6 @@ void SdkStatus::EnterMode(bool isExternalSdkMode)
   
   if (!wasAlreadyInSdkMode)
   {
-    _externalInterface->Broadcast(ExternalInterface::MessageGameToEngine(
-                                  ExternalInterface::PushIdleAnimation(AnimationTrigger::Count,
-                                                                       kSDKLockName)));
     ResetRobot(false);
     _enterSdkModeTime_s = GetCurrentTime_s();
   }
@@ -145,10 +137,7 @@ void SdkStatus::ExitMode(bool isExternalSdkMode)
   const bool isStillInSdkMode = IsInAnySdkMode();
   
   if (!isStillInSdkMode)
-  {
-    _externalInterface->Broadcast(ExternalInterface::MessageGameToEngine(
-                                  ExternalInterface::RemoveIdleAnimation(kSDKLockName)));
-    
+  {    
     // Disconnect before sending exit mode event so that all connect/disconnects are wrapped by sdk on/off
     OnDisconnect(true);
     

@@ -561,7 +561,6 @@ void BehaviorTrackLaser::TransitionToRespondToLaser()
   // However, don't override sparks driving or idle animations (i.e. when "streamlining").
   if(!ShouldStreamline() && !_dVars.haveAdjustedAnimations)
   {
-    SmartPushIdleAnimation(AnimationTrigger::LaserFace);    
     robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(
                                                              {AnimationTrigger::LaserDriveStart,
                                                                AnimationTrigger::LaserDriveLoop,
@@ -820,7 +819,6 @@ void BehaviorTrackLaser::Cleanup()
   // Only pop animations if set within this behavior
   if(_dVars.haveAdjustedAnimations)
   {
-    SmartRemoveIdleAnimation();
     GetBEI().GetRobotInfo().GetDrivingAnimationHandler().RemoveDrivingAnimations(GetDebugLabel());
     _dVars.haveAdjustedAnimations = false;
   }

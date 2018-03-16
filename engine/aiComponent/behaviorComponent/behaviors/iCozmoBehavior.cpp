@@ -184,7 +184,6 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
 , _requiredRecentDriveOffCharger_sec(-1.0f)
 , _requiredRecentSwitchToParent_sec(-1.0f)
 , _isActivated(false)
-, _hasSetIdle(false)
 {
   if(!ReadFromJson(config)){
     PRINT_NAMED_WARNING("ICozmoBehavior.ReadFromJson.Failed",
@@ -613,7 +612,6 @@ void ICozmoBehavior::OnActivatedInternal()
   _isActivated = true;
   _delegationCallback = nullptr;
   _activatedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _hasSetIdle = false;
   _startCount++;
   
   // Clear user intent if responding to it. Since _respondToUserIntent is initialized, this
@@ -724,10 +722,6 @@ void ICozmoBehavior::OnDeactivatedInternal()
   
   // Clear callbacks
   _delegationCallback = nullptr;
-  
-  if(_hasSetIdle){
-    SmartRemoveIdleAnimation();
-  }
 
   // Set Mode Subscriptions back to ActivatableScope values. OnLeftActivatableScopeInternal handles final unsubscribe
   if(!_operationModifiers.visionModesForActivatableScope->empty()){
@@ -1212,33 +1206,6 @@ void ICozmoBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchiev
   PRINT_CH_INFO("Behaviors", "ICozmoBehavior.BehaviorObjectiveAchieved", "Behavior:%s, Objective:%s", GetDebugLabel().c_str(), EnumToString(objectiveAchieved));
   // send das event
   Util::sEventF("robot.freeplay_objective_achieved", {{DDATA, EnumToString(objectiveAchieved)}}, "%s", GetDebugLabel().c_str());
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SmartPushIdleAnimation(AnimationTrigger animation)
-{
-  if(ANKI_VERIFY(!_hasSetIdle,
-                 "ICozmoBehavior.SmartPushIdleAnimation.IdleAlreadySet",
-                 "Behavior %s has already set an idle animation",
-                 GetDebugLabel().c_str())){
-    // TODO: Restore idle animations (VIC-366)
-    //robot.GetAnimationStreamer().PushIdleAnimation(animation, kIdleLockPrefix + GetDebugLabel());
-    _hasSetIdle = true;
-  }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SmartRemoveIdleAnimation()
-{
-  if(ANKI_VERIFY(_hasSetIdle,
-                 "ICozmoBehavior.SmartRemoveIdleAnimation.NoIdleSet",
-                 "Behavior %s is trying to remove an idle, but none is currently set",
-                 GetDebugLabel().c_str())){
-    // TODO: Restore idle animations (VIC-366)
-    //robot.GetAnimationStreamer().RemoveIdleAnimation(kIdleLockPrefix + GetDebugLabel());
-    _hasSetIdle = false;
-  }
 }
 
 

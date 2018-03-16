@@ -30,9 +30,6 @@ namespace Cozmo {
 
         public override void Exit() {
           base.Exit();
-          if (_CurrentRobot != null) {
-            _CurrentRobot.RemoveIdleAnimation(idleAnimLock);
-          }
         }
 
         private void HandleContinueButtonClicked() {

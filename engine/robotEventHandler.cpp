@@ -1646,13 +1646,6 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& 
     robot->GetActionList().Cancel();
     robot->GetMoveComponent().StopAllMotors();
     robot->GetBodyLightComponent().ClearAllBackpackLightConfigs();
-    
-    // Clear out all idle animations set by the sdk
-    // TODO: Restore Idle Animation API (VIC-366)
-    // AnimationStreamer& animStreamer = robot->GetAnimationStreamer();
-    // BOUNDED_WHILE(kBoundedWhileIdlePopLimit,
-    //               RESULT_OK == animStreamer.RemoveIdleAnimation("sdk")){
-    // }
   }
 }
 

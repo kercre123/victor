@@ -164,9 +164,6 @@ namespace Onboarding {
 
       IRobot robot = RobotEngineManager.Instance.CurrentRobot;
       if (robot != null) {
-        if (_CustomIdle.Value != Anki.Cozmo.AnimationTrigger.Count) {
-          robot.RemoveIdleAnimation(kOnboardingIdleAnimLock + name);
-        }
         // since the animation is looped was looped, force kill it.
         if (_LoopedAnim.Value != Anki.Cozmo.AnimationTrigger.Count) {
           robot.CancelAction(Anki.Cozmo.RobotActionType.PLAY_ANIMATION);

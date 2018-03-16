@@ -99,7 +99,6 @@ namespace Cozmo.Challenge.CubePounce {
       _CubePounceGame.UpdateUIForGameEnd();
       if (_CurrentRobot != null) {
         _CurrentRobot.TryResetHeadAndLift(null);
-        _CurrentRobot.RemoveIdleAnimation(kCubePounceIdle);
         _CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftDown, kCubePounceIdle);
       }
     }
@@ -116,7 +115,6 @@ namespace Cozmo.Challenge.CubePounce {
         _CurrentRobot.CancelCallback(HandleEndHandAnimFinish);
         _CurrentRobot.CancelCallback(HandleEndRoundAnimFinish);
         _CurrentRobot.CancelCallback(HandleEndGameAnimFinish);
-        _CurrentRobot.RemoveIdleAnimation(kCubePounceIdle);
 
         _CurrentRobot.SetEnableCliffSensor(true);
       }

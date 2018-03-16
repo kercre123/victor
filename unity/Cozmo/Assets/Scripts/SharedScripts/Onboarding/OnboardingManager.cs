@@ -326,7 +326,6 @@ public class OnboardingManager : MonoBehaviour {
       return;
     }
     if (_CurrPhase == OnboardingPhases.InitialSetup) {
-      currentRobot.RemoveIdleAnimation(kOnboardingManagerIdleLock);
       Cozmo.PauseManager.Instance.IsIdleTimeOutEnabled = true;
       Cozmo.PauseManager.Instance.ExitChallengeOnPause = true;
     }

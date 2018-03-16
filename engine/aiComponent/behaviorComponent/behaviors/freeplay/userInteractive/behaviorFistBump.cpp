@@ -105,7 +105,6 @@ bool BehaviorFistBump::WantsToBeActivatedBehavior() const
 void BehaviorFistBump::OnBehaviorActivated()
 {
   // Disable idle animation
-  SmartPushIdleAnimation(AnimationTrigger::Count);
   _dVars = DynamicVariables();
 
   const auto& robotInfo = GetBEI().GetRobotInfo();

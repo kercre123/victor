@@ -1433,27 +1433,6 @@ namespace Cozmo {
     SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
   }
 
-  
-
-  // TODO: Get rid of PushIdleAnimationMessage? Still want to support this from sdk?
-  void WebotsKeyboardController::PushIdleAnimation()
-  {
-    std::string idleAnimToSendName;
-    if (!WebotsHelpers::GetFieldAsString(root_, "idleAnimationName", idleAnimToSendName, false)) {
-      return;
-    }
-    
-    static const char* kWebotsIdleLock = "webots_idle_lock";
-
-    using namespace ExternalInterface;
-    if(idleAnimToSendName.empty()) {
-      SendMessage(MessageGameToEngine(RemoveIdleAnimation(kWebotsIdleLock)));
-    } else {
-      SendMessage(MessageGameToEngine(ExternalInterface::PushIdleAnimation(AnimationTriggerFromString(idleAnimToSendName.c_str()),
-                                                        kWebotsIdleLock)));
-    }
-  }
-
   void WebotsKeyboardController::PlayAnimation() {
     // Send whatever animation is specified in the animationToSendName field
     std::string animToSendName;
@@ -1950,7 +1929,7 @@ namespace Cozmo {
     REGISTER_SHIFTED_KEY_FCN('%', MOD_NONE, SendComputeCameraCalibration,      "Compute camera calibration from calibration images");
 //      REGISTER_SHIFTED_KEY_FCN('%', MOD_ALT, , "");
     REGISTER_SHIFTED_KEY_FCN('^', MOD_NONE, PlayAnimation,                     "Plays animation specified in 'animationToSendName'");
-    REGISTER_SHIFTED_KEY_FCN('^', MOD_ALT,  PushIdleAnimation,                 "Push idle animation");  // Remove? Want for SDK?
+//      REGISTER_SHIFTED_KEY_FCN('^', MOD_ALT,  ,                 "");
 //      REGISTER_SHIFTED_KEY_FCN('&', MOD_NONE, , "");
     REGISTER_SHIFTED_KEY_FCN('&', MOD_ALT,  ReadCameraCalibration,             "Read camera calibration from nvStorage");
     REGISTER_SHIFTED_KEY_FCN('*', MOD_NONE, SendRandomProceduralFace,          "Draws random procedural face");

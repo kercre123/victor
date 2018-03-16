@@ -116,7 +116,6 @@ protected:
   void SetFaceDisplayHue();
   void SendRandomProceduralFace();
   
-  void PushIdleAnimation();
   void PlayAnimation();
   void PlayAnimationGroup();
   void PlayAnimationTrigger();

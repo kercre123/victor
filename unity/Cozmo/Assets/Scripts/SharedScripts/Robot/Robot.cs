@@ -1373,18 +1373,6 @@ public class Robot : IRobot {
     return SendQueueSingleAction(Singleton<PlayAnimationTrigger>.Instance.Initialize(loops, animTriggerEvent, useSafeLiftMotion, ignoreBodyTrack, ignoreHeadTrack, ignoreLiftTrack), callback, queueActionPosition);
   }
 
-  public void PushIdleAnimation(AnimationTrigger default_anim, string lockName) {
-    DAS.Debug("Robot.PushIdleAnimation", "Pushing idle animation to " + default_anim);
-    RobotEngineManager.Instance.Message.PushIdleAnimation = Singleton<PushIdleAnimation>.Instance.Initialize(default_anim, "unity_" + lockName);
-    RobotEngineManager.Instance.SendMessage();
-  }
-
-  public void RemoveIdleAnimation(string lockName) {
-    DAS.Debug("Robot.PopIdleAnimation", "Popping idle animation");
-    RobotEngineManager.Instance.Message.RemoveIdleAnimation = Singleton<RemoveIdleAnimation>.Instance.Initialize("unity_" + lockName);
-    RobotEngineManager.Instance.SendMessage();
-  }
-
   public void SetLiveIdleAnimationParameters(Anki.Cozmo.LiveIdleAnimationParameter[] paramNames, float[] paramValues,
                                              bool setUnspecifiedToDefault = false) {
     RobotEngineManager.Instance.Message.SetLiveIdleAnimationParameters =

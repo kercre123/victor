@@ -76,9 +76,6 @@ namespace Cozmo.Challenge.CubePounce {
     protected override void CleanUpOnDestroy() {
       if (null != CurrentRobot) {
         CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetOut, null);
-        // remove any idles that might have been around due to a sudden quit.
-        CurrentRobot.RemoveIdleAnimation(CubePounceStateResetPoint.kCubePounceResetPoint);
-        CurrentRobot.RemoveIdleAnimation(CubePounceStatePostPoint.kCubePounceIdle);
       }
       LightCube.OnMovedAction -= HandleCubeMoved;
       LightCube.OnStoppedAction -= HandleCubeStopped;

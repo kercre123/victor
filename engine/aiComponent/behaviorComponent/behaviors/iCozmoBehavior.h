@@ -390,12 +390,6 @@ protected:
   /// and clear it appropriately.  Functions also exist to clear these properties
   /// before the behavior stops.
   ////////////////
-  
-  // Push an idle animation which will be removed when the behavior stops
-  void SmartPushIdleAnimation(AnimationTrigger animation);
-  
-  // Remove an idle animation before the beahvior stops
-  void SmartRemoveIdleAnimation();
 
   // For the duration of this behavior, or until SmartClearMotionProfile() is called (whichever is sooner),
   // use the specified motion profile for all motions. Note that this will result in an error if the behavior
@@ -533,9 +527,6 @@ private:
   // A set of the locks that a behavior has used to disable reactions
   // these will be automatically re-enabled on behavior stop
   std::set<std::string> _smartLockIDs;
-  
-  // track whether the behavior has set an idle
-  bool _hasSetIdle;
   
   // An int that holds tracks disabled using SmartLockTrack
   std::map<std::string, u8> _lockingNameToTracksMap;
