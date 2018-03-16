@@ -12,6 +12,7 @@
 **/
 
 #include "engine/aiComponent/timerUtility.h"
+#include "engine/aiComponent/timerUtilityDevFunctions.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #include "util/console/consoleInterface.h"
@@ -28,16 +29,34 @@ Anki::Cozmo::TimerUtility* sTimerUtility = nullptr;
 }
 
 CONSOLE_VAR(u32, kAdvanceTimerSeconds,   "TimerUtility.AdvanceTimerSeconds", 60);
+CONSOLE_VAR(u32, kAdvanceTimerAndAnticSeconds,   "TimerUtility.AdvanceTimerAndAnticSeconds", 60);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AdvanceTimer(ConsoleFunctionContextRef context)
+{ 
+  AdvanceTimerBySeconds(kAdvanceTimerSeconds);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AdvanceTimerAndAntic(ConsoleFunctionContextRef context)
+{  
+  AdvanceTimerBySeconds(kAdvanceTimerAndAnticSeconds);
+  AdvanceAnticBySeconds(kAdvanceTimerAndAnticSeconds);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AdvanceTimerBySeconds(int seconds)
 {  
   if(sTimerUtility != nullptr){
-    sTimerUtility->AdvanceTimeBySeconds(kAdvanceTimerSeconds);
+    sTimerUtility->AdvanceTimeBySeconds(seconds);
   }
 }
 
+
+
 CONSOLE_FUNC(AdvanceTimer, "TimerUtility.AdvanceTimer");
+CONSOLE_FUNC(AdvanceTimerAndAntic, "TimerUtility.AdvanceTimerAndAntic");
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int TimerHandle::GetSystemTime_s()

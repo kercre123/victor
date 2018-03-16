@@ -19,6 +19,7 @@
 
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/timerUtility.h"
+#include "engine/aiComponent/timerUtilityDevFunctions.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -50,6 +51,8 @@ Anki::Cozmo::BehaviorTimerUtilityCoordinator* sCoordinator = nullptr;
 /// Dev/testing functions
 ///////////
 
+CONSOLE_VAR(u32, kAdvanceAnticSeconds,   "TimerUtility.AdvanceAnticSeconds", 10);
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ForceAntic(ConsoleFunctionContextRef context)
 {  
@@ -62,16 +65,18 @@ void ForceAntic(ConsoleFunctionContextRef context)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AdvanceAntic(ConsoleFunctionContextRef context)
 {  
+  AdvanceAnticBySeconds(kAdvanceAnticSeconds);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AdvanceAnticBySeconds(int seconds)
+{
   if(sCoordinator != nullptr){
-    sCoordinator->DevAdvanceAnticSeconds();
+    sCoordinator->DevAdvanceAnticBySeconds(seconds);
   }
 }
 
-  
 CONSOLE_FUNC(ForceAntic, "TimerUtility.ForceAntic");
-
-
-CONSOLE_VAR(u32, kAdvanceAnticSeconds,   "TimerUtility.AdvanceAnticSeconds", 10);
 CONSOLE_FUNC(AdvanceAntic, "TimerUtility.AdvanceAntic");
 
 ///////////
@@ -224,9 +229,9 @@ auto AnticTracker::GetApplicableRule(const TimerUtility::SharedHandle timer) con
 
 #if ANKI_DEV_CHEATS
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTimerUtilityCoordinator::DevAdvanceAnticSeconds()
+void BehaviorTimerUtilityCoordinator::DevAdvanceAnticBySeconds(int seconds)
 {
-  _iParams.anticTracker->AdvanceAnticBySeconds(kAdvanceAnticSeconds);
+  _iParams.anticTracker->AdvanceAnticBySeconds(seconds);
 }
 
 

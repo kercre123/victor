@@ -37,7 +37,7 @@ public:
   #if ANKI_DEV_CHEATS
   void DevSetForceAntic() { _lParams.shouldForceAntic = true; };
 
-  void DevAdvanceAnticSeconds();
+  void DevAdvanceAnticBySeconds(int seconds);
   #endif
 protected:
   // Enforce creation through BehaviorFactory
