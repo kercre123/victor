@@ -11,9 +11,6 @@
 #include "tests.h"
 #include "timer.h"
 
-#define PRESENT_CURRENT_MA  10
-#define DETECT_CURRENT_MA   100
-
 //-----------------------------------------------------------------------------
 //                  Debug
 //-----------------------------------------------------------------------------
@@ -178,10 +175,17 @@ const char* DBG_cmd_substitution(const char *line, int len)
 //                  Robot
 //-----------------------------------------------------------------------------
 
+#define PRESENT_CURRENT_MA  10
+#define DETECT_CURRENT_MA   100
+#define SYSCON_CHG_PWR_DELAY_MS 1000 /*delay from robot's on-charger detect until charging starts*/
+
 int detect_ma = 0;
 bool TestRobotDetect(void)
 {
-  Board::powerOn(PWR_VEXT,0);
+  //on test cleanup/exit, let charger kick back in so we can properly detect removal
+  int chargeDelay = (g_isDevicePresent && !Board::powerIsOn(PWR_VEXT)) ? SYSCON_CHG_PWR_DELAY_MS : 0; //condition from app::WaitForDeviceOff()
+  
+  Board::powerOn(PWR_VEXT, chargeDelay);
   //Board::powerOn(PWR_VBAT); //XXX DEBUG
   
   int i_ma = Meter::getCurrentMa(PWR_VEXT,0);
@@ -197,8 +201,9 @@ bool TestRobotDetect(void)
 void TestRobotCleanup(void)
 {
   detect_ma = 0;
-  Board::powerOff(PWR_VEXT); //Contacts::powerOff();
+  Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT);
+  //ConsolePrintf("----DBG: i=%imA\n", Meter::getCurrentMa(PWR_VEXT,4) );
 }
 
 //always run this first after detect, to get into comms mode
@@ -372,6 +377,7 @@ static inline int charge1_(uint16_t timeout_s, uint16_t i_done_ma, bool dbgPrint
   
   //Turn on charging power
   Board::powerOn(PWR_VEXT,0);
+  Timer::delayMs(SYSCON_CHG_PWR_DELAY_MS); //delay for syscon to enable charger
   
   int status = RECHARGE_STATUS_TIMEOUT;
   while( Timer::elapsedUs(Tstart) < (timeout_s*1000*1000) )
@@ -503,6 +509,7 @@ void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
   
   //Turn on charging power
   Board::powerOn(PWR_VEXT,0);
+  Timer::delayMs(SYSCON_CHG_PWR_DELAY_MS); //delay for syscon to enable charger
   
   CHARGE_TEST_DEBUG( int ibase_ma = 0; uint32_t Tprint = 0;  );
   int avg=0, avgCnt=0, avgMax = 0, iMax = 0, offContact = 0;
