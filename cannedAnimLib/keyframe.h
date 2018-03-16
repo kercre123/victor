@@ -137,6 +137,7 @@ namespace Cozmo {
 
     #if CAN_STREAM
     virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+    virtual bool IsDone() override;
     #endif
 
     static const std::string& GetClassName() {
@@ -171,6 +172,7 @@ namespace Cozmo {
 
     #if CAN_STREAM
       virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+      virtual bool IsDone() override;      
     #endif
 
     static const std::string& GetClassName() {

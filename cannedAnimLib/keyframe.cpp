@@ -154,6 +154,10 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     #if CAN_STREAM
       RobotInterface::EngineToRobot* HeadAngleKeyFrame::GetStreamMessage()
       {
+        if (GetCurrentTime() > 0) {
+          return nullptr;
+        }
+
         _streamHeadMsg.duration_sec = 0.001 * _durationTime_ms;
         
         // Add variability:
@@ -166,6 +170,12 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         
         return new RobotInterface::EngineToRobot(_streamHeadMsg);
       }
+
+      bool HeadAngleKeyFrame::IsDone() 
+      {
+        return IsDoneHelper(_durationTime_ms);
+      }
+
     #endif
 
     Result HeadAngleKeyFrame::DefineFromFlatBuf(const CozmoAnim::HeadAngle* headAngleKeyframe, const std::string& animNameDebug)
@@ -211,6 +221,10 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     #if CAN_STREAM
       RobotInterface::EngineToRobot* LiftHeightKeyFrame::GetStreamMessage()
       {
+        if (GetCurrentTime() > 0) {
+          return nullptr;
+        }
+
         _streamLiftMsg.duration_sec = 0.001 * _durationTime_ms;
         
         // Add variability:
@@ -222,6 +236,11 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         }
 
         return new RobotInterface::EngineToRobot(_streamLiftMsg);
+      }
+
+      bool LiftHeightKeyFrame::IsDone() 
+      {
+        return IsDoneHelper(_durationTime_ms);
       }
     #endif
 
