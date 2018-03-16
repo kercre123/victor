@@ -27,8 +27,7 @@ enum class ScreenName {
     
   Main,
   ClearUserData,
-  ClearUserDataSuccess,
-  ClearUserDataNoop,
+  ClearUserDataFail,
   SelfTest,
   Network,
   SensorInfo,
