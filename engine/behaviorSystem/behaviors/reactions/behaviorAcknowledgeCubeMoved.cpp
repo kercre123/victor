@@ -55,7 +55,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersAcknowledgeCu
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersAcknowledgeCubeArray),

@@ -205,36 +205,6 @@
         "shouldResumeLast": true,
         "debugStrategyName": "Trigger Strategy Unexpected Movement"
       }
-    },
-    {
-      "reactionTrigger": "VC",
-      "behaviorID": "ReactToVoiceCommand",
-      "voiceCommandParams" : {
-        "isWakeUpReaction": false
-      }
-    },
-    // There are two strategies for triggering ReactToVoiceCommand_Wakeup
-    // 1) When saying "Hey Cozmo" after telling Cozmo to go to sleep
-    //    (see ReactionTriggerStrategyVoiceCommand.cpp)
-    // 2) When a Cancel button is pressed after telling Cozmo to go to sleep (uses IdleTimeout cancelled
-    //    as the trigger, see ReactionTriggerStrategyFactory.cpp)
-    {
-      "reactionTrigger": "VC",
-      "behaviorID": "ReactToVoiceCommand_Wakeup",
-      "voiceCommandParams" : {
-        "isWakeUpReaction": true
-      }
-    },
-    {
-      "reactionTrigger": "VC",
-      "behaviorID": "ReactToVoiceCommand_Wakeup",
-      "strategyToCreate": "Generic",
-      "genericStrategyParams" : {
-        "shouldResumeLast": false,
-        "canInterruptOtherTriggeredBehavior": false,
-        "needsRobotPreReq": true,
-        "debugStrategyName": "Trigger Strategy Voice Command Wakeup"
-      }
     }
   ]
 }

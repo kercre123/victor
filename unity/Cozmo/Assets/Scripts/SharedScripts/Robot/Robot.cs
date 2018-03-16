@@ -192,7 +192,7 @@ public class Robot : IRobot {
   private static AllTriggersConsidered _AllTriggers = new AllTriggersConsidered(true, true, true, true, true, true,
                                                                        true, true, true, true, true, true,
                                                                        true, true, true, true, true, true,
-                                                                       true, true, true, true);
+                                                                       true, true, true);
 
   private static DisableReactionsWithLock _RequestDisableReactions = new DisableReactionsWithLock("unity", _AllTriggers);
   private static RemoveDisableReactionsLock _RequestReEnableReactions = new RemoveDisableReactionsLock("unity");

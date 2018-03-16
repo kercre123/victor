@@ -17,7 +17,6 @@ enum uint_8 ActivityType {
   Socialize,
   Sparked,
   StrictPriority,
-  VoiceCommand,
   NeedsExpression,
   Count
 }
@@ -55,8 +54,7 @@ enum uint_8 ActivityID {
   SparksStackBlock,
   SparksWorkout,
   StrictPriorityFreeplay,
-  SparksTrackLaser,
-  VoiceCommand
+  SparksTrackLaser
 }
 
 // The strategies that determine when an activity wants to start/stop
@@ -77,7 +75,6 @@ enum uint_8 HighLevelActivity {
   Freeplay,
   Selection,
   MeetCozmoFindFaces,
-  VoiceCommand,
   Count
 }
 

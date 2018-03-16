@@ -57,7 +57,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPopAWheelieAr
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           false}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPopAWheelieArray),

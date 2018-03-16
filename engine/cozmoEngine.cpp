@@ -37,7 +37,6 @@
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "engine/factory/factoryTestLogger.h"
-#include "engine/voiceCommands/voiceCommandComponent.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -396,8 +395,6 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   _uiMsgHandler->ResetMessageCounts();
   _context->GetRobotManager()->GetMsgHandler()->ResetMessageCounts();
   _context->GetVizManager()->ResetMessageCount();
-  
-  _context->GetVoiceCommandComponent()->Update();
   
   // Handle UI
   Result lastResult = _uiMsgHandler->Update();

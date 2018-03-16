@@ -42,7 +42,6 @@ namespace{
     {ReactionTrigger::RobotShaken,                  false},
     {ReactionTrigger::Sparked,                      true},
     {ReactionTrigger::UnexpectedMovement,           true},
-    {ReactionTrigger::VC,                           true}
   };
   
   static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersImpactArray),

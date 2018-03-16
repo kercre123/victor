@@ -50,7 +50,6 @@
       { "channel": "CubeAccelComponent",   "enabled": false },
       { "channel": "NeedsSystem",          "enabled": false },
       { "channel": "PerfMetric",           "enabled": true },
-      { "channel": "VoiceCommands",        "enabled": false },
       { "channel": "InventoryComponent",   "enabled": false },
       { "channel": "TextToSpeech",         "enabled": false }
     ],
@@ -101,7 +100,6 @@
       { "channel": "CubeAccelComponent",   "enabled": false },
       { "channel": "NeedsSystem",          "enabled": false },
       { "channel": "PerfMetric",           "enabled": true },
-      { "channel": "VoiceCommands",        "enabled": false },
       { "channel": "InventoryComponent",   "enabled": false },
       { "channel": "TextToSpeech",         "enabled": false }
     ],
@@ -152,7 +150,6 @@
       { "channel": "CubeAccelComponent",   "enabled": false },
       { "channel": "NeedsSystem",          "enabled": false },
       { "channel": "PerfMetric",           "enabled": true },
-      { "channel": "VoiceCommands",        "enabled": false },
       { "channel": "InventoryComponent",   "enabled": false },
       { "channel": "TextToSpeech",         "enabled": false }
     ],

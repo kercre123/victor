@@ -47,7 +47,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersPlacedOnSlope
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersPlacedOnSlopeArray),

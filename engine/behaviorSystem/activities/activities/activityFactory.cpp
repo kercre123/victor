@@ -21,7 +21,6 @@
 #include "engine/behaviorSystem/activities/activities/activitySocialize.h"
 #include "engine/behaviorSystem/activities/activities/activitySparked.h"
 #include "engine/behaviorSystem/activities/activities/activityStrictPriority.h"
-#include "engine/behaviorSystem/activities/activities/activityVoiceCommand.h"
 
 #include "engine/robot.h"
 
@@ -74,11 +73,6 @@ IActivity* CreateActivity(Robot& robot, ActivityType activityType, const Json::V
     case ActivityType::StrictPriority:
     {
       activityPtr = new ActivityStrictPriority(robot, config);
-      break;
-    }
-    case ActivityType::VoiceCommand:
-    {
-      activityPtr = new ActivityVoiceCommand(robot, config);
       break;
     }
     case ActivityType::NeedsExpression:

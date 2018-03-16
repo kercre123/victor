@@ -57,10 +57,6 @@ class VizManager;
 class NeedsManager;
 class PerfMetric;
   
-namespace VoiceCommand {
-  class VoiceCommandComponent;
-}
-
 class ThreadIDInternal;
   
 enum class SdkStatusType : uint8_t;
@@ -100,7 +96,6 @@ public:
   AudioMultiplexer*                     GetAudioMultiplexer() const { return _audioServer.get(); }
   VizManager*                           GetVizManager() const { return _vizManager.get(); }
   Util::TransferQueueMgr*               GetTransferQueue() const { return _transferQueueMgr.get(); }
-  VoiceCommand::VoiceCommandComponent*  GetVoiceCommandComponent() const { return _voiceCommandComponent.get(); }
   NeedsManager*                         GetNeedsManager() const { return _needsManager.get(); }
   CozmoExperiments*                     GetExperiments() const { return _cozmoExperiments.get(); }
   PerfMetric*                           GetPerfMetric() const { return _perfMetric.get(); }
@@ -135,7 +130,6 @@ private:
   std::unique_ptr<Util::TransferQueueMgr>               _transferQueueMgr;
   std::unique_ptr<Util::DasTransferTask>                _dasTransferTask;
   std::unique_ptr<Util::GameLogTransferTask>            _gameLogTransferTask;
-  std::unique_ptr<VoiceCommand::VoiceCommandComponent>  _voiceCommandComponent;
   std::unique_ptr<NeedsManager>                         _needsManager;
   std::unique_ptr<CozmoExperiments>                     _cozmoExperiments;
   std::unique_ptr<PerfMetric>                           _perfMetric;

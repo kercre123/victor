@@ -13,19 +13,29 @@
 #include "audioCaptureSystem.h"
 #include "util/logging/logging.h"
 
-#import <AudioToolbox/AudioToolbox.h>
-
 //
-// Audio capture is OFF unless enabled by configuration (project/gyp/voice-recognition.gypi)
+// Audio capture is OFF unless enabled by configuration
 //
-#if !defined(VC_AUDIOCAPTURE_FUNCTIONALITY)
-#define VC_AUDIOCAPTURE_FUNCTIONALITY 0
+#if !defined(AUDIOCAPTURE_FUNCTIONALITY)
+#define AUDIOCAPTURE_FUNCTIONALITY 0
 #endif
 
-#if VC_AUDIOCAPTURE_FUNCTIONALITY && (TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE)
+#if !defined(TARGET_IPHONE_SIMULATOR)
+#define TARGET_IPHONE_SIMULATOR 0
+#endif
+
+#if !defined(TARGET_OS_IPHONE)
+#define TARGET_OS_IPHONE 0
+#endif
+
+#if AUDIOCAPTURE_FUNCTIONALITY && (TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE)
 #define IPHONE_TYPE 1
 #else
 #define IPHONE_TYPE 0
+#endif
+
+#if AUDIOCAPTURE_FUNCTIONALITY
+#import <AudioToolbox/AudioToolbox.h>
 #endif
 
 #if IPHONE_TYPE
@@ -44,6 +54,7 @@ namespace AudioUtil {
   
 struct AudioCaptureSystemData
 {
+#if AUDIOCAPTURE_FUNCTIONALITY
   AudioCaptureSystem*               _captureSystem = nullptr;
   AudioQueueRef                     _queue = nullptr;
   AudioQueueBufferRef               _buffers[NUM_BUFFERS];
@@ -84,8 +95,10 @@ struct AudioCaptureSystemData
     }
     _captureSystem = nullptr;
   }
+#endif
 };
   
+#if AUDIOCAPTURE_FUNCTIONALITY
 static void HandleCallbackEntry(void * __nullable               inUserData,
                                 AudioQueueRef                   inAQ,
                                 AudioQueueBufferRef             inBuffer,
@@ -96,12 +109,21 @@ static void HandleCallbackEntry(void * __nullable               inUserData,
   AudioCaptureSystemData* data = static_cast<AudioCaptureSystemData*>(inUserData);
   if (data) { data->HandleCallback(inAQ, inBuffer, inStartTime, inNumberPackets, inPacketDescs); }
 }
+#endif
 
-AudioCaptureSystem::AudioCaptureSystem() = default;
+AudioCaptureSystem::AudioCaptureSystem(uint32_t samplesPerChunk, uint32_t sampleRate)
+: _samplesPerChunk(samplesPerChunk)
+, _sampleRate_hz(sampleRate)
+{
+  // To prevent warnings when functionality is not defined in
+  (void) _samplesPerChunk;
+  (void) _sampleRate_hz;
+}
 
 // Note this should be done AFTER permission has been granted
 void AudioCaptureSystem::Init()
 {
+#if AUDIOCAPTURE_FUNCTIONALITY
   if (!_impl && GetPermissionState() == PermissionState::Granted)
   {
     _impl.reset(new AudioCaptureSystemData{});
@@ -109,25 +131,27 @@ void AudioCaptureSystem::Init()
     
     AudioStreamBasicDescription standardAudioFormat;
     GetStandardAudioDescriptionFormat(standardAudioFormat);
+    standardAudioFormat.mSampleRate = _sampleRate_hz;
     OSStatus status = AudioQueueNewInput(&standardAudioFormat, HandleCallbackEntry, _impl.get(), nullptr, nullptr, 0, &_impl->_queue);
     if (kAudioServicesNoError != status)
     {
-      PRINT_NAMED_ERROR("AudioCaptureSystem.Constructor.AudioQueueNewInput.Error","OSStatus errorcode: %d", (int)status);
+      PRINT_NAMED_WARNING("AudioCaptureSystem.Constructor.AudioQueueNewInput.Warn","OSStatus errorcode: %d", (int)status);
       _impl.reset();
       return;
     }
     
     for(int i = 0; i < NUM_BUFFERS; i++)
     {
-      status = AudioQueueAllocateBuffer(_impl->_queue, kBytesPerChunk, &_impl->_buffers[i]);
+      status = AudioQueueAllocateBuffer(_impl->_queue, _samplesPerChunk * sizeof(AudioSample), &_impl->_buffers[i]);
       if (kAudioServicesNoError != status)
       {
-        PRINT_NAMED_ERROR("AudioCaptureSystem.Constructor.AudioQueueAllocateBuffer.Error","OSStatus errorcode: %d", (int)status);
+        PRINT_NAMED_WARNING("AudioCaptureSystem.Constructor.AudioQueueAllocateBuffer.Warn","OSStatus errorcode: %d", (int)status);
         _impl.reset();
         return;
       }
     }
   }
+#endif
 }
 
 AudioCaptureSystem::~AudioCaptureSystem()
@@ -188,9 +212,9 @@ void AudioCaptureSystem::RequestCapturePermission(RequestCapturePermissionCallba
   }
 }
   
+#if IPHONE_TYPE
 static void DoIPhoneSpecificConfig()
 {
-#if IPHONE_TYPE
   AVAudioSession * session = [AVAudioSession sharedInstance];
   if (!session)
   {
@@ -287,11 +311,12 @@ static void DoIPhoneSpecificConfig()
                         (long)[nsError code], [[nsError localizedDescription] UTF8String]);
     }
   }
-#endif
 }
+#endif
 
 void AudioCaptureSystem::StartRecording()
 {
+#if AUDIOCAPTURE_FUNCTIONALITY
   if (_impl && !_impl->_recording && GetPermissionState() == PermissionState::Granted)
   {
     _impl->_recording = true;
@@ -300,26 +325,30 @@ void AudioCaptureSystem::StartRecording()
       AudioQueueEnqueueBuffer(_impl->_queue, _impl->_buffers[i], 0, NULL);
     }
     
-    if (IPHONE_TYPE)
+#if IPHONE_TYPE
     {
       DoIPhoneSpecificConfig();
     }
+#endif
     
     OSStatus status = AudioQueueStart(_impl->_queue, NULL);
     if (kAudioServicesNoError != status)
     {
-      PRINT_NAMED_ERROR("AudioCaptureSystem.StartRecording.AudioQueueStart.Error","Is permission properly granted? OSStatus errorcode: %d", (int)status);
+      PRINT_NAMED_WARNING("AudioCaptureSystem.StartRecording.AudioQueueStart.Warn","Is permission properly granted? OSStatus errorcode: %d", (int)status);
     }
   }
+#endif
 }
 
 void AudioCaptureSystem::StopRecording()
 {
+#if AUDIOCAPTURE_FUNCTIONALITY
   if (_impl && _impl->_recording)
   {
     _impl->_recording = false;
     AudioQueueStop(_impl->_queue, true);
   }
+#endif
 }
 
 } // end namespace AudioUtil

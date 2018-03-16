@@ -26,7 +26,6 @@
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyRobotPlacedOnSlope.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyRobotShaken.h"
 #include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategySparked.h"
-#include "engine/behaviorSystem/reactionTriggerStrategies/reactionTriggerStrategyVoiceCommand.h"
 #include "engine/robot.h"
 
 #include "anki/common/basestation/jsonTools.h"
@@ -234,43 +233,6 @@ IReactionTriggerStrategy* ReactionTriggerStrategyFactory::
       };
       genericStrategy->ConfigureRelevantEvents(relevantTypes);
       strategy = genericStrategy;
-      break;
-    }
-    case ReactionTrigger::VC:
-    {
-      const WantsToRunStrategyType kGenericStrategyType = WantsToRunStrategyType::Generic;
-      if(strategyToCreate == kGenericStrategyType)
-      {
-        // Generic strategy wants to run when IdleTimeout is cancelled (cancelled by game when waking up while
-        // going to sleep). The VC reaction trigger needs to be enabled and the current reaction can't be VC or
-        // PlacedOnCharger (We expect to potentially receive a CancelIdleTimeout message from game when
-        // on the charger and we don't want that to trigger the strategy).
-        // This strategy is used to trigger reactToVoiceCommand_Wakeup when sleeping is cancelled via a cancel
-        // button
-        auto* genericStrategy = ReactionTriggerStrategyGeneric::CreateReactionTriggerStrategyGeneric(robot, config);
-        std::set<MessageGameToEngineTag> relevantTypes =
-        {
-          MessageGameToEngineTag::CancelIdleTimeout
-        };
-        genericStrategy->ConfigureRelevantEvents(relevantTypes,
-         [](const AnkiEvent<ExternalInterface::MessageGameToEngine>& event, const Robot& robot)
-         {
-           const bool currentTriggerNotVC = (robot.GetBehaviorManager().GetCurrentReactionTrigger() !=
-                                             ReactionTrigger::VC);
-           const bool currentTriggerNotOnCharger = (robot.GetBehaviorManager().GetCurrentReactionTrigger() !=
-                                                    ReactionTrigger::PlacedOnCharger);
-           const bool VCTriggerEnabled = robot.GetBehaviorManager().IsReactionTriggerEnabled(ReactionTrigger::VC);
-           
-           return (VCTriggerEnabled && currentTriggerNotVC && currentTriggerNotOnCharger);
-         }
-        );
-        
-        strategy = genericStrategy;
-      }
-      else
-      {
-        strategy = new ReactionTriggerStrategyVoiceCommand(robot, config);
-      }
       break;
     }
     case ReactionTrigger::Count:

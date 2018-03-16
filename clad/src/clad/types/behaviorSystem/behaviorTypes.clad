@@ -91,8 +91,7 @@ enum uint_8 BehaviorClass {
   ReactToRobotShaken,
   ReactToSparked,
   ReactToStackOfCubes,
-  ReactToUnexpectedMovement,
-  ReactToVoiceCommand
+  ReactToUnexpectedMovement
 
 }
 
@@ -199,8 +198,6 @@ enum uint_8 BehaviorID {
   ReactToSparked,
   ReactToStackOfCubes,
   ReactToUnexpectedMovement,
-  ReactToVoiceCommand,
-  ReactToVoiceCommand_Wakeup,
 
   RequestKeepAway,
   RequestMemoryMatch,

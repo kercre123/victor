@@ -98,7 +98,6 @@ const ReactionTriggerHelpers::FullReactionArray &GetAffectAllArray() {
       {ReactionTrigger::RobotShaken,           true},
       {ReactionTrigger::Sparked,               true},
       {ReactionTrigger::UnexpectedMovement,    true},
-      {ReactionTrigger::VC,                    true},
   };
 
   static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectAllArray),
@@ -271,13 +270,6 @@ void EnsureFullReactionArrayConversionsValid(const FullReactionArray& reactions,
                    "EnsureFullReactionArrayConversionsValid.UnexpectedMovement");
         break;
       }
-      case ReactionTrigger::VC:
-      {
-        DEV_ASSERT((triggersAffected.vc == reactionEntry.Value()) &&
-                   (triggersAffected.vc == commutativeEntry.Value()),
-                   "EnsureFullReactionArrayConversionsValid.VoiceCommand");
-        break;
-      }
       case ReactionTrigger::Count:
       case ReactionTrigger::NoneTrigger:
       {
@@ -312,8 +304,7 @@ AllTriggersConsidered ConvertReactionArrayToAllTriggersConsidered(const FullReac
        reactions[Util::EnumToUnderlying(ReactionTrigger::RobotOnSide)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::RobotShaken)].Value(),
        reactions[Util::EnumToUnderlying(ReactionTrigger::Sparked)].Value(),
-       reactions[Util::EnumToUnderlying(ReactionTrigger::UnexpectedMovement)].Value(),
-       reactions[Util::EnumToUnderlying(ReactionTrigger::VC)].Value());
+       reactions[Util::EnumToUnderlying(ReactionTrigger::UnexpectedMovement)].Value());
   if(ANKI_DEV_CHEATS){
     EnsureFullReactionArrayConversionsValid(reactions, affected);
   }
@@ -366,7 +357,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersUIRequestGame
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      true},
   {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           false}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersUIRequestGame),
@@ -941,29 +931,6 @@ bool BehaviorManager::SwitchToReactionTrigger(IReactionTriggerStrategy& triggerS
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorManager::SwitchToVoiceCommandBehavior(IBehaviorPtr nextBehavior)
-{
-  BehaviorRunningAndResumeInfo newBehaviorInfo;
-  newBehaviorInfo.SetCurrentBehavior(nextBehavior);
-
-  // if this is the first interruption, set the current scored behavior as the behavior to resume
-  if(nullptr == GetRunningAndResumeInfo().GetBehaviorToResume() &&
-     nullptr != GetRunningAndResumeInfo().GetCurrentBehavior())
-  {
-    newBehaviorInfo.SetBehaviorToResume(GetRunningAndResumeInfo().GetCurrentBehavior());
-  }
-  
-  // if this is after the first, pass the behavior to resume along
-  if(nullptr != GetRunningAndResumeInfo().GetBehaviorToResume())
-  {
-    newBehaviorInfo.SetBehaviorToResume(GetRunningAndResumeInfo().GetBehaviorToResume());
-  }
-  
-  return SwitchToBehaviorBase(newBehaviorInfo);
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorManager::SwitchToUIGameRequestBehavior()
 {
   DisableReactionsWithLock(kDisableReactionsUIRequestGameLock, kAffectTriggersUIRequestGame);
@@ -1131,13 +1098,7 @@ Result BehaviorManager::Update(Robot& robot)
     EnsureRequestGameIsClear();
   }
   
-  // check for voice commands
-  _highLevelActivityMap[HighLevelActivity::VoiceCommand]->Update(robot);
-  // Identify whether there is a voice command-response behavior we want to be running
-  IBehaviorPtr voiceCommandBehavior = _highLevelActivityMap[HighLevelActivity::VoiceCommand]->
-                 GetDesiredActiveBehavior(robot, GetRunningAndResumeInfo().GetCurrentBehavior());
-  
-  if ((voiceCommandBehavior == nullptr) && _shouldRequestGame){
+  if (_shouldRequestGame){
     // Set IBehaviorPtr for requested game
     SelectUIRequestGameBehavior();
     _shouldRequestGame = false;
@@ -1152,8 +1113,7 @@ Result BehaviorManager::Update(Robot& robot)
   // Allow reactionary behaviors to request a switch without a message
   const bool switchedFromReactionTrigger = CheckReactionTriggerStrategies();
 
-  if ((voiceCommandBehavior == nullptr) &&
-      (_uiRequestGameBehavior == nullptr) &&
+  if (_uiRequestGameBehavior == nullptr &&
       !switchedFromReactionTrigger)
   {
     const bool currentBehaviorIsReactionary =
@@ -1165,23 +1125,13 @@ Result BehaviorManager::Update(Robot& robot)
     }
   }
   
-  // Reaction triggers we just switched to take priority over voice commands and ui requests
+  // Reaction triggers we just switched to take priority
   if (!switchedFromReactionTrigger &&
-      ((voiceCommandBehavior != nullptr) || (_uiRequestGameBehavior != nullptr)))
+      _uiRequestGameBehavior != nullptr)
   {
-    // TODO: Note this won't work with switching between multiple behaviors that are all part of the same response.
-    // The interface to the voice command behavior chooser will need to be updated so that the behavior manager knows whether
-    // this new behavior is a brand new voice command response that needs to be 'switched' to, or simply a different behavior
-    // in a line of behavior responses that can be used in the normal way (ie switched to using logic below).
-    // TODO: figure out if the above TODO's assumptions are true...
     auto currentBehavior = GetRunningAndResumeInfo().GetCurrentBehavior();
-    if ((voiceCommandBehavior != nullptr) && (currentBehavior != voiceCommandBehavior))
-    {
-      SwitchToVoiceCommandBehavior(voiceCommandBehavior);
-      EnsureRequestGameIsClear();
-    }
     // Switch into the request game behavior if we haven't already
-    else if ((_uiRequestGameBehavior != nullptr) && (currentBehavior != _uiRequestGameBehavior)){
+    if ((_uiRequestGameBehavior != nullptr) && (currentBehavior != _uiRequestGameBehavior)){
       SwitchToUIGameRequestBehavior();
     }
   }
@@ -1190,8 +1140,7 @@ Result BehaviorManager::Update(Robot& robot)
   if (currentBehavior != nullptr) {
     
     const bool shouldAttemptResume =
-      (GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger) ||
-      (voiceCommandBehavior != nullptr);
+      GetRunningAndResumeInfo().GetCurrentReactionTrigger() != ReactionTrigger::NoneTrigger;
     
     // We have a current behavior, update it.
     const IBehavior::Status status = currentBehavior->Update();

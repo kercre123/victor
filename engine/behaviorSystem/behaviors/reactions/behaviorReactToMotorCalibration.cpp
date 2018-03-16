@@ -45,7 +45,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersMotorCalibrat
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           true}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersMotorCalibrationArray),

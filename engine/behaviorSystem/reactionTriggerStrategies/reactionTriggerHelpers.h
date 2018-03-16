@@ -36,7 +36,6 @@
   {ReactionTrigger::RobotShaken,                  triggers.robotShaken},  \
   {ReactionTrigger::Sparked,                      triggers.sparked},  \
   {ReactionTrigger::UnexpectedMovement,           triggers.unexpectedMovement},  \
-  {ReactionTrigger::VC,                           triggers.vc},  \
 }
 
 

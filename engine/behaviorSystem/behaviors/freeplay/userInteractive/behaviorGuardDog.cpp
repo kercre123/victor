@@ -65,7 +65,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersGuardDogArray
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           false}
 };
   
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersGuardDogArray),

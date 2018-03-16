@@ -64,7 +64,7 @@ public:
   void LoadAnimations();
   void LoadFaceAnimations();
   void LoadRobotConfigs();
-  void LoadVoiceCommandConfigs();
+  void LoadGameRequestAndTrickConfigs();
 
   using FileJsonMap       = std::unordered_map<std::string, const Json::Value>;
   using BehaviorIDJsonMap = std::unordered_map<BehaviorID,  const Json::Value>;
@@ -88,7 +88,6 @@ public:
   const Json::Value& GetRobotWorkoutConfig() const       { return _robotWorkoutConfig; }
   const Json::Value& GetRobotVisionConfig() const        { return _robotVisionConfig; }
   const Json::Value& GetReactionTriggerMap() const       { return _reactionTriggerMap; }
-  const Json::Value& GetVoiceCommandConfig() const       { return _voiceCommandConfig; }
   const Json::Value& GetRobotNeedsConfig() const         { return _needsSystemConfig; }
   const Json::Value& GetStarRewardsConfig() const        { return _starRewardsConfig; }
   const Json::Value& GetRobotNeedsActionsConfig() const  { return _needsActionConfig; }
@@ -99,7 +98,7 @@ public:
   const Json::Value& GetInventoryConfig() const          { return _inventoryConfig; }
   const Json::Value& GetDasEventConfig() const           { return _dasEventConfig; }
   
-  // voice command configs
+  // Game request and trick configuration
   const Json::Value& GetGameRequestWeightsConfig() const { return _gameRequestWeights; }
   const Json::Value& GetDoATrickWeightsConfig() const { return _doATrickWeights; }
 
@@ -170,7 +169,6 @@ private:
   Json::Value _robotVisionConfig;
   Json::Value _reactionTriggerMap;
   Json::Value _robotWorkoutConfig;
-  Json::Value _voiceCommandConfig;
   Json::Value _needsSystemConfig;
   Json::Value _starRewardsConfig;
   Json::Value _needsActionConfig;
@@ -181,7 +179,7 @@ private:
   Json::Value _inventoryConfig;
   Json::Value _dasEventConfig;
   
-  // voice command configs
+  // game request and trick weights
   Json::Value _gameRequestWeights;
   Json::Value _doATrickWeights;
   

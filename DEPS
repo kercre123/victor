@@ -33,7 +33,7 @@
                 "build_type_id": "Cte_Master",
                 "extension": "tar.gz",
                 "package_name": "Cte",
-                "version": "173"
+                "version": "187"
             },
             "firmware": {
                 "build_type_id": "CozmoOne_Experiments_CollectFirmware",

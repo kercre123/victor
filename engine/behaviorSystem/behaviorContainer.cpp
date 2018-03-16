@@ -93,7 +93,6 @@
 #include "engine/behaviorSystem/behaviors/reactions/behaviorReactToSparked.h"
 #include "engine/behaviorSystem/behaviors/reactions/behaviorReactToStackOfCubes.h"
 #include "engine/behaviorSystem/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
-#include "engine/behaviorSystem/behaviors/reactions/behaviorReactToVoiceCommand.h"
 
 #include "engine/robot.h"
 
@@ -621,11 +620,6 @@ IBehaviorPtr BehaviorContainer::CreateBehavior(BehaviorClass behaviorType, Robot
     case BehaviorClass::ReactToPet:
     {
       newBehavior = IBehaviorPtr(new BehaviorReactToPet(robot, config));
-      break;
-    }
-    case BehaviorClass::ReactToVoiceCommand:
-    {
-      newBehavior = IBehaviorPtr(new BehaviorReactToVoiceCommand(robot, config));
       break;
     }
     case BehaviorClass::DriveInDesperation:

@@ -255,7 +255,6 @@ private:
   // switches to a given behavior (stopping the current behavior if necessary). Returns true if it switched
   bool SwitchToReactionTrigger(IReactionTriggerStrategy& triggerStrategy, IBehaviorPtr nextBehavior);
   bool SwitchToBehaviorBase(BehaviorRunningAndResumeInfo& nextBehaviorInfo);
-  bool SwitchToVoiceCommandBehavior(IBehaviorPtr nextBehavior);
   void SwitchToUIGameRequestBehavior();
   
   // checks the chooser and switches to a new behavior if neccesary

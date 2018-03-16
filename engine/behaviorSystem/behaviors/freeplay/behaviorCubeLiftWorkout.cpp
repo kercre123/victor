@@ -61,7 +61,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersWorkoutArray 
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           true}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersWorkoutArray),

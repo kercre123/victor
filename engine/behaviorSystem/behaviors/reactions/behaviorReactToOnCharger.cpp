@@ -57,7 +57,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersOnCharger = {
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      true},
   {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           false}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectTriggersOnCharger),

@@ -104,7 +104,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectTriggersEnrollFaceArr
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::UnexpectedMovement,           true},
-  {ReactionTrigger::VC,                           true}
 };
 
 

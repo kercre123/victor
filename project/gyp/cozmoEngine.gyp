@@ -3,7 +3,6 @@
     '../../coretech/project/gyp/face-library.gypi',
     '../../coretech/project/gyp/opencv.gypi',
     'text-to-speech.gypi',
-    'voice-recognition.gypi',
   ],
 
   'variables': {
@@ -286,7 +285,6 @@
                     '<(webots_path)/lib/',
                     '<@(flatbuffers_lib_search_path_mac)',
                     '<@(text_to_speech_library_dirs)',
-                    '<@(voice_recog_library_lib_path)',
                 ],
               },
             }],
@@ -326,7 +324,6 @@
                     '<(webots_path)/lib/',
                     '<@(flatbuffers_lib_search_path_mac)',
                     '<@(text_to_speech_library_dirs)',
-                    '<@(voice_recog_library_lib_path)',
                 ],
               },
             }],
@@ -367,7 +364,6 @@
                     '<(webots_path)/lib/',
                     '<@(flatbuffers_lib_search_path_mac)',
                     '<@(text_to_speech_library_dirs)',
-                    '<@(voice_recog_library_lib_path)',
                 ],
               },
             }],
@@ -407,7 +403,6 @@
                     '<@(opencv_lib_search_path_release)',
                     '<(webots_path)/lib/',
                     '<@(text_to_speech_library_dirs)',
-                    '<@(voice_recog_library_lib_path)',
                 ],
               },
             }],
@@ -1232,18 +1227,6 @@
                   }],
                 ], # conditions
               },
-              
-              {
-                'action_name': 'create_symlink_resources_voice_command_data',
-                'inputs': [],
-                'outputs': [],
-                'action': [
-                '../../tools/build/tools/ankibuild/symlink.py',
-                '--link_target', '<(cozmo_engine_path)/resources/assets/voiceCommand/exports',
-                '--link_name', '<(PRODUCT_DIR)/resources/assets/voiceCommand',
-                '--create_folder', '<(PRODUCT_DIR)/resources/assets'
-                ],
-              },
 
             ], #end actions
           }, # end unittest target
@@ -1555,13 +1538,6 @@
               ],
             }, # end action
           ], # end actions
-          
-          'include_dirs': [
-            '<@(voice_recog_library_includes)',
-          ],
-          'libraries': [
-            '<@(voice_recog_library_libs)',
-          ],
         }],
         ['OS=="ios" or OS=="android"', {
           'actions': [

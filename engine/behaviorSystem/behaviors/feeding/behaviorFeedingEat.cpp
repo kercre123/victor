@@ -81,7 +81,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kDisableCliffWhileEating = {
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kDisableCliffWhileEating),

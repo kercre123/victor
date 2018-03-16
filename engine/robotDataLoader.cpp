@@ -581,23 +581,8 @@ void RobotDataLoader::LoadActivities()
 }
 
 
-void RobotDataLoader::LoadVoiceCommandConfigs()
+void RobotDataLoader::LoadGameRequestAndTrickConfigs()
 {
-#if THF_FUNCTIONALITY
-  // Configuration for voice command component 
-  {
-    std::string jsonFilename = "assets/voiceCommand/voiceCommand_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _voiceCommandConfig);
-    if (!success)
-    {
-      PRINT_NAMED_ERROR("RobotDataLoader.VoiceCommandConfigJsonFailed",
-                        "Voice Command Json config file %s not found or failed to parse",
-                        jsonFilename.c_str());
-      _voiceCommandConfig.clear();
-    }
-  }
-#endif
-  
   // Configuration for "lets play" game selection
   {
     std::string jsonFilename = "config/engine/game_request_weights.json";
@@ -613,7 +598,7 @@ void RobotDataLoader::LoadVoiceCommandConfigs()
   
   // Configuration for "do a trick" spark selection
   {
-    std::string jsonFilename = "config/engine/voiceCommands/do_a_trick_weights.json";
+    std::string jsonFilename = "config/engine/do_a_trick_weights.json";
     const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _doATrickWeights);
     if (!success)
     {
@@ -727,9 +712,9 @@ void RobotDataLoader::LoadRobotConfigs()
     }
   }
   
-  // Voice Command config
+  // Game request and trick config
   {
-    LoadVoiceCommandConfigs();
+    LoadGameRequestAndTrickConfigs();
   }
   
   // needs system config

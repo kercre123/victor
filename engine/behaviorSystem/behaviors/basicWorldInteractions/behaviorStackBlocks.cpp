@@ -65,7 +65,6 @@ static constexpr ReactionTriggerHelpers::FullReactionArray kHiccupDisableTrigger
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
 };
   
 }

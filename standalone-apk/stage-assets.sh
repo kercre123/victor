@@ -73,7 +73,6 @@ LOGv "Run copyResources.py"
     --rewardedActionsPath resources/assets/RewardedActions/ \
     --engineResourcesPath resources/config/ \
     --unityAssetsPath unity/Cozmo/Assets/StreamingAssets/ \
-    --voiceCommandResourcesPath resources/assets/voiceCommand/exports/ \
     --ttsResourcesPath generated/android/resources/tts/
 
     # Do not copy sound banks

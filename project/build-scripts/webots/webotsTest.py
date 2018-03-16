@@ -246,7 +246,8 @@ def sign_webot_executables(build_type, password):
 
   UtilLog.info("Your password may be needed in order to add the webots executables to the firewall exception list.")
 
-  executables_folder = get_subpath(os.path.join("generated","mac","DerivedData"), build_type)
+  build_folder = get_build_folder(build_type)
+  executables_folder = get_subpath(os.path.join("generated","mac","DerivedData"), build_folder)
 
   executables = [
     'webotsCtrlBuildServerTest',

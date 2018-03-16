@@ -99,7 +99,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectFullPyramidProcessArr
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectFullPyramidProcessArray),
@@ -130,7 +129,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectPyramidSetupArray = {
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectPyramidSetupArray),

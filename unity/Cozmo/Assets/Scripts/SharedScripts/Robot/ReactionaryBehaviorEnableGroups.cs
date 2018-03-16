@@ -33,8 +33,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: true,
-    unexpectedMovement: true,
-    vc: true
+    unexpectedMovement: true
   );
 
   // triggers that are disabled during challenges. some activities/games will choose to override this.
@@ -59,8 +58,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: true,
-    unexpectedMovement: false,
-    vc: true
+    unexpectedMovement: false
   );
 
   // in repair we also disable certain reactions when in severe repair state: (to be consistent with freeplay)
@@ -86,8 +84,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: true,
     robotShaken: false,
     sparked: true,
-    unexpectedMovement: false,
-    vc: true
+    unexpectedMovement: false
   );
 
   // cube pounce overrides the default challenge trigger disables with this
@@ -112,8 +109,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: true,
-    unexpectedMovement: true,
-    vc: true
+    unexpectedMovement: true
   );
 
   // drone mode overrides the default challenge trigger disables with this
@@ -138,8 +134,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: true,
     sparked: true,
-    unexpectedMovement: false,
-    vc: true
+    unexpectedMovement: false
   );
 
   // face enrollment overrides the default challenge trigger disables with this
@@ -164,8 +159,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: true,
     sparked: false,
-    unexpectedMovement: false,
-    vc: true
+    unexpectedMovement: false
   );
 
   // memory match overrides the default challenge trigger disables with this
@@ -190,8 +184,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: true,
-    unexpectedMovement: true,
-    vc: true
+    unexpectedMovement: true
   );
 
   // cozmo says overrides the default challenge trigger disables with this
@@ -216,8 +209,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: false,
-    unexpectedMovement: true,
-    vc: true
+    unexpectedMovement: true
   );
 
   // additional trigger disables in idle drive states for drone mode
@@ -242,8 +234,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: false,
-    unexpectedMovement: true,
-    vc: true
+    unexpectedMovement: true
   );
 
   // additional trigger disables for drone mode when driving
@@ -268,8 +259,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: false,
-    unexpectedMovement: true,
-    vc: true
+    unexpectedMovement: true
   );
 
   // special speed tap end of round trigger disables
@@ -294,8 +284,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: false,
-    unexpectedMovement: false,
-    vc: true
+    unexpectedMovement: false
   );
 
   public static Anki.Cozmo.AllTriggersConsidered kOnboardingBigReactionsOffTriggers = new Anki.Cozmo.AllTriggersConsidered(
@@ -319,8 +308,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: false,
-    unexpectedMovement: false,
-    vc: true
+    unexpectedMovement: false
   );
 
   // triggers disabled while app is backgrounded
@@ -345,8 +333,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: false,
     sparked: false,
-    unexpectedMovement: false,
-    vc: true
+    unexpectedMovement: false
   );
 
   // Reactions disabled when connected to a simulated robot because their sensors don't handle the trigger properly
@@ -371,8 +358,7 @@ public class ReactionaryBehaviorEnableGroups : MonoBehaviour {
     robotOnSide: false,
     robotShaken: true,
     sparked: false,
-    unexpectedMovement: false,
-    vc: false
+    unexpectedMovement: false
   );
 
 

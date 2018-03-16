@@ -50,7 +50,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kTriggersToDisableInSevereNe
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      true},
   {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false}
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kTriggersToDisableInSevereNeedsState),
@@ -78,7 +77,6 @@ constexpr ReactionTriggerHelpers::FullReactionArray kAffectNoneArray = {
   {ReactionTrigger::RobotShaken,                  false},
   {ReactionTrigger::Sparked,                      false},
   {ReactionTrigger::UnexpectedMovement,           false},
-  {ReactionTrigger::VC,                           false},
 };
 
 static_assert(ReactionTriggerHelpers::IsSequentialArray(kAffectNoneArray),

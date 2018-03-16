@@ -5,8 +5,6 @@ asset_project(
                 ('assets', 'animationGroupMaps/AnimationTriggerMap.json'),
                 ('assets', 'cubeAnimationGroupMaps/CubeAnimationTriggerMap.json'),
                 ('assets', 'RewardedActions/RewardedActions.json'),
-                ('assets', 'voiceCommand/voice-recognition-data.txt'),
-                ('assets', 'voiceCommand/exports/**/*.raw'),
                 ('external', 'animations/**/*.bin'),
                 ('external', 'animationGroups/**/*.json'),
                 ('external', 'faceAnimations/**/*.png'),
