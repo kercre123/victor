@@ -21,7 +21,7 @@
 #include <fcntl.h>
 
 #define BEGIN_DONT_RUN_AFTER_PACKOUT \
-  if(!Factory::GetEMR()->PACKED_OUT_FLAG) {
+  if(!Factory::GetEMR()->fields.PACKED_OUT_FLAG) {
 
 #define END_DONT_RUN_AFTER_PACKOUT \
   }
@@ -79,7 +79,7 @@ namespace Factory {
 
         // If this is the factory test and the emr is null (doesn't exist) or we have not been packed out then
         // /factory should be writable so close the emr and reopen as writable
-        if(FACTORY_TEST && (_emr == nullptr || !_emr->PACKED_OUT_FLAG))
+        if(FACTORY_TEST && (_emr == nullptr || !_emr->fields.PACKED_OUT_FLAG))
         {
           PRINT_NAMED_INFO("Factory.ReadEMR.ReopeningAsWritable","");
 

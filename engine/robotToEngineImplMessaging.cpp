@@ -915,7 +915,7 @@ void RobotToEngineImplMessaging::HandleSyncTimeAck(const AnkiEvent<RobotInterfac
   robot->SetTimeSynced();
 
   // Move the head up when we sync time so that the customer can see the face easily
-  if(FACTORY_TEST && Factory::GetEMR()->PACKED_OUT_FLAG)
+  if(FACTORY_TEST && Factory::GetEMR()->fields.PACKED_OUT_FLAG)
   {
     const f32 kLookUpSpeed_radps = 2;
     robot->GetMoveComponent().MoveHeadToAngle(MAX_HEAD_ANGLE, 
