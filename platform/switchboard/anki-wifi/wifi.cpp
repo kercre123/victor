@@ -17,6 +17,7 @@
 #include <ifaddrs.h>
 #include "exec_command.h"
 #include "fileutils.h"
+#include "anki-ble/stringutils.h"
 #include "log.h"
 #include "wifi.h"
 
@@ -214,10 +215,18 @@ void HandleOutputCallback(int rc, const std::string& output) {
   // noop
 }
 
-bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb, gpointer userData) {
+bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData) {
   ConnManBusTechnology* tech_proxy;
   GError* error;
   bool success;
+
+  std::string nameFromHex;
+  int len = ssid.length();
+  for(int i=0; i< len; i+=2) {
+    std::string byte = ssid.substr(i,2);
+    char chr = (char) (int)strtol(byte.c_str(), nullptr, 16);
+    nameFromHex.push_back(chr);
+  }
 
   error = nullptr;
   tech_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
@@ -271,6 +280,7 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
     GVariant* child = g_variant_get_child_value(services, i);
     GVariant* attrs = g_variant_get_child_value(child, 1);
 
+    bool hasName = false;
     bool matchedName = false;
     bool matchedInterface = false;
     bool matchedType = false;
@@ -284,11 +294,12 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
       const char* key = g_variant_get_string(key_v, nullptr);
 
       if(g_str_equal(key, "Name")) {
-        if(std::string(g_variant_get_string(val, nullptr)) == ssid) {
+        if(std::string(g_variant_get_string(val, nullptr)) == nameFromHex) {
           matchedName = true;
         } else {
           matchedName = false;
         }
+        hasName = true;
       }
 
       if(g_str_equal(key, "Type")) {
@@ -335,6 +346,9 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
         // early out--we are already connected!
         return true;
       }
+    } else if(hidden && !hasName) {
+      serviceVariant = child;
+      foundService = true;
     }
   }
 
@@ -344,8 +358,14 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
   }
 
   // Set config
-  std::map<std::string, std::string> networks;
-  networks.insert(std::pair<std::string, std::string>(ssid, pw));
+  std::vector<WiFiConfig> networks;
+  WiFiConfig config;
+  config.auth = (WiFiAuth)auth;
+  config.hidden = hidden;
+  config.ssid = ssid;
+  config.passphrase = pw;
+
+  networks.push_back(config);
   SetWiFiConfig(networks, HandleOutputCallback);
 
   GVariantIter iter;
@@ -363,6 +383,8 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
   }
 
   std::string s = std::string(objectPath);
+
+  Log::Write("Service path: %s\n", s.c_str());
 
   ConnManBusService* service = conn_man_bus_service_proxy_new_for_bus_sync(
                                   G_BUS_TYPE_SYSTEM,
@@ -419,20 +441,61 @@ std::map<std::string, std::string> UnPackWiFiConfig(const std::vector<uint8_t>& 
   return networks;
 }
 
-void SetWiFiConfig(const std::map<std::string, std::string> networks, ExecCommandCallback callback) {
+void SetWiFiConfig(const std::vector<WiFiConfig>& networks, ExecCommandCallback callback) {
   std::ostringstream wifiConfigStream;
 
   int count = 0;
-  for (auto const& kv : networks) {
+  for (auto const& config : networks) {
     if (count > 0) {
       wifiConfigStream << std::endl;
     }
+    // Exclude networks with ssids that are not in hex format
+    if (!IsHexString(config.ssid)) {
+      loge("SetWiFiConfig. '%s' is NOT a hexadecimal string.", config.ssid.c_str());
+      continue;
+    }
+    // Exclude networks with unsupported auth types
+    if ((config.auth != WiFiAuth::AUTH_NONE_OPEN)
+        && (config.auth != WiFiAuth::AUTH_NONE_WEP)
+        && (config.auth != WiFiAuth::AUTH_NONE_WEP_SHARED)
+        && (config.auth != WiFiAuth::AUTH_WPA_PSK)
+        && (config.auth != WiFiAuth::AUTH_WPA2_PSK)) {
+      loge("SetWiFiConfig. Unsupported auth type : %d for '%s'",
+           config.auth,
+           hexStringToAsciiString(config.ssid).c_str());
+      continue;
+    }
+
+    std::string security;
+    switch (config.auth) {
+      case WiFiAuth::AUTH_NONE_WEP:
+        /* fall through */
+      case WiFiAuth::AUTH_NONE_WEP_SHARED:
+        security = "wep";
+        break;
+      case WiFiAuth::AUTH_WPA_PSK:
+        /* fall through */
+      case WiFiAuth::AUTH_WPA2_PSK:
+        security = "psk";
+        break;
+      case WiFiAuth::AUTH_NONE_OPEN:
+        /* fall through */
+      default:
+        security = "none";
+        break;
+    }
+
+    std::string hidden(config.hidden ? "true" : "false");
     wifiConfigStream << "[service_wifi_" << count++ << "]" << std::endl
                      << "Type = wifi" << std::endl
-                     << "IPv4 = auto" << std::endl
+                     << "IPv4 = dhcp" << std::endl
                      << "IPv6 = auto" << std::endl
-                     << "Name = " << kv.first << std::endl
-                     << "Passphrase = " << kv.second << std::endl;
+                     << "SSID=" << config.ssid << std::endl
+                     << "Security=" << security << std::endl
+                     << "Hidden=" << hidden << std::endl;
+    if (!config.passphrase.empty()) {
+      wifiConfigStream << "Passphrase=" << config.passphrase << std::endl;
+    }
   }
 
   int rc = WriteFileAtomically(GetPathToWiFiConfigFile(), wifiConfigStream.str());

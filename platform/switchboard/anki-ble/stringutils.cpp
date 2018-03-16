@@ -19,7 +19,6 @@ inline bool caseInsensitveCharCompare(char a, char b) {
   return (std::toupper(a) == std::toupper(b));
 }
 
-
 bool AreCaseInsensitiveStringsEqual(const std::string& s1, const std::string& s2)
 {
   return ((s1.size() == s2.size())
@@ -57,4 +56,25 @@ std::string byteVectorToHexString(const std::vector<uint8_t>& byteVector,
   }
 
   return hexString;
+}
+
+bool IsHexString(const std::string& hexString) {
+  for (auto const& c : hexString) {
+    if (!std::isxdigit(c)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+std::string hexStringToAsciiString(const std::string& hexString)
+{
+  std::string asciiString;
+  for (auto it = hexString.cbegin() ; it != hexString.cend(); it++) {
+    char c = (*it) << 4;
+    it++;
+    c |= (*it);
+    asciiString.push_back(c);
+  }
+  return asciiString;
 }

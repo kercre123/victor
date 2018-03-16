@@ -63,6 +63,8 @@ message RtsWifiConnectRequest {
     string      ssid,
     string      password,
     uint_8      timeout,
+    uint_8      authType,
+    bool        hidden,
 }
 
 message RtsWifiConnectResponse {

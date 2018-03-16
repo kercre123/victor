@@ -358,6 +358,8 @@ struct RtsWifiConnectRequest
   std::string ssid;
   std::string password;
   uint8_t timeout;
+  uint8_t authType;
+  bool hidden;
   
   /**** Constructors ****/
   RtsWifiConnectRequest() = default;
@@ -369,10 +371,14 @@ struct RtsWifiConnectRequest
   
   explicit RtsWifiConnectRequest(const std::string& ssid,
     const std::string& password,
-    uint8_t timeout)
+    uint8_t timeout,
+    uint8_t authType,
+    bool hidden)
   : ssid(ssid)
   , password(password)
   , timeout(timeout)
+  , authType(authType)
+  , hidden(hidden)
   {}
   
   explicit RtsWifiConnectRequest(const uint8_t* buff, size_t len);
@@ -393,7 +399,7 @@ struct RtsWifiConnectRequest
   
   template <typename Callable>
   void Invoke(Callable&& func) const {
-     func(ssid, password, timeout);
+     func(ssid, password, timeout, authType, hidden);
   }
 };
 

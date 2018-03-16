@@ -44,12 +44,20 @@ class WiFiScanResult {
   std::string ssid;
 };
 
-bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb, gpointer userData);
+class WiFiConfig {
+ public:
+  WiFiAuth auth;
+  bool     hidden;
+  std::string ssid; /* hexadecimal representation of ssid name */
+  std::string passphrase;
+};
+
+bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData);
 std::vector<WiFiScanResult> ScanForWiFiAccessPoints();
 std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& results);
 void EnableWiFiInterface(const bool enable, ExecCommandCallback callback);
 std::map<std::string, std::string> UnPackWiFiConfig(const std::vector<uint8_t>& packed);
-void SetWiFiConfig(const std::map<std::string, std::string> networks, ExecCommandCallback);
+void SetWiFiConfig(const std::vector<WiFiConfig>& networks, ExecCommandCallback);
 void HandleOutputCallback(int rc, const std::string& output);
 bool HasInternet();
 bool GetIpFromHostName(char* hostname, char* ip);

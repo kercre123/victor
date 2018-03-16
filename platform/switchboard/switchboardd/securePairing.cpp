@@ -423,12 +423,14 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::Rts
   if(_state == PairingState::ConfirmedSharedSecret) {
     Anki::Victor::ExternalComms::RtsWifiConnectRequest wifiConnectMessage = msg.Get_RtsWifiConnectRequest();
 
-    Log::Write("Trying to connect to wifi network [%s].", wifiConnectMessage.ssid.c_str());
+    Log::Write("Trying to connect to wifi network [%s][pw=%s][sec=%d][hid=%d].", wifiConnectMessage.ssid.c_str(), wifiConnectMessage.password.c_str(), wifiConnectMessage.authType, wifiConnectMessage.hidden);
 
     _wifiConnectTimeout_s = std::max(kWifiConnectMinTimeout_s, wifiConnectMessage.timeout);
 
     bool connected = Anki::ConnectWiFiBySsid(wifiConnectMessage.ssid, 
       wifiConnectMessage.password,
+      wifiConnectMessage.authType,
+      (bool)wifiConnectMessage.hidden,
       nullptr,
       nullptr);
 
