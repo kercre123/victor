@@ -277,11 +277,10 @@ void TestRobotMotors(void)
 {
   //ccr_sr_t* psr; //sensor values
   
-  int tread[4];
-  tread[0] = ( cmdRobotMot(100, 50, CCC_SENSOR_MOT_LEFT, 127, 0, 0, 0) )->enc.speed;
-  tread[1] = ( cmdRobotMot(100, 50, CCC_SENSOR_MOT_LEFT, -127, 0, 0, 0) )->enc.speed;
-  tread[2] = ( cmdRobotMot(100, 50, CCC_SENSOR_MOT_RIGHT, 0, -127, 0, 0) )->enc.speed;
-  tread[3] = ( cmdRobotMot(100, 50, CCC_SENSOR_MOT_RIGHT, 0, 127, 0, 0) )->enc.speed;
+  int treadL_Fwd = ( cmdRobotMot(100, 50, CCC_SENSOR_MOT_LEFT, 127, 0, 0, 0) )->enc.speed;
+  int treadL_Rev = ( cmdRobotMot(100, 50, CCC_SENSOR_MOT_LEFT, -127, 0, 0, 0) )->enc.speed;
+  int treadR_Fwd = ( cmdRobotMot(100, 50, CCC_SENSOR_MOT_RIGHT, 0, -127, 0, 0) )->enc.speed;
+  int treadR_Rev = ( cmdRobotMot(100, 50, CCC_SENSOR_MOT_RIGHT, 0, 127, 0, 0) )->enc.speed;
   
   //check range of motion
   int lift_start = ( cmdRobotMot(50, 50, CCC_SENSOR_MOT_LIFT, 0, 0, 100, 0) )->enc.pos;
@@ -292,39 +291,43 @@ void TestRobotMotors(void)
   int head_travel = head_end - head_start;
   
   ConsolePutChar('\n');
-  ConsolePrintf("tread speed LEFT : %i %i\n", tread[0], tread[1]);
-  ConsolePrintf("tread speed RIGHT: %i %i\n", tread[2], tread[3]);
+  ConsolePrintf("tread speed LEFT : %i %i\n", treadL_Fwd, treadL_Rev);
+  ConsolePrintf("tread speed RIGHT: %i %i\n", treadR_Fwd, treadR_Rev);
   ConsolePrintf("lift pos: start %i end %i travel %i\n", lift_start, lift_end, lift_travel);
   ConsolePrintf("head pos: start %i end %i travel %i\n", head_start, head_end, head_travel);
   ConsolePutChar('\n');
   
   const int min_speed = 1500; //we normally see 1700-1900
   
-  if( tread[0] < min_speed || (-1)*tread[1] < min_speed ) {
-    ConsolePrintf("insufficient LEFT tread speed %i %i\n", tread[0], tread[1]);
+  if( treadL_Fwd < min_speed || (-1)*treadL_Rev < min_speed ) {
+    ConsolePrintf("insufficient LEFT tread speed %i %i\n", treadL_Fwd, treadL_Rev);
     throw ERROR_MOTOR_LEFT; //ERROR_MOTOR_LEFT_SPEED
   }
-  if( tread[2] < min_speed || (-1)*tread[3] < min_speed ) {
-    ConsolePrintf("insufficient RIGHT tread speed %i %i\n", tread[2], tread[3]);
+  if( (-1)*treadR_Fwd < min_speed || treadR_Rev < min_speed ) {
+    ConsolePrintf("insufficient RIGHT tread speed %i %i\n", treadR_Fwd, treadR_Rev);
     throw ERROR_MOTOR_RIGHT; //ERROR_MOTOR_RIGHT_SPEED
   }
   
+  //XXX: calibration sample of 1, travel should be about -230
+  lift_travel *= -1; //positive travel comparisons
   if( (-1)*lift_travel > 20 )
     throw ERROR_MOTOR_LIFT_BACKWARD;
   else if( lift_travel < 20 )
     throw ERROR_MOTOR_LIFT; //can't move?
   else if( lift_travel < 100 )
     throw ERROR_MOTOR_LIFT_RANGE; //moves, but not enough...
-  else if( lift_travel > 400 )
+  else if( lift_travel > 300 )
     throw ERROR_MOTOR_LIFT_NOSTOP; //moves too much!
   
+  //XXX: calibration sample of 1, travel should be about -570
+  head_travel *= -1; //positive travel comparisons
   if( (-1)*head_travel > 20 )
     throw ERROR_MOTOR_HEAD_BACKWARD;
   else if( head_travel < 20 )
     throw ERROR_MOTOR_HEAD; //can't move?
-  else if( head_travel < 100 )
+  else if( head_travel < 400 )
     throw ERROR_MOTOR_HEAD_RANGE; //moves, but not enough...
-  else if( head_travel > 400 )
+  else if( head_travel > 700 )
     throw ERROR_MOTOR_HEAD_NOSTOP; //moves too much!
 }
 
