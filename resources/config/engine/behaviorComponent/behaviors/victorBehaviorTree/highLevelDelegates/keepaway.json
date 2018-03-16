@@ -25,5 +25,6 @@
   "nominalPounceDistance_mm":         55.0, // Cube must be closer than this to pounce
   "instaPounceDistance_mm":           35.0, // If the cube is closer than this, pounce with zero delay
   "pounceSuccessPitchDiff_deg":       5.0,
+  "useProxForDistance":               true,
   "pointsToWin":                      3
 }

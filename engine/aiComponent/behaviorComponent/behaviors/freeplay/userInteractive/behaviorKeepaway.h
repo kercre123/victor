@@ -124,6 +124,7 @@ private:
     float   nominalPounceDistance_mm;
     float   instaPounceDistance_mm;
     float   pounceSuccessPitchDiff_deg;
+    bool    useProxForDistance;
     uint8_t pointsToWin;
   };
 

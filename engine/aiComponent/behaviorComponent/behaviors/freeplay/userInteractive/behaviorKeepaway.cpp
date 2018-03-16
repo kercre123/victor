@@ -18,6 +18,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/visionComponent.h"
 
 #include "coretech/common/engine/utils/timer.h"
@@ -66,6 +67,7 @@ BehaviorKeepaway::InstanceConfig::InstanceConfig(const Json::Value& config)
   nominalPounceDistance_mm = JsonTools::ParseFloat(config, "nominalPounceDistance_mm", kDebugName);
   instaPounceDistance_mm = JsonTools::ParseFloat(config, "instaPounceDistance_mm", kDebugName);
   pounceSuccessPitchDiff_deg = JsonTools::ParseFloat(config, "pounceSuccessPitchDiff_deg", kDebugName);
+  useProxForDistance = JsonTools::ParseBool(config, "useProxForDistance", kDebugName);
   pointsToWin = JsonTools::ParseUint8(config, "pointsToWin", kDebugName);
 }
 
@@ -120,6 +122,7 @@ BehaviorKeepaway::BehaviorKeepaway(const Json::Value& config)
   MakeMemberTunable(_iConfig.nominalPounceDistance_mm, "nominalPounceDistance_mm");
   MakeMemberTunable(_iConfig.instaPounceDistance_mm, "instaPounceDistance_mm");
   MakeMemberTunable(_iConfig.pounceSuccessPitchDiff_deg, "pounceSuccessPitchDiff_deg");
+  MakeMemberTunable(_iConfig.useProxForDistance, "useProxForDistance");
   MakeMemberTunable(_iConfig.pointsToWin, "pointsToWin");
 }
 
@@ -347,7 +350,10 @@ void BehaviorKeepaway::TransitionToPouncing()
   _dVars.pounceSuccessPitch_deg = startingPitch + _iConfig.pounceSuccessPitchDiff_deg;
   _dVars.pounceChance = _iConfig.basePounceChance;
   SET_STATE(KeepawayState::Pouncing);
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePouncePounceNormal), &BehaviorKeepaway::TransitionToReacting);
+  AnimationTrigger pounceTrigger = _dVars.target.isInInstaPounceRange ? 
+                                   AnimationTrigger::CubePouncePounceClose :
+                                   AnimationTrigger::CubePouncePounceNormal;
+  DelegateIfInControl(new TriggerAnimationAction(pounceTrigger), &BehaviorKeepaway::TransitionToReacting);
 }
 
 void BehaviorKeepaway::TransitionToFakeOut()
@@ -491,11 +497,28 @@ void BehaviorKeepaway::UpdateTargetAngle()
 
 void BehaviorKeepaway::UpdateTargetDistance()
 {
-  // Use ClosestMarker for distance checks
   const ObservableObject* targetObject = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.targetID);
-  Pose3d closestMarkerPose;
-  targetObject->GetClosestMarkerPose(GetBEI().GetRobotInfo().GetPose(), true, closestMarkerPose);
-  _dVars.targetDistance = Point2f(closestMarkerPose.GetTranslation()).Length();
+
+  bool usingProx = false;
+  if(_iConfig.useProxForDistance){
+    auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetValue<ProxSensorComponent>();
+    bool targetIsInProxFOV = false;
+    proxSensor.IsInFOV(targetObject->GetPose(), targetIsInProxFOV);
+    u16 proxDist_mm = 0;
+
+    // If we can see the cube (or have seen it recently enough) to verify its in prox range, use prox
+    if(_dVars.target.isVisible && targetIsInProxFOV && proxSensor.GetLatestDistance_mm(proxDist_mm)){
+      _dVars.targetDistance = proxDist_mm;
+      usingProx = true;
+    }
+  } 
+  
+  if(!usingProx){
+    // Otherwise, use ClosestMarker for VisionBased distance checks
+    Pose3d closestMarkerPose;
+    targetObject->GetClosestMarkerPose(GetBEI().GetRobotInfo().GetPose(), true, closestMarkerPose);
+    _dVars.targetDistance = Point2f(closestMarkerPose.GetTranslation()).Length();
+  }
 
   if(_dVars.targetDistance > _iConfig.animDistanceOffset_mm + _iConfig.outOfPlayDistance_mm){
     _dVars.target.isInPlay = false;
