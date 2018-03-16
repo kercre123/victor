@@ -1245,21 +1245,6 @@ namespace Cozmo {
     toggle = !toggle;
   }
 
-  void WebotsKeyboardController::ToggleEyeRendering()
-  {
-    using namespace ExternalInterface;
-
-    static bool toggle = false;
-    toggle = !toggle;
-
-    for(auto key : {"ProcFace_RenderInnerOuterGlow","ProcFace_ApplyGlowFilter", "ProcFace_UseAntialiasing", "ProcFace_UseNoise"}) {
-      SendMessage(MessageGameToEngine(SetAnimDebugConsoleVarMessage(key,
-                                                                    (toggle ? "1" : "0"))));
-    }
-
-    LOG_INFO("ToggleEyeRendering", "%s eye rendering", (toggle ? "Victor" : "Cozmo"));
-  }
-
   void WebotsKeyboardController::FlipSelectedBlock()
   {
     ExternalInterface::FlipBlock m;
@@ -2036,7 +2021,7 @@ namespace Cozmo {
     REGISTER_KEY_FCN('H', MOD_ALT_SHIFT, SendFakeTriggerWordDetect, "Send fake trigger word detect");
     
     REGISTER_KEY_FCN('I', MOD_NONE,      ToggleImageStreaming, "Toggle image streaming");
-    REGISTER_KEY_FCN('I', MOD_SHIFT,     ToggleEyeRendering, "Toggle Victor/Cozmo eye rendering");
+//      REGISTER_KEY_FCN('I', MOD_SHIFT,     , "");
 //      REGISTER_KEY_FCN('I', MOD_ALT,       , "");
 //      REGISTER_KEY_FCN('I', MOD_ALT_SHIFT, , "");
     

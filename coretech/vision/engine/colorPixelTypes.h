@@ -125,6 +125,8 @@ namespace Vision {
     // Masks and shifts to convert an RGB565 color into a
     // 32-bit BGRA color (i.e. 0xBBGGRRAA), e.g. which webots expects
     inline u32 ToBGRA32(u8 alpha = 0xFF) const;
+    // 32-bit RGBA color (i.e. 0xRRGGBBAA)
+    inline u32 ToRGBA32(u8 alpha = 0xFF) const;
 
     inline void SetValue(u16 value){ *((u16*)&(this->operator[](0))) = value; }
     inline u16 GetValue()    const { return *((u16*)&(this->operator[](0))); }
@@ -252,19 +254,42 @@ namespace Vision {
   
   inline u32 PixelRGB565::ToBGRA32(u8 alpha) const
   {
-    const u16 Rshift = 0;
-    const u16 Gshift = 13;
-    const u16 Bshift = 27;
-    
-    const u32 color = (((u32) (GetValue() & Rmask) << Rshift) |
-                       ((u32) (GetValue() & Gmask) << Gshift) |
-                       ((u32) (GetValue() & Bmask) << Bshift) |
-                       alpha);
-    
-    return color;
+    union cast_t {
+      struct {
+        u8 a;
+        u8 r;
+        u8 g;
+        u8 b;
+      };
+      u32 result;
+    } pixel;
+
+    pixel.r = r();
+    pixel.g = g();
+    pixel.b = b();
+    pixel.a = alpha;
+    return pixel.result;
   }
   
   
+  inline u32 PixelRGB565::ToRGBA32(u8 alpha) const
+  {
+    union cast_t {
+      struct {
+        u8 b;
+        u8 g;
+        u8 r;
+        u8 a;
+      };
+      u32 result;
+    } pixel;
+
+    pixel.r = r();
+    pixel.g = g();
+    pixel.b = b();
+    pixel.a = alpha;
+    return pixel.result;
+  }
 } // namespace Vision
 } // namespace Anki
 

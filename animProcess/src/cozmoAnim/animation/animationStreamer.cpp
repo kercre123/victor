@@ -92,15 +92,29 @@ namespace Cozmo {
 
       if(filename.find(".gif") != std::string::npos) {
         s_gif = jo_gif_start(cacheFilename.c_str(), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, 0, 255);
-        s_frame = 0;
-        s_framesToCapture = numFrames;
+        if(s_gif.fp != nullptr) {
+          s_frame = 0;
+          s_framesToCapture = numFrames;
+          
+          const std::string html = std::string("<html>\n") + "Capturing frames as <a href=\"/cache/"+filename+"\">"+filename+"\n" + "</html>\n";
+          context->channel->WriteLog(html.c_str());
+        } else {
+          const std::string html = std::string("<html>\n") + "Error: unable to open file <a href=\"/cache/"+filename+"\">"+filename+"\n" + "</html>\n";
+          context->channel->WriteLog(html.c_str());
+        }
       } else {
         s_tga = fopen(cacheFilename.c_str(), "wb");
-        s_frame = 0;
-        s_framesToCapture = 1;
+        if(s_tga != nullptr) {
+          s_frame = 0;
+          s_framesToCapture = 1;
+
+          const std::string html = std::string("<html>\n") + "Capturing frames as <a href=\"/cache/"+filename+"\">"+filename+"\n" + "</html>\n";
+          context->channel->WriteLog(html.c_str());
+        } else {
+          const std::string html = std::string("<html>\n") + "Error: unable to open file <a href=\"/cache/"+filename+"\">"+filename+"\n" + "</html>\n";
+          context->channel->WriteLog(html.c_str());
+        }
       }
-      const std::string html = std::string("<html>\n") + "Capturing frames as <a href=\"/cache/"+filename+"\">"+filename+"\n" + "</html>\n";
-      context->channel->WriteLog(html.c_str());
     } else {
       context->channel->WriteLog("CaptureFace already in progress.");
     }
@@ -636,28 +650,51 @@ namespace Cozmo {
       DEV_ASSERT(_context != nullptr, "AnimationStreamer.BufferFaceToSend.NoContext");
       DEV_ASSERT(_context->GetRandom() != nullptr, "AnimationStreamer.BufferFaceToSend.NoRNGinContext");
 
+      if(s_faceDataReset) {
+        s_faceDataOverride = s_faceDataBaseline = procFace;
+        ProceduralFace::SetHue(ProceduralFace::DefaultHue);
+
+        // animationStreamer.cpp
+        
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_OverrideEyeParams");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_OverrideRightEyeParams");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_Gamma");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_FromLinear");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_ToLinear");
+
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_DefaultScanlineOpacity");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NominalEyeSpacing");
+
+        // proceduralFace.cpp
+
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_DefaultScanlineOpacity");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NominalEyeSpacing");
+
+        // proceduralFaceDrawer.cpp
+        
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NoiseNumFrames");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NoiseMinLightness");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NoiseMaxLightness");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NoiseFraction");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NoiseFraction");
+
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_UseAntiAliasedLines");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_EyeLightnessMultiplier");
+
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_HotspotRender");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_HotspotFalloff");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowRender");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowSizeMultiplier");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowLightnessMultiplier");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowGaussianFilter");
+
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_AntiAliasingSize");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_AntiAliasingGaussianFilter");
+
+        s_faceDataReset = false;
+      }
+
       if(kProcFace_OverrideEyeParams) {
-        if(s_faceDataReset) {
-          s_faceDataOverride = s_faceDataBaseline = procFace;
-          ProceduralFace::SetHue(ProceduralFace::DefaultHue);
-
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_DefaultScanlineOpacity");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NominalEyeSpacing");
-
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NoiseFraction");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_UseAntiAliasedLines");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowSizeMultiplier");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_EyeLightnessMultiplier");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowLightnessMultiplier");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_RenderInnerOuterGlow");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_InnerGlowFrac");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_ApplyGlowFilter");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GaussianGlowFilter");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_AntiAliasingSize");
-
-          s_faceDataReset = false;
-        }
-
         // compare override face data with baseline, if different update the rendered face
 
         ProceduralFace newProcFace = procFace;
@@ -718,37 +755,8 @@ namespace Cozmo {
       float elapsed = (end - s_frameStart)/float(CLOCKS_PER_SEC);
       s_frameStart = end;
 
-      static uint8_t frame[FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*4];
-      const u16* srcPtr = faceImg565.GetRawDataPointer();
-      unsigned char* dstPtr = frame;
-      for(int i = 0; i < FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT; ++i) {
-        // col fedcba9876543210
-        //     RRRRR            >> 11
-        //          GGGGGG      >> 5
-        //                BBBBB >> 0
-        u16 col = *srcPtr++;
-
-        // shift and mask to low bits
-        //    red 000RRRrr
-        //  green 00GGgggg
-        //   blue 000BBBbb
-        u8 red = (col>>11) & 0x1f;
-        u8 green = (col>>5) & 0x3f;
-        u8 blue = (col>>0) & 0x1f;
-
-        // shift for brightness, populate bottom bits from top bits for noise
-        //    red RRRrrRRR
-        //  green GGggggGG
-        //   blue BBBbbBBB
-        red = (red << 3)|(red >> 2);
-        green = (green << 2)|(green >> 4);
-        blue = (blue << 3)|(blue >> 2);
-
-        *dstPtr++ = red;
-        *dstPtr++ = green;
-        *dstPtr++ = blue;
-        *dstPtr++ = 0xff;
-      }
+      Vision::ImageRGBA frame(FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
+      frame.SetFromRGB565(faceImg565);
 
       if(s_tga != NULL) {
         if(s_frame == 0) {
@@ -759,10 +767,10 @@ namespace Cozmo {
           head[14] = FACE_DISPLAY_HEIGHT & 0xff;
           head[15] = (FACE_DISPLAY_HEIGHT >> 8) & 0xff;
           head[16] = 32;   /** 32 bits depth **/
-          head[17] = 0x28; /** top-down flag, 8 bits alpha **/
+          head[17] = 0x08; /** top-down flag, 8 bits alpha **/
           fwrite(head, sizeof(uint8_t), 18, s_tga);
         }
-        fwrite(frame, sizeof(uint8_t), FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*4, s_tga);
+        fwrite(frame.GetDataPointer(), sizeof(uint8_t), FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*4, s_tga);
 
         ++s_frame;
         if(s_frame == s_framesToCapture) {
@@ -770,7 +778,7 @@ namespace Cozmo {
           s_framesToCapture = 0;
         }
       } else {
-        jo_gif_frame(&s_gif, frame, elapsed/100.f, false);
+        jo_gif_frame(&s_gif, (uint8_t*)frame.GetDataPointer(), elapsed/100.f, false);
 
         ++s_frame;
         if(s_frame == s_framesToCapture) {
