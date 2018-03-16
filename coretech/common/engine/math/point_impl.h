@@ -404,13 +404,13 @@ namespace Anki {
   template<PointDimType N, typename T>
   bool Point<N,T>::operator!=(const Point<N,T>& other) const
   {
-    return AllHelper(*this, other, std::not_equal_to<T>());
+    return !AllHelper(*this, other, std::equal_to<T>());
   }
 
   template<PointDimType N, typename T>
   bool operator!= (const Point<N,T> &point1, const Point<N,T> &point2)
   {
-    return AllHelper(point1, point2, std::not_equal_to<T>());
+    return !AllHelper(point1, point2, std::equal_to<T>());
   }
 
   template<PointDimType N, typename T>
