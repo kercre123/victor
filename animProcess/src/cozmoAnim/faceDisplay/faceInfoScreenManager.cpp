@@ -861,13 +861,13 @@ void FaceInfoScreenManager::DrawNetwork()
 
   const bool hasInternet = Util::InternetUtils::HasInternet();
 
-  // TODO: Check actual hosts for connectivity. But which ones?
+  // TODO (VIC-1816): Check actual hosts for connectivity
   const bool hasAuthAccess  = false;
   const bool hasOTAAccess   = false;
   const bool hasVoiceAccess = Util::InternetUtils::CanConnectToHostName("chipper-dev.api.anki.com", 443);
 
   const ColoredText online("ONLINE", NamedColors::GREEN);
-  const ColoredText offline("OFFLINE", NamedColors::RED);
+  const ColoredText offline("UNAVAILABLE", NamedColors::RED);
 
   const ColoredText authStatus  = hasAuthAccess  ? online : offline;
   const ColoredText otaStatus   = hasOTAAccess   ? online : offline;
@@ -878,9 +878,11 @@ void FaceInfoScreenManager::DrawNetwork()
                              {ssid}, 
                              { {"IP: "}, {ip, (hasInternet ? NamedColors::GREEN : NamedColors::RED)} },
                              { },
-                             { {"AUTH: "}, authStatus },
-                             { {"OTA: "}, otaStatus },
-                             { {"VOICE: "}, voiceStatus }
+
+                             // TODO: VIC-1816
+                            //  { {"AUTH: "}, authStatus },
+                            //  { {"OTA: "}, otaStatus },
+                            //  { {"VOICE: "}, voiceStatus }
                            };
 
   DrawTextOnScreen(lines);
