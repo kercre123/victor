@@ -14,6 +14,7 @@
 #pragma once
 
 #include "exec_command.h"
+#include "connmanbus.h"
 
 #include <map>
 #include <string>
@@ -51,6 +52,12 @@ class WiFiConfig {
   std::string ssid; /* hexadecimal representation of ssid name */
   std::string passphrase;
 };
+
+std::string GetObjectPathForService(GVariant* service);
+bool ConnectToWifiService(ConnManBusService* service);
+bool DisconnectFromWifiService(ConnManBusService* service);
+ConnManBusService* GetServiceForPath(std::string objectPath);
+void SetWiFiConfig(std::string ssid, std::string password, WiFiAuth auth, bool isHidden);
 
 bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData);
 std::vector<WiFiScanResult> ScanForWiFiAccessPoints();
