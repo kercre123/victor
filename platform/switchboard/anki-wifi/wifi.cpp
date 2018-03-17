@@ -369,7 +369,16 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidd
     // it will look "wifi_000af56d4ce4_hidden_managed_psk"
     // something like this. we need to replace 'hidden' with
     // SSID string.
-    servicePath.replace(39, 6, ssid);
+    std::string prefix = "/net/connman/service/wifi_000000000000_";
+    std::string hiddenText = "hidden";
+
+    if(strncmp(prefix.c_str(), servicePath.c_str(), 25) != 0) {
+      // compare strings all the way up to and including "wifi"
+      Log::Error("Be very scared! The Connman service path does not match the expected format.");
+      return false;
+    }
+
+    servicePath.replace(prefix.length(), hiddenText.length(), ssid);
     Log::Write("Hidden network, trying service path: %s", ssid.c_str());
   }
 

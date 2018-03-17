@@ -12,6 +12,8 @@
 #include <sstream>
 #include <iomanip>
 
+#define START_OTA_AFTER_CONNECT 0
+
 @implementation BleCentral
 
 - (id)init {
@@ -213,7 +215,9 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 //
 //          Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsSshRequest>(self, parts);
 //          Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiIpRequest>(self);
-          //Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsOtaUpdateRequest>(self, "http://sai-general.s3.amazonaws.com/build-assets/ota-test.tar");
+#if START_OTA_AFTER_CONNECT
+          Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsOtaUpdateRequest>(self, "http://sai-general.s3.amazonaws.com/build-assets/ota-test.tar");
+#endif
         }
         
         break;
