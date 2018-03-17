@@ -116,7 +116,7 @@ int main(void)
   signal(SIGTERM, Cleanup);
 
   // - create and set logger
-  Util::AndroidLogPrintLogger logPrintLogger("webserver");
+  Util::AndroidLogPrintLogger logPrintLogger("vic-webserver");
   Util::gLoggerProvider = &logPrintLogger;
 
   Util::Data::DataPlatform* dataPlatform = createPlatform();
@@ -182,4 +182,6 @@ int main(void)
                           (float)(forwardJumpDuration * 0.001f));
     }
   }
+
+  Util::gLoggerProvider = nullptr;
 }
