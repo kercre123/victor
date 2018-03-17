@@ -220,21 +220,6 @@ void TestRobotInfo(void)
   try { //DEBUG, cmd doesn't always succeed in dev builds
     cmdRobotEsn();
     cmdRobotBsv();
-  } catch(int e){
-  }
-  
-  /*/DEBUG: test EMR_FIELD_OFS macro
-  ConsolePrintf("EMR_FIELD_OFS(%s)=%u\n", "ESN", EMR_FIELD_OFS(ESN) );
-  ConsolePrintf("EMR_FIELD_OFS(%s)=%u\n", "HW_VER", EMR_FIELD_OFS(HW_VER) );
-  ConsolePrintf("EMR_FIELD_OFS(%s)=%u\n", "MODEL", EMR_FIELD_OFS(MODEL) );
-  ConsolePrintf("EMR_FIELD_OFS(%s)=%u\n", "LOT_CODE", EMR_FIELD_OFS(LOT_CODE) );
-  ConsolePrintf("EMR_FIELD_OFS(%s)=%u\n", "PLAYPEN_READY_FLAG", EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
-  ConsolePrintf("EMR_FIELD_OFS(%s)=%u\n", "PLAYPEN_PASSED_FLAG", EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
-  ConsolePrintf("EMR_FIELD_OFS(%s)=%u\n", "PACKED_OUT_FLAG", EMR_FIELD_OFS(PACKED_OUT_FLAG) );
-  ConsolePrintf("EMR_FIELD_OFS(%s)=%u\n", "PACKED_OUT_DATE", EMR_FIELD_OFS(PACKED_OUT_DATE) );
-  //-*/
-  
-  try { //DEBUG, cmd doesn't always succeed in dev builds
     uint32_t esn      = cmdRobotGmr( EMR_FIELD_OFS(ESN) );
     uint32_t hwver    = cmdRobotGmr( EMR_FIELD_OFS(HW_VER) );
     uint32_t model    = cmdRobotGmr( EMR_FIELD_OFS(MODEL) );
@@ -336,6 +321,45 @@ void TestRobotMotors(void)
     throw ERROR_MOTOR_HEAD_NOSTOP; //moves too much!
 }
 
+void EmrChecks(void)
+{
+  //Make sure previous tests have passed
+  if( g_fixmode == FIXMODE_ROBOT3 ) {
+    //XXX: ROBOT1,2,MIC_TEST etc results in EMR.fixture[?]
+  }
+  if( g_fixmode == FIXMODE_PACKOUT ) {
+    uint32_t ppReady  = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
+    uint32_t ppPassed = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
+    if( ppReady != 1 || ppPassed != 1 ) {
+      throw ERROR_ROBOT_TEST_SEQUENCE;
+    }
+  }
+  
+  //requrie retest on all downstream fixtures after rework
+  if( g_fixmode == FIXMODE_ROBOT3 ) {
+    cmdRobotSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
+    cmdRobotSmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), 0 );
+    cmdRobotSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 0 );
+  }
+  if( g_fixmode == FIXMODE_PACKOUT ) {
+    cmdRobotSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
+  }
+}
+
+void EmrUpdate(void)
+{
+  if( g_fixmode == FIXMODE_ROBOT3 ) {
+    cmdRobotSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 1 );
+  }
+  if( g_fixmode == FIXMODE_PACKOUT ) {
+    cmdRobotSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 1 );
+  }
+}
+
+//-----------------------------------------------------------------------------
+//                  Recharge
+//-----------------------------------------------------------------------------
+
 //read battery voltage
 int robot_get_battVolt100x(void)
 {
@@ -356,10 +380,6 @@ int robot_get_battVolt100x(void)
   //return vBatFilt100x; //return filtered vBat
   return -1;
 }
-
-//-----------------------------------------------------------------------------
-//                  Recharge
-//-----------------------------------------------------------------------------
 
 enum {
   RECHARGE_STATUS_OK = 0,
@@ -631,30 +651,23 @@ TestFunction* TestRobot3GetTests(void)
 {
   static TestFunction m_tests[] = {
     TestRobotInfo,
+    EmrChecks, //check previous test results and reset status flags
     TestRobotSensors,
     TestRobotMotors,
     ChargeTest,
+    EmrUpdate, //set test complete flags
     NULL,
   };
   return m_tests;
+}
+TestFunction* TestRobotPackoutGetTests(void) { 
+  return TestRobot3GetTests();
 }
 
 TestFunction* TestRobotPlaypenGetTests(void)
 {
   static TestFunction m_tests[] = {
     TestRobotInfo,
-    NULL,
-  };
-  return m_tests;
-}
-
-TestFunction* TestRobotPackoutGetTests(void)
-{
-  static TestFunction m_tests[] = {
-    TestRobotInfo,
-    TestRobotSensors,
-    TestRobotMotors,
-    ChargeTest,
     NULL,
   };
   return m_tests;

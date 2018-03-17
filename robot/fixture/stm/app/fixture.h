@@ -309,6 +309,8 @@ typedef int error_t;
 //#define ERROR_CUBE_STANDBY          754   // Too much power in standby mode
 //#define ERROR_CUBE_RADIO            755   // Bad radio/antenna
 
+#define ERROR_ROBOT_TEST_SEQUENCE     800   // This test cannot run until all previous tests have passed
+
 //<export heading> Internal Errors - generally programming or hardware errors
 #define ERROR_EMPTY_COMMAND         901
 #define ERROR_ACK1                  902
