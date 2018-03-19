@@ -36,6 +36,7 @@ namespace Cozmo {
   
   namespace Audio {
     class AnimationAudioClient;
+    class ProceduralAudioClient;
   }
   
   
@@ -77,6 +78,8 @@ namespace Cozmo {
 
     Result SetFaceImage(const Vision::Image& img, u32 duration_ms);
     Result SetFaceImage(const Vision::ImageRGB565& img, u32 duration_ms);
+    
+    Audio::ProceduralAudioClient* GetProceduralAudioClient() const { return _proceduralAudioClient.get(); }
     
     // If any animation is set for streaming and isn't done yet, stream it.
     Result Update();
@@ -233,7 +236,8 @@ namespace Cozmo {
     // For keep face alive animations
     std::map<KeepFaceAliveParameter, f32> _keepFaceAliveParams;
     
-    std::unique_ptr<Audio::AnimationAudioClient> _audioClient;
+    std::unique_ptr<Audio::AnimationAudioClient> _animAudioClient;
+    std::unique_ptr<Audio::ProceduralAudioClient> _proceduralAudioClient;
     
     // Time to wait before forcing KeepFaceAlive() after the latest stream has stopped
     f32 _longEnoughSinceLastStreamTimeout_s;

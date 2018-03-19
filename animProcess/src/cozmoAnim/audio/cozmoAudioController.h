@@ -46,6 +46,12 @@ public:
   void SetRobotMasterVolume( AudioEngine::AudioRTPCValue volume,
                              AudioEngine::AudioTimeMs timeInMilliSeconds = 0,
                              AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear );
+  
+  // Control Robot's procedural audio volume (a.k.a. movement sounds)
+  // Valid Volume values are [0.0 - 1.0]
+  void SetProceduralAudioVolume( AudioEngine::AudioRTPCValue volume,
+                                 AudioEngine::AudioTimeMs timeInMilliSeconds = 0,
+                                 AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear );
 
 
 private:

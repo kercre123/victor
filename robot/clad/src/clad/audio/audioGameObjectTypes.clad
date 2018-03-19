@@ -8,7 +8,7 @@ enum uint_64 GameObjectType
 
   Invalid = 0,
   Default,
-  Victor_Listener,   // DO NOT USE - This is defalt listener
+  Victor_Listener,   // DO NOT USE - This is default listener
   Procedural,
   Animation,
   Behavior,

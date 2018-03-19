@@ -24,6 +24,7 @@
 #include "cannedAnimLib/proceduralFaceDrawer.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/animationAudioClient.h"
+#include "cozmoAnim/audio/proceduralAudioClient.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
@@ -266,7 +267,8 @@ namespace Cozmo {
   , _trackLayerComponent(new TrackLayerComponent(context))
   , _lockedTracks(0)
   , _tracksInUse(0)
-  , _audioClient( new Audio::AnimationAudioClient(context->GetAudioController()) )
+  , _animAudioClient( new Audio::AnimationAudioClient(context->GetAudioController()) )
+  , _proceduralAudioClient( new Audio::ProceduralAudioClient(context->GetAudioController()) )
   , _longEnoughSinceLastStreamTimeout_s(kDefaultLongEnoughSinceLastStreamTimeout_s)
   , _numTicsToSendAnimState(kAnimStateReportingPeriod_tics)
   {
@@ -574,7 +576,7 @@ namespace Cozmo {
 
       EnableBackpackAnimationLayer(false);
 
-      _audioClient->StopCozmoEvent();
+      _animAudioClient->StopCozmoEvent();
 
       if (_streamingAnimation == _proceduralAnimation) {
         _proceduralAnimation->Clear();
@@ -1160,7 +1162,7 @@ namespace Cozmo {
     if (robotAudioTrack.HasFramesLeft() &&
         robotAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, currTime_ms))
     {
-      _audioClient->PlayAudioKeyFrame( robotAudioTrack.GetCurrentKeyFrame(), _context->GetRandom() );
+      _animAudioClient->PlayAudioKeyFrame( robotAudioTrack.GetCurrentKeyFrame(), _context->GetRandom() );
       robotAudioTrack.MoveToNextKeyFrame();
     }
 
@@ -1305,7 +1307,7 @@ namespace Cozmo {
     
     // Send an end-of-animation keyframe when done
     if( !anim->HasFramesLeft() &&
-        !_audioClient->HasActiveEvents() &&
+        !_animAudioClient->HasActiveEvents() &&
         _startOfAnimationSent &&
         !_endOfAnimationSent)
     {      
@@ -1431,7 +1433,7 @@ namespace Cozmo {
     }
     
     // Tick audio engine
-    _audioClient->Update();
+    _animAudioClient->Update();
     
 
     // Send animState message

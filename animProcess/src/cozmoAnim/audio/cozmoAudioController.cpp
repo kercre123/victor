@@ -95,6 +95,14 @@ void SetRobotMasterVolume( ConsoleFunctionContextRef context )
   }
 }
 
+void SetProceduralAudioVolume( ConsoleFunctionContextRef context )
+{
+  if ( sThis != nullptr ) {
+    const float vol = ConsoleArg_Get_Float( context, "proceduralAudioVolume");
+    sThis->SetProceduralAudioVolume( vol );
+  }
+}
+
 // Generic Audio Interface
 void PostAudioEvent( ConsoleFunctionContextRef context )
 {
@@ -152,6 +160,7 @@ const char* consolePath = "CozmoAudioController";
 CONSOLE_FUNC( SetWriteAudioProfilerCapture, consolePath, bool writeProfiler );
 CONSOLE_FUNC( SetWriteAudioOutputCapture, consolePath, bool writeOutput );
 CONSOLE_FUNC( SetRobotMasterVolume, consolePath, float robotMasterVolume );
+CONSOLE_FUNC( SetProceduralAudioVolume, consolePath, float proceduralAudioVolume );
 CONSOLE_FUNC( PostAudioEvent, consolePath, const char* event, optional uint64 gameObjectId );
 CONSOLE_FUNC( SetAudioState, consolePath, const char* stateGroup, const char* state );
 CONSOLE_FUNC( SetAudioSwitchState, consolePath, const char* switchGroup, const char* state, uint64 gameObjectId );
@@ -232,7 +241,7 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     }
     
     RegisterCladGameObjectsWithAudioController();
-    SetDefaultListeners( { ToAudioGameObject( AudioMetaData::GameObjectType::Cozmo_Listener ) } );
+    SetDefaultListeners( { ToAudioGameObject( AudioMetaData::GameObjectType::Victor_Listener ) } );
   }
   if (sThis == nullptr) {
     sThis = this;
@@ -281,6 +290,25 @@ void CozmoAudioController::SetRobotMasterVolume( AudioEngine::AudioRTPCValue vol
                          orgVol, volume );
   }
   SetParameter( ToAudioParameterId( AudioMetaData::GameParameter::ParameterType::Robot_Volume ),
+                volume,
+                kInvalidAudioGameObject,
+                timeInMilliSeconds,
+                curve );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CozmoAudioController::SetProceduralAudioVolume( AudioEngine::AudioRTPCValue volume,
+                                                     AudioEngine::AudioTimeMs timeInMilliSeconds,
+                                                     AudioEngine::AudioCurveType curve )
+{
+  AudioEngine::AudioRTPCValue orgVol = volume;
+  volume = Util::Clamp( volume, 0.0f, 1.0f );
+  if ( !Util::IsFltNear( volume, orgVol ) ) {
+    PRINT_NAMED_WARNING( "CozmoAudioController.SetProceduralAudioVolume",
+                         "Invalid volume %f - Acceptable volume values are [0.0, 1.0] - Value was Clamped to %f",
+                         orgVol, volume );
+  }
+  SetParameter( ToAudioParameterId( AudioMetaData::GameParameter::ParameterType::Procedural_Audio_Volume ),
                 volume,
                 kInvalidAudioGameObject,
                 timeInMilliSeconds,

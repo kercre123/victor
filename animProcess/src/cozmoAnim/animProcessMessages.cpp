@@ -18,6 +18,7 @@
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
+#include "cozmoAnim/audio/proceduralAudioClient.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animEngine.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
@@ -60,9 +61,10 @@ namespace {
 
   Anki::Cozmo::AnimEngine*                   _animEngine = nullptr;
   Anki::Cozmo::AnimationStreamer*            _animStreamer = nullptr;
-  Anki::Cozmo::Audio::EngineRobotAudioInput* _audioInput = nullptr;
-  const Anki::Cozmo::AnimContext*       _context = nullptr;
-
+  Anki::Cozmo::Audio::EngineRobotAudioInput* _engAudioInput = nullptr;
+  Anki::Cozmo::Audio::ProceduralAudioClient* _proceduralAudioClient = nullptr;
+  const Anki::Cozmo::AnimContext*            _context = nullptr;
+  
   // Amount of time the backpack button must be held before sync() is called
   const f32 kButtonHoldTimeForSync_s = 1.f;
 
@@ -246,27 +248,27 @@ void Process_removeSquint(const Anki::Cozmo::RobotInterface::RemoveSquint& msg)
   
 void Process_postAudioEvent(const Anki::AudioEngine::Multiplexer::PostAudioEvent& msg)
 {
-  _audioInput->HandleMessage(msg);
+  _engAudioInput->HandleMessage(msg);
 }
 
 void Process_stopAllAudioEvents(const Anki::AudioEngine::Multiplexer::StopAllAudioEvents& msg)
 {
-  _audioInput->HandleMessage(msg);
+  _engAudioInput->HandleMessage(msg);
 }
 
 void Process_postAudioGameState(const Anki::AudioEngine::Multiplexer::PostAudioGameState& msg)
 {
-  _audioInput->HandleMessage(msg);
+  _engAudioInput->HandleMessage(msg);
 }
 
 void Process_postAudioSwitchState(const Anki::AudioEngine::Multiplexer::PostAudioSwitchState& msg)
 {
-  _audioInput->HandleMessage(msg);
+  _engAudioInput->HandleMessage(msg);
 }
 
 void Process_postAudioParameter(const Anki::AudioEngine::Multiplexer::PostAudioParameter& msg)
 {
-  _audioInput->HandleMessage(msg);
+  _engAudioInput->HandleMessage(msg);
 }
   
 void Process_setDebugConsoleVarMessage(const Anki::Cozmo::RobotInterface::SetDebugConsoleVarMessage& msg)
@@ -491,10 +493,11 @@ Result AnimProcessMessages::Init(AnimEngine* animEngine,
   // Setup robot and engine sockets
   AnimComms::InitComms();
 
-  _animEngine   = animEngine;
-  _animStreamer = animStreamer;
-  _audioInput   = audioInput;
-  _context      = context;
+  _animEngine             = animEngine;
+  _animStreamer           = animStreamer;
+  _proceduralAudioClient  = _animStreamer->GetProceduralAudioClient();
+  _engAudioInput          = audioInput;
+  _context                = context;
 
   #ifdef SIMULATOR
   const bool haveBC = true;
@@ -506,7 +509,6 @@ Result AnimProcessMessages::Init(AnimEngine* animEngine,
 
   return RESULT_OK;
 }
-
 
 Result AnimProcessMessages::MonitorConnectionState(void)
 {
@@ -591,6 +593,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
       continue;
     }
     ProcessMessageFromRobot(msg);
+    _proceduralAudioClient->ProcessMessage(msg);
   }
 
   #ifndef SIMULATOR
