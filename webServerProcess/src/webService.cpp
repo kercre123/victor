@@ -1246,7 +1246,8 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
     if (it->second->IsToggleable()) {
       category_html[cat] += "                <div>\n";
       category_html[cat] += "                    <label for=\""+label+"\">"+label+"</label>\n";
-      category_html[cat] += "                    <input type=\"checkbox\" name=\""+label+"\" id=\""+label+"\" onclick=\"onCheckboxClickHandler(this)\">\n";
+      const std::string checked = (it->second->GetAsInt64()) ? " checked" : "";
+      category_html[cat] += "                    <input type=\"checkbox\" name=\""+label+"\" id=\""+label+"\" onclick=\"onCheckboxClickHandler(this)\""+checked+">\n";
       category_html[cat] += "                </div>\n";
       category_html[cat] += "                <br>\n";
     }
@@ -1255,8 +1256,11 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
       category_html[cat] += "                    <label for=\""+label+"\">"+label+"</label>\n";
       category_html[cat] += "                    <select name=\""+label+"\" id=\""+label+"\" class=\"listbox\">\n";
       const auto& values = it->second->EnumValues();
+      s64 currentValue = it->second->GetAsInt64();
       for(const auto& item : values) {
-        category_html[cat] += "                        <option>"+item+"</option>\n";
+        const std::string selected = (currentValue == 0) ? "selected=\"selected\"" : "";
+        --currentValue;
+        category_html[cat] += "                        <option "+selected+">"+item+"</option>\n";
       }
       category_html[cat] += "                    </select>\n";
       category_html[cat] += "                </div>\n";
