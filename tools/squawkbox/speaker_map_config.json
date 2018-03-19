@@ -1,0 +1,67 @@
+{
+  "usb1" : 
+      {
+        "Left_Front": {
+          "Speaker_Number":4, 
+          "Speaker_Channel_Map": [0,-1,-1,-1,-1,-1,-1,-1]
+        },
+        "Right_Front": {
+          "Speaker_Number":8, 
+          "Speaker_Channel_Map": [-1,0,-1,-1,-1,-1,-1,-1]
+        },
+        "Left_Surrond": {
+          "Speaker_Number":12, 
+          "Speaker_Channel_Map": [-1,-1,-1,-1,-1,-1,0,-1]
+        },
+        
+        "Right_Surrond": false,
+        
+        "Left_CenterBass": {
+          "Speaker_Number":3, 
+          "Speaker_Channel_Map": [-1,-1,0,-1,-1,-1,-1,-1]
+        },
+        "Right_CenterBass": {
+          "Speaker_Number":7, 
+          "Speaker_Channel_Map": [-1,-1,-1,0,-1,-1,-1,-1]
+        },
+        "Left_Back": {
+          "Speaker_Number":11, 
+          "Speaker_Channel_Map": [-1,-1,-1,-1,0,-1,-1,-1]
+        },
+        
+        "Right_Back": false
+      },
+    "usb2" :  
+      {
+        "Left_Front": {
+          "Speaker_Number":2, 
+          "Speaker_Channel_Map": [0,-1,-1,-1,-1,-1,-1,-1]
+        },
+        "Right_Front": {
+          "Speaker_Number":6, 
+          "Speaker_Channel_Map": [-1,0,-1,-1,-1,-1,-1,-1]
+        },
+        "Left_Surrond": {
+          "Speaker_Number":10, 
+          "Speaker_Channel_Map": [-1,-1,-1,-1,-1,-1,0,-1]
+        },
+        
+        "Right_Surrond": false,
+        
+        "Left_CenterBass": {
+          "Speaker_Number":1, 
+          "Speaker_Channel_Map": [-1,-1,0,-1,-1,-1,-1,-1]
+        },
+        "Right_CenterBass": {
+          "Speaker_Number":5, 
+          "Speaker_Channel_Map": [-1,-1,-1,0,-1,-1,-1,-1]
+        },
+        "Left_Back": {
+          "Speaker_Number":9, 
+          "Speaker_Channel_Map": [-1,-1,-1,-1,0,-1,-1,-1]
+        },
+        
+        "Right_Back": false
+      }
+}
+
