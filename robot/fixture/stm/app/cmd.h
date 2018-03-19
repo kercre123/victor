@@ -118,8 +118,8 @@ typedef union {
 
 ccr_esn_t* cmdRobotEsn(); //read robot (head) ESN
 ccr_bsv_t* cmdRobotBsv(); //read body serial+version info
-ccr_sr_t*  cmdRobotMot(uint8_t NN, uint8_t NNread, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head);
-ccr_sr_t*  cmdRobotGet(uint8_t NN, uint8_t NNread, uint8_t sensor); //NN = #drops (sr vals). return the NNread-th value.
+ccr_sr_t*  cmdRobotMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head);
+ccr_sr_t*  cmdRobotGet(uint8_t NN, uint8_t sensor); //NN = #drops (sr vals). returns &sensor[0] of [NN-1]
 void       cmdRobotFcc(uint8_t mode, uint8_t cn); //CCC_FCC_MODE_, {0..39}
 //void       cmdRobotRlg(uint8_t idx);
 void       cmdRobotEng(uint8_t idx, uint32_t val);

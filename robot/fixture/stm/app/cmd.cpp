@@ -473,14 +473,21 @@ void cmdDbgParseTestbench(void)
 #define CCC_ERROR_HANDLE(e) if( CCC_DEBUG > 0 ) { return 0; } else { throw (e); }
 #define CCC_CMD_DELAY()     if( CCC_DEBUG > 0 ) { Timer::delayMs(150); }
 
+//buffer for sensor data
+static uint8_t *srbuf = app_global_buffer;
+static const int srdatMaxSize = sizeof(ccr_sr_t) * 256;
+STATIC_ASSERT( APP_GLOBAL_BUF_SIZE >= srdatMaxSize , cmd_get_sensor_buffer_size_check );
+
 #include "emrf.h"
 
 static struct { //result of most recent command
   error_t ccr_err;
   int handler_cnt;
   int sr_cnt;
-  int nn_read;
-  union { ccr_esn_t esn; ccr_bsv_t bsv; ccr_sr_t  sr; } rsp;
+  union { 
+    ccr_esn_t esn; 
+    ccr_bsv_t bsv;
+  } rsp;
 } m_dat;
 
 void esn_handler_(char* s) {
@@ -542,43 +549,46 @@ ccr_bsv_t* cmdRobotBsv()
 }
 
 void sensor_handler_(char* s) {
-  if( ++m_dat.handler_cnt == m_dat.nn_read ) { //get this value!
+  ccr_sr_t *psr = &((ccr_sr_t*)srbuf)[m_dat.handler_cnt++];
+  if( m_dat.handler_cnt <= 256 ) { //don't overflow buffer
     for(int x=0; x < m_dat.sr_cnt; x++) {
-      m_dat.rsp.sr.val[x] = cmdParseInt32( cmdGetArg(s,x) );
+      psr->val[x] = cmdParseInt32( cmdGetArg(s,x) );
       m_dat.ccr_err = errno != 0 ? ERROR_TESTPORT_RSP_BAD_ARG : m_dat.ccr_err;
     }
   }
 }
 
-static ccr_sr_t* cmdRobot_MotGet_(uint8_t NN, uint8_t NNread, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, const char* cmd)
+static ccr_sr_t* cmdRobot_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, const char* cmd)
 {
   CCC_CMD_DELAY();
-  memset( &m_dat, 0, sizeof(m_dat) );
   char b[22]; const int bz = sizeof(b);
   snformat(b,bz,"%s %02x %02x %02x %02x %02x %02x", cmd, NN, sensor, (uint8_t)treadL, (uint8_t)treadR, (uint8_t)lift, (uint8_t)head);
   
+  memset( &m_dat, 0, sizeof(m_dat) );
+  memset( srbuf, 0, (1+NN)*sizeof(ccr_sr_t) );
   m_dat.sr_cnt = sensor >= sizeof(ccr_sr_cnt) ? 0 : ccr_sr_cnt[sensor]; //expected number of sensor values per drop/line
-  m_dat.nn_read = NNread; //which sensor reading to save
-  if( NNread > NN ) //will always return 0s!
+  if( !NN )
     throw ERROR_BAD_ARG;
   
   cmdSend(CMD_IO_CONTACTS, b, 500 + (int)NN*6, CMD_OPTS_DEFAULT, sensor_handler_);
   
   #if CCC_DEBUG > 0
-  ConsolePrintf("NN=%u sr vals %i %i %i %i\n", NNread, m_dat.rsp.sr.val[0], m_dat.rsp.sr.val[1], m_dat.rsp.sr.val[2], m_dat.rsp.sr.val[3] );
+  ccr_sr_t* psr = (ccr_sr_t*)srbuf;
+  ConsolePrintf("NN=%u sr vals %i %i %i %i\n", NN, psr[NN-1].val[0], psr[NN-1].val[1], psr[NN-1].val[2], psr[NN-1].val[3] );
   #endif
   
   if( m_dat.handler_cnt != NN || m_dat.ccr_err != ERROR_OK ) {
     ConsolePrintf("SR ERROR %i, handler cnt %i/%i\n", m_dat.ccr_err, m_dat.handler_cnt, NN);
     CCC_ERROR_HANDLE(m_dat.ccr_err);
   }
-  return &m_dat.rsp.sr;
+  
+  return (ccr_sr_t*)srbuf;
 }
-ccr_sr_t* cmdRobotMot(uint8_t NN, uint8_t NNread, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head) {
-  return cmdRobot_MotGet_(NN, NNread, sensor, treadL, treadR, lift, head, "mot");
+ccr_sr_t* cmdRobotMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head) {
+  return cmdRobot_MotGet_(NN, sensor, treadL, treadR, lift, head, "mot");
 }
-ccr_sr_t* cmdRobotGet(uint8_t NN, uint8_t NNread, uint8_t sensor) {
-  return cmdRobot_MotGet_(NN, NNread, sensor, 0, 0, 0, 0, "get");
+ccr_sr_t* cmdRobotGet(uint8_t NN, uint8_t sensor) {
+  return cmdRobot_MotGet_(NN, sensor, 0, 0, 0, 0, "get");
 }
 
 void cmdRobotFcc(uint8_t mode, uint8_t cn) {

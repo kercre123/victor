@@ -23,25 +23,25 @@ static void dbg_test_all_(void)
   cmdRobotEsn(); //ConsolePutChar('\n');
   cmdRobotBsv(); //ConsolePutChar('\n');
   
-  cmdRobotGet(1, 1, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
-  cmdRobotGet(3, 3, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
-  cmdRobotGet(5, 3, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
-  cmdRobotGet(1, 1, CCC_SENSOR_CLIFF); ConsolePutChar('\n');
-  cmdRobotGet(1, 1, CCC_SENSOR_MOT_LEFT); ConsolePutChar('\n');
-  cmdRobotGet(1, 1, CCC_SENSOR_MOT_RIGHT); ConsolePutChar('\n');
-  cmdRobotGet(1, 1, CCC_SENSOR_MOT_LIFT); ConsolePutChar('\n');
-  cmdRobotGet(1, 1, CCC_SENSOR_MOT_HEAD); ConsolePutChar('\n');
-  cmdRobotGet(1, 1, CCC_SENSOR_PROX_TOF); ConsolePutChar('\n');
-  cmdRobotGet(1, 1, CCC_SENSOR_BTN_TOUCH); ConsolePutChar('\n');
-  cmdRobotGet(1, 1, CCC_SENSOR_RSSI); ConsolePutChar('\n');
-  cmdRobotGet(1, 1, CCC_SENSOR_RX_PKT); ConsolePutChar('\n');
+  cmdRobotGet(1, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
+  cmdRobotGet(3, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
+  cmdRobotGet(5, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
+  cmdRobotGet(1, CCC_SENSOR_CLIFF); ConsolePutChar('\n');
+  cmdRobotGet(1, CCC_SENSOR_MOT_LEFT); ConsolePutChar('\n');
+  cmdRobotGet(1, CCC_SENSOR_MOT_RIGHT); ConsolePutChar('\n');
+  cmdRobotGet(1, CCC_SENSOR_MOT_LIFT); ConsolePutChar('\n');
+  cmdRobotGet(1, CCC_SENSOR_MOT_HEAD); ConsolePutChar('\n');
+  cmdRobotGet(1, CCC_SENSOR_PROX_TOF); ConsolePutChar('\n');
+  cmdRobotGet(1, CCC_SENSOR_BTN_TOUCH); ConsolePutChar('\n');
+  cmdRobotGet(1, CCC_SENSOR_RSSI); ConsolePutChar('\n');
+  cmdRobotGet(1, CCC_SENSOR_RX_PKT); ConsolePutChar('\n');
   
-  cmdRobotMot(100, 20, CCC_SENSOR_MOT_LEFT, 127, 0, 0, 0); ConsolePutChar('\n');
-  cmdRobotMot(100, 20, CCC_SENSOR_MOT_RIGHT, 0, -127, 0, 0); ConsolePutChar('\n');
-  cmdRobotMot(50,  15, CCC_SENSOR_MOT_LIFT, 0, 0, 100, 0); ConsolePutChar('\n');
-  cmdRobotMot(75,  20, CCC_SENSOR_MOT_LIFT, 0, 0, -100, 0); ConsolePutChar('\n');
-  cmdRobotMot(50,  20, CCC_SENSOR_MOT_HEAD, 0, 0, 0, 100); ConsolePutChar('\n');
-  cmdRobotMot(75,  20, CCC_SENSOR_MOT_HEAD, 0, 0, 0, -100); ConsolePutChar('\n');
+  cmdRobotMot(100, CCC_SENSOR_MOT_LEFT, 127, 0, 0, 0); ConsolePutChar('\n');
+  cmdRobotMot(100, CCC_SENSOR_MOT_RIGHT, 0, -127, 0, 0); ConsolePutChar('\n');
+  cmdRobotMot(50,  CCC_SENSOR_MOT_LIFT, 0, 0, 100, 0); ConsolePutChar('\n');
+  cmdRobotMot(75,  CCC_SENSOR_MOT_LIFT, 0, 0, -100, 0); ConsolePutChar('\n');
+  cmdRobotMot(50,  CCC_SENSOR_MOT_HEAD, 0, 0, 0, 100); ConsolePutChar('\n');
+  cmdRobotMot(75,  CCC_SENSOR_MOT_HEAD, 0, 0, 0, -100); ConsolePutChar('\n');
   
   uint32_t esn = cmdRobotGmr(0); //ConsolePutChar('\n');
   uint32_t hw_ver = cmdRobotGmr(1); //ConsolePutChar('\n');
@@ -111,18 +111,16 @@ static void dbg_test_comm_loop_(int nloops, int rlim)
   srand(Timer::get());
   for(int x = 0; x < nloops; x++) {
     cmdRobotEsn(); cmdRobotBsv();
-    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BATTERY);
-    //cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BATTERY);
-    //cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BATTERY);
-    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_CLIFF);
-    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_LEFT);
-    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_RIGHT);
-    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_LIFT);
-    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_MOT_HEAD);
-    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_PROX_TOF);
-    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_BTN_TOUCH);
-    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_RSSI);
-    cmdRobotGet(1+rand()%rlim, 1, CCC_SENSOR_RX_PKT);
+    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_BATTERY);
+    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_CLIFF);
+    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_MOT_LEFT);
+    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_MOT_RIGHT);
+    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_MOT_LIFT);
+    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_MOT_HEAD);
+    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_PROX_TOF);
+    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_BTN_TOUCH);
+    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_RSSI);
+    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_RX_PKT);
   }
 }
 
@@ -246,12 +244,12 @@ void TestRobotInfo(void)
 
 void TestRobotSensors(void)
 {
-  ccr_sr_t bat    = *cmdRobotGet(3, 2, CCC_SENSOR_BATTERY);
-  ccr_sr_t cliff  = *cmdRobotGet(3, 2, CCC_SENSOR_CLIFF);
-  ccr_sr_t prox   = *cmdRobotGet(3, 2, CCC_SENSOR_PROX_TOF);
-  ccr_sr_t btn    = *cmdRobotGet(3, 2, CCC_SENSOR_BTN_TOUCH);
-  ccr_sr_t rssi   = *cmdRobotGet(3, 2, CCC_SENSOR_RSSI);
-  ccr_sr_t pktcnt = *cmdRobotGet(3, 2, CCC_SENSOR_RX_PKT);
+  ccr_sr_t bat    = cmdRobotGet(3, CCC_SENSOR_BATTERY   )[1];
+  ccr_sr_t cliff  = cmdRobotGet(3, CCC_SENSOR_CLIFF     )[1];
+  ccr_sr_t prox   = cmdRobotGet(3, CCC_SENSOR_PROX_TOF  )[1];
+  ccr_sr_t btn    = cmdRobotGet(3, CCC_SENSOR_BTN_TOUCH )[1];
+  ccr_sr_t rssi   = cmdRobotGet(3, CCC_SENSOR_RSSI      )[1];
+  ccr_sr_t pktcnt = cmdRobotGet(3, CCC_SENSOR_RX_PKT    )[1];
   
   ConsolePrintf("Sensor Values:\n");
   ConsolePrintf(".battery = %i.%03iV\n", bat.bat.raw/1000, bat.bat.raw%1000);
@@ -267,16 +265,16 @@ void TestRobotMotors(void)
 {
   //ccr_sr_t* psr; //sensor values
   
-  int treadL_Fwd = ( cmdRobotMot(100, 50, CCC_SENSOR_MOT_LEFT, 127, 0, 0, 0) )->enc.speed;
-  int treadL_Rev = ( cmdRobotMot(100, 50, CCC_SENSOR_MOT_LEFT, -127, 0, 0, 0) )->enc.speed;
-  int treadR_Fwd = ( cmdRobotMot(100, 50, CCC_SENSOR_MOT_RIGHT, 0, -127, 0, 0) )->enc.speed;
-  int treadR_Rev = ( cmdRobotMot(100, 50, CCC_SENSOR_MOT_RIGHT, 0, 127, 0, 0) )->enc.speed;
+  int treadL_Fwd = cmdRobotMot(100, CCC_SENSOR_MOT_LEFT,  127,    0, 0, 0 )[49].enc.speed;
+  int treadL_Rev = cmdRobotMot(100, CCC_SENSOR_MOT_LEFT, -127,    0, 0, 0 )[49].enc.speed;
+  int treadR_Fwd = cmdRobotMot(100, CCC_SENSOR_MOT_RIGHT,   0, -127, 0, 0 )[49].enc.speed;
+  int treadR_Rev = cmdRobotMot(100, CCC_SENSOR_MOT_RIGHT,   0,  127, 0, 0 )[49].enc.speed;
   
   //check range of motion
-  int lift_start = ( cmdRobotMot(50, 50, CCC_SENSOR_MOT_LIFT, 0, 0, 100, 0) )->enc.pos;
-  int lift_end   = ( cmdRobotMot(75, 75, CCC_SENSOR_MOT_LIFT, 0, 0, -100, 0) )->enc.pos;
-  int head_start = ( cmdRobotMot(50, 50, CCC_SENSOR_MOT_HEAD, 0, 0, 0, 100) )->enc.pos;
-  int head_end   = ( cmdRobotMot(75, 75, CCC_SENSOR_MOT_HEAD, 0, 0, 0, -100) )->enc.pos;
+  int lift_start = cmdRobotMot(50, CCC_SENSOR_MOT_LIFT, 0, 0,  100,    0 )[49].enc.pos;
+  int lift_end   = cmdRobotMot(75, CCC_SENSOR_MOT_LIFT, 0, 0, -100,    0 )[74].enc.pos;
+  int head_start = cmdRobotMot(50, CCC_SENSOR_MOT_HEAD, 0, 0,    0,  100 )[49].enc.pos;
+  int head_end   = cmdRobotMot(75, CCC_SENSOR_MOT_HEAD, 0, 0,    0, -100 )[74].enc.pos;
   int lift_travel = lift_end - lift_start;
   int head_travel = head_end - head_start;
   
