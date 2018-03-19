@@ -45,16 +45,7 @@
   
   NSLog(@"Init bleCentral");
   
-  NSData* publicKey = [[NSUserDefaults standardUserDefaults] dataForKey:@"publicKey"];
-  NSLog(@"data: %@", publicKey);
-  
-  //[self resetDefaults];
   _victorsDiscovered = [[NSMutableDictionary alloc] init];
-  
-  const char* str = "HELLO WORLD";
-  std::string s = [self hexStr:(uint8_t*)str length:11];
-  printf("[%s]\n", s.c_str());
-  
   _reconnection = false;
   
   return [super init];
@@ -62,9 +53,8 @@
 
 - (std::string)hexStr:(uint8_t*)data length:(int)len {
   std::stringstream ss;
-  ss<<std::hex;
   for(int i(0);i<len;++i)
-    ss<<(int)data[i];
+    ss << std::setfill('0') << std::setw(2) << std::hex << (int)data[i];
   return ss.str();
 }
 
@@ -429,9 +419,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiScanRequest>(self);
   } else {
     Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiScanRequest>(self);
-    //Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsOtaUpdateRequest>(self, "http://sai-general.s3.amazonaws.com/build-assets/ota-test.tar");
   }
-  //Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiAccessPointRequest>(self, true);
 }
 
 - (void) HandleWifiScanResponse:(const Anki::Victor::ExternalComms::RtsWifiScanResponse&)msg {
@@ -445,13 +433,13 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   }
   
   
-  char ssid[32];
-  char pw[64];
+  char ssid[32] = {'\0'};
+  char pw[64] = {'\0'};
   
   NSLog(@"Enter wifi credentials:");
-  scanf("%32s %64s", ssid, pw);
+  (void)scanf("%32s %64s", ssid, pw);
   
-  NSString* ssidS = [NSString stringWithUTF8String:std::string(ssid).c_str()];
+  NSString* ssidS = [NSString stringWithUTF8String:ssid];
   
   bool hidden = false;
   WiFiAuth auth = AUTH_WPA_PSK;
@@ -462,10 +450,10 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     hidden = true;
   }
 
-  
+  uint8_t requestTimeout_s = 15;
   Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiConnectRequest>(self,
-    [self hexStr:(uint8_t*)std::string(ssid).c_str() length:std::string(ssid).length()],
-    std::string(pw), 15, auth, hidden);
+    [self hexStr:(uint8_t*)ssid length:strlen(ssid)],
+    std::string(pw), requestTimeout_s, auth, hidden);
 }
 
 - (void) HandleWifiAccessPointResponse:(const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&)msg {

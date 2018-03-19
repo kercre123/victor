@@ -221,11 +221,13 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidd
 
   std::string nameFromHex;
   int len = ssid.length();
-  for(int i=0; i< len; i+=2) {
-    std::string byte = ssid.substr(i,2);
+  for(int i = 0; i < len; i += 2) {
+    std::string byte = ssid.substr(i, 2);
     char chr = (char) (int)strtol(byte.c_str(), nullptr, 16);
     nameFromHex.push_back(chr);
   }
+
+  Log::Write("NameFromHex: {%s}", nameFromHex.c_str());
 
   error = nullptr;
   tech_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
@@ -369,10 +371,11 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidd
     // it will look "wifi_000af56d4ce4_hidden_managed_psk"
     // something like this. we need to replace 'hidden' with
     // SSID string.
-    std::string prefix = "/net/connman/service/wifi_000000000000_";
+    std::string wifiPrefix = "/net/connman/service/wifi";
+    std::string prefix = wifiPrefix + "_000000000000_";
     std::string hiddenText = "hidden";
 
-    if(strncmp(prefix.c_str(), servicePath.c_str(), 25) != 0) {
+    if(strncmp(prefix.c_str(), servicePath.c_str(), wifiPrefix.length()) != 0) {
       // compare strings all the way up to and including "wifi"
       Log::Error("Be very scared! The Connman service path does not match the expected format.");
       return false;
