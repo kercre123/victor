@@ -25,6 +25,7 @@ using namespace std;
 
 void NativeAnkiUtilConsoleLoadVarsWithContext(ConsoleFunctionContextRef context);
 void NativeAnkiUtilConsoleSaveVarsWithContext(ConsoleFunctionContextRef context);
+void NativeAnkiUtilConsoleDeleteVarsWithContext(ConsoleFunctionContextRef context);
 
 std::string g_ConsoleVarIniFilePath = "";
 
@@ -446,6 +447,12 @@ void SaveConsoleVars( ConsoleFunctionContextRef context )
   NativeAnkiUtilConsoleSaveVarsWithContext( context );
 }
 CONSOLE_FUNC( SaveConsoleVars, "Console" );
+
+void DeleteConsoleVars( ConsoleFunctionContextRef context )
+{
+  NativeAnkiUtilConsoleDeleteVarsWithContext( context );
+}
+CONSOLE_FUNC( DeleteConsoleVars, "Console" );
   
 //------------------------------------------------------------------------------------------------------------------------------
 void List_Variables( ConsoleFunctionContextRef context )
@@ -1182,5 +1189,17 @@ void NativeAnkiUtilConsoleSaveVarsWithContext(ConsoleFunctionContextRef context)
 void NativeAnkiUtilConsoleSaveVars()
 {
   NativeAnkiUtilConsoleSaveVarsWithContext(nullptr);
+}
+
+
+void NativeAnkiUtilConsoleDeleteVarsWithContext(ConsoleFunctionContextRef context)
+{
+  const char* k_ConsoleVarIniFilePath = g_ConsoleVarIniFilePath.c_str();
+
+  int result = std::remove(k_ConsoleVarIniFilePath);
+  if (result != 0)
+  {
+      LOG_ERROR("ConsoleSystem.DeleteVars", "Error trying to delete console vars file %s", k_ConsoleVarIniFilePath);
+  }
 }
 

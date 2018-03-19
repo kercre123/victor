@@ -525,9 +525,12 @@ static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
             "close\r\n\r\n");
 
   const auto& osState = OSState::getInstance();
-  const std::string robotID  = std::to_string(osState->GetRobotID());
-  const std::string serialNo = osState->GetSerialNumberAsString();
-  const std::string ip       = osState->GetIPAddress();
+  const std::string robotID        = std::to_string(osState->GetRobotID());
+  const std::string serialNo       = osState->GetSerialNumberAsString();
+  const std::string ip             = osState->GetIPAddress();
+  const std::string robotName      = osState->GetRobotName();
+  const std::string osBuildVersion = osState->GetOSBuildVersion();
+  const std::string sha            = osState->GetBuildSha();
 
   const std::string buildConfig =
 #if defined(NDEBUG)
@@ -559,10 +562,11 @@ static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
 
 #endif
 
-  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n",
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
             robotID.c_str(), serialNo.c_str(), ip.c_str(),
             buildConfig.c_str(),
-            procVersion.c_str(), procCmdLine.c_str());
+            procVersion.c_str(), procCmdLine.c_str(),
+            robotName.c_str(), osBuildVersion.c_str(), sha.c_str());
   return 1;
 }
 
@@ -577,7 +581,6 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
   enum {
     kStat_CpuFreq,
     kStat_Temperature,
-    kStat_BatteryVoltage,
     kStat_Uptime,
     kStat_IdleTime,
     kStat_RealTimeClock,
@@ -619,16 +622,6 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
     // Update temperature reading (Celsius)
     const uint32_t cpuTemp_C = osState->GetTemperature_C();
     stat_temperature = std::to_string(cpuTemp_C);
-  }
-
-  std::string stat_batteryVoltage;
-  if (active[kStat_BatteryVoltage]) {
-    // Battery voltage
-    const uint32_t batteryVoltage_uV = osState->GetBatteryVoltage_uV();
-    const float batteryVoltage_V = batteryVoltage_uV * 0.000001f;
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(3) << batteryVoltage_V;
-    stat_batteryVoltage = ss.str();
   }
 
   std::string stat_uptime;
@@ -683,10 +676,9 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
             "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
             "close\r\n\r\n");
 
-  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n",
             stat_cpuFreq.c_str(),
             stat_temperature.c_str(),
-            stat_batteryVoltage.c_str(),
             stat_uptime.c_str(),
             stat_idleTime.c_str(),
             stat_rtc.c_str(),

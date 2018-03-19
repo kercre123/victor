@@ -36,7 +36,6 @@
     var perfItems = [
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:1500000, desc:"CPU freq",        units:"kHz" },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:150,     desc:"Temperature",     units:"Celsius" },
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:5,       desc:"Battery",         units:"volts" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Uptime",          units:"seconds" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Idle time",       units:"seconds" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Real time clock", units:"" },
@@ -77,6 +76,8 @@
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Fully charged time",  units:"seconds" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Low battery time",    units:"seconds" }
     ];
+
+    var dialogOKFunction = undefined;
 
     function ClearAllPages() {
         $('div[id^="page_"]').hide();
@@ -123,6 +124,9 @@
                     $("#main_build_config").html(payload[3]);
                     $("#main_os_version").html(payload[4]);
                     $("#main_cmd_line").html(payload[5]);
+                    $("#main_robot_name").html(payload[6]);
+                    $("#main_os_build_version").html(payload[7]);
+                    $("#main_build_sha").html(payload[8]);
                 })
             }
         } else if (pageName == "page_perf") {
@@ -425,6 +429,38 @@
         }
     }
 
+    function StartConfirmDialog(title, body, okfunction) {
+        dialogOKFunction = okfunction;
+        $("#confirm_dialog_body").html(body);
+        var d = $("#confirm_dialog");
+        d.dialog("option", "title", title);
+        d.dialog("open");
+    }
+
+    function ButtonHandler_ConsoleVarsLoad() {
+        console.log('ButtonHandler_ConsoleVarsLoad');
+        StartConfirmDialog("", "Load console vars from disk:", function() {
+            $.post("consolefunccall", {func:"LoadConsoleVars", args:""}, function(result){});
+        });
+    }
+    function ButtonHandler_ConsoleVarsSave() {
+        console.log('ButtonHandler_ConsoleVarsSave');
+        StartConfirmDialog("", "Save console vars to disk:", function() {
+            $.post("consolefunccall", {func:"SaveConsoleVars", args:""}, function(result){});
+        });
+    }
+    function ButtonHandler_ConsoleVarsReset() {
+        console.log('ButtonHandler_ConsoleVarsReset');
+        StartConfirmDialog("", "Reset console vars in memory to defaults:", function() {
+            $.post("consolefunccall", {func:"ResetConsoleVars", args:""}, function(result){});
+        });
+    }
+    function ButtonHandler_ConsoleVarsDelete() {        
+        console.log('ButtonHandler_ConsoleVarsDelete');
+        StartConfirmDialog("", "Delete console vars file on disk:", function() {
+            $.post("consolefunccall", {func:"DeleteConsoleVars", args:""}, function(result){});
+        });
+    }
 
     $(document).ready(function() {
         ClearAllPages();
@@ -438,6 +474,26 @@
         $("#btn_engine_toggle_auto_update").click(ButtonHandler_EngineToggleAutoUpdate);
         $("#btn_engine_set_update_period").click(ButtonHandler_EngineSetUpdatePeriod);
         $("#btn_engine_update_now").click(ButtonHandler_EngineUpdateNow);
+        $("#btn_console_vars_load").click(ButtonHandler_ConsoleVarsLoad);
+        $("#btn_console_vars_save").click(ButtonHandler_ConsoleVarsSave);
+        $("#btn_console_vars_reset").click(ButtonHandler_ConsoleVarsReset);
+        $("#btn_console_vars_delete").click(ButtonHandler_ConsoleVarsDelete);
+        $("#confirm_dialog").dialog({ autoOpen: false, modal: true, resizable: false,
+            draggable: true,
+            width: 'auto',
+            buttons: {
+                "OK": function() {
+                    $("#confirm_dialog").dialog("close");
+                    if (dialogOKFunction !== undefined) {
+                        dialogOKFunction();
+                        dialogOKFunction = undefined;
+                    }
+                },
+                "Cancel": function () {
+                    $("#confirm_dialog").dialog("close");
+                    dialogOKFunction = undefined;
+                }
+        } });
 
         $.post("getinitialconfig", function(data) {
             var payload = data.split("\n");
@@ -526,6 +582,9 @@
                     <td style='text-align:right'>Robot ID:</td><td id="main_robot_id"></td>
                 </tr>
                 <tr>
+                    <td style='text-align:right'>Robot Name:</td><td id="main_robot_name"></td>
+                </tr>
+                <tr>
                     <td style='text-align:right'>Robot Serial Number:</td><td id="main_robot_serial_number"></td>
                 </tr>
                 <tr>
@@ -536,6 +595,12 @@
                 </tr>
                 <tr>
                     <td style='text-align:right'>OS Version:</td><td id="main_os_version"></td>
+                </tr>
+                <tr>
+                    <td style='text-align:right'>OS Build Version:</td><td id="main_os_build_version"></td>
+                </tr>
+                <tr>
+                    <td style='text-align:right'>Build Sha:</td><td id="main_build_sha"></td>
                 </tr>
                 <tr>
                     <td style='text-align:right'>Command Line:</td><td id="main_cmd_line"></td>
@@ -566,6 +631,9 @@
                     <td>Get console variable</td><td>/consolevarget?key=name_of_variable</td>
                 </tr>
                 <tr>
+                    <td>List console functions</td><td><a href="/consolefunclist">/consolefunclist</a></td>
+                </tr>
+                <tr>
                     <td>List console functions matching</td><td>/consolefunclist?key=search_key</td>
                 </tr>
                 <tr>
@@ -575,7 +643,14 @@
             <br/>
             <div>
                 <input type="submit" value="consolevars">
+            </div><br>
+            <div>
+                <button id='btn_console_vars_load'>LOAD console vars</button>
+                <button id='btn_console_vars_save'>SAVE console vars</button>
+                <button id='btn_console_vars_delete'>DELETE console vars save file</button>
+                <button id='btn_console_vars_reset'>RESET console vars to default values</button>
             </div>
+            <br><br>
             <a href="webViz.html">WebViz</a>
         </div>
 
@@ -674,6 +749,11 @@
                 <input type="submit" value="cache">
                 <input type="submit" value="currentgamelog">
             </div>
+        </div>
+
+        <div id="confirm_dialog" title="">
+          <p id='confirm_dialog_body'></p>
+          <p>Are you sure?</p>
         </div>
 
     </div>
