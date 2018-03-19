@@ -51,7 +51,6 @@ static void flush_(cmd_io io)
       while( ConsoleGetCharNoWait() > -1 ); //flush unread dma buf
       break;
     case CMD_IO_CONTACTS:
-      Contacts::flushRx(); //empty line buffer
       while( Contacts::getchar() > -1 );
       break;
     default:
@@ -173,6 +172,12 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
   active_tick_interval_ms = next_tick_interval_ms;
   active_tick_handler = next_tick_handler;
   next_tick_interval_ms = 0, next_tick_handler = NULL; //single-use
+  
+  //contact handoff power -> uart
+  if( io == CMD_IO_CONTACTS && Contacts::powerIsOn() ) {
+    Contacts::powerOff(); //forces discharge
+    Contacts::setModeRx(); //explicit mode change
+  }
   
   //send command out the selected io channel (append prefix)
   flush_(io); //flush rx buffers first for correct response detection

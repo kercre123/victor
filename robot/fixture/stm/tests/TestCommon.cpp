@@ -190,6 +190,14 @@ namespace TestCommon
                 {
                   const char* sub_line = hook_sendline(line, line_len);
                   int sub_len = sub_line != NULL ? strlen(sub_line) : 0;
+                  
+                  //allow hook to finish with newline to flush target rx
+                  if( sub_len == 1 && sub_line[0] == '\n' ) {
+                    ConsolePutChar('\n');
+                    sub_len = 0;
+                    sub_line = NULL;
+                  }
+                  
                   if( sub_line /*&& sub_len > 0*/ )
                   {
                     sub_len = sub_len > line_maxlen ? line_maxlen : sub_len; //limit to our buffer size

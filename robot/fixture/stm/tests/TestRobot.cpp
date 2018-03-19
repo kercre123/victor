@@ -639,7 +639,11 @@ TestFunction* TestRobot2GetTests(void)
 {
   static TestFunction m_tests[] = {
     TestRobotInfo,
-    DBG_test_emr,
+    //DBG_test_emr,
+    TestRobotSensors,
+    //TestRobotMotors,
+    ChargeTest,
+    TestRobotSensors,
     NULL,
   };
   return m_tests;
