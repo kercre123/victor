@@ -38,7 +38,7 @@ using namespace AudioEngine;
 using namespace AudioMetaData;
 using namespace AudioKeyFrameType;
 
-static const AudioGameObject kAnimGameObj = ToAudioGameObject(GameObjectType::Cozmo_OnDevice);
+static const AudioGameObject kAnimGameObj = ToAudioGameObject(GameObjectType::Animation);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AnimationAudioClient::AnimationAudioClient( CozmoAudioController* audioController )

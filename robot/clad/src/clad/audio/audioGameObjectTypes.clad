@@ -8,11 +8,12 @@ enum uint_64 GameObjectType
 
   Invalid = 0,
   Default,
-  UI,
-  SFX,
-  CodeLab,
-  Cozmo_OnDevice,
-  Cozmo_Listener,
+  Victor_Listener,   // DO NOT USE - This is defalt listener
+  Procedural,
+  Animation,
+  Behavior,
+  TextToSpeech,
+  
   End, // Need end val so I can enumerate through GameObjects
 
 }

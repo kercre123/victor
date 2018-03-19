@@ -511,7 +511,7 @@ void BehaviorReactToVoiceCommand::OnVictorListeningBegin()
   if ( GenericEvent::Invalid != _iVars.earConBegin )
   {
     // Play earcon begin audio
-    GetBEI().GetRobotAudioClient().PostEvent( _iVars.earConBegin, AudioMetaData::GameObjectType::SFX );
+    GetBEI().GetRobotAudioClient().PostEvent( _iVars.earConBegin, AudioMetaData::GameObjectType::Behavior );
   }
 }
 
@@ -523,7 +523,7 @@ void BehaviorReactToVoiceCommand::OnVictorListeningEnd()
   if ( GenericEvent::Invalid != _iVars.earConEnd )
   {
     // Play earcon end audio
-    GetBEI().GetRobotAudioClient().PostEvent( _iVars.earConEnd, AudioMetaData::GameObjectType::SFX );
+    GetBEI().GetRobotAudioClient().PostEvent( _iVars.earConEnd, AudioMetaData::GameObjectType::Behavior );
   }
 
   // Note: this is currently decoupled with the actual stream from the AnimProcess

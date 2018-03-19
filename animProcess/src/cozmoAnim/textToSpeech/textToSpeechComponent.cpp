@@ -43,7 +43,7 @@
 
 namespace {
   // TTS audio always plays on robot device
-  constexpr Anki::AudioMetaData::GameObjectType kTTSGameObject = Anki::AudioMetaData::GameObjectType::Cozmo_OnDevice;
+  constexpr Anki::AudioMetaData::GameObjectType kTTSGameObject = Anki::AudioMetaData::GameObjectType::TextToSpeech;
 }
 
 namespace Anki {
@@ -233,7 +233,7 @@ if (AudioCreationState::Preparing == state) {
   const auto eventId = static_cast<AudioEngine::AudioEventId>(GetAudioEvent(style));
   const auto gameObject = static_cast<AudioEngine::AudioGameObject>(kTTSGameObject);
 
-  _audioController->PostAudioEvent(eventId, gameObject, nullptr);
+  _audioController->PostAudioEvent(eventId, gameObject);
 
   // Clear operation from bookkeeping
   ClearOperationData(ttsID);

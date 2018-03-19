@@ -241,9 +241,9 @@ void BehaviorReactToTouchPetting::BehaviorUpdate()
         
         // audio for petting purring
         if(_currBlissLevel==0) {
-          GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Play__Robot_Vic_Sfx__Purr_Loop_Play, AMD_GOT::Cozmo_OnDevice);
+          GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Play__Robot_Vic_Sfx__Purr_Loop_Play, AMD_GOT::Behavior);
         } else {
-          GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Play__Robot_Vic_Sfx__Purr_Increase_Level, AMD_GOT::Cozmo_OnDevice);
+          GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Play__Robot_Vic_Sfx__Purr_Increase_Level, AMD_GOT::Behavior);
         }
         
         // important: increase the bliss level AFTER getting the animation index
@@ -285,7 +285,7 @@ void BehaviorReactToTouchPetting::BehaviorUpdate()
           CancelAndPlayAnimation(_animPettingGetout[animIdx]);
           
           
-          GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Stop__Robot_Vic_Sfx__Purr_Loop_Stop, AMD_GOT::Cozmo_OnDevice);
+          GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Stop__Robot_Vic_Sfx__Purr_Loop_Stop, AMD_GOT::Behavior);
           
           // ensures we wait for the getout to finish before ending the behavior
           _currResponseState = Done;

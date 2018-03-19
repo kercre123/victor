@@ -290,7 +290,7 @@ void BehaviorDevImageCapture::BehaviorUpdate()
         using GE = AudioMetaData::GameEvent::GenericEvent;
         using GO = AudioMetaData::GameObjectType;
         GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Camera_Flash,
-                                                 GO::Default);
+                                                 GO::Behavior);
       }
 
 
