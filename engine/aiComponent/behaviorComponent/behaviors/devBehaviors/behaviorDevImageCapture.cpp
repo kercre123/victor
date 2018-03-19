@@ -21,6 +21,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
@@ -265,6 +266,16 @@ void BehaviorDevImageCapture::BehaviorUpdate()
     else {
       PRINT_CH_DEBUG("Behaviors", "BehaviorDevImageCapture.touch.shortPress", "short press release");
       // take single photo
+
+      // shutter sound
+      {
+        using GE = AudioMetaData::GameEvent::GenericEvent;
+        using GO = AudioMetaData::GameObjectType;
+        GetBEI().GetRobotAudioClient().PostEvent(GE::Play__Robot_Vic_Sfx__Camera_Flash,
+                                                 GO::Default);
+      }
+
+
       if (_iConfig.saveSensorData) {
         visionComponent.SetSaveImageParameters(ImageSendMode::SingleShotWithSensorData,
                                                GetSavePath(),
@@ -305,7 +316,7 @@ void BehaviorDevImageCapture::BlinkLight()
   _dVars.blinkOn = !_dVars.blinkOn;
 
   GetBEI().GetBodyLightComponent().SetBackpackLights( _dVars.blinkOn ? kLightsOn : kLightsOff );
-  
+
   // always blink if we are streaming, and set up another blink for single photo if we need to turn off the
   // light
   if( _dVars.blinkOn || _dVars.isStreaming ) {
