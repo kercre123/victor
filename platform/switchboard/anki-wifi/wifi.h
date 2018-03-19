@@ -14,6 +14,7 @@
 #pragma once
 
 #include "exec_command.h"
+#include "connmanbus.h"
 
 #include <map>
 #include <string>
@@ -35,6 +36,13 @@ enum WiFiAuth : uint8_t {
       AUTH_WPA2_EAP        = 7
 };
 
+enum WiFiConnState : uint8_t {
+  UNKNOWN       = 0,
+  ONLINE        = 1,
+  CONNECTED     = 2,
+  DISCONNECTED  = 3,
+};
+
 class WiFiScanResult {
  public:
   WiFiAuth    auth;
@@ -44,17 +52,37 @@ class WiFiScanResult {
   std::string ssid;
 };
 
-bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb, gpointer userData);
+class WiFiConfig {
+ public:
+  WiFiAuth auth;
+  bool     hidden;
+  std::string ssid; /* hexadecimal representation of ssid name */
+  std::string passphrase;
+};
+
+struct WiFiState {
+  std::string ssid;
+  WiFiConnState connState;
+};
+
+std::string GetObjectPathForService(GVariant* service);
+bool ConnectToWifiService(ConnManBusService* service);
+bool DisconnectFromWifiService(ConnManBusService* service);
+ConnManBusService* GetServiceForPath(std::string objectPath);
+void SetWiFiConfig(std::string ssid, std::string password, WiFiAuth auth, bool isHidden);
+
+bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData);
 std::vector<WiFiScanResult> ScanForWiFiAccessPoints();
 std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& results);
 void EnableWiFiInterface(const bool enable, ExecCommandCallback callback);
 std::map<std::string, std::string> UnPackWiFiConfig(const std::vector<uint8_t>& packed);
-void SetWiFiConfig(const std::map<std::string, std::string> networks, ExecCommandCallback);
+void SetWiFiConfig(const std::vector<WiFiConfig>& networks, ExecCommandCallback);
 void HandleOutputCallback(int rc, const std::string& output);
 bool HasInternet();
 bool GetIpFromHostName(char* hostname, char* ip);
 bool EnableAccessPointMode(std::string ssid, std::string pw);
 bool DisableAccessPointMode();
 int GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits);
+WiFiState GetWiFiState();
 
 } // namespace Anki

@@ -20,3 +20,5 @@ bool AreCaseInsensitiveStringsEqual(const std::string& s1, const std::string& s2
 std::string byteVectorToHexString(const std::vector<uint8_t>& byteVector,
                                   const int numSpaces = 0,
                                   const bool lowercase = false);
+bool IsHexString(const std::string& hexString);
+std::string hexStringToAsciiString(const std::string& hexString);
