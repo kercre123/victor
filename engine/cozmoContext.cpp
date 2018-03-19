@@ -13,7 +13,6 @@
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "engine/viz/vizManager.h"
-#include "engine/voiceCommands/voiceCommandComponent.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "util/cpuProfiler/cpuThreadId.h"
 #include "util/environment/locale.h"
@@ -57,9 +56,6 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   _dasTransferTask->Init(_transferQueueMgr.get());
   #endif
   _gameLogTransferTask->Init(_transferQueueMgr.get());
-
-  // This needs to happen after the audio server is set up
-  _voiceCommandComponent.reset(new VoiceCommand::VoiceCommandComponent(*this));
 
   _appToEngineHandler->Init( _webService.get(), _externalInterface );
 }

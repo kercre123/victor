@@ -429,25 +429,6 @@ void RobotDataLoader::LoadFacePNGPaths()
 }
 
 
-void RobotDataLoader::LoadVoiceCommandConfigs()
-{
-#if THF_FUNCTIONALITY
-  // Configuration for voice command component 
-  {
-    std::string jsonFilename = "assets/voiceCommand/exports/voiceCommand_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _voiceCommandConfig);
-    if (!success)
-    {
-      LOG_ERROR("RobotDataLoader.VoiceCommandConfigJsonFailed",
-                "Voice Command Json config file %s not found or failed to parse",
-                jsonFilename.c_str());
-      _voiceCommandConfig.clear();
-    }
-  }
-#endif
-}
-
-
 void RobotDataLoader::LoadAnimationTriggerResponses()
 {
   _animationTriggerResponses->Load(_platform, "assets/animationGroupMaps");
@@ -536,11 +517,6 @@ void RobotDataLoader::LoadRobotConfigs()
                 "UserIntents Json config file %s not found or failed to parse",
                 jsonFilename.c_str());
     }
-  }
-  
-  // Voice Command config
-  {
-    LoadVoiceCommandConfigs();
   }
   
   // DAS event config

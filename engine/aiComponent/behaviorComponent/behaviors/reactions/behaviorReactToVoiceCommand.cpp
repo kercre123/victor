@@ -35,7 +35,6 @@
 #include "engine/micDirectionHistory.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/robotInterface/messageHandler.h"
-#include "engine/voiceCommands/voiceCommandComponent.h"
 #include "util/console/consoleInterface.h"
 
 #include "coretech/common/engine/utils/timer.h"
@@ -312,13 +311,6 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
 {
-  using namespace Anki::Cozmo::VoiceCommand;
-
-  // note: do we need these?
-  VoiceCommandComponent* voiceComponent = GetBEI().GetRobotInfo().GetContext()->GetVoiceCommandComponent();
-  voiceComponent->ForceListenContext(VoiceCommandListenContext::TriggerPhrase);
-  voiceComponent->BroadcastVoiceEvent(RespondingToCommandEnd(VoiceCommandType::HeyCozmo));
-
   // we've done all we can, now it's up to the next behavior to consume the user intent
   GetBehaviorComp<UserIntentComponent>().SetUserIntentTimeoutEnabled( true );
 

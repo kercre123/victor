@@ -73,6 +73,7 @@ elseif (MACOSX)
 
   set(PLATFORM_LIBS
       util
+      util_audio
       cti_messaging
       ${WEBOTS_LIBS}
   )

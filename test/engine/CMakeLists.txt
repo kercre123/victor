@@ -38,7 +38,6 @@ target_link_libraries(test_engine
   cubeBleClient
   osState
   util
-  util_audio
   gtest
   # platform
   ${PLATFORM_LIBS}
