@@ -329,7 +329,8 @@ void SecurePairing::SendWifiConnectResult(bool success) {
   }
 
   // Send challenge and update state
-  SendRtsMessage<RtsWifiConnectResponse>(success? 1 : 0);
+  WiFiState wifiState = Anki::GetWiFiState();
+  SendRtsMessage<RtsWifiConnectResponse>(wifiState.ssid, wifiState.connState);
 }
 
 void SecurePairing::SendWifiAccessPointResponse(bool success, std::string ssid, std::string pw) {

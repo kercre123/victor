@@ -68,7 +68,8 @@ message RtsWifiConnectRequest {
 }
 
 message RtsWifiConnectResponse {
-    uint_8      statusCode
+    string      wifiSsidHex,
+    uint_8      wifiState,
 }
 
 message RtsWifiIpRequest {
@@ -87,7 +88,7 @@ message RtsStatusRequest {
 }
 
 message RtsStatusResponse {
-    string      wifiSsid,
+    string      wifiSsidHex,
     uint_8      wifiState,
     uint_8      bleState,
     uint_8      batteryState,

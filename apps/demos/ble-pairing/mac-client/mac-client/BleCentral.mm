@@ -185,9 +185,9 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       }
       case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiConnectResponse: {
         Anki::Victor::ExternalComms::RtsWifiConnectResponse msg = rtsMsg.Get_RtsWifiConnectResponse();
-        printf("Is victor connected to the internet? %d\n", msg.statusCode); // 1 = yes, 0 = no
+        printf("Is victor connected to the internet? %d\n", msg.wifiState); // 1 = yes, 0 = no
         
-        if(msg.statusCode == 1) {
+        if(msg.wifiState == 1) {
 //          NSString* fp = @"/Users/paul/.ssh/id_rsa.pub";
 //          NSString* key = [NSString stringWithContentsOfFile:fp encoding:NSUTF8StringEncoding error:nil];
 //
@@ -225,7 +225,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       case Anki::Victor::ExternalComms::RtsConnectionTag::RtsStatusResponse: {
         //
         Anki::Victor::ExternalComms::RtsStatusResponse msg = rtsMsg.Get_RtsStatusResponse();
-        NSLog(@"Connected to [%s] with state [%d]", msg.wifiSsid.c_str(), msg.wifiState);
+        NSLog(@"Connected to [%s] with state [%d]", msg.wifiSsidHex.c_str(), msg.wifiState);
         
         break;
       }

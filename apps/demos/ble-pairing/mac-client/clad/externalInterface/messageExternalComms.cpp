@@ -612,7 +612,8 @@ size_t RtsWifiConnectResponse::Pack(uint8_t* buff, size_t len) const
 
 size_t RtsWifiConnectResponse::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
-  buffer.Write(this->statusCode);
+  buffer.WritePString<uint8_t>(this->wifiSsidHex);
+  buffer.Write(this->wifiState);
   const size_t bytesWritten {buffer.GetBytesWritten()};
   return bytesWritten;
 }
@@ -625,21 +626,26 @@ size_t RtsWifiConnectResponse::Unpack(const uint8_t* buff, const size_t len)
 
 size_t RtsWifiConnectResponse::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
-  buffer.Read(this->statusCode);
+  buffer.ReadPString<uint8_t>(this->wifiSsidHex);
+  buffer.Read(this->wifiState);
   return buffer.GetBytesRead();
 }
 
 size_t RtsWifiConnectResponse::Size() const
 {
   size_t result = 0;
-  // statusCode
+  // wifiSsidHex
+  result += 1; // uint_8 (string length)
+  result += this->wifiSsidHex.length(); // uint_8
+  // wifiState
   result += 1; // uint_8
   return result;
 }
 
 bool RtsWifiConnectResponse::operator==(const RtsWifiConnectResponse& other) const
 {
-  return (this->statusCode == other.statusCode);
+  return (this->wifiSsidHex == other.wifiSsidHex &&
+    this->wifiState == other.wifiState);
 }
 
 bool RtsWifiConnectResponse::operator!=(const RtsWifiConnectResponse& other) const
@@ -648,10 +654,10 @@ bool RtsWifiConnectResponse::operator!=(const RtsWifiConnectResponse& other) con
 }
 
 
-const char* RtsWifiConnectResponseVersionHashStr = "95e87374ead10e62f14d0491fa0c8046";
+const char* RtsWifiConnectResponseVersionHashStr = "676bd89e05e379ddd27c2c14c972912f";
 
 const uint8_t RtsWifiConnectResponseVersionHash[16] = { 
-    0x95, 0xe8, 0x73, 0x74, 0xea, 0xd1, 0xe, 0x62, 0xf1, 0x4d, 0x4, 0x91, 0xfa, 0xc, 0x80, 0x46 
+    0x67, 0x6b, 0xd8, 0x9e, 0x5, 0xe3, 0x79, 0xdd, 0xd2, 0x7c, 0x2c, 0x14, 0xc9, 0x72, 0x91, 0x2f 
 };
 
 // MESSAGE RtsWifiIpRequest
@@ -871,7 +877,7 @@ size_t RtsStatusResponse::Pack(uint8_t* buff, size_t len) const
 
 size_t RtsStatusResponse::Pack(CLAD::SafeMessageBuffer& buffer) const
 {
-  buffer.WritePString<uint8_t>(this->wifiSsid);
+  buffer.WritePString<uint8_t>(this->wifiSsidHex);
   buffer.Write(this->wifiState);
   buffer.Write(this->bleState);
   buffer.Write(this->batteryState);
@@ -887,7 +893,7 @@ size_t RtsStatusResponse::Unpack(const uint8_t* buff, const size_t len)
 
 size_t RtsStatusResponse::Unpack(const CLAD::SafeMessageBuffer& buffer)
 {
-  buffer.ReadPString<uint8_t>(this->wifiSsid);
+  buffer.ReadPString<uint8_t>(this->wifiSsidHex);
   buffer.Read(this->wifiState);
   buffer.Read(this->bleState);
   buffer.Read(this->batteryState);
@@ -897,9 +903,9 @@ size_t RtsStatusResponse::Unpack(const CLAD::SafeMessageBuffer& buffer)
 size_t RtsStatusResponse::Size() const
 {
   size_t result = 0;
-  // wifiSsid
+  // wifiSsidHex
   result += 1; // uint_8 (string length)
-  result += this->wifiSsid.length(); // uint_8
+  result += this->wifiSsidHex.length(); // uint_8
   // wifiState
   result += 1; // uint_8
   // bleState
@@ -911,7 +917,7 @@ size_t RtsStatusResponse::Size() const
 
 bool RtsStatusResponse::operator==(const RtsStatusResponse& other) const
 {
-  return (this->wifiSsid == other.wifiSsid &&
+  return (this->wifiSsidHex == other.wifiSsidHex &&
     this->wifiState == other.wifiState &&
     this->bleState == other.bleState &&
     this->batteryState == other.batteryState);
@@ -923,10 +929,10 @@ bool RtsStatusResponse::operator!=(const RtsStatusResponse& other) const
 }
 
 
-const char* RtsStatusResponseVersionHashStr = "e75cd3daeede788c0351804c5f9be032";
+const char* RtsStatusResponseVersionHashStr = "bcd561dde5fe2e81bbb0c0193ec07557";
 
 const uint8_t RtsStatusResponseVersionHash[16] = { 
-    0xe7, 0x5c, 0xd3, 0xda, 0xee, 0xde, 0x78, 0x8c, 0x3, 0x51, 0x80, 0x4c, 0x5f, 0x9b, 0xe0, 0x32 
+    0xbc, 0xd5, 0x61, 0xdd, 0xe5, 0xfe, 0x2e, 0x81, 0xbb, 0xb0, 0xc0, 0x19, 0x3e, 0xc0, 0x75, 0x57 
 };
 
 // MESSAGE RtsWifiScanRequest

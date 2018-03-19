@@ -654,18 +654,36 @@ WiFiState GetWiFiState() {
           const char* ethernet_key = g_variant_get_string(ethernet_key_v, nullptr);
           if (g_str_equal(ethernet_key, "Interface")) {
             if (!g_str_equal(g_variant_get_string(ethernet_val, nullptr), "wlan0")) {
+              isAssociated = false;
               break;
             }
           }
         }
       }
 
-      if (g_str_equal(key, "Name")) {
-        connectedSsid = std::string(g_variant_get_string(val, nullptr));
-      }
-
       if (g_str_equal(key, "State")) {
         std::string state = std::string(g_variant_get_string(val, nullptr));
+        std::string servicePath = GetObjectPathForService(child);
+
+        std::string wifiPrefix = "/net/connman/service/wifi";
+        std::string prefix = wifiPrefix + "_000000000000_";
+        std::string hexString = "";
+
+        if(strncmp(prefix.c_str(), servicePath.c_str(), wifiPrefix.length()) != 0) {
+          // compare strings all the way up to and including "wifi"
+          Log::Error("Be very scared! The Connman service path does not match the expected format.");
+          return wifiState;
+        }
+
+        for(int i = prefix.length(); i < servicePath.length(); i++) {
+          if(servicePath[i] == '_') {
+            break;
+          }
+          hexString.push_back(servicePath[i]);
+        }
+
+        connectedSsid = hexString;
+
         if(state == "ready") {
           isAssociated = true;
           connState = WiFiConnState::CONNECTED;
