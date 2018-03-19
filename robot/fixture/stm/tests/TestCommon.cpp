@@ -126,7 +126,7 @@ namespace TestCommon
     if( which == TO_CONTACTS )
       Contacts::setModeRx(); //explicit mode change required?
     
-    int c;
+    int c, esc_cnt = 0;
     uint32_t Tstart = Timer::get();
     while(1)
     {
@@ -251,6 +251,16 @@ namespace TestCommon
             }
             //else, whoops! drop data we don't have room for
           }
+        }
+        
+        //AnkiLog firmware update from inside the bridge
+        esc_cnt = c == 0x1B ? esc_cnt + 1 : 0; //count consecutive ESC chars
+        if( esc_cnt >= 5 ) {
+          esc_cnt = 0;
+          uint32_t Tanki = Timer::get();
+          while( Timer::elapsedUs(Tanki) < 15*1000*1000 )
+            ConsoleUpdate();
+          ConsolePrintf("\nAborting Firmware Update\n");
         }
         
         //track 'exit' cmd
