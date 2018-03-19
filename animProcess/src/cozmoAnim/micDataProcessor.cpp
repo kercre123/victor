@@ -780,8 +780,7 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
     if (_currentlyStreaming)
     {
       // Are we done with what we want to stream?
-      static constexpr size_t kMaxRecordTime_ms = 10000;
-      static constexpr size_t kMaxRecordNumChunks = (kMaxRecordTime_ms / kTimePerSEBlock_ms) + 1;
+      static constexpr size_t kMaxRecordNumChunks = (kStreamingTimeout_ms / kTimePerSEBlock_ms) + 1;
       if (receivedStopMessage || _streamingAudioIndex >= kMaxRecordNumChunks)
       {
         ClearCurrentStreamingJob();

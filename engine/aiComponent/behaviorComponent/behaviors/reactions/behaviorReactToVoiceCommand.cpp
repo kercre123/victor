@@ -35,6 +35,7 @@
 #include "engine/micDirectionHistory.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/robotInterface/messageHandler.h"
+#include "micDataTypes.h"
 #include "util/console/consoleInterface.h"
 
 #include "coretech/common/engine/utils/timer.h"
@@ -56,9 +57,7 @@ namespace {
   const char* kProceduralBackpackLights         = "backpackLights";
 
   constexpr AnimationTrigger kInvalidAnimation  = AnimationTrigger::Count;
-  // if you change MicDataInfo::kMaxRecordTime_ms, you must change this!
-  // ** need a way to coordinate this with AnimProcess **
-  constexpr size_t           kMaxRecordTime_ms  = 10000;
+  constexpr size_t           kMaxRecordTime_ms  = MicData::kStreamingTimeout_ms;
   constexpr float            kMaxRecordTime_s   = ( (float)kMaxRecordTime_ms / 1000.0f );
   constexpr float            kListeningBuffer_s = 2.0f;
 

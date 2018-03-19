@@ -101,7 +101,6 @@ private:
   bool _forceRecordClip = false;
 #endif
 
-  static constexpr uint32_t kRawAudioPerBuffer_ms = 2000;
   static constexpr uint32_t kRawAudioBufferSize = kRawAudioPerBuffer_ms / kTimePerChunk_ms;
   float _rawAudioBufferFullness[2] = { 0.f, 0.f };
   // We have 2 fixed buffers for incoming raw audio that we alternate between, so that the processing thread can work
@@ -120,7 +119,7 @@ private:
   std::mutex _fftResultMutex;
 
   // Internal buffer used to add to the streaming audio once a trigger is detected
-  static constexpr uint32_t kImmediateBufferSize = kTriggerOverlapSize_ms / (kChunksPerSEBlock * kTimePerChunk_ms);
+  static constexpr uint32_t kImmediateBufferSize = kTriggerOverlapSize_ms / kTimePerSEBlock_ms;
   struct TimedMicData {
     std::array<AudioUtil::AudioSample, kSamplesPerBlock> audioBlock;
     TimeStamp_t timestamp;

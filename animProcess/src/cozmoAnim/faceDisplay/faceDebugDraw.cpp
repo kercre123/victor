@@ -18,6 +18,7 @@
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/engine/image.h"
+#include "micDataTypes.h"
 #include "util/helpers/templateHelpers.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "webServerProcess/src/webService.h"
@@ -142,7 +143,7 @@ void FaceDebugDraw::DrawConfidenceClock(
   }
 
   // pre-calc the delay time as well for use in both web server and face debug ...
-  const auto maxDelayTime_ms = 2000.f * 2.f;
+  const auto maxDelayTime_ms = (float) MicData::kRawAudioPerBuffer_ms;
   const auto delayTime_ms = (int) (maxDelayTime_ms * bufferFullPercent);
 
 

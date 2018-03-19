@@ -60,6 +60,7 @@ target_link_libraries(cozmo_engine
   cti_planning
   cubeBleClient
   osState
+  micdata
   # vendor
   ${FLATBUFFERS_LIBS}
   ${LIBARCHIVE_LIBS}
