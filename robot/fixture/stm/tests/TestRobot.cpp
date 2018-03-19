@@ -216,9 +216,9 @@ void TestRobotInfo(void)
   Contacts::setModeRx();
   
   try { //DEBUG, cmd doesn't always succeed in dev builds
-    cmdRobotEsn();
+    uint32_t esn0 = cmdRobotEsn()->esn;
     cmdRobotBsv();
-    uint32_t esn      = cmdRobotGmr( EMR_FIELD_OFS(ESN) );
+    uint32_t esn1     = cmdRobotGmr( EMR_FIELD_OFS(ESN) );
     uint32_t hwver    = cmdRobotGmr( EMR_FIELD_OFS(HW_VER) );
     uint32_t model    = cmdRobotGmr( EMR_FIELD_OFS(MODEL) );
     uint32_t lot_code = cmdRobotGmr( EMR_FIELD_OFS(LOT_CODE) );
@@ -227,9 +227,14 @@ void TestRobotInfo(void)
     uint32_t packedout    = cmdRobotGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
     uint32_t packoutdate  = cmdRobotGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
     ConsolePrintf("\n");
-    ConsolePrintf("esn=%08x hwVer=%u model=%u lotCode=%u\n", esn, hwver, model, lot_code);
-    ConsolePrintf("playpenready=%u playpenpass=%u\n", playpenready, playpenpass);
-    ConsolePrintf("packedout=%u packout-date=%u\n", packedout, packoutdate);
+    ConsolePrintf("EMR[%u] esn         :%08x [%08x]\n", EMR_FIELD_OFS(ESN), esn1, esn0);
+    ConsolePrintf("EMR[%u] hwver       :%u\n", EMR_FIELD_OFS(HW_VER), hwver);
+    ConsolePrintf("EMR[%u] model       :%u\n", EMR_FIELD_OFS(MODEL), model);
+    ConsolePrintf("EMR[%u] lotcode     :%u\n", EMR_FIELD_OFS(LOT_CODE), lot_code);
+    ConsolePrintf("EMR[%u] playpenready:%u\n", EMR_FIELD_OFS(PLAYPEN_READY_FLAG), playpenready);
+    ConsolePrintf("EMR[%u] playpenpass :%u\n", EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), playpenpass);
+    ConsolePrintf("EMR[%u] packedout   :%u\n", EMR_FIELD_OFS(PACKED_OUT_FLAG), packedout);
+    ConsolePrintf("EMR[%u] packout-date:%u\n", EMR_FIELD_OFS(PACKED_OUT_DATE), packoutdate);
     ConsolePrintf("\n");
   } catch(int e){
   }
