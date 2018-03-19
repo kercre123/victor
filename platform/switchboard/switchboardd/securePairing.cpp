@@ -341,6 +341,21 @@ void SecurePairing::SendWifiAccessPointResponse(bool success, std::string ssid, 
   SendRtsMessage<RtsWifiAccessPointResponse>(success, ssid, pw);
 }
 
+void SecurePairing::SendStatusResponse() {
+  if(!AssertState(CommsState::SecureClad)) {
+    return;
+  }
+
+  WiFiState state = Anki::GetWiFiState();
+  uint8_t bleState = 1; // for now, if we are sending this message, we are connected
+  uint8_t batteryState = 0; // for now, ignore this field until we have a way to get that info
+
+  // Send challenge and update state
+  SendRtsMessage<RtsStatusResponse>(state.ssid, state.connState, bleState, batteryState);
+
+  Log::Write("Send status response.");
+}
+
 void SecurePairing::SendCancelPairing() {
   // Send challenge and update state
   SendRtsMessage<RtsCancelPairing>();
@@ -348,6 +363,9 @@ void SecurePairing::SendCancelPairing() {
 }
 
 void SecurePairing::SendOtaProgress(int status, uint64_t progress, uint64_t expectedTotal) {
+  if(!AssertState(CommsState::SecureClad)) {
+    return;
+  }
   // Send Ota Progress
   SendRtsMessage<RtsOtaUpdateResponse>(status, progress, expectedTotal);
   Log::Write("Sending OTA Progress Update");
@@ -469,6 +487,12 @@ void SecurePairing::HandleRtsWifiIpRequest(const Victor::ExternalComms::RtsConne
 void SecurePairing::HandleRtsStatusRequest(const Victor::ExternalComms::RtsConnection& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
+  }
+
+  if(_state == PairingState::ConfirmedSharedSecret) {
+    SendStatusResponse();
+  } else {
+    Log::Write("Received status request in the wrong state.");
   }
 }
 

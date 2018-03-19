@@ -219,13 +219,7 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidd
   GError* error;
   bool success;
 
-  std::string nameFromHex;
-  int len = ssid.length();
-  for(int i = 0; i < len; i += 2) {
-    std::string byte = ssid.substr(i, 2);
-    char chr = (char) (int)strtol(byte.c_str(), nullptr, 16);
-    nameFromHex.push_back(chr);
-  }
+  std::string nameFromHex = hexStringToAsciiString(ssid);
 
   Log::Write("NameFromHex: {%s}", nameFromHex.c_str());
 
@@ -590,6 +584,110 @@ void SetWiFiConfig(const std::vector<WiFiConfig>& networks, ExecCommandCallback 
   }
 
   ExecCommandInBackground({"connmanctl", "enable", "wifi"}, callback);
+}
+
+WiFiState GetWiFiState() {
+  // Return WiFiState object
+  WiFiState wifiState;
+  wifiState.ssid = "";
+  wifiState.connState = WiFiConnState::UNKNOWN;
+
+  GError* error = nullptr;
+
+  ConnManBusManager* manager_proxy;
+  manager_proxy = conn_man_bus_manager_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
+                                                              G_DBUS_PROXY_FLAGS_NONE,
+                                                              "net.connman",
+                                                              "/",
+                                                              nullptr,
+                                                              &error);
+  if (error) {
+    loge("error getting proxy for net.connman /");
+    return wifiState;
+  }
+
+  GVariant* services = nullptr;
+  bool success = conn_man_bus_manager_call_get_services_sync(manager_proxy,
+                                                        &services,
+                                                        nullptr,
+                                                        &error);
+  g_object_unref(manager_proxy);
+  if (error) {
+    loge("Error getting services from connman");
+    return wifiState;
+  }
+
+  if (!success) {
+    loge("connman failed to get list of services");
+    return wifiState;
+  }
+
+  for (gsize i = 0 ; i < g_variant_n_children(services); i++) {
+    GVariant* child = g_variant_get_child_value(services, i);
+    GVariant* attrs = g_variant_get_child_value(child, 1);
+
+    bool isAssociated = false;
+    std::string connectedSsid;
+    WiFiConnState connState = WiFiConnState::UNKNOWN;
+
+    for (gsize j = 0 ; j < g_variant_n_children(attrs); j++) {
+      GVariant* attr = g_variant_get_child_value(attrs, j);
+      GVariant* key_v = g_variant_get_child_value(attr, 0);
+      GVariant* val_v = g_variant_get_child_value(attr, 1);
+      GVariant* val = g_variant_get_variant(val_v);
+      const char* key = g_variant_get_string(key_v, nullptr);
+
+      // Make sure this is a wifi service and not something else
+      if (g_str_equal(key, "Type")) {
+        if (!g_str_equal(g_variant_get_string(val, nullptr), "wifi")) {
+          break;
+        }
+      }
+
+      // Make sure this is for the wlan0 interface and not p2p0
+      if (g_str_equal(key, "Ethernet")) {
+        for (gsize k = 0 ; k < g_variant_n_children(val); k++) {
+          GVariant* ethernet_attr = g_variant_get_child_value(val, k);
+          GVariant* ethernet_key_v = g_variant_get_child_value(ethernet_attr, 0);
+          GVariant* ethernet_val_v = g_variant_get_child_value(ethernet_attr, 1);
+          GVariant* ethernet_val = g_variant_get_variant(ethernet_val_v);
+          const char* ethernet_key = g_variant_get_string(ethernet_key_v, nullptr);
+          if (g_str_equal(ethernet_key, "Interface")) {
+            if (!g_str_equal(g_variant_get_string(ethernet_val, nullptr), "wlan0")) {
+              break;
+            }
+          }
+        }
+      }
+
+      if (g_str_equal(key, "Name")) {
+        connectedSsid = std::string(g_variant_get_string(val, nullptr));
+      }
+
+      if (g_str_equal(key, "State")) {
+        std::string state = std::string(g_variant_get_string(val, nullptr));
+        if(state == "ready") {
+          isAssociated = true;
+          connState = WiFiConnState::CONNECTED;
+        } else if(state == "online") {
+          isAssociated = true;
+          connState = WiFiConnState::ONLINE;
+        }
+      }
+    }
+
+    if(isAssociated) {
+      wifiState.ssid = connectedSsid;
+      wifiState.connState = connState;
+      break;
+    }
+  }
+
+  if(HasInternet()) {
+    wifiState.connState = WiFiConnState::ONLINE;
+  }
+
+  return wifiState;
 }
 
 bool CanConnectToHostName(char* hostName) {

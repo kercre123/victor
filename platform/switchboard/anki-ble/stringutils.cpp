@@ -15,6 +15,19 @@
 #include <algorithm>
 #include <cctype>
 
+static uint8_t hex_char_to_byte(char input) {
+  if (input >= '0' && input <= '9') {
+    return input - '0';
+  }
+  if (input >= 'A' && input <= 'F') {
+    return input - 'A' + 10;
+  }
+  if (input >= 'a' && input <= 'f') {
+    return input - 'a' + 10;
+  }
+  return 0;
+}
+
 inline bool caseInsensitveCharCompare(char a, char b) {
   return (std::toupper(a) == std::toupper(b));
 }
@@ -71,9 +84,9 @@ std::string hexStringToAsciiString(const std::string& hexString)
 {
   std::string asciiString;
   for (auto it = hexString.cbegin() ; it != hexString.cend(); it++) {
-    char c = (*it) << 4;
+    char c = (hex_char_to_byte(*it)) << 4;
     it++;
-    c |= (*it);
+    c |= hex_char_to_byte(*it);
     asciiString.push_back(c);
   }
   return asciiString;

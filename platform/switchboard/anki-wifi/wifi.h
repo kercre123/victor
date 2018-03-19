@@ -36,6 +36,13 @@ enum WiFiAuth : uint8_t {
       AUTH_WPA2_EAP        = 7
 };
 
+enum WiFiConnState : uint8_t {
+  UNKNOWN       = 0,
+  ONLINE        = 1,
+  CONNECTED     = 2,
+  DISCONNECTED  = 3,
+};
+
 class WiFiScanResult {
  public:
   WiFiAuth    auth;
@@ -51,6 +58,11 @@ class WiFiConfig {
   bool     hidden;
   std::string ssid; /* hexadecimal representation of ssid name */
   std::string passphrase;
+};
+
+struct WiFiState {
+  std::string ssid;
+  WiFiConnState connState;
 };
 
 std::string GetObjectPathForService(GVariant* service);
@@ -71,5 +83,6 @@ bool GetIpFromHostName(char* hostname, char* ip);
 bool EnableAccessPointMode(std::string ssid, std::string pw);
 bool DisableAccessPointMode();
 int GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits);
+WiFiState GetWiFiState();
 
 } // namespace Anki

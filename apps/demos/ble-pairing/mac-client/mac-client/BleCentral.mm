@@ -207,6 +207,8 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 //          Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiIpRequest>(self);
 #if START_OTA_AFTER_CONNECT
           Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsOtaUpdateRequest>(self, "http://sai-general.s3.amazonaws.com/build-assets/ota-test.tar");
+#else
+          Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsStatusRequest>(self);
 #endif
         }
         
@@ -222,6 +224,9 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       }
       case Anki::Victor::ExternalComms::RtsConnectionTag::RtsStatusResponse: {
         //
+        Anki::Victor::ExternalComms::RtsStatusResponse msg = rtsMsg.Get_RtsStatusResponse();
+        NSLog(@"Connected to [%s] with state [%d]", msg.wifiSsid.c_str(), msg.wifiState);
+        
         break;
       }
       case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiScanResponse: {

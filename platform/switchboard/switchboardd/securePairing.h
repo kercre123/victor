@@ -127,6 +127,7 @@ namespace Switchboard {
     void SendWifiScanResult();
     void SendWifiConnectResult(bool connect);
     void SendWifiAccessPointResponse(bool success, std::string ssid, std::string pw);
+    void SendStatusResponse();
     
     void IncrementAbnormalityCount();
     void IncrementChallengeCount();
