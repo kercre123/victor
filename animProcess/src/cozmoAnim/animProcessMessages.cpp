@@ -557,7 +557,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   // Simulator never has EMR
   FaceInfoScreenManager::getInstance()->SetShouldDrawFAC(false);
 #else
-  FaceInfoScreenManager::getInstance()->SetShouldDrawFAC(!Factory::GetEMR()->PACKED_OUT_FLAG);
+  FaceInfoScreenManager::getInstance()->SetShouldDrawFAC(!Factory::GetEMR()->fields.PACKED_OUT_FLAG);
 #endif
 
   return RESULT_OK;
