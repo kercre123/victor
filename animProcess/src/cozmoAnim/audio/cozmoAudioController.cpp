@@ -64,6 +64,7 @@ static void AudioEngineLogCallback( uint32_t, const char*, ErrorLevel, AudioPlay
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+namespace Console {
 // Console Vars
 CONSOLE_VAR( bool, kWriteAudioProfilerCapture, "CozmoAudioController", false );
 CONSOLE_VAR( bool, kWriteAudioOutputCapture, "CozmoAudioController", false );
@@ -166,7 +167,7 @@ CONSOLE_FUNC( SetAudioState, consolePath, const char* stateGroup, const char* st
 CONSOLE_FUNC( SetAudioSwitchState, consolePath, const char* switchGroup, const char* state, uint64 gameObjectId );
 CONSOLE_FUNC( SetAudioParameter, consolePath, const char* parameter, float value, optional uint64 gameObjectId );
 CONSOLE_FUNC( StopAllAudioEvents, consolePath, optional uint64 gameObjectId );
-
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // CozmoAudioController
@@ -233,15 +234,16 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     }
 
     // Use Console vars to control profiling settings
-    if ( kWriteAudioProfilerCapture ) {
+    if ( Console::kWriteAudioProfilerCapture ) {
       WriteProfilerCapture( true );
     }
-    if ( kWriteAudioOutputCapture ) {
+    if ( Console::kWriteAudioOutputCapture ) {
       WriteAudioOutputCapture( true );
     }
     
     RegisterCladGameObjectsWithAudioController();
     SetDefaultListeners( { ToAudioGameObject( AudioMetaData::GameObjectType::Victor_Listener ) } );
+    SetInitialVolume();
   }
   if (sThis == nullptr) {
     sThis = this;
@@ -334,6 +336,14 @@ void CozmoAudioController::RegisterCladGameObjectsWithAudioController()
                         aGameObj, EnumToString(static_cast<GameObjectType>(aGameObj)));
     }
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CozmoAudioController::SetInitialVolume()
+{
+  // FIXME: VIC-1861 - This is temp until we have better way to set values from persistent data
+  SetRobotMasterVolume(0.5f);
+  SetProceduralAudioVolume(0.0f);
 }
 
 

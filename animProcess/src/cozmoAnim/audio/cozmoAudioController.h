@@ -60,6 +60,9 @@ private:
   
   // Register CLAD Game Objects
   void RegisterCladGameObjectsWithAudioController();
+  
+  // Set initial volumes at startup
+  void SetInitialVolume();
  
 };
 
