@@ -20,6 +20,12 @@
 int shutdownSignal = 0;
 int shutdownCounter = 2;
 
+// Count of how many ticks we have been on the charger
+uint8_t seenChargerCnt = 0;
+// How many ticks we need to be on the charger before
+// we will stay on
+static const uint8_t MAX_SEEN_CHARGER_CNT = 5;
+
 void Cleanup(int signum)
 {
   Anki::Cozmo::Robot::Destroy();
@@ -53,7 +59,7 @@ int main(int argc, const char* argv[])
   Anki::Cozmo::Robot::Init();
 
   auto start = std::chrono::steady_clock::now();
-  auto stoppedCharging = start;
+  auto timeOfPowerOn = start;
 
   for (;;) {
     //HAL::Step should never return !OK, but if it does, best not to trust its data.
@@ -74,22 +80,33 @@ int main(int argc, const char* argv[])
     //printf("TS: %d\n", Anki::Cozmo::HAL::GetTimeStamp() );
     start = end;
 
-    if (shutdownSignal == 0) {
-      if (Anki::Cozmo::Factory::GetEMR()->fields.PACKED_OUT_FLAG) {
-        if (Anki::Cozmo::HAL::BatteryIsOnCharger()) {
-          stoppedCharging = end;
-        } else {
-          auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - stoppedCharging);
-          if (elapsed > std::chrono::seconds(15)) {
-            Anki::Cozmo::Robot::Destroy();
+    // If we are packed out and have not yet seen the charger
+    if (Anki::Cozmo::Factory::GetEMR()->fields.PACKED_OUT_FLAG &&
+        shutdownSignal == 0 && 
+        seenChargerCnt < MAX_SEEN_CHARGER_CNT) 
+    {
+      // Need to be on the charger for some number of ticks
+      if (Anki::Cozmo::HAL::BatteryIsOnCharger())
+      {
+        seenChargerCnt++;
+      }
+      else
+      {
+        seenChargerCnt = 0;
+      }
 
-            sync();
-            std::this_thread::sleep_for(std::chrono::milliseconds(200));
+      // If it has been more than 15 seconds since power on and we
+      // have not been on the charger then shutdown
+      auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - timeOfPowerOn);
+      if (elapsed > std::chrono::seconds(15))
+      {
+        Anki::Cozmo::Robot::Destroy();
 
-            Anki::Cozmo::HAL::Shutdown();
-            break;
-          }
-        }
+        sync();
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+        Anki::Cozmo::HAL::Shutdown();
+        break;
       }
     }
 

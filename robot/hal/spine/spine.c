@@ -257,6 +257,9 @@ int spine_get_payload_len(PayloadId payload_type, enum MsgDir dir)
   case PAYLOAD_CONT_DATA:
     return sizeof(struct ContactData);
     break;
+  case PAYLOAD_SHUT_DOWN:
+    return 0;
+    break;
   default:
     break;
   }
