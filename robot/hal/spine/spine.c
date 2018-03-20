@@ -47,15 +47,7 @@ SpineErr spine_open(spine_ctx_t spine, struct spine_params params)
     spine_debug("opening serial port\n");
 
     spine->fd = open(params.devicename, O_RDWR | O_NONBLOCK);
-#ifdef SPINE_TTY_LEGACY
-    if (spine->fd == -1) {
-        if (strncmp(params.devicename, SPINE_TTY, strlen(SPINE_TTY)) == 0) {
-            // If we're running on an old OS version, try the legacy ttyHSL1 device
-            spine->fd = open(SPINE_TTY_LEGACY, O_RDWR | O_NONBLOCK);
-        }
-    }
-#endif
-    if (spine->fd == -1) {
+    if (spine->fd < 0) {
         return spine_error(err_CANT_OPEN_FILE, "Can't open %s", params.devicename);
     }
 
@@ -561,7 +553,6 @@ ssize_t spine_shutdown(spine_ctx_t spine)
   return r;
 }
 
-#ifdef DEBUG_SPINE_TEST
 //
 // TEST
 //
@@ -701,5 +692,3 @@ int spine_test_loop_once() {
 
   return 0;
 }
-
-#endif // DEBUG_SPINE_TEST
