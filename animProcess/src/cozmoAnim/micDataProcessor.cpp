@@ -76,7 +76,22 @@ namespace {
 
 # define CONSOLE_GROUP "MicData"
   CONSOLE_VAR_RANGED(s32, kMicData_NextTriggerIndex, CONSOLE_GROUP, 0, 0, kTriggerDataListLen-1);
+
+#if ANKI_DEV_CHEATS
+  std::string _debugMicDataWriteLocation = "";
+
+  void ClearMicData(ConsoleFunctionContextRef context)
+  {
+    if (!_debugMicDataWriteLocation.empty())
+    {
+      Anki::Util::FileUtils::RemoveDirectory(_debugMicDataWriteLocation);
+    }
+  }
+  CONSOLE_FUNC(ClearMicData, CONSOLE_GROUP);
+
+#endif
 # undef CONSOLE_GROUP
+
 }
 
 namespace Anki {
@@ -109,6 +124,10 @@ MicDataProcessor::MicDataProcessor(const std::string& writeLocation, const std::
   if (!_writeLocationDir.empty())
   {
     Util::FileUtils::CreateDirectory(_writeLocationDir);
+
+    #if ANKI_DEV_CHEATS
+      _debugMicDataWriteLocation = _writeLocationDir;
+    #endif
   }
 
   const std::string& pronunciationFileToUse = "";
