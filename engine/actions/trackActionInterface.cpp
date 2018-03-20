@@ -215,7 +215,8 @@ void ITrackAction::SetMaxHeadAngle(const Radians& maxHeadAngle_rads)
 void ITrackAction::SetMoveEyes(bool moveEyes)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetMoveEyes.ActionAlreadyStarted");
-  _moveEyes = moveEyes;
+  // Note: PROCEDURAL_EYE_LEADING is a compile-time option to enable/disable eye leading
+  _moveEyes = (moveEyes && PROCEDURAL_EYE_LEADING);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

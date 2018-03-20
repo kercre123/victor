@@ -37,6 +37,9 @@
 // preliminary callback code for functions to be run when an action completes.
 #define USE_ACTION_CALLBACKS 1
 
+// Enable/disable procedural eye leading
+#define PROCEDURAL_EYE_LEADING 0
+
 // TODO: Is this Cozmo-specific or can it be moved to coretech?
 // (Note it does require a Robot, which is currently only present in Cozmo)
 
