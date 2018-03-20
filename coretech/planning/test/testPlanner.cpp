@@ -34,7 +34,7 @@ bool CheckPlanAsPathIsSafe(const xythetaPlannerContext& context, xythetaPlan& pl
   Path path;
   context.env.AppendToPath(plan, path, 0);
   Path wasteValidPath;
-  const float startAngle = context.env.GetTheta_c(plan.start_.theta);
+  const float startAngle = context.env.LookupTheta(plan.start_.theta);
   return context.env.PathIsSafe(path, startAngle, (nullptr!=validPath) ? *validPath : wasteValidPath);
 }
 
@@ -713,7 +713,7 @@ GTEST_TEST(TestPlanner, ReplanHard)
 
   State_c newRobotPos(137.9, -1.35, 0.0736);
   ASSERT_FALSE(context.env.IsInCollision(newRobotPos)) << "position "<<newRobotPos<<" should be safe";
-  ASSERT_FALSE(context.env.IsInCollision(context.env.State_c2State(newRobotPos)));
+  ASSERT_FALSE(context.env.IsInCollision(GraphState(newRobotPos)));
 
   State_c lastSafeState;
   xythetaPlan oldPlan;
@@ -740,7 +740,7 @@ GTEST_TEST(TestPlanner, ReplanHard)
     ASSERT_LT(context.env.ApplyAction(oldPlan.GetAction(i), currID, false), 100.0) << "action penalty too high!";
   }
 
-  ASSERT_EQ(currID, context.env.State_c2State(lastSafeState).GetStateID()) << "end of validOldPlan should match lastSafeState!";
+  ASSERT_EQ(currID, GraphState(lastSafeState).GetStateID()) << "end of validOldPlan should match lastSafeState!";
   
   // replan from last safe state
 
@@ -848,8 +848,8 @@ void TestPlanner_ClosestSegmentToPoseHelper(xythetaPlannerContext& context, xyth
     // just check the first one, since I broke the tests with the new way I round states
     size_t sizeToCheck = 1; // prim.intermediatePositions.size() - 1;
     for(size_t intermediateIdx = 0; intermediateIdx < sizeToCheck ; intermediateIdx++) {
-      State_c pose(prim.intermediatePositions[intermediateIdx].position.x_mm + context.env.GetX_mm(curr.x),
-                   prim.intermediatePositions[intermediateIdx].position.y_mm + context.env.GetX_mm(curr.y),
+      State_c pose(prim.intermediatePositions[intermediateIdx].position.x_mm + (curr.x * GraphState::resolution_mm_),
+                   prim.intermediatePositions[intermediateIdx].position.y_mm + (curr.y * GraphState::resolution_mm_),
                    prim.intermediatePositions[intermediateIdx].position.theta);
 
       ASSERT_EQ(planIdx, context.env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose, distFromPlan))
@@ -1032,7 +1032,7 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_initial)
         State_c s = context.env.State2State_c(start);
         s.x_mm += dx;
         s.y_mm += dy;
-        if( context.env.State_c2State(s) == start ) {
+        if( GraphState(s) == start ) {
           ASSERT_EQ(0, context.env.FindClosestPlanSegmentToPose(planner.GetPlan(), s, distFromPlan))
             << "didn't get correct position for offset ("<<dx<<','<<dy<<") s="<<s<<" dist="<<distFromPlan 
             << " (" << numTested << " already passed)";

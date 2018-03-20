@@ -51,8 +51,8 @@ GTEST_TEST(TestEnvironment, State2c)
   // just read the prims so we have a valid environment (resolution, etc).
   EXPECT_TRUE(env.ReadMotionPrimitives((std::string(QUOTE(TEST_DATA_PATH)) + std::string(TEST_PRIM_FILE)).c_str()));
 
-  ASSERT_FLOAT_EQ(1.0 / env.resolution_mm_, env.oneOverResolution_);
-  ASSERT_FLOAT_EQ(1.0 / env.radiansPerAngle_, env.oneOverRadiansPerAngle_);
+  ASSERT_FLOAT_EQ(1.0 / GraphState::resolution_mm_, GraphState::oneOverResolution_);
+  ASSERT_FLOAT_EQ(1.0 / GraphState::radiansPerAngle_, GraphState::oneOverRadiansPerAngle_);
 
   GraphState s(0, 0, 0);
   State_c c = env.State2State_c(s);
@@ -61,14 +61,14 @@ GTEST_TEST(TestEnvironment, State2c)
   EXPECT_FLOAT_EQ(c.y_mm, 0.0);
   EXPECT_FLOAT_EQ(c.theta, 0.0);
   
-  GraphState s2 = env.State_c2State(c);
+  GraphState s2(c);
   EXPECT_EQ(s, s2);
 
   s.x = 234;
   s.y = 103;
   s.theta = 6;
 
-  s2 = env.State_c2State(env.State2State_c(s));
+  s2 = GraphState(env.State2State_c(s));
   EXPECT_EQ(s, s2);
 
 }
@@ -320,7 +320,7 @@ GTEST_TEST(TestEnvironment, ReverseSuccessorsMatch_WithObstacle)
   env.PrepareForPlanning();
 
   State_c curr_c(-14,107,15);
-  GraphState curr = env.State_c2State(curr_c);
+  GraphState curr(curr_c);
 
   SuccessorIterator it = env.GetSuccessors(curr.GetStateID(), 5.0, false);
 

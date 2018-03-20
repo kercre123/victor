@@ -439,7 +439,7 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
           State_c target_c(targetPoses[i].GetTranslation().x(),
                            targetPoses[i].GetTranslation().y(),
                            targetPoses[i].GetRotationAngle<'Z'>().ToFloat());
-          GraphState target(_impl->_context.env.State_c2State(target_c));
+          GraphState target(target_c);
           
           if(_impl->_context.env.GetCollisionPenalty(target) < maxPenalty) {
             closestDist2 = dist2;
@@ -853,7 +853,7 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     Planning::GraphTheta numAngles = (GraphTheta) _context.env.GetNumAngles();
     for(GraphTheta theta=0; theta < numAngles; ++theta) {
 
-      float thetaRads = _context.env.GetTheta_c(theta);
+      float thetaRads = _context.env.LookupTheta(theta);
 
       // Since the planner is given the driveCenter poses to be the robot's origin, compute the actual robot
       // origin given a driveCenter pose at (0,0,0) in order to get the actual bounding box of the robot.
@@ -866,12 +866,14 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
       robotPoly.ImportQuad2d(_robot->GetBoundingQuadXY(robotOriginPose, robotPadding)
                                     .Scale(LATTICE_PLANNER_ROBOT_EXPANSION_SCALING) );
       
+      const Pose2d& robotPose = (_robot->GetPose());
+      const State_c robotState(robotPose.GetX(), robotPose.GetY(), robotPose.GetAngle().ToFloat());
       for(const auto& boundingPoly : convexHulls) {
         _context.env.AddObstacleWithExpansion(boundingPoly, robotPoly, theta, DEFAULT_OBSTACLE_PENALTY);
 
         // only draw the angle we are currently at
         if(vizColor != nullptr &&
-           _context.env.GetTheta(_robot->GetPose().GetRotationAngle<'Z'>().ToFloat()) == theta
+           robotState.GetGraphTheta() == theta
            // && !isReplanning
           ) {
 

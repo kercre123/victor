@@ -15,6 +15,7 @@
 
 
 #include "coretech/common/shared/types.h"
+#include "coretech/common/engine/math/point.h"
 #include "json/json-forwards.h"
 #include "util/math/math.h"
 #include <string>
@@ -37,6 +38,7 @@ using GraphTheta = uint8_t;
 using GraphXY    = int16_t;
 
 union StateID;
+class State_c;
 
 // descritized state for quick lookup in state graph
 class GraphState
@@ -46,7 +48,8 @@ public:
 
   GraphState() : x(0), y(0), theta(0) {};
   GraphState(StateID sid);
-  GraphState(GraphXY x, GraphXY y, GraphXY theta) : x(x), y(y), theta(theta) {};
+  explicit GraphState(State_c s);
+  GraphState(GraphXY x, GraphXY y, GraphTheta theta) : x(x), y(y), theta(theta) {};
 
   // returns true if successful
   bool Import(const Json::Value& config);
@@ -60,6 +63,18 @@ public:
   GraphXY x;
   GraphXY y;
   GraphTheta theta;
+
+  inline Point2f GetPointXY_mm() const { return Point2f(resolution_mm_ * x, resolution_mm_ * y); }
+
+  static constexpr u8    numAngles_              = 1 << THETA_BITS;
+  static constexpr float resolution_mm_          = 10;
+  static constexpr float oneOverResolution_      = (float)(1.0 / ((double)resolution_mm_));
+
+  // NOTE: these are approximate. The actual angles are calculated relative to exterior points on a 5x5 grid,
+  //       and they are loaded along with motion primitives
+  static constexpr float radiansPerAngle_        = 2 * M_PI / numAngles_;
+  static constexpr float oneOverRadiansPerAngle_ = (float)(1.f / ((double)radiansPerAngle_));
+
 };
 
 // bit field representation that packs into an int useful for checking the open and closed sets for expanded states
@@ -106,6 +121,10 @@ public:
   bool Import(const Json::Value& config);
   void Dump(Util::JsonWriter& writer) const;
 
+  inline GraphTheta GetGraphTheta() const { return (GraphTheta) round(Util::ClampAngle2PI(theta) * GraphState::oneOverRadiansPerAngle_) % GraphState::numAngles_; }
+  inline Point2f    GetPointXY_mm() const { return Point2f(x_mm, y_mm); }
+
+  // TODO: store these as Point2f natively to avoid construction? we almost always use both as a point anyway
   float x_mm;
   float y_mm;
   float theta;

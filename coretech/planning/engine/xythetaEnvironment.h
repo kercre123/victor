@@ -176,10 +176,7 @@ public:
   Cost GetCollisionPenalty(GraphState s) const;
 
   inline State_c State2State_c(const GraphState& s) const;
-  inline State_c StateID2State_c(StateID sid) const;
 
-  // round the continuous state to the nearest discrete state, ignoring obstacles
-  inline GraphState State_c2State(const State_c& c) const;
 
   // round the continuous state to the nearest discrete state which is
   // safe. Return true if success, false if all 4 corners are unsafe
@@ -188,17 +185,7 @@ public:
 
   unsigned int GetNumAngles() const {return numAngles_;}
 
-  inline static float GetXFromStateID(StateID sid);
-  inline static float GetYFromStateID(StateID sid);
-  inline static float GetThetaFromStateID(StateID sid);
-
-  inline float GetX_mm(GraphXY x) const;
-  inline float GetY_mm(GraphXY y) const;
-  inline float GetTheta_c(GraphTheta theta) const;
-
-  inline GraphXY GetX(float x_mm) const;
-  inline GraphXY GetY(float y_mm) const;
-  inline GraphTheta GetTheta(float theta_rad) const;
+  inline float LookupTheta(GraphTheta theta) const;
 
   float GetDistanceBetween(const State_c& start, const GraphState& end) const;
   static float GetDistanceBetween(const State_c& start, const State_c& end);
@@ -230,9 +217,10 @@ public:
   double GetOneOverMaxVelocity() const {return _robotParams.oneOverMaxVelocity;}
   double GetHalfWheelBase_mm() const {return _robotParams.halfWheelBase_mm;}
 
-  float GetResolution_mm() const { return resolution_mm_; }
+  float GetResolution_mm() const { return GraphState::resolution_mm_; }
 
 private:
+  const u8 numAngles_ = GraphState::numAngles_; 
 
   // returns true on success
   bool ParseObstacles(const Json::Value& config);
@@ -244,16 +232,6 @@ private:
   bool ParseMotionPrims(const Json::Value& config, bool useDumpFormat = false);
 
   void PopulateReverseMotionPrims();
-
-  float resolution_mm_;
-  float oneOverResolution_;
-
-  unsigned int numAngles_;
-
-  // NOTE: these are approximate. The actual angles aren't evenly
-  // distrubuted, but this will get you close
-  float radiansPerAngle_;
-  float oneOverRadiansPerAngle_;
 
   // First index is starting angle, second is prim ID
   std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;
@@ -310,81 +288,15 @@ bool xythetaEnvironment::GetMotion(GraphTheta theta, ActionID actionID, MotionPr
 // TODO:(bn) pull out into _inline.cpp
 State_c xythetaEnvironment::State2State_c(const GraphState& s) const
 {
-  return State_c(GetX_mm(s.x), GetY_mm(s.y), GetTheta_c(s.theta));
+  return State_c(GraphState::resolution_mm_ * s.x, GraphState::resolution_mm_ * s.y, LookupTheta(s.theta));
 }
 
-GraphState xythetaEnvironment::State_c2State(const State_c& c) const
-{
-  return GraphState(GetX(c.x_mm), GetY(c.y_mm), GetTheta(c.theta));
-}
 
-State_c xythetaEnvironment::StateID2State_c(StateID sid) const
-{
-  return State_c(GetX_mm(sid.s.x), GetY_mm(sid.s.y), GetTheta_c(sid.s.theta));
-}
-
-float xythetaEnvironment::GetXFromStateID(StateID sid)
-{
-  return sid.s.x;
-}
-
-float xythetaEnvironment::GetYFromStateID(StateID sid)
-{
-  return sid.s.y;
-}
-
-float xythetaEnvironment::GetThetaFromStateID(StateID sid)
-{
-  return sid.s.theta;
-}
-
-float xythetaEnvironment::GetX_mm(GraphXY x) const
-{
-  return resolution_mm_ * x;
-}
-
-float xythetaEnvironment::GetY_mm(GraphXY y) const
-{
-  return resolution_mm_ * y;
-}
-
-float xythetaEnvironment::GetTheta_c(GraphTheta theta) const
+float xythetaEnvironment::LookupTheta(GraphTheta theta) const
 {
   assert(theta >= 0 && theta < angles_.size());
   return angles_[theta];
 }
-
-GraphXY xythetaEnvironment::GetX(float x_mm) const
-{
-  return (GraphXY) roundf(x_mm * oneOverResolution_);
-}
-
-GraphXY xythetaEnvironment::GetY(float y_mm) const
-{
-  return (GraphXY) roundf(y_mm * oneOverResolution_);
-}
-
-GraphTheta xythetaEnvironment::GetTheta(float theta_rad) const
-{
-  float positiveTheta = theta_rad;
-  // TODO:(bn) something faster (std::remainder ??)
-  while(positiveTheta < 0.0) {
-    positiveTheta += 2*M_PI;
-  }
-  
-  while(positiveTheta >= 2*M_PI) {
-    positiveTheta -= 2*M_PI;
-  }
-  
-  const GraphTheta theta = (GraphTheta) std::round(positiveTheta * oneOverRadiansPerAngle_) % numAngles_;
-
-  assert(numAngles_ == angles_.size());
-  assert(theta >= 0 && theta < angles_.size());
-  
-  return theta;
-}
-
-
 
 }
 }

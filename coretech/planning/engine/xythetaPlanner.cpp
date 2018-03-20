@@ -174,7 +174,7 @@ bool xythetaPlannerImpl::CheckGoal(const std::pair<GoalID,State_c>& goal, StateI
     return false;
   }
 
-  GraphState goalState = _context.env.State_c2State( goal_c );
+  GraphState goalState( goal_c );
   if( _context.env.IsInCollision( goalState ) ){
     if( ! _context.env.RoundSafe( goal_c, goalState ) ) {
       PRINT_NAMED_INFO("xythetaPlanner.Goal.Invalid", "all possible discrete states of goal %d are in collision!", (int)goalID);
@@ -216,7 +216,7 @@ bool xythetaPlannerImpl::CheckContextGoals(GoalStateIDPairs& goalStateIDs,
   for( const auto& goalPair : validGoals_c) {
     const GoalID& goalID = goalPair.first;
     const State_c& goal_c = goalPair.second;
-    GraphState goal = _context.env.State_c2State( goal_c );
+    GraphState goal( goal_c );
     if( _context.env.IsInCollision( goal ) ){
       if( ! _context.env.RoundSafe( goal_c, goal ) ) {
         PRINT_NAMED_INFO("xythetaPlanner.Goal.Invalid",
@@ -277,7 +277,7 @@ bool xythetaPlannerImpl::CheckContextStart(GraphState& start) const
     return false;
   }
 
-  start = _context.env.State_c2State( _context.start );
+  start = GraphState( _context.start );
 
   if( _context.env.IsInCollision(start) ) {
     if( ! _context.env.RoundSafe( _context.start, start ) ) {

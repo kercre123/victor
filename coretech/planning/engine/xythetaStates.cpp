@@ -24,12 +24,14 @@ namespace Anki {
 namespace Planning {
 
 GraphState::GraphState(StateID sid)
-  :
-  x(xythetaEnvironment::GetXFromStateID(sid)),
-  y(xythetaEnvironment::GetYFromStateID(sid)),
-  theta(xythetaEnvironment::GetThetaFromStateID(sid))
-{
-}
+  : x(sid.s.x)
+  , y(sid.s.y)
+  , theta(sid.s.theta) {}
+
+GraphState::GraphState(State_c s) 
+  : x(roundf(s.x_mm * oneOverResolution_))
+  , y(roundf(s.y_mm * oneOverResolution_))
+  , theta(s.GetGraphTheta()) {}
 
 bool GraphState::Import(const Json::Value& config)
 {

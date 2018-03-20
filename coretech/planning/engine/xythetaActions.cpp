@@ -351,7 +351,7 @@ bool MotionPrimitive::Create(const Json::Value& config, GraphTheta startingAngle
       penalty = 1.0 / cost;
     }
 
-    intermediatePositions.emplace_back(s, env.GetTheta(s.theta),  penalty);
+    intermediatePositions.emplace_back(s, s.GetGraphTheta(),  penalty);
   }
 
   if(config.isMember("extra_cost_factor")) {
@@ -384,8 +384,8 @@ bool MotionPrimitive::Create(const Json::Value& config, GraphTheta startingAngle
     if(std::abs(signedLength) > 0.001) {
       pathSegments_.AppendLine(0.0,
                                0.0,
-                               signedLength * cos(env.GetTheta_c(startingAngle)),
-                               signedLength * sin(env.GetTheta_c(startingAngle)),
+                               signedLength * cos(env.LookupTheta(startingAngle)),
+                               signedLength * sin(env.LookupTheta(startingAngle)),
                                isReverse ? -linearSpeed : linearSpeed,
                                LATTICE_PLANNER_ACCEL,
                                LATTICE_PLANNER_DECEL);
@@ -425,8 +425,8 @@ bool MotionPrimitive::Create(const Json::Value& config, GraphTheta startingAngle
     double direction = config["turn_in_place_direction"].asDouble();
 
     // turn in place is just like an arc with radius 0
-    Radians startRads(env.GetTheta_c(startTheta));
-    double deltaTheta = startRads.angularDistance(env.GetTheta_c(endStateOffset.theta), direction < 0);
+    Radians startRads(env.LookupTheta(startTheta));
+    double deltaTheta = startRads.angularDistance(env.LookupTheta(endStateOffset.theta), direction < 0);
 
     Cost turnTime = std::abs(deltaTheta) * env._robotParams.halfWheelBase_mm * oneOverLinearSpeed;
     cost += turnTime;
@@ -436,7 +436,7 @@ bool MotionPrimitive::Create(const Json::Value& config, GraphTheta startingAngle
     pathSegments_.AppendPointTurn(0.0,
                                   0.0,
                                   startRads.ToFloat(),
-                                  env.GetTheta_c(endStateOffset.theta),
+                                  env.LookupTheta(endStateOffset.theta),
                                   rotSpeed,
                                   LATTICE_PLANNER_ROT_ACCEL,
                                   LATTICE_PLANNER_ROT_DECEL,
@@ -474,13 +474,14 @@ bool MotionPrimitive::Create(const Json::Value& config, GraphTheta startingAngle
 }
 
 SuccessorIterator::SuccessorIterator(const xythetaEnvironment* env, StateID startID, Cost startG, bool reverse)
-  : start_c_(env->StateID2State_c(startID))
+  : start_c_(env->State2State_c(startID))
   , start_(startID)
   , startG_(startG)
   , nextAction_(0)
   , reverse_(reverse)
 {
-  assert(start_.theta == xythetaEnvironment::GetThetaFromStateID(startID));
+  // verify unpacking worked
+  assert(start_.theta == startID.s.theta);
 }
 
 // TODO:(bn) inline?

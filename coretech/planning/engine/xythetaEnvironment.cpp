@@ -40,8 +40,7 @@ namespace Planning {
 Cost xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions) const
 {
   GraphState curr(stateID);
-  float start_x = GetX_mm(curr.x);
-  float start_y = GetY_mm(curr.y);
+  Point2f start = curr.GetPointXY_mm();
 
   assert(curr.theta >= 0);
   assert(curr.theta < allMotionPrimitives_.size());
@@ -76,10 +75,8 @@ Cost xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, b
       size_t endObs = obstaclesPerAngle_[angle].size();
 
       for(size_t obs = 0; obs < endObs; ++obs) {
-
-        if(obstaclesPerAngle_[angle][obs].first.Contains(
-             start_x + prim->intermediatePositions[point].position.x_mm,
-             start_y + prim->intermediatePositions[point].position.y_mm ) ) {
+        const Point2f intermediatePoint = prim->intermediatePositions[point].position.GetPointXY_mm();
+        if( obstaclesPerAngle_[angle][obs].first.Contains(start + intermediatePoint) ) {
 
           penalty += obstaclesPerAngle_[angle][obs].second *
             prim->intermediatePositions[point].oneOverDistanceFromLastPosition;
@@ -171,11 +168,11 @@ Cost xythetaEnvironment::ApplyPathSegment(const PathSegment& pathSegment,
       return MAX_OBSTACLE_COST;
   }
 
-  GraphTheta intermediateTheta = GetTheta(intermediate_c.theta);
+  GraphTheta intermediateTheta = intermediate_c.GetGraphTheta();
   for(size_t i=1; i < numIntermediatePoints; ++i) {
     if( segmentType == PST_POINT_TURN ) {
       intermediate_c.theta = start_theta + dtheta*i;
-      intermediateTheta = GetTheta(intermediate_c.theta);
+      intermediateTheta = intermediate_c.GetGraphTheta();
     } else if( segmentType == PST_LINE ) {
       intermediate_c.x_mm = start_x + dx*i;
       intermediate_c.y_mm = start_y + dy*i;
@@ -183,7 +180,7 @@ Cost xythetaEnvironment::ApplyPathSegment(const PathSegment& pathSegment,
       intermediate_c.x_mm = segmentDef.arc.centerPt_x + segmentDef.arc.radius * cosf(segmentDef.arc.startRad + dtheta*i);
       intermediate_c.y_mm = segmentDef.arc.centerPt_y + segmentDef.arc.radius * sinf(segmentDef.arc.startRad + dtheta*i);
       intermediate_c.theta = start_theta + dtheta*i;
-      intermediateTheta = GetTheta(intermediate_c.theta);
+      intermediateTheta = intermediate_c.GetGraphTheta();
     }
     
     size_t endObs = obstaclesPerAngle_[intermediateTheta].size();
@@ -370,7 +367,7 @@ bool xythetaEnvironment::IsInCollision(GraphState s) const
 
 bool xythetaEnvironment::IsInCollision(State_c c) const
 {  
-  GraphTheta angle = GetTheta(c.theta);
+  GraphTheta angle = c.GetGraphTheta();
   size_t endObs = obstaclesPerAngle_[angle].size();
 
   for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
@@ -387,7 +384,7 @@ bool xythetaEnvironment::IsInSoftCollision(GraphState s) const
   size_t endObs = obstaclesPerAngle_[angle].size();
 
   for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
-    if(obstaclesPerAngle_[angle][obsIdx].first.Contains( GetX_mm(s.x), GetY_mm(s.y) ))
+    if(obstaclesPerAngle_[angle][obsIdx].first.Contains( s.GetPointXY_mm() ))
       return true;
   }
   return false;
@@ -399,7 +396,7 @@ Cost xythetaEnvironment::GetCollisionPenalty(GraphState s) const
   size_t endObs = obstaclesPerAngle_[angle].size();
 
   for(size_t obsIdx=0; obsIdx<endObs; ++obsIdx) {
-    if(obstaclesPerAngle_[angle][obsIdx].first.Contains( GetX_mm(s.x), GetY_mm(s.y) ))
+    if(obstaclesPerAngle_[angle][obsIdx].first.Contains( s.GetPointXY_mm() ))
       return obstaclesPerAngle_[angle][obsIdx].second;
   }
   return 0.0;
@@ -419,11 +416,7 @@ xythetaEnvironment::~xythetaEnvironment()
 
 xythetaEnvironment::xythetaEnvironment()
 {
-  numAngles_ = 1<<THETA_BITS;
   obstaclesPerAngle_.resize(numAngles_);
-
-  radiansPerAngle_ = 2*M_PI/numAngles_;
-  oneOverRadiansPerAngle_ = (float)(1.0 / ((double)radiansPerAngle_));
 }
 
 bool xythetaEnvironment::Init(const Json::Value& mprimJson)
@@ -440,13 +433,8 @@ size_t xythetaEnvironment::GetNumObstacles() const
 bool xythetaEnvironment::Init(const char* mprimFilename)
 {
   if(ReadMotionPrimitives(mprimFilename)) {
-    numAngles_ = 1<<THETA_BITS;
     obstaclesPerAngle_.resize(numAngles_);
-
-    radiansPerAngle_ = 2*M_PI/numAngles_;
-    oneOverRadiansPerAngle_ = (float)(1.0 / ((double)radiansPerAngle_));
-  }
-  else {
+  } else {
     PRINT_NAMED_ERROR("xythetaEnvironemnt.Init.Fail", "could not parse motion primitives");
     return false;
   }
@@ -527,14 +515,17 @@ bool xythetaEnvironment::ReadMotionPrimitives(const char* mprimFilename)
 bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config, bool useDumpFormat)
 {
   try {
-    if(!JsonTools::GetValueOptional(config, "resolution_mm", resolution_mm_) ||
-       !JsonTools::GetValueOptional(config, "num_angles", numAngles_)) {
+    float configResolution = 0.f;
+    unsigned int configAngles = 0;
+    if(!JsonTools::GetValueOptional(config, "resolution_mm", configResolution) ||
+       !JsonTools::GetValueOptional(config, "num_angles", configAngles)) {
       printf("error: could not find key 'resolution_mm' or 'num_angles' in motion primitives\n");
       JsonTools::PrintJsonCout(config, 1);
       return false;
     }
 
-    oneOverResolution_ = (float)(1.0 / ((double)resolution_mm_));
+    assert(GraphState::resolution_mm_ == configResolution);
+    assert(GraphState::numAngles_ == configAngles);
 
     // parse through the action types
     if(config["actions"].size() == 0) {
@@ -645,8 +636,8 @@ void xythetaEnvironment::PopulateReverseMotionPrims()
 
 void xythetaEnvironment::DumpMotionPrims(Util::JsonWriter& writer) const
 {
-  writer.AddEntry("resolution_mm", resolution_mm_);
-  writer.AddEntry("num_angles", (int)numAngles_);
+  writer.AddEntry("resolution_mm", GraphState::resolution_mm_);
+  writer.AddEntry("num_angles", (int)GraphState::numAngles_);
 
   writer.StartList("actions");
   for(const auto& action : actionTypes_) {
@@ -692,8 +683,9 @@ bool xythetaEnvironment::ParseObstacles(const Json::Value& config)
       return false;
     }
 
-    obstaclesPerAngle_.clear();
-    obstaclesPerAngle_.resize(numAngles_);
+    for (auto obstacles : obstaclesPerAngle_) {
+      obstacles.clear();
+    }
 
     for( int theta = 0; theta < numAngles_; ++theta ) {
 
@@ -919,18 +911,18 @@ bool xythetaEnvironment::RoundSafe(const State_c& c, GraphState& rounded) const
   float bestDist2 = 999999.9;
 
   // TODO:(bn) smarter rounding for theta?
-  rounded.theta = GetTheta(c.theta);
+  rounded.theta = c.GetGraphTheta();
 
-  GraphXY startX = (GraphXY) floor(c.x_mm * oneOverResolution_);
-  GraphXY endX   = (GraphXY)  ceil(c.x_mm * oneOverResolution_);
-  GraphXY startY = (GraphXY) floor(c.y_mm * oneOverResolution_);
-  GraphXY endY   = (GraphXY)  ceil(c.y_mm * oneOverResolution_);
+  GraphXY startX = (GraphXY) floor(c.x_mm * GraphState::oneOverResolution_);
+  GraphXY endX   = (GraphXY)  ceil(c.x_mm * GraphState::oneOverResolution_);
+  GraphXY startY = (GraphXY) floor(c.y_mm * GraphState::oneOverResolution_);
+  GraphXY endY   = (GraphXY)  ceil(c.y_mm * GraphState::oneOverResolution_);
 
   for(GraphXY x = startX; x <= endX; ++x) {
     for(GraphXY y = startY; y <= endY; ++y) {
       GraphState candidate(x, y, rounded.theta);
       if(!IsInCollision(candidate)) {
-        float dist2 = pow(GetX_mm(x) - c.x_mm, 2) + pow(GetY_mm(y) - c.y_mm, 2);
+        float dist2 = (candidate.GetPointXY_mm() - c.GetPointXY_mm()).LengthSq();
         if(dist2 < bestDist2) {
           bestDist2 = dist2;
           rounded.x = x;
@@ -945,11 +937,7 @@ bool xythetaEnvironment::RoundSafe(const State_c& c, GraphState& rounded) const
 
 float xythetaEnvironment::GetDistanceBetween(const State_c& start, const GraphState& end) const
 {
-  float distSq = 
-    pow(GetX_mm(end.x) - start.x_mm, 2)
-    + pow(GetY_mm(end.y) - start.y_mm, 2);
-
-  return sqrtf(distSq);
+  return (end.GetPointXY_mm() - start.GetPointXY_mm()).Length();
 }
 
 float xythetaEnvironment::GetDistanceBetween(const State_c& start, const State_c& end)
@@ -963,8 +951,8 @@ float xythetaEnvironment::GetDistanceBetween(const State_c& start, const State_c
 
 float xythetaEnvironment::GetMinAngleBetween(const State_c& start, const GraphState& end) const
 {
-  const float diff1 = std::abs(GetTheta_c(end.theta) - start.theta);
-  const float diff2 = std::abs( std::abs(GetTheta_c(end.theta) - start.theta) - M_PI );
+  const float diff1 = std::abs(LookupTheta(end.theta) - start.theta);
+  const float diff2 = std::abs( std::abs(LookupTheta(end.theta) - start.theta) - M_PI );
   return std::min( diff1, diff2 );
 }
 
@@ -1072,7 +1060,7 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
   float closestXYDist = std::numeric_limits<float>::max();
   size_t closestPointIdx = 0;
 
-  const GraphState discreteInputState = State_c2State(state);
+  const GraphState discreteInputState(state);
 
   // First search *just* the action starting points. If there is an exact match here, that's the winner.
   // Also, keep track of closest distances in case there isn't an exact match
@@ -1093,9 +1081,7 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
     }
 
     // TODO:(bn) no sqrt!
-    const float xError = state.x_mm - GetX_mm(currPlanState.x);
-    const float yError = state.y_mm - GetY_mm(currPlanState.y);
-    const float initialXYDist = sqrt(pow(xError, 2) + pow(yError, 2));
+    const float initialXYDist = (state.GetPointXY_mm() - currPlanState.GetPointXY_mm()).Length();
 
     if( initialXYDist < closestXYDist ) {
       closestXYDist = initialXYDist;
@@ -1122,9 +1108,8 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
 
     // the intermediate position (x,y) coordinates are all centered at 0. Instead of shifting them over each
     // time, we just shift the state we are searching for (fewer ops). (theta doesn't matter here)
-    const State_c offsetToPlanState(state.x_mm - GetX_mm(currPlanState.x),
-                                    state.y_mm - GetY_mm(currPlanState.y),
-                                    state.theta);
+    const Point2f offset = state.GetPointXY_mm() - currPlanState.GetPointXY_mm();
+    const State_c offsetToPlanState(offset.x(), offset.y(), state.theta);
     
     const MotionPrimitive& prim(GetRawMotionPrimitive(currPlanState.theta, plan.GetAction(planIdx)));
 
@@ -1139,7 +1124,7 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
 
 
       // check if this intermediate state is an exact match
-      GraphState intermediateStateRounded = State_c2State( intermediate.position );
+      GraphState intermediateStateRounded( intermediate.position );
       if( intermediateStateRounded == discreteInputState ) {
         if(debug) {
           cout << " exact: " << discreteInputState << endl;
