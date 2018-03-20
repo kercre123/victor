@@ -4,7 +4,9 @@
 
   "animTriggers" : ["HikingSquintStart"],
 
-  "wantsToBeActivatedCondition": {
-    "conditionType" : "EyeContact"
-  }
+  "wantsToBeActivatedConditions": [
+    {
+      "conditionType" : "EyeContact"
+    }
+  ]
 }
