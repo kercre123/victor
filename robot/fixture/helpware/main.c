@@ -21,6 +21,11 @@
 #define FIXTURE_TTY "/dev/ttyHSL1"
 #define FIXTURE_BAUD B1000000
 
+#ifdef DEBUG_WO_SERIAL
+#define serial_write(fd, st, ln)
+#define serial_read(fd, buf, ln) 0
+#define serial_init(tty, baud) 0
+#endif
 
 #define LINEBUFSZ 1024
 
@@ -49,31 +54,31 @@ int printf_multiple(int targets, const char* format, ...)
 {
   va_list argptr;
   va_start(argptr, format);
-  
+
   char buf[256];
   int formatlen = vsnprintf(buf, sizeof(buf), format, argptr);
   int validlen = formatlen < sizeof(buf) ? formatlen : sizeof(buf); //MIN(formatlen, sizeof(buf))
   va_end(argptr);
-  
+
   if( validlen > 0 ) //neg on encoding err
     write_multiple(targets, buf, validlen );
-  
+
   if( validlen < formatlen ) {
     const char err_msg[] = "--PRINTF_MULTIPLE BUFFER OVERFLOW--\n";
     write_multiple(SEND_CL, err_msg, sizeof(err_msg));
   }
-  
+
   return formatlen;
 }
 
-int shellcommand(const char* command, int timeout_sec) {
+int shellcommand(int timeout_sec, const char* command, const char* argstr) {
   int retval = -666;
   uint64_t expiration = steady_clock_now()+(timeout_sec*NSEC_PER_SEC);
 
   printf_multiple(SEND_CL, "-BEGIN SHELL- \"%s\" (%is)\n", command, timeout_sec);
-  
+
   int pid;
-  int pfd = pidopen("./headprogram", &pid);
+  int pfd = pidopen(command, argstr, &pid);
   bool timedout = false;
 
   if (pfd>0) {
@@ -128,7 +133,7 @@ int handle_logstop_command(const char* cmd, int len) {
 int handle_dutprogram_command(const char* cmd, int len) {
   char *end;
   const char *next = cmd;
-  
+
   //first arg is timeout value in seconds (%u)
   errno = 0;
   long timeout_sec = strtol(next, &end, 10);
@@ -140,7 +145,7 @@ int handle_dutprogram_command(const char* cmd, int len) {
   printf("timeout = %ds\n", (int)timeout_sec);
   len -= (end-next);
   next = end;
-  
+
   //2nd arg is 32-bit esn (%08x)
   errno = 0;
   unsigned long esn = len > 0 ? strtoul(next, &end, 16) : 0;
@@ -152,10 +157,10 @@ int handle_dutprogram_command(const char* cmd, int len) {
   printf("esn = %08x\n", (uint32_t)esn);
   len -= (end-next);
   next = end;
-  
-  char dutcmd[25];
-  snprintf(dutcmd, sizeof(dutcmd), "./headprogram %08x", (uint32_t)esn);
-  return shellcommand(dutcmd, (int)timeout_sec);
+
+  char argstr[25];
+  snprintf(argstr, sizeof(argstr), "%08x", (uint32_t)esn);
+  return shellcommand((int)timeout_sec, "./headprogram", argstr );
 }
 
 int handle_shell_timeout_test_command(const char* cmd, int len) {
@@ -170,7 +175,7 @@ int read_file_(const char* filepath, char* out_buf, int buf_sz, int* out_len)
   *out_len = 0;
   out_buf[0] = '\0';
   int fd = open(filepath, O_RDONLY);
-  
+
   if (fd > 0) {
     *out_len = read(fd, out_buf, buf_sz);
     close(fd);
@@ -178,7 +183,7 @@ int read_file_(const char* filepath, char* out_buf, int buf_sz, int* out_len)
     printf_multiple(SEND_CL, "file open error: '%s' errno=%i fd=%i\n", filepath, errno, fd);
     return errno;
   }
-  
+
   return 0;
 }
 
@@ -186,11 +191,11 @@ int read_file_(const char* filepath, char* out_buf, int buf_sz, int* out_len)
 char* read_file_line1_(const char* filepath)
 {
   static char buf[READ_FILE_BUF_SZ+1];
-  
+
   int rlen = 0;
   int err = read_file_(filepath, buf, READ_FILE_BUF_SZ, &rlen);
   buf[READ_FILE_BUF_SZ] = '\0';
-  
+
   if( err == 0 )
   {
     int linelen = 0;
@@ -201,7 +206,7 @@ char* read_file_line1_(const char* filepath)
     buf[linelen] = '\0';
     return buf;
   }
-  
+
   return NULL;
 }
 
@@ -218,7 +223,7 @@ int handle_get_temperature_command(const char* cmd, int len)
   //cat thermal_zone*/type to see a list of valid zones
   //printf("DEBUG,GET-TEMP: cmd=%08x, len=%i, cmd+len=%08x\n", (uint32_t)cmd, len, (uint32_t)(cmd+len) );
   //printf("DEBUG,GET-TEMP: '%.*s' (%i)\n", len, cmd, len);
-  
+
   char* next = (char*)cmd;
   while(next < cmd+len) //each argument is zone # to report
   {
@@ -226,7 +231,7 @@ int handle_get_temperature_command(const char* cmd, int len)
     char *endptr;
     int zone = strtol(next, &endptr, 10); //enforce base10
     //printf("DEBUG,GET-TEMP: zone=%i, next=%08x, endptr-delta=%i, errno=%i\n", zone, (uint32_t)next, (uint32_t)(endptr-next), errno);
-    
+
     char *temperature = NULL;
     if( errno == 0 && zone >= 0 && zone <= 999 && endptr > next ) {
       char filepath[50];
@@ -238,7 +243,7 @@ int handle_get_temperature_command(const char* cmd, int len)
     printf_multiple(SEND_CLS, ":%i %s\n", zone, (temperature ? temperature : "-1"));
     next = endptr > next ? endptr : next+1;
   }
-  
+
   //fflush(stdout);
   return 0;
 }
@@ -467,13 +472,13 @@ int main(int argc, const char* argv[])
   serial_write(gSerialFd, (uint8_t*)"reset\n", 6);
 
   enable_kbhit(1);
-  
+
   //process bootup
   exit = fixture_serial(gSerialFd);
   exit |= user_terminal();
   printf("helper build " __DATE__ " " __TIME__ "\n");
   fflush(stdout);
-  
+
   while (!exit)
   {
     exit = fixture_serial(gSerialFd);
