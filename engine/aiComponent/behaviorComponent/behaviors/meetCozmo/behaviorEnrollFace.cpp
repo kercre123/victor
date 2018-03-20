@@ -238,6 +238,15 @@ void BehaviorEnrollFace::OnBehaviorActivated()
     return;
   }
   
+  {
+    // send a status update to the app that MeetVictor has started with _faceName.
+    // todo: this will be superceded by some sort of robot status VIC-1423
+    if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
+      ExternalInterface::MeetVictorStarted status( _faceName );
+      GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(std::move(status)));
+    }
+  }
+  
   // Settings ok: initialize rest of behavior state
   _saveSucceeded = false;
   
@@ -336,6 +345,7 @@ void BehaviorEnrollFace::BehaviorUpdate()
         PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.CheckIfDone.ReachedEnrollmentCount", "");
         
         // tell the app we've finished scanning
+        // todo: replace with generic status VIC-1423
         if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
           ExternalInterface::MeetVictorFaceScanComplete status;
           GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(std::move(status)));
@@ -676,6 +686,7 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
                   
                   // tell the app we're beginning enrollment
                   if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
+                    // todo: replace with generic status VIC-1423
                     ExternalInterface::MeetVictorFaceScanStarted status;
                     GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(std::move(status)));
                   }

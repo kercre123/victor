@@ -34,6 +34,7 @@ namespace {
   // put here any engine to game tag that should be sent to the app
   std::vector<Tag> tags = {
     Tag::FaceEnrollmentCompleted,
+    Tag::MeetVictorStarted,
     Tag::MeetVictorFaceScanStarted,
     Tag::MeetVictorFaceScanComplete,
     Tag::EnrolledNamesResponse
@@ -366,6 +367,10 @@ void AppToEngineHandler::HandleEngineToGameMessage( const AnkiEvent<ExternalInte
       A2E_SET_JSON(jsonEntry, faceEntry, name);
       jsonList.append( jsonEntry );
     }
+  }
+  else if( tag == Tag::MeetVictorStarted ) {
+    auto& msg = data.Get_MeetVictorStarted();
+    json["name"] = msg.name;
   }
   else if( tag == Tag::MeetVictorFaceScanStarted ) {
     // do nothing. this is just here so people know this is handled

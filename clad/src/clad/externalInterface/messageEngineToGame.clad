@@ -466,6 +466,13 @@ message FaceEnrollmentCompleted
   string               name
 }
 
+// Status messages that will be superceded by some sort of generic status message (VIC-1423)
+
+message MeetVictorStarted
+{
+  string name
+}
+
 // Tell the app the robot is starting a facial scan for the Meet Victor flow
 message MeetVictorFaceScanStarted
 {
