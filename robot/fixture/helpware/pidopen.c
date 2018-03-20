@@ -12,7 +12,7 @@
 #define SHELLNAME "/system/bin/sh"
 
 
-int pidopen(const char* processname, pid_t* pid_out)
+int pidopen(const char* processname, const char argstr, pid_t* pid_out)
 {
   pid_t pid = 0;
   int pipefd[2];
@@ -24,7 +24,7 @@ int pidopen(const char* processname, pid_t* pid_out)
     // Child. redirect std output to pipe, launch script
     close(pipefd[0]);
     dup2(pipefd[1], STDOUT_FILENO);
-    execl(SHELLNAME, SHELLNAME, processname, NULL);
+    execl(SHELLNAME, SHELLNAME, processname, argstr, NULL);
   }
   //Only parent gets here. make tail nonblocking and return;
   *pid_out = pid;
