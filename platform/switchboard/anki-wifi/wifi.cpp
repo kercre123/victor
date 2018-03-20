@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <fstream>
 #include <sstream>
+#include <cstring>
 
 namespace Anki {
 
@@ -210,15 +211,287 @@ std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& resu
   return packed_results;
 }
 
+typedef struct {
+  const char *name;
+  const char *ssid;
+  const char *passphrase;
+} WPAConnectInfo;
+
+static WPAConnectInfo wpaConnectInfo;
+
+static void hiddenAPCallback(GDBusConnection *connection,
+                      const gchar *sender,
+                      const gchar *object_path,
+                      const gchar *interface_name,
+                      const gchar *method_name,
+                      GVariant *parameters,
+                      GDBusMethodInvocation *invocation,
+                      gpointer user_data)
+{
+  loge("%s: sender %s object_path %s interface_name %s method_name %s\n",
+       __func__, sender, object_path, interface_name, method_name);
+
+  if (strcmp(object_path, "/tmp/agent"))
+    return; //not us
+
+  if (strcmp(interface_name, "net.connman.Agent"))
+    return; // not our Interface
+
+  if (!strcmp(method_name, "RequestInput")) {
+    // Ok, let's provide the input
+    gchar *obj;
+    GVariant *dict;
+
+    g_variant_get(parameters, "(oa{sv})", &obj, &dict);
+    logi("%s: object %s", __func__, obj);
+
+    GVariantBuilder *dict_builder = g_variant_builder_new(G_VARIANT_TYPE("(a{sv})"));
+    g_variant_builder_open(dict_builder, G_VARIANT_TYPE("a{sv}"));
+    if (wpaConnectInfo.name) {
+      logi("%s: found 'Name'", __func__);
+      g_variant_builder_add(dict_builder, "{sv}", "Name", g_variant_new_string(wpaConnectInfo.name));
+    }
+    if (wpaConnectInfo.passphrase) {
+      logi("%s: found 'Passphrase'", __func__);
+      g_variant_builder_add(dict_builder, "{sv}", "Passphrase", g_variant_new_string(wpaConnectInfo.passphrase));
+    }
+    g_variant_builder_close(dict_builder);
+
+    GVariant *response = g_variant_builder_end(dict_builder);
+    g_variant_builder_unref(dict_builder);
+    logi("%s", g_variant_print(response, true));
+
+    g_dbus_method_invocation_return_value(invocation, response);
+  }
+}
+
+static GVariant *
+handle_get_property (GDBusConnection  *connection,
+                     const gchar      *sender,
+                     const gchar      *object_path,
+                     const gchar      *interface_name,
+                     const gchar      *property_name,
+                     GError          **error,
+                     gpointer          user_data)
+{
+  loge ("%s called", __func__);
+  return nullptr;
+}
+
+static gboolean
+handle_set_property (GDBusConnection  *connection,
+                     const gchar      *sender,
+                     const gchar      *object_path,
+                     const gchar      *interface_name,
+                     const gchar      *property_name,
+                     GVariant         *value,
+                     GError          **error,
+                     gpointer          user_data)
+{
+  loge ("%s called", __func__);
+  return true;
+}
+
+
+GDBusInterfaceVTable vtable = {
+  .method_call = hiddenAPCallback,
+  .get_property = handle_get_property,
+  .set_property = handle_set_property,
+};
+
 void HandleOutputCallback(int rc, const std::string& output) {
   // noop
 }
+
+void signalCallback(GDBusConnection *connection,
+                    const gchar *sender_name,
+                    const gchar *object_path,
+                    const gchar *interface_name,
+                    const gchar *signal_name,
+                    GVariant *parameters,
+                    gpointer user_data)
+{
+  loge("oh well %s: %s %s %s %s\n", __func__, sender_name, object_path, interface_name, signal_name);
+}
+
+/* Introspection data for the service we are exporting */
+static const gchar introspection_xml[] =
+  "<node>"
+  "  <interface name='net.connman.Agent'>"
+  "    <method name='RequestInput'>"
+  "      <arg type='o' name='service' direction='in'/>"
+  "      <arg type='a{sv}' name='fields' direction='in'/>"
+  "      <arg type='a{sv}' name='input' direction='out'/>"
+  "    </method>"
+  "  </interface>"
+  "</node>";
+static GDBusNodeInfo *introspection_data = NULL;
+
+
+static gpointer mainThread(gpointer data)
+{
+  GCond *cond = (GCond *)data;
+  GError *error = nullptr;
+  GMainLoop *loop = g_main_loop_new(NULL, true);
+  GDBusConnection *gdbusConn = g_bus_get_sync(G_BUS_TYPE_SYSTEM,
+                                              nullptr,
+                                              &error);
+
+  if (error) {
+      loge("error getting connection");
+      return nullptr;
+  }
+
+  introspection_data = g_dbus_node_info_new_for_xml (introspection_xml, NULL);
+  g_assert (introspection_data != NULL);
+
+  ConnManBusManager *manager;
+  manager = conn_man_bus_manager_proxy_new_sync(gdbusConn,
+                                                G_DBUS_PROXY_FLAGS_NONE,
+                                                "net.connman",
+                                                "/",
+                                                nullptr,
+                                                &error);
+  if (error) {
+    loge("error getting manager");
+    return nullptr;
+  }
+
+  GDBusProxy *proxy;
+  proxy = g_dbus_proxy_new_sync (gdbusConn,
+                       G_DBUS_PROXY_FLAGS_NONE,
+                       introspection_data->interfaces[0],
+                       "net.connman.yohoyo",
+                       "/tmp/agent",
+                       "net.connman.Agent",
+                       nullptr,
+                       &error);
+  if (error)
+    loge("error getting proxy %s", error->message);
+
+  const gchar *name = g_dbus_proxy_get_interface_name (G_DBUS_PROXY(manager));
+  logi("%s: interface %s", __func__, name);
+
+  name = g_dbus_proxy_get_object_path(G_DBUS_PROXY(manager));
+  logi("%s: object path %s", __func__, name);
+
+  
+  logi("%s: init halfway", __func__);
+  guint agentId = 0;
+  agentId = g_dbus_connection_register_object(gdbusConn,
+                                              "/tmp/agent",
+                                              introspection_data->interfaces[0],
+                                              &vtable,
+                                              nullptr,
+                                              nullptr,
+                                              &error);
+  if (error) {
+    loge("Error registering agent object");
+    return nullptr;
+  } else
+    loge("Agent object registered");
+
+  if (!conn_man_bus_manager_call_register_agent_sync(manager,
+                                                     "/tmp/agent",
+                                                     nullptr,
+                                                     &error)) {
+    loge("error registering agent");
+    return nullptr;
+  }
+
+  logi("Agent for hidden networks is activated");
+
+  g_cond_signal(cond);
+
+#if 0
+  GVariantBuilder *b;
+  GVariant *dict;
+
+  b = g_variant_builder_new (G_VARIANT_TYPE ("oa{sv}"));
+  g_variant_builder_add (b, "{sv}", "name", g_variant_new_string ("foo"));
+  g_variant_builder_add (b, "{sv}", "timeout", g_variant_new_int32 (10));
+  dict = g_variant_builder_end (b);
+
+  g_dbus_proxy_call_sync(proxy,
+                         "RequestInput",
+                         g_variant_new ("(oa{sv})",
+                                        "/tmp/agent",
+                                        dict),
+                         G_DBUS_CALL_FLAGS_NONE,
+                         -1,
+                         NULL,
+                         &error);
+
+  if (error)
+    loge("%s: call sync error %s", __func__, error->message);
+#endif
+  g_main_loop_run(loop);
+
+  conn_man_bus_manager_call_unregister_agent_sync(manager,
+                                                  "/tmp/agent",
+                                                  nullptr,
+                                                  &error);
+  g_dbus_connection_unregister_object(gdbusConn, agentId);
+
+
+  g_main_loop_unref(loop);
+  g_object_unref(manager);
+  return NULL;
+}
+
+typedef struct {
+  GCond *cond;
+  GError *error;
+  ConnManBusService *service;
+} ConnectAsyncData;
+
+void connectCallback(GObject *source_object, GAsyncResult *result, gpointer user_data)
+{
+  ConnectAsyncData *connectData = (ConnectAsyncData *)user_data;
+
+  // sanity check
+  gpointer res_user_data = g_async_result_get_user_data(result);
+  if (res_user_data != user_data)
+    loge("%s: res_user_data != user_data", __func__);
+
+  conn_man_bus_service_call_connect_finish (connectData->service,
+                                            result,
+                                            &connectData->error);
+  if (connectData->error != nullptr)
+    loge("%s: error %s", __func__, connectData->error->message);
+
+  g_cond_signal(connectData->cond);
+}
+
+static GMutex connectMutex;
 
 bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData) {
   ConnManBusTechnology* tech_proxy;
   GError* error;
   bool success;
 
+  g_mutex_lock(&connectMutex);
+
+  GCond connectCond;
+  g_cond_init(&connectCond);
+
+  static GThread *thread = g_thread_new("main", mainThread, &connectCond);
+
+  if (thread == nullptr) {
+    g_mutex_unlock(&connectMutex);
+    loge("couldn't spawn main thread");
+    return false;
+  }
+
+  gint64 end_time = g_get_monotonic_time () + 5 * G_TIME_SPAN_SECOND;
+  bool timedOut = !g_cond_wait_until(&connectCond, &connectMutex, end_time);
+  g_mutex_unlock(&connectMutex);
+
+  if (timedOut) {
+    loge("timed out waiting for the thread");
+    return false;
+  }
+ 
   std::string nameFromHex = hexStringToAsciiString(ssid);
 
   Log::Write("NameFromHex: {%s}", nameFromHex.c_str());
@@ -253,7 +526,6 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidd
                                                         nullptr,
                                                         &error);
 
-  g_object_unref(manager_proxy);
   if (error) {
     loge("Error getting services from connman");
     return false;
@@ -360,47 +632,21 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidd
   std::string servicePath = GetObjectPathForService(serviceVariant);
   Log::Write("Initiating connection to %s.", servicePath.c_str());
 
-  if(hidden) {
-    // need to do some surgery on the object path
-    // it will look "wifi_000af56d4ce4_hidden_managed_psk"
-    // something like this. we need to replace 'hidden' with
-    // SSID string.
-    std::string wifiPrefix = "/net/connman/service/wifi";
-    std::string prefix = wifiPrefix + "_000000000000_";
-    std::string hiddenText = "hidden";
-
-    if(strncmp(prefix.c_str(), servicePath.c_str(), wifiPrefix.length()) != 0) {
-      // compare strings all the way up to and including "wifi"
-      Log::Error("Be very scared! The Connman service path does not match the expected format.");
-      return false;
-    }
-
-    servicePath.replace(prefix.length(), hiddenText.length(), ssid);
-    Log::Write("Hidden network, trying service path: %s", ssid.c_str());
-  }
-
-  // before connecting, lets disconnect from our current different network
-  if(currentServiceVariant != nullptr) {
-    // we have a connected service and it *isn't* the one we are currently connected to
-    std::string currentOPath = GetObjectPathForService(currentServiceVariant);
-    ConnManBusService* currentService = GetServiceForPath(currentOPath);
-    bool disconnected = DisconnectFromWifiService(currentService);
-
-    if(disconnected) {
-      Log::Write("Disconnected from %s.", currentOPath.c_str());
-    }
-  }
-
-  // Get the ConnManBusService for our object path
   Log::Write("Service path: %s", servicePath.c_str());
   ConnManBusService* service = GetServiceForPath(servicePath);
   if(service == nullptr) {
     return false;
   }
 
+  if (hidden) {
+    wpaConnectInfo.ssid = nullptr;
+    wpaConnectInfo.name = nameFromHex.c_str();
+    wpaConnectInfo.passphrase = pw.c_str();
+  }
   // Try to connect to our service
   bool connect = ConnectToWifiService(service);
 
+  g_object_unref(manager_proxy);
   return connect;
 }
 
@@ -428,20 +674,39 @@ bool ConnectToWifiService(ConnManBusService* service) {
     return false;
   }
 
-  gboolean didConnect = conn_man_bus_service_call_connect_sync (service, nullptr, &error);
+  GCond connectCond;
+  g_cond_init(&connectCond);
 
-  if(!didConnect && error != nullptr) {
-    Log::Write("Error connecting to wifi [attempt 1]: %s", error->message);
+  g_mutex_lock(&connectMutex);
+
+  ConnectAsyncData connAsyncData;
+
+  connAsyncData.error = error;
+  connAsyncData.cond = &connectCond;
+  connAsyncData.service = service;
+  conn_man_bus_service_call_connect (service,
+                                     nullptr,
+                                     connectCallback,
+                                     (gpointer)&connAsyncData);
+
+  gint64 end_time = g_get_monotonic_time () + 5 * G_TIME_SPAN_SECOND;
+  bool timedOut = !g_cond_wait_until(&connectCond, &connectMutex, end_time);
+  g_mutex_unlock(&connectMutex);
+
+  error = connAsyncData.error; 
+  if(timedOut || error != nullptr) {
+    Log::Write("Error connecting to wifi [attempt 1]: %s",
+               timedOut ? "timed out waiting on conditional" : error->message);
     error = nullptr;
 
-    didConnect = conn_man_bus_service_call_connect_sync (service, nullptr, &error);
+    bool didConnect = conn_man_bus_service_call_connect_sync (service, nullptr, &error);
 
     if(!didConnect && error != nullptr) {
       Log::Write("Error connecting to wifi [attempt 2]: %s", error->message);
     }
   }  
 
-  return (bool)didConnect;
+  return error == nullptr;
 }
 
 bool DisconnectFromWifiService(ConnManBusService* service) {
