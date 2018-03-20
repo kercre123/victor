@@ -148,10 +148,6 @@ std::vector<WiFiScanResult> ScanForWiFiAccessPoints() {
         }
       }
 
-      if (g_str_equal(key, "Name")) {
-        result.ssid = std::string(g_variant_get_string(val, nullptr));
-      }
-
       if (g_str_equal(key, "Strength")) {
         result.signal_level =
             (uint8_t) CalculateSignalLevel((int) g_variant_get_byte(val),
@@ -189,6 +185,7 @@ std::vector<WiFiScanResult> ScanForWiFiAccessPoints() {
     }
 
     if (type_is_wifi && iface_is_wlan0) {
+      result.ssid = GetHexSsidFromServicePath(GetObjectPathForService(child));
       results.push_back(result);
     }
   }
@@ -664,25 +661,7 @@ WiFiState GetWiFiState() {
       if (g_str_equal(key, "State")) {
         std::string state = std::string(g_variant_get_string(val, nullptr));
         std::string servicePath = GetObjectPathForService(child);
-
-        std::string wifiPrefix = "/net/connman/service/wifi";
-        std::string prefix = wifiPrefix + "_000000000000_";
-        std::string hexString = "";
-
-        if(strncmp(prefix.c_str(), servicePath.c_str(), wifiPrefix.length()) != 0) {
-          // compare strings all the way up to and including "wifi"
-          Log::Error("Be very scared! The Connman service path does not match the expected format.");
-          return wifiState;
-        }
-
-        for(int i = prefix.length(); i < servicePath.length(); i++) {
-          if(servicePath[i] == '_') {
-            break;
-          }
-          hexString.push_back(servicePath[i]);
-        }
-
-        connectedSsid = hexString;
+        connectedSsid = GetHexSsidFromServicePath(servicePath);
 
         if(state == "ready") {
           isAssociated = true;
@@ -706,6 +685,27 @@ WiFiState GetWiFiState() {
   }
 
   return wifiState;
+}
+
+std::string GetHexSsidFromServicePath(std::string servicePath) {
+  // Take a dbus wifi service path and extract the ssid HEX
+  std::string wifiPrefix = "/net/connman/service/wifi";
+  std::string prefix = wifiPrefix + "_000000000000_";
+  std::string hexString = "";
+
+  if(strncmp(prefix.c_str(), servicePath.c_str(), wifiPrefix.length()) != 0) {
+    // compare strings all the way up to and including "wifi"
+    return "! Invalid Ssid";
+  }
+
+  for(int i = prefix.length(); i < servicePath.length(); i++) {
+    if(servicePath[i] == '_') {
+      break;
+    }
+    hexString.push_back(servicePath[i]);
+  }
+
+  return hexString;
 }
 
 bool CanConnectToHostName(char* hostName) {

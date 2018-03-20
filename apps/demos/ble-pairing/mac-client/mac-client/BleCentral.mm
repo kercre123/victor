@@ -58,6 +58,39 @@
   return ss.str();
 }
 
+- (std::string)asciiStr:(uint8_t*)data length:(int)size {
+  if(size % 2 != 0) {
+    return "! Odd size";
+  }
+  
+  std::string ascii = "";
+  
+  for(int i = 0; i < size; i += 2) {
+    uint8_t a = [self nibbleToNumber:data[i]];
+    uint8_t b = [self nibbleToNumber:data[i+1]];
+    
+    if(a == 255 || b == 255) {
+      return "! Non-HEX character in string";
+    }
+    
+    ascii += (a << 4) | b;
+  }
+  
+  return ascii;
+}
+
+- (uint8_t)nibbleToNumber:(uint8_t)nibble {
+  if(nibble >= '0' && nibble <= '9') {
+    return nibble - '0';
+  } else if(nibble >= 'A' && nibble <= 'F') {
+    return nibble - 55;
+  } else if(nibble >= 'a' && nibble <= 'f') {
+    return nibble - (55 + 0x20);
+  } else {
+    return 255;
+  }
+}
+
 - (void)resetDefaults {
   NSUserDefaults * defs = [NSUserDefaults standardUserDefaults];
   NSDictionary * dict = [defs dictionaryRepresentation];
@@ -432,8 +465,11 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   NSMutableDictionary* wifiAuth = [[NSMutableDictionary alloc] init];
   
   for(int i = 0; i < msg.scanResult.size(); i++) {
-    NSLog(@"%d: %d %d %s", i, msg.scanResult[i].signalStrength, msg.scanResult[i].authType, msg.scanResult[i].ssid.c_str());
-    NSString* ssidStr = [NSString stringWithUTF8String:msg.scanResult[i].ssid.c_str()];
+    std::string ssidAscii = [self asciiStr:(uint8_t*)msg.scanResult[i].ssid.c_str() length:msg.scanResult[i].ssid.length()];
+    
+    NSLog(@"%d: %d %d %s", i, msg.scanResult[i].signalStrength, msg.scanResult[i].authType, ssidAscii.c_str());
+    
+    NSString* ssidStr = [NSString stringWithUTF8String:ssidAscii.c_str()];
     [wifiAuth setValue:[NSNumber numberWithInt:msg.scanResult[i].authType] forKey:ssidStr];
   }
   

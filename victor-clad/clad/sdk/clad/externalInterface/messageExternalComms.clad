@@ -30,7 +30,7 @@ enum uint_8 RtsConnType {
 message RtsWifiScanResult {
     uint_8      authType,
     uint_8      signalStrength,
-    string      ssid,
+    string      wifiSsidHex,
 }
 
 message RtsConnRequest {

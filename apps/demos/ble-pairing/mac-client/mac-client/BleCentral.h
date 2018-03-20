@@ -64,6 +64,9 @@ enum WiFiAuth : uint8_t {
 }
 
 - (std::string)hexStr:(uint8_t*)data length:(int)len;
+- (std::string)asciiStr:(uint8_t*)data length:(int)size;
+- (uint8_t)nibbleToNumber:(uint8_t)nibble;
+
 - (void) handleSend:(const void*)bytes length:(int)n;
 - (void) handleReceive:(const void*)bytes length:(int)n;
 - (void) handleReceiveSecure:(const void*)bytes length:(int)n;
