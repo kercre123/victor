@@ -35,9 +35,9 @@ struct CubeLights;
 struct CubeLightSequence;
 struct ObjectAvailable;
 struct ObjectAccel;
-namespace BlockMessages {
-  class LightCubeMessage;
-}
+class MessageCubeToEngine;
+class MessageEngineToCube;
+  
 namespace ExternalInterface {
   class MessageGameToEngine;
   class MessageEngineToGame;
@@ -72,10 +72,7 @@ public:
   void EnableDiscovery(const bool enable = true, const float discoveryTime_sec = 0.f);
   
   // Interface for other components to send messages to light cubes by ActiveId
-  bool SendLightCubeMessage(const ActiveID& activeId, const BlockMessages::LightCubeMessage& lcm);
-
-  // Start/stop ObjectAccel message streaming from the specified cube
-  bool SetStreamObjectAccel(const ActiveID& activeId, const bool enable=true);
+  bool SendCubeMessage(const ActiveID& activeId, const MessageEngineToCube& msg);
   
   // Send CubeLights message to the specified cube
   bool SendCubeLights(const ActiveID& activeId, const CubeLights& cubeLights);
@@ -107,7 +104,7 @@ private:
   void HandleObjectAvailable(const ObjectAvailable& msg);
   
   // Handler for messages from light cubes
-  void HandleLightCubeMessage(const BleFactoryId& factoryId, const BlockMessages::LightCubeMessage& lcm);
+  void HandleCubeMessage(const BleFactoryId& factoryId, const MessageCubeToEngine& msg);
   
   // Handler for when light cube BLE connection is established/unestablished
   void HandleConnectionStateChange(const BleFactoryId& factoryId, const bool connected);

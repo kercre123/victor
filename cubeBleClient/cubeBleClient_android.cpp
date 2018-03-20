@@ -39,7 +39,7 @@ Result CubeBleClient::Update()
 }
 
 
-bool CubeBleClient::SendMessageToLightCube(const BleFactoryId&, const BlockMessages::LightCubeMessage&)
+bool CubeBleClient::SendMessageToLightCube(const BleFactoryId&, const MessageEngineToCube&)
 {
   return true;
 }

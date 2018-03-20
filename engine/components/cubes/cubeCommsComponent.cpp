@@ -22,9 +22,11 @@
 
 #include "coretech/common/engine/utils/timer.h"
 
-#include "clad/externalInterface/cubeMessages.h"
-#include "clad/externalInterface/lightCubeMessage.h"
+#include "clad/externalInterface/messageCubeToEngine.h"
+#include "clad/externalInterface/messageEngineToCube.h"
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageFromActiveObject.h"
+#include "clad/externalInterface/messageToActiveObject.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -49,7 +51,7 @@ CubeCommsComponent::CubeCommsComponent()
 {
   // Register callbacks for messages from CubeBleClient
   _cubeBleClient->RegisterObjectAvailableCallback(std::bind(&CubeCommsComponent::HandleObjectAvailable, this, std::placeholders::_1));
-  _cubeBleClient->RegisterLightCubeMessageCallback(std::bind(&CubeCommsComponent::HandleLightCubeMessage, this, std::placeholders::_1, std::placeholders::_2));
+  _cubeBleClient->RegisterCubeMessageCallback(std::bind(&CubeCommsComponent::HandleCubeMessage, this, std::placeholders::_1, std::placeholders::_2));
   _cubeBleClient->RegisterCubeConnectedCallback([this](const BleFactoryId& factoryId) { this->HandleConnectionStateChange(factoryId, true); });
   _cubeBleClient->RegisterCubeDisconnectedCallback([this](const BleFactoryId& factoryId) { this->HandleConnectionStateChange(factoryId, false); });
 }
@@ -185,38 +187,22 @@ void CubeCommsComponent::EnableDiscovery(const bool enable, const float discover
 }
 
 
-bool CubeCommsComponent::SendLightCubeMessage(const ActiveID& activeId, const BlockMessages::LightCubeMessage& msg)
+bool CubeCommsComponent::SendCubeMessage(const ActiveID& activeId, const MessageEngineToCube& msg)
 {
   const auto* cube = GetCubeByActiveId(activeId);
   
   if (nullptr == cube) {
-    PRINT_NAMED_WARNING("CubeCommsComponent.SendLightCubeMessage.InvalidCube", "Could not find cube with activeID %d", activeId);
+    PRINT_NAMED_WARNING("CubeCommsComponent.SendCubeMessage.InvalidCube", "Could not find cube with activeID %d", activeId);
     return false;
   }
   if (!cube->connected) {
-    PRINT_NAMED_WARNING("CubeCommsComponent.SendLightCubeMessage.NotConnected", "Cannot send message to unconnected to cube (activeID %d)", activeId);
+    PRINT_NAMED_WARNING("CubeCommsComponent.SendCubeMessage.NotConnected", "Cannot send message to unconnected to cube (activeID %d)", activeId);
     return false;
   }
   
   const auto factoryId = cube->factoryId;
   const bool res = _cubeBleClient->SendMessageToLightCube(factoryId, msg);
   return res;
-}
-  
-  
-// Start/stop ObjectAccel message streaming from the specified cube
-// Note: Once we overhaul the cube messaging to only send raw accelerometer
-// data and pretty much nothing else, we can get rid of the StreamObjectAccel
-// CLAD message, since it would be redundant
-bool CubeCommsComponent::SetStreamObjectAccel(const ActiveID& activeId, const bool enable)
-{
-  const auto cube = GetCubeByActiveId(activeId);
-  if ((nullptr != cube) && cube->connected) {
-    BlockMessages::LightCubeMessage msg;
-    msg.Set_streamObjectAccel(StreamObjectAccel(activeId, enable));
-    return _cubeBleClient->SendMessageToLightCube(cube->factoryId, msg);
-  }
-  return false;
 }
 
 
@@ -250,7 +236,7 @@ void CubeCommsComponent::GenerateCubeLightMessages(const CubeLights& cubeLights,
   // wrapping around if necessary.
   if (useRotation) {
     for (int i=0 ; i<kNumCubeLeds ; i++) {
-      animations[i].LinkToOther(animations[(i + 1) % kNumCubeLeds]);
+      animations[(i + 1) % kNumCubeLeds].LinkToOther(animations[i]);
     }
   }
   
@@ -286,14 +272,32 @@ void CubeCommsComponent::GenerateCubeLightMessages(const CubeLights& cubeLights,
 
 bool CubeCommsComponent::SendCubeLights(const ActiveID& activeId, const CubeLights& cubeLights)
 {
+  CubeLightSequence cubeLightSequence;
+  std::vector<CubeLightKeyframeChunk> cubeLightKeyframeChunks;
+  
+  GenerateCubeLightMessages(cubeLights,
+                            cubeLightSequence,
+                            cubeLightKeyframeChunks);
+  
   const auto cube = GetCubeByActiveId(activeId);
-  bool success = false;
   if ((nullptr != cube) && cube->connected) {
-    BlockMessages::LightCubeMessage lightStateMsg;
-    lightStateMsg.Set_cubeLights(CubeLights(cubeLights));
-    success = _cubeBleClient->SendMessageToLightCube(cube->factoryId, lightStateMsg);
+    for (auto& keyframeMsg : cubeLightKeyframeChunks) {
+      MessageEngineToCube cubeKeyframeChunkMsg(std::move(keyframeMsg));
+      if (!_cubeBleClient->SendMessageToLightCube(cube->factoryId, cubeKeyframeChunkMsg)) {
+        PRINT_NAMED_WARNING("CubeCommsComponent.SendCubeLights.FailedSendingChunk",
+                            "Failed to send CubeLightKeyframeChunk message (starting index %d)",
+                            keyframeMsg.startingIndex);
+        return false;
+      }
+    }
+    MessageEngineToCube cubeLightSequenceMsg(std::move(cubeLightSequence));
+    if (!_cubeBleClient->SendMessageToLightCube(cube->factoryId, cubeLightSequenceMsg)) {
+      PRINT_NAMED_WARNING("CubeCommsComponent.SendCubeLights.FailedSendingSequence",
+                          "Failed to send CubeLightSequence message");
+      return false;
+    }
   }
-  return success;
+  return true;
 }
 
   
@@ -367,90 +371,41 @@ void CubeCommsComponent::HandleObjectAvailable(const ObjectAvailable& msg)
 }
 
   
-void CubeCommsComponent::HandleLightCubeMessage(const BleFactoryId& factoryId, const BlockMessages::LightCubeMessage& lcm)
+void CubeCommsComponent::HandleCubeMessage(const BleFactoryId& factoryId, const MessageCubeToEngine& msg)
 {
   const auto it = _factoryIdToActiveIdMap.find(factoryId);
   if (it == _factoryIdToActiveIdMap.end()) {
-    PRINT_NAMED_WARNING("CubeCommsComponent.HandleLightCubeMessage.NoActiveId", "Could not find ActiveId for block with factory ID %d", factoryId);
+    PRINT_NAMED_WARNING("CubeCommsComponent.HandleCubeMessage.NoActiveId", "Could not find ActiveId for block with factory ID %d", factoryId);
     return;
   }
   
   const auto activeId = it->second;
   
   auto* cube = GetCubeByActiveId(activeId);
-  DEV_ASSERT(cube != nullptr, "CubeCommsComponent.HandleLightCubeMessage.CubeNotFound");
+  DEV_ASSERT(cube != nullptr, "CubeCommsComponent.HandleCubeMessage.CubeNotFound");
   
   cube->lastHeardTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
-  switch (lcm.GetTag()) {
-    case BlockMessages::LightCubeMessageTag::accel:
+  switch (msg.GetTag()) {
+    case MessageCubeToEngineTag::accelData:
     {
-      // Modify the message to include the correct activeId and timestamp
-      ObjectAccel msg(lcm.Get_accel());
-      msg.objectID = activeId;
-      msg.timestamp = _robot->GetLastMsgTimestamp(); // TODO: Is this accurate enough?
-      
-      // Pass this to the CubeAccelComponent to handle:
-      _robot->GetCubeAccelComponent().HandleObjectAccel(msg);
-      break;
-    }
-    case BlockMessages::LightCubeMessageTag::moved:
-    {
-      // Call into Blockworld to handle the message.
-      ObjectMoved msg(lcm.Get_moved());
-      msg.objectID = activeId;
-      msg.timestamp = _robot->GetLastMsgTimestamp();
-      // This is sort of a hack - should be probably be moved to BlockWorld
-      _robot->GetRobotToEngineImplMessaging().HandleActiveObjectMoved(msg, _robot);
-      
-      _robot->GetBlockTapFilter().HandleActiveObjectMoved(msg);
-      break;
-    }
-    case BlockMessages::LightCubeMessageTag::powerLevel:
-    {
-      // Call into Blockworld to handle the message.
-      ObjectPowerLevel msg(lcm.Get_powerLevel());
-      msg.objectID = activeId;
-      // This is sort of a hack - should be probably be moved elsewhere
-      _robot->GetRobotToEngineImplMessaging().HandleObjectPowerLevel(msg, _robot);
-      break;
-    }
-    case BlockMessages::LightCubeMessageTag::stopped:
-    {
-      // Call into Blockworld to handle the message.
-      ObjectStoppedMoving msg(lcm.Get_stopped());
-      msg.objectID = activeId;
-      msg.timestamp = _robot->GetLastMsgTimestamp();
-      // This is sort of a hack - should be probably be moved to BlockWorld
-      _robot->GetRobotToEngineImplMessaging().HandleActiveObjectStopped(msg, _robot);
-      
-      _robot->GetBlockTapFilter().HandleActiveObjectStopped(msg);
-      break;
-    }
-    case BlockMessages::LightCubeMessageTag::upAxisChanged:
-    {
-      ObjectUpAxisChanged msg(lcm.Get_upAxisChanged());
-      msg.objectID = activeId;
-      msg.timestamp = _robot->GetLastMsgTimestamp();
-      
-      // This is sort of a hack - should be probably be moved to BlockWorld
-      _robot->GetRobotToEngineImplMessaging().HandleActiveObjectUpAxisChanged(msg, _robot);
-      break;
-    }
-    case BlockMessages::LightCubeMessageTag::tapped:
-    {
-      ObjectTapped msg(lcm.Get_tapped());
-      msg.objectID = activeId;
-      msg.timestamp = _robot->GetLastMsgTimestamp();
-      
-      _robot->GetBlockTapFilter().HandleActiveObjectTapped(msg);
+      const auto& accelDataMsg = msg.Get_accelData();
+      ObjectAccel oaMsg;
+      oaMsg.accel.x = accelDataMsg.accel[0];
+      oaMsg.accel.y = accelDataMsg.accel[1];
+      oaMsg.accel.z = accelDataMsg.accel[2];
+      oaMsg.objectID = activeId;
+      oaMsg.timestamp = _robot->GetLastMsgTimestamp(); // TODO: Is this accurate enough?
+
+      // TODO: Pass this to the CubeAccelComponent to handle:
+      //_robot->GetCubeAccelComponent().HandleObjectAccel(oaMsg);
       break;
     }
     default:
     {
-      PRINT_NAMED_WARNING("CubeCommsComponent.HandleLightCubeMessage.UnhandledTag",
+      PRINT_NAMED_WARNING("CubeCommsComponent.HandleCubeMessage.UnhandledTag",
                           "Unhandled tag %s (factoryId %d)",
-                          BlockMessages::LightCubeMessageTagToString(lcm.GetTag()),
+                          MessageCubeToEngineTagToString(msg.GetTag()),
                           factoryId);
       break;
     }

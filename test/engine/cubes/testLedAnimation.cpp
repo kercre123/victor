@@ -14,7 +14,7 @@
 
 #include "gtest/gtest.h"
 
-#include "clad/externalInterface/cubeMessages.h"
+#include "clad/externalInterface/messageEngineToCube.h"
 #include "clad/types/ledTypes.h"
 
 #include "engine/components/cubes/ledAnimation.h"

@@ -114,7 +114,7 @@ namespace Anki {
       if (nullptr != _engineSupervisor) {
 
         // Is the step time defined in the world file >= than the robot time? It should be!
-        DEV_ASSERT(TIME_STEP >= _engineSupervisor->getBasicTimeStep(), "cameraService_mac.UnexpectedTimeStep");
+        DEV_ASSERT(ROBOT_TIME_STEP_MS >= _engineSupervisor->getBasicTimeStep(), "cameraService_mac.UnexpectedTimeStep");
 
         if (VISION_TIME_STEP % static_cast<u32>(_engineSupervisor->getBasicTimeStep()) != 0) {
           PRINT_NAMED_WARNING("cameraService_mac.InvalidVisionTimeStep",
@@ -155,7 +155,7 @@ namespace Anki {
     Result CameraService::Update()
     {
       if (nullptr != _engineSupervisor) {
-        if (_engineSupervisor->step(Cozmo::TIME_STEP) == -1) {
+        if (_engineSupervisor->step(Cozmo::ROBOT_TIME_STEP_MS) == -1) {
           return RESULT_FAIL;
         }
         // AudioUpdate();

@@ -12,7 +12,7 @@
 
 #include "engine/components/cubes/ledAnimation.h"
 
-#include "clad/externalInterface/cubeMessages.h"
+#include "clad/externalInterface/messageEngineToCube.h"
 #include "clad/externalInterface/messageToActiveObject.h"
 #include "clad/types/ledTypes.h"
 
@@ -28,8 +28,7 @@ namespace Cozmo {
 LedAnimation::LedAnimation(const LightState& lightState, const int baseIndex)
 {
   const bool hasOffset = lightState.offset != 0;
-  _keyframes.reserve(hasOffset ? 4 : 3);
-  
+
   // Re-used temporary keyframe:
   CubeLightKeyframe keyframe;
   
@@ -39,8 +38,6 @@ LedAnimation::LedAnimation(const LightState& lightState, const int baseIndex)
     keyframe.color.fill(0);
     keyframe.holdFrames = lightState.offset;
     keyframe.decayFrames = 0;
-    keyframe.nextIndex = currKeyFrameIndex + 1;
-    
     _keyframes.push_back(keyframe);
     ++currKeyFrameIndex;
   }
@@ -65,9 +62,26 @@ LedAnimation::LedAnimation(const LightState& lightState, const int baseIndex)
   keyframe.nextIndex = hasOffset ? 1 : 0; // If there is an offset frame in the front, don't go back to it
   _keyframes.push_back(keyframe);
   
-  // Apply the base index to each keyframe:
-  for (auto& keyframe : _keyframes) {
-    keyframe.nextIndex += baseIndex;
+  // Handle the special case of all lightState times being zero,
+  // indicating that we should keep OnColor indefinitely
+  if (lightState.onFrames == 0 &&
+      lightState.offFrames == 0 &&
+      lightState.transitionOnFrames == 0 &&
+      lightState.transitionOffFrames == 0) {
+    DEV_ASSERT(_keyframes.empty(), "LedAnimation.LedAnimation.ShouldBeNoKeyframes");
+    keyframe.color = RGBA_TO_RGB_ARRAY(lightState.onColor);
+    keyframe.holdFrames = 0;
+    keyframe.decayFrames = 0;
+    _keyframes.push_back(keyframe);
+  }
+      
+  DEV_ASSERT(!_keyframes.empty(), "LedAnimation.LedAnimation.NoKeyframes");
+  
+  // Set up linking among the keyframes. Link each keyframe
+  // (except the final one) to the keyframe after it.
+  // Need to add baseIndex to each index.
+  for (int i=0 ; i < _keyframes.size()-1 ; i++) {
+    _keyframes[i].nextIndex = i + 1 + baseIndex;
   }
   
   _baseIndex = baseIndex;
