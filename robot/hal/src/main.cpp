@@ -25,6 +25,7 @@ uint8_t seenChargerCnt = 0;
 // How many ticks we need to be on the charger before
 // we will stay on
 static const uint8_t MAX_SEEN_CHARGER_CNT = 5;
+bool wasPackedOutAtBoot = false;
 
 void Cleanup(int signum)
 {
@@ -60,6 +61,7 @@ int main(int argc, const char* argv[])
 
   auto start = std::chrono::steady_clock::now();
   auto timeOfPowerOn = start;
+  wasPackedOutAtBoot = Anki::Cozmo::Factory::GetEMR()->fields.PACKED_OUT_FLAG;
 
   for (;;) {
     //HAL::Step should never return !OK, but if it does, best not to trust its data.
@@ -81,7 +83,7 @@ int main(int argc, const char* argv[])
     start = end;
 
     // If we are packed out and have not yet seen the charger
-    if (Anki::Cozmo::Factory::GetEMR()->fields.PACKED_OUT_FLAG &&
+    if (wasPackedOutAtBoot &&
         shutdownSignal == 0 && 
         seenChargerCnt < MAX_SEEN_CHARGER_CNT) 
     {
