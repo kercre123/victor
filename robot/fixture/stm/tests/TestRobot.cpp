@@ -197,7 +197,7 @@ const char* DBG_cmd_substitution(const char *line, int len)
 
 #define PRESENT_CURRENT_MA  10
 #define DETECT_CURRENT_MA   100
-#define SYSCON_CHG_PWR_DELAY_MS 1000 /*delay from robot's on-charger detect until charging starts*/
+#define SYSCON_CHG_PWR_DELAY_MS 250 /*delay from robot's on-charger detect until charging starts*/
 
 int detect_ma = 0;
 bool TestRobotDetect(void)
