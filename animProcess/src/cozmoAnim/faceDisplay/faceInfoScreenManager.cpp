@@ -966,16 +966,16 @@ void FaceInfoScreenManager::DrawIMUInfo(const RobotState& state)
 void FaceInfoScreenManager::DrawMotorInfo(const RobotState& state)
 {
   char temp[32] = "";
-  sprintf(temp, "HEAD:   %3.1f", RAD_TO_DEG(state.headAngle));
+  sprintf(temp, "HEAD:   %3.1f deg", RAD_TO_DEG(state.headAngle));
   const std::string head = temp;
   
-  sprintf(temp, "LIFT:   %3.1f", RAD_TO_DEG(state.liftAngle));
+  sprintf(temp, "LIFT:   %3.1f deg", RAD_TO_DEG(state.liftAngle));
   const std::string lift = temp;
 
-  sprintf(temp, "LSPEED: %3.1f", state.lwheel_speed_mmps);
+  sprintf(temp, "LSPEED: %3.1f mm/s", state.lwheel_speed_mmps);
   const std::string lSpeed = temp;
 
-  sprintf(temp, "RSPEED: %3.1f", state.rwheel_speed_mmps);
+  sprintf(temp, "RSPEED: %3.1f mm/s", state.rwheel_speed_mmps);
   const std::string rSpeed = temp;
   
   DrawTextOnScreen({head, lift, lSpeed, rSpeed});

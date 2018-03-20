@@ -125,12 +125,15 @@ namespace HeadController {
         potentialBurnoutStartTime_ms_ = 0;
         bracing_ = false;
         
-        power_ = 0;
-        HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
-        
-        if (autoReEnable) {
-          enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;
+        if (!IsCalibrating()) {
+          power_ = 0;
+          HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
         }
+      }
+      
+      enableAtTime_ms_ = 0;
+      if (autoReEnable) {
+        enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;
       }
     }
 
