@@ -36,7 +36,7 @@ void spine_destroy(spine_ctx_t spine)
     spine->fd = -1;
 }
 
-SpineErr spine_open(spine_ctx_t spine, struct spine_params params)
+static SpineErr spine_open_internal(spine_ctx_t spine, struct spine_params params)
 {
     assert(spine != NULL);
 
@@ -47,7 +47,7 @@ SpineErr spine_open(spine_ctx_t spine, struct spine_params params)
     spine_debug("opening serial port\n");
 
     spine->fd = open(params.devicename, O_RDWR | O_NONBLOCK);
-    if (spine->fd < 0) {
+    if (spine->fd == -1) {
         return spine_error(err_CANT_OPEN_FILE, "Can't open %s", params.devicename);
     }
 
@@ -78,10 +78,28 @@ SpineErr spine_open(spine_ctx_t spine, struct spine_params params)
     return err_OK;
 }
 
+SpineErr spine_open(spine_ctx_t spine, struct spine_params params)
+{
+    SpineErr r = spine_open_internal(spine, params);
+#ifdef SPINE_TTY_LEGACY
+    if ((r == err_TERMIOS_FAIL) || (r == err_CANT_OPEN_FILE)) {
+        if (strncmp(params.devicename, SPINE_TTY, strlen(SPINE_TTY)) == 0) {
+            // If we're running on an old OS version, try the legacy ttyHSL1 device
+            struct spine_params legacy_params = {
+                .baudrate = params.baudrate,
+                .devicename = SPINE_TTY_LEGACY
+            };
+            r = spine_open_internal(spine, legacy_params);
+        }
+    }
+#endif
+    return r;
+}
+
 int spine_close(spine_ctx_t spine)
 {
     LOGD("close(fd = %d)", spine->fd);
-    if (spine->fd < 0) {
+    if (spine->fd == -1) {
         return 0;
     }
     int r = close(spine->fd);
@@ -544,6 +562,7 @@ ssize_t spine_set_mode(spine_ctx_t spine, int new_mode)
 }
 
 
+#ifdef DEBUG_SPINE_TEST
 //
 // TEST
 //
@@ -683,3 +702,5 @@ int spine_test_loop_once() {
 
   return 0;
 }
+
+#endif // DEBUG_SPINE_TEST
