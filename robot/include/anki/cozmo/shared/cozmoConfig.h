@@ -313,6 +313,12 @@ namespace Cozmo {
   // Default robot ID
   // Do not change this! It affects which ports are binded to.
   const u32 DEFAULT_ROBOT_ID = 0;
+
+  // Defines whether animation process should broadcast the final face image (after processing/scan line application etc)
+  // back to engine so that it can maintain an accurate reperesentation of robot state
+  // THIS IS CURRENTLY USED FOR R&D ONLY - CONSULT KEVIN YOON ABOUT PERFORMANCE BEFORE TURNING
+  // THIS ON IN MASTER
+  #define SHOULD_SEND_DISPLAYED_FACE_TO_ENGINE false
   
   //
   // Local (unix-domain) socket paths.

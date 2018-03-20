@@ -425,7 +425,7 @@ ActionResult ITrackAction::CheckIfDone()
       f32  eyeShiftX = 0.f, eyeShiftY = 0.f;
       
       // Tilt Head:
-      f32 relTiltAngle = (absTiltAngle - GetRobot().GetHeadAngle()).ToFloat();
+      f32 relTiltAngle = (absTiltAngle - GetRobot().GetComponent<FullRobotPose>().GetHeadAngle()).ToFloat();
       
       const bool shouldClampSmallAngles = UpdateSmallAngleClamping();
         
@@ -433,7 +433,7 @@ ActionResult ITrackAction::CheckIfDone()
       if(shouldClampSmallAngles && FLT_LE(std::abs(relTiltAngle), _tiltTolerance.ToFloat()))
       {
         relTiltAngle = std::copysign(_tiltTolerance.ToFloat(), relTiltAngle);
-        absTiltAngle = GetRobot().GetHeadAngle() + relTiltAngle;
+        absTiltAngle = GetRobot().GetComponent<FullRobotPose>().GetHeadAngle() + relTiltAngle;
       }
       
       if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) &&

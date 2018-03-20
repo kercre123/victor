@@ -57,6 +57,7 @@
 #include "engine/objectPoseConfirmer.h"
 #include "engine/petWorld.h"
 #include "engine/ramp.h"
+#include "engine/fullRobotPose.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotGyroDriftDetector.h"
 #include "engine/robotIdleTimeoutComponent.h"
@@ -149,33 +150,12 @@ static const float kPitchAngleOnFacePlantMax_rads = DEG_TO_RAD(-80.f);
 static const float kPitchAngleOnFacePlantMin_sim_rads = DEG_TO_RAD(110.f); //This has not been tested
 static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-80.f); //This has not been tested
 
-// For tool code reading
-// Camera looking straight:
-//const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
-//   0,     0,   1.f,
-//  -1.f,   0,   0,
-//   0,    -1.f, 0,
-//});
-// 4-degree look down:
-const RotationMatrix3d Robot::_kDefaultHeadCamRotation = RotationMatrix3d({
-  0,      -0.0698f,  0.9976f,
--1.0000f,  0,        0,
-  0,      -0.9976f, -0.0698f,
-});
 
 Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 : _poseOrigins(new PoseOriginList())
-, _neckPose(0.f,Y_AXIS_3D(),
-            {NECK_JOINT_POSITION[0], NECK_JOINT_POSITION[1], NECK_JOINT_POSITION[2]}, _pose, "RobotNeck")
-, _headCamPose(_kDefaultHeadCamRotation,
-                {HEAD_CAM_POSITION[0], HEAD_CAM_POSITION[1], HEAD_CAM_POSITION[2]}, _neckPose, "RobotHeadCam")
-, _liftBasePose(0.f, Y_AXIS_3D(),
-                {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]}, _pose, "RobotLiftBase")
-, _liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, _liftBasePose, "RobotLift")
 , _ID(robotID)
 , _timeSynced(false)
 , _lastMsgTimestamp(0)
-, _currentHeadAngle(MIN_HEAD_ANGLE)
 , _robotAccelFiltered(0.f, 0.f, 0.f)
 {
   DEV_ASSERT(context != nullptr, "Robot.Constructor.ContextIsNull");
@@ -221,13 +201,14 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::RobotIdleTimeout,           new RobotIdleTimeoutComponent());
     _components->AddDependentComponent(RobotComponentID::MicDirectionHistory,        new MicDirectionHistory());
     _components->AddDependentComponent(RobotComponentID::Battery,                    new BatteryComponent());
+    _components->AddDependentComponent(RobotComponentID::FullRobotPose,                new FullRobotPose());
     _components->InitComponents(this);
   }
       
-  _pose.SetName("Robot_" + std::to_string(_ID));
+  GetComponent<FullRobotPose>().GetPose().SetName("Robot_" + std::to_string(_ID));
   _driveCenterPose.SetName("RobotDriveCenter_" + std::to_string(_ID));
   
-  // Initializes _pose, _poseOrigins, and _worldOrigin:
+  // Initializes FullRobotPose, _poseOrigins, and _worldOrigin:
   Delocalize(false);
   
   // The call to Delocalize() will increment frameID, but we want it to be
@@ -248,7 +229,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 
   // Setting camera pose according to current head angle.
   // (Not using SetHeadAngle() because _isHeadCalibrated is initially false making the function do nothing.)
-  GetVisionComponent().GetCamera().SetPose(GetCameraPose(_currentHeadAngle));
+  GetVisionComponent().GetCamera().SetPose(GetCameraPose(GetComponent<FullRobotPose>().GetHeadAngle()));
 
   // Used for CONSOLE_FUNCTION "PlayAnimationByName" above
 #if REMOTE_CONSOLE_ENABLED
@@ -518,9 +499,9 @@ void Robot::Delocalize(bool isCarryingObject)
   LOG_EVENT("Robot.Delocalize", "Delocalizing robot %d. New origin: %s. NumOrigins=%zu",
             GetID(), worldOrigin.GetName().c_str(), GetPoseOriginList().GetSize());
   
-  _pose.SetRotation(0, Z_AXIS_3D());
-  _pose.SetTranslation({0.f, 0.f, 0.f});
-  _pose.SetParent(worldOrigin);
+  GetComponent<FullRobotPose>().GetPose().SetRotation(0, Z_AXIS_3D());
+  GetComponent<FullRobotPose>().GetPose().SetTranslation({0.f, 0.f, 0.f});
+  GetComponent<FullRobotPose>().GetPose().SetParent(worldOrigin);
       
   _driveCenterPose.SetRotation(0, Z_AXIS_3D());
   _driveCenterPose.SetTranslation({0.f, 0.f, 0.f});
@@ -529,7 +510,7 @@ void Robot::Delocalize(bool isCarryingObject)
   // Create a new pose frame so that we can't get pose history entries with the same pose
   // frame that have different origins (Not 100% sure this is totally necessary but seems
   // like the cleaner / safer thing to do.)
-  Result res = SetNewPose(_pose);
+  Result res = SetNewPose(GetComponent<FullRobotPose>().GetPose());
   if (res != RESULT_OK)
   {
     LOG_WARNING("Robot.Delocalize.SetNewPose", "Failed to set new pose");
@@ -543,7 +524,7 @@ void Robot::Delocalize(bool isCarryingObject)
              GetLastMsgTimestamp(),
              GetPoseFrameID(),
              worldOrigin.GetID());
-    SendAbsLocalizationUpdate(_pose, GetLastMsgTimestamp(), GetPoseFrameID());
+    SendAbsLocalizationUpdate(GetComponent<FullRobotPose>().GetPose(), GetLastMsgTimestamp(), GetPoseFrameID());
   }
   
   // Update VizText
@@ -779,7 +760,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   SetLiftAngle(msg.liftAngle);
       
   // Update robot pitch angle
-  _pitchAngle = Radians(msg.pose.pitch_angle);
+  GetComponent<FullRobotPose>().SetPitchAngle(Radians(msg.pose.pitch_angle));
   
   // Update sensor components:
   GetCliffSensorComponent().NotifyOfRobotState(msg);
@@ -900,7 +881,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
 //      const RotationMatrix3d R_heading(headingAngle, Z_AXIS_3D());
 //      const RotationMatrix3d R_tilt(tiltAngle, Y_AXIS_3D());
 //          
-//      newPose = Pose3d(R_tilt*R_heading, newTranslation, _pose.GetParent());
+//      newPose = Pose3d(R_tilt*R_heading, newTranslation, GetComponent<FullRobotPose>().GetPose().GetParent());
 //      //SetPose(newPose); // Done by UpdateCurrPoseFromHistory() below
       
     } else {
@@ -1016,8 +997,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     PRINT_NAMED_INFO("Robot.UpdateFullRobotState.OdometryUpdate",
     "Robot %d's pose updated to (%.3f, %.3f, %.3f) @ %.1fdeg based on "
     "msg at time=%d, frame=%d saying (%.3f, %.3f) @ %.1fdeg\n",
-    _ID, _pose.GetTranslation().x(), _pose.GetTranslation().y(), _pose.GetTranslation().z(),
-    _pose.GetRotationAngle<'Z'>().getDegrees(),
+    _ID, GetComponent<FullRobotPose>().GetPose().GetTranslation().x(), GetComponent<FullRobotPose>().GetPose().GetTranslation().y(), GetComponent<FullRobotPose>().GetPose().GetTranslation().z(),
+    GetComponent<FullRobotPose>().GetPose().GetRotationAngle<'Z'>().getDegrees(),
     msg.timestamp, msg.pose_frame_id,
     msg.pose_x, msg.pose_y, msg.pose_angle*180.f/M_PI);
   */
@@ -1050,13 +1031,7 @@ bool Robot::HasReceivedRobotState() const
 {
   return _newStateMsgAvailable;
 }
-    
-void Robot::SetCameraRotation(f32 roll, f32 pitch, f32 yaw)
-{
-  RotationMatrix3d rot(roll, -pitch, yaw);
-  _headCamPose.SetRotation(rot * _kDefaultHeadCamRotation);
-  LOG_INFO("Robot.SetCameraRotation", "yaw_corr=%f, pitch_corr=%f, roll_corr=%f", yaw, pitch, roll);
-}
+
     
 void Robot::SetPhysicalRobot(bool isPhysical)
 {
@@ -1115,14 +1090,14 @@ Pose3d Robot::GetHistoricalCameraPose(const HistRobotState& histState, TimeStamp
 {
   // Compute pose from robot body to camera
   // Start with canonical (untilted) headPose
-  Pose3d camPose(_headCamPose);
+  Pose3d camPose(GetComponent<FullRobotPose>().GetHeadCamPose());
       
   // Rotate that by the given angle
   RotationVector3d Rvec(-histState.GetHeadAngle_rad(), Y_AXIS_3D());
   camPose.RotateBy(Rvec);
       
   // Precompose with robot body to neck pose
-  camPose.PreComposeWith(_neckPose);
+  camPose.PreComposeWith(GetComponent<FullRobotPose>().GetNeckPose());
       
   // Set parent pose to be the historical robot pose
   camPose.SetParent(histState.GetPose());
@@ -1241,7 +1216,7 @@ Result Robot::Update()
       
   // Full Webots CozmoBot model
   if (IsPhysical()) {
-    GetContext()->GetVizManager()->DrawRobot(GetID(), robotPoseWrtOrigin, GetHeadAngle(), GetLiftAngle());
+    GetContext()->GetVizManager()->DrawRobot(GetID(), robotPoseWrtOrigin, GetComponent<FullRobotPose>().GetHeadAngle(), GetComponent<FullRobotPose>().GetLiftAngle());
   }
   
   // Robot bounding box
@@ -1350,29 +1325,20 @@ Result Robot::Update()
       
 } // Update()
       
-static bool IsValidHeadAngle(f32 head_angle, f32* clipped_valid_head_angle)
+static f32 ClipHeadAngle(f32 head_angle)
 {
   if (head_angle < MIN_HEAD_ANGLE - HEAD_ANGLE_LIMIT_MARGIN) {
     //PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Head angle (%f rad) too small.\n", head_angle);
-    if (clipped_valid_head_angle) {
-      *clipped_valid_head_angle = MIN_HEAD_ANGLE;
-    }
-    return false;
+    return MIN_HEAD_ANGLE;
   }
   else if (head_angle > MAX_HEAD_ANGLE + HEAD_ANGLE_LIMIT_MARGIN) {
     //PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Head angle (%f rad) too large.\n", head_angle);
-    if (clipped_valid_head_angle) {
-      *clipped_valid_head_angle = MAX_HEAD_ANGLE;
-    }
-    return false;
+    return MAX_HEAD_ANGLE;
   }
+
+  return head_angle;
       
-  if (clipped_valid_head_angle) {
-    *clipped_valid_head_angle = head_angle;
-  }
-  return true;
-      
-} // IsValidHeadAngle()
+} // ClipHeadAngle()
 
     
 Result Robot::SetNewPose(const Pose3d& newPose)
@@ -1385,7 +1351,7 @@ Result Robot::SetNewPose(const Pose3d& newPose)
   //  can get.
   const TimeStamp_t timeStamp = GetLastMsgTimestamp();
   
-  return AddVisionOnlyStateToHistory(timeStamp, _pose, GetHeadAngle(), GetLiftAngle());
+  return AddVisionOnlyStateToHistory(timeStamp, GetComponent<FullRobotPose>().GetPose(), GetComponent<FullRobotPose>().GetHeadAngle(), GetComponent<FullRobotPose>().GetLiftAngle());
 }
     
 void Robot::SetPose(const Pose3d &newPose)
@@ -1399,18 +1365,18 @@ void Robot::SetPose(const Pose3d &newPose)
   }
 
   // Update our current pose and keep the name consistent
-  const std::string name = _pose.GetName();
-  _pose = newPose;
-  _pose.SetName(name);
+  const std::string name = GetComponent<FullRobotPose>().GetPose().GetName();
+  GetComponent<FullRobotPose>().SetPose(newPose);
+  GetComponent<FullRobotPose>().GetPose().SetName(name);
       
-  ComputeDriveCenterPose(_pose, _driveCenterPose);
+  ComputeDriveCenterPose(GetComponent<FullRobotPose>().GetPose(), _driveCenterPose);
       
 } // SetPose()
     
 Pose3d Robot::GetCameraPose(const f32 atAngle) const
 {
   // Start with canonical (untilted) headPose
-  Pose3d newHeadPose(_headCamPose);
+  Pose3d newHeadPose(GetComponent<FullRobotPose>().GetHeadCamPose());
       
   // Rotate that by the given angle
   RotationVector3d Rvec(-atAngle, Y_AXIS_3D());
@@ -1423,13 +1389,14 @@ Pose3d Robot::GetCameraPose(const f32 atAngle) const
 void Robot::SetHeadAngle(const f32& angle)
 {
   if (_isHeadCalibrated) {
-    if (!IsValidHeadAngle(angle, &_currentHeadAngle)) {
+    f32 clippedHeadAngle = ClipHeadAngle(angle);
+    GetComponent<FullRobotPose>().SetHeadAngle(clippedHeadAngle);
+    GetVisionComponent().GetCamera().SetPose(GetCameraPose(GetComponent<FullRobotPose>().GetHeadAngle())); 
+    if(clippedHeadAngle != angle){
       LOG_WARNING("Robot.GetCameraHeadPose.HeadAngleOOB",
                   "Angle %.3frad / %.1f (TODO: Send correction or just recalibrate?)",
                   angle, RAD_TO_DEG(angle));
     }
-        
-    GetVisionComponent().GetCamera().SetPose(GetCameraPose(_currentHeadAngle));
   }
   
 } // SetHeadAngle()
@@ -1469,16 +1436,16 @@ void Robot::ComputeLiftPose(const f32 atAngle, Pose3d& liftPose)
 void Robot::SetLiftAngle(const f32& angle)
 {
   // TODO: Add lift angle limits?
-  _currentLiftAngle = angle;
+  GetComponent<FullRobotPose>().SetLiftAngle(angle);
       
-  Robot::ComputeLiftPose(_currentLiftAngle, _liftPose);
+  Robot::ComputeLiftPose(GetComponent<FullRobotPose>().GetLiftAngle(), GetComponent<FullRobotPose>().GetLiftPose());
 
-  DEV_ASSERT(_liftPose.IsChildOf(_liftBasePose), "Robot.SetLiftAngle.InvalidPose");
+  DEV_ASSERT(GetComponent<FullRobotPose>().GetLiftPose().IsChildOf(GetComponent<FullRobotPose>().GetLiftBasePose()), "Robot.SetLiftAngle.InvalidPose");
 }
     
 Radians Robot::GetPitchAngle() const
 {
-  return _pitchAngle;
+  return GetComponent<FullRobotPose>().GetPitchAngle();
 }
   
 bool Robot::WasObjectTappedRecently(const ObjectID& objectID) const
@@ -1545,8 +1512,8 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
                 existingObject->GetID().GetValue());
       return RESULT_FAIL;
     }
-    liftAngle = GetLiftAngle();
-    headAngle = GetHeadAngle();
+    liftAngle = GetComponent<FullRobotPose>().GetLiftAngle();
+    headAngle = GetComponent<FullRobotPose>().GetHeadAngle();
   } else {
     // Get computed HistRobotState at the time the object was observed.
     if ((lastResult = GetStateHistory()->GetComputedStateAt(seenObject->GetLastObservedTime(), &histStatePtr, &histStateKey)) != RESULT_OK) {
@@ -1894,8 +1861,8 @@ Result Robot::LocalizeToMat(const MatPiece* matSeen, MatPiece* existingMatPiece)
   // the pose w.r.t. the origin for storing poses in history.
   // HistRobotState p(robot->GetPoseFrameID(),
   //                  robotPoseWrtMat.GetWithRespectToRoot(),
-  //                  posePtr->GetHeadAngle(),
-  //                  posePtr->GetLiftAngle());
+  //                  posePtr->GetComponent<FullRobotPose>().GetHeadAngle(),
+  //                  posePtr->GetComponent<FullRobotPose>().GetLiftAngle());
   Pose3d robotPoseWrtOrigin = robotPoseWrtMat.GetWithRespectToRoot();
       
   if ((lastResult = AddVisionOnlyStateToHistory(existingMatPiece->GetLastObservedTime(),
@@ -1980,8 +1947,8 @@ Result Robot::SetOnRamp(bool t)
     // Record start (x,y) position coming from robot so basestation can
     // compute actual (x,y,z) position from upcoming odometry updates
     // coming from robot (which do not take slope of ramp into account)
-    _rampStartPosition = {_pose.GetTranslation().x(), _pose.GetTranslation().y()};
-    _rampStartHeight   = _pose.GetTranslation().z();
+    _rampStartPosition = {GetComponent<FullRobotPose>().GetPose().GetTranslation().x(), GetComponent<FullRobotPose>().GetPose().GetTranslation().y()};
+    _rampStartHeight   = GetComponent<FullRobotPose>().GetPose().GetTranslation().z();
         
     LOG_INFO("Robot.SetOnRamp.TransitionOntoRamp",
              "Robot %d transitioning onto ramp %d, using start (%.1f,%.1f,%.1f)",
@@ -2021,8 +1988,8 @@ Result Robot::SetOnRamp(bool t)
     LOG_INFO("Robot.SetOnRamp.TransitionOffRamp",
              "Robot %d transitioning off of ramp %d, at (%.1f,%.1f,%.1f) @ %.1fdeg, timeStamp = %d",
              _ID, ramp->GetID().GetValue(),
-             _pose.GetTranslation().x(), _pose.GetTranslation().y(), _pose.GetTranslation().z(),
-             _pose.GetRotationAngle<'Z'>().getDegrees(),
+             GetComponent<FullRobotPose>().GetPose().GetTranslation().x(), GetComponent<FullRobotPose>().GetPose().GetTranslation().y(), GetComponent<FullRobotPose>().GetPose().GetTranslation().z(),
+             GetComponent<FullRobotPose>().GetPose().GetRotationAngle<'Z'>().getDegrees(),
              timeStamp);
   } // if/else transitioning onto ramp
       
@@ -2058,8 +2025,8 @@ Result Robot::SetPoseOnCharger()
   LOG_INFO("Robot.SetPoseOnCharger.SetPose",
            "Robot %d now on charger %d, at (%.1f,%.1f,%.1f) @ %.1fdeg, timeStamp = %d",
            _ID, charger->GetID().GetValue(),
-           _pose.GetTranslation().x(), _pose.GetTranslation().y(), _pose.GetTranslation().z(),
-           _pose.GetRotationAngle<'Z'>().getDegrees(),
+           GetComponent<FullRobotPose>().GetPose().GetTranslation().x(), GetComponent<FullRobotPose>().GetPose().GetTranslation().y(), GetComponent<FullRobotPose>().GetPose().GetTranslation().z(),
+           GetComponent<FullRobotPose>().GetPose().GetRotationAngle<'Z'>().getDegrees(),
             timeStamp);
       
   return RESULT_OK;
@@ -2148,7 +2115,7 @@ Result Robot::SendAbsLocalizationUpdate() const
 Result Robot::SendHeadAngleUpdate() const
 {
   return SendMessage(RobotInterface::EngineToRobot(
-                       RobotInterface::HeadAngleUpdate(_currentHeadAngle)));
+                       RobotInterface::HeadAngleUpdate(GetComponent<FullRobotPose>().GetHeadAngle())));
 }
 
 Result Robot::SendIMURequest(const u32 length_ms) const
@@ -2235,7 +2202,7 @@ TimeStamp_t Robot::GetLastImageTimeStamp() const {
 
 Quad2f Robot::GetBoundingQuadXY(const f32 padding_mm) const
 {
-  return GetBoundingQuadXY(_pose, padding_mm);
+  return GetBoundingQuadXY(GetComponent<FullRobotPose>().GetPose(), padding_mm);
 }
     
 Quad2f Robot::GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm)
@@ -2278,12 +2245,12 @@ f32 Robot::GetHeight() const
     
 f32 Robot::GetLiftHeight() const
 {
-  return ConvertLiftAngleToLiftHeightMM(GetLiftAngle());
+  return ConvertLiftAngleToLiftHeightMM(GetComponent<FullRobotPose>().GetLiftAngle());
 }
     
 Transform3d Robot::GetLiftTransformWrtCamera(const f32 atLiftAngle, const f32 atHeadAngle) const
 {
-  Pose3d liftPose(_liftPose);
+  Pose3d liftPose(GetComponent<FullRobotPose>().GetLiftPose());
   ComputeLiftPose(atLiftAngle, liftPose);
 
   Pose3d camPose = GetCameraPose(atHeadAngle);
@@ -2309,7 +2276,7 @@ Result Robot::UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin)
   // Reverse the connection between origin and robot, and connect the new
   // reversed connection
   //ASSERT_NAMED(p.GetPose().GetParent() == _poseOrigin, "Robot.UpdateWorldOrigin.InvalidPose");
-  //Pose3d originWrtRobot = _pose.GetInverse();
+  //Pose3d originWrtRobot = GetComponent<FullRobotPose>().GetPose().GetInverse();
   //originWrtRobot.SetParent(&newPoseOrigin);
   
   // TODO: Update to use PoseOriginList::Rejigger
@@ -2324,7 +2291,7 @@ Result Robot::UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin)
   // TODO: We should only be doing this (modifying what _worldOrigin points to) when it is one of the
   // placeHolder poseOrigins, not if it is a mat!
   std::string origName(_worldOrigin->GetName());
-  *_worldOrigin = _pose.GetInverse();
+  *_worldOrigin = GetComponent<FullRobotPose>().GetPose().GetInverse();
   _worldOrigin->SetParent(&newPoseWrtNewOrigin);
       
       
@@ -2554,7 +2521,7 @@ ExternalInterface::RobotState Robot::GetRobotState() const
   msg.leftWheelSpeed_mmps  = GetLeftWheelSpeed();
   msg.rightWheelSpeed_mmps = GetRightWheelSpeed();
       
-  msg.headAngle_rad = GetHeadAngle();
+  msg.headAngle_rad = GetComponent<FullRobotPose>().GetHeadAngle();
   msg.liftHeight_mm = GetLiftHeight();
   
   msg.accel = GetHeadAccelData();
@@ -2633,7 +2600,7 @@ RobotInterface::MessageHandler* Robot::GetRobotMessageHandler() const
 Result Robot::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, f32 yTolFrac) const
 {
   Pose3d poseWrtNeck;
-  const bool success = pose.GetWithRespectTo(_neckPose, poseWrtNeck);
+  const bool success = pose.GetWithRespectTo(GetComponent<FullRobotPose>().GetNeckPose(), poseWrtNeck);
   if (!success)
   {
     LOG_WARNING("Robot.ComputeHeadAngleToSeePose.OriginMismatch", "");
@@ -2724,7 +2691,7 @@ Result Robot::ComputeTurnTowardsImagePointAngles(const Point2f& imgPoint, const 
   {
     LOG_WARNING("Robot.ComputeTurnTowardsImagePointAngles.ComputeHistPoseFailed", "t=%u", timestamp);
     absPanAngle = GetPose().GetRotation().GetAngleAroundZaxis();
-    absTiltAngle = GetHeadAngle();
+    absTiltAngle = GetComponent<FullRobotPose>().GetHeadAngle();
     return result;
   }
   

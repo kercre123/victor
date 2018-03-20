@@ -12,6 +12,7 @@
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/robotInterface/messageHandler.h"
+#include "coretech/vision/engine/image.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/signalHolder.h"
@@ -81,7 +82,8 @@ public:
   void HandleObjectPowerLevel(const ObjectPowerLevel& message, Robot* const robot);
   void HandleAudioInput(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleMicDirection(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  
+  void HandleDisplayedFaceImage(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
+
   double GetLastImageReceivedTime() const { return _lastImageRecvTime; }
   
 private:
@@ -105,6 +107,12 @@ private:
   // For tracking time since last power level report (per accessory)
   std::map<uint32_t, uint32_t> _lastPowerLevelSentTime;
   std::map<uint32_t, uint32_t> _lastMissedPacketCount;
+
+  // For tracking face image data sent back from robot
+  Vision::ImageRGB565 _faceImageRGB565;
+  u32                 _faceImageRGBId                    = 0;          // Used only for tracking chunks of the same image as they are received
+  u32                 _faceImageRGBChunksReceivedBitMask = 0;
+  const u32           kAllFaceImageRGBChunksReceivedMask = 0x3fffffff; // 30 bits for 30 expected chunks 
 
   // Internal helpers
   bool ShouldIgnoreMultipleImages() const;

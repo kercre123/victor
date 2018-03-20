@@ -876,7 +876,7 @@ namespace Anki {
     
     bool MoveHeadToAngleAction::IsHeadInPosition() const
     {
-      const bool inPosition = _headAngle.IsNear(GetRobot().GetHeadAngle(), _angleTolerance.ToFloat()+Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
+      const bool inPosition = _headAngle.IsNear(GetRobot().GetComponent<FullRobotPose>().GetHeadAngle(), _angleTolerance.ToFloat()+Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT);
       return inPosition;
     }
     
@@ -904,14 +904,14 @@ namespace Anki {
         { 
           // Lead with the eyes, if not in position
           // Note: assuming screen is about the same x distance from the neck joint as the head cam
-           Radians angleDiff =  GetRobot().GetHeadAngle() - _headAngle;
+           Radians angleDiff =  GetRobot().GetComponent<FullRobotPose>().GetHeadAngle() - _headAngle;
            const f32 y_mm = std::tan(angleDiff.ToFloat()) * HEAD_CAM_POSITION[0];
            const f32 yPixShift = y_mm * (static_cast<f32>(GetRobot().GetDisplayHeightInPixels()/4) / SCREEN_SIZE[1]);
           GetRobot().GetAnimationComponent().AddOrUpdateEyeShift(_kEyeShiftLayerName, 0, yPixShift, 4*ANIM_TIME_STEP_MS);
           
           if(!_holdEyes) {
             // Store the half the angle differene so we know when to remove eye shift
-            _halfAngle = 0.5f*(_headAngle - GetRobot().GetHeadAngle()).getAbsoluteVal();
+            _halfAngle = 0.5f*(_headAngle - GetRobot().GetComponent<FullRobotPose>().GetHeadAngle()).getAbsoluteVal();
           }
         }
       }
@@ -955,13 +955,13 @@ namespace Anki {
       {
         // If we're not there yet but at least halfway, and we're not supposed
         // to "hold" the eyes, then remove eye shift
-        if(_inPosition || _headAngle.IsNear(GetRobot().GetHeadAngle(), _halfAngle))
+        if(_inPosition || _headAngle.IsNear(GetRobot().GetComponent<FullRobotPose>().GetHeadAngle(), _halfAngle))
         {
           PRINT_CH_DEBUG("Actions", "MoveHeadToAngleAction.CheckIfDone.RemovingEyeShift",
                          "[%d] Currently at %.1fdeg, on the way to %.1fdeg, within "
                          "half angle of %.1fdeg",
                          GetTag(),
-                         RAD_TO_DEG(GetRobot().GetHeadAngle()),
+                         RAD_TO_DEG(GetRobot().GetComponent<FullRobotPose>().GetHeadAngle()),
                          _headAngle.getDegrees(),
                          _halfAngle.getDegrees());
           
@@ -986,7 +986,7 @@ namespace Anki {
                         "[%d] Head considered in position at %.1fdeg but still moving at %.1fdeg",
                         GetTag(),
                         _headAngle.getDegrees(),
-                        RAD_TO_DEG(GetRobot().GetHeadAngle()));
+                        RAD_TO_DEG(GetRobot().GetComponent<FullRobotPose>().GetHeadAngle()));
         }
       
         result = isHeadMoving ? ActionResult::RUNNING : ActionResult::SUCCESS;
@@ -995,7 +995,7 @@ namespace Anki {
         PRINT_PERIODIC_CH_DEBUG(10, "Actions", "MoveHeadToAngleAction.CheckIfDone.NotInPosition",
                                 "[%d] Waiting for head to get in position: %.1fdeg vs. %.1fdeg(+/-%.1f) tol:%.1fdeg",
                                 GetTag(),
-                                RAD_TO_DEG(GetRobot().GetHeadAngle()),
+                                RAD_TO_DEG(GetRobot().GetComponent<FullRobotPose>().GetHeadAngle()),
                                 _headAngle.getDegrees(),
                                 _variability.getDegrees(),
                                 _angleTolerance.getDegrees());
@@ -1343,7 +1343,7 @@ namespace Anki {
       }
       _compoundAction.AddAction(action);
       
-      const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : GetRobot().GetHeadAngle() + _headTiltAngle;
+      const Radians newHeadAngle = _isTiltAbsolute ? _headTiltAngle : GetRobot().GetComponent<FullRobotPose>().GetHeadAngle() + _headTiltAngle;
       MoveHeadToAngleAction* headAction = new MoveHeadToAngleAction(newHeadAngle, _tiltAngleTol);
       headAction->SetMoveEyes(_moveEyes);
       if( _tiltSpeedsManuallySet ) {

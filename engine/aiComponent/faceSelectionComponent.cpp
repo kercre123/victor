@@ -110,7 +110,7 @@ float FaceSelectionComponent::CalculateHeadAngleCost(const Vision::TrackedFace* 
   }
 
   Radians absHeadTurnAngle = TurnTowardsPoseAction::GetAbsoluteHeadAngleToLookAtPose(poseWrtRobot.GetTranslation());
-  Radians relHeadTurnAngle = absHeadTurnAngle - _robot.GetHeadAngle();
+  Radians relHeadTurnAngle = absHeadTurnAngle - _robot.GetComponent<FullRobotPose>().GetHeadAngle();
   return relHeadTurnAngle.getAbsoluteVal().ToFloat();
 }
 

@@ -719,7 +719,7 @@ Result ObjectPoseConfirmer::AddLiftRelativeObservation(ObservableObject* object,
   // Sanity checks
   DEV_ASSERT(objectID.IsSet(),
              "ObjectPoseConfirmer.AddLiftRelativeObservation.UnSetObjectID");
-  DEV_ASSERT(newPoseWrtLift.IsChildOf(_robot->GetLiftPose()),
+  DEV_ASSERT(newPoseWrtLift.IsChildOf(_robot->GetComponent<FullRobotPose>().GetLiftPose()),
              "ObjectPoseConfirmer.AddLiftRelativeObservation.PoseNotWrtLift");
   DEV_ASSERT( object == _robot->GetBlockWorld().GetLocatedObjectByID(objectID),
              "ObjectPoseConfirmer.AddLiftRelativeObservation.NotTheObjectInBlockWorldForID");

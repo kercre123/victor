@@ -28,6 +28,7 @@
 #include "engine/events/ankiEvent.h"
 #include "util/entityComponent/dependencyManagedEntity.h"
 #include "engine/ramp.h"
+#include "engine/fullRobotPose.h"
 #include "engine/robotComponents_fwd.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/image.h"
@@ -369,18 +370,11 @@ public:
   Result         GetHistoricalCamera(TimeStamp_t t_request, Vision::Camera& camera) const;
   Pose3d         GetHistoricalCameraPose(const HistRobotState& histState, TimeStamp_t t) const;
 
-  // Set the calibrated rotation of the camera
-  void SetCameraRotation(f32 roll, f32 pitch, f32 yaw);
-
   // Return the timestamp of the last _processed_ image
   TimeStamp_t GetLastImageTimeStamp() const;
 
   // =========== Pose (of the robot or its parts) ===========
   const Pose3d&       GetPose() const;
-  const f32           GetHeadAngle() const;
-  const f32           GetLiftAngle() const;
-  const Pose3d&       GetLiftPose()     const { return _liftPose; } // At current lift position!
-  const Pose3d&       GetLiftBasePose() const { return _liftBasePose; }
   const PoseFrameID_t GetPoseFrameID()  const { return _frameId; }
   const Pose3d&       GetWorldOrigin()  const;
   PoseOriginID_t      GetWorldOriginID()const;
@@ -611,11 +605,6 @@ public:
 
 protected:
   std::unique_ptr<PoseOriginList> _poseOrigins;
-  Pose3d         _pose;
-  const Pose3d     _neckPose;     // joint around which head rotates
-  Pose3d           _headCamPose;  // in canonical (untilted) position w.r.t. neck joint
-  const Pose3d     _liftBasePose; // around which the base rotates/lifts
-  Pose3d           _liftPose;     // current, w.r.t. liftBasePose
 
   using EntityType = DependencyManagedEntity<RobotComponentID>;
   using ComponentPtr = std::unique_ptr<EntityType>;
@@ -664,15 +653,6 @@ protected:
   f32 _localizedMarkerDistToCameraSq = -1.0f;
 
   Result UpdateWorldOrigin(Pose3d& newPoseWrtNewOrigin);
-
-
-  static const RotationMatrix3d _kDefaultHeadCamRotation;
-
-
-  f32              _currentHeadAngle;
-
-  f32              _currentLiftAngle = 0;
-  Radians          _pitchAngle;
 
   f32              _leftWheelSpeed_mmps;
   f32              _rightWheelSpeed_mmps;
@@ -772,20 +752,20 @@ inline const RobotID_t Robot::GetID(void) const
 
 inline const Pose3d& Robot::GetPose(void) const
 {
-  ANKI_VERIFY(_pose.GetRootID() == GetWorldOriginID(),
+  ANKI_VERIFY(GetComponent<FullRobotPose>().GetPose().GetRootID() == GetWorldOriginID(),
               "Robot.GetPose.BadPoseRootOrWorldOriginID",
               "WorldOriginID:%d(%s), RootID:%d",
               GetWorldOriginID(), GetWorldOrigin().GetName().c_str(),
-              _pose.GetRootID());
+              GetComponent<FullRobotPose>().GetPose().GetRootID());
 
   // TODO: COZMO-1637: Once we figure this out, switch this back to dev_assert for efficiency
-  ANKI_VERIFY(_pose.HasSameRootAs(GetWorldOrigin()),
+  ANKI_VERIFY(GetComponent<FullRobotPose>().GetPose().HasSameRootAs(GetWorldOrigin()),
               "Robot.GetPose.PoseOriginNotWorldOrigin",
               "WorldOrigin: %s, Pose: %s",
               GetWorldOrigin().GetNamedPathToRoot(false).c_str(),
-              _pose.GetNamedPathToRoot(false).c_str());
+              GetComponent<FullRobotPose>().GetPose().GetNamedPathToRoot(false).c_str());
 
-  return _pose;
+  return GetComponent<FullRobotPose>().GetPose();
 }
 
 inline const Pose3d& Robot::GetDriveCenterPose(void) const
@@ -799,12 +779,6 @@ inline const Pose3d& Robot::GetDriveCenterPose(void) const
 
   return _driveCenterPose;
 }
-
-inline const f32 Robot::GetHeadAngle() const
-{ return _currentHeadAngle; }
-
-inline const f32 Robot::GetLiftAngle() const
-{ return _currentLiftAngle; }
 
 inline void Robot::SetRamp(const ObjectID& rampID, const Ramp::TraversalDirection direction) {
   _rampID = rampID;

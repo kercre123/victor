@@ -56,6 +56,7 @@ class RobotToEngineImplMessaging;
 class RobotIdleTimeoutComponent;
 class MicDirectionHistory;
 class BatteryComponent;
+class FullRobotPose;
 
 } // namespace Cozmo
 
@@ -96,6 +97,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(RobotToEngineImplMessaging,    RobotComponentID, Rob
 LINK_COMPONENT_TYPE_TO_ENUM(RobotIdleTimeoutComponent,     RobotComponentID, RobotIdleTimeout)
 LINK_COMPONENT_TYPE_TO_ENUM(MicDirectionHistory,           RobotComponentID, MicDirectionHistory)
 LINK_COMPONENT_TYPE_TO_ENUM(BatteryComponent,              RobotComponentID, Battery)
+LINK_COMPONENT_TYPE_TO_ENUM(FullRobotPose,                   RobotComponentID, FullRobotPose)
 
 // Translate entity into string
 template<>
@@ -135,6 +137,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::ProgressionUnlock:          { return "ProgressionUnlock";}
     case Cozmo::RobotComponentID::ProxSensor:                 { return "ProxSensor";}
     case Cozmo::RobotComponentID::PublicStateBroadcaster:     { return "PublicStateBroadcaster";}
+    case Cozmo::RobotComponentID::FullRobotPose:              { return "FullRobotPose";}
     case Cozmo::RobotComponentID::RobotIdleTimeout:           { return "RobotIdleTimeout";}
     case Cozmo::RobotComponentID::RobotToEngineImplMessaging: { return "RobotToEngineImplMessaging";}
     case Cozmo::RobotComponentID::StateHistory:               { return "StateHistory";}

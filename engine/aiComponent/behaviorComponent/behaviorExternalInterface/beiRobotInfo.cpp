@@ -100,7 +100,7 @@ float BEIRobotInfo::GetHeadAccelMagnitudeFiltered() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const f32 BEIRobotInfo::GetHeadAngle() const
 {
-  return _robot.GetHeadAngle();
+  return _robot.GetComponent<FullRobotPose>().GetHeadAngle();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -136,7 +136,7 @@ TimeStamp_t BEIRobotInfo::GetLastMsgTimestamp() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 f32 BEIRobotInfo::GetLiftAngle() const
 {
-  return _robot.GetLiftAngle();
+  return _robot.GetComponent<FullRobotPose>().GetLiftAngle();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

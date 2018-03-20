@@ -259,7 +259,6 @@ namespace Cozmo {
   
   CONSOLE_FUNC(ToggleKeepFaceAlive, "ProceduralFace");
     
-    
   } // namespace
   
   AnimationStreamer::AnimationStreamer(const AnimContext* context)
@@ -954,6 +953,33 @@ namespace Cozmo {
       const std::string tempStr = std::to_string(tempC) + "C";
       const Point2f position(25, 25);
       faceImg565.DrawText(position, tempStr, alertColor, 1.f);
+    }
+
+    if(SHOULD_SEND_DISPLAYED_FACE_TO_ENGINE){
+      // Send the final buffered face back over to engine
+      ASSERT_NAMED(faceImg565.IsContinuous(), "AnimationComponent.DisplayFaceImage.NotContinuous");
+      static int imageID = 0;
+      static const int kMaxPixelsPerMsg = 600; // TODO - fix
+      
+      int chunkCount = 0;
+      int pixelsLeftToSend = FACE_DISPLAY_NUM_PIXELS;
+      const u16* startIt = faceImg565.GetRawDataPointer();
+      while (pixelsLeftToSend > 0) {
+        RobotInterface::DisplayedFaceImageRGBChunk msg;
+        msg.imageId = imageID;
+        msg.chunkIndex = chunkCount++;
+        msg.numPixels = std::min(kMaxPixelsPerMsg, pixelsLeftToSend);
+
+        std::copy_n(startIt, msg.numPixels, std::begin(msg.faceData));
+
+        pixelsLeftToSend -= msg.numPixels;
+        std::advance(startIt, msg.numPixels);
+        RobotInterface::SendAnimToEngine(msg);
+      }
+      imageID++;
+
+      static const int kExpectedNumChunks = static_cast<int>(std::ceilf( (f32)FACE_DISPLAY_NUM_PIXELS / kMaxPixelsPerMsg ));
+      DEV_ASSERT_MSG(chunkCount == kExpectedNumChunks, "AnimationComponent.DisplayFaceImage.UnexpectedNumChunks", "%d", chunkCount);
     }
 
     FaceDisplay::getInstance()->DrawToFace(faceImg565);

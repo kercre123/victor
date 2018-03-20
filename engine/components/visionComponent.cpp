@@ -1915,7 +1915,7 @@ namespace Cozmo {
       }
     }
 
-    msg.headAngle = _robot->GetHeadAngle();
+    msg.headAngle = _robot->GetComponent<FullRobotPose>().GetHeadAngle();
     msg.success = true;
 
     if(kDrawDebugDisplay)

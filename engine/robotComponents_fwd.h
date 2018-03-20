@@ -46,6 +46,7 @@ enum class RobotComponentID{
   DrivingAnimationHandler,
   EngineAudioClient,
   FaceWorld,
+  FullRobotPose,
   GyroDriftDetector,
   Inventory,
   Map,

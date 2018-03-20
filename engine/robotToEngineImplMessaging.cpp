@@ -82,6 +82,7 @@ RobotToEngineImplMessaging::RobotToEngineImplMessaging()
 , _hasMismatchedEngineToRobotCLAD(false)
 , _hasMismatchedRobotToEngineCLAD(false)
 {
+   _faceImageRGB565.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
 }
 
 RobotToEngineImplMessaging::~RobotToEngineImplMessaging()
@@ -124,7 +125,8 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribe(RobotInterface::RobotToEngineTag::dockingStatus,                             &RobotToEngineImplMessaging::HandleDockingStatus);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::micDirection,                   &RobotToEngineImplMessaging::HandleMicDirection);
-  
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::displayedFaceImageRGBChunk,     &RobotToEngineImplMessaging::HandleDisplayedFaceImage);
+
   // lambda wrapper to call internal handler
   GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::state,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
@@ -981,6 +983,41 @@ void RobotToEngineImplMessaging::HandleMicDirection(const AnkiEvent<RobotInterfa
   robot->GetMicDirectionHistory().AddDirectionSample(payload.timestamp,
                                                      payload.direction, payload.confidence,
                                                      payload.selectedDirection);
+}
+
+void RobotToEngineImplMessaging::HandleDisplayedFaceImage(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  const auto & msg = message.GetData().Get_displayedFaceImageRGBChunk();
+  if (msg.imageId != _faceImageRGBId) {
+    if (_faceImageRGBChunksReceivedBitMask != 0) {
+      PRINT_NAMED_WARNING("AnimationStreamer.Process_displayFaceImageRGBChunk.UnfinishedFace", 
+                          "Overwriting ID %d with ID %d", 
+                          _faceImageRGBId, msg.imageId);
+    }
+    _faceImageRGBId = msg.imageId;
+    _faceImageRGBChunksReceivedBitMask = 1 << msg.chunkIndex;
+  } else {
+    _faceImageRGBChunksReceivedBitMask |= 1 << msg.chunkIndex;
+  }
+  
+  static const u16 kMaxNumPixelsPerChunk = sizeof(msg.faceData) / sizeof(msg.faceData[0]);
+  const auto numPixels = std::min(msg.numPixels, kMaxNumPixelsPerChunk);
+  // Not user why copy_n wasnt working here, but just going ahead and doing an extra copy to fix the issue
+  auto unnecessaryCopy = msg.faceData;
+  std::copy_n(unnecessaryCopy.begin(), numPixels, _faceImageRGB565.GetRawDataPointer() + (msg.chunkIndex * kMaxNumPixelsPerChunk));
+  
+  if (_faceImageRGBChunksReceivedBitMask == kAllFaceImageRGBChunksReceivedMask) {
+    Vision::ImageRGB fullImage;
+    fullImage.SetFromRGB565(_faceImageRGB565);
+    
+    #if SHOULD_SEND_DISPLAYED_FACE_TO_ENGINE
+    robot->GetComponent<FullRobotPose>().SetDisplayImg(fullImage);
+    #endif
+
+    _faceImageRGBId = 0;
+    _faceImageRGBChunksReceivedBitMask = 0;
+  }
+
 }
 
 } // end namespace Cozmo

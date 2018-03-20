@@ -205,7 +205,7 @@ const std::string& AnimationComponent::GetAnimationNameFromGroup(const std::stri
   const AnimationGroup* group = _animationGroups->_container.GetAnimationGroup(name);
   if(group != nullptr && !group->IsEmpty()) {
     return group->GetAnimationName(_robot->GetMoodManager(),  _animationGroups->_container, 
-                                   _robot->GetHeadAngle(), strictCooldown);
+                                   _robot->GetComponent<FullRobotPose>().GetHeadAngle(), strictCooldown);
   }
   static const std::string empty("");
   return empty;
