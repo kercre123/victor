@@ -70,11 +70,11 @@ int shellcommand(const char* command, int timeout_sec) {
   int retval = -666;
   uint64_t expiration = steady_clock_now()+(timeout_sec*NSEC_PER_SEC);
 
-
-  fixture_log_writestring("-BEGIN SHELL- ");
-  fixture_log_writestring(command);
-  fixture_log_writestring("\n");
-
+  //fixture_log_writestring("-BEGIN SHELL- ");
+  //fixture_log_writestring(command);
+  //fixture_log_writestring("\n");
+  printf_multiple(SEND_CL, "-BEGIN SHELL- \"%s\" (%is)\n", command, timeout_sec);
+  
   int pid;
   int pfd = pidopen("./headprogram", &pid);
   bool timedout = false;
@@ -145,7 +145,7 @@ int handle_dutprogram_command(const char* cmd, int len) {
     timeout_sec = INT_MAX;
     return 2; //report formatting error
   }
-  printf("timeout = %d\n", (int)timeout_sec);
+  printf("timeout = %ds\n", (int)timeout_sec);
   len -= (end-next);
   next = end;
   
@@ -153,11 +153,11 @@ int handle_dutprogram_command(const char* cmd, int len) {
   errno = 0;
   unsigned long esn = len > 0 ? strtoul(next, &end, 16) : 0;
   if( errno != 0 || end <= next || esn > 0xFFFFffff || esn < 1 ) {
-    printf("esn = %lu, errno = %d, end = next+%d\n", esn, errno, end-next );
+    printf("esn = %lx, errno = %d, end = next+%d\n", esn, errno, end-next );
     esn = 0;
     return 2; //report formatting error
   }
-  printf("esn = %u\n", (uint32_t)esn);
+  printf("esn = %08x\n", (uint32_t)esn);
   len -= (end-next);
   next = end;
   
