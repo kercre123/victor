@@ -242,9 +242,17 @@ SpineErr hal_init(const char* devicename, long baudrate)
 {
   gHal.errcount = 0;
   gHal.fd = 0;
-  return hal_serial_open(devicename, baudrate);
+  SpineErr r = hal_serial_open(devicename, baudrate);
+#ifdef SPINE_TTY_LEGACY
+  if ((r == err_TERMIOS_FAIL) || (r == err_CANT_OPEN_FILE)) {
+    if (strncmp(devicename, SPINE_TTY, strlen(SPINE_TTY)) == 0) {
+      // If we're running on an old OS version, try the legacy ttyHSL1 device
+      r = hal_serial_open(SPINE_TTY_LEGACY, baudrate);
+    }
+  }
+#endif
+  return r;
 }
-
 
 
 // Scan the whole payload for sync, to recover after dropped bytes,
