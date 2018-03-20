@@ -27,7 +27,7 @@ uint8_t seenChargerCnt = 0;
 static const uint8_t MAX_SEEN_CHARGER_CNT = 5;
 bool wasPackedOutAtBoot = false;
 
-void Cleanup(int signum)
+static void Cleanup(int signum)
 {
   Anki::Cozmo::Robot::Destroy();
 
@@ -115,7 +115,7 @@ int main(int argc, const char* argv[])
     if (shutdownSignal != 0 && --shutdownCounter == 0) {
       sync();
       AnkiInfo("robot.main.shutdown", "%d", shutdownSignal);
-      exit(shutdownSignal);
+      exit(0);
     }
   }
   return 0;

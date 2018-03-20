@@ -52,6 +52,17 @@ constexpr const int SLEEP_DELAY_US = (10*1000);
 Anki::Cozmo::CozmoAPI* gEngineAPI = nullptr;
 Anki::Util::Data::DataPlatform* gDataPlatform = nullptr;
 
+// Signal handlers
+namespace {
+  bool gShutdown = false;
+}
+
+static void sigterm(int)
+{
+  LOG_INFO("CozmoEngineMain.SIGTERM", "Shutting down");
+  gShutdown = true;
+}
+
 void configure_engine(Json::Value& config)
 {
   if (!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
@@ -203,6 +214,10 @@ static int cozmo_stop()
 {
   int result = 0;
 
+  if (nullptr != gEngineAPI) {
+    gEngineAPI->Clear();
+  }
+
   Anki::Util::SafeDelete(gEngineAPI);
   Anki::Util::gEventProvider = nullptr;
   Anki::Util::SafeDelete(Anki::Util::gLoggerProvider);
@@ -218,6 +233,9 @@ static int cozmo_stop()
 
 int main(int argc, char* argv[])
 {
+    // Install signal handler
+    signal(SIGTERM, sigterm);
+
     char cwd[PATH_MAX] = { 0 };
     getcwd(cwd, sizeof(cwd));
     printf("CWD: %s\n", cwd);
@@ -323,7 +341,7 @@ int main(int argc, char* argv[])
 
     LOG_INFO("CozmoEngineMain.main", "Engine started");
 
-    while (true) {
+    while (!gShutdown) {
       if (!cozmo_is_running()) {
         LOG_INFO("CozmoEngineMain.main", "Engine has stopped");
         break;
@@ -332,7 +350,7 @@ int main(int argc, char* argv[])
     }
 
     LOG_INFO("CozmoEngineMain.main", "Stopping engine");
-    cozmo_stop();
+    res = cozmo_stop();
 
     return res;
 }

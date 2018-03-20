@@ -31,7 +31,7 @@ public:
   Util::CpuThreadId _id = Util::kCpuThreadIdInvalid;
 };
 
-  
+
 CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInterface* externalInterface)
   : _externalInterface(externalInterface)
   , _dataPlatform(dataPlatform)
@@ -57,7 +57,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   _dasTransferTask->Init(_transferQueueMgr.get());
   #endif
   _gameLogTransferTask->Init(_transferQueueMgr.get());
-  
+
   // This needs to happen after the audio server is set up
   _voiceCommandComponent.reset(new VoiceCommand::VoiceCommandComponent(*this));
 
@@ -74,6 +74,12 @@ CozmoContext::~CozmoContext()
 {
 }
 
+void CozmoContext::Shutdown()
+{
+  // Order of destruction matters!  RobotManager makes calls back into context,
+  // so manager must be shut down before context is destroyed.
+  _robotMgr->Shutdown();
+}
 
 bool CozmoContext::IsInSdkMode() const
 {
@@ -83,8 +89,8 @@ bool CozmoContext::IsInSdkMode() const
   }
   return false;
 }
-  
-  
+
+
 void CozmoContext::SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const
 {
   if (_externalInterface)
@@ -97,8 +103,8 @@ void CozmoContext::SetRandomSeed(uint32_t seed)
 {
   _random->SetSeed("CozmoContext", seed);
 }
-  
-  
+
+
 void CozmoContext::SetLocale(const std::string& localeString)
 {
   // TODO: VIC-27 - Migrate Audio Local functionality to Victor
@@ -129,6 +135,6 @@ bool CozmoContext::IsMainThread() const
   return Util::AreCpuThreadIdsEqual( _threadIdHolder->_id, Util::GetCurrentThreadId() );
 }
 
-  
+
 } // namespace Cozmo
 } // namespace Anki
