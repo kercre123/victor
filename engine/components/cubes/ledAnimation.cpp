@@ -12,7 +12,7 @@
 
 #include "engine/components/cubes/ledAnimation.h"
 
-#include "clad/externalInterface/cubeMessages.h"
+#include "clad/externalInterface/messageEngineToCube.h"
 #include "clad/externalInterface/messageToActiveObject.h"
 #include "clad/types/ledTypes.h"
 
@@ -28,7 +28,7 @@ namespace Cozmo {
 LedAnimation::LedAnimation(const LightState& lightState, const int baseIndex)
 {
   const bool hasOffset = lightState.offset != 0;
-  
+
   // Re-used temporary keyframe:
   CubeLightKeyframe keyframe;
   
@@ -36,7 +36,6 @@ LedAnimation::LedAnimation(const LightState& lightState, const int baseIndex)
     keyframe.color.fill(0);
     keyframe.holdFrames = lightState.offset;
     keyframe.decayFrames = 0;
-    
     _keyframes.push_back(keyframe);
   }
   
@@ -60,6 +59,21 @@ LedAnimation::LedAnimation(const LightState& lightState, const int baseIndex)
     keyframe.decayFrames = 0;
     _keyframes.push_back(keyframe);
   }
+  
+  // Handle the special case of all lightState times being zero,
+  // indicating that we should keep OnColor indefinitely
+  if (lightState.onFrames == 0 &&
+      lightState.offFrames == 0 &&
+      lightState.transitionOnFrames == 0 &&
+      lightState.transitionOffFrames == 0) {
+    DEV_ASSERT(_keyframes.empty(), "LedAnimation.LedAnimation.ShouldBeNoKeyframes");
+    keyframe.color = RGBA_TO_RGB_ARRAY(lightState.onColor);
+    keyframe.holdFrames = 0;
+    keyframe.decayFrames = 0;
+    _keyframes.push_back(keyframe);
+  }
+      
+  DEV_ASSERT(!_keyframes.empty(), "LedAnimation.LedAnimation.NoKeyframes");
   
   // Set up linking among the keyframes. Link each keyframe
   // (except the final one) to the keyframe after it.

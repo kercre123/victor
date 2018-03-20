@@ -228,9 +228,9 @@ namespace Cozmo {
    **************************************************************************/
   
   // Cozmo control loop is 200Hz.
-  const s32 TIME_STEP = 5;
+  const s32 ROBOT_TIME_STEP_MS = 5;
   
-  const f32 CONTROL_DT = TIME_STEP*0.001f;
+  const f32 CONTROL_DT = ROBOT_TIME_STEP_MS * 0.001f;
   
   const f32 ONE_OVER_CONTROL_DT = 1.0f/CONTROL_DT;
   
@@ -248,6 +248,10 @@ namespace Cozmo {
   const u32 WEB_SERVER_TIME_STEP_US = WEB_SERVER_TIME_STEP_MS * 1000;
   const s32 WEB_SERVER_OVERTIME_WARNING_THRESH_MS = 500;
   const s32 WEB_SERVER_OVERTIME_WARNING_THRESH_US = WEB_SERVER_OVERTIME_WARNING_THRESH_MS * 1000;
+  
+  // Time step for actual and simulated cubes
+  const s32 CUBE_TIME_STEP_MS = 5;
+  const s32 SIM_CUBE_TIME_STEP_MS = 10;
   
   // Timestep for cube animation LED 'frames'
   const u32 CUBE_LED_FRAME_LENGTH_MS = 30;

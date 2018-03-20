@@ -70,8 +70,8 @@ private:
   // Offset in seconds used in the "testOffset" animation
   const float kLedOffset_sec = 0.6f;
   
-  // Rotation period in seconds used in the "testRotation" animation
-  const float kRotationPeriod_sec = 0.45f;
+  // Length of the "testRotation" animation
+  const float kRotationAnimLength_sec = 0.45f;
   
   // Cube animation triggers for the test animations
   const CubeAnimationTrigger _testAllLedsTrigger  = CubeAnimationTrigger::TestAllLeds;
@@ -188,20 +188,20 @@ s32 CST_LightCubeAnims::UpdateSimInternal()
       const float timeIntoAnimation_sec = now_sec - _animStartTime_sec;
       const float timeTol_sec = 0.15f;
       
-      // Midway through each of the rotation periods, test that the expected colors are correct
-      if (NEAR(timeIntoAnimation_sec, 0.5f * kRotationPeriod_sec, timeTol_sec)) {
+      // Midway through each repetition of the animation, test that the expected colors are correct
+      if (NEAR(timeIntoAnimation_sec, 0.5f * kRotationAnimLength_sec, timeTol_sec)) {
         // Should be in the 0th rotation phase (LED0:red, LED1:green, and LED2:blue all on)
         AssertRotationLedsCorrect(0);
-      } else if (NEAR(timeIntoAnimation_sec, 1.5f * kRotationPeriod_sec, timeTol_sec)) {
+      } else if (NEAR(timeIntoAnimation_sec, 1.5f * kRotationAnimLength_sec, timeTol_sec)) {
         // Should be in the first rotation phase (LED1:red, LED2:green, and LED3:blue all on)
         AssertRotationLedsCorrect(1);
-      } else if (NEAR(timeIntoAnimation_sec, 2.5f * kRotationPeriod_sec, timeTol_sec)) {
+      } else if (NEAR(timeIntoAnimation_sec, 2.5f * kRotationAnimLength_sec, timeTol_sec)) {
         AssertRotationLedsCorrect(2);
-      } else if (NEAR(timeIntoAnimation_sec, 3.5f * kRotationPeriod_sec, timeTol_sec)) {
+      } else if (NEAR(timeIntoAnimation_sec, 3.5f * kRotationAnimLength_sec, timeTol_sec)) {
         AssertRotationLedsCorrect(3);
       }
       
-      if (timeIntoAnimation_sec >= 4*kRotationPeriod_sec) {
+      if (timeIntoAnimation_sec >= 4*kRotationAnimLength_sec) {
         SET_TEST_STATE(Exit);
       }
       break;

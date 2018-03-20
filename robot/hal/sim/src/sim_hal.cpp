@@ -98,7 +98,7 @@ namespace Anki {
 
       bool isInitialized = false;
 
-      u32 tickCnt_ = 0; // increments each robot step (TIME_STEP)
+      u32 tickCnt_ = 0; // increments each robot step (ROBOT_TIME_STEP_MS)
       
       webots::Supervisor webotRobot_;
 
@@ -246,7 +246,7 @@ namespace Anki {
         const float batteryIncreaseRate_voltsPerMin = chargeRateField->getSFFloat();
         
         // Compute delta volts
-        const float updateTime_sec = Util::MilliSecToSec((float) batteryUpdateRate_tics_ * TIME_STEP);;
+        const float updateTime_sec = Util::MilliSecToSec((float) batteryUpdateRate_tics_ * ROBOT_TIME_STEP_MS);;
         const float batteryDeltaVolts = (batteryIncreaseRate_voltsPerMin / 60.f) * updateTime_sec;
         float batteryVolts = batteryVoltsField_->getSFFloat() + batteryDeltaVolts;
         
@@ -306,7 +306,7 @@ namespace Anki {
 
     Result HAL::Init()
     {
-      assert(TIME_STEP >= webotRobot_.getBasicTimeStep());
+      assert(ROBOT_TIME_STEP_MS >= webotRobot_.getBasicTimeStep());
 
       leftWheelMotor_  = webotRobot_.getMotor("LeftWheelMotor");
       rightWheelMotor_ = webotRobot_.getMotor("RightWheelMotor");
@@ -356,11 +356,11 @@ namespace Anki {
       }
 
       // Enable position measurements on head, lift, and wheel motors
-      leftWheelPosSensor_->enable(TIME_STEP);
-      rightWheelPosSensor_->enable(TIME_STEP);
+      leftWheelPosSensor_->enable(ROBOT_TIME_STEP_MS);
+      rightWheelPosSensor_->enable(ROBOT_TIME_STEP_MS);
 
-      headPosSensor_->enable(TIME_STEP);
-      liftPosSensor_->enable(TIME_STEP);
+      headPosSensor_->enable(ROBOT_TIME_STEP_MS);
+      liftPosSensor_->enable(ROBOT_TIME_STEP_MS);
 
       // Set speeds to 0
       leftWheelMotor_->setVelocity(0);
@@ -371,38 +371,38 @@ namespace Anki {
       // Get localization sensors
       gps_ = webotRobot_.getGPS("gps");
       compass_ = webotRobot_.getCompass("compass");
-      gps_->enable(TIME_STEP);
-      compass_->enable(TIME_STEP);
+      gps_->enable(ROBOT_TIME_STEP_MS);
+      compass_->enable(ROBOT_TIME_STEP_MS);
 
       // Gyro
       gyro_ = webotRobot_.getGyro("gyro");
-      gyro_->enable(TIME_STEP);
+      gyro_->enable(ROBOT_TIME_STEP_MS);
 
       // Accelerometer
       accel_ = webotRobot_.getAccelerometer("accel");
-      accel_->enable(TIME_STEP);
+      accel_->enable(ROBOT_TIME_STEP_MS);
 
       // Proximity sensor
       proxCenter_ = webotRobot_.getDistanceSensor("forwardProxSensor");
-      proxCenter_->enable(TIME_STEP);
+      proxCenter_->enable(ROBOT_TIME_STEP_MS);
       
       // Cliff sensors
       cliffSensors_[HAL::CLIFF_FL] = webotRobot_.getDistanceSensor("cliffSensorFL");
       cliffSensors_[HAL::CLIFF_FR] = webotRobot_.getDistanceSensor("cliffSensorFR");
       cliffSensors_[HAL::CLIFF_BL] = webotRobot_.getDistanceSensor("cliffSensorBL");
       cliffSensors_[HAL::CLIFF_BR] = webotRobot_.getDistanceSensor("cliffSensorBR");
-      cliffSensors_[HAL::CLIFF_FL]->enable(TIME_STEP);
-      cliffSensors_[HAL::CLIFF_FR]->enable(TIME_STEP);
-      cliffSensors_[HAL::CLIFF_BL]->enable(TIME_STEP);
-      cliffSensors_[HAL::CLIFF_BR]->enable(TIME_STEP);
+      cliffSensors_[HAL::CLIFF_FL]->enable(ROBOT_TIME_STEP_MS);
+      cliffSensors_[HAL::CLIFF_FR]->enable(ROBOT_TIME_STEP_MS);
+      cliffSensors_[HAL::CLIFF_BL]->enable(ROBOT_TIME_STEP_MS);
+      cliffSensors_[HAL::CLIFF_BR]->enable(ROBOT_TIME_STEP_MS);
 
       // Charge contact
       chargeContact_ = webotRobot_.getConnector("ChargeContact");
-      chargeContact_->enablePresence(TIME_STEP);
+      chargeContact_->enablePresence(ROBOT_TIME_STEP_MS);
       wasOnCharger_ = false;
 
       backpackTouchSensorReceiver_ = webotRobot_.getReceiver("touchSensorUpper");
-      backpackTouchSensorReceiver_->enable(TIME_STEP);
+      backpackTouchSensorReceiver_->enable(ROBOT_TIME_STEP_MS);
 
       // Backpack button
       backpackButtonPressedField_ =  webotRobot_.getSelf()->getField("backpackButtonPressed");
@@ -646,7 +646,7 @@ namespace Anki {
     void HAL::EngageGripper()
     {
       con_->lock();
-      con_->enablePresence(TIME_STEP);
+      con_->enablePresence(ROBOT_TIME_STEP_MS);
       isGripperEnabled_ = true;
 #     if DEBUG_GRIPPER
       PRINT_NAMED_DEBUG("simHAL.EngageGripper.Locked", "");
@@ -670,7 +670,7 @@ namespace Anki {
     Result HAL::Step(void)
     {
 
-      if(webotRobot_.step(Cozmo::TIME_STEP) == -1) {
+      if(webotRobot_.step(Cozmo::ROBOT_TIME_STEP_MS) == -1) {
         return RESULT_FAIL;
       } else {
         MotorUpdate();

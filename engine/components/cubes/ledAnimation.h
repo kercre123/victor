@@ -19,7 +19,6 @@ namespace Anki {
 namespace Cozmo {
   
 // forware decl:
-class CubeMessage;
 struct CubeLights;
 struct LightState;
 struct CubeLightKeyframe;

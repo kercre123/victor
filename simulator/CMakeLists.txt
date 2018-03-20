@@ -75,6 +75,7 @@ target_link_libraries(webotsCtrlCommon
   PUBLIC
   util
   cti_common
+  cube_led_animator
   ${PLATFORM_LIBS}
 )
 

@@ -59,6 +59,25 @@ target_compile_definitions(robot_hal
   #HAL_DUMMY_BODY # Uncomment if deploying on head only
 )
 
+# Create a lib for cube firmware led animation code, so
+# we can link into it from webotsCtrlLightCube
+if (MACOSX)
+add_library(cube_led_animator STATIC
+  ${CMAKE_SOURCE_DIR}/robot/cube_firmware/app/animation.c
+)
+
+target_compile_options(cube_led_animator
+  PRIVATE
+  ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+)
+
+target_compile_definitions(cube_led_animator
+  PRIVATE
+  ${PLATFORM_COMPILE_DEFS}
+  ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS}
+)
+endif()
+
 set(PLATFORM_SRCS "")
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")

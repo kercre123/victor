@@ -20,8 +20,6 @@
 
 #include "coretech/common/engine/utils/timer.h"
 
-#include "clad/externalInterface/lightCubeMessage.h"
-
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
@@ -132,7 +130,7 @@ void CubeAccelComponent::AddListener(const ObjectID& objectID,
                     objectID.GetValue(),
                     obj->GetActiveID());
       
-      _robot->GetCubeCommsComponent().SetStreamObjectAccel(obj->GetActiveID(), true);
+      //_robot->GetCubeCommsComponent().SetStreamObjectAccel(obj->GetActiveID(), true);
     }else{
       PRINT_NAMED_WARNING("CubeAccelComponent.AddListener.InvalidObject",
                           "Object id %d is not connected",
@@ -176,7 +174,7 @@ bool CubeAccelComponent::RemoveListener(const ObjectID& objectID,
                         obj->GetID().GetValue(),
                         obj->GetActiveID());
           
-          _robot->GetCubeCommsComponent().SetStreamObjectAccel(obj->GetActiveID(), false);
+          //_robot->GetCubeCommsComponent().SetStreamObjectAccel(obj->GetActiveID(), false);
         }
         
         // Reset window size to default value
