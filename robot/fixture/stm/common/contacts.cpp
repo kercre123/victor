@@ -46,7 +46,7 @@ namespace Contacts
     MODE_RX,
   };
   
-  static const uint32_t CONTACT_BAUD = 57600;
+  static const uint32_t CONTACT_BAUD = 115200;
   static int mode = MODE_UNINITIALIZED;
   static bool m_console_echo = 0;
   
@@ -91,6 +91,9 @@ namespace Contacts
       USART->DR = c;
       while( !(USART->SR & USART_SR_TXE) ); //dat moved to shift register (ok to write a new data)
       while( !(USART->SR & USART_SR_TC)  ); //wait for transmit complete
+      
+      if( CONTACT_BAUD > 57600 ) //bandwidth throttle for 115.2k
+        delay_bit_time_(10);
     #endif
   }
 }
