@@ -97,6 +97,12 @@
     "emotionEvents" : [
     ]
   },
+  "audioParameterMap": {
+    "Happy": "Robot_Vic_Happy",
+    "Confident": "Robot_Vic_Confident",
+    "Social": "Robot_Vic_Social",
+    "Stimulated": "Robot_Vic_Stimulation"
+  },
   "defaultRepetitionPenalty" : {
     "nodes" : [
       {

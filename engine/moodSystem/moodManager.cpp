@@ -10,29 +10,30 @@
  *
  **/
 
+#include "engine/moodSystem/moodManager.h"
 
+#include "clad/audio/audioParameterTypes.h"
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/vizInterface/messageViz.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/actionContainers.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/ankiEventUtil.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/emotionEvent.h"
-#include "engine/moodSystem/moodManager.h"
 #include "engine/moodSystem/staticMoodData.h"
 #include "engine/robot.h"
 #include "engine/viz/vizManager.h"
-#include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/vizInterface/messageViz.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include <assert.h>
-
 
 namespace Anki {
 namespace Cozmo {
@@ -42,11 +43,13 @@ namespace Cozmo {
 // need it to be different per robot / moodManager
 static StaticMoodData sStaticMoodData;
 
+namespace {
 static const char* kActionResultEmotionEventKey = "actionResultEmotionEvents";
-  
+static const char* kAudioParametersMapKey = "audioParameterMap";
   
 CONSOLE_VAR(bool, kSendMoodToViz, "VizDebug", true);
-
+CONSOLE_VAR(float, kAudioSendPeriod_s, "MoodManager", 0.5f);
+}
 
 StaticMoodData& MoodManager::GetStaticMoodData()
 {
@@ -93,7 +96,8 @@ void MoodManager::ReadMoodConfig(const Json::Value& inJson)
 {
   GetStaticMoodData().Init(inJson);
 
-  LoadActionCompletedEventMap(inJson[kActionResultEmotionEventKey]);
+  LoadAudioParameterMap(inJson[kAudioParametersMapKey]);
+  LoadActionCompletedEventMap(inJson[kActionResultEmotionEventKey]);  
 
   if (nullptr != _robot) {
     if( _robot->HasExternalInterface() ) {
@@ -127,6 +131,30 @@ void MoodManager::LoadEmotionEvents(const RobotDataLoader::FileJsonMap& emotionE
 bool MoodManager::LoadEmotionEvents(const Json::Value& inJson)
 {
   return GetStaticMoodData().LoadEmotionEvents(inJson);
+}
+
+void MoodManager::LoadAudioParameterMap(const Json::Value& inJson)
+{
+  if( ANKI_VERIFY( ! inJson.isArray(), "MoodManager.LoadAudioParameterMap.MissingKey",
+                   "No audio parameter map specified, or it isn't a list" ) ) {
+
+    for( auto mapIt = inJson.begin(); mapIt != inJson.end(); ++mapIt ) {
+      EmotionType emo;
+      if( ANKI_VERIFY( EmotionTypeFromString(mapIt.key().asCString(), emo),
+                       "MoodManager.LoadAudioParameterMap.InvalidEmotion",
+                       "Emotion type '%s' cannot be converted to enum value",
+                       mapIt.key().asCString() ) ) {
+
+        AudioParameterType audioParam;
+        if( ANKI_VERIFY( AudioMetaData::GameParameter::ParameterTypeFromString( mapIt->asCString(), audioParam ),
+                       "MoodManager.LoadAudioParameterMap.InvalidAudioParameter",
+                         "Audio parameter type '%s' cannot be converted to enum value",
+                         mapIt->asCString() ) ) {
+          _audioParameterMap.emplace( emo, audioParam );
+        }
+      }
+    }
+  }
 }
 
 void MoodManager::LoadActionCompletedEventMap(const Json::Value& inJson)
@@ -205,6 +233,11 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
     emotion.Update(GetStaticMoodData().GetDecayGraph(emotionType), currentTime, timeDelta);
 
     SEND_MOOD_TO_VIZ_DEBUG_ONLY( robotMood.emotion.push_back(emotion.GetValue()) );
+  }
+
+  const bool hasComp = dependentComps.HasComponent(RobotComponentID::EngineAudioClient);
+  if( hasComp && ( (currentTime - _lastAudioSendTime_s) > kAudioSendPeriod_s ) ) {
+    SendEmotionsToAudio(dependentComps.GetValue<Audio::EngineRobotAudioClient>());
   }
   
   SendEmotionsToGame();
@@ -300,6 +333,23 @@ void MoodManager::SendEmotionsToGame()
   }
 }
 
+void MoodManager::SendEmotionsToAudio(Audio::EngineRobotAudioClient& audioClient)
+{
+  for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
+  {
+    const EmotionType emotionType = (EmotionType)i;
+    Emotion& emotion = GetEmotionByIndex(i);
+
+    auto audioParamIt = _audioParameterMap.find(emotionType);
+    if( audioParamIt != _audioParameterMap.end() ) {
+      const float val = emotion.GetValue();
+      audioClient.PostParameter( audioParamIt->second, val );
+    }
+  }
+
+  _lastAudioSendTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+}
+
   
 // updates the most recent time this event was triggered, and returns how long it's been since the event was last seen
 // returns FLT_MAX if this is the first time the event has been seen
@@ -362,6 +412,11 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
     {
       const float penalizedDeltaValue = emotionAffector.GetValue() * repetitionPenalty;
       GetEmotion(emotionAffector.GetType()).Add(penalizedDeltaValue);
+    }
+
+    if( _robot ) {
+      // update audio now instead of waiting for the next natural update
+      SendEmotionsToAudio(_robot->GetComponent<Audio::EngineRobotAudioClient>());
     }
     
     SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(eventName.c_str()) );

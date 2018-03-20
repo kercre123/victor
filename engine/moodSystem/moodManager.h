@@ -40,8 +40,15 @@
 #include <vector>
 
 namespace Anki {
-namespace Cozmo {
 
+namespace AudioMetaData {
+namespace GameParameter {
+// forward declaration (see audioParameterTypes.clad)
+enum class ParameterType : u32;
+}
+}
+
+namespace Cozmo {
 
 constexpr float kEmotionChangeVerySmall = 0.06f;
 constexpr float kEmotionChangeSmall     = 0.12f;
@@ -55,10 +62,13 @@ class AnkiEvent;
 
 
 namespace ExternalInterface {
-  class MessageGameToEngine;
-  struct RobotCompletedAction;
+class MessageGameToEngine;
+struct RobotCompletedAction;
 }
-  
+
+namespace Audio{
+class EngineRobotAudioClient;
+}
   
 class Robot;
 class StaticMoodData;
@@ -77,9 +87,11 @@ public:
   //////
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
   virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override {
-      components.insert(RobotComponentID::CozmoContext);
+    components.insert(RobotComponentID::CozmoContext);
   };
-  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::EngineAudioClient);
+  }
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   //////
   // end IDependencyManagedComponent functions
@@ -175,8 +187,11 @@ private:
     return _emotions[index];
   }
 
+  void LoadAudioParameterMap(const Json::Value& inJson);
   void LoadActionCompletedEventMap(const Json::Value& inJson);
   void PrintActionCompletedEventMap() const;
+
+  void SendEmotionsToAudio(Audio::EngineRobotAudioClient& audioClient);
   
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( void AddEvent(const char* eventName) );
     
@@ -192,11 +207,17 @@ private:
   using ActionCompletedEventMap = std::map< std::pair< RobotActionType, ActionResultCategory >, std::string >;
   ActionCompletedEventMap _actionCompletedEventMap;
 
+  using AudioParameterType = AudioMetaData::GameParameter::ParameterType;  
+  // map from emotion to audio parameter type to inform audio system of mood parameters
+  std::map< EmotionType, AudioParameterType > _audioParameterMap;
+
   std::set< u32 > _actionsTagsToIgnore;
   
   std::vector<Signal::SmartHandle> _signalHandles;
 
   int _actionCallbackID = 0;
+
+  float _lastAudioSendTime_s = 0.0f;
 };
   
 
