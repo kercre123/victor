@@ -65,6 +65,14 @@ struct WiFiState {
   WiFiConnState connState;
 };
 
+struct ConnectAsyncData {
+  bool completed;
+  GCond *cond;
+  GError *error;
+  ConnManBusService *service;
+};
+
+
 std::string GetObjectPathForService(GVariant* service);
 bool ConnectToWifiService(ConnManBusService* service);
 bool DisconnectFromWifiService(ConnManBusService* service);
