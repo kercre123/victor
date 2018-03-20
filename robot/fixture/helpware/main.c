@@ -70,9 +70,6 @@ int shellcommand(const char* command, int timeout_sec) {
   int retval = -666;
   uint64_t expiration = steady_clock_now()+(timeout_sec*NSEC_PER_SEC);
 
-  //fixture_log_writestring("-BEGIN SHELL- ");
-  //fixture_log_writestring(command);
-  //fixture_log_writestring("\n");
   printf_multiple(SEND_CL, "-BEGIN SHELL- \"%s\" (%is)\n", command, timeout_sec);
   
   int pid;
@@ -103,13 +100,8 @@ int shellcommand(const char* command, int timeout_sec) {
     retval = pidclose(pid, timedout);
   }
 
-
-  fixture_log_writestring("--END SHELL-- ");
-  fixture_log_writestring(command);
-  fixture_log_writestring("\n");
-
+  printf_multiple(SEND_CL, "--END SHELL-- \"%s\"\n", command);
   return retval;
-
 }
 
 int handle_lcdset_command(const char* cmd, int len) {
