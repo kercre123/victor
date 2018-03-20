@@ -31,6 +31,7 @@ const char* kEmergencyGetOutAnimationKey = "emergencyGetOut";
 const char* kLoopEndConditionKey         = "loopEndCondition";
 const char* kLoopIntervalKey             = "loopInterval_s"; // If less than length of animation, will not interrupt
 const char* kCheckEndCondKey             = "shouldCheckEndCondDuringAnim";
+const char* kLockTreadsKey               = "lockTreads";
 }
 
 
@@ -43,6 +44,7 @@ BehaviorAnimGetInLoop::InstanceConfig::InstanceConfig()
   emergencyGetOutTrigger      = AnimationTrigger::Count;
   loopInterval_s              = 0;
   checkEndConditionDuringAnim = true;
+  tracksToLock                = static_cast<uint8_t>(AnimTrackFlag::NO_TRACKS);
 };
 
 
@@ -75,6 +77,12 @@ BehaviorAnimGetInLoop::BehaviorAnimGetInLoop(const Json::Value& config)
   if(config.isMember(kEmergencyGetOutAnimationKey)){
     loadTrigger(_iConfig.emergencyGetOutTrigger, kEmergencyGetOutAnimationKey);
   }
+  
+  bool lockTreads = false;
+  JsonTools::GetValueOptional( config, kLockTreadsKey, lockTreads );
+  _iConfig.tracksToLock = lockTreads
+                          ? static_cast<uint8_t>(AnimTrackFlag::BODY_TRACK)
+                          : static_cast<uint8_t>(AnimTrackFlag::NO_TRACKS);
 
   if(config.isMember(kLoopEndConditionKey)){
     _iConfig.endLoopCondition = BEIConditionFactory::CreateBEICondition(config[kLoopEndConditionKey], GetDebugLabel()); 
@@ -85,7 +93,7 @@ BehaviorAnimGetInLoop::BehaviorAnimGetInLoop(const Json::Value& config)
 
   if(config.isMember(kCheckEndCondKey)){
     std::string debugStr = "BehaviorAnimGetInLoop.Constructor.CheckEndCondIssue";
-    _iConfig.checkEndConditionDuringAnim = JsonTools::ParseBool(config, kLoopEndConditionKey, debugStr);
+    _iConfig.checkEndConditionDuringAnim = JsonTools::ParseBool(config, kCheckEndCondKey, debugStr);
   }
 
   if(config.isMember(kLoopIntervalKey)){
@@ -122,7 +130,9 @@ void BehaviorAnimGetInLoop::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAnimGetInLoop::OnBehaviorActivated()
 {
-  _iConfig.endLoopCondition->SetActive(GetBEI(), true);
+  if(_iConfig.endLoopCondition != nullptr){
+    _iConfig.endLoopCondition->SetActive(GetBEI(), true);
+  }
   _dVars = DynamicVariables();
   TransitionToGetIn();
 }
@@ -159,7 +169,9 @@ void BehaviorAnimGetInLoop::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAnimGetInLoop::OnBehaviorDeactivated()
 {
-  _iConfig.endLoopCondition->SetActive(GetBEI(), false);
+  if(_iConfig.endLoopCondition != nullptr){
+    _iConfig.endLoopCondition->SetActive(GetBEI(), false);
+  }
 
   if((_dVars.stage == BehaviorStage::Loop) &&
      (_iConfig.emergencyGetOutTrigger != AnimationTrigger::Count)){
@@ -172,7 +184,7 @@ void BehaviorAnimGetInLoop::OnBehaviorDeactivated()
 void BehaviorAnimGetInLoop::TransitionToGetIn()
 {
   _dVars.stage = BehaviorStage::GetIn;
-  DelegateIfInControl(new TriggerAnimationAction(_iConfig.getInTrigger));
+  DelegateIfInControl(new TriggerAnimationAction(_iConfig.getInTrigger, 1, true, _iConfig.tracksToLock));
 }
 
 
@@ -180,7 +192,7 @@ void BehaviorAnimGetInLoop::TransitionToGetIn()
 void BehaviorAnimGetInLoop::TransitionToLoop()
 {
   _dVars.stage = BehaviorStage::Loop;
-  DelegateIfInControl(new TriggerAnimationAction(_iConfig.loopTrigger));
+  DelegateIfInControl(new TriggerAnimationAction(_iConfig.loopTrigger, 1, true, _iConfig.tracksToLock));
 }
 
 
@@ -188,7 +200,7 @@ void BehaviorAnimGetInLoop::TransitionToLoop()
 void BehaviorAnimGetInLoop::TransitionToGetOut()
 {
   _dVars.stage = BehaviorStage::GetOut;
-  DelegateIfInControl(new TriggerAnimationAction(_iConfig.getOutTrigger));
+  DelegateIfInControl(new TriggerAnimationAction(_iConfig.getOutTrigger, 1, true, _iConfig.tracksToLock));
 }
 
 

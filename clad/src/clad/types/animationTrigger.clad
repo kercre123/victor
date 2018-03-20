@@ -170,6 +170,10 @@ enum int_32 AnimationTrigger
   ObservingLookStraight,
   ObservingLookUp,
 
+  ObservingOnCharger,
+  ObservingOnChargerGetIn,
+  ObservingOnChargerGetOut,
+
   OnLearnedPlayerName,
   OnSawNewNamedFace,
   OnSawNewUnnamedFace,

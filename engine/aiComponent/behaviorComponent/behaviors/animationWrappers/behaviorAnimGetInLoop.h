@@ -66,6 +66,7 @@ private:
     AnimationTrigger emergencyGetOutTrigger;
     float            loopInterval_s;
     bool             checkEndConditionDuringAnim;
+    uint8_t          tracksToLock;
 
     IBEIConditionPtr endLoopCondition;
   };

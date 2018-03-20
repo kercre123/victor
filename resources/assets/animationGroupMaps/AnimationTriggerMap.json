@@ -350,7 +350,7 @@
     },
     {
       "CladEvent": "GoToSleepGetOut",
-      "AnimName": "ag_gotosleep_getout"
+      "AnimName": "ag_gotosleep_wakeup"
     },
     {
       "CladEvent": "GoToSleepOff",
@@ -1074,7 +1074,7 @@
     },
     {
       "CladEvent": "WakeupGetout",
-      "AnimName": "ag_vc_startledwakeup_01"
+      "AnimName": "ag_gotosleep_wakeup"
     },    
     {
       "CladEvent": "ObservingLookUp",
@@ -1254,7 +1254,7 @@
     },
     {
       "CladEvent": "ReactToGoodNight",
-      "AnimName": "ag_vc_goodnight"
+      "AnimName": "ag_gotosleep_getin"
     },
     {
       "CladEvent": "ReactToGreeting",
@@ -1263,6 +1263,18 @@
     {
       "CladEvent": "ReactToTouchInitial",
       "AnimName": "ag_petting_reacttotouch_01"
+    },
+    {
+      "CladEvent": "ObservingOnChargerGetIn",
+      "AnimName": "ag_observe_oncharger_getin"
+    },
+    {
+      "CladEvent": "ObservingOnChargerGetOut",
+      "AnimName": "ag_observe_oncharger_getout"
+    },
+    {
+      "CladEvent": "ObservingOnCharger",
+      "AnimName": "ag_observe_oncharger_observing"
     }
   ]
 }

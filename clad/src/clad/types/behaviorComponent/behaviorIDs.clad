@@ -173,6 +173,7 @@ enum uint_8 BehaviorID {
   ObservingLookAtFaces,
   ObservingOnCharger,
   ObservingOnChargerIdle,
+  ObservingOnChargerIdleAnim,
 
   // victorBehaviorTree/highLevelDelegates
   PickupCube,
