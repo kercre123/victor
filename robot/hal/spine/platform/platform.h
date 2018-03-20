@@ -22,8 +22,8 @@
 #include <unistd.h>
 #include <termios.h>
 
-
-#define SPINE_TTY "/dev/ttyHSL1"
+#define SPINE_TTY "/dev/ttyHS0"
+#define SPINE_TTY_LEGACY "/dev/ttyHSL1"
 #define SPINE_BAUD B3000000
 
 #define static_assert _Static_assert

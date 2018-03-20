@@ -158,6 +158,10 @@ private:
   WebService::WebService* _webService;
   
   bool _drawFAC = false;
+
+  // Reboot Linux
+  void Reboot();
+
 };
 
 } // namespace Cozmo

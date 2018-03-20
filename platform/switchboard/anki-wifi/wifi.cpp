@@ -10,13 +10,13 @@
  *
  **/
 
-#include "connmanbus.h"
 #include <netdb.h> //hostent
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <ifaddrs.h>
 #include "exec_command.h"
 #include "fileutils.h"
+#include "anki-ble/stringutils.h"
 #include "log.h"
 #include "wifi.h"
 
@@ -214,10 +214,14 @@ void HandleOutputCallback(int rc, const std::string& output) {
   // noop
 }
 
-bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb, gpointer userData) {
+bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData) {
   ConnManBusTechnology* tech_proxy;
   GError* error;
   bool success;
+
+  std::string nameFromHex = hexStringToAsciiString(ssid);
+
+  Log::Write("NameFromHex: {%s}", nameFromHex.c_str());
 
   error = nullptr;
   tech_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
@@ -261,6 +265,7 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
   }
 
   GVariant* serviceVariant = nullptr;
+  GVariant* currentServiceVariant = nullptr;
   bool foundService = false;
 
   for (gsize i = 0 ; i < g_variant_n_children(services); i++) {
@@ -271,6 +276,7 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
     GVariant* child = g_variant_get_child_value(services, i);
     GVariant* attrs = g_variant_get_child_value(child, 1);
 
+    bool hasName = false;
     bool matchedName = false;
     bool matchedInterface = false;
     bool matchedType = false;
@@ -284,11 +290,12 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
       const char* key = g_variant_get_string(key_v, nullptr);
 
       if(g_str_equal(key, "Name")) {
-        if(std::string(g_variant_get_string(val, nullptr)) == ssid) {
+        if(std::string(g_variant_get_string(val, nullptr)) == nameFromHex) {
           matchedName = true;
         } else {
           matchedName = false;
         }
+        hasName = true;
       }
 
       if(g_str_equal(key, "Type")) {
@@ -321,6 +328,7 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
       if (g_str_equal(key, "State")) {
         if (g_str_equal(g_variant_get_string(val, nullptr), "online") ||
             g_str_equal(g_variant_get_string(val, nullptr), "ready") ) {
+          currentServiceVariant = child;
           serviceOnline = true;
         }
       }
@@ -335,6 +343,9 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
         // early out--we are already connected!
         return true;
       }
+    } else if(hidden && !hasName) {
+      serviceVariant = child;
+      foundService = true;
     }
   }
 
@@ -344,44 +355,102 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, GAsyncReadyCallback cb,
   }
 
   // Set config
-  std::map<std::string, std::string> networks;
-  networks.insert(std::pair<std::string, std::string>(ssid, pw));
-  SetWiFiConfig(networks, HandleOutputCallback);
+  SetWiFiConfig(ssid, pw, (WiFiAuth)auth, hidden);
 
-  GVariantIter iter;
-  GVariant *serviceChild;
-  const gchar* objectPath = nullptr;
+  std::string servicePath = GetObjectPathForService(serviceVariant);
+  Log::Write("Initiating connection to %s.", servicePath.c_str());
 
-  g_variant_iter_init (&iter, serviceVariant);
-  while ((serviceChild = g_variant_iter_next_value (&iter)))
-  {
-    if(g_str_equal(g_variant_get_type_string(serviceChild),"o")) {
-      objectPath = g_variant_get_string (serviceChild, nullptr);
+  if(hidden) {
+    // need to do some surgery on the object path
+    // it will look "wifi_000af56d4ce4_hidden_managed_psk"
+    // something like this. we need to replace 'hidden' with
+    // SSID string.
+    std::string wifiPrefix = "/net/connman/service/wifi";
+    std::string prefix = wifiPrefix + "_000000000000_";
+    std::string hiddenText = "hidden";
+
+    if(strncmp(prefix.c_str(), servicePath.c_str(), wifiPrefix.length()) != 0) {
+      // compare strings all the way up to and including "wifi"
+      Log::Error("Be very scared! The Connman service path does not match the expected format.");
+      return false;
     }
 
-    g_variant_unref (serviceChild);
+    servicePath.replace(prefix.length(), hiddenText.length(), ssid);
+    Log::Write("Hidden network, trying service path: %s", ssid.c_str());
   }
 
-  std::string s = std::string(objectPath);
+  // before connecting, lets disconnect from our current different network
+  if(currentServiceVariant != nullptr) {
+    // we have a connected service and it *isn't* the one we are currently connected to
+    std::string currentOPath = GetObjectPathForService(currentServiceVariant);
+    ConnManBusService* currentService = GetServiceForPath(currentOPath);
+    bool disconnected = DisconnectFromWifiService(currentService);
 
+    if(disconnected) {
+      Log::Write("Disconnected from %s.", currentOPath.c_str());
+    }
+  }
+
+  // Get the ConnManBusService for our object path
+  Log::Write("Service path: %s", servicePath.c_str());
+  ConnManBusService* service = GetServiceForPath(servicePath);
+  if(service == nullptr) {
+    return false;
+  }
+
+  // Try to connect to our service
+  bool connect = ConnectToWifiService(service);
+
+  return connect;
+}
+
+ConnManBusService* GetServiceForPath(std::string objectPath) {
+  GError* error = nullptr;
   ConnManBusService* service = conn_man_bus_service_proxy_new_for_bus_sync(
                                   G_BUS_TYPE_SYSTEM,
                                   G_DBUS_PROXY_FLAGS_NONE,
                                   "net.connman",
-                                  objectPath,
+                                  objectPath.c_str(),
                                   nullptr,
                                   &error);
 
-  gboolean didConnect = conn_man_bus_service_call_connect_sync (
-                                 service,
-                                 nullptr,
-                                 &error);
+  if(service == nullptr || error != nullptr) {
+    Log::Write("Could not find service for object path: %s", objectPath.c_str());
+  }
+
+  return service;
+}
+
+bool ConnectToWifiService(ConnManBusService* service) {
+  GError* error = nullptr;
+
+  if(service == nullptr) {
+    return false;
+  }
+
+  gboolean didConnect = conn_man_bus_service_call_connect_sync (service, nullptr, &error);
 
   if(!didConnect && error != nullptr) {
-    Log::Write("Error connecting to wifi: %s", error->message);
+    Log::Write("Error connecting to wifi [attempt 1]: %s", error->message);
+    error = nullptr;
+
+    didConnect = conn_man_bus_service_call_connect_sync (service, nullptr, &error);
+
+    if(!didConnect && error != nullptr) {
+      Log::Write("Error connecting to wifi [attempt 2]: %s", error->message);
+    }
   }  
 
   return (bool)didConnect;
+}
+
+bool DisconnectFromWifiService(ConnManBusService* service) {
+  if(service == nullptr) {
+    return false;
+  }
+  
+  GError* error = nullptr;
+  return conn_man_bus_service_call_disconnect_sync (service, nullptr, &error);
 }
 
 void EnableWiFiInterface(const bool enable, ExecCommandCallback callback) {
@@ -391,6 +460,24 @@ void EnableWiFiInterface(const bool enable, ExecCommandCallback callback) {
     ExecCommandInBackground({"connmanctl", "disable", "wifi"}, callback);
     ExecCommandInBackground({"ifconfig", "wlan0"}, callback);
   }
+}
+
+std::string GetObjectPathForService(GVariant* service) {
+  GVariantIter iter;
+  GVariant *serviceChild;
+  const gchar* objectPath = nullptr;
+
+  g_variant_iter_init (&iter, service);
+  while ((serviceChild = g_variant_iter_next_value (&iter)))
+  {
+    if(g_str_equal(g_variant_get_type_string(serviceChild),"o")) {
+      objectPath = g_variant_get_string (serviceChild, nullptr);
+    }
+
+    g_variant_unref (serviceChild);
+  }
+
+  return std::string(objectPath);
 }
 
 static std::string GetPathToWiFiConfigFile()
@@ -419,20 +506,73 @@ std::map<std::string, std::string> UnPackWiFiConfig(const std::vector<uint8_t>& 
   return networks;
 }
 
-void SetWiFiConfig(const std::map<std::string, std::string> networks, ExecCommandCallback callback) {
+void SetWiFiConfig(std::string ssid, std::string password, WiFiAuth auth, bool isHidden) {
+  std::vector<WiFiConfig> networks;
+  WiFiConfig config;
+  config.auth = auth;
+  config.hidden = isHidden;
+  config.ssid = ssid;
+  config.passphrase = password;
+
+  networks.push_back(config);
+  SetWiFiConfig(networks, HandleOutputCallback);
+}
+
+void SetWiFiConfig(const std::vector<WiFiConfig>& networks, ExecCommandCallback callback) {
   std::ostringstream wifiConfigStream;
 
   int count = 0;
-  for (auto const& kv : networks) {
+  for (auto const& config : networks) {
     if (count > 0) {
       wifiConfigStream << std::endl;
     }
+    // Exclude networks with ssids that are not in hex format
+    if (!IsHexString(config.ssid)) {
+      loge("SetWiFiConfig. '%s' is NOT a hexadecimal string.", config.ssid.c_str());
+      continue;
+    }
+    // Exclude networks with unsupported auth types
+    if ((config.auth != WiFiAuth::AUTH_NONE_OPEN)
+        && (config.auth != WiFiAuth::AUTH_NONE_WEP)
+        && (config.auth != WiFiAuth::AUTH_NONE_WEP_SHARED)
+        && (config.auth != WiFiAuth::AUTH_WPA_PSK)
+        && (config.auth != WiFiAuth::AUTH_WPA2_PSK)) {
+      loge("SetWiFiConfig. Unsupported auth type : %d for '%s'",
+           config.auth,
+           hexStringToAsciiString(config.ssid).c_str());
+      continue;
+    }
+
+    std::string security;
+    switch (config.auth) {
+      case WiFiAuth::AUTH_NONE_WEP:
+        /* fall through */
+      case WiFiAuth::AUTH_NONE_WEP_SHARED:
+        security = "wep";
+        break;
+      case WiFiAuth::AUTH_WPA_PSK:
+        /* fall through */
+      case WiFiAuth::AUTH_WPA2_PSK:
+        security = "psk";
+        break;
+      case WiFiAuth::AUTH_NONE_OPEN:
+        /* fall through */
+      default:
+        security = "none";
+        break;
+    }
+
+    std::string hidden(config.hidden ? "true" : "false");
     wifiConfigStream << "[service_wifi_" << count++ << "]" << std::endl
                      << "Type = wifi" << std::endl
-                     << "IPv4 = auto" << std::endl
+                     << "IPv4 = dhcp" << std::endl
                      << "IPv6 = auto" << std::endl
-                     << "Name = " << kv.first << std::endl
-                     << "Passphrase = " << kv.second << std::endl;
+                     << "SSID=" << config.ssid << std::endl
+                     << "Security=" << security << std::endl
+                     << "Hidden=" << hidden << std::endl;
+    if (!config.passphrase.empty()) {
+      wifiConfigStream << "Passphrase=" << config.passphrase << std::endl;
+    }
   }
 
   int rc = WriteFileAtomically(GetPathToWiFiConfigFile(), wifiConfigStream.str());
@@ -444,6 +584,128 @@ void SetWiFiConfig(const std::map<std::string, std::string> networks, ExecComman
   }
 
   ExecCommandInBackground({"connmanctl", "enable", "wifi"}, callback);
+}
+
+WiFiState GetWiFiState() {
+  // Return WiFiState object
+  WiFiState wifiState;
+  wifiState.ssid = "";
+  wifiState.connState = WiFiConnState::UNKNOWN;
+
+  GError* error = nullptr;
+
+  ConnManBusManager* manager_proxy;
+  manager_proxy = conn_man_bus_manager_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
+                                                              G_DBUS_PROXY_FLAGS_NONE,
+                                                              "net.connman",
+                                                              "/",
+                                                              nullptr,
+                                                              &error);
+  if (error) {
+    loge("error getting proxy for net.connman /");
+    return wifiState;
+  }
+
+  GVariant* services = nullptr;
+  bool success = conn_man_bus_manager_call_get_services_sync(manager_proxy,
+                                                        &services,
+                                                        nullptr,
+                                                        &error);
+  g_object_unref(manager_proxy);
+  if (error) {
+    loge("Error getting services from connman");
+    return wifiState;
+  }
+
+  if (!success) {
+    loge("connman failed to get list of services");
+    return wifiState;
+  }
+
+  for (gsize i = 0 ; i < g_variant_n_children(services); i++) {
+    GVariant* child = g_variant_get_child_value(services, i);
+    GVariant* attrs = g_variant_get_child_value(child, 1);
+
+    bool isAssociated = false;
+    std::string connectedSsid;
+    WiFiConnState connState = WiFiConnState::UNKNOWN;
+
+    for (gsize j = 0 ; j < g_variant_n_children(attrs); j++) {
+      GVariant* attr = g_variant_get_child_value(attrs, j);
+      GVariant* key_v = g_variant_get_child_value(attr, 0);
+      GVariant* val_v = g_variant_get_child_value(attr, 1);
+      GVariant* val = g_variant_get_variant(val_v);
+      const char* key = g_variant_get_string(key_v, nullptr);
+
+      // Make sure this is a wifi service and not something else
+      if (g_str_equal(key, "Type")) {
+        if (!g_str_equal(g_variant_get_string(val, nullptr), "wifi")) {
+          break;
+        }
+      }
+
+      // Make sure this is for the wlan0 interface and not p2p0
+      if (g_str_equal(key, "Ethernet")) {
+        for (gsize k = 0 ; k < g_variant_n_children(val); k++) {
+          GVariant* ethernet_attr = g_variant_get_child_value(val, k);
+          GVariant* ethernet_key_v = g_variant_get_child_value(ethernet_attr, 0);
+          GVariant* ethernet_val_v = g_variant_get_child_value(ethernet_attr, 1);
+          GVariant* ethernet_val = g_variant_get_variant(ethernet_val_v);
+          const char* ethernet_key = g_variant_get_string(ethernet_key_v, nullptr);
+          if (g_str_equal(ethernet_key, "Interface")) {
+            if (!g_str_equal(g_variant_get_string(ethernet_val, nullptr), "wlan0")) {
+              isAssociated = false;
+              break;
+            }
+          }
+        }
+      }
+
+      if (g_str_equal(key, "State")) {
+        std::string state = std::string(g_variant_get_string(val, nullptr));
+        std::string servicePath = GetObjectPathForService(child);
+
+        std::string wifiPrefix = "/net/connman/service/wifi";
+        std::string prefix = wifiPrefix + "_000000000000_";
+        std::string hexString = "";
+
+        if(strncmp(prefix.c_str(), servicePath.c_str(), wifiPrefix.length()) != 0) {
+          // compare strings all the way up to and including "wifi"
+          Log::Error("Be very scared! The Connman service path does not match the expected format.");
+          return wifiState;
+        }
+
+        for(int i = prefix.length(); i < servicePath.length(); i++) {
+          if(servicePath[i] == '_') {
+            break;
+          }
+          hexString.push_back(servicePath[i]);
+        }
+
+        connectedSsid = hexString;
+
+        if(state == "ready") {
+          isAssociated = true;
+          connState = WiFiConnState::CONNECTED;
+        } else if(state == "online") {
+          isAssociated = true;
+          connState = WiFiConnState::ONLINE;
+        }
+      }
+    }
+
+    if(isAssociated) {
+      wifiState.ssid = connectedSsid;
+      wifiState.connState = connState;
+      break;
+    }
+  }
+
+  if(HasInternet()) {
+    wifiState.connState = WiFiConnState::ONLINE;
+  }
+
+  return wifiState;
 }
 
 bool CanConnectToHostName(char* hostName) {

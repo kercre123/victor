@@ -358,6 +358,8 @@ struct RtsWifiConnectRequest
   std::string ssid;
   std::string password;
   uint8_t timeout;
+  uint8_t authType;
+  bool hidden;
   
   /**** Constructors ****/
   RtsWifiConnectRequest() = default;
@@ -369,10 +371,14 @@ struct RtsWifiConnectRequest
   
   explicit RtsWifiConnectRequest(const std::string& ssid,
     const std::string& password,
-    uint8_t timeout)
+    uint8_t timeout,
+    uint8_t authType,
+    bool hidden)
   : ssid(ssid)
   , password(password)
   , timeout(timeout)
+  , authType(authType)
+  , hidden(hidden)
   {}
   
   explicit RtsWifiConnectRequest(const uint8_t* buff, size_t len);
@@ -393,7 +399,7 @@ struct RtsWifiConnectRequest
   
   template <typename Callable>
   void Invoke(Callable&& func) const {
-     func(ssid, password, timeout);
+     func(ssid, password, timeout, authType, hidden);
   }
 };
 
@@ -403,7 +409,8 @@ extern const uint8_t RtsWifiConnectRequestVersionHash[16];
 // MESSAGE RtsWifiConnectResponse
 struct RtsWifiConnectResponse
 {
-  uint8_t statusCode;
+  std::string wifiSsidHex;
+  uint8_t wifiState;
   
   /**** Constructors ****/
   RtsWifiConnectResponse() = default;
@@ -413,8 +420,10 @@ struct RtsWifiConnectResponse
   RtsWifiConnectResponse& operator=(const RtsWifiConnectResponse& other) = default;
   RtsWifiConnectResponse& operator=(RtsWifiConnectResponse&& other) = default;
   
-  explicit RtsWifiConnectResponse(uint8_t statusCode)
-  : statusCode(statusCode)
+  explicit RtsWifiConnectResponse(const std::string& wifiSsidHex,
+    uint8_t wifiState)
+  : wifiSsidHex(wifiSsidHex)
+  , wifiState(wifiState)
   {}
   
   explicit RtsWifiConnectResponse(const uint8_t* buff, size_t len);
@@ -435,7 +444,7 @@ struct RtsWifiConnectResponse
   
   template <typename Callable>
   void Invoke(Callable&& func) const {
-     func(statusCode);
+     func(wifiSsidHex, wifiState);
   }
 };
 
@@ -570,7 +579,7 @@ extern const uint8_t RtsStatusRequestVersionHash[16];
 // MESSAGE RtsStatusResponse
 struct RtsStatusResponse
 {
-  std::string wifiSsid;
+  std::string wifiSsidHex;
   uint8_t wifiState;
   uint8_t bleState;
   uint8_t batteryState;
@@ -583,11 +592,11 @@ struct RtsStatusResponse
   RtsStatusResponse& operator=(const RtsStatusResponse& other) = default;
   RtsStatusResponse& operator=(RtsStatusResponse&& other) = default;
   
-  explicit RtsStatusResponse(const std::string& wifiSsid,
+  explicit RtsStatusResponse(const std::string& wifiSsidHex,
     uint8_t wifiState,
     uint8_t bleState,
     uint8_t batteryState)
-  : wifiSsid(wifiSsid)
+  : wifiSsidHex(wifiSsidHex)
   , wifiState(wifiState)
   , bleState(bleState)
   , batteryState(batteryState)
@@ -611,7 +620,7 @@ struct RtsStatusResponse
   
   template <typename Callable>
   void Invoke(Callable&& func) const {
-     func(wifiSsid, wifiState, bleState, batteryState);
+     func(wifiSsidHex, wifiState, bleState, batteryState);
   }
 };
 

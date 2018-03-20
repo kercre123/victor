@@ -1740,20 +1740,6 @@ void RobotEventHandler::HandleMessage(const SwitchboardInterface::SetConnectionS
     PRINT_NAMED_WARNING("RobotEventHandler.SwitchboardSetConnectionStatus.InvalidRobotID", 
                         "Failed to find robot");
   } else {
-
-    // If starting BLE pairing/connection flow switch to the wait behavior
-    if(msg.status == SwitchboardInterface::ConnectionStatus::START_PAIRING)
-    {
-      ICozmoBehaviorPtr behavior = robot->GetAIComponent().GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(Wait));
-      robot->GetAIComponent().GetBehaviorComponent().GetComponent<BehaviorSystemManager>().ResetBehaviorStack((IBehavior*)(behavior.get()));
-    }
-    // Otherwise if ending pairing/connection flow switch to the base default behavior
-    else if(msg.status == SwitchboardInterface::ConnectionStatus::END_PAIRING)
-    {
-      IBehavior* behavior = robot->GetAIComponent().GetBehaviorComponent().GetComponent<BaseBehaviorWrapper>()._baseBehavior;
-      robot->GetAIComponent().GetBehaviorComponent().GetComponent<BehaviorSystemManager>().ResetBehaviorStack(behavior);
-    }
-
     // Forward to robot
     robot->SendRobotMessage<SwitchboardInterface::SetConnectionStatus>(msg.status);
   }

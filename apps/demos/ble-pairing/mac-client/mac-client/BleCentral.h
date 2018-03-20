@@ -21,6 +21,17 @@ enum RtsState {
   CladSecure  = 2,
 };
 
+enum WiFiAuth : uint8_t {
+  AUTH_NONE_OPEN       = 0,
+  AUTH_NONE_WEP        = 1,
+  AUTH_NONE_WEP_SHARED = 2,
+  AUTH_IEEE8021X       = 3,
+  AUTH_WPA_PSK         = 4,
+  AUTH_WPA_EAP         = 5,
+  AUTH_WPA2_PSK        = 6,
+  AUTH_WPA2_EAP        = 7
+};
+
 @interface BleCentral : NSObject <CBCentralManagerDelegate, CBPeripheralDelegate> {
   NSString* _localName;
   
@@ -52,6 +63,7 @@ enum RtsState {
   bool _connecting;
 }
 
+- (std::string)hexStr:(uint8_t*)data length:(int)len;
 - (void) handleSend:(const void*)bytes length:(int)n;
 - (void) handleReceive:(const void*)bytes length:(int)n;
 - (void) handleReceiveSecure:(const void*)bytes length:(int)n;

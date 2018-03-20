@@ -42,6 +42,11 @@
 
 #include <chrono>
 
+#ifndef SIMULATOR
+#include <linux/reboot.h>
+#include <sys/reboot.h>
+#endif
+
 
 // Log options
 #define LOG_CHANNEL    "FaceInfoScreenManager"
@@ -139,8 +144,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_SCREEN(CustomText, None);
   ADD_SCREEN(Main, Network);
   ADD_SCREEN_WITH_TEXT(ClearUserData, Main, {"CLEAR USER DATA?"});
-  ADD_SCREEN_WITH_TEXT(ClearUserDataSuccess, Main, {"SUCCESS"});
-  ADD_SCREEN_WITH_TEXT(ClearUserDataNoop, Main, {"NO DATA TO ERASE"});
+  ADD_SCREEN_WITH_TEXT(ClearUserDataFail, Main, {"CLEAR USER DATA FAILED"});
   ADD_SCREEN_WITH_TEXT(SelfTest, Main, {"START SELF TEST?"});
   ADD_SCREEN(Network, SensorInfo);
   ADD_SCREEN(SensorInfo, IMUInfo);
@@ -157,11 +161,9 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_SCREEN(Camera, Main);    // Last screen cycles back to Main
 
   // Recovery screen
-  FaceInfoScreen::MenuItemAction rebootAction = []() {
-    LOG_WARNING("FaceInfoScreenManager.Recovery.Reboot", "");
-
-    // Send shutdown command to syscon
-    RobotInterface::SendAnimToRobot(RobotInterface::Shutdown());
+  FaceInfoScreen::MenuItemAction rebootAction = [this]() {
+    LOG_INFO("FaceInfoScreenManager.Recovery.Rebooting", "");
+    this->Reboot();
 
     return ScreenName::Recovery;
   };
@@ -186,26 +188,21 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_MENU_ITEM(SelfTest, "CONFIRM", Main);        // TODO: VIC-1498
   
   // Clear User Data menu
-  FaceInfoScreen::MenuItemAction confirmClearUserData = [context]() {
-    auto persistentDir = context->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Persistent, "");
-    const bool persistentExists = Util::FileUtils::DirectoryExists(persistentDir);
-    if (persistentExists) {
-      Util::FileUtils::RemoveDirectory(persistentDir);
+  FaceInfoScreen::MenuItemAction confirmClearUserData = [this]() {
+    // Write this file to indicate that the data partition should be wiped on reboot
+    if (!Util::FileUtils::WriteFile("/run/wipe-data", "1")) {
+      LOG_WARNING("FaceInfoSCreenManager.ClearUserData.Failed", "");
+      return ScreenName::ClearUserDataFail;
     }
-    auto cacheDir = context->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Cache, "");
-    const bool cacheExists = Util::FileUtils::DirectoryExists(cacheDir);
-    if (cacheExists) {
-      Util::FileUtils::RemoveDirectory(cacheDir);
-    }
-    if (persistentExists || cacheExists) {
-      return ScreenName::ClearUserDataSuccess;
-    }
-    return ScreenName::ClearUserDataNoop;
+
+    // Reboot robot for clearing to take effect
+    LOG_INFO("FaceInfoScreenManager.ClearUserData.Rebooting", "");
+    this->Reboot();
+    return ScreenName::ClearUserData;
   };
   ADD_MENU_ITEM(ClearUserData, "EXIT", Main);
   ADD_MENU_ITEM_WITH_ACTION(ClearUserData, "CONFIRM", confirmClearUserData);
-  SET_TIMEOUT(ClearUserDataSuccess, 2.f, Main);
-  SET_TIMEOUT(ClearUserDataNoop, 2.f, Main);
+  SET_TIMEOUT(ClearUserDataFail, 2.f, Main);
   
   // Camera screen
   FaceInfoScreen::ScreenAction cameraEnterAction = [animStreamer]() {
@@ -864,13 +861,13 @@ void FaceInfoScreenManager::DrawNetwork()
 
   const bool hasInternet = Util::InternetUtils::HasInternet();
 
-  // TODO: Check actual hosts for connectivity. But which ones?
+  // TODO (VIC-1816): Check actual hosts for connectivity
   const bool hasAuthAccess  = false;
   const bool hasOTAAccess   = false;
   const bool hasVoiceAccess = Util::InternetUtils::CanConnectToHostName("chipper-dev.api.anki.com", 443);
 
   const ColoredText online("ONLINE", NamedColors::GREEN);
-  const ColoredText offline("OFFLINE", NamedColors::RED);
+  const ColoredText offline("UNAVAILABLE", NamedColors::RED);
 
   const ColoredText authStatus  = hasAuthAccess  ? online : offline;
   const ColoredText otaStatus   = hasOTAAccess   ? online : offline;
@@ -881,9 +878,11 @@ void FaceInfoScreenManager::DrawNetwork()
                              {ssid}, 
                              { {"IP: "}, {ip, (hasInternet ? NamedColors::GREEN : NamedColors::RED)} },
                              { },
-                             { {"AUTH: "}, authStatus },
-                             { {"OTA: "}, otaStatus },
-                             { {"VOICE: "}, voiceStatus }
+
+                             // TODO: VIC-1816
+                            //  { {"AUTH: "}, authStatus },
+                            //  { {"OTA: "}, otaStatus },
+                            //  { {"VOICE: "}, voiceStatus }
                            };
 
   DrawTextOnScreen(lines);
@@ -967,16 +966,16 @@ void FaceInfoScreenManager::DrawIMUInfo(const RobotState& state)
 void FaceInfoScreenManager::DrawMotorInfo(const RobotState& state)
 {
   char temp[32] = "";
-  sprintf(temp, "HEAD:   %3.1f", RAD_TO_DEG(state.headAngle));
+  sprintf(temp, "HEAD:   %3.1f deg", RAD_TO_DEG(state.headAngle));
   const std::string head = temp;
   
-  sprintf(temp, "LIFT:   %3.1f", RAD_TO_DEG(state.liftAngle));
+  sprintf(temp, "LIFT:   %3.1f deg", RAD_TO_DEG(state.liftAngle));
   const std::string lift = temp;
 
-  sprintf(temp, "LSPEED: %3.1f", state.lwheel_speed_mmps);
+  sprintf(temp, "LSPEED: %3.1f mm/s", state.lwheel_speed_mmps);
   const std::string lSpeed = temp;
 
-  sprintf(temp, "RSPEED: %3.1f", state.rwheel_speed_mmps);
+  sprintf(temp, "RSPEED: %3.1f mm/s", state.rwheel_speed_mmps);
   const std::string rSpeed = temp;
   
   DrawTextOnScreen({head, lift, lSpeed, rSpeed});
@@ -1126,6 +1125,16 @@ void FaceInfoScreenManager::DrawScratch()
   }
   
   FaceDisplay::getInstance()->DrawToFaceDebug(*_scratchDrawingImg);
+}
+
+void FaceInfoScreenManager::Reboot()
+{
+#ifdef SIMULATOR
+  LOG_WARNING("FaceInfoScreenManager.Reboot.NotSupportInSimulator", "");
+#else
+  sync(); sync(); sync(); // Linux voodoo
+  reboot(LINUX_REBOOT_CMD_RESTART);
+#endif
 }
 
 } // namespace Cozmo
