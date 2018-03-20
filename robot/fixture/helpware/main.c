@@ -130,17 +130,40 @@ int handle_logstop_command(const char* cmd, int len) {
   return 0;
 }
 
-
+//#define STATIC_ASSERT(COND,MSG) typedef char static_assertion_##MSG[(COND)?1:-1]
+//STATIC_ASSERT(LONG_MAX > 0xFFFFffff); //require >32-bit long for parsing u32 nums with strtol()
 
 int handle_dutprogram_command(const char* cmd, int len) {
-  char* num_end;
-  long timeout_sec = strtol(cmd, &num_end, 10);
-  printf("timeout = %ld\n", timeout_sec);
-  if (num_end == cmd || timeout_sec == 0) {
-    timeout_sec = LONG_MAX;
+  char *end;
+  const char *next = cmd;
+  
+  //first arg is timeout value in seconds (%u)
+  errno = 0;
+  long timeout_sec = strtol(next, &end, 10);
+  if( errno != 0 || end <= next || timeout_sec > INT_MAX || timeout_sec < 1 /*INT_MIN*/ ) {
+    printf("timeout = %ld, errno = %d, end = next+%d\n", timeout_sec, errno, end-next );
+    timeout_sec = INT_MAX;
+    return 2; //report formatting error
   }
-  return shellcommand("./headprogram", timeout_sec);
-
+  printf("timeout = %d\n", (int)timeout_sec);
+  len -= (end-next);
+  next = end;
+  
+  //2nd arg is 32-bit esn (%08x)
+  errno = 0;
+  unsigned long esn = len > 0 ? strtoul(next, &end, 16) : 0;
+  if( errno != 0 || end <= next || esn > 0xFFFFffff || esn < 1 ) {
+    printf("esn = %lu, errno = %d, end = next+%d\n", esn, errno, end-next );
+    esn = 0;
+    return 2; //report formatting error
+  }
+  printf("esn = %u\n", (uint32_t)esn);
+  len -= (end-next);
+  next = end;
+  
+  char dutcmd[25];
+  snprintf(dutcmd, sizeof(dutcmd), "./headprogram %08x", (uint32_t)esn);
+  return shellcommand(dutcmd, (int)timeout_sec);
 }
 
 int handle_shell_timeout_test_command(const char* cmd, int len) {
