@@ -1,0 +1,20 @@
+
+#include "clad/externalInterface/messageMeetVictor.clad"
+
+namespace Anki {
+namespace Victor {
+namespace ExternalInterface {
+
+message ExternalInterfaceError
+{
+    string  errorString // TODO: change this to use an enum
+}
+
+union ExternalInterface {
+    ExternalInterfaceError  ExternalInterfaceError  =   0x00,
+    MeetVictor              MeetVictor              =   0x01,
+}
+
+} // namespace ExternalInterface
+} // namespace Victor
+} // namespace Anki

@@ -17,7 +17,7 @@ For repos that don't build with cmake you can use the configure.py script to spe
 
 _Example Configure Script Usage:_
 ``` bash
-./configure.py --cpp --python --csharp # will build c++, python and charp libraries
+./configure.py --cpp --python --csharp # will build c++, python and csharp libraries
 ```
 
 ## Considerations

@@ -1,0 +1,62 @@
+namespace Anki {
+namespace Victor {
+namespace ExternalInterface {
+
+// ====================================================
+//                      Meet Victor
+// ====================================================
+
+// Request the robot enter the Meet Victor UX flow
+message MeetVictorRequest
+{
+}
+
+// Tell the app that the robot is ready to enter the Meet Victor UX flow with
+// a face ID
+message MeetVictorReadyResponse
+{
+    string  faceID
+}
+
+// Tell the app the robot is starting a facial scan for the Meet Victor UX flow
+message MeetVictorFaceScanStarted
+{
+}
+
+// Tell the app the robot is finishing a facial scan for the Meet Victor UX flow
+message MeetVictorFaceScanComplete
+{
+}
+
+// Specify a name for a given face ID in the meet victor UX flow
+message MeetVictorSetUserName
+{
+    string  faceID,
+    string  name
+}
+
+// Finish the meet victor UX flow, communicating success or failure
+message MeetVictorComplete
+{
+    bool    success
+}
+
+// Tell the app the robot encountered an error during the Meet Victor UX flow
+message MeetVictorError
+{
+    string  errorString // TODO: change this to an enum
+}
+
+union MeetVictor {
+    MeetVictorError             MeetVictorError             = 0x00,
+    MeetVictorRequest           MeetVictorRequest           = 0x01,
+    MeetVictorReadyResponse     MeetVictorReadyResponse     = 0x02,
+    MeetVictorFaceScanStarted   MeetVictorFaceScanStarted   = 0x03,
+    MeetVictorFaceScanComplete  MeetVictorFaceScanComplete  = 0x04,
+    MeetVictorSetUserName       MeetVictorSetUserName       = 0x05,
+    MeetVictorComplete          MeetVictorComplete          = 0x06,
+}
+
+} // namespace ExternalInterface
+} // namespace Victor
+} // namespace Anki

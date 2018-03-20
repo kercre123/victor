@@ -1,5 +1,5 @@
 /**
- * File: externalCommsCladHandler.h
+ * File: internalInterfaceCladHandler.h
  *
  * Author: Paul Aluri (@paluri)
  * Created: 3/15/2018
@@ -13,13 +13,13 @@
  **/
 
 #include "signals/simpleSignal.hpp"
-#include "clad/externalInterface/messageExternalComms.h"
+#include "clad/internalInterface/messageInternalInterface.h"
 
 namespace Anki {
 namespace Switchboard {
-  class ExternalCommsCladHandler {
+  class InternalInterfaceCladHandler {
     public:
-    using RtsConnectionSignal = Signal::Signal<void (const Anki::Victor::ExternalComms::RtsConnection& msg)>;
+    using RtsConnectionSignal = Signal::Signal<void (const Anki::Victor::InternalInterface::RtsConnection& msg)>;
     
     RtsConnectionSignal& OnReceiveRtsConnResponse() {
       return _receiveRtsConnResponse;
@@ -66,64 +66,64 @@ namespace Switchboard {
       return _DEV_ReceiveSshKey;
     }
 
-    Anki::Victor::ExternalComms::ExternalComms ReceiveExternalCommsMsg(uint8_t* buffer, size_t length) {
-      Anki::Victor::ExternalComms::ExternalComms extComms;
+    Anki::Victor::InternalInterface::InternalInterface ReceiveInternalInterfaceMsg(uint8_t* buffer, size_t length) {
+      Anki::Victor::InternalInterface::InternalInterface internalInterface;
 
-      const size_t unpackSize = extComms.Unpack(buffer, length);
+      const size_t unpackSize = internalInterface.Unpack(buffer, length);
       if(unpackSize != length) {
         // bugs
-        Log::Write("externalCommsCladHandler - Somehow our bytes didn't pack to the proper size.");
+        Log::Write("internalInterfaceCladHandler - Somehow our bytes didn't unpack to the proper size.");
       }
       
-      if(extComms.GetTag() == Anki::Victor::ExternalComms::ExternalCommsTag::RtsConnection) {
-        Anki::Victor::ExternalComms::RtsConnection rtsMsg = extComms.Get_RtsConnection();
+      if(internalInterface.GetTag() == Anki::Victor::InternalInterface::InternalInterfaceTag::RtsConnection) {
+        Anki::Victor::InternalInterface::RtsConnection rtsMsg = internalInterface.Get_RtsConnection();
         
         switch(rtsMsg.GetTag()) {
-          case Anki::Victor::ExternalComms::RtsConnectionTag::Error:
+          case Anki::Victor::InternalInterface::RtsConnectionTag::Error:
             //
             break;
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsConnResponse: {
+          case Anki::Victor::InternalInterface::RtsConnectionTag::RtsConnResponse: {
             _receiveRtsConnResponse.emit(rtsMsg);          
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsChallengeMessage: {
+          case Anki::Victor::InternalInterface::RtsConnectionTag::RtsChallengeMessage: {
             _receiveRtsChallengeMessage.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiConnectRequest: {
+          case Anki::Victor::InternalInterface::RtsConnectionTag::RtsWifiConnectRequest: {
             _receiveRtsWifiConnectRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiIpRequest: {
+          case Anki::Victor::InternalInterface::RtsConnectionTag::RtsWifiIpRequest: {
             _receiveRtsWifiIpRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsStatusRequest: {
+          case Anki::Victor::InternalInterface::RtsConnectionTag::RtsStatusRequest: {
             _receiveRtsStatusRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiScanRequest: {
+          case Anki::Victor::InternalInterface::RtsConnectionTag::RtsWifiScanRequest: {
             _receiveRtsWifiScanRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsOtaUpdateRequest: {
+          case Anki::Victor::InternalInterface::RtsConnectionTag::RtsOtaUpdateRequest: {
             _receiveRtsOtaUpdateRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiAccessPointRequest: {
+          case Anki::Victor::InternalInterface::RtsConnectionTag::RtsWifiAccessPointRequest: {
             _receiveRtsWifiAccessPointRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsCancelPairing: {
+          case Anki::Victor::InternalInterface::RtsConnectionTag::RtsCancelPairing: {
             _receiveRtsCancelPairing.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsAck: {
+          case Anki::Victor::InternalInterface::RtsConnectionTag::RtsAck: {
             _receiveRtsAck.emit(rtsMsg);
             break;
           }
           // RtsSsh
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsSshRequest: {
+          case Anki::Victor::InternalInterface::RtsConnectionTag::RtsSshRequest: {
             _DEV_ReceiveSshKey.emit(rtsMsg);
             break;
           }
@@ -133,17 +133,17 @@ namespace Switchboard {
         }
       }
 
-      return extComms;
+      return internalInterface;
     }
 
-    static std::vector<uint8_t> SendExternalCommsMsg(Anki::Victor::ExternalComms::ExternalComms msg) {
+    static std::vector<uint8_t> SendInternalInterfaceMsg(Anki::Victor::InternalInterface::InternalInterface msg) {
       std::vector<uint8_t> messageData(msg.Size());
 
       const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
 
       if(packedSize != msg.Size()) {
         // bugs
-        Log::Write("externalCommsCladHandler - Somehow our bytes didn't pack to the proper size.");
+        Log::Write("internalInterfaceCladHandler - Somehow our bytes didn't pack to the proper size.");
       }
 
       return messageData;

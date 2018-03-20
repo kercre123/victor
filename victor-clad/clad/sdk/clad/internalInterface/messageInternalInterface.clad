@@ -1,0 +1,66 @@
+// Messages to be communicated over the wire from Victor to an External Device.
+//  for the C-Like Abstract Data language
+// Author: Nicolas Kent
+// Copyright: Anki Inc (c) 2018
+
+#include "clad/internalInterface/messageRobotTransportSecurity.clad"
+
+namespace Anki {
+namespace Victor {
+namespace InternalInterface {
+
+
+message InternalError {
+    //
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Actions
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// ====================================================
+//                      App General
+// ====================================================
+
+enum uint_16 RobotStatus {
+  Exploring,
+}
+
+// Tell the app the robot's ui exposed status
+message RobotStatusRequest {
+    //
+}
+
+// Tell the app the robot's ui exposed status
+message RobotStatusResponse {
+    RobotStatus     response
+}
+
+message AppGeneralError {
+    //
+}
+
+union AppGeneral {
+    AppGeneralError             AppGeneralError             = 0x00,
+    RobotStatusRequest          RobotStatusRequest          = 0x01,
+    RobotStatusResponse         RobotStatusResponse         = 0x02,
+}
+
+
+
+// ====================================================
+//                      Outer Union
+// ====================================================
+
+union InternalInterface {
+    InternalError               InternalError               = 0x00,
+    RtsConnection               RtsConnection               = 0x01, // Note: never change RtsConnection messages or 
+                                                                    // this value in the union.
+                                                                    // Instead you should make a new union for any
+                                                                    // future pairing protocol versions, and add those
+                                                                    // to this union with different tags.
+}
+
+} // namespace InternalInterface
+} // namespace Victor
+} // namespace Anki

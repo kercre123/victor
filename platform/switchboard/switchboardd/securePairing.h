@@ -22,7 +22,7 @@
 #include "switchboardd/keyExchange.h"
 #include "switchboardd/pairingMessages.h"
 #include "switchboardd/taskExecutor.h"
-#include "switchboardd/externalCommsCladHandler.h"
+#include "switchboardd/internalInterfaceCladHandler.h"
 #include "switchboardd/engineMessagingClient.h"
 
 namespace Anki {
@@ -133,37 +133,37 @@ namespace Switchboard {
     void IncrementChallengeCount();
 
     Signal::SmartHandle _rtsConnResponseHandle;
-    void HandleRtsConnResponse(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsConnResponse(const Victor::InternalInterface::RtsConnection& msg);
 
     Signal::SmartHandle _rtsChallengeMessageHandle;
-    void HandleRtsChallengeMessage(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsChallengeMessage(const Victor::InternalInterface::RtsConnection& msg);
 
     Signal::SmartHandle _rtsWifiConnectRequestHandle;
-    void HandleRtsWifiConnectRequest(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsWifiConnectRequest(const Victor::InternalInterface::RtsConnection& msg);
 
     Signal::SmartHandle _rtsWifiIpRequestHandle;
-    void HandleRtsWifiIpRequest(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsWifiIpRequest(const Victor::InternalInterface::RtsConnection& msg);
 
     Signal::SmartHandle _rtsRtsStatusRequestHandle;
-    void HandleRtsStatusRequest(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsStatusRequest(const Victor::InternalInterface::RtsConnection& msg);
 
     Signal::SmartHandle _rtsWifiScanRequestHandle;
-    void HandleRtsWifiScanRequest(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsWifiScanRequest(const Victor::InternalInterface::RtsConnection& msg);
 
     Signal::SmartHandle _rtsOtaUpdateRequestHandle;
-    void HandleRtsOtaUpdateRequest(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsOtaUpdateRequest(const Victor::InternalInterface::RtsConnection& msg);
 
     Signal::SmartHandle _rtsWifiAccessPointRequestHandle;
-    void HandleRtsWifiAccessPointRequest(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsWifiAccessPointRequest(const Victor::InternalInterface::RtsConnection& msg);
 
     Signal::SmartHandle _rtsCancelPairingHandle;
-    void HandleRtsCancelPairing(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsCancelPairing(const Victor::InternalInterface::RtsConnection& msg);
 
     Signal::SmartHandle _rtsAckHandle;
-    void HandleRtsAck(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsAck(const Victor::InternalInterface::RtsConnection& msg);
 
     Signal::SmartHandle _rtsSshHandle;
-    void HandleRtsSsh(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsSsh(const Victor::InternalInterface::RtsConnection& msg);
     
     // Variables
     const uint8_t kMaxMatchAttempts = 5;
@@ -191,7 +191,7 @@ namespace Switchboard {
     
     std::unique_ptr<KeyExchange> _keyExchange;
     std::unique_ptr<TaskExecutor> _taskExecutor;
-    std::unique_ptr<ExternalCommsCladHandler> _cladHandler;
+    std::unique_ptr<InternalInterfaceCladHandler> _cladHandler;
     
     Signal::SmartHandle _onReceivePlainTextHandle;
     Signal::SmartHandle _onReceiveEncryptedHandle;
