@@ -1,0 +1,120 @@
+#!/bin/sh -f
+#
+# platform/config/bin/vic-watchdog
+#
+# Victor watchdog script
+#
+# This script runs as a background service to monitor status
+# of other victor services.  If a critical service exits with a
+# non-zero exit status, the watchdog script will call vic-tombstone
+# to display error codes on the robot's face.
+#
+# Default configuration values may be overridden by environment settings.
+# When run from vic-watchdog.service, environment settings may be
+# specified in /anki/etc/vic-watchdog.env.
+#
+set -u
+
+# How long do we sleep between status checks?
+: ${VIC_WATCHDOG_SLEEP:="15"}
+
+# Which services do we monitor?
+: ${VIC_WATCHDOG_SERVICES:="vic-robot vic-anim vic-engine"}
+
+# How many consecutive failures required for restart?
+: ${VIC_WATCHDOG_RESTART_FAILS:="1"}
+
+# How many consecutive failures required for tombstone?
+: ${VIC_WATCHDOG_TOMBSTONE_FAILS:="2"}
+
+# How many consecutive failures required for halt?
+: ${VIC_WATCHDOG_HALT_FAILS:="4"}
+
+# Helper proc to get service status
+get_status()
+{
+  unit="$1"
+
+  # Check for non-zero exit status
+  status=$(/bin/systemctl show -p ExecMainStatus ${unit})
+  status=$(echo ${status} | /bin/sed -e /ExecMainStatus=/s///)
+  if [ "${status}" != "0" ]; then
+    echo "${status}"; return
+  fi
+
+  # Check for service that failed to start
+  active=$(/bin/systemctl is-active ${unit})
+  if [ "${active}" == "failed" ]; then
+    echo "F"; return
+  fi
+
+  echo ${status}
+}
+
+# Count of consecutive failures
+fails=0
+
+while [ 1 ] ;
+do
+  # Start with a sleep so services can initialize
+  sleep ${VIC_WATCHDOG_SLEEP}
+
+  # Initialize tombstone string
+  tombstone=""
+
+  # Count this check as a failure?
+  ok=yes
+
+  for svc in ${VIC_WATCHDOG_SERVICES} ;
+  do
+    # Add status to current tombstone string
+    status=$(get_status ${svc})
+    tombstone="${tombstone} ${status}"
+
+    # If status is non-zero exit code, count this as a failure
+    if [ "$status" != "0" ]; then
+      ok=no
+    fi
+  done
+
+  echo "tombstone=${tombstone} ok=${ok}"
+
+  if [ "${ok}" == "yes" ]; then
+    fails=0
+    continue
+  fi
+
+  fails=$(expr ${fails} + 1)
+
+  #
+  # Perform zero or one of the following actions
+  #
+
+  if [ ${VIC_WATCHDOG_HALT_FAILS} -gt 0 ]; then
+    if [ ${fails} -ge ${VIC_WATCHDOG_HALT_FAILS} ]; then
+      # Request controlled shutdown
+      echo "SYSTEM HALT after ${fails} fails"
+      /bin/systemctl halt
+      continue
+    fi
+  fi
+
+  if [ ${VIC_WATCHDOG_TOMBSTONE_FAILS} -gt 0 ]; then
+    if [ ${fails} -ge ${VIC_WATCHDOG_TOMBSTONE_FAILS} ]; then
+      # Show tombstone string
+      echo "SHOW TOMBSTONE after ${fails} fails"
+      /anki/bin/vic-tombstone ${tombstone}
+      continue
+    fi
+  fi
+
+  if [ ${VIC_WATCHDOG_RESTART_FAILS} -gt 0 ]; then
+    if [ ${fails} -ge ${VIC_WATCHDOG_RESTART_FAILS} ]; then
+      # Restart victor target
+      echo "SERVICE RESTART after ${fails} fails"
+      /bin/systemctl restart victor.target
+      continue
+    fi
+  fi
+
+done

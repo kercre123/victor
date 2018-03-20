@@ -1,0 +1,16 @@
+#!/bin/sh -f
+#
+# platform/config/bin/vic-tombstone
+#
+# Stop animation process (if needed) then display error string on robot's face.
+#
+set -u
+
+active=$(/bin/systemctl is-active vic-anim.service)
+if [ "$active" == "active" ]; then
+  /bin/systemctl stop vic-anim.service
+  sleep 1
+fi
+
+# Display at size 2, row 4 for max visibility
+/bin/echo "2 4 w $*" | /system/bin/display > /dev/null 2>&1
