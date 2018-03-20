@@ -18,6 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "util/helpers/boundedWhile.h"
@@ -101,8 +102,9 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
   if( triggerWordPending ) {
     bool highLevelRunning = false;
     const IBehavior* behavior = this;
+    const auto& bsm = GetBEI().GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<BehaviorSystemManager>();
     BOUNDED_WHILE( 100, (behavior != nullptr) && "Stack too deep to find sleeping" ) {
-      behavior = GetBEI().GetDelegationComponent().GetBehaviorDelegatedTo( behavior );
+      behavior = bsm.GetBehaviorDelegatedTo( behavior );
       if( highLevelRunning && (behavior == _iConfig.sleepingBehavior.get()) ) {
         // High level AI is running the Sleeping behavior (probably through the Napping state).
         // Wake word serves as the wakeup for a napping robot, so disable the wake word behavior and let
