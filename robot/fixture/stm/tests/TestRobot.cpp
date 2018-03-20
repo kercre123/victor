@@ -15,26 +15,38 @@
 //                  Debug
 //-----------------------------------------------------------------------------
 
+static void dbg_check_emr_(void)
+{
+  uint32_t esn0 = cmdRobotEsn()->esn;
+  uint32_t esn1     = cmdRobotGmr( EMR_FIELD_OFS(ESN) );
+  uint32_t hwver    = cmdRobotGmr( EMR_FIELD_OFS(HW_VER) );
+  uint32_t model    = cmdRobotGmr( EMR_FIELD_OFS(MODEL) );
+  uint32_t lot_code = cmdRobotGmr( EMR_FIELD_OFS(LOT_CODE) );
+  uint32_t playpenready = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
+  uint32_t playpenpass  = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
+  uint32_t packedout    = cmdRobotGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
+  uint32_t packoutdate  = cmdRobotGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
+  
+  ConsolePrintf("\n");
+  cmdRobotBsv();
+  ConsolePrintf("\n");
+  ConsolePrintf("EMR[%u] esn         :%08x [%08x]\n", EMR_FIELD_OFS(ESN), esn1, esn0);
+  ConsolePrintf("EMR[%u] hwver       :%u\n", EMR_FIELD_OFS(HW_VER), hwver);
+  ConsolePrintf("EMR[%u] model       :%u\n", EMR_FIELD_OFS(MODEL), model);
+  ConsolePrintf("EMR[%u] lotcode     :%u\n", EMR_FIELD_OFS(LOT_CODE), lot_code);
+  ConsolePrintf("EMR[%u] playpenready:%u\n", EMR_FIELD_OFS(PLAYPEN_READY_FLAG), playpenready);
+  ConsolePrintf("EMR[%u] playpenpass :%u\n", EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), playpenpass);
+  ConsolePrintf("EMR[%u] packedout   :%u\n", EMR_FIELD_OFS(PACKED_OUT_FLAG), packedout);
+  ConsolePrintf("EMR[%u] packout-date:%u\n", EMR_FIELD_OFS(PACKED_OUT_DATE), packoutdate);
+  ConsolePrintf("\n");
+}
+
 static void dbg_test_all_(void)
 {
   //test all supported commands
-  cmdRobotEsn(); //ConsolePutChar('\n');
-  cmdRobotBsv(); //ConsolePutChar('\n');
-  cmdRobotEsn(); //ConsolePutChar('\n');
-  cmdRobotBsv(); //ConsolePutChar('\n');
-  
-  cmdRobotGet(1, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
-  cmdRobotGet(3, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
-  cmdRobotGet(5, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_CLIFF); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_MOT_LEFT); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_MOT_RIGHT); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_MOT_LIFT); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_MOT_HEAD); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_PROX_TOF); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_BTN_TOUCH); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_RSSI); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_RX_PKT); ConsolePutChar('\n');
+  cmdRobotEsn();
+  cmdRobotBsv();
+  ConsolePutChar('\n');
   
   cmdRobotMot(100, CCC_SENSOR_MOT_LEFT, 127, 0, 0, 0); ConsolePutChar('\n');
   cmdRobotMot(100, CCC_SENSOR_MOT_RIGHT, 0, -127, 0, 0); ConsolePutChar('\n');
@@ -43,10 +55,20 @@ static void dbg_test_all_(void)
   cmdRobotMot(50,  CCC_SENSOR_MOT_HEAD, 0, 0, 0, 100); ConsolePutChar('\n');
   cmdRobotMot(75,  CCC_SENSOR_MOT_HEAD, 0, 0, 0, -100); ConsolePutChar('\n');
   
-  uint32_t esn = cmdRobotGmr(0); //ConsolePutChar('\n');
-  uint32_t hw_ver = cmdRobotGmr(1); //ConsolePutChar('\n');
-  uint32_t model = cmdRobotGmr(2); //ConsolePutChar('\n');
-  uint32_t lot_code = cmdRobotGmr(3); //ConsolePutChar('\n');
+  cmdRobotGet(1, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
+  cmdRobotGet(3, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
+  cmdRobotGet(5, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
+  cmdRobotGet(1, CCC_SENSOR_CLIFF); ConsolePutChar('\n');
+  //cmdRobotGet(1, CCC_SENSOR_MOT_LEFT); ConsolePutChar('\n');
+  //cmdRobotGet(1, CCC_SENSOR_MOT_RIGHT); ConsolePutChar('\n');
+  //cmdRobotGet(1, CCC_SENSOR_MOT_LIFT); ConsolePutChar('\n');
+  //cmdRobotGet(1, CCC_SENSOR_MOT_HEAD); ConsolePutChar('\n');
+  cmdRobotGet(1, CCC_SENSOR_PROX_TOF); ConsolePutChar('\n');
+  cmdRobotGet(1, CCC_SENSOR_BTN_TOUCH); ConsolePutChar('\n');
+  cmdRobotGet(1, CCC_SENSOR_RSSI); ConsolePutChar('\n');
+  cmdRobotGet(1, CCC_SENSOR_RX_PKT); ConsolePutChar('\n');
+  
+  dbg_check_emr_();
 }
 
 static void dbg_test_emr_(bool blank_only=0, bool dont_clear=0);
@@ -216,26 +238,7 @@ void TestRobotInfo(void)
   Contacts::setModeRx();
   
   try { //DEBUG, cmd doesn't always succeed in dev builds
-    uint32_t esn0 = cmdRobotEsn()->esn;
-    cmdRobotBsv();
-    uint32_t esn1     = cmdRobotGmr( EMR_FIELD_OFS(ESN) );
-    uint32_t hwver    = cmdRobotGmr( EMR_FIELD_OFS(HW_VER) );
-    uint32_t model    = cmdRobotGmr( EMR_FIELD_OFS(MODEL) );
-    uint32_t lot_code = cmdRobotGmr( EMR_FIELD_OFS(LOT_CODE) );
-    uint32_t playpenready = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
-    uint32_t playpenpass  = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
-    uint32_t packedout    = cmdRobotGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
-    uint32_t packoutdate  = cmdRobotGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
-    ConsolePrintf("\n");
-    ConsolePrintf("EMR[%u] esn         :%08x [%08x]\n", EMR_FIELD_OFS(ESN), esn1, esn0);
-    ConsolePrintf("EMR[%u] hwver       :%u\n", EMR_FIELD_OFS(HW_VER), hwver);
-    ConsolePrintf("EMR[%u] model       :%u\n", EMR_FIELD_OFS(MODEL), model);
-    ConsolePrintf("EMR[%u] lotcode     :%u\n", EMR_FIELD_OFS(LOT_CODE), lot_code);
-    ConsolePrintf("EMR[%u] playpenready:%u\n", EMR_FIELD_OFS(PLAYPEN_READY_FLAG), playpenready);
-    ConsolePrintf("EMR[%u] playpenpass :%u\n", EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), playpenpass);
-    ConsolePrintf("EMR[%u] packedout   :%u\n", EMR_FIELD_OFS(PACKED_OUT_FLAG), packedout);
-    ConsolePrintf("EMR[%u] packout-date:%u\n", EMR_FIELD_OFS(PACKED_OUT_DATE), packoutdate);
-    ConsolePrintf("\n");
+    dbg_check_emr_();
   } catch(int e){
   }
   
