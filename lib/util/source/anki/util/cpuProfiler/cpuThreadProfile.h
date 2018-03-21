@@ -89,7 +89,8 @@ public:
   void LogProfile(uint32_t threadIndex) const;
   
   void LogAllCalledSamples(uint32_t threadIndex, const std::vector<CpuProfileSampleShared*>& samplesCalledFromThread) const;
-  
+  void SaveChromeTracingProfile(FILE* fp, uint32_t threadIndex) const;
+
   uint32_t GetTickNum() const { return _tickNum; }
   
   const CpuProfileClock::time_point& GetStartTimePoint() const { return _startTimePoint; }

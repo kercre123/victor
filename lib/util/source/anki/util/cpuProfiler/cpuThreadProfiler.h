@@ -18,6 +18,7 @@
 #include "util/cpuProfiler/cpuProfilerSettings.h"
 #include "util/cpuProfiler/cpuThreadId.h"
 #include "util/cpuProfiler/cpuThreadProfile.h"
+#include <cstdio>
 #include <vector>
 
 
@@ -51,6 +52,7 @@ public:
   void Init(CpuThreadId threadId, uint32_t threadIndex, const char* threadName, double maxTickTime_ms,
             uint32_t logFrequency, const CpuProfileClock::time_point& baseTimePoint, uint32_t sampleCount = 512);
   
+  static void SetChromeTracingFile(const char* tracingFile);
   void ReuseThread(CpuThreadId threadId);
   
   void SortProfile() { _currentProfile.SortSamples(); } // optional, needed for LogProfile() to work correctly
@@ -127,7 +129,8 @@ private:
   void WarnOfTinyProfileSample(const CpuProfileSampleShared& sharedData, double duration_ms);
   
   static double sMinSampleDuration_ms; // ignore trivial samples below this
-  
+  static FILE* _chromeTracingFile;
+
   std::vector<CpuProfileSampleShared*>  _samplesCalledFromThread;
   const char*                 _threadName;
   CpuThreadProfile            _currentProfile;

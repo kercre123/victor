@@ -102,7 +102,9 @@ bool CozmoAPI::Update(const BaseStationTime_t currentTime_nanosec)
     PRINT_NAMED_ERROR("CozmoAPI.Update", "Cozmo has not been started!");
     return false;
   }
-  
+
+  // Replace Util::CpuThreadProfiler::kLogFrequencyNever with a small value to output logging,
+  // can be used with Chrome Tracing format
   ANKI_CPU_TICK("CozmoEngineWebots", kMaxDesiredEngineDuration, Util::CpuThreadProfiler::kLogFrequencyNever);
   
   return _cozmoRunner->Update(currentTime_nanosec);

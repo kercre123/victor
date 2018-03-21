@@ -127,6 +127,13 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   //, _bleSystem(new BLESystem())
   ,_animationTransferHandler(new AnimationTransfer(_uiMsgHandler.get(),dataPlatform))
 {
+#if ANKI_CPU_PROFILER_ENABLED
+  // Initialize CPU profiler early and put tracing file at known location with no dependencies on other systems
+  Anki::Util::CpuProfiler::GetInstance();
+  Anki::Util::CpuThreadProfiler::SetChromeTracingFile(
+      dataPlatform->pathToResource(Util::Data::Scope::Cache, "vic-engine-tracing.json").c_str());
+#endif
+
   DEV_ASSERT(_context->GetExternalInterface() != nullptr, "Cozmo.Engine.ExternalInterface.nullptr");
   if (Anki::Util::gTickTimeProvider == nullptr) {
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();

@@ -611,6 +611,8 @@ namespace Cozmo {
 #if ANKI_CPU_PROFILER_ENABLED
     constexpr float kMaxExpectedFaceDrawTime_ms = 13.f;
 #endif
+    // Replace Util::CpuThreadProfiler::kLogFrequencyNever with a small value to output logging,
+    // can be used with Chrome Tracing format
     ANKI_CPU_TICK("ProceduralFaceDrawer", kMaxExpectedFaceDrawTime_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
     // Replace the above line with the below line to see profiling info in the log
     // ANKI_CPU_TICK("ProceduralFaceDrawer", kMaxExpectedFaceDrawTime_ms, 61);
