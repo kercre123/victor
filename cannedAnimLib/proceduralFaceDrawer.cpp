@@ -389,10 +389,22 @@ namespace Cozmo {
 
     // Black out lids
     if(!upperLidPoly.empty()) {
-      cv::fillConvexPoly(_eyeShape.get_CvMat_(), upperLidPoly, 0, kLineType);
+      if(faceData.GetParameter(whichEye, Parameter::UpperLidBend) < 0.f) {
+        const cv::Point* pts[1] = { &upperLidPoly[0] };
+        int npts[1] = { (int)upperLidPoly.size() };
+        cv::fillPoly(_eyeShape.get_CvMat_(), pts, npts, 1, 0, kLineType);
+      } else {
+        cv::fillConvexPoly(_eyeShape.get_CvMat_(), upperLidPoly, 0, kLineType);
+      }
     }
     if(!lowerLidPoly.empty()) {
-      cv::fillConvexPoly(_eyeShape.get_CvMat_(), lowerLidPoly, 0, kLineType);
+      if(faceData.GetParameter(whichEye, Parameter::LowerLidBend) < 0.f) {
+        const cv::Point* pts[1] = { &lowerLidPoly[0] };
+        int npts[1] = { (int)lowerLidPoly.size() };
+        cv::fillPoly(_eyeShape.get_CvMat_(), pts, npts, 1, 0, kLineType);
+      } else {
+        cv::fillConvexPoly(_eyeShape.get_CvMat_(), lowerLidPoly, 0, kLineType);
+      }
     }
     
     const f32 eyeScaleX = faceData.GetParameter(whichEye, Parameter::EyeScaleX);
