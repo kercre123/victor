@@ -1,30 +1,53 @@
-#!/system/bin/sh
+#!/bin/bash
 
-#unlock the read-only partition (until next boot)
-#adb remount
+#command line options:
+debug=0
+for arg in "$@"; do
+  if [ "${arg}" == "-d" ]; then debug=1; echo debug mode 1; fi
+done
 
-#https://stackoverflow.com/questions/13089694/adb-remount-permission-denied-but-able-to-access-super-user-in-shell-android#13366444
-#"Both adb remount and adb root don't work on a production build without altering ro.secure, but you can still
-# remount /system by opening a shell, asking for root permissions and typing the mount command."
-
-#modified init sequence after os update
-#cd /data
-echo 'cd /data/local/fixture && ./helper' > /data/appinit.sh
-chmod +x /data/appinit.sh
-exit
-
-#start helper application after normal boot
-if ! grep -q './helper' "/system/etc/userinit.sh"; then #if we haven't already added...
-  echo remount read-only partition
-  cd /
-  mount -o rw,remount /system
-
-  echo adding helper to bootup
-  cd /system/etc
-  echo 'cd /data/local/fixture && ./helper' > userinit_helper.sh
-  cat userinit_helper.sh >> userinit.sh
-  rm userinit_helper.sh
-
-else
-  echo helper boot ok
+bootscript="/etc/initscripts/ankiinit"
+if [ ! -e $bootscript ]; then
+  echo $bootscript does not exist
+  exit 1
 fi
+
+echo modifying boot script...
+tmpfile="ankiinitmod"; rm -f $tmpfile
+modified=0; linecnt=0
+while IFS='' read -r line || [[ -n "$line" ]]; do #https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable
+  linecnt=$((linecnt+1))
+  
+  #detect if we already modified this script
+  if [[ $line = *"boot helper"* ]] && [ $modified -lt 1 ]; then
+    modified=1;
+    echo $bootscript already helpified!
+  fi
+  
+  #insert helper boot code just before exit
+  if [[ $line = *"exit 0"* ]] && [ $modified -lt 1 ]; then
+    modified=1
+    echo adding helper modifications
+    echo "" >> $tmpfile
+    echo "#boot helper" >> $tmpfile
+    echo "mount -o exec,remount /data" >> $tmpfile
+    echo "/data/local/fixture/helper" >> $tmpfile
+    echo "" >> $tmpfile
+  fi
+  
+  echo $line >> $tmpfile
+done < $bootscript
+
+#point of no return!
+echo remove robot process boot target...
+systemctl stop anki-robot.target
+rm -f /etc/systemd/system/default.target #systemctl disable anki-robot.target
+echo updating boot script...
+chmod +x $tmpfile
+cp -f $tmpfile $bootscript
+sync
+
+if [ $debug -gt 0 ]; then echo found $linecnt lines; fi
+if [ $debug -lt 1 ]; then rm -f $tmpfile; fi
+
+exit 0

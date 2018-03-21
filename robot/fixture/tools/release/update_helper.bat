@@ -6,6 +6,8 @@ if %ERRORLEVEL% NEQ 0 (
   exit 1
 )
 
+echo waiting for device connection...
+adb wait-for-device && adb shell "systemctl stop anki-robot.target && systemctl disable anki-robot.target && sync"
 adb shell "echo shell connection established"
 if %ERRORLEVEL% NEQ 0 (
   echo adb not connected to a device, e=%ERRORLEVEL%
@@ -29,10 +31,12 @@ adb shell -x "cd data/local/fixture && chmod +x display"
 adb shell "sync"
 
 REM enable helper auto-start
-adb shell -x "cd data/local/fixture && ./helpify"
+adb shell "mount -o exec,remount /data"
+adb shell -x "cd data/local/fixture && ./helpify -d"
 adb shell "sync"
 
-REM adb reboot
-echo -------- POWER CYCLE NOW --------
+REM echo -------- POWER CYCLE NOW --------
+echo rebooting
+adb reboot
 pause
 
