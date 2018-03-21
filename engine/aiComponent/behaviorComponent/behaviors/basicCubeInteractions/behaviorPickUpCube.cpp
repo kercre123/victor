@@ -26,7 +26,6 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/externalInterface/messageFromActiveObject.h"
 
 
 namespace Anki {

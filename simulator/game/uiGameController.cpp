@@ -19,7 +19,6 @@
 #include "util/transport/udpTransport.h"
 // includes for physics functions
 #include "coretech/messaging/shared/UdpClient.h"
-#include "clad/externalInterface/messageFromActiveObject.h"
 #include "clad/physicsInterface/messageSimPhysics.h"
 // end of physics includes
 #include <stdio.h>
@@ -282,21 +281,21 @@ namespace Anki {
       HandleImageChunk(msg);
     } // HandleImageChunk()
     
-    void UiGameController::HandleActiveObjectAccelBase(const ObjectAccel& msg)
+    void UiGameController::HandleActiveObjectAccelBase(const ExternalInterface::ObjectAccel& msg)
     {
       //PRINT_NAMED_INFO("HandleActiveObjectAccel", "ObjectID %d, timestamp %d, accel {%.2f, %.2f, %.2f}",
       //                 msg.objectID, msg.timestamp, msg.accel.x, msg.accel.y, msg.accel.z);
       HandleActiveObjectAccel(msg);
     }
     
-    void UiGameController::HandleActiveObjectConnectionStateBase(const ObjectConnectionState& msg)
+    void UiGameController::HandleActiveObjectConnectionStateBase(const ExternalInterface::ObjectConnectionState& msg)
     {
       PRINT_NAMED_INFO("HandleActiveObjectConnectionState", "ObjectID %d (factoryID 0x%x): %s",
                        msg.objectID, msg.factoryID, msg.connected ? "CONNECTED" : "DISCONNECTED");
       HandleActiveObjectConnectionState(msg);
     }
     
-    void UiGameController::HandleActiveObjectMovedBase(const ObjectMoved& msg)
+    void UiGameController::HandleActiveObjectMovedBase(const ExternalInterface::ObjectMoved& msg)
     {
      // PRINT_NAMED_INFO("HandleActiveObjectMovedWrapper", "Received message that object %d moved. Accel=(%f,%f,%f). UpAxis=%s",
      //                  msg.objectID, msg.accel.x, msg.accel.y, msg.accel.z, UpAxisToString(msg.upAxis));
@@ -304,7 +303,7 @@ namespace Anki {
       HandleActiveObjectMoved(msg);
     }
     
-    void UiGameController::HandleActiveObjectStoppedMovingBase(const ObjectStoppedMoving& msg)
+    void UiGameController::HandleActiveObjectStoppedMovingBase(const ExternalInterface::ObjectStoppedMoving& msg)
     {
       PRINT_NAMED_INFO("HandleActiveObjectStoppedMoving", "Received message that object %d stopped moving",
                        msg.objectID);
@@ -312,7 +311,7 @@ namespace Anki {
       HandleActiveObjectStoppedMoving(msg);
     }
     
-    void UiGameController::HandleActiveObjectTappedBase(const ObjectTapped& msg)
+    void UiGameController::HandleActiveObjectTappedBase(const ExternalInterface::ObjectTapped& msg)
     {
       PRINT_NAMED_INFO("HandleActiveObjectTapped", "Received message that object %d was tapped %d times.",
                        msg.objectID, msg.numTaps);
@@ -320,7 +319,7 @@ namespace Anki {
       HandleActiveObjectTapped(msg);
     }
     
-    void UiGameController::HandleActiveObjectUpAxisChangedBase(const ObjectUpAxisChanged& msg)
+    void UiGameController::HandleActiveObjectUpAxisChangedBase(const ExternalInterface::ObjectUpAxisChanged& msg)
     {
       PRINT_NAMED_INFO("HandleActiveObjectUpAxisChanged", "Received message that object %d's UpAxis has changed (new UpAxis = %s).",
                        msg.objectID, UpAxisToString(msg.upAxis));

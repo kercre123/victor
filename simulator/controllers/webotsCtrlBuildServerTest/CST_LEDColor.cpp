@@ -41,7 +41,7 @@ private:
   uint8_t const * const GetMessage() const;
   s32 UpdateSimInternal() override;
   
-  void HandleActiveObjectConnectionState(const ObjectConnectionState& msg) override;
+  void HandleActiveObjectConnectionState(const ExternalInterface::ObjectConnectionState& msg) override;
 
   TestState _testState = TestState::Init;
   s32 _result = 0;
@@ -273,7 +273,7 @@ s32 CST_LEDColor::UpdateSimInternal()
   return _result;
 }
 
-void CST_LEDColor::HandleActiveObjectConnectionState(const ObjectConnectionState& msg)
+void CST_LEDColor::HandleActiveObjectConnectionState(const ExternalInterface::ObjectConnectionState& msg)
 {
   if(msg.connected)
   {

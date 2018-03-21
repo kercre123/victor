@@ -26,7 +26,6 @@
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/externalInterface/messageFromActiveObject.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {

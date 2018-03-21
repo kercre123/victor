@@ -28,8 +28,10 @@ namespace webots {
 
 namespace Anki {
 namespace Cozmo {
-  
-struct ObjectAvailable;
+
+namespace ExternalInterface {
+  struct ObjectAvailable;
+}
 class MessageEngineToCube;
 class MessageCubeToEngine;
 
@@ -54,7 +56,7 @@ public:
   static void SetSupervisor(webots::Supervisor *sup);
 #endif
 
-  using ObjectAvailableCallback   = std::function<void(const ObjectAvailable&)>;
+  using ObjectAvailableCallback   = std::function<void(const ExternalInterface::ObjectAvailable&)>;
   using CubeMessageCallback       = std::function<void(const BleFactoryId&, const MessageCubeToEngine&)>;
   using CubeConnectedCallback     = std::function<void(const BleFactoryId&)>;
   using CubeDisconnectedCallback  = std::function<void(const BleFactoryId&)>;

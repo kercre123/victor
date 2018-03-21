@@ -34,9 +34,11 @@ namespace Anki {
 namespace Cozmo {
 
 class Robot;
-struct ObjectTapped;
-struct ObjectMoved;
-struct ObjectStoppedMoving;
+namespace ExternalInterface {
+  struct ObjectTapped;
+  struct ObjectMoved;
+  struct ObjectStoppedMoving;
+}
 
 class BlockTapFilterComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
@@ -61,9 +63,9 @@ public:
   
   bool ShouldIgnoreMovementDueToDoubleTap(const ObjectID& objectID);
   
-  void HandleActiveObjectTapped(const ObjectTapped& message);
-  void HandleActiveObjectMoved(const ObjectMoved& message);
-  void HandleActiveObjectStopped(const ObjectStoppedMoving& message);
+  void HandleActiveObjectTapped(const ExternalInterface::ObjectTapped& message);
+  void HandleActiveObjectMoved(const ExternalInterface::ObjectMoved& message);
+  void HandleActiveObjectStopped(const ExternalInterface::ObjectStoppedMoving& message);
 
 private:
   
@@ -91,7 +93,7 @@ private:
   };
   
   std::map<ObjectID, DoubleTapInfo> _doubleTapObjects;
-  std::list<ObjectTapped> _tapInfo;
+  std::list<ExternalInterface::ObjectTapped> _tapInfo;
   
 #if ANKI_DEV_CHEATS
   void HandleSendTapFilterStatus(const AnkiEvent<ExternalInterface::MessageGameToEngine>& message);

@@ -13,7 +13,6 @@
 #include "engine/components/cubes/ledAnimation.h"
 
 #include "clad/externalInterface/messageEngineToCube.h"
-#include "clad/externalInterface/messageToActiveObject.h"
 #include "clad/types/ledTypes.h"
 
 #include "util/logging/logging.h"

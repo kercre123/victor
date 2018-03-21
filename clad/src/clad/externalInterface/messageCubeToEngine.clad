@@ -2,7 +2,7 @@
  *
  */
 
-#include "clad/externalInterface/messageFromActiveObject.clad"
+#include "clad/externalInterface/messageEngineToGame.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -21,10 +21,10 @@ message CubeAccelData
 
 union MessageCubeToEngine
 {
-  CubeAccelData          accelData      = 2, // tag must match COMMAND_ACCEL_DATA in cube firmware
+  CubeAccelData accelData = 2, // tag must match COMMAND_ACCEL_DATA in cube firmware
   
   // For sim only, to emulate BLE advertising:
-  ObjectAvailable        available      = 3,
+  ExternalInterface::ObjectAvailable  available = 3,
 }
 
 

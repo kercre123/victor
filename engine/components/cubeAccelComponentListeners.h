@@ -14,9 +14,9 @@
 #ifndef __Anki_Cozmo_Basestation_Components_CubeAccelComponentListener_H__
 #define __Anki_Cozmo_Basestation_Components_CubeAccelComponentListener_H__
 
-#include "coretech/common/engine/math/rotation.h"
+#include "clad/types/activeObjectAccel.h"
 
-#include "clad/externalInterface/messageFromActiveObject.h"
+#include "coretech/common/engine/math/rotation.h"
 
 namespace Anki {
 namespace Cozmo {

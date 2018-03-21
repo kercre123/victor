@@ -37,7 +37,7 @@ public:
 private:
   s32 UpdateSimInternal() override;
   
-  void HandleActiveObjectConnectionState(const ObjectConnectionState& msg) override;
+  void HandleActiveObjectConnectionState(const ExternalInterface::ObjectConnectionState& msg) override;
 
   void SetupExpectedLedPattern(Util::GraphEvaluator2d& graphEvaluator);
   
@@ -284,7 +284,7 @@ void CST_LightCubeAnims::AssertLedValues(const std::array<LEDValue, 4> expectedL
   }
 }
   
-void CST_LightCubeAnims::HandleActiveObjectConnectionState(const ObjectConnectionState& msg)
+void CST_LightCubeAnims::HandleActiveObjectConnectionState(const ExternalInterface::ObjectConnectionState& msg)
 {
   if(msg.connected) {
     _id = msg.objectID;

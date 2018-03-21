@@ -36,8 +36,6 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "clad/externalInterface/messageToActiveObject.h"
-
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 
@@ -936,7 +934,7 @@ const char* CubeLightComponent::LayerToString(const AnimLayerEnum& layer) const
 // =============Message handlers for cube lights==================
 
 template<>
-void CubeLightComponent::HandleMessage(const ObjectConnectionState& msg)
+void CubeLightComponent::HandleMessage(const ExternalInterface::ObjectConnectionState& msg)
 {
   if(msg.connected && IsValidLightCube(msg.object_type, false))
   {
