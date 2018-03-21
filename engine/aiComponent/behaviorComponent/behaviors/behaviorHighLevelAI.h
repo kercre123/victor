@@ -40,6 +40,8 @@ protected:
   }
   
   virtual void BehaviorUpdate() override;
+  
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
 private:
   

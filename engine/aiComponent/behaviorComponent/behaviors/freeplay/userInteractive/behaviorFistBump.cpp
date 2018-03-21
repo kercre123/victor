@@ -92,7 +92,17 @@ BehaviorFistBump::BehaviorFistBump(const Json::Value& config)
 , _iConfig(config)
 {
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFistBump::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kMaxTimeToLookForFaceKey,
+    kAbortIfNoFaceFoundKey,
+    kUpdateLastCompletionTimeKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorFistBump::WantsToBeActivatedBehavior() const

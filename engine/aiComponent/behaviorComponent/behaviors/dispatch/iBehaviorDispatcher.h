@@ -41,6 +41,7 @@ public:
 
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
 
   // This function should be overridden to return the behavior that should run. This will only be called at

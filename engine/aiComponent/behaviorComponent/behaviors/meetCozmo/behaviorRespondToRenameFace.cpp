@@ -39,6 +39,14 @@ BehaviorRespondToRenameFace::BehaviorRespondToRenameFace(const Json::Value& conf
   
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorRespondToRenameFace::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    JsonKeys::AnimationTriggerKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRespondToRenameFace::HandleWhileInScopeButNotActivated(const GameToEngineEvent& event)

@@ -50,6 +50,7 @@ public:
   
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
 
   using base = ICozmoBehavior;
   virtual void OnBehaviorActivated() override;

@@ -89,7 +89,17 @@ BehaviorStackBlocks::BehaviorStackBlocks(const Json::Value& config)
                                                      "BehaviorStackBlocks.Constructor.RetryCountIssue");
   }
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorStackBlocks::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kStackInAnyOrientationKey,
+    kPickupBehaviorIDKey,
+    kRetryPlaceCountKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStackBlocks::InitBehavior()

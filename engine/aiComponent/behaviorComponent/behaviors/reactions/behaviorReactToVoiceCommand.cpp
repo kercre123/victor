@@ -133,6 +133,24 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
   SetRespondToTriggerWord( true );
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kExitOnIntentsKey,
+    kEarConBegin,
+    kEarConEnd,
+    kProceduralBackpackLights,
+    kIntentBehaviorKey,
+    kTriggerBehaviorKey,
+    kTriggerBehaviorKey,
+    kIntentListenGetIn,
+    kLeesFeelings,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::LoadLeeHappinessValues( const Json::Value& config )
 {

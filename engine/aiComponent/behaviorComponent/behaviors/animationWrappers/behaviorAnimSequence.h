@@ -46,6 +46,8 @@ protected:
     modifiers.wantsToBeActivatedWhenOffTreads = true;
     modifiers.wantsToBeActivatedWhenOnCharger = _iConfig.activatableOnCharger;
   }
+  
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual bool WantsToBeActivatedAnimSeqInternal() const { return true;}
   

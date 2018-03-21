@@ -30,6 +30,7 @@ class BehaviorDispatcherStrictPriorityWithCooldown : public IBehaviorDispatcher
 
 protected:
   
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   virtual ICozmoBehaviorPtr GetDesiredBehavior() override;
   virtual void BehaviorDispatcher_OnActivated() override;
   virtual void BehaviorDispatcher_OnDeactivated() override;

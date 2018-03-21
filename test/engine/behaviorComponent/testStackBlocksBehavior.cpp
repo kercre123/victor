@@ -70,8 +70,7 @@ void CreateStackBehavior(Robot& robot, ICozmoBehaviorPtr& stackBehavior, Behavio
     R"({
          "behaviorClass": "StackBlocks",
          "behaviorID": "Wait_TestInjectable",
-         "pickupBehaviorID": "PickupCube",
-         "flatScore": 0.8
+         "pickupBehaviorID": "PickupCube"
        })";
 
   Json::Value config;   

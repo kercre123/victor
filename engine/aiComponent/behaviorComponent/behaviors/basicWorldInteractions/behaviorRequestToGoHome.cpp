@@ -36,6 +36,8 @@ const char* kRequestWaitLoopAnimTriggerKey = "waitLoopAnimTrigger";
 const char* kRequestIdleWaitTimeKey        = "idleWaitTime_sec";
 const char* kPickupAnimTriggerKey          = "pickupAnimTrigger";
 const char* kMaxFaceAgeKey                 = "maxFaceAge_sec";
+const char* kNormalKey                     = "normal";
+const char* kSevereKey                     = "severe";
 }
 
 
@@ -64,9 +66,25 @@ BehaviorRequestToGoHome::BehaviorRequestToGoHome(const Json::Value& config)
 : ICozmoBehavior(config)
 , _dVars(_iConfig)
 {
-  LoadConfig(config["params"]);
+  LoadConfig(config);
 }
- 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorRequestToGoHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kNumRequestsKey,
+    kRequestAnimTriggerKey,
+    kRequestGetoutAnimTriggerKey,
+    kRequestWaitLoopAnimTriggerKey,
+    kRequestIdleWaitTimeKey,
+    kPickupAnimTriggerKey,
+    kMaxFaceAgeKey,
+    kNormalKey,
+    kSevereKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorRequestToGoHome::WantsToBeActivatedBehavior() const
@@ -249,8 +267,8 @@ void BehaviorRequestToGoHome::LoadConfig(const Json::Value& config)
   const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
   
   const std::map<std::string, RequestParams*> configEntryMap {
-    {"normal", &_iConfig.normalRequest},
-    {"severe", &_iConfig.severeRequest},
+    {kNormalKey, &_iConfig.normalRequest},
+    {kSevereKey, &_iConfig.severeRequest},
   };
   
   for (auto& pair : configEntryMap) {

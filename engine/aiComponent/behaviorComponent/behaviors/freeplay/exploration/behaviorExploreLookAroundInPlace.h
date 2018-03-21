@@ -75,6 +75,7 @@ protected:
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingPets, EVisionUpdateFrequency::Standard });
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization

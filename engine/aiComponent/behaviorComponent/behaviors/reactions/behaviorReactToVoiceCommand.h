@@ -36,6 +36,7 @@ private:
 public:
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const override;
+  virtual void GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const override;
   
   // Empty override of AddListener because the strategy that controls this behavior is a listener
   // The strategy controls multiple different behaviors and listeners are necessary for the other behaviors

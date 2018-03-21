@@ -58,6 +58,16 @@ void ${class_name}::GetAllDelegates(std::set<IBehavior*>& delegates) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ${class_name}::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    // TODO: insert any possible root-level json keys that this class is expecting.
+    // TODO: replace this method with a simple {} in the header if this class doesn't use the ctor's "config" argument.
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ${class_name}::OnBehaviorActivated() 
 {
   // reset dynamic variables

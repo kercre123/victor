@@ -38,6 +38,12 @@ namespace {
 
 constexpr const char* kDebugName = "BehaviorHighLevelAI";
   
+const char* kSocializeKnownFaceCooldownKey = "socializeKnownFaceCooldown_s";
+const char* kPlayWithCubeCooldownKey = "playWithCubeCooldown_s";
+const char* kPlayWithCubeOnChargerCooldownKey = "playWithCubeOnChargerCooldown_s";
+const char* kGoToSleepTimeoutKey = "goToSleepTimeout_s";
+const char* kMinFaceTimeToAllowSleepKey = "minFaceTimeToAllowSleep_s";
+const char* kMaxFaceDistanceToSocializeKey = "maxFaceDistanceToSocialize_mm";
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -45,18 +51,32 @@ constexpr const char* kDebugName = "BehaviorHighLevelAI";
 BehaviorHighLevelAI::BehaviorHighLevelAI(const Json::Value& config)
   : InternalStatesBehavior( config, CreatePreDefinedStrategies() )
 {
-  _params.socializeKnownFaceCooldown_s = JsonTools::ParseFloat(config, "socializeKnownFaceCooldown_s", kDebugName);
-  _params.playWithCubeCooldown_s = JsonTools::ParseFloat(config, "playWithCubeCooldown_s", kDebugName);
-  _params.playWithCubeOnChargerCooldown_s = JsonTools::ParseFloat(config, "playWithCubeOnChargerCooldown_s", kDebugName);
-  _params.goToSleepTimeout_s = JsonTools::ParseFloat(config, "goToSleepTimeout_s", kDebugName);
-  _params.minFaceTimeToAllowSleep_s = JsonTools::ParseFloat(config, "minFaceTimeToAllowSleep_s", kDebugName);
-  _params.maxFaceDistanceToSocialize_mm = JsonTools::ParseFloat(config, "maxFaceDistanceToSocialize_mm", kDebugName);
+  _params.socializeKnownFaceCooldown_s = JsonTools::ParseFloat(config, kSocializeKnownFaceCooldownKey, kDebugName);
+  _params.playWithCubeCooldown_s = JsonTools::ParseFloat(config, kPlayWithCubeCooldownKey, kDebugName);
+  _params.playWithCubeOnChargerCooldown_s = JsonTools::ParseFloat(config, kPlayWithCubeOnChargerCooldownKey, kDebugName);
+  _params.goToSleepTimeout_s = JsonTools::ParseFloat(config, kGoToSleepTimeoutKey, kDebugName);
+  _params.minFaceTimeToAllowSleep_s = JsonTools::ParseFloat(config, kMinFaceTimeToAllowSleepKey, kDebugName);
+  _params.maxFaceDistanceToSocialize_mm = JsonTools::ParseFloat(config, kMaxFaceDistanceToSocializeKey, kDebugName);
   
-  MakeMemberTunable( _params.socializeKnownFaceCooldown_s, "socializeKnownFaceCooldown_s" );
-  MakeMemberTunable( _params.playWithCubeOnChargerCooldown_s, "playWithCubeOnChargerCooldown_s" );
-  MakeMemberTunable( _params.playWithCubeCooldown_s, "playWithCubeCooldown_s" );
+  MakeMemberTunable( _params.socializeKnownFaceCooldown_s, kSocializeKnownFaceCooldownKey );
+  MakeMemberTunable( _params.playWithCubeOnChargerCooldown_s, kPlayWithCubeOnChargerCooldownKey );
+  MakeMemberTunable( _params.playWithCubeCooldown_s, kPlayWithCubeCooldownKey );
   
   AddConsoleVarTransitions( "MoveToState", kDebugName );
+}
+  
+void BehaviorHighLevelAI::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  InternalStatesBehavior::GetBehaviorJsonKeys( expectedKeys );
+  const char* list[] = {
+    kSocializeKnownFaceCooldownKey,
+    kPlayWithCubeCooldownKey,
+    kPlayWithCubeOnChargerCooldownKey,
+    kGoToSleepTimeoutKey,
+    kMinFaceTimeToAllowSleepKey,
+    kMaxFaceDistanceToSocializeKey
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
 }
   
 BehaviorHighLevelAI::~BehaviorHighLevelAI()

@@ -46,6 +46,7 @@ protected:
   virtual void GetLinkedActivatableScopeBehaviors(std::set<IBehavior*>& delegates) const override {
     delegates.insert(_iConfig.delegate.get());
   };
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void InitBehavior() override final;
   virtual bool WantsToBeActivatedBehavior() const override final;

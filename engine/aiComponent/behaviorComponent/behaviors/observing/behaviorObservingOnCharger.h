@@ -35,6 +35,7 @@ protected:
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Low});
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   virtual bool CanBeGentlyInterruptedNow() const override;
   virtual void OnBehaviorActivated() override;
 

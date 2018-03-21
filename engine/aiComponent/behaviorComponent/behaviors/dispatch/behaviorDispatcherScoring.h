@@ -32,7 +32,7 @@ protected:
   friend class BehaviorFactory;  
   BehaviorDispatcherScoring(const Json::Value& config);
   
-
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   virtual ICozmoBehaviorPtr GetDesiredBehavior() override;
   virtual void InitDispatcher() override;  
   virtual void BehaviorDispatcher_OnDeactivated() override;

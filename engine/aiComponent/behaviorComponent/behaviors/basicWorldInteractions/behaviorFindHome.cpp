@@ -72,13 +72,25 @@ BehaviorFindHome::BehaviorFindHome(const Json::Value& config)
 : ICozmoBehavior(config)
 {
   const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
-  _iConfig = InstanceConfig(config["params"], debugName);
+  _iConfig = InstanceConfig(config, debugName);
   
   // Set up block world filter for finding Home object
   _iConfig.homeFilter->AddAllowedFamily(ObjectFamily::Charger);
   _iConfig.homeFilter->AddAllowedType(ObjectType::Charger_Basic);
 }
- 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kSearchAnimKey,
+    kNumSearchesKey,
+    kMinDrivingDistKey,
+    kMaxDrivingDistKey,
+    kMaxObservedAgeSecKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+} 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorFindHome::WantsToBeActivatedBehavior() const

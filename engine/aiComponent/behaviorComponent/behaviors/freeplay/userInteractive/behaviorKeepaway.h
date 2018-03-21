@@ -37,6 +37,7 @@ protected:
     modifiers.wantsToBeActivatedWhenOnCharger = false;
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
@@ -126,6 +127,8 @@ private:
     float   pounceSuccessPitchDiff_deg;
     bool    useProxForDistance;
     uint8_t pointsToWin;
+    
+    std::vector<std::string> floatNames; // autofilled names of the above floats
   };
 
   struct DynamicVariables{

@@ -106,6 +106,23 @@ BehaviorAnimGetInLoop::BehaviorAnimGetInLoop(const Json::Value& config)
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAnimGetInLoop::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kGetInAnimationKey,
+    kLoopAnimationKey,
+    kGetOutAnimationKey,
+    kEmergencyGetOutAnimationKey,
+    kLoopEndConditionKey,
+    kCheckEndCondKey,
+    kLoopIntervalKey,
+    kLockTreadsKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
+  
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAnimGetInLoop::~BehaviorAnimGetInLoop()
 {
 

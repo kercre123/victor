@@ -273,6 +273,16 @@ BehaviorTimerUtilityCoordinator::~BehaviorTimerUtilityCoordinator()
   sCoordinator = nullptr;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorTimerUtilityCoordinator::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kAnticConfigKey,
+    kMinValidTimerKey,
+    kMaxValidTimerKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTimerUtilityCoordinator::InitBehavior()

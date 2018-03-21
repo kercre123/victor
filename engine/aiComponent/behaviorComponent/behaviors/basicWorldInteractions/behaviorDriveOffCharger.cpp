@@ -60,6 +60,12 @@ BehaviorDriveOffCharger::BehaviorDriveOffCharger(const Json::Value& config)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDriveOffCharger::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  expectedKeys.insert( kExtraDriveDistKey );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDriveOffCharger::WantsToBeActivatedBehavior() const
 {
   const auto& robotInfo = GetBEI().GetRobotInfo();

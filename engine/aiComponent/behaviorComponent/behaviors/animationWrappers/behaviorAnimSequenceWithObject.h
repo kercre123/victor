@@ -28,6 +28,8 @@ protected:
   friend class BehaviorFactory;
   BehaviorAnimSequenceWithObject(const Json::Value& config);
   virtual void OnBehaviorActivated() override;
+  
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
 public:
   virtual bool WantsToBeActivatedBehavior() const override;

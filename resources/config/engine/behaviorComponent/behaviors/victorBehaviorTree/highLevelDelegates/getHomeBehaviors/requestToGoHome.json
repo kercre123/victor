@@ -3,24 +3,22 @@
   "behaviorID": "RequestToGoHome",
   "displayNameKey":"behavior.RequestToGoHome",
   
-  "params" : {
-    "normal" : {
-      "numRequests"         : 1,
-      "requestAnimTrigger"  : "ChargerDockingRequest",
-      "getoutAnimTrigger"   : "ChargerDockingRequestGetout",
-      "waitLoopAnimTrigger" : "ChargerDockingRequestWaitLoop",
-      "idleWaitTime_sec"    : 30.0
-    }, 
-    "severe" : {
-      "numRequests"         : 1,
-      "requestAnimTrigger"  : "ChargerDockingSevereRequest",
-      "getoutAnimTrigger"   : "ChargerDockingSevereRequestGetout",
-      "waitLoopAnimTrigger" : "ChargerDockingRequestWaitLoop",
-      "idleWaitTime_sec"    : 30.0
-    },
-    
-    "pickupAnimTrigger" : "ChargerDockingRequestPickup",
-    
-    "maxFaceAge_sec"    : 120.0
-  }
+  "normal" : {
+    "numRequests"         : 1,
+    "requestAnimTrigger"  : "ChargerDockingRequest",
+    "getoutAnimTrigger"   : "ChargerDockingRequestGetout",
+    "waitLoopAnimTrigger" : "ChargerDockingRequestWaitLoop",
+    "idleWaitTime_sec"    : 30.0
+  }, 
+  "severe" : {
+    "numRequests"         : 1,
+    "requestAnimTrigger"  : "ChargerDockingSevereRequest",
+    "getoutAnimTrigger"   : "ChargerDockingSevereRequestGetout",
+    "waitLoopAnimTrigger" : "ChargerDockingRequestWaitLoop",
+    "idleWaitTime_sec"    : 30.0
+  },
+  
+  "pickupAnimTrigger" : "ChargerDockingRequestPickup",
+  
+  "maxFaceAge_sec"    : 120.0
 }

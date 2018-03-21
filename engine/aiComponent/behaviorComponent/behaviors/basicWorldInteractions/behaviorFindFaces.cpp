@@ -27,7 +27,10 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-
+const char* const kMaxFaceAgeToLookKey = "maxFaceAgeToLook_ms";
+const char* const kStoppingConditionKey = "stoppingCondition";
+const char* const kSearchBehaviorKey = "searchBehavior";
+const char* const kTimeoutKey = "timeout_sec";
 }
 
 
@@ -52,16 +55,16 @@ BehaviorFindFaces::DynamicVariables::DynamicVariables()
 BehaviorFindFaces::BehaviorFindFaces(const Json::Value& config)
   : ICozmoBehavior(config)
 {
-  JsonTools::GetValueOptional(config, "maxFaceAgeToLook_ms", _iConfig.maxFaceAgeToLook_ms);
+  JsonTools::GetValueOptional(config, kMaxFaceAgeToLookKey, _iConfig.maxFaceAgeToLook_ms);
   
   const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
 
-  const auto& conditionStr = JsonTools::ParseString(config, "stoppingCondition", debugName);
+  const auto& conditionStr = JsonTools::ParseString(config, kStoppingConditionKey, debugName);
   _iConfig.stoppingCondition = StoppingConditionFromString(conditionStr);
   
-  _iConfig.searchBehaviorStr = JsonTools::ParseString(config, "searchBehavior", debugName);
+  _iConfig.searchBehaviorStr = JsonTools::ParseString(config, kSearchBehaviorKey, debugName);
   
-  JsonTools::GetValueOptional(config, "timeout_sec", _iConfig.timeout_sec);
+  JsonTools::GetValueOptional(config, kTimeoutKey, _iConfig.timeout_sec);
   
   // Make sure a nonzero timeout was provided if the stopping
   // condition is "timeout"
@@ -69,7 +72,18 @@ BehaviorFindFaces::BehaviorFindFaces(const Json::Value& config)
     DEV_ASSERT(Util::IsFltGTZero(_iConfig.timeout_sec), "BehaviorFindFaces.InvalidTimeout");
   }
 }
- 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindFaces::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kMaxFaceAgeToLookKey,
+    kStoppingConditionKey,
+    kSearchBehaviorKey,
+    kTimeoutKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorFindFaces::WantsToBeActivatedBehavior() const

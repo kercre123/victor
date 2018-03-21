@@ -28,6 +28,7 @@ class BehaviorDispatcherStrictPriority : public IBehaviorDispatcher
 protected:
   
   virtual ICozmoBehaviorPtr GetDesiredBehavior() override;
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 private:
   struct InstanceConfig {
     InstanceConfig();

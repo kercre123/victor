@@ -18,6 +18,10 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+namespace {
+const char* kBehaviorsKey = "behaviors";
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDispatcherStrictPriority::InstanceConfig::InstanceConfig()
@@ -35,7 +39,7 @@ BehaviorDispatcherStrictPriority::DynamicVariables::DynamicVariables()
 BehaviorDispatcherStrictPriority::BehaviorDispatcherStrictPriority(const Json::Value& config)
   : IBehaviorDispatcher(config)
 {
-  const Json::Value& behaviorArray = config["behaviors"];
+  const Json::Value& behaviorArray = config[kBehaviorsKey];
   DEV_ASSERT_MSG(!behaviorArray.isNull(),
                  "BehaviorDispatcherStrictPriority.BehaviorsNotSpecified",
                  "No Behaviors key found");
@@ -45,7 +49,13 @@ BehaviorDispatcherStrictPriority::BehaviorDispatcherStrictPriority(const Json::V
     }
   }
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherStrictPriority::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  expectedKeys.insert( kBehaviorsKey );
+  IBehaviorDispatcher::GetBehaviorJsonKeys(expectedKeys);
+}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehaviorPtr BehaviorDispatcherStrictPriority::GetDesiredBehavior()
 {

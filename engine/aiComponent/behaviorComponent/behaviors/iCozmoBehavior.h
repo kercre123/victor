@@ -191,6 +191,9 @@ public:
 
   // Give derived behaviors the opportunity to override default behavior operations
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const = 0;
+  
+  // gets list of ICozmoBehavior's expected keys and the derived class's, through GetBehaviorJsonKeys
+  std::vector<const char*> GetAllJsonKeys() const;
 
   // Allow external behaviors to ask that this behavior return false for WantsToBeActivated
   // for this tick. This should only be used by "coordinator" behaviors to allow an "event"
@@ -242,6 +245,11 @@ protected:
   // also don't want to put it in too low a delegate for the same reason -- if it doesn't start,
   // the higher level behavior might try again, and you end up in a loop. Choose wisely my friend.
   void AddResetTimer(const std::string& timerName) { _resetTimers.push_back(timerName); }
+  
+  // Derived behaviors can specify all json keys they expect at the root level, so that
+  // behavior json loading fails (in dev) if unexpected keys are found. You should insert
+  // into this list instead of assigning it.
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const = 0;
   
   virtual void OnEnteredActivatableScopeInternal() override;
   virtual void OnLeftActivatableScopeInternal() override;

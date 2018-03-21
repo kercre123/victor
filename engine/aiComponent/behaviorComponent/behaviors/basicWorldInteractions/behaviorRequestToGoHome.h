@@ -35,6 +35,7 @@ public:
 protected:
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override { modifiers.wantsToBeActivatedWhenOnCharger = false; }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;

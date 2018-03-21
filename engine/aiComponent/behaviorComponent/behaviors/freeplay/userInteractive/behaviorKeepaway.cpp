@@ -34,41 +34,52 @@ const char* kDebugName = "BehaviorKeepaway";
 const char* kLogChannelName = "Behaviors";
 // Distance past nominalPounceDist that we allow victor to creep. Helps ensure he eventually pounces.
 const float kCreepOverlapDist_mm = 3.0f;
+const char* kPointsToWinKey = "pointsToWin";
+const char* kUseProxForDistance = "useProxForDistance";
 const bool kAllowCallback = false;
 }
 
 BehaviorKeepaway::InstanceConfig::InstanceConfig(const Json::Value& config)
 {
+  // Helper macro to grab the key with the same name as the param struct member from the Json and
+  // set it as a float
+  # define SET_FLOAT_HELPER(__name__) do { \
+    __name__ = JsonTools::ParseFloat(config, QUOTE(__name__), "BehaviorKeepaway.InstanceConfig");\
+    if( ANKI_DEVELOPER_CODE ) {\
+      floatNames.emplace_back( QUOTE(__name__) );\
+    }\
+  } while(0)
+  
   // Set up a filter for finding Keepaway-able items
   keepawayTargetFilter = std::make_unique<BlockWorldFilter>();
   keepawayTargetFilter->AddAllowedFamily(ObjectFamily::Block);
   keepawayTargetFilter->AddAllowedFamily(ObjectFamily::LightCube);
   keepawayTargetFilter->AddAllowedFamily(ObjectFamily::CustomObject);
-  naturalGameEndTimeout_s = JsonTools::ParseFloat(config, "naturalGameEndTimeout_s", kDebugName);
-  targetUnmovedGameEndTimeout_s = JsonTools::ParseFloat(config, "targetUnmovedGameEndTimeout_s", kDebugName);
-  noVisibleTargetGameEndTimeout_s = JsonTools::ParseFloat(config, "noVisibleTargetGameEndTimeout_s", kDebugName);
-  noPointsEarnedTimeout_s = JsonTools::ParseFloat(config, "noPointsEarnedTimeout_s", kDebugName);
-  targetVisibleTimeout_s = JsonTools::ParseFloat(config, "targetVisibleTimeout_s", kDebugName);
-  animDistanceOffset_mm = JsonTools::ParseFloat(config, "animDistanceOffset_mm", kDebugName);
-  inPlayDistance_mm = JsonTools::ParseFloat(config, "inPlayDistance_mm", kDebugName);
-  outOfPlayDistance_mm = JsonTools::ParseFloat(config, "outOfPlayDistance_mm", kDebugName);
-  allowablePointingError_deg = JsonTools::ParseFloat(config, "allowablePointingError_deg", kDebugName);
-  targetUnmovedDistance_mm = JsonTools::ParseFloat(config, "targetUnmovedDistance_mm", kDebugName);
-  targetUnmovedAngle_deg = JsonTools::ParseFloat(config, "targetUnmovedAngle_deg", kDebugName);
-  targetUnmovedCreepTimeout_s = JsonTools::ParseFloat(config, "targetUnmovedCreepTimeout_s", kDebugName);
-  creepDistanceMin_mm = JsonTools::ParseFloat(config, "creepDistanceMin_mm", kDebugName);
-  creepDistanceMax_mm = JsonTools::ParseFloat(config, "creepDistanceMax_mm", kDebugName);
-  creepDelayTimeMin_s = JsonTools::ParseFloat(config, "creepDelayTimeMin_s", kDebugName);
-  creepDelayTimeMax_s = JsonTools::ParseFloat(config, "creepDelayTimeMax_s", kDebugName);
-  pounceDelayTimeMin_s = JsonTools::ParseFloat(config, "pounceDelayTimeMin_s", kDebugName);
-  pounceDelayTimeMax_s = JsonTools::ParseFloat(config, "pounceDelayTimeMax_s", kDebugName);
-  basePounceChance = JsonTools::ParseFloat(config, "basePounceChance", kDebugName);
-  pounceChanceIncrement = JsonTools::ParseFloat(config, "pounceChanceIncrement", kDebugName);
-  nominalPounceDistance_mm = JsonTools::ParseFloat(config, "nominalPounceDistance_mm", kDebugName);
-  instaPounceDistance_mm = JsonTools::ParseFloat(config, "instaPounceDistance_mm", kDebugName);
-  pounceSuccessPitchDiff_deg = JsonTools::ParseFloat(config, "pounceSuccessPitchDiff_deg", kDebugName);
-  useProxForDistance = JsonTools::ParseBool(config, "useProxForDistance", kDebugName);
-  pointsToWin = JsonTools::ParseUint8(config, "pointsToWin", kDebugName);
+  SET_FLOAT_HELPER(naturalGameEndTimeout_s);
+  SET_FLOAT_HELPER(targetUnmovedGameEndTimeout_s);
+  SET_FLOAT_HELPER(noVisibleTargetGameEndTimeout_s);
+  SET_FLOAT_HELPER(noPointsEarnedTimeout_s);
+  SET_FLOAT_HELPER(targetVisibleTimeout_s);
+  SET_FLOAT_HELPER(animDistanceOffset_mm);
+  SET_FLOAT_HELPER(inPlayDistance_mm);
+  SET_FLOAT_HELPER(outOfPlayDistance_mm);
+  SET_FLOAT_HELPER(allowablePointingError_deg);
+  SET_FLOAT_HELPER(targetUnmovedDistance_mm);
+  SET_FLOAT_HELPER(targetUnmovedAngle_deg);
+  SET_FLOAT_HELPER(targetUnmovedCreepTimeout_s);
+  SET_FLOAT_HELPER(creepDistanceMin_mm);
+  SET_FLOAT_HELPER(creepDistanceMax_mm);
+  SET_FLOAT_HELPER(creepDelayTimeMin_s);
+  SET_FLOAT_HELPER(creepDelayTimeMax_s);
+  SET_FLOAT_HELPER(pounceDelayTimeMin_s);
+  SET_FLOAT_HELPER(pounceDelayTimeMax_s);
+  SET_FLOAT_HELPER(basePounceChance);
+  SET_FLOAT_HELPER(pounceChanceIncrement);
+  SET_FLOAT_HELPER(nominalPounceDistance_mm);
+  SET_FLOAT_HELPER(instaPounceDistance_mm);
+  SET_FLOAT_HELPER(pounceSuccessPitchDiff_deg);
+  useProxForDistance = JsonTools::ParseBool(config, kUseProxForDistance, kDebugName);
+  pointsToWin = JsonTools::ParseUint8(config, kPointsToWinKey, kDebugName);
 }
 
 BehaviorKeepaway::DynamicVariables::DynamicVariables(const InstanceConfig& iConfig)
@@ -124,6 +135,16 @@ BehaviorKeepaway::BehaviorKeepaway(const Json::Value& config)
   MakeMemberTunable(_iConfig.pounceSuccessPitchDiff_deg, "pounceSuccessPitchDiff_deg");
   MakeMemberTunable(_iConfig.useProxForDistance, "useProxForDistance");
   MakeMemberTunable(_iConfig.pointsToWin, "pointsToWin");
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorKeepaway::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  expectedKeys.insert( kPointsToWinKey );
+  expectedKeys.insert( kUseProxForDistance );
+  for( const auto& str : _iConfig.floatNames ) {
+    expectedKeys.insert( str.c_str() );
+  }
 }
 
 bool BehaviorKeepaway::WantsToBeActivatedBehavior() const 

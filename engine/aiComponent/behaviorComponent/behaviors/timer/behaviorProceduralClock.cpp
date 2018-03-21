@@ -84,6 +84,21 @@ BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorProceduralClock::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kDigitMapKey,
+    kTimerElementsKey,
+    kClockTemplateKey,
+    kGetInTriggerKey,
+    kGetOutTriggerKey,
+    kDisplayClockSKey,
+    kShouldTurnToFaceKey,
+    kStaticElementsKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorProceduralClock::InitBehavior()

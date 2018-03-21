@@ -38,6 +38,7 @@ protected:
     modifiers.wantsToBeActivatedWhenOnCharger = false;
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Low });
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
 
   virtual void OnBehaviorActivated() override;

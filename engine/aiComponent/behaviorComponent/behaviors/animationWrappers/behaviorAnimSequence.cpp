@@ -79,6 +79,19 @@ BehaviorAnimSequence::BehaviorAnimSequence(const Json::Value& config, bool trigg
   _iConfig.activatableOnCharger = config.get(kSupportCharger, false).asBool();
 }
   
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAnimSequence::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kAnimTriggerKey,
+    kAnimNamesKey,
+    kLoopsKey,
+    kSupportCharger,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAnimSequence::~BehaviorAnimSequence()
 {

@@ -2,14 +2,12 @@
   "behaviorClass": "FindHome",
   "behaviorID": "FindHome",
   
-  "params" : {
-    "searchAnimTrigger" : "ChargerDockingSearch",
-    
-    "numSearches" : 3,
-    
-    "minDrivingDist_mm" : 150,
-    "maxDrivingDist_mm" : 400,
-    
-    "maxLastObservedAge_sec" : 60
-  }
+  "searchAnimTrigger" : "ChargerDockingSearch",
+  
+  "numSearches" : 3,
+  
+  "minDrivingDist_mm" : 150,
+  "maxDrivingDist_mm" : 400,
+  
+  "maxLastObservedAge_sec" : 60
 }

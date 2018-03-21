@@ -64,6 +64,8 @@ const float kCubeFailureRot_rad = DEG_TO_RAD(22.5f);
 const float kLocationFailureDist_mm = 100.0f;
 // if a location fails, what rotation invalidates for other poses
 const float kLocationFailureRot_rad = M_PI_F;
+  
+const char* kRecentFailureCooldownKey = "recentFailureCooldown_sec";
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // LocationCalculator: given row and column can calculate a 3d pose in a beacon
@@ -170,6 +172,7 @@ bool LocationCalculator::IsLocationFreeForObject(const int row, const int col, P
 BehaviorExploreBringCubeToBeacon::BehaviorExploreBringCubeToBeacon(const Json::Value& config)
 : ICozmoBehavior(config)
 {
+  LoadConfig(config);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -178,12 +181,18 @@ BehaviorExploreBringCubeToBeacon::~BehaviorExploreBringCubeToBeacon()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploreBringCubeToBeacon::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  expectedKeys.insert( kRecentFailureCooldownKey );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploreBringCubeToBeacon::LoadConfig(const Json::Value& config)
 {
   using namespace JsonTools;
   const std::string& debugName = GetDebugLabel() + ".BehaviorExploreBringCubeToBeacon";
 
-  _configParams.recentFailureCooldown_sec = ParseFloat(config, "recentFailureCooldown_sec", debugName);
+  _configParams.recentFailureCooldown_sec = ParseFloat(config, kRecentFailureCooldownKey, debugName);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

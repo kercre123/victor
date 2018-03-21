@@ -39,6 +39,16 @@
 namespace Anki {
 namespace Cozmo {
   
+namespace {
+  const char* kTileSizeKey = "tileSize_pixels";
+  const char* kWallSizeKey = "wallSize_pixels";
+  const char* kCozmoAvatarSizeKey = "cozmoAvatarSize_pixels";
+  const char* kTimeBetweenTilesKey = "timeBetweenTiles_Sec";
+  const char* kTimePauseAtIntersectionMinKey = "timePauseAtIntersectionMin_Sec";
+  const char* kTimePauseAtIntersectionMaxKey = "timePauseAtIntersectionMax_Sec";
+  const char* kChanceRandomWrongChoiceKey = "chanceRandomWrongChoice";
+}
+  
 // Console parameters
 #define CONSOLE_GROUP "Behavior.PuzzleMaze"
   
@@ -84,13 +94,13 @@ BehaviorPuzzleMaze::InstanceConfig::InstanceConfig(const Json::Value& config)
   chanceWrongTurn                = 0.05f;
 
   // grab any values the JSON overrides
-  JsonTools::GetValueOptional(config, "tileSize_pixels",                tileSize_px);
-  JsonTools::GetValueOptional(config, "wallSize_pixels",                wallSize_px);
-  JsonTools::GetValueOptional(config, "cozmoAvatarSize_pixels",         cozmoAvatarSize_px);
-  JsonTools::GetValueOptional(config, "timeBetweenTiles_Sec",           timeBetweenMazeSteps_Sec);
-  JsonTools::GetValueOptional(config, "timePauseAtIntersectionMin_Sec", timePauseAtIntersectionMin_Sec);
-  JsonTools::GetValueOptional(config, "timePauseAtIntersectionMax_Sec", timePauseAtIntersectionMax_Sec);
-  JsonTools::GetValueOptional(config, "chanceRandomWrongChoice",        chanceWrongTurn);
+  JsonTools::GetValueOptional(config, kTileSizeKey,                tileSize_px);
+  JsonTools::GetValueOptional(config, kWallSizeKey,                wallSize_px);
+  JsonTools::GetValueOptional(config, kCozmoAvatarSizeKey,         cozmoAvatarSize_px);
+  JsonTools::GetValueOptional(config, kTimeBetweenTilesKey,           timeBetweenMazeSteps_Sec);
+  JsonTools::GetValueOptional(config, kTimePauseAtIntersectionMinKey, timePauseAtIntersectionMin_Sec);
+  JsonTools::GetValueOptional(config, kTimePauseAtIntersectionMaxKey, timePauseAtIntersectionMax_Sec);
+  JsonTools::GetValueOptional(config, kChanceRandomWrongChoiceKey,        chanceWrongTurn);
 }
 
 
@@ -112,7 +122,21 @@ BehaviorPuzzleMaze::BehaviorPuzzleMaze(const Json::Value& config)
 {
 
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPuzzleMaze::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kTileSizeKey,
+    kWallSizeKey,
+    kCozmoAvatarSizeKey,
+    kTimeBetweenTilesKey,
+    kTimePauseAtIntersectionMinKey,
+    kTimePauseAtIntersectionMaxKey,
+    kChanceRandomWrongChoiceKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Transition to given state

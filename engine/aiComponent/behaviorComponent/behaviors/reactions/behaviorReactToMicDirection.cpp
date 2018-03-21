@@ -99,6 +99,15 @@ BehaviorReactToMicDirection::~BehaviorReactToMicDirection()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToMicDirection::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kKeyResponseList,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToMicDirection::LoadDynamicReactionStateData( const Json::Value& config )
 {
   // load our default values ...

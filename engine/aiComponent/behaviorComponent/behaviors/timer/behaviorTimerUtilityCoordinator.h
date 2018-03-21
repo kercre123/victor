@@ -50,6 +50,7 @@ protected:
     modifiers.behaviorAlwaysDelegates = true;
     modifiers.wantsToBeActivatedWhenOffTreads = true;
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;

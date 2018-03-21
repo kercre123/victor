@@ -51,6 +51,12 @@ BehaviorAnimSequenceWithObject::BehaviorAnimSequenceWithObject(const Json::Value
   }
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAnimSequenceWithObject::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  BaseClass::GetBehaviorJsonKeys( expectedKeys );
+  expectedKeys.insert( kObjectTypeKey );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 bool BehaviorAnimSequenceWithObject::WantsToBeActivatedBehavior() const

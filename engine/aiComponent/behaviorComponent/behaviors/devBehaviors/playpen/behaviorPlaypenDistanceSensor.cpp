@@ -25,10 +25,10 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-static const std::string kAngleToTurnKey    = "AngleToTurnToSeeTarget_deg";
-static const std::string kDistToDriveKey    = "DistanceToDriveToSeeTarget_mm";
-static const std::string kExpectedObjectKey = "ExpectedObjectType";
-static const std::string kExpectedDistKey   = "ExpectedDistance_mm";
+static const char* const kAngleToTurnKey    = "AngleToTurnToSeeTarget_deg";
+static const char* const kDistToDriveKey    = "DistanceToDriveToSeeTarget_mm";
+static const char* const kExpectedObjectKey = "ExpectedObjectType";
+static const char* const kExpectedDistKey   = "ExpectedDistance_mm";
 }
 
 BehaviorPlaypenDistanceSensor::BehaviorPlaypenDistanceSensor(const Json::Value& config)
@@ -40,7 +40,7 @@ BehaviorPlaypenDistanceSensor::BehaviorPlaypenDistanceSensor(const Json::Value& 
   if(!res)
   {
     PRINT_NAMED_ERROR("BehaviorPlaypenDistanceSensor.Constructor.MissingConfigKey",
-                      "Missing %s key from PlaypenDistanceSensor Config", kAngleToTurnKey.c_str());
+                      "Missing %s key from PlaypenDistanceSensor Config", kAngleToTurnKey);
   }
   _angleToTurn = DEG_TO_RAD(angle);
   
@@ -49,7 +49,7 @@ BehaviorPlaypenDistanceSensor::BehaviorPlaypenDistanceSensor(const Json::Value& 
   if(!res)
   {
     PRINT_NAMED_ERROR("BehaviorPlaypenDistanceSensor.Constructor.MissingConfigKey",
-                      "Missing %s key from PlaypenDistanceSensor Config", kExpectedObjectKey.c_str());
+                      "Missing %s key from PlaypenDistanceSensor Config", kExpectedObjectKey);
   }
   _expectedObjectType = ObjectTypeFromString(objectType);
   
@@ -57,12 +57,24 @@ BehaviorPlaypenDistanceSensor::BehaviorPlaypenDistanceSensor(const Json::Value& 
   if(!res)
   {
     PRINT_NAMED_ERROR("BehaviorPlaypenDistanceSensor.Constructor.MissingConfigKey",
-                      "Missing %s key from PlaypenDistanceSensor Config", kExpectedDistKey.c_str());
+                      "Missing %s key from PlaypenDistanceSensor Config", kExpectedDistKey);
   }
 
   JsonTools::GetValueOptional(config, kDistToDriveKey, _distToDrive_mm);
   
   SubscribeToTags({EngineToGameTag::RobotObservedObject});
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPlaypenDistanceSensor::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kAngleToTurnKey,
+    kDistToDriveKey,
+    kExpectedObjectKey,
+    kExpectedDistKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 Result BehaviorPlaypenDistanceSensor::OnBehaviorActivatedInternal()

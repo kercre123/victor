@@ -58,6 +58,12 @@ static const BackpackLights kLightsOff = {
   .transitionOffPeriod_ms = {{0,0,0}},
   .offset                 = {{0,0,0}}
 };
+  
+const char* const kSavePathKey = "save_path";
+const char* const kImageSaveQualityKey = "quality";
+const char* const kUseCapacitiveTouchKey = "use_capacitive_touch";
+const char* const kSaveSensorDataKey = "save_sensor_data";
+const char* const kClassNamesKey = "class_names";
 
 }
 
@@ -87,17 +93,17 @@ BehaviorDevImageCapture::DynamicVariables::DynamicVariables()
 BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
   : ICozmoBehavior(config)
 {
-  _iConfig.imageSavePath = JsonTools::ParseString(config, "save_path", "BehaviorDevImageCapture");
-  _iConfig.imageSaveQuality = JsonTools::ParseInt8(config, "quality", "BehaviorDevImageCapture");
-  _iConfig.useCapTouch = JsonTools::ParseBool(config, "use_capacitive_touch", "BehaviorDevImageCapture");
+  _iConfig.imageSavePath = JsonTools::ParseString(config, kSavePathKey, "BehaviorDevImageCapture");
+  _iConfig.imageSaveQuality = JsonTools::ParseInt8(config, kImageSaveQualityKey, "BehaviorDevImageCapture");
+  _iConfig.useCapTouch = JsonTools::ParseBool(config, kUseCapacitiveTouchKey, "BehaviorDevImageCapture");
 
-  if (config.isMember("save_sensor_data")) {
-    _iConfig.saveSensorData = config["save_sensor_data"].asBool();
+  if (config.isMember(kSaveSensorDataKey)) {
+    _iConfig.saveSensorData = config[kSaveSensorDataKey].asBool();
   }
 
-  if(config.isMember("class_names"))
+  if(config.isMember(kClassNamesKey))
   {
-    auto const& classNames = config["class_names"];
+    auto const& classNames = config[kClassNamesKey];
     if(classNames.isArray())
     {
       for(Json::ArrayIndex index=0; index < classNames.size(); ++index)
@@ -122,7 +128,19 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
 BehaviorDevImageCapture::~BehaviorDevImageCapture()
 {
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDevImageCapture::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kSavePathKey,
+    kImageSaveQualityKey,
+    kUseCapacitiveTouchKey,
+    kSaveSensorDataKey,
+    kClassNamesKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 static inline void EnableDebugFaceDrawButton(BehaviorExternalInterface& bei, bool enable)

@@ -80,6 +80,12 @@ BehaviorLookInPlaceMemoryMap::BehaviorLookInPlaceMemoryMap(const Json::Value& co
 BehaviorLookInPlaceMemoryMap::~BehaviorLookInPlaceMemoryMap()
 {  
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorLookInPlaceMemoryMap::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  expectedKeys.insert( kConfigParamsKey );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorLookInPlaceMemoryMap::WantsToBeActivatedBehavior() const

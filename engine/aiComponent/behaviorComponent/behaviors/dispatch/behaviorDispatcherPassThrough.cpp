@@ -62,6 +62,11 @@ void BehaviorDispatcherPassThrough::GetBehaviorOperationModifiers(BehaviorOperat
   _iConfig.delegate->GetBehaviorOperationModifiers(modifiers);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherPassThrough::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  expectedKeys.insert( kBehaviorIDConfigKey );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherPassThrough::InitBehavior()

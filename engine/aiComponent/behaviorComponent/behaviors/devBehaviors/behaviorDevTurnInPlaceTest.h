@@ -33,6 +33,7 @@ protected:
   BehaviorDevTurnInPlaceTest(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
 private:
 

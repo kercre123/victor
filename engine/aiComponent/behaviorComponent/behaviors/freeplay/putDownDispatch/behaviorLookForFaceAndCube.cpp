@@ -35,6 +35,24 @@ namespace {
 
 static constexpr const int kNumFramesToWaitForTrackingOnlyFace = 1;
 static constexpr const int kNumFramesToWaitForUnNamedFace = 3;
+  
+const char* const kBodyTurnSpeedKey                 = "bodyTurnSpeed_degPerSec";
+const char* const kHeadTurnSpeedKey                 = "headTurnSpeed_degPerSec";
+const char* const kFace_headAngleAbsRangeMinKey     = "face_headAngleAbsRangeMin_deg";
+const char* const kFace_headAngleAbsRangeMaxKey     = "face_headAngleAbsRangeMax_deg";
+const char* const kFace_bodyAngleRelRangeMinKey     = "face_bodyAngleRelRangeMin_deg";
+const char* const kFace_bodyAngleRelRangeMaxKey     = "face_bodyAngleRelRangeMax_deg";
+const char* const kFace_sidePicksKey                = "face_sidePicks";
+const char* const kCube_headAngleAbsRangeMinKey     = "cube_headAngleAbsRangeMin_rad";
+const char* const kCube_headAngleAbsRangeMaxKey     = "cube_headAngleAbsRangeMax_rad";
+const char* const kCube_bodyAngleRelRangeMinKey     = "cube_bodyAngleRelRangeMin_rad";
+const char* const kCube_bodyAngleRelRangeMaxKey     = "cube_bodyAngleRelRangeMax_rad";
+const char* const kCube_sidePicksKey                = "cube_sidePicks";
+const char* const kStopBehaviorOnCubeKey            = "stopBehaviorOnCube";
+const char* const kVerifySeenFacesKey               = "verifySeenFaces";
+const char* const kStopBehaviorOnAnyFaceKey         = "stopBehaviorOnAnyFace";
+const char* const kStopBehaviorOnNamedFaceKey       = "stopBehaviorOnNamedFace";
+const char* const kLookInPlaceAnimTriggerKey        = "lookInPlaceAnimTrigger";
 };
 
 
@@ -54,29 +72,29 @@ BehaviorLookForFaceAndCube::InstanceConfig::InstanceConfig(const Json::Value& co
   const std::string& debugName = "BehaviorLookForFaceAndCube.LoadConfig";
 
   // shared
-  bodyTurnSpeed_radPerSec = DEG_TO_RAD( ParseFloat(config, "bodyTurnSpeed_degPerSec", debugName) );
-  headTurnSpeed_radPerSec = DEG_TO_RAD( ParseFloat(config, "headTurnSpeed_degPerSec", debugName) );
+  bodyTurnSpeed_radPerSec = DEG_TO_RAD( ParseFloat(config, kBodyTurnSpeedKey, debugName) );
+  headTurnSpeed_radPerSec = DEG_TO_RAD( ParseFloat(config, kHeadTurnSpeedKey, debugName) );
   
   // face states
-  face_headAngleAbsRangeMin_rad = DEG_TO_RAD( ParseFloat(config, "face_headAngleAbsRangeMin_deg", debugName) );
-  face_headAngleAbsRangeMax_rad = DEG_TO_RAD( ParseFloat(config, "face_headAngleAbsRangeMax_deg", debugName) );
-  face_bodyAngleRelRangeMin_rad = DEG_TO_RAD( ParseFloat(config, "face_bodyAngleRelRangeMin_deg", debugName) );
-  face_bodyAngleRelRangeMax_rad = DEG_TO_RAD( ParseFloat(config, "face_bodyAngleRelRangeMax_deg", debugName) );
-  face_sidePicks = ParseUint8(config, "face_sidePicks", debugName);
+  face_headAngleAbsRangeMin_rad = DEG_TO_RAD( ParseFloat(config, kFace_headAngleAbsRangeMinKey, debugName) );
+  face_headAngleAbsRangeMax_rad = DEG_TO_RAD( ParseFloat(config, kFace_headAngleAbsRangeMaxKey, debugName) );
+  face_bodyAngleRelRangeMin_rad = DEG_TO_RAD( ParseFloat(config, kFace_bodyAngleRelRangeMinKey, debugName) );
+  face_bodyAngleRelRangeMax_rad = DEG_TO_RAD( ParseFloat(config, kFace_bodyAngleRelRangeMaxKey, debugName) );
+  face_sidePicks = ParseUint8(config, kFace_sidePicksKey, debugName);
   // cube states
-  cube_headAngleAbsRangeMin_rad = DEG_TO_RAD( ParseFloat(config, "cube_headAngleAbsRangeMin_rad", debugName) );;
-  cube_headAngleAbsRangeMax_rad = DEG_TO_RAD( ParseFloat(config, "cube_headAngleAbsRangeMax_rad", debugName) );;
-  cube_bodyAngleRelRangeMin_rad = DEG_TO_RAD( ParseFloat(config, "cube_bodyAngleRelRangeMin_rad", debugName) );;
-  cube_bodyAngleRelRangeMax_rad = DEG_TO_RAD( ParseFloat(config, "cube_bodyAngleRelRangeMax_rad", debugName) );;
-  cube_sidePicks = ParseUint8(config, "cube_sidePicks", debugName);
-  stopBehaviorOnCube = config.get("stopBehaviorOnCube", false).asBool();
+  cube_headAngleAbsRangeMin_rad = DEG_TO_RAD( ParseFloat(config, kCube_headAngleAbsRangeMinKey, debugName) );;
+  cube_headAngleAbsRangeMax_rad = DEG_TO_RAD( ParseFloat(config, kCube_headAngleAbsRangeMaxKey, debugName) );;
+  cube_bodyAngleRelRangeMin_rad = DEG_TO_RAD( ParseFloat(config, kCube_bodyAngleRelRangeMinKey, debugName) );;
+  cube_bodyAngleRelRangeMax_rad = DEG_TO_RAD( ParseFloat(config, kCube_bodyAngleRelRangeMaxKey, debugName) );;
+  cube_sidePicks = ParseUint8(config, kCube_sidePicksKey, debugName);
+  stopBehaviorOnCube = config.get(kStopBehaviorOnCubeKey, false).asBool();
   
-  verifySeenFaces = ParseBool(config, "verifySeenFaces", debugName);
-  stopBehaviorOnAnyFace = ParseBool(config, "stopBehaviorOnAnyFace", debugName);
-  stopBehaviorOnNamedFace = ParseBool(config, "stopBehaviorOnNamedFace", debugName);
+  verifySeenFaces = ParseBool(config, kVerifySeenFacesKey, debugName);
+  stopBehaviorOnAnyFace = ParseBool(config, kStopBehaviorOnAnyFaceKey, debugName);
+  stopBehaviorOnNamedFace = ParseBool(config, kStopBehaviorOnNamedFaceKey, debugName);
   
   // anim triggers
-  std::string lookInPlaceAnimTriggerStr = ParseString(config, "lookInPlaceAnimTrigger", debugName);
+  std::string lookInPlaceAnimTriggerStr = ParseString(config, kLookInPlaceAnimTriggerKey, debugName);
   lookInPlaceAnimTrigger = lookInPlaceAnimTriggerStr.empty() ? AnimationTrigger::Count : AnimationTriggerFromString(lookInPlaceAnimTriggerStr.c_str());
   if ( lookInPlaceAnimTrigger == AnimationTrigger::Count )
   {
@@ -102,7 +120,7 @@ BehaviorLookForFaceAndCube::DynamicVariables::DynamicVariables(Radians&& startin
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorLookForFaceAndCube::BehaviorLookForFaceAndCube(const Json::Value& config)
 : ICozmoBehavior(config)
-, _iConfig(config["params"])
+, _iConfig(config)
 , _dVars(Radians())
 {
   if( _iConfig.verifySeenFaces || _iConfig.stopBehaviorOnAnyFace || _iConfig.stopBehaviorOnNamedFace  ) {
@@ -121,6 +139,31 @@ BehaviorLookForFaceAndCube::BehaviorLookForFaceAndCube(const Json::Value& config
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorLookForFaceAndCube::~BehaviorLookForFaceAndCube()
 {  
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorLookForFaceAndCube::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kBodyTurnSpeedKey,
+    kHeadTurnSpeedKey,
+    kFace_headAngleAbsRangeMinKey,
+    kFace_headAngleAbsRangeMaxKey,
+    kFace_bodyAngleRelRangeMinKey,
+    kFace_bodyAngleRelRangeMaxKey,
+    kFace_sidePicksKey,
+    kCube_headAngleAbsRangeMinKey,
+    kCube_headAngleAbsRangeMaxKey,
+    kCube_bodyAngleRelRangeMinKey,
+    kCube_bodyAngleRelRangeMaxKey,
+    kCube_sidePicksKey,
+    kStopBehaviorOnCubeKey,
+    kVerifySeenFacesKey,
+    kStopBehaviorOnAnyFaceKey,
+    kStopBehaviorOnNamedFaceKey,
+    kLookInPlaceAnimTriggerKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

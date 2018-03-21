@@ -39,6 +39,7 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.behaviorAlwaysDelegates = false;
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
   virtual void OnBehaviorDeactivated() override;
@@ -140,6 +141,9 @@ private:
     float    trackingTimeToAchieveObjective_sec;  // E.g. 5sec
     
     bool     skipGetOutAnim = false;
+    
+    // list of the above var names
+    std::vector<std::string> varNames;
   };
 
   struct DynamicVariables {

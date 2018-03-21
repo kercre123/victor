@@ -2,14 +2,12 @@
   "behaviorClass": "GoHome",
   "behaviorID": "GoHome",
   
-  "params" : {
-    "useCliffSensorCorrection" : true,
-    "leftTurnAnimTrigger"    : "ChargerDockingLeftTurn",
-    "rightTurnAnimTrigger"   : "ChargerDockingRightTurn",
-    "backupStartAnimTrigger" : "ChargerDockingBackupDriveStart",
-    "backupEndAnimTrigger"   : "ChargerDockingBackupDriveEnd",
-    "backupLoopAnimTrigger"  : "ChargerDockingBackupDriveLoop",
-    "raiseLiftAnimTrigger"   : "ChargerDockingRaiseLift",
-    "nuzzleAnimTrigger"      : "ChargerDockingSettle"
-  }
+  "useCliffSensorCorrection" : true,
+  "leftTurnAnimTrigger"    : "ChargerDockingLeftTurn",
+  "rightTurnAnimTrigger"   : "ChargerDockingRightTurn",
+  "backupStartAnimTrigger" : "ChargerDockingBackupDriveStart",
+  "backupEndAnimTrigger"   : "ChargerDockingBackupDriveEnd",
+  "backupLoopAnimTrigger"  : "ChargerDockingBackupDriveLoop",
+  "raiseLiftAnimTrigger"   : "ChargerDockingRaiseLift",
+  "nuzzleAnimTrigger"      : "ChargerDockingSettle"
 }

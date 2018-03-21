@@ -171,6 +171,8 @@ namespace {
 
   static_assert( sizeof(kSoundResponses_AwakeOffCharger)/sizeof(BehaviorReactToSound::DirectionResponse) == kNumMicDirections,
                 "The array [kSoundResponses_AwakeOffCharger] is missing data for all mic directions (in behaviorReactToSound.cpp)" );
+  
+  const char* const kFromSleepKey = "FromSleep";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -179,7 +181,7 @@ BehaviorReactToSound::BehaviorReactToSound( const Json::Value& config ) :
 {
   // whether or not we're responding from the asleep or awake/observing state will be determined via json config.
   // this allows us to have different state "tree/graphs" for when victor is in the sleep or awake behavior state.
-  const bool isSleeping = JsonTools::ParseBool( config, "FromSleep", "BehaviorReactToSound.Params.ObservationStatus" );
+  const bool isSleeping = JsonTools::ParseBool( config, kFromSleepKey, "BehaviorReactToSound.Params.ObservationStatus" );
   _observationStatus = ( isSleeping ? EObservationStatus::EObservationStatus_Asleep : EObservationStatus::EObservationStatus_Awake );
 }
 
@@ -189,6 +191,15 @@ void BehaviorReactToSound::GetBehaviorOperationModifiers( BehaviorOperationModif
   modifiers.wantsToBeActivatedWhenCarryingObject  = true;
   modifiers.behaviorAlwaysDelegates               = true;
   modifiers.wantsToBeActivatedWhenOnCharger       = true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToSound::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kFromSleepKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

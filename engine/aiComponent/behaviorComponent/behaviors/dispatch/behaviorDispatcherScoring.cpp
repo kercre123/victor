@@ -73,7 +73,13 @@ BehaviorDispatcherScoring::~BehaviorDispatcherScoring()
 {
 
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherScoring::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  expectedKeys.insert( kBehaviorsInChooserConfigKey );
+  IBehaviorDispatcher::GetBehaviorJsonKeys(expectedKeys);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherScoring::InitDispatcher()

@@ -64,7 +64,16 @@ BehaviorPickUpCube::BehaviorPickUpCube(const Json::Value& config)
     _iConfig.pickupRetryCount = JsonTools::ParseUint8(config, kPickupRetryCountKey, debug);
   }
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPickUpCube::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kPickupRetryCountKey,
+    kPickupRetryCountKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPickUpCube::WantsToBeActivatedBehavior() const

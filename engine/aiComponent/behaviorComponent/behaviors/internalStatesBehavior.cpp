@@ -42,6 +42,8 @@ namespace {
 constexpr const char* kStateConfgKey = "states";
 constexpr const char* kStateNameConfgKey = "name";
 constexpr const char* kResumeReplacementsKey = "resumeReplacements";
+constexpr const char* kTransitionDefinitionsKey = "transitionDefinitions";
+constexpr const char* kInitialStateKey = "initialState";
 
 
 static const BackpackLights kLightsOff = {
@@ -160,7 +162,7 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config, PreDef
   std::set< StateID > allFromStates;
   std::set< StateID > allToStates;
   
-  for( const auto& transitionDefConfig : config["transitionDefinitions"] ) {
+  for( const auto& transitionDefConfig : config[kTransitionDefinitionsKey] ) {
     std::vector<StateID> fromStates;
     if( transitionDefConfig["from"].isArray() ) {
       ANKI_VERIFY( transitionDefConfig["from"].size() > 0,
@@ -232,7 +234,7 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config, PreDef
                 "Created %zu states",
                 _states->size());
 
-  const std::string& initialStateStr = JsonTools::ParseString(config, "initialState", "InternalStatesBehavior.StateConfig");
+  const std::string& initialStateStr = JsonTools::ParseString(config, kInitialStateKey, "InternalStatesBehavior.StateConfig");
   auto stateIt = _stateNameToID.find(initialStateStr);
   if( ANKI_VERIFY( stateIt != _stateNameToID.end(),
                    "InternalStatesBehavior.Config.InitialState.NoSuchState",
@@ -261,6 +263,17 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config)
 
 InternalStatesBehavior::~InternalStatesBehavior()
 {
+}
+  
+void InternalStatesBehavior::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kStateConfgKey,
+    kResumeReplacementsKey,
+    kTransitionDefinitionsKey,
+    kInitialStateKey
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 void InternalStatesBehavior::InitBehavior()

@@ -67,7 +67,12 @@ BehaviorTrackLaser::InstanceConfig::InstanceConfig(const Json::Value& config)
 {
   // Helper macro to grab the key with the same name as the param struct member from the Json and
   // set it as a float
-  # define SET_FLOAT_HELPER(__name__) do { __name__ = JsonTools::ParseFloat(config, QUOTE(__name__), "BehaviorTrackLaser.SetParamsFromConfig"); } while(0)
+  # define SET_FLOAT_HELPER(__name__) do { \
+    __name__ = JsonTools::ParseFloat(config, QUOTE(__name__), "BehaviorTrackLaser.SetParamsFromConfig");\
+    if( ANKI_DEVELOPER_CODE ) {\
+      varNames.emplace_back( QUOTE(__name__) );\
+    }\
+  } while(0)
   
   // In same order as defined in the params struct
   SET_FLOAT_HELPER(startIfLaserSeenWithin_sec);
@@ -153,7 +158,19 @@ BehaviorTrackLaser::BehaviorTrackLaser(const Json::Value& config)
   _dVars.lastLaserObservation.timestamp_ms      = 0;
   _dVars.lastLaserObservation.timestamp_prev_ms = 0;
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorTrackLaser::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kSkipGetOutAnimKey,
+    kMaxLostLaserTimeoutGraphKey
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+  for( const auto& str : _iConfig.varNames ) {
+    expectedKeys.insert( str.c_str() );
+  }
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorTrackLaser::WantsToBeActivatedBehavior() const

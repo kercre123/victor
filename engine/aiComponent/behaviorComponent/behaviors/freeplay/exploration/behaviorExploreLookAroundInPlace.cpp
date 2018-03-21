@@ -71,6 +71,12 @@ BehaviorExploreLookAroundInPlace::BehaviorExploreLookAroundInPlace(const Json::V
 BehaviorExploreLookAroundInPlace::~BehaviorExploreLookAroundInPlace()
 {  
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorExploreLookAroundInPlace::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  expectedKeys.insert( kConfigParamsKey );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorExploreLookAroundInPlace::WantsToBeActivatedBehavior() const

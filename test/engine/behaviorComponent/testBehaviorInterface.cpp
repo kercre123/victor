@@ -613,6 +613,8 @@ public:
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
     modifiers.behaviorAlwaysDelegates = false;
   }
+  
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
 
   virtual bool WantsToBeActivatedBehavior() const override {
     return true;
@@ -704,6 +706,7 @@ public:
   std::string _type;
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
 
   virtual bool WantsToBeActivatedBehavior() const override {
     return true;

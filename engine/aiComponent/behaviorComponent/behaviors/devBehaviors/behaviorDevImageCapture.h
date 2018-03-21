@@ -41,6 +41,7 @@ protected:
     modifiers.behaviorAlwaysDelegates = false;
     modifiers.visionModesForActiveScope->insert({VisionMode::SavingImages, EVisionUpdateFrequency::High});
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;

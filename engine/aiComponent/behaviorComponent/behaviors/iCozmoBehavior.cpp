@@ -79,6 +79,7 @@ static const char* kAnonymousBehaviorMapKey          = "anonymousBehaviors";
 static const char* kAnonymousBehaviorName            = "behaviorName";
   
 static const char* kBehaviorDebugLabel               = "debugLabel";
+static const char* kDisplayNameKey                   = "displayNameKey";
 }
 
   
@@ -292,7 +293,38 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
 ICozmoBehavior::~ICozmoBehavior()
 {
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
+{
+  std::vector<const char*> expectedKeys;
+  
+  // this comes first so that if the behavior assigns instead of inserts its more likely to fail.
+  static const char* baseKeys[] = {
+    kBehaviorClassKey,
+    kBehaviorIDConfigKey,
+    kRequiredUnlockKey,
+    kRequiredDriveOffChargerKey,
+    kRequiredParentSwitchKey,
+    kExecutableBehaviorTypeKey,
+    kAlwaysStreamlineKey,
+    kWantsToBeActivatedCondConfigKey,
+    kWantsToCancelSelfConfigKey,
+    kRespondToUserIntentsKey,
+    kClaimUserIntentDataKey,
+    kRespondToTriggerWordKey,
+    kResetTimersKey,
+    kAnonymousBehaviorMapKey,
+    kDisplayNameKey,
+  };
+  expectedKeys.insert( expectedKeys.end(), std::begin(baseKeys), std::end(baseKeys) );
+  
+  std::set<const char*> behaviorKeys;
+  GetBehaviorJsonKeys( behaviorKeys );
+  expectedKeys.insert( expectedKeys.end(), behaviorKeys.begin(), behaviorKeys.end() );
+  
+  return expectedKeys;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::InitInternal()

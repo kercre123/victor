@@ -39,6 +39,14 @@ namespace {
   // animation control constants
   const int kPlayAnimOnce = 1;    // value for number of loops argument for playing anim once
   const bool kCanAnimationInterrupt = true; // value for whether starting the animation can interrupt
+  
+  const char* const kTimeTilTouchCheckKey = "timeTilTouchCheck";
+  const char* const kAnimGroupNamesKey = "animGroupNames";
+  const char* const kAnimGroupNamesGetoutKey = "animGroupNamesGetout";
+  const char* const kTimeTilBlissGetoutKey = "timeTilBlissGetout";
+  const char* const kTimeTilNonBlissGetoutKey = "timeTilNonBlissGetout";
+  const char* const kNumPetsToAdvanceBlissKey = "numPetsToAdvanceBliss";
+  
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -62,29 +70,44 @@ BehaviorReactToTouchPetting::BehaviorReactToTouchPetting(const Json::Value& conf
 {
   const char* kDebugStr = "BehaviorReactToTouchPetting.Ctor";
   
-  _timeTilTouchCheck = JsonTools::ParseFloat( config, "timeTilTouchCheck", kDebugStr);
+  _timeTilTouchCheck = JsonTools::ParseFloat( config, kTimeTilTouchCheckKey, kDebugStr);
   
   std::vector<std::string> tmp;
-  ANKI_VERIFY(JsonTools::GetVectorOptional(config, "animGroupNames", tmp),"BehaviorReactToTouchPetting.Ctor.MissingVectorOfAnimTriggers","");
+  ANKI_VERIFY(JsonTools::GetVectorOptional(config, kAnimGroupNamesKey, tmp),"BehaviorReactToTouchPetting.Ctor.MissingVectorOfAnimTriggers","");
   for(const auto& t : tmp) {
     _animPettingResponse.push_back( AnimationTriggerFromString(t) );
   }
   
   tmp.clear();
-  ANKI_VERIFY(JsonTools::GetVectorOptional(config, "animGroupNamesGetout", tmp),"BehaviorReactToTouchPetting.Ctor.MissingVectorOfAnimTriggersGetout","");
+  ANKI_VERIFY(JsonTools::GetVectorOptional(config, kAnimGroupNamesGetoutKey, tmp),"BehaviorReactToTouchPetting.Ctor.MissingVectorOfAnimTriggersGetout","");
   for(const auto& t : tmp) {
     _animPettingGetout.push_back( AnimationTriggerFromString(t) );
   }
   
-  _blissTimeout = JsonTools::ParseFloat(config, "timeTilBlissGetout",kDebugStr);
-  _nonBlissTimeout = JsonTools::ParseFloat(config, "timeTilNonBlissGetout",kDebugStr);
-  _minNumPetsToAdvanceBliss = JsonTools::ParseInt8(config, "numPetsToAdvanceBliss",kDebugStr);
+  _blissTimeout = JsonTools::ParseFloat(config, kTimeTilBlissGetoutKey,kDebugStr);
+  _nonBlissTimeout = JsonTools::ParseFloat(config, kTimeTilNonBlissGetoutKey,kDebugStr);
+  _minNumPetsToAdvanceBliss = JsonTools::ParseInt8(config, kNumPetsToAdvanceBlissKey,kDebugStr);
   
   SubscribeToTags({
     ExternalInterface::MessageEngineToGameTag::TouchButtonEvent
   });
 }
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToTouchPetting::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+     kTimeTilTouchCheckKey,
+     kAnimGroupNamesKey,
+     kAnimGroupNamesGetoutKey,
+     kTimeTilBlissGetoutKey,
+     kTimeTilNonBlissGetoutKey,
+     kNumPetsToAdvanceBlissKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToTouchPetting::AlwaysHandleInScope(const EngineToGameEvent& event)
 {

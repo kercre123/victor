@@ -86,6 +86,12 @@ constexpr MemoryMapTypes::FullContentArray typesToBlockDriving =
 };
 static_assert(MemoryMapTypes::IsSequentialArray(typesToBlockDriving),
   "This array does not define all types once and only once.");
+  
+const char* const kMinTimeToTrackFaceKey = "minTimeToTrackFace_s";
+const char* const kMaxTimeToTrackFaceKey = "maxTimeToTrackFace_s";
+const char* const kClampSmallAnglesKey = "clampSmallAngles";
+const char* const kMinClampPeriodKey = "minClampPeriod_s";
+const char* const kMaxClampPeriodKey = "maxClampPeriod_s";
 }
 
 
@@ -112,8 +118,21 @@ BehaviorInteractWithFaces::DynamicVariables::DynamicVariables()
 BehaviorInteractWithFaces::BehaviorInteractWithFaces(const Json::Value& config)
 : ICozmoBehavior(config)
 {
-  LoadConfig(config["params"]);
+  LoadConfig(config);
 
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorInteractWithFaces::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+   kMinTimeToTrackFaceKey,
+   kMaxTimeToTrackFaceKey,
+   kClampSmallAnglesKey,
+   kMinClampPeriodKey,
+   kMaxClampPeriodKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -122,8 +141,8 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
   using namespace JsonTools;
   const std::string& debugName = "BehaviorInteractWithFaces.BehaviorInteractWithFaces.LoadConfig";
 
-  _iConfig.minTimeToTrackFace_s = ParseFloat(config, "minTimeToTrackFace_s", debugName);
-  _iConfig.maxTimeToTrackFace_s = ParseFloat(config, "maxTimeToTrackFace_s", debugName);
+  _iConfig.minTimeToTrackFace_s = ParseFloat(config, kMinTimeToTrackFaceKey, debugName);
+  _iConfig.maxTimeToTrackFace_s = ParseFloat(config, kMaxTimeToTrackFaceKey, debugName);
 
   if( ! ANKI_VERIFY(_iConfig.maxTimeToTrackFace_s >= _iConfig.minTimeToTrackFace_s,
                     "BehaviorInteractWithFaces.LoadConfig.InvalidTrackingTime",
@@ -134,10 +153,10 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
     _iConfig.maxTimeToTrackFace_s = _iConfig.minTimeToTrackFace_s;
   }
 
-  _iConfig.clampSmallAngles = ParseBool(config, "clampSmallAngles", debugName);
+  _iConfig.clampSmallAngles = ParseBool(config, kClampSmallAnglesKey, debugName);
   if( _iConfig.clampSmallAngles ) {
-    _iConfig.minClampPeriod_s = ParseFloat(config, "minClampPeriod_s", debugName);
-    _iConfig.maxClampPeriod_s = ParseFloat(config, "maxClampPeriod_s", debugName);
+    _iConfig.minClampPeriod_s = ParseFloat(config, kMinClampPeriodKey, debugName);
+    _iConfig.maxClampPeriod_s = ParseFloat(config, kMinClampPeriodKey, debugName);
 
     if( ! ANKI_VERIFY(_iConfig.maxClampPeriod_s >= _iConfig.minClampPeriod_s,
                       "BehaviorInteractWithFaces.LoadConfig.InvalidClampPeriod",

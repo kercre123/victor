@@ -26,6 +26,7 @@ namespace Cozmo {
 namespace{
 static const char* kConfigKeyDelegateID = "delegateID";
 static const char* kConfigKeyNumRuns = "numRuns";
+static const char* kBehaviorsKey = "behaviors";
 }
 
 
@@ -74,7 +75,17 @@ BehaviorDispatcherRerun::~BehaviorDispatcherRerun()
 {
   
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherRerun::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kBehaviorsKey,
+    kConfigKeyDelegateID,
+    kConfigKeyNumRuns,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherRerun::InitBehavior()

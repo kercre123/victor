@@ -32,7 +32,7 @@ public:
 
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const override;
-
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
 
 protected:
 

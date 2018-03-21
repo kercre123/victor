@@ -99,7 +99,16 @@ BehaviorLookAround::BehaviorLookAround(const Json::Value& config)
 BehaviorLookAround::~BehaviorLookAround()
 {
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorLookAround::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kShouldHandleConfirmedKey,
+    kShouldHandlePossibleKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorLookAround::WantsToBeActivatedBehavior() const

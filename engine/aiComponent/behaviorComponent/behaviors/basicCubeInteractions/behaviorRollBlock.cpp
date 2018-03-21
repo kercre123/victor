@@ -72,7 +72,16 @@ BehaviorRollBlock::BehaviorRollBlock(const Json::Value& config)
     _iConfig.rollRetryCount = JsonTools::ParseUint8(config, kRetryCountKey,debugStr);
   }
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorRollBlock::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kIsBlockRotationImportant,
+    kRetryCountKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorRollBlock::WantsToBeActivatedBehavior() const

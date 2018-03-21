@@ -30,6 +30,8 @@ namespace Cozmo {
 namespace{
   
 const float kAccelMagnitudeShakingStartedThreshold = 16000.f;
+  
+const char* const kBehaviorsKey = "behaviors";
 
 // set to > 0 from console to fake the repeated "shakes" (shakes are hard to do in webots sim)
 CONSOLE_VAR(unsigned int, kDevDispatchAfterShake, "DevBaseBehavior", 0);
@@ -81,7 +83,7 @@ BehaviorDispatchAfterShake::DynamicVariables::DynamicVariables()
 BehaviorDispatchAfterShake::BehaviorDispatchAfterShake(const Json::Value& config)
   : ICozmoBehavior(config)
 {
-  for( const auto& behavior : config["behaviors"] ) {
+  for( const auto& behavior : config[kBehaviorsKey] ) {
     _iConfig.delegateIDs.push_back( BehaviorTypesWrapper::BehaviorIDFromString( behavior.asString() ) );
   }
   
@@ -89,7 +91,12 @@ BehaviorDispatchAfterShake::BehaviorDispatchAfterShake(const Json::Value& config
                "BehaviorDispatchAfterShake.Ctor.Empty",
                "No behavior delegates were found" );
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatchAfterShake::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  expectedKeys.insert( kBehaviorsKey );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatchAfterShake::OnBehaviorActivated()

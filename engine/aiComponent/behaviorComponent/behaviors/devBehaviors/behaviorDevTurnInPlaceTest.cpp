@@ -24,6 +24,11 @@ namespace Cozmo {
 
 namespace{
 const char* kChannelName = "Behaviors";
+
+const char* const kLoopForeverKey = "loopForever";
+const char* const kGapBetweenTestsKey = "gapBetweenTests_s";
+const char* const kRunsPerTestKey = "nRunsPerTest";
+const char* const kTestsKey = "tests";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -50,11 +55,11 @@ BehaviorDevTurnInPlaceTest::BehaviorDevTurnInPlaceTest(const Json::Value& config
   using namespace JsonTools;
   const char* debugName = "BehaviorDevTurnInPlaceTest";
   
-  _iConfig.loopForever = ParseBool(config, "loopForever", debugName);
-  _iConfig.gapBetweenTests_s = ParseFloat(config, "gapBetweenTests_s", debugName);
-  _iConfig.nRunsPerTest = ParseUint8(config, "nRunsPerTest", debugName);
+  _iConfig.loopForever = ParseBool(config, kLoopForeverKey, debugName);
+  _iConfig.gapBetweenTests_s = ParseFloat(config, kGapBetweenTestsKey, debugName);
+  _iConfig.nRunsPerTest = ParseUint8(config, kRunsPerTestKey, debugName);
   
-  const auto& testArray = config["tests"];
+  const auto& testArray = config[kTestsKey];
   for (const auto& test : testArray) {
     const auto angle = ParseFloat(test, "angle_deg", debugName);
     const auto speed = ParseFloat(test, "speed_deg_per_sec", debugName);
@@ -69,7 +74,18 @@ BehaviorDevTurnInPlaceTest::BehaviorDevTurnInPlaceTest(const Json::Value& config
                 "Loaded %zu tests from config file.",
                 _iConfig.tests.size());
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDevTurnInPlaceTest::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kLoopForeverKey,
+    kGapBetweenTestsKey,
+    kRunsPerTestKey,
+    kTestsKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDevTurnInPlaceTest::WantsToBeActivatedBehavior() const
