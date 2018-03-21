@@ -1379,10 +1379,14 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
 void WebService::SendToWebSockets(const std::string& moduleName, const Json::Value& data) const
 {
   Json::Value payload;
-  payload["module"] = moduleName;
-  payload["data"] = data;
+  bool hasAssigned = false; // don't copy payload unless there is >= 1 client for this module
   for( const auto& connData : _webSocketConnections ) {
     if( connData.subscribedModules.find( moduleName ) != connData.subscribedModules.end() ) {
+      if( !hasAssigned ) {
+        payload["module"] = moduleName;
+        payload["data"] = data;
+        hasAssigned = true;
+      }
       SendToWebSocket(connData.conn, payload);
     }
   }

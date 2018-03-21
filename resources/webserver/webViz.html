@@ -212,8 +212,8 @@
       <p>This page will display data "pushed" from Victor engine to multiple drawing modules.</p>
       <p>Each tab contains its own module. Open the tab to subscribe to the data source for that module.</p>
       <p>To add new modules, start with the template file module.js.template.</p>
-      <p>Are you not seeing new tabs or new functionality? In Chrome, hit Command + Option + J,
-         then right click the page refresh button. Select "Empty cache and hard reload"</p>
+      <p><b>Are you always disconnected from the robot? Not seeing new tabs or new functionality? In Chrome, hit Command + Option + J,
+         then right click the page refresh button. Select "Empty cache and hard reload"</b></p>
     </div>
 
     
@@ -418,6 +418,9 @@
       var payload = {"type": "data", "module": moduleName.toLowerCase(), "data": data};
       socket.send( JSON.stringify(payload) );
     }
+    var getPortLink = function(port) {
+      return 'http://' + window.location.hostname + ':' + port + window.location.pathname;
+    }
 
     var modulesContexts = {};
     var moduleMethods = {}; // global passed to modules
@@ -428,9 +431,9 @@
       var missingTabsStr = '<h3>Looking for ';
       if( location.port == 8889 ) {
         modules = modules8889;
-        missingTabsStr += Object.keys(modules8888).join(' or ') + '? Change the port to 8888</h3>';
+        missingTabsStr += Object.keys(modules8888).join(' or ') + '? Change the port to <a href="' + getPortLink(8888) + '">8888</a></h3>';
       } else {
-        missingTabsStr += Object.keys(modules8889).join(' or ') + '? Change the port to 8889</h3>';
+        missingTabsStr += Object.keys(modules8889).join(' or ') + '? Change the port to <a href="' + getPortLink(8889) + '">8889</a></h3>';
       } 
       $('#tab-overview').append( missingTabsStr );
 
