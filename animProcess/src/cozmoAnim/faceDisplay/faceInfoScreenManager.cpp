@@ -826,8 +826,11 @@ void FaceInfoScreenManager::Update(const RobotState& state)
 
 void FaceInfoScreenManager::DrawMain()
 {
+  std::stringstream ss;
+  ss << std::hex << Factory::GetEMR()->fields.ESN;
+  const std::string serialNo = "ESN: "  + ss.str();
+
   auto *osstate = OSState::getInstance();
-  const std::string serialNo = "ESN: "  + osstate->GetSerialNumberAsString();
   const std::string osVer    = "OS: "   + osstate->GetOSBuildVersion() + (FACTORY_TEST ? " (V3)" : "");
   const std::string ssid     = "SSID: " + osstate->GetSSID(true);
 
