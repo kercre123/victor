@@ -51,11 +51,44 @@
   return [super init];
 }
 
-- (std::string)hexStr:(uint8_t*)data length:(int)len {
+- (std::string)hexStr:(char*)data length:(int)len {
   std::stringstream ss;
   for(int i(0);i<len;++i)
     ss << std::setfill('0') << std::setw(2) << std::hex << (int)data[i];
   return ss.str();
+}
+
+- (std::string)asciiStr:(char*)data length:(int)size {
+  if(size % 2 != 0) {
+    return "! Odd size";
+  }
+  
+  std::string ascii = "";
+  
+  for(int i = 0; i < size; i += 2) {
+    uint8_t a = [self nibbleToNumber:data[i]];
+    uint8_t b = [self nibbleToNumber:data[i+1]];
+    
+    if(a == 255 || b == 255) {
+      return "! Non-HEX character in string";
+    }
+    
+    ascii += (a << 4) | b;
+  }
+  
+  return ascii;
+}
+
+- (uint8_t)nibbleToNumber:(uint8_t)nibble {
+  if(nibble >= '0' && nibble <= '9') {
+    return nibble - '0';
+  } else if(nibble >= 'A' && nibble <= 'F') {
+    return nibble - 'A' + 10;
+  } else if(nibble >= 'a' && nibble <= 'f') {
+    return nibble - 'a' + 10;
+  } else {
+    return 255;
+  }
 }
 
 - (void)resetDefaults {
@@ -159,6 +192,9 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   int result = crypto_aead_xchacha20poly1305_ietf_decrypt(msgBuffer, &size, nullptr, (uint8_t*)bytes, n, nullptr, 0, _nonceIn, _decryptKey);
   if(result == 0) {
     sodium_increment(_nonceIn, crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
+  } else {
+    NSLog(@"Error in decrypting challenge. Our key must be bad. :(");
+    return;
   }
   
   Anki::Victor::ExternalComms::ExternalComms extComms;
@@ -225,7 +261,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       case Anki::Victor::ExternalComms::RtsConnectionTag::RtsStatusResponse: {
         //
         Anki::Victor::ExternalComms::RtsStatusResponse msg = rtsMsg.Get_RtsStatusResponse();
-        NSLog(@"Connected to [%s] with state [%d]", msg.wifiSsidHex.c_str(), msg.wifiState);
+        NSLog(@"Connected to [%s] with state [%d] [%s]", msg.wifiSsidHex.c_str(), msg.wifiState, msg.accessPoint? "true" : "false");
         
         break;
       }
@@ -432,8 +468,11 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   NSMutableDictionary* wifiAuth = [[NSMutableDictionary alloc] init];
   
   for(int i = 0; i < msg.scanResult.size(); i++) {
-    NSLog(@"%d: %d %d %s", i, msg.scanResult[i].signalStrength, msg.scanResult[i].authType, msg.scanResult[i].ssid.c_str());
-    NSString* ssidStr = [NSString stringWithUTF8String:msg.scanResult[i].ssid.c_str()];
+    std::string ssidAscii = [self asciiStr:(char*)msg.scanResult[i].wifiSsidHex.c_str() length:msg.scanResult[i].wifiSsidHex.length()];
+    
+    NSLog(@"%d: %d %d %s", i, msg.scanResult[i].signalStrength, msg.scanResult[i].authType, ssidAscii.c_str());
+    
+    NSString* ssidStr = [NSString stringWithUTF8String:ssidAscii.c_str()];
     [wifiAuth setValue:[NSNumber numberWithInt:msg.scanResult[i].authType] forKey:ssidStr];
   }
   
@@ -457,12 +496,12 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 
   uint8_t requestTimeout_s = 15;
   Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiConnectRequest>(self,
-    [self hexStr:(uint8_t*)ssid length:strlen(ssid)],
+    [self hexStr:ssid length:strlen(ssid)],
     std::string(pw), requestTimeout_s, auth, hidden);
 }
 
 - (void) HandleWifiAccessPointResponse:(const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&)msg {
-  NSLog(@"Access point enabled with SSID: [%s] PW: [%s]", msg.ssid.c_str(), msg.pw.c_str());
+  NSLog(@"Access point enabled with SSID: [%s] PW: [%s]", msg.ssid.c_str(), msg.password.c_str());
 }
 
 - (void)peripheral:(CBPeripheral *)peripheral

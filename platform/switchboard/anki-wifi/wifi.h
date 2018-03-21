@@ -70,6 +70,7 @@ bool ConnectToWifiService(ConnManBusService* service);
 bool DisconnectFromWifiService(ConnManBusService* service);
 ConnManBusService* GetServiceForPath(std::string objectPath);
 void SetWiFiConfig(std::string ssid, std::string password, WiFiAuth auth, bool isHidden);
+std::string GetHexSsidFromServicePath(const std::string& servicePath);
 
 bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData);
 std::vector<WiFiScanResult> ScanForWiFiAccessPoints();
@@ -80,6 +81,7 @@ void SetWiFiConfig(const std::vector<WiFiConfig>& networks, ExecCommandCallback)
 void HandleOutputCallback(int rc, const std::string& output);
 bool HasInternet();
 bool GetIpFromHostName(char* hostname, char* ip);
+bool IsAccessPointMode();
 bool EnableAccessPointMode(std::string ssid, std::string pw);
 bool DisableAccessPointMode();
 int GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits);

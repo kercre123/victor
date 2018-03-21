@@ -148,10 +148,6 @@ std::vector<WiFiScanResult> ScanForWiFiAccessPoints() {
         }
       }
 
-      if (g_str_equal(key, "Name")) {
-        result.ssid = std::string(g_variant_get_string(val, nullptr));
-      }
-
       if (g_str_equal(key, "Strength")) {
         result.signal_level =
             (uint8_t) CalculateSignalLevel((int) g_variant_get_byte(val),
@@ -189,6 +185,7 @@ std::vector<WiFiScanResult> ScanForWiFiAccessPoints() {
     }
 
     if (type_is_wifi && iface_is_wlan0) {
+      result.ssid = GetHexSsidFromServicePath(GetObjectPathForService(child));
       results.push_back(result);
     }
   }
@@ -664,25 +661,7 @@ WiFiState GetWiFiState() {
       if (g_str_equal(key, "State")) {
         std::string state = std::string(g_variant_get_string(val, nullptr));
         std::string servicePath = GetObjectPathForService(child);
-
-        std::string wifiPrefix = "/net/connman/service/wifi";
-        std::string prefix = wifiPrefix + "_000000000000_";
-        std::string hexString = "";
-
-        if(strncmp(prefix.c_str(), servicePath.c_str(), wifiPrefix.length()) != 0) {
-          // compare strings all the way up to and including "wifi"
-          Log::Error("Be very scared! The Connman service path does not match the expected format.");
-          return wifiState;
-        }
-
-        for(int i = prefix.length(); i < servicePath.length(); i++) {
-          if(servicePath[i] == '_') {
-            break;
-          }
-          hexString.push_back(servicePath[i]);
-        }
-
-        connectedSsid = hexString;
+        connectedSsid = GetHexSsidFromServicePath(servicePath);
 
         if(state == "ready") {
           isAssociated = true;
@@ -706,6 +685,27 @@ WiFiState GetWiFiState() {
   }
 
   return wifiState;
+}
+
+std::string GetHexSsidFromServicePath(const std::string& servicePath) {
+  // Take a dbus wifi service path and extract the ssid HEX
+  std::string wifiPrefix = "/net/connman/service/wifi";
+  std::string prefix = wifiPrefix + "_000000000000_";
+  std::string hexString = "";
+
+  if(servicePath.compare(0, wifiPrefix.length(), wifiPrefix) != 0) {
+    // compare strings all the way up to and including "wifi"
+    return "! Invalid Ssid";
+  }
+
+  for(int i = prefix.length(); i < servicePath.length(); i++) {
+    if(servicePath[i] == '_') {
+      break;
+    }
+    hexString.push_back(servicePath[i]);
+  }
+
+  return hexString;
 }
 
 bool CanConnectToHostName(char* hostName) {
@@ -781,6 +781,49 @@ bool HasInternet() {
   std::string google = "google.com";
   std::string amazon = "amazon.com";
   return CanConnectToHostName((char*)google.c_str()) || CanConnectToHostName((char*)amazon.c_str());
+}
+
+bool IsAccessPointMode() {
+  GError* error = nullptr;
+
+  GVariant* properties;
+
+  ConnManBusTechnology* tech_proxy = nullptr;
+  tech_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
+                                                              G_DBUS_PROXY_FLAGS_NONE,
+                                                              "net.connman",
+                                                              "/net/connman/technology/wifi",
+                                                              nullptr,
+                                                              &error);
+
+  if(error != nullptr) {
+    return false;
+  }
+
+  bool success = (bool)conn_man_bus_technology_call_get_properties_sync (
+    tech_proxy,
+    &properties,
+    nullptr,
+    &error);
+
+  if(error != nullptr || !success) {
+    return false;
+  }
+
+  for (gsize j = 0 ; j < g_variant_n_children(properties); j++) {
+    GVariant* attr = g_variant_get_child_value(properties, j);
+    GVariant* key_v = g_variant_get_child_value(attr, 0);
+    GVariant* val_v = g_variant_get_child_value(attr, 1);
+    GVariant* val = g_variant_get_variant(val_v);
+    const char* key = g_variant_get_string(key_v, nullptr);
+
+    // Make sure this is a wifi service and not something else
+    if (g_str_equal(key, "Tethering")) {
+      return (bool)g_variant_get_boolean(val);
+    }
+  }
+
+  return false;
 }
 
 bool EnableAccessPointMode(std::string ssid, std::string pw) {

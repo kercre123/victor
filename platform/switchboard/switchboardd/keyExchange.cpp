@@ -30,6 +30,28 @@ void KeyExchange::Reset() {
   memset(_publicKey, 0, sizeof(_publicKey));
 }
 
+bool KeyExchange::ValidateKeys(uint8_t* publicKey, uint8_t* privateKey) {
+  uint8_t encryptServer[crypto_kx_SESSIONKEYBYTES];
+  uint8_t decryptServer[crypto_kx_SESSIONKEYBYTES];
+  uint8_t encryptClient[crypto_kx_SESSIONKEYBYTES];
+  uint8_t decryptClient[crypto_kx_SESSIONKEYBYTES];
+  uint8_t remotePub[crypto_kx_PUBLICKEYBYTES];
+  uint8_t remotePriv[crypto_kx_SECRETKEYBYTES];
+
+  // generate fake key pair
+  crypto_kx_keypair(remotePub, remotePriv);
+
+  int serverStatus = crypto_kx_server_session_keys(decryptServer, encryptServer, publicKey, privateKey, remotePub);
+  int clientStatus = crypto_kx_client_session_keys(decryptClient, encryptClient, remotePub, remotePriv, publicKey);
+
+  if(serverStatus != 0 || clientStatus != 0) {
+    return false;
+  }
+
+  return (memcmp(decryptServer, encryptClient, crypto_kx_SESSIONKEYBYTES) == 0) &&
+    (memcmp(decryptClient, encryptServer, crypto_kx_SESSIONKEYBYTES) == 0);
+}
+
 std::string KeyExchange::GeneratePin() const {
   return GeneratePin(_numPinDigits);
 }

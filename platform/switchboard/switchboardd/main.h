@@ -27,6 +27,14 @@
 
 namespace Anki {
 namespace Switchboard {
+  enum OtaStatusCode {
+    UNKNOWN     = 1,
+    IN_PROGRESS = 2,
+    COMPLETED   = 3,
+    REBOOTING   = 4,
+    ERROR       = 5,
+  };
+
   class Daemon {
     public:
       Daemon(struct ev_loop* loop) :
@@ -44,8 +52,8 @@ namespace Switchboard {
     
     private:
       static void HandleEngineTimer(struct ev_loop* loop, struct ev_timer* w, int revents);
-      static void HandleRebootTimer(struct ev_loop* loop, struct ev_timer* w, int revents);
       static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
+      void HandleReboot();
 
       using EvTimerSignal = Signal::Signal<void ()>;
 
