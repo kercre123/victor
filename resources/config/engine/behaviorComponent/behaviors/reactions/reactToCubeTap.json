@@ -1,0 +1,17 @@
+{
+  "behaviorClass": "ReactToCubeTap",
+  "behaviorID": "ReactToCubeTap",
+
+  "interactionDuration_s"   : 3.0,
+  "onChargerBehavior"       : "GetOffCharger ",
+
+  "anonymousBehaviors" :
+  [
+    {
+      "behaviorClass": "DriveOffCharger",
+      "behaviorName": "GetOffCharger",
+
+      "extraDistanceToDrive_mm" : 30.0
+    }
+  ]
+}

@@ -720,6 +720,7 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
     strategy->SetActive(GetBEI(), true);
   }
 
+  OnBehaviorEnteredActivatableScope();
 }
 
 
@@ -739,6 +740,7 @@ void ICozmoBehavior::OnLeftActivatableScopeInternal()
     strategy->SetActive(GetBEI(), false);
   }
 
+  OnBehaviorLeftActivatableScope();
 }
 
 
