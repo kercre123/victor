@@ -14,17 +14,30 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponentCloudServer.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "engine/cozmoContext.h"
 #include "util/threading/threadPriority.h"
+#include <chrono>
 
 namespace Anki {
 namespace Cozmo {
 
-BehaviorComponentCloudServer::BehaviorComponentCloudServer(CallbackFunc callback, const std::string& name, const int sleepMs)
+namespace {
+  const std::string kWebVizTab = "cloudintents";
+}
+
+BehaviorComponentCloudServer::BehaviorComponentCloudServer(const CozmoContext* context, CallbackFunc callback,
+                                                           const std::string& name, const int sleepMs)
 : _callback(std::move(callback))
 , _shutdown(false)
 , _sleepMs(sleepMs)
+, _context(context)
 {
   _listenThread = std::thread([this, name] { RunThread(std::move(name)); });
+
+  #if SEND_CLOUD_DEV_RESULTS
+  AddSignalHandle(_context->GetWebService()->OnWebVizSubscribed(kWebVizTab).ScopedSubscribe(
+    [this] (const auto& sendFunc) { OnClientInit(sendFunc); }));
+  #endif
 }
 
 BehaviorComponentCloudServer::~BehaviorComponentCloudServer()
@@ -46,11 +59,50 @@ void BehaviorComponentCloudServer::RunThread(std::string sockName)
     const bool isReconnect = (received == 1 && buf[0] == '\0');
     if (received > 0 && !isReconnect) {
       std::string msg{buf, buf+received};
+      AddResult(msg);
       _callback(std::move(msg));
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(_sleepMs));
   }
 }
+
+void BehaviorComponentCloudServer::AddResult(const std::string& str)
+{
+  #if SEND_CLOUD_DEV_RESULTS
+  Json::Value value;
+  Json::Reader reader;
+  if (!reader.parse(str, value)) {
+    value = Json::objectValue;
+    value["error"] = "Could not parse: " + str;
+  }
+  auto epochTime = std::chrono::system_clock::now().time_since_epoch();
+  value["time"] = std::chrono::duration_cast<std::chrono::seconds>(epochTime).count();
+
+  // don't let result buffer grow infinitely
+  if (_devResults.size() > 8 && _devResults.size() == _devResults.capacity()) {
+    for (int i = 0; i < _devResults.size() - 1; i++) {
+      _devResults[i] = std::move(_devResults[i+1]);
+    }
+    _devResults[_devResults.size()-1] = std::move(value);
+  }
+  else {
+    _devResults.emplace_back(std::move(value));
+  }
+
+  _context->GetWebService()->SendToWebViz(kWebVizTab, _devResults.back());
+  #endif
+}
+
+#if SEND_CLOUD_DEV_RESULTS
+void BehaviorComponentCloudServer::OnClientInit(const WebService::SendToClientFunc& sendFunc)
+{
+  Json::Value value{Json::arrayValue};
+  for (const auto& val : _devResults) {
+    value.append(val);
+  }
+  sendFunc(value);
+}
+#endif
 
 }
 }

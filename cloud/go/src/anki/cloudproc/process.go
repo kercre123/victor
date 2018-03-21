@@ -143,7 +143,7 @@ procloop:
 				chipperConn, err = chipper.NewConn(ChipperURL, ChipperSecret, "device-id")
 				if err != nil {
 					log.Println("Error getting chipper connection:", err)
-					p.writeError("connecting")
+					p.writeError("connecting", err.Error())
 					return
 				}
 				stream, err = chipperConn.NewStream(chipper.StreamOpts{
@@ -155,7 +155,7 @@ procloop:
 					SessionId: uuid.New().String()[:16],
 					Handler:   p.opts.handler})
 				if err != nil {
-					p.writeError("newstream")
+					p.writeError("newstream", err.Error())
 				}
 			})
 			if err != nil {
@@ -191,7 +191,7 @@ procloop:
 		case err := <-cloudError:
 			logVerbose("Received error from cloud:", err)
 			p.signalMicStop()
-			p.writeError("server")
+			p.writeError("server", err)
 			close(ctx.audioStream)
 			ctx.close()
 			ctx = nil
@@ -230,8 +230,8 @@ func SetVerbose(value bool) {
 	verbose = value
 }
 
-func (p *Process) writeError(reason string) {
-	jsonMap := map[string]string{"error": reason}
+func (p *Process) writeError(reason string, extra string) {
+	jsonMap := map[string]string{"error": reason, "extra": extra}
 	buf, err := json.Marshal(jsonMap)
 	if err != nil {
 		log.Println("Couldn't encode json error for "+reason+": ", err)

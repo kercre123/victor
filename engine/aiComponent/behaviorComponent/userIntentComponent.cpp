@@ -53,11 +53,11 @@ UserIntentComponent::UserIntentComponent(const Robot& robot, const Json::Value& 
   
   // setup cloud intent handler
   const auto& serverName = GetServerName( robot );
-  _server.reset( new BehaviorComponentCloudServer( std::bind( &UserIntentComponent::OnCloudData,
-                                                              this,
-                                                              std::placeholders::_1),
-                                                   serverName ) );
-  
+  _server.reset( new BehaviorComponentCloudServer( _context, std::bind( &UserIntentComponent::OnCloudData,
+                                                                        this,
+                                                                        std::placeholders::_1),
+                                                                        serverName ) );
+
   // setup trigger word handler
   auto triggerWordCallback = [this]( const AnkiEvent<RobotInterface::RobotToEngine>& event ){
     SetTriggerWordPending();
