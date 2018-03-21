@@ -467,7 +467,15 @@ int main(int argc, const char* argv[])
   display_init();
   fixture_log_init();
 
-  gSerialFd = serial_init(FIXTURE_TTY, FIXTURE_BAUD);
+  int x; const char *tty = 0;
+  for(x=1; x < argc; x++) {
+    printf("arg[%u] '%s'\n", x, argv[x]);
+    if( !strncmp(argv[x],"/dev/tty",8) )
+      tty = argv[x];
+  }
+  
+  printf("serial_init(%s)\n", tty ? tty : FIXTURE_TTY);
+  gSerialFd = serial_init( tty ? tty : FIXTURE_TTY, FIXTURE_BAUD);
 
   serial_write(gSerialFd, (uint8_t*)"\x1b\x1b\n", 4);
   serial_write(gSerialFd, (uint8_t*)"reset\n", 6);
