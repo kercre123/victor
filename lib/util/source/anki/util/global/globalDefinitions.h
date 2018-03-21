@@ -30,9 +30,9 @@
   #define ANKI_PRIVACY_GUARD      0 // PII displayed in debug logs!!!
 #elif defined(RELEASE)
   #define ANKI_DEVELOPER_CODE     0
-  #define ANKI_DEV_CHEATS         1
-  #define ANKI_PROFILING_ENABLED  1
-  #define ANKI_PRIVACY_GUARD      0 // PII displayed in non-shipping release logs!!!
+  #define ANKI_DEV_CHEATS         0
+  #define ANKI_PROFILING_ENABLED  0
+  #define ANKI_PRIVACY_GUARD      1 // PII displayed in non-shipping release logs!!!
 #elif defined(SHIPPING)
   #define ANKI_DEVELOPER_CODE     0
   #define ANKI_DEV_CHEATS         0
