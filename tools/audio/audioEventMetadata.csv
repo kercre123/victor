@@ -88,6 +88,8 @@ Event,,Play__Robot_Sfx__Qa_Scrn_Angry_Long,456773531,Robot_Sfx,Qa_Scrn_Angry_Lon
 Event,,Play__Robot_Sfx__Qa_Scrn_Sad_Long,2927747014,Robot_Sfx,Qa_Scrn_Sad_Long,
 Event,,Play__Robot_Sfx__Qa_Scrn_Surprised_Long,1297306135,Robot_Sfx,Qa_Scrn_Surprised_Long,
 Event,,Play__Robot_Sfx__Repair_Calibrate,2827992012,Robot_Sfx,Repair_Calibrate,
+Event,,Play__Robot_Sfx__Scan_Loop_Stop_Bell,177966030,Robot_Sfx,Scan_Loop_Stop_Bell,
+Event,,Play__Robot_Sfx__Scan_Single,3220792573,Robot_Sfx,Scan_Single,
 Event,,Play__Robot_Sfx__Scrn_Angry,2974471057,Robot_Sfx,Scrn_Angry,
 Event,,Play__Robot_Sfx__Scrn_Angry_Long,3501460118,Robot_Sfx,Scrn_Angry_Long,
 Event,,Play__Robot_Sfx__Scrn_Angry_Loop_Play,2332165935,Robot_Sfx,Scrn_Angry_Loop_Play,
