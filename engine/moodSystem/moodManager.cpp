@@ -33,11 +33,15 @@
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
+#include "webServerProcess/src/webService.h"
 #include <assert.h>
 
 namespace Anki {
 namespace Cozmo {
 
+namespace{
+  const std::string kWebVizModuleName = "mood";
+}
 
 // For now StaticMoodData is basically a singleton, but hidden behind an interface in mood manager incase we ever
 // need it to be different per robot / moodManager
@@ -48,8 +52,11 @@ static const char* kActionResultEmotionEventKey = "actionResultEmotionEvents";
 static const char* kAudioParametersMapKey = "audioParameterMap";
   
 CONSOLE_VAR(bool, kSendMoodToViz, "VizDebug", true);
+
 CONSOLE_VAR(float, kAudioSendPeriod_s, "MoodManager", 0.5f);
+CONSOLE_VAR(float, kWebVizPeriod_s, "MoodManager", 1.0f);
 }
+
 
 StaticMoodData& MoodManager::GetStaticMoodData()
 {
@@ -235,9 +242,15 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
     SEND_MOOD_TO_VIZ_DEBUG_ONLY( robotMood.emotion.push_back(emotion.GetValue()) );
   }
 
-  const bool hasComp = dependentComps.HasComponent(RobotComponentID::EngineAudioClient);
-  if( hasComp && ( (currentTime - _lastAudioSendTime_s) > kAudioSendPeriod_s ) ) {
+  const bool hasAudioComp = dependentComps.HasComponent(RobotComponentID::EngineAudioClient);
+  if( hasAudioComp && ( (currentTime - _lastAudioSendTime_s) > kAudioSendPeriod_s ) ) {
     SendEmotionsToAudio(dependentComps.GetValue<Audio::EngineRobotAudioClient>());
+  }
+
+  if( ANKI_DEV_CHEATS && dependentComps.HasComponent(RobotComponentID::CozmoContext) ) {
+    if( (currentTime - _lastWebVizSendTime_s) > kWebVizPeriod_s ) {
+      SendMoodToWebViz(dependentComps.GetValue<ContextWrapper>().context);
+    }
   }
   
   SendEmotionsToGame();
@@ -254,6 +267,42 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
     _robot->GetContext()->GetVizManager()->SendRobotMood(std::move(robotMood));
   }
   #endif //SEND_MOOD_TO_VIZ_DEBUG
+}
+
+void MoodManager::SendMoodToWebViz(const CozmoContext* context, const std::string& emotionEvent)
+{
+  if( nullptr == context ) {
+    return;
+  }
+             
+  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  Json::Value data;
+  data["time"] = currentTime_s;
+
+  auto& moodData = data["moods"];
+  
+  for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
+  {
+    const EmotionType emotionType = (EmotionType)i;
+    const float val = GetEmotionByIndex(i).GetValue();
+    
+    Json::Value entry;
+    entry["emotion"] = EmotionTypeToString( emotionType );
+    entry["value"] = val;
+    moodData.append( entry );
+  }
+
+  if( ! emotionEvent.empty() ) {
+    data["emotionEvent"] = emotionEvent;
+  }
+
+  const auto* web = context->GetWebService();
+  if( nullptr != web ) {
+    web->SendToWebViz( kWebVizModuleName, data );
+  }
+  
+  _lastWebVizSendTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
 
 void MoodManager::HandleActionEnded(const ExternalInterface::RobotCompletedAction& completion)
@@ -404,6 +453,11 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
   {
     PRINT_CH_INFO("Mood", "TriggerEmotionEvent", "%s", eventName.c_str());
     
+    // update webviz before the event
+    if( ANKI_DEV_CHEATS && kWebVizPeriod_s >= 0.0f && nullptr != _robot ) {
+      SendMoodToWebViz(_robot->GetContext());
+    }
+
     const float timeSinceLastOccurence = UpdateLatestEventTimeAndGetTimeElapsedInSeconds(eventName, currentTimeInSeconds);
     const float repetitionPenalty = emotionEvent->CalculateRepetitionPenalty(timeSinceLastOccurence);
 
@@ -426,6 +480,11 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
     std::for_each(_emotions, _emotions+((size_t)(EmotionType::Count)),
                   [&stream](const Emotion &iter){ stream<<iter.GetValue(); stream<<","; });
     Anki::Util::sEvent("robot.mood_values", {{DDATA,eventName.c_str()}}, stream.str().c_str());
+
+    // and update webviz after, with the name of the event that happened
+    if( ANKI_DEV_CHEATS && kWebVizPeriod_s >= 0.0f && nullptr != _robot ) {
+      SendMoodToWebViz(_robot->GetContext(), eventName);
+    }
   }
   else
   {
@@ -478,6 +537,9 @@ void MoodManager::SetEmotion(EmotionType emotionType, float value)
 {
   GetEmotion(emotionType).SetValue(value);
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent("SetEmotion") );
+  if( ANKI_DEV_CHEATS && kWebVizPeriod_s >= 0.0f && nullptr != _robot ) {
+    SendMoodToWebViz(_robot->GetContext(), "SetEmotion");
+  }
 }
 
 void MoodManager::SetEnableMoodEventOnCompletion(u32 actionTag, bool enable)

@@ -70,9 +70,9 @@ namespace Audio{
 class EngineRobotAudioClient;
 }
   
+class CozmoContext;
 class Robot;
 class StaticMoodData;
-
   
 class MoodManager : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
@@ -90,6 +90,7 @@ public:
     components.insert(RobotComponentID::CozmoContext);
   };
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::CozmoContext);
     dependencies.insert(RobotComponentID::EngineAudioClient);
   }
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
@@ -194,6 +195,8 @@ private:
   void SendEmotionsToAudio(Audio::EngineRobotAudioClient& audioClient);
   
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( void AddEvent(const char* eventName) );
+
+  void SendMoodToWebViz(const CozmoContext* context, const std::string& emotionEvent = "");
     
   // ============================== Private Member Vars ==============================
   
@@ -218,6 +221,7 @@ private:
   int _actionCallbackID = 0;
 
   float _lastAudioSendTime_s = 0.0f;
+  float _lastWebVizSendTime_s = 0.0f;
 };
   
 

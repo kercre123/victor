@@ -65,6 +65,7 @@ CozmoBot2 {
 }
 WebotsKeyboardController {
   behaviorName "HighLevelAI"
+  emotionName "Stimulated"
   consoleVarName "DevDispatchAfterShake"
   consoleVarValue "1"
   colorizeStderrOutput TRUE
