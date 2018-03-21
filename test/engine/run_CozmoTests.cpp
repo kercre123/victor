@@ -569,7 +569,7 @@ void FakeRecvConnectionMessage(Robot& robot, double time, uint32_t activeID, uin
 // helper for move messages
 void FakeRecvMovedMessage(Robot& robot, double time, Anki::TimeStamp_t timestamp, uint32_t activeID)
 {
-  const auto& msg = ObjectMoved(timestamp, activeID, ActiveAccel(1,1,1), Anki::Cozmo::UpAxis::ZPositive );
+  const auto& msg = ExternalInterface::ObjectMoved(timestamp, activeID, ActiveAccel(1,1,1), Anki::Cozmo::UpAxis::ZPositive );
   robot.GetRobotToEngineImplMessaging().HandleActiveObjectMoved(msg, &robot);
 }
 

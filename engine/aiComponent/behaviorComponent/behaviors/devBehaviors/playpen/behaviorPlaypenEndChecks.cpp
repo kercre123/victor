@@ -82,7 +82,7 @@ void BehaviorPlaypenEndChecks::OnBehaviorDeactivated()
   _heardFromLightCube = false;
 }
 
-void BehaviorPlaypenEndChecks::HandleObjectAvailable(const ObjectAvailable& payload)
+void BehaviorPlaypenEndChecks::HandleObjectAvailable(const ExternalInterface::ObjectAvailable& payload)
 {
   if(IsValidLightCube(payload.objectType, false))
   {

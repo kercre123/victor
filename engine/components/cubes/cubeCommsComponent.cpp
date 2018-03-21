@@ -25,8 +25,6 @@
 #include "clad/externalInterface/messageCubeToEngine.h"
 #include "clad/externalInterface/messageEngineToCube.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/externalInterface/messageFromActiveObject.h"
-#include "clad/externalInterface/messageToActiveObject.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -335,7 +333,7 @@ void CubeCommsComponent::HandleGameEvents(const AnkiEvent<ExternalInterface::Mes
 }
 
   
-void CubeCommsComponent::HandleObjectAvailable(const ObjectAvailable& msg)
+void CubeCommsComponent::HandleObjectAvailable(const ExternalInterface::ObjectAvailable& msg)
 {
   // Ensure that this message is referring to a light cube, not some other object
   DEV_ASSERT(IsValidLightCube(msg.objectType, false), "CubeCommsComponent.HandleObjectAvailable.UnknownType");
@@ -366,7 +364,8 @@ void CubeCommsComponent::HandleObjectAvailable(const ObjectAvailable& msg)
   }
   
   if (_broadcastObjectAvailableMsg) {
-    _robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectAvailable(msg)));
+    using namespace ExternalInterface;
+    _robot->Broadcast(MessageEngineToGame(ObjectAvailable(msg)));
   }
 }
 
@@ -390,7 +389,7 @@ void CubeCommsComponent::HandleCubeMessage(const BleFactoryId& factoryId, const 
     case MessageCubeToEngineTag::accelData:
     {
       const auto& accelDataMsg = msg.Get_accelData();
-      ObjectAccel oaMsg;
+      ExternalInterface::ObjectAccel oaMsg;
       oaMsg.accel.x = accelDataMsg.accel[0];
       oaMsg.accel.y = accelDataMsg.accel[1];
       oaMsg.accel.z = accelDataMsg.accel[2];
@@ -472,10 +471,11 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
   // TODO: arguably blockworld should do this, because when do we want to remove/add objects and not notify?
   if (objID.IsSet()) {
     // Send connection message to game
-    _robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectConnectionState(objID.GetValue(),
-                                                                                  cube->factoryId,
-                                                                                  cube->objectType,
-                                                                                  cube->connected)));
+    using namespace ExternalInterface;
+    _robot->Broadcast(MessageEngineToGame(ObjectConnectionState(objID.GetValue(),
+                                                                cube->factoryId,
+                                                                cube->objectType,
+                                                                cube->connected)));
   }
 }
   

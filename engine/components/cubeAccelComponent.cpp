@@ -40,9 +40,9 @@ void FakeCubeAcceleration(ConsoleFunctionContextRef context)
   const TimeStamp_t timestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   uint32_t whichLightCube = kCubeAccelWhichLightCube;
   ActiveAccel accel(kCubeAccelMagnitude_mm_s_s, 0,0);
-  ObjectAccel payload(timestamp,
-                       0,
-                       accel);
+  ExternalInterface::ObjectAccel payload(timestamp,
+                                         0,
+                                         accel);
   
   if(sThis != nullptr){
     sThis->Dev_HandleObjectAccel(whichLightCube, payload);
@@ -55,15 +55,15 @@ void FakeCubeShake(ConsoleFunctionContextRef context)
 
   const TimeStamp_t previousTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - 1000;
   ActiveAccel positiveAccel(kCubeAccelMagnitude_mm_s_s, 0,0);
-  ObjectAccel positivePayload(previousTimestamp,
-                              0,
-                              positiveAccel);
+  ExternalInterface::ObjectAccel positivePayload(previousTimestamp,
+                                                 0,
+                                                 positiveAccel);
   
   const TimeStamp_t currentTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   ActiveAccel negativeAccel(-kCubeAccelMagnitude_mm_s_s, 0,0);
-  ObjectAccel negativePayload(currentTimestamp,
-                              0,
-                              negativeAccel);
+  ExternalInterface::ObjectAccel negativePayload(currentTimestamp,
+                                                 0,
+                                                 negativeAccel);
   
   if(sThis != nullptr){
     sThis->Dev_HandleObjectAccel(whichLightCube, positivePayload);
@@ -187,7 +187,7 @@ bool CubeAccelComponent::RemoveListener(const ObjectID& objectID,
 }
 
   
-void CubeAccelComponent::HandleObjectAccel(const ObjectAccel& objectAccel)
+void CubeAccelComponent::HandleObjectAccel(const ExternalInterface::ObjectAccel& objectAccel)
 {
   const ActiveObject* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(objectAccel.objectID);
   if(object == nullptr)
@@ -227,7 +227,8 @@ void CubeAccelComponent::HandleObjectAccel(const ObjectAccel& objectAccel)
   }
   
   // Forward to game and viz
-  _robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectAccel(objectAccel.timestamp, objectID, objectAccel.accel)));
+  using namespace ExternalInterface;
+  _robot->Broadcast(MessageEngineToGame(ObjectAccel(objectAccel.timestamp, objectID, objectAccel.accel)));
   _robot->GetContext()->GetVizManager()->SendObjectAccelState(objectID, objectAccel.accel);
 }
   
@@ -252,7 +253,7 @@ void CubeAccelComponent::CullToWindowSize(AccelHistory& accelHistory)
   }
 }
 
-void CubeAccelComponent::Dev_HandleObjectAccel(const u32 whichLightCubeType, ObjectAccel& objectAccel)
+void CubeAccelComponent::Dev_HandleObjectAccel(const u32 whichLightCubeType, ExternalInterface::ObjectAccel& objectAccel)
 {
   static const std::map<u32, ObjectType> kLightCubeTypeToObjectType = {
     {1, ObjectType::Block_LIGHTCUBE1},
@@ -277,7 +278,7 @@ void CubeAccelComponent::Dev_HandleObjectAccel(const u32 whichLightCubeType, Obj
   
   
 template<>
-void CubeAccelComponent::HandleMessage(const ObjectConnectionState& msg)
+void CubeAccelComponent::HandleMessage(const ExternalInterface::ObjectConnectionState& msg)
 {
   if(msg.connected)
   {

@@ -10,8 +10,6 @@
 #include "clad/types/ledTypes.h"
 #include "clad/externalInterface/messageCubeToEngine.h"
 #include "clad/externalInterface/messageEngineToCube.h"
-#include "clad/externalInterface/messageFromActiveObject.h"
-#include "anki/cozmo/robot/ledController.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
@@ -327,7 +325,8 @@ Result Update() {
     // Send ObjectAvailable message
     static u32 objAvailableSendCtr = 0;
     if (objAvailableSendCtr-- == 0) {
-      SendMessageHelper(discoveryEmitter_, ObjectAvailable(factoryID_,
+      SendMessageHelper(discoveryEmitter_,
+                        ExternalInterface::ObjectAvailable(factoryID_,
                                                            objectType_,
                                                            0));
       objAvailableSendCtr = OBJECT_AVAILABLE_MESSAGE_PERIOD;

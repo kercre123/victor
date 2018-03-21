@@ -39,7 +39,7 @@ public:
   bool ObjectOutsideIgnoreArea(BehaviorExternalInterface& behaviorExternalInterface);
   
   // update values for reactionObject
-  void ObjectStartedMoving(BehaviorExternalInterface& behaviorExternalInterface, const ObjectMoved& msg);
+  void ObjectStartedMoving(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::ObjectMoved& msg);
   void ObjectStoppedMoving(BehaviorExternalInterface& behaviorExternalInterface);
   void ObjectObserved(BehaviorExternalInterface& behaviorExternalInterface);
   void ResetObject();
@@ -145,7 +145,7 @@ void ConditionObjectMoved::HandleEvent(const EngineToGameEvent& event, BehaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionObjectMoved::HandleObjectMoved(BehaviorExternalInterface& behaviorExternalInterface, const ObjectMoved& msg)
+void ConditionObjectMoved::HandleObjectMoved(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::ObjectMoved& msg)
 {
   auto iter = GetReactionaryIterator(msg.objectID);
   iter->ObjectStartedMoving(behaviorExternalInterface, msg);
@@ -153,7 +153,7 @@ void ConditionObjectMoved::HandleObjectMoved(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionObjectMoved::HandleObjectStopped(BehaviorExternalInterface& behaviorExternalInterface, const ObjectStoppedMoving& msg)
+void ConditionObjectMoved::HandleObjectStopped(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::ObjectStoppedMoving& msg)
 {
   auto iter = GetReactionaryIterator(msg.objectID);
   iter->ObjectStoppedMoving(behaviorExternalInterface);
@@ -161,7 +161,7 @@ void ConditionObjectMoved::HandleObjectStopped(BehaviorExternalInterface& behavi
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionObjectMoved::HandleObjectUpAxisChanged(BehaviorExternalInterface& behaviorExternalInterface, const ObjectUpAxisChanged& msg)
+void ConditionObjectMoved::HandleObjectUpAxisChanged(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::ObjectUpAxisChanged& msg)
 {
   auto iter = GetReactionaryIterator(msg.objectID);
   iter->ObjectUpAxisHasChanged(behaviorExternalInterface);
@@ -283,7 +283,7 @@ bool ReactionObjectData::ObjectOutsideIgnoreArea(BehaviorExternalInterface& beha
 
 // update values for reactionObject
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ReactionObjectData::ObjectStartedMoving(BehaviorExternalInterface& behaviorExternalInterface, const ObjectMoved& msg)
+void ReactionObjectData::ObjectStartedMoving(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::ObjectMoved& msg)
 {
   const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_objectID);
   if(object == nullptr){

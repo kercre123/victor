@@ -59,6 +59,12 @@ structure LightState
   int_16   padding2 = 0  // an array of LightStates complain about alignment
 }
 
+structure CubeLights
+{
+  LightState lights[4],
+  bool       rotate = 0,    // Should the pattern rotate through all LEDS on the cube?
+  bool       playOnce = 0,  // Play the cube light animation once then stop
+}
 
 // Specify LEDs, relative to block's top face (as determined by accelerometer)
 // Looking down at top face (and through to bottom face), LEDs are

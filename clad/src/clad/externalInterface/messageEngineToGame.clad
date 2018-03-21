@@ -5,9 +5,9 @@
 
 #include "clad/audio/audioCallbackMessage.clad"
 #include "clad/externalInterface/messageShared.clad"
-#include "clad/externalInterface/messageFromActiveObject.clad"
 #include "clad/types/actionTypes.clad"
 #include "clad/types/actionResults.clad"
+#include "clad/types/activeObjectAccel.clad"
 #include "clad/types/animationEvents.clad"
 #include "clad/types/behaviorComponent/behaviorObjectives.clad"
 #include "clad/types/debugConsoleTypes.clad"
@@ -549,6 +549,64 @@ message AnimationEvent {
   AnimEvent event_id
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  CUBES  ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// Indicates that a cube is advertising, but not connected.
+message ObjectAvailable
+{
+  uint_32     factory_id,
+  ObjectType  objectType,
+  int_8       rssi
+}
+
+// Indicates that a cube has connected or disconnected
+message ObjectConnectionState
+{  
+  uint_32 objectID,
+  uint_32 factoryID,
+  ObjectType  object_type,
+  bool connected
+}
+
+message ObjectMoved
+{
+  uint_32     timestamp,
+  uint_32     objectID,
+  ActiveAccel accel,
+  UpAxis      axisOfAccel, // The direction of acceleration, reported when object starts moving, and every time the direction changes.
+}
+
+message ObjectStoppedMoving
+{
+  uint_32 timestamp,
+  uint_32 objectID,
+}
+
+message ObjectUpAxisChanged
+{
+  uint_32 timestamp,
+  uint_32 objectID,
+  UpAxis  upAxis,
+}
+
+message ObjectTapped
+{
+  uint_32 timestamp,
+  uint_32 objectID,
+  uint_8  numTaps,
+  uint_8  tapTime,
+  int_8   tapNeg,
+  int_8   tapPos,
+}
+
+message ObjectAccel
+{
+  uint_32 timestamp,
+  uint_32 objectID,
+  ActiveAccel accel,
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////  META  /////////////////////////////////////
@@ -930,6 +988,6 @@ autounion MessageEngineToGame
   UiDeviceConnected                 UiDeviceConnected                  = 0x00, // DO NOT CHANGE THIS VALUE
 }
 
-} // namespace G2U
+} // namespace ExternalInterface
 } // namespace Cozmo
 } // namespace Anki

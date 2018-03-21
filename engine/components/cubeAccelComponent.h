@@ -29,7 +29,6 @@
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 
-#include "clad/externalInterface/messageFromActiveObject.h"
 
 #include <list>
 #include <map>
@@ -38,6 +37,11 @@ static const Anki::TimeStamp_t kDefaultWindowSize_ms = 50;
 
 namespace Anki {
 namespace Cozmo {
+
+namespace ExternalInterface {
+  struct ObjectAvailable;
+  struct ObjectAccel;
+}
 
 class Robot;
 
@@ -79,12 +83,12 @@ public:
   
   // Exposed for debug purposes - should not be called directly
   // whichLightCubeType should be 1, 2, or 3 for LightCube1, 2, or 3
-  void Dev_HandleObjectAccel(const u32 whichLightCubeType, ObjectAccel& accel);
+  void Dev_HandleObjectAccel(const u32 whichLightCubeType, ExternalInterface::ObjectAccel& accel);
   
   template<typename T>
   void HandleMessage(const T& msg);
   
-  void HandleObjectAccel(const ObjectAccel& objectAccel);
+  void HandleObjectAccel(const ExternalInterface::ObjectAccel& objectAccel);
   
 private:
   

@@ -177,7 +177,7 @@ Result CubeBleClient::Update()
     _discoveryReceiver->nextPacket();
     if (cubeMessage.GetTag() == MessageCubeToEngineTag::available) {
       // Received an advertisement message
-      ObjectAvailable msg(cubeMessage.Get_available());
+      ExternalInterface::ObjectAvailable msg(cubeMessage.Get_available());
       
       // TODO: Convert the webots signal strength to similar values to what we get from the robot.
       // These numbers were just approximated by experimenting on webots

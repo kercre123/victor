@@ -33,14 +33,14 @@ class AnkiEvent;
 struct CubeLightKeyframeChunk;
 struct CubeLights;
 struct CubeLightSequence;
-struct ObjectAvailable;
-struct ObjectAccel;
 class MessageCubeToEngine;
 class MessageEngineToCube;
   
 namespace ExternalInterface {
   class MessageGameToEngine;
   class MessageEngineToGame;
+  struct ObjectAccel;
+  struct ObjectAvailable;
 }
   
 class CubeCommsComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
@@ -101,7 +101,7 @@ private:
   // Handlers for messages from CubeBleClient:
   
   // Handler for ObjectAvailable advertisement message
-  void HandleObjectAvailable(const ObjectAvailable& msg);
+  void HandleObjectAvailable(const ExternalInterface::ObjectAvailable& msg);
   
   // Handler for messages from light cubes
   void HandleCubeMessage(const BleFactoryId& factoryId, const MessageCubeToEngine& msg);

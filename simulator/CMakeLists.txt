@@ -75,7 +75,6 @@ target_link_libraries(webotsCtrlCommon
   PUBLIC
   util
   cti_common
-  cube_led_animator
   ${PLATFORM_LIBS}
 )
 
@@ -93,16 +92,15 @@ target_link_libraries(webotsCtrlLightCube
   PRIVATE
   util
   cti_common
+  cube_led_animator
   engine_clad
   robot_interface
-  supervisor # for ledController
   webotsCtrlCommon
   ${PLATFORM_LIBS}
 )
 
 target_compile_definitions(webotsCtrlLightCube
   PRIVATE
-  COZMO_ROBOT
   SIMULATOR
 )
 
