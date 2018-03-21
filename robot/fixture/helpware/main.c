@@ -75,7 +75,7 @@ int shellcommand(int timeout_sec, const char* command, const char* argstr) {
   int retval = -666;
   uint64_t expiration = steady_clock_now()+(timeout_sec*NSEC_PER_SEC);
 
-  printf_multiple(SEND_CL, "-BEGIN SHELL- \"%s\" (%is)\n", command, timeout_sec);
+  printf_multiple(SEND_CL, "-BEGIN SHELL- \"%s %s\" (%is)\n", command, argstr, timeout_sec);
 
   int pid;
   int pfd = pidopen(command, argstr, &pid);
@@ -105,7 +105,7 @@ int shellcommand(int timeout_sec, const char* command, const char* argstr) {
     retval = pidclose(pid, timedout);
   }
 
-  printf_multiple(SEND_CL, "--END SHELL-- \"%s\"\n", command);
+  printf_multiple(SEND_CL, "--END SHELL-- \"%s %s\"\n", command, argstr);
   return retval;
 }
 

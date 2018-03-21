@@ -12,7 +12,7 @@
 #define SHELLNAME "/system/bin/sh"
 
 
-int pidopen(const char* processname, const char argstr, pid_t* pid_out)
+int pidopen(const char* processname, const char* argstr, pid_t* pid_out)
 {
   pid_t pid = 0;
   int pipefd[2];
