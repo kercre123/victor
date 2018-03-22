@@ -1,0 +1,63 @@
+#include <assert.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "app.h"
+#include "board.h"
+#include "cmd.h"
+#include "console.h"
+#include "contacts.h"
+#include "dut_uart.h"
+#include "fixture.h"
+#include "meter.h"
+#include "motorled.h"
+#include "nvReset.h"
+#include "random.h"
+#include "tests.h"
+#include "timer.h"
+
+//static uint32_t detect_ms = 0;
+//static uint32_t Tdetect;
+
+//start a test run by flipping detected to true (auto clear at end)
+void TestDebugSetDetect(int ms) {
+  //Tdetect = Timer::get(); //reset the timebase
+  //detect_ms = ms;
+}
+
+bool TestDebugDetect(void) {
+  //return Timer::elapsedUs(Tdetect) < 1000*detect_ms;
+  return false;
+}
+
+void TestDebugCleanup(void)
+{
+}
+
+void TestDebugInit(void)
+{
+}
+
+void TestDebugProcess(void)
+{
+  srand(Timer::get());
+  uint32_t esn = ((rand()&0xffff)<<16) | (rand()&0xffff);
+  
+  const int timeout_s = 5;
+  char b[40]; const int bz = sizeof(b);
+  cmdSend(CMD_IO_HELPER, snformat(b,bz,"dutprogram %u %08x", timeout_s, esn), (timeout_s+10)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
+}
+
+TestFunction* TestDebugGetTests(void)
+{
+  static TestFunction m_tests[] = {
+    TestDebugInit,
+    TestDebugProcess,
+    NULL
+  };
+  return m_tests;
+}
+

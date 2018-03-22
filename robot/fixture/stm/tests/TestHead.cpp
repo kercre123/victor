@@ -13,9 +13,6 @@
 #include "testcommon.h"
 #include "timer.h"
 
-#define HEAD_CMD_OPTS   (CMD_OPTS_DEFAULT)
-//#define HEAD_CMD_OPTS   (CMD_OPTS_LOG_ERRORS | CMD_OPTS_REQUIRE_STATUS_CODE) /*disable exceptions*/
-
 static headid_t headnfo;
 
 static uint32_t m_previous_esn = 0;
@@ -94,7 +91,7 @@ void TestHeadDutProgram(void)
   m_previous_esn = headnfo.esn; //even if programming fails, report the (now unusable) ESN
   
   //helper head does the rest
-  cmdSend(CMD_IO_HELPER, snformat(b,bz,"dutprogram %u %08x", timeout_s, headnfo.esn), (timeout_s+10)*1000, HEAD_CMD_OPTS | CMD_OPTS_ALLOW_STATUS_ERRS );
+  cmdSend(CMD_IO_HELPER, snformat(b,bz,"dutprogram %u %08x", timeout_s, headnfo.esn), (timeout_s+10)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
   if( cmdStatus() != 0 )
   {
     //map programming error to appropriate fixture error

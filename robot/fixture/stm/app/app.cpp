@@ -313,8 +313,9 @@ inline void dbgBtnHandler(void)
     if( g_fixmode == FIXMODE_HEAD1 && edge > 0 && x == Board::BTN_4 )
       g_forceStart = 1;
     
-    if( edge > 0 && x == Board::BTN_1 )
-      cmdSend(CMD_IO_HELPER, "get_temperature 0 1 2 3 4 5 6 7 8 9", 100, (CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN));
+    //XXX: run debug tests
+    if( g_fixmode == FIXMODE_DEBUG && edge > 0 && x == Board::BTN_4 )
+      g_forceStart = 1;
     
     /*/DEBUG: the ol' btn toggles an LED trick
     if( edge > 0 ) { 
