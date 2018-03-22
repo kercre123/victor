@@ -43,12 +43,16 @@ void TestDebugInit(void)
 
 void TestDebugProcess(void)
 {
+  static int ofs = -2;
   srand(Timer::get());
-  uint32_t esn = ((rand()&0xffff)<<16) | (rand()&0xffff);
+  //uint32_t esn = ((rand()&0xffff)<<16) | (rand()&0xffff);
   
-  const int timeout_s = 5;
+  const int shell_timeout_s = 5;
+  int script_delay_s = shell_timeout_s + ofs;
+  ofs *= (-1);
+  
   char b[40]; const int bz = sizeof(b);
-  cmdSend(CMD_IO_HELPER, snformat(b,bz,"dutprogram %u %08x", timeout_s, esn), (timeout_s+10)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
+  cmdSend(CMD_IO_HELPER, snformat(b,bz,"dutprogram %u %u", shell_timeout_s, script_delay_s), (shell_timeout_s+10)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
 }
 
 TestFunction* TestDebugGetTests(void)
