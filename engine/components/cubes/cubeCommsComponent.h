@@ -105,6 +105,10 @@ private:
   // Handler for when light cube BLE connection is established/unestablished
   void HandleConnectionStateChange(const BleFactoryId& factoryId, const bool connected);
   
+  // Get the ActiveID to assign to the next object added to the available cubes
+  // list (just to make sure each object gets a unique ActiveID)
+  ActiveID GetNextActiveId();
+  
   // If discovering, then we are listening for any advertising cubes and
   // selecting the best ones to connect to.
   bool _discovering = false;
@@ -128,7 +132,10 @@ private:
   // The main list of cubes we know about:
   std::map<ActiveID, CubeInfo> _availableCubes;
   
-  // Convenience map of factoryID to ActiveID for quicker lookup based on factoryID:
+  // Map of factoryID to ActiveID for quicker lookup based on factoryID.
+  // This map is persistent and items are never removed from it. This is
+  // to ensure that objects with the same factory ID get assigned the same
+  // active ID even after they've disappeared and reconnected.
   std::unordered_map<BleFactoryId, ActiveID> _factoryIdToActiveIdMap;
   
   // AddCubeToList() generates a new activeId and adds the cube to the _availableCubes list if it's not in there already.
@@ -137,9 +144,6 @@ private:
   
   // Remove cube from the list based on BleFactoryId. Returns true if cube was successfully removed.
   bool RemoveCubeFromList(const BleFactoryId& factoryId);
-  
-  // Clear the list of cubes
-  void ClearList();
   
   // Find a cube in the list by ActiveID and return a pointer to it. Returns nullptr if not found.
   CubeInfo* GetCubeByActiveId(const ActiveID& activeId);

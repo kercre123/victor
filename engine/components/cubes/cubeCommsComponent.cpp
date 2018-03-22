@@ -37,7 +37,7 @@ namespace {
   const float kDisconnectCheckPeriod_sec = 2.0f;
   
   // How long must the object be disconnected before we really remove it from the list of connected objects
-  const float kDisconnectTimeout_sec = 2.0f;
+  const float kDisconnectTimeout_sec = 5.0f;
   
   const int kNumCubeLeds = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
 }
@@ -104,7 +104,6 @@ void CubeCommsComponent::UpdateDependent(const RobotCompMap& dependentComps)
         PRINT_NAMED_INFO("CubeCommsComponent.Update.RemovingStaleCube",
                          "Removing unconnected cube with factory ID %d since we haven't heard from it recently.",
                          cube.factoryId);
-        _factoryIdToActiveIdMap.erase(cube.factoryId);
         it = _availableCubes.erase(it);
         
         if (_broadcastObjectAvailableMsg) {
@@ -338,16 +337,10 @@ void CubeCommsComponent::HandleObjectAvailable(const ExternalInterface::ObjectAv
   DEV_ASSERT(IsValidLightCube(msg.objectType, false), "CubeCommsComponent.HandleObjectAvailable.UnknownType");
   
   // Is this cube already in our list?
-  const auto it = _factoryIdToActiveIdMap.find(msg.factory_id);
-  const bool alreadyInList = (it != _factoryIdToActiveIdMap.end());
+  auto* cube = GetCubeByFactoryId(msg.factory_id);
+  const bool alreadyInList = (cube != nullptr);
   
   if (alreadyInList) {
-    // Find this cube in _availableCubes:
-    const auto activeId = it->second;
-    const auto cube = GetCubeByActiveId(activeId);
-    
-    DEV_ASSERT(cube != nullptr, "CubeCommsComponent.HandleObjectAvailable.CouldNotFindCube");
-    
     // Update lastHeardTime and RSSI:
     cube->lastRssi = msg.rssi;
     cube->lastHeardTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -457,8 +450,6 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
     
     // Remove active object from blockworld if it exists, and remove all instances in all origins
     objID = _robot->GetBlockWorld().RemoveConnectedActiveObject(activeId);
-    
-    // TODO: Remove this object from our list or just leave as not connected?
   }
   
   PRINT_NAMED_INFO("CubeCommsComponent.HandleConnectionStateChange.Recvd", "FactoryID 0x%x, connected %d",
@@ -478,7 +469,14 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
   }
 }
   
- 
+
+ActiveID CubeCommsComponent::GetNextActiveId()
+{
+  static ActiveID nextActiveId = 1;
+  return nextActiveId++;
+}
+
+
 bool CubeCommsComponent::AddCubeToList(const CubeInfo& cube)
 {
   // Is this cube already in the list? Check factory ID against existing elements.
@@ -488,22 +486,20 @@ bool CubeCommsComponent::AddCubeToList(const CubeInfo& cube)
   const bool alreadyInList = (it != _availableCubes.end());
   
   if (!alreadyInList) {
-    // ActiveID to assign to the next object added to the list (just to make
-    // sure each object gets a unique ActiveID)
-    static ActiveID nextActiveId = 1;
-    
-    // Insert this cube into the container
-    _availableCubes[nextActiveId] = cube;
-    
-    // Add to the convenience map:
-    _factoryIdToActiveIdMap[cube.factoryId] = nextActiveId;
-    
-    // increment nextActiveId for next insertion
-    ++nextActiveId;
+    // See if we have an existing ActiveID for this factoryID
+    const auto mapIt = _factoryIdToActiveIdMap.find(cube.factoryId);
+    if (mapIt != _factoryIdToActiveIdMap.end()) {
+      // We already have an active ID for this factory ID, so just use that.
+      const auto activeId = mapIt->second;
+      _availableCubes[activeId] = cube;
+    } else {
+      // We do not have an activeID for this factoryID, so
+      // use the next unique one
+      const auto activeId = GetNextActiveId();
+      _availableCubes[activeId] = cube;
+      _factoryIdToActiveIdMap[cube.factoryId] = activeId;
+    }
   }
-  
-  // in dev, ensure that maps are the same size:
-  DEV_ASSERT(_availableCubes.size() == _factoryIdToActiveIdMap.size(), "CubeCommsComponent.AddCubeToList.MapSizeMismatch");
   
   return !alreadyInList;
 }
@@ -521,25 +517,12 @@ bool CubeCommsComponent::RemoveCubeFromList(const BleFactoryId& factoryId)
       PRINT_NAMED_WARNING("CubeCommsComponent.RemoveCubeFromList.UnknownCube", "Cube with activeID of %d not found!", activeID);
       success = false;
     }
-    
-    // Remove the factoryId -> ActiveId map element:
-    _factoryIdToActiveIdMap.erase(it);
   } else {
     PRINT_NAMED_WARNING("CubeCommsComponent.RemoveCubeFromList.UnknownCube", "Cube with factory ID of %d not found!", factoryId);
     success = false;
   }
-  
-  // in dev, ensure that maps are the same size:
-  DEV_ASSERT(_availableCubes.size() == _factoryIdToActiveIdMap.size(), "CubeCommsComponent.RemoveCubeFromList.MapSizeMismatch");
 
   return success;
-}
- 
-
-void CubeCommsComponent::ClearList()
-{
-  _availableCubes.clear();
-  _factoryIdToActiveIdMap.clear();
 }
 
 
