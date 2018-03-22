@@ -117,7 +117,7 @@ namespace TestCommon
     const  int  line_maxlen = 40;
     int  line_len = 0, recall_len = 0;
     char line[line_maxlen+1];
-    const int charge_idle_ms = 30*1000; //delay before enabling robot charging
+    const int charge_idle_ms = 7*1000; //delay before enabling robot charging
     int idle_ms = 0;
     bool charge_en = (opts & BRIDGE_OPT_CHG_DISABLE) == 0;
     
