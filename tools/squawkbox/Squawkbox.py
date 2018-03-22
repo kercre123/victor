@@ -134,6 +134,10 @@ class Squawkbox:
           "you're running on Mac OS X.")
       sys.exit(-1)
 
+    def audio_callback(in_data, frame_count, time_info, status):
+      data = wf.readframes(frame_count)
+      return (data, pyaudio.paContinue)
+
     # open stream
     stream = self.pa.open(
       format=self.pa.get_format_from_width(wf.getsampwidth()),
@@ -141,14 +145,13 @@ class Squawkbox:
       rate=wf.getframerate(),
       output=True,
       output_device_index=usb_card_index, #Important, points to our usb sound card
-      output_host_api_specific_stream_info=stream_info)
+      output_host_api_specific_stream_info=stream_info,
+      stream_callback=audio_callback)
 
-    # read data
-    data = wf.readframes(chunk)
-    # play stream once
-    while data != b'':
-      stream.write(data)
-      data = wf.readframes(chunk)
+    stream.start_stream()
+
+    while stream.is_active():
+      sleep(0.1)
 
     stream.stop_stream()
     stream.close()
