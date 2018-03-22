@@ -26,12 +26,29 @@ asset_project(
     srcs = [],
     platform_srcs = [
         ('android', subdir_glob([
-            ('sound/victor_linux', '*')
+            ('externals/victor-audio-assets/victor_robot/victor_linux', '**/*')
             ],
             prefix = 'sound')
         ),
         ('mac', subdir_glob([
-            ('sound/dev_mac', '*')
+            ('externals/victor-audio-assets/victor_robot/dev_mac', '**/*')
+            ],
+            prefix = 'sound')
+        ),
+    ]      
+)
+
+asset_project(
+    name = 'cozmo_resources_local_sound',
+    srcs = [],
+    platform_srcs = [
+        ('android', subdir_glob([
+            ('externals/local-audio-assets/victor_robot/victor_linux', '**/*')
+            ],
+            prefix = 'sound')
+        ),
+        ('mac', subdir_glob([
+            ('externals/local-audio-assets/victor_robot/dev_mac', '**/*')
             ],
             prefix = 'sound')
         ),
