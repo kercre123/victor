@@ -3,7 +3,7 @@
   "behaviorID": "ReactToCubeTap",
 
   "interactionDuration_s"   : 3.0,
-  "onChargerBehavior"       : "GetOffCharger ",
+  "onChargerBehavior"       : "GetOffCharger",
 
   "anonymousBehaviors" :
   [

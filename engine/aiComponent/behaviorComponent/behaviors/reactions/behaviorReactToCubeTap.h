@@ -28,9 +28,6 @@ private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  using super = ICozmoBehavior;
-
-  friend class BehaviorContainer;
   friend class BehaviorFactory;
   BehaviorReactToCubeTap( const Json::Value& config );
 
@@ -60,9 +57,16 @@ protected:
 
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  struct CubeInfo
+  {
+    ObjectID      id;
+    float         lastTappedTime;
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State Functions
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   enum class EState : uint8_t
   {
     Invalid,
@@ -79,6 +83,7 @@ protected:
 
   bool IsCubeLocated() const;
   void OnCubeNotFound();
+  void DriveToCube( unsigned int attempt = 1 );
 
 private:
 
@@ -97,7 +102,7 @@ private:
     std::string                                 chargerBehaviorString;
     std::shared_ptr<BehaviorDriveOffCharger>    chargerBehavior;
 
-    ObjectID                                    targetCube;
+    CubeInfo                                    targetCube;
 
   } _iVars;
 
