@@ -586,27 +586,6 @@ namespace Cozmo {
     SendExecuteTestPlan(pathMotionProfile_);
   }
 
-
-  void WebotsKeyboardController::ToggleCubeAccelStreaming()
-  {
-    // Toggle streaming accel from object with ID given in 'streamObjectId' field.
-    
-    u32 streamObjectID = (u32) root_->getField("streamObjectID")->getSFInt32();
-    // Try to add this objID to the set of already streaming IDs.
-    // If streamObjectID wasn't in the set before, add it and enable streaming.
-    const auto result = streamingAccelObjIds.insert(streamObjectID);
-    const bool enable = result.second;
-    
-    // if we're disabling streaming, remove this objID from the set.
-    if (!enable) {
-      streamingAccelObjIds.erase(streamObjectID);
-    }
-    
-    printf("%s streaming of accel data from object %d (now streaming from %lu objects)\n", enable ? "Enable" : "Disable", streamObjectID, streamingAccelObjIds.size());
-    ExternalInterface::StreamObjectAccel msg(streamObjectID, enable);
-    SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
-  }
-
   void WebotsKeyboardController::ExecuteBehavior()
   {
     std::string behaviorName;
@@ -2000,7 +1979,7 @@ namespace Cozmo {
 //      REGISTER_SHIFTED_KEY_FCN('{', MOD_ALT,  , "");
     REGISTER_SHIFTED_KEY_FCN('}', MOD_NONE, RunDebugConsoleFunc,               "Run debug console function with args in engine process");
     REGISTER_SHIFTED_KEY_FCN('}', MOD_ALT,  RunDebugConsoleFunc,               "Run debug console function with args in anim process");
-    REGISTER_SHIFTED_KEY_FCN('|', MOD_NONE, ToggleCubeAccelStreaming,          "Toggle streaming of cube accel data from 'streamObjectID'");
+//      REGISTER_SHIFTED_KEY_FCN('|', MOD_NONE, , "");
 //      REGISTER_SHIFTED_KEY_FCN('|', MOD_ALT, , "");
     REGISTER_SHIFTED_KEY_FCN(':', MOD_NONE, SetRollActionParams,               "Set parameters for roll action");
 //      REGISTER_SHIFTED_KEY_FCN(':', MOD_ALT, , "");

@@ -14,9 +14,12 @@
 
 #include "engine/activeObject.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/cubeAccelComponentListeners.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
+
+#include "clad/externalInterface/messageCubeToEngine.h"
 
 #include "coretech/common/engine/utils/timer.h"
 
@@ -24,72 +27,12 @@
 
 namespace Anki {
 namespace Cozmo {
-
-namespace {
-Anki::Cozmo::CubeAccelComponent* sThis = nullptr;
-}
-  
-#if REMOTE_CONSOLE_ENABLED
-namespace {
-  
-CONSOLE_VAR(u32, kCubeAccelWhichLightCube, "CubeAccelComponent.FakeAccel", 1); // LightCube 1, 2, or 3
-CONSOLE_VAR(f32, kCubeAccelMagnitude_mm_s_s, "CubeAccelComponent.FakeAccel", 3500.0f);
-  
-void FakeCubeAcceleration(ConsoleFunctionContextRef context)
-{
-  const TimeStamp_t timestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  uint32_t whichLightCube = kCubeAccelWhichLightCube;
-  ActiveAccel accel(kCubeAccelMagnitude_mm_s_s, 0,0);
-  ExternalInterface::ObjectAccel payload(timestamp,
-                                         0,
-                                         accel);
-  
-  if(sThis != nullptr){
-    sThis->Dev_HandleObjectAccel(whichLightCube, payload);
-  }
-}
-
-void FakeCubeShake(ConsoleFunctionContextRef context)
-{
-  uint32_t whichLightCube = kCubeAccelWhichLightCube;
-
-  const TimeStamp_t previousTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - 1000;
-  ActiveAccel positiveAccel(kCubeAccelMagnitude_mm_s_s, 0,0);
-  ExternalInterface::ObjectAccel positivePayload(previousTimestamp,
-                                                 0,
-                                                 positiveAccel);
-  
-  const TimeStamp_t currentTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  ActiveAccel negativeAccel(-kCubeAccelMagnitude_mm_s_s, 0,0);
-  ExternalInterface::ObjectAccel negativePayload(currentTimestamp,
-                                                 0,
-                                                 negativeAccel);
-  
-  if(sThis != nullptr){
-    sThis->Dev_HandleObjectAccel(whichLightCube, positivePayload);
-    sThis->Dev_HandleObjectAccel(whichLightCube, negativePayload);
-  }
-}
-  
-CONSOLE_FUNC(FakeCubeAcceleration, "CubeAccelComponent.FakeAccel");
-CONSOLE_FUNC(FakeCubeShake, "CubeAccelComponent.FakeAccel");
-
-}
-#endif
-  
-  
-  
   
 CubeAccelComponent::CubeAccelComponent()
 : IDependencyManagedComponent(this, RobotComponentID::CubeAccel)
-{  
-  sThis = this;
+{
 }
 
-CubeAccelComponent::~CubeAccelComponent()
-{
-  sThis = nullptr;
-}
 
 void CubeAccelComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) 
 {
@@ -103,175 +46,93 @@ void CubeAccelComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
 }
 
 
-void CubeAccelComponent::AddListener(const ObjectID& objectID,
-                                     const std::shared_ptr<CubeAccelListeners::ICubeAccelListener>& listener,
-                                     const TimeStamp_t& windowSize_ms)
+void CubeAccelComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
-  auto iter = _objectAccelHistory.find(objectID);
-  if(iter == _objectAccelHistory.end())
-  {
-    // No AccelHistory for this object so add one
-    AccelHistory accelHistory;
-    auto pair = _objectAccelHistory.emplace(objectID, std::move(accelHistory));
-    DEV_ASSERT(pair.second, "CubeAccelComponent.AddListener.EmplaceFailed");
-    iter = pair.first;
-  }
-  
-  // If there are no listeners of this object's accel data then streaming
-  // is not enabled for the object so enable it
-  if(iter->second.listeners.empty())
-  {
-    const ActiveObject* obj = _robot->GetBlockWorld().GetConnectedActiveObjectByID(objectID);
-    if(obj != nullptr)
-    {
-      PRINT_CH_INFO("CubeAccelComponent",
-                    "CubeAccelComponent.AddListener.StartingObjectAccelStream",
-                    "ObjectID %d (activeID %d)",
-                    objectID.GetValue(),
-                    obj->GetActiveID());
-      
-      //_robot->GetCubeCommsComponent().SetStreamObjectAccel(obj->GetActiveID(), true);
-    }else{
-      PRINT_NAMED_WARNING("CubeAccelComponent.AddListener.InvalidObject",
-                          "Object id %d is not connected",
-                          objectID.GetValue());
-    }
-  }
-  
-  // TODO Run listener over all of history if there is history? CullToWindowSize() first in case history is old
-  // Add this listener to our set of listeners for this object
-  iter->second.listeners.insert(listener);
-  
-  // Make sure window size is never smaller than what any one call to AddListener requested
-  iter->second.windowSize_ms = MAX(iter->second.windowSize_ms, windowSize_ms);
-}
-
-bool CubeAccelComponent::RemoveListener(const ObjectID& objectID,
-                                        const std::shared_ptr<CubeAccelListeners::ICubeAccelListener>& listener)
-{
-  auto accelHistory = _objectAccelHistory.find(objectID);
-  if(accelHistory != _objectAccelHistory.end())
-  {
-    auto iter = accelHistory->second.listeners.find(listener);
-    
-    // If the listener is in the set, remove it
-    if(iter != accelHistory->second.listeners.end())
-    {
-      accelHistory->second.listeners.erase(iter);
-      
-      // TODO: Consider recalculating accelHistory->second.windowSize_ms after removing a listener
-      // This would require storing windowSize_ms per listener
-      
-      // If there are no more listeners then disable object accel streaming
-      if(accelHistory->second.listeners.empty())
-      {
-        const ActiveObject* obj = _robot->GetBlockWorld().GetConnectedActiveObjectByID(accelHistory->first);
-        if(obj != nullptr)
-        {
-          PRINT_CH_INFO("CubeAccelComponent",
-                        "CubeAccelComponent.RemoveListener.StoppingObjectAccelStream",
-                        "ObjectID %d (activeID %d)",
-                        obj->GetID().GetValue(),
-                        obj->GetActiveID());
-          
-          //_robot->GetCubeCommsComponent().SetStreamObjectAccel(obj->GetActiveID(), false);
-        }
-        
-        // Reset window size to default value
-        accelHistory->second.windowSize_ms = kDefaultWindowSize_ms;
+  // Check to see if anyone is using the listeners, and if not, remove them.
+  for (auto& mapEntry : _listenerMap) {
+    const auto objId = mapEntry.first;
+    auto& listenerSet = mapEntry.second;
+    for (auto iter = listenerSet.begin() ; iter != listenerSet.end() ; ) {
+      if (iter->use_count() <= 1) {
+        PRINT_NAMED_INFO("CubeAccelComponent.UpdateDependent.RemovingListener",
+                         "Removing listener for objectID %d since no one is using it",
+                         objId.GetValue());
+        iter = listenerSet.erase(iter);
+      } else {
+        ++iter;
       }
-      return true;
     }
   }
-  return false;
 }
 
-  
-void CubeAccelComponent::HandleObjectAccel(const ExternalInterface::ObjectAccel& objectAccel)
+
+bool CubeAccelComponent::AddListener(const ObjectID& objectID,
+                                     const std::shared_ptr<CubeAccelListeners::ICubeAccelListener>& listener)
 {
-  const ActiveObject* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(objectAccel.objectID);
-  if(object == nullptr)
-  {
-    // It's possible to receive an objectAccel message before the cube
-    // re-connection message resulting in the object not being in block world
-    // So assert that we don't have any tracking data still valid on the cube
-    // we can't find
-    auto iter = _objectAccelHistory.find(objectAccel.objectID);
-    DEV_ASSERT_MSG((iter == _objectAccelHistory.end()) ||
-                   iter->second.listeners.empty(),
-                   "CubeAccelComponent.HandleObjectAccel.NoConnectedObject",
-                   "Object %d is not in block world, but we still have data on it",
-                   objectAccel.objectID);
+  const ActiveObject* obj = _robot->GetBlockWorld().GetConnectedActiveObjectByID(objectID);
+  if (obj == nullptr) {
+    PRINT_NAMED_WARNING("CubeAccelComponent.AddListener.InvalidObject",
+                        "Object id %d is not connected",
+                        objectID.GetValue());
+    return false;
+  }
+  
+  // Add this listener to our set of listeners for this object
+  auto& listenersSet = _listenerMap[objectID];
+  const auto resultPair = listenersSet.insert(listener);
+  const bool successfullyInserted = resultPair.second;
+  if (!successfullyInserted) {
+    PRINT_NAMED_WARNING("CubeAccelComponent.AddListener.InsertFailed",
+                        "Failed to insert listener for object %d. Does this listener already exist in the set?",
+                        objectID.GetValue());
+  }
+  return successfullyInserted;
+}
+
+
+void CubeAccelComponent::HandleCubeAccelData(const ActiveID& activeID,
+                                             const CubeAccelData& accelData)
+{
+  const ActiveObject* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID);
+  if (object == nullptr) {
+    DEV_ASSERT(false, "CubeAccelComponent.HandleCubeAccelData.NoConnectedObject");
     return;
   }
   
   const uint32_t objectID = object->GetID();
-  const auto& iter = _objectAccelHistory.find(objectID);
-
-  // We should have an entry in _objectAccelHistory for the object this accel data is coming from
-  if(ANKI_VERIFY(iter != _objectAccelHistory.end(),
-                 "CubeAccelComponent.HandleObjectAccel.NoObjectIDInHistory",
-                 "No accel history for objectID %u",
-                 objectID))
-  {
-    // Add accel data to history
-    iter->second.history[objectAccel.timestamp] = objectAccel.accel;
+  
+  // Check for taps
+  if (accelData.tap_count != 0) {
+    using namespace ExternalInterface;
+    ObjectTapped objectTapped;
+    objectTapped.timestamp = _robot->GetLastMsgTimestamp(); // TODO: Need a better timestamp here
+    objectTapped.objectID  = objectID;
+    objectTapped.numTaps   = accelData.tap_count;
+    objectTapped.tapTime   = accelData.tap_time;
+    objectTapped.tapNeg    = accelData.tap_neg;
+    objectTapped.tapPos    = accelData.tap_pos;
     
-    // Update all of the listeners with the accel data
-    for(auto& listener : iter->second.listeners)
-    {
-      listener->Update(objectAccel.accel);
-    }
-    
-    CullToWindowSize(iter->second);
+    // Forward to game
+    _robot->Broadcast(MessageEngineToGame(std::move(objectTapped)));
   }
   
-  // Forward to game and viz
-  using namespace ExternalInterface;
-  _robot->Broadcast(MessageEngineToGame(ObjectAccel(objectAccel.timestamp, objectID, objectAccel.accel)));
-  _robot->GetContext()->GetVizManager()->SendObjectAccelState(objectID, objectAccel.accel);
-}
-  
-void CubeAccelComponent::CullToWindowSize(AccelHistory& accelHistory)
-{
-  if(accelHistory.history.size() > 1)
-  {
-    const TimeStamp_t mostRecentTime = accelHistory.history.rbegin()->first;
-    
-    if(mostRecentTime < accelHistory.windowSize_ms)
-    {
-      return;
-    }
-    
-    const TimeStamp_t oldestAllowedTime = mostRecentTime - accelHistory.windowSize_ms;
-    const auto it = accelHistory.history.lower_bound(oldestAllowedTime);
-    
-    if(!accelHistory.history.empty() && it != accelHistory.history.begin())
-    {
-      accelHistory.history.erase(accelHistory.history.begin(), it);
-    }
-  }
-}
-
-void CubeAccelComponent::Dev_HandleObjectAccel(const u32 whichLightCubeType, ExternalInterface::ObjectAccel& objectAccel)
-{
-  static const std::map<u32, ObjectType> kLightCubeTypeToObjectType = {
-    {1, ObjectType::Block_LIGHTCUBE1},
-    {2, ObjectType::Block_LIGHTCUBE2},
-    {3, ObjectType::Block_LIGHTCUBE3}
+  // Convert raw accelerometer data to mm/s^2
+  auto rawAccelToMmps = [](const s16 rawAccel) {
+    // Raw accel is an s16 with range -4g to +4g
+    const float accelG = rawAccel / std::numeric_limits<s16>::max() * 4.f;
+    return accelG * 9810.f;
   };
+  ActiveAccel accel;
+  accel.x = rawAccelToMmps(accelData.accel[0]);
+  accel.y = rawAccelToMmps(accelData.accel[1]);
+  accel.z = rawAccelToMmps(accelData.accel[2]);
   
-  const auto& objectTypeIter = kLightCubeTypeToObjectType.find(whichLightCubeType);
-  if(objectTypeIter != kLightCubeTypeToObjectType.end())
-  {
-    BlockWorldFilter filter;
-    filter.SetAllowedTypes({objectTypeIter->second});
+  const auto& iter = _listenerMap.find(objectID);
 
-    const ObservableObject* object = _robot->GetBlockWorld().FindConnectedActiveMatchingObject(filter);
-    if(object != nullptr)
-    {
-      objectAccel.objectID = object->GetID();
-      HandleObjectAccel(objectAccel);
+  if(iter != _listenerMap.end()) {
+    // Update all of the listeners with the accel data
+    for(auto& listener : iter->second) {
+      listener->Update(accel);
     }
   }
 }
@@ -280,15 +141,7 @@ void CubeAccelComponent::Dev_HandleObjectAccel(const u32 whichLightCubeType, Ext
 template<>
 void CubeAccelComponent::HandleMessage(const ExternalInterface::ObjectConnectionState& msg)
 {
-  if(msg.connected)
-  {
-    auto iter = _objectAccelHistory.find(msg.objectID);
-    DEV_ASSERT_MSG((iter == _objectAccelHistory.end()) ||
-                   iter->second.listeners.empty(),
-                   "CubeAccelComponent.HandleMessage.ObjectConnectionState",
-                   "Connecting to object %d which has a dangling listener",
-                   msg.objectID);
-  }
+  // TODO: This handler will create/destroy always-on listeners for ObjectMoved, ObjectUpAxisChanged, etc.
 }
   
 }

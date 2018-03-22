@@ -388,16 +388,7 @@ void CubeCommsComponent::HandleCubeMessage(const BleFactoryId& factoryId, const 
   switch (msg.GetTag()) {
     case MessageCubeToEngineTag::accelData:
     {
-      const auto& accelDataMsg = msg.Get_accelData();
-      ExternalInterface::ObjectAccel oaMsg;
-      oaMsg.accel.x = accelDataMsg.accel[0];
-      oaMsg.accel.y = accelDataMsg.accel[1];
-      oaMsg.accel.z = accelDataMsg.accel[2];
-      oaMsg.objectID = activeId;
-      oaMsg.timestamp = _robot->GetLastMsgTimestamp(); // TODO: Is this accurate enough?
-
-      // TODO: Pass this to the CubeAccelComponent to handle:
-      //_robot->GetCubeAccelComponent().HandleObjectAccel(oaMsg);
+      _robot->GetCubeAccelComponent().HandleCubeAccelData(activeId, msg.Get_accelData());
       break;
     }
     default:

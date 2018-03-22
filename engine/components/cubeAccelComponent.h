@@ -13,22 +13,18 @@
 #ifndef __Anki_Cozmo_Basestation_Components_CubeAccelComponent_H__
 #define __Anki_Cozmo_Basestation_Components_CubeAccelComponent_H__
 
-#include "engine/components/cubeAccelComponentListeners.h"
-#include "engine/events/ankiEvent.h"
-#include "engine/robotInterface/messageHandler.h"
-#include "coretech/common/engine/objectIDs.h"
-#include "coretech/common/engine/math/point_impl.h"
-#include "coretech/common/shared/types.h"
-#include "engine/components/cubeAccelComponentListeners.h"
-#include "util/entityComponent/iDependencyManagedComponent.h"
+#include "engine/cozmoObservableObject.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/robotComponents_fwd.h"
 #include "engine/robotInterface/messageHandler.h"
 
+#include "coretech/common/engine/objectIDs.h"
+#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/shared/types.h"
 
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
-
 
 #include <list>
 #include <map>
@@ -38,9 +34,9 @@ static const Anki::TimeStamp_t kDefaultWindowSize_ms = 50;
 namespace Anki {
 namespace Cozmo {
 
-namespace ExternalInterface {
-  struct ObjectAvailable;
-  struct ObjectAccel;
+struct CubeAccelData;
+namespace CubeAccelListeners {
+  class ICubeAccelListener;
 }
 
 class Robot;
@@ -49,7 +45,7 @@ class CubeAccelComponent : public IDependencyManagedComponent<RobotComponentID>,
 {
 public:
   CubeAccelComponent();
-  virtual ~CubeAccelComponent();
+  virtual ~CubeAccelComponent() = default;
 
   //////
   // IDependencyManagedComponent functions
@@ -61,55 +57,30 @@ public:
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::BodyLights);
   };
-  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   //////
   // end IDependencyManagedComponent functions
   //////
 
-  // Runs the listener on the accelerometer data stream coming from the specified object
-  // Enables streaming object accel data if not already enabled for object
-  // Sets the window size of this object's accelerometer data to be at least the specified
-  // window size
-  void AddListener(const ObjectID& objectID,
-                   const std::shared_ptr<CubeAccelListeners::ICubeAccelListener>& listener,
-                   const TimeStamp_t& windowSize_ms = kDefaultWindowSize_ms);
+  // Add a listener for the given ObjectId.
+  // The listener gets run on the accelerometer data stream coming from the specified object.
+  // Returns true if listener was successfully added.
+  // Listeners are automatically removed when no one else is using them (shared pointer use count == 1)
+  bool AddListener(const ObjectID& objectID,
+                   const std::shared_ptr<CubeAccelListeners::ICubeAccelListener>& listener);
 
-  // Removes the listener from the accelerometer data stream coming from the specified object
-  // If this is the last listener then disables streaming object accel data for the object
-  // Returns whether or not the listener was successfully removed
-  bool RemoveListener(const ObjectID& objectID,
-                      const std::shared_ptr<CubeAccelListeners::ICubeAccelListener>& listener);
-  
-  
-  // Exposed for debug purposes - should not be called directly
-  // whichLightCubeType should be 1, 2, or 3 for LightCube1, 2, or 3
-  void Dev_HandleObjectAccel(const u32 whichLightCubeType, ExternalInterface::ObjectAccel& accel);
-  
   template<typename T>
   void HandleMessage(const T& msg);
   
-  void HandleObjectAccel(const ExternalInterface::ObjectAccel& objectAccel);
+  void HandleCubeAccelData(const ActiveID& activeID,
+                           const CubeAccelData& accelData);
   
 private:
   
-  struct AccelHistory
-  {
-    // Window size of data to keep in history
-    TimeStamp_t windowSize_ms = kDefaultWindowSize_ms;
-    
-    // Historical accel data
-    std::map<TimeStamp_t, ActiveAccel> history;
-    
-    // Incoming accel data is run on this set of listeners
-    std::set<std::shared_ptr<CubeAccelListeners::ICubeAccelListener>> listeners;
-  };
-  
-  // Culls history to it's window size
-  void CullToWindowSize(AccelHistory& accelHistory);
+  // Incoming accel data is run on this set of listeners
+  std::map<ObjectID, std::set<std::shared_ptr<CubeAccelListeners::ICubeAccelListener>>> _listenerMap;
   
   Robot* _robot = nullptr;
-  
-  std::map<ObjectID, AccelHistory> _objectAccelHistory;
   
   std::list<Signal::SmartHandle> _eventHandlers;
   

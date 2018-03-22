@@ -39,7 +39,6 @@ class MessageEngineToCube;
 namespace ExternalInterface {
   class MessageGameToEngine;
   class MessageEngineToGame;
-  struct ObjectAccel;
   struct ObjectAvailable;
 }
   

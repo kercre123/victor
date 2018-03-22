@@ -51,7 +51,6 @@ protected:
   void TrackPet();
   void ExecuteTestPlan();
   
-  void ToggleCubeAccelStreaming();
   void ExecuteBehavior();
   void LogCliffSensorData();
   
