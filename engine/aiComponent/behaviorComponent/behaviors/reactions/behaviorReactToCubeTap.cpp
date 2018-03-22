@@ -41,6 +41,7 @@ namespace {
 
   // don't bother responding after this amount of time
   const float kCubeTapMaxResponseTime                        = 1.0f;
+  const int kDriveToCubeAttempts                             = 2;
 }
 
 namespace Anki {
@@ -119,6 +120,18 @@ void BehaviorReactToCubeTap::GetBehaviorOperationModifiers( BehaviorOperationMod
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToCubeTap::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  static const char* list[] =
+  {
+    kChargerBehaviorKey,
+    kCubeInteractionDurationKey,
+  };
+
+  expectedKeys.insert( std::begin( list ), std::end( list ) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToCubeTap::WantsToBeActivatedBehavior() const
 {
   return _iVars.targetCube.id.IsSet();
@@ -130,24 +143,13 @@ void BehaviorReactToCubeTap::AlwaysHandleInScope( const EngineToGameEvent& event
   // note: waiting for the new cube work to go in before figuring out how to detect taps
   if ( event.GetData().GetTag() == ExternalInterface::MessageEngineToGame::Tag::ObjectTapped )
   {
-    const ObjectTapped& payload = event.GetData().Get_ObjectTapped();
+    const ExternalInterface::ObjectTapped& payload = event.GetData().Get_ObjectTapped();
+
     _iVars.targetCube.id              = payload.objectID;
     _iVars.targetCube.lastTappedTime  = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
     PRINT_CH_DEBUG( "Behaviors", "BehaviorReactToCubeTap", "Received Cube Tapped event [%u]", payload.objectID );
   }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToCubeTap::OnBehaviorEnteredActivatableScope()
-{
-
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToCubeTap::OnBehaviorLeftActivatableScope()
-{
-
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -296,8 +298,8 @@ void BehaviorReactToCubeTap::DriveToCube( unsigned int attempt )
         break;
 
       case ActionResult::RETRY:
-        // attempt to drive to the cube at most 2 times, then give up
-        if ( attempt < 2 )
+        // attempt to drive to the cube at most kDriveToCubeAttempts times, then give up
+        if ( attempt < kDriveToCubeAttempts )
         {
           PRINT_CH_INFO( "Behaviors", "BehaviorReactToCubeTap.DriveToCube", "DriveToCube failed, retrying attempt #%u", attempt+1 );
           DriveToCube( attempt + 1 );
