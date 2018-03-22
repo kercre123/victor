@@ -17,6 +17,12 @@
 namespace Anki {
 namespace Cozmo {
   
+  enum class Filter {
+    None           = 0,
+    BoxFilter      = 1,
+    GaussianFilter = 2,
+  };
+
   #define CONSOLE_GROUP "ProceduralFace"
 
 #if PROCEDURALFACE_NOISE_FEATURE
@@ -29,18 +35,19 @@ namespace Cozmo {
   CONSOLE_VAR_EXTERN(s32, kProcFace_NoiseNumFrames);
 #endif
     
-  CONSOLE_VAR(bool,       kProcFace_UseAntiAliasedLines,        CONSOLE_GROUP, true); // Only affects OpenCV drawing, not post-smoothing
-  CONSOLE_VAR_RANGED(f32, kProcFace_EyeLightnessMultiplier,     CONSOLE_GROUP, 1.f, 0.f, 10.f);
+  CONSOLE_VAR_ENUM(u8,      kProcFace_LineType,                   CONSOLE_GROUP, 1, "Line_4,Line_8,Line_AA"); // Only affects OpenCV drawing, not post-smoothing
+  CONSOLE_VAR_RANGED(s32,   kProcFace_EllipseDelta,               CONSOLE_GROUP, 10, 1, 90);
+  CONSOLE_VAR_RANGED(f32,   kProcFace_EyeLightnessMultiplier,     CONSOLE_GROUP, 1.f, 0.f, 10.f);
 
-  CONSOLE_VAR(bool,       kProcFace_HotspotRender,              CONSOLE_GROUP, true); // Render glow
-  CONSOLE_VAR_RANGED(f32, kProcFace_HotspotFalloff,             CONSOLE_GROUP, 0.85f, 0.05f, 1.f);
+  CONSOLE_VAR(bool,         kProcFace_HotspotRender,              CONSOLE_GROUP, true); // Render glow
+  CONSOLE_VAR_RANGED(f32,   kProcFace_HotspotFalloff,             CONSOLE_GROUP, 0.85f, 0.05f, 1.f);
 
   CONSOLE_VAR_RANGED(f32, kProcFace_GlowSizeMultiplier,         CONSOLE_GROUP, 1.f, 0.f, 1.f);
   CONSOLE_VAR_RANGED(f32, kProcFace_GlowLightnessMultiplier,    CONSOLE_GROUP, 1.f, 0.f, 10.f);
-  CONSOLE_VAR(bool,       kProcFace_GlowGaussianFilter,         CONSOLE_GROUP, false); // Gausssian or boxfilter for glow
+  CONSOLE_VAR_ENUM(uint8_t, kProcFace_GlowFilter,                 CONSOLE_GROUP, (uint8_t)Filter::BoxFilter, "None,Box,Gaussian");
 
-  CONSOLE_VAR_RANGED(s32, kProcFace_AntiAliasingSize,           CONSOLE_GROUP, 5, 0, 63); // full image antialiasing
-  CONSOLE_VAR(bool,       kProcFace_AntiAliasingGaussianFilter, CONSOLE_GROUP, false); // simpler box filter if not
+  CONSOLE_VAR_RANGED(s32,   kProcFace_AntiAliasingSize,           CONSOLE_GROUP, 5, 0, 63); // full image antialiasing
+  CONSOLE_VAR_ENUM(uint8_t, kProcFace_AntiAliasingFilter,         CONSOLE_GROUP, (uint8_t)Filter::BoxFilter, "None,Box,Gaussian");
 
   static void VictorFaceRenderer(ConsoleFunctionContextRef context)
   {
@@ -205,16 +212,16 @@ namespace Cozmo {
     // Compute eye and lid polygons:
     //
     std::vector<cv::Point> eyePoly, segment, lowerLidPoly, upperLidPoly;
-    const s32 kEllipseDelta = 5;
-    const s32 kLineType = (kProcFace_UseAntiAliasedLines ? cv::LINE_AA : cv::LINE_8);
-    
+    static const s32 kLineTypes[3] = { cv::LINE_4, cv::LINE_8, cv::LINE_AA };
+    const s32 kLineType = kLineTypes[kProcFace_LineType];
+
     // 1. Eye shape poly
     {
       ANKI_CPU_PROFILE("EyeShapePoly");
       // Upper right corner
       if(upRightRadX > 0 && upRightRadY > 0) {
        cv::ellipse2Poly(cv::Point(std::round(halfEyeWidth  - upRightRadX), std::round(-halfEyeHeight + upRightRadY)),
-                        cv::Size(upRightRadX,upRightRadY), 0, 270, 360, kEllipseDelta, segment);
+                        cv::Size(upRightRadX,upRightRadY), 0, 270, 360, kProcFace_EllipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
         eyePoly.emplace_back(halfEyeWidth,-halfEyeHeight);
@@ -223,7 +230,7 @@ namespace Cozmo {
       // Lower right corner
       if(lowRightRadX > 0 && lowRightRadY > 0) {
         cv::ellipse2Poly(cv::Point(std::round(halfEyeWidth - lowRightRadX), std::round(halfEyeHeight - lowRightRadY)),
-                         cv::Size(lowRightRadX,lowRightRadY), 0, 0, 90, kEllipseDelta, segment);
+                         cv::Size(lowRightRadX,lowRightRadY), 0, 0, 90, kProcFace_EllipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
         eyePoly.emplace_back(halfEyeWidth, halfEyeHeight);
@@ -232,7 +239,7 @@ namespace Cozmo {
       // Lower left corner
       if(lowLeftRadX > 0 && lowLeftRadY > 0) {
        cv::ellipse2Poly(cv::Point(std::round(-halfEyeWidth  + lowLeftRadX), std::round(halfEyeHeight - lowLeftRadY)),
-                        cv::Size(lowLeftRadX,lowLeftRadY), 0, 90, 180, kEllipseDelta, segment);
+                        cv::Size(lowLeftRadX,lowLeftRadY), 0, 90, 180, kProcFace_EllipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
         eyePoly.emplace_back(-halfEyeWidth, halfEyeHeight);
@@ -241,7 +248,7 @@ namespace Cozmo {
       // Upper left corner
       if(upLeftRadX > 0 && upLeftRadY > 0) {
         cv::ellipse2Poly(cv::Point(std::round(-halfEyeWidth + upLeftRadX), std::round(-halfEyeHeight + upLeftRadY)),
-                        cv::Size(upLeftRadX,upLeftRadY), 0, 180, 270, kEllipseDelta, segment);
+                        cv::Size(upLeftRadX,upLeftRadY), 0, 180, 270, kProcFace_EllipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
         eyePoly.emplace_back(-halfEyeWidth,-halfEyeHeight);
@@ -266,7 +273,7 @@ namespace Cozmo {
       if(yRad != 0) {
         const f32 xRad = std::round(halfEyeWidth / std::cos(angleRad));
         cv::ellipse2Poly(cv::Point(0, std::round(halfEyeHeight - lowerLidY)),
-                         cv::Size(xRad,yRad), angleDeg, 180, 360, kEllipseDelta, segment);
+                         cv::Size(xRad,yRad), angleDeg, 180, 360, kProcFace_EllipseDelta, segment);
         DEV_ASSERT(std::abs(segment.front().x - lowerLidPoly.back().x)<3 &&
                    std::abs(segment.front().y - lowerLidPoly.back().y)<3,
                    "First curved lower lid segment point not close to last lid poly point.");
@@ -295,7 +302,7 @@ namespace Cozmo {
       if(yRad != 0) {
         const f32 xRad = std::round(halfEyeWidth / std::cos(angleRad));
         cv::ellipse2Poly(cv::Point(0, std::round(-halfEyeHeight + upperLidY)),
-                         cv::Size(xRad,yRad), angleDeg, 0, 180, kEllipseDelta, segment);
+                         cv::Size(xRad,yRad), angleDeg, 0, 180, kProcFace_EllipseDelta, segment);
         DEV_ASSERT(std::abs(segment.front().x - upperLidPoly.back().x)<3 &&
                    std::abs(segment.front().y - upperLidPoly.back().y)<3,
                    "First curved upper lid segment point not close to last lid poly point");
@@ -469,7 +476,7 @@ namespace Cozmo {
       
       Rectangle<s32> eyeBoundingBoxS32(upperLeft.CastTo<s32>(), bottomRight.CastTo<s32>());
       Vision::Image eyeShapeROI = _eyeShape.GetROI(eyeBoundingBoxS32);
-      
+
       // Compute glow from the final eye shape (after lids are drawn)
       _glowImg.Allocate(faceImg.GetNumRows(), faceImg.GetNumCols());
       _glowImg.FillWith(0);
@@ -489,11 +496,11 @@ namespace Cozmo {
           ++glowSizeY;
         }
 
-        if(kProcFace_GlowGaussianFilter) {
+        if(kProcFace_GlowFilter == (uint8_t)Filter::BoxFilter) {
+          cv::boxFilter(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), -1, cv::Size(glowSizeX,glowSizeY));
+        } else if(kProcFace_GlowFilter == (uint8_t)Filter::GaussianFilter) {
           cv::GaussianBlur(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), cv::Size(glowSizeX,glowSizeY),
                            (f32)glowSizeX, (f32)glowSizeY);
-        } else {
-          cv::boxFilter(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), -1, cv::Size(glowSizeX,glowSizeY));
         }
       }
 
@@ -503,12 +510,12 @@ namespace Cozmo {
         if(kProcFace_AntiAliasingSize % 2 == 0) {
           ++kProcFace_AntiAliasingSize; // Antialiasing filter size should be odd
         }
-        if(kProcFace_AntiAliasingGaussianFilter) {
+        if(kProcFace_AntiAliasingFilter == (uint8_t)Filter::BoxFilter) {
+          cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize));
+        } else if(kProcFace_AntiAliasingFilter == (uint8_t)Filter::GaussianFilter) {
           const f32 kAntiAliasingSigmaFraction = 0.5f;
           cv::GaussianBlur(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize),
                            (f32)kProcFace_AntiAliasingSize * kAntiAliasingSigmaFraction);
-        } else {
-          cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize));
         }
       }
       
