@@ -78,6 +78,8 @@ void DecodeAndFlash(void)
       FlashProgress(100);
       //SlowPutString("Resetting\n\n");
       
+      Timer::wait(1000);
+      
       // Force reset
       SCB->VTOR = FLASH_BOOTLOADER;
       NVIC_SystemReset();
