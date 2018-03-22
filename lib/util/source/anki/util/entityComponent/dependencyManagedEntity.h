@@ -30,13 +30,12 @@ class Robot;
 }
 
 template<typename EnumType>
-class DependencyManagedEntity
-{
+class DependencyManagedEntity{
 public:
   using ComponentType = IDependencyManagedComponent<EnumType>;
   using DependentComponents = DependencyManagedEntity<EnumType>;
   
-  DependencyManagedEntity() = default;
+  DependencyManagedEntity(){};
 
   // Note: If shouldManage is true ownership of the component is transfered to the entity
   // DO NOT delete or access the pointer directly after this call - access it through the entity's
@@ -50,10 +49,8 @@ public:
                                     ComponentType*& component,
                                     bool shouldManage);
 
-  // Remove a component from the entity - if the component is managed it will be deleted
-  void RemoveComponent(EnumType enumID);
   void ClearEntity();
-
+  
   bool HasComponent(EnumType enumID) const;
   
   const ComponentType& GetComponent(EnumType enumID) const;
@@ -167,21 +164,6 @@ void DependencyManagedEntity<EnumType>::DevReplaceDependentComponent(EnumType en
   }
 
   AddDependentComponent(enumID, component, shouldManage);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<typename EnumType>
-void DependencyManagedEntity<EnumType>::RemoveComponent(EnumType enumID)
-{
-  auto compIter = _components.find(enumID);
-  if(compIter != _components.end()){
-    _components.erase(compIter);
-  }
-  
-  auto managedCompIter = _managedComponents.find(enumID);
-  if(managedCompIter != _managedComponents.end()){
-    _managedComponents.erase(managedCompIter);
-  }
 }
 
 

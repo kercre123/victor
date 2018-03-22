@@ -126,7 +126,7 @@ enum class RobotToEngineTag : uint8_t;
 class ContextWrapper:  public IDependencyManagedComponent<RobotComponentID> {
 public:
   ContextWrapper(const CozmoContext* context)
-  : IDependencyManagedComponent(this, RobotComponentID::CozmoContextWrapper)
+  : IDependencyManagedComponent(this, RobotComponentID::CozmoContext)
   , context(context){}
   const CozmoContext* context;
 
@@ -181,9 +181,7 @@ public:
   // =========== Components ===========
 
   bool HasComponent(RobotComponentID componentID) const {
-    return (_components != nullptr) &&
-           _components->HasComponent(componentID) &&
-           _components->GetComponent(componentID).IsValueValid();
+    return (_components != nullptr) && (_components->GetComponent(componentID).IsValueValid());
   }
 
   template<typename T>

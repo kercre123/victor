@@ -215,7 +215,7 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
   
   // Can have null robot for unit tests
   if ((nullptr != _robot) &&
-      _robot->HasComponent(RobotComponentID::CozmoContextWrapper) &&
+      _robot->HasComponent(RobotComponentID::CozmoContext) &&
       kSendMoodToViz)
   {
     _robot->GetContext()->GetVizManager()->SendRobotMood(std::move(robotMood));

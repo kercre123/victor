@@ -38,7 +38,7 @@ enum class RobotComponentID{
   BodyLights,
   Carrying,
   CliffSensor,
-  CozmoContextWrapper,
+  CozmoContext,
   CubeAccel,
   CubeComms,
   CubeLights,
