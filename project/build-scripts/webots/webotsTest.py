@@ -6,6 +6,7 @@ import inspect
 import subprocess
 import sys
 import argparse
+import signal
 import time
 import threading
 import tarfile
@@ -510,6 +511,11 @@ def run_tests(tests, log_folder, show_graphics, default_timeout, forward_webots_
   log_file_paths = []
   total_error_count = 0
   total_warning_count = 0
+  
+  # Keep track of how many times we get a seg fault from webots binary.
+  # Allow this and retry the affected test up to the global max number of times.
+  total_sigsegv_count = 0
+  max_sigsegv_count = 5
 
   cur_time = datetime.strftime(datetime.now(), '%Y-%m-%d_%H-%M-%S')
   GENERATED_FILE_PATH = get_subpath(os.path.join("simulator","worlds"), GENERATED_WORLD_FILE_NAME)
@@ -593,6 +599,15 @@ def run_tests(tests, log_folder, show_graphics, default_timeout, forward_webots_
         # Get return code from test
         if output.test_return_code is None:
           UtilLog.error('No result code received from {test_controller}'.format(test_controller=test_controller))
+          continue
+
+        # check for SIGSEGV (seg fault) return code from Webots. Sometimes Webots itself just crashes
+        # before the tests even run, but this shouldn't be considered a test failure, so re-run the test.
+        if os.WIFSIGNALED(output.test_return_code) and os.WTERMSIG(output.test_return_code) == signal.SIGSEGV and total_sigsegv_count < max_sigsegv_count:
+          UtilLog.info('Received SIGSEGV from webots. Retrying test.')
+          total_sigsegv_count += 1
+          num_retries_mutable += 1
+          num_retries_counting_up -= 1
           continue
 
         if output.test_return_code != 0:
