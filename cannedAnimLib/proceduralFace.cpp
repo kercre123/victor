@@ -213,13 +213,20 @@ void ProceduralFace::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& e
 {
   const char* eyeStr = (eye == WhichEye::Left) ? kLeftEyeKey : kRightEyeKey;
 
+  // NOTE: don't do this
+
+  // TODO: replace with a single version of assets, same version of code and assets,
+  //       that is pushed with atomic releases
+  // https://ankiinc.atlassian.net/browse/VIC-1964
+  
   const size_t N = static_cast<size_t>(Parameter::NumParameters);
-  const size_t N_old = N - 5; // Before Saturation, Lightness, Glow, and HotSpotCenterX/Y were added
-  if(eyeArray.size() != N && eyeArray.size() != N_old)
+  const size_t N_old_old = N - 6; // Before Saturation, Lightness, Glow, and HotSpotCenterX/Y were added
+  const size_t N_old = N - 1; // Before Eye Glow Lightness
+  if(eyeArray.size() != N && eyeArray.size() != N_old_old && eyeArray.size() != N_old)
   {
     PRINT_NAMED_WARNING("ProceduralFace.SetEyeArrayHelper.WrongNumParams",
-                        "Unexpected number of parameters for %s array (%lu vs. %lu or %lu)",
-                        eyeStr, (unsigned long)eyeArray.size(), (unsigned long)N, (unsigned long)N_old);
+                        "Unexpected number of parameters for %s array (%lu vs. %lu or %lu or %lu)",
+                        eyeStr, (unsigned long)eyeArray.size(), (unsigned long)N, (unsigned long)N_old_old, (unsigned long)N_old);
   }
   
   for(s32 i=0; i<std::min(eyeArray.size(), N); ++i)
@@ -227,8 +234,8 @@ void ProceduralFace::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& e
     SetParameter(eye, static_cast<ProceduralFace::Parameter>(i), eyeArray[i]);
   }
   
-  // Set defaults for parameters that are unset because keyframe is old format
-  if (eyeArray.size() == N_old)
+  // Set defaults for parameters that are unset because keyframe is old old format
+  if (eyeArray.size() == N_old_old || eyeArray.size() == N_old)
   {
     for (std::underlying_type<Parameter>::type iParam=0; iParam < Util::EnumToUnderlying(Parameter::NumParameters); ++iParam)
     {
@@ -240,7 +247,6 @@ void ProceduralFace::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& e
       }
     }
   }
-  
 }
 
 void ProceduralFace::SetFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe)
