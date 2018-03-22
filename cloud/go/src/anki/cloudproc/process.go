@@ -4,8 +4,11 @@ import (
 	"anki/chipper"
 	"anki/log"
 	"anki/util"
+	"context"
 	"encoding/json"
 	"io"
+	"net"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -156,6 +159,22 @@ procloop:
 					Handler:   p.opts.handler})
 				if err != nil {
 					p.writeError("newstream", err.Error())
+					// debug cause of lookup failure
+					var debug string
+					addrs, err := net.DefaultResolver.LookupHost(context.Background(), "chipper-dev.api.anki.com")
+					if err != nil {
+						debug += "lookup_err: " + err.Error()
+					} else {
+						debug += "lookup_ips: " + strings.Join(addrs, "/")
+					}
+					debug += "   "
+					_, err = net.Dial("tcp", "chipper-dev.api.anki.com:443")
+					if err != nil {
+						debug += "dial_err: " + err.Error()
+					} else {
+						debug += "dial_success"
+					}
+					p.writeError("newstream_debug", debug)
 				}
 			})
 			if err != nil {

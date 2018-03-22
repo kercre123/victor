@@ -227,8 +227,6 @@ bool LocalUdpServer::AddClient(const struct sockaddr_un &saddr, socklen_t saddrl
       return false;
     }
 
-    LOG_INFO("ASDFASDFloud", "cloud adding serv %s", peername.c_str());
-
     _client = saddr;
     _client.sun_path[saddrlen - (sizeof(saddr) - sizeof(saddr.sun_path))] = 0;
   }
