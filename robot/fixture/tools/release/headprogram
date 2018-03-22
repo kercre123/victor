@@ -2,8 +2,15 @@
 esn="$1"
 echo esn=$esn
 
-echo host > /sys/kernel/debug/msm_otg/mode
-insmod /system/lib/modules/usbserial.ko vendor=0x05c6 product=0x9008
+killall -9 adbd
+
+mode=$(cat /sys/kernel/debug/msm_otg/mode)
+if [ "$mode" != "host" ]; then
+  echo none > /sys/kernel/debug/msm_otg/mode
+  echo host > /sys/kernel/debug/msm_otg/mode
+fi
+
+insmod ./usbserial.ko vendor=0x05c6 product=0x9008
 sleep 1
 lsusb
 #./emmcdl/emmcdl -p 0 -info
