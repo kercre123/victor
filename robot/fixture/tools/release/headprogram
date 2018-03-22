@@ -1,4 +1,7 @@
 #!/bin/sh
+esn="$1"
+echo esn=$esn
+
 echo host > /sys/kernel/debug/msm_otg/mode
 insmod /system/lib/modules/usbserial.ko vendor=0x05c6 product=0x9008
 sleep 1
