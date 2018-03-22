@@ -31,7 +31,7 @@ while IFS='' read -r line || [[ -n "$line" ]]; do #https://stackoverflow.com/que
     echo "" >> $tmpfile
     echo "#boot helper" >> $tmpfile
     echo "mount -o exec,remount /data" >> $tmpfile
-    echo "/data/local/fixture/helper" >> $tmpfile
+    echo "/data/local/fixture/helper > /dev/null 2>&1 &" >> $tmpfile
     echo "" >> $tmpfile
   fi
   
