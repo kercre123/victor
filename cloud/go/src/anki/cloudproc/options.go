@@ -1,7 +1,7 @@
 package cloudproc
 
 import (
-	pb "github.com/anki/sai-chipper-voice/grpc/pb2"
+	pb "github.com/anki/sai-chipper-voice/grpc/pb"
 )
 
 type Handler = pb.IntentService
@@ -12,30 +12,42 @@ const (
 	HandlerMicrosoft Handler = pb.IntentService_BING_LUIS
 )
 
-// Options defines various settings that can be passed in to the cloud process
-type Options struct {
+type Option func(o *options)
+
+type options struct {
 	compress bool
 	chunkMs  uint
 	handler  Handler
+	stop     <-chan struct{}
 }
 
-// SetCompression sets whether compression will be performed on audio
+// WithCompression sets whether compression will be performed on audio
 // before uploading (and returns the same Options struct to allow method
 // chaining)
-func (o *Options) SetCompression(value bool) *Options {
-	o.compress = value
-	return o
+func WithCompression(value bool) Option {
+	return func(o *options) {
+		o.compress = value
+	}
 }
 
-// SetChunkMs determines how often the cloud process will stream data to the cloud
-func (o *Options) SetChunkMs(value uint) *Options {
-	o.chunkMs = value
-	return o
+// WithChunkMs determines how often the cloud process will stream data to the cloud
+func WithChunkMs(value uint) Option {
+	return func(o *options) {
+		o.chunkMs = value
+	}
 }
 
-// SetHandler sets the intent service (MS, Google, etc) that should handle this
+// WithHandler sets the intent service (MS, Google, etc) that should handle this
 // request on the server, if one is desired
-func (o *Options) SetHandler(value Handler) *Options {
-	o.handler = value
-	return o
+func WithHandler(value Handler) Option {
+	return func(o *options) {
+		o.handler = value
+	}
+}
+
+// WithStopChannel sets a channel that can be triggered to kill the process
+func WithStopChannel(value <-chan struct{}) Option {
+	return func(o *options) {
+		o.stop = value
+	}
 }

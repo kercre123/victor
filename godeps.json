@@ -8,7 +8,7 @@
     "branch": "master"
   },
   "github.com/anki/sai-chipper-voice": {
-    "commit": "8f2961de6952f4699ca93b4f7c0acdaa6adb53ce",
+    "commit": "31bec55aa2773fe52cef8081b39ab969bc37bc04",
     "branch": "develop"
   },
   "github.com/golang/protobuf": {
@@ -48,7 +48,7 @@
     "branch": "master"
   },
   "github.com/anki/opus-go": {
-    "commit": "b20aea9f756098d14cd880002650793bdcf4fa99",
+    "commit": "130dd0d57e3b5bd6238aa3b062bf653f4aa194ec",
     "branch": "v2"
   }
 }

@@ -65,11 +65,11 @@ func main() {
 	var sender cloudproc.Sender
 	if *makeproc {
 		cloudproc.SetVerbose(*verbose)
-		opts := new(cloudproc.Options).SetCompression(*compress)
+		options := []cloudproc.Option{cloudproc.WithCompression(*compress)}
 		if *ms {
-			opts.SetHandler(cloudproc.HandlerMicrosoft)
+			options = append(options, cloudproc.WithHandler(cloudproc.HandlerMicrosoft))
 		}
-		proc, err := harness.CreateMemProcess(opts)
+		proc, err := harness.CreateMemProcess(options...)
 		if err != nil {
 			fmt.Println("Couldn't create test cloud process:", err)
 			return

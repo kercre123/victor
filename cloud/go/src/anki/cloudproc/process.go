@@ -1,7 +1,6 @@
 package cloudproc
 
 import (
-	"anki/chipper"
 	"anki/log"
 	"anki/util"
 	"context"
@@ -10,6 +9,7 @@ import (
 	"net"
 	"strings"
 
+	"github.com/anki/sai-chipper-voice/client/chipper"
 	"github.com/google/uuid"
 )
 
@@ -49,7 +49,7 @@ type Process struct {
 	kill      chan struct{}
 	hotword   chan hotwordEvent
 	audio     chan socketMsg
-	opts      *Options
+	opts      options
 }
 
 // AddReceiver adds the given Receiver to the list of sources the
@@ -106,16 +106,14 @@ func (p *Process) AddIntentWriter(w io.Writer) {
 }
 
 // Run starts the cloud process, which will run until stopped on the given channel
-func (p *Process) Run(stop <-chan struct{}) {
+func (p *Process) Run(options ...Option) {
 	if verbose {
 		log.Println("Verbose logging enabled")
 	}
-	// set default options if not provided
-	if p.opts == nil {
-		p.opts = &Options{}
-	}
-	if p.opts.chunkMs == 0 {
-		p.opts.chunkMs = DefaultChunkMs
+	// set default options before processing user options
+	p.opts.chunkMs = DefaultChunkMs
+	for _, opt := range options {
+		opt(&p.opts)
 	}
 
 	cloudIntent := make(chan string)
@@ -215,7 +213,7 @@ procloop:
 			ctx.close()
 			ctx = nil
 
-		case <-stop:
+		case <-p.opts.stop:
 			logVerbose("Received stop notification")
 			if p.kill != nil {
 				close(p.kill)
@@ -223,15 +221,6 @@ procloop:
 			break procloop
 		}
 	}
-}
-
-// SetOptions assigns the given options to this instance
-func (p *Process) SetOptions(o *Options) {
-	if o == nil {
-		return
-	}
-	p.opts = new(Options)
-	*p.opts = *o
 }
 
 // ChunkSamples is the number of samples that should be in each chunk

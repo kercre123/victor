@@ -1,7 +1,6 @@
 package main
 
 import (
-	"anki/opus"
 	"anki/util"
 	"bytes"
 	"flag"
@@ -12,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/anki/opus-go/opus"
 	wav "github.com/youpy/go-wav"
 )
 

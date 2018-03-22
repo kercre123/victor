@@ -1,12 +1,13 @@
 package cloudproc
 
 import (
-	"anki/chipper"
 	"anki/log"
 	"anki/util"
 	"bytes"
 	"encoding/json"
 	"sync"
+
+	"github.com/anki/sai-chipper-voice/client/chipper"
 )
 
 type voiceContext struct {

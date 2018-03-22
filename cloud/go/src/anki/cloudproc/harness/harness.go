@@ -54,7 +54,7 @@ func CreateIpcProcess() (Harness, error) {
 	process := &cloudproc.Process{}
 	process.AddReceiver(receiver)
 	process.AddIntentWriter(aiClient)
-	go process.Run(kill)
+	go process.Run(cloudproc.WithStopChannel(kill))
 
 	sender := cloudproc.NewIpcSender(micConn)
 
@@ -95,7 +95,7 @@ func (h *memHarness) ReadIntent() (string, error) {
 	return string(<-h.intent), nil
 }
 
-func CreateMemProcess(o *cloudproc.Options) (Harness, error) {
+func CreateMemProcess(options ...cloudproc.Option) (Harness, error) {
 	kill := make(chan struct{})
 
 	intentResult := make(chan []byte)
@@ -104,8 +104,8 @@ func CreateMemProcess(o *cloudproc.Options) (Harness, error) {
 	process := &cloudproc.Process{}
 	process.AddReceiver(receiver)
 	process.AddIntentWriter(util.NewChanWriter(intentResult))
-	process.SetOptions(o)
-	go process.Run(kill)
+
+	go process.Run(append(options, cloudproc.WithStopChannel(kill))...)
 
 	return &memHarness{
 		Sender: sender,

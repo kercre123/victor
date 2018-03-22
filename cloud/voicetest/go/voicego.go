@@ -10,9 +10,9 @@ import (
 	"os"
 	"strings"
 
-	"anki/chipper"
 	"anki/cloudproc"
 
+	"github.com/anki/sai-chipper-voice/client/chipper"
 	"github.com/google/uuid"
 	wav "github.com/youpy/go-wav"
 )

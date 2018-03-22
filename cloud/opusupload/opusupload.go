@@ -1,13 +1,13 @@
 package main
 
 import (
-	"anki/chipper"
 	"anki/cloudproc"
 	"flag"
 	"fmt"
 	"io/ioutil"
 
-	pb "github.com/anki/sai-chipper-voice/grpc/pb2"
+	"github.com/anki/sai-chipper-voice/client/chipper"
+	pb "github.com/anki/sai-chipper-voice/grpc/pb"
 	"github.com/google/uuid"
 )
 

@@ -85,11 +85,11 @@ func main() {
 		process.AddTestReceiver(testRecv)
 	}
 	process.AddIntentWriter(aiSock)
-	//opts := new(cloudproc.Options).SetCompression(true).SetChunkMs(120)
-	opts := new(cloudproc.Options).SetChunkMs(120)
+	var options []cloudproc.Option
+	//options = append(options, WithCompression(true))
+	options = append(options, cloudproc.WithChunkMs(120))
 	if *ms {
-		opts.SetHandler(cloudproc.HandlerMicrosoft)
+		options = append(options, cloudproc.WithHandler(cloudproc.HandlerMicrosoft))
 	}
-	process.SetOptions(opts)
-	process.Run(nil)
+	process.Run(options...)
 }
