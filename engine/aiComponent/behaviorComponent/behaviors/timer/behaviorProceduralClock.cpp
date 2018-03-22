@@ -17,8 +17,8 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/compositeImageCache.h"
 #include "engine/aiComponent/faceSelectionComponent.h"
-#include "engine/aiComponent/templatedImageCache.h"
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/components/animationComponent.h"
 #include "engine/faceWorld.h"
@@ -30,13 +30,12 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
-const char* kClockTemplateKey    = "clockTemplate";
+const char* kClockLayoutKey      = "clockLayout";
 const char* kDigitMapKey         = "digitImageMap";
 const char* kGetInTriggerKey     = "getInAnimTrigger";
 const char* kGetOutTriggerKey    = "getOutAnimTrigger";
 const char* kDisplayClockSKey    = "displayClockFor_s";
 const char* kStaticElementsKey   = "staticElements";
-const char* kTimerElementsKey    = "timerElementsMap";
 const char* kShouldTurnToFaceKey = "shouldTurnToFace";
 }
 
@@ -57,20 +56,13 @@ BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
                 i);
   }
 
-  {
-    for(auto& key : config[kTimerElementsKey].getMemberNames()){
-      _instanceParams.digitToTemplateMap[StringToDigitID(key)] = config[kTimerElementsKey][key].asString();
-    }
-    ANKI_VERIFY(_instanceParams.digitToTemplateMap.size() == Util::EnumToUnderlying(DigitID::Count),
-                "BehaviorProceduralClock.Constructor.MissingElements",
-                "Expected digit map to have %zu elements, but it has %d",
-                _instanceParams.digitToTemplateMap.size(),
-                Util::EnumToUnderlying(DigitID::Count));
-  }
-
   const std::string kDebugStr = "BehaviorProceduralClock.ParsingIssue";
 
-  _instanceParams.templateJSON = config[kClockTemplateKey];
+  // load in the layout
+  if(ANKI_VERIFY(config.isMember(kClockLayoutKey),kDebugStr.c_str(), "Missing layout key")){
+      _instanceParams.compImg = Vision::CompositeImage(config[kClockLayoutKey]);
+  }
+
   _instanceParams.getInAnim = AnimationTriggerFromString(JsonTools::ParseString(config, kGetInTriggerKey, kDebugStr));
   _instanceParams.getOutAnim = AnimationTriggerFromString(JsonTools::ParseString(config, kGetOutTriggerKey, kDebugStr));
   _instanceParams.totalTimeDisplayClock = JsonTools::ParseUint8(config, kDisplayClockSKey, kDebugStr);
@@ -79,7 +71,8 @@ BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
   // add all static elements
   if(config.isMember(kStaticElementsKey)){
     for(auto& key: config[kStaticElementsKey].getMemberNames()){
-      _instanceParams.staticElements[key] = config[kStaticElementsKey][key].asString();
+      Vision::SpriteBoxName sbName = Vision::SpriteBoxNameFromString(key);
+      _instanceParams.staticElements[sbName] = config[kStaticElementsKey][key].asString();
     }
   }
 }
@@ -88,14 +81,13 @@ BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
 void BehaviorProceduralClock::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   const char* list[] = {
+    kClockLayoutKey,
     kDigitMapKey,
-    kTimerElementsKey,
-    kClockTemplateKey,
     kGetInTriggerKey,
     kGetOutTriggerKey,
     kDisplayClockSKey,
-    kShouldTurnToFaceKey,
     kStaticElementsKey,
+    kShouldTurnToFaceKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -108,14 +100,14 @@ void BehaviorProceduralClock::InitBehavior()
     // and allow behaviors to re-set functionality in code only
     auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
     
-    std::map<DigitID, std::function<int()>> countUpFuncs;
+    std::map<Vision::SpriteBoxName, std::function<int()>> countUpFuncs;
     // Ten Mins Digit
     {
       auto tenMinsFunc = [&timerUtility](){
         const int currentTime_s = timerUtility.GetSystemTime_s();
         return TimerHandle::SecondsToDisplayMinutes(currentTime_s)/10;
       };
-      countUpFuncs.emplace(std::make_pair(DigitID::DigitOne, tenMinsFunc));
+      countUpFuncs.emplace(std::make_pair(Vision::SpriteBoxName::TensLeftOfColon, tenMinsFunc));
     }
     // One Mins Digit
     {
@@ -123,7 +115,7 @@ void BehaviorProceduralClock::InitBehavior()
         const int currentTime_s = timerUtility.GetSystemTime_s();
         return TimerHandle::SecondsToDisplayMinutes(currentTime_s) % 10;
       };
-      countUpFuncs.emplace(std::make_pair(DigitID::DigitTwo, oneMinsFunc));
+      countUpFuncs.emplace(std::make_pair(Vision::SpriteBoxName::OnesLeftOfColon, oneMinsFunc));
     }
     // Ten seconds digit
     {
@@ -131,7 +123,7 @@ void BehaviorProceduralClock::InitBehavior()
         const int currentTime_s = timerUtility.GetSystemTime_s();
         return TimerHandle::SecondsToDisplaySeconds(currentTime_s)/10;
       };
-      countUpFuncs.emplace(std::make_pair(DigitID::DigitThree, tenSecsFunc));
+      countUpFuncs.emplace(std::make_pair(Vision::SpriteBoxName::TensRightOfColon, tenSecsFunc));
     }
     // One seconds digit
     {
@@ -139,7 +131,7 @@ void BehaviorProceduralClock::InitBehavior()
         const int currentTime_s = timerUtility.GetSystemTime_s();
         return TimerHandle::SecondsToDisplaySeconds(currentTime_s) % 10;
       };
-      countUpFuncs.emplace(std::make_pair(DigitID::DigitFour, oneSecsFunc));
+      countUpFuncs.emplace(std::make_pair(Vision::SpriteBoxName::OnesRightOfColon, oneSecsFunc));
     }
     
     SetDigitFunctions(std::move(countUpFuncs));
@@ -219,54 +211,53 @@ void BehaviorProceduralClock::BehaviorUpdate()
       TransitionToGetOut();
     }else if(currentTime_s >= _lifetimeParams.nextUpdateTime_s){
       _lifetimeParams.nextUpdateTime_s = currentTime_s + 1;
-      std::map<std::string, std::string> quadrantMap;
-      BuildAndDisplayTimer(quadrantMap);      
+      Vision::CompositeImageLayer::ImageMap empty;
+      BuildAndDisplayProceduralClock(std::move(empty));      
     }
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-auto BehaviorProceduralClock::StringToDigitID(const std::string& str) -> DigitID
-{
-  if(str == "DigitOne"){ return DigitID::DigitOne;}
-  else if(str == "DigitTwo"){ return DigitID::DigitTwo;}
-  else if(str == "DigitThree"){ return DigitID::DigitThree;}
-  else if(str == "DigitFour"){ return DigitID::DigitFour;}
-  else { 
-    PRINT_NAMED_WARNING("BehaviorProceduralClock.StringToDigitID.NoMatchFound",
-                        "Digit %s not found in enum", str.c_str());
-    return DigitID::Count;
-  }
-
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorProceduralClock::BuildAndDisplayTimer(std::map<std::string, std::string>& quadrantMap)
+  void BehaviorProceduralClock::BuildAndDisplayProceduralClock(Vision::CompositeImageLayer::ImageMap&& imageMap)
 {
   // set static quadrants
   for(auto& entry : _instanceParams.staticElements){
-    quadrantMap[entry.first] = entry.second;
+    imageMap[entry.first] = entry.second;
   }
 
   // set digits
   bool isLeadingZero = true;
-  for(int enumIdx = 0; enumIdx < Util::EnumToUnderlying(DigitID::Count); enumIdx++){
-    const DigitID enumVal = DigitID(enumIdx);
-    const int digitToDisplay = _instanceParams.getDigitFunctions[enumVal]();
+  const std::vector<Vision::SpriteBoxName> orderedDigits = {Vision::SpriteBoxName::TensLeftOfColon,   
+                                                            Vision::SpriteBoxName::OnesLeftOfColon, 
+                                                            Vision::SpriteBoxName::TensRightOfColon,
+                                                            Vision::SpriteBoxName::OnesRightOfColon};
+  for(auto& spriteBoxName : orderedDigits){
+    const int digitToDisplay = _instanceParams.getDigitFunctions[spriteBoxName]();
     isLeadingZero &= (digitToDisplay == 0);
     if(isLeadingZero){
-      quadrantMap[_instanceParams.digitToTemplateMap[enumVal]] = "empty_grid";
+      imageMap[spriteBoxName] = "empty_grid";
     }else{
-      quadrantMap[_instanceParams.digitToTemplateMap[enumVal]] = _instanceParams.intsToImages[digitToDisplay];
+      imageMap[spriteBoxName] = _instanceParams.intsToImages[digitToDisplay];
+    }
+  }
+  
+  auto& layerMap = _instanceParams.compImg.GetLayerMap();
+  if(ANKI_VERIFY(layerMap.size() == 1,"BehaviorProceduralClock.BuildAndDisplayProceduralClock.IncorrectLayerNumber",
+                 "Expecting 1 layer in the image, but image has %zu",
+                 layerMap.size())){
+    // Grab the image by name and
+    auto name = layerMap.begin()->second.GetLayerName();
+    Vision::CompositeImageLayer* layer = _instanceParams.compImg.GetLayerByName(name);
+    if(layer != nullptr){
+      layer->SetImageMap(std::move(imageMap));
     }
   }
   // build the full image
-  auto& imageCache = GetBEI().GetAIComponent().GetComponent<TemplatedImageCache>();
+  auto& imageCache = GetBEI().GetAIComponent().GetComponent<CompositeImageCache>();
   const auto& image = imageCache.BuildImage(GetDebugLabel(), 
                                             FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, 
-                                            _instanceParams.templateJSON, quadrantMap);
+                                            _instanceParams.compImg);
   
   auto grey = image.ToGray();
   // draw it to the face
@@ -275,19 +266,9 @@ void BehaviorProceduralClock::BuildAndDisplayTimer(std::map<std::string, std::st
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorProceduralClock::SetDigitFunctions(std::map<DigitID, std::function<int()>>&& functions)
+void BehaviorProceduralClock::SetDigitFunctions(std::map<Vision::SpriteBoxName, std::function<int()>>&& functions)
 {
   _instanceParams.getDigitFunctions = functions;
-  if(ANKI_DEV_CHEATS){
-    std::set<DigitID> digits;
-    for(auto& entry: _instanceParams.getDigitFunctions){
-      digits.insert(entry.first);
-    }
-    ANKI_VERIFY(Util::EnumToUnderlying(DigitID::Count) == digits.size(),
-                "BehaviorProceduralClock.SetDigitFunctions.ImproperNumberOfFunctions",
-                "Expected %d functions, received %zu",
-                Util::EnumToUnderlying(DigitID::Count), digits.size());
-  }
 }
 
 

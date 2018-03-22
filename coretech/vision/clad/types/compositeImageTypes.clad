@@ -1,0 +1,37 @@
+/** Clad types related to composite images
+ */
+
+
+namespace Anki {
+namespace Vision {
+
+// Layer names that allow composite image layers to be:
+//  1) Referenced/set in code or JSON
+//  2) Composite image layers are rendered in the order of this enum
+enum uint_8 LayerName 
+{
+  // Special layer names that lots of images can use
+  StaticBackground = 0,
+
+  // "Numbered" layers for arbitrary layouts
+  Layer_1,
+  Layer_2,
+  Layer_3
+
+}
+
+// Names for SpriteBoxes
+enum uint_8 SpriteBoxName
+{
+  // SpritBoxNames for procedural clock
+  TensLeftOfColon,
+  OnesLeftOfColon,
+  Colon,
+  TensRightOfColon,
+  OnesRightOfColon
+
+
+}
+      
+} // namespace Vision
+} // namespace Anki

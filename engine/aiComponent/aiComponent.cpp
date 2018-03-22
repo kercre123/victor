@@ -22,7 +22,7 @@
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/aiComponent/puzzleComponent.h"
-#include "engine/aiComponent/templatedImageCache.h"
+#include "engine/aiComponent/compositeImageCache.h"
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
@@ -75,7 +75,7 @@ void AIComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depende
     _aiComponents = std::make_unique<EntityType>();
     {
       auto* faceSelectionComp = new FaceSelectionComponent(*robot, robot->GetFaceWorld(), robot->GetMicDirectionHistory());
-      auto* templatedImageCache = new TemplatedImageCache(robot->GetContext()->GetDataLoader()->GetFacePNGPaths());
+      auto* compositeImageCache = new CompositeImageCache(robot->GetContext()->GetDataLoader()->GetFacePNGPaths());
       
       _aiComponents->AddDependentComponent(AIComponentID::BehaviorComponent,          new BehaviorComponent());
       _aiComponents->AddDependentComponent(AIComponentID::ContinuityComponent,        new ContinuityComponent(*robot));
@@ -84,7 +84,7 @@ void AIComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depende
       _aiComponents->AddDependentComponent(AIComponentID::InformationAnalyzer,        new AIInformationAnalyzer());
       _aiComponents->AddDependentComponent(AIComponentID::ObjectInteractionInfoCache, new ObjectInteractionInfoCache(*robot));
       _aiComponents->AddDependentComponent(AIComponentID::Puzzle,                     new PuzzleComponent(*robot));
-      _aiComponents->AddDependentComponent(AIComponentID::TemplatedImageCache,        templatedImageCache);
+      _aiComponents->AddDependentComponent(AIComponentID::CompositeImageCache,        compositeImageCache);
       _aiComponents->AddDependentComponent(AIComponentID::TimerUtility,               new TimerUtility());
       _aiComponents->AddDependentComponent(AIComponentID::Whiteboard,                 new AIWhiteboard(*robot));
     }

@@ -11,11 +11,12 @@
  *
  **/
 
-#ifndef __Cozmo_Basestation_AIComponent_TemplatedImageCache_H__
-#define __Cozmo_Basestation_AIComponent_TemplatedImageCache_H__
+#ifndef __Cozmo_Basestation_AIComponent_CompositeImageCache_H__
+#define __Cozmo_Basestation_AIComponent_CompositeImageCache_H__
 
+#include "clad/types/compositeImageTypes.h"
 #include "coretech/vision/engine/colorPixelTypes.h"
-#include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/compositeImage/compositeImage.h"
 #include "engine/robotDataLoader.h"
 #include "engine/aiComponent/aiComponents_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
@@ -25,43 +26,42 @@ namespace Anki {
 namespace Cozmo {
 
   
-class TemplatedImageCache : public IDependencyManagedComponent<AIComponentID>, 
+class CompositeImageCache : public IDependencyManagedComponent<AIComponentID>, 
                             private Util::noncopyable
 {
 public:
-  TemplatedImageCache(const RobotDataLoader::ImagePathMap& imageMap)
-  : IDependencyManagedComponent<AIComponentID>(this, AIComponentID::TemplatedImageCache)
+  CompositeImageCache(const RobotDataLoader::ImagePathMap& imageMap)
+  : IDependencyManagedComponent<AIComponentID>(this, AIComponentID::CompositeImageCache)
   , _imagePathMap(imageMap){}
   // Pass in the template and a map of quadrant name to image name
   // If an image with the same name has been built and cached, only the quadrants
   // different from the cached image will be re-drawn 
   const Vision::ImageRGBA& BuildImage(const std::string& imageName,
                                       s32 imageWidth, s32 imageHeight,
-                                      const Json::Value& templateSpec, 
-                                      const std::map<std::string, std::string>& quadrantMap);
+                                      const Vision::CompositeImage& image);
 
   // Give behaviors a way to access the imagePathMap
   const RobotDataLoader::ImagePathMap& GetImagePathMap(){ return _imagePathMap;}
 private:
   struct CacheEntry{
     CacheEntry(s32 imageWidth, s32 imageHeight)
-    : _image(imageHeight, imageWidth){
-      _image.FillWith(Vision::PixelRGBA());
+    : preAllocatedImage(imageHeight, imageWidth){
+      preAllocatedImage.FillWith(Vision::PixelRGBA());
     }
-    std::map<std::string, std::string> _quadrantMap;
-    Vision::ImageRGBA _image;
+    
+    Vision::CompositeImage compositeImage;
+    Vision::ImageRGBA preAllocatedImage;
   };
 
   const RobotDataLoader::ImagePathMap& _imagePathMap;
   std::map<std::string, CacheEntry> _imageCache;
 
   void UpdateCacheEntry(CacheEntry& cacheEntry,
-                        const Json::Value& templateSpec, 
-                        const std::map<std::string, std::string>& quadrantMap);
+                        const Vision::CompositeImage& image);
 
-}; // class TemplatedImageCache
+}; // class CompositeImageCache
 
 } // namespace Cozmo
 } // namespace Anki
 
-#endif // __Cozmo_Basestation_AIComponent_TemplatedImageCache_H__
+#endif // __Cozmo_Basestation_AIComponent_CompositeImageCache_H__

@@ -1089,6 +1089,14 @@ namespace Vision {
     cv::cvtColor(this->get_CvMat_(), grayImage.get_CvMat_(), CV_RGBA2GRAY);
   }
 
+  ImageRGBA& ImageRGBA::SetFromGray(const Image& imageGray)
+  {
+    cv::cvtColor(imageGray.get_CvMat_(), this->get_CvMat_(), CV_GRAY2RGBA);
+    SetTimestamp(imageGray.GetTimestamp());
+    SetImageId(imageGray.GetImageId());
+    return *this;
+  }
+
   ImageRGBA& ImageRGBA::SetFromRGB565(const ImageRGB565& rgb565, const u8 alpha)
   {
     // Note: not equivalent to cv::cvtColor(rgb565.get_CvMat_(), this->get_CvMat_(), cv::COLOR_BGR5652RGBA);

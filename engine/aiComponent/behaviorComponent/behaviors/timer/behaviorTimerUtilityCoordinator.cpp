@@ -536,7 +536,6 @@ TimerUtility& BehaviorTimerUtilityCoordinator::GetTimerUtility() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions() const
 {
-  using DigitID = BehaviorProceduralClock::DigitID;
   auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
   
   auto startTimerCallback = [&timerUtility, this](){
@@ -545,7 +544,7 @@ void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions() const
 
   _iParams.setTimerBehavior->SetShowClockCallback(startTimerCallback);
 
-  std::map<DigitID, std::function<int()>> timerFuncs;
+  std::map<Vision::SpriteBoxName, std::function<int()>> timerFuncs;
   // Tens Digit (left of colon)
   {
     auto tenMinsFunc = [&timerUtility](){
@@ -561,7 +560,7 @@ void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions() const
         return 0;
       }
     };
-    timerFuncs.emplace(std::make_pair(DigitID::DigitOne, tenMinsFunc));
+    timerFuncs.emplace(std::make_pair(Vision::SpriteBoxName::TensLeftOfColon, tenMinsFunc));
   }
   // Ones Digit (left of colon)
   {
@@ -578,7 +577,7 @@ void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions() const
         return 0;
       }
     };
-    timerFuncs.emplace(std::make_pair(DigitID::DigitTwo, oneMinsFunc));
+    timerFuncs.emplace(std::make_pair(Vision::SpriteBoxName::OnesLeftOfColon, oneMinsFunc));
   }
   // Tens Digit (right of colon)
   {
@@ -595,7 +594,7 @@ void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions() const
         return 0;
       }
     };
-    timerFuncs.emplace(std::make_pair(DigitID::DigitThree, tenSecsFunc));
+    timerFuncs.emplace(std::make_pair(Vision::SpriteBoxName::TensRightOfColon, tenSecsFunc));
   }
   // Ones Digit (right of colon)
   {
@@ -612,7 +611,7 @@ void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions() const
         return 0;
       }
     };
-    timerFuncs.emplace(std::make_pair(DigitID::DigitFour, oneSecsFunc));
+    timerFuncs.emplace(std::make_pair(Vision::SpriteBoxName::OnesRightOfColon, oneSecsFunc));
   }
   
   auto intentionalCopy = timerFuncs;

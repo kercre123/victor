@@ -28,21 +28,7 @@
 namespace Anki {
 namespace Cozmo {
 
-// Forward declarations
-class AIInformationAnalyzer;
-class AIWhiteboard;
-class BEIRobotInfo;
-class BehaviorComponent;
 class BehaviorContainer;
-class ContinuityComponent;
-class FaceSelectionComponent;
-class FreeplayDataTracker;
-class ObjectInteractionInfoCache;
-class PuzzleComponent;
-class Robot;
-class TemplatedImageCache;
-class TimerUtility;
-
 
 // AIComponent is updated at the robot component level, same as BehaviorComponent
 // Therefore BCComponents (which are managed by BehaviorComponent) can't declare dependencies on AIComponent
