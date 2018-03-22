@@ -864,7 +864,7 @@ void process_incoming_frame(struct BodyToHead* bodyData)
       show_body_version(BSV_LINES - ActiveCycleCountdown()); //convert to countup
     }
     if (printmask & (1<<show_RSSI)) {
-      show_packet_count();
+      show_rssi();
     }
     if (printmask & (1<<show_PACKETS)) {
       show_packet_count();
