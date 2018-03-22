@@ -298,7 +298,6 @@ protected:
   void SendNVClearPartialPendingWriteData();
   void SendEnableBlockTapFilter(bool enable);
   void SendEnableBlockPool(double maxDiscoveryTime, bool enabled);
-  void SendStreamObjectAccel(const u32 objectID, bool enable = true);
 
   ///
   // @brief      Send SetActiveObjectLEDs CLAD message

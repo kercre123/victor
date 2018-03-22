@@ -135,7 +135,7 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
         // Make sure we're getting ObjectAccel messages when we request them:
         CST_ASSERT(_numObjectAccelMsgs == 0, "We've received ObjectAccel messages, but we shouldn't have yet!");
         
-        SendStreamObjectAccel(_objId, true);
+        //SendStreamObjectAccel(_objId, true);
         SET_TEST_STATE(CheckForObjectAccelMessage);
       }
       break;

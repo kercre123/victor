@@ -1719,13 +1719,6 @@ namespace Anki {
       
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
     }
-
-    void UiGameController::SendStreamObjectAccel(const u32 objectID, bool enable)
-    {
-      ExternalInterface::StreamObjectAccel m(objectID, enable);
-      
-      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
-    }
     
     void UiGameController::SendSetActiveObjectLEDs(const u32 objectID,
                                                    const u32 onColor,

@@ -219,11 +219,7 @@ void BehaviorFeedingEat::OnBehaviorDeactivated()
 
   GetBEI().GetRobotInfo().EnableStopOnCliff(true);
   
-  const bool removeSuccessfull = GetBEI().HasCubeAccelComponent() &&
-    GetBEI().GetCubeAccelComponent().RemoveListener(_dVars.targetID, _iConfig.cubeMovementListener);
-  ANKI_VERIFY(removeSuccessfull,
-             "BehaviorFeedingEat.StopInternal.FailedToRemoveAccellComponent",
-              "");
+  // Release the cube accel listener
   _iConfig.cubeMovementListener.reset();
   _dVars.targetID.UnSet();
 }

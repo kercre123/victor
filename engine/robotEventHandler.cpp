@@ -1051,7 +1051,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMotionModelParams>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::StopRobotForSdk>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::StreamObjectAccel>();
       
     // EngineToGame: (in alphabetical order)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::AnimationAborted>();
@@ -1646,31 +1645,6 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& 
     robot->GetActionList().Cancel();
     robot->GetMoveComponent().StopAllMotors();
     robot->GetBodyLightComponent().ClearAllBackpackLightConfigs();
-  }
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::StreamObjectAccel& msg)
-{
-  Robot* robot = _context->GetRobotManager()->GetRobot();
-  if (nullptr == robot)
-  {
-    PRINT_NAMED_WARNING("RobotEventHandler.StreamObjectAccel.InvalidRobotID", "Failed to find robot.");
-  }
-  else
-  {
-    static std::shared_ptr<CubeAccelListeners::ICubeAccelListener> listener(new CubeAccelListeners::DummyListener());
- 
-    if(msg.enable)
-    {
-      robot->GetCubeAccelComponent().AddListener(msg.objectID, listener);
-    }
-    else
-    {
-      robot->GetCubeAccelComponent().RemoveListener(msg.objectID, listener);
-    }
   }
 }
   
