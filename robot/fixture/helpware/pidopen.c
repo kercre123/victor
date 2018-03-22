@@ -9,7 +9,7 @@
 #include "core/clock.h"
 
 
-#define SHELLNAME "/system/bin/sh"
+#define SHELLNAME "/bin/sh"
 
 
 int pidopen(const char* processname, const char* argstr, pid_t* pid_out)
