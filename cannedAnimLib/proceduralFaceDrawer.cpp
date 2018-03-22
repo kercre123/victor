@@ -35,7 +35,6 @@ namespace Cozmo {
   CONSOLE_VAR(bool,       kProcFace_HotspotRender,              CONSOLE_GROUP, true); // Render glow
   CONSOLE_VAR_RANGED(f32, kProcFace_HotspotFalloff,             CONSOLE_GROUP, 0.85f, 0.05f, 1.f);
 
-  CONSOLE_VAR(bool,       kProcFace_GlowRender,                 CONSOLE_GROUP, false);
   CONSOLE_VAR_RANGED(f32, kProcFace_GlowSizeMultiplier,         CONSOLE_GROUP, 1.f, 0.f, 1.f);
   CONSOLE_VAR_RANGED(f32, kProcFace_GlowLightnessMultiplier,    CONSOLE_GROUP, 1.f, 0.f, 10.f);
   CONSOLE_VAR(bool,       kProcFace_GlowGaussianFilter,         CONSOLE_GROUP, false); // Gausssian or boxfilter for glow
@@ -322,7 +321,7 @@ namespace Cozmo {
                                                              eyeCenter.y());
 
     const Value glowFraction = Util::Min(1.f, Util::Max(-1.f, kProcFace_GlowSizeMultiplier * faceData.GetParameter(whichEye, Parameter::GlowSize)));
-
+    const Value glowLightness = kProcFace_GlowLightnessMultiplier * faceData.GetParameter(whichEye, Parameter::GlowLightness);
     const SmallMatrix<2, 3, f32> W_glow = GetTransformationMatrix(faceData.GetParameter(whichEye, Parameter::EyeAngle),
                                                                   (1+glowFraction) * faceData.GetParameter(whichEye, Parameter::EyeScaleX),
                                                                   (1+glowFraction) * faceData.GetParameter(whichEye, Parameter::EyeScaleY),
@@ -474,29 +473,26 @@ namespace Cozmo {
       _glowImg.Allocate(faceImg.GetNumRows(), faceImg.GetNumCols());
       _glowImg.FillWith(0);
 
-      if(kProcFace_GlowRender) {
+      if(Util::IsFltGTZero(glowLightness) && Util::IsFltGTZero(glowFraction)) {
         ANKI_CPU_PROFILE("GlowRender");
-        if(Util::IsFltGTZero(glowFraction))
-        {
-          Vision::Image glowImgROI  = _glowImg.GetROI(eyeBoundingBoxS32);
+        Vision::Image glowImgROI  = _glowImg.GetROI(eyeBoundingBoxS32);
 
-          s32 glowSizeX = std::ceil(glowFraction * 0.5f * scaledEyeWidth);
-          s32 glowSizeY = std::ceil(glowFraction * 0.5f * scaledEyeHeight);
+        s32 glowSizeX = std::ceil(glowFraction * 0.5f * scaledEyeWidth);
+        s32 glowSizeY = std::ceil(glowFraction * 0.5f * scaledEyeHeight);
 
-          // Make sure sizes are odd:
-          if(glowSizeX % 2 == 0) {
-            ++glowSizeX;
-          }
-          if(glowSizeY % 2 == 0) {
-            ++glowSizeY;
-          }
+        // Make sure sizes are odd:
+        if(glowSizeX % 2 == 0) {
+          ++glowSizeX;
+        }
+        if(glowSizeY % 2 == 0) {
+          ++glowSizeY;
+        }
 
-          if(kProcFace_GlowGaussianFilter) {
-            cv::GaussianBlur(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), cv::Size(glowSizeX,glowSizeY),
-                             (f32)glowSizeX, (f32)glowSizeY);
-          } else {
-            cv::boxFilter(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), -1, cv::Size(glowSizeX,glowSizeY));
-          }
+        if(kProcFace_GlowGaussianFilter) {
+          cv::GaussianBlur(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), cv::Size(glowSizeX,glowSizeY),
+                           (f32)glowSizeX, (f32)glowSizeY);
+        } else {
+          cv::boxFilter(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), -1, cv::Size(glowSizeX,glowSizeY));
         }
       }
 
@@ -579,7 +575,7 @@ namespace Cozmo {
               }
               else
               {
-                newValue *= kProcFace_GlowLightnessMultiplier;
+                newValue *= glowLightness;
               }
               
               // Put the final value into the face image

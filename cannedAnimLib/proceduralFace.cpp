@@ -87,6 +87,7 @@ namespace {
     {ProceduralFace::Parameter::GlowSize,          { false, true,  -1.f, 0.5f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
     {ProceduralFace::Parameter::HotSpotCenterX,    { false, true,   0.f, 0.0f, EyeParamCombineMethod::Average,  {-1.f, 1.f}   }     },
     {ProceduralFace::Parameter::HotSpotCenterY,    { false, true,   0.f, 0.0f, EyeParamCombineMethod::Average,  {-1.f, 1.f}   }     },
+    {ProceduralFace::Parameter::GlowLightness,     { false, true,  0.f, 0.f,   EyeParamCombineMethod::None,     {0.f, 1.f}   }     },
   };
   
   static_assert( Util::FullEnumToValueArrayChecker::IsSequentialArray(kEyeParamInfoLUT),

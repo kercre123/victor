@@ -9,7 +9,6 @@
 namespace Anki {
 namespace Cozmo {
   CONSOLE_VAR_EXTERN(bool, kProcFace_HotspotRender)
-  CONSOLE_VAR_EXTERN(bool, kProcFace_GlowRender)
   CONSOLE_VAR_EXTERN(s32, kProcFace_AntiAliasingSize)
 }
 }
@@ -31,7 +30,7 @@ std::string resourcePath; // This is externed and used by tests
 int main(int argc, char ** argv)
 {
   // For victor rendering
-  kProcFace_HotspotRender = kProcFace_GlowRender = true;
+  kProcFace_HotspotRender = true;
   kProcFace_AntiAliasingSize = 5.f;
 
   //LEAKING HERE
