@@ -375,9 +375,10 @@ namespace Cozmo {
     // pixels below *inclusive* of the bottom right point, so we use HEIGHT/WIDTH-1)
     upperLeft.x() = std::max(0.f, upperLeft.x());
     upperLeft.y() = std::max(0.f, upperLeft.y());
-    bottomRight.x() = std::min((f32)(ProceduralFace::WIDTH-1), bottomRight.x());
-    bottomRight.y() = std::min((f32)(ProceduralFace::HEIGHT-1), bottomRight.y());
-    
+    // Push bottom-right co-ordinate to avoid un-antialiased edges
+    bottomRight.x() = std::min((f32)(ProceduralFace::WIDTH-1), bottomRight.x()+1);
+    bottomRight.y() = std::min((f32)(ProceduralFace::HEIGHT-1), bottomRight.y()+1);
+
     // Create the bounding that we're returning from the upperLeft and bottomRight points
     eyeBoundingBox = Rectangle<f32>(upperLeft, bottomRight);
     
