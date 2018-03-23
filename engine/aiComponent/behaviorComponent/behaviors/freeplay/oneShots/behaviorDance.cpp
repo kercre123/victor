@@ -17,7 +17,7 @@
 #include "engine/activeObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/components/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
 
 #include "util/helpers/boundedWhile.h"

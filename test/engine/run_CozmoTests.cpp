@@ -17,7 +17,7 @@
 #include "engine/activeObjectHelpers.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
-#include "engine/components/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"

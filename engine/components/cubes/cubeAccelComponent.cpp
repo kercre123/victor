@@ -10,11 +10,11 @@
  *
  **/
 
-#include "engine/components/cubeAccelComponent.h"
+#include "engine/components/cubes/cubeAccelComponent.h"
 
 #include "engine/activeObject.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/components/cubeAccelComponentListeners.h"
+#include "engine/components/cubes/cubeAccelListeners/iCubeAccelListener.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
