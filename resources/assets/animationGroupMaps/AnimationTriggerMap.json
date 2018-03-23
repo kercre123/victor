@@ -1265,6 +1265,42 @@
       "AnimName": "ag_petting_reacttotouch_01"
     },
     {
+      "CladEvent": "ReactToMotionRightGetout",
+      "AnimName": "ag_rtmotion_right_getout"
+    },
+    {
+      "CladEvent": "ReactToMotionLeftGetout",
+      "AnimName": "ag_rtmotion_left_getout"
+    },
+    {
+      "CladEvent": "ReactToMotionUpGetout",
+      "AnimName": "ag_rtmotion_up_getout"
+    },
+    {
+      "CladEvent": "ReactToMotionRight",
+      "AnimName": "ag_rtmotion_lookright"
+    },
+    {
+      "CladEvent": "ReactToMotionLeft",
+      "AnimName": "ag_rtmotion_lookleft"
+    },
+    {
+      "CladEvent": "ReactToMotionUp",
+      "AnimName": "ag_rtmotion_lookup"
+    },
+    {
+      "CladEvent": "ReactToMotionTurnRight",
+      "AnimName": "ag_rtmotion_turn45right"
+    },
+    {
+      "CladEvent": "ReactToMotionTurnLeft",
+      "AnimName": "ag_rtmotion_turn45left"
+    },
+    {
+      "CladEvent": "ReactToMotionTurnUp",
+      "AnimName": "ag_rtmotion_forwardup"
+    },
+    {
       "CladEvent": "ObservingOnChargerGetIn",
       "AnimName": "ag_observe_oncharger_getin"
     },

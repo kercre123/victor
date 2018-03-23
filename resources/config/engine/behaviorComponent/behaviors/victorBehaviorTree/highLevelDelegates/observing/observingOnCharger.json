@@ -13,9 +13,13 @@
       "behaviorName" : "ObservingOnChargerInternal",
       "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
 
-      "interruptActiveBehavior": false,
+      "interruptActiveBehavior": true,
   
       "behaviors": [    
+        {
+          "behavior": "ReactToMotion",
+          "cooldown_s": 0.0
+        },
         {
           "behavior": "ObservingOnChargerIdleAnim",
           "cooldown_s": 0.0

@@ -13,11 +13,15 @@
 #include "util/helpers/includeGTest.h"
 #include "util/fileUtils/fileUtils.h"
 
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "coretech/vision/engine/eyeContact.h"
+#include "engine/cozmoContext.h"
 
 #include <fstream>
+
+extern Anki::Cozmo::CozmoContext* cozmoContext;
 
 using namespace Anki::Vision;
 using namespace Anki;
@@ -57,12 +61,8 @@ TEST(EyeContact, GazeEstimationInterface)
 
   Result lastResult = RESULT_OK;
 
-  const char* root_dir = getenv("ROOT_DIR");
-  ASSERT_NE(nullptr, root_dir);
-  std::string base = root_dir;
-  std::string pathToImages =
-    Util::FileUtils::FullFilePath({base, "resources", "test", "gazeEstimationTests"});
-
+  const std::string pathToImages = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                                                   "test/gazeEstimationTests");
   std::vector<std::string> imageFiles = 
     Anki::Util::FileUtils::FilesInDirectory(pathToImages, true, ".jpg");
 
@@ -99,11 +99,10 @@ TEST(EyeContact, GazeEstimationInterface)
 TEST(EyeContact, EyeContactInterface)
 {
   Json::Value gazeData;
-  const char* root_dir = getenv("ROOT_DIR");
-  ASSERT_NE(nullptr, root_dir);
-  std::string base = root_dir;
-  std::string inputPath = Util::FileUtils::FullFilePath(
-    {base, "resources", "test", "gazeEstimationTests", "gazePoints.json"});
+  
+  const std::string base = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                                           "test/gazeEstimationTests");
+  std::string inputPath = Util::FileUtils::FullFilePath({base, "gazePoints.json"});
   std::ifstream gazeDataFile(inputPath, std::ifstream::binary);
   gazeDataFile >> gazeData;
 

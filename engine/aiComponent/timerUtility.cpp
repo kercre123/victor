@@ -72,7 +72,9 @@ int TimerHandle::GetSystemTime_s()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TimerUtility::TimerUtility()
 : IDependencyManagedComponent<AIComponentID>(this, AIComponentID::TimerUtility){
-  ANKI_VERIFY(sTimerUtility == nullptr, "TimerUtility.Constructor.MultipleInstances","");
+  if( sTimerUtility != nullptr ) {
+    PRINT_NAMED_WARNING("TimerUtility.Constructor.MultipleInstances","TimerUtility instance exists already");
+  }
   sTimerUtility = this;
 
 }

@@ -27,7 +27,11 @@
           "cooldown_s": 15.0
         },
         {
-          "behavior": "NothingToDo_Idle",
+          "behavior": "ReactToMotion",
+          "cooldown_s": 0.0
+        },
+        {
+          "behavior": "Wait", // todo: this should be an animation that doesnt move the head
           "cooldown_s": 0.0
         }
       ]

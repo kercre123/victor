@@ -70,13 +70,15 @@ void BehaviorAnimSequenceWithObject::OnBehaviorActivated()
 {
   const auto* obj = GetLocatedObject();
   
-  if (ANKI_VERIFY(obj != nullptr,
-                  "BehaviorAnimSequenceWithObject.OnBehaviorActivated.NullObject",
-                  "Null object!")) {
+  if( obj != nullptr ) {
     // Attempt to turn toward the specified object, and even if fails, move on to the animations
     DelegateIfInControl(new TurnTowardsObjectAction(obj->GetID()), [this]() {
       BaseClass::StartPlayingAnimations();
     });
+  } else {
+    // can occur in unit tests
+    PRINT_NAMED_WARNING( "BehaviorAnimSequenceWithObject.OnBehaviorActivated.NullObject",
+                         "Null object!" );
   }
 }
   
