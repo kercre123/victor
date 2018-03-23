@@ -139,12 +139,18 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
   }
 
-  // The "main" thread is meant to be the one Update is run on. However, on some systems, some messaging
+  //
+  // The "engine thread" is meant to be the one Update is run on. However, on some systems, some messaging
   // happens during Init which is on one thread, then later, a different thread runs the updates. This will
   // trigger asserts because more than one thread is sending messages. To work around this, we consider the
-  // "main thread" to be whatever thread Init is called from, until the first call of Update, at which point
-  // we switch our notion of "main thread" to the updating thread
-  _context->SetMainThread();
+  // "engine thread" to be whatever thread Init is called from, until the first call of Update, at which point
+  // we switch our notion of "engine thread" to the updating thread.
+  //
+  // During shutdown, the "engine thread" may switch again so messages can be sent by the thread performing shutdown.
+  // This happens AFTER stopping the update thread, so we can still guarantee that no other threads are allowed
+  // to send messages.
+  //
+  _context->SetEngineThread();
 
   // log additional das info
   LOG_EVENT("device.language_locale", "%s", _context->GetLocale()->GetLocaleString().c_str());
@@ -330,13 +336,13 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
 
   // This is a bit of a hack, but on some systems the thread that calls Update is different from the thread
   // that does all of the setup. This flag assures that we set the "main" thread to be the one that's going to
-  // be doing the updating
+  // be doing the updating.
   if( !_hasRunFirstUpdate ) {
-    _context->SetMainThread();
+    _context->SetEngineThread();
     _hasRunFirstUpdate = true;
   }
 
-  DEV_ASSERT( _context->IsMainThread(), "CozmoEngine.EngineNotOnMainThread" );
+  DEV_ASSERT(_context->IsEngineThread(), "CozmoEngine.UpdateOnWrongThread" );
 
 #if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS || ENABLE_CE_RUN_TIME_DIAGNOSTICS
   const double startUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
@@ -770,6 +776,13 @@ void CozmoEngine::RegisterEngineTickPerformance(const float tickDuration_ms,
   // Update the PerfMetric system for end of tick
   _context->GetPerfMetric()->Update(tickDuration_ms, tickFrequency_ms,
                                     sleepDurationIntended_ms, sleepDurationActual_ms);
+}
+
+void CozmoEngine::SetEngineThread()
+{
+  // Context is valid for lifetime of engine
+  DEV_ASSERT(_context, "CozmoEngine.SetEngineThread.InvalidContext");
+  _context->SetEngineThread();
 }
 
 } // namespace Cozmo

@@ -121,12 +121,12 @@ void CozmoContext::SetLocale(const std::string& localeString)
 }
 
 
-void CozmoContext::SetMainThread()
+void CozmoContext::SetEngineThread()
 {
   _threadIdHolder->_id = Util::GetCurrentThreadId();
 }
 
-bool CozmoContext::IsMainThread() const
+bool CozmoContext::IsEngineThread() const
 {
   return Util::AreCpuThreadIdsEqual( _threadIdHolder->_id, Util::GetCurrentThreadId() );
 }

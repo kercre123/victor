@@ -104,11 +104,12 @@ public:
 
   void SetLocale(const std::string& locale);
 
-  // Tell the context that this is the main thread
-  void SetMainThread();
+  // Designate current thread as the "main thread" used for engine updates.
+  void SetEngineThread();
 
-  // Returns true if the current thread is the "main" one. Requires SetMainThread to have been called
-  bool IsMainThread() const;
+  // Returns true if the current thread is the "main thread" used for engine updates.
+  // Requires SetEngineThread (above) to have been called.
+  bool IsEngineThread() const;
 
   // Perform orderly shutdown of components
   void Shutdown();
