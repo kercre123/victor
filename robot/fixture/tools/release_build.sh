@@ -30,5 +30,6 @@ cp ../helpware/dfu ./$folder
 cp ../helpware/helper ./$folder
 cp ../helpware/display ./$folder
 #cp ../helpware/commander ./$folder
+cp ../emmcdl/headprogram ./$folder
 
 echo Done!
