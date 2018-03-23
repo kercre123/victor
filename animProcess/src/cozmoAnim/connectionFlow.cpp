@@ -187,6 +187,12 @@ void DrawUpdatingOSErrorScreen(AnimationStreamer* animStreamer)
   animStreamer->SetStreamingAnimation("anim_pairing_icon_update_error", 0, 0, shouldInterrupt, shouldRenderInEyeHue);
 }
 
+// Uses a png sequence animation to draw os updating error icon to screen
+void DrawUpdatingOSErrorScreen(AnimationStreamer* animStreamer)
+{
+  animStreamer->SetStreamingAnimation("anim_pairing_icon_update_error", 0, 0);
+}
+
 // Uses a png sequence animation to draw waiting for app icon to screen
 void DrawWaitingForAppScreen(AnimationStreamer* animStreamer)
 {
