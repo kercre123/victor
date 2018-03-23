@@ -160,7 +160,7 @@ int handle_dutprogram_command(const char* cmd, int len) {
   next = end;
   
   char argstr[50];
-  snprintf(argstr, sizeof(argstr), "%08x %s", (uint32_t)esn, next != 0 ? next : "");
+  snprintf(argstr, sizeof(argstr), "%08x", (uint32_t)esn); //, len > 0 ? len : 0, next); //XXX: tacking on extra args like this doesn't work (spaces do not delimit args in pidopen)
   return shellcommand((int)timeout_sec, "./headprogram", argstr );
 }
 
