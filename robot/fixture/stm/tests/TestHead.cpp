@@ -53,7 +53,7 @@ void TestHeadCleanup(void)
 
 void TestHeadDutProgram(void)
 {
-  const int timeout_s = 120 + 60; //XXX: first working version clocked in at ~120s. Add some margin.
+  const int timeout_s = 210 + 90; //XXX: DVT3 from LE helper clocked in at ~210s. Add some margin.
   char b[40]; int bz = sizeof(b);
   
   //Power cycle to reset DUT head
