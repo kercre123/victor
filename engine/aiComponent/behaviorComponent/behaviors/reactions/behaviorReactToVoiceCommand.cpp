@@ -57,8 +57,7 @@ namespace {
   const char* kProceduralBackpackLights         = "backpackLights";
 
   constexpr AnimationTrigger kInvalidAnimation  = AnimationTrigger::Count;
-  constexpr size_t           kMaxRecordTime_ms  = MicData::kStreamingTimeout_ms;
-  constexpr float            kMaxRecordTime_s   = ( (float)kMaxRecordTime_ms / 1000.0f );
+  constexpr float            kMaxRecordTime_s   = ( (float)MicData::kStreamingTimeout_ms / 1000.0f );
   constexpr float            kListeningBuffer_s = 2.0f;
 
   CONSOLE_VAR( bool, kRespondsToTriggerWord, "BehaviorReactToVoiceCommand", true );
@@ -71,7 +70,8 @@ BehaviorReactToVoiceCommand::InstanceConfig::InstanceConfig() :
   turnOnTrigger( true ),
   turnOnIntent( !turnOnTrigger ),
   playListeningGetInAnim( true ),
-  exitOnIntents( true )
+  exitOnIntents( true ),
+  backpackLights( true )
 {
 
 }
@@ -81,7 +81,8 @@ BehaviorReactToVoiceCommand::DynamicVariables::DynamicVariables() :
   state( EState::Positioning ),
   reactionDirection( kMicDirectionUnknown ),
   streamingBeginTime( 0.0f ),
-  intentStatus( EIntentStatus::NoIntentHeard )
+  intentStatus( EIntentStatus::NoIntentHeard ),
+  isListening( false )
 {
 
 }
@@ -169,6 +170,7 @@ void BehaviorReactToVoiceCommand::LoadLeeHappinessValues( const Json::Value& con
       _iVars.turnOnTrigger           = false;
       _iVars.turnOnIntent            = true;
       _iVars.playListeningGetInAnim  = false;
+      _iVars.backpackLights          = true;
     }
     else if ( leesFeelings == "lee_meh" )
     {
@@ -180,6 +182,7 @@ void BehaviorReactToVoiceCommand::LoadLeeHappinessValues( const Json::Value& con
       _iVars.turnOnTrigger           = false;
       _iVars.turnOnIntent            = true;
       _iVars.playListeningGetInAnim  = true;
+      _iVars.backpackLights          = true;
     }
     else if ( leesFeelings == "lee_sad" )
     {
@@ -191,6 +194,7 @@ void BehaviorReactToVoiceCommand::LoadLeeHappinessValues( const Json::Value& con
       _iVars.turnOnTrigger           = true;
       _iVars.turnOnIntent            = false;
       _iVars.playListeningGetInAnim  = true;
+      _iVars.backpackLights          = true;
     }
     else
     {
@@ -234,9 +238,11 @@ void BehaviorReactToVoiceCommand::InitBehavior()
     _iVars.reactionBehavior = std::static_pointer_cast<BehaviorReactToMicDirection>(reactionBehavior);
   }
 
-  SubscribeToTags({
-    RobotInterface::RobotToEngineTag::triggerWordDetected
-  });
+  SubscribeToTags(
+  {{
+    RobotInterface::RobotToEngineTag::triggerWordDetected,
+    RobotInterface::RobotToEngineTag::animEvent
+  }});
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -276,6 +282,23 @@ void BehaviorReactToVoiceCommand::AlwaysHandleInScope( const RobotToEngineEvent&
                      "Received TriggerWordDetected event with diretion [%d]", (int)_triggerDirection );
     }
     #endif
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToVoiceCommand::HandleWhileActivated( const RobotToEngineEvent& event )
+{
+  if ( _dVars.state == EState::Positioning )
+  {
+    const RobotInterface::RobotToEngine::Tag tag = event.GetData().GetTag();
+    if ( tag == RobotInterface::RobotToEngineTag::animEvent )
+    {
+      const AnimationEvent& animEvent = event.GetData().Get_animEvent();
+      if ( animEvent.event_id == AnimEvent::LISTENING_BEGIN )
+      {
+        OnVictorListeningBegin();
+      }
+    }
   }
 }
 
@@ -427,34 +450,13 @@ MicDirectionIndex BehaviorReactToVoiceCommand::GetSelectedDirectionFromMicHistor
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnStreamingBegin()
 {
-  static const BackpackLights kStreamingLights =
-  {
-    .onColors               = {{NamedColors::RED,NamedColors::RED,NamedColors::RED}},
-    .offColors              = {{NamedColors::RED,NamedColors::RED,NamedColors::RED}},
-    .onPeriod_ms            = {{0,0,0}},
-    .offPeriod_ms           = {{0,0,0}},
-    .transitionOnPeriod_ms  = {{0,0,0}},
-    .transitionOffPeriod_ms = {{0,0,0}},
-    .offset                 = {{0,0,0}}
-  };
-
-  if ( _iVars.backpackLights )
-  {
-    BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
-    blc.StartLoopingBackpackLights( kStreamingLights, BackpackLightSource::Behavior, _dVars.lightsHandle );
-  }
-
   _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnStreamingEnd()
 {
-  if ( _iVars.backpackLights )
-  {
-    BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
-    blc.StopLoopingBackpackLights( _dVars.lightsHandle );
-  }
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -476,8 +478,14 @@ void BehaviorReactToVoiceCommand::StartListening()
                                                      std::max( timeout, 1.0f ) ),
                          &BehaviorReactToVoiceCommand::StopListening );
 
+    // the _dVars.state is purposely decoupled from _dVars.isListening so that we can trigger the listening response
+    // before we go into the listening state flow
+    // this is our fallback in the case where we haven't begun listening by the time the listening state has begun
     _dVars.state = EState::Listening;
-    OnVictorListeningBegin();
+    if ( !_dVars.isListening )
+    {
+      OnVictorListeningBegin();
+    }
   };
 
   if ( _iVars.playListeningGetInAnim )
@@ -508,17 +516,45 @@ void BehaviorReactToVoiceCommand::OnVictorListeningBegin()
 {
   using namespace AudioMetaData::GameEvent;
 
+  static const BackpackLights kStreamingLights =
+  {
+    .onColors               = {{NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN}},
+    .offColors              = {{NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN}},
+    .onPeriod_ms            = {{0,0,0}},
+    .offPeriod_ms           = {{0,0,0}},
+    .transitionOnPeriod_ms  = {{0,0,0}},
+    .transitionOffPeriod_ms = {{0,0,0}},
+    .offset                 = {{0,0,0}}
+  };
+
+  if ( _iVars.backpackLights )
+  {
+    BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
+    blc.StartLoopingBackpackLights( kStreamingLights, BackpackLightSource::Behavior, _dVars.lightsHandle );
+  }
+
   if ( GenericEvent::Invalid != _iVars.earConBegin )
   {
     // Play earcon begin audio
     GetBEI().GetRobotAudioClient().PostEvent( _iVars.earConBegin, AudioMetaData::GameObjectType::Behavior );
   }
+
+  // technically we don't have to trigger this at the same time as EState::Listening, so we need to track this separately
+  _dVars.isListening = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnVictorListeningEnd()
 {
   using namespace AudioMetaData::GameEvent;
+
+  _dVars.isListening = false;
+
+  if ( _iVars.backpackLights )
+  {
+    BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
+    blc.StopLoopingBackpackLights( _dVars.lightsHandle );
+  }
 
   if ( GenericEvent::Invalid != _iVars.earConEnd )
   {
