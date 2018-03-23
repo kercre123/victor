@@ -4,21 +4,28 @@ import (
 	pb "github.com/anki/sai-chipper-voice/grpc/pb"
 )
 
+// Handler aliases the IntentService field from our protobuf that determines
+// which backend service (Google, MS, etc) should handle this request
 type Handler = pb.IntentService
 
 const (
-	HandlerDefault   Handler = pb.IntentService_DEFAULT
-	HandlerGoogle    Handler = pb.IntentService_DIALOGFLOW
+	// HandlerDefault represents the default backend service chosen by chipper
+	HandlerDefault Handler = pb.IntentService_DEFAULT
+	// HandlerGoogle will have Google's DialogFlow service handle requests
+	HandlerGoogle Handler = pb.IntentService_DIALOGFLOW
+	// HandlerMicrosoft will have Microsoft's Bing/LUIS speech service handle requests
 	HandlerMicrosoft Handler = pb.IntentService_BING_LUIS
 )
 
+// Option defines an option that can be set on the cloud process
 type Option func(o *options)
 
 type options struct {
-	compress bool
-	chunkMs  uint
-	handler  Handler
-	stop     <-chan struct{}
+	compress  bool
+	chunkMs   uint
+	handler   Handler
+	stop      <-chan struct{}
+	saveAudio bool
 }
 
 // WithCompression sets whether compression will be performed on audio
@@ -49,5 +56,12 @@ func WithHandler(value Handler) Option {
 func WithStopChannel(value <-chan struct{}) Option {
 	return func(o *options) {
 		o.stop = value
+	}
+}
+
+// WithSaveAudio sets whether the chipper server should save the audio we send to it
+func WithSaveAudio(value bool) Option {
+	return func(o *options) {
+		o.saveAudio = value
 	}
 }

@@ -1,15 +1,15 @@
 {
   "google.golang.org/genproto": {
-    "commit": "2b5a72b8730b0b16380010cfe5286c42108d88e7",
+    "commit": "f8c8703595236ae70fdf8789ecb656ea0bcdcf46",
     "branch": "master"
   },
   "google.golang.org/grpc": {
-    "commit": "dfa18343df54bda471a4b53677aa7c0d0df882d1",
+    "commit": "bdb0727fa72e9f94e0b23df2b8c17561956811cd",
     "branch": "master"
   },
   "github.com/anki/sai-chipper-voice": {
-    "commit": "31bec55aa2773fe52cef8081b39ab969bc37bc04",
-    "branch": "develop"
+    "commit": "fbf149f159a1ffe9765dc1aa7091400874c5e9af",
+    "branch": "active"
   },
   "github.com/golang/protobuf": {
     "commit": "bbd03ef6da3a115852eaf24c8a1c46aeb39aa175",
@@ -28,11 +28,11 @@
     "branch": "master"
   },
   "golang.org/x/net": {
-    "commit": "dc948dff8834a7fe1ca525f8d04e261c2b56e70d",
+    "commit": "6078986fec03a1dcc236c34816c71b0e05018fda",
     "branch": "master"
   },
   "golang.org/x/text": {
-    "commit": "4e4a3210bb54bb31f6ab2cdca2edcc0b50c420c1",
+    "commit": "8c34f848e18c4bd34d02db7f19a0ed1a0a8f5852",
     "branch": "master"
   },
   "github.com/hashicorp/go-multierror": {
@@ -48,7 +48,7 @@
     "branch": "master"
   },
   "github.com/anki/opus-go": {
-    "commit": "130dd0d57e3b5bd6238aa3b062bf653f4aa194ec",
+    "commit": "db270449b5224095453ece81e0d67577067430e1",
     "branch": "v2"
   }
 }

@@ -126,6 +126,7 @@ function updateDeps(args) {
   }
 
   // define function to update each dep; returns if anything was changed
+  const summaries = []
   const updateDep = (name, dep) => {
     const status = str => console.log(name + ': ' + str);
     if (!dep.branch) {
@@ -138,6 +139,8 @@ function updateDeps(args) {
       const latestCommit = execSyncTrimDir(depdir, 'git rev-parse origin/' + dep.branch);
       if (latestCommit != dep.commit) {
         status('updating branch ' + dep.branch + ' to latest: ' + latestCommit);
+        const summary = execSyncTrimDir(depdir, 'git log --oneline --no-decorate ' + dep.commit + '..' + latestCommit);
+        summaries.push(name + ':\n' + summary);
         dep.commit = latestCommit;
         return true;
       }
@@ -170,6 +173,8 @@ function updateDeps(args) {
   if (changed) {
     console.log('wrote updates to ' + filename + ', run \'execute\' command to check out updated commits');
     save();
+    console.log('\nchange summary:\n');
+    console.log(summaries.join('\n\n'));
   }
   else {
     console.log('no changes from update');

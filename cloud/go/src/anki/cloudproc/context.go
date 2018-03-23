@@ -94,6 +94,10 @@ func sendJSONResponse(resp *chipper.IntentResult, cloudChan cloudChans) {
 	if resp.Parameters != nil && len(resp.Parameters) > 0 {
 		outResponse["params"] = resp.Parameters
 	}
+	outResponse["metadata"] = struct {
+		SpeechText       string
+		IntentConfidence float32
+	}{resp.QueryText, resp.IntentConfidence}
 	buf := bytes.Buffer{}
 	encoder := json.NewEncoder(&buf)
 	if err := encoder.Encode(outResponse); err != nil {

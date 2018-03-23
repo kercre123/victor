@@ -154,7 +154,8 @@ procloop:
 						Complexity: 0,
 						FrameSize:  60},
 					SessionId: uuid.New().String()[:16],
-					Handler:   p.opts.handler})
+					Handler:   p.opts.handler,
+					SaveAudio: p.opts.saveAudio})
 				if err != nil {
 					p.writeError("newstream", err.Error())
 					// debug cause of lookup failure

@@ -85,9 +85,8 @@ func main() {
 		process.AddTestReceiver(testRecv)
 	}
 	process.AddIntentWriter(aiSock)
-	var options []cloudproc.Option
+	options := []cloudproc.Option{cloudproc.WithChunkMs(120), cloudproc.WithSaveAudio(true)}
 	//options = append(options, WithCompression(true))
-	options = append(options, cloudproc.WithChunkMs(120))
 	if *ms {
 		options = append(options, cloudproc.WithHandler(cloudproc.HandlerMicrosoft))
 	}
