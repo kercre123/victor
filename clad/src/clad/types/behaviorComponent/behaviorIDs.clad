@@ -122,6 +122,7 @@ enum uint_8 BehaviorID {
   TimerUtilityCoordinator,
 
   // victorBehaviorTree
+  ComeHereVoiceCommand,
   CoordinateGlobalInterrupts,
   GlobalInterruptions,
   HighLevelAI,

@@ -1,0 +1,20 @@
+{
+  "behaviorID": "ComeHereVoiceCommand",
+  "behaviorClass": "DispatcherQueue",
+
+  "behaviors": 
+  [
+    "DriveOffCharger",
+    "ComeHereInternal"
+  ],
+
+  "anonymousBehaviors": [
+    {
+      "behaviorName" : "ComeHereInternal",
+      "behaviorClass" : "DriveToFace",
+
+      "timeUntilCancelFaceTrack_s": 5.0,
+      "minDriveToFaceDistanceKey_mm": 200
+    }
+  ]
+}

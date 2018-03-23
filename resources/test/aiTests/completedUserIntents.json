@@ -33,7 +33,12 @@
 
     "system_charger": {
       "type": "system_charger"
+    },
+
+    "imperative_come": {
+      "type": "imperative_come"
     }
+
 
   },
 

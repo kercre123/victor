@@ -119,6 +119,7 @@ TEST(BehaviorHighLevelAI, UserIntentsHandled)
     { "fist_bump",         {"Napping", "NappingOnCharger"} },
     { "keep_away",         {"Napping", "NappingOnCharger"} },
     { "roll_cube",         {"Napping", "NappingOnCharger"} },
+    { "imperative_come",   {"Napping", "NappingOnCharger"} },
     { "system_sleep",      {"Napping", "NappingOnCharger"} },
     { "system_charger",    {"ObservingOnCharger",
                             "ObservingOnChargerRecentlyPlaced",
@@ -185,6 +186,14 @@ TEST(BehaviorHighLevelAI, UserIntentsHandled)
         << " (" << label << ") but is listed as an exception";
       // you should update this test to remove the exception (see exceptionsList, above)
     }
+  }
+  
+  for( const auto& exceptionEntry : exceptionsList ) {
+    const auto& label = exceptionEntry.first;
+    const auto it = std::find_if( completedIntents.begin(), completedIntents.end(), [&](const auto& entry) {
+      return entry.first == label;
+    });
+    EXPECT_TRUE( it != completedIntents.end() ) << "In addition to adding exceptions to the above list, add to completedUserIntents.json";
   }
   
 }

@@ -112,29 +112,29 @@ BehaviorKeepaway::BehaviorKeepaway(const Json::Value& config)
 , _dVars(_iConfig)
 {
   // Add configurable params as ConsoleVars
-  MakeMemberTunable(_iConfig.naturalGameEndTimeout_s, "naturalGameEndTimeout_s");
-  MakeMemberTunable(_iConfig.targetUnmovedGameEndTimeout_s, "targetUnmovedGameEndTimeout_s");
-  MakeMemberTunable(_iConfig.noVisibleTargetGameEndTimeout_s, "noVisibleTargetGameEndTimeout_s");
-  MakeMemberTunable(_iConfig.noPointsEarnedTimeout_s, "noPointsEarnedTimeout_s");
-  MakeMemberTunable(_iConfig.targetVisibleTimeout_s, "targetVisibleTimeout_s");
-  MakeMemberTunable(_iConfig.animDistanceOffset_mm, "animDistanceOffset_mm");
-  MakeMemberTunable(_iConfig.inPlayDistance_mm, "inPlayDistance_mm");
-  MakeMemberTunable(_iConfig.outOfPlayDistance_mm, "outOfPlayDistance_mm");
-  MakeMemberTunable(_iConfig.allowablePointingError_deg, "allowablePointingError_deg");
-  MakeMemberTunable(_iConfig.targetUnmovedCreepTimeout_s, "targetUnmovedCreepTimeout_s");
-  MakeMemberTunable(_iConfig.creepDistanceMin_mm, "creepDistanceMin_mm");
-  MakeMemberTunable(_iConfig.creepDistanceMax_mm, "creepDistanceMax_mm");
-  MakeMemberTunable(_iConfig.creepDelayTimeMin_s, "creepDelayTimeMin_s");
-  MakeMemberTunable(_iConfig.creepDelayTimeMax_s, "creepDelayTimeMax_s");
-  MakeMemberTunable(_iConfig.pounceDelayTimeMin_s, "pounceDelayTimeMin_s");
-  MakeMemberTunable(_iConfig.pounceDelayTimeMax_s, "pounceDelayTimeMax_s");
-  MakeMemberTunable(_iConfig.basePounceChance, "basePounceChance");
-  MakeMemberTunable(_iConfig.pounceChanceIncrement, "pounceChanceIncrement");
-  MakeMemberTunable(_iConfig.nominalPounceDistance_mm, "nominalPounceDistance_mm");
-  MakeMemberTunable(_iConfig.instaPounceDistance_mm, "instaPounceDistance_mm");
-  MakeMemberTunable(_iConfig.pounceSuccessPitchDiff_deg, "pounceSuccessPitchDiff_deg");
-  MakeMemberTunable(_iConfig.useProxForDistance, "useProxForDistance");
-  MakeMemberTunable(_iConfig.pointsToWin, "pointsToWin");
+  MakeMemberTunable(_iConfig.naturalGameEndTimeout_s, "naturalGameEndTimeout_s", kDebugName);
+  MakeMemberTunable(_iConfig.targetUnmovedGameEndTimeout_s, "targetUnmovedGameEndTimeout_s", kDebugName);
+  MakeMemberTunable(_iConfig.noVisibleTargetGameEndTimeout_s, "noVisibleTargetGameEndTimeout_s", kDebugName);
+  MakeMemberTunable(_iConfig.noPointsEarnedTimeout_s, "noPointsEarnedTimeout_s", kDebugName);
+  MakeMemberTunable(_iConfig.targetVisibleTimeout_s, "targetVisibleTimeout_s", kDebugName);
+  MakeMemberTunable(_iConfig.animDistanceOffset_mm, "animDistanceOffset_mm", kDebugName);
+  MakeMemberTunable(_iConfig.inPlayDistance_mm, "inPlayDistance_mm", kDebugName);
+  MakeMemberTunable(_iConfig.outOfPlayDistance_mm, "outOfPlayDistance_mm", kDebugName);
+  MakeMemberTunable(_iConfig.allowablePointingError_deg, "allowablePointingError_deg", kDebugName);
+  MakeMemberTunable(_iConfig.targetUnmovedCreepTimeout_s, "targetUnmovedCreepTimeout_s", kDebugName);
+  MakeMemberTunable(_iConfig.creepDistanceMin_mm, "creepDistanceMin_mm", kDebugName);
+  MakeMemberTunable(_iConfig.creepDistanceMax_mm, "creepDistanceMax_mm", kDebugName);
+  MakeMemberTunable(_iConfig.creepDelayTimeMin_s, "creepDelayTimeMin_s", kDebugName);
+  MakeMemberTunable(_iConfig.creepDelayTimeMax_s, "creepDelayTimeMax_s", kDebugName);
+  MakeMemberTunable(_iConfig.pounceDelayTimeMin_s, "pounceDelayTimeMin_s", kDebugName);
+  MakeMemberTunable(_iConfig.pounceDelayTimeMax_s, "pounceDelayTimeMax_s", kDebugName);
+  MakeMemberTunable(_iConfig.basePounceChance, "basePounceChance", kDebugName);
+  MakeMemberTunable(_iConfig.pounceChanceIncrement, "pounceChanceIncrement", kDebugName);
+  MakeMemberTunable(_iConfig.nominalPounceDistance_mm, "nominalPounceDistance_mm", kDebugName);
+  MakeMemberTunable(_iConfig.instaPounceDistance_mm, "instaPounceDistance_mm", kDebugName);
+  MakeMemberTunable(_iConfig.pounceSuccessPitchDiff_deg, "pounceSuccessPitchDiff_deg", kDebugName);
+  MakeMemberTunable(_iConfig.useProxForDistance, "useProxForDistance", kDebugName);
+  MakeMemberTunable(_iConfig.pointsToWin, "pointsToWin", kDebugName);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

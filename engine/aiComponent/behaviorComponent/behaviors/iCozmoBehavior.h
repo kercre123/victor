@@ -445,10 +445,10 @@ protected:
   // make a member variable a console var that is only around as long as its class instance is
   #if ANKI_DEV_CHEATS
     template <typename T>
-    void MakeMemberTunable(T& param, const std::string& name);
+    void MakeMemberTunable(T& param, const std::string& name, const char* category = nullptr);
   #else // no op
     template <typename T>
-    void MakeMemberTunable(T& param, const std::string& name) {  }
+    void MakeMemberTunable(T& param, const std::string& name, const char* category = nullptr) {  }
   #endif
   
 private:
@@ -676,11 +676,13 @@ bool ICozmoBehavior::FindAnonymousBehaviorByNameAndDowncast(const std::string& b
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #if ANKI_DEV_CHEATS
 template <typename T>
-void ICozmoBehavior::MakeMemberTunable(T& param, const std::string& name)
+void ICozmoBehavior::MakeMemberTunable(T& param, const std::string& name, const char* category)
 {
   const std::string uniqueName = GetDebugLabel() + "_" + name;
   const bool unregisterOnDestruction = true;
-  const char* category = "BehaviorInstanceParams";
+  if( category == nullptr ) {
+    category = "BehaviorInstanceParams";
+  }
   // ensure this param isnt already registered
   for( const auto& var : _tunableParams ) {
     if( !ANKI_VERIFY( var->GetID() != uniqueName,

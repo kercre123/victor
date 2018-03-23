@@ -92,6 +92,11 @@
       "clearIntent": "play_specific"
     },
     {
+      "name": "ComeHere",
+      "behavior": "ComeHereVoiceCommand",
+      "clearIntent": "imperative_come"
+    },
+    {
       "name": "Keepaway",
       "behavior": "KeepawayVoiceCommand",
       "debugColor": "YELLOW",
@@ -403,6 +408,18 @@
     },
 
     {
+      "from": "ComeHere",
+      "exitTransitions": [
+        {
+          "to": "Socializing",
+          "condition": {
+            "conditionType": "TrueCondition"
+          }
+        }
+      ]
+    },
+
+    {
       "from": "Keepaway",
       "exitTransitions": [
         {
@@ -437,6 +454,7 @@
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
         "FistBump",
+        "ComeHere",
         "Keepaway",
         "Observing",
         "ReturningToCharger", // to avoid unclaimed intent
@@ -482,6 +500,7 @@
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
         "FistBump",
+        "ComeHere",
         "Keepaway",
         "Observing",
         "Socializing",
@@ -534,6 +553,7 @@
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
         "FistBump",
+        "ComeHere",
         "Keepaway",
         "Observing",
         "Socializing",
@@ -585,6 +605,7 @@
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
         "FistBump",
+        "ComeHere",
         "Keepaway",
         "Observing",
         "Socializing",
@@ -651,8 +672,7 @@
         "DriveOffChargerIntoObserving",
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
-        "FistBump",
-        "Keepaway",
+        "ComeHere",
         "Observing",
         "Socializing",
         "WakingUp",
@@ -696,6 +716,57 @@
         }
       ]
 
+    },
+
+    // come here
+    {
+      "from": [
+        "ObservingOnCharger",
+        "ObservingOnChargerRecentlyPlaced",
+        "DriveOffChargerIntoObserving",
+        "DriveOffChargerIntoSocializing",
+        "DriveOffChargerIntoPlay",
+        "FistBump",
+        "ComeHere",
+        "Keepaway",
+        "Observing",
+        "Socializing",
+        "WakingUp",
+        "ReturningToCharger",
+        "FailedToFindCharger"
+      ],
+      "interruptingTransitions": [
+        {
+          "to": "ComeHere",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {
+                "type": "imperative_come"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "from": [
+        "PlayingWithCube",
+        "RollCube"
+      ],
+      "nonInterruptingTransitions": [
+        {
+          "to": "ComeHere",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {
+                "type": "imperative_come"
+              }
+            ]
+          }
+        }
+      ]
     }
     
   ]
