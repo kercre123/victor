@@ -105,7 +105,6 @@ int ForkAndExec(const std::vector<std::string>& args, std::ostream& out)
   sigset_t blockset;
   sigset_t oldset;
   int rc = 0;
-  int status = 0;
 
   rc = pthread_mutex_lock(&sMutex);
   if (rc) {
@@ -158,7 +157,7 @@ int ForkAndExec(const std::vector<std::string>& args, std::ostream& out)
   } else {
     sChildPid = pid;
     close(child_ptty);
-    rc = WaitForChild(parent_ptty, pid, &status, out);
+    rc = WaitForChild(parent_ptty, pid, NULL, out);
     sChildPid = -1;
   }
 
