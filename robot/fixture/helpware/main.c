@@ -492,6 +492,7 @@ int main(int argc, const char* argv[])
   {
     exit = fixture_serial(gSerialFd);
     exit |= user_terminal();
+    usleep(1000); //1ms to yeild
  }
 
   on_exit();

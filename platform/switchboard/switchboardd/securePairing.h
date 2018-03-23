@@ -48,6 +48,7 @@ namespace Switchboard {
     using ReceivedWifiCredentialsSignal = Signal::Signal<void (std::string, std::string)>;
     using UpdatedPinSignal = Signal::Signal<void (std::string)>;
     using OtaUpdateSignal = Signal::Signal<void (std::string)>;
+    using StopPairingSignal = Signal::Signal<void ()>;
     
     // Constructors
     SecurePairing(INetworkStream* stream, struct ev_loop* evloop, std::shared_ptr<EngineMessagingClient> engineClient, bool isPairing, bool isOtaUpdating);
@@ -79,6 +80,10 @@ namespace Switchboard {
     // PIN Update Event
     UpdatedPinSignal& OnUpdatedPinEvent() {
       return _updatedPinSignal;
+    }
+
+    StopPairingSignal& OnStopPairingEvent() {
+      return _stopPairingSignal;
     }
 
     OtaUpdateSignal& OnOtaUpdateRequestEvent() {
@@ -113,6 +118,7 @@ namespace Switchboard {
     void HandleChallengeResponse(uint8_t* bytes, uint32_t length);
 
     void SubscribeToCladMessages();
+    void UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus state);
     
     inline bool AssertState(CommsState state) {
       return state == _commsState;
@@ -216,6 +222,7 @@ namespace Switchboard {
     bool _isPairing = false;
     bool _isOtaUpdating = false;
     OtaUpdateSignal _otaUpdateRequestSignal;
+    StopPairingSignal _stopPairingSignal;
   };
 } // Switchboard
 } // Anki

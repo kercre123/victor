@@ -138,8 +138,9 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
     Log::Write("Connected to a BLE central.");
     if(_securePairing == nullptr) {
       _securePairing = std::make_unique<Anki::Switchboard::SecurePairing>(stream, _loop, _engineMessagingClient, _isPairing, _isOtaUpdating);
-      _securePairing->OnUpdatedPinEvent().SubscribeForever(std::bind(&Daemon::OnPinUpdated, this, std::placeholders::_1));
-      _securePairing->OnOtaUpdateRequestEvent().SubscribeForever(std::bind(&Daemon::OnOtaUpdatedRequest, this, std::placeholders::_1));
+      _pinHandle = _securePairing->OnUpdatedPinEvent().ScopedSubscribe(std::bind(&Daemon::OnPinUpdated, this, std::placeholders::_1));
+      _otaHandle = _securePairing->OnOtaUpdateRequestEvent().ScopedSubscribe(std::bind(&Daemon::OnOtaUpdatedRequest, this, std::placeholders::_1));
+      _endHandle = _securePairing->OnStopPairingEvent().ScopedSubscribe(std::bind(&Daemon::OnEndPairing, this));
     }
     
     // Initiate pairing process
@@ -159,6 +160,9 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
       _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
     }
     Log::Write("Destroying secure pairing object.");
+    _pinHandle = nullptr;
+    _otaHandle = nullptr;
+    _endHandle = nullptr;
     _securePairing = nullptr;
   }
 }
@@ -168,6 +172,10 @@ void Daemon::OnPinUpdated(std::string pin) {
   _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::START_PAIRING);
   _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SHOW_PIN);
   Log::Blue((" " + pin + " ").c_str());
+}
+
+void Daemon::OnEndPairing() {
+  UpdateAdvertisement(false);
 }
 
 void Daemon::HandleOtaUpdateProgress() {
@@ -284,7 +292,16 @@ void Daemon::HandleOtaUpdateExit(int rc, const std::string& output) {
 
     ev_timer_stop(_loop, &_handleOtaTimer.timer);
     _isOtaUpdating = false;
-    _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+
+    if(rc != 0) {
+      if(_securePairing == nullptr) {
+        // Change the face back to end pairing state *only* if 
+        // we didn't update successfully and there is no BLE connection 
+        _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+      } else {
+        _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::UPDATING_OS_ERROR);
+      }
+    }
   });
 }
 
@@ -328,7 +345,7 @@ void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame
     case Anki::Cozmo::ExternalInterface::MessageEngineToGameTag::ExitPairing: {
       printf("Exit pairing: %hhu\n", tag);
       UpdateAdvertisement(false);
-      if(_securePairing != nullptr) {
+      if(_securePairing != nullptr && _isPairing) {
         _securePairing->StopPairing();
       }
       _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
