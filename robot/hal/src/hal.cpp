@@ -447,4 +447,9 @@ extern "C" {
   u64 steady_clock_now(void) {
     return std::chrono::steady_clock::now().time_since_epoch().count();
   }
+
+  void hal_terminate(void) {
+    Anki::Cozmo::HAL::Shutdown();
+  }
+
 }

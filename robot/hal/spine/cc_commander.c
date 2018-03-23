@@ -63,6 +63,7 @@ typedef void (*ShutdownFunction)(int);
 const struct SpineMessageHeader* hal_read_frame();
 void start_overrride(int count);
 extern void request_version(void);
+void hal_terminate(void);
 
 
 enum {
@@ -447,6 +448,22 @@ uint8_t handle_gmr_command(const uint8_t args[]) {
 }
 
 
+uint8_t handle_pwr_command(const uint8_t args[]) {
+  switch (args[0]) {
+    case 0:
+      //no action
+      break;
+    case 1: //reboot
+      hal_terminate();
+      break;
+    case 2:  //shutdown
+      hal_terminate();
+      break;
+    default:
+      return ERR_SYNTAX;
+  }
+  return err_OK;
+}
 
 int gQuit = 0;
 const char* handle_quit_command(const char* text, int len)
@@ -494,6 +511,7 @@ static const CommandHandler handlers[] = {
 //  REGISTER_COMMAND(lfe),
   REGISTER_COMMAND(smr),
   REGISTER_COMMAND(gmr),
+  REGISTER_COMMAND(pwr),
  /* ^^ insert new commands here ^^ */
   {0}  /* MUST BE 0 TERMINATED */
 };
