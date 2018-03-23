@@ -38,6 +38,7 @@
     },
     {
       "cloud_intent" : "intent_clock_settimer",
+      "app_intent" : "intent_clock_settimer",
       "user_intent"  : "set_timer",
       "cloud_substitutions": {
         "timer_duration": "time_s"
@@ -46,14 +47,17 @@
     },
     {
       "cloud_intent": "intent_system_charger",
+      "app_intent": "intent_system_charger",
       "user_intent": "system_charger"
     },
     {
       "cloud_intent": "intent_system_sleep",
+      "app_intent": "intent_system_sleep",
       "user_intent": "system_sleep"
     },
     {
       "cloud_intent": "intent_play_specific",
+      "app_intent": "intent_play_specific",
       "user_intent": "play_specific"
     },
     {

@@ -1,5 +1,5 @@
 /**
- * File: testTransitionsUserIntents.cpp
+ * File: testUserIntentsTransitions.cpp
  *
  * Author: Kevin M. Karol
  * Created: 2018-03-07
@@ -20,13 +20,19 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
+#include "test/engine/behaviorComponent/testIntentsFramework.h"
+#include "test/engine/behaviorComponent/testRegistrar.h"
 
 using namespace Anki;
 using namespace Anki::Cozmo;
 
 namespace {
+
+MAKE_REGISTRAR( UserIntentsRegistrar )
+#define TEST_INTENT(a,b, testID) static UserIntentsRegistrar autoRegUserIntents_##b(testID);\
+        TEST(a,b)
   
-TEST(TransitionsUserIntents, SetTimer)
+TEST_INTENT(UserIntentsTransitions, SetTimer, "set_timer")
 {
   TestBehaviorFramework tbf;
   tbf.InitializeStandardBehaviorComponent();
@@ -46,9 +52,18 @@ TEST(TransitionsUserIntents, SetTimer)
   timerIntent._tag = UserIntentTag::set_timer;
   timerIntent._set_timer = timeInSeconds;
 
-  auto res = tbf.TestUserIntentTransition(stack, timerIntent, BehaviorID::SingletonTimerSet);
+  TestIntentsFramework tif;
+  auto res = tif.TestUserIntentTransition(tbf, stack, timerIntent, BehaviorID::SingletonTimerSet);
   EXPECT_TRUE(res);
 }
 
+TEST(UserIntentsTransitions, CompletedHaveTests)
+{
+  TestIntentsFramework tif;
+  const auto& completedLabels = tif.GetCompletedLabels( TestIntentsFramework::EHandledLocation::Elsewhere );
+  for( const auto& label : completedLabels ) {
+    EXPECT_TRUE( UserIntentsRegistrar::IsRegistered( label ) ) << "You need to write a test for " << label;
+  }
+}
 
 } // namespace

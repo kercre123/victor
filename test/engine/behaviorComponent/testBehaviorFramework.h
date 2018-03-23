@@ -104,21 +104,6 @@ public:
   // Walks the full freeplay tree to see whether the stack can occur
   static bool CanStackOccurDuringFreeplay(const std::vector<IBehavior*>& stackToBuild);
 
-  ///////
-  // Functions related to user intents
-  ///////
-
-  // Pass in:
-  //  1) Initial Behavior Stack
-  //  2) User intent to send
-  //  3) Behavior expected to handle the intent
-  // Returns true if from the initial stack the user intent results in the 
-  // expected behavior taking control of the stack
-  // False otherwise
-  bool TestUserIntentTransition(const std::vector<IBehavior*>& initialStack,
-                                UserIntent intentToSend,
-                                BehaviorID expectedIntentHandlerID);
-
 private:
   std::unique_ptr<BehaviorContainer> _behaviorContainer;
   std::unique_ptr<Robot> _robot;

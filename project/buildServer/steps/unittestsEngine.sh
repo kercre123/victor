@@ -75,6 +75,11 @@ fi
 # comment out to skip generating it
 export ANKI_TEST_BEHAVIOR_FILE="behavior_transitions.txt"
 
+# unit test(s) look for this file to run cloud intent tests
+# comment out to skip generating it and running the tests
+# export ANKI_TEST_INTENT_SAMPLE_FILE="intent_samples.json"
+# ${TOPLEVEL}/tools/ai/makeSampleIntents.py $ANKI_TEST_INTENT_SAMPLE_FILE
+
 echo "Entering directory \`${BUILDPATH}'"
 cd ${BUILDPATH}
 

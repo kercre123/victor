@@ -1,0 +1,46 @@
+// Put all the user intents that you consider done here, and label them so that other tests can use them.
+// Put them either in handledByHighLevelAI or handledElsewhere (the latter should be divided up once we
+// better understand where things will live).
+// Format:
+//       "label_for_lookup_in_tests": {
+//         "type": "user_intent_tag_goes_here",
+//         [ additional params as needed ]
+//       }
+// The intent parameter names are based on the json that could be used by UserIntent::SetFromJSON().
+// If a parameter is provided, an intent will only match if it contains that parameter key and value.
+
+{
+  "handledByHighLevelAI": {
+
+    "roll_cube": {
+      "type": "play_specific",
+      "entity_behavior": "roll_cube"
+    },
+
+    "fist_bump": {
+      "type": "play_specific",
+      "entity_behavior": "fist_bump"
+    },
+
+    "keep_away": {
+      "type": "play_specific",
+      "entity_behavior": "keep_away"
+    },
+
+    "system_sleep": {
+      "type": "system_sleep"
+    },
+
+    "system_charger": {
+      "type": "system_charger"
+    }
+
+  },
+
+  "handledElsewhere": {
+    "set_timer": {
+      "type": "set_timer"
+    }
+  }
+
+}

@@ -353,31 +353,6 @@ bool TestBehaviorFramework::CanStackOccurDuringFreeplay(const std::vector<IBehav
   return sawMatch;
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool TestBehaviorFramework::TestUserIntentTransition(const std::vector<IBehavior*>& initialStack,
-                                                     UserIntent intentToSend,
-                                                     BehaviorID expectedIntentHandlerID)
-{
-  ReplaceBehaviorStack(initialStack);
-  
-  // Send user intent
-  auto& uic = GetBehaviorComponent().GetComponent<UserIntentComponent>();
-  uic.SetUserIntentPending(std::move(intentToSend));
-
-  // Tick the behavior component so that the behavior can respond to the intent
-  AICompMap emptyMap;
-  GetBehaviorComponent().UpdateDependent(emptyMap);
-
-  // Check the result
-  BehaviorSystemManager& bsm = GetBehaviorSystemManager();
-  IBehavior* topOfStack = bsm._behaviorStack->GetTopOfStack();
-  auto castTopOfStack = dynamic_cast<ICozmoBehavior*>(topOfStack);
-
-  return castTopOfStack->_id == expectedIntentHandlerID;
-}
-
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DoBehaviorComponentTicks(Robot& robot, ICozmoBehavior& behavior, BehaviorComponent& behaviorComponent, int num)
 {
