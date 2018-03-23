@@ -474,7 +474,7 @@ void cmdDbgParseTestbench(void)
 //                  Robot (Charge Contacts)
 //-----------------------------------------------------------------------------
 
-#define CCC_DEBUG 1
+#define CCC_DEBUG 0
 #define CCC_ERROR_HANDLE(e) if( CCC_DEBUG > 0 ) { return 0; } else { throw (e); }
 #define CCC_CMD_DELAY()     if( CCC_DEBUG > 0 ) { Timer::delayMs(150); }
 

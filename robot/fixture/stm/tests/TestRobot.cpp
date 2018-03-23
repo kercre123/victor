@@ -250,8 +250,10 @@ void TestRobotInfo(void)
   //-*/
 }
 
+//ccr_sr_t get(uint8_t NN, uint8_t sensor
 void TestRobotSensors(void)
 {
+  //XXX struct copies don't seem to work correctly...
   ccr_sr_t bat    = cmdRobotGet(3, CCC_SENSOR_BATTERY   )[1];
   ccr_sr_t cliff  = cmdRobotGet(3, CCC_SENSOR_CLIFF     )[1];
   ccr_sr_t prox   = cmdRobotGet(3, CCC_SENSOR_PROX_TOF  )[1];
@@ -260,11 +262,11 @@ void TestRobotSensors(void)
   ccr_sr_t pktcnt = cmdRobotGet(3, CCC_SENSOR_RX_PKT    )[1];
   
   ConsolePrintf("Sensor Values:\n");
-  ConsolePrintf(".battery = %i.%03iV\n", bat.bat.raw/1000, bat.bat.raw%1000);
-  ConsolePrintf(".cliff = fL:%i fR:%i bL:%i bR:%i\n", cliff.cliff.fL, cliff.cliff.fR, cliff.cliff.bL, cliff.cliff.bR);
-  ConsolePrintf(".prox = %imm sigRate:%i spad:%i ambientRate:%i\n", prox.prox.rangeMM, prox.prox.signalRate, prox.prox.spadCnt, prox.prox.ambientRate);
-  ConsolePrintf(".btn = %i touch=%i\n", btn.btn.btn, btn.btn.touch);
-  ConsolePrintf(".rf = %idBm %i packets\n", rssi.fccRssi.rssi, rssi.fccRx.pktCnt);
+  ConsolePrintf("  battery = %i.%03iV\n", bat.bat.raw/1000, bat.bat.raw%1000);
+  ConsolePrintf("  cliff = fL:%i fR:%i bR:%i bL:%i\n", cliff.cliff.fL, cliff.cliff.fR, cliff.cliff.bR, cliff.cliff.bL);
+  ConsolePrintf("  prox = %imm sigRate:%i spad:%i ambientRate:%i\n", prox.prox.rangeMM, prox.prox.signalRate, prox.prox.spadCnt, prox.prox.ambientRate);
+  ConsolePrintf("  btn = %i touch=%i\n", btn.btn.btn, btn.btn.touch);
+  ConsolePrintf("  rf = %idBm %i packets\n", rssi.fccRssi.rssi, rssi.fccRx.pktCnt);
   
   //XXX: what should "good" sensor values look like?
 }
