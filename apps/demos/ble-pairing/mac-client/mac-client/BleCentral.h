@@ -61,12 +61,30 @@ enum WiFiAuth : uint8_t {
   
   NSMutableDictionary* _victorsDiscovered;
   bool _connecting;
+  
+  NSString* _filter;
+  
+  NSMutableDictionary* _wifiAuth;
+  dispatch_queue_t _commandQueue;
+  
+  std::string _currentCommand;
+  bool _readyForNextCommand;
+  
+  uint8_t _otaStatusCode;
+  uint64_t _otaProgress;
+  uint64_t _otaExpected;
+  
+  bool _verbose;
 }
 
-- (std::string)hexStr:(uint8_t*)data length:(int)len;
+- (std::string)hexStr:(char*)data length:(int)len;
+- (std::string)asciiStr:(char*)data length:(int)size;
+- (uint8_t)nibbleToNumber:(uint8_t)nibble;
+
 - (void) handleSend:(const void*)bytes length:(int)n;
 - (void) handleReceive:(const void*)bytes length:(int)n;
 - (void) handleReceiveSecure:(const void*)bytes length:(int)n;
+- (void) printHelp;
 
 - (void) HandleReceiveHandshake:(const void*)bytes length:(int)n;
 - (void) HandleReceivePublicKey:(const Anki::Victor::ExternalComms::RtsConnRequest&)msg;
@@ -81,7 +99,10 @@ enum WiFiAuth : uint8_t {
 - (void) sendSecure:(const void*)bytes length:(int)n;
 
 - (void) StartScanning;
+- (void) StartScanning:(NSString*)nameFilter;
 - (void) StopScanning;
+
+- (std::vector<std::string>) GetWordsFromLine: (std::string)line;
 
 - (void) printSuccess:(const char*) txt;
 
@@ -91,6 +112,7 @@ enum WiFiAuth : uint8_t {
 - (NSData*) GetPublicKey;
 - (NSArray*) GetSession: (NSString*)key;
 - (void)resetDefaults;
+- (void)setVerbose:(bool)enabled;
 
 @end
 

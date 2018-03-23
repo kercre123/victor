@@ -17,6 +17,7 @@
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
+#include "cozmoAnim/connectionFlow.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreen.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
@@ -135,7 +136,8 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   // Screens we don't want users to have access to
   // * Microphone visualization
   // * Camera
-  const bool hideSpecialDebugScreens = (FACTORY_TEST && Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG) || !ANKI_DEV_CHEATS;
+  //const bool hideSpecialDebugScreens = (FACTORY_TEST && Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG) || !ANKI_DEV_CHEATS;  // TODO: Use this line in master
+  const bool hideSpecialDebugScreens = (FACTORY_TEST && Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG);                        // Use this line in factory branch
 
   ADD_SCREEN_WITH_TEXT(Recovery, Recovery, {"RECOVERY MODE"});
   ADD_SCREEN(None, None);
@@ -145,6 +147,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_SCREEN(Main, Network);
   ADD_SCREEN_WITH_TEXT(ClearUserData, Main, {"CLEAR USER DATA?"});
   ADD_SCREEN_WITH_TEXT(ClearUserDataFail, Main, {"CLEAR USER DATA FAILED"});
+  ADD_SCREEN_WITH_TEXT(Rebooting, Rebooting, {"REBOOTING..."});
   ADD_SCREEN_WITH_TEXT(SelfTest, Main, {"START SELF TEST?"});
   ADD_SCREEN(Network, SensorInfo);
   ADD_SCREEN(SensorInfo, IMUInfo);
@@ -165,12 +168,20 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
     LOG_INFO("FaceInfoScreenManager.Recovery.Rebooting", "");
     this->Reboot();
 
-    return ScreenName::Recovery;
+    return ScreenName::Rebooting;
   };
   ADD_MENU_ITEM_WITH_ACTION(Recovery, "EXIT", rebootAction);
   ADD_MENU_ITEM(Recovery, "CONTINUE", None);
   DISABLE_TIMEOUT(Recovery);
 
+  // None screen 
+#if FACTORY_TEST  
+  FaceInfoScreen::ScreenAction drawInitConnectionScreen = [animStreamer]() {
+    InitConnectionFlow(animStreamer);
+  };
+  GetScreen(ScreenName::None)->SetEnterScreenAction(drawInitConnectionScreen);
+#endif  
+  
   // FAC screen
   DISABLE_TIMEOUT(FAC);
 
@@ -198,7 +209,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
     // Reboot robot for clearing to take effect
     LOG_INFO("FaceInfoScreenManager.ClearUserData.Rebooting", "");
     this->Reboot();
-    return ScreenName::ClearUserData;
+    return ScreenName::Rebooting;
   };
   ADD_MENU_ITEM(ClearUserData, "EXIT", Main);
   ADD_MENU_ITEM_WITH_ACTION(ClearUserData, "CONFIRM", confirmClearUserData);
@@ -825,8 +836,11 @@ void FaceInfoScreenManager::Update(const RobotState& state)
 
 void FaceInfoScreenManager::DrawMain()
 {
+  std::stringstream ss;
+  ss << std::hex << Factory::GetEMR()->fields.ESN;
+  const std::string serialNo = "ESN: "  + ss.str();
+
   auto *osstate = OSState::getInstance();
-  const std::string serialNo = "ESN: "  + osstate->GetSerialNumberAsString();
   const std::string osVer    = "OS: "   + osstate->GetOSBuildVersion() + (FACTORY_TEST ? " (V3)" : "");
   const std::string ssid     = "SSID: " + osstate->GetSSID(true);
 
@@ -1102,7 +1116,7 @@ void FaceInfoScreenManager::DrawTextOnScreen(const ColoredTextLines& lines,
 
 void FaceInfoScreenManager::EnablePairingScreen(bool enable)
 {
-  if (enable && GetCurrScreenName() != ScreenName::None) {
+  if (enable && GetCurrScreenName() != ScreenName::Pairing) {
     LOG_INFO("FaceInfoScreenManager.EnablePairingScreen.Enable", "");
     SetScreen(ScreenName::Pairing);
   } else if (!enable && GetCurrScreenName() == ScreenName::Pairing) {
@@ -1132,8 +1146,28 @@ void FaceInfoScreenManager::Reboot()
 #ifdef SIMULATOR
   LOG_WARNING("FaceInfoScreenManager.Reboot.NotSupportInSimulator", "");
 #else
+  
+  // Need to call reboot in forked process for some reason.
+  // Otherwise, reboot doesn't actually happen.
+  // Also useful for transitioning to "REBOOTING..." screen anyway.
   sync(); sync(); sync(); // Linux voodoo
-  reboot(LINUX_REBOOT_CMD_RESTART);
+  pid_t pid = fork();
+  if (pid == 0)
+  {
+    // child process
+    execl("/bin/systemctl", "reboot", 0);  // Graceful reboot
+  }
+  else if (pid > 0)
+  {
+    // parent process
+    LOG_INFO("FaceInfoScreenManager.Reboot.Rebooting", "");
+  }
+  else 
+  {
+    // fork failed
+    LOG_WARNING("FaceInfoScreenManager.Reboot.Failed", "");
+  }
+
 #endif
 }
 

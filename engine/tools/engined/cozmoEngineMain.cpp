@@ -16,6 +16,8 @@
 #include "util/logging/channelFilter.h"
 #include "util/helpers/templateHelpers.h"
 
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
 #if !defined(DEV_LOGGER_ENABLED)
   #if FACTORY_TEST
     #define DEV_LOGGER_ENABLED 1
@@ -51,6 +53,17 @@ constexpr const int SLEEP_DELAY_US = (10*1000);
 // Global singletons
 Anki::Cozmo::CozmoAPI* gEngineAPI = nullptr;
 Anki::Util::Data::DataPlatform* gDataPlatform = nullptr;
+
+// Signal handlers
+namespace {
+  bool gShutdown = false;
+}
+
+static void sigterm(int)
+{
+  LOG_INFO("CozmoEngineMain.SIGTERM", "Shutting down");
+  gShutdown = true;
+}
 
 void configure_engine(Json::Value& config)
 {
@@ -130,11 +143,14 @@ static int cozmo_start(const Json::Value& configuration)
 
   // Initialize logging
   #if DEV_LOGGER_ENABLED
+  if(!FACTORY_TEST || (FACTORY_TEST && !Anki::Cozmo::Factory::GetEMR()->fields.PACKED_OUT_FLAG))
+  {
     using DevLoggingSystem = Anki::Cozmo::DevLoggingSystem;
     const std::string& appRunId = Anki::Util::GetUUIDString();
     const std::string& devlogPath = gDataPlatform->pathToResource(Anki::Util::Data::Scope::CurrentGameLog, LOG_PROCNAME);
     DevLoggingSystem::CreateInstance(devlogPath, appRunId);
     loggers.push_back(DevLoggingSystem::GetInstancePrintProvider());
+  }
   #endif
 
   Anki::Util::IEventProvider* eventProvider = nullptr;
@@ -203,6 +219,10 @@ static int cozmo_stop()
 {
   int result = 0;
 
+  if (nullptr != gEngineAPI) {
+    gEngineAPI->Clear();
+  }
+
   Anki::Util::SafeDelete(gEngineAPI);
   Anki::Util::gEventProvider = nullptr;
   Anki::Util::SafeDelete(Anki::Util::gLoggerProvider);
@@ -218,6 +238,9 @@ static int cozmo_stop()
 
 int main(int argc, char* argv[])
 {
+    // Install signal handler
+    signal(SIGTERM, sigterm);
+
     char cwd[PATH_MAX] = { 0 };
     getcwd(cwd, sizeof(cwd));
     printf("CWD: %s\n", cwd);
@@ -323,7 +346,7 @@ int main(int argc, char* argv[])
 
     LOG_INFO("CozmoEngineMain.main", "Engine started");
 
-    while (true) {
+    while (!gShutdown) {
       if (!cozmo_is_running()) {
         LOG_INFO("CozmoEngineMain.main", "Engine has stopped");
         break;
@@ -332,7 +355,7 @@ int main(int argc, char* argv[])
     }
 
     LOG_INFO("CozmoEngineMain.main", "Stopping engine");
-    cozmo_stop();
+    res = cozmo_stop();
 
     return res;
 }

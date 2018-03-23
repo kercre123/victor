@@ -353,7 +353,7 @@ namespace Anki {
               // Must be beyond threshold for some count to ignore
               // lift bouncing against lower limit
               ++liftAngleHigherThanCalibAbortAngleCount_;
-              if (liftAngleHigherThanCalibAbortAngleCount_ > UPWARDS_LIFT_MOTION_FOR_CALIB_ABORT_CNT) {
+              if (liftAngleHigherThanCalibAbortAngleCount_ >= UPWARDS_LIFT_MOTION_FOR_CALIB_ABORT_CNT) {
                 if (firstCalibration_) {
                   AnkiWarn("LiftController.CalibrationUpdate.RestartingCalib", 
                            "Someone is probably messing with lift (low: %fdeg, curr: %fdeg)",

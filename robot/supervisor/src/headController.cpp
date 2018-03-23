@@ -76,8 +76,21 @@ namespace HeadController {
       } HeadCalibState;
 
       HeadCalibState calState_ = HCS_IDLE;
+
+      // Whether or not head is calibrated
       bool isCalibrated_ = false;
+
+      // If this is the first time calibrating, repeat until it's done.
+      // Shouldn't proceed until calibration is complete.
+      bool firstCalibration_ = true;
+
+      // Last time head movement was detected
       u32 lastHeadMovedTime_ms = 0;
+      
+      // Parameters for determining if head is being messed with during
+      // calibration in which case calibration is retried or aborted
+      f32 lowHeadAngleDuringCalib_rad_;
+      const f32 UPWARDS_HEAD_MOTION_FOR_CALIB_ABORT_RAD = DEG_TO_RAD(5.f);
 
       u32 lastInPositionTime_ms_;
       const u32 IN_POSITION_TIME_MS = 200;
@@ -88,11 +101,11 @@ namespace HeadController {
 
       bool enable_ = false;
 
-      // If disabled, lift motor is automatically re-enabled at this time if non-zero.
+      // If disabled, head motor is automatically re-enabled at this time if non-zero.
       u32 enableAtTime_ms_ = 0;
       
       // If enableAtTime_ms_ is non-zero, this is the time beyond current time
-      // that the motor will be re-enabled if the lift is not moving.
+      // that the motor will be re-enabled if the head is not moving.
       const u32 REENABLE_TIMEOUT_MS = 2000;
       
       // Bracing for impact
@@ -193,6 +206,7 @@ namespace HeadController {
             power_ = HAL::MotorGetCalibPower(MotorID::MOTOR_HEAD);
             HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
             lastHeadMovedTime_ms = HAL::GetTimeStamp();
+            lowHeadAngleDuringCalib_rad_ = currentAngle_.ToFloat();
             calState_ = HCS_WAIT_FOR_STOP;
             break;
 
@@ -229,10 +243,42 @@ namespace HeadController {
               AnkiInfo( "HeadController.Calibrated", "");
               ResetLowAnglePosition();
               calState_ = HCS_IDLE;
+              firstCalibration_ = false;
               Messages::SendMotorCalibrationMsg(MotorID::MOTOR_HEAD, false);
             }
             break;
+        } // end switch(calState_)
+
+        // Check if head is actually moving up when it should be moving down.
+        // This means someone's messing with it so just abort calibration.
+        if (IsCalibrating()) {
+          const float currAngle = currentAngle_.ToFloat();
+          if (lowHeadAngleDuringCalib_rad_ > currAngle) {
+            lowHeadAngleDuringCalib_rad_ = currAngle;
+          }
+
+          if (currAngle - lowHeadAngleDuringCalib_rad_ > UPWARDS_HEAD_MOTION_FOR_CALIB_ABORT_RAD) {
+            if (firstCalibration_) {
+              AnkiWarn("HeadController.CalibrationUpdate.RestartingCalib", 
+                        "Someone is probably messing with head (low: %fdeg, curr: %fdeg)",
+                        RAD_TO_DEG(lowHeadAngleDuringCalib_rad_), RAD_TO_DEG(currAngle));
+              calState_ = HCS_LOWER_HEAD;
+            } else {
+              AnkiInfo("HeadController.CalibrationUpdate.Abort", 
+                        "Someone is probably messing with head (low: %fdeg, curr: %fdeg)",
+                        RAD_TO_DEG(lowHeadAngleDuringCalib_rad_), RAD_TO_DEG(currAngle));
+              // Turn off motor
+              power_ = 0.0;
+              HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
+
+              // Pretend calibration is fine
+              isCalibrated_ = true;
+              calState_ = HCS_IDLE;
+              Messages::SendMotorCalibrationMsg(MotorID::MOTOR_HEAD, false);
+            }
+          }
         }
+
       }
 
     }

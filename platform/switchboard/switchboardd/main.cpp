@@ -66,6 +66,7 @@ void Daemon::Stop() {
     _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
   }
 
+  ev_timer_stop(_loop, &_engineTimer.timer);
   ev_timer_stop(_loop, &_handleOtaTimer.timer);
 }
 
@@ -178,12 +179,12 @@ void Daemon::HandleOtaUpdateProgress() {
     int status = GetOtaProgress(&progressVal, &expectedVal);
 
     if(status == -1) {
-      _securePairing->SendOtaProgress(254, progressVal, expectedVal);
+      _securePairing->SendOtaProgress(OtaStatusCode::UNKNOWN, progressVal, expectedVal);
       return;  
     }
 
     Log::Write("Downloaded %llu/%llu bytes.", progressVal, expectedVal);
-    _securePairing->SendOtaProgress(0, progressVal, expectedVal);
+    _securePairing->SendOtaProgress(OtaStatusCode::IN_PROGRESS, progressVal, expectedVal);
   }
 }
 
@@ -241,32 +242,50 @@ int Daemon::GetOtaProgress(uint64_t* progressVal, uint64_t* expectedVal) {
 }
 
 void Daemon::HandleOtaUpdateExit(int rc, const std::string& output) {
-  if(rc == 0) {
-    // todo: inform client of status before rebooting
-    if(_securePairing != nullptr) {
-      _securePairing->SendOtaProgress(0, 100, 100);
+  _taskExecutor->Wake([rc, this] {
+    if(rc == 0) {
+      uint64_t progressVal = 0;
+      uint64_t expectedVal = 0;
+
+      int status = GetOtaProgress(&progressVal, &expectedVal);
+
+      if(status == 0) {
+        if(_securePairing != nullptr) {
+          // inform client of status before rebooting
+          _securePairing->SendOtaProgress(OtaStatusCode::COMPLETED, progressVal, expectedVal);
+        }
+
+        if(progressVal != 0 && progressVal == expectedVal) {
+          Log::Write("Update download finished successfully. Rebooting in 3 seconds."); 
+          auto when = std::chrono::steady_clock::now() + std::chrono::seconds(3);
+          _taskExecutor->WakeAfter([this]() {
+            this->HandleReboot();
+          }, when);
+        } else {
+          Log::Write("Update engine exited with status 0 but progress and expected-size did not match or were 0.");
+        }
+      } else {
+        Log::Write("Trouble reading status files for update engine. Won't reboot.");
+        if(_securePairing != nullptr) {
+          _securePairing->SendOtaProgress(OtaStatusCode::ERROR, 0, 0);
+        }
+      }
+    } else {
+      // error happened while downloading OTA update
+      if(_securePairing != nullptr) {
+        _securePairing->SendOtaProgress(rc, 0, 0);
+      }
+      Log::Write("Update failed with error code: %d", rc);
     }
 
-    Log::Write("Update download finished successfully. Rebooting in 3 seconds.");
-
-    ev_timer rebootTimer;
-    ev_timer_init(&rebootTimer, HandleRebootTimer, 3, 0);
-    ev_timer_start(_loop, &rebootTimer);
-  } else {
-    // error happened while downloading OTA update
     if(_securePairing != nullptr) {
-      _securePairing->SendOtaProgress(255, 0, 0);
+      _securePairing->SetOtaUpdating(false);
     }
-    Log::Write("Update filed with error code: %d", rc);
-  }
 
-  if(_securePairing != nullptr) {
-    _securePairing->SetOtaUpdating(false);
-  }
-
-  ev_timer_stop(_loop, &_handleOtaTimer.timer);
-  _isOtaUpdating = false;
-  _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+    ev_timer_stop(_loop, &_handleOtaTimer.timer);
+    _isOtaUpdating = false;
+    _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+  });
 }
 
 void Daemon::OnOtaUpdatedRequest(std::string url) {
@@ -332,10 +351,19 @@ void Daemon::HandleEngineTimer(struct ev_loop* loop, struct ev_timer* w, int rev
   }
 }
 
-void Daemon::HandleRebootTimer(struct ev_loop* loop, struct ev_timer* w, int revents) {
+void Daemon::HandleReboot() {
   Log::Write("Rebooting...");
+
+  // shut down timers
+  Stop();
+
+  // trigger reboot
   sync(); sync(); sync();
-  reboot(LINUX_REBOOT_CMD_RESTART);
+  int status = reboot(LINUX_REBOOT_CMD_RESTART);
+
+  if(status == -1) {
+    Log::Write("Error while restarting: [%d]", status);
+  }
 }
 
 void Daemon::sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents)

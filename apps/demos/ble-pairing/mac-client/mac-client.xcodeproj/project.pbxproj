@@ -49,6 +49,7 @@
 		700A7147205A647F00B518CD /* json.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = json.h; sourceTree = "<group>"; };
 		700A7149205A647F00B518CD /* SafeMessageBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SafeMessageBuffer.cpp; sourceTree = "<group>"; };
 		700A714A205A647F00B518CD /* jsoncpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = jsoncpp.cpp; sourceTree = "<group>"; };
+		DA27D3082063191900D4416A /* argparse.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = argparse.hpp; sourceTree = "<group>"; };
 		DA54706C2047985E004FDA9F /* mac-client */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "mac-client"; sourceTree = BUILT_PRODUCTS_DIR; };
 		DA54706F2047985E004FDA9F /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
 		DA54707620479890004FDA9F /* BleCentral.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = BleCentral.mm; sourceTree = "<group>"; };
@@ -169,6 +170,7 @@
 				DA54706F2047985E004FDA9F /* main.mm */,
 				DA5470782047989C004FDA9F /* BleCentral.h */,
 				DA54707620479890004FDA9F /* BleCentral.mm */,
+				DA27D3082063191900D4416A /* argparse.hpp */,
 			);
 			path = "mac-client";
 			sourceTree = "<group>";

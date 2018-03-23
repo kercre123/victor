@@ -30,12 +30,15 @@
 using namespace Anki;
 using namespace Anki::Cozmo;
 
+#define LOG_CHANNEL "CozmoAnimMain"
+
 namespace {
 AnimEngine* animEngine = nullptr;
 }
 
-void Cleanup(int signum)
+static void Cleanup(int signum)
 {
+  LOG_INFO("CozmoAnimMain.Cleanup", "exit on signal %d", signum);
   if (animEngine != nullptr)
   {
     delete animEngine;
@@ -43,7 +46,7 @@ void Cleanup(int signum)
   }
 
   sync();
-  exit(signum);
+  exit(0);
 }
 
 Anki::Util::Data::DataPlatform* createPlatform(const std::string& persistentPath,
@@ -102,7 +105,7 @@ Anki::Util::Data::DataPlatform* createPlatform()
   if (config.isMember("DataPlatformResourcesPath")) {
     resourcesPath = config["DataPlatformResourcesPath"].asCString();
   } else {
-    PRINT_NAMED_ERROR("cozmoAnimMain.createPlatform.DataPlatformResourcesPathUndefined", "");    
+    PRINT_NAMED_ERROR("cozmoAnimMain.createPlatform.DataPlatformResourcesPathUndefined", "");
   }
 
   Util::Data::DataPlatform* dataPlatform =

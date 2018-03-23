@@ -12,6 +12,7 @@ enum {
   ERR_UNKNOWN,
   ERR_SYNTAX,
   ERR_SYSTEM,
+  ERR_LOCKED    //packout
 };
 
 #ifdef STANDALONE_UTILITY
@@ -212,14 +213,14 @@ uint16_t ActivePrintmask(void) {
 
 /************* CIRCULAR BUFFER for outgoing contact text ***************/
 
-#define MIN(a,b) ((a)<(b)?(a):(b))
 
-#define TXTBUF_CAPACITY (1<<8)
+#define TXTBUF_CAPACITY (1<<12)
 #define TXTBUF_SIZE_MASK (TXTBUF_CAPACITY-1)
 
 
 struct text_buffer_t {
-  struct ContactData buffer[TXTBUF_CAPACITY];
+//  struct ContactData buffer[TXTBUF_CAPACITY];
+  unsigned char text[TXTBUF_CAPACITY];
   idx_t head;
   idx_t tail;
 };
@@ -231,24 +232,27 @@ static inline idx_t contact_text_buffer_count() {
   return ((gOutgoingText.head-gOutgoingText.tail) & TXTBUF_SIZE_MASK);
 }
 
-idx_t contact_text_buffer_put(struct ContactData* data) {
+idx_t contact_text_buffer_put(const unsigned char* text, idx_t len) {
   idx_t available = TXTBUF_CAPACITY-1 - contact_text_buffer_count();
-  if (available) {
-    gOutgoingText.buffer[gOutgoingText.head++]=*data;
+  idx_t count = MIN(available, len);
+  while (count-->0) {
+    gOutgoingText.text[gOutgoingText.head++]=*text++;
     gOutgoingText.head &= TXTBUF_SIZE_MASK;
-    return available-1;
+    len--;
   }
-  return 0;
+  return len;
 }
 
-idx_t contact_text_buffer_get(struct ContactData* data) {
+idx_t contact_text_buffer_get(unsigned char data[], idx_t len) {
   idx_t available = contact_text_buffer_count();
-  if (available) {
-    *data = gOutgoingText.buffer[gOutgoingText.tail++];
+  idx_t count = 0;
+  len = MIN(available, len);
+  while (count < len) {
+    *data++ = gOutgoingText.text[gOutgoingText.tail++];
     gOutgoingText.tail &= TXTBUF_SIZE_MASK;
-    return available;
+    count++;
   }
-  return 0;
+return count;
 }
 
 /***** logging interface  **************************/
@@ -296,6 +300,7 @@ int emr_get(uint8_t index, uint32_t* value);
 int SetMedicalRecord(uint8_t index, uint32_t value)
 {
   print_response("EMR %d := %08x\n", index, value);
+  if (index == 0) { return ERR_SYSTEM; }
   int retval = emr_set(index, value);
   sync();
   return retval;
@@ -669,22 +674,17 @@ int print_response(const char* format, ...) {
     return retval;
   }
 
-  memset(response.data, SLUG_PAD_CHAR, SLUG_PAD_SIZE);
 
-  const int space_remaining = sizeof(response.data)-SLUG_PAD_SIZE;
-
-  int nchars = vsnprintf((char*)response.data+SLUG_PAD_SIZE,
-                         space_remaining,
+  int nchars = vsnprintf((char*)response.data,
+                         sizeof(response.data),
                          format, argptr);
 
  va_end(argptr);
  if (nchars >= 0)  { //successful write
-   int remainder = space_remaining - nchars;
-   if (remainder > 0)  { //print not truncated, free space at end of packet
-     memset(response.data+SLUG_PAD_SIZE+nchars, 0, remainder); //pad it
-   }
-   ccc_debug_x("CCC preparing response [ %s ]", response.data+SLUG_PAD_SIZE);
-   contact_text_buffer_put(&response);
+   int remainder = sizeof(response.data) - nchars;
+   int actual_len =  (remainder >= 0)  ? nchars : sizeof(response.data);
+   ccc_debug_x("CCC preparing response [ %s ]", response.data);
+   contact_text_buffer_put(response.data, actual_len);
    if (remainder < 0) { // the string was truncated
      return nchars + print_response("...");
    }
@@ -751,7 +751,6 @@ uint16_t show_legend(uint16_t mask) {
   if (mask & (1<<show_MOTOR3)) {
     print_response("HEAD pos speed\n");
   }
-
   if (mask & (1<<show_CLIFF)) {
     print_response("CLIFF fl fr br bl \n");
   }
@@ -788,7 +787,7 @@ void show_motor(int motor_id, const struct MotorState motor[]) {
   int32_t microsec = m->time / HAL_TICKS_PER_US;
   int32_t speed = (microsec!=0 && m->position != lastpos[motor_id]) ?
     (dist/microsec) : 0;
-  ccc_debug("CCC motor pos/speed:  %d/ %d in %d -> %d", m->position, m->delta, m->time, speed);
+  ccc_debug_x("CCC motor pos/speed:  %d/ %d in %d -> %d", m->position, m->delta, m->time, speed);
   print_response(":%d %d\n",
                  m->position,
                  speed);
@@ -802,7 +801,7 @@ void show_packet_count(void) {
 
 }
 void show_rssi(void) {
-  print_response(":%d\n", -1);
+  print_response(":%d\n", -128);
 
 }
 
@@ -865,7 +864,7 @@ void process_incoming_frame(struct BodyToHead* bodyData)
       show_body_version(BSV_LINES - ActiveCycleCountdown()); //convert to countup
     }
     if (printmask & (1<<show_RSSI)) {
-      show_packet_count();
+      show_rssi();
     }
     if (printmask & (1<<show_PACKETS)) {
       show_packet_count();
@@ -1023,23 +1022,26 @@ void ccc_payload_process(struct BodyToHead* data)
   }
 }
 
+
 struct HeadToBody* ccc_data_get_response(void) {
   populate_outgoing_frame();
   return &gHeadData;
 }
 
-
+#define CD_DATA_SLACK 4  //use 28 out of 32 chars to prevent syscon buffer overflow
 static struct ContactData response;
 struct ContactData* ccc_text_response(void) {
-  if (contact_text_buffer_get(&response)) {
+
+  memset(response.data, SLUG_PAD_CHAR, SLUG_PAD_SIZE);
+  const int space_remaining = sizeof(response.data)-SLUG_PAD_SIZE;
+  uint8_t* text_start = response.data+SLUG_PAD_SIZE;
+
+  idx_t nchars = contact_text_buffer_get(text_start, space_remaining-CD_DATA_SLACK);
+  if (nchars) {
+    memset(text_start+nchars,'\0', space_remaining-nchars); //pad remainder
     ccc_debug("CCC transmitting response [ %s ]", response.data);
     return &response;
   }
-  /* if  (ccc_commander_is_active() && gRespPending) { */
-  /*   ccc_debug_x("CCC transmitting response [ %s ]", gResponse.data); */
-  /*   gRespPending = 0; */
-  /*   return &gResponse; */
-  /* } */
   return NULL;
 }
 

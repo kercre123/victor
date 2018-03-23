@@ -225,9 +225,18 @@ void SecurePairing::SendPublicKey() {
   uint32_t fileVersion = SavedSessionManager::LoadKey(&publicKeyBuffer[0], crypto_kx_PUBLICKEYBYTES, SavedSessionManager::kPublicKeyPath);
   uint32_t fileVPrivate = SavedSessionManager::LoadKey(&privateKeyBuffer[0], crypto_kx_SECRETKEYBYTES, SavedSessionManager::kPrivateKeyPath);
 
-  if(fileVersion == SB_PAIRING_PROTOCOL_VERSION && fileVPrivate == SB_PAIRING_PROTOCOL_VERSION) {
-    publicKey = &publicKeyBuffer[0];
-    _keyExchange->SetKeys(publicKey, &privateKeyBuffer[0]);
+  // Check if keys from file are valid
+  bool validKeys = _keyExchange->ValidateKeys(publicKeyBuffer, privateKeyBuffer);
+
+  if(!validKeys) {
+    Log::Write("Keys loaded from file are corrupt.");
+  } else {
+    Log::Write("Store keys are good to go.");
+  }
+
+  if(validKeys && (fileVersion == SB_PAIRING_PROTOCOL_VERSION) && (fileVPrivate == SB_PAIRING_PROTOCOL_VERSION)) {
+    publicKey = publicKeyBuffer;
+    _keyExchange->SetKeys(publicKey, privateKeyBuffer);
 
     Log::Write("Loading key pair from file.");
   } else {
@@ -350,9 +359,10 @@ void SecurePairing::SendStatusResponse() {
   WiFiState state = Anki::GetWiFiState();
   uint8_t bleState = 1; // for now, if we are sending this message, we are connected
   uint8_t batteryState = 0; // for now, ignore this field until we have a way to get that info
+  bool isApMode = Anki::IsAccessPointMode();
 
   // Send challenge and update state
-  SendRtsMessage<RtsStatusResponse>(state.ssid, state.connState, bleState, batteryState);
+  SendRtsMessage<RtsStatusResponse>(state.ssid, state.connState, isApMode, bleState, batteryState);
 
   Log::Write("Send status response.");
 }
@@ -442,11 +452,11 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::Rts
   if(_state == PairingState::ConfirmedSharedSecret) {
     Anki::Victor::ExternalComms::RtsWifiConnectRequest wifiConnectMessage = msg.Get_RtsWifiConnectRequest();
 
-    Log::Write("Trying to connect to wifi network [%s][pw=%s][sec=%d][hid=%d].", wifiConnectMessage.ssid.c_str(), wifiConnectMessage.password.c_str(), wifiConnectMessage.authType, wifiConnectMessage.hidden);
+    Log::Write("Trying to connect to wifi network [%s][pw=%s][sec=%d][hid=%d].", wifiConnectMessage.wifiSsidHex.c_str(), wifiConnectMessage.password.c_str(), wifiConnectMessage.authType, wifiConnectMessage.hidden);
 
     _wifiConnectTimeout_s = std::max(kWifiConnectMinTimeout_s, wifiConnectMessage.timeout);
 
-    bool connected = Anki::ConnectWiFiBySsid(wifiConnectMessage.ssid, 
+    bool connected = Anki::ConnectWiFiBySsid(wifiConnectMessage.wifiSsidHex, 
       wifiConnectMessage.password,
       wifiConnectMessage.authType,
       (bool)wifiConnectMessage.hidden,

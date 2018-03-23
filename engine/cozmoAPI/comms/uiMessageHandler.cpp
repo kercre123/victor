@@ -122,6 +122,12 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
                                     ISocketComms::DeviceId hostDeviceId, bool isSdkCommunicationEnabled)
     {
       // Note: Some SocketComms are deliberately null depending on the build platform, type etc.
+#if FACTORY_TEST
+      if(type != UiConnectionType::Switchboard)
+      {
+        return nullptr;
+      }
+#endif
 
       switch(type)
       {

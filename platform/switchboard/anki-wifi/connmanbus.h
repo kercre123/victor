@@ -970,7 +970,11 @@ G_GNUC_DEPRECATED gboolean conn_man_bus_technology_call_get_properties_finish (
     GAsyncResult *res,
     GError **error);
 
-G_GNUC_DEPRECATED gboolean conn_man_bus_technology_call_get_properties_sync (
+/* !!! removed deprecated warning !!!
+ * Since we control our entire environment, as long as 
+ * we don't change Connman, this will work. - PRA
+ */
+gboolean conn_man_bus_technology_call_get_properties_sync (
     ConnManBusTechnology *proxy,
     GVariant **out_properties,
     GCancellable *cancellable,

@@ -72,6 +72,7 @@ namespace Switchboard {
     void Reset();
     void SetRemotePublicKey(const uint8_t* pubKey);
     bool CalculateSharedKeys(const uint8_t* pin);
+    bool ValidateKeys(uint8_t* publicKey, uint8_t* privateKey);
     
   private:
     // Variables
