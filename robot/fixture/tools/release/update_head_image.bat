@@ -23,6 +23,7 @@ adb shell -x "mkdir -p data/local/fixture && sync"
 REM update head scripts & image files
 adb push headprogram data/local/fixture/
 adb push usbserial.ko data/local/fixture/
+adb push makebc data/local/fixture/
 adb shell "chmod +x /data/local/fixture/*"
 adb shell -x "rm -rf /data/local/fixture/emmcdl/ && sync && sleep 1 && mkdir /data/local/fixture/emmcdl/"
 adb push emmcdl data/local/fixture/

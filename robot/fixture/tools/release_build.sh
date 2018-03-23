@@ -31,5 +31,6 @@ cp ../helpware/helper ./$folder
 cp ../helpware/display ./$folder
 #cp ../helpware/commander ./$folder
 cp ../emmcdl/headprogram ./$folder
+cp ../emmcdl/makebc/makebc ./$folder
 
 echo Done!
