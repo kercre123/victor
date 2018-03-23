@@ -152,20 +152,21 @@ static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-80.f); //Thi
 
 
 Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
-: _poseOrigins(new PoseOriginList())
+: _context(context)
+, _poseOrigins(new PoseOriginList())
 , _ID(robotID)
 , _timeSynced(false)
 , _lastMsgTimestamp(0)
 , _robotAccelFiltered(0.f, 0.f, 0.f)
 {
-  DEV_ASSERT(context != nullptr, "Robot.Constructor.ContextIsNull");
+  DEV_ASSERT(_context != nullptr, "Robot.Constructor.ContextIsNull");
   
   LOG_INFO("Robot.Robot", "Created");
 
   // create all components
   {
     _components = std::make_unique<EntityType>();
-    _components->AddDependentComponent(RobotComponentID::CozmoContext,               new ContextWrapper(context));
+    _components->AddDependentComponent(RobotComponentID::CozmoContextWrapper,        new ContextWrapper(context));
     _components->AddDependentComponent(RobotComponentID::BlockWorld,                 new BlockWorld());
     _components->AddDependentComponent(RobotComponentID::FaceWorld,                  new FaceWorld());
     _components->AddDependentComponent(RobotComponentID::PetWorld,                   new PetWorld());
@@ -201,7 +202,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::RobotIdleTimeout,           new RobotIdleTimeoutComponent());
     _components->AddDependentComponent(RobotComponentID::MicDirectionHistory,        new MicDirectionHistory());
     _components->AddDependentComponent(RobotComponentID::Battery,                    new BatteryComponent());
-    _components->AddDependentComponent(RobotComponentID::FullRobotPose,                new FullRobotPose());
+    _components->AddDependentComponent(RobotComponentID::FullRobotPose,              new FullRobotPose());
     _components->InitComponents(this);
   }
       
@@ -243,8 +244,11 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     
 Robot::~Robot()
 {
-  LOG_EVENT("robot.destructor", "%d", GetID());
-  
+  // VIC-1961: Remove touch sensor component before aborting all since there's a DEV_ASSERT crash
+  // and we need to write data out from the touch sensor component out. This explicit destruction
+  // can be removed once the DEV_ASSERT is fixed
+  _components->RemoveComponent(RobotComponentID::TouchSensor);
+
   // force an update to the freeplay data manager, so we'll send a DAS event before the tracker is destroyed
   GetAIComponent().GetComponent<FreeplayDataTracker>().ForceUpdate();
   
@@ -253,6 +257,13 @@ Robot::~Robot()
   // Destroy our actionList before things like the path planner, since actions often rely on those.
   // ActionList must be cleared before it is destroyed because pending actions may attempt to make use of the pointer.
   GetActionList().Clear();
+
+  // Remove (destroy) the vision component explicitly since it contains poses that
+  // use the contents of FullRobotPose as a parent and there's no gaurentee
+  // on entity/component destruction order
+  _components->RemoveComponent(RobotComponentID::Vision);
+
+  LOG_EVENT("robot.destructor", "%d", GetID());
 }
 
 
@@ -2126,7 +2137,7 @@ Result Robot::SendIMURequest(const u32 length_ms) const
 
 bool Robot::HasExternalInterface() const
 {
-  if (HasComponent(RobotComponentID::CozmoContext)){
+  if (HasComponent(RobotComponentID::CozmoContextWrapper)){
     return GetContext()->GetExternalInterface() != nullptr;
   }
   return false;
@@ -2586,7 +2597,7 @@ RobotState Robot::GetDefaultRobotState()
 
 RobotInterface::MessageHandler* Robot::GetRobotMessageHandler() const
 {
-  if ((!_components->GetComponent(RobotComponentID::CozmoContext).IsValueValid()) ||
+  if ((!_components->GetComponent(RobotComponentID::CozmoContextWrapper).IsValueValid()) ||
       (GetContext()->GetRobotManager() == nullptr))
   {
     DEV_ASSERT(false, "Robot.GetRobotMessageHandler.nullptr");

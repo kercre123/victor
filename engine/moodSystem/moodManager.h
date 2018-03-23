@@ -87,10 +87,10 @@ public:
   //////
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
   virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override {
-    components.insert(RobotComponentID::CozmoContext);
+    components.insert(RobotComponentID::CozmoContextWrapper);
   };
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
-    dependencies.insert(RobotComponentID::CozmoContext);
+    dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::EngineAudioClient);
   }
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;

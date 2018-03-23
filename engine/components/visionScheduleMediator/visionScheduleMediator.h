@@ -51,12 +51,12 @@ public:
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::Vision);
-    dependencies.insert(RobotComponentID::CozmoContext);
+    dependencies.insert(RobotComponentID::CozmoContextWrapper);
   }
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {}
   virtual void AdditionalUpdateAccessibleComponents(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::Vision);
-    dependencies.insert(RobotComponentID::CozmoContext);
+    dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
 

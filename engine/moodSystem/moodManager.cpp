@@ -247,7 +247,7 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
     SendEmotionsToAudio(dependentComps.GetValue<Audio::EngineRobotAudioClient>());
   }
 
-  if( ANKI_DEV_CHEATS && dependentComps.HasComponent(RobotComponentID::CozmoContext) ) {
+  if( ANKI_DEV_CHEATS && dependentComps.HasComponent(RobotComponentID::CozmoContextWrapper) ) {
     if( (currentTime - _lastWebVizSendTime_s) > kWebVizPeriod_s ) {
       SendMoodToWebViz(dependentComps.GetValue<ContextWrapper>().context);
     }
@@ -261,7 +261,7 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
   
   // Can have null robot for unit tests
   if ((nullptr != _robot) &&
-      _robot->HasComponent(RobotComponentID::CozmoContext) &&
+      _robot->HasComponent(RobotComponentID::CozmoContextWrapper) &&
       kSendMoodToViz)
   {
     _robot->GetContext()->GetVizManager()->SendRobotMood(std::move(robotMood));

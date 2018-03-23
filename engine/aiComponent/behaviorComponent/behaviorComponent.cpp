@@ -153,7 +153,6 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
 
   // Behavior Event Anim Response Director
   if(!entity->HasComponent(BCComponentID::BehaviorEventAnimResponseDirector)){
-    BehaviorEventAnimResponseDirector animDirector;
     entity->AddDependentComponent(BCComponentID::BehaviorEventAnimResponseDirector,
                                   new BehaviorEventAnimResponseDirector());
   }
