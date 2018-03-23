@@ -40,7 +40,7 @@ class Squawkbox:
     return logger
    
    #PLAY MODES
-  def automatic_test_single_speaker(self, sound_card_dict):
+  def automatic_test_single_speaker(self, sound_card_dict, websocket = None):
 
     #Make sure audio dir set
     if self.audio_files_mapping == False:
@@ -71,11 +71,11 @@ class Squawkbox:
                         .format(sound_name, sound_repeat, sound_delay)
                         )
         for i in range(0,sound_repeat):
-          self.play_single_sound(usb_card_choice, sound_card_dict, sound_path, sound_speaker)
+          self.play_single_sound(usb_card_choice, sound_card_dict, sound_path, sound_speaker, websocket)
           self.logger.info("Pausing for {} seconds.".format(sound_delay))
           sleep(sound_delay)
       else:
-        self.play_single_sound(usb_card_choice, sound_card_dict, sound_path, sound_speaker)
+        self.play_single_sound(usb_card_choice, sound_card_dict, sound_path, sound_speaker, websocket)
         self.logger.info("Pausing for {} seconds.".format(sound_delay))
         sleep(sound_delay)
 
@@ -116,7 +116,12 @@ class Squawkbox:
     self.auto_test_file_path = self.json_test_file_to_test_list(json_file_path)
     return
 
-  def play_single_sound(self, sound_card_choice, sound_card_dict, sound_file_path, speaker_choice):
+  def play_single_sound(self,
+                        sound_card_choice, 
+                        sound_card_dict, 
+                        sound_file_path, 
+                        speaker_choice, 
+                        websocket=None):
     chunk = 1024
     wf = wave.open(sound_file_path, 'rb')
     
@@ -150,8 +155,18 @@ class Squawkbox:
 
     stream.start_stream()
 
-    while stream.is_active():
-      sleep(0.1)
+    #If websocket provided, Flags will begin and end gathering the micdata
+    #while audio stream is active/playing
+    if websocket != None:
+      websocket.mic_stream_flag = True
+      
+      while stream.is_active():
+        sleep(0.1)      
+      
+      websocket.mic_stream_flag = False
+    else:
+      while stream.is_active():
+        sleep(0.1)
 
     stream.stop_stream()
     stream.close()
