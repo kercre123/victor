@@ -12,6 +12,8 @@ done
 # Enable USB
 mode=$(cat /sys/kernel/debug/msm_otg/mode)
 if [ "$mode" != "host" ]; then
+  echo cpu clock $(cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq)
+  echo 800000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
   echo none > /sys/kernel/debug/msm_otg/mode
   echo host > /sys/kernel/debug/msm_otg/mode
   insmod ./usbserial.ko vendor=0x05c6 product=0x9008
