@@ -150,7 +150,7 @@ int handle_dutprogram_command(const char* cmd, int len) {
   //2nd arg is 32-bit esn (%08x)
   errno = 0;
   unsigned long esn = len > 0 ? strtoul(next, &end, 16) : 0;
-  if( errno != 0 || end <= next || esn > 0xFFFFffff || esn < 1 ) {
+  if( errno != 0 || end <= next || esn > 0xFFFFffff || esn < 0 ) {
     printf("esn = %lx, errno = %d, end = next+%d\n", esn, errno, end-next );
     esn = 0;
     return 2; //report formatting error
@@ -158,9 +158,9 @@ int handle_dutprogram_command(const char* cmd, int len) {
   printf("esn = %08x\n", (uint32_t)esn);
   len -= (end-next);
   next = end;
-
-  char argstr[25];
-  snprintf(argstr, sizeof(argstr), "%08x", (uint32_t)esn);
+  
+  char argstr[50];
+  snprintf(argstr, sizeof(argstr), "%08x %s", (uint32_t)esn, next != 0 ? next : "");
   return shellcommand((int)timeout_sec, "./headprogram", argstr );
 }
 

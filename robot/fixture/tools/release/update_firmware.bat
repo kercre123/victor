@@ -43,5 +43,6 @@ adb shell -x "cd data/local/fixture && ./dfu %FILENAME%"
 
 REM echo restarting helper
 echo restarting helper
-adb shell "/data/local/fixture/helper > /dev/null 2>&1 &"
-
+adb shell "sleep 1 && /data/local/fixture/helper > /dev/null 2>&1 &"
+echo rebooting...
+adb reboot
