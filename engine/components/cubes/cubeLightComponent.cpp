@@ -16,7 +16,7 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
-#include "engine/components/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLightComponent.h"
 
 #include "engine/activeCube.h"
 #include "engine/activeObject.h"

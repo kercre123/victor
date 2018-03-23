@@ -13,7 +13,7 @@
 #include "engine/components/cubes/cubeCommsComponent.h"
 
 #include "engine/components/blockTapFilterComponent.h"
-#include "engine/components/cubeAccelComponent.h"
+#include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/cubes/ledAnimation.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"

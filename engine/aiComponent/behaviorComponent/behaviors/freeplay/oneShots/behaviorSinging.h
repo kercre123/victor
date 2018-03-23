@@ -16,7 +16,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorSinging_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/components/cubeAccelComponentListeners.h"
+#include "engine/components/cubes/cubeAccelListeners/shakeListener.h"
 
 #include "clad/audio/audioSwitchTypes.h"
 

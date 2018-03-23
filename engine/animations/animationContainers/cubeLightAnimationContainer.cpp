@@ -13,7 +13,7 @@
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "engine/animations/animationContainers/cubeLightAnimationContainer.h"
-#include "engine/components/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLightComponent.h"
 
 namespace Anki {
 namespace Cozmo {
