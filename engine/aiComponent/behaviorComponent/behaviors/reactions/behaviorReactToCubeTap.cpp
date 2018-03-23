@@ -104,7 +104,10 @@ void BehaviorReactToCubeTap::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCubeTap::GetAllDelegates( std::set<IBehavior*>& delegates ) const
 {
-
+  if ( _iVars.chargerBehavior )
+  {
+    delegates.insert( _iVars.chargerBehavior.get() );
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
