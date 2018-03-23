@@ -2302,9 +2302,15 @@ Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliabl
 // Sync time with physical robot and trigger it robot to send back camera calibration
 Result Robot::SendSyncTime() const
 {
-  // BRC: Why are we call AndroidHAL/CameraService to get a timestamp?
+  // BRC: The following code replaces a call to `CameraService::getInstance()->GetTimeStamp()`
+  auto currTime = std::chrono::steady_clock::now();
+  TimeStamp_t ts = 
+    static_cast<TimeStamp_t>(
+      std::chrono::duration_cast<std::chrono::milliseconds>(currTime.time_since_epoch()).count()
+    );
+
   Result result = SendMessage(RobotInterface::EngineToRobot(
-                                RobotInterface::SyncTime(CameraService::getInstance()->GetTimeStamp(),
+                                RobotInterface::SyncTime(ts,
                                                          DRIVE_CENTER_OFFSET)));
 
   if (result == RESULT_OK) {
