@@ -2,6 +2,7 @@
 
 import os
 import errno
+import glob
 import inspect
 import subprocess
 import sys
@@ -250,14 +251,7 @@ def sign_webot_executables(build_type, password):
 
   executables_folder = get_subpath(os.path.join("_build","mac"), build_type.name, "bin")
 
-  executables = [
-    'webotsCtrlBuildServerTest',
-    'webotsCtrlWebServer',
-    'webotsCtrlGameEngine',
-    'webotsCtrlRobot',
-    'webotsCtrlGameEngine2',
-    'webotsCtrlRobot2'
-  ]
+  executables = glob.glob(os.path.join(executables_folder, 'webotsCtrl*'));
 
   codesign_command = [
     'codesign',
@@ -267,8 +261,7 @@ def sign_webot_executables(build_type, password):
   ]
 
   # Add the executables to the firewall list and explicitly allow incoming connections
-  for exe in executables:
-    exe_path = os.path.join(executables_folder, exe)
+  for exe_path in executables:
     if os.path.isfile(exe_path):
       firewall_cli(["--add"], password, executable_path=exe_path)
       firewall_cli(["--unblock"], password, executable_path=exe_path)
