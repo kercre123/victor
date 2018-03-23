@@ -23,6 +23,7 @@ extern "C" {
 
 #define FIXMODE_HEAD1          11
 #define FIXMODE_HEAD2          12
+#define FIXMODE_HELPER1        13
 
 #define FIXMODE_BACKPACK1      16
 
@@ -105,7 +106,7 @@ uint32_t      fixtureGetSerial(void); // Get a serial number for a device in the
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "HEAD1"       , TestHeadDetect      , TestHead1GetTests           , TestHeadCleanup             , FIXMODE_HEAD1       },  /*11*/  \
   { "HEAD2"       , TestHeadDetect      , TestHead2GetTests           , TestHeadCleanup             , FIXMODE_HEAD2       },  /*12*/  \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "HELPER1"     , TestHeadDetect      , TestHelper1GetTests         , TestHeadCleanup             , FIXMODE_HELPER1     },  /*13*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "BACKPACK1"   , TestBackpackDetect  , TestBackpack1GetTests       , TestBackpackCleanup         , FIXMODE_BACKPACK1   },  /*16*/  \

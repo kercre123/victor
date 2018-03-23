@@ -87,11 +87,12 @@ void TestHeadDutProgram(void)
   }
   
   //provision ESN
-  headnfo.esn = fixtureGetSerial();
+  headnfo.esn = g_fixmode == FIXMODE_HELPER1 ? 0 : fixtureGetSerial();
   m_previous_esn = headnfo.esn; //even if programming fails, report the (now unusable) ESN
   
   //helper head does the rest
-  cmdSend(CMD_IO_HELPER, snformat(b,bz,"dutprogram %u %08x", timeout_s, headnfo.esn), (timeout_s+10)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
+  snformat(b,bz,"dutprogram %u %08x %s", timeout_s, headnfo.esn, g_fixmode == FIXMODE_HELPER1 ? "helper" : "");
+  cmdSend(CMD_IO_HELPER, b, (timeout_s+10)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
   if( cmdStatus() != 0 )
   {
     //map programming error to appropriate fixture error
@@ -121,6 +122,9 @@ TestFunction* TestHead1GetTests(void)
     NULL,
   };
   return m_tests;
+}
+TestFunction* TestHelper1GetTests(void) {
+  return TestHead1GetTests();
 }
 
 TestFunction* TestHead2GetTests(void)

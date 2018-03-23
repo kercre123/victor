@@ -104,7 +104,7 @@ void SetFixtureText(bool reinit)
     color = m_last_error == ERROR_OK ? 'g' : 'r';
   
   //for head programming fixtures, show last written ESN on the display
-  if( g_fixmode >= FIXMODE_HEAD1 && g_fixmode <= FIXMODE_HEAD2 )
+  if( g_fixmode >= FIXMODE_HEAD1 && g_fixmode <= FIXMODE_HELPER1 )
     HelperLcdSetLine(1, snformat(b,bz,"prev esn: 0x%08x", TestHeadGetPrevESN()) );
   else if( !inited && !g_isReleaseBuild )
     HelperLcdSetLine(1, "DEV-NOT FOR FACTORY!");
@@ -127,11 +127,11 @@ void SetFixtureText(bool reinit)
     HelperLcdSetLine(4, snformat(b,bz,"                   %u", tempC/10) );
     HelperLcdSetLine(5, snformat(b,bz,"                   %u", tempC%10) );
   }//-*/
-  int temp_line = (g_fixmode >= FIXMODE_HEAD1 && g_fixmode <= FIXMODE_HEAD2) ? 6 : 7; //shift up for head modes (make space for os version info)
+  int temp_line = (g_fixmode >= FIXMODE_HEAD1 && g_fixmode <= FIXMODE_HELPER1) ? 6 : 7; //shift up for head modes (make space for os version info)
   HelperLcdSetLine(temp_line, snformat(b,bz,"%iC", tempC) );
   
   //mode-specific info
-  if( !inited && (g_fixmode == FIXMODE_HEAD1 || g_fixmode == FIXMODE_HEAD2) )
+  if( !inited && (g_fixmode == FIXMODE_HEAD1 || g_fixmode == FIXMODE_HELPER1) )
     HelperLcdSetLine(7, snformat(b,bz,"os-ver %s", cmdGetEmmcdlVersion()) );
   
   //show build info and version
@@ -310,7 +310,7 @@ inline void dbgBtnHandler(void)
       g_forceStart = 1;
     
     //XXX: hack to manually start head programming
-    if( g_fixmode == FIXMODE_HEAD1 && edge > 0 && x == Board::BTN_4 )
+    if( (g_fixmode >= FIXMODE_HEAD1 && g_fixmode <= FIXMODE_HELPER1) && edge > 0 && x == Board::BTN_4 )
       g_forceStart = 1;
     
     //XXX: run debug tests

@@ -29,6 +29,7 @@ bool          TestHeadDetect(void);
 void          TestHeadCleanup(void);
 TestFunction* TestHead1GetTests(void);
 TestFunction* TestHead2GetTests(void);
+TestFunction* TestHelper1GetTests(void);
 
 //Backpack
 bool          TestBackpackDetect(void);
