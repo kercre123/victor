@@ -20,6 +20,9 @@ if not exist "emmcdl" (
 REM create fixture directory, if it doesn't exist
 adb shell -x "mkdir -p data/local/fixture && sync"
 
+REM increase cpu0 freq (usb performance)
+REM adb shell "echo 800000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"
+
 REM update head scripts & image files
 adb push headprogram data/local/fixture/
 adb push usbserial.ko data/local/fixture/
