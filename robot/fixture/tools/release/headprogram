@@ -1,17 +1,31 @@
 #!/bin/sh
-esn="$1"
-echo esn=$esn
-
-killall -9 adbd
-
+ESN=$1
+HW_VER=0001
+MODEL=0001
+# Enable USB
 mode=$(cat /sys/kernel/debug/msm_otg/mode)
 if [ "$mode" != "host" ]; then
   echo none > /sys/kernel/debug/msm_otg/mode
   echo host > /sys/kernel/debug/msm_otg/mode
+  insmod ./usbserial.ko vendor=0x05c6 product=0x9008
+  sleep 1
 fi
-
-insmod ./usbserial.ko vendor=0x05c6 product=0x9008
-sleep 1
+# Prepare factory partition image
+umount /data/img
+rm emmcdl/factory.img
+mkdir -p /data/img
+dd if=/dev/zero of=emmcdl/factory.img count=4 bs=1M     || exit 101
+yes | mkfs.ext4 emmcdl/factory.img                      || exit 102
+mount -o loop emmcdl/factory.img /data/img              || exit 103
+mkdir /data/img/cloud                                   || exit 103
+# Set up birth certificate on factory partition
+./makebc /data/img/birthcertificate $ESN $HW_VER $MODEL || exit 104
+# Prepare cloud data for this ESN
+unzip -d /data/img/cloud /anki/certs.zip $ESN/*         || exit 105
+mv /data/img/cloud/$ESN/* /data/img/cloud               || exit 105
+chmod 0440 /data/img/cloud /data/img/cloud/*            || exit 105
+chown 888:888 /data/img/cloud /data/img/cloud/*         || exit 105
+umount /data/img                                        || exit 106
+# Flash the robot
 lsusb
-#./emmcdl/emmcdl -p 0 -info
 ./emmcdl/emmcdl -p 0 -f emmcdl/prog_emmc_firehose_8909_ddr.mbn -x emmcdl/anki.xml -SetActivePartition 0
