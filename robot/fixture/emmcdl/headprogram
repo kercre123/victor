@@ -5,7 +5,8 @@ MODEL=0001
 
 helper=0
 for arg in "$@"; do
-  if [ "${arg}" == "helper" ]; then echo making helper head; helper=1; ESN=0; fi
+  #echo arg: \""${arg}"\" #DEBUG
+  if [ "${arg}" == "helper" ]; then echo "making helper head"; helper=1; ESN=0; fi
 done
 
 # Enable USB
@@ -28,12 +29,17 @@ mkdir /data/img/cloud                                   || exit 103
 ./makebc /data/img/birthcertificate $ESN $HW_VER $MODEL || exit 104
 # Prepare cloud data for this ESN
 if [ $helper -eq 0 ]; then
+  echo unpacking cert...
   unzip -d /data/img/cloud /anki/certs.zip $ESN/*         || exit 105
+  if [ ! -e /data/img/cloud/$ESN ]; then
+    echo no cert found for ESN $ESN
+    exit 105
+  fi
   mv /data/img/cloud/$ESN/* /data/img/cloud               || exit 105
   chmod 0440 /data/img/cloud /data/img/cloud/*            || exit 105
   chown 888:888 /data/img/cloud /data/img/cloud/*         || exit 105
-  umount /data/img                                        || exit 106
 fi
+umount /data/img                                        || exit 106
 # Flash the robot
 lsusb
 ./emmcdl/emmcdl -p 0 -f emmcdl/prog_emmc_firehose_8909_ddr.mbn -x emmcdl/anki.xml -SetActivePartition 0

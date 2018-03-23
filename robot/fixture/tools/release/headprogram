@@ -29,7 +29,12 @@ mkdir /data/img/cloud                                   || exit 103
 ./makebc /data/img/birthcertificate $ESN $HW_VER $MODEL || exit 104
 # Prepare cloud data for this ESN
 if [ $helper -eq 0 ]; then
+  echo unpacking cert...
   unzip -d /data/img/cloud /anki/certs.zip $ESN/*         || exit 105
+  if [ ! -e /data/img/cloud/$ESN ]; then
+    echo no cert found for ESN $ESN
+    exit 105
+  fi
   mv /data/img/cloud/$ESN/* /data/img/cloud               || exit 105
   chmod 0440 /data/img/cloud /data/img/cloud/*            || exit 105
   chown 888:888 /data/img/cloud /data/img/cloud/*         || exit 105
