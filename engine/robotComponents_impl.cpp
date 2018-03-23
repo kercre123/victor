@@ -61,7 +61,7 @@ class FullRobotPose;
 } // namespace Cozmo
 
 // Template specializations mapping enums from the _fwd.h file to the class forward declarations above
-LINK_COMPONENT_TYPE_TO_ENUM(ContextWrapper,                RobotComponentID, CozmoContextWrapper)
+LINK_COMPONENT_TYPE_TO_ENUM(ContextWrapper,                RobotComponentID, CozmoContext)
 LINK_COMPONENT_TYPE_TO_ENUM(BlockWorld,                    RobotComponentID, BlockWorld)
 LINK_COMPONENT_TYPE_TO_ENUM(FaceWorld,                     RobotComponentID, FaceWorld)
 LINK_COMPONENT_TYPE_TO_ENUM(PetWorld,                      RobotComponentID, PetWorld)
@@ -116,7 +116,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::BodyLights:                 { return "BodyLights";}
     case Cozmo::RobotComponentID::Carrying:                   { return "Carrying";}
     case Cozmo::RobotComponentID::CliffSensor:                { return "CliffSensor";}
-    case Cozmo::RobotComponentID::CozmoContextWrapper:        { return "CozmoContextWrapper";}
+    case Cozmo::RobotComponentID::CozmoContext:               { return "CozmoContext";}
     case Cozmo::RobotComponentID::CubeAccel:                  { return "CubeAccel";}
     case Cozmo::RobotComponentID::CubeComms:                  { return "CubeComms";}
     case Cozmo::RobotComponentID::CubeLights:                 { return "CubeLights";}

@@ -32,8 +32,7 @@ class DependencyManagedEntity;
 // Interface for components that have their dependencies managed
 ////////
 template<typename EnumType>
-class IDependencyManagedComponent 
-{
+class IDependencyManagedComponent {
 protected:
   // To avoid bizarre memory bugs that can arise from converting back and forth
   // from void* to base vs derived classes (particularly when multiple inheritance is involved)

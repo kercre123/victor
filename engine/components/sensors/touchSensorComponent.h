@@ -61,7 +61,7 @@ public:
 
 public:
   TouchSensorComponent();
-  virtual ~TouchSensorComponent() = default;
+  ~TouchSensorComponent() = default;
 
   //////
   // IDependencyManagedComponent functions

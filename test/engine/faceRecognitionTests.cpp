@@ -365,7 +365,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
   s32 totalFalsePositives = 0;
   
   DependencyManagedEntity<RobotComponentID> dependentComponents;
-  dependentComponents.AddDependentComponent(RobotComponentID::CozmoContextWrapper, new ContextWrapper(cozmoContext));
+  dependentComponents.AddDependentComponent(RobotComponentID::CozmoContext, new ContextWrapper(cozmoContext));
   for(s32 iReload=0; iReload<2; ++iReload)
   {
     // All-new robot, face tracker, and face world for each person for this test

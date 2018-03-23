@@ -69,7 +69,10 @@ PathComponent::PathComponent()
 
 PathComponent::~PathComponent()
 {
-  Abort();
+  // If there's no context the robot is being destroyed - no need to abort
+  if(_robot->HasComponent(RobotComponentID::CozmoContext)){
+    Abort();
+  }
 }
 
 void PathComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
@@ -917,7 +920,7 @@ Result PathComponent::ClearPath()
   if( _lastSentPathID != 0 ) {
     _lastCanceledPathID = _lastSentPathID;
   }
-
+  
   _robot->GetContext()->GetVizManager()->ErasePath(_robot->GetID());
   if(_pdo) {
     _pdo->ClearPath();
