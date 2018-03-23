@@ -211,10 +211,54 @@ void HandleOutputCallback(int rc, const std::string& output) {
   // noop
 }
 
+static gpointer connectionThread(gpointer data)
+{
+  GMainLoop *loop = g_main_loop_new(NULL, true);
+
+  if (!loop) {
+      loge("error getting main loop");
+      return nullptr;
+  }
+
+  g_main_loop_run(loop);
+  g_main_loop_unref(loop);
+  return nullptr;
+}
+
+static GMutex connectMutex;
+
+void connectCallback(GObject *source_object, GAsyncResult *result, gpointer user_data)
+{
+  struct ConnectAsyncData *connectData = (struct ConnectAsyncData *)user_data;
+
+  // sanity check
+  gpointer res_user_data = g_async_result_get_user_data(result);
+  if (res_user_data != user_data) {
+    loge("%s: res_user_data != user_data, bailing out", __func__);
+    return;
+  }
+
+  conn_man_bus_service_call_connect_finish (connectData->service,
+                                            result,
+                                            &connectData->error);
+
+  g_mutex_lock(&connectMutex);
+  connectData->completed = true;
+  g_cond_signal(connectData->cond);
+  g_mutex_unlock(&connectMutex);
+}
+
 bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData) {
   ConnManBusTechnology* tech_proxy;
   GError* error;
   bool success;
+
+  static GThread *thread = g_thread_new("connect", connectionThread, nullptr);
+
+  if (thread == nullptr) {
+    loge("couldn't spawn connection thread");
+    return false;
+  }
 
   std::string nameFromHex = hexStringToAsciiString(ssid);
 
@@ -398,6 +442,10 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidd
   // Try to connect to our service
   bool connect = ConnectToWifiService(service);
 
+  if (!connect) {
+    Log::Write("Retry connecting one more time");
+    connect = ConnectToWifiService(service);
+  }
   return connect;
 }
 
@@ -419,26 +467,43 @@ ConnManBusService* GetServiceForPath(std::string objectPath) {
 }
 
 bool ConnectToWifiService(ConnManBusService* service) {
-  GError* error = nullptr;
 
   if(service == nullptr) {
     return false;
   }
 
-  gboolean didConnect = conn_man_bus_service_call_connect_sync (service, nullptr, &error);
+  GCond connectCond;
+  g_cond_init(&connectCond);
 
-  if(!didConnect && error != nullptr) {
-    Log::Write("Error connecting to wifi [attempt 1]: %s", error->message);
-    error = nullptr;
+  g_mutex_lock(&connectMutex);
 
-    didConnect = conn_man_bus_service_call_connect_sync (service, nullptr, &error);
+  struct ConnectAsyncData connAsyncData;
 
-    if(!didConnect && error != nullptr) {
-      Log::Write("Error connecting to wifi [attempt 2]: %s", error->message);
-    }
-  }  
+  connAsyncData.completed = false;
+  connAsyncData.error = nullptr;
+  connAsyncData.cond = &connectCond;
+  connAsyncData.service = service;
+  conn_man_bus_service_call_connect (service,
+                                     nullptr,
+                                     connectCallback,
+                                     (gpointer)&connAsyncData);
 
-  return (bool)didConnect;
+  gint64 end_time = g_get_monotonic_time () + 10 * G_TIME_SPAN_SECOND;
+  bool timedOut = false;
+  while (!connAsyncData.completed) {
+    timedOut = !g_cond_wait_until(&connectCond, &connectMutex, end_time);
+    if (timedOut)
+      break;
+  };
+  g_mutex_unlock(&connectMutex);
+
+  bool didConnect = !timedOut && connAsyncData.error == nullptr;
+  if(!didConnect) {
+    Log::Write("Error connecting to wifi: %s",
+               timedOut ?
+               "timed out waiting on conditional" : connAsyncData.error->message);
+  }
+  return didConnect;
 }
 
 bool DisconnectFromWifiService(ConnManBusService* service) {
