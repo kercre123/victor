@@ -258,7 +258,7 @@ resources/config/engine/firmware_*
 binary_cache
 perf.data
 symbol_cache
-
+.projectile
 
 # victor envsetup.sh
 filelist
