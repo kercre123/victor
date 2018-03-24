@@ -31,7 +31,8 @@ while IFS='' read -r line || [[ -n "$line" ]]; do #https://stackoverflow.com/que
     echo "" >> $tmpfile
     echo "#boot helper" >> $tmpfile
     echo "mount -o exec,remount /data" >> $tmpfile
-    echo "/data/local/fixture/helper > /dev/null 2>&1 &" >> $tmpfile
+    echo "cd /data/local/fixture" >> $tmpfile
+    echo "./helper > /dev/null 2> /dev/null < /dev/null &" >> $tmpfile
     echo "" >> $tmpfile
   fi
   
@@ -45,6 +46,7 @@ rm -f /etc/systemd/system/default.target #systemctl disable anki-robot.target
 echo updating boot script...
 chmod +x $tmpfile
 cp -f $tmpfile $bootscript
+chmod +x $bootscript
 sync
 
 if [ $debug -gt 0 ]; then echo found $linecnt lines; fi
