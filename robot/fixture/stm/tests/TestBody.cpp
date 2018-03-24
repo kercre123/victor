@@ -7,6 +7,7 @@
 #include "console.h"
 #include "contacts.h"
 #include "fixture.h"
+#include "flexflow.h"
 #include "hwid.h"
 #include "meter.h"
 #include "portable.h"
@@ -28,6 +29,8 @@
 //syscon has a 4-word header that is mangled by the normal build signing process
 #define SYSCON_HEADER_SIZE        16
 #define SYSCON_EVIL               0x4F4D3243 /*first word of syscon header, indicates valid app*/
+
+static const int CURRENT_HW_REV = BODYID_HWREV_DVT3;
 
 //-----------------------------------------------------------------------------
 //                  STM Load
@@ -159,14 +162,15 @@ static void BodyLoadTestFirmware(void)
   Timer::delayMs(150); //wait for systest to boot into main and enable battery power
   Contacts::setModeRx(); //switch to comms mode
   
-  //DEBUG: console bridge, manual testing
+  //DEBUG:
   if( g_fixmode < FIXMODE_BODY1 ) {
-    //cmdSend(CMD_IO_CONTACTS, "echo on", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
-    TestCommon::consoleBridge(TO_CONTACTS,5000);
+    TestCommon::consoleBridge(TO_CONTACTS,5000,0,BRIDGE_OPT_CHG_DISABLE);
   }
   
   //Run some tests
   cmdSend(CMD_IO_CONTACTS, "getvers");
+  
+  //XXX: --- add hardware tests here ---
   
   Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT);
@@ -186,7 +190,7 @@ static void BodyLoadProductionFirmware(void)
   
   //assign ESN & HW ids (preserve, if exist)
   bodyid.model = BODYID_MODEL_BLACK_STD;
-  bodyid.hwrev = (bodyid.hwrev == BODYID_HWREV_EMPTY) ? BODYID_HWREV_DVT2 : bodyid.hwrev;
+  bodyid.hwrev = (bodyid.hwrev == BODYID_HWREV_EMPTY) ? CURRENT_HW_REV : bodyid.hwrev;
   if( !bodyid.esn || bodyid.esn == BODYID_ESN_EMPTY )
   {
     //if( g_isReleaseBuild )
@@ -216,14 +220,20 @@ static void BodyBootcheckProductionFirmware(void)
 {
   mcu_power_down_();
   
+  //DEBUG:
+  if( g_fixmode < FIXMODE_BODY1 ) {
+    //only works if body has a battery?
+    TestCommon::consoleBridge(TO_CONTACTS,3000,0,BRIDGE_OPT_CHG_DISABLE);
+  }
+  
   //Power up and test comms
   Board::powerOn(PWR_VEXT,0); //must provide VEXT to wake up the mcu
-  if( g_fixmode < FIXMODE_BODY3 )
+  if( g_fixmode < FIXMODE_BODY3 ) //BODY3 has battery installed
     Board::powerOn(PWR_VBAT, 0);
   Timer::delayMs(150); //wait for mcu to boot into main and enable battery power
   Contacts::setModeRx(); //switch to comms mode
   
-  bool allow_skip = g_fixmode <= FIXMODE_BODY0; //BODY debug modes
+  bool allow_skip = g_fixmode < FIXMODE_BODY1; //DEBUG
   ConsolePrintf("listening for syscon boot message. %s\n", (allow_skip ? "press a key to skip" : "") );
   
   while( ConsoleReadChar() > -1 );
@@ -250,7 +260,10 @@ static void BodyBootcheckProductionFirmware(void)
 
 static void BodyFlexFlowReport(void)
 {
-  ConsolePrintf("<flex> ESN %08x\n", bodyid.esn);
+  char b[80]; const int bz = sizeof(b);
+  snformat(b,bz,"<flex> ESN %08x HwRev %u Model %u\n", bodyid.esn, bodyid.hwrev, bodyid.model);
+  ConsoleWrite(b);
+  FLEXFLOW::write(b);
 }
 
 /*static void BodyChargeContactElectricalDebug(void)
@@ -300,8 +313,9 @@ TestFunction* TestBody0GetTests(void)
 {
   static TestFunction m_tests_0a[] = {
     ShortCircuitTest,
-    //BodyTryReadSerial, --skip serial read. forces blank state
-    BodyLoadTestFirmware,
+    BodyTryReadSerial, //--skip serial read to force blank state
+    //BodyLoadTestFirmware,
+    //BodyBootcheckProductionFirmware,
     //BodyChargeContactElectricalDebug,
     NULL,
   };

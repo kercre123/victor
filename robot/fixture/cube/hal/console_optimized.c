@@ -4,7 +4,7 @@
 #include "console.h"
 #include "hal_uart.h"
 
-const int console_len_max = 55;
+const int console_len_max = 75;
 static char console_buf[console_len_max + 1];
 static int console_len = 0;
 //static bool m_console_echo = 0;

@@ -14,7 +14,8 @@
 
 
 #define MAX_FIRMWARE_SZ 0xa0000
-#define FIXTURE_TTY "/dev/ttyHSL1"
+//#define FIXTURE_TTY "/dev/ttyHSL1"
+#define FIXTURE_TTY "/dev/ttyHS0"
 #define FIXTURE_BAUD B1000000
 
 

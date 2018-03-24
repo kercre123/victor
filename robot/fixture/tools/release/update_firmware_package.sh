@@ -1,7 +1,10 @@
 #!/bin/bash
 
-adb=/mnt/c/android/adb.exe
-if [ ! -e $adb ]; then echo $adb does not exist; exit 1; fi
+#if [ ! -e $adb ]; then echo $adb does not exist; exit 1; fi
+
+#adb shell "echo shell connection established"
+#shell_status=$?
+#if [ $shell_status -ne 0 ]; then echo adb not connected to a device, e=$shell_status; exit $shell_status; fi
 
 #find highest version firmware package in this directory
 fwver=0; fwzip="x"
@@ -36,22 +39,5 @@ if [ -e $manifest ]; then
   done < $manifest
 fi
 
-echo "------------- untested beyond this point -----------------"
-$adb devices
-exit 0
-
-#create fixture directory, if it doesn't exist
-$adb shell -x "mkdir -p data/local/fixture"
-
-#load updated helper files
-$adb push dfu data/local/fixture/
-$adb push $safefileVxx data/local/fixture/
-$adb shell -x "cd data/local/fixture && chmod +x dfu"
-
-#send firmware to bootloader
-echo updating firmware...
-$adb shell -x "pkill helper"
-$adb shell -x "cd data/local/fixture && ./dfu $safefileVxx"
-
-$adb reboot
-echo done
+#last mile delivery by the local post office
+cmd.exe /c update_firmware.bat $safefileVxx

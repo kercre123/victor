@@ -14,7 +14,6 @@
 #include "motorled.h"
 #include "nvReset.h"
 #include "timer.h"
-#include "uart.h"
 
 // Which character to escape into command code
 #define ESCAPE_CODE 27
@@ -227,8 +226,6 @@ void InitConsole(void)
   DMA_ITConfig(DMA1_Stream2, DMA_IT_TC, DISABLE);
   DMA_Cmd(DMA1_Stream2, ENABLE);
   
-  SlowPutString("Console Initialized\n");
-  
   //restore console mode from reset data
   m_isInConsoleMode = g_app_reset.valid && g_app_reset.console.isInConsoleMode;
 }
@@ -401,6 +398,15 @@ static void emmcdlVersionCmd(void)
   }
 }
 
+static void GetTemperatureCmd(void)
+{
+  int zone = DEFAULT_TEMP_ZONE;
+  try { zone = strtol(GetArgument(1),0,0); } catch (int e) { }
+  
+  int tempC = cmdGetHelperTempC(zone);
+  ConsolePrintf("zone %i: %iC\n", zone >= 0 ? zone : DEFAULT_TEMP_ZONE, tempC);
+}
+
 static void DutProgCmd_(void)
 {
   int enable = 0;
@@ -464,6 +470,7 @@ static CommandFunction m_functions[] =
   {"GetSerial", GetSerialCmd, FALSE},
   {"BinVersion", BinVersionCmd, FALSE},
   {"emmcdlVersion", emmcdlVersionCmd, FALSE},
+  {"GetTemp", GetTemperatureCmd, FALSE},
   {"SetDateCode", SetDateCode, FALSE},
   {"SetLotCode", SetLotCode, FALSE},
   {"SetMode", SetMode, FALSE},
@@ -551,7 +558,7 @@ static void ParseCommand(void)
 //keep partial line in a local buffer so we can flush it into the console
 const  int  line_maxlen = 127;
 static int  line_len = 0;
-static char line[line_maxlen+1];
+static char m_line[line_maxlen+1];
 char* ConsoleGetLine(int timeout_us, int *out_len)
 {
   //append to line - never destroy data
@@ -563,19 +570,19 @@ char* ConsoleGetLine(int timeout_us, int *out_len)
       if( c == '\r' || c == '\n' )
         eol = 1;
       else if( line_len < line_maxlen )
-        line[line_len++] = c;
+        m_line[line_len++] = c;
       //else, whoops! drop data we don't have room for
     }
   }
   while( !eol && Timer::elapsedUs(start) < timeout_us );
   
-  line[line_len] = '\0';
+  m_line[line_len] = '\0';
   if( out_len )
     *out_len = line_len; //always report read length (even if not EOL)
   
   if( eol ) {
     line_len = 0; //wash our hands of this data once we've passed it to caller
-    return line;
+    return m_line;
   }
   return NULL;
 }
@@ -683,7 +690,7 @@ void ConsoleUpdate(void)
 {
   if(line_len) { //some joker left data in the line buffer...
     for(int x=0; x < line_len; x++)
-      ConsoleProcessChar_(line[x]); //shove it into the console processor
+      ConsoleProcessChar_(m_line[x]); //shove it into the console processor
     line_len = 0;
   }
   

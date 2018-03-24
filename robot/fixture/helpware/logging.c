@@ -16,12 +16,12 @@
 #define LOG_BUFSZ 256
 
 static struct {
-  bool enabled;
   int fd;
+  bool enabled;
   int start_cnt;
   uint64_t start_time;
   int ccnt; //character count within the current line
-} gLogging = {0,0,0};
+} gLogging = {-1,0,0};
 
 
 unsigned int get_sequence_number(const char* seqfile)
@@ -42,7 +42,7 @@ unsigned int get_sequence_number(const char* seqfile)
 
 int fixture_log_init(void)
 {
-  if (!gLogging.fd) {
+  if (gLogging.fd < 0) {
     memset(&gLogging, 0, sizeof(gLogging));
     int n = get_sequence_number(SEQFILE);
     char filename[MAX_LOGFILE_NAMELEN];
@@ -54,18 +54,18 @@ int fixture_log_init(void)
     snprintf(filename, MAX_LOGFILE_NAMELEN, HELPER_LOGFILE, n);
     gLogging.fd = open(filename, O_WRONLY|O_CREAT);
     
-    if( gLogging.fd )
+    if( gLogging.fd >= 0 )
       write(gLogging.fd, "helper build " __DATE__ " " __TIME__ "\n", strlen("helper build " __DATE__ " " __TIME__ "\n"));
   }
-  return (gLogging.fd == 0);
+  return (gLogging.fd < 0);
 }
 
 void fixture_log_terminate(void)
 {
-  if (gLogging.fd) {
+  if (gLogging.fd >= 0) {
     fixture_log_stop("",0);
     close(gLogging.fd);
-    gLogging.fd = 0;
+    gLogging.fd = -1;
   }
 }
 
@@ -73,7 +73,7 @@ int fixture_log_start(const char* params, int len)
 {
   char buf[100];
   
-  if (gLogging.fd) {
+  if (gLogging.fd >= 0) {
     if( !gLogging.enabled ) {
       gLogging.enabled = true;
       snprintf(buf, sizeof(buf), "\n------------------------------ log start %i ------------------------------\n", ++gLogging.start_cnt);
