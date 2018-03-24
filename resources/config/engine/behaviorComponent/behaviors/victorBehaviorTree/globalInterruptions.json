@@ -9,13 +9,13 @@
     "TriggerWordDetected",
     "TimerUtilityCoordinator",
     "MeetVictor",
+    "ReactToTouchPetting",
     "ReactToGreeting",
     "ReactToGoodMorning",
     "ReactToGoodBye",
     "ReactToGoodNight",
     "DoATrickVoiceCommand",
     "ReactToSoundAwake",
-    "ReactToTouchDispatcher",
     "ReactToUnclaimedIntent",
     "HighLevelAI"
   ]

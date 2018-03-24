@@ -225,8 +225,6 @@ enum uint_8 BehaviorID {
   KeepawayVoiceCommand,
 
   // victorBehaviorTree
-  ReactToTouchDispatcher,
-  ReactToTouchInitial,
   ReactToTouchPetting,
   ReactToUnclaimedIntent,
   SingletonICantDoThat,

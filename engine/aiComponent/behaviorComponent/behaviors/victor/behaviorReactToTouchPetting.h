@@ -69,6 +69,8 @@ private:
   // ordered list of petting getout animations (corresponds to above list)
   std::vector<AnimationTrigger> _animPettingGetout;
   
+  AnimationTrigger _animPettingGetin;
+  
   // duration of time to wait before checking
   // for state transition conditions for bliss
   // levels (i.e. num pets rcvd OR any active touch)

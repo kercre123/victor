@@ -41,6 +41,7 @@ namespace {
   const bool kCanAnimationInterrupt = true; // value for whether starting the animation can interrupt
   
   const char* const kTimeTilTouchCheckKey = "timeTilTouchCheck";
+  const char* const kAnimGroupGetinKey = "animGroupGetin";
   const char* const kAnimGroupNamesKey = "animGroupNames";
   const char* const kAnimGroupNamesGetoutKey = "animGroupNamesGetout";
   const char* const kTimeTilBlissGetoutKey = "timeTilBlissGetout";
@@ -54,6 +55,7 @@ BehaviorReactToTouchPetting::BehaviorReactToTouchPetting(const Json::Value& conf
 : ICozmoBehavior(config)
 , _animPettingResponse()
 , _animPettingGetout()
+, _animPettingGetin()
 , _timeTilTouchCheck(5.0f)
 , _blissTimeout(5.0f)
 , _nonBlissTimeout(5.0f)
@@ -84,6 +86,11 @@ BehaviorReactToTouchPetting::BehaviorReactToTouchPetting(const Json::Value& conf
     _animPettingGetout.push_back( AnimationTriggerFromString(t) );
   }
   
+  _animPettingGetin = AnimationTriggerFromString(
+                        JsonTools::ParseString(config,
+                                               kAnimGroupGetinKey,
+                                               "BehaviorReactToTouchPetting.Ctor.MissingGetin"));
+  
   _blissTimeout = JsonTools::ParseFloat(config, kTimeTilBlissGetoutKey,kDebugStr);
   _nonBlissTimeout = JsonTools::ParseFloat(config, kTimeTilNonBlissGetoutKey,kDebugStr);
   _minNumPetsToAdvanceBliss = JsonTools::ParseInt8(config, kNumPetsToAdvanceBlissKey,kDebugStr);
@@ -104,6 +111,7 @@ void BehaviorReactToTouchPetting::GetBehaviorJsonKeys(std::set<const char*>& exp
      kTimeTilBlissGetoutKey,
      kTimeTilNonBlissGetoutKey,
      kNumPetsToAdvanceBlissKey,
+     kAnimGroupGetinKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -154,6 +162,8 @@ void BehaviorReactToTouchPetting::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToTouchPetting::OnBehaviorActivated()
 {
+  CancelAndPlayAnimation(_animPettingGetin);
+  
   // starts the state machine to check for updates
   _currResponseState = PettingResponseState::PlayTransitionToLevel;
 }
@@ -163,7 +173,8 @@ void BehaviorReactToTouchPetting::CancelAndPlayAnimation(AnimationTrigger anim)
 {
   TriggerAnimationAction* action = new TriggerAnimationAction(anim,
                                                               kPlayAnimOnce,
-                                                              kCanAnimationInterrupt);
+                                                              kCanAnimationInterrupt,
+                                                              (u8)AnimTrackFlag::BODY_TRACK);
   CancelDelegates();
   DelegateIfInControl(action);
 }
@@ -173,7 +184,8 @@ void BehaviorReactToTouchPetting::PlayBlissLoopAnimation()
 {
   TriggerAnimationAction* action = new TriggerAnimationAction(_animPettingResponse.back(),
                                                               kPlayAnimOnce,
-                                                              kCanAnimationInterrupt);
+                                                              kCanAnimationInterrupt,
+                                                              (u8)AnimTrackFlag::BODY_TRACK);
   
   ActionResultCallback cb = [this](ActionResult result)->void {
     // note: since Update() waits for animations to finish before
