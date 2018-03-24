@@ -121,6 +121,7 @@ enum uint_8 BehaviorClass {
   AcknowledgeFace,
   AcknowledgeObject,
   ReactToCliff,
+  ReactToCubeTap,
   ReactToFrustration,
   ReactToMicDirection,
   ReactToMotion,

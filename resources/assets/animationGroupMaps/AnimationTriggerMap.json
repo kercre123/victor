@@ -1311,6 +1311,34 @@
     {
       "CladEvent": "ObservingOnCharger",
       "AnimName": "ag_observe_oncharger_observing"
+    },
+    {
+      "CladEvent": "ReactToCubeTapCubeTapped",
+      "AnimName": "ag_cubetapping_reacttocubetap"
+    },
+    {
+      "CladEvent": "ReactToCubeSearchForCube",
+      "AnimName": "ag_cubetapping_searchforcube"
+    },
+    {
+      "CladEvent": "ReactToCubeTapCubeFound",
+      "AnimName": "ag_cubetapping_reacttofoundcube"
+    },
+    {
+      "CladEvent": "ReactToCubeTapCubeNotFound",
+      "AnimName": "ag_cubetapping_reacttofoundcube"
+    },
+    {
+      "CladEvent": "ReactToCubeTapFoundFace",
+      "AnimName": "ag_cubetapping_reacttoface"
+    },
+    {
+      "CladEvent": "ReactToCubeTapInteractionLoop",
+      "AnimName": "ag_cubetapping_idleloop"
+    },
+    {
+      "CladEvent": "ReactToCubeTapInteractionGetOut",
+      "AnimName": "ag_cubetapping_getout"
     }
   ]
 }
