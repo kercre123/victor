@@ -872,6 +872,11 @@ namespace Anki {
     {
       return 0; // Simulator never watchdogs
     }
+
+    void HAL::Shutdown()
+    {
+
+    }
     
   } // namespace Cozmo
 } // namespace Anki
