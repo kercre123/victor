@@ -324,12 +324,17 @@ void BehaviorReactToTouchPetting::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToTouchPetting::OnBehaviorDeactivated()
 {
+  using AMD_GE_GE = AudioMetaData::GameEvent::GenericEvent;
+  using AMD_GOT = AudioMetaData::GameObjectType;
+  
   _currResponseState              = Done;
   _numPressesAtCurrentBlissLevel  = 0;
   _currBlissLevel                 = 0;
   _checkForTimeoutTimeNonbliss    = std::numeric_limits<float>::max();
   _checkForTransitionTime         = std::numeric_limits<float>::max();
   _checkForTimeoutTimeBliss       = std::numeric_limits<float>::max();
+  
+  GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Stop__Robot_Vic_Sfx__Purr_Loop_Stop, AMD_GOT::Behavior);
 }
 
 } // Cozmo
