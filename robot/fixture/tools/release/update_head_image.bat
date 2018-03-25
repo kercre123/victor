@@ -24,14 +24,15 @@ REM increase cpu0 freq (usb performance)
 REM adb shell "echo 800000 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"
 
 REM update head scripts & image files
-adb push headprogram data/local/fixture/
-adb push usbserial.ko data/local/fixture/
-adb push makebc data/local/fixture/
+adb push headprogram /data/local/fixture/
+adb push usbserial.ko /data/local/fixture/
+adb push makebc /data/local/fixture/
 adb shell "chmod +x /data/local/fixture/*"
+adb shell "dos2unix /data/local/fixture/headprogram"
 adb shell -x "rm -rf /data/local/fixture/emmcdl/ && sync && sleep 1 && mkdir /data/local/fixture/emmcdl/"
 adb push emmcdl data/local/fixture/
-adb push bin/emmcdl data/local/fixture/emmcdl/
-adb shell -x "cd data/local/fixture/emmcdl && chmod +x emmcdl"
+adb push bin/emmcdl /data/local/fixture/emmcdl/
+adb shell -x "cd /data/local/fixture/emmcdl && chmod +x emmcdl"
 adb shell "sync"
 
 echo restart helper process...
