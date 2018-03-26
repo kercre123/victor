@@ -46,7 +46,7 @@ namespace Contacts
     MODE_RX,
   };
   
-  static const uint32_t CONTACT_BAUD = 57600;
+  static const uint32_t CONTACT_BAUD = 115200;
   static int mode = MODE_UNINITIALIZED;
   static bool m_console_echo = 0;
   
@@ -91,6 +91,9 @@ namespace Contacts
       USART->DR = c;
       while( !(USART->SR & USART_SR_TXE) ); //dat moved to shift register (ok to write a new data)
       while( !(USART->SR & USART_SR_TC)  ); //wait for transmit complete
+      
+      if( CONTACT_BAUD > 57600 ) //bandwidth throttle for 115.2k
+        delay_bit_time_(10);
     #endif
   }
 }
@@ -364,7 +367,7 @@ namespace Contacts {
   #else //TARGET_FIXTURE
   const  int  line_maxlen = 127;
   #endif
-  static char line[line_maxlen+1];
+  static char m_line[line_maxlen+1];
   static int  line_len = 0;
 }
 
@@ -448,11 +451,11 @@ namespace Contacts {
         Contacts::putecho('\n');
         if(line_len)
         {
-          line[line_len] = '\0';
+          m_line[line_len] = '\0';
           if(out_len)
             *out_len = line_len;
           line_len = 0;
-          return line;
+          return m_line;
         }
         break;
       
@@ -470,7 +473,7 @@ namespace Contacts {
         if( c >= ' ' && c <= '~' ) //printable char set
         {
           if( line_len < line_maxlen ) {
-            line[line_len++] = c;
+            m_line[line_len++] = c;
             Contacts::putecho(c);
           }
         }
@@ -493,6 +496,12 @@ char* Contacts::getline(int timeout_us, int *out_len)
   } while( !line && Timer::elapsedUs(start) < timeout_us );
   
   return line;
+}
+
+char* Contacts::getlinebuffer(int *out_len) {
+  if(out_len)
+    *out_len = line_len; //report length
+  return m_line;
 }
 
 int Contacts::flushRx(void)

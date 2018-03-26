@@ -54,7 +54,7 @@ void cmdTickCallback(uint32_t interval_ms, void(*tick_handler)(void) );
 //Note: valid strings must guarantee no \r \n chars and one valid \0 terminator
 
 //@return parsed integer value of s. INT_MIN on parse err.
-int cmdParseInt32(char *s);
+int32_t cmdParseInt32(char *s);
 
 //@return u32 value of input hex string (e.g. 'a235dc01'). 0 on parse error + errno set to -1
 uint32_t cmdParseHex32(char* s);
@@ -78,13 +78,15 @@ void cmdDbgParseTestbench(void);
 #define CCC_SENSOR_NONE       0
 #define CCC_SENSOR_BATTERY    1
 #define CCC_SENSOR_CLIFF      2
-#define CCC_SENSOR_ENCODERS   3
-#define CCC_SENSOR_SPEED      4
-#define CCC_SENSOR_PROX_TOF   5
-#define CCC_SENSOR_BTN_TOUCH  6
-#define CCC_SENSOR_RSSI       7
-#define CCC_SENSOR_RX_PKT     8
-const int ccr_sr_cnt[9] = {0,1,4,4,4,1,2,1,1}; //number of sensor fields for each type
+#define CCC_SENSOR_MOT_LEFT   3
+#define CCC_SENSOR_MOT_RIGHT  4
+#define CCC_SENSOR_MOT_LIFT   5
+#define CCC_SENSOR_MOT_HEAD   6
+#define CCC_SENSOR_PROX_TOF   7
+#define CCC_SENSOR_BTN_TOUCH  8
+#define CCC_SENSOR_RSSI       9
+#define CCC_SENSOR_RX_PKT     10
+const int ccr_sr_cnt[11] = {0,2,4,2,2,2,2,4,2,1,1}; //number of sensor fields for each type
 
 //FCC test modes
 #define CCC_FCC_MODE_TX_CARRIER   0
@@ -103,14 +105,21 @@ typedef struct {
   uint32_t app_version[4];
 } ccr_bsv_t;
 
-typedef struct {
-  uint16_t val[4];
+typedef union {
+  int32_t val[4];
+  struct { int32_t raw; int32_t temp; } bat; //battery: raw-adc, temperature (2x int16)
+  struct { int32_t fL; int32_t fR; int32_t bR; int32_t bL; } cliff; //cliff sensors: front/back L/R (4x uint16)
+  struct { int32_t pos; int32_t speed; } enc; //encoder: position, speed (2x int32)
+  struct { int32_t rangeMM; int32_t spadCnt; int32_t signalRate; int32_t ambientRate; } prox; //proximity,TOF (4x uint16)
+  struct { int32_t touch; int32_t btn; } btn; //touch & button (2x uint16)
+  struct { int32_t rssi; } fccRssi; //FCC mode RSSI (int8)
+  struct { int32_t pktCnt; } fccRx; //Fcc mode packet rx (int32)
 } ccr_sr_t;
 
 ccr_esn_t* cmdRobotEsn(); //read robot (head) ESN
 ccr_bsv_t* cmdRobotBsv(); //read body serial+version info
 ccr_sr_t*  cmdRobotMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head);
-ccr_sr_t*  cmdRobotGet(uint8_t NN, uint8_t sensor);
+ccr_sr_t*  cmdRobotGet(uint8_t NN, uint8_t sensor); //NN = #drops (sr vals). returns &sensor[0] of [NN-1]
 void       cmdRobotFcc(uint8_t mode, uint8_t cn); //CCC_FCC_MODE_, {0..39}
 //void       cmdRobotRlg(uint8_t idx);
 void       cmdRobotEng(uint8_t idx, uint32_t val);
@@ -122,7 +131,9 @@ uint32_t   cmdRobotGmr(uint8_t idx);
 //                  Additional Cmd + response parsing
 //-----------------------------------------------------------------------------
 
+#define DEFAULT_TEMP_ZONE 3
 char* cmdGetEmmcdlVersion(int timeout_ms = CMD_DEFAULT_TIMEOUT);
+int   cmdGetHelperTempC(int zone = DEFAULT_TEMP_ZONE);
 
 #endif //CMD_H
 

@@ -24,10 +24,12 @@ TestFunction* TestBody2GetTests(void);
 TestFunction* TestBody3GetTests(void);
 
 //Head
+uint32_t      TestHeadGetPrevESN(void);
 bool          TestHeadDetect(void);
 void          TestHeadCleanup(void);
 TestFunction* TestHead1GetTests(void);
 TestFunction* TestHead2GetTests(void);
+TestFunction* TestHelper1GetTests(void);
 
 //Backpack
 bool          TestBackpackDetect(void);
@@ -45,6 +47,7 @@ TestFunction* TestCubeFinish1GetTests(void);
 TestFunction* TestCubeFinish2GetTests(void);
 TestFunction* TestCubeFinish3GetTests(void);
 TestFunction* TestCubeFinishXGetTests(void);
+uint32_t cubebootSignature(bool dbg_print=0, int *out_cubeboot_size=0);
 
 //Robot
 bool          TestRobotDetect(void);

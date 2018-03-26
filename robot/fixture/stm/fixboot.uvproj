@@ -7,7 +7,7 @@
 
   <Targets>
     <Target>
-      <TargetName>Debug</TargetName>
+      <TargetName>Release</TargetName>
       <ToolsetNumber>0x4</ToolsetNumber>
       <ToolsetName>ARM-ADS</ToolsetName>
       <TargetOption>
@@ -44,14 +44,14 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>.\build\</OutputDirectory>
-          <OutputName>vicfix</OutputName>
+          <OutputDirectory>.\build\boot\</OutputDirectory>
+          <OutputName>boot</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>1</CreateHexFile>
           <DebugInformation>1</DebugInformation>
           <BrowseInformation>1</BrowseInformation>
-          <ListingPath>.\build\</ListingPath>
+          <ListingPath>.\build\boot\</ListingPath>
           <HexFormatSelection>1</HexFormatSelection>
           <Merge32K>0</Merge32K>
           <CreateBatchFile>0</CreateBatchFile>
@@ -66,18 +66,18 @@
             <nStopU2X>0</nStopU2X>
           </BeforeCompile>
           <BeforeMake>
-            <RunUserProg1>1</RunUserProg1>
-            <RunUserProg2>1</RunUserProg2>
-            <UserProg1Name>cmd /c del build\binaries.o</UserProg1Name>
-            <UserProg2Name>cmd /c del fixture.safe</UserProg2Name>
+            <RunUserProg1>0</RunUserProg1>
+            <RunUserProg2>0</RunUserProg2>
+            <UserProg1Name></UserProg1Name>
+            <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
           </BeforeMake>
           <AfterMake>
             <RunUserProg1>1</RunUserProg1>
-            <RunUserProg2>1</RunUserProg2>
-            <UserProg1Name>fromelf --bin build\vicfix.axf --output build\vicfix.bin</UserProg1Name>
-            <UserProg2Name>crypto\Release_FIXTURE\makesafe_fixture -prod fixture.safe build\vicfix.bin</UserProg2Name>
+            <RunUserProg2>0</RunUserProg2>
+            <UserProg1Name>fromelf --bin build\boot\boot.axf --output build\boot\boot.bin</UserProg1Name>
+            <UserProg2Name></UserProg2Name>
             <UserProg1Dos16Mode>0</UserProg1Dos16Mode>
             <UserProg2Dos16Mode>0</UserProg2Dos16Mode>
           </AfterMake>
@@ -144,7 +144,7 @@
             <UsePdscDebugDescription>0</UsePdscDebugDescription>
           </Target>
           <RunDebugAfterBuild>0</RunDebugAfterBuild>
-          <TargetSelection>6</TargetSelection>
+          <TargetSelection>1</TargetSelection>
           <SimDlls>
             <CpuDll></CpuDll>
             <CpuDllArguments></CpuDllArguments>
@@ -158,7 +158,7 @@
             <PeripheralDll></PeripheralDll>
             <PeripheralDllArguments></PeripheralDllArguments>
             <InitializationFile></InitializationFile>
-            <Driver>Segger\JL2CM3.dll</Driver>
+            <Driver>BIN\UL2CM3.DLL</Driver>
           </TargetDlls>
         </DebugOption>
         <Utilities>
@@ -170,7 +170,7 @@
             <Capability>1</Capability>
             <DriverSelection>4096</DriverSelection>
           </Flash1>
-          <bUseTDR>1</bUseTDR>
+          <bUseTDR>0</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
           <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
@@ -221,7 +221,7 @@
             <hadIRAM2>0</hadIRAM2>
             <hadIROM2>0</hadIROM2>
             <StupSel>8</StupSel>
-            <useUlib>0</useUlib>
+            <useUlib>1</useUlib>
             <EndSel>0</EndSel>
             <uLtcg>0</uLtcg>
             <RoSelD>3</RoSelD>
@@ -306,8 +306,8 @@
               </OCR_RVCT3>
               <OCR_RVCT4>
                 <Type>1</Type>
-                <StartAddress>0x8060000</StartAddress>
-                <Size>0x10000</Size>
+                <StartAddress>0x8000000</StartAddress>
+                <Size>0x4000</Size>
               </OCR_RVCT4>
               <OCR_RVCT5>
                 <Type>1</Type>
@@ -359,10 +359,10 @@
             <uC99>0</uC99>
             <useXO>0</useXO>
             <VariousControls>
-              <MiscControls>--exceptions --exceptions_unwind</MiscControls>
-              <Define>FIXTURE,STM32F2XX,USE_STDPERIPH_DRIVER,DEBUG</Define>
+              <MiscControls>--c99</MiscControls>
+              <Define>USE_STDPERIPH_DRIVER,STM32F2XX,USE_STM322xG_EVAL,USE_USB_OTG_FS</Define>
               <Undefine></Undefine>
-              <IncludePath>.;app;common;hal;inc;lib;stm32f2xx;tests;xxx</IncludePath>
+              <IncludePath>stm32f2xx;hal;.</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -376,14 +376,14 @@
             <uSurpInc>0</uSurpInc>
             <useXO>0</useXO>
             <VariousControls>
-              <MiscControls>--cpreproc</MiscControls>
+              <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
               <IncludePath></IncludePath>
             </VariousControls>
           </Aads>
           <LDads>
-            <umfTarg>0</umfTarg>
+            <umfTarg>1</umfTarg>
             <Ropi>0</Ropi>
             <Rwpi>0</Rwpi>
             <noStLib>0</noStLib>
@@ -392,10 +392,10 @@
             <TextAddressRange>0x8000000</TextAddressRange>
             <DataAddressRange>0x20000000</DataAddressRange>
             <pXoBase></pXoBase>
-            <ScatterFile>.\vicfix.sct</ScatterFile>
+            <ScatterFile></ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
-            <Misc>--datacompressor off</Misc>
+            <Misc></Misc>
             <LinkerInputFile></LinkerInputFile>
             <DisabledWarnings></DisabledWarnings>
           </LDads>
@@ -403,293 +403,37 @@
       </TargetOption>
       <Groups>
         <Group>
-          <GroupName>app</GroupName>
-          <Files>
-            <File>
-              <FileName>app.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\app\app.cpp</FilePath>
-              <FileOption>
-                <CommonProperty>
-                  <UseCPPCompiler>2</UseCPPCompiler>
-                  <RVCTCodeConst>0</RVCTCodeConst>
-                  <RVCTZI>0</RVCTZI>
-                  <RVCTOtherData>0</RVCTOtherData>
-                  <ModuleSelection>0</ModuleSelection>
-                  <IncludeInBuild>2</IncludeInBuild>
-                  <AlwaysBuild>1</AlwaysBuild>
-                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
-                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
-                  <PublicsOnly>2</PublicsOnly>
-                  <StopOnExitCode>11</StopOnExitCode>
-                  <CustomArgument></CustomArgument>
-                  <IncludeLibraryModules></IncludeLibraryModules>
-                  <ComprImg>1</ComprImg>
-                </CommonProperty>
-                <FileArmAds>
-                  <Cads>
-                    <interw>2</interw>
-                    <Optim>0</Optim>
-                    <oTime>2</oTime>
-                    <SplitLS>2</SplitLS>
-                    <OneElfS>2</OneElfS>
-                    <Strict>2</Strict>
-                    <EnumInt>2</EnumInt>
-                    <PlainCh>2</PlainCh>
-                    <Ropi>2</Ropi>
-                    <Rwpi>2</Rwpi>
-                    <wLevel>0</wLevel>
-                    <uThumb>2</uThumb>
-                    <uSurpInc>2</uSurpInc>
-                    <uC99>2</uC99>
-                    <useXO>2</useXO>
-                    <VariousControls>
-                      <MiscControls></MiscControls>
-                      <Define></Define>
-                      <Undefine></Undefine>
-                      <IncludePath></IncludePath>
-                    </VariousControls>
-                  </Cads>
-                </FileArmAds>
-              </FileOption>
-            </File>
-            <File>
-              <FileName>binaries.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>.\app\binaries.s</FilePath>
-            </File>
-            <File>
-              <FileName>binariesc.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\app\binariesc.c</FilePath>
-            </File>
-            <File>
-              <FileName>fixture.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\app\fixture.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>cmd.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\app\cmd.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>tests</GroupName>
-          <Files>
-            <File>
-              <FileName>TestBody.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\tests\TestBody.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>TestCommon.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\tests\TestCommon.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>TestHead.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\tests\TestHead.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>TestBackpack.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\tests\TestBackpack.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>TestCube.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\tests\TestCube.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>TestRobot.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\tests\TestRobot.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>TestMotor.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\tests\TestMotor.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>TestDebugStub.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\tests\TestDebugStub.cpp</FilePath>
-              <FileOption>
-                <CommonProperty>
-                  <UseCPPCompiler>2</UseCPPCompiler>
-                  <RVCTCodeConst>0</RVCTCodeConst>
-                  <RVCTZI>0</RVCTZI>
-                  <RVCTOtherData>0</RVCTOtherData>
-                  <ModuleSelection>0</ModuleSelection>
-                  <IncludeInBuild>0</IncludeInBuild>
-                  <AlwaysBuild>2</AlwaysBuild>
-                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
-                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
-                  <PublicsOnly>2</PublicsOnly>
-                  <StopOnExitCode>11</StopOnExitCode>
-                  <CustomArgument></CustomArgument>
-                  <IncludeLibraryModules></IncludeLibraryModules>
-                  <ComprImg>1</ComprImg>
-                </CommonProperty>
-                <FileArmAds>
-                  <Cads>
-                    <interw>2</interw>
-                    <Optim>0</Optim>
-                    <oTime>2</oTime>
-                    <SplitLS>2</SplitLS>
-                    <OneElfS>2</OneElfS>
-                    <Strict>2</Strict>
-                    <EnumInt>2</EnumInt>
-                    <PlainCh>2</PlainCh>
-                    <Ropi>2</Ropi>
-                    <Rwpi>2</Rwpi>
-                    <wLevel>0</wLevel>
-                    <uThumb>2</uThumb>
-                    <uSurpInc>2</uSurpInc>
-                    <uC99>2</uC99>
-                    <useXO>2</useXO>
-                    <VariousControls>
-                      <MiscControls></MiscControls>
-                      <Define></Define>
-                      <Undefine></Undefine>
-                      <IncludePath></IncludePath>
-                    </VariousControls>
-                  </Cads>
-                </FileArmAds>
-              </FileOption>
-            </File>
-            <File>
-              <FileName>TestDebugHeadprogram.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\tests\TestDebugHeadprogram.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
           <GroupName>lib</GroupName>
-          <Files>
-            <File>
-              <FileName>crc16.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\lib\crc16.c</FilePath>
-            </File>
-            <File>
-              <FileName>crc32.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\lib\crc32.c</FilePath>
-            </File>
-            <File>
-              <FileName>nvReset.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\lib\nvReset.c</FilePath>
-            </File>
-            <File>
-              <FileName>swd.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\lib\swd.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>swd_stm32.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\lib\swd_stm32.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>swd_da1458x.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\lib\swd_da1458x.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>hal</GroupName>
-          <Files>
-            <File>
-              <FileName>board.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\board.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>bpled.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\bpled.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>contacts.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\common\contacts.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>system_stm32f2xx.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\system_stm32f2xx.c</FilePath>
-            </File>
-            <File>
-              <FileName>startup_stm32f2xx.s</FileName>
-              <FileType>2</FileType>
-              <FilePath>.\hal\startup_stm32f2xx.s</FilePath>
-            </File>
-            <File>
-              <FileName>stm32fxxx_it.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\stm32fxxx_it.c</FilePath>
-            </File>
-            <File>
-              <FileName>timer.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\common\timer.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>flash.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\flash.c</FilePath>
-            </File>
-            <File>
-              <FileName>console.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\console.c</FilePath>
-            </File>
-            <File>
-              <FileName>meter.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\meter.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>motorled.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\motorled.c</FilePath>
-            </File>
-            <File>
-              <FileName>random.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\random.c</FilePath>
-            </File>
-            <File>
-              <FileName>dut_uart.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\dut_uart.cpp</FilePath>
-            </File>
-            <File>
-              <FileName>bdaddr.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\bdaddr.c</FilePath>
-            </File>
-            <File>
-              <FileName>flexflow.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\flexflow.cpp</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>stm32f2xx</GroupName>
           <Files>
             <File>
               <FileName>misc.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\stm32f2xx\misc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f2xx_adc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\stm32f2xx\stm32f2xx_adc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f2xx_crc.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\stm32f2xx\stm32f2xx_crc.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f2xx_dac.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\stm32f2xx\stm32f2xx_dac.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f2xx_dma.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\stm32f2xx\stm32f2xx_dma.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f2xx_exti.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\stm32f2xx\stm32f2xx_exti.c</FilePath>
             </File>
             <File>
               <FileName>stm32f2xx_flash.c</FileName>
@@ -702,14 +446,14 @@
               <FilePath>.\stm32f2xx\stm32f2xx_gpio.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f2xx_rcc.c</FileName>
+              <FileName>stm32f2xx_i2c.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\stm32f2xx\stm32f2xx_rcc.c</FilePath>
+              <FilePath>.\stm32f2xx\stm32f2xx_i2c.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f2xx_tim.c</FileName>
+              <FileName>stm32f2xx_iwdg.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\stm32f2xx\stm32f2xx_tim.c</FilePath>
+              <FilePath>.\stm32f2xx\stm32f2xx_iwdg.c</FilePath>
             </File>
             <File>
               <FileName>stm32f2xx_pwr.c</FileName>
@@ -717,9 +461,9 @@
               <FilePath>.\stm32f2xx\stm32f2xx_pwr.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f2xx_usart.c</FileName>
+              <FileName>stm32f2xx_rcc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\stm32f2xx\stm32f2xx_usart.c</FilePath>
+              <FilePath>.\stm32f2xx\stm32f2xx_rcc.c</FilePath>
             </File>
             <File>
               <FileName>stm32f2xx_spi.c</FileName>
@@ -727,24 +471,54 @@
               <FilePath>.\stm32f2xx\stm32f2xx_spi.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f2xx_dma.c</FileName>
+              <FileName>stm32f2xx_syscfg.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\stm32f2xx\stm32f2xx_dma.c</FilePath>
+              <FilePath>.\stm32f2xx\stm32f2xx_syscfg.c</FilePath>
             </File>
             <File>
-              <FileName>stm32f2xx_adc.c</FileName>
+              <FileName>stm32f2xx_tim.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\stm32f2xx\stm32f2xx_adc.c</FilePath>
+              <FilePath>.\stm32f2xx\stm32f2xx_tim.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f2xx_usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\stm32f2xx\stm32f2xx_usart.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f2xx_wwdg.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\stm32f2xx\stm32f2xx_wwdg.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>crypto</GroupName>
+          <GroupName>boot</GroupName>
           <Files>
             <File>
-              <FileName>opensafe.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\crypto\opensafe.c</FilePath>
+              <FileName>app.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\boot\app.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>hal</GroupName>
+          <Files>
+            <File>
+              <FileName>system_stm32f2xx.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\hal\system_stm32f2xx.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>startup</GroupName>
+          <Files>
+            <File>
+              <FileName>startup_stm32f2xx.s</FileName>
+              <FileType>2</FileType>
+              <FilePath>.\boot\startup_stm32f2xx.s</FilePath>
             </File>
           </Files>
         </Group>

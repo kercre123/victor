@@ -6,16 +6,19 @@
 #include "console.h"
 #include "contacts.h"
 #include "fixture.h"
+#include "flexflow.h"
 #include "hwid.h"
 #include "meter.h"
 #include "portable.h"
 #include "testcommon.h"
 #include "timer.h"
 
-#define HEAD_CMD_OPTS   (CMD_OPTS_DEFAULT)
-//#define HEAD_CMD_OPTS   (CMD_OPTS_LOG_ERRORS | CMD_OPTS_REQUIRE_STATUS_CODE) /*disable exceptions*/
-
 static headid_t headnfo;
+
+static uint32_t m_previous_esn = 0;
+uint32_t TestHeadGetPrevESN(void) {
+  return m_previous_esn;
+}
 
 bool TestHeadDetect(void)
 {
@@ -50,12 +53,8 @@ void TestHeadCleanup(void)
 
 void TestHeadDutProgram(void)
 {
-  const int timeout_s = 120 + 60; //XXX: first working version clocked in at ~120s. Add some margin.
+  const int timeout_s = 210 + 90; //XXX: DVT3 from LE helper clocked in at ~210s. Add some margin.
   char b[40]; int bz = sizeof(b);
-  
-  //XXX: get a unique id/sn for the head
-  srand( Timer::get() );
-  int head_id = (rand() << 16) | (rand() & 0xffff); //RAND_MAX is < 0xFFFFffff
   
   //Power cycle to reset DUT head
   Board::powerOff(PWR_VEXT);
@@ -87,22 +86,32 @@ void TestHeadDutProgram(void)
     }
   }
   
+  //provision ESN
+  headnfo.esn = g_fixmode == FIXMODE_HELPER1 ? 0 : fixtureGetSerial();
+  m_previous_esn = headnfo.esn; //even if programming fails, report the (now unusable) ESN
+  
   //helper head does the rest
-  cmdSend(CMD_IO_HELPER, snformat(b,bz,"dutprogram %u [id=%08x]", timeout_s, head_id), (timeout_s+10)*1000, HEAD_CMD_OPTS | CMD_OPTS_ALLOW_STATUS_ERRS );
+  snformat(b,bz,"dutprogram %u %08x %s", timeout_s, headnfo.esn, g_fixmode == FIXMODE_HELPER1 ? "helper" : "");
+  cmdSend(CMD_IO_HELPER, b, (timeout_s+10)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
   if( cmdStatus() != 0 )
   {
     //map programming error to appropriate fixture error
-    ConsolePrintf("programming failed: error %i\n", cmdStatus() );
-    throw ERROR_TESTPORT_CMD_FAILED;
+    switch( cmdStatus() )
+    {
+      case ERROR_OUT_OF_CLOUD_CERTS:
+        throw ERROR_OUT_OF_CLOUD_CERTS;
+      default:
+        throw ERROR_TESTPORT_CMD_FAILED;
+    }
   }
-  
-  //XXX: read esn from head (internal UUID)
-  headnfo.esn = head_id; //HEADID_ESN_EMPTY;
 }
 
 static void HeadFlexFlowReport(void)
 {
-  ConsolePrintf("<flex> ESN %08x\n", headnfo.esn);
+  char b[80]; const int bz = sizeof(b);
+  snformat(b,bz,"<flex> ESN %08x\n", headnfo.esn);
+  ConsoleWrite(b);
+  FLEXFLOW::write(b);
 }
 
 TestFunction* TestHead1GetTests(void)
@@ -113,6 +122,9 @@ TestFunction* TestHead1GetTests(void)
     NULL,
   };
   return m_tests;
+}
+TestFunction* TestHelper1GetTests(void) {
+  return TestHead1GetTests();
 }
 
 TestFunction* TestHead2GetTests(void)

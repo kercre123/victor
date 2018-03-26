@@ -66,7 +66,7 @@ const f32 FaceInfoScreenManager::kDefaultTextScale = 0.4f;
 namespace {
   // Number of tics that a wheel needs to be moving for before it registers
   // as a signal to move the menu cursor
-  const u32 kMenuCursorMoveCountThresh = 5;
+  const u32 kMenuCursorMoveCountThresh = 10;
   
   const f32 kWheelMotionThresh_mmps = 3.f;
   
