@@ -10,13 +10,14 @@ then
 fi                                                                                                  
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
-source ${TOPLEVEL}/project/victor/scripts/android_env.sh
+source ${TOPLEVEL}/project/victor/scripts/victor_env.sh
 
-DEVICE_IP=$($ADB shell ifconfig wlan0 | awk /"inet addr"/'{print $2}' | awk -F: '{printf("%s",$2);}')
-echo "DEVICE_IP = $DEVICE_IP"
+robot_set_host
+
+echo "ANKI_ROBOT_HOST = $ANKI_ROBOT_HOST"
 
 WEBOTS_WORLD="${TOPLEVEL}/simulator/worlds/cozmo2Viz.wbt"
 
 # modify webots world in-place
-sed -i '' "s/\# forcedRobotIP \"192.168.X.X\"/forcedRobotIP \"$DEVICE_IP\"/" $WEBOTS_WORLD
-sed -i '' "s/\# engineIP      \"192.168.X.X\"/engineIP      \"$DEVICE_IP\"/" $WEBOTS_WORLD
+sed -i '' "s/\# forcedRobotIP \"192.168.X.X\"/forcedRobotIP \"$ANKI_ROBOT_HOST\"/" $WEBOTS_WORLD
+sed -i '' "s/\# engineIP      \"192.168.X.X\"/engineIP      \"$ANKI_ROBOT_HOST\"/" $WEBOTS_WORLD
