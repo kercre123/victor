@@ -351,6 +351,13 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
 {
+  // in case we were interrupted before we had a chance to turn off backpack ligths, do so now ...
+  if ( _iVars.backpackLights && _dVars.lightsHandle.IsValid() )
+  {
+    BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
+    blc.StopLoopingBackpackLights( _dVars.lightsHandle );
+  }
+
   // we've done all we can, now it's up to the next behavior to consume the user intent
   GetBehaviorComp<UserIntentComponent>().SetUserIntentTimeoutEnabled( true );
 
@@ -550,7 +557,7 @@ void BehaviorReactToVoiceCommand::OnVictorListeningEnd()
 
   _dVars.isListening = false;
 
-  if ( _iVars.backpackLights )
+  if ( _iVars.backpackLights && _dVars.lightsHandle.IsValid() )
   {
     BodyLightComponent& blc = GetBEI().GetBodyLightComponent();
     blc.StopLoopingBackpackLights( _dVars.lightsHandle );
