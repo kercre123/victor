@@ -9,7 +9,8 @@ namespace Anki {
 
     namespace Robot {
 
-      Result Init();
+      Result Init(const int * shutdownSignal);
+
       void Destroy();
 
       Result step_MainExecution();

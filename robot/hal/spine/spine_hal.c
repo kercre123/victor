@@ -107,7 +107,7 @@ SpineErr hal_serial_open(const char* devicename, long baudrate)
 }
 
 
-int hal_serial_read(uint8_t* buffer, int len)   //->bytes_recieved
+int hal_serial_read(uint8_t* buffer, int len)   //->bytes_received
 {
 
   int result = read(gHal.fd, buffer, len);
@@ -189,7 +189,7 @@ static const uint8_t* spine_construct_header(PayloadId payload_type,  uint16_t p
 }
 
 
-//Function: Examines `buf[idx]` and determines if it is part of sync seqence.
+//Function: Examines `buf[idx]` and determines if it is part of sync sequence.
 //Prereq: The first `idx` chars in `buf` are partial valid sync sequence.
 //Returns: Length of partial valid sync sequence. possible values = 0..idx+1
 static int spine_sync(const uint8_t* buf, unsigned int idx)
@@ -252,7 +252,7 @@ SpineErr hal_init(const char* devicename, long baudrate)
 // Scan the whole payload for sync, to recover after dropped bytes,
 int hal_resync_partial(int start_offset, int len) {
    /*  ::: Preconditions :::
-       gHal.inbuffer contains len recieved bytes.
+       gHal.inbuffer contains len received bytes.
        the first start_offset bytes do not need to be scanned
        ::: Postconditions :::
        the first valid sync header and any following bytes up to `len`
@@ -286,7 +286,7 @@ int hal_resync_partial(int start_offset, int len) {
 
 
 //gathers most recently queued frame,
-//Spins until valid frame header is recieved.
+//Spins until valid frame header is received.
 const struct SpineMessageHeader* hal_read_frame()
 {
   static unsigned int index = 0;

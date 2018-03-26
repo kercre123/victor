@@ -76,12 +76,14 @@ ssize_t robot_io(spine_ctx_t spine, uint32_t sleepTimeMicroSec = 1000)
   return r;
 }
 
-Result spine_wait_for_first_frame(spine_ctx_t spine)
+Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
 {
   bool initialized = false;
   int read_count = 0;
 
-  while (!initialized) {
+  assert(shutdownSignal != nullptr);
+
+  while (!initialized && *shutdownSignal == 0) {
     ssize_t r = spine_parse_frame(spine, &frameBuffer_, sizeof(frameBuffer_), NULL);
 
     if (r < 0) {
@@ -115,12 +117,14 @@ Result spine_wait_for_first_frame(spine_ctx_t spine)
     read_count++;
   }
 
-  return RESULT_OK;
+  return (initialized ? RESULT_OK : RESULT_FAIL_IO_TIMEOUT);
 }
 
 
-Result HAL::Init()
+Result HAL::Init(const int * shutdownSignal)
 {
+  using Result = Anki::Result;
+
   // Set ID
   robotID_ = Anki::Cozmo::DEFAULT_ROBOT_ID;
 
@@ -150,9 +154,13 @@ Result HAL::Init()
 
     spine_set_mode(&spine_, RobotMode_RUN);
 
-    // Do we need to check for errors here?
     AnkiDebug("HAL.Init.WaitingForDataFrame", "");
-    (void) spine_wait_for_first_frame(&spine_);
+    const Result result = spine_wait_for_first_frame(&spine_, shutdownSignal);
+    if (RESULT_OK != result) {
+      AnkiError("HAL.Init.SpineWait", "Unable to synchronize spine (result %d)", result);
+      return result;
+    }
+
   }
 #else
   bodyData_ = &dummyBodyData_;
