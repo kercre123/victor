@@ -47,6 +47,7 @@ TcpSocketComms::~TcpSocketComms()
   
 bool TcpSocketComms::Init(UiConnectionType connectionType, const Json::Value& config)
 {
+  // TODO(Al): Put back once switchboard<->engine connection is local sockets
   // assert(connectionType == UiConnectionType::SdkOverTcp);
   
   const Json::Value& portValue = config[AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT];
