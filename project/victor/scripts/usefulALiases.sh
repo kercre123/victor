@@ -25,6 +25,7 @@ alias victor_build_run='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/vi
 
 alias victor_log='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_log.sh'
 alias victor_ble='GET_GIT_ROOT; node ${GIT_PROJ_ROOT}/tools/victor-ble-cli/index.js'
+alias victor_set_robot_key='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/tools/victor-ble-cli/vic_set_robot_key.sh'
 alias victor_addr2line='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/addr2line.sh'
 
 # If you have lnav...
