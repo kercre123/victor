@@ -38,6 +38,9 @@ CONTROLLER_ARGS_PLACEHOLDER = r'%COZMO_SIM_TEST%'
 COZMOBOT_PLACEHOLDER = r'%COZMOBOT%'
 GENERATED_WORLD_FILE_NAME = '__generated__.wbt'
 
+# Path to firewall control app
+SOCKETFILTERFW = os.path.join(os.sep + 'usr', 'libexec', 'ApplicationFirewall', 'socketfilterfw')
+
 # Name of user created certificate for signing webots executables to be
 # excepted by the firewall
 CERTIFICATE_NAME = "WebotsFirewall"
@@ -45,7 +48,7 @@ CERTIFICATE_NAME = "WebotsFirewall"
 class ThreadOutput(object):
   test_return_code = None
 
-class TemplateStringNotFoundException(Exception): 
+class TemplateStringNotFoundException(Exception):
   def __init__(self, template_string, source_data):
     UtilLog.error("Template string was not found in source data!")
     UtilLog.error("Template String: {0}\nSource Data: {1}".format(template_string, source_data))
@@ -110,7 +113,7 @@ def sudo_this(command, password):
 
   command (list) --
     Similar to the `command` parameter in os.Popen(), this list
-    conists of space seperated items that make up a regular bash command. ie.
+    consists of space separated items that make up a regular bash command. ie.
     `curl -O http://website.com/file` would be ["curl", "-O",
     "http://website.com/file"]
 
@@ -144,16 +147,14 @@ def firewall_cli(flags, password, sudo=True, executable_path=""):
     avaliable options.
 
   executable_path (optional) --
-    The path of executable for arugment of `--add`, `--unblock`, etc.
+    The path of executable for argument of `--add`, `--unblock`, etc.
   """
 
-  socketfilterfw_path = os.path.join(os.sep + 'usr', 'libexec', 'ApplicationFirewall', 'socketfilterfw')
-
   # Check that socketfilterfw exists and is executable
-  assert os.path.isfile(socketfilterfw_path)
-  assert os.access(socketfilterfw_path, os.X_OK)
+  assert os.path.isfile(SOCKETFILTERFW)
+  assert os.access(SOCKETFILTERFW, os.X_OK)
 
-  command = [socketfilterfw_path]
+  command = [SOCKETFILTERFW]
 
   # Tack on arguments
   # Difference in extend and append because one is a list and the other is a string
@@ -251,7 +252,7 @@ def sign_webot_executables(build_type, password):
 
   executables_folder = get_subpath(os.path.join("_build","mac"), build_type.name, "bin")
 
-  executables = glob.glob(os.path.join(executables_folder, 'webotsCtrl*'));
+  executables = glob.glob(os.path.join(executables_folder, 'webotsCtrl*'))
 
   codesign_command = [
     'codesign',
@@ -289,13 +290,46 @@ def build(build_type):
   build_command = [
           victor_build_script_path,
           '-p', 'mac',              # build the mac project (with webots sim controllers)
-          '-c', build_type.name 
+          '-c', build_type.name
           ]
 
   UtilLog.debug('build command {command}'.format(command=' '.join(build_command)))
 
   return subprocess.call(build_command) == 0
 
+def exec_this(command):
+  """
+  Run command as subprocess.
+  Takes list of ["name", "arg", "arg"...]
+  Returns output of executing "name arg arg ...".
+  """
+  print(' '.join(command))
+  output = util.File.evaluate(command)
+  output = output.decode('utf-8').rstrip('\n')
+  print(output)
+  return output
+
+def setup_exe(exe):
+  """
+  Execute commands to sign executable, then add it as a firewall exception
+  """
+  exec_this(['codesign', '-f', '-s', CERTIFICATE_NAME, exe])
+  output = exec_this([SOCKETFILTERFW, '--add', exe])
+  if 'already a part of the firewall' not in output:
+    print('You must run webotsTest.py --setupFirewall to add ' + exe)
+  output = exec_this([SOCKETFILTERFW, '--unblock', exe])
+  if 'is permitted' not in output:
+    print('You must run webotsTest.py --setupFirewall to unblock ' + exe)
+
+def setup_exe_list(exes):
+  if not is_firewall_enabled(''):
+    print('Firewall is not enabled. No need to sign executables.')
+    return
+  if not is_certificate_installed():
+    print('Firewall certificate is not installed. Unable to sign executables.')
+    return
+  for exe in exes:
+    setup_exe(exe)
 
 def run_webots(output, wbt_file_path, show_graphics, log_file_name):
   """Run an individual webots simulation and return the return code of the process through `output`.
@@ -354,13 +388,13 @@ def wait_until(condition_fn, timeout, period=0.25):
   return False
 
 def is_webots_running():
-  process = subprocess.Popen("ps -ax | grep [" + os.sep + "]" + os.path.join("Applications","Webots.app","webots"), 
+  process = subprocess.Popen("ps -ax | grep [" + os.sep + "]" + os.path.join("Applications","Webots.app","webots"),
                               shell=True, stdout=subprocess.PIPE)
   result = process.communicate()[0]
   if len(result) > 0:
     return True
   return False
-  
+
 def is_webots_not_running():
   return not is_webots_running()
 
@@ -504,7 +538,7 @@ def run_tests(tests, log_folder, show_graphics, default_timeout, forward_webots_
   log_file_paths = []
   total_error_count = 0
   total_warning_count = 0
-  
+
   # Keep track of how many times we get a seg fault from webots binary.
   # Allow this and retry the affected test up to the global max number of times.
   total_sigsegv_count = 0
@@ -531,9 +565,9 @@ def run_tests(tests, log_folder, show_graphics, default_timeout, forward_webots_
                                  CONTROLLER_ARGS_PLACEHOLDER, controller_args)
 
       # cozmo proto for Victor is CozmoBot2
-      generate_file_with_replace(GENERATED_FILE_PATH, 
+      generate_file_with_replace(GENERATED_FILE_PATH,
                                  GENERATED_FILE_PATH,
-                                 COZMOBOT_PLACEHOLDER, 
+                                 COZMOBOT_PLACEHOLDER,
                                  "DEF cozmoBot CozmoBot2")
 
       num_retries_counting_up = -1 # only needed for teamcity variable logging
@@ -562,7 +596,7 @@ def run_tests(tests, log_folder, show_graphics, default_timeout, forward_webots_
 
         # Setup the webots thread to run the test - thread should exit before the join timeout
         output = ThreadOutput()
-        run_webots_thread = threading.Thread(target=run_webots, args=[output, GENERATED_FILE_PATH, 
+        run_webots_thread = threading.Thread(target=run_webots, args=[output, GENERATED_FILE_PATH,
                                                                       show_graphics, log_file_name])
         run_webots_thread.start()
         run_webots_thread.join(timeout)
@@ -571,11 +605,11 @@ def run_tests(tests, log_folder, show_graphics, default_timeout, forward_webots_
         (crash_count, error_count, warning_count) = parse_output(forward_webots_log_level, log_file_name)
 
         # Combines the webots test output file and the devLog directory into a human readable format
-        didFail = any([(fail_on_error and (error_count > 0)), (crash_count > 0), 
+        didFail = any([(fail_on_error and (error_count > 0)), (crash_count > 0),
                           run_webots_thread.isAlive(), (output.test_return_code is None), (output.test_return_code != 0)])
 
-        generate_combined_webots_devLog(log_folder, log_file_name, 
-                                        didFail, test_controller, world_file, 
+        generate_combined_webots_devLog(log_folder, log_file_name,
+                                        didFail, test_controller, world_file,
                                         cur_time)
 
         # Check if timeout exceeded
@@ -612,16 +646,16 @@ def run_tests(tests, log_folder, show_graphics, default_timeout, forward_webots_
           UtilLog.error('There was an error in the webots log.')
           continue
 
-        test_result = ResultCode.succeeded  # pylint: disable=redefined-variable-type
+        test_result = ResultCode.succeeded
 
       total_error_count += error_count
       total_warning_count += warning_count
 
       UtilLog.info("##teamcity[buildStatisticValue key='WebotsNumRetries_{test_controller}_{world_file}' value='{num_of_retries}']".format(
-                      test_controller=test_controller, world_file=world_file, 
+                      test_controller=test_controller, world_file=world_file,
                       num_of_retries=num_retries_counting_up))
 
-      UtilLog.info("Test {test_controller} {test_result}".format(test_controller=test_controller, 
+      UtilLog.info("Test {test_controller} {test_result}".format(test_controller=test_controller,
                                                                  test_result=test_result.name))
       test_statuses[test_controller][world_file] = test_result
 
@@ -634,8 +668,8 @@ def generate_combined_webots_devLog(log_folder, log_file_name, didFail, test_con
   """ Combines the webots test output and the devLog into a single human readable foldername
 
       This function relies on the fact that we zip up previous devLogs so only the devLog
-      which was generated in assosiation with the log file is still a folder
-      and that the dev_log_folder path is stable.  
+      which was generated in association with the log file is still a folder
+      and that the dev_log_folder path is stable.
       The two asserts in this function ensure that those assumptions are true.
   """
 
@@ -711,7 +745,7 @@ def parse_output(log_level, log_file):
         UtilLog.info(line)
     elif log_level is ForwardWebotsLogLevel.full_forwarding:
       UtilLog.info(line)
-    
+
     # Stop parsing the output if we encounter the end of the webots run, since
     # there can be nonsense error messages while processes are terminating.
     if 'UiGameController.QuitWebots.Result' in line:
@@ -742,7 +776,7 @@ def get_log_file_path(log_folder, test_name, world_file_name, timestamp="", retr
 
   timestamp (string, optional)--
     Timestamp of the test run. Will be included in the file name if provided.
-    
+
   retry_number (integer)--
     Which retry of the run this is (0 if it is the original run).
   """
@@ -750,7 +784,7 @@ def get_log_file_path(log_folder, test_name, world_file_name, timestamp="", retr
   retry_string = ""
   if retry_number > 0:
     retry_string = "_retry{0}".format(retry_number)
-    
+
   if timestamp == "":
     file_name = "webots_out_{0}_{1}{2}.txt".format(test_name, world_file_name, retry_string)
   else:
@@ -820,13 +854,18 @@ def main():
                       dest='password',
                       action='store',
                       help="""Your password is needed to add the webots executables to the firewall exception list. Can
-                      be omitted if your firewall is disabled. It is requested in plaintext so this script can be re-ran 
+                      be omitted if your firewall is disabled. It is requested in plaintext so this script can be re-ran
                       easily and also for build server/steps reasons.""")
-                      
+
   parser.add_argument('--setupFirewall',
                       dest='setupFirewallAndExit',
                       action='store_true',
                       help="""Add the webots executables to the firewall exception list and exit.""")
+
+  parser.add_argument('--setup-exe',
+                      dest='setup_exe_list',
+                      action='append',
+                      help="""Add webots executable to firewall exception list""")
 
   parser.add_argument('--forwardWebotsLogLevel',
                       dest='log_level',
@@ -859,7 +898,7 @@ def main():
                       action='store_false',
                       help="""If set, a test will not automatically fail just because an error
                       appears in its webots log.""")
-                      
+
   parser.add_argument('--doNotQuitWebots',
                       dest='quit_webots_after_test',
                       default='true',
@@ -884,6 +923,10 @@ def main():
 
   UtilLog.debug(options)
 
+  if options.setup_exe_list:
+    setup_exe_list(options.setup_exe_list)
+    sys.exit(0)
+
   # build the project first
   if not build(options.build_type):
     UtilLog.error("build failed")
@@ -893,7 +936,7 @@ def main():
     print("Enter your password to set up firewall exceptions:")
     sign_webot_executables(options.build_type, getpass.getpass()) # prompt for password
     sys.exit(0)
-  
+
   if options.password:
     sign_webot_executables(options.build_type, options.password)
 
@@ -977,7 +1020,7 @@ def main():
 
   if options.num_runs > 1:
     UtilLog.info("{failed}/{total} ({percentage:.1f}%) runs failed".format(
-                  failed=num_of_failed_runs, total=num_of_total_runs, 
+                  failed=num_of_failed_runs, total=num_of_total_runs,
                   percentage=float(num_of_failed_runs)/num_of_total_runs*100))
 
     results_passed_msg=''
@@ -1010,7 +1053,7 @@ def main():
     slack_url = '{}'.format(os.environ['SLACK_TOKEN_URL'])
     cmd = ['curl', '-X', 'POST', '-d', 'payload={}'.format(payload), slack_url]
     process = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
+    dummy_stdout, dummy_stderr = process.communicate()
   return return_value
 
 
