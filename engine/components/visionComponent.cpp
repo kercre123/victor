@@ -88,7 +88,9 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D, "Vision.General", false);
   CONSOLE_VAR(bool, kDrawMarkerNames,              "Vision.General", false); // In viz camera view
   CONSOLE_VAR(bool, kDisplayUndistortedImages,     "Vision.General", false);
-  CONSOLE_VAR(bool, kDisplayObjectDetectionLabels, "Vision.General", false); // when drawing images to screen
+    
+  CONSOLE_VAR(bool, kEnableMirrorMode,             "Vision.General", false);
+  CONSOLE_VAR(bool, kDisplayObjectDetectionLabels, "Vision.General", false); // when in mirror mode
   
   // Hack to continue drawing detected objects for a bit after they are detected
   // since object detection is slow
@@ -515,8 +517,9 @@ namespace Cozmo {
       else
       {
         // At this point, we have an image + robot state, continue processing
+        
         // "Mirror mode": draw images we process to the robot's screen
-        if(_drawImagesToScreen)
+        if(_drawImagesToScreen || kEnableMirrorMode)
         {
           // TODO: Add this as a lambda you can register with VisionComponent for things you want to
           //       do with image when captured?

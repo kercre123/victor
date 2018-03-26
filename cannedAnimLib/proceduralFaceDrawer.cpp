@@ -718,6 +718,7 @@ namespace Cozmo {
       }
       
       Rectangle<s32> eyesROI(colMin, rowMin, colMax-colMin+1, rowMax-rowMin+1);
+      output.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
       output.FillWith(0);
       Vision::ImageRGB565 roi = output.GetROI(eyesROI);
       faceImg.GetROI(eyesROI).ConvertHSV2RGB565(roi);
