@@ -44,7 +44,7 @@ namespace {
   const float kFullyChargedThresholdVolts = 4.0f;
   
   // Voltage below which battery is considered in a low charge state
-  const float kLowBatteryThresholdVolts = 3.5f;
+  const float kLowBatteryThresholdVolts = 3.65f;
 }
 
 BatteryComponent::BatteryComponent()
