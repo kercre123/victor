@@ -1,4 +1,5 @@
 #!/bin/bash
+cd "$(dirname ${BASH_SOURCE[0]})"
 
 #files, config
 keil=/mnt/c/Keil/UV4/UV4.exe
@@ -16,6 +17,10 @@ if $tasklist | grep -iq "UV4.exe"; then
   echo close all instances of UV4 before build
   exit 1
 fi
+
+#git (relative) list of modified files
+#uncomittedfilez=$(git diff-files --relative --name-only --ignore-space-at-eol)
+uncomittedfilez=$(git ls-files -m)
 
 #read release version
 version=$(grep -oP '#define\s+APP_RELEASE_VERSION\s+\K([0-9]+)' $vers_file)
@@ -57,7 +62,9 @@ echo $(printf build-err:%d $builderr) >> $manifest
 echo $(printf branch:%s $(git rev-parse --abbrev-ref HEAD)) >> $manifest
 echo $(printf sha-1:%s $(git rev-parse HEAD)) >> $manifest
 #if [ "$(git diff-index --cached --quiet HEAD --ignore-submodules --)" == "0" ]; then isclean=1; else isclean=0; fi
-#echo $(printf working-tree-clean:%d $isclean) >> $manifest
+if [ "$uncomittedfilez" == "" ]; then isclean=1; else isclean=0; fi
+echo $(printf working-tree-clean:%d $isclean) >> $manifest
+echo $(printf working-tree-changes:%s "$uncomittedfilez") >> $manifest
 
 #package for shipment
 if [ $builderr = 0 -o $builderr = 1 ]; then #Note: keil return 1=warnings-only
