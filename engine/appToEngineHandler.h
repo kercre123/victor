@@ -40,9 +40,9 @@ class MessageEngineToGame;
 class MessageGameToEngine;
 }
   
-// namespace WebService {
-// class WebService;
-// }
+namespace WebService {
+class WebService;
+}
 
   
 class AppToEngineHandler : private Util::noncopyable
@@ -50,7 +50,7 @@ class AppToEngineHandler : private Util::noncopyable
 public:
   AppToEngineHandler();
   
-  void Init(/*WebService::WebService* ws, */IExternalInterface* ei);
+  void Init(WebService::WebService* ws, IExternalInterface* ei);
   
   // webserver will call this with everything after the ? in the url
   std::string ParseAppToEngineRequest( const std::string& params ) const;
@@ -68,7 +68,7 @@ private:
   // assigns str to data with the best guess of type (string, int, or float)
   void AssignBestGuess( Json::Value& data, const std::string& str ) const;
   
-  // WebService::WebService* _webService = nullptr;
+  WebService::WebService* _webService = nullptr;
   
   IExternalInterface* _externalInterface = nullptr;
   

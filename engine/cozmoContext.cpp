@@ -19,7 +19,7 @@
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/random/randomGenerator.h"
-// #include "webServerProcess/src/webService.h"
+#include "webServerProcess/src/webService.h"
 
 
 namespace Anki {
@@ -48,7 +48,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _gameLogTransferTask(new Anki::Util::GameLogTransferTask())
   , _cozmoExperiments(new CozmoExperiments(this))
   , _perfMetric(new PerfMetric(this))
-  // , _webService(new WebService::WebService())
+  , _webService(new WebService::WebService())
   , _appToEngineHandler( new AppToEngineHandler() )
   , _threadIdHolder(new ThreadIDInternal)
 {
@@ -61,7 +61,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   // This needs to happen after the audio server is set up
   _voiceCommandComponent.reset(new VoiceCommand::VoiceCommandComponent(*this));
 
-  _appToEngineHandler->Init(/* _webService.get(), */_externalInterface );
+  _appToEngineHandler->Init( _webService.get(), _externalInterface );
 }
 
 

@@ -63,7 +63,7 @@ if (ANDROID)
 
   target_link_libraries(vic-webserver
     PRIVATE
-    #victor_web_library
+    victor_web_library
     cti_common
     util
     ${PLATFORM_LIBS}

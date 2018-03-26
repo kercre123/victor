@@ -52,9 +52,9 @@ class VizManager;
 class PerfMetric;
 class AppToEngineHandler;
 
-// namespace WebService {
-//   class WebService;
-// }
+namespace WebService {
+  class WebService;
+}
 
 namespace VoiceCommand {
   class VoiceCommandComponent;
@@ -100,7 +100,7 @@ public:
   VoiceCommand::VoiceCommandComponent*  GetVoiceCommandComponent() const { return _voiceCommandComponent.get(); }
   CozmoExperiments*                     GetExperiments() const { return _cozmoExperiments.get(); }
   PerfMetric*                           GetPerfMetric() const { return _perfMetric.get(); }
-  void*               GetWebService() const { return nullptr;}//_webService.get(); }
+  WebService::WebService*               GetWebService() const { return _webService.get(); }
 
   bool  IsInSdkMode() const;
   void  SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const;
@@ -137,7 +137,7 @@ private:
   std::unique_ptr<VoiceCommand::VoiceCommandComponent>  _voiceCommandComponent;
   std::unique_ptr<CozmoExperiments>                     _cozmoExperiments;
   std::unique_ptr<PerfMetric>                           _perfMetric;
-  // std::unique_ptr<WebService::WebService>               _webService;
+  std::unique_ptr<WebService::WebService>               _webService;
   std::unique_ptr<AppToEngineHandler>                   _appToEngineHandler;
 
   // for holding the thread id (and avoiding needed to include the .h here)

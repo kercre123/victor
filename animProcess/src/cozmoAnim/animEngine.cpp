@@ -25,7 +25,7 @@
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-// #include "webServerProcess/src/webService.h"
+#include "webServerProcess/src/webService.h"
 
 #include "osState/osState.h"
 
@@ -100,8 +100,8 @@ Result AnimEngine::Init()
   auto * audioInput = static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput(regId));
   AnimProcessMessages::Init(this, _animationStreamer.get(), audioInput, _context.get());
 
-  // _context->GetWebService()->Start(_context->GetDataPlatform(),
-  //                                  _context->GetDataLoader()->GetWebServerAnimConfig());
+  _context->GetWebService()->Start(_context->GetDataPlatform(),
+                                   _context->GetDataLoader()->GetWebServerAnimConfig());
   FaceInfoScreenManager::getInstance()->Init(_context.get(), _animationStreamer.get());
 
   LOG_INFO("AnimEngine.Init.Success","Success");
@@ -144,7 +144,7 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
   
   BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
 
-  // _context->GetWebService()->Update();
+  _context->GetWebService()->Update();
   
   Result result = AnimProcessMessages::Update(currTime_nanosec);
   if (RESULT_OK != result) {

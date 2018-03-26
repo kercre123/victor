@@ -92,7 +92,7 @@ FaceInfoScreenManager::FaceInfoScreenManager()
 , _headTriggerReady(false)
 , _debugInfoScreensUnlocked(false)
 , _currScreen(nullptr)
-// , _webService(nullptr)
+, _webService(nullptr)
 {
   _scratchDrawingImg->Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
 
@@ -105,7 +105,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   DEV_ASSERT(context != nullptr, "FaceInfoScreenManager.Init.NullContext");
 
   // allow us to send debug info out to the web server
-  // _webService = context->GetWebService();
+  _webService = context->GetWebService();
   
   #define ADD_SCREEN(name, gotoScreen) \
     _screenMap.emplace(std::piecewise_construct, \
@@ -411,35 +411,35 @@ void FaceInfoScreenManager::DrawConfidenceClock(
 
 
   // always send web server data until we feel this is too much a perf hit
-  // if (nullptr != _webService)
-  // {
-  //   using namespace std::chrono;
+  if (nullptr != _webService)
+  {
+    using namespace std::chrono;
 
-  //   // if we send this data every tick, we crash the robot;
-  //   // only send the web data every X seconds
-  //   static double nextWebServerUpdateTime = 0.0;
-  //   const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
-  //   if (currentTime > nextWebServerUpdateTime)
-  //   {
-  //     nextWebServerUpdateTime = currentTime + 0.150;
+    // if we send this data every tick, we crash the robot;
+    // only send the web data every X seconds
+    static double nextWebServerUpdateTime = 0.0;
+    const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+    if (currentTime > nextWebServerUpdateTime)
+    {
+      nextWebServerUpdateTime = currentTime + 0.150;
 
-  //     Json::Value webData;
-  //     webData["confidence"] = micData.confidence;
-  //     webData["dominant"] = micData.direction;
-  //     webData["maxConfidence"] = maxConf;
-  //     webData["triggerDetected"] = triggerRecognized;
-  //     webData["delayTime"] = delayTime_ms;
+      Json::Value webData;
+      webData["confidence"] = micData.confidence;
+      webData["dominant"] = micData.direction;
+      webData["maxConfidence"] = maxConf;
+      webData["triggerDetected"] = triggerRecognized;
+      webData["delayTime"] = delayTime_ms;
 
-  //     Json::Value& directionValues = webData["directions"];
-  //     for ( float confidence : micData.confidenceList )
-  //     {
-  //       directionValues.append(confidence);
-  //     }
+      Json::Value& directionValues = webData["directions"];
+      for ( float confidence : micData.confidenceList )
+      {
+        directionValues.append(confidence);
+      }
 
-  //     const std::string moduleName = "micdata";
-  //     _webService->SendToWebViz( moduleName, webData );
-  //   }
-  // }
+      const std::string moduleName = "micdata";
+      _webService->SendToWebViz( moduleName, webData );
+    }
+  }
 
   if (GetCurrScreenName() != ScreenName::MicDirectionClock)
   {
