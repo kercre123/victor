@@ -37,10 +37,15 @@ public:
   virtual bool WantsToBeActivatedBehavior() const override;
 
   // Notify the behavior that it should end the looping animation when it finishes
-  void RequestLoopEnd() { _lifetimeParams.shouldLoopEnd = true; }
+  void RequestLoopEnd() { _dVars.shouldLoopEnd = true; }
 
 protected:
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{}
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+    modifiers.behaviorAlwaysDelegates         = false;
+  }
+  
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
@@ -55,22 +60,28 @@ private:
     GetOut
   };
 
-  struct InstanceParams {
-    AnimationTrigger getInTrigger  = AnimationTrigger::Count;
-    AnimationTrigger loopTrigger   = AnimationTrigger::Count;
-    AnimationTrigger getOutTrigger = AnimationTrigger::Count;
-    AnimationTrigger emergencyGetOutTrigger = AnimationTrigger::Count;
+  struct InstanceConfig {
+    InstanceConfig();
+    AnimationTrigger getInTrigger;
+    AnimationTrigger loopTrigger;
+    AnimationTrigger getOutTrigger;
+    AnimationTrigger emergencyGetOutTrigger;
+    float            loopInterval_s;
+    bool             checkEndConditionDuringAnim;
+    uint8_t          tracksToLock;
+
     IBEIConditionPtr endLoopCondition;
-    bool             checkEndConditionDuringAnim = true;
   };
 
-  struct LifetimeParams {
-    BehaviorStage stage = BehaviorStage::GetIn;
-    bool shouldLoopEnd = false;
+  struct DynamicVariables {
+    DynamicVariables();
+    BehaviorStage stage;
+    bool shouldLoopEnd;
+    float nextLoopTime_s;
   };
 
-  InstanceParams _instanceParams;
-  LifetimeParams _lifetimeParams;
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
 
   void TransitionToGetIn();
   void TransitionToLoop();

@@ -31,7 +31,7 @@ namespace{
 const char* kFaceSelectionPriorityKey    = "faceSelectionPriority";
 const float kHighValuePriority           = 1000.0f;
 const float kLowValueTieBreaker          = 1.0f;
-const char* kDistToFaceAlreadyHere_mmKey = "distToFaceAlreadyHere_mm";
+const char* kDistToFaceAlreadyHereKey    = "distToFaceAlreadyHere_mm";
 const char* kPreferMicDirectionKey       = "preferMicDirection";
 }
 
@@ -46,10 +46,20 @@ BehaviorComeHere::BehaviorComeHere(const Json::Value& config)
   JsonTools::GetValueOptional(config, kPreferMicDirectionKey, _params.preferMicData);
 
   // get dist in mm and then square it
-  JsonTools::GetValueOptional(config, kDistToFaceAlreadyHere_mmKey, _params.distAlreadyHere_mm_sqr);
+  JsonTools::GetValueOptional(config, kDistToFaceAlreadyHereKey, _params.distAlreadyHere_mm_sqr);
   _params.distAlreadyHere_mm_sqr = pow(_params.distAlreadyHere_mm_sqr, 2.f);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorComeHere::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kFaceSelectionPriorityKey,
+    kPreferMicDirectionKey,
+    kDistToFaceAlreadyHereKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorComeHere::OnBehaviorActivated()
@@ -69,7 +79,7 @@ void BehaviorComeHere::TurnTowardsMicDirection()
 {
   DEBUG_SET_STATE(TurnTowardsMicDirection);
   // Calculate radians to turn based on mic data
-  MicDirectionHistory::DirectionIndex dirIdx = GetBEI().GetMicDirectionHistory().GetRecentDirection();
+  MicDirectionIndex dirIdx = GetBEI().GetMicDirectionHistory().GetRecentDirection();
   dirIdx = dirIdx < 6 ? dirIdx : -(dirIdx - 6);
   const float radiansPerIdx = (2.0f/12.0f);
   const bool isAbsolute = false;
@@ -91,7 +101,7 @@ void BehaviorComeHere::TurnTowardsFace()
     }
   }
 
-  const auto& faceSelectionComp = GetBEI().GetAIComponent().GetFaceSelectionComponent();
+  const auto& faceSelectionComp = GetAIComp<FaceSelectionComponent>();
   // Select face based on priority penalties
   FaceSelectionComponent::FaceSelectionFactorMap map;
   for(auto& priority: _facePriorities){

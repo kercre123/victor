@@ -21,6 +21,8 @@ func main() {
 	infile := flag.String("file", "", "wav file to open")
 	makeproc := flag.Bool("harness", false, "create cloud process harness inside this")
 	verbose := flag.Bool("verbose", false, "enable verbose logging")
+	compress := flag.Bool("compress", false, "do compression in harness")
+	ms := flag.Bool("ms", false, "use microsoft instead of google")
 	flag.Parse()
 
 	if *infile == "" {
@@ -63,7 +65,11 @@ func main() {
 	var sender cloudproc.Sender
 	if *makeproc {
 		cloudproc.SetVerbose(*verbose)
-		proc, err := harness.CreateMemProcess()
+		options := []cloudproc.Option{cloudproc.WithCompression(*compress)}
+		if *ms {
+			options = append(options, cloudproc.WithHandler(cloudproc.HandlerMicrosoft))
+		}
+		proc, err := harness.CreateMemProcess(options...)
 		if err != nil {
 			fmt.Println("Couldn't create test cloud process:", err)
 			return
@@ -90,7 +96,8 @@ func main() {
 	}
 
 	// simulate real-time recording and delay between each send
-	interval := time.Millisecond * (1000 / cloudproc.ChunkHz)
+	const chunkMs = 60
+	interval := time.Millisecond * chunkMs
 	nextSend := time.Now().Add(interval)
 
 	// send hotword
@@ -98,13 +105,14 @@ func main() {
 	sender.SendHotword()
 	buf := data
 	sent := 0
-	for len(buf) >= cloudproc.ChunkSamples {
+	const chunkSamples = 16000 / 1000 * chunkMs
+	for len(buf) >= chunkSamples {
 		sleepTarget := nextSend.Sub(time.Now())
 		nextSend = nextSend.Add(interval)
 		time.Sleep(sleepTarget)
 
-		temp := buf[:cloudproc.ChunkSamples]
-		buf = buf[cloudproc.ChunkSamples:]
+		temp := buf[:chunkSamples]
+		buf = buf[chunkSamples:]
 
 		data := &bytes.Buffer{}
 		binary.Write(data, binary.LittleEndian, temp)
@@ -117,4 +125,5 @@ func main() {
 		fmt.Println("\rSent:", sent, "samples")
 	}
 	fmt.Println("Done sending, exiting")
+
 }

@@ -76,19 +76,22 @@ struct DockingErrorSignal;
     // IDependencyManagedComponent functions
     //////
     virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
-    // Maintain the chain of initializations currently in robot - it might be possible to
-    // change the order of initialization down the line, but be sure to check for ripple effects
-    // when changing this function
     virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
-      dependencies.insert(RobotComponentID::Movement);
+      dependencies.insert(RobotComponentID::CozmoContextWrapper);
     };
-    virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+    virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override {
+      components.insert(RobotComponentID::CozmoContextWrapper);
+    };
+
+    virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
+      dependencies.insert(RobotComponentID::Movement);
+      // Applies the scheduling consequences of the last frame's subscriptions before ticking VisionComponent
+      dependencies.insert(RobotComponentID::VisionScheduleMediator);
+    };
+    virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
     //////
     // end IDependencyManagedComponent functions
     //////
-
-    
-    Result Init(const Json::Value& config);
 
     // SetNextImage does nothing until enabled
     void Enable(bool enable) { _enabled = enable; }
@@ -100,9 +103,7 @@ struct DockingErrorSignal;
     void SetCameraCalibration(std::shared_ptr<Vision::CameraCalibration> camCalib);
     
     bool IsDisplayingProcessedImagesOnly() const;
-    
-    Result Update();
-    
+        
     // Provide next image for processing, with corresponding robot state.
     // In synchronous mode, the image is processed immediately. In asynchronous
     // mode, it will be processed as soon as the current image is completed.
@@ -258,11 +259,17 @@ struct DockingErrorSignal;
     Result EraseFace(Vision::FaceID_t faceID);
     void   EraseAllFaces();
     
+    // Get a list of names and their IDs
+    void RequestEnrolledNames();
+    
     // Will assign a new name to a given face ID. The old name is provided as a
     // safety measure: the rename will only happen if the given old name matches
     // the one currently assigned to faceID. Otherwise, failure is returned.
     // On success, a RobotLoadedKnownFace message with the new ID/name pairing is broadcast.
     Result RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName);
+    
+    // Returns true if the provided name has been enrolled
+    bool IsNameTaken(const std::string& name);
     
     // Load/Save face album data to/from robot's NVStorage
     Result SaveFaceAlbumToRobot();
@@ -382,6 +389,9 @@ struct DockingErrorSignal;
     std::vector<Signal::SmartHandle> _signalHandles;
     
     std::map<f32,Matrix_3x3f> _groundPlaneHomographyLUT; // keyed on head angle in radians
+
+
+    void ReadVisionConfig(const Json::Value& config);
     void PopulateGroundPlaneHomographyLUT(f32 angleResolution_rad = DEG_TO_RAD(0.25f));
     
     void Processor();

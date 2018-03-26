@@ -51,6 +51,7 @@ protected:
   BehaviorPickUpCube(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
@@ -68,13 +69,15 @@ private:
   };
 
   struct InstanceConfig{
-    int pickupRetryCount = 1;
+    InstanceConfig();
+    int pickupRetryCount;
   };
 
   struct DynamicVariables{
+    DynamicVariables();
     ObjectID targetBlockID;
-    bool idSetExternally = false;
-    int pickupRetryCount = 0;
+    bool     idSetExternally;
+    int      pickupRetryCount;
   };
 
   InstanceConfig _iConfig;

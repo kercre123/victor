@@ -53,11 +53,11 @@ UserIntentComponent::UserIntentComponent(const Robot& robot, const Json::Value& 
   
   // setup cloud intent handler
   const auto& serverName = GetServerName( robot );
-  _server.reset( new BehaviorComponentCloudServer( std::bind( &UserIntentComponent::OnCloudData,
-                                                              this,
-                                                              std::placeholders::_1),
-                                                   serverName ) );
-  
+  _server.reset( new BehaviorComponentCloudServer( _context, std::bind( &UserIntentComponent::OnCloudData,
+                                                                        this,
+                                                                        std::placeholders::_1),
+                                                                        serverName ) );
+
   // setup trigger word handler
   auto triggerWordCallback = [this]( const AnkiEvent<RobotInterface::RobotToEngine>& event ){
     SetTriggerWordPending();
@@ -206,10 +206,6 @@ UserIntent* UserIntentComponent::TakePreservedUserIntentOwnership(UserIntentTag 
   });
   if( it != _preservedIntents.end() ) {
     UserIntent* intent = it->intent.release();
-    ANKI_VERIFY( intent != nullptr,
-                 "UserIntentComponent.TakePreservedUserIntentOwnership.AlreadyClaimed",
-                 "Intent '%s' has been claimed already",
-                 UserIntentTagToString(userIntent) );
     return intent;
   } else {
     PRINT_NAMED_WARNING( "UserIntentComponent.TakePreservedUserIntentOwnership.NotFound",
@@ -278,6 +274,16 @@ void UserIntentComponent::SetUserIntentPending(UserIntent&& userIntent)
   }
 
   _pendingIntentTick = BaseStationTimer::getInstance()->GetTickCount();
+  _pendingIntentTimeoutEnabled = true;
+}
+
+void UserIntentComponent::SetUserIntentTimeoutEnabled(bool isEnabled)
+{
+  // if we're re-enabling the timeout warning, reset the tick count
+  if( isEnabled && !_pendingIntentTimeoutEnabled ) {
+    _pendingIntentTick = BaseStationTimer::getInstance()->GetTickCount();
+  }
+  _pendingIntentTimeoutEnabled = isEnabled;
 }
 
 void UserIntentComponent::SetCloudIntentPending(const std::string& cloudIntent)
@@ -366,7 +372,7 @@ bool UserIntentComponent::SetCloudIntentPendingFromJSON(const std::string& cloud
   return true;
 }
 
-void UserIntentComponent::Update()
+void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
 {
   
   {
@@ -400,20 +406,22 @@ void UserIntentComponent::Update()
   }
 
   if( _pendingIntent != nullptr ) {
-    const size_t dt = currTick - _pendingIntentTick;
-    if( dt >= kMaxTicksToWarn ) {
-      PRINT_NAMED_WARNING("UserIntentComponent.Update.PendingIntentNotCleared.Warn",
-                          "Intent '%s' has been pending for %zu ticks",
+    if( _pendingIntentTimeoutEnabled ) {
+      const size_t dt = currTick - _pendingIntentTick;
+      if( dt >= kMaxTicksToWarn ) {
+        PRINT_NAMED_WARNING("UserIntentComponent.Update.PendingIntentNotCleared.Warn",
+                            "Intent '%s' has been pending for %zu ticks",
+                            UserIntentTagToString(_pendingIntent->GetTag()),
+                            dt);
+      }
+      if( dt >= kMaxTicksToClear ) {
+        PRINT_NAMED_ERROR("UserIntentComponent.Update.PendingIntentNotCleared.ForceClear",
+                          "Intent '%s' has been pending for %zu ticks, forcing a clear",
                           UserIntentTagToString(_pendingIntent->GetTag()),
                           dt);
-    }
-    if( dt >= kMaxTicksToClear ) {      
-      PRINT_NAMED_ERROR("UserIntentComponent.Update.PendingIntentNotCleared.ForceClear",
-                        "Intent '%s' has been pending for %zu ticks, forcing a clear",
-                        UserIntentTagToString(_pendingIntent->GetTag()),
-                        dt);
-      _pendingIntent.reset();
-      _wasIntentUnclaimed = true;
+        _pendingIntent.reset();
+        _wasIntentUnclaimed = true;
+      }
     }
   }
   

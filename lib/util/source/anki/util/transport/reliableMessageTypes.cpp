@@ -54,9 +54,9 @@ bool IsMutlipleMessagesType(EReliableMessageType messageType)
   
 const char* ReliableMessageTypeToString(EReliableMessageType messageType)
 {
-#ifdef SHIPPING
+#ifdef NDEBUG
   return "";
-#else // SHIPPING
+#else // NDEBUG
   switch(messageType)
   {
     case eRMT_Invalid:                      break;
@@ -75,7 +75,7 @@ const char* ReliableMessageTypeToString(EReliableMessageType messageType)
   }
   
   return "Invalid";
-#endif // SHIPPING
+#endif // NDEBUG
 }
   
 bool IsValidMessageType(EReliableMessageType messageType)

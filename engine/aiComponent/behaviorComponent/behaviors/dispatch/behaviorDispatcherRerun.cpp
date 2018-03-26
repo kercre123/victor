@@ -26,7 +26,9 @@ namespace Cozmo {
 namespace{
 static const char* kConfigKeyDelegateID = "delegateID";
 static const char* kConfigKeyNumRuns = "numRuns";
+static const char* kBehaviorsKey = "behaviors";
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Json::Value BehaviorDispatcherRerun::CreateConfig(BehaviorID newConfigID, BehaviorID delegateID, const int numRuns)
@@ -40,17 +42,30 @@ Json::Value BehaviorDispatcherRerun::CreateConfig(BehaviorID newConfigID, Behavi
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDispatcherRerun::InstanceConfig::InstanceConfig()
+{
+  numRuns = 0;
+  delegateID = BEHAVIOR_ID(Wait);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDispatcherRerun::DynamicVariables::DynamicVariables()
+{
+  numRunsRemaining = 0;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDispatcherRerun::BehaviorDispatcherRerun(const Json::Value& config)
 : ICozmoBehavior(config)
-, _params()
-, _numRunsRemaining(0)
 {
-  _params._delegateID = BehaviorTypesWrapper::BehaviorIDFromString(
+  _iConfig.delegateID = BehaviorTypesWrapper::BehaviorIDFromString(
     JsonTools::ParseString(config,
                            kConfigKeyDelegateID,
                            "BehaviorDispatcherRerun.Constructor.NoDelegateID"));
   
-  _params._numRuns = JsonTools::ParseInt8(config, kConfigKeyNumRuns,
+  _iConfig.numRuns = JsonTools::ParseInt8(config, kConfigKeyNumRuns,
                                           "BehaviorDispatcherRerun.Constructor.numRunsNotSpecified");       
 }
 
@@ -60,20 +75,30 @@ BehaviorDispatcherRerun::~BehaviorDispatcherRerun()
 {
   
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherRerun::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kBehaviorsKey,
+    kConfigKeyDelegateID,
+    kConfigKeyNumRuns,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherRerun::InitBehavior()
 {
-  _delegatePtr = GetBEI().GetBehaviorContainer().FindBehaviorByID(_params._delegateID);
+  _iConfig.delegatePtr = GetBEI().GetBehaviorContainer().FindBehaviorByID(_iConfig.delegateID);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherRerun::OnBehaviorActivated()
 {
-  _numRunsRemaining = _params._numRuns;
-  if(_delegatePtr != nullptr){
+  _dVars.numRunsRemaining = _iConfig.numRuns;
+  if(_iConfig.delegatePtr != nullptr){
     CheckRerunState();
   }
 }
@@ -94,17 +119,17 @@ void BehaviorDispatcherRerun::CheckRerunState()
                  "")){
     auto& delegationComp = GetBEI().GetDelegationComponent();
     if(!delegationComp.IsControlDelegated(this)){
-      if(_numRunsRemaining != 0 &&
-         _delegatePtr->WantsToBeActivated() &&
+      if(_dVars.numRunsRemaining != 0 &&
+         _iConfig.delegatePtr->WantsToBeActivated() &&
          ANKI_VERIFY(delegationComp.HasDelegator(this),
                      "BehaviorDispatcherRerun.CheckRerunState.MissingDelegator",
                      ""))
       {
-        delegationComp.GetDelegator(this).Delegate(this, _delegatePtr.get());
-        if(_numRunsRemaining > 0){
-          _numRunsRemaining--;
+        delegationComp.GetDelegator(this).Delegate(this, _iConfig.delegatePtr.get());
+        if(_dVars.numRunsRemaining > 0){
+          _dVars.numRunsRemaining--;
         }
-      }else if(_numRunsRemaining == 0){
+      }else if(_dVars.numRunsRemaining == 0){
         delegationComp.CancelSelf(this);
       }
     } // end !IsControlDelegated
@@ -121,8 +146,8 @@ void BehaviorDispatcherRerun::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherRerun::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  if(_delegatePtr != nullptr){
-    delegates.insert(_delegatePtr.get());    
+  if(_iConfig.delegatePtr != nullptr){
+    delegates.insert(_iConfig.delegatePtr.get());    
   }
 }
   

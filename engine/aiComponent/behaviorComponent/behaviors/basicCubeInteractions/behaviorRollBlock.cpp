@@ -42,8 +42,26 @@ static const float kMaxDistCozmoIsRollingCube_mm = 120;
 CONSOLE_VAR(f32, kBRB_ScoreIncreaseForAction, "Behavior.RollBlock", 0.8f);
   
 }
-  
-  
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorRollBlock::InstanceConfig::InstanceConfig()
+{
+  isBlockRotationImportant = false;
+  rollRetryCount           = 1;
+};
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorRollBlock::DynamicVariables::DynamicVariables()
+{
+  didAttemptDock        = false;
+  upAxisOnBehaviorStart = AxisName::X_POS;
+  behaviorState         = State::RollingBlock;
+  rollRetryCount        = 0;
+};
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorRollBlock::BehaviorRollBlock(const Json::Value& config)
 : ICozmoBehavior(config)
@@ -54,7 +72,16 @@ BehaviorRollBlock::BehaviorRollBlock(const Json::Value& config)
     _iConfig.rollRetryCount = JsonTools::ParseUint8(config, kRetryCountKey,debugStr);
   }
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorRollBlock::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kIsBlockRotationImportant,
+    kRetryCountKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorRollBlock::WantsToBeActivatedBehavior() const
@@ -125,7 +152,7 @@ void BehaviorRollBlock::CalculateTargetID(ObjectID& targetID) const
   const Intent intent = (_iConfig.isBlockRotationImportant ?
                          Intent::RollObjectWithDelegateAxisCheck :
                          Intent::RollObjectWithDelegateNoAxisCheck);
-  auto& objInfoCache = GetBEI().GetAIComponent().GetObjectInteractionInfoCache();
+  auto& objInfoCache = GetAIComp<ObjectInteractionInfoCache>();
   targetID = objInfoCache.GetBestObjectForIntention(intent);
 }
   
@@ -158,7 +185,7 @@ void BehaviorRollBlock::TransitionToPerformingAction()
       auto& blockWorld = GetBEI().GetBlockWorld();
       const ObservableObject* pickupObj = blockWorld.GetLocatedObjectByID(_dVars.targetID);
       if(pickupObj != nullptr){
-        auto& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();	
+        auto& whiteboard = GetAIComp<AIWhiteboard>();	
         whiteboard.SetFailedToUse(*pickupObj,	
                                   AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie);
       }

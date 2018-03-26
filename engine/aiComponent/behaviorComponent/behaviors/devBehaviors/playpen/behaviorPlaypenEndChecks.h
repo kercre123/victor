@@ -18,6 +18,9 @@
 
 namespace Anki {
 namespace Cozmo {
+namespace ExternalInterface {
+  struct ObjectAvailable;
+}
 
 class BehaviorPlaypenEndChecks : public IBehaviorPlaypen
 {
@@ -35,7 +38,7 @@ protected:
     
 private:
 
-  void HandleObjectAvailable(const ObjectAvailable& payload);
+  void HandleObjectAvailable(const ExternalInterface::ObjectAvailable& payload);
 
   bool _heardFromLightCube = false;
 };

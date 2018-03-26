@@ -20,12 +20,28 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+namespace {
+const char* kBehaviorsKey = "behaviors";
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDispatcherQueue::InstanceConfig::InstanceConfig()
+{
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDispatcherQueue::DynamicVariables::DynamicVariables()
+{
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDispatcherQueue::BehaviorDispatcherQueue(const Json::Value& config)
   : IBehaviorDispatcher(config, false)
 {
-  const Json::Value& behaviorArray = config["behaviors"];
+  const Json::Value& behaviorArray = config[kBehaviorsKey];
   DEV_ASSERT_MSG(!behaviorArray.isNull(),
                  "BehaviorDispatcherQueue.BehaviorsNotSpecified",
                  "No Behaviors key found");
@@ -35,11 +51,18 @@ BehaviorDispatcherQueue::BehaviorDispatcherQueue(const Json::Value& config)
     }
   }
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherQueue::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  expectedKeys.insert( kBehaviorsKey );
+  IBehaviorDispatcher::GetBehaviorJsonKeys(expectedKeys);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherQueue::BehaviorDispatcher_OnActivated()
 {
-  _currIdx = 0;
+  _dVars.currIdx = 0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -47,7 +70,7 @@ void BehaviorDispatcherQueue::DispatcherUpdate()
 {
   if( IsActivated() &&
       !IsControlDelegated() &&
-      _currIdx >= GetAllPossibleDispatches().size() ) {
+      _dVars.currIdx >= GetAllPossibleDispatches().size() ) {
     // we're past the end of the queue and control isn't delegated, so stop ourselves
     CancelSelf();
   }
@@ -62,24 +85,24 @@ ICozmoBehaviorPtr BehaviorDispatcherQueue::GetDesiredBehavior()
   const auto& dispatches = GetAllPossibleDispatches();
 
   // iterate until we find a behavior that wants to be activated
-  BOUNDED_WHILE( 1000, _currIdx < dispatches.size() ) {
-    if( dispatches[_currIdx]->WantsToBeActivated() ) {
+  BOUNDED_WHILE( 1000, _dVars.currIdx < dispatches.size() ) {
+    if( dispatches[_dVars.currIdx]->WantsToBeActivated() ) {
       PRINT_CH_INFO("Behaviors", "BehaviorDispatcherQueue.SelectBehavior",
                     "Selecting behavior %zu '%s'",
-                    _currIdx,
-                    dispatches[_currIdx]->GetDebugLabel().c_str());
+                    _dVars.currIdx,
+                    dispatches[_dVars.currIdx]->GetDebugLabel().c_str());
 
       // return this behavior and increment for next time
-      return dispatches[_currIdx++];
+      return dispatches[_dVars.currIdx++];
     }
     else {
       // try the next behavior
       PRINT_CH_INFO("Behaviors", "BehaviorDispatcherQueue.SkipBehavior",
                     "Skipping behavior %zu '%s' because it doesn't want to run",
-                    _currIdx,
-                    dispatches[_currIdx]->GetDebugLabel().c_str());
+                    _dVars.currIdx,
+                    dispatches[_dVars.currIdx]->GetDebugLabel().c_str());
 
-      _currIdx++;
+      _dVars.currIdx++;
     }
   }
 

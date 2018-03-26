@@ -23,10 +23,6 @@ set(PLATFORM_FLAGS "")
 if (ANDROID)
   include(breakpad)
   set(PLATFORM_LIBS android log GLESv2)
-  set(PLATFORM_COMPILE_DEFS
-    THF_FUNCTIONALITY=0
-    VC_AUDIOCAPTURE_FUNCTIONALITY=0
-  )
 elseif (MACOSX)
   find_library(FOUNDATION Foundation)
   include(webots)
@@ -38,8 +34,6 @@ elseif (MACOSX)
   )
   set(PLATFORM_COMPILE_DEFS
     SIMULATOR
-    THF_FUNCTIONALITY=0
-    VC_AUDIOCAPTURE_FUNCTIONALITY=0
   )
 endif()
 
@@ -56,7 +50,6 @@ target_link_libraries(cozmo_engine
   audio_multiplexer_engine
   engine_clad
   PRIVATE
-  util_audio
   ble_cozmo
   DAS 
   cameraService
@@ -67,6 +60,7 @@ target_link_libraries(cozmo_engine
   cti_planning
   cubeBleClient
   osState
+  micdata
   # vendor
   ${FLATBUFFERS_LIBS}
   ${LIBARCHIVE_LIBS}

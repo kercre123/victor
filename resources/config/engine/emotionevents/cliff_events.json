@@ -1,23 +1,6 @@
 {
   "emotionEvents" : [
     {
-      "name" : "CliffDetected",
-      "emotionAffectors" : [										  
-         {
-            "emotionType" : "Happy",
-            "value" : -0.12
-         },
-         {
-            "emotionType" : "Calm",
-            "value" : -0.12
-         },
-         {
-            "emotionType" : "Brave",
-            "value" : -0.12
-         }
-      ]
-    },
-    {
       "name" : "CliffReact",
       "emotionAffectors" : [										  
          {
@@ -25,12 +8,8 @@
             "value" : -0.12
          },
          {
-            "emotionType" : "Calm",
-            "value" : -0.12
-         },
-         {
-            "emotionType" : "Brave",
-            "value" : -0.12
+            "emotionType" : "Stimulated",
+            "value" : 0.04
          }
       ]
     }

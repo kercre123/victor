@@ -279,12 +279,12 @@ TEST(PoseOriginList, IDs)
   ASSERT_NE(id1, id2);
   
   // Duplicating an ID will abort with DEV_ASSERT in Debug, or return false in Release/Shipping
-# if defined(DEBUG)
-  ASSERT_DEATH(originList.AddOriginWithID(id1), "");
-  ASSERT_DEATH(originList.AddOriginWithID(id2), "");
-# else 
+# if defined(NDEBUG)
   ASSERT_FALSE(originList.AddOriginWithID(id1));
   ASSERT_FALSE(originList.AddOriginWithID(id2));
+# else 
+  ASSERT_DEATH(originList.AddOriginWithID(id1), "");
+  ASSERT_DEATH(originList.AddOriginWithID(id2), "");
 # endif
   
   const PoseID_t id3 = id2 + 1;

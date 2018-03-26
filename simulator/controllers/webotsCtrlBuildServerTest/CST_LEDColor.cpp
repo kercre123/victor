@@ -41,7 +41,7 @@ private:
   uint8_t const * const GetMessage() const;
   s32 UpdateSimInternal() override;
   
-  void HandleActiveObjectConnectionState(const ObjectConnectionState& msg) override;
+  void HandleActiveObjectConnectionState(const ExternalInterface::ObjectConnectionState& msg) override;
 
   TestState _testState = TestState::Init;
   s32 _result = 0;
@@ -77,7 +77,7 @@ private:
   const u32 kTransitionOnPeriod_ms = 0;
   const u32 kTransitionOffPeriod_ms = 0;
   const int kOffset_ms = 0;
-  const u32 kRotationPeriod_ms = 0;
+  const bool kRotate = false;
   // relative x, y are garbage values since MakeRelativeMode = RELATIVE_LED_MODE_OFF; see COZMO-3049
   const f32 kRelativeToX = 0;
   const f32 kRelativeToY = 0;
@@ -131,7 +131,7 @@ s32 CST_LEDColor::UpdateSimInternal()
                                  transitionOnPeriod_ms,
                                  transitionOffPeriod_ms,
                                  {{kOffset_ms,kOffset_ms,kOffset_ms,kOffset_ms}},
-                                 kRotationPeriod_ms,
+                                 kRotate,
                                  kRelativeToX,
                                  kRelativeToY,
                                  kMakeRelative);
@@ -189,7 +189,7 @@ s32 CST_LEDColor::UpdateSimInternal()
                               kTransitionOnPeriod_ms,
                               kTransitionOffPeriod_ms,
                               kOffset_ms,
-                              kRotationPeriod_ms,
+                              kRotate,
                               kRelativeToX,
                               kRelativeToY,
                               WhichCubeLEDs::ALL,
@@ -273,7 +273,7 @@ s32 CST_LEDColor::UpdateSimInternal()
   return _result;
 }
 
-void CST_LEDColor::HandleActiveObjectConnectionState(const ObjectConnectionState& msg)
+void CST_LEDColor::HandleActiveObjectConnectionState(const ExternalInterface::ObjectConnectionState& msg)
 {
   if(msg.connected)
   {

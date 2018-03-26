@@ -26,6 +26,7 @@
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/unitTestKey.h"
 #include "util/console/consoleFunction.h"
@@ -40,6 +41,9 @@ namespace {
 
 constexpr const char* kStateConfgKey = "states";
 constexpr const char* kStateNameConfgKey = "name";
+constexpr const char* kResumeReplacementsKey = "resumeReplacements";
+constexpr const char* kTransitionDefinitionsKey = "transitionDefinitions";
+constexpr const char* kInitialStateKey = "initialState";
 
 
 static const BackpackLights kLightsOff = {
@@ -84,7 +88,7 @@ public:
   void AddNonInterruptingTransition(StateID toState, IBEIConditionPtr condition );
   void AddExitTransition(StateID toState, IBEIConditionPtr condition);
 
-  void OnActivated(BehaviorExternalInterface& bei);
+  void OnActivated(BehaviorExternalInterface& bei, bool isResuming);
   void OnDeactivated(BehaviorExternalInterface& bei);
   // TODO:(bn) add asserts for these
 
@@ -158,7 +162,7 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config, PreDef
   std::set< StateID > allFromStates;
   std::set< StateID > allToStates;
   
-  for( const auto& transitionDefConfig : config["transitionDefinitions"] ) {
+  for( const auto& transitionDefConfig : config[kTransitionDefinitionsKey] ) {
     std::vector<StateID> fromStates;
     if( transitionDefConfig["from"].isArray() ) {
       ANKI_VERIFY( transitionDefConfig["from"].size() > 0,
@@ -230,7 +234,7 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config, PreDef
                 "Created %zu states",
                 _states->size());
 
-  const std::string& initialStateStr = JsonTools::ParseString(config, "initialState", "InternalStatesBehavior.StateConfig");
+  const std::string& initialStateStr = JsonTools::ParseString(config, kInitialStateKey, "InternalStatesBehavior.StateConfig");
   auto stateIt = _stateNameToID.find(initialStateStr);
   if( ANKI_VERIFY( stateIt != _stateNameToID.end(),
                    "InternalStatesBehavior.Config.InitialState.NoSuchState",
@@ -238,6 +242,16 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config, PreDef
                    initialStateStr.c_str()) ) {
     _currState = stateIt->second;
     _defaultState = stateIt->second;
+  }
+  
+  // fill out _resumeReplacements with any state replacements to be made when re-activating the behavior
+  if( !config[kResumeReplacementsKey].isNull() ) {
+    const auto& replacementsList = config[kResumeReplacementsKey];
+    const auto& fromList = replacementsList.getMemberNames();
+    for( const auto& from : fromList ) {
+      StateID toId = GetStateID( replacementsList[from].asString() );
+      _resumeReplacements.emplace_back( GetStateID(from), toId );
+    }
   }
 
 }
@@ -250,8 +264,17 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config)
 InternalStatesBehavior::~InternalStatesBehavior()
 {
 }
-
-
+  
+void InternalStatesBehavior::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kStateConfgKey,
+    kResumeReplacementsKey,
+    kTransitionDefinitionsKey,
+    kInitialStateKey
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 void InternalStatesBehavior::InitBehavior()
 {
@@ -302,6 +325,17 @@ void InternalStatesBehavior::OnBehaviorActivated()
     // force an update
     _debugLightsDirty = true;
   }
+  
+  if( !_firstRun ) {
+    // resuming this behavior -- see if we should be resuming in a different state than when we were
+    // previously de-activated
+    const auto it = std::find_if(_resumeReplacements.begin(), _resumeReplacements.end(), [this](const auto& p) {
+      return p.first == _currState;
+    });
+    if( it != _resumeReplacements.end() ) {
+      _currState = it->second;
+    }
+  }
 
   // keep the state the same (either set from constructor or the last run)
   if( ANKI_VERIFY( _currState != InvalidStateID,
@@ -312,6 +346,8 @@ void InternalStatesBehavior::OnBehaviorActivated()
   else {
     TransitionToState(_defaultState);
   }
+  
+  _firstRun = false;
 }
 
 void InternalStatesBehavior::OnBehaviorDeactivated()
@@ -462,6 +498,8 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
 
   // TODO:(bn) don't de- and re-activate behaviors if switching states doesn't change the behavior  
 
+  const bool isResuming = (targetState == _currState) && !_firstRun;
+  
   if( _currState != InvalidStateID ) {
     _states->at(_currState).OnDeactivated(GetBEI());
     const bool allowCallback = false;
@@ -483,7 +521,7 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
   if( _currState != InvalidStateID ) {
     State& state = _states->at(_currState);
 
-    state.OnActivated(GetBEI());
+    state.OnActivated(GetBEI(), isResuming);
 
     if( _useDebugLights ) {
       if( _currDebugLights.onColors[kDebugStateLED] != state._debugColor ) {
@@ -565,25 +603,42 @@ void InternalStatesBehavior::State::AddExitTransition(StateID toState, IBEICondi
   _exitTransitions.emplace_back(toState, condition);
 }
 
-void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei)
+void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei, bool isResuming)
 {
   if( _clearIntent != USER_INTENT(INVALID) ) {
-    auto& uic = bei.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+    auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
     if( uic.IsUserIntentPending( _clearIntent ) ) {
       uic.ClearUserIntent( _clearIntent );
     }
   }
+  
+  auto resetTimer = [](const IBEIConditionPtr& condition) {
+    auto timerCondition = std::dynamic_pointer_cast<ConditionTimerInRange>( condition );
+    if( timerCondition != nullptr ) {
+      timerCondition->Reset();
+    }
+  };
+  
   for( const auto& transitionPair : _interruptingTransitions ) {
     const auto& iConditionPtr = transitionPair.second;
     iConditionPtr->SetActive(bei, true);
+    if( !isResuming && (iConditionPtr->GetConditionType() == BEIConditionType::TimerInRange) ) {
+      resetTimer( iConditionPtr );
+    }
   }
   for( const auto& transitionPair : _nonInterruptingTransitions ) {
     const auto& iConditionPtr = transitionPair.second;
     iConditionPtr->SetActive(bei, true);
+    if( !isResuming && (iConditionPtr->GetConditionType() == BEIConditionType::TimerInRange) ) {
+      resetTimer( iConditionPtr );
+    }
   }
   for( const auto& transitionPair : _exitTransitions ) {
     const auto& iConditionPtr = transitionPair.second;
     iConditionPtr->SetActive(bei, true);
+    if( !isResuming && (iConditionPtr->GetConditionType() == BEIConditionType::TimerInRange) ) {
+      resetTimer( iConditionPtr );
+    }
   }
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();

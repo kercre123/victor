@@ -26,14 +26,15 @@ public:
   // drive forward when this behavior runs
   bool IsCozmoAlreadyCloseEnoughToFace(Vision::FaceID_t faceID);
   
-  void SetTargetFace(const SmartFaceID faceID){_targetFace = faceID;}
+  void SetTargetFace(const SmartFaceID faceID){_dVars.targetFace = faceID;}
   
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorDriveToFace(const Json::Value& config);
 
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
@@ -50,9 +51,22 @@ private:
     TrackFace
   };
   
-  State _currentState;
-  float _timeCancelTracking_s;
-  mutable SmartFaceID _targetFace;
+  struct InstanceConfig {
+    InstanceConfig();
+    float timeUntilCancelFaceTrack_s;
+    float minDriveToFaceDistance_mm;
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    State currentState;
+    float timeCancelTracking_s;
+
+    mutable SmartFaceID targetFace;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
   
   void TransitionToTurningTowardsFace();
   void TransitionToDrivingToFace();
@@ -63,12 +77,11 @@ private:
   bool CalculateDistanceToFace(Vision::FaceID_t faceID, float& distance);
   void SetState_internal(State state, const std::string& stateName);
 
-  
 };
 
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 
 
-#endif
+#endif // __Cozmo_Basestation_Behaviors_BehaviorDriveToFace_H__

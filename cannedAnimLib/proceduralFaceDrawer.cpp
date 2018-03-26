@@ -17,29 +17,46 @@
 namespace Anki {
 namespace Cozmo {
   
+  enum class Filter {
+    None           = 0,
+    BoxFilter      = 1,
+    GaussianFilter = 2,
+  };
+
   #define CONSOLE_GROUP "ProceduralFace"
 
-  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseFraction,            CONSOLE_GROUP, 0.15f, 0.f, 1.f); // TODO: Tie to audio
+#if PROCEDURALFACE_NOISE_FEATURE
+  static const s32 kNumNoiseImages = 7;
 
-  CONSOLE_VAR(bool,       kProcFace_UseAntiAliasedLines,      CONSOLE_GROUP, true); // Only affects OpenCV drawing, not post-smoothing
-  CONSOLE_VAR_RANGED(f32, kProcFace_GlowSizeMultiplier,       CONSOLE_GROUP, 1.f, 0.f, 1.f);
-  CONSOLE_VAR_RANGED(f32, kProcFace_EyeBrightnessMultiplier,  CONSOLE_GROUP, 1.f, 0.f, 10.f);
-  CONSOLE_VAR_RANGED(f32, kProcFace_GlowBrightnessMultiplier, CONSOLE_GROUP, 1.f, 0.f, 10.f);
+  CONSOLE_VAR_RANGED(s32, kProcFace_NoiseNumFrames,     "ProceduralFace", 0, 0, kNumNoiseImages);
+  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMinLightness,  "ProceduralFace", 1.f-0.15f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
+  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMaxLightness,  "ProceduralFace", 1.f+0.15f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
 
-  CONSOLE_VAR(bool,       kProcFace_RenderInnerOuterGlow,     CONSOLE_GROUP, false); // Render glow
-  CONSOLE_VAR_RANGED(f32, kProcFace_InnerGlowFrac,            CONSOLE_GROUP, 0.4f, 0.05f, 1.f);
-  CONSOLE_VAR(bool,       kProcFace_ApplyGlowFilter,          CONSOLE_GROUP, false); // Gausssian or boxfilter for glow
-  CONSOLE_VAR(bool,       kProcFace_GaussianGlowFilter,       CONSOLE_GROUP, false); // simpler box filter if not
-  CONSOLE_VAR_RANGED(s32, kProcFace_AntiAliasingSize,         CONSOLE_GROUP, 0, 0, 63); // full image antialiasing
+  CONSOLE_VAR_EXTERN(s32, kProcFace_NoiseNumFrames);
+#endif
+    
+  CONSOLE_VAR_ENUM(u8,      kProcFace_LineType,                   CONSOLE_GROUP, 1, "Line_4,Line_8,Line_AA"); // Only affects OpenCV drawing, not post-smoothing
+  CONSOLE_VAR_RANGED(s32,   kProcFace_EllipseDelta,               CONSOLE_GROUP, 10, 1, 90);
+  CONSOLE_VAR_RANGED(f32,   kProcFace_EyeLightnessMultiplier,     CONSOLE_GROUP, 1.f, 0.f, 10.f);
+
+  CONSOLE_VAR(bool,         kProcFace_HotspotRender,              CONSOLE_GROUP, true); // Render glow
+  CONSOLE_VAR_RANGED(f32,   kProcFace_HotspotFalloff,             CONSOLE_GROUP, 0.85f, 0.05f, 1.f);
+
+  CONSOLE_VAR_RANGED(f32, kProcFace_GlowSizeMultiplier,         CONSOLE_GROUP, 1.f, 0.f, 1.f);
+  CONSOLE_VAR_RANGED(f32, kProcFace_GlowLightnessMultiplier,    CONSOLE_GROUP, 1.f, 0.f, 10.f);
+  CONSOLE_VAR_ENUM(uint8_t, kProcFace_GlowFilter,                 CONSOLE_GROUP, (uint8_t)Filter::BoxFilter, "None,Box,Gaussian");
+
+  CONSOLE_VAR_RANGED(s32,   kProcFace_AntiAliasingSize,           CONSOLE_GROUP, 5, 0, 63); // full image antialiasing
+  CONSOLE_VAR_ENUM(uint8_t, kProcFace_AntiAliasingFilter,         CONSOLE_GROUP, (uint8_t)Filter::BoxFilter, "None,Box,Gaussian");
 
   static void VictorFaceRenderer(ConsoleFunctionContextRef context)
   {
-    kProcFace_RenderInnerOuterGlow = kProcFace_ApplyGlowFilter = true;
+    kProcFace_HotspotRender = true;
     kProcFace_AntiAliasingSize = 5;
   }
   static void CozmoFaceRenderer(ConsoleFunctionContextRef context)
   {
-    kProcFace_RenderInnerOuterGlow = kProcFace_ApplyGlowFilter = false;
+    kProcFace_HotspotRender = false;
     kProcFace_AntiAliasingSize = 0;
   }
   CONSOLE_FUNC(VictorFaceRenderer, CONSOLE_GROUP);
@@ -112,23 +129,23 @@ namespace Cozmo {
 #   undef NUM_FAST_EXP_TERMS
   }
   
+#if PROCEDURALFACE_NOISE_FEATURE
   inline Array2d<f32> CreateNoiseImage(const Util::RandomGenerator& rng)
   {
     Array2d<f32> noiseImg(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
     f32* noiseImg_i = noiseImg.GetRow(0);
     for(s32 j=0; j<noiseImg.GetNumElements(); ++j)
     {
-      noiseImg_i[j] = rng.RandDblInRange(1.f - kProcFace_NoiseFraction, 1.f + kProcFace_NoiseFraction);
+      noiseImg_i[j] = rng.RandDblInRange(kProcFace_NoiseMinLightness, kProcFace_NoiseMaxLightness);
     }
     return noiseImg;
   }
-  
+
   const Array2d<f32>& ProceduralFaceDrawer::GetNoiseImage(const Util::RandomGenerator& rng)
   {
     // NOTE: Since this is called separately for each eye, this looks better if we use an odd number of images
-    static const s32 kNumNoiseImages = 7;
     static_assert(kNumNoiseImages % 2 == 1, "Use odd number of noise images");
-    static const std::array<Array2d<f32>, kNumNoiseImages> kNoiseImages{{
+    static std::array<Array2d<f32>, kNumNoiseImages> kNoiseImages{{
       CreateNoiseImage(rng),
       CreateNoiseImage(rng),
       CreateNoiseImage(rng),
@@ -137,18 +154,33 @@ namespace Cozmo {
       CreateNoiseImage(rng),
       CreateNoiseImage(rng),
     }};
-    
-    // Cycle circularly through the set of noise images
-    static auto iter = kNoiseImages.begin();
-    const Array2d<f32>& noiseImg = *iter;
-    ++iter;
-    if(iter == kNoiseImages.end()) {
-      iter = kNoiseImages.begin();
+
+    kProcFace_NoiseMinLightness = Anki::Util::Clamp(kProcFace_NoiseMinLightness, 0.f, kProcFace_NoiseMaxLightness);
+    kProcFace_NoiseMaxLightness = Anki::Util::Clamp(kProcFace_NoiseMaxLightness, kProcFace_NoiseMinLightness, 2.f);
+
+    static f32 kProcFace_NoiseMinLightness_old = kProcFace_NoiseMinLightness;
+    static f32 kProcFace_NoiseMaxLightness_old = kProcFace_NoiseMaxLightness;
+    if(kProcFace_NoiseMinLightness_old != kProcFace_NoiseMinLightness || kProcFace_NoiseMaxLightness_old != kProcFace_NoiseMaxLightness) {
+      for(auto& currentNoiseImage : kNoiseImages) {
+        Array2d<f32> noiseImg = CreateNoiseImage(rng);
+        std::swap(currentNoiseImage, noiseImg);
+      }
+
+      kProcFace_NoiseMinLightness_old = kProcFace_NoiseMinLightness;
+      kProcFace_NoiseMaxLightness_old = kProcFace_NoiseMaxLightness;
     }
     
-    return noiseImg;
+    if(kProcFace_NoiseNumFrames == 0) {
+      return kNoiseImages[0];
+    } else {
+      // Cycle circularly through the set of noise images
+      static s32 index = 0;
+      index = (index + 1) % kProcFace_NoiseNumFrames;
+      return kNoiseImages[index];
+    }
   }
-  
+#endif // PROCEDURALFACE_NOISE_FEATURE
+
   void ProceduralFaceDrawer::DrawEye(const ProceduralFace& faceData, WhichEye whichEye, const Util::RandomGenerator& rng,
                                      Vision::ImageRGB& faceImg, Rectangle<f32>& eyeBoundingBox)
   {
@@ -180,16 +212,16 @@ namespace Cozmo {
     // Compute eye and lid polygons:
     //
     std::vector<cv::Point> eyePoly, segment, lowerLidPoly, upperLidPoly;
-    const s32 kEllipseDelta = 5;
-    const s32 kLineType = (kProcFace_UseAntiAliasedLines ? cv::LINE_AA : cv::LINE_8);
-    
+    static const s32 kLineTypes[3] = { cv::LINE_4, cv::LINE_8, cv::LINE_AA };
+    const s32 kLineType = kLineTypes[kProcFace_LineType];
+
     // 1. Eye shape poly
     {
       ANKI_CPU_PROFILE("EyeShapePoly");
       // Upper right corner
       if(upRightRadX > 0 && upRightRadY > 0) {
        cv::ellipse2Poly(cv::Point(std::round(halfEyeWidth  - upRightRadX), std::round(-halfEyeHeight + upRightRadY)),
-                        cv::Size(upRightRadX,upRightRadY), 0, 270, 360, kEllipseDelta, segment);
+                        cv::Size(upRightRadX,upRightRadY), 0, 270, 360, kProcFace_EllipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
         eyePoly.emplace_back(halfEyeWidth,-halfEyeHeight);
@@ -198,7 +230,7 @@ namespace Cozmo {
       // Lower right corner
       if(lowRightRadX > 0 && lowRightRadY > 0) {
         cv::ellipse2Poly(cv::Point(std::round(halfEyeWidth - lowRightRadX), std::round(halfEyeHeight - lowRightRadY)),
-                         cv::Size(lowRightRadX,lowRightRadY), 0, 0, 90, kEllipseDelta, segment);
+                         cv::Size(lowRightRadX,lowRightRadY), 0, 0, 90, kProcFace_EllipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
         eyePoly.emplace_back(halfEyeWidth, halfEyeHeight);
@@ -207,7 +239,7 @@ namespace Cozmo {
       // Lower left corner
       if(lowLeftRadX > 0 && lowLeftRadY > 0) {
        cv::ellipse2Poly(cv::Point(std::round(-halfEyeWidth  + lowLeftRadX), std::round(halfEyeHeight - lowLeftRadY)),
-                        cv::Size(lowLeftRadX,lowLeftRadY), 0, 90, 180, kEllipseDelta, segment);
+                        cv::Size(lowLeftRadX,lowLeftRadY), 0, 90, 180, kProcFace_EllipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
         eyePoly.emplace_back(-halfEyeWidth, halfEyeHeight);
@@ -216,7 +248,7 @@ namespace Cozmo {
       // Upper left corner
       if(upLeftRadX > 0 && upLeftRadY > 0) {
         cv::ellipse2Poly(cv::Point(std::round(-halfEyeWidth + upLeftRadX), std::round(-halfEyeHeight + upLeftRadY)),
-                        cv::Size(upLeftRadX,upLeftRadY), 0, 180, 270, kEllipseDelta, segment);
+                        cv::Size(upLeftRadX,upLeftRadY), 0, 180, 270, kProcFace_EllipseDelta, segment);
         eyePoly.insert(eyePoly.end(), segment.begin(), segment.end());
       } else {
         eyePoly.emplace_back(-halfEyeWidth,-halfEyeHeight);
@@ -241,7 +273,7 @@ namespace Cozmo {
       if(yRad != 0) {
         const f32 xRad = std::round(halfEyeWidth / std::cos(angleRad));
         cv::ellipse2Poly(cv::Point(0, std::round(halfEyeHeight - lowerLidY)),
-                         cv::Size(xRad,yRad), angleDeg, 180, 360, kEllipseDelta, segment);
+                         cv::Size(xRad,yRad), angleDeg, 180, 360, kProcFace_EllipseDelta, segment);
         DEV_ASSERT(std::abs(segment.front().x - lowerLidPoly.back().x)<3 &&
                    std::abs(segment.front().y - lowerLidPoly.back().y)<3,
                    "First curved lower lid segment point not close to last lid poly point.");
@@ -270,7 +302,7 @@ namespace Cozmo {
       if(yRad != 0) {
         const f32 xRad = std::round(halfEyeWidth / std::cos(angleRad));
         cv::ellipse2Poly(cv::Point(0, std::round(-halfEyeHeight + upperLidY)),
-                         cv::Size(xRad,yRad), angleDeg, 0, 180, kEllipseDelta, segment);
+                         cv::Size(xRad,yRad), angleDeg, 0, 180, kProcFace_EllipseDelta, segment);
         DEV_ASSERT(std::abs(segment.front().x - upperLidPoly.back().x)<3 &&
                    std::abs(segment.front().y - upperLidPoly.back().y)<3,
                    "First curved upper lid segment point not close to last lid poly point");
@@ -296,7 +328,7 @@ namespace Cozmo {
                                                              eyeCenter.y());
 
     const Value glowFraction = Util::Min(1.f, Util::Max(-1.f, kProcFace_GlowSizeMultiplier * faceData.GetParameter(whichEye, Parameter::GlowSize)));
-
+    const Value glowLightness = kProcFace_GlowLightnessMultiplier * faceData.GetParameter(whichEye, Parameter::GlowLightness);
     const SmallMatrix<2, 3, f32> W_glow = GetTransformationMatrix(faceData.GetParameter(whichEye, Parameter::EyeAngle),
                                                                   (1+glowFraction) * faceData.GetParameter(whichEye, Parameter::EyeScaleX),
                                                                   (1+glowFraction) * faceData.GetParameter(whichEye, Parameter::EyeScaleY),
@@ -350,9 +382,10 @@ namespace Cozmo {
     // pixels below *inclusive* of the bottom right point, so we use HEIGHT/WIDTH-1)
     upperLeft.x() = std::max(0.f, upperLeft.x());
     upperLeft.y() = std::max(0.f, upperLeft.y());
-    bottomRight.x() = std::min((f32)(ProceduralFace::WIDTH-1), bottomRight.x());
-    bottomRight.y() = std::min((f32)(ProceduralFace::HEIGHT-1), bottomRight.y());
-    
+    // Push bottom-right co-ordinate to avoid un-antialiased edges
+    bottomRight.x() = std::min((f32)(ProceduralFace::WIDTH-1), bottomRight.x()+1);
+    bottomRight.y() = std::min((f32)(ProceduralFace::HEIGHT-1), bottomRight.y()+1);
+
     // Create the bounding that we're returning from the upperLeft and bottomRight points
     eyeBoundingBox = Rectangle<f32>(upperLeft, bottomRight);
     
@@ -363,10 +396,22 @@ namespace Cozmo {
 
     // Black out lids
     if(!upperLidPoly.empty()) {
-      cv::fillConvexPoly(_eyeShape.get_CvMat_(), upperLidPoly, 0, kLineType);
+      if(faceData.GetParameter(whichEye, Parameter::UpperLidBend) < 0.f) {
+        const cv::Point* pts[1] = { &upperLidPoly[0] };
+        int npts[1] = { (int)upperLidPoly.size() };
+        cv::fillPoly(_eyeShape.get_CvMat_(), pts, npts, 1, 0, kLineType);
+      } else {
+        cv::fillConvexPoly(_eyeShape.get_CvMat_(), upperLidPoly, 0, kLineType);
+      }
     }
     if(!lowerLidPoly.empty()) {
-      cv::fillConvexPoly(_eyeShape.get_CvMat_(), lowerLidPoly, 0, kLineType);
+      if(faceData.GetParameter(whichEye, Parameter::LowerLidBend) < 0.f) {
+        const cv::Point* pts[1] = { &lowerLidPoly[0] };
+        int npts[1] = { (int)lowerLidPoly.size() };
+        cv::fillPoly(_eyeShape.get_CvMat_(), pts, npts, 1, 0, kLineType);
+      } else {
+        cv::fillConvexPoly(_eyeShape.get_CvMat_(), lowerLidPoly, 0, kLineType);
+      }
     }
     
     const f32 eyeScaleX = faceData.GetParameter(whichEye, Parameter::EyeScaleX);
@@ -397,10 +442,10 @@ namespace Cozmo {
       // Inner Glow = the brighter glow at the center of the eye that falls off radially towards the edge of the eye
       // Outer Glow = the "halo" effect around the outside of the eye shape
       // Add inner glow to the eye shape, before we compute the outer glow, so that boundaries conditions match.
-      if(kProcFace_RenderInnerOuterGlow) {
+      if(kProcFace_HotspotRender) {
         ANKI_CPU_PROFILE("RenderInnerOuterGlow");
-        const f32 sigmaX = kProcFace_InnerGlowFrac*scaledEyeWidth;
-        const f32 sigmaY = kProcFace_InnerGlowFrac*scaledEyeHeight;
+        const f32 sigmaX = kProcFace_HotspotFalloff*scaledEyeWidth;
+        const f32 sigmaY = kProcFace_HotspotFalloff*scaledEyeHeight;
         const f32 invInnerGlowSigmaX_sq = 1.f / (2.f * (sigmaX*sigmaX));
         const f32 invInnerGlowSigmaY_sq = 1.f / (2.f * (sigmaY*sigmaY));
         for(s32 i=upperLeft.y(); i<=bottomRight.y(); ++i)
@@ -431,34 +476,31 @@ namespace Cozmo {
       
       Rectangle<s32> eyeBoundingBoxS32(upperLeft.CastTo<s32>(), bottomRight.CastTo<s32>());
       Vision::Image eyeShapeROI = _eyeShape.GetROI(eyeBoundingBoxS32);
-      
+
       // Compute glow from the final eye shape (after lids are drawn)
       _glowImg.Allocate(faceImg.GetNumRows(), faceImg.GetNumCols());
       _glowImg.FillWith(0);
 
-      if(kProcFace_ApplyGlowFilter) {
-        ANKI_CPU_PROFILE("ApplyGlowFilter");
-        if(Util::IsFltGTZero(glowFraction))
-        {
-          Vision::Image glowImgROI  = _glowImg.GetROI(eyeBoundingBoxS32);
+      if(Util::IsFltGTZero(glowLightness) && Util::IsFltGTZero(glowFraction)) {
+        ANKI_CPU_PROFILE("GlowRender");
+        Vision::Image glowImgROI  = _glowImg.GetROI(eyeBoundingBoxS32);
 
-          s32 glowSizeX = std::ceil(glowFraction * 0.5f * scaledEyeWidth);
-          s32 glowSizeY = std::ceil(glowFraction * 0.5f * scaledEyeHeight);
+        s32 glowSizeX = std::ceil(glowFraction * 0.5f * scaledEyeWidth);
+        s32 glowSizeY = std::ceil(glowFraction * 0.5f * scaledEyeHeight);
 
-          // Make sure sizes are odd:
-          if(glowSizeX % 2 == 0) {
-            ++glowSizeX;
-          }
-          if(glowSizeY % 2 == 0) {
-            ++glowSizeY;
-          }
+        // Make sure sizes are odd:
+        if(glowSizeX % 2 == 0) {
+          ++glowSizeX;
+        }
+        if(glowSizeY % 2 == 0) {
+          ++glowSizeY;
+        }
 
-          if(kProcFace_GaussianGlowFilter) {
-            cv::GaussianBlur(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), cv::Size(glowSizeX,glowSizeY),
-                             (f32)glowSizeX, (f32)glowSizeY);
-          } else {
-            cv::boxFilter(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), -1, cv::Size(glowSizeX,glowSizeY));
-          }
+        if(kProcFace_GlowFilter == (uint8_t)Filter::BoxFilter) {
+          cv::boxFilter(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), -1, cv::Size(glowSizeX,glowSizeY));
+        } else if(kProcFace_GlowFilter == (uint8_t)Filter::GaussianFilter) {
+          cv::GaussianBlur(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), cv::Size(glowSizeX,glowSizeY),
+                           (f32)glowSizeX, (f32)glowSizeY);
         }
       }
 
@@ -468,12 +510,12 @@ namespace Cozmo {
         if(kProcFace_AntiAliasingSize % 2 == 0) {
           ++kProcFace_AntiAliasingSize; // Antialiasing filter size should be odd
         }
-        if(kProcFace_GaussianGlowFilter) {
+        if(kProcFace_AntiAliasingFilter == (uint8_t)Filter::BoxFilter) {
+          cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize));
+        } else if(kProcFace_AntiAliasingFilter == (uint8_t)Filter::GaussianFilter) {
           const f32 kAntiAliasingSigmaFraction = 0.5f;
           cv::GaussianBlur(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize),
                            (f32)kProcFace_AntiAliasingSize * kAntiAliasingSigmaFraction);
-        } else {
-          cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize));
         }
       }
       
@@ -495,8 +537,10 @@ namespace Cozmo {
       // Draw the eye into the face image, adding outer glow, noise, and stylized scanlines
       {
         ANKI_CPU_PROFILE("DrawEyePixels");
+#if PROCEDURALFACE_NOISE_FEATURE
         const Array2d<f32>& noiseImg = GetNoiseImage(rng);
-        
+#endif
+
         for(s32 i=upperLeft.y(); i<=bottomRight.y(); ++i)
         {
           //DEV_ASSERT_MSG(i>=0 && i<faceImg.GetNumRows(), "ProceduralFaceDrawer.DrawEye.BadRow", "%d", i);
@@ -504,8 +548,10 @@ namespace Cozmo {
           Vision::PixelRGB* faceImg_i = faceImg.GetRow(i);
           const u8*  eyeShape_i = _eyeShape.GetRow(i);
           const u8*  glowImg_i  = _glowImg.GetRow(i);
+#if PROCEDURALFACE_NOISE_FEATURE
           const f32* noiseImg_i = noiseImg.GetRow(i);
-          
+#endif
+
           for(s32 j=upperLeft.x(); j<=bottomRight.x(); ++j)
           {
             //DEV_ASSERT_MSG(j>=0 && j<faceImg.GetNumCols(), "ProceduralFaceDrawer.DrawEye.BadCol", "%d", j);
@@ -520,17 +566,24 @@ namespace Cozmo {
               // Combine everything together: noise, scanline, inner glow falloff, and the antialiasing / glow value.
               // Note that the value in glowImg/eyeShape is already [0,255]
               f32 newValue = static_cast<f32>(std::max(glowValue,eyeValue));
-              newValue *= noiseImg_i[j] * eyeLightness;
-              
+#if PROCEDURALFACE_NOISE_FEATURE
+              if (kProcFace_NoiseNumFrames > 0) {
+                newValue *= noiseImg_i[j] * eyeLightness;
+              } else
+#endif
+              {
+                newValue *= eyeLightness;
+              }
+
               // Don't do scanlines in the glow region.
               const bool isPartOfEye = (eyeValue >= glowValue); // (and not part of glow)
               if(isPartOfEye)
               {
-                newValue *= kProcFace_EyeBrightnessMultiplier;
+                newValue *= kProcFace_EyeLightnessMultiplier;
               }
               else
               {
-                newValue *= kProcFace_GlowBrightnessMultiplier;
+                newValue *= glowLightness;
               }
               
               // Put the final value into the face image
@@ -559,9 +612,11 @@ namespace Cozmo {
                                       const Util::RandomGenerator& rng, 
                                       Vision::ImageRGB565& output)
   {
-    #if ANKI_DEV_CHEATS
+#if ANKI_CPU_PROFILER_ENABLED
     constexpr float kMaxExpectedFaceDrawTime_ms = 13.f;
-    #endif
+#endif
+    // Replace Util::CpuThreadProfiler::kLogFrequencyNever with a small value to output logging,
+    // can be used with Chrome Tracing format
     ANKI_CPU_TICK("ProceduralFaceDrawer", kMaxExpectedFaceDrawTime_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
     // Replace the above line with the below line to see profiling info in the log
     // ANKI_CPU_TICK("ProceduralFaceDrawer", kMaxExpectedFaceDrawTime_ms, 61);
@@ -663,6 +718,7 @@ namespace Cozmo {
       }
       
       Rectangle<s32> eyesROI(colMin, rowMin, colMax-colMin+1, rowMax-rowMin+1);
+      output.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
       output.FillWith(0);
       Vision::ImageRGB565 roi = output.GetROI(eyesROI);
       faceImg.GetROI(eyesROI).ConvertHSV2RGB565(roi);

@@ -669,23 +669,6 @@ class GamePlatformConfiguration(object):
 
         ankibuild.util.File.update_if_changed(build_config_final_path, build_config_temp_path)
 
-        # Copy sensory voice recognition language data files from CTE to local folders to be used at runtime
-        voiceCommandLocalDir = os.path.join(GAME_ROOT, 'resources', 'assets', 'voiceCommand')
-        voiceRecogDataList = open(os.path.join(voiceCommandLocalDir, 'voice-recognition-data.txt')).read().splitlines()
-
-        voiceCommandDataBaseDirSrc = os.path.join(CTE_ROOT, 'sensory', 'TrulyHandsfreeSDK', '4.4.23_noexpire', 'Data')
-        voiceCommandDataBaseDirDest = os.path.join(voiceCommandLocalDir, 'exports', 'base')
-
-        for dataLine in voiceRecogDataList:
-            copy_srcFile = os.path.join(voiceCommandDataBaseDirSrc, dataLine)
-            copy_destFile = os.path.join(voiceCommandDataBaseDirDest, dataLine)
-            if not os.path.exists(copy_srcFile):
-                print_status('Cannot find voice data source file {0}'.format(copy_srcFile))
-                continue
-            else:
-                ankibuild.util.File.mkdir_p(os.path.dirname(copy_destFile))
-                ankibuild.util.File.cp(copy_srcFile, copy_destFile)
-
         # Copy CodeLabStrings.json LocalizedString files to Scratch folder as js files.
         # Add text to top and bottom so json inside js files will be accessible as a variable off of window.
         codeLabStringsFileListDir = os.path.join(GAME_ROOT, 'tools', 'scratch')

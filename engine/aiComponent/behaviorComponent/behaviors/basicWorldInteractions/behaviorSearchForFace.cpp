@@ -27,6 +27,19 @@ namespace {
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorSearchForFace::InstanceConfig::InstanceConfig()
+{
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorSearchForFace::DynamicVariables::DynamicVariables()
+{
+  behaviorState = State::SearchingForFace;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorSearchForFace::BehaviorSearchForFace(const Json::Value& config)
 : ICozmoBehavior(config)
 {
@@ -61,7 +74,7 @@ void BehaviorSearchForFace::BehaviorUpdate()
     return;
   }
 
-  if((_behaviorState == State::SearchingForFace) &&
+  if((_dVars.behaviorState == State::SearchingForFace) &&
      (GetBEI().GetFaceWorld().HasAnyFaces())){
     CancelDelegates(false);
     TransitionToFoundFace();
@@ -88,7 +101,7 @@ void BehaviorSearchForFace::TransitionToFoundFace()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSearchForFace::SetState_internal(State state, const std::string& stateName)
 {
-  _behaviorState = state;
+  _dVars.behaviorState = state;
   SetDebugStateName(stateName);
 }
 

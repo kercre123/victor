@@ -139,6 +139,34 @@ enum uint_32 Relationship
   Relationship_Stranger = 3087192196,
 }
 
+enum uint_32 Robot_Vic_Head_Direction
+{
+  Invalid = 0,
+  Robot_Vic_Head_Direction_Down = 3234804922,
+  Robot_Vic_Head_Direction_Up = 123512153,
+}
+
+enum uint_32 Robot_Vic_Lift_Direction
+{
+  Invalid = 0,
+  Robot_Vic_Lift_Direction_Down = 3238791869,
+  Robot_Vic_Lift_Direction_Up = 807633034,
+}
+
+enum uint_32 Robot_Vic_Tread_Drive
+{
+  Invalid = 0,
+  Robot_Vic_Tread_Drive = 4283612440,
+  Robot_Vic_Tread_Spin = 2961118536,
+}
+
+enum uint_32 Robot_Vic_Tread_Speed
+{
+  Invalid = 0,
+  Robot_Vic_Tread_Backward = 3258446947,
+  Robot_Vic_Tread_Forward = 1541107887,
+}
+
 enum uint_32 Sparked
 {
   Fun = 982472036,
@@ -160,6 +188,10 @@ enum uint_32 SwitchGroupType
   Invalid = 0,
   Mood = 3128647864,
   Relationship = 3723222599,
+  Robot_Vic_Head_Direction = 358594767,
+  Robot_Vic_Lift_Direction = 3690255634,
+  Robot_Vic_Tread_Drive = 4283612440,
+  Robot_Vic_Tread_Speed = 724346585,
   Sparked = 62349551,
   World_Event = 846944294,
 }

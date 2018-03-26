@@ -109,7 +109,7 @@ EContentTypePackedType ConvertContentArrayToFlags(const MemoryMapTypes::FullCont
 // MemoryMap
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MemoryMap::MemoryMap()
-: _quadTree(MemoryMapDataPtr())
+: _quadTree()
 {
 }
 
@@ -203,7 +203,7 @@ bool MemoryMap::HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& 
       hasCollision |= IsInEContentTypePackedType(node.GetData()->type, nodeTypeFlags);
     };
   
-  MONITOR_PERFORMANCE( _quadTree.Fold(accumulator, Poly2f({rayFrom, rayTo})) );
+  MONITOR_PERFORMANCE( _quadTree.Fold(accumulator, FastPolygon({rayFrom, rayTo})) );
   return hasCollision;
 }
 

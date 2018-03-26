@@ -241,7 +241,7 @@ Result HAL::Step(void)
   uint32_t now = GetMicroCounter();
 
   Result result = RESULT_OK;
-  bool commander_is_active;
+  bool commander_is_active = false;
 
 #ifdef HAL_DUMMY_BODY
   ProcessIMUEvents();
@@ -253,12 +253,12 @@ Result HAL::Step(void)
 
   //Packet throttle.
   if (now-last_packet_send >= MIN_CCC_XMIT_SPACING_US ) {
-
     //check if the charge contact commander is active,
     //if so, override normal operation
-    commander_is_active = ccc_commander_is_active();
-    struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
-
+    // commander_is_active = ccc_commander_is_active();
+    // struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
+    struct HeadToBody* h2bp =  &headData_;
+    
     spine_write_h2b_frame(&spine_, h2bp);
 
     struct ContactData* ccc_response = ccc_text_response();
@@ -418,13 +418,6 @@ bool HAL::BatteryIsOnCharger()
   // The POWER_ON_CHARGER flag is set whenever there is sensed voltage on
   // the charge contacts.
   return bodyData_->battery.flags & POWER_ON_CHARGER;
-}
-
-bool HAL::BatteryIsChargerOOS()
-{
-  return false;
-  // BRC: no longer supported in DVT2
-  // bodyData_->battery.flags & chargerOOS;
 }
 
 u8 HAL::GetWatchdogResetCounter()

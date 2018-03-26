@@ -412,7 +412,7 @@ ssize_t spine_parse_frame(spine_ctx_t spine, void *out_buf, size_t out_buf_len, 
     // Invalid CRC
     if (true_crc != expected_crc) {
         // throw away header
-      LOGW("invalid crc: expected=%08x | observed=%08x [type %x]", expected_crc, true_crc, header->payload_type);
+        LOGW("invalid crc: expected=%08x | observed=%08x [type %x]", expected_crc, true_crc, header->payload_type);
         spine_set_rx_cursor(spine, sync_index + sizeof(SYNC_BODY_TO_HEAD));
         return -1;
     }

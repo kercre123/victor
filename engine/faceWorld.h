@@ -57,11 +57,8 @@ namespace Cozmo {
     // IDependencyManagedComponent functions
     //////
     virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
-    // Maintain the chain of initializations currently in robot - it might be possible to
-    // change the order of initialization down the line, but be sure to check for ripple effects
-    // when changing this function
     virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
-      dependencies.insert(RobotComponentID::BlockWorld);
+        dependencies.insert(RobotComponentID::CozmoContextWrapper);
     };
     virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
 
@@ -136,6 +133,8 @@ namespace Cozmo {
     
     bool IsFaceEnrollmentComplete() const { return _lastEnrollmentCompleted; }
     void SetFaceEnrollmentComplete(bool complete) { _lastEnrollmentCompleted = complete; }
+
+    bool IsMakingEyeContact() const;
     
     // template for all events we subscribe to
     template<typename T>
@@ -184,6 +183,10 @@ namespace Cozmo {
     
     void DrawFace(FaceEntry& knownFace, bool drawInImage = true);
     void EraseFaceViz(FaceEntry& faceEntry);
+    
+    void SendObjectUpdateToWebViz( const ExternalInterface::RobotDeletedFace& msg ) const;
+    void SendObjectUpdateToWebViz( const ExternalInterface::RobotObservedFace& msg ) const;
+    void SendObjectUpdateToWebViz( const std::string& name, Vision::FaceID_t id, uint32_t timestamp ) const;
     
     std::vector<Signal::SmartHandle> _eventHandles;
     

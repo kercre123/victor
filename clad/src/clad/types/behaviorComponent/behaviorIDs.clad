@@ -23,7 +23,6 @@ enum uint_8 BehaviorID {
   DevBaseBehavior,
   DevDisplayReadingsOnFace,
   DevImageCapture,
-  DevPettingTestSimple,
   DevTouchDataCollection,
   DevTurnInPlaceTest,
   DockingTestSimple,
@@ -61,9 +60,18 @@ enum uint_8 BehaviorID {
   ExamplePetInitialDetection,
 
   // reactions
+  ProceduralTurnToMicDirection,
   ReactToCliff,
+  ReactToCubeTap,
   ReactToCubeMoved,
+  ReactToGoodBye,
+  ReactToGoodMorning,
+  ReactToGoodNight,
+  ReactToGreeting,
   ReactToPet,
+  ReactToSoundAsleep,
+  ReactToSoundAwake,
+  ReactToTriggerDirectionAwake,
 
   // singing
   Singing_AbaDaba,
@@ -107,12 +115,15 @@ enum uint_8 BehaviorID {
   Singing_YellowRose,
 
   // timer
+  SingletonCancelTimer,
+  SingletonTimerAlreadySet,
   SingletonTimerAntic,
   SingletonTimerRinging,
   SingletonTimerSet,
   TimerUtilityCoordinator,
 
   // victorBehaviorTree
+  ComeHereVoiceCommand,
   CoordinateGlobalInterrupts,
   GlobalInterruptions,
   HighLevelAI,
@@ -135,13 +146,13 @@ enum uint_8 BehaviorID {
   Hiking_FirstLookWakeUp,
   Hiking_LookInPlace360,
   Hiking_LookInPlaceForUnknown,
-  Hiking_PounceOnMotion,
   Hiking_RollCube,
   Hiking_ThinkAboutBeacons,
   Hiking_VisitInterestingEdge,
 
   // victorBehaviorTree/highLevelDelegates
   InteractWithFaces,
+  Keepaway,
   LookInPlaceHeadUp,
 
   // victorBehaviorTree/highLevelDelegates/meetVictor
@@ -158,11 +169,14 @@ enum uint_8 BehaviorID {
   DriveOffChargerIntoObserving,
   DriveOffChargerIntoPlay,
   Observing,
+  ObservingEyeContact,
   ObservingFailedToFindCharger,
   ObservingFindFaces,
   ObservingLookAtFaces,
   ObservingOnCharger,
   ObservingOnChargerIdle,
+  ObservingOnChargerIdleAnim,
+  ReactToMotion,
 
   // victorBehaviorTree/highLevelDelegates
   PickupCube,
@@ -171,16 +185,14 @@ enum uint_8 BehaviorID {
   PlayRollBlock,
   PlayWithCube,
   PopAWheelie,
-
-  // victorBehaviorTree/highLevelDelegates
-  PounceOnMotion_Socialize,
+  RollCubeVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates/pounceWithProx
-  PounceApproachWithProx,
-  PounceDispatcher,
-  PounceQuickLeft,
-  PounceQuickRight,
-  PounceWithProx,
+  SingletonPounceApproachWithProx,
+  SingletonPounceDispatcher,
+  SingletonPounceTurnLeft,
+  SingletonPounceTurnRight,
+  SingletonPounceWithProx,
 
   // victorBehaviorTree/highLevelDelegates
   PutDownBlock,
@@ -200,6 +212,7 @@ enum uint_8 BehaviorID {
   SleepingWakeUp,
 
   // victorBehaviorTree/highLevelDelegates/socialize
+  DriveOffChargerIntoSocializing,
   FindFaces_socialize,
   Socialize,
   SocializeGame,
@@ -208,12 +221,14 @@ enum uint_8 BehaviorID {
   StackBlocks,
 
   // victorBehaviorTree/highLevelDelegates/voiceCommands
+  DoATrickVoiceCommand,
   FistBumpVoiceCommand,
+  KeepawayVoiceCommand,
 
   // victorBehaviorTree
-  ReactToSoundAsleep,
-  ReactToSoundAwake,
+  ReactToTouchPetting,
   ReactToUnclaimedIntent,
+  SingletonICantDoThat,
   TriggerWordDetected,
 }
 

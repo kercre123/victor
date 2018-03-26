@@ -1,0 +1,9 @@
+{
+  "behaviorID" : "ReactToMotion",
+  "behaviorClass" : "ReactToMotion",
+
+  "eyeMotionTimeout_s": 2.0,
+  "eyeMotionShiftTimeout_s": 1.0,
+  "ticksInIntervalForTurn": 3,
+  "turnIntervalSize": 50
+}

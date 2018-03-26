@@ -31,19 +31,13 @@ using namespace Anki::Cozmo;
 #define LOG_CHANNEL "CozmoWebServer"
 
 namespace {
-WebService::WebService* cozmoWebServer = nullptr;
+  bool gShutdown = false;
 }
 
-static void Cleanup(int signum)
+static void Shutdown(int signum)
 {
-  LOG_INFO("CozmoWebServer.Cleanup", "exit on signal %d", signum);
-
-  if (cozmoWebServer != nullptr)
-  {
-    delete cozmoWebServer;
-    cozmoWebServer = nullptr;
-  }
-  exit(0);
+  LOG_INFO("CozmoWebServer.Shutdown", "Shutdown on signal %d", signum);
+  gShutdown = true;
 }
 
 Anki::Util::Data::DataPlatform* createPlatform(const std::string& persistentPath,
@@ -113,25 +107,27 @@ Anki::Util::Data::DataPlatform* createPlatform()
 
 int main(void)
 {
-  signal(SIGTERM, Cleanup);
+  signal(SIGTERM, Shutdown);
 
   // - create and set logger
-  Util::AndroidLogPrintLogger logPrintLogger("webserver");
+  Util::AndroidLogPrintLogger logPrintLogger("vic-webserver");
   Util::gLoggerProvider = &logPrintLogger;
 
   Util::Data::DataPlatform* dataPlatform = createPlatform();
 
   // Create and init cozmoWebServer
   Json::Value wsConfig;
-  static const std::string & wsConfigPath = "webserver/webServerConfig_robot.json";
+  static const std::string & wsConfigPath = "webserver/webServerConfig_standalone.json";
   const bool success = dataPlatform->readAsJson(Util::Data::Scope::Resources, wsConfigPath, wsConfig);
   if (!success)
   {
     LOG_ERROR("CozmoWebServerMain.WebServerConfigNotFound",
               "Web server config file %s not found or failed to parse",
               wsConfigPath.c_str());
+    exit(1);
   }
-  cozmoWebServer = new WebService::WebService();
+
+  auto cozmoWebServer = std::make_unique<WebService::WebService>();
   cozmoWebServer->Start(dataPlatform, wsConfig);
 
   using namespace std::chrono;
@@ -142,8 +138,7 @@ int main(void)
   // Set the target time for the end of the first frame
   auto targetEndFrameTime = runStart + (microseconds)(WEB_SERVER_TIME_STEP_US);
 
-
-  while (1)
+  while (!gShutdown)
   {
     cozmoWebServer->Update();
 
@@ -182,4 +177,12 @@ int main(void)
                           (float)(forwardJumpDuration * 0.001f));
     }
   }
+
+  LOG_INFO("CozmoWebServer.main", "Stopping web server");
+  cozmoWebServer.reset();
+
+  LOG_INFO("CozmoWebServer.main", "exit(0)");
+  Util::gLoggerProvider = nullptr;
+  exit(0);
+
 }

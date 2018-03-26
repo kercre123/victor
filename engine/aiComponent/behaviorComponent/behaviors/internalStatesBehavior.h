@@ -54,8 +54,6 @@ public:
 protected:
 
   
-  
-  
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void InitBehavior() override;
   virtual void BehaviorUpdate() override;
@@ -63,6 +61,7 @@ protected:
   virtual void OnBehaviorDeactivated() override;
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override { }
   virtual bool WantsToBeActivatedBehavior() const override { return true; }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   
   using StateID = size_t;
   static const StateID InvalidStateID = 0;
@@ -122,6 +121,8 @@ private:
   StateID _currState = InvalidStateID;
 
   StateID _defaultState = InvalidStateID;
+  
+  std::vector<std::pair<StateID,StateID>> _resumeReplacements;
 
   BackpackLights _currDebugLights;
   bool _debugLightsDirty = false;
@@ -130,6 +131,8 @@ private:
   
   std::unique_ptr<Anki::Util::IConsoleFunction> _consoleFunc;
   StateID _consoleFuncState = InvalidStateID;
+  
+  bool _firstRun = true;
 };
 
 }

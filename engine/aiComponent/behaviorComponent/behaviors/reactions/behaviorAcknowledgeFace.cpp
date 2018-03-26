@@ -26,7 +26,6 @@
 #include "engine/faceWorld.h"
 #include "engine/moodSystem/moodManager.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/externalInterface/messageFromActiveObject.h"
 #include "util/console/consoleInterface.h"
 
 namespace Anki {
@@ -94,7 +93,7 @@ void BehaviorAcknowledgeFace::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorAcknowledgeFace::UpdateBestTarget()
 {
-  const auto& faceSelection = GetBEI().GetAIComponent().GetFaceSelectionComponent();
+  const auto& faceSelection = GetAIComp<FaceSelectionComponent>();
   FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;
   criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 1));
   criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3));

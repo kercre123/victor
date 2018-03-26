@@ -15,7 +15,8 @@
 
 #include "coretech/common/engine/math/point.h"
 #include "coretech/common/shared/types.h"
-#include "util/entityComponent/iManageableComponent.h"
+#include "engine/aiComponent/aiComponents_fwd.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "json/json.h"
 
 #include "util/helpers/noncopyable.h"
@@ -50,7 +51,8 @@ public:
 };
 
 
-class PuzzleComponent : public IManageableComponent, private Util::noncopyable
+class PuzzleComponent : public IDependencyManagedComponent<AIComponentID>, 
+                        private Util::noncopyable
 {
 public:
 

@@ -25,6 +25,7 @@ using namespace std;
 
 void NativeAnkiUtilConsoleLoadVarsWithContext(ConsoleFunctionContextRef context);
 void NativeAnkiUtilConsoleSaveVarsWithContext(ConsoleFunctionContextRef context);
+void NativeAnkiUtilConsoleDeleteVarsWithContext(ConsoleFunctionContextRef context);
 
 std::string g_ConsoleVarIniFilePath = "";
 
@@ -167,13 +168,6 @@ void ConsoleSystem::Register( const std::string& keystring, IConsoleVariable* va
 //------------------------------------------------------------------------------------------------------------------------------
 void ConsoleSystem::Register( const std::string& keystring, ConsoleFunc function, const char* categoryName, const std::string& args )
 {
-  if (_isInitializationComplete)
-  {
-    // Most funcs are added in static init (way before ini load), some are added manually but they should be added as
-    // early as possible!
-    LOG_WARNING("ConsoleSystem.RegisterFunc", "Adding func '%s' after initialization!", keystring.c_str());
-  }
-
   // The IConsoleVariable will register itself within its constructor.
   IConsoleFunction* func = new IConsoleFunction( keystring, function, categoryName, args );
   allocatedFunctions_.push_back( func );
@@ -182,13 +176,6 @@ void ConsoleSystem::Register( const std::string& keystring, ConsoleFunc function
 //------------------------------------------------------------------------------------------------------------------------------
 void ConsoleSystem::Register( const std::string& keystring, IConsoleFunction* function )
 {
-  if (_isInitializationComplete)
-  {
-    // Most funcs are added in static init (way before ini load), some are added manually but they should be added as
-    // early as possible!
-    LOG_WARNING("ConsoleSystem.RegisterFunc", "Adding func '%s' after initialization!", keystring.c_str());
-  }
-
   const StringID key = GetSearchKey( keystring );
   pair<FunctionDatabase::iterator, bool> result;
   result = consolefunctions_.emplace( key, function );
@@ -460,6 +447,12 @@ void SaveConsoleVars( ConsoleFunctionContextRef context )
   NativeAnkiUtilConsoleSaveVarsWithContext( context );
 }
 CONSOLE_FUNC( SaveConsoleVars, "Console" );
+
+void DeleteConsoleVars( ConsoleFunctionContextRef context )
+{
+  NativeAnkiUtilConsoleDeleteVarsWithContext( context );
+}
+CONSOLE_FUNC( DeleteConsoleVars, "Console" );
   
 //------------------------------------------------------------------------------------------------------------------------------
 void List_Variables( ConsoleFunctionContextRef context )
@@ -1196,5 +1189,17 @@ void NativeAnkiUtilConsoleSaveVarsWithContext(ConsoleFunctionContextRef context)
 void NativeAnkiUtilConsoleSaveVars()
 {
   NativeAnkiUtilConsoleSaveVarsWithContext(nullptr);
+}
+
+
+void NativeAnkiUtilConsoleDeleteVarsWithContext(ConsoleFunctionContextRef context)
+{
+  const char* k_ConsoleVarIniFilePath = g_ConsoleVarIniFilePath.c_str();
+
+  int result = std::remove(k_ConsoleVarIniFilePath);
+  if (result != 0)
+  {
+      LOG_ERROR("ConsoleSystem.DeleteVars", "Error trying to delete console vars file %s", k_ConsoleVarIniFilePath);
+  }
 }
 

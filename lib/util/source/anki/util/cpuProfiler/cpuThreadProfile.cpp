@@ -15,6 +15,8 @@
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 
+#include <pthread.h>
+#include <unistd.h>
 
 #if ANKI_CPU_PROFILER_ENABLED
 
@@ -146,7 +148,71 @@ void CpuThreadProfile::LogAllCalledSamples(uint32_t threadIndex,
   }
 }
 
-  
+
+void CpuThreadProfile::SaveChromeTracingProfile(FILE* fp, uint32_t threadIndex) const
+{
+  const size_t kMaxSampleDepth = 32;
+  const CpuProfileSample* sampleStack[kMaxSampleDepth];
+  size_t sampleStackDepth = 0;
+
+  pid_t pid = getpid();
+
+#if defined(ANDROID)
+  uint64_t tid = (uint64_t)gettid();
+#else
+  uint64_t tid;
+  pthread_threadid_np(NULL, &tid);
+#endif
+
+  for (const CpuProfileSample& sample : _samples)
+  {
+    while (sampleStackDepth > 0)
+    {
+      const CpuProfileSample* latestSample = sampleStack[sampleStackDepth-1];
+      if (latestSample->GetEndTimePoint() <= sample.GetStartTimePoint())
+      {
+        // new sample starts after latestSample finished - pop latestSample off the stack
+        fprintf(fp, "{\"name\": \"%s\", \"cat\": \"c++\", \"ph\": \"E\", \"ts\": %lld, \"pid\": %d, \"tid\": %llu},\n",
+                latestSample->GetName(),
+                std::chrono::duration_cast<std::chrono::milliseconds>(latestSample->GetEndTimePoint().time_since_epoch()).count(),
+                pid,
+                tid);
+        --sampleStackDepth;
+      }
+      else
+      {
+        // Nothing left to pop off
+        break;
+      }
+    }
+
+    {
+      fprintf(fp, "{\"name\": \"%s\", \"cat\": \"c++\", \"ph\": \"B\", \"ts\": %lld, \"pid\": %d, \"tid\": %llu},\n",
+              sample.GetName(),
+              std::chrono::duration_cast<std::chrono::milliseconds>(sample.GetStartTimePoint().time_since_epoch()).count(),
+              pid,
+              tid);
+    }
+    fflush(fp);
+    
+    if (sampleStackDepth < kMaxSampleDepth)
+    {
+      sampleStack[sampleStackDepth++] = &sample;
+    }
+  }
+
+  while (sampleStackDepth > 0)
+  {
+    const CpuProfileSample* latestSample = sampleStack[sampleStackDepth-1];
+    fprintf(fp, "{\"name\": \"%s\", \"cat\": \"c++\", \"ph\": \"E\", \"ts\": %lld, \"pid\": %d, \"tid\": %llu},\n",
+            latestSample->GetName(),
+            std::chrono::duration_cast<std::chrono::milliseconds>(latestSample->GetEndTimePoint().time_since_epoch()).count(),
+            pid,
+            tid);
+    --sampleStackDepth;
+  }
+}
+
 } // end namespace Util
 } // end namespace Anki
 

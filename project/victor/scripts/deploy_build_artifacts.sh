@@ -3,8 +3,10 @@
 set -e
 set -u
 
-# Go to directory of this script
+# Get directory of this script, then normalize to absolute path
 SCRIPT_PATH=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))
+SCRIPT_PATH=$(cd ${SCRIPT_PATH}; echo ${PWD})
+
 SCRIPT_NAME=$(basename ${0})
 TOPLEVEL=$SCRIPT_PATH
 
@@ -101,7 +103,11 @@ find bin -type f -not -name '*.full' >> ${RSYNC_LIST}
 find etc >> ${RSYNC_LIST}
 find data >> ${RSYNC_LIST}
 
-rsync -rlptD -IzvP --delete --delete-before --force --files-from=${RSYNC_LIST} ./ rsync://${DEVICE_IP_ADDRESS}/anki_root/
+#
+# Use --inplace to avoid consuming temp space & minimize number of writes
+# Use --delete to purge files that are no longer present in build tree
+#
+rsync -rlptD -IzvP --inplace --delete --delete-before --force --files-from=${RSYNC_LIST} ./ rsync://${DEVICE_IP_ADDRESS}/anki_root/
 
 rm -f ${BUILD_ROOT}/rsync.*.lst
 

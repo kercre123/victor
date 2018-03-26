@@ -14,10 +14,10 @@
 #define CONSOLE_MACRO_H
 
 #ifndef REMOTE_CONSOLE_ENABLED
-  #if defined(SHIPPING)
-    #define REMOTE_CONSOLE_ENABLED 0
+  #if defined(NDEBUG)
+    #define REMOTE_CONSOLE_ENABLED 1 // also enabled for release builds
   #else
-    #define REMOTE_CONSOLE_ENABLED 1
+    #define REMOTE_CONSOLE_ENABLED 1 // enabled for debug builds
   #endif
 #endif
 

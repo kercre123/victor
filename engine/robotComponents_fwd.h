@@ -13,49 +13,59 @@
 #ifndef __Engine_RobotComponentsFWD_H__
 #define __Engine_RobotComponentsFWD_H__
 
-#include "util/entityComponent/iDependencyManagedComponent.h"
+#include <set>
 
 namespace Anki {
+
+// forward declarations
+template<typename EnumType>
+class DependencyManagedEntity;
+
+template<typename EnumType>
+class IDependencyManagedComponent;
+
 namespace Cozmo {
 
 // When adding to this enum be sure to also declare a template specialization
 // in the _impl.cpp file mapping the enum to the class type it is associated with
 enum class RobotComponentID{
-  CozmoContext,
-  BlockWorld,
-  FaceWorld,
-  PetWorld,
-  PublicStateBroadcaster,
-  EngineAudioClient,
-  PathPlanning,
-  DrivingAnimationHandler,
-  ActionList,
-  Movement,
-  Vision,
-  VisionScheduleMediator,
-  Map,
-  NVStorage,
   AIComponent,
-  ObjectPoseConfirmer,
-  CubeLights,
+  ActionList,
+  Animation,
+  Battery,
+  BlockTapFilter,
+  BlockWorld,
   BodyLights,
-  CubeAccel,
-  CubeComms,
-  GyroDriftDetector,
-  Docking,
   Carrying,
   CliffSensor,
-  ProxSensor,
-  TouchSensor,
-  Animation,
-  StateHistory,
-  MoodManager,
+  CozmoContextWrapper,
+  CubeAccel,
+  CubeComms,
+  CubeLights,
+  Docking,
+  DrivingAnimationHandler,
+  EngineAudioClient,
+  FaceWorld,
+  FullRobotPose,
+  GyroDriftDetector,
   Inventory,
-  ProgressionUnlock,
-  BlockTapFilter,
-  RobotToEngineImplMessaging,
-  RobotIdleTimeout,
+  Map,
   MicDirectionHistory,
+  MoodManager,
+  Movement,
+  NVStorage,
+  ObjectPoseConfirmer,
+  PathPlanning,
+  PetWorld,
+  ProgressionUnlock,
+  ProxSensor,
+  PublicStateBroadcaster,
+  RobotIdleTimeout,
+  RobotToEngineImplMessaging,
+  StateHistory,
+  TouchSensor,
+  Vision,
+  VisionScheduleMediator,
   Count
 };
 

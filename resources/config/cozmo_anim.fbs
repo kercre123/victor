@@ -17,7 +17,7 @@ table ProceduralFace {
   faceScaleY:float = 1.0;
   leftEye:[float];
   rightEye:[float];
-  scanlineOpacity:float = 0.7;
+  scanlineOpacity:float = 1.0;
 }
 
 table HeadAngle {
@@ -27,12 +27,35 @@ table HeadAngle {
   angleVariability_deg:ubyte = 0;
 }
 
+table AudioEventGroup {
+  eventIds:[uint];
+  volumes:[float];
+  probabilities:[float];
+}
+
+table AudioState {
+  stateGroupId:uint = 0;
+  stateId:uint = 0;
+}
+
+table AudioSwitch {
+  switchGroupId:uint = 0;
+  stateId:uint = 0;
+}
+
+table AudioParameter {
+  parameterId:uint = 0;
+  value:float = 0.0;
+  time_ms:uint = 0;
+  curve:ubyte = 0;
+}
+
 table RobotAudio {
   triggerTime_ms:uint;
-  audioEventId:[long] (required);
-  volume:float = 1.0;
-  probability:[float];
-  hasAlts:bool = true;
+  eventGroups:[AudioEventGroup];
+  states:[AudioState];
+  switches:[AudioSwitch];
+  parameters:[AudioParameter];
 }
 
 table BackpackLights {
@@ -46,7 +69,7 @@ table BackpackLights {
 table FaceAnimation {
   triggerTime_ms:uint;
   animName:string (required);
-  scanlineOpacity:float = 0.7;
+  scanlineOpacity:float = 1.0;
 }
 
 table Event {

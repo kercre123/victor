@@ -18,6 +18,7 @@
 
 #include <thread>
 
+#if ANKI_PROFILING_ENABLED
 
 namespace Anki {
 namespace Util {
@@ -439,4 +440,4 @@ TEST(CpuProfiler, MultiThreadedWithMain)
   }
 }
 
-
+#endif // ANKI_PROFILING_ENABLED

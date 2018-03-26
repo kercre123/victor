@@ -137,17 +137,26 @@ namespace Vision {
     const BlinkAmount& GetBlinkAmount() const { return _blinkAmount; }
     void  SetBlinkAmount(f32 leftAmount, f32 rightAmount);
     
+    // Eye contact detection, if available
+    bool IsMakingEyeContact() const { return _isMakingEyeContact; }
+    void SetEyeContact(const bool eyeContact);
+
+    // Has the translation of this face been set
+    bool IsTranslationSet() const { return _isTranslationSet; }
+
     void SetRecognitionDebugInfo(const std::list<FaceRecognitionMatch>& info);
     const std::list<FaceRecognitionMatch>& GetRecognitionDebugInfo() const;
     
   private:
     
-    FaceID_t       _id             = UnknownFaceID;
-    float          _score          = 0.f;
-    TimeStamp_t    _timestamp      = 0;
-    s32            _numEnrollments = 0;
-    bool           _isBeingTracked = false;
-    bool           _isFacingCamera = false;
+    FaceID_t       _id                 = UnknownFaceID;
+    float          _score              = 0.f;
+    TimeStamp_t    _timestamp          = 0;
+    s32            _numEnrollments     = 0;
+    bool           _isBeingTracked     = false;
+    bool           _isFacingCamera     = false;
+    bool           _isMakingEyeContact = false;
+    bool           _isTranslationSet   = false;
 
     std::string    _name;
     
@@ -331,6 +340,10 @@ namespace Vision {
     _blinkAmount.wasChecked = true;
     _blinkAmount.blinkAmountLeft  = leftAmount;
     _blinkAmount.blinkAmountRight = rightAmount;
+  }
+
+  inline void TrackedFace::SetEyeContact(const bool eyeContact) {
+    _isMakingEyeContact = eyeContact;
   }
   
 } // namespace Vision

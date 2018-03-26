@@ -35,35 +35,23 @@ public:
 protected:
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override { modifiers.wantsToBeActivatedWhenOnCharger = false; }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
 private:
-  
-  void TransitionToSearchingForFaces();
-  void TransitionToRequestAnim();
-  void TransitionToRequestWaitLoopAnim();
-  void TransitionToRequestGetoutAnim();
-  void TransitionToLowPowerMode();
-  
-  void LoadConfig(const Json::Value& config);
-  
-  // Determine which request type should be active
-  // and load the appropriate parameter set
-  void UpdateCurrRequestTypeAndLoadParams();
-  
   enum class EState {
     Init,
     FindingFaces,
-    Requesting,
-  } _state;
+    Requesting
+  };
   
   enum class ERequestType {
     Normal,  // normal request
     Severe,  // severe request
     LowPower // time to transition to low-power mode
-  } _currRequestType;
+  };
   
   struct RequestParams {
     int numRequests = 0;
@@ -75,31 +63,50 @@ private:
     float idleWaitTime_sec = 0.f;
   };
   
-  struct {
-    RequestParams normal; // params to use for 'normal' requests
-    RequestParams severe; // params to use for 'severe' requests
+
+  struct InstanceConfig {
+    InstanceConfig();
+    RequestParams normalRequest; // params to use for 'normal' requests
+    RequestParams severeRequest; // params to use for 'severe' requests
     
-    AnimationTrigger pickupAnimTrigger = AnimationTrigger::Count;
+    AnimationTrigger pickupAnimTrigger;
     
     // The maximum allowed 'age' for a face before resorting
     // to a search. i.e. if we have a known face but it's
     // older than this, search for faces anyway.
-    float maxFaceAge_sec = 0.f;
-  } _params;
-  
-  // pointer to the currently active request params
-  RequestParams* _currRequestParams = &_params.normal;
+    float maxFaceAge_sec;
 
-  // Counters for number of requests that have happened
-  int _numNormalRequests = 0;
-  int _numSevereRequests = 0;
-  
-  // robot image timestamp at the time the behavior was activated
-  TimeStamp_t _imageTimestampWhenActivated = 0;
-  
-  // Sub-behavior used to search in place for a face
-  ICozmoBehaviorPtr _findFacesBehavior;
+    // Sub-behavior used to search in place for a face
+    ICozmoBehaviorPtr findFacesBehavior;
+  };
 
+  struct DynamicVariables {
+    DynamicVariables(const InstanceConfig& iConfig);
+    // pointer to the currently active request params
+    const RequestParams* currRequestParamsPtr;
+    ERequestType   currRequestType;
+    EState         state;
+    // Counters for number of requests that have happened
+    int numNormalRequests;
+    int numSevereRequests;
+    // robot image timestamp at the time the behavior was activated
+    TimeStamp_t imageTimestampWhenActivated;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
+  void TransitionToSearchingForFaces();
+  void TransitionToRequestAnim();
+  void TransitionToRequestWaitLoopAnim();
+  void TransitionToRequestGetoutAnim();
+  void TransitionToLowPowerMode();
+  
+  void LoadConfig(const Json::Value& config);
+  
+  // Determine which request type should be active
+  // and load the appropriate parameter set
+  void UpdateCurrRequestTypeAndLoadParams();
 };
   
 

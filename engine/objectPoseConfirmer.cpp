@@ -19,7 +19,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoObservableObject.h"
@@ -719,7 +719,7 @@ Result ObjectPoseConfirmer::AddLiftRelativeObservation(ObservableObject* object,
   // Sanity checks
   DEV_ASSERT(objectID.IsSet(),
              "ObjectPoseConfirmer.AddLiftRelativeObservation.UnSetObjectID");
-  DEV_ASSERT(newPoseWrtLift.IsChildOf(_robot->GetLiftPose()),
+  DEV_ASSERT(newPoseWrtLift.IsChildOf(_robot->GetComponent<FullRobotPose>().GetLiftPose()),
              "ObjectPoseConfirmer.AddLiftRelativeObservation.PoseNotWrtLift");
   DEV_ASSERT( object == _robot->GetBlockWorld().GetLocatedObjectByID(objectID),
              "ObjectPoseConfirmer.AddLiftRelativeObservation.NotTheObjectInBlockWorldForID");

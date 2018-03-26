@@ -2,7 +2,9 @@
   "behaviorClass": "AnimSequence",
   "behaviorID": "ExampleObjectPositionUpdated",
   "animTriggers": ["AcknowledgeObject"],
-  "wantsToBeActivatedCondition": {
-    "conditionType" : "ObjectPositionUpdated"
-  }  
+  "wantsToBeActivatedConditions": [
+    {
+      "conditionType" : "ObjectPositionUpdated"
+    }
+  ]  
 }

@@ -91,6 +91,7 @@ protected:
     GetBehaviorOperationModifiersInternal(modifiers);
   }
   virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
 
 
   enum PlaypenStatus

@@ -60,6 +60,7 @@ protected:
     modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Low });
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
@@ -70,22 +71,37 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 private:
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Types
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    
   using BaseClass = ICozmoBehavior;
-    
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  //
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
   using Face = Vision::TrackedFace;
+
+  struct InstanceConfig {
+    InstanceConfig();
+    float minTimeToTrackFace_s;
+    float maxTimeToTrackFace_s;
+
+    float minClampPeriod_s;
+    float maxClampPeriod_s;
+    bool clampSmallAngles;
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    // ID of face we are currently interested in
+    mutable SmartFaceID targetFace;
+    // We only want to run for faces we've seen since the last time we ran, so keep track of the final timestamp
+    // when the behavior finishes
+    TimeStamp_t lastImageTimestampWhileRunning;
+    // In the face tracking stage the action will hang, so store a time at which we want to stop it (from within
+    // Update)
+    float trackFaceUntilTime_s;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
 
   void LoadConfig(const Json::Value& config);
 
-  // sets the mutbale _targetFace to the face we want to interact with
+  // sets the mutbale _dVars.targetFace to the face we want to interact with
   void SelectFaceToTrack() const;
 
   void TransitionToInitialReaction();
@@ -95,33 +111,6 @@ private:
   void TransitionToTriggerEmotionEvent();
 
   bool CanDriveIdealDistanceForward();
-
-  ////////////////////////////////////////////////////////////////////////////////
-  // Members
-  ////////////////////////////////////////////////////////////////////////////////
-
-  // ID of face we are currently interested in
-  mutable SmartFaceID _targetFace;
-
-  // We only want to run for faces we've seen since the last time we ran, so keep track of the final timestamp
-  // when the behavior finishes
-  TimeStamp_t _lastImageTimestampWhileRunning = 0;
-
-  // In the face tracking stage the action will hang, so store a time at which we want to stop it (from within
-  // Update)
-  float _trackFaceUntilTime_s = -1.0f;
-
-  struct Configuration {
-    float minTimeToTrackFace_s = 0.0f;;
-    float maxTimeToTrackFace_s = 0.0f;;
-
-    float minClampPeriod_s = 0.0f;;
-    float maxClampPeriod_s = 0.0f;;
-    bool clampSmallAngles = false;
-  };
-
-  Configuration _configParams;
-
     
 }; // BehaviorInteractWithFaces
   

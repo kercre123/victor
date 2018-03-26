@@ -59,6 +59,8 @@ public:
   
   void SetOwnerDebugLabel(const std::string& ownerLabel) { _ownerLabel = ownerLabel; }
   
+  const std::string GetDebugLabel() const { return _debugLabel; }
+
 protected:
 
   // // ResetInternal is called whenever Reset is called, which depends on how the strategy is being used
@@ -88,7 +90,6 @@ protected:
   // try not to return two elements with the same "name"
   virtual DebugFactorsList GetDebugFactors() const { return {}; };
   
-  const std::string GetDebugLabel() const { return _debugLabel; }
 
 private:
   

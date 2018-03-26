@@ -39,6 +39,16 @@
 namespace Anki {
 namespace Cozmo {
   
+namespace {
+  const char* kTileSizeKey = "tileSize_pixels";
+  const char* kWallSizeKey = "wallSize_pixels";
+  const char* kCozmoAvatarSizeKey = "cozmoAvatarSize_pixels";
+  const char* kTimeBetweenTilesKey = "timeBetweenTiles_Sec";
+  const char* kTimePauseAtIntersectionMinKey = "timePauseAtIntersectionMin_Sec";
+  const char* kTimePauseAtIntersectionMaxKey = "timePauseAtIntersectionMax_Sec";
+  const char* kChanceRandomWrongChoiceKey = "chanceRandomWrongChoice";
+}
+  
 // Console parameters
 #define CONSOLE_GROUP "Behavior.PuzzleMaze"
   
@@ -70,38 +80,73 @@ const char * BehaviorPuzzleMaze::EnumToString(const MazeState& state)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Transition to given state
-void BehaviorPuzzleMaze::TransitionToState(const MazeState& state)
+BehaviorPuzzleMaze::InstanceConfig::InstanceConfig(const Json::Value& config)
 {
-  if (_state != state) {
-    LOG_TRACE("BehaviorPuzzleMaze.TransitionToState", "%s to %s", EnumToString(_state), EnumToString(state));
-    SetDebugStateName(EnumToString(state));
-    _state = state;
-  }
+  animateBetweenTiles = true;
+  
+  // Default values
+  tileSize_px                    = 20;
+  wallSize_px                    = 2;
+  cozmoAvatarSize_px             = 6;
+  timeBetweenMazeSteps_Sec       = 2.f;
+  timePauseAtIntersectionMin_Sec = 0.5f;
+  timePauseAtIntersectionMax_Sec = 1.0f;
+  chanceWrongTurn                = 0.05f;
+
+  // grab any values the JSON overrides
+  JsonTools::GetValueOptional(config, kTileSizeKey,                tileSize_px);
+  JsonTools::GetValueOptional(config, kWallSizeKey,                wallSize_px);
+  JsonTools::GetValueOptional(config, kCozmoAvatarSizeKey,         cozmoAvatarSize_px);
+  JsonTools::GetValueOptional(config, kTimeBetweenTilesKey,           timeBetweenMazeSteps_Sec);
+  JsonTools::GetValueOptional(config, kTimePauseAtIntersectionMinKey, timePauseAtIntersectionMin_Sec);
+  JsonTools::GetValueOptional(config, kTimePauseAtIntersectionMaxKey, timePauseAtIntersectionMax_Sec);
+  JsonTools::GetValueOptional(config, kChanceRandomWrongChoiceKey,        chanceWrongTurn);
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorPuzzleMaze::DynamicVariables::DynamicVariables()
+{
+  avatarState = AvatarState::WaitNextMove;
+  totalTimeInLastPuzzle_Sec = 0.f;
+  isMazeSolved = false;
+  nextStep_Sec = 0.f;
+  state = MazeState::Init;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPuzzleMaze::BehaviorPuzzleMaze(const Json::Value& config)
 : ICozmoBehavior(config)
-, _avatarState(AvatarState::WaitNextMove)
-, _tileSize_px(20)
-, _wallSize_px(2)
-, _cozmoAvatarSize_px(6)
-, _timeBetweenMazeSteps_Sec(2.f)
-, _timePauseAtIntersectionMin_Sec(0.5f)
-, _timePauseAtIntersectionMax_Sec(1.0f)
-, _chanceWrongTurn(0.05f)
-, _animateBetweenTiles(true)
-, _totalTimeInLastPuzzle_Sec(0.f)
-, _isMazeSolved(false)
+, _iConfig(config)
 {
-  JsonTools::GetValueOptional(config, "tileSize_pixels", _tileSize_px);
-  JsonTools::GetValueOptional(config, "wallSize_pixels", _wallSize_px);
-  JsonTools::GetValueOptional(config, "cozmoAvatarSize_pixels", _cozmoAvatarSize_px);
-  JsonTools::GetValueOptional(config, "timeBetweenTiles_Sec", _timeBetweenMazeSteps_Sec);
-  JsonTools::GetValueOptional(config, "timePauseAtIntersectionMin_Sec", _timePauseAtIntersectionMin_Sec);
-  JsonTools::GetValueOptional(config, "timePauseAtIntersectionMax_Sec", _timePauseAtIntersectionMax_Sec);
-  JsonTools::GetValueOptional(config, "chanceRandomWrongChoice", _chanceWrongTurn);
+
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPuzzleMaze::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kTileSizeKey,
+    kWallSizeKey,
+    kCozmoAvatarSizeKey,
+    kTimeBetweenTilesKey,
+    kTimePauseAtIntersectionMinKey,
+    kTimePauseAtIntersectionMaxKey,
+    kChanceRandomWrongChoiceKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Transition to given state
+void BehaviorPuzzleMaze::TransitionToState(const MazeState& state)
+{
+  if (_dVars.state != state) {
+    LOG_TRACE("BehaviorPuzzleMaze.TransitionToState", "%s to %s", EnumToString(_dVars.state), EnumToString(state));
+    SetDebugStateName(EnumToString(state));
+    _dVars.state = state;
+  }
 }
 
 
@@ -128,7 +173,7 @@ void BehaviorPuzzleMaze::StartAnimation(const AnimationTrigger& animationTrigger
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPuzzleMaze::StartAnimation(const AnimationTrigger& animationTrigger)
 {
-  StartAnimation(animationTrigger, _state);
+  StartAnimation(animationTrigger, _dVars.state);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -234,16 +279,16 @@ void BehaviorPuzzleMaze::OnBehaviorActivated()
 {
   LOG_TRACE("BehaviorPuzzleMaze.InitInternal", "Init behavior");
   
-  const auto& currMaze = GetBEI().GetAIComponent().GetPuzzleComponent().GetCurrentMaze();
-  _currFacing = MazeWalls::South;
-  _currPos = currMaze._start;
-  _path.clear();
-  _path.emplace_back(_currPos);
-  _nextStep_Sec = 0.f;
-  _totalTimeInLastPuzzle_Sec = 0.f;
-  _isMazeSolved = false;
+  const auto& currMaze = GetAIComp<PuzzleComponent>().GetCurrentMaze();
+  _dVars.currFacing = MazeWalls::South;
+  _dVars.currPos = currMaze._start;
+  _dVars.path.clear();
+  _dVars.path.emplace_back(_dVars.currPos);
+  _dVars.nextStep_Sec = 0.f;
+  _dVars.totalTimeInLastPuzzle_Sec = 0.f;
+  _dVars.isMazeSolved = false;
   
-  _nextPos = _currPos;
+  _dVars.nextPos = _dVars.currPos;
   
   TransitionToState(MazeState::GetIn);
   
@@ -254,49 +299,49 @@ void BehaviorPuzzleMaze::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPuzzleMaze::SingleStepMaze()
 {
-  const auto& currMaze = GetBEI().GetAIComponent().GetPuzzleComponent().GetCurrentMaze();
+  const auto& currMaze = GetAIComp<PuzzleComponent>().GetCurrentMaze();
   // This function is called once we've reached the end of an animation, so update our tile position
-  _currPos = _nextPos;
+  _dVars.currPos = _dVars.nextPos;
   // step if we're not at the end.
-  if( !(_currPos == currMaze._end) )
+  if( !(_dVars.currPos == currMaze._end) )
   {
     // we've reached the end of where we were moving.
-    MazeWalls currcell = (MazeWalls)currMaze._maze[_currPos.y()][_currPos.x()];
+    MazeWalls currcell = (MazeWalls)currMaze._maze[_dVars.currPos.y()][_dVars.currPos.x()];
     // This is more than just a hallway, we need to think about this.
     int numExits = GetNumberOfExitsFromCell(currcell) ;
-    if( _avatarState == AvatarState::MovingBetweenTiles && numExits > 2)
+    if( _dVars.avatarState == AvatarState::MovingBetweenTiles && numExits > 2)
     {
-      _avatarState = AvatarState::ThinkingAnim;
-      float thinkingTime = GetBEI().GetRNG().RandDblInRange(_timePauseAtIntersectionMin_Sec, _timePauseAtIntersectionMax_Sec);
-      _nextStep_Sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + thinkingTime;
+      _dVars.avatarState = AvatarState::ThinkingAnim;
+      float thinkingTime = GetBEI().GetRNG().RandDblInRange(_iConfig.timePauseAtIntersectionMin_Sec, _iConfig.timePauseAtIntersectionMax_Sec);
+      _dVars.nextStep_Sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + thinkingTime;
       // Even when doing our balancing and we skip animating we want this to simulate as if we had animated.
-      _totalTimeInLastPuzzle_Sec += thinkingTime;
+      _dVars.totalTimeInLastPuzzle_Sec += thinkingTime;
       
-      LOG_TRACE("BehaviorPuzzleMaze.SingleStepMaze.ToThinking", "NumExits:%d x: %d y: %d, wait: %.2f", numExits, _currPos.x(), _currPos.y(), thinkingTime);
+      LOG_TRACE("BehaviorPuzzleMaze.SingleStepMaze.ToThinking", "NumExits:%d x: %d y: %d, wait: %.2f", numExits, _dVars.currPos.x(), _dVars.currPos.y(), thinkingTime);
     }
     else
     {
-      _avatarState = AvatarState::MovingBetweenTiles;
-      _nextStep_Sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _timeBetweenMazeSteps_Sec;
+      _dVars.avatarState = AvatarState::MovingBetweenTiles;
+      _dVars.nextStep_Sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _iConfig.timeBetweenMazeSteps_Sec;
       // Even when doing our balancing and we skip animating we want this to simulate as if we had animated.
-      _totalTimeInLastPuzzle_Sec += _timeBetweenMazeSteps_Sec;
+      _dVars.totalTimeInLastPuzzle_Sec += _iConfig.timeBetweenMazeSteps_Sec;
       
       bool makeWrongTurn = false;
       if( numExits > 2 )
       {
-        makeWrongTurn = GetBEI().GetRNG().RandDbl() < _chanceWrongTurn ;
+        makeWrongTurn = GetBEI().GetRNG().RandDbl() < _iConfig.chanceWrongTurn ;
       }
       Point2i moveDir;
-      _currFacing = GetNextDir(currcell, _currFacing, moveDir, makeWrongTurn);
-      _nextPos = _currPos + moveDir;
-      _path.emplace_back(_currPos);
-      LOG_TRACE("BehaviorPuzzleMaze.SingleStepMaze.ToMoving","at %d, %d, facing %d",_currPos.x(),_currPos.y(),(int)_currFacing);
+      _dVars.currFacing = GetNextDir(currcell, _dVars.currFacing, moveDir, makeWrongTurn);
+      _dVars.nextPos = _dVars.currPos + moveDir;
+      _dVars.path.emplace_back(_dVars.currPos);
+      LOG_TRACE("BehaviorPuzzleMaze.SingleStepMaze.ToMoving","at %d, %d, facing %d",_dVars.currPos.x(),_dVars.currPos.y(),(int)_dVars.currFacing);
     }
   }
   else
   {
     LOG_TRACE("BehaviorPuzzleMaze.SingleStepMaze.Solved", "");
-    _isMazeSolved = true;
+    _dVars.isMazeSolved = true;
   }
 }
 
@@ -305,8 +350,8 @@ void BehaviorPuzzleMaze::SingleStepMaze()
 void BehaviorPuzzleMaze::UpdateMaze()
 {
   // Do single step update, when done animating or when running in fast mode.
-  if( (_nextStep_Sec < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() || !_animateBetweenTiles) &&
-     !_isMazeSolved)
+  if( (_dVars.nextStep_Sec < BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() || !_iConfig.animateBetweenTiles) &&
+     !_dVars.isMazeSolved)
   {
     SingleStepMaze();
   }
@@ -316,20 +361,20 @@ void BehaviorPuzzleMaze::UpdateMaze()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPuzzleMaze::DrawMaze(Vision::Image& image)
 {
-  const auto& currMaze = GetBEI().GetAIComponent().GetPuzzleComponent().GetCurrentMaze();
+  const auto& currMaze = GetAIComp<PuzzleComponent>().GetCurrentMaze();
   size_t h = currMaze.GetHeight();
   size_t w = currMaze.GetWidth();
   
   // if avatar is in state moving, this is correct. If in state waiting
   float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  float t = 1.f - ((_nextStep_Sec - currTime) / _timeBetweenMazeSteps_Sec);
+  float t = 1.f - ((_dVars.nextStep_Sec - currTime) / _iConfig.timeBetweenMazeSteps_Sec);
   
-  float lerpedPosX = _currPos.x() + t * (_nextPos.x() - _currPos.x());
-  float lerpedPosY = _currPos.y() + t * (_nextPos.y() - _currPos.y());
+  float lerpedPosX = _dVars.currPos.x() + t * (_dVars.nextPos.x() - _dVars.currPos.x());
+  float lerpedPosY = _dVars.currPos.y() + t * (_dVars.nextPos.y() - _dVars.currPos.y());
   // draw offset to mid screen.
   // convert from tile to pixel coordinates...
-  int camX = (lerpedPosX * _tileSize_px);
-  int camY = (lerpedPosY * _tileSize_px);
+  int camX = (lerpedPosX * _iConfig.tileSize_px);
+  int camY = (lerpedPosY * _iConfig.tileSize_px);
   
   int offsetX =  FACE_DISPLAY_WIDTH/2 - camX;
   int offsetY =  FACE_DISPLAY_HEIGHT/2 - camY;
@@ -343,32 +388,32 @@ void BehaviorPuzzleMaze::DrawMaze(Vision::Image& image)
       if( (wall & MazeWalls::North) != 0 )
       {
         // draw top wall
-        Rectangle<f32> rect( ( _tileSize_px * x )+ offsetX,
-                            ( _tileSize_px * y ) + offsetY,
-                            _tileSize_px, _wallSize_px);
+        Rectangle<f32> rect( ( _iConfig.tileSize_px * x )+ offsetX,
+                            ( _iConfig.tileSize_px * y ) + offsetY,
+                            _iConfig.tileSize_px, _iConfig.wallSize_px);
         // Rect not line to control thinkness.
         image.DrawFilledRect(rect, NamedColors::WHITE);
       }
       if( (wall & MazeWalls::West) != 0 )
       {
         // Draw on the inner edges of the square
-        Rectangle<f32> rect(( _tileSize_px * x )+ offsetX,
-                            ( _tileSize_px * y ) + offsetY,
-                            _wallSize_px, _tileSize_px);
+        Rectangle<f32> rect(( _iConfig.tileSize_px * x )+ offsetX,
+                            ( _iConfig.tileSize_px * y ) + offsetY,
+                            _iConfig.wallSize_px, _iConfig.tileSize_px);
         image.DrawFilledRect(rect, NamedColors::WHITE);
       }
       if( (wall & MazeWalls::South) != 0 )
       {
-        Rectangle<f32> rect(( _tileSize_px * x ) + offsetX,
-                            ( _tileSize_px * (y +1) ) -_wallSize_px + offsetY,
-                            _tileSize_px, _wallSize_px);
+        Rectangle<f32> rect(( _iConfig.tileSize_px * x ) + offsetX,
+                            ( _iConfig.tileSize_px * (y +1) ) -_iConfig.wallSize_px + offsetY,
+                            _iConfig.tileSize_px, _iConfig.wallSize_px);
         image.DrawFilledRect(rect, NamedColors::WHITE);
       }
       if( (wall & MazeWalls::East) != 0 )
       {
-        Rectangle<f32> rect(( _tileSize_px * (x+1) ) - _wallSize_px + offsetX,
-                            ( _tileSize_px * y ) + offsetY,
-                            _wallSize_px, _tileSize_px);
+        Rectangle<f32> rect(( _iConfig.tileSize_px * (x+1) ) - _iConfig.wallSize_px + offsetX,
+                            ( _iConfig.tileSize_px * y ) + offsetY,
+                            _iConfig.wallSize_px, _iConfig.tileSize_px);
         image.DrawFilledRect(rect, NamedColors::WHITE);
       }
     }
@@ -380,9 +425,9 @@ void BehaviorPuzzleMaze::DrawMaze(Vision::Image& image)
 void BehaviorPuzzleMaze::DrawCozmo(Vision::Image& image)
 {
   // Cozmo is basically just always center screen dot. forcing world around him to scroll.
-  // TODO: Loop an animation when in _avatarState = AvatarState::ThinkingAnim
-  image.DrawFilledCircle(Point2f(FACE_DISPLAY_WIDTH/2+ _tileSize_px/2 ,FACE_DISPLAY_HEIGHT/2+ _tileSize_px/2 ),
-                         NamedColors::WHITE, _cozmoAvatarSize_px);
+  // TODO: Loop an animation when in _dVars.avatarState = AvatarState::ThinkingAnim
+  image.DrawFilledCircle(Point2f(FACE_DISPLAY_WIDTH/2+ _iConfig.tileSize_px/2 ,FACE_DISPLAY_HEIGHT/2+ _iConfig.tileSize_px/2 ),
+                         NamedColors::WHITE, _iConfig.cozmoAvatarSize_px);
 }
 
 
@@ -390,7 +435,7 @@ void BehaviorPuzzleMaze::DrawCozmo(Vision::Image& image)
 void BehaviorPuzzleMaze::UpdateDisplay()
 {
   // Do we need to draw a new face?
-  if (!IsControlDelegated() && _animateBetweenTiles) {
+  if (!IsControlDelegated() && _iConfig.animateBetweenTiles) {
     
     // Init background, height by width
     Vision::Image image(FACE_DISPLAY_HEIGHT,FACE_DISPLAY_WIDTH, NamedColors::BLACK);
@@ -418,17 +463,17 @@ void BehaviorPuzzleMaze::BehaviorUpdate()
     return;
   }
   
-  switch (_state) {
+  switch (_dVars.state) {
     case MazeState::Init:
     {
       // This should never happen. InitInternal (above) sets state to GetIn.
-      DEV_ASSERT(_state != MazeState::Init, "BehaviorPuzzleMaze.Update.InvalidState");
+      DEV_ASSERT(_dVars.state != MazeState::Init, "BehaviorPuzzleMaze.Update.InvalidState");
       break;
     }
     case MazeState::GetIn:
     {
       if (!IsControlDelegated()) {
-        StartAnimation(AnimationTrigger::BouncerGetIn, MazeState::MazeStep);
+        StartAnimation(AnimationTrigger::CubePounceGetIn, MazeState::MazeStep);
       }
       break;
     }
@@ -442,7 +487,7 @@ void BehaviorPuzzleMaze::BehaviorUpdate()
     case MazeState::GetOut:
     {
       if (!IsControlDelegated()) {
-        StartAnimation(AnimationTrigger::BouncerGetOut, MazeState::Complete);
+        StartAnimation(AnimationTrigger::CubePounceGetOut, MazeState::Complete);
       }
       break;
     }
@@ -470,19 +515,19 @@ void BehaviorPuzzleMaze::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPuzzleMaze::SetAnimateBetweenPoints(bool isNormalMode)
 {
-  _animateBetweenTiles = isNormalMode;
+  _iConfig.animateBetweenTiles = isNormalMode;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float BehaviorPuzzleMaze::GetTotalTimeFromLastRun()
 {
-  return _totalTimeInLastPuzzle_Sec;
+  return _dVars.totalTimeInLastPuzzle_Sec;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPuzzleMaze::IsPuzzleCompleted()
 {
-  return _isMazeSolved;
+  return _dVars.isMazeSolved;
 }
   
 } // namespace Cozmo

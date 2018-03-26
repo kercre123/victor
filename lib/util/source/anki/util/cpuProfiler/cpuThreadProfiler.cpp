@@ -28,7 +28,8 @@ CONSOLE_VAR(bool, kProfilerLogSlowTicks, "CpuProfiler", false);
   
 double CpuThreadProfiler::sMinSampleDuration_ms = 0.01; // ignore trivial samples below this
 
-  
+FILE* CpuThreadProfiler::_chromeTracingFile = nullptr;
+
 CpuThreadProfiler::CpuThreadProfiler()
   : _threadName(kThreadNameInvalid)
   , _currentProfile()
@@ -73,6 +74,22 @@ void CpuThreadProfiler::Init(CpuThreadId threadId, uint32_t threadIndex, const c
 }
   
   
+void CpuThreadProfiler::SetChromeTracingFile(const char* tracingFile) {
+  if (_chromeTracingFile) {
+    fclose(_chromeTracingFile);
+    _chromeTracingFile = nullptr;
+  }
+
+  _chromeTracingFile = fopen(tracingFile, "w");
+  if (_chromeTracingFile) {
+    fprintf(_chromeTracingFile, "{\"displayTimeUnit\": \"ms\",");
+    fprintf(_chromeTracingFile, "\"ts_epoch\": %lld,", std::chrono::duration_cast<std::chrono::milliseconds>(CpuProfileClock::now().time_since_epoch()).count());
+    fprintf(_chromeTracingFile, "\"app_epoch\": %lld,\n", std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
+    fprintf(_chromeTracingFile, "\"traceEvents\": [");
+  }
+}
+
+
 void CpuThreadProfiler::ReuseThread(CpuThreadId threadId)
 {
   assert(_hasBeenDeleted);
@@ -145,12 +162,16 @@ void CpuThreadProfiler::EndTick()
 
 void CpuThreadProfiler::LogProfile() const
 {
-  PRINT_CH_INFO("CpuProfiler", "LogProfile", "Thread %u '%s' tick %u [%.3f ms from start %.3f, end %.3f]",
-                GetThreadIndex(), GetThreadName(), _currentProfile.GetTickNum(),
-                _currentProfile.GetTickDuration(),
-                GetTimeSinceBase_ms(_currentProfile.GetStartTimePoint()),
-                GetTimeSinceBase_ms(_currentProfile.GetEndTimePoint()));
-  _currentProfile.LogProfile(_threadIndex);
+  if (_chromeTracingFile) {
+      _currentProfile.SaveChromeTracingProfile(_chromeTracingFile, _threadIndex);
+  } else {
+    PRINT_CH_INFO("CpuProfiler", "LogProfile", "Thread %u '%s' tick %u [%.3f ms from start %.3f, end %.3f]",
+                  GetThreadIndex(), GetThreadName(), _currentProfile.GetTickNum(),
+                  _currentProfile.GetTickDuration(),
+                  GetTimeSinceBase_ms(_currentProfile.GetStartTimePoint()),
+                  GetTimeSinceBase_ms(_currentProfile.GetEndTimePoint()));
+    _currentProfile.LogProfile(_threadIndex);
+  }
 }
   
   
@@ -163,10 +184,12 @@ void CpuThreadProfiler::SortAndLogProfile()
   
 void CpuThreadProfiler::LogAllCalledSamples() const
 {
-  PRINT_CH_INFO("CpuProfiler", "LogAllCalledSamples", "Thread %u '%s' tick %u",
-                GetThreadIndex(), GetThreadName(), _currentProfile.GetTickNum());
+  if (!_chromeTracingFile) {
+    PRINT_CH_INFO("CpuProfiler", "LogAllCalledSamples", "Thread %u '%s' tick %u",
+                  GetThreadIndex(), GetThreadName(), _currentProfile.GetTickNum());
 
-  _currentProfile.LogAllCalledSamples(_threadIndex, _samplesCalledFromThread);
+    _currentProfile.LogAllCalledSamples(_threadIndex, _samplesCalledFromThread);
+  }
 }
 
   

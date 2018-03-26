@@ -42,6 +42,10 @@ DISPLAY = display
 DISPLAY_SRC = display.c helper_text.c display_test.c
 DISPLAY_OBJ = $(DISPLAY_SRC:%.c=$(OBJDIR)/%.o)
 
+DISPLAY_BLIT = display_blit
+DISPLAY_BLIT_SRC = display.c display_blit_test.c
+DISPLAY_BLIT_OBJ = $(DISPLAY_BLIT_SRC:%.c=$(OBJDIR)/%.o)
+
 HELPER = helper
 HELPER_SRC = main.c display.c helper_text.c logging.c pidopen.c
 HELPER_OBJ = $(HELPER_SRC:%.c=$(OBJDIR)/%.o)
@@ -74,6 +78,9 @@ $(ANIMATE): $(CORE) $(ANIMATE_OBJ)
 
 $(DISPLAY): $(CORE) $(DISPLAY_OBJ)
 	$(CROSS_COMPILE)gcc -pie $(DISPLAY_OBJ) $(LIBPATH) $(LIBS)  -o $(DISPLAY)
+
+$(DISPLAY_BLIT): $(CORE) $(DISPLAY_BLIT_OBJ)
+	$(CROSS_COMPILE)gcc -pie $(DISPLAY_BLIT_OBJ) $(LIBPATH) $(LIBS)  -o $(DISPLAY_BLIT)
 
 $(HELPER): $(CORE) $(HELPER_OBJ)
 	$(CROSS_COMPILE)gcc -pie $(HELPER_OBJ) $(LIBPATH) $(LIBS)  -o $(HELPER)

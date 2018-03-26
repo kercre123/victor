@@ -23,7 +23,28 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
-  const char* kChannelName = "Behaviors";
+const char* kChannelName = "Behaviors";
+
+const char* const kLoopForeverKey = "loopForever";
+const char* const kGapBetweenTestsKey = "gapBetweenTests_s";
+const char* const kRunsPerTestKey = "nRunsPerTest";
+const char* const kTestsKey = "tests";
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDevTurnInPlaceTest::InstanceConfig::InstanceConfig()
+{
+  gapBetweenTests_s = 0.f;
+  nRunsPerTest      = 1;
+  loopForever        = false;
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDevTurnInPlaceTest::DynamicVariables::DynamicVariables()
+{
+  testInd = 0;
 }
 
 
@@ -34,26 +55,37 @@ BehaviorDevTurnInPlaceTest::BehaviorDevTurnInPlaceTest(const Json::Value& config
   using namespace JsonTools;
   const char* debugName = "BehaviorDevTurnInPlaceTest";
   
-  _loopForever = ParseBool(config, "loopForever", debugName);
-  _gapBetweenTests_s = ParseFloat(config, "gapBetweenTests_s", debugName);
-  _nRunsPerTest = ParseUint8(config, "nRunsPerTest", debugName);
+  _iConfig.loopForever = ParseBool(config, kLoopForeverKey, debugName);
+  _iConfig.gapBetweenTests_s = ParseFloat(config, kGapBetweenTestsKey, debugName);
+  _iConfig.nRunsPerTest = ParseUint8(config, kRunsPerTestKey, debugName);
   
-  const auto& testArray = config["tests"];
+  const auto& testArray = config[kTestsKey];
   for (const auto& test : testArray) {
     const auto angle = ParseFloat(test, "angle_deg", debugName);
     const auto speed = ParseFloat(test, "speed_deg_per_sec", debugName);
     const auto accel = ParseFloat(test, "accel_deg_per_sec2", debugName);
     const auto tol   = ParseFloat(test, "tol_deg",   debugName);
     
-    _tests.emplace_back(angle, speed, accel, tol);
+    _iConfig.tests.emplace_back(angle, speed, accel, tol);
   }
   
   PRINT_CH_INFO(kChannelName,
                 "BehaviorDevTurnInPlaceTest.LoadFromJson",
                 "Loaded %zu tests from config file.",
-                _tests.size());
+                _iConfig.tests.size());
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDevTurnInPlaceTest::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kLoopForeverKey,
+    kGapBetweenTestsKey,
+    kRunsPerTestKey,
+    kTestsKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDevTurnInPlaceTest::WantsToBeActivatedBehavior() const
@@ -67,13 +99,13 @@ void BehaviorDevTurnInPlaceTest::OnBehaviorActivated()
 {
   Reset();
   
-  DEV_ASSERT(!_tests.empty(), "BehaviorDevTurnInPlaceTest.NoTestsLoaded");
-  DEV_ASSERT(_testInd == 0, "BehaviorDevTurnInPlaceTest.TestIndexNonzero");
-  DEV_ASSERT(_nRunsPerTest > 0, "BehaviorDevTurnInPlaceTest.InvalidNRunsPerTest");
+  DEV_ASSERT(!_iConfig.tests.empty(), "BehaviorDevTurnInPlaceTest.NoTestsLoaded");
+  DEV_ASSERT(_dVars.testInd == 0, "BehaviorDevTurnInPlaceTest.TestIndexNonzero");
+  DEV_ASSERT(_iConfig.nRunsPerTest > 0, "BehaviorDevTurnInPlaceTest.InvalidNRunsPerTest");
   
   auto& robotInfo = GetBEI().GetRobotInfo();
   // Start the tests rolling
-  const auto action = GenerateTestAction(robotInfo.GetPose(), _testInd);
+  const auto action = GenerateTestAction(robotInfo.GetPose(), _dVars.testInd);
   DelegateIfInControl(action, &BehaviorDevTurnInPlaceTest::ActionCallback);
 }
 
@@ -88,8 +120,8 @@ void BehaviorDevTurnInPlaceTest::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevTurnInPlaceTest::Reset()
 {
-  _testInd = 0;
-  for (auto& test : _tests) {
+  _dVars.testInd = 0;
+  for (auto& test : _iConfig.tests) {
     test.Reset();
   }
 }
@@ -99,29 +131,29 @@ void BehaviorDevTurnInPlaceTest::Reset()
 void BehaviorDevTurnInPlaceTest::ActionCallback()
 {
   auto& robotInfo = GetBEI().GetRobotInfo();
-  auto& currTest = _tests[_testInd];
+  auto& currTest = _iConfig.tests[_dVars.testInd];
   
   PRINT_CH_INFO(kChannelName,
                 "BehaviorDevTurnInPlaceTest.TestComplete",
                 "index %i, run %d, finalHeading_deg %.3f",
-                _testInd, 1 + currTest.nTimesRun,
+                _dVars.testInd, 1 + currTest.nTimesRun,
                 robotInfo.GetPose().GetRotation().GetAngleAroundZaxis().getDegrees());
   
   // check if we should run this test again or move on to the next one
-  if ((++currTest.nTimesRun % _nRunsPerTest) == 0) {
-    ++_testInd;
+  if ((++currTest.nTimesRun % _iConfig.nRunsPerTest) == 0) {
+    ++_dVars.testInd;
   }
   
   // check if we've reached the end of the test queue
-  if (_testInd >= _tests.size()) {
-    if (_loopForever) {
-      _testInd = 0;
+  if (_dVars.testInd >= _iConfig.tests.size()) {
+    if (_iConfig.loopForever) {
+      _dVars.testInd = 0;
     } else {
       return;
     }
   }
   
-  const auto action = GenerateTestAction(robotInfo.GetPose(), _testInd);
+  const auto action = GenerateTestAction(robotInfo.GetPose(), _dVars.testInd);
   DelegateIfInControl(action, &BehaviorDevTurnInPlaceTest::ActionCallback);
 }
 
@@ -129,9 +161,9 @@ void BehaviorDevTurnInPlaceTest::ActionCallback()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompoundActionSequential* BehaviorDevTurnInPlaceTest::GenerateTestAction(const Pose3d& robotPose, const int testInd) const
 {
-  DEV_ASSERT(testInd < _tests.size(), "BehaviorDevTurnInPlaceTest.GenerateTestAction.TestIndexOOB");
+  DEV_ASSERT(testInd < _iConfig.tests.size(), "BehaviorDevTurnInPlaceTest.GenerateTestAction.TestIndexOOB");
   
-  const auto test = _tests[testInd];
+  const auto test = _iConfig.tests[testInd];
   
   PRINT_CH_INFO(kChannelName,
                 "BehaviorDevTurnInPlaceTest.TestStart",
@@ -147,7 +179,7 @@ CompoundActionSequential* BehaviorDevTurnInPlaceTest::GenerateTestAction(const P
   turnAction->SetVariability(0.f);
   
   // Optionally wait in between TurnInPlace actions
-  const auto waitAction = new WaitAction(_gapBetweenTests_s);
+  const auto waitAction = new WaitAction(_iConfig.gapBetweenTests_s);
   
   // Create the compound action
   auto compoundAction = new CompoundActionSequential();

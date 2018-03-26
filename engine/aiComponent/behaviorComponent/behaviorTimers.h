@@ -14,6 +14,7 @@
 #define __Engine_AiComponent_BehaviorComponent_BehaviorTimers_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
 #include <unordered_map>

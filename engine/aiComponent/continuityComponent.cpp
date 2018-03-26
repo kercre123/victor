@@ -21,14 +21,15 @@ namespace Cozmo {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ContinuityComponent::ContinuityComponent(Robot& robot)
-: _robot(robot)
+: IDependencyManagedComponent<AIComponentID>(this, AIComponentID::ContinuityComponent)
+, _robot(robot)
 {
 
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ContinuityComponent::Update()
+void ContinuityComponent::UpdateDependent(const AICompMap& dependentComps)
 {
   if(!_playingGetOut &&
      (_nextActionToQueue != nullptr)){

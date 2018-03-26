@@ -2,5 +2,8 @@
   "port": "8889",
   "title0": "Victor Web Server (Anim process)",
   "title1": "This web server is running in the Anim process",
-  "startPage": "page_consolevars"
+  "whichWebServer": 2,
+  "startPage": "page_consolevars",
+  "allowPerfPage": false,
+  "allowConsoleVarsPage": true
 }

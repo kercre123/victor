@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/robotComponents_fwd.h"
 #include "util/entityComponent/componentWrapper.h"
-#include "util/entityComponent/entity.h"
+#include "util/entityComponent/dependencyManagedEntity.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
@@ -28,49 +28,14 @@
 namespace Anki {
 namespace Cozmo {
 
-// Forward declarations
-class AIInformationAnalyzer;
-class AIWhiteboard;
-class BEIRobotInfo;
-class BehaviorComponent;
 class BehaviorContainer;
-class ContinuityComponent;
-class FaceSelectionComponent;
-class FreeplayDataTracker;
-class ObjectInteractionInfoCache;
-class PuzzleComponent;
-class Robot;
-class TemplatedImageCache;
-class TimerUtility;
 
-namespace ComponentWrappers{
-class AIComponentComponents{
-public:
-  AIComponentComponents(Robot&                      robot,
-                        BehaviorComponent*&         behaviorComponent,
-                        ContinuityComponent*        continuityComponent,
-                        FaceSelectionComponent*     faceSelectionComponent,
-                        FreeplayDataTracker*        freeplayDataTracker,
-                        AIInformationAnalyzer*      infoAnalyzer,
-                        ObjectInteractionInfoCache* objectInteractionInfoCache,
-                        PuzzleComponent*            puzzleComponent,
-                        TemplatedImageCache*        templatedImageCache,
-                        TimerUtility*               timerUtility,
-                        AIWhiteboard*               aiWhiteboard);
-  virtual ~AIComponentComponents();
-  
-  Robot& _robot;
-  EntityFullEnumeration<AIComponentID, ComponentWrapper, AIComponentID::Count> _components;
-
-};
-}
-
-  // AIComponent is updated at the robot component level, same as BehaviorComponent
-  // Therefore BCComponents (which are managed by BehaviorComponent) can't declare dependencies on AIComponent 
-  // since when it's Init/Update relative to BehaviorComponent must be declared by BehaviorComponent explicitly, 
-  // not by individual components within BehaviorComponent
-class AIComponent :  public UnreliableComponent<BCComponentID>, 
-                     public IDependencyManagedComponent<RobotComponentID>,  
+// AIComponent is updated at the robot component level, same as BehaviorComponent
+// Therefore BCComponents (which are managed by BehaviorComponent) can't declare dependencies on AIComponent
+// since when it's Init/Update relative to BehaviorComponent must be declared by BehaviorComponent explicitly,
+// not by individual components within BehaviorComponent
+class AIComponent :  public UnreliableComponent<BCComponentID>,
+                     public IDependencyManagedComponent<RobotComponentID>,
                      private Util::noncopyable
 {
 public:
@@ -80,10 +45,27 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override final{};
-  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
-  virtual void UpdateDependent(const RobotCompMap& dependentComponents) override {};
-  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override final;
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::CozmoContextWrapper);
+  };
+  virtual void UpdateDependent(const RobotCompMap& dependentComponents) override;
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::BlockTapFilter);
+    dependencies.insert(RobotComponentID::BlockWorld);
+    dependencies.insert(RobotComponentID::CliffSensor);
+    dependencies.insert(RobotComponentID::FaceWorld);
+    dependencies.insert(RobotComponentID::Inventory);
+    dependencies.insert(RobotComponentID::Map);
+    dependencies.insert(RobotComponentID::Movement);
+    dependencies.insert(RobotComponentID::MoodManager);
+    dependencies.insert(RobotComponentID::PetWorld);
+    dependencies.insert(RobotComponentID::ProxSensor);
+    dependencies.insert(RobotComponentID::RobotIdleTimeout);
+    dependencies.insert(RobotComponentID::TouchSensor);
+    dependencies.insert(RobotComponentID::Vision);
+    dependencies.insert(RobotComponentID::VisionScheduleMediator);
+  };
 
   // Prevent hiding function warnings by exposing the (valid) unreliable component methods
   using UnreliableComponent<BCComponentID>::InitDependent;
@@ -99,45 +81,15 @@ public:
   // Components
   ////////////////////////////////////////////////////////////////////////////////
   template<typename T>
-  T& GetComponent(AIComponentID componentID) const {assert(_aiComponents); return _aiComponents->_components.GetComponent(componentID).GetValue<T>();}
+  T& GetComponent() const {assert(_aiComponents); return _aiComponents->GetValue<T>();}
 
   template<typename T>
-  T* GetBasePtr(AIComponentID componentID) const {assert(_aiComponents); return _aiComponents->_components.GetComponent(componentID).GetBasePtr<T>();}
+  T* GetBasePtr() const {assert(_aiComponents); return _aiComponents->GetBasePtr<T>();}
 
-  inline const AIInformationAnalyzer& GetAIInformationAnalyzer() const { return GetComponent<AIInformationAnalyzer>(AIComponentID::InformationAnalyzer);}
-  inline AIInformationAnalyzer& GetAIInformationAnalyzer() { return GetComponent<AIInformationAnalyzer>(AIComponentID::InformationAnalyzer);}
-  
-  
-  inline const BehaviorComponent& GetBehaviorComponent() const {  return GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent); }
-  inline BehaviorComponent&       GetBehaviorComponent()       {  return GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent); }
-  
+  #if ANKI_DEV_CHEATS
   // For test only
   BehaviorContainer& GetBehaviorContainer();
-  
-  inline ObjectInteractionInfoCache& GetObjectInteractionInfoCache() const {  return GetComponent<ObjectInteractionInfoCache>(AIComponentID::ObjectInteractionInfoCache); }
-  inline ObjectInteractionInfoCache& GetObjectInteractionInfoCache()       {  return GetComponent<ObjectInteractionInfoCache>(AIComponentID::ObjectInteractionInfoCache); }
-  
-  inline const AIWhiteboard& GetWhiteboard()   const {  return GetComponent<AIWhiteboard>(AIComponentID::Whiteboard); }
-  inline AIWhiteboard& GetNonConstWhiteboard() const {  return GetComponent<AIWhiteboard>(AIComponentID::Whiteboard); }
-  inline AIWhiteboard&       GetWhiteboard()         {  return GetComponent<AIWhiteboard>(AIComponentID::Whiteboard); }
-  
-  inline const PuzzleComponent& GetPuzzleComponent() const { return GetComponent<PuzzleComponent>(AIComponentID::Puzzle);}
-  inline PuzzleComponent&       GetPuzzleComponent()       { return GetComponent<PuzzleComponent>(AIComponentID::Puzzle);}
-
-  inline const FaceSelectionComponent& GetFaceSelectionComponent() const {return GetComponent<FaceSelectionComponent>(AIComponentID::FaceSelection);}
-    
-  inline FreeplayDataTracker& GetFreeplayDataTracker()  {  return GetComponent<FreeplayDataTracker>(AIComponentID::FreeplayDataTracker); }  
-  
-  ////////////////////////////////////////////////////////////////////////////////
-  // Update and init
-  ////////////////////////////////////////////////////////////////////////////////
-
-  // Pass in behavior component if you have a custom component already set up
-  // If nullptr is passed in AIComponent will generate a default behavior component
-  // AIComponent takes over contrrol of the customBehaviorComponent's memory
-  Result Init(Robot* robot, BehaviorComponent*& customBehaviorComponent);
-  Result Update(Robot& robot, std::string& currentActivityName,
-                              std::string& behaviorDebugStr);
+  #endif
 
   ////////////////////////////////////////////////////////////////////////////////
   // Message handling / dispatch
@@ -145,17 +97,21 @@ public:
 
   void OnRobotDelocalized();
   void OnRobotRelocalized();
-  
+
   ////////////////////////////////////////////////////////////////////////////////
   // Accessors
   ////////////////////////////////////////////////////////////////////////////////
-  
+
   inline bool IsSuddenObstacleDetected() const { return _suddenObstacleDetected; }
 
 private:
-  std::unique_ptr<ComponentWrappers::AIComponentComponents> _aiComponents;
+  Robot* _robot = nullptr;
+  using EntityType = DependencyManagedEntity<AIComponentID>;
+  using ComponentPtr = std::unique_ptr<EntityType>;
+
+  ComponentPtr _aiComponents;
   bool   _suddenObstacleDetected;
-  
+
   void CheckForSuddenObstacle(Robot& robot);
 };
 

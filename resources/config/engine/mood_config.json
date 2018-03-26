@@ -26,15 +26,6 @@
          ]
       },
      {
-       "emotionType": "WantToPlay",
-       "nodes": [
-         {
-           "x": 0,
-           "y": 1
-         }
-       ]
-     },
-     {
        "emotionType": "Social",
        "nodes": [
          {
@@ -79,11 +70,38 @@
            "y": 0
          }
        ]
+     },
+     {
+       "emotionType": "Stimulated",
+       "nodes": [
+         {
+           "x": 0,
+           "y": 1
+         },
+         {
+           "x": 1.5,
+           "y": 1
+         },
+         {
+           "x": 1.8,
+           "y": 0.9
+         },
+         {
+           "x": 300.0,
+           "y": 0
+         }
+       ]
      }
   ],
   "eventMapper" : {
     "emotionEvents" : [
     ]
+  },
+  "audioParameterMap": {
+    "Happy": "Robot_Vic_Happy",
+    "Confident": "Robot_Vic_Confident",
+    "Social": "Robot_Vic_Social",
+    "Stimulated": "Robot_Vic_Stimulation"
   },
   "defaultRepetitionPenalty" : {
     "nodes" : [

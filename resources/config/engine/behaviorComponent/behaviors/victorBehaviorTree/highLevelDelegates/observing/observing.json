@@ -14,17 +14,25 @@
       "behaviorName" : "ObservingInternal",
       "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
     
-      "interruptActiveBehavior": false,
+      "interruptActiveBehavior": true,
     
       "behaviors": [    
         {
           "behavior": "ObservingLookAtFaces",
-          "cooldown_s": 30.0,
+          "cooldown_s": 300.0,
           "cooldown_random_factor": 0.5
         },
         {
-          "behavior": "NothingToDo_Idle",
-          "cooldown_s": 5.0
+          "behavior": "ObservingEyeContact",
+          "cooldown_s": 15.0
+        },
+        {
+          "behavior": "ReactToMotion",
+          "cooldown_s": 0.0
+        },
+        {
+          "behavior": "Wait", // todo: this should be an animation that doesnt move the head
+          "cooldown_s": 0.0
         }
       ]
     }

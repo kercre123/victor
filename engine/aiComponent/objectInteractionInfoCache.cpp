@@ -75,7 +75,8 @@ static_assert(IsSequentialArray(kDependentIntentionMap),
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ObjectInteractionInfoCache::ObjectInteractionInfoCache(const Robot& robot)
-: _robot(robot)
+: IDependencyManagedComponent<AIComponentID>(this, AIComponentID::ObjectInteractionInfoCache) 
+, _robot(robot)
 {
   
   // Pickup no axis check
@@ -305,7 +306,7 @@ bool ObjectInteractionInfoCache::CanPickupNoAxisCheck(const ObservableObject* ob
   }
   
   // check for recent failures
-  auto& whiteboard = _robot.GetAIComponent().GetWhiteboard();
+  auto& whiteboard = _robot.GetAIComponent().GetComponent<AIWhiteboard>();
   const bool recentlyFailed = whiteboard.DidFailToUse(object->GetID(),
                                            {{ ObjectActionFailure::PickUpObject, ObjectActionFailure::RollOrPopAWheelie }},
                                            DefaultFailToUseParams::kTimeObjectInvalidAfterFailure_sec,
@@ -366,8 +367,8 @@ bool ObjectInteractionInfoCache::CanUseAsStackBottomHelper(const ObservableObjec
     return false;
   }
   
-  const bool hasFailedRecently = _robot.GetAIComponent().GetWhiteboard().
-  DidFailToUse(object->GetID(),
+  const bool hasFailedRecently = _robot.GetAIComponent().GetComponent<AIWhiteboard>().DidFailToUse(
+               object->GetID(),
                ObjectActionFailure::StackOnObject,
                kTimeObjectInvalidAfterStackFailure_sec,
                object->GetPose(),
@@ -403,7 +404,7 @@ bool ObjectInteractionInfoCache::CanUseAsStackBottomAxisCheck(const ObservableOb
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ObjectInteractionInfoCache::CanUseForPopAWheelie(const ObservableObject* object) const
 {
-  auto& whiteboard = _robot.GetAIComponent().GetWhiteboard();
+  auto& whiteboard = _robot.GetAIComponent().GetComponent<AIWhiteboard>();
 
   const bool hasFailedToPopAWheelie = whiteboard.DidFailToUse(object->GetID(),
                                                    ObjectActionFailure::RollOrPopAWheelie,
@@ -419,7 +420,7 @@ bool ObjectInteractionInfoCache::CanUseForPopAWheelie(const ObservableObject* ob
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ObjectInteractionInfoCache::CanRollObjectDelegateNoAxisCheck(const ObservableObject* object) const
 {
-  auto& whiteboard = _robot.GetAIComponent().GetWhiteboard();
+  auto& whiteboard = _robot.GetAIComponent().GetComponent<AIWhiteboard>();
   
   const bool hasFailedToRoll = whiteboard.DidFailToUse(object->GetID(),
                                             ObjectActionFailure::RollOrPopAWheelie,

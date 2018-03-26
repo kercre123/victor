@@ -8,10 +8,12 @@
   "num_loops" : 1,
   "playOnChargerWithoutBody" : true,
 
-  "wantsToBeActivatedCondition": {
-    "conditionType" : "ObjectInitialDetection",
-    "objectType" : "Charger_Basic",
-    "firstTimeOnly" : false
-  }
+  "wantsToBeActivatedConditions": [
+    {
+      "conditionType" : "ObjectInitialDetection",
+      "objectType" : "Charger_Basic",
+      "firstTimeOnly" : false
+    }
+  ]
 
 }

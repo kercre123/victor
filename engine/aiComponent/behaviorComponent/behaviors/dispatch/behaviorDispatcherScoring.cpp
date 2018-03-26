@@ -26,6 +26,20 @@ const char* kScoringConfigKey                = "scoring";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDispatcherScoring::InstanceConfig::InstanceConfig()
+{
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDispatcherScoring::DynamicVariables::DynamicVariables()
+{
+  currentScoringTracker = nullptr;  
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDispatcherScoring::BehaviorDispatcherScoring(const Json::Value& config)
 : IBehaviorDispatcher(config)
 {
@@ -48,7 +62,7 @@ BehaviorDispatcherScoring::BehaviorDispatcherScoring(const Json::Value& config)
                      "Scoring Information Not Provided For %s",
                      BehaviorTypesWrapper::BehaviorIDToString(behaviorID));
 
-      _scoringTracker.push_back(BehaviorScoringWrapper(scoringConfig));
+      _iConfig.scoringTracker.push_back(BehaviorScoringWrapper(scoringConfig));
     }
   }
 }
@@ -59,12 +73,18 @@ BehaviorDispatcherScoring::~BehaviorDispatcherScoring()
 {
 
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherScoring::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  expectedKeys.insert( kBehaviorsInChooserConfigKey );
+  IBehaviorDispatcher::GetBehaviorJsonKeys(expectedKeys);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherScoring::InitDispatcher()
 {
-  for(auto& entry: _scoringTracker){
+  for(auto& entry: _iConfig.scoringTracker){
     entry.Init(GetBEI());
   }
 }
@@ -73,11 +93,11 @@ void BehaviorDispatcherScoring::InitDispatcher()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherScoring::BehaviorDispatcher_OnDeactivated() 
 {
-  if(_currentScoringTracker != nullptr){
-    _currentScoringTracker->BehaviorDeactivated();
-    _currentScoringTracker = nullptr;
+  if(_dVars.currentScoringTracker != nullptr){
+    _dVars.currentScoringTracker->BehaviorDeactivated();
+    _dVars.currentScoringTracker = nullptr;
   }
-  _currentDispatch.reset();
+  _dVars.currentDispatch.reset();
 }
 
 
@@ -85,11 +105,11 @@ void BehaviorDispatcherScoring::BehaviorDispatcher_OnDeactivated()
 ICozmoBehaviorPtr BehaviorDispatcherScoring::GetDesiredBehavior()
 {
   ICozmoBehaviorPtr desiredDispatch;  
-  if(ANKI_VERIFY(GetAllPossibleDispatches().size() == _scoringTracker.size(),
+  if(ANKI_VERIFY(GetAllPossibleDispatches().size() == _iConfig.scoringTracker.size(),
                  "BehaviorDispatcherScoring.GetDesiredBehavior.InvalidSizes",
                  "there are %zu dispatches, but %zu scoring trackers",
                  GetAllPossibleDispatches().size(),
-                 _scoringTracker.size())){
+                 _iConfig.scoringTracker.size())){
     const int invalidIdx = -1;
     int highestScoreIdx = invalidIdx;                  
     float highestScore = 0.f;
@@ -100,7 +120,7 @@ ICozmoBehaviorPtr BehaviorDispatcherScoring::GetDesiredBehavior()
     for(int i = 0; i < allDispatches.size(); i++) {
       auto& entry = allDispatches[i];
       if(entry->IsActivated() || entry->WantsToBeActivated()) {
-        const float newScore = _scoringTracker[i].EvaluateScore(GetBEI());
+        const float newScore = _iConfig.scoringTracker[i].EvaluateScore(GetBEI());
         if(FLT_GT(newScore, highestScore)){
           highestScore = newScore;
           highestScoreIdx = i;
@@ -111,13 +131,13 @@ ICozmoBehaviorPtr BehaviorDispatcherScoring::GetDesiredBehavior()
     // Activate/deactivate score tracking if highest score has changed
     if(highestScoreIdx != invalidIdx){
       desiredDispatch = allDispatches[highestScoreIdx];
-      if(desiredDispatch != _currentDispatch){
-        if(_currentScoringTracker != nullptr){
-          _currentScoringTracker->BehaviorDeactivated();
+      if(desiredDispatch != _dVars.currentDispatch){
+        if(_dVars.currentScoringTracker != nullptr){
+          _dVars.currentScoringTracker->BehaviorDeactivated();
         }
-        _currentScoringTracker = &_scoringTracker[highestScoreIdx];
-        _currentScoringTracker->BehaviorWillBeActivated();
-        _currentDispatch = desiredDispatch;
+        _dVars.currentScoringTracker = &_iConfig.scoringTracker[highestScoreIdx];
+        _dVars.currentScoringTracker->BehaviorWillBeActivated();
+        _dVars.currentDispatch = desiredDispatch;
       }
     }
 

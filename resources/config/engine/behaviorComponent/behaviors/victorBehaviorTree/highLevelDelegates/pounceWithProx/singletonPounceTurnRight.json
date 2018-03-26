@@ -1,0 +1,14 @@
+{
+  "behaviorID": "SingletonPounceTurnRight",  
+  "behaviorClass" : "Turn",
+  "shouldTurnClockwise": true,
+  "turnDegrees" : 20,
+
+  "wantsToBeActivatedConditions": [
+    {
+      "conditionType" : "MotionDetected",
+      "motionArea"    : "Right",
+      "motionLevel"   : "High"
+    }
+  ]
+}

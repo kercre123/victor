@@ -5,6 +5,7 @@
   "loopAnimation"    : "TimerRing",
   "getOut"           : "TimerRingGetOut",
   "emergencyGetOut"  : "TimerRingGetOut",
+  "loopInterval_s"   : 5,
   "loopEndCondition" : {
     "conditionType"  : "RobotTouched",
     "minTouchTime"   : 0.2

@@ -48,43 +48,41 @@ ITrackAction::ITrackAction(const std::string name, const RobotActionType type)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ITrackAction::~ITrackAction()
 {
-  // Make sure eye shift gets removed
-  GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName);
-  
-
-  // Set default eye dart distance
-  // NOTE: It may not have been at default before, but it doesn't seem worth
-  //       exposing the parameters to the engine just for this.
-  //       Currently, the only way it wouldn't have previously been at default
-  //       is if it was changed via G2E::SetKeepFaceAliveParameter message.
-  GetRobot().GetAnimationComponent().SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter::EyeDartMaxDistance_pix);
-  
   if(HasRobot()){
+    // Make sure eye shift gets removed
+    GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName);
+    
+
+    // Set default eye dart distance
+    // NOTE: It may not have been at default before, but it doesn't seem worth
+    //       exposing the parameters to the engine just for this.
+    //       Currently, the only way it wouldn't have previously been at default
+    //       is if it was changed via G2E::SetKeepFaceAliveParameter message.
+    GetRobot().GetAnimationComponent().SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter::EyeDartMaxDistance_pix);
+    
     // Make sure we abort any sound actions we triggered
     GetRobot().GetActionList().Cancel(_soundAnimTag);
-  }
 
-  if(HasStarted())
-  {
-    // Make sure we don't leave the head/body moving
-    switch(_mode)
+    if(HasStarted())
     {
-      case Mode::HeadAndBody:
-        GetRobot().GetMoveComponent().StopBody();
-        GetRobot().GetMoveComponent().StopHead();
-        break;
-        
-      case Mode::BodyOnly:
-        GetRobot().GetMoveComponent().StopBody();
-        break;
-        
-      case Mode::HeadOnly:
-        GetRobot().GetMoveComponent().StopHead();
-        break;
+      // Make sure we don't leave the head/body moving
+      switch(_mode)
+      {
+        case Mode::HeadAndBody:
+          GetRobot().GetMoveComponent().StopBody();
+          GetRobot().GetMoveComponent().StopHead();
+          break;
+          
+        case Mode::BodyOnly:
+          GetRobot().GetMoveComponent().StopBody();
+          break;
+          
+        case Mode::HeadOnly:
+          GetRobot().GetMoveComponent().StopHead();
+          break;
+      }
     }
-  }
   
-  if(HasRobot()){
     GetRobot().GetDrivingAnimationHandler().ActionIsBeingDestroyed();
   }
 }
@@ -217,7 +215,8 @@ void ITrackAction::SetMaxHeadAngle(const Radians& maxHeadAngle_rads)
 void ITrackAction::SetMoveEyes(bool moveEyes)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetMoveEyes.ActionAlreadyStarted");
-  _moveEyes = moveEyes;
+  // Note: PROCEDURAL_EYE_LEADING is a compile-time option to enable/disable eye leading
+  _moveEyes = (moveEyes && PROCEDURAL_EYE_LEADING);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -426,7 +425,7 @@ ActionResult ITrackAction::CheckIfDone()
       f32  eyeShiftX = 0.f, eyeShiftY = 0.f;
       
       // Tilt Head:
-      f32 relTiltAngle = (absTiltAngle - GetRobot().GetHeadAngle()).ToFloat();
+      f32 relTiltAngle = (absTiltAngle - GetRobot().GetComponent<FullRobotPose>().GetHeadAngle()).ToFloat();
       
       const bool shouldClampSmallAngles = UpdateSmallAngleClamping();
         
@@ -434,7 +433,7 @@ ActionResult ITrackAction::CheckIfDone()
       if(shouldClampSmallAngles && FLT_LE(std::abs(relTiltAngle), _tiltTolerance.ToFloat()))
       {
         relTiltAngle = std::copysign(_tiltTolerance.ToFloat(), relTiltAngle);
-        absTiltAngle = GetRobot().GetHeadAngle() + relTiltAngle;
+        absTiltAngle = GetRobot().GetComponent<FullRobotPose>().GetHeadAngle() + relTiltAngle;
       }
       
       if((Mode::HeadAndBody == _mode || Mode::HeadOnly == _mode) &&

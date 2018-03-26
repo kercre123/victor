@@ -16,7 +16,7 @@
 #include <stddef.h>
 #include "coretech/planning/shared/goalDefs.h"
 #include "coretech/planning/shared/path.h"
-#include "xythetaPlanner_definitions.h"
+#include "xythetaActions.h"
 #include <utility>
 
 #define DEFUALT_MAX_EXPANSIONS 5000000
@@ -26,10 +26,6 @@ namespace Anki
 namespace Planning
 {
 
-// TODO:(bn) env_fwd.h file?
-
-class State_c;
-class xythetaPlan;
 struct xythetaPlannerContext;
 struct xythetaPlannerImpl;
 

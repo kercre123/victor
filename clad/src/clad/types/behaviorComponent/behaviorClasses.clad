@@ -47,7 +47,6 @@ enum uint_8 BehaviorClass {
   // devBehaviors
   DevDisplayReadingsOnFace,
   DevImageCapture,
-  DevPettingTestSimple,
   DevTouchDataCollection,
   DevTurnInPlaceTest,
   DispatchAfterShake,
@@ -70,6 +69,7 @@ enum uint_8 BehaviorClass {
   PlaypenWaitToStart,
 
   // dispatch
+  DispatcherPassThrough,
   DispatcherQueue,
   DispatcherRandom,
   DispatcherRerun,
@@ -99,10 +99,8 @@ enum uint_8 BehaviorClass {
   LookForFaceAndCube,
 
   // freeplay/userInteractive
-  Bouncer,
   FistBump,
-  GuardDog,
-  PounceOnMotion,
+  Keepaway,
   PounceWithProx,
   PuzzleMaze,
   TrackLaser,
@@ -123,7 +121,10 @@ enum uint_8 BehaviorClass {
   AcknowledgeFace,
   AcknowledgeObject,
   ReactToCliff,
+  ReactToCubeTap,
   ReactToFrustration,
+  ReactToMicDirection,
+  ReactToMotion,
   ReactToMotorCalibration,
   ReactToPet,
   ReactToPlacedOnSlope,
@@ -132,6 +133,7 @@ enum uint_8 BehaviorClass {
   ReactToRobotOnFace,
   ReactToRobotOnSide,
   ReactToRobotShaken,
+  ReactToSound,
   ReactToUnexpectedMovement,
   ReactToVoiceCommand,
 
@@ -144,7 +146,7 @@ enum uint_8 BehaviorClass {
 
   // victor
   ComeHere,
-  ReactToSound,
+  ReactToTouchPetting,
   ReactToUnclaimedIntent,
 }
 

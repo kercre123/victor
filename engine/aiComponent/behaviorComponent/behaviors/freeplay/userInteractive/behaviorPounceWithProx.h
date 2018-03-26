@@ -35,6 +35,7 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.behaviorAlwaysDelegates = false;
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
@@ -47,20 +48,24 @@ private:
     ReactToPounce
   };
 
-  struct {
-    float maxPounceDist = 120.0f;
-    float minGroundAreaForPounce = 0.01f;
-    float pounceTimeout_s = 5;
+  struct InstanceConfig{
+    InstanceConfig();
+    float maxPounceDist;
+    float minGroundAreaForPounce;
+    float pounceTimeout_s;
     IBEIConditionPtr inRangeCondition;
-  } _instanceParams;
-
-  struct LifetimeParams{
-    float prePouncePitch = 0.0f;
-    bool motionObserved = false;
-    float pounceAtTime_s = std::numeric_limits<float>::max();
-    PounceState pounceState = PounceState::WaitForMotion;
   };
-  LifetimeParams _lifetimeParams;
+
+  struct DynamicVariables{
+    DynamicVariables();
+    float prePouncePitch;
+    bool motionObserved;
+    float pounceAtTime_s;
+    PounceState pounceState;
+  };
+
+  InstanceConfig _iConfig;
+  DynamicVariables _dVars;
 
 
   void TransitionToResultAnim();

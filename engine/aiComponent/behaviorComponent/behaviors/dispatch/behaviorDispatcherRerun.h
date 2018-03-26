@@ -42,6 +42,7 @@ protected:
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     modifiers.behaviorAlwaysDelegates = false;
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void InitBehavior() override;
 
@@ -52,18 +53,26 @@ protected:
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
 private:
-  struct Params{
-    BehaviorID _delegateID;
-    int _numRuns; 
+  struct InstanceConfig {
+    InstanceConfig();
+    int numRuns; 
+    
+    BehaviorID        delegateID;
+    ICozmoBehaviorPtr delegatePtr;
   };
-  Params _params;
-  int _numRunsRemaining;
-  ICozmoBehaviorPtr _delegatePtr;
+
+  struct DynamicVariables {
+    DynamicVariables();
+    int numRunsRemaining;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
 
   void CheckRerunState();
 };
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 
-#endif
+#endif // __Engine_AiComponent_BehaviorComponent_BehaviorDispatcherRerun_H__

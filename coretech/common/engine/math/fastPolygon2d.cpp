@@ -31,16 +31,16 @@ void FastPolygon::ResetCounts()
 }
 
 FastPolygon::FastPolygon(const Poly2f& basePolygon)
-  : _poly(basePolygon)
+  : ConvexPolygon(basePolygon)
+  , _minX( basePolygon.GetMinX() )
+  , _maxX( basePolygon.GetMaxX() )
+  , _minY( basePolygon.GetMinY() )
+  , _maxY( basePolygon.GetMaxY() )
+  , _circleCenter( basePolygon.ComputeCentroid() )
 {
   CreateEdgeVectors();
-
-  ComputeCenter();
-
   ComputeCircles();
 }
-
-
 
 /*
  * NOTE: TODO: (bn): There is another method that could be faster,
@@ -108,9 +108,7 @@ bool FastPolygon::Contains(float x, float y) const
 
     // dot product of perpendicular vector and (x,y) - polygonPoint
 
-    float dot = edgeVec.first.x() * ( x - _poly[pointIdx].x() ) + edgeVec.first.y() * ( y - _poly[pointIdx].y() ) ;
-
-    // float dot = Anki::DotProduct( edgeVec.first, testPoint - _poly[pointIdx] );
+    float dot = edgeVec.first.x() * ( x - _points[pointIdx].x() ) + edgeVec.first.y() * ( y - _points[pointIdx].y() ) ;
 
 #ifndef NDEBUG
     _numDotProducts++;
@@ -137,6 +135,10 @@ bool FastPolygon::Contains(const Point2f& pt) const
 #endif
 }
 
+bool FastPolygon::InHalfPlane(const Halfplane2f& H) const 
+{
+  return std::all_of(begin(), end(), [&H](const Point2f& p) { return H.Contains(p); });
+}
 
 float FastPolygon::GetCircumscribedRadius() const
 {
@@ -152,19 +154,6 @@ float FastPolygon::GetInscribedRadius() const
 // internal helpers
 ////////////////////////////////////////////////////////////////////////////////
 
-void FastPolygon::ComputeCenter()
-{
-  // for now just use the geometric center
-  // TODO:(bn) something smarter to get a better set of circles
-
-  _circleCenter = _poly.ComputeCentroid();
-
-  _minX = _poly.GetMinX();
-  _maxX = _poly.GetMaxX();
-  _minY = _poly.GetMinY();
-  _maxY = _poly.GetMaxY();
-}
-
 void FastPolygon::ComputeCircles()
 {
   // go through each point and compute two things. First compute the
@@ -176,15 +165,15 @@ void FastPolygon::ComputeCircles()
   _circumscribedRadiusSquared = 0.0f;
   _inscribedRadiusSquared = FLT_MAX;
 
-  size_t numPts = _poly.size();
+  size_t numPts = size();
   assert(_perpendicularEdgeVectors.size() <= numPts);
 
   if (numPts > 2)
   {
     for(size_t i = 0; i < numPts; ++i) {
       float distanceToPointSquared =
-        std::pow( _poly[i].x() - _circleCenter.x(), 2 ) +
-        std::pow( _poly[i].y() - _circleCenter.y(), 2 );
+        std::pow( _points[i].x() - _circleCenter.x(), 2 ) +
+        std::pow( _points[i].y() - _circleCenter.y(), 2 );
 
       if( distanceToPointSquared > _circumscribedRadiusSquared ) {
         _circumscribedRadiusSquared = distanceToPointSquared;
@@ -193,7 +182,7 @@ void FastPolygon::ComputeCircles()
       size_t pointIdx = _perpendicularEdgeVectors[i].second;
 
       float distanceToEdgeSquared = std::pow(
-        Anki::DotProduct( _perpendicularEdgeVectors[i].first, _circleCenter - _poly[pointIdx] ),
+        Anki::DotProduct( _perpendicularEdgeVectors[i].first, _circleCenter - _points[pointIdx] ),
         2);
       if(distanceToEdgeSquared < _inscribedRadiusSquared) {
         _inscribedRadiusSquared = distanceToEdgeSquared;
@@ -202,7 +191,7 @@ void FastPolygon::ComputeCircles()
   } 
   else 
   {
-    const Point2f line = _poly.GetEdgeVector(0);
+    const Point2f line = GetEdgeVector(0);
     _circumscribedRadiusSquared = std::pow( line.x(), 2 ) + std::pow( line.y(), 2 );
     _inscribedRadiusSquared = 0;
   }
@@ -222,14 +211,14 @@ void FastPolygon::CreateEdgeVectors()
   _perpendicularEdgeVectors.clear();
   _edgeSegments.clear();  
 
-  size_t numPts = _poly.size();
+  size_t numPts = size();
 
   if (numPts > 1) // proper polygon
   {
     for(size_t i = 0; i < numPts; ++i) {
-      const Vec2f edgeVector( _poly.GetEdgeVector(i) );
+      const Vec2f edgeVector( GetEdgeVector(i) );
       float oneOverNorm = 1.0 / edgeVector.Length();
-      _edgeSegments.emplace_back( _poly[i], _poly[(i+1) % numPts] );
+      _edgeSegments.emplace_back( _points[i], _points[(i+1) % numPts] );
       _perpendicularEdgeVectors.emplace_back( std::make_pair(
                                                 Vec2f{ -edgeVector.y() * oneOverNorm, edgeVector.x() * oneOverNorm },
                                                 i) );
@@ -322,7 +311,7 @@ unsigned int FastPolygon::CheckTestPoints(std::vector< std::pair< bool, Point2f 
 
 
     size_t pointIdx = _perpendicularEdgeVectors[edgeIdx].second;
-    float dot = Anki::DotProduct( _perpendicularEdgeVectors[edgeIdx].first, testEntry.second - _poly[pointIdx] );
+    float dot = Anki::DotProduct( _perpendicularEdgeVectors[edgeIdx].first, testEntry.second - _points[pointIdx] );
 
     if( dot > 0.0f ) {
       // is outside of edge, so this point is a hit! (we want to throw out as many test points as we can)

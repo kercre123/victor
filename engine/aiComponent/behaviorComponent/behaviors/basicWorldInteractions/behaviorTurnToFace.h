@@ -34,12 +34,24 @@ public:
   
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   
 private:
-  mutable SmartFaceID _targetFace;
+  struct InstanceConfig {
+    InstanceConfig();
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    mutable SmartFaceID targetFace;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
   
 };
   

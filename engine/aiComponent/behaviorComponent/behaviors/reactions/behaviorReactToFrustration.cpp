@@ -162,6 +162,19 @@ void BehaviorReactToFrustration::LoadJson(const Json::Value& config)
   
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToFrustration::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kRandomDriveMinDistKey_mm,
+    kRandomDriveMaxDistKey_mm,
+    kRandomDriveMinAngleKey_deg,
+    kRandomDriveMaxAngleKey_deg,
+    kAnimationKey,
+    kEmotionEventKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToFrustration::AddListener(ISubtaskListener* listener)

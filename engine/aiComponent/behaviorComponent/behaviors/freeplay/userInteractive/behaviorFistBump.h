@@ -36,8 +36,9 @@ protected:
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
     modifiers.behaviorAlwaysDelegates = false;
     modifiers.wantsToBeActivatedWhenOnCharger = false;
-    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
+    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Low });
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
 
   virtual void OnBehaviorActivated() override;
@@ -60,33 +61,41 @@ private:
     CompleteFail,
     Complete
   };
+
+  struct InstanceConfig {
+    InstanceConfig(const Json::Value& config);
+    f32  maxTimeToLookForFace_s;
+    bool abortIfNoFaceFound;
+
+    // Whether or not to update the last time the FistBump completed for the
+    // purpose of affecting trigger cooldown times
+    bool updateLastCompletionTime;
+    std::set<IFistBumpListener*> fistBumpListeners;
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    State state;
+    // Looking for faces vars
+    f32  startLookingForFaceTime_s;
+    f32  nextGazeChangeTime_s;
+    u32  nextGazeChangeIndex;
+      // Wait for bump vars
+    f32 waitStartTime_s;
+    int fistBumpRequestCnt;
+    f32 waitingAccelX_mmps2;
+      // Recorded position of lift for bump detection
+    f32 liftWaitingAngle_rad;
+    
+    // Abort when picked up for long enough
+    f32 lastTimeOffTreads_s;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
   
   bool CheckForBump(const BEIRobotInfo& robotInfo);
-  State _state;
-  
-  // Looking for faces vars
-  f32  _startLookingForFaceTime_s;
-  f32  _nextGazeChangeTime_s;
-  u32  _nextGazeChangeIndex;
-  f32  _maxTimeToLookForFace_s;
-  bool _abortIfNoFaceFound;
-
-  // Wait for bump vars
-  f32 _waitStartTime_s;
-  int _fistBumpRequestCnt;
-  f32 _waitingAccelX_mmps2;
-  
-  // Recorded position of lift for bump detection
-  f32 _liftWaitingAngle_rad;
-  
-  // Abort when picked up for long enough
-  f32 _lastTimeOffTreads_s;
-  
-  // Whether or not to update the last time the FistBump completed for the
-  // purpose of affecting trigger cooldown times
-  bool _updateLastCompletionTime;
-
-  std::set<IFistBumpListener*> _fistBumpListeners;
   void ResetTrigger(bool updateLastCompletionTime);
   
   void ResetFistBumpTimer() const;

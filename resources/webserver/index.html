@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 
@@ -14,20 +13,71 @@
     <script src="jquery-ui.js"></script>
 
     <script>
+    // NOTE these enums must match those in WebService.cpp
+    var whichWebServerEnum = {
+        UNKNOWN:-1,
+        STANDALONE:0,
+        ENGINE:1,
+        ANIM:2,
+    };
+
     var mainPageInitialized = false;
     var connectedToWebotsSim = false;
+    var whichWebServer = whichWebServerEnum.UNKNOWN;
     var curPageName = "";
 
+    var allowConsoleVarsPage = true;
+    var allowPerfPage = true;
     var perfAutoUpdate = false;
     var perfAutoUpdatePeriod_ms = 1000;
     var perfAutoUpdatePeriodMin_ms = 250;   // Minimum auto update period
     var perfAutoUpdateTimerId = 0;
 
     var perfItems = [
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:1500000, desc:"CPU freq (kHz)" },
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:150,     desc:"Temperature (Celsius)" },
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:5,       desc:"Battery (volts)" }
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:1500000, desc:"CPU freq",        units:"kHz" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:150,     desc:"Temperature",     units:"Celsius" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Uptime",          units:"seconds" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Idle time",       units:"seconds" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Real time clock", units:"" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:429268,  desc:"Memory",          units:"kB",      updateFunction:MemUseInfo },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"Overall CPU",     units:"%",       updateFunction:CPUTimeInfo },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU0",            units:"%",       updateFunction:CPUTimeInfo },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU1",            units:"%",       updateFunction:CPUTimeInfo },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU2",            units:"%",       updateFunction:CPUTimeInfo },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU3",            units:"%",       updateFunction:CPUTimeInfo }
     ];
+
+    const kNumCPUTimeValues = 8;    // Number of time values to read per cpu
+    var prevCpuTime = {
+        ' ':{ prevUsedTime:0, prevTotalTime:0 },
+        '0':{ prevUsedTime:0, prevTotalTime:0 },
+        '1':{ prevUsedTime:0, prevTotalTime:0 },
+        '2':{ prevUsedTime:0, prevTotalTime:0 },
+        '3':{ prevUsedTime:0, prevTotalTime:0 }
+    };
+
+    var procAutoUpdate = false;
+    var procAutoUpdatePeriod_ms = 1000;
+    var procAutoUpdatePeriodMin_ms = 1000;   // Minimum auto update period
+    var procAutoUpdateTimerId = 0;
+
+    var engineAutoUpdate = false;
+    var engineAutoUpdatePeriod_ms = 1000;
+    var engineAutoUpdatePeriodMin_ms = 250;   // Minimum auto update period
+    var engineAutoUpdateTimerId = 0;
+
+    var engineItems = [
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:5,      desc:"Battery (filtered)",  units:"volts" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:5,      desc:"Battery (raw)",       units:"volts" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Battery level",       units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Battery charging",    units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"On charger contacts", units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"On charger platform", units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Fully charged time",  units:"seconds" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Low battery time",    units:"seconds" }
+    ];
+
+    var dialogOKFunction = undefined;
 
     function ClearAllPages() {
         $('div[id^="page_"]').hide();
@@ -44,6 +94,14 @@
             if (perfAutoUpdate) {
                 clearTimeout(perfAutoUpdateTimerId);
             }
+        } else if (curPageName == "page_processes") {
+            if (procAutoUpdate) {
+                clearTimeout(procAutoUpdateTimerId);
+            }
+        } else if (curPageName == "page_engine") {
+            if (engineAutoUpdate) {
+                clearTimeout(engineAutoUpdateTimerId);
+            }
         }
 
         ClearAllPages();
@@ -57,8 +115,10 @@
         // Page ENTRY actions:
         if (pageName == "page_main") {
             if (!mainPageInitialized) {
+                console.log('Initializing page_main');
                 mainPageInitialized = true;
                 $.post("/getmainrobotinfo", function(data) {
+                    console.log('returned from /getmainrobotinfo');
                     var payload = data.split("\n");
                     $("#main_robot_id").html(payload[0]);
                     $("#main_robot_serial_number").html(payload[1]);
@@ -66,28 +126,94 @@
                     $("#main_build_config").html(payload[3]);
                     $("#main_os_version").html(payload[4]);
                     $("#main_cmd_line").html(payload[5]);
+                    $("#main_robot_name").html(payload[6]);
+                    $("#main_os_build_version").html(payload[7]);
+                    $("#main_build_sha").html(payload[8]);
                 })
             }
+        } else if (pageName == "page_consolevars") {
+            if (allowConsoleVarsPage) {
+                $("#consolevars_main_section").show();
+                $("#consolevars_page_disabled").hide();
+            } else {
+                $("#consolevars_main_section").hide();
+                $("#consolevars_page_disabled").show();
+            }
         } else if (pageName == "page_perf") {
-            UpdatePerfHeader();
-            var numItems = perfItems.length;
-            for (var i = 0; i < numItems; i++) {
-                var item = perfItems[i];
-                // Set checkbox states to reflect the internal flags
-                $('#' + 'id_perf_checkbox_' + i).prop("checked", item["activeUpdate"]);
-                if (item["hasGraph"]) {
-                    $('#' + 'id_graph_' + i).progressbar({
-                        max: parseFloat(item["graphMax"]),
-                        value: parseFloat(item["val"]),
-                        create: function(event, ui)
-                            {$(this).find('.ui-widget-header').css
-                            ({'background-color':'darkgrey','height':'16px'})}
-                    })
+            if (allowPerfPage && !connectedToWebotsSim) {
+                UpdatePerfHeader();
+                $("#perf_page_disabled").hide();
+                $("#perf_page_disabled_webots").hide();
+                var numItems = perfItems.length;
+                for (var i = 0; i < numItems; i++) {
+                    var item = perfItems[i];
+                    // Set checkbox states to reflect the internal flags
+                    $('#' + 'id_perf_checkbox_' + i).prop("checked", item["activeUpdate"]);
+                    if (item["hasGraph"]) {
+                        $('#' + 'id_graph_' + i).progressbar({
+                            max: parseFloat(item["graphMax"]),
+                            value: parseFloat(item["val"]),
+                            create: function(event, ui)
+                                {$(this).find('.ui-widget-header').css
+                                ({'background-color':'darkgrey','height':'14px'})}
+                        });
+                    }
+                }
+                if (perfAutoUpdate) {
+                    // When entering perf page and auto-update is on, do the first update immediately
+                    perfAutoUpdateTimerId = setTimeout(SendPerfUpdateRequest, 0, true);
                 }
             }
-            if (perfAutoUpdate) {
-                // When entering perf page and auto-update is on, do the first update immediately
-                perfAutoUpdateTimerId = setTimeout(SendPerfUpdateRequest, 0, true);
+            else {                
+                $("#perf_main_section").hide();
+                if (connectedToWebotsSim) {
+                    $("#perf_page_disabled_webots").show();
+                    $("#perf_page_disabled").hide();
+                }
+                else {
+                    $("#perf_page_disabled_webots").hide();
+                    $("#perf_page_disabled").show();
+                }
+            }
+        } else if (pageName == "page_processes") {
+            if (!connectedToWebotsSim) {
+                UpdateProcHeader();
+                $("#proc_page_disabled_webots").hide();
+                if (procAutoUpdate) {
+                    // When entering processes page and auto-update is on, do the first update immediately
+                    procAutoUpdateTimerId = setTimeout(SendProcUpdateRequest, 0, true);
+                }
+            }
+            else {
+                $("#proc_main_section").hide();
+                $("#proc_page_disabled_webots").show();
+            }
+        } else if (pageName == "page_engine") {
+            if (whichWebServer == whichWebServerEnum.ENGINE) {
+                UpdateEngineHeader();
+                $("#engine_page_disabled").hide();
+                var numItems = engineItems.length;
+                for (var i = 0; i < numItems; i++) {
+                    var item = engineItems[i];
+                    // Set checkbox states to reflect the internal flags
+                    $('#' + 'id_engine_checkbox_' + i).prop("checked", item["activeUpdate"]);
+                    if (item["hasGraph"]) {
+                        $('#' + 'id_engine_graph_' + i).progressbar({
+                            max: parseFloat(item["graphMax"]),
+                            value: parseFloat(item["val"]),
+                            create: function(event, ui)
+                                {$(this).find('.ui-widget-header').css
+                                ({'background-color':'darkgrey','height':'14px'})}
+                        });
+                    }
+                }
+                if (engineAutoUpdate) {
+                    // When entering engine page and auto-update is on, do the first update immediately
+                    engineAutoUpdateTimerId = setTimeout(SendEngineUpdateRequest, 0, true);
+                }
+            } else {
+                $("#engine_main_section").hide();
+                $("#engine_page_disabled").show();
             }
         }
     }
@@ -131,12 +257,18 @@
                 var item = perfItems[i];
                 if (item["activeUpdate"]) {
                     var v = payload[i];
-                    item["val"] = v;
-                    $("#id_perf_row_value_" + i).html(v);
-                    if (item["hasGraph"]) {
-                        var graph = $('#' + 'id_graph_' + i);
-                        graph.progressbar( "option", "value", parseFloat(v) );
-                        graph.progressbar( "option", "max", parseFloat(item["graphMax"]) );
+                    var uf = item["updateFunction"];
+                    if (uf !== undefined) {
+                        uf(v, i);
+                    }
+                    else {
+                        item["val"] = v;
+                        $("#id_perf_row_value_" + i).html(v);
+                        if (item["hasGraph"]) {
+                            var graph = $('#' + 'id_graph_' + i);
+                            graph.progressbar( "option", "value", parseFloat(v) );
+                            graph.progressbar( "option", "max", parseFloat(item["graphMax"]) );
+                        }
                     }
                 }
             }
@@ -146,11 +278,232 @@
         }
     }
 
+    function MemUseInfo(payload, itemIndex) {
+        var values = payload.split(',');
+        var totalMem_kB = parseInt(values[0]);
+        var freeMem_kB = parseInt(values[1]);
+        var usedMem_kB = totalMem_kB - freeMem_kB;
+        var v = usedMem_kB + " used, " + freeMem_kB + " free";
+        $("#id_perf_row_value_" + itemIndex).html(v);
+        var graph = $('#' + 'id_graph_' + itemIndex);
+        graph.progressbar( "option", "value", usedMem_kB );
+        graph.progressbar( "option", "max", totalMem_kB );
+    }
+
+    function CPUTimeInfo(payload, itemIndex) {
+        var whichCPU = payload.charAt(3);
+        payload = payload.substring(5); // Strip cpu name and space(s)
+        // Parse the first 8 integers out of the line:
+        var stringValues = payload.split(' ');
+        var values = [];
+        var totalTime = 0;
+        for (var i = 0; i < kNumCPUTimeValues; i++) {
+            var v = parseInt(stringValues[i]);
+            values[i] = v;
+            totalTime += v;
+        }
+        var idleTime = values[3] + values[4];   // 'idle' + 'iowait'
+        var usedTime = totalTime - idleTime;
+        var prev = prevCpuTime[whichCPU];
+        var deltaTotalTime = totalTime - prev["prevTotalTime"];
+        var deltaUsedTime = usedTime - prev["prevUsedTime"];
+
+        var usedPct = deltaUsedTime * 100 / deltaTotalTime;
+        // Note: In future, more of this data could be displayed.  Perhaps in a multi-section progress bar
+        $("#id_perf_row_value_" + itemIndex).html(usedPct.toFixed(2));
+        var graph = $('#' + 'id_graph_' + itemIndex);
+        graph.progressbar( "option", "value", usedPct );
+
+        // Save the last reading for this CPU so it can be used next call
+        prev["prevUsedTime"] = usedTime;
+        prev["prevTotalTime"] = totalTime;
+    }
+
+    function UpdateProcHeader() {
+        $("#proc_auto_update").html("Auto update is " + (procAutoUpdate ? "ON" : "off"));
+        $("#proc_cur_update_period").html("Update period: " + procAutoUpdatePeriod_ms + "ms");
+        $('#proc_update_freq_value').val(procAutoUpdatePeriod_ms);
+    }
+    function ButtonHandler_ProcToggleAutoUpdate() {
+        procAutoUpdate = !procAutoUpdate;
+        UpdateProcHeader();
+        if (procAutoUpdate) {
+            procAutoUpdateTimerId = setTimeout(SendProcUpdateRequest, 0, true);
+        } else {
+            clearTimeout(procAutoUpdateTimerId);
+        }
+    }
+    function ButtonHandler_ProcSetUpdatePeriod() {
+        var v = $("#proc_update_freq_value").val();
+        procAutoUpdatePeriod_ms = Math.max(v, procAutoUpdatePeriodMin_ms);
+        UpdateProcHeader();
+    }
+    function ButtonHandler_ProcUpdateNow() {
+        SendProcUpdateRequest(false);
+    }
+    function ButtonHandler_Processes() {
+        // This is for the start/stop/restart buttons for each process
+        var action = $(this).html().toLowerCase();
+        var procName = $(this).parent().parent().attr("id");
+        var request = "/systemctl?proc=" + procName + "&" + action;
+        $.post(request, function(data) {
+            // AFTER we've processed the request, start an update request
+            // for the process statuses, so we see the results of the
+            // change soon
+            if (procAutoUpdate) {
+                clearTimeout(procAutoUpdateTimerId);
+                procAutoUpdateTimerId = setTimeout(SendProcUpdateRequest, 0, true);
+
+            } else {
+                SendProcUpdateRequest(false);
+            }
+        });
+    }
+    function SendProcUpdateRequest(triggeredByTimer) {
+        var query = "";
+        $('#table_processes tr').each(function() {
+            if (query != "") {
+                query += "&";
+            }
+            query += this.id;
+        });
+        $.post("/getprocessstatus?proc=" + query, function(data) {
+            var payload = data.split("\n");
+            for (var i = 0; i < payload.length; i++) {
+                var procData = payload[i].split('=');
+                $('#' + procData[0]).find('#status').html(procData[1]);
+            }
+        });
+        if (procAutoUpdate && triggeredByTimer) {
+            procAutoUpdateTimerId = setTimeout(SendProcUpdateRequest, procAutoUpdatePeriod_ms, true);
+        }
+    }
+
+    function UpdateEngineHeader() {
+        $("#engine_auto_update").html("Auto update is " + (engineAutoUpdate ? "ON" : "off"));
+        $("#engine_cur_update_period").html("Update period: " + engineAutoUpdatePeriod_ms + "ms");
+        $('#engine_update_freq_value').val(engineAutoUpdatePeriod_ms);
+    }
+
+    function ButtonHandler_EngineToggleAutoUpdate() {
+        engineAutoUpdate = !engineAutoUpdate;
+        UpdateEngineHeader();
+        if (engineAutoUpdate) {
+            engineAutoUpdateTimerId = setTimeout(SendEngineUpdateRequest, 0, true);
+        } else {
+            clearTimeout(engineAutoUpdateTimerId);
+        }
+    }
+    function ButtonHandler_EngineSetUpdatePeriod() {
+        var v = $("#engine_update_freq_value").val();
+        engineAutoUpdatePeriod_ms = Math.max(v, engineAutoUpdatePeriodMin_ms);
+        UpdateEngineHeader();
+    }
+    function ButtonHandler_EngineUpdateNow() {
+        SendEngineUpdateRequest(false);
+    }
+    function onEngineRowCheckboxClickHandler(index) {
+        engineItems[index]["activeUpdate"] = !engineItems[index]["activeUpdate"];
+    }
+
+    function SendEngineUpdateRequest(triggeredByTimer) {
+        var whichStats = "";
+        var numItems = engineItems.length;
+        for (var i = 0; i < numItems; i++) {
+            whichStats += (engineItems[i]["activeUpdate"] ? "1" : "0");
+        }
+        $.post("/getenginestats?" + whichStats, function(data) {
+            var payload = data.split("\n");
+            for (var i = 0; i < numItems; i++) {
+                var item = engineItems[i];
+                if (item["activeUpdate"]) {
+                    var v = payload[i];
+                    var uf = item["updateFunction"];
+                    if (uf !== undefined) {
+                        uf(v, i);
+                    }
+                    else {
+                        item["val"] = v;
+                        $("#id_engine_row_value_" + i).html(v);
+                        if (item["hasGraph"]) {
+                            var graph = $('#' + 'id_engine_graph_' + i);
+                            graph.progressbar( "option", "value", parseFloat(v) );
+                            graph.progressbar( "option", "max", parseFloat(item["graphMax"]) );
+                        }
+                    }
+                }
+            }
+        });
+        if (engineAutoUpdate && triggeredByTimer) {
+            engineAutoUpdateTimerId = setTimeout(SendEngineUpdateRequest, engineAutoUpdatePeriod_ms, true);
+        }
+    }
+
+    function StartConfirmDialog(title, body, okfunction) {
+        dialogOKFunction = okfunction;
+        $("#confirm_dialog_body").html(body);
+        var d = $("#confirm_dialog");
+        d.dialog("option", "title", title);
+        d.dialog("open");
+    }
+
+    function ButtonHandler_ConsoleVarsLoad() {
+        console.log('ButtonHandler_ConsoleVarsLoad');
+        StartConfirmDialog("", "Load console vars from disk:", function() {
+            $.post("consolefunccall", {func:"LoadConsoleVars", args:""}, function(result){});
+        });
+    }
+    function ButtonHandler_ConsoleVarsSave() {
+        console.log('ButtonHandler_ConsoleVarsSave');
+        StartConfirmDialog("", "Save console vars to disk:", function() {
+            $.post("consolefunccall", {func:"SaveConsoleVars", args:""}, function(result){});
+        });
+    }
+    function ButtonHandler_ConsoleVarsReset() {
+        console.log('ButtonHandler_ConsoleVarsReset');
+        StartConfirmDialog("", "Reset console vars in memory to defaults:", function() {
+            $.post("consolefunccall", {func:"ResetConsoleVars", args:""}, function(result){});
+        });
+    }
+    function ButtonHandler_ConsoleVarsDelete() {        
+        console.log('ButtonHandler_ConsoleVarsDelete');
+        StartConfirmDialog("", "Delete console vars file on disk:", function() {
+            $.post("consolefunccall", {func:"DeleteConsoleVars", args:""}, function(result){});
+        });
+    }
+
     $(document).ready(function() {
         ClearAllPages();
         $("#btn_toggle_auto_update").click(ButtonHandler_ToggleAutoUpdate);
         $("#btn_set_update_period").click(ButtonHandler_SetUpdatePeriod);
         $("#btn_update_now").click(ButtonHandler_UpdateNow);
+        $("#btn_proc_toggle_auto_update").click(ButtonHandler_ProcToggleAutoUpdate);
+        $("#btn_proc_set_update_period").click(ButtonHandler_ProcSetUpdatePeriod);
+        $("#btn_proc_update_now").click(ButtonHandler_ProcUpdateNow);
+        $('#table_processes').on('click', 'button', ButtonHandler_Processes);
+        $("#btn_engine_toggle_auto_update").click(ButtonHandler_EngineToggleAutoUpdate);
+        $("#btn_engine_set_update_period").click(ButtonHandler_EngineSetUpdatePeriod);
+        $("#btn_engine_update_now").click(ButtonHandler_EngineUpdateNow);
+        $("#btn_console_vars_load").click(ButtonHandler_ConsoleVarsLoad);
+        $("#btn_console_vars_save").click(ButtonHandler_ConsoleVarsSave);
+        $("#btn_console_vars_reset").click(ButtonHandler_ConsoleVarsReset);
+        $("#btn_console_vars_delete").click(ButtonHandler_ConsoleVarsDelete);
+        $("#confirm_dialog").dialog({ autoOpen: false, modal: true, resizable: false,
+            draggable: true,
+            width: 'auto',
+            buttons: {
+                "OK": function() {
+                    $("#confirm_dialog").dialog("close");
+                    if (dialogOKFunction !== undefined) {
+                        dialogOKFunction();
+                        dialogOKFunction = undefined;
+                    }
+                },
+                "Cancel": function () {
+                    $("#confirm_dialog").dialog("close");
+                    dialogOKFunction = undefined;
+                }
+        } });
 
         $.post("getinitialconfig", function(data) {
             var payload = data.split("\n");
@@ -159,6 +512,9 @@
             var startPage = payload[2];
             connectedToWebotsSim = (payload[3] === "true");
             $("#main_robot_connection_type").html(connectedToWebotsSim ? "Webots Simulator" : "Physical Robot");
+            allowPerfPage = (payload[4] === "true");
+            whichWebServer = payload[5];
+            allowConsoleVarsPage = (payload[6] === "true");
             SetPage(startPage);
         });
         // Initialize the perf table
@@ -166,10 +522,21 @@
         var numRows = perfItems.length;
         for (var r = 0; r < numRows; r++) {
             var data = perfItems[r];
-            var s = "<tr><td><input id='id_perf_checkbox_" + r + "' type='checkbox' onClick='onPerfRowCheckboxClickHandler(" + r + ")'/>" +
-                "</td><td>" + data["desc"] +
-                "</td><td width='100px' id='id_perf_row_value_" + r +
-                "'></td><td width='300px' id='id_graph_" + r + "'></td></tr>";
+            var s = "<tr height='34px'><td><input id='id_perf_checkbox_" + r + "' type='checkbox' onClick='onPerfRowCheckboxClickHandler(" + r + ")'/>" +
+                "</td><td style='text-align:right'>" + data["desc"] +
+                "</td><td style='text-align:right' width='180px' id='id_perf_row_value_" + r +
+                "'></td><td>" + data["units"] + "</td><td width='300px' id='id_graph_" + r + "'></td></tr>";
+            table.append(s);
+        }
+        // Initialize the engine table
+        var table = $("#engine_table");
+        var numRows = engineItems.length;
+        for (var r = 0; r < numRows; r++) {
+            var data = engineItems[r];
+            var s = "<tr height='34px'><td><input id='id_engine_checkbox_" + r + "' type='checkbox' onClick='onEngineRowCheckboxClickHandler(" + r + ")'/>" +
+                "</td><td style='text-align:right'>" + data["desc"] +
+                "</td><td style='text-align:right' width='180px' id='id_engine_row_value_" + r +
+                "'></td><td>" + data["units"] + "</td><td width='300px' id='id_engine_graph_" + r + "'></td></tr>";
             table.append(s);
         }
     });
@@ -210,10 +577,11 @@
         <div>&nbsp
             <button type="button" name="page_main">MAIN</button>&nbsp&nbsp&nbsp
             <button type="button" name="page_consolevars">CONSOLE VARS/FUNCS</button>&nbsp&nbsp&nbsp
-            <button type="button" name="page_perf">PERF</button>&nbsp&nbsp&nbsp
             <button type="button" name="page_files">FILES</button>&nbsp&nbsp&nbsp
-<!--             <button type="button" name="page_processes">PROCESSES</button>&nbsp&nbsp&nbsp
- -->        </div>
+            <button type="button" name="page_perf">PERF</button>&nbsp&nbsp&nbsp
+            <button type="button" name="page_processes">PROCESSES</button>&nbsp&nbsp&nbsp
+            <button type="button" name="page_engine">ENGINE</button>&nbsp&nbsp&nbsp
+        </div>
         <hr>
 
         <div id="page_main">
@@ -223,6 +591,9 @@
                 </tr>
                 <tr>
                     <td style='text-align:right'>Robot ID:</td><td id="main_robot_id"></td>
+                </tr>
+                <tr>
+                    <td style='text-align:right'>Robot Name:</td><td id="main_robot_name"></td>
                 </tr>
                 <tr>
                     <td style='text-align:right'>Robot Serial Number:</td><td id="main_robot_serial_number"></td>
@@ -237,6 +608,12 @@
                     <td style='text-align:right'>OS Version:</td><td id="main_os_version"></td>
                 </tr>
                 <tr>
+                    <td style='text-align:right'>OS Build Version:</td><td id="main_os_build_version"></td>
+                </tr>
+                <tr>
+                    <td style='text-align:right'>Build Sha:</td><td id="main_build_sha"></td>
+                </tr>
+                <tr>
                     <td style='text-align:right'>Command Line:</td><td id="main_cmd_line"></td>
                 </tr>
             </table>
@@ -244,50 +621,139 @@
         </div>
 
         <div id="page_consolevars">
-            These are for the console variables and console functions in THIS process only.<br>
-            <table border=1>
-                <tr>
-                    <th>description</th><th>url</th>
-                </tr>
-                <tr>
-                    <td>View and edit console variables</td><td><a href="/consolevars">/consolevars</a></td>
-                </tr>
-                <tr>
-                    <td>List console variables</td><td><a href="/consolevarlist">/consolevarlist</a></td>
-                </tr>
-                <tr>
-                    <td>List console variables matching</td><td>/consolevarlist?key=search_key</td>
-                </tr>
-                <tr>
-                    <td>Set console variable</td><td>/consolevarset?key=name_of_variable&amp;value=new_value_of_variable</td>
-                </tr>
-                <tr>
-                    <td>Get console variable</td><td>/consolevarget?key=name_of_variable</td>
-                </tr>
-                <tr>
-                    <td>Call console function</td><td>/consolefunccall?func=name_of_function&amp;args=arguments</td>
-                </tr>
-            </table>
-            <br>
-            <div>
-                <input type="submit" value="consolevars">
+            <div id='consolevars_main_section'>
+                These are for the console variables and console functions in THIS process only.<br>
+                <table border=1>
+                    <tr>
+                        <th>description</th><th>url</th>
+                    </tr>
+                    <tr>
+                        <td>View and edit console variables</td><td><a href="/consolevars">/consolevars</a></td>
+                    </tr>
+                    <tr>
+                        <td>List console variables</td><td><a href="/consolevarlist">/consolevarlist</a></td>
+                    </tr>
+                    <tr>
+                        <td>List console variables matching</td><td>/consolevarlist?key=search_key</td>
+                    </tr>
+                    <tr>
+                        <td>Set console variable</td><td>/consolevarset?key=name_of_variable&amp;value=new_value_of_variable</td>
+                    </tr>
+                    <tr>
+                        <td>Get console variable</td><td>/consolevarget?key=name_of_variable</td>
+                    </tr>
+                    <tr>
+                        <td>List console functions</td><td><a href="/consolefunclist">/consolefunclist</a></td>
+                    </tr>
+                    <tr>
+                        <td>List console functions matching</td><td>/consolefunclist?key=search_key</td>
+                    </tr>
+                    <tr>
+                        <td>Call console function</td><td>/consolefunccall?func=name_of_function&amp;args=arguments</td>
+                    </tr>
+                </table>
+                <br/>
+                <div>
+                    <input type="submit" value="consolevars">
+                </div><br>
+                <div>
+                    <button id='btn_console_vars_load'>LOAD console vars</button>
+                    <button id='btn_console_vars_save'>SAVE console vars</button>
+                    <button id='btn_console_vars_delete'>DELETE console vars save file</button>
+                    <button id='btn_console_vars_reset'>RESET console vars to default values</button>
+                </div>
+                <br><br>
+                <a href="webViz.html">WebViz</a>
             </div>
+            <div id='consolevars_page_disabled'>The console vars/funcs page is disabled in the standalone webserver.  Use the Engine or Anim webserver instead.</div>
         </div>
 
         <div id="page_perf">
             <br>
-            <button id='btn_update_now'>Update NOW</button>&nbsp&nbsp&nbsp&nbsp
-            <input  id='update_freq_value' type='number' max='100000'></input>
-            <button id='btn_set_update_period'>Set update period (ms)</button>
-            <span   id='perf_cur_update_period'></span>&nbsp&nbsp&nbsp&nbsp
-            <button id='btn_toggle_auto_update'>Toggle Auto Update</button>
-            <span   id='perf_auto_update'></span>
-            <br><br>
-            <table id='perf_table' border=1>
-                <tr>
-                    <th>Active</th><th>Description</th><th>Value</th><th>Graph</th>
-                </tr>
-            </table>
+            <div id='perf_main_section'>
+                <button id='btn_update_now'>Update NOW</button>&nbsp&nbsp&nbsp&nbsp
+                <input  id='update_freq_value' type='number' max='100000'></input>
+                <button id='btn_set_update_period'>Set update period (ms)</button>
+                <span   id='perf_cur_update_period'></span>&nbsp&nbsp&nbsp&nbsp
+                <button id='btn_toggle_auto_update'>Toggle Auto Update</button>
+                <span   id='perf_auto_update'></span>
+                <br><br>
+                <table id='perf_table' border=1>
+                    <tr>
+                        <th>Active</th><th>Description</th><th>Value</th><th>Units</th><th>Graph</th>
+                    </tr>
+                </table>
+            </div>
+            <div id='perf_page_disabled'>The perf page is disabled in the Anim webserver.  Use the standalone or Engine webserver instead.</div>
+            <div id='perf_page_disabled_webots'>The perf page is disabled in pure webots sim, since it is for actual robot stats.</div>
+        </div>
+
+        <div id="page_engine">
+            <br>
+            <div id='engine_main_section'>
+                <button id='btn_engine_update_now'>Update NOW</button>&nbsp&nbsp&nbsp&nbsp
+                <input  id='engine_update_freq_value' type='number' max='100000'></input>
+                <button id='btn_engine_set_update_period'>Set update period (ms)</button>
+                <span   id='engine_cur_update_period'></span>&nbsp&nbsp&nbsp&nbsp
+                <button id='btn_engine_toggle_auto_update'>Toggle Auto Update</button>
+                <span   id='engine_auto_update'></span>
+                <br><br>
+                <table id='engine_table' border=1>
+                    <tr>
+                        <th>Active</th><th>Description</th><th>Value</th><th>Units</th><th>Graph</th>
+                    </tr>
+                </table>
+            </div>
+            <div id='engine_page_disabled'>The engine page is disabled in the Anim and standalone webservers.  Use the Engine webserver instead.</div>
+        </div>
+
+        <div id="page_processes">
+            <br>
+            <div id='proc_main_section'>
+                <button id='btn_proc_update_now'>Update NOW</button>&nbsp&nbsp&nbsp&nbsp
+                <input  id='proc_update_freq_value' type='number' max='100000'></input>
+                <button id='btn_proc_set_update_period'>Set update period (ms)</button>
+                <span   id='proc_cur_update_period'></span>&nbsp&nbsp&nbsp&nbsp
+                <button id='btn_proc_toggle_auto_update'>Toggle Auto Update</button>
+                <span   id='proc_auto_update'></span>
+                <br><br>
+                <table id='table_processes' border=1>
+                    <tr>
+                        <th>Process:</th><th>Status:</th><th>Controls:</th>
+                    </tr>
+                    <tr id='vic-webserver'>
+                        <td width='120px'>Webserver</td><td id='status' width='120px'></td>
+                        <td>&nbsp&nbsp<button id='btn_proc_stop' style='width:80px'>STOP</button>
+                        &nbsp<button id='btn_proc_start' style='width:80px'>START</button>
+                        &nbsp<button id='btn_proc_restart' style='width:80px'>RESTART</button>&nbsp&nbsp</td>
+                    </tr>
+                    <tr id='vic-cloud'>
+                        <td width='120px'>Cloud</td><td id='status' width='120px'></td>
+                        <td>&nbsp&nbsp<button id='btn_proc_stop' style='width:80px'>STOP</button>
+                        &nbsp<button id='btn_proc_start' style='width:80px'>START</button>
+                        &nbsp<button id='btn_proc_restart' style='width:80px'>RESTART</button>&nbsp&nbsp</td>
+                    </tr>
+                    <tr id='vic-engine'>
+                        <td width='120px'>Engine</td><td id='status' width='120px'></td>
+                        <td>&nbsp&nbsp<button id='btn_proc_stop' style='width:80px'>STOP</button>
+                        &nbsp<button id='btn_proc_start' style='width:80px'>START</button>
+                        &nbsp<button id='btn_proc_restart' style='width:80px'>RESTART</button>&nbsp&nbsp</td>
+                    </tr>
+                    <tr id='vic-anim'>
+                        <td width='120px'>Anim</td><td id='status' width='120px'></td>
+                        <td>&nbsp&nbsp<button id='btn_proc_stop' style='width:80px'>STOP</button>
+                        &nbsp<button id='btn_proc_start' style='width:80px'>START</button>
+                        &nbsp<button id='btn_proc_restart' style='width:80px'>RESTART</button>&nbsp&nbsp</td>
+                    </tr>
+                    <tr id='vic-robot'>
+                        <td width='120px'>Robot</td><td id='status' width='120px'></td>
+                        <td>&nbsp&nbsp<button id='btn_proc_stop' style='width:80px'>STOP</button>
+                        &nbsp<button id='btn_proc_start' style='width:80px'>START</button>
+                        &nbsp<button id='btn_proc_restart' style='width:80px'>RESTART</button>&nbsp&nbsp</td>
+                    </tr>
+                </table>
+            </div>
+            <div id='proc_page_disabled_webots'>The processes page is disabled in pure webots sim, since it is for the actual robot processes.</div>
         </div>
 
         <div id="page_files">
@@ -297,6 +763,11 @@
                 <input type="submit" value="cache">
                 <input type="submit" value="currentgamelog">
             </div>
+        </div>
+
+        <div id="confirm_dialog" title="">
+          <p id='confirm_dialog_body'></p>
+          <p>Are you sure?</p>
         </div>
 
     </div>

@@ -2143,6 +2143,22 @@ namespace Vision {
      }
   } // EraseFace()
 
+  std::vector<Vision::LoadedKnownFace> FaceRecognizer::GetEnrolledNames() const
+  {
+    std::vector<LoadedKnownFace> ret;
+    ret.reserve( _enrollmentData.size() );
+    auto const nowTime = std::chrono::system_clock::now();
+    for( const auto& entry : _enrollmentData ) {
+      if( !entry.second.GetName().empty() ) {
+        ret.emplace_back( LoadedKnownFace{GetSecondsSince(nowTime, entry.second.GetEnrollmentTime()),
+                                          GetSecondsSince(nowTime, entry.second.GetLastUpdateTime()),
+                                          GetSecondsSince(nowTime, entry.second.FindLastSeenTime()),
+                                          entry.second.GetFaceID(),
+                                          entry.second.GetName()} );
+      }
+    }
+    return ret;
+  }
   
   void FaceRecognizer::EraseAllFaces()
   {

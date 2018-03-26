@@ -21,9 +21,6 @@
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
 #include "engine/navMap/memoryMap/data/memoryMapData.h"
 
-#include "coretech/common/engine/math/point.h"
-#include "coretech/common/engine/math/triangle.h"
-#include "coretech/common/engine/math/lineSegment2d.h"
 #include "coretech/common/engine/math/fastPolygon2d.h"
 
 #include "util/helpers/noncopyable.h"
@@ -51,9 +48,6 @@ public:
   using NodeContent    = QuadTreeTypes::NodeContent;
   using FoldFunctor    = QuadTreeTypes::FoldFunctor;
   using FoldDirection  = QuadTreeTypes::FoldDirection;
-  
-  // type of overlap for two sets
-  enum class ESetOverlap { Disjoint, Intersecting, SupersetOf, SubsetOf};
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Initialization
@@ -98,23 +92,13 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // run the provided accumulator function recursively over the tree for all nodes intersecting with region (if provided).
-  void Fold(FoldFunctor accumulator, FoldDirection dir = FoldDirection::BreadthFirst);
-  void Fold(FoldFunctor accumulator, const FastPolygon& region, FoldDirection dir = FoldDirection::BreadthFirst);
-
+  // NOTE: any recursive call through the QTN should be implemented by fold so all collision checks happen in a consistant manner
   void Fold(FoldFunctorConst accumulator, FoldDirection dir = FoldDirection::BreadthFirst) const;
-  void Fold(FoldFunctorConst accumulator, const FastPolygon& region, FoldDirection dir = FoldDirection::BreadthFirst) const;
 
-  // moves this node's center towards the required points, so that they can be included in this node
-  // returns true if the root shifts, false if it can't shift to accomodate all points or the points are already contained
-  bool ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& processor);
+  template <class ConvexType>
+  typename std::enable_if<std::is_base_of<ConvexPolygon, ConvexType>::value>::type
+  Fold(FoldFunctorConst accumulator, const ConvexType& region, FoldDirection dir = FoldDirection::BreadthFirst) const;
 
-  // Convert this node into a parent of its level, delegating its children to the new child that substitutes it
-  // In order for a quadtree to be valid, the only way this could work without further operations is calling this
-  // on a root node. Such responsibility lies in the caller, not in this node
-  // Returns true if successfully expanded, false otherwise
-  // maxRootLevel: it won't upgrade if the root is already higher level than the specified
-  bool UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, QuadTreeProcessor& processor);
- 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Exploration
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -134,14 +118,14 @@ public:
   // Collision checks
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  // calculates in what manner the sets defined by the node and poly may intersect
-  ESetOverlap GetOverlapType(const FastPolygon& poly) const;
+  // calculates if the polygon intersects the node
+  bool Intersects(const FastPolygon& poly) const;
   
   // returns true if this node FULLY contains the given poly
   bool Contains(const FastPolygon& poly) const;
 
   // returns true if the given poly FULLY contains this node (this assumes `poly` is convex)
-  bool IsContainedBy(const FastPolygon& poly) const;
+  bool IsContainedBy(const ConvexPointSet2f& set) const;
   
 private:
 
@@ -149,15 +133,23 @@ private:
   // Types
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  struct AxisAlignedQuad {
+  struct AxisAlignedQuad : public ConvexPointSet<2, f32> {
     AxisAlignedQuad(const Point2f& p, const Point2f& q);
-    bool Contains(const Point2f& p) const;
+
+    // check if a point is contained in AABB
+    virtual bool Contains(const Point2f& p) const override;
+
+    // check if this quad is fully in the halfplane defined by l
+    virtual bool InHalfPlane(const Halfplane2f& H) const override;
+            bool InNegativeHalfPlane(const Line2f& l) const;
+
+    // sorted in CW order for convenience
+    inline const Point2f& GetLowerLeft()  const { return corners[0]; }
+    inline const Point2f& GetUpperLeft()  const { return corners[1]; }
+    inline const Point2f& GetUpperRight() const { return corners[2]; }
+    inline const Point2f& GetLowerRight() const { return corners[3]; }
     
-    Point2f lowerLeft; 
-    Point2f lowerRight; 
-    Point2f upperLeft; 
-    Point2f upperRight; 
-    std::array<LineSegment, 2> diagonals;
+    std::vector<const Point2f> corners;
   };
   
   // info about moving towards a neighbor
@@ -198,9 +190,14 @@ private:
   
   // read the note in destructor on why we manually destroy nodes when they are removed
   static void DestroyNodes(ChildrenVector& nodes, QuadTreeProcessor& processor);
+
+  // run the provided accumulator function recursively over the tree for all nodes intersecting with region (if provided).
+  // NOTE: mutable recursive calls should remain private to ensure tree invariants are held
+  void Fold(FoldFunctor accumulator, FoldDirection dir = FoldDirection::BreadthFirst);
   
-  // reset the parameters of the AABB after center or size have changed
-  void ResetBoundingBox();
+  template <class ConvexType>
+  typename std::enable_if<std::is_base_of<ConvexPolygon, ConvexType>::value>::type
+  Fold(FoldFunctor accumulator, const ConvexType& region, FoldDirection dir = FoldDirection::BreadthFirst);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Exploration
@@ -245,6 +242,109 @@ private:
     
 }; // class
   
+/*
+  For calls that are constrained by some convex region, first we can potnetially avoid excess collision checks
+  if the current node is fully contained by the Fold Region. In the example below, nodes 1 through 6 need intersection 
+  checks, but nodes A through D do not since their parent is fully contained by Fold Region
+ 
+                    +-----------------+------------------+
+                    |                 |                  |
+                    |                 |                  |
+                    |                 |                  |
+                    |         1       |        2         |
+                    |                 |                  |
+                    |    . . . . . . . . .<- Fold        |
+                    |    .            |  .   Region      |
+                    +----+----#########--+---------------+
+                    |    .    # A | B #  .               |
+                    |    4    #---+---#  .               |
+                    |    .    # D | C #  .               |
+                    +----+----#########  .     3         |
+                    |    .    |       |  .               |
+                    |    6 . .|. .5. .|. .               |
+                    |         |       |                  |
+                    +---------+-------+------------------+
+
+*/
+
+template <class ConvexType>
+inline typename std::enable_if<std::is_base_of<ConvexPolygon, ConvexType>::value>::type
+QuadTreeNode::Fold(FoldFunctor accumulator, const ConvexType& region, FoldDirection dir)
+{
+  if ( Intersects(region) )
+  {    
+    // check if we can stop doing overlap checks
+    if ( IsContainedBy(region) )
+    {
+      Fold(accumulator, dir);
+    } else {
+      if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
+
+      // filter out child nodes if we know the region won't intersect based off of AABB checks
+      if (IsSubdivided())
+      {      
+        u8 childFilter = 0b1111; // Bit field represents quadrants (-x, -y), (-x, +y), (+x, -y), (+x, +y)
+        
+        if ( region.GetMinX() > _center.x() ) { childFilter &= 0b0011; } // only +x (top) nodes
+        if ( region.GetMaxX() < _center.x() ) { childFilter &= 0b1100; } // only -x (bot) nodes
+        if ( region.GetMinY() > _center.y() ) { childFilter &= 0b0101; } // only +y (left) nodes
+        if ( region.GetMaxY() < _center.y() ) { childFilter &= 0b1010; } // only -y (right) nodes
+
+        // iterate in reverse order relative to EQuadrant order to save some extra arithmetic
+        u8 idx = 0;
+        do
+        {
+          if (childFilter & 1) { 
+            _childrenPtr[idx]->Fold(accumulator, region, dir); 
+          }
+          ++idx;
+        } while ( childFilter >>= 1 ); 
+      }
+
+      if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
+    }
+  }
+}
+
+template <class ConvexType>
+inline typename std::enable_if<std::is_base_of<ConvexPolygon, ConvexType>::value>::type
+QuadTreeNode::Fold(FoldFunctorConst accumulator, const ConvexType& region, FoldDirection dir) const
+{
+  if ( Intersects(region) )
+  {    
+    // check if we can stop doing overlap checks
+    if ( IsContainedBy(region) )
+    {
+      Fold(accumulator, dir);
+    } else {
+      if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
+
+      // filter out child nodes if we know the region won't intersect based off of AABB checks
+      if (IsSubdivided())
+      {      
+        u8 childFilter = 0b1111; // Bit field represents quadrants (-x, -y), (-x, +y), (+x, -y), (+x, +y)
+        
+        if ( region.GetMinX() > _center.x() ) { childFilter &= 0b0011; } // only +x (top) nodes
+        if ( region.GetMaxX() < _center.x() ) { childFilter &= 0b1100; } // only -x (bot) nodes
+        if ( region.GetMinY() > _center.y() ) { childFilter &= 0b0101; } // only +y (left) nodes
+        if ( region.GetMaxY() < _center.y() ) { childFilter &= 0b1010; } // only -y (right) nodes
+
+        // iterate in reverse order relative to EQuadrant order to save some extra arithmetic
+        u8 idx = 0;
+        do 
+        {
+          if (childFilter & 1) { 
+            ((const QuadTreeNode*) _childrenPtr[idx].get())->Fold(accumulator, region, dir);
+           }
+          ++idx;
+        } while ( childFilter >>= 1 );
+      }
+
+      if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
+    }
+  }
+}
+
 } // namespace
 } // namespace
 

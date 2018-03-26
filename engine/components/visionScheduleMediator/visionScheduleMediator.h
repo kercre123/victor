@@ -20,6 +20,7 @@
 #include "clad/types/visionModes.h"
 #include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
 #include "engine/robotComponents_fwd.h"
+#include "engine/vision/visionModeSchedule.h"
 #include "json/json-forwards.h"
 #include "util/helpers/noncopyable.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
@@ -50,14 +51,20 @@ public:
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::Vision);
-    dependencies.insert(RobotComponentID::CozmoContext);
+    dependencies.insert(RobotComponentID::CozmoContextWrapper);
   }
-  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {}
+  virtual void AdditionalUpdateAccessibleComponents(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::Vision);
+    dependencies.insert(RobotComponentID::CozmoContextWrapper);
+  };
+  virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
+
   // IDependencyManagedComponent
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // Update called from Robot for the time being. May shift to UpdateDependent later
-  void Update();
+  // Perform most of the Init from here, called by InitDependent, to allow for Unit Testing
+  void Init(const Json::Value& config);
 
   // Set up baseline subscriptions to manage VisionMode defaults via the VSM
   void GetInternalSubscriptions(std::set<VisionModeRequest>& baselineSubscriptions) const {
@@ -76,7 +83,7 @@ public:
   void ReleaseAllVisionModeSubscriptions(IVisionModeSubscriber* subscriber);
 
   // in debug builds, send viz messages to webots
-  void SendDebugVizMessages();
+  void SendDebugVizMessages(const CozmoContext* context);
 
 private:
 
@@ -101,10 +108,11 @@ private:
   };
 
   // Internal call to parse the subscription record and send the emergent config to the VisionComponent if it changed
-  void UpdateVisionSchedule();
+  void UpdateVisionSchedule(VisionComponent& visionComponent, const CozmoContext* context);
 
-  // Makes a pass over the VisionModeSchedule to spread out processing requirements for various modes.
-  void GenerateBalancedSchedule();
+  // Makes a pass over the VisionModeSchedule to spread out processing requirements for various modes and sends it to 
+  // the VisionComponent. The generated schedule is returned for evaluation in Unit Tests, but is not normally used.
+  const AllVisionModesSchedule::ModeScheduleList GenerateBalancedSchedule(VisionComponent& visionComponent);
 
   // Returns true if the update period for this mode changed as a result of subscription changes
   bool UpdateModePeriodIfNecessary(VisionModeData& mode) const;
@@ -114,8 +122,6 @@ private:
 
   using RequestRecord = std::pair<IVisionModeSubscriber*, EVisionUpdateFrequency>;
 
-  const CozmoContext* _context;
-  VisionComponent* _visionComponent;
   std::unordered_map<VisionMode, VisionModeData> _modeDataMap;
   bool _subscriptionRecordIsDirty = false;
   bool _hasScheduleOnStack = false;

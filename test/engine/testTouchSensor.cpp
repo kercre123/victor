@@ -259,7 +259,7 @@ TEST_F(TouchSensorTest, CalibrateAndClassifyMultirobotTests)
         uint16_t touch = rawTouchSensorReadings[j];
         Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
         msg.backpackTouchSensorRaw = touch;
-        testTouchSensorComponent.Update(msg);
+        testTouchSensorComponent.NotifyOfRobotState(msg);
       }
       testBody();
     };
@@ -275,7 +275,7 @@ TEST_F(TouchSensorTest, CalibrateAndClassifyMultirobotTests)
         uint16_t touch = rawTouchSensorReadings[j];
         Anki::Cozmo::RobotState msg = _robot->GetDefaultRobotState();
         msg.backpackTouchSensorRaw = touch;
-        testTouchSensorComponent.Update(msg);
+        testTouchSensorComponent.NotifyOfRobotState(msg);
 
         if(testTouchSensorComponent.IsCalibrated()) {
           indexWhenCalib = j;

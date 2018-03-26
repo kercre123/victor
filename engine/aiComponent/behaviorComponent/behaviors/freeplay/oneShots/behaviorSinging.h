@@ -16,7 +16,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorSinging_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/components/cubeAccelComponentListeners.h"
+#include "engine/components/cubes/cubeAccelListeners/shakeListener.h"
 
 #include "clad/audio/audioSwitchTypes.h"
 
@@ -36,6 +36,7 @@ public:
   
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;

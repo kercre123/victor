@@ -133,28 +133,6 @@ namespace Anki {
   
     // Default values in clad
     const PathMotionProfile DEFAULT_PATH_MOTION_PROFILE = PathMotionProfile();
-
-
-    /***************************************************************************
-     *
-     *                          Nurture metagame/needs system
-     *
-     **************************************************************************/
-
-    // Maximum number of need types (only 3 planned, but larger for future)
-    const u32 MAX_NEEDS = 10;
-
-    // Maximum number of repairable parts
-    const u32 MAX_REPAIRABLE_PARTS = 32;
-
-
-    /***************************************************************************
-     *
-     *                               Misc
-     *
-     **************************************************************************/
-    
-    constexpr f32 LOW_BATTERY_THRESH_VOLTS = 3.5f;
     
   } // namespace Cozmo
 } // namespace Anki

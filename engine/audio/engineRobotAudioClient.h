@@ -48,11 +48,8 @@ public:
   // IDependencyManagedComponent functions
   //////
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override {};
-  // Maintain the chain of initializations currently in robot - it might be possible to
-  // change the order of initialization down the line, but be sure to check for ripple effects
-  // when changing this function
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
-    dependencies.insert(RobotComponentID::PublicStateBroadcaster);
+    dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
   //////

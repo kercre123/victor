@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.6)
 
 project(robot)
 
+include(anki_build_cxx)
+include(android_strip)
+
 add_library(robot_interface INTERFACE IMPORTED GLOBAL)
 set_property(TARGET robot_interface
              PROPERTY INTERFACE_INCLUDE_DIRECTORIES
@@ -20,9 +23,6 @@ if (MACOSX)
     SIMULATOR
   )
 elseif (ANDROID)
-  set(PLATFORM_COMPILE_DEFS
-    DEVELOPMENT
-  )
 endif()
 
 
@@ -46,12 +46,37 @@ target_include_directories(robot_hal
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/hal/sim/include>
 )
 
+target_compile_options(robot_hal
+  PRIVATE
+  ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+)
+
 target_compile_definitions(robot_hal
   PRIVATE
   COZMO_ROBOT
   ${PLATFORM_COMPILE_DEFS}
+  ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS}
   #HAL_DUMMY_BODY # Uncomment if deploying on head only
 )
+
+# Create a lib for cube firmware led animation code, so
+# we can link into it from webotsCtrlLightCube
+if (MACOSX)
+add_library(cube_led_animator STATIC
+  ${CMAKE_SOURCE_DIR}/robot/cube_firmware/app/animation.c
+)
+
+target_compile_options(cube_led_animator
+  PRIVATE
+  ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+)
+
+target_compile_definitions(cube_led_animator
+  PRIVATE
+  ${PLATFORM_COMPILE_DEFS}
+  ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS}
+)
+endif()
 
 set(PLATFORM_SRCS "")
 set(PLATFORM_LIBS "")
@@ -62,14 +87,12 @@ if (ANDROID)
   set(PLATFORM_LIBS
     robot_hal
   )
-  set(PLATFORM_COMPILE_DEFS
-    DEVELOPMENT
-  )
 elseif (MACOSX)
   include(webots)
 
   set(PLATFORM_LIBS
       util
+      util_audio
       cti_messaging
       ${WEBOTS_LIBS}
   )
@@ -88,9 +111,6 @@ elseif (MACOSX)
       ${CMAKE_SOURCE_DIR}/simulator/robot/sim_overlayDisplay.cpp
   )
 endif()
-
-
-include(anki_build_cxx)
 
 anki_build_cxx_library(robot_transport ${ANKI_SRCLIST_DIR} STATIC)
 
@@ -123,7 +143,6 @@ target_compile_definitions(supervisor
   PRIVATE
   COZMO_ROBOT
   CORETECH_ROBOT
-  _DEBUG
   ${PLATFORM_COMPILE_DEFS}
 )
 
@@ -137,20 +156,12 @@ target_include_directories(supervisor
   ${PLATFORM_INCLUDES}
 )
 
-
-
-include(anki_build_cxx)
-include(android_strip)
-
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
 if (ANDROID)
   set(PLATFORM_LIBS android log)
-  set(PLATFORM_COMPILE_DEFS
-    DEVELOPMENT
-  )
 elseif (MACOSX)
   find_library(FOUNDATION Foundation)
   set(PLATFORM_LIBS
@@ -194,7 +205,6 @@ if (ANDROID)
     PRIVATE
     COZMO_ROBOT
     CORETECH_ROBOT
-    _DEBUG
     ${PLATFORM_COMPILE_DEFS}
     #HAL_DUMMY_BODY # Uncomment if deploying on head only
   )

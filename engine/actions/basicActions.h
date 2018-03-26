@@ -66,7 +66,8 @@ namespace Cozmo {
 
       virtual bool SetMotionProfile(const PathMotionProfile& motionProfile) override;
       
-      void SetMoveEyes(bool enable) { _moveEyes = enable; }
+      // Note: PROCEDURAL_EYE_LEADING is a compile-time option to enable/disable eye leading
+      void SetMoveEyes(bool enable) { _moveEyes = (enable && PROCEDURAL_EYE_LEADING); }
       
     protected:
       
@@ -104,7 +105,7 @@ namespace Cozmo {
       PoseFrameID_t _prevPoseFrameId = 0;
       u32 _relocalizedCnt = 0;
       
-      bool    _moveEyes = true;
+      bool    _moveEyes = (true && PROCEDURAL_EYE_LEADING);
       
       bool _isInitialized = false;
       
@@ -309,7 +310,8 @@ namespace Cozmo {
       
       // Enable/disable eye movement while turning. If hold is true, the eyes will
       // remain in their final position until the next time something moves the head.
-      void SetMoveEyes(bool enable, bool hold=false) { _moveEyes = enable; _holdEyes = hold; }
+      // Note: PROCEDURAL_EYE_LEADING is a compile-time option to enable/disable eye leading
+      void SetMoveEyes(bool enable, bool hold=false) { _moveEyes = (enable && PROCEDURAL_EYE_LEADING); _holdEyes = hold; }
       
     protected:
       
@@ -332,7 +334,7 @@ namespace Cozmo {
       f32         _maxSpeed_radPerSec = 15.f;
       f32         _accel_radPerSec2   = 20.f;
       f32         _duration_sec = 0.f;
-      bool        _moveEyes = true;
+      bool        _moveEyes = (true && PROCEDURAL_EYE_LEADING);
       bool        _holdEyes = false;
       Radians     _halfAngle;
 

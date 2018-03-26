@@ -30,69 +30,78 @@
 #include <fstream>
 
 namespace Anki {
-  namespace Cozmo {
-    
-    class BehaviorLiftLoadTest : public ICozmoBehavior
-    {
-      protected:
-        friend class BehaviorFactory;
-        BehaviorLiftLoadTest(const Json::Value& config);
-      
-      public:
-      
-        virtual ~BehaviorLiftLoadTest() { }
-      
-        virtual bool WantsToBeActivatedBehavior() const override;
-    
-      protected:
-        virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
-          modifiers.behaviorAlwaysDelegates = false;
-        }
+namespace Cozmo {
 
-        void InitBehavior() override;
-      private:
-      
-        virtual void OnBehaviorActivated() override;
-      
-        virtual void BehaviorUpdate() override;
+class BehaviorLiftLoadTest : public ICozmoBehavior
+{
+protected:
+  friend class BehaviorFactory;
+  BehaviorLiftLoadTest(const Json::Value& config);
 
-        virtual void OnBehaviorDeactivated() override;
-        
-        virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
-        virtual void HandleWhileActivated(const RobotToEngineEvent& event) override;
-      
-        virtual void AlwaysHandleInScope(const GameToEngineEvent& event) override;
-      
-        void PrintStats();
-      
-        enum class State {
-          Init,           // Main test loop
-          WaitForPutdown, // Robot was picked up, now waiting for putdown
-          TestComplete    // Test complete
-        };
-      
-        void SetCurrState(State s);
-        const char* StateToString(const State m);
-        void UpdateStateName();
-      
-        State _currentState = State::Init;
-      
-        Signal::SmartHandle _signalHandle;
+public:
 
-        void Write(const std::string& s);
-      
-        std::unique_ptr<Util::RollingFileLogger> _logger;
-      
-        bool _abortTest = false;
-        bool _canRun    = true;
-      
-        // Stats for test/attempts
-        int _numLiftRaises        = 0;
-        int _numHadLoad           = 0;
-        bool _loadStatusReceived = false;
-        bool _hasLoad            = false;
-    };
+  virtual ~BehaviorLiftLoadTest() { }
+
+  virtual bool WantsToBeActivatedBehavior() const override;
+
+protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.behaviorAlwaysDelegates = false;
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+
+  void InitBehavior() override;
+private:
+  enum class State {
+    Init,           // Main test loop
+    WaitForPutdown, // Robot was picked up, now waiting for putdown
+    TestComplete    // Test complete
+  };
+
+
+  struct InstanceConfig {
+    InstanceConfig();
+    std::unique_ptr<Util::RollingFileLogger> logger;
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    State currentState;
+    bool  abortTest;
+    bool  canRun;
+
+    // Stats for test/attempts
+    int  numLiftRaises;
+    int  numHadLoad;
+    bool loadStatusReceived;
+    bool hasLoad;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
+
+  void Write(const std::string& s);
+
+  virtual void OnBehaviorActivated() override;
+
+  virtual void BehaviorUpdate() override;
+
+  virtual void OnBehaviorDeactivated() override;
+  
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
+  virtual void HandleWhileActivated(const RobotToEngineEvent& event) override;
+
+  virtual void AlwaysHandleInScope(const GameToEngineEvent& event) override;
+
+  void PrintStats();
+
+  void SetCurrState(State s);
+  const char* StateToString(const State m);
+  void UpdateStateName();
+
+};
+}
 }
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorDockingTest_H__

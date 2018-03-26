@@ -131,8 +131,9 @@ void BehaviorSystemManager::ResetBehaviorStack(IBehavior* baseBehavior)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalInterface)
+void BehaviorSystemManager::UpdateDependent(const BCCompMap& dependentComponents)
 {
+  auto& bei = dependentComponents.GetValue<BehaviorExternalInterface>();
   ANKI_CPU_PROFILE("BehaviorSystemManager::Update");
   
   if(_initializationStage == InitializationStage::SystemNotInitialized) {
@@ -153,7 +154,7 @@ void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalIn
   }
 
   for( const auto& completionMsg : _actionsCompletedThisTick ) {
-    behaviorExternalInterface.GetDelegationComponent().HandleActionComplete( completionMsg.idTag );
+    bei.GetDelegationComponent().HandleActionComplete( completionMsg.idTag );
   }
   
   _asyncMessageComponent->PrepareCache();
@@ -161,14 +162,14 @@ void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalIn
   std::set<IBehavior*> behaviorsUpdatesTickedInStack;
   // First update the behavior stack and allow it to make any delegation/canceling
   // decisions that it needs to make
-  _behaviorStack->UpdateBehaviorStack(behaviorExternalInterface,
+  _behaviorStack->UpdateBehaviorStack(bei,
                                       _actionsCompletedThisTick,
                                       *_asyncMessageComponent,
                                       behaviorsUpdatesTickedInStack);
   _actionsCompletedThisTick.clear();
   // Then once all of that's done, update anything that's in activatable scope
   // but isn't currently on the behavior stack
-  UpdateInActivatableScope(behaviorExternalInterface, behaviorsUpdatesTickedInStack);
+  UpdateInActivatableScope(bei, behaviorsUpdatesTickedInStack);
   
   _asyncMessageComponent->ClearCache();
 } // Update()
@@ -178,16 +179,13 @@ void BehaviorSystemManager::Update(BehaviorExternalInterface& behaviorExternalIn
 void BehaviorSystemManager::UpdateInActivatableScope(BehaviorExternalInterface& behaviorExternalInterface, const std::set<IBehavior*>& tickedInStack)
 {
   // This is innefficient and should be replaced, but not overengineering right now
-  std::set<IBehavior*> allInActivatableScope;
-  const BehaviorStack::DelegatesMap& delegatesMap = _behaviorStack->GetDelegatesMap();
-  for(auto& entry: delegatesMap){
-    for(auto& behavior : entry.second){
-      if(tickedInStack.find(behavior)  == tickedInStack.end()){
-          allInActivatableScope.insert(behavior);
-      }
-    }
-  }
+  const auto& allInActivatableScope = _behaviorStack->GetBehaviorsInActivatableScope();;
+
   for(auto& entry: allInActivatableScope){
+    if(tickedInStack.find(entry) != tickedInStack.end()){
+      continue;
+    }
+    
     behaviorExternalInterface.GetBehaviorEventComponent()._gameToEngineEvents.clear();
     behaviorExternalInterface.GetBehaviorEventComponent()._engineToGameEvents.clear();
     behaviorExternalInterface.GetBehaviorEventComponent()._robotToEngineEvents.clear();
@@ -256,10 +254,7 @@ bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
   
   {
     // Ensure that the delegated behavior is in the delegates map
-    const BehaviorStack::DelegatesMap& delegatesMap =  _behaviorStack->GetDelegatesMap();
-    auto iter = delegatesMap.find(delegator);
-    if(!ANKI_VERIFY((iter != delegatesMap.end()) &&
-                    (iter->second.find(delegated) != iter->second.end()),
+    if(!ANKI_VERIFY(_behaviorStack->IsValidDelegation(delegator, delegated),
                    "BehaviorSystemManager.Delegate.DelegateNotInAvailableDelegateMap",
                    "Delegator %s asked to delegate to %s which is not in available delegates map",
                    delegator->GetDebugLabel().c_str(),

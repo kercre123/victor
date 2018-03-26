@@ -268,7 +268,7 @@ FlipBlockAction::FlipBlockAction(ObjectID objectID)
 FlipBlockAction::~FlipBlockAction()
 {
   _compoundAction.PrepForCompletion();
-  if (_flipTag != -1)
+  if (HasRobot() && (_flipTag != -1))
   {
     GetRobot().GetActionList().Cancel(_flipTag);
   }
@@ -281,7 +281,7 @@ void FlipBlockAction::SetShouldCheckPreActionPose(bool shouldCheck)
 
 void FlipBlockAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
 {
-  requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+  requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
 }
 
 ActionResult FlipBlockAction::Init()

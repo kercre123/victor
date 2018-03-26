@@ -20,7 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/components/cubeAccelComponent.h"
+#include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerHelpers.h"
 
@@ -112,7 +112,16 @@ BehaviorSinging::~BehaviorSinging()
 {
   
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorSinging::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kAudioSwitchGroup,
+    kAudioSwitch,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorSinging::WantsToBeActivatedBehavior() const
@@ -162,8 +171,7 @@ void BehaviorSinging::OnBehaviorActivated()
     
     // Set up a CubeAccel ShakeListener that will update this object's average shake amount
     // when shaking is detected
-    std::shared_ptr<CubeAccelListeners::ICubeAccelListener> listener;
-    listener.reset(new CubeAccelListeners::ShakeListener(0.5, 2.5, 3.9, shakeDetected));
+    auto listener = std::make_shared<CubeAccelListeners::ShakeListener>(0.5, 2.5, 3.9, shakeDetected);
     GetBEI().GetCubeAccelComponent().AddListener(objectID, listener);
     
     // Store the listener so we can remove it when the behavior ends
@@ -270,16 +278,7 @@ void BehaviorSinging::OnBehaviorDeactivated()
   }
 
   // Remove all our listeners
-  for(auto iter = _cubeAccelListeners.begin(); iter != _cubeAccelListeners.end();)
-  {
-    const bool wasRemoved = GetBEI().GetCubeAccelComponent().RemoveListener(iter->first, iter->second);
-    DEV_ASSERT(wasRemoved, "BehaviorSinging.StopInternal.RemoveListenerFailed");
-    
-    // We should be the only thing that has a shared_ptr pointing to our CubeAccelListeners
-    // CubeAccelComponent used to have one but we just removed it
-    DEV_ASSERT(iter->second.use_count() == 1, "BehaviorSinging.StopInternal.ListenerHasMultipleRefs");
-    iter = _cubeAccelListeners.erase(iter);
-  }
+  _cubeAccelListeners.clear();
 }
   
 }

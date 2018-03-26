@@ -27,32 +27,63 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-
+const char* const kMaxFaceAgeToLookKey = "maxFaceAgeToLook_ms";
+const char* const kStoppingConditionKey = "stoppingCondition";
+const char* const kSearchBehaviorKey = "searchBehavior";
+const char* const kTimeoutKey = "timeout_sec";
 }
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorFindFaces::InstanceConfig::InstanceConfig()
+{
+  maxFaceAgeToLook_ms = 0;
+  stoppingCondition = StoppingCondition::Invalid;
+  timeout_sec = 0.f;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorFindFaces::DynamicVariables::DynamicVariables()
+{
+  searchingForFaces = false;
+  imageTimestampWhenActivated = 0;
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFindFaces::BehaviorFindFaces(const Json::Value& config)
   : ICozmoBehavior(config)
 {
-  JsonTools::GetValueOptional(config, "maxFaceAgeToLook_ms", _maxFaceAgeToLook_ms);
+  JsonTools::GetValueOptional(config, kMaxFaceAgeToLookKey, _iConfig.maxFaceAgeToLook_ms);
   
   const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
 
-  const auto& conditionStr = JsonTools::ParseString(config, "stoppingCondition", debugName);
-  _stoppingCondition = StoppingConditionFromString(conditionStr);
+  const auto& conditionStr = JsonTools::ParseString(config, kStoppingConditionKey, debugName);
+  _iConfig.stoppingCondition = StoppingConditionFromString(conditionStr);
   
-  _searchBehaviorStr = JsonTools::ParseString(config, "searchBehavior", debugName);
+  _iConfig.searchBehaviorStr = JsonTools::ParseString(config, kSearchBehaviorKey, debugName);
   
-  JsonTools::GetValueOptional(config, "timeout_sec", _timeout_sec);
+  JsonTools::GetValueOptional(config, kTimeoutKey, _iConfig.timeout_sec);
   
   // Make sure a nonzero timeout was provided if the stopping
   // condition is "timeout"
-  if (_stoppingCondition == StoppingCondition::Timeout) {
-    DEV_ASSERT(Util::IsFltGTZero(_timeout_sec), "BehaviorFindFaces.InvalidTimeout");
+  if (_iConfig.stoppingCondition == StoppingCondition::Timeout) {
+    DEV_ASSERT(Util::IsFltGTZero(_iConfig.timeout_sec), "BehaviorFindFaces.InvalidTimeout");
   }
 }
- 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindFaces::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kMaxFaceAgeToLookKey,
+    kStoppingConditionKey,
+    kSearchBehaviorKey,
+    kTimeoutKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorFindFaces::WantsToBeActivatedBehavior() const
@@ -64,7 +95,7 @@ bool BehaviorFindFaces::WantsToBeActivatedBehavior() const
 
 void BehaviorFindFaces::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  delegates.insert(_searchBehavior.get());
+  delegates.insert(_iConfig.searchBehavior.get());
 }
 
 
@@ -72,8 +103,8 @@ void BehaviorFindFaces::GetAllDelegates(std::set<IBehavior*>& delegates) const
 void BehaviorFindFaces::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
-  _searchBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_searchBehaviorStr));
-  DEV_ASSERT(_searchBehavior != nullptr,
+  _iConfig.searchBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.searchBehaviorStr));
+  DEV_ASSERT(_iConfig.searchBehavior != nullptr,
              "BehaviorFindFaces.InitBehavior.NullSearchBehavior");
 }
 
@@ -81,28 +112,28 @@ void BehaviorFindFaces::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindFaces::OnBehaviorActivated()
 {
-  DEV_ASSERT(_stoppingCondition != StoppingCondition::Invalid,
+  DEV_ASSERT(_iConfig.stoppingCondition != StoppingCondition::Invalid,
              "BehaviorFindFaces.OnBehaviorActivated.InvalidStoppingCondition");
   
   const auto& robotInfo = GetBEI().GetRobotInfo();
   
   // Get known faces
   const TimeStamp_t latestImageTimeStamp = robotInfo.GetLastImageTimeStamp();
-  _imageTimestampWhenActivated = latestImageTimeStamp;
+  _dVars.imageTimestampWhenActivated = latestImageTimeStamp;
   
-  _startingFaces = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(latestImageTimeStamp > _maxFaceAgeToLook_ms ?
-                                                                   latestImageTimeStamp - _maxFaceAgeToLook_ms :
-                                                                   0);
-  const bool hasRecentFaces = !_startingFaces.empty();
-  if ((_stoppingCondition == StoppingCondition::AnyFace) &&
+  _dVars.startingFaces = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(latestImageTimeStamp > _iConfig.maxFaceAgeToLook_ms ?
+                                                                         latestImageTimeStamp - _iConfig.maxFaceAgeToLook_ms :
+                                                                         0);
+  const bool hasRecentFaces = !_dVars.startingFaces.empty();
+  if ((_iConfig.stoppingCondition == StoppingCondition::AnyFace) &&
       hasRecentFaces){
     return;
   }
   
   // Delegate to the search behavior
-  if (_searchBehavior->WantsToBeActivated()) {
-    DelegateIfInControl(_searchBehavior.get());
-    _searchingForFaces = true;
+  if (_iConfig.searchBehavior->WantsToBeActivated()) {
+    DelegateIfInControl(_iConfig.searchBehavior.get());
+    _dVars.searchingForFaces = true;
   }
 }
 
@@ -110,9 +141,9 @@ void BehaviorFindFaces::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindFaces::OnBehaviorDeactivated()
 {
-  _startingFaces.clear();
-  _imageTimestampWhenActivated = 0;
-  _searchingForFaces = false;
+  _dVars.startingFaces.clear();
+  _dVars.imageTimestampWhenActivated = 0;
+  _dVars.searchingForFaces = false;
 }
 
 
@@ -123,27 +154,27 @@ void BehaviorFindFaces::BehaviorUpdate()
     return;
   }
   
-  if (_searchingForFaces) {
+  if (_dVars.searchingForFaces) {
     // Check stopping conditions
     bool shouldStop = false;
-    if (_stoppingCondition == StoppingCondition::AnyFace) {
-      shouldStop = GetBEI().GetFaceWorld().HasAnyFaces(_imageTimestampWhenActivated);
-    } else if (_stoppingCondition == StoppingCondition::NewFace) {
-      const auto& newFaces = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(_imageTimestampWhenActivated);
+    if (_iConfig.stoppingCondition == StoppingCondition::AnyFace) {
+      shouldStop = GetBEI().GetFaceWorld().HasAnyFaces(_dVars.imageTimestampWhenActivated);
+    } else if (_iConfig.stoppingCondition == StoppingCondition::NewFace) {
+      const auto& newFaces = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(_dVars.imageTimestampWhenActivated);
       // Check if newFaces is a subset of startingFaces.
       // If not, then a new face ID must have been added at some point.
-      const bool newFaceAdded = !std::includes(_startingFaces.begin(), _startingFaces.end(),
+      const bool newFaceAdded = !std::includes(_dVars.startingFaces.begin(), _dVars.startingFaces.end(),
                                                newFaces.begin(), newFaces.end());
       shouldStop = newFaceAdded;
-    } else if (_stoppingCondition == StoppingCondition::Timeout) {
-      shouldStop = (GetActivatedDuration() > _timeout_sec);
+    } else if (_iConfig.stoppingCondition == StoppingCondition::Timeout) {
+      shouldStop = (GetActivatedDuration() > _iConfig.timeout_sec);
     }
     
     if (shouldStop) {
       PRINT_CH_INFO("Behaviors",
                     "FindFaces.CancellingSearch",
                     "Cancelling face search due to stopping condition %s",
-                    StoppingConditionToString(_stoppingCondition));
+                    StoppingConditionToString(_iConfig.stoppingCondition));
       CancelDelegates();
     }
   }

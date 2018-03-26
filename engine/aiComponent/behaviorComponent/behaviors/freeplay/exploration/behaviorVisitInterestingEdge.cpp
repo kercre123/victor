@@ -40,6 +40,28 @@
 namespace Anki {
 namespace Cozmo {
   
+namespace {
+const char* const kObserveEdgeAnimTriggerKey = "observeEdgeAnimTrigger";
+const char* const kEdgesNotFoundAnimTriggerKey = "edgesNotFoundAnimTrigger";
+const char* const kSquintStartAnimTriggerKey = "squintStartAnimTrigger";
+const char* const kSquintLoopAnimTriggerKey = "squintLoopAnimTrigger";
+const char* const kSquintEndAnimTriggerKey = "squintEndAnimTrigger";
+const char* const kAllowGoalsBehindOtherEdgesKey = "allowGoalsBehindOtherEdges";
+const char* const kDistanceFromLookAtPointMinKey = "distanceFromLookAtPointMin_mm";
+const char* const kDistanceFromLookAtPointMaxKey = "distanceFromLookAtPointMax_mm";
+const char* const kDistanceInsideGoalToLookAtKey = "distanceInsideGoalToLookAt_mm";
+const char* const kAdditionalClearanceInFrontKey = "additionalClearanceInFront_mm";
+const char* const kAdditionalClearanceBehindKey = "additionalClearanceBehind_mm";
+const char* const kVantagePointAngleOffsetPerTryKey = "vantagePointAngleOffsetPerTry_deg";
+const char* const kVantagePointAngleOffsetTriesKey = "vantagePointAngleOffsetTries";
+const char* const kForwardConeHalfWidthAtRobotKey = "forwardConeHalfWidthAtRobot_mm";
+const char* const kForwardConeFarPlaneDistFromRobotKey = "forwardConeFarPlaneDistFromRobot_mm";
+const char* const kForwardConeHalfWidthAtFarPlaneKey = "forwardConeHalfWidthAtFarPlane_mm";
+const char* const kAccuracyDistanceFromBorderKey = "accuracyDistanceFromBorder_mm";
+const char* const kObservationDistanceFromBorderKey = "observationDistanceFromBorder_mm";
+const char* const kBorderApproachSpeedKey = "borderApproachSpeed_mmps";
+}
+  
 // kVie_MoveActionRetries: should probably not be in json, since it's not subject to gameplay tweaks
 CONSOLE_VAR(uint8_t, kVie_MoveActionRetries, "BehaviorVisitInterestingEdge", 3);
 // kVieDrawDebugInfo: Debug. If set to true the behavior renders debug privimitives
@@ -126,7 +148,7 @@ BehaviorVisitInterestingEdge::BehaviorVisitInterestingEdge(const Json::Value& co
 , _operatingState(EOperatingState::Invalid)
 {  
   // load parameters from json
-  LoadConfig(config["params"]);
+  LoadConfig(config);
   
   _requiredProcess = AIInformationAnalysis::EProcess::CalculateInterestingRegions;
 }
@@ -134,6 +156,33 @@ BehaviorVisitInterestingEdge::BehaviorVisitInterestingEdge(const Json::Value& co
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorVisitInterestingEdge::~BehaviorVisitInterestingEdge()
 {  
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorVisitInterestingEdge::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kObserveEdgeAnimTriggerKey,
+    kEdgesNotFoundAnimTriggerKey,
+    kSquintStartAnimTriggerKey,
+    kSquintLoopAnimTriggerKey,
+    kSquintEndAnimTriggerKey,
+    kAllowGoalsBehindOtherEdgesKey,
+    kDistanceFromLookAtPointMinKey,
+    kDistanceFromLookAtPointMaxKey,
+    kDistanceInsideGoalToLookAtKey,
+    kAdditionalClearanceInFrontKey,
+    kAdditionalClearanceBehindKey,
+    kVantagePointAngleOffsetPerTryKey,
+    kVantagePointAngleOffsetTriesKey,
+    kForwardConeHalfWidthAtRobotKey,
+    kForwardConeFarPlaneDistFromRobotKey,
+    kForwardConeHalfWidthAtFarPlaneKey,
+    kAccuracyDistanceFromBorderKey,
+    kObservationDistanceFromBorderKey,
+    kBorderApproachSpeedKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -219,7 +268,7 @@ void BehaviorVisitInterestingEdge::OnBehaviorActivated()
   DEV_ASSERT(_cache.IsSet(), "BehaviorVisitInterestingEdge.InitInternal.CantTrustCache");
   
   // make sure we are not updating borders while running the behavior (useless)
-  GetBEI().GetAIComponent().GetAIInformationAnalyzer().AddDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetDebugLabel());
+  GetAIComp<AIInformationAnalyzer>().AddDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetDebugLabel());
 
   // reset operating state to pick the starting one
   _operatingState = EOperatingState::Invalid;
@@ -234,7 +283,7 @@ void BehaviorVisitInterestingEdge::OnBehaviorActivated()
 void BehaviorVisitInterestingEdge::OnBehaviorDeactivated()
 {
   // remove our request to disable the analysis process
-  GetBEI().GetAIComponent().GetAIInformationAnalyzer().RemoveDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetDebugLabel());
+  GetAIComp<AIInformationAnalyzer>().RemoveDisableRequest(AIInformationAnalysis::EProcess::CalculateInterestingRegions, GetDebugLabel());
 
   const auto& robotInfo = GetBEI().GetRobotInfo();
   // clear debug render
@@ -392,7 +441,7 @@ void BehaviorVisitInterestingEdge::PickGoals(BorderRegionScoreVector& validGoals
   validGoals.clear();
 
   // ask the information analyzer about the regions it has detected (should have been this frame)
-  const INavMap::BorderRegionVector& interestingRegions = GetBEI().GetAIComponent().GetAIInformationAnalyzer().GetDetectedInterestingRegions();
+  const INavMap::BorderRegionVector& interestingRegions = GetAIComp<AIInformationAnalyzer>().GetDetectedInterestingRegions();
   
   // process them and see if we can pick one
   if ( !interestingRegions.empty() && GetBEI().HasMapComponent() )
@@ -698,7 +747,7 @@ void BehaviorVisitInterestingEdge::TransitionToS3_ObserveFromClose()
 
   // we know the distance to the closest border, so we can get as close as we want before playing the anim
   const float robotLen = (ROBOT_BOUNDING_X_FRONT + ROBOT_BOUNDING_X_LIFT);
-  const float lastEdgeDistance_mm = GetBEI().GetAIComponent().GetWhiteboard().GetLastEdgeClosestDistance();
+  const float lastEdgeDistance_mm = GetAIComp<AIWhiteboard>().GetLastEdgeClosestDistance();
   DEV_ASSERT(!std::isnan(lastEdgeDistance_mm), "BehaviorVisitInterestingEdge.TransitionToS3_ObserveFromClose.NaNEdgeDist");
   const float distanceToMoveForward_mm = lastEdgeDistance_mm - robotLen - _configParams.observationDistanceFromBorder_mm;
   
@@ -825,7 +874,7 @@ void BehaviorVisitInterestingEdge::StateUpdate_GatheringAccurateEdge()
   _waitForImagesActionTag = ActionConstants::INVALID_TAG;
   
   // check distance to closest detected edge
-  const float lastEdgeDistance_mm = GetBEI().GetAIComponent().GetWhiteboard().GetLastEdgeClosestDistance();
+  const float lastEdgeDistance_mm = GetAIComp<AIWhiteboard>().GetLastEdgeClosestDistance();
   const bool detectedEdges = !std::isnan(lastEdgeDistance_mm);
   if ( detectedEdges && GetBEI().HasMapComponent() )
   { 
@@ -982,41 +1031,41 @@ void BehaviorVisitInterestingEdge::LoadConfig(const Json::Value& config)
 
   // anim triggers
   {
-    const std::string& triggerName = ParseString(config, "observeEdgeAnimTrigger", debugName);
+    const std::string& triggerName = ParseString(config, kObserveEdgeAnimTriggerKey, debugName);
     _configParams.observeEdgeAnimTrigger = triggerName.empty() ? AnimationTrigger::Count :
       AnimationTriggerFromString(triggerName.c_str());
   } {
-    const std::string& triggerName = ParseString(config, "edgesNotFoundAnimTrigger", debugName);
+    const std::string& triggerName = ParseString(config, kEdgesNotFoundAnimTriggerKey, debugName);
     _configParams.edgesNotFoundAnimTrigger = triggerName.empty() ? AnimationTrigger::Count :
       AnimationTriggerFromString(triggerName.c_str());
   } {
-    const std::string& triggerName = ParseString(config, "squintStartAnimTrigger", debugName);
+    const std::string& triggerName = ParseString(config, kSquintStartAnimTriggerKey, debugName);
     _configParams.squintStartAnimTrigger = triggerName.empty() ? AnimationTrigger::Count :
       AnimationTriggerFromString(triggerName.c_str());
   } {
-    const std::string& triggerName = ParseString(config, "squintLoopAnimTrigger", debugName);
+    const std::string& triggerName = ParseString(config, kSquintLoopAnimTriggerKey, debugName);
     _configParams.squintLoopAnimTrigger = triggerName.empty() ? AnimationTrigger::Count :
       AnimationTriggerFromString(triggerName.c_str());
   } {
-    const std::string& triggerName = ParseString(config, "squintEndAnimTrigger", debugName);
+    const std::string& triggerName = ParseString(config, kSquintEndAnimTriggerKey, debugName);
     _configParams.squintEndAnimTrigger = triggerName.empty() ? AnimationTrigger::Count :
       AnimationTriggerFromString(triggerName.c_str());
   }
   // gameplay params
-  _configParams.allowGoalsBehindOtherEdges = ParseBool(config, "allowGoalsBehindOtherEdges", debugName);
-  _configParams.distanceFromLookAtPointMin_mm = ParseFloat(config, "distanceFromLookAtPointMin_mm", debugName);
-  _configParams.distanceFromLookAtPointMax_mm = ParseFloat(config, "distanceFromLookAtPointMax_mm", debugName);
-  _configParams.distanceInsideGoalToLookAt_mm = ParseFloat(config, "distanceInsideGoalToLookAt_mm", debugName);
-  _configParams.additionalClearanceInFront_mm = ParseFloat(config, "additionalClearanceInFront_mm", debugName);
-  _configParams.additionalClearanceBehind_mm  = ParseFloat(config, "additionalClearanceBehind_mm", debugName);
-  _configParams.vantagePointAngleOffsetPerTry_deg = ParseFloat(config, "vantagePointAngleOffsetPerTry_deg", debugName);
-  _configParams.vantagePointAngleOffsetTries = ParseUint8(config, "vantagePointAngleOffsetTries", debugName);
-  _configParams.forwardConeHalfWidthAtRobot_mm = ParseFloat(config, "forwardConeHalfWidthAtRobot_mm", debugName);
-  _configParams.forwardConeFarPlaneDistFromRobot_mm = ParseFloat(config, "forwardConeFarPlaneDistFromRobot_mm", debugName);
-  _configParams.forwardConeHalfWidthAtFarPlane_mm = ParseFloat(config, "forwardConeHalfWidthAtFarPlane_mm", debugName);
-  _configParams.accuracyDistanceFromBorder_mm = ParseFloat(config, "accuracyDistanceFromBorder_mm", debugName);
-  _configParams.observationDistanceFromBorder_mm = ParseFloat(config, "observationDistanceFromBorder_mm", debugName);
-  _configParams.borderApproachSpeed_mmps = ParseFloat(config, "borderApproachSpeed_mmps", debugName);
+  _configParams.allowGoalsBehindOtherEdges = ParseBool(config, kAllowGoalsBehindOtherEdgesKey, debugName);
+  _configParams.distanceFromLookAtPointMin_mm = ParseFloat(config, kDistanceFromLookAtPointMinKey, debugName);
+  _configParams.distanceFromLookAtPointMax_mm = ParseFloat(config, kDistanceFromLookAtPointMaxKey, debugName);
+  _configParams.distanceInsideGoalToLookAt_mm = ParseFloat(config, kDistanceInsideGoalToLookAtKey, debugName);
+  _configParams.additionalClearanceInFront_mm = ParseFloat(config, kAdditionalClearanceInFrontKey, debugName);
+  _configParams.additionalClearanceBehind_mm  = ParseFloat(config, kAdditionalClearanceBehindKey, debugName);
+  _configParams.vantagePointAngleOffsetPerTry_deg = ParseFloat(config, kVantagePointAngleOffsetPerTryKey, debugName);
+  _configParams.vantagePointAngleOffsetTries = ParseUint8(config, kVantagePointAngleOffsetTriesKey, debugName);
+  _configParams.forwardConeHalfWidthAtRobot_mm = ParseFloat(config, kForwardConeHalfWidthAtRobotKey, debugName);
+  _configParams.forwardConeFarPlaneDistFromRobot_mm = ParseFloat(config, kForwardConeFarPlaneDistFromRobotKey, debugName);
+  _configParams.forwardConeHalfWidthAtFarPlane_mm = ParseFloat(config, kForwardConeHalfWidthAtFarPlaneKey, debugName);
+  _configParams.accuracyDistanceFromBorder_mm = ParseFloat(config, kAccuracyDistanceFromBorderKey, debugName);
+  _configParams.observationDistanceFromBorder_mm = ParseFloat(config, kObservationDistanceFromBorderKey, debugName);
+  _configParams.borderApproachSpeed_mmps = ParseFloat(config, kBorderApproachSpeedKey, debugName);
   
   // validate
   DEV_ASSERT(_configParams.observeEdgeAnimTrigger != AnimationTrigger::Count,

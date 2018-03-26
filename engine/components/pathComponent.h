@@ -97,13 +97,14 @@ public:
   // IDependencyManagedComponent functions
   //////
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
-  // Maintain the chain of initializations currently in robot - it might be possible to
-  // change the order of initialization down the line, but be sure to check for ripple effects
-  // when changing this function
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
-    dependencies.insert(RobotComponentID::EngineAudioClient);
+    dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
-  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override{};
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override{
+    dependencies.insert(RobotComponentID::AIComponent);
+    dependencies.insert(RobotComponentID::ActionList);
+  };
+  virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   //////
   // end IDependencyManagedComponent functions
   //////
@@ -156,8 +157,6 @@ public:
 
   // Handle new data from the robot
   void UpdateCurrentPathSegment(s8 currPathSegment);
-
-  void Update();
 
   // Stops planning and path following. Returns RESULT_OK if successfully aborted (this may fail, e.g., if
   // message sending to the robot fails)

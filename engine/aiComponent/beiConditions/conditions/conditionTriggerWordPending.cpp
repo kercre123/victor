@@ -33,7 +33,7 @@ ConditionTriggerWordPending::ConditionTriggerWordPending(const Json::Value& conf
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ConditionTriggerWordPending::AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
 {
-  const auto& uic = behaviorExternalInterface.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  const auto& uic = behaviorExternalInterface.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
   return uic.IsTriggerWordPending();
 }
 

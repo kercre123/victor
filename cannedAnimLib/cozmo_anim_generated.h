@@ -13,6 +13,14 @@ struct ProceduralFace;
 
 struct HeadAngle;
 
+struct AudioEventGroup;
+
+struct AudioState;
+
+struct AudioSwitch;
+
+struct AudioParameter;
+
 struct RobotAudio;
 
 struct BackpackLights;
@@ -102,7 +110,7 @@ struct ProceduralFace FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   float faceScaleY() const { return GetField<float>(VT_FACESCALEY, 1.0f); }
   const flatbuffers::Vector<float> *leftEye() const { return GetPointer<const flatbuffers::Vector<float> *>(VT_LEFTEYE); }
   const flatbuffers::Vector<float> *rightEye() const { return GetPointer<const flatbuffers::Vector<float> *>(VT_RIGHTEYE); }
-  float scanlineOpacity() const { return GetField<float>(VT_SCANLINEOPACITY, 0.7f); }
+  float scanlineOpacity() const { return GetField<float>(VT_SCANLINEOPACITY, 1.0f); }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_TRIGGERTIME_MS) &&
@@ -131,7 +139,7 @@ struct ProceduralFaceBuilder {
   void add_faceScaleY(float faceScaleY) { fbb_.AddElement<float>(ProceduralFace::VT_FACESCALEY, faceScaleY, 1.0f); }
   void add_leftEye(flatbuffers::Offset<flatbuffers::Vector<float>> leftEye) { fbb_.AddOffset(ProceduralFace::VT_LEFTEYE, leftEye); }
   void add_rightEye(flatbuffers::Offset<flatbuffers::Vector<float>> rightEye) { fbb_.AddOffset(ProceduralFace::VT_RIGHTEYE, rightEye); }
-  void add_scanlineOpacity(float scanlineOpacity) { fbb_.AddElement<float>(ProceduralFace::VT_SCANLINEOPACITY, scanlineOpacity, 0.7f); }
+  void add_scanlineOpacity(float scanlineOpacity) { fbb_.AddElement<float>(ProceduralFace::VT_SCANLINEOPACITY, scanlineOpacity, 1.0f); }
   ProceduralFaceBuilder(flatbuffers::FlatBufferBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
   ProceduralFaceBuilder &operator=(const ProceduralFaceBuilder &);
   flatbuffers::Offset<ProceduralFace> Finish() {
@@ -149,7 +157,7 @@ inline flatbuffers::Offset<ProceduralFace> CreateProceduralFace(flatbuffers::Fla
     float faceScaleY = 1.0f,
     flatbuffers::Offset<flatbuffers::Vector<float>> leftEye = 0,
     flatbuffers::Offset<flatbuffers::Vector<float>> rightEye = 0,
-    float scanlineOpacity = 0.7f) {
+    float scanlineOpacity = 1.0f) {
   ProceduralFaceBuilder builder_(_fbb);
   builder_.add_scanlineOpacity(scanlineOpacity);
   builder_.add_rightEye(rightEye);
@@ -172,7 +180,7 @@ inline flatbuffers::Offset<ProceduralFace> CreateProceduralFaceDirect(flatbuffer
     float faceScaleY = 1.0f,
     const std::vector<float> *leftEye = nullptr,
     const std::vector<float> *rightEye = nullptr,
-    float scanlineOpacity = 0.7f) {
+    float scanlineOpacity = 1.0f) {
   return CreateProceduralFace(_fbb, triggerTime_ms, faceAngle, faceCenterX, faceCenterY, faceScaleX, faceScaleY, leftEye ? _fbb.CreateVector<float>(*leftEye) : 0, rightEye ? _fbb.CreateVector<float>(*rightEye) : 0, scanlineOpacity);
 }
 
@@ -225,28 +233,210 @@ inline flatbuffers::Offset<HeadAngle> CreateHeadAngle(flatbuffers::FlatBufferBui
   return builder_.Finish();
 }
 
+struct AudioEventGroup FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_EVENTIDS = 4,
+    VT_VOLUMES = 6,
+    VT_PROBABILITIES = 8
+  };
+  const flatbuffers::Vector<uint32_t> *eventIds() const { return GetPointer<const flatbuffers::Vector<uint32_t> *>(VT_EVENTIDS); }
+  const flatbuffers::Vector<float> *volumes() const { return GetPointer<const flatbuffers::Vector<float> *>(VT_VOLUMES); }
+  const flatbuffers::Vector<float> *probabilities() const { return GetPointer<const flatbuffers::Vector<float> *>(VT_PROBABILITIES); }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, VT_EVENTIDS) &&
+           verifier.Verify(eventIds()) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, VT_VOLUMES) &&
+           verifier.Verify(volumes()) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PROBABILITIES) &&
+           verifier.Verify(probabilities()) &&
+           verifier.EndTable();
+  }
+};
+
+struct AudioEventGroupBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_eventIds(flatbuffers::Offset<flatbuffers::Vector<uint32_t>> eventIds) { fbb_.AddOffset(AudioEventGroup::VT_EVENTIDS, eventIds); }
+  void add_volumes(flatbuffers::Offset<flatbuffers::Vector<float>> volumes) { fbb_.AddOffset(AudioEventGroup::VT_VOLUMES, volumes); }
+  void add_probabilities(flatbuffers::Offset<flatbuffers::Vector<float>> probabilities) { fbb_.AddOffset(AudioEventGroup::VT_PROBABILITIES, probabilities); }
+  AudioEventGroupBuilder(flatbuffers::FlatBufferBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
+  AudioEventGroupBuilder &operator=(const AudioEventGroupBuilder &);
+  flatbuffers::Offset<AudioEventGroup> Finish() {
+    auto o = flatbuffers::Offset<AudioEventGroup>(fbb_.EndTable(start_, 3));
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<AudioEventGroup> CreateAudioEventGroup(flatbuffers::FlatBufferBuilder &_fbb,
+    flatbuffers::Offset<flatbuffers::Vector<uint32_t>> eventIds = 0,
+    flatbuffers::Offset<flatbuffers::Vector<float>> volumes = 0,
+    flatbuffers::Offset<flatbuffers::Vector<float>> probabilities = 0) {
+  AudioEventGroupBuilder builder_(_fbb);
+  builder_.add_probabilities(probabilities);
+  builder_.add_volumes(volumes);
+  builder_.add_eventIds(eventIds);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<AudioEventGroup> CreateAudioEventGroupDirect(flatbuffers::FlatBufferBuilder &_fbb,
+    const std::vector<uint32_t> *eventIds = nullptr,
+    const std::vector<float> *volumes = nullptr,
+    const std::vector<float> *probabilities = nullptr) {
+  return CreateAudioEventGroup(_fbb, eventIds ? _fbb.CreateVector<uint32_t>(*eventIds) : 0, volumes ? _fbb.CreateVector<float>(*volumes) : 0, probabilities ? _fbb.CreateVector<float>(*probabilities) : 0);
+}
+
+struct AudioState FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_STATEGROUPID = 4,
+    VT_STATEID = 6
+  };
+  uint32_t stateGroupId() const { return GetField<uint32_t>(VT_STATEGROUPID, 0); }
+  uint32_t stateId() const { return GetField<uint32_t>(VT_STATEID, 0); }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_STATEGROUPID) &&
+           VerifyField<uint32_t>(verifier, VT_STATEID) &&
+           verifier.EndTable();
+  }
+};
+
+struct AudioStateBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_stateGroupId(uint32_t stateGroupId) { fbb_.AddElement<uint32_t>(AudioState::VT_STATEGROUPID, stateGroupId, 0); }
+  void add_stateId(uint32_t stateId) { fbb_.AddElement<uint32_t>(AudioState::VT_STATEID, stateId, 0); }
+  AudioStateBuilder(flatbuffers::FlatBufferBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
+  AudioStateBuilder &operator=(const AudioStateBuilder &);
+  flatbuffers::Offset<AudioState> Finish() {
+    auto o = flatbuffers::Offset<AudioState>(fbb_.EndTable(start_, 2));
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<AudioState> CreateAudioState(flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t stateGroupId = 0,
+    uint32_t stateId = 0) {
+  AudioStateBuilder builder_(_fbb);
+  builder_.add_stateId(stateId);
+  builder_.add_stateGroupId(stateGroupId);
+  return builder_.Finish();
+}
+
+struct AudioSwitch FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_SWITCHGROUPID = 4,
+    VT_STATEID = 6
+  };
+  uint32_t switchGroupId() const { return GetField<uint32_t>(VT_SWITCHGROUPID, 0); }
+  uint32_t stateId() const { return GetField<uint32_t>(VT_STATEID, 0); }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_SWITCHGROUPID) &&
+           VerifyField<uint32_t>(verifier, VT_STATEID) &&
+           verifier.EndTable();
+  }
+};
+
+struct AudioSwitchBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_switchGroupId(uint32_t switchGroupId) { fbb_.AddElement<uint32_t>(AudioSwitch::VT_SWITCHGROUPID, switchGroupId, 0); }
+  void add_stateId(uint32_t stateId) { fbb_.AddElement<uint32_t>(AudioSwitch::VT_STATEID, stateId, 0); }
+  AudioSwitchBuilder(flatbuffers::FlatBufferBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
+  AudioSwitchBuilder &operator=(const AudioSwitchBuilder &);
+  flatbuffers::Offset<AudioSwitch> Finish() {
+    auto o = flatbuffers::Offset<AudioSwitch>(fbb_.EndTable(start_, 2));
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<AudioSwitch> CreateAudioSwitch(flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t switchGroupId = 0,
+    uint32_t stateId = 0) {
+  AudioSwitchBuilder builder_(_fbb);
+  builder_.add_stateId(stateId);
+  builder_.add_switchGroupId(switchGroupId);
+  return builder_.Finish();
+}
+
+struct AudioParameter FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_PARAMETERID = 4,
+    VT_VALUE = 6,
+    VT_TIME_MS = 8,
+    VT_CURVE = 10
+  };
+  uint32_t parameterId() const { return GetField<uint32_t>(VT_PARAMETERID, 0); }
+  float value() const { return GetField<float>(VT_VALUE, 0.0f); }
+  uint32_t time_ms() const { return GetField<uint32_t>(VT_TIME_MS, 0); }
+  uint8_t curve() const { return GetField<uint8_t>(VT_CURVE, 0); }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_PARAMETERID) &&
+           VerifyField<float>(verifier, VT_VALUE) &&
+           VerifyField<uint32_t>(verifier, VT_TIME_MS) &&
+           VerifyField<uint8_t>(verifier, VT_CURVE) &&
+           verifier.EndTable();
+  }
+};
+
+struct AudioParameterBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_parameterId(uint32_t parameterId) { fbb_.AddElement<uint32_t>(AudioParameter::VT_PARAMETERID, parameterId, 0); }
+  void add_value(float value) { fbb_.AddElement<float>(AudioParameter::VT_VALUE, value, 0.0f); }
+  void add_time_ms(uint32_t time_ms) { fbb_.AddElement<uint32_t>(AudioParameter::VT_TIME_MS, time_ms, 0); }
+  void add_curve(uint8_t curve) { fbb_.AddElement<uint8_t>(AudioParameter::VT_CURVE, curve, 0); }
+  AudioParameterBuilder(flatbuffers::FlatBufferBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
+  AudioParameterBuilder &operator=(const AudioParameterBuilder &);
+  flatbuffers::Offset<AudioParameter> Finish() {
+    auto o = flatbuffers::Offset<AudioParameter>(fbb_.EndTable(start_, 4));
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<AudioParameter> CreateAudioParameter(flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t parameterId = 0,
+    float value = 0.0f,
+    uint32_t time_ms = 0,
+    uint8_t curve = 0) {
+  AudioParameterBuilder builder_(_fbb);
+  builder_.add_time_ms(time_ms);
+  builder_.add_value(value);
+  builder_.add_parameterId(parameterId);
+  builder_.add_curve(curve);
+  return builder_.Finish();
+}
+
 struct RobotAudio FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_TRIGGERTIME_MS = 4,
-    VT_AUDIOEVENTID = 6,
-    VT_VOLUME = 8,
-    VT_PROBABILITY = 10,
-    VT_HASALTS = 12
+    VT_EVENTGROUPS = 6,
+    VT_STATES = 8,
+    VT_SWITCHES = 10,
+    VT_PARAMETERS = 12
   };
   uint32_t triggerTime_ms() const { return GetField<uint32_t>(VT_TRIGGERTIME_MS, 0); }
-  const flatbuffers::Vector<int64_t> *audioEventId() const { return GetPointer<const flatbuffers::Vector<int64_t> *>(VT_AUDIOEVENTID); }
-  float volume() const { return GetField<float>(VT_VOLUME, 1.0f); }
-  const flatbuffers::Vector<float> *probability() const { return GetPointer<const flatbuffers::Vector<float> *>(VT_PROBABILITY); }
-  bool hasAlts() const { return GetField<uint8_t>(VT_HASALTS, 1) != 0; }
+  const flatbuffers::Vector<flatbuffers::Offset<AudioEventGroup>> *eventGroups() const { return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<AudioEventGroup>> *>(VT_EVENTGROUPS); }
+  const flatbuffers::Vector<flatbuffers::Offset<AudioState>> *states() const { return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<AudioState>> *>(VT_STATES); }
+  const flatbuffers::Vector<flatbuffers::Offset<AudioSwitch>> *switches() const { return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<AudioSwitch>> *>(VT_SWITCHES); }
+  const flatbuffers::Vector<flatbuffers::Offset<AudioParameter>> *parameters() const { return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<AudioParameter>> *>(VT_PARAMETERS); }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_TRIGGERTIME_MS) &&
-           VerifyFieldRequired<flatbuffers::uoffset_t>(verifier, VT_AUDIOEVENTID) &&
-           verifier.Verify(audioEventId()) &&
-           VerifyField<float>(verifier, VT_VOLUME) &&
-           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PROBABILITY) &&
-           verifier.Verify(probability()) &&
-           VerifyField<uint8_t>(verifier, VT_HASALTS) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, VT_EVENTGROUPS) &&
+           verifier.Verify(eventGroups()) &&
+           verifier.VerifyVectorOfTables(eventGroups()) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, VT_STATES) &&
+           verifier.Verify(states()) &&
+           verifier.VerifyVectorOfTables(states()) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, VT_SWITCHES) &&
+           verifier.Verify(switches()) &&
+           verifier.VerifyVectorOfTables(switches()) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, VT_PARAMETERS) &&
+           verifier.Verify(parameters()) &&
+           verifier.VerifyVectorOfTables(parameters()) &&
            verifier.EndTable();
   }
 };
@@ -255,41 +445,40 @@ struct RobotAudioBuilder {
   flatbuffers::FlatBufferBuilder &fbb_;
   flatbuffers::uoffset_t start_;
   void add_triggerTime_ms(uint32_t triggerTime_ms) { fbb_.AddElement<uint32_t>(RobotAudio::VT_TRIGGERTIME_MS, triggerTime_ms, 0); }
-  void add_audioEventId(flatbuffers::Offset<flatbuffers::Vector<int64_t>> audioEventId) { fbb_.AddOffset(RobotAudio::VT_AUDIOEVENTID, audioEventId); }
-  void add_volume(float volume) { fbb_.AddElement<float>(RobotAudio::VT_VOLUME, volume, 1.0f); }
-  void add_probability(flatbuffers::Offset<flatbuffers::Vector<float>> probability) { fbb_.AddOffset(RobotAudio::VT_PROBABILITY, probability); }
-  void add_hasAlts(bool hasAlts) { fbb_.AddElement<uint8_t>(RobotAudio::VT_HASALTS, static_cast<uint8_t>(hasAlts), 1); }
+  void add_eventGroups(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<AudioEventGroup>>> eventGroups) { fbb_.AddOffset(RobotAudio::VT_EVENTGROUPS, eventGroups); }
+  void add_states(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<AudioState>>> states) { fbb_.AddOffset(RobotAudio::VT_STATES, states); }
+  void add_switches(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<AudioSwitch>>> switches) { fbb_.AddOffset(RobotAudio::VT_SWITCHES, switches); }
+  void add_parameters(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<AudioParameter>>> parameters) { fbb_.AddOffset(RobotAudio::VT_PARAMETERS, parameters); }
   RobotAudioBuilder(flatbuffers::FlatBufferBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
   RobotAudioBuilder &operator=(const RobotAudioBuilder &);
   flatbuffers::Offset<RobotAudio> Finish() {
     auto o = flatbuffers::Offset<RobotAudio>(fbb_.EndTable(start_, 5));
-    fbb_.Required(o, RobotAudio::VT_AUDIOEVENTID);  // audioEventId
     return o;
   }
 };
 
 inline flatbuffers::Offset<RobotAudio> CreateRobotAudio(flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t triggerTime_ms = 0,
-    flatbuffers::Offset<flatbuffers::Vector<int64_t>> audioEventId = 0,
-    float volume = 1.0f,
-    flatbuffers::Offset<flatbuffers::Vector<float>> probability = 0,
-    bool hasAlts = true) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<AudioEventGroup>>> eventGroups = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<AudioState>>> states = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<AudioSwitch>>> switches = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<AudioParameter>>> parameters = 0) {
   RobotAudioBuilder builder_(_fbb);
-  builder_.add_probability(probability);
-  builder_.add_volume(volume);
-  builder_.add_audioEventId(audioEventId);
+  builder_.add_parameters(parameters);
+  builder_.add_switches(switches);
+  builder_.add_states(states);
+  builder_.add_eventGroups(eventGroups);
   builder_.add_triggerTime_ms(triggerTime_ms);
-  builder_.add_hasAlts(hasAlts);
   return builder_.Finish();
 }
 
 inline flatbuffers::Offset<RobotAudio> CreateRobotAudioDirect(flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t triggerTime_ms = 0,
-    const std::vector<int64_t> *audioEventId = nullptr,
-    float volume = 1.0f,
-    const std::vector<float> *probability = nullptr,
-    bool hasAlts = true) {
-  return CreateRobotAudio(_fbb, triggerTime_ms, audioEventId ? _fbb.CreateVector<int64_t>(*audioEventId) : 0, volume, probability ? _fbb.CreateVector<float>(*probability) : 0, hasAlts);
+    const std::vector<flatbuffers::Offset<AudioEventGroup>> *eventGroups = nullptr,
+    const std::vector<flatbuffers::Offset<AudioState>> *states = nullptr,
+    const std::vector<flatbuffers::Offset<AudioSwitch>> *switches = nullptr,
+    const std::vector<flatbuffers::Offset<AudioParameter>> *parameters = nullptr) {
+  return CreateRobotAudio(_fbb, triggerTime_ms, eventGroups ? _fbb.CreateVector<flatbuffers::Offset<AudioEventGroup>>(*eventGroups) : 0, states ? _fbb.CreateVector<flatbuffers::Offset<AudioState>>(*states) : 0, switches ? _fbb.CreateVector<flatbuffers::Offset<AudioSwitch>>(*switches) : 0, parameters ? _fbb.CreateVector<flatbuffers::Offset<AudioParameter>>(*parameters) : 0);
 }
 
 struct BackpackLights FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
@@ -367,7 +556,7 @@ struct FaceAnimation FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   };
   uint32_t triggerTime_ms() const { return GetField<uint32_t>(VT_TRIGGERTIME_MS, 0); }
   const flatbuffers::String *animName() const { return GetPointer<const flatbuffers::String *>(VT_ANIMNAME); }
-  float scanlineOpacity() const { return GetField<float>(VT_SCANLINEOPACITY, 0.7f); }
+  float scanlineOpacity() const { return GetField<float>(VT_SCANLINEOPACITY, 1.0f); }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<uint32_t>(verifier, VT_TRIGGERTIME_MS) &&
@@ -383,7 +572,7 @@ struct FaceAnimationBuilder {
   flatbuffers::uoffset_t start_;
   void add_triggerTime_ms(uint32_t triggerTime_ms) { fbb_.AddElement<uint32_t>(FaceAnimation::VT_TRIGGERTIME_MS, triggerTime_ms, 0); }
   void add_animName(flatbuffers::Offset<flatbuffers::String> animName) { fbb_.AddOffset(FaceAnimation::VT_ANIMNAME, animName); }
-  void add_scanlineOpacity(float scanlineOpacity) { fbb_.AddElement<float>(FaceAnimation::VT_SCANLINEOPACITY, scanlineOpacity, 0.7f); }
+  void add_scanlineOpacity(float scanlineOpacity) { fbb_.AddElement<float>(FaceAnimation::VT_SCANLINEOPACITY, scanlineOpacity, 1.0f); }
   FaceAnimationBuilder(flatbuffers::FlatBufferBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
   FaceAnimationBuilder &operator=(const FaceAnimationBuilder &);
   flatbuffers::Offset<FaceAnimation> Finish() {
@@ -396,7 +585,7 @@ struct FaceAnimationBuilder {
 inline flatbuffers::Offset<FaceAnimation> CreateFaceAnimation(flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t triggerTime_ms = 0,
     flatbuffers::Offset<flatbuffers::String> animName = 0,
-    float scanlineOpacity = 0.7f) {
+    float scanlineOpacity = 1.0f) {
   FaceAnimationBuilder builder_(_fbb);
   builder_.add_scanlineOpacity(scanlineOpacity);
   builder_.add_animName(animName);
@@ -407,7 +596,7 @@ inline flatbuffers::Offset<FaceAnimation> CreateFaceAnimation(flatbuffers::FlatB
 inline flatbuffers::Offset<FaceAnimation> CreateFaceAnimationDirect(flatbuffers::FlatBufferBuilder &_fbb,
     uint32_t triggerTime_ms = 0,
     const char *animName = nullptr,
-    float scanlineOpacity = 0.7f) {
+    float scanlineOpacity = 1.0f) {
   return CreateFaceAnimation(_fbb, triggerTime_ms, animName ? _fbb.CreateString(animName) : 0, scanlineOpacity);
 }
 

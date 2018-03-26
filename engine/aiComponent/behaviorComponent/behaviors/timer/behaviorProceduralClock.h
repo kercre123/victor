@@ -13,8 +13,11 @@
 #ifndef __Engine_Behaviors_BehaviorProceduralClock_H__
 #define __Engine_Behaviors_BehaviorProceduralClock_H__
 
+#include "clad/types/compositeImageTypes.h"
+#include "coretech/vision/engine/compositeImage/compositeImage.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/smartFaceId.h"
+
 
 namespace Anki {
 namespace Cozmo {
@@ -22,18 +25,8 @@ namespace Cozmo {
 class BehaviorProceduralClock : public ICozmoBehavior
 {
 public:
-  // digits of display - numbered left to right
-  enum class DigitID{
-    DigitOne = 0,
-    DigitTwo,
-    DigitThree,
-    DigitFour,
-    Count
-  };
-
-
   // Specify how each digit on the face should be calculated - must set all 4 values in map
-  void SetDigitFunctions(std::map<DigitID, std::function<int()>>&& functions);
+  void SetDigitFunctions(std::map<Vision::SpriteBoxName, std::function<int()>>&& functions);
   // Specify a callback which should be called when the clock is shown on the robot's face
   void SetShowClockCallback(std::function<void()>&& callback)
   {
@@ -46,7 +39,9 @@ protected:
   BehaviorProceduralClock(const Json::Value& config);
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
     modifiers.behaviorAlwaysDelegates = false;
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated() override;
   virtual void InitBehavior() override;
@@ -68,11 +63,10 @@ private:
 
 
   struct InstanceParams{
-    Json::Value templateJSON;
-    std::map<std::string, std::string> staticElements;
+    Vision::CompositeImage compImg;
+    std::map<Vision::SpriteBoxName, std::string> staticElements;
     // TODO: transition these maps to fullyEnumeratedArrays
-    std::map<DigitID, std::string> digitToTemplateMap;
-    std::map<DigitID, std::function<int()>> getDigitFunctions; 
+    std::map<Vision::SpriteBoxName, std::function<int()>> getDigitFunctions; 
     std::map<int, std::string> intsToImages;
     AnimationTrigger getInAnim;
     AnimationTrigger getOutAnim;
@@ -92,10 +86,9 @@ private:
   InstanceParams _instanceParams;
   LifetimeParams _lifetimeParams;
 
-  DigitID StringToDigitID(const std::string& str);
-  // Function which builds and displays the timer - adds the 4 core digits on top
+  // Function which builds and displays the proceduralClock - adds the 4 core digits on top
   // of any quadrant images passed into the function
-  void BuildAndDisplayTimer(std::map<std::string, std::string>& quadrantMap);
+  void BuildAndDisplayProceduralClock(Vision::CompositeImageLayer::ImageMap&& imageMap);
 
   // Updates the target face within lifetime params - returns the member face for checking success inline
   SmartFaceID UpdateTargetFace();

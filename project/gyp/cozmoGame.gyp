@@ -542,16 +542,6 @@
                 ],
             },
             {
-              'action_name': 'create_symlink_resources_voice_command_data',
-              'inputs': [],
-              'outputs': [],
-              'action': [
-                '../../tools/build/tools/ankibuild/symlink.py',
-                '--link_target', '<(cozmo_asset_path)/voiceCommand/exports',
-                '--link_name', '<(webotsCtrlGameEngine)/resources/assets/voiceCommand'
-              ],
-            },
-            {
                 'action_name': 'create_symlink_resources_sound',
                 'inputs': [],
                 'outputs': [],

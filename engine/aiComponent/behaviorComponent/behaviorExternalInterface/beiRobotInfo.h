@@ -18,6 +18,7 @@
 #include "coretech/common/engine/math/pose.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
+#include "clad/types/batteryTypes.h"
 #include "clad/types/offTreadsStates.h"
 
 // forward declaration
@@ -37,6 +38,7 @@ class DataPlatform;
 namespace Cozmo {
 
 // forward declaration
+class BatteryComponent;
 class CarryingComponent;
 class CliffSensorComponent;
 class CozmoContext;
@@ -74,6 +76,7 @@ public:
   //////
 
 
+  BatteryLevel GetBatteryLevel() const;
   Quad2f GetBoundingQuadXY(const Pose3d& atPose) const;
   CarryingComponent& GetCarryingComponent() const;
   const CliffSensorComponent& GetCliffSensorComponent() const;
@@ -114,7 +117,7 @@ public:
   bool IsCharging() const;
   bool IsHeadCalibrated() const;
   bool IsLiftCalibrated() const;
-  bool IsOnCharger() const;
+  bool IsOnChargerContacts() const;
   bool IsOnChargerPlatform() const;
   bool IsPhysical() const;
   bool IsPickedUp() const;

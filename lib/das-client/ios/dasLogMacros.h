@@ -17,10 +17,10 @@
 
 #define LOGD(fmt, ...) {DASNSLogV(fmt, __VA_ARGS__);}
 
-#ifdef DEBUG
-#define LOGV(fmt, ...) {DASNSLogV(fmt, __VA_ARGS__);}
-#else
+#ifdef NDEBUG
 #define LOGV(fmt, ...)
+#else
+#define LOGV(fmt, ...) {DASNSLogV(fmt, __VA_ARGS__);}
 #endif
 
 #endif // __DasLogMacros_H__

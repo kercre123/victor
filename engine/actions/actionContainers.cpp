@@ -239,7 +239,8 @@ namespace Anki {
       
     } // Print()
     
-    Result ActionList::Update()
+
+    void ActionList::UpdateDependent(const RobotCompMap& dependentComps)
     {
       ANKI_CPU_PROFILE("ActionList::Update");
       
@@ -261,9 +262,13 @@ namespace Anki {
         }
       } // for each actionMemberPair
 
-      GetActionWatcher().Update();
-      
-      return lastResult;
+      if(lastResult != RESULT_OK){
+        PRINT_NAMED_WARNING("ActionList.UpdateDependent.ActionResultNotOk",
+                            "Action update returned result %d",
+                            Util::EnumToUnderlying(lastResult));
+      }
+
+      GetActionWatcher().Update();      
     } // Update()
     
     

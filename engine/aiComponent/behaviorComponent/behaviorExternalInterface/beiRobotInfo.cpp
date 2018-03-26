@@ -15,6 +15,7 @@
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "engine/robot.h"
+#include "engine/components/batteryComponent.h"
 
 
 namespace Anki {
@@ -30,6 +31,11 @@ BEIRobotInfo::~BEIRobotInfo()
   
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BatteryLevel BEIRobotInfo::GetBatteryLevel() const
+{
+  return _robot.GetBatteryComponent().GetBatteryLevel();
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Quad2f BEIRobotInfo::GetBoundingQuadXY(const Pose3d& atPose) const
@@ -94,7 +100,7 @@ float BEIRobotInfo::GetHeadAccelMagnitudeFiltered() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const f32 BEIRobotInfo::GetHeadAngle() const
 {
-  return _robot.GetHeadAngle();
+  return _robot.GetComponent<FullRobotPose>().GetHeadAngle();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -112,7 +118,7 @@ const RobotID_t BEIRobotInfo::GetID() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TimeStamp_t BEIRobotInfo::GetLastChargingStateChangeTimestamp() const
 {
-  return _robot.GetLastChargingStateChangeTimestamp();
+  return _robot.GetBatteryComponent().GetLastChargingStateChangeTimestamp();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -130,7 +136,7 @@ TimeStamp_t BEIRobotInfo::GetLastMsgTimestamp() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 f32 BEIRobotInfo::GetLiftAngle() const
 {
-  return _robot.GetLiftAngle();
+  return _robot.GetComponent<FullRobotPose>().GetLiftAngle();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -227,7 +233,7 @@ Result BEIRobotInfo::ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& head
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsCharging() const
 {
-  return _robot.IsCharging();
+  return _robot.GetBatteryComponent().IsCharging();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -243,15 +249,15 @@ bool BEIRobotInfo::IsLiftCalibrated() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BEIRobotInfo::IsOnCharger() const
+bool BEIRobotInfo::IsOnChargerContacts() const
 {
-  return _robot.IsOnCharger();
+  return _robot.GetBatteryComponent().IsOnChargerContacts();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsOnChargerPlatform() const
 {
-  return _robot.IsOnChargerPlatform();
+  return _robot.GetBatteryComponent().IsOnChargerPlatform();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

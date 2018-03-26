@@ -38,14 +38,16 @@ public:
   
   // Begin playing the animations
   void StartPlayingAnimations();
-  void SetAnimSequence(const std::vector<AnimationTrigger>& animations){_animTriggers = animations;}
+  void SetAnimSequence(const std::vector<AnimationTrigger>& animations){_iConfig.animTriggers = animations;}
 
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
     modifiers.wantsToBeActivatedWhenOffTreads = true;
-    modifiers.wantsToBeActivatedWhenOnCharger = _supportCharger;
+    modifiers.wantsToBeActivatedWhenOnCharger = _iConfig.activatableOnCharger;
   }
+  
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual bool WantsToBeActivatedAnimSeqInternal() const { return true;}
   
@@ -56,31 +58,36 @@ protected:
   // Returns true if multiple animations will be played as a loop _numLoops times
   // Returns false if a single animation will play _numLoops times
   bool IsSequenceLoop();
-  
-  // ========== Members ==========
-  
-  // Class supports playing a series of animation triggers OR a series of animations by name
-  // BUT NOT BOTH AT THE SAME TIME!!!!
-  std::vector<AnimationTrigger> _animTriggers;
-  std::vector<std::string>      _animationNames;
-  int _numLoops;
-  int _sequenceLoopsDone; // for sequences it's not per animation, but per sequence, so we have to wait till the last one
 
 private:
-  // queues actions to play all the animations specified in _animTriggers
+  struct InstanceConfig {
+    InstanceConfig();
+    bool activatableOnCharger;
+    int  numLoops;
+    // Class supports playing a series of animation triggers OR a series of animations by name
+    // BUT NOT BOTH AT THE SAME TIME!!!!
+    std::vector<AnimationTrigger> animTriggers;
+    std::vector<std::string>      animationNames;
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    // for sequences it's not per animation, but per sequence, so we have to wait till the last one
+    int sequenceLoopsDone; 
+    std::set<ISubtaskListener*> listeners;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
+  // queues actions to play all the animations specified in animTriggers
   void StartSequenceLoop();
   
   // We call our listeners whenever an animation completes
   void CallToListeners();
 
   // internal helper to properly handle locking extra tracks if needed
-  u8 GetTracksToLock() const; 
-
-  // defaults to false, but if set true, this will allow the behavior to work while the robot is sitting on
-  // the charger. It will lock out the body track to avoid coming off the charger (if we're on one)
-  bool _supportCharger = false;
-  
-  std::set<ISubtaskListener*> _listeners;
+  u8 GetTracksToLock() const;  
 };
   
 

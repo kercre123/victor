@@ -115,6 +115,14 @@ Registers an animation in the `resources/assets/animations/` folder with the can
 
 e.g. `curl` <http://127.0.0.1:8889/consolefunccall?func=AddAnimation&args=anim_bored_01.bin>
 
+### Console function: CaptureFace *filename* *number of frames*
+
+Captures each rendered face frame and saves into a .gif file, if filename is omitted the default is `eyes.gif` and the default number of frames is 1.
+
+e.g. http://127.0.0.1:8889/consolefunccall?func=CaptureFace&args=longmovie.gif+100
+
+If viewed from a browser a hyperlink to the captured .gif is displayed, the link is only valid after the capture is complete. There is no notification. Additionally you may need to refresh the page.
+
 # playanimation.py
 
 `playanimation` is a tool for previewing and debugging animations for Victor. As a preview tool it allows animation files to be uploaded to the robot or simulator and triggered to play. These animations remain with the robot/simulator and can replace existing content, they can also be replayed via the webserver. This is referred to as playing "on robot".

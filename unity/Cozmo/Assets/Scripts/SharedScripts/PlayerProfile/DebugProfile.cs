@@ -90,14 +90,6 @@ namespace DataPersistence {
         DataPersistence.DataPersistenceManager.Instance.Save();
         if (RobotEngineManager.Instance != null && RobotEngineManager.Instance.CurrentRobot != null) {
           RobotEngineManager.Instance.CurrentRobot.SetEnableFreeplayActivity(!NoFreeplayOnStart);
-          // Ensure freeplay idles are disabled
-          if (DataPersistenceManager.Instance.Data.DebugPrefs.NoFreeplayOnStart) {
-            RobotEngineManager.Instance.CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.Count,
-                                                                        DebugProfile.kNoFreelpayOnStartLock);
-          }
-          else {
-            RobotEngineManager.Instance.CurrentRobot.RemoveIdleAnimation(DebugProfile.kNoFreelpayOnStartLock);
-          }
         }
         break;
       case "UseFastConnectivityFlow":

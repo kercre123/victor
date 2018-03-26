@@ -31,41 +31,6 @@
 
 using namespace Anki::Cozmo;
 
-void RecursiveDelegation(Robot& robot,
-                         TestBehaviorFramework& testFramework,
-                         std::map<IBehavior*,std::set<IBehavior*>>& delegateMap)
-{
-  robot.GetActionList().Update();
-  if(delegateMap.empty()){
-    return;
-  }else{
-    auto& bsm = testFramework.GetBehaviorSystemManager();
-    IBehavior* topOfStack = bsm._behaviorStack->GetTopOfStack();
-    auto iter = delegateMap.find(topOfStack);
-    if(iter != delegateMap.end()){
-      for(auto& delegate: iter->second){
-        delegate->WantsToBeActivated();
-
-        // cancel all delegates (including actions) because the behaviors OnActivated may have delegated to
-        // something
-        auto& delegationComponent = testFramework.GetBehaviorExternalInterface().GetDelegationComponent();
-        delegationComponent.CancelDelegates(topOfStack);
-
-        bsm.Delegate(topOfStack, delegate);
-        RecursiveDelegation(robot, testFramework, delegateMap);
-      }
-      delegateMap.erase(iter);
-      bsm.CancelSelf(topOfStack);
-    }else{
-      std::set<IBehavior*> tmpDelegates;
-      topOfStack->GetAllDelegates(tmpDelegates);
-      delegateMap.insert(std::make_pair(topOfStack, std::move(tmpDelegates)));
-      RecursiveDelegation(robot, testFramework, delegateMap);
-    }
-  }
-}
-
-
 TEST(DelegationTree, FullTreeWalkthrough)
 {
   // Read in the current behavior system configuration
@@ -73,35 +38,18 @@ TEST(DelegationTree, FullTreeWalkthrough)
   // and deactivating all delegates to ensure the tree is valid
   TestBehaviorFramework testFramework(1, nullptr);
   testFramework.InitializeStandardBehaviorComponent();
-  IBehavior* baseBehavior = nullptr;
-  // Load base behavior in from data
-  {
-    auto dataLoader = testFramework.GetRobot().GetContext()->GetDataLoader();
-    
-    Json::Value blankActivitiesConfig;
+  testFramework.SetDefaultBaseBehavior();
 
-    const Json::Value& behaviorSystemConfig = (dataLoader != nullptr) ?
-           dataLoader->GetVictorFreeplayBehaviorConfig() : blankActivitiesConfig;
-
-    BehaviorID baseBehaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(behaviorSystemConfig);
-    
-    auto& bc = testFramework.GetBehaviorContainer();
-    baseBehavior = bc.FindBehaviorByID(baseBehaviorID).get();
-    DEV_ASSERT(baseBehavior != nullptr,
-               "BehaviorComponent.Init.InvalidbaseBehavior");
-  }
-  
-  // Clear out the default stack and put the base behavior on the stack
   BehaviorSystemManager& bsm = testFramework.GetBehaviorSystemManager();
-  bsm._behaviorStack->ClearStack();
-  bsm._behaviorStack->InitBehaviorStack(baseBehavior);
-  IBehavior* bottomOfStack = bsm._behaviorStack->GetTopOfStack();
+  IBehavior* bottomOfStack = bsm._behaviorStack->_behaviorStack.front();
+  auto& delegationComponent = testFramework.GetBehaviorExternalInterface().GetDelegationComponent();
+  delegationComponent.CancelDelegates(bottomOfStack);
   
   std::map<IBehavior*,std::set<IBehavior*>> delegateMap;
   std::set<IBehavior*> tmpDelegates;
   bottomOfStack->GetAllDelegates(tmpDelegates);
   delegateMap.insert(std::make_pair(bottomOfStack, tmpDelegates));
-  RecursiveDelegation(testFramework.GetRobot(), testFramework, delegateMap);
+  testFramework.FullTreeWalk(delegateMap);
 }
 
 

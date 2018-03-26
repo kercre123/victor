@@ -116,14 +116,24 @@ UserIntentMap::UserIntentMap(const Json::Value& config)
     
     if( ANKI_DEVELOPER_CODE ) {
       // prevent typos
-      const char* validKeys[] = {kCloudIntentKey, kCloudVariableSubstitutionsKey, kCloudVariableNumericsKey,
-                                 kAppIntentKey, kAppVariableSubstitutionsKey, kAppVariableNumericsKey,
-                                 kUserIntentKey};
-      for( const auto& memberName : mapping.getMemberNames() ) {
-        const auto it = std::find_if(std::begin(validKeys), std::end(validKeys), [&memberName](const char* c) {
-          return (memberName == c);
-        });
-        DEV_ASSERT( it != std::end(validKeys), "Invalid key" );
+      std::vector<const char*> validKeys = {
+        kCloudIntentKey, kCloudVariableSubstitutionsKey, kCloudVariableNumericsKey,
+        kAppIntentKey, kAppVariableSubstitutionsKey, kAppVariableNumericsKey,
+        kUserIntentKey
+      };
+      std::vector<std::string> badKeys;
+      const bool hasBadKeys = JsonTools::HasUnexpectedKeys( mapping, validKeys, badKeys );
+      if( hasBadKeys ) {
+        std::string keys;
+        for( const auto& key : badKeys ) {
+          keys += key;
+          keys += ",";
+        }
+        DEV_ASSERT_MSG( false,
+                        "UserIntentMap.Ctor.UnexpectedKey",
+                        "Keys '%s' unexpected for intent '%s'",
+                        keys.c_str(),
+                        UserIntentTagToString(intentTag) );
       }
     }
   }
@@ -253,7 +263,7 @@ void UserIntentMap::SanitizeVariables(const std::string& intent,
 
         if( it->isNumeric ) {
           // varNameP is the current var name, since it may have switched
-          auto str = paramsList[*varNameP].asString();
+          auto str = JsonTools::ParseString( paramsList, varNameP->c_str(), debugName );
           try {
             // replace a string type with its numeric type (string or long long)
             if( str.find(".") != std::string::npos ) {

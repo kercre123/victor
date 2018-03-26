@@ -35,7 +35,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  virtual void Update(BehaviorExternalInterface& behaviorExternalInterface) = 0;
+  virtual void Update(BehaviorExternalInterface& behaviorExternalInterface) {};
   
   virtual bool IsControlDelegated(const IBehavior* delegator) = 0;
   virtual bool CanDelegate(IBehavior* delegator) = 0;

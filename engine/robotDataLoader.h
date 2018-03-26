@@ -62,7 +62,6 @@ public:
 
   // refresh individual data pieces after initial load
   void LoadRobotConfigs();
-  void LoadVoiceCommandConfigs();
 
   using FileJsonMap       = std::unordered_map<std::string, const Json::Value>;
   using ImagePathMap      = std::unordered_map<std::string, std::string>;
@@ -89,7 +88,6 @@ public:
   const Json::Value& GetVictorFreeplayBehaviorConfig() const { return _victorFreeplayBehaviorConfig; }
   const Json::Value& GetRobotVisionConfig() const            { return _robotVisionConfig; }
   const Json::Value& GetVisionScheduleMediatorConfig() const { return _visionScheduleMediatorConfig; }
-  const Json::Value& GetVoiceCommandConfig() const           { return _voiceCommandConfig; }
   const Json::Value& GetInventoryConfig() const              { return _inventoryConfig; }
   const Json::Value& GetWebServerEngineConfig() const        { return _webServerEngineConfig; }
   const Json::Value& GetDasEventConfig() const               { return _dasEventConfig; }
@@ -99,6 +97,10 @@ public:
   const ImagePathMap& GetFacePNGPaths()       const { return _facePNGPaths; }
 
   bool IsCustomAnimLoadEnabled() const;
+
+  #if ANKI_DEV_CHEATS
+  Json::Value& GetRobotVisionConfigUpdatableRef()           { return _robotVisionConfig; }
+  #endif
   
 private:
   void CollectAnimFiles();
@@ -162,7 +164,6 @@ private:
   Json::Value _victorFreeplayBehaviorConfig;
   Json::Value _robotVisionConfig;
   Json::Value _visionScheduleMediatorConfig;
-  Json::Value _voiceCommandConfig;
   Json::Value _textToSpeechConfig;
   Json::Value _inventoryConfig;
   Json::Value _webServerEngineConfig;

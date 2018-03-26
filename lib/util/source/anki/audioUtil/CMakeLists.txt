@@ -38,12 +38,16 @@ add_library(util_audio
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
+set(PLATFORM_COMPILE_DEFS "")
 if (ANDROID)
   set(PLATFORM_LIBS android log OpenSLES)
 elseif(MACOSX)
     find_library(AUDIO_TOOLBOX AudioToolbox)
     find_library(FOUNDATION Foundation)
     set(PLATFORM_LIBS ${AUDIO_TOOLBOX} ${FOUNDATION})
+    set(PLATFORM_COMPILE_DEFS
+      AUDIOCAPTURE_FUNCTIONALITY=1
+    )
 endif()
 
 target_compile_options(util_audio
@@ -54,6 +58,7 @@ target_compile_options(util_audio
 target_compile_definitions(util_audio
   PRIVATE
   ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS}
+  ${PLATFORM_COMPILE_DEFS}
 )
 
 target_include_directories(util_audio PUBLIC

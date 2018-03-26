@@ -15,6 +15,7 @@
 
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "cozmoAnim/animation/animationStreamer.h"
 //#include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 
@@ -23,6 +24,7 @@
 #include "cannedAnimLib/proceduralFaceDrawer.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/animationAudioClient.h"
+#include "cozmoAnim/audio/proceduralAudioClient.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/animContext.h"
@@ -33,9 +35,11 @@
 #include "osState/osState.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
+#include "webServerProcess/src/webService.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -45,6 +49,11 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 
+#include "jo_gif/jo_gif.h"
+
+#include <stdio.h>
+#include <time.h>
+
 #define DEBUG_ANIMATION_STREAMING 0
 #define DEBUG_ANIMATION_STREAMING_AUDIO 0
 
@@ -53,12 +62,32 @@ namespace Cozmo {
 
   CONSOLE_VAR(bool, kProcFace_OverrideEyeParams,        "ProceduralFace", false); // Override procedural face with ConsoleVars edited version
   CONSOLE_VAR(bool, kProcFace_OverrideRightEyeParams,   "ProceduralFace", false); // Make left and right eyes override in unison
-  CONSOLE_VAR(bool, kProcFace_UseNoise,                 "ProceduralFace", false); // Victor vs Cozmo effect, no noise = lazy updates
+#if PROCEDURALFACE_NOISE_FEATURE
+  CONSOLE_VAR_EXTERN(s32, kProcFace_NoiseNumFrames);
+#endif
+  CONSOLE_VAR_ENUM(int, kProcFace_GammaType,            "ProceduralFace", 0, "None,FromLinear,ToLinear,AddGamma,RemoveGamma,Custom");
+  CONSOLE_VAR_RANGED(f32, kProcFace_Gamma,              "ProceduralFace", 1.f, 1.f, 4.f);
+
+  enum class FaceGammaType {
+    None,
+    FromLinear,
+    ToLinear,
+    AddGamma,    // Use value of kProcFace_Gamma
+    RemoveGamma, // Use value of kProcFace_Gamma
+    Custom
+  };
 
   static ProceduralFace s_faceDataOverride; // incoming values from console var system
   static ProceduralFace s_faceDataBaseline; // baseline to compare against, differences mean override the incoming animation
+  static const AnimContext* s_context; // copy of AnimContext in first constructed AnimationStreamer, needed for GetDataPlatform
   static bool s_faceDataOverrideRegistered = false;
   static bool s_faceDataReset = false;
+  static int s_frame = 0;
+  static int s_framesToCapture = 0;
+  static jo_gif_t s_gif;
+  static clock_t s_frameStart;
+  static FILE* s_tga;
+  static uint8_t s_gammaLUT[3][256];// RGB x 256 entries
 
   void ResetFace(ConsoleFunctionContextRef context)
   {
@@ -66,6 +95,111 @@ namespace Cozmo {
   }
   
   CONSOLE_FUNC(ResetFace, "ProceduralFace");
+
+  static void CaptureFace(ConsoleFunctionContextRef context)
+  {
+    if(s_framesToCapture == 0) {
+      const std::string filename = ConsoleArg_GetOptional_String(context, "filename", "screenshot.tga");
+      const int numFrames = ConsoleArg_GetOptional_Int(context, "numFrames", 1);
+
+      const Util::Data::DataPlatform* dataPlatform = s_context->GetDataPlatform();
+      const std::string cacheFilename = dataPlatform->pathToResource(Util::Data::Scope::Cache, filename);
+
+      if(filename.find(".gif") != std::string::npos) {
+        s_gif = jo_gif_start(cacheFilename.c_str(), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, 0, 255);
+        if(s_gif.fp != nullptr) {
+          s_frame = 0;
+          s_framesToCapture = numFrames;
+          
+          const std::string html = std::string("<html>\n") + "Capturing frames as <a href=\"/cache/"+filename+"\">"+filename+"\n" + "</html>\n";
+          context->channel->WriteLog(html.c_str());
+        } else {
+          const std::string html = std::string("<html>\n") + "Error: unable to open file <a href=\"/cache/"+filename+"\">"+filename+"\n" + "</html>\n";
+          context->channel->WriteLog(html.c_str());
+        }
+      } else {
+        s_tga = fopen(cacheFilename.c_str(), "wb");
+        if(s_tga != nullptr) {
+          s_frame = 0;
+          s_framesToCapture = 1;
+
+          const std::string html = std::string("<html>\n") + "Capturing frames as <a href=\"/cache/"+filename+"\">"+filename+"\n" + "</html>\n";
+          context->channel->WriteLog(html.c_str());
+        } else {
+          const std::string html = std::string("<html>\n") + "Error: unable to open file <a href=\"/cache/"+filename+"\">"+filename+"\n" + "</html>\n";
+          context->channel->WriteLog(html.c_str());
+        }
+      }
+    } else {
+      context->channel->WriteLog("CaptureFace already in progress.");
+    }
+
+    s_frameStart = clock();
+  }
+
+  CONSOLE_FUNC(CaptureFace, "ProceduralFace", optional const char* filename, optional int numFrames);
+
+  static void LoadFaceGammaLUT(ConsoleFunctionContextRef context)
+  {
+    const std::string filename = ConsoleArg_GetOptional_String(context, "filename", "screenshot.tga");
+
+    const Util::Data::DataPlatform* dataPlatform = s_context->GetDataPlatform();
+    const std::string cacheFilename = dataPlatform->pathToResource(Util::Data::Scope::Cache, filename);
+
+    Vision::Image tga;
+    Result result = tga.Load(cacheFilename);
+    if(result == RESULT_OK) {
+      const int width = tga.GetNumCols();
+      const int height = tga.GetNumRows();
+      const int channels = tga.GetNumChannels();
+      if (width != 256 || height != 1) {
+        const std::string html = std::string("<html>\n") +filename+" must be either a 256x1 image file\n" + "</html>\n";
+        context->channel->WriteLog(html.c_str());
+      } else {
+        for(int channel = 0; channel < 3; ++channel) {
+          // greyscale: offset = 0 always, RGB and RGBA: offset is channel, A is ignored
+          uint8_t* srcPtr = tga.GetRawDataPointer() + (channel % channels);
+          for(int x = 0; x < width; ++x) {
+            s_gammaLUT[channel][x] = *srcPtr;
+            srcPtr += channels;
+          }
+        }
+
+        kProcFace_GammaType = (int)FaceGammaType::Custom;
+      }
+    } else {
+      // see https://ankiinc.atlassian.net/browse/VIC-1646 to productize .tga loading
+      std::vector<uint8_t> tga = Anki::Util::FileUtils::ReadFileAsBinary(cacheFilename);
+      if(tga.size() < 18) {
+        const std::string html = std::string("<html>\n") +filename+" is not a .tga file\n" + "</html>\n";
+        context->channel->WriteLog(html.c_str());
+      } else {
+        const int width = tga[12]+tga[13]*256;
+        const int height = tga[14]+tga[15]*256;
+        const int bytesPerPixel = tga[16] / 8;
+        if(tga[2] != 2 && tga[2] != 3) {
+          const std::string html = std::string("<html>\n") +filename+" is not an uncompressed, true-color or grayscale .tga file\n" + "</html>\n";
+          context->channel->WriteLog(html.c_str());
+        } else if (width != 256 || height != 1) {
+          const std::string html = std::string("<html>\n") +filename+" must be a 256x1 .tga file\n" + "</html>\n";
+          context->channel->WriteLog(html.c_str());
+        } else {
+          for(int channel = 0; channel < 3; ++channel) {
+            // greyscale: offset = 0 always, RGB and RGBA: offset is channel, A is ignored
+            uint8_t* srcPtr = &tga[18 + (channel % bytesPerPixel)];
+            for(int x = 0; x < width; ++x) {
+              s_gammaLUT[channel][x] = *srcPtr;
+              srcPtr += bytesPerPixel;
+            }
+          }
+
+          kProcFace_GammaType = (int)FaceGammaType::Custom;
+        }
+      }
+    }
+  }
+
+  CONSOLE_FUNC(LoadFaceGammaLUT, "ProceduralFace", const char* filename);
 
   namespace{
     
@@ -114,6 +248,18 @@ namespace Cozmo {
   // Overrides whatever faces we're sending with a 3-stripe test pattern
   // (seems more related to the other ProceduralFace console vars, so putting it in that group instead)
   CONSOLE_VAR(bool, kProcFace_DisplayTestPattern, "ProceduralFace", false);
+  
+  // Allows easy disabling of KeepFaceAlive using the console system (i.e., without a message interface)
+  // This is useful for the animators to disable KeepFaceAlive while testing eye shapes, etc.
+  static bool s_enableKeepFaceAlive = true;
+  void ToggleKeepFaceAlive(ConsoleFunctionContextRef context)
+  {
+    s_enableKeepFaceAlive = !s_enableKeepFaceAlive;
+    PRINT_CH_INFO(kLogChannelName, "ConsoleFunc.ToggleKeepFaceAlive", "KeepFaceAlive now %s",
+                  (s_enableKeepFaceAlive ? "ON" : "OFF"));
+  }
+  
+  CONSOLE_FUNC(ToggleKeepFaceAlive, "ProceduralFace");
     
   } // namespace
   
@@ -122,7 +268,8 @@ namespace Cozmo {
   , _trackLayerComponent(new TrackLayerComponent(context))
   , _lockedTracks(0)
   , _tracksInUse(0)
-  , _audioClient( new Audio::AnimationAudioClient(context->GetAudioController()) )
+  , _animAudioClient( new Audio::AnimationAudioClient(context->GetAudioController()) )
+  , _proceduralAudioClient( new Audio::ProceduralAudioClient(context->GetAudioController()) )
   , _longEnoughSinceLastStreamTimeout_s(kDefaultLongEnoughSinceLastStreamTimeout_s)
   , _numTicsToSendAnimState(kAnimStateReportingPeriod_tics)
   {
@@ -131,6 +278,7 @@ namespace Cozmo {
 
     if(ANKI_DEV_CHEATS) {
       if (!s_faceDataOverrideRegistered) {
+        s_context = context;
         s_faceDataOverride.RegisterFaceWithConsoleVars();
         s_faceDataOverrideRegistered = true;
       }
@@ -435,7 +583,7 @@ namespace Cozmo {
 
       EnableBackpackAnimationLayer(false);
 
-      _audioClient->StopCozmoEvent();
+      _animAudioClient->StopCozmoEvent();
 
       if (_streamingAnimation == _proceduralAnimation) {
         _proceduralAnimation->Clear();
@@ -574,39 +722,62 @@ namespace Cozmo {
     }
     else
     {
-      if(!kProcFace_UseNoise) {
+      if(!PROCEDURALFACE_NOISE_FEATURE || (kProcFace_NoiseNumFrames == 0)) {
         static ProceduralFace previousFace;
         if (previousFace == procFace) {
           return;
         }
         previousFace = procFace;
       }
-
+        
       DEV_ASSERT(_context != nullptr, "AnimationStreamer.BufferFaceToSend.NoContext");
       DEV_ASSERT(_context->GetRandom() != nullptr, "AnimationStreamer.BufferFaceToSend.NoRNGinContext");
 
+      if(s_faceDataReset) {
+        s_faceDataOverride = s_faceDataBaseline = procFace;
+        ProceduralFace::SetHue(ProceduralFace::DefaultHue);
+
+        // animationStreamer.cpp
+        
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_OverrideEyeParams");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_OverrideRightEyeParams");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_Gamma");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_FromLinear");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_ToLinear");
+
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_DefaultScanlineOpacity");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NominalEyeSpacing");
+
+        // proceduralFace.cpp
+
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_DefaultScanlineOpacity");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NominalEyeSpacing");
+
+        // proceduralFaceDrawer.cpp
+        
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NoiseNumFrames");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NoiseMinLightness");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NoiseMaxLightness");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NoiseFraction");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NoiseFraction");
+
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_UseAntiAliasedLines");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_EyeLightnessMultiplier");
+
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_HotspotRender");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_HotspotFalloff");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowRender");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowSizeMultiplier");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowLightnessMultiplier");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowGaussianFilter");
+
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_AntiAliasingSize");
+        NativeAnkiUtilConsoleResetValueToDefault("ProcFace_AntiAliasingGaussianFilter");
+
+        s_faceDataReset = false;
+      }
+
       if(kProcFace_OverrideEyeParams) {
-        if(s_faceDataReset) {
-          s_faceDataOverride = s_faceDataBaseline = procFace;
-          ProceduralFace::SetHue(ProceduralFace::DefaultHue);
-
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_DefaultScanlineOpacity");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NominalEyeSpacing");
-
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NoiseFraction");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_UseAntiAliasedLines");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowSizeMultiplier");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_EyeBrightnessMultiplier");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowBrightnessMultiplier");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_RenderInnerOuterGlow");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_InnerGlowFrac");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_ApplyGlowFilter");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GaussianGlowFilter");
-          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_AntiAliasingSize");
-
-          s_faceDataReset = false;
-        }
-
         // compare override face data with baseline, if different update the rendered face
 
         ProceduralFace newProcFace = procFace;
@@ -652,7 +823,31 @@ namespace Cozmo {
     
     BufferFaceToSend(_faceDrawBuf);
   }
-  
+
+  // Conversions to and from linear space i.e. sRGB to linear and linear to sRGB
+  // used when populating the lookup tables for gamma correction.
+  // https://github.com/hsluv/hsluv/releases/tag/_legacyjs6.0.4
+
+  static inline float fromLinear(float c)
+  {
+    if (c <= 0.0031308f) {
+      return 12.92f * c;
+    } else {
+      return (float)(1.055f * pow(c, 1.f / 2.4f) - 0.055f);
+    }
+  }
+
+  static inline float toLinear(float c)
+  {
+    float a = 0.055f;
+
+    if (c > 0.04045f) {
+      return (float)(powf((c + a) / (1.f + a), 2.4f));
+    } else {
+      return (float)(c / 12.92f);
+    }
+  }
+
   void AnimationStreamer::BufferFaceToSend(Vision::ImageRGB565& faceImg565)
   {
     DEV_ASSERT_MSG(faceImg565.GetNumCols() == FACE_DISPLAY_WIDTH &&
@@ -661,7 +856,92 @@ namespace Cozmo {
                    "Got %d x %d. Expected %d x %d",
                    faceImg565.GetNumCols(), faceImg565.GetNumRows(),
                    FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
-    
+
+    static int kProcFace_GammaType_old = (int)FaceGammaType::None;
+    static f32 kProcFace_Gamma_old = -1.f;
+
+    if((kProcFace_GammaType != kProcFace_GammaType_old) || (kProcFace_Gamma_old != kProcFace_Gamma)) {
+      switch(kProcFace_GammaType) {
+      case (int)FaceGammaType::FromLinear:
+        for (int i = 0; i < 256; i++) {
+          s_gammaLUT[0][i] = s_gammaLUT[1][i] = s_gammaLUT[2][i] = cv::saturate_cast<uchar>(fromLinear(i / 255.f) * 255.0f);
+        }
+        break;
+      case (int)FaceGammaType::ToLinear:
+        for (int i = 0; i < 256; i++) {
+          s_gammaLUT[0][i] = s_gammaLUT[1][i] = s_gammaLUT[2][i] = cv::saturate_cast<uchar>(toLinear(i / 255.f) * 255.0f);
+        }
+        break;
+      case (int)FaceGammaType::AddGamma:
+        for (int i = 0; i < 256; i++) {
+          s_gammaLUT[0][i] = s_gammaLUT[1][i] = s_gammaLUT[2][i] = cv::saturate_cast<uchar>(powf((float)(i / 255.f), 1.f/kProcFace_Gamma) * 255.0f);
+        }
+        break;
+      case (int)FaceGammaType::RemoveGamma:
+        for (int i = 0; i < 256; i++) {
+          s_gammaLUT[0][i] = s_gammaLUT[1][i] = s_gammaLUT[2][i] = cv::saturate_cast<uchar>(powf((float)(i / 255.f), kProcFace_Gamma) * 255.0f);
+        }
+        break;
+      }
+
+      kProcFace_GammaType_old = kProcFace_GammaType;
+      kProcFace_Gamma_old = kProcFace_Gamma;
+    }
+
+    if(kProcFace_GammaType != (int)FaceGammaType::None) {
+      int nrows = faceImg565.GetNumRows();
+      int ncols = faceImg565.GetNumCols();
+      if(faceImg565.IsContinuous())
+      {
+        ncols *= nrows;
+        nrows = 1;
+      }
+
+      for(int i=0; i<nrows; ++i)
+      {
+        Vision::PixelRGB565* img_i = faceImg565.GetRow(i);
+        for(int j=0; j<ncols; ++j)
+          img_i[j].SetValue(Vision::PixelRGB565(s_gammaLUT[0][img_i[j].r()], s_gammaLUT[1][img_i[j].g()], s_gammaLUT[2][img_i[j].b()]).GetValue());
+        }
+      }
+
+    if(s_framesToCapture > 0) {
+      clock_t end = clock();
+      float elapsed = (end - s_frameStart)/float(CLOCKS_PER_SEC);
+      s_frameStart = end;
+
+      Vision::ImageRGBA frame(FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
+      frame.SetFromRGB565(faceImg565);
+
+      if(s_tga != NULL) {
+        if(s_frame == 0) {
+          uint8_t head[18] = {0};
+          head[ 2] = 2; // uncompressed, true-color image
+          head[12] = FACE_DISPLAY_WIDTH & 0xff;
+          head[13] = (FACE_DISPLAY_WIDTH >> 8) & 0xff;
+          head[14] = FACE_DISPLAY_HEIGHT & 0xff;
+          head[15] = (FACE_DISPLAY_HEIGHT >> 8) & 0xff;
+          head[16] = 32;   /** 32 bits depth **/
+          head[17] = 0x08; /** top-down flag, 8 bits alpha **/
+          fwrite(head, sizeof(uint8_t), 18, s_tga);
+        }
+        fwrite(frame.GetDataPointer(), sizeof(uint8_t), FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*4, s_tga);
+
+        ++s_frame;
+        if(s_frame == s_framesToCapture) {
+          fclose(s_tga);
+          s_framesToCapture = 0;
+        }
+      } else {
+        jo_gif_frame(&s_gif, (uint8_t*)frame.GetDataPointer(), elapsed/100.f, false);
+
+        ++s_frame;
+        if(s_frame == s_framesToCapture) {
+          jo_gif_end(&s_gif);
+          s_framesToCapture = 0;
+        }
+      }
+    }
 
 #if ANKI_DEV_CHEATS
     // Draw red square in corner of face if thermal issues
@@ -685,6 +965,33 @@ namespace Cozmo {
       faceImg565.DrawText(position, tempStr, alertColor, 1.f);
     }
 #endif
+
+    if(SHOULD_SEND_DISPLAYED_FACE_TO_ENGINE){
+      // Send the final buffered face back over to engine
+      ASSERT_NAMED(faceImg565.IsContinuous(), "AnimationComponent.DisplayFaceImage.NotContinuous");
+      static int imageID = 0;
+      static const int kMaxPixelsPerMsg = 600; // TODO - fix
+      
+      int chunkCount = 0;
+      int pixelsLeftToSend = FACE_DISPLAY_NUM_PIXELS;
+      const u16* startIt = faceImg565.GetRawDataPointer();
+      while (pixelsLeftToSend > 0) {
+        RobotInterface::DisplayedFaceImageRGBChunk msg;
+        msg.imageId = imageID;
+        msg.chunkIndex = chunkCount++;
+        msg.numPixels = std::min(kMaxPixelsPerMsg, pixelsLeftToSend);
+
+        std::copy_n(startIt, msg.numPixels, std::begin(msg.faceData));
+
+        pixelsLeftToSend -= msg.numPixels;
+        std::advance(startIt, msg.numPixels);
+        RobotInterface::SendAnimToEngine(msg);
+      }
+      imageID++;
+
+      static const int kExpectedNumChunks = static_cast<int>(std::ceilf( (f32)FACE_DISPLAY_NUM_PIXELS / kMaxPixelsPerMsg ));
+      DEV_ASSERT_MSG(chunkCount == kExpectedNumChunks, "AnimationComponent.DisplayFaceImage.UnexpectedNumChunks", "%d", chunkCount);
+    }
 
     FaceDisplay::getInstance()->DrawToFace(faceImg565);
   }
@@ -739,6 +1046,10 @@ namespace Cozmo {
   
     _startOfAnimationSent = true;
     _endOfAnimationSent = false;
+    
+    if( ANKI_DEV_CHEATS ) {
+      SendAnimationToWebViz( true );
+    }
 
     return RESULT_OK;
   }
@@ -774,6 +1085,10 @@ namespace Cozmo {
     
     _endOfAnimationSent = true;
     _startOfAnimationSent = false;
+    
+    if( ANKI_DEV_CHEATS ) {
+      SendAnimationToWebViz( false );
+    }
     
     // Every time we end an animation we should also re-enable BPL_USER layer on robot
     EnableBackpackAnimationLayer(false);
@@ -856,7 +1171,7 @@ namespace Cozmo {
     if (robotAudioTrack.HasFramesLeft() &&
         robotAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, currTime_ms))
     {
-      _audioClient->PlayAudioKeyFrame( robotAudioTrack.GetCurrentKeyFrame() );
+      _animAudioClient->PlayAudioKeyFrame( robotAudioTrack.GetCurrentKeyFrame(), _context->GetRandom() );
       robotAudioTrack.MoveToNextKeyFrame();
     }
 
@@ -1001,7 +1316,7 @@ namespace Cozmo {
     
     // Send an end-of-animation keyframe when done
     if( !anim->HasFramesLeft() &&
-        !_audioClient->HasActiveEvents() &&
+        !_animAudioClient->HasActiveEvents() &&
         _startOfAnimationSent &&
         !_endOfAnimationSent)
     {      
@@ -1067,7 +1382,7 @@ namespace Cozmo {
         _wasAnimationInterruptedWithNothing = false;
       }
       
-      if(_enableKeepFaceAlive && !FACTORY_TEST)
+      if(s_enableKeepFaceAlive && !FACTORY_TEST)
       {
         _trackLayerComponent->KeepFaceAlive(_keepFaceAliveParams);
       }
@@ -1127,7 +1442,7 @@ namespace Cozmo {
     }
     
     // Tick audio engine
-    _audioClient->Update();
+    _animAudioClient->Update();
     
 
     // Send animState message
@@ -1147,10 +1462,10 @@ namespace Cozmo {
   
   void AnimationStreamer::EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms)
   {
-    if (_enableKeepFaceAlive && !enable) {
+    if (s_enableKeepFaceAlive && !enable) {
       _trackLayerComponent->RemoveKeepFaceAlive(disableTimeout_ms);
     }
-    _enableKeepFaceAlive = enable;
+    s_enableKeepFaceAlive = enable;
   }
   
   void AnimationStreamer::SetDefaultKeepFaceAliveParams()
@@ -1253,6 +1568,19 @@ namespace Cozmo {
       result = SetStreamingAnimation(_proceduralAnimation, 0);
     }
     return result;
+  }
+  
+  void AnimationStreamer::SendAnimationToWebViz( bool starting ) const
+  {
+    if( _context != nullptr ) {
+      auto* webService = _context->GetWebService();
+      if( (webService != nullptr) && (_streamingAnimation != nullptr) ) {
+        Json::Value data;
+        data["type"] = starting ? "start" : "stop";
+        data["animation"] = _streamingAnimation->GetName();
+        webService->SendToWebViz("animations", data);
+      }
+    }
   }
   
   

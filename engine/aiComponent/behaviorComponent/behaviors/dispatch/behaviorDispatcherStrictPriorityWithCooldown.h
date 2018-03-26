@@ -30,6 +30,7 @@ class BehaviorDispatcherStrictPriorityWithCooldown : public IBehaviorDispatcher
 
 protected:
   
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   virtual ICozmoBehaviorPtr GetDesiredBehavior() override;
   virtual void BehaviorDispatcher_OnActivated() override;
   virtual void BehaviorDispatcher_OnDeactivated() override;
@@ -37,18 +38,26 @@ protected:
   virtual void DispatcherUpdate() override;
 
 private:
+  struct InstanceConfig {
+    InstanceConfig();
+    // index here matches the index in IBehaviorDispatcher::GetAllPossibleDispatches()
+    std::vector< BehaviorCooldownInfo > cooldownInfo;
+  };
 
-  // index here matches the index in IBehaviorDispatcher::GetAllPossibleDispatches()
-  std::vector< BehaviorCooldownInfo > _cooldownInfo;
+  struct DynamicVariables {
+    DynamicVariables();
+    // keep track of which behavior we last requested so that we can properly start the cooldown when the
+    // behavior ends
+    size_t lastDesiredBehaviorIdx;
+  };
 
-  // keep track of which behavior we last requested so that we can properly start the cooldown when the
-  // behavior ends
-  size_t _lastDesiredBehaviorIdx = 0;
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
   
 };
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 
 
-#endif
+#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_Dispatch_BehaviorDispatcherStrictPriorityWithCooldown_H__

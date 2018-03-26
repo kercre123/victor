@@ -18,6 +18,7 @@
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
+#include "cozmoAnim/audio/proceduralAudioClient.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animEngine.h"
 #include "cozmoAnim/connectionFlow.h"
@@ -63,8 +64,11 @@ namespace {
 
   Anki::Cozmo::AnimEngine*                   _animEngine = nullptr;
   Anki::Cozmo::AnimationStreamer*            _animStreamer = nullptr;
-  Anki::Cozmo::Audio::EngineRobotAudioInput* _audioInput = nullptr;
-  const Anki::Cozmo::AnimContext*       _context = nullptr;
+  Anki::Cozmo::Audio::EngineRobotAudioInput* _engAudioInput = nullptr;
+  Anki::Cozmo::Audio::ProceduralAudioClient* _proceduralAudioClient = nullptr;
+  const Anki::Cozmo::AnimContext*            _context = nullptr;
+
+  CONSOLE_VAR(bool, kDebugFaceDraw_CycleWithButton, "DebugFaceDraw", true);   
 
   static void ListAnimations(ConsoleFunctionContextRef context)
   {
@@ -236,27 +240,27 @@ void Process_removeSquint(const Anki::Cozmo::RobotInterface::RemoveSquint& msg)
   
 void Process_postAudioEvent(const Anki::AudioEngine::Multiplexer::PostAudioEvent& msg)
 {
-  _audioInput->HandleMessage(msg);
+  _engAudioInput->HandleMessage(msg);
 }
 
 void Process_stopAllAudioEvents(const Anki::AudioEngine::Multiplexer::StopAllAudioEvents& msg)
 {
-  _audioInput->HandleMessage(msg);
+  _engAudioInput->HandleMessage(msg);
 }
 
 void Process_postAudioGameState(const Anki::AudioEngine::Multiplexer::PostAudioGameState& msg)
 {
-  _audioInput->HandleMessage(msg);
+  _engAudioInput->HandleMessage(msg);
 }
 
 void Process_postAudioSwitchState(const Anki::AudioEngine::Multiplexer::PostAudioSwitchState& msg)
 {
-  _audioInput->HandleMessage(msg);
+  _engAudioInput->HandleMessage(msg);
 }
 
 void Process_postAudioParameter(const Anki::AudioEngine::Multiplexer::PostAudioParameter& msg)
 {
-  _audioInput->HandleMessage(msg);
+  _engAudioInput->HandleMessage(msg);
 }
   
 void Process_setDebugConsoleVarMessage(const Anki::Cozmo::RobotInterface::SetDebugConsoleVarMessage& msg)
@@ -351,14 +355,18 @@ void Process_setBLEPin(const Anki::Cozmo::SwitchboardInterface::SetBLEPin& msg)
   SetBLEPin(msg.pin);
 }
 
-
-
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
 {
   //LOG_WARNING("AnimProcessMessages.ProcessMessageFromEngine", "%d", msg.tag);
   bool forwardToRobot = false;
   switch (msg.tag)
   {
+    case RobotInterface::EngineToRobot::Tag_absLocalizationUpdate:
+    {
+      forwardToRobot = true;
+      _context->GetMicDataProcessor()->ResetMicListenDirection();
+      break;
+    }
 
 #include "clad/robotInterface/messageEngineToRobot_switch_from_0x50_to_0xAF.def"
 
@@ -457,16 +465,16 @@ Result AnimProcessMessages::Init(AnimEngine* animEngine,
   // Setup robot and engine sockets
   AnimComms::InitComms();
 
-  _animEngine   = animEngine;
-  _animStreamer = animStreamer;
-  _audioInput   = audioInput;
-  _context      = context;
+  _animEngine             = animEngine;
+  _animStreamer           = animStreamer;
+  _proceduralAudioClient  = _animStreamer->GetProceduralAudioClient();
+  _engAudioInput          = audioInput;
+  _context                = context;
 
   InitConnectionFlow(_animStreamer);
 
   return RESULT_OK;
 }
-
 
 Result AnimProcessMessages::MonitorConnectionState(void)
 {
@@ -551,6 +559,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
       continue;
     }
     ProcessMessageFromRobot(msg);
+    _proceduralAudioClient->ProcessMessage(msg);
   }
 
 #if FACTORY_TEST

@@ -1,28 +1,37 @@
 package cloudproc
 
 import (
-	"anki/chipper"
+	"anki/log"
 	"anki/util"
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"sync"
+
+	"github.com/anki/sai-chipper-voice/client/chipper"
 )
 
 type voiceContext struct {
+	conn        *chipper.Conn
 	stream      *chipper.Stream
+	process     *Process
 	samples     []byte
 	audioStream chan []byte
 	once        sync.Once
 }
 
+type cloudChans struct {
+	intent chan<- string
+	err    chan<- string
+}
+
 func (ctx *voiceContext) addSamples(samples []byte) {
 	ctx.samples = append(ctx.samples, samples...)
-	if len(ctx.samples) >= StreamSize {
+	streamSize := ctx.process.StreamSize()
+	if len(ctx.samples) >= streamSize {
 		// we have enough samples to stream - slice them off and pass them to another
 		// thread for sending to server
-		samples := ctx.samples[:StreamSize]
-		ctx.samples = ctx.samples[StreamSize:]
+		samples := ctx.samples[:streamSize]
+		ctx.samples = ctx.samples[streamSize:]
 		ctx.audioStream <- samples
 	}
 }
@@ -30,14 +39,17 @@ func (ctx *voiceContext) addSamples(samples []byte) {
 func (ctx *voiceContext) close() error {
 	var err util.Errors
 	err.Append(ctx.stream.Close())
+	err.Append(ctx.conn.Close())
 	return err.Error()
 }
 
-func newVoiceContext(stream *chipper.Stream, cloudChan chan<- string) *voiceContext {
+func (p *Process) newVoiceContext(conn *chipper.Conn, stream *chipper.Stream, cloudChan cloudChans) *voiceContext {
 	audioStream := make(chan []byte, 10)
 	ctx := &voiceContext{
+		conn:        conn,
 		stream:      stream,
-		samples:     make([]byte, 0, StreamSize*2),
+		process:     p,
+		samples:     make([]byte, 0, p.StreamSize()*2),
 		audioStream: audioStream}
 
 	go func() {
@@ -49,13 +61,14 @@ func newVoiceContext(stream *chipper.Stream, cloudChan chan<- string) *voiceCont
 	return ctx
 }
 
-func (ctx *voiceContext) sendAudio(samples []byte, cloudChan chan<- string) {
+func (ctx *voiceContext) sendAudio(samples []byte, cloudChan cloudChans) {
 	var err error
 	sendTime := util.TimeFuncMs(func() {
 		err = ctx.stream.SendAudio(samples)
 	})
 	if err != nil {
-		fmt.Println("Cloud error:", err)
+		log.Println("Cloud error:", err)
+		cloudChan.err <- err.Error()
 		return
 	}
 	logVerbose("Sent", len(samples), "bytes to Chipper (call took", int(sendTime), "ms)")
@@ -65,28 +78,32 @@ func (ctx *voiceContext) sendAudio(samples []byte, cloudChan chan<- string) {
 		go func() {
 			resp, err := ctx.stream.WaitForIntent()
 			if err != nil {
-				fmt.Println("CCE error:", err)
-				cloudChan <- ""
+				log.Println("CCE error:", err)
+				cloudChan.err <- err.Error()
 				return
 			}
-			fmt.Println("Intent response ->", resp)
+			log.Println("Intent response ->", resp)
 			sendJSONResponse(resp, cloudChan)
 		}()
 	})
 }
 
-func sendJSONResponse(resp *chipper.IntentResult, cloudChan chan<- string) {
+func sendJSONResponse(resp *chipper.IntentResult, cloudChan cloudChans) {
 	outResponse := make(map[string]interface{})
 	outResponse["intent"] = resp.Action
 	if resp.Parameters != nil && len(resp.Parameters) > 0 {
 		outResponse["params"] = resp.Parameters
 	}
+	outResponse["metadata"] = struct {
+		SpeechText       string
+		IntentConfidence float32
+	}{resp.QueryText, resp.IntentConfidence}
 	buf := bytes.Buffer{}
 	encoder := json.NewEncoder(&buf)
 	if err := encoder.Encode(outResponse); err != nil {
-		fmt.Println("JSON encode error:", err)
-		cloudChan <- ""
+		log.Println("JSON encode error:", err)
+		cloudChan.err <- "json"
 		return
 	}
-	cloudChan <- buf.String()
+	cloudChan.intent <- buf.String()
 }

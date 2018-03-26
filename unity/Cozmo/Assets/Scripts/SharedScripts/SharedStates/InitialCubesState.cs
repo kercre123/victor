@@ -69,25 +69,6 @@ public class InitialCubesState : State {
     PushIdleAnimation();
   }
 
-  protected void PushIdleAnimation() {
-    if (!_PushedIdleAnimation) {
-      Anki.Cozmo.ExternalInterface.PushIdleAnimation pushIdleAnimMsg = new Anki.Cozmo.ExternalInterface.PushIdleAnimation();
-      pushIdleAnimMsg.animTrigger = Anki.Cozmo.AnimationTrigger.GameSetupIdle;
-      pushIdleAnimMsg.lockName = kInitialCubesStateIdleLock;
-      RobotEngineManager.Instance.Message.PushIdleAnimation = pushIdleAnimMsg;
-      RobotEngineManager.Instance.SendMessage();
-      _PushedIdleAnimation = true;
-    }
-  }
-
-  protected void PopIdleAnimation() {
-    if (_PushedIdleAnimation) {
-      RobotEngineManager.Instance.Message.RemoveIdleAnimation = new Anki.Cozmo.ExternalInterface.RemoveIdleAnimation(kInitialCubesStateIdleLock);
-      RobotEngineManager.Instance.SendMessage();
-      _PushedIdleAnimation = false;
-    }
-  }
-
   protected virtual void CheckForNewlySeenCubes() {
     // The reaction animation has head movement, so don't
     // mark cubes as out of view while the animation is playing

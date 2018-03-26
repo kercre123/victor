@@ -44,3 +44,13 @@ go_project(
     name = 'wavtest',
     dir = 'wavtest'
 )
+
+go_project(
+    name = 'opusupload',
+    dir = 'opusupload'
+)
+
+go_project(
+    name = 'opusenc',
+    dir = 'opusenc'
+)

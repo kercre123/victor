@@ -26,9 +26,15 @@ def is_special(pat):
     """Whether the given pattern string contains match constructs."""
     return "*" in pat or "?" in pat or "[" in pat
 
+def path_contains_dotdot(relative_path):
+    for p in relative_path.parts:
+        if p == '..':
+            return True
+    return False
+
 def path_component_contains_dot(relative_path):
     for p in relative_path.parts:
-        if p.startswith('.') and p != "..":
+        if p.startswith('.'):
             return True
     return False
 
@@ -36,9 +42,13 @@ def path_component_contains_dot(relative_path):
 def glob_internal(includes, excludes, project_root_relative_excludes, include_dotfiles,
                   search_base_path, project_root):
     search_base = Path(search_base_path)
+    if path_contains_dotdot(search_base):
+        raise ValueError('Search path may not contain ..')
     def includes_iterator():
         for pattern in includes:
             for path in search_base.glob(pattern):
+                if path_contains_dotdot(path):
+                    raise ValueError('Include path may not contain ..')
                 # TODO(beng): Handle hidden files on Windows.
                 if path.is_file() and \
                         (include_dotfiles or not path_component_contains_dot(
@@ -510,5 +520,3 @@ if __name__ == '__main__':
                 sys.stdout.write("\n".join(files))
                 sys.stdout.write("\n")
                 sys.stdout.flush()
-
-

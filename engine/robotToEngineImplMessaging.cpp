@@ -23,6 +23,7 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
@@ -43,8 +44,6 @@
 #include "clad/robotInterface/messageEngineToRobot_hash.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_hash.h"
-#include "clad/externalInterface/messageFromActiveObject.h"
-#include "clad/externalInterface/messageToActiveObject.h"
 #include "clad/types/robotStatusAndActions.h"
 
 #include "audioUtil/audioDataTypes.h"
@@ -83,6 +82,7 @@ RobotToEngineImplMessaging::RobotToEngineImplMessaging()
 , _hasMismatchedEngineToRobotCLAD(false)
 , _hasMismatchedRobotToEngineCLAD(false)
 {
+   _faceImageRGB565.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
 }
 
 RobotToEngineImplMessaging::~RobotToEngineImplMessaging()
@@ -126,7 +126,8 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::micDirection,                   &RobotToEngineImplMessaging::HandleMicDirection);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::streamCameraImages,             &RobotToEngineImplMessaging::HandleStreamCameraImages);  
-  
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::displayedFaceImageRGBChunk,     &RobotToEngineImplMessaging::HandleDisplayedFaceImage);
+
   // lambda wrapper to call internal handler
   GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::state,
                                                      [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
@@ -463,24 +464,24 @@ void RobotToEngineImplMessaging::HandleDockingStatus(const AnkiEvent<RobotInterf
 // Helpers used by the shared templated ObjectMovedOrStoppedHelper() method below,
 // for each type of message.
 template<class PayloadType> static const char* GetEventPrefix();
-template<> inline const char* GetEventPrefix<ObjectMoved>() { return "Robot.ActiveObjectMoved."; }
-template<> inline const char* GetEventPrefix<ObjectStoppedMoving>() { return "Robot.ActiveObjectStopped."; }
+template<> inline const char* GetEventPrefix<ExternalInterface::ObjectMoved>() { return "Robot.ActiveObjectMoved."; }
+template<> inline const char* GetEventPrefix<ExternalInterface::ObjectStoppedMoving>() { return "Robot.ActiveObjectStopped."; }
 
-static inline const char* GetAxisString(const ObjectMoved& payload) { return EnumToString(payload.axisOfAccel); }
-static inline const char* GetAxisString(const ObjectStoppedMoving& payload) { return "<unknown>"; }
+static inline const char* GetAxisString(const ExternalInterface::ObjectMoved& payload) { return EnumToString(payload.axisOfAccel); }
+static inline const char* GetAxisString(const ExternalInterface::ObjectStoppedMoving& payload) { return "<unknown>"; }
 
-static inline const float GetXAccelVal(const ObjectMoved& payload) { return payload.accel.x; }
-static inline const float GetXAccelVal(const ObjectStoppedMoving& payload) { return 0; }
+static inline const float GetXAccelVal(const ExternalInterface::ObjectMoved& payload) { return payload.accel.x; }
+static inline const float GetXAccelVal(const ExternalInterface::ObjectStoppedMoving& payload) { return 0; }
 
-static inline const float GetYAccelVal(const ObjectMoved& payload) { return payload.accel.y; }
-static inline const float GetYAccelVal(const ObjectStoppedMoving& payload) { return 0; }
+static inline const float GetYAccelVal(const ExternalInterface::ObjectMoved& payload) { return payload.accel.y; }
+static inline const float GetYAccelVal(const ExternalInterface::ObjectStoppedMoving& payload) { return 0; }
 
-static inline const float GetZAccelVal(const ObjectMoved& payload) { return payload.accel.z; }
-static inline const float GetZAccelVal(const ObjectStoppedMoving& payload) { return 0; }
+static inline const float GetZAccelVal(const ExternalInterface::ObjectMoved& payload) { return payload.accel.z; }
+static inline const float GetZAccelVal(const ExternalInterface::ObjectStoppedMoving& payload) { return 0; }
   
 template<class PayloadType> static bool GetIsMoving();
-template<> inline bool GetIsMoving<ObjectMoved>() { return true; }
-template<> inline bool GetIsMoving<ObjectStoppedMoving>() { return false; }
+template<> inline bool GetIsMoving<ExternalInterface::ObjectMoved>() { return true; }
+template<> inline bool GetIsMoving<ExternalInterface::ObjectStoppedMoving>() { return false; }
 
   
 // Shared helper we can use for Moved or Stopped messages
@@ -627,14 +628,14 @@ static void ObjectMovedOrStoppedHelper(Robot* const robot, PayloadType payload)
   
 } // ObjectMovedOrStoppedHelper()
 
-void RobotToEngineImplMessaging::HandleActiveObjectMoved(const ObjectMoved& message, Robot* const robot)
+void RobotToEngineImplMessaging::HandleActiveObjectMoved(const ExternalInterface::ObjectMoved& message, Robot* const robot)
 {
   ANKI_CPU_PROFILE("Robot::HandleActiveObjectMoved");
   
   ObjectMovedOrStoppedHelper(robot, message);
 }
 
-void RobotToEngineImplMessaging::HandleActiveObjectStopped(const ObjectStoppedMoving& message, Robot* const robot)
+void RobotToEngineImplMessaging::HandleActiveObjectStopped(const ExternalInterface::ObjectStoppedMoving& message, Robot* const robot)
 {
   ANKI_CPU_PROFILE("Robot::HandleActiveObjectStopped");
   
@@ -642,12 +643,12 @@ void RobotToEngineImplMessaging::HandleActiveObjectStopped(const ObjectStoppedMo
 }
 
 
-void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const ObjectUpAxisChanged& message, Robot* const robot)
+void RobotToEngineImplMessaging::HandleActiveObjectUpAxisChanged(const ExternalInterface::ObjectUpAxisChanged& message, Robot* const robot)
 {
   ANKI_CPU_PROFILE("Robot::HandleActiveObjectUpAxisChanged");
 
   // We make a copy of this message so we can update the object ID before broadcasting
-  ObjectUpAxisChanged payload = message;
+  ExternalInterface::ObjectUpAxisChanged payload = message;
   
   
   // grab objectID from the connected instance
@@ -740,7 +741,7 @@ void RobotToEngineImplMessaging::HandlePotentialCliffEvent(const AnkiEvent<Robot
   
   // Ignore potential cliff events while on the charger platform because we expect them
   // while driving off the charger
-  if (robot->IsOnChargerPlatform())
+  if (robot->GetBatteryComponent().IsOnChargerPlatform())
   {
     LOG_DEBUG("Robot.HandlePotentialCliffEvent.OnChargerPlatform",
               "Ignoring potential cliff event while on charger platform");
@@ -933,75 +934,47 @@ void RobotToEngineImplMessaging::HandleRobotPoked(const AnkiEvent<RobotInterface
   robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotPoked()));
 }
 
-//
-// Convert battery voltage to percentage according to profile described by Nathan Monson.
-// Always returns a value 0-100.
-//
-static float GetBatteryPercent(float batteryVoltage)
-{
-  const float batteryEmpty = 1.0f; // 1.0V
-  const float batteryFull = 1.5f; // 1.5V
-  
-  if (batteryVoltage >= batteryFull) {
-    return 100.0f;
-  }
-  if (batteryVoltage > batteryEmpty) {
-    float percent = 100.0f * (batteryVoltage - batteryEmpty) / (batteryFull - batteryEmpty);
-    return percent;
-  }
-  return 0.0f;
-}
-
-void RobotToEngineImplMessaging::HandleObjectPowerLevel(const ObjectPowerLevel& payload, Robot* const robot)
-{
-  ANKI_CPU_PROFILE("Robot::HandleObjectPowerLevel");
-  
-  const auto robotID __attribute__((unused)) = robot->GetID();
-  const auto activeID = payload.objectID;
-  const auto missedPackets = payload.missedPackets;
-  const auto batteryLevel = payload.batteryLevel;
-  const float batteryVoltage = batteryLevel / 100.0f;
-  const float batteryPercent = GetBatteryPercent(batteryVoltage);
-  
-  // Report to log
-  LOG_DEBUG("RobotToEngine.ObjectPowerLevel.Log", "RobotID %u activeID %u at %.2fV %.2f%%",
-            robotID, activeID, batteryVoltage, batteryPercent);
-  
-  // Report to DAS if this is first event for this accessory or if appropriate interval has passed since last report
-  const uint32_t now = Util::numeric_cast<uint32_t>(Anki::BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
-  const uint32_t then = _lastPowerLevelSentTime[activeID];
-  const uint32_t was = _lastMissedPacketCount[activeID];
-
-  if (then == 0 || now - then >= POWER_LEVEL_INTERVAL_SEC || missedPackets - was > 512) {
-    LOG_DEBUG("RobotToEngine.ObjectPowerLevel.Report",
-              "Sending DAS report for robotID %u activeID %u now %u then %u",
-              robotID, activeID, now, then);
-    char ddata[BUFSIZ];
-    snprintf(ddata, sizeof(ddata), "%.2f,%.2f", batteryVoltage, batteryPercent);
-    Anki::Util::sEventF("robot.accessory_powerlevel", {{DDATA, ddata}},
-      "%u %.2fV (%d lost)", activeID, batteryVoltage, missedPackets);
-
-    _lastPowerLevelSentTime[activeID] = now;
-    _lastMissedPacketCount[activeID] = missedPackets;
-  }
-  
-  // Forward to game
-  const BlockWorld & blockWorld = robot->GetBlockWorld();
-  const ActiveObject * object = blockWorld.GetConnectedActiveObjectByActiveID(activeID);
-  if (object != nullptr) {
-    const uint32_t objectID = object->GetID();
-    LOG_DEBUG("RobotToEngine.ObjectPowerLevel.Broadcast",
-              "RobotID %u activeID %u objectID %u at %u cv",
-              robotID, activeID, objectID, batteryLevel);
-    robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectPowerLevel(objectID, missedPackets, batteryLevel)));
-  }
-
-}
-
 void RobotToEngineImplMessaging::HandleMicDirection(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
   const auto & payload = message.GetData().Get_micDirection();
-  robot->GetMicDirectionHistory().AddDirectionSample(payload.timestamp, payload.direction, payload.confidence);
+  robot->GetMicDirectionHistory().AddDirectionSample(payload.timestamp,
+                                                     payload.direction, payload.confidence,
+                                                     payload.selectedDirection);
+}
+
+void RobotToEngineImplMessaging::HandleDisplayedFaceImage(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  const auto & msg = message.GetData().Get_displayedFaceImageRGBChunk();
+  if (msg.imageId != _faceImageRGBId) {
+    if (_faceImageRGBChunksReceivedBitMask != 0) {
+      PRINT_NAMED_WARNING("AnimationStreamer.Process_displayFaceImageRGBChunk.UnfinishedFace", 
+                          "Overwriting ID %d with ID %d", 
+                          _faceImageRGBId, msg.imageId);
+    }
+    _faceImageRGBId = msg.imageId;
+    _faceImageRGBChunksReceivedBitMask = 1 << msg.chunkIndex;
+  } else {
+    _faceImageRGBChunksReceivedBitMask |= 1 << msg.chunkIndex;
+  }
+  
+  static const u16 kMaxNumPixelsPerChunk = sizeof(msg.faceData) / sizeof(msg.faceData[0]);
+  const auto numPixels = std::min(msg.numPixels, kMaxNumPixelsPerChunk);
+  // Not user why copy_n wasnt working here, but just going ahead and doing an extra copy to fix the issue
+  auto unnecessaryCopy = msg.faceData;
+  std::copy_n(unnecessaryCopy.begin(), numPixels, _faceImageRGB565.GetRawDataPointer() + (msg.chunkIndex * kMaxNumPixelsPerChunk));
+  
+  if (_faceImageRGBChunksReceivedBitMask == kAllFaceImageRGBChunksReceivedMask) {
+    Vision::ImageRGB fullImage;
+    fullImage.SetFromRGB565(_faceImageRGB565);
+    
+    #if SHOULD_SEND_DISPLAYED_FACE_TO_ENGINE
+    robot->GetComponent<FullRobotPose>().SetDisplayImg(fullImage);
+    #endif
+
+    _faceImageRGBId = 0;
+    _faceImageRGBChunksReceivedBitMask = 0;
+  }
+
 }
 
 void RobotToEngineImplMessaging::HandleStreamCameraImages(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)

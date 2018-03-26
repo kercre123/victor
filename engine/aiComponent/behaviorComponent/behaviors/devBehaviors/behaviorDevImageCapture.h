@@ -39,7 +39,9 @@ protected:
     modifiers.wantsToBeActivatedWhenOffTreads = true;
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     modifiers.behaviorAlwaysDelegates = false;
+    modifiers.visionModesForActiveScope->insert({VisionMode::SavingImages, EVisionUpdateFrequency::High});
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
@@ -47,31 +49,40 @@ protected:
   virtual void BehaviorUpdate() override;
   
 private:
+  struct InstanceConfig {
+    InstanceConfig();
+    std::string imageSavePath;
+    int8_t      imageSaveQuality;
+    bool        useCapTouch;
+    bool        saveSensorData;
+
+    std::list<std::string> classNames;
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    float touchStartedTime_s;
+    
+    // backpack lights state for debug
+    bool  blinkOn;
+    float timeToBlink;
+
+    bool  isStreaming;
+    bool  wasLiftUp;
+
+    std::list<std::string>::const_iterator currentClassIter;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
 
   void BlinkLight();
   std::string GetSavePath() const;
   void SwitchToNextClass();
 
-  std::string _imageSavePath;
-  int8_t _imageSaveQuality;
-  bool _saveSensorData = false;
-  
-  bool  _useCapTouch = false;
-  float _touchStartedTime_s = -1.0f;
-    
-  bool _isStreaming = false;
-
-  // backpack lights state for debug
-  bool _blinkOn = false;
-  float _timeToBlink = -1.0f;
-
-  bool _wasLiftUp = false;
-  std::list<std::string> _classNames;
-  std::list<std::string>::const_iterator _currentClassIter;
 };
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 
-
-#endif
+#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_DevBehaviors_BehaviorDevImageCapture_H__

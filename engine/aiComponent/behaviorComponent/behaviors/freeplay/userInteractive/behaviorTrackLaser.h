@@ -39,6 +39,7 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.behaviorAlwaysDelegates = false;
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
   virtual void OnBehaviorDeactivated() override;
@@ -58,17 +59,29 @@ private:
     GetOutBored,
     WaitForStop,
     Complete,
+  };  
+  
+  struct LaserObservation {
+    enum Type {
+      None,         // Have not observed anything
+      Unconfirmed,  // Seen while not running (and auto exposure on)
+      Confirmed     // Seen while running (with reduced exposure)
+    };
+    
+    Type        type;
+    TimeStamp_t timestamp_ms;
+    TimeStamp_t timestamp_prev_ms;
+    Point2f     pointWrtRobot;
   };
-  
-  // used for tracking total turn angle
-  Radians _cumulativeTurn_rad;
-  
+
   // Set from Json config (use keys named exactly the same as the struct members).
   // Rough "reasonable" values are provided in comments to give you an idea of where to start.
   // NOTE: All are stored as floats to make it easy to set them from Json via one simple macro
-  struct {
-    
-    // Behavior is activatable if a possible laser was seen within this long
+  struct InstanceConfig {
+    InstanceConfig();
+    InstanceConfig(const Json::Value& config);
+
+      // Behavior is activatable if a possible laser was seen within this long
     float    startIfLaserSeenWithin_sec; // E.g. 1.0sec
     
     // Must see possible laser within this distance to start to try to confirm.
@@ -129,38 +142,37 @@ private:
     
     bool     skipGetOutAnim = false;
     
-  } _params;
-  
-  struct LaserObservation {
-    enum Type {
-      None,         // Have not observed anything
-      Unconfirmed,  // Seen while not running (and auto exposure on)
-      Confirmed     // Seen while running (with reduced exposure)
-    };
-    
-    Type        type;
-    TimeStamp_t timestamp_ms;
-    TimeStamp_t timestamp_prev_ms;
-    Point2f     pointWrtRobot;
+    // list of the above var names
+    std::vector<std::string> varNames;
   };
-  
-  LaserObservation _lastLaserObservation;
-  bool  _haveEverConfirmedLaser = false;
-  bool  _haveAdjustedAnimations = false;
-  bool  _shouldSendTrackingObjectiveAchieved = false;
-  
-  s16 _imageMean = -1;
-  TimeStamp_t _exposureChangedTime_ms = 0;
-  
-  float _lastTimeRotate = 0.f;
-  float _startedTracking_sec = 0.f;
-  float _currentLostLaserTimeout_s = 0.f;
-  
-  State _state = State::Inactive;
-  
-  // So that we can restore when done
-  CameraParams _originalCameraSettings;
-  
+
+  struct DynamicVariables {
+    DynamicVariables();
+
+    LaserObservation lastLaserObservation;
+
+    // used for tracking total turn angle
+    Radians cumulativeTurn_rad;
+    bool    haveEverConfirmedLaser;
+    bool    haveAdjustedAnimations;
+    bool    shouldSendTrackingObjectiveAchieved;
+    
+    s16 imageMean;
+    TimeStamp_t exposureChangedTime_ms;
+    
+    float lastTimeRotate;
+    float startedTracking_sec;
+    float currentLostLaserTimeout_s;
+    
+    State state;
+    
+    // So that we can restore when done
+    CameraParams originalCameraSettings;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
   // reset everything for when the behavior is finished
   void Cleanup();
   
@@ -181,9 +193,7 @@ private:
   void TransitionToGetOutBored();
   
   void InitHelper();
-  
-  void SetParamsFromConfig(const Json::Value& config);
-  
+    
   void SetLastLaserObservation(const EngineToGameEvent& event);
   
 };

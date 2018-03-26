@@ -41,6 +41,8 @@ message MicDirection
   uint_32   timestamp,
   uint_16   direction,
   int_16    confidence,
+  uint_16   selectedDirection,
+  int_16    selectedConfidence,
   float_32  confidenceList[13],
   int_32  activeState,
 }
@@ -95,6 +97,17 @@ message AudioFFTResult
   uint_32 result[4]
 }
 
+// Anim process applies a bunch of filters/modifications on face data
+// This message broadcasts back the final face that will be displayed on robot
+// Image is broadcast in 600 pixel chunks until the full image has been sent back
+// Format: 600 pixels, 16-bits each (RGB565)
+message DisplayedFaceImageRGBChunk {
+    uint_16  faceData[600],   // TODO: Make size a clad const
+    uint_16  numPixels,       // Number of pixels in faceData
+    uint_8   imageId,         // ID for this image, used only to track chunks of the same image
+    uint_8   chunkIndex
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from robot to engine.
@@ -147,7 +160,8 @@ union RobotToEngine {
   ManufacturingID            mfgId                  = 0xCB,
   FirmwareVersion            firmwareVersion        = 0xCC,
 
-  // FREE SLOTS 0xCD to 0xD2
+  DisplayedFaceImageRGBChunk displayedFaceImageRGBChunk = 0xCD,
+  // FREE SLOTS 0xCE to 0xD2
 
   // Messages from animation process to engine
   AnimationAdded             animAdded              = 0xD3,

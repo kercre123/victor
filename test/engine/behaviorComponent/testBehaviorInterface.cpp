@@ -196,9 +196,8 @@ TEST(BehaviorInterface, HandleMessages)
   
   // Tick the behavior component to send message to behavior
   {
-    std::string currentActivityName;
-    std::string behaviorDebugStr;
-    testBehaviorFramework.GetBehaviorComponent().Update(robot, currentActivityName, behaviorDebugStr);
+    DependencyManagedEntity<AIComponentID> dependentComps;
+    testBehaviorFramework.GetBehaviorComponent().UpdateDependent(dependentComps);
   }
   
   EXPECT_EQ(b._alwaysHandleCalls, 1);
@@ -216,9 +215,8 @@ TEST(BehaviorInterface, HandleMessages)
 
   // Tick the behavior component to send message to behavior
   {
-    std::string currentActivityName;
-    std::string behaviorDebugStr;
-    testBehaviorFramework.GetBehaviorComponent().Update(robot, currentActivityName, behaviorDebugStr);
+    DependencyManagedEntity<AIComponentID> dependentComps;
+    testBehaviorFramework.GetBehaviorComponent().UpdateDependent(dependentComps);
   }
   
   EXPECT_EQ(b._alwaysHandleCalls, 2);
@@ -523,9 +521,10 @@ TEST(BehaviorInterface, DelegateIfInControlWhenNotRunning)
 
   b.OnDeactivated();
   
-  robot.GetActionList().Update();
-  robot.GetActionList().Update();
-  robot.GetActionList().Update();
+  DependencyManagedEntity<RobotComponentID> robotComps;
+  robot.GetActionList().UpdateDependent(robotComps);
+  robot.GetActionList().UpdateDependent(robotComps);
+  robot.GetActionList().UpdateDependent(robotComps);
 
   EXPECT_TRUE(robot.GetActionList().IsEmpty()) << "action should have been canceled by stop";
 
@@ -614,6 +613,8 @@ public:
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
     modifiers.behaviorAlwaysDelegates = false;
   }
+  
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
 
   virtual bool WantsToBeActivatedBehavior() const override {
     return true;
@@ -705,6 +706,7 @@ public:
   std::string _type;
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
 
   virtual bool WantsToBeActivatedBehavior() const override {
     return true;
@@ -731,7 +733,7 @@ TEST(BehaviorInterface, BehaviorRespondsToUserIntents)
   }
   
   BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
-  auto& uic = bei.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
   
   for( int i=0; i<=11; ++i ) {
     bool callbackFired = false;

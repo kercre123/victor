@@ -17,6 +17,7 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/robot.h"
 
@@ -199,7 +200,7 @@ TurnToAlignWithChargerAction::TurnToAlignWithChargerAction(ObjectID chargerID,
 
 void TurnToAlignWithChargerAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
 {
-  requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+  requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
 }
 
 ActionResult TurnToAlignWithChargerAction::Init()
@@ -311,7 +312,7 @@ ActionResult BackupOntoChargerAction::SelectDockAction(ActionableObject* object)
 ActionResult BackupOntoChargerAction::Verify()
 {
   // Verify that robot is on charger
-  if (GetRobot().IsOnCharger()) {
+  if (GetRobot().GetBatteryComponent().IsOnChargerContacts()) {
     PRINT_CH_INFO("Actions", "BackupOntoChargerAction.Verify.MountingChargerComplete",
                 "Robot has mounted charger.");
     return ActionResult::SUCCESS;

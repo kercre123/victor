@@ -405,7 +405,6 @@ namespace Cozmo.Repair.UI {
         robot.SetDefaultHeadAndLiftState(false, 0.0f, 0.0f);
         robot.CancelAction(RobotActionType.PLAY_ANIMATION);
         PlayGetOutAnim(_LastBracketTransitionedInto);
-        robot.RemoveIdleAnimation(kNeedsRepairIdleLock);
         HubWorldBase.Instance.StartFreeplay();
         robot.RemoveDisableReactionsLock(ReactionaryBehaviorEnableGroups.kMinigameId);
       }
@@ -833,7 +832,6 @@ namespace Cozmo.Repair.UI {
 
         var robot = RobotEngineManager.Instance.CurrentRobot;
         if (robot != null) {
-          robot.RemoveIdleAnimation(kNeedsRepairIdleLock);
           robot.CancelAction(RobotActionType.PLAY_ANIMATION);
         }
         PlayRobotCalibrationResponseAnim();
@@ -1407,10 +1405,7 @@ namespace Cozmo.Repair.UI {
           idle = AnimationTrigger.RepairFixSevereIdle;
           break;
         }
-
-        robot.RemoveIdleAnimation(kNeedsRepairIdleLock);
         robot.PushIdleAnimation(idle, kNeedsRepairIdleLock);
-
       }
     }
 

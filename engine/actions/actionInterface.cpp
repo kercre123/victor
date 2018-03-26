@@ -18,6 +18,7 @@
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/actionWatcher.h"
 #include "engine/components/animTrackHelpers.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
@@ -368,7 +369,7 @@ namespace Anki {
             if (moveComponent.AreAnyTracksLocked(tracksToLock))
             {
               // Print special, more helpful message in SDK mode, if on charger
-              if (GetRobot().GetContext()->IsInSdkMode() && GetRobot().IsOnCharger())
+              if (GetRobot().GetContext()->IsInSdkMode() && GetRobot().GetBatteryComponent().IsOnChargerContacts())
               {
                 PRINT_CH_INFO(kLogChannelName, "IActionRunner.Update.TracksLockedOnChargerInSDK",
                               "Use of head/lift/body motors is limited while on charger in SDK mode");
@@ -565,7 +566,7 @@ namespace Anki {
     IAction::~IAction()
     {
       // release any subscriptions held by the VSM for this Action
-      if(!_requiredVisionModes.empty()) {
+      if(HasRobot() && !_requiredVisionModes.empty()) {
         PRINT_CH_DEBUG(kLogChannelName, "IAction.Update.UnSettingVisionModes",
                         "Action %s [%d] Releasing VisionModes",
                         GetName().c_str(),

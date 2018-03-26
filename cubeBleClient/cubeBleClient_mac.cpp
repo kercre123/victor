@@ -15,7 +15,8 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "clad/externalInterface/lightCubeMessage.h"
+#include "clad/externalInterface/messageCubeToEngine.h"
+#include "clad/externalInterface/messageEngineToCube.h"
 
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
@@ -67,7 +68,7 @@ CubeBleClient::CubeBleClient()
     _discoveryReceiver = _engineSupervisor->getReceiver("discoveryReceiver");
     DEV_ASSERT(_discoveryReceiver != nullptr, "CubeBleClient.NullDiscoveryReceiver");
     _discoveryReceiver->setChannel(kDiscoveryChannel);
-    _discoveryReceiver->enable(TIME_STEP);
+    _discoveryReceiver->enable(SIM_CUBE_TIME_STEP_MS);
     
     _cubeEmitter = _engineSupervisor->getEmitter("cubeCommsEmitter");
     DEV_ASSERT(_cubeEmitter != nullptr, "CubeBleClient.NullCubeEmitter");
@@ -84,7 +85,7 @@ CubeBleClient::CubeBleClient()
       
       // Set channel to i+1, so that they start at 1 (since simulated light cube factory IDs start at 1)
       rec->setChannel(i+1);
-      rec->enable(TIME_STEP);
+      rec->enable(SIM_CUBE_TIME_STEP_MS);
       
       // Add to the list of receivers:
       _cubeReceivers.push_back(rec);
@@ -111,7 +112,7 @@ void CubeBleClient::SetSupervisor(webots::Supervisor *sup)
 }
   
   
-bool CubeBleClient::SendMessageToLightCube(const BleFactoryId& factoryID, const BlockMessages::LightCubeMessage& msg)
+bool CubeBleClient::SendMessageToLightCube(const BleFactoryId& factoryID, const MessageEngineToCube& msg)
 {
   DEV_ASSERT(IsConnectedToCube(factoryID), "CubeBleClient.SendMessageToLightCube.CubeNotConnected");
   
@@ -170,13 +171,13 @@ Result CubeBleClient::Update()
 {
   // Look for discovery/advertising messages:
   while (_discoveryReceiver->getQueueLength() > 0) {
-    // Shove the data into a LightCubeMessage and call callbacks.
-    BlockMessages::LightCubeMessage lcm((uint8_t *) _discoveryReceiver->getData(), (size_t) _discoveryReceiver->getDataSize());
+    // Shove the data into a MessageCubeToEngine and call callbacks.
+    MessageCubeToEngine cubeMessage((uint8_t *) _discoveryReceiver->getData(), (size_t) _discoveryReceiver->getDataSize());
     const auto sigStrength = _discoveryReceiver->getSignalStrength();
     _discoveryReceiver->nextPacket();
-    if (lcm.GetTag() == BlockMessages::LightCubeMessageTag::available) {
+    if (cubeMessage.GetTag() == MessageCubeToEngineTag::available) {
       // Received an advertisement message
-      ObjectAvailable msg(lcm.Get_available());
+      ExternalInterface::ObjectAvailable msg(cubeMessage.Get_available());
       
       // TODO: Convert the webots signal strength to similar values to what we get from the robot.
       // These numbers were just approximated by experimenting on webots
@@ -190,7 +191,7 @@ Result CubeBleClient::Update()
       }
     } else {
       // Unexpected message type on the discovery channel
-      PRINT_NAMED_WARNING("CubeBleClient.Update.UnexpectedMsg", "Expected ObjectAvailable but received %s", LightCubeMessageTagToString(lcm.GetTag()));
+      PRINT_NAMED_WARNING("CubeBleClient.Update.UnexpectedMsg", "Expected ObjectAvailable but received %s", MessageCubeToEngineTagToString(cubeMessage.GetTag()));
     }
   }
 
@@ -198,12 +199,12 @@ Result CubeBleClient::Update()
   for (const auto& receiever : _cubeReceivers) {
     const int factoryID = receiever->getChannel(); // factory ID is same as channel
     while (receiever->getQueueLength() > 0) {
-      BlockMessages::LightCubeMessage lcm((uint8_t *) receiever->getData(), (size_t) receiever->getDataSize());
+      MessageCubeToEngine cubeMessage((uint8_t *) receiever->getData(), (size_t) receiever->getDataSize());
       receiever->nextPacket();
       // Received a light cube message. Call the registered callbacks, but only if the state is 'connected'
       if (IsConnectedToCube(factoryID)) {
-        for (const auto& callback : _lightCubeMessageCallbacks) {
-          callback(factoryID, lcm);
+        for (const auto& callback : _cubeMessageCallbacks) {
+          callback(factoryID, cubeMessage);
         }
       }
     }

@@ -9,6 +9,7 @@ macro(__anki_setup_go_environment target_basedir)
   file(RELATIVE_PATH __gobuild_basedir ${CMAKE_CURRENT_BINARY_DIR} "${__gobuild_basedir}")
 
   set(__go_compile_env "CGO_ENABLED=1")
+  list(APPEND __go_compile_env "GOPATH=${GOPATH}")
   set(__go_build_flags "")
   set(__go_deps "")
 
@@ -46,7 +47,7 @@ macro(__anki_run_go_build target_name)
   add_custom_command(
     OUTPUT ${__gobuild_out}
     COMMAND ${CMAKE_COMMAND} -E env ${__go_compile_env} ${__include_env} ${__link_env}
-                             $ENV{GOROOT}/bin/go build ${__go_build_flags} ${__ldflags_str} ${__go_build_ldflags} ${__gobuild_basedir}
+                             ${GOROOT}/bin/go build ${__go_build_flags} ${__ldflags_str} ${__go_build_ldflags} ${__gobuild_basedir}
     DEPENDS ${SRCS} ${_ab_PLATFORM_SRCS} ${__go_deps}
   )
 endmacro()
@@ -165,11 +166,21 @@ endmacro()
 # specify that a go project should link against another C library
 macro(anki_go_add_c_library target_name c_target)
   target_link_libraries(${target_name}_fake_dep PUBLIC ${c_target})
-  get_target_property(__c_link_location ${c_target} ARCHIVE_OUTPUT_DIRECTORY)
+  get_target_property(__is_imported ${c_target} IMPORTED)
+  if (${__is_imported})
+    get_target_property(__c_link_location ${c_target} IMPORTED_LOCATION)
+    get_filename_component(__c_link_location ${__c_link_location} DIRECTORY)
+  else()
+    get_target_property(__c_link_location ${c_target} ARCHIVE_OUTPUT_DIRECTORY)
+  endif()
   get_target_property(__current_link_folders ${target_name} GO_CLINK_FOLDERS)
   set(__current_link_folders "${__current_link_folders} -L${__c_link_location}")
   set_property(TARGET ${target_name} PROPERTY GO_CLINK_FOLDERS ${__current_link_folders})
   add_dependencies(${target_name} ${c_target})
+endmacro()
+
+macro(anki_go_add_include_dir target_name include_dir)
+  target_include_directories(${target_name}_fake_dep PUBLIC ${include_dir})
 endmacro()
 
 macro(anki_go_set_ldflags target_name flags)

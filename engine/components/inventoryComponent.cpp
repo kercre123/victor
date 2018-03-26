@@ -14,6 +14,8 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/components/inventoryComponent.h"
 #include "engine/components/nvStorageComponent.h"
+#include "engine/cozmoContext.h"
+#include "engine/robotDataLoader.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 
@@ -45,12 +47,6 @@ InventoryComponent::InventoryComponent()
 void InventoryComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
 {
   _robot = robot;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void InventoryComponent::Init(const Json::Value& config)
-{
   ReadCurrentInventoryFromRobot();
   
   // Subscribe to messages
@@ -62,7 +58,19 @@ void InventoryComponent::Init(const Json::Value& config)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::InventoryRequestSet>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::InventoryRequestGet>();
   }
-  
+
+  auto& context = dependentComponents.GetValue<ContextWrapper>().context;
+
+  if (nullptr != context->GetDataPlatform())
+  {
+    ReadInventoryConfig(context->GetDataLoader()->GetInventoryConfig());
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void InventoryComponent::ReadInventoryConfig(const Json::Value& config)
+{
   // parse inventory caps from json
   const Json::Value& inventoryTypeCaps = config[kInventoryTypeCapsConfigKey];
   for (int i = 0; i < InventoryTypeNumEntries; i++)
@@ -76,7 +84,7 @@ void InventoryComponent::Init(const Json::Value& config)
   }
 }
   
-void InventoryComponent::Update(const float currentTime_s)
+void InventoryComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
   if( !_isWritingToRobot && _robotWritePending)
   {

@@ -18,12 +18,31 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+namespace {
+const char* kBehaviorsKey = "behaviors";
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDispatcherRandom::InstanceConfig::InstanceConfig()
+{
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDispatcherRandom::DynamicVariables::DynamicVariables()
+{
+  shouldEndAfterBehavior = false;
+  lastDesiredBehaviorIdx = 0;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDispatcherRandom::BehaviorDispatcherRandom(const Json::Value& config)
   : BaseClass(config, false)
 {
-  const Json::Value& behaviorArray = config["behaviors"];
+  const Json::Value& behaviorArray = config[kBehaviorsKey];
   DEV_ASSERT_MSG(!behaviorArray.isNull(),
                  "BehaviorDispatcherStrictPriorityWithCooldown.BehaviorsNotSpecified",
                  "No Behaviors key found");
@@ -35,57 +54,78 @@ BehaviorDispatcherRandom::BehaviorDispatcherRandom(const Json::Value& config)
       
       IBehaviorDispatcher::AddPossibleDispatch(behaviorIDStr);
 
-      _cooldownInfo.emplace_back( BehaviorCooldownInfo{behaviorDefinitionGroup} );
+      _iConfig.cooldownInfo.emplace_back( BehaviorCooldownInfo{behaviorDefinitionGroup} );
 
       const float weight = JsonTools::ParseFloat(behaviorDefinitionGroup,
                                                  "weight",
                                                  "BehaviorDispatcherRandom.BehaviorGroup.NoWeight");
-      _weights.push_back(weight);
+      _iConfig.weights.push_back(weight);
                                                  
     }
   }
+  
+  // initialize last idx to invalid value
+  _dVars.lastDesiredBehaviorIdx = _iConfig.cooldownInfo.size();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherRandom::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  expectedKeys.insert( kBehaviorsKey );
+  IBehaviorDispatcher::GetBehaviorJsonKeys(expectedKeys);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherRandom::BehaviorDispatcher_OnActivated()
 {
-  _shouldEndAfterBehavior = false;
+  _dVars.shouldEndAfterBehavior = false;
+  _dVars.lastDesiredBehaviorIdx = _iConfig.cooldownInfo.size();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherRandom::BehaviorDispatcher_OnDeactivated()
+{
+  // if we are stopped while a behavior was active, put it on cooldown
+  if( _dVars.lastDesiredBehaviorIdx < _iConfig.cooldownInfo.size() ) {
+    _iConfig.cooldownInfo[ _dVars.lastDesiredBehaviorIdx ].StartCooldown(GetRNG());
+    _dVars.lastDesiredBehaviorIdx = _iConfig.cooldownInfo.size();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior()
 {
-  DEV_ASSERT_MSG( _cooldownInfo.size() == IBehaviorDispatcher::GetAllPossibleDispatches().size(),
+  DEV_ASSERT_MSG( _iConfig.cooldownInfo.size() == IBehaviorDispatcher::GetAllPossibleDispatches().size(),
                   "BehaviorDispatcherRandom.CooldownSizeMismatch",
                   "have %zu cooldown infos, buts %zu possible dispatches",
-                  _cooldownInfo.size(),
+                  _iConfig.cooldownInfo.size(),
                   IBehaviorDispatcher::GetAllPossibleDispatches().size());
-  DEV_ASSERT_MSG( _weights.size() == IBehaviorDispatcher::GetAllPossibleDispatches().size(),
+  DEV_ASSERT_MSG( _iConfig.weights.size() == IBehaviorDispatcher::GetAllPossibleDispatches().size(),
                   "BehaviorDispatcherRandom.WeightSizeMismatch",
                   "have %zu weights, buts %zu possible dispatches",
-                  _cooldownInfo.size(),
+                  _iConfig.cooldownInfo.size(),
                   IBehaviorDispatcher::GetAllPossibleDispatches().size());
 
   // after the behavior we delegate to here finishes, we should cancel ourselves
-  _shouldEndAfterBehavior = true;
+  _dVars.shouldEndAfterBehavior = true;
   
-  Util::RandomVectorSampler<ICozmoBehaviorPtr> availableBehaviors;
+  Util::RandomVectorSampler<size_t> availableBehaviorIdxs;
 
-  const size_t numBehaviors = _cooldownInfo.size();
+  const size_t numBehaviors = _iConfig.cooldownInfo.size();
   for( size_t idx = 0; idx < numBehaviors; ++idx ) {
-    auto& cooldownInfo = _cooldownInfo.at(idx);
+    auto& cooldownInfo = _iConfig.cooldownInfo.at(idx);
     const auto& behavior = IBehaviorDispatcher::GetAllPossibleDispatches().at(idx);    
 
     if( !cooldownInfo.OnCooldown() &&
         ( behavior->IsActivated() ||
           behavior->WantsToBeActivated() ) ) {
-      availableBehaviors.PushBack(behavior, _weights[idx]);
+      availableBehaviorIdxs.PushBack(idx, _iConfig.weights[idx]);
 
       PRINT_CH_DEBUG("Behaviors", "BehaviorDispatcherRandom.ConsiderBehavior",
                      "%s: considering '%s' with weight %f",
                      GetDebugLabel().c_str(),
                      behavior->GetDebugLabel().c_str(),
-                     _weights[idx]);
+                     _iConfig.weights[idx]);
     }
     else {
       PRINT_CH_DEBUG("Behaviors", "BehaviorDispatcherRandom.IgnoreBehavior",
@@ -95,8 +135,10 @@ ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior()
     }
   }
 
-  if( !availableBehaviors.Empty() ) {
-    return availableBehaviors.Sample(GetRNG());
+  if( !availableBehaviorIdxs.Empty() ) {
+    size_t idx = availableBehaviorIdxs.Sample(GetRNG());
+    _dVars.lastDesiredBehaviorIdx = idx;
+    return IBehaviorDispatcher::GetAllPossibleDispatches().at(idx);
   }
   else {
     
@@ -110,11 +152,12 @@ ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior()
 
       if( ( behavior->IsActivated() ||
             behavior->WantsToBeActivated() ) ) {
-        auto& cooldownInfo = _cooldownInfo.at(idx);
+        auto& cooldownInfo = _iConfig.cooldownInfo.at(idx);
         const float remCooldown = cooldownInfo.GetRemainingCooldownTime_s();
         if( remCooldown < minCooldownRemaining ) {
           minCooldownRemaining = remCooldown;
           bestBehavior = behavior;
+          _dVars.lastDesiredBehaviorIdx = idx;
         }
       }
     }
@@ -135,14 +178,28 @@ ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherRandom::DispatcherUpdate()
 {
-  if( _shouldEndAfterBehavior &&
+  if( _dVars.shouldEndAfterBehavior &&
       ! IsControlDelegated() &&
       IsActivated() )
   {
     CancelSelf();
   }
+  
+  if( IsActivated()
+      && (_dVars.lastDesiredBehaviorIdx < _iConfig.cooldownInfo.size())
+      && !IsControlDelegated() )
+  {
+    // the last behavior must have stopped, so start its cooldown now
+    PRINT_CH_INFO("Behaviors",
+                  "BehaviorDispatcherRandom.LastBehaviorStopped.StartCooldown",
+                  "Behavior idx %zu '%s' seems to have stopped, start cooldown",
+                  _dVars.lastDesiredBehaviorIdx,
+                  IBehaviorDispatcher::GetAllPossibleDispatches()[_dVars.lastDesiredBehaviorIdx]->GetDebugLabel().c_str());
+    _iConfig.cooldownInfo[ _dVars.lastDesiredBehaviorIdx ].StartCooldown(GetRNG());
+    _dVars.lastDesiredBehaviorIdx = _iConfig.cooldownInfo.size();
+  }
 }
 
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki

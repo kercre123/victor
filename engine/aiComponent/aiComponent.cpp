@@ -22,7 +22,7 @@
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/aiComponent/puzzleComponent.h"
-#include "engine/aiComponent/templatedImageCache.h"
+#include "engine/aiComponent/compositeImageCache.h"
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
@@ -46,41 +46,6 @@ static const int kObsMaxObjectDistance_mm     = 100;   // don't respond if senso
 namespace Anki {
 namespace Cozmo {
 
-
-namespace ComponentWrappers{
-AIComponentComponents::AIComponentComponents(Robot&                      robot,
-                                             BehaviorComponent*&         behaviorComponent,
-                                             ContinuityComponent*        continuityComponent,
-                                             FaceSelectionComponent*     faceSelectionComponent,
-                                             FreeplayDataTracker*        freeplayDataTracker,
-                                             AIInformationAnalyzer*      infoAnalyzer,
-                                             ObjectInteractionInfoCache* objectInteractionInfoCache,
-                                             PuzzleComponent*            puzzleComponent,
-                                             TemplatedImageCache*        templatedImageCache,
-                                             TimerUtility*               timerUtility,
-                                             AIWhiteboard*               aiWhiteboard)
-:_robot(robot)
-,_components({
-  {AIComponentID::BehaviorComponent,          ComponentWrapper(behaviorComponent, true)},
-  {AIComponentID::ContinuityComponent,        ComponentWrapper(continuityComponent, true)},
-  {AIComponentID::FaceSelection,              ComponentWrapper(faceSelectionComponent, true)},
-  {AIComponentID::FreeplayDataTracker,        ComponentWrapper(freeplayDataTracker, true)},
-  {AIComponentID::InformationAnalyzer,        ComponentWrapper(infoAnalyzer, true)},
-  {AIComponentID::ObjectInteractionInfoCache, ComponentWrapper(objectInteractionInfoCache, true)},
-  {AIComponentID::Puzzle,                     ComponentWrapper(puzzleComponent, true)},
-  {AIComponentID::TemplatedImageCache,        ComponentWrapper(templatedImageCache, true)},
-  {AIComponentID::TimerUtility,               ComponentWrapper(timerUtility, true)},
-  {AIComponentID::Whiteboard,                 ComponentWrapper(aiWhiteboard, true)}
-}){}
-
-AIComponentComponents::~AIComponentComponents()
-{
-  
-}
-
-}
-
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIComponent::AIComponent()
 : UnreliableComponent<BCComponentID>(this, BCComponentID::AIComponent)
@@ -97,118 +62,56 @@ AIComponent::~AIComponent()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result AIComponent::Init(Robot* robot, BehaviorComponent*& customBehaviorComponent)
+void AIComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
 {
+  _robot = robot;
   const CozmoContext* context = robot->GetContext();
 
   if(context == nullptr ) {
     PRINT_NAMED_WARNING("AIComponent.Init.NoContext", "wont be able to load some componenets. May be OK in unit tests");
   }
-
+  
   {
-    BehaviorComponent* behaviorComponent = nullptr;
-    bool behaviorCompInitRequired = false;
-    if(customBehaviorComponent != nullptr) {
-      behaviorComponent = customBehaviorComponent;
-      customBehaviorComponent = nullptr;
-    }else{
-      behaviorComponent = new BehaviorComponent();
-      behaviorCompInitRequired = true;
+    _aiComponents = std::make_unique<EntityType>();
+    {
+      auto* faceSelectionComp = new FaceSelectionComponent(*robot, robot->GetFaceWorld(), robot->GetMicDirectionHistory());
+      auto* compositeImageCache = new CompositeImageCache(robot->GetContext()->GetDataLoader()->GetFacePNGPaths());
+      
+      _aiComponents->AddDependentComponent(AIComponentID::BehaviorComponent,          new BehaviorComponent());
+      _aiComponents->AddDependentComponent(AIComponentID::ContinuityComponent,        new ContinuityComponent(*robot));
+      _aiComponents->AddDependentComponent(AIComponentID::FaceSelection,              faceSelectionComp);
+      _aiComponents->AddDependentComponent(AIComponentID::FreeplayDataTracker,        new FreeplayDataTracker());
+      _aiComponents->AddDependentComponent(AIComponentID::InformationAnalyzer,        new AIInformationAnalyzer());
+      _aiComponents->AddDependentComponent(AIComponentID::ObjectInteractionInfoCache, new ObjectInteractionInfoCache(*robot));
+      _aiComponents->AddDependentComponent(AIComponentID::Puzzle,                     new PuzzleComponent(*robot));
+      _aiComponents->AddDependentComponent(AIComponentID::CompositeImageCache,        compositeImageCache);
+      _aiComponents->AddDependentComponent(AIComponentID::TimerUtility,               new TimerUtility());
+      _aiComponents->AddDependentComponent(AIComponentID::Whiteboard,                 new AIWhiteboard(*robot));
     }
 
-    _aiComponents = std::make_unique<ComponentWrappers::AIComponentComponents>(
-          *robot,
-          behaviorComponent,
-          new ContinuityComponent(*robot),
-          new FaceSelectionComponent(*robot, robot->GetFaceWorld(), robot->GetMicDirectionHistory()),
-          new FreeplayDataTracker(),
-          new AIInformationAnalyzer(),
-          new ObjectInteractionInfoCache(*robot),
-          new PuzzleComponent(*robot),
-          new TemplatedImageCache(robot->GetContext()->GetDataLoader()->GetFacePNGPaths()),
-          new TimerUtility(),
-          new AIWhiteboard(*robot)
-    );
-
-    if(behaviorCompInitRequired){
-      auto& behaviorComp = GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent);
-      auto entity = std::make_unique<BehaviorComponent::EntityType>();
-      entity->AddDependentComponent(BCComponentID::AIComponent, this, false);
-      BehaviorComponent::GenerateManagedComponents(*robot, entity);
-      behaviorComp.Init(robot, std::move(entity));
-    }
-  }
-  
-  
-  auto& dataTracker = GetComponent<FreeplayDataTracker>(AIComponentID::FreeplayDataTracker);
-  
-  // Toggle flag to "start" the tracking process - legacy assumption that freeeplay is not
-  // active on app start - full fix requires a deeper update to the data tracking system
-  // that is outside of scope for this PR but should be addressed in VIC-626
-  dataTracker.SetFreeplayPauseFlag(true, FreeplayPauseFlag::OffTreads);
-  dataTracker.SetFreeplayPauseFlag(false, FreeplayPauseFlag::OffTreads);
-    
-  // initialize whiteboard
-  auto& whiteBoard = GetComponent<AIWhiteboard>(AIComponentID::Whiteboard);
-  whiteBoard.Init();
-  
-  RobotDataLoader* dataLoader = nullptr;
-  if(context){
-    dataLoader = robot->GetContext()->GetDataLoader();
-  }
-  
-  return RESULT_OK;
+    _aiComponents->InitComponents(robot);
+  }  
 }
 
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result AIComponent::Update(Robot& robot, std::string& currentActivityName,
-                                         std::string& behaviorDebugStr)
+void AIComponent::UpdateDependent(const RobotCompMap& dependentComponents)
 {
-
-
-  // information analyzer should run before behaviors so that they can feed off its findings
-  {
-    auto& infoAnalyzer = GetComponent<AIInformationAnalyzer>(AIComponentID::InformationAnalyzer);
-    infoAnalyzer.Update(robot);
-  }
-  {
-    auto& whiteboard = GetComponent<AIWhiteboard>(AIComponentID::Whiteboard);
-    whiteboard.Update();
-  }
-  
-  // Update continuity component before behavior component to ensure behaviors don't
-  // re-gain control when an action is pending
-  {
-    auto& contComponent = GetComponent<ContinuityComponent>(AIComponentID::ContinuityComponent);
-    contComponent.Update();
-  }
-  
-  {
-    auto& behaviorComponent = GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent);
-    behaviorComponent.Update(robot, currentActivityName, behaviorDebugStr);
-  }
-
-  {
-    auto& freeplayTracker = GetComponent<FreeplayDataTracker>(AIComponentID::FreeplayDataTracker);
-    freeplayTracker.Update();
-  }
-  
-  CheckForSuddenObstacle(robot);
-
-  return RESULT_OK;
+  _aiComponents->UpdateComponents();
+  CheckForSuddenObstacle(*_robot);
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIComponent::OnRobotDelocalized()
 {
-  GetWhiteboard().OnRobotDelocalized();
+  GetComponent<AIWhiteboard>().OnRobotDelocalized();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIComponent::OnRobotRelocalized()
 {
-  GetWhiteboard().OnRobotRelocalized();
+  GetComponent<AIWhiteboard>().OnRobotRelocalized();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -269,14 +172,14 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
   } 
 }
 
-
+#if ANKI_DEV_CHEATS
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorContainer& AIComponent::GetBehaviorContainer() 
 {
-  auto& behaviorComponent = GetComponent<BehaviorComponent>(AIComponentID::BehaviorComponent);
+  auto& behaviorComponent = GetComponent<BehaviorComponent>();
   return behaviorComponent.GetBehaviorContainer();
 }
-
+#endif
 
 } // namespace Cozmo
 } // namespace Anki

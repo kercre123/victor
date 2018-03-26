@@ -22,7 +22,6 @@
 #include "engine/utils/cozmoFeatureGate.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/externalInterface/messageFromActiveObject.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/math/math.h"
@@ -72,7 +71,7 @@ void BlockTapFilterComponent::InitDependent(Cozmo::Robot* robot, const RobotComp
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BlockTapFilterComponent::Update()
+void BlockTapFilterComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
   ANKI_CPU_PROFILE("BlockTapFilterComponent::Update");
   
@@ -81,10 +80,10 @@ void BlockTapFilterComponent::Update()
     const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     if( currTime > _waitToTime )
     {
-      std::list<ObjectTapped>::iterator highIter = _tapInfo.begin();
+      std::list<ExternalInterface::ObjectTapped>::iterator highIter = _tapInfo.begin();
       int16_t highIntensity = ((*highIter).tapPos - (*highIter).tapNeg);
       // grab with highest intensity from recent taps after set amount of time from first tap in group.
-      for (std::list<ObjectTapped>::iterator it=_tapInfo.begin(); it != _tapInfo.end(); ++it)
+      for (std::list<ExternalInterface::ObjectTapped>::iterator it=_tapInfo.begin(); it != _tapInfo.end(); ++it)
       {
         int16_t currIntensity = ((*it).tapPos - (*it).tapNeg);
         if( highIntensity < currIntensity)
@@ -94,7 +93,7 @@ void BlockTapFilterComponent::Update()
         }
       }
       PRINT_CH_INFO("BlockPool","BlockTapFilterComponent.Update","intensity %d time: %d id: %d",highIntensity,currTime,(*highIter).objectID);
-      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(*highIter)));
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ObjectTapped(*highIter)));
       _tapInfo.clear();
     }
   }
@@ -158,10 +157,10 @@ void BlockTapFilterComponent::HandleSendTapFilterStatus(const AnkiEvent<External
 }
 #endif
   
-void BlockTapFilterComponent::HandleActiveObjectTapped(const ObjectTapped& message)
+void BlockTapFilterComponent::HandleActiveObjectTapped(const ExternalInterface::ObjectTapped& message)
 {
   // We make a copy of this message so we can update the object ID before broadcasting
-  ObjectTapped payload = message;
+  ExternalInterface::ObjectTapped payload = message;
   
   // Taps below threshold should be filtered and ignored.
   const int16_t intensity = payload.tapPos - payload.tapNeg;
@@ -197,7 +196,7 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const ObjectTapped& messa
   if (!_enabled || !_robot->IsPhysical())
   {
     // Do not filter any taps if block tap filtering was disabled.
-    _robot->Broadcast(ExternalInterface::MessageEngineToGame(ObjectTapped(payload)));
+    _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ObjectTapped(payload)));
   }
   else
   {
@@ -215,7 +214,7 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const ObjectTapped& messa
   CheckForDoubleTap(payload.objectID);
 }
 
-void BlockTapFilterComponent::HandleActiveObjectMoved(const ObjectMoved& payload)
+void BlockTapFilterComponent::HandleActiveObjectMoved(const ExternalInterface::ObjectMoved& payload)
 {
   // In the message coming from the robot, the objectID is the slot the object is connected on which is its
   // engine activeID
@@ -246,7 +245,7 @@ void BlockTapFilterComponent::HandleActiveObjectMoved(const ObjectMoved& payload
   }
 }
 
-void BlockTapFilterComponent::HandleActiveObjectStopped(const ObjectStoppedMoving& payload)
+void BlockTapFilterComponent::HandleActiveObjectStopped(const ExternalInterface::ObjectStoppedMoving& payload)
 {
   // In the message coming from the robot, the objectID is the slot the object is connected on which is its
   // engine activeID

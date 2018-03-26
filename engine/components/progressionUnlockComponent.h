@@ -41,19 +41,14 @@ public:
   // IDependencyManagedComponent functions
   //////
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
-  // Maintain the chain of initializations currently in robot - it might be possible to
-  // change the order of initialization down the line, but be sure to check for ripple effects
-  // when changing this function
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
-    dependencies.insert(RobotComponentID::Inventory);
+    dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   //////
   // end IDependencyManagedComponent functions
   //////
-
-
-  void Init();
 
   // By default, this checks if the given unlock is _actually_ unlocked. if forFreeplay=true, then first it
   // will check the freeplay overrides in json. If there is a corresponding entry there, this will return
@@ -67,7 +62,6 @@ public:
   // send a message representing the current status of all unlocks
   void SendUnlockStatus() const;
 
-  void Update();
 
   template<typename T>
   void HandleMessage(const T& msg);

@@ -31,6 +31,7 @@ protected:
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual Result         OnBehaviorActivatedInternal()   override;
   virtual PlaypenStatus PlaypenUpdateInternal() override;

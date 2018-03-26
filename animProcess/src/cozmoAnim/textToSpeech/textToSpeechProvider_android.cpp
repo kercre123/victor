@@ -45,12 +45,6 @@ namespace {
 
 #endif
 
-// TTS license params
-// VIC-293 TODO: Obfuscate a la Cozmo
-#define BAB_TTS_USERID 0x616e596a
-#define BAB_TTS_PASSWD 0x0003909b
-#define BAB_TTS_LICENSE "\"3728 0 jYna #COMMERCIAL#Anki-SanFrancisco-UnitedStatesofAmerica\"\nTaswmpTh5wDkWrvG2@qcUjG6tywkk7UFaT8TBelBzpD3NZoV5wgA!HPJZc@uxZfwgjfUXdzxAXzB@BWkIborrT##\nRG5dt6vLuFzK5a$fKbcaxcbUrc7!zUIiHPdrVm3nu!dJvyyb\nWWGfgh4ZR9pnqgv9mrlCAS##\n"
-
 // Fixed parameters
 #define TTS_LEADINGSILENCE_MS  50 // Minimum allowed by Acapela TTS SDK
 #define TTS_TRAILINGSILENCE_MS 50 // Minimum allowed by Acapela TTS SDK
@@ -79,6 +73,11 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* context, c
     LOG_WARNING("TextToSpeechProvider.Initialize.NoLocale", "Missing locale");
     return;
   }
+
+  // Set up license parameters
+  const auto tts_userid = AcapelaTTS::GetUserid();
+  const auto tts_passwd = AcapelaTTS::GetPassword();
+  const auto tts_license = AcapelaTTS::GetLicense();
 
   // Set up default parameters
   _tts_voice = "co-German-Klaus-22khz/ged/ged_klaus_22k_co.fl.ini";
@@ -148,9 +147,9 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* context, c
   // Populate init struct
   _BAB_MemParam = (BABILE_MemParam *) calloc(1, sizeof(BABILE_MemParam));
   _BAB_MemParam->sSize = sizeof(BABILE_MemParam); /* Sanity+version check*/
-  _BAB_MemParam->license = (const BB_TCHAR *) BAB_TTS_LICENSE;
-  _BAB_MemParam->uid.passwd = BAB_TTS_PASSWD;
-  _BAB_MemParam->uid.userId = BAB_TTS_USERID;
+  _BAB_MemParam->license = (const BB_TCHAR *) tts_license.c_str();
+  _BAB_MemParam->uid.passwd = tts_passwd;
+  _BAB_MemParam->uid.userId = tts_userid;
   _BAB_MemParam->nlpeLS = nlpeLS;
   _BAB_MemParam->nlpModule = nlpModule;
   _BAB_MemParam->synthLS = synthLS;

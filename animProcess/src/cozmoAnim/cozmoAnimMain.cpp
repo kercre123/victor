@@ -4,11 +4,12 @@
 * Author: Kevin Yoon
 * Created: 6/26/17
 *
-* Description: Cozmo Anim Process on Android
+* Description: Cozmo Anim Process on Victor
 *
 * Copyright: Anki, inc. 2017
 *
 */
+
 #include "cozmoAnim/animEngine.h"
 
 #include "coretech/common/engine/jsonTools.h"
@@ -16,6 +17,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "util/console/consoleSystem.h"
 #include "util/logging/logging.h"
 #include "util/logging/androidLogPrintLogger_android.h"
 #include "util/fileUtils/fileUtils.h"
@@ -33,20 +35,13 @@ using namespace Anki::Cozmo;
 #define LOG_CHANNEL "CozmoAnimMain"
 
 namespace {
-AnimEngine* animEngine = nullptr;
+  bool gShutdown = false;
 }
 
-static void Cleanup(int signum)
+static void Shutdown(int signum)
 {
-  LOG_INFO("CozmoAnimMain.Cleanup", "exit on signal %d", signum);
-  if (animEngine != nullptr)
-  {
-    delete animEngine;
-    animEngine = nullptr;
-  }
-
-  sync();
-  exit(0);
+  LOG_INFO("CozmoAnimMain.Shutdown", "Shutdown on signal %d", signum);
+  gShutdown = true;
 }
 
 Anki::Util::Data::DataPlatform* createPlatform(const std::string& persistentPath,
@@ -117,7 +112,7 @@ Anki::Util::Data::DataPlatform* createPlatform()
 
 int main(void)
 {
-  signal(SIGTERM, Cleanup);
+  signal(SIGTERM, Shutdown);
 
   // - create and set logger
   Util::AndroidLogPrintLogger logPrintLogger("vic-anim");
@@ -125,10 +120,19 @@ int main(void)
 
   Util::Data::DataPlatform* dataPlatform = createPlatform();
 
-  // Create and init AnimEngine
-  animEngine = new AnimEngine(dataPlatform);
+  // Set up the console vars to load from file, if it exists
+  ANKI_CONSOLE_SYSTEM_INIT(dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "consoleVarsAnim.ini").c_str());
 
-  animEngine->Init();
+  // Create and init AnimEngine
+  AnimEngine * animEngine = new AnimEngine(dataPlatform);
+
+  Result result = animEngine->Init();
+  if (RESULT_OK != result) {
+    LOG_ERROR("CozmoAnimMain.main.InitFailed", "Unable to initialize (exit %d)", result);
+    delete animEngine;
+    sync();
+    exit(result);
+  }
 
   using namespace std::chrono;
   using TimeClock = steady_clock;
@@ -138,15 +142,16 @@ int main(void)
   // Set the target time for the end of the first frame
   auto targetEndFrameTime = runStart + (microseconds)(ANIM_TIME_STEP_US);
 
-
-  while (1) {
+  // Loop until shutdown or error
+  while (!gShutdown) {
 
     const auto tickStart = TimeClock::now();
     const duration<double> curTime_s = tickStart - runStart;
     const BaseStationTime_t curTime_ns = Util::numeric_cast<BaseStationTime_t>(Util::SecToNanoSec(curTime_s.count()));
 
-    if (animEngine->Update(curTime_ns) != RESULT_OK) {
-      PRINT_NAMED_WARNING("CozmoAnimMain.Update.Failed", "Exiting...");
+    result = animEngine->Update(curTime_ns);
+    if (RESULT_OK != result) {
+      PRINT_NAMED_WARNING("CozmoAnimMain.main.UpdateFailed", "Unable to update (result %d)", result);
       break;
     }
 
@@ -190,4 +195,10 @@ int main(void)
     }
 
   }
+
+  LOG_INFO("CozmoAnimMain.main.Shutdown", "Shutting down (exit %d)", result);
+
+  delete animEngine;
+  sync();
+  exit(result);
 }

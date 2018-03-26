@@ -158,7 +158,7 @@ elseif(VICOS)
 
   include(vicos-sdk-stl-config)
 else()
-  # Current default (android or mac platforms)
+  # Current DEFAULT (android or mac platforms)
   set(CLEAN_CLAD_TARGETS TRUE)
 
   import(util "lib/util")
@@ -179,6 +179,7 @@ else()
   add_subdirectory("cannedAnimLib")
   add_subdirectory("animProcess")
   add_subdirectory("webServerProcess")
+  add_subdirectory("lib/micData")
   add_subdirectory("lib/signalEssence")
   add_subdirectory("platform")
 

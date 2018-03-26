@@ -30,7 +30,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/externalInterface/messageFromActiveObject.h"
 #include "util/console/consoleInterface.h"
 
 
@@ -136,7 +135,19 @@ void BehaviorAcknowledgeObject::LoadConfig(const Json::Value& config)
                       "%d", _params.numImagesToWaitFor);
   }
 } // LoadConfig()
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAcknowledgeObject::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kReactionAnimGroupKey,
+    kMaxTurnAngleKey,
+    kPanToleranceKey,
+    kTiltToleranceKey,
+    kNumImagesToWaitForKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeObject::BeginIteration()

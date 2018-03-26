@@ -28,10 +28,23 @@ class BehaviorDispatcherStrictPriority : public IBehaviorDispatcher
 protected:
   
   virtual ICozmoBehaviorPtr GetDesiredBehavior() override;
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+private:
+  struct InstanceConfig {
+    InstanceConfig();
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
 
 };
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 
-#endif
+#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_Dispatch_BehaviorDispatcherStrictPriority_H__

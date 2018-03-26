@@ -1,0 +1,17 @@
+{
+  "play" : [  
+    {
+      "Speaker": 8,
+      "Sound": "alarm",
+      "Play_Amount": 1,
+      "Delay": 0
+    },
+    {
+      "Speaker": 5, 
+      "Sound": "unknown_intent",
+      "Play_Amount": 3,
+      "Delay": 0
+    }
+  ]
+}
+

@@ -6,6 +6,8 @@
 #include "cannedAnimLib/proceduralFace.h"
 #include "coretech/vision/engine/image.h"
 
+#define PROCEDURALFACE_NOISE_FEATURE 1 // feature capable but disabled as num frames = 0
+
 namespace Anki {
   
   // Forward declaration:
@@ -56,8 +58,10 @@ namespace Cozmo {
     static Vision::Image _glowImg;
     static Vision::Image _eyeShape;
     
+#if PROCEDURALFACE_NOISE_FEATURE
     static const Array2d<f32>& GetNoiseImage(const Util::RandomGenerator& rng);
-    
+#endif
+
     // Returns true if scanline should be applied to the given row. Only
     // apply scanlines in alternating pairs of rows (i.e. 00110011)
     static bool ShouldApplyScanlineToRow(const u32 rowNum) { return (rowNum & 2) != 0; }

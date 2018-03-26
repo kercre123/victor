@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenWaitToStart.h"
 
+#include "engine/components/batteryComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
@@ -95,7 +96,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInterna
                           (PlaypenConfig::kUseButtonToStart &&
                            _buttonPressed);
 
-  if(touchGood && buttonGood && (robot.IsOnCharger() || robot.IsCharging()))
+  if(touchGood && buttonGood && (robot.GetBatteryComponent().IsOnChargerContacts() || robot.GetBatteryComponent().IsCharging()))
   {
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, PlaypenStatus::Complete);
   }

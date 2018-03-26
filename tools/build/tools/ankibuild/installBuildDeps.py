@@ -1,16 +1,19 @@
-#!/usr/bin/env python
-# Do not change to python2 as this is used to install python2.
+#!/usr/bin/python
 
 import sys
 import subprocess
 import argparse
 import platform
 import signal
+import re
+from distutils.version import LooseVersion, StrictVersion
 from os import getenv, path, killpg, setsid, environ
 
 class DependencyInstaller(object):
 
-  OPT = path.join("/usr", "local", "opt")
+  L_BIN = path.join("/usr", "local", "bin")
+  APPROVED_BREW_VERSION = "1.5.9"
+  MINIMUM_PYTHON3 = '3.6.4'
 
   def __init__(self, options):
     if options.verbose:
@@ -21,7 +24,8 @@ class DependencyInstaller(object):
     """Check whether a package @dep is installed"""
     # TODO: This check will work for executables, but checking whether something exists
     # is not enough. We need to ensure that the installed version has the required capabilities.
-    if not path.exists(path.join("/usr/local/opt", dep)):
+    # OR we need to check that brew has just installed it.  Since some things are just libs.
+    if not path.exists(path.join(self.L_BIN, dep)):
       notFound = subprocess.call(['which', dep], stdout=subprocess.PIPE)
       if notFound:
         return False
@@ -40,70 +44,123 @@ class DependencyInstaller(object):
 
     noBrew = subprocess.call(['which', 'brew'], stdout=subprocess.PIPE)
     if noBrew:
-       print "Homebrew is not installed.  Goto https://brew.sh "
+       print( "Homebrew is not installed.  Goto https://brew.sh ")
        return False
+    return True
+
+  def mustUpgrade(self, tool, min_version):
+    """Compare installed version to make sure its at least at the minimum value."""
+
+    home_regex = re.compile('.*(\d+\.\d+\.\d+\S*)\s')
+
+    try:
+      stdout_result = subprocess.check_output([tool, '--version'])
+      if stdout_result == "":
+        print("info: {0} not installed at this time.".format(tool))
+        return False
+    except:
+      print("info: {0} not installed at this time.".format(tool))
+      return False
+
+    current_version = home_regex.match(stdout_result)
+
+    print("info: {0} {1}".format(tool, current_version.group(1)))
+
+    return LooseVersion(min_version) > LooseVersion(current_version.group(1))
+
+  def minimumNeededVersion(self, tool, version):
+    """if tool is using a version that is too old it needs to be updated."""
+
+    if self.mustUpgrade(tool, version):
+      print("info: {0} is too old. Updating...".format(tool))
+      if tool == 'brew':
+         cmd = 'update'
+      else:
+         cmd = 'upgrade'
+      result = subprocess.call(['brew', cmd])
+      if result:
+        print("error: failed to {0} {1}.".format(cmd, tool))
+        return False
+      return True
+    return True
+
+  def forceInstall(self, tool):
+    """force installation of package.  this will be for packages that brew in its ignorance has deprecated."""
+    print("force installing {0}".format(tool))
+    result = subprocess.call(['brew', 'install', '--force', '--verbose', tool])
+    if result:
+      print("error: failed to install {0}!".format(tool))
+      return False
+    print("keg-only packages are not linked.".format(tool))
+    print("warning: force linking {0}".format(tool))
+    result = subprocess.call(['brew', 'link', '--force', '--verbose', tool])
+    if result:
+      print("error: failed to link {0}!".format(tool))
+      return False
+    if not self.isInstalled(tool):
+      print("warning: {0} still not found at {1}".format(tool,self.L_BIN))
     return True
 
 
   def installTool(self, tool):
     if not self.isInstalled(tool):
-      # TODO: Add support for installing specific versions.
-      print "Installing %s" % tool
+      # todo: add support for installing specific versions.
+      print "installing %s" % tool
       result = subprocess.call(['brew', 'install', tool])
       if result:
-        print "Error: Failed to install %s!" % tool
+        print "error: failed to install %s!" % tool
         return False
       if not self.isInstalled(tool):
-        print "Error: %s still not installed!" % tool
-        return False
+        print("warning: {0} still not found in {1}.  possibly keg-only".format(tool, self.L_BIN))
+        return self.forceInstall(tool)
     return True
 
   def installPythonPackage(self, package, version):
     if not self.isPythonPackageInstalled(package, version):
-      print "Installing %s" % package
+      print "installing %s" % package
       pip = 'pip' + str(version)
       result = subprocess.call([pip, 'install', package])
       if result:
-        print("Error: Failed to install python{0} package {1}!".format(version, package))
+        print("error: failed to install python{0} package {1}!".format(version, package))
         return False
       if not self.isPythonPackageInstalled(package, version):
-        print("Error: python{0} package {1} still not installed!".format(version, package))
+        print("error: python{0} package {1} still not installed!".format(version, package))
         return False
     return True
 
 
   def addEnvVariable(self, env_name, env_value):
-    """ Adds an Env variable to bash profile & sets it for the run of the script.
-    Args:
-        env_name: Name of environment variable(will be caste to uppercase).
-        env_value: Value of variable.
+    """ adds an env variable to bash profile & sets it for the run of the script.
+    args:
+        env_name: name of environment variable(will be caste to uppercase).
+        env_value: value of variable.
 
-    Returns: True if set.  False is the variable exists either in the environment or in bash_profile.
+    returns: True if set.  False is the variable exists either in the environment or in bash_profile.
 
     """
     env_name = str.upper(env_name)
     home = getenv("HOME")
     if home is None:
-      print("Error: Unable to find ${HOME} directory")
+      print("error: unable to find ${HOME} directory")
       return False
 
-    # The insurmountable problem is that a subprocess cannot change the environment of the calling process.
-    # This will set everything for this run OR for future terminals to work correctly.
+    # the insurmountable problem is that a subprocess cannot change the environment of the calling process.
+    # this will set everything for this run or for future terminals to work correctly.
     if getenv(env_name) is None:
       environ[env_name] = env_value
       print("Set environment variable {} to {}".format(env_name, env_value))
 
       bash_prof = path.join(home, '.bash_profile')
       export_line = 'export {}={}'.format(env_name, env_value)
-      # If there is no bash profile don't' make it.
+      # if there is no bash profile don't' make it.
       if path.isfile(bash_prof):
         handle_prof = open(bash_prof, 'r')
         check_lines = handle_prof.readlines()
         handle_prof.close()
         for lines in check_lines:
           if lines.strip() == export_line.strip():
-            #Variable already set but doesn't exist in env. This implies that it's been added by this process.
-            print("Warning: You should open a new terminal now that bash_profile has been modified.")
+            #variable already set but doesn't exist in env. this implies that it's been added by this process.
+            print("warning: you should open a new terminal now that bash_profile has been modified.")
             return False
 
         with open(bash_prof, 'a+') as file:
@@ -111,11 +168,12 @@ class DependencyInstaller(object):
         if file.closed is True:
           # bash is not optional for this subprocess call.
           if subprocess.call(['source', bash_prof], executable="/bin/bash") != 0:
-            print "Warning: Unable to source {}".format(bash_prof)
+            print "warning: unable to source {}".format(bash_prof)
 
     return True
 
   def install(self):
+    environ["PIP_REQUIRE_VIRTUALENV"] = ""
     homebrew_deps = self.options.deps
 
     python2_deps = self.options.python2_deps
@@ -123,6 +181,10 @@ class DependencyInstaller(object):
 
     if not self.testHomebrew():
       return False
+
+    # dependency not existing wont break this.
+    self.minimumNeededVersion('python3',self.MINIMUM_PYTHON3)
+    self.minimumNeededVersion('brew',self.APPROVED_BREW_VERSION)
 
     for tool in homebrew_deps:
       if not self.installTool(tool):

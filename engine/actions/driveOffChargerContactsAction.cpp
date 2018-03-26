@@ -17,6 +17,7 @@
  **/
 
 #include "engine/actions/driveOffChargerContactsAction.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 
@@ -46,7 +47,7 @@ DriveOffChargerContactsAction::DriveOffChargerContactsAction()
 
 ActionResult DriveOffChargerContactsAction::Init()
 {
-  _startedOnCharger = GetRobot().IsOnCharger();
+  _startedOnCharger = GetRobot().GetBatteryComponent().IsOnChargerContacts();
   if(_startedOnCharger)
   {
     return DriveStraightAction::Init();
@@ -73,7 +74,7 @@ ActionResult DriveOffChargerContactsAction::CheckIfDone()
   }
   
   // If drive straight has finished, check that we are no longer on the charger
-  if(!GetRobot().IsOnCharger())
+  if(!GetRobot().GetBatteryComponent().IsOnChargerContacts())
   {
     return ActionResult::SUCCESS;
   }

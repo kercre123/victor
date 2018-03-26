@@ -28,7 +28,6 @@ enum uint_32 RobotStatusFlag {
     IS_CHARGING             = 0x00002000,
     CLIFF_DETECTED          = 0x00004000,
     ARE_WHEELS_MOVING       = 0x00008000,
-    IS_CHARGER_OOS          = 0x00010000,
 }
 
 enum uint_8 DockAction

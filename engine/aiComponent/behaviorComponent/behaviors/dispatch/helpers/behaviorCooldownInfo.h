@@ -43,6 +43,8 @@ private:
 
   // members
   float _onCooldownUntil_s = -1.0f;
+  
+  bool _ignoreFastForward = false;
 };
 
 }

@@ -37,38 +37,50 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Standard });
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
 
 private:
+
+  struct InstanceConfig {
+    InstanceConfig();
+    InstanceConfig(const Json::Value& config, const std::string& debugName);
+
+    AnimationTrigger leftTurnAnimTrigger;
+    AnimationTrigger rightTurnAnimTrigger;
+    AnimationTrigger backupStartAnimTrigger;
+    AnimationTrigger backupEndAnimTrigger;
+    AnimationTrigger backupLoopAnimTrigger;
+    AnimationTrigger raiseLiftAnimTrigger;
+    AnimationTrigger nuzzleAnimTrigger;
+
+    bool useCliffSensorCorrection;
+    std::unique_ptr<BlockWorldFilter> homeFilter;
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    ObjectID chargerID;
+    bool     drivingAnimsPushed;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
   
   void TransitionToTurn();
   void TransitionToMountCharger();
   void TransitionToPlayingNuzzleAnim();
   void TransitionToOnChargerCheck();
+  void ActionFailure();
   
   void PushDrivingAnims();
   void PopDrivingAnims();
   
-  struct {
-    bool useCliffSensorCorrection = true;
-    AnimationTrigger leftTurnAnimTrigger    = AnimationTrigger::Count;
-    AnimationTrigger rightTurnAnimTrigger   = AnimationTrigger::Count;
-    AnimationTrigger backupStartAnimTrigger = AnimationTrigger::Count;
-    AnimationTrigger backupEndAnimTrigger   = AnimationTrigger::Count;
-    AnimationTrigger backupLoopAnimTrigger  = AnimationTrigger::Count;
-    AnimationTrigger raiseLiftAnimTrigger   = AnimationTrigger::Count;
-    AnimationTrigger nuzzleAnimTrigger      = AnimationTrigger::Count;
-  } _params;
+    
   
-  void LoadConfig(const Json::Value& config);
-  
-  std::unique_ptr<BlockWorldFilter> _homeFilter;
-  
-  ObjectID _chargerID;
-  
-  bool _drivingAnimsPushed = false;
+
   
 };
   

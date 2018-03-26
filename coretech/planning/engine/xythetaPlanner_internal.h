@@ -82,7 +82,7 @@ struct xythetaPlannerImpl
                          GoalState_cPairs& roundedGoals_c) const;
 
   // same as above, but for the start
-  bool CheckContextStart(State& start) const;
+  bool CheckContextStart(GraphState& start) const;
 
   // Context holds everything that can change outside of planning, and should represent all of the config,
   // including start, goal, motion primitives, etc. and holds the environment.
@@ -96,7 +96,7 @@ struct xythetaPlannerImpl
   // down to _goalStateIDs, then converted back to continuous states. These will NOT remain sorted by GoalID.
   GoalState_cPairs _goals_c;
 
-  State _start;
+  GraphState _start;
   StateID _startID;
 
   OpenList _open;

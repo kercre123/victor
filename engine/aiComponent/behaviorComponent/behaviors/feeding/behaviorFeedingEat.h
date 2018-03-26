@@ -40,16 +40,17 @@ public:
   virtual bool WantsToBeActivatedBehavior() const override;
   
   virtual void AddListener(IFeedingListener* listener) override{
-    _feedingListeners.insert(listener);
+    _iConfig.feedingListeners.insert(listener);
   };
 
   // remove a listener if preset and return true. Otherwise, return false
   bool RemoveListeners(IFeedingListener* listener);
 
-  void SetTargetObject(const ObjectID& objID){_targetID = objID;}
+  void SetTargetObject(const ObjectID& objID){_dVars.targetID = objID;}
   
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
 
   using base = ICozmoBehavior;
   virtual void OnBehaviorActivated() override;
@@ -64,21 +65,30 @@ private:
     PlacingLiftOnCube,
     Eating
   };
-  
-  mutable ObjectID _targetID;
-  float _timeCubeIsSuccessfullyDrained_sec;
-  bool  _hasRegisteredActionComplete;
 
-  State _currentState;
-  
-  // Listeners which should be notified when Cozmo starts eating
-  std::set<IFeedingListener*> _feedingListeners;
-  // Listen for the cube being pulled away from Cozmo
-  std::shared_ptr<CubeAccelListeners::MovementListener> _cubeMovementListener; // CubeAccelComponent listener
+  struct InstanceConfig {
+    InstanceConfig();
+    // Listeners which should be notified when Cozmo starts eating
+    std::set<IFeedingListener*> feedingListeners;
+    // Listen for the cube being pulled away from Cozmo
+    std::shared_ptr<CubeAccelListeners::MovementListener> cubeMovementListener; // CubeAccelComponent listener
+  };
 
-  // map of cubes to skip. Key is the object ID, value is the last pose updated timestamp where we want to
-  // ignore it. If the pose has updated after this timestamp, consider it valid again
-  std::map< ObjectID, TimeStamp_t > _badCubesMap;
+  struct DynamicVariables {
+    DynamicVariables();
+
+    State currentState;
+    mutable ObjectID targetID;
+
+    float timeCubeIsSuccessfullyDrained_sec;
+    bool  hasRegisteredActionComplete;
+    // map of cubes to skip. Key is the object ID, value is the last pose updated timestamp where we want to
+    // ignore it. If the pose has updated after this timestamp, consider it valid again
+    std::map< ObjectID, TimeStamp_t > badCubesMap;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
   
   void TransitionToDrivingToFood();
   void TransitionToPlacingLiftOnCube();

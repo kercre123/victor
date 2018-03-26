@@ -13,7 +13,7 @@
 #ifndef WEB_SERVICE_H
 #define WEB_SERVICE_H
 
-#include "util/export/export.h"
+#include "civetweb/include/civetweb.h"
 
 #include "json/json.h"
 
@@ -77,6 +77,13 @@ public:
   
   const std::string& getConsoleVarsTemplate();
 
+  enum class WhichWebServer
+  {
+    Standalone = 0,
+    Engine     = 1,
+    Anim       = 2
+  };
+
   enum RequestType
   {
     RT_ConsoleVarsUI,
@@ -110,6 +117,9 @@ public:
   std::mutex _requestMutex;
 
   const Json::Value& GetConfig() { return _config; }
+  const Anki::Util::Data::DataPlatform* GetPlatform() { return _platform; }
+
+  void RegisterRequestHandler(std::string uri, mg_request_handler handler, void* cbdata);
 
 private:
 
@@ -144,6 +154,7 @@ private:
   std::vector<Request*> _requests;
 
   Json::Value _config;
+  Anki::Util::Data::DataPlatform* _platform;
  
   std::unordered_map<std::string, OnWebVizSubscribedType> _webVizSubscribedSignals;
   std::unordered_map<std::string, OnWebVizDataType> _webVizDataSignals;

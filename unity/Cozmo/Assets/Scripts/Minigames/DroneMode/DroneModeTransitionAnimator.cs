@@ -12,7 +12,6 @@ namespace Cozmo.Challenge.DroneMode {
     private TransitionAnimationState _CurrentAnimationState = TransitionAnimationState.NONE;
 
     private string _DebugString;
-    private System.Collections.Generic.Stack<AnimationTrigger> _IdleAnimationStack;
 
     private bool _AllowIdleAnimation = true;
 
@@ -25,7 +24,6 @@ namespace Cozmo.Challenge.DroneMode {
     }
 
     public DroneModeTransitionAnimator(IRobot targetRobot) {
-      _IdleAnimationStack = new System.Collections.Generic.Stack<AnimationTrigger>();
       _RobotToAnimate = targetRobot;
 
       // Push neutral idle
@@ -33,21 +31,8 @@ namespace Cozmo.Challenge.DroneMode {
     }
 
     public void CleanUp() {
-      // Pop neutral idle
-      while (_IdleAnimationStack.Count > 0) {
-        PopRobotIdleAnimation();
-      }
       _RobotToAnimate.CancelCallback(HandleInAnimationFinished);
       _RobotToAnimate.CancelCallback(HandleOutAnimationFinished);
-    }
-
-    public override string ToString() {
-      string animationStack = "";
-      foreach (var anim in _IdleAnimationStack) {
-        animationStack += "\n";
-        animationStack += anim.ToString();
-      }
-      return _DebugString + "\nStack(" + _IdleAnimationStack.Count + "):" + animationStack;
     }
 
     public void PlayTransitionAnimation(DroneModeControlsSlide.SpeedSliderSegment newSliderSegment) {
@@ -146,10 +131,6 @@ namespace Cozmo.Challenge.DroneMode {
 
     private void SetDrivingAnimation(DroneModeControlsSlide.SpeedSliderSegment currentDriveType) {
       UpdateDebugStringAndSendDAS("SetDrivingAnimation");
-      // Pop animations until we only have an idle
-      while (_IdleAnimationStack.Count > 0) {
-        PopRobotIdleAnimation();
-      }
       // Push current driving animation if not neutral
       switch (currentDriveType) {
       case DroneModeControlsSlide.SpeedSliderSegment.Forward:
@@ -176,9 +157,6 @@ namespace Cozmo.Challenge.DroneMode {
         _AllowIdleAnimation = allow;
         if (_CurrentDriveSpeedSegment == DroneModeControlsSlide.SpeedSliderSegment.Neutral
             && _TargetDriveSpeedSegment == DroneModeControlsSlide.SpeedSliderSegment.Neutral) {
-          while (_IdleAnimationStack.Count > 0) {
-            PopRobotIdleAnimation();
-          }
           UpdateDroneModeIdleAnimation();
         }
       }
@@ -196,12 +174,9 @@ namespace Cozmo.Challenge.DroneMode {
 
     private void PushRobotIdleAnimation(AnimationTrigger animation) {
       _RobotToAnimate.PushIdleAnimation(animation, kDroneModeIdle);
-      _IdleAnimationStack.Push(animation);
     }
 
     private void PopRobotIdleAnimation() {
-      _RobotToAnimate.RemoveIdleAnimation(kDroneModeIdle);
-      _IdleAnimationStack.Pop();
     }
 
     private void UpdateDebugStringAndSendDAS(string methodTag) {

@@ -35,9 +35,9 @@ target_link_libraries(victor_web_library
   cti_vision
   DAS
   osState
+  PUBLIC
   # vendor
   civetweb
-  PUBLIC
   robot_interface  # Needs to be public for cozmoConfig.h
 )
 

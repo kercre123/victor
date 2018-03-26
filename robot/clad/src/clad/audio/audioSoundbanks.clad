@@ -6,6 +6,10 @@ namespace SoundBank {
 
 enum uint_32 BankType
 {
+  Chewie_App = 652415938,
+  Chewie_Dev = 804253094,
+  Chewie_Global_Data = 3599655703,
+  Chewie_Ui = 2872058299,
   Cozmo = 2386142475,
   Cozmo_Singing = 3988466513,
   Dev_Debug = 1453038702,
@@ -14,6 +18,11 @@ enum uint_32 BankType
   Music = 3991942870,
   Sfx = 393239870,
   Ui = 1551306167,
+  Victor_Dev = 3324335988,
+  Victor_Global_Data = 550470153,
+  Victor_Sfx = 2740517684,
+  Victor_Ui = 1643138457,
+  Victor_Vo = 1693471430,
 }
 
 } // SoundBank

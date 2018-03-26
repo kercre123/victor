@@ -2,6 +2,8 @@
   "behaviorID" : "Socialize",
   "behaviorClass" : "DispatcherQueue",
 
+  "resetTimers": ["Socializing"],
+
   "behaviors" : [
     "DriveOffCharger",
     "ShortLookAroundForFaceAndCube",

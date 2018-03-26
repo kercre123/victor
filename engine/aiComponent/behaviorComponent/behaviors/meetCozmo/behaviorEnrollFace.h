@@ -57,7 +57,8 @@ protected:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated()   override;
   virtual void BehaviorUpdate() override;
@@ -85,12 +86,15 @@ private:
     LookingForFace,
     Enrolling,
     SayingName,
+    SayingIKnowThatName,
+    EmotingConfusion,
     SavingToRobot,
     TimedOut,
     ScanningInterrupted,
     SaveFailed,
     Failed_WrongFace,
     Failed_UnknownReason,
+    Failed_NameInUse,
     Cancelled,
   };
   
@@ -104,7 +108,10 @@ private:
   void TransitionToEnrolling();
   void TransitionToScanningInterrupted();
   void TransitionToSayingName();
+  void TransitionToSayingIKnowThatName();
   void TransitionToSavingToRobot();
+  // catch all for "confusion" animations that should play before transitioning to the given state
+  void TransitionToFailedState( State state, const std::string& stateName);
   
   void UpdateFaceToEnroll();
   void UpdateFaceIDandTime(const Face* newFace);
@@ -160,6 +167,8 @@ private:
   
   using EnrollmentSettings = ExternalInterface::SetFaceToEnroll;
   std::unique_ptr<EnrollmentSettings> _settings;
+  
+  State _failedState;
   
 }; // class BehaviorEnrollFace
   

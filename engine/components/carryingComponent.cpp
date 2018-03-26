@@ -217,7 +217,7 @@ void CarryingComponent::UnSetCarryingObjects(bool topOnly)
       continue;
     }
     
-    if ( carriedObject->GetPose().IsChildOf(_robot->GetLiftPose())) {
+    if ( carriedObject->GetPose().IsChildOf(_robot->GetComponent<FullRobotPose>().GetLiftPose())) {
       // if the carried object is still attached to the lift it can cause issues. We had a bug
       // in which we delocalized and unset as carrying, but would not dettach from lift, causing
       // the cube to accidentally inherit the new origin via its parent, the lift, since the robot is always
@@ -333,7 +333,7 @@ Result CarryingComponent::SetObjectAsAttachedToLift(const ObjectID& objectID,
   // marker is from the center of the block
   // TODO: compute the height adjustment per object or at least use values from cozmoConfig.h
   Pose3d objectPoseWrtLiftPose;
-  if(object->GetPose().GetWithRespectTo(_robot->GetLiftPose(), objectPoseWrtLiftPose) == false) {
+  if(object->GetPose().GetWithRespectTo(_robot->GetComponent<FullRobotPose>().GetLiftPose(), objectPoseWrtLiftPose) == false) {
     PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectAndLiftPoseHaveDifferentOrigins",
                       "Object robot is picking up and robot's lift must share a common origin.");
     return RESULT_FAIL;

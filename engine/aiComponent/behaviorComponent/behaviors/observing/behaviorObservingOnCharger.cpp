@@ -23,6 +23,13 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+namespace {
+const char* const kSmallMotionPeriodKey = "small_motion_period_s";
+const char* const kSmallMotionPeriodRandomFactorKey = "small_motion_period_random_factor";
+const char* const kLookUpPeriodMultiplierKey = "look_up_period_multiplier";
+const char* const kLookStraightPeriodMultiplierKey = "look_straight_period_multiplier";
+}
 
 struct BehaviorObservingOnCharger::Params
 {
@@ -41,18 +48,18 @@ struct BehaviorObservingOnCharger::Params
 
 BehaviorObservingOnCharger::Params::Params(const Json::Value& config)
 {
-  _smallMotionPeriod.ReadFromJson(config["small_motion_period_s"]);
-  _smallMotionPeriodRandomFactor = config.get("small_motion_period_random_factor", 0.0f).asFloat();
+  _smallMotionPeriod.ReadFromJson(config[kSmallMotionPeriodKey]);
+  _smallMotionPeriodRandomFactor = config.get(kSmallMotionPeriodRandomFactorKey, 0.0f).asFloat();
 
 
   _lookUpPeriodMultiplier = JsonTools::ParseFloat(config,
-                                                  "look_up_period_multiplier",
+                                                  kLookUpPeriodMultiplierKey,
                                                   "BehaviorObservingOnCharger.Params.LookUpPeriodMultiplier");
 
   
   _lookStraightPeriodMultiplier = JsonTools::ParseFloat(
     config,
-    "look_straight_period_multiplier",
+    kLookStraightPeriodMultiplierKey,
     "BehaviorObservingOnCharger.Params.LookStraightPeriodMultiplier");
 }
 
@@ -65,6 +72,17 @@ BehaviorObservingOnCharger::BehaviorObservingOnCharger(const Json::Value& config
 BehaviorObservingOnCharger::~BehaviorObservingOnCharger()
 {
 
+}
+
+void BehaviorObservingOnCharger::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kSmallMotionPeriodKey,
+    kSmallMotionPeriodRandomFactorKey,
+    kLookUpPeriodMultiplierKey,
+    kLookStraightPeriodMultiplierKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 bool BehaviorObservingOnCharger::CanBeGentlyInterruptedNow() const

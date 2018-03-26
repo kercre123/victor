@@ -20,52 +20,60 @@
 #include <string>
 
 namespace Anki {
-  namespace Cozmo {
-    
-    class BlockWorldFilter;
-    class ObservableObject;
-    
-    class BehaviorPopAWheelie : public ICozmoBehavior
-    {
-    protected:
-      // Enforce creation through BehaviorFactory
-      friend class BehaviorFactory;
-      BehaviorPopAWheelie(const Json::Value& config);
-      
-      virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
-      virtual void OnBehaviorActivated() override;
-      virtual void OnBehaviorDeactivated() override;
-      
-      virtual bool WantsToBeActivatedBehavior() const override;
+namespace Cozmo {
 
-    private:
-      
-      // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
-      // UpdateWhileNotRunning
-      mutable ObjectID _targetBlock;
-      ObjectID _lastBlockReactedTo;
-      
-      s32 _numPopAWheelieActionRetries = 0;
-      
-      bool _hasDisabledcliff = false;
-            
-      enum class DebugState {
-        ReactingToBlock,
-        PerformingAction
-      };
-            
-      void TransitionToReactingToBlock();
-      void TransitionToPerformingAction();
-      void TransitionToPerformingAction(bool isRetry);
-      
-      void SetupRetryAction(const ExternalInterface::RobotCompletedAction& msg);
-      
-      void ResetBehavior();
-      
-      virtual void UpdateTargetBlock() const;
-    };
-    
-  }
+class BlockWorldFilter;
+class ObservableObject;
+
+class BehaviorPopAWheelie : public ICozmoBehavior
+{
+protected:
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
+  BehaviorPopAWheelie(const Json::Value& config);
+  
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+  virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
+  
+  virtual bool WantsToBeActivatedBehavior() const override;
+
+private:
+  enum class DebugState {
+    ReactingToBlock,
+    PerformingAction
+  };
+
+  struct InstanceConfig {
+    InstanceConfig();
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    // TODO:(bn) a few behaviors have used this pattern now, maybe we should re-think having some kind of
+    // UpdateWhileNotRunning
+    mutable ObjectID targetBlock;
+    ObjectID         lastBlockReactedTo;
+    s32              numPopAWheelieActionRetries;
+    bool             hasDisabledcliff;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+        
+  void TransitionToReactingToBlock();
+  void TransitionToPerformingAction();
+  void TransitionToPerformingAction(bool isRetry);
+  
+  void SetupRetryAction(const ExternalInterface::RobotCompletedAction& msg);
+  
+  void ResetBehavior();
+  
+  virtual void UpdateTargetBlock() const;
+};
+  
+}
 }
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorPopAWheelie_H__

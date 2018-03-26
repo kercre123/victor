@@ -24,14 +24,17 @@
 namespace Anki {
 namespace Cozmo {
 
-static const char* kConfigParamsKey = "params";
+namespace {
+const char* const kNewAreaAnimTriggerKey = "newAreaAnimTrigger";
+const char* const kBeaconRadiusKey = "beaconRadius_mm";
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorThinkAboutBeacons::BehaviorThinkAboutBeacons(const Json::Value& config)
 : ICozmoBehavior(config)
 {  
   // load parameters from json
-  LoadConfig(config[kConfigParamsKey]);
+  LoadConfig(config);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -39,7 +42,17 @@ BehaviorThinkAboutBeacons::~BehaviorThinkAboutBeacons()
 {
   
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorThinkAboutBeacons::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kNewAreaAnimTriggerKey,
+    kBeaconRadiusKey
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorThinkAboutBeacons::WantsToBeActivatedBehavior() const
 {
@@ -47,7 +60,7 @@ bool BehaviorThinkAboutBeacons::WantsToBeActivatedBehavior() const
   bool needsBeacon = true;
   
   // check current beacon
-  const AIWhiteboard& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();
+  const AIWhiteboard& whiteboard = GetAIComp<AIWhiteboard>();
   const AIBeacon* activeBeacon = whiteboard.GetActiveBeacon();
   if ( nullptr != activeBeacon )
   {
@@ -82,15 +95,15 @@ void BehaviorThinkAboutBeacons::LoadConfig(const Json::Value& config)
   using namespace JsonTools;
   const std::string& debugName = std::string(GetDebugLabel()) + ".BehaviorThinkAboutBeacons.LoadConfig";
 
-  _configParams.newAreaAnimTrigger = ParseString(config, "newAreaAnimTrigger", debugName);
-  _configParams.beaconRadius_mm = ParseFloat(config, "beaconRadius_mm", debugName);
+  _configParams.newAreaAnimTrigger = ParseString(config, kNewAreaAnimTriggerKey, debugName);
+  _configParams.beaconRadius_mm = ParseFloat(config, kBeaconRadiusKey, debugName);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorThinkAboutBeacons::SelectNewBeacon()
 {
   // TODO implement the real deal
-   AIWhiteboard& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();
+   AIWhiteboard& whiteboard = GetAIComp<AIWhiteboard>();
   whiteboard.AddBeacon( GetBEI().GetRobotInfo().GetPose().GetWithRespectToRoot(), _configParams.beaconRadius_mm );
 }
 

@@ -52,8 +52,11 @@ namespace Vision {
     static const uint32_t kRandomSeed = 1;
   }
   
-  FaceTracker::Impl::Impl(const std::string& modelPath, const Json::Value& config)
-  : _recognizer(config)
+  FaceTracker::Impl::Impl(const Camera& camera,
+                          const std::string& modelPath,
+                          const Json::Value& config)
+  : _camera(camera)
+  , _recognizer(config)
   , _rng(new Util::RandomGenerator(FaceEnrollParams::kRandomSeed))
   {
     if(config.isMember("FaceDetection")) {
@@ -618,6 +621,26 @@ namespace Vision {
     
     return RESULT_OK;
   }
+
+  bool FaceTracker::Impl::DetectEyeContact(const TrackedFace& face,
+                                           const TimeStamp_t& timeStamp)
+  {
+    DEV_ASSERT(face.IsTranslationSet(), "FaceTrackerImpl.DetectEyeContact.FaceTranslationNotSet");
+    auto& entry = _facesEyeContact[face.GetID()];
+    entry.Update(face, timeStamp);
+
+    // Check if the face is stale
+    bool eyeContact = false;
+    if (entry.GetExpired(timeStamp))
+    {
+      _facesEyeContact.erase(face.GetID());
+    }
+    else
+    {
+      eyeContact = entry.IsMakingEyeContact();
+    }
+    return eyeContact;
+  }
   
   Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
                                    std::list<TrackedFace>& faces,
@@ -869,6 +892,19 @@ namespace Vision {
         
         face.SetRecognitionDebugInfo(recognitionData.GetDebugMatchingInfo());
       }
+
+      // Use a camera from the robot's pose history to estimate the head's
+      // 3D translation, w.r.t. that camera. Also puts the face's pose in
+      // the camera's pose chain. This needs to happen before Detecting
+      // Eye Contact, there is a assert in there that should catch it
+      // if the pose is uninitialized but won't catch on going cases of the
+      // dependence.
+      face.UpdateTranslation(_camera);
+
+      if(_detectGaze && facePartsFound)
+      {
+        face.SetEyeContact(DetectEyeContact(face, frameOrig.GetTimestamp()));
+      }
       
     } // FOR each face
     
@@ -888,6 +924,11 @@ namespace Vision {
   void FaceTracker::Impl::EraseAllFaces()
   {
     _recognizer.EraseAllFaces();
+  }
+  
+  std::vector<Vision::LoadedKnownFace> FaceTracker::Impl::GetEnrolledNames() const
+  {
+    return _recognizer.GetEnrolledNames();
   }
   
   Result FaceTracker::Impl::SaveAlbum(const std::string& albumName)

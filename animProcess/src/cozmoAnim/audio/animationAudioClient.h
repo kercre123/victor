@@ -15,6 +15,7 @@
 #ifndef __Anki_Cozmo_AnimationAudioClient_H__
 #define __Anki_Cozmo_AnimationAudioClient_H__
 
+#include "cannedAnimLib/audioKeyFrameTypes.h"
 #include "audioEngine/audioTypeTranslator.h"
 #include <set>
 #include <mutex>
@@ -48,7 +49,7 @@ public:
   void Update() const;
 
   // Perform functionality for frame
-  void PlayAudioKeyFrame( const RobotAudioKeyFrame& keyFrame );
+  void PlayAudioKeyFrame( const RobotAudioKeyFrame& keyFrame, Util::RandomGenerator* randomGen );
   
   // Stop all animation audio
   void StopCozmoEvent();
@@ -59,9 +60,15 @@ public:
 
 private:
   
-  CozmoAudioController*  _audioController = nullptr;
+  CozmoAudioController*                 _audioController = nullptr;
   std::set<AudioEngine::AudioPlayingId> _activeEvents;
-  mutable std::mutex      _lock;
+  mutable std::mutex                    _lock;
+  
+  // Key frame types
+  void HandleAudioRef( const AudioKeyFrameType::AudioEventGroupRef& eventRef, Util::RandomGenerator* randomGen = nullptr );
+  void HandleAudioRef( const AudioKeyFrameType::AudioStateRef& stateRef );
+  void HandleAudioRef( const AudioKeyFrameType::AudioSwitchRef& switchRef );
+  void HandleAudioRef( const AudioKeyFrameType::AudioParameterRef& parameterRef );
   
   // Perform an event
   AudioEngine::AudioPlayingId PostCozmoEvent( AudioMetaData::GameEvent::GenericEvent event );

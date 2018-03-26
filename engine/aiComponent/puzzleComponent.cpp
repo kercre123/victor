@@ -88,7 +88,8 @@ size_t MazeConfig::GetHeight() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 PuzzleComponent::PuzzleComponent(Robot& robot)
-: _robot(robot)
+: IDependencyManagedComponent<AIComponentID>(this, AIComponentID::Puzzle)
+, _robot(robot)
 {
   _currMaze = _mazes.end();
 }

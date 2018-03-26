@@ -9,17 +9,25 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/processing.js/1.6.6/processing.min.js"></script>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js"></script>
+  
   <script>
-    var modules = { 
-      // add new modules here, which also become the tab
-      // names. The (case-insensitive) key should match
-      // the moduleName used when your c++ code passes
-      // data to the webservice.
+    // add new modules here, which also become the tab
+    // names. The (case-insensitive) key should match
+    // the moduleName used when your c++ code passes
+    // data to the webservice.
+    var modules8888 = { 
       Behaviors : 'webVizModules/behaviors.js',
-      MicData : 'webVizModules/micData.js',
       Intents : 'webVizModules/intents.js',
-      BehaviorConds : 'webVizModules/behaviorConditions.js'
+      CloudIntents : 'webVizModules/cloud.js',
+      BehaviorConds : 'webVizModules/behaviorConditions.js',
+      VisionScheduleMediator : 'webVizModules/visionScheduleMediator.js',
+      ObservedObjects : 'webVizModules/observedObjects.js',
+      Mood : 'webVizModules/mood.js'
+    }
+    var modules8889 = {
+      MicData : 'webVizModules/micData.js',
+      Animations: 'webVizModules/animations.js'
     }
   </script>
 
@@ -35,7 +43,8 @@
       font: 12px sans-serif;
     }
 
-    .container {
+    #container,
+    #popouts {
       width: 800px;
       margin: 20px auto;
 
@@ -129,18 +138,28 @@
     }
 
     .tab-content {
-      display: none;
       background: #ededed;
       padding: 15px;
       border: 1px solid #AAA;
       border-top:none;
+      position:relative;
+    }
+    .tab-content:not(.poppedOut),
+    .tab-content.tab-placeholder {
+      display: none;
     }
 
     .tab-content.current {
       display: inherit;
     }
+    .tab-placeholder {
+      height:10px;
+    }
 
     #tab-overview p {
+      padding:10px;
+    }
+    #tab-overview h3 {
       padding:10px;
     }
 
@@ -150,6 +169,28 @@
       right:10px;
       font-size:20px;
       color:red;
+    }
+
+    .popoutIcon,
+    .nowItsAPinIcon {
+      position:absolute;
+      top:0px;
+      right:0px;
+      width:16px;
+      height:16px;
+      background-image:url(images/webVizPins.png);
+      cursor:pointer;
+    }
+    .nowItsAPinIcon {
+      background-position: -16px 0px;
+    }
+
+    #popouts {
+      margin-top: 50px;
+    }
+    #popouts .tab-content {
+      border-top: 1px solid #AAA;
+      margin-bottom:20px;
     }
 
     
@@ -163,7 +204,7 @@
 <body>
 
   <div id="status">Not connected to robot</div>
-  <div class="container">
+  <div id="container">
 
     <ul class="tabs">
       <li class="tab-link current" data-tab="tab-overview">Overview</li>
@@ -173,15 +214,20 @@
       <p>This page will display data "pushed" from Victor engine to multiple drawing modules.</p>
       <p>Each tab contains its own module. Open the tab to subscribe to the data source for that module.</p>
       <p>To add new modules, start with the template file module.js.template.</p>
-      <p>Are you not seeing new tabs or new functionality? In Chrome, hit Command + Option + J,
-         then right click the page refresh button. Select "Empty cache and hard reload"</p>
+      <p><b>Are you always disconnected from the robot? Not seeing new tabs or new functionality? In Chrome, hit Command + Option + J,
+         then right click the page refresh button. Select "Empty cache and hard reload"</b></p>
     </div>
 
     
   </div>
 
+  <div id="popouts">
+  </div>
+
 
   <script>
+
+    var modules;
 
     var kUpdatePeriod_ms = 200; // todo: maybe a module should request its period?
 
@@ -245,7 +291,8 @@
         $('ul.tabs').append('<li class="tab-link" data-tab="tab-' + moduleName + '">' 
                             + originalName 
                             + '</li>');
-        $('.container').append('<div id="tab-' + moduleName + '" class="tab-content"></div>');
+        var tab = $('<div id="tab-' + moduleName + '" class="tab-content"></div>').appendTo('#container');
+        tab.append('<div class="popoutIcon"></div>');
       }
       // handle tab clicks (assumes no new tabs created after this)
       $('ul.tabs li').click(function(){
@@ -253,9 +300,15 @@
 
         $('ul.tabs li').removeClass('current');
         $('.tab-content').removeClass('current');
+        $('.tab-placeholder').hide();
 
         $(this).addClass('current');
-        $('#'+tab_id).addClass('current');
+        var tab = $('#'+tab_id);
+        if( tab.hasClass('poppedOut') ) {
+          $('.tab-placeholder').show();
+        } else {
+          tab.addClass('current');
+        }
 
         var moduleName = tab_id.substring(4); // after "tab-"
         if( typeof modules[moduleName] === 'undefined' ) {
@@ -274,6 +327,23 @@
           modules[moduleName].init($('#' + tab_id)[0]);
         }
       });
+      $('.popoutIcon').click(function(){
+        var tab = $(this).parent();
+        if( !$(this).hasClass('nowItsAPinIcon') ) {
+          tab.detach().addClass('poppedOut').appendTo('#popouts');
+          $(this).addClass('nowItsAPinIcon');
+          $('.tab-placeholder').show();
+        } else {
+          tab.detach().removeClass('poppedOut').appendTo('#container');
+          $(this).removeClass('nowItsAPinIcon');
+          var currTab = $('.tab-link.current').attr('data-tab');
+          if( currTab == tab.attr('id') ) {
+            $('.tab-placeholder').hide();
+          }
+        }
+      });
+      // add a placeholder for when tabs are popped out
+      $('<div class="tab-content tab-placeholder"></div>').appendTo('#container');
     }
 
     var isSubscribed = function(moduleName) {
@@ -350,11 +420,25 @@
       var payload = {"type": "data", "module": moduleName.toLowerCase(), "data": data};
       socket.send( JSON.stringify(payload) );
     }
+    var getPortLink = function(port) {
+      return 'http://' + window.location.hostname + ':' + port + window.location.pathname;
+    }
 
     var modulesContexts = {};
     var moduleMethods = {}; // global passed to modules
     var moduleSendDataFunc; // global passed to modules
     $(function(){
+
+      modules = modules8888;
+      var missingTabsStr = '<h3>Looking for ';
+      if( location.port == 8889 ) {
+        modules = modules8889;
+        missingTabsStr += Object.keys(modules8888).join(' or ') + '? Change the port to <a href="' + getPortLink(8888) + '">8888</a></h3>';
+      } else {
+        missingTabsStr += Object.keys(modules8889).join(' or ') + '? Change the port to <a href="' + getPortLink(8889) + '">8889</a></h3>';
+      } 
+      $('#tab-overview').append( missingTabsStr );
+
 
       // load module data
       var moduleIndex = 0;

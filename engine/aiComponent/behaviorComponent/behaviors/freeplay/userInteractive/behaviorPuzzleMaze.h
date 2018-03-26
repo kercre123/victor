@@ -59,6 +59,7 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.behaviorAlwaysDelegates = false;
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
   virtual void OnBehaviorDeactivated() override;
@@ -84,32 +85,41 @@ private:
     ThinkingAnim,
     WaitNextMove,
   };
-  AvatarState _avatarState;
-  
-  // puzzle solving things
-  std::vector< Point2i > _path;
-  MazeWalls _currFacing;
-  Point2i   _currPos;
-  Point2i   _nextPos;
-  float     _nextStep_Sec;
-  
-  // config speeds and vals
-  int _tileSize_px;
-  int _wallSize_px;
-  int _cozmoAvatarSize_px;
-  float _timeBetweenMazeSteps_Sec;
-  float _timePauseAtIntersectionMin_Sec;
-  float _timePauseAtIntersectionMax_Sec;
-  float _chanceWrongTurn;
-  
-  // Variables used in balance testing
-  bool _animateBetweenTiles;
-  // even if not animating between tiles it will treat it that way.
-  float _totalTimeInLastPuzzle_Sec;
-  bool  _isMazeSolved;
 
-  // Member variables
-  MazeState _state = MazeState::Init;
+  struct InstanceConfig {
+    InstanceConfig(const Json::Value& config);
+    // config speeds and vals
+    int tileSize_px;
+    int wallSize_px;
+    int cozmoAvatarSize_px;
+    float timeBetweenMazeSteps_Sec;
+    float timePauseAtIntersectionMin_Sec;
+    float timePauseAtIntersectionMax_Sec;
+    float chanceWrongTurn;
+    // Variables used in balance testing
+    bool animateBetweenTiles;
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    AvatarState avatarState;
+    // puzzle solving things
+    std::vector< Point2i > path;
+    MazeWalls currFacing;
+    Point2i   currPos;
+    Point2i   nextPos;
+    float     nextStep_Sec;
+
+    // Member variables
+    MazeState state;
+
+    // even if not animating between tiles it will treat it that way.
+    float totalTimeInLastPuzzle_Sec;
+    bool  isMazeSolved;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
   
   // State management
   const char * EnumToString(const MazeState& state);

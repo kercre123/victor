@@ -48,7 +48,6 @@ namespace Anki {
         constexpr auto IS_CHARGING = EnumToUnderlyingType(RobotStatusFlag::IS_CHARGING);
         constexpr auto CLIFF_DETECTED = EnumToUnderlyingType(RobotStatusFlag::CLIFF_DETECTED);
         constexpr auto ARE_WHEELS_MOVING = EnumToUnderlyingType(RobotStatusFlag::ARE_WHEELS_MOVING);
-        constexpr auto IS_CHARGER_OOS = EnumToUnderlyingType(RobotStatusFlag::IS_CHARGER_OOS);
         
         u8 pktBuffer_[2048];
 
@@ -133,8 +132,7 @@ namespace Anki {
         robotState_.status |= HAL::BatteryIsCharging() ? IS_CHARGING : 0;
         robotState_.status |= ProxSensors::IsAnyCliffDetected() ? CLIFF_DETECTED : 0;
         robotState_.status |= IMUFilter::IsFalling() ? IS_FALLING : 0;
-        robotState_.status |= HAL::BatteryIsChargerOOS() ? IS_CHARGER_OOS : 0;
-        robotState_.batteryVoltage = HAL::BatteryGetVoltage();
+	robotState_.batteryVoltage = HAL::BatteryGetVoltage();
 #ifdef  SIMULATOR
         if(isForcedDelocalizing_)
         {

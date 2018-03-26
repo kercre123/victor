@@ -30,6 +30,8 @@ namespace Cozmo {
 namespace{
   
 const float kAccelMagnitudeShakingStartedThreshold = 16000.f;
+  
+const char* const kBehaviorsKey = "behaviors";
 
 // set to > 0 from console to fake the repeated "shakes" (shakes are hard to do in webots sim)
 CONSOLE_VAR(unsigned int, kDevDispatchAfterShake, "DevBaseBehavior", 0);
@@ -58,47 +60,77 @@ static const BackpackLights kLightsShake =
   .offset                 = {{0,0,0}}
 };
 
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDispatchAfterShake::InstanceConfig::InstanceConfig()
+{
 
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDispatchAfterShake::DynamicVariables::DynamicVariables()
+{
+  countShaken = 0;
+  shakingSession = false;
+  lastChangeTime_s = 0.0f;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDispatchAfterShake::BehaviorDispatchAfterShake(const Json::Value& config)
   : ICozmoBehavior(config)
 {
-  for( const auto& behavior : config["behaviors"] ) {
-    _delegateIDs.push_back( BehaviorTypesWrapper::BehaviorIDFromString( behavior.asString() ) );
+  for( const auto& behavior : config[kBehaviorsKey] ) {
+    _iConfig.delegateIDs.push_back( BehaviorTypesWrapper::BehaviorIDFromString( behavior.asString() ) );
   }
   
-  ANKI_VERIFY( !_delegateIDs.empty(),
+  ANKI_VERIFY( !_iConfig.delegateIDs.empty(),
                "BehaviorDispatchAfterShake.Ctor.Empty",
                "No behavior delegates were found" );
 }
-
-void BehaviorDispatchAfterShake::OnBehaviorActivated()
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatchAfterShake::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
-  _countShaken = 0;
+  expectedKeys.insert( kBehaviorsKey );
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatchAfterShake::OnBehaviorActivated()
+{
+  _dVars.countShaken = 0;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatchAfterShake::InitBehavior()
 {
-  for( const auto& delegateID : _delegateIDs ) {
-    _delegates.push_back( GetBEI().GetBehaviorContainer().FindBehaviorByID(delegateID) );
+  for( const auto& delegateID : _iConfig.delegateIDs ) {
+    _iConfig.delegates.push_back( GetBEI().GetBehaviorContainer().FindBehaviorByID(delegateID) );
     
-    ANKI_VERIFY( _delegates.back() != nullptr,
+    ANKI_VERIFY( _iConfig.delegates.back() != nullptr,
                  "BehaviorDispatchAfterShake.Delegate.InvalidBehavior",
                  "could not get pointer for behavior '%s'",
                  BehaviorTypesWrapper::BehaviorIDToString(delegateID) );
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatchAfterShake::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  // copy _delegates into delegates, taking the raw ptrs
-  std::transform( _delegates.begin(),
-                  _delegates.end(),
+  // copy _iConfig.delegates into delegates, taking the raw ptrs
+  std::transform( _iConfig.delegates.begin(),
+                  _iConfig.delegates.end(),
                   std::inserter(delegates, delegates.end()),
                   [](const auto& x){ return x.get(); });
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatchAfterShake::BehaviorUpdate()
 {
   if(!IsActivated() || IsControlDelegated()){
@@ -109,32 +141,32 @@ void BehaviorDispatchAfterShake::BehaviorUpdate()
   
   if( kDevDispatchAfterShake > 0 ) {
     
-    _countShaken = kDevDispatchAfterShake;
+    _dVars.countShaken = kDevDispatchAfterShake;
     kDevDispatchAfterShake = 0;
-    _shakingSession = false;
+    _dVars.shakingSession = false;
     
   } else {
     
     const bool isBeingShaken = (robotInfo.GetHeadAccelMagnitudeFiltered() > kAccelMagnitudeShakingStartedThreshold);
     const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    if( (_shakingSession && isBeingShaken)
-        || (!_shakingSession && !isBeingShaken) )
+    if( (_dVars.shakingSession && isBeingShaken)
+        || (!_dVars.shakingSession && !isBeingShaken) )
     {
       // last shake time / last steady time
-      _lastChangeTime_s = currentTime;
+      _dVars.lastChangeTime_s = currentTime;
     }
     
-    const bool timeElapsed = (currentTime - _lastChangeTime_s >= kShakeTime);
-    if( _shakingSession && (!isBeingShaken) && timeElapsed ) {
+    const bool timeElapsed = (currentTime - _dVars.lastChangeTime_s >= kShakeTime);
+    if( _dVars.shakingSession && (!isBeingShaken) && timeElapsed ) {
       // shaking stopped for a while
-      _shakingSession = false;
+      _dVars.shakingSession = false;
       
       GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsSteady);
     }
-    if( !_shakingSession && isBeingShaken && timeElapsed ) {
+    if( !_dVars.shakingSession && isBeingShaken && timeElapsed ) {
       // shaking started for a while
-      _shakingSession = true;
-      ++_countShaken;
+      _dVars.shakingSession = true;
+      ++_dVars.countShaken;
       
       GetBEI().GetBodyLightComponent().SetBackpackLights(kLightsShake);
     }
@@ -143,19 +175,19 @@ void BehaviorDispatchAfterShake::BehaviorUpdate()
   }
   
   const bool isOnTreads = (robotInfo.GetOffTreadsState() == OffTreadsState::OnTreads);
-  if( (_countShaken>0) && (!_shakingSession) && isOnTreads ) {
+  if( (_dVars.countShaken>0) && (!_dVars.shakingSession) && isOnTreads ) {
     // time to delegate to the data defined delegate
-    size_t idx = _countShaken - 1;
-    if( _countShaken > _delegates.size() ) {
+    size_t idx = _dVars.countShaken - 1;
+    if( _dVars.countShaken > _iConfig.delegates.size() ) {
       PRINT_NAMED_WARNING("BehaviorDispatchAfterShake.BehaviorUpdate.TooManyShakes",
                           "You shook the robot (%zu) times but there were only (%zu) behaviors",
-                          _countShaken,
-                          _delegates.size());
-      idx = std::min(idx, _delegates.size()-1);
+                          _dVars.countShaken,
+                          _iConfig.delegates.size());
+      idx = std::min(idx, _iConfig.delegates.size()-1);
     }
     
-    DEV_ASSERT( idx<_delegates.size(), "BehaviorDispatchAfterShake.Update.OutOfRange" );
-    auto& delegate = _delegates[idx];
+    DEV_ASSERT( idx<_iConfig.delegates.size(), "BehaviorDispatchAfterShake.Update.OutOfRange" );
+    auto& delegate = _iConfig.delegates[idx];
     if( ANKI_VERIFY( delegate != nullptr,
                      "BehaviorDispatchAfterShake.Update.NullDelegate",
                      "Behavior idx (%zu) is null",
@@ -167,9 +199,9 @@ void BehaviorDispatchAfterShake::BehaviorUpdate()
       }
     }
     // clear shaken count so you have to shake again to run the behavior again if it completes
-    _countShaken = 0;
+    _dVars.countShaken = 0;
   }
 }
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki

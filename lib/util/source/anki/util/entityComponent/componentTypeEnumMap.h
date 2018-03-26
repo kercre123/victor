@@ -12,11 +12,23 @@
 #ifndef __Util_EntityComponent_ComponentTypeEnumMap_H__
 #define __Util_EntityComponent_ComponentTypeEnumMap_H__
 
+#include <string>
 
 namespace Anki {
 
+// Macro to make template specialization less verbose
+#define LINK_COMPONENT_TYPE_TO_ENUM(componentType, enumType, enumValue) \
+template<>\
+void GetComponentIDForType<Cozmo::enumType, Cozmo::componentType>(Cozmo::enumType& enumToSet){enumToSet = Cozmo::enumType::enumValue;}
+
 template<typename EnumType, typename ClassType>
 void GetComponentIDForType(EnumType& enumToSet);
+
+template<typename EnumType>
+std::string GetEntityNameForEnumType();
+
+template<typename EnumType>
+std::string GetComponentStringForID(EnumType enumID);
 
 } // namespace Anki
 

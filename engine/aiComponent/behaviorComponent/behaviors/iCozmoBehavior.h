@@ -16,11 +16,13 @@
 
 #include "engine/actions/actionContainers.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
-#include "engine/components/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator_fwd.h"
 #include "engine/robotInterface/messageHandler.h"
@@ -189,6 +191,9 @@ public:
 
   // Give derived behaviors the opportunity to override default behavior operations
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const = 0;
+  
+  // gets list of ICozmoBehavior's expected keys and the derived class's, through GetBehaviorJsonKeys
+  std::vector<const char*> GetAllJsonKeys() const;
 
   // Allow external behaviors to ask that this behavior return false for WantsToBeActivated
   // for this tick. This should only be used by "coordinator" behaviors to allow an "event"
@@ -241,8 +246,16 @@ protected:
   // the higher level behavior might try again, and you end up in a loop. Choose wisely my friend.
   void AddResetTimer(const std::string& timerName) { _resetTimers.push_back(timerName); }
   
+  // Derived behaviors can specify all json keys they expect at the root level, so that
+  // behavior json loading fails (in dev) if unexpected keys are found. You should insert
+  // into this list instead of assigning it.
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const = 0;
+  
   virtual void OnEnteredActivatableScopeInternal() override;
   virtual void OnLeftActivatableScopeInternal() override;
+
+  virtual void OnBehaviorEnteredActivatableScope() { }
+  virtual void OnBehaviorLeftActivatableScope() { }
 
   virtual void OnBehaviorActivated() = 0;
   
@@ -388,12 +401,6 @@ protected:
   /// and clear it appropriately.  Functions also exist to clear these properties
   /// before the behavior stops.
   ////////////////
-  
-  // Push an idle animation which will be removed when the behavior stops
-  void SmartPushIdleAnimation(AnimationTrigger animation);
-  
-  // Remove an idle animation before the beahvior stops
-  void SmartRemoveIdleAnimation();
 
   // For the duration of this behavior, or until SmartClearMotionProfile() is called (whichever is sooner),
   // use the specified motion profile for all motions. Note that this will result in an error if the behavior
@@ -416,6 +423,16 @@ protected:
 
   // Helper function to play an emergency get out through the continuity component
   void PlayEmergencyGetOut(AnimationTrigger anim);
+
+  template<typename T>
+  T& GetAIComp() const {
+    return GetBEI().GetAIComponent(). template GetComponent<T>();
+  }
+
+  template<typename T>
+  T& GetBehaviorComp() const {
+    return GetBEI().GetAIComponent().GetComponent<BehaviorComponent>(). template GetComponent<T>();
+  }
   
   // If a behavior requires that an AIInformationProcess is running for the behavior
   // to operate properly, the behavior should set this variable directly so that
@@ -431,10 +448,10 @@ protected:
   // make a member variable a console var that is only around as long as its class instance is
   #if ANKI_DEV_CHEATS
     template <typename T>
-    void MakeMemberTunable(T& param, const std::string& name);
+    void MakeMemberTunable(T& param, const std::string& name, const char* category = nullptr);
   #else // no op
     template <typename T>
-    void MakeMemberTunable(T& param, const std::string& name) {  }
+    void MakeMemberTunable(T& param, const std::string& name, const char* category = nullptr) {  }
   #endif
   
 private:
@@ -447,6 +464,7 @@ private:
   // only used if we aren't using the BSM
   u32 _lastActionTag = 0;
   std::vector<IBEIConditionPtr> _wantsToBeActivatedConditions;
+  std::vector<IBEIConditionPtr> _wantsToCancelSelfConditions;
   BehaviorOperationModifiers _operationModifiers;
   
   // Returns true if the state of the world/robot is sufficient for this behavior to be executed
@@ -520,9 +538,6 @@ private:
   // A set of the locks that a behavior has used to disable reactions
   // these will be automatically re-enabled on behavior stop
   std::set<std::string> _smartLockIDs;
-  
-  // track whether the behavior has set an idle
-  bool _hasSetIdle;
   
   // An int that holds tracks disabled using SmartLockTrack
   std::map<std::string, u8> _lockingNameToTracksMap;
@@ -624,7 +639,7 @@ template<typename T>
 bool ICozmoBehavior::DelegateIfInControl(IBehavior* delegate, void(T::*callback)())
 {
   return DelegateIfInControl(delegate,
-                             std::bind(callback, static_cast<T*>(this), std::placeholders::_1));
+                             std::bind(callback, static_cast<T*>(this)));
 }
 
 
@@ -664,11 +679,13 @@ bool ICozmoBehavior::FindAnonymousBehaviorByNameAndDowncast(const std::string& b
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #if ANKI_DEV_CHEATS
 template <typename T>
-void ICozmoBehavior::MakeMemberTunable(T& param, const std::string& name)
+void ICozmoBehavior::MakeMemberTunable(T& param, const std::string& name, const char* category)
 {
   const std::string uniqueName = GetDebugLabel() + "_" + name;
   const bool unregisterOnDestruction = true;
-  const char* category = "BehaviorInstanceParams";
+  if( category == nullptr ) {
+    category = "BehaviorInstanceParams";
+  }
   // ensure this param isnt already registered
   for( const auto& var : _tunableParams ) {
     if( !ANKI_VERIFY( var->GetID() != uniqueName,

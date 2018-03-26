@@ -25,7 +25,7 @@ namespace {
   // CONSTANTS
   const float kMaxTouchIntensityInvalid = 800;      
   
-  const int kMinCountNoTouchForAccumulation = 1000;
+  const int kMinCountNoTouchForAccumulation = 100; // ~3 seconds of no-touch
   
 
   const int kBaselineMinCalibReadings = 90;
@@ -72,7 +72,7 @@ TouchSensorComponent::TouchSensorComponent()
 : ISensorComponent(kLogDirectory)
 , IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::TouchSensor)
 , _lastRawTouchValue(0)
-, _noContactCounter(0)
+, _noContactCounter(kMinCountNoTouchForAccumulation)
 , _baselineTouch(kBaselineInitial)
 , _boxFilterTouch(kBoxFilterSize)
 , _detectOffsetFromBase(kDynamicThreshMininumUndetectOffset+kDynamicThreshGap)
@@ -85,7 +85,7 @@ TouchSensorComponent::TouchSensorComponent()
 {
 }
 
-void TouchSensorComponent::UpdateInternal(const RobotState& msg)
+void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
 {
   if(FACTORY_TEST &&_dataToRecord != nullptr)
   {
@@ -141,8 +141,9 @@ void TouchSensorComponent::UpdateInternal(const RobotState& msg)
     DEV_ASSERT( IsCalibrated(), "TouchSensorComponent.ClassifyingBeforeCalibration");
     if(!GetIsPressed() && !isPickedUp) {
       _noContactCounter++;
-      if(_noContactCounter > kMinCountNoTouchForAccumulation) {
+      if(_noContactCounter >= kMinCountNoTouchForAccumulation) {
         _baselineTouch = kBaselineFilterCoeff*boxFiltVal + (1.0f-kBaselineFilterCoeff)*_baselineTouch;
+        _noContactCounter = kMinCountNoTouchForAccumulation;
       }
     } else {
       // if we are picked up OR we are being touched

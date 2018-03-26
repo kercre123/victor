@@ -66,11 +66,12 @@ float GetTimeForCurrentPuzzle(BehaviorPuzzleMaze* puzzleMazePtr,AIComponent& aiC
   puzzleMazePtr->TransitionToState(BehaviorPuzzleMaze::MazeState::MazeStep);
   int i = 0;
   constexpr int maxIterations = 100000;
+  DependencyManagedEntity<RobotComponentID> dependencies;
   while( !puzzleMazePtr->IsPuzzleCompleted() && i < maxIterations)
   {
     // Tick
     IncrementBaseStationTimerTicks();
-    aiComponent.Update(robot, currentActivityName, behaviorDebugStr);
+    aiComponent.UpdateDependent(dependencies);
     puzzleMazePtr->Update();
     i++;
   }
@@ -135,7 +136,7 @@ TEST(PuzzleMazeBehavior, DISABLED_BalanceTool)
   
   BehaviorPuzzleMaze* puzzleMazePtr = (BehaviorPuzzleMaze*)puzzleMazeBehavior.get();
   auto& aiComponent = testBehaviorFramework.GetAIComponent();
-  PuzzleComponent& puzzleComp = aiComponent.GetPuzzleComponent();
+  PuzzleComponent& puzzleComp = aiComponent.GetComponent<PuzzleComponent>();
   
   constexpr int maxRuns = 50;
   size_t numPuzzles = puzzleComp.GetNumMazes();

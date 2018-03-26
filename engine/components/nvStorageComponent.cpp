@@ -669,7 +669,7 @@ void NVStorageComponent::LoadDataFromFiles()
   }
 }
   
-void NVStorageComponent::Update()
+void NVStorageComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
 }
   

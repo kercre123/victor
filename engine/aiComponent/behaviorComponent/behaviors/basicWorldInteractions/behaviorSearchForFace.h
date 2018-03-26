@@ -32,6 +32,7 @@ public:
   
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
 
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
@@ -41,8 +42,19 @@ private:
     SearchingForFace,
     FoundFace
   };
+
+  struct InstanceConfig {
+    InstanceConfig();
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    State behaviorState;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
   
-  State    _behaviorState;
   
   void TransitionToSearchingAnimation();
   void TransitionToFoundFace();

@@ -103,6 +103,10 @@ namespace Anki
     void PrintJsonInfo(const Json::Value& config, const std::string& eventName, int maxDepth = 0);  // print_named_info
     void PrintJsonError(const Json::Value& config, const std::string& eventName, int maxDepth = 0);  // print_named_error
     
+    // Returns true if a key other than something in expectedKeys is found at the root level. sets
+    // the badKey if an unexpected key is found
+    bool HasUnexpectedKeys(const Json::Value& config, const std::vector<const char*>& expectedKeys, std::vector<std::string>& badKeys);
+    
 #if 0
 #pragma mark --- Templated Implementations ---
 #endif

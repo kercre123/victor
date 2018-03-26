@@ -37,29 +37,38 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Standard });
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated() override;
 
 private:
+  struct InstanceConfig {
+    InstanceConfig();
+    InstanceConfig(const Json::Value& config, const std::string& debugName);
+    int         numSearches;
+    float       minDrivingDist_mm;
+    float       maxDrivingDist_mm;
+    TimeStamp_t maxObservedAge_ms;
+    
+    AnimationTrigger searchAnimTrigger;
+    std::unique_ptr<BlockWorldFilter> homeFilter;
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();    
+    int numSearchesCompleted;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
   
   void TransitionToSearchAnim();
   void TransitionToRandomDrive();
   
   void GetRandomDrivingPose(Pose3d& outPose);
   
-  struct {
-    AnimationTrigger searchAnimTrigger = AnimationTrigger::Count;
-    int numSearches = 0;
-    float minDrivingDist_mm = 0.f;
-    float maxDrivingDist_mm = 0.f;
-    TimeStamp_t maxObservedAge_ms = 0;
-  } _params;
   
-  void LoadConfig(const Json::Value& config);
-  
-  std::unique_ptr<BlockWorldFilter> _homeFilter;
-  
-  int _numSearchesCompleted = 0;
+
   
 };
   

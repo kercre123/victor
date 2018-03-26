@@ -19,7 +19,7 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/bodyLightComponent.h"
-#include "engine/components/cubeAccelComponent.h"
+#include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/movementComponent.h"
@@ -1055,7 +1055,6 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMotionModelParams>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::StopRobotForSdk>();
-    helper.SubscribeGameToEngine<MessageGameToEngineTag::StreamObjectAccel>();
 
     // Messages from switchboard
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetConnectionStatus>();
@@ -1654,38 +1653,6 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::StopRobotForSdk& 
     robot->GetActionList().Cancel();
     robot->GetMoveComponent().StopAllMotors();
     robot->GetBodyLightComponent().ClearAllBackpackLightConfigs();
-    
-    // Clear out all idle animations set by the sdk
-    // TODO: Restore Idle Animation API (VIC-366)
-    // AnimationStreamer& animStreamer = robot->GetAnimationStreamer();
-    // BOUNDED_WHILE(kBoundedWhileIdlePopLimit,
-    //               RESULT_OK == animStreamer.RemoveIdleAnimation("sdk")){
-    // }
-  }
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<>
-void RobotEventHandler::HandleMessage(const ExternalInterface::StreamObjectAccel& msg)
-{
-  Robot* robot = _context->GetRobotManager()->GetRobot();
-  if (nullptr == robot)
-  {
-    PRINT_NAMED_WARNING("RobotEventHandler.StreamObjectAccel.InvalidRobotID", "Failed to find robot.");
-  }
-  else
-  {
-    static std::shared_ptr<CubeAccelListeners::ICubeAccelListener> listener(new CubeAccelListeners::DummyListener());
- 
-    if(msg.enable)
-    {
-      robot->GetCubeAccelComponent().AddListener(msg.objectID, listener);
-    }
-    else
-    {
-      robot->GetCubeAccelComponent().RemoveListener(msg.objectID, listener);
-    }
   }
 }
   

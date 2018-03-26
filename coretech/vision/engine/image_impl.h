@@ -3,6 +3,9 @@
 // does use an _impl file (since it's templated).  But it's weird for people
 // who want to use Image to need to know that they need to include array2d_impl.
 
+#ifndef __Anki_Vision_Image_Impl_H__
+#define __Anki_Vision_Image_Impl_H__
+
 #include "coretech/vision/engine/image.h"
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/math/rect_impl.h"
@@ -48,3 +51,5 @@ void ImageBase<T>::DrawSubImage(const DerivedType& subImage, const Point2f& topL
 
 } // namespace Vision
 } // namespace Anki
+
+#endif // __Anki_Vision_Image_Impl_H__

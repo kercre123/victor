@@ -35,14 +35,33 @@ static const Radians tiltRads(MIN_HEAD_ANGLE);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorPounceWithProx::InstanceConfig::InstanceConfig()
+{
+  maxPounceDist = 120.0f;
+  minGroundAreaForPounce = 0.01f;
+  pounceTimeout_s = 5;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorPounceWithProx::DynamicVariables::DynamicVariables()
+{
+  prePouncePitch = 0.0f;
+  motionObserved = false;
+  pounceAtTime_s = std::numeric_limits<float>::max();
+  pounceState = PounceState::WaitForMotion;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPounceWithProx::BehaviorPounceWithProx(const Json::Value& config)
 : ICozmoBehavior(config)
 {
   SubscribeToTags({
     EngineToGameTag::RobotObservedMotion
   });
-  _instanceParams.inRangeCondition =
-    BEIConditionFactory::CreateBEICondition( config["wantsToBeActivatedCondition"], GetDebugLabel() );
+  _iConfig.inRangeCondition =
+    BEIConditionFactory::CreateBEICondition( config["wantsToBeActivatedConditions"][0], GetDebugLabel() );
 }
 
 
@@ -62,25 +81,25 @@ void BehaviorPounceWithProx::GetAllDelegates(std::set<IBehavior*>& delegates) co
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPounceWithProx::InitBehavior()
 {
-  _instanceParams.inRangeCondition->Init(GetBEI());
+  _iConfig.inRangeCondition->Init(GetBEI());
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPounceWithProx::OnBehaviorActivated()
 {
-  _instanceParams.inRangeCondition->SetActive(GetBEI(), true);
+  _iConfig.inRangeCondition->SetActive(GetBEI(), true);
 
   const f32 currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _lifetimeParams = LifetimeParams();
-  _lifetimeParams.pounceAtTime_s = currentTimeInSeconds + _instanceParams.pounceTimeout_s;
+  _dVars = DynamicVariables();
+  _dVars.pounceAtTime_s = currentTimeInSeconds + _iConfig.pounceTimeout_s;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPounceWithProx::OnBehaviorDeactivated()
 {
-  _instanceParams.inRangeCondition->SetActive(GetBEI(), false);
+  _iConfig.inRangeCondition->SetActive(GetBEI(), false);
 }
 
 
@@ -96,18 +115,18 @@ void BehaviorPounceWithProx::BehaviorUpdate()
   const bool isSensorReadingValid = proxSensor.GetLatestDistance_mm(dummyDistance_mm);
   if(isSensorReadingValid){
     // Transition conditions
-    switch(_lifetimeParams.pounceState){
+    switch(_dVars.pounceState){
       case PounceState::WaitForMotion:
       {
-        if(!_instanceParams.inRangeCondition->AreConditionsMet(GetBEI())){
+        if(!_iConfig.inRangeCondition->AreConditionsMet(GetBEI())){
           CancelSelf();
           return;
         }
 
         const f32 currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-        if(_lifetimeParams.motionObserved ||
-           (_lifetimeParams.pounceAtTime_s < currentTimeInSeconds)){
-          _lifetimeParams.pounceState = PounceState::PounceOnMotion;
+        if(_dVars.motionObserved ||
+           (_dVars.pounceAtTime_s < currentTimeInSeconds)){
+          _dVars.pounceState = PounceState::PounceOnMotion;
         }else if(!IsControlDelegated()){
           DelegateIfInControl(
             new CompoundActionParallel({
@@ -123,9 +142,9 @@ void BehaviorPounceWithProx::BehaviorUpdate()
         // Pounce on the object
         if(!IsControlDelegated()){
           const auto& robotInfo = GetBEI().GetRobotInfo();
-          _lifetimeParams.prePouncePitch = robotInfo.GetPitchAngle().ToFloat();
+          _dVars.prePouncePitch = robotInfo.GetPitchAngle().ToFloat();
           TransitionToPounce();
-          _lifetimeParams.pounceState = PounceState::ReactToPounce;
+          _dVars.pounceState = PounceState::ReactToPounce;
         }
         break;
       }
@@ -165,7 +184,7 @@ void BehaviorPounceWithProx::TransitionToResultAnim()
   }
   
   DelegateIfInControl(newAction, [this](){
-                                _lifetimeParams.pounceState = PounceState::WaitForMotion;
+                                _dVars.pounceState = PounceState::WaitForMotion;
                               });
 }
 
@@ -177,14 +196,14 @@ bool BehaviorPounceWithProx::IsFingerCaught()
   const float liftHeightThresh = 35.5f;
   const float bodyAngleThresh = 0.02f;
   
-  float robotBodyAngleDelta = robotInfo.GetPitchAngle().ToFloat() - _lifetimeParams.prePouncePitch;
+  float robotBodyAngleDelta = robotInfo.GetPitchAngle().ToFloat() - _dVars.prePouncePitch;
   
   // check the lift angle, after some time, transition state
   PRINT_CH_INFO("Behaviors", "BehaviorPounceOnMotion.CheckResult", "lift: %f body: %fdeg (%frad) (%f -> %f)",
                 robotInfo.GetLiftHeight(),
                 RAD_TO_DEG(robotBodyAngleDelta),
                 robotBodyAngleDelta,
-                RAD_TO_DEG(_lifetimeParams.prePouncePitch),
+                RAD_TO_DEG(_dVars.prePouncePitch),
                 robotInfo.GetPitchAngle().getDegrees());
   return robotInfo.GetLiftHeight() > liftHeightThresh || robotBodyAngleDelta > bodyAngleThresh;
 }
@@ -193,7 +212,7 @@ bool BehaviorPounceWithProx::IsFingerCaught()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPounceWithProx::TransitionToPounce()
 {  
-  _lifetimeParams.motionObserved = false;
+  _dVars.motionObserved = false;
   AnimationTrigger anim = AnimationTrigger::PounceWProxForward;
   
   DelegateIfInControl(new TriggerAnimationAction(anim),
@@ -210,19 +229,19 @@ void BehaviorPounceWithProx::HandleWhileActivated(const EngineToGameEvent& event
     case MessageEngineToGameTag::RobotObservedMotion: {
       // don't update the pounce location while we are active but go back.
       const auto & motionObserved = event.GetData().Get_RobotObservedMotion();
-      const bool inGroundPlane = motionObserved.ground_area > _instanceParams.minGroundAreaForPounce;
+      const bool inGroundPlane = motionObserved.ground_area > _iConfig.minGroundAreaForPounce;
       
       const float robotOffsetX = motionObserved.ground_x;
       const float robotOffsetY = motionObserved.ground_y;
       
       // we haven't started the pounce, so update the pounce location
-      if ((_lifetimeParams.pounceState == PounceState::WaitForMotion) && inGroundPlane )
+      if ((_dVars.pounceState == PounceState::WaitForMotion) && inGroundPlane )
       {
         float dist = std::sqrt( std::pow( robotOffsetX, 2 ) + std::pow( robotOffsetY, 2) );
-        if ( dist <= (_instanceParams.maxPounceDist*2) )
+        if ( dist <= (_iConfig.maxPounceDist*2) )
         {
           //Set the exit state information and then cancel the hang action
-          _lifetimeParams.motionObserved = true;
+          _dVars.motionObserved = true;
         }
         else
         {

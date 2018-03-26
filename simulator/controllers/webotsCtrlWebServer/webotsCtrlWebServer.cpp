@@ -15,8 +15,6 @@
 
 #include "json/json.h"
 
-#include "util/console/consoleInterface.h"
-#include "util/console/consoleSystem.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/channelFilter.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -30,12 +28,6 @@
 #include <webots/Supervisor.hpp>
 
 #define LOG_CHANNEL    "webotsCtrlWebServer"
-
-namespace Anki {
-  namespace Cozmo {
-    CONSOLE_VAR_EXTERN(bool, kEnableCladLogger);
-  }
-}
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -103,13 +95,9 @@ int main(int argc, char **argv)
   // Start with a step so that we can attach to the process here for debugging
   webserverSupervisor.step(WEB_SERVER_TIME_STEP_MS);
   
-  // Set up the console vars to load from file, if it exists
-  ANKI_CONSOLE_SYSTEM_INIT("consoleVars.ini");
-  NativeAnkiUtilConsoleLoadVars();
-
   // Create the standalone web server
   Json::Value wsConfig;
-  static const std::string & wsConfigPath = "webserver/webServerConfig_robot.json";
+  static const std::string & wsConfigPath = "webserver/webServerConfig_standalone.json";
   const bool success = dataPlatform.readAsJson(Util::Data::Scope::Resources, wsConfigPath, wsConfig);
   if (!success)
   {

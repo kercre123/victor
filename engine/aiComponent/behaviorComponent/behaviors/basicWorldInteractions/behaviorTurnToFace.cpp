@@ -24,6 +24,18 @@ namespace Cozmo {
 namespace {
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorTurnToFace::InstanceConfig::InstanceConfig()
+{
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorTurnToFace::DynamicVariables::DynamicVariables()
+{
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorTurnToFace::BehaviorTurnToFace(const Json::Value& config)
@@ -40,18 +52,18 @@ bool BehaviorTurnToFace::WantsToBeActivatedBehavior() const
   TimeStamp_t lastTimeObserved = GetBEI().GetFaceWorld().GetLastObservedFace(wastedPose);
   std::set<Vision::FaceID_t> facesObserved = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(lastTimeObserved);
   if(facesObserved.size() > 0){
-    _targetFace = GetBEI().GetFaceWorld().GetSmartFaceID(*facesObserved.begin());
+    _dVars.targetFace = GetBEI().GetFaceWorld().GetSmartFaceID(*facesObserved.begin());
   }
   
-  return _targetFace.IsValid();
+  return _dVars.targetFace.IsValid();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTurnToFace::OnBehaviorActivated()
 {
-  if(_targetFace.IsValid()){
-    DelegateIfInControl(new TurnTowardsFaceAction(_targetFace)); 
+  if(_dVars.targetFace.IsValid()){
+    DelegateIfInControl(new TurnTowardsFaceAction(_dVars.targetFace)); 
   }
 }
 
@@ -59,7 +71,7 @@ void BehaviorTurnToFace::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTurnToFace::OnBehaviorDeactivated()
 {
-  _targetFace.Reset();
+  _dVars.targetFace.Reset();
 }
 
   

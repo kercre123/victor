@@ -25,6 +25,7 @@
 #include "engine/faceWorld.h"
 #include "engine/petWorld.h"
 #include "engine/robot.h"
+#include "engine/robotDataLoader.h"
 #include "engine/robotStateHistory.h"
 #include "engine/vision/visionModesHelpers.h"
 #include "engine/vision/visionSystem.h"
@@ -87,7 +88,9 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D, "Vision.General", false);
   CONSOLE_VAR(bool, kDrawMarkerNames,              "Vision.General", false); // In viz camera view
   CONSOLE_VAR(bool, kDisplayUndistortedImages,     "Vision.General", false);
-  CONSOLE_VAR(bool, kDisplayObjectDetectionLabels, "Vision.General", false); // when drawing images to screen
+    
+  CONSOLE_VAR(bool, kEnableMirrorMode,             "Vision.General", false);
+  CONSOLE_VAR(bool, kDisplayObjectDetectionLabels, "Vision.General", false); // when in mirror mode
   
   // Hack to continue drawing detected objects for a bit after they are detected
   // since object detection is slow
@@ -142,6 +145,7 @@ namespace Cozmo {
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EnableVisionMode>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseAllEnrolledFaces>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::EraseEnrolledFaceByID>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestEnrolledNames>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::LoadFaceAlbumFromFile>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveFaceAlbumToFile>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::UpdateEnrolledFaceByID>();
@@ -156,10 +160,16 @@ namespace Cozmo {
 
     // "Special" viz identifier for the main camera feed
     _vizDisplayIndexMap["camera"] = 0;
+
+    auto& context = dependentComponents.GetValue<ContextWrapper>().context;
+
+    if (nullptr != context->GetDataPlatform())
+    {
+      ReadVisionConfig(context->GetDataLoader()->GetRobotVisionConfig());
+    }
   }
 
-
-  Result VisionComponent::Init(const Json::Value& config)
+  void VisionComponent::ReadVisionConfig(const Json::Value& config)
   {
     _isInitialized = false;
 
@@ -169,7 +179,7 @@ namespace Cozmo {
     do { \
       if(!JsonTools::GetValueOptional(__json__, __fieldName__, __variable__)) { \
         PRINT_NAMED_ERROR("VisionSystem.Init.MissingJsonParameter", "%s", __fieldName__); \
-        return RESULT_FAIL; \
+        return; \
     }} while(0)
 
     const Json::Value& imageQualityConfig = config[JsonKey::ImageQualityGroup];
@@ -184,7 +194,7 @@ namespace Cozmo {
     Result result = _visionSystem->Init(config);
     if(RESULT_OK != result) {
       PRINT_NAMED_ERROR("VisionComponent.Init.VisionSystemInitFailed", "");
-      return result;
+      return;
     }
 
     // Request face album data from the robot
@@ -213,11 +223,9 @@ namespace Cozmo {
     _dropStats.SetChannelName("VisionComponent");
     _dropStats.SetRecentWindowLength(kDropStatsWindowLength_sec * kCameraFrameRate_fps);
 
-    _isInitialized = true;
-    return RESULT_OK;
-
-  } //Init()
-
+    _isInitialized = true;    
+  } //ReadVisionConfig()
+  
   void VisionComponent::SetCameraCalibration(std::shared_ptr<Vision::CameraCalibration> camCalib)
   {
     const bool calibChanged = _camera->SetCalibration(camCalib);
@@ -406,23 +414,23 @@ namespace Cozmo {
     return lastResult;
   }
 
-  Result VisionComponent::Update()
+  void VisionComponent::UpdateDependent(const RobotCompMap& dependentComps)
   {
     if(!_isInitialized) {
       PRINT_NAMED_WARNING("VisionComponent.Update.NotInitialized", "");
-      return RESULT_FAIL;
+      return;
     }
 
     if (!_enabled) {
       PRINT_CH_INFO("VisionComponent", "VisionComponent.Update.NotEnabled", "");
-      return RESULT_OK;
+      return;
     }
 
     if(!IsCameraCalibrationSet())
     {
       PRINT_NAMED_WARNING("VisionComponent.Update.NoCameraCalibration",
-                          "Camera calibration should be set before calling Update().");
-      return RESULT_FAIL;
+                          "Camera calibration should be set before calling UpdateDependent().");
+      return;
     }
 
     if(_bufferedImg.IsEmpty())
@@ -455,7 +463,7 @@ namespace Cozmo {
             _lastReceivedImageTimeStamp_ms = 0;
             _lastProcessedImageTimeStamp_ms = 0;
             ReleaseImage(_bufferedImg);
-            return RESULT_FAIL;
+            return;
           }
           _framePeriod_ms = _bufferedImg.GetTimestamp() - _lastReceivedImageTimeStamp_ms;
         }
@@ -488,7 +496,7 @@ namespace Cozmo {
 
         ReleaseImage(_bufferedImg);
 
-        return RESULT_OK;
+        return;
       }
 
       // Do we have anything in state history at least as new as this image yet?
@@ -509,8 +517,9 @@ namespace Cozmo {
       else
       {
         // At this point, we have an image + robot state, continue processing
+        
         // "Mirror mode": draw images we process to the robot's screen
-        if(_drawImagesToScreen)
+        if(_drawImagesToScreen || kEnableMirrorMode)
         {
           // TODO: Add this as a lambda you can register with VisionComponent for things you want to
           //       do with image when captured?
@@ -555,7 +564,9 @@ namespace Cozmo {
       } // if(!haveHistStateAtLeastAsNewAsImage)
     } // if(_bufferedImg.IsEmpty())
 
-    return RESULT_OK;
+    
+    UpdateAllResults();
+    return;
   }
 
   Result VisionComponent::SetNextImage(Vision::ImageRGB& image)
@@ -1907,7 +1918,7 @@ namespace Cozmo {
       }
     }
 
-    msg.headAngle = _robot->GetHeadAngle();
+    msg.headAngle = _robot->GetComponent<FullRobotPose>().GetHeadAngle();
     msg.success = true;
 
     if(kDrawDebugDisplay)
@@ -2261,6 +2272,18 @@ namespace Cozmo {
     SaveFaceAlbumToRobot();
     _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotErasedAllEnrolledFaces()));
   }
+  
+  void VisionComponent::RequestEnrolledNames()
+  {
+    ExternalInterface::EnrolledNamesResponse response;
+    Lock();
+    response.faces = _visionSystem->GetEnrolledNames();
+    Unlock();
+    
+    _robot->Broadcast( ExternalInterface::MessageEngineToGame( std::move(response) ) );
+  }
+  
+  
 
   Result VisionComponent::RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName)
   {
@@ -2276,6 +2299,25 @@ namespace Cozmo {
     }
 
     return result;
+  }
+  
+  bool VisionComponent::IsNameTaken(const std::string& name)
+  {
+    Lock();
+    auto namePairList = _visionSystem->GetEnrolledNames();
+    Unlock();
+    
+    auto tolower = [](const char c) { return std::tolower(c); };
+    std::string lcName{name};
+    std::transform(lcName.begin(), lcName.end(), lcName.begin(), tolower);
+    for( const auto& nameEntry : namePairList ) {
+      std::string existingNameCopy = nameEntry.name;
+      std::transform(existingNameCopy.begin(), existingNameCopy.end(), existingNameCopy.begin(), tolower);
+      if( existingNameCopy == lcName ) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void VisionComponent::BroadcastLoadedNamesAndIDs(const std::list<Vision::LoadedKnownFace>& loadedFaces) const
@@ -2519,6 +2561,12 @@ namespace Cozmo {
   void VisionComponent::HandleMessage(const ExternalInterface::EraseAllEnrolledFaces& msg)
   {
     EraseAllFaces();
+  }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::RequestEnrolledNames& msg)
+  {
+    RequestEnrolledNames();
   }
 
   // Helper function to get the full path to face albums if isRelative=true

@@ -1,0 +1,9 @@
+{
+  "port": "8887",
+  "title0": "Victor Web Server",
+  "title1": "This web server is running in the WebServer process",
+  "whichWebServer": 0,
+  "startPage": "page_main",
+  "allowPerfPage": true,
+  "allowConsoleVarsPage": false
+}

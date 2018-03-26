@@ -37,7 +37,22 @@ CONSOLE_VAR(s32, kBPW_MaxRetries,         "Behavior.PopAWheelie", 1);
 
 } // end namespace
 
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorPopAWheelie::InstanceConfig::InstanceConfig()
+{
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorPopAWheelie::DynamicVariables::DynamicVariables()
+{
+  numPopAWheelieActionRetries = 0;
+  hasDisabledcliff = false;
+}
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPopAWheelie::BehaviorPopAWheelie(const Json::Value& config)
 : ICozmoBehavior(config)
@@ -50,14 +65,14 @@ bool BehaviorPopAWheelie::WantsToBeActivatedBehavior() const
 {
   UpdateTargetBlock();
   
-  return _targetBlock.IsSet();
+  return _dVars.targetBlock.IsSet();
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPopAWheelie::OnBehaviorActivated()
 {
-  if(!ShouldStreamline() && _lastBlockReactedTo != _targetBlock){
+  if(!ShouldStreamline() && _dVars.lastBlockReactedTo != _dVars.targetBlock){
     TransitionToReactingToBlock();
   }else{
     TransitionToPerformingAction();
@@ -77,7 +92,7 @@ void BehaviorPopAWheelie::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPopAWheelie::UpdateTargetBlock() const
 {
-  _targetBlock = GetBEI().GetAIComponent().GetObjectInteractionInfoCache().
+  _dVars.targetBlock = GetAIComp<ObjectInteractionInfoCache>().
        GetBestObjectForIntention(ObjectInteractionIntention::PopAWheelieOnObject);
 }
 
@@ -89,13 +104,13 @@ void BehaviorPopAWheelie::TransitionToReactingToBlock()
 
   // Turn towards the object and then react to it before performing the pop a wheelie action
   DelegateIfInControl(new CompoundActionSequential({
-      new TurnTowardsObjectAction(_targetBlock),
+      new TurnTowardsObjectAction(_dVars.targetBlock),
       new TriggerLiftSafeAnimationAction(AnimationTrigger::PopAWheelieInitial),
     }),
     [this](const ActionResult& res){
       if(res == ActionResult::SUCCESS)
       {
-        _lastBlockReactedTo = _targetBlock;
+        _dVars.lastBlockReactedTo = _dVars.targetBlock;
       }
       TransitionToPerformingAction();
     });
@@ -113,7 +128,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
 {
-  if( ! _targetBlock.IsSet() ) {
+  if( ! _dVars.targetBlock.IsSet() ) {
     PRINT_NAMED_WARNING("BehaviorPopAWheelie.NoBlockID",
                         "%s: Transitioning to action state, but we don't have a valid block ID",
                         GetDebugLabel().c_str());
@@ -121,17 +136,17 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
   }
   
   if(isRetry) {
-    ++_numPopAWheelieActionRetries;
+    ++_dVars.numPopAWheelieActionRetries;
     PRINT_NAMED_INFO("BehaviorPopAWheelie.TransitionToPerformingAction.Retrying",
-                     "Retry %d of %d", _numPopAWheelieActionRetries, kBPW_MaxRetries);
+                     "Retry %d of %d", _dVars.numPopAWheelieActionRetries, kBPW_MaxRetries);
   } else {
-    _numPopAWheelieActionRetries = 0;
+    _dVars.numPopAWheelieActionRetries = 0;
   }
   
   // Only turn towards face if this is _not_ a retry
   const Radians maxTurnToFaceAngle( (isRetry || ShouldStreamline() ? 0 : DEG_TO_RAD(90)) );
 
-  DriveToPopAWheelieAction* goPopAWheelie = new DriveToPopAWheelieAction(_targetBlock,
+  DriveToPopAWheelieAction* goPopAWheelie = new DriveToPopAWheelieAction(_dVars.targetBlock,
                                                                          false,
                                                                          0,
                                                                          maxTurnToFaceAngle);
@@ -142,7 +157,7 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
   // that we play the correct animation instead of getting interrupted)  
   auto disableCliff = [this](Robot& robot) {
     // tell the robot not to stop the current action / animation if the cliff sensor fires
-    _hasDisabledcliff = true;
+    _dVars.hasDisabledcliff = true;
     robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableStopOnCliff(false)));
   };
   goPopAWheelie->SetPreDockCallback(disableCliff);
@@ -154,14 +169,14 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
                 {
                   case ActionResultCategory::SUCCESS:
                   {
-                    _lastBlockReactedTo.UnSet();
+                    _dVars.lastBlockReactedTo.UnSet();
                     DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::SuccessfulWheelie));
                     BehaviorObjectiveAchieved(BehaviorObjective::PoppedWheelie);
                     break;
                   }
                   case ActionResultCategory::RETRY:
                   {
-                    if(_numPopAWheelieActionRetries < kBPW_MaxRetries)
+                    if(_dVars.numPopAWheelieActionRetries < kBPW_MaxRetries)
                     {
                       SetupRetryAction(msg);
                       break;
@@ -178,9 +193,9 @@ void BehaviorPopAWheelie::TransitionToPerformingAction(bool isRetry)
                                      EnumToString(msg.result));
                     
                     // mark the block as inaccessible
-                    const ObservableObject* failedObject = failedObject = GetBEI().GetBlockWorld().GetLocatedObjectByID(_targetBlock);
+                    const ObservableObject* failedObject = failedObject = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.targetBlock);
                     if(failedObject){
-                      GetBEI().GetAIComponent().GetWhiteboard().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie);
+                      GetAIComp<AIWhiteboard>().SetFailedToUse(*failedObject, AIWhiteboard::ObjectActionFailure::RollOrPopAWheelie);
                     }
                     break;
                   }
@@ -237,10 +252,10 @@ void BehaviorPopAWheelie::SetupRetryAction(const ExternalInterface::RobotComplet
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPopAWheelie::ResetBehavior()
 {
-  _targetBlock.UnSet();
+  _dVars.targetBlock.UnSet();
 
-  if( _hasDisabledcliff ) {
-    _hasDisabledcliff = false;
+  if( _dVars.hasDisabledcliff ) {
+    _dVars.hasDisabledcliff = false;
     auto& robotInfo = GetBEI().GetRobotInfo();
     // NOTE: assumes that we want the cliff to be re-enabled when we leave this behavior. If it was disabled
     // before this behavior started, it will be enabled anyway. If this becomes a problem, then we need to

@@ -67,13 +67,13 @@ namespace Anki
       // IDependencyManagedComponent functions
       //////
       virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComponents) override final;
-      // Maintain the chain of initializations currently in robot - it might be possible to
-      // change the order of initialization down the line, but be sure to check for ripple effects
-      // when changing this function
       virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
-        dependencies.insert(RobotComponentID::CozmoContext);
+        dependencies.insert(RobotComponentID::CozmoContextWrapper);
       };
-      virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+      virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
+        dependencies.insert(RobotComponentID::CubeComms);
+        dependencies.insert(RobotComponentID::Vision);
+      };
 
       // Prevent hiding function warnings by exposing the (valid) unreliable component methods
       using UnreliableComponent<BCComponentID>::InitDependent;
@@ -507,7 +507,10 @@ namespace Anki
       
       void SetupEventHandlers(IExternalInterface& externalInterface);
       
-      Result SanityCheckBookkeeping() const;    
+      Result SanityCheckBookkeeping() const;
+      
+      void SendObjectUpdateToWebViz( const ExternalInterface::RobotDeletedLocatedObject& msg ) const;
+      void SendObjectUpdateToWebViz( const ExternalInterface::RobotObservedObject& msg ) const;
       
       //
       // Member Variables

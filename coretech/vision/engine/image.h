@@ -374,7 +374,9 @@ namespace Vision {
     
     Image ToGray() const;
     void FillGray(Image& grayOut) const;
-    
+    ImageRGBA& SetFromGray(const Image& imageGray);   // Set this RGBA image from given gray image
+    ImageRGBA& SetFromRGB565(const ImageRGB565& rgb565, const u8 alpha = 255); // Set from given RGB565 image
+
     void DrawSubImage(const ImageRGBA& subImage, const Point2f& topLeftCorner) { 
       return ImageBase<PixelRGBA>::DrawSubImage<ImageRGBA>(subImage, topLeftCorner); 
     }

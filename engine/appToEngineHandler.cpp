@@ -33,7 +33,11 @@ namespace {
   
   // put here any engine to game tag that should be sent to the app
   std::vector<Tag> tags = {
-    Tag::FaceEnrollmentCompleted
+    Tag::FaceEnrollmentCompleted,
+    Tag::MeetVictorStarted,
+    Tag::MeetVictorFaceScanStarted,
+    Tag::MeetVictorFaceScanComplete,
+    Tag::EnrolledNamesResponse
   };
 }
   
@@ -113,7 +117,7 @@ bool SetFromJSONImpl(const Json::Value& json, int& val)
   return success;
 }
   
-#define SetFromJSON(data, cladStruct, name) SetFromJSONImpl(data[#name], cladStruct.name)
+#define A2E_SET_FROM_JSON(data, cladStruct, name) SetFromJSONImpl(data[#name], cladStruct.name)
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AppToEngineHandler::CreateCLAD( const Json::Value& data, ExternalInterface::MessageGameToEngine& msg ) const
@@ -129,19 +133,43 @@ bool AppToEngineHandler::CreateCLAD( const Json::Value& data, ExternalInterface:
     // put here deserializing of any messages you care about
     if( data["type"] == "SetFaceToEnroll" ) {
       SetFaceToEnroll sfte;
-      success &= SetFromJSON(data, sfte, name);
-      success &= SetFromJSON(data, sfte, observedID);
-      success &= SetFromJSON(data, sfte, saveID);
-      success &= SetFromJSON(data, sfte, saveToRobot);
-      success &= SetFromJSON(data, sfte, sayName);
-      success &= SetFromJSON(data, sfte, useMusic);
+      success &= A2E_SET_FROM_JSON(data, sfte, name);
+      success &= A2E_SET_FROM_JSON(data, sfte, observedID);
+      success &= A2E_SET_FROM_JSON(data, sfte, saveID);
+      success &= A2E_SET_FROM_JSON(data, sfte, saveToRobot);
+      success &= A2E_SET_FROM_JSON(data, sfte, sayName);
+      success &= A2E_SET_FROM_JSON(data, sfte, useMusic);
       tmpMsg.Set_SetFaceToEnroll(std::move(sfte));
     }
     else if( data["type"] == "AppIntent" ) {
       AppIntent appIntent;
-      success &= SetFromJSON(data, appIntent, intent);
-      success &= SetFromJSON(data, appIntent, param);
+      success &= A2E_SET_FROM_JSON(data, appIntent, intent);
+      success &= A2E_SET_FROM_JSON(data, appIntent, param);
       tmpMsg.Set_AppIntent(std::move(appIntent));
+    }
+    else if( data["type"] == "EraseEnrolledFaceByID" ) {
+      EraseEnrolledFaceByID erase;
+      success &= A2E_SET_FROM_JSON(data, erase, faceID);
+      tmpMsg.Set_EraseEnrolledFaceByID(std::move(erase));
+    }
+    else if( data["type"] == "UpdateEnrolledFaceByID" ) {
+      UpdateEnrolledFaceByID update;
+      success &= A2E_SET_FROM_JSON(data, update, faceID);
+      success &= A2E_SET_FROM_JSON(data, update, newName);
+      success &= A2E_SET_FROM_JSON(data, update, oldName);
+      tmpMsg.Set_UpdateEnrolledFaceByID(std::move(update));
+    }
+    else if( data["type"] == "CancelFaceEnrollment" ) {
+      CancelFaceEnrollment cancel;
+      tmpMsg.Set_CancelFaceEnrollment(std::move(cancel));
+    }
+    else if( data["type"] == "RequestEnrolledNames" ) {
+      RequestEnrolledNames request;
+      tmpMsg.Set_RequestEnrolledNames(std::move(request));
+    }
+    else if( data["type"] == "EraseAllEnrolledFaces" ) {
+      EraseAllEnrolledFaces eraseAll;
+      tmpMsg.Set_EraseAllEnrolledFaces(std::move(eraseAll));
     }
     else {
       success = false;
@@ -319,12 +347,36 @@ void AppToEngineHandler::HandleEngineToGameMessage( const AnkiEvent<ExternalInte
   json["type"] = MessageEngineToGameTagToString(tag);
   
   // manually serialize since these are "message"s not "structure"s in CLAD
-  #define SaveFromJSON(json, data, name) json[#name] = data.name
+  #define A2E_SET_JSON(json, data, name) json[#name] = data.name
+  
   if( tag == Tag::FaceEnrollmentCompleted ) {
     auto& msg = data.Get_FaceEnrollmentCompleted();
-    SaveFromJSON(json, msg, faceID);
-    SaveFromJSON(json, msg, name);
+    A2E_SET_JSON(json, msg, faceID);
+    A2E_SET_JSON(json, msg, name);
     json["result"] = FaceEnrollmentResultToString(msg.result);
+  }
+  else if( tag == Tag::EnrolledNamesResponse ) {
+    auto& msg = data.Get_EnrolledNamesResponse();
+    auto& jsonList = json["faces"];
+    for( const auto& faceEntry : msg.faces ) {
+      Json::Value jsonEntry;
+      A2E_SET_JSON(jsonEntry, faceEntry, secondsSinceFirstEnrolled);
+      A2E_SET_JSON(jsonEntry, faceEntry, secondsSinceLastUpdated);
+      A2E_SET_JSON(jsonEntry, faceEntry, secondsSinceLastSeen);
+      A2E_SET_JSON(jsonEntry, faceEntry, faceID);
+      A2E_SET_JSON(jsonEntry, faceEntry, name);
+      jsonList.append( jsonEntry );
+    }
+  }
+  else if( tag == Tag::MeetVictorStarted ) {
+    auto& msg = data.Get_MeetVictorStarted();
+    json["name"] = msg.name;
+  }
+  else if( tag == Tag::MeetVictorFaceScanStarted ) {
+    // do nothing. this is just here so people know this is handled
+  }
+  else if( tag == Tag::MeetVictorFaceScanComplete ) {
+    // do nothing. this is just here so people know this is handled
   }
   
   

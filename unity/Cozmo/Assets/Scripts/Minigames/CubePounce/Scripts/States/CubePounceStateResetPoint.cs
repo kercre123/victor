@@ -76,7 +76,6 @@ namespace Cozmo.Challenge.CubePounce {
 
     private void ReactToCubeInRange() {
       _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetReady, HandleGetInAnimFinish);
-      _CurrentRobot.RemoveIdleAnimation(kCubePounceResetPoint);
       _CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftUp, kCubePounceResetPoint);
 
       _GetReadyAnimInProgress = true;
@@ -93,7 +92,6 @@ namespace Cozmo.Challenge.CubePounce {
 
     private void ReactToCubeOutOfRange() {
       _CurrentRobot.SendAnimationTrigger(Anki.Cozmo.AnimationTrigger.CubePounceGetUnready, HandleGetUnreadyDone);
-      _CurrentRobot.RemoveIdleAnimation(kCubePounceResetPoint);
       _CurrentRobot.PushIdleAnimation(Anki.Cozmo.AnimationTrigger.CubePounceIdleLiftDown, kCubePounceResetPoint);
 
       _GetReadyAnimCompleted = false;

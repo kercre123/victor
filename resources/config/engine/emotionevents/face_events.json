@@ -6,6 +6,10 @@
         {
           "emotionType" : "Social",
           "value" : 0.08
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.02
         }
       ]
     },
@@ -14,6 +18,10 @@
       "emotionAffectors" : [
         {
           "emotionType" : "Social",
+          "value" : 0.8
+        },
+        {
+          "emotionType" : "Stimulated",
           "value" : 0.8
         }
       ]
@@ -24,6 +32,10 @@
         {
           "emotionType" : "Social",
           "value" : 0.6
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.5
         }
       ]
     },
@@ -42,6 +54,10 @@
         {
           "emotionType" : "Social",
           "value" : 0.6
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.8
         }
       ]
     }

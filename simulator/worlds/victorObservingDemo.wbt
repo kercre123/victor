@@ -1,9 +1,9 @@
-#VRML_SIM V8.5 utf8
+#VRML_SIM R2018a utf8
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.22960533 -0.40130452 -0.88669954 4.0805622
-  position 1.6562732 1.0409785 1.8928662
+  orientation 0.354519788155736 0.5630826686340736 0.7464942250881398 2.2628819285799144
+  position 2.7180323062983094 1.3239881445284694 0.9039526442806154
 }
 Background {
   skyColor [
@@ -26,19 +26,18 @@ DirectionalLight {
   intensity 0.5
 }
 CozmoMat {
-  showMarkers FALSE
 }
 VictorCharger {
   translation -0.076696196 0.00014978189 2.4646951e-14
   rotation 0 0 1 4.7124
 }
 Face {
-  translation 0.57139415 -0.0017680771 0.39
+  translation 0.4213941499999999 -0.001768074157703489 0.23999999999999988
   rotation 0 0 -1 4.712389
   image "face02.png"
 }
 Face {
-  translation 0.52778232 -0.23261288 0.32
+  translation 0.36357493093074505 -0.18861363710812293 0.29
   rotation 0 0 -1 4.9741884
 }
 LightCube {
@@ -48,15 +47,15 @@ LightCube {
 }
 LightCube {
   translation -0.010376264 0.32666562 0.0219929
-  rotation 1.39537e-05 -1.83704e-06 1 0.261799
-  objectType "Block_LIGHTCUBE3"
+  rotation 1.3953699998618023e-5 -1.8370399998180594e-6 0.9999999999009599 0.261799
   colorizeStderrOutput TRUE
+  objectType "Block_LIGHTCUBE3"
 }
 LightCube {
   translation 0.08610605 0.32966413 0.0219929
   rotation 0 0 -1 6.23319
-  objectType "Block_LIGHTCUBE2"
   colorizeStderrOutput TRUE
+  objectType "Block_LIGHTCUBE2"
 }
 CozmoBot2 {
   translation 0 0 0.005
@@ -66,11 +65,12 @@ CozmoBot2 {
 }
 WebotsKeyboardController {
   behaviorName "HighLevelAI"
+  emotionName "Stimulated"
   consoleVarName "DevDispatchAfterShake"
   consoleVarValue "1"
+  colorizeStderrOutput TRUE
   translation -0.24686749 0.2921897 0.08
   rotation 0 0 1 6.0213859
-  colorizeStderrOutput TRUE
 }
 CozmoVizDisplay {
   streamResolution "NHD"

@@ -12,8 +12,10 @@ namespace Cozmo {
 enum uint_8 BehaviorTimerTypes {
   Invalid,
 
-  PlayingWithCube,
   FistBump,
+  PlayingWithCube,
+  Socializing,
+  
 }
 
 } // namespace Cozmo

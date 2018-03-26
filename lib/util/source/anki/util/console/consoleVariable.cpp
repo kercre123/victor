@@ -120,6 +120,5 @@ bool ConsoleVar<bool>::ParseText(const char* text)
   return true;
 }
 
-
 }
 }

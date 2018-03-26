@@ -3,15 +3,18 @@
   "behaviorClass" : "HighLevelAI",
 
   
-  "socializeKnownFaceCooldown_s": 600.0,
-  "playWithCubeCooldown_s": 60.0,
-  "playWithCubeOnChargerCooldown_s": 600.0,
-  "goToSleepTimeout_s": 240.0,
-  "minFaceAgeToAllowSleep_ms": 5000,
-  "needsToChargeTime_ms": 300000,
-  "maxFaceDistanceToSocialize_mm": 1000.0,
+  "socializeKnownFaceCooldown_s": 1800.0,
+  "playWithCubeCooldown_s": 600.0,
+  "playWithCubeOnChargerCooldown_s": 2400.0,
+  "goToSleepTimeout_s": 1200.0,
+  "minFaceTimeToAllowSleep_s": 600.0,
+  "maxFaceDistanceToSocialize_mm": 500.0,
 
   "initialState": "ObservingOnCharger",
+
+  "resumeReplacements": {
+    "Napping" : "ObservingOnCharger"
+  },
 
   "states": [
     {
@@ -30,7 +33,7 @@
     },
     {
       "name": "DriveOffChargerIntoSocializing",
-      "behavior": "DriveOffCharger"
+      "behavior": "DriveOffChargerIntoSocializing"
     },
     {
       "name": "DriveOffChargerIntoPlay",
@@ -52,9 +55,21 @@
       "debugColor": "DARKGREEN"
     },
     {
+      "name": "RollCube",
+      "behavior": "RollCubeVoiceCommand",
+      "clearIntent": "play_specific"
+    },
+    {
       "name": "Napping",
       "behavior": "Sleeping",
-      "debugColor": "GREEN"
+      "debugColor": "GREEN",
+      "clearIntent": "system_sleep"
+    },
+    {
+      "name": "NappingOnCharger",
+      "behavior": "Sleeping",
+      "debugColor": "GREEN",
+      "clearIntent": "system_sleep"
     },
     {
       "name": "WakingUp",
@@ -73,7 +88,19 @@
     {
       "name": "FistBump",
       "behavior": "FistBumpVoiceCommand",
-      "debugColor": "WHITE"
+      "debugColor": "WHITE",
+      "clearIntent": "play_specific"
+    },
+    {
+      "name": "ComeHere",
+      "behavior": "ComeHereVoiceCommand",
+      "clearIntent": "imperative_come"
+    },
+    {
+      "name": "Keepaway",
+      "behavior": "KeepawayVoiceCommand",
+      "debugColor": "YELLOW",
+      "clearIntent": "play_specific"
     }
   ],
 
@@ -102,7 +129,8 @@
           "to": "DriveOffChargerIntoObserving",
           "condition": {
             "conditionType": "TimerInRange",
-            "begin_s": 600.0
+            "begin_s": 1100.0,
+            "manualResetOnly": true
           }
         },
         {
@@ -110,7 +138,7 @@
           "preDefinedStrategyName": "NeedsToLeaveChargerForPlay"
         },
         {
-          "to": "Napping",
+          "to": "NappingOnCharger",
           "preDefinedStrategyName": "WantsToSleep"
         }
       ]
@@ -135,7 +163,8 @@
           "to": "ObservingOnCharger",
           "condition": {
             "conditionType": "TimerInRange",
-            "begin_s": 120.0
+            "begin_s": 1200.0,
+            "manualResetOnly": true
           }
         }
       ]
@@ -162,7 +191,10 @@
       "nonInterruptingTransitions": [
         {
           "to": "ReturningToCharger",
-          "preDefinedStrategyName": "NeedsToCharge"
+          "condition": {
+            "conditionType": "BatteryLevel",
+            "targetBatteryLevel": "Low"
+          }
         }
       ]
     },
@@ -254,7 +286,7 @@
     },
     
     {
-      "from": "Napping",
+      "from": "NappingOnCharger",
       "interruptingTransitions": [
         {
           "to": "WakingUp",
@@ -264,6 +296,12 @@
               "conditionType": "OnCharger"
             }
           }
+        },
+        {
+          "to": "ObservingOnCharger",
+          "condition": {
+            "conditionType": "TriggerWordPending"
+          }
         }
       ],
       "nonInterruptingTransitions": [
@@ -271,7 +309,20 @@
           "to": "WakingUp",
           "condition": {
             "conditionType": "TimerInRange",
-            "begin_s": 300.0
+            "begin_s": 14400.0,
+            "manualResetOnly": true
+          }
+        }
+      ]
+    },
+
+    {
+      "from": "Napping",
+      "interruptingTransitions": [
+        {
+          "to": "WakingUp",
+          "condition": {
+            "conditionType": "OnCharger"
           }
         }
       ]
@@ -300,18 +351,21 @@
           }
         }
       ],
+      "nonInterruptingTransitions": [
+        {
+          "to": "FailedToFindCharger",
+          "condition": {
+            "conditionType": "TimerInRange",
+            "begin_s": 300.0,
+            "manualResetOnly": true
+          }
+        }
+      ],
       "exitTransitions": [
         {
           "to": "ObservingOnChargerRecentlyPlaced",
           "condition": {
             "conditionType": "OnCharger"
-          }
-        },
-        {
-          // TODO:(bn) this doesn't work right now because FindAndGoToHome never stops unless it find a charger
-          "to": "FailedToFindCharger",
-          "condition": {
-            "conditionType": "TrueCondition" 
           }
         }
       ]
@@ -353,6 +407,42 @@
       ]
     },
 
+    {
+      "from": "ComeHere",
+      "exitTransitions": [
+        {
+          "to": "Socializing",
+          "condition": {
+            "conditionType": "TrueCondition"
+          }
+        }
+      ]
+    },
+
+    {
+      "from": "Keepaway",
+      "exitTransitions": [
+        {
+          "to": "Socializing",
+          "condition": {
+            "conditionType": "TrueCondition"
+          }
+        }
+      ]
+    },
+
+    {
+      "from": "RollCube",
+      "exitTransitions": [
+        {
+          "to": "Observing",
+          "condition": {
+            "conditionType": "TrueCondition"
+          }
+        }
+      ]
+    },
+
     //***************************
     // VOICE COMMANDS   
     //*************************** 
@@ -364,9 +454,13 @@
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
         "FistBump",
+        "ComeHere",
+        "Keepaway",
         "Observing",
         "ReturningToCharger", // to avoid unclaimed intent
-        "Socializing"
+        "Socializing",
+        "RollCube",
+        "Keepaway"
       ],
       "interruptingTransitions": [
         {
@@ -406,9 +500,10 @@
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
         "FistBump",
+        "ComeHere",
+        "Keepaway",
         "Observing",
         "Socializing",
-        "Napping",
         "WakingUp",
         "ReturningToCharger",
         "FailedToFindCharger"
@@ -422,9 +517,6 @@
               {
                 "type": "play_specific",
                 "entity_behavior": "fist_bump"
-              },
-              {
-                "type": "play_anytrick"
               }
             ]
           }
@@ -433,7 +525,8 @@
     },
     {
       "from": [
-        "PlayingWithCube"
+        "PlayingWithCube",
+        "RollCube"
       ],
       "nonInterruptingTransitions": [
         {
@@ -444,15 +537,238 @@
               {
                 "type": "play_specific",
                 "entity_behavior": "fist_bump"
-              },
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    // Play Keepaway
+    {
+      "from": [
+        "ObservingOnCharger",
+        "ObservingOnChargerRecentlyPlaced",
+        "DriveOffChargerIntoObserving",
+        "DriveOffChargerIntoSocializing",
+        "DriveOffChargerIntoPlay",
+        "FistBump",
+        "ComeHere",
+        "Keepaway",
+        "Observing",
+        "Socializing",
+        "WakingUp",
+        "ReturningToCharger",
+        "FailedToFindCharger"
+      ],
+      "interruptingTransitions": [
+        {
+          "to": "Keepaway",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
               {
-                "type": "play_anytrick"
+                "type": "play_specific",
+                "entity_behavior": "keep_away"
+              }
+            ]
+          }
+        }
+      ]
+
+    },
+    {
+      "from": [
+        "PlayingWithCube",
+        "RollCube"
+      ],
+      "nonInterruptingTransitions": [
+        {
+          "to": "Keepaway",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {
+                "type": "play_specific",
+                "entity_behavior": "keep_away"
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    // go to sleep off charger
+    {
+      "from": [
+        "DriveOffChargerIntoObserving",
+        "DriveOffChargerIntoSocializing",
+        "DriveOffChargerIntoPlay",
+        "FistBump",
+        "ComeHere",
+        "Keepaway",
+        "Observing",
+        "Socializing",
+        "WakingUp",
+        "ReturningToCharger",
+        "FailedToFindCharger",
+        "PlayingWithCube",
+        "RollCube"
+      ],
+      "interruptingTransitions": [
+        {
+          "to": "Napping",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {"type": "system_sleep"}
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "from": [
+        "PlayingWithCube",
+        "RollCube"
+      ],
+      "nonInterruptingTransitions": [
+        {
+          "to": "Napping",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {"type": "system_sleep"}
+            ]
+          }
+        }
+      ]
+    },
+
+    // go to sleep on charger
+    {
+      "from": [
+        "ObservingOnCharger",
+        "ObservingOnChargerRecentlyPlaced"
+      ],
+      "interruptingTransitions": [
+        {
+          "to": "NappingOnCharger",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {"type": "system_sleep"}
+            ]
+          }
+        }
+      ]
+    },
+
+    // roll cube
+    {
+      "from": [
+        "ObservingOnCharger",
+        "ObservingOnChargerRecentlyPlaced",
+        "DriveOffChargerIntoObserving",
+        "DriveOffChargerIntoSocializing",
+        "DriveOffChargerIntoPlay",
+        "ComeHere",
+        "Observing",
+        "Socializing",
+        "WakingUp",
+        "ReturningToCharger",
+        "FailedToFindCharger",
+        "PlayingWithCube",
+        "RollCube"
+      ],
+      "interruptingTransitions": [
+        {
+          "to": "RollCube",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {
+                "type": "play_specific",
+                "entity_behavior": "roll_cube"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "from": [
+        "FistBump",
+        "Keepaway"
+      ],
+      "nonInterruptingTransitions": [
+        {
+          "to": "RollCube",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {
+                "type": "play_specific",
+                "entity_behavior": "roll_cube"
+              }
+            ]
+          }
+        }
+      ]
+
+    },
+
+    // come here
+    {
+      "from": [
+        "ObservingOnCharger",
+        "ObservingOnChargerRecentlyPlaced",
+        "DriveOffChargerIntoObserving",
+        "DriveOffChargerIntoSocializing",
+        "DriveOffChargerIntoPlay",
+        "FistBump",
+        "ComeHere",
+        "Keepaway",
+        "Observing",
+        "Socializing",
+        "WakingUp",
+        "ReturningToCharger",
+        "FailedToFindCharger"
+      ],
+      "interruptingTransitions": [
+        {
+          "to": "ComeHere",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {
+                "type": "imperative_come"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "from": [
+        "PlayingWithCube",
+        "RollCube"
+      ],
+      "nonInterruptingTransitions": [
+        {
+          "to": "ComeHere",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {
+                "type": "imperative_come"
               }
             ]
           }
         }
       ]
     }
+    
   ]
 
 }

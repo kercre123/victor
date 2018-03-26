@@ -60,14 +60,7 @@ public:
   virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
   
 protected:
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Initialization
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // set attributes from the given config
-  void LoadConfig(const Json::Value& config);
-  
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // ICozmoBehavior API
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -76,14 +69,14 @@ protected:
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Standard});
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // State transitions
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
+private:
+  using FaceID_t = Vision::FaceID_t;
+
   // store state to resume
   enum class State {
     S0FaceOnCenter,
@@ -94,6 +87,57 @@ protected:
     S5Center,
     Done
   };
+
+  struct InstanceConfig {
+    InstanceConfig(const Json::Value& config);
+    // turn speeds
+    Radians bodyTurnSpeed_radPerSec;
+    Radians headTurnSpeed_radPerSec;
+    // faces
+    Radians face_headAngleAbsRangeMin_rad;  // min head angle when looking for faces
+    Radians face_headAngleAbsRangeMax_rad;  // max head angle when looking for faces
+    Radians face_bodyAngleRelRangeMin_rad;  // min body angle to turn a little when looking for faces
+    Radians face_bodyAngleRelRangeMax_rad;  // max body angle to turn a little when looking for faces
+    uint8_t face_sidePicks;                 // in addition to center, how many angle picks we do per side - face (x per left, x per right)
+    bool verifySeenFaces;                   // if true, turn towards and verify any faces we see during this behavior
+    // cubes
+    Radians cube_headAngleAbsRangeMin_rad;  // min head angle when looking for cubes
+    Radians cube_headAngleAbsRangeMax_rad;  // max head angle when looking for cubes
+    Radians cube_bodyAngleRelRangeMin_rad;  // min body angle to turn a little when looking for cubes
+    Radians cube_bodyAngleRelRangeMax_rad;  // max body angle to turn a little when looking for cubes
+    uint8_t cube_sidePicks;                 // in addition to center, how many angle picks we do per side - cube (x per left, x per right)
+    // anims
+    AnimationTrigger lookInPlaceAnimTrigger;
+    // early stopping
+    bool stopBehaviorOnAnyFace;   // leave the behavior as soon as any face is seen
+    bool stopBehaviorOnNamedFace; // leave the behavior as soon as a named face is seen
+    bool stopBehaviorOnCube;      // leave the behavior as soon as a cube is seen
+  };
+
+  struct DynamicVariables {
+    DynamicVariables(Radians&& startingRads);
+
+    // facing direction when we start the behavior
+    Radians startingBodyFacing_rad;
+    
+    // number of angle picks we have done for the current state
+    uint8_t currentSidePicksDone;
+    
+    // current state so that we resume at the proper stage (react to cube interrupts behavior for example)
+    State currentState;
+
+    // set of face ID's that we have "verified" with a turn to action (if desired)
+    std::set<FaceID_t> verifiedFaces;
+    bool isVerifyingFace;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // State transitions
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   
   // S0: look for face center
   void TransitionToS1_FaceOnLeft();
@@ -103,40 +147,6 @@ protected:
   void TransitionToS5_Center();
   void TransitionToS6_Done();
  
-private:
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Types
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  using FaceID_t = Vision::FaceID_t;
-  
-  // attributes specifically for configuration of every state
-  struct Configuration
-  {
-    // turn speeds
-    Radians bodyTurnSpeed_radPerSec;
-    Radians headTurnSpeed_radPerSec;
-    // faces
-    Radians face_headAngleAbsRangeMin_rad;  // min head angle when looking for faces
-    Radians face_headAngleAbsRangeMax_rad;  // max head angle when looking for faces
-    Radians face_bodyAngleRelRangeMin_rad;  // min body angle to turn a little when looking for faces
-    Radians face_bodyAngleRelRangeMax_rad;  // max body angle to turn a little when looking for faces
-    uint8_t face_sidePicks = 0;               // in addition to center, how many angle picks we do per side - face (x per left, x per right)
-    bool verifySeenFaces = false; // if true, turn towards and verify any faces we see during this behavior
-    // cubes
-    Radians cube_headAngleAbsRangeMin_rad;  // min head angle when looking for cubes
-    Radians cube_headAngleAbsRangeMax_rad;  // max head angle when looking for cubes
-    Radians cube_bodyAngleRelRangeMin_rad;  // min body angle to turn a little when looking for cubes
-    Radians cube_bodyAngleRelRangeMax_rad;  // max body angle to turn a little when looking for cubes
-    uint8_t cube_sidePicks = 0;               // in addition to center, how many angle picks we do per side - cube (x per left, x per right)
-    // anims
-    AnimationTrigger lookInPlaceAnimTrigger;
-    // early stopping
-    bool stopBehaviorOnAnyFace = false; // leave the behavior as soon as any face is seen
-    bool stopBehaviorOnNamedFace = false; // leave the behavior as soon as a named face is seen
-    
-  };
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // State helpers
@@ -153,29 +163,13 @@ private:
 
   // stop the behavior if desired based on observing the given face
   void StopBehaviorOnFaceIfNeeded(FaceID_t observedFace);
+  
+  // true if a cube is in blockworld
+  bool DoesCubeExist() const;
 
   // cancel the current action and do a verify face action instead
   void CancelActionAndVerifyFace(FaceID_t observedFace);
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Attributes
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // parsed configurations params from json
-  Configuration _configParams;
-
-  // facing direction when we start the behavior
-  Radians _startingBodyFacing_rad;
-  
-  // number of angle picks we have done for the current state
-  uint8_t _currentSidePicksDone;
-  
-  // current state so that we resume at the proper stage (react to cube interrupts behavior for example)
-  State _currentState;
-
-  // set of face ID's that we have "verified" with a turn to action (if desired)
-  std::set<FaceID_t> _verifiedFaces;
-  bool _isVerifyingFace = false;
 };
 
 } // namespace Cozmo

@@ -33,7 +33,7 @@ protected:
   // called during (child) constructors to add a behavior string to dispatch to. First, anonymous behaviors
   // will be searched, if there are no matches there, behavior ID's will be checked. If those also don't
   // match, this will print an error (during Init)
-  void AddPossibleDispatch(const std::string& behavior) { _behaviorStrs.push_back(behavior); }
+  void AddPossibleDispatch(const std::string& behavior) { _iConfig.behaviorStrs.push_back(behavior); }
 
 public:
   virtual bool WantsToBeActivatedBehavior() const override;
@@ -41,6 +41,7 @@ public:
 
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
 
   // This function should be overridden to return the behavior that should run. This will only be called at
@@ -53,7 +54,7 @@ protected:
   virtual void BehaviorDispatcher_OnDeactivated() {}
   
   // behaviors will be returned in the order they were added
-  const std::vector<ICozmoBehaviorPtr>& GetAllPossibleDispatches() const { return _behaviors; }
+  const std::vector<ICozmoBehaviorPtr>& GetAllPossibleDispatches() const { return _iConfig.behaviors; }
 
   // ICozmoBehavior functions:  
   virtual void InitBehavior() final override;
@@ -65,15 +66,24 @@ protected:
   virtual bool CanBeGentlyInterruptedNow() const final override;
 
 private:
+  struct InstanceConfig {
+    InstanceConfig();
+    std::vector<std::string>       behaviorStrs;
+    std::vector<ICozmoBehaviorPtr> behaviors;
 
-  std::vector<std::string> _behaviorStrs;
-  std::vector<ICozmoBehaviorPtr> _behaviors;
+    bool shouldInterruptActiveBehavior;
+  };
 
-  bool _shouldInterruptActiveBehavior;
+  struct DynamicVariables {
+    DynamicVariables();
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
 };
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki 
 
-
-#endif
+#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_Dispatch_IBehaviorDispatcher_H__

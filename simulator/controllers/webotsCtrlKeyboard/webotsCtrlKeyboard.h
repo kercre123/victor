@@ -51,7 +51,6 @@ protected:
   void TrackPet();
   void ExecuteTestPlan();
   
-  void ToggleCubeAccelStreaming();
   void ExecuteBehavior();
   void LogCliffSensorData();
   
@@ -116,7 +115,6 @@ protected:
   void SetFaceDisplayHue();
   void SendRandomProceduralFace();
   
-  void PushIdleAnimation();
   void PlayAnimation();
   void PlayAnimationGroup();
   void PlayAnimationTrigger();

@@ -20,7 +20,7 @@
 
 namespace Anki {
 
-class ConvexPolygon
+class ConvexPolygon : public Poly2f
 {
 public:
   enum EClockDirection { CW, CCW };
@@ -28,33 +28,23 @@ public:
   // must be constructed from an existing polygon
   ConvexPolygon(const Poly2f& basePolygon);
   
-        Point2f& operator[](size_t i)       { return _poly[GetInternalIdx(i)]; }
-  const Point2f& operator[](size_t i) const { return _poly[GetInternalIdx(i)]; }
-
-  const Poly2f& GetSimplePolygon() const { return _poly; }
+  virtual       Point2f& operator[](size_t i)       override { return _points[GetInternalIdx(i)]; }
+  virtual const Point2f& operator[](size_t i) const override { return _points[GetInternalIdx(i)]; }
 
   void SetClockDirection(EClockDirection d) { _currDirection = d; };
   EClockDirection GetClockDirection() const { return _currDirection; }
     
-  size_t size() const { return _poly.size(); }
-    
-  float GetMinX() const { return _poly.GetMinX(); }
-  float GetMaxX() const { return _poly.GetMaxX(); }
-  float GetMinY() const { return _poly.GetMinY(); }
-  float GetMaxY() const { return _poly.GetMaxY(); }
-  
-  f32     GetEdgeAngle(size_t i)  const { return _poly.GetEdgeAngle(GetInternalIdx(i)); }
-  Point2f GetEdgeVector(size_t i) const { return _poly.GetEdgeVector(GetInternalIdx(i)); }
-  Point2f ComputeCentroid()       const { return _poly.ComputeCentroid(); }
-    
+  // check if the given polygon is convex  
   static bool IsConvex(const Poly2f& poly);
+  
+  // get the convex hull for the provided set of points
+  static ConvexPolygon ConvexHull(std::vector<Point2f>&& points);
   
   void RadialExpand(f32 d);
   
 private:
-  Poly2f          _poly;
   EClockDirection _currDirection;
-  size_t GetInternalIdx(size_t i) const { return (_currDirection == CW) ? i : _poly.size() - i;}
+  size_t GetInternalIdx(size_t i) const { return (_currDirection == CW) ? i : size() - i;}
 };
 
 }

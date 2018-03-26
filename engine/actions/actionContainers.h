@@ -136,14 +136,11 @@ namespace Anki {
       /////
 
       virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
-      // Maintain the chain of initializations currently in robot - it might be possible to
-      // change the order of initialization down the line, but be sure to check for ripple effects
-      // when changing this function
-      virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
-        dependencies.insert(RobotComponentID::DrivingAnimationHandler);
+      virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
+      virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
+        dependencies.insert(RobotComponentID::AIComponent);
       };
-      virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
-
+      virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
       //////
       // end IDependencyManagedComponent functions
       /////

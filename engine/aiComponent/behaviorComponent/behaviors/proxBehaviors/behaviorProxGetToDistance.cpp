@@ -48,6 +48,17 @@ BehaviorProxGetToDistance::BehaviorProxGetToDistance(const Json::Value& config)
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorProxGetToDistance::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kGoalDistanceKey,
+    kGoalTolerenceKey,
+    kEndWhenGoalReachedKey,
+    kDistToSpeedKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorProxGetToDistance::WantsToBeActivatedBehavior() const

@@ -332,7 +332,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
   }
   
   // Get default config and make it use synchronous mode for face recognition
-  Json::Value config = cozmoContext->GetDataLoader()->GetRobotVisionConfig();
+  Json::Value& config = cozmoContext->GetDataLoader()->GetRobotVisionConfigUpdatableRef();
   config["FaceRecognition"]["RunMode"] = "synchronous";
   
   const u16 HEAD_CAM_CALIB_WIDTH  = 320;
@@ -364,6 +364,8 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
   
   s32 totalFalsePositives = 0;
   
+  DependencyManagedEntity<RobotComponentID> dependentComponents;
+  dependentComponents.AddDependentComponent(RobotComponentID::CozmoContextWrapper, new ContextWrapper(cozmoContext));
   for(s32 iReload=0; iReload<2; ++iReload)
   {
     // All-new robot, face tracker, and face world for each person for this test
@@ -374,8 +376,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
     RobotState stateMsg( Robot::GetDefaultRobotState() );
     
     robot.GetVisionComponent().SetIsSynchronous(true);
-    Result initResult = robot.GetVisionComponent().Init(config);
-    ASSERT_EQ(RESULT_OK, initResult);
+    robot.GetVisionComponent().InitDependent(&robot, dependentComponents);
     
     robot.GetVisionComponent().SetCameraCalibration(camCalib);
     robot.GetVisionComponent().EnableMode(VisionMode::Idle, true);

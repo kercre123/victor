@@ -54,32 +54,25 @@ static const constexpr float kInvalidStartedTime_sec            = -1.f;
 // Cozmo's low head angle for watching for lasers
 static const Radians kAbsHeadDown_rad(MIN_HEAD_ANGLE);
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorTrackLaser::BehaviorTrackLaser(const Json::Value& config)
-: ICozmoBehavior(config)
-, _cumulativeTurn_rad(0)
-, _lastTimeRotate(0.0f)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorTrackLaser::InstanceConfig::InstanceConfig()
 {
-  SubscribeToTags({{
-    EngineToGameTag::RobotObservedLaserPoint,
-    EngineToGameTag::RobotProcessedImage
-  }});
-
-  SetParamsFromConfig(config);
-
-  SET_STATE(Inactive);
-  
-  _lastLaserObservation.type         = LaserObservation::Type::None;
-  _lastLaserObservation.timestamp_ms      = 0;
-  _lastLaserObservation.timestamp_prev_ms = 0;
+  skipGetOutAnim = false;
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTrackLaser::SetParamsFromConfig(const Json::Value& config)
+BehaviorTrackLaser::InstanceConfig::InstanceConfig(const Json::Value& config)
 {
   // Helper macro to grab the key with the same name as the param struct member from the Json and
   // set it as a float
-# define SET_FLOAT_HELPER(__name__) do { _params.__name__ = JsonTools::ParseFloat(config, QUOTE(__name__), "BehaviorTrackLaser.SetParamsFromConfig"); } while(0)
+  # define SET_FLOAT_HELPER(__name__) do { \
+    __name__ = JsonTools::ParseFloat(config, QUOTE(__name__), "BehaviorTrackLaser.SetParamsFromConfig");\
+    if( ANKI_DEVELOPER_CODE ) {\
+      varNames.emplace_back( QUOTE(__name__) );\
+    }\
+  } while(0)
   
   // In same order as defined in the params struct
   SET_FLOAT_HELPER(startIfLaserSeenWithin_sec);
@@ -113,18 +106,70 @@ void BehaviorTrackLaser::SetParamsFromConfig(const Json::Value& config)
   SET_FLOAT_HELPER(predictionDuration_sec);
   SET_FLOAT_HELPER(trackingTimeToAchieveObjective_sec);
   
-  JsonTools::GetValueOptional(config, kSkipGetOutAnimKey, _params.skipGetOutAnim);
+  skipGetOutAnim = false;
+  JsonTools::GetValueOptional(config, kSkipGetOutAnimKey, skipGetOutAnim);
   
   if(ANKI_VERIFY(config.isMember(kMaxLostLaserTimeoutGraphKey),
                  "BehaviorTrackLaser.SetParamsFromConfig.MissingLostLaserGraphKey",
                  "No key found for lost laser timeout graph")){
     const Json::Value& maxLostLaserTimeoutGraph = config[kMaxLostLaserTimeoutGraphKey];
-    _params.maxLostLaserTimeoutGraph_sec.ReadFromJson(maxLostLaserTimeoutGraph);
+    maxLostLaserTimeoutGraph_sec.ReadFromJson(maxLostLaserTimeoutGraph);
   }
 
   
 # undef SET_FLOAT_HELPER
   
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorTrackLaser::DynamicVariables::DynamicVariables()
+{
+  haveEverConfirmedLaser              = false;
+  haveAdjustedAnimations              = false;
+  shouldSendTrackingObjectiveAchieved = false;
+  
+  imageMean                 = -1;
+  exposureChangedTime_ms    = 0;
+  lastTimeRotate            = 0.f;
+  startedTracking_sec       = 0.f;
+  currentLostLaserTimeout_s = 0.f;
+  cumulativeTurn_rad        = 0;
+  lastTimeRotate            = 0.0f;
+
+  state = State::Inactive;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorTrackLaser::BehaviorTrackLaser(const Json::Value& config)
+: ICozmoBehavior(config)
+{
+  SubscribeToTags({{
+    EngineToGameTag::RobotObservedLaserPoint,
+    EngineToGameTag::RobotProcessedImage
+  }});
+
+  _iConfig = InstanceConfig(config);
+
+  SET_STATE(Inactive);
+  
+  _dVars.lastLaserObservation.type         = LaserObservation::Type::None;
+  _dVars.lastLaserObservation.timestamp_ms      = 0;
+  _dVars.lastLaserObservation.timestamp_prev_ms = 0;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorTrackLaser::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kSkipGetOutAnimKey,
+    kMaxLostLaserTimeoutGraphKey
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+  for( const auto& str : _iConfig.varNames ) {
+    expectedKeys.insert( str.c_str() );
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -152,21 +197,21 @@ bool BehaviorTrackLaser::WantsToBeActivatedBehavior() const
   else
   {
     // Have we seen a potential laser observation recently?
-    if(_lastLaserObservation.type != LaserObservation::Type::None)
+    if(_dVars.lastLaserObservation.type != LaserObservation::Type::None)
     {
       const TimeStamp_t lastImgTime_ms = robotInfo.GetLastImageTimeStamp();
-      const TimeStamp_t seenWithin_ms  = Util::SecToMilliSec(_params.startIfLaserSeenWithin_sec);
+      const TimeStamp_t seenWithin_ms  = Util::SecToMilliSec(_iConfig.startIfLaserSeenWithin_sec);
       
-      const bool crntSeenRecently = ((_lastLaserObservation.timestamp_ms + seenWithin_ms) > lastImgTime_ms);
-      const bool prevSeenRecently = ((_lastLaserObservation.timestamp_prev_ms + seenWithin_ms) > lastImgTime_ms);
+      const bool crntSeenRecently = ((_dVars.lastLaserObservation.timestamp_ms + seenWithin_ms) > lastImgTime_ms);
+      const bool prevSeenRecently = ((_dVars.lastLaserObservation.timestamp_prev_ms + seenWithin_ms) > lastImgTime_ms);
       
       if(crntSeenRecently && prevSeenRecently)
       {
         PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.WantsToBeActivatedBehavior.CanStart",
                        "LastObs:%dms PrevObs:%dms LastImgTime:%dms Threshold:%.2fs",
-                       _lastLaserObservation.timestamp_ms,
-                       _lastLaserObservation.timestamp_prev_ms,
-                       lastImgTime_ms, _params.startIfLaserSeenWithin_sec);
+                       _dVars.lastLaserObservation.timestamp_ms,
+                       _dVars.lastLaserObservation.timestamp_prev_ms,
+                       lastImgTime_ms, _iConfig.startIfLaserSeenWithin_sec);
         return true;
       }
     }
@@ -179,11 +224,11 @@ bool BehaviorTrackLaser::WantsToBeActivatedBehavior() const
 void BehaviorTrackLaser::OnBehaviorActivated()
 {
   InitHelper();
-  const bool haveSeenLaser = (_lastLaserObservation.type != LaserObservation::Type::None);
+  const bool haveSeenLaser = (_dVars.lastLaserObservation.type != LaserObservation::Type::None);
   if(haveSeenLaser || ShouldStreamline())
   {
     // Pretend we just rotated so we don't immediately rotate to start
-    _lastTimeRotate = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _dVars.lastTimeRotate = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
     TransitionToWaitForExposureChange();
   }
@@ -197,10 +242,9 @@ void BehaviorTrackLaser::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTrackLaser::InitHelper()
 {
-  _haveEverConfirmedLaser = false;
-  _shouldSendTrackingObjectiveAchieved = false;
-  
-  _originalCameraSettings = GetBEI().GetVisionComponent().GetCurrentCameraParams();
+  _dVars.haveEverConfirmedLaser = false;
+  _dVars.shouldSendTrackingObjectiveAchieved = false;  
+  _dVars.originalCameraSettings = GetBEI().GetVisionComponent().GetCurrentCameraParams();
   
   // disable all vision except what's needed laser point detection and confirmation
   const bool kUseDefaultsForUnspecified = false;
@@ -209,11 +253,11 @@ void BehaviorTrackLaser::InitHelper()
     {VisionMode::ComputingStatistics,  VisionModeSchedule(true)},
   }, kUseDefaultsForUnspecified);
   GetBEI().GetVisionComponent().PushNextModeSchedule(std::move(schedule));
-  GetBEI().GetVisionComponent().SetAndDisableAutoExposure(_params.darkenedExposure_ms, _params.darkenedGain);
+  GetBEI().GetVisionComponent().SetAndDisableAutoExposure(_iConfig.darkenedExposure_ms, _iConfig.darkenedGain);
   
-  _exposureChangedTime_ms = 0;
-  _imageMean = -1;
-  _currentLostLaserTimeout_s = _params.maxLostLaserTimeoutGraph_sec.EvaluateY(0);
+  _dVars.exposureChangedTime_ms = 0;
+  _dVars.imageMean = -1;
+  _dVars.currentLostLaserTimeout_s = _iConfig.maxLostLaserTimeoutGraph_sec.EvaluateY(0);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -223,7 +267,7 @@ void BehaviorTrackLaser::BehaviorUpdate()
     return;
   }
 
-  switch(_state)
+  switch(_dVars.state)
   {
     case State::WaitForStop:
     {
@@ -233,7 +277,7 @@ void BehaviorTrackLaser::BehaviorUpdate()
   
     case State::WaitingForExposureChange:
     {
-      if(_exposureChangedTime_ms == 0)
+      if(_dVars.exposureChangedTime_ms == 0)
       {
         // Still waiting.
         break;
@@ -250,7 +294,7 @@ void BehaviorTrackLaser::BehaviorUpdate()
       
     case State::WaitingForLaser:
     {
-      if(LaserObservation::Type::Confirmed == _lastLaserObservation.type)
+      if(LaserObservation::Type::Confirmed == _dVars.lastLaserObservation.type)
       {
         LOG_EVENT("robot.laser_behavior.confirmed_laser", "");
         TransitionToRespondToLaser();
@@ -262,14 +306,14 @@ void BehaviorTrackLaser::BehaviorUpdate()
         {
           // Check to see if it's time to rotate again
           const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-          if ( (_lastTimeRotate + _params.maxTimeBeforeRotate_sec) < currentTime_sec )
+          if ( (_dVars.lastTimeRotate + _iConfig.maxTimeBeforeRotate_sec) < currentTime_sec )
           {
             TransitionToRotateToWatchingNewArea();
           }
         }
         else // Have timed out
         {
-          if(_haveEverConfirmedLaser)
+          if(_dVars.haveEverConfirmedLaser)
           {
             TransitionToGetOutBored();
           }
@@ -285,15 +329,15 @@ void BehaviorTrackLaser::BehaviorUpdate()
   
     case State::TrackLaser: // Let tracking action deal with timing out
     {
-      if(_lastLaserObservation.type != LaserObservation::None){
-        if(_startedTracking_sec == kInvalidStartedTime_sec){
-          _startedTracking_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if(_dVars.lastLaserObservation.type != LaserObservation::None){
+        if(_dVars.startedTracking_sec == kInvalidStartedTime_sec){
+          _dVars.startedTracking_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
         }
         
-        const f32  trackingTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _startedTracking_sec;
-        if(trackingTime_sec > _params.trackingTimeToAchieveObjective_sec)
+        const f32  trackingTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _dVars.startedTracking_sec;
+        if(trackingTime_sec > _iConfig.trackingTimeToAchieveObjective_sec)
         {
-          _shouldSendTrackingObjectiveAchieved = true;
+          _dVars.shouldSendTrackingObjectiveAchieved = true;
         }
         break;
       }
@@ -310,7 +354,7 @@ void BehaviorTrackLaser::BehaviorUpdate()
       // If not already in the process of getting out, check to see if there has been a timeout.
       if(CheckForTimeout())
       {
-        if(_haveEverConfirmedLaser)
+        if(_dVars.haveEverConfirmedLaser)
         {
           TransitionToGetOutBored();
         }
@@ -329,7 +373,7 @@ void BehaviorTrackLaser::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 /**void BehaviorTrackLaser::ResumeInternal()
 {
-  _lastLaserObservation.type = LaserObservation::Type::None;
+  _dVars.lastLaserObservation.type = LaserObservation::Type::None;
   InitHelper();
   TransitionToBringingHeadDown();
   
@@ -338,7 +382,7 @@ void BehaviorTrackLaser::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorTrackLaser::OnBehaviorDeactivated()
 {
-  if(_shouldSendTrackingObjectiveAchieved){
+  if(_dVars.shouldSendTrackingObjectiveAchieved){
     BehaviorObjectiveAchieved(BehaviorObjective::LaserTracked);
   }
   
@@ -353,27 +397,27 @@ bool BehaviorTrackLaser::CheckForTimeout()
   
   const TimeStamp_t lastImgTime_ms = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
   
-  if (_haveEverConfirmedLaser &&
-      (_lastLaserObservation.timestamp_ms + (_currentLostLaserTimeout_s * 1000)) < lastImgTime_ms )
+  if (_dVars.haveEverConfirmedLaser &&
+      (_dVars.lastLaserObservation.timestamp_ms + (_dVars.currentLostLaserTimeout_s * 1000)) < lastImgTime_ms )
   {
     PRINT_CH_INFO(kLogChannelName, "BehaviorTrackLaser.CheckForTimeout.NoLaserTimeout",
                   "No laser found, giving up after %fs",
-                  _currentLostLaserTimeout_s);
+                  _dVars.currentLostLaserTimeout_s);
     
-    Util::sEventF("robot.laser_behavior.no_laser_timeout", {{DDATA, (_haveEverConfirmedLaser ? "0" : "1")}},
-                  "%f", (_currentLostLaserTimeout_s * 1000));
+    Util::sEventF("robot.laser_behavior.no_laser_timeout", {{DDATA, (_dVars.haveEverConfirmedLaser ? "0" : "1")}},
+                  "%f", (_dVars.currentLostLaserTimeout_s * 1000));
     
     isTimedOut = true;
   }
-  else if(!_haveEverConfirmedLaser &&
-          _state == State::WaitingForLaser &&
-          _exposureChangedTime_ms + _params.maxTimeToConfirm_ms < lastImgTime_ms)
+  else if(!_dVars.haveEverConfirmedLaser &&
+          _dVars.state == State::WaitingForLaser &&
+          _dVars.exposureChangedTime_ms + _iConfig.maxTimeToConfirm_ms < lastImgTime_ms)
   {
     // Ran out of time confirming the unconfirmed laser we had seen, immediately complete
     // to get out of the behavior without really having done anything
     PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.CheckForTimeout.NeverConfirmed",
                    "LastImg:%dms LastObs:%dms MaxTime:%dms",
-                   lastImgTime_ms, _lastLaserObservation.timestamp_ms, (TimeStamp_t)_params.maxTimeToConfirm_ms);
+                   lastImgTime_ms, _dVars.lastLaserObservation.timestamp_ms, (TimeStamp_t)_iConfig.maxTimeToConfirm_ms);
   
     LOG_EVENT("robot.laser_behavior.laser_never_confirmed", "");
   
@@ -382,13 +426,13 @@ bool BehaviorTrackLaser::CheckForTimeout()
   else
   {
     const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    if ( (GetTimeActivated_s() + _params.maxTimeBehaviorTimeout_sec) < currentTime_sec)
+    if ( (GetTimeActivated_s() + _iConfig.maxTimeBehaviorTimeout_sec) < currentTime_sec)
     {
       PRINT_CH_INFO(kLogChannelName, "BehaviorTrackLaser.CheckForTimeout.BehaviorTimeout",
                     "Started:%.1f, Now:%.1f, Timeout:%.1f",
-                    GetTimeActivated_s(), currentTime_sec, _params.maxTimeBehaviorTimeout_sec);
+                    GetTimeActivated_s(), currentTime_sec, _iConfig.maxTimeBehaviorTimeout_sec);
       
-      LOG_EVENT("robot.laser_behavior.ran_until_max_timeout", "%f", _params.maxTimeBehaviorTimeout_sec);
+      LOG_EVENT("robot.laser_behavior.ran_until_max_timeout", "%f", _iConfig.maxTimeBehaviorTimeout_sec);
       
       isTimedOut = true;
     }
@@ -412,8 +456,8 @@ void BehaviorTrackLaser::TransitionToInitialSearch()
   float panDirection = 1.0f;
   {
     // set pan and tilt
-    Radians panAngle(DEG_TO_RAD(GetRNG().RandDblInRange(_params.randomInitialSearchPanMin_deg,
-                                                        _params.randomInitialSearchPanMax_deg)));
+    Radians panAngle(DEG_TO_RAD(GetRNG().RandDblInRange(_iConfig.randomInitialSearchPanMin_deg,
+                                                        _iConfig.randomInitialSearchPanMax_deg)));
     // randomize direction
     if( GetRNG().RandDbl() < 0.5 )
     {
@@ -430,8 +474,8 @@ void BehaviorTrackLaser::TransitionToInitialSearch()
   // exactly)
   {
     // get new pan angle
-    Radians panAngle(DEG_TO_RAD(GetRNG().RandDblInRange(_params.randomInitialSearchPanMin_deg,
-                                                        _params.randomInitialSearchPanMax_deg)));
+    Radians panAngle(DEG_TO_RAD(GetRNG().RandDblInRange(_iConfig.randomInitialSearchPanMin_deg,
+                                                        _iConfig.randomInitialSearchPanMax_deg)));
     // opposite direction
     panAngle *= -panDirection;
     
@@ -447,11 +491,11 @@ void BehaviorTrackLaser::TransitionToBringingHeadDown()
 {
   SET_STATE(BringingHeadDown);
   
-  const f32 backupSpeed_mmps = std::abs(_params.backupDistAfterPounce_mm) / _params.backupDurationAfterPounce_sec;
+  const f32 backupSpeed_mmps = std::abs(_iConfig.backupDistAfterPounce_mm) / _iConfig.backupDurationAfterPounce_sec;
 
   CompoundActionParallel* moveBackAndBringHeadDown = new CompoundActionParallel({
     new MoveHeadToAngleAction(kAbsHeadDown_rad),
-    new DriveStraightAction(_params.backupDistAfterPounce_mm, backupSpeed_mmps),
+    new DriveStraightAction(_iConfig.backupDistAfterPounce_mm, backupSpeed_mmps),
   });
   
   DelegateIfInControl(moveBackAndBringHeadDown, &BehaviorTrackLaser::TransitionToWaitForLaser);
@@ -461,25 +505,25 @@ void BehaviorTrackLaser::TransitionToBringingHeadDown()
 void BehaviorTrackLaser::TransitionToRotateToWatchingNewArea()
 {
   SET_STATE( RotateToWatchingNewArea );
-  _lastTimeRotate = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _dVars.lastTimeRotate = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-  Radians panAngle(DEG_TO_RAD(GetRNG().RandDblInRange(_params.randomInitialSearchPanMin_deg,
-                                                      _params.randomInitialSearchPanMax_deg)));
+  Radians panAngle(DEG_TO_RAD(GetRNG().RandDblInRange(_iConfig.randomInitialSearchPanMin_deg,
+                                                      _iConfig.randomInitialSearchPanMax_deg)));
 
   // other direction weighted based on the cumulative turn rads - constantly pulls robot towards center
-  const double weightedSearchAmplitude = (_params.searchAmplitude_deg /
-                                          (_params.searchAmplitude_deg - _cumulativeTurn_rad.getDegrees())) * 0.5;
+  const double weightedSearchAmplitude = (_iConfig.searchAmplitude_deg /
+                                          (_iConfig.searchAmplitude_deg - _dVars.cumulativeTurn_rad.getDegrees())) * 0.5;
   if( GetRNG().RandDbl() < weightedSearchAmplitude)
   {
     panAngle *= -1.f;
   }
-  _cumulativeTurn_rad += panAngle;
+  _dVars.cumulativeTurn_rad += panAngle;
   
   const bool kIsPanAbsolute = false;
   const bool kIsTiltAbsolute = true;
   IActionRunner* panAction = new PanAndTiltAction(panAngle, kAbsHeadDown_rad, kIsPanAbsolute, kIsTiltAbsolute);
   
-  _lastLaserObservation.type = LaserObservation::Type::None;
+  _dVars.lastLaserObservation.type = LaserObservation::Type::None;
   
   DelegateIfInControl(panAction, &BehaviorTrackLaser::TransitionToWaitForLaser);
 }
@@ -492,7 +536,7 @@ void BehaviorTrackLaser::TransitionToWaitForExposureChange()
   // Wait a couple of images for the exposure change to take effect.
   // Note that we don't care what kind of processing occurred in those images;
   // any image will do.
-  const s32 numImagesToWait = (s32)_params.numImagesToWaitForExposureChange;
+  const s32 numImagesToWait = (s32)_iConfig.numImagesToWaitForExposureChange;
   CompoundActionParallel* action = new CompoundActionParallel({new WaitForImagesAction(numImagesToWait)});
   
   if(ShouldStreamline())
@@ -506,13 +550,13 @@ void BehaviorTrackLaser::TransitionToWaitForExposureChange()
   {
     // We *assume* exposure has changed after seeing enough images, no way to know for sure!
     // Once this is true, observed lasers will be considered "confirmed".
-    _exposureChangedTime_ms = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+    _dVars.exposureChangedTime_ms = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
     TransitionToWaitForLaser();
     
     PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.TransitionToWaitForExposureChange.AssumingChanged",
                    "%d images have passed. Assuming exposure change has taken effect at t=%dms",
-                   (s32)_params.numImagesToWaitForExposureChange,
-                   _exposureChangedTime_ms);
+                   (s32)_iConfig.numImagesToWaitForExposureChange,
+                   _dVars.exposureChangedTime_ms);
   });
 }
 
@@ -531,19 +575,18 @@ void BehaviorTrackLaser::TransitionToRespondToLaser()
   // Wait until we actually confirm a laser to adjust the idle/driving animations, to
   // avoid eyes changing if we see a possible laser and end up _not_ confirming.
   // However, don't override sparks driving or idle animations (i.e. when "streamlining").
-  if(!ShouldStreamline() && !_haveAdjustedAnimations)
+  if(!ShouldStreamline() && !_dVars.haveAdjustedAnimations)
   {
-    SmartPushIdleAnimation(AnimationTrigger::LaserFace);    
     robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(
                                                              {AnimationTrigger::LaserDriveStart,
                                                                AnimationTrigger::LaserDriveLoop,
                                                                AnimationTrigger::LaserDriveEnd},
                                                              GetDebugLabel());
     
-    _haveAdjustedAnimations = true;
+    _dVars.haveAdjustedAnimations = true;
   }
   
-  const Point2f& pt = _lastLaserObservation.pointWrtRobot;
+  const Point2f& pt = _dVars.lastLaserObservation.pointWrtRobot;
   const Pose3d laserPointPose(0.f, Z_AXIS_3D(), {pt.x(), pt.y(), 0.f}, robotInfo.GetPose());
   
   CompoundActionSequential* action = new CompoundActionSequential({
@@ -563,8 +606,8 @@ void BehaviorTrackLaser::TransitionToTrackLaser()
   
   // re-set laser observation so that we can ensure Cozmo reacquire the laser
   // after playing his react to laser animation
-  _lastLaserObservation.type = LaserObservation::Type::None;
-  _startedTracking_sec = kInvalidStartedTime_sec;
+  _dVars.lastLaserObservation.type = LaserObservation::Type::None;
+  _dVars.startedTracking_sec = kInvalidStartedTime_sec;
 
   auto const& laserMsgTag = ExternalInterface::MessageEngineToGameTag::RobotObservedLaserPoint;
   TrackGroundPointAction* trackAction = new TrackGroundPointAction(laserMsgTag);
@@ -574,10 +617,10 @@ void BehaviorTrackLaser::TransitionToTrackLaser()
     auto const& laserMsgTag = ExternalInterface::MessageEngineToGameTag::RobotObservedLaserPoint;
     TrackGroundPointAction* trackAction = new TrackGroundPointAction(laserMsgTag);
     
-    trackAction->SetUpdateTimeout(_params.trackingTimeout_sec);
+    trackAction->SetUpdateTimeout(_iConfig.trackingTimeout_sec);
     trackAction->SetMoveEyes(true);
     
-    const TimeStamp_t predictionDuration_ms = Util::SecToMilliSec(_params.predictionDuration_sec);
+    const TimeStamp_t predictionDuration_ms = Util::SecToMilliSec(_iConfig.predictionDuration_sec);
     if(predictionDuration_ms > 0)
     {
       const bool kUseXPrediction = false;
@@ -593,22 +636,22 @@ void BehaviorTrackLaser::TransitionToTrackLaser()
     trackAction->SetClampSmallAnglesToTolerances(true);
     
     const bool kInterruptDrivingAnimOnSuccess = true;
-    trackAction->SetStopCriteria(DEG_TO_RAD(_params.pouncePanTol_deg),
-                                 DEG_TO_RAD(_params.pounceTiltTol_deg),
-                                 0.f, _params.pounceIfWithinDist_mm,
-                                 _params.pounceAfterTrackingFor_sec,
+    trackAction->SetStopCriteria(DEG_TO_RAD(_iConfig.pouncePanTol_deg),
+                                 DEG_TO_RAD(_iConfig.pounceTiltTol_deg),
+                                 0.f, _iConfig.pounceIfWithinDist_mm,
+                                 _iConfig.pounceAfterTrackingFor_sec,
                                  kInterruptDrivingAnimOnSuccess);
     
     // Vary the pan speed slightly each time
-    DEV_ASSERT(_params.minPanDuration_sec <= _params.maxPanDuration_sec,
+    DEV_ASSERT(_iConfig.minPanDuration_sec <= _iConfig.maxPanDuration_sec,
                "BehaviorTrackLaser.TransitionToTrackLaser.BadPanDurations");
-    const f32 panTime_sec = GetRNG().RandDblInRange(_params.minPanDuration_sec, _params.maxPanDuration_sec);
+    const f32 panTime_sec = GetRNG().RandDblInRange(_iConfig.minPanDuration_sec, _iConfig.maxPanDuration_sec);
     trackAction->SetPanDuration(panTime_sec);
     
     // Vary the forward driving speed slightly each time
-    DEV_ASSERT(_params.minTimeToReachLaser_sec <= _params.maxTimeToReachLaser_sec,
+    DEV_ASSERT(_iConfig.minTimeToReachLaser_sec <= _iConfig.maxTimeToReachLaser_sec,
                "BehaviorTrackLaser.TransitionToTrackLaser.BadTimeToReachLaserParams");
-    const f32 driveTime_sec = GetRNG().RandDblInRange(_params.minTimeToReachLaser_sec, _params.maxTimeToReachLaser_sec);
+    const f32 driveTime_sec = GetRNG().RandDblInRange(_iConfig.minTimeToReachLaser_sec, _iConfig.maxTimeToReachLaser_sec);
     trackAction->SetDesiredTimeToReachTarget(driveTime_sec);
   }
 
@@ -622,7 +665,7 @@ void BehaviorTrackLaser::TransitionToTrackLaser()
                 const f32  actionTrackingTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - startedActionTime_sec;
 
                 const float behaviorRunningElapsed = (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - GetTimeActivated_s());
-                _currentLostLaserTimeout_s = _params.maxLostLaserTimeoutGraph_sec.EvaluateY(behaviorRunningElapsed);
+                _dVars.currentLostLaserTimeout_s = _iConfig.maxLostLaserTimeoutGraph_sec.EvaluateY(behaviorRunningElapsed);
                 
                 PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.TransitionToTrackLaser.TrackingFinished",
                                "Result: %s Time: %fsec WillPounce: %s", EnumToString(result), actionTrackingTime_sec,
@@ -664,7 +707,7 @@ void BehaviorTrackLaser::TransitionToGetOutBored()
   auto callback = [this](){ SET_STATE(WaitForStop); };
   
   // Call callback immediately if not playing the get out anim
-  if(_params.skipGetOutAnim)
+  if(_iConfig.skipGetOutAnim)
   {
     callback();
   }
@@ -692,8 +735,8 @@ void BehaviorTrackLaser::AlwaysHandleInScope(const EngineToGameEvent& event)
       // If we see the image mean drop significantly while waiting for the exposure change,
       // assume the change has happened so we can more immediately confirm a possible laser
       // and start tracking.
-      const bool exposureChangeAlreadyObserved = (_exposureChangedTime_ms > 0);
-      if(State::WaitingForExposureChange == _state && !exposureChangeAlreadyObserved)
+      const bool exposureChangeAlreadyObserved = (_dVars.exposureChangedTime_ms > 0);
+      if(State::WaitingForExposureChange == _dVars.state && !exposureChangeAlreadyObserved)
       {
         auto const& robotProcessedImage = event.GetData().Get_RobotProcessedImage();
         
@@ -707,25 +750,25 @@ void BehaviorTrackLaser::AlwaysHandleInScope(const EngineToGameEvent& event)
             PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.AlwaysHandle.ImageMean",
                            "Waiting for exposure change. Current mean: %d", crntImgMean);
             
-            if(_imageMean < 0)
+            if(_dVars.imageMean < 0)
             {
-              _imageMean = Util::numeric_cast<s16>(crntImgMean);
+              _dVars.imageMean = Util::numeric_cast<s16>(crntImgMean);
             }
-            else if(crntImgMean < Util::numeric_cast<u8>((f32)_imageMean * _params.imageMeanFractionForExposureChange))
+            else if(crntImgMean < Util::numeric_cast<u8>((f32)_dVars.imageMean * _iConfig.imageMeanFractionForExposureChange))
             {
               PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.AlwaysHandle.ObservedExposureChange",
                              "Image mean dropped from %d to %d. Assuming exposure changed at t=%dms.",
-                             _imageMean, crntImgMean, robotProcessedImage.timestamp);
+                             _dVars.imageMean, crntImgMean, robotProcessedImage.timestamp);
               
-              _exposureChangedTime_ms = robotProcessedImage.timestamp;
+              _dVars.exposureChangedTime_ms = robotProcessedImage.timestamp;
               
               // RobotProcessedImage messages come _after_ RobotObservedLaserPoint messages from that image.
               // Check to see if we saw a (possible) laser in this image and if so, mark it as confirmed, now
               // that we know the exposure had already dropped.
-              if(_lastLaserObservation.timestamp_ms == _exposureChangedTime_ms)
+              if(_dVars.lastLaserObservation.timestamp_ms == _dVars.exposureChangedTime_ms)
               {
-                _lastLaserObservation.type = LaserObservation::Type::Confirmed;
-                _haveEverConfirmedLaser |= true;
+                _dVars.lastLaserObservation.type = LaserObservation::Type::Confirmed;
+                _dVars.haveEverConfirmedLaser |= true;
               }
             }
             
@@ -753,24 +796,24 @@ void BehaviorTrackLaser::SetLastLaserObservation(const EngineToGameEvent& event)
 {
   const auto & laserObserved = event.GetData().Get_RobotObservedLaserPoint();
   const bool inGroundPlane   = (laserObserved.ground_area_fraction > 0.f);
-  const bool closeEnough     = (IsActivated() || laserObserved.ground_x_mm < _params.maxDistToGetAttention_mm);
+  const bool closeEnough     = (IsActivated() || laserObserved.ground_x_mm < _iConfig.maxDistToGetAttention_mm);
   
   if ( inGroundPlane && closeEnough )
   {
     // This observation is "confirmed" if exposure has been adjusted to dark
-    const bool isConfirmed = (_exposureChangedTime_ms > 0);
+    const bool isConfirmed = (_dVars.exposureChangedTime_ms > 0);
     
     PRINT_CH_DEBUG(kLogChannelName, "BehaviorTrackLaser.SetLastLaserObservation.SawLaser",
                    "%s laser at (%d,%d), t=%d",
                    isConfirmed ? "Confirmed" : "Saw possible",
                    laserObserved.ground_x_mm, laserObserved.ground_y_mm, laserObserved.timestamp);
     
-    _lastLaserObservation.type = (isConfirmed ? LaserObservation::Type::Confirmed : LaserObservation::Type::Unconfirmed);
-    _lastLaserObservation.timestamp_prev_ms = _lastLaserObservation.timestamp_ms; // keep track of previous
-    _lastLaserObservation.timestamp_ms = laserObserved.timestamp;
-    _lastLaserObservation.pointWrtRobot.x() = laserObserved.ground_x_mm;
-    _lastLaserObservation.pointWrtRobot.y() = laserObserved.ground_y_mm;
-    _haveEverConfirmedLaser |= isConfirmed; // Once we've ever confirmed, stay true
+    _dVars.lastLaserObservation.type = (isConfirmed ? LaserObservation::Type::Confirmed : LaserObservation::Type::Unconfirmed);
+    _dVars.lastLaserObservation.timestamp_prev_ms = _dVars.lastLaserObservation.timestamp_ms; // keep track of previous
+    _dVars.lastLaserObservation.timestamp_ms = laserObserved.timestamp;
+    _dVars.lastLaserObservation.pointWrtRobot.x() = laserObserved.ground_x_mm;
+    _dVars.lastLaserObservation.pointWrtRobot.y() = laserObserved.ground_y_mm;
+    _dVars.haveEverConfirmedLaser |= isConfirmed; // Once we've ever confirmed, stay true
   }
 }
   
@@ -779,22 +822,21 @@ void BehaviorTrackLaser::Cleanup()
 {
   SET_STATE(Complete);
   
-  _haveEverConfirmedLaser = false;
-  _exposureChangedTime_ms = 0;
-  _lastLaserObservation.type = LaserObservation::Type::None;
+  _dVars.haveEverConfirmedLaser = false;
+  _dVars.exposureChangedTime_ms = 0;
+  _dVars.lastLaserObservation.type = LaserObservation::Type::None;
   
   // Leave the exposure/color settings as they were when we started
   GetBEI().GetVisionComponent().PopCurrentModeSchedule();
   GetBEI().GetVisionComponent().SetAndDisableAutoExposure(
-    _originalCameraSettings.exposureTime_ms, _originalCameraSettings.gain);
+    _dVars.originalCameraSettings.exposureTime_ms, _dVars.originalCameraSettings.gain);
   GetBEI().GetVisionComponent().EnableAutoExposure(true);
   
   // Only pop animations if set within this behavior
-  if(_haveAdjustedAnimations)
+  if(_dVars.haveAdjustedAnimations)
   {
-    SmartRemoveIdleAnimation();
     GetBEI().GetRobotInfo().GetDrivingAnimationHandler().RemoveDrivingAnimations(GetDebugLabel());
-    _haveAdjustedAnimations = false;
+    _dVars.haveAdjustedAnimations = false;
   }
 }
 
@@ -802,9 +844,9 @@ void BehaviorTrackLaser::Cleanup()
 void BehaviorTrackLaser::SetState_internal(State state, const std::string& stateName)
 {
   // don't log staying in same state (we do that a lot in this behavior with WaitForLaser)
-  if(_state != state)
+  if(_dVars.state != state)
   {
-    _state = state;
+    _dVars.state = state;
     SetDebugStateName(stateName);
   }
 }

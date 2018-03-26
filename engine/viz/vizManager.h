@@ -266,11 +266,6 @@ namespace Anki {
                                const Polygon<2,T>& poly,
                                const ColorRGBA& color);
 
-      void DrawPlannerObstacle(const bool isReplan,
-                               const u32 quadID,
-                               const FastPolygon& poly,
-                               const ColorRGBA& color);
-
       template<typename T>
       void DrawPoseMarker(const u32 quadID,
                           const Quadrilateral<2,T>& quad,
@@ -289,10 +284,6 @@ namespace Anki {
       template<typename T>
       void DrawPoly(const u32 polyID,
                     const Polygon<2,T>& poly,
-                    const ColorRGBA& color);
-
-      void DrawPoly(const u32 polyID,
-                    const FastPolygon& poly,
                     const ColorRGBA& color);
 
       // ==== Erase functions =====
@@ -396,7 +387,8 @@ namespace Anki {
                           const u8  lockedTracks,
                           const u8  tracksInUse,
                           const f32 imuTemperature_degC,
-                          std::array<uint16_t, 4> cliffThresholds);
+                          std::array<uint16_t, 4> cliffThresholds,
+                          const float batteryVolts);
       
       void SendCurrentAnimation(const std::string& animName, u8 animTag);
 

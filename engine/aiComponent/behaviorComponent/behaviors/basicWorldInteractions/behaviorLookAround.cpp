@@ -41,18 +41,50 @@
 namespace Anki {
 namespace Cozmo {
 
+namespace{
 static const char* const kShouldHandleConfirmedKey = "shouldHandleConfirmedObject";
 static const char* const kShouldHandlePossibleKey = "shouldHandlePossibleObject";
+// The default radius (in mm) we assume exists for us to move around in
+constexpr static f32 kDefaultSafeRadius = 150;
+// How far back (at most) to move the center when we encounter a cliff
+constexpr static f32 kMaxCliffShiftDist = 100.0f;
+// Number of destinations we want to reach before resting for a bit (needs to be at least 2)
+constexpr static u32 kDestinationsToReach = 6;
+// How far back from a possible object to observe it (at most)
+constexpr static f32 kMaxObservationDistanceSq_mm = SQUARE(200.0f);
+// If the possible block is too far, this is the distance to view it from
+constexpr static f32 kPossibleObjectViewingDist_mm = 100.0f;
+}
+
 
 using namespace ExternalInterface;
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorLookAround::InstanceConfig::InstanceConfig()
+{
+  shouldHandleConfirmedObjectOverved = true;
+  shouldHandlePossibleObjectOverved  = true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorLookAround::DynamicVariables::DynamicVariables()
+{
+  currentState             = State::Inactive;
+  currentDestination       = Destination::North;
+  safeRadius               = kDefaultSafeRadius;
+  numDestinationsLeft      = kDestinationsToReach;
+  lookAroundHeadAngle_rads = DEG_TO_RAD(-5);
+}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorLookAround::BehaviorLookAround(const Json::Value& config)
 : ICozmoBehavior(config)
 {
-  _shouldHandleConfirmedObjectOverved = config.get(kShouldHandleConfirmedKey, true).asBool();
-  _shouldHandlePossibleObjectOverved = config.get(kShouldHandlePossibleKey, true).asBool();
+  _iConfig.shouldHandleConfirmedObjectOverved = config.get(kShouldHandleConfirmedKey, true).asBool();
+  _iConfig.shouldHandlePossibleObjectOverved = config.get(kShouldHandlePossibleKey, true).asBool();
   
   SubscribeToTags({{
     EngineToGameTag::RobotObservedObject,
@@ -67,7 +99,16 @@ BehaviorLookAround::BehaviorLookAround(const Json::Value& config)
 BehaviorLookAround::~BehaviorLookAround()
 {
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorLookAround::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kShouldHandleConfirmedKey,
+    kShouldHandlePossibleKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorLookAround::WantsToBeActivatedBehavior() const
@@ -138,6 +179,7 @@ void BehaviorLookAround::AlwaysHandleInScope(const EngineToGameEvent& event)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookAround::OnBehaviorActivated()
 {
+  _dVars = DynamicVariables();
   // Update explorable area center to current robot pose
   ResetSafeRegion();
   
@@ -167,7 +209,7 @@ void BehaviorLookAround::TransitionToRoaming()
   Pose3d destPose;
   const int MAX_NUM_CONSIDERED_DEST_POSES = 30;
   for (int i = MAX_NUM_CONSIDERED_DEST_POSES; i > 0; --i) {
-    destPose = GetDestinationPose(_currentDestination);
+    destPose = GetDestinationPose(_dVars.currentDestination);
     
     auto& robotInfo = GetBEI().GetRobotInfo();
     // Get robot bounding box at destPose
@@ -186,8 +228,8 @@ void BehaviorLookAround::TransitionToRoaming()
                           MAX_NUM_CONSIDERED_DEST_POSES);
       
       // Try another destination
-      _currentDestination = GetNextDestination(_currentDestination);
-      if (_numDestinationsLeft == 0) {
+      _dVars.currentDestination = GetNextDestination(_dVars.currentDestination);
+      if (_dVars.numDestinationsLeft == 0) {
         TransitionToInactive();
         return;
       }
@@ -201,16 +243,16 @@ void BehaviorLookAround::TransitionToRoaming()
 
   // move head and lift to reasonable place before we start Roaming
   IActionRunner* setHeadAndLiftAction = new CompoundActionParallel({
-      new MoveHeadToAngleAction(_lookAroundHeadAngle_rads),
+      new MoveHeadToAngleAction(_dVars.lookAroundHeadAngle_rads),
       new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK) });
 
   DelegateIfInControl(new CompoundActionSequential({setHeadAndLiftAction, goToPoseAction}),
               [this](ActionResult result) {
                 const ActionResultCategory resCat = IActionRunner::GetActionResultCategory(result);
                 if( resCat == ActionResultCategory::SUCCESS || resCat == ActionResultCategory::RETRY ) {
-                  _currentDestination = GetNextDestination(_currentDestination);
+                  _dVars.currentDestination = GetNextDestination(_dVars.currentDestination);
                 }
-                if (_numDestinationsLeft == 0) {
+                if (_dVars.numDestinationsLeft == 0) {
                   TransitionToInactive();
                 }
                 else {
@@ -227,11 +269,11 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject()
 
   auto& robotInfo = GetBEI().GetRobotInfo();
   CompoundActionSequential* action = new CompoundActionSequential();
-  action->AddAction(new TurnTowardsPoseAction(_lastPossibleObjectPose));
+  action->AddAction(new TurnTowardsPoseAction(_dVars.lastPossibleObjectPose));
 
   // if the pose is too far away, drive towards it 
   Pose3d relPose;
-  if( _lastPossibleObjectPose.GetWithRespectTo( robotInfo.GetPose(), relPose ) ) {
+  if( _dVars.lastPossibleObjectPose.GetWithRespectTo( robotInfo.GetPose(), relPose ) ) {
     const Pose2d relPose2d(relPose);
     float dist2 = relPose2d.GetTranslation().LengthSq();
     if( dist2 > kMaxObservationDistanceSq_mm ) {
@@ -254,8 +296,8 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject()
                         "Could not get pose of possible object W.R.T robot");
     if(ANKI_DEVELOPER_CODE)
     {
-      _lastPossibleObjectPose.Print();
-      _lastPossibleObjectPose.PrintNamedPathToRoot(false);
+      _dVars.lastPossibleObjectPose.Print();
+      _dVars.lastPossibleObjectPose.PrintNamedPathToRoot(false);
     }
   }
 
@@ -277,7 +319,7 @@ void BehaviorLookAround::TransitionToLookingAtPossibleObject()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookAround::TransitionToExaminingFoundObject()
 {
-  if( _recentObjects.empty() ) {
+  if( _dVars.recentObjects.empty() ) {
     TransitionToRoaming();
     return;
   }
@@ -290,7 +332,7 @@ void BehaviorLookAround::TransitionToExaminingFoundObject()
                                     MoodManager::GetCurrentTimeInSeconds());
   }
   
-  ObjectID recentObjectID = *_recentObjects.begin();
+  ObjectID recentObjectID = *_dVars.recentObjects.begin();
 
   PRINT_NAMED_DEBUG("BehaviorLookAround.TransitionToExaminingFoundObject", "examining new object %d",
                     recentObjectID.GetValue());
@@ -303,8 +345,8 @@ void BehaviorLookAround::TransitionToExaminingFoundObject()
                    PRINT_NAMED_DEBUG("BehaviorLookAround.Objects",
                                      "Done examining object %d, adding to boring list",
                                      recentObjectID.GetValue());
-                   _recentObjects.erase(recentObjectID);
-                   _oldBoringObjects.insert(recentObjectID);
+                   _dVars.recentObjects.erase(recentObjectID);
+                   _dVars.oldBoringObjects.insert(recentObjectID);
                  }
 
                  if( IActionRunner::GetActionResultCategory(result) != ActionResultCategory::CANCELLED ) {
@@ -322,15 +364,15 @@ void BehaviorLookAround::BehaviorUpdate()
   }
 #if SAFE_ZONE_VIZ
   const auto& robotInfo = GetBEI().GetRobotInfo();
-  Point2f center = { _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y() };
-  robotInfo.GetContext()->GetVizManager()->DrawXYCircle(robotInfo.GetID(), ::Anki::NamedColors::GREEN, center, _safeRadius);
+  Point2f center = { _dVars.moveAreaCenter.GetTranslation().x(), _dVars.moveAreaCenter.GetTranslation().y() };
+  robotInfo.GetContext()->GetVizManager()->DrawXYCircle(robotInfo.GetID(), ::Anki::NamedColors::GREEN, center, _dVars.safeRadius);
 #endif
 
   if( IsControlDelegated() ) {
     return;
   }
   
-  if( _currentState == State::WaitForOtherActions ) {
+  if( _dVars.currentState == State::WaitForOtherActions ) {
     if( !IsControlDelegated() ) {
       TransitionToRoaming();
     }
@@ -347,7 +389,7 @@ void BehaviorLookAround::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination destination)
 {
-  Pose3d destPose(_moveAreaCenter);
+  Pose3d destPose(_dVars.moveAreaCenter);
   
   s32 baseAngleDegrees = 0;
   bool shouldRotate = true;
@@ -399,31 +441,11 @@ Pose3d BehaviorLookAround::GetDestinationPose(BehaviorLookAround::Destination de
   {
     // The multiplier amount of change we want to vary the radius by (-0.25 means from 75% to 100% of radius)
     static const f32 radiusVariation = -0.25f;
-    f32 distMod = GetRNG().RandDbl() * radiusVariation * _safeRadius;
-    destPose.SetTranslation(destPose.GetTranslation() + destPose.GetRotation() * Point3f(_safeRadius + distMod, 0, 0));
+    f32 distMod = GetRNG().RandDbl() * radiusVariation * _dVars.safeRadius;
+    destPose.SetTranslation(destPose.GetTranslation() + destPose.GetRotation() * Point3f(_dVars.safeRadius + distMod, 0, 0));
   }
   
   return destPose;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAround::OnBehaviorDeactivated()
-{
-  ResetBehavior();
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorLookAround::ResetBehavior()
-{
-  // Reset our number of destinations for next time we run this behavior
-  _numDestinationsLeft = kDestinationsToReach;
-
-  SET_STATE(State::Inactive);
-  
-  _recentObjects.clear();
-  _oldBoringObjects.clear();
 }
 
 
@@ -432,11 +454,11 @@ void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bo
 {
   assert(IsActivated());
 
-  if( ! _shouldHandleConfirmedObjectOverved && confirmed ) {
+  if( ! _iConfig.shouldHandleConfirmedObjectOverved && confirmed ) {
     return;
   }
 
-  if( !_shouldHandlePossibleObjectOverved && !confirmed ) {
+  if( !_iConfig.shouldHandlePossibleObjectOverved && !confirmed ) {
     return;
   }
   
@@ -444,9 +466,9 @@ void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bo
   
   if (familyList.count(msg.objectFamily) > 0) {
     if( ! confirmed ) {
-      if( _currentState != State::LookingAtPossibleObject && _currentState != State::ExaminingFoundObject ) {
+      if( _dVars.currentState != State::LookingAtPossibleObject && _dVars.currentState != State::ExaminingFoundObject ) {
         const auto& robotInfo = GetBEI().GetRobotInfo();
-        _lastPossibleObjectPose = Pose3d{0, Z_AXIS_3D(),
+        _dVars.lastPossibleObjectPose = Pose3d{0, Z_AXIS_3D(),
                                          {msg.pose.x, msg.pose.y, msg.pose.z},
                                          robotInfo.GetWorldOrigin()};
         PRINT_NAMED_DEBUG("BehaviorLookAround.HandleObjectObserved.LookingAtPossibleObject",
@@ -455,13 +477,13 @@ void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bo
         TransitionToLookingAtPossibleObject();
       }
     }
-    else if( 0 == _oldBoringObjects.count(msg.objectID) && _currentState != State::ExaminingFoundObject) {
+    else if( 0 == _dVars.oldBoringObjects.count(msg.objectID) && _dVars.currentState != State::ExaminingFoundObject) {
 
       PRINT_NAMED_DEBUG("BehaviorLookAround.HandleObjectObserved.ExaminingFoundObject",
                         "stopping to look at found object id %d",
                         msg.objectID);
 
-      _recentObjects.insert(msg.objectID);
+      _dVars.recentObjects.insert(msg.objectID);
 
       CancelDelegates(false);
       TransitionToExaminingFoundObject();
@@ -479,26 +501,26 @@ void BehaviorLookAround::HandleObjectObserved(const RobotObservedObject& msg, bo
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookAround::UpdateSafeRegionForCube(const Vec3f& objectPosition)
 {
-  Vec3f translationDiff = objectPosition - _moveAreaCenter.GetTranslation();
+  Vec3f translationDiff = objectPosition - _dVars.moveAreaCenter.GetTranslation();
   // We're only going to care about the XY plane distance
   translationDiff.z() = 0;
   const f32 distanceSqr = translationDiff.LengthSq();
   
   // If the distance between our safe area center and the object we're seeing exceeds our current safe radius,
   // update our center point and safe radius to include the object's location
-  if (_safeRadius * _safeRadius < distanceSqr)
+  if (_dVars.safeRadius * _dVars.safeRadius < distanceSqr)
   {
     const f32 distance = std::sqrt(distanceSqr);
     
     // Ratio is ratio of distance to new center point to distance of observed object
-    const f32 newCenterRatio = 0.5f - _safeRadius / (2.0f * distance);
+    const f32 newCenterRatio = 0.5f - _dVars.safeRadius / (2.0f * distance);
     // The new center is calculated as: C1 = C0 + (ObjectPosition - C0) * Ratio
-    _moveAreaCenter.SetTranslation(_moveAreaCenter.GetTranslation() + translationDiff * newCenterRatio);
+    _dVars.moveAreaCenter.SetTranslation(_dVars.moveAreaCenter.GetTranslation() + translationDiff * newCenterRatio);
 
     // The new radius is simply half the distance between the far side of the previus circle and the observed object
-    _safeRadius = 0.5f * (distance + _safeRadius);
+    _dVars.safeRadius = 0.5f * (distance + _dVars.safeRadius);
 
-    PRINT_NAMED_DEBUG("BehaviorLookAround.UpdateSafeRegion.Cube", "New safe radius is %fmm", _safeRadius);
+    PRINT_NAMED_DEBUG("BehaviorLookAround.UpdateSafeRegion.Cube", "New safe radius is %fmm", _dVars.safeRadius);
   }
 }
 
@@ -506,13 +528,13 @@ void BehaviorLookAround::UpdateSafeRegionForCube(const Vec3f& objectPosition)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookAround::UpdateSafeRegionForCliff(const Pose3d& cliffPose)
 {
-  Vec3f translationDiff = cliffPose.GetTranslation() - _moveAreaCenter.GetTranslation();
+  Vec3f translationDiff = cliffPose.GetTranslation() - _dVars.moveAreaCenter.GetTranslation();
   // We're only going to care about the XY plane distance
   translationDiff.z() = 0;
   const f32 distanceSqr = translationDiff.LengthSq();
 
   // if the cliff is inside our safe radius, we need to update the safe region
-  if (_safeRadius * _safeRadius > distanceSqr)
+  if (_dVars.safeRadius * _dVars.safeRadius > distanceSqr)
   {
     const f32 distance = std::sqrt(distanceSqr);
 
@@ -522,7 +544,7 @@ void BehaviorLookAround::UpdateSafeRegionForCliff(const Pose3d& cliffPose)
       PRINT_NAMED_DEBUG("BehaviorLookAround.UpdateSafeRegion.Cliff.ShrinkR",
                         "new safe radius = %fmm",
                         kDefaultSafeRadius);
-      _safeRadius = kDefaultSafeRadius;
+      _dVars.safeRadius = kDefaultSafeRadius;
     }
     else {
       // otherwise we need to move the safe radius. Use the angle in the pose, since this is the angle at
@@ -539,8 +561,8 @@ void BehaviorLookAround::UpdateSafeRegionForCliff(const Pose3d& cliffPose)
       // that the distance between C1 and the cliff is kDefaultSafeRadius. This means that, in cliff coordinates:
       // x^2 + (y + d)^2 = kDefaultSafeRadius^2
       // solve the above for d (quadratic equation) and you get the code below
-      float dx = _moveAreaCenter.GetTranslation().x() - cliffPose.GetTranslation().x();
-      float dy = _moveAreaCenter.GetTranslation().y() - cliffPose.GetTranslation().y();
+      float dx = _dVars.moveAreaCenter.GetTranslation().x() - cliffPose.GetTranslation().x();
+      float dy = _dVars.moveAreaCenter.GetTranslation().y() - cliffPose.GetTranslation().y();
       float cliffTheta = cliffPose.GetRotationAngle<'Z'>().ToFloat();
       float x = dx * std::cos(cliffTheta) - dy * std::sin(cliffTheta);
       float y = dx * std::sin(cliffTheta) + dy * std::cos(cliffTheta);
@@ -586,7 +608,7 @@ void BehaviorLookAround::UpdateSafeRegionForCliff(const Pose3d& cliffPose)
 
       // PRINT_NAMED_DEBUG("DEBUG.SafeRegion",
       //                   "c0 = [%f, %f], r=%f, cliff = [%f,%f], theta = %f",
-      //                   _moveAreaCenter.GetTranslation().x(), _moveAreaCenter.GetTranslation().y(),
+      //                   _dVars.moveAreaCenter.GetTranslation().x(), _dVars.moveAreaCenter.GetTranslation().y(),
       //                   kDefaultSafeRadius,
       //                   cliffPose.GetTranslation().x(), cliffPose.GetTranslation().y(),
       //                   cliffTheta);
@@ -595,13 +617,13 @@ void BehaviorLookAround::UpdateSafeRegionForCliff(const Pose3d& cliffPose)
                         "moving center by %fmm and resetting radius",
                         shiftDist);
       
-      Vec3f newTranslation( _moveAreaCenter.GetTranslation() );
+      Vec3f newTranslation( _dVars.moveAreaCenter.GetTranslation() );
       newTranslation.x() -= shiftDist * std::cos( cliffTheta );
       newTranslation.y() -= shiftDist * std::sin( cliffTheta );
       newTranslation.z() = 0.0f;
       
-      _moveAreaCenter.SetTranslation(newTranslation);
-      _safeRadius = kDefaultSafeRadius;
+      _dVars.moveAreaCenter.SetTranslation(newTranslation);
+      _dVars.safeRadius = kDefaultSafeRadius;
     }
   }
 }
@@ -627,9 +649,9 @@ BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorL
   static BehaviorLookAround::Destination previous = BehaviorLookAround::Destination::Center;
   
   // If we've visited enough destinations, go back to center
-  if (_numDestinationsLeft <= 1)
+  if (_dVars.numDestinationsLeft <= 1)
   {
-    _numDestinationsLeft = 0;
+    _dVars.numDestinationsLeft = 0;
     PRINT_NAMED_DEBUG("BehaviorLookAround.GetNextDestination.ReturnToCenter", "going back to center");
     return Destination::Center;
   }
@@ -651,11 +673,11 @@ BehaviorLookAround::Destination BehaviorLookAround::GetNextDestination(BehaviorL
   auto newDestIter = all.begin();
   while (randIndex-- > 0) { newDestIter++; }
 
-  _numDestinationsLeft--;
+  _dVars.numDestinationsLeft--;
 
   PRINT_NAMED_DEBUG("BehaviorLookAround.GetNextDestination", "%s (%d left)",
                     DestinationToString(*newDestIter),
-                    _numDestinationsLeft);
+                    _dVars.numDestinationsLeft);
   
   return *newDestIter;
 }
@@ -681,8 +703,8 @@ void BehaviorLookAround::HandleCliffEvent(const EngineToGameEvent& event)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookAround::ResetSafeRegion()
 {
-  _moveAreaCenter = GetBEI().GetRobotInfo().GetPose();
-  _safeRadius = kDefaultSafeRadius;
+  _dVars.moveAreaCenter = GetBEI().GetRobotInfo().GetPose();
+  _dVars.safeRadius = kDefaultSafeRadius;
   PRINT_NAMED_DEBUG("BehaviorLookAround.ResetSafeRegion", "safe region reset");
 }
 
@@ -690,7 +712,7 @@ void BehaviorLookAround::ResetSafeRegion()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookAround::SetState_internal(State state, const std::string& stateName)
 {
-  _currentState = state;
+  _dVars.currentState = state;
   SetDebugStateName(stateName);
 }
 

@@ -10,11 +10,24 @@
     },
     {
       "cloud_intent": "intent_imperative_come",
+      "app_intent": "intent_imperative_come",
       "user_intent": "imperative_come"
+    },
+    {
+      "cloud_intent": "intent_global_cancel",
+      "user_intent": "cancel_timer"
     },
     {
       "cloud_intent": "intent_greeting_goodbye",
       "user_intent": "greeting_goodbye"
+    },
+    {
+      "cloud_intent": "intent_greeting_goodmorning",
+      "user_intent": "greeting_goodmorning"
+    },
+    {
+      "cloud_intent": "intent_greeting_goodnight",
+      "user_intent": "greeting_goodnight"
     },
     {
       "cloud_intent": "intent_greeting_hello",
@@ -26,26 +39,26 @@
     },
     {
       "cloud_intent" : "intent_clock_settimer",
+      "app_intent" : "intent_clock_settimer",
       "user_intent"  : "set_timer",
       "cloud_substitutions": {
-        "timer-duration.amount": "time_s"
+        "timer_duration": "time_s"
       },
-      "cloud_numerics": ["timer-duration.amount"]
+      "cloud_numerics": ["timer_duration"]
     },
     {
       "cloud_intent": "intent_system_charger",
+      "app_intent": "intent_system_charger",
       "user_intent": "system_charger"
     },
     {
       "cloud_intent": "intent_system_sleep",
+      "app_intent": "intent_system_sleep",
       "user_intent": "system_sleep"
     },
     {
-      "cloud_intent": "intent_system_wake",
-      "user_intent": "system_wake"
-    },
-    {
       "cloud_intent": "intent_play_specific",
+      "app_intent": "intent_play_specific",
       "user_intent": "play_specific"
     },
     {

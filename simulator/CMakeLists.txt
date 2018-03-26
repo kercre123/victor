@@ -6,11 +6,21 @@ if (NOT MACOSX)
   return()
 endif()
 
-set(CONTROLLERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/controllers")
-set(BUILT_RESOURCES_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources")
-
 include(opencv)
 include(symlink_target)
+include(anki_build_cxx)
+
+# Build options
+option(WEBOTS_SETUP_EXE "Set up controller executables for use with webots firewall certificate" ON)
+
+# Path to controllers
+set(CONTROLLERS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/controllers")
+
+# Path to resources
+set(BUILT_RESOURCES_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources")
+
+# Path to webotsTest.py
+set(WEBOTS_TEST "${CMAKE_SOURCE_DIR}/project/build-scripts/webots/webotsTest.py")
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
@@ -31,7 +41,6 @@ if (MACOSX)
   )
 endif()
 
-include(anki_build_cxx)
 
 #
 # webots plugins
@@ -83,25 +92,45 @@ target_compile_definitions(webotsCtrlCommon
 )
 
 #
+# webots controller macros
+#
+macro(webots_setup_exe target)
+  add_custom_command(
+    TARGET ${target}
+    POST_BUILD
+    COMMAND ${WEBOTS_TEST} --setup-exe $<TARGET_FILE:${target}>
+    COMMENT ${WEBOTS_TEST} --setup-exe $<TARGET_FILE:${target}>
+  )
+endmacro(webots_setup_exe)
+
+macro(webots_build_cxx_executable target srclist_dir)
+  # Build the executable
+  anki_build_cxx_executable(${target} ${srclist_dir})
+  # Sign executable for use with webots firewall certificate
+  if (WEBOTS_SETUP_EXE)
+    webots_setup_exe(${target})
+  endif(WEBOTS_SETUP_EXE)
+endmacro(webots_build_cxx_executable)
+
+#
 # webots controller executables
 #
 
-anki_build_cxx_executable(webotsCtrlLightCube ${ANKI_SRCLIST_DIR})
+webots_build_cxx_executable(webotsCtrlLightCube ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlLightCube
   PRIVATE
   util
   cti_common
+  cube_led_animator
   engine_clad
   robot_interface
-  supervisor # for ledController
   webotsCtrlCommon
   ${PLATFORM_LIBS}
 )
 
 target_compile_definitions(webotsCtrlLightCube
   PRIVATE
-  COZMO_ROBOT
   SIMULATOR
 )
 
@@ -117,7 +146,7 @@ symlink_target(
 )
 
 
-anki_build_cxx_executable(webotsCtrlViz ${ANKI_SRCLIST_DIR})
+webots_build_cxx_executable(webotsCtrlViz ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlViz
   PRIVATE
@@ -139,13 +168,14 @@ symlink_target(
   DST ${CONTROLLERS_DIR}/webotsCtrlViz/resources
 )
 
-
-anki_build_cxx_executable(webotsCtrlRobot2 ${ANKI_SRCLIST_DIR})
+#
+# webotsCtrlRobot2
+#
+webots_build_cxx_executable(webotsCtrlRobot2 ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlRobot2
   PRIVATE
   util
-  util_audio
   kazmath
   cti_common
   cti_common_robot
@@ -163,7 +193,6 @@ target_compile_definitions(webotsCtrlRobot2
   PRIVATE
   COZMO_ROBOT
   SIMULATOR
-  _DEBUG
 )
 
 symlink_target(
@@ -177,8 +206,11 @@ symlink_target(
   DST ${CONTROLLERS_DIR}/webotsCtrlRobot2/resources
 )
 
+#
+# webotsCtrlAnim
+#
 
-anki_build_cxx_executable(webotsCtrlAnim ${ANKI_SRCLIST_DIR})
+webots_build_cxx_executable(webotsCtrlAnim ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlAnim
   PRIVATE
@@ -212,33 +244,41 @@ symlink_target(
   DST ${CONTROLLERS_DIR}/webotsCtrlAnim/resources
 )
 
-#anki_build_cxx_executable(webotsCtrlWebServer ${ANKI_SRCLIST_DIR})
+#
+# webotsCtrlWebServer
+#
 
-#target_link_libraries(webotsCtrlWebServer
-#  PRIVATE
-#  #util
-#  webotsCtrlCommon
-#  osState
-#  victor_web_library
-#)
+webots_build_cxx_executable(webotsCtrlWebServer ${ANKI_SRCLIST_DIR})
 
-#target_compile_definitions(webotsCtrlWebServer
-#  PRIVATE
-#  SIMULATOR
-#)
+target_link_libraries(webotsCtrlWebServer
+  PRIVATE
+  #util
+  webotsCtrlCommon
+  osState
+  victor_web_library
+)
 
-#symlink_target(
-#  TARGET webotsCtrlWebServer
-#  DST "${CONTROLLERS_DIR}/webotsCtrlWebServer/"
-#)
+target_compile_definitions(webotsCtrlWebServer
+  PRIVATE
+  SIMULATOR
+)
 
-#symlink_target(
-#  TARGET webotsCtrlWebServer
-#  SRC ${BUILT_RESOURCES_DIR}
-#  DST ${CONTROLLERS_DIR}/webotsCtrlWebServer/resources
-#)
+symlink_target(
+  TARGET webotsCtrlWebServer
+  DST "${CONTROLLERS_DIR}/webotsCtrlWebServer/"
+)
 
-anki_build_cxx_executable(webotsCtrlGameEngine2 ${ANKI_SRCLIST_DIR})
+symlink_target(
+  TARGET webotsCtrlWebServer
+  SRC ${BUILT_RESOURCES_DIR}
+  DST ${CONTROLLERS_DIR}/webotsCtrlWebServer/resources
+)
+
+#
+# webotsCtrlGameEngine2
+#
+
+webots_build_cxx_executable(webotsCtrlGameEngine2 ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlGameEngine2
   PRIVATE
@@ -274,8 +314,11 @@ symlink_target(
   DST ${CONTROLLERS_DIR}/webotsCtrlGameEngine2/resources
 )
 
+#
+# webotsCtrlKeyboard
+#
 
-anki_build_cxx_executable(webotsCtrlKeyboard ${ANKI_SRCLIST_DIR})
+webots_build_cxx_executable(webotsCtrlKeyboard ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlKeyboard
   PRIVATE
@@ -294,7 +337,7 @@ target_include_directories(webotsCtrlKeyboard
 
 target_compile_definitions(webotsCtrlKeyboard
   PRIVATE
-  CORETECH_ENGINE=1
+  CORETECH_ENGINE
 )
 
 symlink_target(
@@ -308,8 +351,11 @@ symlink_target(
   DST ${CONTROLLERS_DIR}/webotsCtrlKeyboard/resources
 )
 
+#
+# webotsCtrlBuildServerTest
+#
 
-anki_build_cxx_executable(webotsCtrlBuildServerTest ${ANKI_SRCLIST_DIR})
+webots_build_cxx_executable(webotsCtrlBuildServerTest ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlBuildServerTest
   PRIVATE
@@ -333,7 +379,7 @@ target_include_directories(webotsCtrlBuildServerTest
 
 target_compile_definitions(webotsCtrlBuildServerTest
   PRIVATE
-  CORETECH_ENGINE=1
+  CORETECH_ENGINE
 )
 
 symlink_target(
@@ -341,9 +387,12 @@ symlink_target(
   DST "${CONTROLLERS_DIR}/webotsCtrlBuildServerTest/"
 )
 
+#
 # Webots Ctrl Hand Emitter
+#
 
-anki_build_cxx_executable(webotsCtrlHandEmitter ${ANKI_SRCLIST_DIR})
+webots_build_cxx_executable(webotsCtrlHandEmitter ${ANKI_SRCLIST_DIR})
+
 target_include_directories(webotsCtrlHandEmitter
   PRIVATE
   ${CMAKE_SOURCE_DIR}
@@ -361,7 +410,11 @@ symlink_target(
 
 # end -- Webots Controller Hand Emitter
 
-anki_build_cxx_executable(webotsCtrlDevLog ${ANKI_SRCLIST_DIR})
+#
+# webotsCtrlDevLog
+#
+
+webots_build_cxx_executable(webotsCtrlDevLog ${ANKI_SRCLIST_DIR})
 
 target_link_libraries(webotsCtrlDevLog
   PRIVATE
@@ -392,4 +445,3 @@ symlink_target(
   TARGET webotsCtrlDevLog
   DST "${CONTROLLERS_DIR}/webotsCtrlDevLog/"
 )
-

@@ -23,7 +23,7 @@
 #include "engine/animations/animationTransfer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/bodyLightComponent.h"
-#include "engine/components/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerResponsesContainer.h"
 #include "engine/utils/cozmoExperiments.h"
@@ -52,7 +52,7 @@ CONSOLE_VAR(bool, kStressTestThreadedPrintsDuringLoad, "RobotDataLoader", false)
 static Anki::Cozmo::ThreadedPrintStressTester stressTester;
 #endif // REMOTE_CONSOLE_ENABLED
 
-  
+
 }
 
 namespace Anki {
@@ -85,30 +85,21 @@ void RobotDataLoader::LoadNonConfigData()
   }
 
   Anki::Util::SetThreadName(pthread_self(), "RbtDataLoader");
-  
+
   // Uncomment this line to enable the profiling of loading data
   //ANKI_CPU_TICK_ONE_TIME("RobotDataLoader::LoadNonConfigData");
 
-  ANKI_VERIFY( !_context->IsMainThread(), "RobotDataLoadingShouldNotBeOnMainThread", "" );
-  
+  ANKI_VERIFY( !_context->IsEngineThread(), "RobotDataLoadingShouldNotBeOnEngineThread", "" );
+
   if( kStressTestThreadedPrintsDuringLoad ) {
     REMOTE_CONSOLE_ENABLED_ONLY( stressTester.Start() );
   }
-  
+
   {
-    ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");
-    CollectAnimFiles();
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationGroups");
+    LoadAnimationGroups();
   }
 
-  // Don't load these if this is the factory test
-  if(!FACTORY_TEST)
-  {
-    {
-      ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationGroups");
-      LoadAnimationGroups();
-    }
-  }
-    
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
     LoadBackpackLightAnimations();
@@ -124,23 +115,19 @@ void RobotDataLoader::LoadNonConfigData()
     LoadCubeAnimationTriggerResponses();
   }
 
-  // Don't load these if this is the factory test
-  if(!FACTORY_TEST)
   {
-    {
-      ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
-      LoadEmotionEvents();
-    }
-    
-    {
-      ANKI_CPU_PROFILE("RobotDataLoader::LoadFacePNGPaths");
-      LoadFacePNGPaths();
-    }
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
+    LoadEmotionEvents();
+  }
 
-    {
-      ANKI_CPU_PROFILE("RobotDataLoader::LoadDasBlacklistedAnimationTriggers");
-      LoadDasBlacklistedAnimationTriggers();
-    }
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadFacePNGPaths");
+    LoadFacePNGPaths();
+  }
+
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadDasBlacklistedAnimationTriggers");
+    LoadDasBlacklistedAnimationTriggers();
   }
 
   {
@@ -152,12 +139,12 @@ void RobotDataLoader::LoadNonConfigData()
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBehaviors");
     LoadBehaviors();
   }
-  
+
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationTriggerResponses");
     LoadAnimationTriggerResponses();
   }
-  
+
   {
     // Load SayText Action Intent Config
     ANKI_CPU_PROFILE("RobotDataLoader::LoadSayTextActionIntentConfigs");
@@ -177,18 +164,18 @@ void RobotDataLoader::LoadNonConfigData()
   if( kStressTestThreadedPrintsDuringLoad ) {
     REMOTE_CONSOLE_ENABLED_ONLY( stressTester.Stop() );
   }
-  
+
   // we're done
   _loadingCompleteRatio.store(1.0f);
 }
-  
+
 void RobotDataLoader::AddToLoadingRatio(float delta)
 {
   // Allows for a thread to repeatedly try to update the loading ratio until it gets access
   auto current = _loadingCompleteRatio.load();
   while (!_loadingCompleteRatio.compare_exchange_weak(current, current + delta));
 }
-  
+
 void RobotDataLoader::CollectAnimFiles()
 {
   // animations
@@ -209,14 +196,14 @@ void RobotDataLoader::CollectAnimFiles()
       });
     }
   }
-  
+
   // cube light animations
   {
     WalkAnimationDir("config/engine/lights/cubeLights", _cubeLightAnimFileTimestamps, [this] (const std::string& filename) {
       _jsonFiles[FileType::CubeLightAnimation].push_back(filename);
     });
   }
-  
+
   // backpack light animations
   {
     WalkAnimationDir("config/engine/lights/backpackLights", _backpackLightAnimFileTimestamps, [this] (const std::string& filename) {
@@ -242,7 +229,7 @@ void RobotDataLoader::CollectAnimFiles()
     }
   }
 }
-  
+
 bool RobotDataLoader::IsCustomAnimLoadEnabled() const
 {
   return (_context->IsInSdkMode() || (ANKI_DEV_CHEATS != 0));
@@ -251,11 +238,11 @@ bool RobotDataLoader::IsCustomAnimLoadEnabled() const
 void RobotDataLoader::LoadCubeLightAnimations()
 {
   const double startTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-  
+
   using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
   MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadCubeLightAnimationFile, this, std::placeholders::_1);
   MyDispatchWorker myWorker(loadFileFunc);
-  
+
   const auto& fileList = _jsonFiles[FileType::CubeLightAnimation];
   const auto size = fileList.size();
   for (int i = 0; i < size; i++) {
@@ -263,7 +250,7 @@ void RobotDataLoader::LoadCubeLightAnimations()
   }
 
   myWorker.Process();
-  
+
   const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
   double loadTime = endTime - startTime;
   PRINT_CH_INFO("Animations", "RobotDataLoader.LoadCubeLightAnimations.LoadTime",
@@ -283,19 +270,19 @@ void RobotDataLoader::LoadCubeLightAnimationFile(const std::string& path)
 void RobotDataLoader::LoadBackpackLightAnimations()
 {
   const double startTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
-  
+
   using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
   MyDispatchWorker::FunctionType loadFileFunc = std::bind(&RobotDataLoader::LoadBackpackLightAnimationFile, this, std::placeholders::_1);
   MyDispatchWorker myWorker(loadFileFunc);
-  
+
   const auto& fileList = _jsonFiles[FileType::BackpackLightAnimation];
   const auto size = fileList.size();
   for (int i = 0; i < size; i++) {
     myWorker.PushJob(fileList[i]);
   }
-  
+
   myWorker.Process();
-  
+
   const double endTime = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
   double loadTime = endTime - startTime;
   PRINT_CH_INFO("Animations", "RobotDataLoader.LoadBackpackLightAnimations.LoadTime",
@@ -422,12 +409,12 @@ void RobotDataLoader::LoadBehaviors()
       auto result = _behaviors.emplace(std::piecewise_construct,
                                        std::forward_as_tuple(behaviorID),
                                        std::forward_as_tuple(std::move(behaviorJson)));
-      
+
       DEV_ASSERT_MSG(result.second,
                      "RobotDataLoader.LoadBehaviors.FailedEmplace",
                      "Failed to insert BehaviorID %s - make sure all behaviors have unique IDs",
                      BehaviorTypesWrapper::BehaviorIDToString(behaviorID));
-      
+
     }
     else if (!success)
     {
@@ -436,7 +423,7 @@ void RobotDataLoader::LoadBehaviors()
   }
 }
 
- 
+
 void RobotDataLoader::LoadFacePNGPaths()
 {
   const std::string facePNGFolder = _platform->pathToResource(Util::Data::Scope::Resources, "config/facePNGs/");
@@ -447,25 +434,6 @@ void RobotDataLoader::LoadFacePNGPaths()
     std::string strippedName = (dotIndex == std::string::npos) ? fileName : fileName.substr(0, dotIndex);
     _facePNGPaths.emplace(std::piecewise_construct, std::forward_as_tuple(strippedName), std::forward_as_tuple(std::move(fullPath)));
   }
-}
-
-
-void RobotDataLoader::LoadVoiceCommandConfigs()
-{
-#if THF_FUNCTIONALITY
-  // Configuration for voice command component 
-  {
-    std::string jsonFilename = "assets/voiceCommand/exports/voiceCommand_config.json";
-    const bool success = _platform->readAsJson(Util::Data::Scope::Resources, jsonFilename, _voiceCommandConfig);
-    if (!success)
-    {
-      LOG_ERROR("RobotDataLoader.VoiceCommandConfigJsonFailed",
-                "Voice Command Json config file %s not found or failed to parse",
-                jsonFilename.c_str());
-      _voiceCommandConfig.clear();
-    }
-  }
-#endif
 }
 
 
@@ -481,7 +449,7 @@ void RobotDataLoader::LoadCubeAnimationTriggerResponses()
 
 void RobotDataLoader::LoadDasBlacklistedAnimationTriggers()
 {
-  static const std::string kBlacklistedAnimationTriggersConfigKey = "blacklisted_animation_triggers";  
+  static const std::string kBlacklistedAnimationTriggersConfigKey = "blacklisted_animation_triggers";
   const Json::Value& blacklistedTriggers = _dasEventConfig[kBlacklistedAnimationTriggersConfigKey];
   for (int i = 0; i < blacklistedTriggers.size(); i++)
   {
@@ -496,7 +464,7 @@ void RobotDataLoader::LoadRobotConfigs()
   if (_platform == nullptr) {
     return;
   }
-  
+
   ANKI_CPU_TICK_ONE_TIME("RobotDataLoader::LoadRobotConfigs");
   // mood config
   {
@@ -509,7 +477,7 @@ void RobotDataLoader::LoadRobotConfigs()
                 jsonFilename.c_str());
     }
   }
-  
+
   // victor behavior systems config
   {
     static const std::string jsonFilename = "config/engine/behaviorComponent/victor_behavior_config.json";
@@ -546,7 +514,7 @@ void RobotDataLoader::LoadRobotConfigs()
                 jsonFilename.c_str());
     }
   }
-  
+
   // userIntentsComponent config (also maps cloud intents to user intents)
   {
     static const std::string jsonFilename = "config/engine/behaviorComponent/user_intent_map.json";
@@ -558,12 +526,7 @@ void RobotDataLoader::LoadRobotConfigs()
                 jsonFilename.c_str());
     }
   }
-  
-  // Voice Command config
-  {
-    LoadVoiceCommandConfigs();
-  }
-  
+
   // DAS event config
   {
     static const std::string jsonFilename = "config/engine/das_event_config.json";
@@ -575,14 +538,14 @@ void RobotDataLoader::LoadRobotConfigs()
                 jsonFilename.c_str());
     }
   }
-  
+
   // feature gate
   {
     const std::string filename{_platform->pathToResource(Util::Data::Scope::Resources, "config/features.json")};
     const std::string fileContents{Util::FileUtils::ReadFile(filename)};
     _context->GetFeatureGate()->Init(fileContents);
   }
-  
+
   // A/B testing definition
   {
     const std::string filename{_platform->pathToResource(Util::Data::Scope::Resources, "config/experiments.json")};
@@ -618,12 +581,12 @@ void RobotDataLoader::LoadRobotConfigs()
 bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)
 {
   loadingCompleteRatio_out = _loadingCompleteRatio.load();
-  
+
   if (_isNonConfigDataLoaded)
   {
     return true;
   }
-  
+
   // loading hasn't started
   if (!_dataLoadingThread.joinable())
   {
@@ -631,18 +594,18 @@ bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)
     _dataLoadingThread = std::thread(&RobotDataLoader::LoadNonConfigData, this);
     return false;
   }
-  
+
   // loading has started but isn't complete
   if (loadingCompleteRatio_out < 1.0f)
   {
     return false;
   }
-  
+
   // loading is now done so lets clean up
   _dataLoadingThread.join();
   _dataLoadingThread = std::thread();
   _isNonConfigDataLoaded = true;
-  
+
   return true;
 }
 

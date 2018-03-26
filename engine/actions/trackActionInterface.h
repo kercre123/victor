@@ -167,7 +167,7 @@ private:
   Radians  _maxHeadAngle  = MAX_HEAD_ANGLE;
   u32      _stopOnOtherActionTag = ActionConstants::INVALID_TAG;
   
-  bool         _moveEyes    = false;
+  bool     _moveEyes      = (false && PROCEDURAL_EYE_LEADING);
   
   bool     _shouldPlayDrivingAnimation = false;
 

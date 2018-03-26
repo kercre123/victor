@@ -28,11 +28,12 @@ namespace webots {
 
 namespace Anki {
 namespace Cozmo {
-  
-struct ObjectAvailable;
-namespace BlockMessages {
-  class LightCubeMessage;
+
+namespace ExternalInterface {
+  struct ObjectAvailable;
 }
+class MessageEngineToCube;
+class MessageCubeToEngine;
 
 // Alias for BLE factory ID (TODO: should be defined in CLAD)
 using BleFactoryId = int;
@@ -55,16 +56,16 @@ public:
   static void SetSupervisor(webots::Supervisor *sup);
 #endif
 
-  using ObjectAvailableCallback   = std::function<void(const ObjectAvailable&)>;
-  using LightCubeMessageCallback  = std::function<void(const BleFactoryId&, const BlockMessages::LightCubeMessage&)>;
+  using ObjectAvailableCallback   = std::function<void(const ExternalInterface::ObjectAvailable&)>;
+  using CubeMessageCallback       = std::function<void(const BleFactoryId&, const MessageCubeToEngine&)>;
   using CubeConnectedCallback     = std::function<void(const BleFactoryId&)>;
   using CubeDisconnectedCallback  = std::function<void(const BleFactoryId&)>;
   
   void RegisterObjectAvailableCallback(const ObjectAvailableCallback& callback) {
     _objectAvailableCallbacks.push_back(callback);
   }
-  void RegisterLightCubeMessageCallback(const LightCubeMessageCallback& callback) {
-    _lightCubeMessageCallbacks.push_back(callback);
+  void RegisterCubeMessageCallback(const CubeMessageCallback& callback) {
+    _cubeMessageCallbacks.push_back(callback);
   }
 
   void RegisterCubeConnectedCallback(const CubeConnectedCallback& callback) {
@@ -76,7 +77,7 @@ public:
   }
   
   // Send a message to the specified light cube. Returns true on success.
-  bool SendMessageToLightCube(const BleFactoryId&, const BlockMessages::LightCubeMessage&);
+  bool SendMessageToLightCube(const BleFactoryId&, const MessageEngineToCube&);
   
   // Request to connect to an advertising cube. Returns true on success.
   bool ConnectToCube(const BleFactoryId&);
@@ -96,7 +97,7 @@ private:
   std::vector<ObjectAvailableCallback> _objectAvailableCallbacks;
   
   // callbacks for raw light cube messages:
-  std::vector<LightCubeMessageCallback> _lightCubeMessageCallbacks;
+  std::vector<CubeMessageCallback> _cubeMessageCallbacks;
   
   // callbacks for when a cube is connected:
   std::vector<CubeConnectedCallback> _cubeConnectedCallbacks;

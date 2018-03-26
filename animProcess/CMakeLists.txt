@@ -48,6 +48,7 @@ target_link_libraries(victor_anim
   audio_engine
   audio_multiplexer_robot
   osState
+  micdata
   # vendor
   ${OPENCV_LIBS}
   ${FLATBUFFERS_LIBS} 
@@ -72,6 +73,7 @@ target_compile_definitions(victor_anim
 target_include_directories(victor_anim 
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src> # allow "android/" prefix
+  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/lib/util/source/3rd>
   ${PLATFORM_INCLUDES}
 )
 

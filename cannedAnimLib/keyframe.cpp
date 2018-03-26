@@ -154,6 +154,10 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     #if CAN_STREAM
       RobotInterface::EngineToRobot* HeadAngleKeyFrame::GetStreamMessage()
       {
+        if (GetCurrentTime() > 0) {
+          return nullptr;
+        }
+
         _streamHeadMsg.duration_sec = 0.001 * _durationTime_ms;
         
         // Add variability:
@@ -166,6 +170,12 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         
         return new RobotInterface::EngineToRobot(_streamHeadMsg);
       }
+
+      bool HeadAngleKeyFrame::IsDone() 
+      {
+        return IsDoneHelper(_durationTime_ms);
+      }
+
     #endif
 
     Result HeadAngleKeyFrame::DefineFromFlatBuf(const CozmoAnim::HeadAngle* headAngleKeyframe, const std::string& animNameDebug)
@@ -211,6 +221,10 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     #if CAN_STREAM
       RobotInterface::EngineToRobot* LiftHeightKeyFrame::GetStreamMessage()
       {
+        if (GetCurrentTime() > 0) {
+          return nullptr;
+        }
+
         _streamLiftMsg.duration_sec = 0.001 * _durationTime_ms;
         
         // Add variability:
@@ -222,6 +236,11 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         }
 
         return new RobotInterface::EngineToRobot(_streamLiftMsg);
+      }
+
+      bool LiftHeightKeyFrame::IsDone() 
+      {
+        return IsDoneHelper(_durationTime_ms);
       }
     #endif
 
@@ -414,82 +433,11 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     //
     // RobotAudioKeyFrame
     //
-    RobotAudioKeyFrame::RobotAudioKeyFrame(AudioRef&& audioRef, TimeStamp_t triggerTime_ms)
+
+    Result RobotAudioKeyFrame::AddAudioRef(AudioKeyFrameType::AudioRef&& audioRef)
     {
-      SetTriggerTime(triggerTime_ms);
-      AddAudioRef( std::move( audioRef ) );
-    }
-    
-    Result RobotAudioKeyFrame::AddAudioRef(AudioRef&& audioRef)
-    {
-      // TODO: Need a way to verify the event is valid while loading animation metadata - JMR
-      _audioReferences.emplace_back( std::move( audioRef ) );
+      _audioReferences.push_back( std::move(audioRef) );
       return RESULT_OK;
-    }
-
-    const int8_t RobotAudioKeyFrame::GetNumAudioRefs() const
-    {
-      return Util::numeric_cast<int8_t>(_audioReferences.size());
-    }
-
-    const int8_t RobotAudioKeyFrame::GetAudioRefIndex(bool useProbability) const
-    {
-      if(_audioReferences.empty()) {
-        PRINT_NAMED_ERROR("RobotAudioKeyFrame.GetAudioRefIndex.EmptyAudioReferences",
-                          "Check to make sure animation loaded successfully - sound file(s) probably not found.");
-        return kNoAudioRefIndex;
-      }
-      
-      int8_t selectedAudioIndex = kNoAudioRefIndex;
-
-      if (_audioReferences.size() > 0) {
-
-        // If we are NOT using the probabilities for each audio event, then randomly select one.
-        if (!useProbability) {
-          if (_audioReferences.size() == 1) {
-            selectedAudioIndex = 0;
-          } else {
-            // Randomly select if there are more than one audio references
-            selectedAudioIndex = GetRNG().RandIntInRange(0, static_cast<s32>(_audioReferences.size()-1));
-          }
-          PRINT_CH_DEBUG("Audio", "RobotAudioKeyFrame.GetAudioRef.RandomAudioSelection",
-                         "Randomly selected audio index = %i", selectedAudioIndex);
-          return selectedAudioIndex;
-        }
-
-        // Taking probabilities into account, select which audio event should be used.
-        // TODO: See https://github.com/anki/cozmo-one/pull/5688#discussion_r139861577 for a
-        // suggested improvement to this probability-driven selection (tracked in VIC-432)
-        const f32 randDbl = GetRNG().RandDbl(1.0);
-        f32 randRangeMin = 0.0;
-        for (int idx=0; idx<_audioReferences.size(); idx++) {
-          if (Util::IsFltNear(_audioReferences[idx].probability, 0.0f)) {
-            continue;
-          }
-          f32 randRangeMax = randRangeMin + _audioReferences[idx].probability;
-          PRINT_CH_DEBUG("Audio", "RobotAudioKeyFrame.GetAudioRefIndex.ShowInfo",
-                         "random value = %f, idx = %i and range = %f to %f",
-                         randDbl, idx, randRangeMin, randRangeMax);
-          if (Util::InRange(randDbl, randRangeMin, randRangeMax)) {
-            // ^ that if statement is equivalent to: if ((randRangeMin <= randDbl) && (randDbl <= randRangeMax))
-            selectedAudioIndex = idx;
-            break;
-          }
-          randRangeMin = randRangeMax;
-        }
-        PRINT_CH_DEBUG("Audio", "RobotAudioKeyFrame.GetAudioRef.RandomAudioSelection",
-                       "Probability selected audio index = %i", selectedAudioIndex);
-      }
-      return selectedAudioIndex;
-    }
-
-    const RobotAudioKeyFrame::AudioRef& RobotAudioKeyFrame::GetAudioRef(const int8_t selectedAudioIndex) const
-    {
-      if (selectedAudioIndex < 0) {
-        static const AudioRef InvalidRef( AudioMetaData::GameEvent::GenericEvent::Invalid );
-        return InvalidRef;
-      }
-      return _audioReferences[selectedAudioIndex];
     }
 
     Result RobotAudioKeyFrame::DefineFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug)
@@ -500,129 +448,360 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       return lastResult;
     }
     
-    Result RobotAudioKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug)
-    {
-      f32 volume = audioKeyframe->volume();
-      bool hasAlts = audioKeyframe->hasAlts();
-
-      auto audioEventData = audioKeyframe->audioEventId();
-      auto* probabilities = audioKeyframe->probability();
-
-      if(nullptr != probabilities) {
-        if(probabilities->size() == 0) {
-          probabilities = nullptr;
-        } else if(probabilities->size() != audioEventData->size()) {
-          // We must have the same number of probability values as audio events
-          PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromFlatBuf.UnknownProbabilities",
-                            "%s: The number of audio event IDs (%i) does not match number of probabilities (%i)",
-                            animNameDebug.c_str(), audioEventData->size(), probabilities->size());
-          return RESULT_FAIL;
-        }
-      }
-
-      if(nullptr != probabilities) {
-        // Check sum of all probabilities to ensure it is <= 1.0
-        f32 totalProb = 0.0f;
-        for (int probIdx=0; probIdx < probabilities->size(); probIdx++) {
-          totalProb += probabilities->Get(probIdx);
-          if(totalProb > 1.0) {
-            PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromFlatBuf.TotalProbabilitiesTooHigh",
-                              "%s: The total probability of all audio events combined exceeds 1.0",
-                              animNameDebug.c_str());
-            return RESULT_FAIL;
-          }
-        }
-      }
-
-      for (int aeIdx=0; aeIdx < audioEventData->size(); aeIdx++) {
-        f32 probability;
-        if(nullptr == probabilities) {
-          // If no probability is set, use equal probability for all audio events
-          probability = 1.0f / audioEventData->size();
-        } else {
-          probability = probabilities->Get(aeIdx);
-        }
-        auto audioEventVal = audioEventData->Get(aeIdx);
-
-        // The casting to 64-bit was borrowed from RobotAudioKeyFrame::SetMembersFromJson(), where the corresponding
-        // comment is "We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit"
-        const auto eventId = static_cast<AudioMetaData::GameEvent::GenericEvent>( (uint64_t) audioEventVal );
-
-        Result addResult = AddAudioRef( AudioRef( eventId, volume, probability, hasAlts ) );
-        if(addResult != RESULT_OK) {
-          return addResult;
-        }
-      }
-
-      return RESULT_OK;
-    }
+#define JSON_KEY( __KEY__ ) static const char* kKey_##__KEY__ = QUOTE(__KEY__)
     
     Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
-      // Get volume and has-alternate-audio settings
-      f32 volume = 1.0f;
-      JsonTools::GetValueOptional(jsonRoot, "volume", volume);
-      bool hasAlts = false;
-      JsonTools::GetValueOptional(jsonRoot, "hasAlts", hasAlts);
-
-      f32 probability = 1.0f;
-
-      const Json::Value& jsonAudioNames = jsonRoot["audioEventId"];
-      if(jsonAudioNames.isArray()) {
-        std::vector<f32> probabilities;
-        const bool probabilitiesSet = JsonTools::GetVectorOptional(jsonRoot, "probability", probabilities);
-        if(!probabilitiesSet) {
-          const bool probabilitySet = JsonTools::GetValueOptional(jsonRoot, "probability", probability);
-          if(probabilitySet) {
-            probabilities.push_back(probability);
+      using namespace AudioEngine;
+      using namespace AudioKeyFrameType;
+      using namespace AudioMetaData;
+      
+      // Check for deprecated format
+      if ( jsonRoot.isMember("audioEventId") ) {
+        // Deprecated format
+        return SetMembersFromDeprecatedJson(jsonRoot, animNameDebug);
+      }
+      
+      // Frame type list keys
+      JSON_KEY(eventGroups);
+      JSON_KEY(states);
+      JSON_KEY(switches);
+      JSON_KEY(parameters);
+      
+      const auto& states = jsonRoot[kKey_states];
+      if (states.isArray()) {
+        JSON_KEY(stateGroupId);
+        JSON_KEY(stateId);
+        for (auto stateIt = states.begin(); stateIt != states.end(); ++stateIt) {
+          auto groupId = static_cast<u32>(GameState::StateGroupType::Invalid);
+          auto stateId = static_cast<u32>(GameState::GenericState::Invalid);
+          JsonTools::GetValueOptional(*stateIt, kKey_stateGroupId, groupId);
+          JsonTools::GetValueOptional(*stateIt, kKey_stateId, stateId);
+          if (((u32)GameState::StateGroupType::Invalid == groupId) || ((u32)GameState::GenericState::Invalid == stateId)) {
+            PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.InvalidGameState",
+                              "'%s' @ %i ms : Has an invalid stateGroupId (%i) or stateId (%i)",
+                              animNameDebug.c_str(), _triggerTime_ms, groupId, stateId);
+            // Move to next state
+            continue;
           }
-        }
-
-        if(probabilities.empty() && !jsonAudioNames.empty()) {
-          // If no probability is set, use equal probability for all audio events
-          const f32 eachProbability = 1.0f / jsonAudioNames.size();
-          for (int idx=0; idx<jsonAudioNames.size(); idx++) {
-            probabilities.push_back(eachProbability);
-          }
-        } else if(probabilities.size() != jsonAudioNames.size()) {
-          // We must have the same number of probability values as audio events
-          PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.UnknownProbabilities",
-                            "%s: The number of audio event IDs (%u) does not match number of probabilities (%zu)",
-                            animNameDebug.c_str(), jsonAudioNames.size(), probabilities.size());
-          return RESULT_FAIL;
-        }
-
-        // Check sum of all probabilities to ensure it is <= 1.0
-        f32 totalProb = 0.0f;
-        for (int probIdx=0; probIdx < probabilities.size(); probIdx++) {
-          totalProb += probabilities[probIdx];
-          if(totalProb > 1.0) {
-            PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.TotalProbabilitiesTooHigh",
-                              "%s: The total probability of all audio events combined exceeds 1.0",
-                              animNameDebug.c_str());
-            return RESULT_FAIL;
-          }
-        }
-
-        for(s32 i=0; i<jsonAudioNames.size(); ++i) {
-          probability = probabilities[i];
-          // We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit
-          const auto eventId = static_cast<AudioMetaData::GameEvent::GenericEvent>( jsonAudioNames[i].asUInt64() );
-          Result addResult = AddAudioRef( AudioRef( eventId, volume, probability, hasAlts ) );
+          Result addResult = AddAudioRef(AudioRef(AudioStateRef(static_cast<GameState::StateGroupType>(groupId),
+                                                                static_cast<GameState::GenericState>(stateId))));
           if(addResult != RESULT_OK) {
             return addResult;
           }
         }
-      } else {
-        JsonTools::GetValueOptional(jsonRoot, "probability", probability);
-        // We intentionally cast json data to 64 bit so we can guaranty that the value is 32 bit
-        const auto eventId = static_cast<AudioMetaData::GameEvent::GenericEvent>( jsonAudioNames.asUInt64() );
-        Result addResult = AddAudioRef( AudioRef( eventId, volume, probability, hasAlts ) );
+      } // States
+      
+      const auto& switches = jsonRoot[kKey_switches];
+      if (switches.isArray()) {
+        JSON_KEY(switchGroupId);
+        JSON_KEY(stateId);
+        for (auto switchIt = switches.begin(); switchIt != switches.end(); ++switchIt) {
+          auto groupId = static_cast<u32>(SwitchState::SwitchGroupType::Invalid);
+          auto stateId = static_cast<u32>(SwitchState::GenericSwitch::Invalid);
+          JsonTools::GetValueOptional(*switchIt, kKey_switchGroupId, groupId);
+          JsonTools::GetValueOptional(*switchIt, kKey_stateId, stateId);
+          if (((u32)SwitchState::SwitchGroupType::Invalid == groupId) ||
+              ((u32)SwitchState::GenericSwitch::Invalid == stateId)) {
+            PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.InvalidSwitchState",
+                              "'%s' @ %i ms : Has an invalid switchGroupId (%i) or stateId (%i)",
+                              animNameDebug.c_str(), _triggerTime_ms, groupId, stateId);
+            // Move to next switch
+            continue;
+          }
+          Result addResult = AddAudioRef(AudioRef(AudioSwitchRef(static_cast<SwitchState::SwitchGroupType>(groupId),
+                                                                 static_cast<SwitchState::GenericSwitch>(stateId))));
+          if(addResult != RESULT_OK) {
+            return addResult;
+          }
+        }
+      } // Switches
+      
+      const auto& parameters = jsonRoot[kKey_parameters];
+      if (parameters.isArray()) {
+        JSON_KEY(parameterId);
+        JSON_KEY(value);
+        JSON_KEY(time_ms);
+        JSON_KEY(curve);
+        for (auto parameterIt = parameters.begin(); parameterIt != parameters.end(); ++parameterIt) {
+          auto parameterId = static_cast<u32>(GameParameter::ParameterType::Invalid);
+          float value = 0.0f;
+          u32   time_ms = 0;
+          u8    curve = static_cast<u8>(AudioEngine::Multiplexer::CurveType::Linear);
+          JsonTools::GetValueOptional(*parameterIt, kKey_parameterId, parameterId);
+          if ((u32)GameParameter::ParameterType::Invalid == parameterId) {
+            PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.InvalidParameter",
+                              "'%s' @ %i ms : Has an invalid parameterId", animNameDebug.c_str(), _triggerTime_ms);
+            // Move to next parameter
+            continue;
+          }
+          JsonTools::GetValueOptional(*parameterIt, kKey_value, value);
+          JsonTools::GetValueOptional(*parameterIt, kKey_time_ms, time_ms);
+          JsonTools::GetValueOptional(*parameterIt, kKey_curve, curve);
+          Result addResult = AddAudioRef(AudioRef(AudioParameterRef(static_cast<GameParameter::ParameterType>(parameterId),
+                                                                    value,
+                                                                    time_ms,
+                                                                    static_cast<AudioEngine::Multiplexer::CurveType>(curve))));
+          if(addResult != RESULT_OK) {
+            return addResult;
+          }
+        }
+      } // Parameters
+      
+      // Events need to be added last to the AudioRef list, they need to be posted last when performing a key frame
+      const auto& eventGroups = jsonRoot[kKey_eventGroups];
+      if (eventGroups.isArray()) {
+        JSON_KEY(eventIds);
+        JSON_KEY(volumes);
+        JSON_KEY(probabilities);
+        
+        for (auto eventGroupIt = eventGroups.begin(); eventGroupIt != eventGroups.end(); ++eventGroupIt) {
+          const auto& eventIds = (*eventGroupIt)[kKey_eventIds];
+          const auto& volumes = (*eventGroupIt)[kKey_volumes];
+          const auto& probabilities = (*eventGroupIt)[kKey_probabilities];
+          if ((eventIds.size() != volumes.size()) || (eventIds.size() != probabilities.size())) {
+            PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.InvlaidEventGroup",
+                              "'%s' @ %i ms : EventIds, Volumes & Probabilities don't have the same count",
+                              animNameDebug.c_str(), _triggerTime_ms);
+            // Move to next Event Group
+            continue;
+          }
+          // Check sum of all probabilities to ensure it is <= 1.0
+          f32 totalProb = 0.0f;
+          for (auto probIt = probabilities.begin(); probIt != probabilities.end(); ++probIt) {
+            totalProb += probIt->asFloat();
+            if (totalProb > 1.0f) {
+              PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.TotalProbabilitiesTooHigh",
+                                "'%s' @ %i ms : The total probability of all audio events combined exceeds 1.0",
+                                animNameDebug.c_str(), _triggerTime_ms);
+              return RESULT_FAIL;
+            }
+          }
+          
+          // Add events to group
+          AudioEventGroupRef eventGroup;
+          GameEvent::GenericEvent eventId;
+          for (int idx = 0; idx < eventIds.size(); ++idx) {
+            eventId = static_cast<GameEvent::GenericEvent>( eventIds[idx].asUInt() );
+            if (GameEvent::GenericEvent::Invalid == eventId) {
+              PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.InvalidGameEvent",
+                                "'%s' @ %i ms : Has an invalid audio event", animNameDebug.c_str(), _triggerTime_ms);
+              // Move on to next event
+              continue;
+            }
+            eventGroup.AddEvent(eventId, volumes[idx].asFloat(), probabilities[idx].asFloat());
+          }
+          
+          if (eventGroup.Events.empty()) {
+            PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.InvalidGameEventGroup",
+                              "'%s' @ %i ms : Has an empty event group", animNameDebug.c_str(), _triggerTime_ms);
+            return  RESULT_FAIL;
+          }
+          Result addResult = AddAudioRef(AudioRef(std::move(eventGroup)));
+          if (addResult != RESULT_OK) {
+            return addResult;
+          }
+        }
+      } // EventGroups
+      return RESULT_OK;
+    }
+    
+    Result RobotAudioKeyFrame::SetMembersFromDeprecatedJson(const Json::Value &jsonRoot,
+                                                            const std::string& animNameDebug)
+    {
+      using namespace AudioKeyFrameType;
+      using namespace AudioMetaData;
+      
+      JSON_KEY(audioEventId);
+      JSON_KEY(volume);
+      JSON_KEY(probability);
+      
+      // Get volume settings
+      f32 volume = 1.0f;
+      JsonTools::GetValueOptional(jsonRoot, kKey_volume, volume);
+      f32 probability = 1.0f;
+      
+      const Json::Value& eventIds = jsonRoot[kKey_audioEventId];
+      if (eventIds.isArray()) {
+        std::vector<f32> probabilities;
+        const bool probabilitiesSet = JsonTools::GetVectorOptional(jsonRoot, kKey_probability, probabilities);
+        if (!probabilitiesSet) {
+          const bool probabilitySet = JsonTools::GetValueOptional(jsonRoot, kKey_probability, probability);
+          if (probabilitySet) {
+            probabilities.push_back(probability);
+          }
+        }
+        
+        if (probabilities.empty() && !eventIds.empty()) {
+          // If no probability is set, use equal probability for all audio events
+          const f32 eachProbability = 1.0f / eventIds.size();
+          for (int idx = 0; idx < eventIds.size(); idx++) {
+            probabilities.push_back(eachProbability);
+          }
+        }
+        else if (probabilities.size() != eventIds.size()) {
+          // We must have the same number of probability values as audio events
+          PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromDeprecatedJson.UnknownProbabilities",
+                            "%s: The number of audio event IDs (%u) does not match number of probabilities (%zu)",
+                            animNameDebug.c_str(), eventIds.size(), probabilities.size());
+          return RESULT_FAIL;
+        }
+        
+        // Check sum of all probabilities to ensure it is <= 1.0
+        f32 totalProb = 0.0f;
+        for (int probIdx = 0; probIdx < probabilities.size(); probIdx++) {
+          totalProb += probabilities[probIdx];
+          if(totalProb > 1.0) {
+            PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromDeprecatedJson.TotalProbabilitiesTooHigh",
+                              "%s: The total probability of all audio events combined exceeds 1.0",
+                              animNameDebug.c_str());
+            return RESULT_FAIL;
+          }
+        }
+        
+        AudioEventGroupRef eventGroup;
+        for (int idx = 0; idx < eventIds.size(); ++idx) {
+          probability = probabilities[idx];
+          const auto eventId = static_cast<GameEvent::GenericEvent>( eventIds[idx].asUInt() );
+          if (GameEvent::GenericEvent::Invalid == eventId) {
+            PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromDeprecatedJson.InvalidGameEvent",
+                              "'%s' @ %i ms : Has an invalid audio event", animNameDebug.c_str(), _triggerTime_ms);
+            // Move on to next event
+            continue;
+          }
+          eventGroup.AddEvent(eventId, volume, probability);
+        }
+        Result addResult = AddAudioRef( AudioRef( std::move(eventGroup) ) );
+        if (addResult != RESULT_OK) {
+          return addResult;
+        }
+      }
+      else {
+        JsonTools::GetValueOptional(jsonRoot, kKey_probability, probability);
+        const auto eventId = static_cast<GameEvent::GenericEvent>( eventIds.asUInt() );
+        if (GameEvent::GenericEvent::Invalid == eventId) {
+          PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromDeprecatedJson.InvalidGameEvent",
+                            "'%s' @ %i ms : Has an invalid audio event", animNameDebug.c_str(), _triggerTime_ms);
+          return RESULT_FAIL;
+        }
+        AudioEventGroupRef eventGroup;
+        eventGroup.AddEvent(eventId, volume, probability);
+        Result addResult = AddAudioRef( AudioRef( std::move(eventGroup) ) );
         if(addResult != RESULT_OK) {
           return addResult;
         }
       }
-
+      return RESULT_OK;
+    }
+    
+    
+    Result RobotAudioKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe,
+                                                    const std::string& animNameDebug)
+    {
+      using namespace AudioEngine;
+      using namespace AudioKeyFrameType;
+      using namespace AudioMetaData;
+      
+      const auto* states = audioKeyframe->states();
+      if (nullptr != states) {
+        for (const auto& aState : *states) {
+          const auto groupId = static_cast<GameState::StateGroupType>(aState->stateGroupId());
+          const auto stateId = static_cast<GameState::GenericState>(aState->stateId());
+          if ((GameState::StateGroupType::Invalid == groupId) || (GameState::GenericState::Invalid == stateId)) {
+            PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromFlatBuf.InvalidGameState",
+                              "'%s' @ %i ms : Has an invalid stateGroupId (%i) or stateId (%i)",
+                              animNameDebug.c_str(), _triggerTime_ms, groupId, stateId);
+            // Move to next State
+            continue;
+          }
+          Result addResult = AddAudioRef(AudioRef(AudioStateRef(groupId, stateId)));
+          if(addResult != RESULT_OK) {
+            return addResult;
+          }
+        }
+      }
+      
+      const auto* switches = audioKeyframe->switches();
+      if (nullptr != switches) {
+        for (const auto& aSwitch : *switches) {
+          const auto groupId = static_cast<SwitchState::SwitchGroupType>(aSwitch->switchGroupId());
+          const auto stateId = static_cast<SwitchState::GenericSwitch>(aSwitch->stateId());
+          if ((SwitchState::SwitchGroupType::Invalid == groupId) || (SwitchState::GenericSwitch::Invalid == stateId)) {
+            PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromFlatBuf.InvalidSwitchState",
+                              "'%s' @ %i ms : Has an invalid switchGroupId (%i) or stateId (%i)",
+                              animNameDebug.c_str(), _triggerTime_ms, groupId, stateId);
+            // Move to next Switch
+            continue;
+          }
+          Result addResult = AddAudioRef(AudioRef(AudioSwitchRef(groupId, stateId)));
+          if(addResult != RESULT_OK) {
+            return addResult;
+          }
+        }
+      }
+      
+      const auto* parameters = audioKeyframe->parameters();
+      if (nullptr != parameters) {
+        for (const auto& aParameter : *parameters) {
+          const auto parameterId = static_cast<GameParameter::ParameterType>(aParameter->parameterId());
+          if (GameParameter::ParameterType::Invalid == parameterId) {
+            PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromFlatBuf.InvalidParameter",
+                              "'%s' @ %i ms : Has an invalid parameterId", animNameDebug.c_str(), _triggerTime_ms);
+            // Move to next Parameter
+            continue;
+          }
+          auto parameterRef = AudioParameterRef(parameterId,
+                                                aParameter->value(),
+                                                aParameter->time_ms(),
+                                                static_cast<Multiplexer::CurveType>(aParameter->curve()));
+          Result addResult = AddAudioRef(AudioRef(std::move(parameterRef)));
+          if(addResult != RESULT_OK) {
+            return addResult;
+          }
+        }
+      }
+      // Events need to be added last to the AudioRef list, they need to be posted last when performing a key frame
+      const auto* eventGroups = audioKeyframe->eventGroups();
+      if (nullptr != eventGroups) {
+        // Loop through groups
+        for (const auto& aGroup : *eventGroups) {
+          // Create event group
+          AudioEventGroupRef anEventGroup;
+          const auto* eventIds      = aGroup->eventIds();
+          const auto* volumes       = aGroup->volumes();
+          const auto* probabilities = aGroup->probabilities();
+          
+          if ((eventIds->size() != volumes->size()) || (eventIds->size() != probabilities->size())) {
+            PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromFlatBuf.InvlaidEventGroup",
+                              "'%s' @ %i ms : EventIds, Volumes & Probabilities don't have the same count",
+                              animNameDebug.c_str(), _triggerTime_ms);
+            // Move to next Event Group
+            continue;
+          }
+          
+          // Loop through events in group
+          for (uint idx = 0; idx < eventIds->size();  ++idx) {
+            const auto& anEventId = static_cast<GameEvent::GenericEvent>(eventIds->Get(idx));
+            if (GameEvent::GenericEvent::Invalid == anEventId) {
+              PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromFlatBuf.InvalidGameEvent",
+                                "'%s' @ %i ms : Has an invalid audio event", animNameDebug.c_str(), _triggerTime_ms);
+              // Move on to next Event
+              continue;
+            }
+            anEventGroup.AddEvent(anEventId, volumes->Get(idx), probabilities->Get(idx));
+          }
+          
+          if (anEventGroup.Events.empty()) {
+            PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromFlatBuf.InvalidGameEventGroup",
+                              "'%s' @ %i ms : Has an empty event group", animNameDebug.c_str(), _triggerTime_ms);
+            return  RESULT_FAIL;
+          }
+          Result addResult = AddAudioRef(AudioRef(std::move(anEventGroup)));
+          if (addResult != RESULT_OK) {
+            return addResult;
+          }
+        }
+      }
       return RESULT_OK;
     }
     
@@ -958,7 +1137,10 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     #if CAN_STREAM
       RobotInterface::EngineToRobot* RecordHeadingKeyFrame::GetStreamMessage()
       {
-        return new RobotInterface::EngineToRobot(_streamMsg);
+        if (GetCurrentTime() == 0) {
+          return new RobotInterface::EngineToRobot(_streamMsg);
+        }
+        return nullptr;
       }
     #endif
     
@@ -1076,7 +1258,10 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     #if CAN_STREAM
       RobotInterface::EngineToRobot* TurnToRecordedHeadingKeyFrame::GetStreamMessage()
       {
-        return new RobotInterface::EngineToRobot(_streamMsg);
+        if (GetCurrentTime() == 0) {
+          return new RobotInterface::EngineToRobot(_streamMsg);
+        }
+        return nullptr;
       }
     #endif
     

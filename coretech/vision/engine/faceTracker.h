@@ -35,7 +35,9 @@ namespace Vision {
   {
   public:
     
-    FaceTracker(const std::string& modelPath, const Json::Value& config);
+    FaceTracker(const Camera& camera,
+                const std::string& modelPath,
+                const Json::Value& config);
     
     ~FaceTracker();
     
@@ -73,6 +75,8 @@ namespace Vision {
     void   EraseAllFaces();
     Result RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,
                       Vision::RobotRenamedEnrolledFace& renamedFace);
+    
+    std::vector<Vision::LoadedKnownFace> GetEnrolledNames() const;
     
     Result SaveAlbum(const std::string& albumName);
     Result LoadAlbum(const std::string& albumName, std::list<LoadedKnownFace>& loadedFaces);

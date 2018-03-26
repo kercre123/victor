@@ -35,6 +35,7 @@ public:
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     modifiers.behaviorAlwaysDelegates = false;
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
   
 protected:
 
@@ -58,7 +59,6 @@ protected:
   bool RobotConfigMatchesExpected(BExtI& bexi) const;
 
 private:
-
   enum DataAnnotation : int{
     NoTouch,
     SustainedContact,
@@ -73,23 +73,33 @@ private:
     MoveChrgOn
   };
 
+  struct InstanceConfig {
+    InstanceConfig();
+
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    // the current type of touch to collect for
+    DataAnnotation        annotation;
+    
+    std::vector<uint16_t> touchValues;
+    // the condition under which to collection the requisite touch samples
+    // note: this reflects the motor state (and checks for valid charger)
+    CollectionMode        collectMode;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
+
   std::pair<std::string,std::string> ToString(DataAnnotation da) const;
   std::pair<std::string,std::string> ToString(CollectionMode cm) const;
   void OnNextDataset(BehaviorExternalInterface& bexi,
                      CollectionMode cm, DataAnnotation da) const;
-
-  // the current type of touch to collect for
-  DataAnnotation _annotation;
-  
-  // the condition under which to collection the requisite touch samples
-  // note: this reflects the motor state (and checks for valid charger)
-  CollectionMode _collectMode;
-
-  std::vector<uint16_t> _touchValues;
-
 };
 
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorDevTouchDataCollection_H__

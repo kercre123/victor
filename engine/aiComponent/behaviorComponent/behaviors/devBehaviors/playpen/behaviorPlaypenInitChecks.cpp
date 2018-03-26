@@ -13,6 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenInitChecks.h"
 
+#include "engine/components/batteryComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/nvStorageComponent.h"
@@ -55,14 +56,15 @@ Result BehaviorPlaypenInitChecks::OnBehaviorActivatedInternal()
   }
   
   // Battery voltage should be relatively high as we are on the charger
-  if(robot.GetBatteryVoltage() < PlaypenConfig::kMinBatteryVoltage)
+  const float batteryVolts = robot.GetBatteryComponent().GetBatteryVoltsRaw();
+  if(batteryVolts < PlaypenConfig::kMinBatteryVoltage)
   {
-    PRINT_NAMED_WARNING("BehaviorPlaypenInitChecks.OnActivated.BatteryTooLow", "%fv", robot.GetBatteryVoltage());
+    PRINT_NAMED_WARNING("BehaviorPlaypenInitChecks.OnActivated.BatteryTooLow", "%fv", batteryVolts);
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::BATTERY_TOO_LOW, RESULT_FAIL);
   }
   
   // Make sure we are considered on the charger and charging
-  if(!(robot.IsOnCharger() && robot.IsCharging()))
+  if(!(robot.GetBatteryComponent().IsOnChargerContacts() && robot.GetBatteryComponent().IsCharging()))
   {
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CHARGER_UNDETECTED, RESULT_FAIL);
   }

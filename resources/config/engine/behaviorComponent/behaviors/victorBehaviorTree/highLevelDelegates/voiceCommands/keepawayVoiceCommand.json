@@ -1,0 +1,10 @@
+{
+  "behaviorID" : "KeepawayVoiceCommand",
+  "behaviorClass" : "DispatcherQueue",
+
+  "behaviors": [
+    "DriveOffCharger",
+    "Keepaway"
+  ]
+
+}

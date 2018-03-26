@@ -8,6 +8,7 @@
     {
       "behavior" : "AcknowledgeCharger",
       "cooldown_s" : 60.0,
+      "ignoreFastForward": true,
       "cooldown_random_factor" : 0.0
     },
     {

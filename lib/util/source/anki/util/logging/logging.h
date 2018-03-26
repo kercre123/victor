@@ -39,7 +39,7 @@ class ITickTimeProvider;
 class ILoggerProvider;
 class ChannelFilter;
 class IEventProvider;
-  
+
 const uint8_t DASMaxSvalLength = 128;
 
 std::string HexDump(const void *value, const size_t len, char delimiter);
@@ -54,58 +54,58 @@ extern bool _errG;
 
 // Global flag to control break-on-error behavior
 extern bool _errBreakOnError;
-  
+
 __attribute__((__used__))
 void sEventF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__((format(printf,3,4)));
-  
+
 __attribute__((__used__))
 void sEventV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args) __attribute__((format(printf,3,0)));
-  
+
 __attribute__((__used__))
 void sEvent(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
 
 __attribute__((__used__))
 void sErrorF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__((format(printf,3,4)));
-  
+
 __attribute__((__used__))
 void sErrorV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args) __attribute__((format(printf,3,0)));
-  
+
 __attribute__((__used__))
 void sError(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
 
 __attribute__((__used__))
 void sWarningF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__((format(printf,3,4)));
-  
+
 __attribute__((__used__))
 void sWarningV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args) __attribute__((format(printf,3,0)));
-  
+
 __attribute__((__used__))
 void sWarning(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
 
 __attribute__((__used__))
 void sInfoF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__((format(printf,3,4)));
-  
+
 __attribute__((__used__))
 void sChanneledInfoF(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__((format(printf,4,5)));
-  
+
 __attribute__((__used__))
 void sInfoV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args) __attribute__((format(printf,3,0)));
-  
+
 __attribute__((__used__))
 void sChanneledInfoV(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args) __attribute__((format(printf,4,0)));
-  
+
 __attribute__((__used__))
 void sInfo(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
-  
+
 __attribute__((__used__))
 void sChanneledInfo(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
 
 __attribute__((__used__))
 void sChanneledDebugF(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__((format(printf,4,5)));
-  
+
 __attribute__((__used__))
 void sChanneledDebugV(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args) __attribute__((format(printf,4,0)));
-  
+
 __attribute__((__used__))
 void sChanneledDebug(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
 
@@ -122,7 +122,7 @@ void sSetGlobal(const char* key, const char* value);
 // This calls blocks until log data has been flushed.
 //
 void sLogFlush();
- 
+
 //
 // Anki::Util::sDebugBreak()
 // Break to debugger (if possible), then return to caller.
@@ -150,7 +150,7 @@ void sDebugBreakOnError();
 // Never returns to caller.
 //
 __attribute__((noreturn)) void sAbort();
-  
+
 } // namespace Util
 } // namespace Anki
 
@@ -242,20 +242,20 @@ __attribute__((noreturn)) void sAbort();
 //
 
 // Helper used by debug/info versions below
-#define PRINT_PERIODIC_CH_HELPER(channel_func, num_calls_between_prints, channel, name, format, ...) \
-{ static u16 cnt = num_calls_between_prints;                              \
-  if (++cnt > num_calls_between_prints) {                                 \
-    ::Anki::Util::channel_func(channel, name, {}, format, ##__VA_ARGS__); \
-    cnt = 0;                                                              \
-  }                                                                       \
+#define PRINT_PERIODIC_CH_HELPER(func, period, channel, name, format, ...) \
+{ static u16 cnt = period;                                                 \
+  if (++cnt >= period) {                                                   \
+    ::Anki::Util::func(channel, name, {}, format, ##__VA_ARGS__);          \
+    cnt = 0;                                                               \
+  }                                                                        \
 }
 
 // Actually use these in your code (not the helper above)
-#define PRINT_PERIODIC_CH_INFO(num_calls_between_prints, channel, name, format, ...) \
-PRINT_PERIODIC_CH_HELPER(sChanneledInfoF, num_calls_between_prints, channel, name, format, ##__VA_ARGS__)
+#define PRINT_PERIODIC_CH_INFO(period, channel, name, format, ...) \
+PRINT_PERIODIC_CH_HELPER(sChanneledInfoF, period, channel, name, format, ##__VA_ARGS__)
 
-#define PRINT_PERIODIC_CH_DEBUG(num_calls_between_prints, channel, name, format, ...) \
-PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, name, format, ##__VA_ARGS__)
+#define PRINT_PERIODIC_CH_DEBUG(period, channel, name, format, ...) \
+PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, period, channel, name, format, ##__VA_ARGS__)
 
 // Streams
 #define PRINT_STREAM_ERROR(eventName, args) do{         \
@@ -296,10 +296,10 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
 
 
 // Anki assert definition
-#if (!defined(NDEBUG)) && !(defined(UNIT_TEST))
-#define DEBUG_ABORT __builtin_trap()
-#else
+#if defined(NDEBUG) || defined(UNIT_TEST)
 #define DEBUG_ABORT ((void)0)
+#else
+#define DEBUG_ABORT __builtin_trap()
 #endif
 
 #define ASSERT_NAMED(expr, name) do {                       \
@@ -427,4 +427,3 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, num_calls_between_prints, channel, na
 #define LOG_CH_DEBUG(ch, name, fmt, ...) PRINT_CH_DEBUG(ch, name, fmt, ##__VA_ARGS__)
 
 #endif // __Util_Logging_Logging_H_
-

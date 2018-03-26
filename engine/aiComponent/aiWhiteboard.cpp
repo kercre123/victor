@@ -97,7 +97,8 @@ size_t GetObjectFailureListMaxSize(AIWhiteboard::ObjectActionFailure action)
 // AIWhiteboard
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AIWhiteboard::AIWhiteboard(Robot& robot)
-: _robot(robot)
+: IDependencyManagedComponent<AIComponentID>(this, AIComponentID::Whiteboard)
+, _robot(robot)
 , _gotOffChargerAtTime_sec(-1.0f)
 , _returnedToTreadsAtTime_sec(-1.0f)
 , _edgeInfoTime_sec(-1.0f)
@@ -112,8 +113,9 @@ AIWhiteboard::~AIWhiteboard()
 
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::Init()
+void AIWhiteboard::InitDependent(Cozmo::Robot* robot, const AICompMap& dependentComps)
 {
   // register to possible object events
   if ( _robot.HasExternalInterface() )
@@ -129,15 +131,9 @@ void AIWhiteboard::Init()
   }
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::Update()
-{
-
-  Victor_Update();
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AIWhiteboard::Victor_Update()
+void AIWhiteboard::UpdateDependent(const AICompMap& dependentComps)
 {
   // TODO:(bn) cache this filter
 

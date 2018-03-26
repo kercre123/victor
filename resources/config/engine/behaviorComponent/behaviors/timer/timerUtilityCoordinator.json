@@ -2,6 +2,8 @@
   "behaviorClass" : "TimerUtilityCoordinator",
   "behaviorID"    : "TimerUtilityCoordinator",
 
+  "minValidTimer_s" : 1,
+  "maxValidTimer_s" : 359999, // 99 hours, 59 minutes and 59 seconds
   "anticConfig" : [
     {
       "recurIntervalMin_s" : 180,

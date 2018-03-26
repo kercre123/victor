@@ -1,0 +1,17 @@
+{
+  "behaviorClass" : "ReactToTouchPetting",
+  "behaviorID"    : "ReactToTouchPetting",
+  "animGroupGetin" : "ReactToTouchInitial",
+  "animGroupNames" : ["PettingLevel1", "PettingLevel2", "PettingLevel3","PettingLevel4","PettingBlissLoop"],
+  "animGroupNamesGetout" : [ "PettingLevel1Getout", "PettingLevel2Getout", "PettingLevel3Getout", "PettingLevel4Getout","PettingBlissGetout"],
+  "timeTilTouchCheck" : 5.0,
+  "timeTilBlissGetout" : 5.0,
+  "timeTilNonBlissGetout" : 1.0,
+  "numPetsToAdvanceBliss" : 2,
+  "wantsToBeActivatedConditions": [
+    {
+      "conditionType" : "RobotTouched",
+      "minTouchTime" : 0.1
+    }
+  ]
+}

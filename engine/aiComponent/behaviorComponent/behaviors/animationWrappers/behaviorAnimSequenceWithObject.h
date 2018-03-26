@@ -24,27 +24,33 @@ class BehaviorAnimSequenceWithObject : public BehaviorAnimSequence
 {
 using BaseClass = BehaviorAnimSequence;
 protected:
-  
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorAnimSequenceWithObject(const Json::Value& config);
-  
-public:
-  
-  virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+
+public:
+  virtual bool WantsToBeActivatedBehavior() const override;
   const ObservableObject* GetLocatedObject() const;
   
 private:
-  
-  // The ObjectType to look for
-  ObjectType _objectType = ObjectType::UnknownObject;
-  
+  struct InstanceConfig {
+    InstanceConfig();
+    // The ObjectType to look for
+    ObjectType objectType;
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
 };
 
-
-}
-}
+} // namespace Cozmo
+} // namespace Anki
 
 #endif // __Engine_Behaviors_BehaviorAnimSequenceWithObject_H__

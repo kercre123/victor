@@ -26,12 +26,12 @@ public:
 private:
   s32 UpdateSimInternal() override;
 
-  void HandleActiveObjectTapped(const ObjectTapped& msg) override;
-  void HandleActiveObjectStoppedMoving(const ObjectStoppedMoving& msg) override;
-  void HandleActiveObjectMoved(const ObjectMoved& msg) override;
-  void HandleActiveObjectUpAxisChanged(const ObjectUpAxisChanged& msg) override;
-  void HandleActiveObjectConnectionState(const ObjectConnectionState& msg) override;
-  void HandleActiveObjectAccel(const ObjectAccel& msg) override;
+  void HandleActiveObjectTapped(const ExternalInterface::ObjectTapped& msg) override;
+  void HandleActiveObjectStoppedMoving(const ExternalInterface::ObjectStoppedMoving& msg) override;
+  void HandleActiveObjectMoved(const ExternalInterface::ObjectMoved& msg) override;
+  void HandleActiveObjectUpAxisChanged(const ExternalInterface::ObjectUpAxisChanged& msg) override;
+  void HandleActiveObjectConnectionState(const ExternalInterface::ObjectConnectionState& msg) override;
+  void HandleActiveObjectAccel(const ExternalInterface::ObjectAccel& msg) override;
 
   TestState _testState = TestState::Init;
   const Pose3d _cubePose1 = {0, Vec3f(0.f, 0.f, 1.f), Vec3f(200.f, 50.f, 22.1f)};
@@ -135,7 +135,7 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
         // Make sure we're getting ObjectAccel messages when we request them:
         CST_ASSERT(_numObjectAccelMsgs == 0, "We've received ObjectAccel messages, but we shouldn't have yet!");
         
-        SendStreamObjectAccel(_objId, true);
+        //SendStreamObjectAccel(_objId, true);
         SET_TEST_STATE(CheckForObjectAccelMessage);
       }
       break;
@@ -160,27 +160,27 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
   return _result;
 }
 
-void CST_MotionMessagesFromBlocks::HandleActiveObjectTapped(const ObjectTapped& msg)
+void CST_MotionMessagesFromBlocks::HandleActiveObjectTapped(const ExternalInterface::ObjectTapped& msg)
 {
   _wasTapped = true;
 }
 
-void CST_MotionMessagesFromBlocks::HandleActiveObjectStoppedMoving(const ObjectStoppedMoving& msg)
+void CST_MotionMessagesFromBlocks::HandleActiveObjectStoppedMoving(const ExternalInterface::ObjectStoppedMoving& msg)
 {
   _wasStopped = true;
 }
 
-void CST_MotionMessagesFromBlocks::HandleActiveObjectMoved(const ObjectMoved& msg)
+void CST_MotionMessagesFromBlocks::HandleActiveObjectMoved(const ExternalInterface::ObjectMoved& msg)
 {
   _wasMoved = true;
 }
   
-void CST_MotionMessagesFromBlocks::HandleActiveObjectUpAxisChanged(const ObjectUpAxisChanged& msg)
+void CST_MotionMessagesFromBlocks::HandleActiveObjectUpAxisChanged(const ExternalInterface::ObjectUpAxisChanged& msg)
 {
   _lastReportedUpAxis = msg.upAxis;
 }
   
-void CST_MotionMessagesFromBlocks::HandleActiveObjectConnectionState(const ObjectConnectionState& msg)
+void CST_MotionMessagesFromBlocks::HandleActiveObjectConnectionState(const ExternalInterface::ObjectConnectionState& msg)
 {
   if (msg.connected) {
     ++_numObjectsConnected;
@@ -190,7 +190,7 @@ void CST_MotionMessagesFromBlocks::HandleActiveObjectConnectionState(const Objec
   }
 }
 
-void CST_MotionMessagesFromBlocks::HandleActiveObjectAccel(const ObjectAccel& msg)
+void CST_MotionMessagesFromBlocks::HandleActiveObjectAccel(const ExternalInterface::ObjectAccel& msg)
 {
   ++_numObjectAccelMsgs;
 }

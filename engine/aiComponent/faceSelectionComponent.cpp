@@ -110,7 +110,7 @@ float FaceSelectionComponent::CalculateHeadAngleCost(const Vision::TrackedFace* 
   }
 
   Radians absHeadTurnAngle = TurnTowardsPoseAction::GetAbsoluteHeadAngleToLookAtPose(poseWrtRobot.GetTranslation());
-  Radians relHeadTurnAngle = absHeadTurnAngle - _robot.GetHeadAngle();
+  Radians relHeadTurnAngle = absHeadTurnAngle - _robot.GetComponent<FullRobotPose>().GetHeadAngle();
   return relHeadTurnAngle.getAbsoluteVal().ToFloat();
 }
 
@@ -135,7 +135,7 @@ float FaceSelectionComponent::CalculateMicDirectionCost(const Vision::TrackedFac
   // Recent direction is provided in terms of an index 0 - 11 coresponding to the face of a clock
   // these calculations assume that we've done the work to normalize recent direction to already
   // be relative to robot
-  MicDirectionHistory::DirectionIndex dirIdx = _micDirectionHistory.GetRecentDirection();
+  MicDirectionIndex dirIdx = _micDirectionHistory.GetRecentDirection();
   // Only care about relative turn in either direction
   dirIdx = dirIdx < 6 ? dirIdx : dirIdx - 6;
   const float radiansPerIdx = (2.0f/12.0f);

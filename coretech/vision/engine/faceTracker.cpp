@@ -43,8 +43,10 @@ FACE_TRACKER_PROVIDER == FACE_TRACKER_OPENCV
 namespace Anki {
 namespace Vision {
   
-  FaceTracker::FaceTracker(const std::string& modelPath, const Json::Value& config)
-  : _pImpl(new Impl(modelPath, config))
+  FaceTracker::FaceTracker(const Camera&        camera,
+                           const std::string&   modelPath,
+                           const Json::Value&   config)
+  : _pImpl(new Impl(camera, modelPath, config))
   {
     
   }
@@ -94,6 +96,11 @@ namespace Vision {
   void FaceTracker::EraseAllFaces()
   {
     return _pImpl->EraseAllFaces();
+  }
+  
+  std::vector<Vision::LoadedKnownFace> FaceTracker::GetEnrolledNames() const
+  {
+    return _pImpl->GetEnrolledNames();
   }
   
   Result FaceTracker::RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,

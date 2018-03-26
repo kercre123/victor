@@ -42,6 +42,7 @@ protected:
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     modifiers.behaviorAlwaysDelegates = false;
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
@@ -51,17 +52,23 @@ protected:
   virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
 
 private:
-  static constexpr float kTopLeftCornerMagicNumber = 15.f;
-  struct DynamicVariables{
-    // autolayout and image variables
-    Vision::Image image = Vision::Image(FACE_DISPLAY_HEIGHT,FACE_DISPLAY_WIDTH, NamedColors::BLACK);
-    Point2f autoLayoutPoint = Point2f(0, kTopLeftCornerMagicNumber);
+  struct InstanceConfig {
+    InstanceConfig();
+  };
 
+
+  struct DynamicVariables{
+    DynamicVariables();
+    // autolayout and image variables
+    Vision::Image image;
+    Point2f       autoLayoutPoint;
     // for tracking peripheral motion 
-    bool motionIsValid = false;
+    bool          motionIsValid;
+    
     ExternalInterface::RobotObservedMotion motionMessage;
   };
 
+  InstanceConfig   _iConfig;
   DynamicVariables _dVars;
 
   // Utility function which will automatically layout all text passed into it 

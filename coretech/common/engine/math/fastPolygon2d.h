@@ -14,8 +14,6 @@
 #ifndef __COMMON_BASESTATION_MATH_FASTPOLYGON2D_H__
 #define __COMMON_BASESTATION_MATH_FASTPOLYGON2D_H__
 
-#include "coretech/common/engine/math/polygon.h"
-#include "coretech/common/engine/math/point.h"
 #include "coretech/common/engine/math/lineSegment2d.h"
 #include "coretech/common/engine/math/convexPolygon2d.h"
 
@@ -40,7 +38,9 @@
 
 namespace Anki {
 
-class FastPolygon
+// TODO: ConvexPolygon should inherit from ConvexPointSet, but that requires moving Contains
+//       and InHalfplane checks to ConvexPolygon class.
+class FastPolygon : public ConvexPolygon, public ConvexPointSet<2, f32>
 {
 public:
 
@@ -51,16 +51,13 @@ public:
   bool Contains(float x, float y) const;
 
   // convenience function
-  bool Contains(const Point2f& pt) const;
-
-  const Poly2f& GetSimplePolygon() const {return _poly.GetSimplePolygon();}
+  virtual bool Contains(const Point2f& pt) const override;
   
-  const Point2f& operator[] (size_t idx) const {return _poly[idx];}
+  // returns true if the convex polygon is fully contained by the halfplane H
+  virtual bool InHalfPlane(const Halfplane2f& H) const override;
   
   const std::vector<LineSegment>& GetEdgeSegments() const { return _edgeSegments; }
   
-  size_t Size() const {return _poly.size();}
-
   // getters for testing / plotting
 
   // Returns the center point of the circles used for quick checks
@@ -77,10 +74,10 @@ public:
   // be faster
   void SortEdgeVectors();
 
-  float GetMinX() const {return _minX;}
-  float GetMaxX() const {return _maxX;}
-  float GetMinY() const {return _minY;}
-  float GetMaxY() const {return _maxY;}
+  virtual float GetMinX() const override {return _minX;}
+  virtual float GetMaxX() const override {return _maxX;}
+  virtual float GetMinY() const override {return _minY;}
+  virtual float GetMaxY() const override {return _maxY;}
 
   static void ResetCounts();
   static int _numChecks;
@@ -93,9 +90,6 @@ public:
 #endif
 
 private:
-  // ConvexPolygon constructor enforces CW direction and convexity
-  const ConvexPolygon _poly;
-
   // outermost bounding-box of poly
   float _minX;
   float _maxX;
@@ -127,12 +121,6 @@ private:
   std::vector< std::pair< Vec2f, size_t> > _perpendicularEdgeVectors;
   std::vector< LineSegment > _edgeSegments;
   
-
-
-  // helper functions
-
-  void ComputeCenter();
-
   void ComputeCircles();
 
   // create (unsorted) edge vectors

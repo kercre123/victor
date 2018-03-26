@@ -36,36 +36,80 @@ const char* kMaxDrivingDistKey    = "maxDrivingDist_mm";
 const char* kMaxObservedAgeSecKey = "maxLastObservedAge_sec";
 }
   
-  
-BehaviorFindHome::BehaviorFindHome(const Json::Value& config)
-  : ICozmoBehavior(config)
-  , _homeFilter(std::make_unique<BlockWorldFilter>())
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorFindHome::InstanceConfig::InstanceConfig()
 {
-  LoadConfig(config["params"]);
+  searchAnimTrigger = AnimationTrigger::Count;
+  numSearches       = 0;
+  minDrivingDist_mm = 0.f;
+  maxDrivingDist_mm = 0.f;
+  maxObservedAge_ms = 0;
+  homeFilter        = std::make_unique<BlockWorldFilter>();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
+{
+  searchAnimTrigger  = JsonTools::ParseAnimationTrigger(config, kSearchAnimKey, debugName);
+  numSearches        = JsonTools::ParseUint8(config, kNumSearchesKey, debugName);
+  minDrivingDist_mm  = JsonTools::ParseFloat(config, kMinDrivingDistKey, debugName);
+  maxDrivingDist_mm  = JsonTools::ParseFloat(config, kMaxDrivingDistKey, debugName);
+  maxObservedAge_ms  = Util::numeric_cast<TimeStamp_t>(1000.f * JsonTools::ParseFloat(config, kMaxObservedAgeSecKey, debugName));
+  homeFilter         = std::make_unique<BlockWorldFilter>();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorFindHome::DynamicVariables::DynamicVariables()
+{
+  numSearchesCompleted = 0;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorFindHome::BehaviorFindHome(const Json::Value& config)
+: ICozmoBehavior(config)
+{
+  const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
+  _iConfig = InstanceConfig(config, debugName);
   
   // Set up block world filter for finding Home object
-  _homeFilter->AddAllowedFamily(ObjectFamily::Charger);
-  _homeFilter->AddAllowedType(ObjectType::Charger_Basic);
+  _iConfig.homeFilter->AddAllowedFamily(ObjectFamily::Charger);
+  _iConfig.homeFilter->AddAllowedType(ObjectType::Charger_Basic);
 }
- 
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kSearchAnimKey,
+    kNumSearchesKey,
+    kMinDrivingDistKey,
+    kMaxDrivingDistKey,
+    kMaxObservedAgeSecKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+} 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorFindHome::WantsToBeActivatedBehavior() const
 {
   // Cannot be activated if we already know where a charger is and have seen it recently enough
   std::vector<const ObservableObject*> locatedHomes;
-  GetBEI().GetBlockWorld().FindLocatedMatchingObjects(*_homeFilter, locatedHomes);
+  GetBEI().GetBlockWorld().FindLocatedMatchingObjects(*_iConfig.homeFilter, locatedHomes);
   
   const bool hasAHome = !locatedHomes.empty();
   
   // If a max allowable observation age was given as a parameter,
   // then check if we have seen a charger recently
   bool recentlyObserved = true;
-  if (_params.maxObservedAge_ms != 0) {
+  if (_iConfig.maxObservedAge_ms != 0) {
     recentlyObserved = std::any_of(locatedHomes.begin(),
                                    locatedHomes.end(),
                                    [this](const ObservableObject* obj) {
                                      const auto nowTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-                                     return nowTimestamp < obj->GetLastObservedTime() + _params.maxObservedAge_ms;
+                                     return nowTimestamp < obj->GetLastObservedTime() + _iConfig.maxObservedAge_ms;
                                    });
   }
   
@@ -74,28 +118,31 @@ bool BehaviorFindHome::WantsToBeActivatedBehavior() const
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::OnBehaviorActivated()
 {
-  _numSearchesCompleted = 0;
+  _dVars.numSearchesCompleted = 0;
   
   TransitionToSearchAnim();
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::TransitionToSearchAnim()
 {
-  DelegateIfInControl(new TriggerAnimationAction(_params.searchAnimTrigger),
+  DelegateIfInControl(new TriggerAnimationAction(_iConfig.searchAnimTrigger),
                       [this]() {
-                        ++_numSearchesCompleted;
+                        ++_dVars.numSearchesCompleted;
                         TransitionToRandomDrive();
                       });
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::TransitionToRandomDrive()
 {
   // Have we already completed the required number of searches?
-  if (_numSearchesCompleted >= _params.numSearches) {
+  if (_dVars.numSearchesCompleted >= _iConfig.numSearches) {
     return;
   }
   
@@ -112,12 +159,13 @@ void BehaviorFindHome::TransitionToRandomDrive()
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::GetRandomDrivingPose(Pose3d& outPose)
 {
   // TODO: use memory map! avoid obstacles!!
   
   const float turnAngle_rad = GetRNG().RandDblInRange(-M_PI, M_PI);
-  const float distance_mm = GetRNG().RandDblInRange(_params.minDrivingDist_mm, _params.maxDrivingDist_mm);
+  const float distance_mm = GetRNG().RandDblInRange(_iConfig.minDrivingDist_mm, _iConfig.maxDrivingDist_mm);
   
   const auto& robotInfo = GetBEI().GetRobotInfo();
   
@@ -126,18 +174,6 @@ void BehaviorFindHome::GetRandomDrivingPose(Pose3d& outPose)
   Radians newAngle = outPose.GetRotationAngle<'Z'>() + Radians(turnAngle_rad);
   outPose.SetRotation( outPose.GetRotation() * Rotation3d{ newAngle, Z_AXIS_3D() } );
   outPose.TranslateForward(distance_mm);
-}
-
-
-void BehaviorFindHome::LoadConfig(const Json::Value& config)
-{
-  const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
-  
-  _params.searchAnimTrigger  = JsonTools::ParseAnimationTrigger(config, kSearchAnimKey, debugName);
-  _params.numSearches        = JsonTools::ParseUint8(config, kNumSearchesKey, debugName);
-  _params.minDrivingDist_mm  = JsonTools::ParseFloat(config, kMinDrivingDistKey, debugName);
-  _params.maxDrivingDist_mm  = JsonTools::ParseFloat(config, kMaxDrivingDistKey, debugName);
-  _params.maxObservedAge_ms  = Util::numeric_cast<TimeStamp_t>(1000.f * JsonTools::ParseFloat(config, kMaxObservedAgeSecKey, debugName));
 }
 
 

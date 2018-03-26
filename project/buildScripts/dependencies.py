@@ -622,8 +622,7 @@ def teamcity_package(tc_dict):
     return downloaded_builds
 
 
-# TODO: Set the following default value of 'validate_assets' back to True after VIC-1467 has been completed
-def extract_dependencies(version_file, location=EXTERNALS_DIR, validate_assets=False):
+def extract_dependencies(version_file, location=EXTERNALS_DIR, validate_assets=True):
     """
     Entry point to starting the dependency extraction.
 

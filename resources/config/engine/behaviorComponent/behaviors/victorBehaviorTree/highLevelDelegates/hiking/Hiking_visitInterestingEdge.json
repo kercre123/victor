@@ -9,47 +9,44 @@
   "behaviorClass": "VisitInterestingEdge",
   "behaviorID": "Hiking_VisitInterestingEdge",
 
-  "params": {
+  // anim for observing
+  "observeEdgeAnimTrigger"  : "HikingObserve",
+  "edgesNotFoundAnimTrigger": "HikingInterestingEdgeThought",
+  "squintStartAnimTrigger"  : "HikingSquintStart",
+  "squintLoopAnimTrigger"   : "HikingSquintLoop",
+  "squintEndAnimTrigger"    : "HikingSquintEnd",
   
-    // anim for observing
-    "observeEdgeAnimTrigger"  : "HikingObserve",
-    "edgesNotFoundAnimTrigger": "HikingInterestingEdgeThought",
-    "squintStartAnimTrigger"  : "HikingSquintStart",
-    "squintLoopAnimTrigger"   : "HikingSquintLoop",
-    "squintEndAnimTrigger"    : "HikingSquintEnd",
-    
-    // vantage point generation
-    "allowGoalsBehindOtherEdges": false,
-    
-    // note on distanceFromLookAtPointMin_mm
-    // smallest quad is 6.25 half side. For 45 degree border on a leaf quad, there's a chance that
-    // we would be colliding with our own quad within a few pixels. Mathematically we can see that it's x/2,
-    // where x is the diagonal of the square of side 6.25.
-    // pix = x/2 = sqrt(6.25*6.25+6.25*6.25)/2 = 4.42 mm approx
-    // Instead of letting code handle this, I trusted data to configure a min distance that would prevent that issue.
-    // The closest we can get then is min = ROBOT_FRONT + distanceInsideGoalToLookAt_mm + 4.42
-    // = 32.1f + (15 atm) + 4.42 = 51.52 mm. Anything beyond that is separation betwen Cozmo and the goal.
-    // note that quads lose precission, so the actual border will be a little inside the quad
-    // Update: now the look at point is the position where we start to look for accurate edges. The grounplane
-    // ROI distance is currenly 50.0f, so in order to detect the closest border we would have to be at least 50.0f
-    // away from the goal
-    "distanceFromLookAtPointMin_mm": 105.0, // 55.0,
-    "distanceFromLookAtPointMax_mm": 110.0, // 65.0,
-    "distanceInsideGoalToLookAt_mm": 15.0,
-    
-    "accuracyDistanceFromBorder_mm": 20.0,
-    "observationDistanceFromBorder_mm": 18.0,
-    "borderApproachSpeed_mmps": 50.0,
-    
-    "additionalClearanceInFront_mm": 0.0,
-    "additionalClearanceBehind_mm": 10.0, // for backpack
-    
-    "vantagePointAngleOffsetPerTry_deg": 20, // now that vantage point is far (for focus), we can have smaller variation
-    "vantagePointAngleOffsetTries": 1, // 1 try means 2 more rays. (1)noRotation, (2)+try_deg, (3)-try_deg 
-    
-    // forwardCone
-    "forwardConeHalfWidthAtRobot_mm": 80.0,
-    "forwardConeFarPlaneDistFromRobot_mm": 140.0,
-    "forwardConeHalfWidthAtFarPlane_mm": 120.0
-  }
+  // vantage point generation
+  "allowGoalsBehindOtherEdges": false,
+  
+  // note on distanceFromLookAtPointMin_mm
+  // smallest quad is 6.25 half side. For 45 degree border on a leaf quad, there's a chance that
+  // we would be colliding with our own quad within a few pixels. Mathematically we can see that it's x/2,
+  // where x is the diagonal of the square of side 6.25.
+  // pix = x/2 = sqrt(6.25*6.25+6.25*6.25)/2 = 4.42 mm approx
+  // Instead of letting code handle this, I trusted data to configure a min distance that would prevent that issue.
+  // The closest we can get then is min = ROBOT_FRONT + distanceInsideGoalToLookAt_mm + 4.42
+  // = 32.1f + (15 atm) + 4.42 = 51.52 mm. Anything beyond that is separation betwen Cozmo and the goal.
+  // note that quads lose precission, so the actual border will be a little inside the quad
+  // Update: now the look at point is the position where we start to look for accurate edges. The grounplane
+  // ROI distance is currenly 50.0f, so in order to detect the closest border we would have to be at least 50.0f
+  // away from the goal
+  "distanceFromLookAtPointMin_mm": 105.0, // 55.0,
+  "distanceFromLookAtPointMax_mm": 110.0, // 65.0,
+  "distanceInsideGoalToLookAt_mm": 15.0,
+  
+  "accuracyDistanceFromBorder_mm": 20.0,
+  "observationDistanceFromBorder_mm": 18.0,
+  "borderApproachSpeed_mmps": 50.0,
+  
+  "additionalClearanceInFront_mm": 0.0,
+  "additionalClearanceBehind_mm": 10.0, // for backpack
+  
+  "vantagePointAngleOffsetPerTry_deg": 20, // now that vantage point is far (for focus), we can have smaller variation
+  "vantagePointAngleOffsetTries": 1, // 1 try means 2 more rays. (1)noRotation, (2)+try_deg, (3)-try_deg 
+  
+  // forwardCone
+  "forwardConeHalfWidthAtRobot_mm": 80.0,
+  "forwardConeFarPlaneDistFromRobot_mm": 140.0,
+  "forwardConeHalfWidthAtFarPlane_mm": 120.0
 }

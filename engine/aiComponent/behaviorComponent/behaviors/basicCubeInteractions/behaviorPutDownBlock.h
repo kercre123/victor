@@ -38,11 +38,20 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
   virtual bool WantsToBeActivatedBehavior() const override;
 
   virtual void OnBehaviorActivated() override;
   
 private:
+  struct InstanceConfig {
+    InstanceConfig();
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+  };
+
 
   void LookDownAtBlock();
 

@@ -62,7 +62,7 @@ void BehaviorReactToRobotOnFace::FlipOverIfNeeded()
       anim = AnimationTrigger::FacePlantRollArmUp;
     }
     
-    if(GetBEI().GetAIComponent().GetWhiteboard().HasHiccups())
+    if(GetAIComp<AIWhiteboard>().HasHiccups())
     {
       anim = AnimationTrigger::HiccupRobotOnFace;
     }

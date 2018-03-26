@@ -143,9 +143,16 @@ SayTextAction::SayTextAction(const std::string& text, const SayTextIntent intent
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SayTextAction::~SayTextAction()
 {
-  // Now that we're all done, cleanup possible audio data leaks caused by action or animations being aborted. This is
-  // safe to call for success as well.
-  //_robot.GetTextToSpeechComponent().CleanupAudioEngine(_ttsOperationId);
+  // If TTS did not reach a terminal state, cancel it now
+  if (HasRobot() &&
+      (_ttsState != TextToSpeechState::Invalid) && 
+      (_ttsState != TextToSpeechState::Done)) {
+    LOG_DEBUG("SayTextAction.Destructor", "Cancel ttsID %d", _ttsID);
+    RobotInterface::TextToSpeechStop msg;
+    msg.ttsID = _ttsID;
+    const Robot & robot = GetRobot();
+    robot.SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+  }
 
   if (_playAnimationAction != nullptr) {
     _playAnimationAction->PrepForCompletion();
@@ -209,6 +216,7 @@ ActionResult SayTextAction::Init()
   // of data associated with each utterance.
 
   _ttsID = GetNextID();
+  _ttsState = TextToSpeechState::Preparing;
 
   // When does this action expire?
   _expiration_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + _timeout_sec;
@@ -378,27 +386,6 @@ ActionResult SayTextAction::CheckIfDone()
   return ActionResult::RUNNING;
 
 } // CheckIfDone()
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SayTextAction::GenerateTtsAudio()
-{
-  #ifdef notdef
-  // Be careful with putting text in the action name because it could be a player name, which is PII
-  SetName(std::string("SayText_") + Util::HidePersonallyIdentifiableInfo(_text.c_str()));
-
-  if (!IsValidVoiceStyle(_style)) {
-    PRINT_NAMED_ERROR("SayTextAction.GenerateTtsAudio.InvalidStyle", "%u is not a valid voice style", (unsigned) _style);
-    _ttsOperationId = TextToSpeechComponent::kInvalidOperationId;
-    return;
-  }
-
-  // Create speech data
-  _ttsOperationId = _robot.GetTextToSpeechComponent().CreateSpeech(_text, _style, _durationScalar);
-  if (TextToSpeechComponent::kInvalidOperationId == _ttsOperationId) {
-    PRINT_NAMED_ERROR("SayTextAction.GenerateTtsAudio.CreateSpeech", "SpeechState is None");
-  }
-  #endif
-} // GenerateTtsAudio()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper method

@@ -61,6 +61,8 @@ namespace Vision {
     Result   EraseFace(FaceID_t faceID);
     void     EraseAllFaces();
     
+    std::vector<Vision::LoadedKnownFace> GetEnrolledNames() const;
+    
     Result RenameFace(FaceID_t faceID, const std::string& oldName, const std::string& newName,
                       Vision::RobotRenamedEnrolledFace& renamedFace);
     

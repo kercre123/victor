@@ -20,6 +20,7 @@ anki_build_copy_assets(
     OUT_DSTS ASSET_OUTPUT_FILES
     OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
 )
+add_dependencies(cozmo_resources_sound cozmo_resources_assets)
 
 anki_build_copy_assets(
     TARGET cozmo_resources_config
@@ -29,6 +30,7 @@ anki_build_copy_assets(
     OUT_DSTS ASSET_OUTPUT_FILES
     OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
 )
+add_dependencies(cozmo_resources_config cozmo_resources_sound)
 
 anki_build_copy_assets(
     TARGET cozmo_resources_webserver
@@ -38,6 +40,7 @@ anki_build_copy_assets(
     OUT_DSTS ASSET_OUTPUT_FILES
     OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
 )
+add_dependencies(cozmo_resources_webserver cozmo_resources_config)
 
 anki_build_copy_assets(
     TARGET cozmo_bundle
@@ -46,6 +49,7 @@ anki_build_copy_assets(
     OUT_DSTS ASSET_OUTPUT_FILES
     OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
 )
+add_dependencies(cozmo_bundle cozmo_resources_webserver)
 
 anki_build_copy_assets(
   TARGET        cozmo_resources_tts
@@ -55,6 +59,7 @@ anki_build_copy_assets(
   OUT_DSTS ASSET_OUTPUT_FILES
   OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
 )
+add_dependencies(cozmo_resources_tts cozmo_bundle)
 
 set(ASSET_TARGETS
     cozmo_resources_assets
@@ -74,6 +79,7 @@ if (MACOSX)
         OUT_DSTS ASSET_OUTPUT_FILES
         OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
     )
+    add_dependencies(cozmo_resources_test cozmo_resources_tts)
     list(APPEND ASSET_TARGETS cozmo_resources_test)
 endif(MACOSX)
 

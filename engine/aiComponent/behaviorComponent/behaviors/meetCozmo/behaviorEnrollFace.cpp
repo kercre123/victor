@@ -118,12 +118,23 @@ BehaviorEnrollFace::BehaviorEnrollFace(const Json::Value& config)
   _tooManyFacesTimeout_sec = config.get(kTooManyFacesTimeoutKey, kEnrollFace_DefaultTooManyFacesTimeout_sec).asFloat();
   _tooManyFacesRecentTime_sec = config.get(kTooManyFacesRecentTimeKey, kEnrollFace_DefaultTooManyFacesRecentTime_sec).asFloat();
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEnrollFace::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kMaxFacesVisibleKey,
+    kTooManyFacesTimeoutKey,
+    kTooManyFacesRecentTimeKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::CheckForIntentData() const
 {
-  auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
   UserIntent* intent = uic.TakePreservedUserIntentOwnership( USER_INTENT(meet_victor) );
   if( intent != nullptr ) {
     const auto& meetVictor = intent->Get_meet_victor();
@@ -167,6 +178,11 @@ Result BehaviorEnrollFace::InitEnrollmentSettings()
     return RESULT_FAIL;
   }
   
+  if( GetBEI().GetVisionComponent().IsNameTaken( _faceName ) ) {
+    TransitionToSayingIKnowThatName();
+    return RESULT_FAIL;
+  }
+  
   // If saveID is specified and we've already seen it (so it's in FaceWorld), make
   // sure that it is the ID of a _named_ face
   if(_saveID != Vision::UnknownFaceID)
@@ -196,6 +212,13 @@ void BehaviorEnrollFace::OnBehaviorActivated()
       return;
     }
       
+    case State::SayingIKnowThatName:
+    {
+      PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.FastForwardToSayingIKnowThatName", "");
+      TransitionToSayingIKnowThatName();
+      return;
+    }
+
     case State::SavingToRobot:
     case State::SaveFailed:
     {
@@ -224,6 +247,15 @@ void BehaviorEnrollFace::OnBehaviorActivated()
                         "Disabling enrollment");
     DisableEnrollment();
     return;
+  }
+  
+  {
+    // send a status update to the app that MeetVictor has started with _faceName.
+    // todo: this will be superceded by some sort of robot status VIC-1423
+    if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
+      ExternalInterface::MeetVictorStarted status( _faceName );
+      GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(std::move(status)));
+    }
   }
   
   // Settings ok: initialize rest of behavior state
@@ -290,6 +322,7 @@ void BehaviorEnrollFace::BehaviorUpdate()
     case State::TimedOut:
     case State::Failed_WrongFace:
     case State::Failed_UnknownReason:
+    case State::Failed_NameInUse:
     case State::SaveFailed:
     case State::Cancelled:
     {
@@ -306,7 +339,9 @@ void BehaviorEnrollFace::BehaviorUpdate()
     }
       
     case State::SayingName:
+    case State::SayingIKnowThatName:
     case State::SavingToRobot:
+    case State::EmotingConfusion:
     case State::ScanningInterrupted:
     {
       // Nothing specific to do: just waiting for animation/save to complete
@@ -319,6 +354,13 @@ void BehaviorEnrollFace::BehaviorUpdate()
       if(GetBEI().GetFaceWorld().IsFaceEnrollmentComplete())
       {
         PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.CheckIfDone.ReachedEnrollmentCount", "");
+        
+        // tell the app we've finished scanning
+        // todo: replace with generic status VIC-1423
+        if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
+          ExternalInterface::MeetVictorFaceScanComplete status;
+          GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(std::move(status)));
+        }
         
         // If we complete successfully, unset the observed ID/name
         _observedUnusableID = Vision::UnknownFaceID;
@@ -379,13 +421,19 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
 
   const auto& robotInfo = GetBEI().GetRobotInfo();
   // if on the charger, we're exiting to the on charger reaction, unity is going to try to cancel but too late.
-  if( robotInfo.IsOnCharger() )
+  if( robotInfo.IsOnChargerContacts() )
   {
     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.StopInternal.CancelBecauseOnCharger","");
     SET_STATE(Cancelled);
   }
   
   ExternalInterface::FaceEnrollmentCompleted info;
+  
+  if( _state == State::EmotingConfusion ) {
+    // interrupted while in a transient animation state. Replace with the reason for being
+    // in this state
+    _state = _failedState;
+  }
   
   const bool wasSeeingMultipleFaces = _startedSeeingMultipleFaces_sec > 0.f;
   const bool observedUnusableFace = _observedUnusableID != Vision::UnknownFaceID && !_observedUnusableName.empty();
@@ -439,6 +487,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
       case State::Enrolling:
       case State::ScanningInterrupted:
       case State::SayingName:
+      case State::SayingIKnowThatName:
       case State::SavingToRobot:
       case State::SaveFailed:
         // If we're stopping in any of these states without having timed out
@@ -451,12 +500,17 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
         info.result = FaceEnrollmentResult::Success;
         break;
       
+      case State::Failed_NameInUse:
+        info.result = FaceEnrollmentResult::NameInUse;
+        break;
+        
       case State::NotStarted:
       case State::Failed_UnknownReason:
         info.result = FaceEnrollmentResult::UnknownFailure;
         break;
       
       case State::Failed_WrongFace:
+      case State::EmotingConfusion:
         // Should have been handled above
         PRINT_NAMED_ERROR("BehaviorEnrollFace.StopInternal.UnexpectedState",
                           "Failed_WrongFace state not expected here");
@@ -594,7 +648,7 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
                   if(HasTimedOut())
                   {
                     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.LookingForFace.TimedOut", "");
-                    SET_STATE(TimedOut);
+                    TransitionToFailedState(State::TimedOut,"TimedOut");
                   }
                   else
                   {
@@ -639,6 +693,13 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
                   {
                     // Just play the get-in if we aren't able to move the treads
                     action = getInAnimAction;
+                  }
+                  
+                  // tell the app we're beginning enrollment
+                  if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
+                    // todo: replace with generic status VIC-1423
+                    ExternalInterface::MeetVictorFaceScanStarted status;
+                    GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(std::move(status)));
                   }
                   
                   DelegateIfInControl(action, &BehaviorEnrollFace::TransitionToEnrolling);
@@ -778,6 +839,56 @@ void BehaviorEnrollFace::TransitionToSayingName()
     }
   });
   
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEnrollFace::TransitionToSayingIKnowThatName()
+{
+  SET_STATE(SayingIKnowThatName);
+  
+  CancelDelegates(false);
+  
+  if(_sayName) {
+    
+    
+    // todo: locale
+    const std::string sentence = "eye already know a " + _faceName;
+    SayTextAction* speakAction = new SayTextAction(sentence, SayTextIntent::Text);
+    speakAction->SetAnimationTrigger(AnimationTrigger::MeetCozmoDuplicateName);
+    
+  
+    DelegateIfInControl(speakAction, [this](ActionResult result) {
+      SET_STATE(Failed_NameInUse);
+    });
+  } else {
+    TransitionToFailedState(State::Failed_NameInUse,"Failed_NameInUse");
+  }
+  
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEnrollFace::TransitionToFailedState( State state, const std::string& stateName )
+{
+  SET_STATE(EmotingConfusion);
+  _failedState = state;
+  
+  CancelDelegates(false);
+  
+  auto* action = new TriggerLiftSafeAnimationAction(AnimationTrigger::MeetCozmoConfusion);
+  
+  DelegateIfInControl(action, [this, state, &stateName](ActionResult result) {
+    if( ActionResult::SUCCESS != result ) {
+      PRINT_NAMED_WARNING("BehaviorEnrollFace.TransitionToFailedState.FinalAnimationFailed", "");
+    }
+    _state = state;
+    SetDebugStateName(stateName);
+  });
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEnrollFace::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
+{
+  modifiers.visionModesForActiveScope->insert( { VisionMode::DetectingFaces, EVisionUpdateFrequency::High } );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1226,7 +1337,7 @@ void BehaviorEnrollFace::AlwaysHandleInScope(const EngineToGameEvent& event)
                         msg.oldID, msg.newID,
                         Util::HidePersonallyIdentifiableInfo(newFace->GetName().c_str()), _saveID);
           
-          SET_STATE(Failed_WrongFace);
+          TransitionToFailedState(State::Failed_WrongFace, "Failed_WrongFace");
           
           _observedUnusableID   = msg.newID;
           _observedUnusableName = newFace->GetName();
@@ -1247,7 +1358,7 @@ void BehaviorEnrollFace::AlwaysHandleInScope(const EngineToGameEvent& event)
         PRINT_NAMED_ERROR("BehaviorEnrollFace.HandleRobotChangedObservedFaceID.SaveIDChanged",
                           "Was saving to ID=%d, which apparently changed to %d. Should not happen. Will abort.",
                           _saveID, msg.newID);
-        SET_STATE(Failed_UnknownReason);
+        TransitionToFailedState(State::Failed_UnknownReason,"Failed_UnknownReason");
       }
       break;
     }

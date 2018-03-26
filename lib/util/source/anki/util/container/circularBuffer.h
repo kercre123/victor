@@ -22,20 +22,38 @@
 
 namespace Anki {
 namespace Util {
-
   
-template <class T>
-class CircularBuffer
+// NOTE: ignore this template garbage, just use CircularBuffer<T>
+  
+template <class T, class TRef, class TCRef>
+class CircularBufferInternal;
+  
+template <typename T>
+struct CB_Typedef {
+  using type = CircularBufferInternal<T, T&, const T&>;
+};
+
+// required specialization for CircularBuffer<bool>, since the underlying container is specialized
+template <>
+struct CB_Typedef<bool> {
+  using type = CircularBufferInternal<bool, std::vector<bool>::reference, std::vector<bool>::const_reference>;
+};
+
+template <typename T>
+using CircularBuffer = typename CB_Typedef<T>::type;
+  
+template <class T, class TRef, class TCRef>
+class CircularBufferInternal
 {
 public:
   
-  explicit CircularBuffer(size_t capacity=0)  { Reset(capacity); }
-  ~CircularBuffer() {}
+  explicit CircularBufferInternal(size_t capacity=0)  { Reset(capacity); }
+  ~CircularBufferInternal() {}
   
-  CircularBuffer(const CircularBuffer& other) = default;
-  CircularBuffer& operator=(const CircularBuffer& other) = default;
+  CircularBufferInternal(const CircularBufferInternal& other) = default;
+  CircularBufferInternal& operator=(const CircularBufferInternal& other) = default;
   
-  CircularBuffer(CircularBuffer&& rhs) noexcept
+  CircularBufferInternal(CircularBufferInternal&& rhs) noexcept
     : _buffer(     std::move(rhs._buffer) )
     , _firstIndex( std::move(rhs._firstIndex) )
     , _numEntries( std::move(rhs._numEntries) )
@@ -48,7 +66,7 @@ public:
     rhs._capacity   = 0;
   }
   
-  CircularBuffer& operator=(CircularBuffer&& rhs) noexcept
+  CircularBufferInternal& operator=(CircularBufferInternal&& rhs) noexcept
   {
     if (this != &rhs)
     {
@@ -66,7 +84,7 @@ public:
     return *this;
   }
   
-  bool operator==(const Anki::Util::CircularBuffer<T>& rhs) const
+  bool operator==(const Anki::Util::CircularBufferInternal<T,TRef,TCRef>& rhs) const
   {
 
     if (size() != rhs.size()) {
@@ -82,7 +100,7 @@ public:
     return true;
   }
   
-  bool operator!=(const Anki::Util::CircularBuffer<T>& rhs) const
+  bool operator!=(const Anki::Util::CircularBufferInternal<T,TRef,TCRef>& rhs) const
   {
     return !(*this == rhs);
   }
@@ -130,7 +148,7 @@ public:
     --_numEntries;
   }
   
-  T& push_front()
+  TRef push_front()
   {
     assert(_numEntries <= _capacity);
     if (_numEntries >= _capacity)
@@ -143,7 +161,7 @@ public:
     return _buffer[_firstIndex];
   }
   
-  T& push_back()
+  TRef push_back()
   {
     assert(_numEntries <= _capacity);
     if (_numEntries >= _capacity)
@@ -158,13 +176,13 @@ public:
   
   void push_front(const T& newEntry)
   {
-    auto& nextSlot = push_front();
+    TRef nextSlot = push_front();
     nextSlot = newEntry;
   }
   
   void push_back(const T& newEntry)
   {
-    auto& nextSlot = push_back();
+    TRef nextSlot = push_back();
     nextSlot = newEntry;
   }
   
@@ -200,26 +218,26 @@ public:
   size_t capacity() const { return _capacity; }
   bool   empty() const    { return (_numEntries == 0); }
   
-  const T& operator[](size_t itemIndex) const
+  TCRef operator[](size_t itemIndex) const
   {
     assert(itemIndex < _numEntries);
     const size_t bufferIndex = ItemIndexToBufferIndex(itemIndex);
     return _buffer[bufferIndex];
   }
   
-  T& operator[](size_t itemIndex)
+  TRef operator[](size_t itemIndex)
   {
     assert(itemIndex < _numEntries);
     const size_t bufferIndex = ItemIndexToBufferIndex(itemIndex);
     return _buffer[bufferIndex];
   }
   
-  const T& front() const
+  TCRef front() const
   {
     return (*this)[0];
   }
   
-  T& front()
+  TRef front()
   {
     return (*this)[0];
   }
@@ -242,12 +260,12 @@ public:
     return availableSize;
   }
   
-  const T& back() const
+  TCRef back() const
   {
     return (*this)[size()-1];
   }
   
-  T& back()
+  TRef back()
   {
     return (*this)[size()-1];
   }

@@ -10,9 +10,9 @@
  *
  **/
 
-#include "anki/planning/basestation/xythetaEnvironment.h"
-#include "anki/planning/basestation/xythetaPlanner.h"
-#include "anki/planning/basestation/xythetaPlannerContext.h"
+#include "coretech/planning/engine/xythetaEnvironment.h"
+#include "coretech/planning/engine/xythetaPlanner.h"
+#include "coretech/planning/engine/xythetaPlannerContext.h"
 #include "json/json.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
 
     int choice = 0;
 
-    State curr = plan.start_;
+    GraphState curr = plan.start_;
     Cost g = 0.0;
 
     while(choice >= 0) {
@@ -215,7 +215,7 @@ int main(int argc, char *argv[])
         name = context.env.GetActionType(it.Front().actionID).GetName();
 
         cout<<"  "<<(int)it.Front().actionID<<": "<<left<<setw(22)<<name
-            <<State(it.Front().stateID)<<" cost = "
+            <<GraphState(it.Front().stateID)<<" cost = "
             <<(it.Front().g - g)<<endl;
         results[it.Front().actionID] = it.Front().stateID;
         it.Next(context.env);
@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
         plan.Push(choice, 0.0);
         writePath("path.txt", context.env, plan);
 
-        curr = State(results[choice]);
+        curr = GraphState(results[choice]);
       }
     }
 

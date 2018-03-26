@@ -13,10 +13,11 @@
 #ifndef __AnimProcess_CozmoAnim_MicImmediateDirection_H_
 #define __AnimProcess_CozmoAnim_MicImmediateDirection_H_
 
-#include "cozmoAnim/micDataTypes.h"
+#include "micDataTypes.h"
 
 #include <array>
 #include <cstdint>
+#include <mutex>
 
 namespace Anki {
 namespace Cozmo {
@@ -28,16 +29,16 @@ public:
   MicImmediateDirection();
   void AddDirectionSample(const MicDirectionData& newSample);
   DirectionIndex GetDominantDirection() const;
-  const MicDirectionData& GetLatestSample() const;
+  MicDirectionData GetLatestSample() const;
 
 private:
   static constexpr uint32_t kMicDirectionBuffer_ms = 700 + kTriggerOverlapSize_ms;
-  static constexpr uint32_t kMicDirectionBufferLen = kMicDirectionBuffer_ms / 
-                                                     (kTimePerChunk_ms * kChunksPerSEBlock);
+  static constexpr uint32_t kMicDirectionBufferLen = kMicDirectionBuffer_ms / kTimePerSEBlock_ms;
 
   std::array<MicDirectionData, kMicDirectionBufferLen> _micDirectionBuffer{};
   uint32_t _micDirectionBufferIndex = 0;
   std::array<uint32_t, kNumDirections> _micDirectionsCount{};
+  mutable std::mutex _mutex;
 };
 
 } // namespace MicData

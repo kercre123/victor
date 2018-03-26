@@ -38,16 +38,21 @@ protected:
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     modifiers.behaviorAlwaysDelegates = false;
   }
+  
+  virtual void BehaviorUpdate() override;
+  
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
 private:
+  
+  bool IsBehaviorActive( BehaviorID behaviorID ) const;
   
   struct {
     float socializeKnownFaceCooldown_s;
     float playWithCubeCooldown_s;
     float playWithCubeOnChargerCooldown_s;
     float goToSleepTimeout_s;
-    u32 minFaceAgeToAllowSleep_ms;
-    u32 needsToChargeTime_ms;
+    float minFaceTimeToAllowSleep_s;
     float maxFaceDistanceToSocialize_mm;
   } _params;
   

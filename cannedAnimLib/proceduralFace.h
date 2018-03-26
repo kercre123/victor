@@ -39,7 +39,7 @@ namespace ExternalInterface {
 }
 
 class ScanlineDistorter;
-  
+
 class ProceduralFace
 {
 public:
@@ -56,7 +56,7 @@ public:
   static constexpr s32   NominalEyeHeight       = 57;  // V1: 40;
   static constexpr s32   NominalEyeWidth        = 43;  // V1: 30;
   
-  static constexpr f32 DefaultHue = 0.566f;
+  static constexpr f32 DefaultHue = 0.45f;
 
   using Value = f32;
   using Parameter = ProceduralEyeParameter;
@@ -191,7 +191,7 @@ private:
   Value           _faceAngle_deg   = 0.0f;
   Point<2,Value>  _faceScale       = 1.0f;
   Point<2,Value>  _faceCenter      = 0.0f;
-  Value           _scanlineOpacity = 0.7f;
+  Value           _scanlineOpacity; // set to default from console var in constructor
   
   static Value    _hue;
 

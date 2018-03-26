@@ -2,15 +2,16 @@
   "VisionModeSettings" :
   [
     // Frequency settings indicate update period in frames for each mode e.g. "1" runs every frame "4" every fourth etc.
-    // Settings must be Powers Of Two to simplify schedule construction.
-    // "relativeCost" is an heuristic weighting to drive separation of heavy-weight tasks between frames.
+    // Settings other than relativeCost must be Powers Of Two to simplify schedule construction.
+    // "relativeCost" is an heuristic weighting to drive separation of heavy-weight tasks between frames where 1 should
+    // indicate our lowest cost process e.g. "DetectingMarkers" is ~16x as resource intensive as "CheckingQuality"
     {
       "mode"         : "DetectingMarkers",
       "low"          : 4,
       "med"          : 2,
       "high"         : 1,
       "standard"     : 2,
-      "relativeCost" : 1
+      "relativeCost" : 16
     },
     {
       "mode"         : "DetectingFaces",
@@ -18,15 +19,15 @@
       "med"          : 2,
       "high"         : 1,
       "standard"     : 2,
-      "relativeCost" : 1
+      "relativeCost" : 16
     },
     {
       "mode"         : "DetectingPets",
-      "low"          : 4,
-      "med"          : 2,
-      "high"         : 1,
-      "standard"     : 2,
-      "relativeCost" : 1
+      "low"          : 8,
+      "med"          : 4,
+      "high"         : 2,
+      "standard"     : 8,
+      "relativeCost" : 10
     },
     {
       "mode"         : "DetectingMotion",
@@ -34,18 +35,10 @@
       "med"          : 2,
       "high"         : 1,
       "standard"     : 2,
-      "relativeCost" : 1
+      "relativeCost" : 4
     },
     {
       "mode"         : "DetectingOverheadEdges",
-      "low"          : 4,
-      "med"          : 2,
-      "high"         : 1,
-      "standard"     : 2,
-      "relativeCost" : 1
-    },
-    {
-      "mode"         : "CheckingQuality",
       "low"          : 4,
       "med"          : 2,
       "high"         : 1,
@@ -106,6 +99,14 @@
       "med"          : 2,
       "high"         : 1,
       "standard"     : 2,
+      "relativeCost" : 1
+    },
+    {
+      "mode"         : "SavingImages",
+      "low"          : 1,
+      "med"          : 1,
+      "high"         : 1,
+      "standard"     : 1,
       "relativeCost" : 1
     }
   ]

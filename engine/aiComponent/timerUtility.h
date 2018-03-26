@@ -14,7 +14,9 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_TimerUtility_H__
 #define __Cozmo_Basestation_BehaviorSystem_TimerUtility_H__
 
-#include "util/entityComponent/iManageableComponent.h"
+#include "coretech/common/shared/types.h"
+#include "engine/aiComponent/aiComponents_fwd.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/logging/logging.h"
 
@@ -53,18 +55,26 @@ class TimerHandle{
     int GetDisplayHoursRemaining()   const { return SecondsToDisplayHours(GetTimeRemaining_s());}
     int GetDisplayMinutesRemaining() const { return SecondsToDisplayMinutes(GetTimeRemaining_s());}
     int GetDisplaySecondsRemaining() const { return SecondsToDisplaySeconds(GetTimeRemaining_s());}
+
+
+    #if ANKI_DEV_CHEATS
+    // "Advance" time by shortening the time remaining
+    void AdvanceTimeBySeconds(u32 secondsToAdvance){_endTime_s -= secondsToAdvance;}
+    #endif
+
   private:
     // helper for easy access to current time
     static int GetSystemTime_s();
 
     const int _timerLength;
-    const int _endTime_s;
+    int _endTime_s;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // TimerUtility
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class TimerUtility : public IManageableComponent , private Util::noncopyable
+class TimerUtility : public IDependencyManagedComponent<AIComponentID>, 
+                     private Util::noncopyable
 {
 public:
   using SharedHandle = std::shared_ptr<TimerHandle>;
@@ -73,17 +83,16 @@ public:
   TimerUtility();
   virtual ~TimerUtility();
 
-  SharedHandle StartTimer(int timerLength_s)
-  {
-    ANKI_VERIFY(_activeTimer->GetTimeRemaining_s() == 0,
-                "TimerUtility.StartTimer.TimerAlreadySet", 
-                "Current design says we don't overwrite timers - remove this verify if that changes");
-    _activeTimer = std::make_shared<TimerHandle>(timerLength_s);
-    return _activeTimer;
-  }
-  SharedHandle GetActiveTimer() const { return _activeTimer; }
+  SharedHandle GetTimerHandle() const { return _activeTimer; }
+  SharedHandle StartTimer(int timerLength_s);
+  void ClearTimer();
 
   int GetSystemTime_s() const;
+
+    #if ANKI_DEV_CHEATS
+    // "Advance" time by shortening the time remaining
+    void AdvanceTimeBySeconds(u32 secondsToAdvance){ if(_activeTimer != nullptr){_activeTimer->AdvanceTimeBySeconds(secondsToAdvance); }}
+    #endif
 
 private:
   SharedHandle _activeTimer;

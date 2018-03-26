@@ -17,7 +17,7 @@
 #include "engine/activeObjectHelpers.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
-#include "engine/components/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
@@ -569,7 +569,7 @@ void FakeRecvConnectionMessage(Robot& robot, double time, uint32_t activeID, uin
 // helper for move messages
 void FakeRecvMovedMessage(Robot& robot, double time, Anki::TimeStamp_t timestamp, uint32_t activeID)
 {
-  const auto& msg = ObjectMoved(timestamp, activeID, ActiveAccel(1,1,1), Anki::Cozmo::UpAxis::ZPositive );
+  const auto& msg = ExternalInterface::ObjectMoved(timestamp, activeID, ActiveAccel(1,1,1), Anki::Cozmo::UpAxis::ZPositive );
   robot.GetRobotToEngineImplMessaging().HandleActiveObjectMoved(msg, &robot);
 }
 

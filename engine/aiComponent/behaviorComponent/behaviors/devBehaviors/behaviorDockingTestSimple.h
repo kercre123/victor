@@ -36,114 +36,120 @@
 #include <fstream>
 
 namespace Anki {
-  namespace Cozmo {
-    
-    class BehaviorDockingTestSimple : public ICozmoBehavior
-    {
-      protected:
-        friend class BehaviorFactory;
-        BehaviorDockingTestSimple(const Json::Value& config);
-      
-      public:      
-        virtual ~BehaviorDockingTestSimple() { }
-      
-        virtual bool WantsToBeActivatedBehavior() const override;
+namespace Cozmo {
 
-      protected:
-        virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
-          modifiers.behaviorAlwaysDelegates = false;
-        }
+class BehaviorDockingTestSimple : public ICozmoBehavior
+{
+protected:
+  friend class BehaviorFactory;
+  BehaviorDockingTestSimple(const Json::Value& config);
 
-      
-        void InitBehavior() override;
-      
-      private:
-      
-        virtual void OnBehaviorActivated() override;
-      
-        virtual void BehaviorUpdate() override;
+public:      
+  virtual ~BehaviorDockingTestSimple() { }
 
-        virtual void OnBehaviorDeactivated() override;
-        
-        virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
-      
-        // Handlers for signals coming from the engine/robot
-        void HandleObservedObject(Robot& robot, const ExternalInterface::RobotObservedObject& msg);
-        void HandleRobotStopped(Robot& robot, const ExternalInterface::RobotStopped &msg);
-        void HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);
-        void HandleDockingStatus(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-      
-        // returns true if the callback handled the action, false if we should continue to handle it in HandleActionCompleted
-        using ActionResultCallback = std::function<bool(const ActionResult& result, const ActionCompletedUnion& completionInfo)>;
-      
-        void DelegateIfInControl(Robot& robot, IActionRunner* action, ActionResultCallback callback = {});
-      
-        bool IsControlDelegated() const {return !_actionCallbackMap.empty(); }
-      
-        // Records this attempt and sets state to reset
-        void EndAttempt(Robot& robot, ActionResult result, std::string name, bool endingFromFailedAction = false);
-      
-        // Write out information relating to this attempt
-        void RecordAttempt(ActionResult result, std::string name);
-      
-        void PrintStats();
-      
-        enum class State {
-          Init,
-          Inactive,
-          Roll,
-          PickupLow,
-          PlaceLow,
-          Reset,
-          ManualReset
-        };
-      
-        void SetCurrState(State s);
-        void SetCurrStateAndFlashLights(State s, Robot& robot);
-        const char* StateToString(const State m);
-        void UpdateStateName();
-      
-        State _currentState = State::Init;
-      
-        std::map<u32, ActionResultCallback> _actionCallbackMap;
-        Signal::SmartHandle _signalHandle;
-      
-        // ID of block to pickup
-        ObjectID _blockObjectIDPickup;
-      
-        Vision::Marker _initialVisionMarker;
-        Vision::Marker _markerBeingSeen;
-      
-        // Where the cube should be put down
-        Pose3d _cubePlacementPose;
-      
-        const f32 kInvalidAngle = 1000;
-        f32    _initialPreActionPoseAngle_rad = kInvalidAngle;
-      
-        void Write(const std::string& s);
-      
-        std::unique_ptr<Util::RollingFileLogger> _logger;
-        std::string _imageFolder;  // image folder name
-      
-        bool _reset                = false; // test needs to be reset
-        bool _yellForHelp          = false; // whether or not we should yell for help
-        bool _yellForCompletion    = false; // whether or not we should yell the test completed
-        bool _endingFromFailedAction = false;
-        int _numSawObject           = 0;
-      
-        // Stats for test/attempts
-        int _numFails              = 0;
-        int _numDockingRetries     = 0;
-        int _numAttempts           = 0;
-        int _numExtraAttemptsDueToFailure = 0;
-        int _numConsecFails        = 0;
-        bool _didHM                = false;
-        bool _failedCurrentAttempt = false;
-        TimeStamp_t _attemptStartTime;
-        Pose3d _initialRobotPose;
-        Pose3d _initialCubePose;
-    };
+  virtual bool WantsToBeActivatedBehavior() const override;
+
+protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.behaviorAlwaysDelegates = false;
   }
-}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+
+
+  void InitBehavior() override;
+
+private:
+  // returns true if the callback handled the action, false if we should continue to handle it in HandleActionCompleted
+  using ActionResultCallback = std::function<bool(const ActionResult& result, const ActionCompletedUnion& completionInfo)>;
+
+  enum class State {
+    Init,
+    Inactive,
+    Roll,
+    PickupLow,
+    PlaceLow,
+    Reset,
+    ManualReset
+  };
+
+  struct InstanceConfig {
+    InstanceConfig();
+    std::string imageFolder;  // image folder name
+    Signal::SmartHandle signalHandle;
+    std::unique_ptr<Util::RollingFileLogger> logger;
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    State currentState;
+    std::map<u32, ActionResultCallback> actionCallbackMap;
+
+    // ID of block to pickup
+    ObjectID       blockObjectIDPickup;
+    Vision::Marker initialVisionMarker;
+    Vision::Marker markerBeingSeen;
+    
+    // Where the cube should be put down
+    Pose3d cubePlacementPose;
+    f32    initialPreActionPoseAngle_rad;
+    bool   reset;             // test needs to be reset
+    bool   yellForHelp;       // whether or not we should yell for help
+    bool   yellForCompletion; // whether or not we should yell the test completed
+    bool   endingFromFailedAction;
+    int    numSawObject;
+
+    // Stats for test/attempts
+    int  numFails;
+    int  numDockingRetries;
+    int  numAttempts;
+    int  numExtraAttemptsDueToFailure;
+    int  numConsecFails;
+    bool didHM;
+    bool failedCurrentAttempt;
+
+    TimeStamp_t attemptStartTime;
+    Pose3d      initialRobotPose;
+    Pose3d      initialCubePose;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
+  virtual void OnBehaviorActivated() override;
+
+  virtual void BehaviorUpdate() override;
+
+  virtual void OnBehaviorDeactivated() override;
+  
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
+
+  // Handlers for signals coming from the engine/robot
+  void HandleObservedObject(Robot& robot, const ExternalInterface::RobotObservedObject& msg);
+  void HandleRobotStopped(Robot& robot, const ExternalInterface::RobotStopped &msg);
+  void HandleActionCompleted(Robot& robot, const ExternalInterface::RobotCompletedAction& msg);
+  void HandleDockingStatus(const AnkiEvent<RobotInterface::RobotToEngine>& message);
+
+  void DelegateIfInControl(Robot& robot, IActionRunner* action, ActionResultCallback callback = {});
+
+  bool IsControlDelegated() const {return !_dVars.actionCallbackMap.empty(); }
+
+  // Records this attempt and sets state to reset
+  void EndAttempt(Robot& robot, ActionResult result, std::string name, bool endingFromFailedAction = false);
+
+  // Write out information relating to this attempt
+  void RecordAttempt(ActionResult result, std::string name);
+
+  void PrintStats();
+
+  void SetCurrState(State s);
+  void SetCurrStateAndFlashLights(State s, Robot& robot);
+  const char* StateToString(const State m);
+  void UpdateStateName();
+
+  void Write(const std::string& s);
+};
+
+} // namespace Cozmo
+} // namespace Anki
 
 #endif // __Cozmo_Basestation_Behaviors_BehaviorDockingTest_H__

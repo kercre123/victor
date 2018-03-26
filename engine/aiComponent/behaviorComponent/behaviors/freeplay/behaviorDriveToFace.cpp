@@ -21,8 +21,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/faceWorld.h"
 
+#include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
-#include "util/console/consoleInterface.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
 
@@ -30,24 +30,58 @@ namespace Anki {
 namespace Cozmo {
   
 namespace{
-CONSOLE_VAR(f32, kTimeUntilCancelFaceTrack_s,"BehaviorDriveToFace", 5.0f);
-CONSOLE_VAR(f32, kMinDriveToFaceDistance_mm, "BehaviorDriveToFace", 200.0f);
 // We want cozmo to slow down as he approaches the face since there's probably
 // an edge.  The decel factor relative to the default profile is arbitrary but
 // tuned based off some testing to attempt the right feeling of "approaching" the face
 const float kArbitraryDecelFactor = 3.0f;
+  
+const char* const kTimeUntilCancelFaceTrackKey = "timeUntilCancelFaceTrack_s";
+const char* const kMinDriveToFaceDistanceKey = "minDriveToFaceDistanceKey_mm";
+const char* const kDebugName = "BehaviorDriveToFace";
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDriveToFace::InstanceConfig::InstanceConfig()
+{
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDriveToFace::DynamicVariables::DynamicVariables()
+{
+  timeCancelTracking_s = 0;
+  currentState         = State::TurnTowardsFace;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDriveToFace::BehaviorDriveToFace(const Json::Value& config)
 : ICozmoBehavior(config)
-, _currentState(State::TurnTowardsFace)
-, _timeCancelTracking_s(0)
 {
+  _iConfig.timeUntilCancelFaceTrack_s = JsonTools::ParseFloat( config, kTimeUntilCancelFaceTrackKey, kDebugName );
+  _iConfig.minDriveToFaceDistance_mm = JsonTools::ParseFloat( config, kMinDriveToFaceDistanceKey, kDebugName );
   
+  MakeMemberTunable( _iConfig.timeUntilCancelFaceTrack_s, kTimeUntilCancelFaceTrackKey, kDebugName );
+  MakeMemberTunable( _iConfig.minDriveToFaceDistance_mm, kMinDriveToFaceDistanceKey, kDebugName );
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDriveToFace::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
+{
+  modifiers.visionModesForActiveScope->insert( {VisionMode::DetectingFaces, EVisionUpdateFrequency::High} );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDriveToFace::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kTimeUntilCancelFaceTrackKey,
+    kMinDriveToFaceDistanceKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDriveToFace::WantsToBeActivatedBehavior() const
@@ -60,20 +94,20 @@ bool BehaviorDriveToFace::WantsToBeActivatedBehavior() const
   if(lastFaceInCurrentOrigin){
     const auto facesObserved = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(timeLastFaceObserved);
     if(facesObserved.size() > 0){
-      _targetFace = GetBEI().GetFaceWorld().GetSmartFaceID(*facesObserved.begin());
+      _dVars.targetFace = GetBEI().GetFaceWorld().GetSmartFaceID(*facesObserved.begin());
     }else{
-      _targetFace.Reset();
+      _dVars.targetFace.Reset();
     }
   }
   
-  return _targetFace.IsValid();
+  return _dVars.targetFace.IsValid();
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveToFace::OnBehaviorActivated()
 {
-  if(_targetFace.IsValid()){
+  if(_dVars.targetFace.IsValid()){
     TransitionToTurningTowardsFace();
     
   }else{
@@ -91,8 +125,8 @@ void BehaviorDriveToFace::BehaviorUpdate()
   }
 
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if(_currentState == State::TrackFace &&
-     _timeCancelTracking_s < currentTime_s){
+  if(_dVars.currentState == State::TrackFace &&
+     _dVars.timeCancelTracking_s < currentTime_s){
     CancelSelf();
   }  
 }
@@ -101,7 +135,7 @@ void BehaviorDriveToFace::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveToFace::OnBehaviorDeactivated()
 {
-  _targetFace.Reset();
+  _dVars.targetFace.Reset();
 }
 
 
@@ -109,14 +143,14 @@ void BehaviorDriveToFace::OnBehaviorDeactivated()
 void BehaviorDriveToFace::TransitionToTurningTowardsFace()
 {
   SET_STATE(TurnTowardsFace);
-  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace(_targetFace);
+  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace(_dVars.targetFace);
   if(facePtr != nullptr){
     CompoundActionSequential* turnAndVerifyAction = new CompoundActionSequential();
-    turnAndVerifyAction->AddAction(new TurnTowardsFaceAction(_targetFace));
+    turnAndVerifyAction->AddAction(new TurnTowardsFaceAction(_dVars.targetFace));
     turnAndVerifyAction->AddAction(new VisuallyVerifyFaceAction(facePtr->GetID()));
     
-    DelegateIfInControl(new TurnTowardsFaceAction(_targetFace),
-                [this, &facePtr](ActionResult result){
+    DelegateIfInControl(new TurnTowardsFaceAction(_dVars.targetFace),
+                [this, facePtr](ActionResult result){
                   if(result == ActionResult::SUCCESS){
                     if(IsCozmoAlreadyCloseEnoughToFace(facePtr->GetID())){
                       TransitionToAlreadyCloseEnough();
@@ -134,10 +168,10 @@ void BehaviorDriveToFace::TransitionToDrivingToFace()
 {
   SET_STATE(DriveToFace);
   float distToHead;
-  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace(_targetFace);
+  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace(_dVars.targetFace);
   if(facePtr != nullptr &&
      CalculateDistanceToFace(facePtr->GetID(), distToHead)){
-    DriveStraightAction* driveAction = new DriveStraightAction(distToHead - kMinDriveToFaceDistance_mm,
+    DriveStraightAction* driveAction = new DriveStraightAction(distToHead - _iConfig.minDriveToFaceDistance_mm,
                                                                MAX_WHEEL_SPEED_MMPS);
     driveAction->SetDecel(DEFAULT_PATH_MOTION_PROFILE.decel_mmps2/kArbitraryDecelFactor);
     DelegateIfInControl(driveAction, &BehaviorDriveToFace::TransitionToTrackingFace);
@@ -158,10 +192,10 @@ void BehaviorDriveToFace::TransitionToAlreadyCloseEnough()
 void BehaviorDriveToFace::TransitionToTrackingFace()
 {
   SET_STATE(TrackFace);
-  _timeCancelTracking_s = kTimeUntilCancelFaceTrack_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _dVars.timeCancelTracking_s = _iConfig.timeUntilCancelFaceTrack_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   // Runs forever - the behavior will be stopped in the Update loop when the
   // timeout for face tracking is hit
-  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace(_targetFace);
+  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace(_dVars.targetFace);
   if(facePtr != nullptr){
     const Vision::FaceID_t faceID = facePtr->GetID();
     DelegateIfInControl(new TrackFaceAction(faceID));
@@ -172,7 +206,7 @@ void BehaviorDriveToFace::TransitionToTrackingFace()
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveToFace::SetState_internal(State state, const std::string& stateName)
 {
-  _currentState = state;
+  _dVars.currentState = state;
   SetDebugStateName(stateName);
 }
 
@@ -182,7 +216,7 @@ bool BehaviorDriveToFace::IsCozmoAlreadyCloseEnoughToFace(Vision::FaceID_t faceI
 {
   float distToHead;
   if(CalculateDistanceToFace(faceID, distToHead)){
-    return distToHead <= kMinDriveToFaceDistance_mm;
+    return distToHead <= _iConfig.minDriveToFaceDistance_mm;
   }
   
   return false;
@@ -193,7 +227,7 @@ bool BehaviorDriveToFace::IsCozmoAlreadyCloseEnoughToFace(Vision::FaceID_t faceI
 bool BehaviorDriveToFace::CalculateDistanceToFace(Vision::FaceID_t faceID, float& distance)
 {
   // Get the distance between the robot and the head's pose on the X/Y plane
-  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace(_targetFace);
+  const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace(_dVars.targetFace);
   if(facePtr != nullptr){
     const auto& robotInfo = GetBEI().GetRobotInfo();
 

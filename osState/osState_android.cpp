@@ -44,16 +44,28 @@ namespace {
 
   std::ifstream _cpuFile;
   std::ifstream _tempFile;
+  std::ifstream _uptimeFile;
+  std::ifstream _memInfoFile;
+  std::ifstream _cpuTimeStatsFile;
 
   const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
   const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
   const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone3/temp";
   const char* kMACAddressFile = "/sys/class/net/wlan0/address";
   const char* kRecoveryModeFile = "/data/unbrick";
-  
+  const char* kUptimeFile = "/proc/uptime";
+  const char* kMemInfoFile = "/proc/meminfo";
+  const char* kCPUTimeStatsFile = "/proc/stat";
+
   // System vars
-  uint32_t _cpuFreq_kHz; // CPU freq
-  uint32_t _cpuTemp_C;   // Temperature in Celsius
+  uint32_t _cpuFreq_kHz;      // CPU freq
+  uint32_t _cpuTemp_C;        // Temperature in Celsius
+  float _uptime_s;            // Uptime in seconds
+  float _idleTime_s;          // Idle time in seconds
+  uint32_t _memTotal_kB;      // Total memory in kB
+  uint32_t _memFree_kB;       // Free memory in kB
+  std::vector<std::string> _CPUTimeStats; // CPU time stats lines
+
 
   // How often state variables are updated
   uint32_t _updatePeriod_ms = 0;
@@ -119,18 +131,11 @@ OSState::OSState()
   _cpuFreq_kHz = kNominalCPUFreq_kHz;
   _cpuTemp_C = 0;
 
-  _tempFile.open(kTemperatureFile, std::ifstream::in);
-  _cpuFile.open(kCPUFreqFile, std::ifstream::in);
+  _buildSha = ANKI_BUILD_SHA;
 }
 
 OSState::~OSState()
 {
-  if (_tempFile.is_open()) {
-    _tempFile.close();
-  }
-  if (_cpuFile.is_open()) {
-    _cpuFile.close();
-  }
 }
 
 RobotID_t OSState::GetRobotID() const
@@ -144,11 +149,18 @@ void OSState::Update()
     const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
     if (now_ms - _lastUpdateTime_ms > _updatePeriod_ms) {
       
+      using namespace std::chrono;
+      // const auto startTime = steady_clock::now();
+
       // Update cpu freq
-      _cpuFreq_kHz = UpdateCPUFreq_kHz();
+      UpdateCPUFreq_kHz();
 
       // Update temperature reading
-      _cpuTemp_C = UpdateTemperature_C();
+      UpdateTemperature_C();
+      
+      // const auto now = steady_clock::now();
+      // const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
+      // PRINT_NAMED_INFO("OSState", "Update took %lld microseconds", elapsed_us);
 
       _lastUpdateTime_ms = now_ms;
     }
@@ -160,27 +172,56 @@ void OSState::SetUpdatePeriod(uint32_t milliseconds)
   _updatePeriod_ms = milliseconds;
 }
 
-uint32_t OSState::UpdateCPUFreq_kHz() const
+void OSState::UpdateCPUFreq_kHz() const
 {
   // Update cpu freq
-  uint32_t cpuFreq_kHz;
-  _cpuFile.seekg(0, _cpuFile.beg);
-  _cpuFile >> cpuFreq_kHz;
-  return cpuFreq_kHz;
+  _cpuFile.open(kCPUFreqFile, std::ifstream::in);
+  _cpuFile >> _cpuFreq_kHz;
+  _cpuFile.close();
 }
-      
-uint32_t OSState::UpdateTemperature_C() const
+
+void OSState::UpdateTemperature_C() const
 {
   // Update temperature reading
-  uint32_t cpuTemp_C;
-  _tempFile.seekg(0, _tempFile.beg);
-  _tempFile >> cpuTemp_C;
-  return cpuTemp_C;
+  _tempFile.open(kTemperatureFile, std::ifstream::in);
+  _tempFile >> _cpuTemp_C;
+  _tempFile.close();
+}
+
+void OSState::UpdateUptimeAndIdleTime() const
+{
+  // Update uptime and idle time data
+  _uptimeFile.open(kUptimeFile, std::ifstream::in);
+  _uptimeFile >> _uptime_s >> _idleTime_s;
+  _uptimeFile.close();
+}
+
+void OSState::UpdateMemoryInfo() const
+{
+  // Update total and free memory
+  _memInfoFile.open(kMemInfoFile, std::ifstream::in);
+  std::string discard;
+  _memInfoFile >> discard >> _memTotal_kB >> discard >> discard >> _memFree_kB;
+  _memInfoFile.close();
+}
+
+void OSState::UpdateCPUTimeStats() const
+{
+  // Update CPU time stats lines
+  _cpuTimeStatsFile.open(kCPUTimeStatsFile, std::ifstream::in);
+  static const int kNumCPUTimeStatLines = 5;
+  _CPUTimeStats.resize(kNumCPUTimeStatLines);
+  for (int i = 0; i < kNumCPUTimeStatLines; i++) {
+    std::getline(_cpuTimeStatsFile, _CPUTimeStats[i]);
+  }
+  _cpuTimeStatsFile.close();
 }
 
 uint32_t OSState::GetCPUFreq_kHz() const
 {
-  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetCPUFreq_kHz.ZeroUpdate");
+  if (_updatePeriod_ms == 0) {
+    UpdateCPUFreq_kHz();
+  }
   return _cpuFreq_kHz;
 }
 
@@ -193,9 +234,44 @@ bool OSState::IsCPUThrottling() const
 
 uint32_t OSState::GetTemperature_C() const
 {
-  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetTemperature_C.ZeroUpdate");
+  if (_updatePeriod_ms == 0) {
+    UpdateTemperature_C();
+  }
   return _cpuTemp_C;
 }
+
+float OSState::GetUptimeAndIdleTime(float &idleTime_s) const
+{
+  // Better to have this relatively expensive call as on-demand only
+  DEV_ASSERT(_updatePeriod_ms == 0, "OSState.GetUptimeAndIdleTime.NonZeroUpdate");
+  if (_updatePeriod_ms == 0) {
+    UpdateUptimeAndIdleTime();
+  }
+  idleTime_s = _idleTime_s;
+  return _uptime_s;
+}
+
+uint32_t OSState::GetMemoryInfo(uint32_t &freeMem_kB) const
+{
+  // Better to have this relatively expensive call as on-demand only
+  DEV_ASSERT(_updatePeriod_ms == 0, "OSState.GetMemoryInfo.NonZeroUpdate");
+  if (_updatePeriod_ms == 0) {
+    UpdateMemoryInfo();
+  }
+  freeMem_kB = _memFree_kB;
+  return _memTotal_kB;
+}
+
+const std::vector<std::string>& OSState::GetCPUTimeStats() const
+{
+  // Better to have this relatively expensive call as on-demand only
+  DEV_ASSERT(_updatePeriod_ms == 0, "OSState.GetCPUTimeStats.NonZeroUpdate");
+  if (_updatePeriod_ms == 0) {
+    UpdateCPUTimeStats();
+  }
+  return _CPUTimeStats;
+}
+
 
 const std::string& OSState::GetSerialNumberAsString()
 {
@@ -228,6 +304,11 @@ const std::string& OSState::GetOSBuildVersion()
   }
   
   return _osBuildVersion;
+}
+
+const std::string& OSState::GetBuildSha() 
+{
+  return _buildSha;
 }
 
 std::string OSState::GetRobotName() const

@@ -5,7 +5,7 @@ import os
 import requests
 import time
 
-kProcFace_DefaultScanlineOpacity = 0.7
+kProcFace_DefaultScanlineOpacity = 1
 
 FACE_DISPLAY_WIDTH = 184
 FACE_DISPLAY_HEIGHT = 96
@@ -119,7 +119,7 @@ class ProceduralFace:
     self._faceAngle_deg = 0.0
     self._faceCenter = [0.0, 0.0]
     self._faceScale = [1.0, 1.0]
-    self._scanlineOpacity = 0.7
+    self._scanlineOpacity = kProcFace_DefaultScanlineOpacity
 
   def __str__(self):
     result = "Left:"+str(self._eyeParams[0])+"\n"

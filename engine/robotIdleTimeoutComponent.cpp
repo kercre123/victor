@@ -46,8 +46,10 @@ void RobotIdleTimeoutComponent::InitDependent(Cozmo::Robot* robot, const RobotCo
 }
 
 
-void RobotIdleTimeoutComponent::Update(float currentTime_s)
+void RobotIdleTimeoutComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
+  const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
   // If it's time to do sleep and face off
   if(_faceOffTimeout_s > 0.0f && _faceOffTimeout_s <= currentTime_s)
   {

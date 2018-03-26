@@ -26,7 +26,6 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "clad/externalInterface/messageFromActiveObject.h"
 
 
 namespace Anki {
@@ -35,6 +34,22 @@ namespace Cozmo {
 namespace{
 const char* kPickupRetryCountKey = "retryCount";
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorPickUpCube::InstanceConfig::InstanceConfig()
+{
+  pickupRetryCount = 1;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorPickUpCube::DynamicVariables::DynamicVariables()
+{
+  idSetExternally = false;
+  pickupRetryCount = 0;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPickUpCube::BehaviorPickUpCube(const Json::Value& config)
@@ -49,7 +64,16 @@ BehaviorPickUpCube::BehaviorPickUpCube(const Json::Value& config)
     _iConfig.pickupRetryCount = JsonTools::ParseUint8(config, kPickupRetryCountKey, debug);
   }
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorPickUpCube::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+    kPickupRetryCountKey,
+    kPickupRetryCountKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorPickUpCube::WantsToBeActivatedBehavior() const
@@ -98,7 +122,7 @@ void BehaviorPickUpCube::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPickUpCube::CalculateTargetID(ObjectID& outTargetID) const
 {  
-  auto& objInfoCache = GetBEI().GetAIComponent().GetObjectInteractionInfoCache();
+  auto& objInfoCache = GetAIComp<ObjectInteractionInfoCache>();
   const ObjectInteractionIntention intent = ObjectInteractionIntention::PickUpObjectNoAxisCheck;
   const ObjectID& possiblyBestObjID = objInfoCache.GetBestObjectForIntention(intent);
 
@@ -133,7 +157,7 @@ void BehaviorPickUpCube::TransitionToPickingUpCube()
       auto& blockWorld = GetBEI().GetBlockWorld();
       const ObservableObject* pickupObj = blockWorld.GetLocatedObjectByID(_dVars.targetBlockID);
       if(pickupObj != nullptr){
-        auto& whiteboard = GetBEI().GetAIComponent().GetWhiteboard();	
+        auto& whiteboard = GetAIComp<AIWhiteboard>();	
         whiteboard.SetFailedToUse(*pickupObj,	
                                   AIWhiteboard::ObjectActionFailure::PickUpObject);
       }

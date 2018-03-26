@@ -1096,6 +1096,39 @@ namespace Vision {
     cv::cvtColor(this->get_CvMat_(), grayImage.get_CvMat_(), CV_RGBA2GRAY);
   }
 
+  ImageRGBA& ImageRGBA::SetFromGray(const Image& imageGray)
+  {
+    cv::cvtColor(imageGray.get_CvMat_(), this->get_CvMat_(), CV_GRAY2RGBA);
+    SetTimestamp(imageGray.GetTimestamp());
+    SetImageId(imageGray.GetImageId());
+    return *this;
+  }
+
+  ImageRGBA& ImageRGBA::SetFromRGB565(const ImageRGB565& rgb565, const u8 alpha)
+  {
+    // Note: not equivalent to cv::cvtColor(rgb565.get_CvMat_(), this->get_CvMat_(), cv::COLOR_BGR5652RGBA);
+    //       given differences in endian-ness.
+
+    DEV_ASSERT(this->IsContinuous(), "ImageRGBA.IsNotContinuous");
+    
+    int nrows = rgb565.GetNumRows();
+    int ncols = rgb565.GetNumCols();
+    if(rgb565.IsContinuous()) {
+      // pretend the data is a 1D array, nrows x ncols in length
+      ncols *= nrows;
+      nrows = 1;
+    }
+
+    uint32_t* dstPtr = (u32*)GetDataPointer();
+    for(int i=0; i<nrows; i++) {
+      auto * img_i = rgb565.GetRow(i); // get pointer to start of row i
+      for(int j=0; j<ncols; j++) {
+        *dstPtr++ = img_i[j].ToRGBA32(alpha);
+      }
+    }
+    return *this;
+  }
+
   void ImageRGBA::ConvertToShowableFormat(cv::Mat& showImg) const {
     cv::cvtColor(this->get_CvMat_(), showImg, cv::COLOR_RGBA2BGRA);
   }
@@ -1177,7 +1210,7 @@ namespace Vision {
     cv::cvtColor(rgb565.get_CvMat_(), this->get_CvMat_(), cv::COLOR_BGR5652RGB);
     return *this;
   }
-  
+
   Image ImageRGB::ToGray() const
   {
     Image grayImage(GetNumRows(), GetNumCols());

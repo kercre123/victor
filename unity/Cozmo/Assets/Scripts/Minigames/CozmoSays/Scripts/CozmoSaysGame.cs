@@ -33,7 +33,6 @@ namespace CozmoSays {
     protected override void CleanUpOnDestroy() {
       if (CurrentRobot != null) {
         CurrentRobot.SetDefaultHeadAndLiftState(false, 0.0f, 0.0f);
-        CurrentRobot.RemoveIdleAnimation(idleAnimLock);
       }
     }
   }

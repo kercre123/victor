@@ -34,9 +34,11 @@ namespace Anki {
 namespace Cozmo {
 
 class Robot;
-struct ObjectTapped;
-struct ObjectMoved;
-struct ObjectStoppedMoving;
+namespace ExternalInterface {
+  struct ObjectTapped;
+  struct ObjectMoved;
+  struct ObjectStoppedMoving;
+}
 
 class BlockTapFilterComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
@@ -47,24 +49,23 @@ public:
   // IDependencyManagedComponent functions
   //////
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
-  // Maintain the chain of initializations currently in robot - it might be possible to
-  // change the order of initialization down the line, but be sure to check for ripple effects
-  // when changing this function
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
-    dependencies.insert(RobotComponentID::ProgressionUnlock);
+    dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
-  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::CubeComms);
+    dependencies.insert(RobotComponentID::CubeAccel);
+  };
+  virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   //////
   // end IDependencyManagedComponent functions
   //////
   
-  void Update();
-  
   bool ShouldIgnoreMovementDueToDoubleTap(const ObjectID& objectID);
   
-  void HandleActiveObjectTapped(const ObjectTapped& message);
-  void HandleActiveObjectMoved(const ObjectMoved& message);
-  void HandleActiveObjectStopped(const ObjectStoppedMoving& message);
+  void HandleActiveObjectTapped(const ExternalInterface::ObjectTapped& message);
+  void HandleActiveObjectMoved(const ExternalInterface::ObjectMoved& message);
+  void HandleActiveObjectStopped(const ExternalInterface::ObjectStoppedMoving& message);
 
 private:
   
@@ -92,7 +93,7 @@ private:
   };
   
   std::map<ObjectID, DoubleTapInfo> _doubleTapObjects;
-  std::list<ObjectTapped> _tapInfo;
+  std::list<ExternalInterface::ObjectTapped> _tapInfo;
   
 #if ANKI_DEV_CHEATS
   void HandleSendTapFilterStatus(const AnkiEvent<ExternalInterface::MessageGameToEngine>& message);

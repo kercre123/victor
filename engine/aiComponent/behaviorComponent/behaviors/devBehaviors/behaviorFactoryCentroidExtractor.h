@@ -28,43 +28,56 @@
 namespace Anki {
 namespace Cozmo {
   
-  class BehaviorFactoryCentroidExtractor : public ICozmoBehavior
-  {
-  protected:
-    
-    friend class BehaviorFactory;
-    BehaviorFactoryCentroidExtractor(const Json::Value& config);
-    
-  public:
-    
-    virtual ~BehaviorFactoryCentroidExtractor() { }
-    
-    virtual bool WantsToBeActivatedBehavior() const override;
-    
-  protected:
-    virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
-      modifiers.wantsToBeActivatedWhenCarryingObject = true;
-      modifiers.behaviorAlwaysDelegates = false;
-    }
+class BehaviorFactoryCentroidExtractor : public ICozmoBehavior
+{
+protected:
+  
+  friend class BehaviorFactory;
+  BehaviorFactoryCentroidExtractor(const Json::Value& config);
+  
+public:
+  
+  virtual ~BehaviorFactoryCentroidExtractor() { }
+  
+  virtual bool WantsToBeActivatedBehavior() const override;
+  
+protected:
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+    modifiers.behaviorAlwaysDelegates = false;
+  }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
 
-  private:    
-    virtual void OnBehaviorActivated() override;
-    virtual void BehaviorUpdate() override;
+private:
+  struct InstanceConfig {
+    InstanceConfig();
+    FactoryTestLogger factoryTestLogger;
 
-    virtual void OnBehaviorDeactivated() override;
-    
-    void TransitionToMovingHead(Robot& robot);
-    
-    virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
-    
-    bool _waitingForDots = false;
-    bool _headCalibrated = false;
-    bool _liftCalibrated = false;
-    
-    FactoryTestLogger _factoryTestLogger;
   };
-}
-}
+
+  struct DynamicVariables {
+    DynamicVariables();
+    bool waitingForDots;
+    bool headCalibrated;
+    bool liftCalibrated;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
+  virtual void OnBehaviorActivated() override;
+  virtual void BehaviorUpdate() override;
+
+  virtual void OnBehaviorDeactivated() override;
+  
+  void TransitionToMovingHead(Robot& robot);
+  
+  virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
+  
+};
+
+} // namespace Cozmo
+} // namespace Anki
 
 
 

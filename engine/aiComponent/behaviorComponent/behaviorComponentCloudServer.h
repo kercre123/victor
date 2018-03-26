@@ -15,6 +15,10 @@
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorComponentCloudServer_H__
 
 #include "coretech/messaging/shared/LocalUdpServer.h"
+#include "util/global/globalDefinitions.h"
+#include "util/signals/signalHolder.h"
+#include "webServerProcess/src/webService.h"
+#include <json/json.h>
 #include <atomic>
 #include <functional>
 #include <string>
@@ -23,11 +27,13 @@
 namespace Anki {
 namespace Cozmo {
 
-class BehaviorComponentCloudServer {
+class CozmoContext;
+
+class BehaviorComponentCloudServer : private Util::SignalHolder {
 public:
   using CallbackFunc = std::function<void(std::string)>;
 
-  BehaviorComponentCloudServer(CallbackFunc callback, const std::string& name, int sleepMs = 40);
+  BehaviorComponentCloudServer(const CozmoContext* context, CallbackFunc callback, const std::string& name, int sleepMs = 40);
   ~BehaviorComponentCloudServer();
 
 private:
@@ -38,6 +44,16 @@ private:
   LocalUdpServer _server;
   std::atomic_bool _shutdown;
   const int _sleepMs;
+  const CozmoContext* _context;
+
+  #define SEND_CLOUD_DEV_RESULTS ANKI_DEV_CHEATS
+  #if SEND_CLOUD_DEV_RESULTS
+  std::vector<Json::Value> _devResults;
+
+  using WebService = WebService::WebService;
+  void OnClientInit(const WebService::SendToClientFunc& sendFunc);
+  #endif
+  void AddResult(const std::string& str);
 };
 
 }

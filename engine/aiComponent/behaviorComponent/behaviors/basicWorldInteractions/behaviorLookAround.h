@@ -42,17 +42,17 @@ public:
   virtual ~BehaviorLookAround() override;
 
   virtual bool WantsToBeActivatedBehavior() const override;
-  void SetLookAroundHeadAngle(float angle_rads) { _lookAroundHeadAngle_rads = angle_rads; }
+  void SetLookAroundHeadAngle(float angle_rads) { _dVars.lookAroundHeadAngle_rads = angle_rads; }
   
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
     modifiers.behaviorAlwaysDelegates = false;
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void OnBehaviorActivated() override;
   virtual void BehaviorUpdate() override;
-  virtual void OnBehaviorDeactivated() override;
 
   virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
   virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
@@ -65,14 +65,6 @@ private:
     LookingAtPossibleObject,
     ExaminingFoundObject
   };
-  void SetState_internal(State state, const std::string& stateName);
-
-  void TransitionToWaitForOtherActions();
-  void TransitionToInactive();
-  void TransitionToRoaming();
-  void TransitionToLookingAtPossibleObject();
-  void TransitionToExaminingFoundObject();
-
   enum class Destination {
     North = 0,
     West,
@@ -83,42 +75,42 @@ private:
     Count
   };
 
+  struct InstanceConfig {
+    InstanceConfig();
+    bool shouldHandleConfirmedObjectOverved;
+    bool shouldHandlePossibleObjectOverved;
+  };
+
+  struct DynamicVariables {
+    DynamicVariables();
+    State       currentState;
+    Destination currentDestination;
+    
+    // note that this is reset when the robot is put down, so no need to worry about origins
+    Pose3d moveAreaCenter;
+    f32    safeRadius;
+    u32    numDestinationsLeft;
+    f32    lookAroundHeadAngle_rads;
+
+    std::set<ObjectID> recentObjects;
+    std::set<ObjectID> oldBoringObjects;
+    Pose3d             lastPossibleObjectPose;
+  };
+
+  InstanceConfig   _iConfig;
+  DynamicVariables _dVars;
+
+  void SetState_internal(State state, const std::string& stateName);
+
+  void TransitionToWaitForOtherActions();
+  void TransitionToInactive();
+  void TransitionToRoaming();
+  void TransitionToLookingAtPossibleObject();
+  void TransitionToExaminingFoundObject();
+
   static const char* DestinationToString(const Destination& dest);
   
-  // How fast to rotate when looking around
-  constexpr static f32 kDegreesRotatePerSec = 25;
-  // The default radius (in mm) we assume exists for us to move around in
-  constexpr static f32 kDefaultSafeRadius = 150;
-  // How far back (at most) to move the center when we encounter a cliff
-  constexpr static f32 kMaxCliffShiftDist = 100.0f;
-  // Number of destinations we want to reach before resting for a bit (needs to be at least 2)
-  constexpr static u32 kDestinationsToReach = 6;
-  // How far back from a possible object to observe it (at most)
-  constexpr static f32 kMaxObservationDistanceSq_mm = SQUARE(200.0f);
-  // If the possible block is too far, this is the distance to view it from
-  constexpr static f32 kPossibleObjectViewingDist_mm = 100.0f;
-  // How long to wait to try to see a possible object (might do this 3 times)
-  constexpr static f32 kPossibleObjectWaitTime_s = 0.5f;
-  
-  State _currentState = State::Inactive;
-  Destination _currentDestination = Destination::North;
-
-  // note that this is reset when the robot is put down, so no need to worry about origins
-  Pose3d _moveAreaCenter;
-  f32 _safeRadius = kDefaultSafeRadius;
-  u32 _currentDriveActionID = 0;
-  u32 _numDestinationsLeft = kDestinationsToReach;
-  f32 _lookAroundHeadAngle_rads = DEG_TO_RAD(-5);
-
-  bool _shouldHandleConfirmedObjectOverved;
-  bool _shouldHandlePossibleObjectOverved;
-  
-  std::set<ObjectID> _recentObjects;
-  std::set<ObjectID> _oldBoringObjects;
-  Pose3d _lastPossibleObjectPose;
-  
   Pose3d GetDestinationPose(Destination destination);
-  void ResetBehavior();
   Destination GetNextDestination(Destination current);
 
   void ResetSafeRegion();

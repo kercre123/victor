@@ -40,11 +40,21 @@ const char* FreeplayDataTracker::FreeplayPauseFlagToString(FreeplayPauseFlag fla
 }
 
 FreeplayDataTracker::FreeplayDataTracker()
+: IDependencyManagedComponent<AIComponentID>(this, AIComponentID::FreeplayDataTracker)
 {
   _timeToSendData_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kUpdatePeriod_s;
 }
 
-void FreeplayDataTracker::Update()
+void FreeplayDataTracker::InitDependent(Cozmo::Robot* robot, const AICompMap& dependentComps)
+{ 
+  // Toggle flag to "start" the tracking process - legacy assumption that freeeplay is not
+  // active on app start - full fix requires a deeper update to the data tracking system
+  // that is outside of scope for this PR but should be addressed in VIC-626
+  SetFreeplayPauseFlag(true, FreeplayPauseFlag::OffTreads);
+  SetFreeplayPauseFlag(false, FreeplayPauseFlag::OffTreads);
+}
+
+void FreeplayDataTracker::UpdateDependent(const AICompMap& dependentComps)
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if( currTime_s >= _timeToSendData_s ) {

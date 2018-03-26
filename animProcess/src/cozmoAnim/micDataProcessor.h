@@ -16,15 +16,18 @@
 
 #include "svad.h"
 
-#include "cozmoAnim/micDataTypes.h"
+#include "micDataTypes.h"
 #include "coretech/common/shared/types.h"
+#include "audioUtil/audioDataTypes.h"
 #include "util/container/fixedCircularBuffer.h"
 #include "util/global/globalDefinitions.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 
 #include <array>
+#include <condition_variable>
 #include <cstdint>
+#include <deque>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -64,11 +67,15 @@ public:
   void SetForceRecordClip(bool newValue) { _forceRecordClip = newValue; }
 #endif
 
+  void ResetMicListenDirection();
+
 private:
   std::string _writeLocationDir = "";
   // Members for caching off lookup indices for mic processing results
   int _bestSearchBeamIndex = 0;
   int _bestSearchBeamConfidence = 0;
+  int _selectedSearchBeamIndex = 0;
+  int _selectedSearchBeamConfidence = 0;
   int _searchConfidenceState = 0;
 
   // Members for the the mic processing/recording/streaming jobs
@@ -76,6 +83,10 @@ private:
   std::shared_ptr<MicDataInfo> _currentStreamingJob;
   std::recursive_mutex _dataRecordJobMutex;
   bool _currentlyStreaming = false;
+#if ANKI_DEV_CHEATS
+  bool _fakeStreamingState = false;
+#endif
+  size_t _streamingAudioIndex = 0;
 
   // Members for general purpose processing and state
   std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> _inProcessAudioBlock;
@@ -85,11 +96,11 @@ private:
   std::unique_ptr<MicImmediateDirection> _micImmediateDirection;
   std::unique_ptr<SVadConfig_t> _sVadConfig;
   std::unique_ptr<SVadObject_t> _sVadObject;
+  uint32_t _vadCountdown = 0;
 #if ANKI_DEV_CHEATS
   bool _forceRecordClip = false;
 #endif
 
-  static constexpr uint32_t kRawAudioPerBuffer_ms = 2000;
   static constexpr uint32_t kRawAudioBufferSize = kRawAudioPerBuffer_ms / kTimePerChunk_ms;
   float _rawAudioBufferFullness[2] = { 0.f, 0.f };
   // We have 2 fixed buffers for incoming raw audio that we alternate between, so that the processing thread can work
@@ -98,6 +109,7 @@ private:
   // Index of the buffer that is currently being used by the processing thread
   uint32_t _rawAudioProcessingIndex = 0;
   std::thread _processThread;
+  std::thread _processTriggerThread;
   std::mutex _rawMicDataMutex;
   bool _processThreadStop = false;
   bool _robotWasMoving = false;
@@ -107,20 +119,28 @@ private:
   std::mutex _fftResultMutex;
 
   // Internal buffer used to add to the streaming audio once a trigger is detected
-  static constexpr uint32_t kImmediateBufferSize = kTriggerOverlapSize_ms / (kChunksPerSEBlock * kTimePerChunk_ms);
+  static constexpr uint32_t kImmediateBufferSize = kTriggerOverlapSize_ms / kTimePerSEBlock_ms;
   struct TimedMicData {
     std::array<AudioUtil::AudioSample, kSamplesPerBlock> audioBlock;
     TimeStamp_t timestamp;
   };
   Util::FixedCircularBuffer<TimedMicData, kImmediateBufferSize> _immediateAudioBuffer;
+  std::mutex _procAudioXferMutex;
+  std::condition_variable _dataReadyCondition;
+  std::condition_variable _xferAvailableCondition;
+  size_t _procAudioRawComplete = 0;
+  size_t _procAudioXferCount = 0;
 
   // Members for holding outgoing messages
   std::vector<std::unique_ptr<RobotInterface::RobotToEngine>> _msgsToEngine;
   std::mutex _msgsMutex;
 
+  // Mutex for different accessing signal essence software
+  std::mutex _seInteractMutex;
+
   void InitVAD();
   void TriggerWordDetectCallback(const char* resultFound, float score);
-  bool ProcessRawAudio(TimeStamp_t timestamp,
+  void ProcessRawAudio(TimeStamp_t timestamp,
                        const AudioUtil::AudioSample* audioChunk,
                        uint32_t robotStatus,
                        float robotAngle);
@@ -130,7 +150,8 @@ private:
                                         uint32_t robotStatus,
                                         float robotAngle);
 
-  void ProcessLoop();
+  void ProcessRawLoop();
+  void ProcessTriggerLoop();
   void ClearCurrentStreamingJob();
   float GetIncomingMicDataPercentUsed();
 };

@@ -23,6 +23,7 @@ enum uint_8 FaceEnrollmentResult
     SaveFailed,
     Incomplete,
     Cancelled,
+    NameInUse,
     UnknownFailure
 }
 

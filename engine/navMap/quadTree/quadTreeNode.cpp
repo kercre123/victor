@@ -22,6 +22,7 @@
 
 #include <unordered_map>
 #include <limits>
+#include <algorithm>
 
 namespace Anki {
 namespace Cozmo {
@@ -47,47 +48,58 @@ QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t leve
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 QuadTreeNode::AxisAlignedQuad::AxisAlignedQuad(const Point2f& p, const Point2f& q)
-: lowerLeft(  Point2f(fmin(p.x(), q.x()), fmin(p.y(), q.y())) )
-, lowerRight( Point2f(fmax(p.x(), q.x()), fmin(p.y(), q.y())) )
-, upperLeft(  Point2f(fmin(p.x(), q.x()), fmax(p.y(), q.y())) )
-, upperRight( Point2f(fmax(p.x(), q.x()), fmax(p.y(), q.y())) )
-, diagonals{{ 
-    LineSegment( lowerLeft, upperRight), 
-    LineSegment( Point2f(fmax(p.x(), q.x()), fmin(p.y(), q.y())), Point2f(fmin(p.x(), q.x()), fmax(p.y(), q.y())) ),
-  }} {} 
+: corners{{ 
+    Point2f(fmin(p.x(), q.x()), fmin(p.y(), q.y())),
+    Point2f(fmin(p.x(), q.x()), fmax(p.y(), q.y())),
+    Point2f(fmax(p.x(), q.x()), fmax(p.y(), q.y())),
+    Point2f(fmax(p.x(), q.x()), fmin(p.y(), q.y())) }} {}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTreeNode::AxisAlignedQuad::Contains(const Point2f& p) const
 {
-  return FLT_GE(p.x(), lowerLeft.x()) && FLT_LE(p.x(), upperRight.x()) && 
-         FLT_GE(p.y(), lowerLeft.y()) && FLT_LE(p.y(), upperRight.y());
+  return FLT_GE(p.x(), GetLowerLeft().x()) && FLT_LE(p.x(), GetUpperRight().x()) && 
+         FLT_GE(p.y(), GetLowerLeft().y()) && FLT_LE(p.y(), GetUpperRight().y());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::ResetBoundingBox()
+bool QuadTreeNode::AxisAlignedQuad::InHalfPlane(const Halfplane2f& H) const
 {
-  Point3f offset(_sideLen/2, _sideLen/2, 0);
-  _boundingBox = AxisAlignedQuad(_center - offset, _center + offset );
+  return std::all_of(corners.begin(), corners.end(), [&H](const Point2f& p) { return H.Contains(p); }); 
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool QuadTreeNode::AxisAlignedQuad::InNegativeHalfPlane(const Line2f& l) const
+{
+  return std::all_of(corners.begin(), corners.end(), [&l](const Point2f& p) { return FLT_LT(l.Evaluate(p), 0.f); }); 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTreeNode::Contains(const FastPolygon& poly) const
 {
-  for (const auto& pt : poly.GetSimplePolygon()) 
-  {
-    if (!_boundingBox.Contains(pt)) return false;
-  }
-  return true;
+  // return true if all of the vertices of poly are contained by the bounding box
+  return std::all_of(poly.begin(), poly.end(),[&](auto& p) {return _boundingBox.Contains(p);});
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::IsContainedBy(const FastPolygon& poly) const
+bool QuadTreeNode::IsContainedBy(const ConvexPointSet2f& set) const
 {
-  if (!poly.Contains(_boundingBox.lowerLeft))  { return false; }
-  if (!poly.Contains(_boundingBox.lowerRight)) { return false; }
-  if (!poly.Contains(_boundingBox.upperLeft))  { return false; }
-  if (!poly.Contains(_boundingBox.upperRight)) { return false; }
-  return true;
+  return std::all_of(_boundingBox.corners.begin(), _boundingBox.corners.end(),[&](auto& p) {return set.Contains(p);});
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool QuadTreeNode::Intersects(const FastPolygon& poly) const
+{
+  // check if any of the bounding box edges create a separating axis
+  if ( poly.GetMinX() > _boundingBox.GetUpperRight().x() ) { return false; }
+  if ( poly.GetMaxX() < _boundingBox.GetLowerLeft().x()  ) { return false; }
+  if ( poly.GetMinY() > _boundingBox.GetUpperRight().y() ) { return false; }
+  if ( poly.GetMaxY() < _boundingBox.GetLowerLeft().y()  ) { return false; }
+
+  // fastPolygon line segments define the halfplane boundary of points in the polygon.
+  // Therefore, we should check if the boundingBox is in the negative halfplane
+  // defined by FastPolygon edge segements
+  return std::none_of(poly.GetEdgeSegments().begin(), poly.GetEdgeSegments().end(), 
+                      [&](const auto& l) { return _boundingBox.InNegativeHalfPlane(l); });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -105,222 +117,6 @@ Quad2f QuadTreeNode::MakeQuadXY(const float padding_mm) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& processor)
-{
-  bool xPlusAxisReq  = false;
-  bool xMinusAxisReq = false;
-  bool yPlusAxisReq  = false;
-  bool yMinusAxisReq = false;
-  const float rootHalfLen = _sideLen * 0.5f;
-
-  // iterate every point and see what direction they need the root to shift towards
-  for( const Point2f& p : requiredPoints )
-  {
-    xPlusAxisReq  = xPlusAxisReq  || FLT_GE(p.x(), _center.x()+rootHalfLen);
-    xMinusAxisReq = xMinusAxisReq || FLT_LE(p.x(), _center.x()-rootHalfLen);
-    yPlusAxisReq  = yPlusAxisReq  || FLT_GE(p.y(), _center.y()+rootHalfLen);
-    yMinusAxisReq = yMinusAxisReq || FLT_LE(p.y(), _center.y()-rootHalfLen);
-  }
-  
-  // can't shift +x and -x at the same time
-  if ( xPlusAxisReq && xMinusAxisReq ) {
-    PRINT_NAMED_WARNING("QuadTreeNode.ShiftRoot.CantShiftPMx", "Current root size can't accomodate given points");
-    return false;
-  }
-
-  // can't shift +y and -y at the same time
-  if ( yPlusAxisReq && yMinusAxisReq ) {
-    PRINT_NAMED_WARNING("QuadTreeNode.ShiftRoot.CantShiftPMy", "Current root size can't accomodate given points");
-    return false;
-  }
-
-  // cache which axes we shift in
-  const bool xShift = xPlusAxisReq || xMinusAxisReq;
-  const bool yShift = yPlusAxisReq || yMinusAxisReq;
-  if ( !xShift && !yShift ) {
-    // this means all points are contained in this node, we shouldn't be here
-    PRINT_NAMED_ERROR("QuadTreeNode.ShiftRoot.AllPointsIn", "We don't need to shift");
-    return false;
-  }
-
-  // the new center will be shifted in one or both axes, depending on xyIncrease
-  // for example, if we left the root through the right, only the right side will expand, and the left will collapse,
-  // but top and bottom will remain the same
-  _center.x() = _center.x() + (xShift ? (xPlusAxisReq ? rootHalfLen : -rootHalfLen) : 0.0f);
-  _center.y() = _center.y() + (yShift ? (yPlusAxisReq ? rootHalfLen : -rootHalfLen) : 0.0f);
-  ResetBoundingBox();
-  
-  // if the root has children, update them, otherwise no further changes are necessary
-  if ( !_childrenPtr.empty() )
-  {
-    // save my old children so that we can swap them with the new ones
-    std::vector< std::unique_ptr<QuadTreeNode> > oldChildren;
-    std::swap(oldChildren, _childrenPtr);
-    
-    // create new children
-    const float chHalfLen = rootHalfLen*0.5f;
-      
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopLeft , this) ); // up L
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopRight, this) ); // up R
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotLeft , this) ); // lo L
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotRight, this) ); // lo R
-
-    // typedef to cast quadrant enum to the underlaying type (that can be assigned to size_t)
-    using Q2N = std::underlying_type<EQuadrant>::type; // Q2N stands for "Quadrant To Number", it makes code below easier to read
-    static_assert( sizeof(Q2N) < sizeof(size_t), "UnderlyingTypeIsBiggerThanSizeType");
-    
-    /* 
-      Example of shift along both axes +x,+y
-    
-                      ^                                           ^ +y
-                      | +y                                        |---- ----
-                                                                  |    | TL |
-                  ---- ----                                        ---- ----
-        -x       | BL | TL |     +x               -x              | BR |    |  +x
-       < ---      ---- ----      --->              < ---           ---- ----  --->
-                 | BR | TR |
-                  ---- ----
-     
-                      | -y                                        | -y
-                      v                                           v
-     
-       Since the root can't expand anymore, we move it in the direction we would want to expand. Note in the example
-       how TopLeft becomes BottomRight in the new root. We want to preserve the children of that direct child (old TL), but
-       we need to hook them to a different child (new BR). That's essentially what the rest of this method does.
-     
-    */
-    
-    // this content is set to the children that don't inherit old children
-    
-    // calculate which children are brought over from the old ones
-    if ( xShift && yShift )
-    {
-      // double move, only one child is preserved, which is the one in the same direction top the expansion one
-      if ( xPlusAxisReq ) {
-        if ( yPlusAxisReq ) {
-          // we are moving along +x +y axes, top left becomes bottom right of the new root
-          _childrenPtr[(Q2N)EQuadrant::BotRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopLeft].get(), processor);
-        } else {
-          // we are moving along +x -y axes, top right becomes bottom left of the new root
-          _childrenPtr[(Q2N)EQuadrant::BotLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopRight].get(), processor);
-        }
-      }
-      else
-      {
-        if ( yPlusAxisReq ) {
-          // we are moving along -x +y axes, bottom left becomes top right of the new root
-          _childrenPtr[(Q2N)EQuadrant::TopRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotLeft].get(), processor);
-        } else {
-          // we are moving along -x -y axes, bottom right becomes top left of the new root
-          _childrenPtr[(Q2N)EQuadrant::TopLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotRight].get(), processor);
-        }
-      }
-    }
-    else if ( xShift )
-    {
-      // move only in one axis, two children are preserved, top or bottom
-      if ( xPlusAxisReq )
-      {
-        // we are moving along +x axis, top children are preserved, but they become the bottom ones
-        _childrenPtr[(Q2N)EQuadrant::BotLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopLeft].get(), processor );
-        _childrenPtr[(Q2N)EQuadrant::BotRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopRight].get(), processor);
-      }
-      else
-      {
-        // we are moving along -x axis, bottom children are preserved, but they become the top ones
-        _childrenPtr[(Q2N)EQuadrant::TopLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotLeft].get(), processor);
-        _childrenPtr[(Q2N)EQuadrant::TopRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotRight].get(), processor);
-      }
-    }
-    else if ( yShift )
-    {
-      // move only in one axis, two children are preserved, left or right
-      if ( yPlusAxisReq )
-      {
-        // we are moving along +y axis, left children are preserved, but they become the right ones
-        _childrenPtr[(Q2N)EQuadrant::TopRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopLeft].get(), processor);
-        _childrenPtr[(Q2N)EQuadrant::BotRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotLeft].get(), processor);
-      }
-      else
-      {
-        // we are moving along -y axis, right children are preserved, but they become the left ones
-        _childrenPtr[(Q2N)EQuadrant::TopLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopRight].get(), processor);
-        _childrenPtr[(Q2N)EQuadrant::BotLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotRight].get(), processor);
-      }
-    }
-    
-    // destroy the nodes that are going away because we shifted away from them
-    DestroyNodes(oldChildren, processor);
-  }
-  
-  // log
-  PRINT_CH_INFO("QuadTree", "QuadTree.ShiftRoot", "Root level is still %u, root shifted. Allowing %.2fm", _level, MM_TO_M(_sideLen));
-  
-  // successful shift
-  return true;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLevel, QuadTreeProcessor& processor)
-{
-  DEV_ASSERT(!NEAR_ZERO(direction.x()) || !NEAR_ZERO(direction.y()),
-             "QuadTreeNode.UpgradeRootLevel.InvalidDirection");
-  
-  // reached expansion limit
-  if ( _level == std::numeric_limits<uint8_t>::max() || _level >= maxRootLevel) {
-    return false;
-  }
-
-  // save my old children to store in the child that is taking my spot
-  std::vector< std::unique_ptr<QuadTreeNode> > oldChildren;
-  std::swap(oldChildren, _childrenPtr);
-
-  const bool xPlus = FLT_GE_ZERO(direction.x());
-  const bool yPlus = FLT_GE_ZERO(direction.y());
-  
-  // move to its new center
-  const float oldHalfLen = _sideLen * 0.50f;
-  _center.x() = _center.x() + (xPlus ? oldHalfLen : -oldHalfLen);
-  _center.y() = _center.y() + (yPlus ? oldHalfLen : -oldHalfLen);
-
-  // create new children
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopLeft , this) ); // up L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopRight, this) ); // up R
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotLeft , this) ); // lo L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotRight, this) ); // lo R
-
-  // calculate the child that takes my place by using the opposite direction to expansion
-  size_t childIdx = 0;
-  if      ( !xPlus &&  yPlus ) { childIdx = 1; }
-  else if (  xPlus && !yPlus ) { childIdx = 2; }
-  else if (  xPlus &&  yPlus ) { childIdx = 3; }
-  QuadTreeNode& childTakingMyPlace = *_childrenPtr[childIdx];
-  
-  
-  // set the new parent in my old children
-  for ( auto& childPtr : oldChildren ) {
-    childPtr->ChangeParent( &childTakingMyPlace );
-  }
-  
-  // swap children with the temp
-  std::swap(childTakingMyPlace._childrenPtr, oldChildren);
-
-  // set the content type I had in the child that takes my place, then reset my content
-  childTakingMyPlace.ForceSetDetectedContentType( _content.data, processor );
-  ForceSetDetectedContentType(MemoryMapDataPtr(), processor);
-  
-  // upgrade my remaining stats
-  _sideLen = _sideLen * 2.0f;
-  ++_level;
-  ResetBoundingBox();
-
-  // log
-  PRINT_CH_INFO("QuadTree", "QuadTree.UpdgradeRootLevel", "Root expanded to level %u. Allowing %.2fm", _level, MM_TO_M(_sideLen));
-  
-  return true;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
 {
   DEV_ASSERT(CanSubdivide() && !IsSubdivided(), "QuadTreeNode.Subdivide.InvalidSubdivide");
@@ -329,10 +125,10 @@ void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
   const float quarterLen = halfLen * 0.50f;
   const uint8_t cLevel = _level-1;
 
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopLeft , this) ); // up L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopRight, this) ); // up R
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotLeft , this) ); // lo L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotRight, this) ); // lo E
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::PlusXPlusY , this) ); // up L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::PlusXMinusY, this) ); // up R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::MinusXPlusY , this) ); // lo L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::MinusXMinusY, this) ); // lo E
 
   // our children may change later on, but until they do, assume they have our old content
   for ( auto& childPtr : _childrenPtr )
@@ -453,31 +249,31 @@ const QuadTreeNode::MoveInfo* QuadTreeNode::GetDestination(EQuadrant from, EDire
   static MoveInfo quadrantAndDirection[4][4] =
   {
     {
-    /*quadrantAndDirection[EQuadrant::TopLeft][EDirection::North]  =*/ {EQuadrant::BotLeft , false},
-    /*quadrantAndDirection[EQuadrant::TopLeft][EDirection::East ]  =*/ {EQuadrant::TopRight, true },
-    /*quadrantAndDirection[EQuadrant::TopLeft][EDirection::South]  =*/ {EQuadrant::BotLeft , true },
-    /*quadrantAndDirection[EQuadrant::TopLeft][EDirection::West ]  =*/ {EQuadrant::TopRight, false}
+    /*quadrantAndDirection[EQuadrant::PlusXPlusY][EDirection::North]  =*/ {EQuadrant::MinusXPlusY , false},
+    /*quadrantAndDirection[EQuadrant::PlusXPlusY][EDirection::East ]  =*/ {EQuadrant::PlusXMinusY, true },
+    /*quadrantAndDirection[EQuadrant::PlusXPlusY][EDirection::South]  =*/ {EQuadrant::MinusXPlusY , true },
+    /*quadrantAndDirection[EQuadrant::PlusXPlusY][EDirection::West ]  =*/ {EQuadrant::PlusXMinusY, false}
     },
 
     {
-    /*quadrantAndDirection[EQuadrant::TopRight][EDirection::North] =*/ {EQuadrant::BotRight, false},
-    /*quadrantAndDirection[EQuadrant::TopRight][EDirection::East ] =*/ {EQuadrant::TopLeft , false},
-    /*quadrantAndDirection[EQuadrant::TopRight][EDirection::South] =*/ {EQuadrant::BotRight, true},
-    /*quadrantAndDirection[EQuadrant::TopRight][EDirection::West ] =*/ {EQuadrant::TopLeft , true}
+    /*quadrantAndDirection[EQuadrant::PlusXMinusY][EDirection::North] =*/ {EQuadrant::MinusXMinusY, false},
+    /*quadrantAndDirection[EQuadrant::PlusXMinusY][EDirection::East ] =*/ {EQuadrant::PlusXPlusY , false},
+    /*quadrantAndDirection[EQuadrant::PlusXMinusY][EDirection::South] =*/ {EQuadrant::MinusXMinusY, true},
+    /*quadrantAndDirection[EQuadrant::PlusXMinusY][EDirection::West ] =*/ {EQuadrant::PlusXPlusY , true}
     },
 
     {
-    /*quadrantAndDirection[EQuadrant::BotLeft][EDirection::North]  =*/ {EQuadrant::TopLeft , true},
-    /*quadrantAndDirection[EQuadrant::BotLeft][EDirection::East ]  =*/ {EQuadrant::BotRight, true},
-    /*quadrantAndDirection[EQuadrant::BotLeft][EDirection::South]  =*/ {EQuadrant::TopLeft , false},
-    /*quadrantAndDirection[EQuadrant::BotLeft][EDirection::West ]  =*/ {EQuadrant::BotRight, false}
+    /*quadrantAndDirection[EQuadrant::MinusXPlusY][EDirection::North]  =*/ {EQuadrant::PlusXPlusY , true},
+    /*quadrantAndDirection[EQuadrant::MinusXPlusY][EDirection::East ]  =*/ {EQuadrant::MinusXMinusY, true},
+    /*quadrantAndDirection[EQuadrant::MinusXPlusY][EDirection::South]  =*/ {EQuadrant::PlusXPlusY , false},
+    /*quadrantAndDirection[EQuadrant::MinusXPlusY][EDirection::West ]  =*/ {EQuadrant::MinusXMinusY, false}
     },
 
     {
-    /*quadrantAndDirection[EQuadrant::BotRight][EDirection::North] =*/ {EQuadrant::TopRight, true},
-    /*quadrantAndDirection[EQuadrant::BotRight][EDirection::East ] =*/ {EQuadrant::BotLeft , false},
-    /*quadrantAndDirection[EQuadrant::BotRight][EDirection::South] =*/ {EQuadrant::TopRight, false},
-    /*quadrantAndDirection[EQuadrant::BotRight][EDirection::West ] =*/ {EQuadrant::BotLeft , true}
+    /*quadrantAndDirection[EQuadrant::MinusXMinusY][EDirection::North] =*/ {EQuadrant::PlusXMinusY, true},
+    /*quadrantAndDirection[EQuadrant::MinusXMinusY][EDirection::East ] =*/ {EQuadrant::MinusXPlusY , false},
+    /*quadrantAndDirection[EQuadrant::MinusXMinusY][EDirection::South] =*/ {EQuadrant::PlusXMinusY, false},
+    /*quadrantAndDirection[EQuadrant::MinusXMinusY][EDirection::West ] =*/ {EQuadrant::MinusXPlusY , true}
     }
   };
   
@@ -516,26 +312,26 @@ void QuadTreeNode::AddSmallestDescendants(EDirection direction, EClockDirection 
     switch (direction) {
       case EDirection::North:
       {
-        firstChild  = isCW ? EQuadrant::TopLeft  : EQuadrant::TopRight;
-        secondChild = isCW ? EQuadrant::TopRight : EQuadrant::TopLeft;
+        firstChild  = isCW ? EQuadrant::PlusXPlusY  : EQuadrant::PlusXMinusY;
+        secondChild = isCW ? EQuadrant::PlusXMinusY : EQuadrant::PlusXPlusY;
       }
       break;
       case EDirection::East:
       {
-        firstChild  = isCW ? EQuadrant::TopRight : EQuadrant::BotRight;
-        secondChild = isCW ? EQuadrant::BotRight : EQuadrant::TopRight;
+        firstChild  = isCW ? EQuadrant::PlusXMinusY : EQuadrant::MinusXMinusY;
+        secondChild = isCW ? EQuadrant::MinusXMinusY : EQuadrant::PlusXMinusY;
       }
       break;
       case EDirection::South:
       {
-        firstChild  = isCW ? EQuadrant::BotRight : EQuadrant::BotLeft;
-        secondChild = isCW ? EQuadrant::BotLeft  : EQuadrant::BotRight;
+        firstChild  = isCW ? EQuadrant::MinusXMinusY : EQuadrant::MinusXPlusY;
+        secondChild = isCW ? EQuadrant::MinusXPlusY  : EQuadrant::MinusXMinusY;
       }
       break;
       case EDirection::West:
       {
-        firstChild  = isCW ? EQuadrant::BotLeft : EQuadrant::TopLeft;
-        secondChild = isCW ? EQuadrant::TopLeft : EQuadrant::BotLeft;
+        firstChild  = isCW ? EQuadrant::MinusXPlusY : EQuadrant::PlusXPlusY;
+        secondChild = isCW ? EQuadrant::PlusXPlusY : EQuadrant::MinusXPlusY;
       }
       break;
       case EDirection::Invalid:
@@ -601,56 +397,8 @@ void QuadTreeNode::AddSmallestNeighbors(EDirection direction,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTreeNode::ESetOverlap QuadTreeNode::GetOverlapType(const FastPolygon& poly) const
-{  
-  bool containsOne = false;
-  bool containsAll = true;
-  
-  for (const auto& pt : poly.GetSimplePolygon()) 
-  {
-    bool containsThis = _boundingBox.Contains(pt); 
-    containsOne |= containsThis;
-    containsAll &= containsThis;
-
-    // exit early if we know the only case is the two sets are itersecting
-    if ( containsOne && !containsAll ) 
-    {
-      return ESetOverlap::Intersecting;
-    }
-  }
-
-  // all of the poly points are fully contained within the current node
-  if (containsAll)
-  {
-    return ESetOverlap::SubsetOf;
-  }
-  
-  size_t numVerticies = poly.Size();
-  if (numVerticies > 1) // skip for point inserts
-  {
-    // check all edges of the polygon
-    for (const auto& diag : _boundingBox.diagonals)
-    {
-      for (const auto& curLine : poly.GetEdgeSegments())
-      {
-        if (curLine.IntersectsWith(diag)) 
-        {
-          return ESetOverlap::Intersecting;
-        }
-      }
-    }
-    
-    // there are no line intersections and none of the poly points are in the quad. Therefor, if at least one of
-    // the quad points is contained in the poly, then all points of the quad are in the poly.
-    bool containsAnyAndAll = poly.Contains( _boundingBox.lowerLeft );
-    if ( containsAnyAndAll ) 
-    {
-      return ESetOverlap::SupersetOf;
-    }  
-  }
-
-  return ESetOverlap::Disjoint;
-}
+// Fold Implementations
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::Fold(FoldFunctor accumulator, FoldDirection dir)
@@ -666,22 +414,6 @@ void QuadTreeNode::Fold(FoldFunctor accumulator, FoldDirection dir)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::Fold(FoldFunctor accumulator, const FastPolygon& region, FoldDirection dir)
-{
-  if ( ESetOverlap::Disjoint != GetOverlapType(region) )
-  {    
-    if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
-    
-    for ( auto& cPtr : _childrenPtr )
-    {
-      cPtr->Fold(accumulator, region, dir);
-    }
-    
-    if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::Fold(FoldFunctorConst accumulator, FoldDirection dir) const
 { 
   if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
@@ -690,28 +422,10 @@ void QuadTreeNode::Fold(FoldFunctorConst accumulator, FoldDirection dir) const
   {
     // disambiguate const method call
     const QuadTreeNode* constPtr = cPtr.get();
-    if (constPtr) { constPtr->Fold(accumulator, dir); }
+    constPtr->Fold(accumulator, dir);
   }
   
   if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::Fold(FoldFunctorConst accumulator, const FastPolygon& region, FoldDirection dir) const
-{
-  if ( ESetOverlap::Disjoint != GetOverlapType(region) )
-  {    
-    if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
-
-    for ( const auto& cPtr : _childrenPtr )
-    {
-      // disambiguate const method call
-      const QuadTreeNode* constPtr = cPtr.get();
-      if (constPtr) { constPtr->Fold(accumulator, region, dir); }
-    }
-    
-    if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
-  }
 }
 
 } // namespace Cozmo

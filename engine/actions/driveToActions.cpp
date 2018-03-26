@@ -19,7 +19,7 @@
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
@@ -95,7 +95,7 @@ namespace Anki {
     
     DriveToObjectAction::~DriveToObjectAction()
     {
-      if(_lightsSet)
+      if(HasRobot() && _lightsSet)
       {
         PRINT_CH_INFO("Actions", "DriveToObjectAction.UnsetInteracting", "%s[%d] Unsetting interacting object to %d",
                       GetName().c_str(), GetTag(),
@@ -660,7 +660,7 @@ namespace Anki {
 
     void DriveToPoseAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
     {
-      requests.insert({ VisionMode::DetectingMarkers , EVisionUpdateFrequency::High });
+      requests.insert({ VisionMode::DetectingMarkers , EVisionUpdateFrequency::Low });
     }
 
     f32 DriveToPoseAction::GetTimeoutInSeconds() const { return kDriveToPoseTimeout; }  

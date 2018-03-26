@@ -26,6 +26,7 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/engine/image.h"
+#include "micDataTypes.h"
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleSystem.h"
 #include "util/fileUtils/fileUtils.h"
@@ -380,7 +381,7 @@ void FaceInfoScreenManager::DrawConfidenceClock(
   // of these default values change the server gets them too
 
   const auto& confList = micData.confidenceList;
-  const auto& winningIndex = micData.direction;
+  const auto& winningIndex = micData.selectedDirection;
   auto maxCurConf = (float)micData.confidence;
   for (int i=0; i<12; ++i)
   {
@@ -406,7 +407,7 @@ void FaceInfoScreenManager::DrawConfidenceClock(
   }
 
   // pre-calc the delay time as well for use in both web server and face debug ...
-  const auto maxDelayTime_ms = 2000.f * 2.f;
+  const auto maxDelayTime_ms = (float) MicData::kRawAudioPerBuffer_ms;
   const auto delayTime_ms = (int) (maxDelayTime_ms * bufferFullPercent);
 
 
@@ -844,6 +845,10 @@ void FaceInfoScreenManager::DrawMain()
   const std::string osVer    = "OS: "   + osstate->GetOSBuildVersion() + (FACTORY_TEST ? " (V3)" : "");
   const std::string ssid     = "SSID: " + osstate->GetSSID(true);
 
+#if ANKI_DEV_CHEATS
+  const std::string sha      = "SHA: "  + osstate->GetBuildSha(); 
+ #endif
+  
   std::string ip             = osstate->GetIPAddress();
   if (ip.empty()) {
     ip = "XXX.XXX.XXX.XXX";
@@ -854,7 +859,10 @@ void FaceInfoScreenManager::DrawMain()
   ColoredTextLines lines = { {serialNo}, 
                              {osVer}, 
                              {ssid}, 
-                             { {"IP: "}, {ip, (hasInternet ? NamedColors::GREEN : NamedColors::RED)} }
+                             { {"IP: "}, {ip, (hasInternet ? NamedColors::GREEN : NamedColors::RED)} },
+#if ANKI_DEV_CHEATS
+			     {sha},
+#endif
                            };
    
   DrawTextOnScreen(lines);

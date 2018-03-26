@@ -10,7 +10,7 @@
         "repo_names": {
             "anki-thirdparty": {
                 "branch": "branches/victor",
-                "version": "153"
+                "version": "155"
             },
             "victor-animation-assets": {
                 "additional_files": [
@@ -27,11 +27,11 @@
                     "animationGroups",
                     "faceAnimations"
                 ],
-                "version": "2645"
+                "version": "2780"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "17"
+                "version": "25"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"
@@ -42,7 +42,7 @@
                 "build_type_id": "Cte_Master",
                 "extension": "tar.gz",
                 "package_name": "Cte",
-                "version": "186"
+                "version": "187"
             }
         },
         "default_usr": "puller_cozmo",

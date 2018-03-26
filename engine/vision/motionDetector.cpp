@@ -563,6 +563,7 @@ Result MotionDetector::DetectHelper(const ImageType &image,
   if(headSame && poseSame &&
      HavePrevImage<ImageType>() &&
      !crntPoseData.histState.WasCameraMoving() &&
+     !crntPoseData.histState.WasPickedUp() &&
      longEnoughSinceLastMotion)
   {
     // Save timestamp and prepare the msg

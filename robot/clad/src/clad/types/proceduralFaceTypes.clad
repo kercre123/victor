@@ -35,6 +35,7 @@ enum uint_8 ProceduralEyeParameter {
     GlowSize,         // 0 for no glow, 1 for glow width/height equal to half eye width/height (-1 to leave as is)
     HotSpotCenterX,   // Center of the hotspot ("pupil") relative to center...
     HotSpotCenterY,   // ... specified as a fraction of the current eye width/height [-1,+1]
+    GlowLightness,    // [0,1] 0 for no glow, 1 for full brightness
     NumParameters
 }
 
@@ -47,8 +48,8 @@ structure ProceduralFaceParameters {
     float_32 scanlineOpacity,      // Use -1 to use current
 
     // Vector of values for each ProceduralEyeParameter for each eye:
-    float_32 leftEye[24],          // NOTE: Must match NumParameters above
-    float_32 rightEye[24]          //   "
+    float_32 leftEye[25],          // NOTE: Must match NumParameters above
+    float_32 rightEye[25]          //   "
 }
 
 } // namespace Cozmo

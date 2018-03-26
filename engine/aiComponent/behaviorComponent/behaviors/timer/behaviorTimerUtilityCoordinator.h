@@ -15,7 +15,6 @@
 #define __Engine_Behaviors_BehaviorTimerUtilityCoordinator_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "clad/types/behaviorComponent/userIntent.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -24,6 +23,7 @@ namespace Cozmo {
 class BehaviorProceduralClock;
 class BehaviorAnimGetInLoop;
 class TimerUtility;
+class UserIntent;
 // Specified in .cpp
 class AnticTracker;
 
@@ -34,6 +34,11 @@ public:
 
   bool IsTimerRinging();
 
+  #if ANKI_DEV_CHEATS
+  void DevSetForceAntic() { _lParams.shouldForceAntic = true; };
+
+  void DevAdvanceAnticBySeconds(int seconds);
+  #endif
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;  
@@ -43,7 +48,9 @@ protected:
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
     modifiers.behaviorAlwaysDelegates = true;
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
   }
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
@@ -54,27 +61,43 @@ private:
   struct InstanceParams{
     std::shared_ptr<BehaviorProceduralClock> setTimerBehavior;
     std::shared_ptr<BehaviorProceduralClock> timerAnticBehavior;
-    std::shared_ptr<BehaviorAnimGetInLoop> timerRingingBehavior;
-    std::unique_ptr<AnticTracker> anticTracker;
+    std::shared_ptr<BehaviorAnimGetInLoop>   timerRingingBehavior;
+    ICozmoBehaviorPtr                        timerAlreadySetBehavior;
+    ICozmoBehaviorPtr                        iCantDoThatBehavior;
+    ICozmoBehaviorPtr                        cancelTimerBehavior;
+    std::unique_ptr<AnticTracker>            anticTracker;
+    int                                      minValidTimer_s;
+    int                                      maxValidTimer_s;
   };
 
   struct LifetimeParams{
-    mutable bool timerSet = false;
-    std::unique_ptr<UserIntent> setTimerIntent = std::make_unique<UserIntent>();
+    LifetimeParams();
+    bool shouldForceAntic;
+    std::unique_ptr<UserIntent> setTimerIntent;
   };
 
   InstanceParams _iParams;
   LifetimeParams _lParams;
 
   bool TimerShouldRing() const;
-  const TimerUtility& GetTimerUtility() const;
+  TimerUtility& GetTimerUtility() const;
   
   void SetupTimerBehaviorFunctions() const;
 
   void TransitionToSetTimer();
   void TransitionToPlayAntic();
   void TransitionToRinging();
+  void TransitionToTimerAlreadySet();
+  void TransitionToNoTimerToCancel();
+  void TransitionToCancelTimer();
+  void TransitionToInvalidTimerRequest();
 
+
+  // Functions called by Update to check for transitions
+  void CheckShouldCancelRinging();
+  void CheckShouldSetTimer();
+  void CheckShouldCancelTimer();
+  void CheckShouldPlayAntic();
 };
 
 } // namespace Cozmo

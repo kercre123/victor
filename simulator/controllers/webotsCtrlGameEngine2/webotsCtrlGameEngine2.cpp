@@ -191,8 +191,7 @@ int main(int argc, char **argv)
   config[AnkiUtil::kP_NUM_SDK_DEVICES_TO_WAIT_FOR] = 1;
   
   // Set up the console vars to load from file, if it exists
-  ANKI_CONSOLE_SYSTEM_INIT("consoleVars.ini");
-  NativeAnkiUtilConsoleLoadVars();
+  ANKI_CONSOLE_SYSTEM_INIT("consoleVarsEngine.ini");
   
   // Initialize the API
   CozmoAPI myCozmo;

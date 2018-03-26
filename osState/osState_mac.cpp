@@ -15,6 +15,7 @@
 #include "osState/osState.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/logging/logging.h"
+#include "util/math/numericCast.h"
 
 #include <webots/Supervisor.hpp>
 
@@ -39,7 +40,7 @@ namespace {
   // Whether or not SetSupervisor() was called
   bool _supervisorIsSet = false;
   webots::Supervisor *_supervisor = nullptr;
-
+  
   RobotID_t _robotID = DEFAULT_ROBOT_ID;
 
   uint32_t _updatePeriod_ms = 0;
@@ -54,7 +55,7 @@ OSState::OSState()
     // Set RobotID
     const auto* robotIDField = _supervisor->getSelf()->getField("robotID");
     DEV_ASSERT(robotIDField != nullptr, "OSState.Ctor.MissingRobotIDField");
-    _robotID = robotIDField->getSFInt32();
+    _robotID = robotIDField->getSFInt32();    
   }
   
   // Set simulated attributes
@@ -62,6 +63,7 @@ OSState::OSState()
   _osBuildVersion = "12345";
   _ipAddress = "127.0.0.1";
   _ssid = "AnkiNetwork";
+  _buildSha = ANKI_BUILD_SHA;
 }
 
 OSState::~OSState()
@@ -108,7 +110,7 @@ uint32_t OSState::GetTemperature_C() const
   // on physical robot
   return 65;  
 }
-  
+
 const std::string& OSState::GetSerialNumberAsString()
 {
   return _serialNumString;
@@ -117,6 +119,11 @@ const std::string& OSState::GetSerialNumberAsString()
 const std::string& OSState::GetOSBuildVersion()
 {
   return _osBuildVersion;
+}
+  
+const std::string& OSState::GetBuildSha()
+{
+  return _buildSha;
 }
 
 std::string OSState::GetMACAddress() const

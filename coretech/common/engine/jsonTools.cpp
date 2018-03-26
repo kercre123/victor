@@ -330,7 +330,20 @@ __attribute__((used)) void PrintJsonError(const Json::Value& config, const std::
   };
   PrintJsonInternal(config, maxDepth, function);
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool HasUnexpectedKeys(const Json::Value& config, const std::vector<const char*>& expectedKeys, std::vector<std::string>& badKeys)
+{
+  for( const auto& key : config.getMemberNames() ) {
+    const auto it = std::find_if(expectedKeys.begin(), expectedKeys.end(), [&key](const char* c) {
+      return (key == c);
+    });
+    if( it == std::end(expectedKeys) ) {
+      badKeys.push_back( key );
+    }
+  }
+  return !badKeys.empty();
+}
 
 } // namespace JsonTools
 

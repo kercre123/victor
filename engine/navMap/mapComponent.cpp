@@ -39,7 +39,7 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/console/consoleInterface.h"
 
-// Giving this its own local define, in case we want to control it independently of DEV_CHEATS / SHIPPING, etc.
+// Giving this its own local define, in case we want to control it independently of DEV_CHEATS / NDEBUG, etc.
 #define ENABLE_DRAWING ANKI_DEV_CHEATS
 
 namespace Anki {
@@ -188,8 +188,9 @@ void MapComponent::HandleMessage(const ExternalInterface::SetMemoryMapBroadcastF
   _broadcastRate_sec = msg.frequency;
 };
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result MapComponent::Update()
+void MapComponent::UpdateDependent(const RobotCompMap& dependentComps)
 { 
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   if (currentNavMemoryMap)
@@ -230,7 +231,7 @@ Result MapComponent::Update()
     } 
   }
   
-  return RESULT_OK;
+  UpdateRobotPose();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -352,7 +353,7 @@ void MapComponent::UpdateRobotPose()
     // regular clear of obstacle
     InsertData(Poly2f(robotQuad), MemoryMapData(EContentType::ClearOfObstacle, currentTimestamp));
 		
-    _robot->GetAIComponent().GetWhiteboard().ProcessClearQuad(robotQuad);
+    _robot->GetAIComponent().GetComponent<AIWhiteboard>().ProcessClearQuad(robotQuad);
     // update las reported pose
     _reportedRobotPose = robotPoseWrtOrigin;
   }
@@ -1547,7 +1548,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
   // notify the whiteboard we just processed edge information from a frame
   const float closestPointDist_mm = std::isnan(closestPointDist_mm2) ?
     std::numeric_limits<float>::quiet_NaN() : sqrt(closestPointDist_mm2);
-  _robot->GetAIComponent().GetWhiteboard().SetLastEdgeInformation(frameInfo.timestamp, closestPointDist_mm);
+  _robot->GetAIComponent().GetComponent<AIWhiteboard>().SetLastEdgeInformation(frameInfo.timestamp, closestPointDist_mm);
   
   return RESULT_OK;
 }

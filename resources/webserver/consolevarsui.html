@@ -29,7 +29,8 @@
 
     $(function() {
         $("#main").accordion({
-            heightStyle: "content"
+            heightStyle: "content",
+            collapsible: true
         });
     });
 
@@ -78,6 +79,15 @@
                 value = this.value;
             selector.slider("value", value*scale);
             $.post("consolevarset", {key: selector.attr("id"), value: value}, function(result){});
+        })
+        // when list box is changed
+        $(".listbox").each(function() {
+            var selector = $("#" + this.id);
+            $(this).selectmenu({
+               change: function(event, data) {
+                   $.post("consolevarset", {key: selector.attr("id"), value: data.item.index}, function(result){});
+               }
+            });
         })
         // when function call button is clicked, get arguments from text box, and call function
         $(".function").click(function() {

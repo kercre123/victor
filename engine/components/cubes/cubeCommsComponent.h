@@ -30,15 +30,16 @@ namespace Cozmo {
 class Robot;
 template <typename Type>
 class AnkiEvent;
+struct CubeLightKeyframeChunk;
 struct CubeLights;
-struct ObjectAvailable;
-struct ObjectAccel;
-namespace BlockMessages {
-  class LightCubeMessage;
-}
+struct CubeLightSequence;
+class MessageCubeToEngine;
+class MessageEngineToCube;
+  
 namespace ExternalInterface {
   class MessageGameToEngine;
   class MessageEngineToGame;
+  struct ObjectAvailable;
 }
   
 class CubeCommsComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
@@ -51,18 +52,14 @@ public:
   // IDependencyManagedComponent functions
   //////
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
-  // Maintain the chain of initializations currently in robot - it might be possible to
-  // change the order of initialization down the line, but be sure to check for ripple effects
-  // when changing this function
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
-    dependencies.insert(RobotComponentID::CubeAccel);
+    dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
+  virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
   //////
   // end IDependencyManagedComponent functions
   //////
-
-  void Update();
   
   // Enter or leave discovery mode for the requested duration (uses default if none specified).
   // In discover mode, component will listen for advertising cubes and connect to the 'best' ones.
@@ -70,10 +67,7 @@ public:
   void EnableDiscovery(const bool enable = true, const float discoveryTime_sec = 0.f);
   
   // Interface for other components to send messages to light cubes by ActiveId
-  bool SendLightCubeMessage(const ActiveID& activeId, const BlockMessages::LightCubeMessage& lcm);
-
-  // Start/stop ObjectAccel message streaming from the specified cube
-  bool SetStreamObjectAccel(const ActiveID& activeId, const bool enable=true);
+  bool SendCubeMessage(const ActiveID& activeId, const MessageEngineToCube& msg);
   
   // Send CubeLights message to the specified cube
   bool SendCubeLights(const ActiveID& activeId, const CubeLights& cubeLights);
@@ -92,17 +86,27 @@ private:
   
   // Handles for grabbing GameToEngine messages
   std::vector<Signal::SmartHandle> _signalHandles;
-    
+  
+  // From the given CubeLights struct, generates a set of cube light messages
+  // to be sent over BLE to a cube.
+  void GenerateCubeLightMessages(const CubeLights& cubeLights,
+                                 CubeLightSequence& cubeLightSequence,
+                                 std::vector<CubeLightKeyframeChunk>& cubeLightKeyframeChunks);
+  
   // Handlers for messages from CubeBleClient:
   
   // Handler for ObjectAvailable advertisement message
-  void HandleObjectAvailable(const ObjectAvailable& msg);
+  void HandleObjectAvailable(const ExternalInterface::ObjectAvailable& msg);
   
   // Handler for messages from light cubes
-  void HandleLightCubeMessage(const BleFactoryId& factoryId, const BlockMessages::LightCubeMessage& lcm);
+  void HandleCubeMessage(const BleFactoryId& factoryId, const MessageCubeToEngine& msg);
   
   // Handler for when light cube BLE connection is established/unestablished
   void HandleConnectionStateChange(const BleFactoryId& factoryId, const bool connected);
+  
+  // Get the ActiveID to assign to the next object added to the available cubes
+  // list (just to make sure each object gets a unique ActiveID)
+  ActiveID GetNextActiveId();
   
   // If discovering, then we are listening for any advertising cubes and
   // selecting the best ones to connect to.
@@ -127,7 +131,10 @@ private:
   // The main list of cubes we know about:
   std::map<ActiveID, CubeInfo> _availableCubes;
   
-  // Convenience map of factoryID to ActiveID for quicker lookup based on factoryID:
+  // Map of factoryID to ActiveID for quicker lookup based on factoryID.
+  // This map is persistent and items are never removed from it. This is
+  // to ensure that objects with the same factory ID get assigned the same
+  // active ID even after they've disappeared and reconnected.
   std::unordered_map<BleFactoryId, ActiveID> _factoryIdToActiveIdMap;
   
   // AddCubeToList() generates a new activeId and adds the cube to the _availableCubes list if it's not in there already.
@@ -136,9 +143,6 @@ private:
   
   // Remove cube from the list based on BleFactoryId. Returns true if cube was successfully removed.
   bool RemoveCubeFromList(const BleFactoryId& factoryId);
-  
-  // Clear the list of cubes
-  void ClearList();
   
   // Find a cube in the list by ActiveID and return a pointer to it. Returns nullptr if not found.
   CubeInfo* GetCubeByActiveId(const ActiveID& activeId);

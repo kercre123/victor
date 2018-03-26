@@ -32,7 +32,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateGlobalInterrupts.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevDisplayReadingsOnFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevImageCapture.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevPettingTestSimple.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTouchDataCollection.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTurnInPlaceTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDispatchAfterShake.h"
@@ -51,6 +50,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenSoundCheck.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/playpen/behaviorPlaypenWaitToStart.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherPassThrough.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherQueue.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRandom.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherRerun.h"
@@ -68,10 +68,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/oneShots/behaviorDance.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/oneShots/behaviorSinging.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/putDownDispatch/behaviorLookForFaceAndCube.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorBouncer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorFistBump.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorGuardDog.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPounceOnMotion.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorKeepaway.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPounceWithProx.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPuzzleMaze.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorTrackLaser.h"
@@ -84,7 +82,10 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCubeTap.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToFrustration.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMicDirection.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMotion.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMotorCalibration.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToPet.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToPlacedOnSlope.h"
@@ -93,13 +94,14 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotOnFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotOnSide.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotShaken.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToSound.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleeping.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToSound.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToTouchPetting.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToUnclaimedIntent.h"
 
 #include "clad/types/behaviorComponent/behaviorTypes.h"
@@ -259,12 +261,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::DevPettingTestSimple:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorDevPettingTestSimple(config));
-      break;
-    }
-    
     case BehaviorClass::DevTouchDataCollection:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDevTouchDataCollection(config));
@@ -373,6 +369,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::DispatcherPassThrough:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDispatcherPassThrough(config));
+      break;
+    }
+    
     case BehaviorClass::DispatcherQueue:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDispatcherQueue(config));
@@ -475,27 +477,15 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::Bouncer:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorBouncer(config));
-      break;
-    }
-    
     case BehaviorClass::FistBump:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorFistBump(config));
       break;
     }
     
-    case BehaviorClass::GuardDog:
+    case BehaviorClass::Keepaway:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorGuardDog(config));
-      break;
-    }
-    
-    case BehaviorClass::PounceOnMotion:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorPounceOnMotion(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorKeepaway(config));
       break;
     }
     
@@ -577,6 +567,18 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::ReactToMicDirection:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToMicDirection(config));
+      break;
+    }
+    
+    case BehaviorClass::ReactToMotion:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToMotion(config));
+      break;
+    }
+    
     case BehaviorClass::ReactToMotorCalibration:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToMotorCalibration(config));
@@ -625,6 +627,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::ReactToSound:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToSound(config));
+      break;
+    }
+    
     case BehaviorClass::ReactToUnexpectedMovement:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToUnexpectedMovement(config));
@@ -661,9 +669,15 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::ReactToSound:
+    case BehaviorClass::ReactToTouchPetting:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToSound(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToTouchPetting(config));
+      break;
+    }
+
+    case BehaviorClass::ReactToCubeTap:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToCubeTap(config));
       break;
     }
     

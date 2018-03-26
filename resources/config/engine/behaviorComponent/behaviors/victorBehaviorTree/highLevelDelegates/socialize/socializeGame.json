@@ -4,12 +4,17 @@
 
   "behaviors" : [
     {
-      "behavior": "PounceOnMotion_Socialize",
-      "cooldown_s": 900.0,
+      "behavior": "SingletonPounceDispatcher",
+      "cooldown_s": 2400.0,
       "weight": 0.2
     },
     {
       "behavior": "FistBump",
+      "cooldown_s": 1200.0,
+      "weight": 0.4
+    },
+    {
+      "behavior": "Keepaway",
       "cooldown_s": 500.0,
       "weight": 0.4
     }

@@ -34,7 +34,7 @@ bool CheckPlanAsPathIsSafe(const xythetaPlannerContext& context, xythetaPlan& pl
   Path path;
   context.env.AppendToPath(plan, path, 0);
   Path wasteValidPath;
-  const float startAngle = context.env.GetTheta_c(plan.start_.theta);
+  const float startAngle = context.env.LookupTheta(plan.start_.theta);
   return context.env.PathIsSafe(path, startAngle, (nullptr!=validPath) ? *validPath : wasteValidPath);
 }
 
@@ -713,7 +713,7 @@ GTEST_TEST(TestPlanner, ReplanHard)
 
   State_c newRobotPos(137.9, -1.35, 0.0736);
   ASSERT_FALSE(context.env.IsInCollision(newRobotPos)) << "position "<<newRobotPos<<" should be safe";
-  ASSERT_FALSE(context.env.IsInCollision(context.env.State_c2State(newRobotPos)));
+  ASSERT_FALSE(context.env.IsInCollision(GraphState(newRobotPos)));
 
   State_c lastSafeState;
   xythetaPlan oldPlan;
@@ -740,7 +740,7 @@ GTEST_TEST(TestPlanner, ReplanHard)
     ASSERT_LT(context.env.ApplyAction(oldPlan.GetAction(i), currID, false), 100.0) << "action penalty too high!";
   }
 
-  ASSERT_EQ(currID, context.env.State_c2State(lastSafeState).GetStateID()) << "end of validOldPlan should match lastSafeState!";
+  ASSERT_EQ(currID, GraphState(lastSafeState).GetStateID()) << "end of validOldPlan should match lastSafeState!";
   
   // replan from last safe state
 
@@ -772,7 +772,7 @@ GTEST_TEST(TestPlanner, DISABLED_ClosestSegmentToPose_straight)
 
   xythetaPlanner planner(context);
 
-  planner._impl->_plan.start_ = State(0, 0, 0);
+  planner._impl->_plan.start_ = GraphState(0, 0, 0);
 
   ASSERT_EQ(context.env.GetRawMotionPrimitive(0, 0).endStateOffset.x, 1) << "invalid action";
   ASSERT_EQ(context.env.GetRawMotionPrimitive(0, 0).endStateOffset.y, 0) << "invalid action";
@@ -825,10 +825,10 @@ void TestPlanner_ClosestSegmentToPoseHelper(xythetaPlannerContext& context, xyth
   printf("manually created plan:\n");
   context.env.PrintPlan(planner.GetPlan());
 
-  State start = planner._impl->_plan.start_;
+  GraphState start = planner._impl->_plan.start_;
 
   // go through each intermediate point, perturb it a bit, and make sure it returns correctly
-  State curr = start;
+  GraphState curr = start;
 
   size_t planSize = planner._impl->_plan.Size();
   for(size_t planIdx = 0; planIdx < planSize; ++planIdx) {
@@ -848,8 +848,8 @@ void TestPlanner_ClosestSegmentToPoseHelper(xythetaPlannerContext& context, xyth
     // just check the first one, since I broke the tests with the new way I round states
     size_t sizeToCheck = 1; // prim.intermediatePositions.size() - 1;
     for(size_t intermediateIdx = 0; intermediateIdx < sizeToCheck ; intermediateIdx++) {
-      State_c pose(prim.intermediatePositions[intermediateIdx].position.x_mm + context.env.GetX_mm(curr.x),
-                   prim.intermediatePositions[intermediateIdx].position.y_mm + context.env.GetX_mm(curr.y),
+      State_c pose(prim.intermediatePositions[intermediateIdx].position.x_mm + (curr.x * GraphState::resolution_mm_),
+                   prim.intermediatePositions[intermediateIdx].position.y_mm + (curr.y * GraphState::resolution_mm_),
                    prim.intermediatePositions[intermediateIdx].position.theta);
 
       ASSERT_EQ(planIdx, context.env.FindClosestPlanSegmentToPose(planner.GetPlan(), pose, distFromPlan))
@@ -867,7 +867,7 @@ void TestPlanner_ClosestSegmentToPoseHelper(xythetaPlannerContext& context, xyth
 
     StateID currID(curr);
     context.env.ApplyAction(planner._impl->_plan.GetAction(planIdx), currID, false);
-    curr = State(currID);
+    curr = GraphState(currID);
   }
 }
 
@@ -881,7 +881,7 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_straight2)
 
   xythetaPlanner planner(context);
 
-  planner._impl->_plan.start_ = State(0, 0, 0);
+  planner._impl->_plan.start_ = GraphState(0, 0, 0);
 
   ASSERT_EQ(context.env.GetRawMotionPrimitive(0, 0).endStateOffset.x, 1) << "invalid action";
   ASSERT_EQ(context.env.GetRawMotionPrimitive(0, 0).endStateOffset.y, 0) << "invalid action";
@@ -905,7 +905,7 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_wiggle)
   xythetaPlanner planner(context);
 
   // bunch of random actions, no turn in place
-  planner._impl->_plan.start_ = State(0, 0, 6);
+  planner._impl->_plan.start_ = GraphState(0, 0, 6);
   planner._impl->_plan.Push(0, 0.0);
   planner._impl->_plan.Push(2, 0.0);
   planner._impl->_plan.Push(2, 0.0);
@@ -937,7 +937,7 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_turnLineTurn)
     xythetaPlanner planner(context);
 
     // turn in place, straight (and some turns) , turn in place
-    planner._impl->_plan.start_ = State(0, 0, startAngle);
+    planner._impl->_plan.start_ = GraphState(0, 0, startAngle);
     planner._impl->_plan.Push(5, 0.0);
     planner._impl->_plan.Push(5, 0.0);
     planner._impl->_plan.Push(5, 0.0);
@@ -970,7 +970,7 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_custom)
   xythetaPlanner planner(context);
 
   // bunch of random actions, no turn in place
-  planner._impl->_plan.start_ = State(0, 0, 7);
+  planner._impl->_plan.start_ = GraphState(0, 0, 7);
   planner._impl->_plan.Push(4, 0.0);
   planner._impl->_plan.Push(4, 0.0);
   planner._impl->_plan.Push(4, 0.0);
@@ -1000,7 +1000,7 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_initial)
     xythetaPlanner planner(context);
 
     // bunch of random actions, no turn in place
-    State start = State(0, 0, startAngle);
+    GraphState start = GraphState(0, 0, startAngle);
     planner._impl->_plan.start_ = start;
     planner._impl->_plan.Push(4, 0.0);
     planner._impl->_plan.Push(4, 0.0);
@@ -1032,7 +1032,7 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_initial)
         State_c s = context.env.State2State_c(start);
         s.x_mm += dx;
         s.y_mm += dy;
-        if( context.env.State_c2State(s) == start ) {
+        if( GraphState(s) == start ) {
           ASSERT_EQ(0, context.env.FindClosestPlanSegmentToPose(planner.GetPlan(), s, distFromPlan))
             << "didn't get correct position for offset ("<<dx<<','<<dy<<") s="<<s<<" dist="<<distFromPlan 
             << " (" << numTested << " already passed)";

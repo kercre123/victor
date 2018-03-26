@@ -28,10 +28,23 @@ static const char* kInterruptBehaviorKey = "interruptActiveBehavior";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IBehaviorDispatcher::InstanceConfig::InstanceConfig()
+{
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IBehaviorDispatcher::DynamicVariables::DynamicVariables()
+{
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehaviorDispatcher::IBehaviorDispatcher(const Json::Value& config)
   : ICozmoBehavior(config)
 {
-  _shouldInterruptActiveBehavior = JsonTools::ParseBool(config,
+  _iConfig.shouldInterruptActiveBehavior = JsonTools::ParseBool(config,
                                                         kInterruptBehaviorKey,
                                                         "IBehaviorDispatcher.ShouldInterrupt.ConfigError");
 }
@@ -40,7 +53,7 @@ IBehaviorDispatcher::IBehaviorDispatcher(const Json::Value& config)
 IBehaviorDispatcher::IBehaviorDispatcher(const Json::Value& config, bool shouldInterruptActiveBehavior)
   : ICozmoBehavior(config)
 {
-  _shouldInterruptActiveBehavior = shouldInterruptActiveBehavior;
+  _iConfig.shouldInterruptActiveBehavior = shouldInterruptActiveBehavior;
 
   // the config should either _not_ set the value at all, or it should be consistent with what the base class
   // passes in
@@ -51,11 +64,17 @@ IBehaviorDispatcher::IBehaviorDispatcher(const Json::Value& config, bool shouldI
               kInterruptBehaviorKey,
               config.get(kInterruptBehaviorKey, false).asBool() ? "true" : "false");
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IBehaviorDispatcher::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  expectedKeys.insert( kInterruptBehaviorKey );
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehaviorDispatcher::InitBehavior()
 {
-  for( const auto& behaviorStr : _behaviorStrs ) {
+  for( const auto& behaviorStr : _iConfig.behaviorStrs ) {
     // first check anonymous behaviors
     ICozmoBehaviorPtr behavior = FindAnonymousBehaviorByName(behaviorStr);
     if( nullptr == behavior ) {
@@ -69,12 +88,12 @@ void IBehaviorDispatcher::InitBehavior()
                      behaviorStr.c_str());
     }
     if(behavior != nullptr){
-      _behaviors.push_back(behavior);
+      _iConfig.behaviors.push_back(behavior);
     }
   }
 
   // don't need the strings anymore, so clear them to release memory
-  _behaviorStrs.clear();
+  _iConfig.behaviorStrs.clear();
   
   InitDispatcher();
 }
@@ -96,7 +115,7 @@ void IBehaviorDispatcher::GetBehaviorOperationModifiers(BehaviorOperationModifie
   bool subBehaviorOnCharger = false;
   
   // check all sub behavior values
-  for( const auto& behaviorPtr : _behaviors ) {
+  for( const auto& behaviorPtr : _iConfig.behaviors ) {
     BehaviorOperationModifiers subModifiers;
     behaviorPtr->GetBehaviorOperationModifiers(subModifiers);
     subBehaviorCarryingObject |= subModifiers.wantsToBeActivatedWhenCarryingObject;
@@ -116,7 +135,7 @@ void IBehaviorDispatcher::GetBehaviorOperationModifiers(BehaviorOperationModifie
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehaviorDispatcher::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  for( const auto& behaviorPtr : _behaviors ) {
+  for( const auto& behaviorPtr : _iConfig.behaviors ) {
     delegates.insert( static_cast<IBehavior*>(behaviorPtr.get()) );
   }
 }
@@ -176,7 +195,7 @@ void IBehaviorDispatcher::BehaviorUpdate()
 
   // only choose a new behavior if we should interrupt the active behavior, or if no behavior is active
   if( ! IsControlDelegated() ||
-      _shouldInterruptActiveBehavior ) {
+      _iConfig.shouldInterruptActiveBehavior ) {
   
     auto& delegationComponent = GetBEI().GetDelegationComponent();
   

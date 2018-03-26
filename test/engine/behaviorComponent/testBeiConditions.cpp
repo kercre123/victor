@@ -31,13 +31,22 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/moodSystem/moodManager.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/robot.h"
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 #include "util/math/math.h"
 #include "util/console/consoleInterface.h"
 
+namespace Anki {
+namespace Cozmo {
+CONSOLE_VAR_EXTERN(float, kTimeMultiplier);
+}
+}
+
 using namespace Anki;
 using namespace Anki::Cozmo;
+
+
 
 namespace {
 
@@ -221,6 +230,8 @@ TEST(BeiConditions, Frustration)
 
 TEST(BeiConditions, Timer)
 {
+  const float oldVal = kTimeMultiplier;
+  kTimeMultiplier = 1.0f;
   BaseStationTimer::getInstance()->UpdateTime(0);
   
   const std::string json = R"json(
@@ -282,6 +293,8 @@ TEST(BeiConditions, Timer)
 
   BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(resetTime_s + 80.0f));
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  
+  kTimeMultiplier = oldVal;
 }
 
 TEST(BeiConditions, Negate)
@@ -368,6 +381,9 @@ TEST(BeiConditions, NegateTrue)
 
 TEST(BeiConditions, NegateTimerInRange)
 {
+  const float oldVal = kTimeMultiplier;
+  kTimeMultiplier = 1.0f;
+  
   BaseStationTimer::getInstance()->UpdateTime(0);
   
   const std::string json = R"json(
@@ -432,6 +448,8 @@ TEST(BeiConditions, NegateTimerInRange)
 
   BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(resetTime_s + 80.0f));
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  
+  kTimeMultiplier = oldVal;
 }
 
 TEST(BeiConditions, OnCharger)
@@ -460,21 +478,21 @@ TEST(BeiConditions, OnCharger)
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
 
   // charger implies platform here
-  robot.SetOnCharger(true);
+  robot.GetBatteryComponent().SetOnChargeContacts(true);
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
 
   // off charger, but still on platform
-  robot.SetOnCharger(false);
+  robot.GetBatteryComponent().SetOnChargeContacts(false);
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
 
-  robot.SetOnChargerPlatform(false);
+  robot.GetBatteryComponent().SetOnChargerPlatform(false);
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
 
   // just on platform
-  robot.SetOnChargerPlatform(true);
+  robot.GetBatteryComponent().SetOnChargerPlatform(true);
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
 }
@@ -537,7 +555,7 @@ TEST(BeiConditions, TriggerWordPending)
   
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   
-  auto& uic = bei.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
   uic.SetTriggerWordPending();
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
@@ -600,7 +618,7 @@ TEST(BeiConditions, UserIntentPending)
   
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
   
-  auto& uic = bei.GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
   
   // (1) test_user_intent_1  matches the tag
   
@@ -705,6 +723,9 @@ TEST(BeiConditions, BehaviorTimer)
 {
   BaseStationTimer::getInstance()->UpdateTime(0.0);
   
+  const float oldVal = kTimeMultiplier;
+  kTimeMultiplier = 1.0f;
+  
   const std::string json = R"json(
   {
     "conditionType": "BehaviorTimer",
@@ -758,6 +779,8 @@ TEST(BeiConditions, BehaviorTimer)
   
   BaseStationTimer::getInstance()->UpdateTime(Util::SecToNanoSec(resetTime2 + 15.0001));
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  
+  kTimeMultiplier = oldVal;
 }
 
 

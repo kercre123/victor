@@ -586,27 +586,6 @@ namespace Cozmo {
     SendExecuteTestPlan(pathMotionProfile_);
   }
 
-
-  void WebotsKeyboardController::ToggleCubeAccelStreaming()
-  {
-    // Toggle streaming accel from object with ID given in 'streamObjectId' field.
-    
-    u32 streamObjectID = (u32) root_->getField("streamObjectID")->getSFInt32();
-    // Try to add this objID to the set of already streaming IDs.
-    // If streamObjectID wasn't in the set before, add it and enable streaming.
-    const auto result = streamingAccelObjIds.insert(streamObjectID);
-    const bool enable = result.second;
-    
-    // if we're disabling streaming, remove this objID from the set.
-    if (!enable) {
-      streamingAccelObjIds.erase(streamObjectID);
-    }
-    
-    printf("%s streaming of accel data from object %d (now streaming from %lu objects)\n", enable ? "Enable" : "Disable", streamObjectID, streamingAccelObjIds.size());
-    ExternalInterface::StreamObjectAccel msg(streamObjectID, enable);
-    SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
-  }
-
   void WebotsKeyboardController::ExecuteBehavior()
   {
     std::string behaviorName;
@@ -970,7 +949,7 @@ namespace Cozmo {
       msg.transitionOffPeriod_ms = 100;
       msg.turnOffUnspecifiedLEDs = 1;
       msg.offset = 0;
-      msg.rotationPeriod_ms = 0;
+      msg.rotate = false;
       
       if(_shiftKeyPressed) {
         printf("Updating active block edge\n");
@@ -1245,21 +1224,6 @@ namespace Cozmo {
     toggle = !toggle;
   }
 
-  void WebotsKeyboardController::ToggleEyeRendering()
-  {
-    using namespace ExternalInterface;
-
-    static bool toggle = false;
-    toggle = !toggle;
-
-    for(auto key : {"ProcFace_RenderInnerOuterGlow","ProcFace_ApplyGlowFilter", "ProcFace_UseAntialiasing", "ProcFace_UseNoise"}) {
-      SendMessage(MessageGameToEngine(SetAnimDebugConsoleVarMessage(key,
-                                                                    (toggle ? "1" : "0"))));
-    }
-
-    LOG_INFO("ToggleEyeRendering", "%s eye rendering", (toggle ? "Victor" : "Cozmo"));
-  }
-
   void WebotsKeyboardController::FlipSelectedBlock()
   {
     ExternalInterface::FlipBlock m;
@@ -1446,27 +1410,6 @@ namespace Cozmo {
     faceParams.faceCenY  = 0; //rng.RandIntInRange(-5, 5);
     
     SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
-  }
-
-  
-
-  // TODO: Get rid of PushIdleAnimationMessage? Still want to support this from sdk?
-  void WebotsKeyboardController::PushIdleAnimation()
-  {
-    std::string idleAnimToSendName;
-    if (!WebotsHelpers::GetFieldAsString(root_, "idleAnimationName", idleAnimToSendName, false)) {
-      return;
-    }
-    
-    static const char* kWebotsIdleLock = "webots_idle_lock";
-
-    using namespace ExternalInterface;
-    if(idleAnimToSendName.empty()) {
-      SendMessage(MessageGameToEngine(RemoveIdleAnimation(kWebotsIdleLock)));
-    } else {
-      SendMessage(MessageGameToEngine(ExternalInterface::PushIdleAnimation(AnimationTriggerFromString(idleAnimToSendName.c_str()),
-                                                        kWebotsIdleLock)));
-    }
   }
 
   void WebotsKeyboardController::PlayAnimation() {
@@ -1983,7 +1926,7 @@ namespace Cozmo {
     REGISTER_SHIFTED_KEY_FCN('%', MOD_NONE, SendComputeCameraCalibration,      "Compute camera calibration from calibration images");
 //      REGISTER_SHIFTED_KEY_FCN('%', MOD_ALT, , "");
     REGISTER_SHIFTED_KEY_FCN('^', MOD_NONE, PlayAnimation,                     "Plays animation specified in 'animationToSendName'");
-    REGISTER_SHIFTED_KEY_FCN('^', MOD_ALT,  PushIdleAnimation,                 "Push idle animation");  // Remove? Want for SDK?
+//      REGISTER_SHIFTED_KEY_FCN('^', MOD_ALT,  ,                 "");
 //      REGISTER_SHIFTED_KEY_FCN('&', MOD_NONE, , "");
     REGISTER_SHIFTED_KEY_FCN('&', MOD_ALT,  ReadCameraCalibration,             "Read camera calibration from nvStorage");
     REGISTER_SHIFTED_KEY_FCN('*', MOD_NONE, SendRandomProceduralFace,          "Draws random procedural face");
@@ -2000,7 +1943,7 @@ namespace Cozmo {
 //      REGISTER_SHIFTED_KEY_FCN('{', MOD_ALT,  , "");
     REGISTER_SHIFTED_KEY_FCN('}', MOD_NONE, RunDebugConsoleFunc,               "Run debug console function with args in engine process");
     REGISTER_SHIFTED_KEY_FCN('}', MOD_ALT,  RunDebugConsoleFunc,               "Run debug console function with args in anim process");
-    REGISTER_SHIFTED_KEY_FCN('|', MOD_NONE, ToggleCubeAccelStreaming,          "Toggle streaming of cube accel data from 'streamObjectID'");
+//      REGISTER_SHIFTED_KEY_FCN('|', MOD_NONE, , "");
 //      REGISTER_SHIFTED_KEY_FCN('|', MOD_ALT, , "");
     REGISTER_SHIFTED_KEY_FCN(':', MOD_NONE, SetRollActionParams,               "Set parameters for roll action");
 //      REGISTER_SHIFTED_KEY_FCN(':', MOD_ALT, , "");
@@ -2054,7 +1997,7 @@ namespace Cozmo {
     REGISTER_KEY_FCN('H', MOD_ALT_SHIFT, SendFakeTriggerWordDetect, "Send fake trigger word detect");
     
     REGISTER_KEY_FCN('I', MOD_NONE,      ToggleImageStreaming, "Toggle image streaming");
-    REGISTER_KEY_FCN('I', MOD_SHIFT,     ToggleEyeRendering, "Toggle Victor/Cozmo eye rendering");
+//      REGISTER_KEY_FCN('I', MOD_SHIFT,     , "");
 //      REGISTER_KEY_FCN('I', MOD_ALT,       , "");
 //      REGISTER_KEY_FCN('I', MOD_ALT_SHIFT, , "");
     

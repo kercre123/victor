@@ -56,10 +56,6 @@ namespace WebService {
   class WebService;
 }
 
-namespace VoiceCommand {
-  class VoiceCommandComponent;
-}
-
 class ThreadIDInternal;
 
 enum class SdkStatusType : uint8_t;
@@ -97,7 +93,6 @@ public:
   RobotManager*                         GetRobotManager() const { return _robotMgr.get(); }
   VizManager*                           GetVizManager() const { return _vizManager.get(); }
   Util::TransferQueueMgr*               GetTransferQueue() const { return _transferQueueMgr.get(); }
-  VoiceCommand::VoiceCommandComponent*  GetVoiceCommandComponent() const { return _voiceCommandComponent.get(); }
   CozmoExperiments*                     GetExperiments() const { return _cozmoExperiments.get(); }
   PerfMetric*                           GetPerfMetric() const { return _perfMetric.get(); }
   WebService::WebService*               GetWebService() const { return _webService.get(); }
@@ -109,11 +104,12 @@ public:
 
   void SetLocale(const std::string& locale);
 
-  // Tell the context that this is the main thread
-  void SetMainThread();
+  // Designate current thread as the "main thread" used for engine updates.
+  void SetEngineThread();
 
-  // Returns true if the current thread is the "main" one. Requires SetMainThread to have been called
-  bool IsMainThread() const;
+  // Returns true if the current thread is the "main thread" used for engine updates.
+  // Requires SetEngineThread (above) to have been called.
+  bool IsEngineThread() const;
 
   // Perform orderly shutdown of components
   void Shutdown();
@@ -134,7 +130,6 @@ private:
   std::unique_ptr<Util::TransferQueueMgr>               _transferQueueMgr;
   std::unique_ptr<Util::DasTransferTask>                _dasTransferTask;
   std::unique_ptr<Util::GameLogTransferTask>            _gameLogTransferTask;
-  std::unique_ptr<VoiceCommand::VoiceCommandComponent>  _voiceCommandComponent;
   std::unique_ptr<CozmoExperiments>                     _cozmoExperiments;
   std::unique_ptr<PerfMetric>                           _perfMetric;
   std::unique_ptr<WebService::WebService>               _webService;

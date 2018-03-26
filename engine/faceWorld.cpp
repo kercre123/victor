@@ -23,6 +23,7 @@
 #include "clad/types/enrolledFaceStorage.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "webServerProcess/src/webService.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "engine/smartFaceId.h"
@@ -116,7 +117,14 @@ namespace Cozmo {
     if(broadcast)
     {
       using namespace ExternalInterface;
-      _robot->Broadcast(MessageEngineToGame(RobotDeletedFace(faceEntryIter->first)));
+      
+      RobotDeletedFace msg(faceEntryIter->first);
+      
+      if( ANKI_DEV_CHEATS ) {
+        SendObjectUpdateToWebViz( msg );
+      }
+      
+      _robot->Broadcast(MessageEngineToGame(std::move(msg)));
     }
     
     EraseFaceViz(faceEntryIter->second);
@@ -508,21 +516,29 @@ namespace Cozmo {
           feature.first->emplace_back(pt.x(), pt.y());
         }
       }
+      
+      RobotObservedFace msg(faceEntry->face.GetID(),
+                            faceEntry->face.GetTimeStamp(),
+                            faceEntry->face.GetHeadPose().ToPoseStruct3d(_robot->GetPoseOriginList()),
+                            CladRect(faceEntry->face.GetRect().GetX(),
+                                     faceEntry->face.GetRect().GetY(),
+                                     faceEntry->face.GetRect().GetWidth(),
+                                     faceEntry->face.GetRect().GetHeight()),
+                            faceEntry->face.GetName(),
+                            faceEntry->face.GetMaxExpression(),
+                            faceEntry->face.GetSmileAmount(),
+                            faceEntry->face.GetGaze(),
+                            faceEntry->face.GetBlinkAmount(),
+                            faceEntry->face.GetExpressionValues(),
+                            leftEye, rightEye, nose, mouth);
+      
+      if( ANKI_DEV_CHEATS ) {
+        SendObjectUpdateToWebViz( msg );
+      }
         
-      _robot->Broadcast(MessageEngineToGame(RobotObservedFace(faceEntry->face.GetID(),
-                                                             faceEntry->face.GetTimeStamp(),
-                                                             faceEntry->face.GetHeadPose().ToPoseStruct3d(_robot->GetPoseOriginList()),
-                                                             CladRect(faceEntry->face.GetRect().GetX(),
-                                                                      faceEntry->face.GetRect().GetY(),
-                                                                      faceEntry->face.GetRect().GetWidth(),
-                                                                      faceEntry->face.GetRect().GetHeight()),
-                                                             faceEntry->face.GetName(),
-                                                             faceEntry->face.GetMaxExpression(),
-                                                             faceEntry->face.GetSmileAmount(),
-                                                             faceEntry->face.GetGaze(),
-                                                             faceEntry->face.GetBlinkAmount(),
-                                                             faceEntry->face.GetExpressionValues(),
-                                                             leftEye, rightEye, nose, mouth)));
+      _robot->Broadcast(MessageEngineToGame(std::move(msg)));
+      
+
       
       /*
       const Vision::Image& faceThumbnail = faceEntry->face.GetThumbnail();
@@ -854,6 +870,8 @@ namespace Cozmo {
                                                                               trackedFace.GetHeadPose(),
                                                                               drawFaceColor);
     
+    SendObjectUpdateToWebViz( trackedFace.GetName(), trackedFace.GetID(), trackedFace.GetTimeStamp() );
+    
     if(drawInImage)
     {
       // Draw box around recognized face (with ID) now that we have the real ID set
@@ -879,6 +897,66 @@ namespace Cozmo {
   void FaceWorld::Enroll(const SmartFaceID& faceID)
   {
     Enroll(faceID.GetID());
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void FaceWorld::SendObjectUpdateToWebViz( const ExternalInterface::RobotDeletedFace& msg ) const
+  {
+    if( msg.faceID <= 0 ) {
+      return; // ignore half-recognized or invalid faces
+    }
+    
+    Json::Value data;
+    data["type"] = "RobotDeletedFace";
+    data["faceID"] = msg.faceID;
+    
+    const auto* webService = _robot->GetContext()->GetWebService();
+    if( webService != nullptr ) {
+      const std::string moduleName = "observedobjects";
+      webService->SendToWebViz( moduleName, data );
+    }
+    
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void FaceWorld::SendObjectUpdateToWebViz( const ExternalInterface::RobotObservedFace& msg ) const
+  {
+    SendObjectUpdateToWebViz( msg.name, msg.faceID, msg.timestamp);
+  }
+  
+  void FaceWorld::SendObjectUpdateToWebViz( const std::string& name, Vision::FaceID_t id, uint32_t timestamp ) const
+  {
+    if( id <= 0 ) {
+      return; // ignore half-recognized or invalid faces
+    }
+    Json::Value data;
+    data["type"] = "RobotObservedFace";
+    data["faceID"] = id;
+    if( !name.empty() ) {
+      data["name"] = name;
+    }
+    data["timestamp"] = timestamp;
+    
+    const auto* webService = _robot->GetContext()->GetWebService();
+    if( webService != nullptr ) {
+      const std::string moduleName = "observedobjects";
+      webService->SendToWebViz( moduleName, data );
+    }
+    
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool FaceWorld::IsMakingEyeContact() const
+  {
+    // Loop over all the faces and see if any of them are making eye contact
+    for (const auto& entry: _faceEntries)
+    {
+      if (entry.second.face.IsMakingEyeContact())
+      {
+        return true;
+      }
+    }
+    return false;
   }
 
 } // namespace Cozmo

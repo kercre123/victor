@@ -1,0 +1,46 @@
+{
+  "behaviorID" : "DoATrickVoiceCommand",
+  "behaviorClass" : "DispatcherQueue",
+
+  "respondToUserIntents": [
+    {
+      "type": "play_anytrick"
+    }
+  ],
+
+  "behaviors" : [
+    "DriveOffCharger",
+    "DoATrickInternal",
+    "PutDownBlock"
+  ],
+
+  "anonymousBehaviors": [
+    {
+      "behaviorName" : "DoATrickInternal",
+      "behaviorClass" : "DispatcherRandom",
+    
+      "behaviors" : [
+        
+        {
+          "behavior": "PopAWheelie",
+          "cooldown_s": 600.0,
+          "cooldown_random_factor": 0.5,
+          "weight": 1.0
+        },
+        {
+          "behavior": "FistBump",
+          "cooldown_s": 600.0,
+          "cooldown_random_factor": 0.5,
+          "weight": 1.0
+        },
+        {
+          "behavior": "PlayRollBlock",
+          "cooldown_s": 600.0,
+          "cooldown_random_factor": 0.5,
+          "weight": 1.0
+        }
+        
+      ]
+    }
+  ]
+}

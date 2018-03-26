@@ -86,15 +86,53 @@ constexpr MemoryMapTypes::FullContentArray typesToBlockDriving =
 };
 static_assert(MemoryMapTypes::IsSequentialArray(typesToBlockDriving),
   "This array does not define all types once and only once.");
-
+  
+const char* const kMinTimeToTrackFaceKey = "minTimeToTrackFace_s";
+const char* const kMaxTimeToTrackFaceKey = "maxTimeToTrackFace_s";
+const char* const kClampSmallAnglesKey = "clampSmallAngles";
+const char* const kMinClampPeriodKey = "minClampPeriod_s";
+const char* const kMaxClampPeriodKey = "maxClampPeriod_s";
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorInteractWithFaces::InstanceConfig::InstanceConfig()
+{
+  minTimeToTrackFace_s = 0.0f;
+  maxTimeToTrackFace_s = 0.0f;
+  minClampPeriod_s     = 0.0f;
+  maxClampPeriod_s     = 0.0f;
+  clampSmallAngles     = false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorInteractWithFaces::DynamicVariables::DynamicVariables()
+{
+  lastImageTimestampWhileRunning = 0;
+  trackFaceUntilTime_s           = -1.0f;
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorInteractWithFaces::BehaviorInteractWithFaces(const Json::Value& config)
 : ICozmoBehavior(config)
 {
-  LoadConfig(config["params"]);
+  LoadConfig(config);
 
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorInteractWithFaces::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+  const char* list[] = {
+   kMinTimeToTrackFaceKey,
+   kMaxTimeToTrackFaceKey,
+   kClampSmallAnglesKey,
+   kMinClampPeriodKey,
+   kMaxClampPeriodKey,
+  };
+  expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -103,30 +141,30 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
   using namespace JsonTools;
   const std::string& debugName = "BehaviorInteractWithFaces.BehaviorInteractWithFaces.LoadConfig";
 
-  _configParams.minTimeToTrackFace_s = ParseFloat(config, "minTimeToTrackFace_s", debugName);
-  _configParams.maxTimeToTrackFace_s = ParseFloat(config, "maxTimeToTrackFace_s", debugName);
+  _iConfig.minTimeToTrackFace_s = ParseFloat(config, kMinTimeToTrackFaceKey, debugName);
+  _iConfig.maxTimeToTrackFace_s = ParseFloat(config, kMaxTimeToTrackFaceKey, debugName);
 
-  if( ! ANKI_VERIFY(_configParams.maxTimeToTrackFace_s >= _configParams.minTimeToTrackFace_s,
+  if( ! ANKI_VERIFY(_iConfig.maxTimeToTrackFace_s >= _iConfig.minTimeToTrackFace_s,
                     "BehaviorInteractWithFaces.LoadConfig.InvalidTrackingTime",
                     "%s: minTrackTime = %f, maxTrackTime = %f",
                     GetDebugLabel().c_str(),
-                    _configParams.minTimeToTrackFace_s,
-                    _configParams.maxTimeToTrackFace_s) ) {
-    _configParams.maxTimeToTrackFace_s = _configParams.minTimeToTrackFace_s;
+                    _iConfig.minTimeToTrackFace_s,
+                    _iConfig.maxTimeToTrackFace_s) ) {
+    _iConfig.maxTimeToTrackFace_s = _iConfig.minTimeToTrackFace_s;
   }
 
-  _configParams.clampSmallAngles = ParseBool(config, "clampSmallAngles", debugName);
-  if( _configParams.clampSmallAngles ) {
-    _configParams.minClampPeriod_s = ParseFloat(config, "minClampPeriod_s", debugName);
-    _configParams.maxClampPeriod_s = ParseFloat(config, "maxClampPeriod_s", debugName);
+  _iConfig.clampSmallAngles = ParseBool(config, kClampSmallAnglesKey, debugName);
+  if( _iConfig.clampSmallAngles ) {
+    _iConfig.minClampPeriod_s = ParseFloat(config, kMinClampPeriodKey, debugName);
+    _iConfig.maxClampPeriod_s = ParseFloat(config, kMinClampPeriodKey, debugName);
 
-    if( ! ANKI_VERIFY(_configParams.maxClampPeriod_s >= _configParams.minClampPeriod_s,
+    if( ! ANKI_VERIFY(_iConfig.maxClampPeriod_s >= _iConfig.minClampPeriod_s,
                       "BehaviorInteractWithFaces.LoadConfig.InvalidClampPeriod",
                       "%s: minPeriod = %f, maxPeriod = %f",
                       GetDebugLabel().c_str(),
-                      _configParams.minClampPeriod_s,
-                      _configParams.maxClampPeriod_s) ) {
-      _configParams.maxClampPeriod_s = _configParams.minClampPeriod_s;
+                      _iConfig.minClampPeriod_s,
+                      _iConfig.maxClampPeriod_s) ) {
+      _iConfig.maxClampPeriod_s = _iConfig.minClampPeriod_s;
     }
 
   }
@@ -136,9 +174,9 @@ void BehaviorInteractWithFaces::LoadConfig(const Json::Value& config)
 void BehaviorInteractWithFaces::OnBehaviorActivated()
 {
   // reset the time to stop tracking (in the tracking state)
-  _trackFaceUntilTime_s = -1.0f;
+  _dVars.trackFaceUntilTime_s = -1.0f;
 
-  if( _targetFace.IsValid() ) {
+  if( _dVars.targetFace.IsValid() ) {
     TransitionToInitialReaction();
   }
   else {
@@ -154,9 +192,9 @@ void BehaviorInteractWithFaces::BehaviorUpdate()
     return;
   }
 
-  if( _trackFaceUntilTime_s >= 0.0f ) {
+  if( _dVars.trackFaceUntilTime_s >= 0.0f ) {
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    if( currTime_s >= _trackFaceUntilTime_s ) {
+    if( currTime_s >= _dVars.trackFaceUntilTime_s ) {
       BehaviorObjectiveAchieved(BehaviorObjective::InteractedWithFace);
       CancelDelegates();
     }
@@ -166,17 +204,17 @@ void BehaviorInteractWithFaces::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorInteractWithFaces::WantsToBeActivatedBehavior() const
 {
-  _targetFace.Reset();
+  _dVars.targetFace.Reset();
   SelectFaceToTrack();
 
-  return _targetFace.IsValid();
+  return _dVars.targetFace.IsValid();
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorInteractWithFaces::OnBehaviorDeactivated()
 {
-  _lastImageTimestampWhileRunning = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+  _dVars.lastImageTimestampWhileRunning = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -229,7 +267,7 @@ void BehaviorInteractWithFaces::TransitionToInitialReaction()
   CompoundActionSequential* action = new CompoundActionSequential();
 
   {
-    TurnTowardsFaceAction* turnAndAnimateAction = new TurnTowardsFaceAction(_targetFace, M_PI_F, true);
+    TurnTowardsFaceAction* turnAndAnimateAction = new TurnTowardsFaceAction(_dVars.targetFace, M_PI_F, true);
     turnAndAnimateAction->SetSayNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialNamed);
     turnAndAnimateAction->SetNoNameAnimationTrigger(AnimationTrigger::InteractWithFacesInitialUnnamed);
     turnAndAnimateAction->SetRequireFaceConfirmation(true);
@@ -252,16 +290,16 @@ void BehaviorInteractWithFaces::TransitionToInitialReaction()
                                           MoodManager::GetCurrentTimeInSeconds());
         }
         
-        _lastImageTimestampWhileRunning =  GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+        _dVars.lastImageTimestampWhileRunning =  GetBEI().GetRobotInfo().GetLastImageTimeStamp();
         
-        SmartFaceID oldTargetFace = _targetFace;
+        SmartFaceID oldTargetFace = _dVars.targetFace;
         SelectFaceToTrack();
-        if(_targetFace != oldTargetFace) {
+        if(_dVars.targetFace != oldTargetFace) {
           // only retry a max of one time to avoid loops
           PRINT_CH_INFO("Behaviors","BehaviorInteractWithFaces.InitialReactionFailed.TryAgain",
                         "tracking face %s failed, but will try again with face %s",
                         oldTargetFace.GetDebugStr().c_str(),
-                        _targetFace.GetDebugStr().c_str());
+                        _dVars.targetFace.GetDebugStr().c_str());
 
           TransitionToInitialReaction();
         }
@@ -322,13 +360,13 @@ void BehaviorInteractWithFaces::TransitionToDrivingForward()
   }
 
   {
-    TrackFaceAction* trackWithHeadAction = new TrackFaceAction(_targetFace);
+    TrackFaceAction* trackWithHeadAction = new TrackFaceAction(_dVars.targetFace);
     trackWithHeadAction->SetMode(ITrackAction::Mode::HeadOnly);
     trackWithHeadAction->StopTrackingWhenOtherActionCompleted( driveActionTag );
     trackWithHeadAction->SetTiltTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingPanAngle_deg));
     trackWithHeadAction->SetPanTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingTiltAngle_deg));
-    trackWithHeadAction->SetClampSmallAnglesToTolerances(_configParams.clampSmallAngles);
-    trackWithHeadAction->SetClampSmallAnglesPeriod(_configParams.minClampPeriod_s, _configParams.maxClampPeriod_s);
+    trackWithHeadAction->SetClampSmallAnglesToTolerances(_iConfig.clampSmallAngles);
+    trackWithHeadAction->SetClampSmallAnglesPeriod(_iConfig.minClampPeriod_s, _iConfig.maxClampPeriod_s);
 
     action->AddAction( trackWithHeadAction );
   }
@@ -343,19 +381,19 @@ void BehaviorInteractWithFaces::TransitionToTrackingFace()
   DEBUG_SET_STATE(TrackingFace);
 
   const float randomTimeToTrack_s = Util::numeric_cast<float>(
-    GetRNG().RandDblInRange(_configParams.minTimeToTrackFace_s, _configParams.maxTimeToTrackFace_s));
+    GetRNG().RandDblInRange(_iConfig.minTimeToTrackFace_s, _iConfig.maxTimeToTrackFace_s));
   PRINT_CH_INFO("Behaviors", "BehaviorInteractWithFaces.TrackTime", "will track for %f seconds", randomTimeToTrack_s);
-  _trackFaceUntilTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + randomTimeToTrack_s;
+  _dVars.trackFaceUntilTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + randomTimeToTrack_s;
 
 
   CompoundActionParallel* action = new CompoundActionParallel();
 
   {
-    TrackFaceAction* trackAction = new TrackFaceAction(_targetFace);
+    TrackFaceAction* trackAction = new TrackFaceAction(_dVars.targetFace);
     trackAction->SetTiltTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingPanAngle_deg));
     trackAction->SetPanTolerance(DEG_TO_RAD(kInteractWithFaces_MinTrackingTiltAngle_deg));
-    trackAction->SetClampSmallAnglesToTolerances(_configParams.clampSmallAngles);
-    trackAction->SetClampSmallAnglesPeriod(_configParams.minClampPeriod_s, _configParams.maxClampPeriod_s);
+    trackAction->SetClampSmallAnglesToTolerances(_iConfig.clampSmallAngles);
+    trackAction->SetClampSmallAnglesPeriod(_iConfig.minClampPeriod_s, _iConfig.maxClampPeriod_s);
     action->AddAction(trackAction);
   }
   
@@ -372,7 +410,7 @@ void BehaviorInteractWithFaces::TransitionToTriggerEmotionEvent()
 
   if(GetBEI().HasMoodManager()){
     auto& moodManager = GetBEI().GetMoodManager();
-    const Vision::TrackedFace* face = GetBEI().GetFaceWorld().GetFace( _targetFace );
+    const Vision::TrackedFace* face = GetBEI().GetFaceWorld().GetFace( _dVars.targetFace );
     
     if( nullptr != face && face->HasName() ) {
       moodManager.TriggerEmotionEvent("InteractWithNamedFace", MoodManager::GetCurrentTimeInSeconds());
@@ -387,19 +425,19 @@ void BehaviorInteractWithFaces::TransitionToTriggerEmotionEvent()
 void BehaviorInteractWithFaces::SelectFaceToTrack() const
 {  
   const bool considerTrackingOnlyFaces = false;
-  std::set< Vision::FaceID_t > faces = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(_lastImageTimestampWhileRunning,
+  std::set< Vision::FaceID_t > faces = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(_dVars.lastImageTimestampWhileRunning,
                                                                                  considerTrackingOnlyFaces);
   
   std::set<SmartFaceID> smartFaces;
   for(auto& entry : faces){
     smartFaces.insert(GetBEI().GetFaceWorld().GetSmartFaceID(entry));
   }
-  const auto& faceSelection = GetBEI().GetAIComponent().GetFaceSelectionComponent();
+  const auto& faceSelection = GetAIComp<FaceSelectionComponent>();
   FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;
   criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::UnnamedFace, 1000));
   criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 1));
   criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3));
-  _targetFace = faceSelection.GetBestFaceToUse(criteriaMap, smartFaces);
+  _dVars.targetFace = faceSelection.GetBestFaceToUse(criteriaMap, smartFaces);
 }
 
 

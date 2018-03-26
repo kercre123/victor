@@ -21,9 +21,17 @@ LIFT_HEIGHT_ATTR = "height_mm"
 
 HEAD_ANGLE_ATTR = "angle_deg"
 
-AUDIO_NAME_ATTR = "audioName"
 
-PROBABILITY_ATTR = "probability"
+# Audio JSON Attributes
+AUDIO_EVENT_GROUPS_ATTR = "eventGroups"
+AUDIO_EVENT_IDS_ATTR = "eventIds"
+AUDIO_VOLUMES_ATTR = "volumes"
+AUDIO_PROBABILITIES_ATTR = "probabilities"
+# Deprecated keys
+AUDIO_DEP_EVENT_ATTR = "audioEventId"
+AUDIO_DEP_VOLUME_ATTR = "volume"
+AUDIO_DEP_PROBABILITY_ATTR = "probability"
+
 
 DURATION_TIME_ATTR = "durationTime_ms"
 
@@ -146,25 +154,8 @@ def prep_json_for_binary_conversion(anim_name, keyframes):
                     pass
 
         if track == ROBOT_AUDIO_TRACK:
-            # Some old anim files have an "durationTime_ms" attribute for audio keyframes, but those
-            # aren't used anymore and thus not defined in the schema, so they are removed here.
-            try:
-                keyframe.pop(DURATION_TIME_ATTR)
-            except KeyError:
-                pass
-            # The "probability" attribute used to be a single float value, but that has now changed
-            # to a list of probabilities, so we convert it to a list here if needed.
-            try:
-                if not isinstance(keyframe[PROBABILITY_ATTR], list):
-                    keyframe[PROBABILITY_ATTR] = [keyframe[PROBABILITY_ATTR]]
-            except KeyError:
-                pass
-            # Remove the "audioName" data since the event IDs are what we really need
-            # and "audioName" has been removed from the schema for binary data.
-            try:
-                keyframe.pop(AUDIO_NAME_ATTR)
-            except KeyError:
-                pass
+            # There are so many migration changes audio gets its own method =)
+            keyframe = prep_audio_key_frame_json(keyframe, anim_name)
 
         if track == PROCEDURAL_FACE_TRACK:
             # The engine doesn't use "durationTime_ms" for ProceduralFaceKeyFrame
@@ -196,6 +187,107 @@ def prep_json_for_binary_conversion(anim_name, keyframes):
         anim_dict[KEYFRAMES_ATTR][track].append(keyframe)
 
     return anim_dict
+
+
+def prep_audio_key_frame_json(keyframe, anim_name):
+    """
+    1. Check audio key frame json format
+    2. Migrate old version to new format
+    3. Handle exporter edge cases
+    Current Audio Key Frame format
+    {
+        "triggerTime_ms": uint
+        "eventGroups": [
+          {
+            "eventIds": [uint],
+            "volumes": [float],
+            "probabilities": [float]
+          }
+        ],
+        "states": [
+          {
+            stateGroupId: uint,
+            stateId: uint
+          }
+        ]
+        "switches": [
+          {
+            switchGroupId: uint,
+            stateId: uint
+          }
+        ]
+        "parameters": [
+          {
+            parameterId: uint,
+            value: float,
+            time_ms: uint,
+            curve: byte
+          }
+        ]
+    }
+    """
+
+    # Check audio key frame format
+    if not AUDIO_DEP_EVENT_ATTR in keyframe:
+        # Key frame is in correct format
+        return keyframe
+
+    # Migrate to new audio key frame format
+    audioFrame = {}
+    audioFrame[TRIGGER_TIME_ATTR] = keyframe[TRIGGER_TIME_ATTR]
+    eventGroup = {}
+
+    # Update Audio Event Id values
+    if isinstance(keyframe[AUDIO_DEP_EVENT_ATTR], list):
+        eventGroup[AUDIO_EVENT_IDS_ATTR] = keyframe[AUDIO_DEP_EVENT_ATTR]
+    else:
+        eventGroup[AUDIO_EVENT_IDS_ATTR] = [keyframe[AUDIO_DEP_EVENT_ATTR]]
+
+    eventCount = 0
+    if AUDIO_EVENT_IDS_ATTR in eventGroup:
+        eventCount = len(eventGroup[AUDIO_EVENT_IDS_ATTR])
+
+    # Return empty key frame, this will signal an error when loaded
+    if eventCount == 0:
+        audioFrame[AUDIO_EVENT_GROUPS_ATTR] = [eventGroup]
+        return audioFrame
+
+    # Update probabiltiy value & handle migration edge cases
+    probCount = 0
+    if AUDIO_DEP_PROBABILITY_ATTR in keyframe:
+        # Get probability values
+        if isinstance(keyframe[AUDIO_DEP_PROBABILITY_ATTR], list):
+            # Expect a value for every event
+            dep_probability = keyframe[AUDIO_DEP_PROBABILITY_ATTR]
+            probCount = len(dep_probability)
+            eventGroup[AUDIO_PROBABILITIES_ATTR] = dep_probability            
+        else:
+            # Expect a single event
+            eventGroup[AUDIO_PROBABILITIES_ATTR] = [keyframe[AUDIO_DEP_PROBABILITY_ATTR]]
+            probCount = 1
+    
+    if probCount != eventCount:
+        if probCount != 0:
+            # Event count miss match
+            msg = "Failed to migrate '%s' because the event and probability count do not match" % (anim_name)
+            print(msg)
+        # Equal chance for each event
+        val = 1.0 / eventCount
+        probabilities = [val] * eventCount
+        eventGroup[AUDIO_PROBABILITIES_ATTR] = probabilities
+
+    # Update Volume value
+    defaultVol = 1.0
+    if AUDIO_DEP_VOLUME_ATTR in keyframe:
+        # Old versions only have 1 volume
+        defaultVol = keyframe[AUDIO_DEP_VOLUME_ATTR]
+    # Set same volume for all events
+    eventGroup[AUDIO_VOLUMES_ATTR] = [defaultVol] * eventCount
+
+    # Add single event group to audio frame
+    audioFrame[AUDIO_EVENT_GROUPS_ATTR] = [eventGroup]
+
+    return audioFrame
 
 
 def write_json_file(json_file, data):
@@ -271,5 +363,4 @@ def main(json_files, bin_name, flatc_dir, schema_file=SCHEMA_FILE, bin_file_ext=
     if not os.path.isfile(renamed_bin_file):
         raise ValueError("Binary file missing: %s" % renamed_bin_file)
     return renamed_bin_file
-
 

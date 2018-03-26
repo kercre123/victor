@@ -1,0 +1,45 @@
+{
+  "behaviorID" : "RollCubeVoiceCommand",
+  "behaviorClass" : "DispatcherQueue",
+
+  "behaviors" : [
+    "DriveOffCharger",
+    "LookForCubeInternal",
+    "PlayRollBlock",
+    "PutDownBlock"
+  ],
+
+  "resetTimers": ["PlayingWithCube"],
+
+  "anonymousBehaviors": [
+    {
+      "behaviorClass": "LookForFaceAndCube",
+      "behaviorName": "LookForCubeInternal",
+      
+      "bodyTurnSpeed_degPerSec": 180,
+      "headTurnSpeed_degPerSec": 120,
+      
+      "face_headAngleAbsRangeMin_deg": 0,
+      "face_headAngleAbsRangeMax_deg": 20,
+      "face_bodyAngleRelRangeMin_deg": 10,
+      "face_bodyAngleRelRangeMax_deg": 30,
+      "face_sidePicks": 0,
+      
+      "cube_headAngleAbsRangeMin_rad": -5,
+      "cube_headAngleAbsRangeMax_rad":  5,
+      "cube_bodyAngleRelRangeMin_rad": 10,
+      "cube_bodyAngleRelRangeMax_rad": 30,
+      "cube_sidePicks": 3,
+  
+      // stop this behavior if a named face is seen (after turning towards it)
+      "verifySeenFaces": false,
+      "stopBehaviorOnAnyFace": false,
+      "stopBehaviorOnNamedFace": false,
+      // dont start if a cube is known, or stop if a cube is seen 
+      "stopBehaviorOnCube": true,
+      
+      "lookInPlaceAnimTrigger": "HikingLookAround"
+      
+    }
+  ]
+}

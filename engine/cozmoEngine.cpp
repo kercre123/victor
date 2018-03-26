@@ -11,6 +11,7 @@
 
 #include "engine/cozmoEngine.h"
 #include "engine/cozmoContext.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/robotInterface/messageHandler.h"
@@ -31,7 +32,6 @@
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "engine/factory/factoryTestLogger.h"
-#include "engine/voiceCommands/voiceCommandComponent.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "webServerProcess/src/webService.h"
 
@@ -79,6 +79,46 @@
 namespace Anki {
 namespace Cozmo {
 
+int GetEngineStatsWebServerHandler(struct mg_connection *conn, void *cbdata)
+{
+  using namespace std::chrono;
+  const auto startTime = steady_clock::now();
+
+  // We ignore the query string because overhead is minimal
+  auto* cozmoEngine = static_cast<CozmoEngine*>(cbdata);
+  const auto& robot = cozmoEngine->GetRobot();
+
+  const auto& batteryComponent = robot->GetBatteryComponent();
+  std::stringstream ss;
+  ss << std::fixed << std::setprecision(3) << batteryComponent.GetBatteryVolts();
+  const std::string stat_batteryVoltsFiltered = ss.str();
+  std::stringstream ss2;
+  ss2 << std::fixed << std::setprecision(3) << batteryComponent.GetBatteryVoltsRaw();
+  const std::string stat_batteryVoltsRaw = ss2.str();
+  const std::string stat_batteryLevel = EnumToString(batteryComponent.GetBatteryLevel());
+  const std::string stat_batteryIsCharging = batteryComponent.IsCharging() ? "true" : "false";
+  const std::string stat_batteryIsOnChargerContacts = batteryComponent.IsOnChargerContacts() ? "true" : "false";
+  const std::string stat_batteryIsOnChargerPlatform = batteryComponent.IsOnChargerPlatform() ? "true" : "false";
+  const std::string stat_batteryFullyChargedTime_s = std::to_string(static_cast<int>(batteryComponent.GetFullyChargedTimeSec()));
+  const std::string stat_batteryLowBatteryTime_s = std::to_string(static_cast<int>(batteryComponent.GetLowBatteryTimeSec()));
+
+  mg_printf(conn,
+            "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
+            "close\r\n\r\n");
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
+            stat_batteryVoltsFiltered.c_str(), stat_batteryVoltsRaw.c_str(),
+            stat_batteryLevel.c_str(), stat_batteryIsCharging.c_str(),
+            stat_batteryIsOnChargerContacts.c_str(), stat_batteryIsOnChargerPlatform.c_str(),
+            stat_batteryFullyChargedTime_s.c_str(), stat_batteryLowBatteryTime_s.c_str());
+
+  const auto now = steady_clock::now();
+  const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
+  LOG_INFO("CozmoEngine.GetEngineStatsWebServerHandler.Time", "GetEngineStatsWebServerHandler took %lld microseconds", elapsed_us);
+
+  return 1;
+}
+
+
 CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort* messagePipe)
   : _uiMsgHandler(new UiMessageHandler(1, messagePipe))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
@@ -87,17 +127,30 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   //, _bleSystem(new BLESystem())
   ,_animationTransferHandler(new AnimationTransfer(_uiMsgHandler.get(),dataPlatform))
 {
+#if ANKI_CPU_PROFILER_ENABLED
+  // Initialize CPU profiler early and put tracing file at known location with no dependencies on other systems
+  Anki::Util::CpuProfiler::GetInstance();
+  Anki::Util::CpuThreadProfiler::SetChromeTracingFile(
+      dataPlatform->pathToResource(Util::Data::Scope::Cache, "vic-engine-tracing.json").c_str());
+#endif
+
   DEV_ASSERT(_context->GetExternalInterface() != nullptr, "Cozmo.Engine.ExternalInterface.nullptr");
   if (Anki::Util::gTickTimeProvider == nullptr) {
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
   }
 
-  // The "main" thread is meant to be the one Update is run on. However, on some systems, some messaging
+  //
+  // The "engine thread" is meant to be the one Update is run on. However, on some systems, some messaging
   // happens during Init which is on one thread, then later, a different thread runs the updates. This will
   // trigger asserts because more than one thread is sending messages. To work around this, we consider the
-  // "main thread" to be whatever thread Init is called from, until the first call of Update, at which point
-  // we switch our notion of "main thread" to the updating thread
-  _context->SetMainThread();
+  // "engine thread" to be whatever thread Init is called from, until the first call of Update, at which point
+  // we switch our notion of "engine thread" to the updating thread.
+  //
+  // During shutdown, the "engine thread" may switch again so messages can be sent by the thread performing shutdown.
+  // This happens AFTER stopping the update thread, so we can still guarantee that no other threads are allowed
+  // to send messages.
+  //
+  _context->SetEngineThread();
 
   // log additional das info
   LOG_EVENT("device.language_locale", "%s", _context->GetLocale()->GetLocaleString().c_str());
@@ -214,23 +267,19 @@ Result CozmoEngine::Init(const Json::Value& config) {
 
   SetEngineState(EngineState::LoadingData);
 
-  _context->GetWebService()->Start(_context->GetDataPlatform(),
-                                   _context->GetDataLoader()->GetWebServerEngineConfig());
+  const auto& webService = _context->GetWebService();
+  webService->Start(_context->GetDataPlatform(),
+                    _context->GetDataLoader()->GetWebServerEngineConfig());
+  webService->RegisterRequestHandler("/getenginestats", GetEngineStatsWebServerHandler, this);
 
   // DAS Event: "cozmo_engine.init.build_configuration"
   // s_val: Build configuration
   // data: Unused
   Anki::Util::sEvent("cozmo_engine.init.build_configuration", {},
-#if defined(DEBUG)
-                     "DEBUG");
-#elif defined(RELEASE)
+#if defined(NDEBUG)
                      "RELEASE");
-#elif defined(PROFILE)
-                     "PROFILE");
-#elif defined(SHIPPING)
-                     "SHIPPING");
 #else
-                     "UNKNOWN");
+                     "DEBUG");
 #endif
 
   _isInitialized = true;
@@ -287,13 +336,13 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
 
   // This is a bit of a hack, but on some systems the thread that calls Update is different from the thread
   // that does all of the setup. This flag assures that we set the "main" thread to be the one that's going to
-  // be doing the updating
+  // be doing the updating.
   if( !_hasRunFirstUpdate ) {
-    _context->SetMainThread();
+    _context->SetEngineThread();
     _hasRunFirstUpdate = true;
   }
 
-  DEV_ASSERT( _context->IsMainThread(), "CozmoEngine.EngineNotOnMainThread" );
+  DEV_ASSERT(_context->IsEngineThread(), "CozmoEngine.UpdateOnWrongThread" );
 
 #if ENABLE_CE_SLEEP_TIME_DIAGNOSTICS || ENABLE_CE_RUN_TIME_DIAGNOSTICS
   const double startUpdateTimeMs = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
@@ -320,8 +369,6 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   _uiMsgHandler->ResetMessageCounts();
   _context->GetRobotManager()->GetMsgHandler()->ResetMessageCounts();
   _context->GetVizManager()->ResetMessageCount();
-  
-  _context->GetVoiceCommandComponent()->Update();
 
   _context->GetWebService()->Update();
 
@@ -729,6 +776,13 @@ void CozmoEngine::RegisterEngineTickPerformance(const float tickDuration_ms,
   // Update the PerfMetric system for end of tick
   _context->GetPerfMetric()->Update(tickDuration_ms, tickFrequency_ms,
                                     sleepDurationIntended_ms, sleepDurationActual_ms);
+}
+
+void CozmoEngine::SetEngineThread()
+{
+  // Context is valid for lifetime of engine
+  DEV_ASSERT(_context, "CozmoEngine.SetEngineThread.InvalidContext");
+  _context->SetEngineThread();
 }
 
 } // namespace Cozmo

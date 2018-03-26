@@ -57,19 +57,20 @@ public:
   // Returns true if CPU frequncy falls below kNominalCPUFreq_kHz
   bool IsCPUThrottling() const;
 
-  // Reads the current CPU frequency and returns it
-  uint32_t UpdateCPUFreq_kHz() const;
-
-  // Reads the temperature in Celsius and returns it
-  uint32_t UpdateTemperature_C() const;
-
   // Returns current CPU frequency
-  // Asserts if update rate is 0
   uint32_t GetCPUFreq_kHz() const;
   
   // Returns temperature in Celsius
-  // Asserts if update rate is 0
   uint32_t GetTemperature_C() const;
+
+  // Returns uptime (and idle time) in seconds
+  float GetUptimeAndIdleTime(float &idleTime_s) const;
+
+  // Returns total and free memory in kB
+  uint32_t GetMemoryInfo(uint32_t &freeMem_kB) const;
+
+  // Returns data about CPU times
+  const std::vector<std::string>& GetCPUTimeStats() const;
 
   // Returns our ip address
   const std::string& GetIPAddress(bool update = false);
@@ -97,12 +98,14 @@ public:
 
   // Returns the os build version (time of build)
   const std::string& GetOSBuildVersion();
+  
+  const std::string& GetBuildSha();
 
   // Returns the semi-unique name of this robot, Vector_XYXY
   // Where X is a letter and Y is a digit
-  // The name can change over the lifetime of the robot
+  // The name can change over the lifetime of the roobt
   std::string GetRobotName() const;
-  
+
   // Returns whether or not the robot has booted in recovery mode
   // which is done by holding the backpack button down for ~12 seconds
   // while robot is on charger
@@ -114,12 +117,31 @@ private:
 
   void UpdateWifiInfo();
   
+  // Reads the current CPU frequency
+  void UpdateCPUFreq_kHz() const;
+
+  // Reads the temperature in Celsius
+  void UpdateTemperature_C() const;
+
+  // Reads the battery voltage in microvolts
+  void UpdateBatteryVoltage_uV() const;
+
+  // Reads uptime (and idle time) data
+  void UpdateUptimeAndIdleTime() const;
+
+  // Reads memory info data
+  void UpdateMemoryInfo() const;
+
+  // Reads CPU times data
+  void UpdateCPUTimeStats() const;
+
   uint32_t kNominalCPUFreq_kHz = 800000;
 
   std::string _ipAddress       = "";
   std::string _ssid            = "";
   std::string _serialNumString = "";
   std::string _osBuildVersion  = "";
+  std::string _buildSha        = "";
 
 }; // class OSState
   

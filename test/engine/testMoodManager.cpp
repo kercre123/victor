@@ -51,14 +51,20 @@ Anki::Util::GraphEvaluator2d kTestDecayGraph({{0.0f, 1.0f }, {0.5f, 1.0f }, {1.0
                                               {2.0f, 0.5f }, {2.5f, 0.5f }, {3.0f, 0.4f }, {3.5f, 0.0f } });
 
 
+const EmotionType kTestEmoType0 = EmotionType::Happy; // was happy
+const EmotionType kTestEmoType1 = EmotionType::Confident; // was calm
+const EmotionType kTestEmoType2 = EmotionType::Social; // was brave
+const EmotionType kTestEmoType3 = EmotionType::Stimulated; // was confident
+
 // Helper - tick mood manager for N ticks with a given timestep
 void TickMoodManager(MoodManager& moodManager, uint32_t numTicks, float tickTimeStep)
 {
+  DependencyManagedEntity<RobotComponentID> dependencies;
   for (uint32_t i=0; i < numTicks; ++i)
   {
     gCurrentTime += tickTimeStep;
-    moodManager.Update(gCurrentTime);
     BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( gCurrentTime ) );
+    moodManager.UpdateDependent(dependencies);
   }
 }
 
@@ -67,7 +73,7 @@ void InitStaticMoodData()
 {
   StaticMoodData& staticMoodData = MoodManager::GetStaticMoodData();
  
-  staticMoodData.SetDecayGraph(EmotionType::Happy, kTestDecayGraph);
+  staticMoodData.SetDecayGraph(kTestEmoType0, kTestDecayGraph);
   staticMoodData.SetDefaultRepetitionPenalty(kTestDefaultRepetitionPenaltyGraph);
 }
 
@@ -80,28 +86,28 @@ TEST(MoodManager, AddEmotionNoPenalty)
 
   TickMoodManager(moodManager, 1, kTickTimestep);
   
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 0.0f);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Calm),  0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 1),  0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Calm, 1),   0.0f, 0.0f);
-  moodManager.AddToEmotion(EmotionType::Happy, 0.5f, "Test1a", gCurrentTime);
-  moodManager.AddToEmotion(EmotionType::Calm,  0.1f, "Test1b", gCurrentTime);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 0.5f);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Calm),  0.1f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 1),  0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Calm, 1),   0.1f, 0.0f);
-  moodManager.AddToEmotion(EmotionType::Happy, 0.5f, "Test2", gCurrentTime);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 1.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 1),  1.0f, 0.0f);
-  moodManager.AddToEmotion(EmotionType::Happy, 0.5f, "Test3", gCurrentTime);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 1.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 1),  1.0f, 0.0f);
-  moodManager.AddToEmotion(EmotionType::Happy, -1.5f, "Test4", gCurrentTime);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), -0.5f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 1), -0.5f, 0.0f);
-  moodManager.AddToEmotion(EmotionType::Happy, -1.5f, "Test5", gCurrentTime);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), -1.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 1), -1.0f, 0.0f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 0.0f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType1),  0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 1),  0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType1, 1),   0.0f, 0.0f);
+  moodManager.AddToEmotion(kTestEmoType0, 0.5f, "Test1a", gCurrentTime);
+  moodManager.AddToEmotion(kTestEmoType1,  0.1f, "Test1b", gCurrentTime);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 0.5f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType1),  0.1f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 1),  0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType1, 1),   0.1f, 0.0f);
+  moodManager.AddToEmotion(kTestEmoType0, 0.5f, "Test2", gCurrentTime);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 1.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 1),  1.0f, 0.0f);
+  moodManager.AddToEmotion(kTestEmoType0, 0.5f, "Test3", gCurrentTime);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 1.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 1),  1.0f, 0.0f);
+  moodManager.AddToEmotion(kTestEmoType0, -1.5f, "Test4", gCurrentTime);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), -0.5f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 1), -0.5f, 0.0f);
+  moodManager.AddToEmotion(kTestEmoType0, -1.5f, "Test5", gCurrentTime);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), -1.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 1), -1.0f, 0.0f);
 }
 
 
@@ -113,30 +119,30 @@ TEST(MoodManager, AddEmotionRepeatPenalty)
   
   TickMoodManager(moodManager, 1, kTickTimestep);
   
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 0.0f);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Calm),  0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 1),  0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Calm, 1),   0.0f, 0.0f);
-  moodManager.AddToEmotion(EmotionType::Happy, 0.5f, "Test1",  gCurrentTime);
-  moodManager.AddToEmotion(EmotionType::Calm,  0.1f, "Test1b", gCurrentTime);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 0.5f);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Calm),  0.1f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 1),  0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Calm, 1),   0.1f, 0.0f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 0.0f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType1),  0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 1),  0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType1, 1),   0.0f, 0.0f);
+  moodManager.AddToEmotion(kTestEmoType0, 0.5f, "Test1",  gCurrentTime);
+  moodManager.AddToEmotion(kTestEmoType1,  0.1f, "Test1b", gCurrentTime);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 0.5f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType1),  0.1f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 1),  0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType1, 1),   0.1f, 0.0f);
   
   // Repeat at t=0
-  moodManager.AddToEmotion(EmotionType::Happy, 0.5f, "Test1",  gCurrentTime); // 0 second since last Test1 -> only +0
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 0.5f);
+  moodManager.AddToEmotion(kTestEmoType0, 0.5f, "Test1",  gCurrentTime); // 0 second since last Test1 -> only +0
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 0.5f);
   
   // Repeat at t=5
   gCurrentTime += 5.0f;
-  moodManager.AddToEmotion(EmotionType::Happy, 0.5f, "Test1",  gCurrentTime); // 5 second since last Test1 -> only +0.25
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 0.75f);
+  moodManager.AddToEmotion(kTestEmoType0, 0.5f, "Test1",  gCurrentTime); // 5 second since last Test1 -> only +0.25
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 0.75f);
 
   // Repeat at t=15
   gCurrentTime += 10.0f;
-  moodManager.AddToEmotion(EmotionType::Happy, 0.24f, "Test1",  gCurrentTime); // 10 second since last Test1 -> full 0.24
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 0.99f);
+  moodManager.AddToEmotion(kTestEmoType0, 0.24f, "Test1",  gCurrentTime); // 10 second since last Test1 -> full 0.24
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 0.99f);
 }
 
 
@@ -148,89 +154,89 @@ TEST(MoodManager, AddEmotionNoPenaltyEachTick)
   
   TickMoodManager(moodManager, 1, kTickTimestep);
   
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 0.0f);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Calm),  0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,  1),  0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 99),  0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Calm,  1),   0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Calm, 99),   0.0f, 0.0f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 0.0f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType1),  0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  1),  0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 99),  0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType1,  1),   0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType1, 99),   0.0f, 0.0f);
   
-  moodManager.AddToEmotion(EmotionType::Happy, 0.5f, "Test1", gCurrentTime);
-  moodManager.AddToEmotion(EmotionType::Calm,  0.1f, "Test2", gCurrentTime);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 0.5f);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Calm),  0.1f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,  1),  0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 99),  0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Calm,  1),   0.1f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Calm, 99),   0.1f, 0.0f);
+  moodManager.AddToEmotion(kTestEmoType0, 0.5f, "Test1", gCurrentTime);
+  moodManager.AddToEmotion(kTestEmoType1,  0.1f, "Test2", gCurrentTime);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 0.5f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType1),  0.1f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  1),  0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 99),  0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType1,  1),   0.1f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType1, 99),   0.1f, 0.0f);
   TickMoodManager(moodManager, 1, kTickTimestep);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 0.5f);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Calm),  0.1f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,  1),  0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,  2),  0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 99),  0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Calm,  1),   0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Calm,  2),   0.1f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Calm, 99),   0.1f, 0.0f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 0.5f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType1),  0.1f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  1),  0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  2),  0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 99),  0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType1,  1),   0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType1,  2),   0.1f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType1, 99),   0.1f, 0.0f);
   
-  moodManager.AddToEmotion(EmotionType::Happy, 0.5f, "Test3", gCurrentTime);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 1.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,  1),  0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,  2),  1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 99),  1.0f, 0.0f);
+  moodManager.AddToEmotion(kTestEmoType0, 0.5f, "Test3", gCurrentTime);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 1.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  1),  0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  2),  1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 99),  1.0f, 0.0f);
   TickMoodManager(moodManager, 1, kTickTimestep);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 1.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,  1),  0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,  2),  0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,  3),  1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 99),  1.0f, 0.0f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 1.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  1),  0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  2),  0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  3),  1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 99),  1.0f, 0.0f);
   
-  moodManager.AddToEmotion(EmotionType::Happy, 0.5f, "Test4", gCurrentTime);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 1.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   1),  0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   2),  0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   3),  1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,  99),  1.0f, 0.0f);
+  moodManager.AddToEmotion(kTestEmoType0, 0.5f, "Test4", gCurrentTime);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 1.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   1),  0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   2),  0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   3),  1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  99),  1.0f, 0.0f);
   TickMoodManager(moodManager, 1, kTickTimestep);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 1.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   1),  0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   2),  0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   3),  0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   4),  1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,  99),  1.0f, 0.0f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 1.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   1),  0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   2),  0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   3),  0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   4),  1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  99),  1.0f, 0.0f);
   
-  moodManager.AddToEmotion(EmotionType::Happy, -1.5f, "Test5", gCurrentTime);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), -0.5f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   1), -1.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   2), -1.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   3), -1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   4), -0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,  99), -0.5f, 0.0f);
+  moodManager.AddToEmotion(kTestEmoType0, -1.5f, "Test5", gCurrentTime);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), -0.5f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   1), -1.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   2), -1.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   3), -1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   4), -0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  99), -0.5f, 0.0f);
   TickMoodManager(moodManager, 1, kTickTimestep);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   1),  0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   2), -1.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   3), -1.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   4), -1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   5), -0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,  99), -0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   1),  0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   2), -1.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   3), -1.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   4), -1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   5), -0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  99), -0.5f, 0.0f);
   
-  moodManager.AddToEmotion(EmotionType::Happy, -1.5f, "Test6", gCurrentTime);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), -1.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   1), -0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   2), -2.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   3), -2.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   4), -1.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   5), -1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,  99), -1.0f, 0.0f);
+  moodManager.AddToEmotion(kTestEmoType0, -1.5f, "Test6", gCurrentTime);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), -1.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   1), -0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   2), -2.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   3), -2.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   4), -1.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   5), -1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  99), -1.0f, 0.0f);
   TickMoodManager(moodManager, 1, kTickTimestep);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), -1.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   1),  0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   2), -0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   3), -2.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   4), -2.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   5), -1.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,   6), -1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,  99), -1.0f, 0.0f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), -1.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   1),  0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   2), -0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   3), -2.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   4), -2.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   5), -1.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   6), -1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  99), -1.0f, 0.0f);
 }
 
 
@@ -241,78 +247,78 @@ TEST(MoodManager, DecayFromPositive)
   MoodManager moodManager;
   TickMoodManager(moodManager, 1, kTickTimestep);
   
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 0.0f);
-  moodManager.AddToEmotion(EmotionType::Happy, 10.0f, "Test1", gCurrentTime);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 1.0f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 0.0f);
+  moodManager.AddToEmotion(kTestEmoType0, 10.0f, "Test1", gCurrentTime);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 1.0f);
   
   TickMoodManager(moodManager, 10, kTickTimestep); // now = 0.1f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 1.0f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 1.0f,  0.000001f);
 
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 11), 1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 10), 0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,  1), 0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,  0), 0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(EmotionType::Happy, 0.2f   ), 1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(EmotionType::Happy, 0.091f ), 1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(EmotionType::Happy, 0.09f ),  0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(EmotionType::Happy, 0.0f   ), 0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 11), 1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 10), 0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  1), 0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  0), 0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.2f   ), 1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.091f ), 1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.09f ),  0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.0f   ), 0.0f, 0.0f);
   
   TickMoodManager(moodManager, 30, kTickTimestep); // now = 0.4f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 1.0f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 1.0f,  0.000001f);
   
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 41), 1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 40), 0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(EmotionType::Happy, 0.391f ),  1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(EmotionType::Happy, 0.39f   ), 0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 41), 1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 40), 0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.391f ),  1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.39f   ), 0.0f, 0.0f);
   
   TickMoodManager(moodManager, 10, kTickTimestep); // now = 0.5f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 1.0f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 1.0f,  0.000001f);
   
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 51), 1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 50), 0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(EmotionType::Happy, 0.491f ),  1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(EmotionType::Happy, 0.49f   ), 0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 51), 1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 50), 0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.491f ),  1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.49f   ), 0.0f, 0.0f);
 
   TickMoodManager(moodManager, 30, kTickTimestep); // now = 0.8f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 0.94f, 0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 0.94f, 0.000001f);
   
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 81),  0.94f, 0.0001f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 80), -0.06f, 0.0001f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 31), -0.06f, 0.0001f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy, 16), -0.03f, 0.0001f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(EmotionType::Happy,  1),  0.00f, 0.0001f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(EmotionType::Happy, 0.791f ),   0.94f, 0.0001f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(EmotionType::Happy, 0.79f  ),  -0.06f, 0.0001f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(EmotionType::Happy, 0.3f   ),  -0.06f, 0.0001f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(EmotionType::Happy, 0.15f  ),  -0.03f, 0.0001f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(EmotionType::Happy, 0.0f   ),   0.0f , 0.0001f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 81),  0.94f, 0.0001f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 80), -0.06f, 0.0001f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 31), -0.06f, 0.0001f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 16), -0.03f, 0.0001f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  1),  0.00f, 0.0001f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.791f ),   0.94f, 0.0001f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.79f  ),  -0.06f, 0.0001f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.3f   ),  -0.06f, 0.0001f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.15f  ),  -0.03f, 0.0001f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.0f   ),   0.0f , 0.0001f);
 
   TickMoodManager(moodManager, 20, kTickTimestep); // now = 1.0f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 0.9f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 0.9f,  0.000001f);
   
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 1.25f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 0.85f, 0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 0.85f, 0.000001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 1.5f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 0.8f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 0.8f,  0.000001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 1.75f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 0.65f, 0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 0.65f, 0.000001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 2.0f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 0.5f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 0.5f,  0.000001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 2.25f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 0.5f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 0.5f,  0.000001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 2.5f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 0.5f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 0.5f,  0.000001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 2.75f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 0.45f, 0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 0.45f, 0.000001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 3.0f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 0.4f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 0.4f,  0.000001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 3.25f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 0.2f,  0.00001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 0.2f,  0.00001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 3.5f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 0.0f,  0.00001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 0.0f,  0.00001f);
   // Should remain zero
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 4.0f
-  EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 0.0f);
+  EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 0.0f);
 }
 
 
@@ -323,43 +329,43 @@ TEST(MoodManager, DecayFromNegative)
   MoodManager moodManager;
   TickMoodManager(moodManager, 1, kTickTimestep);
   
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 0.0f);
-  moodManager.AddToEmotion(EmotionType::Happy, -10.0f, "Test1", gCurrentTime);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), -1.0f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 0.0f);
+  moodManager.AddToEmotion(kTestEmoType0, -10.0f, "Test1", gCurrentTime);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), -1.0f);
   
   TickMoodManager(moodManager, 10, kTickTimestep); // now = 0.1f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), -1.0f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), -1.0f,  0.000001f);
   TickMoodManager(moodManager, 30, kTickTimestep); // now = 0.4f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), -1.0f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), -1.0f,  0.000001f);
   TickMoodManager(moodManager, 10, kTickTimestep); // now = 0.5f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), -1.0f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), -1.0f,  0.000001f);
   TickMoodManager(moodManager, 30, kTickTimestep); // now = 0.8f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), -0.94f, 0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), -0.94f, 0.000001f);
   TickMoodManager(moodManager, 20, kTickTimestep); // now = 1.0f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), -0.9f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), -0.9f,  0.000001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 1.25f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), -0.85f, 0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), -0.85f, 0.000001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 1.5f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), -0.8f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), -0.8f,  0.000001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 1.75f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), -0.65f, 0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), -0.65f, 0.000001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 2.0f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), -0.5f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), -0.5f,  0.000001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 2.25f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), -0.5f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), -0.5f,  0.000001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 2.5f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), -0.5f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), -0.5f,  0.000001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 2.75f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), -0.45f, 0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), -0.45f, 0.000001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 3.0f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), -0.4f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), -0.4f,  0.000001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 3.25f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), -0.2f,  0.00001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), -0.2f,  0.00001f);
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 3.5f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy),  0.0f,  0.00001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0),  0.0f,  0.00001f);
   // Should remain zero
   TickMoodManager(moodManager, 25, kTickTimestep); // now = 4.0f
-  EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 0.0f);
+  EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 0.0f);
 }
 
 
@@ -371,27 +377,27 @@ TEST(MoodManager, DecayResetFromAwards)
   TickMoodManager(moodManager, 1, kTickTimestep);
   
   
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 0.0f);
-  moodManager.AddToEmotion(EmotionType::Happy, 10.0f, "Test1", gCurrentTime);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 1.0f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 0.0f);
+  moodManager.AddToEmotion(kTestEmoType0, 10.0f, "Test1", gCurrentTime);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 1.0f);
   
   TickMoodManager(moodManager, 20, 0.1f); // now = 2.0f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 0.5f,  0.000001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 0.5f,  0.000001f);
 
-  moodManager.AddToEmotion(EmotionType::Happy, 0.25f, "Test2", gCurrentTime);
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 0.75f, 0.000001f);
+  moodManager.AddToEmotion(kTestEmoType0, 0.25f, "Test2", gCurrentTime);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 0.75f, 0.000001f);
   // now = 0.0f (add reset the decay)
   
   TickMoodManager(moodManager, 20, 0.1f); // now = 2.0f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 0.375f,  0.1f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 0.375f,  0.1f);
 
-  moodManager.AddToEmotion(EmotionType::Happy, -0.25f, "Test3", gCurrentTime);
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 0.125f, 0.000001f);
+  moodManager.AddToEmotion(kTestEmoType0, -0.25f, "Test3", gCurrentTime);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 0.125f, 0.000001f);
   // now still = 2.0f (subtract doesn't reset the decay)
   // Note: due to the decrease this is equivalent to a 0.25 initial value dropped to 0.125 after 2 seconds
 
   TickMoodManager(moodManager, 10, 0.1f); // now = 3.0f
-  EXPECT_NEAR(moodManager.GetEmotionValue(EmotionType::Happy), 0.1f,  0.0001f);
+  EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 0.1f,  0.0001f);
   
 }
 
@@ -402,10 +408,10 @@ TEST(MoodManager, DecayResetFromAwards)
 
 TEST(MoodManager, EmotionScorerRoundTripJson)
 {
-  EmotionScorer testScorer(EmotionType::Happy,
+  EmotionScorer testScorer(kTestEmoType0,
                            Anki::Util::GraphEvaluator2d({{-1.0f, 0.0f}, {0.5f, 1.0f}, {1.0f, 0.6f}}), true);
   
-  EXPECT_EQ(testScorer.GetEmotionType(), EmotionType::Happy);
+  EXPECT_EQ(testScorer.GetEmotionType(), kTestEmoType0);
   EXPECT_EQ(testScorer.GetScoreGraph().GetNumNodes(), 3);
   EXPECT_EQ(testScorer.GetScoreGraph().GetNode(0)._x, -1.0f);
   EXPECT_EQ(testScorer.GetScoreGraph().GetNode(0)._y,  0.0f);
@@ -422,7 +428,7 @@ TEST(MoodManager, EmotionScorerRoundTripJson)
   
   EmotionScorer testScorer2(testJson);
   
-  EXPECT_EQ(testScorer2.GetEmotionType(), EmotionType::Happy);
+  EXPECT_EQ(testScorer2.GetEmotionType(), kTestEmoType0);
   EXPECT_EQ(testScorer2.GetScoreGraph().GetNumNodes(), 3);
   EXPECT_EQ(testScorer2.GetScoreGraph().GetNode(0)._x, -1.0f);
   EXPECT_EQ(testScorer2.GetScoreGraph().GetNode(0)._y,  0.0f);
@@ -436,7 +442,7 @@ TEST(MoodManager, EmotionScorerRoundTripJson)
 
 static const char* kTestEmotionScorerJson =
 "{"
-"   \"emotionType\" : \"Calm\","
+"   \"emotionType\" : \"Confident\","
 "   \"scoreGraph\" : {"
 "      \"nodes\" : ["
 "         {"
@@ -462,7 +468,7 @@ TEST(MoodManager, EmotionScorerReadJson)
   
   EmotionScorer testScorer(emotionScorerJson);
 
-  EXPECT_EQ(testScorer.GetEmotionType(), EmotionType::Calm);
+  EXPECT_EQ(testScorer.GetEmotionType(), kTestEmoType1);
   EXPECT_EQ(testScorer.GetScoreGraph().GetNumNodes(), 2);
   EXPECT_EQ(testScorer.GetScoreGraph().GetNode(0)._x, -1.0f);
   EXPECT_EQ(testScorer.GetScoreGraph().GetNode(0)._y, -0.5f);
@@ -474,7 +480,7 @@ TEST(MoodManager, EmotionScorerReadJson)
 // Missing scoreGraph entry
 static const char* kBad3TestEmotionScorerJson =
 "{"
-"   \"emotionType\" : \"Calm\","
+"   \"emotionType\" : \"Confident\","
 "   \"trackDelta\" : false"
 "}";
 
@@ -486,12 +492,12 @@ TEST(MoodManager, EmotionScorerReadBadJson3)
   const bool parsedOK = reader.parse(kBad3TestEmotionScorerJson, emotionScorerJson, false);
   ASSERT_TRUE(parsedOK);
   
-  EmotionScorer testScorer(EmotionType::Brave, Anki::Util::GraphEvaluator2d(), false);
+  EmotionScorer testScorer(kTestEmoType2, Anki::Util::GraphEvaluator2d(), false);
   const bool readRes = testScorer.ReadFromJson(emotionScorerJson);
   
   EXPECT_FALSE( readRes );
   
-  EXPECT_EQ(testScorer.GetEmotionType(), EmotionType::Calm);
+  EXPECT_EQ(testScorer.GetEmotionType(), kTestEmoType1);
   EXPECT_EQ(testScorer.GetScoreGraph().GetNumNodes(), 0);
   EXPECT_EQ(testScorer.TrackDeltaScore(), false);
 }
@@ -500,7 +506,7 @@ TEST(MoodManager, EmotionScorerReadBadJson3)
 // Missing scoreGraph entry
 static const char* kBad4TestEmotionScorerJson =
 "{"
-"   \"emotionType\" : \"Calm\","
+"   \"emotionType\" : \"Confident\","
 "   \"scoreGraph\" : {"
 "      \"nodes\" : ["
 "         {"
@@ -519,12 +525,12 @@ TEST(MoodManager, EmotionScorerReadBadJson4)
   const bool parsedOK = reader.parse(kBad4TestEmotionScorerJson, emotionScorerJson, false);
   ASSERT_TRUE(parsedOK);
   
-  EmotionScorer testScorer(EmotionType::Brave, Anki::Util::GraphEvaluator2d(), false);
+  EmotionScorer testScorer(kTestEmoType2, Anki::Util::GraphEvaluator2d(), false);
   const bool readRes = testScorer.ReadFromJson(emotionScorerJson);
   
   EXPECT_FALSE( readRes );
   
-  EXPECT_EQ(testScorer.GetEmotionType(), EmotionType::Calm);
+  EXPECT_EQ(testScorer.GetEmotionType(), kTestEmoType1);
   EXPECT_EQ(testScorer.GetScoreGraph().GetNumNodes(), 1);
   EXPECT_EQ(testScorer.TrackDeltaScore(), false);
 }
@@ -537,7 +543,7 @@ TEST(MoodManager, EmotionScorerReadBadJson4)
 
 TEST(MoodManager, EmotionAffectorRoundTripJson)
 {
-  EmotionAffector testAffector(EmotionType::Happy, 0.75f);
+  EmotionAffector testAffector(kTestEmoType0, 0.75f);
   
   Json::Value testJson;
   const bool writeRes = testAffector.WriteToJson(testJson);
@@ -548,7 +554,7 @@ TEST(MoodManager, EmotionAffectorRoundTripJson)
   const bool readRes = testAffector2.ReadFromJson(testJson);
   
   EXPECT_TRUE(readRes);
-  EXPECT_EQ(testAffector2.GetType(),  EmotionType::Happy);
+  EXPECT_EQ(testAffector2.GetType(),  kTestEmoType0);
   EXPECT_EQ(testAffector2.GetValue(), 0.75f);
 }
 
@@ -556,7 +562,7 @@ TEST(MoodManager, EmotionAffectorRoundTripJson)
 // Valid Json
 static const char* kTestEmotionAffectorJson =
 "{"
-"   \"emotionType\" : \"Calm\","
+"   \"emotionType\" : \"Confident\","
 "   \"value\" : 0.33"
 "}";
 
@@ -572,7 +578,7 @@ TEST(MoodManager, EmotionAffectorReadJson)
   const bool readRes = testAffector.ReadFromJson(emotionAffectorJson);
   
   EXPECT_TRUE(readRes);
-  EXPECT_EQ(testAffector.GetType(),  EmotionType::Calm);
+  EXPECT_EQ(testAffector.GetType(),  kTestEmoType1);
   EXPECT_EQ(testAffector.GetValue(), 0.33f);
 }
 
@@ -586,9 +592,9 @@ TEST(MoodManager, EmotionEventRoundTripJson)
 {
   EmotionEvent testEvent;
   testEvent.SetName("TestEvent1");
-  testEvent.AddEmotionAffector(EmotionAffector(EmotionType::Brave, 0.11f));
-  testEvent.AddEmotionAffector(EmotionAffector(EmotionType::Happy, 0.22f));
-  testEvent.AddEmotionAffector(EmotionAffector(EmotionType::Calm,  0.33f));
+  testEvent.AddEmotionAffector(EmotionAffector(kTestEmoType2, 0.11f));
+  testEvent.AddEmotionAffector(EmotionAffector(kTestEmoType0, 0.22f));
+  testEvent.AddEmotionAffector(EmotionAffector(kTestEmoType1,  0.33f));
   
   Json::Value testJson;
   const bool writeRes = testEvent.WriteToJson(testJson);
@@ -602,11 +608,11 @@ TEST(MoodManager, EmotionEventRoundTripJson)
   
   EXPECT_EQ(testEvent2.GetName(), "TestEvent1");
   EXPECT_EQ(testEvent2.GetNumAffectors(), 3);
-  EXPECT_EQ(testEvent2.GetAffector(0).GetType(),  EmotionType::Brave);
+  EXPECT_EQ(testEvent2.GetAffector(0).GetType(),  kTestEmoType2);
   EXPECT_EQ(testEvent2.GetAffector(0).GetValue(), 0.11f);
-  EXPECT_EQ(testEvent2.GetAffector(1).GetType(),  EmotionType::Happy);
+  EXPECT_EQ(testEvent2.GetAffector(1).GetType(),  kTestEmoType0);
   EXPECT_EQ(testEvent2.GetAffector(1).GetValue(), 0.22f);
-  EXPECT_EQ(testEvent2.GetAffector(2).GetType(),  EmotionType::Calm);
+  EXPECT_EQ(testEvent2.GetAffector(2).GetType(),  kTestEmoType1);
   EXPECT_EQ(testEvent2.GetAffector(2).GetValue(), 0.33f);
 }
 
@@ -617,7 +623,7 @@ static const char* kTestEmotionEventJson =
 "   \"name\" : \"TestEvent1\","
 "   \"emotionAffectors\" : ["
 "      {"
-"         \"emotionType\" : \"Brave\","
+"         \"emotionType\" : \"Social\","
 "         \"value\" : 0.11"
 "      },"
 "      {"
@@ -625,7 +631,7 @@ static const char* kTestEmotionEventJson =
 "         \"value\" : 0.22"
 "      },"
 "      {"
-"         \"emotionType\" : \"Calm\","
+"         \"emotionType\" : \"Confident\","
 "         \"value\" : 0.33"
 "      }"
 "   ]"
@@ -646,11 +652,11 @@ TEST(MoodManager, EmotionEventReadJson)
   
   EXPECT_EQ(testEvent.GetName(), "TestEvent1");
   EXPECT_EQ(testEvent.GetNumAffectors(), 3);
-  EXPECT_EQ(testEvent.GetAffector(0).GetType(),  EmotionType::Brave);
+  EXPECT_EQ(testEvent.GetAffector(0).GetType(),  kTestEmoType2);
   EXPECT_EQ(testEvent.GetAffector(0).GetValue(), 0.11f);
-  EXPECT_EQ(testEvent.GetAffector(1).GetType(),  EmotionType::Happy);
+  EXPECT_EQ(testEvent.GetAffector(1).GetType(),  kTestEmoType0);
   EXPECT_EQ(testEvent.GetAffector(1).GetValue(), 0.22f);
-  EXPECT_EQ(testEvent.GetAffector(2).GetType(),  EmotionType::Calm);
+  EXPECT_EQ(testEvent.GetAffector(2).GetType(),  kTestEmoType1);
   EXPECT_EQ(testEvent.GetAffector(2).GetValue(), 0.33f);
 }
 
@@ -667,9 +673,9 @@ TEST(MoodManager, EmotionEventMapperRoundTripJson)
   {
     EmotionEvent* newEvent = new EmotionEvent();
     newEvent->SetName("TestEvent1b");
-    newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Brave, 0.11f));
-    newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Happy, 0.22f));
-    newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Calm,  0.33f));
+    newEvent->AddEmotionAffector(EmotionAffector(kTestEmoType2, 0.11f));
+    newEvent->AddEmotionAffector(EmotionAffector(kTestEmoType0, 0.22f));
+    newEvent->AddEmotionAffector(EmotionAffector(kTestEmoType1,  0.33f));
 
     testEventMapper.AddEvent(newEvent);
   }
@@ -677,8 +683,8 @@ TEST(MoodManager, EmotionEventMapperRoundTripJson)
   {
     EmotionEvent* newEvent = new EmotionEvent();
     newEvent->SetName("TestEvent2b");
-    newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Calm,  0.44f));
-    newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Happy, 0.55f));
+    newEvent->AddEmotionAffector(EmotionAffector(kTestEmoType1,  0.44f));
+    newEvent->AddEmotionAffector(EmotionAffector(kTestEmoType0, 0.55f));
     
     testEventMapper.AddEvent(newEvent);
   }
@@ -687,8 +693,8 @@ TEST(MoodManager, EmotionEventMapperRoundTripJson)
     // This event will clobber 1st event added
     EmotionEvent* newEvent = new EmotionEvent();
     newEvent->SetName("TestEvent1b");
-    newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Brave, 0.66f));
-    newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Happy, 0.77f));
+    newEvent->AddEmotionAffector(EmotionAffector(kTestEmoType2, 0.66f));
+    newEvent->AddEmotionAffector(EmotionAffector(kTestEmoType0, 0.77f));
     
     testEventMapper.AddEvent(newEvent);
   }
@@ -708,18 +714,18 @@ TEST(MoodManager, EmotionEventMapperRoundTripJson)
     ASSERT_NE(foundEvent2, nullptr);
 
     EXPECT_EQ(foundEvent2->GetNumAffectors(), 2);
-    EXPECT_EQ(foundEvent2->GetAffector(0).GetType(),  EmotionType::Calm);
+    EXPECT_EQ(foundEvent2->GetAffector(0).GetType(),  kTestEmoType1);
     EXPECT_EQ(foundEvent2->GetAffector(0).GetValue(), 0.44f);
-    EXPECT_EQ(foundEvent2->GetAffector(1).GetType(),  EmotionType::Happy);
+    EXPECT_EQ(foundEvent2->GetAffector(1).GetType(),  kTestEmoType0);
     EXPECT_EQ(foundEvent2->GetAffector(1).GetValue(), 0.55f);
     
     const EmotionEvent* foundEvent1 = testEventMapper2.FindEvent("TestEvent1b");
     ASSERT_NE(foundEvent1, nullptr);
     
     EXPECT_EQ(foundEvent1->GetNumAffectors(), 2);
-    EXPECT_EQ(foundEvent1->GetAffector(0).GetType(),  EmotionType::Brave);
+    EXPECT_EQ(foundEvent1->GetAffector(0).GetType(),  kTestEmoType2);
     EXPECT_EQ(foundEvent1->GetAffector(0).GetValue(), 0.66f);
-    EXPECT_EQ(foundEvent1->GetAffector(1).GetType(),  EmotionType::Happy);
+    EXPECT_EQ(foundEvent1->GetAffector(1).GetType(),  kTestEmoType0);
     EXPECT_EQ(foundEvent1->GetAffector(1).GetValue(), 0.77f);
   }
 }
@@ -736,7 +742,7 @@ static const char* kTestEmotionEventMapperJson =
 "               \"value\" : 0.11"
 "            },"
 "            {"
-"               \"emotionType\" : \"Calm\","
+"               \"emotionType\" : \"Confident\","
 "               \"value\" : 0.22"
 "            }"
 "         ],"
@@ -745,11 +751,11 @@ static const char* kTestEmotionEventMapperJson =
 "      {"
 "         \"emotionAffectors\" : ["
 "            {"
-"               \"emotionType\" : \"Brave\","
+"               \"emotionType\" : \"Social\","
 "               \"value\" : 0.33"
 "            },"
 "            {"
-"               \"emotionType\" : \"Confident\","
+"               \"emotionType\" : \"Stimulated\","
 "               \"value\" : 0.44"
 "            }"
 "         ],"
@@ -774,7 +780,7 @@ static const char* kTestEmotionEventMapperJson2 =
 "      {"
 "         \"emotionAffectors\" : ["
 "            {"
-"               \"emotionType\" : \"Brave\","
+"               \"emotionType\" : \"Social\","
 "               \"value\" : 0.66"
 "            }"
 "         ],"
@@ -822,9 +828,9 @@ TEST(MoodManager, EmotionEventMapperReadJson)
     ASSERT_NE(foundEvent, nullptr);
     
     EXPECT_EQ(foundEvent->GetNumAffectors(), 2);
-    EXPECT_EQ(foundEvent->GetAffector(0).GetType(),  EmotionType::Happy);
+    EXPECT_EQ(foundEvent->GetAffector(0).GetType(),  kTestEmoType0);
     EXPECT_EQ(foundEvent->GetAffector(0).GetValue(), 0.11f);
-    EXPECT_EQ(foundEvent->GetAffector(1).GetType(),  EmotionType::Calm);
+    EXPECT_EQ(foundEvent->GetAffector(1).GetType(),  kTestEmoType1);
     EXPECT_EQ(foundEvent->GetAffector(1).GetValue(), 0.22f);
   }
   {
@@ -832,9 +838,9 @@ TEST(MoodManager, EmotionEventMapperReadJson)
     ASSERT_NE(foundEvent, nullptr);
     
     EXPECT_EQ(foundEvent->GetNumAffectors(), 2);
-    EXPECT_EQ(foundEvent->GetAffector(0).GetType(),  EmotionType::Brave);
+    EXPECT_EQ(foundEvent->GetAffector(0).GetType(),  kTestEmoType2);
     EXPECT_EQ(foundEvent->GetAffector(0).GetValue(), 0.33f);
-    EXPECT_EQ(foundEvent->GetAffector(1).GetType(),  EmotionType::Confident);
+    EXPECT_EQ(foundEvent->GetAffector(1).GetType(),  kTestEmoType3);
     EXPECT_EQ(foundEvent->GetAffector(1).GetValue(), 0.44f);
   }
   {
@@ -842,11 +848,11 @@ TEST(MoodManager, EmotionEventMapperReadJson)
     ASSERT_NE(foundEvent, nullptr);
     
     EXPECT_EQ(foundEvent->GetNumAffectors(), 3);
-    EXPECT_EQ(foundEvent->GetAffector(0).GetType(),  EmotionType::Brave);
+    EXPECT_EQ(foundEvent->GetAffector(0).GetType(),  kTestEmoType2);
     EXPECT_EQ(foundEvent->GetAffector(0).GetValue(), 0.11f);
-    EXPECT_EQ(foundEvent->GetAffector(1).GetType(),  EmotionType::Happy);
+    EXPECT_EQ(foundEvent->GetAffector(1).GetType(),  kTestEmoType0);
     EXPECT_EQ(foundEvent->GetAffector(1).GetValue(), 0.22f);
-    EXPECT_EQ(foundEvent->GetAffector(2).GetType(),  EmotionType::Calm);
+    EXPECT_EQ(foundEvent->GetAffector(2).GetType(),  kTestEmoType1);
     EXPECT_EQ(foundEvent->GetAffector(2).GetValue(), 0.33f);
   }
   {
@@ -854,7 +860,7 @@ TEST(MoodManager, EmotionEventMapperReadJson)
     ASSERT_NE(foundEvent, nullptr);
     
     EXPECT_EQ(foundEvent->GetNumAffectors(), 1);
-    EXPECT_EQ(foundEvent->GetAffector(0).GetType(),  EmotionType::Happy);
+    EXPECT_EQ(foundEvent->GetAffector(0).GetType(),  kTestEmoType0);
     EXPECT_EQ(foundEvent->GetAffector(0).GetValue(), 0.55f);
   }
   {
@@ -862,7 +868,7 @@ TEST(MoodManager, EmotionEventMapperReadJson)
     ASSERT_NE(foundEvent, nullptr);
     
     EXPECT_EQ(foundEvent->GetNumAffectors(), 1);
-    EXPECT_EQ(foundEvent->GetAffector(0).GetType(),  EmotionType::Brave);
+    EXPECT_EQ(foundEvent->GetAffector(0).GetType(),  kTestEmoType2);
     EXPECT_EQ(foundEvent->GetAffector(0).GetValue(), 0.66f);
   }
 }
@@ -880,16 +886,16 @@ TEST(MoodManager, StaticMoodDataRoundTripJson)
   Anki::Util::GraphEvaluator2d kTestNoDecayGraph({{0.0f, 1.0f}, {1.0f, 1.0f}});
   
   testStaticData.InitDecayGraphs();
-  testStaticData.SetDecayGraph(EmotionType::Happy, kTestDecayGraph);
-  testStaticData.SetDecayGraph(EmotionType::Calm,  kTestNoDecayGraph);
+  testStaticData.SetDecayGraph(kTestEmoType0, kTestDecayGraph);
+  testStaticData.SetDecayGraph(kTestEmoType1,  kTestNoDecayGraph);
   testStaticData.SetDefaultRepetitionPenalty(kTestDefaultRepetitionPenaltyGraph);
   
   {
     EmotionEvent* newEvent = new EmotionEvent();
     newEvent->SetName("TestEvent1");
-    newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Brave,  0.11f));
-    newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Happy, -0.22f));
-    newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Calm,   0.33f));
+    newEvent->AddEmotionAffector(EmotionAffector(kTestEmoType2,  0.11f));
+    newEvent->AddEmotionAffector(EmotionAffector(kTestEmoType0, -0.22f));
+    newEvent->AddEmotionAffector(EmotionAffector(kTestEmoType1,   0.33f));
   
     testStaticData.GetEmotionEventMapper().AddEvent(newEvent);
   }
@@ -897,8 +903,8 @@ TEST(MoodManager, StaticMoodDataRoundTripJson)
   {
     EmotionEvent* newEvent = new EmotionEvent();
     newEvent->SetName("TestEvent2");
-    newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Calm,  -0.44f));
-    newEvent->AddEmotionAffector(EmotionAffector(EmotionType::Happy,  0.55f));
+    newEvent->AddEmotionAffector(EmotionAffector(kTestEmoType1,  -0.44f));
+    newEvent->AddEmotionAffector(EmotionAffector(kTestEmoType0,  0.55f));
     
     testStaticData.GetEmotionEventMapper().AddEvent(newEvent);
   }
@@ -914,7 +920,7 @@ TEST(MoodManager, StaticMoodDataRoundTripJson)
   EXPECT_TRUE(readRes);
   
   {
-    const Anki::Util::GraphEvaluator2d& happyGraph = testStaticData2.GetDecayGraph(EmotionType::Happy);
+    const Anki::Util::GraphEvaluator2d& happyGraph = testStaticData2.GetDecayGraph(kTestEmoType0);
     ASSERT_EQ(happyGraph.GetNumNodes(), kTestDecayGraph.GetNumNodes());
     for (int i=0; i < kTestDecayGraph.GetNumNodes(); ++i)
     {
@@ -924,7 +930,7 @@ TEST(MoodManager, StaticMoodDataRoundTripJson)
   }
   
   {
-    const Anki::Util::GraphEvaluator2d& calmGraph = testStaticData2.GetDecayGraph(EmotionType::Calm);
+    const Anki::Util::GraphEvaluator2d& calmGraph = testStaticData2.GetDecayGraph(kTestEmoType1);
     ASSERT_EQ(calmGraph.GetNumNodes(), kTestNoDecayGraph.GetNumNodes());
     for (int i=0; i < kTestNoDecayGraph.GetNumNodes(); ++i)
     {
@@ -938,20 +944,20 @@ TEST(MoodManager, StaticMoodDataRoundTripJson)
     ASSERT_NE(foundEvent1, nullptr);
     
     EXPECT_EQ(foundEvent1->GetNumAffectors(), 3);
-    EXPECT_EQ(foundEvent1->GetAffector(0).GetType(),  EmotionType::Brave);
+    EXPECT_EQ(foundEvent1->GetAffector(0).GetType(),  kTestEmoType2);
     EXPECT_EQ(foundEvent1->GetAffector(0).GetValue(),  0.11f);
-    EXPECT_EQ(foundEvent1->GetAffector(1).GetType(),  EmotionType::Happy);
+    EXPECT_EQ(foundEvent1->GetAffector(1).GetType(),  kTestEmoType0);
     EXPECT_EQ(foundEvent1->GetAffector(1).GetValue(), -0.22f);
-    EXPECT_EQ(foundEvent1->GetAffector(2).GetType(),  EmotionType::Calm);
+    EXPECT_EQ(foundEvent1->GetAffector(2).GetType(),  kTestEmoType1);
     EXPECT_EQ(foundEvent1->GetAffector(2).GetValue(),  0.33f);
     
     const EmotionEvent* foundEvent2 = testStaticData2.GetEmotionEventMapper().FindEvent("TestEvent2");
     ASSERT_NE(foundEvent2, nullptr);
     
     EXPECT_EQ(foundEvent2->GetNumAffectors(), 2);
-    EXPECT_EQ(foundEvent2->GetAffector(0).GetType(),  EmotionType::Calm);
+    EXPECT_EQ(foundEvent2->GetAffector(0).GetType(),  kTestEmoType1);
     EXPECT_EQ(foundEvent2->GetAffector(0).GetValue(), -0.44f);
-    EXPECT_EQ(foundEvent2->GetAffector(1).GetType(),  EmotionType::Happy);
+    EXPECT_EQ(foundEvent2->GetAffector(1).GetType(),  kTestEmoType0);
     EXPECT_EQ(foundEvent2->GetAffector(1).GetValue(),  0.55f);
   }
 }
@@ -979,7 +985,7 @@ static const char* kTestStaticMoodDataJson =
 "         ]"
 "      },"
 "      {"
-"         \"emotionType\" : \"Calm\","
+"         \"emotionType\" : \"Confident\","
 "         \"nodes\" : ["
 "            {"
 "               \"x\" : 0,"
@@ -997,7 +1003,7 @@ static const char* kTestStaticMoodDataJson =
 "          {"
 "             \"emotionAffectors\" : ["
 "                {"
-"                   \"emotionType\" : \"Brave\","
+"                   \"emotionType\" : \"Social\","
 "                   \"value\" : 0.11"
 "                },"
 "                {"
@@ -1005,7 +1011,7 @@ static const char* kTestStaticMoodDataJson =
 "                   \"value\" : -0.22"
 "                },"
 "                {"
-"                   \"emotionType\" : \"Calm\","
+"                   \"emotionType\" : \"Confident\","
 "                   \"value\" : 0.33"
 "                }"
 "             ],"
@@ -1014,7 +1020,7 @@ static const char* kTestStaticMoodDataJson =
 "          {"
 "             \"emotionAffectors\" : ["
 "                {"
-"                   \"emotionType\" : \"Calm\","
+"                   \"emotionType\" : \"Confident\","
 "                   \"value\" : -0.44"
 "                },"
 "                {"
@@ -1054,7 +1060,7 @@ TEST(MoodManager, StaticMoodDataReadJson)
   EXPECT_TRUE(readRes);
   
   {
-    const Anki::Util::GraphEvaluator2d& happyGraph = testStaticMoodData.GetDecayGraph(EmotionType::Happy);
+    const Anki::Util::GraphEvaluator2d& happyGraph = testStaticMoodData.GetDecayGraph(kTestEmoType0);
     ASSERT_EQ(happyGraph.GetNumNodes(), 3);
 
     EXPECT_FLOAT_EQ(happyGraph.GetNode(2)._x, 2.0f);
@@ -1062,7 +1068,7 @@ TEST(MoodManager, StaticMoodDataReadJson)
   }
   
   {
-    const Anki::Util::GraphEvaluator2d& calmGraph = testStaticMoodData.GetDecayGraph(EmotionType::Calm);
+    const Anki::Util::GraphEvaluator2d& calmGraph = testStaticMoodData.GetDecayGraph(kTestEmoType1);
     ASSERT_EQ(calmGraph.GetNumNodes(), 2);
 
     EXPECT_FLOAT_EQ(calmGraph.GetNode(1)._x, 1.5f);
@@ -1070,17 +1076,17 @@ TEST(MoodManager, StaticMoodDataReadJson)
   }
 
   MoodManager moodManager;
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Brave), 0.0f);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), 0.0f);
-  EXPECT_EQ(moodManager.GetEmotionValue(EmotionType::Calm),  0.0f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType2), 0.0f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 0.0f);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType1),  0.0f);
   moodManager.TriggerEmotionEvent("TestEvent1", 0.0);
-  EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(EmotionType::Brave),  0.11f);
-  EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(EmotionType::Happy), -0.22f);
-  EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(EmotionType::Calm),   0.33f);
+  EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(kTestEmoType2),  0.11f);
+  EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(kTestEmoType0), -0.22f);
+  EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(kTestEmoType1),   0.33f);
   moodManager.TriggerEmotionEvent("TestEvent2", 0.0);
-  EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(EmotionType::Brave),  0.11f);
-  EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(EmotionType::Happy),  0.33f);
-  EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(EmotionType::Calm),  -0.11f);
+  EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(kTestEmoType2),  0.11f);
+  EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(kTestEmoType0),  0.33f);
+  EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(kTestEmoType1),  -0.11f);
 }
 
 

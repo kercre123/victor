@@ -22,17 +22,10 @@ class BehaviorAnimSequenceWithFace : public BehaviorAnimSequence
 {
 using BaseClass = BehaviorAnimSequence;
 protected:
-  
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorAnimSequenceWithFace(const Json::Value& config);
-
-public:
-
   virtual void OnBehaviorActivated() override;
-  void SetAnimationsToPlay(const std::vector<AnimationTrigger>& animations){
-    _animTriggers = animations;
-  }
 };
 
 }

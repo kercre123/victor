@@ -45,7 +45,7 @@ void BehaviorReactToUnclaimedIntent::GetBehaviorOperationModifiers( BehaviorOper
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToUnclaimedIntent::WantsToBeActivatedBehavior() const
 {
-  const auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  const auto& uic = GetBehaviorComp<UserIntentComponent>();
   
   return uic.WasUserIntentUnclaimed();
 }
@@ -53,7 +53,7 @@ bool BehaviorReactToUnclaimedIntent::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToUnclaimedIntent::OnBehaviorActivated()
 {
-  auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
   uic.ResetUserIntentUnclaimed();
   
   const AnimationTrigger animTrigger = AnimationTrigger::ReactToUnclaimedIntent;

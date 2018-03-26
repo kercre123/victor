@@ -33,7 +33,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/continuityComponent.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
@@ -66,7 +66,8 @@ static const char* kRequiredDriveOffChargerKey       = "requiredRecentDriveOffCh
 static const char* kRequiredParentSwitchKey          = "requiredRecentSwitchToParent_sec";
 static const char* kExecutableBehaviorTypeKey        = "executableBehaviorType";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
-static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedCondition";
+static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedConditions";
+static const char* kWantsToCancelSelfConfigKey       = "wantsToCancelSelfConditions";
 static const char* kRespondToUserIntentsKey          = "respondToUserIntents";
 static const char* kClaimUserIntentDataKey           = "claimUserIntentData";
 static const char* kRespondToTriggerWordKey          = "respondToTriggerWord";
@@ -78,6 +79,7 @@ static const char* kAnonymousBehaviorMapKey          = "anonymousBehaviors";
 static const char* kAnonymousBehaviorName            = "behaviorName";
   
 static const char* kBehaviorDebugLabel               = "debugLabel";
+static const char* kDisplayNameKey                   = "displayNameKey";
 }
 
   
@@ -183,7 +185,6 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
 , _requiredRecentDriveOffCharger_sec(-1.0f)
 , _requiredRecentSwitchToParent_sec(-1.0f)
 , _isActivated(false)
-, _hasSetIdle(false)
 {
   if(!ReadFromJson(config)){
     PRINT_NAMED_WARNING("ICozmoBehavior.ReadFromJson.Failed",
@@ -242,9 +243,21 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   
   JsonTools::GetValueOptional(config, kAlwaysStreamlineKey, _alwaysStreamline);
   
+  // Add WantsToBeActivated conditions
   if(config.isMember(kWantsToBeActivatedCondConfigKey)){
-    _wantsToBeActivatedConditions.push_back(
-      BEIConditionFactory::CreateBEICondition( config[kWantsToBeActivatedCondConfigKey], GetDebugLabel() ) );
+    for(auto& strategy : config[kWantsToBeActivatedCondConfigKey]){
+      _wantsToBeActivatedConditions.push_back(
+        BEIConditionFactory::CreateBEICondition(strategy, GetDebugLabel() ) );
+    }
+  }
+
+  // Add WantsToCancelSelf conditions
+  if(config.isMember(kWantsToCancelSelfConfigKey)){
+    for(auto& strategy : config[kWantsToCancelSelfConfigKey]){
+      _wantsToCancelSelfConditions.push_back(
+        BEIConditionFactory::CreateBEICondition( strategy, GetDebugLabel() )
+      );
+    }
   }
 
   if(config.isMember(kAnonymousBehaviorMapKey)){
@@ -280,7 +293,38 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
 ICozmoBehavior::~ICozmoBehavior()
 {
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
+{
+  std::vector<const char*> expectedKeys;
+  
+  // this comes first so that if the behavior assigns instead of inserts its more likely to fail.
+  static const char* baseKeys[] = {
+    kBehaviorClassKey,
+    kBehaviorIDConfigKey,
+    kRequiredUnlockKey,
+    kRequiredDriveOffChargerKey,
+    kRequiredParentSwitchKey,
+    kExecutableBehaviorTypeKey,
+    kAlwaysStreamlineKey,
+    kWantsToBeActivatedCondConfigKey,
+    kWantsToCancelSelfConfigKey,
+    kRespondToUserIntentsKey,
+    kClaimUserIntentDataKey,
+    kRespondToTriggerWordKey,
+    kResetTimersKey,
+    kAnonymousBehaviorMapKey,
+    kDisplayNameKey,
+  };
+  expectedKeys.insert( expectedKeys.end(), std::begin(baseKeys), std::end(baseKeys) );
+  
+  std::set<const char*> behaviorKeys;
+  GetBehaviorJsonKeys( behaviorKeys );
+  expectedKeys.insert( expectedKeys.end(), behaviorKeys.begin(), behaviorKeys.end() );
+  
+  return expectedKeys;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::InitInternal()
@@ -289,6 +333,10 @@ void ICozmoBehavior::InitInternal()
 
   {
     for( auto& strategy : _wantsToBeActivatedConditions ) {
+      strategy->Init(GetBEI());
+    }
+    
+    for( auto& strategy : _wantsToCancelSelfConditions ) {
       strategy->Init(GetBEI());
     }
 
@@ -596,7 +644,6 @@ void ICozmoBehavior::OnActivatedInternal()
   _isActivated = true;
   _delegationCallback = nullptr;
   _activatedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _hasSetIdle = false;
   _startCount++;
   
   // Clear user intent if responding to it. Since _respondToUserIntent is initialized, this
@@ -606,7 +653,7 @@ void ICozmoBehavior::OnActivatedInternal()
   if( _respondToUserIntent != nullptr ) {
     auto tag = _respondToUserIntent->GetUserIntentTagSelected();
     if( tag != USER_INTENT(INVALID) ) {
-      auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+      auto& uic = GetBehaviorComp<UserIntentComponent>();
       if( _claimUserIntentData ) {
         // u now pwn it
         _pendingIntent.reset( uic.ClearUserIntentWithOwnership( tag ) );
@@ -623,7 +670,7 @@ void ICozmoBehavior::OnActivatedInternal()
   
   // Clear trigger word if responding to it
   if( _respondToTriggerWord ) {
-    GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent().ClearPendingTriggerWord();
+    GetBehaviorComp<UserIntentComponent>().ClearPendingTriggerWord();
   }
 
   // Handle Vision Mode Subscriptions
@@ -632,10 +679,16 @@ void ICozmoBehavior::OnActivatedInternal()
       *_operationModifiers.visionModesForActiveScope);
   }
 
-  // Manage state for any IBEIConditions used by this Behavior
+  // Manage state for any WantsToBeActivated conditions used by this Behavior
   // Conditions may not be evaluted when the behavior is Active
   for(auto& strategy: _wantsToBeActivatedConditions){
     strategy->SetActive(GetBEI(), false);
+  }
+
+  // Manage state for any WantsToCancelSelf conditions used by this Behavior
+  // Conditions will be evaluated while the behavior is activated
+  for(auto& strategy: _wantsToCancelSelfConditions){
+    strategy->SetActive(GetBEI(), true);
   }
   
   // reset any timers
@@ -651,7 +704,7 @@ void ICozmoBehavior::OnActivatedInternal()
 void ICozmoBehavior::OnEnteredActivatableScopeInternal()
 {
   if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid ){
-    auto& infoProcessor = GetBEI().GetAIComponent().GetAIInformationAnalyzer();
+    auto& infoProcessor = GetAIComp<AIInformationAnalyzer>();
     infoProcessor.AddEnableRequest(_requiredProcess, GetDebugLabel().c_str());
   }
 
@@ -667,6 +720,7 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
     strategy->SetActive(GetBEI(), true);
   }
 
+  OnBehaviorEnteredActivatableScope();
 }
 
 
@@ -674,7 +728,7 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
 void ICozmoBehavior::OnLeftActivatableScopeInternal()
 {
   if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid ){
-    auto& infoProcessor = GetBEI().GetAIComponent().GetAIInformationAnalyzer();
+    auto& infoProcessor = GetAIComp<AIInformationAnalyzer>();
     infoProcessor.RemoveEnableRequest(_requiredProcess, GetDebugLabel().c_str());
   }
 
@@ -686,6 +740,7 @@ void ICozmoBehavior::OnLeftActivatableScopeInternal()
     strategy->SetActive(GetBEI(), false);
   }
 
+  OnBehaviorLeftActivatableScope();
 }
 
 
@@ -701,10 +756,6 @@ void ICozmoBehavior::OnDeactivatedInternal()
   
   // Clear callbacks
   _delegationCallback = nullptr;
-  
-  if(_hasSetIdle){
-    SmartRemoveIdleAnimation();
-  }
 
   // Set Mode Subscriptions back to ActivatableScope values. OnLeftActivatableScopeInternal handles final unsubscribe
   if(!_operationModifiers.visionModesForActivatableScope->empty()){
@@ -712,10 +763,16 @@ void ICozmoBehavior::OnDeactivatedInternal()
       *_operationModifiers.visionModesForActivatableScope);
   }
 
-  // Manage state for any IBEIConditions used by this Behavior:
+  // Manage state for any WantsToBeActivated conditions used by this Behavior:
   // Conditions may be evaluted when inactive, if in Activatable scope
   for(auto& strategy: _wantsToBeActivatedConditions){
     strategy->SetActive(GetBEI(), true);
+  }
+
+  // Manage state for any WantsToCancelSelf conditions used by this Behavior
+  // Conditions will be evaluated while the behavior is activated
+  for(auto& strategy: _wantsToCancelSelfConditions){
+    strategy->SetActive(GetBEI(), false);
   }
 
   // clear the path component motion profile if it was set by the behavior
@@ -735,7 +792,7 @@ void ICozmoBehavior::OnDeactivatedInternal()
   if( (_respondToUserIntent != nullptr) && (!_claimUserIntentData) ) {
     // make sure a delegate of this behavior claimed the intent that we preserved for them, and
     // remove it if not
-    auto& uic = GetBEI().GetAIComponent().GetBehaviorComponent().GetUserIntentComponent();
+    auto& uic = GetBehaviorComp<UserIntentComponent>();
     uic.ResetPreservedUserIntents( GetID() );
   }
   
@@ -779,7 +836,7 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
   // check if required processes are running
   if ( _requiredProcess != AIInformationAnalysis::EProcess::Invalid )
   {
-    const bool isProcessOn = GetBEI().GetAIComponent().GetAIInformationAnalyzer().IsProcessRunning(_requiredProcess);
+    const bool isProcessOn = GetAIComp<AIInformationAnalyzer>().IsProcessRunning(_requiredProcess);
     if ( !isProcessOn ) {
       PRINT_NAMED_ERROR("ICozmoBehavior.WantsToBeActivated.RequiredProcessNotFound",
         "Required process '%s' is not enabled for '%s'",
@@ -809,7 +866,7 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
   const bool requiresRecentDriveOff = FLT_GE(_requiredRecentDriveOffCharger_sec, 0.0f);
   if ( requiresRecentDriveOff )
   {
-    const float lastDriveOff = GetBEI().GetAIComponent().GetWhiteboard().GetTimeAtWhichRobotGotOffCharger();
+    const float lastDriveOff = GetAIComp<AIWhiteboard>().GetTimeAtWhichRobotGotOffCharger();
     const bool hasDrivenOff = FLT_GE(lastDriveOff, 0.0f);
     if ( !hasDrivenOff ) {
       // never driven off the charger, can't run
@@ -880,16 +937,39 @@ void ICozmoBehavior::UpdateInternal()
   // Tick behavior update
   BehaviorUpdate();
 
-  // Check whether we should cancel the behavior if control is no longer delegated
+
   if(IsActivated()){
+    bool shouldCancelSelf = false;
+    std::string baseDebugStr = "ICozmoBehavior.UpdateInternal.DataDefinedCancelSelf.";
+
+    // Check whether we should cancel the behavior if control is no longer delegated
     if(_operationModifiers.behaviorAlwaysDelegates && !IsControlDelegated()){
+      shouldCancelSelf = true;
+      PRINT_NAMED_INFO((baseDebugStr + "ControlNotDelegated").c_str(),
+                       "Behavior always delegates, so cancel self");
+    }
+
+    // Check wants to cancel self strategies
+    for(auto& strategy: _wantsToCancelSelfConditions){
+      if(strategy->AreConditionsMet(GetBEI())){
+        shouldCancelSelf = true;
+        PRINT_NAMED_INFO((baseDebugStr + "WantsToCancelSelfStrategy").c_str(),
+                         "Strategy %s wants behavior %s to cancel itself",
+                         strategy->GetDebugLabel().c_str(),
+                         GetDebugLabel().c_str());
+      }
+    }
+
+    // Actually cancel the behavior
+    if(shouldCancelSelf){
       if(GetBEI().HasDelegationComponent()){
         auto& delegationComponent = GetBEI().GetDelegationComponent();
         delegationComponent.CancelSelf(this);
+        return;
       }
     }
-  }
-  
+
+  } // end IsActivated
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1161,33 +1241,6 @@ void ICozmoBehavior::BehaviorObjectiveAchieved(BehaviorObjective objectiveAchiev
   // send das event
   Util::sEventF("robot.freeplay_objective_achieved", {{DDATA, EnumToString(objectiveAchieved)}}, "%s", GetDebugLabel().c_str());
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SmartPushIdleAnimation(AnimationTrigger animation)
-{
-  if(ANKI_VERIFY(!_hasSetIdle,
-                 "ICozmoBehavior.SmartPushIdleAnimation.IdleAlreadySet",
-                 "Behavior %s has already set an idle animation",
-                 GetDebugLabel().c_str())){
-    // TODO: Restore idle animations (VIC-366)
-    //robot.GetAnimationStreamer().PushIdleAnimation(animation, kIdleLockPrefix + GetDebugLabel());
-    _hasSetIdle = true;
-  }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SmartRemoveIdleAnimation()
-{
-  if(ANKI_VERIFY(_hasSetIdle,
-                 "ICozmoBehavior.SmartRemoveIdleAnimation.NoIdleSet",
-                 "Behavior %s is trying to remove an idle, but none is currently set",
-                 GetDebugLabel().c_str())){
-    // TODO: Restore idle animations (VIC-366)
-    //robot.GetAnimationStreamer().RemoveIdleAnimation(kIdleLockPrefix + GetDebugLabel());
-    _hasSetIdle = false;
-  }
-}
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1295,7 +1348,7 @@ UserIntent& ICozmoBehavior::GetTriggeringUserIntent()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::PlayEmergencyGetOut(AnimationTrigger anim)
 {
-  auto& contComp = GetBEI().GetAIComponent().GetComponent<ContinuityComponent>(AIComponentID::ContinuityComponent);
+  auto& contComp = GetBEI().GetAIComponent().GetComponent<ContinuityComponent>();
   contComp.PlayEmergencyGetOut(anim);
 }
 

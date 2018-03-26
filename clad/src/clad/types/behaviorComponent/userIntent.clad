@@ -50,25 +50,27 @@ union dupes_allowed UserIntent
   // PLEASE KEEP ALPHABETIZED 
   // thank you in advance for caring
 
-  UserIntent_Void greeting_goodbye,
-  UserIntent_Void greeting_hello,
-  UserIntent_Void imperative_come,
-  UserIntent_Void imperative_quiet,
-  UserIntent_MeetVictor meet_victor, 
-  UserIntent_Void play_anytrick,
-  UserIntent_PlaySpecific play_specific,
+  UserIntent_Void          greeting_goodbye,
+  UserIntent_Void          greeting_goodmorning,
+  UserIntent_Void          greeting_goodnight,
+  UserIntent_Void          greeting_hello,
+  UserIntent_Void          imperative_come,
+  UserIntent_Void          imperative_quiet,
+  UserIntent_MeetVictor    meet_victor, 
+  UserIntent_Void          play_anytrick,
+  UserIntent_PlaySpecific  play_specific,
+  UserIntent_Void          cancel_timer,
   UserIntent_TimeInSeconds set_timer,
-  UserIntent_Void system_charger,
-  UserIntent_Void status_feeling,
-  UserIntent_Void system_sleep,
-  UserIntent_Void system_wake,
+  UserIntent_Void          system_charger,
+  UserIntent_Void          status_feeling,
+  UserIntent_Void          system_sleep,
 
 
   // for tests
-  UserIntent_Void test_SEPARATOR, // used for validation to know when the above ends
-  UserIntent_Void test_user_intent_1,
-  UserIntent_Void test_user_intent_2,
-  UserIntent_Test_Name test_name,
+  UserIntent_Void               test_SEPARATOR, // used for validation to know when the above ends
+  UserIntent_Void               test_user_intent_1,
+  UserIntent_Void               test_user_intent_2,
+  UserIntent_Test_Name          test_name,
   UserIntent_Test_TimeWithUnits test_timeWithUnits,
 }
 

@@ -27,6 +27,7 @@ message RobotStateMessage
   uint_8   imageProcFrameRateHz,
   uint_8   lockedAnimTracks,
   uint_8   animTracksInUse,
+  float_32 batteryVolts,
 }
 
 message CurrentAnimation

@@ -62,6 +62,7 @@
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/math/math.h"
+#include "webServerProcess/src/webService.h"
 
 // TODO: Expose these as parameters
 #define BLOCK_IDENTIFICATION_TIMEOUT_MS 500
@@ -790,6 +791,10 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
                                     observedObject->GetPose().ToPoseStruct3d(_robot->GetPoseOriginList()),
                                     topMarkerOrientation.ToFloat(),
                                     observedObject->IsActive());
+    
+    if( ANKI_DEV_CHEATS ) {
+      SendObjectUpdateToWebViz( observation );
+    }
     
     _robot->Broadcast(MessageEngineToGame(std::move(observation)));
     
@@ -3267,8 +3272,14 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
       DEV_ASSERT(!objectDeletedInfo._objectCopy->HasValidPose(), "ObjectPoseConfirmer.CopyInheritedPose");
       _robot->GetObjectPoseConfirmer().BroadcastObjectPoseChanged(*objectDeletedInfo._objectCopy, oldPosePtr, oldPoseState);
       
+      RobotDeletedLocatedObject msg(deletedID);
+      
+      if( ANKI_DEV_CHEATS ) {
+        SendObjectUpdateToWebViz( msg );
+      }
+      
       // RobotDeletedLocatedObject
-      _robot->Broadcast(MessageEngineToGame(RobotDeletedLocatedObject(deletedID)));
+      _robot->Broadcast(MessageEngineToGame(std::move(msg)));
       
       // delete the copy we made now, since it won't be useful anymore
       Util::SafeDelete(objectDeletedInfo._objectCopy);
@@ -3467,5 +3478,40 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     FindLocatedObjectHelper(filter, visualizeHelper, false);
     
   } // DrawAllObjects()
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::SendObjectUpdateToWebViz( const ExternalInterface::RobotDeletedLocatedObject& msg ) const
+  {
+    Json::Value data;
+    data["type"] = "RobotDeletedLocatedObject";
+    data["objectID"] = msg.objectID;
+    
+    const auto* webService = _robot->GetContext()->GetWebService();
+    if( webService != nullptr ) {
+      const std::string moduleName = "observedobjects";
+      webService->SendToWebViz( moduleName, data );
+    }
+    
+  } // SendObjectUpdateToWebViz()
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::SendObjectUpdateToWebViz( const ExternalInterface::RobotObservedObject& msg ) const
+  {
+    Json::Value data;
+    data["type"] = "RobotObservedObject";
+    data["objectID"] = msg.objectID;
+    data["objectFamily"] = ObjectFamilyToString(msg.objectFamily);
+    data["objectType"] = ObjectTypeToString(msg.objectType);
+    data["isActive"] = msg.isActive;
+    data["timestamp"] = msg.timestamp;
+    
+    const auto* webService = _robot->GetContext()->GetWebService();
+    if( webService != nullptr ) {
+      const std::string moduleName = "observedobjects";
+      webService->SendToWebViz( moduleName, data );
+    }
+    
+  } // SendObjectUpdateToWebViz()
+  
 } // namespace Cozmo
 } // namespace Anki

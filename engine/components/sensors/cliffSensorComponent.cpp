@@ -70,7 +70,7 @@ CliffSensorComponent::CliffSensorComponent()
 }
 
 
-void CliffSensorComponent::UpdateInternal(const RobotState& msg)
+void CliffSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
 {
   // Update raw and filtered cliff sensor data
   for (int i=0 ; i<kNumCliffSensors ; i++) {

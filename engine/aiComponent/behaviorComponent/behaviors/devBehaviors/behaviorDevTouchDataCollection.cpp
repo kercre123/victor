@@ -27,7 +27,7 @@ namespace Cozmo {
 
 namespace {
 
-  bool _rcvdNextDatasetRequest = false;
+bool _rcvdNextDatasetRequest = false;
 
 #if ANKI_DEV_CHEATS
   // console func helper --- links webots keyboard controller to control behavior
@@ -65,12 +65,22 @@ std::pair<std::string,std::string> BehaviorDevTouchDataCollection::ToString(Coll
   return got->second;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDevTouchDataCollection::InstanceConfig::InstanceConfig()
+{
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorDevTouchDataCollection::DynamicVariables::DynamicVariables()
+{
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 BehaviorDevTouchDataCollection::BehaviorDevTouchDataCollection(const Json::Value& config)
 : ICozmoBehavior(config)
-, _annotation(NoTouch)
-, _collectMode(IdleChrgOff)
-, _touchValues()
 {
   // listening for raw touch input data
   SubscribeToTags({
@@ -90,15 +100,15 @@ void BehaviorDevTouchDataCollection::HandleWhileActivated(const RobotToEngineEve
 
       static size_t ticksNotMeasured = 0;
       if( RobotConfigMatchesExpected(bexi) ) {
-        _touchValues.push_back(touch_value);
+        _dVars.touchValues.push_back(touch_value);
         ticksNotMeasured = 0;
-        if( _touchValues.size()%100 == 0 ) {
+        if( _dVars.touchValues.size()%100 == 0 ) {
           PRINT_CH_INFO("Behaviors", "TouchDataCollection", "3 seconds collected");
         }
       } else {
         ticksNotMeasured++;
         if(ticksNotMeasured > 100) {
-          PRINT_CH_INFO("Behaviors","TouchDataCollection","NotLoggingExpected.%s",ToString(_collectMode).first.c_str());
+          PRINT_CH_INFO("Behaviors","TouchDataCollection","NotLoggingExpected.%s",ToString(_dVars.collectMode).first.c_str());
           ticksNotMeasured = 0;
         }
       }
@@ -130,11 +140,12 @@ void BehaviorDevTouchDataCollection::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 void BehaviorDevTouchDataCollection::OnBehaviorActivated()
 {
-  _touchValues.clear();
-  if( _collectMode == MoveChrgOff || _collectMode == MoveChrgOn ) {
+  _dVars.touchValues.clear();
+  if( _dVars.collectMode == MoveChrgOff || _dVars.collectMode == MoveChrgOn ) {
     EnqueueMotorActions();
   }
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 void BehaviorDevTouchDataCollection::EnqueueMotorActions()
@@ -166,14 +177,15 @@ void BehaviorDevTouchDataCollection::EnqueueMotorActions()
   goingUp = !goingUp;
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 bool BehaviorDevTouchDataCollection::RobotConfigMatchesExpected(BehaviorExternalInterface& bexi) const
 {
-  const bool onCharger = bexi.GetRobotInfo().IsOnCharger();
+  const bool onCharger = bexi.GetRobotInfo().IsOnChargerContacts();
   
   const bool isMotoring = IsControlDelegated();
 
-  switch(_collectMode) {
+  switch(_dVars.collectMode) {
     case IdleChrgOff:
       return !onCharger && !isMotoring;
     case IdleChrgOn:
@@ -187,6 +199,7 @@ bool BehaviorDevTouchDataCollection::RobotConfigMatchesExpected(BehaviorExternal
   return false;
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 void BehaviorDevTouchDataCollection::BehaviorUpdate()
 {
@@ -197,10 +210,10 @@ void BehaviorDevTouchDataCollection::BehaviorUpdate()
   }
 
   if(_rcvdNextDatasetRequest) {
-    OnNextDataset(bexi, _collectMode, _annotation);
+    OnNextDataset(bexi, _dVars.collectMode, _dVars.annotation);
     
-    int ic = (int)_collectMode;
-    int ia = (int)_annotation;
+    int ic = (int)_dVars.collectMode;
+    int ia = (int)_dVars.annotation;
     ic++;
     if(ic==4) {
       ic = 0; //reset
@@ -210,30 +223,33 @@ void BehaviorDevTouchDataCollection::BehaviorUpdate()
       }
     }
 
-    _collectMode = static_cast<CollectionMode>(ic);
-    _annotation = static_cast<DataAnnotation>(ia);
+    _dVars.collectMode = static_cast<CollectionMode>(ic);
+    _dVars.annotation = static_cast<DataAnnotation>(ia);
     PRINT_CH_INFO("Behaviors", "TouchDataCollection",
                   "Collecting for '%s' under '%s'", 
-                  ToString(_annotation).first.c_str(), 
-                  ToString(_collectMode).first.c_str());
+                  ToString(_dVars.annotation).first.c_str(), 
+                  ToString(_dVars.collectMode).first.c_str());
 
-    if( _collectMode == MoveChrgOff || _collectMode == MoveChrgOn ) {
+    if( _dVars.collectMode == MoveChrgOff || _dVars.collectMode == MoveChrgOn ) {
       EnqueueMotorActions();
     }
 
-    _touchValues.clear();
+    _dVars.touchValues.clear();
 
     _rcvdNextDatasetRequest = false;
   }
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 void BehaviorDevTouchDataCollection::LoopMotorsActionCallback(ActionResult res)
 {
   // don't loop unless we are in the correct mode
-  if( _collectMode == MoveChrgOff || _collectMode == MoveChrgOn ) {
+  if( _dVars.collectMode == MoveChrgOff || _dVars.collectMode == MoveChrgOn ) {
     EnqueueMotorActions();
   }
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 void BehaviorDevTouchDataCollection::OnNextDataset(BehaviorExternalInterface& bexi,
@@ -260,14 +276,14 @@ void BehaviorDevTouchDataCollection::OnNextDataset(BehaviorExternalInterface& be
   
   std::string filePath = filePathSS.str();
 
-  PRINT_CH_INFO("Behaviors","WriteToFile","%zd values to %s", _touchValues.size(), filePath.c_str());
+  PRINT_CH_INFO("Behaviors","WriteToFile","%zd values to %s", _dVars.touchValues.size(), filePath.c_str());
 
   if(Util::FileUtils::FileExists(filePath)) {
     PRINT_NAMED_WARNING("BehaviorDevTouchDataCollection.FileAlreadyExists","Overwriting %s", filePath.c_str());
   }
 
   std::stringstream contents;
-  for(auto& val : _touchValues) {
+  for(auto& val : _dVars.touchValues) {
     contents << (int)val << std::endl;
   }
 
