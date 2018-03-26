@@ -173,8 +173,7 @@ void BehaviorReactToTouchPetting::CancelAndPlayAnimation(AnimationTrigger anim)
 {
   TriggerAnimationAction* action = new TriggerAnimationAction(anim,
                                                               kPlayAnimOnce,
-                                                              kCanAnimationInterrupt,
-                                                              (u8)AnimTrackFlag::BODY_TRACK);
+                                                              kCanAnimationInterrupt);
   CancelDelegates();
   DelegateIfInControl(action);
 }
@@ -184,8 +183,7 @@ void BehaviorReactToTouchPetting::PlayBlissLoopAnimation()
 {
   TriggerAnimationAction* action = new TriggerAnimationAction(_animPettingResponse.back(),
                                                               kPlayAnimOnce,
-                                                              kCanAnimationInterrupt,
-                                                              (u8)AnimTrackFlag::BODY_TRACK);
+                                                              kCanAnimationInterrupt);
   
   ActionResultCallback cb = [this](ActionResult result)->void {
     // note: since Update() waits for animations to finish before
