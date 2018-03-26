@@ -193,13 +193,16 @@ void SetBLEPin(uint32_t pin)
 
 void InitConnectionFlow(AnimationStreamer* animStreamer)
 {
-  // Don't start connection flow if not packed out
-  if(!Factory::GetEMR()->fields.PACKED_OUT_FLAG)
+  if(FACTORY_TEST)
   {
-    return;
-  }
+    // Don't start connection flow if not packed out
+    if(!Factory::GetEMR()->fields.PACKED_OUT_FLAG)
+    {
+      return;
+    }
 
-  DrawStartPairingScreen(animStreamer);
+    DrawStartPairingScreen(animStreamer);
+  }
 }
 
 void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,

@@ -20,12 +20,14 @@
 int shutdownSignal = 0;
 int shutdownCounter = 2;
 
+#if FACTORY_TEST
 // Count of how many ticks we have been on the charger
 uint8_t seenChargerCnt = 0;
 // How many ticks we need to be on the charger before
 // we will stay on
 static const uint8_t MAX_SEEN_CHARGER_CNT = 5;
 bool wasPackedOutAtBoot = false;
+#endif
 
 static void Cleanup(int signum)
 {
@@ -60,9 +62,11 @@ int main(int argc, const char* argv[])
   Anki::Cozmo::Robot::Init();
 
   auto start = std::chrono::steady_clock::now();
+#if FACTORY_TEST
   auto timeOfPowerOn = start;
   wasPackedOutAtBoot = Anki::Cozmo::Factory::GetEMR()->fields.PACKED_OUT_FLAG;
-
+#endif
+  
   for (;;) {
     //HAL::Step should never return !OK, but if it does, best not to trust its data.
     if (Anki::Cozmo::HAL::Step() == Anki::RESULT_OK) {
@@ -82,6 +86,7 @@ int main(int argc, const char* argv[])
     //printf("TS: %d\n", Anki::Cozmo::HAL::GetTimeStamp() );
     start = end;
 
+#if FACTORY_TEST
     // If we are packed out and have not yet seen the charger
     if (wasPackedOutAtBoot &&
         shutdownSignal == 0 && 
@@ -111,6 +116,7 @@ int main(int argc, const char* argv[])
         break;
       }
     }
+#endif
 
     if (shutdownSignal != 0 && --shutdownCounter == 0) {
       sync();

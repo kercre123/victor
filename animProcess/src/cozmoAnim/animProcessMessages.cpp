@@ -553,13 +553,15 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
     ProcessMessageFromRobot(msg);
   }
 
+#if FACTORY_TEST
 #if defined(SIMULATOR)
   // Simulator never has EMR
   FaceInfoScreenManager::getInstance()->SetShouldDrawFAC(false);
 #else
   FaceInfoScreenManager::getInstance()->SetShouldDrawFAC(!Factory::GetEMR()->fields.PACKED_OUT_FLAG);
 #endif
-
+#endif
+  
   return RESULT_OK;
 }
 

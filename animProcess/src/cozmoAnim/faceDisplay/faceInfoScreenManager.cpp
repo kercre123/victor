@@ -136,8 +136,8 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   // Screens we don't want users to have access to
   // * Microphone visualization
   // * Camera
-  //const bool hideSpecialDebugScreens = (FACTORY_TEST && Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG) || !ANKI_DEV_CHEATS;  // TODO: Use this line in master
-  const bool hideSpecialDebugScreens = (FACTORY_TEST && Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG);                        // Use this line in factory branch
+  const bool hideSpecialDebugScreens = (FACTORY_TEST && Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG) || !ANKI_DEV_CHEATS;  // TODO: Use this line in master
+  //const bool hideSpecialDebugScreens = (FACTORY_TEST && Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG);                        // Use this line in factory branch
 
   ADD_SCREEN_WITH_TEXT(Recovery, Recovery, {"RECOVERY MODE"});
   ADD_SCREEN(None, None);

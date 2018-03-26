@@ -20,12 +20,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#define BEGIN_DONT_RUN_AFTER_PACKOUT \
-  if(!Factory::GetEMR()->fields.PACKED_OUT_FLAG) {
-
-#define END_DONT_RUN_AFTER_PACKOUT \
-  }
-
 namespace Anki {
 namespace Cozmo {
 
