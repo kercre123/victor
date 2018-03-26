@@ -277,6 +277,7 @@
   var tree = d3.tree().nodeSize([0, 30]) //Invokes tree
   var params = {};
   var svgGroups = {};
+  var currentBehaviorDiv;
 
   var hasZoomWindow = false;
   var minZoomTime = 0;
@@ -564,7 +565,7 @@
     params.pathOffset = 10;
     params.barHeight = 30;
 
-    
+    currentBehaviorDiv = $('<h3 id="currentBehavior"></h3>').appendTo( elem );
 
     var svg = d3.select(elem)
                 .append('svg')
@@ -714,6 +715,13 @@
                        .id(function(d) { return d.behaviorID; })
                        .parentId(function(d) { return d.parent; })
                        (flatData);
+
+   // always update the current behavior, even if the toggle for live updates is off
+   if( stack.length && (typeof currentBehaviorDiv !== 'undefined') ) {
+    currentBehaviorDiv.text( 'Current behavior: ' + stack[stack.length - 1] )
+   } else if( typeof currentBehaviorDiv !== 'undefined' ) {
+    currentBehaviorDiv.text( 'No running behavior' )
+   }
     
     // add activeTimes to data, which also sticks it back into flatData as an added bonus
     cachedTreeData.each(function( node ) {
