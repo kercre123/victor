@@ -3,9 +3,7 @@
 set -e
 set -u
 
-: ${INSTALL_ROOT:="/anki"}
-
-# Go to directory of this script                                                                    
+# Get the directory of this script                                                                    
 SCRIPT_PATH=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))
 GIT=`which git`
 if [ -z $GIT ]
@@ -19,4 +17,4 @@ source ${SCRIPT_PATH}/victor_env.sh
 
 robot_set_host
 
-robot_sh "systemctl $*"
+robot_sh logcat | lnav -c '\'':filter-out mm-camera'\'' -c '\'':filter-out cnss-daemon'\'' -c '\'':filter-out ServiceManager'\'' -c '\'':filter-out chatty'\'''

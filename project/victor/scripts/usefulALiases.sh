@@ -23,9 +23,9 @@ alias victor_deploy_debug='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts
 alias victor_deploy_run='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_deploy_run.sh'
 alias victor_build_run='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_build_run.sh'
 
-alias victor_log='adb logcat mm-camera:S mm-camera-intf:S mm-camera-eztune:S mm-camera-sensor:S mm-camera-img:S cnss-daemon:S cozmoengined:S ServiceManager:S chatty:S'
+alias victor_log='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_log.sh'
 alias victor_ble='GET_GIT_ROOT; node ${GIT_PROJ_ROOT}/tools/victor-ble-cli/index.js'
 alias victor_addr2line='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/addr2line.sh'
 
 # If you have lnav...
-alias victor_lnav='adb logcat | lnav -c '\'':filter-out mm-camera'\'' -c '\'':filter-out cnss-daemon'\'' -c '\'':filter-out ServiceManager'\'' -c '\'':filter-out chatty'\'''
+alias victor_lnav='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/project/victor/scripts/victor_log_lnav.sh'
