@@ -213,6 +213,11 @@ void BehaviorReactToTouchPetting::BehaviorUpdate()
   const bool reachedMaxBliss = (_currBlissLevel == _animPettingResponse.size());
   if(_isPressed) {
     _numTicksPressed++;
+    // update the timeouts if we are being currently pressed
+    // prevents issues where presses that are roughly equal
+    // in duration as the timeout, would let the behavior exit
+    _checkForTimeoutTimeBliss     = now + _blissTimeout;
+    _checkForTimeoutTimeNonbliss  = now + _nonBlissTimeout;
   } else {
     _numTicksPressed = 0;
   }
