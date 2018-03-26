@@ -72,6 +72,15 @@ struct ConnectAsyncData {
   ConnManBusService *service;
 };
 
+struct WPAConnectInfo {
+  const char *name;
+  const char *ssid;
+  const char *passphrase;
+
+  guint agentId;
+  GDBusConnection *connection;
+  ConnManBusManager *manager;
+};
 
 std::string GetObjectPathForService(GVariant* service);
 bool ConnectToWifiService(ConnManBusService* service);
