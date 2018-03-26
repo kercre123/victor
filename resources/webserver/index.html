@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 
@@ -27,6 +26,7 @@
     var whichWebServer = whichWebServerEnum.UNKNOWN;
     var curPageName = "";
 
+    var allowConsoleVarsPage = true;
     var allowPerfPage = true;
     var perfAutoUpdate = false;
     var perfAutoUpdatePeriod_ms = 1000;
@@ -115,8 +115,10 @@
         // Page ENTRY actions:
         if (pageName == "page_main") {
             if (!mainPageInitialized) {
+                console.log('Initializing page_main');
                 mainPageInitialized = true;
                 $.post("/getmainrobotinfo", function(data) {
+                    console.log('returned from /getmainrobotinfo');
                     var payload = data.split("\n");
                     $("#main_robot_id").html(payload[0]);
                     $("#main_robot_serial_number").html(payload[1]);
@@ -128,6 +130,14 @@
                     $("#main_os_build_version").html(payload[7]);
                     $("#main_build_sha").html(payload[8]);
                 })
+            }
+        } else if (pageName == "page_consolevars") {
+            if (allowConsoleVarsPage) {
+                $("#consolevars_main_section").show();
+                $("#consolevars_page_disabled").hide();
+            } else {
+                $("#consolevars_main_section").hide();
+                $("#consolevars_page_disabled").show();
             }
         } else if (pageName == "page_perf") {
             if (allowPerfPage && !connectedToWebotsSim) {
@@ -504,6 +514,7 @@
             $("#main_robot_connection_type").html(connectedToWebotsSim ? "Webots Simulator" : "Physical Robot");
             allowPerfPage = (payload[4] === "true");
             whichWebServer = payload[5];
+            allowConsoleVarsPage = (payload[6] === "true");
             SetPage(startPage);
         });
         // Initialize the perf table
@@ -610,48 +621,51 @@
         </div>
 
         <div id="page_consolevars">
-            These are for the console variables and console functions in THIS process only.<br>
-            <table border=1>
-                <tr>
-                    <th>description</th><th>url</th>
-                </tr>
-                <tr>
-                    <td>View and edit console variables</td><td><a href="/consolevars">/consolevars</a></td>
-                </tr>
-                <tr>
-                    <td>List console variables</td><td><a href="/consolevarlist">/consolevarlist</a></td>
-                </tr>
-                <tr>
-                    <td>List console variables matching</td><td>/consolevarlist?key=search_key</td>
-                </tr>
-                <tr>
-                    <td>Set console variable</td><td>/consolevarset?key=name_of_variable&amp;value=new_value_of_variable</td>
-                </tr>
-                <tr>
-                    <td>Get console variable</td><td>/consolevarget?key=name_of_variable</td>
-                </tr>
-                <tr>
-                    <td>List console functions</td><td><a href="/consolefunclist">/consolefunclist</a></td>
-                </tr>
-                <tr>
-                    <td>List console functions matching</td><td>/consolefunclist?key=search_key</td>
-                </tr>
-                <tr>
-                    <td>Call console function</td><td>/consolefunccall?func=name_of_function&amp;args=arguments</td>
-                </tr>
-            </table>
-            <br/>
-            <div>
-                <input type="submit" value="consolevars">
-            </div><br>
-            <div>
-                <button id='btn_console_vars_load'>LOAD console vars</button>
-                <button id='btn_console_vars_save'>SAVE console vars</button>
-                <button id='btn_console_vars_delete'>DELETE console vars save file</button>
-                <button id='btn_console_vars_reset'>RESET console vars to default values</button>
+            <div id='consolevars_main_section'>
+                These are for the console variables and console functions in THIS process only.<br>
+                <table border=1>
+                    <tr>
+                        <th>description</th><th>url</th>
+                    </tr>
+                    <tr>
+                        <td>View and edit console variables</td><td><a href="/consolevars">/consolevars</a></td>
+                    </tr>
+                    <tr>
+                        <td>List console variables</td><td><a href="/consolevarlist">/consolevarlist</a></td>
+                    </tr>
+                    <tr>
+                        <td>List console variables matching</td><td>/consolevarlist?key=search_key</td>
+                    </tr>
+                    <tr>
+                        <td>Set console variable</td><td>/consolevarset?key=name_of_variable&amp;value=new_value_of_variable</td>
+                    </tr>
+                    <tr>
+                        <td>Get console variable</td><td>/consolevarget?key=name_of_variable</td>
+                    </tr>
+                    <tr>
+                        <td>List console functions</td><td><a href="/consolefunclist">/consolefunclist</a></td>
+                    </tr>
+                    <tr>
+                        <td>List console functions matching</td><td>/consolefunclist?key=search_key</td>
+                    </tr>
+                    <tr>
+                        <td>Call console function</td><td>/consolefunccall?func=name_of_function&amp;args=arguments</td>
+                    </tr>
+                </table>
+                <br/>
+                <div>
+                    <input type="submit" value="consolevars">
+                </div><br>
+                <div>
+                    <button id='btn_console_vars_load'>LOAD console vars</button>
+                    <button id='btn_console_vars_save'>SAVE console vars</button>
+                    <button id='btn_console_vars_delete'>DELETE console vars save file</button>
+                    <button id='btn_console_vars_reset'>RESET console vars to default values</button>
+                </div>
+                <br><br>
+                <a href="webViz.html">WebViz</a>
             </div>
-            <br><br>
-            <a href="webViz.html">WebViz</a>
+            <div id='consolevars_page_disabled'>The console vars/funcs page is disabled in the standalone webserver.  Use the Engine or Anim webserver instead.</div>
         </div>
 
         <div id="page_perf">

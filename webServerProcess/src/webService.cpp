@@ -500,20 +500,21 @@ static int GetInitialConfig(struct mg_connection *conn, void *cbdata)
   struct mg_context *ctx = mg_get_context(conn);
   WebService::WebService* that = static_cast<WebService::WebService*>(mg_get_user_data(ctx));
 
-  const std::string title0    = that->GetConfig()["title0"].asString();
-  const std::string title1    = that->GetConfig()["title1"].asString();
-  const std::string startPage = that->GetConfig()["startPage"].asString();
+  const std::string& title0    = that->GetConfig()["title0"].asString();
+  const std::string& title1    = that->GetConfig()["title1"].asString();
+  const std::string& startPage = that->GetConfig()["startPage"].asString();
 #ifdef SIMULATOR
-  const std::string webotsSim = "true";
+  const std::string& webotsSim = "true";
 #else
-  const std::string webotsSim = "false";
+  const std::string& webotsSim = "false";
 #endif
-  const std::string allowPerfPage = that->GetConfig()["allowPerfPage"].asString();
-  const std::string whichWebServer = std::to_string(that->GetConfig()["whichWebServer"].asInt());
+  const std::string& allowPerfPage        = that->GetConfig()["allowPerfPage"].asString();
+  const std::string& whichWebServer       = std::to_string(that->GetConfig()["whichWebServer"].asInt());
+  const std::string& allowConsoleVarsPage = that->GetConfig()["allowConsoleVarsPage"].asString();
 
-  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n", title0.c_str(), title1.c_str(),
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n", title0.c_str(), title1.c_str(),
             startPage.c_str(), webotsSim.c_str(), allowPerfPage.c_str(),
-            whichWebServer.c_str());
+            whichWebServer.c_str(), allowConsoleVarsPage.c_str());
   return 1;
 }
 

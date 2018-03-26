@@ -105,8 +105,7 @@ int main(int argc, char **argv)
   animSupervisor.step(ANIM_TIME_STEP_MS);
   
   // Set up the console vars to load from file, if it exists
-  ANKI_CONSOLE_SYSTEM_INIT("consoleVars.ini");
-  NativeAnkiUtilConsoleLoadVars();
+  ANKI_CONSOLE_SYSTEM_INIT("consoleVarsAnim.ini");
   
   // Initialize the API
   AnimEngine animEngine(&dataPlatform);

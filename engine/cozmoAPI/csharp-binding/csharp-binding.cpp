@@ -380,8 +380,7 @@ int cozmo_startup(const char *configuration_data)
   configure_engine(config);
   
   // Set up the console vars to load from file, if it exists
-  ANKI_CONSOLE_SYSTEM_INIT(dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "consoleVars.ini").c_str());
-  NativeAnkiUtilConsoleLoadVars();
+  ANKI_CONSOLE_SYSTEM_INIT(dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "consoleVarsEngine.ini").c_str());
 
   Cozmo::CozmoAPI* created_engine = new Cozmo::CozmoAPI();
 
