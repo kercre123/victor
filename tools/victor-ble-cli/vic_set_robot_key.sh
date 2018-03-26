@@ -2,11 +2,16 @@
 
 set -e
 
+if [ $# -eq 0 ]; then
+    echo "Missing robot name"
+    exit 1
+fi
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR
 
 if [ ! -d "node_modules" ]; then
-  ./install.sh
+    ./install.sh
 fi
 
 # Check for existence of ssh key pair on the client,
