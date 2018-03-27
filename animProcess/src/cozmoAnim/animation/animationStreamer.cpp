@@ -1187,7 +1187,7 @@ namespace Cozmo {
             
 #     if DEBUG_ANIMATION_STREAMING
 #       define DEBUG_STREAM_KEYFRAME_MESSAGE(__KF_NAME__) \
-                  PRINT_CH_INFO(kLogChannelName, 
+                  PRINT_CH_INFO(kLogChannelName, \
                                 "AnimationStreamer.UpdateStream", \
                                 "Streaming %sKeyFrame at t=%dms.", __KF_NAME__, \
                                 _streamingTime_ms - _startTime_ms)
