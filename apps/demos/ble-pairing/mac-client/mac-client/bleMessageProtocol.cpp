@@ -32,7 +32,7 @@ void Anki::Switchboard::BleMessageProtocol::ReceiveRawBuffer(uint8_t* buffer, si
   uint8_t mulipartState = BleMessageProtocol::GetMultipartBits(headerByte);
   
   if(sizeByte != size - 1) {
-    printf("Size failure: %d %d\n", sizeByte, size);
+    printf("Size failure: %d %d\n", sizeByte, (int)size);
     return;
   }
   
