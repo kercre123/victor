@@ -2700,13 +2700,49 @@ namespace Cozmo {
               PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
             }
           }
-	  Enable(true);
-        } else {
-          PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.Failed", "");
         }
+	// If this is the factory test and we failed to read calibration then use a dummy one
+	// since we should be getting a real one during playpen
+	else if(FACTORY_TEST)
+	{
+          PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.Failed", "");
+
+          // TEMP HACK: Use dummy calibration for now since final camera not available yet
+          PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.UsingDummyV2Calibration", "");
+
+          // Calibration computed from Inverted Box target using one of the proto robots
+          // Should be close enough for other robots without calibration to use
+          const std::array<f32, 8> distortionCoeffs = {{-0.03822904514363595, -0.2964213946476391, -0.00181089972406104, 0.001866070303033584, 0.1803429725181202,
+            0, 0, 0}};
+
+          auto calib = std::make_shared<Vision::CameraCalibration>(360,
+                                          640,
+                                          364.7223064012286,
+                                          366.1693698832141,
+                                          310.6264440545544,
+                                          196.6729350209868,
+                                          0,
+                                          distortionCoeffs);
+
+          SetCameraCalibration(calib);
+
+          // Compute FOV from focal length and send
+          CameraFOVInfo msg(calib->ComputeHorizontalFOV().ToFloat(), calib->ComputeVerticalFOV().ToFloat());
+          if (_robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg))) != RESULT_OK) {
+            PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
+          }
+        }
+	else
+	{
+	  PRINT_NAMED_ERROR("VisionComponent.ReadCameraCalibration.Failed", "");
+	  return;
+	}
+
+        Enable(true);
       };
 
       _robot->GetNVStorageComponent().Read(NVStorage::NVEntryTag::NVEntry_CameraCalib, readCamCalibCallback);
+
     }
   }
 
