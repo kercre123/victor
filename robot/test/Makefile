@@ -74,11 +74,24 @@ stupid:
 	$(ARMCC) $(DEFINES) $(LOCAL_LDLIBS) -I../hal/spine -I../syscon ../hal/spine/spine_hal.c ../hal/spine/spine_crc.c stupid_hal.c 
 	adb push ./a.out /data/local/tmp
 
+bmi160:
+	echo $(PLATFORM)
+	$(ARMCC) $(DEFINES) $(LOCAL_LDLIBS) ../bmi160/bmi160.c ../bmi160/main.c
+
+
+
 spinal_tap:
 	$(CC) $(DEFINES) $(LOCAL_LDLIBS) -I../hal/spine -I../syscon  ../hal/spine/spine_hal.c ../hal/spine/spine_crc.c spinal_tap.c -o spinal_tap
 
 imu_test: imu_test.c ../hal/spine/imu.c
 	$(ARMCC) $(DEFINES) $(LOCAL_LDLIBS) -I../hal/include -I../hal/spine ../hal/spine/imu.c imu_test.c -o imu_test
 
+imu_bmi160_test: imu_bmi160_test.c 
+	echo $(PLATFORMj)
+	$(ARMCC) $(DEFINES) $(LOCAL_LDLIBS)  imu_bmi160_test.c -o imu_bmi160_test
+	adb push ./imu_bmi160_test /data/local
+
+
+
 clean:
-	rm -f *.o imu_test spinal_tap stupid_hal a.out
+	rm -f *.o imu_test imu_bmi160_test spinal_tap stupid_hal a.out
