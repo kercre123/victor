@@ -11,7 +11,6 @@ SCRIPT_NAME=$(basename ${0})
 TOPLEVEL=$SCRIPT_PATH
 
 source ${SCRIPT_PATH}/victor_env.sh
-robot_set_host
 
 # Settings can be overridden through environment
 : ${VERBOSE:=0}
@@ -21,6 +20,7 @@ function usage() {
   echo "$SCRIPT_NAME [OPTIONS]"
   echo "  -h                      print this message"
   echo "  -v                      print verbose output"
+  echo "  -s ANKI_ROBOT_HOST      hostname or ip address of robot"
   echo ""
   echo "environment variables:"
   echo '  $ANKI_ROBOT_HOST        hostname or ip address of robot'
@@ -28,7 +28,7 @@ function usage() {
   echo '  $INSTALL_ROOT           root dir of installed files on target'
 }
 
-while getopts "hv:" opt; do
+while getopts "hv:s:" opt; do
   case $opt in
     h)
       usage && exit 0
@@ -36,11 +36,20 @@ while getopts "hv:" opt; do
     v)
       VERBOSE=1
       ;;
+    s)
+      ANKI_ROBOT_HOST="${OPTARG}"
+      ;;
     *)
       usage && exit 1
       ;;
   esac
 done
+
+if [ -z "${ANKI_ROBOT_HOST+x}" ]; then
+  echo "ERROR: unspecified robot target. Pass the '-s' flag with robot IP, or set ANKI_ROBOT_HOST"
+  usage
+  exit 1
+fi
 
 : ${DEVICE_RSYNC_BIN_DIR:="/tmp"}
 : ${DEVICE_RSYNC_CONF_DIR:="/data/rsync"}
