@@ -17,7 +17,7 @@ if not exist "emmcdl" (
   exit 1
 )
 
-echo update head scripts & image files...
+echo update head scripts and image files...
 adb shell -x "mkdir -p /data/local/fixture"
 adb push headprogram /data/local/fixture/
 adb push usbserial.ko /data/local/fixture/
