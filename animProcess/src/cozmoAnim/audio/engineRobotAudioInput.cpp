@@ -24,9 +24,7 @@ namespace Cozmo {
 namespace Audio {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#define AUDIO_MSG_HANDLER_HELPER(msg)  PRINT_CH_DEBUG(AudioMuxInput::kAudioLogChannel, \
-                                                      "EngineRobotAudioInput.HandleMessage.#msg", ""); \
-                                       AudioEngine::Multiplexer::AudioMuxInput::HandleMessage(msg); 
+#define AUDIO_MSG_HANDLER_HELPER(msg) AudioEngine::Multiplexer::AudioMuxInput::HandleMessage(msg); 
 
 void EngineRobotAudioInput::HandleMessage( const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent ) 
 {
