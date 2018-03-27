@@ -439,6 +439,10 @@ float MoodManager::UpdateEventTimeAndCalculateRepetitionPenalty(const std::strin
   }
   else
   {
+    PRINT_NAMED_WARNING("MoodManager.UpdateEventTimeAndCalculateRepetitionPenalty.NoEvent",
+                        "Could not find event '%s', using default repetition penalty",
+                        eventName.c_str());
+    
     // No matching event name - use the default repetition penalty
     const float repetitionPenalty = GetStaticMoodData().GetDefaultRepetitionPenalty().EvaluateY(timeSinceLastOccurence);
     return repetitionPenalty;
