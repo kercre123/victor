@@ -101,7 +101,7 @@ find data >> ${RSYNC_LIST}
 rsync -rlptD -IzvP --inplace --delete --delete-before --force --files-from=${RSYNC_LIST} \
   --rsync-path=${DEVICE_RSYNC_BIN_DIR}/rsync.bin \
   -e ssh \
-  ./ root@${ANKI_ROBOT_HOST}:/anki_root/
+  ./ root@${ANKI_ROBOT_HOST}:/anki/
 
 rm -f ${BUILD_ROOT}/rsync.*.lst
 
