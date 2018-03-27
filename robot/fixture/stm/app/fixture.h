@@ -319,17 +319,10 @@ typedef int error_t;
 //#define ERROR_RECEIVE               904
 #define ERROR_UNKNOWN_MODE          905
 #define ERROR_OUT_OF_RANGE          906
-//#define ERROR_ALIGNMENT             907
-
 #define ERROR_SERIAL_EXISTS         908
 #define ERROR_LOT_CODE              909
 #define ERROR_OUT_OF_SERIALS        910   // When the fixture itself runs out of 500000 serial numbers
-#define ERROR_OUT_OF_CLOUD_CERTS    911   // The fixture has run out of cloud certificates
-
-//#define ERROR_BIN_SIZE              911   // Binary too large
 #define ERROR_FLASH_VERIFY          912   // Flash verification failed
-////#define ERROR_CUBE_ROM_OVERSIZE     911   // When you link a too-big cube ROM
-////#define ERROR_CUBE_ROM_MISPATCH     912   // When you can't patch the cube ROM
 #define ERROR_SERIAL_INVALID        913   // valid fixture serial # {1-4095} required to generate ESN for production programming
 //#define ERROR_RADIO_TIMEOUT         914   // On-board radio firmware failed to boot
 #define ERROR_INCOMPATIBLE_FIX_REV  915   // Test is incompatible with the current fixture hardware revision
@@ -341,6 +334,20 @@ typedef int error_t;
 #define ERROR_TIMEOUT               951   // The operation timed out
 #define ERROR_POWER_SHORT           952   // Power short circuit detected
 //#define ERROR_DEVICE_NOT_DETECTED   953   // Manual test start - DUT was not detected
+
+//<export heading> Helper Head Errors
+//RESERVED RANGE: 960-969 for helper 'headprogram' script exit codes
+#define ERROR_HEADPGM_OUT_OF_CLOUD_CERTS  960 // The fixture has run out of cloud certificates
+#define ERROR_HEADPGM_MISSING_CERT        961 // Expected cloud certificate not found
+#define ERROR_HEADPGM_BAD_CERT            962 // detected bad cloud certificate
+#define ERROR_HEADPGM_RESERVED_3          963 // RFU exit code from headprogram script
+#define ERROR_HEADPGM_RESERVED_4          964 // RFU exit code from headprogram script
+#define ERROR_HEADPGM_RESERVED_5          965 // RFU exit code from headprogram script
+#define ERROR_HEADPGM_RESERVED_6          966 // RFU exit code from headprogram script
+#define ERROR_HEADPGM_RESERVED_7          967 // RFU exit code from headprogram script
+#define ERROR_HEADPGM_RESERVED_8          968 // RFU exit code from headprogram script
+#define ERROR_HEADPGM_RESERVED_9          969 // RFU exit code from headprogram script
+#define ERROR_HEADPGM_DEFAULT             970 // Headprogram script error
 
 //<export end>
 

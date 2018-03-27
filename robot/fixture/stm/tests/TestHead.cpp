@@ -95,14 +95,10 @@ void TestHeadDutProgram(void)
   cmdSend(CMD_IO_HELPER, b, (timeout_s+10)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
   if( cmdStatus() != 0 )
   {
-    //map programming error to appropriate fixture error
-    switch( cmdStatus() )
-    {
-      case ERROR_OUT_OF_CLOUD_CERTS:
-        throw ERROR_OUT_OF_CLOUD_CERTS;
-      default:
-        throw ERROR_TESTPORT_CMD_FAILED;
-    }
+    if( cmdStatus() >= 960 && cmdStatus() <= 970 ) //headprogram exit code range
+      throw cmdStatus();
+    
+    throw ERROR_HEADPGM_DEFAULT; //default
   }
 }
 
