@@ -24,8 +24,8 @@ adb push usbserial.ko /data/local/fixture/
 adb push makebc /data/local/fixture/
 adb shell "chmod +x /data/local/fixture/*"
 adb shell "dos2unix /data/local/fixture/headprogram"
-REM adb shell -x "rm -rf /data/local/fixture/emmcdl/ && sync && sleep 1 && mkdir /data/local/fixture/emmcdl/"
-REM adb push emmcdl data/local/fixture/
+adb shell -x "rm -rf /data/local/fixture/emmcdl/ && sync && sleep 1 && mkdir /data/local/fixture/emmcdl/"
+adb push emmcdl data/local/fixture/
 adb push bin/emmcdl /data/local/fixture/emmcdl/
 adb shell -x "cd /data/local/fixture/emmcdl && chmod +x emmcdl"
 adb shell "sync"
