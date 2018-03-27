@@ -46,7 +46,7 @@ static SpineErr spine_open_internal(spine_ctx_t spine, struct spine_params param
 
     spine_debug("opening serial port\n");
 
-    spine->fd = open(params.devicename, O_RDWR | O_NONBLOCK);
+    spine->fd = open(params.devicename, O_RDWR);
     if (spine->fd == -1) {
         return spine_error(err_CANT_OPEN_FILE, "Can't open %s", params.devicename);
     }
@@ -394,8 +394,7 @@ ssize_t spine_parse_frame(spine_ctx_t spine, void *out_buf, size_t out_buf_len, 
 
         return 0;
     }
-            spine_debug_x("full slug\n");
-
+    spine_debug_x("full slug\n");
 
     const size_t frame_len =
         sizeof(struct SpineMessageHeader) + expected_payload_len + sizeof(struct SpineMessageFooter);
