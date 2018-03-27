@@ -207,7 +207,8 @@ char* DUT_UART::getline(char* buf, int bufsize, int timeout_us, int *out_len)
   uint32_t start = Timer::get();
   do //read 1 char (even if timeout==0)
   {
-    if( (c = dut_uart_getchar_()) > 0 ) { //ignore null; messes with ascii parser
+    c = dut_uart_getchar_();
+    if( c > 0 && c < 0x80 ) { //ignore null and non-ascii; messes with ascii parser
       if( c == '\r' || c == '\n' )
         eol = 1;
       else if( len < maxlen )

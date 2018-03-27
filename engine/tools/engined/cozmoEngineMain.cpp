@@ -16,6 +16,8 @@
 #include "util/logging/channelFilter.h"
 #include "util/helpers/templateHelpers.h"
 
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
 #if !defined(DEV_LOGGER_ENABLED)
   #if FACTORY_TEST
     #define DEV_LOGGER_ENABLED 1
@@ -141,11 +143,14 @@ static int cozmo_start(const Json::Value& configuration)
 
   // Initialize logging
   #if DEV_LOGGER_ENABLED
+  if(!FACTORY_TEST || (FACTORY_TEST && !Anki::Cozmo::Factory::GetEMR()->fields.PACKED_OUT_FLAG))
+  {
     using DevLoggingSystem = Anki::Cozmo::DevLoggingSystem;
     const std::string& appRunId = Anki::Util::GetUUIDString();
     const std::string& devlogPath = gDataPlatform->pathToResource(Anki::Util::Data::Scope::CurrentGameLog, LOG_PROCNAME);
     DevLoggingSystem::CreateInstance(devlogPath, appRunId);
     loggers.push_back(DevLoggingSystem::GetInstancePrintProvider());
+  }
   #endif
 
   Anki::Util::IEventProvider* eventProvider = nullptr;

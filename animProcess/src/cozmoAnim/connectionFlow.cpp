@@ -174,6 +174,12 @@ void DrawUpdatingOSScreen(AnimationStreamer* animStreamer)
   animStreamer->SetStreamingAnimation("anim_pairing_icon_update", 0, 0);
 }
 
+// Uses a png sequence animation to draw os updating error icon to screen
+void DrawUpdatingOSErrorScreen(AnimationStreamer* animStreamer)
+{
+  animStreamer->SetStreamingAnimation("anim_pairing_icon_update_error", 0, 0);
+}
+
 // Uses a png sequence animation to draw waiting for app icon to screen
 void DrawWaitingForAppScreen(AnimationStreamer* animStreamer)
 {
@@ -257,6 +263,11 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
     case ConnectionStatus::UPDATING_OS:
     {
       DrawUpdatingOSScreen(animStreamer);
+    }
+    break;
+    case ConnectionStatus::UPDATING_OS_ERROR:
+    {
+      DrawUpdatingOSErrorScreen(animStreamer);
     }
     break;
     case ConnectionStatus::WAITING_FOR_APP:

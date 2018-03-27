@@ -133,6 +133,20 @@ int precheck_header(uint8_t* otp8, const uint8_t* bin8, int print_flags)
 //        Commands
 //-----------------------------------------------------------
 
+uint32_t hex32str2ui(char *s)
+{
+  //compiler/target don't support ul!? strtol() max 0x7FFFffff value
+  int len = strlen(s);
+  uint32_t low = strtol(s+len-4,0,16); //last 4 chars
+  
+  char cbak = s[len-4];
+  s[len-4] = '\0'; //temporarily null terminate
+  uint32_t high = strtol(s,0,16);
+  s[len-4] = cbak; //replace char
+  
+  return (high << 16) | low;
+}
+
 int cmd_process(char* s)
 {
   static char b[80]; int bz = sizeof(b);
@@ -182,7 +196,7 @@ int cmd_process(char* s)
   }//-*/
   
   //==========================
-  //>>otp {write} {bd_address} {ESN:0x########} {hw.rev} {model}
+  //>>otp {write} {bd_address} {ESN:########} {hw.rev} {model} {CRC:########}
   //  example: 'otp write 01:02:03:04:05:C6 0x12345678 1 2'
   //==========================
   if( !strcmp(cmd, "otp") )
@@ -216,14 +230,15 @@ int cmd_process(char* s)
 //    else 
       if( !strcmp(console_getargl(s,1), "write") )
     {
-      //Parse write params (ESN, hw.revision, model#) ---------------------------------
+      //Parse write params (ESN, hw.revision, model#, CRC) ---------------------------------
       
-      if( nargs >= 6 ) {
-        binhead->custom_field[0] = strtol(console_getargl(s,3),0,0); //ESN
-        binhead->custom_field[1] = strtol(console_getargl(s,4),0,0); //hw rev
-        binhead->custom_field[2] = strtol(console_getargl(s,5),0,0); //model
+      if( nargs >= 7 ) {
+        binhead->custom_field[0] = hex32str2ui(console_getargl(s,3)); //ESN
+        binhead->custom_field[1] = strtol(console_getargl(s,4),0,0);  //hw rev
+        binhead->custom_field[2] = strtol(console_getargl(s,5),0,0);  //model
+        binhead->custom_field[3] = hex32str2ui(console_getargl(s,6)); //CRC
       }
-      writes_( snformat(b,bz,"ESN,hwrev,model = %08x,%u,%u\n", binhead->custom_field[0], binhead->custom_field[1], binhead->custom_field[2] ) );
+      writes_( snformat(b,bz,"ESN,hwrev,model,CRC = %08x,%u,%u,%08x\n", binhead->custom_field[0], binhead->custom_field[1], binhead->custom_field[2], binhead->custom_field[3] ) );
       
       //validate parameters
       if( binhead->custom_field[0]/*ESN*/ == 0 ||

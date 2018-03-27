@@ -63,11 +63,16 @@ namespace Switchboard {
       void OnDisconnected(int connId, INetworkStream* stream);
       void OnPinUpdated(std::string pin);
       void OnOtaUpdatedRequest(std::string url);
+      void OnEndPairing();
       void OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame message);
       bool TryConnectToEngineServer();
       void HandleOtaUpdateExit(int rc, const std::string& output);
       void HandleOtaUpdateProgress();
       int GetOtaProgress(uint64_t* progress, uint64_t* expected);
+
+      Signal::SmartHandle _pinHandle;
+      Signal::SmartHandle _otaHandle;
+      Signal::SmartHandle _endHandle;
 
       void UpdateAdvertisement(bool pairing);
 

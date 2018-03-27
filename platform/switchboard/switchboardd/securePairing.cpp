@@ -456,6 +456,8 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::Rts
 
     _wifiConnectTimeout_s = std::max(kWifiConnectMinTimeout_s, wifiConnectMessage.timeout);
 
+    UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SETTING_WIFI);
+
     bool connected = Anki::ConnectWiFiBySsid(wifiConnectMessage.wifiSsidHex, 
       wifiConnectMessage.password,
       wifiConnectMessage.authType,
@@ -513,7 +515,7 @@ void SecurePairing::HandleRtsWifiScanRequest(const Victor::ExternalComms::RtsCon
   }
 
   if(_state == PairingState::ConfirmedSharedSecret) {
-    _engineClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SETTING_WIFI);
+    UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SETTING_WIFI);
     SendWifiScanResult();
   } else {
     Log::Write("Received wifi scan request in wrong state.");
@@ -548,6 +550,8 @@ void SecurePairing::HandleRtsWifiAccessPointRequest(const Victor::ExternalComms:
 
       std::string ssid(vicName);
       std::string password = _keyExchange->GeneratePin(kWifiApPasswordSize);
+
+      UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SETTING_WIFI);
 
       bool success = Anki::EnableAccessPointMode(ssid, password);
 
@@ -793,6 +797,14 @@ void SecurePairing::HandleInternetTimerTick() {
   } else if(_inetTimerCount > _wifiConnectTimeout_s) {
     ev_timer_stop(_loop, &_handleInternet.timer);
     SendWifiConnectResult(false);
+  }
+}
+
+void SecurePairing::UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus state) {
+  if(!_isOtaUpdating) {
+    _engineClient->ShowPairingStatus(state);
+  } else {
+    _engineClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::UPDATING_OS);
   }
 }
 

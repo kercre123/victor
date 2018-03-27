@@ -410,6 +410,11 @@ namespace Anki {
 
     } // Init()
 
+    void HAL::Stop()
+    {
+      
+    }
+
     void HAL::Destroy()
     {
       gps_->disable();

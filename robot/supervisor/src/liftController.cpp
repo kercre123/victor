@@ -363,6 +363,12 @@ namespace Anki {
                   AnkiInfo("LiftController.CalibrationUpdate.Abort", 
                            "Someone is probably messing with lift (low: %fdeg, curr: %fdeg)",
                            RAD_TO_DEG(lowLiftAngleDuringCalib_rad_), RAD_TO_DEG(currAngle));
+
+                  // Turn off motor
+                  power_ = 0;
+                  HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
+
+                  // Maintain current calibration
                   ResetAnglePosition(currAngle);
                   isCalibrated_ = true;
                   calState_ = LCS_IDLE;

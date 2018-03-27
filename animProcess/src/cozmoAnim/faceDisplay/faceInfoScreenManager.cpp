@@ -17,6 +17,7 @@
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
+#include "cozmoAnim/connectionFlow.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreen.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
@@ -65,7 +66,7 @@ const f32 FaceInfoScreenManager::kDefaultTextScale = 0.4f;
 namespace {
   // Number of tics that a wheel needs to be moving for before it registers
   // as a signal to move the menu cursor
-  const u32 kMenuCursorMoveCountThresh = 5;
+  const u32 kMenuCursorMoveCountThresh = 10;
   
   const f32 kWheelMotionThresh_mmps = 3.f;
   
@@ -173,6 +174,14 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_MENU_ITEM(Recovery, "CONTINUE", None);
   DISABLE_TIMEOUT(Recovery);
 
+  // None screen 
+#if FACTORY_TEST  
+  FaceInfoScreen::ScreenAction drawInitConnectionScreen = [animStreamer]() {
+    InitConnectionFlow(animStreamer);
+  };
+  GetScreen(ScreenName::None)->SetEnterScreenAction(drawInitConnectionScreen);
+#endif  
+  
   // FAC screen
   DISABLE_TIMEOUT(FAC);
 
@@ -1107,7 +1116,7 @@ void FaceInfoScreenManager::DrawTextOnScreen(const ColoredTextLines& lines,
 
 void FaceInfoScreenManager::EnablePairingScreen(bool enable)
 {
-  if (enable && GetCurrScreenName() != ScreenName::None) {
+  if (enable && GetCurrScreenName() != ScreenName::Pairing) {
     LOG_INFO("FaceInfoScreenManager.EnablePairingScreen.Enable", "");
     SetScreen(ScreenName::Pairing);
   } else if (!enable && GetCurrScreenName() == ScreenName::Pairing) {

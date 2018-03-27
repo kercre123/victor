@@ -23,6 +23,7 @@ extern "C" {
 
 #define FIXMODE_HEAD1          11
 #define FIXMODE_HEAD2          12
+#define FIXMODE_HELPER1        13
 
 #define FIXMODE_BACKPACK1      16
 
@@ -105,7 +106,7 @@ uint32_t      fixtureGetSerial(void); // Get a serial number for a device in the
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "HEAD1"       , TestHeadDetect      , TestHead1GetTests           , TestHeadCleanup             , FIXMODE_HEAD1       },  /*11*/  \
   { "HEAD2"       , TestHeadDetect      , TestHead2GetTests           , TestHeadCleanup             , FIXMODE_HEAD2       },  /*12*/  \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "HELPER1"     , TestHeadDetect      , TestHelper1GetTests         , TestHeadCleanup             , FIXMODE_HELPER1     },  /*13*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { "BACKPACK1"   , TestBackpackDetect  , TestBackpack1GetTests       , TestBackpackCleanup         , FIXMODE_BACKPACK1   },  /*16*/  \
@@ -186,24 +187,24 @@ typedef int error_t;
 //<export heading> ANKI VICTOR FIXTURE ERROR CODES
 
 //<export heading> General Motor Errors
-//#define ERROR_MOTOR_LEFT            310   // Problem driving left motor (sticky or broken wire)
+#define ERROR_MOTOR_LEFT            310   // Problem driving left motor (sticky or broken wire)
 //#define ERROR_MOTOR_LEFT_SPEED      311   // Problem driving left motor at full speed
 //#define ERROR_MOTOR_LEFT_JAM        316   // Jamming test failed on left motor
 
-//#define ERROR_MOTOR_RIGHT           320   // Problem driving right motor (sticky or broken wire)
+#define ERROR_MOTOR_RIGHT           320   // Problem driving right motor (sticky or broken wire)
 //#define ERROR_MOTOR_RIGHT_SPEED     321   // Problem driving right motor at full speed
 //#define ERROR_MOTOR_RIGHT_JAM       326   // Jamming test failed on right motor
 
-//#define ERROR_MOTOR_LIFT            330   // Problem driving lift motor (sticky or broken wire)
-//#define ERROR_MOTOR_LIFT_RANGE      331   // Lift can't reach full range (bad encoder/mechanical blockage)
-//#define ERROR_MOTOR_LIFT_BACKWARD   332   // Lift is wired backward
-//#define ERROR_MOTOR_LIFT_NOSTOP     333   // Lift does not hit stop (bad encoder/missing lift arm)
+#define ERROR_MOTOR_LIFT            330   // Problem driving lift motor (sticky or broken wire)
+#define ERROR_MOTOR_LIFT_RANGE      331   // Lift can't reach full range (bad encoder/mechanical blockage)
+#define ERROR_MOTOR_LIFT_BACKWARD   332   // Lift is wired backward
+#define ERROR_MOTOR_LIFT_NOSTOP     333   // Lift does not hit stop (bad encoder/missing lift arm)
 //#define ERROR_MOTOR_LIFT_JAM        336   // Jamming test failed on lift motor
 
-//#define ERROR_MOTOR_HEAD            340   // Problem driving head motor (sticky or broken wire)
-//#define ERROR_MOTOR_HEAD_RANGE      341   // Head can't reach full range (bad encoder/mechanical blockage)
-//#define ERROR_MOTOR_HEAD_BACKWARD   342   // Head is wired backward
-//#define ERROR_MOTOR_HEAD_NOSTOP     343   // Head does not hit stop (bad encoder/missing head arm)
+#define ERROR_MOTOR_HEAD            340   // Problem driving head motor (sticky or broken wire)
+#define ERROR_MOTOR_HEAD_RANGE      341   // Head can't reach full range (bad encoder/mechanical blockage)
+#define ERROR_MOTOR_HEAD_BACKWARD   342   // Head is wired backward
+#define ERROR_MOTOR_HEAD_NOSTOP     343   // Head does not hit stop (bad encoder/missing head arm)
 //#define ERROR_MOTOR_HEAD_SLOW_RANGE 345   // Head can't reach full range when run at low voltage
 //#define ERROR_MOTOR_HEAD_JAM        346   // Jamming test failed on head motor
 
@@ -213,6 +214,7 @@ typedef int error_t;
 #define ERROR_TESTPORT_RSP_MISSING_ARGS   402 //response is missing required arguments
 #define ERROR_TESTPORT_RSP_BAD_ARG        403 //response arg incorrect or improperly formatted
 #define ERROR_TESTPORT_CMD_FAILED         404 //returned fail code
+#define ERROR_TESTPORT_RX_ERROR           405 //driver (uart) overflow or dropped chars detected
 
 //<export heading> SWD Errors (mcu programming interface)
 //#define ERROR_SWD_IDCODE            450   // IDCODE is unrecognized
@@ -288,6 +290,9 @@ typedef int error_t;
 #define ERROR_CUBE_LED_D4           707   // Detected bad LED [D4]
 #define ERROR_CUBE_ACCEL            708   // Accelerometer cannot communicate
 #define ERROR_CUBE_ACCEL_PWR        709   // Accelerometer power fault
+#define ERROR_CUBE_BAD_BINARY       710   // Fixture has corrupted binary (contact Anki for firmware update)
+#define ERROR_CUBE_FW_MISMATCH      711   // Cube already has fw burned to OTP -- different than current version
+#define ERROR_CUBE_FW_MATCH         712   // Cube already has fw burned to OTP -- same as current version
 //#define ERROR_CUBE_CANNOT_READ      705   // Broken wire or MCU is locked 
 //#define ERROR_CUBEX_NOT_SET         706   // Cube not programmed - CUBEX requires cube to be already programmed
 //#define ERROR_CUBE_SCAN_FAILED      707   // Did not detect advertising packets from the cube's radio
@@ -305,6 +310,8 @@ typedef int error_t;
 //#define ERROR_CUBE_STANDBY          754   // Too much power in standby mode
 //#define ERROR_CUBE_RADIO            755   // Bad radio/antenna
 
+#define ERROR_ROBOT_TEST_SEQUENCE     800   // This test cannot run until all previous tests have passed
+
 //<export heading> Internal Errors - generally programming or hardware errors
 #define ERROR_EMPTY_COMMAND         901
 #define ERROR_ACK1                  902
@@ -317,6 +324,7 @@ typedef int error_t;
 #define ERROR_SERIAL_EXISTS         908
 #define ERROR_LOT_CODE              909
 #define ERROR_OUT_OF_SERIALS        910   // When the fixture itself runs out of 500000 serial numbers
+#define ERROR_OUT_OF_CLOUD_CERTS    911   // The fixture has run out of cloud certificates
 
 //#define ERROR_BIN_SIZE              911   // Binary too large
 #define ERROR_FLASH_VERIFY          912   // Flash verification failed

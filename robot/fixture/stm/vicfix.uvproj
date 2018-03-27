@@ -132,7 +132,7 @@
           </Simulator>
           <Target>
             <UseTarget>1</UseTarget>
-            <LoadApplicationAtStartup>0</LoadApplicationAtStartup>
+            <LoadApplicationAtStartup>1</LoadApplicationAtStartup>
             <RunToMain>1</RunToMain>
             <RestoreBreakpoints>1</RestoreBreakpoints>
             <RestoreWatchpoints>1</RestoreWatchpoints>
@@ -562,9 +562,9 @@
               </FileOption>
             </File>
             <File>
-              <FileName>TestDebugHelper.cpp</FileName>
+              <FileName>TestDebugHeadprogram.cpp</FileName>
               <FileType>8</FileType>
-              <FilePath>.\tests\TestDebugHelper.cpp</FilePath>
+              <FilePath>.\tests\TestDebugHeadprogram.cpp</FilePath>
             </File>
           </Files>
         </Group>
@@ -575,6 +575,11 @@
               <FileName>crc16.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\lib\crc16.c</FilePath>
+            </File>
+            <File>
+              <FileName>crc32.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\lib\crc32.c</FilePath>
             </File>
             <File>
               <FileName>nvReset.c</FileName>
@@ -662,11 +667,6 @@
               <FilePath>.\hal\random.c</FilePath>
             </File>
             <File>
-              <FileName>psk.c</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\hal\psk.c</FilePath>
-            </File>
-            <File>
               <FileName>dut_uart.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\dut_uart.cpp</FilePath>
@@ -675,6 +675,11 @@
               <FileName>bdaddr.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\bdaddr.c</FilePath>
+            </File>
+            <File>
+              <FileName>flexflow.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\flexflow.cpp</FilePath>
             </File>
           </Files>
         </Group>

@@ -211,10 +211,201 @@ void HandleOutputCallback(int rc, const std::string& output) {
   // noop
 }
 
+static gpointer connectionThread(gpointer data)
+{
+  GMainLoop *loop = g_main_loop_new(NULL, true);
+
+  if (!loop) {
+      loge("error getting main loop");
+      return nullptr;
+  }
+
+  g_main_loop_run(loop);
+  g_main_loop_unref(loop);
+  return nullptr;
+}
+
+static GMutex connectMutex;
+
+void connectCallback(GObject *source_object, GAsyncResult *result, gpointer user_data)
+{
+  struct ConnectAsyncData *connectData = (struct ConnectAsyncData *)user_data;
+
+  // sanity check
+  gpointer res_user_data = g_async_result_get_user_data(result);
+  if (res_user_data != user_data) {
+    loge("%s: res_user_data != user_data, bailing out", __func__);
+    return;
+  }
+
+  conn_man_bus_service_call_connect_finish (connectData->service,
+                                            result,
+                                            &connectData->error);
+
+  g_mutex_lock(&connectMutex);
+  connectData->completed = true;
+  g_cond_signal(connectData->cond);
+  g_mutex_unlock(&connectMutex);
+}
+
+static const char hiddenAgentPath[] = "/tmp/vic-switchboard/connman-agent";
+
+static void HiddenAPCallback(GDBusConnection *connection,
+                      const gchar *sender,
+                      const gchar *object_path,
+                      const gchar *interface_name,
+                      const gchar *method_name,
+                      GVariant *parameters,
+                      GDBusMethodInvocation *invocation,
+                      gpointer user_data)
+{
+  struct WPAConnectInfo *wpaConnectInfo = (struct WPAConnectInfo *)user_data;
+
+  if (strcmp(object_path, hiddenAgentPath)) {
+    return; //not us
+  }
+
+  if (strcmp(interface_name, "net.connman.Agent")) {
+    return; // not our Interface
+  }
+
+  if (!strcmp(method_name, "RequestInput")) {
+    // Ok, let's provide the input
+    gchar *obj;
+    GVariant *dict;
+
+    g_variant_get(parameters, "(oa{sv})", &obj, &dict);
+    logi("%s: object %s", __func__, obj);
+
+    GVariantBuilder *dict_builder = g_variant_builder_new(G_VARIANT_TYPE("(a{sv})"));
+    g_variant_builder_open(dict_builder, G_VARIANT_TYPE("a{sv}"));
+    if (wpaConnectInfo->name) {
+      logi("%s: found 'Name'", __func__);
+      g_variant_builder_add(dict_builder, "{sv}", "Name", g_variant_new_string(wpaConnectInfo->name));
+    }
+    if (wpaConnectInfo->ssid) {
+      logi("%s: found 'SSID'", __func__);
+      g_variant_builder_add(dict_builder, "{sv}", "SSID", g_variant_new_bytestring(wpaConnectInfo->ssid));
+    }
+    if (wpaConnectInfo->passphrase) {
+      logi("%s: found 'Passphrase'", __func__);
+      g_variant_builder_add(dict_builder, "{sv}", "Passphrase", g_variant_new_string(wpaConnectInfo->passphrase));
+    }
+    g_variant_builder_close(dict_builder);
+
+    GVariant *response = g_variant_builder_end(dict_builder);
+    g_variant_builder_unref(dict_builder);
+    logi("%s", g_variant_print(response, true));
+
+    g_dbus_method_invocation_return_value(invocation, response);
+  }
+}
+
+GDBusInterfaceVTable hiddenAPVtable = {
+  .method_call = HiddenAPCallback,
+};
+
+/* Introspection data for the service we are exporting */
+static const gchar introspection_xml[] =
+  "<node>"
+  "  <interface name='net.connman.Agent'>"
+  "    <method name='RequestInput'>"
+  "      <arg type='o' name='service' direction='in'/>"
+  "      <arg type='a{sv}' name='fields' direction='in'/>"
+  "      <arg type='a{sv}' name='input' direction='out'/>"
+  "    </method>"
+  "  </interface>"
+  "</node>";
+
+bool RegisterAgentHidden(struct WPAConnectInfo *wpaConnectInfo)
+{
+  GError *error = nullptr;
+
+  GDBusConnection *gdbusConn = g_bus_get_sync(G_BUS_TYPE_SYSTEM,
+                                              nullptr,
+                                              &error);
+
+  static GDBusNodeInfo *introspection_data = g_dbus_node_info_new_for_xml (introspection_xml, NULL);
+  if (!introspection_data) {
+    return false;
+  }
+
+  ConnManBusManager *manager;
+  manager = conn_man_bus_manager_proxy_new_sync(gdbusConn,
+                                                G_DBUS_PROXY_FLAGS_NONE,
+                                                "net.connman",
+                                                "/",
+                                                nullptr,
+                                                &error);
+  if (error) {
+    loge("error getting manager");
+    return false;
+  }
+
+  guint agentId = 0;
+  agentId = g_dbus_connection_register_object(gdbusConn,
+                                              hiddenAgentPath,
+                                              introspection_data->interfaces[0],
+                                              &hiddenAPVtable,
+                                              wpaConnectInfo,
+                                              nullptr,
+                                              &error);
+  if (error) {
+    loge("Error registering agent object");
+    return false;
+  }
+
+  if (!conn_man_bus_manager_call_register_agent_sync(manager,
+                                                     hiddenAgentPath,
+                                                     nullptr,
+                                                     &error)) {
+    g_dbus_connection_unregister_object(gdbusConn, agentId);
+    loge("error registering agent");
+    return false;
+  }
+
+  wpaConnectInfo->agentId = agentId;
+  wpaConnectInfo->connection = gdbusConn;
+  wpaConnectInfo->manager = manager;
+  return true;
+}
+
+bool UnregisterAgentHidden(struct WPAConnectInfo *wpaConnectInfo)
+{
+  GError *error = nullptr;
+
+  if (!wpaConnectInfo) {
+    return false;
+  }
+
+  conn_man_bus_manager_call_unregister_agent_sync (wpaConnectInfo->manager,
+                                                   hiddenAgentPath,
+                                                   nullptr,
+                                                   &error);
+
+  if (error) {
+    return false;
+  }
+
+  g_dbus_connection_unregister_object(wpaConnectInfo->connection,
+                                      wpaConnectInfo->agentId);
+
+  g_object_unref(wpaConnectInfo->manager);
+  g_object_unref(wpaConnectInfo->connection);
+  return true;
+}
+
 bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData) {
   ConnManBusTechnology* tech_proxy;
   GError* error;
   bool success;
+
+  static GThread *thread = g_thread_new("connect", connectionThread, nullptr);
+
+  if (thread == nullptr) {
+    loge("couldn't spawn connection thread");
+    return false;
+  }
 
   std::string nameFromHex = hexStringToAsciiString(ssid);
 
@@ -357,25 +548,6 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidd
   std::string servicePath = GetObjectPathForService(serviceVariant);
   Log::Write("Initiating connection to %s.", servicePath.c_str());
 
-  if(hidden) {
-    // need to do some surgery on the object path
-    // it will look "wifi_000af56d4ce4_hidden_managed_psk"
-    // something like this. we need to replace 'hidden' with
-    // SSID string.
-    std::string wifiPrefix = "/net/connman/service/wifi";
-    std::string prefix = wifiPrefix + "_000000000000_";
-    std::string hiddenText = "hidden";
-
-    if(strncmp(prefix.c_str(), servicePath.c_str(), wifiPrefix.length()) != 0) {
-      // compare strings all the way up to and including "wifi"
-      Log::Error("Be very scared! The Connman service path does not match the expected format.");
-      return false;
-    }
-
-    servicePath.replace(prefix.length(), hiddenText.length(), ssid);
-    Log::Write("Hidden network, trying service path: %s", ssid.c_str());
-  }
-
   // before connecting, lets disconnect from our current different network
   if(currentServiceVariant != nullptr) {
     // we have a connected service and it *isn't* the one we are currently connected to
@@ -395,9 +567,31 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidd
     return false;
   }
 
+  WPAConnectInfo connectInfo = {};
+  bool agent_registered = false;
+  if(hidden) {
+    connectInfo.name = nameFromHex.c_str();
+    connectInfo.passphrase = pw.c_str();
+
+    agent_registered = RegisterAgentHidden(&connectInfo);
+    if (!agent_registered) {
+      loge("could not register agent, bailing out");
+      return false;
+    }
+  }
+
   // Try to connect to our service
   bool connect = ConnectToWifiService(service);
 
+  if (!connect) {
+    Log::Write("Retry connecting one more time");
+    connect = ConnectToWifiService(service);
+  }
+
+  if (agent_registered) {
+    Log::Write("unregistering agent");
+    UnregisterAgentHidden(&connectInfo);
+  }
   return connect;
 }
 
@@ -419,26 +613,43 @@ ConnManBusService* GetServiceForPath(std::string objectPath) {
 }
 
 bool ConnectToWifiService(ConnManBusService* service) {
-  GError* error = nullptr;
 
   if(service == nullptr) {
     return false;
   }
 
-  gboolean didConnect = conn_man_bus_service_call_connect_sync (service, nullptr, &error);
+  GCond connectCond;
+  g_cond_init(&connectCond);
 
-  if(!didConnect && error != nullptr) {
-    Log::Write("Error connecting to wifi [attempt 1]: %s", error->message);
-    error = nullptr;
+  g_mutex_lock(&connectMutex);
 
-    didConnect = conn_man_bus_service_call_connect_sync (service, nullptr, &error);
+  struct ConnectAsyncData connAsyncData;
 
-    if(!didConnect && error != nullptr) {
-      Log::Write("Error connecting to wifi [attempt 2]: %s", error->message);
-    }
-  }  
+  connAsyncData.completed = false;
+  connAsyncData.error = nullptr;
+  connAsyncData.cond = &connectCond;
+  connAsyncData.service = service;
+  conn_man_bus_service_call_connect (service,
+                                     nullptr,
+                                     connectCallback,
+                                     (gpointer)&connAsyncData);
 
-  return (bool)didConnect;
+  gint64 end_time = g_get_monotonic_time () + 10 * G_TIME_SPAN_SECOND;
+  bool timedOut = false;
+  while (!connAsyncData.completed) {
+    timedOut = !g_cond_wait_until(&connectCond, &connectMutex, end_time);
+    if (timedOut)
+      break;
+  };
+  g_mutex_unlock(&connectMutex);
+
+  bool didConnect = !timedOut && connAsyncData.error == nullptr;
+  if(!didConnect) {
+    Log::Write("Error connecting to wifi: %s",
+               timedOut ?
+               "timed out waiting on conditional" : connAsyncData.error->message);
+  }
+  return didConnect;
 }
 
 bool DisconnectFromWifiService(ConnManBusService* service) {
@@ -930,11 +1141,13 @@ int GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {
   memset(ipv4_32bits, 0, 4);
   memset(ipv6_128bits, 0, 16);
 
+  const char* interface = IsAccessPointMode()? "tether" : "wlan0";
+
   while(current != nullptr) {
     int s;
     int family = current->ifa_addr->sa_family;
 
-    if ((family == AF_INET || family == AF_INET6) && (strcmp(current->ifa_name, "wlan0") == 0)) {
+    if ((family == AF_INET || family == AF_INET6) && (strcmp(current->ifa_name, interface) == 0)) {
       char host[NI_MAXHOST];
 
       s = getnameinfo(current->ifa_addr,

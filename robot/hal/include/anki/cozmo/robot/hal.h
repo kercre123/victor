@@ -36,6 +36,9 @@
 #include "sim_hal.h"
 #endif
 
+// Whether or not to read/process imu data on a thread
+#define PROCESS_IMU_ON_THREAD 1
+
 namespace Anki {
 namespace Cozmo {
 namespace HAL {
@@ -54,6 +57,7 @@ static const f32 MOTOR_MAX_POWER = 1.0f;
 
 Result Init(void);
 Result Step(void);
+void Stop(void);
 
 void Shutdown();
 
