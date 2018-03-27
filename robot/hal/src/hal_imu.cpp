@@ -17,6 +17,8 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
+#include <thread>
+#include <mutex>
 
 namespace Anki {
 namespace Cozmo {
@@ -31,16 +33,26 @@ namespace { // "Private members"
   // How often, in ticks, to update the imu tempurature
   const u32 IMU_TEMP_UPDATE_FREQ_TICKS = 200; // ~1 second
 
+  // IMU interactions are handled on a thread due to blocking system calls
+#if PROCESS_IMU_ON_THREAD
+  std::thread _processor;
+  std::mutex _mutex;
+  bool _stopProcessing = false;
+#endif
+
 } // "private" namespace
 
 
 void PushIMU(const HAL::IMU_DataStructure& data)
 {
+#if PROCESS_IMU_ON_THREAD
+  std::lock_guard<std::mutex> lock(_mutex);
+#endif
   if (++_imuNewestIdx >= IMU_DATA_ARRAY_SIZE) {
     _imuNewestIdx = 0;
   }
   if (_imuNewestIdx == _imuLastReadIdx) {
-    //AnkiWarn( "HAL.PushIMU.ArrayIsFull", "Dropping data");
+    AnkiWarn( "HAL.PushIMU.ArrayIsFull", "Dropping data");
   }
 
   _imuDataArr[_imuNewestIdx] = data;
@@ -48,6 +60,10 @@ void PushIMU(const HAL::IMU_DataStructure& data)
 
 bool PopIMU(HAL::IMU_DataStructure& data)
 {
+#if PROCESS_IMU_ON_THREAD
+  std::lock_guard<std::mutex> lock(_mutex);
+#endif
+
   if (_imuNewestIdx == _imuLastReadIdx) {
     return false;
   }
@@ -84,16 +100,62 @@ void ProcessIMUEvents()
   }
 }
 
+bool OpenIMU()
+{
+  const char* err = imu_open();
+  if (err) {
+    AnkiError("HAL.InitIMU.OpenFailed", "%s", err);
+    return false;
+  }
+  imu_init();
+  return true;
+}
+
+#if PROCESS_IMU_ON_THREAD
+// Processing loop for reading imu on a thread
+void ProcessLoop()
+{
+  if(!OpenIMU())
+  {
+    return;
+  }
+
+  while(!_stopProcessing)
+  {
+    const auto start = std::chrono::steady_clock::now();
+    ProcessIMUEvents();
+    const auto end = std::chrono::steady_clock::now();
+    
+    // Sleep such that there are 5ms between ProcessIMUEvent calls
+    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::chrono::duration<double, std::micro> sleepTime = std::chrono::milliseconds(5) - elapsed;
+    std::this_thread::sleep_for(sleepTime);
+  }
+
+  imu_close();
+}
+#endif
 
 void InitIMU()
 {
-  const char* err = imu_open();
-  //TODO: conditional err and return
-  if (err) {
-    AnkiError("HAL.InitIMU.OpenFailed", "%s", err);
-    return;
-  }
-  imu_init();
+
+#if PROCESS_IMU_ON_THREAD
+  // Spin up the processing thread and detach it
+  // This will open, init, and read the imu
+  _processor = std::thread(ProcessLoop);
+  _processor.detach();
+#else
+  OpenIMU();
+#endif
+}
+
+void StopIMU()
+{
+#if PROCESS_IMU_ON_THREAD
+  _stopProcessing = true;
+#else
+  imu_close();
+#endif
 }
 
 

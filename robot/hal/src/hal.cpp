@@ -13,6 +13,7 @@
 // Our Includes
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/robot/logEvent.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "../spine/spine.h"
@@ -56,6 +57,7 @@ namespace { // "Private members"
 // Forward Declarations
 Result InitRadio();
 void InitIMU();
+void StopIMU();
 void ProcessIMUEvents();
 void ProcessTouchLevel(void);
 void PrintConsoleOutput(void);
@@ -69,15 +71,25 @@ extern "C" {
   }
 }
 
-ssize_t robot_io(spine_ctx_t spine, uint32_t sleepTimeMicroSec = 1000)
+ssize_t robot_io(spine_ctx_t spine)
 {
-  usleep(sleepTimeMicroSec);
-
   int fd = spine_get_fd(spine);
+
+  EventStart(EventType::ROBOT_IO_READ);
+  
   ssize_t r = read(fd, readBuffer_, sizeof(readBuffer_));
-  if (r > 0) {
+  
+  EventAddToMisc(EventType::ROBOT_IO_READ, (uint32_t)r);
+  EventStop(EventType::ROBOT_IO_READ);
+  
+  if (r > 0) 
+  {
+    EventStart(EventType::ROBOT_IO_RECEIVE);
     r = spine_receive_data(spine, (const void*)readBuffer_, r);
-  } else if (r < 0) {
+    EventStop(EventType::ROBOT_IO_RECEIVE);
+  } 
+  else if (r < 0) 
+  {
     if (errno == EAGAIN) {
       r = 0;
     }
@@ -123,7 +135,7 @@ Result spine_wait_for_first_frame(spine_ctx_t spine)
       }
     }
 
-    robot_io(&spine_, 1000);
+    robot_io(&spine_);
     read_count++;
   }
 
@@ -197,22 +209,25 @@ Result spine_get_frame() {
 
   ssize_t r = 0;
   do {
+    EventStart(EventType::PARSE_FRAME);
     r = spine_parse_frame(&spine_, frame_buffer, sizeof(frame_buffer), NULL);
+    EventStop(EventType::PARSE_FRAME);
 
-    if (r < 0) {
+    if (r < 0)
+    {
       continue;
-    } else if (r > 0) {
+    } 
+    else if (r > 0) 
+    {
       const struct SpineMessageHeader* hdr = (const struct SpineMessageHeader*)frame_buffer;
       if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
         handle_payload_data(frame_buffer);  //payload starts immediately after header
         result = RESULT_OK;
-        continue;
       }
       else if (hdr->payload_type == PAYLOAD_CONT_DATA) {
          LOGD("Handling CD payload type %x\n", hdr->payload_type);
         ccc_data_process( (ContactData*)(hdr+1) );
         result = RESULT_OK;
-        continue;
       }
       else if (hdr->payload_type == PAYLOAD_VERSION) {
          LOGD("Handling VR payload type %x\n", hdr->payload_type);
@@ -221,11 +236,20 @@ Result spine_get_frame() {
       else {
         LOGD("Unknown Frame Type %x\n", hdr->payload_type);
       }
-
-    } else {
-      // get more data
-      robot_io(&spine_, 1000);
     }
+    else
+    {
+      // get more data
+      EventStart(EventType::ROBOT_IO);
+      robot_io(&spine_);
+      EventStop(EventType::ROBOT_IO);
+    }
+
+    if(result == RESULT_OK)
+    {
+      break;
+    }
+
   } while (r != 0);
 
   return result;
@@ -237,17 +261,16 @@ extern "C"  ssize_t spine_write_ccc_frame(spine_ctx_t spine, const struct Contac
 
 Result HAL::Step(void)
 {
+  EventStep();
+  EventStart(EventType::HAL_STEP);
+
   static uint32_t last_packet_send = 0;
   uint32_t now = GetMicroCounter();
 
   Result result = RESULT_OK;
   bool commander_is_active = false;
 
-#ifdef HAL_DUMMY_BODY
-  ProcessIMUEvents();
-  dummyBodyData_.framecounter++;
-
-#else
+#ifndef HAL_DUMMY_BODY
 
   headData_.framecounter++;
 
@@ -258,21 +281,35 @@ Result HAL::Step(void)
     // commander_is_active = ccc_commander_is_active();
     // struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
     struct HeadToBody* h2bp =  &headData_;
-    
+
+    EventStart(EventType::WRITE_SPINE);
     spine_write_h2b_frame(&spine_, h2bp);
+    EventStop(EventType::WRITE_SPINE);
 
     struct ContactData* ccc_response = ccc_text_response();
     if (ccc_response) {
       spine_write_ccc_frame(&spine_, ccc_response);
     }
     last_packet_send = now;
-  }
+  }  
 
+#if !PROCESS_IMU_ON_THREAD
   ProcessIMUEvents();
+#endif
+
+  EventStart(EventType::READ_SPINE);
 
   do {
     result = spine_get_frame();
   } while(result != RESULT_OK);
+
+  EventStop(EventType::READ_SPINE);
+
+#else // else have dummy body
+
+#if !PROCESS_IMU_ON_THREAD
+  ProcessIMUEvents();
+#endif
 
 #endif // #ifndef HAL_DUMMY_BODY
 
@@ -280,8 +317,15 @@ Result HAL::Step(void)
 
   PrintConsoleOutput();
 
+  EventStop(EventType::HAL_STEP);
+
   //return a fail code if commander is active to prevent robotics from getting confused
   return (commander_is_active) ? RESULT_FAIL_IO_UNSYNCHRONIZED : result;
+}
+
+void HAL::Stop()
+{
+  StopIMU();
 }
 
 void ProcessTouchLevel(void)
