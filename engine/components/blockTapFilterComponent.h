@@ -25,9 +25,6 @@
 #include "engine/robotComponents_fwd.h"
 #include "coretech/common/engine/objectIDs.h"
 
-
-
-
 #include <list>
 
 namespace Anki {
@@ -64,9 +61,10 @@ public:
   
   bool ShouldIgnoreMovementDueToDoubleTap(const ObjectID& objectID);
   
-  void HandleActiveObjectTapped(const ExternalInterface::ObjectTapped& message);
-  void HandleActiveObjectMoved(const ExternalInterface::ObjectMoved& message);
-  void HandleActiveObjectStopped(const ExternalInterface::ObjectStoppedMoving& message);
+  void HandleObjectTapped(const ExternalInterface::ObjectTapped& message);
+  
+  template<typename T>
+  void HandleMessage(const T& msg);
 
 private:
   
@@ -77,6 +75,9 @@ private:
   Robot* _robot = nullptr;
 
   Signal::SmartHandle _gameToEngineSignalHandle;
+  
+  std::list<Signal::SmartHandle> _eventHandles;
+  
   bool _enabled;
   Anki::TimeStamp_t _waitToTime;
   

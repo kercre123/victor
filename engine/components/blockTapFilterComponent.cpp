@@ -55,8 +55,13 @@ void BlockTapFilterComponent::InitDependent(Cozmo::Robot* robot, const RobotComp
     _gameToEngineSignalHandle = (_robot->GetContext()->GetExternalInterface()->Subscribe(
                                                                                         ExternalInterface::MessageGameToEngineTag::EnableBlockTapFilter,
                                                                                         std::bind(&BlockTapFilterComponent::HandleEnableTapFilter, this, std::placeholders::_1)));
+    
+    // Subscribe to messages
+    auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _eventHandles);
+    using namespace ExternalInterface;
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectMoved>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::ObjectStoppedMoving>();
   }
-  
 #if ANKI_DEV_CHEATS
   if( _robot->GetContext()->GetExternalInterface() )
   {
@@ -157,11 +162,8 @@ void BlockTapFilterComponent::HandleSendTapFilterStatus(const AnkiEvent<External
 }
 #endif
   
-void BlockTapFilterComponent::HandleActiveObjectTapped(const ExternalInterface::ObjectTapped& message)
+void BlockTapFilterComponent::HandleObjectTapped(const ExternalInterface::ObjectTapped& payload)
 {
-  // We make a copy of this message so we can update the object ID before broadcasting
-  ExternalInterface::ObjectTapped payload = message;
-  
   // Taps below threshold should be filtered and ignored.
   const int16_t intensity = payload.tapPos - payload.tapNeg;
   if (intensity <= kTapIntensityMin)
@@ -171,14 +173,13 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const ExternalInterface::
     return;
   }
 
-  // find connected object by activeID
-  const ActiveID tappedActiveID = payload.objectID;
-  const ActiveObject* tappedObject = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID( tappedActiveID );
+  // find connected object by objectID
+  const ActiveObject* tappedObject = _robot->GetBlockWorld().GetConnectedActiveObjectByID( payload.objectID );
 
   if(nullptr == tappedObject)
   {
-    PRINT_NAMED_WARNING("BlockTapFilterComponent.HandleActiveObjectTapped.UnknownActiveID",
-                        "Could not find match for active object ID %d", payload.objectID);
+    PRINT_NAMED_WARNING("BlockTapFilterComponent.HandleActiveObjectTapped.UnknownObjectID",
+                        "Could not find match for object ID %d", payload.objectID);
     return;
   }
   
@@ -190,8 +191,6 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const ExternalInterface::
                 tappedObject->GetID().GetValue(), payload.objectID, payload.numTaps,
                 payload.timestamp, payload.tapTime, intensity, engineTime);
   
-  // Update the ID to be the blockworld ID before broadcasting
-  payload.objectID = tappedObject->GetID();
   // In the simulator, taps are soft and also webots doesn't simulate the phantom taps.
   if (!_enabled || !_robot->IsPhysical())
   {
@@ -214,15 +213,14 @@ void BlockTapFilterComponent::HandleActiveObjectTapped(const ExternalInterface::
   CheckForDoubleTap(payload.objectID);
 }
 
-void BlockTapFilterComponent::HandleActiveObjectMoved(const ExternalInterface::ObjectMoved& payload)
+template<>
+void BlockTapFilterComponent::HandleMessage(const ExternalInterface::ObjectMoved& payload)
 {
-  // In the message coming from the robot, the objectID is the slot the object is connected on which is its
-  // engine activeID
-  const ObservableObject* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(payload.objectID);
+  const ObservableObject* object = _robot->GetBlockWorld().GetConnectedActiveObjectByID(payload.objectID);
   if( object == nullptr )
   {
     PRINT_NAMED_WARNING("BlockTapFilterComponent.HandleActiveObjectMoved.ObjectIDNull",
-                        "Could not find match for active object ID %d", payload.objectID);
+                        "Could not find match for object ID %d", payload.objectID);
     return;
   }
   
@@ -245,15 +243,16 @@ void BlockTapFilterComponent::HandleActiveObjectMoved(const ExternalInterface::O
   }
 }
 
-void BlockTapFilterComponent::HandleActiveObjectStopped(const ExternalInterface::ObjectStoppedMoving& payload)
+template<>
+void BlockTapFilterComponent::HandleMessage(const ExternalInterface::ObjectStoppedMoving& payload)
 {
   // In the message coming from the robot, the objectID is the slot the object is connected on which is its
   // engine activeID
-  const ObservableObject* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(payload.objectID);
+  const ObservableObject* object = _robot->GetBlockWorld().GetConnectedActiveObjectByID(payload.objectID);
   if( object == nullptr )
   {
     PRINT_NAMED_WARNING("BlockTapFilterComponent.HandleActiveObjectStopped.ObjectIDNull",
-                        "Could not find match for active object ID %d", payload.objectID);
+                        "Could not find match for object ID %d", payload.objectID);
     return;
   }
   

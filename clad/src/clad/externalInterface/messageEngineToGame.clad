@@ -574,8 +574,6 @@ message ObjectMoved
 {
   uint_32     timestamp,
   uint_32     objectID,
-  ActiveAccel accel,
-  UpAxis      axisOfAccel, // The direction of acceleration, reported when object starts moving, and every time the direction changes.
 }
 
 message ObjectStoppedMoving
