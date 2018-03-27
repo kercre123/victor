@@ -1,5 +1,5 @@
 #!/bin/sh
-ESN=$1
+ESN=$(echo $1 | xargs)
 HW_VER=0001
 MODEL=0001
 
@@ -11,8 +11,8 @@ ERROR_HEADPGM_BAD_CERT=962
 
 helper=0
 for arg in "$@"; do
-  #echo arg: \""${arg}"\" #DEBUG
-  if [ "${arg}" == "helper" ]; then echo "making helper head"; helper=1; ESN=0; fi
+  echo arg: \""${arg}"\" #DEBUG
+  if [ "$(echo ${arg} | xargs)" == "helper" ]; then echo "making helper head"; helper=1; ESN=0; fi
 done
 
 # Enable USB
@@ -46,7 +46,7 @@ if [ $helper -eq 0 ]; then
   unzip -d /data/img/cloud /anki/certs.zip $ESN/*         || exit $ERROR_HEADPGM_BAD_CERT
   if [ ! -e /data/img/cloud/$ESN ]; then
     echo no cert found for ESN $ESN
-    exit $ERROR_HEADPGM_MISSING_CERT #ERROR_HEADPGM_OUT_OF_CLOUD_CERTS
+    exit $((ERROR_HEADPGM_MISSING_CERT)) #ERROR_HEADPGM_OUT_OF_CLOUD_CERTS
   fi
   mv /data/img/cloud/$ESN/* /data/img/cloud               || exit 105
   chmod 0440 /data/img/cloud /data/img/cloud/*            || exit 105
