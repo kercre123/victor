@@ -48,7 +48,7 @@ static void mcu_power_up_(void) {
 static void mcu_power_down_(void) {
   Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT);
-  Timer::delayMs(100);
+  Timer::delayMs(100); //extra delay for power discharge
   
   swd_stm32_deinit();
 }
@@ -115,6 +115,9 @@ static void ShortCircuitTest(void)
   Board::powerOff(PWR_VEXT);
   TestCommon::powerOnProtected(PWR_VEXT, 100, ima_limit_VEXT, 2);
   Board::powerOff(PWR_VEXT);
+  
+  //extra delay for power discharge
+  //Timer::delayMs(1000);
 }
 
 static void BodyTryReadSerial(void)
@@ -348,10 +351,10 @@ TestFunction* TestBody2GetTests(void)
 {
   static TestFunction m_tests[] = {
     ShortCircuitTest,
-    //BodyTryReadSerial, --skip serial read. forces blank state
-    BodyLoadTestFirmware,
+    BodyTryReadSerial, //skip serial read to force blank state (generate new ESN)
+    //BodyLoadTestFirmware,
     BodyLoadProductionFirmware,
-    //BodyBootcheckProductionFirmware,
+    BodyBootcheckProductionFirmware,
     BodyFlexFlowReport,
     NULL,
   };
