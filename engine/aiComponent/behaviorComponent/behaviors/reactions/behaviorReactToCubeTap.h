@@ -81,7 +81,7 @@ protected:
 
   bool IsCubeLocated() const;
   void OnCubeNotFound();
-  void DriveToCube( CubeInfo& cubeInfo, unsigned int attempt = 1 );
+  void DriveToTargetCube( unsigned int attempt = 1 );
 
 private:
 
