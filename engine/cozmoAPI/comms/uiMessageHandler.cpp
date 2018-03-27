@@ -89,7 +89,7 @@ namespace Anki {
 CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enabled in non-SHIPPING apps, for internal dev
 
 
-#define ANKI_ENABLE_SDK_OVER_TCP  1
+#define ANKI_ENABLE_SDK_OVER_TCP  0
 
 
     IMPLEMENT_ENUM_INCREMENT_OPERATORS(UiConnectionType);
@@ -1202,6 +1202,12 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     {
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
+	// Ignore switchboard's numDesiredDevices
+	if(i == UiConnectionType::Switchboard)
+	{
+	  continue;
+	}
+	
         const ISocketComms* socketComms = GetSocketComms(i);
         if (socketComms && socketComms->HasDesiredDevices())
         {
