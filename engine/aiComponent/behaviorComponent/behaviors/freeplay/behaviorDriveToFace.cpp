@@ -145,10 +145,6 @@ void BehaviorDriveToFace::TransitionToTurningTowardsFace()
   SET_STATE(TurnTowardsFace);
   const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace(_dVars.targetFace);
   if(facePtr != nullptr){
-    CompoundActionSequential* turnAndVerifyAction = new CompoundActionSequential();
-    turnAndVerifyAction->AddAction(new TurnTowardsFaceAction(_dVars.targetFace));
-    turnAndVerifyAction->AddAction(new VisuallyVerifyFaceAction(facePtr->GetID()));
-    
     DelegateIfInControl(new TurnTowardsFaceAction(_dVars.targetFace),
                 [this, facePtr](ActionResult result){
                   if(result == ActionResult::SUCCESS){
