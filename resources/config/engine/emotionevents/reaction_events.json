@@ -8,10 +8,30 @@
             "value": -0.2
          },
          {
+             "emotionType" : "Happy",
+             "value" : -0.1
+         },
+         {
              "emotionType" : "Stimulated",
-             "value" : 0.1
+             "value" : 0.05
          }
-      ]
+      ],
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 0.0
+          },
+          {
+            "x" : 0.1,
+            "y" : 0.0
+          },
+          {
+            "x" : 0.1,
+            "y" : 1.0
+          }
+        ]
+      }
     }
   ]
 }

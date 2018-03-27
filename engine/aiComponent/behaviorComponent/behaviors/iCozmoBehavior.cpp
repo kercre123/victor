@@ -72,6 +72,7 @@ static const char* kRespondToUserIntentsKey          = "respondToUserIntents";
 static const char* kClaimUserIntentDataKey           = "claimUserIntentData";
 static const char* kRespondToTriggerWordKey          = "respondToTriggerWord";
 static const char* kResetTimersKey                   = "resetTimers";
+static const char* kEmotionEventOnActivatedKey       = "emotionEventOnActivated";
 static const std::string kIdleLockPrefix             = "Behavior_";
 
 // Keys for loading in anonymous behaviors
@@ -181,6 +182,7 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
 , _executableType(BehaviorTypesWrapper::GetDefaultExecutableBehaviorType())
 , _claimUserIntentData( true )
 , _respondToTriggerWord( false )
+, _emotionEventOnActivated("")
 , _requiredUnlockId( UnlockId::Count )
 , _requiredRecentDriveOffCharger_sec(-1.0f)
 , _requiredRecentSwitchToParent_sec(-1.0f)
@@ -276,7 +278,9 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   }
   
   _respondToTriggerWord = config.get(kRespondToTriggerWordKey, false).asBool();
-  
+
+  _emotionEventOnActivated = config.get(kEmotionEventOnActivatedKey, "").asString();
+
   JsonTools::GetVectorOptional(config, kResetTimersKey, _resetTimers);
   for( const auto& timerName : _resetTimers ) {
     ANKI_VERIFY( BehaviorTimerManager::IsValidName( timerName ),
@@ -313,6 +317,7 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
     kRespondToUserIntentsKey,
     kClaimUserIntentDataKey,
     kRespondToTriggerWordKey,
+    kEmotionEventOnActivatedKey,
     kResetTimersKey,
     kAnonymousBehaviorMapKey,
     kDisplayNameKey,
@@ -415,6 +420,13 @@ void ICozmoBehavior::InitInternal()
   // Don't need the map anymore, plus map is altered as part of iteration so it's no longer valid
   _anonymousBehaviorMapConfig.clear();
 
+  if( ! _emotionEventOnActivated.empty() ) {
+    ANKI_VERIFY( GetBEI().GetMoodManager().IsValidEmotionEvent(_emotionEventOnActivated),
+                 "ICozmoBehavior.Init.InvalidEmotionEvent",
+                 "Behavior '%s' specifies emotion event '%s' which has not been loaded by the mood manager",
+                 GetDebugLabel().c_str(),
+                 _emotionEventOnActivated.c_str());
+  }
 
   // Allow internal init to happen before subscribing to tags in case additional
   // tags are added
@@ -641,9 +653,11 @@ void ICozmoBehavior::OnActivatedInternal()
                         GetDebugLabel().c_str(), robot.GetActionList().GetQueueLength(0));
   }**/
   
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
   _isActivated = true;
   _delegationCallback = nullptr;
-  _activatedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _activatedTime_s = currTime_s;
   _startCount++;
   
   // Clear user intent if responding to it. Since _respondToUserIntent is initialized, this
@@ -697,6 +711,12 @@ void ICozmoBehavior::OnActivatedInternal()
     GetBEI().GetBehaviorTimerManager().GetTimer( timer  ).Reset();
   }
 
+  // trigger emotion event, if present
+  // TODO:(bn) convert these to CLAD?
+  if( !_emotionEventOnActivated.empty() ) {
+    GetBEI().GetMoodManager().TriggerEmotionEvent(_emotionEventOnActivated, currTime_s);
+  }
+  
   OnBehaviorActivated();
 }
 

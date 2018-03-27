@@ -11,7 +11,16 @@
             "emotionType": "Confident",
             "value": -0.1
          }
-      ]
+      ],
+      // failures don't have a cooldown
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 1.0
+          }
+        ]
+      }
     },
     {
       "name": "DrivingActionFailedWithAbort",
@@ -24,7 +33,16 @@
             "emotionType": "Confident",
             "value": -0.2
          }
-      ]
+      ],
+      // failures don't have a cooldown
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 1.0
+          }
+        ]
+      }
     },
     {
       "name": "PickingOrPlacingActionFailedWithRetry",
@@ -37,7 +55,16 @@
             "emotionType": "Confident",
             "value": -0.2
          }
-      ]
+      ],
+      // failures don't have a cooldown
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 1.0
+          }
+        ]
+      }
     },
     {
       "name": "PickingOrPlacingActionFailedWithAbort",
@@ -50,7 +77,16 @@
             "emotionType": "Confident",
             "value": -0.2
          }
-      ]
+      ],
+      // failures don't have a cooldown
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 1.0
+          }
+        ]
+      }
     },
     {
       "name": "DrivingActionSucceeded",
@@ -75,19 +111,6 @@
       ]
     },
     {
-      "name": "StackSucceeded",
-      "emotionAffectors": [										  
-        {
-          "emotionType": "Happy",
-          "value": 0.12
-        },
-        {
-          "emotionType": "Confident",
-          "value": 0.2
-        }
-      ]
-    },
-    {
       "name": "RollSucceeded",
       "emotionAffectors": [										  
         {
@@ -97,19 +120,6 @@
         {
           "emotionType": "Confident",
           "value": 0.2
-        }
-      ]
-    },
-    {
-      "name": "FlipBlockSucceeded",
-      "emotionAffectors": [										  
-        {
-          "emotionType": "Happy",
-          "value": 0.8
-        },
-        {
-          "emotionType": "Confident",
-          "value": 0.5
         }
       ]
     }      
