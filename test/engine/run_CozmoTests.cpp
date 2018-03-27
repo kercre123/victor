@@ -16,6 +16,7 @@
 #include "engine/activeCube.h"
 #include "engine/activeObjectHelpers.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
@@ -567,10 +568,9 @@ void FakeRecvConnectionMessage(Robot& robot, double time, uint32_t activeID, uin
 }
 
 // helper for move messages
-void FakeRecvMovedMessage(Robot& robot, double time, Anki::TimeStamp_t timestamp, uint32_t activeID)
+void FakeRecvMovedMessage(Robot& robot, const Anki::ObjectID& objectId)
 {
-  const auto& msg = ExternalInterface::ObjectMoved(timestamp, activeID, ActiveAccel(1,1,1), Anki::Cozmo::UpAxis::ZPositive );
-  robot.GetRobotToEngineImplMessaging().HandleActiveObjectMoved(msg, &robot);
+  robot.GetCubeAccelComponent().ObjectMovedOrStoppedCallback(objectId, true);
 }
 
 }
@@ -752,8 +752,7 @@ TEST(BlockWorld, PoseUpdates)
 
   // MOVE object2
   {
-    const ActiveObject* con2 = robot.GetBlockWorld().GetConnectedActiveObjectByID( connObj2 );
-    FakeRecvMovedMessage(robot, fakeTime, fakeTime, con2->GetActiveID());
+    FakeRecvMovedMessage(robot, connObj2);
     ++fakeTime;
   }
   
