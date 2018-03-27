@@ -164,7 +164,12 @@
     "DRIVE_TO_FLIP_BLOCK_POSE": {
       "RETRY": "DrivingActionFailedWithRetry",
       "ABORT": "DrivingActionFailedWithAbort"
-    }
+    },
+    "MOUNT_CHARGER": {
+      "SUCCESS": "MountChargerSuccess",
+      "RETRY": "PickingOrPlacingActionFailedWithRetry",
+      "ABORT": "PickingOrPlacingActionFailedWithAbort"
+    }      
   }
 }
 

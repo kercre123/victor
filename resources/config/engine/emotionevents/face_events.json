@@ -84,6 +84,40 @@
           "value" : 0.8
         }
       ]
+    },
+    {
+      "name": "EyeContactReaction",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Social",
+          "value" : 0.8
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.3
+        }
+      ]
+    },
+    {
+      "name": "EnrolledNewFace",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Social",
+          "value" : 1.0
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 1.0
+        },
+        {
+          "emotionType" : "Happy",
+          "value" : 0.5
+        },
+        {
+          "emotionType" : "Confident",
+          "value" : 0.5
+        }
+      ]
     }
   ]
 }

@@ -21,8 +21,9 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
+#include "engine/aiComponent/beiConditions/iBEICondition.h"
+#include "engine/moodSystem/moodManager.h"
 
 // audio
 #include "engine/audio/engineRobotAudioClient.h"
@@ -163,6 +164,8 @@ void BehaviorReactToTouchPetting::InitBehavior()
 void BehaviorReactToTouchPetting::OnBehaviorActivated()
 {
   CancelAndPlayAnimation(_animPettingGetin);
+
+  GetBEI().GetMoodManager().TriggerEmotionEvent("PettingStarted");
   
   // starts the state machine to check for updates
   _currResponseState = PettingResponseState::PlayTransitionToLevel;
@@ -260,7 +263,7 @@ void BehaviorReactToTouchPetting::BehaviorUpdate()
         } else {
           GetBEI().GetRobotAudioClient().PostEvent(AMD_GE_GE::Play__Robot_Vic_Sfx__Purr_Increase_Level, AMD_GOT::Behavior);
         }
-        
+
         // important: increase the bliss level AFTER getting the animation index
         // reasoning:
         // - value of 0 for _currBlissLevel implies only the getin has been played
@@ -268,6 +271,17 @@ void BehaviorReactToTouchPetting::BehaviorUpdate()
         // thus the animation's index is _currBlissLevel-1
         // this keeps it consistent with how we pick the getout animation index
         _currBlissLevel = MIN(_currBlissLevel+1, (int)_animPettingResponse.size());
+
+        const bool nowAtMaxBliss = (_currBlissLevel == _animPettingResponse.size());
+
+        if( nowAtMaxBliss ) {
+          // reached max bliss this time
+          GetBEI().GetMoodManager().TriggerEmotionEvent("PettingReachedMaxBliss");
+        }
+        else {
+          // "leveled up" but did not reach max
+          GetBEI().GetMoodManager().TriggerEmotionEvent("PettingBlissLevelIncrease");
+        }
       }
       break;
     }

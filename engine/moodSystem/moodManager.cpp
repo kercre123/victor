@@ -505,7 +505,7 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
   }
   else
   {
-    PRINT_NAMED_WARNING("MoodManager.TriggerEmotionEvent.EventNotFound", "Failed to find event '%s'", eventName.c_str());
+    PRINT_NAMED_ERROR("MoodManager.TriggerEmotionEvent.EventNotFound", "Failed to find event '%s'", eventName.c_str());
   }
 }
 

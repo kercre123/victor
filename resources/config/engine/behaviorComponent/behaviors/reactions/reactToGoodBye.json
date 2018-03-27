@@ -2,6 +2,8 @@
   "behaviorClass": "AnimSequence",
   "behaviorID": "ReactToGoodBye",
 
+  "emotionEventOnActivated": "RespondToShortVoiceCommand",
+
   "animTriggers": ["ReactToGoodBye"],
   "respondToUserIntents": [
     {
