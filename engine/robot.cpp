@@ -950,7 +950,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     // Add to history
     const HistRobotState histState(newPose,
                                    msg,
-                                   GetProxSensorComponent().IsLatestReadingValid(),
+                                   GetProxSensorComponent().GetLatestProxData(),
                                    GetCliffSensorComponent().GetCliffDetectedFlags() );
     lastResult = GetStateHistory()->AddRawOdomState(msg.timestamp, histState);
     
@@ -2588,7 +2588,7 @@ RobotState Robot::GetDefaultRobotState()
                          GyroData(), //const Anki::Cozmo::GyroData &gyro,
                          kDefaultStatus, //uint32_t status,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
-                         ProxSensorData(), //const Anki::Cozmo::ProxSensorData &proxData,
+                         ProxSensorDataRaw(), //const Anki::Cozmo::ProxSensorDataRaw &proxData,
                          0, // touch intensity value when not touched (from capacitive touch sensor)
                          -1); //int8_t currPathSegment
   

@@ -834,7 +834,7 @@
     },
     {
       "CladEvent": "ReactToObstacle",
-      "AnimName": "ag_reacttocliff_huh_01"
+      "AnimName": "ag_rtobstacle_react_01"
     },
     {
       "CladEvent": "ReactToNewBlockAsk",

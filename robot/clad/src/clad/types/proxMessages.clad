@@ -31,11 +31,11 @@ message SetCliffDetectThresholds
   uint_16 thresholds[4],  // New cliff threshold values for each sensor
 }
 
-structure ProxSensorData {
+structure ProxSensorDataRaw {
   float_32 signalIntensity,  // the intensity of the light (expressed in millions of counts per second) return to the sensor
   float_32 ambientIntensity, // the intensity of light (expressed in millions of counts per second) in ambient conditions (i.e. emitter turned off)
   float_32 spadCount,        // effective number of SPADs (Single-photon Avalanche Diodes) used for the measurement
-  uint_16  distance_mm,      // reported distance in mm
+  uint_16  distance_mm,      // reported distance in mm (includes corrective offset)
   uint_8   rangeStatus,      // the ranging status reported by the device (see documentation for values)
   uint_8   padding,
 }

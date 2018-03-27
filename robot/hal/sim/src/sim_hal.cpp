@@ -781,9 +781,9 @@ namespace Anki {
       return robotID_;
     }
 
-    ProxSensorData HAL::GetRawProxData()
+    ProxSensorDataRaw HAL::GetRawProxData()
     {
-      ProxSensorData proxData;
+      ProxSensorDataRaw proxData;
       proxData.distance_mm = static_cast<u16>( proxCenter_->getValue() );
       // Note: These fields are spoofed with simple defaults for now, but should be computed
       // to reflect the actual behavior of the sensor once we do some more testing with it.

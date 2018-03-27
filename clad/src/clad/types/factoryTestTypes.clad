@@ -185,9 +185,9 @@ structure PoseData {
 }
 
 structure DistanceSensorData {
-  ProxSensorData proxSensorData,
-  float_32       visualDistanceToTarget_mm,
-  float_32       visualAngleAwayFromTarget_rad
+  ProxSensorDataRaw proxSensorData,
+  float_32          visualDistanceToTarget_mm,
+  float_32          visualAngleAwayFromTarget_rad
 }
 
 structure TouchSensorValues {

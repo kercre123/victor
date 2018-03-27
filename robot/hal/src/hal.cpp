@@ -306,9 +306,9 @@ inline u16 FlipBytes(u16 v) {
   return ((((v) & 0x00FF)<<8) | ((v)>>8));
 }
 
-ProxSensorData HAL::GetRawProxData()
+ProxSensorDataRaw HAL::GetRawProxData()
 {
-  ProxSensorData proxData;
+  ProxSensorDataRaw proxData;
   proxData.rangeStatus = bodyData_->proximity.rangeStatus;
   proxData.distance_mm = FlipBytes(bodyData_->proximity.rangeMM);
   // Signal/Ambient Rate are fixed point 9.7, so convert to float:

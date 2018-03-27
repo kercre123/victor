@@ -35,12 +35,12 @@ namespace Anki {
 
     HistRobotState::HistRobotState(const Pose3d& pose,
                                    const RobotState& state,
-                                   const bool isProxSensorValid,
+                                   const ProxSensorData& proxData,
                                    const uint8_t cliffDetectedFlags)
     {
       _pose  = pose;
       _state = state;
-      _wasProxSensorValid = isProxSensorValid;
+      _proxData = proxData;
       _cliffDetectedFlags.SetFlags(cliffDetectedFlags);
     }
     
@@ -132,6 +132,15 @@ namespace Anki {
       interpState.lwheel_speed_mmps = histState1.GetLeftWheelSpeed_mmps() + fraction * (histState2.GetLeftWheelSpeed_mmps() - histState1.GetLeftWheelSpeed_mmps());
       interpState.rwheel_speed_mmps = histState1.GetRightWheelSpeed_mmps() + fraction * (histState2.GetRightWheelSpeed_mmps() - histState1.GetRightWheelSpeed_mmps());
       
+      // Interp prox data
+      // Only interpolating the ProxSensorData struct instead of the ProxSensorDataRaw struct
+      // ProxSensorDataRaw struct in RobotState. If there's a use case for exposing the raw data
+      // we should interpolate here. Yes, there's some data duplication for convenience of having
+      // all the useful stuff in ProxSensorData.
+      ProxSensorData interpProxData = closestHistRobotState->GetProxSensorData();   // Full copy to take care of the bools
+      interpProxData.distance_mm = std::round(f32(histState1.GetProxSensorData().distance_mm) + fraction * f32(histState2.GetProxSensorData().distance_mm - histState1.GetProxSensorData().distance_mm));
+      interpProxData.signalQuality = histState1.GetProxSensorData().signalQuality + fraction * (histState2.GetProxSensorData().signalQuality - histState1.GetProxSensorData().signalQuality); 
+
       // TODO: Interpolate other things as needed
       
       //
@@ -149,13 +158,12 @@ namespace Anki {
       //
       // Interpolate booleans
       //
-      const auto interpProxSensorValid = closestHistRobotState->WasProxSensorValid();
       const auto interpCliffDetectedFlags = closestHistRobotState->_cliffDetectedFlags.GetFlags();
       
       // Construct interpolated HistRobotState to return
       HistRobotState interpHistState(interpPose,
                                      interpState,
-                                     interpProxSensorValid,
+                                     interpProxData,
                                      interpCliffDetectedFlags);
       
       return interpHistState;
