@@ -262,24 +262,24 @@ void BehaviorReactToCubeTap::TransitionToGoToCube( bool playFoundCubeAnimation )
 
   if ( playFoundCubeAnimation )
   {
-    // can't supply DriveToCube() directly as the callback since it has arguments
-    auto driveToCube = [this]() { DriveToCube( _iVars.targetCube ); };
+    // can't supply DriveToTargetCube() directly as the callback since it has arguments
+    auto driveToCube = [this]() { DriveToTargetCube(); };
 
     // play our "holy shit we found a cube" animation, then go to that cube
     DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::ReactToCubeTapCubeFound ), driveToCube );
   }
   else
   {
-    DriveToCube( _iVars.targetCube );
+    DriveToTargetCube();
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToCubeTap::DriveToCube( CubeInfo& cubeInfo, unsigned int attempt )
+void BehaviorReactToCubeTap::DriveToTargetCube( unsigned int attempt )
 {
   // note: find face prior to this and line up to face
 
-  auto onCompleteCallback = [this, &cubeInfo, attempt]( ActionResult result )
+  auto onCompleteCallback = [this, attempt]( ActionResult result ) mutable
   {
     // note: what to do about ActionResult::VISUAL_OBSERVATION_FAILED?
     switch ( result )
@@ -292,25 +292,25 @@ void BehaviorReactToCubeTap::DriveToCube( CubeInfo& cubeInfo, unsigned int attem
         // attempt to drive to the cube at most kDriveToCubeAttempts times, then give up
         if ( attempt < kDriveToCubeAttempts )
         {
-          PRINT_CH_INFO( "Behaviors", "BehaviorReactToCubeTap.DriveToCube", "DriveToCube failed, retrying attempt #%u", attempt+1 );
-          DriveToCube( cubeInfo, attempt + 1 );
+          PRINT_CH_INFO( "Behaviors", "BehaviorReactToCubeTap.DriveToTargetCube", "DriveToTargetCube failed, retrying attempt #%u", attempt+1 );
+          DriveToTargetCube( attempt + 1 );
         }
         else
         {
-          PRINT_CH_INFO( "Behaviors", "BehaviorReactToCubeTap.DriveToCube", "DriveToCube failed, too many attempts, exiting behavior" );
+          PRINT_CH_INFO( "Behaviors", "BehaviorReactToCubeTap.DriveToTargetCube", "DriveToTargetCube failed, too many attempts, exiting behavior" );
           OnCubeNotFound();
         }
         break;
 
       default:
         // if we didn't succeed, bail
-        PRINT_CH_INFO( "Behaviors", "BehaviorReactToCubeTap.DriveToCube", "DriveToCube failed, exiting behavior" );
+        PRINT_CH_INFO( "Behaviors", "BehaviorReactToCubeTap.DriveToTargetCube", "DriveToTargetCube failed, exiting behavior" );
         OnCubeNotFound();
         break;
     }
   };
 
-  DelegateIfInControl( new DriveToObjectAction( cubeInfo.id, PreActionPose::ActionType::DOCKING, 20.0f ),
+  DelegateIfInControl( new DriveToObjectAction( _iVars.targetCube.id, PreActionPose::ActionType::DOCKING, 20.0f ),
                        onCompleteCallback );
 }
 
