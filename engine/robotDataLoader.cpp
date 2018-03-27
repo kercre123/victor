@@ -96,6 +96,11 @@ void RobotDataLoader::LoadNonConfigData()
   }
 
   {
+    ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");
+    CollectAnimFiles();
+  }
+
+  {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationGroups");
     LoadAnimationGroups();
   }
