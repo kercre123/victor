@@ -5,7 +5,7 @@
 LR_IROM1 0x08060000 0x000A0000  {    ; load region size_region
   ; 64KB for program leaves the rest for resources
   ; If you run out, this can be expanded to 128KB MAX (due to fixture bootloader)
-  ER_IROM1 0x08060000 0x00010000  {  ; load address = execution address
+  ER_IROM1 0x08060000 0x00020000  {  ; load address = execution address
    *.o (RESET, +First)
    *(InRoot$$Sections)
    .ANY (+RO)
@@ -23,7 +23,7 @@ LR_IROM1 0x08060000 0x000A0000  {    ; load region size_region
   ; Put all the resources at the end of flash
   ; If you get a weird linker error on this section, add "--datacompressor off" to the Linker options
   ; It turns out Keil's linker can't compute the length of its own compressed sections!
-  ER_BINARIES 0x08070000 ALIGN 0x10000 {
+  ER_BINARIES 0x08080000 ALIGN 0x10000 {
     binaries.o (+RO)
   }
 }
