@@ -15,6 +15,8 @@ then
 fi
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
-source ${SCRIPT_PATH}/android_env.sh
+source ${SCRIPT_PATH}/victor_env.sh
 
-$ADB shell "systemctl $*"
+robot_set_host
+
+robot_sh "systemctl $*"

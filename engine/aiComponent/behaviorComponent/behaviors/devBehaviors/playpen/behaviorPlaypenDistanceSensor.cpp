@@ -129,7 +129,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
   {
     --_numRecordedReadingsLeft;
     
-    const auto& proxData = robot.GetProxSensorComponent().GetLatestProxData();
+    const auto& proxData = robot.GetProxSensorComponent().GetLatestProxDataRaw();
     DistanceSensorData data;
     data.proxSensorData = proxData;
     data.visualDistanceToTarget_mm = 0;

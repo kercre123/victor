@@ -10,7 +10,7 @@
         "repo_names": {
             "anki-thirdparty": {
                 "branch": "branches/victor",
-                "version": "155"
+                "version": "159"
             },
             "victor-animation-assets": {
                 "additional_files": [
@@ -31,7 +31,7 @@
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "25"
+                "version": "27"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"

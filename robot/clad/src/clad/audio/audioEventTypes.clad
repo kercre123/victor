@@ -411,9 +411,12 @@ enum uint_32 GenericEvent
   Play__Robot_Vic_Sfx__Scrn_Surprised_Short = 4031777881,
   Play__Robot_Vic_Sfx__Snore = 3717200567,
   Play__Robot_Vic_Sfx__Timer_Beep = 2315630444,
+  Play__Robot_Vic_Sfx__Touch_React = 1078700783,
   Play__Robot_Vic_Sfx__Tread_Loop_Play = 3369051132,
+  Play__Robot_Vic_Sfx__Wake_Word_Fail = 1241549428,
   Play__Robot_Vic_Sfx__Wake_Word_Off = 76586799,
   Play__Robot_Vic_Sfx__Wake_Word_On = 1532745019,
+  Play__Robot_Vic_Sfx__Wake_Word_Success = 286038569,
   Play__Robot_Vic_Vo__React_Affirmative = 2433936408,
   Play__Robot_Vic_Vo__React_Curious = 1448505674,
   Play__Robot_Vic_Vo__React_Curious_Short = 3797167345,
@@ -1130,10 +1133,13 @@ enum uint_32 Robot_Vic_Sfx
   Scrn_Surprised_Short = 4031777881,
   Snore = 3717200567,
   Timer_Beep = 2315630444,
+  Touch_React = 1078700783,
   Tread_Loop_Play = 3369051132,
   Tread_Loop_Stop = 990175872,
+  Wake_Word_Fail = 1241549428,
   Wake_Word_Off = 76586799,
   Wake_Word_On = 1532745019,
+  Wake_Word_Success = 286038569,
 }
 
 enum uint_32 Robot_Vic_Vo

@@ -154,6 +154,7 @@ private:
   void ProcessTriggerLoop();
   void ClearCurrentStreamingJob();
   float GetIncomingMicDataPercentUsed();
+  void AudioSaveCallback(const std::string& dest);
 };
 
 } // namespace MicData

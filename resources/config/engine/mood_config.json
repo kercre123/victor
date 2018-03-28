@@ -110,7 +110,11 @@
         "y" : 0.0
       },
       {
-        "x" : 30.0,
+        "x" : 0.5,
+        "y" : 0.0
+      },
+      {
+        "x" : 10.0,
         "y" : 1.0
       }
     ]
@@ -147,11 +151,6 @@
       "RETRY": "PickingOrPlacingActionFailedWithRetry",
       "ABORT": "PickingOrPlacingActionFailedWithAbort"
     },
-    "PLACE_OBJECT_HIGH": {
-      "SUCCESS": "StackSucceeded",
-      "RETRY": "PickingOrPlacingActionFailedWithRetry",
-      "ABORT": "PickingOrPlacingActionFailedWithAbort"
-    },
     "ROLL_OBJECT_LOW": {
       // No success anim here because the helper handles it manually
       "RETRY": "PickingOrPlacingActionFailedWithRetry",
@@ -162,13 +161,15 @@
       "RETRY": "PickingOrPlacingActionFailedWithRetry",
       "ABORT": "PickingOrPlacingActionFailedWithAbort"
     },
-    "FLIP_BLOCK": {
-      "SUCCESS": "FlipBlockSucceeded"
-    },
     "DRIVE_TO_FLIP_BLOCK_POSE": {
       "RETRY": "DrivingActionFailedWithRetry",
       "ABORT": "DrivingActionFailedWithAbort"
-    }
+    },
+    "MOUNT_CHARGER": {
+      "SUCCESS": "MountChargerSuccess",
+      "RETRY": "PickingOrPlacingActionFailedWithRetry",
+      "ABORT": "PickingOrPlacingActionFailedWithAbort"
+    }      
   }
 }
 

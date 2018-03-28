@@ -91,7 +91,7 @@ structure RobotState
   float_32 batteryVoltage,
   uint_32 status, // RobotStatusFlag packs as a uint_32
   uint_16 cliffDataRaw[4],
-  ProxSensorData proxData,
+  ProxSensorDataRaw proxData,
   uint_16 backpackTouchSensorRaw,
   int_8   currPathSegment, // -1 if not traversing a path
 }

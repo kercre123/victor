@@ -90,11 +90,11 @@ namespace Anki {
     bool IKeyFrame::IsDoneHelper(TimeStamp_t durationTime_ms)
     {
       // Done once enough time has ticked by or if we're not sending a done message
+      _currentTime_ms += ANIM_TIME_STEP_MS;
       if(_currentTime_ms >= durationTime_ms) {
         _currentTime_ms = 0; // Reset for next time
         return true;
       } else {
-        _currentTime_ms += ANIM_TIME_STEP_MS;
         return false;
       }
     }
@@ -1083,10 +1083,10 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
         //PRINT_NAMED_INFO("BodyMotionKeyFrame.GetStreamMessage",
         //                 "currentTime=%d, duration=%d\n", _currentTime_ms, _duration_ms);
         
-        if(GetCurrentTime() == 0) {
+        if(_currentTime_ms == 0) {
           // Send the motion command at the beginning
           return new RobotInterface::EngineToRobot(_streamMsg);
-        } else if(_enableStopMessage && GetCurrentTime() >= _durationTime_ms) {
+        } else if(_enableStopMessage && _currentTime_ms >= _durationTime_ms) {
           // Send a stop command when the duration has passed
           return new RobotInterface::EngineToRobot(_stopMsg);
         } else {
@@ -1101,12 +1101,16 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     bool BodyMotionKeyFrame::IsDone()
     {
       // Done once enough time has ticked by or if we're not sending a done message
-      if(!_enableStopMessage)
-      {
+      if(!_enableStopMessage || (_currentTime_ms >= _durationTime_ms)) {
+        _currentTime_ms = 0; // Reset for next time
         return true;
-      }
-      
-      return IsDoneHelper(_durationTime_ms);
+      } 
+
+      // Increment time _after_ comparing to duration (unlike IsDoneHelper) so that
+      // this frame is current for one tick after it has technically completed so
+      // that the stop message can be sent if necessary.
+      _currentTime_ms += ANIM_TIME_STEP_MS;
+      return false;
     }
 
 #pragma mark -

@@ -48,6 +48,8 @@ private:
     std::shared_ptr<BehaviorTimerUtilityCoordinator> timerCoordBehavior;
     ICozmoBehaviorPtr highLevelAIBehavior;
     ICozmoBehaviorPtr sleepingBehavior;
+    ICozmoBehaviorPtr keepawayBehavior;
+    ICozmoBehaviorPtr reactToObstacleBehavior;
   };
 
   struct DynamicVariables{

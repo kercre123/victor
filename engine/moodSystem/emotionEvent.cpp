@@ -46,10 +46,13 @@ void EmotionEvent::AddEmotionAffector(const EmotionAffector& inAffector)
   _affectors.push_back(inAffector);
 }
   
-  
-float EmotionEvent::CalculateRepetitionPenalty(float timeSinceLastOccurence) const
+float EmotionEvent::CalculateRepetitionPenalty(float timeSinceLastOccurrence,
+                                               const Util::GraphEvaluator2d& defaultPenalty) const
 {
-  const float repetitionPenalty = _repetitionPenalty.EvaluateY(timeSinceLastOccurence);
+  const float repetitionPenalty = _repetitionPenalty.Empty() ?
+                                  defaultPenalty.EvaluateY(timeSinceLastOccurrence) :
+                                  _repetitionPenalty.EvaluateY(timeSinceLastOccurrence);
+  
   return repetitionPenalty;
 }
 
@@ -113,12 +116,8 @@ bool EmotionEvent::ReadFromJson(const Json::Value& inJson)
       PRINT_NAMED_WARNING("EmotionEvent.ReadFromJson.BadRepetitionPenalty", "Behavior '%s': %s failed to read", _name.c_str(), kRepetitionPenaltyKey);
     }
   }
-  
-  // Ensure there is a valid graph
-  if (_repetitionPenalty.GetNumNodes() == 0)
-  {
-    _repetitionPenalty.AddNode(0.0f, 1.0f); // no penalty for any value
-  }
+
+  // if the graph isn't specified, the passed in default will be used instead
   
   // PRINT_NAMED_DEBUG("EmotionEvent.ReadFromJson", "Loaded event '%s'", _name.c_str());
   

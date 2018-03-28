@@ -416,35 +416,51 @@ float MoodManager::UpdateLatestEventTimeAndGetTimeElapsedInSeconds(const std::st
     // event has happened before - calculate time since it last occured and the matching penalty, then update the time
     
     float& timeEventLastOccured = newEntry.first->second;
-    const float timeSinceLastOccurence = Util::numeric_cast<float>(currentTimeInSeconds - timeEventLastOccured);
+    const float timeSinceLastOccurrence = Util::numeric_cast<float>(currentTimeInSeconds - timeEventLastOccured);
     
     timeEventLastOccured = currentTimeInSeconds;
     
-    return timeSinceLastOccurence;
+    return timeSinceLastOccurrence;
   }
 }
 
 
 float MoodManager::UpdateEventTimeAndCalculateRepetitionPenalty(const std::string& eventName, float currentTimeInSeconds)
 {
-  const float timeSinceLastOccurence = UpdateLatestEventTimeAndGetTimeElapsedInSeconds(eventName, currentTimeInSeconds);
+  const float timeSinceLastOccurrence = UpdateLatestEventTimeAndGetTimeElapsedInSeconds(eventName, currentTimeInSeconds);
   
   const EmotionEvent* emotionEvent = GetStaticMoodData().GetEmotionEventMapper().FindEvent(eventName);
   
   if (emotionEvent)
   {
     // Use the emotionEvent with the matching name for calculating the repetition penalty
-    const float repetitionPenalty = emotionEvent->CalculateRepetitionPenalty(timeSinceLastOccurence);
+    const auto& defaultPenalty = GetStaticMoodData().GetDefaultRepetitionPenalty();
+    const float repetitionPenalty = emotionEvent->CalculateRepetitionPenalty(timeSinceLastOccurrence, defaultPenalty);
     return repetitionPenalty;
   }
   else
   {
+    PRINT_NAMED_WARNING("MoodManager.UpdateEventTimeAndCalculateRepetitionPenalty.NoEvent",
+                        "Could not find event '%s', using default repetition penalty",
+                        eventName.c_str());
+    
     // No matching event name - use the default repetition penalty
-    const float repetitionPenalty = GetStaticMoodData().GetDefaultRepetitionPenalty().EvaluateY(timeSinceLastOccurence);
+    const float repetitionPenalty = GetStaticMoodData().GetDefaultRepetitionPenalty().EvaluateY(timeSinceLastOccurrence);
     return repetitionPenalty;
   }
 }
 
+
+bool MoodManager::IsValidEmotionEvent(const std::string& eventName) const
+{
+  const EmotionEvent* emotionEvent = GetStaticMoodData().GetEmotionEventMapper().FindEvent(eventName);
+  return nullptr != emotionEvent;
+}
+
+void MoodManager::TriggerEmotionEvent(const std::string& eventName)
+{
+  TriggerEmotionEvent(eventName, GetCurrentTimeInSeconds());
+}
 
 void MoodManager::TriggerEmotionEvent(const std::string& eventName, float currentTimeInSeconds)
 {
@@ -458,8 +474,9 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
       SendMoodToWebViz(_robot->GetContext());
     }
 
-    const float timeSinceLastOccurence = UpdateLatestEventTimeAndGetTimeElapsedInSeconds(eventName, currentTimeInSeconds);
-    const float repetitionPenalty = emotionEvent->CalculateRepetitionPenalty(timeSinceLastOccurence);
+    const float timeSinceLastOccurrence = UpdateLatestEventTimeAndGetTimeElapsedInSeconds(eventName, currentTimeInSeconds);
+    const auto& defaultPenalty = GetStaticMoodData().GetDefaultRepetitionPenalty();
+    const float repetitionPenalty = emotionEvent->CalculateRepetitionPenalty(timeSinceLastOccurrence, defaultPenalty);
 
     const std::vector<EmotionAffector>& emotionAffectors = emotionEvent->GetAffectors();
     for (const EmotionAffector& emotionAffector : emotionAffectors)
@@ -488,7 +505,7 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
   }
   else
   {
-    PRINT_NAMED_WARNING("MoodManager.TriggerEmotionEvent.EventNotFound", "Failed to find event '%s'", eventName.c_str());
+    PRINT_NAMED_ERROR("MoodManager.TriggerEmotionEvent.EventNotFound", "Failed to find event '%s'", eventName.c_str());
   }
 }
 

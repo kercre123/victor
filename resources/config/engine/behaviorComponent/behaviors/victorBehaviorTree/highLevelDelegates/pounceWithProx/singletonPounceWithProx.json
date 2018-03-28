@@ -4,8 +4,8 @@
   "wantsToBeActivatedConditions": [
     {
       "conditionType"       : "ProxInRange",
-      "minProxDist_mm"      : 105.0,
-      "maxProxDist_mm"      : 136.0
+      "minProxDist_mm"      : 40.0,
+      "maxProxDist_mm"      : 60.0
     }
   ]
 }

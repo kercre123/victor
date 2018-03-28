@@ -22,8 +22,9 @@ PROTO WebotsKeyboardController [
   # Send a fake intent to respond to. 
   field SFString intent ""
 
-  field SFString emotionName "WantToPlay"
+  field SFString emotionName "Stimulated"
   field SFFloat emotionVal 1.0
+  field SFString emotionEvent "LookAtFaceVerified"
 
   # Name to assign to current faceID
   field SFString userName ""

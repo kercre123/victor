@@ -31,11 +31,7 @@
 #include "util/logging/logging.h"
 
 
-#define DEBUG_CUBE_TAP_VERBOSE 0 // add some verbose debugging if trying to track down issues
-
 namespace {
-  CONSOLE_VAR( bool, kFakeCubeTap, "CubeTap", false );
-
   const char* kChargerBehaviorKey                            = "onChargerBehavior";
   const char* kCubeInteractionDurationKey                    = "interactionDuration_s";
 
@@ -99,6 +95,11 @@ void BehaviorReactToCubeTap::InitBehavior()
 
     _iVars.chargerBehavior = std::static_pointer_cast<BehaviorDriveOffCharger>(chargerBehavior);
   }
+
+  SubscribeToTags(
+  {
+    ExternalInterface::MessageEngineToGame::Tag::ObjectTapped
+  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -143,7 +144,6 @@ bool BehaviorReactToCubeTap::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCubeTap::AlwaysHandleInScope( const EngineToGameEvent& event )
 {
-  // note: waiting for the new cube work to go in before figuring out how to detect taps
   if ( event.GetData().GetTag() == ExternalInterface::MessageEngineToGame::Tag::ObjectTapped )
   {
     const ExternalInterface::ObjectTapped& payload = event.GetData().Get_ObjectTapped();
@@ -168,7 +168,6 @@ void BehaviorReactToCubeTap::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCubeTap::OnBehaviorDeactivated()
 {
-  // note: REMOVE
   _iVars.targetCube.id.UnSet();
   _iVars.targetCube.lastTappedTime = 0.0f;
 }
@@ -176,17 +175,6 @@ void BehaviorReactToCubeTap::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCubeTap::BehaviorUpdate()
 {
-  // note: REMOVE
-  if ( kFakeCubeTap )
-  {
-    if ( !IsActivated() && !_iVars.targetCube.id.IsSet() )
-    {
-      DebugFakeCubeTap();
-    }
-
-    kFakeCubeTap = false;
-  }
-
   if ( IsActivated() )
   {
     // if we're looking for a cube, we want to bail as soon as we have the cube
@@ -274,24 +262,24 @@ void BehaviorReactToCubeTap::TransitionToGoToCube( bool playFoundCubeAnimation )
 
   if ( playFoundCubeAnimation )
   {
-    // can't supply DriveToCube() directly as the callback since it has arguments
-    auto driveToCube = [this]() { DriveToCube(); };
+    // can't supply DriveToTargetCube() directly as the callback since it has arguments
+    auto driveToCube = [this]() { DriveToTargetCube(); };
 
     // play our "holy shit we found a cube" animation, then go to that cube
     DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::ReactToCubeTapCubeFound ), driveToCube );
   }
   else
   {
-    DriveToCube();
+    DriveToTargetCube();
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToCubeTap::DriveToCube( unsigned int attempt )
+void BehaviorReactToCubeTap::DriveToTargetCube( unsigned int attempt )
 {
   // note: find face prior to this and line up to face
 
-  auto onCompleteCallback = [this, attempt]( ActionResult result )
+  auto onCompleteCallback = [this, attempt]( ActionResult result ) mutable
   {
     // note: what to do about ActionResult::VISUAL_OBSERVATION_FAILED?
     switch ( result )
@@ -304,19 +292,19 @@ void BehaviorReactToCubeTap::DriveToCube( unsigned int attempt )
         // attempt to drive to the cube at most kDriveToCubeAttempts times, then give up
         if ( attempt < kDriveToCubeAttempts )
         {
-          PRINT_CH_INFO( "Behaviors", "BehaviorReactToCubeTap.DriveToCube", "DriveToCube failed, retrying attempt #%u", attempt+1 );
-          DriveToCube( attempt + 1 );
+          PRINT_CH_INFO( "Behaviors", "BehaviorReactToCubeTap.DriveToTargetCube", "DriveToTargetCube failed, retrying attempt #%u", attempt+1 );
+          DriveToTargetCube( attempt + 1 );
         }
         else
         {
-          PRINT_CH_INFO( "Behaviors", "BehaviorReactToCubeTap.DriveToCube", "DriveToCube failed, too many attempts, exiting behavior" );
+          PRINT_CH_INFO( "Behaviors", "BehaviorReactToCubeTap.DriveToTargetCube", "DriveToTargetCube failed, too many attempts, exiting behavior" );
           OnCubeNotFound();
         }
         break;
 
       default:
         // if we didn't succeed, bail
-        PRINT_CH_INFO( "Behaviors", "BehaviorReactToCubeTap.DriveToCube", "DriveToCube failed, exiting behavior" );
+        PRINT_CH_INFO( "Behaviors", "BehaviorReactToCubeTap.DriveToTargetCube", "DriveToTargetCube failed, exiting behavior" );
         OnCubeNotFound();
         break;
     }
@@ -342,25 +330,6 @@ void BehaviorReactToCubeTap::TransitionToInteractWithCube()
     cubeInterAction->AddAction( new TriggerAnimationAction( AnimationTrigger::ReactToCubeTapInteractionGetOut ) );
 
     DelegateIfInControl( cubeInterAction );
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToCubeTap::DebugFakeCubeTap()
-{
-  // Filter to find all LightCubes
-  BlockWorldFilter filter;
-  filter.AddAllowedFamily( ObjectFamily::LightCube );
-
-  // Get all connected light cubes
-  std::vector< const ActiveObject* > connectedObjects;
-  GetBEI().GetBlockWorld().FindConnectedActiveMatchingObjects( filter, connectedObjects );
-
-  // grab a random cube
-  if ( !connectedObjects.empty() )
-  {
-    _iVars.targetCube.id = connectedObjects[GetRNG().RandInt((int)connectedObjects.size())]->GetID();
-    _iVars.targetCube.lastTappedTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
 }
 

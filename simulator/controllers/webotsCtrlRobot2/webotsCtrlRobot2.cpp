@@ -6,7 +6,7 @@
  * Modifications:
  */
 
- 
+
 #include "../shared/ctrlCommonInitialization.h"
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "simulator/robot/sim_overlayDisplay.h"
@@ -35,16 +35,18 @@ int main(int argc, char **argv)
 {
   using namespace Anki;
   using namespace Anki::Cozmo;
-  
-  
+
+  // Placeholder for SIGTERM flag
+  int shutdownSignal = 0;
+
   // parse commands
   WebotsCtrlShared::ParsedCommandLine params = WebotsCtrlShared::ParseCommandLine(argc, argv);
   // create platform
   const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlRobot2");
   // initialize logger
   WebotsCtrlShared::DefaultAutoGlobalLogger autoLogger(dataPlatform, params.filterLog, params.colorizeStderrOutput);
-  
-  if(Robot::Init() != Anki::RESULT_OK) {
+
+  if(Robot::Init(&shutdownSignal) != Anki::RESULT_OK) {
     fprintf(stdout, "Failed to initialize Cozmo::Robot!\n");
     return -1;
   }
@@ -56,7 +58,7 @@ int main(int argc, char **argv)
   while(Robot::step_MainExecution() == Anki::RESULT_OK)
   {
     HAL::UpdateDisplay();
-    HAL::Step();      
+    HAL::Step();
   }
 
   return 0;

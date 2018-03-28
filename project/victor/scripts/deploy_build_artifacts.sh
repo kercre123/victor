@@ -10,8 +10,7 @@ SCRIPT_PATH=$(cd ${SCRIPT_PATH}; echo ${PWD})
 SCRIPT_NAME=$(basename ${0})
 TOPLEVEL=$SCRIPT_PATH
 
-source ${SCRIPT_PATH}/android_env.sh
-export -f adb_shell
+source ${SCRIPT_PATH}/victor_env.sh
 
 # Settings can be overridden through environment
 : ${VERBOSE:=0}
@@ -21,9 +20,15 @@ function usage() {
   echo "$SCRIPT_NAME [OPTIONS]"
   echo "  -h                      print this message"
   echo "  -v                      print verbose output"
+  echo "  -s ANKI_ROBOT_HOST      hostname or ip address of robot"
+  echo ""
+  echo "environment variables:"
+  echo '  $ANKI_ROBOT_HOST        hostname or ip address of robot'
+  echo '  $BUILD_ROOT             root dir of build artifacts containing {bin,lib,etc,data} dirs'
+  echo '  $INSTALL_ROOT           root dir of installed files on target'
 }
 
-while getopts "hv:" opt; do
+while getopts "hv:s:" opt; do
   case $opt in
     h)
       usage && exit 0
@@ -31,11 +36,20 @@ while getopts "hv:" opt; do
     v)
       VERBOSE=1
       ;;
+    s)
+      ANKI_ROBOT_HOST="${OPTARG}"
+      ;;
     *)
       usage && exit 1
       ;;
   esac
 done
+
+if [ -z "${ANKI_ROBOT_HOST+x}" ]; then
+  echo "ERROR: unspecified robot target. Pass the '-s' flag with robot IP, or set ANKI_ROBOT_HOST"
+  usage
+  exit 1
+fi
 
 : ${DEVICE_RSYNC_BIN_DIR:="/tmp"}
 : ${DEVICE_RSYNC_CONF_DIR:="/data/rsync"}
@@ -49,47 +63,33 @@ RSYNCD_CONF_VERSION=2
 : ${RSYNC_BIN_DIR="${TOPLEVEL}/rsync"}
 
 echo "Stopping processes"
-$ADB shell systemctl stop anki-robot.target
+robot_sh "/bin/systemctl stop victor.target"
 
-$ADB shell mkdir -p "${INSTALL_ROOT}"
-$ADB shell mkdir -p "${INSTALL_ROOT}/etc"
-$ADB shell mkdir -p "${LIB_INSTALL_PATH}"
-$ADB shell mkdir -p "${BIN_INSTALL_PATH}"
-
-# get device IP Address
-DEVICE_IP_ADDRESS=`$ADB shell ip addr show wlan0 | grep "inet\s" | awk '{print $2}' | awk -F'/' '{print $1}'`
-if [ -z $DEVICE_IP_ADDRESS ]; then
-  DEVICE_IP_ADDRESS=`$ADB shell ip addr show lo | grep "inet\s" | awk '{print $2}' | awk -F'/' '{print $1}'`
-  if [ -z $DEVICE_IP_ADDRESS ]; then
-    echo "no valid android device found"
-    exit 1
-  fi
-
-  DEVICE_IP_ADDRESS="$DEVICE_IP_ADDRESS:6010"
-  $ADB forward tcp:6010 tcp:1873
-else
-  DEVICE_IP_ADDRESS="$DEVICE_IP_ADDRESS:1873"
-fi
+robot_sh mkdir -p "${INSTALL_ROOT}"
+robot_sh mkdir -p "${INSTALL_ROOT}/etc"
+robot_sh mkdir -p "${LIB_INSTALL_PATH}"
+robot_sh mkdir -p "${BIN_INSTALL_PATH}"
 
 # install rsync binary and config if needed
 set +e
-adb_shell "[ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]"
+robot_sh [ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]
 if [ $? -ne 0 ]; then
   echo "loading rsync to device"
-  $ADB push ${RSYNC_BIN_DIR}/rsync.bin ${DEVICE_RSYNC_BIN_DIR}/rsync.bin
+  robot_cp ${RSYNC_BIN_DIR}/rsync.bin ${DEVICE_RSYNC_BIN_DIR}/rsync.bin
 fi
+set -e
 
 RSYNCD_CONF="rsyncd-v${RSYNCD_CONF_VERSION}.conf"
 
-adb_shell "[ -f "$DEVICE_RSYNC_CONF_DIR/$RSYNCD_CONF" ]"
+robot_sh "[ -f "$DEVICE_RSYNC_CONF_DIR/$RSYNCD_CONF" ]"
 if [ $? -ne 0 ]; then
   echo "loading rsync config to device"
-  $ADB push ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}/$RSYNCD_CONF
+  robot_cp ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}/$RSYNCD_CONF
 fi
 set -e
 
 # startup rsync daemon
-$ADB shell "${DEVICE_RSYNC_BIN_DIR}/rsync.bin --daemon --config=${DEVICE_RSYNC_CONF_DIR}/${RSYNCD_CONF}"
+robot_sh "${DEVICE_RSYNC_BIN_DIR}/rsync.bin --daemon --config=${DEVICE_RSYNC_CONF_DIR}/${RSYNCD_CONF}"
 
 pushd ${BUILD_ROOT} > /dev/null 2>&1
 
@@ -107,11 +107,14 @@ find data >> ${RSYNC_LIST}
 # Use --inplace to avoid consuming temp space & minimize number of writes
 # Use --delete to purge files that are no longer present in build tree
 #
-rsync -rlptD -IzvP --inplace --delete --delete-before --force --files-from=${RSYNC_LIST} ./ rsync://${DEVICE_IP_ADDRESS}/anki_root/
+rsync -rlptD -IzvP --inplace --delete --delete-before --force --files-from=${RSYNC_LIST} \
+  --rsync-path=${DEVICE_RSYNC_BIN_DIR}/rsync.bin \
+  -e ssh \
+  ./ root@${ANKI_ROBOT_HOST}:/anki/
 
 rm -f ${BUILD_ROOT}/rsync.*.lst
 
 popd > /dev/null 2>&1
 
 echo "Restarting processes"
-$ADB shell systemctl restart anki-robot.target
+robot_sh systemctl restart anki-robot.target

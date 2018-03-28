@@ -523,8 +523,14 @@ namespace Cozmo {
       const f32 hueFactor = faceData.GetHue();
       DEV_ASSERT(Util::InRange(hueFactor, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidHue");
       const u8 drawHue = std::round(255.f*hueFactor);
-      
-      const f32 satFactor = faceData.GetParameter(whichEye, Parameter::Saturation);
+
+      f32 satFactor = 1.0f;
+#if PROCEDURALFACE_ANIMATED_SATURATION
+      satFactor *= faceData.GetParameter(whichEye, Parameter::Saturation);
+#endif
+#if PROCEDURALFACE_PROCEDURAL_SATURATION
+      satFactor *= faceData.GetSaturation();
+#endif
       DEV_ASSERT(Util::InRange(satFactor, -1.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidSaturation");
       const u8 drawSat = std::round(255.f * satFactor);
       

@@ -692,6 +692,20 @@ namespace Cozmo {
     
   }
 
+  void WebotsKeyboardController::TriggerEmotionEvent()
+  {
+    std::string emotionEvent;
+    if (!WebotsHelpers::GetFieldAsString(root_, "emotionEvent", emotionEvent)) {
+      return;
+    }
+    
+    SendMessage(ExternalInterface::MessageGameToEngine(
+                  ExternalInterface::MoodMessage(
+                    ExternalInterface::MoodMessageUnion(
+                      ExternalInterface::TriggerEmotionEvent(
+                        emotionEvent )))));    
+  }
+
   
   void WebotsKeyboardController::PickOrPlaceObject()
   {
@@ -2016,10 +2030,10 @@ namespace Cozmo {
     REGISTER_KEY_FCN('L', MOD_ALT,       ToggleCliffSensorEnable,    "Toggles cliff sensor enable");
     REGISTER_KEY_FCN('L', MOD_ALT_SHIFT, ToggleEngineLightComponent, "Toggle engine light component");
 
-    REGISTER_KEY_FCN('M', MOD_NONE,      SetEmotion,         "Set 'emotionName' to 'emotionVal'");
-//      REGISTER_KEY_FCN('M', MOD_SHIFT, , "");
-    REGISTER_KEY_FCN('M', MOD_ALT,       NVStorage_ReadTag,  "Read NVStorage data at 'nvTag'");
-    REGISTER_KEY_FCN('M', MOD_ALT_SHIFT, NVStorage_EraseTag, "Erase NVStorage data at 'nvTag'");
+    REGISTER_KEY_FCN('M', MOD_NONE,      SetEmotion,          "Set 'emotionName' to 'emotionVal'");
+    REGISTER_KEY_FCN('M', MOD_SHIFT,     TriggerEmotionEvent, "Trigger 'emotionEvent'");
+    REGISTER_KEY_FCN('M', MOD_ALT,       NVStorage_ReadTag,   "Read NVStorage data at 'nvTag'");
+    REGISTER_KEY_FCN('M', MOD_ALT_SHIFT, NVStorage_EraseTag,  "Erase NVStorage data at 'nvTag'");
     
     REGISTER_KEY_FCN('N', MOD_NONE,      SetUnlock,       "Unlock progression 'unlockName'");
     REGISTER_KEY_FCN('N', MOD_SHIFT,     SetUnlock,       "Lock progression 'unlockName'");

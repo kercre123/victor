@@ -16,6 +16,7 @@
 
 #include "util/bitFlags/bitFlags.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
+#include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/robotComponents_fwd.h"
 #include "util/helpers/templateHelpers.h"
 
@@ -34,7 +35,7 @@ namespace Anki {
       
       HistRobotState(const Pose3d& pose,
                      const RobotState& state,
-                     const bool isProxSensorValid,
+                     const ProxSensorData& proxData,
                      const uint8_t cliffDetectedFlags);
       
       HistRobotState(const HistRobotState& other) = default;
@@ -53,10 +54,12 @@ namespace Anki {
       const f32           GetLiftHeight_mm()               const;
       const u16           GetCliffData(CliffSensor sensor) const;
       const PoseFrameID_t GetFrameId()                     const {return _state.pose_frame_id;}
-      const u16           GetProxSensorVal_mm()            const {return _state.proxData.distance_mm;}
       
       const f32           GetLeftWheelSpeed_mmps()         const {return _state.lwheel_speed_mmps;}
       const f32           GetRightWheelSpeed_mmps()        const {return _state.rwheel_speed_mmps;}
+
+      const ProxSensorData& GetProxSensorData()            const {return _proxData;}
+      const u16           GetProxSensorVal_mm()            const {return _proxData.distance_mm;}
                                                           
       bool WasCarryingObject() const { return  (_state.status & Util::EnumToUnderlying(RobotStatusFlag::IS_CARRYING_BLOCK)); }
       bool WasMoving()         const { return  (_state.status & Util::EnumToUnderlying(RobotStatusFlag::IS_MOVING)); }
@@ -65,7 +68,7 @@ namespace Anki {
       bool WereWheelsMoving()  const { return  (_state.status & Util::EnumToUnderlying(RobotStatusFlag::ARE_WHEELS_MOVING)); }
       bool WasPickedUp()       const { return  (_state.status & Util::EnumToUnderlying(RobotStatusFlag::IS_PICKED_UP)); }
       bool WasCameraMoving()   const { return  (WasHeadMoving() || WereWheelsMoving()); }
-      bool WasProxSensorValid() const { return _wasProxSensorValid; }
+      bool WasProxSensorValid() const { return _proxData.IsValid(); }
       bool WasCliffDetected(CliffSensor sensor) const;
 
       
@@ -82,7 +85,7 @@ namespace Anki {
       Pose3d                       _pose;  // robot pose
       RobotState                   _state;
       
-      bool                         _wasProxSensorValid;
+      ProxSensorData               _proxData;
       Util::BitFlags8<CliffSensor> _cliffDetectedFlags;
     };
     

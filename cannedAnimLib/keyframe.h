@@ -468,6 +468,7 @@ namespace Cozmo {
     
   private:
     
+    TimeStamp_t   _currentTime_ms = 0;
     s32 _durationTime_ms;
     bool _enableStopMessage = true;
     

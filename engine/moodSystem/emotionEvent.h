@@ -52,8 +52,9 @@ public:
   const EmotionAffector& GetAffector(size_t index) const { return _affectors[index]; }
   const std::vector<EmotionAffector>& GetAffectors() const { return _affectors; }
   
-  // penalty is applied as a scalar, so 1.0f == no penalty
-  float CalculateRepetitionPenalty(float timeSinceLastOccurence) const;
+  // penalty is applied as a scalar, so 1.0f == no penalty. If this event doesn't have a configured penalty,
+  // the passed in default penalty config will be used
+  float CalculateRepetitionPenalty(float timeSinceLastOccurrence, const Util::GraphEvaluator2d& defaultPenalty) const;
 
   // ===== Json =====
   

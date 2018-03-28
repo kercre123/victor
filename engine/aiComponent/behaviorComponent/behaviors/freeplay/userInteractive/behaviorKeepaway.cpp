@@ -20,6 +20,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/moodSystem/moodManager.h"
 
 #include "coretech/common/engine/utils/timer.h"
 #include "util/math/math.h"
@@ -162,6 +163,8 @@ void BehaviorKeepaway::OnBehaviorActivated()
   _dVars.targetLastValidTime_s = GetCurrentTimeInSeconds();
   _dVars.targetLastObservedTime_s = GetCurrentTimeInSeconds();
   _dVars.targetLastMovedTime_s = GetCurrentTimeInSeconds();
+
+  GetBEI().GetMoodManager().TriggerEmotionEvent("KeepawayStarted");
 }
 
 void BehaviorKeepaway::BehaviorUpdate()
@@ -366,6 +369,8 @@ void BehaviorKeepaway::TransitionToCreeping()
 
 void BehaviorKeepaway::TransitionToPouncing()
 {
+  GetBEI().GetMoodManager().TriggerEmotionEvent("KeepawayPounce");
+
   _dVars.victorGotLastPoint = false;
   float startingPitch = GetBEI().GetRobotInfo().GetPitchAngle().getDegrees();
   _dVars.pounceSuccessPitch_deg = startingPitch + _iConfig.pounceSuccessPitchDiff_deg;

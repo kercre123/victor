@@ -6,7 +6,7 @@
   "animGroupNamesGetout" : [ "PettingLevel1Getout", "PettingLevel2Getout", "PettingLevel3Getout", "PettingLevel4Getout","PettingBlissGetout"],
   "timeTilTouchCheck" : 5.0,
   "timeTilBlissGetout" : 5.0,
-  "timeTilNonBlissGetout" : 1.0,
+  "timeTilNonBlissGetout" : 3.0,
   "numPetsToAdvanceBliss" : 2,
   "wantsToBeActivatedConditions": [
     {

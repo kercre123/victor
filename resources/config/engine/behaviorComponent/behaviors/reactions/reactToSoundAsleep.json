@@ -2,5 +2,7 @@
   "behaviorClass" : "ReactToSound",
   "behaviorID" : "ReactToSoundAsleep",
 
+  "emotionEventOnActivated": "ReactToSoundAsleep",
+
   "FromSleep" : true
 }

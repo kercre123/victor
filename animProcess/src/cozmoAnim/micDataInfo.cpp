@@ -161,7 +161,12 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
   const std::string& writeLocationBase = Util::FileUtils::FullFilePath({ newDirPath, nameToUse });
   if (!_rawAudioData.empty())
   {
-    auto saveRawWave = [dest = (writeLocationBase + kRawFileExtension),
+    std::string dest = (writeLocationBase + kRawFileExtension);
+    if (_audioSaveCallback != nullptr)
+    {
+      _audioSaveCallback(dest);
+    }
+    auto saveRawWave = [dest = std::move(dest),
                         data = std::move(_rawAudioData),
                         doFFTProcess = _doFFTProcess,
                         fftCallback = std::move(_rawAudioFFTCallback),
@@ -191,7 +196,12 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
 
   if (!_processedAudioData.empty())
   {
-    auto saveProcessedWave = [dest = (writeLocationBase + kWavFileExtension),
+    std::string dest = (writeLocationBase + kWavFileExtension);
+    if (_audioSaveCallback != nullptr)
+    {
+      _audioSaveCallback(dest);
+    }
+    auto saveProcessedWave = [dest = std::move(dest),
                               data = std::move(_processedAudioData)] () {
       Anki::Util::SetThreadName(pthread_self(), "saveProcWave");
       AudioUtil::WaveFile::SaveFile(dest, data);

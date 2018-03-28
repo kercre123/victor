@@ -60,6 +60,7 @@ protected:
   void NVStorage_EraseTag();
   void NVStorage_ReadTag();
   void SetEmotion();
+  void TriggerEmotionEvent();
   
   void PickOrPlaceObject();
   void MountSelectedCharger();

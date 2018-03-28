@@ -103,8 +103,10 @@ public:
   void Reset();
     
   // ==================== Modify Emotions ====================
-  
+
+  // trigger an event at the given time. If no time specified, use GetCurrentTimeInSeconds
   void TriggerEmotionEvent(const std::string& eventName, float currentTimeInSeconds);
+  void TriggerEmotionEvent(const std::string& eventName);
   
   void AddToEmotion(EmotionType emotionType, float baseValue, const char* uniqueIdString, float currentTimeInSeconds);
   
@@ -142,6 +144,9 @@ public:
   SimpleMoodType GetSimpleMood() const;
   
   float GetLastUpdateTime() const { return _lastUpdateTime; }
+
+  // check if the passed in emotion event exists in our map
+  bool IsValidEmotionEvent(const std::string& eventName) const;
   
   // ==================== Event/Message Handling ====================
   // Handle various message types

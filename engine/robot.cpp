@@ -262,10 +262,12 @@ Robot::~Robot()
   // ActionList must be cleared before it is destroyed because pending actions may attempt to make use of the pointer.
   GetActionList().Clear();
 
-  // Remove (destroy) the vision component explicitly since it contains poses that
-  // use the contents of FullRobotPose as a parent and there's no gaurentee
-  // on entity/component destruction order
+  // Remove (destroy) the vision component, map component and object pose confirmer explicitly since
+  // they contains poses that use the contents of FullRobotPose as a parent 
+  // and there's no gaurentee on entity/component destruction order
   _components->RemoveComponent(RobotComponentID::Vision);
+  _components->RemoveComponent(RobotComponentID::Map);
+  _components->RemoveComponent(RobotComponentID::ObjectPoseConfirmer);
 
   LOG_EVENT("robot.destructor", "%d", GetID());
 }
@@ -954,7 +956,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     // Add to history
     const HistRobotState histState(newPose,
                                    msg,
-                                   GetProxSensorComponent().IsLatestReadingValid(),
+                                   GetProxSensorComponent().GetLatestProxData(),
                                    GetCliffSensorComponent().GetCliffDetectedFlags() );
     lastResult = GetStateHistory()->AddRawOdomState(msg.timestamp, histState);
     
@@ -2637,7 +2639,7 @@ RobotState Robot::GetDefaultRobotState()
 			 0.f, // float batteryVoltage
                          kDefaultStatus, //uint32_t status,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
-                         ProxSensorData(), //const Anki::Cozmo::ProxSensorData &proxData,
+                         ProxSensorDataRaw(), //const Anki::Cozmo::ProxSensorDataRaw &proxData,
                          0, // touch intensity value when not touched (from capacitive touch sensor)
                          -1); //int8_t currPathSegment
   

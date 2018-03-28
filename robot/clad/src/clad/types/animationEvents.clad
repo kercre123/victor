@@ -10,6 +10,7 @@ enum uint_8 AnimEvent {
   DEVICE_AUDIO_TRIGGER,
   ENERGY_DRAINCUBE_END,
   TAPPED_BLOCK,
+  LISTENING_BEGIN,
 
   Count
 }

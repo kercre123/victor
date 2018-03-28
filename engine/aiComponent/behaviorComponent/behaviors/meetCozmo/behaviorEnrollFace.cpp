@@ -30,6 +30,7 @@
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
+#include "engine/moodSystem/moodManager.h"
 #include "engine/viz/vizManager.h"
 
 #include "coretech/common/engine/utils/timer.h"
@@ -828,6 +829,9 @@ void BehaviorEnrollFace::TransitionToSayingName()
     }
     else
     {
+      const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      GetBEI().GetMoodManager().TriggerEmotionEvent("EnrolledNewFace", currTime_s);
+
       if(_saveToRobot)
       {
         TransitionToSavingToRobot();

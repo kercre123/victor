@@ -41,6 +41,8 @@ static void Cleanup(int signum)
 
 int main(int argc, const char* argv[])
 {
+  using Result = Anki::Result;
+
   mlockall(MCL_FUTURE);
 
   struct sched_param params;
@@ -58,7 +60,18 @@ int main(int argc, const char* argv[])
 
   //Robot::Init calls HAL::INIT before anything else.
   // TODO: move HAL::Init here into HAL main.
-  Anki::Cozmo::Robot::Init();
+  const Result result = Anki::Cozmo::Robot::Init(&shutdownSignal);
+  if (result != Result::RESULT_OK) {
+    AnkiError("robot.main.InitFailed", "Unable to initialize (result %d)", result);
+    sync();
+    if (shutdownSignal == SIGTERM) {
+      return 0;
+    } else if (shutdownSignal != 0) {
+      return shutdownSignal;
+    } else {
+      return result;
+    }
+  }
 
   auto start = std::chrono::steady_clock::now();
 #if FACTORY_TEST
@@ -118,8 +131,8 @@ int main(int argc, const char* argv[])
 #endif
 
     if (shutdownSignal != 0 && --shutdownCounter == 0) {
-      sync();
       AnkiInfo("robot.main.shutdown", "%d", shutdownSignal);
+      sync();
       exit(0);
     }
   }

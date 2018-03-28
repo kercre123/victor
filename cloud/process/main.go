@@ -31,8 +31,8 @@ func testReader(serv ipc.Server, send cloudproc.Sender) {
 					conn.Close()
 					return
 				}
-				if string(msg) == cloudproc.HotwordMessage {
-					send.SendHotword()
+				if str := string(msg); str == cloudproc.HotwordMessage {
+					send.SendMessage(str)
 				} else {
 					send.SendAudio(msg)
 				}

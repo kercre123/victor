@@ -1,8 +1,8 @@
 /**
 * File: behaviorReactToVoiceCommand.h
 *
-* Author: Lee Crippen
-* Created: 2/16/2017
+* Author: Jarrod Hatfield
+* Created: 2/16/2018
 *
 * Description: Simple behavior to immediately respond to the voice command keyphrase, while waiting for further commands.
 *
@@ -23,17 +23,18 @@ namespace Anki {
 namespace Cozmo {
 
 class BehaviorReactToMicDirection;
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class BehaviorReactToVoiceCommand : public ICozmoBehavior
 {
-private:
-  using super = ICozmoBehavior;
-
-  friend class BehaviorContainer;
   friend class BehaviorFactory;
   BehaviorReactToVoiceCommand(const Json::Value& config);
-  
+
+
 public:
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const override;
   virtual void GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const override;
@@ -46,7 +47,7 @@ public:
 
 protected:
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   enum class EState : uint8_t
   {
     Positioning,
@@ -62,16 +63,14 @@ protected:
     NoIntentHeard,
   };
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // specific default values can be used to easily set all of our different
-  // playtest options.  "Lee Happiness" refers to how happy/sad each of the
-  // different settings make Lee feel ... more noise == Lee sad
-  void LoadLeeHappinessValues( const Json::Value& config );
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
   virtual void InitBehavior() override;
   virtual void GetAllDelegates( std::set<IBehavior*>& delegates ) const override;
+
   virtual void AlwaysHandleInScope( const RobotToEngineEvent& event ) override;
+  virtual void HandleWhileActivated( const RobotToEngineEvent& event ) override;
 
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
@@ -105,16 +104,19 @@ protected:
   void OnVictorListeningBegin();
   void OnVictorListeningEnd();
 
+
 private:
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   struct InstanceConfig
   {
     InstanceConfig();
 
     // earcon is an audible cue to tell the user victor is listening
     AudioMetaData::GameEvent::GenericEvent earConBegin;
-    AudioMetaData::GameEvent::GenericEvent earConEnd;
+    AudioMetaData::GameEvent::GenericEvent earConSuccess;
+    AudioMetaData::GameEvent::GenericEvent earConFail;
 
     bool turnOnTrigger; // do we turn to the user when we hear the trigger word
     bool turnOnIntent; // do we turn to the user when we hear the intent
@@ -129,7 +131,9 @@ private:
 
   } _iVars;
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
   struct DynamicVariables
   {
     DynamicVariables();
@@ -139,6 +143,7 @@ private:
     BackpackLightDataLocator  lightsHandle;
     float                     streamingBeginTime;
     EIntentStatus             intentStatus;
+    bool                      isListening;
 
   } _dVars;
 

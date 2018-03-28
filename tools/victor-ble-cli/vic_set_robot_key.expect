@@ -21,18 +21,26 @@ expect {
     timeout {
         send "quit\r"
         puts "Robot $robot not found."
-        exit
+        exit 1
     }
 }
 
-send "connect $robot\r"
+# If $robot has spaces in it then wrap it
+# in quotes before attempting to connect
+set robot_name $robot
+if {[string match "* *" $robot]} {
+    set robot_name \"$robot\"
+}
+
+
+send "connect $robot_name\r"
 set timeout 30
 expect {
   "Fully connected to $robot" {}
   timeout {
     send "quit\r"
     puts "Unable to connect to $robot"
-    exit
+    exit 1
   }
 }
 
@@ -58,7 +66,7 @@ expect {
         send "disconnect\r"
         send "quit\r"
         puts "Robot $robot did not show IP address in ifconfig."
-        exit
+        exit 1
     }
 }
 

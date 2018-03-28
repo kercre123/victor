@@ -515,6 +515,9 @@ private:
   std::string _dontActivateCoordinator;
   size_t _tickDontActivateSetFor = -1;
 
+  // If non-empty, trigger this emotion event when this behavior activated
+  std::string _emotionEventOnActivated;
+
   // if an unlockId is set, the behavior won't be activatable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;
   
