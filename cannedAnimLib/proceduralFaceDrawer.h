@@ -7,6 +7,8 @@
 #include "coretech/vision/engine/image.h"
 
 #define PROCEDURALFACE_NOISE_FEATURE 1 // feature capable but disabled as num frames = 0
+#define PROCEDURALFACE_ANIMATED_SATURATION   0 // disable saturation in canned animations
+#define PROCEDURALFACE_PROCEDURAL_SATURATION 1 // only take saturation from the C++ API
 
 namespace Anki {
   

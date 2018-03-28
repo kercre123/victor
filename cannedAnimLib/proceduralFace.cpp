@@ -25,6 +25,7 @@ namespace Cozmo {
   
 ProceduralFace* ProceduralFace::_resetData = nullptr;
 ProceduralFace::Value ProceduralFace::_hue = DefaultHue;
+ProceduralFace::Value ProceduralFace::_saturation = DefaultSaturation;
 
 namespace {
 # define CONSOLE_GROUP "ProceduralFace"
@@ -113,6 +114,7 @@ void ProceduralFace::Reset()
 ProceduralFace::ProceduralFace()
 {
   static Anki::Util::ConsoleVar<Value> cvar_hue( _hue, "ProcFace_Hue", "ProceduralFace", 0.f, 1.f, false );
+  static Anki::Util::ConsoleVar<Value> cvar_saturation( _saturation, "ProcFace_Saturation", "ProceduralFace", 0.f, 1.f, false );
 
   for (std::underlying_type<Parameter>::type iParam=0; iParam < Util::EnumToUnderlying(Parameter::NumParameters); ++iParam)
   {

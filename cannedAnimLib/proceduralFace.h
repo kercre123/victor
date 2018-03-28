@@ -57,6 +57,7 @@ public:
   static constexpr s32   NominalEyeWidth        = 43;  // V1: 30;
   
   static constexpr f32 DefaultHue = 0.45f;
+  static constexpr f32 DefaultSaturation = 1.0f;
 
   using Value = f32;
   using Parameter = ProceduralEyeParameter;
@@ -126,6 +127,10 @@ public:
   static void  SetHue(Value hue); 
   static Value GetHue();
   
+  // Set the global saturation of all faces
+  static void  SetSaturation(Value saturation);
+  static Value GetSaturation();
+
   // Get an image filled with the current hue value
   static Vision::Image& GetHueImage();
   
@@ -193,6 +198,7 @@ private:
   Value           _scanlineOpacity; // set to default from console var in constructor
   
   static Value    _hue;
+  static Value    _saturation;
 
   void SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& eyeArray);
   void CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamArray& eyeArray1);
@@ -289,6 +295,21 @@ inline ProceduralFace::Value ProceduralFace::GetHue() {
   return _hue;
 }
   
+inline void ProceduralFace::SetSaturation(Value saturation) {
+  _saturation = saturation;
+  if(!Util::InRange(_saturation, Value(0), Value(1)))
+  {
+    ClipWarnFcn("Saturation", _saturation, Value(0), Value(1));
+    _saturation = Util::Clamp(_saturation, Value(0), Value(1));
+  }
+  // Update the saturation image (used for displaying FaceAnimations):
+  GetSaturationImage().FillWith(static_cast<u8>(_saturation * std::numeric_limits<u8>::max()));
+}
+
+inline ProceduralFace::Value ProceduralFace::GetSaturation() {
+  return _saturation;
+}
+
 inline Vision::Image& ProceduralFace::GetHueImage() {
   static Vision::Image hueImage(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, static_cast<u8>(_hue * std::numeric_limits<u8>::max()));
   return hueImage;
