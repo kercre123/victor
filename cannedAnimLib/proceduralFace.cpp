@@ -220,26 +220,38 @@ void ProceduralFace::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& e
   // TODO: replace with a single version of assets, same version of code and assets,
   //       that is pushed with atomic releases
   // https://ankiinc.atlassian.net/browse/VIC-1964
-  
+
   const size_t N = static_cast<size_t>(Parameter::NumParameters);
-  const size_t N_old_old = N - 6; // Before Saturation, Lightness, Glow, and HotSpotCenterX/Y were added
-  const size_t N_old = N - 1; // Before Eye Glow Lightness
-  if(eyeArray.size() != N && eyeArray.size() != N_old_old && eyeArray.size() != N_old)
+  const size_t N_without_hotspots = N - 6; // Before Saturation, Lightness, Glow, and HotSpotCenterX/Y were added
+  const size_t N_without_glowlightness = N - 1; // Before Eye Glow Lightness
+  if(eyeArray.size() != N && eyeArray.size() != N_without_hotspots && eyeArray.size() != N_without_glowlightness)
   {
     PRINT_NAMED_WARNING("ProceduralFace.SetEyeArrayHelper.WrongNumParams",
                         "Unexpected number of parameters for %s array (%lu vs. %lu or %lu or %lu)",
-                        eyeStr, (unsigned long)eyeArray.size(), (unsigned long)N, (unsigned long)N_old_old, (unsigned long)N_old);
+                        eyeStr, (unsigned long)eyeArray.size(), (unsigned long)N, (unsigned long)N_without_hotspots, (unsigned long)N_without_glowlightness);
   }
-  
   for(s32 i=0; i<std::min(eyeArray.size(), N); ++i)
   {
     SetParameter(eye, static_cast<ProceduralFace::Parameter>(i), eyeArray[i]);
   }
-  
-  // Set defaults for parameters that are unset because keyframe is old old format
-  if (eyeArray.size() == N_old_old || eyeArray.size() == N_old)
+
+  if (eyeArray.size() <= N_without_hotspots)
   {
-    for (std::underlying_type<Parameter>::type iParam=0; iParam < Util::EnumToUnderlying(Parameter::NumParameters); ++iParam)
+    // upgrade from before hotspots to with hotspots (as default values) but not glowsize
+    for (std::underlying_type<Parameter>::type iParam=eyeArray.size(); iParam < N_without_glowlightness; ++iParam)
+    {
+      const auto& paramInfo = kEyeParamInfoLUT[iParam].Value();
+      if(paramInfo.canBeUnset)
+      {
+        _eyeParams[WhichEye::Left][iParam]  = paramInfo.defaultValueIfCombiningWithUnset;
+        _eyeParams[WhichEye::Right][iParam] = paramInfo.defaultValueIfCombiningWithUnset;
+      }
+    }
+  }
+  if (eyeArray.size() <= N_without_glowlightness)
+  {
+    // upgrade from with hotspots to with glowsize (as default values)
+    for (std::underlying_type<Parameter>::type iParam=N_without_glowlightness; iParam < N; ++iParam)
     {
       const auto& paramInfo = kEyeParamInfoLUT[iParam].Value();
       if(paramInfo.canBeUnset)
