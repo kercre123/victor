@@ -4,9 +4,8 @@
 
   "playListeningGetInAnim"  : true,
 
-  "earConAudioEventBegin"   : "Play__Robot_Vic_Sfx__Wake_Word_On",
-  "earConAudioEventSuccess" : "Play__Robot_Vic_Sfx__Wake_Word_Success",
-  "earConAudioEventNeutral" : "Play__Robot_Vic_Sfx__Wake_Word_Fail",
+  "earConAudioEventBegin"   : "Play__Robot_Vic_Vo__React_Wake_Word",
+  "earConAudioEventSuccess" : "Play__Robot_Vic_Vo__React_Wake_Word",
   "backpackLights"          : true,
 
   "behaviorOnIntent"        : "ReactToTriggerDirectionAwake",

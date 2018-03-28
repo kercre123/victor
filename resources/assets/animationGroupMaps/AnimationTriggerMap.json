@@ -1062,7 +1062,7 @@
     },
     {
       "CladEvent": "VC_IntentNeutral",
-      "AnimName": "ag_vc_wakeword_idk"
+      "AnimName": "ag_vc_wakeword_idk_01"
     },
     {	
       "CladEvent": "VC_NoFollowupCommand_NoFace",	
