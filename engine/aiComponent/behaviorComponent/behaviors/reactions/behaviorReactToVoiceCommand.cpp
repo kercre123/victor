@@ -1,8 +1,8 @@
 /**
 * File: behaviorReactToVoiceCommand.cpp
 *
-* Author: Lee Crippen
-* Created: 2/16/2017
+* Author: Jarrod Hatfield
+* Created: 2/16/2018
 *
 * Description: Simple behavior to immediately respond to the voice command keyphrase, while waiting for further commands.
 *
@@ -47,10 +47,10 @@ namespace Anki {
 namespace Cozmo {
 
 namespace {
-  const char* kLeesFeelings                     = "leesFeelings";
-  const char* kExitOnIntentsKey                 = "exitOnIntents";
+  const char* kExitOnIntentsKey                 = "stopListeningOnIntents";
   const char* kEarConBegin                      = "earConAudioEventBegin";
-  const char* kEarConEnd                        = "earConAudioEventEnd";
+  const char* kEarConSuccess                    = "earConAudioEventSuccess";
+  const char* kEarConFail                       = "earConAudioEventNeutral";
   const char* kTriggerBehaviorKey               = "behaviorOnTrigger";
   const char* kIntentBehaviorKey                = "behaviorOnIntent";
   const char* kIntentListenGetIn                = "playListeningGetInAnim";
@@ -66,8 +66,9 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToVoiceCommand::InstanceConfig::InstanceConfig() :
   earConBegin( AudioMetaData::GameEvent::GenericEvent::Invalid ),
-  earConEnd( AudioMetaData::GameEvent::GenericEvent::Invalid ),
-  turnOnTrigger( true ),
+  earConSuccess( AudioMetaData::GameEvent::GenericEvent::Invalid ),
+  earConFail( AudioMetaData::GameEvent::GenericEvent::Invalid ),
+  turnOnTrigger( false ),
   turnOnIntent( !turnOnTrigger ),
   playListeningGetInAnim( true ),
   exitOnIntents( true ),
@@ -93,7 +94,7 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
   _triggerDirection( kMicDirectionUnknown )
 {
   // do we exit once we've received an intent from the cloud?
-  _iVars.exitOnIntents = config.get( kExitOnIntentsKey, true ).asBool();
+  JsonTools::GetValueOptional( config, kExitOnIntentsKey, _iVars.exitOnIntents );
 
   // do we play ear-con sounds to notify the user when Victor is listening
   {
@@ -103,34 +104,37 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
       _iVars.earConBegin = AudioMetaData::GameEvent::GenericEventFromString( earConString );
     }
 
-    if ( JsonTools::GetValueOptional( config, kEarConEnd, earConString ) )
+    if ( JsonTools::GetValueOptional( config, kEarConSuccess, earConString ) )
     {
-      _iVars.earConEnd = AudioMetaData::GameEvent::GenericEventFromString( earConString );
+      _iVars.earConSuccess = AudioMetaData::GameEvent::GenericEventFromString( earConString );
+    }
+
+    if ( JsonTools::GetValueOptional( config, kEarConFail, earConString ) )
+    {
+      _iVars.earConFail = AudioMetaData::GameEvent::GenericEventFromString( earConString );
     }
   }
 
   // do we play the backpack lights from the behavior, else assume anims will handle it
-  _iVars.backpackLights = config.get( kProceduralBackpackLights, false ).asBool();
+  JsonTools::GetValueOptional( config, kProceduralBackpackLights, _iVars.backpackLights );
 
   // by supplying either kTriggerBehaviorKey XOR kIntentBehaviorKey, we're
   // telling the behavior we want to turn to the mic direction either when hearing
   // the trigger word or when receiving the intent
   {
-    _iVars.turnOnIntent = JsonTools::GetValueOptional( config, kIntentBehaviorKey, _iVars.reactionBehaviorString );
     _iVars.turnOnTrigger = JsonTools::GetValueOptional( config, kTriggerBehaviorKey, _iVars.reactionBehaviorString );
+    _iVars.turnOnIntent = JsonTools::GetValueOptional( config, kIntentBehaviorKey, _iVars.reactionBehaviorString );
 
     if ( _iVars.turnOnTrigger && _iVars.turnOnIntent )
     {
-      _iVars.turnOnIntent = false;
+      _iVars.turnOnTrigger = false;
       PRINT_NAMED_WARNING( "BehaviorReactToVoiceCommand.Init",
-                          "Cannot define BOTH %s and %s", kTriggerBehaviorKey, kIntentBehaviorKey );
+                          "Cannot define BOTH %s and %s in json config", kTriggerBehaviorKey, kIntentBehaviorKey );
     }
   }
 
-  _iVars.playListeningGetInAnim = config.get( kIntentListenGetIn, true ).asBool();
+  JsonTools::GetValueOptional( config, kIntentListenGetIn, _iVars.playListeningGetInAnim );
 
-  // this will possibly override all of our loaded values
-  LoadLeeHappinessValues( config );
   SetRespondToTriggerWord( true );
 }
 
@@ -141,75 +145,15 @@ void BehaviorReactToVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& exp
   const char* list[] = {
     kExitOnIntentsKey,
     kEarConBegin,
-    kEarConEnd,
+    kEarConSuccess,
+    kEarConFail,
     kProceduralBackpackLights,
     kIntentBehaviorKey,
     kTriggerBehaviorKey,
     kTriggerBehaviorKey,
-    kIntentListenGetIn,
-    kLeesFeelings,
+    kIntentListenGetIn
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToVoiceCommand::LoadLeeHappinessValues( const Json::Value& config )
-{
-  using namespace AudioMetaData::GameEvent;
-
-  std::string leesFeelings;
-  if ( JsonTools::GetValueOptional( config, kLeesFeelings, leesFeelings ) )
-  {
-    if ( leesFeelings == "lee_happy" )
-    {
-      // no noise or movement prior to hearing the intent
-      // movement and noise after hearing the intent
-
-      _iVars.earConBegin             = GenericEvent::Invalid;
-      _iVars.earConEnd               = GenericEvent::Stop__Robot_Vic_Sfx__Scan_Loop_Stop;
-      _iVars.turnOnTrigger           = false;
-      _iVars.turnOnIntent            = true;
-      _iVars.playListeningGetInAnim  = false;
-      _iVars.backpackLights          = true;
-    }
-    else if ( leesFeelings == "lee_meh" )
-    {
-      // noise but no movement prior to hearing the intent
-      // movement and noise after hearing the intent
-
-      _iVars.earConBegin             = GenericEvent::Play__Robot_Vic_Sfx__Scan_Loop_Play;
-      _iVars.earConEnd               = GenericEvent::Stop__Robot_Vic_Sfx__Scan_Loop_Stop;
-      _iVars.turnOnTrigger           = false;
-      _iVars.turnOnIntent            = true;
-      _iVars.playListeningGetInAnim  = true;
-      _iVars.backpackLights          = true;
-    }
-    else if ( leesFeelings == "lee_sad" )
-    {
-      // movement and noise prior to hearing the intent
-      // noise but no movement after hearing the intent
-
-      _iVars.earConBegin             = GenericEvent::Play__Robot_Vic_Sfx__Scan_Loop_Play;
-      _iVars.earConEnd               = GenericEvent::Stop__Robot_Vic_Sfx__Scan_Loop_Stop;
-      _iVars.turnOnTrigger           = true;
-      _iVars.turnOnIntent            = false;
-      _iVars.playListeningGetInAnim  = true;
-      _iVars.backpackLights          = true;
-    }
-    else
-    {
-      PRINT_NAMED_ERROR( "BehaviorReactToVoiceCommand.Init",
-                         "Config supplied invalid feelings for Lee [%s] (options are lee_happy, lee_meh or lee_sad)",
-                         leesFeelings.c_str() );
-    }
-
-    // make sure we have a reaction behavior if none was specified
-    // this default will be a simple procedural turn towards the mic direction
-    if ( _iVars.reactionBehaviorString.empty() )
-    {
-      _iVars.reactionBehaviorString = "ProceduralTurnToMicDirection";
-    }
-  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -512,9 +456,11 @@ void BehaviorReactToVoiceCommand::StopListening()
                       "BehaviorReactToVoiceCommand.State",
                       "Transitioning to EState::IntentReceived from invalid state [%hhu]", _dVars.state );
 
-  OnVictorListeningEnd();
-  SetUserIntentStatus();
+  // Note: this is currently decoupled with the actual stream from the AnimProcess
+  //       really should be in sync with each other
+  OnStreamingEnd();
 
+  SetUserIntentStatus();
   TransitionToThinking();
 }
 
@@ -525,8 +471,8 @@ void BehaviorReactToVoiceCommand::OnVictorListeningBegin()
 
   static const BackpackLights kStreamingLights =
   {
-    .onColors               = {{NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN}},
-    .offColors              = {{NamedColors::GREEN,NamedColors::GREEN,NamedColors::GREEN}},
+    .onColors               = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
+    .offColors              = {{NamedColors::CYAN,NamedColors::CYAN,NamedColors::CYAN}},
     .onPeriod_ms            = {{0,0,0}},
     .offPeriod_ms           = {{0,0,0}},
     .transitionOnPeriod_ms  = {{0,0,0}},
@@ -563,15 +509,24 @@ void BehaviorReactToVoiceCommand::OnVictorListeningEnd()
     blc.StopLoopingBackpackLights( _dVars.lightsHandle );
   }
 
-  if ( GenericEvent::Invalid != _iVars.earConEnd )
+  // play our "earcon end" audio, which depends on if our intent was successfully heard or not
+  BehaviorExternalInterface& bei = GetBEI();
+  if ( EIntentStatus::IntentHeard == _dVars.intentStatus )
   {
-    // Play earcon end audio
-    GetBEI().GetRobotAudioClient().PostEvent( _iVars.earConEnd, AudioMetaData::GameObjectType::Behavior );
+    if ( GenericEvent::Invalid != _iVars.earConSuccess )
+    {
+      // Play earcon end audio
+      bei.GetRobotAudioClient().PostEvent( _iVars.earConSuccess, AudioMetaData::GameObjectType::Behavior );
+    }
   }
-
-  // Note: this is currently decoupled with the actual stream from the AnimProcess
-  //       really should be in sync with each other
-  OnStreamingEnd();
+  else
+  {
+    if ( GenericEvent::Invalid != _iVars.earConFail )
+    {
+      // Play earcon end audio
+      bei.GetRobotAudioClient().PostEvent( _iVars.earConFail, AudioMetaData::GameObjectType::Behavior );
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -601,8 +556,14 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
 
   auto callback = [this]()
   {
+    // we're keeping our "listening feedback" open until the last possible moment, since the intent can come in after we've
+    // closed our recording stream.
+    OnVictorListeningEnd();
+
     // Play a reaction behavior if we were told to ...
-    if ( _iVars.turnOnIntent && _iVars.reactionBehavior )
+    // ** only in the case that we've heard a valid intent **
+    const bool heardValidIntent = ( _dVars.intentStatus == EIntentStatus::IntentHeard );
+    if ( heardValidIntent && _iVars.turnOnIntent && _iVars.reactionBehavior )
     {
       const MicDirectionIndex triggerDirection = GetReactionDirection();
       _iVars.reactionBehavior->SetReactDirection( triggerDirection );
@@ -639,11 +600,11 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
       break;
     case EIntentStatus::IntentUnknown:
       PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent", "Heard user intent but could not understand it" );
-      intentReaction = AnimationTrigger::VC_IntentUnknown;
+      intentReaction = AnimationTrigger::VC_IntentNeutral;
       break;
     case EIntentStatus::NoIntentHeard:
       PRINT_CH_DEBUG( "MicData", "BehaviorReactToVoiceCommand.Intent", "No user intent was heard" );
-      intentReaction = AnimationTrigger::VC_NoIntentHeard;
+      intentReaction = AnimationTrigger::VC_IntentNeutral;
       break;
   }
 

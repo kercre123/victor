@@ -1,8 +1,8 @@
 /**
 * File: behaviorReactToVoiceCommand.h
 *
-* Author: Lee Crippen
-* Created: 2/16/2017
+* Author: Jarrod Hatfield
+* Created: 2/16/2018
 *
 * Description: Simple behavior to immediately respond to the voice command keyphrase, while waiting for further commands.
 *
@@ -65,11 +65,6 @@ protected:
 
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-  // specific default values can be used to easily set all of our different
-  // playtest options.  "Lee Happiness" refers to how happy/sad each of the
-  // different settings make Lee feel ... more noise == Lee sad
-  void LoadLeeHappinessValues( const Json::Value& config );
   
   virtual void InitBehavior() override;
   virtual void GetAllDelegates( std::set<IBehavior*>& delegates ) const override;
@@ -120,7 +115,8 @@ private:
 
     // earcon is an audible cue to tell the user victor is listening
     AudioMetaData::GameEvent::GenericEvent earConBegin;
-    AudioMetaData::GameEvent::GenericEvent earConEnd;
+    AudioMetaData::GameEvent::GenericEvent earConSuccess;
+    AudioMetaData::GameEvent::GenericEvent earConFail;
 
     bool turnOnTrigger; // do we turn to the user when we hear the trigger word
     bool turnOnIntent; // do we turn to the user when we hear the intent
