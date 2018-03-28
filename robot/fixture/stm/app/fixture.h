@@ -328,6 +328,7 @@ typedef int error_t;
 #define ERROR_INCOMPATIBLE_FIX_REV  915   // Test is incompatible with the current fixture hardware revision
 #define ERROR_INVALID_STATE         916   // Internal state is out of sync
 #define ERROR_BAD_ARG               917   // Argument errror
+#define ERROR_THROW_0               918   // Test threw exception with ERROR_OK?
 //#define ERROR_UNHANDLED_EXCEPTION   918   // 'safe' operation threw an uncategorized error
 
 //<export heading> General/Debug Errors
@@ -340,14 +341,14 @@ typedef int error_t;
 #define ERROR_HEADPGM_OUT_OF_CLOUD_CERTS  960 // The fixture has run out of cloud certificates
 #define ERROR_HEADPGM_MISSING_CERT        961 // Expected cloud certificate not found
 #define ERROR_HEADPGM_BAD_CERT            962 // detected bad cloud certificate
-#define ERROR_HEADPGM_RESERVED_3          963 // RFU exit code from headprogram script
-#define ERROR_HEADPGM_RESERVED_4          964 // RFU exit code from headprogram script
-#define ERROR_HEADPGM_RESERVED_5          965 // RFU exit code from headprogram script
-#define ERROR_HEADPGM_RESERVED_6          966 // RFU exit code from headprogram script
-#define ERROR_HEADPGM_RESERVED_7          967 // RFU exit code from headprogram script
-#define ERROR_HEADPGM_RESERVED_8          968 // RFU exit code from headprogram script
-#define ERROR_HEADPGM_RESERVED_9          969 // RFU exit code from headprogram script
-#define ERROR_HEADPGM_DEFAULT             970 // Headprogram script error
+//#define ERROR_HEADPGM_RESERVED_3          963 // RFU exit code from headprogram script
+//#define ERROR_HEADPGM_RESERVED_4          964 // RFU exit code from headprogram script
+//#define ERROR_HEADPGM_RESERVED_5          965 // RFU exit code from headprogram script
+//#define ERROR_HEADPGM_RESERVED_6          966 // RFU exit code from headprogram script
+//#define ERROR_HEADPGM_RESERVED_7          967 // RFU exit code from headprogram script
+//#define ERROR_HEADPGM_RESERVED_8          968 // RFU exit code from headprogram script
+//#define ERROR_HEADPGM_RESERVED_9          969 // RFU exit code from headprogram script
+#define ERROR_HEADPGM                       970 // Headprogram script error (unknown cause)
 
 //<export end>
 

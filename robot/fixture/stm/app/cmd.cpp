@@ -475,7 +475,6 @@ void cmdDbgParseTestbench(void)
 //-----------------------------------------------------------------------------
 
 #define CCC_DEBUG 0
-#define CCC_ERROR_HANDLE(e) if( CCC_DEBUG > 0 ) { return 0; } else { throw (e); }
 #define CCC_CMD_DELAY()     if( CCC_DEBUG > 0 ) { Timer::delayMs(150); }
 
 //buffer for sensor data
@@ -495,6 +494,23 @@ static struct { //result of most recent command
   } rsp;
 } m_dat;
 
+//common error check function
+static bool ccc_error_check_(int required_handler_cnt)
+{
+  //Note: m_dat.ccr_err (if any) should be assigned by data handler
+  if( m_dat.ccr_err == ERROR_OK && m_dat.handler_cnt != required_handler_cnt ) //handler didn't run? or didn't find formatting errors
+    m_dat.ccr_err = ERROR_TESTPORT_RSP_MISSING_ARGS; //didn't get expected # of responses/lines
+  
+  if( m_dat.ccr_err != ERROR_OK ) {
+    ConsolePrintf("ERROR %i, handler cnt %i/%i\n", m_dat.ccr_err, m_dat.handler_cnt, required_handler_cnt);
+    if( CCC_DEBUG > 0 )
+      return 1;
+    else
+      throw m_dat.ccr_err;
+  }
+  return 0;
+}
+
 void esn_handler_(char* s) {
   m_dat.rsp.esn.esn = cmdParseHex32( cmdGetArg(s,0) );
   m_dat.ccr_err = errno != 0 ? ERROR_TESTPORT_RSP_BAD_ARG: m_dat.ccr_err;
@@ -512,10 +528,7 @@ ccr_esn_t* cmdRobotEsn()
   ConsolePrintf("esn=%08x\n", m_dat.rsp.esn.esn );
   #endif
   
-  if( m_dat.handler_cnt != 1 || m_dat.ccr_err != ERROR_OK ) {
-    ConsolePrintf("ESN ERROR %i, handler cnt %i\n", m_dat.ccr_err, m_dat.handler_cnt);
-    CCC_ERROR_HANDLE(m_dat.ccr_err);
-  }
+  ccc_error_check_(1);
   return &m_dat.rsp.esn;
 }
 
@@ -546,10 +559,7 @@ ccr_bsv_t* cmdRobotBsv()
   ConsolePrintf("bsv app vers %08x %08x %08x %08x\n", m_dat.rsp.bsv.app_version[0], m_dat.rsp.bsv.app_version[1], m_dat.rsp.bsv.app_version[2], m_dat.rsp.bsv.app_version[3] );
   #endif
   
-  if( m_dat.handler_cnt != 10 || m_dat.ccr_err != ERROR_OK ) {
-    ConsolePrintf("BSV ERROR %i, handler cnt %i\n", m_dat.ccr_err, m_dat.handler_cnt);
-    CCC_ERROR_HANDLE(m_dat.ccr_err);
-  }
+  ccc_error_check_(10);
   return &m_dat.rsp.bsv;
 }
 
@@ -582,11 +592,7 @@ static ccr_sr_t* cmdRobot_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int
   ConsolePrintf("NN=%u sr vals %i %i %i %i\n", NN, psr[NN-1].val[0], psr[NN-1].val[1], psr[NN-1].val[2], psr[NN-1].val[3] );
   #endif
   
-  if( m_dat.handler_cnt != NN || m_dat.ccr_err != ERROR_OK ) {
-    ConsolePrintf("SR ERROR %i, handler cnt %i/%i\n", m_dat.ccr_err, m_dat.handler_cnt, NN);
-    CCC_ERROR_HANDLE(m_dat.ccr_err);
-  }
-  
+  ccc_error_check_(NN);
   return (ccr_sr_t*)srbuf;
 }
 ccr_sr_t* cmdRobotMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head) {
@@ -627,16 +633,12 @@ void gmr_handler_(char* s) {
   m_dat.ccr_err = errno != 0 ? ERROR_TESTPORT_RSP_BAD_ARG : m_dat.ccr_err;
 }
 
-////#define EMR_FIELD_OFS(fieldname)    offsetof((fieldname),Anki::Cozmo::Factory::EMR)
 uint32_t cmdRobotGmr(uint8_t idx)
 {
   cmdRobot_IdxVal32_(idx, 0, "gmr", gmr_handler_);
   ConsolePrintf("gmr=%08x\n", m_dat.rsp.esn.esn);
   
-  if( m_dat.handler_cnt != 1 || m_dat.ccr_err != ERROR_OK ) {
-    ConsolePrintf("GMR ERROR %i, handler cnt %i\n", m_dat.ccr_err, m_dat.handler_cnt);
-    CCC_ERROR_HANDLE(m_dat.ccr_err);
-  }
+  ccc_error_check_(1);
   return m_dat.rsp.esn.esn;
 }
 

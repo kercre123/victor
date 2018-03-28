@@ -238,7 +238,7 @@ static void RunTests()
       m_functions[g_stepNumber]();
     }
   } catch (error_t e) {
-    error = e == ERROR_OK ? ERROR_BAD_ARG : e; //don't allow test to throw 'OK'
+    error = e == ERROR_OK ? ERROR_THROW_0 : e; //don't allow test to throw 'OK'
   }
   ConsolePrintf("[RESULT:%03i]\n", error);
   
