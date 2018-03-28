@@ -891,10 +891,6 @@ WiFiState GetWiFiState() {
     }
   }
 
-  if(HasInternet()) {
-    wifiState.connState = WiFiConnState::ONLINE;
-  }
-
   return wifiState;
 }
 
@@ -986,12 +982,6 @@ bool GetIpFromHostName(char* hostName, char* ipAddressOut) {
   strcpy(ipAddressOut, inet_ntoa(*ip[0]));
 
   return true;
-}
-
-bool HasInternet() {
-  std::string google = "google.com";
-  std::string amazon = "amazon.com";
-  return CanConnectToHostName((char*)google.c_str()) || CanConnectToHostName((char*)amazon.c_str());
 }
 
 bool IsAccessPointMode() {
