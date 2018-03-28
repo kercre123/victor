@@ -136,11 +136,6 @@ void RobotDataLoader::LoadNonConfigData()
   }
 
   {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
-    LoadBackpackLightAnimations();
-  }
-
-  {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBehaviors");
     LoadBehaviors();
   }
