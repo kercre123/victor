@@ -356,6 +356,7 @@ enum int_32 AnimationTrigger
   VC_IntentHeard,
   VC_IntentUnknown,
   VC_NoIntentHeard,
+  VC_IntentNeutral,
   VC_NoFollowupCommand_NoFace,
   VC_NoFollowupCommand_WithFace,
 

@@ -2,7 +2,13 @@
   "behaviorClass": "ReactToVoiceCommand",
   "behaviorID": "TriggerWordDetected",
 
-  "behaviorOnTrigger" : "ReactToTriggerDirectionAwake",
+  "playListeningGetInAnim"  : true,
 
-  "leesFeelings" : "lee_sad"
+  "earConAudioEventBegin"   : "Play__Robot_Vic_Sfx__Scan_Loop_Play",
+  "earConAudioEventSuccess" : "Stop__Robot_Vic_Sfx__Scan_Loop_Stop",
+  "earConAudioEventNeutral" : "Stop__Robot_Vic_Sfx__Scan_Loop_Stop",
+  "backpackLights"          : true,
+
+  "behaviorOnIntent"        : "ReactToTriggerDirectionAwake",
+  "stopListeningOnIntents"  : true
 }

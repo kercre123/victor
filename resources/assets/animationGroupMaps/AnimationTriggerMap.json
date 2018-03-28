@@ -1060,6 +1060,10 @@
       "CladEvent": "VC_NoIntentHeard",
       "AnimName": "ag_vc_reaction_whatwasthat"
     },
+    {
+      "CladEvent": "VC_IntentNeutral",
+      "AnimName": "ag_codelab_idk"
+    },
     {	
       "CladEvent": "VC_NoFollowupCommand_NoFace",	
       "AnimName": "ag_vc_reaction_whatwasthat"	
