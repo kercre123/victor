@@ -18,6 +18,7 @@
 #include "util/random/randomGenerator.h"
 #include <limits>
 
+#define ENABLE_AUDIO_PROBABILITY_LOG 0
 #define INVALID_EVENT_IDX std::numeric_limits<size_t>::max()
 
 namespace Anki {
@@ -63,9 +64,12 @@ const AudioEventGroupRef::EventDef* AudioEventGroupRef::RetrieveEvent( bool useP
       continue;
     }
     randRangeMax = randRangeMin + Events[idx].Probability;
-    PRINT_CH_DEBUG("Audio", "AudioEventGroupRef.EventDef.RetrieveEvent.ShowInfo",
-                   "random value = %f, idx = %i and range = %f to %f",
-                   randDbl, (uint32_t)idx, randRangeMin, randRangeMax);
+    if (ENABLE_AUDIO_PROBABILITY_LOG) {
+      PRINT_CH_DEBUG("Audio", "AudioEventGroupRef.EventDef.RetrieveEvent.ShowInfo",
+                     "random value = %f, idx = %i and range = %f to %f",
+                     randDbl, (uint32_t)idx, randRangeMin, randRangeMax);
+    }
+    
     if ( Util::InRange( randDbl, randRangeMin, randRangeMax ) ) {
       // ^ that if statement is equivalent to: if ((randRangeMin <= randDbl) && (randDbl <= randRangeMax))
       selectedIdx = idx;
@@ -76,13 +80,17 @@ const AudioEventGroupRef::EventDef* AudioEventGroupRef::RetrieveEvent( bool useP
   
   if ( INVALID_EVENT_IDX == selectedIdx ) {
     // Probability has chosen not to play an event
-    PRINT_CH_DEBUG("Audio", "AudioEventGroupRef.EventDef.RetrieveEvent.InvalidEventIdx",
-                   "Event Count: %zi Probability: %f", Events.size(), randDbl);
+    if (ENABLE_AUDIO_PROBABILITY_LOG) {
+      PRINT_CH_DEBUG("Audio", "AudioEventGroupRef.EventDef.RetrieveEvent.InvalidEventIdx",
+                     "Event Count: %zi Probability: %f", Events.size(), randDbl);
+    }
     return nullptr;
   }
 
-  PRINT_CH_DEBUG("Audio", "AudioEventGroupRef.EventDef.RetrieveEvent.RandomAudioSelection",
-                 "Probability selected audio index = %ul", (uint32_t)selectedIdx);
+  if (ENABLE_AUDIO_PROBABILITY_LOG) {
+    PRINT_CH_DEBUG("Audio", "AudioEventGroupRef.EventDef.RetrieveEvent.RandomAudioSelection",
+                   "Probability selected audio index = %ul", (uint32_t)selectedIdx);
+  }
 
   return &Events[selectedIdx];
 }
