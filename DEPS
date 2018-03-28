@@ -27,7 +27,7 @@
                     "animationGroups",
                     "faceAnimations"
                 ],
-                "version": "2788"
+                "version": "2789"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
