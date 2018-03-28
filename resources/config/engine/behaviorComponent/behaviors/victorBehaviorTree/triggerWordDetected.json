@@ -4,9 +4,9 @@
 
   "playListeningGetInAnim"  : true,
 
-  "earConAudioEventBegin"   : "Play__Robot_Vic_Sfx__Scan_Loop_Play",
-  "earConAudioEventSuccess" : "Stop__Robot_Vic_Sfx__Scan_Loop_Stop",
-  "earConAudioEventNeutral" : "Stop__Robot_Vic_Sfx__Scan_Loop_Stop",
+  "earConAudioEventBegin"   : "Play__Robot_Vic_Sfx__Wake_Word_On",
+  "earConAudioEventSuccess" : "Play__Robot_Vic_Sfx__Wake_Word_Success",
+  "earConAudioEventNeutral" : "Play__Robot_Vic_Sfx__Wake_Word_Fail",
   "backpackLights"          : true,
 
   "behaviorOnIntent"        : "ReactToTriggerDirectionAwake",
