@@ -24,33 +24,29 @@ namespace Cozmo {
 namespace Audio {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-#define AUDIO_MSG_HANDLER_HELPER(msg)  PRINT_CH_DEBUG(AudioMuxInput::kAudioLogChannel, \
-                                                      "EngineRobotAudioInput.HandleMessage.#msg", ""); \
-                                       AudioEngine::Multiplexer::AudioMuxInput::HandleMessage(msg); 
-
 void EngineRobotAudioInput::HandleMessage( const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent ) 
 {
-  AUDIO_MSG_HANDLER_HELPER(postAudioEvent);
+  AudioEngine::Multiplexer::AudioMuxInput::HandleMessage(postAudioEvent);
 }
 void EngineRobotAudioInput::HandleMessage( const AudioEngine::Multiplexer::StopAllAudioEvents& stopAllAudioEvents )
 {
-  AUDIO_MSG_HANDLER_HELPER(stopAllAudioEvents);
+  AudioEngine::Multiplexer::AudioMuxInput::HandleMessage(stopAllAudioEvents);
 }
 void EngineRobotAudioInput::HandleMessage( const AudioEngine::Multiplexer::PostAudioGameState& postAudioGameState )
 {
-  AUDIO_MSG_HANDLER_HELPER(postAudioGameState);
+  AudioEngine::Multiplexer::AudioMuxInput::HandleMessage(postAudioGameState);
 }
 void EngineRobotAudioInput::HandleMessage( const AudioEngine::Multiplexer::PostAudioSwitchState& postAudioSwitchState )
 {
-  AUDIO_MSG_HANDLER_HELPER(postAudioSwitchState);
+  AudioEngine::Multiplexer::AudioMuxInput::HandleMessage(postAudioSwitchState);
 }
 void EngineRobotAudioInput::HandleMessage( const AudioEngine::Multiplexer::PostAudioParameter& postAudioParameter )
 {
-  AUDIO_MSG_HANDLER_HELPER(postAudioParameter);
+  AudioEngine::Multiplexer::AudioMuxInput::HandleMessage(postAudioParameter);
 }
 void EngineRobotAudioInput::HandleMessage( const AudioEngine::Multiplexer::PostAudioMusicState& postAudioMusicState )
 {
-  AUDIO_MSG_HANDLER_HELPER(postAudioMusicState);
+  AudioEngine::Multiplexer::AudioMuxInput::HandleMessage(postAudioMusicState);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
