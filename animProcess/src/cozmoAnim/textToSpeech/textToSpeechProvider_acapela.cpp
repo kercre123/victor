@@ -40,19 +40,21 @@ static int reveal(int val) {
   return (val ^ 0xACADADA);
 }
 
-#ifdef notdef
+
 
 //
 // Helper functions used for encoding.  These aren't needed at runtime.
 //
+#ifdef notdef
 static std::string conceal(const std::string& val) {
   return reveal(val);
 }
+#endif
 
+#ifdef notdef
 static int conceal(int val) {
   return reveal(val);
 }
-
 #endif
 
 namespace Anki {
@@ -63,13 +65,13 @@ float AcapelaTTS::GetSpeechRate(int speed, float durationScalar)
 {
   // Clamp duration scalar to something reasonable before we divide
   durationScalar = Anki::Util::Clamp(durationScalar, kDurationScalarMin, kDurationScalarMax);
-  
+
   // Adjust base rate (100%) by duration scalar
   const float speechRate = speed / durationScalar;
-  
+
   // Clamp adjusted rate to allowable range
   return Anki::Util::Clamp(speechRate, kSpeechRateMin, kSpeechRateMax);
-    
+
 }
 
 int AcapelaTTS::GetUserid() {
@@ -84,28 +86,51 @@ int AcapelaTTS::GetPassword() {
   return reveal(tts_password);
 }
 
+//
+// Returns license string from Acapela. See also
+//   EXTERNALS/anki-thirdparty/acapela/AcapelaTTS_for_LinuxEmbedded_V8.511/license/babile/babjYna.h
+//
+// Note that license string includes embedded quote and newline characters which must be preserved
+// as part of the string.
+//
+
 std::string AcapelaTTS::GetLicense() {
 
-  static const std::string tts_license = // conceal(...)
-    "\216\237\233\236\224\214\234\214\306\365\302\315\214\217\357\343"
+#ifdef notdef
+  // Enable this stuff to test encoding of a new license string
+  std::string plain = "...";
+  std::string line;
+  for (size_t i = 0; i < plain.size(); ++i) {
+    char buf[BUFSIZ];
+    snprintf(buf, sizeof(buf), "\\%o", transformer(plain[i]));
+    line += buf;
+    if (i % 16 == 15) {
+      LOG_INFO("AcapelaTTS.GetLicense.Concealed", "%s", line.c_str());
+      line.clear();
+    }
+  }
+  LOG_INFO("AcapelaTTS.GetLicense.Concealed", "%s", line.c_str());
+#endif
+
+  static const std::string concealed =
+    "\216\233\231\232\230\214\234\214\306\365\302\315\214\217\357\343"
     "\341\341\351\376\357\345\355\340\217\355\302\307\305\201\377\315"
     "\302\352\336\315\302\317\305\337\317\303\201\371\302\305\330\311"
     "\310\377\330\315\330\311\337\303\312\355\301\311\336\305\317\315"
-    "\216\246\370\315\337\333\301\334\370\304\231\333\350\307\373\336"
-    "\332\353\236\354\335\317\371\306\353\232\330\325\333\307\307\233"
-    "\371\352\315\370\224\370\356\311\300\356\326\334\350\237\342\366"
-    "\303\372\231\333\313\355\215\344\374\346\366\317\354\331\324\366"
-    "\312\333\313\306\312\371\364\310\326\324\355\364\326\356\354\356"
-    "\373\307\345\316\303\336\336\370\217\217\246\376\353\231\310\330"
-    "\232\332\340\331\352\326\347\231\315\210\312\347\316\317\315\324"
-    "\317\316\371\336\317\233\215\326\371\345\305\344\374\310\336\372"
-    "\301\237\302\331\215\310\346\332\325\325\316\246\373\373\353\312"
-    "\313\304\230\366\376\225\334\302\335\313\332\225\301\336\300\357"
-    "\355\377\217\217\246";
+    "\216\246\364\343\332\331\304\302\316\353\374\364\232\344\326\370"
+    "\305\347\306\300\350\373\331\353\377\356\336\346\317\355\236\303"
+    "\357\350\372\330\303\307\366\232\377\305\356\236\354\317\231\233"
+    "\370\310\317\230\340\343\333\303\333\231\344\376\211\215\351\233"
+    "\354\370\346\337\301\375\353\311\344\337\341\230\310\337\331\376"
+    "\354\375\230\334\364\335\210\370\217\217\246\370\301\371\325\326"
+    "\343\364\377\373\300\300\237\375\230\370\230\365\344\326\300\375"
+    "\357\215\343\340\303\353\334\312\231\354\331\307\371\332\225\210"
+    "\350\350\354\303\237\340\332\333\304\310\300\246\373\236\353\347"
+    "\237\345\365\342\315\345\331\332\340\350\231\333\316\377\310\324"
+    "\300\370\217\217\246";
 
-  return reveal(tts_license);
+  return reveal(concealed);
 }
-
 
 } // end namespace TextToSpeech
 } // end namespace Cozmo
