@@ -45,6 +45,9 @@ public:
   // Note this will be called from a separate processing thread
   std::function<void(std::vector<uint32_t>&&)> _rawAudioFFTCallback;
   
+  // Callback for when audio is written to disk
+  std::function<void(const std::string&)> _audioSaveCallback;
+
   void SetTimeToRecord(uint32_t timeToRecord);
   void CollectRawAudio(const AudioUtil::AudioSample* audioChunk, size_t size);
   void CollectProcessedAudio(const AudioUtil::AudioSample* audioChunk, size_t size);

@@ -8,7 +8,7 @@ import (
 // Sender defines the API for sending audio data from an external source into
 // the cloud process
 type Sender interface {
-	SendHotword() error
+	SendMessage(msg string) error
 	SendAudio(buf []byte) (int, error)
 	Read() ([]byte, error)
 }
@@ -17,8 +17,8 @@ type ipcSender struct {
 	conn ipc.Conn
 }
 
-func (s *ipcSender) SendHotword() error {
-	_, err := s.conn.Write([]byte(HotwordMessage))
+func (s *ipcSender) SendMessage(msg string) error {
+	_, err := s.conn.Write([]byte(msg))
 	return err
 }
 
@@ -41,8 +41,8 @@ type memSender struct {
 	dest *Receiver
 }
 
-func (s *memSender) SendHotword() error {
-	s.dest.hotword <- struct{}{}
+func (s *memSender) SendMessage(msg string) error {
+	s.dest.msg <- msg
 	return nil
 }
 
@@ -61,7 +61,7 @@ func (s *memSender) Read() ([]byte, error) {
 // process to get data from the Sender
 func NewMemPipe() (Sender, *Receiver) {
 	sender := &memSender{make(chan []byte), nil}
-	receiver := &Receiver{hotword: make(chan struct{}),
+	receiver := &Receiver{msg: make(chan string),
 		audio:  make(chan socketMsg),
 		writer: util.AsyncWriter(util.NewChanWriter(sender.recv))}
 	sender.dest = receiver

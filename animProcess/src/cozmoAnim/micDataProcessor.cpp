@@ -211,6 +211,7 @@ void MicDataProcessor::TriggerWordDetectCallback(const char* resultFound, float 
   newJob->_numMaxFiles = 100;
   newJob->_typesToRecord.SetBitFlag(MicDataType::Processed, true);
   newJob->_typesToRecord.SetBitFlag(MicDataType::Raw, false);
+  newJob->_audioSaveCallback = std::bind(&MicDataProcessor::AudioSaveCallback, this, std::placeholders::_1);
   newJob->SetTimeToRecord(MicDataInfo::kMaxRecordTime_ms);
 
   TimeStamp_t mostRecentTimestamp;
@@ -637,6 +638,7 @@ void MicDataProcessor::RecordRawAudio(uint32_t duration_ms, const std::string& p
     newJob->_writeLocationDir = _writeLocationDir;
     newJob->_writeNameBase = path;
   }
+  newJob->_audioSaveCallback = std::bind(&MicDataProcessor::AudioSaveCallback, this, std::placeholders::_1);
   
   newJob->_typesToRecord.SetBitFlag(MicDataType::Raw, true);
   newJob->SetTimeToRecord(duration_ms);
@@ -908,6 +910,15 @@ float MicDataProcessor::GetIncomingMicDataPercentUsed()
   // This way the "fullness" returned is less variable and better covers the worst case
   _rawAudioBufferFullness[inUseIndex] = updatedFullness;
   return MAX(_rawAudioBufferFullness[0], _rawAudioBufferFullness[1]);
+}
+
+void MicDataProcessor::AudioSaveCallback(const std::string& dest)
+{
+  if (_udpServer->HasClient())
+  {
+    std::string sendData = "file" + dest;
+    _udpServer->Send(sendData.c_str(), (int)(sendData.length() + 1));
+  }
 }
 
 

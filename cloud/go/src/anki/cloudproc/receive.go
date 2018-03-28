@@ -10,10 +10,10 @@ import (
 // Receiver is an object that should be passed in to the cloud process
 // and determines how it will receive audio data from external sources
 type Receiver struct {
-	hotword chan struct{}
-	audio   chan socketMsg
-	writer  io.Writer
-	isTest  bool
+	msg    chan string
+	audio  chan socketMsg
+	writer io.Writer
+	isTest bool
 }
 
 func (r *Receiver) writeBack(buf []byte) (int, error) {
@@ -26,10 +26,10 @@ func bufToGoString(buf []byte) string {
 	return strings.Trim(string(buf), "\x00")
 }
 
-func directSocketMessage(buf []byte, hotword chan struct{}, audio chan socketMsg) {
+func directSocketMessage(buf []byte, msg chan string, audio chan socketMsg) {
 	if buf != nil && len(buf) > 0 {
-		if bufToGoString(buf) == HotwordMessage {
-			hotword <- struct{}{}
+		if goStr := bufToGoString(buf); goStr == HotwordMessage || len(goStr) > 4 && goStr[:4] == "file" {
+			msg <- goStr
 		} else {
 			audio <- socketMsg{buf}
 		}
@@ -37,26 +37,26 @@ func directSocketMessage(buf []byte, hotword chan struct{}, audio chan socketMsg
 }
 
 // reads messages from a socket and places them on the channel
-func socketReader(s ipc.Conn, hotword chan struct{}, audio chan socketMsg, kill <-chan struct{}) {
+func socketReader(s ipc.Conn, msg chan string, audio chan socketMsg, kill <-chan struct{}) {
 	for {
 		if util.CanSelect(kill) {
 			return
 		}
 
 		buf := s.ReadBlock()
-		directSocketMessage(buf, hotword, audio)
+		directSocketMessage(buf, msg, audio)
 	}
 }
 
 // NewIpcReceiver constructs a Receiver that receives audio data and hotword signals
 // over the given IPC connection
 func NewIpcReceiver(conn ipc.Conn, kill <-chan struct{}) *Receiver {
-	hotword := make(chan struct{})
+	msg := make(chan string)
 	audio := make(chan socketMsg)
-	recv := &Receiver{hotword: hotword,
+	recv := &Receiver{msg: msg,
 		audio:  audio,
 		writer: conn}
-	go socketReader(conn, hotword, audio, kill)
+	go socketReader(conn, msg, audio, kill)
 
 	return recv
 }

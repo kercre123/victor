@@ -59,14 +59,16 @@ void BehaviorComponentCloudServer::RunThread(std::string sockName)
     const bool isReconnect = (received == 1 && buf[0] == '\0');
     if (received > 0 && !isReconnect) {
       std::string msg{buf, buf+received};
-      AddResult(msg);
-      _callback(std::move(msg));
+      const bool isDebug = AddDebugResult(msg);
+      if (!isDebug) {
+        _callback(std::move(msg));
+      }
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(_sleepMs));
   }
 }
 
-void BehaviorComponentCloudServer::AddResult(const std::string& str)
+bool BehaviorComponentCloudServer::AddDebugResult(const std::string& str)
 {
   #if SEND_CLOUD_DEV_RESULTS
   Json::Value value;
@@ -75,6 +77,7 @@ void BehaviorComponentCloudServer::AddResult(const std::string& str)
     value = Json::objectValue;
     value["error"] = "Could not parse: " + str;
   }
+
   auto epochTime = std::chrono::system_clock::now().time_since_epoch();
   value["time"] = std::chrono::duration_cast<std::chrono::seconds>(epochTime).count();
 
@@ -90,6 +93,9 @@ void BehaviorComponentCloudServer::AddResult(const std::string& str)
   }
 
   _context->GetWebService()->SendToWebViz(kWebVizTab, _devResults.back());
+  return _devResults.back().isMember("debug");
+  #else
+  return false;
   #endif
 }
 
