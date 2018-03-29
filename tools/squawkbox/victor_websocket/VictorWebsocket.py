@@ -26,7 +26,8 @@ class VictorWebsocket(object):
     self.intent_stream_flag = False
 
     self.mic_data_raw_results = {"dominant": [], "confidence": [0]*12}
-
+    self.intent_data_raw_results = {"user": [], "cloud": [], "app": []}
+    
     self.user_intents_list = None
     self.cloud_intents_list = None
 
