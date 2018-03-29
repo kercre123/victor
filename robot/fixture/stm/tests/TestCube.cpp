@@ -19,6 +19,7 @@
 #include "tests.h"
 #include "timer.h"
 
+#define TESTCUBE_DEBUG 1
 static const int CURRENT_HW_REV = CUBEID_HWREV_DVT3;
 
 //generate signature for the cube bootloader binary
@@ -31,26 +32,30 @@ uint32_t cubebootSignature(bool dbg_print, int *out_cubeboot_size)
   if( !crc_init) //cache crc. hard-coded bins won't change at runtime, I pinky-swear
   {
     //OTP stub contains nested cubeboot.bin application. location/size info is reported at hard-coded addresses...
-    uint32_t cubeboot_magic = ((uint32_t*)g_CubeStub)[40];
-    uint32_t cubeboot_start = ((uint32_t*)g_CubeStub)[41] & 0x0FFFffff; //ignore dialog's OTP/Ram section placements
-    uint32_t cubeboot_end   = ((uint32_t*)g_CubeStub)[42] & 0x0FFFffff; //ignore dialog's OTP/Ram section placements
-    int cubeboot_size = cubeboot_end - cubeboot_start;
-    int cubestub_size = g_CubeStubEnd - g_CubeStub;
+    const uint32_t cubeboot_magic = ((uint32_t*)g_CubeStub)[40];
+    const uint32_t cubeboot_start = ((uint32_t*)g_CubeStub)[41] & 0x0FFFffff; //ignore dialog's OTP/Ram section placements
+    const uint32_t cubeboot_end   = ((uint32_t*)g_CubeStub)[42] & 0x0FFFffff; //ignore dialog's OTP/Ram section placements
+    const int cubeboot_size = cubeboot_end - cubeboot_start;
+    const int cubestub_size = g_CubeStubEnd - g_CubeStub;
     
     //validate header
     bool bad_header = cubeboot_magic != 0xc0beb007 || cubeboot_size < 4000 || cubeboot_size >= cubestub_size || cubeboot_start >= cubestub_size || cubeboot_end >= cubestub_size;
+    #if TESTCUBE_DEBUG > 0
     if( bad_header || dbg_print ) {
       ConsolePrintf("CubeStub[CubeBoot] header:\n");
       ConsolePrintf("  g_CubeStub: %08x-%08x (%i)\n", 0, cubestub_size-1, cubestub_size);
       ConsolePrintf("  g_CubeBoot: %08x-%08x (%i) magic %08x\n", cubeboot_start, cubeboot_end-1, cubeboot_size, cubeboot_magic);
-      if( bad_header ) {
-        ConsolePrintf("bad header\n");
-        throw ERROR_CUBE_BAD_BINARY;
-        //return 0;
-      }
+    }
+    #endif
+    if( bad_header ) {
+      #if TESTCUBE_DEBUG > 0
+      ConsolePrintf("bad header\n");
+      #endif
+      throw ERROR_CUBE_BAD_BINARY;
     }
     
     //DEBUG: byte-for-byte compare to actual binary
+    #if TESTCUBE_DEBUG > 0
     const int cubeboot_raw_size = g_CubeBootEnd-g_CubeBoot;
     if( cubeboot_raw_size > 0 ) //must be included by 'binaries.s'. Development check.
     {
@@ -70,6 +75,7 @@ uint32_t cubebootSignature(bool dbg_print, int *out_cubeboot_size)
       
       ConsolePrintf(".OK\n");
     }
+    #endif
     
     m_cubeboot_size = cubeboot_size; //cache size after successful checks
     crc = crc32(0xFFFFffff, g_CubeStub+cubeboot_start, cubeboot_size );
@@ -164,7 +170,7 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
         DUT_UART::putchar( bin[n] );
         crc_local ^= bin[n]; //generate expected crc
         if( (n & 0x1FF) == 0 ) //%512 == 0
-          ConsolePrintf(".");
+          ConsolePutChar('.');
       }
       ConsolePrintf("done\n");
       

@@ -17,8 +17,13 @@
 #include "tests.h"
 #include "timer.h"
 
+#define TESTBODY_DEBUG 1
+
+#if TESTBODY_DEBUG > 0
 #define DBG_VERBOSE(x)  x
-//#define DBG_VERBOSE(x)  {}
+#else
+#define DBG_VERBOSE(x)  {}
+#endif
 
 #define FLASH_ADDR_TEST_APP       0x08000000
 #define FLASH_ADDR_SYSBOOT        0x08000000
@@ -115,9 +120,7 @@ static void ShortCircuitTest(void)
   Board::powerOff(PWR_VEXT);
   TestCommon::powerOnProtected(PWR_VEXT, 100, ima_limit_VEXT, 2);
   Board::powerOff(PWR_VEXT);
-  
-  //extra delay for power discharge
-  //Timer::delayMs(1000);
+  Timer::delayMs(250);
 }
 
 static void BodyTryReadSerial(void)
