@@ -101,28 +101,13 @@ void RobotDataLoader::LoadNonConfigData()
   }
 
   {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationGroups");
-    LoadAnimationGroups();
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadBehaviors");
+    LoadBehaviors();
   }
-
+  
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
     LoadBackpackLightAnimations();
-  }
-
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeLightAnimations");
-    LoadCubeLightAnimations();
-  }
-
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerResponses");
-    LoadCubeAnimationTriggerResponses();
-  }
-
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
-    LoadEmotionEvents();
   }
 
   {
@@ -130,27 +115,46 @@ void RobotDataLoader::LoadNonConfigData()
     LoadFacePNGPaths();
   }
 
+  if(!FACTORY_TEST)
   {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadDasBlacklistedAnimationTriggers");
-    LoadDasBlacklistedAnimationTriggers();
-  }
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationGroups");
+      LoadAnimationGroups();
+    }
 
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadBehaviors");
-    LoadBehaviors();
-  }
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeLightAnimations");
+      LoadCubeLightAnimations();
+    }
 
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationTriggerResponses");
-    LoadAnimationTriggerResponses();
-  }
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerResponses");
+      LoadCubeAnimationTriggerResponses();
+    }
 
-  {
-    // Load SayText Action Intent Config
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadSayTextActionIntentConfigs");
-    SayTextAction::LoadMetadata(*_context->GetDataPlatform());
-  }
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
+      LoadEmotionEvents();
+    }
 
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadDasBlacklistedAnimationTriggers");
+      LoadDasBlacklistedAnimationTriggers();
+    }
+
+
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationTriggerResponses");
+      LoadAnimationTriggerResponses();
+    }
+
+    {
+      // Load SayText Action Intent Config
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadSayTextActionIntentConfigs");
+      SayTextAction::LoadMetadata(*_context->GetDataPlatform());
+    }
+  }
+  
   {
     // Load animations into engine - disabled for the time being to save the 30 MB hit
     // of loading animations into engine in addition to anim process
