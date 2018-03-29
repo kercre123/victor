@@ -26,7 +26,15 @@ function usage() {
   echo "$SCRIPT_NAME [OPTIONS]"
   echo "  -h                      print this message"
   echo "  -v                      print verbose output"
-  echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
+  echo "  -c CONFIGURATION        build configuration {Debug,Release}"
+  echo "  -s ANKI_ROBOT_HOST      hostname or ip address of robot"
+  echo ""
+  echo "environment variables:"
+  echo '  $ANKI_ROBOT_HOST        hostname or ip address of robot'
+  echo '  $ANKI_BUILD_TYPE        build configuration {Debug,Release}'
+  echo '  $BUILD_ROOT             root dir of build artifacts containing {bin,lib,etc,data} dirs'
+  echo '  $INSTALL_ROOT           root dir of installed files on target'
+  echo '  $STAGING_DIR            directory to hold staged artifacts before deploy to robot'
 }
 
 while getopts "hvc:" opt; do
@@ -91,6 +99,7 @@ echo "INSTALL_ROOT: ${INSTALL_ROOT}"
 : ${LIB_INSTALL_PATH:="${INSTALL_ROOT}/lib"}
 : ${BIN_INSTALL_PATH:="${INSTALL_ROOT}/bin"}
 : ${RSYNC_BIN_DIR="${TOPLEVEL}/tools/rsync"}
+: ${STAGING_DIR:="${BUILD_ROOT}/staging"}
 
 $ADB shell mkdir -p "${INSTALL_ROOT}"
 $ADB shell mkdir -p "${INSTALL_ROOT}/etc"
@@ -132,31 +141,32 @@ set -e
 # startup rsync daemon
 $ADB shell "${DEVICE_RSYNC_BIN_DIR}/rsync.bin --daemon --config=${DEVICE_RSYNC_CONF_DIR}/${RSYNCD_CONF}"
 
-pushd ${BUILD_ROOT} > /dev/null 2>&1
+# install.sh is a script that is run here by deploy.sh, but also independently by
+# bitbake when building the Victor OS.
+${SCRIPT_PATH}/install.sh ${BUILD_ROOT} ${STAGING_DIR}
+
+
+pushd ${STAGING_DIR} > /dev/null 2>&1
 
 # Since invoking rsync multiple times is expensive.
 # build an include file list so that we can run a single rsync command
+rm -rf ${BUILD_ROOT}/rsync.*.lst
 RSYNC_LIST="${BUILD_ROOT}/rsync.$$.lst"
-touch ${RSYNC_LIST}
 
-if [ -d lib ]; then
-  find lib -type f -name '*.so' -or -name '*.so.1' >> ${RSYNC_LIST}
-fi
+find . -type f > ${RSYNC_LIST}
 
-if [ -d bin ]; then
-  find bin -type f -not -name '*.full' >> ${RSYNC_LIST}
-fi
+#
+# Use --inplace to avoid consuming temp space & minimize number of writes
+# Use --delete to purge files that are no longer present in build tree
+#
+rsync -rlptD -uzvP \
+  --inplace \
+  --delete \
+  --rsync-path=${DEVICE_RSYNC_BIN_DIR}/rsync.bin \
+  --files-from=${RSYNC_LIST} \
+  -e ssh \
+  ./ root@${ANKI_ROBOT_HOST}:/
 
-if [ -d etc ]; then
-  find etc >> ${RSYNC_LIST}
-fi
-
-if [ -d data ]; then
-  find data >> ${RSYNC_LIST}
-fi
-
-rsync -rlptD -uzvP --delete --files-from=${RSYNC_LIST} ./ rsync://${DEVICE_IP_ADDRESS}/anki_root/
-
-rm -f ${BUILD_ROOT}/rsync.*.lst
+rm -f "${RSYNC_LIST}"
 
 popd > /dev/null 2>&1
