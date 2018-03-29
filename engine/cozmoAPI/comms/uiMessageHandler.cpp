@@ -89,7 +89,7 @@ namespace Anki {
 CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enabled in non-SHIPPING apps, for internal dev
 
 
-#define ANKI_ENABLE_SDK_OVER_TCP  0
+#define ANKI_ENABLE_SDK_OVER_TCP 1
 
 
     IMPLEMENT_ENUM_INCREMENT_OPERATORS(UiConnectionType);
@@ -161,7 +161,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         }
         case UiConnectionType::Switchboard:
         {
-          ISocketComms* comms = new TcpSocketComms(true);
+          ISocketComms* comms = new TcpSocketComms(true, SWITCHBOARD_TCP_PORT);
           // Disable ping timeout disconnects
           comms->SetPingTimeoutForDisconnect(0, nullptr);
           return comms;

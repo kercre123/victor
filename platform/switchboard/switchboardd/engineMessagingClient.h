@@ -56,7 +56,7 @@ private:
   static uint8_t sMessageData[2048];
   static const unsigned int kMessageHeaderLength = 2;
   static const char* kEngineAddress;
-  static const unsigned short kEnginePort = 5106;
+  static const unsigned short kEnginePort = 5107;
   const float kEngineMessageFrequency_s = 0.1;
 };
 } // Switchboard

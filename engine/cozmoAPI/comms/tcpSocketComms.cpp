@@ -28,11 +28,11 @@ namespace Cozmo {
 using MessageSizeType = uint16_t; // Must match on Engine and Python SDK side
 
 
-TcpSocketComms::TcpSocketComms(bool isEnabled)
+  TcpSocketComms::TcpSocketComms(bool isEnabled, uint16_t port)
   : ISocketComms(isEnabled)
   , _tcpServer( new TcpServer() )
   , _connectedId( kDeviceIdInvalid )
-  , _port(0)
+  , _port(port)
   , _hasClient(false)
 {
   _receivedBuffer.reserve(4096); // Big enough to hold several messages without reallocating
@@ -54,15 +54,18 @@ bool TcpSocketComms::Init(UiConnectionType connectionType, const Json::Value& co
   
   if (portValue.isNumeric())
   {
-    const uint32_t port = portValue.asUInt();
-    _port = port;
-    
-    if ((uint32_t)_port != port)
+    if(_port == 0)
     {
-      PRINT_NAMED_ERROR("TcpSocketComms.Init",
-                        "Bad '%s' entry in Json config file should fit in u16 (%u != %u)",
-                        AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT, (uint32_t)_port, port);
-      return false;
+      const uint32_t port = portValue.asUInt();
+      _port = port;
+        
+      if ((uint32_t)_port != port)
+      {
+	PRINT_NAMED_ERROR("TcpSocketComms.Init",
+			  "Bad '%s' entry in Json config file should fit in u16 (%u != %u)",
+			  AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT, (uint32_t)_port, port);
+	return false;
+      }
     }
     
     _tcpServer->DisconnectClient();

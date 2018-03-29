@@ -294,6 +294,8 @@ namespace Cozmo {
   // Port for TCP/IP based version of SDK to communicate over
   const u32 SDK_ON_DEVICE_TCP_PORT = 5106;
   // See SDK_ON_COMPUTER_TCP_PORT in engineInterface.py for corresponding port on attached PC
+
+  const u32 SWITCHBOARD_TCP_PORT = 5107;
   
   // If most recent advertisement message is older than this,
   // then it is no longer considered to be advertising.
