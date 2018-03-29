@@ -31,9 +31,10 @@ function usage() {
     echo "  -h                      print this message"
     echo "  -o                      file to log unfiltered data to (Default: ${LOG_FILE})"
     echo "  -f                      lnav filter file to use (Default: ${LNAV_FILTER_FILE})"
+    echo "  -s                      hostname or ip address of robot (Default: ${ANKI_ROBOT_HOST})"
 }
 
-while getopts ":o:f:h" opt; do
+while getopts ":o:f:hs:" opt; do
     case $opt in
         h)
             usage
@@ -44,6 +45,9 @@ while getopts ":o:f:h" opt; do
             ;;
         f)
             LNAV_FILTER_FILE="${OPTARG}"
+            ;;
+        s)
+            ANKI_ROBOT_HOST="${OPTARG}"
             ;;
         :)
             echo "Option -${OPTARG} required an argument." >&2

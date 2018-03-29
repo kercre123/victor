@@ -159,9 +159,9 @@ For a more thorough description of build options, run `project/victor/build-vict
     ./tools/victor-ble-cli/vic_robot_set_key.sh VICTOR_xxxxxx
     ```
 
-    where 'xxxxxx' is the bluetooth ID of the robot (as mentioned above, for example VICTOR_1a3d273d, or VICTOR_R2D2). This script will generate an SSH key pair, install it on your laptop, and then connect to the robot and install the public key on the robot. It will also modify your `~/.ssh/config` file to add some lines that will prevent unnecessary prompts and warnings. Finally, it will show you the robot's IP address, and write that IP address to a file on your laptop.
+    where 'xxxxxx' is the bluetooth ID of the robot (as mentioned above, for example VICTOR_1a3d273d, or "VECTOR R2D2"). This script will generate an SSH key pair, install it on your laptop, and then connect to the robot and install the public key on the robot. It will also modify your `~/.ssh/config` file to add some lines that will prevent unnecessary prompts and warnings. Finally, it will show you the robot's IP address, and write that IP address to a file on your laptop.
 
-1. Once that one-time step is done, all of the existing scripts (victor_start, victor_deploy, victor_log, etc.) will work as before, but without using adb. You can also run a command on the robot with:
+1. Once that one-time step is done, all of the existing scripts (victor_start, victor_deploy, victor_log, etc.) will work as before, but without using adb.<br/><br/>You can also run a command on the robot with:
 
     ```
     ssh root@<robotIP> <command> <arguments>
@@ -180,6 +180,14 @@ For a more thorough description of build options, run `project/victor/build-vict
     ```
 
     to switch to the new robot's IP address. From that point forward the victor_log, etc. scripts will use that new IP address.
+
+1. For convenience when working with multiple robots, or if you just want to be sure you're targeting a specific robot, almost all of the commands accept a robot IP with the -s option. For example:
+
+    ```
+    victor_deploy_release -s 192.168.43.45
+    ```
+
+    will deploy the release version to the robot at 192.168.43.45.
 
 ### Deploying binaries and assets to physical robot
 
