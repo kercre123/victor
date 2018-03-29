@@ -336,19 +336,13 @@ typedef int error_t;
 #define ERROR_POWER_SHORT           952   // Power short circuit detected
 //#define ERROR_DEVICE_NOT_DETECTED   953   // Manual test start - DUT was not detected
 
-//<export heading> Helper Head Errors
-//RESERVED RANGE: 960-969 for helper 'headprogram' script exit codes
-#define ERROR_HEADPGM_OUT_OF_CLOUD_CERTS  960 // The fixture has run out of cloud certificates
-#define ERROR_HEADPGM_MISSING_CERT        961 // Expected cloud certificate not found
-#define ERROR_HEADPGM_BAD_CERT            962 // detected bad cloud certificate
-//#define ERROR_HEADPGM_RESERVED_3          963 // RFU exit code from headprogram script
-//#define ERROR_HEADPGM_RESERVED_4          964 // RFU exit code from headprogram script
-//#define ERROR_HEADPGM_RESERVED_5          965 // RFU exit code from headprogram script
-//#define ERROR_HEADPGM_RESERVED_6          966 // RFU exit code from headprogram script
-//#define ERROR_HEADPGM_RESERVED_7          967 // RFU exit code from headprogram script
-//#define ERROR_HEADPGM_RESERVED_8          968 // RFU exit code from headprogram script
-//#define ERROR_HEADPGM_RESERVED_9          969 // RFU exit code from headprogram script
-#define ERROR_HEADPGM                       970 // Headprogram script error (unknown cause)
+//<export heading> Headprogrm Errors
+//RESERVED RANGE: 960-970 for helper 'headprogram' script exit codes
+#define ERROR_HEADPGM_MISSING_CERT        960 // no cloud certificate matching the given ESN (need new cloud cert file?)
+#define ERROR_HEADPGM_BAD_CERT            961 // detect bad,corrupt cloud certificate file
+#define ERROR_HEADPGM_FAC_IMG             962 // error provisioning factory partition image
+//...
+#define ERROR_HEADPGM                     970 // Headprogram script error (unknown cause)
 
 //<export end>
 
