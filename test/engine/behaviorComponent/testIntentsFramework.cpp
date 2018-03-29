@@ -23,6 +23,11 @@
 
 namespace Anki{
 namespace Cozmo{
+
+namespace{
+  // Used to assert that intents are handled quickly enough. Should match the value set in userIntentComponent.cpp 
+  static const size_t kMaxTicksToClear = 3;
+}
   
 std::unordered_map<std::string, TestIntentsFramework::IntentInfo> TestIntentsFramework::_completedUserIntents;
   
@@ -43,12 +48,18 @@ bool TestIntentsFramework::TestUserIntentTransition( TestBehaviorFramework& tbf,
   
   // Send user intent
   auto& uic = tbf.GetBehaviorComponent().GetComponent<UserIntentComponent>();
+  UserIntentTag intentTag = intentToSend.GetTag();
   uic.SetUserIntentPending(std::move(intentToSend));
 
-  // Tick the behavior component so that the behavior can respond to the intent
+  // Tick the behavior component until the intent is consumed, so that the behavior can respond to the intent
   AICompMap emptyMap;
-  tbf.GetBehaviorComponent().UpdateDependent(emptyMap);
-
+  uint8_t tics = 0;
+  while(uic.IsUserIntentPending(intentTag)){
+    tbf.GetBehaviorComponent().UpdateDependent(emptyMap);
+    IncrementBaseStationTimerTicks();
+    ASSERT_NAMED(++tics < kMaxTicksToClear, 
+                 "Intent '%s' was not within the tick limit");
+  }
   // Check the result
   const auto& stack = tbf.GetCurrentBehaviorStack();
   if( !stack.empty() ) {

@@ -1,0 +1,26 @@
+// Custom BehaviorStack configurations can be defined here by name for use in unit tests. The
+// TestBehaviorFramework will load these configs into a map on init. If the stack is expected to 
+// replicate a stack achievable during a robot run, the "stackIsForTestOnly" flag should
+// be set to "false", otherwise set it to "true" to prevent run-time checks for stack validity.
+
+{
+  "highLevelAI_stack" : {
+    "stackIsForTestOnly" : false,
+    "stack" : [
+      "DevBaseBehavior",
+      "CoordinateGlobalInterrupts",
+      "GlobalInterruptions",
+      "HighLevelAI"   
+    ]
+  },
+  "driveOffChargerIntoObserving_stack" : {
+    "stackIsForTestOnly" : false,
+    "stack" : [
+    "DevBaseBehavior",
+    "CoordinateGlobalInterrupts",
+    "GlobalInterruptions",
+    "HighLevelAI",
+    "DriveOffChargerIntoObserving"
+    ]
+  }
+}

@@ -120,6 +120,7 @@ enum uint_32 EventGroupType
   GenericEvent,
   Music,
   Robot_Sfx,
+  Robot_Vic_Scene,
   Robot_Vic_Sfx,
   Robot_Vic_Vo,
   Robot_Vo,
@@ -277,6 +278,8 @@ enum uint_32 GenericEvent
   Play__Robot_Sfx__Srv_Surprised_Long = 3606017555,
   Play__Robot_Sfx__Srv_Surprised_Short = 4054065165,
   Play__Robot_Sfx__Wink = 3564343056,
+  Play__Robot_Vic_Scene__Anim_Abort = 3575715931,
+  Play__Robot_Vic_Scene__Mov_Rtpc_Reset = 1762574059,
   Play__Robot_Vic_Sfx__Blink = 3688286452,
   Play__Robot_Vic_Sfx__Camera_Flash = 3043844820,
   Play__Robot_Vic_Sfx__Dsp_Loop_Play = 4074272165,
@@ -989,6 +992,13 @@ enum uint_32 Robot_Sfx
   Srv_Surprised_Long = 3606017555,
   Srv_Surprised_Short = 4054065165,
   Wink = 3564343056,
+}
+
+enum uint_32 Robot_Vic_Scene
+{
+  Anim_Abort = 3575715931,
+  Invalid = 0,  // Use this to check for Invalid events
+  Mov_Rtpc_Reset = 1762574059,
 }
 
 enum uint_32 Robot_Vic_Sfx

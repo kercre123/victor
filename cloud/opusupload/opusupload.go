@@ -17,7 +17,7 @@ func main() {
 	flag.Parse()
 
 	fmt.Println("Connecting")
-	conn, err := chipper.NewConn(cloudproc.ChipperURL, cloudproc.ChipperSecret, "device-id")
+	conn, err := chipper.NewConn(cloudproc.ChipperURL, cloudproc.ChipperSecret)
 	if err != nil {
 		fmt.Println("Error starting chipper:", err)
 		return

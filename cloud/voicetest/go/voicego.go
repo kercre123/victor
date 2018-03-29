@@ -76,7 +76,7 @@ func GoAudioCallback(cSamples []int16) {
 
 //export GoMain
 func GoMain(startRecording, stopRecording C.voidFunc) {
-	conn, err := chipper.NewConn(cloudproc.ChipperURL, cloudproc.ChipperSecret, "device-id")
+	conn, err := chipper.NewConn(cloudproc.ChipperURL, cloudproc.ChipperSecret)
 	if err != nil {
 		fmt.Println("Error starting chipper:", err)
 		return

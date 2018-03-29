@@ -27,11 +27,11 @@
                     "animationGroups",
                     "faceAnimations"
                 ],
-                "version": "2780"
+                "version": "2789"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "27"
+                "version": "28"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"

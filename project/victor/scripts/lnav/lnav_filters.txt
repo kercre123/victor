@@ -1,0 +1,8 @@
+# Default filter lnav filter for use with victor_log_lnav.sh 
+#
+# NOTE: If you make changes to this file, you may first need to open lnav
+#       and press Ctrl+R to clear previously set filters.
+#
+# Example: Display lines with "vic-anim" but omits those that have "overtime"
+#:filter-in vic-anim
+#:filter-out overtime

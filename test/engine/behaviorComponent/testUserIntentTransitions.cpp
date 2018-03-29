@@ -36,16 +36,9 @@ TEST_INTENT(UserIntentsTransitions, SetTimer, "set_timer")
 {
   TestBehaviorFramework tbf;
   tbf.InitializeStandardBehaviorComponent();
-  auto& bc = tbf.GetBehaviorContainer();
 
   // Build a valid stack - this test breaks if this stack is no longer valid
-  std::vector<IBehavior*> stack;
-  stack.push_back(bc.FindBehaviorByID(BehaviorID::DevBaseBehavior).get());
-  stack.push_back(bc.FindBehaviorByID(BehaviorID::CoordinateGlobalInterrupts).get());
-  stack.push_back(bc.FindBehaviorByID(BehaviorID::GlobalInterruptions).get());
-  stack.push_back(bc.FindBehaviorByID(BehaviorID::HighLevelAI).get());
-  stack.push_back(bc.FindBehaviorByID(BehaviorID::DriveOffChargerIntoObserving).get());
-  ASSERT_TRUE(tbf.CanStackOccurDuringFreeplay(stack));
+  std::vector<IBehavior*> stack = tbf.GetNamedBehaviorStack("driveOffChargerIntoObserving_stack");
 
   UserIntent_TimeInSeconds timeInSeconds(20);
   UserIntent timerIntent;
@@ -54,6 +47,23 @@ TEST_INTENT(UserIntentsTransitions, SetTimer, "set_timer")
 
   TestIntentsFramework tif;
   auto res = tif.TestUserIntentTransition(tbf, stack, timerIntent, BehaviorID::SingletonTimerSet);
+  EXPECT_TRUE(res);
+}
+
+TEST_INTENT(UserIntentsTransitions, SetKeepAway, "set_keepaway")
+{
+  TestBehaviorFramework tbf;
+  tbf.InitializeStandardBehaviorComponent();
+
+  std::vector<IBehavior*> stack = tbf.GetNamedBehaviorStack("highLevelAI_stack");
+
+  UserIntent_PlaySpecific playKeepaway("keep_away");
+  UserIntent keepawayIntent;
+  keepawayIntent._tag = UserIntentTag::play_specific;
+  keepawayIntent._play_specific = playKeepaway;
+
+  TestIntentsFramework tif;
+  auto res = tif.TestUserIntentTransition(tbf, stack, keepawayIntent, BehaviorID::Keepaway);
   EXPECT_TRUE(res);
 }
 

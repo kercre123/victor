@@ -1,0 +1,69 @@
+// original pattern: 01-02 23:45:48.893 15691 15691 W robot   : CozmoBot.MainCycleTimeError: TooLateCount: 5, avgTooLateTime: 11075 us, tooLongCount: 3, avgTooLongTime: 801 us
+{
+	"victor_log" : {
+        "title" : "VictorLog",
+        "description" : "Victor log files created by adb logcat",
+        "url" : "",
+        "regex" : {
+        	"all_the_info" : {
+        		"pattern" : "^\\s*(?<timestamp>\\d+-\\d+\\s\\d+:\\d+:\\d+\\.\\d{3})\\s+\\d+\\s+\\d+\\s(?<level>[WIDEFV])\\s+(?<channel>[\\w-\\.]+)\\s*:\\s*(?:\\(t:\\d+\\))*\\s*(?<channel_level>\\[\\w+\\])*(?<channel_name>\\[@\\w+\\])*\\s*(?<message_scope>[\\w]+(?:\\.[\\w]+)*)*:*\\s*(?<body>.+)\\s*"
+        	}
+        },
+        "level-field" : "level",
+        "body-field" : "body",
+        "timestamp-field" : "timestamp",
+        "level" : {
+            "error" : "E",
+            "warning" : "W",
+            "info" : "I",
+            "debug" : "D",
+            "fatal" : "F",
+            "debug2" : "V"
+        },
+        "value" : {
+            "channel" : {
+                "kind" : "string",
+                "identifier" : true
+            },
+            "body" : {
+                "kind" : "string",
+                "identifier" : false
+            },
+            "channel_level" : {
+            	"kind" : "string",
+            	"identifier" : true
+            },
+            "channel_name" : {
+            	"kind" : "string",
+            	"identifier" : true
+            },
+            "message_scope" : {
+                "kind" : "string",
+                "identifier" : true
+            }
+        },
+        "timestamp-format" : ["%m-%d %H:%M:%S.%L"],
+        "sample" : [
+            {
+                "line" : "01-01 01:54:10.980   417   417 E cnss-daemon: Stale or unreachable neighbors, ndm state: 16",
+                "level" : "error"
+            },
+            {
+                "line" : "01-01 01:54:23.591   239   239 I chatty  : uid=0(root) /system/bin/debuggerd expire 1 line",
+                "level" : "info"
+            },
+            {
+            	"line" : "01-01 02:13:28.110  3908  3983 D CozmoEngine: (t:03) [Debug][@Unnamed] CliffSensorComponent.UpdateCliffDetectThreshold.CliffValueWhileStopping (tc0066) : 5306 - 154",
+            	"level" : "debug"
+            },
+            {
+            	"line" : "01-01 02:05:57.582  3262  3339 W CozmoEngine: (t:03) [Warn] Robot.MainCycleTooLong (tc4912) :  1 Num errors: 1, Avg time: 807 us",
+            	"level" : "warning"
+            },
+            {
+            	"line" : "1-01 02:29:54.740  4619  4690 I CozmoEngine: (t:03) [Info][@Unnamed] RobotMessageHandler.ProcessMessage.MessageImuTemperature (tc10884) : IMU temperature: 54.025 degC",
+            	"level" : "info"
+            }
+        ]
+    }
+}

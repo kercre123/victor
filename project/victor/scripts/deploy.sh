@@ -18,6 +18,7 @@ source ${SCRIPT_PATH}/victor_env.sh
 
 # Settings can be overridden through environment
 : ${VERBOSE:=0}
+: ${FORCE_RSYNC_BIN:=0}
 : ${ANKI_BUILD_TYPE:="Debug"}
 : ${INSTALL_ROOT:="/anki"}
 : ${DEVICE_RSYNC_BIN_DIR:="/usr/bin"}
@@ -27,6 +28,7 @@ function usage() {
   echo "options:"
   echo "  -h                      print this message"
   echo "  -v                      print verbose output"
+  echo "  -r                      force-install rsync binary on robot"
   echo "  -c CONFIGURATION        build configuration {Debug,Release}"
   echo "  -s ANKI_ROBOT_HOST      hostname or ip address of robot"
   echo ""
@@ -37,13 +39,16 @@ function usage() {
   echo '  $INSTALL_ROOT           root dir of installed files on target'
 }
 
-while getopts "hvc:s:" opt; do
+while getopts "hvrc:s:" opt; do
   case $opt in
     h)
       usage && exit 0
       ;;
     v)
       VERBOSE=1
+      ;;
+    r)
+      FORCE_RSYNC_BIN=1
       ;;
     c)
       ANKI_BUILD_TYPE="${OPTARG}"
@@ -65,7 +70,6 @@ if [ -z "${ANKI_ROBOT_HOST+x}" ]; then
   exit 1
 fi
 
-# echo "VERBOSE: ${VERBOSE}"
 # echo "ANKI_BUILD_TYPE: ${ANKI_BUILD_TYPE}"
 echo "ANKI_ROBOT_HOST: ${ANKI_ROBOT_HOST}"
 echo "   INSTALL_ROOT: ${INSTALL_ROOT}"
@@ -84,7 +88,7 @@ robot_sh mkdir -p "${BIN_INSTALL_PATH}"
 # install rsync binary and config if needed
 set +e
 robot_sh [ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]
-if [ $? -ne 0 ]; then
+if [ $? -ne 0 ] || [ $FORCE_RSYNC_BIN -eq 1 ]; then
   echo "loading rsync to device"
   robot_cp ${RSYNC_BIN_DIR}/rsync.bin ${DEVICE_RSYNC_BIN_DIR}/rsync.bin
 fi
