@@ -4,17 +4,22 @@ HW_VER=0001
 MODEL=0001
 echo headprogram esn $ESN hwvers $((HW_VER)) model $((MODEL))
 
+USBVID=05c6
+USBPID=9008
+
 #exit codes RESERVED RANGE: 960-970
 ERROR_OFFSET=$((960-60)) #shift error codes to start from 60 (valid exit range 0-255)
 ERROR_HEADPGM_MISSING_CERT=$((960-$ERROR_OFFSET))
 ERROR_HEADPGM_BAD_CERT=$((961-$ERROR_OFFSET))
 ERROR_HEADPGM_FAC_IMG=$((962-$ERROR_OFFSET))
+ERROR_HEADPGM_USB_DEV_NOT_FOUND=$((963-$ERROR_OFFSET))
 
-helper=0
+cloudcert=1; helper=0
 for arg in "$@"; do
   #argCnt=$((argCnt+1))
   #echo arg[$argCnt] raw:\""${arg}"\" trimmed:\""$(echo ${arg} | xargs)"\"
-  if [ "$(echo ${arg} | xargs)" == "helper" ]; then echo "making helper head"; helper=1; ESN=0; fi
+  if [ "$(echo ${arg} | xargs)" == "helper" ]; then echo "making helper head"; helper=1; cloudcert=0; ESN=0; fi
+  if [ "$(echo ${arg} | xargs)" == "nocloud" ]; then echo "cloud cert disabled"; cloudcert=0; fi
 done
 
 # Enable USB
@@ -25,7 +30,7 @@ if [ "$mode" != "host" ]; then
   echo host > /sys/kernel/debug/msm_otg/mode
   sleep 1
   echo 1094400 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq
-  insmod ./usbserial.ko vendor=0x05c6 product=0x9008
+  insmod ./usbserial.ko vendor=0x$USBVID product=0x$USBPID
 fi
 
 # Reboot if USB did not switch the first time - only a reboot can fix it
@@ -46,7 +51,7 @@ mkdir /data/img/cloud                                     || exit $ERROR_HEADPGM
 ./makebc /data/img/birthcertificate $ESN $HW_VER $MODEL   || exit $ERROR_HEADPGM_FAC_IMG
 
 # Prepare cloud data for this ESN
-if [ $helper -eq 0 ]; then
+if [ $cloudcert -gt 0 ]; then
   echo unpacking cert...
   unzip -d /data/img/cloud /anki/certs.zip $ESN/*         || exit $ERROR_HEADPGM_BAD_CERT
   if [ ! -e /data/img/cloud/$ESN ]; then
@@ -58,7 +63,13 @@ if [ $helper -eq 0 ]; then
 fi
 umount /data/img                                        || exit $ERROR_HEADPGM_FAC_IMG
 
-# Flash the robot
+#check for USB device [Bus ### Device ###: ID 05c6:9008]
 lsusb
+if ! lsusb | grep -q "ID $USBVID:$USBPID"; then
+  echo "usb device $USBVID:$USBPID not detected"
+  exit $ERROR_HEADPGM_USB_DEV_NOT_FOUND
+fi
+
+# Flash the robot
 ./emmcdl/emmcdl -p 0 -f emmcdl/prog_emmc_firehose_8909_ddr.mbn -x emmcdl/anki.xml -SetActivePartition 0
 

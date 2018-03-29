@@ -341,6 +341,7 @@ typedef int error_t;
 #define ERROR_HEADPGM_MISSING_CERT        960 // no cloud certificate matching the given ESN (need new cloud cert file?)
 #define ERROR_HEADPGM_BAD_CERT            961 // detect bad,corrupt cloud certificate file
 #define ERROR_HEADPGM_FAC_IMG             962 // error provisioning factory partition image
+#define ERROR_HEADPGM_USB_DEV_NOT_FOUND   963 // no valid DUT detected on USB - check power and wiring
 //...
 #define ERROR_HEADPGM                     970 // Headprogram script error (unknown cause)
 

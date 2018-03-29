@@ -188,7 +188,7 @@
       <Focus>0</Focus>
       <ColumnNumber>2</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>232</TopLine>
+      <TopLine>233</TopLine>
       <CurrentLine>244</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\app.cpp</PathWithFileName>
@@ -221,7 +221,7 @@
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
       <TopLine>46</TopLine>
-      <CurrentLine>64</CurrentLine>
+      <CurrentLine>48</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\binariesc.c</PathWithFileName>
       <FilenameWithoutPath>binariesc.c</FilenameWithoutPath>
@@ -356,7 +356,7 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>14</TopLine>
+      <TopLine>15</TopLine>
       <CurrentLine>17</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\tests\TestRobot.cpp</PathWithFileName>
