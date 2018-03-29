@@ -139,6 +139,8 @@ class VictorWebsocket(object):
     #first message will be a list of all available intents, so need to process
     if self.user_intents_list == None and self.cloud_intents_list == None:
       self.process_list_of_intents(message)
+    elif self.intent_stream_flag == True:
+      self.process_intent_stream(message)
 
   #Refer to BI-918 for format of sample message 
   def process_list_of_intents(self, message):
@@ -146,8 +148,13 @@ class VictorWebsocket(object):
     self.user_intents_list = message_to_json["data"][0]["list"]
     self.cloud_intents_list = message_to_json["data"][1]["list"]
   
+  #Refer to BI-919 for format of sample message
   def process_intent_stream(self, message):
-   pass  
+    message_to_json = json.loads(message)
+    for result_dict in message_to_json["data"]:
+        intentTypeName = result_dict["intentType"]
+        intentValue = result_dict["value"]
+        self.intent_data_raw_results[intentTypeName].append(intentValue)
   
   def compile_intent_results(self):
     pass
