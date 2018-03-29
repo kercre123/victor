@@ -2,7 +2,7 @@ import websocket
 import json
 import threading
 import logging
-from statistics import mode, mean 
+from statistics import mode, StatisticsError
 
 class VictorWebsocket(object):
   def __init__(self, robot_ip):
@@ -66,7 +66,18 @@ class VictorWebsocket(object):
     #Find mode of the 12 audio directions
     dominant_list = self.mic_data_raw_results['dominant']
     confidence_list = self.mic_data_raw_results['confidence']
-    final_direction = mode(dominant_list)
+    
+    try:
+      final_direction = mode(dominant_list)
+    except StatisticsError:
+      if not dominant_list: 
+        self.logger.error("mic_data dominant_list was empty")
+        return None
+      else:
+        #TODO: Should give all directions that equally occured
+        #Currently givesthe equally occured direction, with highest 
+        #int value i.e [0,0,1,1] = 1
+        final_direction = max(dominant_list, key=dominant_list.count)
     
     #Calculate the average confidence for that direction
     final_direction_confidence = confidence_list[final_direction]
