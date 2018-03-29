@@ -150,19 +150,12 @@ int handle_dutprogram_command(const char* cmd, int len) {
   //skip space
   next++;
   len--;
-  if( len <= 0 ) //missing ESN param
-    return 917; //ERROR_BAD_ARG
-  
   //ensure null terminated
   char argstr[128];
   if (sizeof(argstr) < len) { len = sizeof(argstr)-1; }
   memcpy(argstr, next, len);
   argstr[len]='\0';
-  
-  int retval = shellcommand((int)timeout_sec, "./headprogram", argstr );
-  if( retval >= 60 && retval <= 70 ) //limited range of script errors mapped to fixture error codes
-    retval += 900; //shift to fixture 'headprogram' error range {960-970}
-  return retval;
+  return shellcommand((int)timeout_sec, "./headprogram", argstr );
 }
 
 int handle_shell_timeout_test_command(const char* cmd, int len) {
