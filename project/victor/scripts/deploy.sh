@@ -35,6 +35,7 @@ function usage() {
   echo '  $ANKI_BUILD_TYPE        build configuration {Debug,Release}'
   echo '  $BUILD_ROOT             root dir of build artifacts containing {bin,lib,etc,data} dirs'
   echo '  $INSTALL_ROOT           root dir of installed files on target'
+  echo '  $STAGING_DIR            directory to hold staged artifacts before deploy to robot'
 }
 
 while getopts "hvc:s:" opt; do
@@ -74,6 +75,7 @@ echo "   INSTALL_ROOT: ${INSTALL_ROOT}"
 : ${LIB_INSTALL_PATH:="${INSTALL_ROOT}/lib"}
 : ${BIN_INSTALL_PATH:="${INSTALL_ROOT}/bin"}
 : ${RSYNC_BIN_DIR="${TOPLEVEL}/tools/rsync"}
+: ${STAGING_DIR:="${BUILD_ROOT}/staging"}
 
 robot_sh mkdir -p "${INSTALL_ROOT}"
 robot_sh mkdir -p "${INSTALL_ROOT}/etc"
@@ -95,17 +97,19 @@ set -e
 # 
 robot_sh "/bin/systemctl stop victor.target"
 
-pushd ${BUILD_ROOT} > /dev/null 2>&1
+# install.sh is a script that is run here by deploy.sh, but also independently by
+# bitbake when building the Victor OS.
+${SCRIPT_PATH}/install.sh ${BUILD_ROOT} ${STAGING_DIR}
+
+
+pushd ${STAGING_DIR} > /dev/null 2>&1
 
 # Since invoking rsync multiple times is expensive.
 # build an include file list so that we can run a single rsync command
+rm -rf ${BUILD_ROOT}/rsync.*.lst
 RSYNC_LIST="${BUILD_ROOT}/rsync.$$.lst"
-touch ${RSYNC_LIST}
 
-find lib -type f -name '*.so' >> ${RSYNC_LIST}
-find bin -type f -not -name '*.full' >> ${RSYNC_LIST}
-find etc >> ${RSYNC_LIST}
-find data >> ${RSYNC_LIST}
+find . -type f > ${RSYNC_LIST}
 
 #
 # Use --inplace to avoid consuming temp space & minimize number of writes
@@ -117,8 +121,8 @@ rsync -rlptD -uzvP \
   --rsync-path=${DEVICE_RSYNC_BIN_DIR}/rsync.bin \
   --files-from=${RSYNC_LIST} \
   -e ssh \
-  ./ root@${ANKI_ROBOT_HOST}:/anki/
+  ./ root@${ANKI_ROBOT_HOST}:/
 
-rm -f ${BUILD_ROOT}/rsync.*.lst
+rm -f "${RSYNC_LIST}"
 
 popd > /dev/null 2>&1
