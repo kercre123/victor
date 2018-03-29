@@ -484,6 +484,7 @@ namespace Contacts {
   }
 }
 
+const int syscon_buf_overflow_indicator = 0x88; //syscon debug mode inserts this in the stream
 char* Contacts::getline(int timeout_us, int *out_len)
 {
   int c;
@@ -491,8 +492,10 @@ char* Contacts::getline(int timeout_us, int *out_len)
   
   uint32_t start = Timer::get();
   do { //read 1 char (even if timeout==0)
-    if( (c = Contacts::getchar()) > 0 ) //ignore null; messes with ascii parser
+    if( (c = Contacts::getchar()) > 0 ) { //ignore null; messes with ascii parser
+      if( c == syscon_buf_overflow_indicator ) c = '@';
       line = line_process_char_(c, out_len);
+    }
   } while( !line && Timer::elapsedUs(start) < timeout_us );
   
   return line;
