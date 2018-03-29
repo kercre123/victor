@@ -10,15 +10,25 @@ class VictorWebsocket(object):
 
     websocket.enableTrace(True)
     self.robot_ip = robot_ip
+    #Generic subscribe message, to request specific data type from Vic websocket
     self.subscribeData = {"type": "subscribe", "module": None}
     
+    self.intent_port = 8888
     self.micdata_port = 8889
+
+    self.num_audio_directions = 12
+    
     #TODO: Make this a blocking action, until a websocket connection is esablished
     self.mic_socket_established = False
     self.mic_stream_flag = False
     
+    self.intent_socket_established = False
+    self.intent_stream_flag = False
+
     self.mic_data_raw_results = {"dominant": [], "confidence": [0]*12}
+
     self.init_micdata_socket()
+    self.init_intent_socket()
 
   def init_micdata_socket(self):
     mic_websocket_url = "ws://{0}:{1}/socket".format(self.robot_ip, self.micdata_port)
@@ -35,13 +45,13 @@ class VictorWebsocket(object):
     self.wst_micdata = threading.Thread(target=self.ws_micdata.run_forever)
     self.wst_micdata.daemon = True 
     self.wst_micdata.start()
-    
+
   def close_mic_socket(self):
     self.ws_micdata.keep_running = False
     return
 
   def on_open_mic(self, ws):
-    self.subscribeData['module'] = 'micdata'
+    self.subscribeData["module"] = "micdata"
     subscribe_message = json.dumps(self.subscribeData)
     self.logger.info("Now waiting for a reply")
     ws.send(subscribe_message)
@@ -56,7 +66,8 @@ class VictorWebsocket(object):
     dominant = json_data["data"]["dominant"]
     confidence = json_data["data"]["confidence"]
 
-    if dominant >= 12: 
+    #There should only be 12 audio directions
+    if dominant >= self.num_audio_directions: 
         return
     else:
         self.mic_data_raw_results['dominant'].append(dominant)
@@ -64,6 +75,7 @@ class VictorWebsocket(object):
   
   def compile_mic_results(self):
     #Find mode of the 12 audio directions
+
     dominant_list = self.mic_data_raw_results['dominant']
     confidence_list = self.mic_data_raw_results['confidence']
     
@@ -85,13 +97,52 @@ class VictorWebsocket(object):
     final_confidence_avg = final_direction_confidence / final_direction_samples
     
     #reset raw results
-    self.mic_data_raw_results['dominant'].clear()
-    self.mic_data_raw_results['confidence'] = [0] * 12 
+    self.mic_data_raw_results["dominant"].clear()
+    self.mic_data_raw_results["confidence"] = [0] * 12 
     
     results_dict = {"final_dominant": final_direction,
                     "final_confidence": final_confidence_avg}
 
     return results_dict
+
+  def init_intent_socket(self):
+    intent_websocket_url = "ws://{0}:{1}/socket".format(self.robot_ip, self.intent_port)
+    
+    self.ws_intent = websocket.WebSocketApp(intent_websocket_url,
+                                    on_message = self.on_intent_message,
+                                    on_error = self.on_error,
+                                    on_close = self.on_close)
+    
+    self.ws_intent.on_open = self.on_open_intent
+    self.ws_intent.keep_running = True 
+
+    #Seperate background thread, to handle incoming messages
+    self.wst_intent = threading.Thread(target=self.ws_intent.run_forever)
+    self.wst_intent.daemon = True 
+    self.wst_intent.start()
+    
+  def close_intent_socket(self):
+    self.ws_intent.keep_running = False
+    return
+
+  def on_open_intent(self, ws):
+    self.subscribeData["module"] = "intents"
+    subscribe_message = json.dumps(self.subscribeData)
+    self.logger.info("Now waiting for a reply")
+    ws.send(subscribe_message)
+    self.intent_socket_established = True
+
+  def on_intent_message(self, ws, message):
+    pass
+
+  def process_list_of_intents(self, message):
+    pass
+  
+  def process_intent_stream(self, message):
+   pass  
+  
+  def compile_intent_results(self):
+    pass
 
   def on_error(self, ws, error):
     self.logger.info(error)
@@ -107,3 +158,4 @@ class VictorWebsocket(object):
     console.setFormatter(formatter)
     logger.addHandler(console)
     return logger
+  
