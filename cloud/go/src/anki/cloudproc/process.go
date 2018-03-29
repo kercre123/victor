@@ -23,6 +23,7 @@ var (
 	// key for Chipper use
 	ChipperSecret string
 	verbose       bool
+	platformOpts  []chipper.ConnOpt
 )
 
 type socketMsg struct {
@@ -144,7 +145,7 @@ procloop:
 				var chipperConn *chipper.Conn
 				var err error
 				ctxTime := util.TimeFuncMs(func() {
-					chipperConn, err = chipper.NewConn(ChipperURL, ChipperSecret, "device-id")
+					chipperConn, err = chipper.NewConn(ChipperURL, ChipperSecret, platformOpts...)
 					if err != nil {
 						log.Println("Error getting chipper connection:", err)
 						p.writeError("connecting", err.Error())

@@ -305,12 +305,18 @@ def cxx_glob(search_base, include_paths, include_exts=[""], includes=[], exclude
 
     include_globs.extend(includes)
 
+    platform_list = platform
+    if not platform_list:
+        platform_list = []
+    elif not isinstance(platform_list, list):
+        platform_list = [platform_list]
+
     finder = FindSrc()
     files = finder.find_src(search_base,
                             search_base,
                             include_globs,
                             excludes,
-                            [platform] if platform else [])
+                            platform_list)
 
     return files
 
@@ -345,7 +351,8 @@ def go_project(name,
 
     deps = cxx_glob(search_base,
                     [os.path.relpath(os.environ['GOPATH'], search_base)],
-                    FindSrc.ANKI_GO_SRC_EXTS)
+                    FindSrc.ANKI_GO_SRC_EXTS,
+                    platform=list(FindSrc.ANKI_BUILD_PLATFORMS))
 
     srcs = all_glob(search_base, [dir])
 
