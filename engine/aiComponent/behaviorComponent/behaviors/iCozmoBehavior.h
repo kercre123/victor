@@ -34,6 +34,7 @@
 #include "clad/types/unlockTypes.h"
 #include "util/console/consoleVariable.h"
 #include "util/logging/logging.h"
+#include "util/string/stringUtils.h"
 
 //Transforms enum into string
 #define DEBUG_SET_STATE(s) SetDebugStateName(#s)
@@ -684,8 +685,9 @@ bool ICozmoBehavior::FindAnonymousBehaviorByNameAndDowncast(const std::string& b
 template <typename T>
 void ICozmoBehavior::MakeMemberTunable(T& param, const std::string& name, const char* category)
 {
-  const std::string uniqueName = GetDebugLabel() + "_" + name;
-  const bool unregisterOnDestruction = true;
+  std::string uniqueName = GetDebugLabel() + "_" + name;
+  Anki::Util::StringReplace( uniqueName, "@", "" );
+  static const bool unregisterOnDestruction = true;
   if( category == nullptr ) {
     category = "BehaviorInstanceParams";
   }

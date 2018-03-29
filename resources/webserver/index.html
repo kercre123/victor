@@ -115,10 +115,8 @@
         // Page ENTRY actions:
         if (pageName == "page_main") {
             if (!mainPageInitialized) {
-                console.log('Initializing page_main');
                 mainPageInitialized = true;
                 $.post("/getmainrobotinfo", function(data) {
-                    console.log('returned from /getmainrobotinfo');
                     var payload = data.split("\n");
                     $("#main_robot_id").html(payload[0]);
                     $("#main_robot_serial_number").html(payload[1]);
@@ -439,6 +437,25 @@
         }
     }
 
+    function InitConfirmDialog() {
+        $("#confirm_dialog").dialog({ autoOpen: false, modal: true, resizable: false,
+            draggable: true,
+            width: 'auto',
+            buttons: {
+                "OK": function() {
+                    $("#confirm_dialog").dialog("close");
+                    if (dialogOKFunction !== undefined) {
+                        dialogOKFunction();
+                        dialogOKFunction = undefined;
+                    }
+                },
+                "Cancel": function () {
+                    $("#confirm_dialog").dialog("close");
+                    dialogOKFunction = undefined;
+                }
+        } });
+    }
+
     function StartConfirmDialog(title, body, okfunction) {
         dialogOKFunction = okfunction;
         $("#confirm_dialog_body").html(body);
@@ -488,22 +505,7 @@
         $("#btn_console_vars_save").click(ButtonHandler_ConsoleVarsSave);
         $("#btn_console_vars_reset").click(ButtonHandler_ConsoleVarsReset);
         $("#btn_console_vars_delete").click(ButtonHandler_ConsoleVarsDelete);
-        $("#confirm_dialog").dialog({ autoOpen: false, modal: true, resizable: false,
-            draggable: true,
-            width: 'auto',
-            buttons: {
-                "OK": function() {
-                    $("#confirm_dialog").dialog("close");
-                    if (dialogOKFunction !== undefined) {
-                        dialogOKFunction();
-                        dialogOKFunction = undefined;
-                    }
-                },
-                "Cancel": function () {
-                    $("#confirm_dialog").dialog("close");
-                    dialogOKFunction = undefined;
-                }
-        } });
+        InitConfirmDialog();
 
         $.post("getinitialconfig", function(data) {
             var payload = data.split("\n");
@@ -558,6 +560,7 @@
             $.post("/"+event.target.value, function(data) {
                 $("#content").html(data);
                 $("#content").show();
+                InitConfirmDialog();
             });
             event.preventDefault();
         });
