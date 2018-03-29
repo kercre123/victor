@@ -36,16 +36,9 @@ TEST_INTENT(UserIntentsTransitions, SetTimer, "set_timer")
 {
   TestBehaviorFramework tbf;
   tbf.InitializeStandardBehaviorComponent();
-  auto& bc = tbf.GetBehaviorContainer();
 
   // Build a valid stack - this test breaks if this stack is no longer valid
-  std::vector<IBehavior*> stack;
-  stack.push_back(bc.FindBehaviorByID(BehaviorID::DevBaseBehavior).get());
-  stack.push_back(bc.FindBehaviorByID(BehaviorID::CoordinateGlobalInterrupts).get());
-  stack.push_back(bc.FindBehaviorByID(BehaviorID::GlobalInterruptions).get());
-  stack.push_back(bc.FindBehaviorByID(BehaviorID::HighLevelAI).get());
-  stack.push_back(bc.FindBehaviorByID(BehaviorID::DriveOffChargerIntoObserving).get());
-  ASSERT_TRUE(tbf.CanStackOccurDuringFreeplay(stack));
+  std::vector<IBehavior*> stack = tbf.GetNamedBehaviorStack("driveOffChargerIntoObserving_stack");
 
   UserIntent_TimeInSeconds timeInSeconds(20);
   UserIntent timerIntent;

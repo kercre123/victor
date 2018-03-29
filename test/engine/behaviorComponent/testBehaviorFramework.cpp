@@ -17,7 +17,10 @@
 
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 
+#include "clad/types/behaviorComponent/behaviorTypes.h"
+#include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -48,6 +51,10 @@ namespace Anki{
 namespace Cozmo{
 
 namespace {
+
+const std::string kNamedBehaviorStackFileName = "test/aiTests/namedBehaviorStacks.json";
+const char* kStackIsForTestOnlyKey = "stackIsForTestOnly";
+const char* kStackKey = "stack";
 
 template<typename T>
 T* GetFromMap(const BEIComponentMap& map, const BEIComponentID componentID) {
@@ -269,6 +276,29 @@ void TestBehaviorFramework::AddDelegateToStack(IBehavior* delegate)
   bsm.Delegate(topOfStack, delegate);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::vector<IBehavior*> TestBehaviorFramework::GetNamedBehaviorStack(const std::string& stackName)
+{
+  if(_namedBehaviorStacks.empty()){
+    LoadNamedBehaviorStacks();
+  }
+
+  ASSERT_NAMED(_namedBehaviorStacks.find(stackName) != _namedBehaviorStacks.end(),
+               ("No namedBehaviorStack exists with name: " + stackName).c_str());
+  return _namedBehaviorStacks[stackName];
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehaviorFramework::SetBehaviorStackByName(const std::string& stackName)
+{
+  if(_namedBehaviorStacks.empty()){
+    LoadNamedBehaviorStacks();
+  }
+
+  ASSERT_NAMED(_namedBehaviorStacks.find(stackName) != _namedBehaviorStacks.end(),
+               ("No namedBehaviorStack exists with name: " + stackName).c_str());
+  ReplaceBehaviorStack(_namedBehaviorStacks[stackName]);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorFramework::FullTreeWalk(std::map<IBehavior*,std::set<IBehavior*>>& delegateMap,
@@ -609,6 +639,38 @@ bool TestBehavior::CallDelegateIfInControlInternalCallbackRobot(Robot& robot,
   new WaitForLambdaAction([&actionCompleteRef](Robot& r){ return actionCompleteRef; });
 
   return DelegateIfInControl(action, &TestBehavior::Bar);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehaviorFramework::LoadNamedBehaviorStacks()
+{
+  ASSERT_NAMED( _namedBehaviorStacks.empty(), "Named Behavior Stacks should be loaded only once");
+
+  Json::Value stackList;
+  const bool readSuccess = cozmoContext->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
+                                                                       kNamedBehaviorStackFileName,
+                                                                       stackList);
+  ASSERT_NAMED( readSuccess, ("TestBehaviorFramework error reading file: " + kNamedBehaviorStackFileName).c_str() );
+
+  for (const auto& behaviorStackName : stackList.getMemberNames() ){
+    std::vector<IBehavior*> behaviorStack;
+    Json::Value stackInfo = stackList[behaviorStackName];
+    bool stackIsForTestOnly = stackInfo[kStackIsForTestOnlyKey].asBool();
+    Json::Value jsonStack = stackInfo[kStackKey];
+    for(auto& behaviorName : jsonStack){
+      BehaviorID behaviorId;
+      ASSERT_NAMED(EnumFromString(behaviorName.asString(), behaviorId), 
+                   ("no behavior exists of name: " + behaviorName.asString()).c_str());
+
+      behaviorStack.push_back(GetBehaviorContainer().FindBehaviorByID(behaviorId).get());
+    }
+    const auto& it = _namedBehaviorStacks.find(behaviorStackName);
+    ASSERT_NAMED( it == _namedBehaviorStacks.end(), 
+                 ("Name already exists for behavior stack: " + behaviorStackName).c_str());
+    ASSERT_NAMED(stackIsForTestOnly || CanStackOccurDuringFreeplay(behaviorStack),
+                 ("Named Behavior Stack: " + behaviorStackName + " is not achievable during freeplay").c_str());
+    _namedBehaviorStacks[behaviorStackName] = behaviorStack;
+  }
 }
 
 }

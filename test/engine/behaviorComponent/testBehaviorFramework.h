@@ -82,7 +82,10 @@ public:
   BehaviorExternalInterface& GetBehaviorExternalInterface(){ assert(_behaviorExternalInterface); return *_behaviorExternalInterface;}
   BehaviorSystemManager& GetBehaviorSystemManager(){ assert(_behaviorSystemManager); return *_behaviorSystemManager; }
   BehaviorContainer& GetBehaviorContainer(){ assert(_behaviorContainer); return *_behaviorContainer;}
-   
+
+ // Return a named behavior stack as defined in namedBehaviorStacks.json
+  std::vector<IBehavior*> GetNamedBehaviorStack(const std::string& behaviorStackName);
+
   ///////
   // Functions which alter the behavior stack
   ///////
@@ -95,7 +98,9 @@ public:
   void ReplaceBehaviorStack(std::vector<IBehavior*> newStack);
   // Add a valid delegate to the stack
   void AddDelegateToStack(IBehavior* delegate);
-  
+   // Set the active behavior stack using a namedBehviorStack from namedBehaviorStacks.json
+  void SetBehaviorStackByName(const std::string& behaviorStackName);
+
   // Delegate through all valid tree states
   // TreeCallback is called after each delegation
   void FullTreeWalk(std::map<IBehavior*,std::set<IBehavior*>>& delegateMap,
@@ -105,8 +110,14 @@ public:
   static bool CanStackOccurDuringFreeplay(const std::vector<IBehavior*>& stackToBuild);
 
 private:
+
+  // Called once during init to load the namedBehaviorStack map from Json
+  void LoadNamedBehaviorStacks();
+
   std::unique_ptr<BehaviorContainer> _behaviorContainer;
   std::unique_ptr<Robot> _robot;
+  
+  std::unordered_map<std::string, std::vector<IBehavior*>> _namedBehaviorStacks;
 
   // Not guaranteed to be initialized
   AIComponent*               _aiComponent;
