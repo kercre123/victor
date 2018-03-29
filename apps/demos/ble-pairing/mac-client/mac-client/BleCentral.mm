@@ -162,7 +162,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       break;
     case Clad: {
       Anki::Victor::ExternalComms::ExternalComms extComms;
-      const size_t unpackSize = extComms.Unpack((uint8_t*)bytes, n);
+      extComms.Unpack((uint8_t*)bytes, n);
       
       if(extComms.GetTag() == Anki::Victor::ExternalComms::ExternalCommsTag::RtsConnection) {
         Anki::Victor::ExternalComms::RtsConnection rtsMsg = extComms.Get_RtsConnection();
@@ -226,7 +226,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   }
   
   Anki::Victor::ExternalComms::ExternalComms extComms;
-  const size_t unpackSize = extComms.Unpack(msgBuffer, size);
+  extComms.Unpack(msgBuffer, size);
   
   free(msgBuffer);
   
@@ -276,7 +276,10 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         //
         Anki::Victor::ExternalComms::RtsWifiIpResponse msg = rtsMsg.Get_RtsWifiIpResponse();
         for(int i = 0; i < 4; i++) {
-          printf("%d ", msg.ipV4[i]);
+          printf("%d", msg.ipV4[i]);
+          if(i < 3) {
+            printf(".");
+          }
         } printf("\n");
         
         if(_currentCommand == "wifi-ip" && !_readyForNextCommand) {
@@ -307,7 +310,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
             break;
         }
 
-        printf("             ssid = %s\n connection_state = %s\n     access_point = %s\n", [self asciiStr:(char*)msg.wifiSsidHex.c_str() length:msg.wifiSsidHex.length()].c_str(), state.c_str(), msg.accessPoint? "true" : "false");
+        printf("             ssid = %s\n connection_state = %s\n     access_point = %s\n", [self asciiStr:(char*)msg.wifiSsidHex.c_str() length:(int)msg.wifiSsidHex.length()].c_str(), state.c_str(), msg.accessPoint? "true" : "false");
         if(_currentCommand == "status" && !_readyForNextCommand) {
           _readyForNextCommand = true;
         }
@@ -326,8 +329,6 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       }
       case Anki::Victor::ExternalComms::RtsConnectionTag::RtsOtaUpdateResponse: {
         Anki::Victor::ExternalComms::RtsOtaUpdateResponse msg = rtsMsg.Get_RtsOtaUpdateResponse();
-        uint64_t c = msg.current;
-        uint64_t t = msg.expected;
         _otaStatusCode = msg.status;
         _otaProgress = msg.current;
         _otaExpected = msg.expected;
@@ -360,6 +361,8 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         //
         break;
       }
+      default:
+        break;
     }
   }
 }
@@ -464,7 +467,11 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     std::array<uint8_t, crypto_kx_PUBLICKEYBYTES> publicKeyArray;
     memcpy(std::begin(publicKeyArray), _publicKey, crypto_kx_PUBLICKEYBYTES);
     
-    crypto_kx_client_session_keys(_decryptKey, _encryptKey, _publicKey, _secretKey, _remotePublicKey);
+    int suc = crypto_kx_client_session_keys(_decryptKey, _encryptKey, _publicKey, _secretKey, _remotePublicKey);
+    
+    if(suc != 0) {
+      if(_verbose) NSLog(@"Problem generated session keys. Try running mac-client.");
+    }
     
     uint8_t tmpDecryptKey[crypto_kx_SESSIONKEYBYTES];
     memcpy(tmpDecryptKey, _decryptKey, crypto_kx_SESSIONKEYBYTES);
@@ -596,7 +603,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         
         uint8_t requestTimeout_s = 15;
         Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiConnectRequest>(self,
-                                                                                 [self hexStr:(char*)words[1].c_str() length:words[1].length()], words[2], requestTimeout_s, auth, hidden);
+                                                                                 [self hexStr:(char*)words[1].c_str() length:(int)words[1].length()], words[2], requestTimeout_s, auth, hidden);
         
       } else if(strcmp(words[0].c_str(), "wifi-ap") == 0) {
         bool enable = (words[1]=="true")?true:false;
@@ -669,7 +676,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         break;
     }
     
-    std::string ssidAscii = [self asciiStr:(char*)msg.scanResult[i].wifiSsidHex.c_str() length:msg.scanResult[i].wifiSsidHex.length()];
+    std::string ssidAscii = [self asciiStr:(char*)msg.scanResult[i].wifiSsidHex.c_str() length:(int)msg.scanResult[i].wifiSsidHex.length()];
     
     printf("%d           %s          %s\n", msg.scanResult[i].signalStrength, sec.c_str(), ssidAscii.c_str());
     

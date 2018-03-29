@@ -96,7 +96,6 @@ void EnableWiFiInterface(const bool enable, ExecCommandCallback callback);
 std::map<std::string, std::string> UnPackWiFiConfig(const std::vector<uint8_t>& packed);
 void SetWiFiConfig(const std::vector<WiFiConfig>& networks, ExecCommandCallback);
 void HandleOutputCallback(int rc, const std::string& output);
-bool HasInternet();
 bool GetIpFromHostName(char* hostname, char* ip);
 bool IsAccessPointMode();
 bool EnableAccessPointMode(std::string ssid, std::string pw);

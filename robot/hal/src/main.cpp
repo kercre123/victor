@@ -16,7 +16,6 @@
   #define HAL_NOT_PROVIDING_CLOCK
 #endif
 
-
 int shutdownSignal = 0;
 int shutdownCounter = 2;
 

@@ -332,7 +332,7 @@ void SecurePairing::SendWifiScanResult() {
   SendRtsMessage<RtsWifiScanResponse>(statusCode, wifiScanResults);
 }
 
-void SecurePairing::SendWifiConnectResult(bool success) {
+void SecurePairing::SendWifiConnectResult() {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -465,8 +465,11 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::Rts
       nullptr,
       nullptr);
 
-    if(Anki::HasInternet()) {
-      SendWifiConnectResult(connected);
+    WiFiState state = Anki::GetWiFiState();
+    bool online = state.connState == WiFiConnState::ONLINE;
+
+    if(online) {
+      SendWifiConnectResult();
     } else {
       ev_timer_again(_loop, &_handleInternet.timer);
     }
@@ -791,12 +794,12 @@ void SecurePairing::IncrementAbnormalityCount() {
 void SecurePairing::HandleInternetTimerTick() {
   _inetTimerCount++;
 
-  if(Anki::HasInternet()) {
+  WiFiState state = Anki::GetWiFiState();
+  bool online = state.connState == WiFiConnState::ONLINE;
+
+  if(online || _inetTimerCount > _wifiConnectTimeout_s) {
     ev_timer_stop(_loop, &_handleInternet.timer);
-    SendWifiConnectResult(true);
-  } else if(_inetTimerCount > _wifiConnectTimeout_s) {
-    ev_timer_stop(_loop, &_handleInternet.timer);
-    SendWifiConnectResult(false);
+    SendWifiConnectResult();
   }
 }
 

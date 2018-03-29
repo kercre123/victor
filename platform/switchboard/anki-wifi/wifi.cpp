@@ -891,10 +891,6 @@ WiFiState GetWiFiState() {
     }
   }
 
-  if(HasInternet()) {
-    wifiState.connState = WiFiConnState::ONLINE;
-  }
-
   return wifiState;
 }
 
@@ -986,12 +982,6 @@ bool GetIpFromHostName(char* hostName, char* ipAddressOut) {
   strcpy(ipAddressOut, inet_ntoa(*ip[0]));
 
   return true;
-}
-
-bool HasInternet() {
-  std::string google = "google.com";
-  std::string amazon = "amazon.com";
-  return CanConnectToHostName((char*)google.c_str()) || CanConnectToHostName((char*)amazon.c_str());
 }
 
 bool IsAccessPointMode() {
@@ -1141,11 +1131,13 @@ int GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {
   memset(ipv4_32bits, 0, 4);
   memset(ipv6_128bits, 0, 16);
 
+  const char* interface = IsAccessPointMode()? "tether" : "wlan0";
+
   while(current != nullptr) {
     int s;
     int family = current->ifa_addr->sa_family;
 
-    if ((family == AF_INET || family == AF_INET6) && (strcmp(current->ifa_name, "wlan0") == 0)) {
+    if ((family == AF_INET || family == AF_INET6) && (strcmp(current->ifa_name, interface) == 0)) {
       char host[NI_MAXHOST];
 
       s = getnameinfo(current->ifa_addr,

@@ -92,7 +92,6 @@ enum WiFiAuth : uint8_t {
 - (void) HandleChallengeMessage:(const Anki::Victor::ExternalComms::RtsChallengeMessage&)msg;
 - (void) HandleChallengeSuccessMessage:(const Anki::Victor::ExternalComms::RtsChallengeSuccessMessage&)msg;
 - (void) HandleWifiScanResponse:(const Anki::Victor::ExternalComms::RtsWifiScanResponse&)msg;
-- (void) HandleWifiConnectResponse:(const Anki::Victor::ExternalComms::RtsWifiConnectResponse&)msg;
 - (void) HandleReceiveAccessPointResponse:(const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&)msg;
 
 - (void) send:(const void*)bytes length:(int)n;
@@ -123,7 +122,7 @@ public:
     Anki::Victor::ExternalComms::ExternalComms msg = Anki::Victor::ExternalComms::ExternalComms(Anki::Victor::ExternalComms::RtsConnection(T(std::forward<Args>(args)...)));
     std::vector<uint8_t> messageData(msg.Size());
     const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
-    [central send:messageData.data() length:packedSize];
+    [central send:messageData.data() length:(int)packedSize];
   }
 };
 
