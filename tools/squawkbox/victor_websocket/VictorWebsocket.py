@@ -27,6 +27,9 @@ class VictorWebsocket(object):
 
     self.mic_data_raw_results = {"dominant": [], "confidence": [0]*12}
 
+    self.user_intents_list = None
+    self.cloud_intents_list = None
+
     self.init_micdata_socket()
     self.init_intent_socket()
 
@@ -133,10 +136,15 @@ class VictorWebsocket(object):
     self.intent_socket_established = True
 
   def on_intent_message(self, ws, message):
-    pass
+    #first message will be a list of all available intents, so need to process
+    if self.user_intents_list == None and self.cloud_intents_list == None:
+      self.process_list_of_intents(message)
 
+  #Refer to BI-918 for format of sample message 
   def process_list_of_intents(self, message):
-    pass
+    message_to_json = json.loads(message)
+    self.user_intents_list = message_to_json["data"][0]["list"]
+    self.cloud_intents_list = message_to_json["data"][1]["list"]
   
   def process_intent_stream(self, message):
    pass  
