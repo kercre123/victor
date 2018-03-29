@@ -52,6 +52,14 @@ AnimationAudioClient::~AnimationAudioClient()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AnimationAudioClient::InitAnimation()
+{
+  // Clear events (if any) from the previous animation 
+  std::lock_guard<std::mutex> lock( _lock );
+  _activeEvents.clear();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnimationAudioClient::Update() const
 {
   if ( _audioController == nullptr ) { return; }
