@@ -86,6 +86,8 @@ enum WiFiAuth : uint8_t {
 - (void) handleReceiveSecure:(const void*)bytes length:(int)n;
 - (void) printHelp;
 
+- (void) SendSshPublicKey:(std::string)filename;
+
 - (void) HandleReceiveHandshake:(const void*)bytes length:(int)n;
 - (void) HandleReceivePublicKey:(const Anki::Victor::ExternalComms::RtsConnRequest&)msg;
 - (void) HandleReceiveNonce:(const Anki::Victor::ExternalComms::RtsNonceMessage&)msg;

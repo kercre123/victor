@@ -595,6 +595,8 @@ void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection& msg
     for(int i = 0; i < sshMsg.sshAuthorizedKeyBytes.size(); i++) {
       data += sshMsg.sshAuthorizedKeyBytes[i];
     }
+
+    Log::Write("Writing public SSH key to file: %s/%s", sshPath.c_str(), sshFile.c_str());
     WriteFileAtomically(sshPath + "/" + sshFile, data, Anki::kModeUserReadWrite);
   }
 }

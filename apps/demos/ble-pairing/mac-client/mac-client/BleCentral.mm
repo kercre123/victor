@@ -23,6 +23,8 @@
   printf("  ota-start <url>                              Start Ota update with provided URL string argument.\n");
   printf("  ota-progress                                 Get current Ota download progress.\n");
   printf("  status                                       Get Vector's general status.\n");
+  printf("  ssh-send [filename]                          Generates/Sends a public SSH key to Victor.\n");
+  printf("  ssh-start                                    Tries to start an SSH session with Victor.\n");
 }
 
 - (void)setVerbose:(bool)enabled {
@@ -275,14 +277,24 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiIpResponse: {
         //
         Anki::Victor::ExternalComms::RtsWifiIpResponse msg = rtsMsg.Get_RtsWifiIpResponse();
-        for(int i = 0; i < 4; i++) {
-          printf("%d", msg.ipV4[i]);
-          if(i < 3) {
-            printf(".");
-          }
-        } printf("\n");
         
         if(_currentCommand == "wifi-ip" && !_readyForNextCommand) {
+          for(int i = 0; i < 4; i++) {
+            printf("%d", msg.ipV4[i]);
+            if(i < 3) {
+              printf(".");
+            }
+          } printf("\n");
+          _readyForNextCommand = true;
+        } else if(_currentCommand == "ssh-start" && !_readyForNextCommand) {          
+          NSString* sshArg = [NSString stringWithFormat:@"root@%d.%d.%d.%d", msg.ipV4[0], msg.ipV4[1], msg.ipV4[2], msg.ipV4[3]];
+          
+          NSString *s = [NSString stringWithFormat:
+                         @"tell application \"Terminal\" to do script \"ssh %@\"", sshArg];
+          
+          NSAppleScript *as = [[NSAppleScript alloc] initWithSource: s];
+          [as executeAndReturnError:nil];
+          
           _readyForNextCommand = true;
         }
         
@@ -365,6 +377,37 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         break;
     }
   }
+}
+
+- (void) SendSshPublicKey:(std::string)filename {
+  NSFileManager* fileManager = [NSFileManager defaultManager];
+  NSString* fn = [NSString stringWithUTF8String:filename.c_str()];
+  
+  if(![fn containsString:@".pub"]) {
+    printf("WARNING! Supplied key does not look like a public key. Are you sure you want to send it to Vector? yes/no\n");
+    char answer[3];
+    scanf("%3s",answer);
+    
+    if(!(strncmp(answer, "yes", 3) == 0)) {
+      return;
+    }
+  }
+  
+  if(![fileManager fileExistsAtPath:fn]) {
+    // Generate Vector keys
+    printf("Supplied public key does not exist.\n");
+    return;
+  }
+  
+  NSString* pubKey = [NSString stringWithContentsOfFile:fn encoding:NSUTF8StringEncoding error:nil];
+  std::string contents = std::string([pubKey UTF8String], pubKey.length);
+  
+  std::vector<std::string> keyParts;
+  for(uint32_t i = 0; i < contents.length(); i += 255) {
+    keyParts.push_back(contents.substr(i, 255));
+  }
+  
+  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsSshRequest>(self, keyParts);
 }
 
 - (void) send:(const void*)bytes length:(int)n {
@@ -624,6 +667,22 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         _currentCommand = "";
       } else if(strcmp(words[0].c_str(), "status") == 0) {
         Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsStatusRequest>(self);
+      } else if(strcmp(words[0].c_str(), "ssh-send") == 0) {
+        NSArray* pathParts = [NSArray arrayWithObjects:NSHomeDirectory(), @".ssh", @"id_rsa_vic_dev.pub", nil];
+        NSString* keyPath = [NSString pathWithComponents:pathParts];
+        std::string filename = std::string(keyPath.UTF8String);
+        
+        if(words.size() > 1) {
+          filename = words[1];
+        }
+        
+        [self SendSshPublicKey:filename];
+        _readyForNextCommand = true;
+        _currentCommand = "";
+      } else if(strcmp(words[0].c_str(), "ssh-start") == 0) {
+        _readyForNextCommand = false;
+        _currentCommand = "ssh-start";
+        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiIpRequest>(self);
       } else if(strcmp(words[0].c_str(), "help") == 0) {
         _readyForNextCommand = true;
         _currentCommand = "";
