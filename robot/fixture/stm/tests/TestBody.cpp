@@ -58,17 +58,39 @@ static void mcu_power_down_(void) {
   swd_stm32_deinit();
 }
 
-void stm32f030_program_(bool erase, uint32_t flash_addr, const uint8_t *bin, const uint8_t *binEnd, bool verify, const char* name)
+static void mcu_swd_init_(void) {
+  try { swd_stm32_init(); /*safe from re-init*/ }
+  catch(int e) {
+    throw e;
+  }
+}
+
+static void mcu_flash_erase_(void) {
+  try { swd_stm32_erase(); }
+  catch(int e) {
+    throw e;
+  }
+}
+
+static void mcu_flash_program_(uint32_t flash_addr, const uint8_t *bin, const uint8_t *binEnd, bool verify, const char* name)
 {
-  swd_stm32_init(); //safe from re-init
-  
-  if( erase )
-    swd_stm32_erase();
+  mcu_swd_init_();
   
   int size = binEnd - bin;
-  if( size > 0 ) {
-    ConsolePrintf("load %s: %u kB\n", name?name:"program", CEILDIV(size,1024));
-    swd_stm32_flash(flash_addr, bin, binEnd, verify);
+  if( size < 1 )
+    throw ERROR_BAD_ARG;
+  
+  ConsolePrintf("load %s: %u kB\n", name?name:"program", CEILDIV(size,1024));
+  try { swd_stm32_flash(flash_addr, bin, binEnd, verify); }
+  catch(int e) {
+    throw e;
+  }
+}
+
+static void mcu_flash_verify_(uint32_t flash_addr, const uint8_t* bin_start, const uint8_t* bin_end) {
+  try { swd_stm32_verify(flash_addr, bin_start, bin_end); }
+  catch(int e) {
+    throw e;
   }
 }
 
@@ -126,7 +148,7 @@ static void ShortCircuitTest(void)
 static void BodyTryReadSerial(void)
 {
   mcu_power_up_();
-  swd_stm32_init();
+  mcu_swd_init_();
   bodyid.hwrev = swd_read32(FLASH_ADDR_SYSBOOT+16);
   bodyid.model = swd_read32(FLASH_ADDR_SYSBOOT+20);
   bodyid.esn    = swd_read32(FLASH_ADDR_SYSBOOT+24); /*ein0*/
@@ -152,13 +174,13 @@ static void BodyLoadTestFirmware(void)
 {
   //erase and power cycle resets any strange internal states from previous fw
   mcu_power_up_();
-  swd_stm32_init();
-  swd_stm32_erase();
+  mcu_swd_init_();
+  mcu_flash_erase_();
   mcu_power_down_();
   
   //Erase and flash
   mcu_power_up_();
-  stm32f030_program_(0, FLASH_ADDR_TEST_APP, g_BodyTest, g_BodyTestEnd, 1, "test firmware");
+  mcu_flash_program_(FLASH_ADDR_TEST_APP, g_BodyTest, g_BodyTestEnd, 1, "test firmware");
   mcu_power_down_();
   
   //Power up and test comms
@@ -190,8 +212,8 @@ static void BodyLoadProductionFirmware(void)
 {
   //erase and power cycle resets any strange internal states from previous fw
   mcu_power_up_();
-  swd_stm32_init();
-  swd_stm32_erase();
+  mcu_swd_init_();
+  mcu_flash_erase_();
   mcu_power_down_();
   
   //assign ESN & HW ids (preserve, if exist)
@@ -214,10 +236,10 @@ static void BodyLoadProductionFirmware(void)
   //Erase and flash boot/app
   ConsolePrintf("load: ESN %08x, hwrev %u, model %u\n", bodyid.esn, bodyid.hwrev, bodyid.model);
   mcu_power_up_();
-  stm32f030_program_(0, FLASH_ADDR_SYSBOOT, bodyboot, bodyboot+bodybootSize, 1, "bootloader");
-  stm32f030_program_(0, FLASH_ADDR_SYSCON,  g_Body,     g_BodyEnd,     1, "application");
-  swd_stm32_verify( FLASH_ADDR_SYSBOOT,     bodyboot, bodyboot+bodybootSize );
-  //swd_stm32_verify( FLASH_ADDR_SYSCON,  g_Body,     g_BodyEnd     );
+  mcu_flash_program_(FLASH_ADDR_SYSBOOT, bodyboot, bodyboot+bodybootSize, 1, "bootloader");
+  mcu_flash_program_(FLASH_ADDR_SYSCON,  g_Body,     g_BodyEnd,     1, "application");
+  mcu_flash_verify_( FLASH_ADDR_SYSBOOT, bodyboot, bodyboot+bodybootSize );
+  //mcu_flash_verify_( FLASH_ADDR_SYSCON,  g_Body,     g_BodyEnd     );
   mcu_power_down_();
 }
 

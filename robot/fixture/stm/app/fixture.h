@@ -217,9 +217,14 @@ typedef int error_t;
 #define ERROR_TESTPORT_RX_ERROR           405 //driver (uart) overflow or dropped chars detected
 
 //<export heading> SWD Errors (mcu programming interface)
-//#define ERROR_SWD_IDCODE            450   // IDCODE is unrecognized
-//#define ERROR_SWD_READ_FAULT        451   // SWD read failed
-//#define ERROR_SWD_WRITE_FAULT       452   // SWD write failed
+#define ERROR_SWD_CHIPINIT            450   // failed to initialze mcu core over SWD (check power & wiring)
+#define ERROR_SWD_INIT_FAIL           451   // failed to initialze mcu core over SWD (check power & wiring)
+#define ERROR_SWD_READ_FAULT          452   // SWD register read failed
+#define ERROR_SWD_WRITE_FAULT         453   // SWD register write failed
+#define ERROR_SWD_FLASH_ERASE         454   // SWD flash erase operation failed
+#define ERROR_SWD_FLASH_WRITE         455   // SWD flash write operation failed
+#define ERROR_SWD_FLASH_VERIFY        456   // SWD flash verify operation failed
+
 //#define ERROR_SWD_WRITE_STUB        453   // Can't write stub
 //#define ERROR_SWD_WRITE_BLOCK       454   // Can't write block
 //#define ERROR_SWD_NOSTUB            455   // Stub did not start up
