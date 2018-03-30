@@ -501,8 +501,11 @@ void SecurePairing::HandleRtsWifiIpRequest(const Victor::ExternalComms::RtsConne
     std::array<uint8_t, 4> ipV4;
     std::array<uint8_t, 16> ipV6;
 
-    Anki::GetIpAddress(ipV4.data(), ipV6.data());
-    SendRtsMessage<RtsWifiIpResponse>(1, 0, ipV4, ipV6);
+    WiFiIpFlags flags = Anki::GetIpAddress(ipV4.data(), ipV6.data());
+    bool hasIpV4 = (flags & WiFiIpFlags::HAS_IPV4) != 0;
+    bool hasIpV6 = (flags & WiFiIpFlags::HAS_IPV6) != 0;
+
+    SendRtsMessage<RtsWifiIpResponse>(hasIpV4, hasIpV6, ipV4, ipV6);
   }
   
   Log::Write("Received wifi ip request.");
