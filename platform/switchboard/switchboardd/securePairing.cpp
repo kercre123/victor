@@ -154,6 +154,10 @@ void SecurePairing::SubscribeToCladMessages() {
 void SecurePairing::Reset(bool forced) {
   // Tell the stream that we can no longer send over encrypted channel
   _stream->SetEncryptedChannelEstablished(false);
+
+  // Send cancel message -- must do this before state is RAW
+  SendCancelPairing();
+
   _commsState = CommsState::Raw;
   
   // Tell key exchange to reset
@@ -161,9 +165,6 @@ void SecurePairing::Reset(bool forced) {
   
   // Clear pin
   _pin = "000000";
-  
-  // Send cancel message
-  SendCancelPairing();
 
   // Stop timers
   ev_timer_stop(_loop, &_handleInternet.timer);
@@ -402,6 +403,7 @@ void SecurePairing::HandleRtsConnResponse(const Anki::Victor::ExternalComms::Rts
     if(connResponse.connectionType == Anki::Victor::ExternalComms::RtsConnType::FirstTimePair) {    
       if(_isPairing && !_isOtaUpdating) {
         HandleInitialPair((uint8_t*)connResponse.publicKey.data(), crypto_kx_PUBLICKEYBYTES);
+        _state = PairingState::AwaitingNonceAck;
       } else {
         Log::Write("Client tried to initial pair while not in pairing mode.");
       }
@@ -419,13 +421,13 @@ void SecurePairing::HandleRtsConnResponse(const Anki::Victor::ExternalComms::Rts
           clientDecryptKeySaved);
 
         SendNonce();
+        _state = PairingState::AwaitingNonceAck;
         Log::Write("Received renew connection request.");
       } else {
         Reset();
         Log::Write("No stored session for public key.");
       }
     }
-    _state = PairingState::AwaitingNonceAck;
   } else {
     // ignore msg
     IncrementAbnormalityCount();
@@ -764,7 +766,7 @@ void SecurePairing::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
       } else{
         // ignore msg
         IncrementAbnormalityCount();
-        Log::Write("Internal state machine error. Assuming raw message, but state is not initial.");
+        Log::Write("Internal state machine error. Assuming raw message, but state is not initial [%d].", (int)_state);
       }
     } else {
       _cladHandler->ReceiveExternalCommsMsg(bytes, length);
@@ -833,6 +835,8 @@ int SecurePairing::SendRtsMessage(Args&&... args) {
     return _stream->SendPlainText(messageData.data(), packedSize);
   } else if(_commsState == CommsState::SecureClad) {
     return _stream->SendEncrypted(messageData.data(), packedSize);
+  } else {
+    Log::Write("Tried to send clad message when state was already set back to RAW.");
   }
 
   return -1;

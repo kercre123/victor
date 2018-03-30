@@ -153,6 +153,12 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   if([characteristic.UUID.UUIDString isEqualToString:_writeUuid.UUIDString]) {
     // Victor made write to UUID
     //NSLog(@"Receive %@", characteristic.value);
+    if(_verbose) {
+      printf("Received Raw [");
+      for(int i = 0; i < characteristic.value.length; i++) {
+        printf("%x ", ((uint8_t*)characteristic.value.bytes)[i]);
+      } printf("]\n");
+    }
     _bleMessageProtocol->ReceiveRawBuffer((uint8_t*)characteristic.value.bytes, (size_t)characteristic.value.length);
   } else if([characteristic.UUID.UUIDString isEqualToString:_writeSecureUuid.UUIDString]) {
     // Victor made write to secure UUID
@@ -161,6 +167,13 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 }
 
 - (void) handleReceive:(const void*)bytes length:(int)n {
+  if(_verbose) {
+    printf("Received [");
+    for(int i = 0; i < n; i++) {
+      printf("%x ", ((uint8_t*)bytes)[i]);
+    } printf("]\n");
+  }
+  
   switch(_rtsState) {
     case Raw:
       [self HandleReceiveHandshake:bytes length:n];
