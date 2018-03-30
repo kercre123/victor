@@ -1317,12 +1317,28 @@
       "AnimName": "ag_observe_oncharger_observing"
     },
     {
-      "CladEvent": "ReactToCubeTapCubeTapped",
+      "CladEvent": "ReactToCubeTapCubeTappedLvl1",
       "AnimName": "ag_cubetapping_reacttocubetap"
     },
     {
-      "CladEvent": "ReactToCubeSearchForCube",
+      "CladEvent": "ReactToCubeTapCubeTappedLvl2",
+      "AnimName": "ag_cubetapping_reacttocubetap_lvl2"
+    },
+    {
+      "CladEvent": "ReactToCubeTapCubeTappedLvl3",
+      "AnimName": "ag_cubetapping_reacttocubetap_lvl3"
+    },
+    {
+      "CladEvent": "ReactToCubeSearchForCubeLvl1",
       "AnimName": "ag_cubetapping_searchforcube"
+    },
+    {
+      "CladEvent": "ReactToCubeSearchForCubeLvl2",
+      "AnimName": "ag_cubetapping_searchforcube_lvl2"
+    },
+    {
+      "CladEvent": "ReactToCubeSearchForCubeLvl3",
+      "AnimName": "ag_cubetapping_searchforcube_lvl3"
     },
     {
       "CladEvent": "ReactToCubeTapCubeFound",

@@ -29,6 +29,7 @@
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
+#include "util/math/math.h"
 
 
 namespace {
@@ -43,9 +44,19 @@ namespace {
 namespace Anki {
 namespace Cozmo {
 
-namespace {
+constexpr BehaviorReactToCubeTap::CubeIntensityAnimations BehaviorReactToCubeTap::kReactToCubeAnimations =
+{
+  { BehaviorReactToCubeTap::EIntensityLevel::Level1,  AnimationTrigger::ReactToCubeTapCubeTappedLvl1 },
+  { BehaviorReactToCubeTap::EIntensityLevel::Level2,  AnimationTrigger::ReactToCubeTapCubeTappedLvl2 },
+  { BehaviorReactToCubeTap::EIntensityLevel::Level3,  AnimationTrigger::ReactToCubeTapCubeTappedLvl3 },
+};
 
-}
+constexpr BehaviorReactToCubeTap::CubeIntensityAnimations BehaviorReactToCubeTap::kSearchForCubeAnimations =
+{
+  { BehaviorReactToCubeTap::EIntensityLevel::Level1,  AnimationTrigger::ReactToCubeSearchForCubeLvl1 },
+  { BehaviorReactToCubeTap::EIntensityLevel::Level2,  AnimationTrigger::ReactToCubeSearchForCubeLvl2 },
+  { BehaviorReactToCubeTap::EIntensityLevel::Level3,  AnimationTrigger::ReactToCubeSearchForCubeLvl3 },
+};
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToCubeTap::InstanceConfig::InstanceConfig() :
@@ -57,7 +68,8 @@ BehaviorReactToCubeTap::InstanceConfig::InstanceConfig() :
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToCubeTap::DynamicVariables::DynamicVariables() :
-  state( EState::Invalid )
+  state( EState::Invalid ),
+  intensity( EIntensityLevel::FirstLevel )
 {
 
 }
@@ -146,12 +158,21 @@ void BehaviorReactToCubeTap::AlwaysHandleInScope( const EngineToGameEvent& event
 {
   if ( event.GetData().GetTag() == ExternalInterface::MessageEngineToGame::Tag::ObjectTapped )
   {
-    const ExternalInterface::ObjectTapped& payload = event.GetData().Get_ObjectTapped();
+    // record the cube tap
+    // if we're not currently active, this will activate us
+
+     const ExternalInterface::ObjectTapped& payload = event.GetData().Get_ObjectTapped();
 
     _iVars.targetCube.id              = payload.objectID;
     _iVars.targetCube.lastTappedTime  = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
     PRINT_CH_DEBUG( "Behaviors", "BehaviorReactToCubeTap", "Received Cube Tapped event [%u]", payload.objectID );
+
+    if ( IsActivated() )
+    {
+      // if we're currently active, we want to react to the tap depending on our current state.
+      OnCubeTappedWhileActive();
+    }
   }
 }
 
@@ -159,10 +180,7 @@ void BehaviorReactToCubeTap::AlwaysHandleInScope( const EngineToGameEvent& event
 void BehaviorReactToCubeTap::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
-
-  // begin playing our response to cube tap anim, then transition into figuring out if we need to drive off the charger or not
-  DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::ReactToCubeTapCubeTapped ),
-                       &BehaviorReactToCubeTap::TransitionToGetOffCharger );
+  ReactToCubeTapped();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -204,6 +222,40 @@ void BehaviorReactToCubeTap::BehaviorUpdate()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToCubeTap::ReactToCubeTapped()
+{
+  // begin playing our response to cube tap anim, then transition into figuring out if we need to drive off the charger or not
+
+  const AnimationTrigger animation = GetCubeReactionAnimation();
+  ASSERT_NAMED_EVENT( AnimationTrigger::Count != animation, "BehaviorReactToCubeTap.OnBehaviorActivated",
+                     "No react to cube animation was found" );
+
+  DelegateIfInControl( new TriggerAnimationAction( animation ), &BehaviorReactToCubeTap::TransitionToGetOffCharger );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToCubeTap::OnCubeTappedWhileActive()
+{
+  DEV_ASSERT_MSG( IsActivated(), "BehaviorReactToCubeTap.State", "Calling OnCubeTappedWhileActive() while not Activated" );
+  if ( EState::FindCube == _dVars.state )
+  {
+    if ( _dVars.intensity < EIntensityLevel::LastLevel )
+    {
+      // note: for now we don't care if it's the same cube or a different one; ONE CUBE TO RULE THEM ALL
+
+      // stop searching for the cube
+      CancelDelegates( false );
+
+      // start searching again, but with more "spaz"
+      _dVars.intensity = static_cast<EIntensityLevel>( _dVars.intensity + 1 );
+
+      PRINT_CH_DEBUG( "Behaviors", "BehaviorReactToCubeTap", "Reacting to multiple cube taps ... spaz level [%d]!", _dVars.intensity );
+      ReactToCubeTapped();
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCubeTap::TransitionToGetOffCharger()
 {
   PRINT_CH_INFO( "Behaviors", "BehaviorReactToCubeTap.State", "Transitioning to GetOffCharger state" );
@@ -231,8 +283,12 @@ void BehaviorReactToCubeTap::TransitionToFindCube()
   {
     // if we find a cube before the animation is complete, then we will cancel the delegate and proceed to going to
     // said cube.  If we make it to the end of the animation, we assume no cube was found and bail.
-    DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::ReactToCubeSearchForCube ),
-                         &BehaviorReactToCubeTap::OnCubeNotFound );
+
+    const AnimationTrigger animation = GetSearchForCubeAnimation();
+    ASSERT_NAMED_EVENT( AnimationTrigger::Count != animation, "BehaviorReactToCubeTap.TransitionToFindCube",
+                       "No search for cube animation was found" );
+
+    DelegateIfInControl( new TriggerAnimationAction( animation ), &BehaviorReactToCubeTap::OnCubeNotFound );
   }
   else
   {
@@ -331,6 +387,26 @@ void BehaviorReactToCubeTap::TransitionToInteractWithCube()
 
     DelegateIfInControl( cubeInterAction );
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+AnimationTrigger BehaviorReactToCubeTap::GetCubeReactionAnimation() const
+{
+  static_assert( IsSequentialArray( kReactToCubeAnimations ), "The array does not define each entry once and only once!" );
+  DEV_ASSERT_MSG( ( _dVars.intensity >= 0 ) && ( _dVars.intensity < EIntensityLevel::Count ),
+                  "BehaviorReactToCubeTap", "Invalid Intensity level" );
+
+  return kReactToCubeAnimations[_dVars.intensity].Value();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+AnimationTrigger BehaviorReactToCubeTap::GetSearchForCubeAnimation() const
+{
+  static_assert( IsSequentialArray( kSearchForCubeAnimations ), "The array does not define each entry once and only once!" );
+  DEV_ASSERT_MSG( ( _dVars.intensity >= 0 ) && ( _dVars.intensity < EIntensityLevel::Count ),
+                  "BehaviorReactToCubeTap", "Invalid Intensity level" );
+
+  return kSearchForCubeAnimations[_dVars.intensity].Value();
 }
 
 } // namespace Cozmo
