@@ -153,7 +153,8 @@ function set_cmake_env()
     local cmake="`which cmake`"
     if [ -z ${cmake} ]; then
         local toplevel=$(gettop)
-        cmake="`${toplevel}/tools/build/tools/ankibuild/cmake.py`"
+        ${toplevel}/tools/build/tools/ankibuild/cmake.py --install-cmake
+        cmake="`${toplevel}/tools/build/tools/ankibuild/cmake.py --find-cmake`"
         cmake=$(dirname ${cmake})
         pathupdate ${cmake}
     fi
