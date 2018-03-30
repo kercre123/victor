@@ -186,7 +186,7 @@ const char* DBG_cmd_substitution(const char *line, int len)
     try { run_debug(arg); } catch(int e) { dbgErr = e; }
     ConsolePrintf("========== DEBUG %s e%03d ==========\n", !dbgErr ? "OK" : "FAIL", dbgErr);
     
-    return "\n";
+    return "\n"; //sends the debug line to charge contacts (ignored by robot, but keeps cmd in recall buffer)
   }
   return 0;
 }
