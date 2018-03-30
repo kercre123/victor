@@ -19,7 +19,7 @@ namespace Anki {
 namespace Switchboard {
   class ExternalCommsCladHandler {
     public:
-    using RtsConnectionSignal = Signal::Signal<void (const Anki::Victor::ExternalComms::RtsConnection& msg)>;
+    using RtsConnectionSignal = Signal::Signal<void (const Anki::Victor::ExternalComms::RtsConnection_2& msg)>;
     
     RtsConnectionSignal& OnReceiveRtsConnResponse() {
       return _receiveRtsConnResponse;
@@ -76,54 +76,55 @@ namespace Switchboard {
       }
       
       if(extComms.GetTag() == Anki::Victor::ExternalComms::ExternalCommsTag::RtsConnection) {
-        Anki::Victor::ExternalComms::RtsConnection rtsMsg = extComms.Get_RtsConnection();
+        Anki::Victor::ExternalComms::RtsConnection rstContainer = extComms.Get_RtsConnection();
+        Anki::Victor::ExternalComms::RtsConnection_2 rtsMsg = rstContainer.Get_RtsConnection_2();
         
         switch(rtsMsg.GetTag()) {
-          case Anki::Victor::ExternalComms::RtsConnectionTag::Error:
+          case Anki::Victor::ExternalComms::RtsConnection_2Tag::Error:
             //
             break;
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsConnResponse: {
+          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsConnResponse: {
             _receiveRtsConnResponse.emit(rtsMsg);          
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsChallengeMessage: {
+          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsChallengeMessage: {
             _receiveRtsChallengeMessage.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiConnectRequest: {
+          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiConnectRequest: {
             _receiveRtsWifiConnectRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiIpRequest: {
+          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiIpRequest: {
             _receiveRtsWifiIpRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsStatusRequest: {
+          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsStatusRequest: {
             _receiveRtsStatusRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiScanRequest: {
+          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiScanRequest: {
             _receiveRtsWifiScanRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsOtaUpdateRequest: {
+          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsOtaUpdateRequest: {
             _receiveRtsOtaUpdateRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiAccessPointRequest: {
+          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiAccessPointRequest: {
             _receiveRtsWifiAccessPointRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsCancelPairing: {
+          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsCancelPairing: {
             _receiveRtsCancelPairing.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsAck: {
+          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsAck: {
             _receiveRtsAck.emit(rtsMsg);
             break;
           }
           // RtsSsh
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsSshRequest: {
+          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsSshRequest: {
             _DEV_ReceiveSshKey.emit(rtsMsg);
             break;
           }
