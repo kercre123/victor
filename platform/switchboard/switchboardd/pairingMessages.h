@@ -13,16 +13,17 @@
 #ifndef SecurePairingMessages_h
 #define SecurePairingMessages_h
 
-#define SB_PAIRING_PROTOCOL_VERSION 1
+#define SB_PAIRING_PROTOCOL_VERSION 2
 #define SB_IPv4_SIZE 4
 #define SB_IPv6_SIZE 16
 
 namespace Anki {
 namespace Switchboard {
-  enum PairingProtocolVersion : uint16_t {
+  enum PairingProtocolVersion : uint32_t {
     INVALID                   = 0,
     V1                        = 1,
-    CURRENT                   = V1,
+    V2                        = 2,
+    CURRENT                   = SB_PAIRING_PROTOCOL_VERSION,
   };
   
   enum SetupMessage : uint8_t {

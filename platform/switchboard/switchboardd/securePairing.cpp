@@ -362,7 +362,12 @@ void SecurePairing::SendStatusResponse() {
   bool isApMode = Anki::IsAccessPointMode();
 
   // Send challenge and update state
-  SendRtsMessage<RtsStatusResponse>(state.ssid, state.connState, isApMode, bleState, batteryState);
+  char buildNo[PROPERTY_VALUE_MAX] = {0};
+  (void)property_get("ro.build.id", buildNo, "");
+
+  std::string buildNoString(buildNo);
+
+  SendRtsMessage<RtsStatusResponse_2>(state.ssid, state.connState, isApMode, bleState, batteryState, buildNoString);
 
   Log::Write("Send status response.");
 }
@@ -386,7 +391,7 @@ void SecurePairing::SendOtaProgress(int status, uint64_t progress, uint64_t expe
 // Event handling methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-void SecurePairing::HandleRtsConnResponse(const Anki::Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsConnResponse(const Anki::Victor::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::Clad)) {
     return;
   }
@@ -428,7 +433,7 @@ void SecurePairing::HandleRtsConnResponse(const Anki::Victor::ExternalComms::Rts
   }
 }
 
-void SecurePairing::HandleRtsChallengeMessage(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsChallengeMessage(const Victor::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -444,7 +449,7 @@ void SecurePairing::HandleRtsChallengeMessage(const Victor::ExternalComms::RtsCo
   }
 }
 
-void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -484,7 +489,7 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::Rts
   }
 }
 
-void SecurePairing::HandleRtsWifiIpRequest(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsWifiIpRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -500,7 +505,7 @@ void SecurePairing::HandleRtsWifiIpRequest(const Victor::ExternalComms::RtsConne
   Log::Write("Received wifi ip request.");
 }
 
-void SecurePairing::HandleRtsStatusRequest(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsStatusRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -512,7 +517,7 @@ void SecurePairing::HandleRtsStatusRequest(const Victor::ExternalComms::RtsConne
   }
 }
 
-void SecurePairing::HandleRtsWifiScanRequest(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsWifiScanRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -525,7 +530,7 @@ void SecurePairing::HandleRtsWifiScanRequest(const Victor::ExternalComms::RtsCon
   }
 }
 
-void SecurePairing::HandleRtsOtaUpdateRequest(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsOtaUpdateRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -539,7 +544,7 @@ void SecurePairing::HandleRtsOtaUpdateRequest(const Victor::ExternalComms::RtsCo
   Log::Write("Starting OTA update.");
 }
 
-void SecurePairing::HandleRtsWifiAccessPointRequest(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsWifiAccessPointRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -572,12 +577,12 @@ void SecurePairing::HandleRtsWifiAccessPointRequest(const Victor::ExternalComms:
   }
 }
 
-void SecurePairing::HandleRtsCancelPairing(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsCancelPairing(const Victor::ExternalComms::RtsConnection_2& msg) {
   Log::Write("Stopping pairing due to client request.");
   StopPairing();
 }
 
-void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& msg) {
   // RtsSsh
   if(!AssertState(CommsState::SecureClad)) {
     return;
@@ -601,10 +606,10 @@ void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection& msg
   }
 }
 
-void SecurePairing::HandleRtsAck(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsAck(const Victor::ExternalComms::RtsConnection_2& msg) {
   Anki::Victor::ExternalComms::RtsAck ack = msg.Get_RtsAck();
   if(_state == PairingState::AwaitingNonceAck && 
-    ack.rtsConnectionTag == (uint8_t)Anki::Victor::ExternalComms::RtsConnectionTag::RtsNonceMessage) {
+    ack.rtsConnectionTag == (uint8_t)Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsNonceMessage) {
     HandleNonceAck();
   } else {
     // ignore msg
@@ -819,7 +824,8 @@ void SecurePairing::UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStat
 
 template<typename T, typename... Args>
 int SecurePairing::SendRtsMessage(Args&&... args) {
-  Anki::Victor::ExternalComms::ExternalComms msg = Anki::Victor::ExternalComms::ExternalComms(Anki::Victor::ExternalComms::RtsConnection(T(std::forward<Args>(args)...)));
+  Anki::Victor::ExternalComms::ExternalComms msg = Anki::Victor::ExternalComms::ExternalComms(
+    Anki::Victor::ExternalComms::RtsConnection(Anki::Victor::ExternalComms::RtsConnection_2(T(std::forward<Args>(args)...))));
   std::vector<uint8_t> messageData(msg.Size());
   const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
 
