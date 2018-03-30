@@ -39,7 +39,7 @@ class AudioMultiplexer;
 namespace Cozmo {
   
 namespace MicData {
-  class MicDataProcessor;
+  class MicDataSystem;
 }
 class RobotDataLoader;
 class ThreadIDInternal;
@@ -80,7 +80,7 @@ public:
   RobotDataLoader*                      GetDataLoader() const { return _dataLoader.get(); }
   Audio::CozmoAudioController*          GetAudioController() const; // Can return nullptr
   AudioMultiplexer*                     GetAudioMultiplexer() const { return _audioMux.get(); }
-  MicData::MicDataProcessor*            GetMicDataProcessor() const { return _micDataProcessor.get(); }
+  MicData::MicDataSystem*               GetMicDataSystem() const { return _micDataSystem.get(); }
   WebService::WebService*               GetWebService() const { return _webService.get(); }
 
   void SetRandomSeed(uint32_t seed);
@@ -101,7 +101,7 @@ private:
   std::unique_ptr<AudioMultiplexer>              _audioMux;
   std::unique_ptr<Util::RandomGenerator>         _random;
   std::unique_ptr<RobotDataLoader>               _dataLoader;
-  std::unique_ptr<MicData::MicDataProcessor>     _micDataProcessor;
+  std::unique_ptr<MicData::MicDataSystem>        _micDataSystem;
   std::unique_ptr<WebService::WebService>        _webService;
 
   // for holding the thread id (and avoiding needed to include the .h here)

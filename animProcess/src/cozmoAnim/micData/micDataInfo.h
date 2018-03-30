@@ -33,7 +33,6 @@ public:
   static constexpr uint32_t kDefaultFilesToCapture = 15;
   static constexpr uint32_t kMinAudioSizeToSave_ms = kTriggerOverlapSize_ms + 100;
 
-  Util::BitFlags8<MicDataType>  _typesToRecord;
   bool                          _doFFTProcess     = false;
   bool                          _repeating        = false;
   uint32_t                      _numMaxFiles      = kDefaultFilesToCapture;
@@ -57,8 +56,13 @@ public:
   bool CheckDone() const;
   uint32_t GetTimeToRecord_ms() const;
   uint32_t GetTimeRecorded_ms() const;
+
+  void EnableDataCollect(MicDataType type, bool saveToFile);
+  void DisableDataCollect(MicDataType type);
   
 private:
+  Util::BitFlags8<MicDataType>  _typesToCollect;
+  Util::BitFlags8<MicDataType>  _typesToSave;
   // These members are accessed via multiple threads when the job is running, so they use a mutex
   uint32_t _timeRecorded_ms  = 0;
   uint32_t _timeToRecord_ms  = 0;

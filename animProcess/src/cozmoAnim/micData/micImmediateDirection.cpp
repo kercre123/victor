@@ -10,7 +10,7 @@
 *
 */
   
-#include "cozmoAnim/micImmediateDirection.h"
+#include "cozmoAnim/micData/micImmediateDirection.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
