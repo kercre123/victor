@@ -585,7 +585,7 @@ static ccr_sr_t* cmdRobot_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int
   if( !NN )
     throw ERROR_BAD_ARG;
   
-  cmdSend(CMD_IO_CONTACTS, b, 500 + (int)NN*6, CMD_OPTS_DEFAULT, sensor_handler_);
+  cmdSend(CMD_IO_CONTACTS, b, 500 + (int)NN*10, CMD_OPTS_DEFAULT, sensor_handler_);
   
   #if CCC_DEBUG > 0
   ccr_sr_t* psr = (ccr_sr_t*)srbuf;
