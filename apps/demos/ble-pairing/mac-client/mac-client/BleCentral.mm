@@ -305,12 +305,18 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           Anki::Victor::ExternalComms::RtsWifiIpResponse msg = rtsMsg.Get_RtsWifiIpResponse();
           
           if(_currentCommand == "wifi-ip" && !_readyForNextCommand) {
-            for(int i = 0; i < 4; i++) {
-              printf("%d", msg.ipV4[i]);
-              if(i < 3) {
-                printf(".");
-              }
-            } printf("\n");
+            if(msg.hasIpV4) {
+              char ipv4String[INET_ADDRSTRLEN] = {0};
+              inet_ntop(AF_INET, msg.ipV4.data(), ipv4String, INET_ADDRSTRLEN);
+              printf("IPv4: %s\n", ipv4String);
+            }
+            
+            if(msg.hasIpV6) {
+              char ipv6String[INET6_ADDRSTRLEN] = {0};
+              inet_ntop(AF_INET6, msg.ipV6.data(), ipv6String, INET6_ADDRSTRLEN);
+              printf("IPv6: %s\n", ipv6String);
+            }
+            
             _readyForNextCommand = true;
           } else if(_currentCommand == "ssh-start" && !_readyForNextCommand) {
             NSString* sshArg = [NSString stringWithFormat:@"root@%d.%d.%d.%d", msg.ipV4[0], msg.ipV4[1], msg.ipV4[2], msg.ipV4[3]];
@@ -474,19 +480,33 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           break;
         }
         case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiIpResponse: {
-          //
           Anki::Victor::ExternalComms::RtsWifiIpResponse msg = rtsMsg.Get_RtsWifiIpResponse();
-          for(int i = 0; i < 4; i++) {
-            printf("%d", msg.ipV4[i]);
-            if(i < 3) {
-              printf(".");
-            }
-          } printf("\n");
           
           if(_currentCommand == "wifi-ip" && !_readyForNextCommand) {
+            if(msg.hasIpV4) {
+              char ipv4String[INET_ADDRSTRLEN] = {0};
+              inet_ntop(AF_INET, msg.ipV4.data(), ipv4String, INET_ADDRSTRLEN);
+              printf("IPv4: %s\n", ipv4String);
+            }
+            
+            if(msg.hasIpV6) {
+              char ipv6String[INET6_ADDRSTRLEN] = {0};
+              inet_ntop(AF_INET6, msg.ipV6.data(), ipv6String, INET6_ADDRSTRLEN);
+              printf("IPv6: %s\n", ipv6String);
+            }
+            
+            _readyForNextCommand = true;
+          } else if(_currentCommand == "ssh-start" && !_readyForNextCommand) {
+            NSString* sshArg = [NSString stringWithFormat:@"root@%d.%d.%d.%d", msg.ipV4[0], msg.ipV4[1], msg.ipV4[2], msg.ipV4[3]];
+            
+            NSString *s = [NSString stringWithFormat:
+                           @"tell application \"Terminal\" to do script \"ssh %@\"", sshArg];
+            
+            NSAppleScript *as = [[NSAppleScript alloc] initWithSource: s];
+            [as executeAndReturnError:nil];
+            
             _readyForNextCommand = true;
           }
-          
           break;
         }
         case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsStatusResponse_2: {
@@ -859,7 +879,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         
       } else if(strcmp(words[0].c_str(), "wifi-ap") == 0) {
         bool enable = (words[1]=="true")?true:false;
-        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiAccessPointRequest>(self, enable);
+        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiAccessPointRequest>(self, _commVersion, enable);
       } else if(strcmp(words[0].c_str(), "wifi-ip") == 0) {
         Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiIpRequest>(self, _commVersion);
       } else if(strcmp(words[0].c_str(), "ota-start") == 0) {

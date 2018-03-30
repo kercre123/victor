@@ -14,6 +14,7 @@
 #include "bleMessageProtocol.h"
 #include "messageExternalComms.h"
 #include <sodium.h>
+#include <arpa/inet.h>
 
 enum RtsState {
   Raw         = 0,
