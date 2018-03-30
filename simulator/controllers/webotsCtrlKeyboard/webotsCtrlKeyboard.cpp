@@ -243,7 +243,7 @@ namespace Cozmo {
   
   void WebotsKeyboardController::HandleLoadedKnownFace(const Vision::LoadedKnownFace& msg)
   {
-    printf("HandleLoadedKnownFace: '%s' (ID:%d) first enrolled %zd seconds ago, last updated %zd seconds ago, last seen %zd seconds ago\n",
+    printf("HandleLoadedKnownFace: '%s' (ID:%d) first enrolled %lld seconds ago, last updated %lld seconds ago, last seen %lld seconds ago\n",
            msg.name.c_str(), msg.faceID, msg.secondsSinceFirstEnrolled, msg.secondsSinceLastUpdated, msg.secondsSinceLastSeen);
   }
   

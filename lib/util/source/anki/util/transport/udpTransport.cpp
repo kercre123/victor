@@ -771,7 +771,7 @@ ssize_t UDPTransport::SendDataToSockAddress(const sockaddr& destSockAddress, uin
     {
       // Not an error code, but the wrong send size!?
       PRINT_NAMED_ERROR("UDPTransport.SentWrongNumBytes",
-                        "sentBytes %zd != bufferSize %zd", sentBytes, bufferWithHeaderSize);
+                        "sentBytes %zd != bufferSize %u", sentBytes, bufferWithHeaderSize);
     }
   }
   
