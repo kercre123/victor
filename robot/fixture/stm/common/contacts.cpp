@@ -58,7 +58,7 @@ namespace Contacts
     int w, r;
   } rx;
   
-  static volatile int framing_err_cnt = 0, overflow_err_cnt = 0, drop_char_cnt = 0;
+  static volatile int framing_err_cnt = 0, overflow_err_cnt = 0, drop_char_cnt = 0, linesync_err_cnt = 0;
   
   static inline void delay_bit_time_(const uint16_t n) {
     Timer::wait(1 + ( ((uint32_t)n*1000*1000) / CONTACT_BAUD) );
@@ -403,6 +403,7 @@ void Contacts::setModeRx(void)
   //framing_err_cnt = 0;
   //overflow_err_cnt = 0;
   //drop_char_cnt = 0;
+  //linesync_err_cnt = 0;
   
   NVIC_EnableIRQ(USART_IRQn);
   mode = MODE_RX;
@@ -484,7 +485,6 @@ namespace Contacts {
   }
 }
 
-const int syscon_buf_overflow_indicator = 0x88; //syscon debug mode inserts this in the stream
 char* Contacts::getline(int timeout_us, int *out_len)
 {
   int c;
@@ -492,8 +492,10 @@ char* Contacts::getline(int timeout_us, int *out_len)
   
   uint32_t start = Timer::get();
   do { //read 1 char (even if timeout==0)
-    if( (c = Contacts::getchar()) > 0 ) { //ignore null; messes with ascii parser
-      if( c == syscon_buf_overflow_indicator ) c = '@';
+    if( (c = Contacts::getchar()) > 0 ) //ignore null; messes with ascii parser
+    {
+      if( c == 0xd2 ) linesync_err_cnt++; //syscon debug mode: replaces mid-packet sync (0xFF) with debug control
+      if( c == 0x88 ) c = '@';            //syscon debug mode: inserts overflow indicator in the stream
       line = line_process_char_(c, out_len);
     }
   } while( !line && Timer::elapsedUs(start) < timeout_us );
@@ -525,6 +527,7 @@ int Contacts::flushRx(void)
   framing_err_cnt = 0;
   overflow_err_cnt = 0;
   drop_char_cnt = 0;
+  linesync_err_cnt = 0;
   
   NVIC_EnableIRQ(USART_IRQn);
   
@@ -562,6 +565,12 @@ namespace Contacts
   int getRxFramingErrors() {
     int temp = framing_err_cnt;
     framing_err_cnt = 0;
+    return temp;
+  }
+  
+  int getLineSyncErrors() {
+    int temp = linesync_err_cnt;
+    linesync_err_cnt = 0;
     return temp;
   }
 }

@@ -125,24 +125,29 @@ static void dbg_test_emr_(bool blank_only, bool dont_clear)
   ConsolePrintf("EMR test %s: %u errors\n", mismatch > 0 ? "FAILED" : "passed", mismatch);
 }
 
-static void dbg_test_comm_loop_(int nloops, int rlim)
+static void dbg_test_comm_loop_(int nloops, int rmax, int rmin)
 {
-  rlim = rlim<=0 ? 255 : rlim&0xff; //limit for random generator
-  ConsolePrintf("STRESS TEST COMMS: %i loops, rlim=%i\n", nloops, rlim);
+  rmin = rmin<=0 ?   1 : rmin&0xff; //limit for random generator
+  rmax = rmax<=0 ? 255 : rmax&0xff; //upper limit for random generator
+  if( rmin > rmax )
+    rmin = rmax;
+  
+  ConsolePrintf("STRESS TEST COMMS: %i loops, NN=rand{%i..%i}\n", nloops, rmin, rmax);
+  int rmod = rmax-rmin+1; //modulo
   
   srand(Timer::get());
   for(int x = 0; x < nloops; x++) {
     cmdRobotEsn(); cmdRobotBsv();
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_BATTERY);
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_CLIFF);
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_MOT_LEFT);
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_MOT_RIGHT);
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_MOT_LIFT);
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_MOT_HEAD);
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_PROX_TOF);
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_BTN_TOUCH);
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_RSSI);
-    cmdRobotGet(1+rand()%rlim, CCC_SENSOR_RX_PKT);
+    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_BATTERY);
+    cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_CLIFF);
+    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_MOT_LEFT);
+    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_MOT_RIGHT);
+    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_MOT_LIFT);
+    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_MOT_HEAD);
+    cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_PROX_TOF);
+    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_BTN_TOUCH);
+    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_RSSI);
+    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_RX_PKT);
   }
 }
 
@@ -151,7 +156,7 @@ static void run_debug(int arg[])
   if( arg[0] == 1 )
     dbg_test_all_();
   if( arg[0] == 2 )
-    dbg_test_comm_loop_(arg[1], arg[2]);
+    dbg_test_comm_loop_(arg[1], arg[2], arg[3]);
   if( arg[0] == 3 )
     dbg_test_emr_( arg[1], arg[2] );
 }
