@@ -7,7 +7,7 @@ Date:   12/06/17
 Description: This script allows sound designers to use locally generated sound banks in local Victor project builds.
              Audio build server scripts are used to generate metadata and package assets similar to how they are
              delivered by Victor's package manager process. This script will simply replace the assets in the
-             EXTERNALS/victor-audio-assets directory. After replacing the audio assets build-victor.sh must be ran to
+             EXTERNALS/local-audio-assets directory. After replacing the audio assets build-victor.sh must be ran to
              copy the assets to the projects deliverables. Likewise, you must run deploy-assets.py to copy new assets
              to robot. For convenience this script has arguments to update audio CLAD files, build victor and deploy
              changes.
@@ -115,7 +115,8 @@ def main(args):
     bundle_soundbank_products.main([path.join(sound_bank_path, 'Dev_Mac'), tmp_dev_mac_dir] + script_commands)
     Logger.info('Complete: bundle_soundbank_products')
 
-    # Organize Sound Banks in project
+    # Organize Sound Banks in project & unzip assets
+    script_commands.append('--unzip-bundles')
     organize_soundbank_products.main([tmp_linux_dir, dest_linux_dir, bank_list_filepath] + script_commands)
     organize_soundbank_products.main([tmp_dev_mac_dir, dest_dev_mac_dir, bank_list_filepath] + script_commands)
     Logger.info('Complete: organize_soundbank_products')
