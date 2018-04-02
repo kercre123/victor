@@ -294,7 +294,7 @@ static void BodyFlexFlowReport(void)
   FLEXFLOW::write(b);
 }
 
-/*static void BodyChargeContactElectricalDebug(void)
+static void BodyChargeContactElectricalDebug(void)
 {
   BodyLoadTestFirmware();
   
@@ -335,7 +335,7 @@ static void BodyFlexFlowReport(void)
   
   Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT);
-}*/
+}
 
 TestFunction* TestBody0GetTests(void)
 {
@@ -343,8 +343,7 @@ TestFunction* TestBody0GetTests(void)
     ShortCircuitTest,
     BodyTryReadSerial, //--skip serial read to force blank state
     //BodyLoadTestFirmware,
-    //BodyBootcheckProductionFirmware,
-    //BodyChargeContactElectricalDebug,
+    BodyChargeContactElectricalDebug,
     NULL,
   };
   static TestFunction m_tests_0[] = {
