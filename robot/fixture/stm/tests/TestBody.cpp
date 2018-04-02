@@ -304,33 +304,39 @@ static void BodyChargeContactElectricalDebug(void)
   Timer::delayMs(150); //wait for systest to boot into main and enable battery power
   Contacts::setModeRx(); //switch to comms mode
   
+  int x=0;
+  while( ConsoleReadChar() > -1 ); //clear console input
   while(1)
   {
     //DEBUG: various TX/RX lengths to test VEXT analog performance
-    for(int x=0; x<10; x++)
-    {
-      ConsolePrintf("---START MEASUREMENTS NOW!---(%u)\n",x+1);
-      Timer::delayMs(3000);
-      
-      //VEXT idle high to pre-charge some gate circuits
-      Contacts::powerOn(); //Contacts::setModeTx();
-      Timer::delayMs(25);
-      Contacts::powerOff();
-      Timer::delayMs(100);
-      
-      cmdSend(CMD_IO_CONTACTS, "getvers", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
-      cmdSend(CMD_IO_CONTACTS, "getvers", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
-      Timer::delayMs(50);
-      cmdSend(CMD_IO_CONTACTS, "testcommand  extra  long  string  to  measure  gate  rise  abcd  1234567890", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
-      Timer::delayMs(50);
-      
-      cmdSend(CMD_IO_CONTACTS, "getvers", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
-      Timer::delayMs(100);
-      
-      Contacts::setModeTx();
-      Timer::delayMs(50);
-      cmdSend(CMD_IO_CONTACTS, "getvers plus some extra ignored params to create a really really long transmit cyclce", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
+    ConsolePrintf("---START MEASUREMENTS NOW!---(%u)\n",x+1);
+    uint32_t Twait = Timer::get();
+    while( Timer::elapsedUs(Twait) < 5*1000*1000 ) {
+      if( ConsoleReadChar() > -1 )
+        break;
     }
+    
+    //VEXT idle high to pre-charge some gate circuits
+    Contacts::powerOn(); //Contacts::setModeTx();
+    Timer::delayMs(25);
+    Contacts::powerOff();
+    Timer::delayMs(100);
+    
+    cmdSend(CMD_IO_CONTACTS, "getvers", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
+    cmdSend(CMD_IO_CONTACTS, "getvers", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
+    Timer::delayMs(50);
+    cmdSend(CMD_IO_CONTACTS, "testcommand  extra  long  string  to  measure  gate  rise  abcd  1234567890", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
+    Timer::delayMs(50);
+    
+    cmdSend(CMD_IO_CONTACTS, "getvers", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
+    Timer::delayMs(100);
+    
+    Contacts::setModeTx();
+    Timer::delayMs(50);
+    cmdSend(CMD_IO_CONTACTS, "getvers plus some extra ignored params to create a really really long transmit cyclce", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
+    
+    if( ConsoleReadChar() > -1 ) //exit test on console input
+      break;
   }
   
   Board::powerOff(PWR_VEXT);
