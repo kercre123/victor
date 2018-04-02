@@ -49,6 +49,7 @@ class TouchSensorComponent;
 class AnimationComponent;
 class RobotStateHistory;
 class MoodManager;
+class StimulationFaceDisplay;
 class InventoryComponent;
 class ProgressionUnlockComponent;
 class BlockTapFilterComponent;
@@ -90,6 +91,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(TouchSensorComponent,          RobotComponentID, Tou
 LINK_COMPONENT_TYPE_TO_ENUM(AnimationComponent,            RobotComponentID, Animation)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotStateHistory,             RobotComponentID, StateHistory)
 LINK_COMPONENT_TYPE_TO_ENUM(MoodManager,                   RobotComponentID, MoodManager)
+LINK_COMPONENT_TYPE_TO_ENUM(StimulationFaceDisplay,        RobotComponentID, StimulationFaceDisplay)
 LINK_COMPONENT_TYPE_TO_ENUM(InventoryComponent,            RobotComponentID, Inventory)
 LINK_COMPONENT_TYPE_TO_ENUM(ProgressionUnlockComponent,    RobotComponentID, ProgressionUnlock)
 LINK_COMPONENT_TYPE_TO_ENUM(BlockTapFilterComponent,       RobotComponentID, BlockTapFilter)
@@ -129,6 +131,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::Map:                        { return "Map";}
     case Cozmo::RobotComponentID::MicDirectionHistory:        { return "MicDirectionHistory";}
     case Cozmo::RobotComponentID::MoodManager:                { return "MoodManager";}
+    case Cozmo::RobotComponentID::StimulationFaceDisplay:     { return "StimulationFaceDisplay";}
     case Cozmo::RobotComponentID::Movement:                   { return "Movement";}
     case Cozmo::RobotComponentID::NVStorage:                  { return "NVStorage";}
     case Cozmo::RobotComponentID::ObjectPoseConfirmer:        { return "ObjectPoseConfirmer";}

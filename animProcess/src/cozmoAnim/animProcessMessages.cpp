@@ -180,6 +180,11 @@ void Process_setFaceHue(const Anki::Cozmo::RobotInterface::SetFaceHue& msg)
   ProceduralFace::SetHue(msg.hue);
 }
 
+void Process_setFaceSaturation(const Anki::Cozmo::RobotInterface::SetFaceSaturation& msg)
+{
+  ProceduralFace::SetSaturation(msg.saturation);
+}
+
 void Process_displayFaceImageBinaryChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageBinaryChunk& msg)
 {
   _animStreamer->Process_displayFaceImageChunk(msg);

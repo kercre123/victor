@@ -46,6 +46,9 @@ public:
   float GetHistoryValueSecondsAgo(float secondsBackwards) const;
   float GetDeltaRecentTicks(uint32_t numTicksBackwards) const { return _value - GetHistoryValueTicksAgo(numTicksBackwards); }
   float GetDeltaRecentSeconds(float secondsBackwards)   const { return _value - GetHistoryValueSecondsAgo(secondsBackwards); }
+
+  // range defaults to values specified in cpp, but can get set manually here
+  void SetEmotionValueRange(float min, float max);
   
   struct HistorySample
   {
@@ -60,6 +63,8 @@ private:
   
   Util::CircularBuffer<HistorySample> _history;
   float                               _value;
+  float                               _minValue;
+  float                               _maxValue;
 
   float                               _timeDecaying;
 };

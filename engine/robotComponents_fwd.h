@@ -52,6 +52,7 @@ enum class RobotComponentID{
   Map,
   MicDirectionHistory,
   MoodManager,
+  StimulationFaceDisplay,
   Movement,
   NVStorage,
   ObjectPoseConfirmer,
