@@ -86,7 +86,8 @@ void cmdDbgParseTestbench(void);
 #define CCC_SENSOR_BTN_TOUCH  8
 #define CCC_SENSOR_RSSI       9
 #define CCC_SENSOR_RX_PKT     10
-const int ccr_sr_cnt[11] = {0,2,4,2,2,2,2,4,2,1,1}; //number of sensor fields for each type
+#define CCC_SENSOR_DEBUG_INC  11
+const int ccr_sr_cnt[12] = {0,2,4,2,2,2,2,4,2,1,1,4}; //number of sensor fields for each type
 
 //FCC test modes
 #define CCC_FCC_MODE_TX_CARRIER   0

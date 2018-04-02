@@ -139,15 +139,16 @@ static void dbg_test_comm_loop_(int nloops, int rmax, int rmin)
   for(int x = 0; x < nloops; x++) {
     cmdRobotEsn(); cmdRobotBsv();
     //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_BATTERY);
-    cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_CLIFF);
+    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_CLIFF);
     //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_MOT_LEFT);
     //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_MOT_RIGHT);
     //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_MOT_LIFT);
     //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_MOT_HEAD);
-    cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_PROX_TOF);
+    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_PROX_TOF);
     //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_BTN_TOUCH);
     //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_RSSI);
     //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_RX_PKT);
+    cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_DEBUG_INC);
   }
 }
 
