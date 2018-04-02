@@ -159,11 +159,11 @@ AnimationTrigger BehaviorReactToPet::GetAnimationTrigger(Vision::PetType petType
   }
   switch (petType) {
     case PetType::Cat:
-      return AnimationTrigger::PetDetectionCat;
+      return AnimationTrigger::DEPRECATED_PetDetectionCat;
     case PetType::Dog:
-      return AnimationTrigger::PetDetectionDog;
+      return AnimationTrigger::DEPRECATED_PetDetectionDog;
     case PetType::Unknown:
-      return AnimationTrigger::PetDetectionSneeze;
+      return AnimationTrigger::DEPRECATED_PetDetectionSneeze;
   }
 }
 

@@ -51,6 +51,7 @@ class ActionableObject;
 class ConditionUserIntentPending;
 class DriveToObjectAction;
 enum class ObjectInteractionIntention;
+class UnitTestKey;
 class UserIntent;
 enum class UserIntentTag : uint8_t;
 
@@ -201,6 +202,8 @@ public:
   // to bypass one of the behaviors InActivatableScope so that it can be handled by something
   // further down the stack
   void SetDontActivateThisTick(const std::string& coordinatorName);
+  
+  std::map<std::string,ICozmoBehaviorPtr> TESTONLY_GetAnonBehaviors( UnitTestKey key ) const;
 
 protected:
 

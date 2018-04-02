@@ -561,6 +561,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::ReactToCubeTap:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToCubeTap(config));
+      break;
+    }
+    
     case BehaviorClass::ReactToFrustration:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToFrustration(config));
@@ -672,12 +678,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ReactToTouchPetting:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToTouchPetting(config));
-      break;
-    }
-
-    case BehaviorClass::ReactToCubeTap:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToCubeTap(config));
       break;
     }
     

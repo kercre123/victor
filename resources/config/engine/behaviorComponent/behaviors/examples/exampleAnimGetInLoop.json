@@ -2,7 +2,7 @@
   "behaviorID"       : "ExampleAnimGetInLoop",
   "behaviorClass"    : "AnimGetInLoop",
   "getIn"            : "CubePounceGetIn",
-  "loopAnimation"    : "DanceMambo",
+  "loopAnimation"    : "DEPRECATED_DanceMambo",
   "getOut"           : "CubePounceGetOut",
   "emergencyGetOut"  : "CubePounceGetOut"
   //"loopEndCondition" : ""

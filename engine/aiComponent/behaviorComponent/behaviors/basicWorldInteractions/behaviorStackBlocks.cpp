@@ -307,7 +307,7 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim()
   
   BehaviorObjectiveAchieved(BehaviorObjective::StackedBlock);
   if(!ShouldStreamline()){
-    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::StackBlocksSuccess));
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DEPRECATED_StackBlocksSuccess));
   }
 }
 

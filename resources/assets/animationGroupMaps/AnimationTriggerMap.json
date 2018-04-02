@@ -1,19 +1,19 @@
 {
   "Pairs": [
     {
-      "CladEvent": "AcknowledgeFaceInitPause",
+      "CladEvent": "DEPRECATED_AcknowledgeFaceInitPause",
       "AnimName": "ag_pause_idle"
     },
     {
-      "CladEvent": "AcknowledgeFaceNamed",
+      "CladEvent": "DEPRECATED_AcknowledgeFaceNamed",
       "AnimName": "ag_freeplay_reacttoface_sayname"
     },
     {
-      "CladEvent": "AcknowledgeFaceUnnamed",
+      "CladEvent": "DEPRECATED_AcknowledgeFaceUnnamed",
       "AnimName": "ag_freeplay_reacttoface_unidentified"
     },
     {
-      "CladEvent": "AcknowledgeObject",
+      "CladEvent": "DEPRECATED_AcknowledgeObject",
       "AnimName": "ag_reacttoblock_react_short"
     },
     {
@@ -21,11 +21,11 @@
       "AnimName": "ag_vc_reaction_alreadyhere"
     },
     {
-      "CladEvent": "AskToBeRightedLeft",
+      "CladEvent": "DEPRECATED_AskToBeRightedLeft",
       "AnimName": "ag_reacttocliff_stuckleftside_01"
     },
     {
-      "CladEvent": "AskToBeRightedRight",
+      "CladEvent": "DEPRECATED_AskToBeRightedRight",
       "AnimName": "ag_reacttocliff_stuckrightside_01"
     },
     {
@@ -33,19 +33,19 @@
       "AnimName": "ag_explorer_huh"
     },
     {
-      "CladEvent": "AudioTestAnim",
+      "CladEvent": "DEPRECATED_AudioTestAnim",
       "AnimName": "ag_audio_test"
     },
     {
-      "CladEvent": "BlockReact",
+      "CladEvent": "DEPRECATED_BlockReact",
       "AnimName": "ag_blockreact"
     },
     {
-      "CladEvent": "PatternGuessNewIdea",
+      "CladEvent": "DEPRECATED_PatternGuessNewIdea",
       "AnimName": "ag_patternguessnewidea"
     },
     {
-      "CladEvent": "PatternGuessThinking",
+      "CladEvent": "DEPRECATED_PatternGuessThinking",
       "AnimName": "ag_patternguessthinking"
     },
     {
@@ -113,15 +113,15 @@
       "AnimName": "ag_connectwakeup"
     },
     {	
-      "CladEvent": "ComeHere_SearchForFace",	
+      "CladEvent": "DEPRECATED_ComeHere_SearchForFace",	
       "AnimName": "ag_vc_reaction_nofaceheardyou"	
     },  
     {
-      "CladEvent": "CubeMovedSense",
+      "CladEvent": "DEPRECATED_CubeMovedSense",
       "AnimName": "ag_reacttoblock_blockpickup_01"
     },
     {
-      "CladEvent": "CubeMovedUpset",
+      "CladEvent": "DEPRECATED_CubeMovedUpset",
       "AnimName": "ag_reacttoblock_blockgone_01"
     },
     {
@@ -133,7 +133,7 @@
       "AnimName": "ag_keepaway_losehand"
     },
     {
-      "CladEvent": "CubePounceLoseRound",
+      "CladEvent": "DEPRECATED_CubePounceLoseRound",
       "AnimName": "ag_cubepounce_loseround"
     },
     {
@@ -153,7 +153,7 @@
       "AnimName": "ag_keepaway_winhand"
     },
     {
-      "CladEvent": "CubePounceWinRound",
+      "CladEvent": "DEPRECATED_CubePounceWinRound",
       "AnimName": "ag_cubepounce_winround"
     },
     {
@@ -189,39 +189,39 @@
       "AnimName": "ag_keepaway_idleliftdown"
     },
     {
-      "CladEvent": "DanceMambo",
+      "CladEvent": "DEPRECATED_DanceMambo",
       "AnimName": "ag_dancing_mambo"
     },
     {
-      "CladEvent": "DemoSpeedTapCozmoWin",
+      "CladEvent": "DEPRECATED_DemoSpeedTapCozmoWin",
       "AnimName": "ag_demo_win_01"
     },
     {
-      "CladEvent": "DemoSpeedTapCozmoLose",
+      "CladEvent": "DEPRECATED_DemoSpeedTapCozmoLose",
       "AnimName": "ag_demo_lose_01"
     },
     {
-      "CladEvent": "DizzyReactionHard",
+      "CladEvent": "DEPRECATED_DizzyReactionHard",
       "AnimName": "ag_dizzy_reaction_hard"
     },
     {
-      "CladEvent": "DizzyReactionMedium",
+      "CladEvent": "DEPRECATED_DizzyReactionMedium",
       "AnimName": "ag_dizzy_reaction_medium"
     },
     {
-      "CladEvent": "DizzyReactionSoft",
+      "CladEvent": "DEPRECATED_DizzyReactionSoft",
       "AnimName": "ag_dizzy_reaction_soft"
     },
     {
-      "CladEvent": "DizzyShakeLoop",
+      "CladEvent": "DEPRECATED_DizzyShakeLoop",
       "AnimName": "ag_dizzy_shake_loop"
     },
     {
-      "CladEvent": "DizzyShakeStop",
+      "CladEvent": "DEPRECATED_DizzyShakeStop",
       "AnimName": "ag_dizzy_shake_stop"
     },
     {
-      "CladEvent": "DizzyStillPickedUp",
+      "CladEvent": "DEPRECATED_DizzyStillPickedUp",
       "AnimName": "ag_dizzy_pickup"
     },
     {
@@ -273,27 +273,27 @@
       "AnimName": "ag_driving01_startdriving"
     },
     {
-      "CladEvent": "FacePlantRoll",
+      "CladEvent": "DEPRECATED_FacePlantRoll",
       "AnimName": "ag_reacttocliff_faceplantroll_01"
     },
     {
-      "CladEvent": "FacePlantRollArmUp",
+      "CladEvent": "DEPRECATED_FacePlantRollArmUp",
       "AnimName": "ag_reacttocliff_faceplantroll_armup_01"
     },
     {
-      "CladEvent": "FailedToRightFromFace",
+      "CladEvent": "DEPRECATED_FailedToRightFromFace",
       "AnimName": "ag_reacttocliff_turtlerollfail_01"
     },
     {
-      "CladEvent": "FeedingEat",
+      "CladEvent": "DEPRECATED_FeedingEat",
       "AnimName": "ag_energy_eatingfullyfull"
     },
     {
-      "CladEvent": "FeedingInterrupted",
+      "CladEvent": "DEPRECATED_FeedingInterrupted",
       "AnimName": "ag_energy_interruptions"
     },
     {
-      "CladEvent": "FeedingPlaceLiftOnCube",
+      "CladEvent": "DEPRECATED_FeedingPlaceLiftOnCube",
       "AnimName": "ag_energy_liftoncubelvl1"
     },
     {
@@ -317,11 +317,11 @@
       "AnimName": "ag_fistbump_fail"
     },
     {
-      "CladEvent": "FlipDownFromBack",
+      "CladEvent": "DEPRECATED_FlipDownFromBack",
       "AnimName": "ag_reacttocliff_turtleroll_01"
     },
     {
-      "CladEvent": "FrustratedByFailure",
+      "CladEvent": "DEPRECATED_FrustratedByFailure",
       "AnimName": "ag_reacttoblock_frustrated"
     },
     {
@@ -329,19 +329,19 @@
       "AnimName": "ag_reacttoblock_frustrated"
     },
     {
-      "CladEvent": "GameSetupGetIn",
+      "CladEvent": "DEPRECATED_GameSetupGetIn",
       "AnimName": "ag_gamesetup_getin"
     },
     {
-      "CladEvent": "GameSetupGetOut",
+      "CladEvent": "DEPRECATED_GameSetupGetOut",
       "AnimName": "ag_gamesetup_getout"
     },
     {
-      "CladEvent": "GameSetupIdle",
+      "CladEvent": "DEPRECATED_GameSetupIdle",
       "AnimName": "ag_gamesetup_idle"
     },
     {
-      "CladEvent": "GameSetupReaction",
+      "CladEvent": "DEPRECATED_GameSetupReaction",
       "AnimName": "ag_gamesetup_reaction"
     },
     {
@@ -349,7 +349,7 @@
       "AnimName": "ag_gotosleep_getin"
     },
     {
-      "CladEvent": "GoToSleepGetOut",
+      "CladEvent": "DEPRECATED_GoToSleepGetOut",
       "AnimName": "ag_gotosleep_wakeup"
     },
     {
@@ -361,55 +361,55 @@
       "AnimName": "ag_gotosleep_sleeping"
     },
     {
-      "CladEvent": "Hiccup",
+      "CladEvent": "DEPRECATED_Hiccup",
       "AnimName": "ag_hiccups"
     },
     {
-      "CladEvent": "HiccupGetIn",
+      "CladEvent": "DEPRECATED_HiccupGetIn",
       "AnimName": "ag_hiccup_getin"
     },
     {
-      "CladEvent": "HiccupPlayerCure",
+      "CladEvent": "DEPRECATED_HiccupPlayerCure",
       "AnimName": "ag_hiccup_playercure_getout"
     },
     {
-      "CladEvent": "HiccupRobotOnBack",
+      "CladEvent": "DEPRECATED_HiccupRobotOnBack",
       "AnimName": "ag_hiccup_puton_bottom"
     },
     {
-      "CladEvent": "HiccupRobotOnFace",
+      "CladEvent": "DEPRECATED_HiccupRobotOnFace",
       "AnimName": "ag_hiccup_puton_face"
     },
     {
-      "CladEvent": "HiccupRobotPickedUp",
+      "CladEvent": "DEPRECATED_HiccupRobotPickedUp",
       "AnimName": "ag_hiccup_player_pickup"
     },
     {
-      "CladEvent": "HiccupSelfCure",
+      "CladEvent": "DEPRECATED_HiccupSelfCure",
       "AnimName": "ag_hiccup_selfcure_getout"
     },
     {
-      "CladEvent": "HikingDrivingStart",
+      "CladEvent": "DEPRECATED_HikingDrivingStart",
       "AnimName": "ag_hiking_startdriving"
     },
     {
-      "CladEvent": "HikingDrivingLoop",
+      "CladEvent": "DEPRECATED_HikingDrivingLoop",
       "AnimName": "ag_hiking_drivingloop"
     },
     {
-      "CladEvent": "HikingDrivingEnd",
+      "CladEvent": "DEPRECATED_HikingDrivingEnd",
       "AnimName": "ag_hiking_enddriving"
     },
     {
-      "CladEvent": "HikingIntro",
+      "CladEvent": "DEPRECATED_HikingIntro",
       "AnimName": "ag_hiking_getin"
     },
     {
-      "CladEvent": "HikingObserve",
+      "CladEvent": "DEPRECATED_HikingObserve",
       "AnimName": "ag_hiking_observe"
     },
     {
-      "CladEvent": "HikingInterestingEdgeThought",
+      "CladEvent": "DEPRECATED_HikingInterestingEdgeThought",
       "AnimName": "ag_hiking_interestingedgethought"
     },
     {
@@ -417,19 +417,19 @@
       "AnimName": "ag_hiking_lookaround"
     },
     {
-      "CladEvent": "HikingReactToEdge",
+      "CladEvent": "DEPRECATED_HikingReactToEdge",
       "AnimName": "ag_hiking_rtedge"
     },
     {
-      "CladEvent": "HikingReactToNewArea",
+      "CladEvent": "DEPRECATED_HikingReactToNewArea",
       "AnimName": "ag_hiking_rtnewarea"
     },
     {
-      "CladEvent": "HikingSquintEnd",
+      "CladEvent": "DEPRECATED_HikingSquintEnd",
       "AnimName": "ag_hiking_edgesquintgetout"
     },
     {
-      "CladEvent": "HikingSquintLoop",
+      "CladEvent": "DEPRECATED_HikingSquintLoop",
       "AnimName": "ag_hiking_edgesquintloop"
     },
     {
@@ -437,11 +437,11 @@
       "AnimName": "ag_hiking_edgesquintgetin"
     },
     {
-      "CladEvent": "HikingReactToPossibleMarker",
+      "CladEvent": "DEPRECATED_HikingReactToPossibleMarker",
       "AnimName": "ag_hiking_rtpmarker"
     },
     {
-      "CladEvent": "HikingWakeUpOffCharger",
+      "CladEvent": "DEPRECATED_HikingWakeUpOffCharger",
       "AnimName": "ag_hiking_getin"
     },
     {
@@ -449,7 +449,7 @@
       "AnimName": "ag_timer_emote"
     },
     {
-      "CladEvent": "IdleOnCharger",
+      "CladEvent": "DEPRECATED_IdleOnCharger",
       "AnimName": "ag_sleeploop"
     },
     {
@@ -465,31 +465,31 @@
       "AnimName": "ag_freeplay_reacttoface_unidentified"
     },
     {
-      "CladEvent": "LaserAcknowledge",
+      "CladEvent": "DEPRECATED_LaserAcknowledge",
       "AnimName": "ag_laser_react_01"
     },
     {
-      "CladEvent": "LaserDriveEnd",
+      "CladEvent": "DEPRECATED_LaserDriveEnd",
       "AnimName": "ag_pouncedriveend"
     },
     {
-      "CladEvent": "LaserDriveLoop",
+      "CladEvent": "DEPRECATED_LaserDriveLoop",
       "AnimName": "ag_laserdriveloop"
     },
     {
-      "CladEvent": "LaserDriveStart",
+      "CladEvent": "DEPRECATED_LaserDriveStart",
       "AnimName": "ag_laserdrivestart"
     },
     {
-      "CladEvent": "LaserFace",
+      "CladEvent": "DEPRECATED_LaserFace",
       "AnimName": "ag_pouncedriveface"
     },
     {
-      "CladEvent": "LaserGetOut",
+      "CladEvent": "DEPRECATED_LaserGetOut",
       "AnimName": "ag_pouncedriveface_getout"
     },
     {
-      "CladEvent": "LaserPounce",
+      "CladEvent": "DEPRECATED_LaserPounce",
       "AnimName": "ag_pounceonmotionpounce"
     },
     {
@@ -501,15 +501,15 @@
       "AnimName": "ag_lookinplaceforfaces_headmovepauses"
     },
     {
-      "CladEvent": "MajorFail",
+      "CladEvent": "DEPRECATED_MajorFail",
       "AnimName": "ag_majorfail"
     },
     {
-      "CladEvent": "MajorWin",
+      "CladEvent": "DEPRECATED_MajorWin",
       "AnimName": "ag_majorwin"
     },
     {
-      "CladEvent": "MeetCozmoGetIn",
+      "CladEvent": "DEPRECATED_MeetCozmoGetIn",
       "AnimName" : "ag_meetcozmo_getin"
     },
     {
@@ -557,11 +557,11 @@
       "AnimName": "ag_attention_lookatdevice"
     },
     {
-      "CladEvent": "NamedFaceInitialGreeting",
+      "CladEvent": "DEPRECATED_NamedFaceInitialGreeting",
       "AnimName" : "ag_greeting_happy"
     },
     {
-      "CladEvent": "NeutralFace",
+      "CladEvent": "DEPRECATED_NeutralFace",
       "AnimName" : "ag_neutral_face"
     },
     {
@@ -569,131 +569,131 @@
       "AnimName": "ag_hiking_lookaround"
     },
     {
-      "CladEvent": "NothingToDoBoredIntro",
+      "CladEvent": "DEPRECATED_NothingToDoBoredIntro",
       "AnimName": "ag_bored"
     },
     {
-      "CladEvent": "NothingToDoBoredEvent",
+      "CladEvent": "DEPRECATED_NothingToDoBoredEvent",
       "AnimName": "ag_bored_event"
     },
     {
-      "CladEvent": "NothingToDoBoredOutro",
+      "CladEvent": "DEPRECATED_NothingToDoBoredOutro",
       "AnimName": "ag_bored_getout"
     },
     {
-      "CladEvent": "OnLearnedPlayerName",
+      "CladEvent": "DEPRECATED_OnLearnedPlayerName",
       "AnimName": "ag_freeplay_reacttoface_longname"
     },
     {
-      "CladEvent": "OnSawNewNamedFace",
+      "CladEvent": "DEPRECATED_OnSawNewNamedFace",
       "AnimName": "ag_interactfaces_enrolled"
     },
     {
-      "CladEvent": "OnSawNewUnnamedFace",
+      "CladEvent": "DEPRECATED_OnSawNewUnnamedFace",
       "AnimName": "ag_interactfaces_unenrolled"
     },
     {
-      "CladEvent": "OnSawOldNamedFace",
+      "CladEvent": "DEPRECATED_OnSawOldNamedFace",
       "AnimName": "ag_interactfaces_enrolled"
     },
     {
-      "CladEvent": "OnSawOldUnnamedFace",
+      "CladEvent": "DEPRECATED_OnSawOldUnnamedFace",
       "AnimName": "ag_interactfaces_unenrolled"
     },
     {
-      "CladEvent": "OnSpeedtapCozmoConfirm",
+      "CladEvent": "DEPRECATED_OnSpeedtapCozmoConfirm",
       "AnimName": "ag_speedtap_tap"
     },
     {
-      "CladEvent": "OnSpeedtapFakeout",
+      "CladEvent": "DEPRECATED_OnSpeedtapFakeout",
       "AnimName": "ag_speedtap_fake"
     },
     {
-      "CladEvent": "OnSpeedtapGameCozmoWinHighIntensity",
+      "CladEvent": "DEPRECATED_OnSpeedtapGameCozmoWinHighIntensity",
       "AnimName": "ag_speedtap_wingame_intensity03"
     },
     {
-      "CladEvent": "OnSpeedtapGameCozmoWinLowIntensity",
+      "CladEvent": "DEPRECATED_OnSpeedtapGameCozmoWinLowIntensity",
       "AnimName": "ag_speedtap_wingame_intensity02"
     },
     {
-      "CladEvent": "OnSpeedtapGamePlayerWinHighIntensity",
+      "CladEvent": "DEPRECATED_OnSpeedtapGamePlayerWinHighIntensity",
       "AnimName": "ag_speedtap_losegame_intensity03"
     },
     {
-      "CladEvent": "OnSpeedtapGamePlayerWinLowIntensity",
+      "CladEvent": "DEPRECATED_OnSpeedtapGamePlayerWinLowIntensity",
       "AnimName": "ag_speedtap_losegame_intensity02"
     },
     {
-      "CladEvent": "OnSpeedtapGetOut",
+      "CladEvent": "DEPRECATED_OnSpeedtapGetOut",
       "AnimName": "ag_speedtap_getout"
     },
     {
-      "CladEvent": "OnSpeedtapHandCozmoWin",
+      "CladEvent": "DEPRECATED_OnSpeedtapHandCozmoWin",
       "AnimName": "ag_speedtap_winhand"
     },
     {
-      "CladEvent": "OnSpeedtapHandPlayerWin",
+      "CladEvent": "DEPRECATED_OnSpeedtapHandPlayerWin",
       "AnimName": "ag_speedtap_losehand"
     },
     {
-      "CladEvent": "OnSpeedtapIdle",
+      "CladEvent": "DEPRECATED_OnSpeedtapIdle",
       "AnimName": "ag_speedtap_peek"
     },
     {
-      "CladEvent": "OnSpeedtapRoundCozmoWinHighIntensity",
+      "CladEvent": "DEPRECATED_OnSpeedtapRoundCozmoWinHighIntensity",
       "AnimName": "ag_speedtap_winround_intensity02"
     },
     {
-      "CladEvent": "OnSpeedtapRoundCozmoWinLowIntensity",
+      "CladEvent": "DEPRECATED_OnSpeedtapRoundCozmoWinLowIntensity",
       "AnimName": "ag_speedtap_winround_intensity01"
     },
     {
-      "CladEvent": "OnSpeedtapRoundPlayerWinHighIntensity",
+      "CladEvent": "DEPRECATED_OnSpeedtapRoundPlayerWinHighIntensity",
       "AnimName": "ag_speedtap_loseround_intensity02"
     },
     {
-      "CladEvent": "OnSpeedtapRoundPlayerWinLowIntensity",
+      "CladEvent": "DEPRECATED_OnSpeedtapRoundPlayerWinLowIntensity",
       "AnimName": "ag_speedtap_loseround_intensity01"
     },
     {
-      "CladEvent": "OnSpeedtapTap",
+      "CladEvent": "DEPRECATED_OnSpeedtapTap",
       "AnimName": "ag_speedtap_tap"
     },
     {
-      "CladEvent": "OnWaitForCubesMinigameSetup",
+      "CladEvent": "DEPRECATED_OnWaitForCubesMinigameSetup",
       "AnimName": "ag_speedtap_wait"
     },
     {
-      "CladEvent": "OnWiggle",
+      "CladEvent": "DEPRECATED_OnWiggle",
       "AnimName": "ag_faceenrollment_wiggle"
     },
     {
-      "CladEvent": "PetDetectionCat",
+      "CladEvent": "DEPRECATED_PetDetectionCat",
       "AnimName": "ag_petdetection_cat"
     },
     {
-      "CladEvent": "PetDetectionDog",
+      "CladEvent": "DEPRECATED_PetDetectionDog",
       "AnimName": "ag_petdetection_dog"
     },
     {
-      "CladEvent": "PetDetectionShort",
+      "CladEvent": "DEPRECATED_PetDetectionShort",
       "AnimName": "ag_petdetection_shortreaction"
     },
     {
-      "CladEvent": "PetDetectionShort_Cat",
+      "CladEvent": "DEPRECATED_PetDetectionShort_Cat",
       "AnimName": "ag_petdetection_shortcat"
     },
     {
-      "CladEvent": "PetDetectionShort_Dog",
+      "CladEvent": "DEPRECATED_PetDetectionShort_Dog",
       "AnimName": "ag_petdetection_shortdog"
     },
     {
-      "CladEvent": "PetDetectionSneeze",
+      "CladEvent": "DEPRECATED_PetDetectionSneeze",
       "AnimName": "ag_petdetection_misc"
     },
     {
-      "CladEvent": "PettingGetin",
+      "CladEvent": "DEPRECATED_PettingGetin",
       "AnimName": "ag_petting_getin_01"
     },
     {
@@ -741,7 +741,7 @@
       "AnimName": "ag_reacttoblock_react_short"
     },
     {
-      "CladEvent": "PlacedOnCharger",
+      "CladEvent": "DEPRECATED_PlacedOnCharger",
       "AnimName": "ag_reacttocharger"
     },
     {
@@ -765,19 +765,19 @@
       "AnimName": "ag_rollcube_retry"
     },
     {
-      "CladEvent": "PounceDriveEnd",
+      "CladEvent": "DEPRECATED_PounceDriveEnd",
       "AnimName": "ag_pouncedriveend"
     },
     {
-      "CladEvent": "PounceDriveLoop",
+      "CladEvent": "DEPRECATED_PounceDriveLoop",
       "AnimName": "ag_pouncedriveloop"
     },
     {
-      "CladEvent": "PounceDriveStart",
+      "CladEvent": "DEPRECATED_PounceDriveStart",
       "AnimName": "ag_pouncedrivestart"
     },
     {
-      "CladEvent": "PounceFace",
+      "CladEvent": "DEPRECATED_PounceFace",
       "AnimName": "ag_pouncedriveface"
     },
     {
@@ -785,15 +785,15 @@
       "AnimName": "ag_pounceonmotionfail"
     },
     {
-      "CladEvent": "PounceGetOut",
+      "CladEvent": "DEPRECATED_PounceGetOut",
       "AnimName": "ag_pouncedriveface_getout"
     },
     {
-      "CladEvent": "PounceInitial",
+      "CladEvent": "DEPRECATED_PounceInitial",
       "AnimName": "ag_pouncewarninginitial"
     },
     {
-      "CladEvent": "PouncePounce",
+      "CladEvent": "DEPRECATED_PouncePounce",
       "AnimName": "ag_pounceonmotionpounce"
     },
     {
@@ -805,11 +805,11 @@
       "AnimName": "ag_quick_pounce_forward"
     },
     {
-      "CladEvent": "PounceWProxLeft",
+      "CladEvent": "DEPRECATED_PounceWProxLeft",
       "AnimName": "ag_quick_pounce_left"
     },
     {
-      "CladEvent": "PounceWProxRight",
+      "CladEvent": "DEPRECATED_PounceWProxRight",
       "AnimName": "ag_quick_pounce_right"
     },
     {
@@ -825,7 +825,7 @@
       "AnimName": "ag_pickupcube_success"
     },
     {
-      "CladEvent": "ReactToBlockRetryPickup",
+      "CladEvent": "DEPRECATED_ReactToBlockRetryPickup",
       "AnimName": "ag_rollcube_retry"
     },
     {
@@ -837,39 +837,39 @@
       "AnimName": "ag_rtobstacle_react_01"
     },
     {
-      "CladEvent": "ReactToNewBlockAsk",
+      "CladEvent": "DEPRECATED_ReactToNewBlockAsk",
       "AnimName": "ag_askforblock"
     },
     {
-      "CladEvent": "ReactToNewBlockBig",
+      "CladEvent": "DEPRECATED_ReactToNewBlockBig",
       "AnimName": "ag_reacttonewblock"
     },
     {
-      "CladEvent": "ReactToNewBlockSmall",
+      "CladEvent": "DEPRECATED_ReactToNewBlockSmall",
       "AnimName": "ag_reacttonewblockonground"
     },
     {
-      "CladEvent": "ReactToOnLeftSide",
+      "CladEvent": "DEPRECATED_ReactToOnLeftSide",
       "AnimName": "ag_reacttocliff_stuckleftside_01"
     },
     {
-      "CladEvent": "ReactToOnRightSide",
+      "CladEvent": "DEPRECATED_ReactToOnRightSide",
       "AnimName": "ag_reacttocliff_stuckrightside_01"
     },
     {
-      "CladEvent": "ReactToPerchedOnBlock",
+      "CladEvent": "DEPRECATED_ReactToPerchedOnBlock",
       "AnimName": "ag_reacttoblock_stuckonblock"
     },
     {
-      "CladEvent": "ReactToPickup",
+      "CladEvent": "DEPRECATED_ReactToPickup",
       "AnimName": "ag_reacttocliff_pickup"
     },
     {
-      "CladEvent": "ReactToPokeReaction",
+      "CladEvent": "DEPRECATED_ReactToPokeReaction",
       "AnimName": "ag_pokereaction"
     },
     {
-      "CladEvent": "ReactToPokeStartled",
+      "CladEvent": "DEPRECATED_ReactToPokeStartled",
       "AnimName": "ag_pokestartled"
     },
     {
@@ -877,31 +877,31 @@
       "AnimName": "ag_reacttocliff_huh_01"
     },
     {
-      "CladEvent": "ReactToUnexpectedMovement",
+      "CladEvent": "DEPRECATED_ReactToUnexpectedMovement",
       "AnimName": "ag_reacttostop"
     },
     {
-      "CladEvent": "RollBlockInitial",
+      "CladEvent": "DEPRECATED_RollBlockInitial",
       "AnimName": "ag_rollcube_initial"
     },
     {
-      "CladEvent": "RollBlockPreActionNamedFace",
+      "CladEvent": "DEPRECATED_RollBlockPreActionNamedFace",
       "AnimName": "ag_freeplay_reacttoface_identified"
     },
     {
-      "CladEvent": "RollBlockPreActionUnnamedFace",
+      "CladEvent": "DEPRECATED_RollBlockPreActionUnnamedFace",
       "AnimName": "ag_freeplay_reacttoface_unidentified"
     },
     {
-      "CladEvent": "RollBlockPutDown",
+      "CladEvent": "DEPRECATED_RollBlockPutDown",
       "AnimName": "ag_putdownblock"
     },
     {
-      "CladEvent": "RollBlockRealign",
+      "CladEvent": "DEPRECATED_RollBlockRealign",
       "AnimName": "ag_rollcube_realign"
     },
     {
-      "CladEvent": "RollBlockRetry",
+      "CladEvent": "DEPRECATED_RollBlockRetry",
       "AnimName": "ag_rollcube_retry"
     },
     {
@@ -909,47 +909,47 @@
       "AnimName": "ag_rollcube_success"
     },
     {
-      "CladEvent": "SdkTextToSpeech",
+      "CladEvent": "DEPRECATED_SdkTextToSpeech",
       "AnimName": "ag_sdk_speak"
     },
     {
-      "CladEvent": "SearchForFace_Search",
+      "CladEvent": "DEPRECATED_SearchForFace_Search",
       "AnimName": "ag_vc_reaction_nofaceheardyou"
     },
     {
-      "CladEvent": "SearchForFace_FoundFace",
+      "CladEvent": "DEPRECATED_SearchForFace_FoundFace",
       "AnimName": "ag_vc_reaction_nofaceheardyou_getout"
     },
     {
-      "CladEvent": "Shiver",
+      "CladEvent": "DEPRECATED_Shiver",
       "AnimName": "ag_shiver"
     },
     {
-      "CladEvent": "Shocked",
+      "CladEvent": "DEPRECATED_Shocked",
       "AnimName": "ag_shocked"
     },
     {
-      "CladEvent": "Singing_80bpm",
+      "CladEvent": "DEPRECATED_Singing_80bpm",
       "AnimName": "ag_cozmosings_80bpm"
     },
     {
-      "CladEvent": "Singing_100bpm",
+      "CladEvent": "DEPRECATED_Singing_100bpm",
       "AnimName": "ag_cozmosings_100bpm"
     },
     {
-      "CladEvent": "Singing_120bpm",
+      "CladEvent": "DEPRECATED_Singing_120bpm",
       "AnimName": "ag_cozmosings_120bpm"
     },
     {
-      "CladEvent": "Singing_GetIn",
+      "CladEvent": "DEPRECATED_Singing_GetIn",
       "AnimName": "ag_cozmosings_getin"
     },
     {
-      "CladEvent": "Singing_GetOut",
+      "CladEvent": "DEPRECATED_Singing_GetOut",
       "AnimName": "ag_cozmosings_getout"
     },
     {
-      "CladEvent": "Sleeping",
+      "CladEvent": "DEPRECATED_Sleeping",
       "AnimName": "ag_sleeping"
     },
     {
@@ -969,31 +969,31 @@
       "AnimName": "ag_lifteffortroll"
     },
     {
-      "CladEvent": "SoundOnlyRamIntoBlock",
+      "CladEvent": "DEPRECATED_SoundOnlyRamIntoBlock",
       "AnimName": "ag_reacttoblock_audioblockcrash"
     },
     {
-      "CladEvent": "SoundOnlyTurnSmall",
+      "CladEvent": "DEPRECATED_SoundOnlyTurnSmall",
       "AnimName": "ag_soundonlyturnsmall"
     },
     {
-      "CladEvent": "SpeedTapDrivingEnd",
+      "CladEvent": "DEPRECATED_SpeedTapDrivingEnd",
       "AnimName": "ag_speedtap_enddriving"
     },
     {
-      "CladEvent": "SpeedTapDrivingLoop",
+      "CladEvent": "DEPRECATED_SpeedTapDrivingLoop",
       "AnimName": "ag_speedtap_drivingloop"
     },
     {
-      "CladEvent": "SpeedTapDrivingStart",
+      "CladEvent": "DEPRECATED_SpeedTapDrivingStart",
       "AnimName": "ag_speedtap_startdriving"
     },
     {
-      "CladEvent": "StackBlocksSuccess",
+      "CladEvent": "DEPRECATED_StackBlocksSuccess",
       "AnimName": "ag_stackcube_success"
     },
     {
-      "CladEvent": "StartSleeping",
+      "CladEvent": "DEPRECATED_StartSleeping",
       "AnimName": "ag_startsleeping"
     },
     {
@@ -1001,7 +1001,7 @@
       "AnimName": "ag_reacttocliff_wheelie_01"
     },
     {
-      "CladEvent": "Surprise",
+      "CladEvent": "DEPRECATED_Surprise",
       "AnimName": "ag_surprise"
     },
     {
@@ -1029,7 +1029,7 @@
       "AnimName": "ag_codelab_getout"
     },
     {
-      "CladEvent": "TurtleRoll",
+      "CladEvent": "DEPRECATED_TurtleRoll",
       "AnimName": "ag_reacttocliff_turtleroll_01"
     },
     {
@@ -1049,15 +1049,15 @@
       "AnimName": "ag_vc_listening_getout"
     },
     {
-      "CladEvent": "VC_IntentHeard",
+      "CladEvent": "DEPRECATED_VC_IntentHeard",
       "AnimName": "ag_vc_reaction_yesfaceheardyou"
     },
     {
-      "CladEvent": "VC_IntentUnknown",
+      "CladEvent": "DEPRECATED_VC_IntentUnknown",
       "AnimName": "ag_vc_reaction_whatwasthat"
     },
     {
-      "CladEvent": "VC_NoIntentHeard",
+      "CladEvent": "DEPRECATED_VC_NoIntentHeard",
       "AnimName": "ag_vc_reaction_whatwasthat"
     },
     {
@@ -1065,15 +1065,15 @@
       "AnimName": "ag_codelab_idk"
     },
     {	
-      "CladEvent": "VC_NoFollowupCommand_NoFace",	
+      "CladEvent": "DEPRECATED_VC_NoFollowupCommand_NoFace",	
       "AnimName": "ag_vc_reaction_whatwasthat"	
     },	
     {	
-      "CladEvent": "VC_NoFollowupCommand_WithFace",	
+      "CladEvent": "DEPRECATED_VC_NoFollowupCommand_WithFace",	
       "AnimName": "ag_vc_reaction_yesfaceheardyou"	
     },
     {
-      "CladEvent": "WaitOnSideLoop",
+      "CladEvent": "DEPRECATED_WaitOnSideLoop",
       "AnimName": "ag_reacttocliff_wait"
     },
     {
@@ -1101,11 +1101,11 @@
       "AnimName": "ag_keepalive_eyesandhead_loop_01"
     },
     {
-      "CladEvent": "LookDownForLaser",
+      "CladEvent": "DEPRECATED_LookDownForLaser",
       "AnimName": "ag_vc_laser_lookdown"
     },
     {
-      "CladEvent": "ReactToSoundOffChargerAsleepAmbient",
+      "CladEvent": "DEPRECATED_ReactToSoundOffChargerAsleepAmbient",
       "AnimName": "ag_rtsound_offcharger_asleep_ambient"
     },
     {
@@ -1141,7 +1141,7 @@
       "AnimName": "ag_rtsound_offcharger_asleep_135right"
     },
     {
-      "CladEvent": "ReactToSoundOffChargerObserveAmbient",
+      "CladEvent": "DEPRECATED_ReactToSoundOffChargerObserveAmbient",
       "AnimName": "ag_rtsound_offcharger_observe_ambient"
     },
     {
@@ -1177,7 +1177,7 @@
       "AnimName": "ag_rtsound_offcharger_observe_135right"
     },
     {
-      "CladEvent": "ReactToSoundOnChargerAsleepAmbient",
+      "CladEvent": "DEPRECATED_ReactToSoundOnChargerAsleepAmbient",
       "AnimName": "ag_rtsound_oncharger_asleep_ambient"
     },
     {
@@ -1197,7 +1197,7 @@
       "AnimName": "ag_rtsound_oncharger_asleep_behind"
     },
     {
-      "CladEvent": "ReactToSoundOnChargerObserveAmbient",
+      "CladEvent": "DEPRECATED_ReactToSoundOnChargerObserveAmbient",
       "AnimName": "ag_rtsound_oncharger_observe_ambient"
     },
     {
@@ -1317,31 +1317,31 @@
       "AnimName": "ag_observe_oncharger_observing"
     },
     {
-      "CladEvent": "ReactToCubeTapCubeTapped",
+      "CladEvent": "DEPRECATED_ReactToCubeTapCubeTapped",
       "AnimName": "ag_cubetapping_reacttocubetap"
     },
     {
-      "CladEvent": "ReactToCubeSearchForCube",
+      "CladEvent": "DEPRECATED_ReactToCubeSearchForCube",
       "AnimName": "ag_cubetapping_searchforcube"
     },
     {
-      "CladEvent": "ReactToCubeTapCubeFound",
+      "CladEvent": "DEPRECATED_ReactToCubeTapCubeFound",
       "AnimName": "ag_cubetapping_reacttofoundcube"
     },
     {
-      "CladEvent": "ReactToCubeTapCubeNotFound",
+      "CladEvent": "DEPRECATED_ReactToCubeTapCubeNotFound",
       "AnimName": "ag_cubetapping_reacttofoundcube"
     },
     {
-      "CladEvent": "ReactToCubeTapFoundFace",
+      "CladEvent": "DEPRECATED_ReactToCubeTapFoundFace",
       "AnimName": "ag_cubetapping_reacttoface"
     },
     {
-      "CladEvent": "ReactToCubeTapInteractionLoop",
+      "CladEvent": "DEPRECATED_ReactToCubeTapInteractionLoop",
       "AnimName": "ag_cubetapping_idleloop"
     },
     {
-      "CladEvent": "ReactToCubeTapInteractionGetOut",
+      "CladEvent": "DEPRECATED_ReactToCubeTapInteractionGetOut",
       "AnimName": "ag_cubetapping_getout"
     }
   ]

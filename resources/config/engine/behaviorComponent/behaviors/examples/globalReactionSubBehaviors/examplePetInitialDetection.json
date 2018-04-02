@@ -1,7 +1,7 @@
 {
   "behaviorClass": "AnimSequence",
   "behaviorID": "ExamplePetInitialDetection",
-  "animTriggers": ["AcknowledgeObject"],
+  "animTriggers": ["DEPRECATED_AcknowledgeObject"],
   "wantsToBeActivatedConditions": 
   [ 
     {

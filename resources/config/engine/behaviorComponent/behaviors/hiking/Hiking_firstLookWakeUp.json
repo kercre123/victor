@@ -10,5 +10,5 @@
   "behaviorID": "Hiking_FirstLookWakeUp",
 
   "requiredRecentDriveOffCharger_sec" : 1.0,
-  "animTriggers": ["HikingWakeUpOffCharger"]
+  "animTriggers": ["DEPRECATED_HikingWakeUpOffCharger"]
 }

@@ -57,14 +57,14 @@ void BehaviorReactToRobotOnFace::FlipOverIfNeeded()
     auto& robotInfo = GetBEI().GetRobotInfo();
     AnimationTrigger anim;
     if(robotInfo.GetLiftAngle() < kRobotMinLiftAngleForArmUpAnim_s){
-      anim = AnimationTrigger::FacePlantRoll;
+      anim = AnimationTrigger::DEPRECATED_FacePlantRoll;
     }else{
-      anim = AnimationTrigger::FacePlantRollArmUp;
+      anim = AnimationTrigger::DEPRECATED_FacePlantRollArmUp;
     }
     
     if(GetAIComp<AIWhiteboard>().HasHiccups())
     {
-      anim = AnimationTrigger::HiccupRobotOnFace;
+      anim = AnimationTrigger::DEPRECATED_HiccupRobotOnFace;
     }
     
 
@@ -89,7 +89,7 @@ void BehaviorReactToRobotOnFace::DelayThenCheckState()
 void BehaviorReactToRobotOnFace::CheckFlipSuccess()
 {
   if(GetBEI().GetOffTreadsState() == OffTreadsState::OnFace) {
-    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FailedToRightFromFace),
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DEPRECATED_FailedToRightFromFace),
                 &BehaviorReactToRobotOnFace::FlipOverIfNeeded);
   }else{
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToRobotOnFace);

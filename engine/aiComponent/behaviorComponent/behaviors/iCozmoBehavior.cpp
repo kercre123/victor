@@ -43,6 +43,7 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/robotInterface/messageHandler.h"
+#include "engine/unitTestKey.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -465,7 +466,12 @@ void ICozmoBehavior::SetDontActivateThisTick(const std::string& coordinatorName)
   _dontActivateCoordinator = coordinatorName;
   _tickDontActivateSetFor = BaseStationTimer::getInstance()->GetTickCount();
 }
-
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::map<std::string,ICozmoBehaviorPtr> ICozmoBehavior::TESTONLY_GetAnonBehaviors( UnitTestKey key ) const
+{
+  return _anonymousBehaviorMap;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::AddWaitForUserIntent( UserIntentTag intentTag )

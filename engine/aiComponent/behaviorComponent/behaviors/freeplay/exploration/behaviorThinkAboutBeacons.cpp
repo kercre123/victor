@@ -80,8 +80,7 @@ void BehaviorThinkAboutBeacons::OnBehaviorActivated()
   SelectNewBeacon();
   
   // play animation since we have discovered a new area
-  const std::string& animGroupName = _configParams.newAreaAnimTrigger;
-  AnimationTrigger trigger = animGroupName.empty() ? AnimationTrigger::Count : AnimationTriggerFromString(animGroupName.c_str());
+  AnimationTrigger trigger = _configParams.newAreaAnimTrigger;
   if ( trigger != AnimationTrigger::Count )
   {    
     IAction* animNewArea = new TriggerAnimationAction(trigger);
@@ -95,7 +94,7 @@ void BehaviorThinkAboutBeacons::LoadConfig(const Json::Value& config)
   using namespace JsonTools;
   const std::string& debugName = std::string(GetDebugLabel()) + ".BehaviorThinkAboutBeacons.LoadConfig";
 
-  _configParams.newAreaAnimTrigger = ParseString(config, kNewAreaAnimTriggerKey, debugName);
+  _configParams.newAreaAnimTrigger = ParseAnimationTrigger(config, kNewAreaAnimTriggerKey, debugName);
   _configParams.beaconRadius_mm = ParseFloat(config, kBeaconRadiusKey, debugName);
 }
 

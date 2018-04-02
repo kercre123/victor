@@ -58,11 +58,11 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded()
     // Check if cliff detected
     // If not, then calibrate head because we're not likely to be on back if no cliff detected.
     if (robotInfo.GetCliffSensorComponent().IsCliffDetected()) {
-      AnimationTrigger anim = AnimationTrigger::FlipDownFromBack;
+      AnimationTrigger anim = AnimationTrigger::DEPRECATED_FlipDownFromBack;
       
       if(GetAIComp<AIWhiteboard>().HasHiccups())
       {
-        anim = AnimationTrigger::HiccupRobotOnBack;
+        anim = AnimationTrigger::DEPRECATED_HiccupRobotOnBack;
       }
     
       DelegateIfInControl(new TriggerAnimationAction(anim),
