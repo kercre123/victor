@@ -28,9 +28,9 @@ namespace Cozmo {
 #if PROCEDURALFACE_NOISE_FEATURE
   static const s32 kNumNoiseImages = 7;
 
-  CONSOLE_VAR_RANGED(s32, kProcFace_NoiseNumFrames,     "ProceduralFace", 0, 0, kNumNoiseImages);
-  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMinLightness,  "ProceduralFace", 1.f-0.15f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
-  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMaxLightness,  "ProceduralFace", 1.f+0.15f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
+  CONSOLE_VAR_RANGED(s32, kProcFace_NoiseNumFrames,     "ProceduralFace", 5, 0, kNumNoiseImages);
+  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMinLightness,  "ProceduralFace", 0.95f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
+  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMaxLightness,  "ProceduralFace", 1.14f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
 
   CONSOLE_VAR_EXTERN(s32, kProcFace_NoiseNumFrames);
 #endif
@@ -40,7 +40,7 @@ namespace Cozmo {
   CONSOLE_VAR_RANGED(f32,   kProcFace_EyeLightnessMultiplier,     CONSOLE_GROUP, 1.f, 0.f, 10.f);
 
   CONSOLE_VAR(bool,         kProcFace_HotspotRender,              CONSOLE_GROUP, true); // Render glow
-  CONSOLE_VAR_RANGED(f32,   kProcFace_HotspotFalloff,             CONSOLE_GROUP, 0.85f, 0.05f, 1.f);
+  CONSOLE_VAR_RANGED(f32,   kProcFace_HotspotFalloff,             CONSOLE_GROUP, 0.9f, 0.05f, 1.f);
 
   CONSOLE_VAR_RANGED(f32, kProcFace_GlowSizeMultiplier,         CONSOLE_GROUP, 1.f, 0.f, 1.f);
   CONSOLE_VAR_RANGED(f32, kProcFace_GlowLightnessMultiplier,    CONSOLE_GROUP, 1.f, 0.f, 10.f);
