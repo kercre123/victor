@@ -891,10 +891,6 @@ WiFiState GetWiFiState() {
     }
   }
 
-  if(HasInternet()) {
-    wifiState.connState = WiFiConnState::ONLINE;
-  }
-
   return wifiState;
 }
 
@@ -986,12 +982,6 @@ bool GetIpFromHostName(char* hostName, char* ipAddressOut) {
   strcpy(ipAddressOut, inet_ntoa(*ip[0]));
 
   return true;
-}
-
-bool HasInternet() {
-  std::string google = "google.com";
-  std::string amazon = "amazon.com";
-  return CanConnectToHostName((char*)google.c_str()) || CanConnectToHostName((char*)amazon.c_str());
 }
 
 bool IsAccessPointMode() {
@@ -1129,7 +1119,9 @@ bool DisableAccessPointMode() {
   return true;
 }
 
-int GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {
+WiFiIpFlags GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {
+  WiFiIpFlags wifiFlags = WiFiIpFlags::NONE;
+
   struct ifaddrs* ifaddrs;
 
   // get ifaddrs
@@ -1144,35 +1136,19 @@ int GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {
   const char* interface = IsAccessPointMode()? "tether" : "wlan0";
 
   while(current != nullptr) {
-    int s;
     int family = current->ifa_addr->sa_family;
 
     if ((family == AF_INET || family == AF_INET6) && (strcmp(current->ifa_name, interface) == 0)) {
-      char host[NI_MAXHOST];
-
-      s = getnameinfo(current->ifa_addr,
-              (family == AF_INET) ? sizeof(struct sockaddr_in) :
-                                    sizeof(struct sockaddr_in6),
-              host, NI_MAXHOST,
-              NULL, 0, NI_NUMERICHOST);
-      if (s != 0) {
-        //printf("getnameinfo() failed: %s\n", gai_strerror(s));
-        //exit(EXIT_FAILURE);
-        return -1;
-      }
-
-      // printf("\t\tname: %s\n", current->ifa_name);
-      // printf("\t\taddress: <%s>\n", host);
-
       if(family == AF_INET) {
-        inet_pton(AF_INET, host, ipv4_32bits);
+        // Handle IPv4
+        struct sockaddr_in *sa = (struct sockaddr_in*)current->ifa_addr;
+        memcpy(ipv4_32bits, &sa->sin_addr, sizeof(sa->sin_addr));
+        wifiFlags = wifiFlags | WiFiIpFlags::HAS_IPV4;
       } else {
         // Handle IPv6
-        /*struct sockaddr_in6 sa6;
-        inet_pton(AF_INET6, host, &(sa6.sin6_addr));
-        for(int i = 0; i < 16; i++) {
-          printf("%x ", *(((uint8_t*)&sa6.sin6_addr)+i));
-        } printf("\n");*/
+        struct sockaddr_in6 *sa6 = (struct sockaddr_in6*)current->ifa_addr;
+        memcpy(ipv6_128bits, &sa6->sin6_addr, sizeof(sa6->sin6_addr));
+        wifiFlags = wifiFlags | WiFiIpFlags::HAS_IPV6;
       }
     }
 
@@ -1182,7 +1158,7 @@ int GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {
   // free ifaddrs
   freeifaddrs(ifaddrs);
 
-  return 0;
+  return wifiFlags;
 }
 
 } // namespace Anki

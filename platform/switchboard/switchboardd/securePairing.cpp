@@ -154,6 +154,10 @@ void SecurePairing::SubscribeToCladMessages() {
 void SecurePairing::Reset(bool forced) {
   // Tell the stream that we can no longer send over encrypted channel
   _stream->SetEncryptedChannelEstablished(false);
+
+  // Send cancel message -- must do this before state is RAW
+  SendCancelPairing();
+
   _commsState = CommsState::Raw;
   
   // Tell key exchange to reset
@@ -161,9 +165,6 @@ void SecurePairing::Reset(bool forced) {
   
   // Clear pin
   _pin = "000000";
-  
-  // Send cancel message
-  SendCancelPairing();
 
   // Stop timers
   ev_timer_stop(_loop, &_handleInternet.timer);
@@ -332,7 +333,7 @@ void SecurePairing::SendWifiScanResult() {
   SendRtsMessage<RtsWifiScanResponse>(statusCode, wifiScanResults);
 }
 
-void SecurePairing::SendWifiConnectResult(bool success) {
+void SecurePairing::SendWifiConnectResult() {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -362,7 +363,12 @@ void SecurePairing::SendStatusResponse() {
   bool isApMode = Anki::IsAccessPointMode();
 
   // Send challenge and update state
-  SendRtsMessage<RtsStatusResponse>(state.ssid, state.connState, isApMode, bleState, batteryState);
+  char buildNo[PROPERTY_VALUE_MAX] = {0};
+  (void)property_get("ro.build.id", buildNo, "");
+
+  std::string buildNoString(buildNo);
+
+  SendRtsMessage<RtsStatusResponse_2>(state.ssid, state.connState, isApMode, bleState, batteryState, buildNoString);
 
   Log::Write("Send status response.");
 }
@@ -386,7 +392,7 @@ void SecurePairing::SendOtaProgress(int status, uint64_t progress, uint64_t expe
 // Event handling methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-void SecurePairing::HandleRtsConnResponse(const Anki::Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsConnResponse(const Anki::Victor::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::Clad)) {
     return;
   }
@@ -397,6 +403,7 @@ void SecurePairing::HandleRtsConnResponse(const Anki::Victor::ExternalComms::Rts
     if(connResponse.connectionType == Anki::Victor::ExternalComms::RtsConnType::FirstTimePair) {    
       if(_isPairing && !_isOtaUpdating) {
         HandleInitialPair((uint8_t*)connResponse.publicKey.data(), crypto_kx_PUBLICKEYBYTES);
+        _state = PairingState::AwaitingNonceAck;
       } else {
         Log::Write("Client tried to initial pair while not in pairing mode.");
       }
@@ -414,13 +421,13 @@ void SecurePairing::HandleRtsConnResponse(const Anki::Victor::ExternalComms::Rts
           clientDecryptKeySaved);
 
         SendNonce();
+        _state = PairingState::AwaitingNonceAck;
         Log::Write("Received renew connection request.");
       } else {
         Reset();
         Log::Write("No stored session for public key.");
       }
     }
-    _state = PairingState::AwaitingNonceAck;
   } else {
     // ignore msg
     IncrementAbnormalityCount();
@@ -428,7 +435,7 @@ void SecurePairing::HandleRtsConnResponse(const Anki::Victor::ExternalComms::Rts
   }
 }
 
-void SecurePairing::HandleRtsChallengeMessage(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsChallengeMessage(const Victor::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -444,7 +451,7 @@ void SecurePairing::HandleRtsChallengeMessage(const Victor::ExternalComms::RtsCo
   }
 }
 
-void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -465,8 +472,11 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::Rts
       nullptr,
       nullptr);
 
-    if(Anki::HasInternet()) {
-      SendWifiConnectResult(connected);
+    WiFiState state = Anki::GetWiFiState();
+    bool online = state.connState == WiFiConnState::ONLINE;
+
+    if(online) {
+      SendWifiConnectResult();
     } else {
       ev_timer_again(_loop, &_handleInternet.timer);
     }
@@ -481,7 +491,7 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::Rts
   }
 }
 
-void SecurePairing::HandleRtsWifiIpRequest(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsWifiIpRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -490,14 +500,17 @@ void SecurePairing::HandleRtsWifiIpRequest(const Victor::ExternalComms::RtsConne
     std::array<uint8_t, 4> ipV4;
     std::array<uint8_t, 16> ipV6;
 
-    Anki::GetIpAddress(ipV4.data(), ipV6.data());
-    SendRtsMessage<RtsWifiIpResponse>(1, 0, ipV4, ipV6);
+    WiFiIpFlags flags = Anki::GetIpAddress(ipV4.data(), ipV6.data());
+    bool hasIpV4 = (flags & WiFiIpFlags::HAS_IPV4) != 0;
+    bool hasIpV6 = (flags & WiFiIpFlags::HAS_IPV6) != 0;
+
+    SendRtsMessage<RtsWifiIpResponse>(hasIpV4, hasIpV6, ipV4, ipV6);
   }
   
   Log::Write("Received wifi ip request.");
 }
 
-void SecurePairing::HandleRtsStatusRequest(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsStatusRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -509,7 +522,7 @@ void SecurePairing::HandleRtsStatusRequest(const Victor::ExternalComms::RtsConne
   }
 }
 
-void SecurePairing::HandleRtsWifiScanRequest(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsWifiScanRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -522,7 +535,7 @@ void SecurePairing::HandleRtsWifiScanRequest(const Victor::ExternalComms::RtsCon
   }
 }
 
-void SecurePairing::HandleRtsOtaUpdateRequest(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsOtaUpdateRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -536,7 +549,7 @@ void SecurePairing::HandleRtsOtaUpdateRequest(const Victor::ExternalComms::RtsCo
   Log::Write("Starting OTA update.");
 }
 
-void SecurePairing::HandleRtsWifiAccessPointRequest(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsWifiAccessPointRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -569,12 +582,12 @@ void SecurePairing::HandleRtsWifiAccessPointRequest(const Victor::ExternalComms:
   }
 }
 
-void SecurePairing::HandleRtsCancelPairing(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsCancelPairing(const Victor::ExternalComms::RtsConnection_2& msg) {
   Log::Write("Stopping pairing due to client request.");
   StopPairing();
 }
 
-void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& msg) {
   // RtsSsh
   if(!AssertState(CommsState::SecureClad)) {
     return;
@@ -592,14 +605,16 @@ void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection& msg
     for(int i = 0; i < sshMsg.sshAuthorizedKeyBytes.size(); i++) {
       data += sshMsg.sshAuthorizedKeyBytes[i];
     }
+
+    Log::Write("Writing public SSH key to file: %s/%s", sshPath.c_str(), sshFile.c_str());
     WriteFileAtomically(sshPath + "/" + sshFile, data, Anki::kModeUserReadWrite);
   }
 }
 
-void SecurePairing::HandleRtsAck(const Victor::ExternalComms::RtsConnection& msg) {
+void SecurePairing::HandleRtsAck(const Victor::ExternalComms::RtsConnection_2& msg) {
   Anki::Victor::ExternalComms::RtsAck ack = msg.Get_RtsAck();
   if(_state == PairingState::AwaitingNonceAck && 
-    ack.rtsConnectionTag == (uint8_t)Anki::Victor::ExternalComms::RtsConnectionTag::RtsNonceMessage) {
+    ack.rtsConnectionTag == (uint8_t)Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsNonceMessage) {
     HandleNonceAck();
   } else {
     // ignore msg
@@ -754,7 +769,7 @@ void SecurePairing::HandleMessageReceived(uint8_t* bytes, uint32_t length) {
       } else{
         // ignore msg
         IncrementAbnormalityCount();
-        Log::Write("Internal state machine error. Assuming raw message, but state is not initial.");
+        Log::Write("Internal state machine error. Assuming raw message, but state is not initial [%d].", (int)_state);
       }
     } else {
       _cladHandler->ReceiveExternalCommsMsg(bytes, length);
@@ -791,12 +806,12 @@ void SecurePairing::IncrementAbnormalityCount() {
 void SecurePairing::HandleInternetTimerTick() {
   _inetTimerCount++;
 
-  if(Anki::HasInternet()) {
+  WiFiState state = Anki::GetWiFiState();
+  bool online = state.connState == WiFiConnState::ONLINE;
+
+  if(online || _inetTimerCount > _wifiConnectTimeout_s) {
     ev_timer_stop(_loop, &_handleInternet.timer);
-    SendWifiConnectResult(true);
-  } else if(_inetTimerCount > _wifiConnectTimeout_s) {
-    ev_timer_stop(_loop, &_handleInternet.timer);
-    SendWifiConnectResult(false);
+    SendWifiConnectResult();
   }
 }
 
@@ -814,7 +829,8 @@ void SecurePairing::UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStat
 
 template<typename T, typename... Args>
 int SecurePairing::SendRtsMessage(Args&&... args) {
-  Anki::Victor::ExternalComms::ExternalComms msg = Anki::Victor::ExternalComms::ExternalComms(Anki::Victor::ExternalComms::RtsConnection(T(std::forward<Args>(args)...)));
+  Anki::Victor::ExternalComms::ExternalComms msg = Anki::Victor::ExternalComms::ExternalComms(
+    Anki::Victor::ExternalComms::RtsConnection(Anki::Victor::ExternalComms::RtsConnection_2(T(std::forward<Args>(args)...))));
   std::vector<uint8_t> messageData(msg.Size());
   const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
 
@@ -822,6 +838,8 @@ int SecurePairing::SendRtsMessage(Args&&... args) {
     return _stream->SendPlainText(messageData.data(), packedSize);
   } else if(_commsState == CommsState::SecureClad) {
     return _stream->SendEncrypted(messageData.data(), packedSize);
+  } else {
+    Log::Write("Tried to send clad message when state was already set back to RAW.");
   }
 
   return -1;

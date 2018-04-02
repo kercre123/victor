@@ -849,12 +849,19 @@ void FaceInfoScreenManager::DrawMain()
     ip = "XXX.XXX.XXX.XXX";
   }
 
+#if !FACTORY_TEST
   const bool hasInternet = Util::InternetUtils::HasInternet();
+#endif  
+  
 
   ColoredTextLines lines = { {serialNo}, 
                              {osVer}, 
                              {ssid}, 
+#if FACTORY_TEST
+                             {"IP: " + ip},
+#else
                              { {"IP: "}, {ip, (hasInternet ? NamedColors::GREEN : NamedColors::RED)} }
+#endif                             
                            };
    
   DrawTextOnScreen(lines);
@@ -873,6 +880,7 @@ void FaceInfoScreenManager::DrawNetwork()
     ip = "XXX.XXX.XXX.XXX";
   }
 
+#if !FACTORY_TEST
   const bool hasInternet = Util::InternetUtils::HasInternet();
 
   // TODO (VIC-1816): Check actual hosts for connectivity
@@ -886,11 +894,16 @@ void FaceInfoScreenManager::DrawNetwork()
   const ColoredText authStatus  = hasAuthAccess  ? online : offline;
   const ColoredText otaStatus   = hasOTAAccess   ? online : offline;
   const ColoredText voiceStatus = hasVoiceAccess ? online : offline;
+#endif
 
   ColoredTextLines lines = { {ble}, 
                              {mac}, 
                              {ssid}, 
+#if FACTORY_TEST
+                             {"IP: " + ip},
+#else                             
                              { {"IP: "}, {ip, (hasInternet ? NamedColors::GREEN : NamedColors::RED)} },
+#endif                             
                              { },
 
                              // TODO: VIC-1816

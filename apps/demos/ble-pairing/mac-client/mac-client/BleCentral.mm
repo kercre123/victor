@@ -23,6 +23,8 @@
   printf("  ota-start <url>                              Start Ota update with provided URL string argument.\n");
   printf("  ota-progress                                 Get current Ota download progress.\n");
   printf("  status                                       Get Vector's general status.\n");
+  printf("  ssh-send [filename]                          Generates/Sends a public SSH key to Victor.\n");
+  printf("  ssh-start                                    Tries to start an SSH session with Victor.\n");
 }
 
 - (void)setVerbose:(bool)enabled {
@@ -66,6 +68,9 @@
     _filter = @"";
     _readyForNextCommand = true;
     _commandQueue = dispatch_queue_create("commands", NULL);
+    _commVersion = 0;
+    
+    _colorArray = @[ @32, @33, @34, @35, @36 ];
   }
   
   return self;
@@ -148,6 +153,12 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   if([characteristic.UUID.UUIDString isEqualToString:_writeUuid.UUIDString]) {
     // Victor made write to UUID
     //NSLog(@"Receive %@", characteristic.value);
+    if(_verbose) {
+      printf("Received Raw [");
+      for(int i = 0; i < characteristic.value.length; i++) {
+        printf("%x ", ((uint8_t*)characteristic.value.bytes)[i]);
+      } printf("]\n");
+    }
     _bleMessageProtocol->ReceiveRawBuffer((uint8_t*)characteristic.value.bytes, (size_t)characteristic.value.length);
   } else if([characteristic.UUID.UUIDString isEqualToString:_writeSecureUuid.UUIDString]) {
     // Victor made write to secure UUID
@@ -156,6 +167,13 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 }
 
 - (void) handleReceive:(const void*)bytes length:(int)n {
+  if(_verbose) {
+    printf("Received [");
+    for(int i = 0; i < n; i++) {
+      printf("%x ", ((uint8_t*)bytes)[i]);
+    } printf("]\n");
+  }
+  
   switch(_rtsState) {
     case Raw:
       [self HandleReceiveHandshake:bytes length:n];
@@ -163,35 +181,69 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     case Clad: {
       Anki::Victor::ExternalComms::ExternalComms extComms;
       extComms.Unpack((uint8_t*)bytes, n);
-      
-      if(extComms.GetTag() == Anki::Victor::ExternalComms::ExternalCommsTag::RtsConnection) {
-        Anki::Victor::ExternalComms::RtsConnection rtsMsg = extComms.Get_RtsConnection();
         
-        switch(rtsMsg.GetTag()) {
-          case Anki::Victor::ExternalComms::RtsConnectionTag::Error:
-            //
-            break;
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsConnRequest: {
-            Anki::Victor::ExternalComms::RtsConnRequest req = rtsMsg.Get_RtsConnRequest();
-            [self HandleReceivePublicKey:req];
-            break;
+      if(_commVersion == 1) {
+        if(extComms.GetTag() == Anki::Victor::ExternalComms::ExternalCommsTag::RtsConnection_1) {
+          Anki::Victor::ExternalComms::RtsConnection_1 rtsMsg = extComms.Get_RtsConnection_1();
+          
+          switch(rtsMsg.GetTag()) {
+            case Anki::Victor::ExternalComms::RtsConnection_1Tag::Error:
+              //
+              break;
+            case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsConnRequest: {
+              Anki::Victor::ExternalComms::RtsConnRequest req = rtsMsg.Get_RtsConnRequest();
+              [self HandleReceivePublicKey:req];
+              break;
+            }
+            case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsNonceMessage: {
+              Anki::Victor::ExternalComms::RtsNonceMessage msg = rtsMsg.Get_RtsNonceMessage();
+              [self HandleReceiveNonce:msg];
+              break;
+            }
+            case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsCancelPairing: {
+              //
+              _rtsState = Raw;
+              break;
+            }
+            case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsAck: {
+              //
+              break;
+            }
+            default:
+              break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsNonceMessage: {
-            Anki::Victor::ExternalComms::RtsNonceMessage msg = rtsMsg.Get_RtsNonceMessage();
-            [self HandleReceiveNonce:msg];
-            break;
+        }
+      } else if(_commVersion == 2){
+        if(extComms.GetTag() == Anki::Victor::ExternalComms::ExternalCommsTag::RtsConnection) {
+          Anki::Victor::ExternalComms::RtsConnection rtsMsg = extComms.Get_RtsConnection();
+          Anki::Victor::ExternalComms::RtsConnection_2 rts2Msg = rtsMsg.Get_RtsConnection_2();
+          
+          switch(rts2Msg.GetTag()) {
+            case Anki::Victor::ExternalComms::RtsConnection_2Tag::Error:
+              //
+              break;
+            case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsConnRequest: {
+              Anki::Victor::ExternalComms::RtsConnRequest req = rts2Msg.Get_RtsConnRequest();
+              [self HandleReceivePublicKey:req];
+              break;
+            }
+            case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsNonceMessage: {
+              Anki::Victor::ExternalComms::RtsNonceMessage msg = rts2Msg.Get_RtsNonceMessage();
+              [self HandleReceiveNonce:msg];
+              break;
+            }
+            case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsCancelPairing: {
+              //
+              _rtsState = Raw;
+              break;
+            }
+            case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsAck: {
+              //
+              break;
+            }
+            default:
+              break;
           }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsCancelPairing: {
-            //
-            _rtsState = Raw;
-            break;
-          }
-          case Anki::Victor::ExternalComms::RtsConnectionTag::RtsAck: {
-            //
-            break;
-          }
-          default:
-            break;
         }
       }
       
@@ -230,141 +282,342 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   
   free(msgBuffer);
   
-  if(extComms.GetTag() == Anki::Victor::ExternalComms::ExternalCommsTag::RtsConnection) {
-    Anki::Victor::ExternalComms::RtsConnection rtsMsg = extComms.Get_RtsConnection();
-    
-    switch(rtsMsg.GetTag()) {
-      case Anki::Victor::ExternalComms::RtsConnectionTag::Error:
-        //
-        break;
-      case Anki::Victor::ExternalComms::RtsConnectionTag::RtsChallengeMessage: {
-        Anki::Victor::ExternalComms::RtsChallengeMessage msg = rtsMsg.Get_RtsChallengeMessage();
-        [self HandleChallengeMessage:msg];
-        break;
-      }
-      case Anki::Victor::ExternalComms::RtsConnectionTag::RtsChallengeSuccessMessage: {
-        Anki::Victor::ExternalComms::RtsChallengeSuccessMessage msg = rtsMsg.Get_RtsChallengeSuccessMessage();
-        [self HandleChallengeSuccessMessage:msg];
-        break;
-      }
-      case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiConnectResponse: {
-        Anki::Victor::ExternalComms::RtsWifiConnectResponse msg = rtsMsg.Get_RtsWifiConnectResponse();
-        switch(msg.wifiState) {
-          case 1:
-            printf("Vector is connected to the internet.\n");
-            break;
-          case 0:
-            printf("Unknown connection status.\n");
-            break;
-          case 2:
-            printf("Vector is connected without internet.\n");
-            break;
-          case 3:
-            printf("Vector is not connected to a network.\n");
-            break;
-          default:
-            break;
+  if(_commVersion == 1) {
+    if(extComms.GetTag() == Anki::Victor::ExternalComms::ExternalCommsTag::RtsConnection_1) {
+      Anki::Victor::ExternalComms::RtsConnection_1 rtsMsg = extComms.Get_RtsConnection_1();
+      
+      switch(rtsMsg.GetTag()) {
+        case Anki::Victor::ExternalComms::RtsConnection_1Tag::Error:
+          //
+          break;
+        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsChallengeMessage: {
+          Anki::Victor::ExternalComms::RtsChallengeMessage msg = rtsMsg.Get_RtsChallengeMessage();
+          [self HandleChallengeMessage:msg];
+          break;
         }
-        
-        if(_currentCommand == "wifi-connect" && !_readyForNextCommand) {
-          _readyForNextCommand = true;
+        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsChallengeSuccessMessage: {
+          Anki::Victor::ExternalComms::RtsChallengeSuccessMessage msg = rtsMsg.Get_RtsChallengeSuccessMessage();
+          [self HandleChallengeSuccessMessage:msg];
+          break;
         }
-        
-        break;
-      }
-      case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiIpResponse: {
-        //
-        Anki::Victor::ExternalComms::RtsWifiIpResponse msg = rtsMsg.Get_RtsWifiIpResponse();
-        for(int i = 0; i < 4; i++) {
-          printf("%d", msg.ipV4[i]);
-          if(i < 3) {
-            printf(".");
+        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsWifiIpResponse: {
+          //
+          Anki::Victor::ExternalComms::RtsWifiIpResponse msg = rtsMsg.Get_RtsWifiIpResponse();
+          
+          if(_currentCommand == "wifi-ip" && !_readyForNextCommand) {
+            if(msg.hasIpV4) {
+              char ipv4String[INET_ADDRSTRLEN] = {0};
+              inet_ntop(AF_INET, msg.ipV4.data(), ipv4String, INET_ADDRSTRLEN);
+              printf("IPv4: %s\n", ipv4String);
+            }
+            
+            if(msg.hasIpV6) {
+              char ipv6String[INET6_ADDRSTRLEN] = {0};
+              inet_ntop(AF_INET6, msg.ipV6.data(), ipv6String, INET6_ADDRSTRLEN);
+              printf("IPv6: %s\n", ipv6String);
+            }
+            
+            _readyForNextCommand = true;
+          } else if(_currentCommand == "ssh-start" && !_readyForNextCommand) {
+            NSString* sshArg = [NSString stringWithFormat:@"root@%d.%d.%d.%d", msg.ipV4[0], msg.ipV4[1], msg.ipV4[2], msg.ipV4[3]];
+            
+            NSString *s = [NSString stringWithFormat:
+                           @"tell application \"Terminal\" to do script \"ssh %@\"", sshArg];
+            
+            NSAppleScript *as = [[NSAppleScript alloc] initWithSource: s];
+            [as executeAndReturnError:nil];
+            
+            _readyForNextCommand = true;
           }
-        } printf("\n");
-        
-        if(_currentCommand == "wifi-ip" && !_readyForNextCommand) {
-          _readyForNextCommand = true;
+          
+          break;
         }
-        
-        break;
-      }
-      case Anki::Victor::ExternalComms::RtsConnectionTag::RtsStatusResponse: {
-        //
-        Anki::Victor::ExternalComms::RtsStatusResponse msg = rtsMsg.Get_RtsStatusResponse();
-        
-        std::string state = "";
-        switch(msg.wifiState) {
-          case 1:
-            state = "ONLINE";
-            break;
-          case 0:
-            state = "UNKNOWN";
-            break;
-          case 2:
-            state = "CONNECTED / NO INTERNET";
-            break;
-          case 3:
-            state = "DISCONNECTED";
-            break;
-          default:
-            break;
+        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsWifiConnectResponse: {
+          Anki::Victor::ExternalComms::RtsWifiConnectResponse msg = rtsMsg.Get_RtsWifiConnectResponse();
+          switch(msg.wifiState) {
+            case 1:
+              printf("Vector is connected to the internet.\n");
+              break;
+            case 0:
+              printf("Unknown connection status.\n");
+              break;
+            case 2:
+              printf("Vector is connected without internet.\n");
+              break;
+            case 3:
+              printf("Vector is not connected to a network.\n");
+              break;
+            default:
+              break;
+          }
+          
+          if(_currentCommand == "wifi-connect" && !_readyForNextCommand) {
+            _readyForNextCommand = true;
+          }
+          
+          break;
         }
+        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsStatusResponse: {
+          //
+          Anki::Victor::ExternalComms::RtsStatusResponse msg = rtsMsg.Get_RtsStatusResponse();
+          
+          std::string state = "";
+          switch(msg.wifiState) {
+            case 1:
+              state = "ONLINE";
+              break;
+            case 0:
+              state = "UNKNOWN";
+              break;
+            case 2:
+              state = "CONNECTED / NO INTERNET";
+              break;
+            case 3:
+              state = "DISCONNECTED";
+              break;
+            default:
+              break;
+          }
 
-        printf("             ssid = %s\n connection_state = %s\n     access_point = %s\n", [self asciiStr:(char*)msg.wifiSsidHex.c_str() length:(int)msg.wifiSsidHex.length()].c_str(), state.c_str(), msg.accessPoint? "true" : "false");
-        if(_currentCommand == "status" && !_readyForNextCommand) {
-          _readyForNextCommand = true;
+          printf("             ssid = %s\n connection_state = %s\n     access_point = %s\n", [self asciiStr:(char*)msg.wifiSsidHex.c_str() length:(int)msg.wifiSsidHex.length()].c_str(), state.c_str(), msg.accessPoint? "true" : "false");
+          if(_currentCommand == "status" && !_readyForNextCommand) {
+            _readyForNextCommand = true;
+          }
+          
+          break;
         }
-        
-        break;
-      }
-      case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiScanResponse: {
-        Anki::Victor::ExternalComms::RtsWifiScanResponse msg = rtsMsg.Get_RtsWifiScanResponse();
-        [self HandleWifiScanResponse:msg];
-        break;
-      }
-      case Anki::Victor::ExternalComms::RtsConnectionTag::RtsWifiAccessPointResponse: {
-        Anki::Victor::ExternalComms::RtsWifiAccessPointResponse msg = rtsMsg.Get_RtsWifiAccessPointResponse();
-        [self HandleReceiveAccessPointResponse:msg];
-        break;
-      }
-      case Anki::Victor::ExternalComms::RtsConnectionTag::RtsOtaUpdateResponse: {
-        Anki::Victor::ExternalComms::RtsOtaUpdateResponse msg = rtsMsg.Get_RtsOtaUpdateResponse();
-        _otaStatusCode = msg.status;
-        _otaProgress = msg.current;
-        _otaExpected = msg.expected;
-        
-        /*
-         * Commenting out for visibility because in next pass, going
-         * to use this code again to show OTA progress bar.
-         *
-         
-         int size = 100;
-        int progress = (int)(((float)c/(float)t) * size);
-        std::string bar = "";
-        
-        for(int i = 0; i < size; i++) {
-          if(i <= progress) bar += "▓";
-          else bar += "_";
+        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsWifiScanResponse: {
+          Anki::Victor::ExternalComms::RtsWifiScanResponse msg = rtsMsg.Get_RtsWifiScanResponse();
+          [self HandleWifiScanResponse:msg];
+          break;
         }
-        
-        printf("%100s [%d%%] [%llu/%llu] \r", bar.c_str(), progress, msg.current, msg.expected);
-        fflush(stdout);
-         
-         */
-        break;
+        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsWifiAccessPointResponse: {
+          Anki::Victor::ExternalComms::RtsWifiAccessPointResponse msg = rtsMsg.Get_RtsWifiAccessPointResponse();
+          [self HandleReceiveAccessPointResponse:msg];
+          break;
+        }
+        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsOtaUpdateResponse: {
+          Anki::Victor::ExternalComms::RtsOtaUpdateResponse msg = rtsMsg.Get_RtsOtaUpdateResponse();
+          _otaStatusCode = msg.status;
+          _otaProgress = msg.current;
+          _otaExpected = msg.expected;
+          
+          /*
+           * Commenting out for visibility because in next pass, going
+           * to use this code again to show OTA progress bar.
+           *
+           
+           int size = 100;
+          int progress = (int)(((float)c/(float)t) * size);
+          std::string bar = "";
+          
+          for(int i = 0; i < size; i++) {
+            if(i <= progress) bar += "▓";
+            else bar += "_";
+          }
+          
+          printf("%100s [%d%%] [%llu/%llu] \r", bar.c_str(), progress, msg.current, msg.expected);
+          fflush(stdout);
+           
+           */
+          break;
+        }
+        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsCancelPairing: {
+          _rtsState = Raw;
+          break;
+        }
+        case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsAck: {
+          //
+          break;
+        }
+        default:
+          break;
       }
-      case Anki::Victor::ExternalComms::RtsConnectionTag::RtsCancelPairing: {
-        _rtsState = Raw;
-        break;
-      }
-      case Anki::Victor::ExternalComms::RtsConnectionTag::RtsAck: {
-        //
-        break;
-      }
-      default:
-        break;
     }
   }
+  else if(_commVersion == 2) {
+    if(extComms.GetTag() == Anki::Victor::ExternalComms::ExternalCommsTag::RtsConnection) {
+      Anki::Victor::ExternalComms::RtsConnection rtsContainer = extComms.Get_RtsConnection();
+      Anki::Victor::ExternalComms::RtsConnection_2 rtsMsg = rtsContainer.Get_RtsConnection_2();
+      
+      switch(rtsMsg.GetTag()) {
+        case Anki::Victor::ExternalComms::RtsConnection_2Tag::Error:
+          //
+          break;
+        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsChallengeMessage: {
+          Anki::Victor::ExternalComms::RtsChallengeMessage msg = rtsMsg.Get_RtsChallengeMessage();
+          [self HandleChallengeMessage:msg];
+          break;
+        }
+        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsChallengeSuccessMessage: {
+          Anki::Victor::ExternalComms::RtsChallengeSuccessMessage msg = rtsMsg.Get_RtsChallengeSuccessMessage();
+          [self HandleChallengeSuccessMessage:msg];
+          break;
+        }
+        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiConnectResponse: {
+          Anki::Victor::ExternalComms::RtsWifiConnectResponse msg = rtsMsg.Get_RtsWifiConnectResponse();
+          switch(msg.wifiState) {
+            case 1:
+              printf("Vector is connected to the internet.\n");
+              break;
+            case 0:
+              printf("Unknown connection status.\n");
+              break;
+            case 2:
+              printf("Vector is connected without internet.\n");
+              break;
+            case 3:
+              printf("Vector is not connected to a network.\n");
+              break;
+            default:
+              break;
+          }
+          
+          if(_currentCommand == "wifi-connect" && !_readyForNextCommand) {
+            _readyForNextCommand = true;
+          }
+          
+          break;
+        }
+        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiIpResponse: {
+          Anki::Victor::ExternalComms::RtsWifiIpResponse msg = rtsMsg.Get_RtsWifiIpResponse();
+          
+          if(_currentCommand == "wifi-ip" && !_readyForNextCommand) {
+            if(msg.hasIpV4) {
+              char ipv4String[INET_ADDRSTRLEN] = {0};
+              inet_ntop(AF_INET, msg.ipV4.data(), ipv4String, INET_ADDRSTRLEN);
+              printf("IPv4: %s\n", ipv4String);
+            }
+            
+            if(msg.hasIpV6) {
+              char ipv6String[INET6_ADDRSTRLEN] = {0};
+              inet_ntop(AF_INET6, msg.ipV6.data(), ipv6String, INET6_ADDRSTRLEN);
+              printf("IPv6: %s\n", ipv6String);
+            }
+            
+            _readyForNextCommand = true;
+          } else if(_currentCommand == "ssh-start" && !_readyForNextCommand) {
+            NSString* sshArg = [NSString stringWithFormat:@"root@%d.%d.%d.%d", msg.ipV4[0], msg.ipV4[1], msg.ipV4[2], msg.ipV4[3]];
+            
+            NSString *s = [NSString stringWithFormat:
+                           @"tell application \"Terminal\" to do script \"ssh %@\"", sshArg];
+            
+            NSAppleScript *as = [[NSAppleScript alloc] initWithSource: s];
+            [as executeAndReturnError:nil];
+            
+            _readyForNextCommand = true;
+          }
+          break;
+        }
+        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsStatusResponse_2: {
+          //
+          Anki::Victor::ExternalComms::RtsStatusResponse_2 msg = rtsMsg.Get_RtsStatusResponse_2();
+          
+          std::string state = "";
+          switch(msg.wifiState) {
+            case 1:
+              state = "ONLINE";
+              break;
+            case 0:
+              state = "UNKNOWN";
+              break;
+            case 2:
+              state = "CONNECTED / NO INTERNET";
+              break;
+            case 3:
+              state = "DISCONNECTED";
+              break;
+            default:
+              break;
+          }
+          
+          printf("             ssid = %s\n connection_state = %s\n     access_point = %s\n          version = %s\n", [self asciiStr:(char*)msg.wifiSsidHex.c_str() length:(int)msg.wifiSsidHex.length()].c_str(), state.c_str(), msg.accessPoint? "true" : "false", msg.version.c_str());
+          if(_currentCommand == "status" && !_readyForNextCommand) {
+            _readyForNextCommand = true;
+          }
+          
+          break;
+        }
+        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiScanResponse: {
+          Anki::Victor::ExternalComms::RtsWifiScanResponse msg = rtsMsg.Get_RtsWifiScanResponse();
+          [self HandleWifiScanResponse:msg];
+          break;
+        }
+        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiAccessPointResponse: {
+          Anki::Victor::ExternalComms::RtsWifiAccessPointResponse msg = rtsMsg.Get_RtsWifiAccessPointResponse();
+          [self HandleReceiveAccessPointResponse:msg];
+          break;
+        }
+        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsOtaUpdateResponse: {
+          Anki::Victor::ExternalComms::RtsOtaUpdateResponse msg = rtsMsg.Get_RtsOtaUpdateResponse();
+          _otaStatusCode = msg.status;
+          _otaProgress = msg.current;
+          _otaExpected = msg.expected;
+          
+          /*
+           * Commenting out for visibility because in next pass, going
+           * to use this code again to show OTA progress bar.
+           *
+           
+           int size = 100;
+           int progress = (int)(((float)c/(float)t) * size);
+           std::string bar = "";
+           
+           for(int i = 0; i < size; i++) {
+           if(i <= progress) bar += "▓";
+           else bar += "_";
+           }
+           
+           printf("%100s [%d%%] [%llu/%llu] \r", bar.c_str(), progress, msg.current, msg.expected);
+           fflush(stdout);
+           
+           */
+          break;
+        }
+        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsCancelPairing: {
+          _rtsState = Raw;
+          break;
+        }
+        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsAck: {
+          //
+          break;
+        }
+        default:
+          break;
+      }
+    }
+  }
+}
+
+- (void) SendSshPublicKey:(std::string)filename {
+  NSFileManager* fileManager = [NSFileManager defaultManager];
+  NSString* fn = [NSString stringWithUTF8String:filename.c_str()];
+  
+  if(![fn containsString:@".pub"]) {
+    printf("WARNING! Supplied key does not look like a public key. Are you sure you want to send it to Vector? yes/no\n");
+    char answer[3];
+    scanf("%3s",answer);
+    
+    if(!(strncmp(answer, "yes", 3) == 0)) {
+      return;
+    }
+  }
+  
+  if(![fileManager fileExistsAtPath:fn]) {
+    // Generate Vector keys
+    printf("Supplied public key does not exist.\n");
+    return;
+  }
+  
+  NSString* pubKey = [NSString stringWithContentsOfFile:fn encoding:NSUTF8StringEncoding error:nil];
+  std::string contents = std::string([pubKey UTF8String], pubKey.length);
+  
+  std::vector<std::string> keyParts;
+  for(uint32_t i = 0; i < contents.length(); i += 255) {
+    keyParts.push_back(contents.substr(i, 255));
+  }
+  
+  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsSshRequest>(self, _commVersion, keyParts);
 }
 
 - (void) send:(const void*)bytes length:(int)n {
@@ -421,11 +674,19 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   }
   
   uint32_t version = *(uint32_t*)(msg + 1);
+  const uint32_t maxVersion = 2;
   
-  if(version != 1) {
-    // Not Version 1
+  if(version != 1 &&
+     version != 2) {
+    // Not Version 1 or Version 2
+    printf("Error: Connected Vector speaks version %d, while our max version is %d!\n", version, maxVersion);
     return;
+  } else {
+    printf("* Speaking to Vector with protocol version [%d].\n", version);
   }
+  
+  // Set version
+  _commVersion = version;
   
   [self send:bytes length:n];
   
@@ -458,7 +719,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     memcpy(_encryptKey, [encKey bytes], crypto_kx_SESSIONKEYBYTES);
     if(_verbose) NSLog(@"Trying to renew connection");
     _reconnection = true;
-    Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsConnResponse>(self, Anki::Victor::ExternalComms::RtsConnType::Reconnection,
+    Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsConnResponse>(self, _commVersion, Anki::Victor::ExternalComms::RtsConnType::Reconnection,
                                                                        publicKeyArray);
   } else {
     crypto_kx_keypair(_publicKey, _secretKey);
@@ -480,11 +741,11 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   
     // Hash mix of pin and decryptKey to form new decryptKey
     
-    Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsConnResponse>(self, Anki::Victor::ExternalComms::RtsConnType::FirstTimePair,
+    Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsConnResponse>(self, _commVersion, Anki::Victor::ExternalComms::RtsConnType::FirstTimePair,
                                                                        publicKeyArray);
     char pin[6];
     char garbage[1];
-    NSLog(@"Enter pin:");
+    printf("> Enter pin:\n");
     scanf("%6s",pin);
     scanf("%c", garbage);
     crypto_generichash(_decryptKey, crypto_kx_SESSIONKEYBYTES, tmpDecryptKey, crypto_kx_SESSIONKEYBYTES, (uint8_t*)pin, 6);
@@ -509,16 +770,25 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   memcpy(_nonceOut, msg.toRobotNonce.data(), crypto_aead_xchacha20poly1305_ietf_NPUBBYTES);
   
   if(_verbose) NSLog(@"Sending ack");
-  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsAck>(self, (uint8_t)Anki::Victor::ExternalComms::RtsConnectionTag::RtsNonceMessage);
+  
+  uint8_t nonceTag = 0;
+  
+  if(_commVersion == 1) {
+    nonceTag = (uint8_t)Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsNonceMessage;
+  } else {
+    nonceTag = (uint8_t)Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsNonceMessage;
+  }
+  
+  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsAck>(self, _commVersion, nonceTag);
   // Move to encrypted comms
   if(_verbose) NSLog(@"Setting mode to ENCRYPTED");
   _rtsState = CladSecure;
 }
 
 - (void) HandleChallengeMessage:(const Anki::Victor::ExternalComms::RtsChallengeMessage &)msg {
-  if(_verbose) NSLog(@"Received challenge message from Victor");
+  if(_verbose) NSLog(@"Received challenge message from Victor: %d", msg.number);
   uint32_t challenge = msg.number;
-  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsChallengeMessage>(self, challenge + 1);
+  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsChallengeMessage>(self, _commVersion, challenge + 1);
 }
 
 - (std::vector<std::string>) GetWordsFromLine: (std::string)line {
@@ -563,7 +833,9 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         shellName = [_peripheral.name substringFromIndex:(_peripheral.name.length - 4)];
       }
       
-      printf("\033[0;32mvector-%s#\033[0m ", [shellName UTF8String]);
+      int vColor = [_colorArray[(_commVersion - 1) % _colorArray.count] intValue];
+      
+      printf("\033[0;%dmvector-%s#\033[0m ", vColor, [shellName UTF8String]);
       fgets(input, sizeof(input), stdin);
       
       for(int i = 1; i < sizeof(input); i++) {
@@ -582,7 +854,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       _currentCommand = words[0];
       
       if(strcmp(words[0].c_str(), "wifi-scan") == 0) {
-        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiScanRequest>(self);
+        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiScanRequest>(self, _commVersion);
       } else if(strcmp(words[0].c_str(), "wifi-connect") == 0) {
         if(words.size() < 3) {
           continue;
@@ -602,20 +874,20 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         printf("Connecting to %s\n", words[1].c_str());
         
         uint8_t requestTimeout_s = 15;
-        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiConnectRequest>(self,
+        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiConnectRequest>(self, _commVersion,
                                                                                  [self hexStr:(char*)words[1].c_str() length:(int)words[1].length()], words[2], requestTimeout_s, auth, hidden);
         
       } else if(strcmp(words[0].c_str(), "wifi-ap") == 0) {
         bool enable = (words[1]=="true")?true:false;
-        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiAccessPointRequest>(self, enable);
+        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiAccessPointRequest>(self, _commVersion, enable);
       } else if(strcmp(words[0].c_str(), "wifi-ip") == 0) {
-        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiIpRequest>(self);
+        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiIpRequest>(self, _commVersion);
       } else if(strcmp(words[0].c_str(), "ota-start") == 0) {
         std::string url = "http://sai-general.s3.amazonaws.com/build-assets/ota-test.tar";
         if(words.size() > 1) {
           url = words[1];
         }
-        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsOtaUpdateRequest>(self, url);
+        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsOtaUpdateRequest>(self, _commVersion, url);
         _readyForNextCommand = true;
         _currentCommand = "";
       } else if(strcmp(words[0].c_str(), "ota-progress") == 0) {
@@ -623,7 +895,23 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         _readyForNextCommand = true;
         _currentCommand = "";
       } else if(strcmp(words[0].c_str(), "status") == 0) {
-        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsStatusRequest>(self);
+        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsStatusRequest>(self, _commVersion);
+      } else if(strcmp(words[0].c_str(), "ssh-send") == 0) {
+        NSArray* pathParts = [NSArray arrayWithObjects:NSHomeDirectory(), @".ssh", @"id_rsa_vic_dev.pub", nil];
+        NSString* keyPath = [NSString pathWithComponents:pathParts];
+        std::string filename = std::string(keyPath.UTF8String);
+        
+        if(words.size() > 1) {
+          filename = words[1];
+        }
+        
+        [self SendSshPublicKey:filename];
+        _readyForNextCommand = true;
+        _currentCommand = "";
+      } else if(strcmp(words[0].c_str(), "ssh-start") == 0) {
+        _readyForNextCommand = false;
+        _currentCommand = "ssh-start";
+        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiIpRequest>(self, _commVersion);
       } else if(strcmp(words[0].c_str(), "help") == 0) {
         _readyForNextCommand = true;
         _currentCommand = "";
@@ -767,7 +1055,7 @@ didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic
   }
   
   if((isAnki && isVictor && (isPairing || knownName)) && !_connecting) {
-    NSLog(@"Connecting to %@", peripheral.name);
+    printf("* Connecting to %s\n", peripheral.name.UTF8String);
     [_centralManager stopScan];
     [[NSUserDefaults standardUserDefaults] setValue:peripheral.name forKey:@"victorName"];
     _peripheral = peripheral;
