@@ -339,7 +339,7 @@ void BehaviorLookAround::TransitionToExaminingFoundObject()
   
   DelegateIfInControl(new CompoundActionSequential({
                   new TurnTowardsObjectAction(recentObjectID),
-                  new TriggerLiftSafeAnimationAction(AnimationTrigger::BlockReact) }),
+                  new TriggerLiftSafeAnimationAction(AnimationTrigger::DEPRECATED_BlockReact) }),
                [this, recentObjectID](ActionResult result) {
                  if( result == ActionResult::SUCCESS ) {
                    PRINT_NAMED_DEBUG("BehaviorLookAround.Objects",

@@ -1,7 +1,7 @@
 {
   "emotionEvents": [
     {
-      "name": "ReactToUnexpectedMovement",
+      "name": "DEPRECATED_ReactToUnexpectedMovement",
       "emotionAffectors": [
          {
             "emotionType": "Confident",
@@ -67,7 +67,7 @@
         },
         {
           "emotionType" : "Stimulated",
-          "value" : 0.4
+          "value" : 0.5
         }
       ]
     },
@@ -80,7 +80,7 @@
         },
         {
           "emotionType" : "Stimulated",
-          "value" : 0.25
+          "value" : 0.05
         }
       ]
     }

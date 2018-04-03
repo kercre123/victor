@@ -25,16 +25,19 @@ LNAV_PATH=${SCRIPT_PATH}/lnav
 LOG_FILE=${LNAV_PATH}/victor_log_lnav.log
 LNAV_FILTER_FILE=${LNAV_PATH}/lnav_filters.txt
 LNAV_FORMAT_FILE=${LNAV_PATH}/victor_log.json
+LNAV_FORMAT_FILE_INSTALL_LOC=~/.lnav/formats/installed/victor_log.json
+UNINSTALL_FORMAT_FILE=0
 
 function usage() {
     echo "$SCRIPT_NAME [OPTIONS]"
-    echo "  -h                      print this message"
-    echo "  -o                      file to log unfiltered data to (Default: ${LOG_FILE})"
-    echo "  -f                      lnav filter file to use (Default: ${LNAV_FILTER_FILE})"
+    echo "  -h                      Print this message"
+    echo "  -o <log file>           File to log unfiltered data to (Default: ${LOG_FILE})"
+    echo "  -f <filter file>        lnav filter file to use (Default: ${LNAV_FILTER_FILE})"
+    echo "  -u                      Display without formatting (i.e. uninstalls lnav format file)"
     echo "  -s                      hostname or ip address of robot (Default: ${ANKI_ROBOT_HOST})"
 }
 
-while getopts ":o:f:hs:" opt; do
+while getopts ":o:f:uhs:" opt; do
     case $opt in
         h)
             usage
@@ -46,6 +49,9 @@ while getopts ":o:f:hs:" opt; do
         f)
             LNAV_FILTER_FILE="${OPTARG}"
             ;;
+        u)
+            UNINSTALL_FORMAT_FILE=1
+            ;;            
         s)
             ANKI_ROBOT_HOST="${OPTARG}"
             ;;
@@ -82,8 +88,16 @@ echo "Logging to file ${LOG_FILE} (PID: {$LOGGING_PID})"
 # Make sure we kill LOGGING_PID no matter how lnav exits!
 set +e
 
+# If lnav format file is already installed and we don't want it
+# to be, then uninstall it
+if [ ${UNINSTALL_FORMAT_FILE} -eq 1 ] && [ -e "${LNAV_FORMAT_FILE_INSTALL_LOC}" ]; then
+  echo "Uninstalling lnav format: ${LNAV_FORMAT_FILE_INSTALL_LOC}"
+  rm ${LNAV_FORMAT_FILE_INSTALL_LOC}
+fi
+
 # Install lnav format file in case it isn't already
-if [ -s "${LNAV_FORMAT_FILE}" ]; then
+if [ ${UNINSTALL_FORMAT_FILE} -eq 0 ] && [ -s "${LNAV_FORMAT_FILE}" ]; then
+  echo "Installing lnav format: ${LNAV_FORMAT_FILE}"
   lnav -i ${LNAV_FORMAT_FILE}
 fi  
 

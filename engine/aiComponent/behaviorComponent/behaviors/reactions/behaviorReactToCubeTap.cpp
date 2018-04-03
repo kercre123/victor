@@ -161,7 +161,7 @@ void BehaviorReactToCubeTap::OnBehaviorActivated()
   _dVars = DynamicVariables();
 
   // begin playing our response to cube tap anim, then transition into figuring out if we need to drive off the charger or not
-  DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::ReactToCubeTapCubeTapped ),
+  DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::DEPRECATED_ReactToCubeTapCubeTapped ),
                        &BehaviorReactToCubeTap::TransitionToGetOffCharger );
 }
 
@@ -231,7 +231,7 @@ void BehaviorReactToCubeTap::TransitionToFindCube()
   {
     // if we find a cube before the animation is complete, then we will cancel the delegate and proceed to going to
     // said cube.  If we make it to the end of the animation, we assume no cube was found and bail.
-    DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::ReactToCubeSearchForCube ),
+    DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::DEPRECATED_ReactToCubeSearchForCube ),
                          &BehaviorReactToCubeTap::OnCubeNotFound );
   }
   else
@@ -251,7 +251,7 @@ bool BehaviorReactToCubeTap::IsCubeLocated() const
 void BehaviorReactToCubeTap::OnCubeNotFound()
 {
   // no callback so that we'll exit the behavior when we're done delegation
-  DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::ReactToCubeTapCubeNotFound ) );
+  DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::DEPRECATED_ReactToCubeTapCubeNotFound ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -266,7 +266,7 @@ void BehaviorReactToCubeTap::TransitionToGoToCube( bool playFoundCubeAnimation )
     auto driveToCube = [this]() { DriveToTargetCube(); };
 
     // play our "holy shit we found a cube" animation, then go to that cube
-    DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::ReactToCubeTapCubeFound ), driveToCube );
+    DelegateIfInControl( new TriggerAnimationAction( AnimationTrigger::DEPRECATED_ReactToCubeTapCubeFound ), driveToCube );
   }
   else
   {
@@ -323,11 +323,11 @@ void BehaviorReactToCubeTap::TransitionToInteractWithCube()
   if ( _iVars.cubeInteractionDuration > 0.0f )
   {
     CompoundActionSequential* cubeInterAction = new CompoundActionSequential();
-    cubeInterAction->AddAction( new TriggerAnimationAction( AnimationTrigger::ReactToCubeTapInteractionLoop,
+    cubeInterAction->AddAction( new TriggerAnimationAction( AnimationTrigger::DEPRECATED_ReactToCubeTapInteractionLoop,
                                                             0, true, (u8)AnimTrackFlag::NO_TRACKS,
                                                             _iVars.cubeInteractionDuration ), true );
 
-    cubeInterAction->AddAction( new TriggerAnimationAction( AnimationTrigger::ReactToCubeTapInteractionGetOut ) );
+    cubeInterAction->AddAction( new TriggerAnimationAction( AnimationTrigger::DEPRECATED_ReactToCubeTapInteractionGetOut ) );
 
     DelegateIfInControl( cubeInterAction );
   }

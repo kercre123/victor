@@ -101,7 +101,7 @@
             "env": {
                 "GTEST_FILTER": "-BlockWorld*:-Localization*",
                 "ANKIWORKROOT": "_build/tmp",
-                "ANKICONFIGROOT": "_build/mac/Debug/assets/cozmo_resources",
+                "ANKICONFIGROOT": "_build/mac/Debug/test/engine",
                 "DYLD_LIBRARY_PATH": "_build/mac/Debug/lib:/Applications/Webots.app/lib"
             },
             "stopOnEntry": false,

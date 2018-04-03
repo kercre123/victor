@@ -3,7 +3,7 @@
 
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
-#include "cozmoAnim/micDataProcessor.h"
+#include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/robotDataLoader.h"
 
 #include "webServerProcess/src/webService.h"
@@ -31,15 +31,10 @@ AnimContext::AnimContext(Util::Data::DataPlatform* dataPlatform)
   , _locale(new Anki::Util::Locale(Anki::Util::Locale::GetNativeLocale()))  
   , _random(new Anki::Util::RandomGenerator())
   , _dataLoader(new RobotDataLoader(this))
+  , _micDataSystem(new MicData::MicDataSystem(dataPlatform))
   , _webService(new WebService::WebService())
   , _threadIdHolder(new ThreadIDInternal)
 {
-  if (dataPlatform != nullptr)
-  {
-    const std::string& dataWriteLocation = _dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata");
-    const std::string& triggerDataDir = _dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/hey_cosmo_and_commands");
-    _micDataProcessor.reset(new MicData::MicDataProcessor(dataWriteLocation, triggerDataDir));
-  }
   InitAudio(_dataPlatform);
 }
 

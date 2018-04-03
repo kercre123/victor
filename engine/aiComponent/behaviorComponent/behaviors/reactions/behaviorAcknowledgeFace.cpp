@@ -141,15 +141,15 @@ void BehaviorAcknowledgeFace::BeginIteration()
         // only play the initial greeting once, so if we are going to use it, mark that here
         _hasPlayedInitialGreeting = true;
         moodManager.TriggerEmotionEvent("GreetingSayName", MoodManager::GetCurrentTimeInSeconds());
-        return AnimationTrigger::NamedFaceInitialGreeting;
+        return AnimationTrigger::DEPRECATED_NamedFaceInitialGreeting;
       });
   }
   else {
-    turnAction->SetSayNameAnimationTrigger(AnimationTrigger::AcknowledgeFaceNamed);
+    turnAction->SetSayNameAnimationTrigger(AnimationTrigger::DEPRECATED_AcknowledgeFaceNamed);
   }
   
   // if it's not named, always play this one
-  turnAction->SetNoNameAnimationTrigger(AnimationTrigger::AcknowledgeFaceUnnamed);
+  turnAction->SetNoNameAnimationTrigger(AnimationTrigger::DEPRECATED_AcknowledgeFaceUnnamed);
   
   turnAction->SetMaxFramesToWait(kNumImagesToWaitFor);
 

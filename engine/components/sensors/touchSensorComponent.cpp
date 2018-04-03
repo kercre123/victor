@@ -13,8 +13,10 @@
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
-#include "util/console/consoleInterface.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "util/console/consoleInterface.h"
+#include "util/fileUtils/fileUtils.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -66,6 +68,13 @@ namespace {
   }
   CONSOLE_FUNC(SetTouchSensor, "Touch", bool pressed);
   #endif
+  
+  const int kMaxPreTouchSamples = 100; // 100 ticks * 30ms = 3 seconds
+  
+  const int kMinPostTouchSamples = 100; // 100 * 30ms = 3 sec
+  
+  const int kMaxDevLogBufferSize = 2000;// 60 seconds / 30ms = 2000 samples
+  
 } // end anonymous namespace
 
 TouchSensorComponent::TouchSensorComponent() 
@@ -82,7 +91,41 @@ TouchSensorComponent::TouchSensorComponent()
 , _countAboveDetectLevel(0)
 , _countBelowUndetectLevel(0)
 , _touchPressTime(std::numeric_limits<float>::max())
+, _devLogMode(PreTouch)
+, _devLogBuffer()
+, _devLogBufferPreTouch()
+, _devLogBufferSaved()
+, _devLogSampleCount(0)
 {
+}
+  
+TouchSensorComponent::~TouchSensorComponent()
+{
+  DevLogTouchSensorData();
+}
+  
+void TouchSensorComponent::DevLogTouchSensorData() const
+{
+  std::string path = _robot->GetContextDataPlatform()->pathToResource(Util::Data::Scope::Cache, kLogDirectory);
+  Util::FileUtils::CreateDirectory(path);
+  
+  path += "/";
+  path += "lastTouchDump.csv";
+  
+  std::stringstream output;
+  for(auto& row : _devLogBufferSaved) {
+    output << row.rawTouch << ",";
+    output << row.boxTouch << ",";
+    output << row.calibBaseline << ",";
+    output << row.detOffsetFromBase << ",";
+    output << row.undOffsetFromBase << ",";
+    output << (int)row.isPressed;
+    output << std::endl;
+  }
+  
+  if(!Util::FileUtils::WriteFile(path, output.str())) {
+    PRINT_NAMED_WARNING("TouchSensorComponent.FailedToWrite","%s", path.c_str());
+  }
 }
 
 void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
@@ -104,6 +147,8 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
   int boxFiltVal = _boxFilterTouch.ApplyFilter(_lastRawTouchValue);
   
   const bool isPickedUp = (msg.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP) != 0;
+
+  bool lastPressed = _isPressed; // after this tick, state may change
   
   if( devSendTouchSensor ) {
     _robot->Broadcast(
@@ -128,7 +173,8 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
     }
   } else {
     // handle checks for touch input, when calibrated
-    if( ProcessWithDynamicThreshold(_baselineTouch, boxFiltVal) ) {
+    const bool didChange = ProcessWithDynamicThreshold(_baselineTouch, boxFiltVal);
+    if(didChange) {
       _robot->Broadcast(
         ExternalInterface::MessageEngineToGame(
           ExternalInterface::TouchButtonEvent(GetIsPressed())));
@@ -148,6 +194,67 @@ void TouchSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
     } else {
       // if we are picked up OR we are being touched
       _noContactCounter = 0;
+    }
+  }
+  
+  // dev-only logging code for touch sensor debugging
+  //
+  // note:
+  // a touch event is defined as occuring iff:
+  // + on the current tick, the pressed state is true
+  // + on the previous tick, the pressed state is false
+  //
+  // The rules for logging the touch data are:
+  // + M samples are recorded before a touch event
+  // + N samples are recorded after a touch event
+  // + if we get a touch event before we finish collecting
+  //    N samples (post-touch), then we keep collecting
+  //    until we can get N consecutive samples
+  //
+  // M = kMaxPreTouchSamples
+  // N = kMinPostTouchSamples
+  {
+    DevLogTouchRow entry
+    {
+      _lastRawTouchValue,
+      boxFiltVal,
+      (int)_baselineTouch,
+      _detectOffsetFromBase,
+      _undetectOffsetFromBase,
+      _isPressed
+    };
+    
+    // always logging pretouch event, only copied when touch event occurs
+    _devLogBufferPreTouch.push_back(entry);
+    if(_devLogBufferPreTouch.size() > kMaxPreTouchSamples) {
+      _devLogBufferPreTouch.pop_front();
+    }
+
+    const bool isTouchEvent = !lastPressed && _isPressed;
+    if(isTouchEvent) {
+      if(_devLogMode==PreTouch) {
+        // seed the staging buffer with the pretouch data
+        // if we are in PostTouch, then no copy is made since
+        // we are already logging to the staging buffer
+        _devLogBuffer = _devLogBufferPreTouch;
+      }
+      _devLogMode = PostTouch;
+      // if we receive a TouchEvent while we are already
+      // logging in PostTouch mode, then we reset the counter
+      _devLogSampleCount = 0;
+    }
+
+    if(_devLogMode==PostTouch) {
+      _devLogBuffer.push_back(entry);
+      _devLogSampleCount++;
+      
+      // on logging enough consecutive PostTouch samples
+      if(_devLogSampleCount > kMinPostTouchSamples || _devLogBuffer.size() > kMaxDevLogBufferSize) {
+        _devLogBufferSaved = std::move(_devLogBuffer);
+        _devLogBuffer.clear();
+        _devLogMode = PreTouch;
+        _devLogSampleCount = 0;
+      }
     }
   }
 }

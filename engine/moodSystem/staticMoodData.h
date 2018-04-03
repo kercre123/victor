@@ -19,6 +19,7 @@
 #include "engine/moodSystem/emotionEventMapper.h"
 #include "clad/types/emotionTypes.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
+#include <map>
 
 
 namespace Json {
@@ -36,7 +37,7 @@ class EmotionEvent;
 class StaticMoodData
 {
 public:
-  
+
   StaticMoodData();
   
   void  Init(const Json::Value& inJson);
@@ -52,7 +53,11 @@ public:
   
   const EmotionEventMapper& GetEmotionEventMapper() const { return _emotionEventMapper; }
         EmotionEventMapper& GetEmotionEventMapper()       { return _emotionEventMapper; }
-  
+
+  // maps emotions which don't use default values to the (min, max) range pair
+  using EmotionValueRangeMap = std::map< EmotionType, std::pair< float, float > >;
+  const EmotionValueRangeMap& GetEmotionValueRangeMap() const { return _emotionValueRangeMap; }
+
   // ===== Json =====
   
   bool LoadEmotionEvents(const Json::Value& inJson);
@@ -62,9 +67,10 @@ public:
   
 private:
   
-  Util::GraphEvaluator2d   _emotionDecayGraphs[(size_t)EmotionType::Count];
-  EmotionEventMapper       _emotionEventMapper;
-  Util::GraphEvaluator2d   _defaultRepetitionPenalty;
+  Util::GraphEvaluator2d _emotionDecayGraphs[(size_t)EmotionType::Count];
+  EmotionEventMapper     _emotionEventMapper;
+  Util::GraphEvaluator2d _defaultRepetitionPenalty;
+  EmotionValueRangeMap   _emotionValueRangeMap;
 };
 
 

@@ -1,18 +1,12 @@
 {
   "emotionEvents" : [
     {
+      // note this may trigger when the robot decides on it's own to do keep away
       "name" : "KeepawayStarted",
       "emotionAffectors" : [										  
         {
-          "emotionType" : "Happy",
-          "value" : 0.2
-        },{
           "emotionType" : "Stimulated",
-          "value" : 0.3
-        },
-        {
-          "emotionType" : "Social",
-          "value" : 0.5
+          "value" : 0.05
         }
       ]
     },

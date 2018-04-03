@@ -141,6 +141,10 @@
         {
           "emotionType": "Confident",
           "value": 0.5
+        },
+        {
+          "emotionType": "Stimulated",
+          "value": -0.5
         }
       ]
     }    

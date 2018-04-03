@@ -534,6 +534,12 @@ Result AnimationComponent::RemoveSquint(const std::string& name, u32 disableTime
   return RESULT_OK;
 }
 
+Result AnimationComponent::SetFaceSaturation(float level)
+{
+  const Result res = _robot->SendRobotMessage<RobotInterface::SetFaceSaturation>(level);
+  return res;
+}
+
 // ================ Game message handlers ======================
 template<>
 void AnimationComponent::HandleMessage(const ExternalInterface::RequestAvailableAnimations& msg)

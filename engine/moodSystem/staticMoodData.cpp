@@ -11,17 +11,31 @@
  *
  **/
 
-
 #include "engine/moodSystem/staticMoodData.h"
+
+#include "coretech/common/engine/jsonTools.h"
 #include "json/json.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/logging/logging.h"
 
-
 namespace Anki {
 namespace Cozmo {
 
-  
+namespace {
+
+static const char* kDecayGraphsKey = "decayGraphs";
+static const char* kEmotionTypeKey = "emotionType";
+static const char* kEventMapperKey = "eventMapper";
+static const char* kDefaultRepetitionPenaltyKey = "defaultRepetitionPenalty";
+static const char* kValueRangeKey = "valueRanges";
+static const char* kMinKey = "min";
+static const char* kMaxKey = "max";
+
+static const char* kJsonDebugName = "StaticMoodData";
+
+}
+
+
 StaticMoodData::StaticMoodData()
 {
   InitDecayGraphs();
@@ -125,13 +139,7 @@ const Util::GraphEvaluator2d& StaticMoodData::GetDecayGraph(EmotionType emotionT
   
   return decayGraph;
 }
-  
-
-static const char* kDecayGraphsKey   = "decayGraphs";
-static const char* kEmotionTypeKey   = "emotionType";
-static const char* kEventMapperKey   = "eventMapper";
-static const char* kDefaultRepetitionPenaltyKey = "defaultRepetitionPenalty";
-  
+    
   
 bool StaticMoodData::LoadEmotionEvents(const Json::Value& inJson)
 {
@@ -143,6 +151,7 @@ bool StaticMoodData::ReadFromJson(const Json::Value& inJson)
 {
   _emotionEventMapper.Clear();
   _defaultRepetitionPenalty.Clear();
+  _emotionValueRangeMap.clear();
   
   const Json::Value& decayGraphsJson = inJson[kDecayGraphsKey];
   if (decayGraphsJson.isNull())
@@ -223,6 +232,29 @@ bool StaticMoodData::ReadFromJson(const Json::Value& inJson)
     if (!_defaultRepetitionPenalty.ReadFromJson(defaultRepetitionPenaltyJson))
     {
       PRINT_NAMED_WARNING("StaticMoodData.ReadFromJson.BadDefaultRepetitionPenalty", "'%s' failed to read", kDefaultRepetitionPenaltyKey);
+    }
+  }
+
+  const Json::Value& valueRangesJson = inJson[kValueRangeKey];
+  if (!valueRangesJson.isNull())
+  {
+    for( const auto& entry : valueRangesJson ) {
+      const std::string& emotionStr = JsonTools::ParseString(entry, kEmotionTypeKey, kJsonDebugName);
+      const EmotionType emotion = EmotionTypeFromString( emotionStr );
+
+      const float minVal = JsonTools::ParseFloat(entry, kMinKey, kJsonDebugName);
+      const float maxVal = JsonTools::ParseFloat(entry, kMaxKey, kJsonDebugName);
+      if( ANKI_VERIFY( minVal <= maxVal,
+                       "StaticMoodData.ReadFromJson.BadValueRange",
+                       "Value range for emotion '%s' in invalid: %f - %f",
+                       emotionStr.c_str(),
+                       minVal,
+                       maxVal) ) {
+        
+        _emotionValueRangeMap.emplace(std::piecewise_construct,
+                                      std::forward_as_tuple(emotion),
+                                      std::forward_as_tuple(minVal, maxVal));
+      }
     }
   }
   

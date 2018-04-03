@@ -1164,6 +1164,7 @@ namespace Cozmo {
 
     if(!_startOfAnimationSent) {
       SendStartOfAnimation();
+      _animAudioClient->InitAnimation();
     }
     
     // Is it time to play robot audio?
@@ -1316,13 +1317,15 @@ namespace Cozmo {
     
     // Send an end-of-animation keyframe when done
     if( !anim->HasFramesLeft() &&
-        !_animAudioClient->HasActiveEvents() &&
         _startOfAnimationSent &&
         !_endOfAnimationSent)
     {      
-//       _audioClient.ClearCurrentAnimation();
       StopTracksInUse();
       lastResult = SendEndOfAnimation();
+      if (_animAudioClient->HasActiveEvents()) {
+        PRINT_NAMED_WARNING("AnimationStreamer.UpdateStream.EndOfAnimation.ActiveAudioEvent",
+                            "AnimName: '%s'", anim->GetName().c_str());
+      }
     }
     
     return lastResult;

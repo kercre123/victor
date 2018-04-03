@@ -541,7 +541,7 @@ void BehaviorTrackLaser::TransitionToWaitForExposureChange()
   
   if(ShouldStreamline())
   {
-    action->AddAction(new TriggerAnimationAction(AnimationTrigger::LookDownForLaser));
+    action->AddAction(new TriggerAnimationAction(AnimationTrigger::DEPRECATED_LookDownForLaser));
   }
   
   // Once we've gottena a couple of images, switch to looking for a laser dot
@@ -578,9 +578,9 @@ void BehaviorTrackLaser::TransitionToRespondToLaser()
   if(!ShouldStreamline() && !_dVars.haveAdjustedAnimations)
   {
     robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(
-                                                             {AnimationTrigger::LaserDriveStart,
-                                                               AnimationTrigger::LaserDriveLoop,
-                                                               AnimationTrigger::LaserDriveEnd},
+                                                             {AnimationTrigger::DEPRECATED_LaserDriveStart,
+                                                               AnimationTrigger::DEPRECATED_LaserDriveLoop,
+                                                               AnimationTrigger::DEPRECATED_LaserDriveEnd},
                                                              GetDebugLabel());
     
     _dVars.haveAdjustedAnimations = true;
@@ -591,7 +591,7 @@ void BehaviorTrackLaser::TransitionToRespondToLaser()
   
   CompoundActionSequential* action = new CompoundActionSequential({
     new TurnTowardsPoseAction(laserPointPose, M_PI_F),
-    new TriggerAnimationAction(AnimationTrigger::LaserAcknowledge, 1, true,
+    new TriggerAnimationAction(AnimationTrigger::DEPRECATED_LaserAcknowledge, 1, true,
                                Util::EnumToUnderlying(AnimTrackFlag::HEAD_TRACK))
   });
   
@@ -689,7 +689,7 @@ void BehaviorTrackLaser::TransitionToPounce()
 {
   SET_STATE(Pouncing);
   
-  IActionRunner* pounceAction = new TriggerLiftSafeAnimationAction(AnimationTrigger::LaserPounce);
+  IActionRunner* pounceAction = new TriggerLiftSafeAnimationAction(AnimationTrigger::DEPRECATED_LaserPounce);
   
   DelegateIfInControl(pounceAction, [this]() {
     BehaviorObjectiveAchieved(BehaviorObjective::LaserPounced);
@@ -713,7 +713,7 @@ void BehaviorTrackLaser::TransitionToGetOutBored()
   }
   else
   {
-    DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::LaserGetOut), callback);
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::DEPRECATED_LaserGetOut), callback);
   }
 }
 

@@ -29,10 +29,10 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/animationComponent.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/cubes/cubeLightComponent.h"
@@ -42,23 +42,24 @@
 #include "engine/components/nvStorageComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
-#include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
+#include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
-#include "engine/components/batteryComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/micDirectionHistory.h"
-#include "engine/navMap/mapComponent.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
+#include "engine/fullRobotPose.h"
+#include "engine/micDirectionHistory.h"
 #include "engine/moodSystem/moodManager.h"
+#include "engine/moodSystem/stimulationFaceDisplay.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/objectPoseConfirmer.h"
 #include "engine/petWorld.h"
 #include "engine/ramp.h"
-#include "engine/fullRobotPose.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotGyroDriftDetector.h"
 #include "engine/robotIdleTimeoutComponent.h"
@@ -198,6 +199,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::Animation,                  new AnimationComponent());
     _components->AddDependentComponent(RobotComponentID::StateHistory,               new RobotStateHistory());
     _components->AddDependentComponent(RobotComponentID::MoodManager,                new MoodManager());
+    _components->AddDependentComponent(RobotComponentID::StimulationFaceDisplay,     new StimulationFaceDisplay());
     _components->AddDependentComponent(RobotComponentID::Inventory,                  new InventoryComponent());
     _components->AddDependentComponent(RobotComponentID::ProgressionUnlock,          new ProgressionUnlockComponent());
     _components->AddDependentComponent(RobotComponentID::BlockTapFilter,             new BlockTapFilterComponent());
