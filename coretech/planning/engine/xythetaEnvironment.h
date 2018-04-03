@@ -183,8 +183,6 @@ public:
   // (unlikely but possible)
   bool RoundSafe(const State_c& c, GraphState& rounded) const;
 
-  unsigned int GetNumAngles() const {return numAngles_;}
-
   inline float LookupTheta(GraphTheta theta) const;
 
   float GetDistanceBetween(const State_c& start, const GraphState& end) const;
@@ -220,8 +218,6 @@ public:
   float GetResolution_mm() const { return GraphState::resolution_mm_; }
 
 private:
-  const u8 numAngles_ = GraphState::numAngles_; 
-
   // returns true on success
   bool ParseObstacles(const Json::Value& config);
   void DumpObstacles(Util::JsonWriter& writer) const;

@@ -850,8 +850,7 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     unsigned int numAdded = 0;
     unsigned int vizID = startIdx;
 
-    Planning::GraphTheta numAngles = (GraphTheta) _context.env.GetNumAngles();
-    for(GraphTheta theta=0; theta < numAngles; ++theta) {
+    for(GraphTheta theta=0; theta < GraphState::numAngles_; ++theta) {
 
       float thetaRads = _context.env.LookupTheta(theta);
 

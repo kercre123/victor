@@ -324,7 +324,7 @@ void xythetaEnvironment::PrepareForPlanning()
 {
   int numObstacles = 0;
 
-  for(size_t angle = 0; angle < numAngles_; ++angle) {
+  for(size_t angle = 0; angle < GraphState::numAngles_; ++angle) {
     for( auto& obstaclePair : obstaclesPerAngle_[angle] ) {
       if( angle == 0 ) {
         numObstacles++;
@@ -336,7 +336,7 @@ void xythetaEnvironment::PrepareForPlanning()
   // fill in the obstacle bounds, default values are set
   obstacleBounds_.resize(numObstacles);
   
-  for(size_t angle = 0; angle < numAngles_; ++angle) {
+  for(size_t angle = 0; angle < GraphState::numAngles_; ++angle) {
     for( int obsIdx = 0; obsIdx < obstaclesPerAngle_[angle].size(); ++obsIdx ) {
       if( obstaclesPerAngle_[angle][obsIdx].first.GetMinX() < obstacleBounds_[obsIdx].minX ) {
         obstacleBounds_[obsIdx].minX = obstaclesPerAngle_[angle][obsIdx].first.GetMinX();
@@ -416,7 +416,7 @@ xythetaEnvironment::~xythetaEnvironment()
 
 xythetaEnvironment::xythetaEnvironment()
 {
-  obstaclesPerAngle_.resize(numAngles_);
+  obstaclesPerAngle_.resize(GraphState::numAngles_);
 }
 
 bool xythetaEnvironment::Init(const Json::Value& mprimJson)
@@ -433,7 +433,7 @@ size_t xythetaEnvironment::GetNumObstacles() const
 bool xythetaEnvironment::Init(const char* mprimFilename)
 {
   if(ReadMotionPrimitives(mprimFilename)) {
-    obstaclesPerAngle_.resize(numAngles_);
+    obstaclesPerAngle_.resize(GraphState::numAngles_);
   } else {
     PRINT_NAMED_ERROR("xythetaEnvironemnt.Init.Fail", "could not parse motion primitives");
     return false;
@@ -551,26 +551,26 @@ bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config, bool useDum
       return false;
     }
 
-    if(angles_.size() != numAngles_) {
+    if(angles_.size() != GraphState::numAngles_) {
       printf("ERROR: numAngles is %u, but we read %lu angle definitions\n",
-             numAngles_,
+             GraphState::numAngles_,
              (unsigned long)angles_.size());
       return false;
     }
 
     // parse through each starting angle
-    if(config["angles"].size() != numAngles_) {
+    if(config["angles"].size() != GraphState::numAngles_) {
       printf("error: could not find key 'angles' in motion primitives\n");
       JsonTools::PrintJsonCout(config, 1);
       return false;
     }
 
-    allMotionPrimitives_.resize(numAngles_);
+    allMotionPrimitives_.resize(GraphState::numAngles_);
 
     unsigned int numPrims = 0;
 
     try {
-      for(unsigned int angle = 0; angle < numAngles_; ++angle) {
+      for(unsigned int angle = 0; angle < GraphState::numAngles_; ++angle) {
         Json::Value prims = config["angles"][angle]["prims"];
         for(unsigned int i = 0; i < prims.size(); ++i) {
           MotionPrimitive p;
@@ -616,10 +616,10 @@ bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config, bool useDum
 void xythetaEnvironment::PopulateReverseMotionPrims()
 {
   reverseMotionPrimitives_.clear();
-  reverseMotionPrimitives_.resize(numAngles_);
+  reverseMotionPrimitives_.resize(GraphState::numAngles_);
 
   // go through each motion primitive, and populate the corresponding reverse primitive
-  for(int startAngle = 0; startAngle < numAngles_; ++startAngle) {
+  for(int startAngle = 0; startAngle < GraphState::numAngles_; ++startAngle) {
     for(int actionID = 0; actionID < allMotionPrimitives_[ startAngle ].size(); ++actionID) {
       const MotionPrimitive& prim( allMotionPrimitives_[ startAngle ][ actionID ] );
       int endAngle = prim.endStateOffset.theta;
@@ -653,7 +653,7 @@ void xythetaEnvironment::DumpMotionPrims(Util::JsonWriter& writer) const
   writer.EndList();
 
   writer.StartList("angles");
-  for(unsigned int angle = 0; angle < numAngles_; ++angle) {
+  for(unsigned int angle = 0; angle < GraphState::numAngles_; ++angle) {
     writer.NextListItem();
     writer.StartList("prims");
     for(const auto& prim : allMotionPrimitives_[angle]) {
@@ -668,17 +668,17 @@ void xythetaEnvironment::DumpMotionPrims(Util::JsonWriter& writer) const
 bool xythetaEnvironment::ParseObstacles(const Json::Value& config)
 {
   try {
-    if( numAngles_ == 0 || config["angles"].isNull() ) {
+    if( GraphState::numAngles_ == 0 || config["angles"].isNull() ) {
       PRINT_NAMED_ERROR("xythetaEnvironment.ParseObstacles.InvalidObjectAngles",
                         "numAngles_ = %d",
-                        numAngles_);
+                        GraphState::numAngles_);
       return false;
     }
 
-    if( numAngles_ != config["angles"].size() ) {
+    if( GraphState::numAngles_ != config["angles"].size() ) {
       PRINT_NAMED_ERROR("xythetaEnvironment.ParseObstacles.AnglesMismatch",
                         "this has %d angles, but json has %d",
-                        numAngles_,
+                        GraphState::numAngles_,
                         config.size());
       return false;
     }
@@ -687,7 +687,7 @@ bool xythetaEnvironment::ParseObstacles(const Json::Value& config)
       obstacles.clear();
     }
 
-    for( int theta = 0; theta < numAngles_; ++theta ) {
+    for( int theta = 0; theta < GraphState::numAngles_; ++theta ) {
 
       if( config["angles"][theta]["obstacles"].isNull() ) {
         PRINT_NAMED_ERROR("xythetaEnvironment.ParseObstacles.badConfig",
@@ -757,7 +757,7 @@ void xythetaEnvironment::AddObstacleAllThetas(const Quad2f& quad, Cost cost)
   poly.ImportQuad2d(quad);
   FastPolygon fastPoly(poly);
 
-  for(size_t i=0; i<numAngles_; ++i) {
+  for(size_t i=0; i<GraphState::numAngles_; ++i) {
     obstaclesPerAngle_[i].push_back( std::make_pair( fastPoly, cost ) );
   }
 }
@@ -767,14 +767,14 @@ void xythetaEnvironment::AddObstacleAllThetas(const RotatedRectangle& rect, Cost
   Poly2f poly(rect);
   FastPolygon fastPoly(poly);
 
-  for(size_t i=0; i<numAngles_; ++i) {
+  for(size_t i=0; i<GraphState::numAngles_; ++i) {
     obstaclesPerAngle_[i].push_back( std::make_pair( fastPoly, cost ) );
   }
 }
 
 void xythetaEnvironment::ClearObstacles()
 {
-  for(size_t i=0; i<numAngles_; ++i) {
+  for(size_t i=0; i<GraphState::numAngles_; ++i) {
     obstaclesPerAngle_[i].clear();
   }
 }
@@ -896,7 +896,7 @@ const FastPolygon& xythetaEnvironment::AddObstacleWithExpansion(const ConvexPoly
     CoreTechPrint("ERROR: theta = %d, but only have %zu obstacle angles and %u angles total\n",
                   theta,
                   obstaclesPerAngle_.size(),
-                  numAngles_);
+                  GraphState::numAngles_);
     
     theta = 0;
   }
