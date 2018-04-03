@@ -103,6 +103,8 @@ public:
 
   UiMessageHandler* GetUiMsgHandler() const { return _uiMsgHandler.get(); }
 
+  EngineState GetEngineState() { return _engineState; }
+
   // Designate calling thread as owner of engine updates
   void SetEngineThread();
 
