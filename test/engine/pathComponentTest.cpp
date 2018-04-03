@@ -52,7 +52,7 @@ protected:
     // default planner to run in main thread
     planner->SetIsSynchronous(true);
 
-    _robot->FakeSyncTimeAck();
+    _robot->FakeSyncRobotAck();
 
     // Fake a state message update for robot
     RobotState stateMsg = _robot->GetDefaultRobotState();

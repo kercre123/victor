@@ -1428,8 +1428,8 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::RobotConnectionRe
     }
     else
     {
-      robot->SyncTime();
-      PRINT_NAMED_INFO("RobotEventHandler.HandleRobotConnectionResponse.SendingSyncTime", "");
+      robot->SyncRobot();
+      PRINT_NAMED_INFO("RobotEventHandler.HandleRobotConnectionResponse.SendingSyncRobot", "");
       
       robot->GetAnimationComponent().Init();
     }

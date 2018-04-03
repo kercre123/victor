@@ -45,13 +45,8 @@ namespace HAL {
  * \section Parameters and Constants
  */
 
-/// Number of time stamp ticks per second
-static const int TICKS_PER_SECOND = 200;
 /// Scale value for maximum motor power in HAL
 static const f32 MOTOR_MAX_POWER = 1.0f;
-/// Maximum number of object advertisements reported in a time step
-//static const size_t MAX_ADVERTISEMENTS_PER_TICK = 16;
-//
 
 //
 // Initialize HAL
@@ -76,17 +71,8 @@ u32 GetMicroCounter(void);
 /// Block main execution for specified number of microseconds
 void MicroWait(u32 microseconds);
 
-/** Retrieve current time robot time stamp
- * TimeStamps are in units of approximate miliseconds but are ticked by the hardware processor update at
- * TICKS_PER_SECOND. The engine sets timestamp on connect to the robot process but otherwise it increases
- * monotonically.
- */
+/// Retrieve current time (from steady_clock) in ms 
 extern "C" TimeStamp_t GetTimeStamp(void);
-
-/** Sets the robot timestamp to value
- * Set timing offset on engine connect.
- */
-void SetTimeStamp(TimeStamp_t t);
 
 /// Retrieve the number of times a hardware watchdog reset has occurred.
 u8 GetWatchdogResetCounter(void);

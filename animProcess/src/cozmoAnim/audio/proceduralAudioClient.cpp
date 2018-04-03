@@ -131,9 +131,9 @@ void ProceduralAudioClient::ProcessMessage(const RobotInterface::RobotToEngine &
       break;
     }
       
-    case RobotToEngine::Tag_syncTimeAck:
+    case RobotToEngine::Tag_syncRobotAck:
     {
-      // Wait for sync ack to indicate the robot's motors are settled and ready to start making noise
+      // Wait for syncRobotAck to indicate the robot's motors are settled and ready to start making noise
       // NOTE: This may need improvments, perhaps use motor calibration messages
       _isActive = true;
       break;

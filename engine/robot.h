@@ -167,16 +167,16 @@ public:
 
   bool HasReceivedRobotState() const;
 
-  const bool GetTimeSynced() const {return _timeSynced;}
-  void       SetTimeSynced()       {_timeSynced = true; _syncTimeSentTime_sec = 0.0f; }
+  const bool GetSyncRobotAcked() const {return _syncRobotAcked;}
+  void       SetSyncRobotAcked()       {_syncRobotAcked = true; _syncRobotSentTime_sec = 0.0f; }
 
-  Result SyncTime();  // TODO:(bn) only for robot event handler, move out of this header...
+  Result SyncRobot();  // TODO:(bn) only for robot event handler, move out of this header...
 
   TimeStamp_t GetLastMsgTimestamp() const { return _lastMsgTimestamp; }
 
-  // This is just for unit tests to fake a syncTimeAck message from the robot
+  // This is just for unit tests to fake a syncRobotAck message from the robot
   // and force the head into calibrated state.
-  void FakeSyncTimeAck() { _timeSynced = true; _isHeadCalibrated = true; _isLiftCalibrated = true; }
+  void FakeSyncRobotAck() { _syncRobotAcked = true; _isHeadCalibrated = true; _isLiftCalibrated = true; }
 
   // =========== Components ===========
 
@@ -603,7 +603,7 @@ public:
   void SetBodyColor(const s32 color);
   const BodyColor GetBodyColor() const { return _bodyColor; }
 
-  bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterTimeSync; }
+  bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterRobotSync; }
 
 protected:
   // Context is stored both as a member variable and as a component (within a wrapper)
@@ -628,8 +628,8 @@ protected:
   s32       _bodyHWVersion    = -1;
   BodyColor _bodyColor        = BodyColor::UNKNOWN;
 
-  // Whether or not sync time was acknowledged by physical robot
-  bool _timeSynced = false;
+  // Whether or not sync was acknowledged by physical robot
+  bool _syncRobotAcked = false;
 
   // Flag indicating whether a robotStateMessage was ever received
   TimeStamp_t _lastMsgTimestamp;
@@ -685,7 +685,7 @@ protected:
   bool             _powerButtonPressed       = false;
   bool             _isPickedUp               = false;
   bool             _isCliffReactionDisabled  = false;
-  bool             _gotStateMsgAfterTimeSync = false;
+  bool             _gotStateMsgAfterRobotSync = false;
   u32              _lastStatusFlags          = 0;
 
   OffTreadsState   _offTreadsState                 = OffTreadsState::OnTreads;
@@ -722,11 +722,11 @@ protected:
                                    const TimeStamp_t&   t,
                                    const PoseFrameID_t& frameId) const;
 
-  // Sync time with physical robot and trigger it to send back camera calibration
-  Result SendSyncTime() const;
+  // Sync with physical robot
+  Result SendSyncRobot() const;
 
-  float _syncTimeSentTime_sec = 0.0f;
-  constexpr static float kMaxSyncTimeAckDelay_sec = 5.0f;
+  float _syncRobotSentTime_sec = 0.0f;
+  constexpr static float kMaxSyncRobotAckDelay_sec = 5.0f;
 
   // Used to calculate tick rate
   float _prevCurrentTime_sec = 0.0f;

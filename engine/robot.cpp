@@ -156,7 +156,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 : _context(context)
 , _poseOrigins(new PoseOriginList())
 , _ID(robotID)
-, _timeSynced(false)
+, _syncRobotAcked(false)
 , _lastMsgTimestamp(0)
 , _robotAccelFiltered(0.f, 0.f, 0.f)
 {
@@ -531,7 +531,7 @@ void Robot::Delocalize(bool isCarryingObject)
     LOG_WARNING("Robot.Delocalize.SetNewPose", "Failed to set new pose");
   }
   
-  if (_timeSynced)
+  if (_syncRobotAcked)
   {
     // Need to update the robot's pose history with our new origin and pose frame IDs
     LOG_INFO("Robot.Delocalize.SendingNewOriginID",
@@ -752,8 +752,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   
   Result lastResult = RESULT_OK;
 
-  // Ignore state messages received before time sync
-  if (!_timeSynced) {
+  // Ignore state messages received before sync
+  if (!_syncRobotAcked) {
     return lastResult;
   }
   
@@ -762,7 +762,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     UpdateFaceImageRGBExample(*this);
   }
   
-  _gotStateMsgAfterTimeSync = true;
+  _gotStateMsgAfterRobotSync = true;
     
   // Set flag indicating that robot state messages have been received
   _lastMsgTimestamp = msg.timestamp;
@@ -1152,13 +1152,13 @@ Result Robot::Update()
   
   const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
-  // Check for syncTimeAck taking too long to arrive
-  if (_syncTimeSentTime_sec > 0.0f && currentTime > _syncTimeSentTime_sec + kMaxSyncTimeAckDelay_sec) {
-    LOG_WARNING("Robot.Update.SyncTimeAckNotReceived", "");
-    _syncTimeSentTime_sec = 0.0f;
+  // Check for syncRobotAck taking too long to arrive
+  if (_syncRobotSentTime_sec > 0.0f && currentTime > _syncRobotSentTime_sec + kMaxSyncRobotAckDelay_sec) {
+    LOG_WARNING("Robot.Update.SyncRobotAckNotReceived", "");
+    _syncRobotSentTime_sec = 0.0f;
   }
   
-  if (!_gotStateMsgAfterTimeSync)
+  if (!_gotStateMsgAfterRobotSync)
   {
     LOG_DEBUG("Robot.Update", "Waiting for first full robot state to be handled");
     return RESULT_OK;
@@ -1469,14 +1469,14 @@ bool Robot::WasObjectTappedRecently(const ObjectID& objectID) const
 }
 
 
-Result Robot::SyncTime()
+Result Robot::SyncRobot()
 {
-  _timeSynced = false;
+  _syncRobotAcked = false;
   GetStateHistory()->Clear();
       
-  Result res = SendSyncTime();
+  Result res = SendSyncRobot();
   if (res == RESULT_OK) {
-    _syncTimeSentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _syncRobotSentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
   return res;
 }
@@ -2060,23 +2060,20 @@ Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliabl
   return sendResult;
 }
       
-// Sync time with physical robot and trigger it robot to send back camera calibration
-Result Robot::SendSyncTime() const
+// Sync with physical robot
+Result Robot::SendSyncRobot() const
 {
-  // BRC: Why are we call AndroidHAL/CameraService to get a timestamp?
-  Result result = SendMessage(RobotInterface::EngineToRobot(
-                                RobotInterface::SyncTime(CameraService::getInstance()->GetTimeStamp(),
-                                                         DRIVE_CENTER_OFFSET)));
+  Result result = SendMessage(RobotInterface::EngineToRobot(RobotInterface::SyncRobot()));
 
   if (result == RESULT_OK) {
     // Reset pose on connect
-    LOG_INFO("Robot.SendSyncTime", "Setting pose to (0,0,0)");
+    LOG_INFO("Robot.SendSyncRobot", "Setting pose to (0,0,0)");
     Pose3d zeroPose(0, Z_AXIS_3D(), {0,0,0}, GetWorldOrigin());
     return SendAbsLocalizationUpdate(zeroPose, 0, GetPoseFrameID());
   }
   
   if (result != RESULT_OK) {
-    LOG_WARNING("Robot.SendSyncTime.FailedToSend","");
+    LOG_WARNING("Robot.SendSyncRobot.FailedToSend","");
   }
   
   return result;

@@ -763,11 +763,6 @@ namespace Anki {
       //return timeStamp_;
     }
 
-    void HAL::SetTimeStamp(TimeStamp_t t)
-    {
-      //timeStamp_ = t;
-    };
-
     void HAL::SetLED(LEDId led_id, u32 color) {
       if (leds_[led_id]) {
         leds_[led_id]->set( color >> 8 ); // RGBA -> 0RGB
