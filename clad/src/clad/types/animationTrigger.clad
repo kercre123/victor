@@ -173,7 +173,6 @@ enum int_32 AnimationTrigger
   ReactToMotionLeftGetout,
   ReactToMotionRightGetout,
   ReactToMotionUpGetout,
-  ReactToUnexpectedMovement,
   ReactToCubeTapCubeTappedLvl1,
   ReactToCubeTapCubeTappedLvl2,
   ReactToCubeTapCubeTappedLvl3,
