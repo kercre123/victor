@@ -634,7 +634,7 @@
         "FailedToFindCharger",
         "PlayingWithCube",
         "RollCube",
-        "ReactToCubeTap"
+        "ReactToCubeTap" // if activated while ON charger, this will immediately get off charger
       ],
       "interruptingTransitions": [
         {
