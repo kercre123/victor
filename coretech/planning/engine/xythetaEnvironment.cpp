@@ -37,6 +37,191 @@ namespace Planning {
 
 // #define HACK_USE_FIXED_SPEED 60.0
 
+SuccessorIterator::SuccessorIterator(const xythetaEnvironment* env, StateID startID, Cost startG, bool reverse)
+  : start_c_(env->State2State_c(startID))
+  , start_(startID)
+  , startG_(startG)
+  , nextAction_(0)
+  , reverse_(reverse)
+{
+  // verify unpacking worked
+  assert(start_.theta == startID.s.theta);
+}
+
+// TODO:(bn) inline?
+bool SuccessorIterator::Done(const xythetaEnvironment& env) const
+{
+  if( ! reverse_ ) {
+    return nextAction_ > env.allMotionPrimitives_[start_.theta].size();
+  }
+  else {
+    return nextAction_ > env.reverseMotionPrimitives_[start_.theta].size();
+  }
+}
+
+void SuccessorIterator::Next(const xythetaEnvironment& env)
+{
+  size_t numActions = 0;
+
+  if( ! reverse_ ) {
+    numActions = env.allMotionPrimitives_[start_.theta].size();
+  }
+  else {
+    numActions = env.reverseMotionPrimitives_[start_.theta].size();
+  }
+
+  while(nextAction_ < numActions) {
+    const MotionPrimitive* prim = nullptr; 
+    if( ! reverse_ ) {
+      prim = &env.allMotionPrimitives_[start_.theta][nextAction_];
+    }
+    else { 
+      prim = &env.reverseMotionPrimitives_[start_.theta][nextAction_];
+    }
+
+    // collision checking
+    long endPoints = prim->intermediatePositions.size();
+    bool collision = false; // fatal collision
+    bool reverseMotion = env.GetActionType(prim->id).IsReverseAction();
+
+    nextSucc_.g = 0;
+
+    Cost penalty = 0.0f;
+
+    // first, check if we are well-clear of everything, and can skip this check
+    bool possibleObstacle = false;
+
+    State_c primtiveOffset = start_c_;
+
+    GraphState result(start_);
+    result.x += prim->endStateOffset.x;
+    result.y += prim->endStateOffset.y;
+    result.theta = prim->endStateOffset.theta;
+
+
+    if( reverse_ ) {
+      primtiveOffset = env.State2State_c(result);
+    }
+
+    float minPrimX = prim->minX + primtiveOffset.x_mm;
+    float maxPrimX = prim->maxX + primtiveOffset.x_mm;
+    float minPrimY = prim->minY + primtiveOffset.y_mm;
+    float maxPrimY = prim->maxY + primtiveOffset.y_mm;
+
+    if( env.obstacleBounds_.empty() && ! env.obstaclesPerAngle_[0].empty() ) {
+      // unit tests might do this
+      PRINT_NAMED_WARNING("xythetaEnvironment.Successor.NoBounds",
+                          "missing obstacle bounding boxes! Did you call env.PrepareForPlanning()???");
+      possibleObstacle = true;      
+    }
+    else {
+      for( const auto& bound : env.obstacleBounds_ ) {
+        if( maxPrimX < bound.minX ||
+            minPrimX > bound.maxX ||
+            maxPrimY < bound.minY ||
+            minPrimY > bound.maxY ) {
+          // can't possibly be a collision
+          continue;
+        }
+        // otherwise, we need to do a full check
+        possibleObstacle = true;
+        break;
+      }
+    }
+
+    
+    if( possibleObstacle ) {
+
+      // two collision check cases. If the angle is changing, then we'll need to potentially switch which
+      // obstacle angle we check while checking, so that is the more complciated case
+
+      // First, handle the simpler case, for straight lines. In this case, we can do a quick bounding box check first
+
+      if( prim->endStateOffset.theta == prim->startTheta ) {
+        for( const auto& obs : env.obstaclesPerAngle_[prim->startTheta] ) {
+
+          if( maxPrimX < obs.first.GetMinX() ||
+              minPrimX > obs.first.GetMaxX() ||
+              maxPrimY < obs.first.GetMinY() ||
+              minPrimY > obs.first.GetMaxY() ) {
+            // can't possibly be a collision, rule out this whole obstacle
+            continue;
+          }
+
+          for( const auto& pt : prim->intermediatePositions ) {
+            if( obs.first.Contains(primtiveOffset.x_mm + pt.position.x_mm,
+                                   primtiveOffset.y_mm + pt.position.y_mm ) ) {
+
+              if(obs.second >= MAX_OBSTACLE_COST) {
+                collision = true;
+                break;
+              }
+              else {
+                // apply soft penalty, but allow the action
+                penalty += obs.second * pt.oneOverDistanceFromLastPosition 
+                        +  (reverseMotion ? REVERSE_OVER_OBSTACLE_COST : 0);
+
+                assert(!isinf(penalty));
+                assert(!isnan(penalty));
+              }
+            }
+          }
+        }
+      }
+
+      else {
+        // handle the more complex case
+
+        for(long pointIdx = endPoints-1; pointIdx >= 0; --pointIdx) {
+
+          GraphTheta angle = prim->intermediatePositions[pointIdx].nearestTheta;
+          for( const auto& obs : env.obstaclesPerAngle_[angle] ) {
+            if( obs.first.Contains(
+                  primtiveOffset.x_mm + prim->intermediatePositions[pointIdx].position.x_mm,
+                  primtiveOffset.y_mm + prim->intermediatePositions[pointIdx].position.y_mm ) ) {
+
+              if(obs.second >= MAX_OBSTACLE_COST) {
+                collision = true;
+                break;
+              }
+              else {
+                // apply soft penalty, but allow the action
+                penalty += obs.second  * prim->intermediatePositions[pointIdx].oneOverDistanceFromLastPosition
+                        +  (reverseMotion ? REVERSE_OVER_OBSTACLE_COST : 0);
+
+                assert(!isinf(penalty));
+                assert(!isnan(penalty));
+              }
+            }
+          }
+        }
+      }
+    }
+
+    assert(!isinf(penalty));
+    assert(!isnan(penalty));
+
+    nextSucc_.g += penalty;
+
+    if(!collision) {
+      nextSucc_.stateID = result.GetStateID();
+      nextSucc_.g += startG_ + prim->cost;
+
+      assert(!isinf(nextSucc_.g));
+      assert(!isnan(nextSucc_.g));
+
+      nextSucc_.penalty = penalty;
+      nextSucc_.actionID = prim->id;
+      assert( reverse_ || nextAction_ == prim->id);
+      break;
+    }
+
+    nextAction_++;
+  }
+
+  nextAction_++;
+}
+
 Cost xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions) const
 {
   GraphState curr(stateID);

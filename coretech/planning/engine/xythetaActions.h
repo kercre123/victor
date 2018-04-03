@@ -150,47 +150,6 @@ private:
   Path pathSegments_;
 };
 
-
-
-// helper class to prevent excess dynamic memory allocation. Additionally, the `Next()` method will 
-// evaluate for potential collisions and not produce successors to invalid states
-class SuccessorIterator
-{
-public:
-  // helper container for Successor data
-  struct Successor
-  {
-    StateID stateID;    // The successor state
-    ActionID actionID;  // The action thats takes you to state
-    Cost g;             // Value associated with state  
-    Cost penalty;       // Penalty paid to transition into state (not counting normal action cost)
-  };
-
-  // if reverse is true, then advance through predecessors instead of successors
-  SuccessorIterator(const xythetaEnvironment* env, StateID startID, Cost startG, bool reverse = false);
-
-  // Returns true if there are no more results left
-  bool Done(const xythetaEnvironment& env) const;
-
-  // Returns the next action results pair
-  inline const Successor& Front() const {return nextSucc_;}
-
-  void Next(const xythetaEnvironment& env);
-
-private:
-
-  State_c    start_c_;
-  GraphState start_;
-  Cost       startG_;
-
-  // once Next() is called, it will evaluate this action
-  ActionID   nextAction_;
-  Successor  nextSucc_;
-  
-  bool reverse_;
-};
-
-
 } // Planning
 } // Anki
 
