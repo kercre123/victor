@@ -880,7 +880,7 @@ void BehaviorEnrollFace::TransitionToFailedState( State state, const std::string
   
   auto* action = new TriggerLiftSafeAnimationAction(AnimationTrigger::MeetCozmoConfusion);
   
-  DelegateIfInControl(action, [this, state, &stateName](ActionResult result) {
+  DelegateIfInControl(action, [this, state, stateName](ActionResult result) {
     if( ActionResult::SUCCESS != result ) {
       PRINT_NAMED_WARNING("BehaviorEnrollFace.TransitionToFailedState.FinalAnimationFailed", "");
     }
