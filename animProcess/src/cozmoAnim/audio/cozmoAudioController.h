@@ -17,10 +17,17 @@
 
 #include "audioEngine/audioEngineController.h"
 #include <memory>
+#include <unordered_map>
 
 namespace Anki {
 namespace AudioEngine {
 class SoundbankLoader;
+}
+namespace AudioMetaData {
+namespace GameParameter {
+// Forward declare audioParameterTypes.h
+enum class ParameterType : uint32_t;
+}
 }
 namespace Cozmo {
 class AnimContext;
@@ -29,7 +36,6 @@ namespace Audio {
 
 class CozmoAudioController : public AudioEngine::AudioEngineController
 {
-
 public:
 
   CozmoAudioController(const AnimContext* context);
@@ -41,29 +47,49 @@ public:
   // Save session audio output to a file
   bool WriteAudioOutputCapture( bool write );
   
+  // Set a specific volume channel
+  // Valid Volume channels are:
+  // Robot_Vic_Volume_Master, Robot_Vic_Volume_Animation, Robot_Vic_Volume_Behavior & Robot_Vic_Volume_Procedural
+  void SetVolume( AudioMetaData::GameParameter::ParameterType volumeChannel,
+                  AudioEngine::AudioRTPCValue volume,
+                  AudioEngine::AudioTimeMs timeInMilliSeconds = 0,
+                  AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear,
+                  bool storeVolume = true );
+
   // Control Robot's master volume
   // Valid Volume values are [0.0 - 1.0]
   void SetRobotMasterVolume( AudioEngine::AudioRTPCValue volume,
                              AudioEngine::AudioTimeMs timeInMilliSeconds = 0,
                              AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear );
   
-  // Control Robot's procedural audio volume (a.k.a. movement sounds)
-  // Valid Volume values are [0.0 - 1.0]
-  void SetProceduralAudioVolume( AudioEngine::AudioRTPCValue volume,
-                                 AudioEngine::AudioTimeMs timeInMilliSeconds = 0,
-                                 AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear );
-
+  // Get Volume channel value [0.0 - 1.0]
+  // Return ture if found
+  bool GetVolume( AudioMetaData::GameParameter::ParameterType volumeChannel,
+                  AudioEngine::AudioRTPCValue& out_value,
+                  bool defaultValue = false );
+  
+  // Reset all volume channels to default value
+  // store default values to persistent storage
+  void SetDefaultVolumes( bool store = true );
 
 private:
   
+  const AnimContext* _animContext = nullptr;
   std::unique_ptr<AudioEngine::SoundbankLoader> _soundbankLoader;
+  std::unordered_map<AudioMetaData::GameParameter::ParameterType, AudioEngine::AudioRTPCValue> _volumeMap;
   
   // Register CLAD Game Objects
   void RegisterCladGameObjectsWithAudioController();
   
   // Set initial volumes at startup
   void SetInitialVolume();
- 
+  
+  // Load/Store persistent volume values
+  void LoadVolumeSettings();
+  void StoreVolumeSettings();
+  bool IsValidVolumeChannel( AudioMetaData::GameParameter::ParameterType volumeChannel );
+  
+  
 };
 
 }

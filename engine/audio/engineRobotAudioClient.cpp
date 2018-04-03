@@ -39,7 +39,7 @@ namespace AMD = AudioMetaData;
 void EngineRobotAudioClient::SetRobotMasterVolume(float volume, int32_t timeInMilliSeconds, CurveType curve)
 {
   DEV_ASSERT(((volume >= 0.0f) && (volume <= 1.0f)), "EngineRobotAudioClient.SetRobotMasterVolume.Volume.InvalidValue");
-  PostParameter(AMD::GameParameter::ParameterType::Robot_Volume,
+  PostParameter(AMD::GameParameter::ParameterType::Robot_Vic_Volume_Master,
                 volume,
                 AMD::GameObjectType::Invalid,
                 timeInMilliSeconds,
