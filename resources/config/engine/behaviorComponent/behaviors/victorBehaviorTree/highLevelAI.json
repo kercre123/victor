@@ -755,7 +755,8 @@
         "Socializing",
         "WakingUp",
         "ReturningToCharger",
-        "FailedToFindCharger"
+        "FailedToFindCharger",
+        "ReactToCubeTap"
       ],
       "interruptingTransitions": [
         {
