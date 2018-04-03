@@ -44,6 +44,9 @@ public:
   AnimationAudioClient( CozmoAudioController* audioController );
 
   ~AnimationAudioClient();
+
+  // Prepare to start animation
+  void InitAnimation();
   
   // Tick Audio Engine each animation frame
   void Update() const;

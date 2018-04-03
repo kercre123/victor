@@ -50,6 +50,23 @@ TEST_INTENT(UserIntentsTransitions, SetTimer, "set_timer")
   EXPECT_TRUE(res);
 }
 
+TEST_INTENT(UserIntentsTransitions, SetKeepAway, "set_keepaway")
+{
+  TestBehaviorFramework tbf;
+  tbf.InitializeStandardBehaviorComponent();
+
+  std::vector<IBehavior*> stack = tbf.GetNamedBehaviorStack("highLevelAI_stack");
+
+  UserIntent_PlaySpecific playKeepaway("keep_away");
+  UserIntent keepawayIntent;
+  keepawayIntent._tag = UserIntentTag::play_specific;
+  keepawayIntent._play_specific = playKeepaway;
+
+  TestIntentsFramework tif;
+  auto res = tif.TestUserIntentTransition(tbf, stack, keepawayIntent, BehaviorID::Keepaway);
+  EXPECT_TRUE(res);
+}
+
 TEST(UserIntentsTransitions, CompletedHaveTests)
 {
   TestIntentsFramework tif;

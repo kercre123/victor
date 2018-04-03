@@ -60,7 +60,6 @@ constexpr float kEmotionChangeVeryLarge = 1.00f;
 template <typename Type>
 class AnkiEvent;
 
-
 namespace ExternalInterface {
 class MessageGameToEngine;
 struct RobotCompletedAction;
@@ -166,7 +165,7 @@ public:
   
 private:
   void ReadMoodConfig(const Json::Value& inJson);
-  // Load in all data-driven emotion events // TODO: move to mood manager?
+  // Load in all data-driven emotion events
   void LoadEmotionEvents(const RobotDataLoader::FileJsonMap& emotionEventData);   
   bool LoadEmotionEvents(const Json::Value& inJson);
 
@@ -198,7 +197,7 @@ private:
   void PrintActionCompletedEventMap() const;
 
   void SendEmotionsToAudio(Audio::EngineRobotAudioClient& audioClient);
-  
+
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( void AddEvent(const char* eventName) );
 
   void SendMoodToWebViz(const CozmoContext* context, const std::string& emotionEvent = "");

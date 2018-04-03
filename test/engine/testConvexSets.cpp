@@ -264,7 +264,9 @@ TEST(AffineHyperplane, InHalfPlane)
 TEST(Ball, Contains)
 {
   {
-    Anki::Ball3f b({0.f, 0.f, 0.f}, 1);
+    const Anki::Point3f origin(0.f, 0.f, 0.f);
+    const f32 radius = 1.f;
+    const Anki::Ball3f b(origin, radius);
     Anki::Util::RandomGenerator gen;
 
     // random points in unit sphere
@@ -273,7 +275,9 @@ TEST(Ball, Contains)
       Anki::Point3f p;
       for (int j=0; j<3; ++j) { p[j] = gen.RandDbl() - gen.RandDbl(); }
 
-      EXPECT_EQ( b.Contains(p) , (Anki::ComputeDistanceBetween(p, {0.f, 0.f, 0.f}) <= 1.f) ); 
+      // VIC-2171: Unit test must apply same logic for tolerance as method being tested
+      const f32 distanceBetween = Anki::ComputeDistanceBetween(p, origin);
+      EXPECT_EQ( b.Contains(p), FLT_LE(SQUARE(distanceBetween), SQUARE(radius)) );
     }
   }
 }

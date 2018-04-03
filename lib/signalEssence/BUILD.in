@@ -1,7 +1,0 @@
-cxx_project(
-    name = 'signal_essence',
-    srcs = [],
-    platform_srcs = [],
-    headers = [],
-    platform_headers = []
-)

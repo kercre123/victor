@@ -155,9 +155,7 @@ void BehaviorReactToFrustration::LoadJson(const Json::Value& config)
   _maxDistanceToDrive_mm = config.get(kRandomDriveMaxDistKey_mm, 0).asFloat();
   _randomDriveAngleMin_deg = config.get(kRandomDriveMinAngleKey_deg, 0).asFloat();
   _randomDriveAngleMax_deg = config.get(kRandomDriveMaxAngleKey_deg, 0).asFloat();
-  _animToPlay = AnimationTriggerFromString(
-                      config.get(kAnimationKey,
-                                 AnimationTriggerToString(AnimationTrigger::Count)).asString().c_str());
+  _animToPlay = JsonTools::ParseAnimationTrigger(config, kAnimationKey, "BehaviorReactToFrustration");
   _finalEmotionEvent = config.get(kEmotionEventKey, "").asString();
   
 }

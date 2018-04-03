@@ -49,7 +49,7 @@ void BehaviorReactToRobotShaken::OnBehaviorActivated()
   _reactionPlayed = EReaction::None;
   
   // Start the animations:
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DizzyShakeLoop, 0));
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DEPRECATED_DizzyShakeLoop, 0));
   
   // Kick off the state machine:
   _state = EState::Shaking;
@@ -86,8 +86,8 @@ void BehaviorReactToRobotShaken::BehaviorUpdate()
     case EState::DoneShaking:
     {
       CancelDelegates(false);
-      CompoundActionSequential* action = new CompoundActionSequential({new TriggerAnimationAction(AnimationTrigger::DizzyShakeStop),
-                                                                       new TriggerAnimationAction(AnimationTrigger::DizzyStillPickedUp)});
+      CompoundActionSequential* action = new CompoundActionSequential({new TriggerAnimationAction(AnimationTrigger::DEPRECATED_DizzyShakeStop),
+                                                                       new TriggerAnimationAction(AnimationTrigger::DEPRECATED_DizzyStillPickedUp)});
       DelegateIfInControl(action);
       
       _state = EState::WaitTilOnTreads;
@@ -112,13 +112,13 @@ void BehaviorReactToRobotShaken::BehaviorUpdate()
       CancelDelegates(false);
       // Play appropriate reaction based on duration of shaking:
       if (_shakenDuration_s > kShakenDurationThresholdHard) {
-        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DizzyReactionHard));
+        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DEPRECATED_DizzyReactionHard));
         _reactionPlayed = EReaction::Hard;
       } else if (_shakenDuration_s > kShakenDurationThresholdMedium) {
-        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DizzyReactionMedium));
+        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DEPRECATED_DizzyReactionMedium));
         _reactionPlayed = EReaction::Medium;
       } else {
-        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DizzyReactionSoft));
+        DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DEPRECATED_DizzyReactionSoft));
         _reactionPlayed = EReaction::Soft;
       }
       

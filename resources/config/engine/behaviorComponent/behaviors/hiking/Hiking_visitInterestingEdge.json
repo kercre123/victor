@@ -10,11 +10,11 @@
   "behaviorID": "Hiking_VisitInterestingEdge",
 
   // anim for observing
-  "observeEdgeAnimTrigger"  : "HikingObserve",
-  "edgesNotFoundAnimTrigger": "HikingInterestingEdgeThought",
+  "observeEdgeAnimTrigger"  : "DEPRECATED_HikingObserve",
+  "edgesNotFoundAnimTrigger": "DEPRECATED_HikingInterestingEdgeThought",
   "squintStartAnimTrigger"  : "HikingSquintStart",
-  "squintLoopAnimTrigger"   : "HikingSquintLoop",
-  "squintEndAnimTrigger"    : "HikingSquintEnd",
+  "squintLoopAnimTrigger"   : "DEPRECATED_HikingSquintLoop",
+  "squintEndAnimTrigger"    : "DEPRECATED_HikingSquintEnd",
   
   // vantage point generation
   "allowGoalsBehindOtherEdges": false,

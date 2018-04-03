@@ -85,7 +85,7 @@ void BehaviorAcknowledgeCubeMoved::BehaviorUpdate()
      && _activeObjectSeen)
   {
     CancelDelegates(false);
-    DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::AcknowledgeObject));
+    DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::DEPRECATED_AcknowledgeObject));
     SET_STATE(ReactingToBlockPresence);
   }
 }
@@ -104,7 +104,7 @@ void BehaviorAcknowledgeCubeMoved::TransitionToPlayingSenseReaction()
   SET_STATE(PlayingSenseReaction);
 
   DelegateIfInControl(new CompoundActionParallel({
-    new TriggerLiftSafeAnimationAction(AnimationTrigger::CubeMovedSense),
+    new TriggerLiftSafeAnimationAction(AnimationTrigger::DEPRECATED_CubeMovedSense),
     new WaitAction(kDelayForUserPresentBlock_s) }),
               &BehaviorAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock);
   
@@ -137,7 +137,7 @@ void BehaviorAcknowledgeCubeMoved::TransitionToTurningToLastLocationOfBlock()
 void BehaviorAcknowledgeCubeMoved::TransitionToReactingToBlockAbsence()
 {
   SET_STATE(ReactingToBlockAbsence);
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::CubeMovedUpset));
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::DEPRECATED_CubeMovedUpset));
   BehaviorObjectiveAchieved(BehaviorObjective::ReactedAcknowledgedCubeMoved);
 }
   

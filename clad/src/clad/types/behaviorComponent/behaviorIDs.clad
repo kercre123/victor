@@ -16,8 +16,7 @@ enum uint_8 BehaviorID {
   Wait_TestInjectable,
 
   // <root>
-  DriveOffCharger,
-  Wait,
+  StackBlocks,
 
   // devBehaviors
   DevBaseBehavior,
@@ -59,19 +58,24 @@ enum uint_8 BehaviorID {
   ExampleObjectPositionUpdated,
   ExamplePetInitialDetection,
 
+  // hiking
+  Hiking_BringCubeToBeacon,
+  Hiking_DriveOffCharger,
+  Hiking_FirstLookIntro,
+  Hiking_FirstLookWakeUp,
+  Hiking_LookInPlace360,
+  Hiking_LookInPlaceForUnknown,
+  Hiking_RollCube,
+  Hiking_ThinkAboutBeacons,
+  Hiking_VisitInterestingEdge,
+
+  // puzzles
+  PuzzleMaze,
+
   // reactions
-  ProceduralTurnToMicDirection,
-  ReactToCliff,
-  ReactToCubeTap,
   ReactToCubeMoved,
-  ReactToGoodBye,
-  ReactToGoodMorning,
-  ReactToGoodNight,
-  ReactToGreeting,
+  ReactToCubeTap,
   ReactToPet,
-  ReactToSoundAsleep,
-  ReactToSoundAwake,
-  ReactToTriggerDirectionAwake,
 
   // singing
   Singing_AbaDaba,
@@ -114,17 +118,10 @@ enum uint_8 BehaviorID {
   Singing_YankeeDoodle,
   Singing_YellowRose,
 
-  // timer
-  SingletonCancelTimer,
-  SingletonTimerAlreadySet,
-  SingletonTimerAntic,
-  SingletonTimerRinging,
-  SingletonTimerSet,
-  TimerUtilityCoordinator,
-
   // victorBehaviorTree
   ComeHereVoiceCommand,
   CoordinateGlobalInterrupts,
+  DriveOffCharger,
   GlobalInterruptions,
   HighLevelAI,
 
@@ -138,17 +135,6 @@ enum uint_8 BehaviorID {
   FindHome,
   GoHome,
   RequestToGoHome,
-
-  // victorBehaviorTree/highLevelDelegates/hiking
-  Hiking_BringCubeToBeacon,
-  Hiking_DriveOffCharger,
-  Hiking_FirstLookIntro,
-  Hiking_FirstLookWakeUp,
-  Hiking_LookInPlace360,
-  Hiking_LookInPlaceForUnknown,
-  Hiking_RollCube,
-  Hiking_ThinkAboutBeacons,
-  Hiking_VisitInterestingEdge,
 
   // victorBehaviorTree/highLevelDelegates
   InteractWithFaces,
@@ -197,13 +183,6 @@ enum uint_8 BehaviorID {
   // victorBehaviorTree/highLevelDelegates
   PutDownBlock,
   PutDownDispatch_LookForFaceAndCube,
-
-  // victorBehaviorTree/highLevelDelegates/puzzles
-  PuzzleMaze,
-
-  // victorBehaviorTree/highLevelDelegates
-  ReactToFrustrationMajor,
-  ReactToObstacle,
   ShortLookAroundForFaceAndCube,
 
   // victorBehaviorTree/highLevelDelegates/sleeping
@@ -217,9 +196,6 @@ enum uint_8 BehaviorID {
   Socialize,
   SocializeGame,
 
-  // victorBehaviorTree/highLevelDelegates
-  StackBlocks,
-
   // victorBehaviorTree/highLevelDelegates/voiceCommands
   DoATrickVoiceCommand,
   FistBumpVoiceCommand,
@@ -228,8 +204,34 @@ enum uint_8 BehaviorID {
   // victorBehaviorTree
   ReactToTouchPetting,
   ReactToUnclaimedIntent,
+
+  // victorBehaviorTree/reactions
+  ProceduralTurnToMicDirection,
+  ReactToCliff,
+  ReactToFrustrationMajor,
+  ReactToGoodBye,
+  ReactToGoodMorning,
+  ReactToGoodNight,
+  ReactToGreeting,
+  ReactToObstacle,
+  ReactToSoundAsleep,
+  ReactToSoundAwake,
+  ReactToTriggerDirectionAwake,
+
+  // victorBehaviorTree
   SingletonICantDoThat,
+
+  // victorBehaviorTree/timer
+  SingletonCancelTimer,
+  SingletonTimerAlreadySet,
+  SingletonTimerAntic,
+  SingletonTimerRinging,
+  SingletonTimerSet,
+  TimerUtilityCoordinator,
+
+  // victorBehaviorTree
   TriggerWordDetected,
+  Wait,
 }
 
 }

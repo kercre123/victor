@@ -11,7 +11,7 @@
 */
 
 #include "cozmoAnim/FftComplex.h"
-#include "cozmoAnim/micDataInfo.h"
+#include "cozmoAnim/micData/micDataInfo.h"
 #include "audioUtil/waveFile.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
@@ -37,7 +37,7 @@ namespace {
 void MicDataInfo::CollectRawAudio(const AudioUtil::AudioSample* audioChunk, size_t size)
 {
   std::lock_guard<std::mutex> lock(_dataMutex);
-  if (_typesToRecord.IsBitFlagSet(MicDataType::Raw))
+  if (_typesToCollect.IsBitFlagSet(MicDataType::Raw))
   {
     AudioUtil::AudioChunk newChunk;
     newChunk.resize(kRawAudioChunkSize);
@@ -49,7 +49,7 @@ void MicDataInfo::CollectRawAudio(const AudioUtil::AudioSample* audioChunk, size
 void MicDataInfo::CollectProcessedAudio(const AudioUtil::AudioSample* audioChunk, size_t size)
 {
   std::lock_guard<std::mutex> lock(_dataMutex);
-  if (_typesToRecord.IsBitFlagSet(MicDataType::Processed))
+  if (_typesToCollect.IsBitFlagSet(MicDataType::Processed))
   {
     AudioUtil::AudioChunk newChunk;
     newChunk.resize(kSamplesPerBlock);
@@ -106,7 +106,7 @@ void MicDataInfo::UpdateForNextChunk()
       // If we fail to find a name with which to save a file, bail now
       if (nextFileNameBase.empty())
       {
-        _typesToRecord.ClearFlags();
+        _typesToSave.ClearFlags();
         return;
       }
     }
@@ -116,7 +116,7 @@ void MicDataInfo::UpdateForNextChunk()
     
     if (!_repeating)
     {
-      _typesToRecord.ClearFlags();
+      _typesToCollect.ClearFlags();
     }
   }
 }
@@ -124,7 +124,7 @@ void MicDataInfo::UpdateForNextChunk()
 bool MicDataInfo::CheckDone() const
 {
   std::lock_guard<std::mutex> lock(_dataMutex);
-  return !_typesToRecord.AreAnyFlagsSet();
+  return !_typesToCollect.AreAnyFlagsSet();
 }
 
 uint32_t MicDataInfo::GetTimeToRecord_ms() const
@@ -161,53 +161,62 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
   const std::string& writeLocationBase = Util::FileUtils::FullFilePath({ newDirPath, nameToUse });
   if (!_rawAudioData.empty())
   {
-    std::string dest = (writeLocationBase + kRawFileExtension);
-    if (_audioSaveCallback != nullptr)
+    if (_typesToSave.IsBitFlagSet(MicDataType::Raw) || _doFFTProcess)
     {
-      _audioSaveCallback(dest);
-    }
-    auto saveRawWave = [dest = std::move(dest),
-                        data = std::move(_rawAudioData),
-                        doFFTProcess = _doFFTProcess,
-                        fftCallback = std::move(_rawAudioFFTCallback),
-                        length_ms = _timeRecorded_ms] () {
-      Anki::Util::SetThreadName(pthread_self(), "saveRawWave");
-      AudioUtil::WaveFile::SaveFile(dest, data, kNumInputChannels, kSampleRateIncoming_hz);
-
-      LOG_INFO("MicDataInfo.WriteRawWaveFile", "%s", dest.c_str());
-      
-      if (doFFTProcess)
+      std::string dest = (writeLocationBase + kRawFileExtension);
+      if (_audioSaveCallback != nullptr)
       {
-        const float length_s = Util::numeric_cast<float>(length_ms / 1000.0f);
-        if (!Util::IsNearZero(length_s))
+        _audioSaveCallback(dest);
+      }
+      auto saveRawWave = [dest = std::move(dest),
+                          data = std::move(_rawAudioData),
+                          saveRaw = _typesToSave.IsBitFlagSet(MicDataType::Raw),
+                          doFFTProcess = _doFFTProcess,
+                          fftCallback = std::move(_rawAudioFFTCallback),
+                          length_ms = _timeRecorded_ms] () {
+        Anki::Util::SetThreadName(pthread_self(), "saveRawWave");
+        if (saveRaw)
         {
-          std::vector<uint32_t> result = GetFFTResultFromRaw(data, length_s);
-          LOG_INFO("MicDataInfo.FFTResultFromRaw", "%d %d %d %d", result[0], result[1], result[2], result[3]);
-          if (fftCallback)
+          AudioUtil::WaveFile::SaveFile(dest, data, kNumInputChannels, kSampleRateIncoming_hz);
+          LOG_INFO("MicDataInfo.WriteRawWaveFile", "%s", dest.c_str());
+        }
+        
+        if (doFFTProcess)
+        {
+          const float length_s = Util::numeric_cast<float>(length_ms / 1000.0f);
+          if (!Util::IsNearZero(length_s))
           {
-            fftCallback(std::move(result));
+            std::vector<uint32_t> result = GetFFTResultFromRaw(data, length_s);
+            LOG_INFO("MicDataInfo.FFTResultFromRaw", "%d %d %d %d", result[0], result[1], result[2], result[3]);
+            if (fftCallback)
+            {
+              fftCallback(std::move(result));
+            }
           }
         }
-      }
-    };
-    std::thread(saveRawWave).detach();
+      };
+      std::thread(saveRawWave).detach();
+    }
     _rawAudioData.clear();
   }
 
   if (!_processedAudioData.empty())
   {
-    std::string dest = (writeLocationBase + kWavFileExtension);
-    if (_audioSaveCallback != nullptr)
+    if (_typesToSave.IsBitFlagSet(MicDataType::Processed))
     {
-      _audioSaveCallback(dest);
+      std::string dest = (writeLocationBase + kWavFileExtension);
+      if (_audioSaveCallback != nullptr)
+      {
+        _audioSaveCallback(dest);
+      }
+      auto saveProcessedWave = [dest = std::move(dest),
+                                data = std::move(_processedAudioData)] () {
+        Anki::Util::SetThreadName(pthread_self(), "saveProcWave");
+        AudioUtil::WaveFile::SaveFile(dest, data);
+        LOG_INFO("MicDataInfo.WriteProcessedWaveFile", "%s", dest.c_str());
+      };
+      std::thread(saveProcessedWave).detach();
     }
-    auto saveProcessedWave = [dest = std::move(dest),
-                              data = std::move(_processedAudioData)] () {
-      Anki::Util::SetThreadName(pthread_self(), "saveProcWave");
-      AudioUtil::WaveFile::SaveFile(dest, data);
-      LOG_INFO("MicDataInfo.WriteProcessedWaveFile", "%s", dest.c_str());
-    };
-    std::thread(saveProcessedWave).detach();
     _processedAudioData.clear();
   }
 }
@@ -321,6 +330,21 @@ std::vector<uint32_t> MicDataInfo::GetFFTResultFromRaw(const AudioUtil::AudioChu
   }
   
   return perChannelFFT;
+}
+
+void MicDataInfo::EnableDataCollect(MicDataType type, bool saveToFile)
+{
+  _typesToCollect.SetBitFlag(type, true);
+  if (saveToFile)
+  {
+    _typesToSave.SetBitFlag(type, true);
+  }
+}
+
+void MicDataInfo::DisableDataCollect(MicDataType type)
+{
+  _typesToCollect.SetBitFlag(type, false);
+  _typesToSave.SetBitFlag(type, false);
 }
 
 } // namespace MicData

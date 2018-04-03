@@ -55,6 +55,7 @@ CONSOLE_VAR(bool, kSendMoodToViz, "VizDebug", true);
 
 CONSOLE_VAR(float, kAudioSendPeriod_s, "MoodManager", 0.5f);
 CONSOLE_VAR(float, kWebVizPeriod_s, "MoodManager", 1.0f);
+
 }
 
 
@@ -106,6 +107,14 @@ void MoodManager::ReadMoodConfig(const Json::Value& inJson)
   LoadAudioParameterMap(inJson[kAudioParametersMapKey]);
   LoadActionCompletedEventMap(inJson[kActionResultEmotionEventKey]);  
 
+  // set values per mood if we have them
+  for( const auto& valueRangeEntry : GetStaticMoodData().GetEmotionValueRangeMap() ) {
+    const auto& emotionType = valueRangeEntry.first;
+    const auto& range = valueRangeEntry.second;
+    
+    GetEmotion(emotionType).SetEmotionValueRange(range.first, range.second);
+  }
+  
   if (nullptr != _robot) {
     if( _robot->HasExternalInterface() ) {
       auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _signalHandles);
@@ -398,7 +407,6 @@ void MoodManager::SendEmotionsToAudio(Audio::EngineRobotAudioClient& audioClient
 
   _lastAudioSendTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
-
   
 // updates the most recent time this event was triggered, and returns how long it's been since the event was last seen
 // returns FLT_MAX if this is the first time the event has been seen

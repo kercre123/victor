@@ -16,6 +16,8 @@ TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
 source ${SCRIPT_PATH}/victor_env.sh
 
+source ${SCRIPT_PATH}/host_robot_ip_override.sh
+
 robot_set_host
 
 while true; do 

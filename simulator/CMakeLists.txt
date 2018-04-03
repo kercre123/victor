@@ -95,11 +95,14 @@ target_compile_definitions(webotsCtrlCommon
 # webots controller macros
 #
 macro(webots_setup_exe target)
+  set(generator ${CMAKE_GENERATOR})
+  set(build ${CMAKE_BUILD_TYPE})
+  set(exe $<TARGET_FILE:${target}>)
   add_custom_command(
     TARGET ${target}
     POST_BUILD
-    COMMAND ${WEBOTS_TEST} --setup-exe $<TARGET_FILE:${target}>
-    COMMENT ${WEBOTS_TEST} --setup-exe $<TARGET_FILE:${target}>
+    COMMENT "Set up webots firewall exception for ${target}"
+    COMMAND ${WEBOTS_TEST} -g ${generator} -b ${build} -x ${exe}
   )
 endmacro(webots_setup_exe)
 

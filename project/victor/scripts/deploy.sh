@@ -18,6 +18,7 @@ source ${SCRIPT_PATH}/victor_env.sh
 
 # Settings can be overridden through environment
 : ${VERBOSE:=0}
+: ${FORCE_RSYNC_BIN:=0}
 : ${ANKI_BUILD_TYPE:="Debug"}
 : ${INSTALL_ROOT:="/anki"}
 : ${DEVICE_RSYNC_BIN_DIR:="/usr/bin"}
@@ -27,6 +28,7 @@ function usage() {
   echo "options:"
   echo "  -h                      print this message"
   echo "  -v                      print verbose output"
+  echo "  -r                      force-install rsync binary on robot"
   echo "  -c CONFIGURATION        build configuration {Debug,Release}"
   echo "  -s ANKI_ROBOT_HOST      hostname or ip address of robot"
   echo ""
@@ -35,15 +37,19 @@ function usage() {
   echo '  $ANKI_BUILD_TYPE        build configuration {Debug,Release}'
   echo '  $BUILD_ROOT             root dir of build artifacts containing {bin,lib,etc,data} dirs'
   echo '  $INSTALL_ROOT           root dir of installed files on target'
+  echo '  $STAGING_DIR            directory to hold staged artifacts before deploy to robot'
 }
 
-while getopts "hvc:s:" opt; do
+while getopts "hvrc:s:" opt; do
   case $opt in
     h)
       usage && exit 0
       ;;
     v)
       VERBOSE=1
+      ;;
+    r)
+      FORCE_RSYNC_BIN=1
       ;;
     c)
       ANKI_BUILD_TYPE="${OPTARG}"
@@ -65,7 +71,6 @@ if [ -z "${ANKI_ROBOT_HOST+x}" ]; then
   exit 1
 fi
 
-# echo "VERBOSE: ${VERBOSE}"
 # echo "ANKI_BUILD_TYPE: ${ANKI_BUILD_TYPE}"
 echo "ANKI_ROBOT_HOST: ${ANKI_ROBOT_HOST}"
 echo "   INSTALL_ROOT: ${INSTALL_ROOT}"
@@ -74,6 +79,7 @@ echo "   INSTALL_ROOT: ${INSTALL_ROOT}"
 : ${LIB_INSTALL_PATH:="${INSTALL_ROOT}/lib"}
 : ${BIN_INSTALL_PATH:="${INSTALL_ROOT}/bin"}
 : ${RSYNC_BIN_DIR="${TOPLEVEL}/tools/rsync"}
+: ${STAGING_DIR:="${BUILD_ROOT}/staging"}
 
 robot_sh mkdir -p "${INSTALL_ROOT}"
 robot_sh mkdir -p "${INSTALL_ROOT}/etc"
@@ -83,7 +89,7 @@ robot_sh mkdir -p "${BIN_INSTALL_PATH}"
 # install rsync binary and config if needed
 set +e
 robot_sh [ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]
-if [ $? -ne 0 ]; then
+if [ $? -ne 0 ] || [ $FORCE_RSYNC_BIN -eq 1 ]; then
   echo "loading rsync to device"
   robot_cp ${RSYNC_BIN_DIR}/rsync.bin ${DEVICE_RSYNC_BIN_DIR}/rsync.bin
 fi
@@ -95,17 +101,19 @@ set -e
 # 
 robot_sh "/bin/systemctl stop victor.target"
 
-pushd ${BUILD_ROOT} > /dev/null 2>&1
+# install.sh is a script that is run here by deploy.sh, but also independently by
+# bitbake when building the Victor OS.
+${SCRIPT_PATH}/install.sh ${BUILD_ROOT} ${STAGING_DIR}
+
+
+pushd ${STAGING_DIR} > /dev/null 2>&1
 
 # Since invoking rsync multiple times is expensive.
 # build an include file list so that we can run a single rsync command
+rm -rf ${BUILD_ROOT}/rsync.*.lst
 RSYNC_LIST="${BUILD_ROOT}/rsync.$$.lst"
-touch ${RSYNC_LIST}
 
-find lib -type f -name '*.so' >> ${RSYNC_LIST}
-find bin -type f -not -name '*.full' >> ${RSYNC_LIST}
-find etc >> ${RSYNC_LIST}
-find data >> ${RSYNC_LIST}
+find . -type f > ${RSYNC_LIST}
 
 #
 # Use --inplace to avoid consuming temp space & minimize number of writes
@@ -117,8 +125,8 @@ rsync -rlptD -uzvP \
   --rsync-path=${DEVICE_RSYNC_BIN_DIR}/rsync.bin \
   --files-from=${RSYNC_LIST} \
   -e ssh \
-  ./ root@${ANKI_ROBOT_HOST}:/anki/
+  ./ root@${ANKI_ROBOT_HOST}:/
 
-rm -f ${BUILD_ROOT}/rsync.*.lst
+rm -f "${RSYNC_LIST}"
 
 popd > /dev/null 2>&1

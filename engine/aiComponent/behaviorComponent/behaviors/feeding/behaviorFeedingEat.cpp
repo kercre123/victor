@@ -265,7 +265,7 @@ void BehaviorFeedingEat::TransitionToPlacingLiftOnCube()
 {
   SET_STATE(PlacingLiftOnCube);
   
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::FeedingPlaceLiftOnCube),
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DEPRECATED_FeedingPlaceLiftOnCube),
                       &BehaviorFeedingEat::TransitionToEating);
 }
 
@@ -276,7 +276,7 @@ void BehaviorFeedingEat::TransitionToEating()
   SET_STATE(Eating);
   GetBEI().GetRobotInfo().EnableStopOnCliff(false);
   
-  AnimationTrigger eatingAnim = AnimationTrigger::FeedingEat;
+  AnimationTrigger eatingAnim = AnimationTrigger::DEPRECATED_FeedingEat;
   
   uint32_t timeDrainCube_s = 0;
   auto* data_ldr = GetBEI().GetRobotInfo().GetContext()->GetDataLoader();
@@ -332,7 +332,7 @@ void BehaviorFeedingEat::TransitionToReactingToInterruption()
   _dVars.timeCubeIsSuccessfullyDrained_sec = FLT_MAX;
   
   CancelDelegates(false);
-  AnimationTrigger trigger = AnimationTrigger::FeedingInterrupted;
+  AnimationTrigger trigger = AnimationTrigger::DEPRECATED_FeedingInterrupted;
   
   {
     DelegateIfInControl(new TriggerLiftSafeAnimationAction(trigger));

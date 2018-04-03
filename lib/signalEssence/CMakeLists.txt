@@ -2,9 +2,7 @@ cmake_minimum_required(VERSION 3.6)
 
 project(signal_essence_proj)
 
-include(anki_build_cxx)
-
-anki_build_cxx_library(signal_essence ${ANKI_SRCLIST_DIR} STATIC)
+add_library(signal_essence STATIC)
 
 include(signalessence)
 

@@ -34,6 +34,7 @@
 #include "clad/types/unlockTypes.h"
 #include "util/console/consoleVariable.h"
 #include "util/logging/logging.h"
+#include "util/string/stringUtils.h"
 
 //Transforms enum into string
 #define DEBUG_SET_STATE(s) SetDebugStateName(#s)
@@ -50,6 +51,7 @@ class ActionableObject;
 class ConditionUserIntentPending;
 class DriveToObjectAction;
 enum class ObjectInteractionIntention;
+class UnitTestKey;
 class UserIntent;
 enum class UserIntentTag : uint8_t;
 
@@ -200,6 +202,8 @@ public:
   // to bypass one of the behaviors InActivatableScope so that it can be handled by something
   // further down the stack
   void SetDontActivateThisTick(const std::string& coordinatorName);
+  
+  std::map<std::string,ICozmoBehaviorPtr> TESTONLY_GetAnonBehaviors( UnitTestKey key ) const;
 
 protected:
 
@@ -684,8 +688,9 @@ bool ICozmoBehavior::FindAnonymousBehaviorByNameAndDowncast(const std::string& b
 template <typename T>
 void ICozmoBehavior::MakeMemberTunable(T& param, const std::string& name, const char* category)
 {
-  const std::string uniqueName = GetDebugLabel() + "_" + name;
-  const bool unregisterOnDestruction = true;
+  std::string uniqueName = GetDebugLabel() + "_" + name;
+  Anki::Util::StringReplace( uniqueName, "@", "" );
+  static const bool unregisterOnDestruction = true;
   if( category == nullptr ) {
     category = "BehaviorInstanceParams";
   }
