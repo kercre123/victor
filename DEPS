@@ -25,9 +25,10 @@
                 "subdirs": [
                     "animations",
                     "animationGroups",
-                    "faceAnimations"
+                    "faceAnimations",
+                    "sprites/spriteSequences"
                 ],
-                "version": "2797"
+                "version": "2798"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
