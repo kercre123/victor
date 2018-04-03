@@ -99,6 +99,16 @@ if [ $? -ne 0 ]; then
   robot_sh 'printf "\x75\x5c\xb6\x43\xae\x15\xb7\x43\x2f\x50\x9b\x43\x45\xac\x44\x43\x00\x00\x00\x00\x68\x01\x80\x02\x0f\x96\x1c\xbd\x8c\xc4\x97\xbe\xb6\x5b\xed\xba\xee\x96\xf4\x3a\xd4\xab\x38\x3e\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" > /factory/nvStorage/80000001.nvdata'
 fi
 
+echo "Checking for switchboard service"
+robot_sh test -f "/lib/systemd/system/vic-switchboard.service"
+if [ $? -ne 0 ]; then
+    echo "Creating switchboard service"
+    robot_sh touch "/lib/systemd/system/vic-switchboard.service"
+    robot_sh 'printf "[Unit]\nDescription=Victor switchboard daemon\nSourcePath=/anki/bin/vic-switchboard\nPartOf=anki-robot.target\nWants=vic-init.service\nAfter=vic-init.service\nConditionFileIsExecutable=/usr/bin/logwrapper\nConditionFileIsExecutable=/anki/bin/vic-switchboard\n[Service]\nEnvironmentFile=/anki/etc/vic-switchboard.env\nExecStart=/usr/bin/logwrapper /anki/bin/vic-switchboard $VIC_SWITCHBOARD_OPTS\nRestart=no\n[Install]\nWantedBy=anki-robot.target\n" > /lib/systemd/system/vic-switchboard.service'
+    robot_sh systemctl daemon-reload
+    robot_sh systemctl enable --now vic-switchboard
+fi
+
 if [ $REMOUNT_RO -eq 1 ]; then
   robot_sh mount -o remount, ro /factory   
 fi
