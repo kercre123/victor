@@ -15,12 +15,14 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "coretech/common/engine/objectIDs.h"
+#include "util/helpers/fullEnumToValueArrayChecker.h"
 
 
 namespace Anki {
 namespace Cozmo {
 
 class BehaviorDriveOffCharger;
+enum class AnimationTrigger : int32_t;
 
 class BehaviorReactToCubeTap : public ICozmoBehavior
 {
@@ -54,6 +56,8 @@ protected:
   virtual void BehaviorUpdate() override;
 
 
+private:
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   struct CubeInfo
@@ -61,9 +65,6 @@ protected:
     ObjectID      id;
     float         lastTappedTime;
   };
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // State Functions
 
   enum class EState : uint8_t
   {
@@ -74,6 +75,23 @@ protected:
     InteractWithCube,
   };
 
+  enum EIntensityLevel
+  {
+    Level1,
+    Level2,
+    Level3,
+
+    Count,
+    FirstLevel  = Level1,
+    LastLevel   = Level3,
+  };
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // State Functions
+
+  void ReactToCubeTapped();
+  void OnCubeTappedWhileActive();
+
   void TransitionToGetOffCharger();
   void TransitionToFindCube();
   void TransitionToGoToCube( bool playFoundCubeAnimation );
@@ -83,7 +101,18 @@ protected:
   void OnCubeNotFound();
   void DriveToTargetCube( unsigned int attempt = 1 );
 
+  AnimationTrigger GetCubeReactionAnimation() const;
+  AnimationTrigger GetSearchForCubeAnimation() const;
+  
+
 private:
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Static Members
+
+  using CubeIntensityAnimations = Util::FullEnumToValueArrayChecker::FullEnumToValueArray<EIntensityLevel, AnimationTrigger, EIntensityLevel::Count>;
+  static const CubeIntensityAnimations kReactToCubeAnimations;
+  static const CubeIntensityAnimations kSearchForCubeAnimations;
 
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -107,6 +136,7 @@ private:
     DynamicVariables();
 
     EState                                      state;
+    EIntensityLevel                             intensity;
 
   } _dVars;
   
