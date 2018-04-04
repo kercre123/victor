@@ -9,11 +9,13 @@ SCRIPT_NAME=$(basename ${0})
 
 
 VERBOSE=""
+KEEP=false
 function usage() {
   echo "$SCRIPT_NAME [OPTIONS] BUILD_DIR DIST_DIR"
   echo "options:"
   echo "  -h                      print this message"
   echo "  -v                      verbose logging"
+  echo "  -k                      keep destination directory, don't clear it before installing"
   echo ""
   echo "required arguments:"
   echo "  BUILD_DIR               directory containing build artifacts"
@@ -21,13 +23,16 @@ function usage() {
   echo ""
 }
 
-while getopts "hv" opt; do
+while getopts "hvk" opt; do
   case $opt in
     h)
         usage && exit 0
         ;;
     v)
         VERBOSE="-v"
+        ;;
+    k)
+        KEEP=true
         ;;
     *)
         usage && exit 1
@@ -46,7 +51,9 @@ pushd $1 > /dev/null 2>&1
 BUILDDIR=`pwd`
 popd > /dev/null 2>&1
 
-rm -rf $2
+if [ $KEEP == false ]; then
+  rm -rf $2
+fi
 mkdir -p $2/anki
 pushd $2/anki > /dev/null 2>&1
 DISTDIR=`pwd`
@@ -88,7 +95,3 @@ rsync \
 
 rm -f ${DIST_LIST}
 popd > /dev/null 2>&1
-
-
-
-
