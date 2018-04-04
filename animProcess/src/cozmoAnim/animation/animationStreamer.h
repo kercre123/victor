@@ -177,7 +177,9 @@ namespace Cozmo {
     
     void BufferFaceToSend(const ProceduralFace& procFace);
     void BufferFaceToSend(Vision::ImageRGB565& image);
-    
+
+    void UpdateCaptureFace(Vision::ImageRGB565& faceImg565);
+
     // Used to stream _just_ the stuff left in the various layers (all procedural stuff)
     Result StreamLayers();
     

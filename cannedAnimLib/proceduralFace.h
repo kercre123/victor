@@ -22,6 +22,12 @@
 #include <array>
 #include <vector>
 
+#define PROCEDURALFACE_NOISE_FEATURE         1 // feature capable but disabled as num frames = 0
+#define PROCEDURALFACE_ANIMATED_SATURATION   0 // disable saturation in canned animations
+#define PROCEDURALFACE_PROCEDURAL_SATURATION 1 // only take saturation from the C++ API
+#define PROCEDURALFACE_GLOW_FEATURE          0
+#define PROCEDURALFACE_SCANLINE_FEATURE      0
+
 namespace Json {
   class Value;
 }
@@ -196,8 +202,10 @@ private:
   Value           _faceAngle_deg   = 0.0f;
   Point<2,Value>  _faceScale       = 1.0f;
   Point<2,Value>  _faceCenter      = 0.0f;
+#if PROCEDURALFACE_SCANLINE_FEATURE
   Value           _scanlineOpacity; // set to default from console var in constructor
-  
+#endif
+
   static Value    _hue;
   static Value    _saturation;
 
@@ -269,16 +277,22 @@ inline Point<2,ProceduralFace::Value> const& ProceduralFace::GetFaceScale() cons
 
 inline void ProceduralFace::SetScanlineOpacity(Value opacity)
 {
+#if PROCEDURALFACE_SCANLINE_FEATURE
   _scanlineOpacity = opacity;
   if(!Util::InRange(_scanlineOpacity, Value(0), Value(1)))
   {
     ClipWarnFcn("ScanlineOpacity", _scanlineOpacity, Value(0), Value(1));
     _scanlineOpacity = Util::Clamp(_scanlineOpacity, Value(0), Value(1));
   }
+#endif
 }
 
 inline ProceduralFace::Value ProceduralFace::GetScanlineOpacity() const {
+#if PROCEDURALFACE_SCANLINE_FEATURE
   return _scanlineOpacity;
+#else
+  return 1.0f;
+#endif
 }
   
 inline void ProceduralFace::SetHue(Value hue) {

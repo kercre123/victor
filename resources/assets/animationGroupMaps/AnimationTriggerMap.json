@@ -317,7 +317,7 @@
       "AnimName": "ag_fistbump_fail"
     },
     {
-      "CladEvent": "DEPRECATED_FlipDownFromBack",
+      "CladEvent": "ANTICIPATED_FlipDownFromBack",
       "AnimName": "ag_reacttocliff_turtleroll_01"
     },
     {
@@ -849,19 +849,19 @@
       "AnimName": "ag_reacttonewblockonground"
     },
     {
-      "CladEvent": "DEPRECATED_ReactToOnLeftSide",
+      "CladEvent": "ANTICIPATED_ReactToOnLeftSide",
       "AnimName": "ag_reacttocliff_stuckleftside_01"
     },
     {
-      "CladEvent": "DEPRECATED_ReactToOnRightSide",
+      "CladEvent": "ANTICIPATED_ReactToOnRightSide",
       "AnimName": "ag_reacttocliff_stuckrightside_01"
     },
     {
-      "CladEvent": "DEPRECATED_ReactToPerchedOnBlock",
+      "CladEvent": "ANTICIPATED_ReactToPerchedOnBlock",
       "AnimName": "ag_reacttoblock_stuckonblock"
     },
     {
-      "CladEvent": "DEPRECATED_ReactToPickup",
+      "CladEvent": "ANTICIPATED_ReactToPickup",
       "AnimName": "ag_reacttocliff_pickup"
     },
     {
@@ -877,7 +877,7 @@
       "AnimName": "ag_reacttocliff_huh_01"
     },
     {
-      "CladEvent": "DEPRECATED_ReactToUnexpectedMovement",
+      "CladEvent": "ANTICIPATED_ReactToUnexpectedMovement",
       "AnimName": "ag_reacttostop"
     },
     {
@@ -897,11 +897,11 @@
       "AnimName": "ag_putdownblock"
     },
     {
-      "CladEvent": "DEPRECATED_RollBlockRealign",
+      "CladEvent": "ANTICIPATED_RollBlockRealign",
       "AnimName": "ag_rollcube_realign"
     },
     {
-      "CladEvent": "DEPRECATED_RollBlockRetry",
+      "CladEvent": "ANTICIPATED_RollBlockRetry",
       "AnimName": "ag_rollcube_retry"
     },
     {
@@ -1073,7 +1073,7 @@
       "AnimName": "ag_vc_reaction_yesfaceheardyou"	
     },
     {
-      "CladEvent": "DEPRECATED_WaitOnSideLoop",
+      "CladEvent": "ANTICIPATED_WaitOnSideLoop",
       "AnimName": "ag_reacttocliff_wait"
     },
     {
@@ -1105,7 +1105,7 @@
       "AnimName": "ag_vc_laser_lookdown"
     },
     {
-      "CladEvent": "DEPRECATED_ReactToSoundOffChargerAsleepAmbient",
+      "CladEvent": "ANTICIPATED_ReactToSoundOffChargerAsleepAmbient",
       "AnimName": "ag_rtsound_offcharger_asleep_ambient"
     },
     {
@@ -1141,7 +1141,7 @@
       "AnimName": "ag_rtsound_offcharger_asleep_135right"
     },
     {
-      "CladEvent": "DEPRECATED_ReactToSoundOffChargerObserveAmbient",
+      "CladEvent": "ANTICIPATED_ReactToSoundOffChargerObserveAmbient",
       "AnimName": "ag_rtsound_offcharger_observe_ambient"
     },
     {
@@ -1177,7 +1177,7 @@
       "AnimName": "ag_rtsound_offcharger_observe_135right"
     },
     {
-      "CladEvent": "DEPRECATED_ReactToSoundOnChargerAsleepAmbient",
+      "CladEvent": "ANTICIPATED_ReactToSoundOnChargerAsleepAmbient",
       "AnimName": "ag_rtsound_oncharger_asleep_ambient"
     },
     {
@@ -1197,7 +1197,7 @@
       "AnimName": "ag_rtsound_oncharger_asleep_behind"
     },
     {
-      "CladEvent": "DEPRECATED_ReactToSoundOnChargerObserveAmbient",
+      "CladEvent": "ANTICIPATED_ReactToSoundOnChargerObserveAmbient",
       "AnimName": "ag_rtsound_oncharger_observe_ambient"
     },
     {

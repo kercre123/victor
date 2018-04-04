@@ -202,6 +202,22 @@ enum int_32 AnimationTrigger
   VC_IntentNeutral,
   WakeupGetout,
 
+  // Animation triggers not currently used in Victor, but which we'll probably need eventually
+  ANTICIPATED_FlipDownFromBack,
+  ANTICIPATED_ReactToOnLeftSide,
+  ANTICIPATED_ReactToOnRightSide,
+  ANTICIPATED_ReactToPerchedOnBlock,
+  ANTICIPATED_ReactToPickup,
+  ANTICIPATED_ReactToSoundOffChargerAsleepAmbient,
+  ANTICIPATED_ReactToSoundOffChargerObserveAmbient,
+  ANTICIPATED_ReactToSoundOnChargerAsleepAmbient,
+  ANTICIPATED_ReactToSoundOnChargerObserveAmbient,
+  ANTICIPATED_ReactToUnexpectedMovement,
+  ANTICIPATED_RollBlockRealign,
+  ANTICIPATED_RollBlockRetry,
+  ANTICIPATED_WaitOnSideLoop,
+
+  // Animation triggers we believe are no longer needed in Victor
   DEPRECATED_AcknowledgeFaceInitPause,
   DEPRECATED_AcknowledgeFaceNamed,
   DEPRECATED_AcknowledgeFaceUnnamed,
@@ -232,7 +248,6 @@ enum int_32 AnimationTrigger
   DEPRECATED_FeedingEat,
   DEPRECATED_FeedingInterrupted,
   DEPRECATED_FeedingPlaceLiftOnCube,
-  DEPRECATED_FlipDownFromBack,
   DEPRECATED_FrustratedByFailure,
   DEPRECATED_GameSetupGetIn,
   DEPRECATED_GameSetupGetOut,
@@ -309,7 +324,6 @@ enum int_32 AnimationTrigger
   DEPRECATED_PounceDriveLoop,
   DEPRECATED_PounceDriveStart,
   DEPRECATED_PounceFace,
-  
   DEPRECATED_PounceGetOut,
   DEPRECATED_PounceInitial,
   DEPRECATED_PouncePounce,
@@ -319,24 +333,13 @@ enum int_32 AnimationTrigger
   DEPRECATED_ReactToNewBlockAsk,
   DEPRECATED_ReactToNewBlockBig,
   DEPRECATED_ReactToNewBlockSmall,
-  DEPRECATED_ReactToOnLeftSide,
-  DEPRECATED_ReactToOnRightSide,
-  DEPRECATED_ReactToPerchedOnBlock,
-  DEPRECATED_ReactToPickup,
   DEPRECATED_ReactToPokeReaction,
   DEPRECATED_ReactToPokeStartled,
-  DEPRECATED_ReactToSoundOffChargerAsleepAmbient,
-  DEPRECATED_ReactToSoundOffChargerObserveAmbient,
-  DEPRECATED_ReactToSoundOnChargerAsleepAmbient,
-  DEPRECATED_ReactToSoundOnChargerObserveAmbient,
-  DEPRECATED_ReactToUnexpectedMovement,
   DEPRECATED_ReactToCubeTapFoundFace,
   DEPRECATED_RollBlockInitial,
   DEPRECATED_RollBlockPreActionNamedFace,
   DEPRECATED_RollBlockPreActionUnnamedFace,
   DEPRECATED_RollBlockPutDown,
-  DEPRECATED_RollBlockRealign,
-  DEPRECATED_RollBlockRetry,
   DEPRECATED_SdkTextToSpeech,
   DEPRECATED_SearchForFace_Search,
   DEPRECATED_SearchForFace_FoundFace,
@@ -357,14 +360,11 @@ enum int_32 AnimationTrigger
   DEPRECATED_StartSleeping,
   DEPRECATED_Surprise,
   DEPRECATED_TurtleRoll,  
-
   DEPRECATED_VC_IntentHeard,
   DEPRECATED_VC_IntentUnknown,
   DEPRECATED_VC_NoIntentHeard,
   DEPRECATED_VC_NoFollowupCommand_NoFace,
   DEPRECATED_VC_NoFollowupCommand_WithFace,
-
-  DEPRECATED_WaitOnSideLoop,
 
   // Count can specify "none" or "unspecified"
   Count, // Keep count at end.
