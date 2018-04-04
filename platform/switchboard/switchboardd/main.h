@@ -51,6 +51,9 @@ namespace Switchboard {
       void Stop();
     
     private:
+      const std::string kUpdateEngineDataPath = "/run/update-engine";
+      const std::string kUpdateEngineExecPath = "/anki/bin";
+  
       static void HandleEngineTimer(struct ev_loop* loop, struct ev_timer* w, int revents);
       static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
       void HandleReboot();
