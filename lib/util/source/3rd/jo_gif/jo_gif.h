@@ -393,6 +393,7 @@ void jo_gif_end(jo_gif_t *gif) {
     return;
   }
   putc(0x3b, gif->fp); // gif trailer
+  fflush(gif->fp);
   fclose(gif->fp);
 }
 #endif

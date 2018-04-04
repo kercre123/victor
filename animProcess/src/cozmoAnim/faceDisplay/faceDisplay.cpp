@@ -94,6 +94,14 @@ void FaceDisplay::DrawFaceLoop()
       const auto& drawImage = *_faceDrawCurImg;
       _faceDrawMutex.unlock();
 
+      // Note: for VIC-1873 it's possible to take a copy of the face buffer here
+      //       and then pass to screen capture for converting to .tga or .gif
+      //       as per the original animationStreamer version.
+
+      //       However, it should be noted having the code here is a significant
+      //       impact to performance, both visually on the robot and dropped frames
+      //       in the .gif file
+
       _displayImpl->FaceDraw(drawImage.GetRawDataPointer());
 
       // Done with this image, clear the pointer

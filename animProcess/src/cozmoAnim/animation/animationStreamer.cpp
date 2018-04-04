@@ -89,11 +89,6 @@ namespace Cozmo {
   static const AnimContext* s_context; // copy of AnimContext in first constructed AnimationStreamer, needed for GetDataPlatform
   static bool s_faceDataOverrideRegistered = false;
   static bool s_faceDataReset = false;
-  static int s_frame = 0;
-  static int s_framesToCapture = 0;
-  static jo_gif_t s_gif;
-  static clock_t s_frameStart;
-  static FILE* s_tga;
   static uint8_t s_gammaLUT[3][256];// RGB x 256 entries
 
   void ResetFace(ConsoleFunctionContextRef context)
@@ -102,49 +97,6 @@ namespace Cozmo {
   }
   
   CONSOLE_FUNC(ResetFace, "ProceduralFace");
-
-  static void CaptureFace(ConsoleFunctionContextRef context)
-  {
-    if(s_framesToCapture == 0) {
-      const std::string filename = ConsoleArg_GetOptional_String(context, "filename", "screenshot.tga");
-      const int numFrames = ConsoleArg_GetOptional_Int(context, "numFrames", 1);
-
-      const Util::Data::DataPlatform* dataPlatform = s_context->GetDataPlatform();
-      const std::string cacheFilename = dataPlatform->pathToResource(Util::Data::Scope::Cache, filename);
-
-      if(filename.find(".gif") != std::string::npos) {
-        s_gif = jo_gif_start(cacheFilename.c_str(), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, 0, 255);
-        if(s_gif.fp != nullptr) {
-          s_frame = 0;
-          s_framesToCapture = numFrames;
-          
-          const std::string html = std::string("<html>\n") + "Capturing frames as <a href=\"/cache/"+filename+"\">"+filename+"\n" + "</html>\n";
-          context->channel->WriteLog(html.c_str());
-        } else {
-          const std::string html = std::string("<html>\n") + "Error: unable to open file <a href=\"/cache/"+filename+"\">"+filename+"\n" + "</html>\n";
-          context->channel->WriteLog(html.c_str());
-        }
-      } else {
-        s_tga = fopen(cacheFilename.c_str(), "wb");
-        if(s_tga != nullptr) {
-          s_frame = 0;
-          s_framesToCapture = 1;
-
-          const std::string html = std::string("<html>\n") + "Capturing frames as <a href=\"/cache/"+filename+"\">"+filename+"\n" + "</html>\n";
-          context->channel->WriteLog(html.c_str());
-        } else {
-          const std::string html = std::string("<html>\n") + "Error: unable to open file <a href=\"/cache/"+filename+"\">"+filename+"\n" + "</html>\n";
-          context->channel->WriteLog(html.c_str());
-        }
-      }
-    } else {
-      context->channel->WriteLog("CaptureFace already in progress.");
-    }
-
-    s_frameStart = clock();
-  }
-
-  CONSOLE_FUNC(CaptureFace, "ProceduralFace", optional const char* filename, optional int numFrames);
 
   static void LoadFaceGammaLUT(ConsoleFunctionContextRef context)
   {
@@ -263,7 +215,67 @@ namespace Cozmo {
   }
   
   CONSOLE_FUNC(ToggleKeepFaceAlive, "ProceduralFace");
-    
+
+  static std::string s_frameFilename;
+  static int s_frame = 0;
+  static int s_framesToCapture = 0;
+  static jo_gif_t s_gif;
+  static clock_t s_frameStart;
+  static FILE* s_tga = nullptr;
+
+  static void CaptureFace(ConsoleFunctionContextRef context)
+  {
+    std::string html;
+
+    if(s_framesToCapture == 0) {
+      s_frameFilename = ConsoleArg_GetOptional_String(context, "filename", "screenshot.tga");
+      const int numFrames = ConsoleArg_GetOptional_Int(context, "numFrames", 1);
+
+      const Util::Data::DataPlatform* dataPlatform = s_context->GetDataPlatform();
+      const std::string cacheFilename = dataPlatform->pathToResource(Util::Data::Scope::Cache, s_frameFilename);
+
+      if(s_frameFilename.find(".gif") != std::string::npos) {
+        s_gif = jo_gif_start(cacheFilename.c_str(), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, -1, 255);
+        if(s_gif.fp != nullptr) {
+          s_framesToCapture = numFrames;
+        }
+      } else {
+        s_tga = fopen(cacheFilename.c_str(), "wb");
+        if(s_tga != nullptr) {
+          uint8_t head[18] = {0};
+          head[ 2] = 2; // uncompressed, true-color image
+          head[12] = FACE_DISPLAY_WIDTH & 0xff;
+          head[13] = (FACE_DISPLAY_WIDTH >> 8) & 0xff;
+          head[14] = FACE_DISPLAY_HEIGHT & 0xff;
+          head[15] = (FACE_DISPLAY_HEIGHT >> 8) & 0xff;
+          head[16] = 32;   /** 32 bits depth **/
+          head[17] = 0x08; /** top-down flag, 8 bits alpha **/
+          fwrite(head, sizeof(uint8_t), 18, s_tga);
+
+          s_framesToCapture = 1;
+        }
+      }
+
+      if(s_framesToCapture > 0) {
+        s_frameStart = clock();
+        s_frame = 0;
+
+        if(s_enableKeepFaceAlive) {
+          html = std::string("<html>\nCapturing frames as <a href=\"/cache/")+s_frameFilename+"\">"+s_frameFilename+"\n" + "</html>\n";
+        } else {
+          html = std::string("<html>\nWaiting to capture frames as <a href=\"/cache/")+s_frameFilename+"\">"+s_frameFilename+"\n" + "</html>\n";
+        }
+      } else {
+        html = std::string("<html>\nError: unable to open file <a href=\"/cache/")+s_frameFilename+"\">"+s_frameFilename+"\n" + "</html>\n";
+      }
+    } else {
+      html = std::string("Capture already in progress as <a href=\"/cache/")+s_frameFilename+"\">"+s_frameFilename+"\n" + "</html>\n";
+    }
+
+    context->channel->WriteLog(html.c_str());
+  }
+
+  CONSOLE_FUNC(CaptureFace, "ProceduralFace", optional const char* filename, optional int numFrames);
   } // namespace
   
   AnimationStreamer::AnimationStreamer(const AnimContext* context)
@@ -845,6 +857,36 @@ namespace Cozmo {
     }
   }
 
+  void AnimationStreamer::UpdateCaptureFace(Vision::ImageRGB565& faceImg565)
+  {
+    if(s_framesToCapture > 0) {
+      clock_t end = clock();
+      int elapsed = (end - s_frameStart)/float(CLOCKS_PER_SEC);
+      s_frameStart = end;
+
+      Vision::ImageRGBA frame(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+      frame.SetFromRGB565(faceImg565);
+
+      if(s_tga != NULL) {
+        fwrite(frame.GetDataPointer(), sizeof(uint8_t), FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*4, s_tga);
+      } else {
+        if(elapsed == 0) elapsed = 1;
+        jo_gif_frame(&s_gif, (uint8_t*)frame.GetDataPointer(), elapsed, false);
+      }
+
+      ++s_frame;
+      if(s_frame == s_framesToCapture) {
+        if(s_tga != NULL) {
+          fclose(s_tga);
+        } else {
+          jo_gif_end(&s_gif);
+        }
+
+        s_framesToCapture = 0;
+      }
+    }
+  }
+
   void AnimationStreamer::BufferFaceToSend(Vision::ImageRGB565& faceImg565)
   {
     DEV_ASSERT_MSG(faceImg565.GetNumCols() == FACE_DISPLAY_WIDTH &&
@@ -897,48 +939,13 @@ namespace Cozmo {
       for(int i=0; i<nrows; ++i)
       {
         Vision::PixelRGB565* img_i = faceImg565.GetRow(i);
-        for(int j=0; j<ncols; ++j)
+        for(int j=0; j<ncols; ++j) {
           img_i[j].SetValue(Vision::PixelRGB565(s_gammaLUT[0][img_i[j].r()], s_gammaLUT[1][img_i[j].g()], s_gammaLUT[2][img_i[j].b()]).GetValue());
         }
       }
-
-    if(s_framesToCapture > 0) {
-      clock_t end = clock();
-      float elapsed = (end - s_frameStart)/float(CLOCKS_PER_SEC);
-      s_frameStart = end;
-
-      Vision::ImageRGBA frame(FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
-      frame.SetFromRGB565(faceImg565);
-
-      if(s_tga != NULL) {
-        if(s_frame == 0) {
-          uint8_t head[18] = {0};
-          head[ 2] = 2; // uncompressed, true-color image
-          head[12] = FACE_DISPLAY_WIDTH & 0xff;
-          head[13] = (FACE_DISPLAY_WIDTH >> 8) & 0xff;
-          head[14] = FACE_DISPLAY_HEIGHT & 0xff;
-          head[15] = (FACE_DISPLAY_HEIGHT >> 8) & 0xff;
-          head[16] = 32;   /** 32 bits depth **/
-          head[17] = 0x08; /** top-down flag, 8 bits alpha **/
-          fwrite(head, sizeof(uint8_t), 18, s_tga);
-        }
-        fwrite(frame.GetDataPointer(), sizeof(uint8_t), FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*4, s_tga);
-
-        ++s_frame;
-        if(s_frame == s_framesToCapture) {
-          fclose(s_tga);
-          s_framesToCapture = 0;
-        }
-      } else {
-        jo_gif_frame(&s_gif, (uint8_t*)frame.GetDataPointer(), elapsed/100.f, false);
-
-        ++s_frame;
-        if(s_frame == s_framesToCapture) {
-          jo_gif_end(&s_gif);
-          s_framesToCapture = 0;
-        }
-      }
     }
+
+    UpdateCaptureFace(faceImg565);
 
     // Draw red square in corner of face if thermal issues
     const bool isCPUThrottling = OSState::getInstance()->IsCPUThrottling();
@@ -1438,7 +1445,7 @@ namespace Cozmo {
         lastResult = StreamLayers();
       }
     }
-    
+
     // Tick audio engine
     _animAudioClient->Update();
     
