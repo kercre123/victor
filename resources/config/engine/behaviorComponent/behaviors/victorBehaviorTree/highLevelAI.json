@@ -101,6 +101,11 @@
       "behavior": "KeepawayVoiceCommand",
       "debugColor": "YELLOW",
       "clearIntent": "play_specific"
+    },
+    {
+      "name": "ReactToCubeTap",
+      "behavior": "ReactToCubeTap",
+      "debugColor": "WHITE"
     }
   ],
 
@@ -443,6 +448,18 @@
       ]
     },
 
+    {
+      "from": "ReactToCubeTap",
+      "exitTransitions": [
+        {
+          "to": "PlayingWithCube", // play with the cube after you were called to a cube
+          "condition": {
+            "conditionType": "TrueCondition"
+          }
+        }
+      ]
+    },
+
     //***************************
     // VOICE COMMANDS   
     //*************************** 
@@ -460,7 +477,8 @@
         "ReturningToCharger", // to avoid unclaimed intent
         "Socializing",
         "RollCube",
-        "Keepaway"
+        "Keepaway",
+        "ReactToCubeTap"
       ],
       "interruptingTransitions": [
         {
@@ -506,7 +524,8 @@
         "Socializing",
         "WakingUp",
         "ReturningToCharger",
-        "FailedToFindCharger"
+        "FailedToFindCharger",
+        "ReactToCubeTap"
       ],
       "interruptingTransitions": [
         {
@@ -559,7 +578,8 @@
         "Socializing",
         "WakingUp",
         "ReturningToCharger",
-        "FailedToFindCharger"
+        "FailedToFindCharger",
+        "ReactToCubeTap"
       ],
       "interruptingTransitions": [
         {
@@ -613,7 +633,8 @@
         "ReturningToCharger",
         "FailedToFindCharger",
         "PlayingWithCube",
-        "RollCube"
+        "RollCube",
+        "ReactToCubeTap" // if activated while ON charger, this will immediately get off charger
       ],
       "interruptingTransitions": [
         {
@@ -679,7 +700,8 @@
         "ReturningToCharger",
         "FailedToFindCharger",
         "PlayingWithCube",
-        "RollCube"
+        "RollCube",
+        "ReactToCubeTap"
       ],
       "interruptingTransitions": [
         {
@@ -733,7 +755,8 @@
         "Socializing",
         "WakingUp",
         "ReturningToCharger",
-        "FailedToFindCharger"
+        "FailedToFindCharger",
+        "ReactToCubeTap"
       ],
       "interruptingTransitions": [
         {
@@ -767,8 +790,36 @@
           }
         }
       ]
+    },
+
+    //***************************
+    // USER INTERACTION COMMANDS
+    //***************************
+
+    {
+      "from": [
+        "ObservingOnCharger",
+        "ObservingOnChargerRecentlyPlaced",
+        "DriveOffChargerIntoObserving",
+        "DriveOffChargerIntoSocializing",
+        "DriveOffChargerIntoPlay",
+        "FistBump",
+        "ComeHere",
+        "Observing",
+        "Socializing",
+        "WakingUp",
+        "ReturningToCharger",
+        "FailedToFindCharger"
+      ],
+      "interruptingTransitions": [
+        {
+          "to": "ReactToCubeTap",
+          "condition": {
+            "conditionType": "CubeTapped"
+          }
+        }
+      ]
     }
-    
   ]
 
 }
