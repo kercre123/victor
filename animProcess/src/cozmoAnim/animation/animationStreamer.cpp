@@ -59,8 +59,16 @@
 namespace Anki {
 namespace Cozmo {
 
-  CONSOLE_VAR(bool, kProcFace_OverrideEyeParams,        "ProceduralFace", false); // Override procedural face with ConsoleVars edited version
-  CONSOLE_VAR(bool, kProcFace_OverrideRightEyeParams,   "ProceduralFace", false); // Make left and right eyes override in unison
+  enum class FaceDisplayType {
+    Normal,
+    Test,
+    OverrideIndividually, // each eyes parameters operate on their respective eye
+    OverrideTogether      // left eye parameters drive both left and right eyes
+  };
+
+  // Overrides whatever faces we're sending with a 3-stripe test pattern
+  // (seems more related to the other ProceduralFace console vars, so putting it in that group instead)
+  CONSOLE_VAR_ENUM(int, kProcFace_Display,             "ProceduralFace", 0, "Normal,Test,Override individually,Override together"); // Override procedural face with ConsoleVars edited version
 #if PROCEDURALFACE_NOISE_FEATURE
   CONSOLE_VAR_EXTERN(s32, kProcFace_NoiseNumFrames);
 #endif
@@ -244,10 +252,6 @@ namespace Cozmo {
   // which we don't care to indicate on the face.
   CONSOLE_VAR(u32,  kThermalThrottlingMinTemp_C,   "AnimationStreamer", 65);
 
-  // Overrides whatever faces we're sending with a 3-stripe test pattern
-  // (seems more related to the other ProceduralFace console vars, so putting it in that group instead)
-  CONSOLE_VAR(bool, kProcFace_DisplayTestPattern, "ProceduralFace", false);
-  
   // Allows easy disabling of KeepFaceAlive using the console system (i.e., without a message interface)
   // This is useful for the animators to disable KeepFaceAlive while testing eye shapes, etc.
   static bool s_enableKeepFaceAlive = true;
@@ -696,7 +700,7 @@ namespace Cozmo {
   
   void AnimationStreamer::BufferFaceToSend(const ProceduralFace& procFace)
   {
-    if(kProcFace_DisplayTestPattern)
+    if(kProcFace_Display == (int)FaceDisplayType::Test)
     {
       // Display three color strips increasing in brightness from left to right
       for(int i=0; i<FACE_DISPLAY_HEIGHT/3; ++i)
@@ -770,13 +774,13 @@ namespace Cozmo {
         s_faceDataReset = false;
       }
 
-      if(kProcFace_OverrideEyeParams) {
+      if(kProcFace_Display == (int)FaceDisplayType::OverrideIndividually || kProcFace_Display == (int)FaceDisplayType::OverrideTogether) {
         // compare override face data with baseline, if different update the rendered face
 
         ProceduralFace newProcFace = procFace;
 
         // for each eye parameter
-        if(kProcFace_OverrideRightEyeParams) {
+        if(kProcFace_Display == (int)FaceDisplayType::OverrideTogether) {
           s_faceDataOverride.SetParameters(ProceduralFace::WhichEye::Right, s_faceDataOverride.GetParameters(ProceduralFace::WhichEye::Left));
         }
         for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {

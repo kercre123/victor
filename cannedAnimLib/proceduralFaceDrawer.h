@@ -6,10 +6,6 @@
 #include "cannedAnimLib/proceduralFace.h"
 #include "coretech/vision/engine/image.h"
 
-#define PROCEDURALFACE_NOISE_FEATURE 1 // feature capable but disabled as num frames = 0
-#define PROCEDURALFACE_ANIMATED_SATURATION   0 // disable saturation in canned animations
-#define PROCEDURALFACE_PROCEDURAL_SATURATION 1 // only take saturation from the C++ API
-
 namespace Anki {
   
   // Forward declaration:
@@ -40,7 +36,7 @@ namespace Cozmo {
     // Although the type of the input image is ImageRGB, it should be an HSV image, i.e.
     // the 'red' channel is hue, 'green' channel is saturation, and 'blue' channel is value
     static void ApplyScanlines(Vision::ImageRGB& imageHsv, const float opacity);
-    
+
   private:
     
     using Parameter = ProceduralEyeParameter;
@@ -64,10 +60,11 @@ namespace Cozmo {
     static const Array2d<f32>& GetNoiseImage(const Util::RandomGenerator& rng);
 #endif
 
+#if PROCEDURALFACE_SCANLINE_FEATURE
     // Returns true if scanline should be applied to the given row. Only
     // apply scanlines in alternating pairs of rows (i.e. 00110011)
     static bool ShouldApplyScanlineToRow(const u32 rowNum) { return (rowNum & 2) != 0; }
-    
+#endif
   }; // class ProceduralFaceπ
   
   
