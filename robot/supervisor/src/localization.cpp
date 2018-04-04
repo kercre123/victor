@@ -51,8 +51,6 @@ namespace Anki {
 
         // private members
         ::Anki::Embedded::Pose2d currMatPose;
-        
-        f32 defaultDriveCenterOffset_ = DRIVE_CENTER_OFFSET;
 
         // Localization:
         f32 x_=0.f, y_=0.f;  // mm
@@ -491,11 +489,6 @@ namespace Anki {
       bool IsOnBridge() {
         return onBridge_;
       }
-
-      void SetDriveCenterOffset(f32 offset_mm)
-      {
-        defaultDriveCenterOffset_ = offset_mm;
-      }
       
       f32 GetDriveCenterOffset()
       {
@@ -505,7 +498,7 @@ namespace Anki {
           return 0;
         }
 
-        return defaultDriveCenterOffset_;
+        return DRIVE_CENTER_OFFSET;
       }
 
       void Update()

@@ -21,7 +21,6 @@ namespace Anki {
       void GetDriveCenterPose(f32& x, f32& y, Radians& angle);
       void SetDriveCenterPose(const f32 &x, const f32 &y, const Radians &angle);
 
-      void SetDriveCenterOffset(f32 offset_mm);
       f32 GetDriveCenterOffset();
 
       // Given a robotOriginPose, returns the pose of the drive center

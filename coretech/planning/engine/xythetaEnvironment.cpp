@@ -37,6 +37,191 @@ namespace Planning {
 
 // #define HACK_USE_FIXED_SPEED 60.0
 
+SuccessorIterator::SuccessorIterator(const xythetaEnvironment* env, StateID startID, Cost startG, bool reverse)
+  : start_c_(env->State2State_c(startID))
+  , start_(startID)
+  , startG_(startG)
+  , nextAction_(0)
+  , reverse_(reverse)
+{
+  // verify unpacking worked
+  assert(start_.theta == startID.s.theta);
+}
+
+// TODO:(bn) inline?
+bool SuccessorIterator::Done(const xythetaEnvironment& env) const
+{
+  if( ! reverse_ ) {
+    return nextAction_ > env.allMotionPrimitives_[start_.theta].size();
+  }
+  else {
+    return nextAction_ > env.reverseMotionPrimitives_[start_.theta].size();
+  }
+}
+
+void SuccessorIterator::Next(const xythetaEnvironment& env)
+{
+  size_t numActions = 0;
+
+  if( ! reverse_ ) {
+    numActions = env.allMotionPrimitives_[start_.theta].size();
+  }
+  else {
+    numActions = env.reverseMotionPrimitives_[start_.theta].size();
+  }
+
+  while(nextAction_ < numActions) {
+    const MotionPrimitive* prim = nullptr; 
+    if( ! reverse_ ) {
+      prim = &env.allMotionPrimitives_[start_.theta][nextAction_];
+    }
+    else { 
+      prim = &env.reverseMotionPrimitives_[start_.theta][nextAction_];
+    }
+
+    // collision checking
+    long endPoints = prim->intermediatePositions.size();
+    bool collision = false; // fatal collision
+    bool reverseMotion = env.GetActionType(prim->id).IsReverseAction();
+
+    nextSucc_.g = 0;
+
+    Cost penalty = 0.0f;
+
+    // first, check if we are well-clear of everything, and can skip this check
+    bool possibleObstacle = false;
+
+    State_c primtiveOffset = start_c_;
+
+    GraphState result(start_);
+    result.x += prim->endStateOffset.x;
+    result.y += prim->endStateOffset.y;
+    result.theta = prim->endStateOffset.theta;
+
+
+    if( reverse_ ) {
+      primtiveOffset = env.State2State_c(result);
+    }
+
+    float minPrimX = prim->minX + primtiveOffset.x_mm;
+    float maxPrimX = prim->maxX + primtiveOffset.x_mm;
+    float minPrimY = prim->minY + primtiveOffset.y_mm;
+    float maxPrimY = prim->maxY + primtiveOffset.y_mm;
+
+    if( env.obstacleBounds_.empty() && ! env.obstaclesPerAngle_[0].empty() ) {
+      // unit tests might do this
+      PRINT_NAMED_WARNING("xythetaEnvironment.Successor.NoBounds",
+                          "missing obstacle bounding boxes! Did you call env.PrepareForPlanning()???");
+      possibleObstacle = true;      
+    }
+    else {
+      for( const auto& bound : env.obstacleBounds_ ) {
+        if( maxPrimX < bound.minX ||
+            minPrimX > bound.maxX ||
+            maxPrimY < bound.minY ||
+            minPrimY > bound.maxY ) {
+          // can't possibly be a collision
+          continue;
+        }
+        // otherwise, we need to do a full check
+        possibleObstacle = true;
+        break;
+      }
+    }
+
+    
+    if( possibleObstacle ) {
+
+      // two collision check cases. If the angle is changing, then we'll need to potentially switch which
+      // obstacle angle we check while checking, so that is the more complciated case
+
+      // First, handle the simpler case, for straight lines. In this case, we can do a quick bounding box check first
+
+      if( prim->endStateOffset.theta == prim->startTheta ) {
+        for( const auto& obs : env.obstaclesPerAngle_[prim->startTheta] ) {
+
+          if( maxPrimX < obs.first.GetMinX() ||
+              minPrimX > obs.first.GetMaxX() ||
+              maxPrimY < obs.first.GetMinY() ||
+              minPrimY > obs.first.GetMaxY() ) {
+            // can't possibly be a collision, rule out this whole obstacle
+            continue;
+          }
+
+          for( const auto& pt : prim->intermediatePositions ) {
+            if( obs.first.Contains(primtiveOffset.x_mm + pt.position.x_mm,
+                                   primtiveOffset.y_mm + pt.position.y_mm ) ) {
+
+              if(obs.second >= MAX_OBSTACLE_COST) {
+                collision = true;
+                break;
+              }
+              else {
+                // apply soft penalty, but allow the action
+                penalty += obs.second * pt.oneOverDistanceFromLastPosition 
+                        +  (reverseMotion ? REVERSE_OVER_OBSTACLE_COST : 0);
+
+                assert(!isinf(penalty));
+                assert(!isnan(penalty));
+              }
+            }
+          }
+        }
+      }
+
+      else {
+        // handle the more complex case
+
+        for(long pointIdx = endPoints-1; pointIdx >= 0; --pointIdx) {
+
+          GraphTheta angle = prim->intermediatePositions[pointIdx].nearestTheta;
+          for( const auto& obs : env.obstaclesPerAngle_[angle] ) {
+            if( obs.first.Contains(
+                  primtiveOffset.x_mm + prim->intermediatePositions[pointIdx].position.x_mm,
+                  primtiveOffset.y_mm + prim->intermediatePositions[pointIdx].position.y_mm ) ) {
+
+              if(obs.second >= MAX_OBSTACLE_COST) {
+                collision = true;
+                break;
+              }
+              else {
+                // apply soft penalty, but allow the action
+                penalty += obs.second  * prim->intermediatePositions[pointIdx].oneOverDistanceFromLastPosition
+                        +  (reverseMotion ? REVERSE_OVER_OBSTACLE_COST : 0);
+
+                assert(!isinf(penalty));
+                assert(!isnan(penalty));
+              }
+            }
+          }
+        }
+      }
+    }
+
+    assert(!isinf(penalty));
+    assert(!isnan(penalty));
+
+    nextSucc_.g += penalty;
+
+    if(!collision) {
+      nextSucc_.stateID = result.GetStateID();
+      nextSucc_.g += startG_ + prim->cost;
+
+      assert(!isinf(nextSucc_.g));
+      assert(!isnan(nextSucc_.g));
+
+      nextSucc_.penalty = penalty;
+      nextSucc_.actionID = prim->id;
+      assert( reverse_ || nextAction_ == prim->id);
+      break;
+    }
+
+    nextAction_++;
+  }
+
+  nextAction_++;
+}
+
 Cost xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions) const
 {
   GraphState curr(stateID);
@@ -324,7 +509,7 @@ void xythetaEnvironment::PrepareForPlanning()
 {
   int numObstacles = 0;
 
-  for(size_t angle = 0; angle < numAngles_; ++angle) {
+  for(size_t angle = 0; angle < GraphState::numAngles_; ++angle) {
     for( auto& obstaclePair : obstaclesPerAngle_[angle] ) {
       if( angle == 0 ) {
         numObstacles++;
@@ -336,7 +521,7 @@ void xythetaEnvironment::PrepareForPlanning()
   // fill in the obstacle bounds, default values are set
   obstacleBounds_.resize(numObstacles);
   
-  for(size_t angle = 0; angle < numAngles_; ++angle) {
+  for(size_t angle = 0; angle < GraphState::numAngles_; ++angle) {
     for( int obsIdx = 0; obsIdx < obstaclesPerAngle_[angle].size(); ++obsIdx ) {
       if( obstaclesPerAngle_[angle][obsIdx].first.GetMinX() < obstacleBounds_[obsIdx].minX ) {
         obstacleBounds_[obsIdx].minX = obstaclesPerAngle_[angle][obsIdx].first.GetMinX();
@@ -416,7 +601,7 @@ xythetaEnvironment::~xythetaEnvironment()
 
 xythetaEnvironment::xythetaEnvironment()
 {
-  obstaclesPerAngle_.resize(numAngles_);
+  obstaclesPerAngle_.resize(GraphState::numAngles_);
 }
 
 bool xythetaEnvironment::Init(const Json::Value& mprimJson)
@@ -433,7 +618,7 @@ size_t xythetaEnvironment::GetNumObstacles() const
 bool xythetaEnvironment::Init(const char* mprimFilename)
 {
   if(ReadMotionPrimitives(mprimFilename)) {
-    obstaclesPerAngle_.resize(numAngles_);
+    obstaclesPerAngle_.resize(GraphState::numAngles_);
   } else {
     PRINT_NAMED_ERROR("xythetaEnvironemnt.Init.Fail", "could not parse motion primitives");
     return false;
@@ -551,26 +736,26 @@ bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config, bool useDum
       return false;
     }
 
-    if(angles_.size() != numAngles_) {
+    if(angles_.size() != GraphState::numAngles_) {
       printf("ERROR: numAngles is %u, but we read %lu angle definitions\n",
-             numAngles_,
+             GraphState::numAngles_,
              (unsigned long)angles_.size());
       return false;
     }
 
     // parse through each starting angle
-    if(config["angles"].size() != numAngles_) {
+    if(config["angles"].size() != GraphState::numAngles_) {
       printf("error: could not find key 'angles' in motion primitives\n");
       JsonTools::PrintJsonCout(config, 1);
       return false;
     }
 
-    allMotionPrimitives_.resize(numAngles_);
+    allMotionPrimitives_.resize(GraphState::numAngles_);
 
     unsigned int numPrims = 0;
 
     try {
-      for(unsigned int angle = 0; angle < numAngles_; ++angle) {
+      for(unsigned int angle = 0; angle < GraphState::numAngles_; ++angle) {
         Json::Value prims = config["angles"][angle]["prims"];
         for(unsigned int i = 0; i < prims.size(); ++i) {
           MotionPrimitive p;
@@ -616,10 +801,10 @@ bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config, bool useDum
 void xythetaEnvironment::PopulateReverseMotionPrims()
 {
   reverseMotionPrimitives_.clear();
-  reverseMotionPrimitives_.resize(numAngles_);
+  reverseMotionPrimitives_.resize(GraphState::numAngles_);
 
   // go through each motion primitive, and populate the corresponding reverse primitive
-  for(int startAngle = 0; startAngle < numAngles_; ++startAngle) {
+  for(int startAngle = 0; startAngle < GraphState::numAngles_; ++startAngle) {
     for(int actionID = 0; actionID < allMotionPrimitives_[ startAngle ].size(); ++actionID) {
       const MotionPrimitive& prim( allMotionPrimitives_[ startAngle ][ actionID ] );
       int endAngle = prim.endStateOffset.theta;
@@ -653,7 +838,7 @@ void xythetaEnvironment::DumpMotionPrims(Util::JsonWriter& writer) const
   writer.EndList();
 
   writer.StartList("angles");
-  for(unsigned int angle = 0; angle < numAngles_; ++angle) {
+  for(unsigned int angle = 0; angle < GraphState::numAngles_; ++angle) {
     writer.NextListItem();
     writer.StartList("prims");
     for(const auto& prim : allMotionPrimitives_[angle]) {
@@ -668,17 +853,17 @@ void xythetaEnvironment::DumpMotionPrims(Util::JsonWriter& writer) const
 bool xythetaEnvironment::ParseObstacles(const Json::Value& config)
 {
   try {
-    if( numAngles_ == 0 || config["angles"].isNull() ) {
+    if( GraphState::numAngles_ == 0 || config["angles"].isNull() ) {
       PRINT_NAMED_ERROR("xythetaEnvironment.ParseObstacles.InvalidObjectAngles",
                         "numAngles_ = %d",
-                        numAngles_);
+                        GraphState::numAngles_);
       return false;
     }
 
-    if( numAngles_ != config["angles"].size() ) {
+    if( GraphState::numAngles_ != config["angles"].size() ) {
       PRINT_NAMED_ERROR("xythetaEnvironment.ParseObstacles.AnglesMismatch",
                         "this has %d angles, but json has %d",
-                        numAngles_,
+                        GraphState::numAngles_,
                         config.size());
       return false;
     }
@@ -687,7 +872,7 @@ bool xythetaEnvironment::ParseObstacles(const Json::Value& config)
       obstacles.clear();
     }
 
-    for( int theta = 0; theta < numAngles_; ++theta ) {
+    for( int theta = 0; theta < GraphState::numAngles_; ++theta ) {
 
       if( config["angles"][theta]["obstacles"].isNull() ) {
         PRINT_NAMED_ERROR("xythetaEnvironment.ParseObstacles.badConfig",
@@ -757,7 +942,7 @@ void xythetaEnvironment::AddObstacleAllThetas(const Quad2f& quad, Cost cost)
   poly.ImportQuad2d(quad);
   FastPolygon fastPoly(poly);
 
-  for(size_t i=0; i<numAngles_; ++i) {
+  for(size_t i=0; i<GraphState::numAngles_; ++i) {
     obstaclesPerAngle_[i].push_back( std::make_pair( fastPoly, cost ) );
   }
 }
@@ -767,14 +952,14 @@ void xythetaEnvironment::AddObstacleAllThetas(const RotatedRectangle& rect, Cost
   Poly2f poly(rect);
   FastPolygon fastPoly(poly);
 
-  for(size_t i=0; i<numAngles_; ++i) {
+  for(size_t i=0; i<GraphState::numAngles_; ++i) {
     obstaclesPerAngle_[i].push_back( std::make_pair( fastPoly, cost ) );
   }
 }
 
 void xythetaEnvironment::ClearObstacles()
 {
-  for(size_t i=0; i<numAngles_; ++i) {
+  for(size_t i=0; i<GraphState::numAngles_; ++i) {
     obstaclesPerAngle_[i].clear();
   }
 }
@@ -896,7 +1081,7 @@ const FastPolygon& xythetaEnvironment::AddObstacleWithExpansion(const ConvexPoly
     CoreTechPrint("ERROR: theta = %d, but only have %zu obstacle angles and %u angles total\n",
                   theta,
                   obstaclesPerAngle_.size(),
-                  numAngles_);
+                  GraphState::numAngles_);
     
     theta = 0;
   }

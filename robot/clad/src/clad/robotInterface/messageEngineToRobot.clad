@@ -188,13 +188,9 @@ message ForceDelocalizeSimulatedRobot
 
 }
 
-message SyncTime
+message SyncRobot
 {
-  uint_32 syncTime,
 
-  // Other random things to send to robot on init
-  // which can eventually be made constant
-  float_32 driveCenterOffset
 }
 
 // Tells syscon to pull the plug
@@ -501,7 +497,7 @@ union EngineToRobot
 
   // Init
   GetManufacturingInfo          getMfgInfo                  = 0x01,
-  SyncTime                      syncTime                    = 0x02,
+  SyncRobot                     syncRobot                   = 0x02,
   Shutdown                      shutdown                    = 0x03,
 
   // Debug / Test

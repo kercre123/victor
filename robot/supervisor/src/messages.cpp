@@ -53,10 +53,9 @@ namespace Anki {
 
         static RobotState robotState_;
 
-        // Flag for receipt of Init message
-        bool initReceived_ = false;
-        u8 ticsSinceInitReceived_ = 0;
-        bool syncTimeAckSent_ = false;
+        // Flag for receipt of sync message
+        bool syncRobotReceived_ = false;
+        bool syncRobotAckSent_ = false;
 
 #ifdef SIMULATOR
         bool isForcedDelocalizing_ = false;
@@ -148,22 +147,15 @@ namespace Anki {
 
 // #pragma --- Message Dispatch Functions ---
 
-      void Process_syncTime(const RobotInterface::SyncTime& msg)
+      void Process_syncRobot(const RobotInterface::SyncRobot& msg)
       {
-        AnkiInfo( "Messages.Process_syncTime.Recvd", "");
+        AnkiInfo( "Messages.Process_syncRobot.Recvd", "");
 
-        // Set SyncTime received flag
+        // Set SyncRobot received flag
         // Acknowledge in Update()
-        initReceived_ = true;
-        ticsSinceInitReceived_ = 0;
+        syncRobotReceived_ = true;
 
         // TODO: Compare message ID to robot ID as a handshake?
-
-        // Poor-man's time sync to basestation, for now.
-        HAL::SetTimeStamp(msg.syncTime);
-
-        // Set drive center offset
-        Localization::SetDriveCenterOffset(msg.driveCenterOffset);
 
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
@@ -220,18 +212,15 @@ namespace Anki {
 
       void Update()
       {
-        // Send syncTimeAck
-        if (!syncTimeAckSent_) {
-          // Make sure we wait some tics after receiving syncTime so that we're sure the
-          // timestamp from the body has propagated up.
-          if (initReceived_ && 
-              (++ticsSinceInitReceived_ > 3) && 
+        // Send ACK of SyncRobot message when system is ready
+        if (!syncRobotAckSent_) {
+          if (syncRobotReceived_ && 
               IMUFilter::IsBiasFilterComplete() &&
               LiftController::IsCalibrated() &&
               HeadController::IsCalibrated()) {
-            RobotInterface::SyncTimeAck syncTimeAckMsg;
-            while (RobotInterface::SendMessage(syncTimeAckMsg) == false);
-            syncTimeAckSent_ = true;
+            RobotInterface::SyncRobotAck syncRobotAckMsg;
+            while (RobotInterface::SendMessage(syncRobotAckMsg) == false);
+            syncRobotAckSent_ = true;
 
             // Send up gyro calibration
             // Since the bias is typically calibrate before the robot is even connected,
@@ -614,7 +603,7 @@ namespace Anki {
       Result SendRobotStateMsg()
       {
         // Don't send robot state updates unless the init message was received
-        if (!initReceived_) {
+        if (!syncRobotReceived_) {
           return RESULT_FAIL;
         }
 
@@ -671,13 +660,13 @@ namespace Anki {
 
       bool ReceivedInit()
       {
-        return initReceived_;
+        return syncRobotReceived_;
       }
 
       void ResetInit()
       {
-        initReceived_ = false;
-        syncTimeAckSent_ = false;
+        syncRobotReceived_ = false;
+        syncRobotAckSent_ = false;
       }
 
     } // namespace Messages

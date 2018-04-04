@@ -39,7 +39,8 @@ protected:
   BehaviorReactToTouchPetting(const Json::Value& config);
   
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
-    modifiers.behaviorAlwaysDelegates = false;
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+    modifiers.behaviorAlwaysDelegates         = false;
   }
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 

@@ -411,7 +411,7 @@ def stop_webots():
   currFile = inspect.getfile(inspect.currentframe())
 
   # kill all webots processes
-  ps   = subprocess.Popen(('ps', 'Aux'), stdout=subprocess.PIPE)
+  ps   = subprocess.Popen(('ps', 'Auxc'), stdout=subprocess.PIPE)
   grep = subprocess.Popen(('grep', '[w]ebots'), stdin=ps.stdout, stdout=subprocess.PIPE)
   grep_minus_this_process = subprocess.Popen(('grep', '-v', currFile), stdin=grep.stdout, stdout=subprocess.PIPE)
   awk  = subprocess.Popen(('awk', '{print $2}'), stdin=grep_minus_this_process.stdout, stdout=subprocess.PIPE)

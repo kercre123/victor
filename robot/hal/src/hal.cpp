@@ -34,10 +34,6 @@ namespace { // "Private members"
 
   s32 robotID_ = -1;
 
-  // TimeStamp offset
-  std::chrono::steady_clock::time_point timeOffset_ = std::chrono::steady_clock::now();
-
-
 #ifdef HAL_DUMMY_BODY
   BodyToHead dummyBodyData_ = {
     .cliffSense = {800, 800, 800, 800}
@@ -361,13 +357,6 @@ TimeStamp_t HAL::GetTimeStamp(void)
   auto currTime = std::chrono::steady_clock::now();
   return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::milliseconds>(currTime.time_since_epoch()).count());
 }
-
-void HAL::SetTimeStamp(TimeStamp_t t)
-{
-  AnkiInfo("HAL.SetTimeStamp", "%d", t);
-  timeOffset_ = std::chrono::steady_clock::now() - std::chrono::milliseconds(t);
-};
-
 
 void HAL::SetLED(LEDId led_id, u32 color)
 {

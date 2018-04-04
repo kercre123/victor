@@ -19,10 +19,14 @@
 #include "engine/ble/BLESystem.h"
 #include "engine/debug/cladLoggerProvider.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
+#include "engine/components/sensors/proxSensorComponent.h"
+#include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/deviceData/deviceDataManager.h"
+#include "engine/micDirectionHistory.h"
 #include "engine/perfMetric.h"
-#include "coretech/common/engine/utils/timer.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
 #include "engine/viz/vizManager.h"
 #include "engine/robot.h"
@@ -81,39 +85,131 @@ namespace Cozmo {
 
 int GetEngineStatsWebServerHandler(struct mg_connection *conn, void *cbdata)
 {
-  using namespace std::chrono;
-  const auto startTime = steady_clock::now();
-
   // We ignore the query string because overhead is minimal
   auto* cozmoEngine = static_cast<CozmoEngine*>(cbdata);
+  if (cozmoEngine->GetEngineState() != EngineState::Running)
+  {
+    LOG_INFO("CozmoEngine.GetEngineStatsWebServerHandler.NotReady", "GetEngineStatsWebServerHandler called but engine not running");
+    return 0;
+  }
   const auto& robot = cozmoEngine->GetRobot();
-
-  const auto& batteryComponent = robot->GetBatteryComponent();
-  std::stringstream ss;
-  ss << std::fixed << std::setprecision(3) << batteryComponent.GetBatteryVolts();
-  const std::string stat_batteryVoltsFiltered = ss.str();
-  std::stringstream ss2;
-  ss2 << std::fixed << std::setprecision(3) << batteryComponent.GetBatteryVoltsRaw();
-  const std::string stat_batteryVoltsRaw = ss2.str();
-  const std::string stat_batteryLevel = EnumToString(batteryComponent.GetBatteryLevel());
-  const std::string stat_batteryIsCharging = batteryComponent.IsCharging() ? "true" : "false";
-  const std::string stat_batteryIsOnChargerContacts = batteryComponent.IsOnChargerContacts() ? "true" : "false";
-  const std::string stat_batteryIsOnChargerPlatform = batteryComponent.IsOnChargerPlatform() ? "true" : "false";
-  const std::string stat_batteryFullyChargedTime_s = std::to_string(static_cast<int>(batteryComponent.GetFullyChargedTimeSec()));
-  const std::string stat_batteryLowBatteryTime_s = std::to_string(static_cast<int>(batteryComponent.GetLowBatteryTimeSec()));
 
   mg_printf(conn,
             "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
             "close\r\n\r\n");
+
+  const auto& batteryComponent = robot->GetBatteryComponent();
+  std::stringstream ss;
+  ss << std::fixed << std::setprecision(3) << batteryComponent.GetBatteryVolts();
+  const auto& stat_batteryVoltsFiltered = ss.str();
+  std::stringstream ss2;
+  ss2 << std::fixed << std::setprecision(3) << batteryComponent.GetBatteryVoltsRaw();
+  const auto& stat_batteryVoltsRaw = ss2.str();
+  const std::string& stat_batteryLevel = EnumToString(batteryComponent.GetBatteryLevel());
+  const std::string& stat_batteryIsCharging = batteryComponent.IsCharging() ? "true" : "false";
+  const std::string& stat_batteryIsOnChargerContacts = batteryComponent.IsOnChargerContacts() ? "true" : "false";
+  const std::string& stat_batteryIsOnChargerPlatform = batteryComponent.IsOnChargerPlatform() ? "true" : "false";
+  const auto& stat_batteryFullyChargedTime_s = std::to_string(static_cast<int>(batteryComponent.GetFullyChargedTimeSec()));
+  const auto& stat_batteryLowBatteryTime_s = std::to_string(static_cast<int>(batteryComponent.GetLowBatteryTimeSec()));
+
   mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
             stat_batteryVoltsFiltered.c_str(), stat_batteryVoltsRaw.c_str(),
             stat_batteryLevel.c_str(), stat_batteryIsCharging.c_str(),
             stat_batteryIsOnChargerContacts.c_str(), stat_batteryIsOnChargerPlatform.c_str(),
             stat_batteryFullyChargedTime_s.c_str(), stat_batteryLowBatteryTime_s.c_str());
 
-  const auto now = steady_clock::now();
-  const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
-  LOG_INFO("CozmoEngine.GetEngineStatsWebServerHandler.Time", "GetEngineStatsWebServerHandler took %lld microseconds", elapsed_us);
+  const auto& robotState = robot->GetRobotState();
+
+  std::stringstream ss3;
+  ss3 << std::fixed << std::setprecision(1) << RAD_TO_DEG(robotState.poseAngle_rad);
+  const auto& stat_poseAngle_rad = ss3.str();
+  std::stringstream ss4;
+  ss4 << std::fixed << std::setprecision(1) << RAD_TO_DEG(robotState.posePitch_rad);
+  const auto& stat_posePitch_rad = ss4.str();
+  std::stringstream ss5;
+  ss5 << std::fixed << std::setprecision(1) << RAD_TO_DEG(robotState.headAngle_rad);
+  const auto& stat_headAngle_rad = ss5.str();
+  std::stringstream ss6;
+  ss6 << std::fixed << std::setprecision(3) << robotState.liftHeight_mm;
+  const auto& stat_liftHeight_mm = ss6.str();
+  std::stringstream ss7;
+  ss7 << std::fixed << std::setprecision(3) << robotState.leftWheelSpeed_mmps;
+  const auto& stat_LWheelSpeed_mmps = ss7.str();
+  std::stringstream ss8;
+  ss8 << std::fixed << std::setprecision(3) << robotState.rightWheelSpeed_mmps;
+  const auto& stat_RWheelSpeed_mmps = ss8.str();
+  std::stringstream ss9;
+  ss9 << std::fixed << std::setprecision(3) << robotState.accel.x;
+  const auto& stat_accelX = ss9.str();
+  std::stringstream ss10;
+  ss10 << std::fixed << std::setprecision(3) << robotState.accel.y;
+  const auto& stat_accelY = ss10.str();
+  std::stringstream ss11;
+  ss11 << std::fixed << std::setprecision(3) << robotState.accel.z;
+  const auto& stat_accelZ = ss11.str();
+  std::stringstream ss12;
+  ss12 << std::fixed << std::setprecision(3) << robotState.gyro.x;
+  const auto& stat_gyroX = ss12.str();
+  std::stringstream ss13;
+  ss13 << std::fixed << std::setprecision(3) << robotState.gyro.y;
+  const auto& stat_gyroY = ss13.str();
+  std::stringstream ss14;
+  ss14 << std::fixed << std::setprecision(3) << robotState.gyro.z;
+  const auto& stat_gyroZ = ss14.str();
+  
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
+            stat_poseAngle_rad.c_str(), stat_posePitch_rad.c_str(),
+            stat_headAngle_rad.c_str(), stat_liftHeight_mm.c_str(),
+            stat_LWheelSpeed_mmps.c_str(), stat_RWheelSpeed_mmps.c_str(),
+            stat_accelX.c_str(), stat_accelY.c_str(), stat_accelZ.c_str(),
+            stat_gyroX.c_str(), stat_gyroY.c_str(), stat_gyroZ.c_str());
+
+  const auto& touchSensorComponent = robot->GetTouchSensorComponent();
+  const std::string& stat_touchDataRaw = std::to_string(touchSensorComponent.GetLatestRawTouchValue());
+
+  const auto& cliffSensorComponent = robot->GetCliffSensorComponent();
+  const auto& cliffDataRaw = cliffSensorComponent.GetCliffDataRaw();
+  const auto& stat_cliff0 = std::to_string(cliffDataRaw[0]);
+  const auto& stat_cliff1 = std::to_string(cliffDataRaw[1]);
+  const auto& stat_cliff2 = std::to_string(cliffDataRaw[2]);
+  const auto& stat_cliff3 = std::to_string(cliffDataRaw[3]);
+
+  const auto& proxSensorComponent = robot->GetProxSensorComponent();
+  const auto& proxDataRaw = proxSensorComponent.GetLatestProxDataRaw();
+  std::stringstream ss15;
+  ss15 << std::fixed << std::setprecision(3) << proxDataRaw.signalIntensity;
+  const auto& stat_proxSignalIntensity = ss15.str();
+  std::stringstream ss16;
+  ss16 << std::fixed << std::setprecision(3) << proxDataRaw.ambientIntensity;
+  const auto& stat_proxAmbientIntensity = ss16.str();
+  std::stringstream ss17;
+  ss17 << std::fixed << std::setprecision(3) << proxDataRaw.spadCount;
+  const auto& stat_proxSpadCount = ss17.str();
+  const auto& stat_proxDistance_mm = std::to_string(proxDataRaw.distance_mm);
+  const auto& stat_proxRangeStatus = std::to_string(proxDataRaw.rangeStatus);
+
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
+            stat_touchDataRaw.c_str(), stat_cliff0.c_str(),
+            stat_cliff1.c_str(), stat_cliff2.c_str(),
+            stat_cliff3.c_str(), stat_proxSignalIntensity.c_str(),
+            stat_proxAmbientIntensity.c_str(), stat_proxSpadCount.c_str(),
+            stat_proxDistance_mm.c_str(), stat_proxRangeStatus.c_str());
+
+  const auto& stat_carryingObjectID = std::to_string(robotState.carryingObjectID);
+  const auto& stat_carryingObjectOnTopID = std::to_string(robotState.carryingObjectOnTopID);
+  const auto& stat_headTrackingObjectID = std::to_string(robotState.headTrackingObjectID);
+  const auto& stat_localizedToObjectID = std::to_string(robotState.localizedToObjectID);
+  const auto& stat_status = std::to_string(robotState.status); 
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n",
+            stat_carryingObjectID.c_str(), stat_carryingObjectOnTopID.c_str(),
+            stat_headTrackingObjectID.c_str(), stat_localizedToObjectID.c_str(),
+            stat_status.c_str());
+
+  const auto& micDirectionHistory = robot->GetMicDirectionHistory();
+  const auto& stat_micRecentDirection = std::to_string(micDirectionHistory.GetRecentDirection());
+  const auto& stat_micSelectedDirection = std::to_string(micDirectionHistory.GetSelectedDirection());
+  mg_printf(conn, "%s\n%s\n",
+            stat_micRecentDirection.c_str(), stat_micSelectedDirection.c_str());
 
   return 1;
 }

@@ -437,7 +437,7 @@ void FaceInfoScreenManager::DrawConfidenceClock(
         directionValues.append(confidence);
       }
 
-      const std::string moduleName = "micdata";
+      static const std::string moduleName = "micdata";
       _webService->SendToWebViz( moduleName, webData );
     }
   }
@@ -616,7 +616,7 @@ void FaceInfoScreenManager::DrawConfidenceClock(
   // and doubled for 2 buffers
   const auto delayStr = std::to_string(delayTime_ms);
   const Point2f textLoc = {0.f, FACE_DISPLAY_HEIGHT - endOfBarHeight_px};
-  const auto textScale = 0.5f;
+  static const auto textScale = 0.5f;
   _scratchDrawingImg->DrawText(textLoc,
                                delayStr,
                                NamedColors::WHITE,

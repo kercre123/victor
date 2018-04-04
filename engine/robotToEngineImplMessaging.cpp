@@ -115,7 +115,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imageGyro,                      &RobotToEngineImplMessaging::HandleImageImuData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuDataChunk,                   &RobotToEngineImplMessaging::HandleImuData);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::imuRawDataChunk,                &RobotToEngineImplMessaging::HandleImuRawData);
-  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::syncTimeAck,                    &RobotToEngineImplMessaging::HandleSyncTimeAck);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::syncRobotAck,                   &RobotToEngineImplMessaging::HandleSyncRobotAck);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotPoked,                     &RobotToEngineImplMessaging::HandleRobotPoked);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::robotAvailable,                 &RobotToEngineImplMessaging::HandleRobotSetHeadID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::firmwareVersion,                &RobotToEngineImplMessaging::HandleFirmwareVersion);
@@ -693,11 +693,11 @@ void RobotToEngineImplMessaging::HandleImageImuData(const AnkiEvent<RobotInterfa
                                                              payload.rateZ);
 }
 
-void RobotToEngineImplMessaging::HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+void RobotToEngineImplMessaging::HandleSyncRobotAck(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
-  ANKI_CPU_PROFILE("Robot::HandleSyncTimeAck");
-  LOG_INFO("Robot.HandleSyncTimeAck","");
-  robot->SetTimeSynced();
+  ANKI_CPU_PROFILE("Robot::HandleSyncRobotAck");
+  LOG_INFO("Robot.HandleSyncRobotAck","");
+  robot->SetSyncRobotAcked();
 
   // Move the head up when we sync time so that the customer can see the face easily
   if(FACTORY_TEST && Factory::GetEMR()->fields.PACKED_OUT_FLAG)
