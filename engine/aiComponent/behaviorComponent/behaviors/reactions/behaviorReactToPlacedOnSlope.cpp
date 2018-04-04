@@ -51,7 +51,7 @@ void BehaviorReactToPlacedOnSlope::OnBehaviorActivated()
   } else {
     // Play the animation then check if we're still on a slope or if we were perched on something:
     
-    AnimationTrigger reactionAnim = AnimationTrigger::DEPRECATED_ReactToPerchedOnBlock;
+    AnimationTrigger reactionAnim = AnimationTrigger::ANTICIPATED_ReactToPerchedOnBlock;
     
     DelegateIfInControl(new TriggerAnimationAction(reactionAnim),
                         &BehaviorReactToPlacedOnSlope::CheckPitch);

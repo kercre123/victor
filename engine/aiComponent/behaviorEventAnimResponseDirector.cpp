@@ -21,8 +21,8 @@ namespace Cozmo {
 BehaviorEventAnimResponseDirector::BehaviorEventAnimResponseDirector()
 : IDependencyManagedComponent<BCComponentID>(this, BCComponentID::BehaviorEventAnimResponseDirector)
 {
-  _animationTriggerMap[UserFacingActionResult::InteractWithBlockDockingIssue] = AnimationTrigger::DEPRECATED_RollBlockRetry;
-  _animationTriggerMap[UserFacingActionResult::DriveToBlockIssue] = AnimationTrigger::DEPRECATED_RollBlockRealign;
+  _animationTriggerMap[UserFacingActionResult::InteractWithBlockDockingIssue] = AnimationTrigger::ANTICIPATED_RollBlockRetry;
+  _animationTriggerMap[UserFacingActionResult::DriveToBlockIssue] = AnimationTrigger::ANTICIPATED_RollBlockRealign;
 }
 
 
