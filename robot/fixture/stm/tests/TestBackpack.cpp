@@ -189,7 +189,7 @@ static void TestMics(void)
   Board::ledOff(Board::LED_GREEN);
   Board::ledOff(Board::LED_RED);
   if( !mic[0].pass || !mic[1].pass || !mic[2].pass || !mic[3].pass )
-    throw ERROR_BACKPACK_LED;
+    throw ERROR_BACKP_LED;
 }
 
 //display pattern for button test

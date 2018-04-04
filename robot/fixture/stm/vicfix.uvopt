@@ -188,8 +188,8 @@
       <Focus>0</Focus>
       <ColumnNumber>2</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>237</TopLine>
-      <CurrentLine>244</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\app.cpp</PathWithFileName>
       <FilenameWithoutPath>app.cpp</FilenameWithoutPath>
@@ -204,8 +204,8 @@
       <Focus>0</Focus>
       <ColumnNumber>17</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>1</TopLine>
-      <CurrentLine>5</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\binaries.s</PathWithFileName>
       <FilenameWithoutPath>binaries.s</FilenameWithoutPath>
@@ -220,8 +220,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>46</TopLine>
-      <CurrentLine>48</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\binariesc.c</PathWithFileName>
       <FilenameWithoutPath>binariesc.c</FilenameWithoutPath>
@@ -252,8 +252,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>486</TopLine>
-      <CurrentLine>517</CurrentLine>
+      <TopLine>148</TopLine>
+      <CurrentLine>152</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\app\cmd.cpp</PathWithFileName>
       <FilenameWithoutPath>cmd.cpp</FilenameWithoutPath>
@@ -274,10 +274,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>28</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>83</TopLine>
-      <CurrentLine>96</CurrentLine>
+      <TopLine>338</TopLine>
+      <CurrentLine>342</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\tests\TestBody.cpp</PathWithFileName>
       <FilenameWithoutPath>TestBody.cpp</FilenameWithoutPath>
@@ -292,7 +292,7 @@
       <Focus>0</Focus>
       <ColumnNumber>16</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>209</TopLine>
+      <TopLine>220</TopLine>
       <CurrentLine>224</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\tests\TestCommon.cpp</PathWithFileName>
@@ -324,8 +324,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>263</TopLine>
-      <CurrentLine>286</CurrentLine>
+      <TopLine>163</TopLine>
+      <CurrentLine>194</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\tests\TestBackpack.cpp</PathWithFileName>
       <FilenameWithoutPath>TestBackpack.cpp</FilenameWithoutPath>
@@ -338,10 +338,10 @@
       <FileType>8</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>2</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>31</TopLine>
-      <CurrentLine>24</CurrentLine>
+      <TopLine>112</TopLine>
+      <CurrentLine>134</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\tests\TestCube.cpp</PathWithFileName>
       <FilenameWithoutPath>TestCube.cpp</FilenameWithoutPath>
@@ -356,8 +356,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>138</TopLine>
-      <CurrentLine>153</CurrentLine>
+      <TopLine>160</TopLine>
+      <CurrentLine>164</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\tests\TestRobot.cpp</PathWithFileName>
       <FilenameWithoutPath>TestRobot.cpp</FilenameWithoutPath>
@@ -476,8 +476,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>354</TopLine>
-      <CurrentLine>362</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\lib\swd.cpp</PathWithFileName>
       <FilenameWithoutPath>swd.cpp</FilenameWithoutPath>
@@ -492,8 +492,8 @@
       <Focus>0</Focus>
       <ColumnNumber>41</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>326</TopLine>
-      <CurrentLine>339</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\lib\swd_stm32.cpp</PathWithFileName>
       <FilenameWithoutPath>swd_stm32.cpp</FilenameWithoutPath>
@@ -508,8 +508,8 @@
       <Focus>0</Focus>
       <ColumnNumber>24</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>54</TopLine>
-      <CurrentLine>69</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\lib\swd_da1458x.cpp</PathWithFileName>
       <FilenameWithoutPath>swd_da1458x.cpp</FilenameWithoutPath>
@@ -532,8 +532,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>1</TopLine>
-      <CurrentLine>1</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\board.cpp</PathWithFileName>
       <FilenameWithoutPath>board.cpp</FilenameWithoutPath>
@@ -564,7 +564,7 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>549</TopLine>
+      <TopLine>567</TopLine>
       <CurrentLine>577</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\common\contacts.cpp</PathWithFileName>
@@ -660,8 +660,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>402</TopLine>
-      <CurrentLine>423</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\console.c</PathWithFileName>
       <FilenameWithoutPath>console.c</FilenameWithoutPath>
@@ -724,8 +724,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>190</TopLine>
-      <CurrentLine>202</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\hal\dut_uart.cpp</PathWithFileName>
       <FilenameWithoutPath>dut_uart.cpp</FilenameWithoutPath>

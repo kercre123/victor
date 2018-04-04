@@ -133,9 +133,9 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
   ConsolePrintf("%u\n", vbat3v_mv); //print final value
   
   if( vbat3v_mv < 2500 )
-    throw ERROR_BAT_UNDERVOLT;
+    throw ERROR_CUBE_BAD_POWER; //ERROR_BAT_UNDERVOLT;
   if( vbat3v_mv > 2900 )
-    throw ERROR_BAT_OVERVOLT;
+    throw ERROR_BAT_OVERVOLT; //ERROR_CUBE_BAD_POWER
   
   //Sync bootloader
   int ack = -1;

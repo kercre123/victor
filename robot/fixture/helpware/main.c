@@ -160,8 +160,8 @@ int handle_dutprogram_command(const char* cmd, int len) {
   argstr[len]='\0';
   
   int retval = shellcommand((int)timeout_sec, "./headprogram", argstr );
-  if( retval >= 60 && retval <= 70 ) //limited range of script errors mapped to fixture error codes
-    retval += 900; //shift to fixture 'headprogram' error range {960-970}
+  if( retval >= 100 && retval <= 120 ) //limited range of script errors mapped to fixture error codes
+    retval += 400; //shift to fixture 'headprogram' error range {500-520}
   return retval;
 }
 
