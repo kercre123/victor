@@ -414,6 +414,7 @@ else
     TARGET_ARG="--target $CMAKE_TARGET"
   fi
   $CMAKE_EXE --build . $TARGET_ARG $*
+  $CMAKE_EXE --build . --target install
 fi
 
 popd > /dev/null 2>&1
