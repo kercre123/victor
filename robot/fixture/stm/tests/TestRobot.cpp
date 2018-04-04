@@ -135,20 +135,30 @@ static void dbg_test_comm_loop_(int nloops, int rmax, int rmin)
   ConsolePrintf("STRESS TEST COMMS: %i loops, NN=rand{%i..%i}\n", nloops, rmin, rmax);
   int rmod = rmax-rmin+1; //modulo
   
+  static int sensorSelect = -1;
+  sensorSelect += 1;
+  
   srand(Timer::get());
-  for(int x = 0; x < nloops; x++) {
+  for(int x = 0; x < nloops; x++)
+  {
     cmdRobotEsn(); cmdRobotBsv();
+    if( sensorSelect == 0 ) {}
     //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_BATTERY);
-    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_CLIFF);
+    else if( sensorSelect == 1 )
+    cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_CLIFF);
     //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_MOT_LEFT);
     //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_MOT_RIGHT);
     //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_MOT_LIFT);
     //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_MOT_HEAD);
-    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_PROX_TOF);
-    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_BTN_TOUCH);
+    else if( sensorSelect == 2 )
+    cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_PROX_TOF);
+    else if( sensorSelect == 3 )
+    cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_BTN_TOUCH);
     //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_RSSI);
     //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_RX_PKT);
+    else if( sensorSelect == 4 )
     cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_DEBUG_INC);
+    else { sensorSelect = -1; break; }
   }
 }
 
