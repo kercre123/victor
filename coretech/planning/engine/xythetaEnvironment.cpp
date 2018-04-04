@@ -51,38 +51,23 @@ SuccessorIterator::SuccessorIterator(const xythetaEnvironment* env, StateID star
 // TODO:(bn) inline?
 bool SuccessorIterator::Done(const xythetaEnvironment& env) const
 {
-  if( ! reverse_ ) {
-    return nextAction_ > env.allMotionPrimitives_[start_.theta].size();
-  }
-  else {
-    return nextAction_ > env.reverseMotionPrimitives_[start_.theta].size();
-  }
+  return nextAction_ > env.allActions_.GetNumActions();
 }
 
 void SuccessorIterator::Next(const xythetaEnvironment& env)
 {
-  size_t numActions = 0;
-
-  if( ! reverse_ ) {
-    numActions = env.allMotionPrimitives_[start_.theta].size();
-  }
-  else {
-    numActions = env.reverseMotionPrimitives_[start_.theta].size();
-  }
+  size_t numActions = env.allActions_.GetNumActions();
 
   while(nextAction_ < numActions) {
-    const MotionPrimitive* prim = nullptr; 
-    if( ! reverse_ ) {
-      prim = &env.allMotionPrimitives_[start_.theta][nextAction_];
-    }
-    else { 
-      prim = &env.reverseMotionPrimitives_[start_.theta][nextAction_];
-    }
+    const MotionPrimitive* prim = (reverse_) ? &env.allActions_.GetReverseMotion((size_t)start_.theta, nextAction_)
+                                             : &env.allActions_.GetForwardMotion((size_t)start_.theta, nextAction_);
+
 
     // collision checking
     long endPoints = prim->intermediatePositions.size();
     bool collision = false; // fatal collision
-    bool reverseMotion = env.GetActionType(prim->id).IsReverseAction();
+    bool reverseMotion = env.GetActionSpace().GetActionType(prim->id).IsReverseAction();
+
 
     nextSucc_.g = 0;
 
@@ -222,52 +207,36 @@ void SuccessorIterator::Next(const xythetaEnvironment& env)
   nextAction_++;
 }
 
-Cost xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions) const
+Cost xythetaEnvironment::CheckAndApplyAction(const ActionID& action, StateID& stateID) const
 {
   GraphState curr(stateID);
   Point2f start = curr.GetPointXY_mm();
 
   assert(curr.theta >= 0);
-  assert(curr.theta < allMotionPrimitives_.size());
+  assert(curr.theta < GraphState::numAngles_);
 
-  if(action >= allMotionPrimitives_[curr.theta].size())
+  if(action >= allActions_.GetNumActions())
     return FATAL_OBSTACLE_COST;
 
-  const MotionPrimitive* prim = & allMotionPrimitives_[curr.theta][action];
+  const MotionPrimitive* prim = & allActions_.GetForwardMotion(curr.theta, action);
 
   Cost penalty = 0.0;
 
-  if(checkCollisions) {
-    // size_t endObs = obstacles_.size();
-    // size_t endPoints = prim->intermediatePositions.size();
-    // for(size_t point=0; point < endPoints; ++point) {
-    //   for(size_t obs=0; obs < endObs; ++obs) {
-    //     float x = start_x + prim->intermediatePositions[point].position.x_mm;
-    //     float y = start_y + prim->intermediatePositions[point].position.y_mm;
-    //     if(obstacles_[obs].first.Contains(x, y)) {
-    //       penalty += obstacles_[obs].second;
-    //       if( penalty >= MAX_OBSTACLE_COST) {
-    //         return penalty;
-    //       }
-    //     }
-    //   }
-    // }
 
-    size_t endPoints = prim->intermediatePositions.size();
+  size_t endPoints = prim->intermediatePositions.size();
 
-    for(size_t point=0; point < endPoints; ++point) {
-      GraphTheta angle = prim->intermediatePositions[point].nearestTheta;
-      size_t endObs = obstaclesPerAngle_[angle].size();
+  for(size_t point=0; point < endPoints; ++point) {
+    GraphTheta angle = prim->intermediatePositions[point].nearestTheta;
+    size_t endObs = obstaclesPerAngle_[angle].size();
 
-      for(size_t obs = 0; obs < endObs; ++obs) {
-        const Point2f intermediatePoint = prim->intermediatePositions[point].position.GetPointXY_mm();
-        if( obstaclesPerAngle_[angle][obs].first.Contains(start + intermediatePoint) ) {
+    for(size_t obs = 0; obs < endObs; ++obs) {
+      const Point2f intermediatePoint = prim->intermediatePositions[point].position.GetPointXY_mm();
+      if( obstaclesPerAngle_[angle][obs].first.Contains(start + intermediatePoint) ) {
 
-          penalty += obstaclesPerAngle_[angle][obs].second *
-            prim->intermediatePositions[point].oneOverDistanceFromLastPosition;
-          if( penalty >= MAX_OBSTACLE_COST) {
-            return penalty;
-          }
+        penalty += obstaclesPerAngle_[angle][obs].second *
+          prim->intermediatePositions[point].oneOverDistanceFromLastPosition;
+        if( penalty >= MAX_OBSTACLE_COST) {
+          return penalty;
         }
       }
     }
@@ -282,9 +251,8 @@ Cost xythetaEnvironment::ApplyAction(const ActionID& action, StateID& stateID, b
   return penalty;
 }
 
-Cost xythetaEnvironment::ApplyPathSegment(const PathSegment& pathSegment,
+Cost xythetaEnvironment::CheckAndApplyPathSegment(const PathSegment& pathSegment,
                                           State_c& state_c,
-                                          bool checkCollisions,
                                           float maxPenalty) const
 {
   Cost penalty = 0.0f;
@@ -292,11 +260,6 @@ Cost xythetaEnvironment::ApplyPathSegment(const PathSegment& pathSegment,
   float endX, endY, endAngle;
   pathSegment.GetEndPose(endX, endY, endAngle);
   State_c endState_c = State_c(endX, endY, endAngle);
-  
-  if( !checkCollisions ) {
-    state_c = endState_c;
-    return penalty;
-  }
   
   const PathSegmentDef& segmentDef = pathSegment.GetDef();
   const PathSegmentType& segmentType = pathSegment.GetType();
@@ -415,7 +378,7 @@ bool xythetaEnvironment::PlanIsSafe(const xythetaPlan& plan,
   // first go through all the actions that we are "skipping"
   for(size_t i=0; i<currentPathIndex; ++i) {
     // advance without checking collisions
-    ApplyAction(plan.GetAction(i), curr, false);
+    allActions_.ApplyAction(plan.GetAction(i), curr);
   }
 
   GraphState currentRobotState(curr);
@@ -428,7 +391,7 @@ bool xythetaEnvironment::PlanIsSafe(const xythetaPlan& plan,
   for(size_t i = currentPathIndex; i < numActions; ++i) {
 
     // check for collisions and possibly update curr
-    Cost actionPenalty = ApplyAction(plan.GetAction(i), curr, true);
+    Cost actionPenalty = CheckAndApplyAction(plan.GetAction(i), curr);
     assert(i < plan.Size());
 
     if(actionPenalty > plan.GetPenalty(i) + REPLAN_PENALTY_BUFFER) {
@@ -453,7 +416,7 @@ bool xythetaEnvironment::PlanIsSafe(const xythetaPlan& plan,
       // TODO:(bn) this is kind of wrong. It's using euclidean
       // distance, instead we should add up the lengths of each
       // action. That will be faster and better
-      if(GetDistanceBetween(lastSafeState, currentRobotState) > maxDistancetoFollowOldPlan_mm) {
+      if(State_c::GetDistanceBetween(lastSafeState, currentRobotState) > maxDistancetoFollowOldPlan_mm) {
         useOldPlan = false;
       }
     }
@@ -485,7 +448,7 @@ bool xythetaEnvironment::PathIsSafe(const Planning::Path& path, float startAngle
     const PathSegment& currSegment = path.GetSegmentConstRef(i);
     
     // check for collisions and possibly update curr
-    Cost penalty = ApplyPathSegment(currSegment, currState_c, true, maxPenalty);
+    Cost penalty = CheckAndApplyPathSegment(currSegment, currState_c, maxPenalty);
     totalPenalty += penalty;
     
     if(totalPenalty > maxPenalty) {
@@ -540,11 +503,6 @@ void xythetaEnvironment::PrepareForPlanning()
   }
 }
 
-const MotionPrimitive& xythetaEnvironment::GetRawMotionPrimitive(GraphTheta theta, ActionID action) const
-{
-  return allMotionPrimitives_[theta][action];
-}
-
 bool xythetaEnvironment::IsInCollision(GraphState s) const
 {
   return IsInCollision(State2State_c(s));
@@ -587,14 +545,6 @@ Cost xythetaEnvironment::GetCollisionPenalty(GraphState s) const
   return 0.0;
 }
 
-void xythetaPlan::Append(const xythetaPlan& other)
-{
-  if(_actionCostPairs.empty()) {
-    start_ = other.start_;
-  }
-  _actionCostPairs.insert(_actionCostPairs.end(), other._actionCostPairs.begin(), other._actionCostPairs.end() );
-}
-
 xythetaEnvironment::~xythetaEnvironment()
 {
 }
@@ -607,7 +557,7 @@ xythetaEnvironment::xythetaEnvironment()
 bool xythetaEnvironment::Init(const Json::Value& mprimJson)
 {
   ClearObstacles();
-  return ParseMotionPrims(mprimJson);
+  return allActions_.ParseMotionPrims(mprimJson);
 }
 
 size_t xythetaEnvironment::GetNumObstacles() const
@@ -635,11 +585,7 @@ void xythetaEnvironment::Dump(Util::JsonWriter& writer) const
 
   writer.StartGroup("obstacles");
   DumpObstacles(writer);
-  writer.EndGroup();
-
-  writer.StartGroup("robotParams");
-  _robotParams.Dump(writer);
-  writer.EndGroup();  
+  writer.EndGroup(); 
 }
 
 bool xythetaEnvironment::Import(const Json::Value& config)
@@ -693,161 +639,8 @@ bool xythetaEnvironment::ReadMotionPrimitives(const char* mprimFilename)
     cout<<"error: could not parse json form file '"<<mprimFilename
         <<"'\n" << reader.getFormattedErrorMessages()<<endl;
   }
-  
-  return ParseMotionPrims(mprimTree, false);
-}
 
-bool xythetaEnvironment::ParseMotionPrims(const Json::Value& config, bool useDumpFormat)
-{
-  try {
-    float configResolution = 0.f;
-    unsigned int configAngles = 0;
-    if(!JsonTools::GetValueOptional(config, "resolution_mm", configResolution) ||
-       !JsonTools::GetValueOptional(config, "num_angles", configAngles)) {
-      printf("error: could not find key 'resolution_mm' or 'num_angles' in motion primitives\n");
-      JsonTools::PrintJsonCout(config, 1);
-      return false;
-    }
-
-    assert(GraphState::resolution_mm_ == configResolution);
-    assert(GraphState::numAngles_ == configAngles);
-
-    // parse through the action types
-    if(config["actions"].size() == 0) {
-      printf("empty or non-existant actions section! (old format, perhaps?)\n");
-      return false;
-    }
-
-    for(const auto & actionConfig : config["actions"]) {
-      ActionType at;
-      at.Import(actionConfig);
-      actionTypes_.push_back(at);
-    }
-
-    try {
-      for(const auto & angle : config["angle_definitions"]) {
-        angles_.push_back(angle.asFloat());
-      }
-    }
-    catch( const std::exception&  e ) {
-      PRINT_NAMED_ERROR("ParseMotionPrims.angle_definitions.Exception",
-                        "json exception: %s",
-                        e.what());
-      return false;
-    }
-
-    if(angles_.size() != GraphState::numAngles_) {
-      printf("ERROR: numAngles is %u, but we read %lu angle definitions\n",
-             GraphState::numAngles_,
-             (unsigned long)angles_.size());
-      return false;
-    }
-
-    // parse through each starting angle
-    if(config["angles"].size() != GraphState::numAngles_) {
-      printf("error: could not find key 'angles' in motion primitives\n");
-      JsonTools::PrintJsonCout(config, 1);
-      return false;
-    }
-
-    allMotionPrimitives_.resize(GraphState::numAngles_);
-
-    unsigned int numPrims = 0;
-
-    try {
-      for(unsigned int angle = 0; angle < GraphState::numAngles_; ++angle) {
-        Json::Value prims = config["angles"][angle]["prims"];
-        for(unsigned int i = 0; i < prims.size(); ++i) {
-          MotionPrimitive p;
-
-          if( useDumpFormat ) {
-            if( ! p.Import(prims[i]) ) {
-              return false;
-            }
-          }
-          else {
-            if(!p.Create(prims[i], angle, *this)) {
-              PRINT_NAMED_ERROR("ParseMotionPrims.CreateFormat.Mprim", "Failed to import motion primitive");
-              return false;
-            }
-          }
-
-          allMotionPrimitives_[angle].push_back(p);
-          numPrims++;
-        }
-      }
-    }
-    catch( const std::exception&  e ) {
-      PRINT_NAMED_ERROR("ParseMotionPrims.anglesPrims.Exception",
-                        "json exception: %s",
-                        e.what());
-      return false;
-    }
-
-    PRINT_NAMED_INFO("ParseMotionPrims.Added", "Added %d motion primitives", numPrims);
-  }
-  catch( const std::exception&  e ) {
-    PRINT_NAMED_ERROR("ParseMotionPrims.Exception",
-                      "json exception: %s",
-                      e.what());
-    return false;
-  }
-
-  PopulateReverseMotionPrims();
-
-  return true;
-}
-
-void xythetaEnvironment::PopulateReverseMotionPrims()
-{
-  reverseMotionPrimitives_.clear();
-  reverseMotionPrimitives_.resize(GraphState::numAngles_);
-
-  // go through each motion primitive, and populate the corresponding reverse primitive
-  for(int startAngle = 0; startAngle < GraphState::numAngles_; ++startAngle) {
-    for(int actionID = 0; actionID < allMotionPrimitives_[ startAngle ].size(); ++actionID) {
-      const MotionPrimitive& prim( allMotionPrimitives_[ startAngle ][ actionID ] );
-      int endAngle = prim.endStateOffset.theta;
-
-      MotionPrimitive reversePrim(prim);
-      reversePrim.endStateOffset.theta = startAngle;
-      reversePrim.endStateOffset.x = -reversePrim.endStateOffset.x;
-      reversePrim.endStateOffset.y = -reversePrim.endStateOffset.y;
-
-      reverseMotionPrimitives_[endAngle].push_back( reversePrim );
-    }
-  }
-}
-
-void xythetaEnvironment::DumpMotionPrims(Util::JsonWriter& writer) const
-{
-  writer.AddEntry("resolution_mm", GraphState::resolution_mm_);
-  writer.AddEntry("num_angles", (int)GraphState::numAngles_);
-
-  writer.StartList("actions");
-  for(const auto& action : actionTypes_) {
-    writer.NextListItem();
-    action.Dump(writer);
-  }
-  writer.EndList();
-
-  writer.StartList("angle_definitions");
-  for(const auto& angleDef : angles_) {
-    writer.AddRawListEntry(angleDef);
-  }
-  writer.EndList();
-
-  writer.StartList("angles");
-  for(unsigned int angle = 0; angle < GraphState::numAngles_; ++angle) {
-    writer.NextListItem();
-    writer.StartList("prims");
-    for(const auto& prim : allMotionPrimitives_[angle]) {
-      writer.NextListItem();
-      prim.Dump(writer);
-    }
-    writer.EndList();
-  }
-  writer.EndList();  
+  return allActions_.ParseMotionPrims(mprimTree, false);
 }
 
 bool xythetaEnvironment::ParseObstacles(const Json::Value& config)
@@ -1120,109 +913,9 @@ bool xythetaEnvironment::RoundSafe(const State_c& c, GraphState& rounded) const
   return bestDist2 < 999999.8;
 }
 
-float xythetaEnvironment::GetDistanceBetween(const State_c& start, const GraphState& end) const
-{
-  return (end.GetPointXY_mm() - start.GetPointXY_mm()).Length();
-}
-
-float xythetaEnvironment::GetDistanceBetween(const State_c& start, const State_c& end)
-{
-  float distSq = 
-    pow(end.x_mm - start.x_mm, 2)
-    + pow(end.y_mm - start.y_mm, 2);
-
-  return sqrtf(distSq);
-}
-
-float xythetaEnvironment::GetMinAngleBetween(const State_c& start, const GraphState& end) const
-{
-  const float diff1 = std::abs(LookupTheta(end.theta) - start.theta);
-  const float diff2 = std::abs( std::abs(LookupTheta(end.theta) - start.theta) - M_PI );
-  return std::min( diff1, diff2 );
-}
-
-float xythetaEnvironment::GetMinAngleBetween(const State_c& start, const State_c& end)
-{
-  const float diff1 = std::abs(end.theta - start.theta);
-  const float diff2 = std::abs( std::abs(end.theta - start.theta) - M_PI );
-  return std::min( diff1, diff2 );
-}
-
 SuccessorIterator xythetaEnvironment::GetSuccessors(StateID startID, Cost currG, bool reverse) const
 {
   return SuccessorIterator(this, startID, currG, reverse);
-}
-
-void xythetaEnvironment::AppendToPath(xythetaPlan& plan, Path& path, int numActionsToSkip) const
-{
-  GraphState curr = plan.start_;
-
-  int actionsLeftToSkip = numActionsToSkip;
-
-  for (size_t i = 0; i < plan.Size(); ++i) {
-    const ActionID& actionID = plan.GetAction(i);
-    
-    if(curr.theta >= allMotionPrimitives_.size() || actionID >= allMotionPrimitives_[curr.theta].size()) {
-      printf("ERROR: can't look up prim for angle %d and action id %d\n", curr.theta, actionID);
-      break;
-    }
-
-    // printf("(%d) %s\n", curr.theta, actionTypes_[actionID].GetName().c_str());
-
-    const MotionPrimitive* prim = &allMotionPrimitives_[curr.theta][actionID];
-
-    if( actionsLeftToSkip == 0 ) {
-      prim->AddSegmentsToPath(State2State_c(curr), path);
-    }
-    else {
-      actionsLeftToSkip--;
-    }
-
-    curr.x += prim->endStateOffset.x;
-    curr.y += prim->endStateOffset.y;
-    curr.theta = prim->endStateOffset.theta;
-  }
-}
-
-// void xythetaEnvironment::SetRobotActionParams(double halfWheelBase_mm,
-//                                               double maxVelocity_mmps,
-//                                               double maxReverseVelocity_mmps)
-// {
-//   _robotParams.halfWheelBase_mm = halfWheelBase_mm;
-//   _robotParams.maxVelocity_mmps = maxVelocity_mmps;
-//   _robotParams.maxReverseVelocity_mmps = maxReverseVelocity_mmps;
-//   _robotParams.oneOverMaxVelocity = 1.0 / _robotParams.maxVelocity_mmps; 
-// }
-
-void xythetaEnvironment::PrintPlan(const xythetaPlan& plan) const
-{
-  State_c curr_c = State2State_c(plan.start_);
-  StateID currID = plan.start_.GetStateID();
-
-  PRINT_STREAM_DEBUG("xythetaEnvironment.PrintPlan", "plan start: " << plan.start_);
-
-  for(size_t i=0; i<plan.Size(); ++i) {
-    PRINT_NAMED_DEBUG("xythetaEnvironment.PrintPlan", "%2lu: (%f, %f, %f [%d]) --> %s (penalty = %f)",
-           (unsigned long)i,
-           curr_c.x_mm, curr_c.y_mm, curr_c.theta, currID.s.theta, 
-           actionTypes_[plan.GetAction(i)].GetName().c_str(),
-           plan.GetPenalty(i));
-    ApplyAction(plan.GetAction(i), currID, false);
-    curr_c = State2State_c(GraphState(currID));
-  }
-}
-
-
-GraphState xythetaEnvironment::GetPlanFinalState(const xythetaPlan& plan) const
-{
-  StateID currID = plan.start_.GetStateID();
-
-  for(size_t i = 0; i < plan.Size(); i++) {
-    const ActionID& action = plan.GetAction(i);
-    ApplyAction(action, currID, false);
-  }
-
-  return GraphState(currID);
 }
 
 size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
@@ -1281,7 +974,7 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
     }
 
     StateID currID(currPlanState);
-    ApplyAction(plan.GetAction(planIdx), currID, false);
+    allActions_.ApplyAction(plan.GetAction(planIdx), currID);
     currPlanState = GraphState(currID);
   }
   
@@ -1296,7 +989,7 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
     const Point2f offset = state.GetPointXY_mm() - currPlanState.GetPointXY_mm();
     const State_c offsetToPlanState(offset.x(), offset.y(), state.theta);
     
-    const MotionPrimitive& prim(GetRawMotionPrimitive(currPlanState.theta, plan.GetAction(planIdx)));
+    const MotionPrimitive& prim = allActions_.GetForwardMotion(currPlanState.theta, plan.GetAction(planIdx));
 
     // skip the last intermediate position, since it overlaps with the next start
     size_t intermediatePositionsSize = prim.intermediatePositions.size();
@@ -1319,7 +1012,7 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
         return planIdx;
       }
       
-      const float xyDist = GetDistanceBetween(offsetToPlanState, intermediate.position);
+      const float xyDist = State_c::GetDistanceBetween(offsetToPlanState, intermediate.position);
 
       if( xyDist < closestXYDist ) {
         closestXYDist = xyDist;
@@ -1335,56 +1028,12 @@ size_t xythetaEnvironment::FindClosestPlanSegmentToPose(const xythetaPlan& plan,
     }
 
     StateID currID(currPlanState);
-    ApplyAction(plan.GetAction(planIdx), currID, false);
+    allActions_.ApplyAction(plan.GetAction(planIdx), currID);
     currPlanState = GraphState(currID);
   }
 
   distanceToPlan = closestXYDist;
   return closestPointIdx;
-}
-
-void xythetaEnvironment::ConvertToXYPlan(const xythetaPlan& plan, std::vector<State_c>& continuousPlan) const
-{
-  continuousPlan.clear();
-
-  State_c curr_c = State2State_c(plan.start_);
-  GraphTheta currTheta = plan.start_.theta;
-  // TODO:(bn) replace theta with radians? maybe just cast it here
-
-  for(size_t i=0; i<plan.Size(); ++i) {
-    printf("curr = (%f, %f, %f [%d]) : %s\n", curr_c.x_mm, curr_c.y_mm, curr_c.theta, currTheta, 
-               actionTypes_[plan.GetAction(i)].GetName().c_str());
-
-    if(currTheta >= allMotionPrimitives_.size() || plan.GetAction(i) >= allMotionPrimitives_[currTheta].size()) {
-      printf("ERROR: can't look up prim for angle %d and action id %d\n", currTheta, plan.GetAction(i));
-      break;
-    }
-    else {
-
-      const MotionPrimitive* prim = &allMotionPrimitives_[currTheta][plan.GetAction(i)];
-      for(size_t j=0; j<prim->intermediatePositions.size(); ++j) {
-        float x = curr_c.x_mm + prim->intermediatePositions[j].position.x_mm;
-        float y = curr_c.y_mm + prim->intermediatePositions[j].position.y_mm;
-        float theta = prim->intermediatePositions[j].position.theta;
-
-        // printf("  (%+5f, %+5f, %+5f) -> (%+5f, %+5f, %+5f)\n",
-        //            prim->intermediatePositions[j].x_mm,
-        //            prim->intermediatePositions[j].y_mm,
-        //            prim->intermediatePositions[j].theta,
-        //            x,
-        //            y,
-        //            theta);
-
-        continuousPlan.push_back(State_c(x, y, theta));
-      }
-
-      if(!continuousPlan.empty())
-        curr_c = continuousPlan.back();
-      else
-        printf("ERROR: no intermediate positiong?!\n");
-      currTheta = prim->endStateOffset.theta;
-    }
-  }
 }
 
 }

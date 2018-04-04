@@ -17,6 +17,8 @@
 #include "util/logging/logging.h"
 #include "util/jsonWriter/jsonWriter.h"
 
+#include "coretech/common/engine/math/point_impl.h"
+
 #include "coretech/common/engine/jsonTools.h"
 #include "json/json.h"
 
@@ -130,6 +132,23 @@ void State_c::Dump(Util::JsonWriter& writer) const
   writer.AddEntry("x_mm", x_mm);
   writer.AddEntry("y_mm", y_mm);
   writer.AddEntry("theta_rads", theta);
+}
+
+float State_c::GetDistanceBetween(const State_c& start, const GraphState& end)
+{
+  return (end.GetPointXY_mm() - start.GetPointXY_mm()).Length();
+}
+
+float State_c::GetDistanceBetween(const State_c& start, const State_c& end)
+{
+  return (end.GetPointXY_mm() - start.GetPointXY_mm()).Length();
+}
+
+float State_c::GetMinAngleBetween(const State_c& start, const State_c& end)
+{
+  const float diff1 = std::abs(end.theta - start.theta);
+  const float diff2 = std::abs( std::abs(end.theta - start.theta) - M_PI );
+  return std::min( diff1, diff2 );
 }
 
 } // namespace Planning
