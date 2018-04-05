@@ -102,6 +102,7 @@ message RtsStatusResponse_2 {
     uint_8      bleState,
     uint_8      batteryState,
     string      version,
+    bool        otaInProgress,
 }
 
 message RtsWifiScanRequest {
@@ -115,6 +116,10 @@ message RtsWifiScanResponse {
 
 message RtsOtaUpdateRequest {
     string      url
+}
+
+message RtsOtaCancelRequest {
+
 }
 
 message RtsOtaUpdateResponse {
@@ -182,6 +187,8 @@ union RtsConnection_2 {
     RtsWifiAccessPointResponse      RtsWifiAccessPointResponse  = 0x14,
     RtsSshRequest                   RtsSshRequest               = 0x15,
     RtsSshResponse                  RtsSshResponse              = 0x16,
+    // New in v2
+    RtsOtaCancelRequest             RtsOtaCancelRequest         = 0x17,     // * new in v2
 }
 
 // The post-factory set of versions

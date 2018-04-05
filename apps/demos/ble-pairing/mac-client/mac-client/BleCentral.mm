@@ -10,9 +10,13 @@
 #include "BleCentral.h"
 #include <stdio.h>
 #include <sstream>
+#include <iostream>
 #include <iomanip>
+#include "signal.h"
 
 @implementation BleCentral
+
+BleCentral* centralContext;
 
 - (void)printHelp {
   printf("# vic shell commands #\n");
@@ -22,6 +26,7 @@
   printf("  wifi-ap <bool>                               Enable/Disable Access Point mode on Vector ('true' or 'false')\n");
   printf("  ota-start <url>                              Start Ota update with provided URL string argument.\n");
   printf("  ota-progress                                 Get current Ota download progress.\n");
+  printf("  ota-cancel                                   Cancel an on-going Ota download.\n");
   printf("  status                                       Get Vector's general status.\n");
   printf("  ssh-send [filename]                          Generates/Sends a public SSH key to Victor.\n");
   printf("  ssh-start                                    Tries to start an SSH session with Victor.\n");
@@ -71,9 +76,32 @@
     _commVersion = 0;
     
     _colorArray = @[ @32, @33, @34, @35, @36 ];
+    
+    _otaProgress = 0;
+    _otaStatusCode = 0;
+    _otaExpected = 0;
+    
+    //
+    // todo: Handle SIGINT to create new
+    // prompt line and use CTRL+D to close(like SSH).
+    //
+    // handle exit signal
+    // centralContext = self;
+    // signal(SIGINT, &CancelCommand);
   }
   
   return self;
+}
+
+void CancelCommand(int s) {
+  [centralContext interrupt];
+}
+
+- (void)interrupt {
+  _readyForNextCommand = true;
+  _currentCommand = "";
+  
+  std::cout << "\b\b  \b\b";
 }
 
 - (std::string)hexStr:(char*)data length:(int)len {
@@ -396,24 +424,6 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           _otaProgress = msg.current;
           _otaExpected = msg.expected;
           
-          /*
-           * Commenting out for visibility because in next pass, going
-           * to use this code again to show OTA progress bar.
-           *
-           
-           int size = 100;
-          int progress = (int)(((float)c/(float)t) * size);
-          std::string bar = "";
-          
-          for(int i = 0; i < size; i++) {
-            if(i <= progress) bar += "▓";
-            else bar += "_";
-          }
-          
-          printf("%100s [%d%%] [%llu/%llu] \r", bar.c_str(), progress, msg.current, msg.expected);
-          fflush(stdout);
-           
-           */
           break;
         }
         case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsCancelPairing: {
@@ -491,28 +501,28 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         }
         case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsStatusResponse_2: {
           //
-          Anki::Victor::ExternalComms::RtsStatusResponse_2 msg = rtsMsg.Get_RtsStatusResponse_2();
-          
-          std::string state = "";
-          switch(msg.wifiState) {
-            case 1:
-              state = "ONLINE";
-              break;
-            case 0:
-              state = "UNKNOWN";
-              break;
-            case 2:
-              state = "CONNECTED / NO INTERNET";
-              break;
-            case 3:
-              state = "DISCONNECTED";
-              break;
-            default:
-              break;
-          }
-          
-          printf("             ssid = %s\n connection_state = %s\n     access_point = %s\n          version = %s\n", [self asciiStr:(char*)msg.wifiSsidHex.c_str() length:(int)msg.wifiSsidHex.length()].c_str(), state.c_str(), msg.accessPoint? "true" : "false", msg.version.c_str());
           if(_currentCommand == "status" && !_readyForNextCommand) {
+            Anki::Victor::ExternalComms::RtsStatusResponse_2 msg = rtsMsg.Get_RtsStatusResponse_2();
+            
+            std::string state = "";
+            switch(msg.wifiState) {
+              case 1:
+                state = "ONLINE";
+                break;
+              case 0:
+                state = "UNKNOWN";
+                break;
+              case 2:
+                state = "CONNECTED / NO INTERNET";
+                break;
+              case 3:
+                state = "DISCONNECTED";
+                break;
+              default:
+                break;
+            }
+            
+            printf("             ssid = %s\n connection_state = %s\n     access_point = %s\n          version = %s\n  ota_in_progress = %s\n", [self asciiStr:(char*)msg.wifiSsidHex.c_str() length:(int)msg.wifiSsidHex.length()].c_str(), state.c_str(), msg.accessPoint? "true" : "false", msg.version.c_str(), msg.otaInProgress? "true" : "false");
             _readyForNextCommand = true;
           }
           
@@ -531,27 +541,38 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsOtaUpdateResponse: {
           Anki::Victor::ExternalComms::RtsOtaUpdateResponse msg = rtsMsg.Get_RtsOtaUpdateResponse();
           _otaStatusCode = msg.status;
-          _otaProgress = msg.current;
+          
+          if(_otaStatusCode == 2) {
+            _otaProgress = msg.current == 0? _otaProgress : msg.current;
+          } else {
+            _otaProgress = msg.current;
+          }
           _otaExpected = msg.expected;
           
           /*
            * Commenting out for visibility because in next pass, going
            * to use this code again to show OTA progress bar.
-           *
-           
-           int size = 100;
-           int progress = (int)(((float)c/(float)t) * size);
-           std::string bar = "";
-           
-           for(int i = 0; i < size; i++) {
-           if(i <= progress) bar += "▓";
-           else bar += "_";
-           }
-           
-           printf("%100s [%d%%] [%llu/%llu] \r", bar.c_str(), progress, msg.current, msg.expected);
-           fflush(stdout);
-           
            */
+          
+          if(_currentCommand == "ota-progress" && !_readyForNextCommand) {
+            if(_otaStatusCode != 2) {
+              _readyForNextCommand = true;
+              _currentCommand = "";
+            }
+            
+            int size = 100;
+            int progress = (int)(((float)_otaProgress/(float)_otaExpected) * size);
+            std::string bar = "";
+           
+            for(int i = 0; i < size; i++) {
+              if(i <= progress) bar += "▓";
+              else bar += "_";
+            }
+           
+            printf("%100s [%d%%] [%llu/%llu] \r", bar.c_str(), progress, msg.current, msg.expected);
+            fflush(stdout);
+          }
+          
           break;
         }
         case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsCancelPairing: {
@@ -870,10 +891,17 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsOtaUpdateRequest>(self, _commVersion, url);
         _readyForNextCommand = true;
         _currentCommand = "";
-      } else if(strcmp(words[0].c_str(), "ota-progress") == 0) {
-        printf("StatusCode[%d] [%llu/%llu]\n", _otaStatusCode, _otaProgress, _otaExpected);
+      } else if(strcmp(words[0].c_str(), "ota-cancel") == 0) {
+        if(_commVersion < 2) {
+          printf("ota-cancel not supported in version %d\n", _commVersion);
+        } else {
+          Clad::SendRtsMessage_2<Anki::Victor::ExternalComms::RtsOtaCancelRequest>(self, _commVersion);
+        }
         _readyForNextCommand = true;
         _currentCommand = "";
+      } else if(strcmp(words[0].c_str(), "ota-progress") == 0) {
+        _readyForNextCommand = false;
+        _currentCommand = "ota-progress";
       } else if(strcmp(words[0].c_str(), "status") == 0) {
         Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsStatusRequest>(self, _commVersion);
       } else if(strcmp(words[0].c_str(), "ssh-send") == 0) {
@@ -1059,6 +1087,13 @@ didFailToConnectPeripheral:(CBPeripheral *)peripheral
   if(_verbose) NSLog(@"Connected to peripheral");
   [self StopScanning];
   [peripheral discoverServices:@[_victorService]];
+}
+
+- (void)centralManager:(CBCentralManager *)central
+didDisconnectPeripheral:(CBPeripheral *)peripheral
+                 error:(NSError *)error {
+  printf("\n* Disconnected\n");
+  exit(0);
 }
 
 - (void)centralManagerDidUpdateState:(nonnull CBCentralManager *)central {

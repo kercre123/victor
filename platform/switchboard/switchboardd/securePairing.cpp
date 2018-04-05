@@ -145,6 +145,7 @@ void SecurePairing::SubscribeToCladMessages() {
   _rtsRtsStatusRequestHandle = _cladHandler->OnReceiveRtsStatusRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsStatusRequest, this, std::placeholders::_1));
   _rtsWifiScanRequestHandle = _cladHandler->OnReceiveRtsWifiScanRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsWifiScanRequest, this, std::placeholders::_1));
   _rtsOtaUpdateRequestHandle = _cladHandler->OnReceiveRtsOtaUpdateRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsOtaUpdateRequest, this, std::placeholders::_1));
+  _rtsOtaCancelRequestHandle = _cladHandler->OnReceiveRtsOtaCancelRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsOtaCancelRequest, this, std::placeholders::_1));
   _rtsWifiAccessPointRequestHandle = _cladHandler->OnReceiveRtsWifiAccessPointRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsWifiAccessPointRequest, this, std::placeholders::_1));
   _rtsCancelPairingHandle = _cladHandler->OnReceiveCancelPairingRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsCancelPairing, this, std::placeholders::_1));
   _rtsAckHandle = _cladHandler->OnReceiveRtsAck().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsAck, this, std::placeholders::_1));
@@ -368,7 +369,7 @@ void SecurePairing::SendStatusResponse() {
 
   std::string buildNoString(buildNo);
 
-  SendRtsMessage<RtsStatusResponse_2>(state.ssid, state.connState, isApMode, bleState, batteryState, buildNoString);
+  SendRtsMessage<RtsStatusResponse_2>(state.ssid, state.connState, isApMode, bleState, batteryState, buildNoString, _isOtaUpdating);
 
   Log::Write("Send status response.");
 }
@@ -544,6 +545,23 @@ void SecurePairing::HandleRtsOtaUpdateRequest(const Victor::ExternalComms::RtsCo
   }
   
   Log::Write("Starting OTA update.");
+}
+
+void SecurePairing::HandleRtsOtaCancelRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
+  if(!AssertState(CommsState::SecureClad)) {
+    return;
+  }
+
+  if(_state == PairingState::ConfirmedSharedSecret && _isOtaUpdating) {
+    Anki::CancelBackgroundCommands();
+    _isOtaUpdating = false;
+    Log::Write("Terminating OTA Update Engine");
+  } else {
+    Log::Write("Tried to cancel OTA when OTA not running.");
+  }
+
+  // Send status response
+  SendStatusResponse();
 }
 
 void SecurePairing::HandleRtsWifiAccessPointRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
