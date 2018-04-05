@@ -22,6 +22,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/quoteMacro.h"
 
+#include <cstdio>
 #include <list>
 #include <fstream>
 
@@ -47,8 +48,11 @@ namespace Vision {
 // static const char * const kLogChannelName = "VisionSystem";
  
 namespace {
-  CONSOLE_VAR(bool, kObjectDetection_UseTensorFlowProcess, "Vision.ObjectDetector", false);
   CONSOLE_VAR(f32,  kObjectDetection_Gamma,                "Vision.ObjectDetector", 1.0f); // set to 1.0 to disable
+  
+  CONSOLE_VAR(bool,       kObjectDetection_UseTensorFlowProcess, "Vision.ObjectDetector", true);
+  CONSOLE_VAR_RANGED(u32, kObjectDetection_PollPeriod_ms,        "Vision.ObjectDetector", 10, 1, 250);
+  CONSOLE_VAR_RANGED(f32, kObjectDetection_TimeoutDuration_sec,  "Vision.ObjectDetector", 10.f, 1., 15.f);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -68,30 +72,36 @@ ObjectDetector::~ObjectDetector()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ObjectDetector::Init(const std::string& modelPath, const std::string& cachePath, const Json::Value& config)
 {
-  _profiler.Tic("LoadModel");
-  const Result result = _model->LoadModel(modelPath, config);
-  _profiler.Toc("LoadModel");
+  Result result = RESULT_OK;
   
-  if(RESULT_OK != result)
+  _cachePath = cachePath;
+  if(kObjectDetection_UseTensorFlowProcess)
   {
-    PRINT_NAMED_ERROR("ObjectDetector.Init.LoadModelFailed", "");
-    return result;
+    PRINT_NAMED_INFO("ObjectDetector.Init.CachePathSet", "%s", _cachePath.c_str());
+    
+    // Clear the cache on startup
+    Util::FileUtils::RemoveDirectory(_cachePath);
+    Util::FileUtils::CreateDirectory(_cachePath);
   }
-
+  else
+  {
+    _profiler.Tic("LoadModel");
+    result = _model->LoadModel(modelPath, config);
+    _profiler.Toc("LoadModel");
+    
+    if(RESULT_OK != result)
+    {
+      PRINT_NAMED_ERROR("ObjectDetector.Init.LoadModelFailed", "");
+      return result;
+    }
+  }
+  
   PRINT_NAMED_INFO("ObjectDetector.Init.LoadModelTime", "Loading model from '%s' took %.1fsec",
                    modelPath.c_str(), Util::MilliSecToSec(_profiler.AverageToc("LoadModel")));
 
   _profiler.SetPrintFrequency(config.get("ProfilingPrintFrequency_ms", 10000).asUInt());
   _profiler.SetDasLogFrequency(config.get("ProfilingEventLogFrequency_ms", 10000).asUInt());
 
-  _cachePath = cachePath;
-  if(kObjectDetection_UseTensorFlowProcess)
-  {
-    // Clear the cache on startup
-    Util::FileUtils::RemoveDirectory(_cachePath);
-    Util::FileUtils::CreateDirectory(_cachePath);
-  }
-  
   _isInitialized = true;
   return result;
 }
@@ -164,8 +174,8 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
       _widthScale = (f32)imageCache.GetOrigNumRows() / (f32)_imgBeingProcessed.GetNumRows();
       _heightScale = (f32)imageCache.GetOrigNumCols() / (f32)_imgBeingProcessed.GetNumCols();
       
-      PRINT_NAMED_INFO("ObjectDetector.Detect.ProcessingImage", "Detecting objects in %dx%d image t=%u",
-                       _imgBeingProcessed.GetNumCols(), _imgBeingProcessed.GetNumRows(), _imgBeingProcessed.GetTimestamp());
+      PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Detect.ProcessingImage", "Detecting objects in %dx%d image t=%u",
+                    _imgBeingProcessed.GetNumCols(), _imgBeingProcessed.GetNumRows(), _imgBeingProcessed.GetTimestamp());
       
       _future = std::async(std::launch::async, [this]() {
         std::list<DetectedObject> objects;
@@ -181,30 +191,35 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
           
           // Rename to what TF process expects once the data is fully written (poor man's "lock")
           const std::string imageFilename = Util::FileUtils::FullFilePath({_cachePath, "objectDetectionImage.png"});
-          const std::string cmd = "mv " + tempFilename + " " + imageFilename;
-          system(cmd.c_str());
+          if(0 != rename(tempFilename.c_str(), imageFilename.c_str()))
+          {
+            PRINT_NAMED_ERROR("StandaloneInferenceProces.FailedToRenameFile",
+                              "%s -> %s", tempFilename.c_str(), imageFilename.c_str());
+            return objects;
+          }
           _profiler.Toc("StandaloneInferenceProcess.WriteImage");
 
           PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Model.SavedImageFileForProcessing", "%s t:%d",
                          imageFilename.c_str(), _imgBeingProcessed.GetTimestamp());
           
           _profiler.Tic("StandaloneInferenceProcess.Polling");
-          const u32 kPollPeriod_ms = 10;
-          const f32 timeoutDuration_sec = 10.f;
-          const f32 starttTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-          f32 currentTime_sec = starttTime_sec;
+          const f32 startTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          f32 currentTime_sec = startTime_sec;
           
           // Wait for result JSON to appear
           const std::string resultFilename = Util::FileUtils::FullFilePath({_cachePath, "objectDetectionResults.json"});
           bool resultAvailable = false;
-          while( !resultAvailable && (currentTime_sec - starttTime_sec < timeoutDuration_sec) )
+          while( !resultAvailable && (currentTime_sec - startTime_sec < kObjectDetection_TimeoutDuration_sec) )
           {
-            std::this_thread::sleep_for(std::chrono::milliseconds(kPollPeriod_ms));
+            std::this_thread::sleep_for(std::chrono::milliseconds(kObjectDetection_PollPeriod_ms));
             resultAvailable = Util::FileUtils::FileExists(resultFilename);
+            currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
           }
           _profiler.Toc("StandaloneInferenceProcess.Polling");
 
           // Delete image file (whether or not we got the result or timed out)
+          PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Detect.DeletingImageFile", "%s, deleting %s",
+                         (resultAvailable ? "Result found" : "Polling timed out"), imageFilename.c_str());
           Util::FileUtils::DeleteFile(imageFilename);
           
           if(resultAvailable)
@@ -253,6 +268,12 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
             }
             file.close();
             Util::FileUtils::DeleteFile(resultFilename);
+          }
+          else
+          {
+            PRINT_NAMED_WARNING("ObjectDetector.Model.PollingForResultTimedOut",
+                                "Start:%.1fsec Current:%.1f Timeout:%.1fsec",
+                                startTime_sec, currentTime_sec, kObjectDetection_TimeoutDuration_sec);
           }
           
           _profiler.Toc("StandaloneInferenceProcess");      
