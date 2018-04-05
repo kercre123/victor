@@ -36,6 +36,9 @@
 #include "sim_hal.h"
 #endif
 
+// Whether or not to read/process imu data on a thread
+#define PROCESS_IMU_ON_THREAD 1
+
 namespace Anki {
 namespace Cozmo {
 namespace HAL {
@@ -54,6 +57,9 @@ static const f32 MOTOR_MAX_POWER = 1.0f;
 
 Result Init(void);
 Result Step(void);
+void Stop(void);
+
+void Shutdown();
 
 /************************************************************************
  * \section Time
@@ -231,48 +237,12 @@ enum {
 };
 
 
-/** Set LED to specific color, includes backpack, headlight and backpack IR
+/** Set LED to specific color
  * @param[in] led_id The LED to Set
  * @param[in] color 32 bit RGBA
  */
 void SetLED(const LEDId led_id, const u32 color);
-
-/************************************************************************
- * \section Accessory Interface
- */
-
-/// Data about an unconnected object advertisement
-struct ObjectAdvertisement
-{
-  u32 factory_id;    ///< Factory ID of object, used for slot assignment
-  u32 lastHeardTick; ///< Last tick heard from
-  s32 rssi;          ///< RSSI of last advertisement packet
-};
-
-/** Retrieves the list of most recently heard from unassigned object advertisements.
- * @param[out] objects An array to fill with advertisement data. Must have room for MAX_ADVERTISEMENTS_PER_TICK
- * entries.
- * @return Number of entries populated.
- */
-int GetObjectAdvertisements(ObjectAdvertisement* objects);
-
-/// Assign a cube to a slot
-Result AssignSlot(const u32 activeID, const u32 factory_id);
-
-/** Set the color of each LED on the accessory
- * @param[in] activeID Accessory slot to update
- * @param[in] colors an array of 4 32-bit RGBA color values
- */
-Result SetBlockLight(const u32 activeID, const u32 colors[4]);
-
-/// Enable or disable streaming accelerometer data from object at activeID
-Result StreamObjectAccel(const u32 activeID, const bool enable);
-
-/** Retrieve cube accelerometer data returned this tick
- * @param[out] activeID Will be set to the ID of the accessory who's data has been received
- * @return Pointer to raw accelerometer data received for that cube this tick or NULL if no data available.
- */
-u8* GetObjectAccelData(u32* activeID);
+void SetSystemLED(u32 color);
 
 /************************************************************************
  * \section Power management
@@ -296,7 +266,6 @@ typedef enum
  */
 void PowerSetMode(const PowerState state);
 
-
 /************************************************************************
  * \section "Radio" comms to/from engine
  */
@@ -313,10 +282,9 @@ u32 RadioGetNextPacket(u8* buffer);
 /** Send a packet on the radio.
  * @param buffer [in] A pointer to the data to be sent
  * @param length [in] The number of bytes to be sent
- * @param socket [in] Socket number, default 0 (base station)
  * @return true if the packet was queued for transmission, false if it couldn't be queued.
  */
-bool RadioSendPacket(const void *buffer, const u32 length, const u8 socket=0);
+bool RadioSendPacket(const void *buffer, const u32 length);
 
 /** Wrapper method for sending messages NOT PACKETS
  * @param msgID The ID (tag) of the message to be sent

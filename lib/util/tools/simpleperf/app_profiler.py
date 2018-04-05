@@ -261,6 +261,7 @@ class AppProfiler(object):
 
     def _download_simpleperf(self):
         simpleperf_binary = get_target_binary_path(self.app_arch, 'simpleperf')
+        self.adb.check_run(['shell', 'mkdir', '-p', '/data/local/tmp'])
         self.adb.check_run(['push', simpleperf_binary, '/data/local/tmp'])
         self.adb.check_run(['shell', 'chmod', 'a+x', '/data/local/tmp/simpleperf'])
 

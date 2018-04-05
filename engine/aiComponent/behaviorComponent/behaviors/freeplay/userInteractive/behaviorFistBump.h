@@ -24,8 +24,8 @@ class BehaviorFistBump : public ICozmoBehavior
 {
 private:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorFistBump(const Json::Value& config);
   
 public:
@@ -88,6 +88,8 @@ private:
 
   std::set<IFistBumpListener*> _fistBumpListeners;
   void ResetTrigger(bool updateLastCompletionTime);
+  
+  void ResetFistBumpTimer() const;
   
 }; // class BehaviorFistBump
   

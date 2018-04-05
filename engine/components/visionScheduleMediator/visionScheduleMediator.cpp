@@ -22,6 +22,12 @@
 namespace Anki{
 namespace Cozmo{
 
+// If UpdatePeriods longer than this become necessary, INCREASE IT. This will also increase
+// the number of frames of the schedule displayed in Webots which will require an appropriate
+// increase in the width of "victor_vision_mode_display" in CozmoVisDisplay.proto to display 
+// correctly.
+const uint8_t kMaxUpdatePeriod = 16;
+
 VisionScheduleMediator::VisionScheduleMediator()
 : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::VisionScheduleMediator)
 {
@@ -50,9 +56,25 @@ void VisionScheduleMediator::InitDependent(Cozmo::Robot* robot, const RobotCompM
     DEV_ASSERT(visionMode != VisionMode::Idle, "VisionScheduleMediator.InvalidVisionModeInJsonConfig");
 
     VisionModeData newModeData = { .low = ParseUint8(modeSettings, "low", debugName),
-                                       .med = ParseUint8(modeSettings, "med", debugName),
-                                       .high = ParseUint8(modeSettings, "high", debugName),
-                                       .standard = ParseUint8(modeSettings, "standard", debugName)};
+                                   .med = ParseUint8(modeSettings, "med", debugName),
+                                   .high = ParseUint8(modeSettings, "high", debugName),
+                                   .standard = ParseUint8(modeSettings, "standard", debugName),
+                                   .relativeCost = ParseUint8(modeSettings, "relativeCost", debugName)};
+
+    // Range check incoming params
+    DEV_ASSERT((newModeData.low > 0) && (newModeData.low < kMaxUpdatePeriod) && 
+               (newModeData.med > 0) && (newModeData.med < kMaxUpdatePeriod) &&
+               (newModeData.high > 0) && (newModeData.high < kMaxUpdatePeriod) &&
+               (newModeData.standard > 0) && (newModeData.standard < kMaxUpdatePeriod),
+               "VisionScheduleMediator.VisionModeFrequencyOutOfRange");
+
+    // Limit inputs to Power-Of-Two (zero check is covered above)
+    // To simplify schedule building, VisionModeFrequencies must be POT 
+    DEV_ASSERT(((newModeData.low & (newModeData.low  - 1)) == 0) &&
+               ((newModeData.med & (newModeData.med  - 1)) == 0) &&
+               ((newModeData.high & (newModeData.high  - 1)) == 0) &&
+               ((newModeData.standard & (newModeData.standard  - 1)) == 0),
+               "VisionScheduleMediator.NonPOTVisionModeFrequency");
 
     _modeDataMap.insert(std::pair<VisionMode, VisionModeData>(visionMode, newModeData));
   }
@@ -68,16 +90,16 @@ void VisionScheduleMediator::InitDependent(Cozmo::Robot* robot, const RobotCompM
 void VisionScheduleMediator::Update()
 {
   // Update the VisionSchedule, if necessary
-  if(subscriptionRecordIsDirty){
+  if(_subscriptionRecordIsDirty){
     UpdateVisionSchedule();
   }
 
   // Update the visualization tools
   if(ANKI_DEV_CHEATS){
     // Send every 50 frames to update corner cases for the vizManager e.g. after init
-    if(framesSinceSendingDebugViz++ >= 50){
+    if(_framesSinceSendingDebugViz++ >= 50){
       SendDebugVizMessages();
-      framesSinceSendingDebugViz = 0;
+      _framesSinceSendingDebugViz = 0;
     }
   } 
 }
@@ -126,7 +148,7 @@ void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* c
     }
   }
 
-  subscriptionRecordIsDirty = true;
+  _subscriptionRecordIsDirty = true;
 }
 
 void VisionScheduleMediator::ReleaseAllVisionModeSubscriptions(IVisionModeSubscriber* subscriber)
@@ -143,13 +165,12 @@ void VisionScheduleMediator::ReleaseAllVisionModeSubscriptions(IVisionModeSubscr
     }
   }
 
-  subscriptionRecordIsDirty = true;
+  _subscriptionRecordIsDirty = true;
 }
 
 void VisionScheduleMediator::UpdateVisionSchedule()
 {
   // Construct a new schedule
-  std::list<std::pair<VisionMode, VisionModeSchedule>> allModeScheduleList;
   bool scheduleDirty = false;
   bool activeModesDirty = false;
 
@@ -172,8 +193,6 @@ void VisionScheduleMediator::UpdateVisionSchedule()
       // Compute the update period for active modes and add to the schedule
       if(modeData.enabled) {
         if(UpdateModePeriodIfNecessary(modeData)){
-          VisionModeSchedule schedule(modeData.updatePeriod);
-          allModeScheduleList.push_back({mode, schedule});
           modeScheduleChanged = true;
           scheduleDirty = true;
         }
@@ -201,10 +220,7 @@ void VisionScheduleMediator::UpdateVisionSchedule()
   }
 
   if(scheduleDirty){
-    const bool kUseDefaultsForUnspecified = true;
-    AllVisionModesSchedule schedule(allModeScheduleList, kUseDefaultsForUnspecified);
-    _visionComponent->PopCurrentModeSchedule();
-    _visionComponent->PushNextModeSchedule(std::move(schedule));
+    GenerateBalancedSchedule();
   }
 
   // On any occasion where we made updates, update the debug viz
@@ -212,7 +228,68 @@ void VisionScheduleMediator::UpdateVisionSchedule()
     SendDebugVizMessages();
   }
 
-  subscriptionRecordIsDirty = false;
+  _subscriptionRecordIsDirty = false;
+}
+
+void VisionScheduleMediator::GenerateBalancedSchedule()
+{
+  uint8_t costStackup[kMaxUpdatePeriod] = {};
+  uint8_t maxRequestedUpdatePeriod = 0;
+
+  AllVisionModesSchedule::ModeScheduleList modeScheduleList;
+
+  for(auto& modeData : _modeDataMap){
+    if(!modeData.second.enabled){
+      continue;
+    }
+
+    const VisionMode mode = modeData.first;
+    const uint8_t updatePeriod = modeData.second.updatePeriod;
+    const uint8_t relativeCost = modeData.second.relativeCost;
+
+    // Keep track of our longest requested UpdatePeriod to search the full schedule minimally
+    if (updatePeriod > maxRequestedUpdatePeriod){
+      maxRequestedUpdatePeriod = updatePeriod;
+    }
+    
+    // Find the offset of the current min computational cost frame in the schedule
+    uint8_t minCost = std::numeric_limits<uint8_t>::max();
+    uint8_t minCostOffset = 0;
+    // For updatePeriods which can be interleaved (updatePeriod != 0,1), start them on the current min cost frame
+    if(updatePeriod > 1){
+      // Search the full schedule, minimally
+      for(int i=0; i < maxRequestedUpdatePeriod; ++i){
+        if(costStackup[i] < minCost){
+          minCost = costStackup[i]; 
+          minCostOffset = i;
+          if(costStackup[i]==0){
+            break;
+          }
+        }
+      }
+    }
+
+    // Reframe minCostOffset in the set [0, updatePeriod)
+    minCostOffset %= updatePeriod;
+
+    // Having found the desired offset, populate the costStackup record
+    modeData.second.offset = minCostOffset;
+    for(int i = minCostOffset; i < kMaxUpdatePeriod; i += updatePeriod){
+      costStackup[i] += relativeCost;
+    }
+
+    DEV_ASSERT((minCostOffset < updatePeriod), "VisionScheduleMediator.FrameOffsetOutOfBounds");
+    VisionModeSchedule schedule(updatePeriod, minCostOffset);
+    modeScheduleList.push_back({ mode, schedule });
+  }
+
+  const bool kUseDefaultsForUnspecified = true;
+  AllVisionModesSchedule overallSchedule(modeScheduleList, kUseDefaultsForUnspecified);
+  if(_hasScheduleOnStack){
+    _visionComponent->PopCurrentModeSchedule();
+  }
+  _visionComponent->PushNextModeSchedule(std::move(overallSchedule));
+  _hasScheduleOnStack = true;
 }
 
 bool VisionScheduleMediator::UpdateModePeriodIfNecessary(VisionModeData& modeData) const
@@ -257,7 +334,16 @@ void VisionScheduleMediator::SendDebugVizMessages()
 
   for(auto& modeDataPair : _modeDataMap) {
     if(modeDataPair.second.enabled){
-      std::string modeString(EnumToString(modeDataPair.first));
+      char schedule[kMaxUpdatePeriod + 1] = {0};
+      memset(schedule, '0', kMaxUpdatePeriod);
+      
+      for(int i = modeDataPair.second.offset; i < kMaxUpdatePeriod; i += modeDataPair.second.updatePeriod){
+        schedule[i] = '1';
+      }
+
+      std::string modeString(schedule);
+      modeString += " ";
+      modeString += EnumToString(modeDataPair.first);
       data.debugStrings.push_back(modeString);
     }
   }

@@ -15,7 +15,6 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorDevPettingTestSimple_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "clad/types/touchGestureTypes.h"
 #include <vector>
 
 namespace Anki {
@@ -33,7 +32,7 @@ public:
   
 protected:
   
-  friend class BehaviorContainer;
+  friend class BehaviorFactory;
   BehaviorDevPettingTestSimple(const Json::Value& config);
   
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {

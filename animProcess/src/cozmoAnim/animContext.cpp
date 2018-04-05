@@ -31,7 +31,7 @@ AnimContext::AnimContext(Util::Data::DataPlatform* dataPlatform)
   , _locale(new Anki::Util::Locale(Anki::Util::Locale::GetNativeLocale()))  
   , _random(new Anki::Util::RandomGenerator())
   , _dataLoader(new RobotDataLoader(this))
-  , _webService(new WebService::WebService())
+  // , _webService(new WebService::WebService())
   , _threadIdHolder(new ThreadIDInternal)
 {
   if (dataPlatform != nullptr)

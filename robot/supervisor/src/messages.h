@@ -53,20 +53,9 @@ namespace Anki {
 
       void ProcessMessage(RobotInterface::EngineToRobot& msg);
 
-      void SniffMessage(RobotInterface::RobotToEngine& msg);
-
-      // Start looking for a particular message ID
-      void LookForID(const RobotInterface::EngineToRobot::Tag msgID);
-
-      // Did we see the message ID we last set? (Or perhaps we timed out)
-      bool StillLookingForID(void);
-
-      // Used by visionSystem for prediction during tracking
       void UpdateRobotStateMsg();
 
-      // Sends robot state message, either the one passed in or the one
-      // stored internally that is updated by UpdateRobotStateMsg().
-      Result SendRobotStateMsg(const RobotState* msg = NULL);
+      Result SendRobotStateMsg();
 
       Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted, bool autoStarted = false);
       
@@ -79,11 +68,6 @@ namespace Anki {
 
       // Resets the receipt of init message
       void ResetInit();
-
-#     ifdef SIMULATOR
-      // Send out a chunked up JPEG-compressed image
-      Result CompressAndSendImage(const u8* img, const s32 captureHeight, const s32 captureWidth, const TimeStamp_t captureTime);
-#     endif
 
     } // namespace Messages
   } // namespace Cozmo

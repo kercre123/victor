@@ -20,7 +20,7 @@ In a shipping build configuration, you will be asked for username and password, 
 
 ## Folders/files
 
-Folders and files within Victor can be examined by clicking on one of the five folder buttons *output*, *resources*, *cache*, *currentgamelog* and *external*. The corresponding folder contents will be shown.  Clicking on folder links will navigate to the corresponding folder.  Clicking on a file link with serve up the file (as a download, or in the case of files like .json files, right in the web page.)
+Folders and files within Victor can be examined by clicking on one of the four folder buttons *persistent*, *resources*, *cache*, and *currentgamelog*. The corresponding folder contents will be shown.  Clicking on folder links will navigate to the corresponding folder.  Clicking on a file link with serve up the file (as a download, or in the case of files like .json files, right in the web page.)
 
 ## Console vars and functions
 
@@ -46,11 +46,10 @@ You can make requests to the web server from a script or command line, e.g.
 To view the contents of the file system:
 
 ```
-curl http://<ip address>:<8887 or 8888 or 8889>/output
+curl http://<ip address>:<8887 or 8888 or 8889>/persistent
 curl http://<ip address>:<8887 or 8888 or 8889>/resources
 curl http://<ip address>:<8887 or 8888 or 8889>/cache
 curl http://<ip address>:<8887 or 8888 or 8889>/currentgamelog
-curl http://<ip address>:<8887 or 8888 or 8889>/external
 ```
 
 To download a file from the file system:

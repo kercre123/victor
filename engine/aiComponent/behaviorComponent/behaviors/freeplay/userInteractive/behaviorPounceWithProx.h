@@ -22,8 +22,8 @@ class BehaviorPounceWithProx : public ICozmoBehavior
 {
 private:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorPounceWithProx(const Json::Value& config);
   
 public:

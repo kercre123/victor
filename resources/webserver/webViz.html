@@ -7,7 +7,7 @@
   <title>Victor Veb Viz</title>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.slim.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/processing.js/1.6.6/processing.min.js"></script>
 
   <script>
@@ -16,7 +16,10 @@
       // names. The (case-insensitive) key should match
       // the moduleName used when your c++ code passes
       // data to the webservice.
-      Behaviors : 'webVizModules/behaviors.js'
+      Behaviors : 'webVizModules/behaviors.js',
+      MicData : 'webVizModules/micData.js',
+      Intents : 'webVizModules/intents.js',
+      BehaviorConds : 'webVizModules/behaviorConditions.js'
     }
   </script>
 
@@ -39,26 +42,98 @@
     }
 
     ul.tabs {
-      margin: 0px;
-      padding: 0px;
+      -ms-box-orient: horizontal;
+      display: -webkit-box;
+      display: -moz-box;
+      display: -ms-flexbox;
+      display: -moz-flex;
+      display: -webkit-flex;
+      display: flex;
+      -webkit-flex-wrap: wrap-reverse;
+      flex-wrap: wrap-reverse;
+      align-items: stretch;
+      width:100%;
+      position: relative;
+      text-align: center;
       list-style: none;
+      margin: 0;
+      padding: 0px 6px;
+      line-height: 24px;
+      overflow: hidden;
+    }
+    ul.tabs:after {
+      position: absolute;
+      content: "";
+      width: 100%;
+      bottom: 0;
+      left: 0;
+      border-bottom: 1px solid #AAA;
+      z-index: 1;
     }
     ul.tabs li {
-      background: none;
-      color: #222;
-      display: inline-block;
       padding: 10px 15px;
-      cursor: pointer;
+      font-size: 12px; 
+      text-align: center;
+      background: #aaa;
+      cursor: pointer;    
+      flex: 0 1 auto;
+
+      position: relative;
+      margin: 0 8px -1px 8px;
+      padding: 0 13px;
+      border: 1px solid #AAA;
+      border-width: 1px 0px 1px 0px;
+      background-color: #d9d9d9;
+      background-image: linear-gradient(to bottom, #d9d9d9 50%, #bcbcbc 100%);
+      box-shadow: inset 0 1px 0 #FFF;
+      text-shadow: 0 1px #FFF;
+      z-index: 0;
     }
+    ul.tabs li:before,
+    ul.tabs li:after {
+      position: absolute;
+      bottom: -1px;
+      width: 15px;
+      height: 26px;
+      content: " ";
+      border: 1px solid #AAA;
+      background: linear-gradient(to bottom, #d9d9d9 50%, #bcbcbc 100%);
+      z-index: 3;
+    }
+    ul.tabs li:before {
+      left: -10px;
+      border-right: none;
+      border-top-left-radius: 6px;
+      transform: skew(-20deg);
+      box-shadow: -2px 0px 2px rgba(0, 0, 0, 0.1), inset 0 1px 0 #FFF;
+    }
+    ul.tabs li:after {
+      right: -10px;
+      border-left: none;
+      border-top-right-radius: 6px;
+      transform: skew(20deg);
+      box-shadow: 2px 0px 3px rgba(0, 0, 0, 0.1), inset 0 1px 0 #FFF;
+    }
+
     ul.tabs li.current {
       background: #ededed;
-      color: #222;
+      color: #000;
+      z-index: 2;
+      border-bottom-color: #ededed;
+    }
+
+    ul.tabs li.current:before,
+    ul.tabs li.current:after {
+      background: #ededed;
+      border-bottom-color: #ededed;
     }
 
     .tab-content {
       display: none;
       background: #ededed;
       padding: 15px;
+      border: 1px solid #AAA;
+      border-top:none;
     }
 
     .tab-content.current {
@@ -74,6 +149,7 @@
       bottom:10px;
       right:10px;
       font-size:20px;
+      color:red;
     }
 
     
@@ -97,7 +173,10 @@
       <p>This page will display data "pushed" from Victor engine to multiple drawing modules.</p>
       <p>Each tab contains its own module. Open the tab to subscribe to the data source for that module.</p>
       <p>To add new modules, start with the template file module.js.template.</p>
+      <p>Are you not seeing new tabs or new functionality? In Chrome, hit Command + Option + J,
+         then right click the page refresh button. Select "Empty cache and hard reload"</p>
     </div>
+
     
   </div>
 
@@ -230,7 +309,7 @@
       socket = new WebSocket(uri);
       socket.onopen = function(){
         // notify that we've connected
-        $('#status').text('Connected');
+        $('#status').text('Connected').css('color','black');
       }
       socket.onmessage = function(msg){
         var jsonData = JSON.parse(msg.data);
@@ -240,7 +319,7 @@
         return false; // keep open
       }
       socket.onclose = function(e){
-        $('#status').text('Disconnected');
+        $('#status').text('Disconnected').css('color','red');
         for( var moduleName in modules ) {
           var idx = subscribedModules.indexOf(moduleName);
           if( idx >= 0 ) {
@@ -249,7 +328,7 @@
         }
       } 
       socket.onerror=function (e) {
-        $('#status').text('WebSockets error: ' + e.code + ' '  + e.reason + '\n');
+        $('#status').text('WebSockets error: ' + e.code + ' '  + e.reason).css('color','red');
       } 
     }
     var subscribe = function(moduleName) {

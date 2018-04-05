@@ -16,6 +16,8 @@
 #include "util/logging/channelFilter.h"
 #include "util/helpers/templateHelpers.h"
 
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
 #if !defined(DEV_LOGGER_ENABLED)
   #if FACTORY_TEST
     #define DEV_LOGGER_ENABLED 1
@@ -52,6 +54,17 @@ constexpr const int SLEEP_DELAY_US = (10*1000);
 Anki::Cozmo::CozmoAPI* gEngineAPI = nullptr;
 Anki::Util::Data::DataPlatform* gDataPlatform = nullptr;
 
+// Signal handlers
+namespace {
+  bool gShutdown = false;
+}
+
+static void sigterm(int)
+{
+  LOG_INFO("CozmoEngineMain.SIGTERM", "Shutting down");
+  gShutdown = true;
+}
+
 void configure_engine(Json::Value& config)
 {
   if (!config.isMember(AnkiUtil::kP_ADVERTISING_HOST_IP)) {
@@ -66,42 +79,15 @@ void configure_engine(Json::Value& config)
 
 }
 
-static Anki::Util::Data::DataPlatform* createPlatform(const std::string& filesPath,
+static Anki::Util::Data::DataPlatform* createPlatform(const std::string& persistentPath,
                                          const std::string& cachePath,
-                                         const std::string& externalPath,
                                          const std::string& resourcesPath)
 {
-    Anki::Util::FileUtils::CreateDirectory(filesPath);
+    Anki::Util::FileUtils::CreateDirectory(persistentPath);
     Anki::Util::FileUtils::CreateDirectory(cachePath);
-    Anki::Util::FileUtils::CreateDirectory(externalPath);
     Anki::Util::FileUtils::CreateDirectory(resourcesPath);
 
-    return new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
-}
-
-static std::string createResourcesPath(const std::string& resourcesBasePath)
-{
-  std::string resourcesRefPath = resourcesBasePath + "/current";
-  std::string resourcesRef = Anki::Util::FileUtils::ReadFile(resourcesRefPath);
-  {
-    auto it = std::find_if(resourcesRef.rbegin(), resourcesRef.rend(),
-          [](char ch){ return !std::iswspace(ch); });
-    resourcesRef.erase(it.base() , resourcesRef.end());
-  }
-  return resourcesBasePath + "/" + resourcesRef + "/cozmo_resources";
-}
-
-static void getAndroidPlatformPaths(std::string& filesPath,
-                             std::string& cachePath,
-                             std::string& externalPath,
-                             std::string& resourcesPath,
-                             std::string& resourcesBasePath)
-{
-  filesPath = "/data/data/com.anki.cozmoengine/files";
-  cachePath = "/data/data/com.anki.cozmoengine/cache";
-  externalPath = "/sdcard/Android/data/com.anki.cozmoengine/files";
-  resourcesBasePath = externalPath + "/assets";
-  resourcesPath = createResourcesPath(resourcesBasePath);
+    return new Anki::Util::Data::DataPlatform(persistentPath, cachePath, resourcesPath);
 }
 
 static int cozmo_start(const Json::Value& configuration)
@@ -119,60 +105,52 @@ static int cozmo_start(const Json::Value& configuration)
   Anki::Util::AndroidLogPrintLogger * logPrintLogger = new Anki::Util::AndroidLogPrintLogger(LOG_PROCNAME);
   loggers.push_back(logPrintLogger);
 
-  std::string filesPath;
+  std::string persistentPath;
   std::string cachePath;
-  std::string externalPath;
   std::string resourcesPath;
   std::string resourcesBasePath;
-
-  getAndroidPlatformPaths(filesPath, cachePath, externalPath, resourcesPath, resourcesBasePath);
 
   // copy existing configuration data
   Json::Value config(configuration);
 
-  if (config.isMember("DataPlatformFilesPath")) {
-    filesPath = config["DataPlatformFilesPath"].asCString();
+  if (config.isMember("DataPlatformPersistentPath")) {
+    persistentPath = config["DataPlatformPersistentPath"].asCString();
   } else {
-    config["DataPlatformFilesPath"] = filesPath;
+    PRINT_NAMED_ERROR("cozmoEngineMain.createPlatform.DataPlatformPersistentPathUndefined", "");
   }
 
   if (config.isMember("DataPlatformCachePath")) {
     cachePath = config["DataPlatformCachePath"].asCString();
   } else {
-    config["DataPlatformCachePath"] = cachePath;
-  }
-
-  if (config.isMember("DataPlatformExternalPath")) {
-    externalPath = config["DataPlatformExternalPath"].asCString();
-  } else {
-    config["DataPlatformExternalPath"] = externalPath;
+    PRINT_NAMED_ERROR("cozmoEngineMain.createPlatform.DataPlatformCachePathUndefined", "");
   }
 
   if (config.isMember("DataPlatformResourcesBasePath")) {
     resourcesBasePath = config["DataPlatformResourcesBasePath"].asCString();
   } else {
-    resourcesBasePath = externalPath + "/assets";
-    config["DataPlatformResourcesBasePath"] = resourcesBasePath;
+    PRINT_NAMED_ERROR("cozmoEngineMain.createPlatform.DataPlatformResourcesBasePathUndefined", "");
   }
 
   if (config.isMember("DataPlatformResourcesPath")) {
     resourcesPath = config["DataPlatformResourcesPath"].asCString();
   } else {
-    resourcesPath = createResourcesPath(resourcesBasePath);
-    config["DataPlatformResourcesPath"] = resourcesPath;
+    PRINT_NAMED_ERROR("cozmoEngineMain.createPlatform.DataPlatformResourcesPathUndefined", "");
   }
 
-  gDataPlatform = createPlatform(filesPath, cachePath, externalPath, resourcesPath);
+  gDataPlatform = createPlatform(persistentPath, cachePath, resourcesPath);
 
   logPrintLogger->PrintLogD(LOG_PROCNAME, "CozmoStart.ResourcesPath", {}, resourcesPath.c_str());
 
   // Initialize logging
   #if DEV_LOGGER_ENABLED
+  if(!FACTORY_TEST || (FACTORY_TEST && !Anki::Cozmo::Factory::GetEMR()->fields.PACKED_OUT_FLAG))
+  {
     using DevLoggingSystem = Anki::Cozmo::DevLoggingSystem;
     const std::string& appRunId = Anki::Util::GetUUIDString();
     const std::string& devlogPath = gDataPlatform->pathToResource(Anki::Util::Data::Scope::CurrentGameLog, LOG_PROCNAME);
     DevLoggingSystem::CreateInstance(devlogPath, appRunId);
     loggers.push_back(DevLoggingSystem::GetInstancePrintProvider());
+  }
   #endif
 
   Anki::Util::IEventProvider* eventProvider = nullptr;
@@ -207,8 +185,8 @@ static int cozmo_start(const Json::Value& configuration)
 
   LOG_INFO("cozmo_start", "Creating engine");
   LOG_INFO("cozmo_start",
-            "Initialized data platform with filesPath = %s, cachePath = %s, externalPath = %s, resourcesPath = %s",
-            filesPath.c_str(), cachePath.c_str(), externalPath.c_str(), resourcesPath.c_str());
+            "Initialized data platform with persistentPath = %s, cachePath = %s, resourcesPath = %s",
+            persistentPath.c_str(), cachePath.c_str(), resourcesPath.c_str());
 
   configure_engine(config);
 
@@ -241,6 +219,10 @@ static int cozmo_stop()
 {
   int result = 0;
 
+  if (nullptr != gEngineAPI) {
+    gEngineAPI->Clear();
+  }
+
   Anki::Util::SafeDelete(gEngineAPI);
   Anki::Util::gEventProvider = nullptr;
   Anki::Util::SafeDelete(Anki::Util::gLoggerProvider);
@@ -249,11 +231,16 @@ static int cozmo_stop()
 #endif
   Anki::Util::SafeDelete(gDataPlatform);
 
+  sync();
+
   return result;
 }
 
 int main(int argc, char* argv[])
 {
+    // Install signal handler
+    signal(SIGTERM, sigterm);
+
     char cwd[PATH_MAX] = { 0 };
     getcwd(cwd, sizeof(cwd));
     printf("CWD: %s\n", cwd);
@@ -273,7 +260,7 @@ int main(int argc, char* argv[])
     };
 
     char config_file_path[PATH_MAX] = { 0 };
-    const char* env_config = getenv("COZMO_ENGINE_CONFIG");
+    const char* env_config = getenv("VIC_ENGINE_CONFIG");
     if (env_config != NULL) {
       strncpy(config_file_path, env_config, sizeof(config_file_path));
     }
@@ -359,7 +346,7 @@ int main(int argc, char* argv[])
 
     LOG_INFO("CozmoEngineMain.main", "Engine started");
 
-    while (true) {
+    while (!gShutdown) {
       if (!cozmo_is_running()) {
         LOG_INFO("CozmoEngineMain.main", "Engine has stopped");
         break;
@@ -368,7 +355,7 @@ int main(int argc, char* argv[])
     }
 
     LOG_INFO("CozmoEngineMain.main", "Stopping engine");
-    cozmo_stop();
+    res = cozmo_stop();
 
     return res;
 }

@@ -26,8 +26,8 @@ class BehaviorReactToCliff : public ICozmoBehavior
 private:
   using super = ICozmoBehavior;
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorReactToCliff(const Json::Value& config);
   
 public:  
@@ -38,6 +38,7 @@ protected:
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
   }
 
+  virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   
@@ -48,6 +49,9 @@ protected:
 
 private:
   using base = ICozmoBehavior;
+  
+  IBEIConditionPtr _cliffDetectedCondition;
+  
   enum class State {
     PlayingStopReaction,
     PlayingCliffReaction,

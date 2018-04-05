@@ -49,6 +49,7 @@
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 
 #include <thread>
+#include <fstream>
 
 #include "opencv2/calib3d/calib3d.hpp"
 
@@ -363,19 +364,44 @@ namespace Cozmo {
     return RESULT_OK;
   }
   
-  Result VisionSystem::SetNextCameraParams(s32 exposure_ms, f32 gain)
+  Result VisionSystem::SetNextCameraExposure(s32 exposure_ms, f32 gain)
   {
     bool& nextParamsSet = _nextCameraParams.first;
     if(nextParamsSet)
     {
       PRINT_NAMED_WARNING("VisionSystem.SetNextCameraParams.OverwritingPreviousParams",
                           "Params already requested (%dms,%.2f) but not sent. Replacing with (%dms,%.2f)",
-                          _nextCameraParams.second.exposure_ms, _nextCameraParams.second.gain,
+                          _nextCameraParams.second.exposureTime_ms, _nextCameraParams.second.gain,
                           exposure_ms, gain);
     }
     
-    _nextCameraParams.second.exposure_ms = exposure_ms;
+    _nextCameraParams.second.exposureTime_ms = exposure_ms;
     _nextCameraParams.second.gain = gain;
+    nextParamsSet = true;
+    
+    return RESULT_OK;
+  }
+
+  Result VisionSystem::SetNextCameraWhiteBalance(f32 whiteBalanceGainR, 
+                                                 f32 whiteBalanceGainG, 
+                                                 f32 whiteBalanceGainB)
+  {
+    bool& nextParamsSet = _nextCameraParams.first;
+    if(nextParamsSet)
+    {
+      PRINT_NAMED_WARNING("VisionSystem.SetNextCameraWhiteBalance.OverwritingPreviousParams",
+                          "Params already requested (%.2f,%.2f,%.2f) but not sent. Replacing with (%.2f,%.2f,%.2f)",
+                          _nextCameraParams.second.whiteBalanceGainR,
+                          _nextCameraParams.second.whiteBalanceGainG,
+                          _nextCameraParams.second.whiteBalanceGainB,
+                          whiteBalanceGainR,
+                          whiteBalanceGainG,
+                          whiteBalanceGainB);
+    }
+    
+    _nextCameraParams.second.whiteBalanceGainR = whiteBalanceGainR;
+    _nextCameraParams.second.whiteBalanceGainG = whiteBalanceGainG;
+    _nextCameraParams.second.whiteBalanceGainB = whiteBalanceGainB;
     nextParamsSet = true;
     
     return RESULT_OK;
@@ -580,7 +606,7 @@ namespace Cozmo {
                                          const std::vector<Anki::Rectangle<s32>>& detections)
   {
 #   define DEBUG_IMAGE_HISTOGRAM 0
-    
+
     // Compute the exposure we would like to have
     f32 exposureAdjFrac = 1.f;
     
@@ -662,15 +688,15 @@ namespace Cozmo {
     // Desired exposure settings are what they already were.
     _currentResult.imageQuality = ImageQuality::Good;
     
-    s32 desiredExposureTime_ms = _currentCameraParams.exposure_ms;
+    s32 desiredExposureTime_ms = _currentCameraParams.exposureTime_ms;
     f32 desiredGain = _currentCameraParams.gain;
     
     if(FLT_LT(exposureAdjFrac, 1.f))
     {
       // Want to bring brightness down: reduce exposure first, if possible
-      if(_currentCameraParams.exposure_ms > _minCameraExposureTime_ms)
+      if(_currentCameraParams.exposureTime_ms > _minCameraExposureTime_ms)
       {
-        desiredExposureTime_ms = std::round(static_cast<f32>(_currentCameraParams.exposure_ms) * exposureAdjFrac);
+        desiredExposureTime_ms = std::round(static_cast<f32>(_currentCameraParams.exposureTime_ms) * exposureAdjFrac);
         desiredExposureTime_ms = std::max(_minCameraExposureTime_ms, desiredExposureTime_ms);
       }
       else if(FLT_GT(_currentCameraParams.gain, _minCameraGain))
@@ -698,10 +724,10 @@ namespace Cozmo {
         desiredGain *= exposureAdjFrac;
         desiredGain = std::min(_maxCameraGain, desiredGain);
       }
-      else if(_currentCameraParams.exposure_ms < _maxCameraExposureTime_ms)
+      else if(_currentCameraParams.exposureTime_ms < _maxCameraExposureTime_ms)
       {
         // Already at max gain; increase exposure
-        desiredExposureTime_ms = std::round(static_cast<f32>(_currentCameraParams.exposure_ms) * exposureAdjFrac);
+        desiredExposureTime_ms = std::round(static_cast<f32>(_currentCameraParams.exposureTime_ms) * exposureAdjFrac);
         desiredExposureTime_ms = std::min(_maxCameraExposureTime_ms, desiredExposureTime_ms);
       }
       else
@@ -732,9 +758,9 @@ namespace Cozmo {
       }
     }
     
-    _currentResult.exposureTime_ms = desiredExposureTime_ms;
-    _currentResult.cameraGain      = desiredGain;
-    
+    _currentResult.cameraParams.exposureTime_ms = desiredExposureTime_ms;
+    _currentResult.cameraParams.gain = desiredGain;
+
     return RESULT_OK;
   }
 
@@ -941,7 +967,7 @@ namespace Cozmo {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result VisionSystem::DetectLaserPoints(Vision::ImageCache& imageCache)
   {
-    const bool isDarkExposure = (Util::IsNear(_currentCameraParams.exposure_ms, _minCameraExposureTime_ms) &&
+    const bool isDarkExposure = (Util::IsNear(_currentCameraParams.exposureTime_ms, _minCameraExposureTime_ms) &&
                                  Util::IsNear(_currentCameraParams.gain, _minCameraGain));
     
     Result result = _laserPointDetector->Detect(imageCache, _poseData, isDarkExposure,
@@ -1333,7 +1359,7 @@ namespace Cozmo {
     VisionProcessingResult result;
     result.timestamp = inputImageGray.GetTimestamp();
     result.imageQuality = ImageQuality::Unchecked;
-    result.exposureTime_ms = -1;
+    result.cameraParams.exposureTime_ms = -1;
     std::swap(result, _currentResult);
     
     auto& visionModesProcessed = _currentResult.modesProcessed;
@@ -1589,6 +1615,22 @@ namespace Cozmo {
       }
       visionModesProcessed.SetBitFlag(VisionMode::CheckingQuality, true);
     }
+
+    if(ShouldProcessVisionMode(VisionMode::CheckingWhiteBalance))
+    {
+      Tic("CheckingWhiteBalance");
+      lastResult = _imagingPipeline->ComputeWhiteBalanceAdjustment(imageCache.GetRGB(),
+                                                                   _currentResult.cameraParams.whiteBalanceGainR,
+                                                                   _currentResult.cameraParams.whiteBalanceGainG,
+                                                                   _currentResult.cameraParams.whiteBalanceGainB);
+      Toc("CheckingWhiteBalance");
+      
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.CheckWhiteBalanceFailed", "");
+        return lastResult;
+      }
+      visionModesProcessed.SetBitFlag(VisionMode::CheckingWhiteBalance, true);
+    }
     
     if(ShouldProcessVisionMode(VisionMode::Benchmarking))
     {
@@ -1608,27 +1650,26 @@ namespace Cozmo {
     if(ShouldProcessVisionMode(VisionMode::SavingImages) && (ImageSendMode::Off != _imageSaveMode))
     {
       Tic("SavingImages");
+      const std::string fullFilename = GetFileNameBasedOnFrameNumber((_imageSaveQuality < 0 ? "png" : "jpg"));
 
-      // Zero-padded frame number as filename:
-      char filename[32];
-      snprintf(filename, sizeof(filename)-1, "%08d.%s", 
-               _frameNumber, (_imageSaveQuality < 0 ? "png" : "jpg"));
-
-      const std::string fullFilename = Util::FileUtils::FullFilePath({_imageSavePath, filename});
-      
       PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.Update.SavingImage", "Saving to %s",
                      fullFilename.c_str());
-         
+
       const Result saveResult = imageCache.GetRGB().Save(fullFilename, _imageSaveQuality);
 
-      if(ImageSendMode::SingleShot == _imageSaveMode)
+      Result saveSensorResult = RESULT_OK;
+      if ((ImageSendMode::SingleShotWithSensorData == _imageSaveMode)) {
+        saveSensorResult = SaveSensorData();
+      }
+
+      if((ImageSendMode::SingleShot == _imageSaveMode) || (ImageSendMode::SingleShotWithSensorData == _imageSaveMode))
       {
         _imageSaveMode = ImageSendMode::Off;
       }
 
       Toc("SavingImages");
 
-      if(RESULT_OK != saveResult)
+      if((RESULT_OK != saveResult) || (RESULT_OK != saveSensorResult))
       {
         PRINT_NAMED_ERROR("VisionSystem.Update.SavingImagesFailed", "");
         // Continue processing, since this should be independent of other modes
@@ -1646,527 +1687,580 @@ namespace Cozmo {
     
     return lastResult;
   } // Update()
-  
-  bool VisionSystem::ShouldProcessVisionMode(VisionMode mode)
-  {
-    if (!IsModeEnabled(mode))
-    {
-      return false;
+
+  Result VisionSystem::SaveSensorData() const {
+
+    const std::string fullFilename = GetFileNameBasedOnFrameNumber("json");
+
+    std::ofstream outFile(fullFilename);
+    if (! outFile.is_open()) {
+      PRINT_NAMED_ERROR("VisionSystem.SaveSensorData.CantOpenFile", "Can't open file %s for writing",
+                        fullFilename.c_str());
+      return RESULT_FAIL;
     }
 
-    if(_modeScheduleStack.empty())
+    Json::Value config;
     {
-      PRINT_NAMED_ERROR("VisionSystem.ShouldProcessVisionMode.EmptyScheduleStack",
-                        "Mode: %s", EnumToString(mode));
-      return false;
+
+      const HistRobotState& state = _poseData.histState;
+      // prox sensor
+      if (state.WasProxSensorValid()) {
+        config["proxSensor"] = state.GetProxSensorVal_mm();
+      }
+      else {
+        config["proxSensor"] = -1;
+      }
+
+      // cliff sensor
+      config["frontLeftCliff"]  = state.WasCliffDetected(CliffSensor::CLIFF_FL);
+      config["frontRightCliff"] = state.WasCliffDetected(CliffSensor::CLIFF_FR);
+      config["backLeftCliff"]   = state.WasCliffDetected(CliffSensor::CLIFF_BL);
+      config["backRightCliff"]  = state.WasCliffDetected(CliffSensor::CLIFF_BR);
+
+      // was picked up
+      config["wasPickedUp"] = state.WasPickedUp();
+
+      // head angle
+      config["headAngle"] = state.GetHeadAngle_rad();
+      // lift angle
+      config["liftAngle"] = state.GetLiftAngle_rad();
     }
-    
-    // See if it's time to process based on the schedule
-    const bool isTimeToProcess = _modeScheduleStack.front().CheckTimeToProcessAndAdvance(mode);
-    return isTimeToProcess;
-  }
-  
-  s32 VisionSystem::GetCurrentCameraExposureTime_ms() const
-  {
-    return _currentCameraParams.exposure_ms;
-  }
-  
-  f32 VisionSystem::GetCurrentCameraGain() const
-  {
-    return _currentCameraParams.gain;
-  }
-  
-  Result VisionSystem::SetAutoExposureParams(const s32 subSample,
-                                             const u8  midValue,
-                                             const f32 midPercentile,
-                                             const f32 maxChangeFraction)
-  {
-    Result result = _imagingPipeline->SetExposureParameters(midValue, midPercentile,
-                                                            maxChangeFraction, subSample);
-    
-    if(RESULT_OK == result)
-    {
-      PRINT_CH_INFO(kLogChannelName, "VisionSystem.SetAutoExposureParams",
-                    "subSample:%d midVal:%d midPerc:%.3f changeFrac:%.3f",
-                    subSample, midValue, midPercentile, maxChangeFraction);
-  }
-  
-    return result;
-  }
-  
-  Result VisionSystem::SetCameraExposureParams(const s32 currentExposureTime_ms,
-                                               const s32 minExposureTime_ms,
-                                               const s32 maxExposureTime_ms,
-                                               const f32 currentGain,
-                                               const f32 minGain,
-                                               const f32 maxGain,
-                                               const GammaCurve& gammaCurve)
-  {
-    // TODO: Expose these x values ("knee locations") somewhere. These are specific to the camera.
-    // (So I'm keeping them out of Vision::ImagingPipeline and defined in Cozmo namespace)
-    static const std::vector<u8> kKneeLocations{
-      0, 8, 16, 24, 32, 40, 48, 64, 80, 96, 112, 128, 144, 160, 192, 224, 255
-    };
-    
-    std::vector<u8> gammaVector(gammaCurve.begin(), gammaCurve.end());
-    
-    Result result = _imagingPipeline->SetGammaTable(kKneeLocations, gammaVector);
-    if(RESULT_OK != result)
-    {
-      PRINT_NAMED_WARNING("VisionSystem.SetCameraExposureParams.BadGammaCurve", "");
-    }
-    
-    if(minExposureTime_ms <= 0)
-    {
-      PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.SetCameraExposureParams.ZeroMinExposureTime",
-                     "Will use 1.");
-      _minCameraExposureTime_ms = 1;
-    }
-    else
-    {
-      _minCameraExposureTime_ms = minExposureTime_ms;
-    }
-    
-    _maxCameraExposureTime_ms = maxExposureTime_ms;
-    
-    _minCameraGain     = minGain;
-    _maxCameraGain     = maxGain;
-    
-    SetNextCameraParams(currentExposureTime_ms, currentGain);
-    
-    PRINT_CH_INFO(kLogChannelName, "VisionSystem.SetCameraExposureParams.Success",
-                  "Current Gain:%dms Limits:[%d %d], Current Exposure:%.3f Limits:[%.3f %.3f]",
-                  currentExposureTime_ms, minExposureTime_ms, maxExposureTime_ms,
-                  currentGain, minGain, maxGain);
+
+    Json::StyledWriter writer;
+    outFile << writer.write(config);
+    outFile.close();
 
     return RESULT_OK;
   }
-  
-  Result VisionSystem::ReadToolCode(const Vision::Image& image)
+
+std::string VisionSystem::GetFileNameBasedOnFrameNumber(const char *extension) const
+{
+  // Zero-padded frame number as filename:
+  char filename[32];
+  snprintf(filename, sizeof(filename)-1, "%08d.%s", _frameNumber, extension);
+
+  const std::string fullFilename = Util::FileUtils::FullFilePath({_imageSavePath, filename});
+  PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.SaveSensorData.GetFileNameBasedOnFrameNumber", "Saving to %s",
+                 fullFilename.c_str());
+  return fullFilename;
+}
+
+bool VisionSystem::ShouldProcessVisionMode(VisionMode mode)
+{
+  if (!IsModeEnabled(mode))
   {
-    //    // DEBUG!
-    //    Vision::Image image;
-    //    //image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_151585ms_0.jpg");
-    //    //image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_251585ms_1.jpg");
-    //    image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_366670ms_0.jpg");
-    //    if(image.IsEmpty()) {
-    //      PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.ReadImageFileFail", "");
-    //      return RESULT_FAIL;
-    //    }
-    //    _clahe->apply(image.get_CvMat_(), image.get_CvMat_());
-    
-    ToolCodeInfo readToolCodeMessage;
-    readToolCodeMessage.code = ToolCode::UnknownTool;
-    _isReadingToolCode = true;
+    return false;
+  }
 
-    auto cleanupLambda = [this,&readToolCodeMessage]() {
-      this->_currentResult.toolCodes.push_back(readToolCodeMessage);
-      this->EnableMode(VisionMode::ReadingToolCode, false);
-      this->_firstReadToolCodeTime_ms = 0;
-      this->_isReadingToolCode = false;
-      PRINT_CH_INFO(kLogChannelName, "VisionSystem.ReadToolCode.DisabledReadingToolCode", "");
-    };
-    
-    if(_firstReadToolCodeTime_ms == 0) {
-      _firstReadToolCodeTime_ms = image.GetTimestamp();
-    }
-    else if(image.GetTimestamp() - _firstReadToolCodeTime_ms > kToolCodeMotionTimeout_ms) {
-      PRINT_NAMED_WARNING("VisionSystem.ReadToolCode.TimeoutWaitingForHeadOrLift",
-                          "start: %d, current: %d, timeout=%dms",
-                          _firstReadToolCodeTime_ms, image.GetTimestamp(), kToolCodeMotionTimeout_ms);
-      cleanupLambda();
-      return RESULT_FAIL;
-    }
-    
-    // All the conditions that must be met to bother trying to read the tool code:
-    const bool headMoving = (_poseData.histState.WasHeadMoving() || _prevPoseData.histState.WasHeadMoving());
-    
-    const bool liftMoving = (_poseData.histState.WasLiftMoving() || _prevPoseData.histState.WasLiftMoving());
+  if(_modeScheduleStack.empty())
+  {
+    PRINT_NAMED_ERROR("VisionSystem.ShouldProcessVisionMode.EmptyScheduleStack",
+                      "Mode: %s", EnumToString(mode));
+    return false;
+  }
 
-    const bool headDown = _poseData.histState.GetHeadAngle_rad() <= MIN_HEAD_ANGLE + HEAD_ANGLE_TOL;
-    
-    const bool liftDown = _poseData.histState.GetLiftHeight_mm() <= LIFT_HEIGHT_LOWDOCK + READ_TOOL_CODE_LIFT_HEIGHT_TOL_MM;
-    
-    // Sanity checks: we should not even be calling ReadToolCode if everybody
-    // hasn't done their job and got us into position
-    if(headMoving || liftMoving || !headDown || !liftDown)
-    {
-      PRINT_CH_INFO(kLogChannelName, "VisionSystem.ReadToolCode.NotInPosition",
-                    "Waiting for head / lift (headMoving %d, lifMoving %d, headDown %d, liftDown %d",
-                    headMoving, liftMoving, headDown, liftDown);
-      return RESULT_OK;
-    }
-    
-    // Guarantee CheckingToolCode mode gets disabled and code read gets sent,
-    // no matter how we return from this function
-    Util::CleanupHelper disableCheckToolCode(cleanupLambda);
-    
-    // Center points of the calibration dots, in lift coordinate frame
-    // TODO: Move these to be defined elsewhere
-    const s32 LEFT_DOT = 0, RIGHT_DOT = 1;
-    const std::vector<Point3f> toolCodeDotsWrtLift = {
+  // See if it's time to process based on the schedule
+  const bool isTimeToProcess = _modeScheduleStack.front().CheckTimeToProcessAndAdvance(mode);
+  return isTimeToProcess;
+}
+
+CameraParams VisionSystem::GetCurrentCameraParams() const
+{
+  // Return nextParams if they have not been set yet otherwise use currentParams
+  return (_nextCameraParams.first ? _nextCameraParams.second : _currentCameraParams);
+}
+
+Result VisionSystem::SetAutoExposureParams(const s32 subSample,
+                                           const u8  midValue,
+                                           const f32 midPercentile,
+                                           const f32 maxChangeFraction)
+{
+  Result result = _imagingPipeline->SetExposureParameters(midValue, midPercentile,
+                                                          maxChangeFraction, subSample);
+
+  if(RESULT_OK == result)
+  {
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.SetAutoExposureParams",
+                  "subSample:%d midVal:%d midPerc:%.3f changeFrac:%.3f",
+                  subSample, midValue, midPercentile, maxChangeFraction);
+  }
+
+  return result;
+}
+
+Result VisionSystem::SetCameraExposureParams(const s32 currentExposureTime_ms,
+                                             const s32 minExposureTime_ms,
+                                             const s32 maxExposureTime_ms,
+                                             const f32 currentGain,
+                                             const f32 minGain,
+                                             const f32 maxGain,
+                                             const GammaCurve& gammaCurve)
+{
+  // TODO: Expose these x values ("knee locations") somewhere. These are specific to the camera.
+  // (So I'm keeping them out of Vision::ImagingPipeline and defined in Cozmo namespace)
+  static const std::vector<u8> kKneeLocations{
+    0, 8, 16, 24, 32, 40, 48, 64, 80, 96, 112, 128, 144, 160, 192, 224, 255
+  };
+  
+  std::vector<u8> gammaVector(gammaCurve.begin(), gammaCurve.end());
+  
+  Result result = _imagingPipeline->SetGammaTable(kKneeLocations, gammaVector);
+  if(RESULT_OK != result)
+  {
+    PRINT_NAMED_WARNING("VisionSystem.SetCameraExposureParams.BadGammaCurve", "");
+  }
+  
+  if(minExposureTime_ms <= 0)
+  {
+    PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.SetCameraExposureParams.ZeroMinExposureTime",
+                   "Will use 1.");
+    _minCameraExposureTime_ms = 1;
+  }
+  else
+  {
+    _minCameraExposureTime_ms = minExposureTime_ms;
+  }
+  
+  _maxCameraExposureTime_ms = maxExposureTime_ms;
+  
+  _minCameraGain     = minGain;
+  _maxCameraGain     = maxGain;
+  
+  SetNextCameraExposure(currentExposureTime_ms, currentGain);
+  
+  PRINT_CH_INFO(kLogChannelName, "VisionSystem.SetCameraExposureParams.Success",
+                "Current Gain:%dms Limits:[%d %d], Current Exposure:%.3f Limits:[%.3f %.3f]",
+                currentExposureTime_ms, minExposureTime_ms, maxExposureTime_ms,
+                currentGain, minGain, maxGain);
+
+  return RESULT_OK;
+}
+
+Result VisionSystem::ReadToolCode(const Vision::Image& image)
+{
+  //    // DEBUG!
+  //    Vision::Image image;
+  //    //image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_151585ms_0.jpg");
+  //    //image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_251585ms_1.jpg");
+  //    image.Load("/Users/andrew/Dropbox (Anki, Inc)/ToolCode/cozmo1_366670ms_0.jpg");
+  //    if(image.IsEmpty()) {
+  //      PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.ReadImageFileFail", "");
+  //      return RESULT_FAIL;
+  //    }
+  //    _clahe->apply(image.get_CvMat_(), image.get_CvMat_());
+
+  ToolCodeInfo readToolCodeMessage;
+  readToolCodeMessage.code = ToolCode::UnknownTool;
+  _isReadingToolCode = true;
+
+  auto cleanupLambda = [this,&readToolCodeMessage]() {
+    this->_currentResult.toolCodes.push_back(readToolCodeMessage);
+    this->EnableMode(VisionMode::ReadingToolCode, false);
+    this->_firstReadToolCodeTime_ms = 0;
+    this->_isReadingToolCode = false;
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.ReadToolCode.DisabledReadingToolCode", "");
+  };
+
+  if(_firstReadToolCodeTime_ms == 0) {
+    _firstReadToolCodeTime_ms = image.GetTimestamp();
+  }
+  else if(image.GetTimestamp() - _firstReadToolCodeTime_ms > kToolCodeMotionTimeout_ms) {
+    PRINT_NAMED_WARNING("VisionSystem.ReadToolCode.TimeoutWaitingForHeadOrLift",
+                        "start: %d, current: %d, timeout=%dms",
+                        _firstReadToolCodeTime_ms, image.GetTimestamp(), kToolCodeMotionTimeout_ms);
+    cleanupLambda();
+    return RESULT_FAIL;
+  }
+
+  // All the conditions that must be met to bother trying to read the tool code:
+  const bool headMoving = (_poseData.histState.WasHeadMoving() || _prevPoseData.histState.WasHeadMoving());
+
+  const bool liftMoving = (_poseData.histState.WasLiftMoving() || _prevPoseData.histState.WasLiftMoving());
+
+  const bool headDown = _poseData.histState.GetHeadAngle_rad() <= MIN_HEAD_ANGLE + HEAD_ANGLE_TOL;
+
+  const bool liftDown = _poseData.histState.GetLiftHeight_mm() <= LIFT_HEIGHT_LOWDOCK + READ_TOOL_CODE_LIFT_HEIGHT_TOL_MM;
+
+  // Sanity checks: we should not even be calling ReadToolCode if everybody
+  // hasn't done their job and got us into position
+  if(headMoving || liftMoving || !headDown || !liftDown)
+  {
+    PRINT_CH_INFO(kLogChannelName, "VisionSystem.ReadToolCode.NotInPosition",
+                  "Waiting for head / lift (headMoving %d, lifMoving %d, headDown %d, liftDown %d",
+                  headMoving, liftMoving, headDown, liftDown);
+    return RESULT_OK;
+  }
+
+  // Guarantee CheckingToolCode mode gets disabled and code read gets sent,
+  // no matter how we return from this function
+  Util::CleanupHelper disableCheckToolCode(cleanupLambda);
+
+  // Center points of the calibration dots, in lift coordinate frame
+  // TODO: Move these to be defined elsewhere
+  const s32 LEFT_DOT = 0, RIGHT_DOT = 1;
+  const std::vector<Point3f> toolCodeDotsWrtLift = {
       {1.5f,  10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT}, // Left in image
       {1.5f, -10.f, LIFT_XBAR_HEIGHT_WRT_WRIST_JOINT}, // Right in image
-    };
-    
-    const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]},
-                              _poseData.histState.GetPose(), "RobotLiftBase");
-    
-    Pose3d liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, liftBasePose, "RobotLift");
-    
-    Robot::ComputeLiftPose(_poseData.histState.GetLiftAngle_rad(), liftPose);
-    
-    Pose3d liftPoseWrtCam;
-    if(false == liftPose.GetWithRespectTo(_poseData.cameraPose, liftPoseWrtCam)) {
-      PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.PoseTreeError",
-                        "Could not get lift pose w.r.t. camera pose.");
+  };
+
+  const Pose3d liftBasePose(0.f, Y_AXIS_3D(), {LIFT_BASE_POSITION[0], LIFT_BASE_POSITION[1], LIFT_BASE_POSITION[2]},
+                            _poseData.histState.GetPose(), "RobotLiftBase");
+
+  Pose3d liftPose(0.f, Y_AXIS_3D(), {LIFT_ARM_LENGTH, 0.f, 0.f}, liftBasePose, "RobotLift");
+
+  Robot::ComputeLiftPose(_poseData.histState.GetLiftAngle_rad(), liftPose);
+
+  Pose3d liftPoseWrtCam;
+  if(false == liftPose.GetWithRespectTo(_poseData.cameraPose, liftPoseWrtCam)) {
+    PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.PoseTreeError",
+                      "Could not get lift pose w.r.t. camera pose.");
+    return RESULT_FAIL;
+  }
+
+  // Put tool code dots in camera coordinate frame
+  std::vector<Point3f> toolCodeDotsWrtCam;
+  liftPoseWrtCam.ApplyTo(toolCodeDotsWrtLift, toolCodeDotsWrtCam);
+
+  // Project into camera
+  std::vector<Anki::Point2f> projectedToolCodeDots;
+  _camera.Project3dPoints(toolCodeDotsWrtCam, projectedToolCodeDots);
+
+  // Only proceed if all dots are visible with the current head/lift pose
+  for(auto & point : projectedToolCodeDots) {
+    if(!_camera.IsWithinFieldOfView(point)) {
+      PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.DotsNotInFOV", "");
       return RESULT_FAIL;
     }
-    
-    // Put tool code dots in camera coordinate frame
-    std::vector<Point3f> toolCodeDotsWrtCam;
-    liftPoseWrtCam.ApplyTo(toolCodeDotsWrtLift, toolCodeDotsWrtCam);
-    
-    // Project into camera
-    std::vector<Anki::Point2f> projectedToolCodeDots;
-    _camera.Project3dPoints(toolCodeDotsWrtCam, projectedToolCodeDots);
-    
-    // Only proceed if all dots are visible with the current head/lift pose
-    for(auto & point : projectedToolCodeDots) {
-      if(!_camera.IsWithinFieldOfView(point)) {
-        PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.DotsNotInFOV", "");
-        return RESULT_FAIL;
-      }
-    }
-    
-    readToolCodeMessage.expectedCalibDotLeft_x  = projectedToolCodeDots[LEFT_DOT].x();
-    readToolCodeMessage.expectedCalibDotLeft_y  = projectedToolCodeDots[LEFT_DOT].y();
-    readToolCodeMessage.expectedCalibDotRight_x = projectedToolCodeDots[RIGHT_DOT].x();
-    readToolCodeMessage.expectedCalibDotRight_y = projectedToolCodeDots[RIGHT_DOT].y();
-    
+  }
+
+  readToolCodeMessage.expectedCalibDotLeft_x  = projectedToolCodeDots[LEFT_DOT].x();
+  readToolCodeMessage.expectedCalibDotLeft_y  = projectedToolCodeDots[LEFT_DOT].y();
+  readToolCodeMessage.expectedCalibDotRight_x = projectedToolCodeDots[RIGHT_DOT].x();
+  readToolCodeMessage.expectedCalibDotRight_y = projectedToolCodeDots[RIGHT_DOT].y();
+
 #   if DRAW_TOOL_CODE_DEBUG
-    Vision::ImageRGB dispImg(image);
+  Vision::ImageRGB dispImg(image);
 #   endif
-    
-    // Tool code calibration dot parameters
-    const f32 kDotWidth_mm = 2.5f;
-    const f32 kDotHole_mm  = 2.5f/3.f;
-    const s32 kBinarizeKernelSize = 11;
-    const f32 kBinarizeKernelSigma = 7.f;
-    const bool kIsCircularDot = true; // false for square dot with rounded corners
-    const f32 holeArea = kDotHole_mm*kDotHole_mm * (kIsCircularDot ? 0.25f*M_PI : 1.f);
-    const f32 filledDotArea = kDotWidth_mm*kDotWidth_mm * (kIsCircularDot ? 0.25f*M_PI : 1.f);
-    const f32 kDotAreaFrac =  (filledDotArea - holeArea) /
-                              (4.f*kCalibDotSearchWidth_mm * kCalibDotSearchHeight_mm);
-    const f32 kMinDotAreaFrac   = 0.25f * kDotAreaFrac;
-    const f32 kMaxDotAreaFrac   = 2.00f * kDotAreaFrac;
-    const f32 kHoleAreaFrac     = holeArea / filledDotArea;
-    const f32 kMaxHoleAreaFrac  = 4.f * kHoleAreaFrac;
-    //const f32 kMinSolidity      = 0.5f*(filledDotArea - holeArea) * (kIsCircularDot ? 1.f/(kDotWidth_mm*kDotWidth_mm) : 1.f);
-    
-    Anki::Point2f camCen;
-    std::vector<Anki::Point2f> observedPoints;
-    _toolCodeImages.clear();
-    for(size_t iDot=0; iDot<projectedToolCodeDots.size(); ++iDot)
-    {
-      // Get an ROI around where we expect to see the dot in the image
-      const Point3f& dotWrtLift3d = toolCodeDotsWrtLift[iDot];
-      Quad3f dotQuadRoi3d = {
+
+  // Tool code calibration dot parameters
+  const f32 kDotWidth_mm = 2.5f;
+  const f32 kDotHole_mm  = 2.5f/3.f;
+  const s32 kBinarizeKernelSize = 11;
+  const f32 kBinarizeKernelSigma = 7.f;
+  const bool kIsCircularDot = true; // false for square dot with rounded corners
+  const f32 holeArea = kDotHole_mm*kDotHole_mm * (kIsCircularDot ? 0.25f*M_PI : 1.f);
+  const f32 filledDotArea = kDotWidth_mm*kDotWidth_mm * (kIsCircularDot ? 0.25f*M_PI : 1.f);
+  const f32 kDotAreaFrac =  (filledDotArea - holeArea) /
+                            (4.f*kCalibDotSearchWidth_mm * kCalibDotSearchHeight_mm);
+  const f32 kMinDotAreaFrac   = 0.25f * kDotAreaFrac;
+  const f32 kMaxDotAreaFrac   = 2.00f * kDotAreaFrac;
+  const f32 kHoleAreaFrac     = holeArea / filledDotArea;
+  const f32 kMaxHoleAreaFrac  = 4.f * kHoleAreaFrac;
+  //const f32 kMinSolidity      = 0.5f*(filledDotArea - holeArea) * (kIsCircularDot ? 1.f/(kDotWidth_mm*kDotWidth_mm) : 1.f);
+
+  Anki::Point2f camCen;
+  std::vector<Anki::Point2f> observedPoints;
+  _toolCodeImages.clear();
+  for(size_t iDot=0; iDot<projectedToolCodeDots.size(); ++iDot)
+  {
+    // Get an ROI around where we expect to see the dot in the image
+    const Point3f& dotWrtLift3d = toolCodeDotsWrtLift[iDot];
+    Quad3f dotQuadRoi3d = {
         {dotWrtLift3d.x() - kCalibDotSearchHeight_mm, dotWrtLift3d.y() - kCalibDotSearchWidth_mm, dotWrtLift3d.z()},
         {dotWrtLift3d.x() - kCalibDotSearchHeight_mm, dotWrtLift3d.y() + kCalibDotSearchWidth_mm, dotWrtLift3d.z()},
         {dotWrtLift3d.x() + kCalibDotSearchHeight_mm, dotWrtLift3d.y() - kCalibDotSearchWidth_mm, dotWrtLift3d.z()},
         {dotWrtLift3d.x() + kCalibDotSearchHeight_mm, dotWrtLift3d.y() + kCalibDotSearchWidth_mm, dotWrtLift3d.z()},
-      };
-      
-      Quad3f dotQuadRoi3dWrtCam;
-      liftPoseWrtCam.ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtCam);
-      
-      if(DRAW_TOOL_CODE_DEBUG)
-      {
-        Quad3f dotQuadRoi3dWrtWorld;
-        liftPose.GetWithRespectToRoot().ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtWorld);
-        dotQuadRoi3dWrtWorld += Point3f(0,0,0.5f);
-        _vizManager->DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_3D, 9324+(u32)iDot, dotQuadRoi3dWrtWorld, NamedColors::RED);
-        
-        Quad3f dotQuad3d = {
+    };
+
+    Quad3f dotQuadRoi3dWrtCam;
+    liftPoseWrtCam.ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtCam);
+
+    if(DRAW_TOOL_CODE_DEBUG)
+    {
+      Quad3f dotQuadRoi3dWrtWorld;
+      liftPose.GetWithRespectToRoot().ApplyTo(dotQuadRoi3d, dotQuadRoi3dWrtWorld);
+      dotQuadRoi3dWrtWorld += Point3f(0,0,0.5f);
+      _vizManager->DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_3D, 9324+(u32)iDot, dotQuadRoi3dWrtWorld, NamedColors::RED);
+
+      Quad3f dotQuad3d = {
           {dotWrtLift3d.x() - kDotWidth_mm*0.5f, dotWrtLift3d.y() - kDotWidth_mm*0.5f, dotWrtLift3d.z()},
           {dotWrtLift3d.x() - kDotWidth_mm*0.5f, dotWrtLift3d.y() + kDotWidth_mm*0.5f, dotWrtLift3d.z()},
           {dotWrtLift3d.x() + kDotWidth_mm*0.5f, dotWrtLift3d.y() - kDotWidth_mm*0.5f, dotWrtLift3d.z()},
           {dotWrtLift3d.x() + kDotWidth_mm*0.5f, dotWrtLift3d.y() + kDotWidth_mm*0.5f, dotWrtLift3d.z()},
-        };
-        Quad3f dotQuadWrtWorld;
-        liftPose.GetWithRespectToRoot().ApplyTo(dotQuad3d, dotQuadWrtWorld);
-        dotQuadWrtWorld += Point3f(0,0,0.5f);
-        _vizManager->DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_3D, 9337+(u32)iDot, dotQuadWrtWorld, NamedColors::GREEN);
-      }
-      
-      Quad2f dotQuadRoi2d;
-      _camera.Project3dPoints(dotQuadRoi3dWrtCam, dotQuadRoi2d);
-      
-      Anki::Rectangle<s32> dotRectRoi(dotQuadRoi2d);
-      
-      // Save ROI image for writing to robot's NVStorage
-      _toolCodeImages.emplace_back(image.GetROI(dotRectRoi));
-      const Vision::Image& dotRoi = _toolCodeImages.back();
-      
-      // Simple global threshold for binarization
-      //Vision::Image invertedDotRoi = dotRoi.GetNegative();
-      //double maxVal = 0, minVal = 0;
-      //cv::minMaxIdx(invertedDotRoi.get_CvMat_(), &minVal, &maxVal);
-      //invertedDotRoi.Threshold((maxVal + minVal)*0.5);
-      
-      // Perform local binarization:
-      Vision::Image dotRoi_blurred;
-      cv::GaussianBlur(dotRoi.get_CvMat_(), dotRoi_blurred.get_CvMat_(),
-                       cv::Size(kBinarizeKernelSize,kBinarizeKernelSize), kBinarizeKernelSigma);
-      Vision::Image binarizedDotRoi(dotRoi.GetNumRows(), dotRoi.GetNumCols());
-      const u8 roiMean = cv::saturate_cast<u8>(1.5 * cv::mean(dotRoi.get_CvMat_())[0]); // 1.5 = fudge factor
-      binarizedDotRoi.get_CvMat_() = ((dotRoi.get_CvMat_() < dotRoi_blurred.get_CvMat_()) &
-                                      (dotRoi.get_CvMat_() < roiMean));
-      
-      if(false && DRAW_TOOL_CODE_DEBUG) {
-        _currentResult.debugImages.push_back({(iDot==0 ? "dotRoi0" : "dotRoi1"), dotRoi});
-        _currentResult.debugImages.push_back({(iDot==0 ? "dotRoi0_blurred" : "dotRoi1_blurred"), dotRoi_blurred});
-        _currentResult.debugImages.push_back({(iDot==0 ? "InvertedDotROI0" : "InvertedDotRoi1"), binarizedDotRoi});
-      }
-      
-      // Get connected components in the ROI
-      Array2d<s32> labels;
-      cv::Mat stats, centroids;
-      const s32 numComponents = cv::connectedComponentsWithStats(binarizedDotRoi.get_CvMat_(), labels.get_CvMat_(), stats, centroids);
-      
-      s32 dotLabel = -1;
-      
-      // Filter out components based on a variety of checks:
-      //  area, solidity, existence and size of a hole that is fully surrounded
-      Anki::Point2f roiCen(binarizedDotRoi.GetNumCols(), binarizedDotRoi.GetNumRows());
-      roiCen *= 0.5f;
-      f32 distToCenterSq = FLT_MAX;
-      for(s32 iComp=1; iComp < numComponents; ++iComp)
+      };
+      Quad3f dotQuadWrtWorld;
+      liftPose.GetWithRespectToRoot().ApplyTo(dotQuad3d, dotQuadWrtWorld);
+      dotQuadWrtWorld += Point3f(0,0,0.5f);
+      _vizManager->DrawQuad(VizQuadType::VIZ_QUAD_GENERIC_3D, 9337+(u32)iDot, dotQuadWrtWorld, NamedColors::GREEN);
+    }
+
+    Quad2f dotQuadRoi2d;
+    _camera.Project3dPoints(dotQuadRoi3dWrtCam, dotQuadRoi2d);
+
+    Anki::Rectangle<s32> dotRectRoi(dotQuadRoi2d);
+
+    // Save ROI image for writing to robot's NVStorage
+    _toolCodeImages.emplace_back(image.GetROI(dotRectRoi));
+    const Vision::Image& dotRoi = _toolCodeImages.back();
+
+    // Simple global threshold for binarization
+    //Vision::Image invertedDotRoi = dotRoi.GetNegative();
+    //double maxVal = 0, minVal = 0;
+    //cv::minMaxIdx(invertedDotRoi.get_CvMat_(), &minVal, &maxVal);
+    //invertedDotRoi.Threshold((maxVal + minVal)*0.5);
+
+    // Perform local binarization:
+    Vision::Image dotRoi_blurred;
+    cv::GaussianBlur(dotRoi.get_CvMat_(), dotRoi_blurred.get_CvMat_(),
+                     cv::Size(kBinarizeKernelSize,kBinarizeKernelSize), kBinarizeKernelSigma);
+    Vision::Image binarizedDotRoi(dotRoi.GetNumRows(), dotRoi.GetNumCols());
+    const u8 roiMean = cv::saturate_cast<u8>(1.5 * cv::mean(dotRoi.get_CvMat_())[0]); // 1.5 = fudge factor
+    binarizedDotRoi.get_CvMat_() = ((dotRoi.get_CvMat_() < dotRoi_blurred.get_CvMat_()) &
+                                    (dotRoi.get_CvMat_() < roiMean));
+
+    if(false && DRAW_TOOL_CODE_DEBUG) {
+      _currentResult.debugImages.push_back({(iDot==0 ? "dotRoi0" : "dotRoi1"), dotRoi});
+      _currentResult.debugImages.push_back({(iDot==0 ? "dotRoi0_blurred" : "dotRoi1_blurred"), dotRoi_blurred});
+      _currentResult.debugImages.push_back({(iDot==0 ? "InvertedDotROI0" : "InvertedDotRoi1"), binarizedDotRoi});
+    }
+
+    // Get connected components in the ROI
+    Array2d<s32> labels;
+    cv::Mat stats, centroids;
+    const s32 numComponents = cv::connectedComponentsWithStats(binarizedDotRoi.get_CvMat_(), labels.get_CvMat_(), stats, centroids);
+
+    s32 dotLabel = -1;
+
+    // Filter out components based on a variety of checks:
+    //  area, solidity, existence and size of a hole that is fully surrounded
+    Anki::Point2f roiCen(binarizedDotRoi.GetNumCols(), binarizedDotRoi.GetNumRows());
+    roiCen *= 0.5f;
+    f32 distToCenterSq = FLT_MAX;
+    for(s32 iComp=1; iComp < numComponents; ++iComp)
+    {
+      const s32* compStats = stats.ptr<s32>(iComp);
+      const s32 compArea = compStats[cv::CC_STAT_AREA];
+      //const s32 bboxArea = compStats[cv::CC_STAT_HEIGHT]*compStats[cv::CC_STAT_WIDTH];
+      //const f32 solidity = (f32)compArea/(f32)bboxArea;
+
+      //        // DEBUG!!!
+      //        {
+      //          Vision::Image temp;
+      //          temp.get_CvMat_() = (labels.get_CvMat_() == iComp);
+      //          PRINT_NAMED_DEBUG("Component", "iComp: %d, Area: %d, solidity: %.3f",
+      //                            iComp, compArea, -1.f);
+      //          temp.Display("Component", 0);
+      //        }
+
+      if(compArea > kMinDotAreaFrac*binarizedDotRoi.GetNumElements() &&
+         compArea < kMaxDotAreaFrac*binarizedDotRoi.GetNumElements()
+        /* && solidity > kMinSolidity */)
       {
-        const s32* compStats = stats.ptr<s32>(iComp);
-        const s32 compArea = compStats[cv::CC_STAT_AREA];
-        //const s32 bboxArea = compStats[cv::CC_STAT_HEIGHT]*compStats[cv::CC_STAT_WIDTH];
-        //const f32 solidity = (f32)compArea/(f32)bboxArea;
-        
-        //        // DEBUG!!!
-        //        {
-        //          Vision::Image temp;
-        //          temp.get_CvMat_() = (labels.get_CvMat_() == iComp);
-        //          PRINT_NAMED_DEBUG("Component", "iComp: %d, Area: %d, solidity: %.3f",
-        //                            iComp, compArea, -1.f);
-        //          temp.Display("Component", 0);
-        //        }
-        
-        if(compArea > kMinDotAreaFrac*binarizedDotRoi.GetNumElements() &&
-           compArea < kMaxDotAreaFrac*binarizedDotRoi.GetNumElements()
-           /* && solidity > kMinSolidity */)
+        const f64* dotCentroid = centroids.ptr<f64>(iComp);
+        const f32 distSq = (Anki::Point2f(dotCentroid[0], dotCentroid[1]) - roiCen).LengthSq();
+        if(distSq < distToCenterSq)
         {
-          const f64* dotCentroid = centroids.ptr<f64>(iComp);
-          const f32 distSq = (Anki::Point2f(dotCentroid[0], dotCentroid[1]) - roiCen).LengthSq();
-          if(distSq < distToCenterSq)
+          // Check to see if center point is "empty" (has background label)
+          // Note the x/y vs. row/col switch here
+          const s32 centerLabel = labels(std::round(dotCentroid[1]),
+                                         std::round(dotCentroid[0]));
+
+          if(centerLabel == 0)
           {
-            // Check to see if center point is "empty" (has background label)
-            // Note the x/y vs. row/col switch here
-            const s32 centerLabel = labels(std::round(dotCentroid[1]),
-                                           std::round(dotCentroid[0]));
-            
-            if(centerLabel == 0)
+            Anki::Rectangle<s32> compRect(compStats[cv::CC_STAT_LEFT],  compStats[cv::CC_STAT_TOP],
+                                          compStats[cv::CC_STAT_WIDTH], compStats[cv::CC_STAT_HEIGHT]);
+
+            Vision::Image compBrightnessROI = dotRoi.GetROI(compRect);
+            Array2d<s32> labelROI;
+            labels.GetROI(compRect).CopyTo(labelROI); // need copy!
+
+            // Verify if we flood fill from center that we get a hole of
+            // reasonable size that doesn't "leak" outside of this component
+            cv::floodFill(labelROI.get_CvMat_(), cv::Point(dotCentroid[0]-compRect.GetX(), dotCentroid[1]-compRect.GetY()),
+                          numComponents+1);
+
+            //              // DEBUG!!!
+            //              //if(iDot == 1){
+            //              {
+            //                Vision::Image temp;
+            //                temp.get_CvMat_() = (labels.get_CvMat_() == iComp);
+            //                PRINT_NAMED_DEBUG("Component", "iComp: %d, Area: %d, solidity: %.3f",
+            //                                  iComp, compArea, -1.f);
+            //                temp.Display("Component");
+            //
+            //                Vision::Image tempFill;
+            //                tempFill.get_CvMat_() = (labelROI.get_CvMat_() == numComponents+1);
+            //                tempFill.Display("FloodFill", 0);
+            //              }
+
+            // Loop over an even smaller ROI right around the component to
+            // compute the hole size, the brightness of that hole vs.
+            // the component itself, and whether the hole is completely
+            // surrounded by the component or touches the edge of ROI.
+            s32 avgDotBrightness = 0;
+            s32 avgHoleBrightness = 0;
+            s32 holeArea = 0;
+            bool touchesEdge = false;
+            for(s32 i=0; i<labelROI.GetNumRows() && !touchesEdge; ++i)
             {
-              Anki::Rectangle<s32> compRect(compStats[cv::CC_STAT_LEFT],  compStats[cv::CC_STAT_TOP],
-                                            compStats[cv::CC_STAT_WIDTH], compStats[cv::CC_STAT_HEIGHT]);
-              
-              Vision::Image compBrightnessROI = dotRoi.GetROI(compRect);
-              Array2d<s32> labelROI;
-              labels.GetROI(compRect).CopyTo(labelROI); // need copy!
-              
-              // Verify if we flood fill from center that we get a hole of
-              // reasonable size that doesn't "leak" outside of this component
-              cv::floodFill(labelROI.get_CvMat_(), cv::Point(dotCentroid[0]-compRect.GetX(), dotCentroid[1]-compRect.GetY()),
-                            numComponents+1);
-              
-              //              // DEBUG!!!
-              //              //if(iDot == 1){
-              //              {
-              //                Vision::Image temp;
-              //                temp.get_CvMat_() = (labels.get_CvMat_() == iComp);
-              //                PRINT_NAMED_DEBUG("Component", "iComp: %d, Area: %d, solidity: %.3f",
-              //                                  iComp, compArea, -1.f);
-              //                temp.Display("Component");
-              //
-              //                Vision::Image tempFill;
-              //                tempFill.get_CvMat_() = (labelROI.get_CvMat_() == numComponents+1);
-              //                tempFill.Display("FloodFill", 0);
-              //              }
-              
-              // Loop over an even smaller ROI right around the component to
-              // compute the hole size, the brightness of that hole vs.
-              // the component itself, and whether the hole is completely
-              // surrounded by the component or touches the edge of ROI.
-              s32 avgDotBrightness = 0;
-              s32 avgHoleBrightness = 0;
-              s32 holeArea = 0;
-              bool touchesEdge = false;
-              for(s32 i=0; i<labelROI.GetNumRows() && !touchesEdge; ++i)
+              const u8* brightness_i = compBrightnessROI.GetRow(i);
+              const s32* label_i = labelROI.GetRow(i);
+
+              for(s32 j=0; j<labelROI.GetNumCols() && !touchesEdge; ++j)
               {
-                const u8* brightness_i = compBrightnessROI.GetRow(i);
-                const s32* label_i = labelROI.GetRow(i);
-                
-                for(s32 j=0; j<labelROI.GetNumCols() && !touchesEdge; ++j)
+                if(label_i[j] == numComponents+1)
                 {
-                  if(label_i[j] == numComponents+1)
+                  ++holeArea;
+                  avgHoleBrightness += brightness_i[j];
+
+                  if(i==0 || i==labelROI.GetNumRows()-1 ||
+                     j==0 || j==labelROI.GetNumCols()-1)
                   {
-                    ++holeArea;
-                    avgHoleBrightness += brightness_i[j];
-                    
-                    if(i==0 || i==labelROI.GetNumRows()-1 ||
-                       j==0 || j==labelROI.GetNumCols()-1)
-                    {
-                      touchesEdge = true;
-                    }
-                  }
-                  else if(label_i[j] == iComp)  {
-                    avgDotBrightness += brightness_i[j];
+                    touchesEdge = true;
                   }
                 }
-              }
-              
-              if(!touchesEdge)
-              {
-                avgHoleBrightness /= holeArea;
-                avgDotBrightness  /= compArea;
-                
-                // Hole should neither leak to the outside, nor should it be too big,
-                // and its brightness should be sufficiently brighter than the dot
-                const bool holeSmallEnough = holeArea < compArea * kMaxHoleAreaFrac;
-                const bool enoughContrast = (f32)avgHoleBrightness > kCalibDotMinContrastRatio * (f32)avgDotBrightness;
-                if(holeSmallEnough && enoughContrast)
-                {
-                  // Yay, passed all checks! Thus "must" be a tool code.
-                  dotLabel = iComp;
-                  distToCenterSq = distSq;
-                } else if(!enoughContrast) {
-                  PRINT_CH_INFO(kLogChannelName, "VisionSystem.ReadToolCode.BadContrast",
-                                "Dot %lu: Contrast for comp %d = %f",
-                                (unsigned long)iDot, iComp, (f32)avgHoleBrightness / (f32)avgDotBrightness);
-                } else if(!holeSmallEnough) {
-                  PRINT_CH_INFO(kLogChannelName, "VisionSystem.ReadToolCode.HoleTooLarge",
-                                "Dot %lu: hole too large %d > %f*%d (=%f)",
-                                (unsigned long)iDot, holeArea, kMaxHoleAreaFrac, compArea,
-                                kMaxHoleAreaFrac*compArea);
+                else if(label_i[j] == iComp)  {
+                  avgDotBrightness += brightness_i[j];
                 }
               }
             }
-          } // dist to center check
-        } // area check
-      } // for each component iComp
-      
-      if(DRAW_TOOL_CODE_DEBUG) {
-        Vision::ImageRGB roiImgDisp(binarizedDotRoi);
-        // Function to color component with dotLabel green, and white for all others
-        std::function<Vision::PixelRGB(const s32&)> fcn = [dotLabel](const s32& label)
-        {
-          if(label == dotLabel) {
-            return Vision::PixelRGB(0,255,0);
-          } else if(label == 0) {
-            return Vision::PixelRGB(0,0,0);
-          } else {
-            return Vision::PixelRGB(255,255,255);
+
+            if(!touchesEdge)
+            {
+              avgHoleBrightness /= holeArea;
+              avgDotBrightness  /= compArea;
+
+              // Hole should neither leak to the outside, nor should it be too big,
+              // and its brightness should be sufficiently brighter than the dot
+              const bool holeSmallEnough = holeArea < compArea * kMaxHoleAreaFrac;
+              const bool enoughContrast = (f32)avgHoleBrightness > kCalibDotMinContrastRatio * (f32)avgDotBrightness;
+              if(holeSmallEnough && enoughContrast)
+              {
+                // Yay, passed all checks! Thus "must" be a tool code.
+                dotLabel = iComp;
+                distToCenterSq = distSq;
+              } else if(!enoughContrast) {
+                PRINT_CH_INFO(kLogChannelName, "VisionSystem.ReadToolCode.BadContrast",
+                              "Dot %lu: Contrast for comp %d = %f",
+                              (unsigned long)iDot, iComp, (f32)avgHoleBrightness / (f32)avgDotBrightness);
+              } else if(!holeSmallEnough) {
+                PRINT_CH_INFO(kLogChannelName, "VisionSystem.ReadToolCode.HoleTooLarge",
+                              "Dot %lu: hole too large %d > %f*%d (=%f)",
+                              (unsigned long)iDot, holeArea, kMaxHoleAreaFrac, compArea,
+                              kMaxHoleAreaFrac*compArea);
+              }
+            }
           }
-        };
-        labels.ApplyScalarFunction(fcn, roiImgDisp);
-        if(dotLabel != -1) {
-          const f64* dotCentroid = centroids.ptr<f64>(dotLabel);
-          roiImgDisp.DrawCircle(Anki::Point2f(dotCentroid[0], dotCentroid[1]), NamedColors::RED, 1);
-          
-          const s32* compStats = stats.ptr<s32>(dotLabel);
-          Anki::Rectangle<f32> compRect(compStats[cv::CC_STAT_LEFT],  compStats[cv::CC_STAT_TOP],
-                                        compStats[cv::CC_STAT_WIDTH], compStats[cv::CC_STAT_HEIGHT]);
-          roiImgDisp.DrawRect(compRect, NamedColors::RED, 1);
+        } // dist to center check
+      } // area check
+    } // for each component iComp
+
+    if(DRAW_TOOL_CODE_DEBUG) {
+      Vision::ImageRGB roiImgDisp(binarizedDotRoi);
+      // Function to color component with dotLabel green, and white for all others
+      std::function<Vision::PixelRGB(const s32&)> fcn = [dotLabel](const s32& label)
+      {
+        if(label == dotLabel) {
+          return Vision::PixelRGB(0,255,0);
+        } else if(label == 0) {
+          return Vision::PixelRGB(0,0,0);
+        } else {
+          return Vision::PixelRGB(255,255,255);
         }
-        _currentResult.debugImageRGBs.push_back({(iDot==0 ? "DotROI0withCentroid" : "DotROI1withCentroid"), roiImgDisp});
-      } // if(DRAW_TOOL_CODE_DEBUG)
-      
-      if(dotLabel == -1) {
-        PRINT_NAMED_WARNING("VisionSystem.ReadToolCode.DotsNotFound",
-                            "Failed to find valid dot");
-        
-        // Continuing to the next dot so that we at least have images
-        continue;
+      };
+      labels.ApplyScalarFunction(fcn, roiImgDisp);
+      if(dotLabel != -1) {
+        const f64* dotCentroid = centroids.ptr<f64>(dotLabel);
+        roiImgDisp.DrawCircle(Anki::Point2f(dotCentroid[0], dotCentroid[1]), NamedColors::RED, 1);
+
+        const s32* compStats = stats.ptr<s32>(dotLabel);
+        Anki::Rectangle<f32> compRect(compStats[cv::CC_STAT_LEFT],  compStats[cv::CC_STAT_TOP],
+                                      compStats[cv::CC_STAT_WIDTH], compStats[cv::CC_STAT_HEIGHT]);
+        roiImgDisp.DrawRect(compRect, NamedColors::RED, 1);
       }
-      
-      DEV_ASSERT(centroids.type() == CV_64F, "VisionSystem.ReadToolCode.CentroidTypeNotDouble");
-      const f64* dotCentroid = centroids.ptr<f64>(dotLabel);
-      observedPoints.push_back(Anki::Point2f(dotCentroid[0] + dotRectRoi.GetX(),
-                                             dotCentroid[1] + dotRectRoi.GetY()));
-      
+      _currentResult.debugImageRGBs.push_back({(iDot==0 ? "DotROI0withCentroid" : "DotROI1withCentroid"), roiImgDisp});
+    } // if(DRAW_TOOL_CODE_DEBUG)
+
+    if(dotLabel == -1) {
+      PRINT_NAMED_WARNING("VisionSystem.ReadToolCode.DotsNotFound",
+                          "Failed to find valid dot");
+
+      // Continuing to the next dot so that we at least have images
+      continue;
+    }
+
+    DEV_ASSERT(centroids.type() == CV_64F, "VisionSystem.ReadToolCode.CentroidTypeNotDouble");
+    const f64* dotCentroid = centroids.ptr<f64>(dotLabel);
+    observedPoints.push_back(Anki::Point2f(dotCentroid[0] + dotRectRoi.GetX(),
+                                           dotCentroid[1] + dotRectRoi.GetY()));
+
 #     if DRAW_TOOL_CODE_DEBUG
-      dispImg.DrawPoint(observedPoints.back(), NamedColors::ORANGE, 1);
+    dispImg.DrawPoint(observedPoints.back(), NamedColors::ORANGE, 1);
       dispImg.DrawPoint(projectedToolCodeDots[iDot], NamedColors::BLUE,   2);
       dispImg.DrawQuad(dotQuadRoi2d, NamedColors::CYAN, 1);
 #     endif
-    } // for each tool code dot iDot
-    
-    if (observedPoints.size() < 2) {
-      PRINT_NAMED_WARNING("VisionSystem.ReadToolCode.WrongNumDotsObserved",
-                          "Dots found in %zu images", observedPoints.size());
-      
-      // TODO: Return failure instead?
-      return RESULT_OK;
-    }
-    
-    readToolCodeMessage.observedCalibDotLeft_x  = observedPoints[LEFT_DOT].x();
-    readToolCodeMessage.observedCalibDotLeft_y  = observedPoints[LEFT_DOT].y();
-    readToolCodeMessage.observedCalibDotRight_x = observedPoints[RIGHT_DOT].x();
-    readToolCodeMessage.observedCalibDotRight_y = observedPoints[RIGHT_DOT].y();
-    
-    // TODO: Actually read the code and put corresponding result in the mailbox (once we have more than one)
-    // NOTE: This gets put in the mailbox by the Cleanup object defined at the top of the function
-    readToolCodeMessage.code = ToolCode::CubeLiftingTool;
-    
-    if(_calibrateFromToolCode)
+  } // for each tool code dot iDot
+
+  if (observedPoints.size() < 2) {
+    PRINT_NAMED_WARNING("VisionSystem.ReadToolCode.WrongNumDotsObserved",
+                        "Dots found in %zu images", observedPoints.size());
+
+    // TODO: Return failure instead?
+    return RESULT_OK;
+  }
+
+  readToolCodeMessage.observedCalibDotLeft_x  = observedPoints[LEFT_DOT].x();
+  readToolCodeMessage.observedCalibDotLeft_y  = observedPoints[LEFT_DOT].y();
+  readToolCodeMessage.observedCalibDotRight_x = observedPoints[RIGHT_DOT].x();
+  readToolCodeMessage.observedCalibDotRight_y = observedPoints[RIGHT_DOT].y();
+
+  // TODO: Actually read the code and put corresponding result in the mailbox (once we have more than one)
+  // NOTE: This gets put in the mailbox by the Cleanup object defined at the top of the function
+  readToolCodeMessage.code = ToolCode::CubeLiftingTool;
+
+  if(_calibrateFromToolCode)
+  {
+    // Solve for camera center and focal length as a system of equations
+    //
+    // Let:
+    //   (x_i, y_i, z_i) = 3D location of tool code dot i
+    //   (u_i, v_i)      = observed 2D projection tool code dot i
+    //   (cx,cy)         = calibration center point
+    //   f               = calibration focal length
+    //
+    // Then:
+    //
+    //   [z_i  0   x_i] [cx]   [z_i * u_i]
+    //   [0   z_i  y_i] [cy] = [z_i * v_i]
+    //                  [f ]
+
+    SmallMatrix<4, 3, f32> A;
+    Anki::Point<4, f32> b;
+    Anki::Point<3, f32> calibParams;
+
+    for(s32 iDot=0; iDot<2; ++iDot)
     {
-      // Solve for camera center and focal length as a system of equations
-      //
-      // Let:
-      //   (x_i, y_i, z_i) = 3D location of tool code dot i
-      //   (u_i, v_i)      = observed 2D projection tool code dot i
-      //   (cx,cy)         = calibration center point
-      //   f               = calibration focal length
-      //
-      // Then:
-      //
-      //   [z_i  0   x_i] [cx]   [z_i * u_i]
-      //   [0   z_i  y_i] [cy] = [z_i * v_i]
-      //                  [f ]
-      
-      SmallMatrix<4, 3, f32> A;
-      Anki::Point<4, f32> b;
-      Anki::Point<3, f32> calibParams;
-      
-      for(s32 iDot=0; iDot<2; ++iDot)
-      {
-        A(iDot*2,0)   = toolCodeDotsWrtCam[iDot].z();
-        A(iDot*2,1)   = 0.f;
-        A(iDot*2,2)   = toolCodeDotsWrtCam[iDot].x();
-        b[iDot*2]     = toolCodeDotsWrtCam[iDot].z() * observedPoints[iDot].x();
-        
-        A(iDot*2+1,0) = 0.f;
-        A(iDot*2+1,1) = toolCodeDotsWrtCam[iDot].z();
-        A(iDot*2+1,2) = toolCodeDotsWrtCam[iDot].y();
-        b[iDot*2+1]   = toolCodeDotsWrtCam[iDot].z() * observedPoints[iDot].y();
-      }
-      
-      Result lsqResult = LeastSquares(A,b,calibParams);
-      
-      DEV_ASSERT(lsqResult == RESULT_OK, "LeastSquares failed");
-      
-      camCen.x()  = calibParams[0];
-      camCen.y()  = calibParams[1];
-      const f32 f = calibParams[2];
-      
+      A(iDot*2,0)   = toolCodeDotsWrtCam[iDot].z();
+      A(iDot*2,1)   = 0.f;
+      A(iDot*2,2)   = toolCodeDotsWrtCam[iDot].x();
+      b[iDot*2]     = toolCodeDotsWrtCam[iDot].z() * observedPoints[iDot].x();
+
+      A(iDot*2+1,0) = 0.f;
+      A(iDot*2+1,1) = toolCodeDotsWrtCam[iDot].z();
+      A(iDot*2+1,2) = toolCodeDotsWrtCam[iDot].y();
+      b[iDot*2+1]   = toolCodeDotsWrtCam[iDot].z() * observedPoints[iDot].y();
+    }
+
+    Result lsqResult = LeastSquares(A,b,calibParams);
+
+    DEV_ASSERT(lsqResult == RESULT_OK, "LeastSquares failed");
+
+    camCen.x()  = calibParams[0];
+    camCen.y()  = calibParams[1];
+    const f32 f = calibParams[2];
+
 #     if DRAW_TOOL_CODE_DEBUG
-      {
+    {
         char dispStr[256];
         snprintf(dispStr, 255, "f=%.1f, cen=(%.1f,%.1f)",
                  f, camCen.x(), camCen.y());
@@ -2174,144 +2268,144 @@ namespace Cozmo {
         _currentResult.debugImageRGBs.push_back({"ToolCode", dispImg});
       }
 #     endif
-      
-      if(std::isnan(camCen.x()) || std::isnan(camCen.y())) {
-        PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.CamCenNaN", "");
-        return RESULT_FAIL;
-      } else if(std::isnan(f) || f <= 0.f) {
-        PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.BadFocalLength", "");
-        return RESULT_FAIL;
-      } else {
-        // Make sure we're not changing too drastically
-        const f32 kMaxChangeFraction = 0.25f;
-        const f32 fChangeFrac = f/_camera.GetCalibration()->GetFocalLength_x();
-        const f32 xChangeFrac = camCen.x() / _camera.GetCalibration()->GetCenter_x();
-        const f32 yChangeFrac = camCen.y() / _camera.GetCalibration()->GetCenter_y();
-        if(!NEAR(fChangeFrac, 1.f, kMaxChangeFraction) ||
-           !NEAR(xChangeFrac, 1.f, kMaxChangeFraction) ||
-           !NEAR(yChangeFrac, 1.f, kMaxChangeFraction))
-        {
-          PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.ChangeTooLarge",
-                            "Calibration change too large from current: f=%f vs %f, "
-                            "cen=(%f,%f) vs (%f,%f)",
-                            f, _camera.GetCalibration()->GetFocalLength_x(),
-                            xChangeFrac, yChangeFrac,
-                            _camera.GetCalibration()->GetCenter_x(),
-                            _camera.GetCalibration()->GetCenter_y());
-          return RESULT_FAIL;
-        }
-        
-        
-        // Sanity check the new calibration:
-        if(true) // TODO: Only in debug?
-        {
-          Vision::Camera tempCamera;
-          auto tempCalib = std::make_shared<Vision::CameraCalibration>(_camera.GetCalibration()->GetNrows(),
-                                                                       _camera.GetCalibration()->GetNcols(),
-                                                                       _camera.GetCalibration()->GetFocalLength_x(),
-                                                                       _camera.GetCalibration()->GetFocalLength_y(),
-                                                                       _camera.GetCalibration()->GetCenter_x(),
-                                                                       _camera.GetCalibration()->GetCenter_y());
-          tempCalib->SetFocalLength(f,f);
-          tempCalib->SetCenter(camCen);
-          tempCamera.SetCalibration(tempCalib);
-          std::vector<Anki::Point2f> sanityCheckPoints;
-          tempCamera.Project3dPoints(toolCodeDotsWrtCam, sanityCheckPoints);
-          for(s32 i=0; i<2; ++i)
-          {
-            const f32 reprojErrorSq = (sanityCheckPoints[i] - observedPoints[i]).LengthSq();
-            if(reprojErrorSq > 5*5)
-            {
-              if(DRAW_TOOL_CODE_DEBUG)
-              {
-                Vision::ImageRGB dispImg(image);
-                dispImg.DrawCircle(sanityCheckPoints[0], NamedColors::RED, 1);
-                dispImg.DrawCircle(sanityCheckPoints[1], NamedColors::RED, 1);
-                dispImg.DrawCircle(observedPoints[0], NamedColors::GREEN, 1);
-                dispImg.DrawCircle(observedPoints[1], NamedColors::GREEN, 1);
-                _currentResult.debugImageRGBs.push_back({"SanityCheck", dispImg});
-              }
-              PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.BadProjection",
-                                "Reprojection error of point %d = %f",
-                                i, std::sqrtf(reprojErrorSq));
-              return RESULT_FAIL;
-            }
-          }
-        } // if sanity checking the new calibration
-        
-        // Update the camera calibration
-        PRINT_CH_INFO(kLogChannelName, "VisionSystem.ReadToolCode.CameraCalibUpdated",
-                      "OldCen=(%f,%f), NewCen=(%f,%f), OldF=(%f,%f), NewF=(%f,%f), t=%dms",
-                      _camera.GetCalibration()->GetCenter_x(),
-                      _camera.GetCalibration()->GetCenter_y(),
-                      camCen.x(), camCen.y(),
-                      _camera.GetCalibration()->GetFocalLength_x(),
-                      _camera.GetCalibration()->GetFocalLength_y(),
-                      f, f,
-                      image.GetTimestamp());
-        _camera.GetCalibration()->SetCenter(camCen);
-        _camera.GetCalibration()->SetFocalLength(f, f);
-    
-      } // if(new calib values pass sanity / nan checks)
-    } // if tool code calibration is enabled
-  
-    return RESULT_OK;
-  } // ReadToolCode()
 
-  Result VisionSystem::GetSerializedFaceData(std::vector<u8>& albumData,
-                                             std::vector<u8>& enrollData) const
+    if(std::isnan(camCen.x()) || std::isnan(camCen.y())) {
+      PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.CamCenNaN", "");
+      return RESULT_FAIL;
+    } else if(std::isnan(f) || f <= 0.f) {
+      PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.BadFocalLength", "");
+      return RESULT_FAIL;
+    } else {
+      // Make sure we're not changing too drastically
+      const f32 kMaxChangeFraction = 0.25f;
+      const f32 fChangeFrac = f/_camera.GetCalibration()->GetFocalLength_x();
+      const f32 xChangeFrac = camCen.x() / _camera.GetCalibration()->GetCenter_x();
+      const f32 yChangeFrac = camCen.y() / _camera.GetCalibration()->GetCenter_y();
+      if(!NEAR(fChangeFrac, 1.f, kMaxChangeFraction) ||
+         !NEAR(xChangeFrac, 1.f, kMaxChangeFraction) ||
+         !NEAR(yChangeFrac, 1.f, kMaxChangeFraction))
+      {
+        PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.ChangeTooLarge",
+                          "Calibration change too large from current: f=%f vs %f, "
+                              "cen=(%f,%f) vs (%f,%f)",
+                          f, _camera.GetCalibration()->GetFocalLength_x(),
+                          xChangeFrac, yChangeFrac,
+                          _camera.GetCalibration()->GetCenter_x(),
+                          _camera.GetCalibration()->GetCenter_y());
+        return RESULT_FAIL;
+      }
+
+
+      // Sanity check the new calibration:
+      if(true) // TODO: Only in debug?
+      {
+        Vision::Camera tempCamera;
+        auto tempCalib = std::make_shared<Vision::CameraCalibration>(_camera.GetCalibration()->GetNrows(),
+                                                                     _camera.GetCalibration()->GetNcols(),
+                                                                     _camera.GetCalibration()->GetFocalLength_x(),
+                                                                     _camera.GetCalibration()->GetFocalLength_y(),
+                                                                     _camera.GetCalibration()->GetCenter_x(),
+                                                                     _camera.GetCalibration()->GetCenter_y());
+        tempCalib->SetFocalLength(f,f);
+        tempCalib->SetCenter(camCen);
+        tempCamera.SetCalibration(tempCalib);
+        std::vector<Anki::Point2f> sanityCheckPoints;
+        tempCamera.Project3dPoints(toolCodeDotsWrtCam, sanityCheckPoints);
+        for(s32 i=0; i<2; ++i)
+        {
+          const f32 reprojErrorSq = (sanityCheckPoints[i] - observedPoints[i]).LengthSq();
+          if(reprojErrorSq > 5*5)
+          {
+            if(DRAW_TOOL_CODE_DEBUG)
+            {
+              Vision::ImageRGB dispImg(image);
+              dispImg.DrawCircle(sanityCheckPoints[0], NamedColors::RED, 1);
+              dispImg.DrawCircle(sanityCheckPoints[1], NamedColors::RED, 1);
+              dispImg.DrawCircle(observedPoints[0], NamedColors::GREEN, 1);
+              dispImg.DrawCircle(observedPoints[1], NamedColors::GREEN, 1);
+              _currentResult.debugImageRGBs.push_back({"SanityCheck", dispImg});
+            }
+            PRINT_NAMED_ERROR("VisionSystem.ReadToolCode.BadProjection",
+                              "Reprojection error of point %d = %f",
+                              i, std::sqrtf(reprojErrorSq));
+            return RESULT_FAIL;
+          }
+        }
+      } // if sanity checking the new calibration
+
+      // Update the camera calibration
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.ReadToolCode.CameraCalibUpdated",
+                    "OldCen=(%f,%f), NewCen=(%f,%f), OldF=(%f,%f), NewF=(%f,%f), t=%dms",
+                    _camera.GetCalibration()->GetCenter_x(),
+                    _camera.GetCalibration()->GetCenter_y(),
+                    camCen.x(), camCen.y(),
+                    _camera.GetCalibration()->GetFocalLength_x(),
+                    _camera.GetCalibration()->GetFocalLength_y(),
+                    f, f,
+                    image.GetTimestamp());
+      _camera.GetCalibration()->SetCenter(camCen);
+      _camera.GetCalibration()->SetFocalLength(f, f);
+
+    } // if(new calib values pass sanity / nan checks)
+  } // if tool code calibration is enabled
+
+  return RESULT_OK;
+} // ReadToolCode()
+
+Result VisionSystem::GetSerializedFaceData(std::vector<u8>& albumData,
+                                           std::vector<u8>& enrollData) const
+{
+  DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.GetSerializedFaceData.NullFaceTracker");
+  return _faceTracker->GetSerializedData(albumData, enrollData);
+}
+
+Result VisionSystem::SetSerializedFaceData(const std::vector<u8>& albumData,
+                                           const std::vector<u8>& enrollData,
+                                           std::list<Vision::LoadedKnownFace>& loadedFaces)
+{
+  DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.SetSerializedFaceData.NullFaceTracker");
+  return _faceTracker->SetSerializedData(albumData, enrollData, loadedFaces);
+}
+
+Result VisionSystem::LoadFaceAlbum(const std::string& albumName, std::list<Vision::LoadedKnownFace> &loadedFaces)
+{
+  DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.LoadFaceAlbum.NullFaceTracker");
+  return _faceTracker->LoadAlbum(albumName, loadedFaces);
+}
+
+Result VisionSystem::SaveFaceAlbum(const std::string& albumName)
+{
+  DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.SaveFaceAlbum.NullFaceTracker");
+  return _faceTracker->SaveAlbum(albumName);
+}
+
+void VisionSystem::SetFaceRecognitionIsSynchronous(bool isSynchronous)
+{
+  DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.SetFaceRecognitionRunMode.NullFaceTracker");
+  _faceTracker->SetRecognitionIsSynchronous(isSynchronous);
+}
+
+bool VisionSystem::IsExposureValid(s32 exposure) const
+{
+  const bool inRange = IN_RANGE(exposure, _minCameraExposureTime_ms, _maxCameraExposureTime_ms);
+  if(!inRange)
   {
-    DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.GetSerializedFaceData.NullFaceTracker");
-    return _faceTracker->GetSerializedData(albumData, enrollData);
+    PRINT_NAMED_WARNING("VisionSystem.IsExposureValid.OOR", "Exposure %dms not in range %dms to %dms",
+                        exposure, _minCameraExposureTime_ms, _maxCameraExposureTime_ms);
   }
-  
-  Result VisionSystem::SetSerializedFaceData(const std::vector<u8>& albumData,
-                                             const std::vector<u8>& enrollData,
-                                             std::list<Vision::LoadedKnownFace>& loadedFaces)
+  return inRange;
+}
+
+bool VisionSystem::IsGainValid(f32 gain) const
+{
+  const bool inRange = IN_RANGE(gain, _minCameraGain, _maxCameraGain);
+  if(!inRange)
   {
-    DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.SetSerializedFaceData.NullFaceTracker");
-    return _faceTracker->SetSerializedData(albumData, enrollData, loadedFaces);
+    PRINT_NAMED_WARNING("VisionSystem.IsGainValid.OOR", "Gain %f not in range %f to %f",
+                        gain, _minCameraGain, _maxCameraGain);
   }
-  
-  Result VisionSystem::LoadFaceAlbum(const std::string& albumName, std::list<Vision::LoadedKnownFace> &loadedFaces)
-  {
-    DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.LoadFaceAlbum.NullFaceTracker");
-    return _faceTracker->LoadAlbum(albumName, loadedFaces);
-  }
-  
-  Result VisionSystem::SaveFaceAlbum(const std::string& albumName)
-  {
-    DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.SaveFaceAlbum.NullFaceTracker");
-    return _faceTracker->SaveAlbum(albumName);
-  }
- 
-  void VisionSystem::SetFaceRecognitionIsSynchronous(bool isSynchronous)
-  {
-    DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.SetFaceRecognitionRunMode.NullFaceTracker");
-    _faceTracker->SetRecognitionIsSynchronous(isSynchronous);
-  }
-  
-  bool VisionSystem::IsExposureValid(s32 exposure) const
-  {
-    const bool inRange = IN_RANGE(exposure, _minCameraExposureTime_ms, _maxCameraExposureTime_ms);
-    if(!inRange)
-    {
-      PRINT_NAMED_WARNING("VisionSystem.IsExposureValid.OOR", "Exposure %dms not in range %dms to %dms",
-                          exposure, _minCameraExposureTime_ms, _maxCameraExposureTime_ms);
-    }
-    return inRange;
-  }
-  
-  bool VisionSystem::IsGainValid(f32 gain) const
-  {
-    const bool inRange = IN_RANGE(gain, _minCameraGain, _maxCameraGain);
-    if(!inRange)
-    {
-      PRINT_NAMED_WARNING("VisionSystem.IsGainValid.OOR", "Gain %f not in range %f to %f",
-                          gain, _minCameraGain, _maxCameraGain);
-    }
-    return inRange;
-  }
-  
+  return inRange;
+}
+
 } // namespace Cozmo
 } // namespace Anki

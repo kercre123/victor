@@ -4,6 +4,7 @@ set(PLATFORM_SRCS "")
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_FLAGS "")
+set(PLATFORM_COMPILE_DEFS "")
 if (MACOSX)
   find_library(FOUNDATION Foundation)
   find_library(SECURITY Security)
@@ -18,6 +19,10 @@ if (MACOSX)
   set(PLATFORM_FLAGS
     -fobjc-arc
     -Wno-unguarded-availability
+  )
+
+  set(PLATFORM_COMPILE_DEFS
+    HAVE_GET_RANDOM_BYTES
   )
 
   set(PLATFORM_INCLUDES
@@ -64,6 +69,11 @@ target_link_libraries(ble_cozmo
 target_compile_options(ble_cozmo
   PRIVATE
   ${PLATFORM_FLAGS}
+)
+
+target_compile_definitions(ble_cozmo
+  PRIVATE
+  ${PLATFORM_COMPILE_DEFS}
 )
 
 target_include_directories(ble_cozmo PUBLIC

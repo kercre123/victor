@@ -41,20 +41,6 @@ Result BehaviorPlaypenWaitToStart::OnBehaviorActivatedInternal()
   // Turn the middle backpack light green to know that this behavior is running
   robot.GetBodyLightComponent().SetBackpackLights(_lights);
 
-  // Check that raw touch values are in expected range (the range assumes no touch)
-  const u16 rawTouchValue = robot.GetTouchSensorComponent().GetLatestRawTouchValue();
-  if(!Util::InRange(rawTouchValue,
-      PlaypenConfig::kMinExpectedTouchValue,
-      PlaypenConfig::kMaxExpectedTouchValue))
-  {
-    PRINT_NAMED_WARNING("BehaviorPlaypenWaitToStart.OnActivated.TouchOOR", 
-                        "Min %u < Val %u < Max %u",
-                        PlaypenConfig::kMinExpectedTouchValue,
-                        rawTouchValue,
-                        PlaypenConfig::kMaxExpectedTouchValue);
-    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::TOUCH_VALUES_OOR, RESULT_FAIL);
-  }
-
   return RESULT_OK;
 }
 
@@ -65,10 +51,8 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInterna
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   const TimeStamp_t curTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  
-  const TouchGesture gesture = robot.GetTouchSensorComponent().GetLatestTouchGesture();
 
-  if(gesture == TouchGesture::ContactInitial && _touchStartTime_ms == 0)
+  if(robot.GetTouchSensorComponent().GetIsPressed() && _touchStartTime_ms == 0)
   {
     _touchStartTime_ms = curTime;
 
@@ -76,7 +60,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInterna
     _lights.offColors[(int)LEDId::LED_BACKPACK_FRONT] = NamedColors::CYAN;
     _needLightUpdate = true;
   }
-  else if(gesture == TouchGesture::NoTouch && _touchStartTime_ms != 0)
+  else if(!robot.GetTouchSensorComponent().GetIsPressed() && _touchStartTime_ms != 0)
   {
     _touchStartTime_ms = 0;
 
@@ -109,17 +93,16 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInterna
   // or this is sim
   const bool buttonGood = !PlaypenConfig::kUseButtonToStart || 
                           (PlaypenConfig::kUseButtonToStart &&
-                           _buttonPressed) || 
-                          !robot.IsPhysical();
+                           _buttonPressed);
 
   if(touchGood && buttonGood && (robot.IsOnCharger() || robot.IsCharging()))
   {
     // Draw nothing on the screen to clear it
-    robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::DrawTextOnScreen(true,
-                                                                                     RobotInterface::ColorRGB(0,0,0),
-                                                                                     RobotInterface::ColorRGB(0,0,0),
+    robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::DrawTextOnScreen(true,	
+                                                                                     RobotInterface::ColorRGB(0,0,0),	
+                                                                                     RobotInterface::ColorRGB(0,0,0),	
                                                                                      "")));
-
+    
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, PlaypenStatus::Complete);
   }
 
@@ -146,6 +129,9 @@ void BehaviorPlaypenWaitToStart::OnBehaviorDeactivated()
   };
 
   robot.GetBodyLightComponent().SetBackpackLights(robot.GetBodyLightComponent().GetOffBackpackLights());
+
+  // Request exit pairing mode to switchboard in case we're in it
+  robot.Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::ExitPairing()));
 }
 
 }

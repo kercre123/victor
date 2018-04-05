@@ -11,31 +11,17 @@
 //-----------------------------------------------------------
 
 //hardware version string
-#if defined(HWVERP2)
-  #define HWVERS "P2"
-#elif defined(HWVERP3)
-  #define HWVERS "P3"
+#if defined(HWVER_DVT3A)
+  #define HWVERS "DVT3A"
+#elif defined(HWVER_DVT2B)
+  #define HWVERS "DVT2B"
 #else
-  #define HWVERS "P?"
+  #define HWVERS "?"
 #endif
 
 //-----------------------------------------------------------
 //        API
 //-----------------------------------------------------------
-
-//power source for switched rail VBATs
-enum vbats_src_e {
-  VBATS_SRC_OFF = 0,
-  VBATS_SRC_VBAT = 1,
-  VBATS_SRC_VEXT = 2
-};
-
-//battery charger enable/strength
-enum chrg_en_e {
-  CHRG_OFF = 0,
-  CHRG_LOW = 1, /*low current charging*/
-  CHRG_HIGH = 2 /*high current charging*/
-};
 
 #ifdef __cplusplus
 namespace Board
@@ -43,10 +29,10 @@ namespace Board
   void init();
   
   //power ctrl
-  void vdd(bool en); //mcu regulator enable (keep alive)
-  void vdds(bool en); //vdd switched (sensor rail)
-  void vbats(vbats_src_e src); //vbat swtiched (head, sensors)
-  void charger(chrg_en_e state); //battery charger
+  void pwr_vdd(bool en);  //VBATs
+  void pwr_vdds(bool en); //vdds (VENC) sensor rail
+  void pwr_vmain(bool en); //VMAIN enable
+  void pwr_charge(bool en); //VEXT connect
 }
 #endif /* __cplusplus */
 
@@ -67,7 +53,7 @@ char* snformat(char *s, size_t n, const char *format, ...);
 
 #ifdef __cplusplus
 //P3 Hacked up dev board has an LED tacked onto BODY_RX pin
-namespace DBGLED GPIO_DEFINE(B, 7); //BODY_RX
+//namespace DBGLED GPIO_DEFINE(B, 7); //BODY_RX
 #endif /* __cplusplus */
 
 

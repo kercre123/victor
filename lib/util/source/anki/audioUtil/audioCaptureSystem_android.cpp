@@ -31,34 +31,34 @@ namespace {
 
 namespace Anki {
 namespace AudioUtil {
-  
+
 struct AudioCaptureSystemData
 {
   AudioCaptureSystem*               _captureSystem = nullptr;
   bool                              _recording = false;
-  
+
   // Pair of audio sample buffers to hold recorded audio
   AudioChunk                        _inputBuffers[2] = { AudioChunk(kSamplesPerChunk), AudioChunk(kSamplesPerChunk) };
   uint32_t                          _enqueuedBuffer = 0;
-  
+
   // Android specific audio recording objects
   SLObjectItf                       _engineObject;
   SLEngineItf                       _engineEngine;
   SLObjectItf                       _recorderObject;
   SLRecordItf                       _recorderRecord;
   SLAndroidSimpleBufferQueueItf     _recorderBufferQueue;
-  
+
   void HandleCallback()
   {
     if(_recording)
     {
       uint32_t fullBuffer = _enqueuedBuffer;
-      
+
       // Note that because we're just alternating between buffers here, the data passed to the callback below
       // needs to be copied out (or processed in place) before we fill up the alternate buffer and switch back.
       _enqueuedBuffer = (0 == _enqueuedBuffer) ? 1 : 0;
       (*_recorderBufferQueue)->Enqueue(_recorderBufferQueue, _inputBuffers[_enqueuedBuffer].data(), kBytesPerChunk);
-      
+
       auto dataCallback = _captureSystem->GetDataCallback();
       if (dataCallback)
       {
@@ -66,7 +66,7 @@ struct AudioCaptureSystemData
       }
     }
   }
-  
+
   ~AudioCaptureSystemData()
   {
     // destroy audio recorder object, and invalidate all associated interfaces
@@ -77,7 +77,7 @@ struct AudioCaptureSystemData
       _recorderRecord = nullptr;
       _recorderBufferQueue = nullptr;
     }
-    
+
     // destroy engine object, and invalidate all associated interfaces
     if (_engineObject != nullptr)
     {
@@ -87,7 +87,7 @@ struct AudioCaptureSystemData
     }
   }
 };
-  
+
 static void HandleCallbackEntry(SLAndroidSimpleBufferQueueItf bufferQueue, void *inUserData)
 {
   AudioCaptureSystemData* data = static_cast<AudioCaptureSystemData*>(inUserData);
@@ -97,7 +97,11 @@ static void HandleCallbackEntry(SLAndroidSimpleBufferQueueItf bufferQueue, void 
 AudioCaptureSystem::AudioCaptureSystem(uint32_t samplesPerChunk, uint32_t sampleRate)
 : _samplesPerChunk(samplesPerChunk)
 , _sampleRate_hz(sampleRate)
-{ }
+{
+  // Not used on android platform
+  (void) _samplesPerChunk;
+  (void) _sampleRate_hz;
+}
 
 void AudioCaptureSystem::Init()
 {
@@ -105,19 +109,19 @@ void AudioCaptureSystem::Init()
   {
     return;
   }
-  
+
   _impl.reset(new AudioCaptureSystemData{});
   _impl->_captureSystem = this;
-  
+
   using SetupStep = std::pair<std::string, std::function<SLuint32()>>;
   std::vector<SetupStep> setupSteps;
-  
+
   // create engine
   setupSteps.emplace_back("create engine", [this] ()
   {
     return slCreateEngine(&(_impl->_engineObject), 0, NULL, 0, NULL, NULL);
   });
-  
+
   // realize the engine
   setupSteps.emplace_back("realize engine", [this] ()
   {
@@ -129,14 +133,14 @@ void AudioCaptureSystem::Init()
   {
     return (*_impl->_engineObject)->GetInterface(_impl->_engineObject, SL_IID_ENGINE, &(_impl->_engineEngine));
   });
-  
+
   // create audio recorder
   setupSteps.emplace_back("create audio recorder", [this] ()
   {
     // configure audio source
     SLDataLocator_IODevice loc_dev = {SL_DATALOCATOR_IODEVICE, SL_IODEVICE_AUDIOINPUT, SL_DEFAULTDEVICEID_AUDIOINPUT, NULL};
     SLDataSource audioSrc = {&loc_dev, NULL};
-    
+
     // configure audio sink
     SLDataLocator_AndroidSimpleBufferQueue loc_bq = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
     SLDataFormat_PCM format_pcm = {
@@ -145,13 +149,13 @@ void AudioCaptureSystem::Init()
       SL_SPEAKER_FRONT_CENTER, SL_BYTEORDER_LITTLEENDIAN
     };
     SLDataSink audioSnk = {&loc_bq, &format_pcm};
-    
+
     const SLInterfaceID id[1] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE};
     const SLboolean req[1] = {SL_BOOLEAN_TRUE};
-    
+
     return (*_impl->_engineEngine)->CreateAudioRecorder(_impl->_engineEngine, &(_impl->_recorderObject), &audioSrc, &audioSnk, 1, id, req);
   });
-  
+
   // realize the audio recorder
   setupSteps.emplace_back("realize audio recorder", [this] ()
   {
@@ -162,25 +166,25 @@ void AudioCaptureSystem::Init()
     }
     return result;
   });
-  
+
   // get the record interface
   setupSteps.emplace_back("get recorder interface", [this] ()
   {
     return (*_impl->_recorderObject)->GetInterface(_impl->_recorderObject, SL_IID_RECORD, &(_impl->_recorderRecord));
   });
-  
+
   // get the buffer queue interface
   setupSteps.emplace_back("get bufferqueue interface", [this] ()
   {
     return (*_impl->_recorderObject)->GetInterface(_impl->_recorderObject, SL_IID_ANDROIDSIMPLEBUFFERQUEUE, &(_impl->_recorderBufferQueue));
   });
-  
+
   // register callback on the buffer queue
   setupSteps.emplace_back("register callback", [this] ()
   {
     return (*_impl->_recorderBufferQueue)->RegisterCallback(_impl->_recorderBufferQueue, HandleCallbackEntry, _impl.get());
   });
-  
+
   // Go through all the steps. If one fails, cleanup and abandon setup (this replaces old goto functionality)
   for (auto& step : setupSteps)
   {
@@ -193,19 +197,19 @@ void AudioCaptureSystem::Init()
     }
   }
 }
-  
+
 AudioCaptureSystem::PermissionState AudioCaptureSystem::GetPermissionState(bool isRepeatRequest) const
 {
   auto envWrapper = Util::JNIUtils::getJNIEnvWrapper();
   JNIEnv* env = envWrapper->GetEnv();
-  
+
   if (nullptr == env)
   {
     PRINT_NAMED_ERROR("AudioCaptureSystem.GetPermissionState.EnvNotFound",
                       "Unable to find JNIEnv variable.");
     return PermissionState::DeniedAllowRetry;
   }
-  
+
   Util::JClassHandle captureClass{envWrapper->FindClassInProject("com/anki/audioUtil/AudioCaptureSystem"), env};
   if (nullptr == captureClass)
   {
@@ -213,16 +217,16 @@ AudioCaptureSystem::PermissionState AudioCaptureSystem::GetPermissionState(bool 
                       "Unable to find com.anki.audioUtil.AudioCaptureSystem");
     return PermissionState::DeniedAllowRetry;
   }
-  
+
   // get method for checking audio capture permission status
   jmethodID hasPermissionMethodID = env->GetStaticMethodID(captureClass.get(), "hasCapturePermission", "()Z");
   jboolean permissionGranted = env->CallStaticBooleanMethod(captureClass.get(), hasPermissionMethodID);
-  
+
   if (!permissionGranted)
   {
     jmethodID showRationaleMethodID = env->GetStaticMethodID(captureClass.get(), "shouldShowRationale", "()Z");
     jboolean shouldShowRationale = env->CallStaticBooleanMethod(captureClass.get(), showRationaleMethodID);
-    
+
     // If we were denied permission we can check whether the OS says we should give a rationale.
     // If the OS says don't bother with the rationale and we have requested permission sometime before,
     // we know the user has selected "don't show again", and won't be getting more prompts to allow mic access.
@@ -231,10 +235,10 @@ AudioCaptureSystem::PermissionState AudioCaptureSystem::GetPermissionState(bool 
     {
       return PermissionState::DeniedNoRetry;
     }
-    
+
     return PermissionState::DeniedAllowRetry;
   }
-  
+
   return PermissionState::Granted;
 }
 
@@ -242,14 +246,14 @@ void AudioCaptureSystem::RequestCapturePermission(RequestCapturePermissionCallba
 {
   auto envWrapper = Util::JNIUtils::getJNIEnvWrapper();
   JNIEnv* env = envWrapper->GetEnv();
-  
+
   if (nullptr == env)
   {
     PRINT_NAMED_ERROR("AudioCaptureSystem.RequestCapturePermission.EnvNotFound",
                       "Unable to find JNIEnv variable.");
     return;
   }
-  
+
   Util::JClassHandle captureClass{envWrapper->FindClassInProject("com/anki/audioUtil/AudioCaptureSystem"), env};
   if (nullptr == captureClass)
   {
@@ -257,13 +261,13 @@ void AudioCaptureSystem::RequestCapturePermission(RequestCapturePermissionCallba
                       "Unable to find com.anki.audioUtil.AudioCaptureSystem");
     return;
   }
-  
+
   // Only lock while updating the capture callback
   {
     std::lock_guard<std::mutex> lock(_requestPermCallbackLock);
     _requestCapturePermissionCallback = std::move(resultCallback);
   }
-  
+
   // get method for requesting audio capture permission status and call it
   jmethodID methodID = env->GetStaticMethodID(captureClass.get(), "requestCapturePermission", "()V");
   env->CallStaticVoidMethod(captureClass.get(), methodID);
@@ -273,13 +277,13 @@ AudioCaptureSystem::~AudioCaptureSystem()
 {
   StopRecording();
 }
-  
+
 void AudioCaptureSystem::StartRecording()
 {
   if (_impl && !_impl->_recording)
   {
     _impl->_recording = true;
-    
+
     // Put us into the recording state
     (*_impl->_recorderRecord)->SetRecordState(_impl->_recorderRecord, SL_RECORDSTATE_RECORDING);
     _impl->_enqueuedBuffer = 0;
@@ -292,7 +296,7 @@ void AudioCaptureSystem::StopRecording()
   if (_impl && _impl->_recording)
   {
     _impl->_recording = false;
-    
+
     // Do recording teardown and stop
     SLuint32 state = SL_PLAYSTATE_PLAYING;
     (*_impl->_recorderRecord)->SetRecordState(_impl->_recorderRecord, SL_RECORDSTATE_STOPPED);

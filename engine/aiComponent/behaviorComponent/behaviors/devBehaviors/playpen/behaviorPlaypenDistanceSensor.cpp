@@ -144,6 +144,21 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
     {
       PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::WRITE_TO_LOG_FAILED, PlaypenStatus::Running);
     }
+
+    if(robot.IsPhysical() &&
+       !Util::IsNear(data.proxSensorData.distance_mm - PlaypenConfig::kDistanceSensorBiasAdjustment_mm, 
+                     data.visualDistanceToTarget_mm,
+                     PlaypenConfig::kDistanceSensorReadingThresh_mm))
+    {
+      PRINT_NAMED_WARNING("BehaviorPlaypenDistanceSensor.PlaypenUpdateInternal.ReadingOutsideThresh",
+                          "Sensor reading %u - %f not near visual reading %f with threshold %f",
+                          data.proxSensorData.distance_mm,
+                          PlaypenConfig::kDistanceSensorBiasAdjustment_mm,
+                          data.visualDistanceToTarget_mm,
+                          PlaypenConfig::kDistanceSensorReadingThresh_mm);
+
+      PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::DISTANCE_SENSOR_OOR, PlaypenStatus::Running);
+    }
     
     return PlaypenStatus::Running;
   }

@@ -1,0 +1,548 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 48;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		700A714B205A647F00B518CD /* SafeMessageBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 700A7144205A647F00B518CD /* SafeMessageBuffer.h */; };
+		700A714C205A647F00B518CD /* json-forwards.h in Headers */ = {isa = PBXBuildFile; fileRef = 700A7146205A647F00B518CD /* json-forwards.h */; };
+		700A714D205A647F00B518CD /* json.h in Headers */ = {isa = PBXBuildFile; fileRef = 700A7147205A647F00B518CD /* json.h */; };
+		700A714E205A647F00B518CD /* SafeMessageBuffer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 700A7149205A647F00B518CD /* SafeMessageBuffer.cpp */; };
+		700A714F205A647F00B518CD /* jsoncpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 700A714A205A647F00B518CD /* jsoncpp.cpp */; };
+		700A7152205A649800B518CD /* libclad.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 700A7138205A639E00B518CD /* libclad.a */; };
+		DA27D31A206C386E00D4416A /* messageExternalComms.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DA27D315206C386D00D4416A /* messageExternalComms.cpp */; };
+		DA27D31B206C386E00D4416A /* messageExternalComms.h in Headers */ = {isa = PBXBuildFile; fileRef = DA27D318206C386D00D4416A /* messageExternalComms.h */; };
+		DA27D31C206C386E00D4416A /* messageExternalCommsTag.h in Headers */ = {isa = PBXBuildFile; fileRef = DA27D319206C386D00D4416A /* messageExternalCommsTag.h */; };
+		DA5470702047985E004FDA9F /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA54706F2047985E004FDA9F /* main.mm */; };
+		DA54707720479890004FDA9F /* BleCentral.mm in Sources */ = {isa = PBXBuildFile; fileRef = DA54707620479890004FDA9F /* BleCentral.mm */; };
+		DA54707B20479928004FDA9F /* CoreBluetooth.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DA54707A20479928004FDA9F /* CoreBluetooth.framework */; };
+		DAE361D52049D4AE0053ED2F /* bleMessageProtocol.cpp in Sources */ = {isa = PBXBuildFile; fileRef = DAE361D32049D4AE0053ED2F /* bleMessageProtocol.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		700A7150205A649300B518CD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = DA5470642047985E004FDA9F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 700A7137205A639E00B518CD;
+			remoteInfo = clad;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		DA54706A2047985E004FDA9F /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		700A7138205A639E00B518CD /* libclad.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libclad.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		700A7144205A647F00B518CD /* SafeMessageBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SafeMessageBuffer.h; sourceTree = "<group>"; };
+		700A7146205A647F00B518CD /* json-forwards.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "json-forwards.h"; sourceTree = "<group>"; };
+		700A7147205A647F00B518CD /* json.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = json.h; sourceTree = "<group>"; };
+		700A7149205A647F00B518CD /* SafeMessageBuffer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SafeMessageBuffer.cpp; sourceTree = "<group>"; };
+		700A714A205A647F00B518CD /* jsoncpp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = jsoncpp.cpp; sourceTree = "<group>"; };
+		DA27D3082063191900D4416A /* argparse.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = argparse.hpp; sourceTree = "<group>"; };
+		DA27D315206C386D00D4416A /* messageExternalComms.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = messageExternalComms.cpp; sourceTree = "<group>"; };
+		DA27D316206C386D00D4416A /* messageExternalComms_declarations.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = messageExternalComms_declarations.def; sourceTree = "<group>"; };
+		DA27D317206C386D00D4416A /* messageExternalComms_switch.def */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = messageExternalComms_switch.def; sourceTree = "<group>"; };
+		DA27D318206C386D00D4416A /* messageExternalComms.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = messageExternalComms.h; sourceTree = "<group>"; };
+		DA27D319206C386D00D4416A /* messageExternalCommsTag.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = messageExternalCommsTag.h; sourceTree = "<group>"; };
+		DA54706C2047985E004FDA9F /* mac-client */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "mac-client"; sourceTree = BUILT_PRODUCTS_DIR; };
+		DA54706F2047985E004FDA9F /* main.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = main.mm; sourceTree = "<group>"; };
+		DA54707620479890004FDA9F /* BleCentral.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = BleCentral.mm; sourceTree = "<group>"; };
+		DA5470782047989C004FDA9F /* BleCentral.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BleCentral.h; sourceTree = "<group>"; };
+		DA54707A20479928004FDA9F /* CoreBluetooth.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreBluetooth.framework; path = System/Library/Frameworks/CoreBluetooth.framework; sourceTree = SDKROOT; };
+		DAE361C52049D1500053ED2F /* libsodium.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libsodium.a; sourceTree = "<group>"; };
+		DAE361CE2049D27B0053ED2F /* libclad.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libclad.a; sourceTree = "<group>"; };
+		DAE361D32049D4AE0053ED2F /* bleMessageProtocol.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = bleMessageProtocol.cpp; sourceTree = "<group>"; };
+		DAE361D42049D4AE0053ED2F /* bleMessageProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = bleMessageProtocol.h; sourceTree = "<group>"; };
+		DAE361D62049D5250053ED2F /* simpleSignal_fwd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = simpleSignal_fwd.h; sourceTree = "<group>"; };
+		DAE361D72049D5250053ED2F /* simpleSignal.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = simpleSignal.hpp; sourceTree = "<group>"; };
+		DAE361D82049D5250053ED2F /* signalHolder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = signalHolder.h; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		700A7135205A639E00B518CD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DA5470692047985E004FDA9F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				700A7152205A649800B518CD /* libclad.a in Frameworks */,
+				DA54707B20479928004FDA9F /* CoreBluetooth.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		700A713C205A63BF00B518CD /* support */ = {
+			isa = PBXGroup;
+			children = (
+				700A7141205A647F00B518CD /* cpp */,
+			);
+			path = support;
+			sourceTree = "<group>";
+		};
+		700A7141205A647F00B518CD /* cpp */ = {
+			isa = PBXGroup;
+			children = (
+				700A7142205A647F00B518CD /* include */,
+				700A7148205A647F00B518CD /* source */,
+			);
+			name = cpp;
+			path = "../../../../../../victor-clad/tools/message-buffers/support/cpp";
+			sourceTree = "<group>";
+		};
+		700A7142205A647F00B518CD /* include */ = {
+			isa = PBXGroup;
+			children = (
+				700A7143205A647F00B518CD /* CLAD */,
+				700A7145205A647F00B518CD /* json */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		700A7143205A647F00B518CD /* CLAD */ = {
+			isa = PBXGroup;
+			children = (
+				700A7144205A647F00B518CD /* SafeMessageBuffer.h */,
+			);
+			path = CLAD;
+			sourceTree = "<group>";
+		};
+		700A7145205A647F00B518CD /* json */ = {
+			isa = PBXGroup;
+			children = (
+				700A7146205A647F00B518CD /* json-forwards.h */,
+				700A7147205A647F00B518CD /* json.h */,
+			);
+			path = json;
+			sourceTree = "<group>";
+		};
+		700A7148205A647F00B518CD /* source */ = {
+			isa = PBXGroup;
+			children = (
+				700A7149205A647F00B518CD /* SafeMessageBuffer.cpp */,
+				700A714A205A647F00B518CD /* jsoncpp.cpp */,
+			);
+			path = source;
+			sourceTree = "<group>";
+		};
+		DA27D314206C385400D4416A /* externalInterface */ = {
+			isa = PBXGroup;
+			children = (
+				DA27D316206C386D00D4416A /* messageExternalComms_declarations.def */,
+				DA27D317206C386D00D4416A /* messageExternalComms_switch.def */,
+				DA27D315206C386D00D4416A /* messageExternalComms.cpp */,
+				DA27D318206C386D00D4416A /* messageExternalComms.h */,
+				DA27D319206C386D00D4416A /* messageExternalCommsTag.h */,
+			);
+			path = externalInterface;
+			sourceTree = "<group>";
+		};
+		DA5470632047985E004FDA9F = {
+			isa = PBXGroup;
+			children = (
+				DAE361D92049DE4D0053ED2F /* clad */,
+				DA54706E2047985E004FDA9F /* mac-client */,
+				DA54706D2047985E004FDA9F /* Products */,
+				DA54707920479928004FDA9F /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		DA54706D2047985E004FDA9F /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				DA54706C2047985E004FDA9F /* mac-client */,
+				700A7138205A639E00B518CD /* libclad.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		DA54706E2047985E004FDA9F /* mac-client */ = {
+			isa = PBXGroup;
+			children = (
+				DAE361D32049D4AE0053ED2F /* bleMessageProtocol.cpp */,
+				DAE361D42049D4AE0053ED2F /* bleMessageProtocol.h */,
+				DAE361C82049D1940053ED2F /* signals */,
+				DA54706F2047985E004FDA9F /* main.mm */,
+				DA5470782047989C004FDA9F /* BleCentral.h */,
+				DA54707620479890004FDA9F /* BleCentral.mm */,
+				DA27D3082063191900D4416A /* argparse.hpp */,
+			);
+			path = "mac-client";
+			sourceTree = "<group>";
+		};
+		DA54707920479928004FDA9F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				DAE361CE2049D27B0053ED2F /* libclad.a */,
+				DAE361C52049D1500053ED2F /* libsodium.a */,
+				DA54707A20479928004FDA9F /* CoreBluetooth.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		DAE361C82049D1940053ED2F /* signals */ = {
+			isa = PBXGroup;
+			children = (
+				DAE361D82049D5250053ED2F /* signalHolder.h */,
+				DAE361D62049D5250053ED2F /* simpleSignal_fwd.h */,
+				DAE361D72049D5250053ED2F /* simpleSignal.hpp */,
+			);
+			path = signals;
+			sourceTree = "<group>";
+		};
+		DAE361D92049DE4D0053ED2F /* clad */ = {
+			isa = PBXGroup;
+			children = (
+				DA27D314206C385400D4416A /* externalInterface */,
+				700A713C205A63BF00B518CD /* support */,
+			);
+			path = clad;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		700A7136205A639E00B518CD /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				700A714D205A647F00B518CD /* json.h in Headers */,
+				700A714C205A647F00B518CD /* json-forwards.h in Headers */,
+				DA27D31C206C386E00D4416A /* messageExternalCommsTag.h in Headers */,
+				700A714B205A647F00B518CD /* SafeMessageBuffer.h in Headers */,
+				DA27D31B206C386E00D4416A /* messageExternalComms.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		700A7137205A639E00B518CD /* clad */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 700A7139205A639E00B518CD /* Build configuration list for PBXNativeTarget "clad" */;
+			buildPhases = (
+				700A7134205A639E00B518CD /* Sources */,
+				700A7135205A639E00B518CD /* Frameworks */,
+				700A7136205A639E00B518CD /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = clad;
+			productName = clad;
+			productReference = 700A7138205A639E00B518CD /* libclad.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		DA54706B2047985E004FDA9F /* mac-client */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = DA5470732047985E004FDA9F /* Build configuration list for PBXNativeTarget "mac-client" */;
+			buildPhases = (
+				DA5470682047985E004FDA9F /* Sources */,
+				DA5470692047985E004FDA9F /* Frameworks */,
+				DA54706A2047985E004FDA9F /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				700A7151205A649300B518CD /* PBXTargetDependency */,
+			);
+			name = "mac-client";
+			productName = "mac-client";
+			productReference = DA54706C2047985E004FDA9F /* mac-client */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		DA5470642047985E004FDA9F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0920;
+				ORGANIZATIONNAME = "Paul Aluri";
+				TargetAttributes = {
+					700A7137205A639E00B518CD = {
+						CreatedOnToolsVersion = 9.2;
+						ProvisioningStyle = Automatic;
+					};
+					DA54706B2047985E004FDA9F = {
+						CreatedOnToolsVersion = 9.2;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = DA5470672047985E004FDA9F /* Build configuration list for PBXProject "mac-client" */;
+			compatibilityVersion = "Xcode 8.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = DA5470632047985E004FDA9F;
+			productRefGroup = DA54706D2047985E004FDA9F /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				DA54706B2047985E004FDA9F /* mac-client */,
+				700A7137205A639E00B518CD /* clad */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		700A7134205A639E00B518CD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				700A714E205A647F00B518CD /* SafeMessageBuffer.cpp in Sources */,
+				DA27D31A206C386E00D4416A /* messageExternalComms.cpp in Sources */,
+				700A714F205A647F00B518CD /* jsoncpp.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		DA5470682047985E004FDA9F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DAE361D52049D4AE0053ED2F /* bleMessageProtocol.cpp in Sources */,
+				DA5470702047985E004FDA9F /* main.mm in Sources */,
+				DA54707720479890004FDA9F /* BleCentral.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		700A7151205A649300B518CD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 700A7137205A639E00B518CD /* clad */;
+			targetProxy = 700A7150205A649300B518CD /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		700A713A205A639E00B518CD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = BEJF9NAYCL;
+				EXECUTABLE_PREFIX = lib;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/../../../../victor-clad/tools/message-buffers/support/cpp/include";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		700A713B205A639E00B518CD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = BEJF9NAYCL;
+				EXECUTABLE_PREFIX = lib;
+				HEADER_SEARCH_PATHS = "$(PROJECT_DIR)/../../../../victor-clad/tools/message-buffers/support/cpp/include";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		DA5470712047985E004FDA9F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		DA5470722047985E004FDA9F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "Mac Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.12;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		DA5470742047985E004FDA9F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 6N4JN4E7V7;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/../../../../tools/message-buffers/support/cpp/include/**",
+					"$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/mac/include",
+					"$(PROJECT_DIR)/**",
+				);
+				"HEADER_SEARCH_PATHS[arch=*]" = (
+					"$(PROJECT_DIR)/../../../../tools/message-buffers/support/cpp/include/**",
+					"$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/mac/include",
+					"$(PROJECT_DIR)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/mac/lib",
+				);
+				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/mac/lib/libsodium.a";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		DA5470752047985E004FDA9F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 6N4JN4E7V7;
+				HEADER_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/../../../../tools/message-buffers/support/cpp/include/**",
+					"$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/mac/include",
+					"$(PROJECT_DIR)",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+					"$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/mac/lib",
+				);
+				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../../../EXTERNALS/coretech_external/build/libsodium/mac/lib/libsodium.a";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		700A7139205A639E00B518CD /* Build configuration list for PBXNativeTarget "clad" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				700A713A205A639E00B518CD /* Debug */,
+				700A713B205A639E00B518CD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DA5470672047985E004FDA9F /* Build configuration list for PBXProject "mac-client" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DA5470712047985E004FDA9F /* Debug */,
+				DA5470722047985E004FDA9F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		DA5470732047985E004FDA9F /* Build configuration list for PBXNativeTarget "mac-client" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DA5470742047985E004FDA9F /* Debug */,
+				DA5470752047985E004FDA9F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = DA5470642047985E004FDA9F /* Project object */;
+}

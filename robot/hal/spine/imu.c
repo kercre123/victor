@@ -218,7 +218,6 @@ static void MicroWait(long microsec)
 
 void imu_init()
 {
-
   imu_debug("Initializing IMU");
 
   //Chip starts in I2C mode.  A rising edge after power-up switches the interface switches to SPI
@@ -332,7 +331,7 @@ int imu_manage(struct IMURawData* data)
   
   // If we got here then we had more data than we should so flush the IMU FIFO
   imu_purge();
-  return i;
+  return IMU_MAX_SAMPLES_PER_READ;
 }
 
 void imu_update_temperature(void)

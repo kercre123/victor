@@ -1,7 +1,8 @@
-#!/usr/bin/env python2 -u
+#!/usr/bin/env python2
 
 import os
 import os.path
+import platform
 import subprocess
 import re
 import shutil
@@ -17,6 +18,22 @@ import glob
 import binary_conversion
 import validate_anim_data
 
+# configure unbuffered output
+# https://stackoverflow.com/a/107717/217431
+class Unbuffered(object):
+   def __init__(self, stream):
+       self.stream = stream
+   def write(self, data):
+       self.stream.write(data)
+       self.stream.flush()
+   def writelines(self, datas):
+       self.stream.writelines(datas)
+       self.stream.flush()
+   def __getattr__(self, attr):
+       return getattr(self.stream, attr)
+
+# This is a work-around for not passing -u via /usr/bin/env on linux
+sys.stdout = Unbuffered(sys.stdout)
 
 VERBOSE = True
 # Replace True for name of log file if desired.
@@ -36,10 +53,15 @@ DIFF_BRANCH_MSG = "is already a working copy for a different URL"
 # TODO: Put this info (unpack files in root directory or subdirectory) somewhere in the DEPS file.
 UNPACK_INTO_SUBDIR = ["faceAnimations"]
 
-
 MANIFEST_FILE_NAME = "anim_manifest.json"
 MANIFEST_NAME_KEY = "name"
 MANIFEST_LENGTH_KEY = "length_ms"
+
+# Trigger asset validation when any of the following external dependencies are updated.
+# Since one of the validation steps is to confirm that all audio used in animations is in
+# fact available, we trigger that validation if either the animation or the audio is updated.
+ASSET_VALIDATION_TRIGGERS = ["victor-animation-assets", "victor-audio-assets"]
+
 
 
 def is_tool(name):
@@ -156,6 +178,27 @@ def get_file_stats(which_dir):
         file_stats[file_ext] += 1
   return file_stats
 
+def get_flatc_dir():
+  """Determine flatc executable location for platform"""
+  platform_map = {
+    'Darwin': 'x86_64-apple-darwin',
+    'Linux': 'x86_64-linux-gnu',
+  }
+  platform_name = platform.system()
+  target_triple = platform_map.get(platform_name)
+
+  if target_triple:
+    flatc_dir = os.path.join(DEPENDENCY_LOCATION, 'coretech_external',
+                             'flatbuffers', 'host-prebuilts',
+                             'current', target_triple, 'bin')
+  else: 
+    # default
+    flatc_dir = os.path.join(DEPENDENCY_LOCATION, 'coretech_external',
+                             'flatbuffers', 'ios', 'Release')
+ 
+  return flatc_dir
+  
+
 
 def convert_json_to_binary(json_files, bin_name, dest_dir, flatc_dir):
     tmp_json_files = []
@@ -191,7 +234,7 @@ def unpack_tarball(tar_file, file_types=[], put_in_subdir=False, add_metadata=Fa
   # so we need to specify the path to the directory that contains that FlatBuffers tool. See
   # https://google.github.io/flatbuffers/flatbuffers_guide_using_schema_compiler.html for additional
   # info about the "flatc" schema compiler.
-  flatc_dir = os.path.join(DEPENDENCY_LOCATION, 'coretech_external', 'flatbuffers', 'ios', 'Release')
+  flatc_dir = get_flatc_dir()
 
   # Set the destination directory where the contents of the .tar file will be unpacked.
   dest_dir = os.path.dirname(tar_file)
@@ -293,8 +336,10 @@ def svn_package(svn_dict):
     Args:
         svn_dict: dict
 
-    Returns: None
+    Returns: List of names for the repos that were checked out
     """
+    checked_out_repos = []
+
     tool = "svn"
     ptool = "tar"
     ptool_options = ['-v', '-x', '-z', '-f']
@@ -310,7 +355,7 @@ def svn_package(svn_dict):
 
     have_internet = is_up(root_url)
     if not have_internet:
-        print "{0} is not available.  Please check your internet connection.".format(root_url)
+        print "WARNING: {0} is not available.  Please check your internet connection.".format(root_url)
         print(stale_warning)
         # Continue anyway in case manifest file needs to be regenerated
 
@@ -358,6 +403,8 @@ def svn_package(svn_dict):
         except ValueError:
             pass
 
+        no_update_msg  = "{0} does not need to be updated.  ".format(repo)
+        no_update_msg += "Current {0} revision at {1}".format(tool, l_rev)
 
         # Do dependencies need to be checked out?
         need_to_checkout = have_internet and (r_rev == "head" or l_rev != r_rev)
@@ -369,6 +416,7 @@ def svn_package(svn_dict):
         if need_to_checkout or not manifest_file_exists:
             if need_to_checkout:
                 print("Checking out '{0}'".format(repo))
+                checked_out_repos.append(repo)
                 err = svn_checkout(checkout, cleanup, unpack, package, allow_extra_files)
                 if err:
                     print("Error in checking out {0}: {1}".format(repo, err.strip()))
@@ -382,6 +430,8 @@ def svn_package(svn_dict):
                             print(stale_warning)
                     else:
                         print(stale_warning)
+            else:
+                print(no_update_msg)
             if extract_types:
                 for subdir in subdirs:
                     put_in_subdir = os.path.basename(subdir) in UNPACK_INTO_SUBDIR
@@ -398,7 +448,9 @@ def svn_package(svn_dict):
                           % (os.path.basename(subdir), file_stats))
 
         else:
-            print "{0} does not need to be updated.  Current {1} revision at {2} ".format(repo, tool, l_rev)
+            print(no_update_msg)
+
+    return checked_out_repos
 
 
 def write_animation_manifest(dest_dir, anim_name_length_mapping, additional_files=None, output_json_file=MANIFEST_FILE_NAME):
@@ -438,18 +490,21 @@ def write_animation_manifest(dest_dir, anim_name_length_mapping, additional_file
 def git_package(git_dict):
     # WIP.  Should this function raise a NotImplementedError exception until it is completed?
     print("The git_package() function has NOT been implemented yet")
+    return []
+
 
 def files_package(files):
+    pulled_files = []
+
     tool = "curl"
     assert is_tool(tool)
     assert isinstance(files, dict)
     for file in files:
         url = files[file].get("url", "undefined")
-
         outfile = os.path.join(DEPENDENCY_LOCATION, file)
         if not is_up(url):
             print "WARNING File {0} is not available. Please check your internet connection.".format(url)
-            return
+            return pulled_files
 
         pull_file = [tool, '-s', url]
         pipe = subprocess.Popen(pull_file, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -457,16 +512,22 @@ def files_package(files):
         status = pipe.poll()
         if status != 0:
             print "Curl exited with non-zero status: {0}".format(stderr)
-            return
+            return pulled_files
         stdout = stdout.strip()
         if (not os.path.exists(outfile)) or open(outfile).read() != stdout:
             with open(outfile, 'w') as output:
                 output.write(stdout)
                 print "Updated {0} from {1}".format(file, url)
+                pulled_files.append(outfile)
         else:
             print "File {0} does not need to be updated".format(file)
 
+    return pulled_files
+
+
 def teamcity_package(tc_dict):
+    downloaded_builds = []
+
     tool = "curl"
     ptool = "tar"
     ptool_options = ['-v', '-x', '-z', '-f']
@@ -480,7 +541,7 @@ def teamcity_package(tc_dict):
 
     if not is_up(root_url):
         print "WARNING {0} is not available.  Please check your internet connection.".format(root_url)
-        return
+        return downloaded_builds
 
     for build in builds:
         new_version = True
@@ -505,7 +566,7 @@ def teamcity_package(tc_dict):
 
         if not is_up(combined_url):
             print "WARNING {0} is not available.  Cannot verify {1}.".format(combined_url, build)
-            return
+            return downloaded_builds
 
         if not os.path.exists(loc):
             os.makedirs(loc)
@@ -535,14 +596,15 @@ def teamcity_package(tc_dict):
                 status = pipe.poll()
                 if status == 0:
                     print "{0} Downloaded.  New version {1} ".format(build.title(), version)
+                    downloaded_builds.append(build.title())
                     break
                 else:
                     print err
                     if os.path.isfile(dist):
                         os.remove(dist)
-                    print( "ERROR {0}ing {1}.  {2} of {3} attempts.".format(tool, package, n+1, RETRIES))
+                    print("ERROR {0}ing {1}.  {2} of {3} attempts.".format(tool, package, n+1, RETRIES))
             else:
-                sys.exit( "ERROR {0}ing {1}.  Please rerun configure.".format(tool, package))
+                sys.exit("ERROR {0}ing {1}.  Please rerun configure.".format(tool, package))
         else:
             print "{0} does not need to be updated.  Current version {1}".format(build.title(), version)
         if os.path.isfile(dist):
@@ -557,8 +619,11 @@ def teamcity_package(tc_dict):
             if VERBOSE:
                 print err
 
+    return downloaded_builds
 
-def extract_dependencies(version_file, location=EXTERNALS_DIR, validate_assets=True):
+
+# TODO: Set the following default value of 'validate_assets' back to True after VIC-1467 has been completed
+def extract_dependencies(version_file, location=EXTERNALS_DIR, validate_assets=False):
     """
     Entry point to starting the dependency extraction.
 
@@ -572,8 +637,10 @@ def extract_dependencies(version_file, location=EXTERNALS_DIR, validate_assets=T
     DEPENDENCY_LOCATION = location
     if not os.path.isdir(location):
         os.makedirs(location)
-    json_parser(version_file)
-    if validate_assets:
+    updated_deps = json_parser(version_file)
+    updated_deps = map(str, updated_deps)
+    if validate_assets and len(set(updated_deps) & set(ASSET_VALIDATION_TRIGGERS)) > 0:
+        # At least one of the asset validation triggers was updated, so perform validation...
         try:
             validate_anim_data.check_audio_events_all_anims(location)
         except ValueError, e:
@@ -597,19 +664,21 @@ def json_parser(version_file):
     Args:
         version_file: path
     """
+    updated_deps = []
     if os.path.isfile(version_file):
         with open(version_file, mode="r") as file_obj:
             djson = json.load(file_obj)
             if "teamcity" in djson:
-                teamcity_package(djson["teamcity"])
+                updated_deps.extend(teamcity_package(djson["teamcity"]))
             if "svn" in djson:
-                svn_package(djson["svn"])
+                updated_deps.extend(svn_package(djson["svn"]))
             if "git" in djson:
-                git_package(djson["git"])
+                updated_deps.extend(git_package(djson["git"]))
             if "files" in djson:
-                files_package(djson["files"])
+                updated_deps.extend(files_package(djson["files"]))
     else:
         sys.exit("ERROR: %s does not exist" % version_file)
+    return updated_deps
 
 
 def update_teamcity_version(version_file, teamcity_builds):

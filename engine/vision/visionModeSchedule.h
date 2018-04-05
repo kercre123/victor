@@ -28,7 +28,7 @@ public:
   VisionModeSchedule(); // Default: always scheduled to run
   explicit VisionModeSchedule(std::vector<bool>&& initSchedule);
   explicit VisionModeSchedule(bool alwaysOnOrOff);
-  explicit VisionModeSchedule(int onFrequency);
+  explicit VisionModeSchedule(int onFrequency, int frameOffset = 0);
   
   // Checks schedule and advances for next query (so should be called once per image/tick)
   bool CheckTimeToProcessAndAdvance();
@@ -43,7 +43,8 @@ private:
 class AllVisionModesSchedule
 {
 public:
-  
+  using ModeScheduleList = std::list<std::pair<VisionMode, VisionModeSchedule>>;
+
   // If initWithDefaults=true, all modes' schedules are set to current defaults.
   // Otherwise, everything starts disabled.
   AllVisionModesSchedule(bool initWithDefaults = true);
@@ -59,7 +60,7 @@ public:
   //   AllVisionModesSchedule({{VisionMode::DetectingPets,          VisionModeSchedule({true, false})},
   //                           {VisionMode::DetectingOverheadEdges, VisionModeSchedule({false, true})}});
   //
-  AllVisionModesSchedule(const std::list<std::pair<VisionMode,VisionModeSchedule>>&  schedules,
+  AllVisionModesSchedule(const ModeScheduleList& schedules,
                          bool useDefaultsForUnspecified = true);
   
   // Get the schedule for a specific mode

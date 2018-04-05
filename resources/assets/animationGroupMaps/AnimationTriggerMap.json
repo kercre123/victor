@@ -17,6 +17,10 @@
       "AnimName": "ag_reacttoblock_react_short"
     },
     {
+      "CladEvent": "AlreadyAtFace",
+      "AnimName": "ag_vc_reaction_alreadyhere"
+    },
+    {
       "CladEvent": "AskToBeRightedLeft",
       "AnimName": "ag_reacttocliff_stuckleftside_01"
     },
@@ -25,52 +29,16 @@
       "AnimName": "ag_reacttocliff_stuckrightside_01"
     },
     {
+      "CladEvent": "AudioOnlyHuh",
+      "AnimName": "ag_explorer_huh"
+    },
+    {
       "CladEvent": "AudioTestAnim",
       "AnimName": "ag_audio_test"
     },
     {
       "CladEvent": "BlockReact",
       "AnimName": "ag_blockreact"
-    },
-    {
-      "CladEvent": "BuildPyramidFirstBlockOnSide",
-      "AnimName": "ag_pyramid_reacttocube_frustrated_low"
-    },
-    {
-      "CladEvent": "BuildPyramidFirstBlockUpright",
-      "AnimName": "ag_pyramid_reacttocube_happy_low"
-    },
-    {
-      "CladEvent": "BuildPyramidLookForFace",
-      "AnimName": "ag_pyramid_lookforface"
-    },
-    {
-      "CladEvent": "BuildPyramidReactToBase",
-      "AnimName": "ag_pyramid_rt2blocks"
-    },
-    {
-      "CladEvent": "BuildPyramidSecondBlockOnSide",
-      "AnimName": "ag_pyramid_reacttocube_frustrated_mid"
-    },
-    {
-      "CladEvent": "BuildPyramidSecondBlockUpright",
-      "AnimName": "ag_pyramid_reacttocube_happy_mid"
-    },
-    {
-      "CladEvent": "BuildPyramidSuccess",
-      "AnimName": "ag_pyramid_success"
-    },
-    {
-      "CladEvent": "BuildPyramidThankUser",
-      "AnimName": "ag_pyramid_thankyou"
-    },
-    {
-      "CladEvent": "BuildPyramidThirdBlockOnSide",
-      "AnimName": "ag_pyramid_reacttocube_frustrated_high"
-    },
-    {
-      "CladEvent": "BuildPyramidThirdBlockUpright",
-      "AnimName": "ag_pyramid_reacttocube_happy_high"
     },
     {
       "CladEvent": "BouncerGetIn",
@@ -107,10 +75,6 @@
     {
       "CladEvent": "BouncerWait",
       "AnimName": "ag_bouncer_wait_01"
-    },
-    {
-      "CladEvent": "CantHandleTallStack",
-      "AnimName": "ag_reacttoblock_3blocktower_upset"
     },
     {
       "CladEvent": "PatternGuessNewIdea",
@@ -181,217 +145,13 @@
       "AnimName": "ag_chargerdocking_reaction"
     },
     {
-      "CladEvent": "CodeLab123Go",
-      "AnimName": "ag_codelab_123go"
-    },
-    {
-      "CladEvent": "CodeLabAmazed",
-      "AnimName": "ag_codelab_lightshow_amazed"
-    },
-    {
-      "CladEvent": "CodeLabBored",
-      "AnimName": "ag_codelab_bored"
-    },
-    {
-      "CladEvent": "CodeLabCat",
-      "AnimName": "ag_codelab_cat"
-    },
-    {
-      "CladEvent": "CodeLabCelebrate",
-      "AnimName": "ag_codelab_cubewhack_celebration"
-    },
-    {
-      "CladEvent": "CodeLabChatty",
-      "AnimName": "ag_codelab_chatty"
-    },
-    {
-      "CladEvent": "CodeLabConducting",
-      "AnimName": "ag_codelab_tinyorchestra_conducting"
-    },
-    {
-      "CladEvent": "CodeLabCurious",
-      "AnimName": "ag_codelab_magicfortuneteller_inquistive"
-    },
-    {
-      "CladEvent": "CodeLabDancingMambo",
-      "AnimName": "ag_codelab_dancing_mambo"
-    },
-    {
-      "CladEvent": "CodeLabDejected",
-      "AnimName": "ag_codelab_dejected"
-    },
-    {
-      "CladEvent": "CodeLabDizzy",
-      "AnimName": "ag_codelab_magicfortuneteller_shake"
-    },
-    {
-      "CladEvent": "CodeLabDizzyEnd",
-      "AnimName": "ag_codelab_magicfortuneteller_shakestop"
-    },
-    {
-      "CladEvent": "CodeLabDog",
-      "AnimName": "ag_codelab_dog"
-    },
-    {
-      "CladEvent": "CodeLabEnter",
-      "AnimName": "ag_codelab_getin"
-    },
-    {
-      "CladEvent": "CodeLabExcited",
-      "AnimName": "ag_codelab_excited"
-    },
-    {
-      "CladEvent": "CodeLabExit",
-      "AnimName": "ag_codelab_getout"
-    },
-    {
-      "CladEvent": "CodeLabFireTruck",
-      "AnimName": "ag_codelab_firetrucktimer_firetruck"
-    },    
-    {
-      "CladEvent": "CodeLabFrustrated",
-      "AnimName": "ag_codelab_frustrated"
-    },
-    {
-      "CladEvent": "CodeLabGetInPos",
-      "AnimName": "ag_codelab_hotpotato_getin"
-    },
-    {
-      "CladEvent": "CodeLabHappy",
-      "AnimName": "ag_codelab_happy"
-    },
-    {
-      "CladEvent": "CodeLabIDK",
-      "AnimName": "ag_codelab_idk"
-    },
-    {
-      "CladEvent": "CodeLabIdle",
-      "AnimName": "ag_codelab_lightshow_idle"
-    },
-    {
-      "CladEvent": "CodeLabLose",
-      "AnimName": "ag_codelab_hotpotato_lose"
-    },
-    {
-      "CladEvent": "CodeLabNo",
-      "AnimName": "ag_codelab_no"
-    },
-    {
-      "CladEvent": "CodeLabPartyTime",
-      "AnimName": "ag_codelab_lightshow_letsbegin"
-    },
-    {
-      "CladEvent": "CodeLabReactHappy",
-      "AnimName": "ag_codelab_magicfortuneteller_answer"
-    },    
-    {
-      "CladEvent": "CodeLabSleep",
-      "AnimName": "ag_codelab_sleep"
-    },
-    {
-      "CladEvent": "CodeLabSneeze",
-      "AnimName": "ag_codelab_sneeze"
-    },
-    {
-      "CladEvent": "CodeLabSurprise",
-      "AnimName": "ag_codelab_surprise"
-    },
-    {
-      "CladEvent": "CodeLabTakaTaka",
-      "AnimName": "ag_codelab_tinyorchestra_takataka"
-    },
-    {
-      "CladEvent": "CodeLabTapCube",
-      "AnimName": "ag_codelab_cubetap"
-    },
-    {
-      "CladEvent": "CodeLabThinking",
-      "AnimName": "ag_codelab_thinking"
-    },
-    {
-      "CladEvent": "CodeLabUnhappy",
-      "AnimName": "ag_codelab_unhappy"
-    },
-    {
-      "CladEvent": "CodeLabVictory",
-      "AnimName": "ag_codelab_victory"
-    },
-    {
-      "CladEvent": "CodeLabWin",
-      "AnimName": "ag_codelab_hotpotato_win"
-    },
-    {
-      "CladEvent": "CodeLabYes",
-      "AnimName": "ag_codelab_yes"
-    },
-    {
       "CladEvent": "ConnectWakeUp",
       "AnimName": "ag_connectwakeup"
     },
-    {
-      "CladEvent": "ConnectWakeUp_SevereEnergy",
-      "AnimName": "ag_energy_wakeup"
-    },
-    {
-      "CladEvent": "ConnectWakeUp_SevereRepair",
-      "AnimName": "ag_repair_severe_wakeup_01"
+    {	
+      "CladEvent": "ComeHere_SearchForFace",	
+      "AnimName": "ag_vc_reaction_nofaceheardyou"	
     },  
-    {
-      "CladEvent": "ComeHere_AlreadyHere",
-      "AnimName": "ag_vc_reaction_alreadyhere"
-    },  
-    {
-      "CladEvent": "ComeHere_SearchForFace",
-      "AnimName": "ag_vc_reaction_nofaceheardyou"
-    },  
-    {
-      "CladEvent": "ComeHere_SearchForFace_FoundFace",
-      "AnimName": "ag_vc_reaction_nofaceheardyou_getout"
-    },
-    {
-      "CladEvent": "CozmoSaysGetIn",
-      "AnimName": "ag_cozmosays_app_getin"
-    },
-    {
-      "CladEvent": "CozmoSaysGetOut",
-      "AnimName": "ag_cozmosays_app_getout"
-    },
-    {
-      "CladEvent": "CozmoSaysSpeakGetInShort",
-      "AnimName": "ag_cozmosays_getin_short"
-    },
-    {
-      "CladEvent": "CozmoSaysSpeakGetInMedium",
-      "AnimName": "ag_cozmosays_getin_medium"
-    },
-    {
-      "CladEvent": "CozmoSaysSpeakGetInLong",
-      "AnimName": "ag_cozmosays_getin_long"
-    },
-    {
-      "CladEvent": "CozmoSaysSpeakGetOutShort",
-      "AnimName": "ag_cozmosays_getout_short"
-    },
-    {
-      "CladEvent": "CozmoSaysSpeakGetOutMedium",
-      "AnimName": "ag_cozmosays_getout_medium"
-    },
-    {
-      "CladEvent": "CozmoSaysSpeakGetOutLong",
-      "AnimName": "ag_cozmosays_getout_long"
-    },
-    {
-      "CladEvent": "CozmoSaysSpeakLoop",
-      "AnimName": "ag_cozmosays_speakloop"
-    },
-    {
-      "CladEvent": "CozmoSaysBadWord",
-      "AnimName": "ag_cozmosays_badword"
-    },
-    {
-      "CladEvent": "CozmoSaysIdle",
-      "AnimName": "ag_cozmosays_idle"
-    },
     {
       "CladEvent": "CubeMovedSense",
       "AnimName": "ag_reacttoblock_blockpickup_01"
@@ -545,58 +305,6 @@
       "AnimName": "ag_driving01_startdriving"
     },
     {
-      "CladEvent": "DroneModeBackwardDrivingEnd",
-      "AnimName": "ag_explorer_drvback_end"
-    },
-    {
-      "CladEvent": "DroneModeBackwardDrivingLoop",
-      "AnimName": "ag_explorer_drvback_loop"
-    },
-    {
-      "CladEvent": "DroneModeBackwardDrivingStart",
-      "AnimName": "ag_explorer_drvback_start"
-    },
-    {
-      "CladEvent": "DroneModeCliffEvent",
-      "AnimName": "ag_explorer_huh"
-    },
-    {
-      "CladEvent": "DroneModeForwardDrivingEnd",
-      "AnimName": "ag_explorer_enddriving"
-    },
-    {
-      "CladEvent": "DroneModeForwardDrivingLoop",
-      "AnimName": "ag_explorer_drivingloop"
-    },
-    {
-      "CladEvent": "DroneModeForwardDrivingStart",
-      "AnimName": "ag_explorer_startdriving"
-    },
-    {
-      "CladEvent": "DroneModeGetIn",
-      "AnimName": "ag_explorer_getin"
-    },
-    {
-      "CladEvent": "DroneModeGetOut",
-      "AnimName": "ag_explorer_getout"
-    },
-    {
-      "CladEvent": "DroneModeIdle",
-      "AnimName": "ag_explorer_idle"
-    },
-    {
-      "CladEvent": "DroneModeKeepAlive",
-      "AnimName": "ag_explorer_keepalive"
-    },
-    {
-      "CladEvent": "DroneModeTurboDrivingStart",
-      "AnimName": "ag_explorer_turbo"
-    },
-    {
-      "CladEvent": "EarnedSparks",
-      "AnimName": "ag_sparking_earnsparks"
-    },
-    {
       "CladEvent": "FacePlantRoll",
       "AnimName": "ag_reacttocliff_faceplantroll_01"
     },
@@ -609,124 +317,16 @@
       "AnimName": "ag_reacttocliff_turtlerollfail_01"
     },
     {
-      "CladEvent": "FeedingAteFullEnough_Normal",
+      "CladEvent": "FeedingEat",
       "AnimName": "ag_energy_eatingfullyfull"
-    },
-    {
-      "CladEvent": "FeedingAteFullEnough_Severe",
-      "AnimName": "ag_energy_eatinggoodenough"
-    },
-    {
-      "CladEvent": "FeedingAteNotFullEnough_Normal",
-      "AnimName": "ag_energy_eatingnotfull"
-    },
-    {
-      "CladEvent": "FeedingAteNotFullEnough_Severe",
-      "AnimName": "ag_energy_eatingstillhungry"
-    },
-    {
-      "CladEvent": "FeedingDrivingGetIn_Severe",
-      "AnimName": "ag_energy_drivegetin"
-    },
-    {
-      "CladEvent": "FeedingDrivingGetOut_Severe",
-      "AnimName": "ag_energy_drivegetout"
-    },
-    {
-      "CladEvent": "FeedingDrivingLoop_Severe",
-      "AnimName": "ag_energy_driveloop"
-    },
-    {
-      "CladEvent": "FeedingPlaceLiftOnCube_Normal",
-      "AnimName": "ag_energy_liftoncubelvl1"
-    },
-    {
-      "CladEvent": "FeedingPlaceLiftOnCube_Severe",
-      "AnimName": "ag_energy_liftoncubelvl2"
-    },
-    {
-      "CladEvent": "FeedingIdleSearch_Normal",
-      "AnimName": "ag_energy_idle_l1_searchforcube"
-    },
-    {
-      "CladEvent": "FeedingIdleSearch_Severe",
-      "AnimName": "ag_energy_idle_l2_searchforcube"
-    },
-    {
-      "CladEvent": "FeedingIdleSearchForFaces_Normal",
-      "AnimName": "ag_energy_idle_01"
-    },
-    {
-      "CladEvent": "FeedingIdleSearchForFaces_Severe",
-      "AnimName": "ag_energy_idle_02_nohead"
-    },
-    {
-      "CladEvent": "FeedingIdleWaitForFullCube_Normal",
-      "AnimName": "ag_energy_idle_01"
-    },
-    {
-      "CladEvent": "FeedingIdleWaitForFullCube_Severe",
-      "AnimName": "ag_energy_idlefeeding"
-    },
-    {
-      "CladEvent": "FeedingIdleWaitForShake_Normal",
-      "AnimName": "ag_energy_idle_l1_searchforcube"
-    },
-    {
-      "CladEvent": "FeedingIdleWaitForShake_Severe",
-      "AnimName": "ag_energy_idle_02"
-    },
-    {
-      "CladEvent": "FeedingIdleWaitForShakeNoHead_Severe",
-      "AnimName": "ag_energy_idle_02_nohead"
     },
     {
       "CladEvent": "FeedingInterrupted",
       "AnimName": "ag_energy_interruptions"
     },
     {
-      "CladEvent": "FeedingInterrupted_Severe",
-      "AnimName": "ag_energy_shortreact_lvl2"
-    },
-    {
-      "CladEvent": "FeedingSearchRequest",
-      "AnimName": "ag_energy_requestshortlvl1"
-    },
-    {
-      "CladEvent": "FeedingSearchRequest_Severe",
-      "AnimName": "ag_energy_requestshortlvl2"
-    },
-    {
-      "CladEvent": "FeedingSearchFailure",
-      "AnimName": "ag_energy_cubenotfound_01"
-    },
-    {
-      "CladEvent": "FeedingSearchFailure_Severe",
-      "AnimName": "ag_energy_cubenotfound_02"
-    },
-    {
-      "CladEvent": "FeedingReactToFullCube_Normal",
-      "AnimName": "ag_energy_cubetone"
-    },
-    {
-      "CladEvent": "FeedingReactToFullCube_Severe",
-      "AnimName": "ag_energy_cubetonesevere"
-    },
-    {
-      "CladEvent": "FeedingReactToSeeCube_Normal",
-      "AnimName": "ag_energy_cubedown"
-    },
-    {
-      "CladEvent": "FeedingReactToSeeCube_Severe",
-      "AnimName": "ag_energy_cubedownsevere"
-    },
-    {
-      "CladEvent": "FeedingReactToShake_Normal",
-      "AnimName": "ag_energy_cubeshake"
-    },
-    {
-      "CladEvent": "FeedingReactToShake_Severe",
-      "AnimName": "ag_energy_cubeshakesevere"
+      "CladEvent": "FeedingPlaceLiftOnCube",
+      "AnimName": "ag_energy_liftoncubelvl1"
     },
     {
       "CladEvent": "FistBumpIdle",
@@ -792,49 +392,49 @@
       "CladEvent": "GoToSleepSleeping",
       "AnimName": "ag_gotosleep_sleeping"
     },
-    {
-      "CladEvent": "GuardDogBusted",
-      "AnimName": "ag_guarddog_getout_busted"
-    },
-    {
-      "CladEvent": "GuardDogCubeDisconnect",
-      "AnimName": "ag_guarddog_interruption_cubedisconnect"
-    },
-    {
-      "CladEvent": "GuardDogFakeout",
-      "AnimName": "ag_guarddog_fakeout"
-    },
-    {
-      "CladEvent": "GuardDogInterruption",
-      "AnimName": "ag_guarddog_interruption"
-    },
-    {
-      "CladEvent": "GuardDogPlayerSuccess",
-      "AnimName": "ag_guarddog_getout_playersucess"
-    },
-    {
-      "CladEvent": "GuardDogPulse",
-      "AnimName": "ag_guarddog_pulse"
-    },
-    {
-      "CladEvent": "GuardDogSettle",
-      "AnimName": "ag_guarddog_settle"
-    },
-    {
-      "CladEvent": "GuardDogSleepLoop",
-      "AnimName": "ag_guarddog_sleeploop"
-    },
-    {
-      "CladEvent": "GuardDogTimeout",
-      "AnimName": "ag_guarddog_getout_timeout"
-    },
-    {
-      "CladEvent": "GuardDogTimeoutCubesTouched",
-      "AnimName": "ag_guarddog_getout_touched"
-    },
-    {
-      "CladEvent": "GuardDogTimeoutCubesUntouched",
-      "AnimName": "ag_guarddog_getout_untouched"
+    {	
+      "CladEvent": "GuardDogBusted",	
+      "AnimName": "ag_guarddog_getout_busted"	
+    },	
+    {	
+      "CladEvent": "GuardDogCubeDisconnect",	
+      "AnimName": "ag_guarddog_interruption_cubedisconnect"	
+    },	
+    {	
+      "CladEvent": "GuardDogFakeout",	
+      "AnimName": "ag_guarddog_fakeout"	
+    },	
+    {	
+      "CladEvent": "GuardDogInterruption",	
+      "AnimName": "ag_guarddog_interruption"	
+    },	
+    {	
+      "CladEvent": "GuardDogPlayerSuccess",	
+      "AnimName": "ag_guarddog_getout_playersucess"	
+    },	
+    {	
+      "CladEvent": "GuardDogPulse",	
+      "AnimName": "ag_guarddog_pulse"	
+    },	
+    {	
+      "CladEvent": "GuardDogSettle",	
+      "AnimName": "ag_guarddog_settle"	
+    },	
+    {	
+      "CladEvent": "GuardDogSleepLoop",	
+      "AnimName": "ag_guarddog_sleeploop"	
+    },	
+    {	
+      "CladEvent": "GuardDogTimeout",	
+      "AnimName": "ag_guarddog_getout_timeout"	
+    },	
+    {	
+      "CladEvent": "GuardDogTimeoutCubesTouched",	
+      "AnimName": "ag_guarddog_getout_touched"	
+    },	
+    {	
+      "CladEvent": "GuardDogTimeoutCubesUntouched",	
+      "AnimName": "ag_guarddog_getout_untouched"	
     },
     {
       "CladEvent": "Hiccup",
@@ -935,30 +535,6 @@
     {
       "CladEvent": "InteractWithFacesInitialUnnamed",
       "AnimName": "ag_freeplay_reacttoface_unidentified"
-    },
-    {
-      "CladEvent": "KnockOverEyes",
-      "AnimName": "ag_reacttoblock_focusedeyes"
-    },
-    {
-      "CladEvent": "KnockOverFailure",
-      "AnimName": "ag_reacttoblock_3blocktower_upset"
-    },
-    {
-      "CladEvent": "KnockOverGrabAttempt",
-      "AnimName": "ag_knockoverstack_grabattempt"
-    },
-    {
-      "CladEvent": "KnockOverPreActionNamedFace",
-      "AnimName": "ag_freeplay_reacttoface_identified"
-    },
-    {
-      "CladEvent": "KnockOverPreActionUnnamedFace",
-      "AnimName": "ag_freeplay_reacttoface_unidentified"
-    },
-    {
-      "CladEvent": "KnockOverSuccess",
-      "AnimName": "ag_knockoverstack_success"
     },
     {
       "CladEvent": "LaserAcknowledge",
@@ -1145,102 +721,6 @@
       "AnimName" : "ag_greeting_happy"
     },
     {
-      "CladEvent": "NeedsMildLowEnergyRequest",
-      "AnimName": "ag_energy_request"
-    },
-    {
-      "CladEvent": "NeedsMildLowPlayRequest",
-      "AnimName": "ag_play_requestplay_level1_01"
-    },
-    {
-      "CladEvent": "NeedsMildLowRepairRequest",
-      "AnimName": "ag_repair_reaction_01"
-    },
-    {
-      "CladEvent": "NeedsSevereLowEnergyCliffReact",
-      "AnimName": "ag_energy_reacttocliff_lvl2"
-    },
-    {
-      "CladEvent": "NeedsSevereLowEnergyDrivingEnd",
-      "AnimName": "ag_energy_drivegetout"
-    },
-    {
-      "CladEvent": "NeedsSevereLowEnergyDrivingLoop",
-      "AnimName": "ag_energy_driveloop"
-    },
-    {
-      "CladEvent": "NeedsSevereLowEnergyDrivingStart",
-      "AnimName": "ag_energy_drivegetin"
-    },
-    {
-      "CladEvent": "NeedsSevereLowEnergyForceGetOut",
-      "AnimName" : "ag_energy_getout"
-    },
-    {
-      "CladEvent": "NeedsSevereLowEnergyGetIn",
-      "AnimName" : "ag_energy_getin"
-    },
-    {
-      "CladEvent": "NeedsSevereLowEnergyIdle",
-      "AnimName": "ag_energy_idle_02"
-    },
-    {
-      "CladEvent": "NeedsSevereLowEnergyRequest",
-      "AnimName": "ag_energy_requestsevere"
-    },
-    {
-      "CladEvent": "NeedsSevereLowEnergySlopeReact",
-      "AnimName": "ag_energy_stuckonblock_lvl2"
-    },
-    {
-      "CladEvent": "NeedsSevereLowPlayForceGetOut",
-      "AnimName": "ag_play_getout"
-    },
-    {
-      "CladEvent": "NeedsSevereLowPlayGetIn",
-      "AnimName": "ag_play_getin"
-    },
-    {
-      "CladEvent": "NeedsSevereLowPlayRequest",
-      "AnimName": "ag_play_requestplay_level2_01"
-    },
-    {
-      "CladEvent": "NeedsSevereLowRepairCliffReact",
-      "AnimName": "ag_repair_severe_interruptions_edge"
-    },
-    {
-      "CladEvent": "NeedsSevereLowRepairDrivingEnd",
-      "AnimName": "ag_repair_severe_driving_end_01"
-    },
-    {
-      "CladEvent": "NeedsSevereLowRepairDrivingLoop",
-      "AnimName": "ag_repair_severe_driving_loop_01"
-    },
-    {
-      "CladEvent": "NeedsSevereLowRepairDrivingStart",
-      "AnimName": "ag_repair_severe_driving_start_01"
-    },
-    {
-      "CladEvent": "NeedsSevereLowRepairForceGetOut",
-      "AnimName" : "ag_repair_severe_getout_01"
-    },
-    {
-      "CladEvent": "NeedsSevereLowRepairGetIn",
-      "AnimName" : "ag_repair_severe_getin_01"
-    },
-    {
-      "CladEvent": "NeedsSevereLowRepairIdle",
-      "AnimName": "ag_repair_severe_idle_01"
-    },
-    {
-      "CladEvent": "NeedsSevereLowRepairRequest",
-      "AnimName": "ag_repair_severe_reaction_01"
-    },
-    {
-      "CladEvent": "NeedsSevereLowRepairSlopeReact",
-      "AnimName": "ag_repair_severe_interruptions_stuckoncube"
-    },
-    {
       "CladEvent": "NeutralFace",
       "AnimName" : "ag_neutral_face"
     },
@@ -1349,134 +829,6 @@
       "AnimName": "ag_faceenrollment_wiggle"
     },
     {
-      "CladEvent": "OnboardingPreBirth",
-      "AnimName": "ag_launch_backpackidle"
-    },
-    {
-      "CladEvent": "OnboardingBirth",
-      "AnimName": "ag_launch_firsttimewakeup"
-    },
-    {
-      "CladEvent": "OnboardingDriveStart",
-      "AnimName": "ag_launch_reacttocube_startdriving"
-    },
-    {
-      "CladEvent": "OnboardingDriveLoop",
-      "AnimName": "ag_launch_reacttocube_drivingloop"
-    },
-    {
-      "CladEvent": "OnboardingDriveEnd",
-      "AnimName": "ag_launch_reacttocube_enddriving"
-    },
-    {
-      "CladEvent": "OnboardingEyesOn",
-      "AnimName": "ag_launch_eyeson"
-    },
-    {
-      "CladEvent": "OnboardingIdle",
-      "AnimName": "ag_launch_idle_01"
-    },
-    {
-      "CladEvent": "OnboardingIdleEnergy",
-      "AnimName": "ag_launch_energy_idle_01"
-    },
-    {
-      "CladEvent": "OnboardingIdlePlay",
-      "AnimName": "ag_launch_play_idle_01"
-    },
-    {
-      "CladEvent": "OnboardingIdleRepair",
-      "AnimName": "ag_launch_repair_idle_01"
-    },
-    {
-      "CladEvent": "OnboardingHelloPlayer",
-      "AnimName": "ag_launch_firsttimewakeup_helloplayer"
-    },
-    {
-      "CladEvent": "OnboardingHelloWorld",
-      "AnimName": "ag_launch_firsttimewakeup_helloworld"
-    },
-    {
-      "CladEvent": "OnboardingReactToFace",
-      "AnimName": "ag_reacttonewblock"
-    },
-    {
-      "CladEvent": "OnboardingReactToCube",
-      "AnimName": "ag_launch_reacttocube"
-    },
-    {
-      "CladEvent": "OnboardingDiscoverCube",
-      "AnimName": "ag_launch_cubediscovery"
-    },
-    {
-      "CladEvent": "OnboardingReactToCubePutDown",
-      "AnimName": "ag_launch_reacttoputdown"
-    },
-    {
-      "CladEvent": "OnboardingCubeDockFail",
-      "AnimName": "ag_requestgamedrivefail"
-    },
-    {
-      "CladEvent": "OnboardingInteractWithCube",
-      "AnimName": "ag_launch_reacttocubepickup"
-    },
-    {
-      "CladEvent": "OnboardingSoundOnlyLiftEffortPickup",
-      "AnimName": "ag_launch_lifteffortpickup"
-    },
-    {
-      "CladEvent": "OnboardingSoundOnlyLiftEffortPlaceLow",
-      "AnimName": "ag_launch_lifteffortplacelow"
-    },
-    {
-      "CladEvent": "OnboardingGetOut",
-      "AnimName": "ag_launch_reacttonextscreen"
-    },
-    {
-      "CladEvent": "OnboardingWakeUpDriveOffCharger",
-      "AnimName": "ag_launch_altwakeup_01"
-    },
-    {
-      "CladEvent": "PeekABooGetIn",
-      "AnimName": "ag_peekaboo_getin"
-    },
-    {
-      "CladEvent": "PeekABooGetOutHappy",
-      "AnimName": "ag_peekaboo_successfulgetout"
-    },
-    {
-      "CladEvent": "PeekABooGetOutSad",
-      "AnimName": "ag_peekaboo_failuregetout"
-    },
-    {
-      "CladEvent": "PeekABooHighIntensity",
-      "AnimName": "ag_peekaboo_requestthrice"
-    },
-    {
-      "CladEvent": "PeekABooIdle",
-      "AnimName": "ag_peekaboo_idles"
-    },
-    {
-      "CladEvent": "PeekABooLowIntensity",
-      "AnimName": "ag_peekaboo_requestonce"
-    },
-    {
-      "CladEvent": "PeekABooMedIntensity",
-      "AnimName": "ag_peekaboo_requesttwice"
-    },
-    {
-      "CladEvent": "PeekABooNoUserInteraction",
-      "AnimName": "ag_peekaboo_fail"
-    },
-    {
-      "CladEvent": "PeekABooShort",
-      "AnimName": "ag_peekaboo_requestshort"
-    },
-    {
-      "CladEvent": "PeekABooSurprised",
-      "AnimName": "ag_peekaboo_success"
-    },
-    {
       "CladEvent": "PetDetectionCat",
       "AnimName": "ag_petdetection_cat"
     },
@@ -1525,12 +877,8 @@
       "AnimName": "ag_petting_bliss_getout"
     },
     {
-      "CladEvent":"PickupHelperPreActionNamedFace",
-      "AnimName": "ag_freeplay_reacttoface_identified"
-    },
-    {
-      "CladEvent":"PickupHelperPreActionUnnamedFace",
-      "AnimName": "ag_freeplay_reacttoface_unidentified"
+      "CladEvent":"PickupCubePreperation",
+      "AnimName": "ag_reacttoblock_react_short"
     },
     {
       "CladEvent": "PlacedOnCharger",
@@ -1673,294 +1021,6 @@
       "AnimName": "ag_reacttostop"
     },
     {
-      "CladEvent": "ReactToUnexpectedMovement_Severe_Energy",
-      "AnimName": "ag_energy_reacttostop_lvl2"
-    },
-    {
-      "CladEvent": "ReactToUnexpectedMovement_Severe_Repair",
-      "AnimName": "ag_repair_severe_reacttostop"
-    },
-    {
-      "CladEvent": "RepairFailMild",
-      "AnimName": "ag_repair_mild_fix_fail_01"
-    },
-    {
-      "CladEvent": "RepairFailSevere",
-      "AnimName": "ag_repair_severe_fix_fail_01"
-    },
-    {
-      "CladEvent": "RepairFixMildGetIn",
-      "AnimName": "ag_repair_fix_getin_01"
-    },
-    {
-      "CladEvent": "RepairFixMildGetOut",
-      "AnimName": "ag_repair_fix_getout_01"
-    },
-    {
-      "CladEvent": "RepairFixMildGetReady",
-      "AnimName": "ag_repair_fix_getready_01"
-    },
-    {
-      "CladEvent": "RepairFixMildHeadDown",
-      "AnimName": "ag_repair_fix_head_down_01"
-    },
-    {
-      "CladEvent": "RepairFixMildHeadUp",
-      "AnimName": "ag_repair_fix_head_up_01"
-    },
-    {
-      "CladEvent": "RepairFixMildIdle",
-      "AnimName": "ag_repair_fix_idle_01"
-    },
-    {
-      "CladEvent": "RepairFixMildLiftDown",
-      "AnimName": "ag_repair_fix_lift_down_01"
-    },
-    {
-      "CladEvent": "RepairFixMildLiftUp",
-      "AnimName": "ag_repair_fix_lift_up_01"
-    },
-    {
-      "CladEvent": "RepairFixMildLowerLift",
-      "AnimName": "ag_repair_fix_lowerlift_01"
-    },
-    {
-      "CladEvent": "RepairFixMildRaiseLift",
-      "AnimName": "ag_repair_fix_raiselift_01"
-    },
-    {
-      "CladEvent": "RepairFixMildRoundReact",
-      "AnimName": "ag_repair_fix_roundreact_01"
-    },
-    {
-      "CladEvent": "RepairFixMildWheelsBack",
-      "AnimName": "ag_repair_fix_wheels_back_01"
-    },
-    {
-      "CladEvent": "RepairFixMildWheelsForward",
-      "AnimName": "ag_repair_fix_wheels_forward_01"
-    },
-    {
-      "CladEvent": "RepairFixSevereGetIn",
-      "AnimName": "ag_repair_severe_fix_getin_01"
-    },
-    {
-      "CladEvent": "RepairFixSevereGetOut",
-      "AnimName": "ag_repair_severe_fix_getout_01"
-    },
-    {
-      "CladEvent": "RepairFixSevereGetReady",
-      "AnimName": "ag_repair_severe_fix_getready_01"
-    },
-    {
-      "CladEvent": "RepairFixSevereHeadDown",
-      "AnimName": "ag_repair_severe_fix_head_down_01"
-    },
-    {
-      "CladEvent": "RepairFixSevereHeadUp",
-      "AnimName": "ag_repair_severe_fix_head_up_01"
-    },
-    {
-      "CladEvent": "RepairFixSevereIdle",
-      "AnimName": "ag_repair_severe_fix_idle_01"
-    },
-    {
-      "CladEvent": "RepairFixSevereLiftDown",
-      "AnimName": "ag_repair_severe_fix_lift_down_01"
-    },
-    {
-      "CladEvent": "RepairFixSevereLiftUp",
-      "AnimName": "ag_repair_severe_fix_lift_up_01"
-    },
-    {
-      "CladEvent": "RepairFixSevereLowerLift",
-      "AnimName": "ag_repair_severe_fix_lowerlift_01"
-    },
-    {
-      "CladEvent": "RepairFixSevereRaiseLift",
-      "AnimName": "ag_repair_severe_fix_raiselift_01"
-    },
-    {
-      "CladEvent": "RepairFixSevereRoundReact",
-      "AnimName": "ag_repair_severe_fix_roundreaction_01"
-    },
-    {
-      "CladEvent": "RepairFixSevereWheelsBack",
-      "AnimName": "ag_repair_severe_fix_wheels_back_01"
-    },
-    {
-      "CladEvent": "RepairFixSevereWheelsForward",
-      "AnimName": "ag_repair_severe_fix_wheels_forward_01"
-    },
-    {
-      "CladEvent": "RepairIdleFullyRepaired",
-      "AnimName": "ag_repair_fix_idle_fullyfull_01"
-    },
-    {
-      "CladEvent": "RepairPartRepaired_Head_Mild",
-      "AnimName": "ag_repair_mild_fix_head"
-    },
-    {
-      "CladEvent": "RepairPartRepaired_Lift_Mild",
-      "AnimName": "ag_repair_mild_fix_lift"
-    },
-    {
-      "CladEvent": "RepairPartRepaired_Tread_Mild",
-      "AnimName": "ag_repair_mild_fix_tread"
-    },
-    {
-      "CladEvent": "RequestGameInterrupt",
-      "AnimName": "ag_requesttoplay_huh_01"
-    },
-    {
-      "CladEvent": "RequestGameKeepAwayInitial0",
-      "AnimName": "ag_rtpkeepaway_ideatoplay"
-    },
-    {
-      "CladEvent": "RequestGameKeepAwayInitial1",
-      "AnimName": "ag_rtpkeepaway_ideatoplay"
-    },
-    {
-      "CladEvent": "RequestGameKeepAwayPreDrive0",
-      "AnimName": "ag_rtpkeepaway_reacttocube"
-    },
-    {
-      "CladEvent": "RequestGameKeepAwayPreDrive1",
-      "AnimName": "ag_rtpkeepaway_reacttocube"
-    },
-    {
-      "CladEvent": "RequestGameKeepAwayRequest0",
-      "AnimName": "ag_rtpkeepaway_askforgame"
-    },
-    {
-      "CladEvent": "RequestGameKeepAwayRequest1",
-      "AnimName": "ag_rtpkeepaway_askforgame"
-    },
-    {
-      "CladEvent": "RequestGameKeepAwayIdle0",
-      "AnimName": "ag_rtpkeepaway_idle"
-    },
-    {
-      "CladEvent": "RequestGameKeepAwayIdle1",
-      "AnimName": "ag_rtpkeepaway_idle"
-    },
-    {
-      "CladEvent": "RequestGameKeepAwayDeny0",
-      "AnimName": "ag_rtpkeepaway_playerno"
-    },
-    {
-      "CladEvent": "RequestGameKeepAwayDeny1",
-      "AnimName": "ag_rtpkeepaway_playerno"
-    },
-    {
-      "CladEvent": "RequestGameKeepAwayAccept0",
-      "AnimName": "ag_rtpkeepaway_playeryes"
-    },
-    {
-      "CladEvent": "RequestGameKeepAwayAccept1",
-      "AnimName": "ag_rtpkeepaway_playeryes"
-    },
-    {
-      "CladEvent": "RequestGameMemoryMatchIdle0",
-      "AnimName": "ag_memorymatch_idle"
-    },
-    {
-      "CladEvent": "RequestGameMemoryMatchIdle1",
-      "AnimName": "ag_memorymatch_idle"
-    },
-    {
-      "CladEvent": "RequestGameMemoryMatchDeny0",
-      "AnimName": "ag_rtpmemorymatch_no"
-    },
-    {
-      "CladEvent": "RequestGameMemoryMatchDeny1",
-      "AnimName": "ag_rtpmemorymatch_no"
-    },
-    {
-      "CladEvent": "RequestGameMemoryMatchAccept0",
-      "AnimName": "ag_rtpmemorymatch_yes"
-    },
-    {
-      "CladEvent": "RequestGameMemoryMatchAccept1",
-      "AnimName": "ag_rtpmemorymatch_yes"
-    },
-    {
-      "CladEvent": "RequestGameMemoryMatchInitial0",
-      "AnimName": "ag_rtpmemorymatch_request"
-    },
-    {
-      "CladEvent": "RequestGameMemoryMatchInitial1",
-      "AnimName": "ag_rtpmemorymatch_request"
-    },
-    {
-      "CladEvent": "RequestGameMemoryMatchPreDrive0",
-      "AnimName": "ag_requestgame_speedtap_predrive"
-    },
-    {
-      "CladEvent": "RequestGameMemoryMatchPreDrive1",
-      "AnimName": "ag_requestgame_speedtap_predrive"
-    },
-    {
-      "CladEvent": "RequestGameMemoryMatchRequest0",
-      "AnimName": "ag_rtpmemorymatch_request"
-    },
-    {
-      "CladEvent": "RequestGameMemoryMatchRequest1",
-      "AnimName": "ag_rtpmemorymatch_request"
-    },
-    {
-      "CladEvent": "RequestGamePickupFail",
-      "AnimName": "ag_requestgamepickupfail"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapDeny0",
-      "AnimName": "ag_requestgame_speedtap_deny"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapDeny1",
-      "AnimName": "ag_requestgame_speedtap_deny"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapInitial0",
-      "AnimName": "ag_requestgame_speedtap_initial"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapInitial1",
-      "AnimName": "ag_requestgame_speedtap_initial"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapPreDrive0",
-      "AnimName": "ag_requestgame_speedtap_predrive"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapPreDrive1",
-      "AnimName": "ag_requestgame_speedtap_predrive"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapRequest0",
-      "AnimName": "ag_requestgame_speedtap_request"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapRequest1",
-      "AnimName": "ag_requestgame_speedtap_request"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapIdle0",
-      "AnimName": "ag_speedtap_wait"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapIdle1",
-      "AnimName": "ag_speedtap_wait"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapAccept0",
-      "AnimName": "ag_requestgame_confirm"
-    },
-    {
-      "CladEvent": "RequestGameSpeedTapAccept1",
-      "AnimName": "ag_requestgame_confirm"
-    },
-    {
       "CladEvent": "RollBlockInitial",
       "AnimName": "ag_rollcube_initial"
     },
@@ -1991,6 +1051,14 @@
     {
       "CladEvent": "SdkTextToSpeech",
       "AnimName": "ag_sdk_speak"
+    },
+    {
+      "CladEvent": "SearchForFace_Search",
+      "AnimName": "ag_vc_reaction_nofaceheardyou"
+    },
+    {
+      "CladEvent": "SearchForFace_FoundFace",
+      "AnimName": "ag_vc_reaction_nofaceheardyou_getout"
     },
     {
       "CladEvent": "Shiver",
@@ -2025,14 +1093,6 @@
       "AnimName": "ag_sleeping"
     },
     {
-      "CladEvent": "SoftSparkUpgradeLift",
-      "AnimName": "ag_upgrade_lift"
-    },
-    {
-      "CladEvent": "SoftSparkUpgradeTracks",
-      "AnimName": "ag_upgrade_tracks"
-    },
-    {
       "CladEvent": "SoundOnlyLiftEffortPickup",
       "AnimName": "ag_lifteffortpickup"
     },
@@ -2055,46 +1115,6 @@
     {
       "CladEvent": "SoundOnlyTurnSmall",
       "AnimName": "ag_soundonlyturnsmall"
-    },
-    {
-      "CladEvent": "SparkDrivingLoop",
-      "AnimName": "ag_sparking_driving_loop"
-    },
-    {
-      "CladEvent": "SparkDrivingStart",
-      "AnimName": "ag_sparking_driving_start"
-    },
-    {
-      "CladEvent": "SparkDrivingStop",
-      "AnimName": "ag_sparking_driving_stop"
-    },
-    {
-      "CladEvent": "SparkFailure",
-      "AnimName": "ag_sparking_fail"
-    },
-    {
-      "CladEvent": "SparkGetIn",
-      "AnimName": "ag_sparking_getin"
-    },
-    {
-      "CladEvent": "SparkGetOut",
-      "AnimName": "ag_sparking_getout"
-    },
-    {
-      "CladEvent": "SparkIdle",
-      "AnimName": "ag_sparking_idle"
-    },
-    {
-      "CladEvent": "SparkPickupInitialCubeReaction",
-      "AnimName": "ag_reacttoblock_react_short"
-    },
-    {
-      "CladEvent": "SparkPickupFinalCubeReaction",
-      "AnimName": "ag_pickupcube_success"
-    },
-    {
-      "CladEvent": "SparkSuccess",
-      "AnimName": "ag_sparking_success"
     },
     {
       "CladEvent": "SpeedTapDrivingEnd",
@@ -2125,6 +1145,26 @@
       "AnimName": "ag_surprise"
     },
     {
+      "CladEvent": "TimerSetGetIn",
+      "AnimName": "ag_timer_set_getin"
+    },
+    {
+      "CladEvent": "TimerSetGetOut",
+      "AnimName": "ag_timer_set_getout"
+    },
+    {
+      "CladEvent": "TimerRingGetIn",
+      "AnimName": "ag_codelab_tinyorchestra_celebration"
+    },
+    {
+      "CladEvent": "TimerRing",
+      "AnimName": "ag_explorer_drvback_loop"
+    },
+    {
+      "CladEvent": "TimerRingGetOut",
+      "AnimName": "ag_codelab_getout"
+    },
+    {
       "CladEvent": "TurtleRoll",
       "AnimName": "ag_reacttocliff_turtleroll_01"
     },
@@ -2132,130 +1172,26 @@
       "CladEvent": "UnitTestAnim",
       "AnimName": "ag_askforblock"
     },
-    {
-      "CladEvent": "VC_Alrighty",
-      "AnimName": "ag_vc_alrighty"
+    {	
+      "CladEvent": "VC_Listening",	
+      "AnimName": "ag_vc_listening"	
     },
-    {
-      "CladEvent": "VC_HowAreYouDoing_AllGood",
-      "AnimName": "ag_vc_reaction_feeling_good_01"
-    },
-    {
-      "CladEvent": "VC_Listening",
-      "AnimName": "ag_vc_listening"
-    },
-    {
-      "CladEvent": "VC_LookDownForLaser",
-      "AnimName": "ag_vc_laser_lookdown"
-    },
-    {
-      "CladEvent": "VC_LookDownNoLaser",
-      "AnimName": "ag_explorer_huh"
-    },
-    {
-      "CladEvent": "VC_NoFollowupCommand_NoFace",
-      "AnimName": "ag_vc_reaction_whatwasthat"
-    },
-    {
-      "CladEvent": "VC_NoFollowupCommand_WithFace",
-      "AnimName": "ag_vc_reaction_yesfaceheardyou"
-    },
-    {
-      "CladEvent": "VC_Refuse_energy",
-      "AnimName": "ag_vc_refuse_energy_01"
-    },
-    {
-      "CladEvent": "VC_Refuse_repair",
-      "AnimName": "ag_vc_refuse_repair_01"
-    },
-    {
-      "CladEvent": "VC_Refuse_sparks",
-      "AnimName": "ag_vc_refuse_nosparks_01"
-    },
-    {
-      "CladEvent": "VC_StartledWakeup",
-      "AnimName": "ag_vc_startledwakeup_01"
+    {	
+      "CladEvent": "VC_NoFollowupCommand_NoFace",	
+      "AnimName": "ag_vc_reaction_whatwasthat"	
+    },	
+    {	
+      "CladEvent": "VC_NoFollowupCommand_WithFace",	
+      "AnimName": "ag_vc_reaction_yesfaceheardyou"	
     },
     {
       "CladEvent": "WaitOnSideLoop",
       "AnimName": "ag_reacttocliff_wait"
+    },
+    {
+      "CladEvent": "WakeupGetout",
+      "AnimName": "ag_vc_startledwakeup_01"
     },    
-    {
-      "CladEvent": "WorkoutPostLift_highEnergy",
-      "AnimName": "ag_workout_highenergy_getready"
-    },
-    {
-      "CladEvent": "WorkoutPostLift_lowEnergy",
-      "AnimName": "ag_workout_lowenergy_getready"
-    },
-    {
-      "CladEvent": "WorkoutPostLift_mediumEnergy",
-      "AnimName": "ag_workout_mediumenergy_getready"
-    },
-    {
-      "CladEvent": "WorkoutPreLift_highEnergy",
-      "AnimName": "ag_workout_highenergy_getin"
-    },
-    {
-      "CladEvent": "WorkoutPreLift_lowEnergy",
-      "AnimName": "ag_workout_lowenergy_getin"
-    },
-    {
-      "CladEvent": "WorkoutPreLift_mediumEnergy",
-      "AnimName": "ag_workout_mediumenergy_getin"
-    },
-    {
-      "CladEvent": "WorkoutPutDown_highEnergy",
-      "AnimName": "ag_workout_highenergy_getout"
-    },
-    {
-      "CladEvent": "WorkoutPutDown_lowEnergy",
-      "AnimName": "ag_workout_lowenergy_getout"
-    },
-    {
-      "CladEvent": "WorkoutPutDown_lowEnergy_simple",
-      "AnimName": "ag_workout_lowenergy_getout_02"
-    },
-    {
-      "CladEvent": "WorkoutPutDown_mediumEnergy",
-      "AnimName": "ag_workout_mediumenergy_getout"
-    },
-    {
-      "CladEvent": "WorkoutStrongLift_highEnergy",
-      "AnimName": "ag_workout_highenergy_strong"
-    },
-    {
-      "CladEvent": "WorkoutStrongLift_lowEnergy",
-      "AnimName": "ag_workout_lowenergy_strong"
-    },
-    {
-      "CladEvent": "WorkoutStrongLift_mediumEnergy",
-      "AnimName": "ag_workout_mediumenergy_strong"
-    },
-    {
-      "CladEvent": "WorkoutTransition_highEnergy",
-      "AnimName": "ag_workout_highenergy_trans"
-    },
-    {
-      "CladEvent": "WorkoutTransition_lowEnergy",
-      "AnimName": "ag_workout_lowenergy_trans"
-    },
-    {
-      "CladEvent": "WorkoutTransition_mediumEnergy",
-      "AnimName": "ag_workout_mediumenergy_trans"
-    },
-    {
-      "CladEvent": "WorkoutWeakLift_highEnergy",
-      "AnimName": "ag_workout_highenergy_weak"
-    },
-    {
-      "CladEvent": "WorkoutWeakLift_lowEnergy",
-      "AnimName": "ag_workout_lowenergy_weak"
-    },
-    {
-      "CladEvent": "WorkoutWeakLift_mediumEnergy",
-      "AnimName": "ag_workout_mediumenergy_weak"
-    },
     {
       "CladEvent": "ObservingLookUp",
       "AnimName": "ag_generic_look_up_01"
@@ -2281,12 +1217,24 @@
       "AnimName": "ag_reacttocharger"
     },
     {
+      "CladEvent": "LookDownForLaser",
+      "AnimName": "ag_vc_laser_lookdown"
+    },
+    {
       "CladEvent": "ReactToSoundOffChargerAsleepAmbient",
       "AnimName": "ag_rtsound_offcharger_asleep_ambient"
     },
     {
       "CladEvent": "ReactToSoundOffChargerAsleepFront",
       "AnimName": "ag_rtsound_offcharger_asleep_front"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerAsleepFrontLeft",
+      "AnimName": "ag_rtsound_offcharger_asleep_45left"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerAsleepFrontRight",
+      "AnimName": "ag_rtsound_offcharger_asleep_45right"
     },
     {
       "CladEvent": "ReactToSoundOffChargerAsleepLeft",
@@ -2301,12 +1249,28 @@
       "AnimName": "ag_rtsound_offcharger_asleep_behind"
     },
     {
+      "CladEvent": "ReactToSoundOffChargerAsleepBehindLeft",
+      "AnimName": "ag_rtsound_offcharger_asleep_135left"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerAsleepBehindRight",
+      "AnimName": "ag_rtsound_offcharger_asleep_135right"
+    },
+    {
       "CladEvent": "ReactToSoundOffChargerObserveAmbient",
       "AnimName": "ag_rtsound_offcharger_observe_ambient"
     },
     {
       "CladEvent": "ReactToSoundOffChargerObserveFront",
       "AnimName": "ag_rtsound_offcharger_observe_front"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerObserveFrontLeft",
+      "AnimName": "ag_rtsound_offcharger_observe_45left"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerObserveFrontRight",
+      "AnimName": "ag_rtsound_offcharger_observe_45right"
     },
     {
       "CladEvent": "ReactToSoundOffChargerObserveLeft",
@@ -2319,6 +1283,14 @@
     {
       "CladEvent": "ReactToSoundOffChargerObserveBehind",
       "AnimName": "ag_rtsound_offcharger_observe_behind"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerObserveBehindLeft",
+      "AnimName": "ag_rtsound_offcharger_observe_135left"
+    },
+    {
+      "CladEvent": "ReactToSoundOffChargerObserveBehindRight",
+      "AnimName": "ag_rtsound_offcharger_observe_135right"
     },
     {
       "CladEvent": "ReactToSoundOnChargerAsleepAmbient",
@@ -2359,6 +1331,10 @@
     {
       "CladEvent": "ReactToSoundOnChargerObserveBehind",
       "AnimName": "ag_rtsound_oncharger_observe_behind"
+    },
+    {
+      "CladEvent": "ReactToUnclaimedIntent",
+      "AnimName": "ag_pounceonmotionfail"
     }
     
   ]

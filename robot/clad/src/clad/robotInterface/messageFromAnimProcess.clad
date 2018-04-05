@@ -48,6 +48,12 @@ message TextToSpeechEvent
   TextToSpeechState ttsState
 }
 
+// Trigger streaming of camera images down to anim process
+// for rendering in debug screen
+message StreamCameraImages
+{
+  bool enable,
+}
 
 } // Cozmo
 } // Anki

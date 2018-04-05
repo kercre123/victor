@@ -5,7 +5,7 @@ set -eu
 SCRIPTDIR=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))           
 
 # What do we want to profile?
-: ${ANKI_PROFILE_PROCNAME:="cozmoengined"}
+: ${ANKI_PROFILE_PROCNAME:="vic-engine"}
 
 # How long do we capture? (in seconds)
 : ${ANKI_PROFILE_DURATION:="10"}
@@ -14,10 +14,11 @@ SCRIPTDIR=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || ech
 : ${ANKI_PROFILE_FREQUENCY:="4000"}
 
 # Where is symbol cache?
-: ${ANKI_PROFILE_SYMBOLCACHE:="${SCRIPTDIR}/${ANKI_PROFILE_PROCNAME}/symbol_cache"}
+: ${ANKI_PROFILE_SYMBOLCACHE:="${SCRIPTDIR}/symbol_cache"}
 
 # Where is perf.data?
 : ${ANKI_PROFILE_PERFDATA:="${SCRIPTDIR}/${ANKI_PROFILE_PROCNAME}/perf.data"}
+mkdir -p ${SCRIPTDIR}/${ANKI_PROFILE_PROCNAME}
 
 # Where is top level?
 : ${TOPLEVEL:="`git rev-parse --show-toplevel`"}

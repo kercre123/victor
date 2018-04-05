@@ -2,8 +2,8 @@
 #include "engine/cozmoContext.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "engine/appToEngineHandler.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/perfMetric.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotManager.h"
@@ -19,7 +19,7 @@
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/random/randomGenerator.h"
-#include "webServerProcess/src/webService.h"
+// #include "webServerProcess/src/webService.h"
 
 
 namespace Anki {
@@ -31,7 +31,7 @@ public:
   Util::CpuThreadId _id = Util::kCpuThreadIdInvalid;
 };
 
-  
+
 CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInterface* externalInterface)
   : _externalInterface(externalInterface)
   , _dataPlatform(dataPlatform)
@@ -46,10 +46,10 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _dasTransferTask(new Anki::Util::DasTransferTask())
   #endif
   , _gameLogTransferTask(new Anki::Util::GameLogTransferTask())
-  , _needsManager(new NeedsManager(this))
   , _cozmoExperiments(new CozmoExperiments(this))
   , _perfMetric(new PerfMetric(this))
-  , _webService(new WebService::WebService())
+  // , _webService(new WebService::WebService())
+  , _appToEngineHandler( new AppToEngineHandler() )
   , _threadIdHolder(new ThreadIDInternal)
 {
 
@@ -57,9 +57,11 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   _dasTransferTask->Init(_transferQueueMgr.get());
   #endif
   _gameLogTransferTask->Init(_transferQueueMgr.get());
-  
+
   // This needs to happen after the audio server is set up
   _voiceCommandComponent.reset(new VoiceCommand::VoiceCommandComponent(*this));
+
+  _appToEngineHandler->Init(/* _webService.get(), */_externalInterface );
 }
 
 
@@ -72,6 +74,12 @@ CozmoContext::~CozmoContext()
 {
 }
 
+void CozmoContext::Shutdown()
+{
+  // Order of destruction matters!  RobotManager makes calls back into context,
+  // so manager must be shut down before context is destroyed.
+  _robotMgr->Shutdown();
+}
 
 bool CozmoContext::IsInSdkMode() const
 {
@@ -81,8 +89,8 @@ bool CozmoContext::IsInSdkMode() const
   }
   return false;
 }
-  
-  
+
+
 void CozmoContext::SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const
 {
   if (_externalInterface)
@@ -95,8 +103,8 @@ void CozmoContext::SetRandomSeed(uint32_t seed)
 {
   _random->SetSeed("CozmoContext", seed);
 }
-  
-  
+
+
 void CozmoContext::SetLocale(const std::string& localeString)
 {
   // TODO: VIC-27 - Migrate Audio Local functionality to Victor
@@ -127,6 +135,6 @@ bool CozmoContext::IsMainThread() const
   return Util::AreCpuThreadIdsEqual( _threadIdHolder->_id, Util::GetCurrentThreadId() );
 }
 
-  
+
 } // namespace Cozmo
 } // namespace Anki

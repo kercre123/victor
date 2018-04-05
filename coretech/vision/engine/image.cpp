@@ -118,6 +118,7 @@ namespace Vision {
   ImageBase<T>& ImageBase<T>::operator= (const ImageBase<T> &other)
   {
     SetTimestamp(other.GetTimestamp());
+    SetImageId(other.GetImageId());
     Array2d<T>::operator=(other);
     return *this;
   }
@@ -275,6 +276,13 @@ namespace Vision {
   }
   
   template<typename T>
+  Vec2f ImageBase<T>::GetTextSize(const std::string& str, f32 scale, int thickness)
+  {
+    auto sz = cv::getTextSize(str, CV_FONT_NORMAL, scale, thickness, nullptr);
+    return Vec2f(sz.width, sz.height);
+  }
+
+  template<typename T>
   void ImageBase<T>::Resize(f32 scaleFactor, ResizeMethod method)
   {
     cv::resize(this->get_CvMat_(), this->get_CvMat_(), cv::Size(), scaleFactor, scaleFactor,
@@ -302,6 +310,7 @@ namespace Vision {
       cv::resize(this->get_CvMat_(), resizedImage.get_CvMat_(), desiredSize, 0, 0,
                  GetOpenCvInterpMethod(method));
       resizedImage.SetTimestamp(this->GetTimestamp());
+      resizedImage.SetImageId(this->GetImageId());
     }
   }
 
@@ -328,6 +337,7 @@ namespace Vision {
     const s32 desiredRows = resizedImage.GetNumRows();
     ResizeKeepAspectRatioHelper(this->get_CvMat_(), resizedImage.get_CvMat_(), desiredCols, desiredRows, GetOpenCvInterpMethod(method), false);
     resizedImage.SetTimestamp(this->GetTimestamp());
+    resizedImage.SetImageId(this->GetImageId());
   }
 
   template<typename T>
@@ -335,6 +345,7 @@ namespace Vision {
   {
     Array2d<T>::CopyTo(otherImage);
     otherImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets copied too
+    otherImage.SetImageId(GetImageId());
   }
 
   template<typename T>
@@ -998,7 +1009,7 @@ namespace Vision {
 
       for(; c < numCols; c++)
       {
-        f32 h = (f32)row[0] * (360/255.f) * (1/60.f);
+        f32 h = (f32)row[0] * (360/256.f) * (1/60.f);
         f32 s = (f32)row[1] * (1/255.f);
         f32 v = (f32)row[2] * (1/255.f);
 
@@ -1068,6 +1079,7 @@ namespace Vision {
     }
     
     SetTimestamp(imageRGB.GetTimestamp());
+    SetImageId(imageRGB.GetImageId());
   }
   
   Image ImageRGBA::ToGray() const
@@ -1080,6 +1092,7 @@ namespace Vision {
   void ImageRGBA::FillGray(Image& grayImage) const
   {
     grayImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets transferred!
+    grayImage.SetImageId(GetImageId());
     cv::cvtColor(this->get_CvMat_(), grayImage.get_CvMat_(), CV_RGBA2GRAY);
   }
 
@@ -1134,6 +1147,7 @@ namespace Vision {
       dataRGB[i].b() = dataRGBA[i].b();
     }
     SetTimestamp(imageRGBA.GetTimestamp());
+    SetImageId(imageRGBA.GetImageId());
   }
   
   ImageRGB::ImageRGB(const ImageRGB565& rgb565)
@@ -1152,6 +1166,7 @@ namespace Vision {
   {
     cv::cvtColor(imageGray.get_CvMat_(), this->get_CvMat_(), CV_GRAY2RGB);
     SetTimestamp(imageGray.GetTimestamp());
+    SetImageId(imageGray.GetImageId());
     return *this;
   }
   
@@ -1173,7 +1188,8 @@ namespace Vision {
   void ImageRGB::FillGray(Image& grayImage) const
   {
     grayImage.SetTimestamp(GetTimestamp()); // Make sure timestamp gets transferred!
-    
+    grayImage.SetImageId(GetImageId());
+
     grayImage.Allocate(GetNumRows(), GetNumCols());
 
     u32 numRows = GetNumRows();
@@ -1192,7 +1208,7 @@ namespace Vision {
 
       u32 j = 0;
 
-#ifdef ANDROID
+#ifdef __ARM_NEON__
       const u32 kNumElementsProcessedPerLoop = 8;
       const u32 kSizeOfRGBElement = 3;
       const u32 kNumIterations = numCols - (kNumElementsProcessedPerLoop - 1);

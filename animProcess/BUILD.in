@@ -17,7 +17,7 @@ cxx_project(
 )
 
 cxx_project(
-    name = 'victor_animator',
+    name = 'vic-anim',
     srcs = glob(['src/cozmoAnim/cozmoAnimMain.cpp']),
     platform_srcs = [
     ],

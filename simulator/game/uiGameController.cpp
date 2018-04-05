@@ -1511,6 +1511,22 @@ namespace Anki {
       message.Set_LogRawProxData(m);
       SendMessage(message);
     }
+    
+    void UiGameController::SendCubeAnimation(const u32 objectID, const CubeAnimationTrigger cubeAnimTrigger)
+    {
+      ExternalInterface::PlayCubeAnim m;
+      m.objectID = objectID;
+      m.trigger = cubeAnimTrigger;
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
+    }
+    
+    void UiGameController::SendStopCubeAnimation(const u32 objectID, const CubeAnimationTrigger cubeAnimTrigger)
+    {
+      ExternalInterface::StopCubeAnim m;
+      m.objectID = objectID;
+      m.trigger = cubeAnimTrigger;
+      SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
+    }
 
     void UiGameController::SendAnimation(const char* animName, u32 numLoops, bool throttleMessages)
     {
@@ -2027,7 +2043,9 @@ namespace Anki {
 
     const std::string UiGameController::GetAnimationTestName() const
     {
-      return _robotNode->getField("animationTestName")->getSFString();
+      std::string animTestName;
+      WebotsHelpers::GetFieldAsString(_robotNode, "animationTestName", animTestName);
+      return animTestName;
     }
 
     const Pose3d UiGameController::GetPose3dOfNode(webots::Node* node) const

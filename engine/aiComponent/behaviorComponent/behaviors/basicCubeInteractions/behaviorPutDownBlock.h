@@ -31,8 +31,8 @@ public:
   static IActionRunner* CreateLookAfterPlaceAction(CarryingComponent& carryingComponent, bool doLookAtFaceAfter=true);
 
 protected:
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorPutDownBlock(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {

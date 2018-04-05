@@ -41,8 +41,8 @@ class BehaviorExploreLookAroundInPlace : public ICozmoBehavior
 {
 protected:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorExploreLookAroundInPlace(const Json::Value& config);
   
 public:

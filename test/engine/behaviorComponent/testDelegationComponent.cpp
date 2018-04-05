@@ -36,7 +36,7 @@ using namespace Anki::Cozmo;
 TEST(DelegationComponent, TestDelegationVariants)
 {
   std::unique_ptr<TestSuperPoweredBehavior> baseBehavior = std::make_unique<TestSuperPoweredBehavior>();
-  TestBehaviorFramework testFramework;
+  TestBehaviorFramework testFramework(1, nullptr);
   auto initializeBehavior = [&baseBehavior](const BehaviorComponent::CompononentPtr& comps){
     baseBehavior->SetBehaviorContainer(comps->GetComponent(BCComponentID::BehaviorContainer).GetValue<BehaviorContainer>());
   };

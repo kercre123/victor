@@ -33,7 +33,7 @@ public:
   
 protected:
   // Construction has to go through BehvaiorContainer
-  friend class BehaviorContainer;
+  friend class BehaviorFactory;
   BehaviorDispatcherRerun(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {

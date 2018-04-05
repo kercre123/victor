@@ -33,10 +33,6 @@ simulator/controllers/webotsCtrlViz/resources
 simulator/controllers/webotsCtrlViz/saved_images
 simulator/controllers/webotsCtrlViz/saved_state
 #
-simulator/controllers/webotsCtrlRobot/webotsCtrlRobot
-simulator/controllers/webotsCtrlRobot/resources
-simulator/controllers/webotsCtrlRobot/nvStorage
-#
 simulator/controllers/webotsCtrlRobot2/webotsCtrlRobot2
 simulator/controllers/webotsCtrlRobot2/resources
 simulator/controllers/webotsCtrlRobot2/nvStorage
@@ -52,15 +48,10 @@ simulator/controllers/webotsCtrlLightCube/resources
 #
 simulator/controllers/webotsCtrlBuildServerTest/webotsCtrlBuildServerTest
 #
-simulator/controllers/webotsCtrlGameEngine/webotsCtrlGameEngine
-simulator/controllers/webotsCtrlGameEngine/resources
-simulator/controllers/webotsCtrlGameEngine/temp
-simulator/controllers/webotsCtrlGameEngine/files
-#
 simulator/controllers/webotsCtrlGameEngine2/webotsCtrlGameEngine2
 simulator/controllers/webotsCtrlGameEngine2/resources
 simulator/controllers/webotsCtrlGameEngine2/temp
-simulator/controllers/webotsCtrlGameEngine2/files
+simulator/controllers/webotsCtrlGameEngine2/persistent
 #
 simulator/controllers/webotsCtrlKeyboard/webotsCtrlKeyboard
 simulator/controllers/webotsCtrlKeyboard/factory_test_logs
@@ -70,19 +61,11 @@ simulator/controllers/webotsCtrlDevLog/webotsCtrlDevLog
 #
 simulator/controllers/webotsCtrlHandEmitter/webotsCtrlHandEmitter
 #
-simulator/plugins/physics/pluginPhysics/libpluginPhysics.dylib
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
 simulator/worlds/__generated__.wbt
 simulator/worlds/__GENERATED_FOR_*__.wbt
 project/build-scripts/webots/__GENERATED_ANIMATIONS_TEST__.cfg
 
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-# Symlinks for face libraries:
-# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-simulator/controllers/webotsCtrlGameEngine/lib
-simulator/controllers/webotsCtrlGameEngine/libfsdk.dylib
-simulator/controllers/webotsCtrlKeyboard/lib
-simulator/controllers/webotsCtrlViz/lib
 
 # Mac OS
 *.DS_Store
@@ -412,3 +395,6 @@ apps/xamarin/chewie/codelab.Droid/bin
 apps/xamarin/chewie/codelab.Droid/obj
 apps/xamarin/chewie/codelab.iOS/bin
 apps/xamarin/chewie/codelab.iOS/obj
+
+# Victor SDK Clad
+victor-sdk-clad

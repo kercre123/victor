@@ -1,5 +1,5 @@
 {
-  "behaviorClass": "PlayAnim",
+  "behaviorClass": "AnimSequence",
   "behaviorID": "ReactToObstacle",
   "displayNameKey":"behavior.ReactToObstacle",
   "animTriggers": ["ReactToObstacle"],

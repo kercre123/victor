@@ -27,8 +27,8 @@ public:
   virtual ~BehaviorObservingOnCharger();
 
 protected:
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;  
   BehaviorObservingOnCharger(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{

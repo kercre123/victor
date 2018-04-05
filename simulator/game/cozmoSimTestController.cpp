@@ -23,7 +23,7 @@ namespace Anki {
   namespace Cozmo {
   
     CozmoSimTestController::CozmoSimTestController()
-    : UiGameController(BS_TIME_STEP)
+    : UiGameController(BS_TIME_STEP_MS)
     , _result(0)
     , _isRecording(false)
     , _screenshotInterval(-1.f)
@@ -49,9 +49,6 @@ namespace Anki {
     
   void CozmoSimTestController::HandleRobotConnected(ExternalInterface::RobotConnectionResponse const &msg)
   {    
-    // Disable needs during all tests
-    SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetNeedsPauseState(true)));
-
   }
     
     bool CozmoSimTestController::IsTrueBeforeTimeout(bool cond,

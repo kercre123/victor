@@ -42,3 +42,25 @@ field and pressing "Shift+C"
 * Behaviors will only become active if `WantsToBeActivated()` returns true. Note that there are some other requirements here like `ShouldRunWhileOnCharger()`. See
   `ICozmoBehavior::WantsToBeActivated()` for details
 * All behavior instances have a `.json` file which specifies a `BehaviorClass` and `BehaviorID` from `behaviorTypes.clad`, as well as other parameters
+
+## Script-generated CLAD and behavior container files
+
+To ease the manual work of creating new behaviors, [createNewBehavior.py](/tools/ai/createNewBehavior.py)
+exists. This script can be run (interactively or using command line args) to create a new behavior class (.cpp
+and .h file). This script itself will then run [generateBehaviorCode.py](/tools/ai/generateBehaviorCode.py),
+which scans the appropriate json and code directories, and automatically generates BehaviorClass and
+BehaviorID CLAD entries, as well as an entry into the behavior container to allow creation of the
+factory. [generateBehaviorCode.py](/tools/ai/generateBehaviorCode.py) can also be run manually if you create
+your own behavior files.
+
+Note that the file name, class name, and BehaviorClass CLAD enum are all linked. Specifically, if you were to
+create a new behavior for doing the dishes, you'd create `behaviorDoDishes.h` and `behaviorDoDishes.cpp` in
+the appropriate directory (and subdirectory to keep things organized). Inside those files, the behavior C++
+class must be called `BehaviorDoDishes`. Then, the python script will automatically create
+`BehaviorClass::DoDishes` in CLAD, and update the container to create this behavior automatically. If you add
+a new instance file called `doDishesAfterDinner.json` and inside declared it to have a behavior ID
+`"DoDishesAfterDinner"`, then the python script would also create `BehaviorID::DoDishesAfterDinner`
+automatically.
+
+The scripts also have some checks to ensure that the above conventions are matched and that json files match
+known behavior classes.

@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <vector>
 
 namespace Anki {
 
@@ -59,7 +60,8 @@ public:
   const Json::Value & GetTextToSpeechConfig() const { return _tts_config; }
   const Json::Value & GetWebServerAnimConfig() const { return _ws_config; }
   Animation* GetCannedAnimation(const std::string& name);
-  
+  std::vector<std::string> GetAnimationNames();
+
 private:
   void NotifyAnimAdded(const std::string& animName, uint32_t animLength);
 

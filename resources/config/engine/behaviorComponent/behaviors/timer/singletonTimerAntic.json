@@ -1,0 +1,77 @@
+{
+  "behaviorClass" : "ProceduralClock",
+  "behaviorID" : "SingletonTimerAntic",
+
+  "getInAnimTrigger" : "TimerSetGetIn",
+  "getOutAnimTrigger" : "TimerSetGetOut",
+  "displayClockFor_s" : 3,
+  "shouldTurnToFace"  : true,
+
+  "clockTemplate" : [
+    {
+      "quadrantName": "digit_one",
+      "x": 15,
+      "y": 30,
+      "width": 29,
+      "height": 41
+    },
+    {
+      "quadrantName": "digit_two",
+      "x": 55,
+      "y": 30,
+      "width": 29,
+      "height": 41
+    },
+    {
+      "quadrantName": "colon",
+      "x": 90,
+      "y": 30,
+      "width": 5,
+      "height": 41
+    },
+    {
+      "quadrantName": "digit_three",
+      "x":103,
+      "y": 30,
+      "width": 29,
+      "height": 41
+    },
+    {
+      "quadrantName": "digit_four",
+      "x": 143,
+      "y": 30,
+      "width": 29,
+      "height": 41
+    }
+  ],
+  // allows template elements which have a static image to be specified once
+  "staticElements":
+  {
+    "colon": "colon"
+  },
+  // allows arbitrary quadrant names to be assigned for each numeral to be
+  // displayed in
+  "timerElementsMap":
+  {
+    "DigitOne"   : "digit_one",
+    "DigitTwo"   : "digit_two",
+    "DigitThree" : "digit_three",
+    "DigitFour"  : "digit_four"
+  },
+
+  "digitImageMap": [
+    "00",
+    "01",
+    "02",
+    "03",
+    "04",
+    "05",
+    "06",
+    "07",
+    "08",
+    "09"
+  ]
+
+
+
+}

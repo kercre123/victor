@@ -25,6 +25,14 @@
       "user_intent": "status_feeling"
     },
     {
+      "cloud_intent" : "intent_clock_settimer",
+      "user_intent"  : "set_timer",
+      "cloud_substitutions": {
+        "timer-duration.amount": "time_s"
+      },
+      "cloud_numerics": ["timer-duration.amount"]
+    },
+    {
       "cloud_intent": "intent_system_charger",
       "user_intent": "system_charger"
     },
@@ -35,8 +43,20 @@
     {
       "cloud_intent": "intent_system_wake",
       "user_intent": "system_wake"
+    },
+    {
+      "cloud_intent": "intent_play_specific",
+      "user_intent": "play_specific"
+    },
+    {
+      "user_intent": "meet_victor",
+      "cloud_intent": "intent_names_username",
+      "app_intent": "intent_meet_victor",
+      "app_substitutions": {
+        "param": "username"
+      }
     }
   ],
 
-  "unmatched_intent": "unmatched"
+  "unmatched_intent": "unmatched_intent"
 }

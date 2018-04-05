@@ -14,8 +14,8 @@ namespace Multiplexer {
 
 message PostAudioEvent
 {
-  Anki::AudioMetaData::GameEvent::GenericEvent  audioEvent,
   Anki::AudioMetaData::GameObjectType           gameObject,
+  Anki::AudioMetaData::GameEvent::GenericEvent  audioEvent,
   uint_16                                       callbackId = 0  // Send all callbacks if this is NOT == 0
 }
 
@@ -32,16 +32,16 @@ message PostAudioGameState
 
 message PostAudioSwitchState
 {
+  Anki::AudioMetaData::GameObjectType                gameObject,
   Anki::AudioMetaData::SwitchState::SwitchGroupType  switchStateGroup,
   Anki::AudioMetaData::SwitchState::GenericSwitch    switchStateValue,
-  Anki::AudioMetaData::GameObjectType                gameObject,
 }
 
 message PostAudioParameter
 {
+  Anki::AudioMetaData::GameObjectType               gameObject,
   Anki::AudioMetaData::GameParameter::ParameterType parameter,
   float_32                                          parameterValue      = 0.0,
-  Anki::AudioMetaData::GameObjectType               gameObject,
   int_32                                            timeInMilliSeconds  = 0,
   CurveType                                         curve,
 }

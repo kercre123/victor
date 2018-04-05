@@ -1,7 +1,7 @@
 {
-  "behaviorClass": "PlayAnim",
+  "behaviorClass": "AnimSequence",
   "behaviorID": "ExampleObjectMoved",
-  "animTriggers": ["OnboardingReactToCube"],
+  "animTriggers": ["AcknowledgeObject"],
   "wantsToBeActivatedCondition": {
     "conditionType" : "ObjectMoved"
   }  

@@ -59,12 +59,26 @@ static bool kUseButtonToStart             = true;
 // How long to record touch sensor data
 static u32  kDurationOfTouchToRecord_ms   = 0;
 
+// Whether or not to check for cloud cert
+static bool kCheckForCert                 = false;
+
+// Path of cloud cert
+static std::string kCertPath              = "/factory/cloud/something.pem";
+
+// The cloud cert should be at least this large
+static ssize_t     kMinCertSize_bytes     = 1000;
+
+// Path to data directory
+static std::string kDataDirPath           = "/data/data/com.anki.victor";
+
+// If data dir is larger than this size, it is deleted
+static ssize_t     kMaxDataDirSize_bytes  = 200000000;
+
 // ----------InitChecks----------
 // Whether or not to check firmware version
 static bool      kCheckFirmwareVersion = true;
 
 // Minimum battery voltage the robot should have at the start and end of playpen
-// TODO(Al): Reenable
 static f32       kMinBatteryVoltage    = 3.6;
 
 // Minimum firmare version we are looking for
@@ -112,12 +126,15 @@ static f32 kVisualDistanceToDistanceSensorObjectThresh_mm = 30;
 // distance sensor behavior json file
 static f32 kDistanceSensorReadingThresh_mm = 20;
 
+// Bias adjustment for raw distance sensor reading when comparing to visual distance
+static f32 kDistanceSensorBiasAdjustment_mm = 30;
+
 // ----------Camera Calibration----------
 // Exposure setting for playpen
-static u16 kExposure_ms                               = 3;
+static u16 kExposure_ms                               = 31;
 
 // Gain setting for playpen
-static f32 kGain                                      = 2.f;
+static f32 kGain                                      = 1.f;
 
 // Tolerance on the calculated camera focal length
 static u32 kFocalLengthTolerance                      = 30;
@@ -132,7 +149,7 @@ static f32 kRadialDistortionTolerance                 = 0.15f;
 static f32 kTangentialDistortionTolerance             = 0.05f;
 
 // Head angle at which we can see the entire calibration target
-static f32 kHeadAngleToSeeTarget                      = MAX_HEAD_ANGLE;
+static f32 kHeadAngleToSeeTarget_rad                  = DEG_TO_RAD(42.f);
 
 // How long we should wait to see the calibration target after looking up at it
 static u32 kTimeoutWaitingForTarget_ms                = 5000;
@@ -144,7 +161,7 @@ static u32 kTimeoutForComputingCalibration_ms         = 5000;
 static u32 kPlaypenCalibTarget                        = 2; // 1 = INVERTED_BOX 2 = QBERT (I don't feel like including cameraCalibrator.h here)
 
 // How big the calibration target's markers are
-static f32 kCalibMarkerSize_mm                        = 15;
+static f32 kCalibMarkerSize_mm                        = 14;
 
 // How big the calibration target's entire marker faces are
 static f32 kCalibMarkerCubeSize_mm                    = 20;
@@ -164,7 +181,7 @@ static f32 kDistanceToTriggerBackCliffs_mm  = 80;
 static f32 kDistanceToDriveOverCliff_mm     = 50;
 
 // Speed at which to drive forwards towards cliff
-static f32 kCliffSpeed_mmps                 = 80;
+static f32 kCliffSpeed_mmps                 = 60;
 
 // Time to wait for a cliff event after getting a robot stopped event
 static f32 kTimeToWaitForCliffEvent_ms      = CLIFF_EVENT_DELAY_MS + 100;

@@ -1,6 +1,6 @@
 {
   "behaviorID" : "SleepingWakeUp",
-  "behaviorClass" : "PlayAnim",
+  "behaviorClass" : "AnimSequence",
 
   "playOnChargerWithoutBody": true,
   

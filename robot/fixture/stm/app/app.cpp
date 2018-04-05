@@ -8,26 +8,27 @@
 #include "board.h"
 #include "cmd.h"
 #include "console.h"
-#include "cube.h"
-#include "display.h"
+#include "contacts.h"
 #include "fixture.h"
 #include "flash.h"
+#include "flexflow.h"
 #include "meter.h"
 #include "nvReset.h"
 #include "portable.h"
 #include "random.h"
 #include "tests.h"
 #include "timer.h"
-#include "uart.h"
-
-u8 g_fixtureReleaseVersion = 2;
-#define BUILD_INFO "Victor"
 
 //Set this flag to modify display info - indicates a debug/test build
-#define NOT_FOR_FACTORY 1
+#include "app_build_flags.h"
+const bool g_isReleaseBuild = !NOT_FOR_FACTORY;
+
+#include "app_release_ver.h"
+u8 g_fixtureReleaseVersion = (NOT_FOR_FACTORY) ? 0 : (APP_RELEASE_VERSION);
+#define BUILD_INFO "Victor DVT3"
 
 #define APP_CMD_OPTS    ((CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN) | CMD_OPTS_DBG_PRINT_RSP_TIME)
-#define LCD_CMD_TIMEOUT 500 /*ms*/
+#define LCD_CMD_TIMEOUT 150 /*ms*/
 
 #define USE_START_BTN 0
 
@@ -42,6 +43,8 @@ u32 g_dateCode = 0;
 
 static TestFunction* m_functions = 0;
 static int m_functionCount = 0;
+static int m_last_time_ms = 0;
+static error_t m_last_error = ERROR_OK;
 
 bool ToggleContacts(void);
 static bool TryToRunTests(void);
@@ -82,72 +85,60 @@ void HelperLcdClear(void)
 }
 
 // Show the name of the fixture and version information
-void SetFixtureText(void)
+extern int HelperTempC;
+void SetFixtureText(bool reinit=0);
+void SetFixtureText(bool reinit)
 {
-  const bool fcc = false;
+  //const bool fcc = false;
   char b[50]; int bz = sizeof(b);
   static bool inited = 0;
+  if( reinit )
+    inited = 0;
   
-  DisplayClear();
   if( !inited )
     HelperLcdClear();
   
-  DisplayBigCenteredText( fixtureName() );
+  //different colors for debug builds
+  char color = 'b';
+  if( !g_isReleaseBuild )
+    color = m_last_error == ERROR_OK ? 'g' : 'r';
   
-  //reset display sizing/defaults
-  DisplayTextHeightMultiplier(1);
-  DisplayTextWidthMultiplier(1);
-  DisplayInvert(fcc); //invert the display colors for fcc build (easy to idenfity)
-  
-  //Dev builds show compile date-time across the top
-#if NOT_FOR_FACTORY
-  DisplayMoveCursor(1,2);
-  DisplayPutString("DEV-NOT FOR FACTORY!!");
-  if( !inited )
+  //for head programming fixtures, show last written ESN on the display
+  if( g_fixmode >= FIXMODE_HEAD1 && g_fixmode <= FIXMODE_HELPER1 )
+    HelperLcdSetLine(1, snformat(b,bz,"prev esn: 0x%08x", TestHeadGetPrevESN()) );
+  else if( !inited && !g_isReleaseBuild )
     HelperLcdSetLine(1, "DEV-NOT FOR FACTORY!");
-  DisplayMoveCursor(10,2);
-  DisplayPutString( (__DATE__ " " __TIME__) );
-  if( !inited )
-    HelperLcdSetLine(2, (__DATE__ " " __TIME__) );
-#else
-  //XXX: for now, show date even on 'release' builds (until we actually release something)
-  DisplayMoveCursor(1,2);
-  DisplayPutString( (__DATE__ " " __TIME__) );
-  if( !inited )
-    HelperLcdSetLine(2, (__DATE__ " " __TIME__) );
-#endif
   
-  //add verision #s and other useful info
-#ifdef FCC
-  DisplayMoveCursor(45, 2);
-  DisplayPutString("CERT/TEST ONLY");
-  if( !inited )
-    HelperLcdSetLine(7, "CERT/TEST ONLY");
-#else
-  if( g_fixmode == FIXMODE_PLAYPEN ) {
-    DisplayMoveCursor(45, 25);
-    DisplayPutString("SSID: Afix");
-    DisplayPutChar('0' + ((FIXTURE_SERIAL&63) / 10)); //param sent to cozmo in playpen / robotTest.c
-    DisplayPutChar('0' + ((FIXTURE_SERIAL&63) % 10)); //"
-    if( !inited )
-      HelperLcdSetLine(7, snformat(b,bz,"   SSID: Afix %02u", FIXTURE_SERIAL&63) ); //XXX: this is probably going away
-  }
-#endif
-  DisplayMoveCursor(55, 2);
-  DisplayPutString(BUILD_INFO);
-  DisplayMoveCursor(55, fcc ? 108 : 105 );
-  DisplayPutChar(fcc ? 'c' : 'v');
-  DisplayPutChar(NOT_FOR_FACTORY ? '-' : '0' + ((g_fixtureReleaseVersion / 100)));
-  DisplayPutChar(NOT_FOR_FACTORY ? '-' : '0' + ((g_fixtureReleaseVersion / 10) % 10));
-  DisplayPutChar(NOT_FOR_FACTORY ? '-' : '0' + (g_fixtureReleaseVersion % 10));
-  DisplayFlip();
+  //debug builds show last error code and test time (color coded)
+  if( !g_isReleaseBuild )
+    HelperLcdSetLine(2, snformat(b,bz,"DEBUG e%03i %u.%03us", m_last_error, m_last_time_ms/1000, m_last_time_ms%1000 ) );
   
+  //Dev builds show compile date-time
+  if( !inited && !g_isReleaseBuild )
+    HelperLcdSetLine(3, (__DATE__ " " __TIME__) );
+  
+  //show helper head internal temperature  
+  int tempC = HelperTempC;
+  /*tempC = tempC < -9 ? -9 : (tempC > 99 ? 99 : tempC); //bounded for 2-char display space
+  if( tempC < 0 ) { //read error
+    HelperLcdSetLine(4, snformat(b,bz,"                   -") );
+    HelperLcdSetLine(5, snformat(b,bz,"                   %u", (-1)*tempC) );
+  } else {
+    HelperLcdSetLine(4, snformat(b,bz,"                   %u", tempC/10) );
+    HelperLcdSetLine(5, snformat(b,bz,"                   %u", tempC%10) );
+  }//-*/
+  int temp_line = (g_fixmode >= FIXMODE_HEAD1 && g_fixmode <= FIXMODE_HELPER1) ? 6 : 7; //shift up for head modes (make space for os version info)
+  HelperLcdSetLine(temp_line, snformat(b,bz,"%iC", tempC) );
+  
+  //mode-specific info
+  if( !inited && (g_fixmode == FIXMODE_HEAD1 || g_fixmode == FIXMODE_HELPER1) )
+    HelperLcdSetLine(7, snformat(b,bz,"os-ver %s", cmdGetEmmcdlVersion()) );
+  
+  //show build info and version
   if( !inited )
     HelperLcdSetLine(8, snformat(b,bz,"%-15s v%03u", BUILD_INFO, g_fixtureReleaseVersion) );
   
-  //DisplayBigCenteredText( fixtureName() );
-  HelperLcdShow(0,0,'b', (char*)fixtureName());
-  
+  HelperLcdShow(0,0, color, (char*)fixtureName());
   inited = 1;
 }
 
@@ -155,9 +146,6 @@ void SetFixtureText(void)
 void SetTestCounterText(u32 current, u32 count)
 {
   char b[10]; int bz = sizeof(b);
-  DisplayClear();
-  DisplayBigCenteredText("%02d/%02d", current, count);
-  DisplayFlip();
   HelperLcdShow(1,0,'b', snformat(b,bz,"%02d/%02d", current, count) );
 }
 
@@ -165,22 +153,13 @@ void SetErrorText(u16 error)
 {
   char b[10]; int bz = sizeof(b);
   Board::ledOn(Board::LED_RED);  // Red
-  
-  DisplayClear();
-  DisplayInvert(1);  
-  DisplayBigCenteredText("%3i", error % 1000);
-  DisplayFlip();
   HelperLcdShow(1,1,'r', snformat(b,bz,"%03i", error % 1000) );
-  
   Timer::wait(200000);      // So nobody misses the error
 }
 
 void SetOKText(void)
 {
   Board::ledOn(Board::LED_GREEN);  // Green
-  DisplayClear();
-  DisplayBigCenteredText("OK");
-  DisplayFlip();
   HelperLcdShow(1,1,'g', "OK");
 }
 
@@ -188,8 +167,12 @@ void SetOKText(void)
 void WaitForDeviceOff(bool error, int debounce_ms = 500);
 void WaitForDeviceOff(bool error, int debounce_ms)
 {
-  Board::disableVEXT();
-  Board::disableVBAT();
+  Board::powerOff(PWR_VEXT);
+  Board::powerOff(PWR_VBAT);
+  Board::powerOff(PWR_CUBEBAT,100);
+  Board::powerOff(PWR_DUTPROG);
+  Board::powerOff(PWR_DUTVDD);
+  Board::powerOff(PWR_UAMP);
   
   u32 debounce = 0;
   u8 buz = 0, annoy = 0;
@@ -214,7 +197,6 @@ void WaitForDeviceOff(bool error, int debounce_ms)
       debounce = 0;
     
     ConsoleUpdate();  // No need to freeze up the console while waiting
-    DisplayUpdate();  // While we wait, let screen saver kick in
     
     if( g_forceStart ) { //force=1 exits this infuriating loop
       g_forceStart = 0;
@@ -229,18 +211,25 @@ void WaitForDeviceOff(bool error, int debounce_ms)
   SetFixtureText();
 }
 
+static void printFixtureInfo() {
+  ConsolePrintf("fixture,hw,%i,%s,serial,%i,%04x\n", Board::revision(), Board::revString(), FIXTURE_SERIAL, FIXTURE_SERIAL);
+  ConsolePrintf("fixture,build,%s,%s %s\n", BUILD_INFO, __DATE__, __TIME__);
+  ConsolePrintf("fixture,fw,%03d,%s,mode,%i,%s\n", g_fixtureReleaseVersion, (NOT_FOR_FACTORY > 0 ? "debug" : "release"), g_fixmode, fixtureName() );
+}
+
 // Walk through tests one by one - logging to the PC and to the Device flash
 int g_stepNumber;
 static void RunTests()
 {
+  Board::ledOn(Board::LED_YLW); //test in-progress
+  
   //char b[10]; int bz = sizeof(b);
-  cmdSend(CMD_IO_HELPER, "logstart [args]", CMD_DEFAULT_TIMEOUT, APP_CMD_OPTS );
+  cmdSend(CMD_IO_HELPER, "logstart", CMD_DEFAULT_TIMEOUT, APP_CMD_OPTS );
   
   ConsolePrintf("[TEST:START]\n");
-  ConsolePrintf("fixtureSerial,%i\n", FIXTURE_SERIAL);
-  ConsolePrintf("fixtureVersion,%i\n", FIXTURE_VERSION);
-  ConsolePrintf("fixtureRev,%s,v%d,%s\n", Board::revString(), g_fixtureReleaseVersion, NOT_FOR_FACTORY > 0 ? "debug" : "release");
+  printFixtureInfo();
   
+  uint32_t Tstart = Timer::get();
   error_t error = ERROR_OK;
   try {
     for (g_stepNumber = 0; g_stepNumber < m_functionCount; g_stepNumber++) {      
@@ -260,8 +249,12 @@ static void RunTests()
     ConsolePrintf("[CLEANUP-ERROR:%03i]\n", e);
   }
   
+  m_last_error = error; //save the error code
+  m_last_time_ms = Timer::elapsedUs(Tstart) / 1000; //Note: may be less than actual time, if test isn't using the Timer (requires polling for accuracy)
   ConsolePrintf("[TEST:END]\n", error);
-  cmdSend(CMD_IO_HELPER, "logstop [args]", CMD_DEFAULT_TIMEOUT, APP_CMD_OPTS );
+  cmdSend(CMD_IO_HELPER, "logstop", CMD_DEFAULT_TIMEOUT, APP_CMD_OPTS );
+  
+  Board::ledOff(Board::LED_YLW); //test ended
   
   if (error != ERROR_OK)
     SetErrorText(error); //turns on RED led
@@ -302,14 +295,70 @@ static bool TryToRunTests(void)
   return TRUE;
 }
 
+inline void dbgBtnHandler(void)
+{
+  //monitor unused buttons
+  int x = USE_START_BTN > 0 ? Board::BTN_2 : Board::BTN_1; //skip start btn if used for testing
+  for( ; x <= Board::BTN_NUM; x++)
+  {
+    int edge = Board::btnEdgeDetect((Board::btn_e)x, 1000, 50);
+    if( edge != 0 )
+      ConsolePrintf("btn %u %s\n", x, edge > 0 ? "pressed" : "released");
+    
+    //XXX: debug backback test. Either kill it, or find a good home (not here)
+    if( g_fixmode == FIXMODE_BACKPACK1 && edge > 0 && x == Board::BTN_4 )
+      g_forceStart = 1;
+    
+    //XXX: hack to manually start head programming
+    if( (g_fixmode >= FIXMODE_HEAD1 && g_fixmode <= FIXMODE_HELPER1) && edge > 0 && x == Board::BTN_4 )
+      g_forceStart = 1;
+    
+    //XXX: run debug tests
+    if( g_fixmode == FIXMODE_DEBUG && edge > 0 && x == Board::BTN_4 )
+      g_forceStart = 1;
+    
+    /*/DEBUG: the ol' btn toggles an LED trick
+    if( edge > 0 ) { 
+      switch( (Board::btn_e)x ) {
+        case Board::BTN_1:  Board::ledToggle(Board::LED_GREEN); break;
+        case Board::BTN_2:  Board::ledToggle(Board::LED_YLW); break;
+        case Board::BTN_3:  Board::ledToggle(Board::LED_RED); break;
+        case Board::BTN_4:
+          for(int b = 0; b < (int)Board::LED_NUM; b++)
+            Board::ledOff((Board::led_e)b);
+          break;
+      }
+    }
+    //-*/
+  }
+}
+
+static uint32_t TtempUpdate = 0;
+int HelperTempC = INT_MIN;
+void helper_temp_manage(bool force_update)
+{
+  static bool last_update_successful = 1;
+  int update_interval = last_update_successful ? 10*1000*1000 : 60*1000*1000; //throttle down for debug if not connected to helper head
+  bool update = force_update || Timer::elapsedUs(TtempUpdate) > update_interval;
+  bool changed = 0;
+  
+  if( update ) {
+    int tempC = cmdGetHelperTempC(); //read new temp
+    last_update_successful = tempC >= 0;
+    changed = tempC != HelperTempC;
+    HelperTempC = tempC; //still process failures to display error code
+    TtempUpdate = Timer::get();
+  }
+  
+  if( changed )
+    SetFixtureText();
+}
+
 // Repeatedly scan for a device, then run through the tests when it appears
 static void MainExecution()
 {
   m_functions = fixtureGetTests();
   m_functionCount = fixtureGetTestCount();
-  
-  Board::ledOff(Board::LED_RED);
-  Board::ledOff(Board::LED_GREEN);
   
   ConsoleUpdate();
   u32 startTime = Timer::get();
@@ -343,34 +392,31 @@ static void MainExecution()
     }
     
     //overide detect mechanism and start the test
-    if( g_forceStart ) {
-      start = 1;
-      Tstart = 0;
-      Board::btnEdgeDetect(Board::BTN_1, -1, -1); //reset state machine
-    }
+    if( g_forceStart )
+      g_forceStart = 0, start = 1;
+    
+    //reset button state & timing
+    if( start )
+      Tstart = 0, Board::btnEdgeDetect(Board::BTN_1, -1, -1); //reset state machine
   
   #else
     //legacy DUT connect starts the test
     if( isPresent || g_forceStart )
-      start = 1;
+      g_forceStart = 0, start = 1;
   
   #endif
   
   if( start ) {
-    Board::ledOff(Board::LED_RED);
-    Board::ledOff(Board::LED_GREEN);
     SetTestCounterText(0, m_functionCount);
     TryToRunTests();
-    g_forceStart = 0;
+    Board::ledOff(Board::LED_RED);
+    Board::ledOff(Board::LED_GREEN);
+    Board::ledOff(Board::LED_YLW);
   }
+  helper_temp_manage(start); //force immediate temp read after test completion
   
-  //Debug: monitor unused buttons
-  int x = USE_START_BTN > 0 ? Board::BTN_2 : Board::BTN_1; //skip start btn if used for testing
-  for( ; x < Board::BTN_1+Board::BTN_NUM; x++) {
-    int edge = Board::btnEdgeDetect((Board::btn_e)x, 1000, 50);
-    if( edge != 0 )
-      ConsolePrintf("btn %u %s\n", x, edge > 0 ? "pressed" : "released");
-  }//-*/
+  //DEBUG
+  dbgBtnHandler();
 }
 
 // Fetch flash parameters - done once on boot up
@@ -399,7 +445,6 @@ void MainErrorLoop(void)
       Board::ledToggle(Board::LED_RED);
     }
     ConsoleUpdate();  // Keep the comm chanel open so we can bootload out of this corner
-    DisplayUpdate();  // While we wait, let screen saver kick in
   }
 }
 
@@ -412,7 +457,7 @@ int main(void)
   g_app_reset.valid = sizeof(g_app_reset) == nvResetGet( (u8*)&g_app_reset, sizeof(g_app_reset) );
   
   Timer::init();
-  InitUART();
+  FLEXFLOW::init();
   FetchParams(); //g_flashParams = flash backup (saved via 'setmode' console cmd)
   InitConsole();
   InitRandom();
@@ -420,27 +465,21 @@ int main(void)
   
   //Try to restore saved mode
   g_fixmode = FIXMODE_NONE;
-  if ( g_flashParams.fixtureTypeOverride > FIXMODE_NONE && g_flashParams.fixtureTypeOverride < g_num_fixmodes )
-    g_fixmode = g_flashParams.fixtureTypeOverride;
+  if ( g_flashParams.fixtureTypeOverride > FIXMODE_NONE && g_flashParams.fixtureTypeOverride < g_num_fixmodes ) {
+    if( g_fixmode_info[g_fixmode].name != NULL ) { //Prevent invalid modes
+      g_fixmode = g_flashParams.fixtureTypeOverride;
+    }
+  }
   
   //TODO: ^^move board init/rev stuff into fixture init
   fixtureInit();
-  InitDisplay();
   Meter::init();
 
   Board::ledOn(Board::LED_RED);
   
-  ConsolePrintf("\n----- Victor Test Fixture: %s v%d -----\n", BUILD_INFO, ((NOT_FOR_FACTORY > 0) ? 0 : g_fixtureReleaseVersion) );
-  ConsolePrintf("Build date-time: %s %s\n", __DATE__, __TIME__);
-  ConsolePrintf("Serial: %d (0x%04x)\n", FIXTURE_SERIAL, FIXTURE_SERIAL);
-  ConsolePrintf("ConsoleMode=%u\n", g_app_reset.valid && g_app_reset.console.isInConsoleMode );
-  ConsolePrintf("Fixure Rev: %s\n", Board::revString() );
-  ConsolePrintf("Mode: %s (%i)\n", fixtureName(), g_fixmode );
-  
-  //DEBUG:
-  SystemCoreClockUpdate();
-  ConsolePrintf("SystemCoreClock: %uHz (%uMHz)\n", SystemCoreClock, SystemCoreClock/1000000);
-  
+  ConsolePrintf("\n----- Victor Test Fixture: -----\n");
+  printFixtureInfo();
+  helper_temp_manage(1);
   SetFixtureText();
   
   //DEBUG: runtime validation of the fixmode array
@@ -448,22 +487,22 @@ int main(void)
     ConsolePrintf("\nFixmode Info failed validation:\n");
     fixtureValidateFixmodeInfo(true); //print the info array to console, hilighting invalid entries
     ConsolePrintf("\n\n");
-    MainErrorLoop(); //process uart/display so we can bootload back to safetey
+    MainErrorLoop(); //process console so we can bootload back to safetey
   }
   
-  /*/DEBUG: show all lcd screens
-  MainExecution();
-  void dbgCycleDisplayScreens(void);
-  dbgCycleDisplayScreens();
-  //-*/
-  
-  //DEBUG:
-  //cmdDbgParseTestbench();
-  
   //lockout on bad hw
-  if( Board::revision() <= BOARD_REV_UNKNOWN ) {
+  if( Board::revision() <= BOARD_REV_INVALID ) {
     SetErrorText( ERROR_INCOMPATIBLE_FIX_REV );
-    MainErrorLoop(); //process uart/display so we can bootload back to safetey
+    MainErrorLoop(); //process console so we can bootload back to safetey
+  }
+  
+  //validate cube bin
+  int cubeErr = ERROR_OK;
+  try { cubebootSignature(0); /*supress dbg print*/ } catch(int e) { cubeErr=e; }
+  if( cubeErr != ERROR_OK ) {
+    try { cubebootSignature(1); /*print error detail*/ } catch(int e) {}
+    SetErrorText( cubeErr );
+    MainErrorLoop(); //process console so we can bootload back to safetey
   }
   
   //prevent test from running if device is connected at POR (require re-insert)
@@ -474,127 +513,13 @@ int main(void)
   WaitForDeviceOff(0);
   #endif
   
+  Board::ledOff(Board::LED_RED);
+  Board::ledOff(Board::LED_GREEN);
+  Board::ledOff(Board::LED_YLW);
+  
   while (1)
   {  
     MainExecution();
-    DisplayUpdate();
   }
 }
 
-//-----------------------------------------------------------------------------
-//                  Debug
-//-----------------------------------------------------------------------------
-/*
-void dbgSetFixtureText(bool fcc, bool not_for_factory);
-void dbgSetTestCounterText(u32 current, u32 count);
-void dbgSetErrorText(u16 error);
-void dbgSetOKText(void);
-
-void dbgDelayMs(int ms) {
-  uint32_t start = Timer::get();
-  while( Timer::elapsedUs(start) < ms*1000 )
-    ConsoleUpdate();
-}
-
-void dbgCycleDisplayScreens(void)
-{
-  while(1)
-  {
-    dbgSetFixtureText(0,0); dbgDelayMs(10000);
-    dbgSetFixtureText(0,1); dbgDelayMs(10000);
-    dbgSetFixtureText(1,0); dbgDelayMs(10000);
-    dbgSetFixtureText(0,1); dbgDelayMs(10000);
-    
-    const int testCount = 5;
-    for(int x=1; x<=testCount; x++) {
-      dbgSetTestCounterText(x,testCount);
-      dbgDelayMs(2000);
-    }
-    
-    dbgSetErrorText( Timer::get()&0x1FF ); //random?
-    dbgDelayMs(10000);
-    
-    dbgSetOKText();
-    dbgDelayMs(10000);
-  }
-}
-
-void dbgSetFixtureText(bool fcc, bool not_for_factory)
-{
-  const int dummyReleaseVers = 47;
-  
-  DisplayClear();
-  DisplayBigCenteredText( fixtureName() );
-  
-  //reset display sizing/defaults
-  DisplayTextHeightMultiplier(1);
-  DisplayTextWidthMultiplier(1);
-  DisplayInvert(fcc); //invert the display colors for fcc build (easy to idenfity)
-  
-  //Dev builds show compile date-time across the top
-  if(not_for_factory) {
-    DisplayMoveCursor(1,2);
-    DisplayPutString("DEV-NOT FOR FACTORY!!");
-    DisplayMoveCursor(10,2);
-    DisplayPutString(__DATE__);
-    DisplayPutString(" ");
-    DisplayPutString(__TIME__);
-  }
-  else {
-    //during development, always show build date/time
-    //DisplayMoveCursor(1,2);
-    //DisplayPutString(__DATE__);
-    //DisplayPutString(" ");
-    //DisplayPutString(__TIME__);
-  }
-  
-  //add verision #s and other useful info
-  if(fcc) {
-    DisplayMoveCursor(45, 2);
-    DisplayPutString("CERT/TEST ONLY");
-  } else {
-    if( g_fixmode == FIXMODE_PLAYPEN ) {
-      DisplayMoveCursor(45, 25);
-      DisplayPutString("SSID: Afix");
-      DisplayPutChar('0' + ((FIXTURE_SERIAL&63) / 10)); //param sent to cozmo in playpen / robotTest.c
-      DisplayPutChar('0' + ((FIXTURE_SERIAL&63) % 10)); //"
-    }
-  }
-  
-  DisplayMoveCursor(55, 2);
-  DisplayPutString(BUILD_INFO);
-  DisplayMoveCursor(55, fcc ? 108 : 105 );
-  DisplayPutChar(fcc ? 'c' : 'v');
-  DisplayPutChar(not_for_factory ? '-' : '0' + ((dummyReleaseVers / 100)));
-  DisplayPutChar(not_for_factory ? '-' : '0' + ((dummyReleaseVers / 10) % 10));
-  DisplayPutChar(not_for_factory ? '-' : '0' + (dummyReleaseVers % 10));
-  DisplayFlip();
-}
-
-void dbgSetTestCounterText(u32 current, u32 count)
-{
-  DisplayClear();
-  DisplayBigCenteredText("%02d/%02d", current, count);
-  DisplayFlip();
-}
-
-void dbgSetErrorText(u16 error)
-{
-  //Board::ledOn(Board::LED_RED);  // Red
-  
-  DisplayClear();
-  DisplayInvert(1);  
-  DisplayBigCenteredText("%3i", error % 1000);
-  DisplayFlip();
-  
-  //Timer::wait(200000);      // So nobody misses the error
-}
-
-void dbgSetOKText(void)
-{
-  //Board::ledOn(Board::LED_GREEN);  // Green
-  DisplayClear();
-  DisplayBigCenteredText("OK");
-  DisplayFlip();
-}
-//-*/

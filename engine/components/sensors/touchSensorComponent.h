@@ -14,16 +14,46 @@
 #define __Engine_Components_TouchSensorComponent_H__
 
 #include "engine/components/sensors/iSensorComponent.h"
-#include "engine/components/sensors/touchSensorHelpers.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "util/entityComponent/entity.h"
-#include "clad/types/touchGestureTypes.h"
 #include "clad/types/factoryTestTypes.h"
+
+#include "util/math/math.h"
+
+#include <deque>
 
 namespace Anki {
 namespace Cozmo {
 
 class IBehaviorPlaypen;
+  
+
+class BoxFilter
+{
+public:
+  BoxFilter(int windowSize)
+  : _buffer()
+  , _winSize(windowSize)
+  , _sum(0)
+  {
+  }
+  
+  int ApplyFilter(int input)
+  {
+    _buffer.push_back(input);
+    _sum += _buffer.back();
+    if(_buffer.size()==(_winSize+1)) {
+      _sum -= _buffer.front();
+      _buffer.pop_front();
+    }
+    return int( float(_sum)/_buffer.size() );
+  }
+  
+private:
+  std::deque<int> _buffer;
+  int _winSize;
+  int _sum;
+};
 
 class TouchSensorComponent : public ISensorComponent, public IDependencyManagedComponent<RobotComponentID>
 {
@@ -49,26 +79,33 @@ public:
   // end IDependencyManagedComponent functions
   //////
   
+  bool GetIsPressed() const;
+  
+  float GetTouchPressTime() const;
+  
 protected:
   virtual void UpdateInternal(const RobotState& msg) override;
   
   virtual std::string GetLogHeader() override;
   virtual std::string GetLogRow() override;
+  
+  // returns true if there is a state change between pressed/released
+  // additionally updates the state of press/release internally which
+  // can be queried with GetIsPressed()
+  bool ProcessWithDynamicThreshold(const int baseline, const int input);
+  
+  int GetDetectLevelOffset() const;
+  
+  int GetUndetectLevelOffset() const;
 
 public:
-  
-  TouchGesture GetLatestTouchGesture() const {
-    return _touchGesture;
-  }
 
-  u32 GetLatestRawTouchValue() const { return _lastRawTouchValue; }
-
-  // returns true if the sensor is currently being touched, false otherwise
-  bool IsTouched() const;
-  
-  bool IsCalibrated() const {
-    return _baselineCalib.IsCalibrated();
+  u16 GetLatestRawTouchValue() const
+  {
+    return _lastRawTouchValue;
   }
+  
+  bool IsCalibrated() const;
   
 private:
 
@@ -82,21 +119,34 @@ private:
   // Pointer to a struct that should be populated with touch sensor data when recording
   TouchSensorValues* _dataToRecord = nullptr;
 
-  DebounceHelper _debouncer;
-
-  TouchGestureClassifier _gestureClassifier;
-
-  TouchBaselineCalibrator _baselineCalib;
-
-  float _touchDetectStdevFactor;
-
-  // the latest computed result of touch gesture
-  TouchGesture _touchGesture;
-
-  u16 _lastRawTouchValue = 0;
+  u16 _lastRawTouchValue;
 
   // number of consecutive cycles seeing "no contact" reading
   size_t _noContactCounter;
+  
+  // calibration value from IIR filtering "no contact" signals
+  float _baselineTouch;
+  
+  BoxFilter _boxFilterTouch;
+  
+  // current offset of the detect-level relative to baseline
+  int _detectOffsetFromBase;
+  
+  // current offset of the undetect-level relative to baseline
+  int _undetectOffsetFromBase;
+  
+  bool _isPressed;
+  
+  size_t _numConsecCalibReadings;
+  
+  // counters to debounce the monotonic increase/decrease
+  // of the detect and undetect thresholds
+  // otherwise noise would constantly be shifting the thresholds
+  int _countAboveDetectLevel;
+  int _countBelowUndetectLevel;
+  
+  // time in seconds of the last touch press
+  float _touchPressTime;
 };
 
 

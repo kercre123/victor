@@ -59,8 +59,9 @@ OSState::OSState()
   
   // Set simulated attributes
   _serialNumString = "12345";
-  _osBuildNum = 12345;
+  _osBuildVersion = "12345";
   _ipAddress = "127.0.0.1";
+  _ssid = "AnkiNetwork";
 }
 
 OSState::~OSState()
@@ -87,25 +88,25 @@ void OSState::SetUpdatePeriod(uint32_t milliseconds)
   _updatePeriod_ms = milliseconds;
 }
 
+bool OSState::IsCPUThrottling() const
+{
+  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.IsCPUThrottling.ZeroUpdate");
+  return false;
+}
+
 uint32_t OSState::GetCPUFreq_kHz() const
 {
   DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetCPUFreq_kHz.ZeroUpdate");
   return kNominalCPUFreq_kHz;
 }
 
-bool OSState::IsThermalThrottling() const
+uint32_t OSState::GetTemperature_C() const
 {
-  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.IsThermalThrottling.ZeroUpdate");
-  return false;
-}
-
-uint32_t OSState::GetTemperature_mC() const
-{
-  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetTemperature_mC.ZeroUpdate");
+  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetTemperature_C.ZeroUpdate");
 
   // 65C: randomly chosen temperature at which throttling does not appear to occur
   // on physical robot
-  return 65000;  
+  return 65;  
 }
   
 const std::string& OSState::GetSerialNumberAsString()
@@ -113,45 +114,34 @@ const std::string& OSState::GetSerialNumberAsString()
   return _serialNumString;
 }
   
-u32 OSState::GetOSBuildNumber()
+const std::string& OSState::GetOSBuildVersion()
 {
-  return _osBuildNum;
+  return _osBuildVersion;
 }
 
-std::string OSState::GetIPAddressInternal()
+std::string OSState::GetMACAddress() const
+{
+  return "00:00:00:00:00:00";
+}
+
+const std::string& OSState::GetIPAddress(bool update)
 {
   return _ipAddress;
 }
 
-// Executes the provided command and returns the output as a string
-std::string OSState::ExecCommand(const char* cmd) 
+const std::string& OSState::GetSSID(bool update)
 {
-  try
-  {
-    std::array<char, 128> buffer;
-    std::string result;
-    std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
-    if (!pipe)
-    {
-      PRINT_NAMED_WARNING("EngineMessages.ExecCommand.FailedToOpenPipe", "");
-      return "";
-    }
+  return _ssid;
+}
 
-    while (!feof(pipe.get()))
-    {
-      if (fgets(buffer.data(), 128, pipe.get()) != nullptr)
-      {
-        result += buffer.data();
-      }
-    }
+std::string OSState::GetRobotName() const
+{
+  return "Vector_0000";
+}
 
-    // Remove the last character as it is a newline
-    return result.substr(0,result.size()-1);
-  }
-  catch(...)
-  {
-    return "";
-  }
+bool OSState::IsInRecoveryMode()
+{
+  return false;
 }
 
 } // namespace Cozmo

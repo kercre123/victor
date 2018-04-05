@@ -102,18 +102,18 @@ namespace {
 
   const BehaviorReactToSound::DirectionResponse kSoundResponses_AsleepOnCharger[] =
   {
-    /*  0 */ { AnimationTrigger::ReactToSoundOnChargerAsleepFront,      kFacingAhead },
-    /*  1 */ { AnimationTrigger::ReactToSoundOnChargerAsleepFront,      kFacingAhead },
-    /*  2 */ { AnimationTrigger::ReactToSoundOnChargerAsleepRight,      kFacingRight },
-    /*  3 */ { AnimationTrigger::ReactToSoundOnChargerAsleepRight,      kFacingRight },
-    /*  4 */ { AnimationTrigger::ReactToSoundOnChargerAsleepRight,      kFacingRight },
-    /*  5 */ { AnimationTrigger::ReactToSoundOnChargerAsleepBehind,     kFacingBehind },
-    /*  6 */ { AnimationTrigger::ReactToSoundOnChargerAsleepBehind,     kFacingBehind },
-    /*  7 */ { AnimationTrigger::ReactToSoundOnChargerAsleepBehind,     kFacingBehind },
-    /*  8 */ { AnimationTrigger::ReactToSoundOnChargerAsleepLeft,       kFacingLeft },
-    /*  9 */ { AnimationTrigger::ReactToSoundOnChargerAsleepLeft,       kFacingLeft },
-    /* 10 */ { AnimationTrigger::ReactToSoundOnChargerAsleepLeft,       kFacingLeft },
-    /* 11 */ { AnimationTrigger::ReactToSoundOnChargerAsleepFront,      kFacingAhead },
+    /*  0 */ { AnimationTrigger::ReactToSoundOnChargerAsleepFront,          kFacingAhead },
+    /*  1 */ { AnimationTrigger::ReactToSoundOnChargerAsleepFront,          kFacingAhead },
+    /*  2 */ { AnimationTrigger::ReactToSoundOnChargerAsleepRight,          kFacingRight },
+    /*  3 */ { AnimationTrigger::ReactToSoundOnChargerAsleepRight,          kFacingRight },
+    /*  4 */ { AnimationTrigger::ReactToSoundOnChargerAsleepRight,          kFacingRight },
+    /*  5 */ { AnimationTrigger::ReactToSoundOnChargerAsleepBehind,         kFacingBehind },
+    /*  6 */ { AnimationTrigger::ReactToSoundOnChargerAsleepBehind,         kFacingBehind },
+    /*  7 */ { AnimationTrigger::ReactToSoundOnChargerAsleepBehind,         kFacingBehind },
+    /*  8 */ { AnimationTrigger::ReactToSoundOnChargerAsleepLeft,           kFacingLeft },
+    /*  9 */ { AnimationTrigger::ReactToSoundOnChargerAsleepLeft,           kFacingLeft },
+    /* 10 */ { AnimationTrigger::ReactToSoundOnChargerAsleepLeft,           kFacingLeft },
+    /* 11 */ { AnimationTrigger::ReactToSoundOnChargerAsleepFront,          kFacingAhead },
   };
 
   static_assert( sizeof(kSoundResponses_AsleepOnCharger)/sizeof(BehaviorReactToSound::DirectionResponse) == MicDirectionHistory::kNumDirections,
@@ -121,18 +121,18 @@ namespace {
 
   const BehaviorReactToSound::DirectionResponse kSoundResponses_AwakeOnCharger[] =
   {
-    /*  0 */ { AnimationTrigger::ReactToSoundOnChargerObserveFront,     kFacingAhead },
-    /*  1 */ { AnimationTrigger::ReactToSoundOnChargerObserveFront,     kFacingAhead },
-    /*  2 */ { AnimationTrigger::ReactToSoundOnChargerObserveRight,     kFacingRight },
-    /*  3 */ { AnimationTrigger::ReactToSoundOnChargerObserveRight,     kFacingRight },
-    /*  4 */ { AnimationTrigger::ReactToSoundOnChargerObserveRight,     kFacingRight },
-    /*  5 */ { AnimationTrigger::ReactToSoundOnChargerObserveBehind,    kFacingBehind },
-    /*  6 */ { AnimationTrigger::ReactToSoundOnChargerObserveBehind,    kFacingBehind },
-    /*  7 */ { AnimationTrigger::ReactToSoundOnChargerObserveBehind,    kFacingBehind },
-    /*  8 */ { AnimationTrigger::ReactToSoundOnChargerObserveLeft,      kFacingLeft },
-    /*  9 */ { AnimationTrigger::ReactToSoundOnChargerObserveLeft,      kFacingLeft },
-    /* 10 */ { AnimationTrigger::ReactToSoundOnChargerObserveLeft,      kFacingLeft },
-    /* 11 */ { AnimationTrigger::ReactToSoundOnChargerObserveFront,     kFacingAhead },
+    /*  0 */ { AnimationTrigger::ReactToSoundOnChargerObserveFront,         kFacingAhead },
+    /*  1 */ { AnimationTrigger::ReactToSoundOnChargerObserveFront,         kFacingAhead },
+    /*  2 */ { AnimationTrigger::ReactToSoundOnChargerObserveRight,         kFacingRight },
+    /*  3 */ { AnimationTrigger::ReactToSoundOnChargerObserveRight,         kFacingRight },
+    /*  4 */ { AnimationTrigger::ReactToSoundOnChargerObserveRight,         kFacingRight },
+    /*  5 */ { AnimationTrigger::ReactToSoundOnChargerObserveBehind,        kFacingBehind },
+    /*  6 */ { AnimationTrigger::ReactToSoundOnChargerObserveBehind,        kFacingBehind },
+    /*  7 */ { AnimationTrigger::ReactToSoundOnChargerObserveBehind,        kFacingBehind },
+    /*  8 */ { AnimationTrigger::ReactToSoundOnChargerObserveLeft,          kFacingLeft },
+    /*  9 */ { AnimationTrigger::ReactToSoundOnChargerObserveLeft,          kFacingLeft },
+    /* 10 */ { AnimationTrigger::ReactToSoundOnChargerObserveLeft,          kFacingLeft },
+    /* 11 */ { AnimationTrigger::ReactToSoundOnChargerObserveFront,         kFacingAhead },
   };
 
   static_assert( sizeof(kSoundResponses_AwakeOnCharger)/sizeof(BehaviorReactToSound::DirectionResponse) == MicDirectionHistory::kNumDirections,
@@ -140,18 +140,18 @@ namespace {
 
   const BehaviorReactToSound::DirectionResponse kSoundResponses_AsleepOffCharger[] =
   {
-    /*  0 */ { AnimationTrigger::ReactToSoundOffChargerAsleepFront,     kFacingAhead },
-    /*  1 */ { AnimationTrigger::ReactToSoundOffChargerAsleepFront,     kFacingAhead },
-    /*  2 */ { AnimationTrigger::ReactToSoundOffChargerAsleepRight,     kFacingRight },
-    /*  3 */ { AnimationTrigger::ReactToSoundOffChargerAsleepRight,     kFacingRight },
-    /*  4 */ { AnimationTrigger::ReactToSoundOffChargerAsleepRight,     kFacingRight },
-    /*  5 */ { AnimationTrigger::ReactToSoundOffChargerAsleepBehind,    kFacingBehind },
-    /*  6 */ { AnimationTrigger::ReactToSoundOffChargerAsleepBehind,    kFacingBehind },
-    /*  7 */ { AnimationTrigger::ReactToSoundOffChargerAsleepBehind,    kFacingBehind },
-    /*  8 */ { AnimationTrigger::ReactToSoundOffChargerAsleepLeft,      kFacingLeft },
-    /*  9 */ { AnimationTrigger::ReactToSoundOffChargerAsleepLeft,      kFacingLeft },
-    /* 10 */ { AnimationTrigger::ReactToSoundOffChargerAsleepLeft,      kFacingLeft },
-    /* 11 */ { AnimationTrigger::ReactToSoundOffChargerAsleepFront,     kFacingAhead },
+    /*  0 */ { AnimationTrigger::ReactToSoundOffChargerAsleepFront,         kFacingAhead },
+    /*  1 */ { AnimationTrigger::ReactToSoundOffChargerAsleepFront,         kFacingAhead },
+    /*  2 */ { AnimationTrigger::ReactToSoundOffChargerAsleepFrontRight,    kFacingRight },
+    /*  3 */ { AnimationTrigger::ReactToSoundOffChargerAsleepRight,         kFacingRight },
+    /*  4 */ { AnimationTrigger::ReactToSoundOffChargerAsleepRight,         kFacingRight },
+    /*  5 */ { AnimationTrigger::ReactToSoundOffChargerAsleepBehindRight,   kFacingBehind },
+    /*  6 */ { AnimationTrigger::ReactToSoundOffChargerAsleepBehind,        kFacingBehind },
+    /*  7 */ { AnimationTrigger::ReactToSoundOffChargerAsleepBehindLeft,    kFacingBehind },
+    /*  8 */ { AnimationTrigger::ReactToSoundOffChargerAsleepLeft,          kFacingLeft },
+    /*  9 */ { AnimationTrigger::ReactToSoundOffChargerAsleepLeft,          kFacingLeft },
+    /* 10 */ { AnimationTrigger::ReactToSoundOffChargerAsleepFrontLeft,     kFacingLeft },
+    /* 11 */ { AnimationTrigger::ReactToSoundOffChargerAsleepFront,         kFacingAhead },
   };
 
   static_assert( sizeof(kSoundResponses_AsleepOffCharger)/sizeof(BehaviorReactToSound::DirectionResponse) == MicDirectionHistory::kNumDirections,
@@ -159,18 +159,18 @@ namespace {
 
   const BehaviorReactToSound::DirectionResponse kSoundResponses_AwakeOffCharger[] =
   {
-    /*  0 */ { AnimationTrigger::ReactToSoundOffChargerObserveFront,    kFacingAhead },
-    /*  1 */ { AnimationTrigger::ReactToSoundOffChargerObserveFront,    kFacingAhead },
-    /*  2 */ { AnimationTrigger::ReactToSoundOffChargerObserveRight,    kFacingRight },
-    /*  3 */ { AnimationTrigger::ReactToSoundOffChargerObserveRight,    kFacingRight },
-    /*  4 */ { AnimationTrigger::ReactToSoundOffChargerObserveRight,    kFacingRight },
-    /*  5 */ { AnimationTrigger::ReactToSoundOffChargerObserveBehind,   kFacingBehind },
-    /*  6 */ { AnimationTrigger::ReactToSoundOffChargerObserveBehind,   kFacingBehind },
-    /*  7 */ { AnimationTrigger::ReactToSoundOffChargerObserveBehind,   kFacingBehind },
-    /*  8 */ { AnimationTrigger::ReactToSoundOffChargerObserveLeft,     kFacingLeft },
-    /*  9 */ { AnimationTrigger::ReactToSoundOffChargerObserveLeft,     kFacingLeft },
-    /* 10 */ { AnimationTrigger::ReactToSoundOffChargerObserveLeft,     kFacingLeft },
-    /* 11 */ { AnimationTrigger::ReactToSoundOffChargerObserveFront,    kFacingAhead },
+    /*  0 */ { AnimationTrigger::ReactToSoundOffChargerObserveFront,        kFacingAhead },
+    /*  1 */ { AnimationTrigger::ReactToSoundOffChargerObserveFront,        kFacingAhead },
+    /*  2 */ { AnimationTrigger::ReactToSoundOffChargerObserveFrontRight,   kFacingRight },
+    /*  3 */ { AnimationTrigger::ReactToSoundOffChargerObserveRight,        kFacingRight },
+    /*  4 */ { AnimationTrigger::ReactToSoundOffChargerObserveRight,        kFacingRight },
+    /*  5 */ { AnimationTrigger::ReactToSoundOffChargerObserveBehindRight,  kFacingBehind },
+    /*  6 */ { AnimationTrigger::ReactToSoundOffChargerObserveBehind,       kFacingBehind },
+    /*  7 */ { AnimationTrigger::ReactToSoundOffChargerObserveBehindLeft,   kFacingBehind },
+    /*  8 */ { AnimationTrigger::ReactToSoundOffChargerObserveLeft,         kFacingLeft },
+    /*  9 */ { AnimationTrigger::ReactToSoundOffChargerObserveLeft,         kFacingLeft },
+    /* 10 */ { AnimationTrigger::ReactToSoundOffChargerObserveFrontLeft,    kFacingLeft },
+    /* 11 */ { AnimationTrigger::ReactToSoundOffChargerObserveFront,        kFacingAhead },
   };
 
   static_assert( sizeof(kSoundResponses_AwakeOffCharger)/sizeof(BehaviorReactToSound::DirectionResponse) == MicDirectionHistory::kNumDirections,

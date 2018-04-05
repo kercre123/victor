@@ -25,8 +25,8 @@ class BlockWorldFilter;
 class BehaviorFindHome : public ICozmoBehavior
 {
 protected:
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorFindHome(const Json::Value& config);
   
 public:

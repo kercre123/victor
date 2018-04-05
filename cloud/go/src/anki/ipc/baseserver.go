@@ -30,6 +30,16 @@ type baseServer struct {
 	wg       sync.WaitGroup
 }
 
+type serverConn struct {
+	Conn
+	serv *baseServer
+}
+
+func (c *serverConn) Close() error {
+	c.serv.remove(c.Conn)
+	return c.Conn.Close()
+}
+
 func newBaseServer(listen netListenerLike, connWrapper func(io.ReadWriteCloser) io.ReadWriteCloser) (Server, error) {
 	serv := &baseServer{listen, make(chan struct{}), make([]Conn, 0, 8), make(chan Conn), sync.WaitGroup{}}
 
@@ -55,7 +65,7 @@ func newBaseServer(listen netListenerLike, connWrapper func(io.ReadWriteCloser) 
 			go func() {
 				defer serv.wg.Done()
 				select {
-				case serv.newConns <- newConn:
+				case serv.newConns <- &serverConn{Conn: newConn, serv: serv}:
 				case <-serv.kill:
 				}
 			}()
@@ -75,6 +85,15 @@ func (serv *baseServer) Close() error {
 	}
 	close(serv.newConns)
 	return err
+}
+
+func (serv *baseServer) remove(c Conn) {
+	for i, ic := range serv.conns {
+		if ic == c {
+			serv.conns = append(serv.conns[:i], serv.conns[i+1:]...)
+			return
+		}
+	}
 }
 
 // NewConns returns a channel that will be passed new clients upon connection to the server,

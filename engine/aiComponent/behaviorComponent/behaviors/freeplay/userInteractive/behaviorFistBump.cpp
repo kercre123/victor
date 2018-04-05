@@ -10,8 +10,10 @@
  **/
 
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorFistBump.h"
+#include "clad/types/behaviorComponent/behaviorTimerTypes.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iFistBumpListener.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
@@ -158,6 +160,7 @@ void BehaviorFistBump::BehaviorUpdate()
           _startLookingForFaceTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
           _state = State::LookingForFace;
         } else {
+          ResetFistBumpTimer();
           _state = State::RequestInitialFistBump;
         }
       });
@@ -170,6 +173,7 @@ void BehaviorFistBump::BehaviorUpdate()
         if (_abortIfNoFaceFound) {
           _state = State::Complete;
         } else {
+          ResetFistBumpTimer();
           _state = State::RequestInitialFistBump;
         }
         break;
@@ -181,6 +185,7 @@ void BehaviorFistBump::BehaviorUpdate()
       TimeStamp_t lastObservedFaceTime = GetBEI().GetFaceWorld().GetLastObservedFace(facePose);
       if (lastObservedFaceTime > 0 && (robotInfo.GetLastMsgTimestamp() - lastObservedFaceTime < kMaxTimeInPastToHaveObservedFace_ms)) {
         DelegateIfInControl(new TurnTowardsLastFacePoseAction());
+        ResetFistBumpTimer();
         _state = State::RequestInitialFistBump;
         break;
       }
@@ -260,7 +265,6 @@ void BehaviorFistBump::BehaviorUpdate()
     }
     case State::CompleteSuccess:
     {
-      NeedActionCompleted();
       // Fall through
     }
     case State::CompleteFail:
@@ -318,6 +322,12 @@ void BehaviorFistBump::ResetTrigger(bool updateLastCompletionTime)
   for (auto &listener : _fistBumpListeners) {
     listener->ResetTrigger(updateLastCompletionTime);
   }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFistBump::ResetFistBumpTimer() const
+{
+  GetBEI().GetBehaviorTimerManager().GetTimer( BehaviorTimerTypes::FistBump ).Reset();
 }
 
 

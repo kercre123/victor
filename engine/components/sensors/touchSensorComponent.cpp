@@ -14,6 +14,7 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "util/console/consoleInterface.h"
+#include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -21,45 +22,39 @@ namespace Cozmo {
 namespace {
   const std::string kLogDirectory = "touchSensor";
 
-  // XXX(agm): arbitrarily chosen constants for Victor-G
+  // CONSTANTS
   const float kMaxTouchIntensityInvalid = 800;      
   
-  const int kMinCountNoTouchForAccumulation = 1000; // = 30 sec / 30 ms rate
-
-  // press debouncing constants
-  const int kDebounceLimitPressLow = 3;
-  const int kDebounceLimitPressHi = 4;
-
-  // gesture classification constants
-  const float kGestureMinTimeForHeld_s = 2.0f;
-  const float kGestureMaxTimeWithoutTouch_s = 3.0f;
-  const float kGestureMinTimeForSlowStroke_s = 0.48f;
-  const int kGestureMaxBufferedStrokeCount = 3;
-  const int kGestureMinNumSlowStrokes = 2;
+  const int kMinCountNoTouchForAccumulation = 1000;
   
-  // baseline calibration constants
-  // note: the fast calibration time is ~3 seconds
-  //       = (25 samples) x (4 times) x (30ms / cycle)
-  const int kBaselineNumUpdatesForFastCalib = 4;
-  const int kBaselineNumSamplesPerUpdateForFastCalib = 25;
-  // coefficients for lowpass filtering where:
-  // 0 = static unchanging output (set once)
-  // 1 = filter takes on latest input
-  const float kBaselineFilterCoeffSlow = 0.0005f;
-  const float kBaselineFilterCoeffFast = 0.2f;
-  // the maximum number of standard deviations to allow sensor readings
-  // during the baseline fast-calibration phase before restarting the phase
-  const float kBaselineRestartMaxStdevFactor = 3.5f;
+
+  const int kBaselineMinCalibReadings = 90;
   
-  // the number of standard deviations to consider sensor readings as "noise"
-  const float kTouchDetectStdevFactor = 1.5f;
-
-  // max allowable buffer standard deviation when we accumulate
-  // into the filtered standard deviation. If input stdev is too
-  // large, then assume there is touch and restart calibration
-  const float kBaselineMaxAllowableBufferStdev = 15;
-
-  const float kBaselineMaxAllowStdevFactorForLowMean = 1.5f;
+  const float kBaselineFilterCoeff = 0.05f;
+  
+  const float kBaselineInitial = 500.0f;
+  
+  const int kBoxFilterSize = 8;
+  
+  // constant size difference between detect and undetect levels
+  const int kDynamicThreshGap = 9;
+  
+  // the offset from the input reading that detect level is set to
+  const int kDynamicThreshDetectFollowOffset = 7;
+  
+  // the offset from the input reading that the undetect level is set to
+  const int kDynamicThreshUndetectFollowOffset = 7;
+  
+  // the highest reachable detect level offset from baseline
+  const int kDynamicThreshMininumUndetectOffset = 13;
+  
+  // the lowest reachable undetect level offset from baseline
+  const int kDynamicThreshMaximumDetectOffset = 50;
+  
+  // minimum number of consecutive readings that are below/above detect level
+  // before we update the thresholds dynamically
+  // note: this counters the impact of noise on the dynamic thresholds
+  const int kMinConsecCountToUpdateThresholds = 8;
   
   bool devSendTouchSensor = false;
   bool devTouchSensorPressed = false;
@@ -76,23 +71,17 @@ namespace {
 TouchSensorComponent::TouchSensorComponent() 
 : ISensorComponent(kLogDirectory)
 , IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::TouchSensor)
-, _debouncer(kDebounceLimitPressLow, 
-             kDebounceLimitPressHi)
-, _gestureClassifier(kGestureMinTimeForHeld_s,
-                     kGestureMaxTimeWithoutTouch_s,
-                     kGestureMinTimeForSlowStroke_s,
-                     kGestureMaxBufferedStrokeCount,
-                     kGestureMinNumSlowStrokes)
-, _baselineCalib(kBaselineNumUpdatesForFastCalib,
-                 kBaselineNumSamplesPerUpdateForFastCalib,
-                 kBaselineFilterCoeffSlow,
-                 kBaselineFilterCoeffFast,
-                 kBaselineRestartMaxStdevFactor,
-                 kBaselineMaxAllowableBufferStdev,
-                 kBaselineMaxAllowStdevFactorForLowMean)
-, _touchDetectStdevFactor(kTouchDetectStdevFactor)
-, _touchGesture(TouchGesture::NoTouch)
+, _lastRawTouchValue(0)
 , _noContactCounter(0)
+, _baselineTouch(kBaselineInitial)
+, _boxFilterTouch(kBoxFilterSize)
+, _detectOffsetFromBase(kDynamicThreshMininumUndetectOffset+kDynamicThreshGap)
+, _undetectOffsetFromBase(kDynamicThreshMininumUndetectOffset)
+, _isPressed(false)
+, _numConsecCalibReadings(0)
+, _countAboveDetectLevel(0)
+, _countBelowUndetectLevel(0)
+, _touchPressTime(std::numeric_limits<float>::max())
 {
 }
 
@@ -107,59 +96,59 @@ void TouchSensorComponent::UpdateInternal(const RobotState& msg)
   if(msg.backpackTouchSensorRaw > kMaxTouchIntensityInvalid) {
     return;
   }
+  
+  const auto now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   _lastRawTouchValue = msg.backpackTouchSensorRaw;
-
+  
+  int boxFiltVal = _boxFilterTouch.ApplyFilter(_lastRawTouchValue);
+  
   const bool isPickedUp = (msg.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP) != 0;
-
-  TouchGesture curGesture = _touchGesture;
-  if( !_baselineCalib.IsCalibrated() && (!devSendTouchSensor) ) {
-    // note: do not detect touch instances during fast-calibration
+  
+  if( devSendTouchSensor ) {
+    _robot->Broadcast(
+      ExternalInterface::MessageEngineToGame(
+        ExternalInterface::TouchButtonEvent(devTouchSensorPressed)));
+    devSendTouchSensor = false;
+    if(devTouchSensorPressed) {
+      _touchPressTime = now;
+    }
+  }
+  
+  if( !IsCalibrated() ) {
+    // note: do not detect touch instances during calibration
     if(!isPickedUp) {
-      _baselineCalib.UpdateCalibration(msg.backpackTouchSensorRaw);
-    }
-    curGesture = TouchGesture::NoTouch;
-  } else {
-    const auto normTouch = msg.backpackTouchSensorRaw-_baselineCalib.GetFilteredTouchMean();
-    const bool isTouched = normTouch > 
-                            (_touchDetectStdevFactor*_baselineCalib.GetFilteredTouchStdev());
-    if( _debouncer.ProcessRawPress(isTouched) || devSendTouchSensor ) {
-      const bool debouncedButtonState = devSendTouchSensor ? devTouchSensorPressed : _debouncer.GetDebouncedPress();
-      _robot->Broadcast(ExternalInterface::MessageEngineToGame(
-                        ExternalInterface::TouchButtonEvent(debouncedButtonState)));
-      if( debouncedButtonState ) {
-        _gestureClassifier.AddTouchPressed();
-      } else {
-        _gestureClassifier.AddTouchReleased();
+      _baselineTouch = kBaselineFilterCoeff*boxFiltVal + (1.0f-kBaselineFilterCoeff)*_baselineTouch;
+      _numConsecCalibReadings++;
+      if(IsCalibrated()) {
+        PRINT_NAMED_INFO("TouchSensorComponent","Calibrated");;
       }
-      
-      devSendTouchSensor = false;
+    } else {
+      _numConsecCalibReadings = 0;
     }
-    curGesture = _gestureClassifier.CalcTouchGesture();
-
+  } else {
+    // handle checks for touch input, when calibrated
+    if( ProcessWithDynamicThreshold(_baselineTouch, boxFiltVal) ) {
+      _robot->Broadcast(
+        ExternalInterface::MessageEngineToGame(
+          ExternalInterface::TouchButtonEvent(GetIsPressed())));
+      if(GetIsPressed()) {
+        _touchPressTime = now;
+      }
+    }
     // require seeing a minimum number of untouched cycles before
     // continuing accumulation of values for baseline detect
-    if(!isTouched && !isPickedUp) {
+    DEV_ASSERT( IsCalibrated(), "TouchSensorComponent.ClassifyingBeforeCalibration");
+    if(!GetIsPressed() && !isPickedUp) {
       _noContactCounter++;
       if(_noContactCounter > kMinCountNoTouchForAccumulation) {
-        _baselineCalib.UpdateCalibration(msg.backpackTouchSensorRaw);
+        _baselineTouch = kBaselineFilterCoeff*boxFiltVal + (1.0f-kBaselineFilterCoeff)*_baselineTouch;
       }
     } else {
       // if we are picked up OR we are being touched
       _noContactCounter = 0;
     }
   }
-
-  if (curGesture != _touchGesture) {
-    _touchGesture = curGesture;
-    _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::TouchGestureEvent(_touchGesture)));
-  }  
-
-}
-
-bool TouchSensorComponent::IsTouched() const
-{
-  return _debouncer.GetDebouncedPress();
 }
 
 std::string TouchSensorComponent::GetLogHeader()
@@ -178,6 +167,88 @@ std::string TouchSensorComponent::GetLogRow()
 void TouchSensorComponent::StartRecordingData(TouchSensorValues* data)
 {
   _dataToRecord = data;
+}
+  
+bool TouchSensorComponent::ProcessWithDynamicThreshold(const int baseline, const int input)
+{
+  // if input touch is within deadband for detect/undetect
+  // then there will be no change in these values
+  // Additionally _isPressed state won't change
+  bool lastPressed = _isPressed;
+  
+  const int detectLevel = baseline + _detectOffsetFromBase;
+  const int undetectLevel = baseline + _undetectOffsetFromBase;
+  
+  DEV_ASSERT( detectLevel > undetectLevel, "DetectLevelLowerThanUndetectLevel");
+  
+  if (input > detectLevel) {
+    _isPressed = true;
+    // monotonically increasing
+    if ((input-detectLevel) > kDynamicThreshDetectFollowOffset) {
+      _countAboveDetectLevel++;
+      _countBelowUndetectLevel = 0;
+      if(_countAboveDetectLevel > kMinConsecCountToUpdateThresholds) {
+        const auto candidateDetectOffset = input - kDynamicThreshDetectFollowOffset - baseline;
+        _detectOffsetFromBase = MIN(kDynamicThreshMaximumDetectOffset, candidateDetectOffset);
+        // detect and undetect levels move in lockstep
+        _undetectOffsetFromBase = _detectOffsetFromBase - kDynamicThreshGap;
+        _countAboveDetectLevel = 0;
+      }
+    } else {
+      // tracks count of *consecutive* readings which are
+      // above or below the respective detect or undetect thresholds
+      _countAboveDetectLevel = 0;
+      _countBelowUndetectLevel = 0;
+    }
+  } else if (input < undetectLevel) {
+    _isPressed = false;
+    // monotonically decreasing
+    if ((undetectLevel-input) > kDynamicThreshUndetectFollowOffset) {
+      _countBelowUndetectLevel++;
+      _countAboveDetectLevel = 0;
+      if(_countBelowUndetectLevel > kDynamicThreshDetectFollowOffset) {
+        auto candidateUndetectOffset = input + kDynamicThreshUndetectFollowOffset - baseline;
+        _undetectOffsetFromBase = MAX(kDynamicThreshMininumUndetectOffset, candidateUndetectOffset);
+        // detect and undetect levels move in lockstep
+        _detectOffsetFromBase = _undetectOffsetFromBase + kDynamicThreshGap;
+        _countBelowUndetectLevel = 0;
+      }
+    } else {
+      // tracks count of *consecutive* readings which are
+      // above or below the respective detect or undetect thresholds
+      _countAboveDetectLevel = 0;
+      _countBelowUndetectLevel = 0;
+    }
+  } else {
+    _countAboveDetectLevel = 0;
+    _countBelowUndetectLevel = 0;
+  }
+  
+  return lastPressed != _isPressed;
+}
+  
+bool TouchSensorComponent::IsCalibrated() const {
+  return _numConsecCalibReadings >= kBaselineMinCalibReadings;
+}
+
+bool TouchSensorComponent::GetIsPressed() const
+{
+  return _isPressed;
+}
+
+int TouchSensorComponent::GetDetectLevelOffset() const
+{
+  return _detectOffsetFromBase;
+}
+
+int TouchSensorComponent::GetUndetectLevelOffset() const
+{
+  return _undetectOffsetFromBase;
+}
+  
+float TouchSensorComponent::GetTouchPressTime() const
+{
+  return _touchPressTime;
 }
   
 } // Cozmo namespace

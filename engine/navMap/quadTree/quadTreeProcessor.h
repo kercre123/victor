@@ -28,7 +28,7 @@
 namespace Anki {
 namespace Cozmo {
   
-class QuadTreeNode;
+class QuadTree;
 using namespace MemoryMapTypes;
 using namespace QuadTreeTypes;
 
@@ -52,7 +52,7 @@ public:
   // NOTE: (mrw) used to set type from Invalid -> Valid so that only SetRoot and subdivide could create
   //       a validated node in the tree. Any other type of node instantiation would be flagged so that
   //       we know it was not attached to a tree. We could consider adding that safety mechanism back.
-  void SetRoot(QuadTreeNode* node) { _root = node; };
+  void SetRoot(QuadTree* tree) { _quadTree = tree; };
 
   // notification when the content type changes for the given node
   void OnNodeContentTypeChanged(const QuadTreeNode* node, const EContentType& oldContent, const bool wasEmpty);
@@ -76,19 +76,10 @@ public:
   // retrieve the borders for the given combination of content types
   void GetBorders(EContentType innerType, EContentTypePackedType outerTypes, MemoryMapTypes::BorderRegionVector& outBorders);
   
-  // returns true if the given ray collides with the given type (any quads of the given type)
-  bool HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& rayTo, EContentTypePackedType types) const;
-  
   // fills content regions of filledType that have borders with any content in fillingTypeFlags, converting the filledType
   // region to the content type given (newContent)
   bool FillBorder(EContentType filledType, EContentTypePackedType fillingTypeFlags, const MemoryMapData& data);
     
-  // attempt to apply a transformation function to all nodes in the tree
-  bool Transform(NodeTransformFunction transform);  
-    
-  // populate a list of all data that matches the predicate
-  void FindIf(NodePredicate pred, MemoryMapDataConstList& output) const;
-  
   // returns true if there are any nodes of the given type, false otherwise
   bool HasContentType(EContentType type) const;
  
@@ -168,13 +159,6 @@ private:
   BorderCombination& RefreshBorderCombination(EContentType innerType, EContentTypePackedType outerTypes);
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Collision checks
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // checks if the given node or any of its children collides with the given ray and matches the type
-  bool HasCollisionRayWithTypes(const QuadTreeNode* node, const FastPolygon& poly, EContentTypePackedType types) const;
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
@@ -193,7 +177,7 @@ private:
   BorderCombination* _currentBorderCombination;
   
   // pointer to the root of the tree
-  QuadTreeNode* _root;
+  QuadTree* _quadTree;
   
   // area of all quads that have been explored
   double _totalExploredArea_m2;

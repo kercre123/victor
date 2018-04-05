@@ -8,7 +8,7 @@ PROTO WebotsKeyboardController [
   field SFString animationToSendName "anim_neutral_eyes_01"
   field SFInt32  animationNumLoops 1
   field SFString idleAnimationName "ProceduralLive"
-  field SFFloat  faceHue 0.4  # should be 0-1 
+  field SFFloat  faceHue 0.566  # should be 0-1 
 
   # Test Animations to send
   field SFString DEV_AnimationName "ANIM_NAME"
@@ -18,9 +18,9 @@ PROTO WebotsKeyboardController [
   field SFString behaviorName "Wait"
   field SFInt32  numBehaviorRuns 1
 
-  # Fake cloud commands
-  # Send a fake cloud intent to respond to
-  field SFString cloudIntent "Count"
+  # Fake intent (user/cloud/etc) commands
+  # Send a fake intent to respond to. 
+  field SFString intent ""
 
   field SFString emotionName "WantToPlay"
   field SFFloat emotionVal 1.0

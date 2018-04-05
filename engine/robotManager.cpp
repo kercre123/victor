@@ -8,7 +8,6 @@
 
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/perfMetric.h"
 #include "engine/robot.h"
 #include "engine/robotInitialConnection.h"
@@ -55,13 +54,13 @@ void RobotManager::Init(const Json::Value& config)
   Anki::Util::Time::PushTimedStep("RobotManager::Init");
   _robotMessageHandler->Init(config, this, _context);
   Anki::Util::Time::PopTimedStep(); // RobotManager::Init
-  
+
   Anki::Util::Time::PrintTimedSteps();
   Anki::Util::Time::ClearSteps();
-  
+
   auto endTime = std::chrono::steady_clock::now();
   auto timeSpent_millis = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
-  
+
   if (ANKI_DEBUG_LEVEL >= ANKI_DEBUG_ERRORS_AND_WARNS)
   {
     constexpr auto maxInitTime_millis = 3000;
@@ -73,8 +72,16 @@ void RobotManager::Init(const Json::Value& config)
                   maxInitTime_millis);
     }
   }
-  
+
   LOG_EVENT("robot.init.time_spent_ms", "%lld", timeSpent_millis);
+}
+
+void RobotManager::Shutdown()
+{
+  // Order of destruction matters! Robot actions call back into robot manager, so
+  // they must be released before robot manager itself.
+  LOG_INFO("RobotManager.Shutdown", "Shutting down");
+  _robot.reset();
 }
 
 void RobotManager::AddRobot(const RobotID_t withID)
@@ -85,14 +92,14 @@ void RobotManager::AddRobot(const RobotID_t withID)
     _initialConnection.reset(new RobotInitialConnection(_context));
   } else {
     LOG_WARNING("RobotManager.AddRobot.AlreadyAdded", "Robot already exists. Must remove first.");
-  }  
+  }
 }
 
 void RobotManager::RemoveRobot(bool robotRejectedConnection)
 {
   if(_robot != nullptr) {
     LOG_INFO("RobotManager.RemoveRobot.Removing", "Removing robot with ID=%d", _robot->GetID());
-    
+
     // ask initial connection tracker if it's handling this
     bool handledDisconnect = false;
     if (_initialConnection) {
@@ -104,7 +111,6 @@ void RobotManager::RemoveRobot(bool robotRejectedConnection)
       _context->GetExternalInterface()->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDisconnected(0.0f)));
     }
 
-    _context->GetNeedsManager()->OnRobotDisconnected();
     _context->GetPerfMetric()->OnRobotDisconnected();
 
 #if USE_DAS
@@ -115,7 +121,7 @@ void RobotManager::RemoveRobot(bool robotRejectedConnection)
 
     _robot.reset();
     _initialConnection.reset();
-    
+
     // Clear out the global DAS values that contain the robot hardware IDs.
     Anki::Util::sSetGlobal(DPHYS, nullptr);
     Anki::Util::sSetGlobal(DGROUP, nullptr);
@@ -146,7 +152,7 @@ void RobotManager::UpdateRobot()
   if (_robot) {
     // Call update
     Result result = _robot->Update();
-    
+
     switch (result)
     {
       case RESULT_FAIL_IO_TIMEOUT:
@@ -155,9 +161,9 @@ void RobotManager::UpdateRobot()
         RemoveRobot(false);
         break;
       }
-        
+
       // TODO: Handle other return results here
-        
+
       default:
         break;
     }
@@ -170,7 +176,7 @@ void RobotManager::UpdateRobot()
                         "Not sending robot %d state (none available).", _robot->GetID());
     }
   }
-  
+
 }
 
 Result RobotManager::UpdateRobotConnection()

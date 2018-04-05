@@ -14,6 +14,7 @@
  */
 
 
+#include "audioEngine/multiplexer/audioCladMessageHelper.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -29,7 +30,7 @@ namespace Anki {
 namespace Cozmo {  
 namespace Audio {
 
-namespace AEM = AudioEngine::Multiplexer;
+namespace AECH = AudioEngine::Multiplexer::CladMessageHelper; 
 namespace AMD = AudioMetaData;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -56,8 +57,9 @@ EngineRobotAudioClient::CallbackIdType EngineRobotAudioClient::PostEvent( AMD::G
     PRINT_NAMED_WARNING("EngineRobotAudioClient.PostEvent", "_robot is NULL, can NOT send message");
     return kInvalidCallbackId;
   }
+  // NOTE: Since we are using C++ Lite the CLAD structs variables need to be put in a different or then the interface
   const auto callbackId = ManageCallback( std::move( callback ) );
-  _robot->SendMessage( RobotInterface::EngineToRobot( AEM::PostAudioEvent( event, gameObject, callbackId ) ) );
+  _robot->SendMessage( RobotInterface::EngineToRobot( AECH::CreatePostAudioEvent( event, gameObject, callbackId ) ) );
   return callbackId;
 }
 
@@ -68,7 +70,7 @@ void EngineRobotAudioClient::StopAllEvents( AMD::GameObjectType gameObject )
     PRINT_NAMED_WARNING("EngineRobotAudioClient.StopAllEvents", "_robot is NULL, can NOT send message");
     return;
   }
-  _robot->SendMessage( RobotInterface::EngineToRobot( AEM::StopAllAudioEvents( gameObject ) ) );
+  _robot->SendMessage( RobotInterface::EngineToRobot( AECH::CreateStopAllAudioEvents( gameObject ) ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -79,7 +81,7 @@ void EngineRobotAudioClient::PostGameState( AMD::GameState::StateGroupType gameS
     PRINT_NAMED_WARNING("EngineRobotAudioClient.PostGameState", "_robot is NULL, can NOT send message");
     return;
   }
-  _robot->SendMessage( RobotInterface::EngineToRobot( AEM::PostAudioGameState( gameStateGroup, gameState ) ) );
+  _robot->SendMessage( RobotInterface::EngineToRobot( AECH::CreatePostAudioGameState( gameStateGroup, gameState ) ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -91,9 +93,9 @@ void EngineRobotAudioClient::PostSwitchState( AMD::SwitchState::SwitchGroupType 
     PRINT_NAMED_WARNING("EngineRobotAudioClient.PostSwitchState", "_robot is NULL, can NOT send message");
     return;
   }
-  _robot->SendMessage( RobotInterface::EngineToRobot( AEM::PostAudioSwitchState( switchGroup,
-                                                                                 switchState,
-                                                                                 gameObject ) ) );
+  _robot->SendMessage( RobotInterface::EngineToRobot( AECH::CreatePostAudioSwitchState( switchGroup,
+                                                                                        switchState,
+                                                                                        gameObject ) ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -107,11 +109,12 @@ void EngineRobotAudioClient::PostParameter( AMD::GameParameter::ParameterType pa
     PRINT_NAMED_WARNING("EngineRobotAudioClient.PostParameter", "_robot is NULL, can NOT send message");
     return;
   }
-  _robot->SendMessage( RobotInterface::EngineToRobot( AEM::PostAudioParameter( parameter,
-                                                                               parameterValue,
-                                                                               gameObject,
-                                                                               timeInMilliSeconds,
-                                                                               curve ) ) );
+
+  _robot->SendMessage( RobotInterface::EngineToRobot( AECH::CreatePostAudioParameter( parameter,
+                                                                                      parameterValue,
+                                                                                      gameObject,
+                                                                                      timeInMilliSeconds,
+                                                                                      curve ) ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -150,7 +153,7 @@ void EngineRobotAudioClient::SubscribeAudioCallbackMessages( Robot* robot )
   
   IExternalInterface* gameToEngineInterface = _robot->GetContext()->GetExternalInterface();
   if ( gameToEngineInterface ) {
-    _signalHandles.push_back(gameToEngineInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume,                                                              robotVolumeCallback));
+    _signalHandles.push_back(gameToEngineInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SetRobotVolume, robotVolumeCallback));
   }
 }
 

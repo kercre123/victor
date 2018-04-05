@@ -573,9 +573,9 @@ public:
   RobotWorldOriginChangedSignal& OnRobotWorldOriginChanged() { return _robotWorldOriginChangedSignal; }
   bool HasExternalInterface() const;
   
-  IExternalInterface* GetExternalInterface();
+  IExternalInterface* GetExternalInterface() const;
   
-  RobotInterface::MessageHandler* GetRobotMessageHandler();
+  RobotInterface::MessageHandler* GetRobotMessageHandler() const;
   void SetImageSendMode(ImageSendMode newMode) { _imageSendMode = newMode; }
   const ImageSendMode GetImageSendMode() const { return _imageSendMode; }
   

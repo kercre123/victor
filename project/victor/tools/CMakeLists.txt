@@ -17,14 +17,24 @@ elseif (MACOSX)
   set(PLATFORM_FLAGS -fobjc-arc)
 endif()
 
-add_executable(axattr
+#
+# Used to set permissions on VicOS Linux Android flavor
+# Not needed on VicOS Linux Embedded flavor
+#
+option(BUILD_AXATTR "Enable build of axattr" OFF)
+
+if (BUILD_AXATTR)
+
+  add_executable(axattr
     axattr/axattr.c
-)
+  )
 
-target_compile_options(axattr
-PRIVATE
-  -DNDEBUG
-  -Os
-)
+  target_compile_options(axattr
+    PRIVATE
+    -DNDEBUG
+    -Os
+  )
 
-android_strip(TARGET axattr)
+  android_strip(TARGET axattr)
+
+endif(BUILD_AXATTR)

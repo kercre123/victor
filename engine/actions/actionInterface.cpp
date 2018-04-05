@@ -7,7 +7,7 @@
  * Description: Implements interfaces for action states for a robot.
  *
  *              Note about subActions (manually ticking actions inside another action)
- *              Store subActions as unique_ptrs since the subAction is unique to the 
+ *              Store subActions as unique_ptrs since the subAction is unique to the
  *              parent and the parent is responsible for managing everything about the
  *              subAction. (see PickupObjectAction for examples)
  *
@@ -34,9 +34,9 @@
 #define DEBUG_ACTION_RUNNING 0
 
 namespace Anki {
-  
+
   namespace Cozmo {
-    
+
     // Ensure that nobody sets bad tag ranges (we want them all to be mutually exclusive
     static_assert(ActionConstants::FIRST_GAME_TAG   > ActionConstants::INVALID_TAG,      "Game Tag Overlap");
     static_assert(ActionConstants::FIRST_SDK_TAG    > ActionConstants::LAST_GAME_TAG,    "Sdk Tag Overlap");
@@ -44,12 +44,12 @@ namespace Anki {
     static_assert(ActionConstants::LAST_GAME_TAG    > ActionConstants::FIRST_GAME_TAG,   "Bad Game Tag Range");
     static_assert(ActionConstants::LAST_SDK_TAG     > ActionConstants::FIRST_SDK_TAG,    "Bad Sdk Tag Range");
     static_assert(ActionConstants::LAST_ENGINE_TAG  > ActionConstants::FIRST_ENGINE_TAG, "Bad Engine Tag Range");
-    
+
     static const char * const kLogChannelName = "Actions";
-  
+
     u32 IActionRunner::sTagCounter = ActionConstants::FIRST_ENGINE_TAG;
     std::set<u32> IActionRunner::sInUseTagSet;
-    
+
     u32 IActionRunner::NextIdTag()
     {
       // Post increment IActionRunner::sTagCounter (and loop within the ENGINE_TAG range)
@@ -62,32 +62,32 @@ namespace Anki {
       {
         ++IActionRunner::sTagCounter;
       }
-      
+
       assert((nextIdTag >= ActionConstants::FIRST_ENGINE_TAG) && (nextIdTag <= ActionConstants::LAST_ENGINE_TAG));
       assert(nextIdTag != ActionConstants::INVALID_TAG);
-      
+
       return nextIdTag;
     }
-    
-    
-    IActionRunner::IActionRunner(const std::string name,
+
+
+    IActionRunner::IActionRunner(const std::string & name,
                                  const RobotActionType type,
-                                 const u8 trackToLock)
+                                 const u8 tracksToLock)
     : _completionUnion(ActionCompletedUnion())
     , _type(type)
     , _name(name)
-    , _tracks(trackToLock)
+    , _tracks(tracksToLock)
     {
       // Assign every action a unique tag that is not currently in use
       _idTag = NextIdTag();
-      
+
       while (!IActionRunner::sInUseTagSet.insert(_idTag).second) {
         PRINT_NAMED_ERROR("IActionRunner.TagCounterClash", "TagCounters shouldn't overlap");
         _idTag = NextIdTag();
       }
-      
+
       _customTag = _idTag;
-      
+
       // This giant switch is necessary to set the appropriate completion union tags in order
       // to avoid emitting a completion union with an invalid tag
       // There is no default case in order to prevent people from forgetting to add it here
@@ -108,32 +108,32 @@ namespace Anki {
           _completionUnion.Set_objectInteractionCompleted(ObjectInteractionCompleted());
           break;
         }
-      
+
         case RobotActionType::READ_TOOL_CODE:
         {
           _completionUnion.Set_readToolCodeCompleted(ReadToolCodeCompleted());
           break;
         }
-        
+
         case RobotActionType::PLAY_ANIMATION:
         {
           _completionUnion.Set_animationCompleted(AnimationCompleted());
           break;
         }
-      
+
         case RobotActionType::DEVICE_AUDIO:
         {
           _completionUnion.Set_deviceAudioCompleted(DeviceAudioCompleted());
           break;
         }
-        
+
         case RobotActionType::TRACK_FACE:
         case RobotActionType::TRACK_PET_FACE:
         {
           _completionUnion.Set_trackFaceCompleted(TrackFaceCompleted());
           break;
         }
-        
+
         // These actions don't set completion unions
         case RobotActionType::ASCEND_OR_DESCEND_RAMP:
         case RobotActionType::BACKUP_ONTO_CHARGER:
@@ -180,7 +180,7 @@ namespace Anki {
         }
       }
     }
-    
+
     IActionRunner::~IActionRunner()
     {
       if(!_preppedForCompletion) {
@@ -196,11 +196,11 @@ namespace Anki {
       if(_shouldClearMotionProfile ) {
         GetRobot().GetPathComponent().ClearCustomMotionProfile();
       }
-      
+
       // Erase the tags as they are no longer in use
       IActionRunner::sInUseTagSet.erase(_customTag);
       IActionRunner::sInUseTagSet.erase(_idTag);
-  
+
       // Stop motion on any movement tracks that are locked by this action
       // and that are currently moving.
       const auto& mc = GetRobot().GetMoveComponent();
@@ -227,7 +227,7 @@ namespace Anki {
                       "Stopping movement on the following tracks since they were locked and are still moving: %s[%s][%d]",
                       debugStr.c_str(), _name.c_str(), _idTag);
       }
-      
+
       if(!_suppressTrackLocking && _state != ActionResult::NOT_STARTED)
       {
         if(DEBUG_ANIM_TRACK_LOCKING)
@@ -241,13 +241,13 @@ namespace Anki {
         }
         GetRobot().GetMoveComponent().UnlockTracks(_tracks, GetTag());
       }
-      
+
       GetRobot().GetActionList().GetActionWatcher().ActionEnding(this);
     }
 
     Robot& IActionRunner::GetRobot()
     {
-      DEV_ASSERT_MSG(_robot != nullptr, 
+      DEV_ASSERT_MSG(_robot != nullptr,
                      "IActionRunner.GetRobot.RobotIsNull",
                      "Robot not set for action %s with tag %d", GetName().c_str(), GetTag());
       return *_robot;
@@ -255,12 +255,12 @@ namespace Anki {
 
     Robot& IActionRunner::GetRobot() const
     {
-      DEV_ASSERT_MSG(_robot != nullptr, 
+      DEV_ASSERT_MSG(_robot != nullptr,
                      "IActionRunner.GetRobot.RobotIsNull",
                      "Robot not set for action %s with tag %d", GetName().c_str(), GetTag());
       return *_robot;
     }
-    
+
     bool IActionRunner::SetTag(u32 tag)
     {
       // Probably a bad idea to be able to change the tag while the action is running
@@ -273,7 +273,7 @@ namespace Anki {
         _state = ActionResult::BAD_TAG;
         return false;
       }
-      
+
       // If the tag has already been set and the action is not running then erase the current tag in order to
       // set the new one
       if(_customTag != _idTag)
@@ -291,13 +291,13 @@ namespace Anki {
       _customTag = tag;
       return true;
     }
-    
+
     bool IActionRunner::Interrupt()
     {
       if(InterruptInternal())
       {
         // Only need to unlock tracks if this is running because Update() locked tracks
-        if(!_suppressTrackLocking && 
+        if(!_suppressTrackLocking &&
            (_state == ActionResult::RUNNING))
         {
           u8 tracks = GetTracksToLock();
@@ -319,7 +319,7 @@ namespace Anki {
       }
       return false;
     }
-    
+
     void IActionRunner::ForceComplete()
     {
       PRINT_CH_INFO("Actions", "IActionRunner.ForceComplete",
@@ -327,18 +327,18 @@ namespace Anki {
                     GetName().c_str(),
                     GetTag(),
                     EnumToString(_state));
-      
+
       _state = ActionResult::SUCCESS;
     }
-    
+
     ActionResult IActionRunner::Update()
     {
       auto & actionList = GetRobot().GetActionList();
       auto & actionWatcher = actionList.GetActionWatcher();
       auto & moveComponent = GetRobot().GetMoveComponent();
-      
+
       actionWatcher.ActionStartUpdating(this);
-      
+
       switch (_state)
       {
         case ActionResult::RETRY:
@@ -364,7 +364,7 @@ namespace Anki {
           {
             // When the ActionRunner first starts, lock any specified subsystems
             u8 tracksToLock = GetTracksToLock();
-            
+
             if (moveComponent.AreAnyTracksLocked(tracksToLock))
             {
               // Print special, more helpful message in SDK mode, if on charger
@@ -373,23 +373,23 @@ namespace Anki {
                 PRINT_CH_INFO(kLogChannelName, "IActionRunner.Update.TracksLockedOnChargerInSDK",
                               "Use of head/lift/body motors is limited while on charger in SDK mode");
               }
-              
+
               // Split this into two messages so we don't send giant strings to DAS
               PRINT_NAMED_WARNING("IActionRunner.Update.TracksLocked",
                                   "Action %s [%d] not running because required tracks are locked",
                                   GetName().c_str(),
                                   GetTag());
-           
+
               PRINT_NAMED_WARNING("IActionRunner.Update.TracksLockedBecause",
                                   "Required tracks %s locked because %s",
                                   AnimTrackHelpers::AnimTrackFlagsToString(tracksToLock).c_str(),
                                   moveComponent.WhoIsLocking(tracksToLock).c_str());
-              
+
               _state = ActionResult::TRACKS_LOCKED;
               actionWatcher.ActionEndUpdating(this);
               return ActionResult::TRACKS_LOCKED;
             }
-            
+
             if (DEBUG_ANIM_TRACK_LOCKING)
             {
               PRINT_CH_INFO(kLogChannelName, "IActionRunner.Update.LockTracks",
@@ -399,10 +399,10 @@ namespace Anki {
                             GetName().c_str(),
                             GetTag());
             }
-            
+
             moveComponent.LockTracks(tracksToLock, GetTag(), GetName());
           }
-          
+
           if (DEBUG_ACTION_RUNNING && _displayMessages)
           {
             PRINT_CH_DEBUG(kLogChannelName, "IActionRunner.Update.IsRunning",
@@ -414,7 +414,7 @@ namespace Anki {
         case ActionResult::RUNNING:
         {
           _state = UpdateInternal();
-          
+
           if (_state == ActionResult::RUNNING)
           {
             // Still running dont fall through
@@ -435,9 +435,9 @@ namespace Anki {
                            _state==ActionResult::CANCELLED_WHILE_RUNNING ? "was cancelled" : "failed"),
                           EnumToString(_state));
           }
-          
+
           PrepForCompletion();
-          
+
           if (DEBUG_ACTION_RUNNING && _displayMessages) {
             PRINT_CH_DEBUG(kLogChannelName, "IActionRunner.Update.IsRunning",
                            "Action [%d] %s NOT running",
@@ -449,12 +449,12 @@ namespace Anki {
       actionWatcher.ActionEndUpdating(this);
       return _state;
     }
-    
+
     void IActionRunner::SetEnableMoodEventOnCompletion(bool enable)
     {
-      GetRobot().GetMoodManager().SetEnableMoodEventOnCompletion(GetTag(), enable);        
+      GetRobot().GetMoodManager().SetEnableMoodEventOnCompletion(GetTag(), enable);
     }
-  
+
     void IActionRunner::PrepForCompletion()
     {
       if(!_preppedForCompletion)
@@ -466,7 +466,7 @@ namespace Anki {
                        "%s [%d]", _name.c_str(), GetTag());
       }
     }
-    
+
     bool IActionRunner::RetriesRemain()
     {
       if(_numRetriesRemaining > 0) {
@@ -476,13 +476,13 @@ namespace Anki {
         return false;
       }
     }
-    
+
 #   if USE_ACTION_CALLBACKS
     void IActionRunner::AddCompletionCallback(ActionCompletionCallback callback)
     {
       _completionCallbacks.emplace_back(callback);
     }
-    
+
     void IActionRunner::RunCallbacks(ActionResult result) const
     {
       for(const auto& callback : _completionCallbacks) {
@@ -491,11 +491,11 @@ namespace Anki {
     }
 #   endif // USE_ACTION_CALLBACKS
 
-    
+
     void IActionRunner::UnlockTracks()
     {
       // Tracks aren't locked until the action starts so don't unlock them until then
-      if(!_suppressTrackLocking && 
+      if(!_suppressTrackLocking &&
          (_state != ActionResult::NOT_STARTED))
       {
         u8 tracks = GetTracksToLock();
@@ -511,7 +511,7 @@ namespace Anki {
         GetRobot().GetMoveComponent().UnlockTracks(tracks, GetTag());
       }
     }
-    
+
     void IActionRunner::SetTracksToLock(const u8 tracks)
     {
       if(_state == ActionResult::NOT_STARTED)
@@ -523,7 +523,7 @@ namespace Anki {
         PRINT_NAMED_WARNING("IActionRunner.SetTracksToLock", "Trying to set tracks to lock while running");
       }
     }
-    
+
     void IActionRunner::Cancel()
     {
       if(_state != ActionResult::NOT_STARTED)
@@ -534,30 +534,30 @@ namespace Anki {
         _state = ActionResult::CANCELLED_WHILE_RUNNING;
       }
     }
-    
+
     void IActionRunner::GetRobotCompletedActionMessage(ExternalInterface::RobotCompletedAction& msg)
     {
       std::vector<ActionResult> subActionResults;
-      GetRobot().GetActionList().GetActionWatcher().GetSubActionResults(GetTag(), subActionResults);        
-      
+      GetRobot().GetActionList().GetActionWatcher().GetSubActionResults(GetTag(), subActionResults);
+
       ActionCompletedUnion acu;
       GetCompletionUnion(acu);
-      
+
       msg = ExternalInterface::RobotCompletedAction(GetTag(),
                                                     GetType(),
                                                     GetState(),
                                                     subActionResults,
                                                     acu);
     }
-    
+
 #pragma mark ---- IAction ----
-    
-    IAction::IAction(const std::string name,
+
+    IAction::IAction(const std::string & name,
                      const RobotActionType type,
-                     const u8 trackToLock)
+                     const u8 tracksToLock)
     : IActionRunner(name,
                     type,
-                    trackToLock)
+                    tracksToLock)
     {
       Reset();
     }
@@ -566,14 +566,14 @@ namespace Anki {
     {
       // release any subscriptions held by the VSM for this Action
       if(!_requiredVisionModes.empty()) {
-        PRINT_CH_DEBUG(kLogChannelName, "IAction.Update.UnSettingVisionModes", 
+        PRINT_CH_DEBUG(kLogChannelName, "IAction.Update.UnSettingVisionModes",
                         "Action %s [%d] Releasing VisionModes",
                         GetName().c_str(),
                         GetTag());
         GetRobot().GetVisionScheduleMediator().ReleaseAllVisionModeSubscriptions(this);
       }
     }
-    
+
     void IAction::Reset(bool shouldUnlockTracks)
     {
       _preconditionsMet = false;
@@ -584,25 +584,25 @@ namespace Anki {
       }
       ResetState();
     }
-    
+
     Util::RandomGenerator& IAction::GetRNG() const
     {
-      return GetRobot().GetRNG();        
+      return GetRobot().GetRNG();
     }
-    
+
     ActionResult IAction::UpdateInternal()
     {
       ActionResult result = ActionResult::RUNNING;
       SetStatus(GetName());
-      
+
       // On first call to Update(), figure out the waitUntilTime
       const f32 currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-      
+
       if(_startTime_sec < 0.f) {
         // Record first update time
         _startTime_sec = currentTimeInSeconds;
       }
-      
+
       // Update timeout/wait times in case they have been adjusted since the action
       // started. Time to wait until is always relative to original start, however.
       // (Include CheckIfDoneDelay in wait time if we have already met pre-conditions
@@ -619,7 +619,7 @@ namespace Anki {
         }
         result = ActionResult::TIMEOUT;
       }
-      
+
       // Don't do anything until we have reached the waitUntilTime
       else if(currentTimeInSeconds >= waitUntilTime)
       {
@@ -644,7 +644,7 @@ namespace Anki {
             // This action is ready to run, subscribe to appropriate vision modes
             GetRequiredVisionModes(_requiredVisionModes);
             if(!_requiredVisionModes.empty()) {
-              PRINT_CH_DEBUG(kLogChannelName, "IAction.Update.SettingVisionModes", 
+              PRINT_CH_DEBUG(kLogChannelName, "IAction.Update.SettingVisionModes",
                              "Action %s [%d] Requesting VisionModes",
                              GetName().c_str(),
                              GetTag());
@@ -664,12 +664,12 @@ namespace Anki {
         if(_preconditionsMet && currentTimeInSeconds >= waitUntilTime) {
           //PRINT_CH_INFO(kLogChannelName, "IAction.Update", "Updating %s: checking if done.", GetName().c_str());
           SetStatus(GetName() + ": check if done");
-          
+
           // Pre-conditions already met, just run until done
           result = CheckIfDone();
         }
       } // if(currentTimeInSeconds > _waitUntilTime)
-      
+
       const bool shouldRetry = (IActionRunner::GetActionResultCategory(result) == ActionResultCategory::RETRY);
       if(shouldRetry && RetriesRemain()) {
         if(IsMessageDisplayEnabled()) {
@@ -677,7 +677,7 @@ namespace Anki {
                         "Robot %d failed running action %s. Retrying.",
                         GetRobot().GetID(), GetName().c_str());
         }
-        
+
         // Don't unlock the tracks if retrying
         Reset(false);
         result = ActionResult::RUNNING;
@@ -690,6 +690,6 @@ namespace Anki {
 #     endif
       return result;
     } // UpdateInternal()
-    
+
   } // namespace Cozmo
 } // namespace Anki

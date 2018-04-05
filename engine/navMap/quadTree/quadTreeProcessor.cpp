@@ -10,7 +10,7 @@
  * Copyright: Anki, Inc. 2016
  **/
 #include "quadTreeProcessor.h"
-#include "quadTreeNode.h"
+#include "quadTree.h"
 
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/math/polygon_impl.h"
@@ -46,7 +46,7 @@ if ( kDebugFindBorders ) {                                                      
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 QuadTreeProcessor::QuadTreeProcessor()
 : _currentBorderCombination(nullptr)
-, _root(nullptr)
+, _quadTree(nullptr)
 , _totalExploredArea_m2(0.0)
 , _totalInterestingEdgeArea_m2(0.0)
 {
@@ -317,61 +317,6 @@ void QuadTreeProcessor::GetBorders(EContentType innerType, EContentTypePackedTyp
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeProcessor::HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& rayTo, EContentTypePackedType types) const
-{
-  ANKI_CPU_PROFILE("QuadTreeProcessor::HasCollisionRayWithTypesNonRecursive");
-
-  // search from root
-  const Poly2f poly({rayFrom, rayTo});
-  const bool ret = HasCollisionRayWithTypes(_root, FastPolygon(poly), types);
-  return ret;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeProcessor::HasCollisionRayWithTypes(const QuadTreeNode* node, const FastPolygon& poly, EContentTypePackedType types) const
-{
-  // this function could be easily optimized by using axis-aligned math available in QuadTreeNode. Adding profile
-  // here to prove that we need to
-  // ANKI_CPU_PROFILE("QuadTreeProcessor::HasCollisionRayWithTypesRecursive"); // recursive functions are not properly tracked. Moving to caller
-
-  // does this node match the types we are looking for?
-  const EContentType curNodeType = node->GetData()->type;
-  const bool matchesType = IsInEContentTypePackedType(curNodeType, types);
-  if ( !node->IsSubdivided() && !matchesType ) {
-    // if it's a leaf quad and the type is not interesting, do not care if the quad collides
-    return false;
-  }
-
-  // if a quad contains any of the points, or the ray intersects with the quad, then the quad is relevant
-  const bool isQuadRelevant = QuadTreeNode::ESetOverlap::Disjoint != node->GetOverlapType(poly);
-  if ( isQuadRelevant )
-  {
-    // the quad is relevant, let's check type
-    
-    // if it matches any type specified, then we found collision return true
-    if ( matchesType ) {
-      return true;
-    }
-    
-    // if it has children, depth search first
-    size_t numChildren = node->GetNumChildren();
-    for(size_t index=0; index<numChildren; ++index)
-    {
-      // grab children at index and ask for collision/type check
-      const std::unique_ptr<QuadTreeNode>& childPtr = node->GetChildAt(index);
-      DEV_ASSERT(childPtr, "QuadTreeProcessor.HasCollisionRayWithTypes.NullChild");
-      const bool childMatches = HasCollisionRayWithTypes(childPtr.get(), poly, types);
-      if ( childMatches ) {
-        // child said yes, we are also a yes
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTreeProcessor::FillBorder(EContentType filledType, EContentTypePackedType fillingTypeFlags, const MemoryMapData& data)
 {
   ANKI_CPU_PROFILE("QuadTreeProcessor.FillBorder");
@@ -412,35 +357,13 @@ bool QuadTreeProcessor::FillBorder(EContentType filledType, EContentTypePackedTy
   
   // add flooded centers to the tree (not this does not cause flood filling)
   bool changed = false;
+  MemoryMapDataPtr dataPtr = data.Clone();
   for( const auto& center : floodedQuadCenters ) {
-    changed |= _root->Insert(Poly2f({center}), data.Clone(), *this);
+    changed |= _quadTree->Insert(Poly2f({center}), dataPtr);
   }
   
   timer.Toc("QuadTreeProcessor.FillBorder");
   return changed;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeProcessor::Transform(NodeTransformFunction transform)
-{
-  // TODO: use cached data in the processor to access all data directly, since we don't have constraints on locality
-  if (_root) {
-    Poly2f p;
-    p.ImportQuad2d(_root->MakeQuadXY());
-    return _root->Transform(FastPolygon(p), transform, *this);
-  }
-  return false;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeProcessor::FindIf(NodePredicate pred, MemoryMapDataConstList& output) const
-{
-  // TODO: use cached data in the processor to access all data directly, since we don't have constraints on locality
-  if (_root) {
-    Poly2f p;
-    p.ImportQuad2d(_root->MakeQuadXY());
-    _root->FindIf(FastPolygon(p), pred, output);
-  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -721,11 +644,11 @@ void QuadTreeProcessor::FindBorders(EContentType innerType, EContentTypePackedTy
   std::unordered_map<const QuadTreeNode*, CheckedInfo> checkedNodes;
 
   // hope this doesn't grow too quickly
-  DEV_ASSERT(_root->GetLevel() < 32, "QuadTreeProcessor.FindBorders.InvalidLevel");
+  DEV_ASSERT(_quadTree->GetLevel() < 32, "QuadTreeProcessor.FindBorders.InvalidLevel");
   
   // reserve space for this node's neighbors
   QuadTreeNode::NodeCPtrVector neighbors;
-  neighbors.reserve( 1 << _root->GetLevel() );
+  neighbors.reserve( 1 << _quadTree->GetLevel() );
   
   const EClockDirection clockDir = EClockDirection::CW;
     
@@ -993,11 +916,11 @@ bool QuadTreeProcessor::HasBorderSeed(EContentType innerType, EContentTypePacked
     return false;
   }
   
-  DEV_ASSERT(_root->GetLevel() < 32, "QuadTreeProcessor.HasBorderSeed.InvalidRootLevel");
+  DEV_ASSERT(_quadTree->GetLevel() < 32, "QuadTreeProcessor.HasBorderSeed.InvalidRootLevel");
   
   // reserve space for any node's neighbors
   QuadTreeNode::NodeCPtrVector neighbors;
-  neighbors.reserve( 1 << _root->GetLevel() ); // hope this doesn't grow too quickly
+  neighbors.reserve( 1 << _quadTree->GetLevel() ); // hope this doesn't grow too quickly
   
   // for every node, try to see if they are an innerContent with at least one outerContent neighbor
   const NodeSet& innerSet = innerSetMatchIt->second;

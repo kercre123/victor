@@ -68,6 +68,10 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
   _imageSaveQuality = JsonTools::ParseInt8(config, "quality", "BehaviorDevImageCapture");
   _useCapTouch = JsonTools::ParseBool(config, "use_capacitive_touch", "BehaviorDevImageCapture");
 
+  if (config.isMember("save_sensor_data")) {
+    _saveSensorData = config["save_sensor_data"].asBool();
+  }
+
   if(config.isMember("class_names"))
   {
     auto const& classNames = config["class_names"];
@@ -94,17 +98,6 @@ BehaviorDevImageCapture::BehaviorDevImageCapture(const Json::Value& config)
 BehaviorDevImageCapture::~BehaviorDevImageCapture()
 {
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-static inline void EnableDebugFaceDrawButton(BehaviorExternalInterface& bei, bool enable)
-{
-  // Gross way to make sure the FaceDebugDraw doesn't hijack the button, using console interface to talk to
-  // animation process
-  using namespace ExternalInterface;
-  const char* enableStr = (enable ? "1" : "0");
-  bei.GetRobotInfo().GetExternalInterface()->Broadcast(MessageGameToEngine(SetAnimDebugConsoleVarMessage("DebugFaceDraw_CycleWithButton",
-                                                                                                         enableStr)));
-}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevImageCapture::OnBehaviorActivated()
@@ -125,9 +118,6 @@ void BehaviorDevImageCapture::OnBehaviorActivated()
   auto& robotInfo = GetBEI().GetRobotInfo();
   // wait for the lift to relax 
   robotInfo.GetMoveComponent().EnableLiftPower(false);
-
-  // Hijack the backpack button
-  EnableDebugFaceDrawButton(GetBEI(), false);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -140,9 +130,6 @@ void BehaviorDevImageCapture::OnBehaviorDeactivated()
   auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
   visionComponent.EnableDrawImagesToScreen(false);
   visionComponent.PopCurrentModeSchedule();
-
-  // Relinquish the button
-  EnableDebugFaceDrawButton(GetBEI(), true);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -215,7 +202,7 @@ void BehaviorDevImageCapture::BehaviorUpdate()
   const bool wasTouched = (_touchStartedTime_s >= 0.0f);
 
   const bool isTouched = (_useCapTouch ? 
-                          GetBEI().GetTouchSensorComponent().IsTouched() :
+                          GetBEI().GetTouchSensorComponent().GetIsPressed() :
                           GetBEI().GetRobotInfo().IsPowerButtonPressed());
 
   if( wasTouched && !isTouched ) {
@@ -238,9 +225,16 @@ void BehaviorDevImageCapture::BehaviorUpdate()
     else {
       PRINT_CH_DEBUG("Behaviors", "BehaviorDevImageCapture.touch.shortPress", "short press release");
       // take single photo
-      visionComponent.SetSaveImageParameters(ImageSendMode::SingleShot,
-                                             GetSavePath(),
-                                             _imageSaveQuality);
+      if (_saveSensorData) {
+        visionComponent.SetSaveImageParameters(ImageSendMode::SingleShotWithSensorData,
+                                               GetSavePath(),
+                                               _imageSaveQuality);
+      }
+      else {
+        visionComponent.SetSaveImageParameters(ImageSendMode::SingleShot,
+                                               GetSavePath(),
+                                               _imageSaveQuality);
+      }
 
       BlinkLight();
     }

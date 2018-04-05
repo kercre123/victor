@@ -24,6 +24,7 @@
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/animationAudioClient.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
+#include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/robotDataLoader.h"
@@ -52,17 +53,19 @@ namespace Cozmo {
 
   CONSOLE_VAR(bool, kProcFace_OverrideEyeParams,        "ProceduralFace", false); // Override procedural face with ConsoleVars edited version
   CONSOLE_VAR(bool, kProcFace_OverrideRightEyeParams,   "ProceduralFace", false); // Make left and right eyes override in unison
-  CONSOLE_VAR(bool, kProcFace_OverrideReset,            "ProceduralFace", false); // Reset overriden parameters to current canned animation
   CONSOLE_VAR(bool, kProcFace_UseNoise,                 "ProceduralFace", false); // Victor vs Cozmo effect, no noise = lazy updates
 
-  CONSOLE_VAR_RANGED(float, kProcFace_Angle_deg,               "ProceduralFace", 0.0f, -90.0f, 90.0f);
-  CONSOLE_VAR_RANGED(float, kProcFace_ScaleX,                  "ProceduralFace", 1.0f, 0.0f, 10.0f);
-  CONSOLE_VAR_RANGED(float, kProcFace_ScaleY,                  "ProceduralFace", 1.0f, 0.0f, 10.0f);
-  CONSOLE_VAR_RANGED(float, kProcFace_CenterX,                 "ProceduralFace", 0.0f, -100.0f, 100.0f);
-  CONSOLE_VAR_RANGED(float, kProcFace_CenterY,                 "ProceduralFace", 0.0f, -100.0f, 100.0f);
-  CONSOLE_VAR_RANGED(float, kProcFace_ScanlineOpacity,         "ProceduralFace", 0.7f, 0.0f, 1.0f);
+  static ProceduralFace s_faceDataOverride; // incoming values from console var system
+  static ProceduralFace s_faceDataBaseline; // baseline to compare against, differences mean override the incoming animation
+  static bool s_faceDataOverrideRegistered = false;
+  static bool s_faceDataReset = false;
 
-  ProceduralFace s_faceDataOverride;
+  void ResetFace(ConsoleFunctionContextRef context)
+  {
+    s_faceDataReset = true;
+  }
+  
+  CONSOLE_FUNC(ResetFace, "ProceduralFace");
 
   namespace{
     
@@ -71,6 +74,10 @@ namespace Cozmo {
   // Specifies how often to send AnimState message
   static const u32 kAnimStateReportingPeriod_tics = 2;
 
+  // Minimum amount of time that must expire after the last non-procedural face
+  // is drawn and the next procedural face can be drawn
+  static const u32 kMinTimeBetweenLastNonProcFaceAndNextProcFace_ms = 2 * ANIM_TIME_STEP_MS;
+    
   // Default time to wait before forcing KeepFaceAlive() after the latest stream has stopped
   const f32 kDefaultLongEnoughSinceLastStreamTimeout_s = 0.5f;
 
@@ -96,6 +103,14 @@ namespace Cozmo {
   // Whether or not to display themal throttling indicator on face
   CONSOLE_VAR(bool, kDisplayThermalThrottling, "AnimationStreamer", true);
 
+  // Temperature beyond which the thermal indicator is displayed on face    
+  CONSOLE_VAR(u32,  kThermalAlertTemp_C,           "AnimationStreamer", 80);
+
+  // Must be at least this hot for CPU throttling to be considered caused
+  // by thermal conditions. It can also throttle because the system is idle
+  // which we don't care to indicate on the face.
+  CONSOLE_VAR(u32,  kThermalThrottlingMinTemp_C,   "AnimationStreamer", 65);
+
   // Overrides whatever faces we're sending with a 3-stripe test pattern
   // (seems more related to the other ProceduralFace console vars, so putting it in that group instead)
   CONSOLE_VAR(bool, kProcFace_DisplayTestPattern, "ProceduralFace", false);
@@ -113,6 +128,13 @@ namespace Cozmo {
   {
     _proceduralAnimation = new Animation(EnumToString(AnimConstants::PROCEDURAL_ANIM));
     _proceduralAnimation->SetIsLive(true);
+
+    if(ANKI_DEV_CHEATS) {
+      if (!s_faceDataOverrideRegistered) {
+        s_faceDataOverride.RegisterFaceWithConsoleVars();
+        s_faceDataOverrideRegistered = true;
+      }
+    }
   }
   
   Result AnimationStreamer::Init()
@@ -385,6 +407,12 @@ namespace Cozmo {
 
   Result AnimationStreamer::SetFaceImage(const Vision::ImageRGB565& imgRGB565, u32 duration_ms)
   {
+    if (_redirectFaceImagesToDebugScreen) {
+      FaceInfoScreenManager::getInstance()->DrawCameraImage(imgRGB565);
+
+      // TODO: Return here or will that screw up stuff on the engine side?
+      //return RESULT_OK;
+    }
     return SetFaceImageHelper(imgRGB565, duration_ms);
   }
   
@@ -450,10 +478,6 @@ namespace Cozmo {
 
       _endOfAnimationSent = false;
       _startOfAnimationSent = false;
-      
-//      // Prep sound
-//      _audioClient.CreateAudioAnimation( anim );
-//      _audioBufferingTime_ms = 0;
       
       // Make sure any eye dart (which is persistent) gets removed so it doesn't
       // affect the animation we are about to start streaming. Give it a little
@@ -551,44 +575,76 @@ namespace Cozmo {
     else
     {
       if(!kProcFace_UseNoise) {
-        static ProceduralFace::EyeParamArray previousEyeParameters[2];
-
-        if (previousEyeParameters[ProceduralFace::WhichEye::Left] == procFace.GetParameters(ProceduralFace::WhichEye::Left) &&
-            previousEyeParameters[ProceduralFace::WhichEye::Right] == procFace.GetParameters(ProceduralFace::WhichEye::Right)) {
+        static ProceduralFace previousFace;
+        if (previousFace == procFace) {
           return;
         }
-
-        previousEyeParameters[ProceduralFace::WhichEye::Left] = procFace.GetParameters(ProceduralFace::WhichEye::Left);
-        previousEyeParameters[ProceduralFace::WhichEye::Right] = procFace.GetParameters(ProceduralFace::WhichEye::Right);
+        previousFace = procFace;
       }
 
       DEV_ASSERT(_context != nullptr, "AnimationStreamer.BufferFaceToSend.NoContext");
       DEV_ASSERT(_context->GetRandom() != nullptr, "AnimationStreamer.BufferFaceToSend.NoRNGinContext");
 
       if(kProcFace_OverrideEyeParams) {
-        static bool overrideInit = false;
-        if (!overrideInit) {
-          s_faceDataOverride.RegisterFaceWithConsoleVars();
-          kProcFace_OverrideReset = true;
-          overrideInit = true;
+        if(s_faceDataReset) {
+          s_faceDataOverride = s_faceDataBaseline = procFace;
+          ProceduralFace::SetHue(ProceduralFace::DefaultHue);
+
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_DefaultScanlineOpacity");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NominalEyeSpacing");
+
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_NoiseFraction");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_UseAntiAliasedLines");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowSizeMultiplier");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_EyeBrightnessMultiplier");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GlowBrightnessMultiplier");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_RenderInnerOuterGlow");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_InnerGlowFrac");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_ApplyGlowFilter");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_GaussianGlowFilter");
+          NativeAnkiUtilConsoleResetValueToDefault("ProcFace_AntiAliasingSize");
+
+          s_faceDataReset = false;
         }
 
-        if(kProcFace_OverrideReset) {
-          s_faceDataOverride = procFace;
-          kProcFace_OverrideReset = false;
-        } else {
-          if(kProcFace_OverrideRightEyeParams) {
-            s_faceDataOverride.SetParameters(ProceduralFace::WhichEye::Right,
-                                             s_faceDataOverride.GetParameters(ProceduralFace::WhichEye::Left));
+        // compare override face data with baseline, if different update the rendered face
+
+        ProceduralFace newProcFace = procFace;
+
+        // for each eye parameter
+        if(kProcFace_OverrideRightEyeParams) {
+          s_faceDataOverride.SetParameters(ProceduralFace::WhichEye::Right, s_faceDataOverride.GetParameters(ProceduralFace::WhichEye::Left));
+        }
+        for(auto whichEye : {ProceduralFace::WhichEye::Left, ProceduralFace::WhichEye::Right}) {
+          for (std::underlying_type<ProceduralFace::Parameter>::type iParam=0;
+               iParam < Util::EnumToUnderlying(ProceduralFace::Parameter::NumParameters);
+               ++iParam) {
+            if(s_faceDataOverride.GetParameter(whichEye, (ProceduralFace::Parameter)iParam) !=
+               s_faceDataBaseline.GetParameter(whichEye, (ProceduralFace::Parameter)iParam)) {
+              newProcFace.SetParameter(whichEye,
+                                       (ProceduralFace::Parameter)iParam,
+                                       s_faceDataOverride.GetParameter(whichEye, (ProceduralFace::Parameter)iParam));
+            }
           }
         }
 
-        s_faceDataOverride.SetFaceAngle(kProcFace_Angle_deg);
-        s_faceDataOverride.SetFaceScale({kProcFace_ScaleX, kProcFace_ScaleY});
-        s_faceDataOverride.SetFacePosition({kProcFace_CenterX, kProcFace_CenterY});
-        s_faceDataOverride.SetScanlineOpacity(kProcFace_ScanlineOpacity);
+        // for each face parameter
+        if(s_faceDataOverride.GetFaceAngle() != s_faceDataBaseline.GetFaceAngle()) {
+          newProcFace.SetFaceAngle(s_faceDataOverride.GetFaceAngle());
+        }
+        if(s_faceDataOverride.GetFaceScale()[0] != s_faceDataBaseline.GetFaceScale()[0] ||
+           s_faceDataOverride.GetFaceScale()[1] != s_faceDataBaseline.GetFaceScale()[1]) {
+          newProcFace.SetFaceScale(s_faceDataOverride.GetFaceScale());
+        }
+        if(s_faceDataOverride.GetFacePosition()[0] != s_faceDataBaseline.GetFacePosition()[0] ||
+           s_faceDataOverride.GetFacePosition()[1] != s_faceDataBaseline.GetFacePosition()[1]) {
+          newProcFace.SetFacePosition(s_faceDataOverride.GetFacePosition());
+        }
+        if(s_faceDataOverride.GetScanlineOpacity() != s_faceDataBaseline.GetScanlineOpacity()) {
+          newProcFace.SetScanlineOpacity(s_faceDataOverride.GetScanlineOpacity());
+        }
 
-        ProceduralFaceDrawer::DrawFace(s_faceDataOverride, *_context->GetRandom(), _faceDrawBuf);
+        ProceduralFaceDrawer::DrawFace(newProcFace, *_context->GetRandom(), _faceDrawBuf);
       } else {
         ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), _faceDrawBuf);
       }
@@ -597,7 +653,7 @@ namespace Cozmo {
     BufferFaceToSend(_faceDrawBuf);
   }
   
-  void AnimationStreamer::BufferFaceToSend(Vision::ImageRGB565& faceImg565, bool allowOverlay)
+  void AnimationStreamer::BufferFaceToSend(Vision::ImageRGB565& faceImg565)
   {
     DEV_ASSERT_MSG(faceImg565.GetNumCols() == FACE_DISPLAY_WIDTH &&
                    faceImg565.GetNumRows() == FACE_DISPLAY_HEIGHT,
@@ -607,15 +663,28 @@ namespace Cozmo {
                    FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
     
 
-    // Draw red square in corner of face if thermal throttling
+#if ANKI_DEV_CHEATS
+    // Draw red square in corner of face if thermal issues
+    const bool isCPUThrottling = OSState::getInstance()->IsCPUThrottling();
+    auto tempC = OSState::getInstance()->GetTemperature_C();
+    const bool tempExceedsAlertThreshold = tempC >= kThermalAlertTemp_C;
+    const bool tempExceedsThrottlingThreshold = tempC >= kThermalThrottlingMinTemp_C;
     if (kDisplayThermalThrottling && 
-        allowOverlay &&
-        OSState::getInstance()->IsThermalThrottling()) {
+        ((isCPUThrottling && tempExceedsThrottlingThreshold) || (tempExceedsAlertThreshold)) ) {
 
-      const Rectangle<f32> rect( 0, 0, 20, 20);
-      const ColorRGBA pixel(1.f, 0.f, 0.f);
-      faceImg565.DrawFilledRect(rect, pixel);
+      // Draw square if CPU is being throttled
+      const ColorRGBA alertColor(1.f, 0.f, 0.f);
+      if (isCPUThrottling) {
+        const Rectangle<f32> rect( 0, 0, 20, 20);
+        faceImg565.DrawFilledRect(rect, alertColor);
+      }
+
+      // Display temperature
+      const std::string tempStr = std::to_string(tempC) + "C";
+      const Point2f position(25, 25);
+      faceImg565.DrawText(position, tempStr, alertColor, 1.f);
     }
+#endif
 
     FaceDisplay::getInstance()->DrawToFace(faceImg565);
   }
@@ -729,25 +798,6 @@ namespace Cozmo {
                                               layeredKeyFrames,
                                               false);
       
-//      // If we have audio to send
-//      if(layeredKeyFrames.haveAudioKeyFrame)
-//      {
-//        BufferMessageToSend(new RobotInterface::EngineToRobot(std::move(layeredKeyFrames.audioKeyFrame)));
-//      }
-//      // Otherwise we don't have an audio keyframe so send silence
-//      else
-//      {
-//        BufferMessageToSend(new RobotInterface::EngineToRobot(AnimKeyFrame::AudioSilence()));
-//      }
-      
-//      // If we haven't sent the start of animation yet do so now (after audio)
-//      if(!_startOfAnimationSent)
-//      {
-//        IncrementTagCtr();
-//        _tag = _tagCtr;
-//        SendStartOfAnimation();
-//      }  
-      
       // If we have backpack keyframes to send
       if(layeredKeyFrames.haveBackpackKeyFrame)
       {
@@ -757,7 +807,8 @@ namespace Cozmo {
       }
       
       // If we have face keyframes to send
-      if(layeredKeyFrames.haveFaceKeyFrame)
+      const bool shouldDrawFaceLayer = BaseStationTimer::getInstance()->GetCurrentTimeStamp() > _nextProceduralFaceAllowedTime_ms;
+      if(layeredKeyFrames.haveFaceKeyFrame && shouldDrawFaceLayer)
       {
         BufferFaceToSend(layeredKeyFrames.faceKeyFrame.GetFace());
       }
@@ -767,13 +818,6 @@ namespace Cozmo {
       // relative to the same start time.
       _streamingTime_ms += ANIM_TIME_STEP_MS;
     }
-    
-//    // If we just finished buffering all the layers, send an end of animation message
-//    if(_startOfAnimationSent &&
-//       !_trackLayerComponent->HaveLayersToSend() &&
-//       !_endOfAnimationSent) {
-//      lastResult = SendEndOfAnimation();
-//    }
     
     return lastResult;
   }// StreamLayers()
@@ -912,10 +956,8 @@ namespace Cozmo {
         
         if (gotImage) {
           DEBUG_STREAM_KEYFRAME_MESSAGE("FaceAnimation");
-          BufferFaceToSend(_faceDrawBuf, false);  // Don't overwrite FaceAnimationKeyFrame images
-        } else {
-          PRINT_NAMED_ERROR("AnimationStreamer.UpdateStream", "%s: Failed retrieving face image.",
-                            anim->GetName().c_str());
+          BufferFaceToSend(_faceDrawBuf);
+          _nextProceduralFaceAllowedTime_ms = currTime_ms + kMinTimeBetweenLastNonProcFaceAndNextProcFace_ms;
         }
 
         if(faceKeyFrame.IsDone()) {
@@ -974,8 +1016,6 @@ namespace Cozmo {
   
   Result AnimationStreamer::Update()
   {
-    ANKI_CPU_PROFILE("AnimationStreamer::Update");
-    
     Result lastResult = RESULT_OK;
     
     bool streamUpdated = false;

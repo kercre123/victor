@@ -23,13 +23,25 @@ static const char* OPTIONAL_DECLARATOR        = "optional";
 
 
 //------------------------------------------------------------------------------------------------------------------------------
-IConsoleFunction::IConsoleFunction( const std::string& keystring, ConsoleFunc function, const char* categoryName, const std::string& args )
-  : function_( function )
+IConsoleFunction::IConsoleFunction( const std::string& keystring,
+                                    std::function<void(ConsoleFunctionContextRef)>&& function,
+                                    const char* categoryName,
+                                    const std::string& args )
+  : function_( std::move(function) )
   , id_(keystring)
   , category_(categoryName)
 {
   ParseFunctionSignature( args );
   Anki::Util::ConsoleSystem::Instance().Register( keystring, this  );
+}
+  
+//------------------------------------------------------------------------------------------------------------------------------
+IConsoleFunction::IConsoleFunction( const std::string& keystring, ConsoleFunc function, const char* categoryName, const std::string& args )
+  : IConsoleFunction( keystring,
+                      [function](ConsoleFunctionContextRef c) { if( function != nullptr ) { function(c); } },
+                      categoryName,
+                      args )
+{
 }
 
 //------------------------------------------------------------------------------------------------------------------------------

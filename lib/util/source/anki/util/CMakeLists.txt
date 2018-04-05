@@ -21,13 +21,11 @@ target_include_directories(util
 set (PLATFORM_LIBS "")
 
 if (ANDROID)
-  set(PLATFORM_LIBS android log)
+  set(PLATFORM_LIBS log)
 elseif (MACOSX)
   find_library(FOUNDATION Foundation)
   set(PLATFORM_LIBS ${FOUNDATION})
 endif()
-
-android_strip(TARGET util)
 
 target_link_libraries(util
   # anki libs

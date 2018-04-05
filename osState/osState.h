@@ -54,29 +54,33 @@ public:
   // ever care about CPU freq and temperature.
   void SetUpdatePeriod(uint32_t milliseconds);
 
-  // Returns true if cpu freq falls below kNominalCPUFreq_kHz
-  // Asserts if update rate is 0
-  bool IsThermalThrottling() const;
+  // Returns true if CPU frequncy falls below kNominalCPUFreq_kHz
+  bool IsCPUThrottling() const;
+
+  // Reads the current CPU frequency and returns it
+  uint32_t UpdateCPUFreq_kHz() const;
+
+  // Reads the temperature in Celsius and returns it
+  uint32_t UpdateTemperature_C() const;
 
   // Returns current CPU frequency
   // Asserts if update rate is 0
   uint32_t GetCPUFreq_kHz() const;
   
-  // Returns temperature in milli-Celsius
+  // Returns temperature in Celsius
   // Asserts if update rate is 0
-  uint32_t GetTemperature_mC() const;
+  uint32_t GetTemperature_C() const;
 
   // Returns our ip address
-  const std::string& GetIPAddress()
-  {
-    if(_ipAddress.empty())
-    {
-      _ipAddress = GetIPAddressInternal();
-    }
+  const std::string& GetIPAddress(bool update = false);
 
-    return _ipAddress;
-  }
+  // Returns the SSID of the connected wifi network
+  const std::string& GetSSID(bool update = false);
 
+  // Returns our mac address
+  std::string GetMACAddress() const;
+
+  // Returns the ESN (electronic serial number) as a u32
   u32 GetSerialNumber()
   {
     const std::string& serialNum = GetSerialNumberAsString();
@@ -88,24 +92,34 @@ public:
     return 0;
   }
 
+  // Returns the ESN (electronic serial number) as a string
   const std::string& GetSerialNumberAsString();
 
-  u32 GetOSBuildNumber();
+  // Returns the os build version (time of build)
+  const std::string& GetOSBuildVersion();
+
+  // Returns the semi-unique name of this robot, Vector_XYXY
+  // Where X is a letter and Y is a digit
+  // The name can change over the lifetime of the robot
+  std::string GetRobotName() const;
+  
+  // Returns whether or not the robot has booted in recovery mode
+  // which is done by holding the backpack button down for ~12 seconds
+  // while robot is on charger
+  bool IsInRecoveryMode();
 
 private:
   // private ctor
   OSState();
 
-  std::string GetIPAddressInternal();
-
-  // Executes the provided command and returns the output as a string
-  std::string ExecCommand(const char* cmd);
+  void UpdateWifiInfo();
   
   uint32_t kNominalCPUFreq_kHz = 800000;
 
   std::string _ipAddress       = "";
+  std::string _ssid            = "";
   std::string _serialNumString = "";
-  u32         _osBuildNum      = 0;
+  std::string _osBuildVersion  = "";
 
 }; // class OSState
   

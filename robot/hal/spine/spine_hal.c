@@ -12,6 +12,8 @@
 #include "spine_crc.h"
 #include "spine_hal.h"
 
+
+
 #define SKIP_CRC_CHECK 0
 
 #define SPINE_MAX_BYTES 1280
@@ -87,6 +89,8 @@ SpineErr hal_serial_open(const char* devicename, long baudrate)
       hal_serial_close();
       return spine_error(err_TERMIOS_FAIL, "tcgetattr() failed");
     }
+
+
 //?    memcpy(gHal.oldcfg,cfg,sizeof(gHal.oldcfg)); //make backup;
 
     cfmakeraw(&cfg);
@@ -97,10 +101,12 @@ SpineErr hal_serial_open(const char* devicename, long baudrate)
 
     LOGD("configuring port %s (fd=%d)", devicename, gHal.fd);
 
+
     if (tcsetattr(gHal.fd, TCSANOW, &cfg)) {
       hal_serial_close();
       return spine_error(err_TERMIOS_FAIL, "tcsetattr() failed");
     }
+
   }
   spine_debug("serial port OK\n");
   return err_OK;
@@ -113,7 +119,7 @@ int hal_serial_read(uint8_t* buffer, int len)   //->bytes_recieved
   int result = read(gHal.fd, buffer, len);
   if (result < 0) {
     if (errno == EAGAIN) { //nonblocking no-data
-      usleep(200); //wait a bit.
+      usleep(HAL_SERIAL_POLL_INTERVAL_US); //wait a bit.
       result = 0; //not an error
     }
   }
@@ -236,9 +242,17 @@ SpineErr hal_init(const char* devicename, long baudrate)
 {
   gHal.errcount = 0;
   gHal.fd = 0;
-  return hal_serial_open(devicename, baudrate);
+  SpineErr r = hal_serial_open(devicename, baudrate);
+#ifdef SPINE_TTY_LEGACY
+  if ((r == err_TERMIOS_FAIL) || (r == err_CANT_OPEN_FILE)) {
+    if (strncmp(devicename, SPINE_TTY, strlen(SPINE_TTY)) == 0) {
+      // If we're running on an old OS version, try the legacy ttyHSL1 device
+      r = hal_serial_open(SPINE_TTY_LEGACY, baudrate);
+    }
+  }
+#endif
+  return r;
 }
-
 
 
 // Scan the whole payload for sync, to recover after dropped bytes,
@@ -347,21 +361,30 @@ const struct SpineMessageHeader* hal_read_frame()
 }
 
 
-//pulls off frames until it gets one of matching type
+//pulls out frames
+const void* hal_get_next_frame(int32_t timeout_ms) {
+  timeout_ms *= 1000 / HAL_SERIAL_POLL_INTERVAL_US;
+  const struct SpineMessageHeader* hdr;
+  do {
+    if (timeout_ms>0 && --timeout_ms==0) {
+      LOGE("TIMEOUT in hal_get_next_frame() TIMEOUT");
+      return NULL;
+    }
+    hdr = hal_read_frame();
+  } while (!hdr);
+  return hdr;
+}
 
 const void* hal_get_frame(uint16_t type, int32_t timeout_ms)
 {
-  timeout_ms *= 5;
-  const struct SpineMessageHeader* hdr;
-  do {
-    hdr = hal_read_frame();
-    if (timeout_ms>0 && --timeout_ms==0) {
-      LOGE("TIMEOUT in hal_get_frame() TIMEOUT");
-      return NULL;
+  while (1) {
+    const struct SpineMessageHeader* hdr;
+    hdr = hal_get_next_frame(timeout_ms);
+    if (!hdr || hdr->payload_type == type) {
+      return hdr;
     }
   }
-  while (!hdr || hdr->payload_type != type);
-  return hdr;
+  return NULL;
 }
 
 const void* hal_wait_for_frame(uint16_t type)

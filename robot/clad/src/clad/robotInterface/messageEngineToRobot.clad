@@ -19,6 +19,8 @@
 #include "clad/types/proxMessages.clad"
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/robotTestModes.clad"
+#include "clad/types/sayTextStyles.clad"
+#include "clad/types/switchboardToRobot.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -195,6 +197,11 @@ message SyncTime
   float_32 driveCenterOffset
 }
 
+// Tells syscon to pull the plug
+message Shutdown
+{
+}
+
 message ControllerGains
 {
   float_32 kp,
@@ -281,7 +288,7 @@ message SetDefaultKeepFaceAliveParameters
 {
 }
 
-message SetKeepFaceAliveParameter 
+message SetKeepFaceAliveParameter
 {
   float_32               value,
   KeepFaceAliveParameter param,
@@ -309,8 +316,8 @@ message RemoveEyeShift
 
 message AddSquint
 {
-  float_32 squintScaleX, 
-  float_32 squintScaleY, 
+  float_32 squintScaleX,
+  float_32 squintScaleY,
   float_32 upperLidAngle,
   string name,
 }
@@ -353,6 +360,11 @@ message SetBackpackLights
   uint_8 layer = 0      // 0 is BPL_USER
 }
 
+message SetSystemLight
+{
+  LightState light
+}
+
 message StartRecordingMics
 {
   uint_32 duration_ms,
@@ -378,7 +390,7 @@ message DrawTextOnScreen
 }
 
 // DisplayProceduralFace
-message DisplayProceduralFace 
+message DisplayProceduralFace
 {
     ProceduralFaceParameters  faceParams,
     uint_32                   duration_ms     // Use uint_32 max value to keep the image on the screen
@@ -396,7 +408,7 @@ message SetFaceHue
 // Bit-image: one bit for each of 184x96 pixels = 2208 bytes
 // If index == 0, this is the top half of the image
 // If index == 1, this is the bottom half of the image
-// Image is actually drawn when index == 1 as long as the associated 
+// Image is actually drawn when index == 1 as long as the associated
 // top half (i.e. index == 0) message with matching tag was received.
 // The duration_ms that is actually used is whichever last image half
 // is sent. Just make sure they're the same for both halves!
@@ -439,12 +451,12 @@ message RunDebugConsoleFuncMessage {
 //
 // Sent from engine to robot (anim process) to initiate TTS
 //
-// TODO VIC-610: Additional TTS params
-//
 message TextToSpeechStart {
-  
-  uint_8 ttsID, // ID of utterance
-  string text   // Text to be pronounced
+  float_32 durationScalar, // Duration adjustment
+  float_32 pitchScalar,    // Pitch adjustment
+  SayTextVoiceStyle style, // Audio processing style
+  uint_8 ttsID,            // ID of utterance
+  string text              // Text to be pronounced
 }
 
 //
@@ -484,6 +496,7 @@ union EngineToRobot
   // Init
   GetManufacturingInfo          getMfgInfo                  = 0x01,
   SyncTime                      syncTime                    = 0x02,
+  Shutdown                      shutdown                    = 0x03,
 
   // Debug / Test
   StartControllerTestMode       startControllerTestMode     = 0x0A,
@@ -502,13 +515,14 @@ union EngineToRobot
   SetBodyAngle                  setBodyAngle                = 0x17,
   TurnInPlaceAtSpeed            turnInPlaceAtSpeed          = 0x18,
   RecordHeading                 recordHeading               = 0x19,
-  TurnToRecordedHeading         turnToRecordedHeading       = 0x1A,  
-  EnableMotorPower              enableMotorPower            = 0x1B,    
+  TurnToRecordedHeading         turnToRecordedHeading       = 0x1A,
+  EnableMotorPower              enableMotorPower            = 0x1B,
   StopAllMotors                 stop                        = 0x1C,
 
   // Lights
   BackpackSetLayer              setBackpackLayer            = 0x1D,
   SetBackpackLights             setBackpackLights           = 0x1E,
+  SetSystemLight                setSystemLight              = 0x1F,
 
   // Path messages
   ClearPath                     clearPath                   = 0x20,
@@ -524,21 +538,21 @@ union EngineToRobot
   PlaceObjectOnGround           placeObjectOnGround         = 0x28,
   DockingErrorSignal            dockingErrorSignal          = 0x2A,
   CarryStateUpdate              setCarryState               = 0x2B,
-  CameraFOVInfo                 cameraFOVInfo               = 0x2C,  
+  CameraFOVInfo                 cameraFOVInfo               = 0x2C,
 
   // Localization
   AbsoluteLocalizationUpdate    absLocalizationUpdate       = 0x2D,
-  ForceDelocalizeSimulatedRobot forceDelocalizeSimulatedRobot = 0x2E, // Used for simulation only, no-op for physical  
+  ForceDelocalizeSimulatedRobot forceDelocalizeSimulatedRobot = 0x2E, // Used for simulation only, no-op for physical
 
   // Sensor messages
-  IMURequest                    imuRequest                  = 0x30,  
-  CheckLiftLoad                 checkLiftLoad               = 0x31,  
+  IMURequest                    imuRequest                  = 0x30,
+  CheckLiftLoad                 checkLiftLoad               = 0x31,
   SetCliffDetectThresholds      setCliffDetectThresholds    = 0x32,
 
   // Calibration
   EnableReadToolCodeMode        enableReadToolCodeMode      = 0x33,
   StartMotorCalibration         startMotorCalibration       = 0x34,
-  
+
   // Reactions
   EnableStopOnCliff             enableStopOnCliff           = 0x35,
   EnableBraceWhenFalling        enableBraceWhenFalling      = 0x36,
@@ -577,6 +591,9 @@ union EngineToRobot
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
   TextToSpeechStart             textToSpeechStart           = 0x92,
   TextToSpeechStop              textToSpeechStop            = 0x93,
+
+  SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
+  SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA1,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

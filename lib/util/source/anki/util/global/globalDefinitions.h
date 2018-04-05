@@ -3,7 +3,7 @@
  *
  * Author: raul
  * Created: 07/16/2014
- * 
+ *
  * Description: Global definitions to be included in all or a large amount of files. Keep content to a minimum, please.
  *
  * Copyright: Anki, Inc. 2014
@@ -28,17 +28,20 @@
   #define ANKI_DEV_CHEATS         1
   #define ANKI_PROFILING_ENABLED  1
   #define ANKI_PRIVACY_GUARD      0 // PII displayed in debug logs!!!
+#elif defined(RELEASE)
+  #define ANKI_DEVELOPER_CODE     0
+  #define ANKI_DEV_CHEATS         0
+  #define ANKI_PROFILING_ENABLED  0
+  #define ANKI_PRIVACY_GUARD      1 // PII displayed in non-shipping release logs!!!
 #elif defined(SHIPPING)
   #define ANKI_DEVELOPER_CODE     0
   #define ANKI_DEV_CHEATS         0
   #define ANKI_PROFILING_ENABLED  0
   #define ANKI_PRIVACY_GUARD      1 // PII redacted in shipping logs
-#else // release
-  #define ANKI_DEVELOPER_CODE     0
-  #define ANKI_DEV_CHEATS         1
-  #define ANKI_PROFILING_ENABLED  1
-  #define ANKI_PRIVACY_GUARD      0 // PII displayed in non-shipping release logs!!!
+#else
+  #error "You must define DEBUG, RELEASE, or SHIPPING"
 #endif
+
 
 #if ANKI_DEVELOPER_CODE
   #define ANKI_DEVELOPER_CODE_ONLY(expr)      expr

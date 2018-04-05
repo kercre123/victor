@@ -38,6 +38,10 @@ struct OverheadEdgeFrame;
  */
 class IFeaturesExtractor {
 public:
+
+  /* Base class should declare a virtual destructor so derived class destructors will be called by delete */
+  virtual ~IFeaturesExtractor() = default;
+
   /**
    * Extract features from a single pixel in the image in position (row, col)
    * @return the features
@@ -102,7 +106,7 @@ template<typename T1, typename T2>
 void CVMatToVector(const cv::Mat& mat, std::vector<std::vector<T2>>& vec)
 {
   DEV_ASSERT(mat.type() == cv::DataType<T1>::type, "CVMatToVector.WrongMatrixType");
-  DEV_ASSERT(mat.channels() == 1, "CVMatToVector.WrongNuberOfChannels");
+  DEV_ASSERT(mat.channels() == 1, "CVMatToVector.WrongNumberOfChannels");
 
   int nRows = mat.rows;
   int nCols = mat.cols;
@@ -124,7 +128,7 @@ void CVMatToVector(const cv::Mat& mat, std::vector<T2>& vec)
 {
   DEV_ASSERT(mat.type() == cv::DataType<T1>::type, "CVMatToVector.WrongMatrixType");
   DEV_ASSERT(mat.rows == 1, "CVMatToVector.OnlySingleRowAllowed");
-  DEV_ASSERT(mat.channels() == 1, "CVMatToVector.WrongNuberOfChannels");
+  DEV_ASSERT(mat.channels() == 1, "CVMatToVector.WrongNumberOfChannels");
 
   int nCols = mat.cols;
   vec = std::vector<T2>(nCols);
@@ -154,7 +158,7 @@ public:
                 DebugImageList <Vision::ImageRGB>& debugImageRGBs,
                 std::list<OverheadEdgeFrame>& outEdges);
 
-  bool IsInitizialized() const {
+  bool IsInitialized() const {
     return _initialized;
   }
 

@@ -1,0 +1,76 @@
+// File: userIntent.clad
+// Author: Brad Neuman
+// Created: 2018-02-04
+// Copyright: Anki, inc. 2018
+
+namespace Anki {
+namespace Cozmo {
+
+structure UserIntent_Void
+{ 
+}
+
+structure UserIntent_MeetVictor
+{
+  string username,
+}
+
+structure UserIntent_PlaySpecific
+{
+  string entity_behavior,
+}
+
+structure UserIntent_TimeInSeconds
+{
+  uint_32 time_s
+}
+
+// test structs. todo: get rid of these in favor of actual structs once
+// there are legit user intents. tests can use the actual structs
+enum uint_8 UserIntent_Test_Time_Units
+{
+  s=0,
+  m
+}
+structure UserIntent_Test_TimeWithUnits
+{
+  uint_32 time,
+  UserIntent_Test_Time_Units units,
+}
+
+structure UserIntent_Test_Name
+{
+  string name
+}
+
+union dupes_allowed UserIntent
+{
+  UserIntent_Void unmatched_intent,
+
+  // PLEASE KEEP ALPHABETIZED 
+  // thank you in advance for caring
+
+  UserIntent_Void greeting_goodbye,
+  UserIntent_Void greeting_hello,
+  UserIntent_Void imperative_come,
+  UserIntent_Void imperative_quiet,
+  UserIntent_MeetVictor meet_victor, 
+  UserIntent_Void play_anytrick,
+  UserIntent_PlaySpecific play_specific,
+  UserIntent_TimeInSeconds set_timer,
+  UserIntent_Void system_charger,
+  UserIntent_Void status_feeling,
+  UserIntent_Void system_sleep,
+  UserIntent_Void system_wake,
+
+
+  // for tests
+  UserIntent_Void test_SEPARATOR, // used for validation to know when the above ends
+  UserIntent_Void test_user_intent_1,
+  UserIntent_Void test_user_intent_2,
+  UserIntent_Test_Name test_name,
+  UserIntent_Test_TimeWithUnits test_timeWithUnits,
+}
+
+} // namespace Cozmo
+} // namespace Anki

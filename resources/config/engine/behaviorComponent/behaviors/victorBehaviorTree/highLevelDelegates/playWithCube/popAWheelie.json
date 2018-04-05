@@ -1,7 +1,6 @@
 {
   "behaviorClass": "PopAWheelie",
   "behaviorID": "PopAWheelie",
-  "needsActionID": "PopAWheelie",
   "displayNameKey":"behavior.PopAWheelie",
   "requiredUnlockId": "PopAWheelieAction",
   "shouldHandleConfirmedObject": false,

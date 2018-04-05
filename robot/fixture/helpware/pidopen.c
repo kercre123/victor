@@ -9,10 +9,12 @@
 #include "core/clock.h"
 
 
-#define SHELLNAME "/system/bin/sh"
+#define SHELLNAME "/bin/sh"
+
+#define MAX_ARGS 16+3
 
 
-int pidopen(const char* processname, pid_t* pid_out)
+int pidopen(const char* processname, const char* argstr, pid_t* pid_out)
 {
   pid_t pid = 0;
   int pipefd[2];
@@ -21,10 +23,22 @@ int pidopen(const char* processname, pid_t* pid_out)
   pid = fork(); //span a child process
   if (pid == 0)
   {
+    //space separate argstr into args array
+    char* argcopy = strdup(argstr); //make a writeable copy
+    char* args[MAX_ARGS];
+
+    args[0]= SHELLNAME;
+    args[1] = (char*)processname;
+    char** ap = &args[2];
+    while (ap < &args[MAX_ARGS] && (*ap = strsep(&argcopy, " ")) != NULL) {
+      if (**ap != '\0') { ap++; }
+    }
+    free(argcopy);
+
     // Child. redirect std output to pipe, launch script
     close(pipefd[0]);
     dup2(pipefd[1], STDOUT_FILENO);
-    execl(SHELLNAME, SHELLNAME, processname, NULL);
+    execv(SHELLNAME, args);
   }
   //Only parent gets here. make tail nonblocking and return;
   *pid_out = pid;

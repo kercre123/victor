@@ -84,11 +84,11 @@ public:
   virtual bool HasContentType(EContentType type) const override;
   
   // Broadcast the memory map
-  virtual void GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const override { _quadTree.GetBroadcastInfo(info); }
+  virtual void GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const override;
 
   // get the timestamp the QT was last measured (we can update the QT with a new timestamp even if the content
   // does not change)
-  virtual TimeStamp_t GetLastChangedTimeStamp() const override {return _quadTree.GetRootNodeContent().data->GetLastObservedTime();}
+  virtual TimeStamp_t GetLastChangedTimeStamp() const override {return _quadTree.GetRootNodeData()->GetLastObservedTime();}
 
 private:
 

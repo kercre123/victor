@@ -2,12 +2,9 @@ package cloudproc
 
 import (
 	"anki/chipper"
-	"anki/ipc"
 	"anki/util"
 	"fmt"
-	"strings"
-	"sync"
-	"time"
+	"io"
 
 	"github.com/google/uuid"
 )
@@ -18,6 +15,8 @@ const (
 )
 
 var (
+	// ChipperSecret should be baked in at build time and serves as the access
+	// key for Chipper use
 	ChipperSecret string
 	verbose       bool
 )
@@ -27,204 +26,164 @@ type socketMsg struct {
 }
 
 const (
-	ChunkHz        = 10                              // samples every 100ms
-	SampleRate     = 16000                           // audio sample rate
-	SampleBits     = 16                              // size of each sample
-	ChunkSamples   = SampleRate / ChunkHz            // how many samples are in each chunk
-	StreamSize     = ChunkSamples * (SampleBits / 8) // how many bytes will be sent per stream
-	HotwordMessage = "hotword"                       // message that signals to us the hotword was triggered
+	// ChunkHz defines how many times per second samples should be sent
+	ChunkHz = 10
+	// SampleRate defines how many samples per second should be sent
+	SampleRate = 16000
+	// SampleBits defines how many bits each sample should contain
+	SampleBits = 16
+	// ChunkSamples is the number of samples that should be in each chunk
+	ChunkSamples = SampleRate / ChunkHz
+	// StreamSize is the size in bytes of each chunk
+	StreamSize = ChunkSamples * (SampleBits / 8)
+	// HotwordMessage is the sequence of bytes that defines a hotword signal over IPC
+	HotwordMessage = "hotword"
 )
 
-// reads messages from a socket and places them on the channel
-func socketReader(s ipc.Conn, ch chan<- socketMsg, kill <-chan struct{}) {
-	for {
-		if util.CanSelect(kill) {
-			return
-		}
+// Process contains the data associated with an instance of the cloud process,
+// and can have receivers and callbacks associated with it before ultimately
+// being started with Run()
+type Process struct {
+	receivers []*Receiver
+	intents   []io.Writer
+	kill      chan struct{}
+	hotword   chan struct{}
+	audio     chan socketMsg
+}
 
-		buf := s.ReadBlock()
-		if buf != nil && len(buf) > 0 {
-			ch <- socketMsg{buf}
-		}
+// AddReceiver adds the given Receiver to the list of sources the
+// cloud process will listen to for data
+func (p *Process) AddReceiver(r *Receiver) {
+	if p.receivers == nil {
+		p.receivers = make([]*Receiver, 0, 4)
 	}
-}
-
-type voiceContext struct {
-	client      *chipper.Client
-	samples     []byte
-	audioStream chan []byte
-	once        sync.Once
-}
-
-func (ctx *voiceContext) addSamples(samples []byte) {
-	ctx.samples = append(ctx.samples, samples...)
-	if len(ctx.samples) >= StreamSize {
-		// we have enough samples to stream - slice them off and pass them to another
-		// thread for sending to server
-		samples := ctx.samples[:StreamSize]
-		ctx.samples = ctx.samples[StreamSize:]
-		ctx.audioStream <- samples
+	if p.kill == nil {
+		p.kill = make(chan struct{})
 	}
+	if len(p.receivers) == 0 {
+		p.hotword = r.hotword
+		p.audio = r.audio
+	} else {
+		if len(p.receivers) == 1 {
+			p.hotword = make(chan struct{})
+			p.audio = make(chan socketMsg)
+			p.addMultiplexRoutine(p.receivers[0])
+		}
+		p.addMultiplexRoutine(r)
+	}
+	p.receivers = append(p.receivers, r)
 }
 
-func (ctx *voiceContext) close() error {
-	return ctx.client.Close()
-}
-
-func newVoiceContext(client *chipper.Client, cloudChan chan<- string) *voiceContext {
-	audioStream := make(chan []byte, 10)
-	ctx := &voiceContext{
-		client:      client,
-		samples:     make([]byte, 0, StreamSize*2),
-		audioStream: audioStream}
-
+func (p *Process) addMultiplexRoutine(r *Receiver) {
 	go func() {
-		for data := range ctx.audioStream {
-			stream(ctx, data, cloudChan)
+		for {
+			select {
+			case <-p.kill:
+				return
+			case <-r.hotword:
+				p.hotword <- struct{}{}
+			case msg := <-r.audio:
+				p.audio <- msg
+			}
 		}
 	}()
-
-	return ctx
 }
 
-func stream(ctx *voiceContext, samples []byte, cloudChan chan<- string) {
-	callStart := time.Now()
-	err := ctx.client.SendAudio(samples)
-	if err != nil {
-		fmt.Println("Cloud error:", err)
-		return
+// AddIntentWriter adds the given Writer to the list of writers that will receive
+// intents from the cloud
+func (p *Process) AddIntentWriter(w io.Writer) {
+	if p.intents == nil {
+		p.intents = make([]io.Writer, 0, 4)
 	}
-	logVerbose("Sent", len(samples), "bytes to Chipper (call took",
-		time.Now().Sub(callStart).Nanoseconds()/int64(time.Millisecond/time.Nanosecond),
-		"ms)")
-
-	// set up response routine if this is the first stream
-	ctx.once.Do(func() {
-		go func() {
-			resp, err := ctx.client.WaitForIntent()
-			if err != nil {
-				fmt.Println("CCE error:", err)
-				cloudChan <- ""
-				return
-			}
-			fmt.Println("Intent response ->", resp)
-			cloudChan <- resp.Action
-		}()
-	})
+	p.intents = append(p.intents, w)
 }
 
-// bufToGoString converts byte buffers that may be null-terminated if created in C
-// to Go strings by trimming off null chars
-func bufToGoString(buf []byte) string {
-	return strings.Trim(string(buf), "\x00")
-}
-
-// SetVerbose enables or disables verbose logging
-func SetVerbose(value bool) {
-	verbose = value
-}
-
-// RunProcess starts the cloud process, which will read data when available
-// from the given mic connection and pass resulting intents to the given AI
-// connection until the given stop channel is triggered
-func RunProcess(micSock ipc.Conn, aiSock ipc.Conn, testChan chan []byte, stop <-chan struct{}) {
+// Run starts the cloud process, which will run until stopped on the given channel
+func (p *Process) Run(stop <-chan struct{}) {
 	if verbose {
 		fmt.Println("Verbose logging enabled")
 	}
-	micChan := make(chan socketMsg)
-	killreader := make(chan struct{})
-	go socketReader(micSock, micChan, killreader)
-	defer close(killreader)
-
-	// if testSock is provided, multiplex it with the mic channel
-	var audioChan chan socketMsg
-	if testChan != nil {
-		audioChan = make(chan socketMsg)
-		go func() {
-			for {
-				select {
-				case msg := <-micChan:
-					audioChan <- msg
-				case msg := <-testChan:
-					audioChan <- socketMsg{msg}
-				case <-killreader:
-					return
-				}
-			}
-		}()
-	} else {
-		audioChan = micChan
-	}
 
 	cloudChan := make(chan string)
-
-	var chipperConn *chipper.Conn
-	var err error
-	connTime := util.TimeFuncMs(func() {
-		chipperConn, err = chipper.NewConn(ChipperURL, ChipperSecret, "device-id")
-	})
-	if err != nil {
-		fmt.Println("Error getting chipper connection:", err)
-		return
-	}
-	logVerbose("Created Chipper connection in", connTime, "ms")
-	defer chipperConn.Close()
 
 	var ctx *voiceContext
 procloop:
 	for {
 		select {
-		case msg := <-audioChan:
-			// handle mic messages: hotword = get ready to stream data, otherwise add samples to
-			// our buffer
-			if bufToGoString(msg.buf) == HotwordMessage {
-				if ctx != nil {
-					fmt.Println("Got hotword event while already streaming, weird...")
-				}
-				var err error
-				var client *chipper.Client
-
-				ctxTime := util.TimeFuncMs(func() {
-					client, err = chipperConn.NewClient(uuid.New().String()[:16])
-				})
-
+		case <-p.hotword:
+			// hotword = get ready to stream data
+			if ctx != nil {
+				fmt.Println("Got hotword event while already streaming, weird...")
+			}
+			var stream *chipper.Stream
+			var chipperConn *chipper.Conn
+			var err error
+			ctxTime := util.TimeFuncMs(func() {
+				chipperConn, err = chipper.NewConn(ChipperURL, ChipperSecret, "device-id")
 				if err != nil {
-					fmt.Println("Error creating Chipper:", err)
-					continue
+					fmt.Println("Error getting chipper connection:", err)
+					return
 				}
+				stream, err = chipperConn.NewStream(chipper.StreamOpts{
+					SessionId: uuid.New().String()[:16]})
+			})
+			if err != nil {
+				fmt.Println("Error creating Chipper:", err)
+				continue
+			}
 
-				ctx = newVoiceContext(client, cloudChan)
+			ctx = newVoiceContext(stream, cloudChan)
 
-				logVerbose("Received hotword event, created context in", ctxTime, "ms")
-			} else if ctx != nil {
+			logVerbose("Received hotword event, created context in", int(ctxTime), "ms")
+
+		case msg := <-p.audio:
+			// add samples to our buffer
+			if ctx != nil {
 				logVerbose("Received", len(msg.buf), "bytes from mic")
 				ctx.addSamples(msg.buf)
 			} else {
 				logVerbose("No active context, discarding", len(msg.buf), "bytes")
 			}
+
 		case intent := <-cloudChan:
 			logVerbose("Received intent from cloud:", intent)
 			// we got an answer from the cloud, tell mic to stop...
-			n, err := micSock.Write([]byte{0, 0})
-			if n != 2 || err != nil {
-				fmt.Println("Mic write error:", n, err)
+			for _, r := range p.receivers {
+				n, err := r.writeBack([]byte{0, 0})
+				if n != 2 || err != nil {
+					fmt.Println("Mic write error:", n, err)
+				}
 			}
-			// and send intent to AI (unless it's empty, server error)
-			if intent != "" {
-				n, err := aiSock.Write([]byte(intent))
+
+			if intent == "" {
+				intent = "error"
+			}
+
+			// send intent to AI
+			for _, r := range p.intents {
+				n, err := r.Write([]byte(intent))
 				if n != len(intent) || err != nil {
 					fmt.Println("AI write error:", n, err)
 				}
 			}
+
 			// stop streaming until we get another hotword event
 			close(ctx.audioStream)
 			ctx.close()
 			ctx = nil
 		case <-stop:
 			logVerbose("Received stop notification")
+			if p.kill != nil {
+				close(p.kill)
+			}
 			break procloop
 		}
 	}
+}
+
+// SetVerbose enables or disables verbose logging
+func SetVerbose(value bool) {
+	verbose = value
 }
 
 func logVerbose(a ...interface{}) {

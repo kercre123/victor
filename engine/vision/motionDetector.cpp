@@ -409,7 +409,7 @@ s32 MotionDetector::RatioTest(const Vision::ImageRGB& image, Vision::Image& rati
   
   u32 numAboveThresh = 0;
   
-#ifdef ANDROID
+#ifdef __ARM_NEON__
 
   return RatioTestNeon(image, ratioImg);
 
@@ -449,7 +449,7 @@ s32 MotionDetector::RatioTest(const Vision::Image& image, Vision::Image& ratioIm
   
   s32 numAboveThresh = 0;
 
-#ifdef ANDROID
+#ifdef __ARM_NEON__
 
   return RatioTestNeon(image, ratioImg);
 

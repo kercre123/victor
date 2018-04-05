@@ -23,6 +23,10 @@ void Encoders::init(void) {
     HENCA::mask | HENCB::mask |
     RTENC::mask | LTENC::mask;
 
+  // Enable power to encoder LEDs
+  nVENC_EN::reset();
+  nVENC_EN::mode(MODE_OUTPUT);
+
   // Setup gpio
   LENCA::mode(MODE_INPUT);
   LENCB::mode(MODE_INPUT);
@@ -38,10 +42,10 @@ void Encoders::init(void) {
     SYSCFG_EXTICR1_EXTI2_PB |
     SYSCFG_EXTICR1_EXTI3_PB;
 
-  SYSCFG->EXTICR[3] = 
+  SYSCFG->EXTICR[3] =
     SYSCFG_EXTICR4_EXTI14_PC |
     SYSCFG_EXTICR4_EXTI15_PC;
-  
+
   EXTI->FTSR |= EVENT_MASK;
   EXTI->RTSR |= EVENT_MASK;
   EXTI->IMR  |= EVENT_MASK;
@@ -52,6 +56,14 @@ void Encoders::init(void) {
   NVIC_EnableIRQ(EXTI0_1_IRQn);
   NVIC_EnableIRQ(EXTI2_3_IRQn);
   NVIC_EnableIRQ(EXTI4_15_IRQn);
+}
+
+void Encoders::stop() {
+  NVIC_DisableIRQ(EXTI0_1_IRQn);
+  NVIC_DisableIRQ(EXTI2_3_IRQn);
+  NVIC_DisableIRQ(EXTI4_15_IRQn);
+
+  nVENC_EN::set();
 }
 
 void Encoders::flip(uint32_t* &time_last, int32_t* &delta_last) {

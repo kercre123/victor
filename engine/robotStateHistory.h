@@ -63,6 +63,7 @@ namespace Anki {
       bool WasHeadMoving()     const { return !(_state.status & Util::EnumToUnderlying(RobotStatusFlag::HEAD_IN_POS)); }
       bool WasLiftMoving()     const { return !(_state.status & Util::EnumToUnderlying(RobotStatusFlag::LIFT_IN_POS)); }
       bool WereWheelsMoving()  const { return  (_state.status & Util::EnumToUnderlying(RobotStatusFlag::ARE_WHEELS_MOVING)); }
+      bool WasPickedUp()       const { return  (_state.status & Util::EnumToUnderlying(RobotStatusFlag::IS_PICKED_UP)); }
       bool WasCameraMoving()   const { return  (WasHeadMoving() || WereWheelsMoving()); }
       bool WasProxSensorValid() const { return _wasProxSensorValid; }
       bool WasCliffDetected(CliffSensor sensor) const;

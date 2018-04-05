@@ -26,7 +26,7 @@ class BehaviorReactToMotorCalibration : public ICozmoBehavior
 private:
   using super = ICozmoBehavior;
   
-  friend class BehaviorContainer;
+  friend class BehaviorFactory;
   BehaviorReactToMotorCalibration(const Json::Value& config);
   
 public:  

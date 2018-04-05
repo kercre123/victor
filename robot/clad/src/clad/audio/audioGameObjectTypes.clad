@@ -3,7 +3,7 @@ namespace Anki {
 namespace AudioMetaData {
 
 
-enum uint_32 GameObjectType
+enum uint_64 GameObjectType
 {
 
   Invalid = 0,
@@ -11,13 +11,8 @@ enum uint_32 GameObjectType
   UI,
   SFX,
   CodeLab,
-  Aria,
   Cozmo_OnDevice,
-  CozmoBus_1,
-  CozmoBus_2,
-  CozmoBus_3,
-  CozmoBus_4,
-
+  Cozmo_Listener,
   End, // Need end val so I can enumerate through GameObjects
 
 }

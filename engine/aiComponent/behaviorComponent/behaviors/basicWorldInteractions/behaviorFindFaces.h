@@ -23,8 +23,8 @@ class BehaviorFindFaces : public ICozmoBehavior
 {
 protected:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorFindFaces(const Json::Value& config);
   
 public:

@@ -15,6 +15,7 @@
 #include "osState/osState.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/console/consoleInterface.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
@@ -26,8 +27,11 @@
 #include <net/if.h>
 #include <netinet/in.h>
 
+#include <linux/wireless.h>
+
 #include <fstream>
 #include <array>
+#include <stdlib.h>
 
 #ifdef SIMULATOR
 #error SIMULATOR should NOT be defined by any target using osState_android.cpp
@@ -43,17 +47,61 @@ namespace {
 
   const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
   const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
-  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone8/temp";
-
+  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone3/temp";
+  const char* kMACAddressFile = "/sys/class/net/wlan0/address";
+  const char* kRecoveryModeFile = "/data/unbrick";
+  
   // System vars
   uint32_t _cpuFreq_kHz; // CPU freq
-  uint32_t _cpuTemp_mC;  // Temperature in milli-Celsius
+  uint32_t _cpuTemp_C;   // Temperature in Celsius
 
   // How often state variables are updated
   uint32_t _updatePeriod_ms = 0;
   uint32_t _lastUpdateTime_ms = 0;
 
 } // namespace
+
+// Searches the .prop property files for the given key and returns the value
+// __system_get_property() from sys/system_properties.h does
+// not work for some reason so we have to read the files manually
+std::string GetProperty(const std::string& key)
+{
+  const std::string kProp = key + "=";
+
+  // First check the regular build.prop
+  std::ifstream infile("/build.prop");
+
+  std::string line;
+  while(std::getline(infile, line))
+  {
+    size_t index = line.find(kProp);
+    if(index != std::string::npos)
+    {
+      infile.close();
+      return line.substr(kProp.length());
+    }
+  }
+
+  infile.close();
+
+  // If the key wasn't found in /build.prop, then
+  // check the persistent build.prop
+  infile.open("/data/persist/build.prop");
+
+  while(std::getline(infile, line))
+  {
+    size_t index = line.find(kProp);
+    if(index != std::string::npos)
+    {
+      infile.close();
+      return line.substr(kProp.length());
+    }
+  }
+
+  infile.close();
+  
+  return "";
+}
 
 OSState::OSState()
 {
@@ -69,7 +117,7 @@ OSState::OSState()
   }
   
   _cpuFreq_kHz = kNominalCPUFreq_kHz;
-  _cpuTemp_mC = 0;
+  _cpuTemp_C = 0;
 
   _tempFile.open(kTemperatureFile, std::ifstream::in);
   _cpuFile.open(kCPUFreqFile, std::ifstream::in);
@@ -97,12 +145,10 @@ void OSState::Update()
     if (now_ms - _lastUpdateTime_ms > _updatePeriod_ms) {
       
       // Update cpu freq
-      _cpuFile.seekg(0, _cpuFile.beg);
-      _cpuFile >> _cpuFreq_kHz;
-      
+      _cpuFreq_kHz = UpdateCPUFreq_kHz();
+
       // Update temperature reading
-      _tempFile.seekg(0, _tempFile.beg);
-      _tempFile >> _cpuTemp_mC;
+      _cpuTemp_C = UpdateTemperature_C();
 
       _lastUpdateTime_ms = now_ms;
     }
@@ -114,49 +160,83 @@ void OSState::SetUpdatePeriod(uint32_t milliseconds)
   _updatePeriod_ms = milliseconds;
 }
 
+uint32_t OSState::UpdateCPUFreq_kHz() const
+{
+  // Update cpu freq
+  uint32_t cpuFreq_kHz;
+  _cpuFile.seekg(0, _cpuFile.beg);
+  _cpuFile >> cpuFreq_kHz;
+  return cpuFreq_kHz;
+}
+      
+uint32_t OSState::UpdateTemperature_C() const
+{
+  // Update temperature reading
+  uint32_t cpuTemp_C;
+  _tempFile.seekg(0, _tempFile.beg);
+  _tempFile >> cpuTemp_C;
+  return cpuTemp_C;
+}
+
 uint32_t OSState::GetCPUFreq_kHz() const
 {
   DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetCPUFreq_kHz.ZeroUpdate");
   return _cpuFreq_kHz;
 }
 
-bool OSState::IsThermalThrottling() const
+
+bool OSState::IsCPUThrottling() const
 {
-  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.IsThermalThrottling.ZeroUpdate");
+  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.IsCPUThrottling.ZeroUpdate");
   return (_cpuFreq_kHz < kNominalCPUFreq_kHz);
 }
 
-uint32_t OSState::GetTemperature_mC() const
+uint32_t OSState::GetTemperature_C() const
 {
-  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetTemperature_mC.ZeroUpdate");
-  return _cpuTemp_mC;
+  DEV_ASSERT(_updatePeriod_ms != 0, "OSState.GetTemperature_C.ZeroUpdate");
+  return _cpuTemp_C;
 }
 
 const std::string& OSState::GetSerialNumberAsString()
 {
-  if(_serialNumString == "")
+  if(_serialNumString.empty())
   {
-    _serialNumString = ExecCommand("getprop ro.serialno");
+    std::ifstream infile("/proc/cmdline");
+
+    std::string line;
+    while(std::getline(infile, line))
+    {
+      static const std::string kProp = "androidboot.serialno=";
+      size_t index = line.find(kProp);
+      if(index != std::string::npos)
+      {
+        _serialNumString = line.substr(index + kProp.length(), 8);
+      }
+    }
+
+    infile.close();
   }
   
   return _serialNumString;
 }
 
-u32 OSState::GetOSBuildNumber()
+const std::string& OSState::GetOSBuildVersion()
 {
-  if(_osBuildNum == 0)
+  if(_osBuildVersion.empty())
   {
-    std::string osBuildNum = ExecCommand("getprop ro.anki.os_build_number");
-    if (!osBuildNum.empty())
-    {
-      _osBuildNum = static_cast<u32>(std::stoi(osBuildNum));
-    }
+    _osBuildVersion = GetProperty("ro.build.version.release");
   }
   
-  return _osBuildNum;
+  return _osBuildVersion;
+}
+
+std::string OSState::GetRobotName() const
+{
+  static std::string name = GetProperty("persist.anki.robot.name");
+  return (name.empty() ? "Vector_0000" : name);
 }
   
-std::string OSState::GetIPAddressInternal()
+void OSState::UpdateWifiInfo()
 {
   // Open a socket to figure out the ip adress of the wlan0 (wifi) interface
   const char* const if_name = "wlan0";
@@ -166,53 +246,80 @@ std::string OSState::GetIPAddressInternal()
     memcpy(ifr.ifr_name,if_name,if_name_len);
     ifr.ifr_name[if_name_len]=0;
   } else {
-    ASSERT_NAMED_EVENT(false, "EngineMessages.GetIPAddress.InvalidInterfaceName", "");
+    ASSERT_NAMED_EVENT(false, "OSState.GetIPAddress.InvalidInterfaceName", "");
   }
 
   int fd=socket(AF_INET,SOCK_DGRAM,0);
   if (fd==-1) {
-    ASSERT_NAMED_EVENT(false, "EngineMessages.GetIPAddress.OpenSocketFail", "");
+    ASSERT_NAMED_EVENT(false, "OSState.GetIPAddress.OpenSocketFail", "");
   }
 
   if (ioctl(fd,SIOCGIFADDR,&ifr)==-1) {
     int temp_errno=errno;
     close(fd);
-    ASSERT_NAMED_EVENT(false, "EngineMessages.GetIPAddress.IoctlError", "%s", strerror(temp_errno));
+    ASSERT_NAMED_EVENT(false, "OSState.GetIPAddress.IoctlError", "%s", strerror(temp_errno));
+  }
+
+  struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
+  _ipAddress = std::string(inet_ntoa(ipaddr->sin_addr));
+
+  // Get SSID
+  iwreq req;
+  strcpy(req.ifr_name, if_name);
+  req.u.data.pointer = (iw_statistics*)malloc(sizeof(iw_statistics));
+  req.u.data.length = sizeof(iw_statistics);
+  
+  const int kSSIDBufferSize = 32;
+  char buffer[kSSIDBufferSize];
+  memset(buffer, 0, sizeof(buffer));
+  req.u.essid.pointer = buffer;
+  req.u.essid.length = kSSIDBufferSize;
+  if(ioctl(fd, SIOCGIWESSID, &req) == -1)
+  {
+    close(fd);
+    ASSERT_NAMED_EVENT(false, "OSState.UpdateWifiInfo.FailedToGetSSID","%s", strerror(errno));
   }
   close(fd);
 
-  struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
-  return std::string(inet_ntoa(ipaddr->sin_addr));
+  _ssid = std::string(buffer);
 }
 
-std::string OSState::ExecCommand(const char* cmd) 
+const std::string& OSState::GetIPAddress(bool update)
 {
-  try
+  if(_ipAddress.empty() || update)
   {
-    std::array<char, 128> buffer;
-    std::string result;
-    std::shared_ptr<FILE> pipe(popen(cmd, "r"), pclose);
-    if (!pipe)
-    {
-      PRINT_NAMED_WARNING("EngineMessages.ExecCommand.FailedToOpenPipe", "");
-      return "";
-    }
-
-    while (!feof(pipe.get()))
-    {
-      if (fgets(buffer.data(), 128, pipe.get()) != nullptr)
-      {
-        result += buffer.data();
-      }
-    }
-
-    // Remove the last character as it is a newline
-    return result.substr(0,result.size()-1);
+    UpdateWifiInfo();
   }
-  catch(...)
+
+  return _ipAddress;
+}
+
+const std::string& OSState::GetSSID(bool update)
+{
+  if(_ssid.empty() || update)
   {
-    return "";
+    UpdateWifiInfo();
   }
+
+  return _ssid;
+}
+
+std::string OSState::GetMACAddress() const
+{
+  std::ifstream macFile;
+  macFile.open(kMACAddressFile);
+  if (macFile.is_open()) {
+    std::string macStr;
+    macFile >> macStr;
+    macFile.close();
+    return macStr;
+  }
+  return "";
+}
+
+bool OSState::IsInRecoveryMode()
+{
+  return Util::FileUtils::FileExists(kRecoveryModeFile);
 }
 
 } // namespace Cozmo

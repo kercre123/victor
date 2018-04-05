@@ -17,6 +17,7 @@
 #include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/math/point.h"
 #include "coretech/common/engine/math/lineSegment2d.h"
+#include "coretech/common/engine/math/convexPolygon2d.h"
 
 #include <vector>
 
@@ -52,7 +53,7 @@ public:
   // convenience function
   bool Contains(const Point2f& pt) const;
 
-  const Poly2f& GetSimplePolygon() const {return _poly;}
+  const Poly2f& GetSimplePolygon() const {return _poly.GetSimplePolygon();}
   
   const Point2f& operator[] (size_t idx) const {return _poly[idx];}
   
@@ -92,8 +93,8 @@ public:
 #endif
 
 private:
-
-  const Poly2f _poly;
+  // ConvexPolygon constructor enforces CW direction and convexity
+  const ConvexPolygon _poly;
 
   // outermost bounding-box of poly
   float _minX;

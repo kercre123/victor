@@ -24,9 +24,7 @@ namespace Data {
 class DataPlatform {
 public:
 
-  DataPlatform(const std::string &filesPath, const std::string &cachePath,
-    const std::string &externalPath,
-    const std::string &resourcesPath);
+  DataPlatform(const std::string &persistentPath, const std::string &cachePath, const std::string &resourcesPath);
 
   std::string pathToResource(const Scope& resourceScope, const std::string& resourceName) const;
   
@@ -43,9 +41,8 @@ public:
   bool writeAsJson(const Scope& resourceScope, const std::string& resourceName, const Json::Value& data) const;
 
 private:
-  const std::string _filesPath;
+  const std::string _persistentPath;
   const std::string _cachePath;
-  const std::string _externalPath;
   const std::string _resourcesPath;
 };
 

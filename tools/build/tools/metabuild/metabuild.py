@@ -153,7 +153,7 @@ def subdir_glob(glob_specs, excludes=None, prefix=None, build_env=None, search_b
 class FindSrc(object):
     """Encapsulate state and processes associated with find source files."""
 
-    ANKI_BUILD_PLATFORMS = ('android', 'ios', 'mac', 'linux', 'windows')
+    ANKI_BUILD_PLATFORMS = ('android', 'ios', 'mac', 'linux', 'vicos', 'windows')
     ANKI_CXX_SRC_EXTS = ( '.c', '.cpp', '.cc' )
     ANKI_GO_SRC_EXTS = ( '.go', )
     ANKI_CXX_INCLUDE_EXTS = ( '.h', '.hpp', '.inl', '.def' )
@@ -331,11 +331,10 @@ def all_glob(search_base, include_paths, includes=[], excludes=[], platform=None
 
 def go_project(name,
                search_base,
-               gopath,
                dir):
 
     deps = cxx_glob(search_base,
-                    [gopath],
+                    [os.path.relpath(os.environ['GOPATH'], search_base)],
                     FindSrc.ANKI_GO_SRC_EXTS)
 
     srcs = all_glob(search_base, [dir])
@@ -348,12 +347,10 @@ def go_project(name,
 
 def go_pathfiles(name,
                  search_base,
-                 gopath,
                  dir):
 
     file_map = {
-        name + ".godir.lst" : [search_base + '/' + dir],
-        name + ".gopath.lst" : [search_base + '/' + gopath],
+        name + ".godir.lst" : [search_base + '/' + dir]
     }
 
     return file_map
@@ -386,15 +383,13 @@ class BuildProcessor(object):
         self.projects[name] = filemap
 
     def _go_project(self, name,
-                gopath,
                 dir):
-        filemap = go_project(name, self.build_env.dirname, gopath, dir)
+        filemap = go_project(name, self.build_env.dirname, dir)
         self.projects[name] = filemap
 
     def _go_pathfiles(self, name,
-                gopath,
                 dir):
-        filemap = go_pathfiles(name, self.build_env.dirname, gopath, dir)
+        filemap = go_pathfiles(name, self.build_env.dirname, dir)
         self.projects[name] = filemap
 
     def _cxx_src_glob(self, include_paths, includes=[], excludes=[], platform=None):

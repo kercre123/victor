@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.6)
 
 list(APPEND CMAKE_MODULE_PATH
   ${CMAKE_CURRENT_SOURCE_DIR}/cmake
+  ${CMAKE_CURRENT_SOURCE_DIR}/victor-clad/cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/lib/util/cmake
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/build/cmake
 )
@@ -11,6 +12,7 @@ project(cozmo)
 include(ccache) # Use ccache if it is installed
 
 include(import)
+include(clean_clad_targets)
 
 # These are used by some android cmake toolchains
 # They appear to be ignored by the android-sdk toolchain that works with gradle/Android Studio
@@ -36,9 +38,17 @@ if (ANDROID)
   set(SYMBOL_VISIBILITY_FLAGS "-fvisibility=hidden")
 elseif(MACOSX)
   set(ANKI_PLATFORM_NAME "mac")
+elseif(VICOS)
+  set(ANKI_PLATFORM_NAME "vicos")
+  set(SYMBOL_VISIBILITY_FLAGS "-fvisibility=hidden")
+elseif(VICOS_STAGING)
+  set(ANKI_PLATFORM_NAME "vicos")
+  set(SYMBOL_VISIBILITY_FLAGS "-fvisibility=hidden")
 else()
   message(FATAL_ERROR "unsupported platform: ${ANKI_PLATFORM_NAME}")
 endif()
+
+message(STATUS "ANKI_PLATFORM_NAME: ${ANKI_PLATFORM_NAME}")
 
 add_compile_options(
     $<$<CONFIG:Debug>:-O0>
@@ -60,10 +70,16 @@ else()
   add_definitions(-DFACTORY_TEST_DEV=0)
 endif()
 
-if (ANDROID)
+add_definitions(-DANKI_BUILD_SHA="${ANKI_BUILD_SHA}")
+
+if (ANDROID OR VICOS OR VICOS_STAGING)
   # Build for Android system without ART (*NO* JNI available)
   add_definitions(
     -DDISABLE_JNI=1
+  )
+else()
+  add_definitions(
+    -DDISABLE_JNI=0
   )
 endif()
 
@@ -107,56 +123,98 @@ endif()
 #    message(FATAL_ERROR "breakpad_client not defined")
 #endif()
 
+set(CLAD_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/victor-clad/tools/message-buffers")
+set(CLAD_VICTOR_EMITTER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/victor-clad/victorEmitters")
+add_subdirectory("victor-clad") # includes clad via message-buffers
 
-import(clad "tools/message-buffers")
-import(util "lib/util")
-include(audio) # See ./cmake/audio.cmake for definitions and lib
-import(ble_cozmo "lib/BLECozmo")
-import(DAS "lib/das-client")
+if (VICOS_STAGING)
+  # VICOS_STAGING is a temp transition phase for converting build targets
+  # to use an embedded linux toolchain.
+  #
+  # Targets listed below build successfully with the vicos-sdk toolchain
+  #
 
-# BRC-TODO: Make this top-level include into an "interface"
-# lib so that other target can depend on it, instead of manually injecting
-# include dirs
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
+  import(util "lib/util")
+  #include(audio) # See ./cmake/audio.cmake for definitions and lib
+  import(ble_cozmo "lib/BLECozmo")
 
-import(coretech "coretech")
-add_subdirectory("clad")
-add_subdirectory("cloud")
-add_subdirectory("cubeBleClient")
-add_subdirectory("osState")
-add_subdirectory("androidHAL")
-add_subdirectory("cannedAnimLib")
-add_subdirectory("animProcess")
-add_subdirectory("webServerProcess")
-add_subdirectory("lib/signalEssence")
+  # Treat VICOS like a standard "unix" target for DAS
+  import(DAS "lib/das-client")
 
-target_include_directories(victor_anim PRIVATE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
-)
+elseif(VICOS)
+  # Until _all_ targets build for VICOS (instead of android), this should only
+  # contain targets that require / only build with the vicos toolchain.
+  import(cti_messaging "coretech/messaging")
+  add_subdirectory("clad")
 
-target_include_directories(victor_web_library PRIVATE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
-)
+  # include only required deps from util
+  add_subdirectory("lib/util/source/3rd/jsoncpp")
+  add_subdirectory("lib/util/source/anki/clad")
 
-add_subdirectory("robot")
+  add_subdirectory("coretech/common/clad")
+  add_subdirectory("coretech/vision/clad")
+  add_subdirectory("robot/clad")
+  add_subdirectory("platform/switchboard")
 
-import(cozmo_engine "engine")
+  include(vicos-sdk-stl-config)
+else()
+  # Current default (android or mac platforms)
+  set(CLEAN_CLAD_TARGETS TRUE)
 
-target_include_directories(cozmo_engine PRIVATE
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
-)
+  import(util "lib/util")
+  include(audio) # See ./cmake/audio.cmake for definitions and lib
+  import(ble_cozmo "lib/BLECozmo")
+  import(DAS "lib/das-client")
 
-add_subdirectory("resources")
+  # BRC-TODO: Make this top-level include into an "interface"
+  # lib so that other target can depend on it, instead of manually injecting
+  # include dirs
+  include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-if (ANDROID)
-    add_subdirectory("project/victor/tools")
-    include(android-ndk-stl-config)
-endif()
+  import(coretech "coretech")
+  add_subdirectory("clad")
+  add_subdirectory("cloud")
+  add_subdirectory("cubeBleClient")
+  add_subdirectory("osState")
+  add_subdirectory("cannedAnimLib")
+  add_subdirectory("animProcess")
+  #add_subdirectory("webServerProcess")
+  add_subdirectory("lib/signalEssence")
+  add_subdirectory("platform")
+
+  target_include_directories(victor_anim PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
+  )
+
+  # target_include_directories(victor_web_library PRIVATE
+  #   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
+  # )
+
+  add_subdirectory("robot")
+
+  import(cozmo_engine "engine")
+
+  target_include_directories(cozmo_engine PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>
+  )
+
+  if (ANDROID)
+      add_subdirectory("project/victor/tools")
+      include(android-ndk-stl-config)
+  endif()
+
+  add_subdirectory("resources")
+endif() # VICOS, VICOS_STAGING
 
 if (MACOSX)
   add_subdirectory("test")
   add_subdirectory("simulator") # webots
 
   enable_testing()
+endif()
 
+# VICOS/STAGING note: Platforms that generate clad should set this variable
+# This avoids nuking CLAD output when no targets were built for a platform
+if (CLEAN_CLAD_TARGETS)
+  clean_clad_targets()
 endif()

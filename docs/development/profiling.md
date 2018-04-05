@@ -16,7 +16,7 @@ victor_deploy
 ```HOW-simpleperf.sh``` recognizes the following environment variables, with default values shown:
 
 ```
-ANKI_PROFILE_PROCNAME=cozmoengined
+ANKI_PROFILE_PROCNAME=vic-engine
 
 ANKI_PROFILE_DURATION=10 (in seconds)
 
@@ -27,14 +27,14 @@ ANKI_PROFILE_SYMBOLCACHE=symbol_cache
 
 Default values may be overridden as needed:
 
-```ANKI_PROFILE_PROCNAME=victor_animator bash HOW-inferno.sh```
+```ANKI_PROFILE_PROCNAME=vic-anim bash HOW-inferno.sh```
 
 Current Victor processes are:
 
-* cloud_process
-* cozmoengined
-* robot_supervisor
-* victor_animator
+* vic-anim
+* vic-engine
+* vic-cloud
+* vic-robot
 
 Additional arguments can be passed to the report generation:
 
@@ -146,7 +146,7 @@ Symbol       |unmangled C++ symbol name
 python ../lib/util/tools/simpleperf/app_profiler.py
        -nc
        -nb
-       -np cozmoengined
+       -np vic-engine
        -r "-e cpu-cycles:u -f 4000 --duration 10"
        -lib symbol_cache
 ```

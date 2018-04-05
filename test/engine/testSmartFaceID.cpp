@@ -22,6 +22,7 @@
 using namespace Anki;
 using namespace Anki::Cozmo;
 
+extern CozmoContext* cozmoContext;
 
 void DeleteFace(Robot& robot, int faceID)
 {
@@ -46,8 +47,7 @@ TEST(SmartFaceID, Empty)
 
 TEST(SmartFaceID, Invalid)
 {
-  CozmoContext context;
-  Robot robot(0, &context);
+  Robot robot(0, cozmoContext);
 
   SmartFaceID sfid = robot.GetFaceWorld().GetSmartFaceID(0);
 
@@ -57,9 +57,7 @@ TEST(SmartFaceID, Invalid)
 
 TEST(SmartFaceID, Valid)
 {
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
-  Robot robot(0, &context);
+  Robot robot(0, cozmoContext);
 
   SmartFaceID sfid = robot.GetFaceWorld().GetSmartFaceID(42);
 
@@ -69,9 +67,7 @@ TEST(SmartFaceID, Valid)
 
 TEST(SmartFaceID, DeletedSimple)
 {
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
-  Robot robot(0, &context);
+  Robot robot(0, cozmoContext);
 
   SmartFaceID sfid = robot.GetFaceWorld().GetSmartFaceID(42);
 
@@ -86,9 +82,7 @@ TEST(SmartFaceID, DeletedSimple)
 
 TEST(SmartFaceID, ChangedSimple)
 {
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
-  Robot robot(0, &context);
+  Robot robot(0, cozmoContext);
 
   SmartFaceID sfid = robot.GetFaceWorld().GetSmartFaceID(42);
 
@@ -103,9 +97,7 @@ TEST(SmartFaceID, ChangedSimple)
 
 TEST(SmartFaceID, ComplexSingleFace)
 {
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
-  Robot robot(0, &context);
+  Robot robot(0, cozmoContext);
 
   SmartFaceID sfid = robot.GetFaceWorld().GetSmartFaceID(42);
 
@@ -152,9 +144,7 @@ TEST(SmartFaceID, ComplexSingleFace)
 
 TEST(SmartFaceID, CopyConstructor)
 {
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
-  Robot robot(0, &context);
+  Robot robot(0, cozmoContext);
 
   SmartFaceID sfid = robot.GetFaceWorld().GetSmartFaceID(42);
 
@@ -225,9 +215,7 @@ TEST(SmartFaceID, CopyConstructor)
 
 TEST(SmartFaceID, CopyWithDelete)
 {
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
-  Robot robot(0, &context);
+  Robot robot(0, cozmoContext);
 
   SmartFaceID* sfidPtr = new SmartFaceID(robot.GetFaceWorld().GetSmartFaceID(42));
   
@@ -359,9 +347,7 @@ TEST(SmartFaceID, CopyWithDelete)
 
 TEST(SmartFaceID, RValue)
 {
-  UiMessageHandler handler(0, nullptr);
-  CozmoContext context(nullptr, &handler);
-  Robot robot(0, &context);
+  Robot robot(0, cozmoContext);
 
   SmartFaceID sfid = robot.GetFaceWorld().GetSmartFaceID(1);
 

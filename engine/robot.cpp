@@ -8,7 +8,7 @@
 //
 
 #include "engine/robot.h"
-#include "androidHAL/androidHAL.h"
+#include "camera/cameraService.h"
 
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/poseOriginList.h"
@@ -17,6 +17,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/actionContainers.h"
 #include "engine/actions/animActions.h"
+#include "engine/actions/basicActions.h"
 #include "engine/activeCube.h"
 #include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/aiComponent.h"
@@ -80,6 +81,8 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/transport/reliableConnection.h"
+
+#include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
@@ -248,6 +251,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 
   _lastDebugStringHash = 0;
       
+  BEGIN_DONT_RUN_AFTER_PACKOUT
   // Read in Mood Manager Json
   if (nullptr != GetContext()->GetDataPlatform())
   {
@@ -275,7 +279,9 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 #endif
 
   // This will create the AndroidHAL instance if it doesn't yet exist
-  AndroidHAL::getInstance();
+  CameraService::getInstance();
+
+  END_DONT_RUN_AFTER_PACKOUT
   
 } // Constructor: Robot
     
@@ -1288,8 +1294,47 @@ Result Robot::Update()
      lastUpdateTime = currentTime_sec;
   */
 
-  //////////// Android HAL Update ////////////
-  AndroidHAL::getInstance()->Update();
+  BEGIN_DONT_RUN_AFTER_PACKOUT
+  //////////// CameraService Update ////////////
+  CameraService::getInstance()->Update();
+
+#if FACTORY_TEST
+  // Once we have gotten a frame from the camera play a sound to indicate 
+  // a "successful" boot
+  static bool playedSound = false;
+  if(!playedSound &&
+     CameraService::getInstance()->HaveGottenFrame())
+  {
+    GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1.f);
+    CompoundActionParallel* action = new CompoundActionParallel();
+    std::weak_ptr<IActionRunner> soundAction = action->AddAction(new PlayAnimationAction("soundTestAnim"));
+
+    // Start WaitForLambdaAction in parallel that will cancel the sound action after 200 milliseconds
+    WaitForLambdaAction* waitAction = new WaitForLambdaAction([soundAction](Robot& robot){
+      static TimeStamp_t start = 0;
+      if(start == 0)
+      {
+        start = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+      }
+
+      if(BaseStationTimer::getInstance()->GetCurrentTimeStamp() - start > 200)
+      {
+        start = 0;
+        auto sp = soundAction.lock();
+        if(sp != nullptr)
+        {
+          sp->Cancel();
+          return true;
+        }
+      }
+
+      return false;
+    });
+    action->AddAction(waitAction);
+    GetActionList().AddConcurrentAction(action);
+    playedSound = true;
+  }
+#endif
 
   //////////// VisionScheduleMediator ////////////
   // Applies the scheduling consequences of the last frame's subscriptions before ticking VisionComponent
@@ -1363,6 +1408,8 @@ Result Robot::Update()
   // Update AI component before behaviors so that behaviors can use the latest information
   GetAIComponent().Update(*this, currentActivityName, _behaviorDebugStr);
 
+  END_DONT_RUN_AFTER_PACKOUT
+
   //////// Update Robot's State Machine /////////////
   const RobotID_t robotID = GetID();
   
@@ -1374,22 +1421,27 @@ Result Robot::Update()
   /////////// Update NVStorage //////////
   GetNVStorageComponent().Update();
 
+  BEGIN_DONT_RUN_AFTER_PACKOUT
   /////////// Update path planning / following ////////////
   GetPathComponent().Update();
+  END_DONT_RUN_AFTER_PACKOUT
   
   /////////// Update cube comms ////////////
   GetCubeCommsComponent().Update();
   
+  BEGIN_DONT_RUN_AFTER_PACKOUT
   // update and broadcast map
   GetMapComponent().Update();
+  END_DONT_RUN_AFTER_PACKOUT
   
   /////////// Update AnimationComponent /////////
   GetAnimationComponent().Update();
 
   /////////// Update visualization ////////////
-      
+  BEGIN_DONT_RUN_AFTER_PACKOUT
   // Draw All Objects by calling their Visualize() methods.
   GetBlockWorld().DrawAllObjects();
+  END_DONT_RUN_AFTER_PACKOUT
 
   // Always draw robot w.r.t. the origin, not in its current frame
   Pose3d robotPoseWrtOrigin = GetPose().GetWithRespectToRoot();
@@ -1465,6 +1517,7 @@ Result Robot::Update()
   GetCubeLightComponent().Update();
   GetBodyLightComponent().Update();
   
+  BEGIN_DONT_RUN_AFTER_PACKOUT
   // Update user facing state information after everything else has been updated
   // so that relevant information is forwarded along to whoever's listening for
   // state changes
@@ -1512,6 +1565,7 @@ Result Robot::Update()
                   GetDockingComponent().CanPickUpObjectFromGround(*obj));
     }
   }
+  END_DONT_RUN_AFTER_PACKOUT
       
   return RESULT_OK;
       
@@ -2248,8 +2302,15 @@ Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliabl
 // Sync time with physical robot and trigger it robot to send back camera calibration
 Result Robot::SendSyncTime() const
 {
+  // BRC: The following code replaces a call to `CameraService::getInstance()->GetTimeStamp()`
+  auto currTime = std::chrono::steady_clock::now();
+  TimeStamp_t ts = 
+    static_cast<TimeStamp_t>(
+      std::chrono::duration_cast<std::chrono::milliseconds>(currTime.time_since_epoch()).count()
+    );
+
   Result result = SendMessage(RobotInterface::EngineToRobot(
-                                RobotInterface::SyncTime(AndroidHAL::getInstance()->GetTimeStamp(),
+                                RobotInterface::SyncTime(ts,
                                                          DRIVE_CENTER_OFFSET)));
 
   if (result == RESULT_OK) {
@@ -2331,7 +2392,7 @@ bool Robot::HasExternalInterface() const
   return false;
 }
 
-IExternalInterface* Robot::GetExternalInterface()
+IExternalInterface* Robot::GetExternalInterface() const
 {
   DEV_ASSERT(GetContext()->GetExternalInterface() != nullptr, "Robot.ExternalInterface.nullptr");
   return GetContext()->GetExternalInterface();
@@ -2784,7 +2845,7 @@ RobotState Robot::GetDefaultRobotState()
   return state;
 }
 
-RobotInterface::MessageHandler* Robot::GetRobotMessageHandler()
+RobotInterface::MessageHandler* Robot::GetRobotMessageHandler() const
 {
   if ((!_components->GetComponent(RobotComponentID::CozmoContext).IsValueValid()) ||
       (GetContext()->GetRobotManager() == nullptr))

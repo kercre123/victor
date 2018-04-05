@@ -10,7 +10,7 @@ then
 fi                                                                                                  
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
-source ${TOPLEVEL}/standalone-apk/android_env.sh
+source ${TOPLEVEL}/project/victor/scripts/android_env.sh
 
 DEVICE_IP=$($ADB shell ifconfig wlan0 | awk /"inet addr"/'{print $2}' | awk -F: '{printf("%s",$2);}')
 echo "DEVICE_IP = $DEVICE_IP"

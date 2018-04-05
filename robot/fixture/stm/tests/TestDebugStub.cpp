@@ -7,19 +7,15 @@
 #include "app.h"
 #include "board.h"
 #include "console.h"
-#include "cube.h"
-#include "display.h"
+#include "contacts.h"
+#include "dut_uart.h"
 #include "fixture.h"
-#include "flash.h"
 #include "meter.h"
 #include "motorled.h"
 #include "nvReset.h"
-#include "portable.h"
 #include "random.h"
-#include "testport.h"
 #include "tests.h"
 #include "timer.h"
-#include "uart.h"
 
 static uint32_t detect_ms = 0;
 static uint32_t Tdetect;

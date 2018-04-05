@@ -5,7 +5,7 @@
 GIT_PROJ_ROOT=`git rev-parse --show-toplevel`
 source ${GIT_PROJ_ROOT}/project/victor/scripts/android_env.sh
 
-micdata_src=/data/data/com.anki.cozmoengine/cache/micdata
+micdata_src=/data/data/com.anki.victor/cache/micdata
 
 datetime=$(date '+%m%d-%k%M%S');
 copy_destination=~/Downloads/micdata$datetime

@@ -15,6 +15,7 @@ namespace Cozmo {
     ReadingToolCode,
     ComputingCalibration,
     CheckingQuality,
+    CheckingWhiteBalance,
     ComputingStatistics,
     DetectingPets,
     EstimatingFacialExpression,  // No effect if DetectingFaces not enabled

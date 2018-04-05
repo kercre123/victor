@@ -23,6 +23,7 @@
 #include "util/logging/logging.h"
 #include "util/console/consoleSystem.h"
 #include "util/console/consoleChannel.h"
+#include "util/global/globalDefinitions.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/string/stringUtils.h"
@@ -41,22 +42,6 @@
 #include <iomanip>
 
 using namespace Anki::Cozmo;
-
-
-namespace {
-
-#ifndef SIMULATOR
-  std::ifstream _cpuFile;
-  std::ifstream _temperatureFile;
-  std::ifstream _batteryVoltageFile;
-
-//  const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
-  const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
-  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone8/temp";
-  const char* kBatteryVoltageFile = "/sys/devices/soc.0/qpnp-linear-charger-8/power_supply/battery/voltage_now";
-#endif
-
-} // namespace
 
 
 // Used websockets codes, see websocket RFC pg 29
@@ -253,20 +238,19 @@ ConsoleVarSet(struct mg_connection *conn, void *cbdata)
 {
   const mg_request_info* info = mg_get_request_info(conn);
 
-  std::string key;
-  std::string value;
+  std::string query;
 
   if (info->content_length > 0) {
     char buf[info->content_length+1];
     mg_read(conn, buf, sizeof(buf));
     buf[info->content_length] = 0;
-    key = buf;
+    query = buf;
   }
   else if (info->query_string) {
-    key = info->query_string;
+    query = info->query_string;
   }
 
-  const int returnCode = ProcessRequest(conn, Anki::Cozmo::WebService::WebService::RequestType::RT_ConsoleVarSet, key, "");
+  const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarSet, query, "");
 
   return returnCode;
 }
@@ -376,6 +360,42 @@ ConsoleFuncCall(struct mg_connection *conn, void *cbdata)
   return returnCode;
 }
 
+static int
+ProcessRequestFromQueryString(struct mg_connection *conn, void *cbdata, WebService::WebService::RequestType type)
+{
+  const mg_request_info* info = mg_get_request_info(conn);
+  std::string request;
+  if (info->content_length > 0) {
+    char buf[info->content_length+1];
+    mg_read(conn, buf, sizeof(buf));
+    buf[info->content_length] = 0;
+    request = buf;
+  }
+  else if (info->query_string) {
+    request = info->query_string;
+  }
+  int returnCode = ProcessRequest(conn, type, request, "");
+  
+  return returnCode;
+}
+
+static int
+TempAppToEngine(struct mg_connection *conn, void *cbdata)
+{
+  return ProcessRequestFromQueryString( conn,
+                                        cbdata,
+                                        Anki::Cozmo::WebService::WebService::RequestType::RT_TempAppToEngine );
+}
+
+static int
+TempEngineToApp(struct mg_connection *conn, void *cbdata)
+{
+  return ProcessRequestFromQueryString( conn,
+                                        cbdata,
+                                        Anki::Cozmo::WebService::WebService::RequestType::RT_TempEngineToApp );
+}
+
+
 WebService::WebService::Request::Request(RequestType rt,
                                          const std::string& param1,
                                          const std::string& param2,
@@ -465,7 +485,46 @@ static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
   const std::string serialNo = osState->GetSerialNumberAsString();
   const std::string ip       = osState->GetIPAddress();
 
-  mg_printf(conn, "%s\n%s\n%s\n", robotID.c_str(), serialNo.c_str(), ip.c_str());
+  const std::string buildConfig =
+#if defined(DEBUG)
+  "DEBUG";
+#elif defined(RELEASE)
+  "RELEASE";
+#elif defined(PROFILE)
+  "PROFILE";
+#elif defined(SHIPPING)
+  "SHIPPING";
+#else
+  "UNKNOWN";
+#endif
+
+#ifdef SIMULATOR
+
+  const std::string procVersion = "n/a (webots)";
+  const std::string procCmdLine = "n/a (webots)";
+
+#else
+
+  // This is a one-time read of info that won't change during the run,
+  // so we don't keep any file streams open
+  std::ifstream fs;
+
+  fs.open("/proc/version", std::ifstream::in);
+  std::string procVersion;
+  std::getline(fs, procVersion);
+  fs.close();
+
+  fs.open("/proc/cmdline", std::ifstream::in);
+  std::string procCmdLine;
+  std::getline(fs, procCmdLine);
+  fs.close();
+
+#endif
+
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n",
+            robotID.c_str(), serialNo.c_str(), ip.c_str(),
+            buildConfig.c_str(),
+            procVersion.c_str(), procCmdLine.c_str());
   return 1;
 }
 
@@ -500,34 +559,32 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
 
 #else
 
+  const auto& osState = OSState::getInstance();
+
   std::string stat_cpuFreq;
   if (active[0]) {
     // Update cpu freq
-    uint32_t cpuFreq_kHz;
-    _cpuFile.seekg(0, _cpuFile.beg);
-    _cpuFile >> cpuFreq_kHz;
+    const uint32_t cpuFreq_kHz = osState->UpdateCPUFreq_kHz();
     stat_cpuFreq = std::to_string(cpuFreq_kHz);
   }
 
   std::string stat_temperature;
   if (active[1]) {
-    // Update temperature reading; convert milli-Celsius to Celsius
-    uint32_t cpuTemp_mC;
-    _temperatureFile.seekg(0, _temperatureFile.beg);
-    _temperatureFile >> cpuTemp_mC;
-    const float cpuTemp_C = cpuTemp_mC * 0.001f;
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(3) << cpuTemp_C;
-    stat_temperature = ss.str();
+    // Update temperature reading (Celsius)
+    const uint32_t cpuTemp_C = osState->UpdateTemperature_C();
+    stat_temperature = std::to_string(cpuTemp_C);
   }
 
   std::string stat_batteryVoltage;
   if (active[2]) {
-    // Battery voltage
-    uint32_t batteryVoltage;
-    _batteryVoltageFile.seekg(0, _batteryVoltageFile.beg);
-    _batteryVoltageFile >> batteryVoltage;
-    stat_batteryVoltage = std::to_string(batteryVoltage);
+    // NOTE: Can no longer (if not now then soon) access battery voltage via OSState.
+    //       Engine's BatteryComponent could possibly send updates to webserver.
+    // // Battery voltage
+    // const uint32_t batteryVoltage_uV = osState->UpdateBatteryVoltage_uV();
+    // const float batteryVoltage_V = batteryVoltage_uV * 0.000001f;
+    // std::stringstream ss;
+    // ss << std::fixed << std::setprecision(6) << batteryVoltage_V;
+    // stat_batteryVoltage = ss.str();
   }
 
 #endif
@@ -579,15 +636,13 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   const std::string webserverPath = platform->pathToResource(Util::Data::Scope::Resources, "webserver");
 
   std::string rewrite;
-  rewrite += "/output=" + platform->pathToResource(Util::Data::Scope::Persistent, "");
+  rewrite += "/persistent=" + platform->pathToResource(Util::Data::Scope::Persistent, "");
   rewrite += ",";
   rewrite += "/resources=" + platform->pathToResource(Util::Data::Scope::Resources, "");
   rewrite += ",";
   rewrite += "/cache=" + platform->pathToResource(Util::Data::Scope::Cache, "");
   rewrite += ",";
   rewrite += "/currentgamelog=" + platform->pathToResource(Util::Data::Scope::CurrentGameLog, "");
-  rewrite += ",";
-  rewrite += "/external=" + platform->pathToResource(Util::Data::Scope::External, "");
 #if USE_DAS
   rewrite += ",";
   rewrite += "/daslog=" + std::string(DASGetLogDir());
@@ -645,16 +700,16 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   mg_set_request_handler(_ctx, "/getmainrobotinfo", GetMainRobotInfo, 0);
   mg_set_request_handler(_ctx, "/getperfstats", GetPerfStats, 0);
 
+  // todo (VIC-1398): remove
+  if( ANKI_DEV_CHEATS ) { 
+    mg_set_request_handler(_ctx, "/sendAppMessage", TempAppToEngine, 0);
+    mg_set_request_handler(_ctx, "/getAppMessages", TempEngineToApp, 0);
+  }
+
   const std::string& consoleVarsTemplate = platform->pathToResource(Util::Data::Scope::Resources, "webserver/consolevarsui.html");
   _consoleVarsUIHTMLTemplate = Anki::Util::StringFromContentsOfFile(consoleVarsTemplate);
 
   _requests.clear();
-
-#ifndef SIMULATOR
-  _temperatureFile.open(kTemperatureFile, std::ifstream::in);
-  _cpuFile.open(kCPUFreqFile, std::ifstream::in);
-  _batteryVoltageFile.open(kBatteryVoltageFile, std::ifstream::in);
-#endif
 }
 
 
@@ -803,8 +858,8 @@ void WebService::Update()
 
             Anki::Util::IConsoleFunction* consoleFunc = consoleSystem.FindFunction(func.c_str());
             if (consoleFunc) {
-              // 64KB to accommodate output of animation names
-              char outText[65536+1] = {0};
+              // 256KB to accommodate output of animation names
+              char outText[256*1024+1] = {0};
               uint32_t outTextLength = sizeof(outText);
 
               ExternalOnlyConsoleChannel consoleChannel(outText, outTextLength);
@@ -822,6 +877,16 @@ void WebService::Update()
             else {
               PRINT_NAMED_INFO("WebService", "CONSOLE_FUNC %s %s not found", func.c_str(), args.c_str());
             }
+          }
+          break;
+        case RT_TempAppToEngine:
+          {
+            _appToEngineOnData.emit( requestPtr->_param1 );
+          }
+          break;
+        case RT_TempEngineToApp:
+          {
+            requestPtr->_result = _appToEngineRequestData.emit();
           }
           break;
         case RT_WebsocketOnSubscribe:
@@ -873,17 +938,6 @@ void WebService::Update()
 
 void WebService::Stop()
 {
-#ifndef SIMULATOR
-  if (_temperatureFile.is_open()) {
-    _temperatureFile.close();
-  }
-  if (_cpuFile.is_open()) {
-    _cpuFile.close();
-  }
-  if (_batteryVoltageFile.is_open()) {
-    _batteryVoltageFile.close();
-  }
-#endif
   if (_ctx) {
     mg_stop(_ctx);
   }
@@ -1105,7 +1159,7 @@ int WebService::HandleWebSocketsData(struct mg_connection* conn, int bits, char*
       }
     }
       break;
-    
+
     case WebSocketsTypeCloseConnection:
     {
       // agree to close connection, but don't do anything here until the close event fires

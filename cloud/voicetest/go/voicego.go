@@ -5,16 +5,14 @@ import "C"
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"encoding/binary"
 	"fmt"
 	"os"
 	"strings"
 
+	"anki/chipper"
 	"anki/cloudproc"
 
-	"github.com/anki/sai-chipper-voice/client/chipper"
-	api "github.com/anki/sai-go-util/http/apiclient"
 	"github.com/google/uuid"
 	wav "github.com/youpy/go-wav"
 )
@@ -24,7 +22,7 @@ type appData struct {
 	sampleCount int
 	lastSend    int
 	tail        []int16
-	client      *chipper.ChipperClient
+	stream      *chipper.Stream
 	notice      chan struct{}
 	dataStream  chan []byte
 	first       bool
@@ -34,7 +32,7 @@ var app = appData{}
 
 func (a *appData) audioRoutine() {
 	for data := range a.dataStream {
-		err := a.client.SendAudio(data)
+		err := a.stream.SendAudio(data)
 		if err != nil {
 			fmt.Println("Error sending audio:", err)
 			close(a.dataStream)
@@ -78,16 +76,22 @@ func GoAudioCallback(cSamples []int16) {
 
 //export GoMain
 func GoMain(startRecording, stopRecording C.voidFunc) {
-	client, err := chipper.NewClient("", cloudproc.ChipperSecret, "device-id",
-		uuid.New().String()[:16],
-		api.WithServerURL(cloudproc.ChipperURL))
+	conn, err := chipper.NewConn(cloudproc.ChipperURL, cloudproc.ChipperSecret, "device-id")
 	if err != nil {
 		fmt.Println("Error starting chipper:", err)
 		return
 	}
+	defer conn.Close()
+	stream, err := conn.NewStream(chipper.StreamOpts{SessionId: uuid.New().String()[:16]})
+	if err != nil {
+		fmt.Println("Error creating stream:", err)
+		return
+	}
+	defer stream.Close()
+
 	app.notice = make(chan struct{})
 	app.dataStream = make(chan []byte, 40)
-	app.client = client
+	app.stream = stream
 	app.first = true
 
 	fmt.Println("Press enter to start recording!")
@@ -98,8 +102,7 @@ func GoMain(startRecording, stopRecording C.voidFunc) {
 	runCFunc(startRecording)
 	<-app.notice
 
-	ctx := context.Background()
-	intent, err := client.WaitForIntent(ctx)
+	intent, err := stream.WaitForIntent()
 	if err != nil {
 		fmt.Println("Intent read failed", err)
 		return

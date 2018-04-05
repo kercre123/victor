@@ -41,6 +41,7 @@ using namespace MemoryMapTypes;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class QuadTreeNode : private Util::noncopyable
 {
+  friend class QuadTree;
 public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Types
@@ -48,6 +49,8 @@ public:
   
   using NodeCPtrVector = std::vector<const QuadTreeNode*>;  
   using NodeContent    = QuadTreeTypes::NodeContent;
+  using FoldFunctor    = QuadTreeTypes::FoldFunctor;
+  using FoldDirection  = QuadTreeTypes::FoldDirection;
   
   // type of overlap for two sets
   enum class ESetOverlap { Disjoint, Intersecting, SupersetOf, SubsetOf};
@@ -58,8 +61,7 @@ public:
 
   // Crete node
   // it will allow subdivision as long as level is greater than 0
-  QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant,
-                      QuadTreeNode* parent, MemoryMapDataPtr data);
+  QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, QuadTreeNode* parent);
   
   // Note: Destructor should call processor.OnNodeDestroyed for any processor the node has been registered to.
   // However, by design, we don't do this (no need to store processor pointers, etc). We can do it because of the
@@ -76,51 +78,32 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Accessors
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool    IsRootNode() const              { return _parent == nullptr; }
+  bool    IsSubdivided() const            { return !_childrenPtr.empty(); }
+  uint8_t GetLevel() const                { return _level; }
+  float   GetSideLen() const              { return _sideLen; }
+  const   Point3f& GetCenter() const      { return _center; }
+  MemoryMapDataPtr GetData() const        { return _content.data; }
+  const NodeContent& GetContent() const   { return _content; }
 
-  uint8_t GetLevel() const { return _level; }
-  float GetSideLen() const { return _sideLen; }
-  const Point3f& GetCenter() const { return _center; }
-  const NodeContent& GetContent() const { return _content; }
-
-  // consider using the concrete checks if you are going to do GetContentType() == X, in case the meaning of that
-  // comparison changes
-  MemoryMapDataPtr GetData() const { return _content.data; }
-  bool IsContentTypeUnknown() const { return _content.data->type == EContentType::Unknown; }
-  
   // Builds a quad from our coordinates
   Quad2f MakeQuadXY(const float padding_mm=0.0f) const;
   
-  // return the unique_ptr for our child at the given index. If no child is present at the given index, it returns
-  // a null pointer
-  const std::unique_ptr<QuadTreeNode>& GetChildAt(size_t index) const;
-  
-  // return number of current children
-  size_t GetNumChildren() const { return _childrenPtr.size(); }
-  
   // return if the node contains any useful data
   bool IsEmptyType() const { return (IsSubdivided() || (_content.data->type == EContentType::Unknown));  }
-  
-  // return true if this quad is already subdivided
-  bool IsSubdivided() const { return !_childrenPtr.empty(); }
+
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // store data in the tree bounded by the provided polygon
-  bool Insert(const FastPolygon& poly, const MemoryMapDataPtr data, QuadTreeProcessor& processor);
+  // run the provided accumulator function recursively over the tree for all nodes intersecting with region (if provided).
+  void Fold(FoldFunctor accumulator, FoldDirection dir = FoldDirection::BreadthFirst);
+  void Fold(FoldFunctor accumulator, const FastPolygon& region, FoldDirection dir = FoldDirection::BreadthFirst);
 
-  
-  // attempt to apply a transformation function to the node, returns true of content changes
-  bool Transform(const FastPolygon& poly,
-                 NodeTransformFunction transform,
-                 QuadTreeProcessor& processor);                        
-  
-  // populate a list of all data that matches the predicate
-  void FindIf(const FastPolygon& poly,
-              NodePredicate pred, 
-              MemoryMapDataConstList& output) const;
-              
+  void Fold(FoldFunctorConst accumulator, FoldDirection dir = FoldDirection::BreadthFirst) const;
+  void Fold(FoldFunctorConst accumulator, const FastPolygon& region, FoldDirection dir = FoldDirection::BreadthFirst) const;
+
   // moves this node's center towards the required points, so that they can be included in this node
   // returns true if the root shifts, false if it can't shift to accomodate all points or the points are already contained
   bool ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& processor);
@@ -147,10 +130,6 @@ public:
   // NOTE: this method is expected to NOT clear the vector before adding neighbors
   void AddSmallestNeighbors(EDirection direction, EClockDirection iterationDirection, NodeCPtrVector& neighbors) const;
  
-  // adds to the given vector the smallest descendants of every branch. If a node is a leaf, it adds itself,
-  // otherwise it recursively asks children to do the same
-  void AddSmallestDescendantsDepthFirst(NodeCPtrVector& descendants) const;
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Collision checks
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -160,20 +139,9 @@ public:
   
   // returns true if this node FULLY contains the given poly
   bool Contains(const FastPolygon& poly) const;
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Render
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // adds the necessary quads to the given vector to be rendered
-  void AddQuadsToDraw(VizManager::SimpleQuadVector& quadVector) const;
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Send
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // adds the necessary quad infos to the given vector to be sent
-  void AddQuadsToSend(MemoryMapTypes::QuadInfoVector& quadInfoVector) const;
+
+  // returns true if the given poly FULLY contains this node (this assumes `poly` is convex)
+  bool IsContainedBy(const FastPolygon& poly) const;
   
 private:
 
@@ -186,6 +154,8 @@ private:
     bool Contains(const Point2f& p) const;
     
     Point2f lowerLeft; 
+    Point2f lowerRight; 
+    Point2f upperLeft; 
     Point2f upperRight; 
     std::array<LineSegment, 2> diagonals;
   };
@@ -206,37 +176,19 @@ private:
   // return true if this quad can subdivide
   bool CanSubdivide() const { return _level > 0; }
   
-  // returns true if this node can override children with the given content type (some changes in content
-  // type are not allowed to preserve information). This is a necessity now to prevent Cliffs from being
-  // removed by Clear. Note that eventually we have to support that since it's possible that the player
-  // actually covers the cliff with something transitable
-  bool CanOverrideSelfWithContent(EContentType newContentType, ESetOverlap overlap ) const;
-  bool CanOverrideSelfAndChildrenWithContent(EContentType newContentType, ESetOverlap overlap) const;
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Modification
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // push content into the QT bounded by poly    
-  // TODO: (mrw) merge this with `Insert` Method once we figure out why creating NodeContent in the recursive call 
-  //       breaks dynamic casting of MemoryMapData          
-  bool Insert_Recursive(const FastPolygon& poly, 
-                        const NodeContent& detectedContent,
-                        QuadTreeProcessor& processor);
 
   // subdivide/merge children
   void Subdivide(QuadTreeProcessor& processor);
-  void Merge(const NodeContent& newContent, QuadTreeProcessor& processor);
-  void ClearDescendants(QuadTreeProcessor& processor);
+  void Merge(const MemoryMapDataPtr newContent, QuadTreeProcessor& processor);
 
   // checks if all children are the same type, if so it removes the children and merges back to a single parent
   void TryAutoMerge(QuadTreeProcessor& processor);
   
-  // sets the content type to the detected one.
-  // try checks por priority first, then calls force
-  void TrySetDetectedContentType(const NodeContent& detectedContent, ESetOverlap overlap, QuadTreeProcessor& processor);
   // force sets the type and updates shared container
-  void ForceSetDetectedContentType(const NodeContent& detectedContent, QuadTreeProcessor& processor);
+  void ForceSetDetectedContentType(const MemoryMapDataPtr detectedContent, QuadTreeProcessor& processor);
   
   // sets a new parent to this node. Used on expansions
   void ChangeParent(const QuadTreeNode* newParent) { _parent = newParent; }

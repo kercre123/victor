@@ -262,14 +262,13 @@ int cozmo_startup(const char *configuration_data)
   }
 
   // Create the data platform with the folders sent from Unity
-  std::string filesPath = config["DataPlatformFilesPath"].asCString();
+  std::string persistentPath = config["DataPlatformPersistentPath"].asCString();
   std::string cachePath = config["DataPlatformCachePath"].asCString();
-  std::string externalPath = config["DataPlatformExternalPath"].asCString();
   std::string resourcesPath = config["DataPlatformResourcesPath"].asCString();
   std::string resourcesBasePath = config["DataPlatformResourcesBasePath"].asCString();
   std::string appRunId = config["appRunId"].asCString();
 
-  dataPlatform = new Anki::Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
+  dataPlatform = new Anki::Util::Data::DataPlatform(persistentPath, cachePath, resourcesPath);
   
   bool dataCollectionEnabled = config["DataCollectionEnabled"].asBool();
   cozmo_configure_das(resourcesBasePath, dataPlatform, dataCollectionEnabled);
@@ -376,7 +375,7 @@ int cozmo_startup(const char *configuration_data)
   }
   
   PRINT_NAMED_INFO("cozmo_startup", "Creating engine");
-  PRINT_NAMED_DEBUG("cozmo_startup", "Initialized data platform with filesPath = %s, cachePath = %s, externalPath = %s, resourcesPath = %s", filesPath.c_str(), cachePath.c_str(), externalPath.c_str(), resourcesPath.c_str());
+  PRINT_NAMED_DEBUG("cozmo_startup", "Initialized data platform with persistentPath = %s, cachePath = %s, resourcesPath = %s", persistentPath.c_str(), cachePath.c_str(), resourcesPath.c_str());
 
   configure_engine(config);
   
@@ -477,7 +476,7 @@ void cozmo_execute_background_transfers()
 const char * cozmo_get_device_id_file_path(const char * persistentDataPath)
 {
   static std::string path;
-  path = std::string(persistentDataPath) + "/output/" + DEVICE_ID_FILE;
+  path = std::string(persistentDataPath) + DEVICE_ID_FILE;
   return path.c_str();
 }
 #endif

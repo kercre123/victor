@@ -32,7 +32,7 @@ static const char* kConfigKeyNumRuns = "numRuns";
 Json::Value BehaviorDispatcherRerun::CreateConfig(BehaviorID newConfigID, BehaviorID delegateID, const int numRuns)
 {
   Json::Value config =  ICozmoBehavior::CreateDefaultBehaviorConfig(
-    BEHAVIOR_CLASS(BehaviorDispatcherRerun), newConfigID);
+    BEHAVIOR_CLASS(DispatcherRerun), newConfigID);
   config[kConfigKeyDelegateID] = BehaviorTypesWrapper::BehaviorIDToString(delegateID);
   config[kConfigKeyNumRuns] = numRuns;
   return config;

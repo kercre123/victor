@@ -23,8 +23,6 @@
 #include "engine/components/cubeAccelComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/animationTriggerHelpers.h"
-#include "engine/needsSystem/needsManager.h"
-#include "engine/needsSystem/needsState.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -120,24 +118,7 @@ BehaviorSinging::~BehaviorSinging()
 bool BehaviorSinging::WantsToBeActivatedBehavior() const
 {
   // Always activatable, the higher level Singing goal/activity is responsible
-  // for deciding when Cozmo should sing
-  // Except if the needs system has unlocked a song, we want that to be the
-  // next song played
-  if(GetBEI().HasNeedsManager()){
-    auto& needsManager = GetBEI().GetNeedsManager();
-    
-    const NeedsState& currNeedState = needsManager.GetCurNeedsState();
-    const auto& forcedSong = currNeedState._forceNextSong;
-    if (forcedSong == UnlockId::Invalid)
-    {
-      return true;
-    }
-    else
-    {
-      return (forcedSong == GetRequiredUnlockID());
-    }
-  }
-    
+  // for deciding when Cozmo should sing    
   return true;
 }
 
@@ -199,7 +180,6 @@ void BehaviorSinging::OnBehaviorActivated()
     if(res == ActionResult::SUCCESS)
     {
       BehaviorObjectiveAchieved(BehaviorObjective::Singing);
-      NeedActionCompleted(NeedsActionId::CozmoSings);
     }
   });
 }

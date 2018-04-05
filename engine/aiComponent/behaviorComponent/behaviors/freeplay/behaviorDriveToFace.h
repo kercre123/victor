@@ -29,8 +29,8 @@ public:
   void SetTargetFace(const SmartFaceID faceID){_targetFace = faceID;}
   
 protected:
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorDriveToFace(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}

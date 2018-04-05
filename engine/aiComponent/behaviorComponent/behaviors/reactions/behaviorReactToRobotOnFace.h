@@ -21,8 +21,8 @@ namespace Cozmo {
 class BehaviorReactToRobotOnFace : public ICozmoBehavior
 {
 private:
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorReactToRobotOnFace(const Json::Value& config);
   
 public:

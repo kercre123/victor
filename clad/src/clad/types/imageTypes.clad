@@ -22,7 +22,8 @@ enum uint_8 ImageEncoding
 enum uint_8 ImageSendMode {
     Off,
     Stream,
-    SingleShot
+    SingleShot,
+    SingleShotWithSensorData
 }
 
 enum uint_32 ImageConstants

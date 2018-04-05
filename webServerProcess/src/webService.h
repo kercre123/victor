@@ -69,6 +69,12 @@ public:
   using OnWebVizDataType = Signal::Signal<void(const Json::Value&,const SendToClientFunc&)>;
   OnWebVizDataType& OnWebVizData(const std::string& moduleName) { return _webVizDataSignals[moduleName]; }
   
+  // temp signals for the app sending data and requesting data
+  using OnAppToEngineOnDataType = Signal::Signal<std::string(const std::string&)>;
+  OnAppToEngineOnDataType& OnAppToEngineOnData() { return _appToEngineOnData; }
+  using OnAppToEngineRequestDataType = Signal::Signal<std::string()>;
+  OnAppToEngineRequestDataType& OnAppToEngineRequestData() { return _appToEngineRequestData; }
+  
   const std::string& getConsoleVarsTemplate();
 
   enum RequestType
@@ -79,6 +85,9 @@ public:
     RT_ConsoleVarList,
     RT_ConsoleFuncList,
     RT_ConsoleFuncCall,
+    
+    RT_TempAppToEngine,
+    RT_TempEngineToApp,
     
     RT_WebsocketOnSubscribe,
     RT_WebsocketOnData,
@@ -138,6 +147,9 @@ private:
  
   std::unordered_map<std::string, OnWebVizSubscribedType> _webVizSubscribedSignals;
   std::unordered_map<std::string, OnWebVizDataType> _webVizDataSignals;
+  
+  OnAppToEngineOnDataType _appToEngineOnData;
+  OnAppToEngineRequestDataType _appToEngineRequestData;
 };
 
 } // namespace WebService

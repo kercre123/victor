@@ -24,7 +24,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPickupCube.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPickUpCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
@@ -282,7 +282,6 @@ void BehaviorStackBlocks::TransitionToPlayingFinalAnim()
   if(!ShouldStreamline()){
     DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::StackBlocksSuccess));
   }
-  NeedActionCompleted();
 }
 
   

@@ -46,7 +46,7 @@ public:
 
   static const int WIDTH  = FACE_DISPLAY_WIDTH;
   static const int HEIGHT = FACE_DISPLAY_HEIGHT;
-  
+
   // Nominal positions/sizes for everything (these are things that aren't
   // parameterized at dynamically, but could be if we want)
   
@@ -56,6 +56,8 @@ public:
   static constexpr s32   NominalEyeHeight       = 57;  // V1: 40;
   static constexpr s32   NominalEyeWidth        = 43;  // V1: 30;
   
+  static constexpr f32 DefaultHue = 0.566f;
+
   using Value = f32;
   using Parameter = ProceduralEyeParameter;
   
@@ -74,6 +76,8 @@ public:
   
   ~ProceduralFace();
 
+  bool operator==(const ProceduralFace& other) const;
+  
   // Allows setting an instance of ProceduralFace to be used as reset values
   static void SetResetData(const ProceduralFace& newResetData);
   
@@ -107,6 +111,7 @@ public:
   
   // Get/Set the overall face position
   void SetFacePosition(Point<2,Value> center);
+  void SetFacePositionAndKeepCentered(Point<2, Value> center);
   Point<2,Value> const& GetFacePosition() const;
   
   // Get/Set the overall face scale
@@ -120,6 +125,7 @@ public:
   // Set the global hue of all faces
   static void  SetHue(Value hue); 
   static Value GetHue();
+  static void ResetHueToDefault();
   
   // Get an image filled with the current hue value
   static Vision::Image& GetHueImage();
@@ -282,6 +288,10 @@ inline void ProceduralFace::SetHue(Value hue) {
 
 inline ProceduralFace::Value ProceduralFace::GetHue() {
   return _hue;
+}
+
+inline void ProceduralFace::ResetHueToDefault() {
+  _hue = DefaultHue;
 }
   
 inline Vision::Image& ProceduralFace::GetHueImage() {

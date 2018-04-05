@@ -1,7 +1,6 @@
 {
   "behaviorClass": "PounceOnMotion",
   "behaviorID": "PounceOnMotion_Socialize",
-  "needsActionID": "Pounce",
   "displayNameKey":"behavior.PounceOnMotion",
   "requiredUnlockId": "PounceOnMotionAction",
 

@@ -149,7 +149,7 @@ void BehaviorDriveToFace::TransitionToDrivingToFace()
 void BehaviorDriveToFace::TransitionToAlreadyCloseEnough()
 {
   SET_STATE(AlreadyCloseEnough);
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ComeHere_AlreadyHere),
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::AlreadyAtFace),
               &BehaviorDriveToFace::TransitionToTrackingFace);
 }
 

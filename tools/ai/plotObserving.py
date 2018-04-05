@@ -39,10 +39,17 @@ def getEdgeLabel( data ):
   else:
     edgeLabel = ''
   return edgeLabel
-def addEdges( fromNode, edges, transitionJson, edgeStyle='solid', color='black' ):
+def addEdges( options, fromNode, edges, transitionJson, edgeStyle='solid', color='black' ):
   for toData in transitionJson:
     toNode = toData['to']
     edgeLabel = getEdgeLabel( toData )
+    if options.ignoreUserIntents and edgeLabel == 'UserIntentPending':
+      continue
+    if options.startNode is not None or options.endNode is not None:
+      if options.startNode is not None and fromNode != options.startNode:
+        continue
+      elif options.endNode is not None and toNode != options.endNode:
+        continue
     edge = (fromNode, toNode)
     props = {'style': edgeStyle, 'label': edgeLabel, 'color': color}
     if [fromNode.lower(), toNode.lower()] != sorted([fromNode.lower(), toNode.lower()]):
@@ -51,7 +58,7 @@ def addEdges( fromNode, edges, transitionJson, edgeStyle='solid', color='black' 
     props['fontcolor'] = color
     edges.append( (edge, props) )
 
-def parseJson( nodes, edges, json, filename ):
+def parseJson( nodes, edges, json, filename, options ):
   """ Loads json into nodes and edges """
 
   states = json['states']
@@ -61,17 +68,22 @@ def parseJson( nodes, edges, json, filename ):
       if name not in nodes:
         nodes.append(name)
   for trans in json['transitionDefinitions']:
-    fromNode = trans['from']
-    interruptingTrans = {} if 'interruptingTransitions' not in trans else trans['interruptingTransitions']
-    nonInterruptingTrans = {} if 'nonInterruptingTransitions' not in trans else trans['nonInterruptingTransitions']
-    exitTrans = {} if 'exitTransitions' not in trans else trans['exitTransitions']
+    fromObj = trans['from']
+    if isinstance(fromObj, list):
+      fromList = fromObj
+    else:
+      fromList = [fromObj]
+    for fromNode in fromList:
+      interruptingTrans = {} if 'interruptingTransitions' not in trans else trans['interruptingTransitions']
+      nonInterruptingTrans = {} if 'nonInterruptingTransitions' not in trans else trans['nonInterruptingTransitions']
+      exitTrans = {} if 'exitTransitions' not in trans else trans['exitTransitions']
 
-    if fromNode not in nodes:
-      nodes.append(fromNode)
-    
-    addEdges( fromNode, edges, interruptingTrans, 'solid', '#d55e00' ) #colors are rgb for colorblind ppl
-    addEdges( fromNode, edges, nonInterruptingTrans, 'dashed', '#009e73' )
-    addEdges( fromNode, edges, exitTrans, 'dotted','#0072b2' )
+      if fromNode not in nodes:
+        nodes.append(fromNode)
+      
+      addEdges( options, fromNode, edges, interruptingTrans, 'solid', '#d55e00' ) #colors are rgb for colorblind ppl
+      addEdges( options, fromNode, edges, nonInterruptingTrans, 'dashed', '#009e73' )
+      addEdges( options, fromNode, edges, exitTrans, 'dotted','#0072b2' )
 
 def loadFile( filename ):
   """ Loads json file, after removing comments """
@@ -156,8 +168,15 @@ def main():
   parser = argparse.ArgumentParser(description='Draws a graph of Victor behaviors.')
   parser.add_argument('-o', '--output', action="store", dest='outputFilename', metavar='OUTPUTFILE',
                       help='output file (extension determines filetype)')
+  parser.add_argument('-u', '--ignore-user-intents', action="store_true", dest='ignoreUserIntents',
+                      help='ignores transitions due to user intents')
   parser.add_argument('inputFilename', metavar='INPUTFILE',
                       help='the file victorObservingDemo.json')
+  mutex = parser.add_mutually_exclusive_group(required=False)
+  mutex.add_argument('--begin', action="store", dest='startNode', metavar='BEGINBEHAVIOR',
+                     help='only draws edges that originate from BEGINBEHAVIOR')
+  mutex.add_argument('--end', action="store", dest='endNode', metavar='ENDBEHAVIOR',
+                     help='only draws edges that end at ENDBEHAVIOR')
   
 
   args = parser.parse_args()
@@ -177,7 +196,14 @@ def main():
   edges = []
 
   jsonData = loadFile( inputFilename )
-  parseJson( nodes, edges, jsonData, inputFilename )
+  parseJson( nodes, edges, jsonData, inputFilename, args )
+
+  if args.startNode is not None and args.startNode not in nodes:
+    print('Behavior {0} was not found'.format(args.startNode))
+    sys.exit(1)
+  if args.endNode is not None and args.endNode not in nodes:
+    print('Behavior {0} was not found'.format(args.endNode))
+    sys.exit(1)
 
   # render 
 

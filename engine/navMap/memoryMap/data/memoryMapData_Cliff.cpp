@@ -30,7 +30,7 @@ MemoryMapData_Cliff::MemoryMapData_Cliff(const Pose3d& cliffPose, TimeStamp_t t)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MemoryMapTypes::MemoryMapDataPtr MemoryMapData_Cliff::Clone() const
 {
-  return std::make_shared<MemoryMapData_Cliff>(*this);
+  return MemoryMapDataWrapper<MemoryMapData_Cliff>(*this);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

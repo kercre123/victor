@@ -33,6 +33,9 @@ public:
   virtual ~ConditionFacePositionUpdated();
 
 protected:
+  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override {
+    requests.insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Low });
+  }
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual void HandleEvent(const EngineToGameEvent& event,

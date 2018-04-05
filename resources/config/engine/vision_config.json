@@ -7,7 +7,8 @@
     "DetectingPets"              : false,
     "DetectingMotion"            : false,
     "DetectingOverheadEdges"     : false,
-    "CheckingQuality"            : false,
+    "CheckingQuality"            : true,
+    "CheckingWhiteBalance"       : true,
     "EstimatingFacialExpression" : false,
     "DetectingSmileAmount"       : false,
     "DetectingGaze"              : false,
@@ -26,7 +27,12 @@
     // value to process every Nth frame
     "DetectingPets"          : [true, false],
     "DetectingOverheadEdges" : [false, true],
-    "CheckingQuality"        : 15,
+    // CheckingQuality and CheckingAWB run every 16 frames but are interleaved so they don't
+    // run at the same time and step on each other's toes
+    "CheckingQuality"        : [false, false, false, false, false, false, false, false, 
+                                false, false, false, false, false, false, false, true],
+    "CheckingWhiteBalance"   : [false, false, false, false, false, false, false, true, 
+                                false, false, false, false, false, false, false, false],
     "DetectingLaserPoints"   : 2,
     "ComputingStatistics"    : false,  // NOTE: enabled but not scheduled!
     "DetectingGeneralObjects": 1,
@@ -50,7 +56,7 @@
   "ImageQuality" :
   {
     // Auto-exposure settings
-    "InitialExposureTime_ms"    : 16,    // Sent each time we request camera calibration
+    "InitialExposureTime_ms"    : 31,    // Sent each time we request camera calibration
     "MidValue"                  : 115,   // [0,255] - Try to make midPercentile have this value
     "TooDarkValue"              : 20,    // "Too Dark" if HighPercentile is below this
     "TooBrightValue"            : 230,   // "Too Bright" if LowPercentile is above this
@@ -58,7 +64,7 @@
     "MidPercentile"             : 0.50,  // [0.0, 1.0]  (B/w low and high, higher to prefer under exposure)
     "HighPercentile"            : 0.90,  // [0.0, 1.0]  (Near 1.0)
     "MaxChangeFraction"         : 0.80,  // [0.0, 1.0]  (Amount we can change current exposure/gain each update)
-    "SubSample"                 : 2,     // >= 1
+    "SubSample"                 : 3,     // >= 1
     "MeterFromDetections"       : true,  // Base auto-exposure on detected markers, faces, etc, if any
     
     "TimeBeforeErrorMessage_ms" :       3000,  // How long VisionSystem must detect "bad" quality before notifying game

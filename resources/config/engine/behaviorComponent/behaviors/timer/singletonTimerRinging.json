@@ -1,0 +1,12 @@
+{
+  "behaviorID"       : "SingletonTimerRinging",
+  "behaviorClass"    : "AnimGetInLoop",
+  "getIn"            : "TimerRingGetIn",
+  "loopAnimation"    : "TimerRing",
+  "getOut"           : "TimerRingGetOut",
+  "emergencyGetOut"  : "TimerRingGetOut",
+  "loopEndCondition" : {
+    "conditionType"  : "RobotTouched",
+    "minTouchTime"   : 0.2
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "behaviorClass" : "TimerUtilityCoordinator",
+  "behaviorID"    : "TimerUtilityCoordinator",
+
+  "anticConfig" : [
+    {
+      "recurIntervalMin_s" : 180,
+      "recurIntervalMax_s" : 300,
+      "ruleMin_s"          : 60
+    }
+  ]
+}

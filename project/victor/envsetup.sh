@@ -186,4 +186,3 @@ fi
 if [ -z ${SKIP_ANDROID_SETUP+x} ]; then
     set_android_env
 fi
-

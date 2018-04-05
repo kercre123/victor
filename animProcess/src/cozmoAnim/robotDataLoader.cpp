@@ -112,8 +112,14 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
 
 Animation* RobotDataLoader::GetCannedAnimation(const std::string& name)
 {
-  assert(_cannedAnimations);
+  DEV_ASSERT(_cannedAnimations != nullptr, "_cannedAnimations");
   return _cannedAnimations->GetAnimation(name);
+}
+
+std::vector<std::string> RobotDataLoader::GetAnimationNames()
+{
+  DEV_ASSERT(_cannedAnimations != nullptr, "_cannedAnimations");
+  return _cannedAnimations->GetAnimationNames();
 }
 
 void RobotDataLoader::NotifyAnimAdded(const std::string& animName, uint32_t animLength)

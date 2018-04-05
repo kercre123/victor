@@ -1,0 +1,55 @@
+#!/bin/bash
+
+#command line options:
+debug=0
+for arg in "$@"; do
+  if [ "${arg}" == "-d" ]; then debug=1; echo debug mode 1; fi
+done
+
+bootscript="/etc/initscripts/ankiinit"
+if [ ! -e $bootscript ]; then
+  echo $bootscript does not exist
+  exit 1
+fi
+
+echo modifying boot script...
+tmpfile="ankiinitmod"; rm -f $tmpfile
+modified=0; linecnt=0
+while IFS='' read -r line || [[ -n "$line" ]]; do #https://stackoverflow.com/questions/10929453/read-a-file-line-by-line-assigning-the-value-to-a-variable
+  linecnt=$((linecnt+1))
+  
+  #detect if we already modified this script
+  if [[ $line = *"boot helper"* ]] && [ $modified -lt 1 ]; then
+    modified=1;
+    echo $bootscript already helpified!
+  fi
+  
+  #insert helper boot code just before exit
+  if [[ $line = *"exit 0"* ]] && [ $modified -lt 1 ]; then
+    modified=1
+    echo adding helper modifications
+    echo "" >> $tmpfile
+    echo "#boot helper" >> $tmpfile
+    echo "mount -o exec,remount /data" >> $tmpfile
+    echo "cd /data/local/fixture" >> $tmpfile
+    echo "./helper > /dev/null 2> /dev/null < /dev/null &" >> $tmpfile
+    echo "" >> $tmpfile
+  fi
+  
+  echo $line >> $tmpfile
+done < $bootscript
+
+#point of no return!
+echo remove robot process boot target...
+systemctl stop anki-robot.target
+rm -f /etc/systemd/system/default.target #systemctl disable anki-robot.target
+echo updating boot script...
+chmod +x $tmpfile
+cp -f $tmpfile $bootscript
+chmod +x $bootscript
+sync
+
+if [ $debug -gt 0 ]; then echo found $linecnt lines; fi
+if [ $debug -lt 1 ]; then rm -f $tmpfile; fi
+
+exit 0

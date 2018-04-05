@@ -3,6 +3,7 @@
   // helper methods
 
   function setBehaviorDropdown(data, container) {
+    data.sort();
     // create if needed, then populate a dropdown with behaviorIDs,
     // and when the user selects one, tell the engine to start that behavior 
     var dropDown = $('#behaviorDropdown');
@@ -547,6 +548,11 @@
   } // end update
 
   myMethods.init = function(elem) {
+
+    if ( location.port != '8888' ) { 
+      $('<h3>You must use this tab with the engine process (port 8888)</h3>').appendTo(elem);
+      return;
+    }
 
     params.duration = 400;
     params.margin = {top: 30, right: 20, bottom: 30, left: 20};

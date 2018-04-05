@@ -826,10 +826,10 @@ namespace Anki {
       SendMessage(VizInterface::MessageViz(VizInterface::DockingErrorSignal(x_dist, y_dist, z_dist, angle)));
     }
     
-    void VizManager::SendCameraInfo(const u16 exposure_ms, const f32 gain)
+    void VizManager::SendCameraParams(const CameraParams& params)
     {
-      ANKI_CPU_PROFILE("VizManager::SendCameraInfo");
-      SendMessage(VizInterface::MessageViz(VizInterface::CameraInfo(gain, exposure_ms)));
+      ANKI_CPU_PROFILE("VizManager::SendCameraParams");
+      SendMessage(VizInterface::MessageViz(VizInterface::CameraParams(std::move(params))));
     }
 
     void VizManager::SendRobotState(const RobotState &msg,

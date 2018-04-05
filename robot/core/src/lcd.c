@@ -52,15 +52,15 @@ static const INIT_SCRIPT init_scr[] = {
   { 0xE0, 14, { 0xD0, 0x10, 0x16, 0x0A, 0x0A, 0x26, 0x3C, 0x53, 0x53, 0x18, 0x15, 0x12, 0x36, 0x3C } }, // +ve voltage gamma control
   { 0xE1, 14, { 0xD0, 0x11, 0x19, 0x0A, 0x09, 0x25, 0x3D, 0x35, 0x54, 0x17, 0x15, 0x12, 0x36, 0x3C } }, // -ve voltage gamma control
   { 0x3A, 1, { 0x55 } },
-  { 0x55, 1, { 0x03 } }, // Content Adaptive Brightness Control: 0x03 = Color Enhancement Off, Moving Image Mode 
+  { 0x55, 1, { 0x03 } }, // Content Adaptive Brightness Control: 0x03 = Color Enhancement Off, Moving Image Mode
   { 0x21, 0 },
   { 0x2A, 4, { 0x00, RSHIFT, (LCD_FRAME_WIDTH + RSHIFT - 1) >> 8, (LCD_FRAME_WIDTH + RSHIFT - 1) & 0xFF } },
   { 0x2B, 4, { 0x00, 0x00, (LCD_FRAME_HEIGHT -1) >> 8, (LCD_FRAME_HEIGHT -1) & 0xFF } },
-  { 0x26, 1, { 0x08 } }, // Gamma Curve Setting: 0x01=2.2, 0x02=1.8, 0x04=2.5, 0x08=1.0 
+  { 0x26, 1, { 0x08 } }, // Gamma Curve Setting: 0x01=2.2, 0x02=1.8, 0x04=2.5, 0x08=1.0
   //{ 0x53, 1, {0x24} },  // Brightness control: Brightness registers active, no dimming, backlight on
   //{ 0x51, 1, {0x80} },  // Screen brightness value
   { 0x29, 0 }, // Display On
-  
+
   { 0 }
 };
 
@@ -93,9 +93,9 @@ static void lcd_spi_transfer(int cmd, int bytes, const void* data) {
 
   while (bytes > 0) {
     const size_t count = bytes > MAX_TRANSFER ? MAX_TRANSFER : bytes;
-    
+
     write(spi_fd, tx_buf, count);
-    
+
     bytes -= count;
     tx_buf += count;
   }
@@ -132,11 +132,15 @@ void lcd_draw_frame2(const uint16_t* frame, size_t size) {
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
-void lcd_set_brightness(int brightness)
+static const char* BACKLIGHT_DEVICES[] = {
+  "/sys/class/leds/face-backlight/brightness",
+  "/sys/class/leds/face-backlight-left/brightness",
+  "/sys/class/leds/face-backlight-right/brightness"
+};
+
+static void _led_set_brightness(const int brightness, const char* led)
 {
-  brightness = MIN(brightness, 20);
-  brightness = MAX(brightness, 0);
-  int fd = open("/sys/class/leds/face-backlight/brightness",O_WRONLY);
+  int fd = open(led,O_WRONLY);
   if (fd) {
     char buf[3];
     snprintf(buf,3,"%02d\n",brightness);
@@ -145,6 +149,15 @@ void lcd_set_brightness(int brightness)
   }
 }
 
+void lcd_set_brightness(int brightness)
+{
+  int l;
+  brightness = MIN(brightness, 20);
+  brightness = MAX(brightness, 0);
+  for (l=0; l<3; ++l) {
+    _led_set_brightness(brightness, BACKLIGHT_DEVICES[l]);
+  }
+}
 
 int lcd_init(void) {
 

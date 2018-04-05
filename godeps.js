@@ -17,15 +17,14 @@ if (!(deps != null && typeof deps === 'object')) {
   process.exit(1);
 }
 const gopath = execSyncTrim('go env GOPATH');
+const gopathSrc = gopath + '/src/';
 console.log('Using GOPATH=' + gopath);
 
 // build command list
 const commands = {
   list: [listDeps, 'list all currently versioned dependencies'],
-  add: [addDep, 'add a dependency with the given name'],
-  remove: [removeDep, 'remove the given dependency from versioning'],
   update: [updateDeps, 'update the given dep (or all deps, with --all flag) to the latest of its tracked branch'],
-  execute: [recordDeps, 'record every remote dependency in $GOPATH as a dependency, check out required versions'],
+  execute: [runRoutine, 'clone and verify all versioned deps, update godeps.json to reflect new/removed deps']
 }
 
 const args = process.argv.slice(2);
@@ -73,39 +72,6 @@ function listDeps() {
   });
 }
 
-function addDep(args) {
-  if (args.length === 0) {
-    console.log('usage: add <package-name> [optional-commit] [optional-tracking-branch]');
-    console.log('- package name should have url form, i.e. github.com/anki/sai-go-util');
-    console.log('- if [optional-commit] not specified, defaults to current HEAD');
-    console.log('- if [optional-tracking-branch] omitted, defaults to current branch (if not detached)');
-    return;
-  }
-  if (deps[args[0]]) {
-    console.log('dep already exists: ' + args[0]);
-    return;
-  }
-  const depdir = getDir(args[0]);
-  try {
-    const pathstats = fs.lstatSync(depdir);
-    if (!pathstats.isDirectory()) {
-      console.error('error: ' + depdir + ' is not a directory');
-      return;
-    }
-  } catch (e) {
-    console.error('error: could not find directory ' + depdir);
-    return;
-  }
-  const toplevel = execSyncTrimDir(depdir, 'git rev-parse --show-toplevel');
-  if (toplevel != depdir) {
-    console.error('not a top level git repo: ' + depdir);
-    return;
-  }
-
-  addDepInternal(args[0], args[1], args[2]);
-  save();
-}
-
 
 function addDepInternal(name, commit, branch) {
   const depdir = getDir(name);
@@ -147,21 +113,6 @@ function addDepInternal(name, commit, branch) {
   }
   deps[name] = newDep;
   console.log(logStr);
-}
-
-
-function removeDep(args) {
-  if (args.length === 0) {
-    console.log('usage: remove <package-name>');
-    return;
-  }
-  if (!deps[args[0]]) {
-    console.error('could not find ' + args[0] + ' in existing deps');
-    return;
-  }
-  delete deps[args[0]]
-  console.log('removed dep ' + args[0]);
-  save();
 }
 
 
@@ -263,11 +214,12 @@ function syncDep(dep) {
 }
 
 
-function recordDeps(args) {
+function runRoutine(args) {
   if (args.length < 1) {
     console.log('usage: execute <generated lst dir>');
     return;
   }
+
   const tryVerifyFunc = func => {
     try {
       return func();
@@ -281,6 +233,12 @@ function recordDeps(args) {
     return;
   }
 
+  // step 1: clone all repos that are specified in the json but don't exist on disk
+  const startDeps = getAllDeps();
+  cloneDeps(startDeps);
+  // update these repos to desired commit
+  const syncResults = startDeps.map(dep => syncDep(dep));
+
   // get list of .godir.lst files in generated dir
   const godirFiles = fs.readdirSync(args[0]).filter(val => val.endsWith('godir.lst')).map(val => path.join(args[0], val));
   if (godirFiles.length === 0) {
@@ -288,79 +246,78 @@ function recordDeps(args) {
     return;
   }
 
-  const stdLibPackages = execSyncTrim('go list std').split('\n');
+  const stdLibPackages = execSyncTrim('go list std').split('\n')
+    .concat(execSyncTrim('GOOS="android" go list std').split('\n'))
+    .reduce((agg, pkg) => !agg.includes(pkg) ? agg + pkg : agg, []);
 
-  const allDeps = godirFiles
-    // get contents of godir files
+  const allGoDirs = godirFiles
     .map(filename => fs.readFileSync(filename, 'utf8'))
-    // get dependencies of each godir
-    .map(godir => execSyncTrim('go list -f \'{{ join .Deps "\\n" }}\' ' + godir))
-    // split newline-separated deps into array, remove std lib packages
-    .map(deps => deps.split('\n').filter(dep => !stdLibPackages.includes(dep)))
-    // merge all deps into one array, removing duplicates
-    .reduce((agg, deps) => agg.concat(deps.filter(dep => !agg.includes(dep))), [])
-  ;
+    .join(' ');
 
-  // starting from $GOPATH/src, recurse over child dirs to find dependencies
-  let names = [''];
+  // step 2: run 'go get' on all godir-specified folders - will pick up any new dependencies
+  execSync('go get -d -v ' + allGoDirs, { stdio: 'inherit' });
+
+  // now that 'go get' has pulled everything we need, get full dependency list for packages
+  const allDeps = [...new Set(execSyncTrim('go list -f \'{{ join .Deps "\\n" }}\' ' + allGoDirs).split('\n'))]
+    .filter(dep => !stdLibPackages.includes(dep)).sort();
+
+  // step 3: check that all remote dependencies are tracked by us and checked out at correct commit
+  //
+  // already cloned + verified tracked dependencies, so remove them from list
+  let remainingDeps = allDeps.slice();
+  Object.keys(deps).forEach(name => {
+    remainingDeps = remainingDeps.filter(dep => !dep.startsWith(name));
+  });
+
+  const ourToplevel = execSyncTrim('git rev-parse --show-toplevel');
   let changed = false;
-  const syncResults = [];
-  while (names.length > 0) {
-    const subdirs = []
-    names.forEach(name => {
-      // if this dir is already in godeps.json, make sure it's up to date and leave
-      if (deps[name]) {
-        syncResults.push(syncDep(Object.assign({ name }, deps[name])));
-        return;
-      }
-      // if this is not the top level of a git repo, maybe its children are?
-      const dir = getDir(name);
-      const toplevel = execSyncTrimDir(dir, 'git rev-parse --show-toplevel');
-      if (toplevel != dir) {
-        // add all child directories to processing list
-        // first get all subdirs in this directory...
-        const contents = fs.readdirSync(dir).filter(filename => fs.lstatSync(path.join(dir, filename)).isDirectory());
-        // now add them to the processing list, making sure to build on the existing dir name
-        subdirs.push(...contents.map(str => path.join(name, str)));
-        return;
-      }
 
-      // if this remote repo is not in our dependencies, ignore it
-      if (!allDeps.find(dep => dep.startsWith(name))) {
-        return;
+  // process 1 dep at a time, since we might be able to remove several deps at once when
+  // multiple dependent packages live in the same repository
+  while (remainingDeps.length > 0) {
+    // is this dep part of a remote repo? see if its git toplevel is the same as our toplevel
+    const dir = getDir(remainingDeps[0]);
+    const toplevel = execSyncTrimDir(dir, 'git rev-parse --show-toplevel');
+    if (toplevel != ourToplevel) {
+      // this is in a remote repo - add the package name implied by the toplevel name to our dependency list
+      if (!toplevel.startsWith(gopathSrc)) {
+        console.log('WTF, why doesn\'t ' + toplevel + ' start with ' + gopathSrc + ' ??');
+        process.exit(1);
       }
+      const remote = toplevel.substr(gopathSrc.length);
+      if (deps[remote]) {
+        console.log('WTF, how did we get here if already tracked: ' + remote);
+        process.exit(1);
+      }
+      // remove all sub-dependencies contained in this repo
+      remainingDeps = remainingDeps.filter(name => !name.startsWith(remote));
 
-      // it passed the tests, add it as a dependency
-      addDepInternal(name);
+      addDepInternal(remote);
       changed = true;
-    });
-    names = subdirs;
+    }
+    else {
+      // this is local, remove it and continue
+      remainingDeps.splice(0, 1);
+    }
   }
+
+  // see if any of our tracked deps are no longer used and should be removed
+  startDeps
+    // find deps in our tracked list that don't contain any dependencies found by go
+    .filter(dep => !allDeps.find(name => name.startsWith(dep.name)))
+    // remove each of them
+    .forEach(dep => {
+      console.log('dependency ' + dep.name + ' is no longer used, removing');
+      delete deps[dep.name];
+      changed = true;
+    }
+  );
+
   if (changed) {
     save();
     console.log('Updates written to godeps.json; now exiting with failure');
     console.log('(builds fail after update to make sure developers commit changes to godeps.json');
     console.log(' BEFORE pushing for pull request/master builds)');
-    process.exit(1);
-  }
-
-  // it should now be the case that all external dependencies are tracked deps or exist on hard drive
-  const trackedDeps = Object.keys(deps);
-  const untrackedDeps = allDeps.filter(dep => !trackedDeps.find(val => dep.startsWith(val)));
-  const isDepMissing = dep => {
-    try {
-      // missing if it contains no go files...
-      return fs.readdirSync(getDir(dep))
-        .filter(file => file.endsWith('.go'))
-        .length === 0;
-    } catch (e) {
-      // ...or if trying to read its contents throws an exception
-      return true;
-    }
-  }
-  const missingDeps = untrackedDeps.filter(isDepMissing);
-  if (missingDeps.length > 0) {
-    missingDeps.forEach(dep => console.log('error: ' + dep + ' is a dependency, but not versioned and not present on disk'));
     process.exit(1);
   }
 
@@ -371,8 +328,60 @@ function recordDeps(args) {
 }
 
 
+function cloneDeps(deplist) {
+  deplist.forEach(dep => {
+    const depdir = getDir(dep.name);
+    if (fs.existsSync(depdir)) {
+      // path where this dependency goes exists, don't worry about it
+      return;
+    }
+
+    // path doesn't exist, need to grab this repo
+    let cloneCmd = '';
+    try {
+      cloneCmd = getCloneCommand(dep.name);
+    }
+    catch (e) {
+      console.log('Clone error: ' + e);
+      process.exit(1);
+    }
+    console.log("Cloning " + dep.name + ": " + cloneCmd);
+    execSync('mkdir -p ' + depdir);
+    execSync('(cd ' + depdir + '; ' + cloneCmd + ' ' + depdir + ' )', { stdio: 'inherit' });
+    execSync('(cd ' + depdir + '; ' + 'git checkout ' + dep.commit + ' )', { stdio: 'pipe' });
+    execSync('(cd ' + depdir + '; ' + 'git submodule update --init --recursive )', { stdio: 'inherit' });
+  });
+}
+
+
+function getCloneCommand(name) {
+  // for github, we know the syntax
+  if (name.startsWith('github.com/')) {
+    return 'git clone git@github.com:' + name.substr('github.com/'.length);
+  }
+
+  // otherwise, get meta tags
+  const curlOut = execSyncTrim('curl -s ' + name + '?go-get=1 | grep go-import');
+  const startIdx = curlOut.indexOf(name);
+  if (startIdx < 0) {
+    throw 'Could not find dependency go-import tag in: ' + curlOut
+  }
+  const strEnd = curlOut.substr(startIdx);
+  const endIdx = strEnd.indexOf('"');
+  if (endIdx < 0) {
+    throw 'Could not find closing quote in: ' + strEnd;
+  }
+
+  const [_, vcs, url] = strEnd.substring(0, endIdx).split(' ');
+  if (vcs != 'git') {
+    throw 'Script doesn\'t yet know how to clone from non-git VCS: ' + vcs;
+  }
+  return 'git clone ' + url;
+}
+
+
 function getDir(name) {
-  return gopath + '/src/' + name;
+  return gopathSrc + name;
 }
 
 

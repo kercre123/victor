@@ -6,32 +6,36 @@
 namespace Anki {
 namespace Cozmo {
 
-// Identifies the WantsToRunStrategy type
+// Identifies the BEICondition type
 // PLEASE KEEP ALPHABETIZED
 enum uint_8 BEIConditionType {
   Invalid,
 
   TrueCondition, // (note: name can't be True due to clad rules)
-  CloudIntentPending,
+
+  CliffDetected,
+  ConsoleVar,
+  BehaviorTimer,
   FacePositionUpdated,
   Frustration,
-  InNeedsBracket,
+  Lambda,
   MotionDetected,
+  Negate,
   ObjectInitialDetection,
   ObjectMoved,
   ObjectPositionUpdated,
   ObstacleDetected,
+  OffTreadsState,
+  OnCharger,
   PetInitialDetection,
   ProxInRange,
   RobotPlacedOnSlope,
   RobotShaken,
-  RobotTouchGesture,
-  Lambda,
-  TimerInRange,
+  RobotTouched,
   TimedDedup,
-  Negate,
-  OnCharger,
-  OffTreadsState,
+  TimerInRange,
+  TriggerWordPending,
+  UserIntentPending,
 }
 
 } // namespace Cozmo

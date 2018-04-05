@@ -22,8 +22,8 @@ class BehaviorPlaypenReadToolCode : public IBehaviorPlaypen
 {
 protected:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorPlaypenReadToolCode(const Json::Value& config);
   
   virtual Result OnBehaviorActivatedInternal()   override;

@@ -1,9 +1,18 @@
-#include "androidHAL/androidHAL.h"
+#include "camera/cameraService.h"
 #include "cubeBleClient/cubeBleClient.h"
 #include "gtest/gtest.h"
 #include "osState/osState.h"
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
+
+namespace Anki {
+namespace Cozmo {
+  CONSOLE_VAR_EXTERN(bool, kProcFace_RenderInnerOuterGlow)
+  CONSOLE_VAR_EXTERN(bool, kProcFace_ApplyGlowFilter)
+  CONSOLE_VAR_EXTERN(s32, kProcFace_AntiAliasingSize)
+}
+}
 
 using namespace Anki;
 using namespace Cozmo;
@@ -21,6 +30,10 @@ std::string resourcePath; // This is externed and used by tests
 
 int main(int argc, char ** argv)
 {
+  // For victor rendering
+  kProcFace_RenderInnerOuterGlow = kProcFace_ApplyGlowFilter = true;
+  kProcFace_AntiAliasingSize = 5.f;
+
   //LEAKING HERE
   Anki::Util::PrintfLoggerProvider* loggerProvider = new Anki::Util::PrintfLoggerProvider();
   loggerProvider->SetMinLogLevel(Anki::Util::ILoggerProvider::LOG_LEVEL_DEBUG);
@@ -57,7 +70,7 @@ int main(int argc, char ** argv)
     std::string path = aux.substr(0,pos);
 */
     std::string path = cwdPath;
-    resourcePath = path + "/../../assets/cozmo_resources";
+    resourcePath = path + "/../../data/assets/cozmo_resources";
   } else {
     // build server specifies configRoot and workRoot
     resourcePath = configRoot + "/resources";
@@ -67,7 +80,7 @@ int main(int argc, char ** argv)
   Anki::Util::_errBreakOnError = false;
 
   // Initialize AndroidHAL singleton without supervisor
-  AndroidHAL::SetSupervisor(nullptr);
+  CameraService::SetSupervisor(nullptr);
   
   // Initialize OSState singleton without supervisor
   OSState::SetSupervisor(nullptr);

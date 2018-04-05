@@ -1,0 +1,221 @@
+// This file is manually generated using ./tools/ai/generateBehaviorCode.py
+// To add a behavior, just create the .cpp and .h files in the correct places
+// and re-run ./tools/ai/generateBehavior.py
+
+namespace Anki {
+namespace Cozmo {
+
+// BehaviorID is a unique identifier for each instance of a behavior
+// so that they can be referenced by other parts of the behavior system
+
+enum uint_8 BehaviorID {
+
+  // required (not based on config)
+  Anonymous,
+  DevExecuteBehaviorRerun,
+  Wait_TestInjectable,
+
+  // <root>
+  DriveOffCharger,
+  Wait,
+
+  // devBehaviors
+  DevBaseBehavior,
+  DevDisplayReadingsOnFace,
+  DevImageCapture,
+  DevPettingTestSimple,
+  DevTouchDataCollection,
+  DevTurnInPlaceTest,
+  DockingTestSimple,
+  FactoryCentroidExtractor,
+  LiftLoadTest,
+
+  // devBehaviors/playpen
+  PlaypenCameraCalibration,
+  PlaypenDistanceSensor100mm,
+  PlaypenDistanceSensor300mm,
+  PlaypenDistanceSensor80mm,
+  PlaypenDriftCheck,
+  PlaypenDriveForwards,
+  PlaypenEndChecks,
+  PlaypenInitChecks,
+  PlaypenMotorCalibration,
+  PlaypenPickupCube,
+  PlaypenReadToolCode,
+  PlaypenSoundCheck,
+  PlaypenTest,
+  PlaypenWaitToStart,
+
+  // examples
+  ExampleAnimGetInLoop,
+  ExampleAnonymousBehaviors,
+  ExampleDispatcherScoring,
+  ExampleGlobalReactions,
+  ExampleProceduralClock,
+
+  // examples/globalReactionSubBehaviors
+  ExampleFacePositionUpdated,
+  ExampleFrustration,
+  ExampleObjectMoved,
+  ExampleObjectPositionUpdated,
+  ExamplePetInitialDetection,
+
+  // reactions
+  ReactToCliff,
+  ReactToCubeMoved,
+  ReactToPet,
+
+  // singing
+  Singing_AbaDaba,
+  Singing_BeautifulDreamer,
+  Singing_Beethovens5th,
+  Singing_Bingo,
+  Singing_BuffaloGals,
+  Singing_Camptown,
+  Singing_CanCan1,
+  Singing_CanCan2,
+  Singing_DannyBoy,
+  Singing_EntryOfTheGladiators,
+  Singing_FarmerInTheDell,
+  Singing_FrereJacques,
+  Singing_HelloMyBaby,
+  Singing_ItsyBitsySpider,
+  Singing_LaPaloma,
+  Singing_LondonBridge,
+  Singing_MaryHadALittleLamb,
+  Singing_MountainKing,
+  Singing_MuffinMan,
+  Singing_MulberryBush,
+  Singing_MussIDenn,
+  Singing_OdeToJoy,
+  Singing_PachebelCanon,
+  Singing_PopGoesTheWeasel,
+  Singing_RowYourBoat,
+  Singing_Sakura,
+  Singing_SilveryMoon,
+  Singing_TaRaRaBoom,
+  Singing_TakeMeOutToTheBallgame,
+  Singing_TisketTasket,
+  Singing_Toccata,
+  Singing_TurkeyInTheStraw,
+  Singing_TwinkleTwinkle,
+  Singing_VivaldiSpring,
+  Singing_WaterMusic,
+  Singing_WildAboutHarry,
+  Singing_WilliamTell,
+  Singing_YankeeDoodle,
+  Singing_YellowRose,
+
+  // timer
+  SingletonTimerAntic,
+  SingletonTimerRinging,
+  SingletonTimerSet,
+  TimerUtilityCoordinator,
+
+  // victorBehaviorTree
+  CoordinateGlobalInterrupts,
+  GlobalInterruptions,
+  HighLevelAI,
+
+  // victorBehaviorTree/highLevelDelegates
+  FistBump,
+
+  // victorBehaviorTree/highLevelDelegates/getHomeBehaviors
+  AcknowledgeCharger,
+  FindAndGoToHome,
+  FindAndRequestHome,
+  FindHome,
+  GoHome,
+  RequestToGoHome,
+
+  // victorBehaviorTree/highLevelDelegates/hiking
+  Hiking_BringCubeToBeacon,
+  Hiking_DriveOffCharger,
+  Hiking_FirstLookIntro,
+  Hiking_FirstLookWakeUp,
+  Hiking_LookInPlace360,
+  Hiking_LookInPlaceForUnknown,
+  Hiking_PounceOnMotion,
+  Hiking_RollCube,
+  Hiking_ThinkAboutBeacons,
+  Hiking_VisitInterestingEdge,
+
+  // victorBehaviorTree/highLevelDelegates
+  InteractWithFaces,
+  LookInPlaceHeadUp,
+
+  // victorBehaviorTree/highLevelDelegates/meetVictor
+  EnrollFace,
+  MeetCozmo_FindFaces_Socialize,
+  MeetCozmo_InteractWithFaces,
+  MeetVictor,
+  RespondToRenameFace,
+
+  // victorBehaviorTree/highLevelDelegates
+  NothingToDo_Idle,
+
+  // victorBehaviorTree/highLevelDelegates/observing
+  DriveOffChargerIntoObserving,
+  DriveOffChargerIntoPlay,
+  Observing,
+  ObservingFailedToFindCharger,
+  ObservingFindFaces,
+  ObservingLookAtFaces,
+  ObservingOnCharger,
+  ObservingOnChargerIdle,
+
+  // victorBehaviorTree/highLevelDelegates
+  PickupCube,
+
+  // victorBehaviorTree/highLevelDelegates/playWithCube
+  PlayRollBlock,
+  PlayWithCube,
+  PopAWheelie,
+
+  // victorBehaviorTree/highLevelDelegates
+  PounceOnMotion_Socialize,
+
+  // victorBehaviorTree/highLevelDelegates/pounceWithProx
+  PounceApproachWithProx,
+  PounceDispatcher,
+  PounceQuickLeft,
+  PounceQuickRight,
+  PounceWithProx,
+
+  // victorBehaviorTree/highLevelDelegates
+  PutDownBlock,
+  PutDownDispatch_LookForFaceAndCube,
+
+  // victorBehaviorTree/highLevelDelegates/puzzles
+  PuzzleMaze,
+
+  // victorBehaviorTree/highLevelDelegates
+  ReactToFrustrationMajor,
+  ReactToObstacle,
+  ShortLookAroundForFaceAndCube,
+
+  // victorBehaviorTree/highLevelDelegates/sleeping
+  GoToSleep,
+  Sleeping,
+  SleepingWakeUp,
+
+  // victorBehaviorTree/highLevelDelegates/socialize
+  FindFaces_socialize,
+  Socialize,
+  SocializeGame,
+
+  // victorBehaviorTree/highLevelDelegates
+  StackBlocks,
+
+  // victorBehaviorTree/highLevelDelegates/voiceCommands
+  FistBumpVoiceCommand,
+
+  // victorBehaviorTree
+  ReactToSoundAsleep,
+  ReactToSoundAwake,
+  ReactToUnclaimedIntent,
+  TriggerWordDetected,
+}
+
+}
+}

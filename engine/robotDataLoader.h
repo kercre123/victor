@@ -90,15 +90,10 @@ public:
   const Json::Value& GetRobotVisionConfig() const            { return _robotVisionConfig; }
   const Json::Value& GetVisionScheduleMediatorConfig() const { return _visionScheduleMediatorConfig; }
   const Json::Value& GetVoiceCommandConfig() const           { return _voiceCommandConfig; }
-  const Json::Value& GetRobotNeedsConfig() const             { return _needsSystemConfig; }
-  const Json::Value& GetStarRewardsConfig() const            { return _starRewardsConfig; }
-  const Json::Value& GetRobotNeedsActionsConfig() const      { return _needsActionConfig; }
-  const Json::Value& GetRobotNeedsDecayConfig() const        { return _needsDecayConfig; }
-  const Json::Value& GetRobotNeedsHandlersConfig() const     { return _needsHandlersConfig; }
-  const Json::Value& GetLocalNotificationConfig() const      { return _localNotificationConfig; }
   const Json::Value& GetInventoryConfig() const              { return _inventoryConfig; }
   const Json::Value& GetWebServerEngineConfig() const        { return _webServerEngineConfig; }
   const Json::Value& GetDasEventConfig() const               { return _dasEventConfig; }
+  const Json::Value& GetUserIntentConfig() const             { return _userIntentsConfig; }
 
   // images are stored as a map of stripped file name (no file extension) to full path
   const ImagePathMap& GetFacePNGPaths()       const { return _facePNGPaths; }
@@ -168,16 +163,11 @@ private:
   Json::Value _robotVisionConfig;
   Json::Value _visionScheduleMediatorConfig;
   Json::Value _voiceCommandConfig;
-  Json::Value _needsSystemConfig;
-  Json::Value _starRewardsConfig;
-  Json::Value _needsActionConfig;
-  Json::Value _needsDecayConfig;
-  Json::Value _needsHandlersConfig;
-  Json::Value _localNotificationConfig;
   Json::Value _textToSpeechConfig;
   Json::Value _inventoryConfig;
   Json::Value _webServerEngineConfig;
   Json::Value _dasEventConfig;
+  Json::Value _userIntentsConfig;
   
   ImagePathMap _facePNGPaths;
 

@@ -34,7 +34,9 @@ protected:
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual void HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
-
+  virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requiredVisionModes) const override {
+    requiredVisionModes.insert( {VisionMode::DetectingMotion, EVisionUpdateFrequency::High });
+  }
 private:
   enum class MotionArea{
     Left,

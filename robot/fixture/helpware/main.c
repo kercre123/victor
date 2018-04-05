@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <termios.h>
 #include <sys/time.h>
 #include <sys/wait.h>
@@ -18,26 +19,68 @@
 #include "helpware/kbhit.h"
 
 
-#define FIXTURE_TTY "/dev/ttyHSL1"
+//#define FIXTURE_TTY "/dev/ttyHSL1"
+#define FIXTURE_TTY "/dev/ttyHS0"
 #define FIXTURE_BAUD B1000000
 
+#ifdef DEBUG_WO_SERIAL
+#define serial_write(fd, st, ln)
+#define serial_read(fd, buf, ln) 0
+#define serial_init(tty, baud) 0
+#endif
 
-#define LINEBUFSZ 255
+#define LINEBUFSZ 1024
 
+static int gSerialFd;
 
+#define SEND_CONSOLE   0x1
+#define SEND_LOG       0x2
+#define SEND_SERIAL    0x4
+#define SEND_CL        (SEND_CONSOLE | SEND_LOG) /*most incomming & error data is sent to console + log*/
+#define SEND_CLS       (SEND_CONSOLE | SEND_LOG | SEND_SERIAL) /*most outgoing data is sent to all 3 targets*/
+void write_multiple(int targets, const char* textstring, int len)
+{
+  if( targets & SEND_CONSOLE ) {
+    printf("%.*s", len, textstring);
+    fflush(stdout);
+  }
+  if( targets & SEND_LOG ) {
+    fixture_log_write(textstring, len);
+  }
+  if( (targets & SEND_SERIAL) && gSerialFd >= 0 ) {
+    serial_write(gSerialFd, (uint8_t*)textstring, len);
+  }
+}
 
+int printf_multiple(int targets, const char* format, ...)
+{
+  va_list argptr;
+  va_start(argptr, format);
 
-int shellcommand(const char* command, int timeout_sec) {
+  char buf[256];
+  int formatlen = vsnprintf(buf, sizeof(buf), format, argptr);
+  int validlen = formatlen < sizeof(buf) ? formatlen : sizeof(buf); //MIN(formatlen, sizeof(buf))
+  va_end(argptr);
+
+  if( validlen > 0 ) //neg on encoding err
+    write_multiple(targets, buf, validlen );
+
+  if( validlen < formatlen ) {
+    const char err_msg[] = "--PRINTF_MULTIPLE BUFFER OVERFLOW--\n";
+    write_multiple(SEND_CL, err_msg, sizeof(err_msg));
+  }
+
+  return formatlen;
+}
+
+int shellcommand(int timeout_sec, const char* command, const char* argstr) {
   int retval = -666;
   uint64_t expiration = steady_clock_now()+(timeout_sec*NSEC_PER_SEC);
 
-
-  fixture_log_writestring("-BEGIN SHELL- ");
-  fixture_log_writestring(command);
-  fixture_log_writestring("\n");
+  printf_multiple(SEND_CL, "-BEGIN SHELL- \"%s %s\" (%is)\n", command, argstr, timeout_sec);
 
   int pid;
-  int pfd = pidopen("./headprogram", &pid);
+  int pfd = pidopen(command, argstr, &pid);
   bool timedout = false;
 
   if (pfd>0) {
@@ -64,13 +107,8 @@ int shellcommand(const char* command, int timeout_sec) {
     retval = pidclose(pid, timedout);
   }
 
-
-  fixture_log_writestring("--END SHELL-- ");
-  fixture_log_writestring(command);
-  fixture_log_writestring("\n");
-
+  printf_multiple(SEND_CL, "--END SHELL-- \"%s %s\"\n", command, argstr);
   return retval;
-
 }
 
 int handle_lcdset_command(const char* cmd, int len) {
@@ -91,23 +129,118 @@ int handle_logstop_command(const char* cmd, int len) {
   return 0;
 }
 
-
+//#define STATIC_ASSERT(COND,MSG) typedef char static_assertion_##MSG[(COND)?1:-1]
+//STATIC_ASSERT(LONG_MAX > 0xFFFFffff); //require >32-bit long for parsing u32 nums with strtol()
 
 int handle_dutprogram_command(const char* cmd, int len) {
-  char* num_end;
-  long timeout_sec = strtol(cmd, &num_end, 10);
-  printf("timeout = %ld\n", timeout_sec);
-  if (num_end == cmd || timeout_sec == 0) {
-    timeout_sec = LONG_MAX;
-  }
-  return shellcommand("./headprogram", timeout_sec);
+  char *end;
+  const char *next = cmd;
 
+  //first arg is timeout value in seconds (%u)
+  errno = 0;
+  long timeout_sec = strtol(next, &end, 10);
+  if( errno != 0 || end <= next || timeout_sec > INT_MAX || timeout_sec < 1 /*INT_MIN*/ ) {
+    printf("timeout = %ld, errno = %d, end = next+%d\n", timeout_sec, errno, end-next );
+    timeout_sec = INT_MAX;
+    return 2; //report formatting error
+  }
+  printf("timeout = %ds\n", (int)timeout_sec);
+  len -= (end-next);
+  next = end;
+
+  //skip space
+  next++;
+  len--;
+  //ensure null terminated
+  char argstr[128];
+  if (sizeof(argstr) < len) { len = sizeof(argstr)-1; }
+  memcpy(argstr, next, len);
+  argstr[len]='\0';
+  return shellcommand((int)timeout_sec, "./headprogram", argstr );
 }
 
 int handle_shell_timeout_test_command(const char* cmd, int len) {
   //return handle_dutprogram_command(cmd, len);
   printf("shell test disabled\n"); fflush(stdout);
   fixture_log_writestring("shell test disabled\n");
+  return 0;
+}
+
+int read_file_(const char* filepath, char* out_buf, int buf_sz, int* out_len)
+{
+  *out_len = 0;
+  out_buf[0] = '\0';
+  int fd = open(filepath, O_RDONLY);
+
+  if (fd > 0) {
+    *out_len = read(fd, out_buf, buf_sz);
+    close(fd);
+  } else {
+    printf_multiple(SEND_CL, "file open error: '%s' errno=%i fd=%i\n", filepath, errno, fd);
+    return errno;
+  }
+
+  return 0;
+}
+
+#define READ_FILE_BUF_SZ 40
+char* read_file_line1_(const char* filepath)
+{
+  static char buf[READ_FILE_BUF_SZ+1];
+
+  int rlen = 0;
+  int err = read_file_(filepath, buf, READ_FILE_BUF_SZ, &rlen);
+  buf[READ_FILE_BUF_SZ] = '\0';
+
+  if( err == 0 )
+  {
+    int linelen = 0;
+    if( rlen > 0 ) {
+      char *s = buf;
+      while( *s > 0x1f && *s < 0x7e ) { linelen++; s++; } //stop at non-printable char or EOL
+    }
+    buf[linelen] = '\0';
+    return buf;
+  }
+
+  return NULL;
+}
+
+int handle_get_emmcdl_ver_command(const char* cmd, int len)
+{
+  char* version = read_file_line1_("/data/local/fixture/emmcdl/version");
+  printf_multiple(SEND_CLS, ":%s\n", (version ? version : "file-error"));
+  return 0;
+}
+
+int handle_get_temperature_command(const char* cmd, int len)
+{
+  //>>get_temperature 4 0 1 ... [zone list]
+  //cat thermal_zone*/type to see a list of valid zones
+  //printf("DEBUG,GET-TEMP: cmd=%08x, len=%i, cmd+len=%08x\n", (uint32_t)cmd, len, (uint32_t)(cmd+len) );
+  //printf("DEBUG,GET-TEMP: '%.*s' (%i)\n", len, cmd, len);
+
+  char* next = (char*)cmd;
+  while(next < cmd+len) //each argument is zone # to report
+  {
+    errno = 0;
+    char *endptr;
+    int zone = strtol(next, &endptr, 10); //enforce base10
+    //printf("DEBUG,GET-TEMP: zone=%i, next=%08x, endptr-delta=%i, errno=%i\n", zone, (uint32_t)next, (uint32_t)(endptr-next), errno);
+
+    char *temperature = NULL;
+    if( errno == 0 && zone >= 0 && zone <= 999 && endptr > next ) {
+      char filepath[50];
+      snprintf(filepath, sizeof(filepath), "/sys/devices/virtual/thermal/thermal_zone%u/temp", zone);
+      temperature = read_file_line1_(filepath);
+    } else {
+      zone = -1;
+    }
+    printf_multiple(SEND_CLS, ":%i %s\n", zone, (temperature ? temperature : "-1"));
+    next = endptr > next ? endptr : next+1;
+  }
+
+  //fflush(stdout);
   return 0;
 }
 
@@ -131,6 +264,8 @@ static const CommandHandler handlers[] = {
   REGISTER_COMMAND(dutprogram),
   REGISTER_COMMAND(shell_timeout_test),
   {"shell-timeout-test", 18, handle_shell_timeout_test_command},
+  REGISTER_COMMAND(get_emmcdl_ver),
+  REGISTER_COMMAND(get_temperature),
  /* ^^ insert new commands here ^^ */
   {0}
 };
@@ -139,6 +274,8 @@ const char* fixture_command_parse(const char*  command, int len) {
   static char responseBuffer[LINEBUFSZ];
 
 //  printf("\tparsing  \"%.*s\"\n", len, command);
+  if(len > 1 && command[len-1]=='\n') //strip trailing newline
+    len--;
 
   const CommandHandler* candidate = &handlers[0];
 
@@ -220,10 +357,8 @@ int fixture_serial(int serialFd) {
 }
 
 
-static int gSerialFd;
 
 
-#define LINEBUFSZ 255
 
 
 
@@ -265,7 +400,7 @@ int user_terminal(void) {
 
 void on_exit(void)
 {
-  if (gSerialFd) {
+  if (gSerialFd >= 0) {
     close(gSerialFd);
   }
   fixture_log_terminate();
@@ -288,20 +423,36 @@ int main(int argc, const char* argv[])
   signal(SIGKILL, safe_quit);
 
   lcd_init();
-  lcd_set_brightness(20);
+  lcd_set_brightness(10);
   display_init();
   fixture_log_init();
 
-  gSerialFd = serial_init(FIXTURE_TTY, FIXTURE_BAUD);
+  int x; const char *tty = 0;
+  for(x=1; x < argc; x++) {
+    printf("arg[%u] '%s'\n", x, argv[x]);
+    if( !strncmp(argv[x],"/dev/tty",8) )
+      tty = argv[x];
+  }
+
+  printf("serial_init(%s)\n", tty ? tty : FIXTURE_TTY);
+  gSerialFd = serial_init( tty ? tty : FIXTURE_TTY, FIXTURE_BAUD);
 
   serial_write(gSerialFd, (uint8_t*)"\x1b\x1b\n", 4);
   serial_write(gSerialFd, (uint8_t*)"reset\n", 6);
 
   enable_kbhit(1);
+
+  //process bootup
+  exit = fixture_serial(gSerialFd);
+  exit |= user_terminal();
+  printf("helper build " __DATE__ " " __TIME__ "\n");
+  fflush(stdout);
+
   while (!exit)
   {
     exit = fixture_serial(gSerialFd);
     exit |= user_terminal();
+    usleep(1000); //1ms to yeild
  }
 
   on_exit();

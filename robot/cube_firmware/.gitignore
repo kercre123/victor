@@ -1,0 +1,14 @@
+.DS_Store
+build
+JLinkLog.txt
+JLinkSettings.ini
+*.uvguix.*
+*.uvgui.*
+cube_application.bin
+RTE
+EventRecorderStub.scvd
+!*.obj
+!*.ini
+JLinkSettings.ini
+*.o
+*.elf

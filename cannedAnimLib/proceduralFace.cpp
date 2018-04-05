@@ -24,13 +24,13 @@ namespace Anki {
 namespace Cozmo {
   
 ProceduralFace* ProceduralFace::_resetData = nullptr;
-ProceduralFace::Value ProceduralFace::_hue = 0.566f;
+ProceduralFace::Value ProceduralFace::_hue = DefaultHue;
 
 namespace {
 # define CONSOLE_GROUP "ProceduralFace"
   
-  CONSOLE_VAR(ProceduralFace::Value, kProcFace_DefaultScanlineOpacity, CONSOLE_GROUP, 0.7f);
-  CONSOLE_VAR(s32, kProcFace_NominalEyeSpacing, CONSOLE_GROUP, 91);  // V1: 64;
+  CONSOLE_VAR_RANGED(ProceduralFace::Value, kProcFace_DefaultScanlineOpacity, CONSOLE_GROUP, 0.7f, 0.f, 1.f);
+  CONSOLE_VAR_RANGED(s32, kProcFace_NominalEyeSpacing, CONSOLE_GROUP, 91, -FACE_DISPLAY_WIDTH, FACE_DISPLAY_WIDTH);  // V1: 64;
   
 # undef CONSOLE_GROUP
   
@@ -127,13 +127,37 @@ ProceduralFace::ProceduralFace(const ProceduralFace& other)
 , _faceAngle_deg(other._faceAngle_deg)
 , _faceScale(other._faceScale)
 , _faceCenter(other._faceCenter)
+, _scanlineOpacity(other._scanlineOpacity)
 {
   if(nullptr != other._scanlineDistorter)
   {
     _scanlineDistorter.reset(new ScanlineDistorter(*other._scanlineDistorter));
   }
 }
-  
+
+bool ProceduralFace::operator==(const ProceduralFace& other) const
+{
+  if (_eyeParams[ProceduralFace::WhichEye::Left] != other._eyeParams[ProceduralFace::WhichEye::Left]) {
+    return false;
+  }
+  if (_eyeParams[ProceduralFace::WhichEye::Right] != other._eyeParams[ProceduralFace::WhichEye::Right]) {
+    return false;
+  }
+  if (_faceAngle_deg != other._faceAngle_deg) {
+    return false;
+  }
+  if (_faceScale != other._faceScale) {
+    return false;
+  }
+  if (_faceCenter != other._faceCenter) {
+    return false;
+  }
+  if (_scanlineOpacity != other._scanlineOpacity) {
+    return false;
+  }
+  return true;
+}
+
 s32 ProceduralFace::GetNominalLeftEyeX()
 {
   return (WIDTH - kProcFace_NominalEyeSpacing)/2;
@@ -157,7 +181,8 @@ ProceduralFace& ProceduralFace::operator=(const ProceduralFace &other)
     _faceAngle_deg = other._faceAngle_deg;
     _faceScale     = other._faceScale;
     _faceCenter    = other._faceCenter;
-    
+    _scanlineOpacity = other._scanlineOpacity;
+
     if(nullptr != other._scanlineDistorter)
     {
       // Deep copy other's ScanlineDistorter (since they are unique)
@@ -330,7 +355,7 @@ void ProceduralFace::SetFromMessage(const ProceduralFaceParameters& msg)
 void ProceduralFace::LookAt(f32 xShift, f32 yShift, f32 xmax, f32 ymax,
                             f32 lookUpMaxScale, f32 lookDownMinScale, f32 outerEyeScaleIncrease)
 {
-  SetFacePosition({xShift, yShift});
+  SetFacePositionAndKeepCentered({xShift, yShift});
   
   // Amount "outer" eye will increase in scale depending on how far left/right we look
   const f32 yscaleLR = 1.f + outerEyeScaleIncrease * std::min(1.f, std::abs(xShift)/xmax);
@@ -384,23 +409,30 @@ inline static T LinearBlendHelper(const T value1, const T value2, const float bl
                                 blendFraction*static_cast<float>(value2));
   return blendValue;
 }
-  
-inline static ProceduralFace::Value BlendAngleHelper(const ProceduralFace::Value angle1,
-                                                     const ProceduralFace::Value angle2,
+
+inline static ProceduralFace::Value BlendAngleHelper(const ProceduralFace::Value angle1_deg,
+                                                     const ProceduralFace::Value angle2_deg,
                                                      const float blendFraction)
 {
-  if(angle1 == angle2) {
+  if(angle1_deg == angle2_deg) {
     // Special case, no math needed
-    return angle1;
+    return angle1_deg;
   }
-  
-  const float angle1_rad = DEG_TO_RAD(static_cast<float>(angle1));
-  const float angle2_rad = DEG_TO_RAD(static_cast<float>(angle2));
-  
-  const float x = LinearBlendHelper(std::cos(angle1_rad), std::cos(angle2_rad), blendFraction);
-  const float y = LinearBlendHelper(std::sin(angle1_rad), std::sin(angle2_rad), blendFraction);
-  
-  return static_cast<ProceduralFace::Value>(RAD_TO_DEG(std::atan2(y,x)));
+
+  float start_deg = angle1_deg;
+  float end_deg = angle2_deg;
+
+  float diff = fabsf(end_deg - start_deg);
+  if (diff > 180) {
+    if (end_deg > start_deg) {
+      start_deg += 360;
+    }
+    else {
+      end_deg += 360;
+    }
+  }
+  const float result = LinearBlendHelper(start_deg, end_deg, blendFraction);
+  return static_cast<ProceduralFace::Value>(result);
 }
   
 void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFace& face2,
@@ -447,7 +479,6 @@ void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFa
 
     } // for each parameter
   } // for each eye
-  
   SetFaceAngle(BlendAngleHelper(face1.GetFaceAngle(), face2.GetFaceAngle(), blendFraction));
   SetFacePosition({LinearBlendHelper(face1.GetFacePosition().x(), face2.GetFacePosition().x(), blendFraction),
                    LinearBlendHelper(face1.GetFacePosition().y(), face2.GetFacePosition().y(), blendFraction)});
@@ -486,21 +517,27 @@ void ProceduralFace::GetEyeBoundingBox(Value& xmin, Value& xmax, Value& ymin, Va
   
 void ProceduralFace::SetFacePosition(Point<2, Value> center)
 {
+  _faceCenter = center;
+}
+
+void ProceduralFace::SetFacePositionAndKeepCentered(Point<2, Value> center)
+{
   // Try not to let the eyes drift off the face (ignores outer glow)
   // NOTE: (1) if you set center and *then* change eye centers/scales, you could still go off screen
   //       (2) this also doesn't take lid height into account, so if the top lid is half closed and
   //           you move the eyes way down, it could look like they disappeared, for example
-  
+
   Value xmin=0, xmax=0, ymin=0, ymax=0;
   GetEyeBoundingBox(xmin, xmax, ymin, ymax);
-  
+
   // The most we can move left is the distance b/w left edge of left eye and the
   // left edge of the screen. The most we can move right is the distance b/w the
   // right edge of the right eye and the right edge of the screen
-  _faceCenter.x() = CLIP(center.x(), -xmin, ProceduralFace::WIDTH-xmax);
-  _faceCenter.y() = CLIP(center.y(), -ymin, ProceduralFace::HEIGHT-ymax);
+  SetFacePosition({CLIP(center.x(), -xmin, ProceduralFace::WIDTH-xmax),
+                   CLIP(center.y(), -ymin, ProceduralFace::HEIGHT-ymax)});
 }
-  
+
+
 void ProceduralFace::CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamArray& eyeArray1)
 {
   for (std::underlying_type<Parameter>::type iParam=0; iParam < Util::EnumToUnderlying(Parameter::NumParameters); ++iParam)
@@ -535,8 +572,8 @@ ProceduralFace& ProceduralFace::Combine(const ProceduralFace& otherFace)
   _faceAngle_deg += otherFace.GetFaceAngle();
   _faceScale     *= otherFace.GetFaceScale();
   _faceCenter    += otherFace.GetFacePosition();
-  
-  LinearBlendHelper(_scanlineOpacity, otherFace._scanlineOpacity, 0.5f);
+
+  _scanlineOpacity = LinearBlendHelper(_scanlineOpacity, otherFace._scanlineOpacity, 0.5f);
   
   const bool thisHasScanlineDistortion  = (nullptr != _scanlineDistorter);
   const bool otherHasScanlineDistortion = (nullptr != otherFace._scanlineDistorter);
@@ -626,17 +663,41 @@ void ProceduralFace::RemoveScanlineDistorter()
 }
 
 void ProceduralFace::RegisterFaceWithConsoleVars() {
+   new Util::ConsoleVar<float>(_faceAngle_deg,
+                               "kProcFace_Angle_deg", "ProceduralFace",
+                               -90.f, 90.f, true);
+
+   new Util::ConsoleVar<float>(_faceScale[0],
+                               "kProcFace_ScaleX", "ProceduralFace",
+                               0.f, 10.f, true);
+
+   new Util::ConsoleVar<float>(_faceScale[1],
+                               "kProcFace_ScaleY", "ProceduralFace",
+                               0.f, 10.f,
+                               true);
+
+   new Util::ConsoleVar<float>(_faceCenter[0],
+                               "kProcFace_CenterX", "ProceduralFace",
+                               -100.f, 100.f, true);
+
+   new Util::ConsoleVar<float>(_faceCenter[1],
+                               "kProcFace_CenterY", "ProceduralFace",
+                               -100.f, 100.f, true);
+
+   new Util::ConsoleVar<float>(_scanlineOpacity,
+                               "kProcFace_ScanlineOpacity", "ProceduralFace",
+                               0.f, 1.f, true);
+
   for(auto whichEye : {WhichEye::Left, WhichEye::Right}) {
     for (std::underlying_type<Parameter>::type iParam=0; iParam < Util::EnumToUnderlying(Parameter::NumParameters); ++iParam) {
       std::string eyeName = (whichEye == 0 ? "Left" : "Right");
-      std::string param = eyeName+"."+EnumToString(kEyeParamInfoLUT[iParam].EnumValue());
-      Util::ConsoleSystem::Instance().Register(param,
-                                                     new Util::ConsoleVar<float>(_eyeParams[whichEye][iParam],
-                                                                                 param.c_str(),
-                                                                                 "ProceduralFace",
-                                                                                 kEyeParamInfoLUT[iParam].Value().clipLimits.min,
-                                                                                 kEyeParamInfoLUT[iParam].Value().clipLimits.max,
-                                                                                 true));
+      std::string param = eyeName+"_"+EnumToString(kEyeParamInfoLUT[iParam].EnumValue());
+      new Util::ConsoleVar<float>(_eyeParams[whichEye][iParam],
+                                  param.c_str(),
+                                  "ProceduralFace",
+                                  kEyeParamInfoLUT[iParam].Value().clipLimits.min,
+                                  kEyeParamInfoLUT[iParam].Value().clipLimits.max,
+                                  true);
     }
   }
 }

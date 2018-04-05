@@ -13,7 +13,7 @@ TOPLEVEL=`$GIT rev-parse --show-toplevel`
 : ${ANKI_PROFILE_SYMBOLCACHE:="$1"}
 : ${FORCE:=0}
 : ${BUILD_ROOT:="${TOPLEVEL}/_build/android/Release"}
-: ${INSTALL_ROOT:="/data/data/com.anki.cozmoengine"}
+: ${INSTALL_ROOT:="/anki"}
 
 # Warn if BUILD_ROOT points to Debug output
 # Should only profile Release builds.

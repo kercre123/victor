@@ -2,15 +2,23 @@ package harness
 
 import (
 	"fmt"
+	"io"
 
 	"anki/cloudproc"
 	"anki/ipc"
 	"anki/util"
 )
 
-type Harness struct {
-	Mic   ipc.Conn
-	AI    ipc.Conn
+type Harness interface {
+	cloudproc.Sender
+	io.Closer
+	ReadIntent() (string, error)
+}
+
+type ipcHarness struct {
+	cloudproc.Sender
+	mic   ipc.Conn
+	ai    ipc.Conn
 	serv1 ipc.Server
 	serv2 ipc.Server
 	kill  chan struct{}
@@ -19,7 +27,7 @@ type Harness struct {
 var aiSockName = ipc.GetSocketPath("ai_harness_sock")
 var micSockName = ipc.GetSocketPath("mic_harness_sock")
 
-func CreateProcess() (*Harness, error) {
+func CreateIpcProcess() (Harness, error) {
 	aiServer, err1 := ipc.NewUnixServer(aiSockName)
 	micServer, err2 := ipc.NewUnixServer(micSockName)
 
@@ -41,21 +49,65 @@ func CreateProcess() (*Harness, error) {
 	fmt.Println("Got harness connections")
 
 	kill := make(chan struct{})
+	receiver := cloudproc.NewIpcReceiver(micClient, kill)
 
-	go cloudproc.RunProcess(micClient, aiClient, nil, kill)
+	process := &cloudproc.Process{}
+	process.AddReceiver(receiver)
+	process.AddIntentWriter(aiClient)
+	go process.Run(kill)
 
-	return &Harness{
-		Mic:   micConn,
-		AI:    aiConn,
-		serv1: aiServer,
-		serv2: micServer,
-		kill:  kill}, nil
+	sender := cloudproc.NewIpcSender(micConn)
+
+	return &ipcHarness{
+		Sender: sender,
+		mic:    micConn,
+		ai:     aiConn,
+		serv1:  aiServer,
+		serv2:  micServer,
+		kill:   kill}, nil
 }
 
-func (h *Harness) Close() {
+func (h *ipcHarness) ReadIntent() (string, error) {
+	return string(h.ai.ReadBlock()), nil
+}
+
+func (h *ipcHarness) Close() error {
 	close(h.kill)
-	h.Mic.Close()
-	h.AI.Close()
+	h.mic.Close()
+	h.ai.Close()
 	h.serv1.Close()
 	h.serv2.Close()
+	return nil
+}
+
+type memHarness struct {
+	cloudproc.Sender
+	kill   chan struct{}
+	intent chan []byte
+}
+
+func (h *memHarness) Close() error {
+	close(h.kill)
+	return nil
+}
+
+func (h *memHarness) ReadIntent() (string, error) {
+	return string(<-h.intent), nil
+}
+
+func CreateMemProcess() (Harness, error) {
+	kill := make(chan struct{})
+
+	intentResult := make(chan []byte)
+
+	sender, receiver := cloudproc.NewMemPipe()
+	process := &cloudproc.Process{}
+	process.AddReceiver(receiver)
+	process.AddIntentWriter(util.NewChanWriter(intentResult))
+	go process.Run(kill)
+
+	return &memHarness{
+		Sender: sender,
+		kill:   kill,
+		intent: intentResult}, nil
 }

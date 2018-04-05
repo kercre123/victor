@@ -29,7 +29,7 @@ public:
   virtual bool WantsToBeActivatedBehavior() const override;
 
 protected:
-  friend class BehaviorContainer;
+  friend class BehaviorFactory;
   BehaviorDevTurnInPlaceTest(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {}

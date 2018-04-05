@@ -24,8 +24,8 @@ class BehaviorDispatcherStrictPriorityWithCooldown : public IBehaviorDispatcher
 {
   using BaseClass = IBehaviorDispatcher;
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;  
   BehaviorDispatcherStrictPriorityWithCooldown(const Json::Value& config);
 
 protected:

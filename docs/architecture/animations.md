@@ -83,7 +83,7 @@ Key       |Effect
 ----------|------
 Shift + I | Toggle eye rendering between Victor and Cozmo style
 
-# Webservice
+# Console functions, variables and webservice
 
 For webots navigate to: <http://127.0.0.1:8889/consolevars?ProceduralFace>
 
@@ -93,4 +93,54 @@ Put a check against *ProcFace_OverrideEyeParams* to allow the sliders take contr
 
 *ProcFace_OverrideRightEyeParams* will force the eyes to be the same, based on the left eye.
 
-*ProcFace_OverrideReset* will reset both eyes from a bad state to the current canned animation state.
+The *ResetFace* button will reset both eyes from a bad state to the current canned animation state.
+
+To toggle between Victor eye rendering and the original Cozmo eye rendering there are two buttons *VictorFaceRenderer* and *CozmoFaceRenderer*, clicking either will change state as appropriate.
+
+### Console function: ListAnimations
+
+Will list the animation names registered to the canned animation library.
+
+e.g. `curl` <http://127.0.0.1:8889/consolefunccall?func=ListAnimations>
+
+### Console function: PlayAnimation *name* [*numLoops*]
+
+Takes an animation name and an optional number of loops and forces the animation process to stream it.
+
+e.g. `curl` <http://127.0.0.1:8889/consolefunccall?func=playanimation&args=anim_rtpmemorymatch_yes_03+4>
+
+### Console function: AddAnimation *path*
+
+Registers an animation in the `resources/assets/animations/` folder with the canned animation containers; this allows animations to be uploaded after launch and triggered.
+
+e.g. `curl` <http://127.0.0.1:8889/consolefunccall?func=AddAnimation&args=anim_bored_01.bin>
+
+# playanimation.py
+
+`playanimation` is a tool for previewing and debugging animations for Victor. As a preview tool it allows animation files to be uploaded to the robot or simulator and triggered to play. These animations remain with the robot/simulator and can replace existing content, they can also be replayed via the webserver. This is referred to as playing "on robot".
+
+As a debugging tool animations can be played entirely on a development machine where state can be easily inspected and dumped, iteration time for the python code is very immediate. These results can then be compared on a robot or simulator by using the webservice to update the procedural face with frames generated on the development PC. This is referred to as playing "on host".
+
+Long name  |Short|Description
+-----------|-----|-----------
+--target   |-t   |Play the animation on the robot or host, default is host'
+--ipaddress|-i   |Optional IP address or robot or localhost for webots. If omitted will output to the console.
+--file     |-f   |Animation file, only JSON is supported for playing on the host
+--animation|-a   |Name of animation within JSON/.bin file
+--realtime |-r   |Drive the animation on the host either at a fixed frame rate or real-time, default is a fixed 33ms frame
+
+To play an animation in the simulator:
+
+`python playanimation.py --target robot --ipaddress 127.0.0.1 --file hotspot_interpolation.json --animation eye_test`
+
+To play an animation on the robot or simulator:
+
+`python playanimation.py --target robot --ipaddress 192.168.1.212 --file hotspot_interpolation.json --animation eye_test`
+
+To play an animation on the host and update the robot or simulator face via the webservice
+
+`python playanimation.py --target host --ipaddress 127.0.0.1 --file hotspot_interpolation.json --animation eye_test`
+
+To play an animation on the host and print face values to the console:
+
+`python playanimation.py --target host --file hotspot_interpolation.json --animation eye_test`

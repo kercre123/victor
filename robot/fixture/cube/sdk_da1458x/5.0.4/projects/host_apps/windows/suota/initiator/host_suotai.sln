@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C++ Express 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "host_suotai", "host_suotai\host_suotai.vcxproj", "{5F1823C3-5188-43D2-AC85-5B9841792A0C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "host_suotai_581", "host_suotai_581\host_suotai_581.vcxproj", "{AE6A37F6-6B7E-4282-BB69-B8C6F4F5C5BB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5F1823C3-5188-43D2-AC85-5B9841792A0C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5F1823C3-5188-43D2-AC85-5B9841792A0C}.Debug|Win32.Build.0 = Debug|Win32
+		{5F1823C3-5188-43D2-AC85-5B9841792A0C}.Release|Win32.ActiveCfg = Release|Win32
+		{5F1823C3-5188-43D2-AC85-5B9841792A0C}.Release|Win32.Build.0 = Release|Win32
+		{AE6A37F6-6B7E-4282-BB69-B8C6F4F5C5BB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AE6A37F6-6B7E-4282-BB69-B8C6F4F5C5BB}.Debug|Win32.Build.0 = Debug|Win32
+		{AE6A37F6-6B7E-4282-BB69-B8C6F4F5C5BB}.Release|Win32.ActiveCfg = Release|Win32
+		{AE6A37F6-6B7E-4282-BB69-B8C6F4F5C5BB}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -25,11 +25,9 @@ namespace Util {
 namespace Data {
 
 
-DataPlatform::DataPlatform(const std::string &filesPath, const std::string &cachePath,
-  const std::string &externalPath, const std::string &resourcesPath)
-: _filesPath(filesPath)
+DataPlatform::DataPlatform(const std::string &persistentPath, const std::string &cachePath, const std::string &resourcesPath)
+: _persistentPath(persistentPath)
 , _cachePath(cachePath)
-, _externalPath(externalPath)
 , _resourcesPath(resourcesPath)
 {
 
@@ -38,39 +36,28 @@ DataPlatform::DataPlatform(const std::string &filesPath, const std::string &cach
 std::string DataPlatform::pathToResource(const Scope& resourceScope, const std::string& resourceName) const
 {
   std::string s = "";
-  if (Scope::Resources == resourceScope) {
-    if (resourceName.empty()) {
-      LOG_WARNING("Platform.pathToResource", "Request for top level resource directory");
+  switch (resourceScope) {
+    case Scope::Persistent:
+      s += _persistentPath;
+      break;
+    case Scope::Resources:
+      s += _resourcesPath;
+      break;
+    case Scope::Cache:
+      s += _cachePath;
+      break;
+    case Scope::CurrentGameLog:
+      s += _cachePath;
+      s += "/gameLogs";
+      break;
+  }
+  if (!resourceName.empty()) {
+    if ('/' != resourceName.front()) {
+      s += "/";
     }
+    s += resourceName;
   }
 
-  if (s.empty()) {
-    switch (resourceScope) {
-      case Scope::Persistent:
-        s += _filesPath;
-        s += "/output";
-        break;
-      case Scope::Resources:
-        s += _resourcesPath;
-        break;
-      case Scope::Cache:
-        s += _cachePath;
-        break;
-      case Scope::CurrentGameLog:
-        s += _cachePath;
-        s += "/gameLogs";
-        break;
-      case Scope::External:
-        s += _externalPath;
-        break;
-    }
-    if (!resourceName.empty()) {
-      if ('/' != resourceName.front()) {
-        s += "/";
-      }
-      s += resourceName;
-    }
-  }
   //LOG_DEBUG("DataPlatform", "%s", s.c_str());
   return s;
 }

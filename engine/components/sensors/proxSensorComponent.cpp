@@ -238,8 +238,8 @@ void ProxSensorComponent::UpdateNavMap()
 
     _robot->GetMapComponent().ClearRobotToEdge(t1, t2, lastTimestamp);
 
-    // Add proxObstacle if detected and close to robot 
-    if (_latestData.distance_mm <= kMaxObsThreshold_mm && !noObject) { 
+    // Add proxObstacle if detected and close to robot, and lift is not interfering
+    if (_latestData.distance_mm <= kMaxObsThreshold_mm && !noObject && !IsLiftInFOV()) {
       const float obstacleHalfWidth_mm = ROBOT_BOUNDING_Y * .5 + kObsPadding_mm;
       Vec3f offset1(-kObsPadding_mm,  -obstacleHalfWidth_mm, 0);   
       Vec3f offset2(-kObsPadding_mm,   obstacleHalfWidth_mm, 0);

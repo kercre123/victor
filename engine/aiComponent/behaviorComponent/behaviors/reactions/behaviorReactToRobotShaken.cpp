@@ -114,15 +114,12 @@ void BehaviorReactToRobotShaken::BehaviorUpdate()
       if (_shakenDuration_s > kShakenDurationThresholdHard) {
         DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DizzyReactionHard));
         _reactionPlayed = EReaction::Hard;
-        NeedActionCompleted(NeedsActionId::DizzyHard);
       } else if (_shakenDuration_s > kShakenDurationThresholdMedium) {
         DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DizzyReactionMedium));
         _reactionPlayed = EReaction::Medium;
-        NeedActionCompleted(NeedsActionId::DizzyMedium);
       } else {
         DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DizzyReactionSoft));
         _reactionPlayed = EReaction::Soft;
-        NeedActionCompleted(NeedsActionId::DizzySoft);
       }
       
       _state = EState::Finished;

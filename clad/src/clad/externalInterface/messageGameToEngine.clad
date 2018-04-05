@@ -20,7 +20,6 @@
 #include "clad/types/inventoryTypes.clad"
 #include "clad/types/ledTypes.clad"
 #include "clad/types/keepFaceAliveParameters.clad"
-#include "clad/types/needsSystemTypes.clad"
 #include "clad/types/objectTypes.clad"
 #include "clad/types/nvStorageTypes.clad"
 #include "clad/types/pathMotionProfile.clad"
@@ -31,6 +30,7 @@
 #include "clad/types/uiConnectionTypes.clad"
 #include "clad/types/unlockTypes.clad"
 #include "clad/types/visionModes.clad"
+#include "clad/types/switchboardToRobot.clad"
 #include "util/ankiLab/ankiLabDef.clad"
 
 
@@ -518,14 +518,19 @@ message SetMemoryMapBroadcastFrequency_sec {
 // Behavior Commands
 ///////////////////////////////////////////////////////////////////////////////
 
-// Allows game to fake trigger word detection to the behavior component
+// Fake trigger word detection to the behavior component
 message FakeTriggerWordDetected
 {
 }
 
-// Allows Game to fake an intent coming from the cloud
+// Fake an intent coming from the cloud
 message FakeCloudIntent{
   string intent
+}
+
+// Fake a user intent
+message FakeUserIntent {
+  string intent,
 }
 
 // ExecuteBehavior
@@ -603,6 +608,17 @@ message RequestPyramidPreReqState{
 
 // A message for Game to let engine know that Cozmo is waking up
 message NotifyCozmoWakeup{
+}
+
+// The app requests that the robot perform some non-instantaneous action, usually
+// an action with an associated voice command, such as "go to your charger"
+// todo (VIC-1398): eventually AppIntent should be its own union of structures, but
+// currently there's only one intent, with one arg, and it's not possible to transmit
+// a union over the temporary webservice handler. This will need replacing once the
+// real app->engine channel is working
+message AppIntent {
+  string intent,
+  string param,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -884,85 +900,6 @@ union MoodMessageUnion {
 
 message MoodMessage {
   MoodMessageUnion  MoodMessageUnion
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Needs
-///////////////////////////////////////////////////////////////////////////////
-
-message GetNeedsState {
-}
-
-message ForceSetNeedsLevels {
-  float_32 newNeedLevel[uint_8]
-}
-
-// In this message, I had to add a second, unused field to get CLAD to compile.
-// This is because of a conflict with the constructor that takes uint_8* and
-// length.
-message ForceSetDamagedParts {
-  bool partIsDamaged[uint_8],
-  bool dummyVarToCompileCLAD
-}
-
-message RegisterOnboardingComplete {
-  int_32 onboardingStage,
-  bool   finalStage,
-  bool   onboardingSkipped,
-}
-
-message SetNeedsPauseState {
-  bool pause
-}
-
-message GetNeedsPauseState {
-}
-
-message SetNeedsPauseStates {
-  bool decayPause[uint_8],
-  bool decayDiscardAfterUnpause[uint_8],
-  bool actionPause[uint_8]
-}
-
-message GetNeedsPauseStates {
-}
-
-// Only want to accept certain needs
-message SetNeedsActionWhitelist {
-  bool enable,
-  NeedsActionId whitelistedActions[uint_8],
-}
-
-message RegisterNeedsActionCompleted {
-  NeedsActionId actionCompleted
-}
-
-message GetWantsNeedsOnboarding {
-}
-
-// Wipes all needs data on the robot
-message WipeRobotNeedsData {
-}
-
-// Wipes all needs data on the device
-message WipeDeviceNeedsData {
-  bool reinitializeNeeds
-}
-
-message GetStarStatus {
-}
-
-message GetSongsList {
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Notifications
-///////////////////////////////////////////////////////////////////////////////
-
-message NotificationsManagerReady {
-}
-
-message RequestNotificationTextKeys {
 }
 
 ///////////////////////////////////////////////////////////////////////////////

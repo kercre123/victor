@@ -11,36 +11,36 @@
       "quadrantName": "digit_one",
       "x": 15,
       "y": 30,
-      "width": 27,
-      "height": 39
+      "width": 29,
+      "height": 41
     },
     {
       "quadrantName": "digit_two",
       "x": 55,
       "y": 30,
-      "width": 27,
-      "height": 39
+      "width": 29,
+      "height": 41
     },
     {
       "quadrantName": "colon",
       "x": 90,
       "y": 30,
       "width": 5,
-      "height": 39
+      "height": 41
     },
     {
       "quadrantName": "digit_three",
       "x":103,
       "y": 30,
-      "width": 27,
-      "height": 39
+      "width": 29,
+      "height": 41
     },
     {
       "quadrantName": "digit_four",
       "x": 143,
       "y": 30,
-      "width": 27,
-      "height": 39
+      "width": 29,
+      "height": 41
     }
   ],
   // allows template elements which have a static image to be specified once

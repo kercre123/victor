@@ -56,6 +56,7 @@ protected:
   void LogCliffSensorData();
   
   void FakeCloudIntent();
+  void FakeUserIntent();
   
   void NVStorage_EraseTag();
   void NVStorage_ReadTag();
@@ -152,6 +153,8 @@ protected:
   
   void ExecuteRobotTestMode();
   void PressBackButton();
+
+  void CycleConnectionFlowState();
   
   // ==== End of key press functions ====
   

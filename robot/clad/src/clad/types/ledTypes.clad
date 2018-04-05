@@ -54,8 +54,9 @@ structure LightState
   uint_8   offFrames = 0,
   uint_8   transitionOnFrames = 0,
   uint_8   transitionOffFrames = 0,
-  int_16   offset = 0,
-  int_16   padding = 0  // Only necessary because messages that contain an array of LightStates complain about alignment
+  uint_8   offset = 0,
+  int_8    padding1 = 0, // Padding only necessary because messages that contain
+  int_16   padding2 = 0  // an array of LightStates complain about alignment
 }
 
 

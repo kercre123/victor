@@ -28,6 +28,7 @@
 #include "engine/vision/visionPoseData.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/cameraParams.h"
 #include "clad/types/loadedKnownFace.h"
 #include "clad/types/robotStatusAndActions.h"
 #include "clad/types/visionModes.h"
@@ -153,6 +154,7 @@ struct DockingErrorSignal;
     Result UpdateImageQuality(const VisionProcessingResult& procResult);
     Result UpdateVisualObstacles(const VisionProcessingResult& procResult);
     Result UpdateDetectedObjects(const VisionProcessingResult& result);
+    Result UpdateWhiteBalance(const VisionProcessingResult& procResult);
 
     const Vision::Camera& GetCamera(void) const;
     Vision::Camera& GetCamera(void);
@@ -286,18 +288,23 @@ struct DockingErrorSignal;
     
     void SetAndDisableAutoExposure(u16 exposure_ms, f32 gain);
     void EnableAutoExposure(bool enable);
+
+    void SetAndDisableWhiteBalance(f32 gainR, f32 gainG, f32 gainB);
+    void EnableWhiteBalance(bool enable);
     
     s32 GetMinCameraExposureTime_ms() const;
     s32 GetMaxCameraExposureTime_ms() const;
     f32 GetMinCameraGain() const;
     f32 GetMaxCameraGain() const;
     
-    s32  GetCurrentCameraExposureTime_ms() const;
-    f32  GetCurrentCameraGain() const;
+    CameraParams GetCurrentCameraParams() const;
     
     // Captures image data from HAL, if available, and puts it in image_out
     // Returns true if image was captured, false if not
     bool CaptureImage(Vision::ImageRGB& image_out);
+
+    // Releases captured image backing data to CameraService
+    bool ReleaseImage(Vision::ImageRGB& image);
 
     f32 GetBodyTurnSpeedThresh_degPerSec() const;
     
@@ -393,7 +400,10 @@ struct DockingErrorSignal;
     void VisualizeObservedMarkerIn3D(const Vision::ObservedMarker& marker) const;
     
     // Sets the exposure and gain on the robot
-    void SetCameraSettings(const s32 exposure_ms, const f32 gain);
+    void SetExposureSettings(const s32 exposure_ms, const f32 gain);
+
+    // Sets the WhiteBalance gains of the camera
+    void SetWhiteBalanceSettings(f32 gainR, f32 gainG, f32 gainB);
     
     // Factory centroid finder: returns the centroids of the 4 factory test dots,
     // computes camera pose w.r.t. the target and broadcasts a RobotCompletedFactoryDotTest
@@ -402,6 +412,7 @@ struct DockingErrorSignal;
     bool _doFactoryDotTest = false;
     
     bool _enableAutoExposure = true;
+    bool _enableWhiteBalance = true;
     
   }; // class VisionComponent
   

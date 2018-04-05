@@ -1,0 +1,20 @@
+LR_1 0x20000000 {                     ; load region size_region
+    ER_1 +0 {                 ; load address = execution address
+   *.o (RESET, +First)
+       *(InRoot$$Sections)                      ; All library sections that must be in a
+                                                ; root region, for example, __main.o,
+                                                ; __scatter*.o, __dc*.o, and * Region$$Table
+       
+    
+   .ANY (+RO)
+        .ANY (+RW)
+  }
+   
+    ER_2 AlignExpr(+0,8) UNINIT
+    {
+        * (non_init, +First)
+        .ANY (+ZI)
+        * (STACK, +Last)
+   }
+   }
+  

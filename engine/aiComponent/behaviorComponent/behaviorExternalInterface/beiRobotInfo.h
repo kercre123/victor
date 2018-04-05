@@ -28,6 +28,10 @@ namespace Anki {
 class PoseOriginList;
 namespace Util {
 class RandomGenerator;
+
+namespace Data {
+class DataPlatform;
+}
 }
 
 namespace Cozmo {
@@ -98,6 +102,8 @@ public:
   Util::RandomGenerator& GetRNG();
   const Pose3d& GetWorldOrigin()  const;
   PoseOriginID_t GetWorldOriginID() const;
+  u32 GetHeadSerialNumber() const;
+  Util::Data::DataPlatform* GetDataPlatform() const;
   bool IsPowerButtonPressed() const;
 
   bool HasExternalInterface() const;

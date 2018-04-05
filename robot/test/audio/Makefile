@@ -9,8 +9,9 @@ ANDROID_ARM_TOOLS_ROOT := $(TOPLEVEL)/generated/android/tools/arm
 ANDROID_ARM_TOOLS_BIN := $(ANDROID_ARM_TOOLS_ROOT)/bin
 
 # Compilation Tools
-
-CFLAGS = -c -fPIC -Wall -pie
+# -c don't run linker, -fPIC emit position-independent code, -Wall enables all the warning
+# -pie produce a dynamically linked position independent executable, -g include symbols, -O0 no optimization (default)
+CFLAGS = -c -fPIC -Wall -pie -g -O0
 INC = include
 OBJECTS = mixer.o pcm.o
 SHLIB = libtinyalsa.so

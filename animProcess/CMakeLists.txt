@@ -8,7 +8,6 @@ anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
 
 include(flatbuffers)
 include(opencv)
-include(speexdsp)
 include(text2speech)
 include(sensory)
 include(robot_core)
@@ -53,13 +52,12 @@ target_link_libraries(victor_anim
   ${OPENCV_LIBS}
   ${FLATBUFFERS_LIBS} 
   signal_essence
-  ${SPEEXDSP_LIBS}
   ${TEXT2SPEECH_LIBS}
   ${SENSORY_LIBS}
   # platform
   ${PLATFORM_LIBS}
   PUBLIC
-  victor_web_library
+  #victor_web_library
   robot_interface  # Needs to be public for cozmoConfig.h
 )
 
@@ -81,9 +79,9 @@ target_include_directories(victor_anim
 # mac implementation uses (webotsCtrlAnim)
 if (ANDROID)
 
-  anki_build_cxx_executable(victor_animator ${ANKI_SRCLIST_DIR})
+  anki_build_cxx_executable(vic-anim ${ANKI_SRCLIST_DIR})
 
-  target_link_libraries(victor_animator
+  target_link_libraries(vic-anim
     PRIVATE
     victor_anim
     cti_common_robot
@@ -92,6 +90,6 @@ if (ANDROID)
     ${PLATFORM_LIBS}
   )
 
-  android_strip(TARGET victor_animator)
+  android_strip(TARGET vic-anim)
     
 endif()

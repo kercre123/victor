@@ -1,6 +1,9 @@
 #!/bin/bash
 set -x
 set -u
+set -e
+
+SCRIPT_PATH=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))
 
 GIT=`which git`
 if [ -z $GIT ]; then
@@ -18,47 +21,21 @@ pushd "${TOPLEVEL}" > /dev/null 2>&1
 
 $GIT config --global url."git@github.com:".insteadOf https://github.com
 
+OS_NAME=$(uname -s)
+case $OS_NAME in
+    "Darwin")
+        HOST="mac"
+        ;;
+    "Linux")
+        HOST="linux"
+        ;;
+esac
 
-vlog "Check brew installation."
-is_brew=`which brew`
-set -e
+HOST_FETCH_DEPS=${SCRIPT_PATH}/"fetch-build-deps.${HOST}.sh"
 
-if [ -z "$is_brew" ]; then
-   echo "Brew not found installing now.  You will be prompted."
-   /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+if [ -x "${HOST_FETCH_DEPS}" ]; then
+    ${HOST_FETCH_DEPS}
+else
+    echo "ERROR: Could not determine platform for system name: $OS_NAME"
+    exit 1
 fi
-
-vlog "Check homebrew dependencies"
-./tools/build/tools/ankibuild/installBuildDeps.py \
-    -d python2 \
-    ninja \
-    python3 \
-    libsndfile \
-    graphviz \
-    node \
-    --pip2 graphviz \
-    --pip3 graphviz
-
-vlog "Android SDK"
-./tools/build/tools/ankibuild/android.py --install-sdk r3
-
-vlog "Android NDK"
-./tools/build/tools/ankibuild/android.py --install-ndk r15b
-
-vlog "CMake"
-./tools/build/tools/ankibuild/cmake.py
-
-vlog "Go"
-./tools/build/tools/ankibuild/go.py
-
-vlog "Build output dirs"
-mkdir -p generated
-mkdir -p _build
-
-vlog "Fetch & extract external dependencies. This may take 1-5 min."
-./project/buildScripts/dependencies.py -v --deps-file DEPS --externals-dir EXTERNALS
-
-vlog "Configure audio library"
-./lib/audio/configure.py
-
-popd > /dev/null 2>&1

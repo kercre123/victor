@@ -12,11 +12,11 @@ namespace Anki {
 
       f32 GetCurrPose_x();
       f32 GetCurrPose_y();
-      Radians GetCurrPose_angle();
+      const Radians& GetCurrPose_angle();
       Embedded::Pose2d GetCurrPose();
 
-      void GetCurrentMatPose(f32& x, f32& y, Radians& angle);
-      void SetCurrentMatPose(const f32 &x, const f32 &y, const Radians &angle);
+      void GetCurrPose(f32& x, f32& y, Radians& angle);
+      void SetCurrPose(const f32 &x, const f32 &y, const Radians &angle);
 
       void GetDriveCenterPose(f32& x, f32& y, Radians& angle);
       void SetDriveCenterPose(const f32 &x, const f32 &y, const Radians &angle);
@@ -48,7 +48,7 @@ namespace Anki {
       // update the current pose by transforming the given keyframe pose
       // by the pose-diff between the historical pose at time t and the current pose.
       // Also updates the current pose frame ID.
-      // If t==0, updates the current pose. i.e. Pretty much calls SetCurrentMatPose()
+      // If t==0, updates the current pose. i.e. Pretty much calls SetCurrPose()
       Result UpdatePoseWithKeyframe(PoseOriginID_t originID,
                                     PoseFrameID_t frameID,
                                     TimeStamp_t t,

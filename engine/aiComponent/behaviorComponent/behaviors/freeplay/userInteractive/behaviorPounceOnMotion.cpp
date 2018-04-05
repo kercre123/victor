@@ -163,7 +163,6 @@ void BehaviorPounceOnMotion::OnBehaviorDeactivated()
   if (_humanInteracted)
   {
     _humanInteracted = false;
-    NeedActionCompleted();
   }
 }
 

@@ -17,6 +17,7 @@ typedef struct {
 } app_reset_dat_t;
 
 //globals located in app.c
+extern const bool       g_isReleaseBuild;
 extern u8               g_fixtureReleaseVersion;
 extern app_reset_dat_t  g_app_reset;
 extern bool             g_isDevicePresent;

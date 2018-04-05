@@ -13,6 +13,8 @@
 
 #include "anki/cozmo/robot/ledController.h"
 
+#include "anki/cozmo/robot/logging.h"
+
 #include <cassert>
 
 #define GET_RED(color) ((color & EnumToUnderlyingType(LEDColor::LED_RED)) >> EnumToUnderlyingType(LEDColorShift::LED_RED_SHIFT))
@@ -37,56 +39,53 @@ namespace Cozmo {
            (int(onBlu * alpha + offBlu * invAlpha)) << EnumToUnderlyingType(LEDColorShift::LED_BLU_SHIFT);
   }
 
-  bool GetCurrentLEDcolor(const LightState& ledParams, const TimeStamp_t currentTime, TimeStamp_t& phaseTime,
-                          u32& newColor, const u32 msPerFrame)
+  u32 GetCurrentLEDcolor(const LightState& ledParams,
+                         const TimeStamp_t currentTime,
+                         const TimeStamp_t phaseTime,
+                         const u32 msPerFrame)
   {
+    AnkiAssert(currentTime >= phaseTime, "LedController.GetCurrentLEDcolor.InvalidPhaseTime");
+    
+    u32 newColor = 0;
+    
     // Check for constant color
     if (ledParams.onFrames == 255 || (ledParams.onColor == ledParams.offColor)) {
-      newColor = ledParams.onColor;
-      return true;
+      return ledParams.onColor;
     }
     
-    u16 phaseFrame = (currentTime - phaseTime) / msPerFrame;
-    if (phaseFrame > 1024)
-    {
-      phaseTime = currentTime; // Someone changed currentTime under us or something else went wrong so reset
-      phaseFrame = 0;
+    const u16 totalFrames = ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames + ledParams.offFrames;
+    
+    s32 phaseFrame = (currentTime - phaseTime) / msPerFrame;
+
+    // Apply the offset
+    phaseFrame -= ledParams.offset;
+
+    // If it's not time to play yet (because of the offset),
+    // just return the off color.
+    if (phaseFrame < 0) {
+      return ledParams.offColor;
     }
     
-    if(phaseFrame <= ledParams.offset)
-    {
-      return false;
-    }
-    else if (phaseFrame <= ledParams.transitionOnFrames + ledParams.offset) // Still turning on
-    {
-      newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, float(phaseFrame - ledParams.offset)/float(ledParams.transitionOnFrames));
-      return true;
-    }
-    else if (phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.offset))
-    {
+    // Modulo to keep phaseFrames in [0, totalFrames)
+    phaseFrame %= totalFrames;
+    
+    if (phaseFrame < ledParams.transitionOnFrames) {
+      // In the "on transition" period
+      newColor = AlphaBlend(ledParams.onColor, ledParams.offColor, float(phaseFrame)/float(ledParams.transitionOnFrames));
+    } else if (phaseFrame < (ledParams.transitionOnFrames + ledParams.onFrames)) {
+      // In the "on" period
       newColor = ledParams.onColor;
-      
-      // Return true for the first frame in the onColor to make sure it's set
-      return phaseFrame <= ledParams.transitionOnFrames + ledParams.offset + 1;
-    }
-    else if (phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames + ledParams.offset))
-    {
-      const u16 offPhase = phaseFrame - (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.offset);
+    } else if (phaseFrame < (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames)) {
+      // In the "off transition" period
+      const u16 offPhase = phaseFrame - (ledParams.transitionOnFrames + ledParams.onFrames);
       newColor = AlphaBlend(ledParams.offColor, ledParams.onColor, float(offPhase)/float(ledParams.transitionOffFrames));
-      return true;
-    }
-    else if (phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames + ledParams.offFrames + ledParams.offset))
-    {
+    } else {
+      // In the "off" period
       newColor = ledParams.offColor;
-      
-      // Return true for the first frame in the offColor to make sure it's set
-      return phaseFrame <= (ledParams.transitionOnFrames + ledParams.onFrames + ledParams.transitionOffFrames + ledParams.offset) + 1;
     }
-
-    newColor = ledParams.offColor;
-    phaseTime = currentTime;
-    return true;
-
+    
+    return newColor;
+    
   } // GetCurrentLEDcolor()
 
 } // namespace Anki

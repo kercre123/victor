@@ -14,6 +14,8 @@
 #ifndef __Cozmo_Engine_PerfMetric_H__
 #define __Cozmo_Engine_PerfMetric_H__
 
+#include <string>
+
 
 namespace Anki {
 namespace Cozmo {

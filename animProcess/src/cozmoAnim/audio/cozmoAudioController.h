@@ -40,6 +40,12 @@ public:
   bool WriteProfilerCapture( bool write );
   // Save session audio output to a file
   bool WriteAudioOutputCapture( bool write );
+  
+  // Control Robot's master volume
+  // Valid Volume values are [0.0 - 1.0]
+  void SetRobotMasterVolume( AudioEngine::AudioRTPCValue volume,
+                             AudioEngine::AudioTimeMs timeInMilliSeconds = 0,
+                             AudioEngine::AudioCurveType curve = AudioEngine::AudioCurveType::Linear );
 
 
 private:

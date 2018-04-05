@@ -25,8 +25,8 @@ class IFrustrationListener;
 class BehaviorReactToFrustration : public ICozmoBehavior
 {
 private:
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorReactToFrustration(const Json::Value& config);
 
 public:

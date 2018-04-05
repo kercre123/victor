@@ -15,9 +15,6 @@
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
-#include "engine/needsSystem/needsManager.h"
-#include "engine/needsSystem/needsState.h"
-#include "clad/types/needsSystemTypes.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/random/randomGenerator.h"
 
@@ -29,8 +26,7 @@ namespace {
 static constexpr float kMinDesiredDistortionDegree = 0.1f;
 }
 
-DesiredFaceDistortionComponent::DesiredFaceDistortionComponent(NeedsManager& needsManager)
-  : _needsManager(needsManager)
+DesiredFaceDistortionComponent::DesiredFaceDistortionComponent()
 {
 }
 
@@ -99,7 +95,7 @@ float DesiredFaceDistortionComponent::GetCurrentDesiredDistortion()
   _curDistortion = -1.f;
   _prevTickCount = tickCount;
   
-  if( _params != nullptr && _rng != nullptr && !_needsManager.GetPaused()) {
+  if( _params != nullptr && _rng != nullptr) {
 
     // if it's time to distort again, or we've never distorted, calculate a desired distortion
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -109,8 +105,7 @@ float DesiredFaceDistortionComponent::GetCurrentDesiredDistortion()
 
     if( timeToDistort ) {
 
-      const auto& needsState = _needsManager.GetCurNeedsState();
-      const float repairLevel = needsState.GetNeedLevel(NeedId::Repair);
+      const float repairLevel = 1.0f;
 
       // evaluate what the "degree" would be at this level
       const float desiredDegree = _params->_degreeEvaluator->EvaluateY( repairLevel );

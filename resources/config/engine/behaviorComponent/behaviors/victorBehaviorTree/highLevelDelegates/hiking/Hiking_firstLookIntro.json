@@ -6,7 +6,7 @@
 //
 //
 {
-  "behaviorClass": "PlayAnim",
+  "behaviorClass": "AnimSequence",
   "behaviorID": "Hiking_FirstLookIntro",
   "requiredRecentSwitchToParent_sec" : 0.25, // in case the anim is too short, to not do it again. Could also add repetition penalty
   "animTriggers": ["HikingIntro"]

@@ -26,9 +26,15 @@
 #include "engine/robotDataLoader.h"
 #include "engine/viz/vizManager.h"
 
+#include "osState/osState.h"
+
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
+
+#if FACTORY_TEST
+#include "anki/cozmo/shared/factory/emrHelper.h"
+#endif
 
 namespace Anki {
 namespace Cozmo {
@@ -83,8 +89,12 @@ Result BehaviorSystemManager::InitConfiguration(Robot& robot,
              baseBehavior != nullptr,
              "BehaviorSystemManager.InitConfiguration.AlreadyInitialized");
 
-  // If this is the factory test forcibly set baseBehavior as playpen
-  if(FACTORY_TEST)
+  // If this is the factory test forcibly set baseBehavior as playpen as long as the robot has not been through packout
+  bool startInPlaypen = false;
+#if FACTORY_TEST
+  startInPlaypen = !Factory::GetEMR()->fields.PACKED_OUT_FLAG && !OSState::getInstance()->IsInRecoveryMode();
+#endif
+  if(startInPlaypen)
   {
     baseBehavior = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(PlaypenTest)).get();
     DEV_ASSERT(baseBehavior != nullptr, "BehaviorSystemManager.InitConfiguration.ForcingPlaypen.Null");

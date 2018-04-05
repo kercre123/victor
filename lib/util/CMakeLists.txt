@@ -34,7 +34,10 @@ if (NOT TARGET kazmath)
 endif()
 
 if (NOT TARGET civetweb)
+  set(SAVE_BUILD_WITH_INSTALL_RPATH ${CMAKE_BUILD_WITH_INSTALL_RPATH})
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
   add_subdirectory("source/3rd/civetweb")
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH ${SAVE_BUILD_WITH_INSTALL_RPATH})
 endif()
 
 # Disable webp until we are going to use it

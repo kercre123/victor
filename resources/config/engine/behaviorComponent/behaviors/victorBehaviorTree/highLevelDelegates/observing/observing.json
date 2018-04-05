@@ -24,7 +24,7 @@
         },
         {
           "behavior": "NothingToDo_Idle",
-          "cooldown_s": 0.0
+          "cooldown_s": 5.0
         }
       ]
     }

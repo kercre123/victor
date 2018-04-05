@@ -50,12 +50,12 @@
       { "channel": "RobotStateHistory",    "enabled": false },
       { "channel": "PublicStateBroadcast", "enabled": false },
       { "channel": "CubeAccelComponent",   "enabled": false },
-      { "channel": "NeedsSystem",          "enabled": false },
       { "channel": "PerfMetric",           "enabled": true },
       { "channel": "VoiceCommands",        "enabled": false },
       { "channel": "InventoryComponent",   "enabled": false },
       { "channel": "TextToSpeech",         "enabled": false },
-      { "channel": "MicData",              "enabled": true }
+      { "channel": "MicData",              "enabled": true },
+      { "channel": "FaceInfoScreenManager", "enabled": true }
     ],
     "levels":
     [
@@ -102,7 +102,6 @@
       { "channel": "RobotStateHistory",    "enabled": false },
       { "channel": "PublicStateBroadcast", "enabled": false },
       { "channel": "CubeAccelComponent",   "enabled": false },
-      { "channel": "NeedsSystem",          "enabled": false },
       { "channel": "PerfMetric",           "enabled": true },
       { "channel": "VoiceCommands",        "enabled": false },
       { "channel": "InventoryComponent",   "enabled": false },
@@ -153,7 +152,6 @@
       { "channel": "RobotStateHistory",    "enabled": false },
       { "channel": "PublicStateBroadcast", "enabled": false },
       { "channel": "CubeAccelComponent",   "enabled": false },
-      { "channel": "NeedsSystem",          "enabled": false },
       { "channel": "PerfMetric",           "enabled": true },
       { "channel": "VoiceCommands",        "enabled": false },
       { "channel": "InventoryComponent",   "enabled": false },

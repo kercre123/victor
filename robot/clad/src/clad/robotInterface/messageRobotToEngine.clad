@@ -14,6 +14,7 @@
 #include "clad/robotInterface/messageFromAnimProcess.clad"
 #include "clad/types/pathEventTypes.clad"
 #include "clad/types/factoryFWOnly.clad"
+#include "clad/types/robotToSwitchboard.clad"
 
 
 namespace Anki {
@@ -83,7 +84,7 @@ message MotorActionAck
 
 message MicData
 {
-  int_16  data[480], // 120 samples of audio 4 channels
+  int_16  data[320], // 80 samples of audio 4 channels
   uint_32 timestamp,
   uint_32 robotStatusFlags, // RobotStatusFlag packs as a uint_32
   float_32 robotRotationAngle,
@@ -103,7 +104,7 @@ message AudioFFTResult
  */
 union RobotToEngine {
   // ==== 0xB0 to 0xEF: Reliable messages to the Engine ====
-  //               NOTE: Messages are currently only reliable between the 
+  //               NOTE: Messages are currently only reliable between the
   //                     animation process and the engine.
   //                     Everything between the anim and robot processes is UNRELIABLE!
 
@@ -120,18 +121,18 @@ union RobotToEngine {
 
   // Docking
   GoalPose                   goalPose               = 0xB7,
-  DockingStatus              dockingStatus          = 0xB8,  
+  DockingStatus              dockingStatus          = 0xB8,
   MovingLiftPostDock         movingLiftPostDock     = 0xB9,
-  LiftLoad                   liftLoad               = 0xBA,    
+  LiftLoad                   liftLoad               = 0xBA,
   PickAndPlaceResult         pickAndPlaceResult     = 0xBB,
-  ChargerMountComplete       chargerMountCompleted  = 0xBC,  
+  ChargerMountComplete       chargerMountCompleted  = 0xBC,
   RampTraverseStart          rampTraverseStarted    = 0xBD,
   RampTraverseComplete       rampTraverseCompleted  = 0xBE,
   BridgeTraverseStart        bridgeTraverseStarted  = 0xBF,
   BridgeTraverseComplete     bridgeTraverseCompleted= 0xC0,
 
   // Sensors
-  // FREE SLOT                                      = 0xC1,  
+  // FREE SLOT                                      = 0xC1,
   IMUDataChunk               imuDataChunk           = 0xC2,
   IMURawDataChunk            imuRawDataChunk        = 0xC3,
   IMUTemperature             imuTemperature         = 0xC4,
@@ -139,12 +140,12 @@ union RobotToEngine {
   PotentialCliff             potentialCliff         = 0xC6,
   FallingEvent               fallingEvent           = 0xC7,
   RobotPoked                 robotPoked             = 0xC8,
-  
+
   // TODO: Can probably get rid of these eventually since engine
   //       can access most of this info directly now.
   FWVersionInfo              factoryFirmwareVersion = 0xC9, ///< DEPRECATED, only used by factory firmware
   ManufacturingID            mfgId                  = 0xCB,
-  FirmwareVersion            firmwareVersion        = 0xCC,  
+  FirmwareVersion            firmwareVersion        = 0xCC,
 
   // FREE SLOTS 0xCD to 0xD2
 
@@ -163,6 +164,10 @@ union RobotToEngine {
   
   TextToSpeechEvent          textToSpeechEvent      = 0xDB,
 
+  SwitchboardInterface::EnterPairing  enterPairing  = 0xDC,
+  SwitchboardInterface::ExitPairing   exitPairing   = 0xDD,  
+  StreamCameraImages         streamCameraImages     = 0xDE,
+
   // Audio
   AudioEngine::Multiplexer::AudioCallbackDuration audioCallbackDuration = 0xE0,
   AudioEngine::Multiplexer::AudioCallbackMarker   audioCallbackMarker   = 0xE1,
@@ -176,9 +181,9 @@ union RobotToEngine {
   ImageImuData               imageGyro              = 0xF1,
   MicData                    micData                = 0xF2,
 
-  // From anim process  
+  // From anim process
   AnimationState             animState              = 0xF3,
-  
+
 }
 
 

@@ -16,6 +16,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/events/ankiEvent.h"
@@ -49,13 +50,22 @@ BehaviorReactToCliff::BehaviorReactToCliff(const Json::Value& config)
     EngineToGameTag::RobotStopped,
     EngineToGameTag::ChargerEvent
   }});
+  
+  _cliffDetectedCondition = BEIConditionFactory::CreateBEICondition(BEIConditionType::CliffDetected, GetDebugLabel());
 }
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToCliff::InitBehavior()
+{
+  _cliffDetectedCondition->Init(GetBEI());
+  _cliffDetectedCondition->SetActive(GetBEI(), true);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToCliff::WantsToBeActivatedBehavior() const
 {
-  return true;
+  return _cliffDetectedCondition->AreConditionsMet(GetBEI());
 }
 
   

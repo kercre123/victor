@@ -15,13 +15,12 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_BehaviorContainer_H__
 #define __Cozmo_Basestation_BehaviorSystem_BehaviorContainer_H__
 
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/noncopyable.h"
-#include "util/logging/logging.h"
 #include "util/signals/simpleSignal_fwd.h"
 #include <unordered_map>
 
@@ -69,7 +68,11 @@ public:
                                    BehaviorClass requiredClass,
                                    std::shared_ptr<T>& outPtr ) const;
   // TODO:(bn) automatically infer requiredClass from T
-  
+
+  // Create a behavior from the given config. Config must specify a behavior ID and class. If the behavior is
+  // successfully created and added to the container, True is returned. Errors include malformed JSON or
+  // duplicate behavior IDs
+  bool CreateAndStoreBehavior(const Json::Value& behaviorConfig);
   
   // ==================== Event/Message Handling ====================
   // Handle various message types
@@ -84,8 +87,6 @@ public:
   
   void Init(BehaviorExternalInterface& behaviorExternalInterface);
 protected:
-  friend class AnonymousBehaviorFactory;  
-  friend class BehaviorComponent;
   friend class DevBehaviorComponentMessageHandler;
   // Check to ensure that the factory only includes one behavior per executable
   // type
@@ -93,10 +94,6 @@ protected:
   
   using BehaviorIDToBehaviorMap = std::map<BehaviorID, ICozmoBehaviorPtr>;
 
-  ICozmoBehaviorPtr CreateBehaviorFromConfig(const Json::Value& behaviorJson);  
-  ICozmoBehaviorPtr CreateAnonymousBehavior(BehaviorClass behaviorType, const Json::Value& config) const;  
-  ICozmoBehaviorPtr CreateBehaviorAndAddToContainer(BehaviorClass behaviorType, const Json::Value& config);
-  
 #if ANKI_DEV_CHEATS
   const BehaviorIDToBehaviorMap& GetBehaviorMap() const { return _idToBehaviorMap; }
 #endif
@@ -105,10 +102,7 @@ private:
   IExternalInterface* _robotExternalInterface;
 
   // ============================== Private Member Funcs ==============================
-  
-  // NOTE: can modify newBehavior (e.g. on name collision if rule is to reuse existing behavior)
-  ICozmoBehaviorPtr AddToContainer(ICozmoBehaviorPtr newBehavior);
-  
+    
   bool RemoveBehaviorFromMap(ICozmoBehaviorPtr behavior);
   
   // helper to avoid including ICozmoBehavior.h here
@@ -117,17 +111,9 @@ private:
   // hide behaviorTypes.h file in .cpp
   std::string GetClassString(BehaviorClass behaviorClass) const;
   
-  // The base function used to create behaviors - should only be called internally
-  ICozmoBehaviorPtr CreateBehaviorBase(BehaviorClass behaviorType, const Json::Value& config) const;
-  
-  void MakeDebugLabelUnique(ICozmoBehaviorPtr behavior) const;
-  
   // ============================== Private Member Vars ==============================
   BehaviorIDToBehaviorMap _idToBehaviorMap;
   std::vector<Signal::SmartHandle> _signalHandles;
-  
-  mutable std::unordered_map<std::string, unsigned int> _debugLabelCounters;
-  
   
   
 };

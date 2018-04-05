@@ -36,8 +36,8 @@ private:
   
   using BaseClass = ICozmoBehavior;
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorLookForFaceAndCube(const Json::Value& config);
   
 public:

@@ -29,8 +29,8 @@ class ObservableObject;
 class BehaviorStackBlocks : public ICozmoBehavior
 {
 protected:
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorStackBlocks(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {

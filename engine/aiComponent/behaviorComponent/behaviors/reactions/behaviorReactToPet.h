@@ -33,8 +33,8 @@ public:
   void SetTargets(const std::set<Vision::FaceID_t>& targets){_targets = targets;}
 
 protected:
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorReactToPet(const Json::Value& config);
   
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {

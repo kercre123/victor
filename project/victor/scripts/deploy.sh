@@ -15,14 +15,47 @@ fi
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
 source ${SCRIPT_PATH}/android_env.sh
+export -f adb_shell
 
 # Settings can be overridden through environment
 : ${VERBOSE:=0}
 : ${ANKI_BUILD_TYPE:="Debug"}
-: ${INSTALL_ROOT:="/data/data/com.anki.cozmoengine"}
+: ${INSTALL_ROOT:="/anki"}
 
-: ${DEVICE_RSYNC_BIN_DIR:="/data/local/tmp"}
+function usage() {
+  echo "$SCRIPT_NAME [OPTIONS]"
+  echo "  -h                      print this message"
+  echo "  -v                      print verbose output"
+  echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
+}
+
+while getopts "hvc:" opt; do
+  case $opt in
+    h)
+      usage && exit 0
+      ;;
+    v)
+      VERBOSE=1
+      ;;
+    c)
+      ANKI_BUILD_TYPE="${OPTARG}"
+      ;;
+    *)
+      usage && exit 1
+      ;;
+  esac
+done
+
+# Settings can be overridden through environment
+: ${VERBOSE:=0}
+: ${ANKI_BUILD_TYPE:="Debug"}
+: ${INSTALL_ROOT:="/anki"}
+
+: ${DEVICE_RSYNC_BIN_DIR:="/tmp"}
 : ${DEVICE_RSYNC_CONF_DIR:="/data/rsync"}
+
+# increment the following value if the contents of rsyncd.conf change
+RSYNCD_CONF_VERSION=2
 
 
 function usage() {
@@ -53,13 +86,14 @@ done
 # echo "ANKI_BUILD_TYPE: ${ANKI_BUILD_TYPE}"
 echo "INSTALL_ROOT: ${INSTALL_ROOT}"
 
-: ${BUILD_ROOT:="${TOPLEVEL}/_build/android/${ANKI_BUILD_TYPE}"}
+: ${PLATFORM_NAME:="android"}
+: ${BUILD_ROOT:="${TOPLEVEL}/_build/${PLATFORM_NAME}/${ANKI_BUILD_TYPE}"}
 : ${LIB_INSTALL_PATH:="${INSTALL_ROOT}/lib"}
 : ${BIN_INSTALL_PATH:="${INSTALL_ROOT}/bin"}
 : ${RSYNC_BIN_DIR="${TOPLEVEL}/tools/rsync"}
 
 $ADB shell mkdir -p "${INSTALL_ROOT}"
-$ADB shell mkdir -p "${INSTALL_ROOT}/config"
+$ADB shell mkdir -p "${INSTALL_ROOT}/etc"
 $ADB shell mkdir -p "${LIB_INSTALL_PATH}"
 $ADB shell mkdir -p "${BIN_INSTALL_PATH}"
 
@@ -80,34 +114,49 @@ fi
 
 # install rsync binary and config if needed
 set +e
-$ADB shell [ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]
+adb_shell "[ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]"
 if [ $? -ne 0 ]; then
   echo "loading rsync to device"
-  $ADB push ${RSYNC_BIN_DIR}/rsync.bin ${DEVICE_RSYNC_BIN_DIR}
+  $ADB push ${RSYNC_BIN_DIR}/rsync.bin ${DEVICE_RSYNC_BIN_DIR}/rsync.bin
 fi
 
-$ADB shell [ -f "$DEVICE_RSYNC_CONF_DIR/rsyncd.conf" ]
+RSYNCD_CONF="rsyncd-v${RSYNCD_CONF_VERSION}.conf"
+
+adb_shell "[ -f "$DEVICE_RSYNC_CONF_DIR/$RSYNCD_CONF" ]"
 if [ $? -ne 0 ]; then
   echo "loading rsync config to device"
-  $ADB push ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}/rsyncd.conf
-else
-  if [ -z `$ADB shell cat "$DEVICE_RSYNC_CONF_DIR/rsyncd.conf" | grep "\[install_root\]"` ]; then
-    echo "updating rsync config"
-    $ADB push ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}/rsyncd.conf
-  fi
+  $ADB push ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}/$RSYNCD_CONF
 fi
 set -e
 
-# rsync will try and create temp directories, so make sure we have write permissions to INSTALL_ROOT
-$ADB shell chmod 777 ${INSTALL_ROOT}
-$ADB shell "${DEVICE_RSYNC_BIN_DIR}/rsync.bin --daemon --config=${DEVICE_RSYNC_CONF_DIR}/rsyncd.conf &"
+# startup rsync daemon
+$ADB shell "${DEVICE_RSYNC_BIN_DIR}/rsync.bin --daemon --config=${DEVICE_RSYNC_CONF_DIR}/${RSYNCD_CONF}"
 
-rsync -Prv --include="*.so" --exclude="*" ${BUILD_ROOT}/lib/ rsync://${DEVICE_IP_ADDRESS}/install_root/lib/
-rsync -Prv --exclude="*.full" --exclude="axattr" ${BUILD_ROOT}/bin/ rsync://${DEVICE_IP_ADDRESS}/install_root/bin/
-rsync -Prv ${TOPLEVEL}/project/victor/runtime/ rsync://${DEVICE_IP_ADDRESS}/install_root/
+pushd ${BUILD_ROOT} > /dev/null 2>&1
 
+# Since invoking rsync multiple times is expensive.
+# build an include file list so that we can run a single rsync command
+RSYNC_LIST="${BUILD_ROOT}/rsync.$$.lst"
+touch ${RSYNC_LIST}
 
-#
-# Put a link in /data/appinit.sh for automatic startup
-#
-$ADB shell ln -sf ${INSTALL_ROOT}/appinit.sh /data/appinit.sh
+if [ -d lib ]; then
+  find lib -type f -name '*.so' -or -name '*.so.1' >> ${RSYNC_LIST}
+fi
+
+if [ -d bin ]; then
+  find bin -type f -not -name '*.full' >> ${RSYNC_LIST}
+fi
+
+if [ -d etc ]; then
+  find etc >> ${RSYNC_LIST}
+fi
+
+if [ -d data ]; then
+  find data >> ${RSYNC_LIST}
+fi
+
+rsync -rlptD -uzvP --delete --files-from=${RSYNC_LIST} ./ rsync://${DEVICE_IP_ADDRESS}/anki_root/
+
+rm -f ${BUILD_ROOT}/rsync.*.lst
+
+popd > /dev/null 2>&1

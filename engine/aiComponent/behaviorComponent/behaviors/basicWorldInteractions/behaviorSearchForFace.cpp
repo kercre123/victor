@@ -73,7 +73,7 @@ void BehaviorSearchForFace::BehaviorUpdate()
 void BehaviorSearchForFace::TransitionToSearchingAnimation()
 {
   SET_STATE(SearchingForFace);
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ComeHere_SearchForFace));
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::SearchForFace_Search));
 }
 
 
@@ -81,7 +81,7 @@ void BehaviorSearchForFace::TransitionToSearchingAnimation()
 void BehaviorSearchForFace::TransitionToFoundFace()
 {
   SET_STATE(FoundFace);
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ComeHere_SearchForFace_FoundFace));
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::SearchForFace_FoundFace));
 }
 
 

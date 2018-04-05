@@ -5,7 +5,7 @@
 //
 //
 {
-  "behaviorClass": "PlayAnim",
+  "behaviorClass": "AnimSequence",
   "behaviorID": "NothingToDo_Idle",
 
   "displayNameKey":"behavior.Bored",

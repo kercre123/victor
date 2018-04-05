@@ -101,20 +101,6 @@ bool AnimationAudioClient::HasActiveEvents() const
   std::lock_guard<std::mutex> lock( _lock );
   return !_activeEvents.empty();
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AnimationAudioClient::SetRobotMasterVolume( AudioEngine::AudioRTPCValue volume,
-                                                 AudioEngine::AudioTimeMs timeInMilliSeconds,
-                                                 AudioEngine::AudioCurveType curve )
-{
-  if ( _audioController == nullptr ) { return; }
-  DEV_ASSERT(((volume >= 0.0f) && (volume <= 1.0f)), "AnimationAudioClient.SetRobotMasterVolume.Volume.InvalidValue");
-  _audioController->SetParameter( ToAudioParameterId( GameParameter::ParameterType::Robot_Volume ),
-                                  volume,
-                                  kInvalidAudioGameObject,
-                                  timeInMilliSeconds,
-                                  curve );
-}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngine::AudioPlayingId AnimationAudioClient::PostCozmoEvent( AudioMetaData::GameEvent::GenericEvent event )

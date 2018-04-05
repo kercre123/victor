@@ -16,7 +16,6 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/debug/devLoggingSystem.h"
-#include "engine/needsSystem/needsManager.h"
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/directGameComms.h"
 #include "engine/cozmoAPI/comms/tcpSocketComms.h"
@@ -89,7 +88,7 @@ namespace Anki {
 CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enabled in non-SHIPPING apps, for internal dev
     
 
-#define ANKI_ENABLE_SDK_OVER_TCP  1
+#define ANKI_ENABLE_SDK_OVER_TCP  0
     
     
     IMPLEMENT_ENUM_INCREMENT_OPERATORS(UiConnectionType);
@@ -108,6 +107,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case UiConnectionType::UI:          return false;
         case UiConnectionType::SdkOverUdp:  return true;
         case UiConnectionType::SdkOverTcp:  return true;
+        case UiConnectionType::Switchboard: return false;
         default:
         {
           PRINT_NAMED_ERROR("IsExternalSdkConnection.BadType", "type = %d", (int)type);
@@ -122,6 +122,12 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
                                     ISocketComms::DeviceId hostDeviceId, bool isSdkCommunicationEnabled)
     {
       // Note: Some SocketComms are deliberately null depending on the build platform, type etc.
+#if FACTORY_TEST
+      if(type != UiConnectionType::Switchboard)
+      {
+        return nullptr;
+      }
+#endif
 
       switch(type)
       {
@@ -151,6 +157,13 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         #else
           return nullptr;
         #endif
+        }
+        case UiConnectionType::Switchboard:
+        {
+          ISocketComms* comms = new TcpSocketComms(true);
+          // Disable ping timeout disconnects
+          comms->SetPingTimeoutForDisconnect(0, nullptr);
+          return comms;
         }
         default:
         {
@@ -270,6 +283,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case UiConnectionType::UI:          return kAcceptMessagesFromUI;
         case UiConnectionType::SdkOverUdp:  return kAcceptMessagesFromSDK;
         case UiConnectionType::SdkOverTcp:  return kAcceptMessagesFromSDK;
+        case UiConnectionType::Switchboard: return true;
         default:
         {
           assert(0);
@@ -332,6 +346,24 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         
         while (connectionType < UiConnectionType::Count)
         {
+          // Only allow Enter/ExitPairing messages to be sent to switchboard
+          if(connectionType == UiConnectionType::Switchboard)
+          {
+            if(message.GetTag() != ExternalInterface::MessageEngineToGameTag::EnterPairing &&
+               message.GetTag() != ExternalInterface::MessageEngineToGameTag::ExitPairing)
+            {
+              if(sendToEveryone)
+              {
+                ++connectionType;
+                continue;
+              }
+              else
+              {
+                return;
+              }
+            }
+          }
+
           ISocketComms* socketComms = GetSocketComms(connectionType);
           if (socketComms)
           {
@@ -456,8 +488,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case GameToEngineTag::RestoreRobotFromBackup:           return true;
         case GameToEngineTag::RequestRobotRestoreData:          return true;
         case GameToEngineTag::WipeRobotGameData:                return true;
-        case GameToEngineTag::WipeRobotNeedsData:               return true;
-        case GameToEngineTag::WipeDeviceNeedsData:              return true;
         case GameToEngineTag::RequestUnlockDataFromBackup:      return true;
         case GameToEngineTag::SetRobotImageSendMode:            return true;
         case GameToEngineTag::SaveImages:                       return true;
@@ -466,12 +496,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case GameToEngineTag::PlannerRunMode:                   return true;
         case GameToEngineTag::StartTestMode:                    return true;
         case GameToEngineTag::TransitionToNextOnboardingState:  return true;
-        case GameToEngineTag::RegisterOnboardingComplete:       return true;
-        case GameToEngineTag::SetNeedsActionWhitelist:          return true;
-        case GameToEngineTag::ForceSetDamagedParts:             return true;
-        case GameToEngineTag::SetNeedsPauseState:               return true;
-        case GameToEngineTag::SetNeedsPauseStates:              return true;
-        case GameToEngineTag::RegisterNeedsActionCompleted:     return true;
         case GameToEngineTag::RequestSetUnlock:                 return true;
         case GameToEngineTag::GetJsonDasLogsMessage:            return true;
         case GameToEngineTag::SaveCalibrationImage:             return true;
@@ -1135,15 +1159,12 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
       _sdkStatus.EnterMode(msg.isExternalSdkMode);
       
       UpdateIsSdkCommunicationEnabled();
-
-      _context->GetNeedsManager()->SetPaused(true);
     }
     
     
     void UiMessageHandler::OnExitSdkMode(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
     {
       const ExternalInterface::ExitSdkMode& msg = event.GetData().Get_ExitSdkMode();
-      _context->GetNeedsManager()->SetPaused(false);
 
       // Note: Robot's message handler also handles this event, and that disconnects the robot
       //       (that's how we ensure that we restore the robot to a safe default state)

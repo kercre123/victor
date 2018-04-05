@@ -16,6 +16,8 @@
 
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animation/animationStreamer.h"
+#include "cozmoAnim/faceDisplay/faceDisplay.h"
+#include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/textToSpeech/textToSpeechComponent.h"
 
@@ -23,10 +25,11 @@
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "webServerProcess/src/webService.h"
+// #include "webServerProcess/src/webService.h"
 
 #include "osState/osState.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
@@ -97,8 +100,9 @@ Result AnimEngine::Init()
   auto * audioInput = static_cast<Audio::EngineRobotAudioInput*>(audioMux->GetInput(regId));
   AnimProcessMessages::Init(this, _animationStreamer.get(), audioInput, _context.get());
 
-  _context->GetWebService()->Start(_context->GetDataPlatform(),
-                                   _context->GetDataLoader()->GetWebServerAnimConfig());
+  // _context->GetWebService()->Start(_context->GetDataPlatform(),
+  //                                  _context->GetDataLoader()->GetWebServerAnimConfig());
+  FaceInfoScreenManager::getInstance()->Init(_context.get(), _animationStreamer.get());
 
   LOG_INFO("AnimEngine.Init.Success","Success");
   _isInitialized = true;
@@ -140,7 +144,7 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
   
   BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
 
-  _context->GetWebService()->Update();
+  // _context->GetWebService()->Update();
   
   Result result = AnimProcessMessages::Update(currTime_nanosec);
   if (RESULT_OK != result) {

@@ -20,12 +20,15 @@
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animEngine.h"
+#include "cozmoAnim/connectionFlow.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
-#include "cozmoAnim/faceDisplay/faceDebugDraw.h"
+#include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/micDataProcessor.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
+#include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -33,6 +36,7 @@
 #include "clad/robotInterface/messageEngineToRobot_sendAnimToRobot_helper.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include "osState/osState.h"
 
@@ -40,6 +44,8 @@
 #include "util/console/consoleSystem.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+
+#include <unistd.h>
 
 // Log options
 #define LOG_CHANNEL    "AnimProcessMessages"
@@ -60,13 +66,55 @@ namespace {
   Anki::Cozmo::Audio::EngineRobotAudioInput* _audioInput = nullptr;
   const Anki::Cozmo::AnimContext*       _context = nullptr;
 
-  #ifndef SIMULATOR
-  const u8 kNumTicksToCheckForBC = 60; // ~2seconds
-  u8 _bcCheckCount = 0;
-  #endif
+  static void ListAnimations(ConsoleFunctionContextRef context)
+  {
+    context->channel->WriteLog("<html>\n");
+    context->channel->WriteLog("<h1>Animations</h1>\n");
+    std::vector<std::string> names = _context->GetDataLoader()->GetAnimationNames();
+    for(const auto& name : names) {
+      std::string url = "consolefunccall?func=playanimation&args="+name+"+1";
+      std::string html = "<a href=\""+url+"\">"+name+"</a>&nbsp\n";
+      context->channel->WriteLog(html.c_str());
+    }
+    context->channel->WriteLog("</html>\n");
+  }
 
-  CONSOLE_VAR(bool, kDebugFaceDraw_CycleWithButton, "DebugFaceDraw", true);   
+  static void PlayAnimation(ConsoleFunctionContextRef context)
+  {
+    const char* name = ConsoleArg_Get_String(context, "name");
+    if (name) {
+      int numLoops = ConsoleArg_GetOptional_Int(context, "numLoops", 1);
+      _animStreamer->SetStreamingAnimation(name, /*tag*/ 1, numLoops, /*interruptRunning*/ true);
 
+      char numLoopsStr[4+1];
+      snprintf(numLoopsStr, sizeof(numLoopsStr), "%d", (numLoops > 9999) ? 9999 : numLoops);
+      std::string text = std::string("Playing ")+name+" "+numLoopsStr+" times<br>";
+      context->channel->WriteLog(text.c_str());
+    } else {
+      context->channel->WriteLog("PlayAnimation name not specified.");
+    }
+  }
+
+  static void AddAnimation(ConsoleFunctionContextRef context)
+  {
+    const char* path = ConsoleArg_Get_String(context, "path");
+    if (path) {
+      const std::string animationFolder = _context->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources, "/assets/animations/");
+      std::string animationPath = animationFolder + path;
+
+      _context->GetDataLoader()->LoadAnimationFile(animationPath.c_str());
+
+      std::string text = "Adding animation ";
+      text += animationPath;
+      context->channel->WriteLog(text.c_str());
+    } else {
+      context->channel->WriteLog("PlayAnimation name not specified.");
+    }
+  }
+
+  CONSOLE_FUNC(ListAnimations, "Animations");
+  CONSOLE_FUNC(PlayAnimation, "Animations", const char* name, optional int numLoops);
+  CONSOLE_FUNC(AddAnimation, "Animations", const char* path);
 }
 
 namespace Anki {
@@ -255,7 +303,7 @@ void Process_startRecordingMics(const Anki::Cozmo::RobotInterface::StartRecordin
 
 void Process_drawTextOnScreen(const Anki::Cozmo::RobotInterface::DrawTextOnScreen& msg)
 {
-  FaceDisplay::GetDebugDraw()->SetCustomText(msg);
+  FaceInfoScreenManager::getInstance()->SetCustomText(msg);
 }
   
 void Process_runDebugConsoleFuncMessage(const Anki::Cozmo::RobotInterface::RunDebugConsoleFuncMessage& msg)
@@ -293,6 +341,17 @@ void Process_textToSpeechStop(const RobotInterface::TextToSpeechStop& msg)
   _animEngine->HandleMessage(msg);
 }
 
+void Process_setConnectionStatus(const Anki::Cozmo::SwitchboardInterface::SetConnectionStatus& msg)
+{
+  UpdateConnectionFlow(std::move(msg), _animStreamer, _context);
+}
+
+void Process_setBLEPin(const Anki::Cozmo::SwitchboardInterface::SetBLEPin& msg)
+{
+  SetBLEPin(msg.pin);
+}
+
+
 
 void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
 {
@@ -324,7 +383,7 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
 
 static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
 {
-  FaceDisplay::GetDebugDraw()->DrawMicInfo(payload);
+  FaceInfoScreenManager::getInstance()->DrawMicInfo(payload);
 
   auto * micDataProcessor = _context->GetMicDataProcessor();
   if (micDataProcessor != nullptr)
@@ -335,21 +394,8 @@ static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
 
 static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
 {
-  FaceDisplay::GetDebugDraw()->DrawStateInfo(robotState);
-
-  static bool buttonWasPressed = false;
-  const auto buttonIsPressed = static_cast<bool>(robotState.status & (uint16_t)RobotStatusFlag::IS_BUTTON_PRESSED);
-  const auto buttonReleased = buttonWasPressed && !buttonIsPressed;
-  buttonWasPressed = buttonIsPressed;
-
-  if (buttonReleased)
-  {
-    if(kDebugFaceDraw_CycleWithButton)
-    {
-      FaceDisplay::GetDebugDraw()->ChangeDrawState();
-    }
-  }
-
+  FaceInfoScreenManager::getInstance()->Update(robotState);
+  
 #if ANKI_DEV_CHEATS
   auto * micDataProcessor = _context->GetMicDataProcessor();
   if (micDataProcessor != nullptr)
@@ -416,13 +462,7 @@ Result AnimProcessMessages::Init(AnimEngine* animEngine,
   _audioInput   = audioInput;
   _context      = context;
 
-  #ifdef SIMULATOR
-  const bool haveBC = true;
-  #else
-  const bool haveBC = Util::FileUtils::FileExists("/data/persist/factory/80000000.nvdata");
-  #endif
-
-  FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!haveBC);
+  InitConnectionFlow(_animStreamer);
 
   return RESULT_OK;
 }
@@ -513,14 +553,13 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
     ProcessMessageFromRobot(msg);
   }
 
-  #ifndef SIMULATOR
-  if(++_bcCheckCount >= kNumTicksToCheckForBC)
-  {
-    _bcCheckCount = 0;
-    const bool haveBC = Util::FileUtils::FileExists("/data/persist/factory/80000000.nvdata");
-    FaceDisplay::GetDebugDraw()->SetShouldDrawFAC(!haveBC);
-  }
-  #endif
+#if defined(SIMULATOR)
+  // Simulator never has EMR
+  FaceInfoScreenManager::getInstance()->SetShouldDrawFAC(false);
+#else
+  FaceInfoScreenManager::getInstance()->SetShouldDrawFAC(!Factory::GetEMR()->fields.PACKED_OUT_FLAG);
+#endif
+
   return RESULT_OK;
 }
 

@@ -23,8 +23,8 @@ class BehaviorPlaypenInitChecks : public IBehaviorPlaypen
 {
 protected:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorPlaypenInitChecks(const Json::Value& config);
   
 protected:

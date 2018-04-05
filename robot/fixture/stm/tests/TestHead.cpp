@@ -6,19 +6,27 @@
 #include "console.h"
 #include "contacts.h"
 #include "fixture.h"
+#include "flexflow.h"
+#include "hwid.h"
 #include "meter.h"
 #include "portable.h"
 #include "testcommon.h"
 #include "timer.h"
 
-#define HEAD_CMD_OPTS   (CMD_OPTS_DEFAULT)
-//#define HEAD_CMD_OPTS   (CMD_OPTS_LOG_ERRORS | CMD_OPTS_REQUIRE_STATUS_CODE) /*disable exceptions*/
+static headid_t headnfo;
+
+static uint32_t m_previous_esn = 0;
+uint32_t TestHeadGetPrevESN(void) {
+  return m_previous_esn;
+}
 
 bool TestHeadDetect(void)
 {
+  memset( &headnfo, 0, sizeof(headnfo) );
+  
   // Make sure power is not applied, as it messes up the detection code below
-  Contacts::powerOff();
-  Board::disableVBAT(); //just in case
+  Board::powerOff(PWR_VEXT);
+  Board::powerOff(PWR_VBAT); //just in case
   
   //weakly pulled-up - it will detect as grounded when the board is attached
   DUT_CS::init(MODE_INPUT, PULL_NONE); //Z
@@ -34,24 +42,23 @@ bool TestHeadDetect(void)
 void TestHeadCleanup(void)
 {
   //if( g_fixmode == FIXMODE_HEAD2 )
-  //  Contacts::powerOn(), return;
+  //  Board::powerOn(PWR_VEXT), return;
   
-  Contacts::powerOff();
+  Board::powerOff(PWR_VEXT);
+  Board::powerOff(PWR_VBAT);
+  
   DUT_RESET::init(MODE_INPUT, PULL_NONE);
   DUT_CS::init(MODE_INPUT, PULL_NONE);
 }
 
 void TestHeadDutProgram(void)
 {
-  const int timeout_s = 120 + 60; //XXX: first working version clocked in at ~120s. Add some margin.
+  const int timeout_s = 210 + 90; //XXX: DVT3 from LE helper clocked in at ~210s. Add some margin.
   char b[40]; int bz = sizeof(b);
   
-  //XXX: get a unique id/sn for the head
-  srand( Timer::get() );
-  int head_id = (rand() << 16) | (rand() & 0xffff); //RAND_MAX is < 0xFFFFffff
-  
   //Power cycle to reset DUT head
-  Contacts::powerOff();
+  Board::powerOff(PWR_VEXT);
+  Board::powerOff(PWR_VBAT);
   Timer::delayMs(1000);
   
   //FORCE_USB signal at POR preps for OS bootload
@@ -61,51 +68,71 @@ void TestHeadDutProgram(void)
   DUT_RESET::init(MODE_OUTPUT); //2.8V -> 1.8V logic level
   
   //power on (with short circuit detection)
+  const int ima_limit_VBAT = 9999;
   const int ima_limit_VEXT = 9999; //XXX: what's our max inrush current?
-  TestCommon::powerShortVEXT(250, ima_limit_VEXT, 2); //Contacts::powerOn();
-
+  Board::powerOff(PWR_VBAT);
+  Board::powerOff(PWR_VEXT);
+  TestCommon::powerOnProtected(PWR_VBAT, 200, ima_limit_VBAT, 2); 
+  TestCommon::powerOnProtected(PWR_VEXT, 200, ima_limit_VEXT, 2);
+  
+  //DEBUG
+  if( g_fixmode == FIXMODE_HEAD2 ) {
+    int timeout_s = 10;
+    ConsolePrintf("---DELAY %us FOR MANUAL FORCE_USB---\n", timeout_s);
+    while( timeout_s-- > 0 ) {
+      Timer::delayMs(1000);
+      if( timeout_s ) //&& timeout_s % 10 == 0 )
+        ConsolePrintf("%us\n", timeout_s);
+    }
+  }
+  
+  //provision ESN
+  headnfo.esn = g_fixmode == FIXMODE_HELPER1 ? 0 : fixtureGetSerial();
+  m_previous_esn = headnfo.esn; //even if programming fails, report the (now unusable) ESN
+  
   //helper head does the rest
-  cmdSend(CMD_IO_HELPER, snformat(b,bz,"dutprogram %u [id=%08x]", timeout_s, head_id), (timeout_s+10)*1000, HEAD_CMD_OPTS | CMD_OPTS_ALLOW_STATUS_ERRS );
+  snformat(b,bz,"dutprogram %u %08x %s", timeout_s, headnfo.esn, g_fixmode == FIXMODE_HELPER1 ? "helper" : "");
+  cmdSend(CMD_IO_HELPER, b, (timeout_s+10)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
   if( cmdStatus() != 0 )
   {
     //map programming error to appropriate fixture error
-    ConsolePrintf("programming failed: error %i\n", cmdStatus() );
-    throw ERROR_TESTPORT_CMD_FAILED;
+    switch( cmdStatus() )
+    {
+      case ERROR_OUT_OF_CLOUD_CERTS:
+        throw ERROR_OUT_OF_CLOUD_CERTS;
+      default:
+        throw ERROR_TESTPORT_CMD_FAILED;
+    }
   }
 }
 
-void TestHeadDutProgramManual(void)
+static void HeadFlexFlowReport(void)
 {
-  //FORCE_USB signal at POR preps for OS bootload
-  DUT_CS::reset();
-  DUT_CS::init(MODE_OUTPUT); //voltage divider gnd (disabled for detect)
-  DUT_RESET::set(); 
-  DUT_RESET::init(MODE_OUTPUT); //2.8V -> 1.8V logic level
-  TestCommon::powerShortVEXT(250, 9999, 2); //Contacts::powerOn();
-  
-  int timeout_s = 5*60;
-  ConsolePrintf("FORCE_USB=1 for %us\n", timeout_s);
-  while( timeout_s-- > 0 ) {
-    Timer::delayMs(1000);
-    if( timeout_s && timeout_s % 10 == 0 )
-      ConsolePrintf("%us\n", timeout_s);
-  }
+  char b[80]; const int bz = sizeof(b);
+  snformat(b,bz,"<flex> ESN %08x\n", headnfo.esn);
+  ConsoleWrite(b);
+  FLEXFLOW::write(b);
 }
 
 TestFunction* TestHead1GetTests(void)
 {
   static TestFunction m_tests[] = {
     TestHeadDutProgram,
+    HeadFlexFlowReport,
     NULL,
   };
   return m_tests;
+}
+TestFunction* TestHelper1GetTests(void) {
+  return TestHead1GetTests();
 }
 
 TestFunction* TestHead2GetTests(void)
 {
   static TestFunction m_tests[] = {
-    TestHeadDutProgramManual,
-    NULL
+    TestHeadDutProgram,
+    HeadFlexFlowReport,
+    NULL,
   };
   return m_tests;
 }

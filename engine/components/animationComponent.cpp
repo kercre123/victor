@@ -241,7 +241,7 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
   // TODO: Is this what interruptRunning should mean?
   //       Or should it queue on anim process side and optionally interrupt currently executing anim?
   if (IsPlayingAnimation() && !interruptRunning) {
-    PRINT_NAMED_WARNING("AnimationComponent.PlayAnimByName.WontInterruptCurrentAnim", "");
+    PRINT_CH_INFO(kLogChannelName, "AnimationComponent.PlayAnimByName.WontInterruptCurrentAnim", "");
     return RESULT_FAIL;
   }
 
@@ -337,7 +337,7 @@ Result AnimationComponent::DisplayFaceImageBinary(const Vision::Image& img, u32 
   // TODO: Is this what interruptRunning should mean?
   //       Or should it queue on anim process side and optionally interrupt currently executing anim?
   if (IsPlayingAnimation() && !interruptRunning) {
-    PRINT_NAMED_WARNING("AnimationComponent.DisplayFaceImageBinary.WontInterruptCurrentAnim", "");
+    PRINT_CH_INFO(kLogChannelName, "AnimationComponent.DisplayFaceImageBinary.WontInterruptCurrentAnim", "");
     return RESULT_FAIL;
   }
 
@@ -419,11 +419,13 @@ Result AnimationComponent::DisplayFaceImageHelper(const ImageType& img, u32 dura
   // TODO: Is this what interruptRunning should mean?
   //       Or should it queue on anim process side and optionally interrupt currently executing anim?
   if (IsPlayingAnimation() && !interruptRunning) {
-    PRINT_NAMED_WARNING("AnimationComponent.DisplayFaceImage.WontInterruptCurrentAnim", "");
+    PRINT_CH_INFO(kLogChannelName, "AnimationComponent.DisplayFaceImage.WontInterruptCurrentAnim", "");
     return RESULT_FAIL;
   }
   
   ASSERT_NAMED(img.IsContinuous(), "AnimationComponent.DisplayFaceImage.NotContinuous");
+  ASSERT_NAMED(img.GetNumRows() == FACE_DISPLAY_HEIGHT, "AnimationComponent.DisplayFaceImage.IncorrectImageHeight");
+  ASSERT_NAMED(img.GetNumCols() == FACE_DISPLAY_WIDTH,  "AnimationComponent.DisplayFaceImage.IncorrectImageWidth");
   
   MessageType msg;
   const int kMaxPixelsPerMsg = msg.faceData.size();
@@ -564,7 +566,7 @@ void AnimationComponent::HandleMessage(const ExternalInterface::DisplayProcedura
   // TODO: Is this what interruptRunning should mean?
   //       Or should it queue on anim process side and optionally interrupt currently executing anim?
   if (IsPlayingAnimation() && !msg.interruptRunning) {
-    PRINT_NAMED_WARNING("AnimationComponent.DisplayProceduralFace.WontInterruptCurrentAnim", "");
+    PRINT_CH_INFO(kLogChannelName, "AnimationComponent.DisplayProceduralFace.WontInterruptCurrentAnim", "");
     return;
   }
 
@@ -589,7 +591,7 @@ void AnimationComponent::HandleMessage(const ExternalInterface::DisplayFaceImage
   // TODO: Is this what interruptRunning should mean?
   //       Or should it queue on anim process side and optionally interrupt currently executing anim?
   if (IsPlayingAnimation() && !msg.interruptRunning) {
-    PRINT_NAMED_WARNING("AnimationComponent.HandleDisplayFaceImage.WontInterruptCurrentAnim", "");
+    PRINT_CH_INFO(kLogChannelName, "AnimationComponent.HandleDisplayFaceImage.WontInterruptCurrentAnim", "");
     return;
   }
 

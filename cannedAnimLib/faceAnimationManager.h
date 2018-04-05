@@ -92,9 +92,14 @@ namespace Cozmo {
     static FaceAnimationManager* _singletonInstance;
     
     FaceAnimation* GetAnimationByName(const std::string& name);
-    void LoadAnimationImageFrames(const std::string& animationFolder, const std::string& animName);
+    void LoadAnimationImageFrames(std::string animationFolder, std::string animName);
     
     std::unordered_map<std::string, FaceAnimation> _availableAnimations;
+
+  private:
+
+    template<class ImageType>
+    void LoadImage(FaceAnimation& anim, const std::string& fullFilename);
     
   }; // class FaceAnimationManager
   

@@ -22,8 +22,8 @@ namespace Cozmo {
 class BehaviorHighLevelAI : public InternalStatesBehavior
 {
 protected:
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;  
   BehaviorHighLevelAI(const Json::Value& config);
   
 public:

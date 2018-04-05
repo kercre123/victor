@@ -166,6 +166,11 @@ namespace {
   
 } // private namespace
 
+TimeStamp_t GetCurrTimestamp()
+{
+  const double currTime_sec = active_object_controller.getTime();
+  return static_cast<TimeStamp_t>(currTime_sec * 1000.f);
+}
   
 template <typename T>
 void SendMessageHelper(webots::Emitter* emitter, T&& msg)
@@ -199,11 +204,13 @@ inline void SetLED_helper(u32 index, u32 rgbaColor) {
 
 void Process_cubeLights(const CubeLights& msg)
 {
+  const u32 currTimestamp = GetCurrTimestamp();
+  
   ledParams_.lightStates = msg.lights;
-  ledParams_.phases.fill(0);
+  ledParams_.phases.fill(currTimestamp);
   
   ledParams_.rotationPeriod = msg.rotationPeriod_frames;
-  ledParams_.lastRotation = 0;
+  ledParams_.lastRotation = currTimestamp;
   ledParams_.rotationOffset = 0;
 }
 
@@ -501,10 +508,11 @@ bool CheckForTap(f32 accelX, f32 accelY, f32 accelZ)
 }
 
 
-void ApplyLEDParams(TimeStamp_t currentTime)
+void ApplyLEDParams()
 {
+  const TimeStamp_t currentTime = GetCurrTimestamp();
   if(ledParams_.rotationPeriod > 0 &&
-     TimestampToLedFrames(currentTime - ledParams_.lastRotation) > ledParams_.rotationPeriod)
+     TimestampToLedFrames(currentTime - ledParams_.lastRotation) >= ledParams_.rotationPeriod)
   {
     ledParams_.lastRotation = currentTime;
     ++ledParams_.rotationOffset;
@@ -514,11 +522,12 @@ void ApplyLEDParams(TimeStamp_t currentTime)
   }
 
   for(u8 i=0; i<NUM_CUBE_LEDS; ++i) {
-    u32 newColor;
-    if (GetCurrentLEDcolor(ledParams_.lightStates[i], currentTime, ledParams_.phases[i], newColor, CUBE_LED_FRAME_LENGTH_MS)) {
-      const u32 index = (i + ledParams_.rotationOffset) % NUM_CUBE_LEDS;
-      SetLED_helper(index, newColor);
-    }
+    const u32 newColor = GetCurrentLEDcolor(ledParams_.lightStates[i],
+                                            currentTime,
+                                            ledParams_.phases[i],
+                                            CUBE_LED_FRAME_LENGTH_MS);
+    const u32 index = (i + ledParams_.rotationOffset) % NUM_CUBE_LEDS;
+    SetLED_helper(index, newColor);
   }
 }
 
@@ -604,8 +613,7 @@ Result Update() {
     }
     
     // Update lights:
-    TimeStamp_t currTimestamp_ms = static_cast<TimeStamp_t>(currTime_sec * 1000.f);
-    ApplyLEDParams(currTimestamp_ms);
+    ApplyLEDParams();
     
     // Set any pending LED color fields. This must be done here since setMFVec3f can only
     // be called once per simulation time step for a given field (known Webots R2018a bug)

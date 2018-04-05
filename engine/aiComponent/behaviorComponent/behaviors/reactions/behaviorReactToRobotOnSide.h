@@ -22,8 +22,8 @@ class BehaviorReactToRobotOnSide : public ICozmoBehavior
 {
 private:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorReactToRobotOnSide(const Json::Value& config);
   
 public:

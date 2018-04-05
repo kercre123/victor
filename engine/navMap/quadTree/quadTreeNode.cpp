@@ -32,14 +32,14 @@ static_assert( !std::is_move_assignable<QuadTreeNode>::value, "QuadTreeNode was 
 static_assert( !std::is_move_constructible<QuadTreeNode>::value, "QuadTreeNode was designed non-movable" );
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, QuadTreeNode* parent, MemoryMapDataPtr data)
+QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t level, EQuadrant quadrant, QuadTreeNode* parent)
 : _center(center)
 , _sideLen(sideLength)
 , _boundingBox(center - Point3f(sideLength/2, sideLength/2, 0), center + Point3f(sideLength/2, sideLength/2, 0))
 , _parent(parent)
 , _level(level)
 , _quadrant(quadrant)
-, _content(data)
+, _content(MemoryMapDataPtr())
 {
   DEV_ASSERT(_quadrant <= EQuadrant::Root, "QuadTreeNode.Constructor.InvalidQuadrant");
 }
@@ -48,6 +48,8 @@ QuadTreeNode::QuadTreeNode(const Point3f &center, float sideLength, uint8_t leve
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 QuadTreeNode::AxisAlignedQuad::AxisAlignedQuad(const Point2f& p, const Point2f& q)
 : lowerLeft(  Point2f(fmin(p.x(), q.x()), fmin(p.y(), q.y())) )
+, lowerRight( Point2f(fmax(p.x(), q.x()), fmin(p.y(), q.y())) )
+, upperLeft(  Point2f(fmin(p.x(), q.x()), fmax(p.y(), q.y())) )
 , upperRight( Point2f(fmax(p.x(), q.x()), fmax(p.y(), q.y())) )
 , diagonals{{ 
     LineSegment( lowerLeft, upperRight), 
@@ -79,6 +81,16 @@ bool QuadTreeNode::Contains(const FastPolygon& poly) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool QuadTreeNode::IsContainedBy(const FastPolygon& poly) const
+{
+  if (!poly.Contains(_boundingBox.lowerLeft))  { return false; }
+  if (!poly.Contains(_boundingBox.lowerRight)) { return false; }
+  if (!poly.Contains(_boundingBox.upperLeft))  { return false; }
+  if (!poly.Contains(_boundingBox.upperRight)) { return false; }
+  return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Quad2f QuadTreeNode::MakeQuadXY(const float padding_mm) const
 {
   const float halfLen = (_sideLen * 0.5f) + padding_mm;
@@ -90,32 +102,6 @@ Quad2f QuadTreeNode::MakeQuadXY(const float padding_mm) const
     {_center.x()-halfLen, _center.y()-halfLen}  // lo R
   };
   return ret;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const std::unique_ptr<QuadTreeNode>& QuadTreeNode::GetChildAt(size_t index) const
-{
-  if ( index < _childrenPtr.size() ) {
-    return _childrenPtr[index];
-  }
-  else
-  {
-    PRINT_NAMED_ERROR("QuadTreeNode.GetChildAt.InvalidIndex",
-      "Index %zu is greater than number of children %zu. Returning null",
-      index, _childrenPtr.size());
-    static std::unique_ptr<QuadTreeNode> nullPtr;
-    return nullPtr;
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::Insert(const FastPolygon& poly, const MemoryMapDataPtr data, QuadTreeProcessor& processor)
-{
-  ANKI_CPU_PROFILE("QuadTreeNode::Insert");
-  
-  NodeContent detectedContent(data);
-  const bool changed = Insert_Recursive(poly, detectedContent, processor);
-  return changed;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -173,13 +159,11 @@ bool QuadTreeNode::ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& pr
     
     // create new children
     const float chHalfLen = rootHalfLen*0.5f;
-    const TimeStamp_t timeCreated = _content.data->GetLastObservedTime();
-    MemoryMapDataPtr newData = std::make_shared<MemoryMapData>(EContentType::Unknown, timeCreated);
       
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopLeft , this, newData) ); // up L
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopRight, this, newData) ); // up R
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotLeft , this, newData) ); // lo L
-    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotRight, this, newData) ); // lo R
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopLeft , this) ); // up L
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::TopRight, this) ); // up R
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()+chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotLeft , this) ); // lo L
+    _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-chHalfLen, _center.y()-chHalfLen, _center.z()}, rootHalfLen, _level-1, EQuadrant::BotRight, this) ); // lo R
 
     // typedef to cast quadrant enum to the underlaying type (that can be assigned to size_t)
     using Q2N = std::underlying_type<EQuadrant>::type; // Q2N stands for "Quadrant To Number", it makes code below easier to read
@@ -207,8 +191,6 @@ bool QuadTreeNode::ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& pr
     */
     
     // this content is set to the children that don't inherit old children
-    MemoryMapData data(EContentType::Unknown, timeCreated);
-    NodeContent emptyUnknownContent(data.Clone());
     
     // calculate which children are brought over from the old ones
     if ( xShift && yShift )
@@ -217,32 +199,20 @@ bool QuadTreeNode::ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& pr
       if ( xPlusAxisReq ) {
         if ( yPlusAxisReq ) {
           // we are moving along +x +y axes, top left becomes bottom right of the new root
-          _childrenPtr[(Q2N)EQuadrant::TopLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-          _childrenPtr[(Q2N)EQuadrant::TopRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-          _childrenPtr[(Q2N)EQuadrant::BotLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
           _childrenPtr[(Q2N)EQuadrant::BotRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopLeft].get(), processor);
         } else {
           // we are moving along +x -y axes, top right becomes bottom left of the new root
-          _childrenPtr[(Q2N)EQuadrant::TopLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-          _childrenPtr[(Q2N)EQuadrant::TopRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
           _childrenPtr[(Q2N)EQuadrant::BotLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopRight].get(), processor);
-          _childrenPtr[(Q2N)EQuadrant::BotRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
         }
       }
       else
       {
         if ( yPlusAxisReq ) {
           // we are moving along -x +y axes, bottom left becomes top right of the new root
-          _childrenPtr[(Q2N)EQuadrant::TopLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
           _childrenPtr[(Q2N)EQuadrant::TopRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotLeft].get(), processor);
-          _childrenPtr[(Q2N)EQuadrant::BotLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-          _childrenPtr[(Q2N)EQuadrant::BotRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
         } else {
           // we are moving along -x -y axes, bottom right becomes top left of the new root
           _childrenPtr[(Q2N)EQuadrant::TopLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotRight].get(), processor);
-          _childrenPtr[(Q2N)EQuadrant::TopRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-          _childrenPtr[(Q2N)EQuadrant::BotLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-          _childrenPtr[(Q2N)EQuadrant::BotRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
         }
       }
     }
@@ -252,8 +222,6 @@ bool QuadTreeNode::ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& pr
       if ( xPlusAxisReq )
       {
         // we are moving along +x axis, top children are preserved, but they become the bottom ones
-        _childrenPtr[(Q2N)EQuadrant::TopLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-        _childrenPtr[(Q2N)EQuadrant::TopRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
         _childrenPtr[(Q2N)EQuadrant::BotLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopLeft].get(), processor );
         _childrenPtr[(Q2N)EQuadrant::BotRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopRight].get(), processor);
       }
@@ -262,8 +230,6 @@ bool QuadTreeNode::ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& pr
         // we are moving along -x axis, bottom children are preserved, but they become the top ones
         _childrenPtr[(Q2N)EQuadrant::TopLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotLeft].get(), processor);
         _childrenPtr[(Q2N)EQuadrant::TopRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotRight].get(), processor);
-        _childrenPtr[(Q2N)EQuadrant::BotLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-        _childrenPtr[(Q2N)EQuadrant::BotRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
       }
     }
     else if ( yShift )
@@ -272,18 +238,14 @@ bool QuadTreeNode::ShiftRoot(const Poly2f& requiredPoints, QuadTreeProcessor& pr
       if ( yPlusAxisReq )
       {
         // we are moving along +y axis, left children are preserved, but they become the right ones
-        _childrenPtr[(Q2N)EQuadrant::TopLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
         _childrenPtr[(Q2N)EQuadrant::TopRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopLeft].get(), processor);
-        _childrenPtr[(Q2N)EQuadrant::BotLeft ]->ForceSetDetectedContentType(emptyUnknownContent, processor);
         _childrenPtr[(Q2N)EQuadrant::BotRight]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotLeft].get(), processor);
       }
       else
       {
         // we are moving along -y axis, right children are preserved, but they become the left ones
         _childrenPtr[(Q2N)EQuadrant::TopLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::TopRight].get(), processor);
-        _childrenPtr[(Q2N)EQuadrant::TopRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
         _childrenPtr[(Q2N)EQuadrant::BotLeft ]->SwapChildrenAndContent(oldChildren[(Q2N)EQuadrant::BotRight].get(), processor);
-        _childrenPtr[(Q2N)EQuadrant::BotRight]->ForceSetDetectedContentType(emptyUnknownContent, processor);
       }
     }
     
@@ -315,8 +277,6 @@ bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLev
 
   const bool xPlus = FLT_GE_ZERO(direction.x());
   const bool yPlus = FLT_GE_ZERO(direction.y());
-  const TimeStamp_t timeCreated = _content.data->GetLastObservedTime();
-  MemoryMapDataPtr newData = std::make_shared<MemoryMapData>(EContentType::Unknown, timeCreated);
   
   // move to its new center
   const float oldHalfLen = _sideLen * 0.50f;
@@ -324,10 +284,10 @@ bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLev
   _center.y() = _center.y() + (yPlus ? oldHalfLen : -oldHalfLen);
 
   // create new children
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopLeft , this, newData) ); // up L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopRight, this, newData) ); // up R
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotLeft , this, newData) ); // lo L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotRight, this, newData) ); // lo R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopLeft , this) ); // up L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::TopRight, this) ); // up R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()+oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotLeft , this) ); // lo L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-oldHalfLen, _center.y()-oldHalfLen, _center.z()}, _sideLen, _level, EQuadrant::BotRight, this) ); // lo R
 
   // calculate the child that takes my place by using the opposite direction to expansion
   size_t childIdx = 0;
@@ -336,15 +296,6 @@ bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLev
   else if (  xPlus &&  yPlus ) { childIdx = 3; }
   QuadTreeNode& childTakingMyPlace = *_childrenPtr[childIdx];
   
-  // we have to set the new first level children as Unknown, since they are initialized as Invalid
-  // except the child that takes my place, since that one is going to inherit my content
-  MemoryMapData unknownData(EContentType::Unknown, timeCreated);
-  NodeContent emptyUnknownContent(unknownData.Clone());
-  for(size_t idx=0; idx<_childrenPtr.size(); ++idx) {
-    if ( idx != childIdx ) {
-      _childrenPtr[idx]->ForceSetDetectedContentType(emptyUnknownContent, processor);
-    }
-  }
   
   // set the new parent in my old children
   for ( auto& childPtr : oldChildren ) {
@@ -354,9 +305,9 @@ bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLev
   // swap children with the temp
   std::swap(childTakingMyPlace._childrenPtr, oldChildren);
 
-  // set the content type I had in the child that takes my place
-  childTakingMyPlace.ForceSetDetectedContentType( _content, processor );
-  ForceSetDetectedContentType(emptyUnknownContent, processor);
+  // set the content type I had in the child that takes my place, then reset my content
+  childTakingMyPlace.ForceSetDetectedContentType( _content.data, processor );
+  ForceSetDetectedContentType(MemoryMapDataPtr(), processor);
   
   // upgrade my remaining stats
   _sideLen = _sideLen * 2.0f;
@@ -370,183 +321,50 @@ bool QuadTreeNode::UpgradeRootLevel(const Point2f& direction, uint8_t maxRootLev
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::AddQuadsToSend(QuadInfoVector& quadInfoVector) const
-{
-  // if we have children, delegate on them, otherwise add data about ourselves
-  if ( _childrenPtr.empty() )
-  {
-    const auto contentTypeExternal = ConvertContentType(_content.data->type);
-    quadInfoVector.emplace_back(ExternalInterface::MemoryMapQuadInfo(contentTypeExternal, _level));
-  }
-  else
-  {
-    // delegate on each child
-    for( const auto& childPtr : _childrenPtr ) {
-      childPtr->AddQuadsToSend(quadInfoVector);
-    }
-  }
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
 {
   DEV_ASSERT(CanSubdivide() && !IsSubdivided(), "QuadTreeNode.Subdivide.InvalidSubdivide");
-  DEV_ASSERT(_level > 0, "QuadTreeNode.Subdivide.InvalidLevel");
   
   const float halfLen    = _sideLen * 0.50f;
   const float quarterLen = halfLen * 0.50f;
   const uint8_t cLevel = _level-1;
-  const TimeStamp_t timeCreated = _content.data->GetLastObservedTime();
-  MemoryMapDataPtr newData = std::make_shared<MemoryMapData>(EContentType::Unknown, timeCreated);
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopLeft , this, newData) ); // up L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopRight, this, newData) ); // up R
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotLeft , this, newData) ); // lo L
-  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotRight, this, newData) ); // lo E
+
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopLeft , this) ); // up L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()+quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::TopRight, this) ); // up R
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()+quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotLeft , this) ); // lo L
+  _childrenPtr.emplace_back( new QuadTreeNode(Point3f{_center.x()-quarterLen, _center.y()-quarterLen, _center.z()}, halfLen, cLevel, EQuadrant::BotRight, this) ); // lo E
 
   // our children may change later on, but until they do, assume they have our old content
   for ( auto& childPtr : _childrenPtr )
   {
-    childPtr->ForceSetDetectedContentType(_content, processor);
+    // use ForceContentType to make sure the processor is notified since the QTN constructor does not notify the processor
+    childPtr->ForceSetDetectedContentType(_content.data, processor);
   }
-  
-  // set our content type to subdivided
-  NodeContent emptySubdividedContent(newData);
-  ForceSetDetectedContentType(emptySubdividedContent, processor);
+  // clear the subdivided node content
+  ForceSetDetectedContentType(MemoryMapDataPtr(), processor);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::Merge(const NodeContent& newContent, QuadTreeProcessor& processor)
+void QuadTreeNode::Merge(const MemoryMapDataPtr newData, QuadTreeProcessor& processor)
 {
   DEV_ASSERT(IsSubdivided(), "QuadTreeNode.Merge.InvalidState");
 
   // since we are going to destroy the children, notify the processor of all the descendants about to be destroyed
-  ClearDescendants(processor);
+  DestroyNodes(_childrenPtr, processor);
+
+  // make sure vector of children is empty to since IsSubdivided() checks this vectors length
+  _childrenPtr.clear();
   
   // set our content to the one we will have after the merge
-  ForceSetDetectedContentType(newContent, processor);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::ClearDescendants(QuadTreeProcessor& processor)
-{
-  // iterate all children recursively destroying their children
-  for ( auto& childPtr : _childrenPtr ) {
-    childPtr->ClearDescendants(processor);
-    processor.OnNodeDestroyed(childPtr.get());
-  }
-  
-  // now remove children
-  _childrenPtr.clear();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::CanOverrideSelfWithContent(EContentType newContentType, ESetOverlap overlap) const
-{
-  // TODO To guarantee that the future doesn't break this, we should require a matrix of old vs new to be fully
-  // specified here. Some values however depend on overlap, so we could not cache / make const
-  
-  EContentType dataType = _content.data->type;
-  if ( newContentType == EContentType::Cliff )
-  {
-    // Cliff can override any other
-    return true;
-  }
-  else if ( dataType == EContentType::Cliff )
-  {
-    // Cliff can only be overridden by a full ClearOfCliff (the cliff is gone)
-    const bool isTotalClear = (newContentType == EContentType::ClearOfCliff) && (overlap == ESetOverlap::SupersetOf);
-    return isTotalClear;
-  }
-  else if ( newContentType == EContentType::ClearOfObstacle )
-  {
-    // ClearOfObstacle can't override ClearOfCliff, since it's less restrictive
-    if ( dataType == EContentType::ClearOfCliff ) {
-      return false;
-    }
-
-    // because quads store information as long as they are touched by something, ClearOfObstacle should
-    // not clear basic types unless it has covered them fully. For example, this fixes obstacles or borders
-    // being cleared just because we clear from the robot to the marker. We do not want to clear below the marker
-    // unless the quad is fully contained (this will prevent lines from destroying content)
-    if ( ( dataType == EContentType::ObstacleObservable   ) ||
-         ( dataType == EContentType::ObstacleCharger      ) ||
-         ( dataType == EContentType::ObstacleUnrecognized ) ||
-         ( dataType == EContentType::InterestingEdge      ) ||
-         ( dataType == EContentType::NotInterestingEdge   ) )
-    {
-      const bool isTotalClear = (overlap == ESetOverlap::SupersetOf);
-      return isTotalClear;
-    }
-  }
-  else if ( newContentType == EContentType::InterestingEdge )
-  {
-    // InterestingEdge can only override basic node types, because it would cause data loss otherwise. For example,
-    // we don't want to override a recognized marked cube or a cliff with their own border
-    if ( ( dataType == EContentType::ObstacleObservable   ) ||
-         ( dataType == EContentType::ObstacleCharger      ) ||
-         ( dataType == EContentType::ObstacleUnrecognized ) ||
-         ( dataType == EContentType::Cliff                ) ||
-         ( dataType == EContentType::NotInterestingEdge   ) )
-    {
-      return false;
-    }
-  }
-  else if ( newContentType == EContentType::ObstacleProx )
-  {
-    if ( ( dataType == EContentType::ObstacleObservable   ) ||
-         ( dataType == EContentType::ObstacleCharger      ) ||
-         ( dataType == EContentType::Cliff                ) )
-    {
-      return false;
-    }
-  }
-  else if ( newContentType == EContentType::NotInterestingEdge )
-  {
-    // NotInterestingEdge can only override interesting edges
-    if ( dataType != EContentType::InterestingEdge ) {
-      return false;
-    }
-  }
-  else if ( newContentType == EContentType::ObstacleChargerRemoved )
-  {
-    // ObstacleChargerRemoved can only remove ObstacleCharger
-    if ( dataType != EContentType::ObstacleCharger ) {
-      return false;
-    }
-  }
-  
-  return true;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::CanOverrideSelfAndChildrenWithContent(EContentType newContentType, ESetOverlap overlap) const
-{
-  if (ESetOverlap::SupersetOf != overlap)
-  {
-    return false;
-  }
-  
-  // ask us
-  if ( !CanOverrideSelfWithContent(newContentType, overlap) ) {
-    return false;
-  }
-
-  // ask children if they can
-  for ( const auto& childPtr : _childrenPtr )
-  {
-    const bool canOverrideChild = childPtr->CanOverrideSelfAndChildrenWithContent(newContentType, overlap);
-    if ( !canOverrideChild ) {
-      return false;
-    }
-  }
-  
-  return true;
+  ForceSetDetectedContentType(newData, processor);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void QuadTreeNode::TryAutoMerge(QuadTreeProcessor& processor)
 {
-  DEV_ASSERT(IsSubdivided(), "QuadTreeNode.TryAutoMerge.NotSubdivided");
+  if (!IsSubdivided()) {
+    return;
+  }
 
   // can't merge if any children are subdivided
   for (const auto& child : _childrenPtr) {
@@ -556,61 +374,32 @@ void QuadTreeNode::TryAutoMerge(QuadTreeProcessor& processor)
   }
   
   bool allChildrenEqual = true;
-  TimeStamp_t firstObservedTime = _childrenPtr[3]->GetData()->GetFirstObservedTime();
-  TimeStamp_t lastObservedTime  = _childrenPtr[3]->GetData()->GetLastObservedTime();
   
   // check if all children classified the same content (assumes node content equality is transitive)
   for(size_t i=0; i<_childrenPtr.size()-1; ++i)
   {
-    firstObservedTime = fmin(firstObservedTime, _childrenPtr[i]->GetData()->GetFirstObservedTime());
-    lastObservedTime  = fmax(lastObservedTime,  _childrenPtr[i]->GetData()->GetLastObservedTime());
     allChildrenEqual &= (_childrenPtr[i]->GetContent() == _childrenPtr[i+1]->GetContent());
   }
   
   // we can merge and set that type on this parent
   if ( allChildrenEqual )
   {
-    NodeContent childContent = _childrenPtr[0]->GetContent(); // do a copy since merging will destroy children
-    childContent.data->SetFirstObservedTime(firstObservedTime);
-    childContent.data->SetLastObservedTime(lastObservedTime);
+    MemoryMapDataPtr nodeData = _childrenPtr[0]->GetData(); // do a copy since merging will destroy children
+    nodeData->SetFirstObservedTime(GetData()->GetFirstObservedTime());
+    nodeData->SetLastObservedTime(GetData()->GetLastObservedTime());
     
-    Merge( childContent, processor );
+    Merge( nodeData, processor );
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::TrySetDetectedContentType(const NodeContent& detectedContent, ESetOverlap overlap,
-  QuadTreeProcessor& processor)
-{
-  // if we don't want to override with the new content, do not call ForceSet
-  if ( !CanOverrideSelfWithContent(detectedContent.data->type, overlap) ) {
-    return;
-  }
-
-  // do the change
-  ForceSetDetectedContentType(detectedContent, processor);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::ForceSetDetectedContentType(const NodeContent& detectedContent, QuadTreeProcessor& processor)
+void QuadTreeNode::ForceSetDetectedContentType(const MemoryMapDataPtr newData, QuadTreeProcessor& processor)
 {
   const EContentType oldContentType = _content.data->type;
   const bool wasEmptyType = IsEmptyType();
-
-  // if we are trying to set a removed type, convert to the type we want to actually set
-  NodeContent finalContent = detectedContent;
-  {
-    const EContentType newContent = detectedContent.data->type;
-    const bool isObstacleRemoved = (newContent == EContentType::ObstacleChargerRemoved);
-    if ( isObstacleRemoved )
-    {
-      MemoryMapData newData(EContentType::ClearOfObstacle, detectedContent.data->GetLastObservedTime());
-      finalContent = NodeContent(newData.Clone());
-    }
-  }
   
   // this is where we can detect changes in content, for example new obstacles or things disappearing
-  _content = finalContent;
+  _content.data = newData;
   
   // notify processor only when content type changes, not if the underlaying info changes
   const bool typeChanged = oldContentType != _content.data->type;
@@ -638,8 +427,8 @@ void QuadTreeNode::SwapChildrenAndContent(QuadTreeNode* otherNode, QuadTreeProce
   }
 
   // swap contents by use of copy, since changes have to be notified to the processor
-  NodeContent myPrevContent = _content;
-  ForceSetDetectedContentType(otherNode->GetContent(), processor);
+  MemoryMapDataPtr myPrevContent = _content.data;
+  ForceSetDetectedContentType(otherNode->GetData(), processor);
   otherNode->ForceSetDetectedContentType(myPrevContent, processor);
 }
 
@@ -812,18 +601,6 @@ void QuadTreeNode::AddSmallestNeighbors(EDirection direction,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::AddSmallestDescendantsDepthFirst(NodeCPtrVector& descendants) const
-{
-  if ( !IsSubdivided() ) {
-    descendants.emplace_back(this);
-  } else {
-    for( const auto& cPtr : _childrenPtr ) {
-      cPtr->AddSmallestDescendantsDepthFirst(descendants);
-    }
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 QuadTreeNode::ESetOverlap QuadTreeNode::GetOverlapType(const FastPolygon& poly) const
 {  
   bool containsOne = false;
@@ -876,114 +653,64 @@ QuadTreeNode::ESetOverlap QuadTreeNode::GetOverlapType(const FastPolygon& poly) 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::Insert_Recursive(const FastPolygon& poly, 
-  const NodeContent& detectedContent,
-  QuadTreeProcessor& processor)
-{  
-  // if we won't gain any new info, no need to process
-  const bool isSameInfo = _content.data == detectedContent.data;
-  if ( isSameInfo ) 
-  {
-    return false;
-  }
-  
-  // to check for changes
-  bool childChanged = false;
-  NodeContent previousContent = _content;
-  ESetOverlap overlap = GetOverlapType(poly);
-  if ( ESetOverlap::Disjoint != overlap )
-  {
-    _content.data->SetLastObservedTime(detectedContent.data->GetLastObservedTime());
+void QuadTreeNode::Fold(FoldFunctor accumulator, FoldDirection dir)
+{
+  if (FoldDirection::BreadthFirst == dir) { accumulator(*this); }
 
-    if ( IsSubdivided() && CanOverrideSelfAndChildrenWithContent(detectedContent.data->type, overlap) )
-    {
-      Merge(detectedContent, processor);
-    }
-    else 
-    {
-      if (  ESetOverlap::SupersetOf != overlap && !IsSubdivided() && CanSubdivide())
-      {
-        Subdivide( processor );
-      }
-      
-      if ( IsSubdivided() )
-      {
-        for( auto& childPtr : _childrenPtr ) 
-        {
-          childChanged |= childPtr->Insert_Recursive(poly, detectedContent, processor);
-        }  
-        TryAutoMerge(processor);
-      }
-      else
-      {
-        TrySetDetectedContentType( detectedContent, overlap, processor );
-      }
-    }
+  for ( auto& cPtr : _childrenPtr )
+  {
+    if (cPtr) cPtr->Fold(accumulator, dir);
   }
-  
-  const bool ret = (_content != previousContent) || childChanged;
-  return ret;
+
+  if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeNode::Transform(const FastPolygon& poly,
-                              NodeTransformFunction transform, 
-                              QuadTreeProcessor& processor)
-{  
-  bool contentChanged = false;
-  
-  ESetOverlap overlap = GetOverlapType(poly);
-  if ( ESetOverlap::Disjoint != overlap )
-  {
-    if ( IsSubdivided() )
+void QuadTreeNode::Fold(FoldFunctor accumulator, const FastPolygon& region, FoldDirection dir)
+{
+  if ( ESetOverlap::Disjoint != GetOverlapType(region) )
+  {    
+    if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
+    
+    for ( auto& cPtr : _childrenPtr )
     {
-      for ( const auto& cPtr : _childrenPtr )
-      {
-        cPtr->Transform(poly, transform, processor);
-      }
-      TryAutoMerge(processor);
+      cPtr->Fold(accumulator, region, dir);
     }
     
-    // if the node contains any data, attempt to perform the transform
-    if (_content.data)
-    {
-      NodeContent newContent(transform(_content.data));
-      
-      // AddContentPoint checks if content has changed for us
-      contentChanged = (_content != newContent) && !IsSubdivided();
-      if (contentChanged) 
-      {
-        ForceSetDetectedContentType(newContent, processor);
-      }
-    }
-    
+    if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
   }
-  
-  return contentChanged;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTreeNode::FindIf(const FastPolygon& poly, MemoryMapTypes::NodePredicate pred, 
-                                    MemoryMapTypes::MemoryMapDataConstList& output) const
-{  
-  ESetOverlap overlap = GetOverlapType(poly);
-  if ( ESetOverlap::Disjoint != overlap )
+void QuadTreeNode::Fold(FoldFunctorConst accumulator, FoldDirection dir) const
+{ 
+  if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
+  
+  for ( const auto& cPtr : _childrenPtr )
   {
-    if ( IsSubdivided() )
+    // disambiguate const method call
+    const QuadTreeNode* constPtr = cPtr.get();
+    if (constPtr) { constPtr->Fold(accumulator, dir); }
+  }
+  
+  if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void QuadTreeNode::Fold(FoldFunctorConst accumulator, const FastPolygon& region, FoldDirection dir) const
+{
+  if ( ESetOverlap::Disjoint != GetOverlapType(region) )
+  {    
+    if (FoldDirection::BreadthFirst == dir) { accumulator(*this); } 
+
+    for ( const auto& cPtr : _childrenPtr )
     {
-      for ( const auto& cPtr : _childrenPtr )
-      {
-        cPtr->FindIf(poly, pred, output);
-      }
+      // disambiguate const method call
+      const QuadTreeNode* constPtr = cPtr.get();
+      if (constPtr) { constPtr->Fold(accumulator, region, dir); }
     }
     
-    // if the node contains any data, attempt to perform the transform
-    if (_content.data)
-    {
-      if (pred(_content.data)) {
-        output.insert(std::const_pointer_cast<MemoryMapData>(_content.data));
-      }
-    }
+    if (FoldDirection::DepthFirst == dir) { accumulator(*this); }
   }
 }
 

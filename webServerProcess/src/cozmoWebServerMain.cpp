@@ -16,6 +16,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/logging/androidLogPrintLogger_android.h"
 
@@ -27,73 +28,99 @@
 using namespace Anki;
 using namespace Anki::Cozmo;
 
+#define LOG_CHANNEL "CozmoWebServer"
+
 namespace {
 WebService::WebService* cozmoWebServer = nullptr;
 }
 
-void Cleanup(int signum)
+static void Cleanup(int signum)
 {
-  if(cozmoWebServer != nullptr)
+  LOG_INFO("CozmoWebServer.Cleanup", "exit on signal %d", signum);
+
+  if (cozmoWebServer != nullptr)
   {
     delete cozmoWebServer;
     cozmoWebServer = nullptr;
   }
-  
-  exit(signum);
+  exit(0);
+}
+
+Anki::Util::Data::DataPlatform* createPlatform(const std::string& persistentPath,
+                                         const std::string& cachePath,
+                                         const std::string& resourcesPath)
+{
+    Anki::Util::FileUtils::CreateDirectory(persistentPath);
+    Anki::Util::FileUtils::CreateDirectory(cachePath);
+    Anki::Util::FileUtils::CreateDirectory(resourcesPath);
+
+    return new Anki::Util::Data::DataPlatform(persistentPath, cachePath, resourcesPath);
+}
+
+Anki::Util::Data::DataPlatform* createPlatform()
+{
+  char config_file_path[PATH_MAX] = { 0 };
+  const char* env_config = getenv("VIC_WEB_SERVER_CONFIG");
+  if (env_config != NULL) {
+    strncpy(config_file_path, env_config, sizeof(config_file_path));
+  }
+
+  Json::Value config;
+
+  printf("config_file: %s\n", config_file_path);
+  if (strlen(config_file_path)) {
+    std::string config_file{config_file_path};
+    if (!Anki::Util::FileUtils::FileExists(config_file)) {
+      fprintf(stderr, "config file not found: %s\n", config_file_path);
+    }
+
+    std::string jsonContents = Anki::Util::FileUtils::ReadFile(config_file);
+    printf("jsonContents: %s\n", jsonContents.c_str());
+    Json::Reader reader;
+    if (!reader.parse(jsonContents, config)) {
+      PRINT_STREAM_ERROR("cozmoWebServerMain.createPlatform.JsonConfigParseError",
+        "json configuration parsing error: " << reader.getFormattedErrorMessages());
+    }
+  }
+
+  std::string persistentPath;
+  std::string cachePath;
+  std::string resourcesPath;
+
+  if (config.isMember("DataPlatformPersistentPath")) {
+    persistentPath = config["DataPlatformPersistentPath"].asCString();
+  } else {
+    PRINT_NAMED_ERROR("cozmoWebServerMain.createPlatform.DataPlatformPersistentPathUndefined", "");
+  }
+
+  if (config.isMember("DataPlatformCachePath")) {
+    cachePath = config["DataPlatformCachePath"].asCString();
+  } else {
+    PRINT_NAMED_ERROR("cozmoWebServerMain.createPlatform.DataPlatformCachePathUndefined", "");
+  }
+
+  if (config.isMember("DataPlatformResourcesPath")) {
+    resourcesPath = config["DataPlatformResourcesPath"].asCString();
+  } else {
+    PRINT_NAMED_ERROR("cozmoWebServerMain.createPlatform.DataPlatformResourcesPathUndefined", "");
+  }
+
+  Util::Data::DataPlatform* dataPlatform =
+    createPlatform(persistentPath, cachePath, resourcesPath);
+
+  return dataPlatform;
 }
 
 int main(void)
 {
   signal(SIGTERM, Cleanup);
-  
+
   // - create and set logger
   Util::AndroidLogPrintLogger logPrintLogger("webserver");
   Util::gLoggerProvider = &logPrintLogger;
 
-  // TODO: Load DataPlatform paths from json or however engine does it
-  /*
-  const char* configuration_data = "{}";
-  
-  Json::Reader reader;
-  Json::Value config;
-  if (!reader.parse(configuration_data, configuration_data + std::strlen(configuration_data), config)) {
-    PRINT_STREAM_ERROR("cozmo_startup", "json configuration parsing error: " << reader.getFormattedErrorMessages());
-    return -1;
-  }
-  
-  // Create the data platform with the folders sent from Unity
-  std::string filesPath = config["DataPlatformFilesPath"].asCString();
-  std::string cachePath = config["DataPlatformCachePath"].asCString();
-  std::string externalPath = config["DataPlatformExternalPath"].asCString();
-  std::string resourcesPath = config["DataPlatformResourcesPath"].asCString();
-  std::string resourcesBasePath = config["DataPlatformResourcesBasePath"].asCString();
-  std::string appRunId = config["appRunId"].asCString();
-  */
-  
-  
-  // Check /data/data/com.anki.cozmoengine/files/assets/current for the hash of the assets directory to use
-  std::string rootDir = "/data/data/com.anki.cozmoengine";
-  std::string assetHash;
-  std::string assetHashFileName = rootDir + "/files/assets/current";
-  std::ifstream assetHashFile(assetHashFileName.c_str());
-  if (assetHashFile.is_open()) {
-    getline(assetHashFile, assetHash);
-    assetHashFile.close();
-    PRINT_NAMED_INFO("main.AssetHashFound", "%s", assetHash.c_str());
-  } else {
-    PRINT_NAMED_ERROR("main.AssetHashFileNotFound", "%s not found", assetHashFileName.c_str());
-    exit(-1);
-  }
-  
-  
-  std::string filesPath = rootDir + "/files/output";
-  std::string cachePath = rootDir + "/cache";  
-  std::string externalPath = "/data/local/tmp";
-  std::string resourcesPath = rootDir + "/files/assets/" + assetHash + "/cozmo_resources";
-  
-  
-  Util::Data::DataPlatform* dataPlatform = new Util::Data::DataPlatform(filesPath, cachePath, externalPath, resourcesPath);
-  
+  Util::Data::DataPlatform* dataPlatform = createPlatform();
+
   // Create and init cozmoWebServer
   Json::Value wsConfig;
   static const std::string & wsConfigPath = "webserver/webServerConfig_robot.json";
@@ -106,20 +133,20 @@ int main(void)
   }
   cozmoWebServer = new WebService::WebService();
   cozmoWebServer->Start(dataPlatform, wsConfig);
-  
+
   using namespace std::chrono;
   using TimeClock = steady_clock;
 
   const auto runStart = TimeClock::now();
-  
+
   // Set the target time for the end of the first frame
   auto targetEndFrameTime = runStart + (microseconds)(WEB_SERVER_TIME_STEP_US);
-  
+
 
   while (1)
   {
     cozmoWebServer->Update();
-    
+
     const auto tickNow = TimeClock::now();
     const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickNow);
 
@@ -129,7 +156,7 @@ int main(void)
       PRINT_NAMED_WARNING("cozmoWebServer.overtime", "Update() (%dms max) is behind by %.3fms",
                           WEB_SERVER_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
     }
-    
+
     // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
     // allows other threads to run
     static const auto minimumSleepTime_us = microseconds((long)0);
@@ -137,7 +164,7 @@ int main(void)
 
     // Set the target end time for the next frame
     targetEndFrameTime += (microseconds)(WEB_SERVER_TIME_STEP_US);
-    
+
     // See if we've fallen very far behind (this happens e.g. after a 5-second blocking
     // load operation); if so, compensate by catching the target frame end time up somewhat.
     // This is so that we don't spend the next SEVERAL frames catching up.

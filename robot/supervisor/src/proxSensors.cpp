@@ -28,17 +28,23 @@ namespace Anki {
         };
         // Piecewise linear look-up table for raw prox sensor reading offset. The table
         // must be ordered on 'first' element. Keep this table small (lookup is linear!)
+#if !FACTORY_TEST
         const std::array<ProxSensorLookupEntry, 2> kProxSensorRawDistLUT_mm {{
           {100, -30},
           {300, -22}
         }};
+#else
+        const std::array<ProxSensorLookupEntry, 1> kProxSensorRawDistLUT_mm {{
+          {0, 0}
+        }};
+#endif
 #endif
         
         // Cliff sensor
         const int _nCliffSensors = HAL::CLIFF_COUNT;
         u16 _cliffVals[_nCliffSensors] = {0};
         
-        // Bits correspond to each of the cliff sensors (4 for V2, 1 otherwise)
+        // Bits correspond to each of the cliff sensors
         uint8_t _cliffDetectedFlags = 0;
         
         bool _enableCliffDetect = true;
@@ -75,6 +81,11 @@ namespace Anki {
         }
       }
 
+      u8 GetCliffDetectedFlags()
+      {
+        return _cliffDetectedFlags;
+      }
+      
       u16 GetCliffValue(u32 ind)
       {
         AnkiConditionalErrorAndReturnValue(ind < HAL::CLIFF_COUNT, 0, "ProxSensors.GetCliffValue.InvalidIndex", "Index %d is not valid", ind);

@@ -12,6 +12,7 @@
 
 
 #include "engine/vision/visionModeSchedule.h"
+#include "util/logging/logging.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -37,9 +38,11 @@ VisionModeSchedule::VisionModeSchedule(bool alwaysOnOrOff)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-VisionModeSchedule::VisionModeSchedule(int onFrequency)
+VisionModeSchedule::VisionModeSchedule(int onFrequency, int frameOffset)
 : VisionModeSchedule(std::vector<bool>(onFrequency,false))
 {
+  DEV_ASSERT((frameOffset < onFrequency), "VisionModeSchedule.ReceivedOutOfBoundsFrameOffset");
+
   if(onFrequency == 0)
   {
     // Special case
@@ -47,7 +50,7 @@ VisionModeSchedule::VisionModeSchedule(int onFrequency)
   }
   else
   {
-    _schedule[0] = true;
+    _schedule[frameOffset] = true;
   }
 }
 

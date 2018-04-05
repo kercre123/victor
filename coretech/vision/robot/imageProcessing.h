@@ -27,7 +27,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define ACCELERATION_ARM_M4 1
 #define ACCELERATION_ARM_A7 2
 
-#ifdef ANDROID
+#ifdef __ARM_NEON__
 #define ACCELERATION_TYPE ACCELERATION_ARM_A7
 #else
 #define ACCELERATION_TYPE ACCELERATION_NONE

@@ -36,11 +36,11 @@ namespace Cozmo {
 class SayTextAction : public IAction
 {
 public:
-  
+
   // Load Static Cozmo Say Text Intent metadata from disk
   // Return true on success
   static bool LoadMetadata(Util::Data::DataPlatform& dataPlatform);
-  
+
   // Customize the text to speech creation by setting the voice style and duration scalar.
   // Note: The duration scalar stretches the duration of the generated TtS audio. When using the unprocessed voice
   //       you can use a value around 1.0 which is the TtS generator normal speed. When using CozmoProcessing
@@ -51,45 +51,45 @@ public:
                 const SayTextVoiceStyle style,
                 const float durationScalar = 1.f,
                 const float voicePitch = 0.f);
-  
+
   // Play a predefined text to speech style by passing in an intent
   SayTextAction(const std::string& text, const SayTextIntent intent);
-  
+
   virtual ~SayTextAction();
-  
+
   virtual f32 GetTimeoutInSeconds() const override { return _timeout_sec; }
-  
+
   // Use an animation group tied to a specific GameEvent.
   // Use AnimationTrigger::Count to use built-in animation (default).
   // The animation group should contain animations that have the special audio keyframe for
   // Audio::GameEvent::GenericEvent::Play__Robot_Vo__External_Cozmo_Processing or Play__Robot_Vo__External_Unprocessed
   void SetAnimationTrigger(AnimationTrigger trigger, u8 ignoreTracks = 0);
-  
+
   // Generate new animation by stitching the animation group animations together until they are equal or greater to the
   // duration of generated text to speech content.
   // Note: Animation Trigger must not have Play__Robot_Vo__External_Cozmo_Processing audio event in the
   // animation. The event will be added to the first frame when generating the animation to fit the duration.
   void SetFitToDuration(bool fitToDuration) { _fitToDuration = fitToDuration; }
 
-  
+
 protected:
 
   virtual ActionResult Init() override;
   virtual ActionResult CheckIfDone() override;
 
-  virtual void OnRobotSet() override final;  
+  virtual void OnRobotSet() override final;
 
 private:
-  
+
   std::string                    _text;
-  SayTextIntent                  _intent;
-  SayTextVoiceStyle              _style;
-  float                          _durationScalar       = 0.f;
+  SayTextIntent                  _intent = SayTextIntent::Count;
+  SayTextVoiceStyle              _style = SayTextVoiceStyle::Count;
+  float                          _durationScalar       = 1.f;
   float                          _pitchScalar          = 0.f; // Adjust Cozmo voice processing pitch [-1.0, 1.0]
 
   // Tracks lifetime of TTS utterance for this action
   // ID 0 is reserved for "invalid".
-  uint8_t                        _ttsID                = 0; 
+  uint8_t                        _ttsID                = 0;
 
   // State of this TTS utterance, as reported by animation process
   // ID 0 is reserved for "invalid".
@@ -104,17 +104,17 @@ private:
   f32                            _timeout_sec          = 30.f;
   f32                            _expiration_sec       = 0.f;
   Signal::SmartHandle            _signalHandle;
-  
+
   // Call to start processing text to speech
   void GenerateTtsAudio();
-  
+
   // Append animation by stitching animation trigger group animations together until the animation's duration is
   // greater or equal to the provided duration
   void UpdateAnimationToFitDuration(const float duration_ms);
-  
+
   // SayTextVoiceStyle lookup up by name
   using SayTextVoiceStyleMap = std::unordered_map<std::string, SayTextVoiceStyle>;
-  
+
   // Cozmo Says intent metadata config data struct
   struct SayTextIntentConfig
   {
@@ -125,29 +125,29 @@ private:
       float rangeMin = std::numeric_limits<float>::min();;
       float rangeMax = std::numeric_limits<float>::max();;
       float rangeStepSize = 0.0f;
-      
+
       ConfigTrait();
       ConfigTrait(const Json::Value& json);
-      
+
       float GetDuration(Util::RandomGenerator& randomGen) const;
     };
-    
+
     std::string name = "";
     SayTextVoiceStyle style = SayTextVoiceStyle::CozmoProcessing_Sentence;
     std::vector<ConfigTrait> durationTraits;
     std::vector<ConfigTrait> pitchTraits;
-    
+
     SayTextIntentConfig();
     SayTextIntentConfig(const std::string& intentName, const Json::Value& json, const SayTextVoiceStyleMap& styleMap);
-    
+
     const ConfigTrait& FindDurationTraitTextLength(uint textLength) const;
     const ConfigTrait& FindPitchTraitTextLength(uint textLength) const;
   };
-  
+
   // Store loaded Cozmo Says intent configs
   using SayIntentConfigMap = std::unordered_map<SayTextIntent, SayTextIntentConfig, Util::EnumHasher>;
   static SayIntentConfigMap _intentConfigs;
-  
+
 }; // class SayTextAction
 
 

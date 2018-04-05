@@ -26,7 +26,7 @@ const char* kOperandKey = "operand";
 
 ConditionNegate::ConditionNegate(const Json::Value& config)
   : IBEICondition(config)
-  , _operand( BEIConditionFactory::CreateBEICondition( config[kOperandKey] ) )
+  , _operand( BEIConditionFactory::CreateBEICondition( config[kOperandKey], GetDebugLabel() ) )
 {
   ANKI_VERIFY(_operand, "ConditionNegate.Constructor.Config.NullOperand", "" );
 }  
@@ -36,13 +36,6 @@ ConditionNegate::ConditionNegate(IBEIConditionPtr operand)
   , _operand(operand)
 {
   ANKI_VERIFY(_operand, "ConditionNegate.Constructor.Direct.NullOperand", "" );
-}
-
-void ConditionNegate::ResetInternal(BehaviorExternalInterface& bei)
-{  
-  if( _operand ) {
-    _operand->Reset(bei);
-  }
 }
 
 void ConditionNegate::InitInternal(BehaviorExternalInterface& bei)
@@ -59,6 +52,13 @@ bool ConditionNegate::AreConditionsMetInternal(BehaviorExternalInterface& bei) c
     return !subResult;
   }
   return false;
+}
+
+void ConditionNegate::SetActiveInternal(BehaviorExternalInterface& bei, bool setActive)
+{
+  if( _operand ){
+    _operand->SetActive(bei, setActive);
+  }
 }
 
 }

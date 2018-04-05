@@ -34,9 +34,6 @@ namespace Cozmo {
   
 class Robot;
 
-CONSOLE_VAR(bool, kRenderQuadTree      , "QuadTree", true);
-CONSOLE_VAR(bool, kRenderLastAddedQuad , "QuadTree", false);
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
 // rsam note: I tweaked this to Initial=160mm, maxDepth=8 to get 256cm max area. With old the 200 I had to choose
@@ -51,9 +48,9 @@ constexpr uint8_t kQuadTreeMaxRootDepth = 8;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 QuadTree::QuadTree(MemoryMapDataPtr rootData)
 : _processor()
-, _root({0,0,1}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, QuadTreeTypes::EQuadrant::Root, nullptr, rootData)  // Note the root is created at z=1
+, _root({0,0,1}, kQuadTreeInitialRootSideLength, kQuadTreeInitialMaxDepth, QuadTreeTypes::EQuadrant::Root, nullptr)  // Note the root is created at z=1
 {
-  _processor.SetRoot( &_root );
+  _processor.SetRoot( this );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -72,47 +69,93 @@ float QuadTree::GetContentPrecisionMM() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTree::Insert(const FastPolygon& poly, MemoryMapDataPtr data, int shiftAllowedCount)
+bool QuadTree::Insert(const FastPolygon& poly, MemoryMapDataPtr data)
 {
   ANKI_CPU_PROFILE("QuadTree::Insert");
-  
-  {
-    // I have had a unit test send here a NaN quad, probably because a cube pose was busted, detect that case
-    // here and ignore the quad so that we don't assert because we expand indefinitely
-    bool isNaNPoly = false;
-    for (const auto& pt : poly.GetSimplePolygon()) 
-    {
-      isNaNPoly |= std::isnan(pt.x()) ||   std::isnan(pt.y());
-    }
-  
-    if ( isNaNPoly ) {
-      PRINT_NAMED_ERROR("QuadTree.Insert.NaNPoly",
-        "Poly is not valid, at least one coordinate is NaN.");
-      Util::sDumpCallstack("QuadTree::Insert");
-      return false;
-    }
-  }
   
   // if the root does not contain the poly, expand
   if ( !_root.Contains( poly ) )
   {
-    // TODO: (mrw) we now remove objects by ID, so we should never be adding the removal type at all?
-    
-    // if we are 'adding' a removal poly, do not expand, since it would be useless to expand or shift to try
-    // to remove data.
-    const bool isRemovingContent = MemoryMapTypes::IsRemovalType(data->type);
-    if ( isRemovingContent ) {
-      PRINT_NAMED_WARNING("QuadTree.Insert.RemovalPolyNotContained",
-        "Poly is not fully contained in root, removal does not cause expansion.");
-    }
-    else
-    {
-      Expand( poly.GetSimplePolygon(), shiftAllowedCount );
-    }
+    ExpandToFit( poly.GetSimplePolygon());
   }
+  
+  // run the insert on the expanded QT
+  bool contentChanged = false;
+  QuadTreeNode::FoldFunctor accumulator = [this, &contentChanged, &data, &poly] (QuadTreeNode& node)
+  {
+    if ( node.GetData() == data ) { return; }
 
-  const bool changed = _root.Insert(poly, data, _processor);
-  return changed;
+    QuadTreeNode::NodeContent previousContent = node._content;
+    node.GetData()->SetLastObservedTime(data->GetLastObservedTime());
+
+    // split node if we can unsure if the incoming poly will fill the entire area
+    if ( !node.IsContainedBy(poly) && !node.IsSubdivided() && node.CanSubdivide())
+    {
+      node.Subdivide( _processor );
+    }
+    
+    if ( !node.IsSubdivided() )
+    {
+      if ( node.GetData()->CanOverrideSelfWithContent(data->type) ) {
+        node.ForceSetDetectedContentType( data, _processor );
+        contentChanged = true;
+      }
+    } 
+  };
+  _root.Fold(accumulator, poly);
+
+  // try to cleanup tree
+  QuadTreeNode::FoldFunctor merge = [this] (QuadTreeNode& node) { node.TryAutoMerge(_processor); };
+  _root.Fold(merge, poly, QuadTreeNode::FoldDirection::DepthFirst);
+
+  return contentChanged;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool QuadTree::Transform(const Poly2f& poly, NodeTransformFunction transform)
+{
+  // run the transform
+  bool contentChanged = false;
+  QuadTreeNode::FoldFunctor trfm = [this, &contentChanged, &transform] (QuadTreeNode& node)
+    {
+      MemoryMapDataPtr newData = transform(node.GetData());
+      if ((node.GetData() != newData) && !node.IsSubdivided()) 
+      {
+        node.ForceSetDetectedContentType(newData, _processor);
+        contentChanged = true;
+      }
+    };
+
+  _root.Fold(trfm, poly);
+
+  // try to cleanup tree
+  QuadTreeNode::FoldFunctor merge = [this] (QuadTreeNode& node) { node.TryAutoMerge(_processor); };
+  _root.Fold(merge, poly, QuadTreeNode::FoldDirection::DepthFirst);
+  
+  return contentChanged;
+}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool QuadTree::Transform(NodeTransformFunction transform)
+{
+  // run the transform
+  bool contentChanged = false;
+  QuadTreeNode::FoldFunctor trfm = [this, &contentChanged, &transform] (QuadTreeNode& node)
+    {
+      MemoryMapDataPtr newData = transform(node.GetData());
+      if ((node.GetData() != newData) && !node.IsSubdivided()) 
+      {
+        node.ForceSetDetectedContentType(newData, _processor);
+        contentChanged = true;
+      }
+    };
+
+  _root.Fold(trfm);
+
+  // try to cleanup tree
+  QuadTreeNode::FoldFunctor merge = [this] (QuadTreeNode& node) { node.TryAutoMerge(_processor); };
+  _root.Fold(merge, QuadTreeNode::FoldDirection::DepthFirst);
+  
+  return contentChanged;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -124,7 +167,10 @@ bool QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
 
   // obtain all leaf nodes from the map we are merging from
   QuadTreeNode::NodeCPtrVector leafNodes;
-  other._root.AddSmallestDescendantsDepthFirst(leafNodes);
+  other.Fold(
+    [&leafNodes](const QuadTreeNode& node) {
+      if (!node.IsSubdivided()) { leafNodes.push_back(&node); }
+    });
   
   // note regarding quad size limit: when we merge one map into another, this map can expand or shift the root
   // to accomodate the information that we are receiving from 'other'. 'other' is considered to have more up to
@@ -136,23 +182,12 @@ bool QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
   // root length. That would allow 'this' to keep at least half a root worth of information with respect the new one
   // we are bringing in.
   
-  // the expected number of shifts should be less than :
-  // halfMaxSize = rootMaxSize*0.5
-  // distance = distance between root centers
-  // maxNumberOfShifts = ceil( distance / halfMaxSize)
-  const Vec3f centerFromOtherInThisFrame = transform * other._root.GetCenter();
-  const float centerDistance = (centerFromOtherInThisFrame - _root.GetCenter()).Length();
-  const float minNodeSize = kQuadTreeInitialRootSideLength / (2 << (kQuadTreeInitialMaxDepth-1));
-  const float maxNodeSize = minNodeSize * (2 << (kQuadTreeMaxRootDepth-1));
-  const float halfRootSize = maxNodeSize * 0.5f;
-  const int maxNumberOfShifts = std::ceil( centerDistance / halfRootSize );
-  
   // iterate all those leaf nodes, adding them to this tree
   bool changed = false;
   for( const auto& nodeInOther : leafNodes ) {
   
     // if the leaf node is unkown then we don't need to add it
-    const bool isUnknown = ( nodeInOther->IsContentTypeUnknown() );
+    const bool isUnknown = ( nodeInOther->GetData()->type == EContentType::Unknown );
     if ( !isUnknown ) {
       // get transformed quad
       Quad2f transformedQuad2d;
@@ -170,20 +205,19 @@ bool QuadTree::Merge(const QuadTree& other, const Pose3d& transform)
       // At this moment is just a known issue
       
       // add to this
-      // TODO: don't copy the data, pass the shared pointer. Also generate the poly directly rather than through a quad
       Poly2f transformedPoly;
       transformedPoly.ImportQuad2d(transformedQuad2d);
       
-      changed |= Insert(transformedPoly, nodeInOther->GetData(), maxNumberOfShifts);
+      changed |= Insert(transformedPoly, nodeInOther->GetData());
     }
   }
   return changed;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTree::Expand(const Poly2f& polyToCover, int shiftAllowedCount)
+bool QuadTree::ExpandToFit(const Poly2f& polyToCover)
 {
-  ANKI_CPU_PROFILE("QuadTree::Expand");
+  ANKI_CPU_PROFILE("QuadTree::ExpandToFit");
   
   // allow expanding several times until the poly fits in the tree, as long as we can expand, we keep trying,
   // relying on the root to tell us if we reached a limit
@@ -201,23 +235,14 @@ bool QuadTree::Expand(const Poly2f& polyToCover, int shiftAllowedCount)
     
   } while( !fitsInMap && expanded );
 
-  // if the poly still doesn't fit, see if we can shift
-  int shiftsDone = 0;
-  bool canShift = (shiftsDone<shiftAllowedCount);
-  if ( !fitsInMap && canShift )
+  // if the poly still doesn't fit, see if we can shift once
+  if ( !fitsInMap )
   {
-    // shift as many times as we can until the poly fits
-    do
-    {
-      // shift the root to try to cover the poly, by removing opposite nodes in the map
-      _root.ShiftRoot(polyToCover, _processor);
-      ++shiftsDone;
-      canShift = (shiftsDone<shiftAllowedCount);
+    // shift the root to try to cover the poly, by removing opposite nodes in the map
+    _root.ShiftRoot(polyToCover, _processor);
 
-      // check if the poly now fits in the expanded root
-      fitsInMap = _root.Contains(polyToCover);
-      
-    } while( !fitsInMap && canShift );
+    // check if the poly now fits in the expanded root
+    fitsInMap = _root.Contains(polyToCover);
   }
   
   // the poly should be contained, if it's not, we have reached the limit of expansions and shifts, and the poly does not
@@ -232,23 +257,6 @@ bool QuadTree::Expand(const Poly2f& polyToCover, int shiftAllowedCount)
   
   // always flag as dirty since we have modified the root (potentially)
   return true;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void QuadTree::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const
-{
-  std::stringstream instanceId;
-  instanceId << "QuadTree_" << this;
-
-  info.mapInfo = ExternalInterface::MemoryMapInfo(
-    _root.GetLevel(),
-    _root.GetSideLen(),
-    _root.GetCenter().x(),
-    _root.GetCenter().y(),
-    _root.GetCenter().z(),
-    instanceId.str());
-
-  _root.AddQuadsToSend(info.quadInfo);
 }
   
 

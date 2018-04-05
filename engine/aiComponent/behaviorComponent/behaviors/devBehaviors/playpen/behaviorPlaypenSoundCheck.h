@@ -22,8 +22,8 @@ class BehaviorPlaypenSoundCheck : public IBehaviorPlaypen
 {
 protected:
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorPlaypenSoundCheck(const Json::Value& config);
   
 protected:

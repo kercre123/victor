@@ -12,6 +12,10 @@
 #include "engine/robotEventHandler.h"
 
 #include "engine/activeObject.h"
+#include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/bodyLightComponent.h"
@@ -1052,6 +1056,10 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::StopRobotForSdk>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::StreamObjectAccel>();
+
+    // Messages from switchboard
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetConnectionStatus>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBLEPin>();
       
     // EngineToGame: (in alphabetical order)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::AnimationAborted>();
@@ -1720,6 +1728,36 @@ template<>
 void RobotEventHandler::HandleMessage(const ExternalInterface::RequestUnlockDataFromBackup& msg)
 {
   PRINT_NAMED_WARNING("RobotEventHandler.HandleRequestUnlockDataFromBackup.UnsupportedForCozmo2", "Restoring from backup belongs in Unity in Cozmo 2.0");
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void RobotEventHandler::HandleMessage(const SwitchboardInterface::SetConnectionStatus& msg)
+{
+  Robot* robot = _context->GetRobotManager()->GetRobot();
+  
+  if (nullptr == robot) {
+    PRINT_NAMED_WARNING("RobotEventHandler.SwitchboardSetConnectionStatus.InvalidRobotID", 
+                        "Failed to find robot");
+  } else {
+    // Forward to robot
+    robot->SendRobotMessage<SwitchboardInterface::SetConnectionStatus>(msg.status);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void RobotEventHandler::HandleMessage(const SwitchboardInterface::SetBLEPin& msg)
+{
+  Robot* robot = _context->GetRobotManager()->GetRobot();
+  
+  if (nullptr == robot) {
+    PRINT_NAMED_WARNING("RobotEventHandler.SwitchboardSetBLEPin.InvalidRobotID", 
+                        "Failed to find robot");
+  } else {
+    // Forward to robot
+    robot->SendRobotMessage<SwitchboardInterface::SetBLEPin>(msg.pin);
+  }
 }
 
 } // namespace Cozmo

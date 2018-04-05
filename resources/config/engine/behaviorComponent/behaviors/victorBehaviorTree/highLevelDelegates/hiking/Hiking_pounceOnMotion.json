@@ -1,7 +1,6 @@
 {
   "behaviorClass": "PounceOnMotion",
   "behaviorID": "Hiking_PounceOnMotion",
-  "needsActionID": "Pounce",
   "requiredUnlockId": "PounceOnMotionAction",
   // very short times to boredom in this behavior, to let other stuff run
   "maxNoGroundMotionBeforeBored_running_Sec": 3.0,

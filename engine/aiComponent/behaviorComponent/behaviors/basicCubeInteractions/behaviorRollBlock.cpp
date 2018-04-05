@@ -184,7 +184,6 @@ void BehaviorRollBlock::TransitionToRollSuccess()
     DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::RollBlockSuccess));
   }
   BehaviorObjectiveAchieved(BehaviorObjective::BlockRolled);
-  NeedActionCompleted();
 }
 
   

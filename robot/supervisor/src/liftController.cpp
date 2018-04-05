@@ -140,8 +140,22 @@ namespace Anki {
 
         LiftCalibState calState_ = LCS_IDLE;
 
+        // Whether or not lift is calibrated
         bool isCalibrated_ = false;
+
+        // If this is the first time calibrating, repeat until it's done.
+        // Shouldn't proceed until calibration is complete.
+        bool firstCalibration_ = true;
+
+        // Last time lift movement was detected
         u32 lastLiftMovedTime_ms = 0;
+
+        // Parameters for determining if lift is being messed with during
+        // calibration in which case calibration is aborted
+        f32 lowLiftAngleDuringCalib_rad_;
+        u32 liftAngleHigherThanCalibAbortAngleCount_;
+        const f32 UPWARDS_LIFT_MOTION_FOR_CALIB_ABORT_RAD = DEG_TO_RAD(10.f);
+        const u32 UPWARDS_LIFT_MOTION_FOR_CALIB_ABORT_CNT = 5;
 
 
         // Whether or not to command anything to motor
@@ -218,15 +232,17 @@ namespace Anki {
           prevAngleError_ = 0.f;
           angleErrorSum_ = 0.f;
 
-          power_ = 0;
-          HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
+          if (!IsCalibrating()) {
+            power_ = 0;
+            HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
+          }
           
           potentialBurnoutStartTime_ms_ = 0;
           bracing_ = false;
-          
-          if (autoReEnable) {
-            enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;
-          }
+        }
+        enableAtTime_ms_ = 0;
+        if (autoReEnable) {
+          enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;
         }
       }
 
@@ -283,6 +299,8 @@ namespace Anki {
               power_ = HAL::MotorGetCalibPower(MotorID::MOTOR_LIFT);
               HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
               lastLiftMovedTime_ms = HAL::GetTimeStamp();
+              lowLiftAngleDuringCalib_rad_ = currentAngle_.ToFloat();
+              liftAngleHigherThanCalibAbortAngleCount_ = 0;
               calState_ = LCS_WAIT_FOR_STOP;
               break;
 
@@ -317,10 +335,51 @@ namespace Anki {
                 isCalibrated_ = true;
 
                 calState_ = LCS_IDLE;
+                firstCalibration_ = false;
                 Messages::SendMotorCalibrationMsg(MotorID::MOTOR_LIFT, false);
               }
               break;
+          }  // end switch(calState_)
+
+          // Check if lift is actually moving up when it should be moving down.
+          // This means someone's messing with it so just abort calibration.
+          if (IsCalibrating()) {
+            const float currAngle = currentAngle_.ToFloat();
+            if (lowLiftAngleDuringCalib_rad_ > currAngle) {
+              lowLiftAngleDuringCalib_rad_ = currAngle;
+            }
+
+            if (currAngle - lowLiftAngleDuringCalib_rad_ > UPWARDS_LIFT_MOTION_FOR_CALIB_ABORT_RAD) {
+              // Must be beyond threshold for some count to ignore
+              // lift bouncing against lower limit
+              ++liftAngleHigherThanCalibAbortAngleCount_;
+              if (liftAngleHigherThanCalibAbortAngleCount_ >= UPWARDS_LIFT_MOTION_FOR_CALIB_ABORT_CNT) {
+                if (firstCalibration_) {
+                  AnkiWarn("LiftController.CalibrationUpdate.RestartingCalib", 
+                           "Someone is probably messing with lift (low: %fdeg, curr: %fdeg)",
+                           RAD_TO_DEG(lowLiftAngleDuringCalib_rad_), RAD_TO_DEG(currAngle));
+                  calState_ = LCS_LOWER_LIFT;
+                } else {
+                  AnkiInfo("LiftController.CalibrationUpdate.Abort", 
+                           "Someone is probably messing with lift (low: %fdeg, curr: %fdeg)",
+                           RAD_TO_DEG(lowLiftAngleDuringCalib_rad_), RAD_TO_DEG(currAngle));
+
+                  // Turn off motor
+                  power_ = 0;
+                  HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
+
+                  // Maintain current calibration
+                  ResetAnglePosition(currAngle);
+                  isCalibrated_ = true;
+                  calState_ = LCS_IDLE;
+                  Messages::SendMotorCalibrationMsg(MotorID::MOTOR_LIFT, false);
+                }
+              }
+            } else {
+              liftAngleHigherThanCalibAbortAngleCount_ = 0;
+            }
           }
+
         }
       }
 
@@ -561,10 +620,12 @@ namespace Anki {
         } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms_ > BURNOUT_TIME_THRESH_MS) {
           if (IsInPosition() || IMUFilter::IsPickedUp() || ProxSensors::IsAnyCliffDetected()) {
             // Stop messing with the lift! Going limp until you do!
+            AnkiInfo("LiftController.MotorBurnoutProtection.GoingLimp", "");
             Messages::SendMotorAutoEnabledMsg(MotorID::MOTOR_LIFT, false);
             Disable(true);
           } else {
             // Burnout protection triggered. Recalibrating.
+            AnkiInfo("LiftController.MotorBurnoutProtection.Recalibrating", "");            
             StartCalibrationRoutine(true);
           }
           return true;

@@ -21,8 +21,7 @@ enum class Scope {
   Persistent,
   Resources,
   Cache,
-  CurrentGameLog,
-  External
+  CurrentGameLog
 };
 
 

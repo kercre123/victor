@@ -21,8 +21,8 @@ namespace Cozmo {
 class BehaviorSleeping : public ICozmoBehavior
 {
 protected:
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;  
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;  
   BehaviorSleeping(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{}
@@ -31,6 +31,8 @@ protected:
   virtual bool CanBeGentlyInterruptedNow() const override;
 
   virtual void OnBehaviorActivated() override;
+  
+  virtual void OnBehaviorDeactivated() override;
 
   virtual bool WantsToBeActivatedBehavior() const override {
     return true;}

@@ -6,7 +6,6 @@ cxx_project(
 
 go_project(
     name = 'voicego',
-    gopath = 'go',
     dir = 'voicetest/go'
 )
 
@@ -18,13 +17,11 @@ cxx_project(
 
 go_project(
     name = 'proctest_go',
-    gopath = 'go',
     dir = 'proctest'
 )
 
 go_project(
-    name = 'cloud_process',
-    gopath = 'go',
+    name = 'vic-cloud',
     dir = 'process'
 )
 
@@ -35,18 +32,15 @@ cxx_project(
 
 go_project(
     name = 'ipctest_go',
-    gopath = 'go',
     dir = 'ipctest/go'
 )
 
 go_project(
     name = 'servbench',
-    gopath = 'go',
     dir = 'servbench'
 )
 
 go_project(
     name = 'wavtest',
-    gopath = 'go',
     dir = 'wavtest'
 )

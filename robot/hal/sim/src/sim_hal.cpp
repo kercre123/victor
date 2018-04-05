@@ -151,11 +151,13 @@ namespace Anki {
 
       // Lights
       webots::LED* leds_[NUM_BACKPACK_LEDS] = {0};
+
+      webots::LED* sysLed_ = nullptr;
       
       // MicData
       // Use the mac mic as input with AudioCaptureSystem
-      constexpr uint32_t kSamplesPerChunk = 120;
-      constexpr uint32_t kSampleRate_hz = 24000;
+      constexpr uint32_t kSamplesPerChunk = 80;
+      constexpr uint32_t kSampleRate_hz = 16000;
       AudioUtil::AudioCaptureSystem audioCaptureSystem_(kSamplesPerChunk, kSampleRate_hz);
 
       // Limit the number of messages that can be sent per robot tic
@@ -387,6 +389,8 @@ namespace Anki {
       leds_[LED_BACKPACK_FRONT] = webotRobot_.getLED("backpackLED1");
       leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("backpackLED2");
       leds_[LED_BACKPACK_BACK] = webotRobot_.getLED("backpackLED3");
+
+      sysLed_ = webotRobot_.getLED("backpackLED0");
       
       // Audio Input
       audioCaptureSystem_.SetCallback(std::bind(&AudioInputCallback, std::placeholders::_1, std::placeholders::_2));
@@ -405,6 +409,11 @@ namespace Anki {
       return RESULT_OK;
 
     } // Init()
+
+    void HAL::Stop()
+    {
+      
+    }
 
     void HAL::Destroy()
     {
@@ -725,6 +734,18 @@ namespace Anki {
         leds_[led_id]->set( color >> 8 ); // RGBA -> 0RGB
       } else {
         PRINT_NAMED_ERROR("simHAL.SetLED.UnhandledLED", "%d", led_id);
+      }
+    }
+
+    void HAL::SetSystemLED(u32 color)
+    {
+      if(sysLed_ != nullptr)
+      {
+        sysLed_->set(color >> 8);
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("simHAL.SetSystemLED.Nullptr", "");
       }
     }
 

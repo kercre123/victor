@@ -14,27 +14,30 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 
 #include "engine/actions/animActions.h"
+#include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/components/animationComponent.h"
+#include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/aiComponent/templatedImageCache.h"
 #include "engine/aiComponent/timerUtility.h"
+#include "engine/components/animationComponent.h"
+#include "engine/faceWorld.h"
+
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/utils/timer.h"
-
 
 namespace Anki {
 namespace Cozmo {
 
 namespace{
-const char* kClockTemplateKey  = "clockTemplate";
-const char* kDigitMapKey       = "digitImageMap";
-const char* kGetInTriggerKey   = "getInAnimTrigger";
-const char* kGetOutTriggerKey  = "getOutAnimTrigger";
-const char* kDisplayClockSKey  = "displayClockFor_s";
-const char* kStaticElementsKey = "staticElements";
-const char* kTimerElementsKey = "timerElementsMap";
+const char* kClockTemplateKey    = "clockTemplate";
+const char* kDigitMapKey         = "digitImageMap";
+const char* kGetInTriggerKey     = "getInAnimTrigger";
+const char* kGetOutTriggerKey    = "getOutAnimTrigger";
+const char* kDisplayClockSKey    = "displayClockFor_s";
+const char* kStaticElementsKey   = "staticElements";
+const char* kTimerElementsKey    = "timerElementsMap";
+const char* kShouldTurnToFaceKey = "shouldTurnToFace";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -71,7 +74,7 @@ BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
   _instanceParams.getInAnim = AnimationTriggerFromString(JsonTools::ParseString(config, kGetInTriggerKey, kDebugStr));
   _instanceParams.getOutAnim = AnimationTriggerFromString(JsonTools::ParseString(config, kGetOutTriggerKey, kDebugStr));
   _instanceParams.totalTimeDisplayClock = JsonTools::ParseUint8(config, kDisplayClockSKey, kDebugStr);
-
+  JsonTools::GetValueOptional(config, kShouldTurnToFaceKey, _instanceParams.shouldTurnToFace);
 
   // add all static elements
   if(config.isMember(kStaticElementsKey)){
@@ -83,10 +86,73 @@ BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorProceduralClock::InitBehavior()
+{
+  if(_instanceParams.getDigitFunctions.size() == 0){
+    // TODO: find a way to load this in from data - for now init the clock as one that counts up based on time
+    // and allow behaviors to re-set functionality in code only
+    auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
+    
+    std::map<DigitID, std::function<int()>> countUpFuncs;
+    // Ten Mins Digit
+    {
+      auto tenMinsFunc = [&timerUtility](){
+        const int currentTime_s = timerUtility.GetSystemTime_s();
+        return TimerHandle::SecondsToDisplayMinutes(currentTime_s)/10;
+      };
+      countUpFuncs.emplace(std::make_pair(DigitID::DigitOne, tenMinsFunc));
+    }
+    // One Mins Digit
+    {
+      auto oneMinsFunc = [&timerUtility](){
+        const int currentTime_s = timerUtility.GetSystemTime_s();
+        return TimerHandle::SecondsToDisplayMinutes(currentTime_s) % 10;
+      };
+      countUpFuncs.emplace(std::make_pair(DigitID::DigitTwo, oneMinsFunc));
+    }
+    // Ten seconds digit
+    {
+      auto tenSecsFunc = [&timerUtility](){
+        const int currentTime_s = timerUtility.GetSystemTime_s();
+        return TimerHandle::SecondsToDisplaySeconds(currentTime_s)/10;
+      };
+      countUpFuncs.emplace(std::make_pair(DigitID::DigitThree, tenSecsFunc));
+    }
+    // One seconds digit
+    {
+      auto oneSecsFunc = [&timerUtility](){
+        const int currentTime_s = timerUtility.GetSystemTime_s();
+        return TimerHandle::SecondsToDisplaySeconds(currentTime_s) % 10;
+      };
+      countUpFuncs.emplace(std::make_pair(DigitID::DigitFour, oneSecsFunc));
+    }
+    
+    SetDigitFunctions(std::move(countUpFuncs));
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorProceduralClock::OnBehaviorActivated() 
 {
   _lifetimeParams = LifetimeParams();
-  TransitionToGetIn();
+
+  if(_instanceParams.shouldTurnToFace && UpdateTargetFace().IsValid()){
+    TransitionToTurnToFace();
+  }else{
+    TransitionToGetIn();
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorProceduralClock::TransitionToTurnToFace()
+{
+  if(ANKI_VERIFY(_lifetimeParams.targetFaceID.IsValid(),
+     "BehaviorProceduralClock.TransitionToTurnToFace.InvalidFace","")){
+    DelegateIfInControl(new TurnTowardsFaceAction(_lifetimeParams.targetFaceID, M_PI_F, true),
+                        &BehaviorProceduralClock::TransitionToGetIn);
+  }
 }
 
 
@@ -102,11 +168,16 @@ void BehaviorProceduralClock::TransitionToGetIn()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorProceduralClock::TransitionToShowClock()
 {
-  auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
-  timerUtility.StartTimer(365);
-
+  // start an animation that will move the body a little while the update loop
+  // handles displaying the clock
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ObservingIdleWithHeadLookingUp ,0));
+  
+  if(_instanceParams.showClockCallback != nullptr){
+    _instanceParams.showClockCallback();
+  }
   _lifetimeParams.currentState = BehaviorState::ShowClock;
-  _lifetimeParams.timeShowClockStarted = static_cast<int>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+  auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
+  _lifetimeParams.timeShowClockStarted = timerUtility.GetSystemTime_s();
   // displaying time on face handled in update loop
 }
 
@@ -115,7 +186,8 @@ void BehaviorProceduralClock::TransitionToShowClock()
 void BehaviorProceduralClock::TransitionToGetOut()
 {
   _lifetimeParams.currentState = BehaviorState::GetOut;
-  DelegateIfInControl(new TriggerAnimationAction(_instanceParams.getOutAnim), 
+  // Cancel the looping show clock body motion animation
+  DelegateNow(new TriggerAnimationAction(_instanceParams.getOutAnim), 
                      [this](){ CancelSelf(); });
 }
 
@@ -128,7 +200,8 @@ void BehaviorProceduralClock::BehaviorUpdate()
   }
 
   if(_lifetimeParams.currentState == BehaviorState::ShowClock){
-    const int currentTime_s = static_cast<int>(BaseStationTimer::getInstance()->GetCurrentTimeInSeconds());
+    auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
+    const int currentTime_s = timerUtility.GetSystemTime_s();
 
     if(currentTime_s >= (_lifetimeParams.timeShowClockStarted + _instanceParams.totalTimeDisplayClock)){
       TransitionToGetOut();
@@ -160,29 +233,70 @@ auto BehaviorProceduralClock::StringToDigitID(const std::string& str) -> DigitID
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorProceduralClock::BuildAndDisplayTimer(std::map<std::string, std::string>& quadrantMap)
 {
-  auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>(AIComponentID::TimerUtility);
-  auto handle = timerUtility.GetActiveTimer();
- 
   // set static quadrants
   for(auto& entry : _instanceParams.staticElements){
     quadrantMap[entry.first] = entry.second;
   }
-  
-  // set clock digit quadrants
-  auto minRemain = handle->GetDisplayMinutesRemaining();
-  auto secRemain = handle->GetDisplaySecondsRemaining();
-  quadrantMap[_instanceParams.digitToTemplateMap[DigitID::DigitOne]]   = _instanceParams.intsToImages[minRemain/10];
-  quadrantMap[_instanceParams.digitToTemplateMap[DigitID::DigitTwo]]   = _instanceParams.intsToImages[minRemain % 10];
-  quadrantMap[_instanceParams.digitToTemplateMap[DigitID::DigitThree]] = _instanceParams.intsToImages[secRemain/10];
-  quadrantMap[_instanceParams.digitToTemplateMap[DigitID::DigitFour]]  = _instanceParams.intsToImages[secRemain % 10];
-  
+
+  // set digits
+  bool isLeadingZero = true;
+  for(int enumIdx = 0; enumIdx < Util::EnumToUnderlying(DigitID::Count); enumIdx++){
+    const DigitID enumVal = DigitID(enumIdx);
+    const int digitToDisplay = _instanceParams.getDigitFunctions[enumVal]();
+    isLeadingZero &= (digitToDisplay == 0);
+    if(isLeadingZero){
+      quadrantMap[_instanceParams.digitToTemplateMap[enumVal]] = "empty_grid";
+    }else{
+      quadrantMap[_instanceParams.digitToTemplateMap[enumVal]] = _instanceParams.intsToImages[digitToDisplay];
+    }
+  }
   // build the full image
   auto& imageCache = GetBEI().GetAIComponent().GetComponent<TemplatedImageCache>(AIComponentID::TemplatedImageCache);
   const auto& image = imageCache.BuildImage(GetDebugLabel(), 
                                             FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, 
                                             _instanceParams.templateJSON, quadrantMap);
+  
+  auto grey = image.ToGray();
   // draw it to the face
-  GetBEI().GetAnimationComponent().DisplayFaceImage(image, 1000.0f, true);
+  GetBEI().GetAnimationComponent().DisplayFaceImage(grey, 1000.0f, true);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorProceduralClock::SetDigitFunctions(std::map<DigitID, std::function<int()>>&& functions)
+{
+  _instanceParams.getDigitFunctions = functions;
+  if(ANKI_DEV_CHEATS){
+    std::set<DigitID> digits;
+    for(auto& entry: _instanceParams.getDigitFunctions){
+      digits.insert(entry.first);
+    }
+    ANKI_VERIFY(Util::EnumToUnderlying(DigitID::Count) == digits.size(),
+                "BehaviorProceduralClock.SetDigitFunctions.ImproperNumberOfFunctions",
+                "Expected %d functions, received %zu",
+                Util::EnumToUnderlying(DigitID::Count), digits.size());
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SmartFaceID BehaviorProceduralClock::UpdateTargetFace()
+{
+  const bool considerTrackingOnlyFaces = false;
+  std::set< Vision::FaceID_t > faces = GetBEI().GetFaceWorld().GetFaceIDs(considerTrackingOnlyFaces);
+  
+  std::set<SmartFaceID> smartFaces;
+  for(auto& entry : faces){
+    smartFaces.insert(GetBEI().GetFaceWorld().GetSmartFaceID(entry));
+  }
+
+  const auto& faceSelection = GetBEI().GetAIComponent().GetFaceSelectionComponent();
+  FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 1));
+  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3));
+  _lifetimeParams.targetFaceID = faceSelection.GetBestFaceToUse(criteriaMap, smartFaces);
+
+  return _lifetimeParams.targetFaceID;
 }
 
 

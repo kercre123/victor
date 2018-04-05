@@ -93,8 +93,10 @@ enum uint_32 Dev_Robot
   Angry_Muttering = 2839960576,
   Curious_Muttering = 2942381837,
   External_Source = 2539447680,
-  Freq_Sweep = 2028515806,
+  Freq_Sweep_20Sec = 4128432838,
+  Freq_Sweep_5Sec = 253187573,
   Invalid = 0,  // Use this to check for Invalid events
+  Mozart = 627442460,
   Pink_1Sec = 3980968688,
   Pink_5Sec = 988519260,
   Playpen_Freq_Sweep = 2363892348,
@@ -120,6 +122,7 @@ enum uint_32 EventGroupType
   Sdk,
   Sfx,
   Ui,
+  Vec_Robot_Sfx,
 }
 
 enum uint_32 GenericEvent
@@ -171,7 +174,9 @@ enum uint_32 GenericEvent
   Play__Dev_Robot__Angry_Muttering = 2839960576,
   Play__Dev_Robot__Curious_Muttering = 2942381837,
   Play__Dev_Robot__External_Source = 2539447680,
-  Play__Dev_Robot__Freq_Sweep = 2028515806,
+  Play__Dev_Robot__Freq_Sweep_20Sec = 4128432838,
+  Play__Dev_Robot__Freq_Sweep_5Sec = 253187573,
+  Play__Dev_Robot__Mozart = 627442460,
   Play__Dev_Robot__Pink_1Sec = 3980968688,
   Play__Dev_Robot__Pink_5Sec = 988519260,
   Play__Dev_Robot__Playpen_Freq_Sweep = 2363892348,
@@ -197,13 +202,10 @@ enum uint_32 GenericEvent
   Play__Robot_Sfx__Effort_Medium = 3696071919,
   Play__Robot_Sfx__Fist_Bump = 1216170354,
   Play__Robot_Sfx__Guard_Dog_Fail = 2830692182,
-  Play__Robot_Sfx__Mvt_Tread_Backward_Loop_Play = 2180021393,
   Play__Robot_Sfx__Mvt_Tread_Backward_Start = 2613090854,
   Play__Robot_Sfx__Mvt_Tread_Backward_Stop = 1888692326,
-  Play__Robot_Sfx__Mvt_Tread_Forward_Loop_Play = 1822774717,
   Play__Robot_Sfx__Mvt_Tread_Forward_Start = 2652548234,
   Play__Robot_Sfx__Mvt_Tread_Forward_Stop = 3470930658,
-  Play__Robot_Sfx__Mvt_Tread_Spin_Loop_Play = 1721811722,
   Play__Robot_Sfx__Mvt_Tread_Spin_Start = 952401069,
   Play__Robot_Sfx__Mvt_Tread_Spin_Stop = 2338140655,
   Play__Robot_Sfx__Nurture_Feeding_Severe_Slurp_1 = 2997826879,
@@ -674,6 +676,7 @@ enum uint_32 GenericEvent
   Play__Ui__Window_Close = 974187556,
   Play__Ui__Window_Open = 1763539616,
   Play__Ui__Window_Vertical_Wipe = 931790836,
+  Play__Vec_Robot_Sfx__Engine = 61679832,
   Stop__Codelab__Music_Hot_Potato_Level_1_Loop_Stop = 2689778401,
   Stop__Codelab__Music_Hot_Potato_Level_2_Loop_Stop = 3058241090,
   Stop__Codelab__Music_Hot_Potato_Level_3_Loop_Stop = 2301371667,
@@ -699,9 +702,6 @@ enum uint_32 GenericEvent
   Stop__Robot_Sfx__Bpk_Red_Loop_Stop = 1319205172,
   Stop__Robot_Sfx__Bpk_White_Loop_Stop = 3518231466,
   Stop__Robot_Sfx__Effort_Long_Stop = 809545185,
-  Stop__Robot_Sfx__Mvt_Tread_Backward_Loop_Stop = 1804693497,
-  Stop__Robot_Sfx__Mvt_Tread_Forward_Loop_Stop = 2726200329,
-  Stop__Robot_Sfx__Mvt_Tread_Spin_Loop_Stop = 3541928210,
   Stop__Robot_Sfx__Nurture_Feeding_Severe_Slurp_1 = 200619089,
   Stop__Robot_Sfx__Nurture_Feeding_Severe_Slurp_2 = 200619090,
   Stop__Robot_Sfx__Nurture_Feeding_Slurp_1 = 1468592372,
@@ -764,16 +764,10 @@ enum uint_32 Robot_Sfx
   Fist_Bump = 1216170354,
   Guard_Dog_Fail = 2830692182,
   Invalid = 0,  // Use this to check for Invalid events
-  Mvt_Tread_Backward_Loop_Play = 2180021393,
-  Mvt_Tread_Backward_Loop_Stop = 1804693497,
   Mvt_Tread_Backward_Start = 2613090854,
   Mvt_Tread_Backward_Stop = 1888692326,
-  Mvt_Tread_Forward_Loop_Play = 1822774717,
-  Mvt_Tread_Forward_Loop_Stop = 2726200329,
   Mvt_Tread_Forward_Start = 2652548234,
   Mvt_Tread_Forward_Stop = 3470930658,
-  Mvt_Tread_Spin_Loop_Play = 1721811722,
-  Mvt_Tread_Spin_Loop_Stop = 3541928210,
   Mvt_Tread_Spin_Start = 952401069,
   Mvt_Tread_Spin_Stop = 2338140655,
   Nurture_Feeding_Severe_Slurp_1 = 200619089,
@@ -1290,6 +1284,12 @@ enum uint_32 Ui
   Window_Close = 974187556,
   Window_Open = 1763539616,
   Window_Vertical_Wipe = 931790836,
+}
+
+enum uint_32 Vec_Robot_Sfx
+{
+  Engine = 61679832,
+  Invalid = 0,  // Use this to check for Invalid events
 }
 
 } // GameEvent

@@ -31,8 +31,8 @@ private:
   
   using BaseClass = ICozmoBehavior;
   
-  // Enforce creation through BehaviorContainer
-  friend class BehaviorContainer;
+  // Enforce creation through BehaviorFactory
+  friend class BehaviorFactory;
   BehaviorVisitInterestingEdge(const Json::Value& config);
   
 public:

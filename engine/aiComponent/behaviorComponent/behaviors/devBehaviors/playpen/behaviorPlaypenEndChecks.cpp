@@ -20,6 +20,8 @@
 
 #include "cubeBleClient/cubeBleClient.h"
 
+#include "util/fileUtils/fileUtils.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -58,6 +60,12 @@ Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal()
   if(!DidReceiveFFTResult())
   {
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::NO_FFT_RESULT, RESULT_FAIL);
+  }
+
+  if(PlaypenConfig::kCheckForCert &&
+     Util::FileUtils::GetFileSize(PlaypenConfig::kCertPath) < PlaypenConfig::kMinCertSize_bytes)
+  {
+    PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CERT_CHECK_FAILED, RESULT_FAIL);
   }
 
   TurnInPlaceAction* turn = new TurnInPlaceAction(DEG_TO_RAD(90), false);

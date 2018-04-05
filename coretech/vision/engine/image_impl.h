@@ -12,7 +12,7 @@ namespace Vision {
 
 template<typename T>
 template<typename DerivedType>
-void ImageBase<T>::DrawSubImage(DerivedType& subImage, const Point2f& topLeftCorner)
+void ImageBase<T>::DrawSubImage(const DerivedType& subImage, const Point2f& topLeftCorner)
 {
   s32 subImageColOffset = 0;
   s32 subImageRowOffset = 0;
