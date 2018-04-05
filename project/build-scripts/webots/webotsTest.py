@@ -64,10 +64,7 @@ class BuildType(Enum):
   Debug = 0
   Release = 1
 
-@unique
-class GeneratorType(Enum):
-  Ninja = 0
-  Xcode = 1
+GeneratorType = Enum('GeneratorType', names=['Ninja', 'Xcode', 'Unix Makefiles'])
 
 @unique
 class ForwardWebotsLogLevel(Enum):
@@ -233,6 +230,14 @@ def install_certificate(password):
     raise RuntimeError("""The WebotsFirewall certificate could not be imported.
                           Output from `security import`: {0}""".format(output))
 
+def get_build_name(generator, build_type):
+  if generator.name == 'Ninja':
+    return build_type.name
+  if generator.name == 'Xcode':
+    return build_type.name + '-Xcode'
+  if generator.name == 'Unix Makefiles':
+    return build_type.name + '-Makefiles'
+  raise 'Unexpected generator ' + generator.name
 
 def sign_webot_executables(generator, build_type, password):
   """
@@ -254,12 +259,8 @@ def sign_webot_executables(generator, build_type, password):
 
   UtilLog.info("Your password may be needed in order to add the webots executables to the firewall exception list.")
 
-  build_name = build_type.name
-  if generator != GeneratorType.Ninja:
-    build_name = build_type.name + "-" + generator.name
-
+  build_name = get_build_name(generator, build_type)
   executables_folder = get_subpath(os.path.join("_build","mac"), build_name, "bin")
-
   executables = glob.glob(os.path.join(executables_folder, 'webotsCtrl*'))
 
   codesign_command = [
@@ -293,11 +294,12 @@ def sign_webot_executables(generator, build_type, password):
 
 
 # build unittest executable
-def build(build_type):
+def build(generator, build_type):
   victor_build_script_path = get_subpath(os.path.join("project","victor","build-victor.sh"))
   build_command = [
           victor_build_script_path,
           '-p', 'mac',              # build the mac project (with webots sim controllers)
+          '-g', generator.name,
           '-c', build_type.name
           ]
 
@@ -324,10 +326,10 @@ def setup_exe(generator, build_type, exe):
   exec_this(['codesign', '-f', '-s', CERTIFICATE_NAME, exe])
   output = exec_this([SOCKETFILTERFW, '--add', exe])
   if 'already a part of the firewall' not in output:
-    print('You must run webotsTest.py -g {} -b {} --setupFirewall to add {}'.format(generator.name, build_type.name, exe))
+    print("You must run webotsTest.py -g '{}' -b {} --setupFirewall to add {}".format(generator.name, build_type.name, exe))
   output = exec_this([SOCKETFILTERFW, '--unblock', exe])
   if 'is permitted' not in output:
-    print('You must run webotsTest.py -g {} -b {} --setupFirewall to unblock {}'.format(generator.name, build_type.name, exe))
+    print("You must run webotsTest.py -g '{}' -b {} --setupFirewall to unblock {}".format(generator.name, build_type.name, exe))
 
 def setup_exes(generator, build_type, exes):
   if not is_firewall_enabled(''):
@@ -946,7 +948,7 @@ def main():
     sys.exit(0)
 
   # build the project first
-  if not build(options.build_type):
+  if not build(options.generator, options.build_type):
     UtilLog.error("build failed")
     return 1
 
