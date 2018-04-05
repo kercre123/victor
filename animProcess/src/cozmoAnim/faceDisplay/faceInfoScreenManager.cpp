@@ -42,6 +42,7 @@
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include <chrono>
+#include <iomanip>
 
 #ifndef SIMULATOR
 #include <linux/reboot.h>
@@ -837,7 +838,7 @@ void FaceInfoScreenManager::Update(const RobotState& state)
 void FaceInfoScreenManager::DrawMain()
 {
   std::stringstream ss;
-  ss << std::hex << Factory::GetEMR()->fields.ESN;
+  ss << std::hex << std::setfill('0') << std::setw(8) << Factory::GetEMR()->fields.ESN;
   const std::string serialNo = "ESN: "  + ss.str();
 
   auto *osstate = OSState::getInstance();
