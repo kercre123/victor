@@ -1,0 +1,18 @@
+{
+    "graph"  : "ssd_mobilenet_v1_128_0.5_coco_transformed.pb", 
+    "memoryMapGraph": 0,
+    
+    "labels" : "coco-labels-80.txt", 
+    "architecture"   : "ssd_mobilenet",
+
+    "input_width" : 128, 
+    "input_height": 128, 
+    "input_mean_R": 0, 
+    "input_mean_G": 0, 
+    "input_mean_B": 0, 
+    "input_std": 255, 
+    "top_K": 1, 
+    "min_score": 0.25,
+
+    "verbose" : 1
+}

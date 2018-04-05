@@ -1,0 +1,22 @@
+{
+    "graph"  : "victor_with_coco_30000.pb", 
+    "memoryMapGraph": 0,
+    
+    "labels" : "person-labels.txt", 
+    "architecture"   : "custom",
+
+    "input" : "input_1",
+    "output" : "output_node0",
+    "use_float_input" : 1,
+
+    "input_width" : 128, 
+    "input_height": 128, 
+    "input_mean_R": 0, 
+    "input_mean_G": 0, 
+    "input_mean_B": 0, 
+    "input_std": 255, 
+    "top_K": 1, 
+    "min_score": 0.25,
+
+    "verbose" : 1
+}
