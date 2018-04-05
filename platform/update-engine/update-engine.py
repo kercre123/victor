@@ -25,7 +25,7 @@ DONE_FILE = os.path.join(STATUS_DIR, "done")
 MANIFEST_FILE = os.path.join(STATUS_DIR, "manifest.ini")
 MANIFEST_SIG = os.path.join(STATUS_DIR, "manifest.sha256")
 BOOT_STAGING = os.path.join(STATUS_DIR, "boot.img")
-OTA_PUB_KEY = "/etc/ota.pub"
+OTA_PUB_KEY = "/anki/etc/ota.pub"
 DD_BLOCK_SIZE = 1024*256
 SUPPORTED_MANIFEST_VERSIONS = ["0.9.2"]
 
