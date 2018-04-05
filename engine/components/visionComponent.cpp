@@ -95,8 +95,8 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kDrawMarkerNames,              "Vision.General", false); // In viz camera view
   CONSOLE_VAR(bool, kDisplayUndistortedImages,     "Vision.General", false);
     
-  CONSOLE_VAR(bool, kEnableMirrorMode,             "Vision.General", false);
-  CONSOLE_VAR(bool, kDisplayObjectDetectionLabels, "Vision.General", false); // when in mirror mode
+  CONSOLE_VAR(bool, kEnableMirrorMode,              "Vision.General", false);
+  CONSOLE_VAR(bool, kDisplayDetectionsInMirrorMode, "Vision.General", false); // objects, faces, markers
   
   // Hack to continue drawing detected objects for a bit after they are detected
   // since object detection is slow
@@ -1093,6 +1093,20 @@ namespace Cozmo {
     }
   } // UpdateAllResults()
 
+  static Rectangle<f32> DisplayMirroredRectHelper(f32 x_topLeft, f32 y_topLeft, f32 width, f32 height)
+  {
+    // TODO: Figure out the original image resolution?
+    const f32 heightScale = (f32)FACE_DISPLAY_HEIGHT / 360.f;
+    const f32 widthScale  = (f32)FACE_DISPLAY_WIDTH / 720.f;
+    
+    const f32 x_topRight = x_topLeft + width; // will become upper left after mirroring
+    const Rectangle<f32> rect((f32)FACE_DISPLAY_WIDTH - widthScale*x_topRight, // mirror rectangle for display
+                              y_topLeft * heightScale,
+                              width * widthScale,
+                              height * heightScale);
+    
+    return rect;
+  }
 
   Result VisionComponent::UpdateVisionMarkers(const VisionProcessingResult& procResult)
   {
@@ -1195,7 +1209,19 @@ namespace Cozmo {
         {
           VisualizeObservedMarkerIn3D(visionMarker);
         }
-
+        
+        if(kDisplayDetectionsInMirrorMode)
+        {
+          const auto& quad = visionMarker.GetImageCorners();
+          std::function<void (Vision::ImageRGB&)> modFcn = [quad,drawColor](Vision::ImageRGB& img)
+          {
+            const Rectangle<f32> rect(quad);
+            img.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight()), drawColor);
+          };
+          
+          AddDrawScreenModifier(modFcn);
+        }
+        
         observedMarkers.push_back(std::move(visionMarker));
       }
     } // if(!procResult.observedMarkers.empty())
@@ -1248,6 +1274,19 @@ namespace Cozmo {
                           "Count=%d", faceDetection.GetNumEnrollments());
 
         _robot->GetFaceWorld().SetFaceEnrollmentComplete(true);
+      }
+      
+      if(kDisplayDetectionsInMirrorMode)
+      {
+        const auto& rect = faceDetection.GetRect();
+        
+        std::function<void (Vision::ImageRGB&)> modFcn = [rect](Vision::ImageRGB& img)
+        {
+          img.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight()),
+                       NamedColors::YELLOW);
+        };
+        
+        AddDrawScreenModifier(modFcn);
       }
     }
 
@@ -1332,24 +1371,14 @@ namespace Cozmo {
                                 + "] t:" + std::to_string(object.timestamp));
       _vizManager->DrawCameraText(rect.GetTopLeft().CastTo<float>(), caption, color);
       
-      if(kDisplayObjectDetectionLabels)
+      if(kDisplayDetectionsInMirrorMode)
       {
         const std::string str(object.name + ":" + std::to_string((s32)std::round(object.score*100.f)));
-        
-        // TODO: Figure out the original image resolution?
-        const f32 heightScale = (f32)FACE_DISPLAY_HEIGHT / 360.f;
-        const f32 widthScale  = (f32)FACE_DISPLAY_WIDTH / 720.f;
-        
-        const f32 x_topRight = object.img_rect.x_topLeft + object.img_rect.width; // will become upper left after mirroring
-        const Rectangle<f32> rect((f32)FACE_DISPLAY_WIDTH - widthScale*x_topRight, // mirror rectangle for display
-                                  object.img_rect.y_topLeft * heightScale,
-                                  object.img_rect.width * widthScale,
-                                  object.img_rect.height * heightScale);
-        
+        const auto& rect = object.img_rect;
         std::function<void (Vision::ImageRGB&)> modFcn = [str,offset,rect,color](Vision::ImageRGB& img)
         {
           img.DrawText({1.f, offset}, str, NamedColors::YELLOW, 0.6f, true);
-          img.DrawRect(rect, color);
+          img.DrawRect(DisplayMirroredRectHelper(rect.x_topLeft, rect.y_topLeft, rect.width, rect.height), color);
         };
         
         AddDrawScreenModifier(modFcn);
