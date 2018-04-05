@@ -1,7 +1,0 @@
-../../simulator/controllers/webotsCtrlLightCube/activeBlock.cpp
-../../simulator/controllers/webotsCtrlLightCube/activeBlock.h
-../../simulator/controllers/webotsCtrlLightCube/block_controller
-../../simulator/controllers/webotsCtrlLightCube/webotsCtrlLightCube.cpp
-../../simulator/controllers/webotsCtrlLightCube/BlockMessages.cpp
-../../simulator/controllers/webotsCtrlLightCube/BlockMessages.h
-../../robot/supervisor/src/ledController.cpp
