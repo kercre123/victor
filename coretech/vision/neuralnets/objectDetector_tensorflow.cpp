@@ -77,14 +77,14 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
   GetFromConfig(input_width);
   GetFromConfig(architecture);
   GetFromConfig(memoryMapGraph);
-
+  
   if("ssd_mobilenet" == _params.architecture)
   {
     _inputLayerName = "image_tensor";
     _outputLayerNames = {"detection_scores", "detection_classes", "detection_boxes", "num_detections"};
     _useFloatInput = false;
   }
-  else if("mobilenet" == _params.architecture)
+  else if(("mobilenet" == _params.architecture) || ("mobilenet_v1" == _params.architecture))
   { 
     _inputLayerName = "input";
     _outputLayerNames = {"MobilenetV1/Predictions/Softmax"};
