@@ -86,7 +86,10 @@ int main(int argc, char **argv)
 
   const std::string imageFilename = (imageFileProvided ? 
                                      argv[4] :
-                                     FullFilePath(cachePath, "objectDetectionImage.png"));
+                                     FullFilePath(cachePath, "objectDetectionImage.png")); 
+
+  std::cout << (imageFileProvided ? "Loading given image: " : "Polling for images at: ") << 
+    imageFilename << std::endl;
 
   const int kPollFrequency_ms = 10;
 
