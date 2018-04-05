@@ -153,7 +153,7 @@ static Anki::Das::ThreadId_t _DASThreadId() {
   assert(nullptr != p);
   return *p;
 }
-  
+
 static void _freeDASThreadId(void* arg) {
   Anki::Das::ThreadId_t* p = (Anki::Das::ThreadId_t*) arg;
   delete p;
@@ -161,7 +161,7 @@ static void _freeDASThreadId(void* arg) {
 
 DASLogLevel DASLogLevelNameToEnum(const std::string& logLevelName) {
   DASLogLevel logLevel = DASLogLevel_NumLevels;
-  
+
   if (AnkiUtil::StringCaseInsensitiveEquals(logLevelName, "debug")) {
     logLevel = DASLogLevel_Debug;
   } else if (AnkiUtil::StringCaseInsensitiveEquals(logLevelName, "info")) {
@@ -199,7 +199,7 @@ void getDASLogLevelName(DASLogLevel logLevel, std::string& outLogLevelName) {
     break;
   }
 }
-  
+
 void getDASTimeString(std::string& outTimeString) {
   std::chrono::system_clock::time_point now {std::chrono::system_clock::now()};
   std::time_t nowTime{std::chrono::system_clock::to_time_t(now)};
@@ -270,19 +270,19 @@ void DASConfigure(const char* configurationJsonFilePath,
         {
           flush_interval = root["dasConfig"].get("flushInterval", DASClient::Json::uintValue).asUInt();
         }
-        
+
         size_t maxLogLength = Anki::Das::kDefaultMaxLogLength;
         if( root["dasConfig"].isMember("maxLogLength") )
         {
           maxLogLength = root["dasConfig"].get("maxLogLength", DASClient::Json::uintValue).asUInt();
         }
-        
+
         size_t maxLogFiles = Anki::Das::kDasDefaultMaxLogFiles;
         if( root["dasConfig"].isMember("maxLogFiles") )
         {
           maxLogFiles = root["dasConfig"].get("maxLogFiles", DASClient::Json::uintValue).asUInt();
         }
-        
+
         sRemoteAppender.reset(new Anki::Das::DasAppender(sDasLogDir, url,flush_interval,
                                                          maxLogLength, maxLogFiles,
                                                          sLogFileArchiveFunc,
@@ -389,14 +389,14 @@ void _DAS_LogInternal(DASLogLevel level, const char* eventName, const char* even
   // Scream if the client passes a null or empty event name and replace it with "noname"
   // If a "noname" event is seen on the server, open a bug
   if (nullptr == eventName || '\0' == *eventName) {
-    LOGD("DAS ERROR: EVENT WITH A NULL OR BLANK NAME PASSED (value=%s file=%s funct=%s line=%d)", 
-      (eventValue ? eventValue : ""), 
-      (file ? file : ""), 
-      (funct ? funct : ""), 
+    LOGD("DAS ERROR: EVENT WITH A NULL OR BLANK NAME PASSED (value=%s file=%s funct=%s line=%d)",
+      (eventValue ? eventValue : ""),
+      (file ? file : ""),
+      (funct ? funct : ""),
       line);
     eventName = "noname";
   }
-  
+
   std::string logLevel;
   getDASLogLevelName(level, logLevel);
   data[Anki::Das::kMessageLevelGlobalKey] = logLevel;
@@ -600,6 +600,10 @@ void DASEnableNetwork(DASDisableNetworkReason reason) {
 
 void DASDisableNetwork(DASDisableNetworkReason reason) {
   DASNetworkingDisabled |= reason;
+}
+
+int DASGetNetworkingDisabled() {
+  return DASNetworkingDisabled;
 }
 
 void _DAS_SetLevel(const char* eventName, DASLogLevel level) {

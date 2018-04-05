@@ -35,6 +35,7 @@ CozmoExperiments::CozmoExperiments(const CozmoContext* context)
 static const char* GetDeviceId()
 {
 #if USE_DAS
+  DEV_ASSERT(DASGetPlatform() != nullptr, "CozmoExperiments.GetDeviceId.MissingDASPlatform");
   return DASGetPlatform()->GetDeviceId();
 #else
   return "user"; // non-empty string keeps it from failing on mac release
