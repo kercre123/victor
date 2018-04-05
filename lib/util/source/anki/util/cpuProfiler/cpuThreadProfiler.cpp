@@ -22,13 +22,20 @@
 namespace Anki {
 namespace Util {
 
-  
 CONSOLE_VAR(bool, kProfilerLogSlowTicks, "CpuProfiler", false);
-  
-  
+
+enum class Output {
+  Console       = 0,
+  ChromeTracing = 1,
+  WebViz        = 2,
+};
+
+CONSOLE_VAR_ENUM(int, kProfilerLogOutput, "CpuProfiler", 0, "Console,Chrome Tracing,WebViz");
+
 double CpuThreadProfiler::sMinSampleDuration_ms = 0.01; // ignore trivial samples below this
 
 FILE* CpuThreadProfiler::_chromeTracingFile = nullptr;
+std::function<void(const Json::Value&)> CpuThreadProfiler::_webServiceCallback = nullptr;
 
 CpuThreadProfiler::CpuThreadProfiler()
   : _threadName(kThreadNameInvalid)
@@ -73,7 +80,7 @@ void CpuThreadProfiler::Init(CpuThreadId threadId, uint32_t threadIndex, const c
   _hasStaleSettings = false;
 }
   
-  
+
 void CpuThreadProfiler::SetChromeTracingFile(const char* tracingFile) {
   if (_chromeTracingFile) {
     fclose(_chromeTracingFile);
@@ -87,6 +94,11 @@ void CpuThreadProfiler::SetChromeTracingFile(const char* tracingFile) {
     fprintf(_chromeTracingFile, "\"app_epoch\": %lld,\n", std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
     fprintf(_chromeTracingFile, "\"traceEvents\": [");
   }
+}
+
+
+void CpuThreadProfiler::SendToWebVizCallback(const std::function<void(const Json::Value&)>& callback) {
+  _webServiceCallback = callback;
 }
 
 
@@ -162,15 +174,15 @@ void CpuThreadProfiler::EndTick()
 
 void CpuThreadProfiler::LogProfile() const
 {
-  if (_chromeTracingFile) {
-      _currentProfile.SaveChromeTracingProfile(_chromeTracingFile, _threadIndex);
-  } else {
+  if (kProfilerLogOutput == (int)Output::Console) {
     PRINT_CH_INFO("CpuProfiler", "LogProfile", "Thread %u '%s' tick %u [%.3f ms from start %.3f, end %.3f]",
                   GetThreadIndex(), GetThreadName(), _currentProfile.GetTickNum(),
                   _currentProfile.GetTickDuration(),
                   GetTimeSinceBase_ms(_currentProfile.GetStartTimePoint()),
                   GetTimeSinceBase_ms(_currentProfile.GetEndTimePoint()));
     _currentProfile.LogProfile(_threadIndex);
+  } else if (kProfilerLogOutput == (int)Output::ChromeTracing) {
+      _currentProfile.SaveChromeTracingProfile(_chromeTracingFile, _threadIndex);
   }
 }
   
@@ -184,11 +196,13 @@ void CpuThreadProfiler::SortAndLogProfile()
   
 void CpuThreadProfiler::LogAllCalledSamples() const
 {
-  if (!_chromeTracingFile) {
+  if (kProfilerLogOutput == (int)Output::Console) {
     PRINT_CH_INFO("CpuProfiler", "LogAllCalledSamples", "Thread %u '%s' tick %u",
                   GetThreadIndex(), GetThreadName(), _currentProfile.GetTickNum());
 
     _currentProfile.LogAllCalledSamples(_threadIndex, _samplesCalledFromThread);
+  } else if (kProfilerLogOutput == (int)Output::WebViz) {
+    _currentProfile.PublishToWebService(_webServiceCallback, _threadIndex, _samplesCalledFromThread);
   }
 }
 
