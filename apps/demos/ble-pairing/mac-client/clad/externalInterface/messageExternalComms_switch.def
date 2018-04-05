@@ -75,6 +75,9 @@ case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsSshRequest:
 case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsSshResponse:
   Process_RtsSshResponse(msg.Get_RtsSshResponse());
   break;
+case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsOtaCancelRequest:
+  Process_RtsOtaCancelRequest(msg.Get_RtsOtaCancelRequest());
+  break;
 }
 switch(msg.GetTag()) {
 default:
