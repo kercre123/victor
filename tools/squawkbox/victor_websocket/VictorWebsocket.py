@@ -22,13 +22,14 @@ class VictorWebsocket(object):
     self.mic_socket_established = False
     self.mic_stream_flag = False
     
-    self.intent_socket_established = False
-    self.intent_stream_flag = False
+    self.cloud_intent_socket_established = False
+    self.cloud_intent_stream_flag = False
 
     self.mic_data_raw_results = {"dominant": [], "confidence": [0]*12}
+    self.cloud_intent_data_raw_results = []
 
     self.init_micdata_socket()
-    self.init_intent_socket()
+    self.init_cloud_intent_socket()
 
   def init_micdata_socket(self):
     mic_websocket_url = "ws://{0}:{1}/socket".format(self.robot_ip, self.micdata_port)
@@ -105,45 +106,42 @@ class VictorWebsocket(object):
 
     return results_dict
 
-  def init_intent_socket(self):
-    intent_websocket_url = "ws://{0}:{1}/socket".format(self.robot_ip, self.intent_port)
+  def init_cloud_intent_socket(self):
+    cloud_intent_websocket_url = "ws://{0}:{1}/socket".format(self.robot_ip, self.intent_port)
     
-    self.ws_intent = websocket.WebSocketApp(intent_websocket_url,
+    self.ws_cloud_intent = websocket.WebSocketApp(cloud_intent_websocket_url,
                                     on_message = self.on_intent_message,
                                     on_error = self.on_error,
                                     on_close = self.on_close)
     
-    self.ws_intent.on_open = self.on_open_intent
-    self.ws_intent.keep_running = True 
+    self.ws_cloud_intent.on_open = self.on_open_intent
+    self.ws_cloud_intent.keep_running = True 
 
     #Seperate background thread, to handle incoming messages
-    self.wst_intent = threading.Thread(target=self.ws_intent.run_forever)
-    self.wst_intent.daemon = True 
-    self.wst_intent.start()
+    self.ws_cloud_intent = threading.Thread(target=self.ws_cloud_intent.run_forever)
+    self.ws_cloud_intent.daemon = True 
+    self.ws_cloud_intent.start()
     
   def close_intent_socket(self):
-    self.ws_intent.keep_running = False
+    self.ws_cloud_intent.keep_running = False
     return
 
   def on_open_intent(self, ws):
-    self.subscribeData["module"] = "intents"
+    self.subscribeData["module"] = "cloudintents"
     subscribe_message = json.dumps(self.subscribeData)
     self.logger.info("Now waiting for a reply")
     ws.send(subscribe_message)
-    self.intent_socket_established = True
+    self.cloud_intent_socket_established = True
 
-  def on_intent_message(self, ws, message):
-    pass
-
-  def process_list_of_intents(self, message):
+  def on_cloud_intent_message(self, ws, message):
     pass
   
-  def process_intent_stream(self, message):
-   pass  
+  def process_cloud_intent_stream(self, message):
+    pass
   
   def compile_intent_results(self):
     pass
-
+    
   def on_error(self, ws, error):
     self.logger.info(error)
 
