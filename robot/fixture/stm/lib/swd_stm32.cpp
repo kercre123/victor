@@ -376,6 +376,9 @@ int swd_stm32_lock_jtag(void)
   r |= swd_write32(0x40022010, 0x200 + 0x20); // Option byte ERASE w/OPTWRE
   r |= swd_write32(0x40022010, 0x200 + 0x40 + 0x20); // START option byte ERASE w/OPTWRE
   
+  if( r != SWD_ACK )
+    THROW_RETURN( ERROR_SWD_WRITE_FAULT );
+  
   int wait = 250;                       // 250ms before we give up (outer limit is 60ms)
   while (swd_read32(0x4002200C) & 1)    // Wait for erase complete
   {
@@ -386,6 +389,9 @@ int swd_stm32_lock_jtag(void)
   
   r |= swd_write32(0x40022010, 0x200 + 0x10);// Allow option byte program w/OPTWRE
   r |= swd_stm32_write16(0x1FFFF800, 0xCC);  // RDP mode 2 - irreversible disable
+  
+  if( r != SWD_ACK )
+    THROW_RETURN( ERROR_SWD_WRITE_FAULT );
   
   wait = 250;                        // 250ms before we give up (outer limit is 1ms)
   while (swd_read32(0x4002200C) & 1)    // Wait for program complete
@@ -399,7 +405,7 @@ int swd_stm32_lock_jtag(void)
   r |= swd_write32(0x40022010, 0x80);        // Re-lock flash  
   
   if( r != SWD_ACK )
-    THROW_RETURN( ERROR_ACK2 );
+    THROW_RETURN( ERROR_SWD_WRITE_FAULT );
   return ERROR_OK;
 }
 
