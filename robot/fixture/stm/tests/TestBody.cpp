@@ -94,6 +94,13 @@ static void mcu_flash_verify_(uint32_t flash_addr, const uint8_t* bin_start, con
   }
 }
 
+static void mcu_jtag_lock_(void) {
+  try { swd_stm32_lock_jtag(); }
+  catch(int e) {
+    throw e;
+  }
+}
+
 //-----------------------------------------------------------------------------
 //                  Body Tests
 //-----------------------------------------------------------------------------
@@ -240,6 +247,10 @@ static void BodyLoadProductionFirmware(void)
   mcu_flash_program_(FLASH_ADDR_SYSCON,  g_Body,     g_BodyEnd,     1, "application");
   mcu_flash_verify_( FLASH_ADDR_SYSBOOT, bodyboot, bodyboot+bodybootSize );
   //mcu_flash_verify_( FLASH_ADDR_SYSCON,  g_Body,     g_BodyEnd     );
+  if( g_fixmode == FIXMODE_BODY1 && g_isReleaseBuild ) {
+    ConsolePrintf("LOCKING JTAG. POINT OF NO RETURN!\n");
+    mcu_jtag_lock_();
+  }
   mcu_power_down_();
 }
 
