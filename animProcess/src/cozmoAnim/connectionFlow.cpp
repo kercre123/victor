@@ -219,15 +219,6 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
     {
       FaceInfoScreenManager::getInstance()->EnablePairingScreen(true);
 
-      // Throttling square is annoying when trying to inspect the display so disable
-      NativeAnkiUtilConsoleSetValueWithString("DisplayThermalThrottling", "false");
-      DrawStartPairingScreen(animStreamer);
-    }
-    break;
-    case ConnectionStatus::SHOW_PIN:
-    {
-      DrawShowPinScreen(animStreamer, context);
-
       // Start system pairing light (pulsing orange/green)
       RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
         .light = {
@@ -240,6 +231,15 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
           .offset = 0
       }}));
       AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
+      
+      // Throttling square is annoying when trying to inspect the display so disable
+      NativeAnkiUtilConsoleSetValueWithString("DisplayThermalThrottling", "false");
+      DrawStartPairingScreen(animStreamer);
+    }
+    break;
+    case ConnectionStatus::SHOW_PIN:
+    {
+      DrawShowPinScreen(animStreamer, context);
     }
     break;
     case ConnectionStatus::SETTING_WIFI:
