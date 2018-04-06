@@ -31,7 +31,6 @@ namespace Contacts
   int getRxDroppedChars();   //get and clear count of dropped rx chars
   int getRxOverflowErrors(); //get and clear count of receive buffer overflows (uart periph)
   int getRxFramingErrors();  //get and clear count of receive framing errors
-  int getLineSyncErrors();   //get and clear count of getline() 0xd2: unexpected sync indicator
 }
 
 #endif
