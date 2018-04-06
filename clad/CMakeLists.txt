@@ -13,8 +13,8 @@ set(CLAD_INCLUDES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/"
     "${CMAKE_CURRENT_SOURCE_DIR}/../lib/util/source/anki/clad/"
     "${CMAKE_CURRENT_SOURCE_DIR}/../robot/clad/src/"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../coretech/vision"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../coretech/common"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../coretech/vision/clad_src/"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../coretech/common/clad_src/"
 )
 
 #CLAD_CPP_DECL=../robot/clad/cozmo_CPP_declarations_emitter.py
@@ -44,6 +44,7 @@ generate_clad_cpp(
     SRCS ${ROBOT_SRCS}
     RELATIVE_SRC_DIR "robot/src"
     OUTPUT_DIR "${OUTPUT_DIR}"
+    INCLUDES "${CLAD_INCLUDES}"
     OUTPUT_SRCS CLAD_CPP_GEN_ROBOT_SRCS
 )
 
@@ -52,6 +53,7 @@ generate_clad_py(
     SRCS ${ROBOT_SRCS}
     RELATIVE_SRC_DIR "robot/src"
     OUTPUT_DIR "${CLAD_PY_OUTPUT_DIR}"
+    INCLUDES "${CLAD_INCLUDES}"
     OUTPUT_SRCS CLAD_PY_GEN_ROBOT_SRCS
 )
 
@@ -60,6 +62,7 @@ generate_clad_cs(
     SRCS ${ROBOT_SRCS}
     RELATIVE_SRC_DIR "robot/src"
     OUTPUT_DIR "${CLAD_CS_OUTPUT_DIR}"
+    INCLUDES "${CLAD_INCLUDES}"
     OUTPUT_SRCS CLAD_CS_GEN_ROBOT_SRCS
 )
 
