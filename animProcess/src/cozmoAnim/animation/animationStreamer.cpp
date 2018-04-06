@@ -731,7 +731,12 @@ namespace Cozmo {
     }
     else
     {
-      if(!PROCEDURALFACE_NOISE_FEATURE || (kProcFace_NoiseNumFrames == 0)) {
+
+#if PROCEDURALFACE_NOISE_FEATURE
+      if(kProcFace_NoiseNumFrames == 0) {
+#else
+      {
+#endif
         static ProceduralFace previousFace;
         if (previousFace == procFace) {
           return;
