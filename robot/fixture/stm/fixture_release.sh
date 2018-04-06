@@ -45,7 +45,7 @@ sleep 1 #delay for file system changes to clear cache
 echo building project
 timeout 5.0s python error_codes_export.py $version #export error codes
 Tstart=$(($(date +%s%N)/1000000))
-timeout 90.0s $keil -b $project -j0 -o $buildlog
+timeout 180.0s $keil -b $project -j0 -o $buildlog
 builderr=$?
 Tend=$(($(date +%s%N)/1000000))
 if [ ! -e $errcodes ]; then builderr=-2; fi
