@@ -592,7 +592,7 @@ namespace Cozmo {
 
       EnableBackpackAnimationLayer(false);
 
-      _animAudioClient->StopCozmoEvent();
+      _animAudioClient->AbortAnimation();
 
       if (_streamingAnimation == _proceduralAnimation) {
         _proceduralAnimation->Clear();

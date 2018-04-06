@@ -54,8 +54,8 @@ public:
   // Perform functionality for frame
   void PlayAudioKeyFrame( const RobotAudioKeyFrame& keyFrame, Util::RandomGenerator* randomGen );
   
-  // Stop all animation audio
-  void StopCozmoEvent();
+  // Perform abort animation audio event
+  void AbortAnimation();
   
   // Check if there is an event being performed
   bool HasActiveEvents() const;
