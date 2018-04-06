@@ -76,6 +76,9 @@ AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
   }
 }
 
+/**
+ * Anime Engine class
+ */
 AnimEngine::~AnimEngine()
 {
   if (Anki::Util::gTickTimeProvider == BaseStationTimer::getInstance()) {
@@ -84,6 +87,9 @@ AnimEngine::~AnimEngine()
   BaseStationTimer::removeInstance();
 }
 
+/**
+* First documentation for an event
+*/
 Result AnimEngine::Init()
 {
   if (_isInitialized) {
@@ -119,6 +125,13 @@ Result AnimEngine::Init()
   return RESULT_OK;
 }
 
+/*!
+  This will be show on the slow updates and as such should not be seen very often
+
+  @param event1 event information
+*/
+DASMESSAGE(AnimEngineMsg,"cozmo_anim.update.sleep.slow");
+
 Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
 {
   //ANKI_CPU_PROFILE("AnimEngine::Update");
@@ -146,7 +159,8 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
       const double maxLatency = ANIM_TIME_STEP_MS + ANIM_OVERTIME_WARNING_THRESH_MS;
       if (timeSinceLastUpdate > maxLatency)
       {
-        Anki::Util::sEventF("cozmo_anim.update.sleep.slow", {{DDATA,TO_DDATA_STR(ANIM_TIME_STEP_MS)}}, "%.2f", timeSinceLastUpdate);
+        AnimEngineMsg aem("%.2f");
+        Anki::Util::sEventD(aem);
       }
     }
     lastUpdateTimeMs = startUpdateTimeMs;

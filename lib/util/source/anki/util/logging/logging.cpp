@@ -68,6 +68,7 @@ bool _errG = false;
 // Do we break on any error?
 bool _errBreakOnError = true;
 
+
 const size_t kMaxStringBufferSize = 1024;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -194,6 +195,11 @@ void sEvent(const char* eventName, const KVV& keyValues, const char* eventValue)
     return;
   }
   gLoggerProvider->PrintEvent(eventName, keyValues, eventValue);
+}
+
+void sEventD(dasMsg& dasMessage)
+{
+  sEvent(dasMessage.eventName(), {}, dasMessage._format.c_str());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

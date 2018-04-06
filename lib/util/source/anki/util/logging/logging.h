@@ -55,11 +55,38 @@ extern bool _errG;
 // Global flag to control break-on-error behavior
 extern bool _errBreakOnError;
 
+/*! \defgroup dasmsg Das Messages
+    \brief Shown when the cozmo anim update to slow to respond
+
+  This will be show on the slow updates and as such should not be seen very often
+*/
+class dasMsg
+{
+public:
+  virtual const char* eventName() = 0;
+  std::string _format;
+  va_list _args;
+};
+
+#define DASMESSAGE(className, eventNameStr) /** \ingroup dasmsg */ \
+                                            /** \brief eventNameStr */ \
+                                            class className: public Anki::Util::dasMsg \
+                                            { \
+                                              className(const char* format, va_list args) { _format = format; _args = args; } \
+                                              virtual const char* eventName() { return eventNameStr; } \
+                                            };
+
+__attribute__((__used__))
+void sEventF(dasMsg& dasMessage);
+
 __attribute__((__used__))
 void sEventF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__((format(printf,3,4)));
 
 __attribute__((__used__))
 void sEventV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args) __attribute__((format(printf,3,0)));
+
+__attribute__((__used__))
+void sEventD(dasMsg& dasMessage);
 
 __attribute__((__used__))
 void sEvent(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
@@ -115,6 +142,7 @@ bool sVerifyFailedReturnFalse(const char* eventName, const char* format, ...) __
 
 
 void sSetGlobal(const char* key, const char* value);
+
 
 //
 // Anki::Util::sLogFlush()

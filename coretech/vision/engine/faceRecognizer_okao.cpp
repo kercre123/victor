@@ -513,6 +513,12 @@ namespace Vision {
     return haveEntry;
   }
   
+
+/*!
+  This will be shown when the most number of faces we support is shown
+*/
+DASMESSAGE(FaceRecMsg,"robot.vision.face_enrollment_count_reached");
+
   EnrolledFaceEntry FaceRecognizer::GetRecognitionData(INT32 forTrackingID, s32& enrollmentCountReached)
   {
     if(ProcessingState::FeaturesReady == _state)
@@ -618,9 +624,8 @@ namespace Vision {
         
         // Log the enrollment ID we just completed and how many album entries it now has
         const size_t numAlbumEntries = entryToReturn.GetAlbumEntries().size();
-        Util::sEventF("robot.vision.face_enrollment_count_reached",
-                      {{DDATA, std::to_string(numAlbumEntries).c_str()}},
-                      "%d", _enrollmentID);
+        FaceRecMsg frm("%d");
+        Anki::Util::sEventD(frm);
         
         enrollmentCountReached = _origEnrollmentCount;
         _origEnrollmentCount = 0; // signifies we've already returned it

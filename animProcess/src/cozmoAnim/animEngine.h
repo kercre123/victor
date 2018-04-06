@@ -41,7 +41,11 @@ namespace Anki {
 
 namespace Anki {
 namespace Cozmo {
+
   
+/**
+ * Anime Engine class
+ */
 class AnimEngine
 {
 public:
