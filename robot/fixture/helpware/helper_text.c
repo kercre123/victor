@@ -11,10 +11,6 @@
 
 
 
-
-#define LAYER_SMALL 1
-#define LAYER_LARGE 3
-
 #define SMALL_LINE_COUNT 8
 
 #define HELPER_SMALL_TEXT_COLOR_FG lcd_BLUE
