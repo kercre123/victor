@@ -139,8 +139,8 @@ class VictorWebsocket(object):
       self.logger.debug("Received a cloud intent message")
       message_to_json = json.loads(message)
     try:
-      print(message_to_json["data"]["intent"])
-      self.cloudIntent_data_raw_results.append(message_to_json["data"]["intent"])
+      cloud_intent_name = message_to_json["data"]["intent"])
+      self.cloudIntent_data_raw_results.append(cloud_intent_name)
     except:
       self.logger.debug("Cloud intent wasn't valid")
   
