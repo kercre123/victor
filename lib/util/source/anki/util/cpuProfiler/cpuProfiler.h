@@ -24,9 +24,9 @@
 #include <assert.h>
 #include <vector>
 
-
-
 #if ANKI_CPU_PROFILER_ENABLED
+
+  #define ANKI_CPU_CONSOLEVARGROUP "CpuProfiler"
 
   #define ANKI_CPU_PROFILER_WARN_ON_NO_PROFILER     0   // Enable to track down calls on untracked threads
 
@@ -40,7 +40,15 @@
   class CpuProfiler
   {
   public:
+    static const char* CpuProfilerLogging() {
+      return "Never,1ms,2ms,4ms,8ms,16ms,32ms";
+    }
     
+    static uint32_t CpuProfilerLoggingTime(int option) {
+      static uint32_t times[] = {Anki::Util::CpuThreadProfiler::kLogFrequencyNever, 1, 2, 4, 8, 16, 32};
+      return times[option];
+    }
+
     CpuProfiler()
       : _threadProfilerCount(0)
       , _creationTimePoint(CpuProfileClock::now())

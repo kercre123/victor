@@ -7,9 +7,13 @@ list(APPEND CMAKE_MODULE_PATH
   ${CMAKE_CURRENT_SOURCE_DIR}/tools/build/cmake
 )
 
-project(cozmo)
+project(victor)
 
-include(ccache) # Use ccache if it is installed
+# Build options
+option(USE_DAS "Enable DAS reporting" OFF)
+
+# Use ccache if it is installed
+include(ccache)
 
 include(import)
 include(clean_clad_targets)

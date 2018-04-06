@@ -40,6 +40,7 @@ namespace Planning
 #define FATAL_OBSTACLE_COST (MAX_OBSTACLE_COST + 1.0f)
 #define REVERSE_OVER_OBSTACLE_COST 0.0f
 
+class xythetaEnvironment;
 
 // helper class to prevent excess dynamic memory allocation. Additionally, the `Next()` method will 
 // evaluate for potential collisions and not produce successors to invalid states
@@ -136,19 +137,12 @@ public:
   // returns the penalty of the path (i.e. no cost for actions, just
   // obstacle penalties). If the action finishes without a fatal
   // penalty, stateID will be updated to the successor state
-  Cost ApplyAction(const ActionID& action, StateID& stateID, bool checkCollisions = true) const;
+  Cost CheckAndApplyAction(const ActionID& action, StateID& stateID) const;
   
-  // Continuous version of ApplyAction for path segments
-  Cost ApplyPathSegment(const PathSegment& pathSegment,
+  // Continuous version of CheckAndApplyAction for path segments
+  Cost CheckAndApplyPathSegment(const PathSegment& pathSegment,
                         State_c& state_c,
-                        bool checkCollisions = true,
                         float maxPenalty = Util::FLOATING_POINT_COMPARISON_TOLERANCE_FLT) const;
-
-  // Returns the state at the end of the given plan (e.g. following
-  // along the plans start and executing every action). No collision
-  // checks are performed
-  GraphState GetPlanFinalState(const xythetaPlan& plan) const;
-
 
   // This essentially projects the given pose onto the plan (held in this member). The projection is just the
   // closest euclidean distance point on the plan, and the return value is the number of complete plan actions
@@ -202,9 +196,6 @@ public:
   // precomputing things, etc.
   void PrepareForPlanning();
 
-  // returns the raw underlying motion primitive. Note that it is centered at (0,0)
-  const MotionPrimitive& GetRawMotionPrimitive(GraphTheta theta, ActionID action) const;
-
   // Returns true if there is a fatal collision at the given state
   bool IsInCollision(GraphState s) const;
   bool IsInCollision(State_c c) const;
@@ -213,75 +204,32 @@ public:
 
   Cost GetCollisionPenalty(GraphState s) const;
 
-  inline State_c State2State_c(const GraphState& s) const;
-
-
   // round the continuous state to the nearest discrete state which is
   // safe. Return true if success, false if all 4 corners are unsafe
   // (unlikely but possible)
   bool RoundSafe(const State_c& c, GraphState& rounded) const;
 
-  inline float LookupTheta(GraphTheta theta) const;
+  // ActionSpace Helpers
 
-  float GetDistanceBetween(const State_c& start, const GraphState& end) const;
-  static float GetDistanceBetween(const State_c& start, const State_c& end);
+  // Get ActionSpace for this environment
+  inline const ActionSpace& GetActionSpace() const { return allActions_; }
 
-  float GetMinAngleBetween(const State_c& start, const GraphState& end) const;
-  static float GetMinAngleBetween(const State_c& start, const State_c& end);
+  inline State_c State2State_c(const GraphState& s) const { return allActions_.State2State_c(s); }
+
+  // returns the raw underlying motion primitive. Note that it is centered at (0,0)
+  inline const MotionPrimitive& GetRawMotion(GraphTheta theta, ActionID aID) const { return allActions_.GetForwardMotion(theta, aID); }
 
   // Get a motion primitive. Returns true if the action is retrieved,
   // false otherwise. Returns primitive in arguments
-  inline bool GetMotion(GraphTheta theta, ActionID actionID, MotionPrimitive& prim) const;
-
-  inline size_t GetNumActions() const { return actionTypes_.size(); }
-  
-  inline const ActionType& GetActionType(ActionID aid) const { return actionTypes_[aid]; }
-
-  // This function fills up the given vector with (x,y,theta) coordinates of
-  // following the plan.
-  void ConvertToXYPlan(const xythetaPlan& plan, std::vector<State_c>& continuousPlan) const;
-
-  void PrintPlan(const xythetaPlan& plan) const;
-
-  // Convert the plan to Planning::PathSegment's and append it to path. Also updates plan to set the
-  // robotPathSegmentIdx_ If skipActions is nonzero, then that many actions from plan will be skipped (not
-  // copied into path), but the state will still be correctly updated
-  void AppendToPath(xythetaPlan& plan, Path& path, int numActionsToSkip = 0) const;
-
-  double GetMaxVelocity_mmps() const {return _robotParams.maxVelocity_mmps;}
-  double GetMaxReverseVelocity_mmps() const {return _robotParams.maxReverseVelocity_mmps;}
-  double GetOneOverMaxVelocity() const {return _robotParams.oneOverMaxVelocity;}
-  double GetHalfWheelBase_mm() const {return _robotParams.halfWheelBase_mm;}
-
-  float GetResolution_mm() const { return GraphState::resolution_mm_; }
+  inline bool TryGetRawMotion(GraphTheta theta, ActionID aID, MotionPrimitive& prim) const;
 
 private:
   // returns true on success
   bool ParseObstacles(const Json::Value& config);
   void DumpObstacles(Util::JsonWriter& writer) const;
 
-  // These are deprecated! Consider removing them. They could come in handy again if we need to dump the fully
-  // parsed-out mprims
-  void DumpMotionPrims(Util::JsonWriter& writer) const;
-  bool ParseMotionPrims(const Json::Value& config, bool useDumpFormat = false);
-
-  void PopulateReverseMotionPrims();
-
-  // First index is starting angle, second is prim ID
-  std::vector< std::vector<MotionPrimitive> > allMotionPrimitives_;
-
-  // Reverse motion primitives, for getting predecessors to a state. The first index is the ending angle, the
-  // second is meaningless. The primitive will have the action ID corresponding to the correct forward
-  // primitive, but the endStateOffset will be reverse, so you can follow backwards
-  std::vector< std::vector<MotionPrimitive> > reverseMotionPrimitives_;
-
-  // index is actionID
-  std::vector<ActionType> actionTypes_;
-
-  // index is GraphTheta, value is theta in radians, between -pi and
-  // pi. If there are more than 8 angles, they are not perfectly
-  // evenly divided (see docs)  // TODO:(bn) write docs....
-  std::vector<float> angles_;
+  // class for calculating exact changes in state for given actions
+  ActionSpace allActions_;
 
   // Obstacles per theta. First index is theta, second of pair is cost
   std::vector< std::vector< std::pair<FastPolygon, Cost> > > obstaclesPerAngle_;
@@ -304,32 +252,18 @@ private:
   // one per obstacle, this is the bounding box that will bound that obstacle at every angle. If you are clear
   // of all of these, then you can skip the check. Order is the same as the obstacle order within the angles
   // in obstaclesPerAngle_
+  // NOTE: (mrw) FastPolygon already has the AABB for us...
   std::vector< Bounds > obstacleBounds_;
-
-  // TODO:(bn) this won't support multiple different robots!
-  const RobotActionParams _robotParams;
 };
 
-bool xythetaEnvironment::GetMotion(GraphTheta theta, ActionID actionID, MotionPrimitive& prim) const
+
+bool xythetaEnvironment::TryGetRawMotion(GraphTheta theta, ActionID aID, MotionPrimitive& prim) const
 {
-  if(theta < allMotionPrimitives_.size() && actionID < allMotionPrimitives_[theta].size()) {
-    prim = allMotionPrimitives_[theta][actionID];
+  if(theta < GraphState::numAngles_ && aID < allActions_.GetNumActions()) {
+    prim = allActions_.GetForwardMotion(theta, aID);
     return true;
   }
   return false;
-}
-
-// TODO:(bn) pull out into _inline.cpp
-State_c xythetaEnvironment::State2State_c(const GraphState& s) const
-{
-  return State_c(GraphState::resolution_mm_ * s.x, GraphState::resolution_mm_ * s.y, LookupTheta(s.theta));
-}
-
-
-float xythetaEnvironment::LookupTheta(GraphTheta theta) const
-{
-  assert(theta >= 0 && theta < angles_.size());
-  return angles_[theta];
 }
 
 }

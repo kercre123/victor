@@ -23,6 +23,11 @@ namespace Cozmo {
     GaussianFilter = 2,
   };
 
+#if ANKI_CPU_PROFILER_ENABLED
+  CONSOLE_VAR_RANGED(float, kProcFace_DrawTimeMax_ms,     ANKI_CPU_CONSOLEVARGROUP, 2, 2, 32);
+  CONSOLE_VAR_ENUM(u8,      kProcFace_DrawTimeLogging,    ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
+#endif
+
   #define CONSOLE_GROUP "ProceduralFace"
 
   CONSOLE_VAR_ENUM(u8,      kProcFace_LineType,                   CONSOLE_GROUP, 1, "Line_4,Line_8,Line_AA"); // Only affects OpenCV drawing, not post-smoothing
@@ -30,7 +35,7 @@ namespace Cozmo {
   CONSOLE_VAR_RANGED(f32,   kProcFace_EyeLightnessMultiplier,     CONSOLE_GROUP, 1.f, 0.f, 2.f);
 
   CONSOLE_VAR(bool,         kProcFace_HotspotRender,              CONSOLE_GROUP, true); // Render glow
-  CONSOLE_VAR_RANGED(f32,   kProcFace_HotspotFalloff,             CONSOLE_GROUP, 0.85f, 0.05f, 1.f);
+  CONSOLE_VAR_RANGED(f32,   kProcFace_HotspotFalloff,             CONSOLE_GROUP, 0.9f, 0.05f, 1.f);
 
 #if PROCEDURALFACE_GLOW_FEATURE
   CONSOLE_VAR_RANGED(f32, kProcFace_GlowSizeMultiplier,           CONSOLE_GROUP, 1.f, 0.f, 1.f);
@@ -625,14 +630,7 @@ namespace Cozmo {
                                       const Util::RandomGenerator& rng, 
                                       Vision::ImageRGB565& output)
   {
-#if ANKI_CPU_PROFILER_ENABLED
-    constexpr float kMaxExpectedFaceDrawTime_ms = 13.f;
-#endif
-    // Replace Util::CpuThreadProfiler::kLogFrequencyNever with a small value to output logging,
-    // can be used with Chrome Tracing format
-    ANKI_CPU_TICK("ProceduralFaceDrawer", kMaxExpectedFaceDrawTime_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
-    // Replace the above line with the below line to see profiling info in the log
-    // ANKI_CPU_TICK("ProceduralFaceDrawer", kMaxExpectedFaceDrawTime_ms, 61);
+    ANKI_CPU_TICK("ProceduralFaceDrawer", kProcFace_DrawTimeMax_ms, Util::CpuProfiler::CpuProfilerLoggingTime(kProcFace_DrawTimeLogging));
     ANKI_CPU_PROFILE("DrawFace");
 
     // Make sure output is allocated appropriately.

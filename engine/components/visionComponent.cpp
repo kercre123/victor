@@ -63,6 +63,10 @@
 namespace Anki {
 namespace Cozmo {
 
+#if ANKI_CPU_PROFILER_ENABLED
+  CONSOLE_VAR_ENUM(u8, kVisionComponent_Logging,   ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
+#endif
+
   CONSOLE_VAR(f32, kHeadTurnSpeedThreshBlock_degs, "WasRotatingTooFast.Block.Head_deg/s",   10.f);
   CONSOLE_VAR(f32, kBodyTurnSpeedThreshBlock_degs, "WasRotatingTooFast.Block.Body_deg/s",   30.f);
   CONSOLE_VAR(u8,  kNumImuDataToLookBack,          "WasRotatingTooFast.Face.NumToLookBack", 5);
@@ -838,7 +842,7 @@ namespace Cozmo {
         continue;
       }
 
-      ANKI_CPU_TICK("VisionComponent", 100.0, Util::CpuThreadProfiler::kLogFrequencyNever);
+      ANKI_CPU_TICK("VisionComponent", 100.0, Util::CpuProfiler::CpuProfilerLoggingTime(kVisionComponent_Logging));
 
       if (!_currentImg.IsEmpty())
       {

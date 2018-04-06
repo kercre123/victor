@@ -1,20 +1,18 @@
 cmake_minimum_required(VERSION 3.6)
 
-project(cozmo_anim)
+project(animProcess)
+
+# Build options
+option(USE_DAS "Enable DAS reporting" OFF)
 
 include(anki_build_cxx)
-
-anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
-
 include(flatbuffers)
 include(opencv)
 include(text2speech)
 include(sensory)
 include(robot_core)
 
-if (NOT DEFINED USE_DAS)
-  set(USE_DAS 0)
-endif()
+anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
@@ -49,9 +47,10 @@ target_link_libraries(victor_anim
   audio_multiplexer_robot
   osState
   micdata
+  DAS
   # vendor
   ${OPENCV_LIBS}
-  ${FLATBUFFERS_LIBS} 
+  ${FLATBUFFERS_LIBS}
   signal_essence
   ${TEXT2SPEECH_LIBS}
   ${SENSORY_LIBS}
@@ -66,11 +65,11 @@ android_strip(TARGET victor_anim)
 
 target_compile_definitions(victor_anim
   PRIVATE
-  USE_DAS=${USE_DAS}
+  USE_DAS=$<BOOL:${USE_DAS}>
   ${PLATFORM_COMPILE_DEFS}
 )
 
-target_include_directories(victor_anim 
+target_include_directories(victor_anim
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src> # allow "android/" prefix
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/lib/util/source/3rd>
@@ -93,5 +92,5 @@ if (ANDROID)
   )
 
   android_strip(TARGET vic-anim)
-    
+
 endif()

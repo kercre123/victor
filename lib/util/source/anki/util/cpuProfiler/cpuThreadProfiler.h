@@ -28,10 +28,13 @@
 #define ANKI_CPU_PROFILER_WARN_ON_TINY_SAMPLES     0   // Enable to track down functions that are too quick to be worth profiling
 #define ANKI_CPU_PROFILER_WARN_ON_SKIPPED_SAMPLES  0   // Enable to track down functions that aren't being profiled
 
+namespace Json {
+class Value;
+};
 
 namespace Anki {
-namespace Util {
 
+namespace Util {
 
 class CpuThreadProfiler
 {
@@ -53,6 +56,7 @@ public:
             uint32_t logFrequency, const CpuProfileClock::time_point& baseTimePoint, uint32_t sampleCount = 512);
   
   static void SetChromeTracingFile(const char* tracingFile);
+  static void SendToWebVizCallback(const std::function<void(const Json::Value&)>& callback);
   void ReuseThread(CpuThreadId threadId);
   
   void SortProfile() { _currentProfile.SortSamples(); } // optional, needed for LogProfile() to work correctly
@@ -130,7 +134,7 @@ private:
   
   static double sMinSampleDuration_ms; // ignore trivial samples below this
   static FILE* _chromeTracingFile;
-
+  static std::function<void(const Json::Value&)> _webServiceCallback;
   std::vector<CpuProfileSampleShared*>  _samplesCalledFromThread;
   const char*                 _threadName;
   CpuThreadProfile            _currentProfile;

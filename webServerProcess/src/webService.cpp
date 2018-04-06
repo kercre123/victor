@@ -67,16 +67,16 @@ public:
     , _outTextPos(0)
   {
     assert((_outText!=nullptr) && (_outTextLength > 0));
-    
+
     _tempBuffer = new char[kTempBufferSize];
   }
-  
+
   virtual ~ExternalOnlyConsoleChannel()
   {
     if (_outText != nullptr)
     {
       // insure out buffer is null terminated
-      
+
       if (_outTextPos < _outTextLength)
       {
         _outText[_outTextPos] = 0;
@@ -86,23 +86,23 @@ public:
         _outText[_outTextLength - 1] = 0;
       }
     }
-    
+
     Anki::Util::SafeDeleteArray( _tempBuffer );
   }
-  
+
   bool IsOpen() override { return true; }
-  
+
   int WriteData(uint8_t *buffer, int len) override
   {
     assert(0); // not implemented (and doesn't seem to ever be called?)
     return len;
   }
-  
+
   int WriteLogv(const char *format, va_list args) override
   {
     // Print to a temporary buffer first so we can use that for any required logs
     const int printRetVal = vsnprintf(_tempBuffer, kTempBufferSize, format, args);
-    
+
     if (printRetVal > 0)
     {
       if ((_outText != nullptr) && (_outTextLength > _outTextPos))
@@ -115,10 +115,10 @@ public:
         _outTextPos += (outPrintRetVal > 0) ? outPrintRetVal : 0;
       }
     }
-    
+
     return printRetVal;
   }
-  
+
   int WriteLog(const char *format, ...) override
   {
     va_list ap;
@@ -127,29 +127,29 @@ public:
     va_end(ap);
     return result;
   }
-  
+
   bool Flush() override
   {
     // already flushed
     return true;
   }
-  
+
   void SetTTYLoggingEnabled(bool newVal) override
   {
   }
-  
+
   bool IsTTYLoggingEnabled() const override
   {
     return true;
   }
-  
+
   const char* GetChannelName() const override { return nullptr; }
   void SetChannelName(const char* newName) override {}
-  
+
 private:
-  
+
   static const size_t kTempBufferSize = 1024;
-  
+
   char*     _tempBuffer;
   char*     _outText;
   uint32_t  _outTextLength;
@@ -224,7 +224,7 @@ ProcessRequest(struct mg_connection *conn, WebService::WebService::RequestType r
   that->AddRequest(requestPtr);
 
   if( waitAndSendResponse ) {
-    
+
     // Now wait until the main thread processes the request
     using namespace std::chrono;
     static const double kTimeoutDuration_s = 10.0;
@@ -254,7 +254,7 @@ ProcessRequest(struct mg_connection *conn, WebService::WebService::RequestType r
               "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
               "close\r\n\r\n");
     mg_printf(conn, "%s\n", requestPtr->_result.c_str());
-  
+
     // Now mark the request as done so the main thread can delete it.
     // if you pass !waitAndSendResponse, you need to manually set this flag
     requestPtr->_done = true;
@@ -326,7 +326,7 @@ ConsoleVarList(struct mg_connection *conn, void *cbdata)
       key = std::string(info->query_string + 4);
     }
   }
-  
+
   const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarList, key, "");
 
   return returnCode;
@@ -416,7 +416,7 @@ ProcessRequestFromQueryString(struct mg_connection *conn, void *cbdata, WebServi
     request = info->query_string;
   }
   int returnCode = ProcessRequest(conn, type, request, "");
-  
+
   return returnCode;
 }
 
@@ -453,7 +453,7 @@ WebService::WebService::Request::Request(RequestType rt,
 WebService::WebService::Request::Request(RequestType rt, const std::string& param1, const std::string& param2)
   : Request(rt, param1, param2, "")
 {
-  
+
 }
 
 static int
@@ -465,8 +465,9 @@ dasinfo(struct mg_connection *conn, void *cbdata)
 
 // NOTE:  For some reason, android builds of the webserver are not getting USE_DAS defined properly
 #if USE_DAS
+
   std::string dasString = "DAS: " + std::string(DASGetLogDir()) + " DASDisableNetworkReason:";
-  int disabled = DASNetworkingDisabled;
+  int disabled = DASGetNetworkingDisabled();
   if (disabled & DASDisableNetworkReason_Simulator) {
     dasString += " Simulator";
   }
@@ -918,7 +919,7 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   callbacks.log_message = LogMessage;
 
   _ctx = mg_start(&callbacks, this, options);
-  
+
   mg_set_websocket_handler(_ctx,
                            "/socket",
                            HandleWebSocketsConnect,
@@ -948,7 +949,7 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
 
 
   // todo (VIC-1398): remove
-  if( ANKI_DEV_CHEATS ) { 
+  if( ANKI_DEV_CHEATS ) {
     mg_set_request_handler(_ctx, "/sendAppMessage", TempAppToEngine, 0);
     mg_set_request_handler(_ctx, "/getAppMessages", TempEngineToApp, 0);
   }
@@ -1142,7 +1143,7 @@ void WebService::Update()
             const auto& moduleName = requestPtr->_param1;
             const auto& idxStr = requestPtr->_param2;
             size_t idx = std::stoi( idxStr );
-            
+
             auto sendToClient = [idx, moduleName, this](const Json::Value& toSend){
               // might crash if webservice is somehow destroyed after the subscriber, but only in dev
               if( (idx < _webSocketConnections.size())
@@ -1154,7 +1155,7 @@ void WebService::Update()
                 SendToWebSocket( _webSocketConnections[idx].conn, payload );
               }
             };
-            
+
             if( requestPtr->_requestType == RT_WebsocketOnSubscribe ) {
               auto signalIt = _webVizSubscribedSignals.find( moduleName );
               if( signalIt != _webVizSubscribedSignals.end() ) {
@@ -1164,7 +1165,7 @@ void WebService::Update()
               const auto& dataStr = requestPtr->_param3;
               Json::Reader reader;
               Json::Value data;
-              
+
               if( reader.parse(dataStr, data) ) {
                 auto signalIt = _webVizDataSignals.find( moduleName );
                 if( signalIt != _webVizDataSignals.end() ) {
@@ -1397,7 +1398,7 @@ int WebService::HandleWebSocketsConnect(const struct mg_connection* conn, void* 
 {
   return 0; // proceed with connection
 }
-  
+
 void WebService::HandleWebSocketsReady(struct mg_connection* conn, void* cbparams)
 {
   struct mg_context* ctx = mg_get_context(conn);
@@ -1409,7 +1410,7 @@ void WebService::HandleWebSocketsReady(struct mg_connection* conn, void* cbparam
 int WebService::HandleWebSocketsData(struct mg_connection* conn, int bits, char* data, size_t dataLen, void* cbparams)
 {
   int ret = 1; // keep open
-  
+
   // lower 4 bits
   const int opcode = bits & 0xF;
 
@@ -1422,7 +1423,7 @@ int WebService::HandleWebSocketsData(struct mg_connection* conn, int bits, char*
         struct mg_context* ctx = mg_get_context(conn);
         Anki::Cozmo::WebService::WebService* that = static_cast<Anki::Cozmo::WebService::WebService*>(mg_get_user_data(ctx));
         DEV_ASSERT(that != nullptr, "Expecting valid webservice this pointer");
-        
+
         Json::Reader reader;
         Json::Value payload;
         bool success = reader.parse(data, payload);
@@ -1443,7 +1444,7 @@ int WebService::HandleWebSocketsData(struct mg_connection* conn, int bits, char*
     default:
       break;
   }
-  
+
   return ret;
 }
 
@@ -1458,7 +1459,7 @@ void WebService::HandleWebSocketsClose(const struct mg_connection* conn, void* c
 void WebService::SendToWebSocket(struct mg_connection* conn, const Json::Value& data)
 {
   // todo: deal with threads if this is used outside dev
-  
+
   std::stringstream ss;
   ss << data;
   std::string str = ss.str();
@@ -1469,7 +1470,7 @@ const std::string& WebService::getConsoleVarsTemplate()
 {
   return _consoleVarsUIHTMLTemplate;
 }
-  
+
 void WebService::OnOpenWebSocket(struct mg_connection* conn)
 {
   ASSERT_NAMED(conn != nullptr, "Can't create connection to n");
@@ -1477,24 +1478,24 @@ void WebService::OnOpenWebSocket(struct mg_connection* conn)
   _webSocketConnections.push_back({});
   _webSocketConnections.back().conn = conn;
 }
-  
+
 void WebService::OnReceiveWebSocket(struct mg_connection* conn, const Json::Value& data)
 {
   // todo: deal with threads
-  
+
   // find connection
   auto it = std::find_if( _webSocketConnections.begin(), _webSocketConnections.end(), [&conn](const auto& perConnData) {
     return perConnData.conn == conn;
   });
-  
+
   if( it != _webSocketConnections.end() ) {
     if( !data["type"].isNull() && !data["module"].isNull() ) {
       const std::string& moduleName = data["module"].asString();
       size_t idx = it - _webSocketConnections.begin();
-      
+
       if( data["type"].asString() == "subscribe" ) {
         it->subscribedModules.insert( moduleName );
-        
+
         const bool waitAndSendResponse = false;
         ProcessRequest(conn,
                        WebService::WebService::RequestType::RT_WebsocketOnSubscribe,
@@ -1517,7 +1518,7 @@ void WebService::OnReceiveWebSocket(struct mg_connection* conn, const Json::Valu
                        ss.str(),
                        waitAndSendResponse);
       }
-      
+
     }
   } else {
     std::stringstream ss;
@@ -1525,14 +1526,14 @@ void WebService::OnReceiveWebSocket(struct mg_connection* conn, const Json::Valu
     LOG_ERROR("Webservice.OnReceiveWebSocket", "No connection for data %s", ss.str().c_str());
   }
 }
-  
+
 void WebService::OnCloseWebSocket(const struct mg_connection* conn)
 {
   // find connection
   auto it = std::find_if( _webSocketConnections.begin(), _webSocketConnections.end(), [&conn](const auto& perConnData) {
     return perConnData.conn == conn;
   });
-  
+
   // erase it
   auto& data = *it;
   std::swap(data, _webSocketConnections.back());
@@ -1542,4 +1543,3 @@ void WebService::OnCloseWebSocket(const struct mg_connection* conn)
 } // namespace WebService
 } // namespace Cozmo
 } // namespace Anki
-

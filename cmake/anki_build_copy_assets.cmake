@@ -74,4 +74,43 @@ function(anki_build_copy_assets)
 
     add_custom_target(${cpassets_TARGET} ALL DEPENDS ${OUTPUT_FILES})
 
-endfunction(anki_build_copy_assets)
+endfunction()
+
+function(anki_build_copydirectory_assets)
+    set(options "")
+    set(oneValueArgs TARGET DEP_TARGET SRCLIST_DIR OUTPUT_DIR RELATIVE_OUTPUT_DIR)
+    set(multiValueArgs OUT_SRCS OUT_DSTS OUT_RELATIVE_DSTS)
+    cmake_parse_arguments(cpassets "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    file(GLOB_RECURSE SRCS
+         LIST_DIRECTORIES false
+         RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/${cpassets_SRCLIST_DIR}
+         ${CMAKE_CURRENT_SOURCE_DIR}/${cpassets_SRCLIST_DIR}/*)
+
+    foreach(src ${SRCS})
+        list(APPEND INPUT_FILES ${CMAKE_CURRENT_SOURCE_DIR}/${cpassets_SRCLIST_DIR}/${src})
+        list(APPEND OUTPUT_FILES ${cpassets_OUTPUT_DIR}/${src})
+        list(APPEND OUTPUT_RELATIVE_DSTS ${cpassets_RELATIVE_OUTPUT_DIR}/${src})
+    endforeach()
+
+    add_custom_command(
+        COMMENT "Copying ${cpassets_SRCLIST_DIR} to ${cpassets_OUTPUT_DIR}"
+        OUTPUT ${OUTPUT_FILES}
+        DEPENDS ${INPUT_FILES}
+        COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/${cpassets_SRCLIST_DIR} ${cpassets_OUTPUT_DIR}
+    )
+
+    add_custom_target(
+        ${cpassets_TARGET} ALL
+        DEPENDS ${INPUT_FILES} ${OUTPUT_FILES}
+    )
+
+    list(APPEND OUTPUT_RELATIVE_DSTS ${${cpassets_OUT_RELATIVE_DSTS}})
+    set(${cpassets_OUT_RELATIVE_DSTS} ${OUTPUT_RELATIVE_DSTS} PARENT_SCOPE)
+
+    list(APPEND OUTPUT_FILES ${${cpassets_OUT_DSTS}})
+    set(${cpassets_OUT_DSTS} ${OUTPUT_FILES} PARENT_SCOPE)
+
+    list(APPEND INPUT_FILES ${${cpassets_OUT_SRCS}})
+    set(${cpassets_OUT_SRCS} ${INPUT_FILES} PARENT_SCOPE)
+endfunction()

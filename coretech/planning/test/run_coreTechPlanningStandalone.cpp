@@ -32,7 +32,7 @@ void writePath(string filename, const xythetaEnvironment& env, const xythetaPlan
 {
   ofstream outfile(filename);
   vector<State_c> plan_c;
-  env.ConvertToXYPlan(plan, plan_c);
+  env.GetActionSpace().ConvertToXYPlan(plan, plan_c);
   for(size_t i=0; i<plan_c.size(); ++i)
     outfile<<plan_c[i].x_mm<<' '<<plan_c[i].y_mm<<' '<<plan_c[i].theta<<endl;
 
@@ -154,7 +154,7 @@ int main(int argc, char *argv[])
 
     if( ! quiet ) {
       printf("complete. Path: \n");
-      context.env.PrintPlan(planner.GetPlan());
+      context.env.GetActionSpace().PrintPlan(planner.GetPlan());
 
       char* cwd=NULL;
       size_t size = 0;
@@ -207,12 +207,12 @@ int main(int argc, char *argv[])
       while(!it.Done(context.env)) {
         MotionPrimitive prim;
         string name;
-        if(!context.env.GetMotion(curr.theta, it.Front().actionID, prim)) {
+        if(!context.env.TryGetRawMotion(curr.theta, it.Front().actionID, prim)) {
           printf("error: internal error! Could not get primitive id %d at theta %d!\n",
                      it.Front().actionID,
                      curr.theta);
         }
-        name = context.env.GetActionType(it.Front().actionID).GetName();
+        name = context.env.GetActionSpace().GetActionType(it.Front().actionID).GetName();
 
         cout<<"  "<<(int)it.Front().actionID<<": "<<left<<setw(22)<<name
             <<GraphState(it.Front().stateID)<<" cost = "
@@ -233,9 +233,9 @@ int main(int argc, char *argv[])
     }
 
     printf("complete. Path: \n");
-    context.env.PrintPlan(plan);
+    context.env.GetActionSpace().PrintPlan(plan);
 
-    cout<<"final state: "<<context.env.State2State_c(context.env.GetPlanFinalState(plan))<<endl;
+    cout<<"final state: "<<context.env.State2State_c(context.env.GetActionSpace().GetPlanFinalState(plan))<<endl;
 
     printf("\n\nTestPlan:\n");
     for(size_t i = 0; i < plan.Size(); i++) 

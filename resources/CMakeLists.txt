@@ -27,14 +27,37 @@ if(USE_LOCAL_AUDIO_ASSETS)
     message("----------------------------------------------------------------------")
 endif()
 
-anki_build_copy_assets(
-    TARGET ${sound_target}
-    SRCLIST_DIR ${ANKI_SRCLIST_DIR}
-    OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
-    RELATIVE_OUTPUT_DIR "cozmo_resources"
-    OUT_DSTS ASSET_OUTPUT_FILES
-    OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
-)
+if(0)
+    anki_build_copy_assets(
+        TARGET ${sound_target}
+        SRCLIST_DIR ${ANKI_SRCLIST_DIR}
+        OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
+        RELATIVE_OUTPUT_DIR "cozmo_resources"
+        OUT_DSTS ASSET_OUTPUT_FILES
+        OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
+    )
+endif()
+
+if(MACOSX)
+    anki_build_copydirectory_assets(
+        TARGET ${sound_target}
+        SRCLIST_DIR "externals/victor-audio-assets/victor_robot/dev_mac"
+        OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources/sound"
+        RELATIVE_OUTPUT_DIR "cozmo_resources/sound"
+        OUT_DSTS ASSET_OUTPUT_FILES
+        OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
+    )
+else()
+    anki_build_copydirectory_assets(
+        TARGET ${sound_target}
+        SRCLIST_DIR "externals/victor-audio-assets/victor_robot/victor_linux"
+        OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources/sound"
+        RELATIVE_OUTPUT_DIR "cozmo_resources/sound"
+        OUT_DSTS ASSET_OUTPUT_FILES
+        OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
+    )
+endif()
+
 add_dependencies(${sound_target} cozmo_resources_assets)
 
 anki_build_copy_assets(

@@ -78,6 +78,13 @@ namespace Anki {
 namespace Cozmo {
 namespace MicData {
 
+#if ANKI_CPU_PROFILER_ENABLED
+  CONSOLE_VAR_RANGED(float, maxProcessingTimePerDrop_ms,      ANKI_CPU_CONSOLEVARGROUP, 5, 5, 32);
+  CONSOLE_VAR_RANGED(float, maxTriggerProcTime_ms,            ANKI_CPU_CONSOLEVARGROUP, 10, 10, 32);
+  CONSOLE_VAR_ENUM(u8,      kMicDataProcessorRaw_Logging,     ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
+  CONSOLE_VAR_ENUM(u8,      kMicDataProcessorTrigger_Logging, ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
+#endif
+
 constexpr auto kCladMicDataTypeSize = sizeof(RobotInterface::MicData::data)/sizeof(RobotInterface::MicData::data[0]);
 static_assert(kCladMicDataTypeSize == kRawAudioChunkSize, "Expecting size of MicData::data to match RawAudioChunk");
 
@@ -391,8 +398,7 @@ void MicDataProcessor::ProcessRawLoop()
 {
   Anki::Util::SetThreadName(pthread_self(), "MicProcRaw");
   static constexpr uint32_t expectedAudioDropsPerAnimLoop = 7;
-  static constexpr uint32_t maxProcessingTimePerDrop_ms = 5;
-  static constexpr uint32_t maxProcTime_ms = expectedAudioDropsPerAnimLoop * maxProcessingTimePerDrop_ms;
+  static const uint32_t maxProcTime_ms = expectedAudioDropsPerAnimLoop * maxProcessingTimePerDrop_ms;
   const auto maxProcTime = std::chrono::milliseconds(maxProcTime_ms);
   while (!_processThreadStop)
   {
@@ -410,7 +416,7 @@ void MicDataProcessor::ProcessRawLoop()
     auto& rawAudioToProcess = _rawAudioBuffers[_rawAudioProcessingIndex];
     while (rawAudioToProcess.size() > 0)
     {
-      ANKI_CPU_TICK("MicDataProcessorRaw", maxProcessingTimePerDrop_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
+      ANKI_CPU_TICK("MicDataProcessorRaw", maxProcessingTimePerDrop_ms, Util::CpuProfiler::CpuProfilerLoggingTime(kMicDataProcessorRaw_Logging));
       ANKI_CPU_PROFILE("ProcessLoop");
 
       const auto& nextData = rawAudioToProcess.front();
@@ -456,10 +462,7 @@ void MicDataProcessor::ProcessTriggerLoop()
   Anki::Util::SetThreadName(pthread_self(), "MicProcTrigger");
   while (!_processThreadStop)
   {
-#if ANKI_CPU_PROFILER_ENABLED
-    static constexpr uint32_t maxTriggerProcTime_ms = 10;
-#endif
-    ANKI_CPU_TICK("MicDataProcessorTrigger", maxTriggerProcTime_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
+    ANKI_CPU_TICK("MicDataProcessorTrigger", maxTriggerProcTime_ms, Util::CpuProfiler::CpuProfilerLoggingTime(kMicDataProcessorTrigger_Logging));
     ANKI_CPU_PROFILE("ProcessTriggerLoop");
     TimedMicData* readyDataSpot = nullptr;
     {

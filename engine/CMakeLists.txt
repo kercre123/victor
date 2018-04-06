@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.6)
 
 project(engine)
 
+# Build options
+option(USE_DAS "Enable DAS reporting" OFF)
+
 include(opencv)
 include(okao)
 include(flatbuffers)
@@ -10,11 +13,11 @@ include(routing_http_server)
 include(android_strip)
 include(anki_build_cxx)
 
+#
+# cozmo_engine
+#
 anki_build_cxx_library(cozmo_engine ${ANKI_SRCLIST_DIR})
 
-if (NOT DEFINED USE_DAS)
-  set(USE_DAS 0)
-endif()
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
@@ -51,7 +54,7 @@ target_link_libraries(cozmo_engine
   engine_clad
   PRIVATE
   ble_cozmo
-  DAS 
+  DAS
   cameraService
   canned_anim_lib_engine
   victor_web_library
@@ -81,11 +84,11 @@ android_strip(TARGET cozmo_engine)
 target_compile_definitions(cozmo_engine
   PRIVATE
   CORETECH_ENGINE
-  USE_DAS=${USE_DAS}
+  USE_DAS=$<BOOL:${USE_DAS}>
   "${PLATFORM_COMPILE_DEFS}"
 )
 
-target_include_directories(cozmo_engine 
+target_include_directories(cozmo_engine
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..> # allows reference to engine/

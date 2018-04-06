@@ -32,9 +32,9 @@ using GoalState_cPairs = std::vector<std::pair<GoalID,State_c>>;
 bool CheckPlanAsPathIsSafe(const xythetaPlannerContext& context, xythetaPlan& plan, Path* validPath = nullptr)
 {
   Path path;
-  context.env.AppendToPath(plan, path, 0);
+  context.env.GetActionSpace().AppendToPath(plan, path, 0);
   Path wasteValidPath;
-  const float startAngle = context.env.LookupTheta(plan.start_.theta);
+  const float startAngle = context.env.GetActionSpace().LookupTheta(plan.start_.theta);
   return context.env.PathIsSafe(path, startAngle, (nullptr!=validPath) ? *validPath : wasteValidPath);
 }
 
@@ -97,7 +97,7 @@ GTEST_TEST(TestPlanner, PlanTwiceEmptyEnv)
   EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   printf("first plan:\n");
-  context.env.PrintPlan(planner.GetPlan());
+  context.env.GetActionSpace().PrintPlan(planner.GetPlan());
 
   size_t firstPlanLength = planner.GetPlan().Size();
   EXPECT_GT(firstPlanLength, 0);
@@ -116,7 +116,7 @@ GTEST_TEST(TestPlanner, PlanTwiceEmptyEnv)
   EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   printf("second plan:\n");
-  context.env.PrintPlan(planner.GetPlan());
+  context.env.GetActionSpace().PrintPlan(planner.GetPlan());
 
   size_t secondPlanLength = planner.GetPlan().Size();
   EXPECT_GT(secondPlanLength, 0);
@@ -190,7 +190,7 @@ GTEST_TEST(TestPlanner, PlanThriceMultipleGoalsEmptyEnv)
   EXPECT_EQ( planner.GetChosenGoalID(), expectedBest );
 
   printf("first plan:\n");
-  context.env.PrintPlan(planner.GetPlan());
+  context.env.GetActionSpace().PrintPlan(planner.GetPlan());
 
   size_t firstPlanLength = planner.GetPlan().Size();
   EXPECT_GT(firstPlanLength, 0);
@@ -209,7 +209,7 @@ GTEST_TEST(TestPlanner, PlanThriceMultipleGoalsEmptyEnv)
   EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
   
   printf("second plan:\n");
-  context.env.PrintPlan(planner.GetPlan());
+  context.env.GetActionSpace().PrintPlan(planner.GetPlan());
   
   size_t secondPlanLength = planner.GetPlan().Size();
   EXPECT_GT(secondPlanLength, 0);
@@ -230,7 +230,7 @@ GTEST_TEST(TestPlanner, PlanThriceMultipleGoalsEmptyEnv)
   EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   printf("third plan:\n");
-  context.env.PrintPlan(planner.GetPlan());
+  context.env.GetActionSpace().PrintPlan(planner.GetPlan());
 
   size_t thirdPlanLength = planner.GetPlan().Size();
   EXPECT_GT(thirdPlanLength, 0);
@@ -464,7 +464,7 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
   bool hasTurn = false;
   size_t plannerSize = planner.GetPlan().Size();
   for(size_t i=0; i < plannerSize; ++i) {
-    if(context.env.GetRawMotionPrimitive(0, planner.GetPlan().GetAction(i)).endStateOffset.theta != 0) {
+    if(context.env.GetRawMotion(0, planner.GetPlan().GetAction(i)).endStateOffset.theta != 0) {
       hasTurn = true;
       break;
     }
@@ -487,7 +487,7 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
   hasTurn = false;
   plannerSize = planner.GetPlan().Size();
   for(size_t i=0; i < plannerSize; ++i) {
-    if(context.env.GetRawMotionPrimitive(0, planner.GetPlan().GetAction(i)).endStateOffset.theta != 0) {
+    if(context.env.GetRawMotion(0, planner.GetPlan().GetAction(i)).endStateOffset.theta != 0) {
       hasTurn = true;
       break;
     }
@@ -512,7 +512,7 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
   // context.env.PrintPlan(planner.GetPlan());
   plannerSize = planner.GetPlan().Size();
   for(size_t i=0; i < plannerSize; ++i) {
-    ASSERT_EQ(context.env.GetRawMotionPrimitive(0, planner.GetPlan().GetAction(i)).endStateOffset.theta,0)
+    ASSERT_EQ(context.env.GetRawMotion(0, planner.GetPlan().GetAction(i)).endStateOffset.theta,0)
       <<"with low cost, should drive straight through obstacle, but plan has a turn!";
   }
 
@@ -532,7 +532,7 @@ GTEST_TEST(TestPlanner, PlanAroundBox_soft)
   
   plannerSize = planner.GetPlan().Size();
   for(size_t i=0; i < plannerSize; ++i) {
-    ASSERT_EQ(context.env.GetRawMotionPrimitive(0, planner.GetPlan().GetAction(i)).endStateOffset.theta,0)
+    ASSERT_EQ(context.env.GetRawMotion(0, planner.GetPlan().GetAction(i)).endStateOffset.theta,0)
       <<"with no obstacle, should drive straight, but plan has a turn!";
   }
 
@@ -704,7 +704,7 @@ GTEST_TEST(TestPlanner, ReplanHard)
   EXPECT_TRUE(context.env.PlanIsSafe(planner.GetPlan(), 0));
   EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
-  context.env.PrintPlan(planner.GetPlan());
+  context.env.GetActionSpace().PrintPlan(planner.GetPlan());
 
   context.env.AddObstacleAllThetas(Anki::RotatedRectangle(200.0, -10.0, 230.0, -10.0, 20.0));
 
@@ -730,17 +730,14 @@ GTEST_TEST(TestPlanner, ReplanHard)
   ASSERT_FALSE(CheckPlanAsPathIsSafe(context, planner.GetPlan(), &oldPath));
 
   std::cout<<"safe section of old plan:\n";
-  context.env.PrintPlan(oldPlan);
+  context.env.GetActionSpace().PrintPlan(oldPlan);
 
   ASSERT_GE(oldPlan.Size(), 1) << "should re-use at least one action from the old plan";
   ASSERT_EQ(oldPath.GetNumSegments(), 0) << "path is just one line and the whole thing should be invalid";
 
-  StateID currID = oldPlan.start_.GetStateID();
-  for(size_t i=0; i < oldPlan.Size(); ++i) {
-    ASSERT_LT(context.env.ApplyAction(oldPlan.GetAction(i), currID, false), 100.0) << "action penalty too high!";
-  }
+  StateID endID = context.env.GetActionSpace().GetPlanFinalState(oldPlan);
 
-  ASSERT_EQ(currID, GraphState(lastSafeState).GetStateID()) << "end of validOldPlan should match lastSafeState!";
+  ASSERT_EQ(endID, GraphState(lastSafeState).GetStateID()) << "end of validOldPlan should match lastSafeState!";
   
   // replan from last safe state
 
@@ -756,7 +753,7 @@ GTEST_TEST(TestPlanner, ReplanHard)
   EXPECT_TRUE(CheckPlanAsPathIsSafe(context, planner.GetPlan()));
 
   std::cout<<"final plan:\n";
-  context.env.PrintPlan(planner.GetPlan());
+  context.env.GetActionSpace().PrintPlan(planner.GetPlan());
 
 }
 
@@ -774,19 +771,19 @@ GTEST_TEST(TestPlanner, DISABLED_ClosestSegmentToPose_straight)
 
   planner._impl->_plan.start_ = GraphState(0, 0, 0);
 
-  ASSERT_EQ(context.env.GetRawMotionPrimitive(0, 0).endStateOffset.x, 1) << "invalid action";
-  ASSERT_EQ(context.env.GetRawMotionPrimitive(0, 0).endStateOffset.y, 0) << "invalid action";
+  ASSERT_EQ(context.env.GetRawMotion(0, 0).endStateOffset.x, 1) << "invalid action";
+  ASSERT_EQ(context.env.GetRawMotion(0, 0).endStateOffset.y, 0) << "invalid action";
 
   for(int i=0; i<10; ++i) {
     planner._impl->_plan.Push(0, 0.0);
   }
 
-  context.env.PrintPlan(planner._impl->_plan);
+  context.env.GetActionSpace().PrintPlan(planner._impl->_plan);
 
   // plan now goes form (0,0) to (10,0), any point in between should work
 
-  for(float distAlong = 0.0f; distAlong < 12.0 * context.env.GetResolution_mm(); distAlong += 0.7356 * context.env.GetResolution_mm()) {
-    size_t expected = (size_t)floor(distAlong / context.env.GetResolution_mm());    
+  for(float distAlong = 0.0f; distAlong < 12.0 * GraphState::resolution_mm_; distAlong += 0.7356 * GraphState::resolution_mm_) {
+    size_t expected = (size_t)floor(distAlong / GraphState::resolution_mm_);    
     if(expected >= 10)
       expected = 9;
 
@@ -823,7 +820,7 @@ void TestPlanner_ClosestSegmentToPoseHelper(xythetaPlannerContext& context, xyth
 {
   
   printf("manually created plan:\n");
-  context.env.PrintPlan(planner.GetPlan());
+  context.env.GetActionSpace().PrintPlan(planner.GetPlan());
 
   GraphState start = planner._impl->_plan.start_;
 
@@ -832,7 +829,7 @@ void TestPlanner_ClosestSegmentToPoseHelper(xythetaPlannerContext& context, xyth
 
   size_t planSize = planner._impl->_plan.Size();
   for(size_t planIdx = 0; planIdx < planSize; ++planIdx) {
-    const MotionPrimitive& prim(context.env.GetRawMotionPrimitive(curr.theta, planner._impl->_plan.GetAction(planIdx)));
+    const MotionPrimitive& prim(context.env.GetRawMotion(curr.theta, planner._impl->_plan.GetAction(planIdx)));
 
     float distFromPlan = 9999.0;
 
@@ -865,9 +862,7 @@ void TestPlanner_ClosestSegmentToPoseHelper(xythetaPlannerContext& context, xyth
 
     }
 
-    StateID currID(curr);
-    context.env.ApplyAction(planner._impl->_plan.GetAction(planIdx), currID, false);
-    curr = GraphState(currID);
+    context.env.GetActionSpace().ApplyAction(planner._impl->_plan.GetAction(planIdx), curr);
   }
 }
 
@@ -883,8 +878,8 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_straight2)
 
   planner._impl->_plan.start_ = GraphState(0, 0, 0);
 
-  ASSERT_EQ(context.env.GetRawMotionPrimitive(0, 0).endStateOffset.x, 1) << "invalid action";
-  ASSERT_EQ(context.env.GetRawMotionPrimitive(0, 0).endStateOffset.y, 0) << "invalid action";
+  ASSERT_EQ(context.env.GetRawMotion(0, 0).endStateOffset.x, 1) << "invalid action";
+  ASSERT_EQ(context.env.GetRawMotion(0, 0).endStateOffset.y, 0) << "invalid action";
 
   for(int i=0; i<10; ++i) {
     planner._impl->_plan.Push(0, 0.0);
@@ -1027,8 +1022,8 @@ GTEST_TEST(TestPlanner, ClosestSegmentToPose_initial)
 
     const float step = 5e-1;
     
-    for( float dx = -context.env.GetResolution_mm(); dx < context.env.GetResolution_mm(); dx += step ) {
-      for( float dy = -context.env.GetResolution_mm(); dy < context.env.GetResolution_mm(); dy += step ) {
+    for( float dx = -GraphState::resolution_mm_; dx < GraphState::resolution_mm_; dx += step ) {
+      for( float dy = -GraphState::resolution_mm_; dy < GraphState::resolution_mm_; dy += step ) {
         State_c s = context.env.State2State_c(start);
         s.x_mm += dx;
         s.y_mm += dy;
@@ -1088,10 +1083,10 @@ GTEST_TEST(TestPlanner, ZeroSizePathFilterBug)
   plan.Push(2);
   plan.Push(5);
   
-  context.env.PrintPlan(plan);
+  context.env.GetActionSpace().PrintPlan(plan);
 
   Path path;
-  context.env.AppendToPath(plan, path, 0);
+  context.env.GetActionSpace().AppendToPath(plan, path, 0);
 
   path.PrintPath();
 

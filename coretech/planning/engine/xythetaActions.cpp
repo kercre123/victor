@@ -35,6 +35,14 @@ namespace Planning {
 
 CONSOLE_VAR(f32, kXYTPlanner_PointTurnTolOverride_deg, "Planner", 2.0f);
 
+void xythetaPlan::Append(const xythetaPlan& other)
+{
+  if(_actionCostPairs.empty()) {
+    start_ = other.start_;
+  }
+  _actionCostPairs.insert(_actionCostPairs.end(), other._actionCostPairs.begin(), other._actionCostPairs.end() );
+}
+
 bool MotionPrimitive::IntermediatePosition::Import(const Json::Value& config)
 {
   try {
@@ -308,7 +316,7 @@ u8 MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
 }
 
 
-bool MotionPrimitive::Create(const Json::Value& config, GraphTheta startingAngle, const xythetaEnvironment& env)
+bool MotionPrimitive::Create(const Json::Value& config, GraphTheta startingAngle, const ActionSpace& env)
 {
   startTheta = startingAngle;
 
@@ -338,16 +346,15 @@ bool MotionPrimitive::Create(const Json::Value& config, GraphTheta startingAngle
     if(!intermediatePositions.empty()) {
       old = intermediatePositions.back().position;
 
-      float dist = env.GetDistanceBetween(old, s);
+      float dist = State_c::GetDistanceBetween(old, s);
 
       // TODO:(bn) use actual time / cost computation!
       float cost = dist;
 
       Radians deltaTheta = Radians(s.theta) - Radians(old.theta);
       cost += std::abs(deltaTheta.ToFloat()) *
-        env._robotParams.halfWheelBase_mm *
-        env._robotParams.oneOverMaxVelocity;
-
+        env.GetHalfWheelBase_mm() *
+        env.GetOneOverMaxVelocity();
       penalty = 1.0 / cost;
     }
 
@@ -359,12 +366,12 @@ bool MotionPrimitive::Create(const Json::Value& config, GraphTheta startingAngle
     return false;
   }
 
-  double linearSpeed = env._robotParams.maxVelocity_mmps;
-  double oneOverLinearSpeed = env._robotParams.oneOverMaxVelocity;
+  double linearSpeed = env.GetMaxVelocity_mmps();
+  double oneOverLinearSpeed = env.GetOneOverMaxVelocity();
   bool isReverse = env.GetActionType(id).IsReverseAction();
   if(isReverse) {
     linearSpeed = env.GetMaxReverseVelocity_mmps();
-    oneOverLinearSpeed = 1.0 / env._robotParams.maxReverseVelocity_mmps;
+    oneOverLinearSpeed = 1.0 / env.GetMaxReverseVelocity_mmps();
   }
 
   // Compute cost based on the action. Cost is time in seconds
@@ -398,7 +405,7 @@ bool MotionPrimitive::Create(const Json::Value& config, GraphTheta startingAngle
 
     // the radius of the circle that the outer wheel will follow
     double turningRadius = std::abs(config["arc"]["radius_mm"].asDouble());
-    double radius_mm = turningRadius + env._robotParams.halfWheelBase_mm;
+    double radius_mm = turningRadius + env.GetHalfWheelBase_mm();
 
     // the total time is the arclength of the outer wheel arc divided by the max outer wheel speed
     Cost arcTime = deltaTheta * radius_mm * oneOverLinearSpeed;
@@ -428,7 +435,7 @@ bool MotionPrimitive::Create(const Json::Value& config, GraphTheta startingAngle
     Radians startRads(env.LookupTheta(startTheta));
     double deltaTheta = startRads.angularDistance(env.LookupTheta(endStateOffset.theta), direction < 0);
 
-    Cost turnTime = std::abs(deltaTheta) * env._robotParams.halfWheelBase_mm * oneOverLinearSpeed;
+    Cost turnTime = std::abs(deltaTheta) * env.GetHalfWheelBase_mm() * oneOverLinearSpeed;
     cost += turnTime;
 
     float rotSpeed = deltaTheta / turnTime;
@@ -471,6 +478,287 @@ bool MotionPrimitive::Create(const Json::Value& config, GraphTheta startingAngle
   CacheBoundingBox();
 
   return true;
+}
+
+bool ActionSpace::ParseMotionPrims(const Json::Value& config, bool useDumpFormat)
+{
+  try {
+    float configResolution = 0.f;
+    unsigned int configAngles = 0;
+    if(!JsonTools::GetValueOptional(config, "resolution_mm", configResolution) ||
+       !JsonTools::GetValueOptional(config, "num_angles", configAngles)) {
+      printf("error: could not find key 'resolution_mm' or 'num_angles' in motion primitives\n");
+      JsonTools::PrintJsonCout(config, 1);
+      return false;
+    }
+
+    assert(GraphState::resolution_mm_ == configResolution);
+    assert(GraphState::numAngles_ == configAngles);
+
+    // parse through the action types
+    if(config["actions"].size() == 0) {
+      printf("empty or non-existant actions section! (old format, perhaps?)\n");
+      return false;
+    }
+
+    for(const auto & actionConfig : config["actions"]) {
+      ActionType at;
+      at.Import(actionConfig);
+      _actionTypes.push_back(at);
+    }
+
+    try {
+      for(const auto & angle : config["angle_definitions"]) {
+        _angles.push_back(angle.asFloat());
+      }
+    }
+    catch( const std::exception&  e ) {
+      PRINT_NAMED_ERROR("ParseMotionPrims.angle_definitions.Exception",
+                        "json exception: %s",
+                        e.what());
+      return false;
+    }
+
+    if(_angles.size() != configAngles) {
+      printf("ERROR: numAngles is %u, but we read %lu angle definitions\n",
+             configAngles,
+             (unsigned long)_angles.size());
+      return false;
+    }
+
+    // parse through each starting angle
+    if(config["angles"].size() != configAngles) {
+      printf("error: could not find key 'angles' in motion primitives\n");
+      JsonTools::PrintJsonCout(config, 1);
+      return false;
+    }
+
+    unsigned int numPrims = 0;
+
+    try {
+      for(unsigned int angle = 0; angle < configAngles; ++angle) {
+        Json::Value prims = config["angles"][angle]["prims"];
+        for(unsigned int i = 0; i < prims.size(); ++i) {
+          MotionPrimitive p;
+
+          if( useDumpFormat ) {
+            if( ! p.Import(prims[i]) ) {
+              return false;
+            }
+          }
+          else {
+            if(!p.Create(prims[i], angle, *this)) {
+              PRINT_NAMED_ERROR("ParseMotionPrims.CreateFormat.Mprim", "Failed to import motion primitive");
+              return false;
+            }
+          }
+
+          _forwardPrims[angle].push_back(p);
+          numPrims++;
+        }
+      }
+    }
+    catch( const std::exception&  e ) {
+      PRINT_NAMED_ERROR("ParseMotionPrims.anglesPrims.Exception",
+                        "json exception: %s",
+                        e.what());
+      return false;
+    }
+
+    PRINT_NAMED_INFO("ParseMotionPrims.Added", "Added %d motion primitives", numPrims);
+  }
+  catch( const std::exception&  e ) {
+    PRINT_NAMED_ERROR("ParseMotionPrims.Exception",
+                      "json exception: %s",
+                      e.what());
+    return false;
+  }
+  
+  PopulateReversePrims();
+  return true;
+}
+
+void ActionSpace::DumpMotionPrims(Util::JsonWriter& writer) const
+{
+  writer.AddEntry("resolution_mm", GraphState::resolution_mm_);
+  writer.AddEntry("num_angles", (int)GraphState::numAngles_);
+
+  writer.StartList("actions");
+  for(const auto& action : _actionTypes) {
+    writer.NextListItem();
+    action.Dump(writer);
+  }
+  writer.EndList();
+
+  writer.StartList("angle_definitions");
+  for(const auto& angleDef : _angles) {
+    writer.AddRawListEntry(angleDef);
+  }
+  writer.EndList();
+
+  writer.StartList("angles");
+  for(unsigned int angle = 0; angle < GraphState::numAngles_; ++angle) {
+    writer.NextListItem();
+    writer.StartList("prims");
+    for(const auto& prim : _forwardPrims[angle]) {
+      writer.NextListItem();
+      prim.Dump(writer);
+    }
+    writer.EndList();
+  }
+  writer.EndList();  
+
+  writer.StartGroup("robotParams");
+  _robotParams.Dump(writer);
+  writer.EndGroup(); 
+}
+
+void ActionSpace::PopulateReversePrims()
+{
+  // go through each motion primitive, and populate the corresponding reverse primitive
+  for(int startAngle = 0; startAngle < GraphState::numAngles_; ++startAngle) {
+    for(int actionID = 0; actionID < _forwardPrims[ startAngle ].size(); ++actionID) {
+      const MotionPrimitive& prim( _forwardPrims[ startAngle ][ actionID ] );
+      int endAngle = prim.endStateOffset.theta;
+
+      MotionPrimitive reversePrim(prim);
+      reversePrim.endStateOffset.theta = startAngle;
+      reversePrim.endStateOffset.x = -reversePrim.endStateOffset.x;
+      reversePrim.endStateOffset.y = -reversePrim.endStateOffset.y;
+
+      _reversePrims[endAngle].push_back( reversePrim );
+    }
+  }
+}
+
+void ActionSpace::PrintPlan(const xythetaPlan& plan) const
+{
+  State_c curr_c = State2State_c(plan.start_);
+
+  PRINT_STREAM_DEBUG("xythetaEnvironment.PrintPlan", "plan start: " << plan.start_);
+
+  for(size_t i=0; i<plan.Size(); ++i) {
+    PRINT_NAMED_DEBUG("xythetaEnvironment.PrintPlan", "%2lu: (%f, %f, %f [%d]) --> %s (penalty = %f)",
+           (unsigned long)i,
+           curr_c.x_mm, curr_c.y_mm, curr_c.theta, curr_c.GetGraphTheta(), 
+           _actionTypes[plan.GetAction(i)].GetName().c_str(),
+           plan.GetPenalty(i));
+    ApplyAction(plan.GetAction(i), curr_c);
+  }
+}
+
+void ActionSpace::ApplyAction(ActionID action, State_c& state) const
+{
+  const MotionPrimitive* prim = & GetForwardMotion(state.GetGraphTheta(), action);
+
+  state.x_mm += prim->endStateOffset.x;
+  state.y_mm += prim->endStateOffset.y;
+  state.theta = prim->endStateOffset.theta;
+}
+
+void ActionSpace::ApplyAction(ActionID action, GraphState& state) const
+{
+  const MotionPrimitive* prim = &GetForwardMotion(state.theta, action);
+
+  state.x += prim->endStateOffset.x;
+  state.y += prim->endStateOffset.y;
+  state.theta = prim->endStateOffset.theta;
+}
+
+void ActionSpace::ApplyAction(ActionID action, StateID& stateID) const
+{
+  GraphState state(stateID);
+  const MotionPrimitive* prim = &GetForwardMotion(state.theta, action);
+
+  state.x += prim->endStateOffset.x;
+  state.y += prim->endStateOffset.y;
+  state.theta = prim->endStateOffset.theta;
+
+  stateID = state.GetStateID();
+}
+
+GraphState ActionSpace::GetPlanFinalState(const xythetaPlan& plan) const
+{
+  StateID currID = plan.start_.GetStateID();
+
+  for(size_t i = 0; i < plan.Size(); i++) {
+    const ActionID& action = plan.GetAction(i);
+    ApplyAction(action, currID);
+  }
+
+  return GraphState(currID);
+}
+
+void ActionSpace::AppendToPath(xythetaPlan& plan, Path& path, int numActionsToSkip) const
+{
+  GraphState curr = plan.start_;
+
+  int actionsLeftToSkip = numActionsToSkip;
+
+  for (size_t i = 0; i < plan.Size(); ++i) {
+    const ActionID& actionID = plan.GetAction(i);
+    
+    if(curr.theta >= GraphState::numAngles_ || actionID >= GetNumActions()) {
+      printf("ERROR: can't look up prim for angle %d and action id %d\n", curr.theta, actionID);
+      break;
+    }
+
+    const MotionPrimitive* prim = &GetForwardMotion(curr.theta, actionID);
+
+    if( actionsLeftToSkip == 0 ) {
+      prim->AddSegmentsToPath(State2State_c(curr), path);
+    }
+    else {
+      actionsLeftToSkip--;
+    }
+
+    curr.x += prim->endStateOffset.x;
+    curr.y += prim->endStateOffset.y;
+    curr.theta = prim->endStateOffset.theta;
+  }
+}
+
+void ActionSpace::ConvertToXYPlan(const xythetaPlan& plan, std::vector<State_c>& continuousPlan) const
+{
+  continuousPlan.clear();
+
+  State_c curr_c = State2State_c(plan.start_);
+  GraphTheta currTheta = plan.start_.theta;
+  // TODO:(bn) replace theta with radians? maybe just cast it here
+
+  for(size_t i=0; i<plan.Size(); ++i) {
+    printf("curr = (%f, %f, %f [%d]) : %s\n", curr_c.x_mm, curr_c.y_mm, curr_c.theta, currTheta, 
+               _actionTypes[plan.GetAction(i)].GetName().c_str());
+
+    if(currTheta >= GraphState::numAngles_ || plan.GetAction(i) >= GetNumActions()) {
+      printf("ERROR: can't look up prim for angle %d and action id %d\n", currTheta, plan.GetAction(i));
+      break;
+    }
+    else {
+      const MotionPrimitive* prim = &GetForwardMotion(currTheta, plan.GetAction(i));
+      for(size_t j=0; j<prim->intermediatePositions.size(); ++j) {
+        float x = curr_c.x_mm + prim->intermediatePositions[j].position.x_mm;
+        float y = curr_c.y_mm + prim->intermediatePositions[j].position.y_mm;
+        float theta = prim->intermediatePositions[j].position.theta;
+
+        // printf("  (%+5f, %+5f, %+5f) -> (%+5f, %+5f, %+5f)\n",
+        //            prim->intermediatePositions[j].x_mm,
+        //            prim->intermediatePositions[j].y_mm,
+        //            prim->intermediatePositions[j].theta,
+        //            x,
+        //            y,
+        //            theta);
+
+        continuousPlan.push_back(State_c(x, y, theta));
+      }
+
+      if(!continuousPlan.empty())
+        curr_c = continuousPlan.back();
+      else
+        printf("ERROR: no intermediate positiong?!\n");
+      currTheta = prim->endStateOffset.theta;
+    }
+  }
 }
 
 } // Planning
