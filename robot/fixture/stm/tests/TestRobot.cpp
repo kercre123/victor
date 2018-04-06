@@ -385,24 +385,13 @@ void EmrUpdate(void)
 //-----------------------------------------------------------------------------
 
 //read battery voltage
-int robot_get_battVolt100x(void)
+int robot_get_batt_mv(void)
 {
-  //XXX: hook this up to a real battery command
-  #define VBAT_SCALE(v) ((v) = (v)<0 ? -1 : (v)>>16)
+  int raw = cmdRobotGet(1, CCC_SENSOR_BATTERY)[0].bat.raw;
+  int vBatMv = BAT_RAW_TO_MV(raw);
   
-  ConsolePrintf(">vbat (simulated)\n");
-  char* rsp = (char*)"vbat 0 65536 655360 6553600 3276800"; //cmdSend(CMD_IO_CONTACTS, "vbat");
-  //int status = cmdStatus();
-  
-  //convert raw values to 100x voltage [centivolts]
-  int vBat100x     = cmdParseInt32( cmdGetArg(rsp,2) ); VBAT_SCALE(vBat100x);
-  int vBatFilt100x = cmdParseInt32( cmdGetArg(rsp,3) ); VBAT_SCALE(vBatFilt100x);
-  int vExt100x     = cmdParseInt32( cmdGetArg(rsp,4) ); VBAT_SCALE(vExt100x);
-  int vExtFilt100x = cmdParseInt32( cmdGetArg(rsp,5) ); VBAT_SCALE(vExtFilt100x);
-  ConsolePrintf("vBat,%03d,%03d,vExt,%03d,%03d\r\n", vBat100x, vBatFilt100x, vExt100x, vExtFilt100x );
-  
-  //return vBatFilt100x; //return filtered vBat
-  return -1;
+  ConsolePrintf("vbat = %u.%03uV (%i)\n", vBatMv/1000, vBatMv%1000, raw);
+  return vBatMv;
 }
 
 enum {
@@ -476,17 +465,17 @@ static inline int charge1_(uint16_t timeout_s, uint16_t i_done_ma, bool dbgPrint
 }
 
 //recharge cozmo. parameterized conditions: time, battery voltage, current threshold
-int m_Recharge( uint16_t max_charge_time_s, uint16_t vbat_limit_v100x, uint16_t i_done_ma, bool dbgPrint )
+int m_Recharge( uint16_t max_charge_time_s, uint16_t bat_limit_mv, uint16_t i_done_ma, bool dbgPrint )
 {
   const u8 BAT_CHECK_INTERVAL_S = 90; //interrupt charging this often to test battery level
-  ConsolePrintf("recharge,%dcV,%dmA,%ds\r\n", vbat_limit_v100x, i_done_ma, max_charge_time_s );
+  ConsolePrintf("recharge,%dcV,%dmA,%ds\r\n", bat_limit_mv, i_done_ma, max_charge_time_s );
   
   Contacts::setModeRx();
   Timer::delayMs(500); //let battery voltage settle
-  int battVolt100x = robot_get_battVolt100x(); //get initial battery level
+  int batt_mv = robot_get_batt_mv(); //get initial battery level
   
   uint32_t Tstart = Timer::get();
-  while( vbat_limit_v100x == 0 || battVolt100x < vbat_limit_v100x )
+  while( bat_limit_mv == 0 || batt_mv < bat_limit_mv )
   {
     if( max_charge_time_s > 0 && Timer::elapsedUs(Tstart) >= ((uint32_t)max_charge_time_s*1000*1000) )
       return RECHARGE_STATUS_TIMEOUT;
@@ -496,7 +485,7 @@ int m_Recharge( uint16_t max_charge_time_s, uint16_t vbat_limit_v100x, uint16_t 
     ConsolePrintf("total charge time: %ds\n", Timer::elapsedUs(Tstart)/1000000 );
     Contacts::setModeRx();
     Timer::delayMs(500); //let battery voltage settle
-    battVolt100x = robot_get_battVolt100x();
+    batt_mv = robot_get_batt_mv();
     
     //charge loop detected robot removal or charge completion?
     if( chgStat != RECHARGE_STATUS_TIMEOUT )
@@ -509,13 +498,13 @@ int m_Recharge( uint16_t max_charge_time_s, uint16_t vbat_limit_v100x, uint16_t 
 void Recharge(void)
 {
   const u16 BAT_MAX_CHARGE_TIME_S = 25*60;  //max amount of time to charge
-  const u16 VBAT_CHARGE_LIMIT = 390;        //Voltage x100
+  const u16 VBAT_CHARGE_LIMIT_MV = 3900;
   const u16 BAT_FULL_I_THRESH_MA = 200;     //current threshold for charging complete (experimental)
   int status;
   
   bool dbgPrint = g_fixmode == FIXMODE_RECHARGE0 ? 1 : 0;
   
-  //Notes from test measurements ->
+  //Notes from test measurements (Cozmo) ->
   //conditions: 90s charge intervals, interrupted to measure vBat)
   //full charge (3.44V-4.15V) 1880s (31.3min)
   //typical charge (3.65V-3.92V) 990s (16.5min)
@@ -523,7 +512,7 @@ void Recharge(void)
   if( g_fixmode == FIXMODE_RECHARGE0 )
     status = m_Recharge( 2*BAT_MAX_CHARGE_TIME_S, 0, BAT_FULL_I_THRESH_MA, dbgPrint ); //charge to full battery
   else
-    status = m_Recharge( BAT_MAX_CHARGE_TIME_S, VBAT_CHARGE_LIMIT, 0, dbgPrint ); //charge to specified voltage
+    status = m_Recharge( BAT_MAX_CHARGE_TIME_S, VBAT_CHARGE_LIMIT_MV, 0, dbgPrint ); //charge to specified voltage
   
   if( status == RECHARGE_STATUS_TIMEOUT )
     throw ERROR_TIMEOUT;
@@ -532,24 +521,22 @@ void Recharge(void)
     cmdSend(CMD_IO_CONTACTS, "powerdown", 50, CMD_OPTS_DEFAULT & ~(CMD_OPTS_LOG_ERRORS | CMD_OPTS_EXCEPTION_EN));
 }
 
-extern void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x );
+extern void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv );
 static void ChargeTest(void) {
-  RobotChargeTest( 425/*mA*/, 420/*cV*/ );
+  RobotChargeTest( 425, 4200 );
 }
 
 //Test charging circuit by verifying current draw
 //@param i_done_ma - average current (min) to pass this test
-//@param vbat_overvolt_v100x - battery too full voltage level. special failure handling above this threshold.
-void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
+//@param bat_overvolt_mv - battery too full voltage level. special failure handling above this threshold.
+void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
 {
   #define CHARGE_TEST_DEBUG(x)    x
   const int NUM_SAMPLES = 16;
   
   Contacts::setModeRx(); //switch to comm mode
   Timer::delayMs(500); //let battery voltage settle
-  int battVolt100x = robot_get_battVolt100x(); //get initial battery level
-  
-  battVolt100x = 360; //XXX battery command doesn't work yet
+  int batt_mv = robot_get_batt_mv(); //get initial battery level
   
   //Turn on charging power
   Board::powerOn(PWR_VEXT,0);
@@ -610,15 +597,19 @@ void RobotChargeTest( u16 i_done_ma, u16 vbat_overvolt_v100x )
     }
   }
   
+  Contacts::setModeRx(); //switch to comm mode
+  Timer::delayMs(500); //let battery voltage settle
+  batt_mv = robot_get_batt_mv(); //get final battery level
+  
   ConsolePrintf("charge-current-ma,%d,sample-cnt,%d\r\n", avg, avgCnt);
   ConsolePrintf("charge-current-dbg,avgMax,%d,%d,iMax,%d,%d\r\n", avgMax, avgMaxTime, iMax, iMaxTime);
   if( avgCnt >= NUM_SAMPLES && avg >= i_done_ma )
     return; //OK
   
-  if( battVolt100x >= vbat_overvolt_v100x ) {
+  if( batt_mv >= bat_overvolt_mv ) {
     //const int BURN_TIME_S = 120;  //time to hit the gym and burn off a few pounds
     //ConsolePrintf("power-on,%ds\r\n", BURN_TIME_S);
-    //robot_get_battVolt100x(BURN_TIME_S,BURN_TIME_S); //reset power-on timer and set face to info screen for the duration
+    //robot_get_batt_mv(BURN_TIME_S,BURN_TIME_S); //reset power-on timer and set face to info screen for the duration
     throw ERROR_BAT_OVERVOLT; //error prompts operator to put robot aside for a bit
   }
   
