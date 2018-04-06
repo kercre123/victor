@@ -291,7 +291,7 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
     case ConnectionStatus::START_PAIRING:
     {
       FaceInfoScreenManager::getInstance()->EnablePairingScreen(true);
-   
+
       // Throttling square is annoying when trying to inspect the display so disable
       NativeAnkiUtilConsoleSetValueWithString("DisplayThermalThrottling", "false");
       DrawStartPairingScreen(animStreamer);
