@@ -88,12 +88,6 @@ namespace Anki
       // and updating robot's and objects' poses from them.
       Result UpdateObservedMarkers(const std::list<Vision::ObservedMarker>& observedMarkers);
       
-      // Adds a proximity obstacle (like random objects detected in front of the robot with the IR sensor) at the given pose.
-      Result AddProxObstacle(const Pose3d& p);
-      
-      // Adds a cliff (detected with cliff detector)
-      Result AddCliff(const Pose3d& p);
-      
       // Adds a collision-based obstacle (for when we think we bumped into something)
       Result AddCollisionObstacle(const Pose3d& p);
       

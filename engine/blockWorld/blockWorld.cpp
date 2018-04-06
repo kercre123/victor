@@ -2293,20 +2293,6 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     BroadcastLocatedObjectStates();
   }
   
-  Result BlockWorld::AddCliff(const Pose3d& p)
-  {
-    // at the moment we treat them as markerless objects
-    const Result ret = AddMarkerlessObject(p, ObjectType::CliffDetection);
-    return ret;
-  }
-
-  Result BlockWorld::AddProxObstacle(const Pose3d& p)
-  {
-    // add markerless object
-    const Result ret = AddMarkerlessObject(p, ObjectType::ProxObstacle);
-    return ret;
-  }
-  
   Result BlockWorld::AddCollisionObstacle(const Pose3d& p)
   {
     const Result ret = AddMarkerlessObject(p, ObjectType::CollisionObstacle);

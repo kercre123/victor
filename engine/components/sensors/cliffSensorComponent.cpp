@@ -15,6 +15,9 @@
 
 #include "engine/components/movementComponent.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/navMap/mapComponent.h"
+#include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
+#include "engine/markerlessObject.h"
 #include "engine/robot.h"
 #include "engine/robotStateHistory.h"
 
@@ -25,6 +28,8 @@
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
+
+#include "coretech/common/engine/math/polygon_impl.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -291,6 +296,17 @@ bool CliffSensorComponent::ComputeCliffPose(const CliffEvent& cliffEvent, Pose3d
     return false;
   }
   
+  // update navmap
+  Point2f cliffSize = MarkerlessObject(ObjectType::CliffDetection).GetSize();
+  Quad2f cliffquad {
+    { +cliffSize.x(), +cliffSize.y() * .5f },  // up L
+    { 0.f,            +cliffSize.y() * .5f },  // lo L
+    { +cliffSize.x(), -cliffSize.y() * .5f },  // up R
+    { 0.f,            -cliffSize.y() * .5f }}; // lo R
+  ((Pose2d) cliffPose).ApplyTo(cliffquad, cliffquad);
+
+  _robot->GetMapComponent().InsertData(Poly2f(cliffquad), MemoryMapData_Cliff(cliffPose, cliffEvent.timestamp));
+
   return true;
 }
 

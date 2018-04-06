@@ -554,8 +554,6 @@ void RobotToEngineImplMessaging::HandleCliffEvent(const AnkiEvent<RobotInterface
   if (cliffEvent.detectedFlags != 0) {
     Pose3d cliffPose;
     if (robot->GetCliffSensorComponent().ComputeCliffPose(cliffEvent, cliffPose)) {
-      // Add cliff obstacle
-      robot->GetBlockWorld().AddCliff(cliffPose);
       LOG_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %.3f,%.3f. DetectedFlags = 0x%02X",
                cliffPose.GetTranslation().x(), cliffPose.GetTranslation().y(), cliffEvent.detectedFlags);
     } else {
