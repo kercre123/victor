@@ -25,11 +25,14 @@ namespace Cozmo {
   
 ProceduralFace* ProceduralFace::_resetData = nullptr;
 ProceduralFace::Value ProceduralFace::_hue = DefaultHue;
+ProceduralFace::Value ProceduralFace::_saturation = DefaultSaturation;
 
 namespace {
 # define CONSOLE_GROUP "ProceduralFace"
   
+#if PROCEDURALFACE_SCANLINE_FEATURE
   CONSOLE_VAR_RANGED(ProceduralFace::Value, kProcFace_DefaultScanlineOpacity, CONSOLE_GROUP, 1.f, 0.f, 1.f);
+#endif
   CONSOLE_VAR_RANGED(s32, kProcFace_NominalEyeSpacing, CONSOLE_GROUP, 92, -FACE_DISPLAY_WIDTH, FACE_DISPLAY_WIDTH);  // V1: 64;
   
 # undef CONSOLE_GROUP
@@ -58,15 +61,13 @@ namespace {
     EyeParamCombineMethod combineMethod;
     struct { ProceduralFace::Value min; ProceduralFace::Value max; } clipLimits;
   };
-  
-  constexpr auto INF = std::numeric_limits<ProceduralFace::Value>::max();
-  
+
   constexpr static const Util::FullEnumToValueArrayChecker::FullEnumToValueArray<ProceduralFace::Parameter, EyeParamInfo,
   ProceduralFace::Parameter::NumParameters> kEyeParamInfoLUT {
     {ProceduralFace::Parameter::EyeCenterX,        { false, false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-FACE_DISPLAY_WIDTH/2, FACE_DISPLAY_WIDTH/2 }    }     },
     {ProceduralFace::Parameter::EyeCenterY,        { false, false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-FACE_DISPLAY_HEIGHT/2,FACE_DISPLAY_HEIGHT/2}    }     },
-    {ProceduralFace::Parameter::EyeScaleX,         { false, false,  1.f,  0.f, EyeParamCombineMethod::Multiply, {0.f, INF}    }     },
-    {ProceduralFace::Parameter::EyeScaleY,         { false, false,  1.f,  0.f, EyeParamCombineMethod::Multiply, {0.f, INF}    }     },
+    {ProceduralFace::Parameter::EyeScaleX,         { false, false,  1.f,  0.f, EyeParamCombineMethod::Multiply, {0.f, 10.f}    }     },
+    {ProceduralFace::Parameter::EyeScaleY,         { false, false,  1.f,  0.f, EyeParamCombineMethod::Multiply, {0.f, 10.f}    }     },
     {ProceduralFace::Parameter::EyeAngle,          { true,  false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-90,  90}    }     },
     {ProceduralFace::Parameter::LowerInnerRadiusX, { false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
     {ProceduralFace::Parameter::LowerInnerRadiusY, { false, false,  0.f,  0.f, EyeParamCombineMethod::None,     {0.f, 1.f}    }     },
@@ -113,6 +114,7 @@ void ProceduralFace::Reset()
 ProceduralFace::ProceduralFace()
 {
   static Anki::Util::ConsoleVar<Value> cvar_hue( _hue, "ProcFace_Hue", "ProceduralFace", 0.f, 1.f, false );
+  static Anki::Util::ConsoleVar<Value> cvar_saturation( _saturation, "ProcFace_Saturation", "ProceduralFace", 0.f, 1.f, false );
 
   for (std::underlying_type<Parameter>::type iParam=0; iParam < Util::EnumToUnderlying(Parameter::NumParameters); ++iParam)
   {
@@ -120,7 +122,9 @@ ProceduralFace::ProceduralFace()
   }
   _eyeParams[WhichEye::Right] = _eyeParams[WhichEye::Left];
   
+#if PROCEDURALFACE_SCANLINE_FEATURE
   _scanlineOpacity = kProcFace_DefaultScanlineOpacity;
+#endif
 }
   
 ProceduralFace::ProceduralFace(const ProceduralFace& other)
@@ -128,7 +132,9 @@ ProceduralFace::ProceduralFace(const ProceduralFace& other)
 , _faceAngle_deg(other._faceAngle_deg)
 , _faceScale(other._faceScale)
 , _faceCenter(other._faceCenter)
+#if PROCEDURALFACE_SCANLINE_FEATURE
 , _scanlineOpacity(other._scanlineOpacity)
+#endif
 {
   if(nullptr != other._scanlineDistorter)
   {
@@ -153,9 +159,11 @@ bool ProceduralFace::operator==(const ProceduralFace& other) const
   if (_faceCenter != other._faceCenter) {
     return false;
   }
+#if PROCEDURALFACE_SCANLINE_FEATURE
   if (_scanlineOpacity != other._scanlineOpacity) {
     return false;
   }
+#endif
   return true;
 }
 
@@ -182,7 +190,9 @@ ProceduralFace& ProceduralFace::operator=(const ProceduralFace &other)
     _faceAngle_deg = other._faceAngle_deg;
     _faceScale     = other._faceScale;
     _faceCenter    = other._faceCenter;
+#if PROCEDURALFACE_SCANLINE_FEATURE
     _scanlineOpacity = other._scanlineOpacity;
+#endif
 
     if(nullptr != other._scanlineDistorter)
     {
@@ -218,26 +228,38 @@ void ProceduralFace::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& e
   // TODO: replace with a single version of assets, same version of code and assets,
   //       that is pushed with atomic releases
   // https://ankiinc.atlassian.net/browse/VIC-1964
-  
+
   const size_t N = static_cast<size_t>(Parameter::NumParameters);
-  const size_t N_old_old = N - 6; // Before Saturation, Lightness, Glow, and HotSpotCenterX/Y were added
-  const size_t N_old = N - 1; // Before Eye Glow Lightness
-  if(eyeArray.size() != N && eyeArray.size() != N_old_old && eyeArray.size() != N_old)
+  const size_t N_without_hotspots = N - 6; // Before Saturation, Lightness, Glow, and HotSpotCenterX/Y were added
+  const size_t N_without_glowlightness = N - 1; // Before Eye Glow Lightness
+  if(eyeArray.size() != N && eyeArray.size() != N_without_hotspots && eyeArray.size() != N_without_glowlightness)
   {
     PRINT_NAMED_WARNING("ProceduralFace.SetEyeArrayHelper.WrongNumParams",
                         "Unexpected number of parameters for %s array (%lu vs. %lu or %lu or %lu)",
-                        eyeStr, (unsigned long)eyeArray.size(), (unsigned long)N, (unsigned long)N_old_old, (unsigned long)N_old);
+                        eyeStr, (unsigned long)eyeArray.size(), (unsigned long)N, (unsigned long)N_without_hotspots, (unsigned long)N_without_glowlightness);
   }
-  
   for(s32 i=0; i<std::min(eyeArray.size(), N); ++i)
   {
     SetParameter(eye, static_cast<ProceduralFace::Parameter>(i), eyeArray[i]);
   }
-  
-  // Set defaults for parameters that are unset because keyframe is old old format
-  if (eyeArray.size() == N_old_old || eyeArray.size() == N_old)
+
+  if (eyeArray.size() <= N_without_hotspots)
   {
-    for (std::underlying_type<Parameter>::type iParam=0; iParam < Util::EnumToUnderlying(Parameter::NumParameters); ++iParam)
+    // upgrade from before hotspots to with hotspots (as default values) but not glowsize
+    for (std::underlying_type<Parameter>::type iParam=eyeArray.size(); iParam < N_without_glowlightness; ++iParam)
+    {
+      const auto& paramInfo = kEyeParamInfoLUT[iParam].Value();
+      if(paramInfo.canBeUnset)
+      {
+        _eyeParams[WhichEye::Left][iParam]  = paramInfo.defaultValueIfCombiningWithUnset;
+        _eyeParams[WhichEye::Right][iParam] = paramInfo.defaultValueIfCombiningWithUnset;
+      }
+    }
+  }
+  if (eyeArray.size() <= N_without_glowlightness)
+  {
+    // upgrade from with hotspots to with glowsize (as default values)
+    for (std::underlying_type<Parameter>::type iParam=N_without_glowlightness; iParam < N; ++iParam)
     {
       const auto& paramInfo = kEyeParamInfoLUT[iParam].Value();
       if(paramInfo.canBeUnset)
@@ -580,8 +602,10 @@ ProceduralFace& ProceduralFace::Combine(const ProceduralFace& otherFace)
   _faceScale     *= otherFace.GetFaceScale();
   _faceCenter    += otherFace.GetFacePosition();
 
+#if PROCEDURALFACE_SCANLINE_FEATURE
   _scanlineOpacity = LinearBlendHelper(_scanlineOpacity, otherFace._scanlineOpacity, 0.5f);
-  
+#endif
+
   const bool thisHasScanlineDistortion  = (nullptr != _scanlineDistorter);
   const bool otherHasScanlineDistortion = (nullptr != otherFace._scanlineDistorter);
   
@@ -676,11 +700,11 @@ void ProceduralFace::RegisterFaceWithConsoleVars() {
 
    new Util::ConsoleVar<float>(_faceScale[0],
                                "kProcFace_ScaleX", "ProceduralFace",
-                               0.f, 10.f, true);
+                               0.f, 4.f, true);
 
    new Util::ConsoleVar<float>(_faceScale[1],
                                "kProcFace_ScaleY", "ProceduralFace",
-                               0.f, 10.f,
+                               0.f, 4.f,
                                true);
 
    new Util::ConsoleVar<float>(_faceCenter[0],
@@ -691,12 +715,26 @@ void ProceduralFace::RegisterFaceWithConsoleVars() {
                                "kProcFace_CenterY", "ProceduralFace",
                                -100.f, 100.f, true);
 
+#if PROCEDURALFACE_SCANLINE_FEATURE
    new Util::ConsoleVar<float>(_scanlineOpacity,
                                "kProcFace_ScanlineOpacity", "ProceduralFace",
                                0.f, 1.f, true);
+#endif
 
   for(auto whichEye : {WhichEye::Left, WhichEye::Right}) {
     for (std::underlying_type<Parameter>::type iParam=0; iParam < Util::EnumToUnderlying(Parameter::NumParameters); ++iParam) {
+      if(!PROCEDURALFACE_GLOW_FEATURE) {
+        if (iParam == (int)Parameter::GlowSize ||
+            iParam == (int)Parameter::GlowLightness) {
+          continue;
+        }
+      }
+      if(!PROCEDURALFACE_ANIMATED_SATURATION) {
+        if (iParam == (int)Parameter::Saturation) {
+          continue;
+        }
+      }
+
       std::string eyeName = (whichEye == 0 ? "Left" : "Right");
       std::string param = eyeName+"_"+EnumToString(kEyeParamInfoLUT[iParam].EnumValue());
       new Util::ConsoleVar<float>(_eyeParams[whichEye][iParam],

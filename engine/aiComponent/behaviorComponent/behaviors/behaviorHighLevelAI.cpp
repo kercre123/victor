@@ -58,9 +58,9 @@ BehaviorHighLevelAI::BehaviorHighLevelAI(const Json::Value& config)
   _params.minFaceTimeToAllowSleep_s = JsonTools::ParseFloat(config, kMinFaceTimeToAllowSleepKey, kDebugName);
   _params.maxFaceDistanceToSocialize_mm = JsonTools::ParseFloat(config, kMaxFaceDistanceToSocializeKey, kDebugName);
   
-  MakeMemberTunable( _params.socializeKnownFaceCooldown_s, kSocializeKnownFaceCooldownKey );
-  MakeMemberTunable( _params.playWithCubeOnChargerCooldown_s, kPlayWithCubeOnChargerCooldownKey );
-  MakeMemberTunable( _params.playWithCubeCooldown_s, kPlayWithCubeCooldownKey );
+  MakeMemberTunable( _params.socializeKnownFaceCooldown_s, kSocializeKnownFaceCooldownKey, kDebugName );
+  MakeMemberTunable( _params.playWithCubeOnChargerCooldown_s, kPlayWithCubeOnChargerCooldownKey, kDebugName );
+  MakeMemberTunable( _params.playWithCubeCooldown_s, kPlayWithCubeCooldownKey, kDebugName );
   
   AddConsoleVarTransitions( "MoveToState", kDebugName );
 }

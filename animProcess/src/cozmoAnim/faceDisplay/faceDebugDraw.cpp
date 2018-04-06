@@ -173,7 +173,7 @@ void FaceDebugDraw::DrawConfidenceClock(
         directionValues.append(confidence);
       }
 
-      const std::string moduleName = "micdata";
+      static const std::string moduleName = "micdata";
       _webService->SendToWebViz( moduleName, webData );
     }
   }
@@ -576,11 +576,11 @@ void FaceDebugDraw::DrawTextOnScreen(const std::vector<std::string>& textVec,
 
 void FaceDebugDraw::DrawScratch()
 {
-  const std::string kDebugCount = std::to_string(Util::EnumToUnderlying(DrawState::Count));
-  std::string text = std::to_string(Util::EnumToUnderlying(_drawState)) + "/" + kDebugCount;
+  static const std::string kDebugCount = std::to_string(Util::EnumToUnderlying(DrawState::Count) - 1);
+  const std::string text = std::to_string(Util::EnumToUnderlying(_drawState)) + "/" + kDebugCount;
 
   const Point2f textLoc = {static_cast<float>(FACE_DISPLAY_WIDTH - (text.length()*16)), 10};
-  const f32 textScale = 0.5f;
+  static const f32 textScale = 0.5f;
   _scratchDrawingImg->DrawText(textLoc,
                                text,
                                NamedColors::WHITE,

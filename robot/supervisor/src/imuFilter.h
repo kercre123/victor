@@ -63,7 +63,7 @@ namespace Anki {
       
       // Whether or not we have finished accumulating enough readings of the gyro offset
       // while the robot is not moving.
-      // SyncTimeAck is blocked until this completes!
+      // SyncRobotAck is blocked until this completes!
       bool IsBiasFilterComplete();
 
       // Get pointer to array of gyro biases

@@ -1,16 +1,87 @@
 {
   "emotionEvents": [
     {
-      "name": "ReactToUnexpectedMovement",
+      "name": "ANTICIPATED_ReactToUnexpectedMovement",
       "emotionAffectors": [
          {
             "emotionType": "Confident",
             "value": -0.2
          },
          {
+             "emotionType" : "Happy",
+             "value" : -0.1
+         },
+         {
              "emotionType" : "Stimulated",
-             "value" : 0.1
+             "value" : 0.05
          }
+      ],
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 0.0
+          },
+          {
+            "x" : 0.1,
+            "y" : 0.0
+          },
+          {
+            "x" : 0.1,
+            "y" : 1.0
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReactToMotion",
+      "emotionAffectors": [
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.1
+        }
+      ],
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 0.0
+          },
+          {
+            "x" : 60.0,
+            "y" : 0.1
+          },
+          {
+            "x" : 120.0,
+            "y" : 1.0
+          }
+        ]
+      }
+    },
+    {
+      "name": "ReactToSoundAsleep",
+      "emotionAffectors": [
+        {
+          "emotionType" : "Happy",
+          "value" : -0.2
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.5
+        }
+      ]
+    },
+    {
+      "name": "ReactToSoundAwake",
+      "emotionAffectors": [
+        {
+          "emotionType" : "Happy",
+          "value" : -0.1
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.05
+        }
       ]
     }
   ]

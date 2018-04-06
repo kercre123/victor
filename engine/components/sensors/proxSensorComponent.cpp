@@ -10,6 +10,7 @@
  *
  **/
 
+#include "engine/components/carryingComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 
 #include "engine/robot.h"
@@ -27,6 +28,25 @@ namespace Cozmo {
   
 namespace {
   const std::string kLogDirName = "proxSensor";
+
+  // The minimum number of consecutive tics that lift must be out of 
+  // FOV in order to actually be considered out of FOV. 
+  // This is to account for apparent timing delay between the sensor 
+  // and lift position readings.
+  // NOTE: A tic in this case is one RobotState msg (i.e. 30ms)
+  const u8 kMinNumConsecTicsLiftOutOfFOV = 3;
+
+  // Between these min/max lift heights, the lift interferes with the prox sensor's beam.
+  const f32 kLiftHeightOccludingProxSensorMin = 34.f;
+  const f32 kLiftHeightOccludingProxSensorMax = 56.f;
+
+  // When carrying a cube, the sensor is occluded most of the time 
+  // except when lift is above a certain height
+  const f32 kLiftHeightOccludingProxSensorWithCubeMin = 0;
+  const f32 kLiftHeightOccludingProxSensorWithCubeMax = LIFT_HEIGHT_HIGHDOCK;
+
+  const f32 kMinPitch = DEG_TO_RAD(-8);
+  const f32 kMaxPitch = DEG_TO_RAD(8);
 
   const Vec3f kProxSensorPositionVec_mm{kProxSensorPosition_mm[0], kProxSensorPosition_mm[1], kProxSensorPosition_mm[2]};
 } // end anonymous namespace
@@ -60,8 +80,9 @@ void ProxSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
   if (kProxSensorEnabled)
   {
     _lastMsgTimestamp = msg.timestamp;
-    _latestData = msg.proxData;
-    
+    _latestDataRaw = msg.proxData;
+
+    UpdateReadingValidity();
     UpdateNavMap();
   }
 }
@@ -75,7 +96,7 @@ std::string ProxSensorComponent::GetLogHeader()
 
 std::string ProxSensorComponent::GetLogRow()
 {
-  const auto& d = _latestData;
+  const auto& d = _latestDataRaw;
   std::stringstream ss;
   ss << _lastMsgTimestamp  << ", ";
   ss << d.distance_mm      << ", ";
@@ -90,18 +111,9 @@ std::string ProxSensorComponent::GetLogRow()
 
 bool ProxSensorComponent::GetLatestDistance_mm(u16& distance_mm) const
 {
-  const bool readingValid = IsLatestReadingValid();
-  if (readingValid) {
-    distance_mm = _latestData.distance_mm;
-  }
-  return readingValid;
+  distance_mm = _latestDataRaw.distance_mm;
+  return IsLatestReadingValid();
 }
-  
-bool ProxSensorComponent::IsLatestReadingValid() const
-{
-  return IsSensorReadingValid(_latestData);
-}
-
 
 Pose3d ProxSensorComponent::GetPose() const
 {
@@ -144,47 +156,48 @@ Result ProxSensorComponent::IsInFOV(const Pose3d& inPose, bool& isInFOV) const
   return Result::RESULT_OK;
 }
   
-
-bool ProxSensorComponent::IsLiftInFOV() const
+void ProxSensorComponent::UpdateReadingValidity() 
 {
-  // TODO: Verify with physical robots that this is accurate.
-  
   bool isInFOV = false;
   if (_robot->IsLiftCalibrated()) {
-    // If the current lift height is between LIFT_HEIGHT_OCCLUDING_PROX_SENSOR_MIN,
-    // and LIFT_HEIGHT_OCCLUDING_PROX_SENSOR_MAX then at least part of the lift is
-    // within view of the sensor.
+    // Check if lift or carried object may be occluding the sensor
+    const bool isCarryingObject  = _robot->GetCarryingComponent().IsCarryingObject();
     isInFOV = Util::InRange(_robot->GetLiftHeight(),
-                            LIFT_HEIGHT_OCCLUDING_PROX_SENSOR_MIN,
-                            LIFT_HEIGHT_OCCLUDING_PROX_SENSOR_MAX);
+                            isCarryingObject ? kLiftHeightOccludingProxSensorWithCubeMin : kLiftHeightOccludingProxSensorMin,
+                            isCarryingObject ? kLiftHeightOccludingProxSensorWithCubeMax : kLiftHeightOccludingProxSensorMax);
+    
+    // Make sure lift is out of field of view for the minimum number of 
+    // tics to actually be considered out of field of view
+    if (!isInFOV) {
+      ++_numTicsLiftOutOfFOV;
+      if (_numTicsLiftOutOfFOV < kMinNumConsecTicsLiftOutOfFOV) {
+        isInFOV = true;
+      } else {
+        _numTicsLiftOutOfFOV = kMinNumConsecTicsLiftOutOfFOV;
+      }
+    } else {
+      _numTicsLiftOutOfFOV = 0;
+    }
+
   } else {
-    PRINT_NAMED_WARNING("ProxSensorComponent.IsLiftInFOV.LiftNotCalibrated",
+    PRINT_NAMED_WARNING("ProxSensorComponent.UpdateReadingValidity.LiftNotCalibrated",
                         "Lift is not calibrated! Considering it not in FOV.");
   }
-  
-  return isInFOV;
-}
+  _latestData.isLiftInFOV = isInFOV;
 
+  // Check if robot is too pitched for reading to be valid
+  const f32 pitchAngle = _robot->GetPitchAngle().ToFloat();
+  _latestData.isTooPitched = pitchAngle < kMinPitch || pitchAngle > kMaxPitch;
 
-bool ProxSensorComponent::IsSensorReadingValid(const ProxSensorData& proxData) const
-{
-  // Check if the reading is within the valid range
-  const u16 proxDist_mm = proxData.distance_mm;
-  const bool inValidRange = Util::InRange(proxDist_mm,
-                                          kMinObsThreshold_mm,
-                                          kMaxObsThreshold_mm);
-  
-  // Check if the lift is in the field of view of the sensor
-  const bool liftBlocking = IsLiftInFOV();
+  // Check if the reading is within the valid range  
+  _latestData.distance_mm = _latestDataRaw.distance_mm;
+  _latestData.isInValidRange = Util::InRange(_latestData.distance_mm,
+                                             kMinObsThreshold_mm,
+                                             kMaxObsThreshold_mm);
   
   // Check that the signal strength is high enough
-  const float quality = GetSignalQuality(proxData);
-  const bool sigQualityOk = quality > kMinQualityThreshold;
-  
-  const bool sensorReadingValid = inValidRange &&
-                                  !liftBlocking &&
-                                  sigQualityOk;
-  return sensorReadingValid;
+  _latestData.signalQuality = GetSignalQuality(_latestDataRaw);
+  _latestData.isValidSignalQuality = _latestData.signalQuality > kMinQualityThreshold;
 }
 
 
@@ -204,14 +217,13 @@ bool ProxSensorComponent::CalculateSensedObjectPose(Pose3d& sensedObjectPose) co
 
 void ProxSensorComponent::UpdateNavMap()
 {
-  if (_latestData.spadCount == 0)
+  if (_latestDataRaw.spadCount == 0)
   {
     PRINT_NAMED_WARNING("ProxSensorComponent.UpdateNavMap", "Invalid sensor reading, SpadCount == 0");
     return;
   }
 
-  const float quality = GetSignalQuality(_latestData);
-
+  const float quality       = _latestData.signalQuality;
   const bool noObject       = quality <= kMinQualityThreshold;                      // sensor is pointed at free space
   const bool objectDetected = (quality >= kMinQualityThreshold &&                   // sensor is getting some reading
                                _latestData.distance_mm >= kMinObsThreshold_mm);     // the sensor is not seeing the lift

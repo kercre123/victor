@@ -49,6 +49,7 @@ class TouchSensorComponent;
 class AnimationComponent;
 class RobotStateHistory;
 class MoodManager;
+class StimulationFaceDisplay;
 class InventoryComponent;
 class ProgressionUnlockComponent;
 class BlockTapFilterComponent;
@@ -61,7 +62,7 @@ class FullRobotPose;
 } // namespace Cozmo
 
 // Template specializations mapping enums from the _fwd.h file to the class forward declarations above
-LINK_COMPONENT_TYPE_TO_ENUM(ContextWrapper,                RobotComponentID, CozmoContext)
+LINK_COMPONENT_TYPE_TO_ENUM(ContextWrapper,                RobotComponentID, CozmoContextWrapper)
 LINK_COMPONENT_TYPE_TO_ENUM(BlockWorld,                    RobotComponentID, BlockWorld)
 LINK_COMPONENT_TYPE_TO_ENUM(FaceWorld,                     RobotComponentID, FaceWorld)
 LINK_COMPONENT_TYPE_TO_ENUM(PetWorld,                      RobotComponentID, PetWorld)
@@ -90,6 +91,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(TouchSensorComponent,          RobotComponentID, Tou
 LINK_COMPONENT_TYPE_TO_ENUM(AnimationComponent,            RobotComponentID, Animation)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotStateHistory,             RobotComponentID, StateHistory)
 LINK_COMPONENT_TYPE_TO_ENUM(MoodManager,                   RobotComponentID, MoodManager)
+LINK_COMPONENT_TYPE_TO_ENUM(StimulationFaceDisplay,        RobotComponentID, StimulationFaceDisplay)
 LINK_COMPONENT_TYPE_TO_ENUM(InventoryComponent,            RobotComponentID, Inventory)
 LINK_COMPONENT_TYPE_TO_ENUM(ProgressionUnlockComponent,    RobotComponentID, ProgressionUnlock)
 LINK_COMPONENT_TYPE_TO_ENUM(BlockTapFilterComponent,       RobotComponentID, BlockTapFilter)
@@ -116,7 +118,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::BodyLights:                 { return "BodyLights";}
     case Cozmo::RobotComponentID::Carrying:                   { return "Carrying";}
     case Cozmo::RobotComponentID::CliffSensor:                { return "CliffSensor";}
-    case Cozmo::RobotComponentID::CozmoContext:               { return "CozmoContext";}
+    case Cozmo::RobotComponentID::CozmoContextWrapper:        { return "CozmoContextWrapper";}
     case Cozmo::RobotComponentID::CubeAccel:                  { return "CubeAccel";}
     case Cozmo::RobotComponentID::CubeComms:                  { return "CubeComms";}
     case Cozmo::RobotComponentID::CubeLights:                 { return "CubeLights";}
@@ -129,6 +131,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::Map:                        { return "Map";}
     case Cozmo::RobotComponentID::MicDirectionHistory:        { return "MicDirectionHistory";}
     case Cozmo::RobotComponentID::MoodManager:                { return "MoodManager";}
+    case Cozmo::RobotComponentID::StimulationFaceDisplay:     { return "StimulationFaceDisplay";}
     case Cozmo::RobotComponentID::Movement:                   { return "Movement";}
     case Cozmo::RobotComponentID::NVStorage:                  { return "NVStorage";}
     case Cozmo::RobotComponentID::ObjectPoseConfirmer:        { return "ObjectPoseConfirmer";}

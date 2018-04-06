@@ -63,6 +63,10 @@
 namespace Anki {
 namespace Cozmo {
 
+#if ANKI_CPU_PROFILER_ENABLED
+  CONSOLE_VAR_ENUM(u8, kVisionComponent_Logging,   ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
+#endif
+
   CONSOLE_VAR(f32, kHeadTurnSpeedThreshBlock_degs, "WasRotatingTooFast.Block.Head_deg/s",   10.f);
   CONSOLE_VAR(f32, kBodyTurnSpeedThreshBlock_degs, "WasRotatingTooFast.Block.Body_deg/s",   30.f);
   CONSOLE_VAR(u8,  kNumImuDataToLookBack,          "WasRotatingTooFast.Face.NumToLookBack", 5);
@@ -88,7 +92,9 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D, "Vision.General", false);
   CONSOLE_VAR(bool, kDrawMarkerNames,              "Vision.General", false); // In viz camera view
   CONSOLE_VAR(bool, kDisplayUndistortedImages,     "Vision.General", false);
-  CONSOLE_VAR(bool, kDisplayObjectDetectionLabels, "Vision.General", false); // when drawing images to screen
+    
+  CONSOLE_VAR(bool, kEnableMirrorMode,             "Vision.General", false);
+  CONSOLE_VAR(bool, kDisplayObjectDetectionLabels, "Vision.General", false); // when in mirror mode
   
   // Hack to continue drawing detected objects for a bit after they are detected
   // since object detection is slow
@@ -515,8 +521,9 @@ namespace Cozmo {
       else
       {
         // At this point, we have an image + robot state, continue processing
+        
         // "Mirror mode": draw images we process to the robot's screen
-        if(_drawImagesToScreen)
+        if(_drawImagesToScreen || kEnableMirrorMode)
         {
           // TODO: Add this as a lambda you can register with VisionComponent for things you want to
           //       do with image when captured?
@@ -835,7 +842,7 @@ namespace Cozmo {
         continue;
       }
 
-      ANKI_CPU_TICK("VisionComponent", 100.0, Util::CpuThreadProfiler::kLogFrequencyNever);
+      ANKI_CPU_TICK("VisionComponent", 100.0, Util::CpuProfiler::CpuProfilerLoggingTime(kVisionComponent_Logging));
 
       if (!_currentImg.IsEmpty())
       {

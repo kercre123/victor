@@ -92,10 +92,20 @@
       "clearIntent": "play_specific"
     },
     {
+      "name": "ComeHere",
+      "behavior": "ComeHereVoiceCommand",
+      "clearIntent": "imperative_come"
+    },
+    {
       "name": "Keepaway",
       "behavior": "KeepawayVoiceCommand",
       "debugColor": "YELLOW",
       "clearIntent": "play_specific"
+    },
+    {
+      "name": "ReactToCubeTap",
+      "behavior": "ReactToCubeTap",
+      "debugColor": "WHITE"
     }
   ],
 
@@ -403,6 +413,18 @@
     },
 
     {
+      "from": "ComeHere",
+      "exitTransitions": [
+        {
+          "to": "Socializing",
+          "condition": {
+            "conditionType": "TrueCondition"
+          }
+        }
+      ]
+    },
+
+    {
       "from": "Keepaway",
       "exitTransitions": [
         {
@@ -426,6 +448,18 @@
       ]
     },
 
+    {
+      "from": "ReactToCubeTap",
+      "exitTransitions": [
+        {
+          "to": "PlayingWithCube", // play with the cube after you were called to a cube
+          "condition": {
+            "conditionType": "TrueCondition"
+          }
+        }
+      ]
+    },
+
     //***************************
     // VOICE COMMANDS   
     //*************************** 
@@ -437,12 +471,14 @@
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
         "FistBump",
+        "ComeHere",
         "Keepaway",
         "Observing",
         "ReturningToCharger", // to avoid unclaimed intent
         "Socializing",
         "RollCube",
-        "Keepaway"
+        "Keepaway",
+        "ReactToCubeTap"
       ],
       "interruptingTransitions": [
         {
@@ -482,12 +518,14 @@
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
         "FistBump",
+        "ComeHere",
         "Keepaway",
         "Observing",
         "Socializing",
         "WakingUp",
         "ReturningToCharger",
-        "FailedToFindCharger"
+        "FailedToFindCharger",
+        "ReactToCubeTap"
       ],
       "interruptingTransitions": [
         {
@@ -534,12 +572,14 @@
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
         "FistBump",
+        "ComeHere",
         "Keepaway",
         "Observing",
         "Socializing",
         "WakingUp",
         "ReturningToCharger",
-        "FailedToFindCharger"
+        "FailedToFindCharger",
+        "ReactToCubeTap"
       ],
       "interruptingTransitions": [
         {
@@ -585,6 +625,7 @@
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
         "FistBump",
+        "ComeHere",
         "Keepaway",
         "Observing",
         "Socializing",
@@ -592,7 +633,8 @@
         "ReturningToCharger",
         "FailedToFindCharger",
         "PlayingWithCube",
-        "RollCube"
+        "RollCube",
+        "ReactToCubeTap" // if activated while ON charger, this will immediately get off charger
       ],
       "interruptingTransitions": [
         {
@@ -651,15 +693,15 @@
         "DriveOffChargerIntoObserving",
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
-        "FistBump",
-        "Keepaway",
+        "ComeHere",
         "Observing",
         "Socializing",
         "WakingUp",
         "ReturningToCharger",
         "FailedToFindCharger",
         "PlayingWithCube",
-        "RollCube"
+        "RollCube",
+        "ReactToCubeTap"
       ],
       "interruptingTransitions": [
         {
@@ -696,8 +738,88 @@
         }
       ]
 
+    },
+
+    // come here
+    {
+      "from": [
+        "ObservingOnCharger",
+        "ObservingOnChargerRecentlyPlaced",
+        "DriveOffChargerIntoObserving",
+        "DriveOffChargerIntoSocializing",
+        "DriveOffChargerIntoPlay",
+        "FistBump",
+        "ComeHere",
+        "Keepaway",
+        "Observing",
+        "Socializing",
+        "WakingUp",
+        "ReturningToCharger",
+        "FailedToFindCharger",
+        "ReactToCubeTap"
+      ],
+      "interruptingTransitions": [
+        {
+          "to": "ComeHere",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {
+                "type": "imperative_come"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "from": [
+        "PlayingWithCube",
+        "RollCube"
+      ],
+      "nonInterruptingTransitions": [
+        {
+          "to": "ComeHere",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {
+                "type": "imperative_come"
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    //***************************
+    // USER INTERACTION COMMANDS
+    //***************************
+
+    {
+      "from": [
+        "ObservingOnCharger",
+        "ObservingOnChargerRecentlyPlaced",
+        "DriveOffChargerIntoObserving",
+        "DriveOffChargerIntoSocializing",
+        "DriveOffChargerIntoPlay",
+        "FistBump",
+        "ComeHere",
+        "Observing",
+        "Socializing",
+        "WakingUp",
+        "ReturningToCharger",
+        "FailedToFindCharger"
+      ],
+      "interruptingTransitions": [
+        {
+          "to": "ReactToCubeTap",
+          "condition": {
+            "conditionType": "CubeTapped"
+          }
+        }
+      ]
     }
-    
   ]
 
 }

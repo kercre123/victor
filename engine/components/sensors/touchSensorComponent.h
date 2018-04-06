@@ -61,7 +61,8 @@ public:
 
 public:
   TouchSensorComponent();
-  ~TouchSensorComponent() = default;
+
+  virtual ~TouchSensorComponent();
 
   //////
   // IDependencyManagedComponent functions
@@ -77,6 +78,9 @@ public:
   bool GetIsPressed() const;
   
   float GetTouchPressTime() const;
+  
+  // dev-only feature for logging values around the last received touch
+  void DevLogTouchSensorData() const;
   
 protected:
   virtual void NotifyOfRobotStateInternal(const RobotState& msg) override;
@@ -142,6 +146,41 @@ private:
   
   // time in seconds of the last touch press
   float _touchPressTime;
+  
+  // dev-only logging members for debugging touch
+  struct DevLogTouchRow
+  {
+    int rawTouch;
+    int boxTouch;
+    int calibBaseline;
+    
+    int detOffsetFromBase;
+    int undOffsetFromBase;
+    
+    bool isPressed;
+  };
+  
+  enum DevLogMode
+  {
+    PreTouch,
+    PostTouch
+  };
+  
+  // phase of logging with respect to the touch event that we
+  // are interested in logging around
+  DevLogMode _devLogMode;
+
+  // staging buffer for holding the pre-touch and post-touch samples
+  std::deque<DevLogTouchRow> _devLogBuffer;
+  
+  // buffer that only accumulates non-press touch samples
+  std::deque<DevLogTouchRow> _devLogBufferPreTouch;
+
+  // last complete buffer that is saved for writing to disk
+  std::deque<DevLogTouchRow> _devLogBufferSaved;
+
+  // number of consecutive touch samples taken after a release->press event
+  size_t _devLogSampleCount;
 };
 
 

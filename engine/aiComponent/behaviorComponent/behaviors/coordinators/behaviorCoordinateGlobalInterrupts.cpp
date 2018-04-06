@@ -76,6 +76,9 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
 
   _iConfig.triggerWordPendingCond = BEIConditionFactory::CreateBEICondition(BEIConditionType::TriggerWordPending, GetDebugLabel());
   _iConfig.triggerWordPendingCond->Init(GetBEI());
+  
+  _iConfig.keepawayBehavior        = BC.FindBehaviorByID(BEHAVIOR_ID(Keepaway));
+  _iConfig.reactToObstacleBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToObstacle));
 }
 
 
@@ -119,6 +122,13 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
       }
     }
   }
+  
+  
+  // Suppress ReactToObstacle if KeepAway is running
+  if (_iConfig.keepawayBehavior->IsActivated()) {
+    _iConfig.reactToObstacleBehavior->SetDontActivateThisTick(GetDebugLabel());
+  }
+
 }
 
 

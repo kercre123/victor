@@ -29,8 +29,8 @@ include(opencv)
 #  $<BUILD_INTERFACE:${CTI_TYPES_GENERATED_DIR}>
 #)
 
-add_subdirectory(common/clad)
-add_subdirectory(vision/clad)
+add_subdirectory(common/clad_src/clad)
+add_subdirectory(vision/clad_src/)
 
 set(CTI_GENERATED_LIBS
     cti_common_clad

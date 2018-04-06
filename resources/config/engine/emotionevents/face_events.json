@@ -5,13 +5,29 @@
       "emotionAffectors" : [
         {
           "emotionType" : "Social",
-          "value" : 0.08
+          "value" : 0.2
         },
         {
           "emotionType" : "Stimulated",
-          "value" : 0.02
+          "value" : 0.1
         }
-      ]
+      ],
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 0.0
+          },
+          {
+            "x" : 30.0,
+            "y" : 0.5
+          },
+          {
+            "x" : 300.0,
+            "y" : 1.0
+          }
+        ]
+      }
     },
     {
       "name": "InteractWithNamedFace",
@@ -46,7 +62,15 @@
           "emotionType" : "Confident",
           "value" : -0.1
         }
-      ]
+      ],
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 1.0
+          }
+        ]
+      }
     },
     {
       "name": "GreetingSayName",
@@ -58,6 +82,40 @@
         {
           "emotionType" : "Stimulated",
           "value" : 0.8
+        }
+      ]
+    },
+    {
+      "name": "EyeContactReaction",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Social",
+          "value" : 0.8
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.3
+        }
+      ]
+    },
+    {
+      "name": "EnrolledNewFace",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Social",
+          "value" : 1.0
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 1.0
+        },
+        {
+          "emotionType" : "Happy",
+          "value" : 0.5
+        },
+        {
+          "emotionType" : "Confident",
+          "value" : 0.5
         }
       ]
     }

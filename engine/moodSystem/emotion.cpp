@@ -36,6 +36,8 @@ CONSOLE_VAR(uint32_t, kMaxEmotionHistorySamples, kEmotionSectionName,  128);
 Emotion::Emotion()
   : _history(kMaxEmotionHistorySamples)
   , _value(kEmotionValueDefault)
+  , _minValue(kEmotionValueMin)
+  , _maxValue(kEmotionValueMax)
   , _timeDecaying(0.0f)
 {
   _history.push_back( HistorySample(_value, 0.0f) );
@@ -123,7 +125,7 @@ void Emotion::Update(const Anki::Util::GraphEvaluator2d& decayGraph, double curr
 void Emotion::Add(float penalizedDeltaValue)
 {
   const float oldValue = _value;
-  const float newValue = Anki::Util::Clamp(_value + penalizedDeltaValue, kEmotionValueMin, kEmotionValueMax);
+  const float newValue = Anki::Util::Clamp(_value + penalizedDeltaValue, _minValue, _maxValue);
   _value = newValue;
   
   const bool isSufficentChangeToResetDecay = (Util::Abs(penalizedDeltaValue) > 0.05f); // penalty can prevent reset (if it scales value too far), but clamping at min/max cannot prevent it
@@ -146,6 +148,17 @@ void Emotion::SetValue(float newValue)
 {
   _value = newValue;
   _timeDecaying = 0.0f;
+}
+
+void Emotion::SetEmotionValueRange(float min, float max)
+{
+  ANKI_VERIFY(min <= max,
+              "Emotion.SetEmotionValueRange.Invalid",
+              "Invalid range %f - %f",
+              min,
+              max);
+  _minValue = min;
+  _maxValue = max;
 }
 
 

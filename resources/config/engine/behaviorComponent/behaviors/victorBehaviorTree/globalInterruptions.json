@@ -5,17 +5,19 @@
   "interruptActiveBehavior": true,
 
   "behaviors": [
+    "ReactToRobotOnBack",
     "ReactToCliff",
     "TriggerWordDetected",
     "TimerUtilityCoordinator",
     "MeetVictor",
+    "ReactToTouchPetting",
     "ReactToGreeting",
     "ReactToGoodMorning",
     "ReactToGoodBye",
     "ReactToGoodNight",
     "DoATrickVoiceCommand",
     "ReactToSoundAwake",
-    "ReactToTouchDispatcher",
+    "ReactToObstacle",
     "ReactToUnclaimedIntent",
     "HighLevelAI"
   ]

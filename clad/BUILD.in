@@ -20,7 +20,9 @@ cxx_project(
 
 cxx_project(
     name = 'robot_clad',
-    srcs = glob(['robot/src/clad/**/*.clad']),
+    srcs = glob(['robot/src/clad/**/*.clad',
+                 'robot/coretech_common_clad/**/*.clad',
+                 'robot/coretech_vision_clad/**/*.clad' ]),
     platform_srcs = [],
     headers = [
         'robot/src/clad/robotInterface/messageEngineToRobot.clad',

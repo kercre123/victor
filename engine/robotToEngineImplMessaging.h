@@ -25,11 +25,6 @@ namespace Anki {
 namespace Cozmo {
 
 class Robot;
-namespace ExternalInterface {
-  struct ObjectMoved;
-  struct ObjectStoppedMoving;
-  struct ObjectUpAxisChanged;
-}
   
 class RobotToEngineImplMessaging : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable, public Util::SignalHolder
 {
@@ -60,9 +55,6 @@ public:
   void HandleFWVersionInfo(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandlePickAndPlaceResult(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleDockingStatus(const AnkiEvent<RobotInterface::RobotToEngine>& message);
-  void HandleActiveObjectMoved(const ExternalInterface::ObjectMoved& message, Robot* const robot);
-  void HandleActiveObjectStopped(const ExternalInterface::ObjectStoppedMoving& message, Robot* const robot);
-  void HandleActiveObjectUpAxisChanged(const ExternalInterface::ObjectUpAxisChanged& message, Robot* const robot);
   void HandleFallingEvent(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleGoalPose(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleRobotStopped(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
@@ -76,7 +68,7 @@ public:
   void HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleImuRawData(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleImageImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
-  void HandleSyncTimeAck(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
+  void HandleSyncRobotAck(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleMotorCalibration(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);
   void HandleMotorAutoEnabled(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot);

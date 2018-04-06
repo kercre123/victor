@@ -502,10 +502,10 @@ void LatticePlanner::GetTestPath(const Pose3d& startPose, Planning::Path &path, 
   xythetaPlan plan;
   _impl->_planner.GetTestPlan(plan);
   PRINT_CH_INFO("Planner", "GetTestPath.Plan", "Plan from xytheta planner:");
-  _impl->_context.env.PrintPlan(plan);
+  _impl->_context.env.GetActionSpace().PrintPlan(plan);
 
   Planning::Path outputPath;
-  _impl->_context.env.AppendToPath(plan, outputPath);
+  _impl->_context.env.GetActionSpace().AppendToPath(plan, outputPath);
 
   if( motionProfile != nullptr ) {
     ApplyMotionProfile(outputPath, *motionProfile, path);
@@ -606,7 +606,7 @@ void LatticePlannerImpl::DoPlanning()
 
     // verify that the append will be correct
     if(_totalPlan.Size() > 0) {
-      GraphState endState = _context.env.GetPlanFinalState(_totalPlan);
+      GraphState endState = _context.env.GetActionSpace().GetPlanFinalState(_totalPlan);
       if(endState != _planner.GetPlan().start_) {
         PRINT_STREAM_ERROR("LatticePlanner.PlanMismatch",
                            "trying to append a plan with a mismatching state!\n"
@@ -614,10 +614,10 @@ void LatticePlannerImpl::DoPlanning()
                            << "next plan start = " << _planner.GetPlan().start_ << std::endl);
 
         PRINT_CH_DEBUG("Planner", "LatticePlannerImpl", "totalPlan_:");
-        _context.env.PrintPlan(_totalPlan);
+        _context.env.GetActionSpace().PrintPlan(_totalPlan);
 
         PRINT_CH_DEBUG("Planner", "LatticePlannerImpl", "new plan:");
-        _context.env.PrintPlan(_planner.GetPlan());
+        _context.env.GetActionSpace().PrintPlan(_planner.GetPlan());
 
         _internalComputeStatus = EPlannerStatus::Error;
       }
@@ -627,12 +627,12 @@ void LatticePlannerImpl::DoPlanning()
     _selectedGoalID = _planner.GetChosenGoalID();
 
     PRINT_CH_DEBUG("Planner", "LatticePlannerImpl", "old plan");
-    _context.env.PrintPlan(_totalPlan);
+    _context.env.GetActionSpace().PrintPlan(_totalPlan);
 
     _totalPlan.Append( _planner.GetPlan() );
 
     PRINT_CH_DEBUG("Planner", "LatticePlannerImpl", "new plan");
-    _context.env.PrintPlan(_planner.GetPlan());
+    _context.env.GetActionSpace().PrintPlan(_planner.GetPlan());
 
     _internalComputeStatus = EPlannerStatus::CompleteWithPlan;
   }
@@ -850,10 +850,9 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     unsigned int numAdded = 0;
     unsigned int vizID = startIdx;
 
-    Planning::GraphTheta numAngles = (GraphTheta) _context.env.GetNumAngles();
-    for(GraphTheta theta=0; theta < numAngles; ++theta) {
+    for(GraphTheta theta=0; theta < GraphState::numAngles_; ++theta) {
 
-      float thetaRads = _context.env.LookupTheta(theta);
+      float thetaRads = _context.env.GetActionSpace().LookupTheta(theta);
 
       // Since the planner is given the driveCenter poses to be the robot's origin, compute the actual robot
       // origin given a driveCenter pose at (0,0,0) in order to get the actual bounding box of the robot.
@@ -1130,7 +1129,7 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
   }
 
   PRINT_CH_DEBUG("Planner", "LatticePlannerImpl", "total path:");
-  _context.env.AppendToPath(_totalPlan, path, planIdx);
+  _context.env.GetActionSpace().AppendToPath(_totalPlan, path, planIdx);
   path.PrintPath();
  
   

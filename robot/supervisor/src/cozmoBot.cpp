@@ -54,17 +54,17 @@ namespace Anki {
       //
       // Methods:
       //
-      Result Init(void)
+      Result Init(const int * shutdownSignal)
       {
         Result lastResult = RESULT_OK;
 
         // HAL and supervisor init
-        lastResult = HAL::Init();
+        lastResult = HAL::Init(shutdownSignal);
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.HAL", "");
 
         lastResult = BackpackLightController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.BackpackLightController", "");
-        
+
         lastResult = Messages::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.Messages", "");
 
@@ -73,10 +73,10 @@ namespace Anki {
 
         lastResult = PathFollower::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.PathFollower", "");
-        
+
         lastResult = IMUFilter::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.IMUFilter", "");
-        
+
         lastResult = DockingController::Init();;
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.DockingController", "");
 
@@ -90,7 +90,7 @@ namespace Anki {
         // Calibrate motors
         LiftController::StartCalibrationRoutine(1);
         HeadController::StartCalibrationRoutine(1);
-        
+
         robotStateMessageCounter_ = 0;
 
         return RESULT_OK;
@@ -158,7 +158,7 @@ namespace Anki {
         if (HAL::RadioIsConnected() && !wasConnected_) {
           AnkiEvent( "CozmoBot.Radio.Connected", "");
           wasConnected_ = true;
-          
+
 #ifdef SIMULATOR
           LiftController::Enable();
           HeadController::Enable();
@@ -197,16 +197,16 @@ namespace Anki {
         MARK_NEXT_TIME_PROFILE(CozmoBot, EYEHEADLIFT);
         HeadController::Update();
         LiftController::Update();
-        
+
         MARK_NEXT_TIME_PROFILE(CozmoBot, LIGHTS);
         BackpackLightController::Update();
-        
+
         MARK_NEXT_TIME_PROFILE(CozmoBot, PATHDOCK);
         PathFollower::Update();
         PickAndPlaceController::Update();
         DockingController::Update();
 
-       
+
 
         // Manage the various motion controllers:
         SpeedController::Manage();
@@ -225,7 +225,7 @@ namespace Anki {
           robotStateMessageCounter_ = 0;
         }
 
-        // Now that the robot state msg has been udpated, send mic data (which uses some of robot state)
+        // Now that the robot state msg has been updated, send mic data (which uses some of robot state)
         Messages::SendMicDataMsgs();
 
         // Print time profile stats
@@ -246,7 +246,7 @@ namespace Anki {
         // Report main cycle time error
         if ((mainTooLateCnt_ > 0 || mainTooLongCnt_ > 0) &&
             (cycleEndTime - lastMainCycleTimeErrorReportTime_ > MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC)) {
-          
+
           AnkiWarn( "CozmoBot.MainCycleTimeError", "TooLateCount: %d, avgTooLateTime: %d us, tooLongCount: %d, avgTooLongTime: %d us",
                    mainTooLateCnt_, avgMainTooLateTime_, mainTooLongCnt_, avgMainTooLongTime_);
 
@@ -257,7 +257,7 @@ namespace Anki {
 
           lastMainCycleTimeErrorReportTime_ = cycleEndTime;
         }
-        
+
         return RESULT_OK;
 
       } // Robot::step_MainExecution()

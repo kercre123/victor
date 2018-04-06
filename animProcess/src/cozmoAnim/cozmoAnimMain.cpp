@@ -4,11 +4,12 @@
 * Author: Kevin Yoon
 * Created: 6/26/17
 *
-* Description: Cozmo Anim Process on Android
+* Description: Cozmo Anim Process on Victor
 *
 * Copyright: Anki, inc. 2017
 *
 */
+
 #include "cozmoAnim/animEngine.h"
 
 #include "coretech/common/engine/jsonTools.h"
@@ -16,6 +17,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "util/console/consoleSystem.h"
 #include "util/logging/logging.h"
 #include "util/logging/androidLogPrintLogger_android.h"
 #include "util/fileUtils/fileUtils.h"
@@ -117,6 +119,9 @@ int main(void)
   Util::gLoggerProvider = &logPrintLogger;
 
   Util::Data::DataPlatform* dataPlatform = createPlatform();
+
+  // Set up the console vars to load from file, if it exists
+  ANKI_CONSOLE_SYSTEM_INIT(dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "consoleVarsAnim.ini").c_str());
 
   // Create and init AnimEngine
   AnimEngine * animEngine = new AnimEngine(dataPlatform);

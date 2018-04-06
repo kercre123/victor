@@ -60,7 +60,6 @@ constexpr float kEmotionChangeVeryLarge = 1.00f;
 template <typename Type>
 class AnkiEvent;
 
-
 namespace ExternalInterface {
 class MessageGameToEngine;
 struct RobotCompletedAction;
@@ -87,10 +86,10 @@ public:
   //////
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
   virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override {
-    components.insert(RobotComponentID::CozmoContext);
+    components.insert(RobotComponentID::CozmoContextWrapper);
   };
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
-    dependencies.insert(RobotComponentID::CozmoContext);
+    dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::EngineAudioClient);
   }
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
@@ -103,8 +102,10 @@ public:
   void Reset();
     
   // ==================== Modify Emotions ====================
-  
+
+  // trigger an event at the given time. If no time specified, use GetCurrentTimeInSeconds
   void TriggerEmotionEvent(const std::string& eventName, float currentTimeInSeconds);
+  void TriggerEmotionEvent(const std::string& eventName);
   
   void AddToEmotion(EmotionType emotionType, float baseValue, const char* uniqueIdString, float currentTimeInSeconds);
   
@@ -142,6 +143,9 @@ public:
   SimpleMoodType GetSimpleMood() const;
   
   float GetLastUpdateTime() const { return _lastUpdateTime; }
+
+  // check if the passed in emotion event exists in our map
+  bool IsValidEmotionEvent(const std::string& eventName) const;
   
   // ==================== Event/Message Handling ====================
   // Handle various message types
@@ -161,7 +165,7 @@ public:
   
 private:
   void ReadMoodConfig(const Json::Value& inJson);
-  // Load in all data-driven emotion events // TODO: move to mood manager?
+  // Load in all data-driven emotion events
   void LoadEmotionEvents(const RobotDataLoader::FileJsonMap& emotionEventData);   
   bool LoadEmotionEvents(const Json::Value& inJson);
 
@@ -193,7 +197,7 @@ private:
   void PrintActionCompletedEventMap() const;
 
   void SendEmotionsToAudio(Audio::EngineRobotAudioClient& audioClient);
-  
+
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( void AddEvent(const char* eventName) );
 
   void SendMoodToWebViz(const CozmoContext* context, const std::string& emotionEvent = "");

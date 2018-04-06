@@ -14,6 +14,9 @@
 #define __PLANNING_BASESTATION_XYTHETA_ACTIONS_H__
 
 #include "coretech/planning/shared/path.h"
+#include "coretech/planning/engine/robotActionParams.h"
+#include "util/helpers/noncopyable.h"
+
 #include "xythetaStates.h"
 
 #include <vector>
@@ -29,11 +32,9 @@ namespace Planning
 {
 
 using ActionID = uint8_t;
-using Cost     = float;;
+using Cost     = float;
 
-// Note: (mrw) we should consider not-requiring the environment in these classes, as the implication is that all of
-// these types exist independant of the world.
-class xythetaEnvironment;
+class ActionSpace;
 
 // denotes the sequence of Cost-ActionID pairs. It is worth noting that this is distinct from a path, which only
 // has a sequence of raw actions (no cost), and is a pure geometric object, while a Plan has no geometry
@@ -108,7 +109,7 @@ public:
 
   // reads raw primitive config and uses the starting angle and environment to compute what is needed
   // Returns true if successful
-  bool Create(const Json::Value& config, GraphTheta startingAngle, const xythetaEnvironment& env);
+  bool Create(const Json::Value& config, GraphTheta startingAngle, const ActionSpace& env);
 
   // returns true if successful, reads a complete config as created by the Dump() call
   bool Import(const Json::Value& config);
@@ -150,46 +151,73 @@ private:
   Path pathSegments_;
 };
 
-
-
-// helper class to prevent excess dynamic memory allocation. Additionally, the `Next()` method will 
-// evaluate for potential collisions and not produce successors to invalid states
-class SuccessorIterator
+class ActionSpace : private Util::noncopyable
 {
 public:
-  // helper container for Successor data
-  struct Successor
-  {
-    StateID stateID;    // The successor state
-    ActionID actionID;  // The action thats takes you to state
-    Cost g;             // Value associated with state  
-    Cost penalty;       // Penalty paid to transition into state (not counting normal action cost)
-  };
+  using PrimitiveTable = std::array< std::vector<MotionPrimitive>, GraphState::numAngles_ >;
 
-  // if reverse is true, then advance through predecessors instead of successors
-  SuccessorIterator(const xythetaEnvironment* env, StateID startID, Cost startG, bool reverse = false);
+  // load/dump motion primitves from file
+  bool ParseMotionPrims(const Json::Value& config, bool useDumpFormat = false);
+  void DumpMotionPrims(Util::JsonWriter& writer) const;
 
-  // Returns true if there are no more results left
-  bool Done(const xythetaEnvironment& env) const;
+  // apply an action to a state
+  void ApplyAction(ActionID action, State_c& state) const;
+  void ApplyAction(ActionID action, GraphState& state) const;
+  void ApplyAction(ActionID action, StateID& state) const;
 
-  // Returns the next action results pair
-  inline const Successor& Front() const {return nextSucc_;}
+  // returns the state at the end of the given plan
+  GraphState GetPlanFinalState(const xythetaPlan& plan) const;
 
-  void Next(const xythetaEnvironment& env);
+  // Convert the plan to Planning::PathSegment's and append it to path. Also updates plan to set the
+  // robotPathSegmentIdx_ If skipActions is nonzero, then that many actions from plan will be skipped (not
+  // copied into path), but the state will still be correctly updated
+  void AppendToPath(xythetaPlan& plan, Path& path, int numActionsToSkip = 0) const;
+
+  // This function fills up the given vector with (x,y,theta) intermediate points of motion primitives in the plan
+  void ConvertToXYPlan(const xythetaPlan& plan, std::vector<State_c>& continuousPlan) const;
+
+  // write plan in the debug console
+  void PrintPlan(const xythetaPlan& plan) const;
+
+  // helpers to get exact continuous theta
+  inline State_c State2State_c(const GraphState& s) const { return State_c(GraphState::resolution_mm_ * s.x, GraphState::resolution_mm_ * s.y, _angles.at(s.theta)); }
+  inline float   LookupTheta(GraphTheta theta)      const { return _angles.at(theta); }
+
+  // Accessors
+  inline size_t                 GetNumActions()                              const { return _actionTypes.size(); }
+  inline const ActionType&      GetActionType(ActionID aID)                  const { return _actionTypes[aID]; }
+  inline const PrimitiveTable&  GetForwardPrimTable()                        const { return _forwardPrims; }
+  inline const PrimitiveTable&  GetReversePrimTable()                        const { return _reversePrims; }
+  inline const MotionPrimitive& GetForwardMotion(GraphTheta t, ActionID aID) const { return _forwardPrims[t][aID]; }
+  inline const MotionPrimitive& GetReverseMotion(GraphTheta t, ActionID aID) const { return _reversePrims[t][aID]; }
+
+  inline double GetMaxVelocity_mmps()        const { return _robotParams.maxVelocity_mmps; }
+  inline double GetMaxReverseVelocity_mmps() const { return _robotParams.maxReverseVelocity_mmps; }
+  inline double GetOneOverMaxVelocity()      const { return _robotParams.oneOverMaxVelocity; }
+  inline double GetHalfWheelBase_mm()        const { return _robotParams.halfWheelBase_mm; }
 
 private:
+  // generate Reverse Primitives from current Forward Prims
+  void PopulateReversePrims();
 
-  State_c    start_c_;
-  GraphState start_;
-  Cost       startG_;
+  // index is GraphTheta, value is theta in radians [-π, π]. The angles are not guaranteed to be uniformly spaced,
+  // since they are calculated relative to the external points on a 5x5 grid
+  std::vector<float> _angles;
 
-  // once Next() is called, it will evaluate this action
-  ActionID   nextAction_;
-  Successor  nextSucc_;
-  
-  bool reverse_;
+  // index is actionID
+  std::vector<ActionType> _actionTypes;
+
+  // Raw descritized motion primitives. 
+  // NOTE: For _reversePrims, the first index of is the ending angle, and the second is meaningless. The primitive 
+  //       will have the action ID corresponding to the correct forward primitive, but the endStateOffset will be 
+  //       reverse, so you can follow backwards
+  PrimitiveTable _forwardPrims;
+  PrimitiveTable _reversePrims;
+
+  // robot properties useful for estimating cost based off of robot speed and turning radius
+  // NOTE:(mrw) these are hardcoded for Cozmo, so it is difficult to support different robot types
+  const RobotActionParams _robotParams;
 };
-
 
 } // Planning
 } // Anki

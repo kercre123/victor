@@ -1,0 +1,16 @@
+
+cxx_project(
+    name = 'cti_vision_clad',
+    srcs = glob(['**/**/*.clad']),
+    platform_srcs = [],
+    headers = [],
+    platform_headers = [],
+)
+
+cxx_project(
+    name = 'cti_composite_image_clad',
+    srcs = glob(["clad/types/spriteNames.clad", "clad/types/compositeImageTypes.clad"]),
+    platform_srcs = [],
+    headers = [],
+    platform_headers = [],
+)

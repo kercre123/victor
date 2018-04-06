@@ -900,8 +900,27 @@ void MapComponent::ClearRobotToMarkers(const ObservableObject* object)
   // only clear to the markers, since for custom object types, the object might be significantly larger than the marker
   for ( const auto& observedMarkerIt : observedMarkers )
   {    
+    // NOTE: (mrw) We are making assumptions here that the marker is both normal to the map plane, and is oriented
+    //       to a 90° angle (up/down/left/right). Additionally, this will clear all the way to the marker, so even
+    //       if the object's physical properties extend in front of the marker, we might be overwritting that region
+    //       with `ClearOfObstacle` state. This is particularly noticeable for the charger, but at the time of writing
+    //       this, it is not interfering with any docking behavior.
     const Quad3f& markerCorners = observedMarkerIt->Get3dCorners(observedMarkerIt->GetPose().GetWithRespectToRoot());
-    ClearRobotToEdge(markerCorners[Quad::BottomLeft], markerCorners[Quad::BottomRight], _robot->GetLastImageTimeStamp());
+
+    // grab the lowest two points
+    const Point3f* p1 = &markerCorners[(Quad::CornerName) 0];
+    const Point3f* p2 = &markerCorners[(Quad::CornerName) 1];
+     
+    for (Quad::CornerName i = (Quad::CornerName) 1; i < Quad::NumCorners; ++i) {
+      if ( FLT_LT(markerCorners[i].z(), p1->z()) ) {
+        p2 = p1;
+        p1 = &markerCorners[i];
+      } else if ( FLT_LT(markerCorners[i].z(), p2->z()) ) {
+        p2 = &markerCorners[i];
+      }
+    }
+  
+    ClearRobotToEdge(*p1, *p2, _robot->GetLastImageTimeStamp());
   }
 }
 

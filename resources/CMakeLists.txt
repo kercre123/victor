@@ -12,15 +12,53 @@ anki_build_copy_assets(
     OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
 )
 
-anki_build_copy_assets(
-    TARGET cozmo_resources_sound
-    SRCLIST_DIR ${ANKI_SRCLIST_DIR}
-    OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
-    RELATIVE_OUTPUT_DIR "cozmo_resources"
-    OUT_DSTS ASSET_OUTPUT_FILES
-    OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
-)
-add_dependencies(cozmo_resources_sound cozmo_resources_assets)
+# Override sound target for locally generated sound banks
+set(sound_target cozmo_resources_sound)
+option(USE_LOCAL_AUDIO_ASSETS "Use local audio assets" OFF)
+if(USE_LOCAL_AUDIO_ASSETS)
+    message("----------------------------------------------------------------------")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/externals/local-audio-assets")
+        set(sound_target cozmo_resources_local_sound)
+        message("Using locally generated audio assets - EXTERNALS/local-audio-assets")
+    else()
+        message("WARNING - Locally generated audio assets do NOT exists!")
+        message("Reverting back to use DEPS assets")
+    endif()
+    message("----------------------------------------------------------------------")
+endif()
+
+if(0)
+    anki_build_copy_assets(
+        TARGET ${sound_target}
+        SRCLIST_DIR ${ANKI_SRCLIST_DIR}
+        OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
+        RELATIVE_OUTPUT_DIR "cozmo_resources"
+        OUT_DSTS ASSET_OUTPUT_FILES
+        OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
+    )
+endif()
+
+if(MACOSX)
+    anki_build_copydirectory_assets(
+        TARGET ${sound_target}
+        SRCLIST_DIR "externals/victor-audio-assets/victor_robot/dev_mac"
+        OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources/sound"
+        RELATIVE_OUTPUT_DIR "cozmo_resources/sound"
+        OUT_DSTS ASSET_OUTPUT_FILES
+        OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
+    )
+else()
+    anki_build_copydirectory_assets(
+        TARGET ${sound_target}
+        SRCLIST_DIR "externals/victor-audio-assets/victor_robot/victor_linux"
+        OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources/sound"
+        RELATIVE_OUTPUT_DIR "cozmo_resources/sound"
+        OUT_DSTS ASSET_OUTPUT_FILES
+        OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
+    )
+endif()
+
+add_dependencies(${sound_target} cozmo_resources_assets)
 
 anki_build_copy_assets(
     TARGET cozmo_resources_config
@@ -30,7 +68,7 @@ anki_build_copy_assets(
     OUT_DSTS ASSET_OUTPUT_FILES
     OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
 )
-add_dependencies(cozmo_resources_config cozmo_resources_sound)
+add_dependencies(cozmo_resources_config ${sound_target})
 
 anki_build_copy_assets(
     TARGET cozmo_resources_webserver
@@ -66,7 +104,7 @@ set(ASSET_TARGETS
     cozmo_resources_config
     cozmo_resources_webserver
     cozmo_resources_tts
-    cozmo_resources_sound
+    ${sound_target}
     cozmo_bundle)
 
 # Bundle test assets on OSX

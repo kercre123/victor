@@ -20,12 +20,20 @@
 #include "util/logging/logging.h"
 #include <assert.h>
 #include <vector>
-
+#include <functional>
 
 #if ANKI_CPU_PROFILER_ENABLED
 
+namespace Json {
+class Value;
+}
 
 namespace Anki {
+
+namespace WebService {
+  class WebService;
+}
+
 namespace Util {
 
 
@@ -90,6 +98,7 @@ public:
   
   void LogAllCalledSamples(uint32_t threadIndex, const std::vector<CpuProfileSampleShared*>& samplesCalledFromThread) const;
   void SaveChromeTracingProfile(FILE* fp, uint32_t threadIndex) const;
+  void PublishToWebService(const std::function<void(const Json::Value&)>& callback, uint32_t threadIndex, const std::vector<CpuProfileSampleShared*>& samplesCalledFromThread) const;
 
   uint32_t GetTickNum() const { return _tickNum; }
   

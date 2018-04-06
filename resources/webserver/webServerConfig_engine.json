@@ -4,5 +4,6 @@
   "title1": "This web server is running in the Engine process",
   "whichWebServer": 1,
   "startPage": "page_consolevars",
-  "allowPerfPage": true
+  "allowPerfPage": true,
+  "allowConsoleVarsPage": true
 }

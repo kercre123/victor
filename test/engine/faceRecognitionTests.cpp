@@ -365,12 +365,12 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
   s32 totalFalsePositives = 0;
   
   DependencyManagedEntity<RobotComponentID> dependentComponents;
-  dependentComponents.AddDependentComponent(RobotComponentID::CozmoContext, new ContextWrapper(cozmoContext));
+  dependentComponents.AddDependentComponent(RobotComponentID::CozmoContextWrapper, new ContextWrapper(cozmoContext));
   for(s32 iReload=0; iReload<2; ++iReload)
   {
     // All-new robot, face tracker, and face world for each person for this test
     Robot robot(1, cozmoContext);
-    robot.FakeSyncTimeAck();
+    robot.FakeSyncRobotAck();
 
     // Fake a state message update for robot
     RobotState stateMsg( Robot::GetDefaultRobotState() );

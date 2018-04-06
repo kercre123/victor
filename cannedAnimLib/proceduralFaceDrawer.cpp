@@ -23,30 +23,37 @@ namespace Cozmo {
     GaussianFilter = 2,
   };
 
+#if ANKI_CPU_PROFILER_ENABLED
+  CONSOLE_VAR_RANGED(float, kProcFace_DrawTimeMax_ms,     ANKI_CPU_CONSOLEVARGROUP, 2, 2, 32);
+  CONSOLE_VAR_ENUM(u8,      kProcFace_DrawTimeLogging,    ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
+#endif
+
   #define CONSOLE_GROUP "ProceduralFace"
+
+  CONSOLE_VAR_ENUM(u8,      kProcFace_LineType,                   CONSOLE_GROUP, 1, "Line_4,Line_8,Line_AA"); // Only affects OpenCV drawing, not post-smoothing
+  CONSOLE_VAR_RANGED(s32,   kProcFace_EllipseDelta,               CONSOLE_GROUP, 10, 1, 90);
+  CONSOLE_VAR_RANGED(f32,   kProcFace_EyeLightnessMultiplier,     CONSOLE_GROUP, 1.f, 0.f, 2.f);
+
+  CONSOLE_VAR(bool,         kProcFace_HotspotRender,              CONSOLE_GROUP, true); // Render glow
+  CONSOLE_VAR_RANGED(f32,   kProcFace_HotspotFalloff,             CONSOLE_GROUP, 0.9f, 0.05f, 1.f);
+
+#if PROCEDURALFACE_GLOW_FEATURE
+  CONSOLE_VAR_RANGED(f32, kProcFace_GlowSizeMultiplier,           CONSOLE_GROUP, 1.f, 0.f, 1.f);
+  CONSOLE_VAR_RANGED(f32, kProcFace_GlowLightnessMultiplier,      CONSOLE_GROUP, 1.f, 0.f, 10.f);
+  CONSOLE_VAR_ENUM(uint8_t, kProcFace_GlowFilter,                 CONSOLE_GROUP, (uint8_t)Filter::BoxFilter, "None,Box,Gaussian");
+#endif
 
 #if PROCEDURALFACE_NOISE_FEATURE
   static const s32 kNumNoiseImages = 7;
 
-  CONSOLE_VAR_RANGED(s32, kProcFace_NoiseNumFrames,     "ProceduralFace", 0, 0, kNumNoiseImages);
-  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMinLightness,  "ProceduralFace", 1.f-0.15f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
-  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMaxLightness,  "ProceduralFace", 1.f+0.15f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
+  CONSOLE_VAR_RANGED(s32, kProcFace_NoiseNumFrames,     "ProceduralFace", 5, 0, kNumNoiseImages);
+  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMinLightness,  "ProceduralFace", 0.95f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
+  CONSOLE_VAR_RANGED(f32, kProcFace_NoiseMaxLightness,  "ProceduralFace", 1.14f, 0.f, 2.f); // replaces kProcFace_NoiseFraction
 
   CONSOLE_VAR_EXTERN(s32, kProcFace_NoiseNumFrames);
 #endif
-    
-  CONSOLE_VAR_ENUM(u8,      kProcFace_LineType,                   CONSOLE_GROUP, 1, "Line_4,Line_8,Line_AA"); // Only affects OpenCV drawing, not post-smoothing
-  CONSOLE_VAR_RANGED(s32,   kProcFace_EllipseDelta,               CONSOLE_GROUP, 10, 1, 90);
-  CONSOLE_VAR_RANGED(f32,   kProcFace_EyeLightnessMultiplier,     CONSOLE_GROUP, 1.f, 0.f, 10.f);
 
-  CONSOLE_VAR(bool,         kProcFace_HotspotRender,              CONSOLE_GROUP, true); // Render glow
-  CONSOLE_VAR_RANGED(f32,   kProcFace_HotspotFalloff,             CONSOLE_GROUP, 0.85f, 0.05f, 1.f);
-
-  CONSOLE_VAR_RANGED(f32, kProcFace_GlowSizeMultiplier,         CONSOLE_GROUP, 1.f, 0.f, 1.f);
-  CONSOLE_VAR_RANGED(f32, kProcFace_GlowLightnessMultiplier,    CONSOLE_GROUP, 1.f, 0.f, 10.f);
-  CONSOLE_VAR_ENUM(uint8_t, kProcFace_GlowFilter,                 CONSOLE_GROUP, (uint8_t)Filter::BoxFilter, "None,Box,Gaussian");
-
-  CONSOLE_VAR_RANGED(s32,   kProcFace_AntiAliasingSize,           CONSOLE_GROUP, 5, 0, 63); // full image antialiasing
+  CONSOLE_VAR_RANGED(s32,   kProcFace_AntiAliasingSize,           CONSOLE_GROUP, 5, 0, 15); // full image antialiasing
   CONSOLE_VAR_ENUM(uint8_t, kProcFace_AntiAliasingFilter,         CONSOLE_GROUP, (uint8_t)Filter::BoxFilter, "None,Box,Gaussian");
 
   static void VictorFaceRenderer(ConsoleFunctionContextRef context)
@@ -327,6 +334,7 @@ namespace Cozmo {
                                                              eyeCenter.x(),
                                                              eyeCenter.y());
 
+#if PROCEDURALFACE_GLOW_FEATURE
     const Value glowFraction = Util::Min(1.f, Util::Max(-1.f, kProcFace_GlowSizeMultiplier * faceData.GetParameter(whichEye, Parameter::GlowSize)));
     const Value glowLightness = kProcFace_GlowLightnessMultiplier * faceData.GetParameter(whichEye, Parameter::GlowLightness);
     const SmallMatrix<2, 3, f32> W_glow = GetTransformationMatrix(faceData.GetParameter(whichEye, Parameter::EyeAngle),
@@ -334,6 +342,7 @@ namespace Cozmo {
                                                                   (1+glowFraction) * faceData.GetParameter(whichEye, Parameter::EyeScaleY),
                                                                   eyeCenter.x(),
                                                                   eyeCenter.y());                                                        
+#endif
     ANKI_CPU_PROFILE_STOP(prof_getMat);
     
     // Initialize bounding box corners at their opposite extremes. We will figure out their
@@ -354,8 +363,10 @@ namespace Cozmo {
       point.x = std::round(temp.x());
       point.y = std::round(temp.y());
 
+#if PROCEDURALFACE_GLOW_FEATURE
       // Use glow warp to figure out larger bounding box which contains glow as well
       temp = W_glow * pointF32;
+#endif
       upperLeft.x()   = std::min(upperLeft.x(),   (f32)std::floor(temp.x()));
       bottomRight.x() = std::max(bottomRight.x(), (f32)std::ceil(temp.x()));
       upperLeft.y()   = std::min(upperLeft.y(),   (f32)std::floor(temp.y()));
@@ -481,6 +492,7 @@ namespace Cozmo {
       _glowImg.Allocate(faceImg.GetNumRows(), faceImg.GetNumCols());
       _glowImg.FillWith(0);
 
+#if PROCEDURALFACE_GLOW_FEATURE
       if(Util::IsFltGTZero(glowLightness) && Util::IsFltGTZero(glowFraction)) {
         ANKI_CPU_PROFILE("GlowRender");
         Vision::Image glowImgROI  = _glowImg.GetROI(eyeBoundingBoxS32);
@@ -503,6 +515,7 @@ namespace Cozmo {
                            (f32)glowSizeX, (f32)glowSizeY);
         }
       }
+#endif
 
       // Antialiasing (AFTER glow because it changes eyeShape, which we use to compute the glow above)
       if(kProcFace_AntiAliasingSize > 0) {
@@ -523,17 +536,20 @@ namespace Cozmo {
       const f32 hueFactor = faceData.GetHue();
       DEV_ASSERT(Util::InRange(hueFactor, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidHue");
       const u8 drawHue = std::round(255.f*hueFactor);
-      
-      const f32 satFactor = faceData.GetParameter(whichEye, Parameter::Saturation);
+
+      f32 satFactor = 1.0f;
+#if PROCEDURALFACE_ANIMATED_SATURATION
+      satFactor *= faceData.GetParameter(whichEye, Parameter::Saturation);
+#endif
+#if PROCEDURALFACE_PROCEDURAL_SATURATION
+      satFactor *= faceData.GetSaturation();
+#endif
       DEV_ASSERT(Util::InRange(satFactor, -1.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidSaturation");
       const u8 drawSat = std::round(255.f * satFactor);
       
       const f32 eyeLightness = faceData.GetParameter(whichEye, Parameter::Lightness);
       DEV_ASSERT(Util::InRange(eyeLightness, -1.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidLightness");
     
-      const f32 scanlineOpacity = faceData.GetScanlineOpacity();
-      DEV_ASSERT(Util::InRange(scanlineOpacity, 0.f, 1.f), "ProceduralFaceDrawer.DrawEye.InvalidScanlineOpacity");
-      
       // Draw the eye into the face image, adding outer glow, noise, and stylized scanlines
       {
         ANKI_CPU_PROFILE("DrawEyePixels");
@@ -581,11 +597,13 @@ namespace Cozmo {
               {
                 newValue *= kProcFace_EyeLightnessMultiplier;
               }
+#if PROCEDURALFACE_GLOW_FEATURE
               else
               {
                 newValue *= glowLightness;
               }
-              
+#endif
+
               // Put the final value into the face image
               // Note: If we're drawing the right eye, there may already be something in the image
               //       from when we drew the left eye (e.g. with large glow), so use max
@@ -612,14 +630,7 @@ namespace Cozmo {
                                       const Util::RandomGenerator& rng, 
                                       Vision::ImageRGB565& output)
   {
-#if ANKI_CPU_PROFILER_ENABLED
-    constexpr float kMaxExpectedFaceDrawTime_ms = 13.f;
-#endif
-    // Replace Util::CpuThreadProfiler::kLogFrequencyNever with a small value to output logging,
-    // can be used with Chrome Tracing format
-    ANKI_CPU_TICK("ProceduralFaceDrawer", kMaxExpectedFaceDrawTime_ms, Util::CpuThreadProfiler::kLogFrequencyNever);
-    // Replace the above line with the below line to see profiling info in the log
-    // ANKI_CPU_TICK("ProceduralFaceDrawer", kMaxExpectedFaceDrawTime_ms, 61);
+    ANKI_CPU_TICK("ProceduralFaceDrawer", kProcFace_DrawTimeMax_ms, Util::CpuProfiler::CpuProfilerLoggingTime(kProcFace_DrawTimeLogging));
     ANKI_CPU_PROFILE("DrawFace");
 
     // Make sure output is allocated appropriately.
@@ -718,6 +729,7 @@ namespace Cozmo {
       }
       
       Rectangle<s32> eyesROI(colMin, rowMin, colMax-colMin+1, rowMax-rowMin+1);
+      output.Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
       output.FillWith(0);
       Vision::ImageRGB565 roi = output.GetROI(eyesROI);
       faceImg.GetROI(eyesROI).ConvertHSV2RGB565(roi);
@@ -828,6 +840,7 @@ namespace Cozmo {
   
   void ProceduralFaceDrawer::ApplyScanlines(Vision::ImageRGB& imageHsv, const float opacity)
   {
+#if PROCEDURALFACE_SCANLINE_FEATURE
     DEV_ASSERT(Util::InRange(opacity, 0.f, 1.f), "ProceduralFaceDrawer.ApplyCurrentFaceHue.InvalidOpacity");
     
     const auto nRows = imageHsv.GetNumRows();
@@ -842,7 +855,8 @@ namespace Cozmo {
         }
       }
     }
+#endif
   }
-  
+
 } // namespace Cozmo
 } // namespace Anki

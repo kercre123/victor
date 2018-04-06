@@ -135,7 +135,7 @@ void BehaviorDevDisplayReadingsOnFace::UpdateDisplayProxReading()
   {
     std::string text = "Intensity: ";
     auto proxData = proxSensor.GetLatestProxData();
-    text += std::to_string(proxData.signalIntensity/proxData.spadCount);
+    text += std::to_string(proxData.signalQuality);
 
 
     DrawTextWithAutoLayout(text);

@@ -1,8 +1,0 @@
-
-cxx_project(
-    name = 'cti_vision_clad',
-    srcs = glob(['**/*.clad']),
-    platform_srcs = [],
-    headers = [],
-    platform_headers = [],
-)

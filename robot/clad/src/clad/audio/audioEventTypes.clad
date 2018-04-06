@@ -120,6 +120,7 @@ enum uint_32 EventGroupType
   GenericEvent,
   Music,
   Robot_Sfx,
+  Robot_Vic_Scene,
   Robot_Vic_Sfx,
   Robot_Vic_Vo,
   Robot_Vo,
@@ -277,6 +278,8 @@ enum uint_32 GenericEvent
   Play__Robot_Sfx__Srv_Surprised_Long = 3606017555,
   Play__Robot_Sfx__Srv_Surprised_Short = 4054065165,
   Play__Robot_Sfx__Wink = 3564343056,
+  Play__Robot_Vic_Scene__Anim_Abort = 3575715931,
+  Play__Robot_Vic_Scene__Mov_Rtpc_Reset = 1762574059,
   Play__Robot_Vic_Sfx__Blink = 3688286452,
   Play__Robot_Vic_Sfx__Camera_Flash = 3043844820,
   Play__Robot_Vic_Sfx__Dsp_Loop_Play = 4074272165,
@@ -411,9 +414,12 @@ enum uint_32 GenericEvent
   Play__Robot_Vic_Sfx__Scrn_Surprised_Short = 4031777881,
   Play__Robot_Vic_Sfx__Snore = 3717200567,
   Play__Robot_Vic_Sfx__Timer_Beep = 2315630444,
+  Play__Robot_Vic_Sfx__Touch_React = 1078700783,
   Play__Robot_Vic_Sfx__Tread_Loop_Play = 3369051132,
+  Play__Robot_Vic_Sfx__Wake_Word_Fail = 1241549428,
   Play__Robot_Vic_Sfx__Wake_Word_Off = 76586799,
   Play__Robot_Vic_Sfx__Wake_Word_On = 1532745019,
+  Play__Robot_Vic_Sfx__Wake_Word_Success = 286038569,
   Play__Robot_Vic_Vo__React_Affirmative = 2433936408,
   Play__Robot_Vic_Vo__React_Curious = 1448505674,
   Play__Robot_Vic_Vo__React_Curious_Short = 3797167345,
@@ -988,6 +994,13 @@ enum uint_32 Robot_Sfx
   Wink = 3564343056,
 }
 
+enum uint_32 Robot_Vic_Scene
+{
+  Anim_Abort = 3575715931,
+  Invalid = 0,  // Use this to check for Invalid events
+  Mov_Rtpc_Reset = 1762574059,
+}
+
 enum uint_32 Robot_Vic_Sfx
 {
   Blink = 3688286452,
@@ -1130,10 +1143,13 @@ enum uint_32 Robot_Vic_Sfx
   Scrn_Surprised_Short = 4031777881,
   Snore = 3717200567,
   Timer_Beep = 2315630444,
+  Touch_React = 1078700783,
   Tread_Loop_Play = 3369051132,
   Tread_Loop_Stop = 990175872,
+  Wake_Word_Fail = 1241549428,
   Wake_Word_Off = 76586799,
   Wake_Word_On = 1532745019,
+  Wake_Word_Success = 286038569,
 }
 
 enum uint_32 Robot_Vic_Vo

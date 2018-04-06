@@ -44,15 +44,21 @@ namespace HAL {
 /************************************************************************
  * \section Parameters and Constants
  */
-  
-/// Number of time stamp ticks per second
-static const int TICKS_PER_SECOND = 200;
+
 /// Scale value for maximum motor power in HAL
 static const f32 MOTOR_MAX_POWER = 1.0f;
-/// Maximum number of object advertisements reported in a time step
-//static const size_t MAX_ADVERTISEMENTS_PER_TICK = 16;
 
-Result Init(void);
+//
+// Initialize HAL
+// Blocks until initialization complete or shutdownSignal becomes non-zero
+// Returns RESULT_OK or error
+//
+Result Init(const int * shutdownSignal);
+
+//
+// Perform a single HAL "tick"
+// Returns RESULT_OK or error
+//
 Result Step(void);
 
 /************************************************************************
@@ -65,19 +71,10 @@ u32 GetMicroCounter(void);
 /// Block main execution for specified number of microseconds
 void MicroWait(u32 microseconds);
 
-/** Retrieve current time robot time stamp
- * TimeStamps are in units of approximate miliseconds but are ticked by the hardware processor update at
- * TICKS_PER_SECOND. The engine sets timestamp on connect to the robot process but otherwise it increases
- * monotonically.
- */
+/// Retrieve current time (from steady_clock) in ms 
 extern "C" TimeStamp_t GetTimeStamp(void);
 
-/** Sets the robot timestamp to value
- * Set timing offset on engine connect.
- */
-void SetTimeStamp(TimeStamp_t t);
-
-/// Retrieve the number of times a hardware watchdog reset has occured.
+/// Retrieve the number of times a hardware watchdog reset has occurred.
 u8 GetWatchdogResetCounter(void);
 
 /************************************************************************
@@ -86,14 +83,14 @@ u8 GetWatchdogResetCounter(void);
 
 /// IMU_DataStructure contains 3-axis acceleration and 3-axis gyro data
 struct IMU_DataStructure
-{ 
+{
   f32 acc_x;  ///< mm/s/s
   f32 acc_y;  ///< mm/s/s
   f32 acc_z;  ///< mm/s/s
   f32 rate_x; ///< rad/s
   f32 rate_y; ///< rad/s
   f32 rate_z; ///< rad/s
-  
+
   f32 temperature_degC;
 };
 
@@ -153,8 +150,8 @@ typedef enum
   CLIFF_COUNT
 } CliffID; //TODO: assert matches DropSensor, or use directly
 
-/// Face proximity sensor
-ProxSensorData GetRawProxData();
+/// Forward proximity sensor
+ProxSensorDataRaw GetRawProxData();
 
 /// Cliff sensors
 u16 GetRawCliffData(const CliffID cliff_id);
@@ -173,7 +170,7 @@ using SendDataFunction = Result (*)(const s16* latestMicData, uint32_t numSample
 /** Grants access to microphone data from this tick.
  * @param[in] Provides a function pointer for actually sending out the message using the mic data
  * @return true if more data needs to be sent (and this should be called again) false otherwise
- */ 
+ */
 bool HandleLatestMicData(SendDataFunction sendDataFunc);
 
 /************************************************************************
@@ -181,7 +178,7 @@ bool HandleLatestMicData(SendDataFunction sendDataFunc);
  */
 
 /// Button IDs
-typedef enum 
+typedef enum
 {
   BUTTON_CAPACITIVE = 0,
   BUTTON_POWER = 1,
@@ -211,7 +208,7 @@ bool BatteryIsCharging();
 bool BatteryIsOnCharger();
 
 /************************************************************************
- * \section Leds
+ * \section LEDs
  */
 
 /// LED identifiers
@@ -242,7 +239,7 @@ void SetLED(const LEDId led_id, const u32 color);
  */
 
 /// Run levels for the hardware
-typedef enum 
+typedef enum
 {
   POWER_STATE_OFF               = 0x00,
   POWER_STATE_OFF_WAKE_ON_RADIO = 0x01,
@@ -283,7 +280,7 @@ bool RadioSendPacket(const void *buffer, const u32 length);
 /** Wrapper method for sending messages NOT PACKETS
  * @param msgID The ID (tag) of the message to be sent
  * @param buffer A pointer to the message to be sent
- * @return True if sucessfully queued, false otherwise
+ * @return True if successfully queued, false otherwise
  */
 bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID);
 
@@ -302,7 +299,7 @@ u32 GetID();
 /// Force a hard fault in the processor, used for hardware assert
 void FORCE_HARDFAULT();
 #define HAL_ASSERT(c) do { if(!(c)) FORCE_HARDFAULT(); } while(0)
-  
+
 } // namespace HAL
 } // namespace Cozmo
 } // namespace Anki

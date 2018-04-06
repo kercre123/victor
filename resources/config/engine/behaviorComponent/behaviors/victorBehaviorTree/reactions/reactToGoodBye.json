@@ -1,0 +1,13 @@
+{
+  "behaviorClass": "AnimSequence",
+  "behaviorID": "ReactToGoodBye",
+
+  "emotionEventOnActivated": "RespondToShortVoiceCommand",
+
+  "animTriggers": ["ReactToGoodBye"],
+  "respondToUserIntents": [
+    {
+      "type": "greeting_goodbye"
+    }
+  ]
+}

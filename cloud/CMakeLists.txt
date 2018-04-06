@@ -60,6 +60,7 @@ if (MACOSX)
     PRIVATE
     util_audio
     voicego
+    opus
     ${SECURITY_FRAMEWORK}
   )
 

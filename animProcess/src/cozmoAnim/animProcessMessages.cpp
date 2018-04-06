@@ -23,7 +23,7 @@
 #include "cozmoAnim/animEngine.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceDebugDraw.h"
-#include "cozmoAnim/micDataProcessor.h"
+#include "cozmoAnim/micData/micDataSystem.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
 #include "coretech/common/engine/utils/timer.h"
@@ -180,6 +180,11 @@ void Process_setFaceHue(const Anki::Cozmo::RobotInterface::SetFaceHue& msg)
   ProceduralFace::SetHue(msg.hue);
 }
 
+void Process_setFaceSaturation(const Anki::Cozmo::RobotInterface::SetFaceSaturation& msg)
+{
+  ProceduralFace::SetSaturation(msg.saturation);
+}
+
 void Process_displayFaceImageBinaryChunk(const Anki::Cozmo::RobotInterface::DisplayFaceImageBinaryChunk& msg)
 {
   _animStreamer->Process_displayFaceImageChunk(msg);
@@ -301,16 +306,16 @@ void Process_setDebugConsoleVarMessage(const Anki::Cozmo::RobotInterface::SetDeb
 
 void Process_startRecordingMics(const Anki::Cozmo::RobotInterface::StartRecordingMics& msg)
 {
-  auto* micDataProcessor = _context->GetMicDataProcessor();
-  if (micDataProcessor == nullptr)
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if (micDataSystem == nullptr)
   {
     return;
   }
 
-  micDataProcessor->RecordRawAudio(msg.duration_ms,
-                                   std::string(msg.path,
-                                               msg.path_length),
-                                   msg.runFFT);
+  micDataSystem->RecordRawAudio(msg.duration_ms,
+                                std::string(msg.path,
+                                            msg.path_length),
+                                msg.runFFT);
 }
 
 void Process_drawTextOnScreen(const Anki::Cozmo::RobotInterface::DrawTextOnScreen& msg)
@@ -362,7 +367,7 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
     case RobotInterface::EngineToRobot::Tag_absLocalizationUpdate:
     {
       forwardToRobot = true;
-      _context->GetMicDataProcessor()->ResetMicListenDirection();
+      _context->GetMicDataSystem()->ResetMicListenDirection();
       break;
     }
 
@@ -391,10 +396,10 @@ static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
 {
   FaceDisplay::GetDebugDraw()->DrawMicInfo(payload);
 
-  auto * micDataProcessor = _context->GetMicDataProcessor();
-  if (micDataProcessor != nullptr)
+  auto * micDataSystem = _context->GetMicDataSystem();
+  if (micDataSystem != nullptr)
   {
-    micDataProcessor->ProcessMicDataPayload(payload);
+    micDataSystem->ProcessMicDataPayload(payload);
   }
 }
 
@@ -433,13 +438,13 @@ static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
   }
 
 #if ANKI_DEV_CHEATS
-  auto * micDataProcessor = _context->GetMicDataProcessor();
-  if (micDataProcessor != nullptr)
+  auto * micDataSystem = _context->GetMicDataSystem();
+  if (micDataSystem != nullptr)
   {
     const auto liftHeight_mm = ConvertLiftAngleToLiftHeightMM(robotState.liftAngle);
     if (LIFT_HEIGHT_CARRY-1.f <= liftHeight_mm)
     {
-      micDataProcessor->SetForceRecordClip(true);
+      micDataSystem->SetForceRecordClip(true);
     }
   }
 #endif
@@ -554,7 +559,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 
   MonitorConnectionState();
 
-  _context->GetMicDataProcessor()->Update(currTime_nanosec);
+  _context->GetMicDataSystem()->Update(currTime_nanosec);
 
   // Process incoming messages from engine
   u32 dataLen;

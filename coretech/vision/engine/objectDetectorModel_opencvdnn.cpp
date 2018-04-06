@@ -112,20 +112,32 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
     // Tensorflow models:
     const std::string graphFileName = Util::FileUtils::FullFilePath({modelPath,_params.graph});
     const std::string graphTxtFileName = Util::FileUtils::FullFilePath({modelPath,_params.graph + "txt"});
-    try
+    if(Util::FileUtils::FileExists(graphFileName))
     {
-      if(Util::FileUtils::FileExists(graphTxtFileName)) {
-        _network = cv::dnn::readNetFromTensorflow(graphFileName, graphTxtFileName);
+      try {
+        if(Util::FileUtils::FileExists(graphTxtFileName)) {
+          _network = cv::dnn::readNetFromTensorflow(graphFileName, graphTxtFileName);
+        }
+        else {
+          _network = cv::dnn::readNetFromTensorflow(graphFileName);
+        }
       }
-      else {
-        _network = cv::dnn::readNetFromTensorflow(graphFileName);
+      catch(const cv::Exception& e) {
+        PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.ReadTensorflowModelCvException",
+                          "Model file: %s, Error: %s", graphFileName.c_str(), e.what());
+        return RESULT_FAIL;
       }
+      catch(...) {
+        PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.ReadTensorflowModelUnknownException",
+                          "Model file: %s", graphFileName.c_str());
+        return RESULT_FAIL;
+      }
+      
     }
-    catch(cv::Exception& e)
+    else
     {
-      PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.ReadNetFromTensorFlowFailed",
-                        "Reading %s: %s",
-                        _params.graph.c_str(), e.what());
+      PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.TensorflowModelFileNotFound",
+                        "Model file: %s", graphFileName.c_str());
       return RESULT_FAIL;
     }
   }
@@ -134,21 +146,33 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const Json
     // Caffe models:
     const std::string protoFileName = Util::FileUtils::FullFilePath({modelPath,_params.graph + ".prototxt"});
     const std::string modelFileName = Util::FileUtils::FullFilePath({modelPath,_params.graph + ".caffemodel"});
-    try
+    if(Util::FileUtils::FileExists(protoFileName) && Util::FileUtils::FileExists(modelFileName))
     {
-      _network = cv::dnn::readNetFromCaffe(protoFileName, modelFileName);
+      try {
+        _network = cv::dnn::readNetFromCaffe(protoFileName, modelFileName);
+      }
+      catch(const cv::Exception& e) {
+        PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.ReadCaffeModelCvException",
+                          "Model file: %s, Error: %s", _params.graph.c_str(), e.what());
+        return RESULT_FAIL;
+      }
+      catch(...) {
+        PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.ReadCaffeModelUnknownException",
+                          "Model file: %s", _params.graph.c_str());
+        return RESULT_FAIL;
+      }
     }
-    catch(cv::Exception& e)
+    else
     {
-      PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.ReadNetCaffeFlowFailed",
-                        "Reading %s.prototxt/caffemodel: %s",
-                        _params.graph.c_str(), e.what());
+      PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.CaffeFilesNotFound",
+                        "Reading %s/%s.{prototxt|caffemodel}", modelPath.c_str(), _params.graph.c_str());
       return RESULT_FAIL;
     }
   }
   
   if(_network.empty())
   {
+    PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.ReadNetFailed", "");
     return RESULT_FAIL;
   }
   

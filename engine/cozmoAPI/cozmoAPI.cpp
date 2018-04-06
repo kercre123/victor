@@ -18,6 +18,7 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "clad/externalInterface/messageShared.h"
 #include "util/ankiLab/ankiLabDef.h"
+#include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
@@ -28,6 +29,11 @@ namespace Anki {
 namespace Cozmo {
 
 #pragma mark --- CozmoAPI Methods ---
+
+#if ANKI_CPU_PROFILER_ENABLED
+  CONSOLE_VAR_ENUM(u8, kCozmoEngineWebots_Logging, ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
+  CONSOLE_VAR_ENUM(u8, kCozmoEngine_Logging,       ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
+#endif
 
 bool CozmoAPI::StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Value& config)
 {
@@ -105,7 +111,7 @@ bool CozmoAPI::Update(const BaseStationTime_t currentTime_nanosec)
 
   // Replace Util::CpuThreadProfiler::kLogFrequencyNever with a small value to output logging,
   // can be used with Chrome Tracing format
-  ANKI_CPU_TICK("CozmoEngineWebots", kMaxDesiredEngineDuration, Util::CpuThreadProfiler::kLogFrequencyNever);
+  ANKI_CPU_TICK("CozmoEngineWebots", kMaxDesiredEngineDuration, Util::CpuProfiler::CpuProfilerLoggingTime(kCozmoEngineWebots_Logging));
 
   return _cozmoRunner->Update(currentTime_nanosec);
 }
@@ -254,7 +260,7 @@ void CozmoAPI::CozmoInstanceRunner::Run()
 
   while(_isRunning)
   {
-    ANKI_CPU_TICK("CozmoEngine", kMaxDesiredEngineDuration, Util::CpuThreadProfiler::kLogFrequencyNever);
+    ANKI_CPU_TICK("CozmoEngine", kMaxDesiredEngineDuration, Util::CpuProfiler::CpuProfilerLoggingTime(kCozmoEngine_Logging));
 
     const duration<double> curTimeSeconds = tickStart - runStart;
     const double curTimeNanoseconds = Util::SecToNanoSec(curTimeSeconds.count());

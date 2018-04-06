@@ -187,13 +187,9 @@ message ForceDelocalizeSimulatedRobot
 
 }
 
-message SyncTime
+message SyncRobot
 {
-  uint_32 syncTime,
 
-  // Other random things to send to robot on init
-  // which can eventually be made constant
-  float_32 driveCenterOffset
 }
 
 message ControllerGains
@@ -391,6 +387,12 @@ message SetFaceHue
     float_32 hue // [0,1]
 }
 
+// SetFaceSaturation
+message SetFaceSaturation
+{
+    float_32 saturation // [0,1]
+}
+
 
 // TODO: Move to messageGameToEngine.clad or shared file
 // DisplayFaceImageBinaryChunk
@@ -484,7 +486,7 @@ union EngineToRobot
 
   // Init
   GetManufacturingInfo          getMfgInfo                  = 0x01,
-  SyncTime                      syncTime                    = 0x02,
+  SyncRobot                     syncRobot                   = 0x02,
 
   // Debug / Test
   StartControllerTestMode       startControllerTestMode     = 0x0A,
@@ -555,18 +557,20 @@ union EngineToRobot
 
   DisplayProceduralFace         displayProceduralFace       = 0x56,
   SetFaceHue                    setFaceHue                  = 0x57,
-  DisplayFaceImageBinaryChunk   displayFaceImageBinaryChunk = 0x58,
-  DisplayFaceImageRGBChunk      displayFaceImageRGBChunk    = 0x59,
+  SetFaceSaturation             setFaceSaturation           = 0x58,
+  DisplayFaceImageBinaryChunk   displayFaceImageBinaryChunk = 0x59,
+  DisplayFaceImageRGBChunk      displayFaceImageRGBChunk    = 0x5A,
 
-  SetDefaultKeepFaceAliveParameters setDefaultKeepFaceAliveParameters = 0x5A,
-  SetKeepFaceAliveParameter     setKeepFaceAliveParameter   = 0x5B,
-  EnableKeepFaceAlive           enableKeepFaceAlive         = 0x5C,
-  AddOrUpdateEyeShift           addOrUpdateEyeShift         = 0x5D,
-  RemoveEyeShift                removeEyeShift              = 0x5E,
-  AddSquint                     addSquint                   = 0x5F,
-  RemoveSquint                  removeSquint                = 0x60,
+  SetDefaultKeepFaceAliveParameters setDefaultKeepFaceAliveParameters = 0x5B,
+  SetKeepFaceAliveParameter     setKeepFaceAliveParameter   = 0x5C,
+  EnableKeepFaceAlive           enableKeepFaceAlive         = 0x5D,
+  AddOrUpdateEyeShift           addOrUpdateEyeShift         = 0x5E,
+  RemoveEyeShift                removeEyeShift              = 0x5F,
+  AddSquint                     addSquint                   = 0x60,
+  RemoveSquint                  removeSquint                = 0x61,
   
-  DisplayFaceImageGrayscaleChunk   displayFaceImageGrayscaleChunk      = 0x61,
+  DisplayFaceImageGrayscaleChunk   displayFaceImageGrayscaleChunk      = 0x62,
+
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,

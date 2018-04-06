@@ -52,6 +52,14 @@ AnimationAudioClient::~AnimationAudioClient()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AnimationAudioClient::InitAnimation()
+{
+  // Clear events (if any) from the previous animation 
+  std::lock_guard<std::mutex> lock( _lock );
+  _activeEvents.clear();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnimationAudioClient::Update() const
 {
   if ( _audioController == nullptr ) { return; }
@@ -128,10 +136,11 @@ void AnimationAudioClient::HandleAudioRef( const AudioParameterRef& parameterRef
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AnimationAudioClient::StopCozmoEvent()
+void AnimationAudioClient::AbortAnimation()
 {
   if ( _audioController == nullptr ) { return; }
-  _audioController->StopAllAudioEvents( kAnimGameObj );
+  const auto event = ToAudioEventId( AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Scene__Anim_Abort );
+  _audioController->PostAudioEvent( event, kAnimGameObj );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

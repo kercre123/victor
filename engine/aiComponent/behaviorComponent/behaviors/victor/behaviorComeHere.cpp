@@ -177,7 +177,7 @@ void BehaviorComeHere::DriveTowardsFace()
 void BehaviorComeHere::NoFaceFound()
 {
   DEBUG_SET_STATE(NoFaceFound);
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ComeHere_SearchForFace));
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DEPRECATED_ComeHere_SearchForFace));
 }
 
 } // namespace Cozmo

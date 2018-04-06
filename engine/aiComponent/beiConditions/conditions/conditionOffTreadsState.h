@@ -24,7 +24,8 @@ class ConditionOffTreadsState : public IBEICondition
 {
 public:
   explicit ConditionOffTreadsState(const Json::Value& config);
-
+  explicit ConditionOffTreadsState(const OffTreadsState& targetState);
+  
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& bei) const override;
 
 private:

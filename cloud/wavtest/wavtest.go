@@ -102,7 +102,7 @@ func main() {
 
 	// send hotword
 	fmt.Println("Sent: 0 samples")
-	sender.SendHotword()
+	sender.SendMessage(cloudproc.HotwordMessage)
 	buf := data
 	sent := 0
 	const chunkSamples = 16000 / 1000 * chunkMs

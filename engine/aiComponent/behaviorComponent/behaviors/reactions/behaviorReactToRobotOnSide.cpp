@@ -56,11 +56,11 @@ void BehaviorReactToRobotOnSide::ReactToBeingOnSide()
   AnimationTrigger anim = AnimationTrigger::Count;
   
   if( GetBEI().GetOffTreadsState() == OffTreadsState::OnLeftSide){
-    anim = AnimationTrigger::ReactToOnLeftSide;
+    anim = AnimationTrigger::ANTICIPATED_ReactToOnLeftSide;
   }
   
   if(GetBEI().GetOffTreadsState() == OffTreadsState::OnRightSide) {
-    anim = AnimationTrigger::ReactToOnRightSide;
+    anim = AnimationTrigger::ANTICIPATED_ReactToOnRightSide;
   }
   
   if(anim != AnimationTrigger::Count){
@@ -76,11 +76,11 @@ void BehaviorReactToRobotOnSide::AskToBeRighted()
   AnimationTrigger anim = AnimationTrigger::Count;
   
   if( GetBEI().GetOffTreadsState() == OffTreadsState::OnLeftSide){
-    anim = AnimationTrigger::AskToBeRightedLeft;
+    anim = AnimationTrigger::DEPRECATED_AskToBeRightedLeft;
   }
   
   if(GetBEI().GetOffTreadsState() == OffTreadsState::OnRightSide) {
-    anim = AnimationTrigger::AskToBeRightedRight;
+    anim = AnimationTrigger::DEPRECATED_AskToBeRightedRight;
   }
   
   if(anim != AnimationTrigger::Count){
@@ -112,14 +112,14 @@ void BehaviorReactToRobotOnSide::HoldingLoop()
       // note: NothingToDoBored anims can move the robot, so Intro/Outro may not work here well, should
       // we be playing a specific loop here?
       DelegateIfInControl(new CompoundActionSequential({
-                    new TriggerAnimationAction(AnimationTrigger::NothingToDoBoredIntro),
-                    new TriggerAnimationAction(AnimationTrigger::NothingToDoBoredEvent),
-                    new TriggerAnimationAction(AnimationTrigger::NothingToDoBoredOutro) }),
+                    new TriggerAnimationAction(AnimationTrigger::DEPRECATED_NothingToDoBoredIntro),
+                    new TriggerAnimationAction(AnimationTrigger::DEPRECATED_NothingToDoBoredEvent),
+                    new TriggerAnimationAction(AnimationTrigger::DEPRECATED_NothingToDoBoredOutro) }),
                   &BehaviorReactToRobotOnSide::HoldingLoop);
     }
     else {
       // otherwise, we just loop this animation
-      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::WaitOnSideLoop),
+      DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ANTICIPATED_WaitOnSideLoop),
                   &BehaviorReactToRobotOnSide::HoldingLoop);
     }
   }

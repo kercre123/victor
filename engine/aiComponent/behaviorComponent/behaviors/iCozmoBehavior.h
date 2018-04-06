@@ -34,6 +34,7 @@
 #include "clad/types/unlockTypes.h"
 #include "util/console/consoleVariable.h"
 #include "util/logging/logging.h"
+#include "util/string/stringUtils.h"
 
 //Transforms enum into string
 #define DEBUG_SET_STATE(s) SetDebugStateName(#s)
@@ -50,6 +51,7 @@ class ActionableObject;
 class ConditionUserIntentPending;
 class DriveToObjectAction;
 enum class ObjectInteractionIntention;
+class UnitTestKey;
 class UserIntent;
 enum class UserIntentTag : uint8_t;
 
@@ -200,6 +202,8 @@ public:
   // to bypass one of the behaviors InActivatableScope so that it can be handled by something
   // further down the stack
   void SetDontActivateThisTick(const std::string& coordinatorName);
+  
+  std::map<std::string,ICozmoBehaviorPtr> TESTONLY_GetAnonBehaviors( UnitTestKey key ) const;
 
 protected:
 
@@ -253,6 +257,9 @@ protected:
   
   virtual void OnEnteredActivatableScopeInternal() override;
   virtual void OnLeftActivatableScopeInternal() override;
+
+  virtual void OnBehaviorEnteredActivatableScope() { }
+  virtual void OnBehaviorLeftActivatableScope() { }
 
   virtual void OnBehaviorActivated() = 0;
   
@@ -445,10 +452,10 @@ protected:
   // make a member variable a console var that is only around as long as its class instance is
   #if ANKI_DEV_CHEATS
     template <typename T>
-    void MakeMemberTunable(T& param, const std::string& name);
+    void MakeMemberTunable(T& param, const std::string& name, const char* category = nullptr);
   #else // no op
     template <typename T>
-    void MakeMemberTunable(T& param, const std::string& name) {  }
+    void MakeMemberTunable(T& param, const std::string& name, const char* category = nullptr) {  }
   #endif
   
 private:
@@ -511,6 +518,9 @@ private:
   // Parameters that track SetDontActivateThisTick
   std::string _dontActivateCoordinator;
   size_t _tickDontActivateSetFor = -1;
+
+  // If non-empty, trigger this emotion event when this behavior activated
+  std::string _emotionEventOnActivated;
 
   // if an unlockId is set, the behavior won't be activatable unless the unlockId is unlocked in the progression component
   UnlockId _requiredUnlockId;
@@ -676,11 +686,14 @@ bool ICozmoBehavior::FindAnonymousBehaviorByNameAndDowncast(const std::string& b
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #if ANKI_DEV_CHEATS
 template <typename T>
-void ICozmoBehavior::MakeMemberTunable(T& param, const std::string& name)
+void ICozmoBehavior::MakeMemberTunable(T& param, const std::string& name, const char* category)
 {
-  const std::string uniqueName = GetDebugLabel() + "_" + name;
-  const bool unregisterOnDestruction = true;
-  const char* category = "BehaviorInstanceParams";
+  std::string uniqueName = GetDebugLabel() + "_" + name;
+  Anki::Util::StringReplace( uniqueName, "@", "" );
+  static const bool unregisterOnDestruction = true;
+  if( category == nullptr ) {
+    category = "BehaviorInstanceParams";
+  }
   // ensure this param isnt already registered
   for( const auto& var : _tunableParams ) {
     if( !ANKI_VERIFY( var->GetID() != uniqueName,

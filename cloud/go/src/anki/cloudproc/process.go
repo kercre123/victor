@@ -23,6 +23,7 @@ var (
 	// key for Chipper use
 	ChipperSecret string
 	verbose       bool
+	platformOpts  []chipper.ConnOpt
 )
 
 type socketMsg struct {
@@ -47,7 +48,7 @@ type Process struct {
 	receivers []*Receiver
 	intents   []io.Writer
 	kill      chan struct{}
-	hotword   chan hotwordEvent
+	msg       chan messageEvent
 	audio     chan socketMsg
 	opts      options
 }
@@ -57,7 +58,7 @@ type Process struct {
 func (p *Process) AddReceiver(r *Receiver) {
 	if p.receivers == nil {
 		p.receivers = make([]*Receiver, 0, 4)
-		p.hotword = make(chan hotwordEvent)
+		p.msg = make(chan messageEvent)
 		p.audio = make(chan socketMsg)
 	}
 	if p.kill == nil {
@@ -77,7 +78,8 @@ func (p *Process) AddTestReceiver(r *Receiver) {
 	p.AddReceiver(r)
 }
 
-type hotwordEvent struct {
+type messageEvent struct {
+	msg    string
 	isTest bool
 }
 
@@ -87,8 +89,8 @@ func (p *Process) addMultiplexRoutine(r *Receiver) {
 			select {
 			case <-p.kill:
 				return
-			case <-r.hotword:
-				p.hotword <- hotwordEvent{isTest: r.isTest}
+			case msg := <-r.msg:
+				p.msg <- messageEvent{msg: msg, isTest: r.isTest}
 			case msg := <-r.audio:
 				p.audio <- msg
 			}
@@ -124,66 +126,72 @@ func (p *Process) Run(options ...Option) {
 procloop:
 	for {
 		select {
-		case hw := <-p.hotword:
-			// hotword = get ready to stream data
-			if ctx != nil {
-				log.Println("Got hotword event while already streaming, weird...")
-				close(ctx.audioStream)
-				ctx.close()
-			}
-
-			// if this is from a test receiver, notify the mic to send the AI a hotword on our behalf
-			if hw.isTest {
-				p.writeMic([]byte{0, 1})
-			}
-
-			var stream *chipper.Stream
-			var chipperConn *chipper.Conn
-			var err error
-			ctxTime := util.TimeFuncMs(func() {
-				chipperConn, err = chipper.NewConn(ChipperURL, ChipperSecret, "device-id")
-				if err != nil {
-					log.Println("Error getting chipper connection:", err)
-					p.writeError("connecting", err.Error())
-					return
+		case msg := <-p.msg:
+			switch {
+			case msg.msg == HotwordMessage:
+				// hotword = get ready to stream data
+				if ctx != nil {
+					log.Println("Got hotword event while already streaming, weird...")
+					close(ctx.audioStream)
+					ctx.close()
 				}
-				stream, err = chipperConn.NewStream(chipper.StreamOpts{
-					CompressOpts: chipper.CompressOpts{
-						Compress:   p.opts.compress,
-						Bitrate:    66 * 1024,
-						Complexity: 0,
-						FrameSize:  60},
-					SessionId: uuid.New().String()[:16],
-					Handler:   p.opts.handler,
-					SaveAudio: p.opts.saveAudio})
-				if err != nil {
-					p.writeError("newstream", err.Error())
-					// debug cause of lookup failure
-					var debug string
-					addrs, err := net.DefaultResolver.LookupHost(context.Background(), "chipper-dev.api.anki.com")
-					if err != nil {
-						debug += "lookup_err: " + err.Error()
-					} else {
-						debug += "lookup_ips: " + strings.Join(addrs, "/")
-					}
-					debug += "   "
-					_, err = net.Dial("tcp", "chipper-dev.api.anki.com:443")
-					if err != nil {
-						debug += "dial_err: " + err.Error()
-					} else {
-						debug += "dial_success"
-					}
-					p.writeError("newstream_debug", debug)
+
+				// if this is from a test receiver, notify the mic to send the AI a hotword on our behalf
+				if msg.isTest {
+					p.writeMic([]byte{0, 1})
 				}
-			})
-			if err != nil {
-				log.Println("Error creating Chipper:", err)
-				continue
+
+				var stream *chipper.Stream
+				var chipperConn *chipper.Conn
+				var err error
+				ctxTime := util.TimeFuncMs(func() {
+					chipperConn, err = chipper.NewConn(ChipperURL, ChipperSecret, platformOpts...)
+					if err != nil {
+						log.Println("Error getting chipper connection:", err)
+						p.writeError("connecting", err.Error())
+						return
+					}
+					stream, err = chipperConn.NewStream(chipper.StreamOpts{
+						CompressOpts: chipper.CompressOpts{
+							Compress:   p.opts.compress,
+							Bitrate:    66 * 1024,
+							Complexity: 0,
+							FrameSize:  60},
+						SessionId: uuid.New().String()[:16],
+						Handler:   p.opts.handler,
+						SaveAudio: p.opts.saveAudio})
+					if err != nil {
+						p.writeError("newstream", err.Error())
+						// debug cause of lookup failure
+						var debug string
+						addrs, err := net.DefaultResolver.LookupHost(context.Background(), "chipper-dev.api.anki.com")
+						if err != nil {
+							debug += "lookup_err: " + err.Error()
+						} else {
+							debug += "lookup_ips: " + strings.Join(addrs, "/")
+						}
+						debug += "   "
+						_, err = net.Dial("tcp", "chipper-dev.api.anki.com:443")
+						if err != nil {
+							debug += "dial_err: " + err.Error()
+						} else {
+							debug += "dial_success"
+						}
+						p.writeError("newstream_debug", debug)
+					}
+				})
+				if err != nil {
+					log.Println("Error creating Chipper:", err)
+					continue
+				}
+
+				ctx = p.newVoiceContext(chipperConn, stream, cloudChan)
+
+				logVerbose("Received hotword event, created context in", int(ctxTime), "ms")
+
+			case len(msg.msg) > 4 && msg.msg[:4] == "file":
+				p.writeResponse([]byte("{\"debug\":\"" + msg.msg[4:] + "\"}"))
 			}
-
-			ctx = p.newVoiceContext(chipperConn, stream, cloudChan)
-
-			logVerbose("Received hotword event, created context in", int(ctxTime), "ms")
 
 		case msg := <-p.audio:
 			// add samples to our buffer

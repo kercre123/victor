@@ -39,7 +39,8 @@ protected:
   BehaviorReactToTouchPetting(const Json::Value& config);
   
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
-    modifiers.behaviorAlwaysDelegates = false;
+    modifiers.wantsToBeActivatedWhenOffTreads = true;
+    modifiers.behaviorAlwaysDelegates         = false;
   }
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
@@ -68,6 +69,8 @@ private:
   
   // ordered list of petting getout animations (corresponds to above list)
   std::vector<AnimationTrigger> _animPettingGetout;
+  
+  AnimationTrigger _animPettingGetin;
   
   // duration of time to wait before checking
   // for state transition conditions for bliss

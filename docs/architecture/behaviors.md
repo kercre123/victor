@@ -64,3 +64,7 @@ automatically.
 
 The scripts also have some checks to ensure that the above conventions are matched and that json files match
 known behavior classes.
+
+## See also
+
+[User/cloud/app intents in the behavior system](/docs/architecture/behaviors_intents.md)

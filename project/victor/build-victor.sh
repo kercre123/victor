@@ -14,7 +14,7 @@ function usage() {
     echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
     echo "  -p [PLATFORM]           build target platform {android,mac}"
     echo "  -a                      append cmake platform argument {arg}"
-    echo "  -g [GENERATOR]          CMake generator {Ninja,Xcode,Makefile}"
+    echo "  -g [GENERATOR]          CMake generator {Ninja,Xcode,Makefiles}"
     echo "  -f                      force-run filelist updates and cmake configure before building"
     echo "  -X                      delete build assets, forcing assets to be re-copied"
     echo "  -d                      DEBUG: generate file lists and exit"
@@ -122,7 +122,9 @@ shift $(($OPTIND - 1))
 #
 
 if [ -z "${CMAKE_EXE+x}" ]; then
-    CMAKE_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/cmake.py --install-cmake 3.9.6`
+    echo "Attempting to install cmake"
+    ${TOPLEVEL}/tools/build/tools/ankibuild/cmake.py --install-cmake 3.9.6
+    CMAKE_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/cmake.py --find-cmake 3.9.6`
 fi
 
 if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
@@ -146,6 +148,29 @@ case "${CONFIGURATION}" in
     ;;
   *)
     echo "${SCRIPT_NAME}: Unknown configuration '${CONFIGURATION}'"
+    usage
+    exit 1
+    ;;
+esac
+
+#
+# Validate generator
+#
+case "${GENERATOR}" in
+  [Nn][Ii][Nn][Jj][Aa])
+    GENERATOR="Ninja"
+    ;;
+  [Xx][Cc][Oo][Dd][Ee])
+    GENERATOR="Xcode"
+    ;;
+  [Mm][Aa][Kk][Ee][Ff][Ii][Ll][Ee][Ss])
+    GENERATOR="Makefiles"
+    ;;
+  "Unix Makefiles")
+    GENERATOR="Makefiles"
+    ;;
+  *)
+    echo "${SCRIPT_NAME}: Unknown generator '${GENERATOR}'"
     usage
     exit 1
     ;;
@@ -187,7 +212,7 @@ fi
 
 # For non-ninja builds, add generator type to build dir
 BUILD_SYSTEM_TAG=""
-if [ ${GENERATOR} != "Ninja" ]; then
+if [ "${GENERATOR}" != "Ninja" ]; then
     BUILD_SYSTEM_TAG="-${GENERATOR}"
 fi
 : ${BUILD_DIR:="${TOPLEVEL}/_build/${PLATFORM}/${CONFIGURATION}${BUILD_SYSTEM_TAG}"}
@@ -197,9 +222,9 @@ case ${GENERATOR} in
         PROJECT_FILE="build.ninja"
         ;;
     "Xcode")
-        PROJECT_FILE="cozmo.xcodeproj"
+        PROJECT_FILE="victor.xcodeproj"
         ;;
-    "Makefile")
+    "Makefiles")
         PROJECT_FILE="Makefile"
         GENERATOR="CodeBlocks - Unix Makefiles"
       ;;

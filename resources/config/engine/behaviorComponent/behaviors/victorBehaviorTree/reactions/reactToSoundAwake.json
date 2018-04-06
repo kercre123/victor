@@ -1,0 +1,8 @@
+{
+  "behaviorClass" : "ReactToSound",
+  "behaviorID" : "ReactToSoundAwake",
+
+  "emotionEventOnActivated": "ReactToSoundAwake",
+
+  "FromSleep" : false
+}

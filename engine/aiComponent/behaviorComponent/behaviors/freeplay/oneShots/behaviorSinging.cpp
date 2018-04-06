@@ -36,12 +36,12 @@ namespace {
   static const char* kAudioSwitchGroup = "audioSwitchGroup";
   static const char* kAudioSwitch = "audioSwitch";
   
-  static const AnimationTrigger kGetInTrigger = AnimationTrigger::Singing_GetIn;
-  static const AnimationTrigger kGetOutTrigger = AnimationTrigger::Singing_GetOut;
+  static const AnimationTrigger kGetInTrigger = AnimationTrigger::DEPRECATED_Singing_GetIn;
+  static const AnimationTrigger kGetOutTrigger = AnimationTrigger::DEPRECATED_Singing_GetOut;
   
-  static const AnimationTrigger k80BpmTrigger = AnimationTrigger::Singing_80bpm;
-  static const AnimationTrigger k100BpmTrigger = AnimationTrigger::Singing_100bpm;
-  static const AnimationTrigger k120BpmTrigger = AnimationTrigger::Singing_120bpm;
+  static const AnimationTrigger k80BpmTrigger = AnimationTrigger::DEPRECATED_Singing_80bpm;
+  static const AnimationTrigger k100BpmTrigger = AnimationTrigger::DEPRECATED_Singing_100bpm;
+  static const AnimationTrigger k120BpmTrigger = AnimationTrigger::DEPRECATED_Singing_120bpm;
   
   static const AudioMetaData::GameParameter::ParameterType kVibratoParam =
     AudioMetaData::GameParameter::ParameterType::Cozmo_Singing_Vibrato;

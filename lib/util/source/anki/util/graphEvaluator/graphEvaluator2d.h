@@ -75,6 +75,7 @@ public:
   
   size_t      GetNumNodes()     const { return _nodes.size(); }
   const Node& GetNode(size_t i) const { return _nodes[i]; }
+  bool        Empty()           const { return _nodes.empty(); }
 
 private:
   

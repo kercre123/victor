@@ -47,7 +47,7 @@ namespace Anki {
       u16 GetCliffValue(u32 ind);
 
       // Get corrected ToF distance sensor data
-      ProxSensorData GetProxData();
+      ProxSensorDataRaw GetProxData();
 
     } // namespace ProxSensors
   } // namespace Cozmo

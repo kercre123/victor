@@ -53,7 +53,7 @@ private:
   using WebService = WebService::WebService;
   void OnClientInit(const WebService::SendToClientFunc& sendFunc);
   #endif
-  void AddResult(const std::string& str);
+  bool AddDebugResult(const std::string& str);
 };
 
 }

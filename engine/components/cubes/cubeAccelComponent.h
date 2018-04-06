@@ -18,6 +18,8 @@
 #include "engine/robotComponents_fwd.h"
 #include "engine/robotInterface/messageHandler.h"
 
+#include "clad/types/activeObjectAccel.h"
+
 #include "coretech/common/engine/objectIDs.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/shared/types.h"
@@ -37,6 +39,8 @@ namespace Cozmo {
 struct CubeAccelData;
 namespace CubeAccelListeners {
   class ICubeAccelListener;
+  class MovementStartStopListener;
+  class UpAxisChangedListener;
 }
 
 class Robot;
@@ -52,7 +56,7 @@ public:
   //////
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
-    dependencies.insert(RobotComponentID::CozmoContext);
+    dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CubeComms);
@@ -80,9 +84,18 @@ private:
   // Incoming accel data is run on this set of listeners
   std::map<ObjectID, std::set<std::shared_ptr<CubeAccelListeners::ICubeAccelListener>>> _listenerMap;
   
+  // Special listeners for detecting when cubes start/stop moving
+  std::map<ObjectID, std::shared_ptr<CubeAccelListeners::MovementStartStopListener>> _movementListeners;
+  
+  std::map<ObjectID, std::shared_ptr<CubeAccelListeners::UpAxisChangedListener>> _upAxisChangedListeners;
+  
   Robot* _robot = nullptr;
   
   std::list<Signal::SmartHandle> _eventHandlers;
+  
+  // Callbacks for object movement and up axis changed listeners
+  void ObjectMovedOrStoppedCallback(const ObjectID objectId, const bool isMoving);
+  void ObjectUpAxisChangedCallback(const ObjectID objectId, const UpAxis& upAxis);
   
 };
 

@@ -86,7 +86,7 @@ namespace Anki {
         return _cliffVals[ind];
       }
       
-      ProxSensorData GetProxData()
+      ProxSensorDataRaw GetProxData()
       {
         auto proxData = HAL::GetRawProxData();
 #ifndef SIMULATOR

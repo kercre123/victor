@@ -1,6 +1,6 @@
 {
   // prevent these animation triggers from logging DAS events
   "blacklisted_animation_triggers": [
-    "NeutralFace"
+    "DEPRECATED_NeutralFace"
   ]
 }

@@ -15,8 +15,6 @@
 
 #include "json/json.h"
 
-#include "util/console/consoleInterface.h"
-#include "util/console/consoleSystem.h"
 #include "util/global/globalDefinitions.h"
 #include "util/logging/channelFilter.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -30,12 +28,6 @@
 #include <webots/Supervisor.hpp>
 
 #define LOG_CHANNEL    "webotsCtrlWebServer"
-
-namespace Anki {
-  namespace Cozmo {
-    CONSOLE_VAR_EXTERN(bool, kEnableCladLogger);
-  }
-}
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -58,6 +50,11 @@ int main(int argc, char **argv)
   
   // Set Webots supervisor
   OSState::SetSupervisor(&webserverSupervisor);
+
+  // Create the OSState singleton now, while we're in the main thread.
+  // If we don't, subsequent calls from the webservice threads will
+  // create it in the wrong thread and things won't work right
+  (void)OSState::getInstance();
 
   // - create and set logger
   Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::ILoggerProvider::LOG_LEVEL_WARN,
@@ -103,10 +100,6 @@ int main(int argc, char **argv)
   // Start with a step so that we can attach to the process here for debugging
   webserverSupervisor.step(WEB_SERVER_TIME_STEP_MS);
   
-  // Set up the console vars to load from file, if it exists
-  ANKI_CONSOLE_SYSTEM_INIT("consoleVars.ini");
-  NativeAnkiUtilConsoleLoadVars();
-
   // Create the standalone web server
   Json::Value wsConfig;
   static const std::string & wsConfigPath = "webserver/webServerConfig_standalone.json";

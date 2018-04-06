@@ -2,16 +2,49 @@
   "emotionEvents" : [
     {
       "name" : "ReactToTriggerWord",
-      "emotionAffectors" : [										  
+      "emotionAffectors" : [
         {
           "emotionType" : "Stimulated",
-          "value" : 0.9
+          "value" : 0.8
         },
         {
           "emotionType" : "Social",
           "value" : 0.5
         }
-      ]
+      ],
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 1.0
+          }
+        ]
+      }
+    },
+    {
+      "name" : "RespondToShortVoiceCommand",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.1
+        },
+        {
+          "emotionType" : "Social",
+          "value" : 0.2
+        },
+        {
+          "emotionType" : "Happy",
+          "value" : 0.15
+        }
+      ],
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 1.0
+          }
+        ]
+      }
     }
   ]
 }

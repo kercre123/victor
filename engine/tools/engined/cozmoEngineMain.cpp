@@ -1,3 +1,15 @@
+/**
+* File: cozmoEngineMain.cpp
+*
+* Author: Various Artists
+* Created: 6/26/17
+*
+* Description: Cozmo Engine Process on Victor
+*
+* Copyright: Anki, inc. 2017
+*
+*/
+
 #include "json/json.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -186,8 +198,7 @@ static int cozmo_start(const Json::Value& configuration)
   configure_engine(config);
 
   // Set up the console vars to load from file, if it exists
-  ANKI_CONSOLE_SYSTEM_INIT(gDataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "consoleVars.ini").c_str());
-  NativeAnkiUtilConsoleLoadVars();
+  ANKI_CONSOLE_SYSTEM_INIT(gDataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "consoleVarsEngine.ini").c_str());
 
   Anki::Cozmo::CozmoAPI* engineInstance = new Anki::Cozmo::CozmoAPI();
 

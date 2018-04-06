@@ -17,6 +17,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -31,7 +32,8 @@ static const float kWaitTimeBeforeRepeatAnim_s = 0.5f;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(const Json::Value& config)
-: ICozmoBehavior(config)
+  : ICozmoBehavior(config)
+  , _offTreadsCondition(OffTreadsState::OnBack)
 {
 }
 
@@ -39,7 +41,15 @@ BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(const Json::Value& config
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToRobotOnBack::WantsToBeActivatedBehavior() const
 {
-  return true;
+  return _offTreadsCondition.AreConditionsMet(GetBEI());
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToRobotOnBack::InitBehavior()
+{
+  _offTreadsCondition.Init(GetBEI());
+  _offTreadsCondition.SetActive(GetBEI(), true);
 }
 
 
@@ -57,12 +67,12 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded()
     const auto& robotInfo = GetBEI().GetRobotInfo();
     // Check if cliff detected
     // If not, then calibrate head because we're not likely to be on back if no cliff detected.
-    if (robotInfo.GetCliffSensorComponent().IsCliffDetected()) {
-      AnimationTrigger anim = AnimationTrigger::FlipDownFromBack;
+    if (robotInfo.GetCliffSensorComponent().IsCliffDetectedStatusBitOn()) {
+      AnimationTrigger anim = AnimationTrigger::ANTICIPATED_FlipDownFromBack;
       
       if(GetAIComp<AIWhiteboard>().HasHiccups())
       {
-        anim = AnimationTrigger::HiccupRobotOnBack;
+        anim = AnimationTrigger::DEPRECATED_HiccupRobotOnBack;
       }
     
       DelegateIfInControl(new TriggerAnimationAction(anim),

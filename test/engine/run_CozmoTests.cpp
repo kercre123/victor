@@ -16,6 +16,7 @@
 #include "engine/activeCube.h"
 #include "engine/activeObjectHelpers.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
@@ -77,7 +78,7 @@ TEST(BlockWorld, DISABLED_AddAndRemoveObject)
   Result lastResult;
   
   Robot robot(1, cozmoContext);
-  robot.FakeSyncTimeAck();
+  robot.FakeSyncRobotAck();
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
   
@@ -403,7 +404,7 @@ TEST(BlockWorld, UpdateObjectOrigins)
   Result lastResult;
   
   Robot robot(1, cozmoContext);
-  robot.FakeSyncTimeAck();
+  robot.FakeSyncRobotAck();
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
   
@@ -567,10 +568,9 @@ void FakeRecvConnectionMessage(Robot& robot, double time, uint32_t activeID, uin
 }
 
 // helper for move messages
-void FakeRecvMovedMessage(Robot& robot, double time, Anki::TimeStamp_t timestamp, uint32_t activeID)
+void FakeRecvMovedMessage(Robot& robot, const Anki::ObjectID& objectId)
 {
-  const auto& msg = ExternalInterface::ObjectMoved(timestamp, activeID, ActiveAccel(1,1,1), Anki::Cozmo::UpAxis::ZPositive );
-  robot.GetRobotToEngineImplMessaging().HandleActiveObjectMoved(msg, &robot);
+  robot.GetCubeAccelComponent().ObjectMovedOrStoppedCallback(objectId, true);
 }
 
 }
@@ -584,7 +584,7 @@ TEST(BlockWorld, PoseUpdates)
   Result lastResult;
   
   Robot robot(1, cozmoContext);
-  robot.FakeSyncTimeAck();
+  robot.FakeSyncRobotAck();
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
   
@@ -752,8 +752,7 @@ TEST(BlockWorld, PoseUpdates)
 
   // MOVE object2
   {
-    const ActiveObject* con2 = robot.GetBlockWorld().GetConnectedActiveObjectByID( connObj2 );
-    FakeRecvMovedMessage(robot, fakeTime, fakeTime, con2->GetActiveID());
+    FakeRecvMovedMessage(robot, connObj2);
     ++fakeTime;
   }
   
@@ -806,7 +805,7 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   Result lastResult;
   
   Robot robot(1, cozmoContext);
-  robot.FakeSyncTimeAck();
+  robot.FakeSyncRobotAck();
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
   
@@ -1006,7 +1005,7 @@ TEST(BlockWorld, RejiggerAndFlatten)
   Result lastResult;
   
   Robot robot(1, cozmoContext);
-  robot.FakeSyncTimeAck();
+  robot.FakeSyncRobotAck();
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
   
@@ -1178,7 +1177,7 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   Result lastResult;
   
   Robot robot(1, cozmoContext);
-  robot.FakeSyncTimeAck();
+  robot.FakeSyncRobotAck();
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
   
@@ -1361,7 +1360,7 @@ TEST(BlockWorld, CubeStacks)
   Result lastResult;
   
   Robot robot(1, cozmoContext);
-  robot.FakeSyncTimeAck();
+  robot.FakeSyncRobotAck();
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
   
@@ -1566,7 +1565,7 @@ TEST(BlockWorld, DISABLED_UnobserveCubeStack)
   Result lastResult;
   
   Robot robot(1, cozmoContext);
-  robot.FakeSyncTimeAck();
+  robot.FakeSyncRobotAck();
   
   // Camera calibration
   const u16 HEAD_CAM_CALIB_WIDTH  = 320;
@@ -1653,7 +1652,7 @@ TEST(BlockWorld, CopyObjectsFromZombieOrigins)
   using namespace Cozmo;
   
   Robot robot(1, cozmoContext);
-  robot.FakeSyncTimeAck();
+  robot.FakeSyncRobotAck();
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
   
@@ -1772,7 +1771,7 @@ TEST(Localization, LocalizationDistance)
   Result lastResult;
   
   Robot robot(1, cozmoContext);
-  robot.FakeSyncTimeAck();
+  robot.FakeSyncRobotAck();
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
   
@@ -1962,7 +1961,7 @@ TEST(FactoryTest, IdealCameraPose)
   
   
   Robot robot(1, cozmoContext);
-  robot.FakeSyncTimeAck();
+  robot.FakeSyncRobotAck();
   
   Vision::Image image;
   ExternalInterface::RobotCompletedFactoryDotTest msg;
@@ -2080,7 +2079,7 @@ TEST(FactoryTest, FindDotsInImages)
   Result lastResult;
   
   Robot robot(1, cozmoContext);
-  robot.FakeSyncTimeAck();
+  robot.FakeSyncRobotAck();
   
   Vision::Image image;
   ExternalInterface::RobotCompletedFactoryDotTest msg;
@@ -2175,7 +2174,7 @@ TEST(BlockWorld, ObjectRobotCollisionCheck)
   using namespace Cozmo;
   
   Robot robot(1, cozmoContext);
-  robot.FakeSyncTimeAck();
+  robot.FakeSyncRobotAck();
   
   ObservableObject* object = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
   
@@ -2256,7 +2255,7 @@ TEST(Localization, UnexpectedMovement)
   Result lastResult;
   
   Robot robot(1, cozmoContext);
-  robot.FakeSyncTimeAck();
+  robot.FakeSyncRobotAck();
   robot.SetPhysicalRobot(true);
   
   BlockWorld& blockWorld = robot.GetBlockWorld();

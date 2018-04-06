@@ -61,7 +61,7 @@ public:
   //////
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
-    dependencies.insert(RobotComponentID::CozmoContext);
+    dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::AIComponent);
@@ -168,7 +168,10 @@ public:
 
   // Returns true if an eye squint layer of the given name is currently applied
   bool IsEyeSquinting(const std::string& name) const { return _activeEyeSquintLayers.count(name) > 0; }
-  
+
+  // set saturation to a given level (default 1.0);
+  Result SetFaceSaturation(float level);
+
   // Enables only the specified tracks. 
   // Status of other tracks remain unchanged.
   void UnlockTracks(u8 tracks);

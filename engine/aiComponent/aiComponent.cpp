@@ -13,6 +13,7 @@
 #include "engine/aiComponent/aiComponent.h"
 
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/shared/radiansMath.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
@@ -36,10 +37,13 @@
 #include "engine/robotStateHistory.h"
 
 namespace {
+static const int kLowQualityProxDistance_mm   = 300;   // Assumed distance if prox reading is low quality
 static const int kObsSampleWindow_ms          = 300;   // sample all measurements over this period
+static const f32 kObsSampleWindow_s           = Anki::Util::MilliSecToSec((f32)kObsSampleWindow_ms);
+static const int kNumRequiredSamples          = static_cast<int>(kObsSampleWindow_s / 0.03f) - 1; // Require almost all samples to be valid
 static const f32 kObsTriggerSensitivity       = 1.2;   // scaling factor for robot speed to object speed
-static const f32 kObsMinObjectSpeed_mmps      = .1;    // prevents trigger if robot is stationary
-static const f32 kObsMaxRotationVariance_rad2 = DEG_TO_RAD(.25);  // variance of heading angle in degrees (stored as radians)
+static const f32 kObsMinObjectSpeed_mmps      = 50;    // prevents trigger if robot is stationary
+static const f32 kObsMaxRotation_rad          = DEG_TO_RAD(3);  // max rotation amount across all samples before considered turning
 static const int kObsMaxObjectDistance_mm     = 100;   // don't respond if sensor reading is too far
 }
 
@@ -120,8 +124,8 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
   // calculate average sensor value over several samples
   f32 avgProxValue_mm       = 0;  // average forward sensor value
   f32 avgRobotSpeed_mmps    = 0;  // average foward wheel speed
-  f32 avgRotation_rad       = 0;  // average heading angle
-  f32 varRotation_radsq     = 0;  // variance of heading angle
+  std::vector<Radians> angleVec;  // set of angles from history
+  angleVec.reserve(kNumRequiredSamples);
   
   const auto&       states  = robot.GetStateHistory()->GetRawPoses();
   const TimeStamp_t endTime = robot.GetLastMsgTimestamp() - kObsSampleWindow_ms;
@@ -129,40 +133,71 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
   int n = 0;
   for(auto st = states.rbegin(); st != states.rend() && st->first > endTime; ++st) {
     const auto& state = st->second;
-    const float angle_rad = state.GetPose().GetRotationAngle<'Z'>().ToFloat();
-    avgProxValue_mm    += state.GetProxSensorVal_mm();
-    avgRobotSpeed_mmps += fabs(state.GetLeftWheelSpeed_mmps() + state.GetRightWheelSpeed_mmps());
-    avgRotation_rad    += angle_rad;
-    varRotation_radsq  += (angle_rad * angle_rad);
+    angleVec.push_back(state.GetPose().GetRotationAngle<'Z'>());
+    const auto& proxData = state.GetProxSensorData();
+
+    // Ignore readings where lift was in fov or it's too pitched
+    if (proxData.isLiftInFOV || proxData.isTooPitched) {
+      continue;
+    }
+    
+    // If signal quality was low, then assume some fixed far
+    // distance since the actual reading can vary wildly.
+    avgProxValue_mm    += proxData.isValidSignalQuality ? 
+                          state.GetProxSensorVal_mm() : 
+                          kLowQualityProxDistance_mm;
+
+    avgRobotSpeed_mmps += state.GetLeftWheelSpeed_mmps() + state.GetRightWheelSpeed_mmps();
+
     n++;
   }
-  // Divide by two here, instead of inside the loop every iteration
-  avgRobotSpeed_mmps *= 0.5f;
 
-  if (0 == n) {    // not enough robot history to calculate
+  // Check that there are a sufficient number of samples 
+  if (n < kNumRequiredSamples) {
     _suddenObstacleDetected = false;
     return;
   }
 
+  // Divide by two here, instead of inside the loop every iteration
+  avgRobotSpeed_mmps *= 0.5f;
+
   avgRobotSpeed_mmps /= n;
   avgProxValue_mm    /= n;
-  avgRotation_rad    /= n;
-  varRotation_radsq  /= n;
-  
-  varRotation_radsq = fabs(varRotation_radsq - (avgRotation_rad * avgRotation_rad));
 
-  u16 latestDistance_mm = 0;
-  const bool readingIsValid = robot.GetProxSensorComponent().GetLatestDistance_mm(latestDistance_mm);
+  // Get the angular range of all angles in history
+  Radians meanAngle;
+  f32 distToMinAngle_rad;
+  f32 distToMaxAngle_rad;
+  RadiansMath::ComputeMinMaxMean(angleVec, meanAngle, distToMinAngle_rad, distToMaxAngle_rad);
+  const f32 angleRange_rad = distToMaxAngle_rad - distToMinAngle_rad;
+
+  // Get latest distance reading and assess validity
+  const auto& proxData = robot.GetProxSensorComponent().GetLatestProxData();
+  const u16 latestDistance_mm = proxData.distance_mm;
+  const bool readingIsValid = proxData.isValidSignalQuality && 
+                              !proxData.isLiftInFOV && 
+                              !proxData.isTooPitched;
   
-  f32 avgObjectSpeed_mmps = 2 * fabs(avgProxValue_mm - latestDistance_mm) / kObsSampleWindow_ms;
+  // (Not-exactly) "average" speed at which object is approaching robot
+  // If it was looking at nothing and then an obstacle appears in front of it, 
+  // this speed should be quite high
+  f32 avgObjectSpeed_mmps = (avgProxValue_mm - latestDistance_mm) / kObsSampleWindow_s;
   
-  // only trigger if sensor is changing faster than the robot speed, robot is
-  // not turning, and sensor is not being changed by noise
+  // Sudden obstacle detection conditions
+  // 1) Signal quality sufficiently indicates that something was detected
+  // 2) Robot is stationary or moving forward
+  // 3) Object according to sensor is approaching robot faster than it's moving
+  //    (i.e. it's not a stationary object)
+  // 4) Robot is not turning
+  // 5) Object is moving faster than some min speed
+  // 6) Last sensor reading is less than a certain distance that defines
+  //    how close an obstacle needs to be in order for it to be sudden.
   _suddenObstacleDetected = readingIsValid &&
+                            (avgRobotSpeed_mmps  >= 0.f) &&
                             (avgObjectSpeed_mmps >= kObsTriggerSensitivity * avgRobotSpeed_mmps) &&
-                            (varRotation_radsq   <= kObsMaxRotationVariance_rad2) &&
+                            (angleRange_rad <= kObsMaxRotation_rad) &&
                             (avgObjectSpeed_mmps >= kObsMinObjectSpeed_mmps) &&
-                            (avgProxValue_mm     <= kObsMaxObjectDistance_mm);                   
+                            (latestDistance_mm   <= kObsMaxObjectDistance_mm);
   
   if (_suddenObstacleDetected) {
     Anki::Util::sEventF("robot.obstacle_detected", {}, 

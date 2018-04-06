@@ -4,5 +4,6 @@
   "title1": "This web server is running in the Anim process",
   "whichWebServer": 2,
   "startPage": "page_consolevars",
-  "allowPerfPage": false
+  "allowPerfPage": false,
+  "allowConsoleVarsPage": true
 }

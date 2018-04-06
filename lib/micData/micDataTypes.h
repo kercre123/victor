@@ -20,8 +20,6 @@ namespace Anki {
 namespace Cozmo {
 namespace MicData {
 
-  using RawAudioChunk = int16_t[320]; // decltype(RobotInterface::MicData::data);
-
   enum class MicDataType {
     Raw,
     Processed
@@ -36,7 +34,8 @@ namespace MicData {
   static constexpr uint32_t kTimePerSEBlock_ms        = kTimePerChunk_ms * kChunksPerSEBlock;
   static constexpr uint32_t kRawAudioChunkSize        = kSamplesPerChunkIncoming * kNumInputChannels;
   static constexpr uint32_t kTriggerOverlapSize_ms    = 140;
-  static constexpr uint32_t kStreamingTimeout_ms      = 6000;
+  static constexpr uint32_t kPreTriggerOverlapSize_ms = 1500;
+  static constexpr uint32_t kStreamingTimeout_ms      = 6000 + kTriggerOverlapSize_ms;
   static constexpr uint32_t kRawAudioPerBuffer_ms     = 1000;
 
   using DirectionIndex = uint16_t;

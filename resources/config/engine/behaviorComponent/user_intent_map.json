@@ -10,6 +10,7 @@
     },
     {
       "cloud_intent": "intent_imperative_come",
+      "app_intent": "intent_imperative_come",
       "user_intent": "imperative_come"
     },
     {

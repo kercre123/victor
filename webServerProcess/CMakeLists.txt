@@ -1,16 +1,18 @@
 cmake_minimum_required(VERSION 3.6)
 
-project(cozmo_webserver)
+project(webServerProcess)
+
+# Build options
+option(USE_DAS "Enable DAS reporting" OFF)
 
 include(anki_build_cxx)
-
-anki_build_cxx_library(victor_web_library ${ANKI_SRCLIST_DIR})
-
 include(opencv)
 
-if (NOT DEFINED USE_DAS)
-  set(USE_DAS 0)
-endif()
+#
+# victor_web_library
+#
+
+anki_build_cxx_library(victor_web_library ${ANKI_SRCLIST_DIR})
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
@@ -45,11 +47,11 @@ android_strip(TARGET victor_web_library)
 
 target_compile_definitions(victor_web_library
   PRIVATE
-  USE_DAS=${USE_DAS}
+  USE_DAS=$<BOOL:${USE_DAS}>
   ${PLATFORM_COMPILE_DEFS}
 )
 
-target_include_directories(victor_web_library 
+target_include_directories(victor_web_library
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src> # allow "android/" prefix
   ${PLATFORM_INCLUDES}
@@ -70,5 +72,5 @@ if (ANDROID)
   )
 
   android_strip(TARGET vic-webserver)
-    
+
 endif()

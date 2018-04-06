@@ -1,6 +1,0 @@
-
-{
-  "behaviorClass" : "AnimSequence",
-  "behaviorID"    : "ReactToTouchInitial",
-  "animTriggers"  : ["ReactToTouchInitial"]
-}

@@ -30,6 +30,7 @@
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
+#include "engine/moodSystem/moodManager.h"
 #include "engine/viz/vizManager.h"
 
 #include "coretech/common/engine/utils/timer.h"
@@ -828,6 +829,9 @@ void BehaviorEnrollFace::TransitionToSayingName()
     }
     else
     {
+      const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      GetBEI().GetMoodManager().TriggerEmotionEvent("EnrolledNewFace", currTime_s);
+
       if(_saveToRobot)
       {
         TransitionToSavingToRobot();
@@ -876,7 +880,7 @@ void BehaviorEnrollFace::TransitionToFailedState( State state, const std::string
   
   auto* action = new TriggerLiftSafeAnimationAction(AnimationTrigger::MeetCozmoConfusion);
   
-  DelegateIfInControl(action, [this, state, &stateName](ActionResult result) {
+  DelegateIfInControl(action, [this, state, stateName](ActionResult result) {
     if( ActionResult::SUCCESS != result ) {
       PRINT_NAMED_WARNING("BehaviorEnrollFace.TransitionToFailedState.FinalAnimationFailed", "");
     }

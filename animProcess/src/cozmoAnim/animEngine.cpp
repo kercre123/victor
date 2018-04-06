@@ -64,11 +64,12 @@ AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
   , _context(std::make_unique<AnimContext>(dataPlatform))
   , _animationStreamer(std::make_unique<AnimationStreamer>(_context.get()))
 {
-#if ANKI_CPU_PROFILER_ENABLED
+#if ANKI_CPU_PROFILER_ENABLED 
   // Initialize CPU profiler early and put tracing file at known location with no dependencies on other systems
   Anki::Util::CpuProfiler::GetInstance();
   Anki::Util::CpuThreadProfiler::SetChromeTracingFile(
       dataPlatform->pathToResource(Util::Data::Scope::Cache, "vic-anim-tracing.json").c_str());
+  Anki::Util::CpuThreadProfiler::SendToWebVizCallback([&](const Json::Value& json) { _context->GetWebService()->SendToWebViz("cpuprofile", json); });
 #endif
 
   if (Anki::Util::gTickTimeProvider == nullptr) {

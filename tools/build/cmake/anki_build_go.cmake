@@ -121,6 +121,8 @@ macro(anki_build_go_c_library target_name gensrc_var srclist_dir)
 
   __anki_build_go_fake_target(${target_name})
 
+  set_target_properties(${target_name} PROPERTIES GO_CLINK_FOLDERS "")
+
   __anki_run_go_build(${target_name})
 
   # export the location of the generated C header:

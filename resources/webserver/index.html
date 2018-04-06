@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 
@@ -27,6 +26,7 @@
     var whichWebServer = whichWebServerEnum.UNKNOWN;
     var curPageName = "";
 
+    var allowConsoleVarsPage = true;
     var allowPerfPage = true;
     var perfAutoUpdate = false;
     var perfAutoUpdatePeriod_ms = 1000;
@@ -62,19 +62,48 @@
     var procAutoUpdateTimerId = 0;
 
     var engineAutoUpdate = false;
-    var engineAutoUpdatePeriod_ms = 1000;
+    var engineAutoUpdatePeriod_ms = 250;
     var engineAutoUpdatePeriodMin_ms = 250;   // Minimum auto update period
     var engineAutoUpdateTimerId = 0;
 
     var engineItems = [
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:5,      desc:"Battery (filtered)",  units:"volts" },
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:5,      desc:"Battery (raw)",       units:"volts" },
-        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Battery level",       units:"" },
-        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Battery charging",    units:"" },
-        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"On charger contacts", units:"" },
-        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"On charger platform", units:"" },
-        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Fully charged time",  units:"seconds" },
-        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Low battery time",    units:"seconds" }
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:5,      desc:"Battery (filtered)",        units:"volts" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:5,      desc:"Battery (raw)",             units:"volts" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Battery level",             units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Battery charging",          units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"On charger contacts",       units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"On charger platform",       units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Fully charged time",        units:"seconds" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Low battery time",          units:"seconds" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Pose angle",                units:"degrees" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Pose pitch",                units:"degrees" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Head angle",                units:"degrees" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,    desc:"Lift height",               units:"mm" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Left wheel speed",          units:"mmps" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Right wheel speed",         units:"mmps" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Accel X",                   units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Accel Y",                   units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Accel Z",                   units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Gyro X",                    units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Gyro Y",                    units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Gyro Z",                    units:"" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:700,    desc:"Backpack touch sensor",     units:"" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:1024,   desc:"Cliff sensor 0 (FL)",       units:"" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:1024,   desc:"Cliff sensor 1 (FR)",       units:"" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:1024,   desc:"Cliff sensor 2 (BL)",       units:"" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:1024,   desc:"Cliff sensor 3 (BR)",       units:"" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:30,     desc:"Prox signal intensity",     units:"" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:0.5,    desc:"Prox ambient intensity",    units:"" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:196,    desc:"Prox SPAD count",           units:"" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:600,    desc:"Prox distance",             units:"mm" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Prox range status",         units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Carrying object ID",        units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Carrying object on top ID", units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Head tracking object ID",   units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Localized to object ID",    units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Status flags",              units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Mic recent direction",      units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Mic selected direction",    units:"" }
     ];
 
     var dialogOKFunction = undefined;
@@ -128,6 +157,14 @@
                     $("#main_os_build_version").html(payload[7]);
                     $("#main_build_sha").html(payload[8]);
                 })
+            }
+        } else if (pageName == "page_consolevars") {
+            if (allowConsoleVarsPage) {
+                $("#consolevars_main_section").show();
+                $("#consolevars_page_disabled").hide();
+            } else {
+                $("#consolevars_main_section").hide();
+                $("#consolevars_page_disabled").show();
             }
         } else if (pageName == "page_perf") {
             if (allowPerfPage && !connectedToWebotsSim) {
@@ -429,6 +466,25 @@
         }
     }
 
+    function InitConfirmDialog() {
+        $("#confirm_dialog").dialog({ autoOpen: false, modal: true, resizable: false,
+            draggable: true,
+            width: 'auto',
+            buttons: {
+                "OK": function() {
+                    $("#confirm_dialog").dialog("close");
+                    if (dialogOKFunction !== undefined) {
+                        dialogOKFunction();
+                        dialogOKFunction = undefined;
+                    }
+                },
+                "Cancel": function () {
+                    $("#confirm_dialog").dialog("close");
+                    dialogOKFunction = undefined;
+                }
+        } });
+    }
+
     function StartConfirmDialog(title, body, okfunction) {
         dialogOKFunction = okfunction;
         $("#confirm_dialog_body").html(body);
@@ -478,22 +534,7 @@
         $("#btn_console_vars_save").click(ButtonHandler_ConsoleVarsSave);
         $("#btn_console_vars_reset").click(ButtonHandler_ConsoleVarsReset);
         $("#btn_console_vars_delete").click(ButtonHandler_ConsoleVarsDelete);
-        $("#confirm_dialog").dialog({ autoOpen: false, modal: true, resizable: false,
-            draggable: true,
-            width: 'auto',
-            buttons: {
-                "OK": function() {
-                    $("#confirm_dialog").dialog("close");
-                    if (dialogOKFunction !== undefined) {
-                        dialogOKFunction();
-                        dialogOKFunction = undefined;
-                    }
-                },
-                "Cancel": function () {
-                    $("#confirm_dialog").dialog("close");
-                    dialogOKFunction = undefined;
-                }
-        } });
+        InitConfirmDialog();
 
         $.post("getinitialconfig", function(data) {
             var payload = data.split("\n");
@@ -504,6 +545,7 @@
             $("#main_robot_connection_type").html(connectedToWebotsSim ? "Webots Simulator" : "Physical Robot");
             allowPerfPage = (payload[4] === "true");
             whichWebServer = payload[5];
+            allowConsoleVarsPage = (payload[6] === "true");
             SetPage(startPage);
         });
         // Initialize the perf table
@@ -547,6 +589,7 @@
             $.post("/"+event.target.value, function(data) {
                 $("#content").html(data);
                 $("#content").show();
+                InitConfirmDialog();
             });
             event.preventDefault();
         });
@@ -610,48 +653,51 @@
         </div>
 
         <div id="page_consolevars">
-            These are for the console variables and console functions in THIS process only.<br>
-            <table border=1>
-                <tr>
-                    <th>description</th><th>url</th>
-                </tr>
-                <tr>
-                    <td>View and edit console variables</td><td><a href="/consolevars">/consolevars</a></td>
-                </tr>
-                <tr>
-                    <td>List console variables</td><td><a href="/consolevarlist">/consolevarlist</a></td>
-                </tr>
-                <tr>
-                    <td>List console variables matching</td><td>/consolevarlist?key=search_key</td>
-                </tr>
-                <tr>
-                    <td>Set console variable</td><td>/consolevarset?key=name_of_variable&amp;value=new_value_of_variable</td>
-                </tr>
-                <tr>
-                    <td>Get console variable</td><td>/consolevarget?key=name_of_variable</td>
-                </tr>
-                <tr>
-                    <td>List console functions</td><td><a href="/consolefunclist">/consolefunclist</a></td>
-                </tr>
-                <tr>
-                    <td>List console functions matching</td><td>/consolefunclist?key=search_key</td>
-                </tr>
-                <tr>
-                    <td>Call console function</td><td>/consolefunccall?func=name_of_function&amp;args=arguments</td>
-                </tr>
-            </table>
-            <br/>
-            <div>
-                <input type="submit" value="consolevars">
-            </div><br>
-            <div>
-                <button id='btn_console_vars_load'>LOAD console vars</button>
-                <button id='btn_console_vars_save'>SAVE console vars</button>
-                <button id='btn_console_vars_delete'>DELETE console vars save file</button>
-                <button id='btn_console_vars_reset'>RESET console vars to default values</button>
+            <div id='consolevars_main_section'>
+                These are for the console variables and console functions in THIS process only.<br>
+                <table border=1>
+                    <tr>
+                        <th>description</th><th>url</th>
+                    </tr>
+                    <tr>
+                        <td>View and edit console variables</td><td><a href="/consolevars">/consolevars</a></td>
+                    </tr>
+                    <tr>
+                        <td>List console variables</td><td><a href="/consolevarlist">/consolevarlist</a></td>
+                    </tr>
+                    <tr>
+                        <td>List console variables matching</td><td>/consolevarlist?key=search_key</td>
+                    </tr>
+                    <tr>
+                        <td>Set console variable</td><td>/consolevarset?key=name_of_variable&amp;value=new_value_of_variable</td>
+                    </tr>
+                    <tr>
+                        <td>Get console variable</td><td>/consolevarget?key=name_of_variable</td>
+                    </tr>
+                    <tr>
+                        <td>List console functions</td><td><a href="/consolefunclist">/consolefunclist</a></td>
+                    </tr>
+                    <tr>
+                        <td>List console functions matching</td><td>/consolefunclist?key=search_key</td>
+                    </tr>
+                    <tr>
+                        <td>Call console function</td><td>/consolefunccall?func=name_of_function&amp;args=arguments</td>
+                    </tr>
+                </table>
+                <br/>
+                <div>
+                    <input type="submit" value="consolevars">
+                </div><br>
+                <div>
+                    <button id='btn_console_vars_load'>LOAD console vars</button>
+                    <button id='btn_console_vars_save'>SAVE console vars</button>
+                    <button id='btn_console_vars_delete'>DELETE console vars save file</button>
+                    <button id='btn_console_vars_reset'>RESET console vars to default values</button>
+                </div>
+                <br><br>
+                <a href="webViz.html">WebViz</a>
             </div>
-            <br><br>
-            <a href="webViz.html">WebViz</a>
+            <div id='consolevars_page_disabled'>The console vars/funcs page is disabled in the standalone webserver.  Use the Engine or Anim webserver instead.</div>
         </div>
 
         <div id="page_perf">

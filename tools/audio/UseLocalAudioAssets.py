@@ -7,7 +7,7 @@ Date:   12/06/17
 Description: This script allows sound designers to use locally generated sound banks in local Victor project builds.
              Audio build server scripts are used to generate metadata and package assets similar to how they are
              delivered by Victor's package manager process. This script will simply replace the assets in the
-             EXTERNALS/victor-audio-assets directory. After replacing the audio assets build-victor.sh must be ran to
+             EXTERNALS/local-audio-assets directory. After replacing the audio assets build-victor.sh must be ran to
              copy the assets to the projects deliverables. Likewise, you must run deploy-assets.py to copy new assets
              to robot. For convenience this script has arguments to update audio CLAD files, build victor and deploy
              changes.
@@ -36,7 +36,7 @@ __script_dir = path.dirname(path.realpath(__file__))
 __project_root_path = path.join(__script_dir, '..', '..')
 __audio_lib_path = path.join(__project_root_path, 'lib', 'audio')
 __audio_build_script_path = path.join(__audio_lib_path, 'build-scripts')
-__victor_external_path = path.join(__project_root_path, 'EXTERNALS', 'victor-audio-assets')
+__victor_external_path = path.join(__project_root_path, 'EXTERNALS', 'local-audio-assets')
 
 
 # Import Audio Build Scripts
@@ -115,7 +115,8 @@ def main(args):
     bundle_soundbank_products.main([path.join(sound_bank_path, 'Dev_Mac'), tmp_dev_mac_dir] + script_commands)
     Logger.info('Complete: bundle_soundbank_products')
 
-    # Organize Sound Banks in project
+    # Organize Sound Banks in project & unzip assets
+    script_commands.append('--unzip-bundles')
     organize_soundbank_products.main([tmp_linux_dir, dest_linux_dir, bank_list_filepath] + script_commands)
     organize_soundbank_products.main([tmp_dev_mac_dir, dest_dev_mac_dir, bank_list_filepath] + script_commands)
     Logger.info('Complete: organize_soundbank_products')
@@ -149,7 +150,7 @@ def main(args):
         Logger.info('Run build-victor.sh')
         victor_project_dir = path.join('project', 'victor')
         victor_build_script = path.join(victor_project_dir, 'build-victor.sh')
-        build_commands = [victor_build_script, '-f', '-I']
+        build_commands = [victor_build_script, '-f', '-a', '-DUSE_LOCAL_AUDIO_ASSETS=ON']
         is_mac_build = False;
         if args.configuration:
             build_commands.append('-c')
@@ -167,20 +168,24 @@ def main(args):
 
         if not is_mac_build:
             # Deploy bins
-            Logger.info('Run deploy.sh')
-            victor_deploy_script = path.join(victor_project_dir, 'scripts', 'deploy.sh')
-            result = subprocess.call([victor_deploy_script], cwd=__project_root_path)
+            victor_project_script_dir = path.join(victor_project_dir, 'scripts')
+            Logger.info('Stop victor process')
+            victor_stop_script = path.join(victor_project_script_dir, 'victor_stop.sh')
+            result = subprocess.call([victor_stop_script], cwd=__project_root_path)
             if result != os.EX_OK:
-                Logger.error('\'{0}\' Failed'.format(victor_deploy_script))
+                Logger.error('\'{0}\' Failed'.format(victor_stop_script))
                 return os.EX_SOFTWARE
 
-            # Deploy assets
-            Logger.info('Run deploy-assets.sh')
-            victor_deploy_assets_script = path.join(victor_project_dir, 'scripts', 'deploy-assets.sh')
-            # Deploy assets on device and remove all old assets
-            result = subprocess.call([victor_deploy_assets_script, '-x'], cwd=__project_root_path)
+            Logger.info('Run victor_deploy.sh')
+            victor_deploy_script = path.join(victor_project_script_dir, 'victor_deploy.sh')
+            build_commands = [victor_deploy_script]
+            if args.configuration:
+                build_commands.append('-c')
+                build_commands.append(args.configuration)
+
+            result = subprocess.call(build_commands, cwd=__project_root_path)
             if result != os.EX_OK:
-                Logger.error('\'{0}\' Failed'.format(victor_deploy_assets_script))
+                Logger.error('\'{0}\' Failed'.format(build_commands))
                 return os.EX_SOFTWARE
 
     # Success!

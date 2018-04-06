@@ -16,7 +16,13 @@
       var d = new Date(0);
       d.setUTCSeconds(elem.time);
       delete elem.time;
-      $('<div>' + d + ' - ' + JSON.stringify(elem) + '</div>').appendTo(parent);
+      if (elem.debug) {
+        $('<div>' + d + ' - <a href="' + elem.debug.substr('/data/data/com.anki.victor'.length) 
+          + '">Captured audio link</a></div>').appendTo(parent);
+      }
+      else {
+        $('<div>' + d + ' - ' + JSON.stringify(elem) + '</div>').appendTo(parent);
+      }
     });
   };
 

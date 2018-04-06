@@ -28,10 +28,10 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/animationComponent.h"
+#include "engine/components/batteryComponent.h"
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/cubes/cubeLightComponent.h"
@@ -41,23 +41,24 @@
 #include "engine/components/nvStorageComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
-#include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
+#include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
-#include "engine/components/batteryComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/micDirectionHistory.h"
-#include "engine/navMap/mapComponent.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
+#include "engine/fullRobotPose.h"
+#include "engine/micDirectionHistory.h"
 #include "engine/moodSystem/moodManager.h"
+#include "engine/moodSystem/stimulationFaceDisplay.h"
+#include "engine/navMap/mapComponent.h"
 #include "engine/objectPoseConfirmer.h"
 #include "engine/petWorld.h"
 #include "engine/ramp.h"
-#include "engine/fullRobotPose.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotGyroDriftDetector.h"
 #include "engine/robotIdleTimeoutComponent.h"
@@ -152,20 +153,21 @@ static const float kPitchAngleOnFacePlantMax_sim_rads = DEG_TO_RAD(-80.f); //Thi
 
 
 Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
-: _poseOrigins(new PoseOriginList())
+: _context(context)
+, _poseOrigins(new PoseOriginList())
 , _ID(robotID)
-, _timeSynced(false)
+, _syncRobotAcked(false)
 , _lastMsgTimestamp(0)
 , _robotAccelFiltered(0.f, 0.f, 0.f)
 {
-  DEV_ASSERT(context != nullptr, "Robot.Constructor.ContextIsNull");
+  DEV_ASSERT(_context != nullptr, "Robot.Constructor.ContextIsNull");
   
   LOG_INFO("Robot.Robot", "Created");
 
   // create all components
   {
     _components = std::make_unique<EntityType>();
-    _components->AddDependentComponent(RobotComponentID::CozmoContext,               new ContextWrapper(context));
+    _components->AddDependentComponent(RobotComponentID::CozmoContextWrapper,        new ContextWrapper(context));
     _components->AddDependentComponent(RobotComponentID::BlockWorld,                 new BlockWorld());
     _components->AddDependentComponent(RobotComponentID::FaceWorld,                  new FaceWorld());
     _components->AddDependentComponent(RobotComponentID::PetWorld,                   new PetWorld());
@@ -194,6 +196,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::Animation,                  new AnimationComponent());
     _components->AddDependentComponent(RobotComponentID::StateHistory,               new RobotStateHistory());
     _components->AddDependentComponent(RobotComponentID::MoodManager,                new MoodManager());
+    _components->AddDependentComponent(RobotComponentID::StimulationFaceDisplay,     new StimulationFaceDisplay());
     _components->AddDependentComponent(RobotComponentID::Inventory,                  new InventoryComponent());
     _components->AddDependentComponent(RobotComponentID::ProgressionUnlock,          new ProgressionUnlockComponent());
     _components->AddDependentComponent(RobotComponentID::BlockTapFilter,             new BlockTapFilterComponent());
@@ -201,7 +204,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::RobotIdleTimeout,           new RobotIdleTimeoutComponent());
     _components->AddDependentComponent(RobotComponentID::MicDirectionHistory,        new MicDirectionHistory());
     _components->AddDependentComponent(RobotComponentID::Battery,                    new BatteryComponent());
-    _components->AddDependentComponent(RobotComponentID::FullRobotPose,                new FullRobotPose());
+    _components->AddDependentComponent(RobotComponentID::FullRobotPose,              new FullRobotPose());
     _components->InitComponents(this);
   }
       
@@ -243,8 +246,11 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     
 Robot::~Robot()
 {
-  LOG_EVENT("robot.destructor", "%d", GetID());
-  
+  // VIC-1961: Remove touch sensor component before aborting all since there's a DEV_ASSERT crash
+  // and we need to write data out from the touch sensor component out. This explicit destruction
+  // can be removed once the DEV_ASSERT is fixed
+  _components->RemoveComponent(RobotComponentID::TouchSensor);
+
   // force an update to the freeplay data manager, so we'll send a DAS event before the tracker is destroyed
   GetAIComponent().GetComponent<FreeplayDataTracker>().ForceUpdate();
   
@@ -253,6 +259,15 @@ Robot::~Robot()
   // Destroy our actionList before things like the path planner, since actions often rely on those.
   // ActionList must be cleared before it is destroyed because pending actions may attempt to make use of the pointer.
   GetActionList().Clear();
+
+  // Remove (destroy) the vision component, map component and object pose confirmer explicitly since
+  // they contains poses that use the contents of FullRobotPose as a parent 
+  // and there's no gaurentee on entity/component destruction order
+  _components->RemoveComponent(RobotComponentID::Vision);
+  _components->RemoveComponent(RobotComponentID::Map);
+  _components->RemoveComponent(RobotComponentID::ObjectPoseConfirmer);
+
+  LOG_EVENT("robot.destructor", "%d", GetID());
 }
 
 
@@ -516,7 +531,7 @@ void Robot::Delocalize(bool isCarryingObject)
     LOG_WARNING("Robot.Delocalize.SetNewPose", "Failed to set new pose");
   }
   
-  if (_timeSynced)
+  if (_syncRobotAcked)
   {
     // Need to update the robot's pose history with our new origin and pose frame IDs
     LOG_INFO("Robot.Delocalize.SendingNewOriginID",
@@ -737,8 +752,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   
   Result lastResult = RESULT_OK;
 
-  // Ignore state messages received before time sync
-  if (!_timeSynced) {
+  // Ignore state messages received before sync
+  if (!_syncRobotAcked) {
     return lastResult;
   }
   
@@ -747,7 +762,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     UpdateFaceImageRGBExample(*this);
   }
   
-  _gotStateMsgAfterTimeSync = true;
+  _gotStateMsgAfterRobotSync = true;
     
   // Set flag indicating that robot state messages have been received
   _lastMsgTimestamp = msg.timestamp;
@@ -939,7 +954,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
     // Add to history
     const HistRobotState histState(newPose,
                                    msg,
-                                   GetProxSensorComponent().IsLatestReadingValid(),
+                                   GetProxSensorComponent().GetLatestProxData(),
                                    GetCliffSensorComponent().GetCliffDetectedFlags() );
     lastResult = GetStateHistory()->AddRawOdomState(msg.timestamp, histState);
     
@@ -1137,13 +1152,13 @@ Result Robot::Update()
   
   const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
-  // Check for syncTimeAck taking too long to arrive
-  if (_syncTimeSentTime_sec > 0.0f && currentTime > _syncTimeSentTime_sec + kMaxSyncTimeAckDelay_sec) {
-    LOG_WARNING("Robot.Update.SyncTimeAckNotReceived", "");
-    _syncTimeSentTime_sec = 0.0f;
+  // Check for syncRobotAck taking too long to arrive
+  if (_syncRobotSentTime_sec > 0.0f && currentTime > _syncRobotSentTime_sec + kMaxSyncRobotAckDelay_sec) {
+    LOG_WARNING("Robot.Update.SyncRobotAckNotReceived", "");
+    _syncRobotSentTime_sec = 0.0f;
   }
   
-  if (!_gotStateMsgAfterTimeSync)
+  if (!_gotStateMsgAfterRobotSync)
   {
     LOG_DEBUG("Robot.Update", "Waiting for first full robot state to be handled");
     return RESULT_OK;
@@ -1454,14 +1469,14 @@ bool Robot::WasObjectTappedRecently(const ObjectID& objectID) const
 }
 
 
-Result Robot::SyncTime()
+Result Robot::SyncRobot()
 {
-  _timeSynced = false;
+  _syncRobotAcked = false;
   GetStateHistory()->Clear();
       
-  Result res = SendSyncTime();
+  Result res = SendSyncRobot();
   if (res == RESULT_OK) {
-    _syncTimeSentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    _syncRobotSentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
   return res;
 }
@@ -2045,23 +2060,20 @@ Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliabl
   return sendResult;
 }
       
-// Sync time with physical robot and trigger it robot to send back camera calibration
-Result Robot::SendSyncTime() const
+// Sync with physical robot
+Result Robot::SendSyncRobot() const
 {
-  // BRC: Why are we call AndroidHAL/CameraService to get a timestamp?
-  Result result = SendMessage(RobotInterface::EngineToRobot(
-                                RobotInterface::SyncTime(CameraService::getInstance()->GetTimeStamp(),
-                                                         DRIVE_CENTER_OFFSET)));
+  Result result = SendMessage(RobotInterface::EngineToRobot(RobotInterface::SyncRobot()));
 
   if (result == RESULT_OK) {
     // Reset pose on connect
-    LOG_INFO("Robot.SendSyncTime", "Setting pose to (0,0,0)");
+    LOG_INFO("Robot.SendSyncRobot", "Setting pose to (0,0,0)");
     Pose3d zeroPose(0, Z_AXIS_3D(), {0,0,0}, GetWorldOrigin());
     return SendAbsLocalizationUpdate(zeroPose, 0, GetPoseFrameID());
   }
   
   if (result != RESULT_OK) {
-    LOG_WARNING("Robot.SendSyncTime.FailedToSend","");
+    LOG_WARNING("Robot.SendSyncRobot.FailedToSend","");
   }
   
   return result;
@@ -2126,7 +2138,7 @@ Result Robot::SendIMURequest(const u32 length_ms) const
 
 bool Robot::HasExternalInterface() const
 {
-  if (HasComponent(RobotComponentID::CozmoContext)){
+  if (HasComponent(RobotComponentID::CozmoContextWrapper)){
     return GetContext()->GetExternalInterface() != nullptr;
   }
   return false;
@@ -2577,7 +2589,7 @@ RobotState Robot::GetDefaultRobotState()
                          GyroData(), //const Anki::Cozmo::GyroData &gyro,
                          kDefaultStatus, //uint32_t status,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
-                         ProxSensorData(), //const Anki::Cozmo::ProxSensorData &proxData,
+                         ProxSensorDataRaw(), //const Anki::Cozmo::ProxSensorDataRaw &proxData,
                          0, // touch intensity value when not touched (from capacitive touch sensor)
                          -1); //int8_t currPathSegment
   
@@ -2586,7 +2598,7 @@ RobotState Robot::GetDefaultRobotState()
 
 RobotInterface::MessageHandler* Robot::GetRobotMessageHandler() const
 {
-  if ((!_components->GetComponent(RobotComponentID::CozmoContext).IsValueValid()) ||
+  if ((!_components->GetComponent(RobotComponentID::CozmoContextWrapper).IsValueValid()) ||
       (GetContext()->GetRobotManager() == nullptr))
   {
     DEV_ASSERT(false, "Robot.GetRobotMessageHandler.nullptr");
