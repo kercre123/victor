@@ -110,11 +110,11 @@ class VictorWebsocket(object):
     cloud_intent_websocket_url = "ws://{0}:{1}/socket".format(self.robot_ip, self.intent_port)
     
     self.ws_cloud_intent = websocket.WebSocketApp(cloud_intent_websocket_url,
-                                    on_message = self.on_intent_message,
+                                    on_message = self.on_cloud_intent_message,
                                     on_error = self.on_error,
                                     on_close = self.on_close)
     
-    self.ws_cloud_intent.on_open = self.on_open_intent
+    self.ws_cloud_intent.on_open = self.on_open_cloud_intent
     self.ws_cloud_intent.keep_running = True 
 
     #Seperate background thread, to handle incoming messages
@@ -126,22 +126,31 @@ class VictorWebsocket(object):
     self.ws_cloud_intent.keep_running = False
     return
 
-  def on_open_intent(self, ws):
+  def on_open_cloud_intent(self, ws):
     self.subscribeData["module"] = "cloudintents"
     subscribe_message = json.dumps(self.subscribeData)
     self.logger.info("Now waiting for a reply")
     ws.send(subscribe_message)
     self.cloud_intent_socket_established = True
 
+  #For now, this only grabs the intent's function name that was triggered
   def on_cloud_intent_message(self, ws, message):
-    pass
+    if self.cloudIntent_stream_flag == True:
+      self.logger.debug("Received a cloud intent message")
+      message_to_json = json.loads(message)
+    try:
+      print(message_to_json["data"]["intent"])
+      self.cloudIntent_data_raw_results.append(message_to_json["data"]["intent"])
+    except:
+      self.logger.debug("Cloud intent wasn't valid")
   
-  def process_cloud_intent_stream(self, message):
-    pass
-  
-  def compile_intent_results(self):
-    pass
-    
+  #Eventually, this will process the entire returned JSON message, rather 
+  #Than just the intent function name
+  def process_and_return_cloud_intent(self):
+    result = self.cloud_intent_data_raw_results[:] #makes a copy
+    self.cloud_intent_data_raw_results = [] #reset for next
+    return result
+
   def on_error(self, ws, error):
     self.logger.info(error)
 
