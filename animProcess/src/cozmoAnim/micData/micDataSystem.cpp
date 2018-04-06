@@ -81,7 +81,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform)
 , _fftResultData(new FFTResultData())
 {
   const std::string& dataWriteLocation = dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata");
-  const std::string& triggerDataDir = dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/hey_cosmo_and_commands");
+  const std::string& triggerDataDir = dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets");
   _writeLocationDir = dataWriteLocation;
   _micDataProcessor.reset(new MicDataProcessor(this, dataWriteLocation, triggerDataDir));
 
