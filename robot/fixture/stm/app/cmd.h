@@ -29,12 +29,18 @@ typedef enum cmd_io_e cmd_io;
 
 //option flags
 #define CMD_OPTS_EXCEPTION_EN         0x0001  //enable exceptions
-#define CMD_OPTS_LOG_ERRORS           0x0002  //log errors (to console)
-#define CMD_OPTS_REQUIRE_STATUS_CODE  0x0004  //missing status code is an error
-#define CMD_OPTS_ALLOW_STATUS_ERRS    0x0010  //status!=0 not considered an error
-#define CMD_OPTS_DBG_PRINT_ENTRY      0x1000  //print function entry with parsed params
-#define CMD_OPTS_DBG_PRINT_RSP_TIME   0x2000  //print elapsed cmd time
-#define CMD_OPTS_DEFAULT              (CMD_OPTS_EXCEPTION_EN | CMD_OPTS_LOG_ERRORS | CMD_OPTS_REQUIRE_STATUS_CODE | CMD_OPTS_DBG_PRINT_RSP_TIME)
+#define CMD_OPTS_REQUIRE_STATUS_CODE  0x0002  //missing status code is an error
+#define CMD_OPTS_ALLOW_STATUS_ERRS    0x0004  //status!=0 not considered an error
+#define CMD_OPTS_LOG_CMD              0x0010  //print-log cmd line (>>cmd...)
+#define CMD_OPTS_LOG_RSP              0x0020  //print-log rsp line (<<cmd...)
+#define CMD_OPTS_LOG_RSP_TIME         0x0040  //print-log append elapsed time to logged rsp line
+#define CMD_OPTS_LOG_ASYNC            0x0080  //print-log async line (:async)
+#define CMD_OPTS_LOG_OTHER            0x0100  //print-log 'other' rx'd line (informational,uncategorized)
+#define CMD_OPTS_LOG_ERRORS           0x0200  //print-log extra error info
+#define CMD_OPTS_LOG_ALL              0x03F0  //print-log all
+#define CMD_OPTS_DBG_PRINT_ENTRY      0x1000  //debug: print function entry with parsed params
+#define CMD_OPTS_DBG_PRINT_RX_PARTIAL 0x2000  //debug: print any unexpected chars, partial line left in rx buffer at cmd end
+#define CMD_OPTS_DEFAULT              (CMD_OPTS_EXCEPTION_EN | CMD_OPTS_REQUIRE_STATUS_CODE | CMD_OPTS_LOG_ALL | CMD_OPTS_DBG_PRINT_RX_PARTIAL)
 
 //Send a command and return response string
 //@return response (NULL if timeout)
@@ -94,6 +100,9 @@ const int ccr_sr_cnt[12] = {0,2,4,2,2,2,2,4,2,1,1,4}; //number of sensor fields 
 #define CCC_FCC_MODE_TX_PACKETS   1
 #define CCC_FCC_MODE_RX_POWER     2
 #define CCC_FCC_MODE_RX_PACKETS   3
+
+//data conversion
+#define BAT_RAW_TO_MV(raw)    (((raw)*2800)>>11)  /*ccr_sr_t::bat.raw (adc) to millivolts*/
 
 typedef struct {
   uint32_t esn;

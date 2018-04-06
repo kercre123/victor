@@ -29,13 +29,12 @@ uint32_t cmdTimeMs() {
 //          Master/Send
 //-----------------------------------------------------------------------------
 
-typedef struct { int rxDroppedChars; int rxOverflowErrors; int rxFramingErrors; int linesyncErrors; } io_err_t;
+typedef struct { int rxDroppedChars; int rxOverflowErrors; int rxFramingErrors; } io_err_t;
 static io_err_t m_ioerr;
 static void get_errs_(cmd_io io, io_err_t *ioe) {
   ioe->rxDroppedChars   = io==CMD_IO_DUT_UART ? DUT_UART::getRxDroppedChars()   : (io==CMD_IO_CONTACTS ? Contacts::getRxDroppedChars()   : 0);
   ioe->rxOverflowErrors = io==CMD_IO_DUT_UART ? DUT_UART::getRxOverflowErrors() : (io==CMD_IO_CONTACTS ? Contacts::getRxOverflowErrors() : 0);
   ioe->rxFramingErrors  = io==CMD_IO_DUT_UART ? DUT_UART::getRxFramingErrors()  : (io==CMD_IO_CONTACTS ? Contacts::getRxFramingErrors()  : 0);
-  ioe->linesyncErrors   =                                                         (io==CMD_IO_CONTACTS ? Contacts::getLineSyncErrors()   : 0);
 }
 
 static char rsp_buf[100];
@@ -183,11 +182,12 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
   
   //send command out the selected io channel (append prefix)
   flush_(io); //flush rx buffers first for correct response detection
-  if( io != CMD_IO_CONSOLE ) //echo to log BEFORE to DUT write or we'll miss response chars
+  if( io != CMD_IO_CONSOLE && opts & CMD_OPTS_LOG_CMD ) //echo to log BEFORE the DUT write or we'll miss response chars
     write_(CMD_IO_CONSOLE, LOG_CMD_PREFIX, scmd, (newline ? "\n" : NULL) );
   write_(io, CMD_PREFIX, scmd, (newline ? "\n" : NULL) );
 
   //Get response
+  memset( &m_ioerr, 0, sizeof(m_ioerr) ); //clear io errs
   m_status = INT_MIN;
   uint32_t Tstart = Timer::get(), Ttick = Timer::get();
   while( Timer::elapsedUs(Tstart) < timeout_ms*1000 )
@@ -205,15 +205,18 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
         rsp += sizeof(RSP_PREFIX)-1; //'strip' prefix
         
         //echo to log (optionally append debug stats)
-        write_(CMD_IO_CONSOLE, io == CMD_IO_CONSOLE ? RSP_PREFIX : LOG_RSP_PREFIX, rsp); //differentiate prefix depending on the sender
-        if( opts & CMD_OPTS_DBG_PRINT_RSP_TIME )
-          write_(CMD_IO_CONSOLE, snformat(b,bz," [%ums]", m_time_ms));
-        write_(CMD_IO_CONSOLE, "\n");
+        if( opts & CMD_OPTS_LOG_RSP ) {
+          write_(CMD_IO_CONSOLE, io == CMD_IO_CONSOLE ? RSP_PREFIX : LOG_RSP_PREFIX, rsp); //differentiate prefix depending on the sender
+          if( opts & CMD_OPTS_LOG_RSP_TIME )
+            write_(CMD_IO_CONSOLE, snformat(b,bz," [%ums]", m_time_ms));
+          write_(CMD_IO_CONSOLE, "\n");
+        }
         
         //check for rx errors
         get_errs_(io, &m_ioerr);
         if( m_ioerr.rxOverflowErrors > 0 || m_ioerr.rxDroppedChars > 0 ) {
-          write_(CMD_IO_CONSOLE, snformat(b,bz,"--> IO ERROR ovfl=%i dropRx=%i frame=%i lsync=%i", m_ioerr.rxOverflowErrors, m_ioerr.rxDroppedChars, m_ioerr.rxFramingErrors, m_ioerr.linesyncErrors));
+          if( opts & CMD_OPTS_LOG_ERRORS )
+            write_(CMD_IO_CONSOLE, snformat(b,bz,"IO ERROR ovfl=%i dropRx=%i frame=%i", m_ioerr.rxOverflowErrors, m_ioerr.rxDroppedChars, m_ioerr.rxFramingErrors));
           ERROR_HANDLE("IO_ERROR\n", ERROR_TESTPORT_RX_ERROR);
           //return NULL; //if no exception, allow cmd validation to continue
         }
@@ -249,16 +252,19 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
         //passed all checks
         return rsp;
       }
-      else
+      else if( rspLen > sizeof(ASYNC_PREFIX)-1 && !strncmp(rsp,ASYNC_PREFIX,sizeof(ASYNC_PREFIX)-1) )
       {
-        if( io != CMD_IO_CONSOLE ) //echo to log, unchanged
+        if( io != CMD_IO_CONSOLE && opts & CMD_OPTS_LOG_ASYNC ) //echo to log, unchanged
           write_(CMD_IO_CONSOLE, rsp, "\n");
         
         //async data while waiting for cmd completion
-        if( async_handler != NULL ) {
-          if( !strncmp(rsp,ASYNC_PREFIX,sizeof(ASYNC_PREFIX)-1) && rspLen > sizeof(ASYNC_PREFIX)-1 )
-            async_handler(rsp + sizeof(ASYNC_PREFIX)-1);
-        }
+        if( async_handler != NULL )
+          async_handler(rsp + sizeof(ASYNC_PREFIX)-1);
+      }
+      else //uncategorized, informational
+      {
+        if( io != CMD_IO_CONSOLE && opts & CMD_OPTS_LOG_OTHER ) //echo to log, unchanged
+          write_(CMD_IO_CONSOLE, rsp, "\n");
       }
     }
     
@@ -270,22 +276,23 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
     }
   }
   
-  //DEBUG: see what's leftover in the rx buffer
-  int rlen;
-  char* rawline = getline_raw_(io, &rlen);
-  if( rlen > 0 ) {
-    write_(CMD_IO_CONSOLE, ".DBG RX PARTIAL '");
-    for(int x=0; x<rlen; x++)
-      write_(CMD_IO_CONSOLE, snformat(b,bz,"%c", rawline[x] >= ' ' && rawline[x] < '~' ? rawline[x] : '*'));
-    write_(CMD_IO_CONSOLE, snformat(b,bz,"' (%i)\n", rlen));
+  if( opts & CMD_OPTS_DBG_PRINT_RX_PARTIAL ) //see what's leftover in the rx buffer
+  {
+    int rlen; char* rawline = getline_raw_(io, &rlen);
+    if( rlen > 0 ) {
+      write_(CMD_IO_CONSOLE, ".DBG RX PARTIAL '");
+      for(int x=0; x<rlen; x++)
+        write_(CMD_IO_CONSOLE, snformat(b,bz,"%c", rawline[x] >= ' ' && rawline[x] < '~' ? rawline[x] : '*'));
+      write_(CMD_IO_CONSOLE, snformat(b,bz,"' (%i)\n", rlen));
+    }
   }
   
   //check for rx errors
   get_errs_(io, &m_ioerr);
-  if( m_ioerr.rxOverflowErrors > 0 || m_ioerr.rxDroppedChars > 0 ) { //|| m_ioerr.linesyncErrors > 0 ) {
-    write_(CMD_IO_CONSOLE, snformat(b,bz,"--> IO ERROR ovfl=%i dropRx=%i frame=%i lsync=%i", m_ioerr.rxOverflowErrors, m_ioerr.rxDroppedChars, m_ioerr.rxFramingErrors, m_ioerr.linesyncErrors));
+  if( m_ioerr.rxOverflowErrors > 0 || m_ioerr.rxDroppedChars > 0 ) {
+    if( opts & CMD_OPTS_LOG_ERRORS )
+      write_(CMD_IO_CONSOLE, snformat(b,bz,"IO ERROR ovfl=%i dropRx=%i frame=%i", m_ioerr.rxOverflowErrors, m_ioerr.rxDroppedChars, m_ioerr.rxFramingErrors));
     ERROR_HANDLE("IO_ERROR\n", ERROR_TESTPORT_RX_ERROR);
-    //return NULL; //if no exception, allow cmd validation to continue
   }
   
   m_time_ms = timeout_ms;
@@ -502,11 +509,11 @@ static bool ccc_error_check_(int required_handler_cnt)
     m_dat.ccr_err = ERROR_TESTPORT_RSP_MISSING_ARGS; //didn't get expected # of responses/lines
   
   //DEBUG XXX: throw error on mid-packet line sync
-  if( m_dat.ccr_err == ERROR_OK && m_ioerr.linesyncErrors > 0 )
-    m_dat.ccr_err = ERROR_TESTPORT_RX_ERROR;
+  //if( m_dat.ccr_err == ERROR_OK && m_ioerr.linesyncErrors > 0 )
+  //  m_dat.ccr_err = ERROR_TESTPORT_RX_ERROR;
   
   if( m_dat.ccr_err != ERROR_OK ) {
-    ConsolePrintf("ERROR %i, handler cnt %i/%i, lsyncErrs=%i\n", m_dat.ccr_err, m_dat.handler_cnt, required_handler_cnt, m_ioerr.linesyncErrors);
+    ConsolePrintf("ERROR %i, handler cnt %i/%i\n", m_dat.ccr_err, m_dat.handler_cnt, required_handler_cnt);
     if( CCC_DEBUG > 0 )
       return 1;
     else

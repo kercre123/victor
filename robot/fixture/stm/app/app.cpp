@@ -27,7 +27,6 @@ const bool g_isReleaseBuild = !NOT_FOR_FACTORY;
 u8 g_fixtureReleaseVersion = (NOT_FOR_FACTORY) ? 0 : (APP_RELEASE_VERSION);
 #define BUILD_INFO "Victor DVT3"
 
-#define APP_CMD_OPTS    ((CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN) | CMD_OPTS_DBG_PRINT_RSP_TIME)
 #define LCD_CMD_TIMEOUT 150 /*ms*/
 
 #define USE_START_BTN 0
@@ -69,13 +68,13 @@ void HelperLcdShow(bool solo, bool invert, char color_rgbw, const char* center_t
   char b[50]; int bz = sizeof(b);
   if( color_rgbw != 'r' && color_rgbw != 'g' && color_rgbw != 'b' && color_rgbw != 'w' )
     color_rgbw = 'w';
-  cmdSend(CMD_IO_HELPER, snformat(b,bz,"lcdshow %u %s%c %s", solo, invert?"i":"", color_rgbw, center_text), LCD_CMD_TIMEOUT, APP_CMD_OPTS);
+  cmdSend(CMD_IO_HELPER, snformat(b,bz,"lcdshow %u %s%c %s", solo, invert?"i":"", color_rgbw, center_text), LCD_CMD_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
 }
 
 void HelperLcdSetLine(int n, const char* line)
 {
   char b[50]; int bz = sizeof(b);
-  cmdSend(CMD_IO_HELPER, snformat(b,bz,"lcdset %u %s", n, line), LCD_CMD_TIMEOUT, APP_CMD_OPTS);
+  cmdSend(CMD_IO_HELPER, snformat(b,bz,"lcdset %u %s", n, line), LCD_CMD_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
 }
 
 void HelperLcdClear(void)
@@ -224,7 +223,7 @@ static void RunTests()
   Board::ledOn(Board::LED_YLW); //test in-progress
   
   //char b[10]; int bz = sizeof(b);
-  cmdSend(CMD_IO_HELPER, "logstart", CMD_DEFAULT_TIMEOUT, APP_CMD_OPTS );
+  cmdSend(CMD_IO_HELPER, "logstart", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN );
   
   ConsolePrintf("[TEST:START]\n");
   printFixtureInfo();
@@ -252,7 +251,7 @@ static void RunTests()
   m_last_error = error; //save the error code
   m_last_time_ms = Timer::elapsedUs(Tstart) / 1000; //Note: may be less than actual time, if test isn't using the Timer (requires polling for accuracy)
   ConsolePrintf("[TEST:END]\n", error);
-  cmdSend(CMD_IO_HELPER, "logstop", CMD_DEFAULT_TIMEOUT, APP_CMD_OPTS );
+  cmdSend(CMD_IO_HELPER, "logstop", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN );
   
   Board::ledOff(Board::LED_YLW); //test ended
   
