@@ -156,6 +156,14 @@ void ResetToDefaultVolume( ConsoleFunctionContextRef context )
   }
 }
 
+void TestAudio_PinkNoise( ConsoleFunctionContextRef context )
+{
+  if ( sThis != nullptr ) {
+    sThis->PostAudioEvent( ToAudioEventId(AudioMetaData::GameEvent::GenericEvent::Play__Dev_Robot__Pink_1Sec),
+                           ToAudioGameObject(AudioMetaData::GameObjectType::Default) );
+  }
+}
+
 // Generic Audio Interface
 void PostAudioEvent( ConsoleFunctionContextRef context )
 {
@@ -218,6 +226,7 @@ CONSOLE_FUNC( SetRobotMasterVolume, consolePath, float robotMasterVolume );
 //CONSOLE_FUNC( ToggleOnOffBehaviorAudio, consolePath );  // Not Working in audio project yet
 CONSOLE_FUNC( ToggleOnOffProceduralAudio, consolePath );
 CONSOLE_FUNC( ResetToDefaultVolume, consolePath );
+CONSOLE_FUNC( TestAudio_PinkNoise, consolePath );
 CONSOLE_FUNC( PostAudioEvent, consolePath, const char* event, optional uint64 gameObjectId );
 CONSOLE_FUNC( SetAudioState, consolePath, const char* stateGroup, const char* state );
 CONSOLE_FUNC( SetAudioSwitchState, consolePath, const char* switchGroup, const char* state, uint64 gameObjectId );
