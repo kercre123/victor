@@ -19,6 +19,7 @@
 #include "audioEngine/audioScene.h"
 #include "audioEngine/soundbankLoader.h"
 #include "clad/audio/audioGameObjectTypes.h"
+#include "json/json.h"
 #include "util/console/consoleInterface.h"
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
@@ -26,6 +27,7 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/math/numericCast.h"
 #include "util/time/universalTime.h"
+#include <set>
 #include <sstream>
 
 
@@ -47,6 +49,12 @@ namespace {
 static Anki::Cozmo::Audio::CozmoAudioController* sThis = nullptr;
 const std::string kProfilerCaptureFileName    = "VictorProfilerSession.prof";
 const std::string kAudioOutputCaptureFileName = "VictorOutputSession.wav";
+const std::string kPersistentVolumeFilePath   = "audio/PersistentVolumeSettings.json";
+// Volume const
+using APT = Anki::AudioMetaData::GameParameter::ParameterType;
+const auto kMasterVolumeChannel = APT::Robot_Vic_Volume_Master;
+const std::set<APT> kVolumeChannels = { kMasterVolumeChannel, APT::Robot_Vic_Volume_Animation,
+                                        APT::Robot_Vic_Volume_Behavior, APT::Robot_Vic_Volume_Procedural };
 }
 
 namespace Anki {
@@ -87,7 +95,7 @@ void SetWriteAudioOutputCapture( ConsoleFunctionContextRef context )
   }
 }
 
-// Robot helpers
+// Set Robot Volumes Channels
 void SetRobotMasterVolume( ConsoleFunctionContextRef context )
 {
   if ( sThis != nullptr ) {
@@ -96,11 +104,55 @@ void SetRobotMasterVolume( ConsoleFunctionContextRef context )
   }
 }
 
-void SetProceduralAudioVolume( ConsoleFunctionContextRef context )
+void ToggleVolumeOnOff( AudioMetaData::GameParameter::ParameterType volumeChannel )
 {
   if ( sThis != nullptr ) {
-    const float vol = ConsoleArg_Get_Float( context, "proceduralAudioVolume");
-    sThis->SetProceduralAudioVolume( vol );
+    float vol = 0.0f;
+    // First, check persistent value
+    if ( !sThis->GetVolume( volumeChannel, vol, false ) ) {
+      // Second, get default value
+      if ( !sThis->GetVolume( volumeChannel, vol, true ) ) {
+        // VolumeChannel doesn't exist in audio project, audio engine will log an error
+        vol = 0.0f;
+      }
+    }
+    // Toggle On/Off
+    if ( Util::IsNearZero( vol ) ) {
+      // Set Default Volume
+      if ( sThis->GetVolume( volumeChannel, vol, true ) ) {
+        if ( Util::IsNearZero( vol ) ) {
+          // Channel is currently muted in project, turn on for sneak peek
+          vol = 1.0f;
+        }
+      }
+    }
+    else {
+      // Mute channel
+      vol = 0.0f;
+    }
+    sThis->SetVolume( volumeChannel, vol );
+  }
+}
+
+void ToggleOnOffAnimationAudio( ConsoleFunctionContextRef context )
+{
+  ToggleVolumeOnOff( AudioMetaData::GameParameter::ParameterType::Robot_Vic_Volume_Animation );
+}
+
+void ToggleOnOffBehaviorAudio( ConsoleFunctionContextRef context )
+{
+  ToggleVolumeOnOff( AudioMetaData::GameParameter::ParameterType::Robot_Vic_Volume_Behavior );
+}
+
+void ToggleOnOffProceduralAudio( ConsoleFunctionContextRef context )
+{
+  ToggleVolumeOnOff( AudioMetaData::GameParameter::ParameterType::Robot_Vic_Volume_Procedural );
+}
+
+void ResetToDefaultVolume( ConsoleFunctionContextRef context )
+{
+  if ( sThis != nullptr ) {
+    sThis->SetDefaultVolumes();
   }
 }
 
@@ -109,9 +161,10 @@ void PostAudioEvent( ConsoleFunctionContextRef context )
 {
   if ( sThis != nullptr ) {
     const char* event = ConsoleArg_Get_String( context, "event" );
+    const auto defaultGameObj = static_cast<uint64_t>(AudioMetaData::GameObjectType::Default);
     const uint64_t gameObjectId = ConsoleArg_GetOptional_UInt64( context,
                                                                  "gameObjectId",
-                                                                 static_cast<uint64_t>(AudioMetaData::GameObjectType::Default) );
+                                                                 defaultGameObj );
     sThis->PostAudioEvent( event, gameObjectId );
   }
 }
@@ -161,7 +214,10 @@ const char* consolePath = "CozmoAudioController";
 CONSOLE_FUNC( SetWriteAudioProfilerCapture, consolePath, bool writeProfiler );
 CONSOLE_FUNC( SetWriteAudioOutputCapture, consolePath, bool writeOutput );
 CONSOLE_FUNC( SetRobotMasterVolume, consolePath, float robotMasterVolume );
-CONSOLE_FUNC( SetProceduralAudioVolume, consolePath, float proceduralAudioVolume );
+//CONSOLE_FUNC( ToggleOnOffAnimationAudio, consolePath ); // Not Working in audio project yet
+//CONSOLE_FUNC( ToggleOnOffBehaviorAudio, consolePath );  // Not Working in audio project yet
+CONSOLE_FUNC( ToggleOnOffProceduralAudio, consolePath );
+CONSOLE_FUNC( ResetToDefaultVolume, consolePath );
 CONSOLE_FUNC( PostAudioEvent, consolePath, const char* event, optional uint64 gameObjectId );
 CONSOLE_FUNC( SetAudioState, consolePath, const char* stateGroup, const char* state );
 CONSOLE_FUNC( SetAudioSwitchState, consolePath, const char* switchGroup, const char* state, uint64 gameObjectId );
@@ -173,12 +229,13 @@ CONSOLE_FUNC( StopAllAudioEvents, consolePath, optional uint64 gameObjectId );
 // CozmoAudioController
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CozmoAudioController::CozmoAudioController( const AnimContext* context )
+: _animContext( context )
 {
 #if USE_AUDIO_ENGINE
   {
-    DEV_ASSERT(nullptr != context, "CozmoAudioController.CozmoAudioController.AnimContext.IsNull");
+    DEV_ASSERT(nullptr != _animContext, "CozmoAudioController.CozmoAudioController.AnimContext.IsNull");
 
-    const Util::Data::DataPlatform* dataPlatform = context->GetDataPlatform();
+    const Util::Data::DataPlatform* dataPlatform = _animContext->GetDataPlatform();
     const std::string assetPath = dataPlatform->pathToResource(Util::Data::Scope::Resources, "sound" );
     const std::string writePath = dataPlatform->pathToResource(Util::Data::Scope::Cache, "sound");
     PRINT_CH_INFO("Audio", "CozmoAudioController.CozmoAudioController", "AssetPath '%s'", assetPath.c_str());
@@ -259,6 +316,7 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CozmoAudioController::~CozmoAudioController()
 {
+  _animContext = nullptr;
   if (sThis == this) {
     sThis = nullptr;
   }
@@ -280,41 +338,87 @@ bool CozmoAudioController::WriteAudioOutputCapture( bool write )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CozmoAudioController::SetVolume( AudioMetaData::GameParameter::ParameterType volumeChannel,
+                                      AudioEngine::AudioRTPCValue volume,
+                                      AudioEngine::AudioTimeMs timeInMilliSeconds,
+                                      AudioEngine::AudioCurveType curve,
+                                      bool storeVolume )
+{
+  if ( !IsValidVolumeChannel( volumeChannel ) ) {
+    // Ignore invalid channel
+    PRINT_NAMED_WARNING( "CozmoAudioController.SetVolume", "Invalid Volume Channel '%s'",
+                         EnumToString( volumeChannel ) );
+    return;
+  }
+  
+  AudioEngine::AudioRTPCValue orgVol = volume;
+  volume = Util::Clamp( volume, 0.0f, 1.0f );
+  if ( !Util::IsFltNear( volume, orgVol ) ) {
+    PRINT_NAMED_WARNING( "CozmoAudioController.SetVolume",
+                         "Invalid volume %f - '%s' acceptable volume values are [0.0, 1.0] - Value was Clamped to %f",
+                         orgVol, EnumToString( volumeChannel ), volume );
+  }
+
+  SetParameter( ToAudioParameterId( volumeChannel ),
+                volume,
+                kInvalidAudioGameObject,
+                timeInMilliSeconds,
+                curve );
+  
+  if ( storeVolume ) {
+    _volumeMap[volumeChannel] = volume;
+    StoreVolumeSettings();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CozmoAudioController::SetRobotMasterVolume( AudioEngine::AudioRTPCValue volume,
                                                  AudioEngine::AudioTimeMs timeInMilliSeconds,
                                                  AudioEngine::AudioCurveType curve )
 {
-  AudioEngine::AudioRTPCValue orgVol = volume;
-  volume = Util::Clamp( volume, 0.0f, 1.0f );
-  if ( !Util::IsFltNear( volume, orgVol ) ) {
-    PRINT_NAMED_WARNING( "CozmoAudioController.SetRobotMasterVolume",
-                         "Invalid volume %f - Acceptable volume values are [0.0, 1.0] - Value was Clamped to %f",
-                         orgVol, volume );
-  }
-  SetParameter( ToAudioParameterId( AudioMetaData::GameParameter::ParameterType::Robot_Volume ),
-                volume,
-                kInvalidAudioGameObject,
-                timeInMilliSeconds,
-                curve );
+  SetVolume( kMasterVolumeChannel, volume, timeInMilliSeconds, curve );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CozmoAudioController::SetProceduralAudioVolume( AudioEngine::AudioRTPCValue volume,
-                                                     AudioEngine::AudioTimeMs timeInMilliSeconds,
-                                                     AudioEngine::AudioCurveType curve )
+bool CozmoAudioController::GetVolume( AudioMetaData::GameParameter::ParameterType volumeChannel,
+                                      AudioEngine::AudioRTPCValue& out_value,
+                                      bool defaultValue )
 {
-  AudioEngine::AudioRTPCValue orgVol = volume;
-  volume = Util::Clamp( volume, 0.0f, 1.0f );
-  if ( !Util::IsFltNear( volume, orgVol ) ) {
-    PRINT_NAMED_WARNING( "CozmoAudioController.SetProceduralAudioVolume",
-                         "Invalid volume %f - Acceptable volume values are [0.0, 1.0] - Value was Clamped to %f",
-                         orgVol, volume );
+  bool success = false;
+  out_value = 0.0f;
+  if ( defaultValue ) {
+    AudioRTPCValueType type = AudioRTPCValueType::Default;
+    success = GetParameterValue( ToAudioParameterId(volumeChannel),
+                                 kInvalidAudioGameObject,
+                                 kInvalidAudioPlayingId,
+                                 out_value,
+                                 type );
   }
-  SetParameter( ToAudioParameterId( AudioMetaData::GameParameter::ParameterType::Procedural_Audio_Volume ),
-                volume,
-                kInvalidAudioGameObject,
-                timeInMilliSeconds,
-                curve );
+  else {
+    const auto it = _volumeMap.find( volumeChannel );
+    if ( it != _volumeMap.end() ) {
+      out_value = it->second;
+      success = true;
+    }
+  }
+  return success;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CozmoAudioController::SetDefaultVolumes( bool store )
+{
+  // Clear persistent volume values and reset engine to default state
+  _volumeMap.clear();
+  AudioEngine::AudioRTPCValue volume;
+  for ( const auto& channel : kVolumeChannels ) {
+    // Set default volumes
+    if ( GetVolume( channel, volume, true ) ) {
+      SetVolume( channel, volume, 0, AudioEngine::AudioCurveType::Linear, false );
+    }
+  }
+  if ( store ) {
+    StoreVolumeSettings();
+  }
 }
 
 // Private Methods
@@ -325,12 +429,12 @@ void CozmoAudioController::RegisterCladGameObjectsWithAudioController()
 
   // Enumerate through GameObjectType Enums
   for ( uint32_t aGameObj = static_cast<AudioGameObject>(GameObjectType::Default);
-       aGameObj < static_cast<uint32_t>(GameObjectType::End);
-       ++aGameObj) {
+        aGameObj < static_cast<uint32_t>(GameObjectType::End);
+        ++aGameObj ) {
     // Register GameObjectType
     bool success = RegisterGameObject( static_cast<AudioGameObject>( aGameObj ),
-                                      std::string(EnumToString(static_cast<GameObjectType>( aGameObj ))) );
-    if (!success) {
+                                       std::string(EnumToString(static_cast<GameObjectType>( aGameObj ))) );
+    if ( !success ) {
       PRINT_NAMED_ERROR("CozmoAudioController.RegisterCladGameObjectsWithAudioController",
                         "Registering GameObjectId: %ul - %s was unsuccessful",
                         aGameObj, EnumToString(static_cast<GameObjectType>(aGameObj)));
@@ -341,9 +445,67 @@ void CozmoAudioController::RegisterCladGameObjectsWithAudioController()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CozmoAudioController::SetInitialVolume()
 {
-  // FIXME: VIC-1861 - This is temp until we have better way to set values from persistent data
-  SetRobotMasterVolume(0.5f);
-  SetProceduralAudioVolume(0.0f);
+  LoadVolumeSettings();
+  for ( const auto kvp : _volumeMap ) {
+    SetVolume( kvp.first, kvp.second, 0, AudioEngine::AudioCurveType::Linear, false );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CozmoAudioController::LoadVolumeSettings()
+{
+  const auto* dataPlatform = _animContext->GetDataPlatform();
+  const auto filePath = dataPlatform->pathToResource( Anki::Util::Data::Scope::Persistent, kPersistentVolumeFilePath );
+  bool loadDefaults = true;
+  _volumeMap.clear();
+  if ( Util::FileUtils::FileExists( filePath ) ) {
+    Json::Value volumeVals;
+    if ( dataPlatform->readAsJson( filePath, volumeVals ) ) {
+      // Load Values
+      const auto keys = volumeVals.getMemberNames();
+      for ( const auto aKey : keys ) {
+        // DEV NOTE: If you hit this assert delete your audio persistent storage files
+        const auto param = AudioMetaData::GameParameter::ParameterTypeFromString( aKey );
+        if ( IsValidVolumeChannel( param ) ) {
+          _volumeMap[param] = volumeVals[aKey].asFloat();
+        }
+      }
+      loadDefaults = _volumeMap.empty();
+    }
+    else {
+      PRINT_NAMED_WARNING("CozmoAudioController.LoadVolumeSettings.FailToReadFile", "'%s' Loading default volumes",
+                          kPersistentVolumeFilePath.c_str());
+    }
+  }
+  
+  if ( loadDefaults ) {
+    // Use Default volumes, they are set in the Wwise audio projcet
+    // Note: We only care about the master volume, other volumes are set by the audio project in sound banks
+    AudioRTPCValue value = 0.0f;
+    if ( GetVolume( kMasterVolumeChannel, value, true ) ) {
+      _volumeMap[kMasterVolumeChannel] = value;
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CozmoAudioController::StoreVolumeSettings()
+{
+  Json::Value volumeVals;
+  for ( const auto kvp : _volumeMap ) {
+    volumeVals[EnumToString(kvp.first)] = kvp.second;
+  }
+  const auto* dataPlatform = _animContext->GetDataPlatform();
+  if ( !dataPlatform->writeAsJson( Anki::Util::Data::Scope::Persistent, kPersistentVolumeFilePath, volumeVals ) ) {
+    PRINT_NAMED_WARNING("CozmoAudioController.StoreVolumeSettings.FailToWriteFile", "%s",
+                        kPersistentVolumeFilePath.c_str());
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CozmoAudioController::IsValidVolumeChannel( AudioMetaData::GameParameter::ParameterType volumeChannel )
+{
+  return ( kVolumeChannels.find( volumeChannel ) != kVolumeChannels.end() );
 }
 
 
@@ -351,10 +513,10 @@ void CozmoAudioController::SetInitialVolume()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Setup Ak Logging callback
 void AudioEngineLogCallback( uint32_t akErrorCode,
-                            const char* errorMessage,
-                            AudioEngine::ErrorLevel errorLevel,
-                            AudioEngine::AudioPlayingId playingId,
-                            AudioEngine::AudioGameObject gameObjectId )
+                             const char* errorMessage,
+                             AudioEngine::ErrorLevel errorLevel,
+                             AudioEngine::AudioPlayingId playingId,
+                             AudioEngine::AudioGameObject gameObjectId )
 {
   std::ostringstream logStream;
   logStream << "ErrorCode: " << akErrorCode << " Message: '" << ((nullptr != errorMessage) ? errorMessage : "")
@@ -366,7 +528,7 @@ void AudioEngineLogCallback( uint32_t akErrorCode,
                   "%s", logStream.str().c_str());
   }
 
-  if (((uint32_t)errorLevel & (uint32_t)ErrorLevel::Error) == (uint32_t)ErrorLevel::Error) {
+  if ( ( (uint32_t)errorLevel & (uint32_t)ErrorLevel::Error ) == (uint32_t)ErrorLevel::Error ) {
     PRINT_NAMED_WARNING("CozmoAudioController.AudioEngineError", "%s", logStream.str().c_str());
   }
 }
