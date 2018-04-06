@@ -29,6 +29,12 @@ ConditionOffTreadsState::ConditionOffTreadsState(const Json::Value& config)
               targetStateStr.c_str());
 }
 
+ConditionOffTreadsState::ConditionOffTreadsState(const OffTreadsState& targetState)
+  : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::OffTreadsState))
+{
+  _targetState = targetState;
+}
+
 bool ConditionOffTreadsState::AreConditionsMetInternal(BehaviorExternalInterface& bei) const
 {
   const OffTreadsState currState = bei.GetRobotInfo().GetOffTreadsState();
