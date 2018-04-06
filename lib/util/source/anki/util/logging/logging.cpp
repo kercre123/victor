@@ -158,6 +158,19 @@ void LogChannelDebug(const char* channel, const char* eventName, const KVV& keyV
 
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void DasMsg::formatEventValue(const char* format, va_list args)
+{
+  // event is BI event, and the data is specifically formatted to be read on the backend.
+  // we should not modify tis data under any circumstance. Hence, no tick timer here
+  char logString[kMaxStringBufferSize]{0};
+  vsnprintf(logString, kMaxStringBufferSize, format, args);
+
+  std::stringstream ss;
+  ss << kMaxStringBufferSize;
+  _eventValue = ss.str();
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sEventF(const char* eventName, const KVV& keyValues, const char* format, ...)
@@ -197,9 +210,9 @@ void sEvent(const char* eventName, const KVV& keyValues, const char* eventValue)
   gLoggerProvider->PrintEvent(eventName, keyValues, eventValue);
 }
 
-void sEventD(dasMsg& dasMessage)
+void sEventD(DasMsg& dasMessage)
 {
-  sEvent(dasMessage.eventName(), {}, dasMessage._format.c_str());
+  sEvent(dasMessage.eventName(), {}, dasMessage._eventValue.c_str());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

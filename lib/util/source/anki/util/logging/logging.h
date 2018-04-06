@@ -60,24 +60,22 @@ extern bool _errBreakOnError;
 
   This will be show on the slow updates and as such should not be seen very often
 */
-class dasMsg
+class DasMsg
 {
 public:
   virtual const char* eventName() = 0;
-  std::string _format;
-  va_list _args;
+  void formatEventValue(const char* format, va_list args);
+  std::string _eventValue;
 };
 
 #define DASMESSAGE(className, eventNameStr) /** \ingroup dasmsg */ \
                                             /** \brief eventNameStr */ \
-                                            class className: public Anki::Util::dasMsg \
+                                            class className: public Anki::Util::DasMsg \
                                             { \
-                                              className(const char* format, va_list args) { _format = format; _args = args; } \
+                                            public: \
+                                              className(const char* format, ...) { va_list args; va_start(args, format); formatEventValue(format, args); va_end(args); } \
                                               virtual const char* eventName() { return eventNameStr; } \
                                             };
-
-__attribute__((__used__))
-void sEventF(dasMsg& dasMessage);
 
 __attribute__((__used__))
 void sEventF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__((format(printf,3,4)));
@@ -86,7 +84,7 @@ __attribute__((__used__))
 void sEventV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args) __attribute__((format(printf,3,0)));
 
 __attribute__((__used__))
-void sEventD(dasMsg& dasMessage);
+void sEventD(DasMsg& dasMessage);
 
 __attribute__((__used__))
 void sEvent(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);

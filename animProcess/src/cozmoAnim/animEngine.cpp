@@ -159,7 +159,7 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
       const double maxLatency = ANIM_TIME_STEP_MS + ANIM_OVERTIME_WARNING_THRESH_MS;
       if (timeSinceLastUpdate > maxLatency)
       {
-        AnimEngineMsg aem("%.2f");
+        AnimEngineMsg aem("%.2f", updateLengthMs);
         Anki::Util::sEventD(aem);
       }
     }

@@ -624,7 +624,7 @@ DASMESSAGE(FaceRecMsg,"robot.vision.face_enrollment_count_reached");
         
         // Log the enrollment ID we just completed and how many album entries it now has
         const size_t numAlbumEntries = entryToReturn.GetAlbumEntries().size();
-        FaceRecMsg frm("%d");
+        FaceRecMsg frm("%d", numAlbumEntries);
         Anki::Util::sEventD(frm);
         
         enrollmentCountReached = _origEnrollmentCount;
