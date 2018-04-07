@@ -109,7 +109,10 @@ if [ $? -ne 0 ]; then
     robot_sh systemctl enable --now vic-switchboard
 fi
 
+robot_sh sync
+
 if [ $REMOUNT_RO -eq 1 ]; then
   robot_sh mount -o remount, ro /factory   
 fi
 
+echo "Success"
