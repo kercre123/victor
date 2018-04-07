@@ -43,6 +43,7 @@
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include <chrono>
+#include <fstream>
 
 #ifndef SIMULATOR
 #include <linux/reboot.h>
@@ -838,7 +839,35 @@ void FaceInfoScreenManager::Update(const RobotState& state)
 void FaceInfoScreenManager::DrawMain()
 {
   std::stringstream ss;
-  ss << std::hex << Factory::GetEMR()->fields.ESN;
+  if(Factory::GetEMR()->fields.ESN != 0)
+  {
+    ss << std::hex << Factory::GetEMR()->fields.ESN;
+  }
+  else
+  {
+    // TODO Remove once DVT2s are phased out
+    // ESN is 0 assume this is a DVT2 with a fake birthcertificate
+    // so look for serial number in "/proc/cmdline"
+    static std::string serialNum = "";
+    if(serialNum == "")
+    {
+      std::ifstream infile("/proc/cmdline");
+
+      std::string line;
+      while(std::getline(infile, line))
+      {
+	static const std::string kProp = "androidboot.serialno=";
+	size_t index = line.find(kProp);
+	if(index != std::string::npos)
+	{
+	  serialNum = line.substr(index + kProp.length(), 8);
+	}
+      }
+
+      infile.close(); 
+    }
+    ss << serialNum;
+  }
   const std::string serialNo = "ESN: "  + ss.str();
 
   auto *osstate = OSState::getInstance();
