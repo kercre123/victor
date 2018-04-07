@@ -498,6 +498,7 @@ static struct { //result of most recent command
   union { 
     ccr_esn_t esn; 
     ccr_bsv_t bsv;
+    uint32_t  emr_val;
   } rsp;
 } m_dat;
 
@@ -584,7 +585,7 @@ void sensor_handler_(char* s) {
   }
 }
 
-static ccr_sr_t* cmdRobot_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, const char* cmd)
+static ccr_sr_t* cmdRobot_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, const char* cmd, int cmd_opts)
 {
   CCC_CMD_DELAY();
   char b[22]; const int bz = sizeof(b);
@@ -596,7 +597,7 @@ static ccr_sr_t* cmdRobot_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int
   if( !NN )
     throw ERROR_BAD_ARG;
   
-  cmdSend(CMD_IO_CONTACTS, b, 500 + (int)NN*10, CMD_OPTS_DEFAULT, sensor_handler_);
+  cmdSend(CMD_IO_CONTACTS, b, 500 + (int)NN*10, cmd_opts, sensor_handler_);
   
   #if CCC_DEBUG > 0
   ccr_sr_t* psr = (ccr_sr_t*)srbuf;
@@ -606,11 +607,11 @@ static ccr_sr_t* cmdRobot_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int
   ccc_error_check_(NN);
   return (ccr_sr_t*)srbuf;
 }
-ccr_sr_t* cmdRobotMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head) {
-  return cmdRobot_MotGet_(NN, sensor, treadL, treadR, lift, head, "mot");
+ccr_sr_t* cmdRobotMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, int cmd_opts) {
+  return cmdRobot_MotGet_(NN, sensor, treadL, treadR, lift, head, "mot", cmd_opts);
 }
-ccr_sr_t* cmdRobotGet(uint8_t NN, uint8_t sensor) {
-  return cmdRobot_MotGet_(NN, sensor, 0, 0, 0, 0, "get");
+ccr_sr_t* cmdRobotGet(uint8_t NN, uint8_t sensor, int cmd_opts) {
+  return cmdRobot_MotGet_(NN, sensor, 0, 0, 0, 0, "get", cmd_opts);
 }
 
 void cmdRobotFcc(uint8_t mode, uint8_t cn) {
@@ -627,30 +628,31 @@ void cmdRobotRlg(uint8_t idx) {
   throw ERROR_EMPTY_COMMAND;
 }
 
-void cmdRobot_IdxVal32_(uint8_t idx, uint32_t val, const char* cmd, void(*handler)(char*) ) {
+void cmdRobot_IdxVal32_(uint8_t idx, uint32_t val, const char* cmd, void(*handler)(char*), bool print_verbose = true ) {
   CCC_CMD_DELAY();
   memset( &m_dat, 0, sizeof(m_dat) );
   char b[22]; const int bz = sizeof(b);
   snformat(b,bz,"%s %02x %02x %02x %02x %02x 00", cmd, idx, (val>>0)&0xFF, (val>>8)&0xFF, (val>>16)&0xFF, (val>>24)&0xFF );
-  cmdSend(CMD_IO_CONTACTS, b, 500, CMD_OPTS_DEFAULT, handler );
+  int opts = print_verbose ? CMD_OPTS_DEFAULT : CMD_OPTS_DEFAULT & ~(CMD_OPTS_LOG_CMD | CMD_OPTS_LOG_RSP);
+  cmdSend(CMD_IO_CONTACTS, b, 500, opts, handler );
 }
 void cmdRobotEng(uint8_t idx, uint32_t val) { cmdRobot_IdxVal32_(idx, val, "eng", 0); }
 void cmdRobotLfe(uint8_t idx, uint32_t val) { cmdRobot_IdxVal32_(idx, val, "lfe", 0); }
-void cmdRobotSmr(uint8_t idx, uint32_t val) { cmdRobot_IdxVal32_(idx, val, "smr", 0); }
+void cmdRobotSmr(uint8_t idx, uint32_t val) { cmdRobot_IdxVal32_(idx, val, "smr", 0, false); }
 
 void gmr_handler_(char* s) {
   m_dat.handler_cnt++;
-  m_dat.rsp.esn.esn = cmdParseHex32( cmdGetArg(s,0) );
+  m_dat.rsp.emr_val = cmdParseHex32( cmdGetArg(s,0) );
   m_dat.ccr_err = errno != 0 ? ERROR_TESTPORT_RSP_BAD_ARG : m_dat.ccr_err;
 }
 
 uint32_t cmdRobotGmr(uint8_t idx)
 {
-  cmdRobot_IdxVal32_(idx, 0, "gmr", gmr_handler_);
-  ConsolePrintf("gmr=%08x\n", m_dat.rsp.esn.esn);
+  cmdRobot_IdxVal32_(idx, 0, "gmr", gmr_handler_, false);
+  //ConsolePrintf("emr[%u] = %08x\n", idx, m_dat.rsp.emr_val);
   
   ccc_error_check_(1);
-  return m_dat.rsp.esn.esn;
+  return m_dat.rsp.emr_val;
 }
 
 //-----------------------------------------------------------------------------
