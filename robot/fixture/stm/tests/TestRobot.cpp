@@ -15,37 +15,11 @@
 //                  Debug
 //-----------------------------------------------------------------------------
 
-static void dbg_check_emr_(void)
-{
-  uint32_t esn0 = cmdRobotEsn()->esn;
-  uint32_t esn1     = cmdRobotGmr( EMR_FIELD_OFS(ESN) );
-  uint32_t hwver    = cmdRobotGmr( EMR_FIELD_OFS(HW_VER) );
-  uint32_t model    = cmdRobotGmr( EMR_FIELD_OFS(MODEL) );
-  uint32_t lot_code = cmdRobotGmr( EMR_FIELD_OFS(LOT_CODE) );
-  uint32_t playpenready = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
-  uint32_t playpenpass  = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
-  uint32_t packedout    = cmdRobotGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
-  uint32_t packoutdate  = cmdRobotGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
-  
-  ConsolePrintf("\n");
-  cmdRobotBsv();
-  ConsolePrintf("\n");
-  ConsolePrintf("EMR[%u] esn         :%08x [%08x]\n", EMR_FIELD_OFS(ESN), esn1, esn0);
-  ConsolePrintf("EMR[%u] hwver       :%u\n", EMR_FIELD_OFS(HW_VER), hwver);
-  ConsolePrintf("EMR[%u] model       :%u\n", EMR_FIELD_OFS(MODEL), model);
-  ConsolePrintf("EMR[%u] lotcode     :%u\n", EMR_FIELD_OFS(LOT_CODE), lot_code);
-  ConsolePrintf("EMR[%u] playpenready:%u\n", EMR_FIELD_OFS(PLAYPEN_READY_FLAG), playpenready);
-  ConsolePrintf("EMR[%u] playpenpass :%u\n", EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), playpenpass);
-  ConsolePrintf("EMR[%u] packedout   :%u\n", EMR_FIELD_OFS(PACKED_OUT_FLAG), packedout);
-  ConsolePrintf("EMR[%u] packout-date:%u\n", EMR_FIELD_OFS(PACKED_OUT_DATE), packoutdate);
-  ConsolePrintf("\n");
-}
-
+extern void read_robot_info_(void);
 static void dbg_test_all_(void)
 {
   //test all supported commands
-  cmdRobotEsn();
-  cmdRobotBsv();
+  read_robot_info_(); //esn,bsv,gmr...
   ConsolePutChar('\n');
   
   cmdRobotMot(100, CCC_SENSOR_MOT_LEFT, 127, 0, 0, 0); ConsolePutChar('\n');
@@ -67,8 +41,6 @@ static void dbg_test_all_(void)
   cmdRobotGet(1, CCC_SENSOR_BTN_TOUCH); ConsolePutChar('\n');
   cmdRobotGet(1, CCC_SENSOR_RSSI); ConsolePutChar('\n');
   cmdRobotGet(1, CCC_SENSOR_RX_PKT); ConsolePutChar('\n');
-  
-  dbg_check_emr_();
 }
 
 static void dbg_test_emr_(bool blank_only=0, bool dont_clear=0);
@@ -242,6 +214,29 @@ void TestRobotCleanup(void)
   //ConsolePrintf("----DBG: i=%imA\n", Meter::getCurrentMa(PWR_VEXT,4) );
 }
 
+void read_robot_info_(void)
+{
+  uint32_t esn0 = cmdRobotEsn()->esn;
+  uint32_t esn1     = cmdRobotGmr( EMR_FIELD_OFS(ESN) );
+  uint32_t hwver    = cmdRobotGmr( EMR_FIELD_OFS(HW_VER) );
+  uint32_t model    = cmdRobotGmr( EMR_FIELD_OFS(MODEL) );
+  uint32_t lot_code = cmdRobotGmr( EMR_FIELD_OFS(LOT_CODE) );
+  uint32_t playpenready = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
+  uint32_t playpenpass  = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
+  uint32_t packedout    = cmdRobotGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
+  uint32_t packoutdate  = cmdRobotGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
+  cmdRobotBsv();
+  
+  ConsolePrintf("EMR[%u] esn         :%08x [%08x]\n", EMR_FIELD_OFS(ESN), esn1, esn0);
+  ConsolePrintf("EMR[%u] hwver       :%u\n", EMR_FIELD_OFS(HW_VER), hwver);
+  ConsolePrintf("EMR[%u] model       :%u\n", EMR_FIELD_OFS(MODEL), model);
+  ConsolePrintf("EMR[%u] lotcode     :%u\n", EMR_FIELD_OFS(LOT_CODE), lot_code);
+  ConsolePrintf("EMR[%u] playpenready:%u\n", EMR_FIELD_OFS(PLAYPEN_READY_FLAG), playpenready);
+  ConsolePrintf("EMR[%u] playpenpass :%u\n", EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), playpenpass);
+  ConsolePrintf("EMR[%u] packedout   :%u\n", EMR_FIELD_OFS(PACKED_OUT_FLAG), packedout);
+  ConsolePrintf("EMR[%u] packout-date:%u\n", EMR_FIELD_OFS(PACKED_OUT_DATE), packoutdate);
+}
+
 //always run this first after detect, to get into comms mode
 void TestRobotInfo(void)
 {
@@ -253,10 +248,7 @@ void TestRobotInfo(void)
   Board::powerOff(PWR_VEXT, 500); //turn power off to disable charging
   Contacts::setModeRx();
   
-  try { //DEBUG, cmd doesn't always succeed in dev builds
-    dbg_check_emr_();
-  } catch(int e){
-  }
+  read_robot_info_();
   
   //DEBUG: console bridge, manual testing
   if( g_fixmode == FIXMODE_ROBOT0 )
@@ -274,55 +266,113 @@ void TestRobotSensors(void)
   ccr_sr_t cliff  = cmdRobotGet(3, CCC_SENSOR_CLIFF     )[1];
   ccr_sr_t prox   = cmdRobotGet(3, CCC_SENSOR_PROX_TOF  )[1];
   ccr_sr_t btn    = cmdRobotGet(3, CCC_SENSOR_BTN_TOUCH )[1];
-  ccr_sr_t rssi   = cmdRobotGet(3, CCC_SENSOR_RSSI      )[1];
-  ccr_sr_t pktcnt = cmdRobotGet(3, CCC_SENSOR_RX_PKT    )[1];
+  //ccr_sr_t rssi   = cmdRobotGet(3, CCC_SENSOR_RSSI      )[1];
+  //ccr_sr_t pktcnt = cmdRobotGet(3, CCC_SENSOR_RX_PKT    )[1];
   
   ConsolePrintf("Sensor Values:\n");
   ConsolePrintf("  battery = %i.%03iV\n", bat.bat.raw/1000, bat.bat.raw%1000);
   ConsolePrintf("  cliff = fL:%i fR:%i bR:%i bL:%i\n", cliff.cliff.fL, cliff.cliff.fR, cliff.cliff.bR, cliff.cliff.bL);
   ConsolePrintf("  prox = %imm sigRate:%i spad:%i ambientRate:%i\n", prox.prox.rangeMM, prox.prox.signalRate, prox.prox.spadCnt, prox.prox.ambientRate);
   ConsolePrintf("  btn = %i touch=%i\n", btn.btn.btn, btn.btn.touch);
-  ConsolePrintf("  rf = %idBm %i packets\n", rssi.fccRssi.rssi, rssi.fccRx.pktCnt);
+  //ConsolePrintf("  rf = %idBm %i packets\n", rssi.fccRssi.rssi, rssi.fccRx.pktCnt);
   
   //XXX: what should "good" sensor values look like?
+  
 }
+
+//measure tread speed, distance etc.
+typedef struct { int fwd_mid; int fwd_avg; int fwd_travel; int rev_mid; int rev_avg; int rev_travel; } motor_speed_t;
+static motor_speed_t* tread_test_(uint8_t sensor, int8_t power)
+{
+  const int cmd_opts = (CMD_OPTS_DEFAULT);// & ~(CMD_OPTS_LOG_RSP | CMD_OPTS_LOG_ASYNC));
+  static motor_speed_t test;
+  memset(&test, 0, sizeof(test));
+  ccr_sr_t* psr;
+  
+  int8_t pwrL = sensor == CCC_SENSOR_MOT_LEFT ? power : 0;
+  int8_t pwrR = sensor == CCC_SENSOR_MOT_RIGHT ? power : 0;
+  if( sensor != CCC_SENSOR_MOT_LEFT && sensor != CCC_SENSOR_MOT_RIGHT )
+    throw ERROR_BAD_ARG;
+  
+  //Forward
+  int start_pos = cmdRobotGet(1, sensor, cmd_opts)[0].enc.pos; //get the idle start position
+  psr = cmdRobotMot(100, sensor, pwrL, pwrR, 0, 0 , cmd_opts);
+  test.fwd_mid = psr[49].enc.speed;
+  for(int x=10; x<90; x++)
+    test.fwd_avg += psr[x].enc.speed;
+  test.fwd_avg /= (90-10);
+  
+  Timer::delayMs(50); //wait for tread to stop spinning
+  int end_pos = cmdRobotGet(1, sensor, cmd_opts)[0].enc.pos;
+  test.fwd_travel = end_pos - start_pos;
+  
+  //Reverse
+  start_pos = end_pos;
+  psr = cmdRobotMot(100, sensor, (-1)*pwrL, (-1)*pwrR, 0, 0 , cmd_opts);
+  test.rev_mid = psr[49].enc.speed;
+  for(int x=10; x<90; x++)
+    test.rev_avg += psr[x].enc.speed;
+  test.rev_avg /= (90-10);
+  
+  Timer::delayMs(50); //wait for tread to stop spinning
+  end_pos = cmdRobotGet(1, sensor, cmd_opts)[0].enc.pos;
+  test.rev_travel = end_pos - start_pos;
+  
+  return &test;
+}
+
+typedef struct {
+  int start_active;   //starting position, while motor is pushing to absolute limit
+  int start_passive;  //starting position, with motor idle
+} motor_limits_t;
 
 void TestRobotMotors(void)
 {
-  //ccr_sr_t* psr; //sensor values
-  
-  int treadL_Fwd = cmdRobotMot(100, CCC_SENSOR_MOT_LEFT,  127,    0, 0, 0 )[49].enc.speed;
-  int treadL_Rev = cmdRobotMot(100, CCC_SENSOR_MOT_LEFT, -127,    0, 0, 0 )[49].enc.speed;
-  int treadR_Fwd = cmdRobotMot(100, CCC_SENSOR_MOT_RIGHT,   0, -127, 0, 0 )[49].enc.speed;
-  int treadR_Rev = cmdRobotMot(100, CCC_SENSOR_MOT_RIGHT,   0,  127, 0, 0 )[49].enc.speed;
+  motor_speed_t treadL = *tread_test_(CCC_SENSOR_MOT_LEFT, 127);
+  motor_speed_t treadR = *tread_test_(CCC_SENSOR_MOT_RIGHT, -127);
   
   //check range of motion
-  int lift_start = cmdRobotMot(50, CCC_SENSOR_MOT_LIFT, 0, 0,  100,    0 )[49].enc.pos;
-  int lift_end   = cmdRobotMot(75, CCC_SENSOR_MOT_LIFT, 0, 0, -100,    0 )[74].enc.pos;
-  int head_start = cmdRobotMot(50, CCC_SENSOR_MOT_HEAD, 0, 0,    0,  100 )[49].enc.pos;
-  int head_end   = cmdRobotMot(75, CCC_SENSOR_MOT_HEAD, 0, 0,    0, -100 )[74].enc.pos;
-  int lift_travel = lift_end - lift_start;
-  int head_travel = head_end - head_start;
+  int lift_start = cmdRobotMot(50, CCC_SENSOR_MOT_LIFT, 0, 0, -100,    0 )[49].enc.pos; //start at bottom
+  int lift_top   = cmdRobotMot(35, CCC_SENSOR_MOT_LIFT, 0, 0,  100,    0 )[34].enc.pos; //up
+  int lift_bot   = cmdRobotMot(35, CCC_SENSOR_MOT_LIFT, 0, 0, -100,    0 )[34].enc.pos; //down
+  int lift_travel_up = lift_top - lift_start;
+  int lift_travel_down = lift_top - lift_bot;
+  int head_start = cmdRobotMot(65, CCC_SENSOR_MOT_HEAD, 0, 0,    0, -127 )[64].enc.pos; //start at bottom
+  int head_top   = cmdRobotMot(65, CCC_SENSOR_MOT_HEAD, 0, 0,    0,  100 )[64].enc.pos; //up
+  int head_bot   = cmdRobotMot(65, CCC_SENSOR_MOT_HEAD, 0, 0,    0, -100 )[64].enc.pos; //down
+  int head_travel_up    = head_top - head_start;
+  int head_travel_down  = head_top - head_bot;
   
   ConsolePutChar('\n');
-  ConsolePrintf("tread speed LEFT : %i %i\n", treadL_Fwd, treadL_Rev);
-  ConsolePrintf("tread speed RIGHT: %i %i\n", treadR_Fwd, treadR_Rev);
-  ConsolePrintf("lift pos: start %i end %i travel %i\n", lift_start, lift_end, lift_travel);
-  ConsolePrintf("head pos: start %i end %i travel %i\n", head_start, head_end, head_travel);
+  ConsolePrintf("tread LEFT  fwd speed:%i avg:%i travel:%i\n", treadL.fwd_mid, treadL.fwd_avg, treadL.fwd_travel);
+  ConsolePrintf("tread LEFT  rev speed:%i avg:%i travel:%i\n", treadL.rev_mid, treadL.rev_avg, treadL.rev_travel);
+  ConsolePrintf("tread RIGHT fwd speed:%i avg:%i travel:%i\n", treadR.fwd_mid, treadR.fwd_avg, treadR.fwd_travel);
+  ConsolePrintf("tread RIGHT rev speed:%i avg:%i travel:%i\n", treadR.rev_mid, treadR.rev_avg, treadR.rev_travel);
+  ConsolePrintf("lift pos: start,up,down %i,%i,%i travel: up,down %i,%i\n", lift_start, lift_top, lift_bot, lift_travel_up, lift_travel_down );
+  ConsolePrintf("head pos: start,up,down %i,%i,%i travel: up,down %i,%i\n", head_start, head_top, head_bot, head_travel_up, head_travel_down );
   ConsolePutChar('\n');
   
-  const int min_speed = 1500; //we normally see 1700-1900
-  
-  if( treadL_Fwd < min_speed || (-1)*treadL_Rev < min_speed ) {
-    ConsolePrintf("insufficient LEFT tread speed %i %i\n", treadL_Fwd, treadL_Rev);
+  const int min_speed = 1500; //we normally see 1700-2000
+  if( treadL.fwd_avg < min_speed || (-1)*treadL.rev_avg < min_speed ) {
+    ConsolePrintf("insufficient LEFT tread speed %i %i\n", treadL.fwd_avg, treadL.rev_avg);
     throw ERROR_MOTOR_LEFT; //ERROR_MOTOR_LEFT_SPEED
   }
-  if( (-1)*treadR_Fwd < min_speed || treadR_Rev < min_speed ) {
-    ConsolePrintf("insufficient RIGHT tread speed %i %i\n", treadR_Fwd, treadR_Rev);
+  if( (-1)*treadR.fwd_avg < min_speed || treadR.rev_avg < min_speed ) {
+    ConsolePrintf("insufficient RIGHT tread speed %i %i\n", treadR.fwd_avg, treadR.rev_avg);
     throw ERROR_MOTOR_RIGHT; //ERROR_MOTOR_RIGHT_SPEED
   }
   
-  //XXX: calibration sample of 1, travel should be about -230
+  const int min_travel = 600;
+  if( treadL.fwd_travel < min_travel || (-1)*treadL.rev_travel < min_travel ) {
+    ConsolePrintf("insufficient LEFT tread travel %i %i\n", treadL.fwd_travel, treadL.rev_travel);
+    throw ERROR_MOTOR_LEFT;
+  }
+  if( (-1)*treadR.fwd_travel < min_travel || treadR.rev_travel < min_travel ) {
+    ConsolePrintf("insufficient RIGHT tread travel %i %i\n", treadR.fwd_travel, treadR.rev_travel);
+    throw ERROR_MOTOR_RIGHT;
+  }
+  
+  /*/XXX: calibration sample of 1, travel should be about -230
   lift_travel *= -1; //positive travel comparisons
   if( (-1)*lift_travel > 20 )
     throw ERROR_MOTOR_LIFT_BACKWARD;
@@ -332,8 +382,9 @@ void TestRobotMotors(void)
     throw ERROR_MOTOR_LIFT_RANGE; //moves, but not enough...
   else if( lift_travel > 300 )
     throw ERROR_MOTOR_LIFT_NOSTOP; //moves too much!
+  //-*/
   
-  //XXX: calibration sample of 1, travel should be about -570
+  /*/XXX: calibration sample of 1, travel should be about -570
   head_travel *= -1; //positive travel comparisons
   if( (-1)*head_travel > 20 )
     throw ERROR_MOTOR_HEAD_BACKWARD;
@@ -343,6 +394,11 @@ void TestRobotMotors(void)
     throw ERROR_MOTOR_HEAD_RANGE; //moves, but not enough...
   else if( head_travel > 700 )
     throw ERROR_MOTOR_HEAD_NOSTOP; //moves too much!
+  //-*/
+}
+
+void TestRobotMotorsSlow(void)
+{
 }
 
 void EmrChecks(void)
