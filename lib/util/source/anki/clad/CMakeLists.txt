@@ -9,7 +9,7 @@ set(CLAD_HASH "${CLAD_EMITTER_DIR}/ASTHash_emitter.py")
 #CLAD_CPP_DECL=../robot/clad/cozmo_CPP_declarations_emitter.py
 #CLAD_CPP_SWITCH=./cozmo_CPP_switch_emitter.py
 #CLAD_HASH=$(CLAD_EMITTER_DIR)/ASTHash_emitter.py
-set(CLAD_CPP_FLAGS "--output-json" "--output-properties")
+set(CLAD_CPP_FLAGS "--output-properties")
 
 set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/util")
 set(PY_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladPython")

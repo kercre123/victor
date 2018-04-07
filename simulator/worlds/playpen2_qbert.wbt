@@ -46,14 +46,13 @@ WebotsKeyboardController {
   userName "Billy"
   filterLogs TRUE
   translation -0.38 0 0.08
-  autoConnect TRUE
 }
 CozmoVizDisplay {
   streamResolution "NHD"
   filterLogs TRUE
 }
 Transform {
-  translation 0.04 0 -0.01
+  translation 0.05 0 -0.01
   rotation 0 0 1 0
   children [
     Transform {

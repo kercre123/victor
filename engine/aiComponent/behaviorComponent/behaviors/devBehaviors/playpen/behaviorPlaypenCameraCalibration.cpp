@@ -33,7 +33,7 @@ namespace {
 // V2 Simulated camera calibration
 static const std::shared_ptr<Vision::CameraCalibration> kApproxCalib(
   new Vision::CameraCalibration(360, 640,
-                                185, 185,
+                                296, 296,
                                 319, 179,
                                 0.f,
                                 std::vector<f32>({0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f, 0.f})));
@@ -92,7 +92,7 @@ Result BehaviorPlaypenCameraCalibration::OnBehaviorActivatedInternal()
   robot.GetVisionComponent().ClearCalibrationImages();
   
   // Move head and lift so we can see the target
-  CompoundActionParallel* action = new CompoundActionParallel({new MoveHeadToAngleAction(PlaypenConfig::kHeadAngleToSeeTarget),
+  CompoundActionParallel* action = new CompoundActionParallel({new MoveHeadToAngleAction(PlaypenConfig::kHeadAngleToSeeTarget_rad),
                                                                new MoveLiftToHeightAction(LIFT_HEIGHT_LOWDOCK)});
   
   DelegateIfInControl(action, [this]() {

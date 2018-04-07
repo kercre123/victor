@@ -1,0 +1,18 @@
+// Messages from robot/anim/engine to be handled by switchboard
+
+namespace Anki {
+namespace Cozmo {
+namespace SwitchboardInterface {
+
+// Sent when the backpack button has been double pressed (triggers on button release)
+message EnterPairing
+{
+}
+
+message ExitPairing
+{
+}
+
+}
+}
+}

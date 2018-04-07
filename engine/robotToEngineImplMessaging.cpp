@@ -54,6 +54,8 @@
 #include "util/helpers/includeFstream.h"
 #include "util/signals/signalHolder.h"
 
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
 #include <functional>
 
 #define LOG_CHANNEL "RobotState"
@@ -122,6 +124,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
   doRobotSubscribe(RobotInterface::RobotToEngineTag::dockingStatus,                             &RobotToEngineImplMessaging::HandleDockingStatus);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::mfgId,                          &RobotToEngineImplMessaging::HandleRobotSetBodyID);
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::micDirection,                   &RobotToEngineImplMessaging::HandleMicDirection);
+  doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::streamCameraImages,             &RobotToEngineImplMessaging::HandleStreamCameraImages);  
   doRobotSubscribeWithRoboRef(RobotInterface::RobotToEngineTag::displayedFaceImageRGBChunk,     &RobotToEngineImplMessaging::HandleDisplayedFaceImage);
 
   // lambda wrapper to call internal handler
@@ -195,7 +198,19 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                                 temp_degC);
                                                        robot->SetImuTemperature(temp_degC);
                                                      }));
+
+  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::enterPairing,
+                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                       // Forward to switchboard
+                                                       robot->Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::EnterPairing()));
+                                                     }));
   
+  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::exitPairing,
+                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                       // Forward to switchboard
+                                                       robot->Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::ExitPairing()));
+                                                     }));
+
   if (robot->HasExternalInterface())
   {
     using namespace ExternalInterface;
@@ -681,6 +696,15 @@ void RobotToEngineImplMessaging::HandleSyncRobotAck(const AnkiEvent<RobotInterfa
   ANKI_CPU_PROFILE("Robot::HandleSyncRobotAck");
   LOG_INFO("Robot.HandleSyncRobotAck","");
   robot->SetSyncRobotAcked();
+
+  // Move the head up when we sync time so that the customer can see the face easily
+  if(FACTORY_TEST && Factory::GetEMR()->fields.PACKED_OUT_FLAG)
+  {
+    const f32 kLookUpSpeed_radps = 2;
+    robot->GetMoveComponent().MoveHeadToAngle(MAX_HEAD_ANGLE, 
+                                              kLookUpSpeed_radps, 
+                                              MAX_HEAD_ACCEL_RAD_PER_S2);
+  }
 }
 
 void RobotToEngineImplMessaging::HandleRobotPoked(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
@@ -733,6 +757,12 @@ void RobotToEngineImplMessaging::HandleDisplayedFaceImage(const AnkiEvent<RobotI
     _faceImageRGBChunksReceivedBitMask = 0;
   }
 
+}
+
+void RobotToEngineImplMessaging::HandleStreamCameraImages(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
+{
+  const auto & payload = message.GetData().Get_streamCameraImages();
+  robot->GetVisionComponent().EnableDrawImagesToScreen(payload.enable);
 }
 
 } // end namespace Cozmo

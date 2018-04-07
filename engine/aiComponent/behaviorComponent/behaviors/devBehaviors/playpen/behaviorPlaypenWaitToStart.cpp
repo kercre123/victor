@@ -94,17 +94,10 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenWaitToStart::PlaypenUpdateInterna
   // or this is sim
   const bool buttonGood = !PlaypenConfig::kUseButtonToStart || 
                           (PlaypenConfig::kUseButtonToStart &&
-                           _buttonPressed) || 
-                          !robot.IsPhysical();
+                           _buttonPressed);
 
   if(touchGood && buttonGood && (robot.GetBatteryComponent().IsOnChargerContacts() || robot.GetBatteryComponent().IsCharging()))
   {
-    // Draw nothing on the screen to clear it
-    robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::DrawTextOnScreen(true,
-                                                                                     RobotInterface::ColorRGB(0,0,0),
-                                                                                     RobotInterface::ColorRGB(0,0,0),
-                                                                                     "")));
-
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, PlaypenStatus::Complete);
   }
 
@@ -131,6 +124,9 @@ void BehaviorPlaypenWaitToStart::OnBehaviorDeactivated()
   };
 
   robot.GetBodyLightComponent().SetBackpackLights(robot.GetBodyLightComponent().GetOffBackpackLights());
+
+  // Request exit pairing mode to switchboard in case we're in it
+  robot.Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::ExitPairing()));
 }
 
 }

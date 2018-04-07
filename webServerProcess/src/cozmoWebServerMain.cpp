@@ -138,7 +138,6 @@ int main(void)
   // Set the target time for the end of the first frame
   auto targetEndFrameTime = runStart + (microseconds)(WEB_SERVER_TIME_STEP_US);
 
-
   while (!gShutdown)
   {
     cozmoWebServer->Update();

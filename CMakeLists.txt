@@ -148,7 +148,19 @@ if (VICOS_STAGING)
 elseif(VICOS)
   # Until _all_ targets build for VICOS (instead of android), this should only
   # contain targets that require / only build with the vicos toolchain.
+  import(cti_messaging "coretech/messaging")
+  add_subdirectory("clad")
 
+  # include only required deps from util
+  add_subdirectory("lib/util/source/3rd/jsoncpp")
+  add_subdirectory("lib/util/source/anki/clad")
+
+  add_subdirectory("coretech/common/clad")
+  add_subdirectory("coretech/vision/clad")
+  add_subdirectory("robot/clad")
+  add_subdirectory("platform/switchboard")
+
+  include(vicos-sdk-stl-config)
 else()
   # Current DEFAULT (android or mac platforms)
   set(CLEAN_CLAD_TARGETS TRUE)

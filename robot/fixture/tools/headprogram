@@ -1,7 +1,0 @@
-#!/system/bin/sh
-echo host > /sys/kernel/debug/msm_otg/mode
-insmod /system/lib/modules/usbserial.ko vendor=0x05c6 product=0x9008
-sleep 1
-lsusb
-#./emmcdl/emmcdl -p 0 -info
-./emmcdl/emmcdl -p 0 -f emmcdl/prog_emmc_firehose_8909_ddr.mbn -x emmcdl/anki.xml -SetActivePartition 0

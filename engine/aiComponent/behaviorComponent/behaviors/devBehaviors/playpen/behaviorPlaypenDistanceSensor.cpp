@@ -157,7 +157,8 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
       PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::WRITE_TO_LOG_FAILED, PlaypenStatus::Running);
     }
 
-    if(!Util::IsNear(data.proxSensorData.distance_mm - PlaypenConfig::kDistanceSensorBiasAdjustment_mm, 
+    if(robot.IsPhysical() &&
+       !Util::IsNear(data.proxSensorData.distance_mm - PlaypenConfig::kDistanceSensorBiasAdjustment_mm, 
                      data.visualDistanceToTarget_mm,
                      PlaypenConfig::kDistanceSensorReadingThresh_mm))
     {

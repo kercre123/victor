@@ -277,6 +277,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     {
       GET_MEMBER_FROM_JSON(jsonRoot, animName);
       JsonTools::GetValueOptional(jsonRoot, "scanlineOpacity", _scanlineOpacity);
+      JsonTools::GetValueOptional(jsonRoot, "frameDuration_ms", _frameDuration_ms);
 
       return Process(animNameDebug);
     }
@@ -324,6 +325,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
     bool FaceAnimationKeyFrame::IsDone()
     {
+      _currentTime_ms += ANIM_TIME_STEP_MS;
+
       // For canned animations we check if GetFaceImage() has been called as many
       // times as there are frames.
       // For procedural animations, frames are deleted (with PopFront) after they are
@@ -356,11 +359,17 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     {
       if(IsDone()) {
         _curFrame = 0;
+        _currentTime_ms = 0;
+        _nextFrameTime_ms = _frameDuration_ms;
         return false;
       }
       
       const bool gotFrame = FaceAnimationManager::getInstance()->GetFrame(_animName, _curFrame, img);
-      ++_curFrame;
+      if(_currentTime_ms >= _nextFrameTime_ms)
+      {
+        _nextFrameTime_ms = _currentTime_ms + _frameDuration_ms;
+        ++_curFrame;
+      }
       
       return gotFrame;
     }

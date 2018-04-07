@@ -2703,9 +2703,12 @@ namespace Cozmo {
             if (_robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg))) != RESULT_OK) {
               PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
             }
-
           }
-        } else {
+        }
+	// If this is the factory test and we failed to read calibration then use a dummy one
+	// since we should be getting a real one during playpen
+	else if(FACTORY_TEST)
+	{
           PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.Failed", "");
 
           // TEMP HACK: Use dummy calibration for now since final camera not available yet
@@ -2732,8 +2735,12 @@ namespace Cozmo {
           if (_robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg))) != RESULT_OK) {
             PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
           }
-
         }
+	else
+	{
+	  PRINT_NAMED_ERROR("VisionComponent.ReadCameraCalibration.Failed", "");
+	  return;
+	}
 
         Enable(true);
       };

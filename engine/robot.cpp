@@ -17,6 +17,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/actionContainers.h"
 #include "engine/actions/animActions.h"
+#include "engine/actions/basicActions.h"
 #include "engine/activeCube.h"
 #include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/aiComponent.h"
@@ -83,6 +84,8 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/transport/reliableConnection.h"
+
+#include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
@@ -241,6 +244,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
 
   // This will create the AndroidHAL instance if it doesn't yet exist
   CameraService::getInstance();
+
   
 } // Constructor: Robot
     
@@ -1185,6 +1189,45 @@ Result Robot::Update()
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
 
+  if(FACTORY_TEST && !Factory::GetEMR()->fields.PACKED_OUT_FLAG)
+  {
+    // Once we have gotten a frame from the camera play a sound to indicate 
+    // a "successful" boot
+    static bool playedSound = false;
+    if(!playedSound &&
+       CameraService::getInstance()->HaveGottenFrame())
+    {
+      GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1.f);
+      CompoundActionParallel* action = new CompoundActionParallel();
+      std::weak_ptr<IActionRunner> soundAction = action->AddAction(new PlayAnimationAction("soundTestAnim"));
+
+      // Start WaitForLambdaAction in parallel that will cancel the sound action after 200 milliseconds
+      WaitForLambdaAction* waitAction = new WaitForLambdaAction([soundAction](Robot& robot){
+	static TimeStamp_t start = 0;
+	if(start == 0)
+	{
+	  start = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+	}
+
+	if(BaseStationTimer::getInstance()->GetCurrentTimeStamp() - start > 200)
+	{
+	  start = 0;
+	  auto sp = soundAction.lock();
+	  if(sp != nullptr)
+	  {
+	    sp->Cancel();
+	    return true;
+	  }
+	}
+
+	return false;
+      });
+      action->AddAction(waitAction);
+      GetActionList().AddConcurrentAction(action);
+      playedSound = true;
+    }
+  }
+
   // Check if we have driven off the charger platform - this has to happen before the behaviors which might
   // need this information. This state is useful for knowing not to play a cliff react when just driving off
   // the charger.
@@ -1219,7 +1262,6 @@ Result Robot::Update()
   }
   
   /////////// Update visualization ////////////
-      
   // Draw All Objects by calling their Visualize() methods.
   GetBlockWorld().DrawAllObjects();
 
@@ -2587,6 +2629,7 @@ RobotState Robot::GetDefaultRobotState()
                          0.f, //float liftAngle,
                          AccelData(), //const Anki::Cozmo::AccelData &accel,
                          GyroData(), //const Anki::Cozmo::GyroData &gyro,
+			 0.f, // float batteryVoltage
                          kDefaultStatus, //uint32_t status,
                          std::move(defaultCliffRawVals), //std::array<uint16_t, 4> cliffDataRaw,
                          ProxSensorDataRaw(), //const Anki::Cozmo::ProxSensorDataRaw &proxData,

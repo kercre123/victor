@@ -1,7 +1,8 @@
 #ifndef __RANDOM_H
 #define __RANDOM_H
+#include <stdint.h>
 
 void InitRandom();
-u32 GetRandom();
+uint32_t GetRandom();
 
 #endif

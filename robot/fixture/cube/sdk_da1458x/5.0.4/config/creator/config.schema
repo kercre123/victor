@@ -1,0 +1,438 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "description": "Project set-up tool configuration file schema",
+    "$ref": "#/definitions/config_file",
+
+    "definitions": {
+
+        "config_file": {
+            "properties": {
+                "schema_version": {
+                    "description": "The version of the schema this config file is valid against",
+                    "enum": [1]
+                },
+                "version": {
+                    "description": "The version number of this file",
+                    "type": "string"
+                },
+                "sdk_paths": {
+                    "description": "The currently supported sdk paths",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sdk_path"
+                    }
+                },
+                "configurations": {
+                    "description": "The possible processor configurations",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/configuration"
+                    }
+                },
+                "option_groups": {
+                    "description": "The option groups",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/option_group"
+                    }
+                }
+            },
+            "required": ["schema_version", "version", "sdk_paths", "configurations", "option_groups"],
+            "additionalProperties": false
+        },
+
+        "sdk_path": {
+            "properties": {
+                "platform": {
+                    "enum": ["win", "mac", "lin"]
+                },
+                "path": {
+                    "description": "The path of the installed SDK",
+                    "type": "string"
+                }
+            },
+            "required": ["platform", "path"],
+            "additionalProperties": false
+        },
+
+        "configuration": {
+            "properties": {
+                "type": {
+                    "description": "The type of this configuration",
+                    "type": "string"
+                },
+                "display_name": {
+                    "description": "The display name of this configuration",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "The description of this configuration",
+                    "type": "string"
+                },
+                "template_path": {
+                    "description": "The path to the template for this configuration",
+                    "type": "string"
+                },
+                "environments": {
+                    "description": "The environments supported by this configuration",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/environment"
+                    }
+                },
+                "processors": {
+                    "description": "The processors supported by this configuration",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/processor"
+                    }
+                },
+
+                "processor_dependents": {
+                    "description": "A list of options affected by processor type",
+                    "type": "array",
+                    "items": {
+                        "properties": {
+                            "when": {
+                                "$ref": "#/definitions/processor"
+                            },
+                            "option": { "type": "string" },
+                            "value": {
+                                "description": "value to set dependent option, a value of null should disable this option",
+                                "oneOf": [
+                                    { "type": "null" },
+                                    { "type": "integer" },
+                                    { "type": "string" },
+                                    { "type": "boolean" },
+                                    { "type": "array", "items": { "type": "string" }}
+                                ]
+                            }
+                        },
+                        "required": ["when", "option"],
+                        "additionalProperties": false
+                    }
+                },
+
+                "excludes": {
+                    "description": "The files that need to be exluded for this configuration",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/exclude"
+                    }
+                },
+                "renames": {
+                    "description": "The files that need to be renamed for this configuration",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/rename"
+                    }
+                },
+                "option_files": {
+                    "description": "The option files provided by this configuration",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/option_file"
+                    }
+                },
+                "overrides": {
+                    "description": "The overrides imposed on the options by this configuration",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/override"
+                    }
+                }
+            },
+            "required": ["type", "display_name", "description", "template_path", "environments", "processors", "option_files"],
+            "additionalProperties": false
+        },
+
+        "option_group": {
+            "properties": {
+                "type": {
+                    "description": "The type of this option group",
+                    "type": "string"
+                },
+                "display_name": {
+                    "description": "The display name of this option group",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "The description of this option group",
+                    "type": "string"
+                },
+                "options": {
+                    "description": "The options included in this group",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/option"
+                    }
+                }
+            },
+            "required": ["type", "display_name", "description", "options"],
+            "additionalProperties": false
+        },
+
+        "environment": {
+            "properties": {
+                "type": {
+                    "description": "The type of environment this is",
+                    "enum": ["keil4", "keil5", "eclipse"]
+                },
+                "display_name": {
+                    "description": "The display name of this environment",
+                    "type": "string"
+                },
+                "project_path": {
+                    "description": "The path to the project file",
+                    "type": "string"
+                }
+            },
+            "required": ["type", "display_name", "project_path"],
+            "additionalProperties": false
+        },
+
+        "processor": {
+            "properties": {
+                "type": {
+                    "description": "The type of processor this is",
+                    "enum": ["580", "581", "583"]
+                },
+                "display_name": {
+                    "description": "The display name of this processor",
+                    "type": "string"
+                }
+            },
+            "required": ["type", "display_name"],
+            "additionalProperties": false
+        },
+
+        "exclude": {
+            "properties": {
+                "type": {
+                    "description": "The internal name for this exclude",
+                    "type": "string"
+                },
+                "display_name": {
+                    "description": "The display name of this exclude",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "The description of this exclude",
+                    "type": "string"
+                },
+                "option_type": {
+                    "enum": ["onoff"]
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "default": {
+                    "type": "boolean"
+                },
+                "files": {
+                    "description": "The paths to the files being excluded",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/exclude_file"
+                    }
+                }
+            },
+            "required": ["type", "display_name", "description", "files", "option_type", "default"],
+            "additionalProperties": false
+        },
+
+        "exclude_file": {
+            "properties": {
+                "type": {
+                    "description": "The type of file being excluded",
+                    "enum": ["cfile", "hfile"]
+                },
+                "description": {
+                    "description": "A description of the file being excluded",
+                    "type": "string"
+                },
+                "source": {
+                    "description": "The path to the file being excluded",
+                    "type": "string"
+                }
+            },
+            "required": ["type", "description", "source"],
+            "additionalProperties": false
+        },
+
+        "rename": {
+            "properties": {
+                "type": {
+                    "description": "The type of file being renamed",
+                    "enum": ["cfile", "hfile", "pfile"]
+                },
+                "source": {
+                    "description": "The path to the file being renamed",
+                    "type": "string"
+                },
+                "destination": {
+                    "description": "The path after renaming",
+                    "type": "string"
+                }
+            },
+            "required": ["type", "source", "destination"],
+            "additionalProperties": false
+        },
+
+        "option_file": {
+            "properties": {
+                "path": {
+                    "description": "The path to the file",
+                    "type": "string"
+                },
+                "options": {
+                    "description": "The options in this file",
+                    "type": "array",
+                    "items": { "type": "string" }
+                }
+            },
+            "required": ["path", "options"],
+            "additionalProperties": false
+        },
+
+        "override": {
+            "properties": {
+                "option": {
+                    "description": "The option that this override applies to",
+                    "type": "string"
+                },
+                "value": {
+                    "description": "The value to override with",
+                    "oneOf": [
+                        { "type": "integer" },
+                        { "type": "string" },
+                        { "type": "boolean" },
+                        { "type": "array", "items": { "type": "string" }}
+                    ]
+                },
+                "minimum": {
+                    "description": "The minimum value this int can take",
+                    "type": "integer"
+                },
+                "maximum": {
+                    "description": "The maximum value this int can take",
+                    "type": "integer"
+                },
+                "default": {
+                    "description": "The default value of this option",
+                    "oneOf": [
+                        { "type": "integer" },
+                        { "type": "string" },
+                        { "type": "boolean" },
+                        { "type": "array", "items": { "type": "string" }}
+                    ]
+                }
+            },
+            "required": ["option"],
+            "additionalProperties": false
+        },
+
+        "option": {
+            "properties": {
+                "type": {
+                    "description": "The internal name of this option",
+                    "type": "string"
+                },
+                "display_name": {
+                    "description": "The display name of this option",
+                    "type": "string"
+                },
+                "description": {
+                    "description": "The description of this option",
+                    "type": "string"
+                },
+                "define": {
+                    "description": "The #define corresponding to this option",
+                    "type": "string"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "dependents": {
+                    "description": "A list of options affected by this value",
+                    "type": "array",
+                    "items": {
+                        "properties": {
+                            "when": {
+                                "description": "Condition to check for",
+                                "oneOf": [
+                                    { "type": "integer" },
+                                    { "type": "string" },
+                                    { "type": "boolean" },
+                                    { "type": "array", "items": { "type": "string" }}
+                                ]
+                            },
+                            "option": { "type": "string" },
+                            "value": {
+                                "description": "value to set dependent option, a value of null should disable this option",
+                                "oneOf": [
+                                    { "type": "null" },
+                                    { "type": "integer" },
+                                    { "type": "string" },
+                                    { "type": "boolean" },
+                                    { "type": "array", "items": { "type": "string" }}
+                                ]
+                            }
+                        },
+                        "required": ["when", "option"],
+                        "additionalProperties": false
+                    }
+                }
+            },
+            "oneOf": [
+                {
+                    "properties": {
+                        "option_type": { "enum": ["onoff"] },
+                        "default": { "type": "boolean" }
+                    },
+                    "required": ["option_type"]
+                },
+                {
+                    "properties": {
+                        "option_type": { "enum": ["enum"] },
+                        "values": {
+                            "description": "The possible values of this enum define",
+                            "type": "array",
+                            "items": {
+                                "properties": {
+                                    "type": { "type": "string" },
+                                    "display_name": { "type": "string" },
+                                    "description": { "type": "string" }
+                                },
+                                "required": ["type", "display_name", "description"],
+                                "additionalProperties": false
+                            }
+                        },
+                        "view": { "enum": ["radio", "dropdown"]},
+                        "default": { "type": "string" }
+                    },
+                    "required": ["option_type", "values"]
+                },
+                {
+                    "properties": {
+                        "option_type": { "enum": ["int"] },
+                        "minimum": { "type": "integer" },
+                        "maximum": { "type": "integer" },
+                        "units": { "type": "string" },
+                        "default": { "type": "integer" }
+                    },
+                    "required": ["option_type"]
+                },
+                {
+                    "properties": {
+                        "option_type": { "enum": ["octets"] },
+                        "count": { "type": "integer" },
+                        "default": { "type": "array", "items": { "type": "string" } }
+                    },
+                    "required": ["option_type", "count"]
+                }
+            ],
+            "required": ["type", "display_name", "description", "define", "option_type", "default"]
+        }
+    }
+}

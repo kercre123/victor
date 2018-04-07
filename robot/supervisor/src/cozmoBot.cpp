@@ -1,6 +1,7 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
+#include "anki/cozmo/robot/logEvent.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -103,12 +104,16 @@ namespace Anki {
       {
         AnkiInfo("CozmoBot.Destroy", "");
 
+        HAL::Stop();
+
         // Turn off lights
         BackpackLightController::TurnOffAll();
       }
 
       Result step_MainExecution()
       {
+        EventStart(EventType::MAIN_STEP);
+
         START_TIME_PROFILE(CozmoBotMain, TOTAL);
         START_TIME_PROFILE(CozmoBot, HAL);
 
@@ -117,7 +122,9 @@ namespace Anki {
         if (lastCycleStartTime_ != 0) {
           u32 timeBetweenCycles = cycleStartTime - lastCycleStartTime_;
           if (timeBetweenCycles > MAIN_TOO_LATE_TIME_THRESH_USEC) {
+            EventStart(EventType::MAIN_CYCLE_TOO_LATE);
             ++mainTooLateCnt_;
+            EventStop(EventType::MAIN_CYCLE_TOO_LATE);
             avgMainTooLateTime_ = (u32)((f32)(avgMainTooLateTime_ * (mainTooLateCnt_ - 1) + timeBetweenCycles)) / mainTooLateCnt_;
           }
         }
@@ -238,10 +245,13 @@ namespace Anki {
         u32 cycleEndTime = HAL::GetMicroCounter();
         u32 cycleTime = cycleEndTime - cycleStartTime;
         if (cycleTime > MAIN_TOO_LONG_TIME_THRESH_USEC) {
+          EventStart(EventType::MAIN_CYCLE_TOO_LONG);
           ++mainTooLongCnt_;
+          EventStop(EventType::MAIN_CYCLE_TOO_LONG);
           avgMainTooLongTime_ = (u32)((f32)(avgMainTooLongTime_ * (mainTooLongCnt_ - 1) + cycleTime)) / mainTooLongCnt_;
         }
         lastCycleStartTime_ = cycleStartTime;
+
 
         // Report main cycle time error
         if ((mainTooLateCnt_ > 0 || mainTooLongCnt_ > 0) &&
@@ -257,6 +267,8 @@ namespace Anki {
 
           lastMainCycleTimeErrorReportTime_ = cycleEndTime;
         }
+
+        EventStop(EventType::MAIN_STEP);
 
         return RESULT_OK;
 

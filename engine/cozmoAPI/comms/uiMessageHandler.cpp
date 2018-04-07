@@ -89,7 +89,7 @@ namespace Anki {
 CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enabled in non-SHIPPING apps, for internal dev
 
 
-#define ANKI_ENABLE_SDK_OVER_TCP  1
+#define ANKI_ENABLE_SDK_OVER_TCP 1
 
 
     IMPLEMENT_ENUM_INCREMENT_OPERATORS(UiConnectionType);
@@ -108,6 +108,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case UiConnectionType::UI:          return false;
         case UiConnectionType::SdkOverUdp:  return true;
         case UiConnectionType::SdkOverTcp:  return true;
+        case UiConnectionType::Switchboard: return false;
         default:
         {
           PRINT_NAMED_ERROR("IsExternalSdkConnection.BadType", "type = %d", (int)type);
@@ -122,6 +123,12 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
                                     ISocketComms::DeviceId hostDeviceId, bool isSdkCommunicationEnabled)
     {
       // Note: Some SocketComms are deliberately null depending on the build platform, type etc.
+#if FACTORY_TEST
+      if(type != UiConnectionType::Switchboard)
+      {
+        return nullptr;
+      }
+#endif
 
       switch(type)
       {
@@ -151,6 +158,13 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         #else
           return nullptr;
         #endif
+        }
+        case UiConnectionType::Switchboard:
+        {
+          ISocketComms* comms = new TcpSocketComms(true, SWITCHBOARD_TCP_PORT);
+          // Disable ping timeout disconnects
+          comms->SetPingTimeoutForDisconnect(0, nullptr);
+          return comms;
         }
         default:
         {
@@ -270,6 +284,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         case UiConnectionType::UI:          return kAcceptMessagesFromUI;
         case UiConnectionType::SdkOverUdp:  return kAcceptMessagesFromSDK;
         case UiConnectionType::SdkOverTcp:  return kAcceptMessagesFromSDK;
+        case UiConnectionType::Switchboard: return true;
         default:
         {
           assert(0);
@@ -332,6 +347,24 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
 
         while (connectionType < UiConnectionType::Count)
         {
+          // Only allow Enter/ExitPairing messages to be sent to switchboard
+          if(connectionType == UiConnectionType::Switchboard)
+          {
+            if(message.GetTag() != ExternalInterface::MessageEngineToGameTag::EnterPairing &&
+               message.GetTag() != ExternalInterface::MessageEngineToGameTag::ExitPairing)
+            {
+              if(sendToEveryone)
+              {
+                ++connectionType;
+                continue;
+              }
+              else
+              {
+                return;
+              }
+            }
+          }
+
           ISocketComms* socketComms = GetSocketComms(connectionType);
           if (socketComms)
           {
@@ -1169,6 +1202,12 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
     {
       for (UiConnectionType i=UiConnectionType(0); i < UiConnectionType::Count; ++i)
       {
+	// Ignore switchboard's numDesiredDevices
+	if(i == UiConnectionType::Switchboard)
+	{
+	  continue;
+	}
+	
         const ISocketComms* socketComms = GetSocketComms(i);
         if (socketComms && socketComms->HasDesiredDevices())
         {

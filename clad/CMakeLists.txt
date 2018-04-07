@@ -20,7 +20,7 @@ set(CLAD_INCLUDES
 #CLAD_CPP_DECL=../robot/clad/cozmo_CPP_declarations_emitter.py
 #CLAD_CPP_SWITCH=./cozmo_CPP_switch_emitter.py
 #CLAD_HASH=$(CLAD_EMITTER_DIR)/ASTHash_emitter.py
-set(CLAD_CPP_FLAGS "--output-union-helper-constructors" "--output-json")
+set(CLAD_CPP_FLAGS "--output-union-helper-constructors --output-json")
 
 set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/engine")
 set(CLAD_CS_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladCSharp")
@@ -145,7 +145,6 @@ generate_clad_cs(
     INCLUDES "${CLAD_INCLUDES}"
     OUTPUT_SRCS CLAD_CS_GEN_SRCS
 )
-
 
 file(STRINGS "${ANKI_SRCLIST_DIR}/engine_clad.headers.lst" ENGINE_HASH_SRCS)
 generate_clad(

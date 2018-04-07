@@ -176,7 +176,11 @@ namespace Cozmo {
 
   // Cliff detection thresholds (these come from testing with DVT1 robots - will need
   // to be adjusted for production hardware)
+  #if FACTORY_TEST
+  const u16 CLIFF_SENSOR_THRESHOLD_MAX = 180;
+  #else
   const u16 CLIFF_SENSOR_THRESHOLD_MAX = 40;
+  #endif
   const u16 CLIFF_SENSOR_THRESHOLD_MIN = 15;
   const u16 CLIFF_SENSOR_THRESHOLD_DEFAULT = CLIFF_SENSOR_THRESHOLD_MAX;
   
@@ -290,6 +294,8 @@ namespace Cozmo {
   // Port for TCP/IP based version of SDK to communicate over
   const u32 SDK_ON_DEVICE_TCP_PORT = 5106;
   // See SDK_ON_COMPUTER_TCP_PORT in engineInterface.py for corresponding port on attached PC
+
+  const u32 SWITCHBOARD_TCP_PORT = 5107;
   
   // If most recent advertisement message is older than this,
   // then it is no longer considered to be advertising.

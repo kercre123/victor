@@ -88,6 +88,7 @@ structure RobotState
   float_32 liftAngle,
   AccelData accel,  // in head-frame (mm/s^2)
   GyroData gyro,    // in head-frame (rad/s)
+  float_32 batteryVoltage,
   uint_32 status, // RobotStatusFlag packs as a uint_32
   uint_16 cliffDataRaw[4],
   ProxSensorDataRaw proxData,

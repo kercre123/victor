@@ -80,6 +80,12 @@ void BodyLightComponent::UpdateChargingLightConfig()
     // so instead of duplicating a lightPattern in json just use what we've already got
     state = BackpackLightsState::BadCharger;
   }
+#if FACTORY_TEST
+  else
+  {
+    state = BackpackLightsState::Idle_09;
+  }
+#endif
   
   if(state != _curBackpackChargeState)
   {
@@ -197,6 +203,8 @@ const char* BodyLightComponent::StateToString(const BackpackLightsState& state) 
       return "Charging";
     case BackpackLightsState::OffCharger:
       return "OffCharger";
+    case BackpackLightsState::Idle_09:
+      return "Idle_09";
   }
 }
 

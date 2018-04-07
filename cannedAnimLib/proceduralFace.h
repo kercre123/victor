@@ -132,6 +132,7 @@ public:
   // Set the global hue of all faces
   static void  SetHue(Value hue); 
   static Value GetHue();
+  static void ResetHueToDefault();
   
   // Set the global saturation of all faces
   static void  SetSaturation(Value saturation);
@@ -307,6 +308,10 @@ inline void ProceduralFace::SetHue(Value hue) {
 
 inline ProceduralFace::Value ProceduralFace::GetHue() {
   return _hue;
+}
+
+inline void ProceduralFace::ResetHueToDefault() {
+  _hue = DefaultHue;
 }
   
 inline void ProceduralFace::SetSaturation(Value saturation) {

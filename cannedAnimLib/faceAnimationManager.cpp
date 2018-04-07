@@ -73,69 +73,76 @@ namespace Cozmo {
     } else {
         resourceScope = Util::Data::Scope::Resources;
     }
-    const std::string animationFolder = dataPlatform->pathToResource(resourceScope, "assets/faceAnimations/");
-    
-    // Get the list of all the directory names
-    std::vector<std::string> faceAnimDirNames;
-    Util::FileUtils::ListAllDirectories(animationFolder, faceAnimDirNames);
-    
+
     // Set up the worker that will process all the image frame folders
-    using MyDispatchWorker = Util::DispatchWorker<3, const std::string&>;
-    MyDispatchWorker::FunctionType workerFunction = std::bind(&FaceAnimationManager::LoadAnimationImageFrames, this, animationFolder, std::placeholders::_1);
+    using MyDispatchWorker = Util::DispatchWorker<3, std::string, std::string>;
+    MyDispatchWorker::FunctionType workerFunction = std::bind(&FaceAnimationManager::LoadAnimationImageFrames, 
+                                                              this, std::placeholders::_1, std::placeholders::_2);
     MyDispatchWorker worker(workerFunction);
-    
-    // Go through the list of directories, removing disallowed names, updating timestamps, and removing ones that don't need to be loaded
-    auto nameIter = faceAnimDirNames.begin();
-    while (nameIter != faceAnimDirNames.end())
+
+    const std::vector<std::string> paths = {"assets/faceAnimations/", "config/facePNGs/faceAnimations/"};
+
+    for(const auto& path : paths)
     {
-      const std::string& animName = *nameIter;
+      const std::string animationFolder = dataPlatform->pathToResource(resourceScope, path);
       
-      // Remove the disallowed name from the list if it's there
-      if (animName == ProceduralAnimName)
+      // Get the list of all the directory names
+      std::vector<std::string> faceAnimDirNames;
+      Util::FileUtils::ListAllDirectories(animationFolder, faceAnimDirNames);
+      
+      // Go through the list of directories, removing disallowed names, updating timestamps, and removing ones that don't need to be loaded
+      auto nameIter = faceAnimDirNames.begin();
+      while (nameIter != faceAnimDirNames.end())
       {
-        PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir.ReservedName",
-                          "'%s' is a reserved face animation name. Ignoring.", ProceduralAnimName.c_str());
-        nameIter = faceAnimDirNames.erase(nameIter);
-        continue;
-      }
-      
-      std::string fullDirName = Util::FileUtils::FullFilePath({animationFolder, animName});
-      struct stat attrib{0};
-      int result = stat(fullDirName.c_str(), &attrib);
-      if (result == -1) {
-        PRINT_NAMED_WARNING("FaceAnimationManager.ReadFaceAnimationDir",
-                            "could not get mtime for %s", fullDirName.c_str());
-        nameIter = faceAnimDirNames.erase(nameIter);
-        continue;
-      }
-      
-      auto mapIt = _availableAnimations.find(animName);
-#ifdef __APPLE__ // TODO: COZMO-1057
-      time_t tmpSeconds = attrib.st_mtimespec.tv_sec; //This maps to __darwin_time_t
-#else
-      time_t tmpSeconds = attrib.st_mtime;
-#endif
-      
-      if (mapIt == _availableAnimations.end()) {
-        _availableAnimations[animName].SetLastLoadedTime(tmpSeconds);
-      } else if (fromCache) {
-        // It should probably be the default behavior to clear the
-        // "frames" vector when "loadAnimDir" is true, right?
-        _availableAnimations[animName].Clear();
-        _availableAnimations[animName].SetLastLoadedTime(tmpSeconds);
-      } else {
-        if (mapIt->second.GetLastLoadedTime() < tmpSeconds) {
-          mapIt->second.SetLastLoadedTime(tmpSeconds);
-        } else {
-          // If we already have this anim loaded and its timestamp isn't old, we don't need to reload it
+        const std::string& animName = *nameIter;
+        
+        // Remove the disallowed name from the list if it's there
+        if (animName == ProceduralAnimName)
+        {
+          PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir.ReservedName",
+                            "'%s' is a reserved face animation name. Ignoring.", ProceduralAnimName.c_str());
           nameIter = faceAnimDirNames.erase(nameIter);
           continue;
         }
+        
+        std::string fullDirName = Util::FileUtils::FullFilePath({animationFolder, animName});
+        struct stat attrib{0};
+        int result = stat(fullDirName.c_str(), &attrib);
+        if (result == -1) {
+          PRINT_NAMED_WARNING("FaceAnimationManager.ReadFaceAnimationDir",
+                              "could not get mtime for %s", fullDirName.c_str());
+          nameIter = faceAnimDirNames.erase(nameIter);
+          continue;
+        }
+        
+        auto mapIt = _availableAnimations.find(animName);
+  #ifdef __APPLE__ // TODO: COZMO-1057
+        time_t tmpSeconds = attrib.st_mtimespec.tv_sec; //This maps to __darwin_time_t
+  #else
+        time_t tmpSeconds = attrib.st_mtime;
+  #endif
+        
+        if (mapIt == _availableAnimations.end()) {
+          _availableAnimations[animName].SetLastLoadedTime(tmpSeconds);
+        } else if (fromCache) {
+          // It should probably be the default behavior to clear the
+          // "frames" vector when "loadAnimDir" is true, right?
+          _availableAnimations[animName].Clear();
+          _availableAnimations[animName].SetLastLoadedTime(tmpSeconds);
+        } else {
+          if (mapIt->second.GetLastLoadedTime() < tmpSeconds) {
+            mapIt->second.SetLastLoadedTime(tmpSeconds);
+          } else {
+            // If we already have this anim loaded and its timestamp isn't old, we don't need to reload it
+            nameIter = faceAnimDirNames.erase(nameIter);
+            continue;
+          }
+        }
+        
+        // Now we can start looking at the next name, this one is ok to load
+        worker.PushJob(animationFolder, animName);
+        ++nameIter;
       }
-      
-      // Now we can start looking at the next name, this one is ok to load
-      worker.PushJob(animName);
-      ++nameIter;
     }
     
     // Go through and load the anims from our list
@@ -155,8 +162,24 @@ namespace Cozmo {
     return GetFrameHelper<Vision::ImageRGB565>(animName, frameNum, frame);
   }
   
+  template<class ImageType>
+  void FaceAnimationManager::LoadImage(FaceAnimation& anim, const std::string& fullFilename)
+  {
+    ImageType img;
+    Result loadResult = img.Load(fullFilename);
+    
+    if(loadResult != RESULT_OK) {
+      PRINT_NAMED_ERROR("FaceAnimationManager.LoadImage.LoadError", "%s", fullFilename.c_str());
+      return;
+    }
+    if(img.GetNumRows() != IMAGE_HEIGHT || img.GetNumCols() != IMAGE_WIDTH) {      
+      img.Resize(IMAGE_HEIGHT, IMAGE_WIDTH);
+    }
+    
+    anim.AddFrame(img);
+  }
   
-  void FaceAnimationManager::LoadAnimationImageFrames(const std::string& animationFolder, const std::string& animName)
+  void FaceAnimationManager::LoadAnimationImageFrames(std::string animationFolder, std::string animName)
   {
     const std::string fullDirName = Util::FileUtils::FullFilePath({animationFolder, animName});
     std::vector<std::string> fileNames = Util::FileUtils::FilesInDirectory(fullDirName);
@@ -209,9 +232,17 @@ namespace Cozmo {
       }
       
       FaceAnimation& anim = _availableAnimations[animName];
-      
-      // Always read in images from file as grayscale (for now at least)
-      anim.SetGrayscale(true);
+
+      // If the animation name has rgb in it then load it as rgb
+      if(animName.find("rgb") != std::string::npos)
+      {
+        anim.SetGrayscale(false);
+      }
+      // Otherwise load as grayscale
+      else
+      {
+        anim.SetGrayscale(true);
+      }
       
       // Add empty frames if there's a gap
       if(frameNum > 1) {
@@ -233,28 +264,14 @@ namespace Cozmo {
       
       // Read the image
       const std::string fullFilename = Util::FileUtils::FullFilePath({fullDirName, filename});
-      Vision::Image img;
-      Result loadResult = img.Load(fullFilename);
-      
-      if(loadResult != RESULT_OK) {
-        PRINT_NAMED_ERROR("FaceAnimationManager.ReadFaceAnimationDir.LoadError", "%s", fullFilename.c_str());
-        continue;
+      if(anim.IsGrayscale())
+      {
+        LoadImage<Vision::Image>(anim, fullFilename);
       }
-      if(img.GetNumRows() != IMAGE_HEIGHT || img.GetNumCols() != IMAGE_WIDTH) {
-//        PRINT_NAMED_INFO("FaceAnimationManager.ReadFaceAnimationDir.Resizing",
-//                         "Image in %s is %dx%d instead of %dx%d.",
-//                         fullFilename.c_str(),
-//                         img.GetNumCols(), img.GetNumRows(),
-//                         IMAGE_WIDTH, IMAGE_HEIGHT);
-        
-        img.Resize(IMAGE_HEIGHT, IMAGE_WIDTH);
+      else
+      {
+        LoadImage<Vision::ImageRGB565>(anim, fullFilename);
       }
-      
-      // DEBUG
-      //cv::imshow("FaceAnimImage", img);
-      //cv::waitKey(30);
-      
-      anim.AddFrame(img);
     }
   }
   
@@ -343,7 +360,7 @@ namespace Cozmo {
       anim->SetGrayscale(isGrayscale);
     }
     
-    anim->AddFrame(faceImg);
+    anim->AddFrame(faceImg, (holdTime_ms == 0));
     
     if(holdTime_ms > ANIM_TIME_STEP_MS) {
       const s32 numFramesToAdd = holdTime_ms / ANIM_TIME_STEP_MS - 1;
@@ -367,17 +384,34 @@ namespace Cozmo {
     } else {
       FaceAnimation& anim = animIter->second;
       
-      if ((animName == ProceduralAnimName)) {
-        if (anim.GetNumFrames() == 0) {
+      if ((animName == ProceduralAnimName)) 
+      {
+        if(anim.GetNumFrames() == 0)
+        {
           return false;
         }
+
         anim.GetFrame(0, frame);
-        PopFront();
+
+        // Pop front if the anim is not holding or
+        // it is holding and there is more than one frame left
+        const bool shouldPop = !anim.ShouldHold() ||
+                               (anim.ShouldHold() && anim.GetNumFrames() > 1);
+
+        if(shouldPop)
+        {
+          PopFront();
+        }
+
         return !frame.IsEmpty();
-      } else if(frameNum < anim.GetNumFrames()) {
+      } 
+      else if(frameNum < anim.GetNumFrames()) 
+      {
         anim.GetFrame(frameNum, frame);
         return true;
-      } else {
+      } 
+      else
+      {
         PRINT_NAMED_ERROR("FaceAnimationManager.GetFrame",
                           "Requested frame number %d is invalid. "
                           "Only %lu frames available in animation %s.",

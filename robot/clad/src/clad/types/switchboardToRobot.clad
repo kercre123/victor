@@ -1,0 +1,36 @@
+// Messages originating in switchboard to be handled by engine/anim/robot processes
+// If anim/robot processes need to handle the message make sure to add an entry in the 
+// EngineToRobot union in "messageEngineToRobot.clad"
+
+namespace Anki {
+namespace Cozmo {
+namespace SwitchboardInterface {
+
+enum uint_8 ConnectionStatus
+{
+  NONE,
+  
+  START_PAIRING,
+  SHOW_PIN,
+  SETTING_WIFI,
+  UPDATING_OS,
+  UPDATING_OS_ERROR,
+  WAITING_FOR_APP,
+  END_PAIRING,
+
+  COUNT
+}
+
+message SetConnectionStatus
+{
+  ConnectionStatus status
+}
+
+message SetBLEPin
+{
+  uint_32 pin
+}
+
+}
+}
+}

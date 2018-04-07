@@ -31,7 +31,7 @@ namespace Vision {
 namespace Cozmo {
 
 class FaceDisplayImpl;
-class FaceDebugDraw;
+class FaceInfoScreenManager;
   
 class FaceDisplay : public Util::DynamicSingleton<FaceDisplay>
 {
@@ -43,8 +43,6 @@ public:
   // For drawing to face in various debug modes
   void DrawToFaceDebug(const Vision::ImageRGB565& img);
 
-  static FaceDebugDraw* GetDebugDraw() { return getInstance()->_faceDebugDraw.get(); }
-
 protected:
   FaceDisplay();
   virtual ~FaceDisplay();
@@ -53,7 +51,6 @@ protected:
 
 private:
   std::unique_ptr<FaceDisplayImpl>  _displayImpl;
-  std::unique_ptr<FaceDebugDraw>    _faceDebugDraw;
 
   // Members for managing the drawing thread
   std::unique_ptr<Vision::ImageRGB565>  _faceDrawImg[2];

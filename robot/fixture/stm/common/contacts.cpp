@@ -58,6 +58,8 @@ namespace Contacts
     int w, r;
   } rx;
   
+  static volatile int framing_err_cnt = 0, overflow_err_cnt = 0, drop_char_cnt = 0;
+  
   static inline void delay_bit_time_(const uint16_t n) {
     Timer::wait(1 + ( ((uint32_t)n*1000*1000) / CONTACT_BAUD) );
   }
@@ -89,6 +91,9 @@ namespace Contacts
       USART->DR = c;
       while( !(USART->SR & USART_SR_TXE) ); //dat moved to shift register (ok to write a new data)
       while( !(USART->SR & USART_SR_TC)  ); //wait for transmit complete
+      
+      if( CONTACT_BAUD > 57600 ) //bandwidth throttle for 115.2k
+        delay_bit_time_(10);
     #endif
   }
 }
@@ -113,6 +118,9 @@ void Contacts::init(void)
     VEXT_SENSE::init(MODE_INPUT, PULL_NONE, TYPE_PUSHPULL);
     VEXT_SENSE::alternate(GPIO_AF_1); //USART2_TX
   #elif TARGET_FIXTURE
+    if( (int)Board::revision >= BOARD_REV_2_0 ) {
+      CHGPWR::init(MODE_OUTPUT, PULL_NONE, TYPE_PUSHPULL); //always drive, to override CHGTX_4V control
+    }
     CHGRX::init(MODE_INPUT, PULL_NONE, TYPE_PUSHPULL);
     CHGTX::init(MODE_INPUT, PULL_NONE, TYPE_PUSHPULL);
     CHGTX::alternate(GPIO_AF_USART6);
@@ -146,6 +154,29 @@ void Contacts::init(void)
   #endif
 }
 
+void Contacts::deinit(void)
+{
+  if( mode == MODE_UNINITIALIZED )
+    return;
+  
+  Contacts::setModeIdle();
+  
+  //deconfigure pin(s)
+  #if TARGET_SYSCON
+    //XXX: not implemented
+  #elif TARGET_FIXTURE
+    if( (int)Board::revision >= BOARD_REV_2_0 ) {
+      CHGPWR::init(MODE_INPUT, PULL_NONE); //release power ctrl
+    }
+  #endif
+  
+  //Disable peripheral clocks
+  //GPIO_RCC_EN(0);
+  //USART_RCC_EN(0);
+  
+  mode = MODE_UNINITIALIZED;
+}
+
 void Contacts::echo(bool on)
 {
   #if TARGET_SYSCON
@@ -164,6 +195,10 @@ void Contacts::setModeIdle(void)
   #if TARGET_SYSCON
     VEXT_SENSE::mode(MODE_INPUT);
   #elif TARGET_FIXTURE
+    if( (int)Board::revision >= BOARD_REV_2_0 ) {
+      CHGTX_EN::init(MODE_INPUT, PULL_NONE); //4V TX driver disabled
+      CHGPWR::reset(); //5V charge power disabled
+    }
     CHGRX::mode(MODE_INPUT);
     CHGTX::mode(MODE_INPUT);
   #endif
@@ -189,6 +224,10 @@ void Contacts::setModePower(void)
   #if TARGET_SYSCON
     //doesn't supply power. effectively in idle mode.
   #elif TARGET_FIXTURE
+    //if( (int)Board::revision >= BOARD_REV_2_0 ) {
+    //  CHGPWR::reset(); //5V charge power disabled
+    //  CHGPWR::init(MODE_OUTPUT, PULL_NONE);
+    //}
     CHGTX::reset(); //VEXT floating(off)
     CHGTX::mode(MODE_OUTPUT);
     CHGRX::reset(); //prime output register for force discharge
@@ -206,6 +245,8 @@ void Contacts::powerOn(int turn_on_delay_ms)
   #elif TARGET_FIXTURE
     if( !powerIsOn() ) {
       CHGTX::set(); //VEXT drive 5V
+      if( (int)Board::revision >= BOARD_REV_2_0 )
+        CHGPWR::set(); //DUT_VEXT drive 5V
       Timer::delayMs(turn_on_delay_ms);
     }
   #endif
@@ -221,6 +262,9 @@ void Contacts::powerOff(int turn_off_delay_ms, bool force)
     if( powerIsOn() )
     {
       CHGTX::reset(); //VEXT float/off
+      if( (int)Board::revision >= BOARD_REV_2_0 )
+        CHGPWR::reset(); //DUT_VEXT disconnect from 5V
+      
       if( force ) //discharge VEXT through 330R
         CHGRX::mode(MODE_OUTPUT);
       
@@ -259,14 +303,20 @@ void Contacts::setModeTx(void)
     delay_bit_time_(2); //wait at least 1 bit-time for uart peripheral to spin up
     
   #elif TARGET_FIXTURE
-    //TX pin controls a high-current FET. 1->VEXT=5V 0->VEXT=Z
+    //v1.0 - TX pin controls a high-current FET. 1->VEXT=5V 0->VEXT=Z
+    //v2.0 - TX pin drives a 4V push-pull buffer
     CHGTX::mode(MODE_ALTERNATE); //hand over to uart control
     USART_Cmd(USART, ENABLE);
     delay_bit_time_(2); //wait at least 1 bit-time for uart peripheral to spin up
     
-    //Drive CHGRX low for the other half of push-pull (pulls VEXT down through 330R)
-    CHGRX::reset();
-    CHGRX::mode(MODE_OUTPUT);
+    if( (int)Board::revision >= BOARD_REV_2_0 ) {
+      CHGTX_EN::reset();  //enable 4V TX driver
+      CHGTX_EN::init(MODE_OUTPUT);
+    } else {
+      //Drive CHGRX low for the other half of push-pull (pulls VEXT down through 330R)
+      CHGRX::reset();
+      CHGRX::mode(MODE_OUTPUT);
+    }
     
   #endif
   
@@ -312,8 +362,12 @@ void Contacts::putchar(char c)
 
 namespace Contacts {
   //getline() local buffer
+  #if TARGET_SYSCON
   const  int  line_maxlen = 31;
-  static char line[line_maxlen+1];
+  #else //TARGET_FIXTURE
+  const  int  line_maxlen = 127;
+  #endif
+  static char m_line[line_maxlen+1];
   static int  line_len = 0;
 }
 
@@ -345,6 +399,10 @@ void Contacts::setModeRx(void)
   rx.len = 0;
   rx.r = 0;
   rx.w = 0;
+  
+  //framing_err_cnt = 0;
+  //overflow_err_cnt = 0;
+  //drop_char_cnt = 0;
   
   NVIC_EnableIRQ(USART_IRQn);
   mode = MODE_RX;
@@ -393,11 +451,11 @@ namespace Contacts {
         Contacts::putecho('\n');
         if(line_len)
         {
-          line[line_len] = '\0';
+          m_line[line_len] = '\0';
           if(out_len)
             *out_len = line_len;
           line_len = 0;
-          return line;
+          return m_line;
         }
         break;
       
@@ -415,7 +473,7 @@ namespace Contacts {
         if( c >= ' ' && c <= '~' ) //printable char set
         {
           if( line_len < line_maxlen ) {
-            line[line_len++] = c;
+            m_line[line_len++] = c;
             Contacts::putecho(c);
           }
         }
@@ -440,6 +498,12 @@ char* Contacts::getline(int timeout_us, int *out_len)
   return line;
 }
 
+char* Contacts::getlinebuffer(int *out_len) {
+  if(out_len)
+    *out_len = line_len; //report length
+  return m_line;
+}
+
 int Contacts::flushRx(void)
 {
   if( mode != MODE_RX )
@@ -455,12 +519,17 @@ int Contacts::flushRx(void)
   rx.r = 0;
   rx.w = 0;
   
+  framing_err_cnt = 0;
+  overflow_err_cnt = 0;
+  drop_char_cnt = 0;
+  
   NVIC_EnableIRQ(USART_IRQn);
   
   return n;
 }
 
-namespace Contacts {
+namespace Contacts
+{
   static inline void uart_isr_handler_(char c)
   {
     if( mode == MODE_RX ) {
@@ -469,8 +538,28 @@ namespace Contacts {
         if(++rx.w >= rx_fifo_size)
           rx.w = 0;
         rx.len++;
+      } else {
+        drop_char_cnt++;
       }
     }
+  }
+  
+  int getRxDroppedChars() {
+    int temp = drop_char_cnt;
+    drop_char_cnt = 0;
+    return temp;
+  }
+  
+  int getRxOverflowErrors() {
+    int temp = overflow_err_cnt;
+    overflow_err_cnt = 0;
+    return temp;
+  }
+  
+  int getRxFramingErrors() {
+    int temp = framing_err_cnt;
+    framing_err_cnt = 0;
+    return temp;
   }
 }
 
@@ -479,7 +568,14 @@ extern "C" void USART_IRQHandler(void)
   volatile int junk;
   
   #if TARGET_SYSCON
-    if( USART->ISR & (USART_ISR_ORE | USART_ISR_FE) ) { //framing and/or overrun error
+    uint32_t status = USART->ISR;
+    if( status & (USART_ISR_ORE | USART_ISR_FE) ) //framing and/or overrun error
+    {
+      if( status & USART_ISR_ORE )
+        Contacts::overflow_err_cnt++;
+      if( status & USART_ISR_FE )
+        Contacts::framing_err_cnt++;
+      
       junk = USART->RDR; //flush the rdr & shift register
       junk = USART->RDR;
       USART->ICR = USART_ICR_ORECF | USART_ICR_FECF; //clear flags
@@ -488,7 +584,14 @@ extern "C" void USART_IRQHandler(void)
     }
     
   #elif TARGET_FIXTURE
-    if( USART->SR & (USART_SR_ORE | USART_SR_FE) ) { //framing and/or overrun error
+    uint32_t status = USART->SR;
+    if( status & (USART_SR_ORE | USART_SR_FE) ) //framing and/or overrun error
+    {
+      if( status & USART_SR_ORE )
+        Contacts::overflow_err_cnt++;
+      if( status & USART_SR_FE )
+        Contacts::framing_err_cnt++;
+      
       junk = USART->DR; //flush the dr & shift register
       junk = USART->DR; //reading DR clears error flags
     } else if (USART->SR & USART_SR_RXNE) {

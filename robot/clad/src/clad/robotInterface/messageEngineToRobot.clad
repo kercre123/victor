@@ -20,6 +20,7 @@
 #include "clad/types/robotStatusAndActions.clad"
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/sayTextStyles.clad"
+#include "clad/types/switchboardToRobot.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -192,6 +193,11 @@ message SyncRobot
 
 }
 
+// Tells syscon to pull the plug
+message Shutdown
+{
+}
+
 message ControllerGains
 {
   float_32 kp,
@@ -350,6 +356,11 @@ message SetBackpackLights
   uint_8 layer = 0      // 0 is BPL_USER
 }
 
+message SetSystemLight
+{
+  LightState light
+}
+
 message StartRecordingMics
 {
   uint_32 duration_ms,
@@ -487,6 +498,7 @@ union EngineToRobot
   // Init
   GetManufacturingInfo          getMfgInfo                  = 0x01,
   SyncRobot                     syncRobot                   = 0x02,
+  Shutdown                      shutdown                    = 0x03,
 
   // Debug / Test
   StartControllerTestMode       startControllerTestMode     = 0x0A,
@@ -512,6 +524,7 @@ union EngineToRobot
   // Lights
   BackpackSetLayer              setBackpackLayer            = 0x1D,
   SetBackpackLights             setBackpackLights           = 0x1E,
+  SetSystemLight                setSystemLight              = 0x1F,
 
   // Path messages
   ClearPath                     clearPath                   = 0x20,
@@ -582,6 +595,9 @@ union EngineToRobot
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
   TextToSpeechStart             textToSpeechStart           = 0x92,
   TextToSpeechStop              textToSpeechStop            = 0x93,
+
+  SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
+  SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA1,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

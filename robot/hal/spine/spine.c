@@ -46,7 +46,7 @@ static SpineErr spine_open_internal(spine_ctx_t spine, struct spine_params param
 
     spine_debug("opening serial port\n");
 
-    spine->fd = open(params.devicename, O_RDWR | O_NONBLOCK);
+    spine->fd = open(params.devicename, O_RDWR);
     if (spine->fd == -1) {
         return spine_error(err_CANT_OPEN_FILE, "Can't open %s", params.devicename);
     }
@@ -267,6 +267,9 @@ int spine_get_payload_len(PayloadId payload_type, enum MsgDir dir)
   case PAYLOAD_CONT_DATA:
     return sizeof(struct ContactData);
     break;
+  case PAYLOAD_SHUT_DOWN:
+    return 0;
+    break;
   default:
     break;
   }
@@ -391,8 +394,7 @@ ssize_t spine_parse_frame(spine_ctx_t spine, void *out_buf, size_t out_buf_len, 
 
         return 0;
     }
-            spine_debug_x("full slug\n");
-
+    spine_debug_x("full slug\n");
 
     const size_t frame_len =
         sizeof(struct SpineMessageHeader) + expected_payload_len + sizeof(struct SpineMessageFooter);
@@ -409,7 +411,7 @@ ssize_t spine_parse_frame(spine_ctx_t spine, void *out_buf, size_t out_buf_len, 
     // Invalid CRC
     if (true_crc != expected_crc) {
         // throw away header
-        LOGW("invalid crc: expected=%x | observed=%x %02x %02x %02x %02x\n", expected_crc, true_crc, crc_bytes[0], crc_bytes[1], crc_bytes[2], crc_bytes[3]);
+        LOGW("invalid crc: expected=%08x | observed=%08x [type %x]", expected_crc, true_crc, header->payload_type);
         spine_set_rx_cursor(spine, sync_index + sizeof(SYNC_BODY_TO_HEAD));
         return -1;
     }
@@ -561,6 +563,12 @@ ssize_t spine_set_mode(spine_ctx_t spine, int new_mode)
   return r;
 }
 
+ssize_t spine_shutdown(spine_ctx_t spine)
+{
+  ssize_t r = spine_write_frame(spine, PAYLOAD_SHUT_DOWN, NULL, 0);
+  spine_debug_x("spine_shutdown return %d\n", r);
+  return r;
+}
 
 #ifdef DEBUG_SPINE_TEST
 //

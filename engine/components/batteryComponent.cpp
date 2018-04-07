@@ -72,7 +72,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   // Poll the system voltage if it's the appropriate time
   const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if (now - _lastBatteryVoltsUpdate_sec > kBatteryVoltsUpdatePeriod_sec) {
-    _batteryVoltsRaw = OSState::getInstance()->GetBatteryVoltage_uV() / 1'000'000.f;
+    _batteryVoltsRaw = msg.batteryVoltage;
     _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
     _lastBatteryVoltsUpdate_sec = now;
   }

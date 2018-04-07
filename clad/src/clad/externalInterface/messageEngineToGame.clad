@@ -44,6 +44,7 @@
 #include "clad/types/visionModes.clad"
 #include "clad/types/ledTypes.clad"
 #include "clad/types/memoryMap.clad"
+#include "clad/types/robotToSwitchboard.clad"
 #include "util/ankiLab/ankiLabDef.clad"
 
 namespace Anki {

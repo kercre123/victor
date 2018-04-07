@@ -18,7 +18,6 @@
 #include "se_diag.h"
 
 #include "cozmoAnim/animProcessMessages.h"
-#include "cozmoAnim/faceDisplay/faceDebugDraw.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/micData/micDataProcessor.h"
 #include "cozmoAnim/micData/micDataSystem.h"

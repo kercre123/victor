@@ -113,6 +113,10 @@ namespace Cozmo {
     void UnlockTrack(AnimTrackFlag track) { _lockedTracks &= ~(u8)track; }
 
     void DrawToFace(const Vision::ImageRGB& img, Array2d<u16>& img565_out);
+    
+    // Whether or not to redirect a face image to the FaceInfoScreenManager
+    // for display on a debug screen
+    void RedirectFaceImagesToDebugScreen(bool redirect) { _redirectFaceImagesToDebugScreen = redirect; }
 
   private:
     
@@ -273,6 +277,8 @@ namespace Cozmo {
         
     // Tic counter for sending animState message
     u32           _numTicsToSendAnimState            = 0;
+
+    bool _redirectFaceImagesToDebugScreen = false;
 
   }; // class AnimationStreamer
   

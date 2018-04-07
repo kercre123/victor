@@ -143,18 +143,6 @@ void BehaviorDevImageCapture::GetBehaviorJsonKeys(std::set<const char*>& expecte
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-static inline void EnableDebugFaceDrawButton(BehaviorExternalInterface& bei, bool enable)
-{
-  // Gross way to make sure the FaceDebugDraw doesn't hijack the button, using console interface to talk to
-  // animation process
-  using namespace ExternalInterface;
-  const char* enableStr = (enable ? "1" : "0");
-  bei.GetRobotInfo().GetExternalInterface()->Broadcast(MessageGameToEngine(SetAnimDebugConsoleVarMessage("DebugFaceDraw_CycleWithButton",
-                                                                                                         enableStr)));
-}
-  
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevImageCapture::OnBehaviorActivated()
 {
   _dVars.touchStartedTime_s = -1.0f;
@@ -168,9 +156,6 @@ void BehaviorDevImageCapture::OnBehaviorActivated()
   auto& robotInfo = GetBEI().GetRobotInfo();
   // wait for the lift to relax 
   robotInfo.GetMoveComponent().EnableLiftPower(false);
-
-  // Hijack the backpack button
-  EnableDebugFaceDrawButton(GetBEI(), false);
 }
 
 
@@ -183,9 +168,6 @@ void BehaviorDevImageCapture::OnBehaviorDeactivated()
 
   auto& visionComponent = GetBEI().GetComponentWrapper(BEIComponentID::Vision).GetValue<VisionComponent>();
   visionComponent.EnableDrawImagesToScreen(false);
-
-  // Relinquish the button
-  EnableDebugFaceDrawButton(GetBEI(), true);
 }
 
 

@@ -26,6 +26,7 @@
 #include "cozmoAnim/audio/animationAudioClient.h"
 #include "cozmoAnim/audio/proceduralAudioClient.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
+#include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/robotDataLoader.h"
@@ -570,6 +571,12 @@ namespace Cozmo {
 
   Result AnimationStreamer::SetFaceImage(const Vision::ImageRGB565& imgRGB565, u32 duration_ms)
   {
+    if (_redirectFaceImagesToDebugScreen) {
+      FaceInfoScreenManager::getInstance()->DrawCameraImage(imgRGB565);
+
+      // TODO: Return here or will that screw up stuff on the engine side?
+      //return RESULT_OK;
+    }
     return SetFaceImageHelper(imgRGB565, duration_ms);
   }
   
@@ -950,6 +957,8 @@ namespace Cozmo {
       }
     }
 
+#if ANKI_DEV_CHEATS
+
     UpdateCaptureFace(faceImg565);
 
     // Draw red square in corner of face if thermal issues
@@ -972,6 +981,7 @@ namespace Cozmo {
       const Point2f position(25, 25);
       faceImg565.DrawText(position, tempStr, alertColor, 1.f);
     }
+#endif
 
     if(SHOULD_SEND_DISPLAYED_FACE_TO_ENGINE){
       // Send the final buffered face back over to engine
