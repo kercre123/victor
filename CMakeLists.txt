@@ -155,8 +155,8 @@ elseif(VICOS)
   add_subdirectory("lib/util/source/3rd/jsoncpp")
   add_subdirectory("lib/util/source/anki/clad")
 
-  add_subdirectory("coretech/common/clad")
-  add_subdirectory("coretech/vision/clad")
+  add_subdirectory("coretech/common/clad_src/clad")
+  add_subdirectory("coretech/vision/clad_src")
   add_subdirectory("robot/clad")
   add_subdirectory("platform/switchboard")
 
