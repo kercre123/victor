@@ -12,7 +12,7 @@ function usage() {
     echo "  -h                      print this message"
     echo "  -v                      print verbose output"
     echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
-    echo "  -p [PLATFORM]           build target platform {android,mac}"
+    echo "  -p [PLATFORM]           build target platform {android,mac,vicos,vicos-staging}"
     echo "  -a                      append cmake platform argument {arg}"
     echo "  -g [GENERATOR]          CMake generator {Ninja,Xcode,Makefiles}"
     echo "  -f                      force-run filelist updates and cmake configure before building"
