@@ -33,14 +33,14 @@ class VizManager;
 
 // Aliases
 using ActiveID = s32;  // TODO: Change this to u32 and use 0 as invalid
-using FactoryID = u32;
+using FactoryID = std::string;
 
 class ObservableObject : public Vision::ObservableObject, private Util::noncopyable
 {
 public:
 
   static const ActiveID InvalidActiveID = -1;
-  static const FactoryID InvalidFactoryID = 0;
+  static const FactoryID InvalidFactoryID;
   
   ObservableObject(ObjectFamily family, ObjectType type)
   : _family(family)
@@ -102,7 +102,7 @@ protected:
   friend ObjectPoseConfirmer;
   
   ActiveID _activeID = -1;
-  FactoryID _factoryID = 0;
+  FactoryID _factoryID = "";
   
   ObjectFamily  _family = ObjectFamily::Unknown;
   ObjectType    _type   = ObjectType::UnknownObject;

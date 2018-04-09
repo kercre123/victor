@@ -2,9 +2,15 @@ cxx_project(
     name = 'cubeBleClient',
     srcs = cxx_src_glob(['.'],
                         excludes = ['*_android.*',
-                                    '*_mac.*']),
+                                    '*_mac.*',
+                                    './anki-ble/**/*',
+                                    './bleClient/*',
+                                    './libev/*',
+                                    ]),
     platform_srcs = [
-        ('android', glob(['**/*_android.cpp'])),
+        ('android', glob(['**/*_android.cpp',
+                          '**/bleClient/*',
+                          '**/anki-ble/common/*'])),
         ('mac', glob(['**/*_mac.cpp']))
     ],
     headers = cxx_header_glob(['.']),

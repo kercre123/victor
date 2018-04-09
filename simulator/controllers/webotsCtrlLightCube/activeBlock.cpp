@@ -15,6 +15,7 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/math/math.h"
 #include "util/math/numericCast.h"
+#include "util/random/randomGenerator.h"
 
 #include "robot/cube_firmware/app/animation.h"
 
@@ -30,6 +31,7 @@
 #include <webots/LED.hpp>
 
 #include <array>
+#include <iomanip>
 #include <map>
 
 webots::Supervisor active_object_controller;
@@ -53,7 +55,7 @@ namespace {
   webots::Emitter*  discoveryEmitter_;
   
   // Webots comm channel used for the discovery emitter/receiver
-  constexpr int kDiscoveryChannel = 99;
+  constexpr int kDiscoveryChannel = 0;
   
   webots::Accelerometer* accel_;
   
@@ -71,11 +73,6 @@ namespace {
   const f32 dt = 0.001f*SIM_CUBE_TIME_STEP_MS;
   const f32 alpha = RC/(RC + dt);
   
-  // This block's "ActiveID". Note that engine will set its own
-  // activeID for this cube, and eventually the messaging will
-  // change and this will be removed from the raw cube messages.
-  s32 blockID_ = -1;
-  
   // Pointers to the LED object to set the simulated cube's lights
   webots::LED* led_[kNumCubeLeds];
   
@@ -87,7 +84,8 @@ namespace {
   // Store them here (key is LED index, value is RGB color).
   std::map<u32, std::array<double, 3>> pendingLedColors_;
   
-  u32 factoryID_ = 0;
+  std::string factoryID_;
+  
   ObjectType objectType_ = ObjectType::UnknownObject;  
   
 } // private namespace
@@ -143,7 +141,9 @@ void ProcessMessage(const MessageEngineToCube& msg)
     }
     break;
     default:
-      // Ignore unexpected messages
+      PRINT_NAMED_ERROR("ActiveBlock.ProcessMessage.UnexpectedTag",
+                        "Received message with unexpected tag %s",
+                        MessageEngineToCubeTagToString(tag));
       break;
   }
 }
@@ -170,36 +170,34 @@ Result Init()
   // Hack to map Victor's circle and square cube types to "1" and "2"
   if(typeString == "Block_LIGHTCUBE_CIRCLE") {
     objectType_ = ObjectType::Block_LIGHTCUBE1;
-    blockID_ = 1;
   }
   else if(typeString == "Block_LIGHTCUBE_SQUARE") {
     objectType_ = ObjectType::Block_LIGHTCUBE2;
-    blockID_ = 2;
   }
   else {
     objectType_ = ObjectTypeFromString(typeString);
-    
-    // Simply set the cube's active ID to be the light cube type's integer value
-    int typeInt = -1;
-    sscanf(typeString.c_str(), "Block_LIGHTCUBE%d", &typeInt);
-    DEV_ASSERT(typeInt != -1, "ActiveBlock.Init.FailedToParseLightCubeInt");
-    blockID_ = typeInt;
   }
   DEV_ASSERT(IsValidLightCube(objectType_, false), "ActiveBlock.Init.InvalidObjectType");
 
   // Generate a factory ID
-  // If PROTO factoryID is > 0, use that.
-  // Otherwise use blockID as factoryID.
+  // If PROTO factoryID is nonempty, use that.
+  // Otherwise randomly generate a factoryID.
   webots::Field* factoryIdField = selfNode->getField("factoryID");
   if (factoryIdField) {
-    s32 fID = factoryIdField->getSFInt32();
-    if (fID > 0) {
-      factoryID_ = fID;
-    } else {
-      factoryID_ = blockID_;
-    }
+    factoryID_ = factoryIdField->getSFString();
   }
-  PRINT_NAMED_INFO("ActiveBlock", "Starting active object %d (factoryID %d)", blockID_, factoryID_);
+  if (factoryID_.empty()) {
+    // factoryID is still empty - generate a unique one.
+    Util::RandomGenerator randGen;
+    std::ostringstream ss;
+    for (int i=0 ; i < 6 ; i++) {
+      const int rand = randGen.RandIntInRange(0, std::numeric_limits<uint8_t>::max());
+      ss << std::setw(2) << std::setfill('0') << std::hex << (int) rand << ":";
+    }
+    factoryID_ = ss.str();
+    factoryID_.pop_back(); // pop off the trailing ":"
+  }
+  PRINT_NAMED_INFO("ActiveBlock", "Starting active object (factoryID %s)", factoryID_.c_str());
   
   // Get all LED handles
   for (int i=0; i<kNumCubeLeds; ++i) {
@@ -213,17 +211,19 @@ Result Init()
   ledColorField_ = selfNode->getField("ledColors");
   assert(ledColorField_ != nullptr);
   
-  // Get radio receiver
-  receiver_ = active_object_controller.getReceiver("receiver");
-  assert(receiver_ != nullptr);
-  receiver_->enable(SIM_CUBE_TIME_STEP_MS);
-  receiver_->setChannel(factoryID_ + 1);
-  
   // Get radio emitter
   emitter_ = active_object_controller.getEmitter("emitter");
   assert(emitter_ != nullptr);
-  emitter_->setChannel(factoryID_);
+  // Generate a unique channel for this cube using factory ID
+  const int emitterChannel = (int) (std::hash<std::string>{}(factoryID_) & 0x3FFFFFFF);
+  emitter_->setChannel(emitterChannel);
   
+  // Get radio receiver (channel = 1 + emitterChannel)
+  receiver_ = active_object_controller.getReceiver("receiver");
+  assert(receiver_ != nullptr);
+  receiver_->setChannel(emitterChannel + 1);
+  receiver_->enable(SIM_CUBE_TIME_STEP_MS);
+
   // Get radio emitter for discovery
   discoveryEmitter_ = active_object_controller.getEmitter("discoveryEmitter");
   assert(discoveryEmitter_ != nullptr);
@@ -363,16 +363,20 @@ Result Update() {
       // Actual cubes send 16 bit signed accelerations, with a
       // range of -4g to 4g.
       const double accel_g = accelVals[i] / 9.81;
-      const double fakeAccelValue = accel_g * std::numeric_limits<int16_t>::max() / 4.0;
-      cubeAccelMsg.accel[i] = Util::numeric_cast_clamped<int16_t>(fakeAccelValue);
+      const double scaledAccelValue = accel_g * std::numeric_limits<int16_t>::max() / 4.0;
+      cubeAccelMsg.accel[i] = Util::numeric_cast_clamped<int16_t>(scaledAccelValue);
     }
     
+    // In cube firmware, the latest tap information is always transmitted,
+    // and tap cnt increments each time a tap is detected.
+    static decltype(cubeAccelMsg.tap_count) nextTapCnt = 0;
     if (CheckForTap(accelVals[0], accelVals[1], accelVals[2])) {
-      cubeAccelMsg.tap_count = 1;
-      cubeAccelMsg.tap_neg = -50;  // Hard-coded tap intensity.
-      cubeAccelMsg.tap_pos = 50;   // Just make sure that tapPos - tapNeg > BlockTapFilterComponent::kTapIntensityMin
-      cubeAccelMsg.tap_time = static_cast<u32>(active_object_controller.getTime() / 0.035f) % std::numeric_limits<u8>::max();  // Each tapTime count should be 35ms
+      ++nextTapCnt;
     }
+    cubeAccelMsg.tap_count = nextTapCnt;
+    cubeAccelMsg.tap_neg = -5000;  // Hard-coded tap intensity.
+    cubeAccelMsg.tap_pos = 5000;
+    cubeAccelMsg.tap_time = static_cast<u32>(active_object_controller.getTime() / 0.035f) % std::numeric_limits<u8>::max();  // Each tapTime count should be 35ms
     
     SendMessageHelper(emitter_, std::move(cubeAccelMsg));
 

@@ -162,7 +162,6 @@ protected:
   void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
   void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
   void SendEnableLiftPower(bool enable);
-  void SendTapBlockOnGround(const u8 numTaps);
   void SendStopAllMotors();
   void SendImageRequest(ImageSendMode mode);
   void SendSetRobotImageSendMode(ImageSendMode mode);
@@ -422,7 +421,7 @@ protected:
   // @param[in]  factoryID  FactoryID of cube to be added. (If 0, then factoryID is auto-generated based on ObjectType)
   // @return     Whether or not it was successfully added
   //
-  bool AddLightCubeByType(ObjectType type, const Pose3d& p, const u32 factoryID = 0);
+  bool AddLightCubeByType(ObjectType type, const Pose3d& p, const std::string& factoryID = "");
 
   // Sets the "pluggedIn" field for the given charger.
   void SetChargerPluggedIn(webots::Node* chargerNode, const bool pluggedIn);

@@ -31,14 +31,14 @@ protected:
   BehaviorPlaypenEndChecks(const Json::Value& config);
   
 protected:
-  virtual void InitBehaviorInternal() override;
+  virtual void OnBehaviorEnteredActivatableScope() override;
   
   virtual Result OnBehaviorActivatedInternal()   override;
   virtual void   OnBehaviorDeactivated()   override;
+  
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
     
 private:
-
-  void HandleObjectAvailable(const ExternalInterface::ObjectAvailable& payload);
 
   bool _heardFromLightCube = false;
 };

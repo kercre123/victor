@@ -22,6 +22,9 @@
 
 #if ANKI_CPU_PROFILER_ENABLED
 
+#if defined(VICOS)
+  #include <sys/syscall.h>
+#endif
 
 namespace Anki {
 namespace Util {
@@ -161,6 +164,8 @@ void CpuThreadProfile::SaveChromeTracingProfile(FILE* fp, uint32_t threadIndex) 
 
 #if defined(ANDROID)
   uint64_t tid = (uint64_t)gettid();
+#elif defined(VICOS)
+  uint64_t tid = (uint64_t)syscall(SYS_gettid);
 #else
   uint64_t tid;
   pthread_threadid_np(NULL, &tid);
