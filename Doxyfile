@@ -791,7 +791,7 @@ WARN_LOGFILE           =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = /Users/jason/victor/lib/util/source/anki/util/logging/logging.h \
+INPUT                  = /Users/jason/victor/ \
                          /Users/jason/victor
 
 # This tag can be used to specify the character encoding of the source files
@@ -893,7 +893,28 @@ EXCLUDE_SYMLINKS       = NO
 
 EXCLUDE_PATTERNS       = */_build/* \
                          */EXTERNALS/* \
-                         */generated/*
+                         */generated/* \
+                         */cloud/* \
+                         */lib/audio/* \
+                         */robot/* \
+                         */apps/xamarin/* \
+                         */tools/* \
+                         */unity/* \
+                         */lib/das-client/testing/gtest/fused-src/* \
+                         */lib/util/tools/simpleperf/* \
+                         */lib/util/source/3rd/* \
+                         */lib/crash-reporting-android/* \
+                         */lib/das-client/testing/* \
+                         */platform/* \
+                         */lib/HockeySDK-iOS/* \
+                         */lib/util/libs/framework/gtest-linux/* \
+                         */project/build-scripts/* \
+                         */matlab/* \
+                         */crypto/* \
+                         */lib/util/libs/framework/gtest.framework/* \
+                         */test/* \
+                         */simulator/* \
+                         */webServerProcess/*
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names
 # (namespaces, classes, functions, etc.) that should be excluded from the
@@ -1689,7 +1710,7 @@ EXTRA_SEARCH_MAPPINGS  =
 # If the GENERATE_LATEX tag is set to YES, doxygen will generate LaTeX output.
 # The default value is: YES.
 
-GENERATE_LATEX         = YES
+GENERATE_LATEX         = NO
 
 # The LATEX_OUTPUT tag is used to specify where the LaTeX docs will be put. If a
 # relative path is entered the value of OUTPUT_DIRECTORY will be put in front of

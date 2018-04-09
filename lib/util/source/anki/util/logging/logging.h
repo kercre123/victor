@@ -56,6 +56,7 @@ extern bool _errG;
 extern bool _errBreakOnError;
 
 /*! \defgroup dasmsg Das Messages
+    \defgroup dasmsg_req Required Das Messages
     \brief Shown when the cozmo anim update to slow to respond
 
   This will be show on the slow updates and as such should not be seen very often
@@ -96,6 +97,9 @@ __attribute__((__used__))
 void sErrorV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args) __attribute__((format(printf,3,0)));
 
 __attribute__((__used__))
+void sErrorD(DasMsg& dasMessage);
+
+__attribute__((__used__))
 void sError(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
 
 __attribute__((__used__))
@@ -103,6 +107,9 @@ void sWarningF(const char* eventName, const std::vector<std::pair<const char*, c
 
 __attribute__((__used__))
 void sWarningV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args) __attribute__((format(printf,3,0)));
+
+__attribute__((__used__))
+void sWarningD(DasMsg& dasMessage);
 
 __attribute__((__used__))
 void sWarning(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
@@ -118,6 +125,12 @@ void sInfoV(const char* eventName, const std::vector<std::pair<const char*, cons
 
 __attribute__((__used__))
 void sChanneledInfoV(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args) __attribute__((format(printf,4,0)));
+
+__attribute__((__used__))
+void sInfoD(DasMsg& dasMessage);
+
+__attribute__((__used__))
+void sChanneledInfoD(const char* channelName, DasMsg& dasMessage);
 
 __attribute__((__used__))
 void sInfo(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);

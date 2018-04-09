@@ -126,7 +126,7 @@ Result AnimEngine::Init()
   return RESULT_OK;
 }
 
-/*!
+/*! \ingroup dasmsg_req
   This will be show on the slow updates and as such should not be seen very often
 
   @param event1 event information
