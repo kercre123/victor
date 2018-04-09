@@ -31,7 +31,7 @@ namespace Cozmo {
   
 namespace {
   // How long to remain in discovery mode
-  const float kDefaultDiscoveryTime_sec = 1.f;
+  const float kDefaultDiscoveryTime_sec = 3.f;
   
   // How often do we check for disconnected objects
   const float kDisconnectCheckPeriod_sec = 2.0f;
@@ -45,13 +45,13 @@ namespace {
   
 CubeCommsComponent::CubeCommsComponent()
 : IDependencyManagedComponent(this, RobotComponentID::CubeComms)
-, _cubeBleClient(CubeBleClient::GetInstance())
+, _cubeBleClient(std::make_unique<CubeBleClient>())
 {
   // Register callbacks for messages from CubeBleClient
   _cubeBleClient->RegisterObjectAvailableCallback(std::bind(&CubeCommsComponent::HandleObjectAvailable, this, std::placeholders::_1));
   _cubeBleClient->RegisterCubeMessageCallback(std::bind(&CubeCommsComponent::HandleCubeMessage, this, std::placeholders::_1, std::placeholders::_2));
-  _cubeBleClient->RegisterCubeConnectedCallback([this](const BleFactoryId& factoryId) { this->HandleConnectionStateChange(factoryId, true); });
-  _cubeBleClient->RegisterCubeDisconnectedCallback([this](const BleFactoryId& factoryId) { this->HandleConnectionStateChange(factoryId, false); });
+  _cubeBleClient->RegisterCubeConnectionCallback(std::bind(&CubeCommsComponent::HandleConnectionStateChange, this, std::placeholders::_1, std::placeholders::_2));
+  _cubeBleClient->RegisterScanFinishedCallback(std::bind(&CubeCommsComponent::HandleScanForCubesFinished, this));
 }
 
 
@@ -67,17 +67,25 @@ void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
     _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::GetBlockPoolMessage, callback));
     _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SendAvailableObjects, callback));
   }
+
+  // Tell Ble client to start discovering right away discovering for cubes right away
+  _cubeBleClient->SetScanDuration(kDefaultDiscoveryTime_sec);
+  _cubeBleClient->StartScanUponConnection();
+  _discovering = true;
+  
+  if (!_cubeBleClient->Init()) {
+    PRINT_NAMED_ERROR("CubeCommsComponent.InitDependent.FailedToInitBleClient",
+                      "Failed to initialize cubeBleClient");
+  }
 }
 
 
 void CubeCommsComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
   // Update the CubeBleClient instance
-  const auto& result = _cubeBleClient->Update();
-  if (result != RESULT_OK) {
+  if (!_cubeBleClient->Update()) {
     PRINT_NAMED_ERROR("CubeCommsComponent.Update.CubeBleUpdateFailed",
-                      "Failed updating CubeBleClient (result %d)",
-                      Util::EnumToUnderlying(result));
+                      "Failed updating CubeBleClient");
     return;
   }
   
@@ -102,8 +110,8 @@ void CubeCommsComponent::UpdateDependent(const RobotCompMap& dependentComps)
       const auto& cube = it->second;
       if (!cube.connected && (now_sec - cube.lastHeardTime_sec > kDisconnectTimeout_sec)) {
         PRINT_NAMED_INFO("CubeCommsComponent.Update.RemovingStaleCube",
-                         "Removing unconnected cube with factory ID %d since we haven't heard from it recently.",
-                         cube.factoryId);
+                         "Removing unconnected cube with factory ID %s since we haven't heard from it recently.",
+                         cube.factoryId.c_str());
         it = _availableCubes.erase(it);
         
         if (_broadcastObjectAvailableMsg) {
@@ -116,47 +124,6 @@ void CubeCommsComponent::UpdateDependent(const RobotCompMap& dependentComps)
     
     _nextDisconnectCheckTime_sec = now_sec + kDisconnectCheckPeriod_sec;
   }
-
-  // Update discovering
-  if (_discovering) {
-    // Check if discovery period is over:
-    if (now_sec > _discoveringEndTime_sec) {
-      // Discovery period has ended. Loop over list of available cubes and connect to
-      // as many as possible, preferring those with high RSSI.
-      
-      // For each object type, keep track of the max rssi seen for that type
-      std::map<ObjectType, int> maxRssiByType;
-      
-      // Keep track of which cubes to connect to. Map is keyed on ObjectType to
-      // ensure we only connect to _one_ object of a given type.
-      std::map<ObjectType, BleFactoryId> objectsToConnectTo;
-      
-      for (const auto& mapEntry : _availableCubes) {
-        const auto& cube = mapEntry.second;
-        const auto& type = cube.objectType;
-        const auto& rssi = cube.lastRssi;
-
-        // If this is the first cube of this type to be seen or if this cube's rssi
-        // is higher than the max seen, add it to the list of cubes to connect to
-        if ((maxRssiByType.find(type) == maxRssiByType.end()) ||
-            (rssi > maxRssiByType[type])) {
-          maxRssiByType[type] = rssi;
-          objectsToConnectTo[type] = cube.factoryId;;
-        }
-      }
-      
-      // Connect to the selected objects
-      for (const auto& entry : objectsToConnectTo) {
-        const auto& factoryId = entry.second;
-        if (!_cubeBleClient->ConnectToCube(factoryId)) {
-          PRINT_NAMED_WARNING("CubeCommsComponent.Update.FailedConnecting", "Failed connecting to cube with factory ID %d", factoryId);
-        }
-      }
-      
-      // Done discovering
-      EnableDiscovery(false);
-    }
-  }
 }
 
 
@@ -166,7 +133,6 @@ void CubeCommsComponent::EnableDiscovery(const bool enable, const float discover
     _discovering = enable;
     if (enable) {
       const float discoveringTime_sec = FLT_NEAR(discoveryTime_sec, 0.f) ? kDefaultDiscoveryTime_sec : discoveryTime_sec;
-      _discoveringEndTime_sec = discoveringTime_sec + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       PRINT_NAMED_INFO("CubeCommsComponent.EnableDiscovery.EnableDiscovery",
                        "Enabling discovery mode (duration %.2f seconds)",
                        discoveringTime_sec);
@@ -175,10 +141,16 @@ void CubeCommsComponent::EnableDiscovery(const bool enable, const float discover
         const auto& cube = mapEntry.second;
         if (cube.connected) {
           if (!_cubeBleClient->DisconnectFromCube(cube.factoryId)) {
-            PRINT_NAMED_WARNING("CubeCommsComponent.EnableDiscovery.FailedDisconnecting", "Failed disconnecting from cube with factory ID %d", cube.factoryId);
+            PRINT_NAMED_WARNING("CubeCommsComponent.EnableDiscovery.FailedDisconnecting", "Failed disconnecting from cube with factory ID %s", cube.factoryId.c_str());
           }
         }
       }
+      _cubeBleClient->SetScanDuration(discoveringTime_sec);
+      _cubeBleClient->StartScanning();
+    } else {
+      PRINT_NAMED_INFO("CubeCommsComponent.EnableDiscovery.DiscoveryEnded",
+                       "Ending discovery mode");
+      _cubeBleClient->StopScanning();
     }
   }
 }
@@ -366,7 +338,7 @@ void CubeCommsComponent::HandleCubeMessage(const BleFactoryId& factoryId, const 
 {
   const auto it = _factoryIdToActiveIdMap.find(factoryId);
   if (it == _factoryIdToActiveIdMap.end()) {
-    PRINT_NAMED_WARNING("CubeCommsComponent.HandleCubeMessage.NoActiveId", "Could not find ActiveId for block with factory ID %d", factoryId);
+    PRINT_NAMED_WARNING("CubeCommsComponent.HandleCubeMessage.NoActiveId", "Could not find ActiveId for block with factory ID %s", factoryId.c_str());
     return;
   }
   
@@ -386,9 +358,9 @@ void CubeCommsComponent::HandleCubeMessage(const BleFactoryId& factoryId, const 
     default:
     {
       PRINT_NAMED_WARNING("CubeCommsComponent.HandleCubeMessage.UnhandledTag",
-                          "Unhandled tag %s (factoryId %d)",
+                          "Unhandled tag %s (factoryId %s)",
                           MessageCubeToEngineTagToString(msg.GetTag()),
-                          factoryId);
+                          factoryId.c_str());
       break;
     }
   }
@@ -400,7 +372,7 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
 {
   auto cube = GetCubeByFactoryId(factoryId);
   if (cube == nullptr) {
-    PRINT_NAMED_WARNING("CubeCommsComponent.HandleCubeConnected.NullCube", "Could not find cube with factory ID %d", factoryId);
+    PRINT_NAMED_WARNING("CubeCommsComponent.HandleCubeConnected.NullCube", "Could not find cube with factory ID %s", factoryId.c_str());
     return;
   }
   
@@ -412,9 +384,9 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
   // If we're already connected to this cube, don't need to do anything else
   if (connected == cube->connected) {
     PRINT_NAMED_WARNING("CubeCommsComponent.HandleCubeConnected.NoStateChange",
-                        "Already %s cube with factory ID %d",
+                        "Already %s cube with factory ID %s",
                         connected ? "connected to" : "disconnected from",
-                        cube->factoryId);
+                        cube->factoryId.c_str());
     return;
   }
   
@@ -424,27 +396,27 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
   if (connected)
   {
     // log event to das
-    Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"connected"}}, "0x%x,%s",
-                        cube->factoryId, EnumToString(cube->objectType));
+    Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"connected"}}, "%s,%s",
+                        cube->factoryId.c_str(), EnumToString(cube->objectType));
     
     // Add active object to blockworld
     objID = _robot->GetBlockWorld().AddConnectedActiveObject(activeId, cube->factoryId, cube->objectType);
     if (objID.IsSet()) {
       PRINT_NAMED_INFO("CubeCommsComponent.HandleConnectionStateChange.Connected",
-                       "Object %d (activeID %d, factoryID 0x%x, objectType '%s')",
-                       objID.GetValue(), activeId, cube->factoryId, EnumToString(cube->objectType));
+                       "Object %d (activeID %d, factoryID %s, objectType '%s')",
+                       objID.GetValue(), activeId, cube->factoryId.c_str(), EnumToString(cube->objectType));
     }
   } else {
     // log event to das
-    Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"disconnected"}}, "0x%x,%s",
-                        cube->factoryId, EnumToString(cube->objectType));
+    Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"disconnected"}}, "%s,%s",
+                        cube->factoryId.c_str(), EnumToString(cube->objectType));
     
     // Remove active object from blockworld if it exists, and remove all instances in all origins
     objID = _robot->GetBlockWorld().RemoveConnectedActiveObject(activeId);
   }
   
-  PRINT_NAMED_INFO("CubeCommsComponent.HandleConnectionStateChange.Recvd", "FactoryID 0x%x, connected %d",
-                   cube->factoryId, cube->connected);
+  PRINT_NAMED_INFO("CubeCommsComponent.HandleConnectionStateChange.Recvd", "FactoryID %s, connected %d",
+                   cube->factoryId.c_str(), cube->connected);
   
   // Viz info
   _robot->GetContext()->GetVizManager()->SendObjectConnectionState(activeId, cube->objectType, cube->connected);
@@ -460,6 +432,47 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
   }
 }
   
+
+void CubeCommsComponent::HandleScanForCubesFinished()
+{
+  _discovering = false;
+  
+  PRINT_NAMED_INFO("CubeCommsComponent.HandleScanForCubesFinished.ScanningForCubesEnded",
+                   "Done scanning for cubes");
+
+  // Discovery period has ended. Loop over list of available cubes and connect to
+  // as many as possible, preferring those with high RSSI.
+  
+  // For each object type, keep track of the max rssi seen for that type
+  std::map<ObjectType, int> maxRssiByType;
+  
+  // Keep track of which cubes to connect to. Map is keyed on ObjectType to
+  // ensure we only connect to _one_ object of a given type.
+  std::map<ObjectType, BleFactoryId> objectsToConnectTo;
+  
+  for (const auto& mapEntry : _availableCubes) {
+    const auto& cube = mapEntry.second;
+    const auto& type = cube.objectType;
+    const auto& rssi = cube.lastRssi;
+    
+    // If this is the first cube of this type to be seen or if this cube's rssi
+    // is higher than the max seen, add it to the list of cubes to connect to
+    if ((maxRssiByType.find(type) == maxRssiByType.end()) ||
+        (rssi > maxRssiByType[type])) {
+      maxRssiByType[type] = rssi;
+      objectsToConnectTo[type] = cube.factoryId;;
+    }
+  }
+  
+  // Connect to the selected cubes
+  for (const auto& entry : objectsToConnectTo) {
+    const auto& factoryId = entry.second;
+    if (!_cubeBleClient->ConnectToCube(factoryId)) {
+      PRINT_NAMED_WARNING("CubeCommsComponent.HandleScanForCubesFinished.FailedConnecting", "Failed connecting to cube with factory ID %s", factoryId.c_str());
+    }
+  }
+}
+
 
 ActiveID CubeCommsComponent::GetNextActiveId()
 {
@@ -509,7 +522,7 @@ bool CubeCommsComponent::RemoveCubeFromList(const BleFactoryId& factoryId)
       success = false;
     }
   } else {
-    PRINT_NAMED_WARNING("CubeCommsComponent.RemoveCubeFromList.UnknownCube", "Cube with factory ID of %d not found!", factoryId);
+    PRINT_NAMED_WARNING("CubeCommsComponent.RemoveCubeFromList.UnknownCube", "Cube with factory ID of %s not found!", factoryId.c_str());
     success = false;
   }
 

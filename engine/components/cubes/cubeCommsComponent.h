@@ -75,14 +75,16 @@ public:
   // Sends current available cube list to game
   void SendBlockPoolData() const;
   
-  // Game to engine event handlers
-  void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  void SetBroadcastObjectAvailable(const bool enable = true) { _broadcastObjectAvailableMsg = enable; }
   
 private:
   
+  // Game to engine event handlers
+  void HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event);
+  
   Robot* _robot = nullptr;
   
-  CubeBleClient* _cubeBleClient;
+  std::unique_ptr<CubeBleClient> _cubeBleClient;
   
   // Handles for grabbing GameToEngine messages
   std::vector<Signal::SmartHandle> _signalHandles;
@@ -104,6 +106,9 @@ private:
   // Handler for when light cube BLE connection is established/unestablished
   void HandleConnectionStateChange(const BleFactoryId& factoryId, const bool connected);
   
+  // Handler for when scanning for cubes has finished
+  void HandleScanForCubesFinished();
+  
   // Get the ActiveID to assign to the next object added to the available cubes
   // list (just to make sure each object gets a unique ActiveID)
   ActiveID GetNextActiveId();
@@ -111,7 +116,6 @@ private:
   // If discovering, then we are listening for any advertising cubes and
   // selecting the best ones to connect to.
   bool _discovering = false;
-  float _discoveringEndTime_sec = 0.f;
   
   // Next time we're supposed to check for disconnections
   float _nextDisconnectCheckTime_sec = 0.f;

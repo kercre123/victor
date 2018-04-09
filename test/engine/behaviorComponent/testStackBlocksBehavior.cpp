@@ -94,7 +94,7 @@ ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ObjectType objectTyp
 {
   // matching activeID happens through objectID automatically on addition
   const ActiveID activeID = -1;
-  const FactoryID factoryID = 0;
+  const FactoryID factoryID = "";
 
   BlockWorld& blockWorld = robot.GetBlockWorld();
   Anki::Cozmo::ObservableObject* objectPtr = CreateActiveObjectByType(objectType, activeID, factoryID);
@@ -157,8 +157,8 @@ void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior,
   ASSERT_FALSE(stackBehavior->WantsToBeActivated()) << "behavior should not be activatable without cubes after update";
 
   auto& blockWorld = robot.GetBlockWorld();
-  blockWorld.AddConnectedActiveObject(0, 0, ObjectType::Block_LIGHTCUBE1);
-  blockWorld.AddConnectedActiveObject(1, 1, ObjectType::Block_LIGHTCUBE2);
+  blockWorld.AddConnectedActiveObject(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
+  blockWorld.AddConnectedActiveObject(1, "BB:BB:BB:BB:BB:BB", ObjectType::Block_LIGHTCUBE2);
 
   IncrementBaseStationTimerTicks();
   aiComponent.UpdateDependent(dependencies);

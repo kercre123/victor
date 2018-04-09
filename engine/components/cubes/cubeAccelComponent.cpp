@@ -100,7 +100,7 @@ bool CubeAccelComponent::AddListener(const ObjectID& objectID,
 void CubeAccelComponent::HandleCubeAccelData(const ActiveID& activeID,
                                              const CubeAccelData& accelData)
 {
-  const ActiveObject* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID);
+  ActiveObject* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID);
   if (object == nullptr) {
     DEV_ASSERT(false, "CubeAccelComponent.HandleCubeAccelData.NoConnectedObject");
     return;
@@ -109,14 +109,18 @@ void CubeAccelComponent::HandleCubeAccelData(const ActiveID& activeID,
   const uint32_t objectID = object->GetID();
   
   // Check for taps
-  if (accelData.tap_count != 0) {
+  const auto tapCnt = accelData.tap_count;
+  if (tapCnt != object->GetTapCount()) {
+    object->SetTapCount(tapCnt);
+    
     ExternalInterface::ObjectTapped objectTapped;
     objectTapped.timestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     objectTapped.objectID  = objectID;
-    objectTapped.numTaps   = accelData.tap_count;
-    objectTapped.tapTime   = accelData.tap_time;
-    objectTapped.tapNeg    = accelData.tap_neg;
-    objectTapped.tapPos    = accelData.tap_pos;
+    // [MAM] Tap intensity is unused, since filtering by intensity is
+    // done on the cubes now, and should be tweaked in the cube firmware.
+//    objectTapped.tapTime   = accelData.tap_time;
+//    objectTapped.tapNeg    = accelData.tap_neg;
+//    objectTapped.tapPos    = accelData.tap_pos;
     
     // Pass to BlockTapFilterComponent
     _robot->GetBlockTapFilter().HandleObjectTapped(objectTapped);

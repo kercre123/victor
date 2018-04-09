@@ -1863,10 +1863,10 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
                                 (objType == conObjWithActiveID->GetType());
       if ( isSameObject ) {
         PRINT_CH_INFO("BlockWorld", "BlockWorld.AddConnectedActiveObject.FoundMatchingObjectAtSameSlot",
-                      "objectID %d, activeID %d, factoryID 0x%x, type %s",
+                      "objectID %d, activeID %d, factoryID %s, type %s",
                       conObjWithActiveID->GetID().GetValue(),
                       conObjWithActiveID->GetActiveID(),
-                      conObjWithActiveID->GetFactoryID(),
+                      conObjWithActiveID->GetFactoryID().c_str(),
                       EnumToString(conObjWithActiveID->GetType()));
         return conObjWithActiveID->GetID();
       }
@@ -1888,7 +1888,7 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
       return object->GetFactoryID() == factoryID;
     });
     const ActiveObject* const conObjectWithFactoryID = FindConnectedObjectHelper(filter, nullptr, true);
-    ANKI_VERIFY( nullptr == conObjectWithFactoryID, "BlockWorld.AddConnectedActiveObject.FactoryIDAlreadyUsed", "%u", factoryID );
+    ANKI_VERIFY( nullptr == conObjectWithFactoryID, "BlockWorld.AddConnectedActiveObject.FactoryIDAlreadyUsed", "%s", factoryID.c_str() );
 
     // This is the new object we are going to create. We can't insert it in _connectedObjects until
     // we know the objectID, so we create it first, and then we look for unconnected matches (we have seen the
@@ -1955,24 +1955,24 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
               // uhm, this is a different object (or factoryID was not set)
               PRINT_CH_INFO("BlockWorld",
                             "AddActiveObject.FoundOtherActiveObjectOfSameType",
-                            "ActiveID %d (factoryID 0x%x) is same type as another existing object (objectID %d, activeID %d, factoryID 0x%x, type %s) updating ids to match",
+                            "ActiveID %d (factoryID %s) is same type as another existing object (objectID %d, activeID %d, factoryID %s, type %s) updating ids to match",
                             activeID,
-                            factoryID,
+                            factoryID.c_str(),
                             sameTypeObject->GetID().GetValue(),
                             sameTypeObject->GetActiveID(),
-                            sameTypeObject->GetFactoryID(),
+                            sameTypeObject->GetFactoryID().c_str(),
                             EnumToString(objType));
               
               // if we have a new factoryID, override the old instances with the new one we connected to
-              if(factoryID > 0)
+              if(!factoryID.empty())
               {
                 sameTypeObject->SetActiveID(activeID);
                 sameTypeObject->SetFactoryID(factoryID);
               }
             } else {
               PRINT_CH_INFO("BlockWorld", "BlockWorld.AddConnectedActiveObject.FoundIdenticalObjectOnDifferentSlot",
-                            "Updating activeID of block with factoryID 0x%x from %d to %d",
-                            sameTypeObject->GetFactoryID(), sameTypeObject->GetActiveID(), activeID);
+                            "Updating activeID of block with factoryID %s from %d to %d",
+                            sameTypeObject->GetFactoryID().c_str(), sameTypeObject->GetActiveID(), activeID);
               // same object, somehow in different activeID now
               sameTypeObject->SetActiveID(activeID);
             }
@@ -2014,21 +2014,21 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
       {
         // somehow (error) we did not have an active connected object for it despite having activeID
         PRINT_CH_INFO("BlockWorld", "BlockWorld.AddConnectedActiveObject.FoundMatchingActiveObject",
-                      "objectID %d, activeID %d, type %s, factoryID 0x%x",
-                      matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), EnumToString(objType), matchingObject->GetFactoryID());
+                      "objectID %d, activeID %d, type %s, factoryID %s",
+                      matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), EnumToString(objType), matchingObject->GetFactoryID().c_str());
         
         // inherit objectID in the activeObject we created
         newActiveObjectPtr->CopyID(matchingObject);
       }
-      else if (matchingObject->GetFactoryID() == 0)
+      else if (matchingObject->GetFactoryID().empty())
       {
         // somehow (error) it never connected before (it shouldn't have had activeID)
         PRINT_NAMED_WARNING("BlockWorld.AddConnectedActiveObject.FoundMatchingActiveObjectThatWasNeverConnected",
-                         "objectID %d, activeID %d, type %s, factoryID 0x%x",
-                         matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), EnumToString(objType), matchingObject->GetFactoryID());
+                         "objectID %d, activeID %d, type %s, factoryID %s",
+                         matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), EnumToString(objType), matchingObject->GetFactoryID().c_str());
         
         // if now we have a factoryID, go fix all located instances of the new object setting their factoryID
-        if(factoryID > 0)
+        if(!factoryID.empty())
         {
           // Need to check existing objects in other frames and update to match new object
           std::vector<ObservableObject*> matchingObjectsInAllFrames;
@@ -2039,9 +2039,9 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
           FindLocatedMatchingObjects(filterInAnyByID, matchingObjectsInAllFrames);
         
           PRINT_CH_INFO("BlockWorld", "BlockWorld.AddConnectedActiveObject.UpdateExistingObjectsFactoryID",
-                           "Updating %zu existing objects in other frames to match object with factoryID 0x%x and activeID %d",
+                           "Updating %zu existing objects in other frames to match object with factoryID %s and activeID %d",
                            matchingObjectsInAllFrames.size(),
-                           factoryID,
+                           factoryID.c_str(),
                            activeID);
           
           ObjectID idPrev;
@@ -2065,8 +2065,8 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
       {
         // ActiveID matched, but FactoryID did not, delete the located instance of this object
         PRINT_NAMED_ERROR("BlockWorld.AddConnectedActiveObject.MismatchedFactoryID",
-                          "objectID %d, activeID %d, type %s, factoryID 0x%x (expected 0x%x)",
-                          matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), EnumToString(objType), factoryID, matchingObject->GetFactoryID());
+                          "objectID %d, activeID %d, type %s, factoryID %s (expected %s)",
+                          matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), EnumToString(objType), factoryID.c_str(), matchingObject->GetFactoryID().c_str());
         
         BlockWorldFilter filter;
         filter.AddAllowedID(matchingObject->GetID());
@@ -2211,12 +2211,12 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
     object->SetVizManager(_robot->GetContext()->GetVizManager());
     
     PRINT_CH_INFO("BlockWorld", "BlockWorld.AddLocatedObject",
-                  "Adding new %s%s object and ID=%d ActID=%d FacID=0x%x at (%.1f, %.1f, %.1f), in frame %s.",
+                  "Adding new %s%s object and ID=%d ActID=%d FacID=%s at (%.1f, %.1f, %.1f), in frame %s.",
                   object->IsActive() ? "active " : "",
                   EnumToString(object->GetType()),
                   object->GetID().GetValue(),
                   object->GetActiveID(),
-                  object->GetFactoryID(),
+                  object->GetFactoryID().c_str(),
                   object->GetPose().GetTranslation().x(),
                   object->GetPose().GetTranslation().y(),
                   object->GetPose().GetTranslation().z(),
