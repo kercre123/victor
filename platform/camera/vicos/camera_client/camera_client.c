@@ -31,7 +31,7 @@
 #include "camera_client.h"
 #include "log.h"
 
-static char *cli_socket_path = "/tmp/cam_client0";
+static char *cli_socket_path = "/var/run/vic-engine-cam_client0";
 static char *srv_socket_path = "/var/run/mm-anki-camera/camera-server";
 
 static const uint64_t HEARTBEAT_INTERVAL_NS = 200000000;
