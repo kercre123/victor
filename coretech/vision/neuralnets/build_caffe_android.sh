@@ -39,7 +39,7 @@ ${CC} --std=c++11 -fPIE -mfloat-abi=softfp -mfpu=neon -pie \
   -I${CORETECH_EXTERNAL_DIR}/opencv-3.4.0/modules/imgcodecs/include \
   -I${CORETECH_EXTERNAL_DIR}/opencv-3.4.0/modules/imgproc/include \
   -I${VICTOR_REPO_PATH}/tools/message-buffers/support/cpp/include \
-  standaloneTensorFlowInference.cpp \
+  standaloneForwardInference.cpp \
   objectDetector_caffe2.cpp \
   ${VICTOR_REPO_PATH}/tools/message-buffers/support/cpp/source/jsoncpp.cpp \
   -L${CAFFE2_PATH}/build_android/lib \

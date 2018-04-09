@@ -27,7 +27,7 @@ ${CC} --std=c++11 -fPIE -mfloat-abi=softfp -mfpu=neon -pie \
   -I${CORETECH_EXTERNAL_DIR}/opencv-3.4.0/modules/dnn/include \
   -I${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/android/sdk/native/jni/include \
   -I${VICTOR_REPO_PATH}/tools/message-buffers/support/cpp/include \
-  standaloneTensorFlowInference.cpp \
+  standaloneForwardInference.cpp \
   objectDetector_opencvdnn.cpp \
   ${VICTOR_REPO_PATH}/tools/message-buffers/support/cpp/source/jsoncpp.cpp \
   -L${NDK_ROOT}/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a \

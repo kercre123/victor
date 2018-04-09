@@ -36,7 +36,7 @@ ${CC} --std=c++11 \
   -I${CORETECH_EXTERNAL_DIR}/opencv-3.4.0/modules/imgproc/include \
   -I${VICTOR_REPO_PATH}/lib/util/source/anki \
   -I${VICTOR_REPO_PATH}/tools/message-buffers/support/cpp/include \
-  standaloneTensorFlowInference.cpp \
+  standaloneForwardInference.cpp \
   objectDetector_tensorflow.cpp \
   ${VICTOR_REPO_PATH}/tools/message-buffers/support/cpp/source/jsoncpp.cpp \
   -Wl,-force_load ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/lib/libtensorflow-core.a \
