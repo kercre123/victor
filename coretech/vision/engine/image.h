@@ -130,6 +130,29 @@ namespace Vision {
     // if the same parameters were passed into DrawText()
     static Vec2f GetTextSize(const std::string& str, f32 scale, int thickness);
 
+    // Outputs textSize and scale in order to make text fill
+    // imageWidth
+    static void MakeTextFillImageWidth(const std::string& text,
+				       int font,
+				       int thickness,
+				       int imageWidth,
+				       cv::Size& textSize,
+				       float& scale);
+
+    // Draws text on img centered horizontally at verticalPos (bottom of text)
+    // OpenCV does not draw filled text so depending on the scale
+    // there may be some empty pixels so drawTwiceToMaybeFillGaps
+    // draws the text a second time at a slight offset to try and
+    // fill the gaps
+    void DrawTextCenteredHorizontally(const std::string& text,
+				      int font,
+				      float scale,
+				      int thickness,
+				      const ColorRGBA& color,
+				      int verticalPos,
+				      bool drawTwiceToMaybeFillGaps);
+
+    
     // DrawSubImage also exists - see derived class for implemetation
     
     using Array2d<T>::GetDataPointer;

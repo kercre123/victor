@@ -125,6 +125,9 @@ target_include_directories(robot_transport
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 )
 
+add_executable(displayFaultCode
+  ${CMAKE_SOURCE_DIR}/robot/include/anki/cozmo/shared/factory/faultCodeMain.cpp
+)
 
 anki_build_cxx_library(supervisor ${ANKI_SRCLIST_DIR} STATIC
   ${PLATFORM_SRCS}

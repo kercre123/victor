@@ -46,80 +46,6 @@ const std::string kURL = "anki.com/v";
 const ColorRGBA   kColor(0.7f, 0.7f, 0.7f, 1.f);
 }
 
-// Outputs textSize and scale in order to make text fill
-// imageWidth
-void MakeTextFillImageWidth(const std::string& text,
-                            int font,
-                            int thickness,
-                            int imageWidth,
-                            cv::Size& textSize,
-                            float& scale)
-{
-  int baseline = 0;
-  scale = 0.1f;
-  cv::Size prevTextSize(0,0);
-  for(; scale < 3.f; scale += 0.05f)
-  {
-    textSize = cv::getTextSize(text, 
-                               CV_FONT_NORMAL,
-                               scale, 
-                               1, 
-                               &baseline);
-
-    if(textSize.width > imageWidth)
-    {
-      scale -= 0.05f;
-      textSize = prevTextSize;
-      break;
-    }
-    prevTextSize = textSize;
-  }
-}
-
-// Draws text on img centered horizontally at verticalPos
-// OpenCV does not draw filled text so depending on the scale
-// there may be some empty pixels so drawTwiceToMaybeFillGaps
-// draws the text a second time at a slight offset to try and
-// fill the gaps
-void DrawTextCenteredHorizontally(const std::string text,
-                                  int font,
-                                  float scale,
-                                  int thickness,
-                                  Vision::ImageRGBA& img,
-                                  const ColorRGBA& color,
-                                  int verticalPos,
-                                  bool drawTwiceToMaybeFillGaps)
-{
-  int baseline = 0;
-  cv::Size textSize = cv::getTextSize(text, 
-                                      font,
-                                      scale, 
-                                      thickness, 
-                                      &baseline);
-
-  Point2f p((img.GetNumCols() - textSize.width)/2, 
-            verticalPos + textSize.height);
-
-  img.DrawText(p,
-               text,
-               color,
-               scale,
-               false,
-               thickness);
-
-  if(drawTwiceToMaybeFillGaps)
-  {
-    p.y() += 1;
-
-    img.DrawText(p,
-               text,
-               color,
-               scale,
-               false,
-               thickness);
-  }
-}
-
 // Draws BLE name and url to screen
 void DrawStartPairingScreen(AnimationStreamer* animStreamer)
 {
@@ -129,12 +55,12 @@ void DrawStartPairingScreen(AnimationStreamer* animStreamer)
   auto* img = new Vision::ImageRGBA(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
   img->FillWith(Vision::PixelRGBA(0, 0));
 
-  DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, 0.5f, 1, *img, kColor, 0, false);
+  img->DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, 0.5f, 1, kColor, 15, false);
 
   cv::Size textSize;
   float scale = 0;
-  MakeTextFillImageWidth(kURL, CV_FONT_NORMAL, 1, img->GetNumCols(), textSize, scale);
-  DrawTextCenteredHorizontally(kURL, CV_FONT_NORMAL, scale, 1, *img, kColor, (FACE_DISPLAY_HEIGHT-textSize.height)/2, true);
+  Vision::Image::MakeTextFillImageWidth(kURL, CV_FONT_NORMAL, 1, img->GetNumCols(), textSize, scale);
+  img->DrawTextCenteredHorizontally(kURL, CV_FONT_NORMAL, scale, 1, kColor, (FACE_DISPLAY_HEIGHT + textSize.height)/2, true);
 
   auto handle = std::make_shared<Vision::SpriteWrapper>(img);
   const bool shouldRenderInEyeHue = false;
@@ -154,9 +80,9 @@ void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* conte
             (FACE_DISPLAY_HEIGHT - key.GetNumRows())/2);
   img->DrawSubImage(key, p);
 
-  DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, 0.5f, 1, *img, kColor, 0, false);
+  img->DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, 0.5f, 1, kColor, 15, false);
 
-  DrawTextCenteredHorizontally(std::to_string(_pin), CV_FONT_NORMAL, 0.7f, 1, *img, kColor, FACE_DISPLAY_HEIGHT-20, false);
+  img->DrawTextCenteredHorizontally(std::to_string(_pin), CV_FONT_NORMAL, 0.7f, 1, kColor, FACE_DISPLAY_HEIGHT-5, false);
 
   auto handle = std::make_shared<Vision::SpriteWrapper>(img);
   const bool shouldRenderInEyeHue = false;
