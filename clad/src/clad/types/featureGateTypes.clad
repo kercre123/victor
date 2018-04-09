@@ -8,7 +8,6 @@ enum uint_8 FeatureType {
   CodeLabGame,
   PeekABoo,
   SparksGatherCubes,
-  Hiccups,
   GuardDog,
   Bouncer,
   Laser,

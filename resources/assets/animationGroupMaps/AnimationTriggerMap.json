@@ -361,34 +361,6 @@
       "AnimName": "ag_gotosleep_sleeping"
     },
     {
-      "CladEvent": "DEPRECATED_Hiccup",
-      "AnimName": "ag_hiccups"
-    },
-    {
-      "CladEvent": "DEPRECATED_HiccupGetIn",
-      "AnimName": "ag_hiccup_getin"
-    },
-    {
-      "CladEvent": "DEPRECATED_HiccupPlayerCure",
-      "AnimName": "ag_hiccup_playercure_getout"
-    },
-    {
-      "CladEvent": "DEPRECATED_HiccupRobotOnBack",
-      "AnimName": "ag_hiccup_puton_bottom"
-    },
-    {
-      "CladEvent": "DEPRECATED_HiccupRobotOnFace",
-      "AnimName": "ag_hiccup_puton_face"
-    },
-    {
-      "CladEvent": "DEPRECATED_HiccupRobotPickedUp",
-      "AnimName": "ag_hiccup_player_pickup"
-    },
-    {
-      "CladEvent": "DEPRECATED_HiccupSelfCure",
-      "AnimName": "ag_hiccup_selfcure_getout"
-    },
-    {
       "CladEvent": "DEPRECATED_HikingDrivingStart",
       "AnimName": "ag_hiking_startdriving"
     },

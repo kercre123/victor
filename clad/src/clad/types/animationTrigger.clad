@@ -254,13 +254,6 @@ enum int_32 AnimationTrigger
   DEPRECATED_GameSetupIdle,
   DEPRECATED_GameSetupReaction,
   DEPRECATED_GoToSleepGetOut,
-  DEPRECATED_Hiccup,
-  DEPRECATED_HiccupGetIn,
-  DEPRECATED_HiccupPlayerCure,
-  DEPRECATED_HiccupRobotOnBack,
-  DEPRECATED_HiccupRobotOnFace,
-  DEPRECATED_HiccupRobotPickedUp,
-  DEPRECATED_HiccupSelfCure,
   DEPRECATED_HikingDrivingEnd,             // loco-driving anim (so that Cozmo can be humming while hiking) - end
   DEPRECATED_HikingDrivingLoop,            // loco-driving anim (so that Cozmo can be humming while hiking) - loop
   DEPRECATED_HikingDrivingStart,           // loco-driving anim (so that Cozmo can be humming while hiking) - start

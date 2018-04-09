@@ -601,11 +601,6 @@ message SetSparkedMusicState{
   AudioMetaData::SwitchState::Sparked sparkedMusicState
 }
 
-// A message for Game to inform Engine that Cozmo has been overfed and
-// should get the hiccups as a result
-message NotifyOverfeedingShouldTriggerHiccups{
-}
-
 // A message for Game to poll pyramid pre-reqs
 message RequestPyramidPreReqState{
 }

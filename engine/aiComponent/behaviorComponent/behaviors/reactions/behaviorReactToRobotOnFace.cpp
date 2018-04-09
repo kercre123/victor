@@ -61,12 +61,6 @@ void BehaviorReactToRobotOnFace::FlipOverIfNeeded()
     }else{
       anim = AnimationTrigger::DEPRECATED_FacePlantRollArmUp;
     }
-    
-    if(GetAIComp<AIWhiteboard>().HasHiccups())
-    {
-      anim = AnimationTrigger::DEPRECATED_HiccupRobotOnFace;
-    }
-    
 
     DelegateIfInControl(new TriggerAnimationAction(anim),
                 &BehaviorReactToRobotOnFace::DelayThenCheckState);
