@@ -95,7 +95,7 @@ private:
   };
   
   std::map<ObjectID, DoubleTapInfo> _doubleTapObjects;
-  std::list<ExternalInterface::ObjectTapped> _tapInfo;
+  std::vector<ExternalInterface::ObjectTapped> _tapInfo;
   
 #if ANKI_DEV_CHEATS
   void HandleSendTapFilterStatus(const AnkiEvent<ExternalInterface::MessageGameToEngine>& message);

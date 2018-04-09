@@ -85,20 +85,7 @@ void BlockTapFilterComponent::Update()
     const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     if( currTime > _waitToTime )
     {
-      std::list<ExternalInterface::ObjectTapped>::iterator highIter = _tapInfo.begin();
-      int16_t highIntensity = ((*highIter).tapPos - (*highIter).tapNeg);
-      // grab with highest intensity from recent taps after set amount of time from first tap in group.
-      for (std::list<ExternalInterface::ObjectTapped>::iterator it=_tapInfo.begin(); it != _tapInfo.end(); ++it)
-      {
-        int16_t currIntensity = ((*it).tapPos - (*it).tapNeg);
-        if( highIntensity < currIntensity)
-        {
-          highIter = it;
-          highIntensity = currIntensity;
-        }
-      }
-      PRINT_CH_INFO("BlockPool","BlockTapFilterComponent.Update","intensity %d time: %d id: %d",highIntensity,currTime,(*highIter).objectID);
-      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ObjectTapped(*highIter)));
+      _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ObjectTapped(_tapInfo.back())));
       _tapInfo.clear();
     }
   }
@@ -164,15 +151,6 @@ void BlockTapFilterComponent::HandleSendTapFilterStatus(const AnkiEvent<External
   
 void BlockTapFilterComponent::HandleObjectTapped(const ExternalInterface::ObjectTapped& payload)
 {
-  // Taps below threshold should be filtered and ignored.
-  const int16_t intensity = payload.tapPos - payload.tapNeg;
-  if (intensity <= kTapIntensityMin)
-  {
-    PRINT_CH_INFO("BlockPool", "BlockTapFilterComponent.HandleEnableTapFilter.Ignored",
-                  "Tap ignored %d <= %d",intensity,kTapIntensityMin);
-    return;
-  }
-
   // find connected object by objectID
   const ActiveObject* tappedObject = _robot->GetBlockWorld().GetConnectedActiveObjectByID( payload.objectID );
 
@@ -185,11 +163,10 @@ void BlockTapFilterComponent::HandleObjectTapped(const ExternalInterface::Object
   
   const Anki::TimeStamp_t engineTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   PRINT_CH_INFO("BlockPool","BlockTapFilterComponent.HandleActiveObjectTapped.MessageActiveObjectTapped",
-                "Received message that %s %d (Active ID %d) was tapped %d times "
-                "(robotTime %d, tapTime %d, intensity: %d, engineTime: %d).",
+                "Received message that %s %d (Active ID %d) was tapped"
+                "(engineTime: %d).",
                 EnumToString(tappedObject->GetType()),
-                tappedObject->GetID().GetValue(), payload.objectID, payload.numTaps,
-                payload.timestamp, payload.tapTime, intensity, engineTime);
+                tappedObject->GetID().GetValue(), payload.objectID, engineTime);
   
   // In the simulator, taps are soft and also webots doesn't simulate the phantom taps.
   if (!_enabled || !_robot->IsPhysical())
@@ -207,7 +184,7 @@ void BlockTapFilterComponent::HandleObjectTapped(const ExternalInterface::Object
       _waitToTime = engineTime + kTapWaitOffset_ms;
     }
 
-    _tapInfo.emplace_back(std::move(payload));
+    _tapInfo.push_back(payload);
   }
   
   CheckForDoubleTap(payload.objectID);

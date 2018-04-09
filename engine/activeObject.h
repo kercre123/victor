@@ -85,6 +85,10 @@ public:
   };
   const LEDstate& GetLEDState(s32 whichLED) const;
   
+  // Current tapCount, which is just an incrementing counter in the raw cube messaging
+  int GetTapCount() const { return _tapCount; }
+  void SetTapCount(const int cnt) { _tapCount = cnt; }
+  
   // Intensity scaler that should be sent down to robot before sending
   // down the LEDState.
   const u8 GetLEDGamma() const {return _ledGamma; }
@@ -96,6 +100,10 @@ protected:
   
   // Keep track of flash rate and color of each LED
   std::array<LEDstate,NUM_LEDS> _ledState;
+  
+  // Keep track of the current tapCount, which is just an
+  // incrementing counter in the raw cube messaging
+  int _tapCount = 0;
   
   // Gamma value to set on lights
   u8 _ledGamma;

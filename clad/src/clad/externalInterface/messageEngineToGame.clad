@@ -97,7 +97,7 @@ message EngineRobotCLADVersionMismatch {
 // Indicates that a previously advertising object is no longer advertising
 message ObjectUnavailable
 {
-  uint_32      factory_id,
+  string       factory_id,
 }
 
 // Responds to Unity request for feature toggles
@@ -556,7 +556,7 @@ message AnimationEvent {
 // Indicates that a cube is advertising, but not connected.
 message ObjectAvailable
 {
-  uint_32     factory_id,
+  string      factory_id,
   ObjectType  objectType,
   int_8       rssi
 }
@@ -565,7 +565,7 @@ message ObjectAvailable
 message ObjectConnectionState
 {  
   uint_32 objectID,
-  uint_32 factoryID,
+  string factoryID,
   ObjectType  object_type,
   bool connected
 }
@@ -593,10 +593,6 @@ message ObjectTapped
 {
   uint_32 timestamp,
   uint_32 objectID,
-  uint_8  numTaps,
-  uint_8  tapTime,
-  int_8   tapNeg,
-  int_8   tapPos,
 }
 
 message ObjectAccel
@@ -757,7 +753,7 @@ message EngineErrorCodeMessage {
 // Sent when a cube lights change in CubeLightComponent
 message CubeLightsStateTransition {
   uint_32 objectID,
-  uint_32 factoryID,
+  string  factoryID,
   ObjectType objectType,
   // Colors are encoded as uint with 5 bits per color
   // To convert from frames to seconds divide by 30 (30 frames per second)
@@ -770,7 +766,7 @@ message CubeLightsStateTransition {
 ///////////////////////////////////////////////////////////////////////////////
 
 structure BlockPoolBlockData {
-  uint_32 factoryID,
+  string factoryID,
   ObjectType objectType
 }
 

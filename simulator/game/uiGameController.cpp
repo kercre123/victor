@@ -290,8 +290,8 @@ namespace Anki {
     
     void UiGameController::HandleActiveObjectConnectionStateBase(const ExternalInterface::ObjectConnectionState& msg)
     {
-      PRINT_NAMED_INFO("HandleActiveObjectConnectionState", "ObjectID %d (factoryID 0x%x): %s",
-                       msg.objectID, msg.factoryID, msg.connected ? "CONNECTED" : "DISCONNECTED");
+      PRINT_NAMED_INFO("HandleActiveObjectConnectionState", "ObjectID %d (factoryID %s): %s",
+                       msg.objectID, msg.factoryID.c_str(), msg.connected ? "CONNECTED" : "DISCONNECTED");
       HandleActiveObjectConnectionState(msg);
     }
     
@@ -313,8 +313,8 @@ namespace Anki {
     
     void UiGameController::HandleActiveObjectTappedBase(const ExternalInterface::ObjectTapped& msg)
     {
-      PRINT_NAMED_INFO("HandleActiveObjectTapped", "Received message that object %d was tapped %d times.",
-                       msg.objectID, msg.numTaps);
+      PRINT_NAMED_INFO("HandleActiveObjectTapped", "Received message that object %d was tapped.",
+                       msg.objectID);
       
       HandleActiveObjectTapped(msg);
     }
@@ -2111,7 +2111,7 @@ namespace Anki {
       return false;
     }
     
-    bool UiGameController::AddLightCubeByType(ObjectType inType, const Pose3d& p, const u32 factoryID)
+    bool UiGameController::AddLightCubeByType(ObjectType inType, const Pose3d& p, const std::string& factoryID)
     {
       // Check if world already has a light cube with that type
       for (auto lightCube : _lightCubes) {

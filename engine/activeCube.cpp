@@ -30,7 +30,7 @@ ActiveCube::ActiveCube(ObjectType type)
 , Block(ObjectFamily::LightCube, type)
 {
   _activeID = -1;
-  _factoryID = 0;
+  _factoryID = "";
   
   // Skip the check for ghost objects, which are a special case (they have 6 unknown markers)
   if(ANKI_DEVELOPER_CODE && (type != ObjectType::Block_LIGHTCUBE_GHOST))
