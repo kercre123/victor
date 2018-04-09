@@ -16,6 +16,7 @@
 #define __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechComponent_H__
 
 #include "audioEngine/audioTools/standardWaveDataContainer.h"
+#include "audioEngine/audioTypes.h"
 #include "coretech/common/shared/types.h"
 #include "clad/audio/audioEventTypes.h"
 #include "clad/audio/audioGameObjectTypes.h"
@@ -34,8 +35,9 @@ namespace Anki {
       class CozmoAudioController;
     }
     namespace RobotInterface {
-      struct TextToSpeechStart;
-      struct TextToSpeechStop;
+      struct TextToSpeechPrepare;
+      struct TextToSpeechDeliver;
+      struct TextToSpeechCancel;
     }
     namespace TextToSpeech {
       class TextToSpeechProvider;
@@ -61,8 +63,9 @@ public:
   //
   // CLAD message handlers are called on the main thread to handle incoming requests.
   //
-  void HandleMessage(const RobotInterface::TextToSpeechStart& msg);
-  void HandleMessage(const RobotInterface::TextToSpeechStop& msg);
+  void HandleMessage(const RobotInterface::TextToSpeechPrepare& msg);
+  void HandleMessage(const RobotInterface::TextToSpeechDeliver& msg);
+  void HandleMessage(const RobotInterface::TextToSpeechCancel& msg);
 
   //
   // Update method is called once per tick on main thread. This method responds to events
@@ -158,13 +161,11 @@ private:
 
   // Set up Audio Engine to play text's audio data
   // out_duration_ms provides approximate duration of event before processing in audio engine
-  // Return false if the audio has NOT been created or is not yet ready, out_duration_ms will NOT be valid.
-  // NOTE: If this method is able to pass speech audio data ownership to plugin it will call ClearOperationData()
-  // TODO: Currently there is only 1 source plugin for inserting audio it would be nice to have more
-  bool PrepareAudioEngine(const TTSID_t ttsID, const SayTextVoiceStyle style, float& out_duration_ms);
+  // out_eventId provides audio event that can be used to trigger playback
+  // Return false if the audio has NOT been created or is not yet ready. Output parameters will NOT be valid.
+  bool PrepareAudioEngine(const TTSID_t ttsID, float& out_duration_ms, AudioEngine::AudioEventId& out_eventId);
 
-  // Clear Speech audio data from audio engine and clear operation data
-  // TODO: Currently there is only 1 source plugin for inserting audio it would be nice to have more
+  // Clear speech audio data from audio engine and clear operation data
   void CleanupAudioEngine(const TTSID_t ttsID);
 
   // Clear speech operation audio data from memory
@@ -179,11 +180,12 @@ private:
   //
   void OnStateInvalid(const TTSID_t ttsID);
   void OnStatePreparing(const TTSID_t ttsID);
-  void OnStateReady(const TTSID_t ttsID);
+  void OnStatePrepared(const TTSID_t ttsID);
 
   // Audio helpers
   void SetAudioProcessingStyle(SayTextVoiceStyle style);
   void SetAudioProcessingPitch(float pitchScalar);
+  void PostAudioEvent(AudioEngine::AudioEventId eventId);
 
 }; // class TextToSpeechComponent
 

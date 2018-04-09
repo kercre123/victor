@@ -451,9 +451,9 @@ message RunDebugConsoleFuncMessage {
 }
 
 //
-// Sent from engine to robot (anim process) to initiate TTS
+// Sent from engine to robot (anim process) to prepare TTS audio
 //
-message TextToSpeechStart {
+message TextToSpeechPrepare {
   float_32 durationScalar, // Duration adjustment
   float_32 pitchScalar,    // Pitch adjustment
   SayTextVoiceStyle style, // Audio processing style
@@ -462,9 +462,17 @@ message TextToSpeechStart {
 }
 
 //
-// Sent from robot (anim process) to engine to cancel TTS
+// Sent from engine to robot (anim process) to deliver TTS audio to wwise
 //
-message TextToSpeechStop {
+message TextToSpeechDeliver {
+  uint_8 ttsID,            // ID of utterance
+  bool triggeredByAnim     // Will TTS be triggered by animation?
+}
+
+//
+// Sent from engine to robot (anim process) to cancel TTS
+//
+message TextToSpeechCancel {
   uint_8 ttsID  // ID of utterance
 }
 
@@ -581,7 +589,7 @@ union EngineToRobot
   RemoveEyeShift                removeEyeShift              = 0x5F,
   AddSquint                     addSquint                   = 0x60,
   RemoveSquint                  removeSquint                = 0x61,
-  
+
   DisplayFaceImageGrayscaleChunk   displayFaceImageGrayscaleChunk      = 0x62,
 
 
@@ -593,8 +601,9 @@ union EngineToRobot
 
   SetDebugConsoleVarMessage     setDebugConsoleVarMessage   = 0x90,
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
-  TextToSpeechStart             textToSpeechStart           = 0x92,
-  TextToSpeechStop              textToSpeechStop            = 0x93,
+  TextToSpeechPrepare           textToSpeechPrepare         = 0x92,
+  TextToSpeechDeliver           textToSpeechDeliver         = 0x93,
+  TextToSpeechCancel            textToSpeechCancel          = 0x94,
 
   SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA1,
