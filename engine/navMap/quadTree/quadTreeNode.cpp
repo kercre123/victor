@@ -138,6 +138,10 @@ void QuadTreeNode::Subdivide(QuadTreeProcessor& processor)
   }
   // clear the subdivided node content
   ForceSetDetectedContentType(MemoryMapDataPtr(), processor);
+
+  // reset timestamps since they were cleared
+  _content.data->SetFirstObservedTime(_childrenPtr[0]->GetData()->GetFirstObservedTime());
+  _content.data->SetLastObservedTime( _childrenPtr[0]->GetData()->GetLastObservedTime());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

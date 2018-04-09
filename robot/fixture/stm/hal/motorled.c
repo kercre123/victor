@@ -1,15 +1,12 @@
 #include <string.h>
 #include "app.h"
 #include "board.h"
-#include "cube.h"
-#include "display.h"
+#include "contacts.h"
 #include "fixture.h"
 #include "flash.h"
 #include "motorled.h"
 #include "portable.h"
-#include "testport.h"
 #include "timer.h"
-#include "uart.h"
 
 #define MOTOR_PWM_MAXVAL 3000
 
@@ -23,47 +20,47 @@ static void m_motor_set_cfg( HBridgeHalfCfg MOTA, HBridgeHalfCfg MOTB )
   //static int init_motordrv_pins = 0;
   //if( !init_motordrv_pins ) {
   //  init_motordrv_pins = 1;
-    PIN_RESET(GPIOB, PINB_MOTDRV_IN1);
-    PIN_OUT(  GPIOB, PINB_MOTDRV_IN1);
-    PIN_RESET(GPIOB, PINB_MOTDRV_EN1);
-    PIN_OUT(  GPIOB, PINB_MOTDRV_EN1);
-    PIN_RESET(GPIOB, PINB_MOTDRV_IN2);
-    PIN_OUT(  GPIOB, PINB_MOTDRV_IN2);
-    PIN_RESET(GPIOB, PINB_MOTDRV_EN2);
-    PIN_OUT(  GPIOB, PINB_MOTDRV_EN2);
+    MOTDRV_IN1::reset();
+    MOTDRV_IN1::mode(MODE_OUTPUT);
+    MOTDRV_EN1::reset();
+    MOTDRV_EN1::mode(MODE_OUTPUT);
+    MOTDRV_IN2::reset();
+    MOTDRV_IN2::mode(MODE_OUTPUT);
+    MOTDRV_EN2::reset();
+    MOTDRV_EN2::mode(MODE_OUTPUT);
   //}
   
   //disable both channels
-  //PIN_RESET(GPIOB, PINB_MOTDRV_EN1);
-  //PIN_RESET(GPIOB, PINB_MOTDRV_EN2);
+  //MOTDRV_EN1::reset();
+  //MOTDRV_EN2::reset();
   
   switch( MOTA ) {
     case HBC_GND:
-      //PIN_RESET(GPIOB, PINB_MOTDRV_IN1);
-      PIN_SET(  GPIOB, PINB_MOTDRV_EN1);
+      //MOTDRV_IN1::reset();
+      MOTDRV_EN1::set();
       break;
     case HBC_VCC:
-      PIN_SET(GPIOB, PINB_MOTDRV_IN1);
-      PIN_SET(GPIOB, PINB_MOTDRV_EN1);
+      MOTDRV_IN1::set();
+      MOTDRV_EN1::set();
       break;
     default: //HBC_OFF:
-      //PIN_RESET(GPIOB, PINB_MOTDRV_EN1);
-      //PIN_RESET(GPIOB, PINB_MOTDRV_IN1);
+      //MOTDRV_EN1::reset();
+      //MOTDRV_IN1::reset();
       break;
   }
   
   switch( MOTB ) {
     case HBC_GND:
-      //PIN_RESET(GPIOB, PINB_MOTDRV_IN2);
-      PIN_SET(  GPIOB, PINB_MOTDRV_EN2);
+      //MOTDRV_IN2::reset();
+      MOTDRV_EN2::set();
       break;
     case HBC_VCC:
-      PIN_SET(GPIOB, PINB_MOTDRV_IN2);
-      PIN_SET(GPIOB, PINB_MOTDRV_EN2);
+      MOTDRV_IN2::set();
+      MOTDRV_EN2::set();
       break;
     default: //HBC_OFF:
-      //PIN_RESET(GPIOB, PINB_MOTDRV_EN2);
-      //PIN_RESET(GPIOB, PINB_MOTDRV_IN2);
+      //MOTDRV_EN2::reset();
+      //MOTDRV_IN2::reset();
       break;
   }
 }
@@ -71,8 +68,7 @@ static void m_motor_set_cfg( HBridgeHalfCfg MOTA, HBridgeHalfCfg MOTB )
 // Set motor speed between 0 and 5000 millivolts
 void MotorMV(int millivolts, bool reverse_nForward )
 {
-  //v1.5 has motor driver IC. Need to configure additional control signals
-  if( Board::revision() >= BOARD_REV_1_5_1 )
+  //if( Board::revision() >= BOARD_REV_1_0 ) //obsoleted hw check
   {
     if( millivolts < 0 )
       m_motor_set_cfg(HBC_GND, HBC_GND); //electrical motor brake
@@ -112,9 +108,10 @@ void MotorMV(int millivolts, bool reverse_nForward )
   TIM_SetCompare1(TIM3, pwm);
   TIM_Cmd(TIM3, ENABLE);
   TIM_CtrlPWMOutputs(TIM3, ENABLE);
-
-  GPIO_PinAFConfig(GPIOC, PINC_CHGTX, GPIO_AF_TIM3);
-  PIN_AF(GPIOC, PINC_CHGTX);
+  
+  Contacts::deinit(); //allow CHGTX to override CHGPWR
+  CHGTX::alternate(GPIO_AF_TIM3); //GPIO_PinAFConfig(GPIOC, PINC_CHGTX, GPIO_AF_TIM3);
+  CHGTX::mode(MODE_ALTERNATE); //PIN_AF(GPIOC, PINC_CHGTX);
 }
 
 //static int VCC = 2800, OVERSAMPLE = 4;  // 2^n samples
@@ -170,6 +167,14 @@ int GrabADC(int channel)
   return Board::getAdcMv((adc_chan_e)channel, 4, 20);
 }
 
+//[LEGACY] pin defines -- DEPRECATED
+// Quadrature encoder IOs/ADC channels
+#define PINA_ENCLED 4
+#define PINC_ENCA   3
+#define ADC_ENCA    13
+#define PINC_ENCB   4
+#define ADC_ENCB    14
+
 // Grab quadrature encoder data
 void ReadEncoder(bool light, int usDelay, int& a, int& b, bool skipa)
 {
@@ -196,12 +201,19 @@ void ReadEncoder(bool light, int usDelay, int& a, int& b, bool skipa)
 //    Backpack: LEDs + Button
 //====================================================================================
 
+//[LEGACY] pin defines -- DEPRECATED
+// Backpack LEDs/ADC channels
+#define PINA_BPLED0 2
+#define PINA_BPLED1 3
+#define PINA_BPLED2 6
+#define PINA_BPLED3 7
+
 //map pin defines from board.h to schematic signal names for clarity
 #define D1  PINA_BPLED0   /*A.2*/
 #define D2  PINA_BPLED2   /*A.6*/
 #define D3  PINA_BPLED1   /*A.3*/
 #define D4  PINA_BPLED3   /*A.7*/
-
+/*
 typedef struct {
   u8  pinhigh;    //LED +Anode, pull-up side of Btns
   u8  pinlow;     //LED -Cathode, gnd side of Btns
@@ -222,8 +234,9 @@ static const bp_led_cfg_t BPLED[] = {
   {D4,D1,LED_RED_MV},  {D4,D2,LED_RED_MV},  {D4,D3,LED_OPEN_MV}  //D4,D5,{BPv1.0=NC, BPv1.5=Btn}
 };
 #define BP_LED_COUNT  (sizeof(BPLED)/sizeof(bp_led_cfg_t))
+*/
 #define BPLED_BTN_IDX (BP_LED_COUNT-1) /*index of the button cfg*/
-
+/*
 static void _bp_signal_float(void)
 {
   PIN_PULL_NONE(GPIOA,D1);  PIN_IN(GPIOA,D1);
@@ -292,13 +305,13 @@ int BPBtnGetMv(void)
   PIN_RESET(GPIOA, BPLED[BPLED_BTN_IDX].pinlow);
   PIN_OUT(GPIOA, BPLED[BPLED_BTN_IDX].pinlow);
 
-  if( Board::revision() <= BOARD_REV_1_0_REV3 ) //v1.0 doesn't support backpack button. pull high to always read as open
-    PIN_PULL_UP(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
-  else //v1.5+
+  //if( Board::revision() <= BOARD_REV_1_0_REV3 ) //v1.0 doesn't support backpack button. pull high to always read as open
+  //  PIN_PULL_UP(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
+  //else //v1.5+
     PIN_PULL_NONE(GPIOA, BPLED[BPLED_BTN_IDX].pinhigh);
   
   // Now grab the voltage
   Timer::wait(100); //wait for voltages to stabilize
   return GrabADC( BPLED[BPLED_BTN_IDX].pinhigh );
 }
-
+*/

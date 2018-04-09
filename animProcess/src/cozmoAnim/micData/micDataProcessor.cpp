@@ -18,7 +18,6 @@
 #include "se_diag.h"
 
 #include "cozmoAnim/animProcessMessages.h"
-#include "cozmoAnim/faceDisplay/faceDebugDraw.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/micData/micDataProcessor.h"
 #include "cozmoAnim/micData/micDataSystem.h"
@@ -46,24 +45,18 @@ namespace {
 
   const TriggerData kTriggerDataList[] = 
   {
+    // "HeyVector" trigger trained on adults
+    {
+      .dataDir = "hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b",
+      .netFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_am.raw",
+      .searchFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_5.raw"
+    },
     // "HeyCozmo" trigger trained on adults
     {
-      .dataDir = "trigger_anki_x_en_us_01_hey_cosmo_sfs14_b3e3cbba",
+      .dataDir = "hey_cosmo_and_commands/trigger_anki_x_en_us_01_hey_cosmo_sfs14_b3e3cbba",
       .netFile = "anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery01_am.raw",
       .searchFile = "anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery01_search_4.raw"
     },
-    // "HeyCozmo" trigger trained on both adults + kids (aka delivery 2)
-    {
-      .dataDir = "trigger_anki_x_en_us_02_hey_cosmo_sfs14_b3e3cbba",
-      .netFile = "anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery02_am.raw",
-      .searchFile = "anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery02_search_4.raw"
-    },
-    // "Cozmo" trigger trained on both adults + kids
-    {
-      .dataDir = "trigger_anki_x_en_us_01_cosmo_sfs14_b3e3cbba",
-      .netFile = "anki_x_cosmo_en_us_sfs14_b3e3cbba_delivery01_am.raw",
-      .searchFile = "anki_x_cosmo_en_us_sfs14_b3e3cbba_delivery01_search_10.raw"
-    }
   };
   constexpr int32_t kTriggerDataListLen = (int32_t) sizeof(kTriggerDataList) / sizeof(kTriggerDataList[0]);
   Anki::AudioUtil::SpeechRecognizer::IndexType _currentTriggerSearchIndex = 0;

@@ -6,18 +6,14 @@
 #include "app.h"
 #include "board.h"
 #include "console.h"
-#include "cube.h"
-#include "display.h"
 #include "fixture.h"
 #include "flash.h"
 #include "meter.h"
 #include "nvReset.h"
 #include "portable.h"
 #include "random.h"
-#include "testport.h"
 #include "tests.h"
 #include "timer.h"
-#include "uart.h"
 
 //global fixture data
 int g_fixmode = FIXMODE_NONE;
@@ -104,12 +100,11 @@ bool fixtureValidateFixmodeInfo(bool print)
 }
 
 //-----------------------------------------------------------------------------
-//                  Legacy stuff...
+//                  Non-Volatile Serial # Management
 //-----------------------------------------------------------------------------
 
-// This generates a unique ID per cycle of the test fixture
-// This was meant to help the "big data" team see if the fixture was ever run but the log was lost (gaps in sequences)
-int GetSequence(void)
+//get the next # in a power-safe, non-repeating sequence from 0-0x7ffff
+static int GetSequence(void)
 {
   u32 sequence;
   u8 bit;
@@ -150,10 +145,12 @@ int GetSequence(void)
 }
 
 // Get a serial number for a device in the normal 12.20 fixture.sequence format
-uint32_t GetSerial()
+uint32_t fixtureGetSerial(void)
 {
-  if (FIXTURE_SERIAL > 0xfff) //12-bit limit
+  if ( !FIXTURE_SERIAL || FIXTURE_SERIAL > 0xfff) { //12-bit limit
+    ConsolePrintf("fixture serial out of range for esn generation\n");
     throw ERROR_SERIAL_INVALID;
+  }
   return (FIXTURE_SERIAL << 20) | (GetSequence() & 0x0Fffff);
 }
 

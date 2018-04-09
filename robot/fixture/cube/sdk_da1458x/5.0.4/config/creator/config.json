@@ -1,0 +1,671 @@
+{
+    "configurations": [
+        {
+            "description": "The configuration to use for a peripheral device in Integrated Processor configuration.", 
+            "display_name": "Integrated Processor", 
+            "environments": [
+                
+                {
+                    "display_name": "Keil 5", 
+                    "project_path": "Keil_5/empty_peripheral_template.uvprojx", 
+                    "type": "keil5"
+                }
+            ], 
+            "option_files": [
+                {
+                    "options": [
+                        "security", 
+                        "watchdog", 
+                        "sleep_mode", 
+                        "max_connections", 
+                        "development_debug", 
+                        "console_print", 
+                        "print_uart"
+                    ], 
+                    "path": "src/config/da1458x_config_basic.h"
+                }, 
+                {
+                    "options": [
+                        "otp_sysram", 
+                        "nvds_hardcode", 
+                        "lp_clock", 
+                        "default_xtal16_trim", 
+                        "periodic_wakeup_duration", 
+                        "external_wakeup_duration", 
+                        "external_wakeup", 
+                        "wakeup_external", 
+                        "true_random", 
+                        "skip_sl_patch", 
+                        "reinit_buffer", 
+                        "memory_map", 
+                        "db_heap_size", 
+                        "env_heap_size", 
+                        "msg_heap_size", 
+                        "non_ret_heap_size", 
+                        "nvds_bd_address", 
+                        "nvds_lp_clock_drift", 
+                        "nvds_ca_duration", 
+                        "nvds_cra_duration", 
+                        "nvds_rssi_threshold", 
+                        "nvds_num_stats_packets", 
+                        "nvds_num_bad_packets", 
+                        "mem_usage_log", 
+                        "wlan_coex", 
+                        "ble_metrics", 
+                        "production_debug", 
+                        "da14583_bdaddr_read"
+                    ], 
+                    "path": "src/config/da1458x_config_advanced.h"
+                }
+            ], 
+            "overrides": [
+                {
+                    "maximum": 1, 
+                    "minimum": 1, 
+                    "option": "max_connections"
+                }, 
+                {
+                    "option": "security", 
+                    "value": true
+                }
+            ], 
+            "processor_dependents": [
+                {
+                    "option": "da14583_bdaddr_read", 
+                    "value": null, 
+                    "when": {
+                        "display_name": "580", 
+                        "type": "580"
+                    }
+                }, 
+                {
+                    "option": "da14583_bdaddr_read", 
+                    "value": null, 
+                    "when": {
+                        "display_name": "581", 
+                        "type": "581"
+                    }
+                }
+            ], 
+            "processors": [
+                {
+                    "display_name": "580", 
+                    "type": "580"
+                }, 
+                {
+                    "display_name": "581", 
+                    "type": "581"
+                }, 
+                {
+                    "display_name": "583", 
+                    "type": "583"
+                }
+            ], 
+            "renames": [
+                {
+                    "destination": "src/user_%APP_NAME%.c", 
+                    "source": "src/user_empty_peripheral_template.c", 
+                    "type": "cfile"
+                }, 
+                {
+                    "destination": "src/user_%APP_NAME%.h", 
+                    "source": "src/user_empty_peripheral_template.h", 
+                    "type": "hfile"
+                }
+            ], 
+            "template_path": "projects/target_apps/template/empty_peripheral_template", 
+            "type": "int"
+        }, 
+        {
+            "description": "The configuration to use for a device in External Processor configuration", 
+            "display_name": "External Processor Configuration", 
+            "environments": [
+               
+                {
+                    "display_name": "Keil 5", 
+                    "project_path": "Keil_5/empty_template_ext.uvprojx", 
+                    "type": "keil5"
+                }
+            ], 
+            "option_files": [
+                {
+                    "options": [
+                        "security", 
+                        "watchdog", 
+                        "sleep_mode", 
+                        "max_connections", 
+                        "development_debug", 
+                        "console_print", 
+                        "print_uart"
+                    ], 
+                    "path": "src/config/da1458x_config_basic.h"
+                }, 
+                {
+                    "options": [
+                        "otp_sysram", 
+                        "nvds_hardcode", 
+                        "lp_clock", 
+                        "default_xtal16_trim", 
+                        "periodic_wakeup_duration", 
+                        "external_wakeup_duration", 
+                        "external_wakeup", 
+                        "wakeup_external", 
+                        "true_random", 
+                        "skip_sl_patch", 
+                        "reinit_buffer", 
+                        "memory_map", 
+                        "db_heap_size", 
+                        "env_heap_size", 
+                        "msg_heap_size", 
+                        "non_ret_heap_size", 
+                        "nvds_bd_address", 
+                        "nvds_lp_clock_drift", 
+                        "nvds_ca_duration", 
+                        "nvds_cra_duration", 
+                        "nvds_rssi_threshold", 
+                        "nvds_num_stats_packets", 
+                        "nvds_num_bad_packets", 
+                        "mem_usage_log", 
+                        "wlan_coex", 
+                        "ble_metrics", 
+                        "production_debug", 
+                        "da14583_bdaddr_read"
+                    ], 
+                    "path": "src/config/da1458x_config_advanced.h"
+                }
+            ], 
+            "overrides": [
+                {
+                    "maximum": 6, 
+                    "minimum": 1, 
+                    "option": "max_connections"
+                }
+            ], 
+            "processor_dependents": [
+                {
+                    "option": "da14583_bdaddr_read", 
+                    "value": null, 
+                    "when": {
+                        "display_name": "580", 
+                        "type": "580"
+                    }
+                }, 
+                {
+                    "option": "da14583_bdaddr_read", 
+                    "value": null, 
+                    "when": {
+                        "display_name": "581", 
+                        "type": "581"
+                    }
+                }
+            ], 
+            "processors": [
+                {
+                    "display_name": "580", 
+                    "type": "580"
+                }, 
+                {
+                    "display_name": "581", 
+                    "type": "581"
+                }, 
+                {
+                    "display_name": "583", 
+                    "type": "583"
+                }
+            ], 
+            "renames": [
+                {
+                    "destination": "src/user_%APP_NAME%.c", 
+                    "source": "src/user_empty_template_ext.c", 
+                    "type": "cfile"
+                }, 
+                {
+                    "destination": "src/user_%APP_NAME%.h", 
+                    "source": "src/user_empty_template_ext.h", 
+                    "type": "hfile"
+                }
+            ], 
+            "template_path": "projects/target_apps/template/empty_template_ext", 
+            "type": "ext"
+        }
+    ], 
+    "option_groups": [
+        {
+            "description": "The basic configuration options", 
+            "display_name": "Basic Configurations", 
+            "options": [
+                {
+                    "default": false, 
+                    "define": "CFG_APP_SECURITY", 
+                    "description": "Enables the BLE security functionality in TASK_APP. If not enabled, BLE security related code is compiled out.", 
+                    "display_name": "BLE security", 
+                    "icon": "dialog.png", 
+                    "option_type": "onoff", 
+                    "type": "security"
+                }, 
+                {
+                    "default": false, 
+                    "define": "CFG_WDOG", 
+                    "description": "Enables WatchDog timer.", 
+                    "display_name": "Watchdog", 
+                    "option_type": "onoff", 
+                    "type": "watchdog"
+                }, 
+                {
+                    "default": "ACTIVE", 
+                    "define": "CFG_SLEEP_MODE", 
+                    "dependents": [
+                        {
+                            "option": "db_heap_size", 
+                            "value": null, 
+                            "when": "ACTIVE"
+                        }, 
+                        {
+                            "option": "env_heap_size", 
+                            "value": null, 
+                            "when": "ACTIVE"
+                        }, 
+                        {
+                            "option": "msg_heap_size", 
+                            "value": null, 
+                            "when": "ACTIVE"
+                        }, 
+                        {
+                            "option": "non_ret_heap_size", 
+                            "value": null, 
+                            "when": "ACTIVE"
+                        }, 
+                        {
+                            "option": "db_heap_size", 
+                            "value": null, 
+                            "when": "CFG_MEM_MAP_EXT_SLEEP"
+                        }, 
+                        {
+                            "option": "env_heap_size", 
+                            "value": null, 
+                            "when": "CFG_MEM_MAP_EXT_SLEEP"
+                        }, 
+                        {
+                            "option": "msg_heap_size", 
+                            "value": null, 
+                            "when": "CFG_MEM_MAP_EXT_SLEEP"
+                        }, 
+                        {
+                            "option": "non_ret_heap_size", 
+                            "value": null, 
+                            "when": "CFG_MEM_MAP_EXT_SLEEP"
+                        }, 
+                        {
+                            "option": "memory_map", 
+                            "value": "EXT_SLEEP_SETUP", 
+                            "when": "CFG_MEM_MAP_EXT_SLEEP"
+                        }, 
+                        {
+                            "option": "memory_map", 
+                            "value": "DEEP_SLEEP_SETUP", 
+                            "when": "CFG_MEM_MAP_DEEP_SLEEP"
+                        }, 
+                        {
+                            "option": "memory_map", 
+                            "value": "EXT_SLEEP_SETUP", 
+                            "when": "ACTIVE"
+                        }
+                    ], 
+                    "description": "Determines sleep mode.", 
+                    "display_name": "Sleep mode", 
+                    "option_type": "enum", 
+                    "type": "sleep_mode", 
+                    "values": [
+                        {
+                            "description": "Extended sleep mode.", 
+                            "display_name": "Extended sleep mode", 
+                            "type": "CFG_MEM_MAP_EXT_SLEEP"
+                        }, 
+                        {
+                            "description": "Deep sleep mode.", 
+                            "display_name": "Deep sleep mode", 
+                            "type": "CFG_MEM_MAP_DEEP_SLEEP"
+                        }, 
+                        {
+                            "description": "No sleep mode.", 
+                            "display_name": "Active", 
+                            "type": "ACTIVE"
+                        }
+                    ], 
+                    "view": "dropdown"
+                }, 
+                {
+                    "default": 1, 
+                    "define": "CFG_MAX_CONNECTIONS", 
+                    "description": "Determines maximum concurrent connections supported by application. It configures the heap memory allocated to service multiple connections. It is used for GAP central role applications.", 
+                    "display_name": "Maximum connections", 
+                    "option_type": "int", 
+                    "type": "max_connections"
+                }, 
+                {
+                    "default": true, 
+                    "define": "CFG_DEVELOPMENT_DEBUG", 
+                    "description": "Enables development debug mode. For production mode builds it must be disabled. When enabled the following debugging features are enabled - SysRAM is not powered down in deep sleep mode. Allows developer to run applications using Deep Sleep mode without programming OTP memory. - Validation of GPIOs reservations. - Enables Debug module and sets code execution in breakpoint in Hardfault and NMI (Watcdog) handleres. It allows developer to hot attach debugger and get debug information.", 
+                    "display_name": "Development debug", 
+                    "option_type": "onoff", 
+                    "type": "development_debug"
+                }, 
+                {
+                    "default": false, 
+                    "define": "CFG_PRINTF", 
+                    "dependents": [
+                        {
+                            "option": "print_uart", 
+                            "value": null, 
+                            "when": false
+                        }
+                    ], 
+                    "description": "Enables serial interface logging mechanism.", 
+                    "display_name": "UART Console Print", 
+                    "option_type": "onoff", 
+                    "type": "console_print"
+                }, 
+                {
+                    "default": true, 
+                    "define": "CFG_PRINTF_UART2", 
+                    "description": "Controls the uart module used. If it is enabled, UART2 is used. If not, UART is used. uart or uart2 driver must be included in project respectively.", 
+                    "display_name": "UART module", 
+                    "option_type": "onoff", 
+                    "type": "print_uart"
+                }
+            ], 
+            "type": "basic_config"
+        }, 
+        {
+            "description": "The advanced configuration settings", 
+            "display_name": "Advanced Config", 
+            "options": [
+                {
+                    "default": false, 
+                    "define": "CFG_BOOT_FROM_OTP", 
+                    "description": "If defined the OTP header data are read from SysRAM. The data are copied by bootrom code. Otherwise the OTP Header data are read from OTP memory. It must be undefined during development phase and for applications booting from external interfaces (UART, SPI, i2c).", 
+                    "display_name": "OTP header read location", 
+                    "option_type": "onoff", 
+                    "type": "otp_sysram"
+                }, 
+                {
+                    "default": true, 
+                    "define": "CFG_INITIALIZE_NVDS_STRUCT", 
+                    "description": "If enabled, NVDS structure is initialized with hardcoded values. If not enabled the NDS structure is padded with 0. The second option is used for production builds where the NVDS area in OTP or non-volalite memory are written in manufcaturing procedure.", 
+                    "display_name": "NVDS hardcoded initialisation", 
+                    "option_type": "onoff", 
+                    "type": "nvds_hardcode"
+                }, 
+                {
+                    "default": "LP_CLK_XTAL32", 
+                    "define": "CFG_LP_CLK", 
+                    "description": "Low Power Clock Selection.", 
+                    "display_name": "Low Power Clock", 
+                    "option_type": "enum", 
+                    "type": "lp_clock", 
+                    "values": [
+                        {
+                            "description": "External XTAL32 oscilator.", 
+                            "display_name": "XTAL32", 
+                            "type": "LP_CLK_XTAL32"
+                        }, 
+                        {
+                            "description": "External internal RCX20 clock.", 
+                            "display_name": "RCX20", 
+                            "type": "LP_CLK_RCX20"
+                        }, 
+                        {
+                            "description": "Use the selection in the corresponding field of OTP Header.", 
+                            "display_name": "OTP", 
+                            "type": "LP_CLK_FROM_OTP"
+                        }
+                    ]
+                }, 
+                {
+                    "default": false, 
+                    "define": "CFG_USE_DEFAULT_XTAL16M_TRIM_VALUE_IF_NOT_CALIBRATED", 
+                    "description": "If enabled the application uses a hardcoded value for XTAL16M trimming. Should be disabled for devices where XTAL16M is calibrated and trim value is stored in OTP. Important note - The hardocded value is the average value of the trimming values giving the optimal results for DA14580 DK devices. May not be applicable in other designs.", 
+                    "display_name": "Default xtal16 trim value", 
+                    "option_type": "onoff", 
+                    "type": "default_xtal16_trim"
+                }, 
+                {
+                    "default": 500, 
+                    "define": "CFG_MAX_SLEEP_DURATION_PERIODIC_WAKEUP_MS", 
+                    "description": "Periodic wakeup period if GTL iface is not enabled. Time in BLE slots.", 
+                    "display_name": "Periodic wake up duration", 
+                    "option_type": "int", 
+                    "type": "periodic_wakeup_duration"
+                }, 
+                {
+                    "default": 10000, 
+                    "define": "CFG_MAX_SLEEP_DURATION_EXTERNAL_WAKEUP_MS", 
+                    "description": "Periodic wakeup period if GTL iface is not enabled. Time in BLE slots.", 
+                    "display_name": "External wake up duration", 
+                    "option_type": "int", 
+                    "type": "external_wakeup_duration"
+                }, 
+                {
+                    "default": false, 
+                    "define": "CFG_EXTERNAL_WAKEUP", 
+                    "description": "Wakeup from external processor running host application.", 
+                    "display_name": "Wakeup from external", 
+                    "option_type": "onoff", 
+                    "type": "external_wakeup"
+                }, 
+                {
+                    "default": false, 
+                    "define": "CFG_WAKEUP_EXT_PROCESSOR", 
+                    "description": "Wakeup external processor when a message is sent to GTL.", 
+                    "display_name": "Wakeup external", 
+                    "option_type": "onoff", 
+                    "type": "wakeup_external"
+                }, 
+                {
+                    "default": true, 
+                    "define": "CFG_TRNG", 
+                    "description": "Enables True random number generator. A random number is generated at system initiliasation and used to seed the C standard library random number generator.", 
+                    "display_name": "True random number generation", 
+                    "option_type": "onoff", 
+                    "type": "true_random"
+                }, 
+                {
+                    "default": true, 
+                    "define": "CFG_SKIP_SL_PATCH", 
+                    "description": "Skip sl patch.", 
+                    "display_name": "Skip sl patch", 
+                    "option_type": "onoff", 
+                    "type": "skip_sl_patch"
+                }, 
+                {
+                    "default": 0, 
+                    "define": "REINIT_DESCRIPT_BUF", 
+                    "description": "Reinitilize BLE messages' descriptors at wakeup from Deep Sleep mode.", 
+                    "display_name": "BLE message reinitialisation", 
+                    "option_type": "int", 
+                    "type": "reinit_buffer"
+                }, 
+                {
+                    "default": "EXT_SLEEP_SETUP", 
+                    "define": "USE_MEMORY_MAP", 
+                    "description": "Memory configuration based on sleep mode. Determines if specifc data areas can be located in SysRAM or not.", 
+                    "display_name": "Memory Map", 
+                    "option_type": "enum", 
+                    "type": "memory_map", 
+                    "values": [
+                        {
+                            "description": "Extended sleep mode.", 
+                            "display_name": "Extended", 
+                            "type": "EXT_SLEEP_SETUP"
+                        }, 
+                        {
+                            "description": "Deep sleep mode.", 
+                            "display_name": "Deep", 
+                            "type": "DEEP_SLEEP_SETUP"
+                        }
+                    ]
+                }, 
+                {
+                    "default": 1024, 
+                    "define": "DB_HEAP_SZ", 
+                    "description": "ATT database heap size.", 
+                    "display_name": "ATT database heap size", 
+                    "option_type": "int", 
+                    "type": "db_heap_size"
+                }, 
+                {
+                    "default": 328, 
+                    "define": "ENV_HEAP_SZ", 
+                    "description": "Enviroment structures heap size.", 
+                    "display_name": "Enviroment structures heap size", 
+                    "option_type": "int", 
+                    "type": "env_heap_size"
+                }, 
+                {
+                    "default": 1312, 
+                    "define": "MSG_HEAP_SZ", 
+                    "description": "Message heap size.", 
+                    "display_name": "Message heap size", 
+                    "option_type": "int", 
+                    "type": "msg_heap_size"
+                }, 
+                {
+                    "default": 1024, 
+                    "define": "NON_RET_HEAP_SZ", 
+                    "description": "Non retention heap size.", 
+                    "display_name": "Non retention heap size", 
+                    "option_type": "int", 
+                    "type": "non_ret_heap_size"
+                }, 
+                {
+                    "count": 6, 
+                    "default": [
+                        "00", 
+                        "00", 
+                        "00", 
+                        "00", 
+                        "00", 
+                        "00"
+                    ], 
+                    "define": "CFG_NVDS_TAG_BD_ADDRESS", 
+                    "description": "Default bdaddress. If bdaddress is written in OTP header this value is ignored.", 
+                    "display_name": "Default bluetooth address", 
+                    "option_type": "octets", 
+                    "type": "nvds_bd_address"
+                }, 
+                {
+                    "default": "DRIFT_BLE_DFT", 
+                    "define": "CFG_NVDS_TAG_LPCLK_DRIFT", 
+                    "description": "Low power clock drift.", 
+                    "display_name": "Low power clock drift", 
+                    "option_type": "enum", 
+                    "type": "nvds_lp_clock_drift", 
+                    "values": [
+                        {
+                            "description": "", 
+                            "display_name": "Default", 
+                            "type": "DRIFT_BLE_DFT"
+                        }
+                    ]
+                }, 
+                {
+                    "default": 2000, 
+                    "define": "CFG_NVDS_TAG_BLE_CA_TIMER_DUR", 
+                    "description": "Channel assessment timer duration (Multiple of 10ms).", 
+                    "display_name": "Channel assessment timer duration", 
+                    "option_type": "int", 
+                    "type": "nvds_ca_duration"
+                }, 
+                {
+                    "default": 6, 
+                    "define": "CFG_NVDS_TAG_BLE_CRA_TIMER_DUR", 
+                    "description": "Channel reassessment timer duration (Multiple of CA timer duration).", 
+                    "display_name": "Channel reassessment timer duration", 
+                    "option_type": "int", 
+                    "type": "nvds_cra_duration"
+                }, 
+                {
+                    "default": 64, 
+                    "define": "CFG_NVDS_TAG_BLE_CA_MIN_RSSI", 
+                    "description": "Minimal RSSI threshold.", 
+                    "display_name": "RSSI threshold", 
+                    "option_type": "int", 
+                    "type": "nvds_rssi_threshold"
+                }, 
+                {
+                    "default": 100, 
+                    "define": "CFG_NVDS_TAG_BLE_CA_NB_PKT", 
+                    "description": "Number of packets to receive for statistics.", 
+                    "display_name": "Statistics packets", 
+                    "option_type": "int", 
+                    "type": "nvds_num_stats_packets"
+                }, 
+                {
+                    "default": 50, 
+                    "define": "CFG_NVDS_TAG_BLE_CA_NB_BAD_PKT", 
+                    "description": "Number  of bad packets needed to remove a channel.", 
+                    "display_name": "Bad packets", 
+                    "option_type": "int", 
+                    "type": "nvds_num_bad_packets"
+                }, 
+                {
+                    "default": false, 
+                    "define": "CFG_LOG_MEM_USAGE", 
+                    "description": "Enables the logging of heap memories usage. The feature can be used in development/debug mode. Application must be executed in Keil debugger environment. Developer must stop execution and type disp_memlog in debugger's command window. Heap memory statistics will be displayed on window.", 
+                    "display_name": "Memory usage logging", 
+                    "option_type": "onoff", 
+                    "type": "mem_usage_log"
+                }, 
+                {
+                    "default": false, 
+                    "define": "CFG_WLAN_COEX", 
+                    "description": "Enables WLAN coexistance signalling interface.", 
+                    "display_name": "WLAN coexistance", 
+                    "option_type": "onoff", 
+                    "type": "wlan_coex"
+                }, 
+                {
+                    "default": false, 
+                    "define": "CFG_BLE_METRICS", 
+                    "description": "Enables the BLE statistics measurement feature.", 
+                    "display_name": "BLE metrics", 
+                    "option_type": "onoff", 
+                    "type": "ble_metrics"
+                }, 
+                {
+                    "default": false, 
+                    "define": "CFG_PRODUCTION_DEBUG_OUTPUT", 
+                    "description": "Output the Hardfault arguments to serial/UART interface.", 
+                    "display_name": "Production debug", 
+                    "option_type": "onoff", 
+                    "type": "production_debug"
+                }, 
+                {
+                    "default": false, 
+                    "define": "CFG_READ_BDADDR_FROM_DA14583_FLASH", 
+                    "description": "Used in DA14583. Enables reading the bdaddress from internal SPI flash.", 
+                    "display_name": "DA14583 Bluetooth address", 
+                    "option_type": "onoff", 
+                    "type": "da14583_bdaddr_read"
+                }
+            ], 
+            "type": "advanced_config"
+        }
+    ], 
+    "schema_version": 1, 
+    "sdk_paths": [
+        {
+            "path": "C:/Users/artpap/Desktop/DA1458x_SDK/5.0.3.268", 
+            "platform": "win"
+        }, 
+        {
+            "path": "/Users/kwf/projects/p2470/vocoder/SDKs/5.0.2.1", 
+            "platform": "mac"
+        }, 
+        {
+            "path": "/opt/DialogSemiconductor/5.0.2.1", 
+            "platform": "lin"
+        }
+    ], 
+    "version": "0.0.0"
+}

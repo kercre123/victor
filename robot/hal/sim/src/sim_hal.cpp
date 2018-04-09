@@ -155,6 +155,8 @@ namespace Anki {
       // Lights
       webots::LED* leds_[NUM_BACKPACK_LEDS] = {0};
 
+      webots::LED* sysLed_ = nullptr;
+      
       // Simulated Battery
       webots::Field *batteryVoltsField_ = nullptr;
       const webots::Field *batteryChargeRateField_ = nullptr;
@@ -421,6 +423,8 @@ namespace Anki {
       leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("backpackLED2");
       leds_[LED_BACKPACK_BACK] = webotRobot_.getLED("backpackLED3");
 
+      sysLed_ = webotRobot_.getLED("backpackLED0");
+
       // Simulated Battery
       batteryVoltsField_ = webotRobot_.getSelf()->getField("batteryVolts");
       DEV_ASSERT(batteryVoltsField_ != nullptr, "simHAL.Init.MissingBatteryVoltsField");
@@ -448,6 +452,11 @@ namespace Anki {
       return RESULT_OK;
 
     } // Init()
+
+    void HAL::Stop()
+    {
+      
+    }
 
     void HAL::Destroy()
     {
@@ -771,6 +780,18 @@ namespace Anki {
       }
     }
 
+    void HAL::SetSystemLED(u32 color)
+    {
+      if(sysLed_ != nullptr)
+      {
+        sysLed_->set(color >> 8);
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("simHAL.SetSystemLED.Nullptr", "");
+      }
+    }
+
     u32 HAL::GetID()
     {
       return robotID_;
@@ -868,7 +889,7 @@ namespace Anki {
 
     f32 HAL::BatteryGetVoltage()
     {
-      return 5;
+      return batteryVoltsField_->getSFFloat();
     }
 
     bool HAL::BatteryIsCharging()
@@ -895,5 +916,9 @@ namespace Anki {
       return 0; // Simulator never watchdogs
     }
 
+    void HAL::Shutdown()
+    {
+
+    }    
   } // namespace Cozmo
 } // namespace Anki

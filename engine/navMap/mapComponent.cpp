@@ -320,33 +320,17 @@ void MapComponent::UpdateRobotPose()
   if ( addAgain )
   {
     TimeStamp_t currentTimestamp = _robot->GetLastMsgTimestamp();
-    // cliff quad: clear or cliff
-    {
-      // TODO configure this size somethere else
-      Point3f cliffSize = MarkerlessObject(ObjectType::CliffDetection).GetSize() * 0.5f;
-      Quad3f cliffquad {
-        {+cliffSize.x(), +cliffSize.y(), cliffSize.z()},  // up L
-        {-cliffSize.x(), +cliffSize.y(), cliffSize.z()},  // lo L
-        {+cliffSize.x(), -cliffSize.y(), cliffSize.z()},  // up R
-        {-cliffSize.x(), -cliffSize.y(), cliffSize.z()}}; // lo R
-      robotPoseWrtOrigin.ApplyTo(cliffquad, cliffquad);
 
-      // depending on cliff on/off, add as ClearOfCliff or as Cliff
-      if ( _robot->GetCliffSensorComponent().IsCliffDetected() )
-      {
-        // since we don't know which sensor detected the cliff, we can't approximiate it's location, so just throw
-        // it at the robot's origin.
-        // note: could assume most cliffs are detected by the forward sensors and push the cliff forward, but
-        //       it would be wrong in the cases when detected by the rear sensors.
-        MemoryMapData_Cliff cliffData(robotPoseWrtOrigin, currentTimestamp);
-        InsertData(Poly2f((Quad2f) cliffquad), cliffData);
-        
-      }
-      else
-      {
-        InsertData(Poly2f((Quad2f)cliffquad), MemoryMapData(EContentType::ClearOfCliff, currentTimestamp));
-      }
-    }
+    // robot quad relative to cliff sensor positions
+    Quad2f robotSensorQuad {
+      {kCliffSensorXOffsetFront_mm, +kCliffSensorYOffset_mm},  // up L
+      {kCliffSensorXOffsetFront_mm, -kCliffSensorYOffset_mm},  // up R
+      {kCliffSensorXOffsetRear_mm,  -kCliffSensorYOffset_mm},  // lo R
+      {kCliffSensorXOffsetRear_mm,  +kCliffSensorYOffset_mm}}; // lo L
+
+    ((Pose2d) robotPoseWrtOrigin).ApplyTo(robotSensorQuad, robotSensorQuad);
+    InsertData(Poly2f(robotSensorQuad), MemoryMapData(EContentType::ClearOfCliff, currentTimestamp));
+
 
     const Quad2f& robotQuad = _robot->GetBoundingQuadXY(robotPoseWrtOrigin);
 

@@ -91,7 +91,7 @@ bool TcpServer::StartListening(const unsigned short port)
     DEBUG_TCP_SERVER("TcpServer: Unable to set SO_REUSEADDR, errno=" << strerror(errno));
   }
   
-  #if defined(LINUX) || defined(ANDROID)
+  #if defined(LINUX) || defined(ANDROID) || defined(VICOS)
   // No SO_NOSIGPIPE available on these platforms - handled with MSG_NOSIGNAL flag on send instead
   #else
   // don't generate a SIGPIPE exception for writing to a closed socket

@@ -16,5 +16,7 @@ source ${GIT_PROJ_ROOT}/project/victor/scripts/victor_env.sh
 
 source ${GIT_PROJ_ROOT}/project/victor/scripts/host_robot_ip_override.sh
 
+robot_set_host
+
 robot_sh rm -rf /data/data/com.anki.victor
 robot_sh rm -rf /anki

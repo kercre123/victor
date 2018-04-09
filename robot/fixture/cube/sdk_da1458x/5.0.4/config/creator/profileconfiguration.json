@@ -1,0 +1,4195 @@
+{
+    "uuidTypes": {
+        "values": [
+            {
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$", 
+                "description": "Example: 01234567-89AB-CDEF-0123-456789ABCDEF", 
+                "type": "uuid128", 
+                "pattern_message": "UUID must be 128 bits long and match pattern, see example.", 
+                "display_name": "128 Bit"
+            }, 
+            {
+                "pattern": "^[a-fA-F0-9]{8}$", 
+                "description": "Example: 89ABCDEF", 
+                "type": "uuid32", 
+                "pattern_message": "UUID must be 32 bits long and match pattern, see example.", 
+                "display_name": "32 Bit"
+            }, 
+            {
+                "pattern": "^[a-fA-F0-9]{4}$", 
+                "description": "Example: 89AB", 
+                "type": "uuid16", 
+                "pattern_message": "UUID must be 16 bits long and match pattern, see example.", 
+                "display_name": "16 Bit"
+            }
+        ], 
+        "display_name": "UUID bit size", 
+        "description": "The total number of bits allowable for this UUID.", 
+        "type": "uuid128"
+    }, 
+    "serviceTypes": {
+        "values": [
+            {
+                "display_name": "Primary", 
+                "type": "primary", 
+                "description": "Primary type."
+            }, 
+            {
+                "display_name": "Secondary", 
+                "type": "secondary", 
+                "description": "Secondary type."
+            }
+        ], 
+        "display_name": "Service type", 
+        "description": "The type of this service.", 
+        "type": "primary"
+    }, 
+    "maximum_custom_services": 2, 
+    "descriptors": {
+        "client_configuration": {
+            "type": 0,
+            "property": "client_configuration", 
+            "namespace": "org.bluetooth.descriptor.gatt.client_characteristic_configuration", 
+            "description": "The Client Characteristic Configuration descriptor defines how the characteristic may be configured by a specific client.", 
+            "name": "Client Configuration", 
+            "uuid": "2902"
+        }, 
+        "server_configuration": {
+            "type": 0,
+            "property": "server_configuration", 
+            "namespace": "org.bluetooth.descriptor.gatt.server_characteristic_configuration", 
+            "description": "The Server Characteristic Configuration descriptor defines how the characteristic descriptor is associated with may be configured for the server.", 
+            "name": "Server Configuration", 
+            "uuid": "2903"
+        }, 
+        "user_description": {
+            "uuid": "2901", 
+            "text": "", 
+            "namespace": "org.bluetooth.descriptor.gatt.characteristic_user_description", 
+            "name": "User Description", 
+            "property": "user_description", 
+            "description": "If the Writable Auxiliary bit of the Characteristics Properties is set then this descriptor is written."
+        }, 
+        "aggregate_format": {
+            "uuid": "2905", 
+            "namespace": "org.bluetooth.descriptor.gatt.characteristic_aggregate_format", 
+            "name": "Aggregate Format", 
+            "formats": [], 
+            "property": "aggregate_format", 
+            "description": "The Characteristic Aggregate Format declaration is an optional characteristic descriptor that defines the format of an aggregated Characteristic Value. A list of the presentation format identifiers that make up the aggregate."
+        }, 
+        "valid_range": {
+            "uuid": "2906", 
+            "namespace": "org.bluetooth.descriptor.valid_range", 
+            "name": "Valid Range", 
+            "range": {}, 
+            "property": "valid_range", 
+            "description": "The Valid Range descriptor is an optional characteristic descriptor that defines the minimum and maximum bounds of the characteristic value. If the value as a exponent attached, the exponent also applies to the range values."
+        }, 
+        "presentation_formats": {
+            "uuid": "2904", 
+            "namespace": "org.bluetooth.descriptor.gatt.characteristic_presentation_format", 
+            "name": "Presentation Formats", 
+            "formats": [], 
+            "property": "presentation_formats", 
+            "description": "A list of presentation format descriptors used for this characteristic."
+        }, 
+        "extended_properties": {
+            "uuid": "2900", 
+            "description": "Extended characteristic properties.", 
+            "namespace": "org.bluetooth.descriptor.gatt.characteristic_extended_properties", 
+            "property": "extended_properties", 
+            "properties": [], 
+            "name": "Extended Properties"
+        }
+    }, 
+    "sigProfileByName": {
+        "org.bluetooth.profile.cycling_power": {
+            "name": "Cycling Power", 
+            "roles": [
+                {
+                    "services": [
+                        "org.bluetooth.service.cycling_power"
+                    ], 
+                    "type": "cp_sensor", 
+                    "display_name": "CP Sensor", 
+                    "description": ""
+                }, 
+                {
+                    "services": [
+                        "org.bluetooth.service.cycling_power"
+                    ], 
+                    "type": "collector", 
+                    "display_name": "Collector", 
+                    "description": ""
+                }
+            ], 
+            "description": "The Cycling Power Profile is used to enable a data collection device to obtain data from a Cycling Power Sensor (CP Sensor) that exposes the Cycling Power Service ."
+        }, 
+        "org.bluetooth.profile.glucose": {
+            "name": "Glucose", 
+            "roles": [
+                {
+                    "services": [
+                        "org.bluetooth.service.glucose", 
+                        "org.bluetooth.service.device_information"
+                    ], 
+                    "display_name": "Glucose Sensor", 
+                    "type": "glucose_sensor", 
+                    "description": ""
+                }, 
+                {
+                    "services": [
+                        "org.bluetooth.service.glucose", 
+                        "org.bluetooth.service.device_information"
+                    ], 
+                    "display_name": "Collector", 
+                    "type": "collector", 
+                    "description": ""
+                }
+            ], 
+            "description": "The Glucose Profile is used to enable a device to obtain glucose measurement and other data from a Glucose Sensor that exposes the Glucose Service."
+        }, 
+        "org.bluetooth.profile.heart_rate": {
+            "name": "Heart Rate", 
+            "roles": [
+                {
+                    "services": [
+                        "org.bluetooth.service.heart_rate", 
+                        "org.bluetooth.service.device_information"
+                    ], 
+                    "display_name": "Heart Rate Sensor", 
+                    "type": "heart_rate_sensor", 
+                    "description": ""
+                }, 
+                {
+                    "services": [
+                        "org.bluetooth.service.heart_rate", 
+                        "org.bluetooth.service.device_information"
+                    ], 
+                    "display_name": "Collector", 
+                    "type": "collector", 
+                    "description": ""
+                }
+            ], 
+            "description": "The Heart Rate Profile is used to enable a data collection device to obtain data from a Heart Rate Sensor that exposes the Heart Rate Service."
+        }, 
+        "org.bluetooth.profile.health_thermometer": {
+            "name": "Health Thermometer", 
+            "roles": [
+                {
+                    "services": [
+                        "org.bluetooth.service.health_thermometer", 
+                        "org.bluetooth.service.device_information"
+                    ], 
+                    "type": "thermometer", 
+                    "display_name": "Thermometer", 
+                    "description": ""
+                }, 
+                {
+                    "services": [
+                        "org.bluetooth.service.health_thermometer", 
+                        "org.bluetooth.service.device_information"
+                    ], 
+                    "type": "collector", 
+                    "display_name": "Collector", 
+                    "description": ""
+                }
+            ], 
+            "description": "The Health Thermometer Profile is used to enable a data collection device to obtain data from a thermometer sensor that exposes the Health Thermometer Service."
+        }, 
+        "org.bluetooth.profile.running_speed_and_cadence": {
+            "name": "Running Speed and Cadence", 
+            "roles": [
+                {
+                    "services": [
+                        "org.bluetooth.service.running_speed_and_cadence", 
+                        "org.bluetooth.service.device_information"
+                    ], 
+                    "type": "rsc_sensor_", 
+                    "display_name": "RSC Sensor ", 
+                    "description": ""
+                }, 
+                {
+                    "services": [
+                        "org.bluetooth.service.running_speed_and_cadence", 
+                        "org.bluetooth.service.device_information"
+                    ], 
+                    "type": "collector", 
+                    "display_name": "Collector", 
+                    "description": ""
+                }
+            ], 
+            "description": "The Running Speed and Cadence Profile is used to enable a data collection device to obtain data from a Runners Speed and Cadence Sensor (RSC Sensor) that exposes the Speed and Cadence Service."
+        }, 
+        "org.bluetooth.profile.find_me": {
+            "name": "Find Me", 
+            "roles": [
+                {
+                    "services": [
+                        "org.bluetooth.service.immediate_alert"
+                    ], 
+                    "type": "find_me_target", 
+                    "display_name": "Find Me Target", 
+                    "description": ""
+                }, 
+                {
+                    "services": [
+                        "org.bluetooth.service.immediate_alert"
+                    ], 
+                    "type": "find_me_locator", 
+                    "display_name": "Find Me Locator", 
+                    "description": ""
+                }
+            ], 
+            "description": "The Find Me profile defines the behavior when a button is pressed on a device to cause an immediate alert on a peer device. This can be used to allow users to find devices that have been misplaced."
+        }, 
+        "org.bluetooth.profile.phone_alert_status": {
+            "name": "Phone Alert Status", 
+            "roles": [
+                {
+                    "services": [
+                        "org.bluetooth.service.phone_alert_status"
+                    ], 
+                    "display_name": "Phone Alert", 
+                    "type": "phone_alert", 
+                    "description": ""
+                }, 
+                {
+                    "services": [
+                        "org.bluetooth.service.phone_alert_status"
+                    ], 
+                    "display_name": "Phone Alert Client", 
+                    "type": "phone_alert_client", 
+                    "description": ""
+                }
+            ], 
+            "description": "The Phone Alert Status profile is used to obtain the Phone Alert Status exposed by the Phone Alert Status service in the peer device. The information of Alert Status and Ringer Setting of a phone can be received and changed by the Phone Alert Status service. This profile also enables the device to configure ringer status on the peer device."
+        }, 
+        "org.bluetooth.profile.location_and_navigation": {
+            "name": "Location and Navigation", 
+            "roles": [
+                {
+                    "services": [
+                        "org.bluetooth.service.location_and_navigation"
+                    ], 
+                    "type": "ln_sensor", 
+                    "display_name": "LN Sensor", 
+                    "description": ""
+                }, 
+                {
+                    "services": [
+                        "org.bluetooth.service.location_and_navigation"
+                    ], 
+                    "type": "collector", 
+                    "display_name": "Collector", 
+                    "description": ""
+                }
+            ], 
+            "description": "The Location and Navigation Profile is used to enable a Collector to interact with a Location and Navigation Sensor (LN Sensor) that exposes the Location and Navigation Service for use in outdoor activity applications."
+        }, 
+        "org.bluetooth.profile.alert_notification": {
+            "name": "Alert Notification", 
+            "roles": [
+                {
+                    "services": [
+                        "org.bluetooth.service.alert_notification"
+                    ], 
+                    "type": "alert_notification_server", 
+                    "display_name": "Alert Notification Server", 
+                    "description": ""
+                }, 
+                {
+                    "services": [
+                        "org.bluetooth.service.alert_notification"
+                    ], 
+                    "type": "alert_notification_client", 
+                    "display_name": "Alert Notification Client", 
+                    "description": ""
+                }
+            ], 
+            "description": "The Alert Notification profile allows a device like a watch to obtain information from a cellphone about incoming calls, missed calls and SMS/MMS messages. The information may include the caller ID for an incoming call or the sender's ID for email/SMS/MMS but not the message. This profile also enables the client device to get information about the number of unread messages on the server device."
+        }, 
+        "org.bluetooth.profile.cycling_speed_and_cadence": {
+            "name": "Cycling Speed and Cadence", 
+            "roles": [
+                {
+                    "services": [
+                        "org.bluetooth.service.cycling_speed_and_cadence", 
+                        "org.bluetooth.service.device_information"
+                    ], 
+                    "display_name": "CSC Sensor", 
+                    "type": "csc_sensor", 
+                    "description": ""
+                }, 
+                {
+                    "services": [
+                        "org.bluetooth.service.cycling_speed_and_cadence", 
+                        "org.bluetooth.service.device_information"
+                    ], 
+                    "display_name": "Collector", 
+                    "type": "collector", 
+                    "description": ""
+                }
+            ], 
+            "description": "The Cycling Speed and Cadence Profile is used to enable a data collection device to obtain data from a Cycling Speed and Cadence Sensor (CSC Sensor) that exposes the Cycling Speed and Cadence Service."
+        }, 
+        "org.bluetooth.profile.blood_pressure": {
+            "name": "Blood Pressure", 
+            "roles": [
+                {
+                    "services": [
+                        "org.bluetooth.service.blood_pressure", 
+                        "org.bluetooth.service.device_information"
+                    ], 
+                    "display_name": "Blood Pressure Sensor", 
+                    "type": "blood_pressure_sensor", 
+                    "description": ""
+                }, 
+                {
+                    "services": [
+                        "org.bluetooth.service.blood_pressure", 
+                        "org.bluetooth.service.device_information"
+                    ], 
+                    "display_name": "Collector", 
+                    "type": "collector", 
+                    "description": ""
+                }
+            ], 
+            "description": "The Blood Pressure Profile is used to enable a device to obtain blood pressure measurement and other data from a non-invasive blood pressure sensor that exposes the Blood Pressure Service."
+        }, 
+        "org.bluetooth.profile.scan_parameters": {
+            "name": "Scan Parameters", 
+            "roles": [
+                {
+                    "services": [
+                        "org.bluetooth.service.scan_parameters"
+                    ], 
+                    "display_name": "Scan Server", 
+                    "type": "scan_server", 
+                    "description": ""
+                }, 
+                {
+                    "services": [
+                        "org.bluetooth.service.scan_parameters"
+                    ], 
+                    "display_name": "Scan Client", 
+                    "type": "scan_client", 
+                    "description": ""
+                }
+            ], 
+            "description": "The Scan Parameters Profile is used to provide devices with information to assist them in managing their connection idle timeout and advertising parameters to optimize for power consumption and/or reconnection latency."
+        }
+    }, 
+    "sdkServices": [
+        {
+            "define": "amps.h", 
+            "display_name": "Alert Notification Service", 
+            "description": "The Alert Notification service exposes alert information in a device.", 
+            "name": "org.bluetooth.service.alert_notification", 
+            "sdkservice": true
+        }, 
+        {
+            "define": "bass.h", 
+            "display_name": "Battery Service Server", 
+            "description": "The Battery Service exposes the state of a battery within a device.", 
+            "name": "org.bluetooth.service.battery_service", 
+            "sdkservice": true
+        },
+        {
+            "define": "blps.h", 
+            "display_name": "Blood Pressure", 
+            "description": "This service exposes blood pressure and other data from a blood pressure monitor intended for healthcare applications.", 
+            "name": "org.bluetooth.service.blood_pressure", 
+            "sdkservice": true
+        },
+        {
+            "define": "diss.h", 
+            "display_name": "Device Information Service Server", 
+            "description": "The Device Information Service exposes manufacturer and/or vendor information about a device.", 
+            "name": "org.bluetooth.service.device_information", 
+            "sdkservice": true
+        }, 
+        {
+            "define": "findt.h", 
+            "display_name": "Immediate Alert", 
+            "description": "This service exposes a control point to allow a peer device to cause the device to immediately alert.", 
+            "name": "org.bluetooth.service.immediate_alert", 
+            "sdkservice": true
+        }, 
+        {
+            "define": "hrps.h", 
+            "display_name": "Heart Rate Sensor", 
+            "description": "Heart Rate Sensor is used to enable a data collection device to obtain data from a Heart Rate Sensor.", 
+            "name": "org.bluetooth.service.heart_rate", 
+            "sdkservice": true
+        }, 
+        {
+            "define": "htpt.h", 
+            "display_name": "Health Thermometer", 
+            "description": "Health Thermometer is used to enable a data collection device to obtain data from a thermometer sensor.", 
+            "name": "org.bluetooth.service.health_thermometer", 
+            "sdkservice": true
+        }, 
+        {
+            "define": "pasps.h", 
+            "display_name": "Phone Alert Status", 
+            "description": "Phone Alert Status is used to obtain the Phone Alert Status in the peer device.", 
+            "name": "org.bluetooth.service.phone_alert_status", 
+            "sdkservice": true
+        }, 
+        {
+            "define": "scpps.h", 
+            "display_name": "Scan Parameters", 
+            "description": "Scan Parameters is used to provide devices with information to assist them in managing their connection idle timeout and advertising parameters to optimize for power consumption and/or reconnection latency.", 
+            "name": "org.bluetooth.service.scan_parameters", 
+            "sdkservice": true
+        }, 
+        {
+            "define": "udss.h", 
+            "display_name": "User Data", 
+            "description": "This service exposes user-related data in the sports and fitness environment. This allows remote access and update of user data by a Client as well as the synchronization of user data between a Server and a Client.", 
+            "name": "org.bluetooth.service.user_data", 
+            "sdkservice": true
+        }, 
+        {
+            "define": "wsss.h", 
+            "display_name": "Weight Scale", 
+            "description": "This service exposes weight and related data from a weight scale intended for consumer healthcare and sports/fitness applications.", 
+            "name": "org.bluetooth.service.weight_scale", 
+            "sdkservice": true
+        } 
+    ], 
+    "presentationFormats": {
+        "values": [
+            {
+                "display_name": "Boolean", 
+                "type": "BOOL"
+            }, 
+            {
+                "display_name": "Unsigned 2-bit integer", 
+                "type": "2BIT"
+            }, 
+            {
+                "display_name": "Unsigned 4-bit integer", 
+                "type": "NIBBLE"
+            }, 
+            {
+                "display_name": "Unsigned 8-bit integer", 
+                "type": "UINT8"
+            }, 
+            {
+                "display_name": "Unsigned 12-bit integer", 
+                "type": "UINT12"
+            }, 
+            {
+                "display_name": "Unsigned 16-bit integer", 
+                "type": "UINT16"
+            }, 
+            {
+                "display_name": "Unsigned 24-bit integer", 
+                "type": "UINT24"
+            }, 
+            {
+                "display_name": "Unsigned 32-bit integer", 
+                "type": "UINT32"
+            }, 
+            {
+                "display_name": "Unsigned 48-bit integer", 
+                "type": "UINT48"
+            }, 
+            {
+                "display_name": "Unsigned 64-bit integer", 
+                "type": "UINT64"
+            }, 
+            {
+                "display_name": "Unsigned 128-bit integer", 
+                "type": "UINT128"
+            }, 
+            {
+                "display_name": "Signed 8-bit integer", 
+                "type": "SINT8"
+            }, 
+            {
+                "display_name": "Signed 12-bit integer", 
+                "type": "SINT12"
+            }, 
+            {
+                "display_name": "Signed 16-bit integer", 
+                "type": "SINT16"
+            }, 
+            {
+                "display_name": "Signed 24-bit integer", 
+                "type": "SINT24"
+            }, 
+            {
+                "display_name": "Signed 32-bit integer", 
+                "type": "SINT32"
+            }, 
+            {
+                "display_name": "Signed 48-bit integer", 
+                "type": "SINT48"
+            }, 
+            {
+                "display_name": "Signed 64-bit integer", 
+                "type": "SINT64"
+            }, 
+            {
+                "display_name": "Signed 128-bit integer", 
+                "type": "SINT128"
+            }, 
+            {
+                "display_name": "IEEE-754 32-bit floating point", 
+                "type": "FLOAT32"
+            }, 
+            {
+                "display_name": "IEEE-754 64-bit floating point", 
+                "type": "FLOAT64"
+            }, 
+            {
+                "display_name": "IEEE-11073 16-bit SFLOAT", 
+                "type": "SFLOAT"
+            }, 
+            {
+                "display_name": "IEEE-11073 32-bit FLOAT", 
+                "type": "FLOAT"
+            }, 
+            {
+                "display_name": "IEEE-20601 format", 
+                "type": "DUINT16"
+            }, 
+            {
+                "display_name": "UTF-8 string", 
+                "type": "UTF8S"
+            }, 
+            {
+                "display_name": "UTF-16 string", 
+                "type": "UTF16S"
+            }, 
+            {
+                "display_name": "Opaque Structure", 
+                "type": "STRUCT"
+            }
+        ], 
+        "display_name": "Presentation formats"
+    }, 
+    "serviceCategories": [
+        {
+            "type": "", 
+            "display_name": "All Categories"
+        }, 
+        {
+            "type": "Category 1", 
+            "display_name": "First Category"
+        }, 
+        {
+            "type": "Category 2", 
+            "display_name": "Second Category"
+        }
+    ], 
+    "characteristicsByName": {
+        "org.bluetooth.characteristic.first_name": {
+            "uuid": "2A8A", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.first_name", 
+            "cidentifier": "first_name", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "First Name"
+        }, 
+        "org.bluetooth.characteristic.scan_refresh": {
+            "client_configuration": 0, 
+            "uuid": "2A31", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.scan_refresh", 
+            "cidentifier": "scan_refresh", 
+            "value": 0, 
+            "properties": [
+                "NOTIFY"
+            ], 
+            "name": "Scan Refresh"
+        }, 
+        "org.bluetooth.characteristic.time_with_dst": {
+            "uuid": "2A11", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.time_with_dst", 
+            "cidentifier": "time_with_dst", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Time with DST"
+        }, 
+        "org.bluetooth.characteristic.scan_interval_window": {
+            "uuid": "2A4F", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.scan_interval_window", 
+            "cidentifier": "scan_interval_window", 
+            "value": 0, 
+            "properties": [
+                "WRITEWITHOUTRESPONSE"
+            ], 
+            "name": "Scan Interval Window"
+        }, 
+        "org.bluetooth.characteristic.two_zone_heart_rate_limit": {
+            "uuid": "2A95", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.two_zone_heart_rate_limit", 
+            "cidentifier": "two_zone_heart_rate_limit", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Two Zone Heart Rate Limit"
+        }, 
+        "org.bluetooth.characteristic.manufacturer_name_string": {
+            "uuid": "2A29", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.manufacturer_name_string", 
+            "cidentifier": "manufacturer_name_string", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Manufacturer Name String"
+        }, 
+        "org.bluetooth.characteristic.cgm_status": {
+            "uuid": "2AA9", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.cgm_status", 
+            "cidentifier": "cgm_status", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "CGM Status"
+        }, 
+        "org.bluetooth.characteristic.cycling_power_feature": {
+            "uuid": "2A65", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.cycling_power_feature", 
+            "cidentifier": "cycling_power_feature", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Cycling Power Feature"
+        }, 
+        "org.bluetooth.characteristic.plx_spot_check_measurement": {
+            "client_configuration": 0, 
+            "uuid": "2A5E", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.plx_spot_check_measurement", 
+            "cidentifier": "plx_spot_check_measurement", 
+            "value": 0, 
+            "properties": [
+                "INDICATE"
+            ], 
+            "name": "PLX Spot-Check Measurement"
+        }, 
+        "org.bluetooth.characteristic.http_status_code": {
+            "uuid": "2AB8", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.http_status_code", 
+            "cidentifier": "http_status_code", 
+            "value": 0, 
+            "properties": [
+                "NOTIFY"
+            ], 
+            "name": "HTTP Status Code"
+        }, 
+        "org.bluetooth.characteristic.gap.peripheral_preferred_connection_parameters": {
+            "uuid": "2A04", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.gap.peripheral_preferred_connection_parameters", 
+            "cidentifier": "peripheral_preferred_connection_parameters", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Peripheral Preferred Connection Parameters"
+        }, 
+        "org.bluetooth.characteristic.body_sensor_location": {
+            "uuid": "2A38", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.body_sensor_location", 
+            "cidentifier": "body_sensor_location", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Body Sensor Location"
+        }, 
+        "org.bluetooth.characteristic.time_update_state": {
+            "uuid": "2A17", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.time_update_state", 
+            "cidentifier": "time_update_state", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Time Update State"
+        }, 
+        "org.bluetooth.characteristic.alert_level": {
+            "uuid": "2A06", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.alert_level", 
+            "cidentifier": "alert_level", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Alert Level"
+        }, 
+        "org.bluetooth.characteristic.ln_feature": {
+            "uuid": "2A6A", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.ln_feature", 
+            "cidentifier": "ln_feature", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "LN Feature"
+        }, 
+        "org.bluetooth.characteristic.hip_circumference": {
+            "uuid": "2A8F", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.hip_circumference", 
+            "cidentifier": "hip_circumference", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Hip Circumference"
+        }, 
+        "org.bluetooth.characteristic.battery_level": {
+            "client_configuration": 0, 
+            "uuid": "2A19", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.battery_level", 
+            "cidentifier": "battery_level", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "presentation_formats": [], 
+            "name": "Battery Level"
+        }, 
+        "org.bluetooth.characteristic.pnp_id": {
+            "uuid": "2A50", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.pnp_id", 
+            "cidentifier": "pnp_id", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "PnP ID"
+        }, 
+        "org.bluetooth.characteristic.plx_continuous_measurement": {
+            "client_configuration": 0, 
+            "uuid": "2A5F", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.plx_continuous_measurement", 
+            "cidentifier": "plx_continuous_measurement_characteristic", 
+            "value": 0, 
+            "properties": [
+                "NOTIFY"
+            ], 
+            "name": "PLX Continuous Measurement Characteristic"
+        }, 
+        "org.bluetooth.characteristic.anaerobic_threshold": {
+            "uuid": "2A83", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.anaerobic_threshold", 
+            "cidentifier": "anaerobic_threshold", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Anaerobic Threshold"
+        }, 
+        "org.bluetooth.characteristic.csc_measurement": {
+            "client_configuration": 0, 
+            "uuid": "2A5B", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.csc_measurement", 
+            "cidentifier": "csc_measurement", 
+            "value": 0, 
+            "properties": [
+                "NOTIFY"
+            ], 
+            "name": "CSC Measurement"
+        }, 
+        "org.bluetooth.characteristic.http_headers": {
+            "uuid": "2AB7", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.http_headers", 
+            "cidentifier": "http_headers", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "HTTP Headers"
+        }, 
+        "org.bluetooth.characteristic.local_time_information": {
+            "uuid": "2A0F", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.local_time_information", 
+            "cidentifier": "local_time_information", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Local Time Information"
+        }, 
+        "org.bluetooth.characteristic.five_zone_heart_rate_limits": {
+            "uuid": "2A8B", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.five_zone_heart_rate_limits", 
+            "cidentifier": "five_zone_heart_rate_limits", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Five Zone Heart Rate Limits"
+        }, 
+        "org.bluetooth.characteristic.anaerobic_heart_rate_upper_limit": {
+            "uuid": "2A82", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.anaerobic_heart_rate_upper_limit", 
+            "cidentifier": "anaerobic_heart_rate_upper_limit", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Anaerobic Heart Rate Upper Limit"
+        }, 
+        "org.bluetooth.characteristic.serial_number_string": {
+            "uuid": "2A25", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.serial_number_string", 
+            "cidentifier": "serial_number_string", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Serial Number String"
+        }, 
+        "org.bluetooth.characteristic.current_time": {
+            "client_configuration": 0, 
+            "uuid": "2A2B", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.current_time", 
+            "cidentifier": "current_time", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "NOTIFY"
+            ], 
+            "name": "Current Time"
+        }, 
+        "org.bluetooth.characteristic.object_action_control_point": {
+            "uuid": "2AC5", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.object_action_control_point", 
+            "cidentifier": "object_action_control_point", 
+            "value": 0, 
+            "properties": [
+                "WRITE", 
+                "INDICATE"
+            ], 
+            "name": "Object Action Control Point"
+        }, 
+        "org.bluetooth.characteristic.weight_scale_feature": {
+            "uuid": "2A9E", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.weight_scale_feature", 
+            "cidentifier": "weight_scale_feature", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Weight Scale Feature"
+        }, 
+        "org.bluetooth.characteristic.https_security": {
+            "uuid": "2ABB", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.https_security", 
+            "cidentifier": "https_security", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "HTTPS Security"
+        }, 
+        "org.bluetooth.characteristic.temperature_measurement": {
+            "client_configuration": 0, 
+            "uuid": "2A1C", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.temperature_measurement", 
+            "cidentifier": "temperature_measurement", 
+            "value": 0, 
+            "properties": [
+                "INDICATE"
+            ], 
+            "name": "Temperature Measurement"
+        }, 
+        "org.bluetooth.characteristic.ringer_setting": {
+            "client_configuration": 0, 
+            "uuid": "2A41", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.ringer_setting", 
+            "cidentifier": "ringer_setting", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "NOTIFY"
+            ], 
+            "name": "Ringer Setting"
+        }, 
+        "org.bluetooth.characteristic.gap.appearance": {
+            "uuid": "2A01", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.gap.appearance", 
+            "cidentifier": "appearance", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Appearance"
+        }, 
+        "org.bluetooth.characteristic.aerobic_threshold": {
+            "uuid": "2A7F", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.aerobic_threshold", 
+            "cidentifier": "aerobic_threshold", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Aerobic Threshold"
+        }, 
+        "org.bluetooth.characteristic.cycling_power_vector": {
+            "client_configuration": 0, 
+            "uuid": "2A64", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.cycling_power_vector", 
+            "cidentifier": "cycling_power_vector", 
+            "value": 0, 
+            "properties": [
+                "NOTIFY"
+            ], 
+            "name": "Cycling Power Vector"
+        }, 
+        "org.bluetooth.characteristic.alert_status": {
+            "client_configuration": 0, 
+            "uuid": "2A3F", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.alert_status", 
+            "cidentifier": "alert_status", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "NOTIFY"
+            ], 
+            "name": "Alert Status"
+        }, 
+        "org.bluetooth.characteristic.uri": {
+            "uuid": "2AB6", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.uri", 
+            "cidentifier": "uri", 
+            "value": 0, 
+            "properties": [
+                "WRITE"
+            ], 
+            "name": "URI"
+        }, 
+        "org.bluetooth.characteristic.unread_alert_status": {
+            "client_configuration": 0, 
+            "uuid": "2A45", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.unread_alert_status", 
+            "cidentifier": "unread_alert_status", 
+            "value": 0, 
+            "properties": [
+                "NOTIFY"
+            ], 
+            "name": "Unread Alert Status"
+        }, 
+        "org.bluetooth.characteristic.tds_control_point": {
+            "client_configuration": 0, 
+            "uuid": "2ABC", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.tds_control_point", 
+            "cidentifier": "tds_control_point", 
+            "value": 0, 
+            "properties": [
+                "WRITE", 
+                "INDICATE"
+            ], 
+            "name": "TDS Control Point"
+        }, 
+        "org.bluetooth.characteristic.resting_heart_rate": {
+            "uuid": "2A92", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.resting_heart_rate", 
+            "cidentifier": "resting_heart_rate", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Resting Heart Rate"
+        }, 
+        "org.bluetooth.characteristic.tx_power_level": {
+            "uuid": "2A07", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.tx_power_level", 
+            "cidentifier": "tx_power_level", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Tx Power Level"
+        }, 
+        "org.bluetooth.characteristic.object_list_filter": {
+            "uuid": "2AC7", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.object_list_filter", 
+            "cidentifier": "object_list_filter", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Object List Filter"
+        }, 
+        "org.bluetooth.characteristic.csc_feature": {
+            "uuid": "2A5C", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.csc_feature", 
+            "cidentifier": "csc_feature", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "CSC Feature"
+        }, 
+        "org.bluetooth.characteristic.cgm_session_run_time": {
+            "uuid": "2AAB", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.cgm_session_run_time", 
+            "cidentifier": "cgm_session_run_time", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "CGM Session Run Time"
+        }, 
+        "org.bluetooth.characteristic.gap.peripheral_privacy_flag": {
+            "uuid": "2A02", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.gap.peripheral_privacy_flag", 
+            "cidentifier": "peripheral_privacy_flag", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Peripheral Privacy Flag"
+        }, 
+        "org.bluetooth.characteristic.bond_management_control_point": {
+            "uuid": "2AA4", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.bond_management_control_point", 
+            "cidentifier": "bond_management_control_point", 
+            "value": 0, 
+            "properties": [
+                "WRITE"
+            ], 
+            "name": "Bond Management Control Point"
+        }, 
+        "org.bluetooth.characteristic.heart_rate_max": {
+            "uuid": "2A8D", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.heart_rate_max", 
+            "cidentifier": "heart_rate_max", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Heart Rate Max"
+        }, 
+        "org.bluetooth.characteristic.age": {
+            "uuid": "2A80", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.age", 
+            "cidentifier": "age", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Age"
+        }, 
+        "org.bluetooth.characteristic.heart_rate_control_point": {
+            "uuid": "2A39", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.heart_rate_control_point", 
+            "cidentifier": "heart_rate_control_point", 
+            "value": 0, 
+            "properties": [
+                "WRITE"
+            ], 
+            "name": "Heart Rate Control Point"
+        }, 
+        "org.bluetooth.characteristic.measurement_interval": {
+            "client_configuration": 0, 
+            "uuid": "2A21", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.measurement_interval", 
+            "cidentifier": "measurement_interval", 
+            "value": 0, 
+            "valid_range": {
+                "upper": 1, 
+                "lower": 0
+            }, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Measurement Interval"
+        }, 
+        "org.bluetooth.characteristic.anaerobic_heart_rate_lower_limit": {
+            "uuid": "2A81", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.anaerobic_heart_rate_lower_limit", 
+            "cidentifier": "anaerobic_heart_rate_lower_limit", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Anaerobic Heart Rate Lower Limit"
+        }, 
+        "org.bluetooth.characteristic.maximum_recommended_heart_rate": {
+            "uuid": "2A91", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.maximum_recommended_heart_rate", 
+            "cidentifier": "maximum_recommended_heart_rate", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Maximum Recommended Heart Rate"
+        }, 
+        "org.bluetooth.characteristic.object_size": {
+            "uuid": "2AC0", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.object_size", 
+            "cidentifier": "object_size", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Object Size"
+        }, 
+        "org.bluetooth.characteristic.cgm_feature": {
+            "uuid": "2AA8", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.cgm_feature", 
+            "cidentifier": "cgm_feature", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "CGM Feature"
+        }, 
+        "org.bluetooth.characteristic.record_access_control_point": {
+            "client_configuration": 0, 
+            "uuid": "2A52", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.record_access_control_point", 
+            "cidentifier": "record_access_control_point", 
+            "value": 0, 
+            "properties": [
+                "WRITE", 
+                "INDICATE"
+            ], 
+            "name": "Record Access Control Point"
+        }, 
+        "org.bluetooth.characteristic.supported_new_alert_category": {
+            "uuid": "2A47", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.supported_new_alert_category", 
+            "cidentifier": "supported_new_alert_category", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Supported New Alert Category"
+        }, 
+        "org.bluetooth.characteristic.date_of_threshold_assessment": {
+            "uuid": "2A86", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.date_of_threshold_assessment", 
+            "cidentifier": "date_of_threshold_assessment", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Date of Threshold Assessment"
+        }, 
+        "org.bluetooth.characteristic.three_zone_heart_rate_limits": {
+            "uuid": "2A94", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.three_zone_heart_rate_limits", 
+            "cidentifier": "three_zone_heart_rate_limits", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Three Zone Heart Rate Limits"
+        }, 
+        "org.bluetooth.characteristic.object_list_control_point": {
+            "uuid": "2AC6", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.object_list_control_point", 
+            "cidentifier": "object_list_control_point", 
+            "value": 0, 
+            "properties": [
+                "WRITE", 
+                "INDICATE"
+            ], 
+            "name": "Object List Control Point"
+        }, 
+        "org.bluetooth.characteristic.cycling_power_control_point": {
+            "client_configuration": 0, 
+            "uuid": "2A66", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.cycling_power_control_point", 
+            "cidentifier": "cycling_power_control_point", 
+            "value": 0, 
+            "properties": [
+                "WRITE", 
+                "INDICATE"
+            ], 
+            "name": "Cycling Power Control Point"
+        }, 
+        "org.bluetooth.characteristic.sensor_location": {
+            "uuid": "2A5D", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.sensor_location", 
+            "cidentifier": "sensor_location", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Sensor Location"
+        }, 
+        "org.bluetooth.characteristic.intermediate_temperature": {
+            "client_configuration": 0, 
+            "uuid": "2A1E", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.intermediate_temperature", 
+            "cidentifier": "intermediate_temperature", 
+            "value": 0, 
+            "properties": [
+                "NOTIFY"
+            ], 
+            "name": "Intermediate Temperature"
+        }, 
+        "org.bluetooth.characteristic.alert_notification_control_point": {
+            "uuid": "2A44", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.alert_notification_control_point", 
+            "cidentifier": "alert_notification_control_point", 
+            "value": 0, 
+            "properties": [
+                "WRITE"
+            ], 
+            "name": "Alert Notification Control Point"
+        }, 
+        "org.bluetooth.characteristic.sc_control_point": {
+            "client_configuration": 0, 
+            "uuid": "2A55", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.sc_control_point", 
+            "cidentifier": "sc_control_point", 
+            "value": 0, 
+            "properties": [
+                "WRITE", 
+                "INDICATE"
+            ], 
+            "name": "SC Control Point"
+        }, 
+        "org.bluetooth.characteristic.aerobic_heart_rate_upper_limit": {
+            "uuid": "2A84", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.aerobic_heart_rate_upper_limit", 
+            "cidentifier": "aerobic_heart_rate_upper_limit", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Aerobic Heart Rate Upper Limit"
+        }, 
+        "org.bluetooth.characteristic.supported_unread_alert_category": {
+            "uuid": "2A48", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.supported_unread_alert_category", 
+            "cidentifier": "supported_unread_alert_category", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Supported Unread Alert Category"
+        }, 
+        "org.bluetooth.characteristic.firmware_revision_string": {
+            "uuid": "2A26", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.firmware_revision_string", 
+            "cidentifier": "firmware_revision_string", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Firmware Revision String"
+        }, 
+        "org.bluetooth.characteristic.hardware_revision_string": {
+            "uuid": "2A27", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.hardware_revision_string", 
+            "cidentifier": "hardware_revision_string", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Hardware Revision String"
+        }, 
+        "org.bluetooth.characteristic.body_composition_measurement": {
+            "client_configuration": 0, 
+            "uuid": "2A9C", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.body_composition_measurement", 
+            "cidentifier": "body_composition_measurement", 
+            "value": 0, 
+            "properties": [
+                "INDICATE"
+            ], 
+            "name": "Body Composition Measurement"
+        }, 
+        "org.bluetooth.characteristic.glucose_feature": {
+            "uuid": "2A51", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.glucose_feature", 
+            "cidentifier": "glucose_feature", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Glucose Feature"
+        }, 
+        "org.bluetooth.characteristic.object_type": {
+            "uuid": "2ABF", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.object_type", 
+            "cidentifier": "object_type", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Object Type"
+        }, 
+        "org.bluetooth.characteristic.temperature_type": {
+            "uuid": "2A1D", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.temperature_type", 
+            "cidentifier": "temperature_type", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Temperature Type"
+        }, 
+        "org.bluetooth.characteristic.object_properties": {
+            "uuid": "2AC4", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.object_properties", 
+            "cidentifier": "object_properties", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Object Properties"
+        }, 
+        "org.bluetooth.characteristic.ln_control_point": {
+            "client_configuration": 0, 
+            "uuid": "2A6B", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.ln_control_point", 
+            "cidentifier": "ln_control_point", 
+            "value": 0, 
+            "properties": [
+                "WRITE", 
+                "INDICATE"
+            ], 
+            "name": "LN Control Point"
+        }, 
+        "org.bluetooth.characteristic.gatt.service_changed": {
+            "uuid": "2A05", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.gatt.service_changed", 
+            "cidentifier": "service_changed", 
+            "value": 0, 
+            "properties": [
+                "INDICATE"
+            ], 
+            "name": "Service Changed"
+        }, 
+        "org.bluetooth.characteristic.language": {
+            "uuid": "2AA2", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.language", 
+            "cidentifier": "language", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Language"
+        }, 
+        "org.bluetooth.characteristic.http_entity_body": {
+            "uuid": "2AB9", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.http_entity_body", 
+            "cidentifier": "http_entity_body", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "HTTP Entity Body"
+        }, 
+        "org.bluetooth.characteristic.object_last_modified": {
+            "uuid": "2AC2", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.object_last_modified", 
+            "cidentifier": "object_last_modified", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Object Last-Modified"
+        }, 
+        "org.bluetooth.characteristic.software_revision_string": {
+            "uuid": "2A28", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.software_revision_string", 
+            "cidentifier": "software_revision_string", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Software Revision String"
+        }, 
+        "org.bluetooth.characteristic.plx_features": {
+            "uuid": "2A60", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.plx_features", 
+            "cidentifier": "plx_features", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "PLX Features"
+        }, 
+        "org.bluetooth.characteristic.ots_feature": {
+            "uuid": "2ABD", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.ots_feature", 
+            "cidentifier": "ots_feature", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "OTS Feature"
+        }, 
+        "org.bluetooth.characteristic.gender": {
+            "uuid": "2A8C", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.gender", 
+            "cidentifier": "gender", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Gender"
+        }, 
+        "org.bluetooth.characteristic.intermediate_cuff_pressure": {
+            "client_configuration": 0, 
+            "uuid": "2A36", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.intermediate_cuff_pressure", 
+            "cidentifier": "intermediate_cuff_pressure", 
+            "value": 0, 
+            "properties": [
+                "NOTIFY"
+            ], 
+            "name": "Intermediate Cuff Pressure"
+        }, 
+        "org.bluetooth.characteristic.glucose_measurement": {
+            "client_configuration": 0, 
+            "uuid": "2A18", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.glucose_measurement", 
+            "cidentifier": "glucose_measurement", 
+            "value": 0, 
+            "properties": [
+                "NOTIFY"
+            ], 
+            "name": "Glucose Measurement"
+        }, 
+        "org.bluetooth.characteristic.fat_burn_heart_rate_upper_limit": {
+            "uuid": "2A89", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.fat_burn_heart_rate_upper_limit", 
+            "cidentifier": "fat_burn_heart_rate_upper_limit", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Fat Burn Heart Rate Upper Limit"
+        }, 
+        "org.bluetooth.characteristic.vo2_max": {
+            "uuid": "2A96", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.vo2_max", 
+            "cidentifier": "vo2_max", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "VO2 Max"
+        }, 
+        "org.bluetooth.characteristic.object_id": {
+            "uuid": "2AC3", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.object_id", 
+            "cidentifier": "object_id", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Object ID"
+        }, 
+        "org.bluetooth.characteristic.blood_pressure_measurement": {
+            "client_configuration": 0, 
+            "uuid": "2A35", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.blood_pressure_measurement", 
+            "cidentifier": "blood_pressure_measurement", 
+            "value": 0, 
+            "properties": [
+                "INDICATE"
+            ], 
+            "name": "Blood Pressure Measurement"
+        }, 
+        "org.bluetooth.characteristic.cgm_specific_ops_control_point": {
+            "client_configuration": 0, 
+            "uuid": "2AAC", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.cgm_specific_ops_control_point", 
+            "cidentifier": "cgm_specific_ops_control_point", 
+            "value": 0, 
+            "properties": [
+                "WRITE", 
+                "INDICATE"
+            ], 
+            "name": "CGM Specific Ops Control Point"
+        }, 
+        "org.bluetooth.characteristic.blood_pressure_feature": {
+            "uuid": "2A49", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.blood_pressure_feature", 
+            "cidentifier": "blood_pressure_feature", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Blood Pressure Feature"
+        }, 
+        "org.bluetooth.characteristic.aerobic_heart_rate_lower_limit": {
+            "uuid": "2A7E", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.aerobic_heart_rate_lower_limit", 
+            "cidentifier": "aerobic_heart_rate_lower_limit", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Aerobic Heart Rate Lower Limit"
+        }, 
+        "org.bluetooth.characteristic.glucose_measurement_context": {
+            "client_configuration": 0, 
+            "uuid": "2A34", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.glucose_measurement_context", 
+            "cidentifier": "glucose_measurement_context", 
+            "value": 0, 
+            "properties": [
+                "NOTIFY"
+            ], 
+            "name": "Glucose Measurement Context"
+        }, 
+        "org.bluetooth.characteristic.gap.device_name": {
+            "uuid": "2A00", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.gap.device_name", 
+            "cidentifier": "device_name", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Device Name"
+        }, 
+        "org.bluetooth.characteristic.weight": {
+            "uuid": "2A98", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.weight", 
+            "cidentifier": "weight", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Weight"
+        }, 
+        "org.bluetooth.characteristic.system_id": {
+            "uuid": "2A23", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.system_id", 
+            "cidentifier": "system_id", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "System ID"
+        }, 
+        "org.bluetooth.characteristic.user_index": {
+            "uuid": "2A9A", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.user_index", 
+            "cidentifier": "user_index", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "User Index"
+        }, 
+        "org.bluetooth.characteristic.rsc_feature": {
+            "uuid": "2A54", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.rsc_feature", 
+            "cidentifier": "rsc_feature", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "RSC Feature"
+        }, 
+        "org.bluetooth.characteristic.gap.reconnection_address": {
+            "uuid": "2A03", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.gap.reconnection_address", 
+            "cidentifier": "reconnection_address", 
+            "value": 0, 
+            "properties": [
+                "WRITE"
+            ], 
+            "name": "Reconnection Address"
+        }, 
+        "org.bluetooth.characteristic.new_alert": {
+            "client_configuration": 0, 
+            "uuid": "2A46", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.new_alert", 
+            "cidentifier": "new_alert", 
+            "value": 0, 
+            "properties": [
+                "NOTIFY"
+            ], 
+            "name": "New Alert"
+        }, 
+        "org.bluetooth.characteristic.last_name": {
+            "uuid": "2A90", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.last_name", 
+            "cidentifier": "last_name", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Last Name"
+        }, 
+        "org.bluetooth.characteristic.reference_time_information": {
+            "uuid": "2A14", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.reference_time_information", 
+            "cidentifier": "reference_time_information", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Reference Time Information"
+        }, 
+        "org.bluetooth.characteristic.cgm_session_start_time": {
+            "uuid": "2AAA", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.cgm_session_start_time", 
+            "cidentifier": "cgm_session_start_time", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "CGM Session Start Time"
+        }, 
+        "org.bluetooth.characteristic.position_quality": {
+            "uuid": "2A69", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.position_quality", 
+            "cidentifier": "position_quality", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Position Quality"
+        }, 
+        "org.bluetooth.characteristic.email_address": {
+            "uuid": "2A87", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.email_address", 
+            "cidentifier": "email_address", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Email Address"
+        }, 
+        "org.bluetooth.characteristic.date_of_birth": {
+            "uuid": "2A85", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.date_of_birth", 
+            "cidentifier": "date_of_birth", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Date of Birth"
+        }, 
+        "org.bluetooth.characteristic.weight_measurement": {
+            "client_configuration": 0, 
+            "uuid": "2A9D", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.weight_measurement", 
+            "cidentifier": "weight_measurement", 
+            "value": 0, 
+            "properties": [
+                "INDICATE"
+            ], 
+            "name": "Weight Measurement"
+        }, 
+        "org.bluetooth.characteristic.object_name": {
+            "uuid": "2ABE", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.object_name", 
+            "cidentifier": "object_name", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Object Name"
+        }, 
+        "org.bluetooth.characteristic.object_first_created": {
+            "uuid": "2AC1", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.object_first_created", 
+            "cidentifier": "object_first_created", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Object First-Created"
+        }, 
+        "org.bluetooth.characteristic.ringer_control_point": {
+            "uuid": "2A40", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.ringer_control_point", 
+            "cidentifier": "ringer_control_point", 
+            "value": 0, 
+            "properties": [
+                "WRITEWITHOUTRESPONSE"
+            ], 
+            "name": "Ringer Control point"
+        }, 
+        "org.bluetooth.characteristic.user_control_point": {
+            "client_configuration": 0, 
+            "uuid": "2A9F", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.user_control_point", 
+            "cidentifier": "user_control_point", 
+            "value": 0, 
+            "properties": [
+                "WRITE", 
+                "INDICATE"
+            ], 
+            "name": "User Control Point"
+        }, 
+        "org.bluetooth.characteristic.location_and_speed": {
+            "client_configuration": 0, 
+            "uuid": "2A67", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.location_and_speed", 
+            "cidentifier": "location_and_speed_characteristic", 
+            "value": 0, 
+            "properties": [
+                "NOTIFY"
+            ], 
+            "name": "Location and Speed Characteristic"
+        }, 
+        "org.bluetooth.characteristic.object_changed": {
+            "uuid": "2AC8", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.object_changed", 
+            "cidentifier": "object_changed", 
+            "value": 0, 
+            "properties": [
+                "INDICATE"
+            ], 
+            "name": "Object Changed"
+        }, 
+        "org.bluetooth.characteristic.bond_management_feature": {
+            "uuid": "2AA5", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.bond_management_feature", 
+            "cidentifier": "bond_management_features", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Bond Management Features"
+        }, 
+        "org.bluetooth.characteristic.time_update_control_point": {
+            "uuid": "2A16", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.time_update_control_point", 
+            "cidentifier": "time_update_control_point", 
+            "value": 0, 
+            "properties": [
+                "WRITEWITHOUTRESPONSE"
+            ], 
+            "name": "Time Update Control Point"
+        }, 
+        "org.bluetooth.characteristic.heart_rate_measurement": {
+            "client_configuration": 0, 
+            "uuid": "2A37", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.heart_rate_measurement", 
+            "cidentifier": "heart_rate_measurement", 
+            "value": 0, 
+            "properties": [
+                "NOTIFY"
+            ], 
+            "name": "Heart Rate Measurement"
+        }, 
+        "org.bluetooth.characteristic.cgm_measurement": {
+            "client_configuration": 0, 
+            "uuid": "2AA7", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.cgm_measurement", 
+            "cidentifier": "cgm_measurement", 
+            "value": 0, 
+            "properties": [
+                "NOTIFY"
+            ], 
+            "name": "CGM Measurement"
+        }, 
+        "org.bluetooth.characteristic.navigation": {
+            "client_configuration": 0, 
+            "uuid": "2A68", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.navigation", 
+            "cidentifier": "navigation", 
+            "value": 0, 
+            "properties": [
+                "NOTIFY"
+            ], 
+            "name": "Navigation"
+        }, 
+        "org.bluetooth.characteristic.cycling_power_measurement": {
+            "client_configuration": 0, 
+            "uuid": "2A63", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.cycling_power_measurement", 
+            "cidentifier": "cycling_power_measurement", 
+            "value": 0, 
+            "server_configuration": 0, 
+            "properties": [
+                "NOTIFY"
+            ], 
+            "name": "Cycling Power Measurement"
+        }, 
+        "org.bluetooth.characteristic.database_change_increment": {
+            "client_configuration": 0, 
+            "uuid": "2A99", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.database_change_increment", 
+            "cidentifier": "database_change_increment", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Database Change Increment"
+        }, 
+        "org.bluetooth.characteristic.rsc_measurement": {
+            "client_configuration": 0, 
+            "uuid": "2A53", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.rsc_measurement", 
+            "cidentifier": "rsc_measurement", 
+            "value": 0, 
+            "properties": [
+                "NOTIFY"
+            ], 
+            "name": "RSC Measurement"
+        }, 
+        "org.bluetooth.characteristic.body_composition_feature": {
+            "uuid": "2A9B", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.body_composition_feature", 
+            "cidentifier": "body_composition_feature", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Body Composition Feature"
+        }, 
+        "org.bluetooth.characteristic.ieee_11073-20601_regulatory_certification_data_list": {
+            "uuid": "2A2A", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.ieee_11073-20601_regulatory_certification_data_list", 
+            "cidentifier": "ieee_11073_20601_regulatory_certification_data_list", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "IEEE 11073-20601 Regulatory Certification Data List"
+        }, 
+        "org.bluetooth.characteristic.height": {
+            "uuid": "2A8E", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.height", 
+            "cidentifier": "height", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Height"
+        }, 
+        "org.bluetooth.characteristic.waist_circumference": {
+            "uuid": "2A97", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.waist_circumference", 
+            "cidentifier": "waist_circumference", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Waist Circumference"
+        }, 
+        "org.bluetooth.characteristic.fat_burn_heart_rate_lower_limit": {
+            "uuid": "2A88", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.fat_burn_heart_rate_lower_limit", 
+            "cidentifier": "fat_burn_heart_rate_lower_limit", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Fat Burn Heart Rate Lower Limit"
+        }, 
+        "org.bluetooth.characteristic.http_control_point": {
+            "uuid": "2ABA", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.http_control_point", 
+            "cidentifier": "http_control_point", 
+            "value": 0, 
+            "properties": [
+                "WRITE"
+            ], 
+            "name": "HTTP Control Point"
+        }, 
+        "org.bluetooth.characteristic.model_number_string": {
+            "uuid": "2A24", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.model_number_string", 
+            "cidentifier": "model_number_string", 
+            "value": 0, 
+            "properties": [
+                "READ"
+            ], 
+            "name": "Model Number String"
+        }, 
+        "org.bluetooth.characteristic.sport_type_for_aerobic_and_anaerobic_thresholds": {
+            "uuid": "2A93", 
+            "value_length": 20, 
+            "namespace": "org.bluetooth.characteristic.sport_type_for_aerobic_and_anaerobic_thresholds", 
+            "cidentifier": "sport_type_for_aerobic_and_anaerobic_thresholds", 
+            "value": 0, 
+            "properties": [
+                "READ", 
+                "WRITE"
+            ], 
+            "name": "Sport Type for Aerobic and Anaerobic Thresholds"
+        }
+    }, 
+    "sigProfiles": [
+        {
+            "category": "", 
+            "display_name": "Alert Notification", 
+            "name": "org.bluetooth.profile.alert_notification", 
+            "description": "This profile enables a client device to receive different types of alerts and event information, as well as information on the count of new alerts and unread items, which exist in the server device."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Blood Pressure", 
+            "name": "org.bluetooth.profile.blood_pressure", 
+            "description": "This profile enables a device to connect and interact with a Blood Pressure Sensor device for use in consumer and professional health care applications."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Cycling Power", 
+            "name": "org.bluetooth.profile.cycling_power", 
+            "description": "This profile enables a Collector device to connect and interact with a Cycling Power Sensor for use in sports and fitness applications."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Cycling Speed and Cadence", 
+            "name": "org.bluetooth.profile.cycling_speed_and_cadence", 
+            "description": "This profile enables a Collector device to connect and interact with a Cycling Speed and Cadence Sensor for use in sports and fitness applications."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Find Me", 
+            "name": "org.bluetooth.profile.find_me", 
+            "description": "The Find Me profile defines the behavior when a button is pressed on one device to cause an alerting signal on a peer device."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Glucose", 
+            "name": "org.bluetooth.profile.glucose", 
+            "description": "This profile enables a device to connect and interact with a glucose sensor for use in consumer and professional healthcare applications."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Health Thermometer", 
+            "name": "org.bluetooth.profile.health_thermometer", 
+            "description": "This profile enables a Collector device to connect and interact with a Thermometer sensor for use in healthcare applications."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Heart Rate", 
+            "name": "org.bluetooth.profile.heart_rate", 
+            "description": "This profile enables a Collector device to connect and interact with a Heart Rate Sensor for use in fitness applications."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Location and Navigation", 
+            "name": "org.bluetooth.profile.location_and_navigation", 
+            "description": "This profile enables a Collector device to connect and interact with a Location and Navigation Sensor for use in outdoor activity applications."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Phone Alert Status", 
+            "name": "org.bluetooth.profile.phone_alert_status", 
+            "description": "This profile enables a PUID device to alert its user about the alert status of a phone connected to the PUID device."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Running Speed and Cadence", 
+            "name": "org.bluetooth.profile.running_speed_and_cadence", 
+            "description": "This profile enables a Collector device to connect and interact with a Runners Speed and Cadence Sensor for use in sports and fitness applications."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Scan Parameters", 
+            "name": "org.bluetooth.profile.scan_parameters", 
+            "description": "This profile defines how a Scan Client device with Bluetooth low energy wireless communications can write its scanning behavior to a Scan Server, and how a Scan Server can request updates of a Scan Client scanning behavior."
+        }
+    ], 
+    "characteristicCategories": [
+        {
+            "type": "", 
+            "display_name": "All Categories"
+        }, 
+        {
+            "type": "Category 1", 
+            "display_name": "First Category"
+        }, 
+        {
+            "type": "Category 2", 
+            "display_name": "Second Category"
+        }, 
+        {
+            "type": "Category 3", 
+            "display_name": "Third Category"
+        }
+    ], 
+    "servicesByName": {
+        "org.bluetooth.service.internet_protocol_support": {
+            "uuid": "1820", 
+            "characteristics": [], 
+            "namespace": "org.bluetooth.service.internet_protocol_support", 
+            "cidentifier": "internet_protocol_support_service", 
+            "name": "Internet Protocol Support Service", 
+            "type": "primary", 
+            "description": "This service does not define any characteristics"
+        }, 
+        "org.bluetooth.service.next_dst_change": {
+            "uuid": "1807", 
+            "characteristics": [
+                "org.bluetooth.characteristic.time_with_dst"
+            ], 
+            "description": "This service enables a Bluetooth device that has knowledge about the next occurrence of a DST change to expose this information to another Bluetooth device.", 
+            "namespace": "org.bluetooth.service.next_dst_change", 
+            "cidentifier": "next_dst_change_service", 
+            "type": "primary", 
+            "name": "Next DST Change Service"
+        }, 
+        "org.bluetooth.service.cycling_speed_and_cadence": {
+            "uuid": "1816", 
+            "characteristics": [
+                "org.bluetooth.characteristic.csc_measurement", 
+                "org.bluetooth.characteristic.csc_feature", 
+                "org.bluetooth.characteristic.sensor_location", 
+                "org.bluetooth.characteristic.sc_control_point"
+            ], 
+            "description": "The Cycling Speed and Cadence (CSC) Service exposes speed-related data and/or cadence-related data while using the Cycling Speed and Cadence sensor (Server).", 
+            "namespace": "org.bluetooth.service.cycling_speed_and_cadence", 
+            "cidentifier": "cycling_speed_and_cadence", 
+            "type": "primary", 
+            "name": "Cycling Speed and Cadence"
+        }, 
+        "org.bluetooth.service.cycling_power": {
+            "uuid": "1818", 
+            "characteristics": [
+                "org.bluetooth.characteristic.cycling_power_measurement", 
+                "org.bluetooth.characteristic.cycling_power_feature", 
+                "org.bluetooth.characteristic.sensor_location", 
+                "org.bluetooth.characteristic.cycling_power_vector", 
+                "org.bluetooth.characteristic.cycling_power_control_point"
+            ], 
+            "namespace": "org.bluetooth.service.cycling_power", 
+            "cidentifier": "cycling_power", 
+            "name": "Cycling Power", 
+            "type": "primary", 
+            "description": "The Cycling Power (CP) Service exposes power- and force-related data and optionally speed- and cadence-related data from a Cycling Power sensor (Server) intended for sports and fitness applications."
+        }, 
+        "org.bluetooth.service.user_data": {
+            "uuid": "181C", 
+            "characteristics": [
+                "org.bluetooth.characteristic.first_name", 
+                "org.bluetooth.characteristic.last_name", 
+                "org.bluetooth.characteristic.email_address", 
+                "org.bluetooth.characteristic.age", 
+                "org.bluetooth.characteristic.date_of_birth", 
+                "org.bluetooth.characteristic.gender", 
+                "org.bluetooth.characteristic.weight", 
+                "org.bluetooth.characteristic.height", 
+                "org.bluetooth.characteristic.vo2_max", 
+                "org.bluetooth.characteristic.heart_rate_max", 
+                "org.bluetooth.characteristic.resting_heart_rate", 
+                "org.bluetooth.characteristic.maximum_recommended_heart_rate", 
+                "org.bluetooth.characteristic.aerobic_threshold", 
+                "org.bluetooth.characteristic.anaerobic_threshold", 
+                "org.bluetooth.characteristic.sport_type_for_aerobic_and_anaerobic_thresholds", 
+                "org.bluetooth.characteristic.date_of_threshold_assessment", 
+                "org.bluetooth.characteristic.waist_circumference", 
+                "org.bluetooth.characteristic.hip_circumference", 
+                "org.bluetooth.characteristic.fat_burn_heart_rate_lower_limit", 
+                "org.bluetooth.characteristic.fat_burn_heart_rate_upper_limit", 
+                "org.bluetooth.characteristic.aerobic_heart_rate_lower_limit", 
+                "org.bluetooth.characteristic.aerobic_heart_rate_upper_limit", 
+                "org.bluetooth.characteristic.anaerobic_heart_rate_lower_limit", 
+                "org.bluetooth.characteristic.anaerobic_heart_rate_upper_limit", 
+                "org.bluetooth.characteristic.five_zone_heart_rate_limits", 
+                "org.bluetooth.characteristic.three_zone_heart_rate_limits", 
+                "org.bluetooth.characteristic.two_zone_heart_rate_limit", 
+                "org.bluetooth.characteristic.database_change_increment", 
+                "org.bluetooth.characteristic.user_index", 
+                "org.bluetooth.characteristic.user_control_point", 
+                "org.bluetooth.characteristic.language"
+            ], 
+            "namespace": "org.bluetooth.service.user_data", 
+            "cidentifier": "user_data", 
+            "name": "User Data", 
+            "type": "primary", 
+            "description": "The User Data Service (UDS) exposes user-related data in the sports and fitness environment. This allows remote access and update of user data by a Client as well as the synchronization of user data between a Server and a Client."
+        }, 
+        "org.bluetooth.service.reference_time_update": {
+            "uuid": "1806", 
+            "characteristics": [
+                "org.bluetooth.characteristic.time_update_control_point", 
+                "org.bluetooth.characteristic.time_update_state"
+            ], 
+            "description": "This service enables a Bluetooth device that can update the system time using reference time such as GPS to expose the control point and the accuracy (drift) of the local system time compared to the reference time source.", 
+            "namespace": "org.bluetooth.service.reference_time_update", 
+            "cidentifier": "reference_time_update_service", 
+            "type": "primary", 
+            "name": "Reference Time Update Service"
+        }, 
+        "org.bluetooth.service.http_proxy": {
+            "uuid": "1823", 
+            "characteristics": [
+                "org.bluetooth.characteristic.uri", 
+                "org.bluetooth.characteristic.http_headers", 
+                "org.bluetooth.characteristic.http_entity_body", 
+                "org.bluetooth.characteristic.http_control_point", 
+                "org.bluetooth.characteristic.http_status_code", 
+                "org.bluetooth.characteristic.https_security"
+            ], 
+            "namespace": "org.bluetooth.service.http_proxy", 
+            "cidentifier": "http_proxy", 
+            "name": "HTTP Proxy", 
+            "type": "primary", 
+            "description": "The HTTP Proxy Service (HPS) allows a device to expose HTTP Web Services to a client. This enables an HPS client device to program a set of characteristics that configures a Hyper Text Transfer Protocol (HTTP) request, initiate this, request, and then read the response."
+        }, 
+        "org.bluetooth.service.transport_discovery": {
+            "uuid": "1824", 
+            "characteristics": [
+                "org.bluetooth.characteristic.tds_control_point"
+            ], 
+            "namespace": "org.bluetooth.service.transport_discovery", 
+            "cidentifier": "transport_discovery", 
+            "name": "Transport Discovery", 
+            "type": "primary", 
+            "description": "The Transport Discovery Service (TDS) enables a device using Bluetooth low energy wireless technology to expose services that are available on a transport other than Bluetooth low energy."
+        }, 
+        "org.bluetooth.service.scan_parameters": {
+            "uuid": "1813", 
+            "characteristics": [
+                "org.bluetooth.characteristic.scan_interval_window", 
+                "org.bluetooth.characteristic.scan_refresh"
+            ], 
+            "description": "The Scan Parameters Service enables a GATT Server device to expose a characteristic for the GATT Client to write its scan interval and scan window on the GATT Server device.", 
+            "namespace": "org.bluetooth.service.scan_parameters", 
+            "cidentifier": "scan_parameters", 
+            "type": "primary", 
+            "name": "Scan Parameters"
+        }, 
+        "org.bluetooth.service.link_loss": {
+            "uuid": "1803", 
+            "characteristics": [
+                "org.bluetooth.characteristic.alert_level"
+            ], 
+            "description": "The LINK LOSS Service is instantiated as a Primary Service.    There is only one instance of the Link Loss Service on a device.    There is only one instance of the Alert Level characteristic in a Link Loss Service.    This alert continues until one of following conditions occurs:    An implementation specific timeout    User interaction on this device    A new alert level is written    The physical link is disconnected", 
+            "namespace": "org.bluetooth.service.link_loss", 
+            "cidentifier": "link_loss", 
+            "type": "primary", 
+            "name": "Link Loss"
+        }, 
+        "org.bluetooth.service.alert_notification": {
+            "uuid": "1811", 
+            "characteristics": [
+                "org.bluetooth.characteristic.supported_new_alert_category", 
+                "org.bluetooth.characteristic.new_alert", 
+                "org.bluetooth.characteristic.supported_unread_alert_category", 
+                "org.bluetooth.characteristic.unread_alert_status", 
+                "org.bluetooth.characteristic.alert_notification_control_point"
+            ], 
+            "description": "The Alert Notification service exposes alert information in a device.  This information includes the following: - Type of alert occuring in a device. - Additional text information such as caller ID or sender ID. - Count of new alerts. - Count of unread alert items.", 
+            "namespace": "org.bluetooth.service.alert_notification", 
+            "cidentifier": "alert_notification_service", 
+            "type": "primary", 
+            "name": "Alert Notification Service"
+        }, 
+        "org.bluetooth.service.heart_rate": {
+            "uuid": "180D", 
+            "characteristics": [
+                "org.bluetooth.characteristic.heart_rate_measurement", 
+                "org.bluetooth.characteristic.body_sensor_location", 
+                "org.bluetooth.characteristic.heart_rate_control_point"
+            ], 
+            "description": "The HEART RATE Service exposes heart rate and other data related to a heart rate sensor intended for fitness applications.", 
+            "namespace": "org.bluetooth.service.heart_rate", 
+            "cidentifier": "heart_rate", 
+            "type": "primary", 
+            "name": "Heart Rate"
+        }, 
+        "org.bluetooth.service.generic_access": {
+            "uuid": "1800", 
+            "characteristics": [
+                "org.bluetooth.characteristic.gap.device_name", 
+                "org.bluetooth.characteristic.gap.appearance", 
+                "org.bluetooth.characteristic.gap.peripheral_privacy_flag", 
+                "org.bluetooth.characteristic.gap.reconnection_address", 
+                "org.bluetooth.characteristic.gap.peripheral_preferred_connection_parameters"
+            ], 
+            "description": "The generic_access service contains generic information about the device. All available Characteristics are readonly.", 
+            "namespace": "org.bluetooth.service.generic_access", 
+            "cidentifier": "_generic_access", 
+            "type": "primary", 
+            "name": " Generic Access"
+        }, 
+        "org.bluetooth.service.location_and_navigation": {
+            "uuid": "1819", 
+            "characteristics": [
+                "org.bluetooth.characteristic.ln_feature", 
+                "org.bluetooth.characteristic.location_and_speed", 
+                "org.bluetooth.characteristic.position_quality", 
+                "org.bluetooth.characteristic.ln_control_point", 
+                "org.bluetooth.characteristic.navigation"
+            ], 
+            "namespace": "org.bluetooth.service.location_and_navigation", 
+            "cidentifier": "location_and_navigation", 
+            "name": "Location and Navigation", 
+            "type": "primary", 
+            "description": "The Location and Navigation Service (LN Service) exposes location and navigation-related data from a Location and Navigation sensor (Server) intended for outdoor activity applications."
+        }, 
+        "org.bluetooth.service.body_composition": {
+            "uuid": "181B", 
+            "characteristics": [
+                "org.bluetooth.characteristic.body_composition_feature", 
+                "org.bluetooth.characteristic.body_composition_measurement"
+            ], 
+            "namespace": "org.bluetooth.service.body_composition", 
+            "cidentifier": "body_composition", 
+            "name": "Body Composition", 
+            "type": "primary", 
+            "description": "The Body Composition Service (BCS) exposes data related to body composition from a body composition analyzer (Server) intended for consumer healthcare as well as sports/fitness applications."
+        }, 
+        "org.bluetooth.service.immediate_alert": {
+            "uuid": "1802", 
+            "characteristics": [
+                "org.bluetooth.characteristic.alert_level"
+            ], 
+            "description": "The Immediate Alert service is instantiated as a Primary Service.    There is only one instance of the Immediate Alert service on a device.    There is only one instance of the Alert Level characteristic in an Immediate Alert service.    This alert continues until one of following conditions occurs: - An implementation specific timeout. - User interaction on this device. - A new alert level is written. - The physical link is disconnected.", 
+            "namespace": "org.bluetooth.service.immediate_alert", 
+            "cidentifier": "immediate_alert", 
+            "type": "primary", 
+            "name": "Immediate Alert"
+        }, 
+        "org.bluetooth.service.tx_power": {
+            "uuid": "1804", 
+            "characteristics": [
+                "org.bluetooth.characteristic.tx_power_level"
+            ], 
+            "description": "The Tx Power service is instantiated as a Primary Service.    There is only one instance of the Tx Power service on a device.    There is exactly one instance of the Tx Power Level characteristic", 
+            "namespace": "org.bluetooth.service.tx_power", 
+            "cidentifier": "tx_power", 
+            "type": "primary", 
+            "name": "Tx Power"
+        }, 
+        "org.bluetooth.service.battery_service": {
+            "uuid": "180F", 
+            "characteristics": [
+                "org.bluetooth.characteristic.battery_level"
+            ], 
+            "namespace": "org.bluetooth.service.battery_service", 
+            "cidentifier": "battery_service", 
+            "name": "Battery Service", 
+            "type": "primary", 
+            "description": "The Battery Service exposes the Battery State and Battery Level of a single battery or set of batteries in a device."
+        }, 
+        "org.bluetooth.service.bond_management": {
+            "uuid": "181E", 
+            "characteristics": [
+                "org.bluetooth.characteristic.bond_management_control_point", 
+                "org.bluetooth.characteristic.bond_management_feature"
+            ], 
+            "description": "This service defines how a peer Bluetooth device can manage the storage of bond information, especially the deletion of it, on the Bluetooth device supporting this service.", 
+            "namespace": "org.bluetooth.service.bond_management", 
+            "cidentifier": "bond_management_service", 
+            "type": "primary", 
+            "name": "Bond Management Service"
+        }, 
+        "org.bluetooth.service.current_time": {
+            "uuid": "1805", 
+            "characteristics": [
+                "org.bluetooth.characteristic.current_time", 
+                "org.bluetooth.characteristic.local_time_information", 
+                "org.bluetooth.characteristic.reference_time_information"
+            ], 
+            "description": "Many Bluetooth devices have the ability to store and show time information. This service defines how a Bluetooth device can expose time information to other Bluetooth devices.", 
+            "namespace": "org.bluetooth.service.current_time", 
+            "cidentifier": "current_time_service", 
+            "type": "primary", 
+            "name": "Current Time Service"
+        }, 
+        "org.bluetooth.service.running_speed_and_cadence": {
+            "uuid": "1814", 
+            "characteristics": [
+                "org.bluetooth.characteristic.rsc_measurement", 
+                "org.bluetooth.characteristic.rsc_feature", 
+                "org.bluetooth.characteristic.sensor_location", 
+                "org.bluetooth.characteristic.sc_control_point"
+            ], 
+            "namespace": "org.bluetooth.service.running_speed_and_cadence", 
+            "cidentifier": "running_speed_and_cadence", 
+            "name": "Running Speed and Cadence", 
+            "type": "primary", 
+            "description": "The Running Speed and Cadence (RSC) Service exposes speed, cadence and other data related to fitness applications such as the stride length and the total distance the user has traveled while using the Speed and Cadence Sensor (Server)."
+        }, 
+        "org.bluetooth.service.weight_scale": {
+            "uuid": "181D", 
+            "characteristics": [
+                "org.bluetooth.characteristic.weight_scale_feature", 
+                "org.bluetooth.characteristic.weight_measurement"
+            ], 
+            "description": "The Weight Scale (WS) Service exposes weight and related data from a weight scale (Server) intended for consumer healthcare as well as sports/fitness applications.", 
+            "namespace": "org.bluetooth.service.weight_scale", 
+            "cidentifier": "weight_scale", 
+            "type": "primary", 
+            "name": "Weight Scale"
+        }, 
+        "org.bluetooth.service.generic_attribute": {
+            "uuid": "1801", 
+            "characteristics": [
+                "org.bluetooth.characteristic.gatt.service_changed"
+            ], 
+            "namespace": "org.bluetooth.service.generic_attribute", 
+            "cidentifier": "generic_attribute", 
+            "name": "Generic Attribute", 
+            "type": "primary", 
+            "description": ""
+        }, 
+        "org.bluetooth.service.phone_alert_status": {
+            "uuid": "180E", 
+            "characteristics": [
+                "org.bluetooth.characteristic.alert_status", 
+                "org.bluetooth.characteristic.ringer_setting", 
+                "org.bluetooth.characteristic.ringer_control_point"
+            ], 
+            "description": "The Phone Alert Status service uses the Alert Status characteristic, Ringer Setting characteristic to expose the phone alert status and Ringer Control Point characteristic to control phone into mute or enable.", 
+            "namespace": "org.bluetooth.service.phone_alert_status", 
+            "cidentifier": "phone_alert_status_service", 
+            "type": "primary", 
+            "name": "Phone Alert Status Service"
+        }, 
+        "org.bluetooth.service.health_thermometer": {
+            "uuid": "1809", 
+            "characteristics": [
+                "org.bluetooth.characteristic.temperature_measurement", 
+                "org.bluetooth.characteristic.temperature_type", 
+                "org.bluetooth.characteristic.intermediate_temperature", 
+                "org.bluetooth.characteristic.measurement_interval"
+            ], 
+            "namespace": "org.bluetooth.service.health_thermometer", 
+            "cidentifier": "health_thermometer", 
+            "name": "Health Thermometer", 
+            "type": "primary", 
+            "description": "The Health Thermometer service is instantiated as a Primary Service.            There are one or more instantiations of the Health Thermometer service per device claiming conformance with this specification."
+        }, 
+        "org.bluetooth.service.device_information": {
+            "uuid": "180A", 
+            "characteristics": [
+                "org.bluetooth.characteristic.manufacturer_name_string", 
+                "org.bluetooth.characteristic.model_number_string", 
+                "org.bluetooth.characteristic.serial_number_string", 
+                "org.bluetooth.characteristic.hardware_revision_string", 
+                "org.bluetooth.characteristic.firmware_revision_string", 
+                "org.bluetooth.characteristic.software_revision_string", 
+                "org.bluetooth.characteristic.system_id", 
+                "org.bluetooth.characteristic.ieee_11073-20601_regulatory_certification_data_list", 
+                "org.bluetooth.characteristic.pnp_id"
+            ], 
+            "namespace": "org.bluetooth.service.device_information", 
+            "cidentifier": "device_information", 
+            "name": "Device Information", 
+            "type": "primary", 
+            "description": "This service exposes manufacturer information about a device.    The Device Information Service is instantiated as a Primary Service.    Only one instance of the Device Information Service is exposed on a device."
+        }, 
+        "org.bluetooth.service.continuous_glucose_monitoring": {
+            "uuid": "181F", 
+            "characteristics": [
+                "org.bluetooth.characteristic.cgm_measurement", 
+                "org.bluetooth.characteristic.cgm_feature", 
+                "org.bluetooth.characteristic.cgm_status", 
+                "org.bluetooth.characteristic.cgm_session_start_time", 
+                "org.bluetooth.characteristic.cgm_session_run_time", 
+                "org.bluetooth.characteristic.record_access_control_point", 
+                "org.bluetooth.characteristic.cgm_specific_ops_control_point"
+            ], 
+            "namespace": "org.bluetooth.service.continuous_glucose_monitoring", 
+            "cidentifier": "continuous_glucose_monitoring", 
+            "name": "Continuous Glucose Monitoring", 
+            "type": "primary", 
+            "description": "The Continuous Glucose Monitoring (CGM) Service exposes glucose measurement and other data related to a personal CGM sensor for healthcare applications."
+        }, 
+        "org.bluetooth.service.object_transfer": {
+            "uuid": "1825", 
+            "characteristics": [
+                "org.bluetooth.characteristic.ots_feature", 
+                "org.bluetooth.characteristic.object_name", 
+                "org.bluetooth.characteristic.object_type", 
+                "org.bluetooth.characteristic.object_size", 
+                "org.bluetooth.characteristic.object_first_created", 
+                "org.bluetooth.characteristic.object_last_modified", 
+                "org.bluetooth.characteristic.object_id", 
+                "org.bluetooth.characteristic.object_properties", 
+                "org.bluetooth.characteristic.object_action_control_point", 
+                "org.bluetooth.characteristic.object_list_control_point", 
+                "org.bluetooth.characteristic.object_list_filter", 
+                "org.bluetooth.characteristic.object_changed"
+            ], 
+            "namespace": "org.bluetooth.service.object_transfer", 
+            "cidentifier": "object_transfer_service", 
+            "name": "Object Transfer Service", 
+            "type": "primary", 
+            "description": "."
+        }, 
+        "org.bluetooth.service.glucose": {
+            "uuid": "1808", 
+            "characteristics": [
+                "org.bluetooth.characteristic.glucose_measurement", 
+                "org.bluetooth.characteristic.glucose_measurement_context", 
+                "org.bluetooth.characteristic.glucose_feature", 
+                "org.bluetooth.characteristic.record_access_control_point"
+            ], 
+            "description": "The Glucose Service exposes glucose and other data related to a glucose sensor for consumer and professional healthcare applications.", 
+            "namespace": "org.bluetooth.service.glucose", 
+            "cidentifier": "glucose", 
+            "type": "primary", 
+            "name": "Glucose"
+        }, 
+        "org.bluetooth.service.pulse_oximeter": {
+            "uuid": "1822", 
+            "characteristics": [
+                "org.bluetooth.characteristic.plx_spot_check_measurement", 
+                "org.bluetooth.characteristic.plx_continuous_measurement", 
+                "org.bluetooth.characteristic.plx_features", 
+                "org.bluetooth.characteristic.record_access_control_point"
+            ], 
+            "namespace": "org.bluetooth.service.pulse_oximeter", 
+            "cidentifier": "pulse_oximeter_service", 
+            "name": "Pulse Oximeter Service", 
+            "type": "primary", 
+            "description": "The Pulse Oximeter Service exposes pulse oximetry data related to a non-invasive pulse oximetry sensor for consumer and professional healthcare applications."
+        }, 
+        "org.bluetooth.service.blood_pressure": {
+            "uuid": "1810", 
+            "characteristics": [
+                "org.bluetooth.characteristic.blood_pressure_measurement", 
+                "org.bluetooth.characteristic.intermediate_cuff_pressure", 
+                "org.bluetooth.characteristic.blood_pressure_feature"
+            ], 
+            "description": "The BLOOD PRESSURE Service exposes blood pressure and other data related to a blood pressure monitor.", 
+            "namespace": "org.bluetooth.service.blood_pressure", 
+            "cidentifier": "blood_pressure", 
+            "type": "primary", 
+            "name": "Blood Pressure"
+        }
+    }, 
+    "sigServices": [
+        {
+            "category": "", 
+            "optional": false, 
+            "display_name": "Alert Notification Service", 
+            "name": "org.bluetooth.service.alert_notification", 
+            "description": "The Alert Notification service exposes alert information in a device."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Blood Pressure", 
+            "optional": false, 
+            "name": "org.bluetooth.service.blood_pressure", 
+            "description": "This service exposes blood pressure and other data from a blood pressure monitor intended for healthcare applications."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Device Information", 
+            "optional": false, 
+            "name": "org.bluetooth.service.device_information", 
+            "description": "The Device Information Service exposes manufacturer and/or vendor information about a device."
+        }, 
+        {
+            "category": "", 
+            "optional": false, 
+            "display_name": "Cycling Power", 
+            "name": "org.bluetooth.service.cycling_power", 
+            "description": "This service exposes power- and force-related data and optionally speed- and cadence-related data from a Cycling Power sensor intended for sports and fitness applications."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Cycling Speed and Cadence", 
+            "optional": false, 
+            "name": "org.bluetooth.service.cycling_speed_and_cadence", 
+            "description": "This service exposes speed-related and cadence-related data from a Cycling Speed and Cadence sensor intended for fitness applications."
+        }, 
+        {
+            "category": "", 
+            "optional": false, 
+            "display_name": "Immediate Alert", 
+            "name": "org.bluetooth.service.immediate_alert", 
+            "description": "This service exposes a control point to allow a peer device to cause the device to immediately alert."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Glucose", 
+            "optional": false, 
+            "name": "org.bluetooth.service.glucose", 
+            "description": "This service exposes glucose and other data from a glucose sensor for use in consumer and professional healthcare applications."
+        }, 
+        {
+            "category": "", 
+            "optional": false, 
+            "display_name": "Health Thermometer", 
+            "name": "org.bluetooth.service.health_thermometer", 
+            "description": "The Health Thermometer service exposes temperature and other data from a thermometer intended for healthcare and fitness applications."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Heart Rate", 
+            "optional": false, 
+            "name": "org.bluetooth.service.heart_rate", 
+            "description": "This service exposes heart rate and other data from a Heart Rate Sensor intended for fitness applications."
+        }, 
+        {
+            "category": "", 
+            "optional": false, 
+            "display_name": "Location and Navigation", 
+            "name": "org.bluetooth.service.location_and_navigation", 
+            "description": "This service exposes location and navigation-related data from a Location and Navigation sensor intended for outdoor activity applications."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Phone Alert Status Service", 
+            "optional": false, 
+            "name": "org.bluetooth.service.phone_alert_status", 
+            "description": "This service dexposes the phone alert status when in a connection."
+        }, 
+        {
+            "category": "", 
+            "optional": false, 
+            "display_name": "Running Speed and Cadence", 
+            "name": "org.bluetooth.service.running_speed_and_cadence", 
+            "description": "This service exposes speed, cadence and other data from a Running Speed and Cadence Sensor intended for fitness applications."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Scan Parameters", 
+            "optional": false, 
+            "name": "org.bluetooth.service.scan_parameters", 
+            "description": "This service enables a GATT Client to store the LE scan parameters it is using on a GATT Server device so that the GATT Server can  utilize the information to adjust behavior to optimize power consumption and/or reconnection latency"
+        }, 
+        {
+            "category": "", 
+            "display_name": "Battery Service", 
+            "optional": false, 
+            "name": "org.bluetooth.service.battery_service", 
+            "description": "The Battery Service exposes the state of a battery within a device."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Body Composition", 
+            "optional": false, 
+            "name": "org.bluetooth.service.body_composition", 
+            "description": "This service exposes data related to body composition from a body composition analyzer intended for consumer healthcare and sports/fitness applications."
+        }, 
+        {
+            "category": "", 
+            "optional": false, 
+            "display_name": "Bond Management Service", 
+            "name": "org.bluetooth.service.bond_management", 
+            "description": "This Specification proposes that this service will enable users to manage their bonds on devices with a limited user interface."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Continuous Glucose Monitoring", 
+            "optional": false, 
+            "name": "org.bluetooth.service.continuous_glucose_monitoring", 
+            "description": "This service exposes glucose and other data from a personal Continuous Glucose Monitoring (CGM) sensor for use in consumer healthcare applications."
+        }, 
+        {
+            "category": "", 
+            "optional": false, 
+            "display_name": "Current Time Service", 
+            "name": "org.bluetooth.service.current_time", 
+            "description": "This service defines how the current time can be exposed using the Generic Attribute Profile (GATT)."
+        }, 
+        {
+            "category": "", 
+            "optional": false, 
+            "display_name": " Generic Access", 
+            "name": "org.bluetooth.service.generic_access", 
+            "description": "The generic_access service contains generic information about the device. All available Characteristics are readonly."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Generic Attribute", 
+            "optional": false, 
+            "name": "org.bluetooth.service.generic_attribute", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "HTTP Proxy", 
+            "optional": false, 
+            "name": "org.bluetooth.service.http_proxy", 
+            "description": "This service allows a Client device, typically a sensor, to communicate with a Web Server through a gateway device. The gateway device implements the HTTP Proxy Service and therefore provides the services available through the Internet to the Client sensor device."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Internet Protocol Support Service", 
+            "optional": false, 
+            "name": "org.bluetooth.service.internet_protocol_support", 
+            "description": "When in a GAP Discoverable Mode for an initial connection to a Router, the Node will include the IP Support Service UUID 0x1820 in the Service UUIDs AD type field         of the advertising data. This enhances the user experience as a Node may be identified by the Router before initiating a connection."
+        }, 
+        {
+            "category": "", 
+            "optional": false, 
+            "display_name": "Link Loss", 
+            "name": "org.bluetooth.service.link_loss", 
+            "description": "This service defines behavior when a link is lost between two devices."
+        }, 
+        {
+            "category": "", 
+            "optional": false, 
+            "display_name": "Next DST Change Service", 
+            "name": "org.bluetooth.service.next_dst_change", 
+            "description": "This service defines how the information about an upcoming DST change can be exposed using the Generic Attribute Profile (GATT)."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Object Transfer Service", 
+            "optional": false, 
+            "name": "org.bluetooth.service.object_transfer", 
+            "description": "This service provides management and control features supporting bulk data transfers which occur via a separate L2CAP connection oriented channel. The Client is enabled to create and delete objects and to execute an action using the currently selected object. The selected object can be written, updated or read via an Object Transfer Channel opened by the Client. The generation of a checksum covering a part or the whole of the object contents is included as an optional feature. This service provides a general method for a Client to select and initiate the transfer of any type of object."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Pulse Oximeter Service", 
+            "optional": false, 
+            "name": "org.bluetooth.service.pulse_oximeter", 
+            "description": "This Service specification proposes a pulse oximetry server for use in consumer and professional healthcare applications."
+        }, 
+        {
+            "category": "", 
+            "optional": false, 
+            "display_name": "Reference Time Update Service", 
+            "name": "org.bluetooth.service.reference_time_update", 
+            "description": "This service defines how a client can request an update from a reference time source from a time server using the Generic Attribute Profile (GATT)"
+        }, 
+        {
+            "category": "", 
+            "display_name": "Transport Discovery", 
+            "optional": false, 
+            "name": "org.bluetooth.service.transport_discovery", 
+            "description": "This service enables a device using Bluetooth low energy wireless technology to expose services that are available on a transport other than Bluetooth low energy.         When used together with a higher level specification (e.g., a specification which references and makes use of TDS), the information provided by this service can be         used to facilitate discovery and utilization of BR/EDR or transports not defined by the Bluetooth SIG such as those defined by the Wi-Fi Alliance or other organizations."
+        }, 
+        {
+            "category": "", 
+            "optional": false, 
+            "display_name": "Tx Power", 
+            "name": "org.bluetooth.service.tx_power", 
+            "description": "This service exposes a device's current transmit power level when in a connection."
+        }, 
+        {
+            "category": "", 
+            "display_name": "User Data", 
+            "optional": false, 
+            "name": "org.bluetooth.service.user_data", 
+            "description": "This service exposes user-related data in the sports and fitness environment. This allows remote access and update of user data by a Client as well as the synchronization of user data between a Server and a Client."
+        }, 
+        {
+            "category": "", 
+            "optional": false, 
+            "display_name": "Weight Scale", 
+            "name": "org.bluetooth.service.weight_scale", 
+            "description": "This service exposes weight and related data from a weight scale intended for consumer healthcare and sports/fitness applications."
+        }
+    ], 
+    "sigCharacteristics": [
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Supported New Alert Category", 
+            "name": "org.bluetooth.characteristic.supported_new_alert_category", 
+            "description": "This characteristic exposes what categories of new alert are supported in the server."
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "New Alert", 
+            "name": "org.bluetooth.characteristic.new_alert", 
+            "description": "This characteristic exposes information about the count of new alerts (for a given category)."
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Supported Unread Alert Category", 
+            "name": "org.bluetooth.characteristic.supported_unread_alert_category", 
+            "description": "This characteristic exposes what categories of unread alert are supported in the server."
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Unread Alert Status", 
+            "name": "org.bluetooth.characteristic.unread_alert_status", 
+            "description": "This characteristic exposes the count of unread alert events existing in the server"
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Alert Notification Control Point", 
+            "name": "org.bluetooth.characteristic.alert_notification_control_point", 
+            "description": "This characteristic allows the peer device to enable/disable the alert notification of new alert and unread event more selectively than can be done by setting or clearing the notification bit in the Client Characteristic Configuration for each alert characteristic."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Blood Pressure Measurement", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.blood_pressure_measurement", 
+            "description": "The BLOOD PRESSURE MEASUREMENT characteristic is used to send a Blood Pressure measurement."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Intermediate Cuff Pressure", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.intermediate_cuff_pressure", 
+            "description": "The INTERMEDIATE CUFF PRESSURE characteristic is used to send intermediate Cuff Pressure values to a device for display purposes while the measurement is in progress."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Blood Pressure Feature", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.blood_pressure_feature", 
+            "description": "The Blood Pressure Feature characteristic is used to describe the supported features of the Blood Pressure Sensor."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Manufacturer Name String", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.manufacturer_name_string", 
+            "description": "This characteristic represents the name of the manufacturer of the device."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Model Number String", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.model_number_string", 
+            "description": "This characteristic represents the model number that is assigned by the device vendor."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Serial Number String", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.serial_number_string", 
+            "description": "This characteristic represents the serial number for a particular instance of the device."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Hardware Revision String", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.hardware_revision_string", 
+            "description": "This characteristic represents the hardware revision for the hardware within the device."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Firmware Revision String", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.firmware_revision_string", 
+            "description": "This characteristic represents the firmware revision for the firmware within the device."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Software Revision String", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.software_revision_string", 
+            "description": "This characteristic represents the software revision for the software within the device."
+        }, 
+        {
+            "category": "", 
+            "display_name": "System ID", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.system_id", 
+            "description": "This characteristic represents a structure containing an Organizationally Unique Identifier (OUI) followed by a manufacturer-defined identifier and is unique for each individual instance of the product."
+        }, 
+        {
+            "category": "", 
+            "display_name": "IEEE 11073-20601 Regulatory Certification Data List", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.ieee_11073-20601_regulatory_certification_data_list", 
+            "description": "This characteristic represents regulatory and certification information for the product in a list defined in IEEE 11073-20601."
+        }, 
+        {
+            "category": "", 
+            "display_name": "PnP ID", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.pnp_id", 
+            "description": "The PnP_ID characteristic is a set of values used to create a device ID value that is unique for this device."
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Cycling Power Measurement", 
+            "name": "org.bluetooth.characteristic.cycling_power_measurement", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Cycling Power Feature", 
+            "name": "org.bluetooth.characteristic.cycling_power_feature", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Sensor Location", 
+            "name": "org.bluetooth.characteristic.sensor_location", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Cycling Power Vector", 
+            "name": "org.bluetooth.characteristic.cycling_power_vector", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Cycling Power Control Point", 
+            "name": "org.bluetooth.characteristic.cycling_power_control_point", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "CSC Measurement", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.csc_measurement", 
+            "description": "The CSC Measurement characteristic is used to send speed-related data and/or cadence-related data."
+        }, 
+        {
+            "category": "", 
+            "display_name": "CSC Feature", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.csc_feature", 
+            "description": "The CSC Feature characteristic is used to describe the supported features of the Server. Reserved for Future Use (RFU) bits in the CSC Feature characteristic value are set to 0."
+        }, 
+        {
+            "category": "", 
+            "display_name": "SC Control Point", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.sc_control_point", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Alert Level", 
+            "name": "org.bluetooth.characteristic.alert_level", 
+            "description": "The Alert Level characteristic is a control point that allows a peer to command this device to alert to a given level."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Glucose Measurement", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.glucose_measurement", 
+            "description": "The Glucose Measurement characteristic is used to send glucose measurements."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Glucose Measurement Context", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.glucose_measurement_context", 
+            "description": "The Glucose Measurement Context characteristic is used to send additional contextual information relative to a Glucose Measurement characteristic."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Glucose Feature", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.glucose_feature", 
+            "description": "The Glucose Feature characteristic is used to describe the supported features of the Server."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Record Access Control Point", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.record_access_control_point", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Temperature Measurement", 
+            "name": "org.bluetooth.characteristic.temperature_measurement", 
+            "description": "This characteristic is used to send a temperature measurement."
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Temperature Type", 
+            "name": "org.bluetooth.characteristic.temperature_type", 
+            "description": "This characteristic is used to describe the type of temperature measurement in relation to the location on the human body at which the temperature was measured."
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Intermediate Temperature", 
+            "name": "org.bluetooth.characteristic.intermediate_temperature", 
+            "description": "This characteristic is used to send intermediate temperature values to a device for display purposes while the measurement is in progress."
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Measurement Interval", 
+            "name": "org.bluetooth.characteristic.measurement_interval", 
+            "description": "This characteristic is used to enable and control the interval between consecutive temperature measurements."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Heart Rate Measurement", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.heart_rate_measurement", 
+            "description": "This characteristic is used to send a heart rate measurement."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Body Sensor Location", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.body_sensor_location", 
+            "description": "The Body Sensor Location characteristic of the device is used to describe the intended location of the heart rate measurement for the device."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Heart Rate Control Point", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.heart_rate_control_point", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "LN Feature", 
+            "name": "org.bluetooth.characteristic.ln_feature", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Location and Speed Characteristic", 
+            "name": "org.bluetooth.characteristic.location_and_speed", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Position Quality", 
+            "name": "org.bluetooth.characteristic.position_quality", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "LN Control Point", 
+            "name": "org.bluetooth.characteristic.ln_control_point", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Navigation", 
+            "name": "org.bluetooth.characteristic.navigation", 
+            "description": "C2: Mandatory if the Navigation feature is supported, otherwise excluded."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Alert Status", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.alert_status", 
+            "description": "The Alert Status Characteristic includes three fields of information to express the alerting status as follows."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Ringer Setting", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.ringer_setting", 
+            "description": "The Ringer Setting characteristic returns the current value of the Ringer Setting when read."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Ringer Control point", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.ringer_control_point", 
+            "description": "When the Ringer Control Point characteristic is written, the server device performs an action based on the value (command)."
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "RSC Measurement", 
+            "name": "org.bluetooth.characteristic.rsc_measurement", 
+            "description": "The RSC Measurement characteristic is used to send speed and cadence measurements."
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "RSC Feature", 
+            "name": "org.bluetooth.characteristic.rsc_feature", 
+            "description": "The RSC Feature characteristic is used to describe the supported features of the Server. Reserved for Future Use (RFU) bits in the SC Feature characteristic value are set to 0."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Scan Interval Window", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.scan_interval_window", 
+            "description": "The Scan Interval Window characteristic is used to store the scan parameters of the Client. Included in this characteristic are the Scan Interval and Scan Window of the Client."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Scan Refresh", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.scan_refresh", 
+            "description": "The Scan Refresh characteristic is used to notify the Client that the Server requires the Scan Interval Window characteristic to be written with the latest values upon notification."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Battery Level", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.battery_level", 
+            "description": "The Battery Level characteristic is read using the GATT Read Characteristic Value sub-procedure and returns the current battery level as a percentage from 0% to 100%;                 0% represents a battery that is fully discharged, 100% represents a battery that is fully charged."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Body Composition Feature", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.body_composition_feature", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "Body Composition Measurement", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.body_composition_measurement", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Bond Management Control Point", 
+            "name": "org.bluetooth.characteristic.bond_management_control_point", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Bond Management Features", 
+            "name": "org.bluetooth.characteristic.bond_management_feature", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "CGM Measurement", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.cgm_measurement", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "CGM Feature", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.cgm_feature", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "CGM Status", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.cgm_status", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "CGM Session Start Time", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.cgm_session_start_time", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "CGM Session Run Time", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.cgm_session_run_time", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "CGM Specific Ops Control Point", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.cgm_specific_ops_control_point", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Current Time", 
+            "name": "org.bluetooth.characteristic.current_time", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Local Time Information", 
+            "name": "org.bluetooth.characteristic.local_time_information", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Reference Time Information", 
+            "name": "org.bluetooth.characteristic.reference_time_information", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Device Name", 
+            "name": "org.bluetooth.characteristic.gap.device_name", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Appearance", 
+            "name": "org.bluetooth.characteristic.gap.appearance", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Peripheral Privacy Flag", 
+            "name": "org.bluetooth.characteristic.gap.peripheral_privacy_flag", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Reconnection Address", 
+            "name": "org.bluetooth.characteristic.gap.reconnection_address", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Peripheral Preferred Connection Parameters", 
+            "name": "org.bluetooth.characteristic.gap.peripheral_preferred_connection_parameters", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "Service Changed", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.gatt.service_changed", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "URI", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.uri", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "HTTP Headers", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.http_headers", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "HTTP Entity Body", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.http_entity_body", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "HTTP Control Point", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.http_control_point", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "HTTP Status Code", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.http_status_code", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "HTTPS Security", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.https_security", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Time with DST", 
+            "name": "org.bluetooth.characteristic.time_with_dst", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "OTS Feature", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.ots_feature", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "Object Name", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.object_name", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "Object Type", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.object_type", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "Object Size", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.object_size", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "Object First-Created", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.object_first_created", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "Object Last-Modified", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.object_last_modified", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "Object ID", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.object_id", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "Object Properties", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.object_properties", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "Object Action Control Point", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.object_action_control_point", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "Object List Control Point", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.object_list_control_point", 
+            "description": "C1:Mandatory if the Server is capable of storing more than one object within the context of this instance of the service; optional otherwise."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Object List Filter", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.object_list_filter", 
+            "description": "C2:Optional if the Server is capable of storing more than one object; excluded otherwise."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Object Changed", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.object_changed", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "PLX Spot-Check Measurement", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.plx_spot_check_measurement", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "PLX Continuous Measurement Characteristic", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.plx_continuous_measurement", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "PLX Features", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.plx_features", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Time Update Control Point", 
+            "name": "org.bluetooth.characteristic.time_update_control_point", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Time Update State", 
+            "name": "org.bluetooth.characteristic.time_update_state", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "TDS Control Point", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.tds_control_point", 
+            "description": "The TDS Control Point characteristic is used to request activation of a transport."
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Tx Power Level", 
+            "name": "org.bluetooth.characteristic.tx_power_level", 
+            "description": "The Tx Power Level characteristic represents the current transmit power level of a physical layer for which the characteristic is associated."
+        }, 
+        {
+            "category": "", 
+            "display_name": "First Name", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.first_name", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Last Name", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.last_name", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Email Address", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.email_address", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Age", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.age", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Date of Birth", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.date_of_birth", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "Gender", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.gender", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Weight", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.weight", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Height", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.height", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "VO2 Max", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.vo2_max", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Heart Rate Max", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.heart_rate_max", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Resting Heart Rate", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.resting_heart_rate", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Maximum Recommended Heart Rate", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.maximum_recommended_heart_rate", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Aerobic Threshold", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.aerobic_threshold", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Anaerobic Threshold", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.anaerobic_threshold", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Sport Type for Aerobic and Anaerobic Thresholds", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.sport_type_for_aerobic_and_anaerobic_thresholds", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Date of Threshold Assessment", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.date_of_threshold_assessment", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "Waist Circumference", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.waist_circumference", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Hip Circumference", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.hip_circumference", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Fat Burn Heart Rate Lower Limit", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.fat_burn_heart_rate_lower_limit", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Fat Burn Heart Rate Upper Limit", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.fat_burn_heart_rate_upper_limit", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Aerobic Heart Rate Lower Limit", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.aerobic_heart_rate_lower_limit", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Aerobic Heart Rate Upper Limit", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.aerobic_heart_rate_upper_limit", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Anaerobic Heart Rate Lower Limit", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.anaerobic_heart_rate_lower_limit", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Anaerobic Heart Rate Upper Limit", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.anaerobic_heart_rate_upper_limit", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Five Zone Heart Rate Limits", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.five_zone_heart_rate_limits", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Three Zone Heart Rate Limits", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.three_zone_heart_rate_limits", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Two Zone Heart Rate Limit", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.two_zone_heart_rate_limit", 
+            "description": "C.1:At least one UDS Characteristic shall be exposed."
+        }, 
+        {
+            "category": "", 
+            "display_name": "Database Change Increment", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.database_change_increment", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "User Index", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.user_index", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "User Control Point", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.user_control_point", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "display_name": "Language", 
+            "optional": true, 
+            "name": "org.bluetooth.characteristic.language", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Weight Scale Feature", 
+            "name": "org.bluetooth.characteristic.weight_scale_feature", 
+            "description": ""
+        }, 
+        {
+            "category": "", 
+            "optional": true, 
+            "display_name": "Weight Measurement", 
+            "name": "org.bluetooth.characteristic.weight_measurement", 
+            "description": ""
+        }
+    ], 
+    "profileCategories": [
+        {
+            "type": "", 
+            "display_name": "All Categories"
+        }, 
+        {
+            "type": "Category 1", 
+            "display_name": "First Category"
+        }, 
+        {
+            "type": "Category 2", 
+            "display_name": "Second Category"
+        }, 
+        {
+            "type": "Category 3", 
+            "display_name": "Third Category"
+        }, 
+        {
+            "type": "Category 4", 
+            "display_name": "Fourth Category"
+        }
+    ],
+    "presentationUnits": {
+        "values": [
+            {
+                "display_name": "No defined unit",
+                "type": "UNITLESS"
+            },
+            {
+                "display_name": "Length Unit - Metre",
+                "type": "METRE"
+            },
+            {
+                "display_name": "Mass unit - Kilogram",
+                "type": "KG"
+            },
+            {
+                "display_name": "Time unit - second",
+                "type": "SECOND"
+            },
+            {
+                "display_name": "Electric current unit - Ampere",
+                "type": "AMPERE"
+            },
+            {
+                "display_name": "Thermodynamic Temperature unit - Kelvin",
+                "type": "KELVIN"
+            },
+            {
+                "display_name": " Amount of substance unit - mole",
+                "type": "MOLE"
+            },
+            {
+                "display_name": "Luminous intensity unit - candela",
+                "type": "CANDELA"
+            },
+            {
+                "display_name": "Area unit - square metres",
+                "type": "SQ_METRE"
+            },
+            {
+                "display_name": "Colume unit - cubic metres",
+                "type": "CUBIC_METRE"
+            },
+            {
+                "display_name": "Velocity unit - metres per second",
+                "type": "METRE_PER_SECOND"
+            },
+            {
+                "display_name": "Acceleration unit - metres per second squared",
+                "type": "METRES_PER_SEC_SQ"
+            },
+            {
+                "display_name": "Wavenumber unit - reciprocal metre",
+                "type": "RECIPROCAL_METRE"
+            },
+            {
+                "display_name": "Density unit - kilogram per cubic metre",
+                "type": "DENS_KG_PER_CUBIC_METRE"
+            },
+            {
+                "display_name": "Surface density unit - kilogram per square metre",
+                "type": "KG_PER_SQ_METRE"
+            },
+            {
+                "display_name": "Specific volume unit - cubic metre per kilogram",
+                "type": "CUBIC_METRE_PER_KG"
+            },
+            {
+                "display_name": "Current density unit - ampere per square metre",
+                "type": "AMPERE_PER_SQ_METRE"
+            },
+            {
+                "display_name": "Magnetic field strength unit - Ampere per metre",
+                "type": "AMPERE_PER_METRE"
+            },
+            {
+                "display_name": "Amount concentration unit - mole per cubic metre",
+                "type": "MOLE_PER_CUBIC_METRE"
+            },
+            {
+                "display_name": "Mass Concentration unit - kilogram per cubic metre",
+                "type": "MASS_KG_PER_CUBIC_METRE"
+            },
+            {
+                "display_name": "Luminance unit - candela per square metre",
+                "type": "CANDELA_PER_SQ_METRE"
+            },
+            {
+                "display_name": "Refractive index unit",
+                "type": "REFRACTIVE_INDEX"
+            },
+            {
+                "display_name": "Relative permeability unit",
+                "type": "RELATIVE_PERMEABILITY"
+            },
+            {
+                "display_name": "Plane angle unit - radian",
+                "type": "RADIAN"
+            },
+            {
+                "display_name": "Solid angle unit - steradian",
+                "type": "STERADIAN"
+            },
+            {
+                "display_name": "Frequency unit - Hertz",
+                "type": "HERTZ"
+            },
+            {
+                "display_name": "Force unit - Newton",
+                "type": "NEWTON"
+            },
+            {
+                "display_name": "Pressure unit - Pascal",
+                "type": "PASCAL"
+            },
+            {
+                "display_name": "Energy unit - Joule",
+                "type": "JOULE"
+            },
+            {
+                "display_name": "Power unit - Watt",
+                "type": "WATT"
+            },
+            {
+                "display_name": "Electric Charge unit - Coulomb",
+                "type": "COULOMB"
+            },
+            {
+                "display_name": "Electric potential difference - Volt",
+                "type": "VOLT"
+            },
+            {
+                "display_name": "Capacitance unit - Farad",
+                "type": "FARAD"
+            },
+            {
+                "display_name": "Electric resistance unit - Ohm",
+                "type": "OHM"
+            },
+            {
+                "display_name": "Electric conductance - Siemens",
+                "type": "SIEMENS"
+            },
+            {
+                "display_name": "Magnetic flux unit - Weber",
+                "type": "WEBER"
+            },
+            {
+                "display_name": "Magnetic flux density unit - Tesla",
+                "type": "TESLA"
+            },
+            {
+                "display_name": "Inductance unit - Henry",
+                "type": "HENRY"
+            },
+            {
+                "display_name": "Temperature unit - degree Celsius",
+                "type": "CELSIUS"
+            },
+            {
+                "display_name": "Luminous flux unit - lumen",
+                "type": "LUMEN"
+            },
+            {
+                "display_name": "Illuminance unit - lux",
+                "type": "LUX"
+            },
+            {
+                "display_name": "Activity referred to a radionuclide unit - becquerel",
+                "type": "BECQUEREL"
+            },
+            {
+                "display_name": "Absorbed dose unit - Gray",
+                "type": "GRAY"
+            },
+            {
+                "display_name": "Dose equivalent unit - Sievert",
+                "type": "SIEVERT"
+            },
+            {
+                "display_name": "Catalytic activity unit - Katal",
+                "type": "KATAL"
+            },
+            {
+                "display_name": "Synamic viscosity unit - Pascal second",
+                "type": "PASCAL_SECOND"
+            },
+            {
+                "display_name": "Moment of force unit - Newton metre",
+                "type": "NEWTON_METRE"
+            },
+            {
+                "display_name": "Surface tension unit - Newton per metre",
+                "type": "NEWTON_PER_METRE"
+            },
+            {
+                "display_name": "Angular velocity unit - radian per second",
+                "type": "RADIAN_PER_SECOND"
+            },
+            {
+                "display_name": "Angular acceleration unit - radian per second squared",
+                "type": "RADIAN_PER_SECOND_SQ"
+            },
+            {
+                "display_name": "Heat flux density unit - Watt per square metre",
+                "type": "WATT_PER_SQ_METRE"
+            },
+            {
+                "display_name": "Heat capacity unit - Joule per Kelvin",
+                "type": "JOULE_PER_KELVIN"
+            },
+            {
+                "display_name": "Specific heat capacity unit - Joule per kilogram kelvin",
+                "type": "JOULE_PER_KG_KELVIN"
+            },
+            {
+                "display_name": "Specific Energy unit - Joule per kilogram",
+                "type": "JOULE_PER_KG"
+            },
+            {
+                "display_name": "Thermal conductivity - Watt per metre Kelvin",
+                "type": "WATT_PER_METRE_KELVIN"
+            },
+            {
+                "display_name": "Energy Density unit - joule per cubic metre",
+                "type": "JOULE_PER_CUBIC_METRE"
+            },
+            {
+                "display_name": "Electric field strength unit - volt per metre",
+                "type": "VOLT_PER_METRE"
+            },
+            {
+                "display_name": "Electric charge density unit - coulomb per cubic metre",
+                "type": "COULOMB_PER_CUBIC_METRE"
+            },
+            {
+                "display_name": "Surface charge density unit - coulomb per square metre",
+                "type": "SURF_COULOMB_PER_SQ_METRE"
+            },
+            {
+                "display_name": "Electric flux density unit - coulomb per square metre",
+                "type": "FLUX_COULOMB_PER_SQ_METRE"
+            },
+            {
+                "display_name": "Permittivity unit - farad per metre",
+                "type": "FARAD_PER_METRE"
+            },
+            {
+                "display_name": "Permeability unit - henry per metre",
+                "type": "HENRY_PER_METRE"
+            },
+            {
+                "display_name": "Molar energy unit - joule per mole",
+                "type": "JOULE_PER_MOLE"
+            },
+            {
+                "display_name": "Molar entropy unit - joule per mole kelvin",
+                "type": "JOULE_PER_MOLE_KELVIN"
+            },
+            {
+                "display_name": "Exposure unit - coulomb per kilogram",
+                "type": "COULOMB_PER_KG"
+            },
+            {
+                "display_name": "Absorbed dose rate unit - gray per second",
+                "type": "GRAY_PER_SECOND"
+            },
+            {
+                "display_name": "Radiant intensity unit - watt per steradian",
+                "type": "WATT_PER_STERADIAN"
+            },
+            {
+                "display_name": "Radiance unit - watt per square meter steradian",
+                "type": "WATT_PER_SQ_METRE_STERADIAN"
+            },
+            {
+                "display_name": "Catalytic activity concentration unit - katal per cubic metre",
+                "type": "KATAL_PER_CUBIC_METRE"
+            },
+            {
+                "display_name": "Time unit - minute",
+                "type": "MINUTE"
+            },
+            {
+                "display_name": "Time unit - hour",
+                "type": "HOUR"
+            },
+            {
+                "display_name": "Time unit - day",
+                "type": "DAY"
+            },
+            {
+                "display_name": "Plane angle unit - degree",
+                "type": "ANGLE_DEGREE"
+            },
+            {
+                "display_name": "Plane angle unit - minute",
+                "type": "ANGLE_MINUTE"
+            },
+            {
+                "display_name": "Plane angle unit - second",
+                "type": "ANGLE_SECOND"
+            },
+            {
+                "display_name": "Area unit - hectare",
+                "type": "HECTARE"
+            },
+            {
+                "display_name": "Volume unit - litre",
+                "type": "LITRE"
+            },
+            {
+                "display_name": "Mass unit - tonne",
+                "type": "TONNE"
+            },
+            {
+                "display_name": "Pressure unit - bar",
+                "type": "BAR"
+            },
+            {
+                "display_name": "Pressure unit - millimetre of mercury",
+                "type": "MM_MERCURY"
+            },
+            {
+                "display_name": "Length unit - angstrom",
+                "type": "ANGSTROM"
+            },
+            {
+                "display_name": "Length unit - nautical mile",
+                "type": "NAUTICAL_MILE"
+            },
+            {
+                "display_name": "Area unit - barn",
+                "type": "BARN"
+            },
+            {
+                "display_name": "Velocity unit - knot",
+                "type": "KNOT"
+            },
+            {
+                "display_name": "Logarithmic radio quantity unit - neper",
+                "type": "NEPER"
+            },
+            {
+                "display_name": "Logarithmic radio quantity unit - bel",
+                "type": "BEL"
+            },
+            {
+                "display_name": "Length unit - yard",
+                "type": "YARD"
+            },
+            {
+                "display_name": "Length unit - parsec",
+                "type": "PARSEC"
+            },
+            {
+                "display_name": "Length unit - inch",
+                "type": "INCH"
+            },
+            {
+                "display_name": "Length unit - foot",
+                "type": "FOOT"
+            },
+            {
+                "display_name": "Length unit - mile",
+                "type": "MILE"
+            },
+            {
+                "display_name": "Pressure unit - pound-force per square inch",
+                "type": "POUND_FORCE_PER_SQ_INCH"
+            },
+            {
+                "display_name": "Velocity unit - kilometre per hour",
+                "type": "KM_PER_HOUR"
+            },
+            {
+                "display_name": "Velocity unit - mile per hour",
+                "type": "MILE_PER_HOUR"
+            },
+            {
+                "display_name": "Angular velocity unit - revolution per minute",
+                "type": "REVOLUTION_PER_MINUTE"
+            },
+            {
+                "display_name": "Energy unit - gram calorie",
+                "type": "GRAM_CALORIE"
+            },
+            {
+                "display_name": "Energy unit - kilogram calorie",
+                "type": "KG_CALORIE"
+            },
+            {
+                "display_name": "Energy unit - kilowatt hour",
+                "type": "KILOWATT_HOUR"
+            },
+            {
+                "display_name": "Thermodynamic temperature unit - degree Fahrenheit",
+                "type": "FAHRENHEIT"
+            },
+            {
+                "display_name": "Percentage",
+                "type": "PERCENTAGE"
+            },
+            {
+                "display_name": "Per mille",
+                "type": "PER_MILLE"
+            },
+            {
+                "display_name": "Period unit - beats per minute",
+                "type": "BEATS_PER_MINUTE"
+            },
+            {
+                "display_name": "Electric charge unit - ampere hours",
+                "type": "AMPERE_HOURS"
+            },
+            {
+                "display_name": "Mass density unit - milligram per decilitre",
+                "type": "MILLIGRAM_PER_DECILITRE"
+            },
+            {
+                "display_name": "Mass density unit - millimole per litre",
+                "type": "MILLIMOLE_PER_LITRE"
+            },
+            {
+                "display_name": "Time unit - year",
+                "type": "YEAR"
+            },
+            {
+                "display_name": "Time unit - month",
+                "type": "MONTH"
+            }
+        ],
+        "display_name": "Presentation units"
+    }
+}

@@ -95,14 +95,28 @@ void RobotDataLoader::LoadNonConfigData()
     REMOTE_CONSOLE_ENABLED_ONLY( stressTester.Start() );
   }
 
-  // Don't load these if this is the factory test
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");
+    CollectAnimFiles();
+  }
+
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadBehaviors");
+    LoadBehaviors();
+  }
+  
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
+    LoadBackpackLightAnimations();
+  }
+
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadFacePNGPaths");
+    LoadFacePNGPaths();
+  }
+
   if(!FACTORY_TEST)
   {
-    {
-      ANKI_CPU_PROFILE("RobotDataLoader::CollectFiles");
-      CollectAnimFiles();
-    }
-
     {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationGroups");
       LoadAnimationGroups();
@@ -114,8 +128,8 @@ void RobotDataLoader::LoadNonConfigData()
     }
 
     {
-      ANKI_CPU_PROFILE("RobotDataLoader::LoadBackpackLightAnimations");
-      LoadBackpackLightAnimations();
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerResponses");
+      LoadCubeAnimationTriggerResponses();
     }
 
     {
@@ -124,37 +138,23 @@ void RobotDataLoader::LoadNonConfigData()
     }
 
     {
-      ANKI_CPU_PROFILE("RobotDataLoader::LoadFacePNGPaths");
-      LoadFacePNGPaths();
-    }
-
-    {
-      ANKI_CPU_PROFILE("RobotDataLoader::LoadCubeAnimationTriggerResponses");
-      LoadCubeAnimationTriggerResponses();
-    }
-
-    {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadDasBlacklistedAnimationTriggers");
       LoadDasBlacklistedAnimationTriggers();
     }
-  }
 
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadBehaviors");
-    LoadBehaviors();
-  }
 
-  {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationTriggerResponses");
-    LoadAnimationTriggerResponses();
-  }
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadAnimationTriggerResponses");
+      LoadAnimationTriggerResponses();
+    }
 
-  {
-    // Load SayText Action Intent Config
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadSayTextActionIntentConfigs");
-    SayTextAction::LoadMetadata(*_context->GetDataPlatform());
+    {
+      // Load SayText Action Intent Config
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadSayTextActionIntentConfigs");
+      SayTextAction::LoadMetadata(*_context->GetDataPlatform());
+    }
   }
-
+  
   {
     // Load animations into engine - disabled for the time being to save the 30 MB hit
     // of loading animations into engine in addition to anim process
@@ -184,7 +184,16 @@ void RobotDataLoader::CollectAnimFiles()
 {
   // animations
   {
-    const std::vector<std::string> paths = {"assets/animations/", "config/engine/animations/"};
+    std::vector<std::string> paths;
+    if(FACTORY_TEST)
+    {
+      paths = {"config/engine/animations/"};
+    }
+    else
+    {
+      paths = {"assets/animations/", "config/engine/animations/"};
+    }
+
     for (const auto& path : paths) {
       WalkAnimationDir(path, _animFileTimestamps, [this] (const std::string& filename) {
         _jsonFiles[FileType::Animation].push_back(filename);
@@ -206,11 +215,14 @@ void RobotDataLoader::CollectAnimFiles()
     });
   }
 
-  // animation groups
+  if(!FACTORY_TEST)
   {
-    WalkAnimationDir("assets/animationGroups/", _groupAnimFileTimestamps, [this] (const std::string& filename) {
-      _jsonFiles[FileType::AnimationGroup].push_back(filename);
-    });
+    // animation groups
+    {
+      WalkAnimationDir("assets/animationGroups/", _groupAnimFileTimestamps, [this] (const std::string& filename) {
+        _jsonFiles[FileType::AnimationGroup].push_back(filename);
+      });
+    }
   }
 
   // print results

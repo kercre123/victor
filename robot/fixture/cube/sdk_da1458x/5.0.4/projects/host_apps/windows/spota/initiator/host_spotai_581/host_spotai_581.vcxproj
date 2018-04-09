@@ -1,0 +1,108 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{26EACF5E-2974-41D2-B33A-4BCCE815C562}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>BTLE_spotai_host</RootNamespace>
+    <ProjectName>host_spotai_581</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>
+    </CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>
+    </CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <ExtensionsToDeleteOnClean>*.cdf;*.cache;*.obj;*.ilk;*.resources;*.tlb;*.tli;*.tlh;*.tmp;*.rsp;*.pgc;*.pgd;*.meta;*.tlog;*.manifest;*.res;*.pch;*.exp;*.idb;*.rep;*.xdc;*.pdb;*_manifest.rc;*.bsc;*.sbr;*.xml</ExtensionsToDeleteOnClean>
+    <IncludePath>$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;..\..\..\..\..\..\sdk\platform\arch;..\..\..\..\..\..\sdk\platform\core_modules\common\api;..\..\..\..\..\..\sdk\platform\core_modules\dbg\api;..\..\..\..\..\..\sdk\platform\core_modules\display\api;..\..\..\..\..\..\sdk\platform\core_modules\gtl\api;..\..\..\..\..\..\sdk\platform\core_modules\ke\api;..\..\..\..\..\..\sdk\platform\core_modules\rwip\api;..\..\..\..\..\..\sdk\ble_stack\rwble;..\..\..\..\..\..\sdk\ble_stack\controller\em;..\..\..\..\..\..\sdk\ble_stack\controller\llc;..\..\..\..\..\..\sdk\ble_stack\controller\lld;..\..\..\..\..\..\sdk\ble_stack\controller\llm;..\..\..\..\..\..\sdk\ble_stack\host\att;..\..\..\..\..\..\sdk\ble_stack\host\att\attc;..\..\..\..\..\..\sdk\ble_stack\host\att\attm;..\..\..\..\..\..\sdk\ble_stack\host\gap;..\..\..\..\..\..\sdk\ble_stack\host\gap\gapc;..\..\..\..\..\..\sdk\ble_stack\host\gap\gapm;..\..\..\..\..\..\sdk\ble_stack\host\att\atts;..\..\..\..\..\..\sdk\ble_stack\host\gatt;..\..\..\..\..\..\sdk\ble_stack\host\gatt\gattc;..\..\..\..\..\..\sdk\ble_stack\host\gatt\gattm;..\..\..\..\..\..\sdk\ble_stack\host\l2c\l2cc;..\..\..\..\..\..\sdk\ble_stack\host\l2c\l2cm;..\..\..\..\..\..\sdk\ble_stack\host\smp;..\..\..\..\..\..\sdk\ble_stack\host\smp\smpc;..\..\..\..\..\..\sdk\ble_stack\host\smp\smpm;..\..\..\..\..\..\sdk\ble_stack\rwble_hl;..\..\..\..\..\..\sdk\ble_stack\hcic</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;..\..\..\..\..\..\sdk\platform\arch;..\..\..\..\..\..\sdk\platform\core_modules\common\api;..\..\..\..\..\..\sdk\platform\core_modules\dbg\api;..\..\..\..\..\..\sdk\platform\core_modules\display\api;..\..\..\..\..\..\sdk\platform\core_modules\gtl\api;..\..\..\..\..\..\sdk\platform\core_modules\ke\api;..\..\..\..\..\..\sdk\platform\core_modules\rwip\api;..\..\..\..\..\..\sdk\ble_stack\rwble;..\..\..\..\..\..\sdk\ble_stack\controller\em;..\..\..\..\..\..\sdk\ble_stack\controller\llc;..\..\..\..\..\..\sdk\ble_stack\controller\lld;..\..\..\..\..\..\sdk\ble_stack\controller\llm;..\..\..\..\..\..\sdk\ble_stack\host\att;..\..\..\..\..\..\sdk\ble_stack\host\att\attc;..\..\..\..\..\..\sdk\ble_stack\host\att\attm;..\..\..\..\..\..\sdk\ble_stack\host\gap;..\..\..\..\..\..\sdk\ble_stack\host\gap\gapc;..\..\..\..\..\..\sdk\ble_stack\host\gap\gapm;..\..\..\..\..\..\sdk\ble_stack\host\att\atts;..\..\..\..\..\..\sdk\ble_stack\host\gatt;..\..\..\..\..\..\sdk\ble_stack\host\gatt\gattc;..\..\..\..\..\..\sdk\ble_stack\host\gatt\gattm;..\..\..\..\..\..\sdk\ble_stack\host\l2c\l2cc;..\..\..\..\..\..\sdk\ble_stack\host\l2c\l2cm;..\..\..\..\..\..\sdk\ble_stack\host\smp;..\..\..\..\..\..\sdk\ble_stack\host\smp\smpc;..\..\..\..\..\..\sdk\ble_stack\host\smp\smpm;..\..\..\..\..\..\sdk\ble_stack\rwble_hl;..\..\..\..\..\..\sdk\ble_stack\hcic</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../include/</AdditionalIncludeDirectories>
+      <UndefinePreprocessorDefinitions>
+      </UndefinePreprocessorDefinitions>
+      <UndefineAllPreprocessorDefinitions>false</UndefineAllPreprocessorDefinitions>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>CompileAsC</CompileAs>
+      <ForcedIncludeFiles>da14581_config.h</ForcedIncludeFiles>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../include/</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>da14581_config.h</ForcedIncludeFiles>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\app.h" />
+    <ClInclude Include="..\include\app_task.h" />
+    <ClInclude Include="..\include\ble_msg.h" />
+    <ClInclude Include="..\include\queue.h" />
+    <ClInclude Include="..\include\uart.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\app.c" />
+    <ClCompile Include="..\src\app_task.c" />
+    <ClCompile Include="..\src\ble_msg.c" />
+    <ClCompile Include="..\src\queue.c" />
+    <ClCompile Include="..\src\uart.c" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

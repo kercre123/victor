@@ -40,12 +40,6 @@ namespace {
   // Whether or not SetSupervisor() was called
   bool _supervisorIsSet = false;
   webots::Supervisor *_supervisor = nullptr;
-
-  // Pointer to the CozmoBot node in the scene tree
-  webots::Node *_robotNode = nullptr;
-  
-  // Pointer to the CozmoBot batteryVolts field
-  webots::Field* _batteryVoltsField = nullptr;
   
   RobotID_t _robotID = DEFAULT_ROBOT_ID;
 
@@ -61,27 +55,14 @@ OSState::OSState()
     // Set RobotID
     const auto* robotIDField = _supervisor->getSelf()->getField("robotID");
     DEV_ASSERT(robotIDField != nullptr, "OSState.Ctor.MissingRobotIDField");
-    _robotID = robotIDField->getSFInt32();
-    
-    // Grab a pointer to the CozmoBot node
-    const auto* rootChildren = _supervisor->getRoot()->getField("children");
-    for (int i=0 ; i < rootChildren->getCount() ; i++) {
-      webots::Node* nd = rootChildren->getMFNode(i);
-      if (nd->getTypeName() == "CozmoBot2") {
-        _robotNode = nd;
-        break;
-      }
-    }
-    
-    DEV_ASSERT(_robotNode != nullptr, "OSState.Ctor.NullRobotNode");
-    _batteryVoltsField = _robotNode->getField("batteryVolts");
-    DEV_ASSERT(_batteryVoltsField != nullptr, "OSState.Ctor.NullBatteryVoltsField");
+    _robotID = robotIDField->getSFInt32();    
   }
   
   // Set simulated attributes
   _serialNumString = "12345";
   _osBuildVersion = "12345";
   _ipAddress = "127.0.0.1";
+  _ssid = "AnkiNetwork";
   _buildSha = ANKI_BUILD_SHA;
 }
 
@@ -130,13 +111,6 @@ uint32_t OSState::GetTemperature_C() const
   return 65;  
 }
 
-
-uint32_t OSState::GetBatteryVoltage_uV() const
-{
-  return Util::numeric_cast<uint32_t>(_batteryVoltsField->getSFFloat() * 1'000'000.f);
-}
-
-
 const std::string& OSState::GetSerialNumberAsString()
 {
   return _serialNumString;
@@ -152,14 +126,29 @@ const std::string& OSState::GetBuildSha()
   return _buildSha;
 }
 
-std::string OSState::GetIPAddressInternal()
+std::string OSState::GetMACAddress() const
+{
+  return "00:00:00:00:00:00";
+}
+
+const std::string& OSState::GetIPAddress(bool update)
 {
   return _ipAddress;
+}
+
+const std::string& OSState::GetSSID(bool update)
+{
+  return _ssid;
 }
 
 std::string OSState::GetRobotName() const
 {
   return "Vector_0000";
+}
+
+bool OSState::IsInRecoveryMode()
+{
+  return false;
 }
 
 } // namespace Cozmo

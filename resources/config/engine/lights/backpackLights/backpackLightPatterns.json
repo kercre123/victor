@@ -2,12 +2,12 @@
     // Climbing green lights
     "charging" : {
         "onColors"                : [[0, 0.5, 0, 1], [0, 0.5, 0, 1], [0, 0.5, 0, 1]],
-        "offColors"               : [[0, 0, 0, 1], [0, 0, 0, 1], [0, 0.5, 0, 1]],
-        "onPeriod_ms"             : [300,600,900],
-        "offPeriod_ms"            : [600,300,0],
+        "offColors"               : [[0, 0, 0, 1], [0, 0, 0, 1], [0, 0, 0, 1]],
+        "onPeriod_ms"             : [600,1200,1800],
+        "offPeriod_ms"            : [1200,600,0],
         "transitionOnPeriod_ms"   : [300,300,300],
         "transitionOffPeriod_ms"  : [300,300,300],
-        "offset"                  : [600,300,0]
+        "offset"                  : [1200,600,0]
     },
 
     // Solid green lights
@@ -30,5 +30,16 @@
         "transitionOnPeriod_ms"   : [0,0,300],
         "transitionOffPeriod_ms"  : [0,0,300],
         "offset"                  : [0,0,0]
+    },
+
+    // Off
+    "idle_09" : {
+        "onColors"                : [[0, 0, 0, 1], [0, 0, 0, 1], [0, 0, 0, 1]],
+        "offColors"               : [[0, 0, 0, 1], [0, 0, 0, 1], [0, 0, 0, 1]],
+        "onPeriod_ms"             : [600,1200,1800],
+        "offPeriod_ms"            : [1200,600,0],
+        "transitionOnPeriod_ms"   : [300,300,300],
+        "transitionOffPeriod_ms"  : [300,300,300],
+        "offset"                  : [1200,600,0]
     }
 }

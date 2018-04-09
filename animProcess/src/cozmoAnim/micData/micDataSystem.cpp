@@ -14,8 +14,7 @@
 #include "coretech/messaging/shared/LocalUdpServer.h"
 
 #include "cozmoAnim/animProcessMessages.h"
-#include "cozmoAnim/faceDisplay/faceDebugDraw.h"
-#include "cozmoAnim/faceDisplay/faceDisplay.h"
+#include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/micData/micDataInfo.h"
 #include "cozmoAnim/micData/micDataProcessor.h"
 #include "cozmoAnim/micData/micDataSystem.h"
@@ -81,7 +80,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform)
 , _fftResultData(new FFTResultData())
 {
   const std::string& dataWriteLocation = dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata");
-  const std::string& triggerDataDir = dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets/hey_cosmo_and_commands");
+  const std::string& triggerDataDir = dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets");
   _writeLocationDir = dataWriteLocation;
   _micDataProcessor.reset(new MicDataProcessor(this, dataWriteLocation, triggerDataDir));
 
@@ -234,7 +233,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     }
   }
 
-  const bool isMicFace = FaceDisplay::GetDebugDraw()->GetDrawState() == FaceDebugDraw::DrawState::MicDirectionClock;
+  const bool isMicFace = FaceInfoScreenManager::getInstance()->GetCurrScreenName() == ScreenName::MicDirectionClock;
   if (!isMicFace)
   {
     _forceRecordClip = false;
@@ -368,7 +367,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
   #if ANKI_DEV_CHEATS
     if (updatedMicDirection || recordingSecondsRemaining != 0)
     {
-      FaceDisplay::GetDebugDraw()->DrawConfidenceClock(
+      FaceInfoScreenManager::getInstance()->DrawConfidenceClock(
         micDirectionData,
         GetIncomingMicDataPercentUsed(),
         recordingSecondsRemaining,

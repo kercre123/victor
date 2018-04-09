@@ -16,8 +16,8 @@
 
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animation/animationStreamer.h"
-#include "cozmoAnim/faceDisplay/faceDebugDraw.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
+#include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/textToSpeech/textToSpeechComponent.h"
 
@@ -118,7 +118,7 @@ Result AnimEngine::Init()
 
   _context->GetWebService()->Start(_context->GetDataPlatform(),
                                    _context->GetDataLoader()->GetWebServerAnimConfig());
-  FaceDisplay::GetDebugDraw()->SetWebService( _context->GetWebService() );
+  FaceInfoScreenManager::getInstance()->Init(_context.get(), _animationStreamer.get());
 
   LOG_INFO("AnimEngine.Init.Success","Success");
   _isInitialized = true;

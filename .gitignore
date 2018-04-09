@@ -39,6 +39,7 @@ simulator/controllers/webotsCtrlRobot2/nvStorage
 #
 simulator/controllers/webotsCtrlAnim/webotsCtrlAnim
 simulator/controllers/webotsCtrlAnim/resources
+simulator/controllers/webotsCtrlAnim/persistent
 #
 simulator/controllers/webotsCtrlWebServer/webotsCtrlWebServer
 simulator/controllers/webotsCtrlWebServer/resources
@@ -258,7 +259,7 @@ resources/config/engine/firmware_*
 binary_cache
 perf.data
 symbol_cache
-
+.projectile
 
 # victor envsetup.sh
 filelist
@@ -394,4 +395,3 @@ apps/xamarin/chewie/codelab.Droid/bin
 apps/xamarin/chewie/codelab.Droid/obj
 apps/xamarin/chewie/codelab.iOS/bin
 apps/xamarin/chewie/codelab.iOS/obj
-/simulator/controllers/webotsCtrlAnim/persistent

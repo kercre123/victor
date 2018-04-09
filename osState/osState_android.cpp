@@ -15,6 +15,7 @@
 #include "osState/osState.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "util/console/consoleInterface.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
@@ -26,8 +27,11 @@
 #include <net/if.h>
 #include <netinet/in.h>
 
+#include <linux/wireless.h>
+
 #include <fstream>
 #include <array>
+#include <stdlib.h>
 
 #ifdef SIMULATOR
 #error SIMULATOR should NOT be defined by any target using osState_android.cpp
@@ -40,15 +44,15 @@ namespace {
 
   std::ifstream _cpuFile;
   std::ifstream _tempFile;
-  std::ifstream _batteryVoltageFile;
   std::ifstream _uptimeFile;
   std::ifstream _memInfoFile;
   std::ifstream _cpuTimeStatsFile;
 
   const char* kNominalCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq";
   const char* kCPUFreqFile = "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq";
-  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone7/temp";
-  const char* kBatteryVoltageFile = "/sys/devices/soc/qpnp-linear-charger-8/power_supply/battery/voltage_now";
+  const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone3/temp";
+  const char* kMACAddressFile = "/sys/class/net/wlan0/address";
+  const char* kRecoveryModeFile = "/data/unbrick";
   const char* kUptimeFile = "/proc/uptime";
   const char* kMemInfoFile = "/proc/meminfo";
   const char* kCPUTimeStatsFile = "/proc/stat";
@@ -56,7 +60,6 @@ namespace {
   // System vars
   uint32_t _cpuFreq_kHz;      // CPU freq
   uint32_t _cpuTemp_C;        // Temperature in Celsius
-  float _batteryVoltage_uV;   // Battery charge in milli-volts
   float _uptime_s;            // Uptime in seconds
   float _idleTime_s;          // Idle time in seconds
   uint32_t _memTotal_kB;      // Total memory in kB
@@ -155,9 +158,6 @@ void OSState::Update()
       // Update temperature reading
       UpdateTemperature_C();
       
-      // Update battery voltage
-      UpdateBatteryVoltage_uV();
-
       // const auto now = steady_clock::now();
       // const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
       // PRINT_NAMED_INFO("OSState", "Update took %lld microseconds", elapsed_us);
@@ -186,14 +186,6 @@ void OSState::UpdateTemperature_C() const
   _tempFile.open(kTemperatureFile, std::ifstream::in);
   _tempFile >> _cpuTemp_C;
   _tempFile.close();
-}
-
-void OSState::UpdateBatteryVoltage_uV() const
-{
-  // Update battery voltage reading
-  _batteryVoltageFile.open(kBatteryVoltageFile, std::ifstream::in);
-  _batteryVoltageFile >> _batteryVoltage_uV;
-  _batteryVoltageFile.close();
 }
 
 void OSState::UpdateUptimeAndIdleTime() const
@@ -246,14 +238,6 @@ uint32_t OSState::GetTemperature_C() const
     UpdateTemperature_C();
   }
   return _cpuTemp_C;
-}
-
-uint32_t OSState::GetBatteryVoltage_uV() const
-{
-  if (_updatePeriod_ms == 0) {
-    UpdateBatteryVoltage_uV();
-  }
-  return _batteryVoltage_uV;
 }
 
 float OSState::GetUptimeAndIdleTime(float &idleTime_s) const
@@ -333,7 +317,7 @@ std::string OSState::GetRobotName() const
   return (name.empty() ? "Vector_0000" : name);
 }
   
-std::string OSState::GetIPAddressInternal()
+void OSState::UpdateWifiInfo()
 {
   // Open a socket to figure out the ip adress of the wlan0 (wifi) interface
   const char* const if_name = "wlan0";
@@ -356,10 +340,67 @@ std::string OSState::GetIPAddressInternal()
     close(fd);
     ASSERT_NAMED_EVENT(false, "OSState.GetIPAddress.IoctlError", "%s", strerror(temp_errno));
   }
-  close(fd);
 
   struct sockaddr_in* ipaddr = (struct sockaddr_in*)&ifr.ifr_addr;
-  return std::string(inet_ntoa(ipaddr->sin_addr));
+  _ipAddress = std::string(inet_ntoa(ipaddr->sin_addr));
+
+  // Get SSID
+  iwreq req;
+  strcpy(req.ifr_name, if_name);
+  req.u.data.pointer = (iw_statistics*)malloc(sizeof(iw_statistics));
+  req.u.data.length = sizeof(iw_statistics);
+  
+  const int kSSIDBufferSize = 32;
+  char buffer[kSSIDBufferSize];
+  memset(buffer, 0, sizeof(buffer));
+  req.u.essid.pointer = buffer;
+  req.u.essid.length = kSSIDBufferSize;
+  if(ioctl(fd, SIOCGIWESSID, &req) == -1)
+  {
+    close(fd);
+    ASSERT_NAMED_EVENT(false, "OSState.UpdateWifiInfo.FailedToGetSSID","%s", strerror(errno));
+  }
+  close(fd);
+
+  _ssid = std::string(buffer);
+}
+
+const std::string& OSState::GetIPAddress(bool update)
+{
+  if(_ipAddress.empty() || update)
+  {
+    UpdateWifiInfo();
+  }
+
+  return _ipAddress;
+}
+
+const std::string& OSState::GetSSID(bool update)
+{
+  if(_ssid.empty() || update)
+  {
+    UpdateWifiInfo();
+  }
+
+  return _ssid;
+}
+
+std::string OSState::GetMACAddress() const
+{
+  std::ifstream macFile;
+  macFile.open(kMACAddressFile);
+  if (macFile.is_open()) {
+    std::string macStr;
+    macFile >> macStr;
+    macFile.close();
+    return macStr;
+  }
+  return "";
+}
+
+bool OSState::IsInRecoveryMode()
+{
+  return Util::FileUtils::FileExists(kRecoveryModeFile);
 }
 
 } // namespace Cozmo

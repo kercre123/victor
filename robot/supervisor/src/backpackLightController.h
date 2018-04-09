@@ -20,6 +20,7 @@ namespace Anki {
     
     namespace RobotInterface {
       struct SetBackpackLights;
+      struct SetSystemLight;
     }
     
     namespace BackpackLightController {
@@ -41,6 +42,7 @@ namespace Anki {
       // Set the parameters of an LED for a specified layer.
       // EnableLayer() must be called to actually apply changes if this is for the non-active layer.
       void SetParams(const RobotInterface::SetBackpackLights& params);
+      void SetParams(const RobotInterface::SetSystemLight& params);
 
       // Set all lights on all layers to off
       void TurnOffAll();

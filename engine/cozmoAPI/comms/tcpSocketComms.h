@@ -29,7 +29,7 @@ class TcpSocketComms : public ISocketComms
 {
 public:
   
-  explicit TcpSocketComms(bool isEnabled);
+  explicit TcpSocketComms(bool isEnabled, uint16_t port = 0);
   virtual ~TcpSocketComms();
   
   virtual bool Init(UiConnectionType connectionType, const Json::Value& config) override;

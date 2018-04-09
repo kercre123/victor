@@ -36,6 +36,9 @@
 #include "sim_hal.h"
 #endif
 
+// Whether or not to read/process imu data on a thread
+#define PROCESS_IMU_ON_THREAD 1
+
 namespace Anki {
 namespace Cozmo {
 namespace HAL {
@@ -60,6 +63,9 @@ Result Init(const int * shutdownSignal);
 // Returns RESULT_OK or error
 //
 Result Step(void);
+void Stop(void);
+
+void Shutdown();
 
 /************************************************************************
  * \section Time
@@ -233,6 +239,7 @@ enum {
  * @param[in] color 32 bit RGBA
  */
 void SetLED(const LEDId led_id, const u32 color);
+void SetSystemLED(u32 color);
 
 /************************************************************************
  * \section Power management
@@ -255,7 +262,6 @@ typedef enum
  * @warning Some power states will power off the android processor
  */
 void PowerSetMode(const PowerState state);
-
 
 /************************************************************************
  * \section "Radio" comms to/from engine

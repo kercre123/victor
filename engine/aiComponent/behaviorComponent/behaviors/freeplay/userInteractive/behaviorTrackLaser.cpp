@@ -243,8 +243,7 @@ void BehaviorTrackLaser::OnBehaviorActivated()
 void BehaviorTrackLaser::InitHelper()
 {
   _dVars.haveEverConfirmedLaser = false;
-  _dVars.shouldSendTrackingObjectiveAchieved = false;
-  
+  _dVars.shouldSendTrackingObjectiveAchieved = false;  
   _dVars.originalCameraSettings = GetBEI().GetVisionComponent().GetCurrentCameraParams();
   
   // disable all vision except what's needed laser point detection and confirmation

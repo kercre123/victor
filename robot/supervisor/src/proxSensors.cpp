@@ -28,10 +28,16 @@ namespace Anki {
         };
         // Piecewise linear look-up table for raw prox sensor reading offset. The table
         // must be ordered on 'first' element. Keep this table small (lookup is linear!)
+#if !FACTORY_TEST
         const std::array<ProxSensorLookupEntry, 2> kProxSensorRawDistLUT_mm {{
           {100, -30},
           {300, -22}
         }};
+#else
+        const std::array<ProxSensorLookupEntry, 1> kProxSensorRawDistLUT_mm {{
+          {0, 0}
+        }};
+#endif
 #endif
         
         // Cliff sensor

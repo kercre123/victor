@@ -75,7 +75,8 @@ fi
 echo "ANKI_ROBOT_HOST: ${ANKI_ROBOT_HOST}"
 echo "   INSTALL_ROOT: ${INSTALL_ROOT}"
 
-: ${BUILD_ROOT:="${TOPLEVEL}/_build/android/${ANKI_BUILD_TYPE}"}
+: ${PLATFORM_NAME:="android"}
+: ${BUILD_ROOT:="${TOPLEVEL}/_build/${PLATFORM_NAME}/${ANKI_BUILD_TYPE}"}
 : ${LIB_INSTALL_PATH:="${INSTALL_ROOT}/lib"}
 : ${BIN_INSTALL_PATH:="${INSTALL_ROOT}/bin"}
 : ${RSYNC_BIN_DIR="${TOPLEVEL}/tools/rsync"}

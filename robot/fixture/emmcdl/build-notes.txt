@@ -1,0 +1,49 @@
+Build process for emmcdl as of DVT3:
+
+cd ~/apq/apps_proc/poky/build/tmp-glibc/deploy/images/apq8009-robot-robot
+simg2img apq8009-robot-sysfs.ext4 apq.image
+#
+mkdir ~/img
+sudo mount -o loop ~/apq/apps_proc/poky/build/tmp-glibc/deploy/images/apq8009-robot-robot/apq.image ~/img
+sudo rm -rf ~/img/anki
+sudo mkdir ~/img/anki
+cd /media/sf_victor/_build/android/Release/
+sudo find lib -type f -name '*.so' -exec cp --parents '{}' ~/img/anki \;
+sudo find bin -type f -not -name '*.full' -exec cp --parents '{}' ~/img/anki \;
+sudo find etc -exec cp --parents '{}' ~/img/anki \;
+sudo find data -exec cp --parents '{}' ~/img/anki \;
+cd /media/sf_victor/_build/vicos/Release/
+sudo find lib -type f -name '*.so' -or -name '*.so.1' -exec cp --parents '{}' ~/img/anki \;
+sudo find bin -type f -not -name '*.full' -exec cp --parents '{}' ~/img/anki \;
+sudo chmod -R 0777 ~/img/anki
+du -d 1 -b M ~/img/anki
+sudo umount ~/img
+#
+cd ~/apq/apps_proc/poky/build/tmp-glibc/deploy/images/apq8009-robot-robot
+ls -la apq8009-robot-sysfs.ext4 
+ext2simg apq.image apq8009-robot-sysfs.ext4 
+ls -la apq8009-robot-sysfs.ext4 
+#
+cd ~/apq/common/build/
+rm -rf bin/asic/sparse_images
+./update_common_info.py --hlos
+#
+cd ~/apq/common/build/
+rm -rf emmcdl ; mkdir emmcdl ; cd emmcdl
+date +%m%d%H%M > version
+cp /media/sf_victor/robot/fixture/emmcdl/bundle/* .
+dos2unix anki.xml
+rm ../bin/asic/*
+cp ../bin/asic/sparse_images/*.ext4 .
+cp ../bin/asic/NON-HLOS.bin .
+cp ../gpt_backup0.bin ../gpt_main0.bin .
+cp ~/apq/boot_images/build/ms/bin/8909/emmc/unsigned/sbl1.mbn .
+cp ~/apq/boot_images/build/ms/bin/8909/emmc/unsigned/prog_emmc_firehose_8909_ddr.mbn .
+cp ~/apq/rpm_proc/build/ms/bin/8909/pm8916/rpm.mbn .
+cp ~/apq/trustzone_images/build/ms/bin/MAZAANAA/unsigned/tz.mbn .
+cp ~/apq/apps_proc/poky/build/tmp-glibc/deploy/images/apq8009-robot-robot/emmc_appsboot.mbn .
+cp ~/apq/common/tools/sectools/resources/build/sec.dat .
+cp ~/apq/apps_proc/poky/build/tmp-glibc/deploy/images/apq8009-robot-robot/apq8009-robot-boot.img.nonsecure apq8009-robot-boot.img
+grep "program " ../bin/asic/sparse_images/rawprogram_unsparse.xml >> anki.xml
+grep "patch " ../patch0.xml >> anki.xml
+echo "</data>" >> anki.xml
