@@ -22,6 +22,7 @@
 #include "engine/components/movementComponent.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -40,6 +41,8 @@ namespace {
   // wait this long after turning before looking for motion. this both helps make sure the camera is
   // steady before looking for motion, and elongates the time spent in this state
   const float kTurnTimeBuffer = 0.25f;
+  
+  CONSOLE_VAR(bool, kTurnFirst, "BehaviorReactToMotion", true);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -200,10 +203,14 @@ void BehaviorReactToMotion::OnBehaviorActivated()
   
   // transition (either an animation or action)
   if( mostMotionArea != MotionArea::None ) {
-    if( _iConfig.procedural ) {
-      TransitionToProceduralEyes( mostMotionArea );
+    if( !kTurnFirst ) {
+      if( _iConfig.procedural ) {
+        TransitionToProceduralEyes( mostMotionArea );
+      } else {
+        TransitionToEyeAnimation( mostMotionArea );
+      }
     } else {
-      TransitionToEyeAnimation( mostMotionArea );
+      DoFullMotion( mostMotionArea );
     }
   } else {
     // can happen in unit tests
@@ -215,6 +222,7 @@ void BehaviorReactToMotion::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToMotion::OnBehaviorDeactivated()
 {
+  PRINT_NAMED_INFO("WHATNOW", "exiting");
   if( _dVars.animationEyeShiftActive ) {
     // an animation has set eye direction, and we need to undo it
     AnimationTrigger trigger = AnimationTrigger::Count;
@@ -446,6 +454,51 @@ void BehaviorReactToMotion::TransitionToProceduralTurn()
   
   CancelDelegates( false );
   DelegateIfInControl( action, [this](ActionResult result){
+    TransitionToTurnedAndWaiting();
+  });
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToMotion::DoFullMotion( MotionArea area )
+{
+  _dVars.state = State::AllMotionsAtOnce;
+  
+  auto* action = new CompoundActionSequential();
+//  if( _dVars.animationEyeShiftActive ) {
+//    // must first play eye getout before looking in the new direction
+//    if( _dVars.lookingDirection == MotionArea::Left ) {
+//      action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ReactToMotionLeftGetout ) );
+//    } else if( _dVars.lookingDirection == MotionArea::Right ) {
+//      action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ReactToMotionRightGetout ) );
+//    } else if( _dVars.lookingDirection == MotionArea::Top ) {
+//      action->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::ReactToMotionUpGetout ) );
+//    }
+//  }
+  
+  _dVars.lookingDirection = area;
+  
+ // AnimationTrigger trigger1 = AnimationTrigger::Count;
+  AnimationTrigger trigger2 = AnimationTrigger::Count;
+  if( area == MotionArea::Left ) {
+   // trigger1 = AnimationTrigger::ReactToMotionLeft;
+    trigger2 = AnimationTrigger::ReactToMotionTurnLeft;
+  } else if( area == MotionArea::Right ) {
+   // trigger1 = AnimationTrigger::ReactToMotionRight;
+    trigger2 = AnimationTrigger::ReactToMotionTurnRight;
+  } else { // up
+    //trigger1 = AnimationTrigger::ReactToMotionUp;
+    trigger2 = AnimationTrigger::ReactToMotionTurnUp;
+  }
+  
+  //action->AddAction( new TriggerLiftSafeAnimationAction(trigger1) );
+  action->AddAction( new TriggerLiftSafeAnimationAction(trigger2) );
+  
+  _dVars.animationEyeShiftActive = true;
+  
+  PRINT_NAMED_INFO("WHATNOW", "starting");
+  CancelDelegates(false);
+  DelegateIfInControl( action, [&](ActionResult res) {
+    PRINT_NAMED_INFO("WHATNOW", "done");
     TransitionToTurnedAndWaiting();
   });
 }

@@ -5,19 +5,19 @@
   "interruptActiveBehavior": true,
 
   "behaviors": [
-    "ReactToCliff",
-    "TriggerWordDetected",
-    "TimerUtilityCoordinator",
-    "MeetVictor",
-    "ReactToTouchPetting",
-    "ReactToGreeting",
-    "ReactToGoodMorning",
-    "ReactToGoodBye",
-    "ReactToGoodNight",
-    "DoATrickVoiceCommand",
-    "ReactToSoundAwake",
-    "ReactToObstacle",
-    "ReactToUnclaimedIntent",
-    "HighLevelAI"
+    // "ReactToCliff",
+    // "TriggerWordDetected",
+    // "TimerUtilityCoordinator",
+    // "MeetVictor",
+    // "ReactToTouchPetting",
+    // "ReactToGreeting",
+    // "ReactToGoodMorning",
+    // "ReactToGoodBye",
+    // "ReactToGoodNight",
+    // "DoATrickVoiceCommand",
+    // "ReactToSoundAwake",
+    // "ReactToObstacle",
+    // "ReactToUnclaimedIntent",
+    "Observing"
   ]
 }

@@ -21,7 +21,7 @@
           "cooldown_s": 0.0
         },
         {
-          "behavior": "ObservingOnChargerIdleAnim",
+          "behavior": "Wait",
           "cooldown_s": 0.0
         }
       ]

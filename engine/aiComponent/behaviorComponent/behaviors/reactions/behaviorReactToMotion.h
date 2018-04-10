@@ -57,6 +57,7 @@ private:
   void TransitionToTurnAnimation();
   void TransitionToProceduralTurn();
   void TransitionToCompleted( bool revertHead = true );
+  void DoFullMotion( MotionArea area );
   
   void UpdateConditions();
   
@@ -107,7 +108,8 @@ private:
     EyeTracking,
     Turning,
     TurnedAndWaiting,
-    Completed
+    Completed,
+    AllMotionsAtOnce
   };
 
   struct DynamicVariables {
