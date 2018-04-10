@@ -22,6 +22,7 @@
 #include "engine/components/movementComponent.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -40,6 +41,8 @@ namespace {
   // wait this long after turning before looking for motion. this both helps make sure the camera is
   // steady before looking for motion, and elongates the time spent in this state
   const float kTurnTimeBuffer = 0.25f;
+  
+  CONSOLE_VAR(bool, kTurnFirst, "BehaviorReactToMotion", true);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -200,10 +203,22 @@ void BehaviorReactToMotion::OnBehaviorActivated()
   
   // transition (either an animation or action)
   if( mostMotionArea != MotionArea::None ) {
-    if( _iConfig.procedural ) {
-      TransitionToProceduralEyes( mostMotionArea );
+    // todo: once we decide whether eyes should precede turns, and whether to use animations vs procedural,
+    // simplify all this logic
+    if( !kTurnFirst || GetBEI().GetRobotInfo().IsOnChargerPlatform() ) {
+      if( _iConfig.procedural ) {
+        TransitionToProceduralEyes( mostMotionArea );
+      } else {
+        TransitionToEyeAnimation( mostMotionArea );
+      }
     } else {
-      TransitionToEyeAnimation( mostMotionArea );
+      _dVars.lookingDirection = mostMotionArea;
+      _dVars.animationEyeShiftActive = true;
+      if( _iConfig.procedural ) {
+        TransitionToProceduralTurn();
+      } else {
+        TransitionToTurnAnimation();
+      }
     }
   } else {
     // can happen in unit tests
