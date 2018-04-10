@@ -155,6 +155,7 @@ elseif(VICOS)
   add_subdirectory("coretech/vision/clad")
   add_subdirectory("robot/clad")
   add_subdirectory("platform/switchboard")
+  add_subdirectory("platform/update-engine")
 
   include(vicos-sdk-stl-config)
 else()

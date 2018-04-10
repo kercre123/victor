@@ -109,4 +109,12 @@ endif()
 if (ANDROID)
   # TODO: support tools on mac
   add_subdirectory(tools)
+
+  # Placeholder install task for cozmo_engine. We will eventually transition to using
+  # install for all libs & binaries in order to assign appropriate permissions.
+  install(TARGETS cozmo_engine
+    LIBRARY DESTINATION ${CMAKE_BINARY_DIR}/dist/lib
+    ARCHIVE DESTINATION ${CMAKE_BINARY_DIR}/dist/lib
+  )
 endif(ANDROID)
+

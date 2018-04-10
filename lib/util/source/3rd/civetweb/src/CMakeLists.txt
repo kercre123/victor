@@ -11,16 +11,18 @@ endif()
 target_include_directories(
   c-library PUBLIC
   ${PROJECT_SOURCE_DIR}/include)
-install(
-  TARGETS c-library
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-  COMPONENT c-library)
-install(FILES
-  ${PROJECT_SOURCE_DIR}/include/civetweb.h
-  DESTINATION include
-  COMPONENT c-library)
+
+# BRC: Remove install process until we need this
+#install(
+#  TARGETS c-library
+#  ARCHIVE DESTINATION lib
+#  LIBRARY DESTINATION lib
+#  RUNTIME DESTINATION bin
+#  COMPONENT c-library)
+#install(FILES
+#  ${PROJECT_SOURCE_DIR}/include/civetweb.h
+#  DESTINATION include
+#  COMPONENT c-library)
 
 # Need Windows sockets if available
 find_package(WinSock)
