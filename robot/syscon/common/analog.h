@@ -25,8 +25,8 @@ namespace Analog {
   void tick(void);
   void stop(void);
   void transmit(BodyToHead* data);
-  void allowCharge(bool);
-  bool delayCharge();
+  void setPower(bool power);
+  void delayCharge();
 };
 
 #endif

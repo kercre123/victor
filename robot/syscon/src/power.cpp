@@ -2,11 +2,13 @@
 #include "hardware.h"
 
 #include "power.h"
+#include "analog.h"
 #include "vectors.h"
 #include "flash.h"
 #include "motors.h"
 #include "encoders.h"
 #include "opto.h"
+#include "mics.h"
 
 #include "contacts.h"
 
@@ -145,23 +147,23 @@ void Power::tick(void) {
       enterBootloader();
       break ;
     case POWER_STOP:
-      POWER_EN::pull(PULL_NONE);
-      POWER_EN::reset();
-      POWER_EN::mode(MODE_OUTPUT);
+      Analog::setPower(false);
       break ;
     default:
-      POWER_EN::pull(PULL_UP);
-      POWER_EN::mode(MODE_INPUT);
+      Analog::setPower(true);
       break ;
   }
-}
-
-void Power::disableHead(void) {
-  MAIN_EN::mode(MODE_OUTPUT);
-  MAIN_EN::reset();
 }
 
 void Power::enableHead(void) {
   MAIN_EN::mode(MODE_OUTPUT);
   MAIN_EN::set();
+  Mics::start();
 }
+
+void Power::disableHead(void) {
+  MAIN_EN::mode(MODE_OUTPUT);
+  MAIN_EN::reset();
+  Mics::stop();
+}
+

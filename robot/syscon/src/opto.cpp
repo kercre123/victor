@@ -545,7 +545,7 @@ void Opto::start(void) {
 void Opto::stop(void) {
   optoActive = false;
 
-  // I2C bus is no longer valid
+  // I2C bus is no longer valid (block sensors)
   I2C::capture();
   
   failure = BOOT_FAIL_NONE;
