@@ -439,6 +439,10 @@ else
     TARGET_ARG="--target $CMAKE_TARGET"
   fi
   $CMAKE_EXE --build . $TARGET_ARG $*
+  if [ "$PLATFORM" != "mac" ]; then
+    # run install target on robot-platforms
+    $CMAKE_EXE --build . --target install
+  fi
 fi
 
 popd > /dev/null 2>&1
