@@ -120,7 +120,7 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
   int vbat3v_mv, vbat3v_last = 0;
   while(1)
   {
-    vbat3v_mv = Board::getAdcMv(ADC_DUT_VDD_IN) << 1; //this input has a resistor divider
+    vbat3v_mv = Meter::getVoltageMv(PWR_DUTVDD,4);
     if( ABS(vbat3v_mv-vbat3v_last) > 25 && Timer::elapsedUs(Tupdate) > 50*1000 ) //detect changes, rate limited
     {
       vbat3v_last = vbat3v_mv;
