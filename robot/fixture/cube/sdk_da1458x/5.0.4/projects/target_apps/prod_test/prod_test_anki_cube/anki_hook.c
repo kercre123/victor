@@ -47,52 +47,10 @@
 
 #include "user_callback_config.h"
 
-
-/****************************************************************************************
-* @brief ANKI LED stuff
-****************************************************************************************/
-
 #include "board.h"
 
-//led bitfield
-#define LED_D1_RED    0x0001
-#define LED_D1_GRN    0x0002
-#define LED_D1_BLU    0x0004
-#define LED_D2_RED    0x0008
-#define LED_D2_GRN    0x0010
-#define LED_D2_BLU    0x0020
-#define LED_D3_RED    0x0040
-#define LED_D3_GRN    0x0080
-#define LED_D3_BLU    0x0100
-#define LED_D4_RED    0x0200
-#define LED_D4_GRN    0x0400
-#define LED_D4_BLU    0x0800
-
-void anki_led_on( uint16_t led_bf )
-{
-  board_init();
-  GPIO_CLR(BOOST); //disable VLED
-  
-  //turn on specified leds
-  if( led_bf & LED_D1_RED ) { GPIO_CLR(D2); }
-  if( led_bf & LED_D1_GRN ) { GPIO_CLR(D1); }
-  if( led_bf & LED_D1_BLU ) { GPIO_CLR(D0); }
-  if( led_bf & LED_D2_RED ) { GPIO_CLR(D5); }
-  if( led_bf & LED_D2_GRN ) { GPIO_CLR(D4); }
-  if( led_bf & LED_D2_BLU ) { GPIO_CLR(D3); }
-  if( led_bf & LED_D3_RED ) { GPIO_CLR(D8); }
-  if( led_bf & LED_D3_GRN ) { GPIO_CLR(D7); }
-  if( led_bf & LED_D3_BLU ) { GPIO_CLR(D6); }
-  if( led_bf & LED_D4_RED ) { GPIO_CLR(D11); }
-  if( led_bf & LED_D4_GRN ) { GPIO_CLR(D10); }
-  if( led_bf & LED_D4_BLU ) { GPIO_CLR(D9); }
-  
-  //enable VLED
-  if( led_bf > 0 ) {
-    GPIO_SET(BOOST);
-  }
-}
-
+#include "app/accel.h"
+#include "app/lights.h"
 
 /****************************************************************************************
 * @brief ANKI Hacky hack time
@@ -140,39 +98,58 @@ void anki_start_tx( uint16_t freq_mhz, int test_pattern )
 typedef struct {
   uint16_t  freq_mhz;
   int       pattern;
-  uint16_t  led_bitfield;
+  uint8_t   led[12];
 } test_cfg_t;
+
+static const int TOTAL_TEST_MODES = 6;
+static const int COUNTDOWN_TIME   = 200 * 10; // 10 seconds to trigger
+extern uint8_t tap_count;
+
+static const test_cfg_t test_modes[TOTAL_TEST_MODES] = {
+  { 2402, TEST_PATTERN_NA_CARRIER, { 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } },
+  { 2442, TEST_PATTERN_NA_CARRIER, { 0x00, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } },
+  { 2480, TEST_PATTERN_NA_CARRIER, { 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 } },
+  { 2402,   TEST_PATTERN_01010101, { 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00 } },
+  { 2442,   TEST_PATTERN_01010101, { 0x00, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00, 0x00 } },
+  { 2480,   TEST_PATTERN_01010101, { 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00 } }
+};
 
 //called from system_init()
 void anki_app_on_init(void)
 {
-  //pick a test. any test
-  const test_cfg_t cfg = { 2402, TEST_PATTERN_NA_CARRIER,       LED_D2_RED | LED_D4_RED };
-  //const test_cfg_t cfg = { 2442, TEST_PATTERN_NA_CARRIER,       LED_D2_GRN | LED_D4_GRN };
-  //const test_cfg_t cfg = { 2480, TEST_PATTERN_NA_CARRIER,       LED_D2_BLU | LED_D4_BLU };
-  //const test_cfg_t cfg = { 2402, TEST_PATTERN_PSEUDO_RANDOM_15, LED_D2_RED };
-  //const test_cfg_t cfg = { 2442, TEST_PATTERN_PSEUDO_RANDOM_15, LED_D2_GRN };
-  //const test_cfg_t cfg = { 2480, TEST_PATTERN_PSEUDO_RANDOM_15, LED_D2_BLU };
-  
-  anki_start_tx( cfg.freq_mhz, cfg.pattern );
-  anki_led_on( cfg.led_bitfield );
+  //;
+  //anki_led_on( cfg.led_bitfield );
   
   //Note1: LED states are chosen to match cube 1.0 FCC patterns (avoids confusion)
   //Note2: Cube 1.0 used f{2402,2442,2482}. We use 2480 (2482 not available)
+  
+  hal_led_init();
+  hal_acc_init();
 }
 
-/*
-CUBE 1.0 FCC FIRMWARE, OPERATIONAL NOTES (FROM EMAIL MAY 25, 2016):
--------------------------------------------------------------------
-3 or 4 Blue LEDs:  RX mode
+void main_exec() {
+  static int countdown = COUNTDOWN_TIME;
+  static uint8_t last_count = ~0;
+  static int selected = 0;
 
-1 Red LED:  TX cube packets at 2402MHz
-1 Green LED:  TX cube packets at 2442MHz
-1 Blue LED:  TX cube packets at 2482MHz
+  // We are already transmitting
+  if (countdown == 0) return ;
 
-2 Red, Green, or Blue LEDs:  TX carrier signals at 2402,2442,2482MHz
+  // Select mode
+  const test_cfg_t *cfg = &test_modes[selected];
+  
+  if (--countdown > 0) {
+    if (tap_count != last_count) {
+      last_count = tap_count;
+      if (++selected >= TOTAL_TEST_MODES) selected = 0;
+    }
 
-If 1 LED is lit, the LED lights at max brightness, suitable for LED testing.
-If 2 LEDs are lit, the LED lights at 50% brightness.
-*/
+    static const uint8_t off[12] = {0,0,0,0,0,0,0,0,0,0,0,0};
+    
+    hal_led_set((countdown & 128) ? off : cfg->led);
+  } else {
+    anki_start_tx(cfg->freq_mhz, cfg->pattern);
+  }
 
+  hal_acc_tick();
+}
