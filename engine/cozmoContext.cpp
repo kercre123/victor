@@ -7,7 +7,6 @@
 #include "engine/perfMetric.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotManager.h"
-#include "engine/util/transferQueue/dasTransferTask.h"
 #include "engine/util/transferQueue/gameLogTransferTask.h"
 #include "engine/util/transferQueue/transferQueueMgr.h"
 #include "engine/utils/cozmoExperiments.h"
@@ -41,9 +40,6 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _robotMgr(new RobotManager(this))
   , _vizManager(new VizManager())
   , _transferQueueMgr(new Anki::Util::TransferQueueMgr())
-  #if USE_DAS
-  , _dasTransferTask(new Anki::Util::DasTransferTask())
-  #endif
   , _gameLogTransferTask(new Anki::Util::GameLogTransferTask())
   , _cozmoExperiments(new CozmoExperiments(this))
   , _perfMetric(new PerfMetric(this))
@@ -51,12 +47,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _appToEngineHandler( new AppToEngineHandler() )
   , _threadIdHolder(new ThreadIDInternal)
 {
-
-  #if USE_DAS
-  _dasTransferTask->Init(_transferQueueMgr.get());
-  #endif
   _gameLogTransferTask->Init(_transferQueueMgr.get());
-
   _appToEngineHandler->Init( _webService.get(), _externalInterface );
 }
 

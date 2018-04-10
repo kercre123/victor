@@ -23,7 +23,6 @@
 // ---------- BEGIN FORWARD DECLARATIONS ----------
 namespace Anki {
 namespace Util {
-  class DasTransferTask;
   class GameLogTransferTask;
   class RandomGenerator;
   class TransferQueueMgr;
@@ -128,7 +127,6 @@ private:
   std::unique_ptr<RobotManager>                         _robotMgr;
   std::unique_ptr<VizManager>                           _vizManager;
   std::unique_ptr<Util::TransferQueueMgr>               _transferQueueMgr;
-  std::unique_ptr<Util::DasTransferTask>                _dasTransferTask;
   std::unique_ptr<Util::GameLogTransferTask>            _gameLogTransferTask;
   std::unique_ptr<CozmoExperiments>                     _cozmoExperiments;
   std::unique_ptr<PerfMetric>                           _perfMetric;
