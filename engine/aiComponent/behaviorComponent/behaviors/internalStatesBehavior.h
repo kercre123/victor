@@ -122,6 +122,8 @@ private:
 
   StateID _defaultState = InvalidStateID;
   
+  size_t _lastTransitionTick = 0;
+  
   std::vector<std::pair<StateID,StateID>> _resumeReplacements;
 
   BackpackLights _currDebugLights;
