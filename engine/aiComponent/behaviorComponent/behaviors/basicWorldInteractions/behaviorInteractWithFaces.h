@@ -18,7 +18,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorInteractWithFaces_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/events/animationTriggerHelpers.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "engine/smartFaceId.h"
 #include "coretech/vision/engine/faceIdTypes.h"
 

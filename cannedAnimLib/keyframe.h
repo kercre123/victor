@@ -20,7 +20,7 @@
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/vision/engine/image.h"
 #include "cannedAnimLib/audioKeyFrameTypes.h"
-#include "cannedAnimLib/faceAnimationManager.h"
+#include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
 #include "cannedAnimLib/proceduralFace.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/ledTypes.h"
@@ -235,17 +235,20 @@ namespace Cozmo {
   }; // class RobotAudioKeyFrame
     
 
-  // A FaceAnimationKeyFrame is for streaming a set of images to display on the
+  // A SpriteSequenceKeyFrame is for streaming a set of images to display on the
   // robot's face. It will return a non-NULL message each time GetStreamMessage()
   // is called until there are no more frames left in the animation.
-  class FaceAnimationKeyFrame : public IKeyFrame
+  class SpriteSequenceKeyFrame : public IKeyFrame
   {
   public:
-    FaceAnimationKeyFrame(const std::string& faceAnimName = "") : _animName(faceAnimName) { }
+    SpriteSequenceKeyFrame(const std::string& spriteSequenceName = "")
+    : _spriteSequenceName(spriteSequenceName) { }
     
     Result DefineFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug);
 
     Result Process(const std::string& animNameDebug);
+    
+    void SetSpriteSequenceContainer(SpriteSequenceContainer* spriteSequenceContainer) {_spriteSequenceContainer = spriteSequenceContainer;}
   
     #if CAN_STREAM
       // The face image isn't actually returned via this function since the
@@ -256,13 +259,16 @@ namespace Cozmo {
     #endif
     
     static const std::string& GetClassName() {
-      static const std::string ClassName("FaceAnimationKeyFrame");
-      return ClassName;
+      // NOTE: Class name is used to parse animations - therefore this string
+      // should maintain the legacy "FaceAnimationKeyFrame" class name until
+      // animation exporter is updated to the SpriteSequence naming convention
+      static const std::string className("FaceAnimationKeyFrame");
+      return className;
     }
 
     virtual bool IsDone() override;
     
-    const std::string& GetName() const { return _animName; }
+    const std::string& GetName() const { return _spriteSequenceName; }
     
     float GetScanlineOpacity() const { return _scanlineOpacity; }
     
@@ -290,7 +296,8 @@ namespace Cozmo {
     template <typename ImageType>
     bool GetFaceImageHelper(ImageType& img);
     
-    std::string  _animName;
+    SpriteSequenceContainer* _spriteSequenceContainer = nullptr;
+    std::string  _spriteSequenceName;
     float        _scanlineOpacity = 1.f;
     s32          _curFrame = 0;
 
@@ -298,7 +305,7 @@ namespace Cozmo {
     u32          _nextFrameTime_ms = 0;
     u32          _currentTime_ms   = 0;
     
-  }; // class FaceAnimationKeyFrame
+  }; // class SpriteSequenceKeyFrame
   
 
   class ProceduralFaceKeyFrame : public IKeyFrame

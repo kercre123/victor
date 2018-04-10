@@ -1,0 +1,71 @@
+[
+  {
+    "CladEvent": "Clock_00",
+    "SpriteName": "clock_00"
+  },
+  {
+    "CladEvent": "Clock_01",
+    "SpriteName": "clock_01"
+  },
+  {
+    "CladEvent": "Clock_02",
+    "SpriteName": "clock_02"
+  },
+  {
+    "CladEvent": "Clock_03",
+    "SpriteName": "clock_03"
+  },
+  {
+    "CladEvent": "Clock_04",
+    "SpriteName": "clock_04"
+  },
+  {
+    "CladEvent": "Clock_05",
+    "SpriteName": "clock_05"
+  },
+  {
+    "CladEvent": "Clock_06",
+    "SpriteName": "clock_06"
+  },
+  {
+    "CladEvent": "Clock_07",
+    "SpriteName": "clock_07"
+  },
+  {
+    "CladEvent": "Clock_08",
+    "SpriteName": "clock_08"
+  },
+  {
+    "CladEvent": "Clock_09",
+    "SpriteName": "clock_09"
+  },
+  {
+    "CladEvent": "Clock_colon",
+    "SpriteName": "clock_colon"
+  },
+  {
+    "CladEvent": "Clock_empty_grid",
+    "SpriteName": "clock_empty_grid"
+  },
+  {
+    "CladEvent": "Face_Bored_Event_02",
+    "SpriteName": "face_bored_event_02"
+  },
+  {
+    "CladEvent": "Face_Bored_Event_04",
+    "SpriteName": "face_bored_event_04"
+  },
+  {
+    "CladEvent": "Face_ChargerDocking_SevereRequest",
+    "SpriteName": "face_chargerdocking_severerequest"
+  },
+  {
+    "CladEvent": "Face_TimerSet_GetIn_01",
+    "SpriteName": "face_timerset_getin_01"
+  },
+  {
+    "CladEvent": "Face_TimerSet_GetIn_02",
+    "SpriteName": "face_timerset_getin_02"
+  }
+]
+

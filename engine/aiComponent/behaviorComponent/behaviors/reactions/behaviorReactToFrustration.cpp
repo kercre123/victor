@@ -20,7 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iSubtaskListener.h"
 #include "engine/drivingAnimationHandler.h"
-#include "engine/events/animationTriggerHelpers.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "engine/moodSystem/moodManager.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "util/math/math.h"
@@ -155,7 +155,7 @@ void BehaviorReactToFrustration::LoadJson(const Json::Value& config)
   _maxDistanceToDrive_mm = config.get(kRandomDriveMaxDistKey_mm, 0).asFloat();
   _randomDriveAngleMin_deg = config.get(kRandomDriveMinAngleKey_deg, 0).asFloat();
   _randomDriveAngleMax_deg = config.get(kRandomDriveMaxAngleKey_deg, 0).asFloat();
-  _animToPlay = JsonTools::ParseAnimationTrigger(config, kAnimationKey, "BehaviorReactToFrustration");
+  JsonTools::GetCladEnumFromJSON(config, kAnimationKey, _animToPlay, "BehaviorReactToFrustration");
   _finalEmotionEvent = config.get(kEmotionEventKey, "").asString();
   
 }

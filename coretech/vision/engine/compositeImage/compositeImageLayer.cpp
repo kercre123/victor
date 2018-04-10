@@ -67,10 +67,11 @@ void CompositeImageLayer::SetImageMap(const Json::Value& imageMapSpec)
   _imageMap.clear();
   const std::string implDebugStr = "CompositeImageBuilder.BuildCompositeImage.SpecKey";
   for(auto& entry: imageMapSpec){
-    const std::string sbString  = JsonTools::ParseString(entry, kSpriteBoxNameKey, implDebugStr);
-    const std::string imagePath = JsonTools::ParseString(entry, kSpritePathKey, implDebugStr);
-    SpriteBoxName sbName        = SpriteBoxNameFromString(sbString);
-    _imageMap.emplace(std::make_pair(sbName, imagePath));
+    const std::string sbString     = JsonTools::ParseString(entry, kSpriteBoxNameKey, implDebugStr);
+    SpriteBoxName sbName           = SpriteBoxNameFromString(sbString);
+    const std::string spriteString = JsonTools::ParseString(entry, kSpriteNameKey, implDebugStr);
+    Vision::SpriteName spriteName   = Vision::SpriteNameFromString(spriteString);
+    _imageMap.emplace(std::make_pair(sbName, spriteName));
   }
 }
 

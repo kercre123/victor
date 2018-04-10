@@ -15,6 +15,7 @@
 #define __Vision_CompositeImageLayer_fwd_H__
 
 #include "clad/types/compositeImageTypes.h"
+#include "clad/types/spriteNames.h"
 
 #include "coretech/common/engine/math/point.h"
 #include <unordered_map>
@@ -32,7 +33,7 @@ namespace CompositeImageConfigKeys{
 static const char* kLayerNameKey       = "layerName";
 static const char* kSpriteBoxLayoutKey = "spriteBoxLayout";
 static const char* kSpriteBoxNameKey   = "spriteBoxName";
-static const char* kSpritePathKey      = "spritePath";
+static const char* kSpriteNameKey      = "spriteName";
 static const char* kCornerXKey         = "x";
 static const char* kCornerYKey         = "y";
 static const char* kWidthKey           = "width";
@@ -45,7 +46,7 @@ class CompositeImageLayer{
 public:
   struct SpriteBox;
   using LayoutMap = std::map<SpriteBoxName, SpriteBox>;
-  using ImageMap  = std::unordered_map<SpriteBoxName, std::string, Anki::Util::EnumHasher>;
+  using ImageMap  = std::unordered_map<SpriteBoxName, Vision::SpriteName, Anki::Util::EnumHasher>;
 
   CompositeImageLayer() {};
   CompositeImageLayer(const Json::Value& layoutSpec);

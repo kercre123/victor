@@ -16,7 +16,7 @@
 
 #include "cannedAnimLib/cannedAnimationContainer.h"
 #include "cannedAnimLib/cozmo_anim_generated.h"
-#include "cannedAnimLib/faceAnimationManager.h"
+#include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
 #include "cannedAnimLib/proceduralFace.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -37,13 +37,12 @@ namespace{
 // based on recent profiling. Some sections below are called out specifically, the rest makes up the remainder.
 // These should add up to be less than or equal to 1.0!
 static constexpr float kAnimationsLoadingRatio = 0.7f;
-static constexpr float kFaceAnimationsLoadingRatio = 0.2f;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CannedAnimationContainer* CannedAnimationLoader::LoadAnimations()
 {
-  _cannedAnimations = std::make_unique<CannedAnimationContainer>();
+  _cannedAnimations = std::make_unique<CannedAnimationContainer>(_spriteSequenceContainer);
   {
     ANKI_CPU_PROFILE("CannedAnimationLoader::CollectFiles");
     CollectAnimFiles();
@@ -55,12 +54,6 @@ CannedAnimationContainer* CannedAnimationLoader::LoadAnimations()
     // The threaded animation loading workers each add to the loading ratio
   }
 
-  {
-    ANKI_CPU_PROFILE("CannedAnimationLoader::LoadFaceAnimations");
-    LoadFaceAnimations();
-    AddToLoadingRatio(kFaceAnimationsLoadingRatio);
-  }
-
   // we're done
   _loadingCompleteRatio.store(1.0f);
   return _cannedAnimations.release();
@@ -68,7 +61,7 @@ CannedAnimationContainer* CannedAnimationLoader::LoadAnimations()
 
 CannedAnimationContainer* CannedAnimationLoader::LoadAnimationsFromFile(const std::string& path)
 {
-  _cannedAnimations = std::make_unique<CannedAnimationContainer>();
+  _cannedAnimations = std::make_unique<CannedAnimationContainer>(_spriteSequenceContainer);
   _jsonFiles.push_back(path);
   {
     ANKI_CPU_PROFILE("CannedAnimationLoader::LoadAnimationFile");
@@ -192,13 +185,6 @@ void CannedAnimationLoader::WalkAnimationDir(const std::string& animationDir, Ti
       walkFunc(path);
     }
   }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CannedAnimationLoader::LoadFaceAnimations()
-{
-  FaceAnimationManager::getInstance()->ReadFaceAnimationDir(_platform);
 }
 
 

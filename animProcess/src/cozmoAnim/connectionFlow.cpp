@@ -143,7 +143,7 @@ void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* conte
 {
   Vision::ImageRGB key;
   key.Load(context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, 
-                                                      "config/facePNGs/pairing_icon_key.png"));
+                                                      "config/devOnlySprites/independentSprites/pairing_icon_key.png"));
 
   Vision::ImageRGB img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
   img.FillWith(0);

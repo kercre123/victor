@@ -99,7 +99,7 @@ private:
   // All the animation tracks, storing different kinds of KeyFrames
   Animations::Track<HeadAngleKeyFrame>      _headTrack;
   Animations::Track<LiftHeightKeyFrame>     _liftTrack;
-  Animations::Track<FaceAnimationKeyFrame>  _faceAnimTrack;
+  Animations::Track<SpriteSequenceKeyFrame> _spriteSequenceTrack;
   Animations::Track<ProceduralFaceKeyFrame> _proceduralFaceTrack;
   Animations::Track<EventKeyFrame>          _eventTrack;
   Animations::Track<BackpackLightsKeyFrame> _backpackLightsTrack;

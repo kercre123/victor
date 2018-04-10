@@ -1,5 +1,5 @@
 /**
- * File: faceAnimation.h
+ * File: spriteSequence.h
  *
  * Author: Matt Michini
  * Date:   2/6/2018
@@ -9,8 +9,8 @@
  * Copyright: Anki, Inc. 2018
  **/
 
-#ifndef __Anim_Face_Animation_H__
-#define __Anim_Face_Animation_H__
+#ifndef __CannedAnimLib_SpriteSequences_SpriteSequence_H__
+#define __CannedAnimLib_SpriteSequences_SpriteSequence_H__
 
 #include <string>
 #include <deque>
@@ -21,7 +21,7 @@
 namespace Anki {
 namespace Cozmo {
   
-class FaceAnimation
+class SpriteSequence
 {
 public:
   
@@ -61,5 +61,5 @@ private:
 } // namespace Anki
 
 
-#endif // __Anim_Face_Animation_H__
+#endif // __CannedAnimLib_SpriteSequences_SpriteSequence_H__
 

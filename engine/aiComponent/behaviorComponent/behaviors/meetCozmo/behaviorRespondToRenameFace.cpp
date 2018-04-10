@@ -15,7 +15,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/sayTextAction.h"
 #include "engine/events/ankiEvent.h"
-#include "engine/events/animationTriggerHelpers.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "engine/externalInterface/externalInterface.h"
 
 namespace Anki {

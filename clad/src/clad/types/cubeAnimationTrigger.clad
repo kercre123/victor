@@ -1,0 +1,50 @@
+// File: cubeAnimationTrigger
+// Author: Al Chaussee
+// Created: 3/31/16
+// Copyright: Anki, inc. 2016
+
+
+namespace Anki {
+namespace Cozmo {
+
+enum int_32 CubeAnimationTrigger
+{
+  // Please keep alphabetical
+
+  Carrying,
+  Connected,
+  CubePouncePlayerLose,
+  CubePouncePlayerWin,
+  Dance_01,
+  Dance_02,
+  Dance_03,
+  Dance_04,
+  Dance_05,
+  Dance_06,
+  DanceFadeOff,
+  DrivingTo,
+  FeedingBlank,
+  FeedingCyanCycle,
+  FeedingCyanSolid,
+  Flash,
+  GatherCubesAllCubesInBeacon,
+  GatherCubesCubeInBeacon,
+  Interacting,
+  InteractingBehaviorLock,
+  Onboarding,
+  Sleep,
+  SleepNoFade,
+  SpeedTapWin,
+  SpeedTapLose,
+  TestAllLeds,
+  TestOffset,
+  TestRotation,
+  Visible,
+  WakeUp,
+  Workout,
+
+  Count
+}
+
+} // end namespace Cozmo
+} // end namespace Anki

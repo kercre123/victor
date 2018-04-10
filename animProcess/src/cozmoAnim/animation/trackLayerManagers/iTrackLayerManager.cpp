@@ -124,7 +124,7 @@ Result ITrackLayerManager<FRAME_TYPE>::AddLayer(const std::string& name,
   Layer newLayer;
   newLayer.track = track; // COPY the track in
   newLayer.track.SetIsLive(true);
-  newLayer.track.Init();
+  newLayer.track.MoveToStart();
   newLayer.startTime_ms = delay_ms;
   newLayer.streamTime_ms = 0;
   newLayer.isPersistent = false;
@@ -146,7 +146,7 @@ void ITrackLayerManager<FRAME_TYPE>::AddPersistentLayer(const std::string& name,
   Layer newLayer;
   newLayer.track = track;
   newLayer.track.SetIsLive(false); // don't want keyframes to delete as they play
-  newLayer.track.Init();
+  newLayer.track.MoveToStart();
   newLayer.startTime_ms = 0;
   newLayer.streamTime_ms = 0;
   newLayer.isPersistent = true;

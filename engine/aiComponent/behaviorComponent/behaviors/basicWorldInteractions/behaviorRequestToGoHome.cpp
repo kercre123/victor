@@ -20,7 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/events/animationTriggerHelpers.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "engine/faceWorld.h"
 
 #include "coretech/common/engine/jsonTools.h"
@@ -276,13 +276,15 @@ void BehaviorRequestToGoHome::LoadConfig(const Json::Value& config)
     auto* params = pair.second;
     
     params->numRequests         = JsonTools::ParseUint8(json, kNumRequestsKey, debugName);
-    params->requestAnimTrigger  = JsonTools::ParseAnimationTrigger(json, kRequestAnimTriggerKey, debugName);
-    params->getoutAnimTrigger   = JsonTools::ParseAnimationTrigger(json, kRequestGetoutAnimTriggerKey, debugName);
-    params->waitLoopAnimTrigger = JsonTools::ParseAnimationTrigger(json, kRequestWaitLoopAnimTriggerKey, debugName);
+   
+    JsonTools::GetCladEnumFromJSON(config, kRequestAnimTriggerKey,         params->requestAnimTrigger, debugName);
+    JsonTools::GetCladEnumFromJSON(config, kRequestGetoutAnimTriggerKey,   params->getoutAnimTrigger, debugName);
+    JsonTools::GetCladEnumFromJSON(config, kRequestWaitLoopAnimTriggerKey, params->waitLoopAnimTrigger, debugName);
+
     params->idleWaitTime_sec    = JsonTools::ParseFloat(json, kRequestIdleWaitTimeKey, debugName);
   }
   
-  _iConfig.pickupAnimTrigger = JsonTools::ParseAnimationTrigger(config, kPickupAnimTriggerKey, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kPickupAnimTriggerKey, _iConfig.pickupAnimTrigger, debugName);
   _iConfig.maxFaceAge_sec    = JsonTools::ParseFloat(config, kMaxFaceAgeKey, debugName);
 }
 

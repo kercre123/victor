@@ -17,7 +17,7 @@
 
 #include "engine/ankiEventUtil.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/events/animationTriggerHelpers.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "coretech/vision/engine/faceIdTypes.h"
 
 #include "clad/types/faceEnrollmentResult.h"

@@ -14,7 +14,7 @@
 
 An Animation is an open-loop sequence of highly coordinated movements, faces (eyes), lights, and sounds used to demonstrate an emotion or reaction. They can be created dynamically at runtime ("procedural" animations) or they are more commonly authored by Anki's animation team in Maya and loaded from files ("canned" animations). 
 
-The `CannedAnimationContainer` is the storage for available canned animations loaded at startup. Animations which are alternates for a similar use case are organized into an `AnimationGroup`. In code, we use an `AnimationTrigger` to select and play an animation from a group based on the robot's emotion, head angle, etc. The mapping from Triggers to Groups is in [`AnimationTriggerMap.json`](/resources/assets/animationGroupMaps/AnimationTriggerMap.json).
+The `CannedAnimationContainer` is the storage for available canned animations loaded at startup. Animations which are alternates for a similar use case are organized into an `AnimationGroup`. In code, we use an `AnimationTrigger` to select and play an animation from a group based on the robot's emotion, head angle, etc. The mapping from Triggers to Groups is in [`AnimationTriggerMap.json`](/resources/assets/cladToFileMaps/AnimationTriggerMap.json).
 
 The Robot has an `AnimationComponent` whose counterpart in the separate animation process is the `AnimationStreamer`.
 

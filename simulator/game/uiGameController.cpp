@@ -15,7 +15,7 @@
 #include "coretech/common/engine/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "engine/events/animationTriggerHelpers.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "util/transport/udpTransport.h"
 // includes for physics functions
 #include "coretech/messaging/shared/UdpClient.h"

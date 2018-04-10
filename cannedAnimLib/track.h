@@ -43,7 +43,7 @@ template<class FRAME_TYPE>
 class Track
 {
 public:
-  static const size_t MAX_FRAMES_PER_TRACK = 1000;
+  static constexpr size_t ConstMaxFramesPerTrack() { return 1000; }
 
   //
   // Default copy constructor and copy assignment operator do not do the right thing for std::list iterators.
@@ -83,7 +83,6 @@ public:
     return *this;
   }
 
-    void Init();
   
   // If set to true, keyframes in this track will be deleted after they are played.
   void SetIsLive(bool isLive) { _isLive = isLive; }
@@ -145,6 +144,9 @@ public:
   // this is a "live" track.
   void MoveToLastKeyFrame();
   
+  // Set the track back to the first keyframe
+  void MoveToStart();
+
   // Move to the very end, deleting keyframes along the way if this is a "live"
   // track. HasFramesLeft() will be false after this.
   void MoveToEnd();
@@ -182,7 +184,7 @@ private:
 }; // class Track
   
 template<typename FRAME_TYPE>
-void Track<FRAME_TYPE>::Init()
+void Track<FRAME_TYPE>::MoveToStart()
 {
   _frameIter = _frames.begin();
 }
@@ -280,7 +282,7 @@ Result Track<FRAME_TYPE>::AddKeyFrameToBackHelper(const FRAME_TYPE& keyFrame,
 {
   prevKeyFrame = nullptr;
   
-  if(_frames.size() > MAX_FRAMES_PER_TRACK) {
+  if(_frames.size() > ConstMaxFramesPerTrack()) {
     PRINT_NAMED_WARNING("Animation.Track.AddKeyFrameToBack.TooManyFrames",
                         "There are already %zu frames in track of type %s. Refusing to add more.",
                         _frames.size(), typeid(keyFrame).name());
@@ -326,7 +328,7 @@ Result Track<FRAME_TYPE>::AddKeyFrameByTimeHelper(const FRAME_TYPE& keyFrame,
                                                   FRAME_TYPE* &prevKeyFrame)
 {
   prevKeyFrame = nullptr;
-  if(_frames.size() > MAX_FRAMES_PER_TRACK) {
+  if(_frames.size() > ConstMaxFramesPerTrack()) {
     PRINT_NAMED_WARNING("Animation.Track.AddKeyFrameByTime.TooManyFrames",
                         "There are already %zu frames in %s track. Refusing to add more.",
                         _frames.size(), keyFrame.GetClassName().c_str());

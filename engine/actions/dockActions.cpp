@@ -27,13 +27,13 @@
 #include "engine/components/pathComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/events/animationTriggerResponsesContainer.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "clad/types/animationTypes.h"
+#include "util/cladHelpers/cladEnumToStringMap.h"
 #include "util/console/consoleInterface.h"
 #include "util/helpers/templateHelpers.h"
 
@@ -538,8 +538,8 @@ namespace Anki {
       {
         if (_liftMovingAnimation != AnimationTrigger::Count) {
           // Check that the animation only has sound keyframes
-          bool has_response = GetRobot().GetContext()->GetDataLoader()->GetAnimationTriggerResponses()->HasResponse(_liftMovingAnimation);
-          if (has_response) {
+          bool hasKey = GetRobot().GetContext()->GetDataLoader()->GetAnimationTriggerResponses()->HasKey(_liftMovingAnimation);
+          if (hasKey) {
             
             // Check that the action matches the current action
             DockAction recvdAction = event.GetData().Get_movingLiftPostDock().action;

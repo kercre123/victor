@@ -34,6 +34,7 @@ class DataPlatform;
 namespace Cozmo {
 
 class CannedAnimationContainer;
+class SpriteSequenceContainer;
 class Animation;
 class AnimContext;
 
@@ -62,14 +63,20 @@ public:
   Animation* GetCannedAnimation(const std::string& name);
   std::vector<std::string> GetAnimationNames();
 
+  SpriteSequenceContainer* GetSpriteSequenceContainer() { return _spriteSequenceContainer.get();}
+
 private:
   void NotifyAnimAdded(const std::string& animName, uint32_t animLength);
+  
+  void SetupProceduralAnimation();
 
   const AnimContext* const _context;
   const Util::Data::DataPlatform* _platform;
 
   // animation data
   std::unique_ptr<CannedAnimationContainer>           _cannedAnimations;
+  std::unique_ptr<SpriteSequenceContainer>            _spriteSequenceContainer;
+
   // loading properties shared with the animiation loader
   std::atomic<float>    _loadingCompleteRatio{0};
   std::atomic<bool>     _abortLoad{false};

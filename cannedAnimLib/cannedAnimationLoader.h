@@ -35,16 +35,19 @@ class DataPlatform;
 namespace Cozmo {
 
 // forward declaration
-class CannedAnimationContainer;
 class AnimContext;
+class CannedAnimationContainer;
+class SpriteSequenceContainer;
 
 class CannedAnimationLoader : private Util::noncopyable
 {
 public:
   CannedAnimationLoader(const Util::Data::DataPlatform* platform,
+                        SpriteSequenceContainer* spriteSequenceContainer,
                         std::atomic<float>& loadingCompleteRatio,
                         std::atomic<bool>&  abortLoad)
   : _platform(platform)
+  , _spriteSequenceContainer(spriteSequenceContainer)
   , _loadingCompleteRatio(loadingCompleteRatio)
   , _abortLoad(abortLoad){}
 
@@ -55,6 +58,7 @@ private:
   
   // params passed in by data loader class
   const Util::Data::DataPlatform* _platform;
+  SpriteSequenceContainer* _spriteSequenceContainer = nullptr;
   std::atomic<float>& _loadingCompleteRatio;
   std::atomic<bool>&  _abortLoad;
 
@@ -76,8 +80,6 @@ private:
 
   void WalkAnimationDir(const std::string& animationDir, TimestampMap& timestamps,
                         const std::function<void(const std::string& filePath)>& walkFunc);
-
-  void LoadFaceAnimations();
 
   void CollectAnimFiles();
 

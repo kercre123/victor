@@ -20,7 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/drivingAnimationHandler.h"
-#include "engine/events/animationTriggerHelpers.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 
 #include "coretech/common/engine/jsonTools.h"
 
@@ -59,13 +59,14 @@ BehaviorGoHome::InstanceConfig::InstanceConfig()
 BehaviorGoHome::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
 {  
   useCliffSensorCorrection = JsonTools::ParseBool(config, kUseCliffSensorsKey, debugName);
-  leftTurnAnimTrigger      = JsonTools::ParseAnimationTrigger(config, kLeftTurnAnimKey, debugName);
-  rightTurnAnimTrigger     = JsonTools::ParseAnimationTrigger(config, kRightTurnAnimKey, debugName);
-  backupStartAnimTrigger   = JsonTools::ParseAnimationTrigger(config, kBackupStartAnimKey, debugName);
-  backupEndAnimTrigger     = JsonTools::ParseAnimationTrigger(config, kBackupEndAnimKey, debugName);
-  backupLoopAnimTrigger    = JsonTools::ParseAnimationTrigger(config, kBackupLoopAnimKey, debugName);
-  raiseLiftAnimTrigger     = JsonTools::ParseAnimationTrigger(config, kRaiseLiftAnimKey, debugName);
-  nuzzleAnimTrigger        = JsonTools::ParseAnimationTrigger(config, kNuzzleAnimKey, debugName);
+  
+  JsonTools::GetCladEnumFromJSON(config, kLeftTurnAnimKey,    leftTurnAnimTrigger, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kRightTurnAnimKey,   rightTurnAnimTrigger, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kBackupStartAnimKey, backupStartAnimTrigger, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kBackupEndAnimKey,   backupEndAnimTrigger, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kBackupLoopAnimKey,  backupLoopAnimTrigger, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kRaiseLiftAnimKey,   raiseLiftAnimTrigger, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kNuzzleAnimKey,      nuzzleAnimTrigger, debugName);
   homeFilter               = std::make_unique<BlockWorldFilter>();
 }
 

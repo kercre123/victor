@@ -1,0 +1,79 @@
+[
+  {
+    "mapPath"       : "/resources/assets/cladToFileMaps/AnimationTriggerMap.json",
+    "resourceKey" : "AnimName",
+
+    "cladPath"      : "/clad/src/clad/types/animationTrigger.clad",
+    
+    "resources": [
+      {
+        "basePath" : "/animation-assets/animationGroups",
+        "resourcesAreFiles"   : true
+      }
+    ]
+  },
+  {
+    "mapPath"       : "/resources/assets/cladToFileMaps/CompositeImageLayoutMap.json",
+    "resourceKey" : "AnimName",
+
+    "cladPath"      : "/coretech/vision/clad_src/clad/types/compositeImageLayouts.clad",
+
+    "resources": [
+      {
+        "basePath" : "/animation-assets/compositeImageResources/imageLayouts",
+        "resourcesAreFiles"   : true
+      }
+    ]
+  },
+  {
+    "mapPath"       : "/resources/assets/cladToFileMaps/CompositeImageLayoutMotionSequenceMap.json",
+    "resourceKey" : "AnimName",
+
+    "cladPath"      : "/coretech/vision/clad_src/clad/types/compositeImageLayoutMotionSequences.clad",
+
+    "resources": [
+      {
+        "basePath" : "/animation-assets/compositeImageResources/layoutMotionSequence",
+        "resourcesAreFiles"   : false
+      }
+    ]
+  },
+  {
+    "mapPath"       : "/resources/assets/cladToFileMaps/CompositeImageMapMap.json",
+    "resourceKey" : "AnimName",
+
+    "cladPath"      : "/coretech/vision/clad_src/clad/types/compositeImageMaps.clad",
+
+    "resources": [
+      {
+        "basePath" : "/animation-assets/compositeImageResources/imageMaps",
+        "resourcesAreFiles"   : true
+      }
+    ]
+  },
+  {
+    "mapPath"       : "/resources/assets/cladToFileMaps/spriteMap.json",
+    "resourceKey" : "SpriteName",
+
+    "cladPath"      : "/coretech/vision/clad_src/clad/types/spriteNames.clad",
+
+    "resources": [
+      {
+        "basePath" : "/animation-assets/sprites/independentSprites",
+        "resourcesAreFiles"   : true
+      },
+      {
+        "basePath" : "/animation-assets/sprites/spriteSequences",
+        "resourcesAreFiles"   : false
+      },
+      {
+        "basePath" : "/../resources/config/devOnlySprites/independentSprites",
+        "resourcesAreFiles"   : true
+      },
+      {
+        "basePath" : "/../resources/config/devOnlySprites/spriteSequences",
+        "resourcesAreFiles"   : false
+      }
+    ]
+  }
+]

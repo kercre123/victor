@@ -25,11 +25,11 @@
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/events/animationTriggerResponsesContainer.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "threadedPrintStressTester.h"
 #include "util/ankiLab/ankiLab.h"
+#include "util/cladHelpers/cladEnumToStringMap.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/dispatchWorker/dispatchWorker.h"
@@ -63,11 +63,12 @@ RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 , _platform(_context->GetDataPlatform())
 , _cubeLightAnimations(new CubeLightAnimationContainer())
 , _animationGroups(new AnimationGroupContainer(*context->GetRandom()))
-, _animationTriggerResponses(new AnimationTriggerResponsesContainer())
-, _cubeAnimationTriggerResponses(new AnimationTriggerResponsesContainer())
+, _animationTriggerResponses(new Util::CladEnumToStringMap<AnimationTrigger>())
+, _cubeAnimationTriggerResponses(new Util::CladEnumToStringMap<CubeAnimationTrigger>())
 , _backpackLightAnimations(new BackpackLightAnimationContainer())
 , _dasBlacklistedAnimationTriggers()
 {
+  _spritePaths = std::make_unique<Util::CladEnumToStringMap<Vision::SpriteName>>();
 }
 
 RobotDataLoader::~RobotDataLoader()
@@ -111,8 +112,8 @@ void RobotDataLoader::LoadNonConfigData()
   }
 
   {
-    ANKI_CPU_PROFILE("RobotDataLoader::LoadFacePNGPaths");
-    LoadFacePNGPaths();
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadSpritePaths");
+    LoadSpritePaths();
   }
 
   if(!FACTORY_TEST)
@@ -136,6 +137,8 @@ void RobotDataLoader::LoadNonConfigData()
       ANKI_CPU_PROFILE("RobotDataLoader::LoadEmotionEvents");
       LoadEmotionEvents();
     }
+
+
 
     {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadDasBlacklistedAnimationTriggers");
@@ -360,15 +363,7 @@ void RobotDataLoader::LoadAnimationGroupFile(const std::string& path)
   Json::Value animGroupDef;
   const bool success = _platform->readAsJson(path, animGroupDef);
   if (success && !animGroupDef.empty()) {
-
-    std::string fullName(path);
-
-    // remove path
-    auto slashIndex = fullName.find_last_of("/");
-    std::string jsonName = slashIndex == std::string::npos ? fullName : fullName.substr(slashIndex + 1);
-    // remove extension
-    auto dotIndex = jsonName.find_last_of(".");
-    std::string animationGroupName = dotIndex == std::string::npos ? jsonName : jsonName.substr(0, dotIndex);
+    std::string animationGroupName = Util::FileUtils::GetFileName(path, true, true);
 
     //PRINT_CH_DEBUG("Animations", "RobotDataLoader.LoadAnimationGroupFile.LoadingSpecificAnimGroupFromJson",
     //               "Loading '%s' from %s", animationGroupName.c_str(), path.c_str());
@@ -428,27 +423,51 @@ void RobotDataLoader::LoadBehaviors()
 }
 
 
-void RobotDataLoader::LoadFacePNGPaths()
+void RobotDataLoader::LoadSpritePaths()
 {
-  const std::string facePNGFolder = _platform->pathToResource(Util::Data::Scope::Resources, "config/facePNGs/");
-  auto pngs = Util::FileUtils::FilesInDirectory(facePNGFolder, true, ".png", true);
-  for (const std::string& fullPath : pngs) {
-    std::string fileName = Util::FileUtils::GetFileName(fullPath);
-    auto dotIndex = fileName.find_last_of(".");
-    std::string strippedName = (dotIndex == std::string::npos) ? fileName : fileName.substr(0, dotIndex);
-    _facePNGPaths.emplace(std::piecewise_construct, std::forward_as_tuple(strippedName), std::forward_as_tuple(std::move(fullPath)));
+  // Creates a map of all sprite names to their file names
+  _spritePaths->Load(_platform, "assets/cladToFileMaps/spriteMap.json", "SpriteName");
+
+  // Filter out all sprite sequences
+  for(auto& key: _spritePaths->GetAllKeys()){
+    if(IsSpriteSequence(key, false)){
+      _spritePaths->Erase(key);
+    }
+  }
+
+  // Get all sprite paths
+  std::map<std::string, std::string> fileNameToFullPath; 
+  {
+    const std::string basePath = "assets/sprites/independentSprites/";
+    const bool useFullPath = true;
+    const char* extensions = "png";
+    const bool recurse = true;
+    
+    const std::string fullPathFolder = _platform->pathToResource(Util::Data::Scope::Resources, basePath);
+
+
+    auto fullImagePaths = Util::FileUtils::FilesInDirectory(fullPathFolder, useFullPath, extensions, recurse);
+    for(auto& fullImagePath : fullImagePaths){
+      const std::string fileName = Util::FileUtils::GetFileName(fullImagePath, true, true);
+      fileNameToFullPath.emplace(fileName, fullImagePath);
+    }
+  }
+  
+  for (auto key : _spritePaths->GetAllKeys()) {
+    auto fullPath = fileNameToFullPath[_spritePaths->GetValue(key)];
+    _spritePaths->UpdateValue(key, std::move(fullPath));
   }
 }
 
 
 void RobotDataLoader::LoadAnimationTriggerResponses()
 {
-  _animationTriggerResponses->Load(_platform, "assets/animationGroupMaps");
+  _animationTriggerResponses->Load(_platform, "assets/cladToFileMaps/AnimationTriggerMap.json", "AnimName");
 }
 
 void RobotDataLoader::LoadCubeAnimationTriggerResponses()
 {
-  _cubeAnimationTriggerResponses->Load(_platform, "assets/cubeAnimationGroupMaps");
+  _cubeAnimationTriggerResponses->Load(_platform, "assets/cladToFileMaps/CubeAnimationTriggerMap.json", "AnimName");
 }
 
 void RobotDataLoader::LoadDasBlacklistedAnimationTriggers()
@@ -615,15 +634,15 @@ bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)
 
 bool RobotDataLoader::HasAnimationForTrigger( AnimationTrigger ev )
 {
-  return _animationTriggerResponses->HasResponse(ev);
+  return _animationTriggerResponses->HasKey(ev);
 }
 std::string RobotDataLoader::GetAnimationForTrigger( AnimationTrigger ev )
 {
-  return _animationTriggerResponses->GetResponse(ev);
+  return _animationTriggerResponses->GetValue(ev);
 }
 std::string RobotDataLoader::GetCubeAnimationForTrigger( CubeAnimationTrigger ev )
 {
-  return _cubeAnimationTriggerResponses->GetResponse(ev);
+  return _cubeAnimationTriggerResponses->GetValue(ev);
 }
 
 

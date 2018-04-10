@@ -17,7 +17,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/events/animationTriggerHelpers.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 
 #include "coretech/common/engine/jsonTools.h"
 
@@ -94,7 +94,7 @@ void BehaviorThinkAboutBeacons::LoadConfig(const Json::Value& config)
   using namespace JsonTools;
   const std::string& debugName = std::string(GetDebugLabel()) + ".BehaviorThinkAboutBeacons.LoadConfig";
 
-  _configParams.newAreaAnimTrigger = ParseAnimationTrigger(config, kNewAreaAnimTriggerKey, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kNewAreaAnimTriggerKey, _configParams.newAreaAnimTrigger, debugName);
   _configParams.beaconRadius_mm = ParseFloat(config, kBeaconRadiusKey, debugName);
 }
 

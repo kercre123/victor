@@ -26,12 +26,13 @@ namespace CozmoAnim {
 
 namespace Anki {
 namespace Cozmo {
+  class SpriteSequenceContainer;
   
   class CannedAnimationContainer
   {
   public:
     
-    CannedAnimationContainer();
+    CannedAnimationContainer(SpriteSequenceContainer* spriteSequenceContainer);
     
     Result DefineHardCoded(); // called at construction
     
@@ -55,8 +56,10 @@ namespace Cozmo {
     void Clear();
     
   private:
-    
+    SpriteSequenceContainer* _spriteSequenceContainer = nullptr;
     std::unordered_map<std::string, Animation> _animations;
+
+    void SetSpriteSequenceContainerOnAnimation(Animation* animation) const;
     
   }; // class CannedAnimationContainer
   

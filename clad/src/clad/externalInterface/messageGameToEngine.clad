@@ -9,6 +9,7 @@
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/types/actionTypes.clad"
 #include "clad/types/controllerChannels.clad"
+#include "clad/types/cubeAnimationTrigger.clad"
 #include "clad/types/customObjectMarkers.clad"
 #include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/emotionTypes.clad"

@@ -14,6 +14,8 @@
 
 #include "coretech/vision/engine/compositeImage/compositeImage.h"
 #include "coretech/vision/engine/image_impl.h"
+#include "util/cladHelpers/cladEnumToStringMap.h"
+#include "util/helpers/templateHelpers.h"
 
 namespace Anki {
 namespace Vision {
@@ -48,7 +50,6 @@ CompositeImage::CompositeImage(const LayerMap&& layers,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompositeImage::~CompositeImage()
 {
-
 }
 
 
@@ -149,7 +150,7 @@ void CompositeImage::OverlayImage(ImageRGBA& baseImage,
         auto& spriteBox = layoutIter->second;
         // If implementation quad was found, draw it into the image at the point
         // specified by the layout quad def
-        const ImageRGBA& subImage = LoadImageFromPath(imagePair.second);
+        const ImageRGBA& subImage = LoadSprite(imagePair.second);
         Point2f topCorner(spriteBox.topLeftCorner.x() + overlayOffset.x(),
                           spriteBox.topLeftCorner.y() + overlayOffset.y());
         baseImage.DrawSubImage(subImage, topCorner);
@@ -169,29 +170,30 @@ void CompositeImage::OverlayImage(ImageRGBA& baseImage,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ImageRGBA CompositeImage::LoadImageFromPath(const std::string& imagePath) const
+ImageRGBA CompositeImage::LoadSprite(Vision::SpriteName spriteName) const
 {
+  DEV_ASSERT(_spriteMap != nullptr, "CompositeImage.AttemptingToLoadSpriteWithoutMap");
   ImageRGBA outImage;
   const bool isGrayscale = true;
+  const std::string fullImagePath = _spriteMap->GetValue(spriteName);
   if(isGrayscale){
     Image grayImage;
-    auto res = grayImage.Load(imagePath);
+    auto res = grayImage.Load(fullImagePath);
     ANKI_VERIFY(RESULT_OK == res,
-                "CompositeImageBuilder.SpriteBoxImpl.Constructor.GrayLoadFailed",
-                "Failed to load image at path %s",
-                imagePath.c_str());
+                "CompositeImage.SpriteBoxImpl.Constructor.GrayLoadFailed",
+                "Failed to load sprite %s",
+                SpriteNameToString(spriteName));
     outImage = ImageRGBA(grayImage.GetNumRows(), grayImage.GetNumCols());
     outImage.SetFromGray(grayImage);
   }else{
-    auto res = outImage.Load(imagePath);
+    auto res = outImage.Load(fullImagePath);
     ANKI_VERIFY(RESULT_OK == res,
-                "CompositeImageBuilder.SpriteBoxImpl.Constructor.ColorLoadFailed",
-                "Failed to load image at path %s",
-                imagePath.c_str());
+                "CompositeImage.SpriteBoxImpl.Constructor.ColorLoadFailed",
+                "Failed to load sprite %s",
+                SpriteNameToString(spriteName));
   }
   return outImage;
 }
-
 
 
 } // namespace Vision

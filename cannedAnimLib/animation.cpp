@@ -154,11 +154,11 @@ Result Animation::DefineFromFlatBuf(const std::string& name, const CozmoAnim::An
     }
   }
 
-  auto faceAnimData = keyframes->FaceAnimationKeyFrame();
-  if (faceAnimData != nullptr) {
-    for (int faIdx=0; faIdx < faceAnimData->size(); faIdx++) {
-      const CozmoAnim::FaceAnimation* faceAnimKeyframe = faceAnimData->Get(faIdx);
-      Result addResult = _faceAnimTrack.AddKeyFrameToBack(faceAnimKeyframe, name);
+  auto spriteSequenceData = keyframes->FaceAnimationKeyFrame();
+  if (spriteSequenceData != nullptr) {
+    for (int faIdx=0; faIdx < spriteSequenceData->size(); faIdx++) {
+      const CozmoAnim::FaceAnimation* faceAnimKeyframe = spriteSequenceData->Get(faIdx);
+      Result addResult = _spriteSequenceTrack.AddKeyFrameToBack(faceAnimKeyframe, name);
       if(addResult != RESULT_OK) {
         PRINT_NAMED_ERROR("Animation.DefineFromFlatBuf.AddKeyFrameFailure",
                           "Adding FaceAnimation frame %d failed.", faIdx);
@@ -260,8 +260,8 @@ Result Animation::DefineFromJson(const std::string& name, const Json::Value &jso
       addResult = _headTrack.AddKeyFrameToBack(jsonFrame, name);
     } else if(frameName == LiftHeightKeyFrame::GetClassName()) {
       addResult = _liftTrack.AddKeyFrameToBack(jsonFrame, name);
-    } else if(frameName == FaceAnimationKeyFrame::GetClassName()) {
-      addResult = _faceAnimTrack.AddKeyFrameToBack(jsonFrame, name);
+    } else if(frameName == SpriteSequenceKeyFrame::GetClassName()) {
+      addResult = _spriteSequenceTrack.AddKeyFrameToBack(jsonFrame, name);
     } else if(frameName == EventKeyFrame::GetClassName()) {
       addResult = _eventTrack.AddKeyFrameToBack(jsonFrame, name);
     } else if(frameName == "DeviceAudioKeyFrame") {
@@ -309,8 +309,8 @@ Animations::Track<LiftHeightKeyFrame>& Animation::GetTrack() {
 }
 
 template<>
-Animations::Track<FaceAnimationKeyFrame>& Animation::GetTrack() {
-  return _faceAnimTrack;
+Animations::Track<SpriteSequenceKeyFrame>& Animation::GetTrack() {
+  return _spriteSequenceTrack;
 }
 
 template<>
@@ -362,7 +362,7 @@ Result Animation::AddKeyFrameToBack(const HeadAngleKeyFrame& kf)
 #define ALL_TRACKS(__METHOD__, __COMBINE_WITH__, ...) \
 _headTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _liftTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
-_faceAnimTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
+_spriteSequenceTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _proceduralFaceTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _eventTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _robotAudioTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
@@ -382,7 +382,7 @@ Result Animation::Init()
   PRINT_NAMED_INFO("Animation.Init", "Initializing animation '%s'", GetName().c_str());
 #   endif
   
-  ALL_TRACKS(Init, ;);
+  ALL_TRACKS(MoveToStart, ;);
   
   _isInitialized = true;
   
@@ -424,7 +424,7 @@ void Animation::AppendAnimation(const Animation& appendAnim)
   // Append animation tracks
   _headTrack.AppendTrack(appendAnim.GetTrack<HeadAngleKeyFrame>(), animOffest_ms);
   _liftTrack.AppendTrack(appendAnim.GetTrack<LiftHeightKeyFrame>(), animOffest_ms);
-  _faceAnimTrack.AppendTrack(appendAnim.GetTrack<FaceAnimationKeyFrame>(), animOffest_ms);
+  _spriteSequenceTrack.AppendTrack(appendAnim.GetTrack<SpriteSequenceKeyFrame>(), animOffest_ms);
   _proceduralFaceTrack.AppendTrack(appendAnim.GetTrack<ProceduralFaceKeyFrame>(), animOffest_ms);
   _eventTrack.AppendTrack(appendAnim.GetTrack<EventKeyFrame>(), animOffest_ms);
   _backpackLightsTrack.AppendTrack(appendAnim.GetTrack<BackpackLightsKeyFrame>(), animOffest_ms);
@@ -447,7 +447,7 @@ uint32_t Animation::GetLastKeyFrameTime_ms()
   lastFrameTime_ms = CompareLastFrameTime<RecordHeadingKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<TurnToRecordedHeadingKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<EventKeyFrame>(lastFrameTime_ms);
-  lastFrameTime_ms = CompareLastFrameTime<FaceAnimationKeyFrame>(lastFrameTime_ms);
+  lastFrameTime_ms = CompareLastFrameTime<SpriteSequenceKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<BackpackLightsKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<ProceduralFaceKeyFrame>(lastFrameTime_ms);
 
@@ -468,7 +468,7 @@ uint32_t Animation::GetLastKeyFrameEndTime_ms()
   lastFrameTime_ms = CompareLastFrameEndTime<RecordHeadingKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<TurnToRecordedHeadingKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<EventKeyFrame>(lastFrameTime_ms);
-  lastFrameTime_ms = CompareLastFrameEndTime<FaceAnimationKeyFrame>(lastFrameTime_ms);
+  lastFrameTime_ms = CompareLastFrameEndTime<SpriteSequenceKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<BackpackLightsKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<ProceduralFaceKeyFrame>(lastFrameTime_ms);
   

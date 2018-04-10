@@ -19,10 +19,17 @@
 #include "coretech/vision/engine/compositeImage/compositeImageLayer.h"
 
 #include "clad/types/compositeImageTypes.h"
+#include "clad/types/spriteNames.h"
 #include "coretech/vision/engine/image.h"
 #include <set>
 
 namespace Anki {
+// Forward declaration
+namespace Util{
+template<class CladEnum>
+class CladEnumToStringMap;
+}
+
 namespace Vision {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -68,12 +75,22 @@ public:
                     std::set<Vision::LayerName> layersToIgnore = {},
                     const Point2i& overlayOffset = {}) const;
 
+  // TMP function - see note below
+  void SetSpriteMap(const Util::CladEnumToStringMap<Vision::SpriteName>* spriteMap)
+  {
+    _spriteMap = spriteMap;
+  }
+
 private:
   s32 _width = 0;
   s32 _height = 0;
   LayerMap  _layerMap;
 
-  ImageRGBA LoadImageFromPath(const std::string& imagePath) const;
+  // TMP: If sprite map is set then the composite image can load sprites directly
+  // this is a transitional necessity while engine/anim composite image relationship is in flux
+  // but theoretically image loading should be done externally to the composite image class
+  const Util::CladEnumToStringMap<Vision::SpriteName>* _spriteMap = nullptr;
+  ImageRGBA LoadSprite(Vision::SpriteName spriteName) const;
 
 };
 

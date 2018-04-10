@@ -1,0 +1,64 @@
+/** Clad enum that maps to Sprite/SpriteSequence resource assets
+*/
+
+
+namespace Anki {
+namespace Vision {
+
+
+enum uint_8 SpriteName
+{
+  // Independent Sprites
+  Clock_00,
+  Clock_01,
+  Clock_02,
+  Clock_03,
+  Clock_04,
+  Clock_05,
+  Clock_06,
+  Clock_07,
+  Clock_08,
+  Clock_09,
+  Clock_colon,
+  Clock_empty_grid,
+
+  // SpriteSequenceces
+  Face_Bored_Event_02,
+  Face_Bored_Event_04,
+  Face_ChargerDocking_SevereRequest,
+  Face_TimerSet_GetIn_01,
+  Face_TimerSet_GetIn_02,
+
+  // Must be last element
+  Count
+}
+
+enum_concept bool IsSpriteSequence[SpriteName] {
+  // Independent Sprites
+  Clock_00 = 0,
+  Clock_01 = 0,
+  Clock_02 = 0,
+  Clock_03 = 0,
+  Clock_04 = 0,
+  Clock_05 = 0,
+  Clock_06 = 0,
+  Clock_07 = 0,
+  Clock_08 = 0,
+  Clock_09 = 0,
+  Clock_colon = 0,
+  Clock_empty_grid = 0,
+
+  // SpriteSequenceces
+  Face_Bored_Event_02 = 1,
+  Face_Bored_Event_04 = 1,
+  Face_ChargerDocking_SevereRequest = 1,
+  Face_TimerSet_GetIn_01 = 1,
+  Face_TimerSet_GetIn_02 = 1,
+
+  // Must be last element
+  Count = 0
+
+}
+
+} // namespace Vision
+} // namespace Anki

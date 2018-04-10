@@ -30,7 +30,6 @@ namespace Cozmo {
   
   // Forward declaration
   class ProceduralFace;
-  class CannedAnimationContainer;
   class AnimContext;
   class TrackLayerComponent;
   

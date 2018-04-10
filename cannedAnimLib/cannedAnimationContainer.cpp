@@ -12,8 +12,10 @@
  **/
 
 #include "cannedAnimLib/cannedAnimationContainer.h"
-#include "cannedAnimLib/faceAnimationManager.h"
+#include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
+#include "cannedAnimLib/track.h"
 
+#include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
 
 #define LOG_CHANNEL "Animations"
@@ -21,21 +23,10 @@
 namespace Anki {
 namespace Cozmo {
   
-  CannedAnimationContainer::CannedAnimationContainer()
+  CannedAnimationContainer::CannedAnimationContainer(SpriteSequenceContainer* spriteSequenceContainer)
+  : _spriteSequenceContainer(spriteSequenceContainer)
   {
     DefineHardCoded();
-   
-    // Add special animation for procedural animation:
-    AddAnimation(FaceAnimationManager::ProceduralAnimName);
-    
-    Animation* anim = GetAnimation(FaceAnimationManager::ProceduralAnimName);
-    assert(anim != nullptr);
-    FaceAnimationKeyFrame kf(FaceAnimationManager::ProceduralAnimName);
-    if(RESULT_OK != anim->AddKeyFrameToBack(kf))
-    {
-      PRINT_NAMED_ERROR("CannedAnimationContainer.Constructor.AddProceduralFailed",
-                        "Failed to add keyframe to procedural animation.");
-    }
   }
 
   Result CannedAnimationContainer::AddAnimation(const std::string& name)
@@ -103,7 +94,7 @@ namespace Cozmo {
     v.reserve(_animations.size());
     for (std::unordered_map<std::string, Animation>::iterator i=_animations.begin(); i != _animations.end(); ++i) {
       // Don't include procedural animation name in list of available animations
-      if (i->first != FaceAnimationManager::ProceduralAnimName) {
+      if (i->first != SpriteSequenceContainer::ProceduralAnimName) {
         v.push_back(i->first);
       }
     }
@@ -117,6 +108,7 @@ namespace Cozmo {
       return RESULT_FAIL;
     }
     Result lastResult = animation->DefineFromFlatBuf(animName, animClip);
+    SetSpriteSequenceContainerOnAnimation(animation);
 
     return SanityCheck(lastResult, animation, animName);
 
@@ -156,6 +148,7 @@ namespace Cozmo {
       return RESULT_FAIL;
     }
     Result lastResult = animation->DefineFromJson(animationName, jsonRoot[animationName]);
+    SetSpriteSequenceContainerOnAnimation(animation);
 
     return SanityCheck(lastResult, animation, animationName);
     
@@ -163,10 +156,10 @@ namespace Cozmo {
 
   Animation* CannedAnimationContainer::GetAnimationWrapper(std::string& animationName)
   {
-    if(animationName == FaceAnimationManager::ProceduralAnimName) {
+    if(animationName == SpriteSequenceContainer::ProceduralAnimName) {
       PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson.ReservedName",
                         "Skipping animation with reserved name '%s'.",
-                        FaceAnimationManager::ProceduralAnimName.c_str());
+                        SpriteSequenceContainer::ProceduralAnimName.c_str());
       return nullptr;
     }
     
@@ -217,6 +210,19 @@ namespace Cozmo {
   {
     _animations.clear();
   } // Clear()
+
+  void CannedAnimationContainer::SetSpriteSequenceContainerOnAnimation(Animation* animation) const
+  {
+    auto& spriteSeqTrack = animation->GetTrack<SpriteSequenceKeyFrame>();
+    const auto& maxCount = Animations::Track<SpriteSequenceKeyFrame>::ConstMaxFramesPerTrack();
+    BOUNDED_WHILE(maxCount, spriteSeqTrack.HasFramesLeft()){
+      auto& keyframe = spriteSeqTrack.GetCurrentKeyFrame();
+      keyframe.SetSpriteSequenceContainer(_spriteSequenceContainer);
+      spriteSeqTrack.MoveToNextKeyFrame();
+    }
+    spriteSeqTrack.MoveToStart();
+  }
+
 
 } // namespace Cozmo
 } // namespace Anki

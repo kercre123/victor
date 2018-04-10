@@ -208,17 +208,15 @@ namespace Anki {
         //
         // Copy engine resources
         //
-        // The 'animations' and 'animationGroups' directories come from 
+        // The 'animations' and 'CladEnumToStringMaps' directories come from 
         //   ../../EXTERNALS/cozmo-assets (SVN) 
-        // while the 'animationGroupMaps' and 'behaviors' directories come from 
+        // while the 'CladEnumToStringMaps' and 'behaviors' directories come from 
         //   '../../resources/assets/' (Git)
         //
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../EXTERNALS/cozmo-assets", assetFolder + "/assets");
         FileUtil.DeleteFileOrDirectory(assetFolder + "/assets/.svn");
-        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/assets/animationGroupMaps",
-                                                   assetFolder + "/assets/animationGroupMaps");
-        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/assets/cubeAnimationGroupMaps",
-                                                   assetFolder + "/assets/cubeAnimationGroupMaps");
+        FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/assets/cladToFileMaps",
+                                                   assetFolder + "/assets/cladToFileMaps");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/assets/RewardedActions",
                                                    assetFolder + "/assets/RewardedActions");
         FileUtil.CopyFileOrDirectoryFollowSymlinks("../../resources/config", assetFolder + "/config");
