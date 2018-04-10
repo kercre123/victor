@@ -19,9 +19,9 @@
 
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/vision/engine/image.h"
-#include "cannedAnimLib/audioKeyFrameTypes.h"
+#include "cannedAnimLib/baseTypes/audioKeyFrameTypes.h"
 #include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
-#include "cannedAnimLib/proceduralFace.h"
+#include "cannedAnimLib/proceduralFace/proceduralFace.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/ledTypes.h"
 #include "util/random/randomGenerator.h"

@@ -11,7 +11,7 @@
 */
 
 
-#include "cannedAnimLib/track.h"
+#include "cannedAnimLib/baseTypes/track.h"
 #include "util/logging/logging.h"
 
 namespace Anki {

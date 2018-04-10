@@ -11,9 +11,9 @@
  *
  **/
 
-#include "cannedAnimLib/cannedAnimationContainer.h"
+#include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
 #include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
-#include "cannedAnimLib/track.h"
+#include "cannedAnimLib/baseTypes/track.h"
 
 #include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"

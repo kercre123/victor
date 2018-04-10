@@ -20,7 +20,7 @@
 //#include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 
 #include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
-#include "cannedAnimLib/proceduralFaceDrawer.h"
+#include "cannedAnimLib/proceduralFace/proceduralFaceDrawer.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/animationAudioClient.h"
 #include "cozmoAnim/audio/proceduralAudioClient.h"

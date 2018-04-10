@@ -10,7 +10,7 @@
  **/
 
 #include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
-#include "cannedAnimLib/keyframe.h"
+#include "cannedAnimLib/baseTypes/keyframe.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/data/dataScope.h"
 #include "coretech/common/engine/array2d_impl.h"

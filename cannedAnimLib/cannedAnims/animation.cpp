@@ -13,8 +13,8 @@
  *
  **/
 
-#include "cannedAnimLib/animation.h"
-#include "cannedAnimLib/cozmo_anim_generated.h"
+#include "cannedAnimLib/cannedAnims/animation.h"
+#include "cannedAnimLib/baseTypes/cozmo_anim_generated.h"
 //#include "cozmoAnim/animation/proceduralFace.h"
 //#include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoConfig.h"

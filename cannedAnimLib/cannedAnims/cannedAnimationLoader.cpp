@@ -12,12 +12,12 @@
  *
  **/
 
-#include "cannedAnimLib/cannedAnimationLoader.h"
+#include "cannedAnimLib/cannedAnims/cannedAnimationLoader.h"
 
-#include "cannedAnimLib/cannedAnimationContainer.h"
-#include "cannedAnimLib/cozmo_anim_generated.h"
+#include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
+#include "cannedAnimLib/baseTypes/cozmo_anim_generated.h"
 #include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
-#include "cannedAnimLib/proceduralFace.h"
+#include "cannedAnimLib/proceduralFace/proceduralFace.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"

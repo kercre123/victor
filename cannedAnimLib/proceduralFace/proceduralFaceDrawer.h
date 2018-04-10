@@ -3,7 +3,7 @@
 
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/matrix.h"
-#include "cannedAnimLib/proceduralFace.h"
+#include "cannedAnimLib/proceduralFace/proceduralFace.h"
 #include "coretech/vision/engine/image.h"
 
 namespace Anki {

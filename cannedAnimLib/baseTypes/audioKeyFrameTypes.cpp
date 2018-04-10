@@ -12,7 +12,7 @@
  **/
 
 
-#include "cannedAnimLib/audioKeyFrameTypes.h"
+#include "cannedAnimLib/baseTypes/audioKeyFrameTypes.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include "util/random/randomGenerator.h"

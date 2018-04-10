@@ -16,12 +16,12 @@
 #include "coretech/common/engine/utils/timer.h"
 
 
-#include "cannedAnimLib/animation.h"
-#include "cannedAnimLib/cannedAnimationContainer.h"
-#include "cannedAnimLib/cannedAnimationLoader.h"
-#include "cannedAnimLib/cozmo_anim_generated.h"
+#include "cannedAnimLib/cannedAnims/animation.h"
+#include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
+#include "cannedAnimLib/cannedAnims/cannedAnimationLoader.h"
+#include "cannedAnimLib/baseTypes/cozmo_anim_generated.h"
 #include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
-#include "cannedAnimLib/proceduralFace.h"
+#include "cannedAnimLib/proceduralFace/proceduralFace.h"
 //#include "anki/cozmo/basestation/animations/animationTransfer.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"

@@ -1,5 +1,5 @@
-#include "cannedAnimLib/proceduralFaceDrawer.h"
-#include "cannedAnimLib/scanlineDistorter.h"
+#include "cannedAnimLib/proceduralFace/proceduralFaceDrawer.h"
+#include "cannedAnimLib/proceduralFace/scanlineDistorter.h"
 
 #include "coretech/common/engine/array2d_impl.h"
 

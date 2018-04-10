@@ -19,8 +19,8 @@
 
 #include "coretech/common/engine/jsonTools.h"
 #include "anki/cozmo/shared/animationTag.h"
-#include "cannedAnimLib/keyframe.h"
-#include "cannedAnimLib/track.h"
+#include "cannedAnimLib/baseTypes/keyframe.h"
+#include "cannedAnimLib/baseTypes/track.h"
 #include <list>
 #include <queue>
 

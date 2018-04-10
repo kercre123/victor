@@ -15,7 +15,7 @@
 #include "audioEngine/audioTypeTranslator.h"
 #include "cozmoAnim/audio/animationAudioClient.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
-#include "cannedAnimLib/keyframe.h"
+#include "cannedAnimLib/baseTypes/keyframe.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"

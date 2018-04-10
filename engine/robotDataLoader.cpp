@@ -12,8 +12,8 @@
 
 #include "engine/robotDataLoader.h"
 
-#include "cannedAnimLib/cannedAnimationContainer.h"
-#include "cannedAnimLib/cannedAnimationLoader.h"
+#include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
+#include "cannedAnimLib/cannedAnims/cannedAnimationLoader.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/sayTextAction.h"

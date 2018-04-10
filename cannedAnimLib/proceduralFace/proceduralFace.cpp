@@ -10,9 +10,9 @@
  *
  **/
 
-#include "cannedAnimLib/cozmo_anim_generated.h"
-#include "cannedAnimLib/proceduralFace.h"
-#include "cannedAnimLib/scanlineDistorter.h"
+#include "cannedAnimLib/baseTypes/cozmo_anim_generated.h"
+#include "cannedAnimLib/proceduralFace/proceduralFace.h"
+#include "cannedAnimLib/proceduralFace/scanlineDistorter.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/math/matrix_impl.h"
 #include "coretech/common/engine/math/point_impl.h"
