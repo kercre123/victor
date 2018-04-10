@@ -32,6 +32,7 @@ static const float kRobotMinLiftAngleForArmUpAnim_s = 45.f;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToRobotOnFace::BehaviorReactToRobotOnFace(const Json::Value& config)
 : ICozmoBehavior(config)
+, _offTreadsCondition(OffTreadsState::OnFace)
 {
 }
 
@@ -39,7 +40,15 @@ BehaviorReactToRobotOnFace::BehaviorReactToRobotOnFace(const Json::Value& config
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToRobotOnFace::WantsToBeActivatedBehavior() const
 {
-  return true;
+  return _offTreadsCondition.AreConditionsMet(GetBEI());
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToRobotOnFace::InitBehavior()
+{
+  _offTreadsCondition.Init(GetBEI());
+  _offTreadsCondition.SetActive(GetBEI(), true);
 }
 
 

@@ -6,6 +6,8 @@
 
   "behaviors": [
     "ReactToRobotOnBack",
+    "ReactToRobotOnFace",
+    "ReactToRobotOnSide",
     "ReactToCliff",
     "TriggerWordDetected",
     "TimerUtilityCoordinator",

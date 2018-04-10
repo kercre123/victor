@@ -30,13 +30,30 @@ static const float kWaitTimeBeforeRepeatAnim_s = 15.f;
 BehaviorReactToRobotOnSide::BehaviorReactToRobotOnSide(const Json::Value& config)
 : ICozmoBehavior(config)
 {
+  _offTreadsConditions.emplace_back(OffTreadsState::OnLeftSide);
+  _offTreadsConditions.emplace_back(OffTreadsState::OnRightSide);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToRobotOnSide::WantsToBeActivatedBehavior() const
 {
-  return true;
+  const bool wantsToBeActivated = std::any_of(_offTreadsConditions.begin(),
+                                              _offTreadsConditions.end(),
+                                              [this](const ConditionOffTreadsState& condition) {
+                                                return condition.AreConditionsMet(GetBEI());
+                                              });
+  return wantsToBeActivated;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToRobotOnSide::InitBehavior()
+{
+  for (auto& condition : _offTreadsConditions) {
+    condition.Init(GetBEI());
+    condition.SetActive(GetBEI(), true);
+  }
 }
 
 
