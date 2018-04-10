@@ -19,6 +19,7 @@
 #include "engine/components/animationComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -52,6 +53,7 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/threading/threadPriority.h"
+#include "util/bitFlags/bitFlags.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
@@ -157,6 +159,8 @@ namespace Cozmo {
       helper.SubscribeGameToEngine<MessageGameToEngineTag::VisionWhileMoving>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SetCameraSettings>();
       helper.SubscribeGameToEngine<MessageGameToEngineTag::SaveImages>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::DevSubscribeVisionModes>();
+      helper.SubscribeGameToEngine<MessageGameToEngineTag::DevUnsubscribeVisionModes>();
 
       // Separate list for engine messages to listen to:
       helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotConnectionResponse>();
@@ -2651,6 +2655,32 @@ namespace Cozmo {
   void VisionComponent::HandleMessage(const ExternalInterface::SaveImages& payload)
   {
     SetSaveImageParameters(payload.mode, payload.path, payload.qualityOnRobot);
+  }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::DevSubscribeVisionModes& payload)
+  {
+    _robot->GetVisionScheduleMediator().DevOnly_SelfSubscribeVisionMode(GetVisionModesFromFlags(payload.bitFlags));
+  }
+  
+  template<>
+  void VisionComponent::HandleMessage(const ExternalInterface::DevUnsubscribeVisionModes& payload)
+  {
+    _robot->GetVisionScheduleMediator().DevOnly_SelfUnsubscribeVisionMode(GetVisionModesFromFlags(payload.bitFlags));
+  }
+  
+  std::set<VisionMode> VisionComponent::GetVisionModesFromFlags(u32 bitflags) const
+  {
+    Util::BitFlags32<VisionMode> flags;
+    flags.SetFlags(bitflags);
+    std::set<VisionMode> visionModes;
+    for(uint32_t i=0; i<VisionModeNumEntries; ++i) {
+      auto mode = static_cast<VisionMode>(i);
+      if(flags.IsBitFlagSet(mode)) {
+        visionModes.insert(mode);
+      }
+    }
+    return visionModes;
   }
 
   template<>

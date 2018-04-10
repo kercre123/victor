@@ -84,6 +84,13 @@ public:
 
   // in debug builds, send viz messages to webots
   void SendDebugVizMessages(const CozmoContext* context);
+  
+  // for webots testing purposes:
+  // VSM will subscribe itself to the passed in modes, which will allow
+  // vision modes to be enabled from non-engine processes (i.e. from
+  // webotsCtrlBuildServerTest)
+  void DevOnly_SelfSubscribeVisionMode(const std::set<VisionMode>& modes);
+  void DevOnly_SelfUnsubscribeVisionMode(const std::set<VisionMode>& modes);
 
 private:
 

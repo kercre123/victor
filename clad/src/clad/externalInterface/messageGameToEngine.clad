@@ -486,6 +486,14 @@ message EnableVisionMode {
    bool       enable
 }
 
+message DevSubscribeVisionModes {
+  uint_32 bitFlags
+}
+
+message DevUnsubscribeVisionModes {
+  uint_32 bitFlags
+}
+
 // Rename given ID+oldName pair to use newName. For safety if current face with given ID
 // does not match oldName, nothing happens.
 // On success, a RobotLoadedKnownFace message with faceID and newName will be sent.

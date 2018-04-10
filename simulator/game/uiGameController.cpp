@@ -870,10 +870,10 @@ namespace Anki {
       return _dataPlatform;
     }
     
-    void UiGameController::SendMessage(const ExternalInterface::MessageGameToEngine& msg)
+    Result UiGameController::SendMessage(const ExternalInterface::MessageGameToEngine& msg)
     {
       UserDeviceID_t devID = 1; // TODO: Should this be a RobotID_t?
-      _msgHandler.SendMessage(devID, msg); 
+      return _msgHandler.SendMessage(devID, msg); 
     }
     
 

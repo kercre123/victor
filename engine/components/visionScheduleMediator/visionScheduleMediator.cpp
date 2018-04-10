@@ -160,6 +160,25 @@ void VisionScheduleMediator::SetVisionModeSubscriptions(IVisionModeSubscriber* c
   _subscriptionRecordIsDirty = true;
 }
 
+  
+void VisionScheduleMediator::DevOnly_SelfSubscribeVisionMode(const std::set<VisionMode>& modes)
+{
+  // TODO(agm): we probably want to be able to set the frequency through this dev-method
+  SetVisionModeSubscriptions(this, modes);
+}
+  
+void VisionScheduleMediator::DevOnly_SelfUnsubscribeVisionMode(const std::set<VisionMode>& modes)
+{
+  for(const VisionMode& mode : modes) {
+    auto got = _modeDataMap.find(mode);
+    if(got!=_modeDataMap.end()) {
+      got->second.requestMap.erase(this);
+      got->second.dirty = true;
+    }
+  }
+  _subscriptionRecordIsDirty = true;
+}
+
 void VisionScheduleMediator::ReleaseAllVisionModeSubscriptions(IVisionModeSubscriber* subscriber)
 {
   // Prevent subscription releases using nullptr

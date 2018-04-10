@@ -137,7 +137,7 @@ protected:
   virtual void HandleRobotDeletedFixedCustomObjects(const ExternalInterface::RobotDeletedFixedCustomObjects& msg) {};
   
   // Message senders
-  void SendMessage(const ExternalInterface::MessageGameToEngine& msg);
+  Result SendMessage(const ExternalInterface::MessageGameToEngine& msg);
   void SendPing(bool isResponse);
   void SendDriveWheels(const f32 lwheel_speed_mmps, const f32 rwheel_speed_mmps, const f32 lwheel_accel_mmps2, const f32 rwheel_accel_mmps2);
   void SendDriveArc(const f32 speed, const f32 accel, const s16 curvature_mm);

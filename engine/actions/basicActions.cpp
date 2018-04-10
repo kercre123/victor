@@ -2096,7 +2096,11 @@ namespace Anki {
             // ... with valid pose w.r.t. robot. Turn towards that face -- iff it doesn't
             // require too large of an adjustment.
             const Radians maxFineTuneAngle( std::min( GetMaxTurnAngle().ToFloat(), DEG_TO_RAD(45.f)) );
-            SetAction(new TurnTowardsPoseAction(pose, maxFineTuneAngle));
+            TurnTowardsPoseAction* ptr = new TurnTowardsPoseAction(pose, maxFineTuneAngle);
+            // note: apply the pan/tilt angle tolerance to the fine-tune action
+            ptr->SetTiltTolerance(GetHeadTiltAngleTolerance());
+            ptr->SetPanTolerance(GetBodyPanAngleTolerance());
+            SetAction(ptr);
           }
         } else {
           SetAction(nullptr);
