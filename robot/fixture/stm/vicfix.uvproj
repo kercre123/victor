@@ -473,6 +473,11 @@
               <FileType>8</FileType>
               <FilePath>.\app\cmd.cpp</FilePath>
             </File>
+            <File>
+              <FileName>robotcom.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\robotcom.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

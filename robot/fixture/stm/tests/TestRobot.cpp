@@ -7,6 +7,7 @@
 #include "emrf.h"
 #include "meter.h"
 #include "portable.h"
+#include "robotcom.h"
 #include "testcommon.h"
 #include "tests.h"
 #include "timer.h"
@@ -22,25 +23,25 @@ static void dbg_test_all_(void)
   read_robot_info_(); //esn,bsv,gmr...
   ConsolePutChar('\n');
   
-  cmdRobotMot(100, CCC_SENSOR_MOT_LEFT, 127, 0, 0, 0); ConsolePutChar('\n');
-  cmdRobotMot(100, CCC_SENSOR_MOT_RIGHT, 0, -127, 0, 0); ConsolePutChar('\n');
-  cmdRobotMot(50,  CCC_SENSOR_MOT_LIFT, 0, 0, 100, 0); ConsolePutChar('\n');
-  cmdRobotMot(75,  CCC_SENSOR_MOT_LIFT, 0, 0, -100, 0); ConsolePutChar('\n');
-  cmdRobotMot(50,  CCC_SENSOR_MOT_HEAD, 0, 0, 0, 100); ConsolePutChar('\n');
-  cmdRobotMot(75,  CCC_SENSOR_MOT_HEAD, 0, 0, 0, -100); ConsolePutChar('\n');
+  rcomMot(100, RCOM_SENSOR_MOT_LEFT, 127, 0, 0, 0); ConsolePutChar('\n');
+  rcomMot(100, RCOM_SENSOR_MOT_RIGHT, 0, -127, 0, 0); ConsolePutChar('\n');
+  rcomMot(50,  RCOM_SENSOR_MOT_LIFT, 0, 0, 100, 0); ConsolePutChar('\n');
+  rcomMot(75,  RCOM_SENSOR_MOT_LIFT, 0, 0, -100, 0); ConsolePutChar('\n');
+  rcomMot(50,  RCOM_SENSOR_MOT_HEAD, 0, 0, 0, 100); ConsolePutChar('\n');
+  rcomMot(75,  RCOM_SENSOR_MOT_HEAD, 0, 0, 0, -100); ConsolePutChar('\n');
   
-  cmdRobotGet(1, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
-  cmdRobotGet(3, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
-  cmdRobotGet(5, CCC_SENSOR_BATTERY); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_CLIFF); ConsolePutChar('\n');
-  //cmdRobotGet(1, CCC_SENSOR_MOT_LEFT); ConsolePutChar('\n');
-  //cmdRobotGet(1, CCC_SENSOR_MOT_RIGHT); ConsolePutChar('\n');
-  //cmdRobotGet(1, CCC_SENSOR_MOT_LIFT); ConsolePutChar('\n');
-  //cmdRobotGet(1, CCC_SENSOR_MOT_HEAD); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_PROX_TOF); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_BTN_TOUCH); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_RSSI); ConsolePutChar('\n');
-  cmdRobotGet(1, CCC_SENSOR_RX_PKT); ConsolePutChar('\n');
+  rcomGet(1, RCOM_SENSOR_BATTERY); ConsolePutChar('\n');
+  rcomGet(3, RCOM_SENSOR_BATTERY); ConsolePutChar('\n');
+  rcomGet(5, RCOM_SENSOR_BATTERY); ConsolePutChar('\n');
+  rcomGet(1, RCOM_SENSOR_CLIFF); ConsolePutChar('\n');
+  //rcomGet(1, RCOM_SENSOR_MOT_LEFT); ConsolePutChar('\n');
+  //rcomGet(1, RCOM_SENSOR_MOT_RIGHT); ConsolePutChar('\n');
+  //rcomGet(1, RCOM_SENSOR_MOT_LIFT); ConsolePutChar('\n');
+  //rcomGet(1, RCOM_SENSOR_MOT_HEAD); ConsolePutChar('\n');
+  rcomGet(1, RCOM_SENSOR_PROX_TOF); ConsolePutChar('\n');
+  rcomGet(1, RCOM_SENSOR_BTN_TOUCH); ConsolePutChar('\n');
+  rcomGet(1, RCOM_SENSOR_RSSI); ConsolePutChar('\n');
+  rcomGet(1, RCOM_SENSOR_RX_PKT); ConsolePutChar('\n');
 }
 
 static void dbg_test_emr_(bool blank_only=0, bool dont_clear=0);
@@ -51,7 +52,7 @@ static void dbg_test_emr_(bool blank_only, bool dont_clear)
   
   //reset EMR to blank
   for(idx=0; idx < 256; idx++)
-    cmdRobotSmr(idx, 0);
+    rcomSmr(idx, 0);
   if( blank_only )
     return;
   
@@ -70,14 +71,14 @@ static void dbg_test_emr_(bool blank_only, bool dont_clear)
       val = 0;
     }
     
-    cmdRobotSmr(idx, val);
+    rcomSmr(idx, val);
     m_emr[idx] = val;
   }
   
   //readback verify
   int mismatch = 0;
   for(idx=0; idx < 256; idx++) {
-    uint32_t val = cmdRobotGmr(idx);
+    uint32_t val = rcomGmr(idx);
     if( val != m_emr[idx] ) {
       mismatch++;
       ConsolePrintf("-------> EMR MISMATCH @[%u]: %08x != %08x\n", idx, val, m_emr[idx]);
@@ -92,7 +93,7 @@ static void dbg_test_emr_(bool blank_only, bool dont_clear)
   
   //reset EMR to blank
   for(idx=0; idx < 256; idx++)
-    cmdRobotSmr(idx, 0);
+    rcomSmr(idx, 0);
   
   ConsolePrintf("EMR test %s: %u errors\n", mismatch > 0 ? "FAILED" : "passed", mismatch);
 }
@@ -113,23 +114,23 @@ static void dbg_test_comm_loop_(int nloops, int rmax, int rmin)
   srand(Timer::get());
   for(int x = 0; x < nloops; x++)
   {
-    cmdRobotEsn(); cmdRobotBsv();
+    rcomEsn(); rcomBsv();
     if( sensorSelect == 0 ) {}
-    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_BATTERY);
+    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_BATTERY);
     else if( sensorSelect == 1 )
-    cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_CLIFF);
-    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_MOT_LEFT);
-    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_MOT_RIGHT);
-    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_MOT_LIFT);
-    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_MOT_HEAD);
+    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_CLIFF);
+    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_LEFT);
+    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_RIGHT);
+    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_LIFT);
+    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_HEAD);
     else if( sensorSelect == 2 )
-    cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_PROX_TOF);
+    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_PROX_TOF);
     else if( sensorSelect == 3 )
-    cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_BTN_TOUCH);
-    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_RSSI);
-    //cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_RX_PKT);
+    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_BTN_TOUCH);
+    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_RSSI);
+    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_RX_PKT);
     else if( sensorSelect == 4 )
-    cmdRobotGet(rmin+rand()%rmod, CCC_SENSOR_DEBUG_INC);
+    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_DEBUG_INC);
     else { sensorSelect = -1; break; }
   }
 }
@@ -216,16 +217,16 @@ void TestRobotCleanup(void)
 
 void read_robot_info_(void)
 {
-  uint32_t esn0 = cmdRobotEsn()->esn;
-  uint32_t esn1     = cmdRobotGmr( EMR_FIELD_OFS(ESN) );
-  uint32_t hwver    = cmdRobotGmr( EMR_FIELD_OFS(HW_VER) );
-  uint32_t model    = cmdRobotGmr( EMR_FIELD_OFS(MODEL) );
-  uint32_t lot_code = cmdRobotGmr( EMR_FIELD_OFS(LOT_CODE) );
-  uint32_t playpenready = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
-  uint32_t playpenpass  = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
-  uint32_t packedout    = cmdRobotGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
-  uint32_t packoutdate  = cmdRobotGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
-  cmdRobotBsv();
+  uint32_t esn0 = rcomEsn();
+  uint32_t esn1     = rcomGmr( EMR_FIELD_OFS(ESN) );
+  uint32_t hwver    = rcomGmr( EMR_FIELD_OFS(HW_VER) );
+  uint32_t model    = rcomGmr( EMR_FIELD_OFS(MODEL) );
+  uint32_t lot_code = rcomGmr( EMR_FIELD_OFS(LOT_CODE) );
+  uint32_t playpenready = rcomGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
+  uint32_t playpenpass  = rcomGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
+  uint32_t packedout    = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
+  uint32_t packoutdate  = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
+  rcomBsv();
   
   ConsolePrintf("EMR[%u] esn         :%08x [%08x]\n", EMR_FIELD_OFS(ESN), esn1, esn0);
   ConsolePrintf("EMR[%u] hwver       :%u\n", EMR_FIELD_OFS(HW_VER), hwver);
@@ -258,16 +259,16 @@ void TestRobotInfo(void)
   //-*/
 }
 
-//ccr_sr_t get(uint8_t NN, uint8_t sensor
+//robot_sr_t get(uint8_t NN, uint8_t sensor
 void TestRobotSensors(void)
 {
   //XXX struct copies don't seem to work correctly...
-  ccr_sr_t bat    = cmdRobotGet(3, CCC_SENSOR_BATTERY   )[1];
-  ccr_sr_t cliff  = cmdRobotGet(3, CCC_SENSOR_CLIFF     )[1];
-  ccr_sr_t prox   = cmdRobotGet(3, CCC_SENSOR_PROX_TOF  )[1];
-  ccr_sr_t btn    = cmdRobotGet(3, CCC_SENSOR_BTN_TOUCH )[1];
-  //ccr_sr_t rssi   = cmdRobotGet(3, CCC_SENSOR_RSSI      )[1];
-  //ccr_sr_t pktcnt = cmdRobotGet(3, CCC_SENSOR_RX_PKT    )[1];
+  robot_sr_t bat    = rcomGet(3, RCOM_SENSOR_BATTERY   )[1];
+  robot_sr_t cliff  = rcomGet(3, RCOM_SENSOR_CLIFF     )[1];
+  robot_sr_t prox   = rcomGet(3, RCOM_SENSOR_PROX_TOF  )[1];
+  robot_sr_t btn    = rcomGet(3, RCOM_SENSOR_BTN_TOUCH )[1];
+  //robot_sr_t rssi   = rcomGet(3, RCOM_SENSOR_RSSI      )[1];
+  //robot_sr_t pktcnt = rcomGet(3, RCOM_SENSOR_RX_PKT    )[1];
   
   ConsolePrintf("Sensor Values:\n");
   ConsolePrintf("  battery = %i.%03iV\n", bat.bat.raw/1000, bat.bat.raw%1000);
@@ -287,35 +288,35 @@ static motor_speed_t* tread_test_(uint8_t sensor, int8_t power)
   const int cmd_opts = (CMD_OPTS_DEFAULT);// & ~(CMD_OPTS_LOG_RSP | CMD_OPTS_LOG_ASYNC));
   static motor_speed_t test;
   memset(&test, 0, sizeof(test));
-  ccr_sr_t* psr;
+  robot_sr_t* psr;
   
-  int8_t pwrL = sensor == CCC_SENSOR_MOT_LEFT ? power : 0;
-  int8_t pwrR = sensor == CCC_SENSOR_MOT_RIGHT ? power : 0;
-  if( sensor != CCC_SENSOR_MOT_LEFT && sensor != CCC_SENSOR_MOT_RIGHT )
+  int8_t pwrL = sensor == RCOM_SENSOR_MOT_LEFT ? power : 0;
+  int8_t pwrR = sensor == RCOM_SENSOR_MOT_RIGHT ? power : 0;
+  if( sensor != RCOM_SENSOR_MOT_LEFT && sensor != RCOM_SENSOR_MOT_RIGHT )
     throw ERROR_BAD_ARG;
   
   //Forward
-  int start_pos = cmdRobotGet(1, sensor, cmd_opts)[0].enc.pos; //get the idle start position
-  psr = cmdRobotMot(100, sensor, pwrL, pwrR, 0, 0 , cmd_opts);
+  int start_pos = rcomGet(1, sensor, cmd_opts)[0].enc.pos; //get the idle start position
+  psr = rcomMot(100, sensor, pwrL, pwrR, 0, 0 , cmd_opts);
   test.fwd_mid = psr[49].enc.speed;
   for(int x=10; x<90; x++)
     test.fwd_avg += psr[x].enc.speed;
   test.fwd_avg /= (90-10);
   
   Timer::delayMs(50); //wait for tread to stop spinning
-  int end_pos = cmdRobotGet(1, sensor, cmd_opts)[0].enc.pos;
+  int end_pos = rcomGet(1, sensor, cmd_opts)[0].enc.pos;
   test.fwd_travel = end_pos - start_pos;
   
   //Reverse
   start_pos = end_pos;
-  psr = cmdRobotMot(100, sensor, (-1)*pwrL, (-1)*pwrR, 0, 0 , cmd_opts);
+  psr = rcomMot(100, sensor, (-1)*pwrL, (-1)*pwrR, 0, 0 , cmd_opts);
   test.rev_mid = psr[49].enc.speed;
   for(int x=10; x<90; x++)
     test.rev_avg += psr[x].enc.speed;
   test.rev_avg /= (90-10);
   
   Timer::delayMs(50); //wait for tread to stop spinning
-  end_pos = cmdRobotGet(1, sensor, cmd_opts)[0].enc.pos;
+  end_pos = rcomGet(1, sensor, cmd_opts)[0].enc.pos;
   test.rev_travel = end_pos - start_pos;
   
   return &test;
@@ -328,18 +329,18 @@ typedef struct {
 
 void TestRobotMotors(void)
 {
-  motor_speed_t treadL = *tread_test_(CCC_SENSOR_MOT_LEFT, 127);
-  motor_speed_t treadR = *tread_test_(CCC_SENSOR_MOT_RIGHT, -127);
+  motor_speed_t treadL = *tread_test_(RCOM_SENSOR_MOT_LEFT, 127);
+  motor_speed_t treadR = *tread_test_(RCOM_SENSOR_MOT_RIGHT, -127);
   
   //check range of motion
-  int lift_start = cmdRobotMot(50, CCC_SENSOR_MOT_LIFT, 0, 0, -100,    0 )[49].enc.pos; //start at bottom
-  int lift_top   = cmdRobotMot(35, CCC_SENSOR_MOT_LIFT, 0, 0,  100,    0 )[34].enc.pos; //up
-  int lift_bot   = cmdRobotMot(35, CCC_SENSOR_MOT_LIFT, 0, 0, -100,    0 )[34].enc.pos; //down
+  int lift_start = rcomMot(50, RCOM_SENSOR_MOT_LIFT, 0, 0, -100,    0 )[49].enc.pos; //start at bottom
+  int lift_top   = rcomMot(35, RCOM_SENSOR_MOT_LIFT, 0, 0,  100,    0 )[34].enc.pos; //up
+  int lift_bot   = rcomMot(35, RCOM_SENSOR_MOT_LIFT, 0, 0, -100,    0 )[34].enc.pos; //down
   int lift_travel_up = lift_top - lift_start;
   int lift_travel_down = lift_top - lift_bot;
-  int head_start = cmdRobotMot(65, CCC_SENSOR_MOT_HEAD, 0, 0,    0, -127 )[64].enc.pos; //start at bottom
-  int head_top   = cmdRobotMot(65, CCC_SENSOR_MOT_HEAD, 0, 0,    0,  100 )[64].enc.pos; //up
-  int head_bot   = cmdRobotMot(65, CCC_SENSOR_MOT_HEAD, 0, 0,    0, -100 )[64].enc.pos; //down
+  int head_start = rcomMot(65, RCOM_SENSOR_MOT_HEAD, 0, 0,    0, -127 )[64].enc.pos; //start at bottom
+  int head_top   = rcomMot(65, RCOM_SENSOR_MOT_HEAD, 0, 0,    0,  100 )[64].enc.pos; //up
+  int head_bot   = rcomMot(65, RCOM_SENSOR_MOT_HEAD, 0, 0,    0, -100 )[64].enc.pos; //down
   int head_travel_up    = head_top - head_start;
   int head_travel_down  = head_top - head_bot;
   
@@ -408,8 +409,8 @@ void EmrChecks(void)
     //XXX: ROBOT1,2,MIC_TEST etc results in EMR.fixture[?]
   }
   if( g_fixmode == FIXMODE_PACKOUT ) {
-    uint32_t ppReady  = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
-    uint32_t ppPassed = cmdRobotGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
+    uint32_t ppReady  = rcomGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
+    uint32_t ppPassed = rcomGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
     if( ppReady != 1 || ppPassed != 1 ) {
       throw ERROR_ROBOT_TEST_SEQUENCE;
     }
@@ -417,22 +418,22 @@ void EmrChecks(void)
   
   //requrie retest on all downstream fixtures after rework
   if( g_fixmode == FIXMODE_ROBOT3 ) {
-    cmdRobotSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
-    cmdRobotSmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), 0 );
-    cmdRobotSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 0 );
+    rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
+    rcomSmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), 0 );
+    rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 0 );
   }
   if( g_fixmode == FIXMODE_PACKOUT ) {
-    cmdRobotSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
+    rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
   }
 }
 
 void EmrUpdate(void)
 {
   if( g_fixmode == FIXMODE_ROBOT3 ) {
-    cmdRobotSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 1 );
+    rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 1 );
   }
   if( g_fixmode == FIXMODE_PACKOUT ) {
-    cmdRobotSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 1 );
+    rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 1 );
   }
 }
 
@@ -443,8 +444,8 @@ void EmrUpdate(void)
 //read battery voltage
 int robot_get_batt_mv(void)
 {
-  int raw = cmdRobotGet(1, CCC_SENSOR_BATTERY)[0].bat.raw;
-  int vBatMv = BAT_RAW_TO_MV(raw);
+  int raw = rcomGet(1, RCOM_SENSOR_BATTERY)[0].bat.raw;
+  int vBatMv = RCOM_BAT_RAW_TO_MV(raw);
   
   ConsolePrintf("vbat = %u.%03uV (%i)\n", vBatMv/1000, vBatMv%1000, raw);
   return vBatMv;
