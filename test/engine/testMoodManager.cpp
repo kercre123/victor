@@ -1214,3 +1214,54 @@ TEST(MoodManager, StaticMoodDataReadJson)
   EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(kTestEmoType0),  0.33f);
   EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(kTestEmoType1),  -0.11f);
 }
+
+TEST(MoodManager, SimpleMood)
+{
+  InitStaticMoodData(DGT::TimeRatio);
+  
+  MoodManager moodManager;
+  TickMoodManager(moodManager, 1, kTickTimestep);
+
+  EXPECT_EQ(moodManager.GetSimpleMood(), SimpleMoodType::LowStim);
+
+  // contains (stim level, confident level, expected mood)
+  const std::vector<std::tuple<float, float, SimpleMoodType>> expectations = {
+    {1.0f, 1.0f, SimpleMoodType::HighStim},
+    {1.0f, 1.0f, SimpleMoodType::HighStim},
+    {1.0f, 0.5f, SimpleMoodType::HighStim},
+    {1.0f, 0.0f, SimpleMoodType::HighStim},
+    {1.0f, -0.1f, SimpleMoodType::HighStim},
+    {1.0f, -0.5f, SimpleMoodType::Frustrated},
+    {1.0f, -1.0f, SimpleMoodType::Frustrated},
+    
+    {0.5f, 1.0f, SimpleMoodType::MedStim},
+    {0.5f, 1.0f, SimpleMoodType::MedStim},
+    {0.5f, 0.5f, SimpleMoodType::MedStim},
+    {0.5f, 0.0f, SimpleMoodType::MedStim},
+    {0.5f, -0.1f, SimpleMoodType::MedStim},
+    {0.5f, -0.5f, SimpleMoodType::Frustrated},
+    {0.5f, -1.0f, SimpleMoodType::Frustrated},
+
+    {0.0f, 1.0f, SimpleMoodType::LowStim},
+    {0.0f, 1.0f, SimpleMoodType::LowStim},
+    {0.0f, 0.5f, SimpleMoodType::LowStim},
+    {0.0f, 0.0f, SimpleMoodType::LowStim},
+    {0.0f, -0.1f, SimpleMoodType::LowStim},
+    {0.0f, -0.5f, SimpleMoodType::LowStim},
+    {0.0f, -1.0f, SimpleMoodType::LowStim} };
+
+
+  for( const auto& tpl : expectations ) {
+    moodManager.SetEmotion(EmotionType::Stimulated, std::get<0>(tpl));
+    moodManager.SetEmotion(EmotionType::Confident,  std::get<1>(tpl));
+    EXPECT_EQ(moodManager.GetSimpleMood(), std::get<2>(tpl))
+      << "before tick: stim=" << std::get<0>(tpl) << " conf=" << std::get<1>(tpl) << " expcted "
+      << SimpleMoodTypeToString(std::get<2>(tpl)) << " got " <<SimpleMoodTypeToString(moodManager.GetSimpleMood());
+      
+    TickMoodManager(moodManager, 1, kTickTimestep);
+    EXPECT_EQ(moodManager.GetSimpleMood(), std::get<2>(tpl))
+      << "after tick: stim=" << std::get<0>(tpl) << " conf=" << std::get<1>(tpl) << " expcted "
+      << SimpleMoodTypeToString(std::get<2>(tpl)) << " got " <<SimpleMoodTypeToString(moodManager.GetSimpleMood());
+
+  }  
+}

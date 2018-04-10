@@ -582,16 +582,28 @@ void MoodManager::SetEnableMoodEventOnCompletion(u32 actionTag, bool enable)
 
 SimpleMoodType MoodManager::GetSimpleMood() const
 {
-  float happiness = GetEmotion(EmotionType::Happy).GetValue();
-  float confidence = GetEmotion(EmotionType::Confident).GetValue();
-  // TODO:(bn) / mooly check AGs for driving groups, hopefully this will work for frustrated
-  if(happiness < -0.33f || confidence < -0.29f) {
-    return SimpleMoodType::Sad;
+  const float stimulated = GetEmotion(EmotionType::Stimulated).GetValue();
+  const float confident  = GetEmotion(EmotionType::Confident ).GetValue();
+
+  // low stim takes precedence because we don't want to annoy people
+  if( stimulated <= 0.2f ) {
+    return SimpleMoodType::LowStim;
   }
-  if(happiness > 0.33f) {
-    return SimpleMoodType::Happy;
+
+  // next priority is frustration
+  if( confident < -0.29f ) { // this is the value used on Cozmo, may need tuning
+    return SimpleMoodType::Frustrated;
   }
-  return SimpleMoodType::Default;
+
+  if( stimulated <= 0.8 ) {
+    return SimpleMoodType::MedStim;
+  }
+  else {
+    return SimpleMoodType::HighStim;
+  }
+
+  // Note: never returns Default (default is used by the animation group selector if more specific anims
+  // aren't provided)
 }
 
   

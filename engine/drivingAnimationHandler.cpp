@@ -33,17 +33,17 @@ namespace Anki {
     
     DrivingAnimationHandler::DrivingAnimationHandler()
     : IDependencyManagedComponent(this, RobotComponentID::DrivingAnimationHandler)
-    , kDefaultDrivingAnimations({AnimationTrigger::DriveStartDefault,
-                                 AnimationTrigger::DriveLoopDefault,
-                                 AnimationTrigger::DriveEndDefault})
-    , kAngryDrivingAnimations({AnimationTrigger::DriveStartAngry,
-                               AnimationTrigger::DriveLoopAngry,
-                               AnimationTrigger::DriveEndAngry})
-    , kHappyDrivingAnimations({AnimationTrigger::DriveStartHappy,
-                               AnimationTrigger::DriveLoopHappy,
-                               AnimationTrigger::DriveEndHappy})
+    , _moodBasedDrivingAnims( { { SimpleMoodType::Default,    { AnimationTrigger::DriveStartDefault,
+                                                                AnimationTrigger::DriveLoopDefault,
+                                                                AnimationTrigger::DriveEndDefault}},
+                                { SimpleMoodType::HighStim,   { AnimationTrigger::DriveStartHappy,
+                                                                AnimationTrigger::DriveLoopHappy,
+                                                                AnimationTrigger::DriveEndHappy}},
+                                { SimpleMoodType::Frustrated, { AnimationTrigger::DriveStartAngry,
+                                                                AnimationTrigger::DriveLoopAngry,
+                                                                AnimationTrigger::DriveEndAngry}} })
     {
-      _currDrivingAnimations = kDefaultDrivingAnimations;
+      _currDrivingAnimations = _moodBasedDrivingAnims.at(SimpleMoodType::Default);
     }
 
     void DrivingAnimationHandler::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) 
@@ -125,11 +125,16 @@ namespace Anki {
     {
       if( _drivingAnimationStack.empty() ) {
         // use mood and needs to determine which anims to play
-        if( _robot->GetMoodManager().GetSimpleMood() == SimpleMoodType::Sad ) {
-          _currDrivingAnimations = kAngryDrivingAnimations;
+        auto it = _moodBasedDrivingAnims.find(_robot->GetMoodManager().GetSimpleMood());
+        if( it == _moodBasedDrivingAnims.end() ) {
+          // fall back to default
+          it = _moodBasedDrivingAnims.find( SimpleMoodType::Default );
         }
-        else {
-          _currDrivingAnimations = kHappyDrivingAnimations;
+
+        if( ANKI_VERIFY(it != _moodBasedDrivingAnims.end(),
+                        "DrivingAnimationHandler.UpdateCurrDrivingAnimations.MoodBased.Missing",
+                        "Missing driving animation! Must specify a default") ) {
+          _currDrivingAnimations = it->second;
         }
       }
       else {

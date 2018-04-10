@@ -9,9 +9,13 @@ namespace Cozmo {
 
 enum uint_8 SimpleMoodType {
 
-Happy = 0,
-Sad,
-Default,
+Default = 0,
+
+LowStim,
+MedStim,
+HighStim,
+
+Frustrated,
 
 Count
 }
