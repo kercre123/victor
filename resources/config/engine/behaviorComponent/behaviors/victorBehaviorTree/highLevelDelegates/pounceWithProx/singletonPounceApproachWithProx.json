@@ -28,16 +28,13 @@
   },
 
 
-  "wantsToBeActivatedConditions": 
-  [
-    {
-      "conditionType": "Negate",
-      "operand": {
-        "conditionType"       : "ProxInRange",
-        "invalidSensorReturn" : true,
-        "minProxDist_mm"      : 44.0,
-        "maxProxDist_mm"      : 46.0
-      }
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType"       : "ProxInRange",
+      "invalidSensorReturn" : true,
+      "minProxDist_mm"      : 44.0,
+      "maxProxDist_mm"      : 46.0
     }
-  ]
+  }
 } 

@@ -56,7 +56,6 @@ namespace {
   
 const char* kLambdaKey = "_lambda";
 const char* kList = "list";
-const char* kConditionType = "conditionType";
   
 }
   
@@ -66,7 +65,7 @@ Json::Value ConditionUserIntentPending::GenerateConfig( const Json::Value& confi
   Json::Value ret;
   
   ret[kList] = config;
-  ret[kConditionType] = BEIConditionTypeToString( BEIConditionType::UserIntentPending );
+  ret[kConditionTypeKey] = BEIConditionTypeToString( BEIConditionType::UserIntentPending );
   
   return ret;
 }

@@ -15,13 +15,13 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionBatteryLevel.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBehaviorTimer.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCliffDetected.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionCompound.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionConsoleVar.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCubeTapped.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionEyeContact.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFrustration.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionNegate.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectMoved.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectPositionUpdated.h"
@@ -37,6 +37,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTriggerWordPending.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUnexpectedMovement.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionUnitTest.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTrue.h"
 
@@ -70,6 +71,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::BehaviorTimer:
     {
       strategy = std::make_shared<ConditionBehaviorTimer>(config);
+      break;
+    }
+    case BEIConditionType::Compound:
+    {
+      strategy = std::make_shared<ConditionCompound>(config);
       break;
     }
     case BEIConditionType::ConsoleVar:
@@ -172,11 +178,6 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
       strategy = std::make_shared<ConditionUserIntentPending>(config);
       break;
     }
-    case BEIConditionType::Negate:
-    {
-      strategy = std::make_shared<ConditionNegate>(config);
-      break;
-    }
     case BEIConditionType::OnCharger:
     {
       strategy = std::make_shared<ConditionOnCharger>(config);
@@ -195,6 +196,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::CubeTapped:
     {
       strategy = std::make_shared<ConditionCubeTapped>(config);
+      break;
+    }
+    case BEIConditionType::UnitTestCondition:
+    {
+      strategy = std::make_shared<ConditionUnitTest>(config);
       break;
     }
     

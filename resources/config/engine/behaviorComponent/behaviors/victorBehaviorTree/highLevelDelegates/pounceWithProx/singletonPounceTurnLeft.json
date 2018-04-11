@@ -4,12 +4,10 @@
   "shouldTurnClockwise": false,
   "turnDegrees" : 20,
   
-  "wantsToBeActivatedConditions": [
-    {
-      "conditionType" : "MotionDetected",
-      "motionArea"    : "Left",
-      "motionLevel"   : "High"
-    }
-  ]  
+  "wantsToBeActivatedCondition": {
+    "conditionType" : "MotionDetected",
+    "motionArea"    : "Left",
+    "motionLevel"   : "High"
+  }  
 
 }
