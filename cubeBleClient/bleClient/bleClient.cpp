@@ -34,7 +34,9 @@ BleClient::BleClient(struct ev_loop* loop)
   : IPCClient(loop)
   , _loop(loop)
   , _asyncBreakSignal(loop)
+  , _asyncStartScanSignal(loop)
   , _connectionCheckTimer(loop)
+  , _scanningTimer(loop)
 {
   // Set up watcher callbacks
   _asyncBreakSignal.set<BleClient, &BleClient::AsyncBreakCallback>(this);
