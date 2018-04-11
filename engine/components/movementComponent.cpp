@@ -145,6 +145,8 @@ void MovementComponent::NotifyOfRobotState(const Cozmo::RobotState& robotState)
 
 void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robotState)
 {
+  const bool wasUnexpectedMovementDetected = _unexpectedMovement.IsDetected();
+  
   // Disabling for sim robot due to odd behavior of measured wheel speeds and the lack
   // of wheel slip that is what allows this detection to work on the real robot
   if (!_robot->IsPhysical())
@@ -158,24 +160,26 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
   if ((_robot->GetAnimationComponent().IsAnimating() && !AreAllTracksLocked((u8)AnimTrackFlag::BODY_TRACK))
       || _robot->GetDockingComponent().IsPickingOrPlacing())
   {
+    _unexpectedMovement.Reset();
     return;
   }
-
-  f32 lWheelSpeed_mmps = robotState.lwheel_speed_mmps;
-  f32 rWheelSpeed_mmps = robotState.rwheel_speed_mmps;
-  f32 zGyro_radps = robotState.gyro.z;
   
-  // Don't check for unexpected movement when picked up, on charger, or while a cliff is detected
-  if (robotState.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP ||
-      robotState.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER ||
-      robotState.status & (uint16_t)RobotStatusFlag::CLIFF_DETECTED)
+  // Don't check for unexpected movement under the following conditions
+  if (robotState.status & (uint16_t)RobotStatusFlag::IS_PICKED_UP   ||
+      robotState.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER  ||
+      robotState.status & (uint16_t)RobotStatusFlag::CLIFF_DETECTED ||
+      robotState.status & (uint16_t)RobotStatusFlag::IS_FALLING)
   {
     _unexpectedMovement.Reset();
     return;
   }
   
-  f32 speedDiff = rWheelSpeed_mmps - lWheelSpeed_mmps;
-  f32 omega = ABS(speedDiff / WHEEL_DIST_MM);
+  const f32 lWheelSpeed_mmps = robotState.lwheel_speed_mmps;
+  const f32 rWheelSpeed_mmps = robotState.rwheel_speed_mmps;
+  const f32 zGyro_radps      = robotState.gyro.z;
+  
+  const f32 speedDiff = rWheelSpeed_mmps - lWheelSpeed_mmps;
+  const f32 omega = std::abs(speedDiff / WHEEL_DIST_MM);
   
   UnexpectedMovementType unexpectedMovementType = UnexpectedMovementType::TURNED_BUT_STOPPED;
   
@@ -234,7 +238,8 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
     unexpectedMovementType = UnexpectedMovementType::TURNED_IN_OPPOSITE_DIRECTION;
   }
   
-  if (_unexpectedMovement.GetCount() > kMaxUnexpectedMovementCount)
+  if (_unexpectedMovement.IsDetected() &&
+      !wasUnexpectedMovementDetected)
   {
     LOG_WARNING("MovementComponent.CheckForUnexpectedMovement",
                 "Unexpected movement detected %s",
@@ -246,7 +251,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
     // adding of obstacles gets turned off too. This is kind of a hack to avoid
     // needing another message/system for turning this on and off.
 
-    UnexpectedMovementSide unexpectedMovementSide = UnexpectedMovementSide::UNKNOWN;
+    _unexpectedMovementSide = UnexpectedMovementSide::UNKNOWN;
     
     const bool isValidTypeOfUnexpectedMovement = (unexpectedMovementType == UnexpectedMovementType::TURNED_BUT_STOPPED ||
                                                   unexpectedMovementType == UnexpectedMovementType::TURNED_IN_OPPOSITE_DIRECTION);
@@ -296,7 +301,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
           if (leftGoingForward)
           {
             // Put obstacle on right side
-            unexpectedMovementSide = UnexpectedMovementSide::RIGHT;
+            _unexpectedMovementSide = UnexpectedMovementSide::RIGHT;
             obstaclePoseWrtRobot.SetRotation(-M_PI_2_F, Z_AXIS_3D());
             obstaclePoseWrtRobot.SetTranslation({0.f, -0.5f*ROBOT_BOUNDING_Y - obstaclePositionPad_mm, 0.f});
             debugStr = "to right of";
@@ -304,7 +309,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
           else
           {
             // Put obstacle on left side
-            unexpectedMovementSide = UnexpectedMovementSide::LEFT;
+            _unexpectedMovementSide = UnexpectedMovementSide::LEFT;
             obstaclePoseWrtRobot.SetRotation(M_PI_2_F, Z_AXIS_3D());
             obstaclePoseWrtRobot.SetTranslation({0.f, 0.5f*ROBOT_BOUNDING_Y + obstaclePositionPad_mm, 0.f});
             debugStr = "to left of";
@@ -317,14 +322,14 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
           if (leftGoingForward && rightGoingForward)
           {
             // Put obstacle in front of robot (note: leave unrotated)
-            unexpectedMovementSide = UnexpectedMovementSide::FRONT;
+            _unexpectedMovementSide = UnexpectedMovementSide::FRONT;
             obstaclePoseWrtRobot.SetTranslation({ROBOT_BOUNDING_X_FRONT + obstaclePositionPad_mm, 0.f, 0.f});
             debugStr = "in front of";
           }
           else
           {
             // Put obstacle behind robot
-            unexpectedMovementSide = UnexpectedMovementSide::BACK;
+            _unexpectedMovementSide = UnexpectedMovementSide::BACK;
             obstaclePoseWrtRobot.SetTranslation({ROBOT_BOUNDING_X_FRONT - ROBOT_BOUNDING_X - obstaclePositionPad_mm, 0.f, 0.f});
             debugStr = "behind";
           }
@@ -354,16 +359,13 @@ void MovementComponent::CheckForUnexpectedMovement(const Cozmo::RobotState& robo
         _robot->GetBlockWorld().AddCollisionObstacle(obstaclePose);
       }
       
-    } // if(unexpectedMovementType == UnexpectedMovementType::TURNED_BUT_STOPPED)
+    } // if(kCreateUnexpectedMovementObstacles && isValidTypeOfUnexpectedMovement)
     
     {
       // Broadcast the associated event
-      ExternalInterface::UnexpectedMovement msg(robotState.timestamp, unexpectedMovementType, unexpectedMovementSide);
+      ExternalInterface::UnexpectedMovement msg(robotState.timestamp, unexpectedMovementType, _unexpectedMovementSide);
       _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
     }
-    
-    _unexpectedMovement.Reset();
-    
   }
 }
 
@@ -977,7 +979,14 @@ std::string MovementComponent::WhoIsLocking(u8 trackFlags) const
   
 #pragma mark -
 #pragma mark Unexpected Movement 
+
+const u8 MovementComponent::UnexpectedMovement::kMaxUnexpectedMovementCount = 11;
   
+bool MovementComponent::UnexpectedMovement::IsDetected() const
+{
+  return _count >= kMaxUnexpectedMovementCount;
+}
+
 void MovementComponent::UnexpectedMovement::Increment(u8 countInc, f32 leftSpeed_mmps, f32 rightSpeed_mmps, TimeStamp_t currentTime)
 {
   if (_count == 0)
@@ -985,6 +994,7 @@ void MovementComponent::UnexpectedMovement::Increment(u8 countInc, f32 leftSpeed
     _startTime = currentTime;
   }
   _count += countInc;
+  _count = std::min(_count, kMaxUnexpectedMovementCount);
   _sumWheelSpeedL_mmps += (f32)countInc * leftSpeed_mmps;
   _sumWheelSpeedR_mmps += (f32)countInc * rightSpeed_mmps;
 }

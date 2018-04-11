@@ -220,6 +220,7 @@ enum uint_8 BehaviorID {
   ReactToSoundAsleep,
   ReactToSoundAwake,
   ReactToTriggerDirectionAwake,
+  ReactToUnexpectedMovement,
 
   // victorBehaviorTree
   SingletonICantDoThat,

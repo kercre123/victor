@@ -50,6 +50,7 @@ class IExternalInterface;
 class MapComponent;
 class MicDirectionHistory;
 class MoodManager;
+class MovementComponent;
 class ObjectPoseConfirmer;
 class PetWorld;
 class ProgressionUnlockComponent;
@@ -129,6 +130,7 @@ public:
             MapComponent*                  mapComponent,
             MicDirectionHistory*           micDirectionHistory,
             MoodManager*                   moodManager,
+            MovementComponent*             movementComponent,
             ObjectPoseConfirmer*           objectPoseConfirmer,
             PetWorld*                      petWorld,
             ProgressionUnlockComponent*    progressionUnlockComponent,
@@ -173,6 +175,9 @@ public:
   
   inline bool HasMoodManager() const { return GetComponentWrapper(BEIComponentID::MoodManager).IsValueValid();}
   MoodManager& GetMoodManager() const{ return GetComponentWrapper(BEIComponentID::MoodManager).GetValue<MoodManager>();}
+  
+  inline bool HasMovementComponent() const { return GetComponentWrapper(BEIComponentID::MovementComponent).IsValueValid();}
+  MovementComponent& GetMovementComponent() const{ return GetComponentWrapper(BEIComponentID::MovementComponent).GetValue<MovementComponent>();}
   
   inline bool HasTouchSensorComponent() const { return GetComponentWrapper(BEIComponentID::TouchSensor).IsValueValid();}
   TouchSensorComponent& GetTouchSensorComponent() const { return GetComponentWrapper(BEIComponentID::TouchSensor).GetValue<TouchSensorComponent>();}
@@ -229,6 +234,7 @@ private:
                        MapComponent*                  mapComponent,
                        MicDirectionHistory*           micDirectionHistory,
                        MoodManager*                   moodManager,
+                       MovementComponent*             movementComponent,
                        ObjectPoseConfirmer*           objectPoseConfirmer,
                        PetWorld*                      petWorld,
                        ProgressionUnlockComponent*    progressionUnlockComponent,

@@ -36,6 +36,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionTimedDedup.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTriggerWordPending.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionUnexpectedMovement.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTrue.h"
 
@@ -159,6 +160,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::TriggerWordPending:
     {
       strategy = std::make_shared<ConditionTriggerWordPending>(config);
+      break;
+    }
+    case BEIConditionType::UnexpectedMovement:
+    {
+      strategy = std::make_shared<ConditionUnexpectedMovement>(config);
       break;
     }
     case BEIConditionType::UserIntentPending:

@@ -38,6 +38,7 @@ enum uint_8 BEIConditionType {
   TimedDedup,
   TimerInRange,
   TriggerWordPending,
+  UnexpectedMovement,
   UserIntentPending,
 }
 
