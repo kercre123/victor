@@ -303,8 +303,11 @@ void Analog::tick(void) {
     }
 
     // Emergency trap (V3.3)
-    if (battery_voltage < POWER_DOWN_POINT) {
+    static const POWER_DOWN_TIME = 200; // 1s
+    if (battery_voltage < POWER_DOWN_POINT && --power_down_timer <= 0) {
       Power::setMode(POWER_STOP);
+    } else {
+      power_down_timer = POWER_DOWN_TIME;
     }
   } else if (charge_cutoff) {
     // Unpowered, on charger (timeout)
