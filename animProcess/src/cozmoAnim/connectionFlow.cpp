@@ -42,7 +42,7 @@ namespace {
 u32 _pin = 123456;
 
 const std::string kURL = "anki.com/v";
-const ColorRGBA   kColor(0.7f, 0.7f, 0.7f, 1.f);
+const ColorRGBA   kColor(0.9f, 0.9f, 0.9f, 1.f);
 }
 
 // Draws BLE name and url to screen
