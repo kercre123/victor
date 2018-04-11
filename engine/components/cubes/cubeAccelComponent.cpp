@@ -116,33 +116,30 @@ void CubeAccelComponent::HandleCubeAccelData(const ActiveID& activeID,
     ExternalInterface::ObjectTapped objectTapped;
     objectTapped.timestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
     objectTapped.objectID  = objectID;
-    // [MAM] Tap intensity is unused, since filtering by intensity is
-    // done on the cubes now, and should be tweaked in the cube firmware.
-//    objectTapped.tapTime   = accelData.tap_time;
-//    objectTapped.tapNeg    = accelData.tap_neg;
-//    objectTapped.tapPos    = accelData.tap_pos;
     
     // Pass to BlockTapFilterComponent
     _robot->GetBlockTapFilter().HandleObjectTapped(objectTapped);
   }
   
-  // Convert raw accelerometer data to mm/s^2
-  auto rawAccelToMmps = [](const s16 rawAccel) {
-    // Raw accel is an s16 with range -4g to +4g
-    const float accelG = static_cast<float>(rawAccel) / std::numeric_limits<s16>::max() * 4.f;
-    return accelG * 9810.f;
-  };
-  ActiveAccel accel;
-  accel.x = rawAccelToMmps(accelData.accel[0]);
-  accel.y = rawAccelToMmps(accelData.accel[1]);
-  accel.z = rawAccelToMmps(accelData.accel[2]);
-  
-  const auto& iter = _listenerMap.find(objectID);
+  for (const auto& accelReading : accelData.accelReadings) {
+    // Convert raw accelerometer data to mm/s^2
+    auto rawAccelToMmps = [](const s16 rawAccel) {
+      // Raw accel is an s16 with range -4g to +4g
+      const float accelG = static_cast<float>(rawAccel) / std::numeric_limits<s16>::max() * 4.f;
+      return accelG * 9810.f;
+    };
+    ActiveAccel accel;
+    accel.x = rawAccelToMmps(accelReading.accel[0]);
+    accel.y = rawAccelToMmps(accelReading.accel[1]);
+    accel.z = rawAccelToMmps(accelReading.accel[2]);
+    
+    const auto& iter = _listenerMap.find(objectID);
 
-  if(iter != _listenerMap.end()) {
-    // Update all of the listeners with the accel data
-    for(auto& listener : iter->second) {
-      listener->Update(accel);
+    if(iter != _listenerMap.end()) {
+      // Update all of the listeners with the accel data
+      for(auto& listener : iter->second) {
+        listener->Update(accel);
+      }
     }
   }
 }

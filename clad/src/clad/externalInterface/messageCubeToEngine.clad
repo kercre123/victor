@@ -7,15 +7,15 @@
 namespace Anki {
 namespace Cozmo {
 
+structure RawCubeAccel
+{
+  int_16 accel[3]
+}
 
 message CubeAccelData
 {
-  uint_8 flags = 0,
-  int_16 accel[3],  // accelerometer readings on the 3 axes
-  int_16 tap_pos    = 0,
-  int_16 tap_neg    = 0,
-  uint_8 tap_count  = 0,
-  uint_8 tap_time   = 0,
+  uint_8 tap_count = 0,
+  RawCubeAccel accelReadings[3], // 3 buffered accelerometer readings on the 3 axes
 }
 
 

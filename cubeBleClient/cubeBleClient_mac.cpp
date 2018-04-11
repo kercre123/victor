@@ -94,7 +94,7 @@ CubeBleClient::CubeBleClient()
     _discoveryReceiver = _engineSupervisor->getReceiver("discoveryReceiver");
     DEV_ASSERT(_discoveryReceiver != nullptr, "CubeBleClient.NullDiscoveryReceiver");
     _discoveryReceiver->setChannel(kDiscoveryChannel);
-    _discoveryReceiver->enable(SIM_CUBE_TIME_STEP_MS);
+    _discoveryReceiver->enable(CUBE_TIME_STEP_MS);
     
     _cubeEmitter = _engineSupervisor->getEmitter("cubeCommsEmitter");
     DEV_ASSERT(_cubeEmitter != nullptr, "CubeBleClient.NullCubeEmitter");
@@ -186,7 +186,7 @@ bool CubeBleClient::ConnectToCube(const BleFactoryId& factoryId)
     if (it == _cubeReceiverMap.end()) {
       // This receiver is free
       rec->setChannel(GetReceiverChannel(factoryId));
-      rec->enable(SIM_CUBE_TIME_STEP_MS);
+      rec->enable(CUBE_TIME_STEP_MS);
       _cubeReceiverMap[factoryId] = rec;
       break;
     }

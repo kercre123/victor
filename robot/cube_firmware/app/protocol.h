@@ -5,7 +5,7 @@
   #pragma anon_unions
 #endif
 
-#define MAX_KEYFRAMES 256
+#define MAX_KEYFRAMES 128
 #define ANIMATION_CHANNELS 4
 #define COLOR_CHANNELS 3
 #define FRAMES_PER_COMMAND 3
@@ -17,6 +17,7 @@ enum {
   COMMAND_ACCEL_FAILURE = 3
 };
 
+static const int ACCEL_FRAMES_PER_MSG = 3;
 typedef uint8_t CubeCommand;
 
 // Inbound format
@@ -35,13 +36,9 @@ typedef struct {
 
 typedef struct {
   CubeCommand command;
-  uint8_t   flags;
-  int16_t   axis[3];
-  int16_t   tap_pos;
-  int16_t   tap_neg;
   uint8_t   tap_count;
-  uint8_t   tap_time;
-} TapCommand;
+  int16_t   axis[ACCEL_FRAMES_PER_MSG][3];
+} AccelDataCommand;
 
 typedef struct {
   CubeCommand command;

@@ -163,7 +163,7 @@ void BlockTapFilterComponent::HandleObjectTapped(const ExternalInterface::Object
   
   const Anki::TimeStamp_t engineTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   PRINT_CH_INFO("BlockPool","BlockTapFilterComponent.HandleActiveObjectTapped.MessageActiveObjectTapped",
-                "Received message that %s %d (Active ID %d) was tapped"
+                "Received message that %s %d (Object ID %d) was tapped"
                 "(engineTime: %d).",
                 EnumToString(tappedObject->GetType()),
                 tappedObject->GetID().GetValue(), payload.objectID, engineTime);
