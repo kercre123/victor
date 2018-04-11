@@ -149,6 +149,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
      , _angleVariability_deg(angle_variability_deg)
      {
        _streamHeadMsg.duration_sec = 0;
+       _streamHeadMsg.actionID = 0;
      }
     
     #if CAN_STREAM
@@ -216,6 +217,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     , _heightVariability_mm(heightVariability_mm)
     {
       _streamLiftMsg.duration_sec = 0;
+      _streamLiftMsg.actionID = 0;
     }
     
     #if CAN_STREAM

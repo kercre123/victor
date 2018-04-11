@@ -363,7 +363,7 @@ ssize_t spine_parse_frame(spine_ctx_t spine, void *out_buf, size_t out_buf_len, 
     if (expected_payload_len == -1 ||
         header->bytes_to_follow != expected_payload_len) {
         // skip current sync
-        spine_debug("invalid payload: expected=%u | observed=%u\n", expected_payload_len, header->bytes_to_follow);
+        spine_debug("invalid payload: expected=%d | observed=%u\n", expected_payload_len, header->bytes_to_follow);
         spine_set_rx_cursor(spine, sync_index + sizeof(SYNC_BODY_TO_HEAD));
         return -1;
     }

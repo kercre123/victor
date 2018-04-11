@@ -361,9 +361,11 @@ namespace Anki {
 
       // Send ack of head motor action
       void AckMotorCommand(u8 actionID) {
-        RobotInterface::MotorActionAck ack;
-        ack.actionID = actionID;
-        RobotInterface::SendMessage(ack);
+        if (actionID != 0) {
+          RobotInterface::MotorActionAck ack;
+          ack.actionID = actionID;
+          RobotInterface::SendMessage(ack);
+        }
       }
       
       void Process_liftHeight(const RobotInterface::SetLiftHeight& msg) {

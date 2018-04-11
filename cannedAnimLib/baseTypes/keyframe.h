@@ -129,7 +129,7 @@ namespace Cozmo {
   class HeadAngleKeyFrame : public IKeyFrame
   {
   public:
-    HeadAngleKeyFrame() { }
+    HeadAngleKeyFrame() { _streamHeadMsg.actionID = 0; }
     HeadAngleKeyFrame(s8 angle_deg, u8 angle_variability_deg, TimeStamp_t duration_ms);
     
     Result DefineFromFlatBuf(const CozmoAnim::HeadAngle* headAngleKeyframe, const std::string& animNameDebug);
@@ -164,7 +164,7 @@ namespace Cozmo {
   class LiftHeightKeyFrame : public IKeyFrame
   {
   public:
-    LiftHeightKeyFrame() { }
+    LiftHeightKeyFrame() { _streamLiftMsg.actionID = 0; }
     LiftHeightKeyFrame(u8 height_mm, u8 heightVariability_mm, TimeStamp_t duration_ms);
     
     Result DefineFromFlatBuf(const CozmoAnim::LiftHeight* liftHeightKeyframe, const std::string& animNameDebug);

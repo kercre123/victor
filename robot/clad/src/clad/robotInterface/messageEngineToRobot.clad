@@ -76,7 +76,7 @@ message SetLiftHeight
   float_32 max_speed_rad_per_sec,
   float_32 accel_rad_per_sec2,
   float_32 duration_sec,
-  uint_8   actionID,
+  uint_8   actionID = 0,
 }
 
 message SetHeadAngle
@@ -85,7 +85,7 @@ message SetHeadAngle
   float_32 max_speed_rad_per_sec,
   float_32 accel_rad_per_sec2,
   float_32 duration_sec,
-  uint_8   actionID,
+  uint_8   actionID = 0,
 }
 
 message HeadAngleUpdate
@@ -105,7 +105,7 @@ message SetBodyAngle
                                    // the sign of max_speed and num_half_revolutions. If false, consider sign
                                    // of max_speed and num_half_revolutions to determine which direction to
                                    // turn and how far to turn (e.g. for turns longer than 360 deg)
-  uint_8   actionID,
+  uint_8   actionID = 0,
 }
 
 message TurnInPlaceAtSpeed

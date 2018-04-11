@@ -142,6 +142,14 @@ public:
                          const f32 accel_rad_per_sec2,
                          const f32 duration_sec = 0.f,
                          MotorActionID* actionID_out = nullptr);
+
+  // Sends raw wheel commands to robot
+  // Generally, you should be using an action instead of calling this directly
+  // unless you have a need to run the wheels for an indeterminate amount of time.
+  Result DriveWheels(const f32 lWheel_speed_mmps,
+                     const f32 rWheel_speed_mmps,
+                     const f32 lWheel_accel_mmps2,
+                     const f32 rWheel_accel_mmps2);
   
   // Sends a message to the robot to turn in place to the specified angle.
   // When the command is received by the robot, it returns a MotorActionAck

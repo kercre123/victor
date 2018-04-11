@@ -605,7 +605,12 @@ Result MovementComponent::EnableHeadPower(bool enable)
   
 MovementComponent::MotorActionID MovementComponent::GetNextMotorActionID(MotorActionID* actionID_out)
 {
-  ++_lastMotorActionID;
+  // Increment actionID
+  // 0 is reserved as it means the robot process should not ack it
+  if (++_lastMotorActionID == 0) {
+    ++_lastMotorActionID;
+  }
+
   if (actionID_out != nullptr) {
     *actionID_out = _lastMotorActionID;
   }
@@ -638,6 +643,18 @@ Result MovementComponent::MoveHeadToAngle(const f32 angle_rad,
                                                                accel_rad_per_sec2,
                                                                duration_sec,
                                                                GetNextMotorActionID(actionID_out));
+}
+
+Result MovementComponent::DriveWheels(const f32 lWheel_speed_mmps,
+                                      const f32 rWheel_speed_mmps,
+                                      const f32 lWheel_accel_mmps2,
+                                      const f32 rWheel_accel_mmps2)
+{
+  return _robot->SendRobotMessage<RobotInterface::DriveWheels>(lWheel_speed_mmps,
+                                                               rWheel_speed_mmps,
+                                                               lWheel_accel_mmps2,
+                                                               rWheel_accel_mmps2);
+
 }
   
 Result MovementComponent::TurnInPlace(const f32 angle_rad,
