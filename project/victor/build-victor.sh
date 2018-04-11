@@ -290,6 +290,9 @@ fi
 # needed for metabuild if we have to run it
 if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ] || [ $CONFIGURE -eq 1 ] ; then
     GEN_SRC_DIR="${TOPLEVEL}/generated/cmake"
+    if [ $CONFIGURE -eq 1 ] ; then
+      rm -rf "${GEN_SRC_DIR}"
+    fi 
     mkdir -p "${GEN_SRC_DIR}"
 
     # Scan for BUILD.in files
