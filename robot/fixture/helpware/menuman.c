@@ -62,20 +62,16 @@ struct MenuManager_t {
   int selection_count;
   const MenuLevel* current;
   int changed;
-  pid_t busy_pid;
+  int is_busy;
 } gMenu;
 
 
 /* Menuing */
 
-void wait_for_process(pid_t pid)
-{
-  gMenu.busy_pid = pid;
-}
 
 void menu_advance()
 {
-  if (!gMenu.busy_pid) {
+  if (!gMenu.is_busy) {
     gMenu.selection_count = 0;
     gMenu.index++;
     gMenu.changed = 1;
@@ -88,14 +84,13 @@ void menu_advance()
 
 void menu_select()
 {
-  if (!gMenu.busy_pid) {
+  if (!gMenu.is_busy) {
     gMenu.changed = 1;
     if (gMenu.current->item[gMenu.index].handler)
     {
       gMenu.selection_count = 10;
       gMenu.current->item[gMenu.index].handler();
-      printf("Handled!\n");
-    }
+     }
     if (gMenu.current->item[gMenu.index].submenu)
     {
       gMenu.current = gMenu.current->item[gMenu.index].submenu;
@@ -105,16 +100,18 @@ void menu_select()
 }
 
 
+void menu_set_busy(int isBusy) {
+  gMenu.is_busy = isBusy;
+  gMenu.changed = 1;
+}
+
+
+int menu_get_index(void) {
+  return gMenu.index;
+}
+
 void draw_menus(void) {
   int i;
-  if (gMenu.busy_pid)
-  {
-    int status;
-    if (waitpid(gMenu.busy_pid, &status, WNOHANG)) {
-      gMenu.busy_pid = 0;
-      gMenu.changed = 1;
-    }
-  }
   if (gMenu.selection_count) {
     if (--gMenu.selection_count == 0)
       gMenu.changed = 1;
@@ -129,7 +126,7 @@ void draw_menus(void) {
       uint16_t inversion = 0;
       snprintf(textbuffer, sizeof(textbuffer), "%c %s",
                (i==gMenu.index)?'>':' ', gMenu.current->item[i].text);
-      if (gMenu.selection_count || gMenu.busy_pid) {
+      if (gMenu.selection_count || gMenu.is_busy) {
         if (i==gMenu.index) { inversion = MENU_TEXT_COLOR_FG; }
       }
       display_draw_text(DISPLAY_LAYER_SMALL, i,
@@ -141,42 +138,72 @@ void draw_menus(void) {
 }
 
 
+static struct {
+  pid_t wait_pid;
+  int proc_fd;
+} gProcess;
 
-int shellcommand(int timeout_sec, const char* command, const char* argstr) {
-  int retval = -666;
-  uint64_t expiration = steady_clock_now()+(timeout_sec*NSEC_PER_SEC);
+void wait_for_process(pid_t pid, int fd)
+{
+  gProcess.wait_pid = pid;
+  gProcess.proc_fd = fd;
+  menu_set_busy(1);
+}
 
-  int pid;
-  int pfd = pidopen(command, argstr, &pid);
-  bool timedout = false;
 
-  if (pfd>0) {
-    uint64_t scnow;// = steady_clock_now();
-    char buffer[512];
-    int n;
-    do {
-      printf("Waiting\n");
-      if (wait_for_data(pfd, 0)) {
-        printf("Reading\n");
-        n = read(pfd, buffer, 512);
-        if (n>0) {
-          printf("%.*s", n, buffer);
+void process_monitor(void){
+  if (gProcess.wait_pid)
+  {
 
-        }
+    int status;
+
+    if (wait_for_data(gProcess.proc_fd, 0)) {
+      char buffer[512];
+      int n = read(gProcess.proc_fd, buffer, 512);
+      if (n>0) {
+        printf("%.*s", n, buffer);
       }
-      scnow = steady_clock_now();
-      printf("comparing %lld >? %lld\n", scnow, expiration);
-      if (scnow > expiration) {
-        printf("TIMEOUT after %d sec\n", timeout_sec);
-        timedout = true;
-        break;
-      }
-    } while (n>0 );
-    printf("closing?\n");
-    retval = pidclose(pid, timedout);
+    }
+
+    if (waitpid(gProcess.wait_pid, &status, WNOHANG)) {
+      gProcess.wait_pid = 0;
+      menu_set_busy(0);
+    }
   }
+}
 
-  return retval;
+
+
+
+#define MOTOR_TEST_POWER 0x3FFF
+#define MOTOR_TEST_DROPS  50
+
+uint64_t gMotorTestCycles = 0;
+
+void start_motor_test(void)
+{
+  gMotorTestCycles =1 ;
+  menu_set_busy(1);
+}
+
+void command_motors(struct HeadToBody* data)
+{
+  static int drop_count = 0;
+  if (gMotorTestCycles) {
+    int i;
+    int16_t power = (gMotorTestCycles%2) ? MOTOR_TEST_POWER : -MOTOR_TEST_POWER;
+    for (i=0;i<MOTOR_COUNT;i++) {
+      data->motorPower[i] = power;
+    }
+    if (drop_count)
+    {
+      drop_count--;
+    }
+    else {
+      gMotorTestCycles++;
+      drop_count = MOTOR_TEST_DROPS;
+    }
+  }
 }
 
 
@@ -186,13 +213,25 @@ int shellcommand(int timeout_sec, const char* command, const char* argstr) {
 void handle_MainPlaySound(void) {
   printf("PlaySound Selected\n");
   pid_t pidout;
-  pidopen("/usr/bin/tinyplay", "test.wav", &pidout);
-  wait_for_process(pidout);
+  int fd = pidopen("./testsound.sh", "test.wav", &pidout);
+  wait_for_process(pidout, fd);
 }
 
-void handle_DetailsNoOp(void) {
-  printf("NoOp Selected\n");
+void handle_MainMotorTest(void) {
+  printf("MotorTest Selected\n");
+  start_motor_test();
 }
+
+void handle_SystemCall(void) {
+  printf("System Call Selected\n");
+  pid_t pidout;
+  char index[4];
+  snprintf(index, sizeof(index), "%d", menu_get_index());
+  printf(">> system.sh %s\n", index);
+  int fd = pidopen("./system.sh", index, &pidout);
+  wait_for_process(pidout, fd);
+}
+
 
 
 
@@ -207,15 +246,18 @@ void handle_DetailsNoOp(void) {
 
 extern MenuLevel menu_Main;
 
-MENU_ITEMS(Details) = {
-  MENU_ACTION("NoOp", DetailsNoOp ),
+MENU_ITEMS(System) = {
+  MENU_ACTION("Option 0", SystemCall ),
+  MENU_ACTION("Option 1", SystemCall ),
+  MENU_ACTION("Option 2", SystemCall ),
   MENU_BACK(Main)
 };
-MENU_CREATE(Details);
+MENU_CREATE(System);
 
 MENU_ITEMS(Main) = {
+  MENU_SUBMENU("System Calls", System),
   MENU_ACTION("PlaySound", MainPlaySound ),
-  MENU_SUBMENU("See Details", Details)
+  MENU_ACTION("Motor Test", MainMotorTest ),
 };
 MENU_CREATE(Main);
 
@@ -225,6 +267,7 @@ void menus_init() {
   gMenu.current = &menu_Main;
   gMenu.index = 0;
   gMenu.changed = 1;
+  gMenu.is_busy = 0;
 }
 
 
@@ -247,7 +290,9 @@ const void* get_a_frame(int32_t timeout_ms) {
 
 void populate_outgoing_frame(void) {
   gHeadData.framecounter++;
-  if (false) { //if there are conditions to communicate to body, put them here
+  if (gMotorTestCycles) { //if there are conditions to communicate to body, put them here
+//    printf("commanding motors\n");
+    command_motors(&gHeadData);
   }
   else {
     //make sure motors are off
@@ -325,6 +370,7 @@ int main(int argc, const char* argv[])
   while (!exit)
   {
     draw_menus();
+    process_monitor();
 
     const struct SpineMessageHeader* hdr = get_a_frame(5);
     if (!hdr) {

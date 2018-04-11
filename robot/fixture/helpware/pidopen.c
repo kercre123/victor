@@ -28,7 +28,7 @@ int pidopen(const char* processname, const char* argstr, pid_t* pid_out)
     char* args[MAX_ARGS];
 
     int i = 0;
-//    args[i++]= SHELLNAME;
+    args[i++]= SHELLNAME;
     args[i++] = (char*)processname;
     char** ap = &args[i++];
     while (ap < &args[MAX_ARGS] && (*ap = strsep(&argcopy, " ")) != NULL) {
