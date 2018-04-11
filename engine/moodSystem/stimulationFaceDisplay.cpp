@@ -28,6 +28,7 @@ namespace {
 CONSOLE_VAR(bool, kStimFace_enabled, "StimFace", true);
 CONSOLE_VAR_RANGED(int, kStimFace_ema_N, "StimFace", 20, 0, 100);
 CONSOLE_VAR_RANGED(f32, kStimFace_sendThresh, "StimFace", 0.01f, 0.0f, 1.0f );
+CONSOLE_VAR_RANGED(f32, kStimFace_minSaturation, "StimFace", 0.25f, 0.0f, 1.0f );
 
 }
 
@@ -42,11 +43,10 @@ StimulationFaceDisplay::~StimulationFaceDisplay()
 
 void StimulationFaceDisplay::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
 {
-  // TODO:(bn) read config
   _saturationMap = std::make_unique<Util::GraphEvaluator2d>();
 
   // for now just use a direct mapping
-  _saturationMap->AddNode(0.0f, 0.0f);
+  _saturationMap->AddNode(0.0f, kStimFace_minSaturation);
   _saturationMap->AddNode(1.0f, 1.0f);
 }
 
