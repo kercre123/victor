@@ -45,7 +45,7 @@ namespace {
 
   const TriggerData kTriggerDataList[] = 
   {
-    // "HeyVector" trigger trained on adults
+    // "HeyVector" trigger trained on adults search 5
     {
       .dataDir = "hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b",
       .netFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_am.raw",
@@ -57,6 +57,30 @@ namespace {
       .netFile = "anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery01_am.raw",
       .searchFile = "anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery01_search_4.raw"
     },
+    // "HeyVector" trigger trained on adults search 7
+    {
+      .dataDir = "hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b",
+      .netFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_am.raw",
+      .searchFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_7.raw"
+    },
+    // "HeyVector" trigger trained on adults search 10
+    {
+      .dataDir = "hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b",
+      .netFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_am.raw",
+      .searchFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_10.raw"
+    },
+    // "HeyVector" trigger trained on adults search 14
+    {
+      .dataDir = "hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b",
+      .netFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_am.raw",
+      .searchFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_14.raw"
+    },
+    // "HeyVector" trigger trained on adults search 18
+    {
+      .dataDir = "hey_vector/trigger_anki_x_enUS_01s_hey_vector_sfs14_a326a14b",
+      .netFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_am.raw",
+      .searchFile = "anki_x_hey_vector_enUS_sfs14_a326a14b_delivery01s_search_18.raw"
+    }
   };
   constexpr int32_t kTriggerDataListLen = (int32_t) sizeof(kTriggerDataList) / sizeof(kTriggerDataList[0]);
   Anki::AudioUtil::SpeechRecognizer::IndexType _currentTriggerSearchIndex = 0;
