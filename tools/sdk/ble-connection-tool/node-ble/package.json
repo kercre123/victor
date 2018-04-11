@@ -1,0 +1,16 @@
+{
+  "name": "clad-test-tool",
+  "version": "1.0.0",
+  "description": "Tool for testing clad",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "noble": "^1.9.0",
+    "npm": "^5.8.0"
+  }
+}
