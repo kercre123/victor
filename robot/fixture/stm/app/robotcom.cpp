@@ -427,7 +427,13 @@ robot_bsv_t* spineGetBodyVersion(void)
 {
   static robot_bsv_t bsv;
   
-  //Send version request cmd (0-payload)
+  //clear out uart rx path
+  DUT_UART::init(SPINE_BAUD);
+  while( DUT_UART::getchar() > -1 ) ;
+  DUT_UART::getRxDroppedChars();
+  DUT_UART::getRxOverflowErrors();
+  
+  //Send version request packet (0-payload)
   spineSend(NULL, PAYLOAD_VERSION);
   
   //Poll for version response
