@@ -173,3 +173,5 @@ to get:
 0x00273793: projects/victor/_build/android/Release/../../../engine/aiComponent/behaviorComponent/behaviorStack.cpp:123
 0x002751ed: projects/victor/_build/android/Release/../../../engine/aiComponent/behaviorComponent/behaviorSystemManager.cpp:154
 ```
+* How do I increase the max files limit on macos Sierra and greater? (when seeing an error like `[Errno 24] Too many open files`)
+  - Follow instructions at https://gist.github.com/tombigel/d503800a282fcadbee14b537735d202c
