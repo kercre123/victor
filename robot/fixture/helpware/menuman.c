@@ -4,13 +4,17 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <fcntl.h>
+#include <sys/wait.h>
 
 #include "core/common.h"
 #include "core/lcd.h"
+#include "core/clock.h"
 #include "helpware/display.h"
 
 #include "spine/spine_hal.h"
 #include "schema/messages.h"
+
+#include "pidopen.h"
 
 #define mm_debug(fmt, args...)  (LOGD( fmt, ##args))
 
@@ -57,63 +61,133 @@ struct MenuManager_t {
   int index;
   int selection_count;
   const MenuLevel* current;
+  int changed;
+  pid_t busy_pid;
 } gMenu;
 
 
 /* Menuing */
 
+void wait_for_process(pid_t pid)
+{
+  gMenu.busy_pid = pid;
+}
 
 void menu_advance()
 {
-  gMenu.selection_count = 0;
-  gMenu.index++;
+  if (!gMenu.busy_pid) {
+    gMenu.selection_count = 0;
+    gMenu.index++;
+    gMenu.changed = 1;
 
-  if (gMenu.index >= gMenu.current->nItems) {
-    gMenu.index = 0;
+    if (gMenu.index >= gMenu.current->nItems) {
+      gMenu.index = 0;
+    }
   }
 }
 
 void menu_select()
 {
-  if (gMenu.current->item[gMenu.index].handler)
-  {
-    gMenu.selection_count = 10;
-    gMenu.current->item[gMenu.index].handler();
-  }
-  if (gMenu.current->item[gMenu.index].submenu)
-  {
-    gMenu.current = gMenu.current->item[gMenu.index].submenu;
-    gMenu.index = 0;
+  if (!gMenu.busy_pid) {
+    gMenu.changed = 1;
+    if (gMenu.current->item[gMenu.index].handler)
+    {
+      gMenu.selection_count = 10;
+      gMenu.current->item[gMenu.index].handler();
+      printf("Handled!\n");
+    }
+    if (gMenu.current->item[gMenu.index].submenu)
+    {
+      gMenu.current = gMenu.current->item[gMenu.index].submenu;
+      gMenu.index = 0;
+    }
   }
 }
 
 
 void draw_menus(void) {
   int i;
-  display_clear_layer(DISPLAY_LAYER_SMALL,
-                      MENU_TEXT_COLOR_FG, MENU_TEXT_COLOR_BG);
-  for (i=0;i< gMenu.current->nItems; i++) {
-    char textbuffer[20];
-    uint16_t inversion = 0;
-    snprintf(textbuffer, sizeof(textbuffer), "%c %s",
-             (i==gMenu.index)?'>':' ', gMenu.current->item[i].text);
-    if (gMenu.selection_count) {
-      gMenu.selection_count--;
-      if (i==gMenu.index) { inversion = MENU_TEXT_COLOR_FG; }
+  if (gMenu.busy_pid)
+  {
+    int status;
+    if (waitpid(gMenu.busy_pid, &status, WNOHANG)) {
+      gMenu.busy_pid = 0;
+      gMenu.changed = 1;
     }
-    display_draw_text(DISPLAY_LAYER_SMALL, i,
-                      MENU_TEXT_COLOR_FG^inversion, MENU_TEXT_COLOR_BG^inversion,
-                      textbuffer, sizeof(textbuffer), false);
   }
-  display_render(0xFF);  //1<<DISPLAY_LAYER_SMALL);
+  if (gMenu.selection_count) {
+    if (--gMenu.selection_count == 0)
+      gMenu.changed = 1;
+
+  }
+  if (gMenu.changed) {
+    gMenu.changed = 0;
+    display_clear_layer(DISPLAY_LAYER_SMALL,
+                        MENU_TEXT_COLOR_FG, MENU_TEXT_COLOR_BG);
+    for (i=0;i< gMenu.current->nItems; i++) {
+      char textbuffer[20];
+      uint16_t inversion = 0;
+      snprintf(textbuffer, sizeof(textbuffer), "%c %s",
+               (i==gMenu.index)?'>':' ', gMenu.current->item[i].text);
+      if (gMenu.selection_count || gMenu.busy_pid) {
+        if (i==gMenu.index) { inversion = MENU_TEXT_COLOR_FG; }
+      }
+      display_draw_text(DISPLAY_LAYER_SMALL, i,
+                        MENU_TEXT_COLOR_FG^inversion, MENU_TEXT_COLOR_BG^inversion,
+                        textbuffer, sizeof(textbuffer), false);
+    }
+    display_render(0xFF);  //1<<DISPLAY_LAYER_SMALL);
+  }
+}
+
+
+
+int shellcommand(int timeout_sec, const char* command, const char* argstr) {
+  int retval = -666;
+  uint64_t expiration = steady_clock_now()+(timeout_sec*NSEC_PER_SEC);
+
+  int pid;
+  int pfd = pidopen(command, argstr, &pid);
+  bool timedout = false;
+
+  if (pfd>0) {
+    uint64_t scnow;// = steady_clock_now();
+    char buffer[512];
+    int n;
+    do {
+      printf("Waiting\n");
+      if (wait_for_data(pfd, 0)) {
+        printf("Reading\n");
+        n = read(pfd, buffer, 512);
+        if (n>0) {
+          printf("%.*s", n, buffer);
+
+        }
+      }
+      scnow = steady_clock_now();
+      printf("comparing %lld >? %lld\n", scnow, expiration);
+      if (scnow > expiration) {
+        printf("TIMEOUT after %d sec\n", timeout_sec);
+        timedout = true;
+        break;
+      }
+    } while (n>0 );
+    printf("closing?\n");
+    retval = pidclose(pid, timedout);
+  }
+
+  return retval;
 }
 
 
 /****  Menu Handlers ****/
 
 
-void handle_MainTest(void) {
-  printf("Test Selected\n");
+void handle_MainPlaySound(void) {
+  printf("PlaySound Selected\n");
+  pid_t pidout;
+  pidopen("/usr/bin/tinyplay", "test.wav", &pidout);
+  wait_for_process(pidout);
 }
 
 void handle_DetailsNoOp(void) {
@@ -133,15 +207,14 @@ void handle_DetailsNoOp(void) {
 
 extern MenuLevel menu_Main;
 
-//MENU_ITEMS(Details) = {
-static const MenuItem menu_items_Details[] = {
+MENU_ITEMS(Details) = {
   MENU_ACTION("NoOp", DetailsNoOp ),
   MENU_BACK(Main)
 };
 MENU_CREATE(Details);
 
 MENU_ITEMS(Main) = {
-  MENU_ACTION("Test", MainTest ),
+  MENU_ACTION("PlaySound", MainPlaySound ),
   MENU_SUBMENU("See Details", Details)
 };
 MENU_CREATE(Main);
@@ -151,6 +224,7 @@ void menus_init() {
   gMenu.selection_count = 0;
   gMenu.current = &menu_Main;
   gMenu.index = 0;
+  gMenu.changed = 1;
 }
 
 

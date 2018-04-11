@@ -62,7 +62,7 @@ SPINE_SRC = spine_hal.c spine_crc.c
 SPINE_OBJ = $(SPINE_SRC:%.c=$(OBJDIR)/%.o)
 
 MENUMAN = menuman
-MENUMAN_SRC = menuman.c kbhit.c display.c
+MENUMAN_SRC = menuman.c kbhit.c display.c pidopen.c
 MENUMAN_OBJ = $(MENUMAN_SRC:%.c=$(OBJDIR)/%.o) $(SPINE_OBJ)
 
 
