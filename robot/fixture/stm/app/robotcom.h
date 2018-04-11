@@ -6,6 +6,18 @@
 #include "cmd.h"
 
 //-----------------------------------------------------------------------------
+//                  Helper Comms: Cmd + response parse
+//-----------------------------------------------------------------------------
+
+#define DEFAULT_TEMP_ZONE 3
+
+void  helperLcdShow(bool solo, bool invert, char color_rgbw, const char* center_text);
+void  helperLcdSetLine(int n, const char* line);
+void  helperLcdClear(void);
+char* helperGetEmmcdlVersion(int timeout_ms = CMD_DEFAULT_TIMEOUT);
+int   helperGetTempC(int zone = DEFAULT_TEMP_ZONE);
+
+//-----------------------------------------------------------------------------
 //                  Robot Communications
 //-----------------------------------------------------------------------------
 
@@ -62,18 +74,27 @@ void          rcomLfe(uint8_t idx, uint32_t val);
 void          rcomSmr(uint8_t idx, uint32_t val);
 uint32_t      rcomGmr(uint8_t idx);
 
-
 //-----------------------------------------------------------------------------
-//                  Helper Comms: Cmd + response parse
+//                  Spine HAL
 //-----------------------------------------------------------------------------
 
-#define DEFAULT_TEMP_ZONE 3
+#include "../../syscon/schema/messages.h"
 
-void  helperLcdShow(bool solo, bool invert, char color_rgbw, const char* center_text);
-void  helperLcdSetLine(int n, const char* line);
-void  helperLcdClear(void);
-char* helperGetEmmcdlVersion(int timeout_ms = CMD_DEFAULT_TIMEOUT);
-int   helperGetTempC(int zone = DEFAULT_TEMP_ZONE);
+typedef struct {
+  SpineMessageHeader  header;
+  union {
+    HeadToBody        h2b;
+    BodyToHead        b2h;
+    MicroBodyToHead   ub2h;
+    ContactData       contact;
+    VersionInfo       bodyvers;
+    AckMessage        ack;
+  } payload;
+  SpineMessageFooter  footer;
+} spinePacket_t;
+
+int             spineSend(uint8_t *payload, PayloadId type);
+spinePacket_t*  spineReceive(int timeout_us);
 
 
 #endif //ROBOTCOM_H
