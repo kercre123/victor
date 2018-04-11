@@ -10,50 +10,26 @@ void TestMotorCleanup(void)
 {
 }
 
-TestFunction* TestMotor1LGetTests(void)
+TestFunction* TestMotor1GetTests(void)
 {
   static TestFunction m_tests[] = {
-    NULL
+    NULL,
   };
   return m_tests;
 }
 
-TestFunction* TestMotor1HGetTests(void)
+TestFunction* TestMotor2GetTests(void)
 {
   static TestFunction m_tests[] = {
-    NULL
+    NULL,
   };
   return m_tests;
 }
 
-TestFunction* TestMotor2LGetTests(void)
+TestFunction* TestMotor3GetTests(void)
 {
   static TestFunction m_tests[] = {
-    NULL
-  };
-  return m_tests;
-}
-
-TestFunction* TestMotor2HGetTests(void)
-{
-  static TestFunction m_tests[] = {
-    NULL
-  };
-  return m_tests;
-}
-
-TestFunction* TestMotor3LGetTests(void)
-{
-  static TestFunction m_tests[] = {
-    NULL
-  };
-  return m_tests;
-}
-
-TestFunction* TestMotor3HGetTests(void)
-{
-  static TestFunction m_tests[] = {
-    NULL
+    NULL,
   };
   return m_tests;
 }

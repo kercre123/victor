@@ -238,6 +238,18 @@ static void da14580_load_program_(const uint8_t *bin, int size, const char* name
 //                  Debug
 //-----------------------------------------------------------------------------
 
+void DbgPowerWaitTest(void)
+{
+  ConsolePrintf("power on and wait (debug)\n");
+  const int ima_limit_CUBEBAT = 450;
+  TestCommon::powerOnProtected(PWR_CUBEBAT, 100, ima_limit_CUBEBAT );
+  //leave power on
+  
+  //DEBUG: console bridge, manual testing
+  cmdSend(CMD_IO_DUT_UART, "echo on", CMD_DEFAULT_TIMEOUT, (CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS) & ~CMD_OPTS_EXCEPTION_EN );
+  TestCommon::consoleBridge(TO_DUT_UART,10*1000);
+}//-*/
+
 void DbgCubeIMeasLoop(char *title)
 {
   DUT_UART::deinit();
@@ -508,56 +520,28 @@ TestFunction* TestCube2GetTests(void) {
   return TestCube1GetTests();
 }
 
-bool TestCubeFinishDetect(void)
+//-----------------------------------------------------------------------------
+//                  Block Tests
+//-----------------------------------------------------------------------------
+
+bool TestBlockDetect(void)
 {
   return false;
 }
 
-TestFunction* TestCubeFinish1GetTests(void)
+void TestBlockCleanup(void)
+{
+}
+
+TestFunction* TestBlock1GetTests(void)
 {
   static TestFunction m_tests[] = {
-    NULL
+    NULL,
   };
   return m_tests;
 }
 
-TestFunction* TestCubeFinish2GetTests(void)
-{
-  static TestFunction m_tests[] = {
-    NULL
-  };
-  return m_tests;
+TestFunction* TestBlock2GetTests(void) { 
+  return TestBlock1GetTests();
 }
-
-TestFunction* TestCubeFinish3GetTests(void)
-{
-  static TestFunction m_tests[] = {
-    NULL
-  };
-  return m_tests;
-}
-
-TestFunction* TestCubeFinishXGetTests(void)
-{
-  static TestFunction m_tests[] = {
-    NULL
-  };
-  return m_tests;
-}
-
-//-----------------------------------------------------------------------------
-//                  Debug
-//-----------------------------------------------------------------------------
-
-void DbgPowerWaitTest(void)
-{
-  ConsolePrintf("power on and wait (debug)\n");
-  const int ima_limit_CUBEBAT = 450;
-  TestCommon::powerOnProtected(PWR_CUBEBAT, 100, ima_limit_CUBEBAT );
-  //leave power on
-  
-  //DEBUG: console bridge, manual testing
-  cmdSend(CMD_IO_DUT_UART, "echo on", CMD_DEFAULT_TIMEOUT, (CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS) & ~CMD_OPTS_EXCEPTION_EN );
-  TestCommon::consoleBridge(TO_DUT_UART,10*1000);
-}//-*/
 

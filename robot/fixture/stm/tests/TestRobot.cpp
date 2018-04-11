@@ -188,9 +188,21 @@ const char* DBG_cmd_substitution(const char *line, int len)
 #define DETECT_CURRENT_MA   100
 #define SYSCON_CHG_PWR_DELAY_MS 250 /*delay from robot's on-charger detect until charging starts*/
 
-int detect_ma = 0;
+int detect_ma = 0; int detect_mv = 0;
 bool TestRobotDetect(void)
 {
+  if( g_fixmode == FIXMODE_ROBOT1 )
+  {
+    //ROBOT1 connected to stump via spine cable. Check for power input.
+    int vdut_mv = Meter::getVoltageMv(PWR_DUTVDD,0);
+    
+    //running average filter, len=2^oversample
+    const int oversample = 6;
+    detect_mv = ( ((1<<oversample)-1)*detect_mv + vdut_mv ) >> oversample;
+    
+    return vdut_mv > 3000;    
+  }
+  
   //on test cleanup/exit, let charger kick back in so we can properly detect removal
   int chargeDelay = (g_isDevicePresent && !Board::powerIsOn(PWR_VEXT)) ? SYSCON_CHG_PWR_DELAY_MS : 0; //condition from app::WaitForDeviceOff()
   
@@ -243,7 +255,10 @@ void TestRobotInfo(void)
 {
   Board::powerOn(PWR_VBAT); //XXX Debug: work on body pcba w/o battery
   
-  ConsolePrintf("detect current avg %i mA\n", detect_ma);
+  if( g_fixmode == FIXMODE_ROBOT1 )
+    ConsolePrintf("detect voltage avg %imV\n", detect_mv);
+  else
+    ConsolePrintf("detect current avg %i mA\n", detect_ma);
   
   ConsolePrintf("Resetting comms interface\n");
   Board::powerOff(PWR_VEXT, 500); //turn power off to disable charging
@@ -677,40 +692,28 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
 //                  Get Tests
 //-----------------------------------------------------------------------------
 
-TestFunction* TestRobotInfoGetTests(void)
-{
-  static TestFunction m_tests[] = {
-    TestRobotInfo,
-    NULL,
-  };
-  return m_tests;
-}
-
-TestFunction* TestRobot0GetTests(void)
-{
-  static TestFunction m_tests[] = {
-    TestRobotInfo,
-    //DBG_RobotCmdTest,
-    //ChargeTest,
-    NULL,
-  };
-  return m_tests;
-}
-
 void DBG_test_all(void) { dbg_test_all_(); }
-TestFunction* TestRobot1GetTests(void)
-{
+void DBG_test_emr(void) { dbg_test_emr_(); }
+
+TestFunction* TestRobot0GetTests(void) {
   static TestFunction m_tests[] = {
     TestRobotInfo,
-    DBG_test_all,
+    //DBG_test_all,
+    //DBG_test_emr,
     NULL,
   };
   return m_tests;
 }
 
-void DBG_test_emr(void) { dbg_test_emr_(); }
-TestFunction* TestRobot2GetTests(void)
-{
+TestFunction* TestRobot1GetTests(void) {
+  static TestFunction m_tests[] = {
+    TestRobotInfo,
+    NULL,
+  };
+  return m_tests;
+}
+
+TestFunction* TestRobot2GetTests(void) {
   static TestFunction m_tests[] = {
     TestRobotInfo,
     //DBG_test_emr,
@@ -723,8 +726,7 @@ TestFunction* TestRobot2GetTests(void)
   return m_tests;
 }
 
-TestFunction* TestRobot3GetTests(void)
-{
+TestFunction* TestRobot3GetTests(void) {
   static TestFunction m_tests[] = {
     TestRobotInfo,
     EmrChecks, //check previous test results and reset status flags
@@ -736,70 +738,23 @@ TestFunction* TestRobot3GetTests(void)
   };
   return m_tests;
 }
+
+TestFunction* TestRobotInfoGetTests(void) {
+  static TestFunction m_tests[] = {
+    TestRobotInfo,
+    NULL,
+  };
+  return m_tests;
+}
+
 TestFunction* TestRobotPackoutGetTests(void) { 
   return TestRobot3GetTests();
 }
 
-TestFunction* TestRobotPlaypenGetTests(void)
-{
-  static TestFunction m_tests[] = {
-    TestRobotInfo,
-    NULL,
-  };
-  return m_tests;
-}
-
-TestFunction* TestRobotLifetestGetTests(void)
-{
-  static TestFunction m_tests[] = {
-    TestRobotInfo,
-    NULL,
-  };
-  return m_tests;
-}
-
-TestFunction* TestRobotRecharge0GetTests(void)
-{
+TestFunction* TestRobotRechargeGetTests(void) {
   static TestFunction m_tests[] = {
     TestRobotInfo,
     Recharge,
-    NULL,
-  };
-  return m_tests;
-}
-
-TestFunction* TestRobotRecharge1GetTests(void)
-{
-  static TestFunction m_tests[] = {
-    TestRobotInfo,
-    Recharge,
-    NULL,
-  };
-  return m_tests;
-}
-
-TestFunction* TestRobotSoundGetTests(void)
-{
-  static TestFunction m_tests[] = {
-    TestRobotInfo,
-    NULL,
-  };
-  return m_tests;
-}
-
-TestFunction* TestRobotFacRevertGetTests(void)
-{
-  static TestFunction m_tests[] = {
-    TestRobotInfo,
-    NULL,
-  };
-  return m_tests;
-}
-
-TestFunction* TestRobotEMGetTests(void)
-{
-  static TestFunction m_tests[] = {
-    TestRobotInfo,
     NULL,
   };
   return m_tests;
