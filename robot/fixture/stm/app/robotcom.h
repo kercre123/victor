@@ -79,6 +79,7 @@ uint32_t      rcomGmr(uint8_t idx);
 //-----------------------------------------------------------------------------
 
 #include "../../syscon/schema/messages.h"
+#include "spine_crc.h"
 
 typedef struct {
   SpineMessageHeader  header;
@@ -94,7 +95,7 @@ typedef struct {
 } spinePacket_t;
 
 int             spineSend(uint8_t *payload, PayloadId type);
-spinePacket_t*  spineReceive(int timeout_us);
+spinePacket_t*  spineReceive(int timeout_us = 10000);
 
 
 #endif //ROBOTCOM_H

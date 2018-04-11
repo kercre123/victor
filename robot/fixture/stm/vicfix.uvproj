@@ -587,6 +587,11 @@
               <FilePath>.\lib\crc32.c</FilePath>
             </File>
             <File>
+              <FileName>spine_crc.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\lib\spine_crc.c</FilePath>
+            </File>
+            <File>
               <FileName>nvReset.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\lib\nvReset.c</FilePath>

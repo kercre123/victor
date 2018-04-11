@@ -287,7 +287,7 @@ uint32_t rcomGmr(uint8_t idx)
 
 const int SPINE_BAUD = 3000000;
 
-static bool valid_payload_type_(PayloadId type) {
+static bool payload_type_is_valid_(PayloadId type) {
   switch( type ) {
     case PAYLOAD_DATA_FRAME:
     case PAYLOAD_CONT_DATA:
@@ -308,13 +308,13 @@ static uint16_t payload_size_(PayloadId type, bool h2b) {
   switch( type ) {
     case PAYLOAD_DATA_FRAME:  return h2b ? sizeof(HeadToBody) : sizeof(BodyToHead);
     case PAYLOAD_CONT_DATA:   return sizeof(ContactData);
-    case PAYLOAD_MODE_CHANGE: break;
+    case PAYLOAD_MODE_CHANGE: break; //DFU
     case PAYLOAD_VERSION:     return sizeof(VersionInfo);
     case PAYLOAD_ACK:         return sizeof(AckMessage);
-    case PAYLOAD_ERASE:       break;
-    case PAYLOAD_VALIDATE:    break;
-    case PAYLOAD_DFU_PACKET:  break;
-    case PAYLOAD_SHUT_DOWN:   break;
+    case PAYLOAD_ERASE:       break; //DFU
+    case PAYLOAD_VALIDATE:    break; //DFU
+    case PAYLOAD_DFU_PACKET:  break; //DFU
+    case PAYLOAD_SHUT_DOWN:   break; //XXX
     case PAYLOAD_BOOT_FRAME:  return sizeof(MicroBodyToHead);
     default: break;
   }
@@ -327,20 +327,18 @@ int spineSend(uint8_t *payload, PayloadId type)
   DUT_UART::init(SPINE_BAUD); //protected from re-init
   
   spinePacket_t txPacket;
-  uint16_t payloadlen = payload_size_(type,1);
+  uint16_t payloadlen = payload ? payload_size_(type,1) : 0; //allow 0-length payload
   
   txPacket.header.sync_bytes = SYNC_HEAD_TO_BODY;
   txPacket.header.payload_type = type;
   txPacket.header.bytes_to_follow = payloadlen;
   
-  memcpy( &txPacket.payload, payload, payloadlen );
+  if( payload && payloadlen > 0 )
+    memcpy( &txPacket.payload, payload, payloadlen );
   
   //place footer at end of payload
   SpineMessageFooter* footer = (SpineMessageFooter*)((uint32_t)&txPacket.payload + payloadlen);
-  uint32_t sum = 0;
-  for(int x=0; x<payloadlen; x++)
-    sum += payload[x];
-  footer->checksum = sum;
+  footer->checksum = calc_crc((const uint8_t*)&txPacket.payload, payloadlen);
   
   #if RCOM_SPINE_DEBUG > 0
   ConsolePrintf("spine tx: type %04x len %u checksum %08x\n", txPacket.header.payload_type, txPacket.header.bytes_to_follow, footer->checksum );
@@ -393,28 +391,65 @@ spinePacket_t* spineReceive(int timeout_us)
       *write++ = c;
   }
   
-  //move footer and error check
+  //process footer
   SpineMessageFooter* footer = (SpineMessageFooter*)((uint32_t)&rxPacket.payload + payloadlen);
-  memcpy( &rxPacket.footer, footer, sizeof(SpineMessageFooter) );
-  uint32_t sum = 0;
-  for(int x=0; x<payloadlen; x++)
-    sum += ((uint8_t*)&rxPacket.payload)[x];
+  memcpy( &rxPacket.footer, footer, sizeof(SpineMessageFooter) ); //move to proper pkt locale
+  crc_t expected_checksum = calc_crc((const uint8_t*)&rxPacket.payload, payloadlen);
   
   #if RCOM_SPINE_DEBUG > 0
     uint16_t expected_len = 0;
     try{ expected_len = payload_size_(rxPacket.header.payload_type,0); } catch(int e){}
     ConsolePrintf("spine rx: type %04x len %u checksum %08x\n", rxPacket.header.payload_type, rxPacket.header.bytes_to_follow, rxPacket.footer.checksum );
-    if( !valid_payload_type_(rxPacket.header.payload_type) )
+    if( !payload_type_is_valid_(rxPacket.header.payload_type) )
       ConsolePrintf("  BAD TYPE: %0x04\n", rxPacket.header.payload_type);
     if( payloadlen != expected_len )
       ConsolePrintf("  BAD LEN: %u/%u\n", payloadlen, expected_len);
-    if( sum != rxPacket.footer.checksum )
-      ConsolePrintf("  BAD CHECKSUM: %08x %08x %08x ----\n", sum, rxPacket.footer.checksum, footer->checksum);
+    if( expected_checksum != rxPacket.footer.checksum )
+      ConsolePrintf("  BAD CHECKSUM: %08x %08x %08x ----\n", expected_checksum, rxPacket.footer.checksum, footer->checksum);
   #endif
   
-  if( sum != rxPacket.footer.checksum )
+  if( expected_checksum != rxPacket.footer.checksum )
     return NULL;
   
   return &rxPacket;
+}
+
+
+
+//-----------------------------------------------------------------------------
+//                  Dev...
+//-----------------------------------------------------------------------------
+
+//verify version structs are equivalent
+STATIC_ASSERT( sizeof(robot_bsv_t) == sizeof(VersionInfo), version_struct_size_match_check );
+
+robot_bsv_t* spineGetBodyVersion(void)
+{
+  static robot_bsv_t bsv;
+  
+  //Send version request cmd (0-payload)
+  spineSend(NULL, PAYLOAD_VERSION);
+  
+  //Poll for version response
+  uint32_t Tstart = Timer::get();
+  while( Timer::elapsedUs(Tstart) < 100000 )
+  {
+    spinePacket_t* pkt = spineReceive(10000);
+    if( pkt != NULL && pkt->header.payload_type == PAYLOAD_VERSION )
+    {
+      memcpy( &bsv, (VersionInfo*)&pkt->payload, sizeof(robot_bsv_t) );
+      
+      #if RCOM_SPINE_DEBUG > 0
+      ConsolePrintf("bsv hw.rev,model %u %u\n", m_dat.rsp.bsv.hw_rev, m_dat.rsp.bsv.hw_model );
+      ConsolePrintf("bsv ein %08x %08x %08x %08x\n", m_dat.rsp.bsv.ein[0], m_dat.rsp.bsv.ein[1], m_dat.rsp.bsv.ein[2], m_dat.rsp.bsv.ein[3] );
+      ConsolePrintf("bsv app vers %08x %08x %08x %08x\n", m_dat.rsp.bsv.app_version[0], m_dat.rsp.bsv.app_version[1], m_dat.rsp.bsv.app_version[2], m_dat.rsp.bsv.app_version[3] );
+      #endif
+      
+      return &bsv;
+    }
+  }
+  
+  ConsolePrintf("FAILED TO READ BODY VERSION\n");
+  return NULL;
 }
 
