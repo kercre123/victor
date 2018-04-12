@@ -215,6 +215,10 @@ int GetEngineStatsWebServerHandler(struct mg_connection *conn, void *cbdata)
 }
 
 
+/*
+  Prints out the language locale of the robot
+*/
+DASMESSAGE(LocaleMsg, "device.language_locale");
 CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort* messagePipe)
   : _uiMsgHandler(new UiMessageHandler(1, messagePipe))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
@@ -250,7 +254,8 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   _context->SetEngineThread();
 
   // log additional das info
-  LOG_EVENT("device.language_locale", "%s", _context->GetLocale()->GetLocaleString().c_str());
+  LocaleMsg lm("%s", _context->GetLocale()->GetLocaleString().c_str());
+  sEventD(lm);
   std::time_t t = std::time(nullptr);
   std::tm tm = *std::localtime(&t);
   std::stringstream timeZoneString;

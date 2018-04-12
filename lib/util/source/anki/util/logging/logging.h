@@ -41,6 +41,7 @@ class ChannelFilter;
 class IEventProvider;
 
 const uint8_t DASMaxSvalLength = 128;
+const size_t kMaxStringBufferSize = 1024;
 
 std::string HexDump(const void *value, const size_t len, char delimiter);
 
@@ -66,7 +67,7 @@ class DasMsg
 public:
   virtual const char* eventName() = 0;
   void formatEventValue(const char* format, va_list args);
-  std::string _eventValue;
+  char _eventValue[kMaxStringBufferSize]{0};
 };
 
 #define DASMESSAGE(className, eventNameStr) /** \ingroup dasmsg */ \
@@ -127,9 +128,6 @@ __attribute__((__used__))
 void sChanneledInfoV(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args) __attribute__((format(printf,4,0)));
 
 __attribute__((__used__))
-void sInfoD(DasMsg& dasMessage);
-
-__attribute__((__used__))
 void sChanneledInfoD(const char* channelName, DasMsg& dasMessage);
 
 __attribute__((__used__))
@@ -153,7 +151,6 @@ bool sVerifyFailedReturnFalse(const char* eventName, const char* format, ...) __
 
 
 void sSetGlobal(const char* key, const char* value);
-
 
 //
 // Anki::Util::sLogFlush()

@@ -77,9 +77,6 @@ AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
   }
 }
 
-/**
- * Anime Engine class
- */
 AnimEngine::~AnimEngine()
 {
   if (Anki::Util::gTickTimeProvider == BaseStationTimer::getInstance()) {
@@ -88,9 +85,6 @@ AnimEngine::~AnimEngine()
   BaseStationTimer::removeInstance();
 }
 
-/**
-* First documentation for an event
-*/
 Result AnimEngine::Init()
 {
   if (_isInitialized) {
@@ -160,7 +154,7 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
       const double maxLatency = ANIM_TIME_STEP_MS + ANIM_OVERTIME_WARNING_THRESH_MS;
       if (timeSinceLastUpdate > maxLatency)
       {
-        AnimEngineMsg aem("%.2f", updateLengthMs);
+        AnimEngineMsg aem("%.2f", timeSinceLastUpdate);
         Anki::Util::sEventD(aem);
       }
     }

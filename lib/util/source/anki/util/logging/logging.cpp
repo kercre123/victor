@@ -69,8 +69,6 @@ bool _errG = false;
 bool _errBreakOnError = true;
 
 
-const size_t kMaxStringBufferSize = 1024;
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // helpers
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -161,14 +159,7 @@ void LogChannelDebug(const char* channel, const char* eventName, const KVV& keyV
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DasMsg::formatEventValue(const char* format, va_list args)
 {
-  // event is BI event, and the data is specifically formatted to be read on the backend.
-  // we should not modify tis data under any circumstance. Hence, no tick timer here
-  char logString[kMaxStringBufferSize]{0};
-  vsnprintf(logString, kMaxStringBufferSize, format, args);
-
-  std::stringstream ss;
-  ss << kMaxStringBufferSize;
-  _eventValue = ss.str();
+  vsnprintf(_eventValue, kMaxStringBufferSize, format, args);
 }
 
 
@@ -212,7 +203,7 @@ void sEvent(const char* eventName, const KVV& keyValues, const char* eventValue)
 
 void sEventD(DasMsg& dasMessage)
 {
-  sEvent(dasMessage.eventName(), {}, dasMessage._eventValue.c_str());
+  sEvent(dasMessage.eventName(), {}, dasMessage._eventValue);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -246,6 +237,11 @@ void sErrorV(const char* eventName, const KVV& keyValues, const char* format, va
 
   // log it
   LogError(eventName, keyValues, logString);
+}
+
+void sErrorD(DasMsg& dasMessage)
+{
+  sError(dasMessage.eventName(), {}, dasMessage._eventValue);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -292,6 +288,11 @@ void sWarningV(const char* eventName, const KVV& keyValues, const char* format, 
   LogWarning(eventName, keyValues, logString);
 }
 
+void sWarningD(DasMsg& dasMessage)
+{
+  sWarning(dasMessage.eventName(), {}, dasMessage._eventValue);
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sWarning(const char* eventName, const KVV& keyValues, const char* eventValue)
 {
@@ -326,6 +327,11 @@ void sChanneledInfoV(const char* channelName, const char* eventName, const KVV& 
   
   // log it
   LogChanneledInfo(channelName, eventName, keyValues, logString);
+}
+
+void sChanneledInfoD(const char* channelName, DasMsg& dasMessage)
+{
+  sChanneledInfo(channelName, dasMessage.eventName(), {}, dasMessage._eventValue);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
