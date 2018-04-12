@@ -19,7 +19,8 @@ static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL17
   ;
 
-static const uint16_t POWER_DOWN_POINT = ADC_VOLTS(3.4);
+static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.4);
+static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 200;  // 1s
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(3.6);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(4.0), ~0);
 
@@ -302,9 +303,14 @@ void Analog::tick(void) {
       charge_count = 0;
     }
 
-    // Emergency trap (V3.3)
-    if (battery_voltage < POWER_DOWN_POINT) {
-      Power::setMode(POWER_STOP);
+    // Low voltage shutdown
+    static int power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
+    if (battery_voltage < LOW_VOLTAGE_POWER_DOWN_POINT) {
+      if (--power_down_timer <= 0) {
+        Power::setMode(POWER_STOP);
+      }
+    } else {
+      power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
     }
   } else if (charge_cutoff) {
     // Unpowered, on charger (timeout)
