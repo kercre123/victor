@@ -99,8 +99,15 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
       return RESULT_FAIL;
     }
     SetFromConfigHelper(config["input"], _inputLayerName);
-    _outputLayerNames.resize(1);
-    SetFromConfigHelper(config["output"], _outputLayerNames[0]);
+    const auto& outputs = config["output"];
+    if(outputs.isArray()) {
+      for(const auto& output : outputs) {
+        _outputLayerNames.push_back(output.asString());
+      }
+    } 
+    else {
+      _outputLayerNames.push_back(outputs.asString());
+    }
     SetFromConfigHelper(config["use_float_input"], _useFloatInput);
 
     if(config.isMember("use_grayscale"))
