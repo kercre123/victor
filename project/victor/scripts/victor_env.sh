@@ -27,7 +27,7 @@ robot_sh ()
 {
     if [ -z ${ANKI_ROBOT_HOST} ]; then
         echo "ERROR: Unspecified robot host."
-        exit 1
+        return 1
     fi
     ssh ${ANKI_ROBOT_USER}@${ANKI_ROBOT_HOST} $*
 }
@@ -36,7 +36,7 @@ robot_cp ()
 {
     if [ -z ${ANKI_ROBOT_HOST} ]; then
         echo "ERROR: Unspecified robot host"
-        exit 1
+        return 1
     fi
 
     if [ $# -eq 3 ]; then
@@ -56,7 +56,7 @@ robot_cp_from ()
 {
     if [ -z ${ANKI_ROBOT_HOST} ]; then
         echo "ERROR: Unspecified robot host"
-        exit 1
+        return 1
     fi
 
     if [ $# -eq 3 ]; then

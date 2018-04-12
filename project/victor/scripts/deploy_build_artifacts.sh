@@ -52,10 +52,6 @@ if [ -z "${ANKI_ROBOT_HOST+x}" ]; then
 fi
 
 : ${DEVICE_RSYNC_BIN_DIR:="/tmp"}
-: ${DEVICE_RSYNC_CONF_DIR:="/data/rsync"}
-
-# increment the following value if the contents of rsyncd.conf change
-RSYNCD_CONF_VERSION=2
 
 : ${BUILD_ROOT:="${TOPLEVEL}"}
 : ${LIB_INSTALL_PATH:="${INSTALL_ROOT}/lib"}
@@ -65,10 +61,22 @@ RSYNCD_CONF_VERSION=2
 echo "Stopping processes"
 robot_sh "/bin/systemctl stop victor.target"
 
+# Remount rootfs read-write if necessary
+MOUNT_STATE=$(\
+    robot_sh "grep ' / ext4.*\sro[\s,]' /proc/mounts > /dev/null 2>&1 && echo ro || echo rw"\
+)
+[[ "$MOUNT_STATE" == "ro" ]] && robot_sh "/bin/mount -o remount,rw /"
+
+set +e
+( # TRY deploy
+
+set -e
+
 robot_sh mkdir -p "${INSTALL_ROOT}"
 robot_sh mkdir -p "${INSTALL_ROOT}/etc"
 robot_sh mkdir -p "${LIB_INSTALL_PATH}"
 robot_sh mkdir -p "${BIN_INSTALL_PATH}"
+
 
 # install rsync binary and config if needed
 set +e
@@ -78,18 +86,6 @@ if [ $? -ne 0 ]; then
   robot_cp ${RSYNC_BIN_DIR}/rsync.bin ${DEVICE_RSYNC_BIN_DIR}/rsync.bin
 fi
 set -e
-
-RSYNCD_CONF="rsyncd-v${RSYNCD_CONF_VERSION}.conf"
-
-robot_sh "[ -f "$DEVICE_RSYNC_CONF_DIR/$RSYNCD_CONF" ]"
-if [ $? -ne 0 ]; then
-  echo "loading rsync config to device"
-  robot_cp ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}/$RSYNCD_CONF
-fi
-set -e
-
-# startup rsync daemon
-robot_sh "${DEVICE_RSYNC_BIN_DIR}/rsync.bin --daemon --config=${DEVICE_RSYNC_CONF_DIR}/${RSYNCD_CONF}"
 
 pushd ${BUILD_ROOT} > /dev/null 2>&1
 
@@ -113,8 +109,17 @@ rsync -rlptD -IzvP --inplace --delete --delete-before --force --files-from=${RSY
   ./ root@${ANKI_ROBOT_HOST}:/anki/
 
 rm -f ${BUILD_ROOT}/rsync.*.lst
+) # END deploy
+
+DEPLOY_RESULT=$?
+set -e
+
+# Remount rootfs read-write
+[[ "$MOUNT_STATE" == "ro" ]] && robot_sh "/bin/mount -o remount,ro /"
 
 popd > /dev/null 2>&1
 
 echo "Restarting processes"
 robot_sh systemctl restart anki-robot.target
+
+exit $DEPLOY_RESULT
