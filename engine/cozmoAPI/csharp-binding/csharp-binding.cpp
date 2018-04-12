@@ -6,6 +6,11 @@
 //
 //
 
+//
+// This file is not used on victor. Contents are preserved for reference.
+//
+#if !defined(VICOS_LA) && !defined(VICOS_LE)
+
 #include "engine/cozmoAPI/csharp-binding/csharp-binding.h"
 
 #include "engine/util/file/archiveUtil.h"
@@ -141,7 +146,7 @@ void configure_engine(Json::Value& config)
   if(!config.isMember(AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT)) {
     config[AnkiUtil::kP_SDK_ON_DEVICE_TCP_PORT] = SDK_ON_DEVICE_TCP_PORT;
   }
-  
+
 }
 
 #if USE_DAS
@@ -151,7 +156,7 @@ static bool das_archive_function(const std::string& inputFilePath)
   const std::string filename = Anki::Util::FileUtils::GetFileName(inputFilePath);
   const std::string baseDirectory = inputFilePath.substr(0, inputFilePath.size() - filename.size());
   const std::string outputFilePath = baseDirectory + filename + kDASArchiveFileExtension;
-  
+
   bool success =
   ANKI_VERIFY(Anki::Cozmo::ArchiveUtil::CreateArchiveFromFiles(outputFilePath, baseDirectory, {inputFilePath}),
               "csharp-binding.das_archive_function.CreateArchiveFromFiles.Fail",
@@ -160,7 +165,7 @@ static bool das_archive_function(const std::string& inputFilePath)
   {
     return false;
   }
-  
+
   Anki::Util::FileUtils::DeleteFile(inputFilePath);
   return true;
 }
@@ -169,16 +174,16 @@ static std::string das_unarchive_function(const std::string& inputFilePath)
 {
   const std::string filename = Anki::Util::FileUtils::GetFileName(inputFilePath);
   const std::string baseDirectory = inputFilePath.substr(0, inputFilePath.size() - filename.size());
-  
+
   const auto expectedIndexOfExtension = filename.size() - kDASArchiveFileExtension.size();
   const auto actualIndexOfExtension = filename.rfind(kDASArchiveFileExtension);
   ANKI_VERIFY(expectedIndexOfExtension == actualIndexOfExtension,
               "csharp-binding.das_unarchive_function.unexpectedFileExtension",
               "Filename %s missing extension %s", filename.c_str(), kDASArchiveFileExtension.c_str());
-  
+
   const std::string outputFilename = filename.substr(0, expectedIndexOfExtension);
-  
-  
+
+
   bool success =
   ANKI_VERIFY(Anki::Cozmo::ArchiveUtil::CreateFilesFromArchive(inputFilePath, baseDirectory),
               "csharp-binding.das_unarchive_function.CreateFilesFromArchive.Fail",
@@ -189,7 +194,7 @@ static std::string das_unarchive_function(const std::string& inputFilePath)
   {
     return "";
   }
-  
+
   return outputFilename;
 }
 #endif
@@ -202,7 +207,7 @@ static void cozmo_configure_das(const std::string& resourcesBasePath,
   DASSetArchiveLogConfig(std::bind(das_archive_function, std::placeholders::_1),
                          std::bind(das_unarchive_function, std::placeholders::_1),
                          kDASArchiveFileExtension);
-  
+
   if(dataCollectionEnabled)
   {
     DASEnableNetwork(DASDisableNetworkReason_UserOptOut);
@@ -211,11 +216,11 @@ static void cozmo_configure_das(const std::string& resourcesBasePath,
   {
     DASDisableNetwork(DASDisableNetworkReason_UserOptOut);
   }
-  
+
   std::string dasConfigPath = resourcesBasePath + "/DASConfig.json";
   std::string dasLogPath = platform->pathToResource(Anki::Util::Data::Scope::Cache, "DASLogs");
   std::string gameLogPath = platform->pathToResource(Anki::Util::Data::Scope::CurrentGameLog, "");
-  
+
   // Does the actual init of the system
   DASConfigure(dasConfigPath.c_str(), dasLogPath.c_str(), gameLogPath.c_str());
 #endif
@@ -248,12 +253,12 @@ void cozmo_uninstall_google_breakpad()
 int cozmo_startup(const char *configuration_data)
 {
   int result = (int)RESULT_OK;
-  
+
   if (engineAPI != nullptr) {
       PRINT_STREAM_ERROR("cozmo_startup", "Game already initialized.");
       return (int)RESULT_FAIL;
   }
-  
+
   Json::Reader reader;
   Json::Value config;
   if (!reader.parse(configuration_data, configuration_data + std::strlen(configuration_data), config)) {
@@ -269,7 +274,7 @@ int cozmo_startup(const char *configuration_data)
   std::string appRunId = config["appRunId"].asCString();
 
   dataPlatform = new Anki::Util::Data::DataPlatform(persistentPath, cachePath, resourcesPath);
-  
+
   bool dataCollectionEnabled = config["DataCollectionEnabled"].asBool();
   cozmo_configure_das(resourcesBasePath, dataPlatform, dataCollectionEnabled);
 
@@ -278,13 +283,13 @@ int cozmo_startup(const char *configuration_data)
     DevLoggingSystem::CreateInstance(dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, "devLogger"), appRunId);
     Util::IFormattedLoggerProvider* unityLoggerProvider = new CLADLoggerProvider();
   #endif
-  
+
   Anki::Util::IEventProvider* eventProvider = nullptr;
   #if USE_DAS
     Util::DasLoggerProvider* dasLoggerProvider = new Util::DasLoggerProvider();
     eventProvider = dasLoggerProvider;
   #endif
-  
+
   Anki::Util::MultiLoggerProvider*loggerProvider = new Anki::Util::MultiLoggerProvider({
 #if USE_DAS
     dasLoggerProvider,
@@ -320,7 +325,7 @@ int cozmo_startup(const char *configuration_data)
   // potentially logging events related to uploading before all initialization data has been set (which can cause
   // malformed DAS events to be created which will be thrown out by the server).
   DASPauseUploadingToServer(false);
-  
+
 #if USE_DAS && ANKI_DEV_CHEATS
   // Now that das has been initialized, update the devlog data with the deviceID
   DevLoggingSystem::GetInstance()->UpdateDeviceId(DASGetPlatform()->GetDeviceId());
@@ -330,7 +335,7 @@ int cozmo_startup(const char *configuration_data)
   MD5 playerIDHash(DASGetPlatform()->GetDeviceId());
   Anki::Util::sSetGlobal("$player_id", playerIDHash.hexdigest().c_str());
 #endif
-  
+
   #if USE_DAS
   // try to post to server just in case we have internet at app startup
   auto callback = [] (bool success, std::string response) {
@@ -345,7 +350,7 @@ int cozmo_startup(const char *configuration_data)
   {
     using namespace Anki::Util;
     ChannelFilter* consoleFilter = new ChannelFilter();
-    
+
     // load file config
     Json::Value consoleFilterConfig;
     const std::string& consoleFilterConfigPath = "config/engine/console_filter_config.json";
@@ -353,32 +358,32 @@ int cozmo_startup(const char *configuration_data)
     {
       PRINT_NAMED_ERROR("webotsCtrlGameEngine.main.loadConsoleConfig", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());
     }
-    
+
     // initialize console filter for this platform
     const std::string& platformOS = dataPlatform->GetOSPlatformString();
     const Json::Value& consoleFilterConfigOnPlatform = consoleFilterConfig[platformOS];
     consoleFilter->Initialize(consoleFilterConfigOnPlatform);
-    
+
     // set filter in the loggers
     std::shared_ptr<const IChannelFilter> filterPtr( consoleFilter );
-    
+
 #if ANKI_DEV_CHEATS
     unityLoggerProvider->SetFilter(filterPtr);
     unityLoggerProvider->ParseLogLevelSettings(consoleFilterConfigOnPlatform);
 #endif
-    
+
     #define FILTER_DAS 0 // for local testing only
     #if USE_DAS && FILTER_DAS
       dasLoggerProvider->SetFilter(filterPtr);
     #endif
-    
+
   }
-  
+
   PRINT_NAMED_INFO("cozmo_startup", "Creating engine");
   PRINT_NAMED_DEBUG("cozmo_startup", "Initialized data platform with persistentPath = %s, cachePath = %s, resourcesPath = %s", persistentPath.c_str(), cachePath.c_str(), resourcesPath.c_str());
 
   configure_engine(config);
-  
+
   // Set up the console vars to load from file, if it exists
   ANKI_CONSOLE_SYSTEM_INIT(dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "consoleVarsEngine.ini").c_str());
 
@@ -389,9 +394,9 @@ int cozmo_startup(const char *configuration_data)
     delete created_engine;
     return (int)engineResult;
   }
-  
+
   engineAPI = created_engine;
-  
+
   return result;
 }
 
@@ -409,7 +414,7 @@ int cozmo_startup(const char *configuration_data)
 int cozmo_shutdown()
 {
   int result = (int)RESULT_OK;
-    
+
 #if defined(ANKI_PLATFORM_IOS)
   result = Anki::Cozmo::iOSBinding::cozmo_shutdown();
 #elif defined(ANKI_PLATFORM_ANDROID)
@@ -417,7 +422,7 @@ int cozmo_shutdown()
 #endif
 
   cozmo_disable_das_networking();
-  
+
   Anki::Util::SafeDelete(engineAPI);
   Anki::Util::gEventProvider = nullptr;
   Anki::Util::SafeDelete(Anki::Util::gLoggerProvider);
@@ -433,11 +438,11 @@ int cozmo_shutdown()
 int cozmo_wifi_setup(const char* wifiSSID, const char* wifiPasskey)
 {
   int result = (int)RESULT_OK;
-  
+
 #if defined(ANKI_PLATFORM_IOS)
   result = Anki::Cozmo::iOSBinding::cozmo_engine_wifi_setup(wifiSSID, wifiPasskey);
 #endif
-  
+
   return result;
 }
 
@@ -488,3 +493,5 @@ uint32_t cozmo_activate_experiment(const uint8_t* requestBuffer, size_t requestS
   }
   return engineAPI->ActivateExperiment(requestBuffer, requestSize, responseBuffer, responseSize);
 }
+
+#endif

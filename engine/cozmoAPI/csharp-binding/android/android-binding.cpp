@@ -10,6 +10,11 @@
  *
  **/
 
+//
+// This file is not used on victor. Contents are preserved for reference.
+//
+#if !defined(VICOS_LA) && !defined(VICOS_LE)
+
 #include "engine/cozmoAPI/csharp-binding/android/android-binding.h"
 #include "engine/cozmoAPI/csharp-binding/csharp-binding.h"
 #include "engine/cozmoAPI/csharp-binding/breakpad/google_breakpad.h"
@@ -87,7 +92,7 @@ Java_com_anki_cozmoengine_Standalone_startCozmoEngine(JNIEnv* env,
   Anki::Util::JNIUtils::SetCurrentActivity(env, activity);
   std::string configurationString = Anki::Util::JNIUtils::getStringFromJString(env, configuration);
   (void) cozmo_startup(configurationString.c_str());
-  
+
 //  // Yes this is a hack but this is all temporary code to get a standalone version of the engine running
 //  bool isExternalSdkMode = true;
 //  uint8_t enter_sdk_mode_message[2] =
@@ -118,10 +123,12 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved)
 {
   // Use one of our java project classes to acquire the class loader that can be used on other threads
   Anki::Util::JNIUtils::SetJvm(vm, "com/anki/util/PermissionUtil");
-  
+
   return JNI_VERSION_1_6;
 }
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
