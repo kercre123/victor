@@ -12,15 +12,13 @@
 **/
 
 
-#include "coretech/vision/engine/compositeImage/compositeImage.h"
+#include "coretech/vision/shared/compositeImage/compositeImage.h"
 #include "coretech/vision/engine/image_impl.h"
 #include "util/cladHelpers/cladEnumToStringMap.h"
 #include "util/helpers/templateHelpers.h"
 
 namespace Anki {
 namespace Vision {
-
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompositeImage::CompositeImage(const Json::Value& layersSpec,
@@ -50,6 +48,55 @@ CompositeImage::CompositeImage(const LayerMap&& layers,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompositeImage::~CompositeImage()
 {
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::vector<CompositeImageChunk> CompositeImage::GetImageChunks() const
+{
+  CompositeImageChunk baseChunk;
+  // Add all of the values that are constant across all chunks
+  baseChunk.imageWidth  = _width;
+  baseChunk.imageHeight = _height;
+  baseChunk.layerMax    = _layerMap.size();
+
+  // Iterate through all layers/sprite boxes adding one chunk per sprite box to the
+  // chunks vector
+  std::vector<CompositeImageChunk> chunks;
+  int layerIdx = 0;
+  for(auto& layerPair : _layerMap){
+    // stable per layer
+    baseChunk.layerName = layerPair.first;
+    baseChunk.layerIndex = layerIdx;
+    layerIdx++;
+    baseChunk.spriteBoxMax = layerPair.second.GetLayoutMap().size();
+
+    int spriteBoxIdx = 0;
+    for(auto& spriteBoxPair : layerPair.second.GetLayoutMap()){
+      baseChunk.spriteBoxIndex = spriteBoxIdx;
+      spriteBoxIdx++;
+      baseChunk.spriteBox = spriteBoxPair.second.Serialize();
+
+      Vision::SpriteName spriteName;
+      if(layerPair.second.GetSpriteName(spriteBoxPair.first, spriteName)){
+        baseChunk.spriteName = spriteName;
+      }
+
+      chunks.push_back(baseChunk);
+    } // end for(spriteBoxPair)
+  } // end for(layerPair)
+
+  return chunks;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImage::ReplaceCompositeImage(const LayerMap&& layers,
+                                           s32 imageWidth,
+                                           s32 imageHeight)
+{
+  _width   = imageWidth;
+  _height  = imageHeight;
+  _layerMap  = std::move(layers);
 }
 
 

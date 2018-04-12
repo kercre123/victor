@@ -17,7 +17,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/compositeImageCache.h"
 #include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/components/animationComponent.h"
@@ -60,7 +59,7 @@ BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
 
   // load in the layout
   if(ANKI_VERIFY(config.isMember(kClockLayoutKey),kDebugStr.c_str(), "Missing layout key")){
-      _instanceParams.compImg = Vision::CompositeImage(config[kClockLayoutKey]);
+      _instanceParams.compImg = Vision::CompositeImage(config[kClockLayoutKey], FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
   }
 
   _instanceParams.getInAnim = AnimationTriggerFromString(JsonTools::ParseString(config, kGetInTriggerKey, kDebugStr));
@@ -254,15 +253,9 @@ void BehaviorProceduralClock::BehaviorUpdate()
       layer->SetImageMap(std::move(imageMap));
     }
   }
-  // build the full image
-  auto& imageCache = GetBEI().GetAIComponent().GetComponent<CompositeImageCache>();
-  const auto& image = imageCache.BuildImage(GetDebugLabel(), 
-                                            FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, 
-                                            _instanceParams.compImg);
   
-  auto grey = image.ToGray();
   // draw it to the face
-  GetBEI().GetAnimationComponent().DisplayFaceImage(grey, 1000.0f, true);
+  GetBEI().GetAnimationComponent().DisplayFaceImage(_instanceParams.compImg, 1000.0f, true);
 }
 
 

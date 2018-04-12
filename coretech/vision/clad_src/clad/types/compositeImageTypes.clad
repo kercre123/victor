@@ -1,6 +1,7 @@
 /** Clad types related to composite images
  */
 
+#include "clad/types/spriteNames.clad"
 
 namespace Anki {
 namespace Vision {
@@ -8,7 +9,7 @@ namespace Vision {
 // Layer names that allow composite image layers to be:
 //  1) Referenced/set in code or JSON
 //  2) Composite image layers are rendered in the order of this enum
-enum uint_8 LayerName 
+enum no_cpp_class uint_8 LayerName 
 {
   // Special layer names that lots of images can use
   StaticBackground = 0,
@@ -21,7 +22,7 @@ enum uint_8 LayerName
 }
 
 // Names for SpriteBoxes
-enum uint_8 SpriteBoxName
+enum no_cpp_class uint_8 SpriteBoxName
 {
   // SpritBoxNames for procedural clock
   TensLeftOfColon,
@@ -30,6 +31,37 @@ enum uint_8 SpriteBoxName
   TensRightOfColon,
   OnesRightOfColon
 
+}
+
+// Structures for serializing CompositeImages as clad
+structure SerializedSpriteBox
+{
+  int_16 topLeftX,
+  int_16 topLeftY,
+  int_16 width,
+  int_16 height,
+  SpriteBoxName name,
+  uint_8 padding[3],
+}
+
+// Structures for serializing CompositeImages as clad
+structure CompositeImageChunk
+{
+  uint_32 imageWidth,
+  uint_32 imageHeight,
+
+  // Information for re-building the composite images from its chunks
+  uint_8 layerIndex,
+  uint_8 layerMax,
+
+  uint_8 spriteBoxIndex,
+  uint_8 spriteBoxMax,
+
+  // Implementation details
+  SerializedSpriteBox  spriteBox,
+
+  LayerName         layerName,
+  Vision::SpriteName spriteName
 
 }
       

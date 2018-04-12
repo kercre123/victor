@@ -13,7 +13,10 @@
 #ifndef ANKI_COZMO_ANIM_DATA_LOADER_H
 #define ANKI_COZMO_ANIM_DATA_LOADER_H
 
+#include "clad/types/spriteNames.h"
 #include "util/helpers/noncopyable.h"
+#include "util/cladHelpers/cladEnumToStringMap.h"
+
 #include "assert.h"
 #include <json/json.h>
 #include <atomic>
@@ -63,9 +66,14 @@ public:
   Animation* GetCannedAnimation(const std::string& name);
   std::vector<std::string> GetAnimationNames();
 
+  // images are stored as a map of stripped file name (no file extension) to full path
+  const Util::CladEnumToStringMap<Vision::SpriteName>* GetSpritePaths()       const { assert(_spritePaths != nullptr); return _spritePaths.get(); }
+
   SpriteSequenceContainer* GetSpriteSequenceContainer() { return _spriteSequenceContainer.get();}
 
 private:
+  void LoadSpritePaths();
+
   void NotifyAnimAdded(const std::string& animName, uint32_t animLength);
   
   void SetupProceduralAnimation();
@@ -74,8 +82,10 @@ private:
   const Util::Data::DataPlatform* _platform;
 
   // animation data
-  std::unique_ptr<CannedAnimationContainer>           _cannedAnimations;
-  std::unique_ptr<SpriteSequenceContainer>            _spriteSequenceContainer;
+  std::unique_ptr<CannedAnimationContainer>              _cannedAnimations;
+  std::unique_ptr<SpriteSequenceContainer>               _spriteSequenceContainer;
+  std::unique_ptr<Util::CladEnumToStringMap<Vision::SpriteName>> _spritePaths;
+
 
   // loading properties shared with the animiation loader
   std::atomic<float>    _loadingCompleteRatio{0};

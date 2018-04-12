@@ -192,6 +192,11 @@ void Process_displayFaceImageRGBChunk(const Anki::Cozmo::RobotInterface::Display
   _animStreamer->Process_displayFaceImageChunk(msg);
 }
 
+void Process_displayCompositeImageChunk(const Anki::Cozmo::RobotInterface::DisplayCompositeImageChunk& msg)
+{
+  _animStreamer->Process_displayCompositeImageChunk(msg);
+}
+
 void Process_enableKeepFaceAlive(const Anki::Cozmo::RobotInterface::EnableKeepFaceAlive& msg)
 {
   _animStreamer->EnableKeepFaceAlive(msg.enable, msg.disableTimeout_ms);

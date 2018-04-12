@@ -11,7 +11,7 @@
 *
 **/
 
-#include "coretech/vision/engine/compositeImage/compositeImageLayer.h"
+#include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
 
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/jsonTools.h"
@@ -60,6 +60,32 @@ CompositeImageLayer::~CompositeImageLayer()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CompositeImageLayer::GetSpriteName(SpriteBoxName sbName, Vision::SpriteName& outName)  const 
+{
+  auto imageMapIter = _imageMap.find(sbName);
+  if(imageMapIter != _imageMap.end()){
+    outName = imageMapIter->second;
+    return true;
+  }
+  return false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImageLayer::AddToLayout(SpriteBoxName sbName, const SpriteBox& spriteBox)
+{
+  _layoutMap.emplace(sbName, spriteBox);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImageLayer::AddToImageMap(SpriteBoxName sbName, const Vision::SpriteName& spriteName)
+{
+  _imageMap.emplace(sbName, spriteName);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CompositeImageLayer::SetImageMap(const Json::Value& imageMapSpec)
 {
   using namespace CompositeImageConfigKeys;
@@ -101,6 +127,20 @@ bool CompositeImageLayer::IsValidImageMap(const ImageMap& imageMap, bool require
   }
 
   return true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SerializedSpriteBox CompositeImageLayer::SpriteBox::Serialize() const
+{
+  SerializedSpriteBox serialized;
+  serialized.topLeftX = topLeftCorner.x();
+  serialized.topLeftY = topLeftCorner.y();
+  serialized.width    = width;
+  serialized.height   = height;
+  serialized.name     = spriteBoxName;
+
+  return serialized;
 }
 
 

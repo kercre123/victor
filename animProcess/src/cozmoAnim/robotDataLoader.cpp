@@ -42,11 +42,17 @@
 namespace Anki {
 namespace Cozmo {
 
+namespace{
+const char* pathToExternalIndependentSprites = "assets/sprites/independentSprites/";
+const char* pathToEngineIndependentSprites = "config/devOnlySprites/independentSprites/";
+}
+
 RobotDataLoader::RobotDataLoader(const AnimContext* context)
 : _context(context)
 , _platform(_context->GetDataPlatform())
 , _cannedAnimations(nullptr)
 {
+  _spritePaths = std::make_unique<Util::CladEnumToStringMap<Vision::SpriteName>>();
 }
 
 RobotDataLoader::~RobotDataLoader()
@@ -96,7 +102,8 @@ void RobotDataLoader::LoadNonConfigData()
                                    _loadingCompleteRatio, _abortLoad);
   _cannedAnimations.reset(animLoader.LoadAnimations());
   
-  SetupProceduralAnimation();  
+  SetupProceduralAnimation();
+  LoadSpritePaths();
 }
 
 void RobotDataLoader::LoadAnimationFile(const std::string& path)
@@ -117,6 +124,41 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
   animsContainer->Clear();
   delete animsContainer;
 }
+
+void RobotDataLoader::LoadSpritePaths()
+{
+  // Creates a map of all sprite names to their file names
+  _spritePaths->Load(_platform, "assets/cladToFileMaps/spriteMap.json", "SpriteName");
+
+  // Filter out all sprite sequences
+  for(auto& key: _spritePaths->GetAllKeys()){
+    if(IsSpriteSequence(key, false)){
+      _spritePaths->Erase(key);
+    }
+  }
+
+  // Get all sprite paths
+  auto independentSpritePaths = {pathToExternalIndependentSprites, pathToEngineIndependentSprites};
+  std::map<std::string, std::string> fileNameToFullPath; 
+  const bool useFullPath = true;
+  const char* extensions = "png";
+  const bool recurse = true;
+  for(const auto& path: independentSpritePaths){
+    const std::string fullPathFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
+
+    auto fullImagePaths = Util::FileUtils::FilesInDirectory(fullPathFolder, useFullPath, extensions, recurse);
+    for(auto& fullImagePath : fullImagePaths){
+      const std::string fileName = Util::FileUtils::GetFileName(fullImagePath, true, true);
+      fileNameToFullPath.emplace(fileName, fullImagePath);
+    }
+  }
+  
+  for (auto key : _spritePaths->GetAllKeys()) {
+    auto fullPath = fileNameToFullPath[_spritePaths->GetValue(key)];
+    _spritePaths->UpdateValue(key, std::move(fullPath));
+  }
+}
+
 
 Animation* RobotDataLoader::GetCannedAnimation(const std::string& name)
 {

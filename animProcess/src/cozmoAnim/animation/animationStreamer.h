@@ -26,6 +26,10 @@
 #include <memory>
 
 namespace Anki {
+namespace Vision{
+class CompositeImageBuilder;
+}
+
 namespace Cozmo {
   
   // Forward declaration
@@ -74,6 +78,8 @@ namespace Cozmo {
     void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageBinaryChunk& msg);
     void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageGrayscaleChunk& msg);
     void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageRGBChunk& msg);
+    void Process_displayCompositeImageChunk(const RobotInterface::DisplayCompositeImageChunk& msg);
+
 
     Result SetFaceImage(const Vision::Image& img, u32 duration_ms);
     Result SetFaceImage(const Vision::ImageRGB565& img, u32 duration_ms);
@@ -273,12 +279,15 @@ namespace Cozmo {
     u32                 _faceImageRGBId                    = 0;          // Used only for tracking chunks of the same image as they are received
     u32                 _faceImageRGBChunksReceivedBitMask = 0;
     const u32           kAllFaceImageRGBChunksReceivedMask = 0x3fffffff; // 30 bits for 30 expected chunks (FACE_DISPLAY_NUM_PIXELS / 600 pixels_per_msg ~= 30)
+
+    // Composite images
+    u32 _compositeImageID = 0; 
+    std::unique_ptr<Vision::CompositeImageBuilder> _compositeImageBuilder;
         
     // Tic counter for sending animState message
     u32           _numTicsToSendAnimState            = 0;
 
     bool _redirectFaceImagesToDebugScreen = false;
-
   }; // class AnimationStreamer
   
 } // namespace Cozmo

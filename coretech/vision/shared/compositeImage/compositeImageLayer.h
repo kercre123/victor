@@ -60,6 +60,14 @@ public:
   const LayoutMap& GetLayoutMap() const { return _layoutMap;}
   const ImageMap&  GetImageMap()  const { return _imageMap;}
 
+  // Returns true if image has been set for sprite box name and outName has been set
+  bool GetSpriteName(SpriteBoxName sbName, Vision::SpriteName& outName)  const;
+
+  // Functions which add on to the current layout
+  void AddToLayout(SpriteBoxName sbName, const SpriteBox& spriteBox);
+  void AddToImageMap(SpriteBoxName sbName, const Vision::SpriteName& spriteName);
+
+  // Functions which replace existing map with a new map
   void SetImageMap(const Json::Value& imageMapSpec);
   void SetImageMap(ImageMap&& imageMap){_imageMap = imageMap;}
   // Checks image map against the Layer's layout to ensure spritebox names match up
@@ -81,6 +89,14 @@ struct CompositeImageLayer::SpriteBox{
   , topLeftCorner(topLeftCorner)
   , width(width)
   , height(height){}
+
+  SpriteBox(const SerializedSpriteBox& spriteBox)
+  : spriteBoxName(spriteBox.name)
+  , topLeftCorner(spriteBox.topLeftX, spriteBox.topLeftY)
+  , width(spriteBox.width)
+  , height(spriteBox.height){}
+
+  SerializedSpriteBox Serialize() const;
 
   SpriteBoxName spriteBoxName;
   Point2i       topLeftCorner;

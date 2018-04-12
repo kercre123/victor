@@ -16,23 +16,21 @@
 
 #include "clad/types/compositeImageTypes.h"
 #include "coretech/vision/engine/colorPixelTypes.h"
-#include "coretech/vision/engine/compositeImage/compositeImage.h"
+#include "coretech/vision/shared/compositeImage/compositeImage.h"
 #include "engine/robotDataLoader.h"
 #include "engine/aiComponent/aiComponents_fwd.h"
-#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
 namespace Anki {
 namespace Cozmo {
 
   
-class CompositeImageCache : public IDependencyManagedComponent<AIComponentID>, 
-                            private Util::noncopyable
+class CompositeImageCache : private Util::noncopyable
 {
 public:
   CompositeImageCache(const Util::CladEnumToStringMap<Vision::SpriteName>* spriteMap)
-  : IDependencyManagedComponent<AIComponentID>(this, AIComponentID::CompositeImageCache)
-  , _spriteMap(spriteMap){}
+  : _spriteMap(spriteMap){}
+
   // Pass in the template and a map of quadrant name to image name
   // If an image with the same name has been built and cached, only the quadrants
   // different from the cached image will be re-drawn 

@@ -32,9 +32,6 @@ namespace Cozmo {
 enum class AIComponentID{
   // component which manages all aspects of the AI system that relate to behaviors
   BehaviorComponent,
-  // component that caches templated images and only swaps out quadrants that have
-  // changed between requests
-  CompositeImageCache,
   // component which sits between the behavior system and action list/animation streamer
   // to ensure smooth transitions between actions
   ContinuityComponent,

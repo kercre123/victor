@@ -31,6 +31,12 @@
 #include <unordered_set>
 
 namespace Anki {
+
+// Forward declarations
+namespace Vision{
+class CompositeImage;
+}
+
 namespace Cozmo {
 
 // Forward declarations
@@ -124,6 +130,7 @@ public:
   Result DisplayFaceImage(const Vision::Image& img, u32 duration_ms, bool interruptRunning = false);
   Result DisplayFaceImage(const Vision::ImageRGB& img, u32 duration_ms, bool interruptRunning = false);
   Result DisplayFaceImage(const Vision::ImageRGB565& imgRGB565, u32 duration_ms, bool interruptRunning = false);
+  Result DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 duration_ms, bool interruptRunning = false);
 
   // Enable/Disable KeepFaceAlive
   // If enable == false, disableTimeout_ms is the duration over which the face should 
@@ -279,6 +286,8 @@ private:
 
   // Map of animation tags to info needed for handling callbacks when the animation completes
   std::unordered_map<Tag, AnimCallbackInfo> _callbackMap;
+
+  int _compositeImageID;
   
 };
 

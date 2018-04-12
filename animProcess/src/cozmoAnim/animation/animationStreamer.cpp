@@ -17,6 +17,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "cozmoAnim/animation/animationStreamer.h"
+#include "coretech/vision/shared/compositeImage/compositeImageBuilder.h"
 //#include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 
 #include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
@@ -561,6 +562,44 @@ namespace Cozmo {
       _faceImageRGBChunksReceivedBitMask = 0;
     }
   }
+
+  void AnimationStreamer::Process_displayCompositeImageChunk(const RobotInterface::DisplayCompositeImageChunk& msg)
+  {
+    // Check for image ID mismatches
+    if(_compositeImageBuilder != nullptr){
+      if(msg.compositeImageID != _compositeImageID){
+        _compositeImageBuilder.reset();
+        PRINT_NAMED_WARNING("AnimationStreamer.Process_displayCompositeImageChunk.MissingChunk",
+                            "Composite image was being built with image ID %d, but new ID %d received so wiping image",
+                            _compositeImageID, msg.compositeImageID);
+      }
+    }
+    _compositeImageID = msg.compositeImageID;
+   
+    // Add the chunk to the builder
+    if(_compositeImageBuilder == nullptr){
+      auto* builder = new Vision::CompositeImageBuilder(_context->GetDataLoader()->GetSpritePaths(),
+                                                        msg.compositeImageChunk);
+      _compositeImageBuilder.reset(builder);
+    }else{
+      _compositeImageBuilder->AddImageChunk(msg.compositeImageChunk);
+    }
+
+    // Display the image if all chunks received
+    if(_compositeImageBuilder->CanBuildImage()){
+      Vision::CompositeImage outImage;
+      const bool builtImage = _compositeImageBuilder->GetCompositeImage(outImage);
+      if(ANKI_VERIFY(builtImage, 
+                     "AnimationStreamer.Process_displayCompositeImageChunk.FailedToBuildImage",
+                     "Composite image failed to build")){
+        SetFaceImageHelper(outImage.RenderImage().ToGray(), msg.duration_ms);
+      }
+
+      _compositeImageBuilder.reset();
+    }
+    
+  }
+
 
   Result AnimationStreamer::SetFaceImage(const Vision::Image& img, u32 duration_ms)
   {

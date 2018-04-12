@@ -16,7 +16,7 @@
 #define __Vision_CompositeImage_H__
 
 
-#include "coretech/vision/engine/compositeImage/compositeImageLayer.h"
+#include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
 
 #include "clad/types/compositeImageTypes.h"
 #include "clad/types/spriteNames.h"
@@ -47,6 +47,13 @@ public:
 
   virtual ~CompositeImage();
 
+  std::vector<CompositeImageChunk> GetImageChunks() const;
+
+  // Clear out the existing image and replace it with the new layer map 
+  void ReplaceCompositeImage(const LayerMap&& layers,
+                             s32 imageWidth = 0,
+                             s32 imageHeight = 0);
+                             
   // Returns true if layer added successfully
   // Returns false if the layer name already exists
   bool AddLayer(CompositeImageLayer&& layer);

@@ -15,7 +15,7 @@
 
 #include "clad/types/compositeImageTypes.h"
 #include "clad/types/spriteNames.h"
-#include "coretech/vision/engine/compositeImage/compositeImage.h"
+#include "coretech/vision/shared/compositeImage/compositeImage.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/smartFaceId.h"
 

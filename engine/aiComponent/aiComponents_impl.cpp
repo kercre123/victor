@@ -24,7 +24,6 @@ class FreeplayDataTracker;
 class AIInformationAnalyzer;
 class ObjectInteractionInfoCache;
 class PuzzleComponent;
-class CompositeImageCache;
 class TimerUtility;
 class AIWhiteboard;
 
@@ -38,7 +37,6 @@ LINK_COMPONENT_TYPE_TO_ENUM(FreeplayDataTracker,        AIComponentID, FreeplayD
 LINK_COMPONENT_TYPE_TO_ENUM(AIInformationAnalyzer,      AIComponentID, InformationAnalyzer)
 LINK_COMPONENT_TYPE_TO_ENUM(ObjectInteractionInfoCache, AIComponentID, ObjectInteractionInfoCache)
 LINK_COMPONENT_TYPE_TO_ENUM(PuzzleComponent,            AIComponentID, Puzzle)
-LINK_COMPONENT_TYPE_TO_ENUM(CompositeImageCache,        AIComponentID, CompositeImageCache)
 LINK_COMPONENT_TYPE_TO_ENUM(TimerUtility,               AIComponentID, TimerUtility)
 LINK_COMPONENT_TYPE_TO_ENUM(AIWhiteboard,               AIComponentID, Whiteboard)
 
@@ -57,7 +55,6 @@ std::string GetComponentStringForID<Cozmo::AIComponentID>(Cozmo::AIComponentID e
     case Cozmo::AIComponentID::InformationAnalyzer:        { return "InformationAnalyzer";}
     case Cozmo::AIComponentID::ObjectInteractionInfoCache: { return "ObjectInteractionInfoCache";}
     case Cozmo::AIComponentID::Puzzle:                     { return "Puzzle";}
-    case Cozmo::AIComponentID::CompositeImageCache:        { return "CompositeImageCache";}
     case Cozmo::AIComponentID::TimerUtility:               { return "TimerUtility";}
     case Cozmo::AIComponentID::Whiteboard:                 { return "Whiteboard";}
     case Cozmo::AIComponentID::Count:                      { return "Count";}

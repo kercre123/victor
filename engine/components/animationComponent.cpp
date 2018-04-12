@@ -25,6 +25,7 @@
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/vision/shared/compositeImage/compositeImage.h"
 
 #include "json/json.h"
 
@@ -52,6 +53,7 @@ AnimationComponent::AnimationComponent()
 , _isAnimating(false)
 , _currAnimName("")
 , _currAnimTag(0)
+, _compositeImageID(0)
 {
 
 }
@@ -455,6 +457,26 @@ Result AnimationComponent::DisplayFaceImageHelper(const ImageType& img, u32 dura
   
   return RESULT_OK;
 }
+
+Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 duration_ms, bool interruptRunning)
+{
+  // TODO: Is this what interruptRunning should mean?
+  //       Or should it queue on anim process side and optionally interrupt currently executing anim?
+  if (IsPlayingAnimation() && !interruptRunning) {
+    PRINT_CH_INFO(kLogChannelName, "AnimationComponent.DisplayFaceImage.WontInterruptCurrentAnim", "");
+    return RESULT_FAIL;
+  }
+
+  // Send the image to the animation process in chunks
+  _compositeImageID++;
+  const std::vector<Vision::CompositeImageChunk> imageChunks = compositeImage.GetImageChunks();
+  for(const auto& chunk: imageChunks){
+    _robot->SendRobotMessage<RobotInterface::DisplayCompositeImageChunk>(_compositeImageID, duration_ms, chunk);
+  }
+
+  return RESULT_OK;
+}
+
 
 Result AnimationComponent::EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms) const
 {

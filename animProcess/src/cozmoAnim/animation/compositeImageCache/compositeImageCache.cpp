@@ -12,12 +12,12 @@
  **/
 
 
-#include "engine/aiComponent/compositeImageCache.h"
+#include "cozmoAnim/animation/compositeImageCache/compositeImageCache.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/math/point_impl.h"
-#include "coretech/vision/engine/compositeImage/compositeImage.h"
+#include "coretech/vision/shared/compositeImage/compositeImage.h"
 
 
 namespace Anki {
