@@ -528,14 +528,11 @@ void MicDataProcessor::ProcessTriggerLoop()
     }
 
     // Run the trigger detection, which will use the callback defined above
-    if (_vadCountdown != 0)
+    // LeeC TODO VIC-2390: For now we're testing without the VAD gate, to make sure we aren't harming trigger recognition
+    // if (_vadCountdown != 0)
     {
       ANKI_CPU_PROFILE("RecognizeTriggerWord");
-      bool streamingInProgress = _micDataSystem->HasStreamingJob();
-      if (!streamingInProgress)
-      {
-        _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
-      }
+      _recognizer->Update(processedAudio.data(), (unsigned int)processedAudio.size());
     }
 
     // Now we're done using this audio with the recognizer, so let it go
