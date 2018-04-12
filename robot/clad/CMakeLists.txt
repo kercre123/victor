@@ -218,3 +218,6 @@ target_include_directories(robot_clad_cpplite
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad>
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/robot>
 )
+
+add_dependencies(robot_clad_cpplite cti_vision_clad_cpplite)
+

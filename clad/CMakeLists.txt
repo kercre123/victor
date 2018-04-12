@@ -92,6 +92,8 @@ target_link_libraries(robot_clad
     clad
 )
 
+add_dependencies(robot_clad cti_vision_clad_cpplite)
+
 
 file(STRINGS "${ANKI_SRCLIST_DIR}/viz_clad.srcs.lst" ROBOT_SRCS)
 generate_clad_cpp(
