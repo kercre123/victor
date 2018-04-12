@@ -5,9 +5,7 @@
   "anim": "DEPRECATED_FrustratedByFailure",
   "finalEmotionEvent": "FinishedMinorFrustration",
 
-  "wantsToBeActivatedConditions": [
-    {
-      "conditionType" : "Frustration"
-    }
-  ] 
+  "wantsToBeActivatedCondition": {
+    "conditionType" : "Frustration"
+  } 
 }

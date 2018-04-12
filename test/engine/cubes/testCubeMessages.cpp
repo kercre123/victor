@@ -58,8 +58,8 @@ TEST(CubeMessages, CompareSizes)
   
     // CubeAccelData (which is TapCommand in cube firmware)
     message.Set_accelData(CubeAccelData());
-    TapCommand tapCommand;
-    EXPECT_EQ(message.Size(), sizeof(tapCommand));
+    AccelDataCommand accelData;
+    EXPECT_EQ(message.Size(), sizeof(accelData));
   }
 }
 

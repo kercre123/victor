@@ -14,6 +14,7 @@
 #define __Engine_Behaviors_BehaviorProceduralClock_H__
 
 #include "clad/types/compositeImageTypes.h"
+#include "clad/types/spriteNames.h"
 #include "coretech/vision/engine/compositeImage/compositeImage.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/smartFaceId.h"
@@ -64,10 +65,10 @@ private:
 
   struct InstanceParams{
     Vision::CompositeImage compImg;
-    std::map<Vision::SpriteBoxName, std::string> staticElements;
+    std::map<Vision::SpriteBoxName, Vision::SpriteName> staticElements;
     // TODO: transition these maps to fullyEnumeratedArrays
     std::map<Vision::SpriteBoxName, std::function<int()>> getDigitFunctions; 
-    std::map<int, std::string> intsToImages;
+    std::map<int, Vision::SpriteName> intsToImages;
     AnimationTrigger getInAnim;
     AnimationTrigger getOutAnim;
     int totalTimeDisplayClock;

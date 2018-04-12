@@ -29,16 +29,6 @@ void Touch::init(void) {
   TIM16->CR2 = 0
     ;
 
-  // Configure the pins
-  CAPO::reset();
-  CAPO::mode(MODE_OUTPUT);
-
-  CAP1I::alternate(2);
-  CAP1I::mode(MODE_ALTERNATE);
-
-  //CAP2I::alternate(2);
-  //CAP2I::mode(MODE_ALTERNATE);
-
   NVIC_EnableIRQ(TIM16_IRQn);
   NVIC_SetPriority(TIM16_IRQn, PRIORITY_TOUCH_SENSE);
 }

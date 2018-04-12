@@ -215,9 +215,12 @@ enum uint_8 BehaviorID {
   ReactToGreeting,
   ReactToObstacle,
   ReactToRobotOnBack,
+  ReactToRobotOnFace,
+  ReactToRobotOnSide,
   ReactToSoundAsleep,
   ReactToSoundAwake,
   ReactToTriggerDirectionAwake,
+  ReactToUnexpectedMovement,
 
   // victorBehaviorTree
   SingletonICantDoThat,

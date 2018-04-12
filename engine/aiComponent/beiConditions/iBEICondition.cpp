@@ -29,9 +29,10 @@ namespace Cozmo {
 
 namespace {
 using namespace ExternalInterface;
-const char* kConditionTypeKey = "conditionType";
 const char* kWebVizModuleName = "behaviorconds";
 }
+  
+const char* const IBEICondition::kConditionTypeKey = "conditionType";
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -67,8 +67,8 @@ static const char* kRequiredDriveOffChargerKey       = "requiredRecentDriveOffCh
 static const char* kRequiredParentSwitchKey          = "requiredRecentSwitchToParent_sec";
 static const char* kExecutableBehaviorTypeKey        = "executableBehaviorType";
 static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
-static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedConditions";
-static const char* kWantsToCancelSelfConfigKey       = "wantsToCancelSelfConditions";
+static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedCondition";
+static const char* kWantsToCancelSelfConfigKey       = "wantsToCancelSelfCondition";
 static const char* kRespondToUserIntentsKey          = "respondToUserIntents";
 static const char* kClaimUserIntentDataKey           = "claimUserIntentData";
 static const char* kRespondToTriggerWordKey          = "respondToTriggerWord";
@@ -248,19 +248,18 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   
   // Add WantsToBeActivated conditions
   if(config.isMember(kWantsToBeActivatedCondConfigKey)){
-    for(auto& strategy : config[kWantsToBeActivatedCondConfigKey]){
-      _wantsToBeActivatedConditions.push_back(
-        BEIConditionFactory::CreateBEICondition(strategy, GetDebugLabel() ) );
-    }
+    const auto& strategy = config[kWantsToBeActivatedCondConfigKey];
+    _wantsToBeActivatedConditions.push_back(
+      BEIConditionFactory::CreateBEICondition(strategy, GetDebugLabel() )
+    );
   }
 
   // Add WantsToCancelSelf conditions
   if(config.isMember(kWantsToCancelSelfConfigKey)){
-    for(auto& strategy : config[kWantsToCancelSelfConfigKey]){
-      _wantsToCancelSelfConditions.push_back(
-        BEIConditionFactory::CreateBEICondition( strategy, GetDebugLabel() )
-      );
-    }
+    const auto& strategy = config[kWantsToCancelSelfConfigKey];
+    _wantsToCancelSelfConditions.push_back(
+      BEIConditionFactory::CreateBEICondition( strategy, GetDebugLabel() )
+    );
   }
 
   if(config.isMember(kAnonymousBehaviorMapKey)){

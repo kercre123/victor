@@ -46,16 +46,7 @@ void CompositeImageCache::UpdateCacheEntry(CacheEntry& cacheEntry,
   // Only render the image diff
   Vision::CompositeImage imageDiff = image.GetImageDiff(cacheEntry.compositeImage);
   cacheEntry.compositeImage = image;
-  
-  // TMP hack - assume the image paths are relative for face images - iterate over image and update
-  // relative paths to full paths
-  for(auto& layerPair: imageDiff.GetLayerMap()){
-    auto intententionalCopy = layerPair.second.GetImageMap();
-    for(auto& spriteBoxPair: intententionalCopy){
-      spriteBoxPair.second = _imagePathMap.find(spriteBoxPair.second)->second;
-    }
-    layerPair.second.SetImageMap(std::move(intententionalCopy));
-  }
+  imageDiff.SetSpriteMap(_spriteMap);
   
   imageDiff.OverlayImage(cacheEntry.preAllocatedImage);
   // Save the full new image as the base of the cache

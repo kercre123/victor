@@ -47,14 +47,19 @@ double gCurrentTime = 0.0; // Fake time for update calls
 
 Anki::Util::GraphEvaluator2d kTestDefaultRepetitionPenaltyGraph({{0.0f, 0.0}, {10.0f, 1.0f}}); // no-repetition penalty
   
-Anki::Util::GraphEvaluator2d kTestDecayGraph({{0.0f, 1.0f }, {0.5f, 1.0f }, {1.0f, 0.9f }, {1.5f, 0.8f },
-                                              {2.0f, 0.5f }, {2.5f, 0.5f }, {3.0f, 0.4f }, {3.5f, 0.0f } });
+Anki::Util::GraphEvaluator2d kTestGraphTimeRatio({{0.0f, 1.0f }, {0.5f, 1.0f }, {1.0f, 0.9f }, {1.5f, 0.8f },
+                                                  {2.0f, 0.5f }, {2.5f, 0.5f }, {3.0f, 0.4f }, {3.5f, 0.0f } });
+
+Anki::Util::GraphEvaluator2d kTestGraphValueSlope({ {-1.0f, 60.0f}, {-0.8f, 6.0f}, {-0.2f, 6.0f}, {0.0f, 0.6f},
+                                                    {0.93999f, 0.6f}, {0.93999f, 0.0f} });
 
 
-const EmotionType kTestEmoType0 = EmotionType::Happy; // was happy
-const EmotionType kTestEmoType1 = EmotionType::Confident; // was calm
-const EmotionType kTestEmoType2 = EmotionType::Social; // was brave
-const EmotionType kTestEmoType3 = EmotionType::Stimulated; // was confident
+const EmotionType kTestEmoType0 = EmotionType::Happy;
+const EmotionType kTestEmoType1 = EmotionType::Confident;
+const EmotionType kTestEmoType2 = EmotionType::Social;
+const EmotionType kTestEmoType3 = EmotionType::Stimulated;
+
+using DGT = MoodDecayEvaulator::DecayGraphType;
 
 // Helper - tick mood manager for N ticks with a given timestep
 void TickMoodManager(MoodManager& moodManager, uint32_t numTicks, float tickTimeStep)
@@ -69,18 +74,27 @@ void TickMoodManager(MoodManager& moodManager, uint32_t numTicks, float tickTime
 }
 
 
-void InitStaticMoodData()
+void InitStaticMoodData(const MoodDecayEvaulator::DecayGraphType graphType)
 {
   StaticMoodData& staticMoodData = MoodManager::GetStaticMoodData();
- 
-  staticMoodData.SetDecayGraph(kTestEmoType0, kTestDecayGraph);
+
+  switch(graphType)
+  {
+    case DGT::TimeRatio:
+      staticMoodData.SetDecayEvaluator(kTestEmoType0, kTestGraphTimeRatio, DGT::TimeRatio);
+      break;
+    case DGT::ValueSlope:
+      staticMoodData.SetDecayEvaluator(kTestEmoType0, kTestGraphValueSlope, DGT::ValueSlope);
+      break;
+  }
+  
   staticMoodData.SetDefaultRepetitionPenalty(kTestDefaultRepetitionPenaltyGraph);
 }
 
 
 TEST(MoodManager, AddEmotionNoPenalty)
 {
-  InitStaticMoodData();
+  InitStaticMoodData(DGT::TimeRatio);
   
   MoodManager moodManager;
 
@@ -113,7 +127,7 @@ TEST(MoodManager, AddEmotionNoPenalty)
 
 TEST(MoodManager, AddEmotionRepeatPenalty)
 {
-  InitStaticMoodData();
+  InitStaticMoodData(DGT::TimeRatio);
   
   MoodManager moodManager;
   
@@ -148,8 +162,8 @@ TEST(MoodManager, AddEmotionRepeatPenalty)
 
 TEST(MoodManager, AddEmotionNoPenaltyEachTick)
 {
-  InitStaticMoodData();
-  
+  InitStaticMoodData(DGT::TimeRatio);
+
   MoodManager moodManager;
   
   TickMoodManager(moodManager, 1, kTickTimestep);
@@ -239,10 +253,9 @@ TEST(MoodManager, AddEmotionNoPenaltyEachTick)
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  99), -1.0f, 0.0f);
 }
 
-
 TEST(MoodManager, DecayFromPositive)
 {
-  InitStaticMoodData();
+  InitStaticMoodData(DGT::TimeRatio);
   
   MoodManager moodManager;
   TickMoodManager(moodManager, 1, kTickTimestep);
@@ -321,10 +334,9 @@ TEST(MoodManager, DecayFromPositive)
   EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 0.0f);
 }
 
-
 TEST(MoodManager, DecayFromNegative)
 {
-  InitStaticMoodData();
+  InitStaticMoodData(DGT::TimeRatio);
   
   MoodManager moodManager;
   TickMoodManager(moodManager, 1, kTickTimestep);
@@ -371,7 +383,7 @@ TEST(MoodManager, DecayFromNegative)
 
 TEST(MoodManager, DecayResetFromAwards)
 {
-  InitStaticMoodData();
+  InitStaticMoodData(DGT::TimeRatio);
   
   MoodManager moodManager;
   TickMoodManager(moodManager, 1, kTickTimestep);
@@ -882,12 +894,15 @@ TEST(MoodManager, EmotionEventMapperReadJson)
 TEST(MoodManager, StaticMoodDataRoundTripJson)
 {
   StaticMoodData testStaticData;
-  
+
   Anki::Util::GraphEvaluator2d kTestNoDecayGraph({{0.0f, 1.0f}, {1.0f, 1.0f}});
-  
-  testStaticData.InitDecayGraphs();
-  testStaticData.SetDecayGraph(kTestEmoType0, kTestDecayGraph);
-  testStaticData.SetDecayGraph(kTestEmoType1,  kTestNoDecayGraph);
+  Anki::Util::GraphEvaluator2d kTestLinearGraph({{-1.0f, 1.0f}, {1.0f, 1.0f}});
+
+  testStaticData.InitDecayEvaluators();
+  testStaticData.SetDecayEvaluator(kTestEmoType0, kTestGraphTimeRatio, DGT::TimeRatio);
+  testStaticData.SetDecayEvaluator(kTestEmoType1, kTestNoDecayGraph, DGT::TimeRatio);
+  // leave 2 at default
+  testStaticData.SetDecayEvaluator(kTestEmoType3, kTestLinearGraph, DGT::ValueSlope);
   testStaticData.SetDefaultRepetitionPenalty(kTestDefaultRepetitionPenaltyGraph);
   
   {
@@ -909,6 +924,43 @@ TEST(MoodManager, StaticMoodDataRoundTripJson)
     testStaticData.GetEmotionEventMapper().AddEvent(newEvent);
   }
 
+  auto moodTestHelper = [](const StaticMoodData& smd) {
+    {
+      const auto& eval = smd.GetDecayEvaluator(kTestEmoType0);
+      ASSERT_FALSE(eval.Empty());
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 0.1f), 1.0f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.4f, 0.1f), 1.0f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(0.9f, 1.0f, 0.5f), 0.8f);
+    }
+
+    {
+      const auto& eval = smd.GetDecayEvaluator(kTestEmoType1);
+      ASSERT_FALSE(eval.Empty());
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 0.1f), 1.0f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.4f, 0.1f), 1.0f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 100.0f, 0.5f), 1.0f);
+    }
+
+    {
+      const auto& eval = smd.GetDecayEvaluator(kTestEmoType2);
+      ASSERT_FALSE(eval.Empty());
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 0.1f), 1.0f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 10.0f, 0.1f), 1.0f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 15.0f, 45.0f), 0.9f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(0.9f, 60.0f, 90.0f), 0.6f);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(0.6f, 150.0f, 150.0f), 0.0f);
+    }
+
+    {
+      const auto& eval = smd.GetDecayEvaluator(kTestEmoType3);
+      ASSERT_FALSE(eval.Empty());
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 15.0f), 0.75);
+      EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 1000.0f, 15.0f), 0.75);
+    }
+  };
+
+  moodTestHelper(testStaticData);
+  
   Json::Value testJson;
   const bool writeRes = testStaticData.WriteToJson(testJson);
   
@@ -918,26 +970,8 @@ TEST(MoodManager, StaticMoodDataRoundTripJson)
   const bool readRes = testStaticData2.ReadFromJson(testJson);
   
   EXPECT_TRUE(readRes);
-  
-  {
-    const Anki::Util::GraphEvaluator2d& happyGraph = testStaticData2.GetDecayGraph(kTestEmoType0);
-    ASSERT_EQ(happyGraph.GetNumNodes(), kTestDecayGraph.GetNumNodes());
-    for (int i=0; i < kTestDecayGraph.GetNumNodes(); ++i)
-    {
-      EXPECT_EQ(happyGraph.GetNode(i)._x, kTestDecayGraph.GetNode(i)._x);
-      EXPECT_EQ(happyGraph.GetNode(i)._y, kTestDecayGraph.GetNode(i)._y);
-    }
-  }
-  
-  {
-    const Anki::Util::GraphEvaluator2d& calmGraph = testStaticData2.GetDecayGraph(kTestEmoType1);
-    ASSERT_EQ(calmGraph.GetNumNodes(), kTestNoDecayGraph.GetNumNodes());
-    for (int i=0; i < kTestNoDecayGraph.GetNumNodes(); ++i)
-    {
-      EXPECT_EQ(calmGraph.GetNode(i)._x, kTestNoDecayGraph.GetNode(i)._x);
-      EXPECT_EQ(calmGraph.GetNode(i)._y, kTestNoDecayGraph.GetNode(i)._y);
-    }
-  }
+
+  moodTestHelper(testStaticData2);
   
   {
     const EmotionEvent* foundEvent1 = testStaticData2.GetEmotionEventMapper().FindEvent("TestEvent1");
@@ -964,88 +998,161 @@ TEST(MoodManager, StaticMoodDataRoundTripJson)
 
 
 // Valid Json
-static const char* kTestStaticMoodDataJson =
-"{"
-"   \"decayGraphs\" : ["
-"      {"
-"         \"emotionType\" : \"Happy\","
-"         \"nodes\" : ["
-"            {"
-"               \"x\" : 0,"
-"               \"y\" : 1"
-"            },"
-"            {"
-"               \"x\" : 1.0,"
-"               \"y\" : 0.95"
-"            },"
-"            {"
-"               \"x\" : 2.0,"
-"               \"y\" : 0.5"
-"            }"
-"         ]"
-"      },"
-"      {"
-"         \"emotionType\" : \"Confident\","
-"         \"nodes\" : ["
-"            {"
-"               \"x\" : 0,"
-"               \"y\" : 1"
-"            },"
-"            {"
-"               \"x\" : 1.5,"
-"               \"y\" : 0.8"
-"            }"
-"         ]"
-"      }"
-"   ],"
-"   \"eventMapper\" : {"
-"      \"emotionEvents\" : ["
-"          {"
-"             \"emotionAffectors\" : ["
-"                {"
-"                   \"emotionType\" : \"Social\","
-"                   \"value\" : 0.11"
-"                },"
-"                {"
-"                   \"emotionType\" : \"Happy\","
-"                   \"value\" : -0.22"
-"                },"
-"                {"
-"                   \"emotionType\" : \"Confident\","
-"                   \"value\" : 0.33"
-"                }"
-"             ],"
-"             \"name\" : \"TestEvent1\""
-"          },"
-"          {"
-"             \"emotionAffectors\" : ["
-"                {"
-"                   \"emotionType\" : \"Confident\","
-"                   \"value\" : -0.44"
-"                },"
-"                {"
-"                   \"emotionType\" : \"Happy\","
-"                   \"value\" : 0.55"
-"                }"
-"             ],"
-"             \"name\" : \"TestEvent2\""
-"          }"
-"       ]"
-"    },"
-"   \"defaultRepetitionPenalty\" : {"
-"      \"nodes\" : ["
-"            {"
-"               \"x\" : 0.0,"
-"               \"y\" : 0.0"
-"            },"
-"            {"
-"               \"x\" : 30.0,"
-"               \"y\" : 1.0"
-"            }"
-"       ]"
-"    }"
-"}";
+static const char* kTestStaticMoodDataJson = R"json(
+{
+  "decayGraphs" : [
+    {
+      "emotionType" : "default",
+      "graphType": "TimeRatio",
+      "nodes" : [
+        {
+          "x" : 0,
+          "y" : 1
+        },
+        {
+          "x" : 10,
+          "y" : 1
+        },
+        {
+          "x" : 30,
+          "y" : 0.9
+        },
+        {
+          "x" : 120,
+          "y" : 0
+        }
+      ]
+    },
+    {
+      "emotionType": "Social",
+      "graphType": "TimeRatio",
+      "nodes": [
+        {
+          "x": 0,
+          "y": 1
+        },
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 12,
+          "y": 0.5
+        },
+        {
+          "x": 30,
+          "y": 0
+        }
+      ]
+    },
+    {
+      "emotionType": "Stimulated",
+      "graphType": "ValueSlope",
+      "nodes": [
+        {
+          "x": 0,
+          "y": 0.6
+        },
+        {
+          "x": 0.2,
+          "y": 0.06
+        },
+        {
+          "x": 0.8,
+          "y": 0.06
+        },
+        {
+          "x": 0.8,
+          "y": 1.2
+        },
+        {
+          "x": 0.99,
+          "y": 1.2
+        },
+        {
+          "x": 0.99,
+          "y": 0.0
+        }
+      ]
+    }
+  ],
 
+  "valueRanges": [
+    {
+      "emotionType": "Stimulated",
+      "min": 0.0,
+      "max": 1.0
+    }
+  ],
+  "eventMapper" : {
+    "emotionEvents" : [
+      {
+        "emotionAffectors" : [
+          {
+            "emotionType" : "Social",
+            "value" : 0.11
+          },
+          {
+            "emotionType" : "Happy",
+            "value" : -0.22
+          },
+          {
+            "emotionType" : "Confident",
+            "value" : 0.33
+          }
+        ],
+        "name" : "TestEvent1"
+      },
+      {
+        "emotionAffectors" : [
+          {
+            "emotionType" : "Confident",
+            "value" : -0.44
+          },
+          {
+            "emotionType" : "Happy",
+            "value" : 0.55
+          }
+        ],
+        "name" : "TestEvent2"
+      }
+    ]
+  },
+  "audioParameterMap": {
+    "Happy": "Robot_Vic_Happy",
+    "Confident": "Robot_Vic_Confident",
+    "Social": "Robot_Vic_Social",
+    "Stimulated": "Robot_Vic_Stimulation"
+  },
+  "defaultRepetitionPenalty" : {
+    "nodes" : [
+      {
+        "x" : 0.0,
+        "y" : 0.0
+      },
+      {
+        "x" : 0.5,
+        "y" : 0.0
+      },
+      {
+        "x" : 10.0,
+        "y" : 1.0
+      }
+    ]
+  },
+  "actionResultEmotionEvents": {
+    "DRIVE_TO_POSE": {
+      "RETRY": "DrivingActionFailedWithRetry",
+      "ABORT": "DrivingActionFailedWithAbort"
+    },
+    "PICKUP_OBJECT_LOW": {
+      "SUCCESS": "PickupSucceeded",
+      "RETRY": "PickingOrPlacingActionFailedWithRetry",
+      "ABORT": "PickingOrPlacingActionFailedWithAbort"
+    }
+  }
+}
+)json";
 
 TEST(MoodManager, StaticMoodDataReadJson)
 {
@@ -1058,22 +1165,41 @@ TEST(MoodManager, StaticMoodDataReadJson)
   const bool readRes = testStaticMoodData.ReadFromJson(staticMoodDataJson);
   
   EXPECT_TRUE(readRes);
-  
-  {
-    const Anki::Util::GraphEvaluator2d& happyGraph = testStaticMoodData.GetDecayGraph(kTestEmoType0);
-    ASSERT_EQ(happyGraph.GetNumNodes(), 3);
 
-    EXPECT_FLOAT_EQ(happyGraph.GetNode(2)._x, 2.0f);
-    EXPECT_FLOAT_EQ(happyGraph.GetNode(2)._y, 0.5f);
-  }
-  
-  {
-    const Anki::Util::GraphEvaluator2d& calmGraph = testStaticMoodData.GetDecayGraph(kTestEmoType1);
-    ASSERT_EQ(calmGraph.GetNumNodes(), 2);
+  static const float kNearTolerance = 0.001f;
 
-    EXPECT_FLOAT_EQ(calmGraph.GetNode(1)._x, 1.5f);
-    EXPECT_FLOAT_EQ(calmGraph.GetNode(1)._y, 0.8f);
+  {
+    const auto& eval = testStaticMoodData.GetDecayEvaluator(EmotionType::Social);
+    ASSERT_FALSE(eval.Empty());
+    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 0.1f), 1.0f);
+    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 1.9f, 0.1f), 1.0f);
+    EXPECT_NEAR(eval.EvaluateDecay(0.9f, 4.0f, 1.0f), 0.85f, kNearTolerance);
+    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 30.0f, 0.1f), 0.0f);
+    EXPECT_FLOAT_EQ(eval.EvaluateDecay(0.0f, 30.0f, 0.1f), 0.0f);
   }
+
+  {
+    const auto& eval = testStaticMoodData.GetDecayEvaluator(EmotionType::Happy);
+    ASSERT_FALSE(eval.Empty());
+    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 0.1f), 1.0f);
+    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 9.0f, 0.1f), 1.0f);
+    EXPECT_NEAR(eval.EvaluateDecay(0.9f, 30.0f, 10.0f), 0.8f, kNearTolerance);
+    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 140.0f, 0.1f), 0.0f);
+    EXPECT_FLOAT_EQ(eval.EvaluateDecay(0.0f, 30.0f, 0.1f), 0.0f);
+  }
+
+  {
+    const auto& eval = testStaticMoodData.GetDecayEvaluator(EmotionType::Stimulated);
+    ASSERT_FALSE(eval.Empty());
+    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 0.0f, 60.0f), 1.0f);
+    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 9.0f, 60.0f), 1.0f);
+    EXPECT_FLOAT_EQ(eval.EvaluateDecay(1.0f, 30.0f, 60.0f), 1.0f);
+
+    EXPECT_NEAR(eval.EvaluateDecay(0.9f, 0.0f, 1.0f), 0.88f, kNearTolerance);
+    EXPECT_NEAR(eval.EvaluateDecay(0.5f, 0.0f, 60.0f), 0.44f, kNearTolerance);
+    EXPECT_FLOAT_EQ(eval.EvaluateDecay(0.0f, 0.0f, 60.0f), 0.0);
+  }
+
 
   MoodManager moodManager;
   EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType2), 0.0f);
@@ -1088,5 +1214,3 @@ TEST(MoodManager, StaticMoodDataReadJson)
   EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(kTestEmoType0),  0.33f);
   EXPECT_FLOAT_EQ(moodManager.GetEmotionValue(kTestEmoType1),  -0.11f);
 }
-
-

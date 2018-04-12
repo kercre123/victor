@@ -13,7 +13,45 @@ namespace Victor {
 
 namespace ExternalComms {
 
+enum class RtsConnection_2Tag : uint8_t {
+  Error                      = 0x0,  // 0
+  RtsConnRequest             = 0x1,  // 1
+  RtsConnResponse            = 0x2,  // 2
+  RtsNonceMessage            = 0x3,  // 3
+  RtsChallengeMessage        = 0x4,  // 4
+  RtsChallengeSuccessMessage = 0x5,  // 5
+  RtsWifiConnectRequest      = 0x6,  // 6
+  RtsWifiConnectResponse     = 0x7,  // 7
+  RtsWifiIpRequest           = 0x8,  // 8
+  RtsWifiIpResponse          = 0x9,  // 9
+  RtsStatusRequest           = 0xa,  // 10
+  RtsStatusResponse_2        = 0xb,  // 11
+  RtsWifiScanRequest         = 0xc,  // 12
+  RtsWifiScanResponse        = 0xd,  // 13
+  RtsOtaUpdateRequest        = 0xe,  // 14
+  RtsOtaUpdateResponse       = 0xf,  // 15
+  RtsCancelPairing           = 0x10, // 16
+  RtsForceDisconnect         = 0x11, // 17
+  RtsAck                     = 0x12, // 18
+  RtsWifiAccessPointRequest  = 0x13, // 19
+  RtsWifiAccessPointResponse = 0x14, // 20
+  RtsSshRequest              = 0x15, // 21
+  RtsSshResponse             = 0x16, // 22
+  RtsOtaCancelRequest        = 0x17, // 23
+  INVALID                    = 255
+};
+
+const char* RtsConnection_2TagToString(const RtsConnection_2Tag tag);
+
 enum class RtsConnectionTag : uint8_t {
+  Error           = 0x0, // 0
+  RtsConnection_2 = 0x2, // 2
+  INVALID         = 255
+};
+
+const char* RtsConnectionTagToString(const RtsConnectionTag tag);
+
+enum class RtsConnection_1Tag : uint8_t {
   Error                      = 0x0,  // 0
   RtsConnRequest             = 0x1,  // 1
   RtsConnResponse            = 0x2,  // 2
@@ -40,7 +78,7 @@ enum class RtsConnectionTag : uint8_t {
   INVALID                    = 255
 };
 
-const char* RtsConnectionTagToString(const RtsConnectionTag tag);
+const char* RtsConnection_1TagToString(const RtsConnection_1Tag tag);
 
 enum class AppGeneralTag : uint8_t {
   Error               = 0x0, // 0
@@ -66,11 +104,12 @@ enum class MeetVictorTag : uint8_t {
 const char* MeetVictorTagToString(const MeetVictorTag tag);
 
 enum class ExternalCommsTag : uint8_t {
-  Error         = 0x0, // 0
-  RtsConnection = 0x1, // 1
-  AppGeneral    = 0x2, // 2
-  MeetVictor    = 0x3, // 3
-  INVALID       = 255
+  Error           = 0x0, // 0
+  RtsConnection_1 = 0x1, // 1
+  RtsConnection   = 0x4, // 4
+  AppGeneral      = 0x2, // 2
+  MeetVictor      = 0x3, // 3
+  INVALID         = 255
 };
 
 const char* ExternalCommsTagToString(const ExternalCommsTag tag);
@@ -82,11 +121,29 @@ const char* ExternalCommsTagToString(const ExternalCommsTag tag);
 } // namespace Anki
 
 template<>
+struct std::hash<Anki::Victor::ExternalComms::RtsConnection_2Tag>
+{
+  size_t operator()(Anki::Victor::ExternalComms::RtsConnection_2Tag t) const
+  {
+    return static_cast<std::underlying_type<Anki::Victor::ExternalComms::RtsConnection_2Tag>::type>(t);
+  }
+};
+
+template<>
 struct std::hash<Anki::Victor::ExternalComms::RtsConnectionTag>
 {
   size_t operator()(Anki::Victor::ExternalComms::RtsConnectionTag t) const
   {
     return static_cast<std::underlying_type<Anki::Victor::ExternalComms::RtsConnectionTag>::type>(t);
+  }
+};
+
+template<>
+struct std::hash<Anki::Victor::ExternalComms::RtsConnection_1Tag>
+{
+  size_t operator()(Anki::Victor::ExternalComms::RtsConnection_1Tag t) const
+  {
+    return static_cast<std::underlying_type<Anki::Victor::ExternalComms::RtsConnection_1Tag>::type>(t);
   }
 };
 

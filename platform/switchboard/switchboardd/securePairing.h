@@ -131,7 +131,7 @@ namespace Switchboard {
     void SendCancelPairing();
     void SendChallengeSuccess();
     void SendWifiScanResult();
-    void SendWifiConnectResult(bool connect);
+    void SendWifiConnectResult();
     void SendWifiAccessPointResponse(bool success, std::string ssid, std::string pw);
     void SendStatusResponse();
     
@@ -139,37 +139,40 @@ namespace Switchboard {
     void IncrementChallengeCount();
 
     Signal::SmartHandle _rtsConnResponseHandle;
-    void HandleRtsConnResponse(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsConnResponse(const Victor::ExternalComms::RtsConnection_2& msg);
 
     Signal::SmartHandle _rtsChallengeMessageHandle;
-    void HandleRtsChallengeMessage(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsChallengeMessage(const Victor::ExternalComms::RtsConnection_2& msg);
 
     Signal::SmartHandle _rtsWifiConnectRequestHandle;
-    void HandleRtsWifiConnectRequest(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsWifiConnectRequest(const Victor::ExternalComms::RtsConnection_2& msg);
 
     Signal::SmartHandle _rtsWifiIpRequestHandle;
-    void HandleRtsWifiIpRequest(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsWifiIpRequest(const Victor::ExternalComms::RtsConnection_2& msg);
 
     Signal::SmartHandle _rtsRtsStatusRequestHandle;
-    void HandleRtsStatusRequest(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsStatusRequest(const Victor::ExternalComms::RtsConnection_2& msg);
 
     Signal::SmartHandle _rtsWifiScanRequestHandle;
-    void HandleRtsWifiScanRequest(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsWifiScanRequest(const Victor::ExternalComms::RtsConnection_2& msg);
 
     Signal::SmartHandle _rtsOtaUpdateRequestHandle;
-    void HandleRtsOtaUpdateRequest(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsOtaUpdateRequest(const Victor::ExternalComms::RtsConnection_2& msg);
+
+    Signal::SmartHandle _rtsOtaCancelRequestHandle;
+    void HandleRtsOtaCancelRequest(const Victor::ExternalComms::RtsConnection_2& msg);
 
     Signal::SmartHandle _rtsWifiAccessPointRequestHandle;
-    void HandleRtsWifiAccessPointRequest(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsWifiAccessPointRequest(const Victor::ExternalComms::RtsConnection_2& msg);
 
     Signal::SmartHandle _rtsCancelPairingHandle;
-    void HandleRtsCancelPairing(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsCancelPairing(const Victor::ExternalComms::RtsConnection_2& msg);
 
     Signal::SmartHandle _rtsAckHandle;
-    void HandleRtsAck(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsAck(const Victor::ExternalComms::RtsConnection_2& msg);
 
     Signal::SmartHandle _rtsSshHandle;
-    void HandleRtsSsh(const Victor::ExternalComms::RtsConnection& msg);
+    void HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& msg);
     
     // Variables
     const uint8_t kMaxMatchAttempts = 5;

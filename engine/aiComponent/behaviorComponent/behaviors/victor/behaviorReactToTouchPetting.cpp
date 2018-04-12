@@ -172,6 +172,9 @@ void BehaviorReactToTouchPetting::OnBehaviorActivated()
 {
   CancelAndPlayAnimation(_animPettingGetin);
 
+  // set internal state to speed up entry into Level1 animations
+  _numPressesAtCurrentBlissLevel = 1;
+
   GetBEI().GetMoodManager().TriggerEmotionEvent("PettingStarted");
   
   // starts the state machine to check for updates

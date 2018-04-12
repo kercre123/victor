@@ -47,6 +47,8 @@ namespace{
 // need it to be different per robot / moodManager
 static StaticMoodData sStaticMoodData;
 
+CONSOLE_VAR_EXTERN(float, kTimeMultiplier);
+
 namespace {
 static const char* kActionResultEmotionEventKey = "actionResultEmotionEvents";
 static const char* kAudioParametersMapKey = "audioParameterMap";
@@ -55,7 +57,6 @@ CONSOLE_VAR(bool, kSendMoodToViz, "VizDebug", true);
 
 CONSOLE_VAR(float, kAudioSendPeriod_s, "MoodManager", 0.5f);
 CONSOLE_VAR(float, kWebVizPeriod_s, "MoodManager", 1.0f);
-
 }
 
 
@@ -235,6 +236,8 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
     PRINT_NAMED_WARNING("MoodManager.BadTimeStep", "TimeStep %f (%f-%f) is < %f - clamping!", timeDelta, currentTime, _lastUpdateTime, kMinTimeStep);
     timeDelta = kMinTimeStep;
   }
+
+  timeDelta *= kTimeMultiplier;
   
   _lastUpdateTime = currentTime;
 
@@ -246,7 +249,7 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
     const EmotionType emotionType = (EmotionType)i;
     Emotion& emotion = GetEmotionByIndex(i);
     
-    emotion.Update(GetStaticMoodData().GetDecayGraph(emotionType), currentTime, timeDelta);
+    emotion.Update(GetStaticMoodData().GetDecayEvaluator(emotionType), timeDelta);
 
     SEND_MOOD_TO_VIZ_DEBUG_ONLY( robotMood.emotion.push_back(emotion.GetValue()) );
   }

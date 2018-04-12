@@ -9,7 +9,7 @@
 #include "power.h"
 #include "vectors.h"
 #include "flash.h"
-#include "lights.h"
+
 
 static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL2
@@ -20,27 +20,34 @@ static const int SELECTED_CHANNELS = 0
   ;
 
 static const uint16_t POWER_DOWN_POINT = ADC_VOLTS(3.4);
-static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.5);
-static const uint32_t FALLING_EDGE = ADC_WINDOW(TRANSITION_POINT, ~0);
+static const uint16_t TRANSITION_POINT = ADC_VOLTS(3.6);
+static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(4.0), ~0);
 
 static const int POWER_DOWN_TIME = 200 * 2;   // Shutdown
 static const int POWER_WIPE_TIME = 200 * 10;  // Enter recovery mode
 static const int MINIMUM_VEXT_TIME = 20; // 0.1s
+static const int CHARGE_ENABLE_DELAY = 50; // 0.25s
+static const int MAX_CHARGE_TIME = 200 * 60 * 30; // 30 minutes
+static const int MAX_CHARGE_TIME_WD = MAX_CHARGE_TIME + 20; // 100ms past MAX_CHARGE_TIME
 
-static const int BUTTON_THRESHOLD = ADC_VOLTS(5.45); // Must be halved from actual
 static const int BOUNCE_LENGTH = 3;
 static const int MINIMUM_RELEASE_UNSTUCK = 20;
+static const int BUTTON_THRESHOLD = ADC_VOLTS(2.0) * 2;
 
-static volatile bool onBatPower;
-static bool chargeAllowed;
 static bool is_charging;
-static int vext_debounce;
-static bool last_vext = false;
+static bool allow_power;
+static bool on_charger = false;
+
+// Assume we started on the charger
+static int vext_debounce = MINIMUM_VEXT_TIME;
+static int charge_delay = CHARGE_ENABLE_DELAY;
+static bool last_vext = true;
+static bool charger_shorted = false;
+
 static bool bouncy_button = false;
 static int bouncy_count = 0;
 static int hold_count = 0;
 static int total_release = 0;
-static bool on_charger = false;
 
 uint16_t volatile Analog::values[ADC_CHANNELS];
 bool Analog::button_pressed = false;
@@ -62,6 +69,9 @@ void Analog::init(void) {
               | ADC_CFGR1_CONT
               | ADC_CFGR1_DMAEN
               | ADC_CFGR1_DMACFG
+              | ADC_CFGR1_AWDEN
+              | ADC_CFGR1_AWDSGL
+              | (ADC_CFGR1_AWDCH_0 * 2) // ADC Channel 2 (VEXT)
               ;
   ADC1->CFGR2 = 0
               | ADC_CFGR2_CKMODE_1
@@ -95,19 +105,90 @@ void Analog::init(void) {
   DMA1_Channel1->CCR |= DMA_CCR_EN;
 
   #ifdef BOOTLOADER
+  allow_power = false;
+  #else
+  allow_power = true;
+  Power::enableHead();
+  #endif
+
+  NVIC_DisableIRQ(ADC1_IRQn);
+  NVIC_SetPriority(ADC1_IRQn, PRIORITY_ADC);
+
+  // Configure all our GPIO to what it needs to be
+  #ifdef BOOTLOADER
+  nCHG_PWR::type(TYPE_PUSHPULL);
+  nCHG_PWR::mode(MODE_OUTPUT);
+  nCHG_PWR::reset();
+
+  BODY_TX::alternate(0);  // USART1_TX
+  BODY_TX::speed(SPEED_HIGH);
+  BODY_TX::set();
+  BODY_TX::mode(MODE_OUTPUT);
+
+  BODY_RX::alternate(0);  // USART1_RX
+  BODY_RX::speed(SPEED_HIGH);
+  BODY_RX::mode(MODE_ALTERNATE);
+
+  VEXT_TX::alternate(1);  // USART2_TX
+  VEXT_TX::speed(SPEED_HIGH);
+  VEXT_TX::pull(PULL_NONE);
+  VEXT_TX::mode(MODE_ALTERNATE);
+
+  // Motor should be primed for reset
+  LN1::reset(); LN1::mode(MODE_OUTPUT);
+  LN2::reset(); LN2::mode(MODE_OUTPUT);
+  HN1::reset(); HN1::mode(MODE_OUTPUT);
+  HN2::reset(); HN2::mode(MODE_OUTPUT);
+  RTN1::reset(); RTN1::mode(MODE_OUTPUT);
+  RTN2::reset(); RTN2::mode(MODE_OUTPUT);
+  LTN1::reset(); LTN1::mode(MODE_OUTPUT);
+  LTN2::reset(); LTN2::mode(MODE_OUTPUT);
+  
+  // Configure P pins 
+  LP1::type(TYPE_OPENDRAIN); 
+  LP1::reset();   
+  LP1::mode(MODE_OUTPUT);
+  HP1::type(TYPE_OPENDRAIN); 
+  HP1::reset();   
+  HP1::mode(MODE_OUTPUT);
+  RTP1::type(TYPE_OPENDRAIN); 
+  RTP1::reset();  
+  RTP1::mode(MODE_OUTPUT);
+  LTP1::type(TYPE_OPENDRAIN); 
+  LTP1::reset();  
+  LTP1::mode(MODE_OUTPUT);
+
+  // Encoders
+  LENCA::mode(MODE_INPUT);
+  LENCB::mode(MODE_INPUT);
+  HENCA::mode(MODE_INPUT);
+  HENCB::mode(MODE_INPUT);
+  RTENC::mode(MODE_INPUT);
+  LTENC::mode(MODE_INPUT);
+
+  nVENC_EN::set();
+  nVENC_EN::mode(MODE_OUTPUT);
+
+  #ifndef DEBUG
+  // Cap-sense
+  CAPO::reset();
+  CAPO::mode(MODE_OUTPUT);
+  CAPI::alternate(2);
+  CAPI::mode(MODE_ALTERNATE);
+  
+  // LEDs
+  LED_CLK::type(TYPE_OPENDRAIN);
+  LED_DAT::reset();
+  LED_CLK::reset();
+  LED_DAT::mode(MODE_OUTPUT);
+  LED_CLK::mode(MODE_OUTPUT);
+
+  leds_off();
+  #endif
+  #endif
+
   POWER_EN::mode(MODE_INPUT);
   POWER_EN::pull(PULL_UP);
-
-  Power::enableHead();
-
-  CHG_EN::type(TYPE_OPENDRAIN);
-  CHG_PWR::type(TYPE_OPENDRAIN);
-
-  CHG_EN::mode(MODE_OUTPUT);
-  CHG_PWR::mode(MODE_OUTPUT);
-
-  Analog::allowCharge(true);
-  #endif
 }
 
 void Analog::stop(void) {
@@ -126,67 +207,139 @@ void Analog::transmit(BodyToHead* data) {
   data->battery.battery = values[ADC_VMAIN];
   data->battery.charger = values[ADC_VEXT];
   data->battery.temperature = values[ADC_TEMP];
+  data->battery.ref_voltage = values[ADC_VREF];
   data->battery.flags = 0
                       | (is_charging ? POWER_IS_CHARGING : 0)
                       | (on_charger ? POWER_ON_CHARGER : 0)
+                      | (charger_shorted ? POWER_CHARGER_SHORTED : 0 )
                       ;
 
   data->touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
 }
 
-void Analog::allowCharge(bool enable) {
-  chargeAllowed = enable;
-
-  if (enable) {
-    CHG_EN::set();
-  } else {
-    CHG_EN::reset();
-  }
-
-  vext_debounce = 0;
+void Analog::delayCharge() {
+  charge_delay = 0;
 }
 
-bool Analog::delayCharge() {
-  vext_debounce = 0;
-  return is_charging;
+void Analog::setPower(bool powered) {
+  allow_power = powered;
 }
 
 void Analog::tick(void) {
   // On-charger delay
   bool vext_now = Analog::values[ADC_VEXT] >= TRANSITION_POINT;
-
-  // Emergency trap (V3.3)
-  if (!is_charging) {
-    battery_voltage = Analog::values[ADC_VMAIN];
-    if (Analog::values[ADC_VMAIN] < POWER_DOWN_POINT) {
-      Power::setMode(POWER_STOP);
-    }
-  }
-
-  // Debounced VEXT line
+  bool charge_cutoff = vext_debounce >= MAX_CHARGE_TIME;
+  bool enable_watchdog = vext_debounce >= MAX_CHARGE_TIME_WD;
+  bool button_now = (values[ADC_BUTTON] >= BUTTON_THRESHOLD);
+  
   if (vext_now && last_vext) {
-    vext_debounce++;
+    if (!enable_watchdog) vext_debounce++;
   } else {
     vext_debounce = 0;
   }
 
   last_vext = vext_now;
-
-  // Charge logic
   on_charger = vext_debounce >= MINIMUM_VEXT_TIME;
-  is_charging = chargeAllowed && on_charger;
-  if (is_charging) {
-    CHG_PWR::set();
-  } else {
-    CHG_PWR::reset();
-  }
 
-  // Button logic
-  bool new_button = (values[ADC_BUTTON] >= BUTTON_THRESHOLD);
+  
+  #ifdef BOOTLOADER
+  static bool has_booted = false;
+  
+  if (!has_booted && (button_now || on_charger)) {
+    Power::enableHead();
+    allow_power = true;
+  }
+  #endif
+
+  VEXT_SENSE::pull(PULL_UP);
+
+  if (!allow_power) {
+    NVIC_DisableIRQ(ADC1_IRQn);
+
+    if (on_charger) {
+      // Powered off charger to stop reboot loop
+      nCHG_PWR::reset();
+      POWER_EN::pull(PULL_NONE);
+      POWER_EN::mode(MODE_INPUT);
+    } else {
+      // Explicitly powered down
+      nCHG_PWR::set();
+      POWER_EN::reset();
+      POWER_EN::mode(MODE_OUTPUT);
+      POWER_EN::pull(PULL_NONE);
+    }
+
+    is_charging = false;
+    charge_delay = 0;
+  } else if (!on_charger) {
+    NVIC_DisableIRQ(ADC1_IRQn);
+    // Powered, off charger
+    nCHG_PWR::set();
+
+    POWER_EN::pull(PULL_UP);
+    POWER_EN::mode(MODE_INPUT);
+
+    battery_voltage = Analog::values[ADC_VMAIN];
+    is_charging = false;
+    charge_delay = 0;
+
+    // Charge contact short sense
+    static const uint32_t CHARGE_MINIMUM = ADC_VOLTS(0.30f);
+    static const int CHARGE_SHORT_LIMIT = 5;
+    static uint32_t charge_shorted = 0;
+    static uint32_t charge_count = 0;
+    static uint32_t charge_sum = 0;
+    
+    charge_sum += Analog::values[ADC_VEXT];
+    if (++charge_count >= 32) {
+      if (charge_sum / 32 > CHARGE_MINIMUM) {
+        charger_shorted = false;
+        charge_shorted = 0;
+      } else {
+        if (++charge_shorted > CHARGE_SHORT_LIMIT) charger_shorted = true;
+      }
+      charge_sum = 0;
+      charge_count = 0;
+    }
+
+    // Emergency trap (V3.3)
+    if (battery_voltage < POWER_DOWN_POINT) {
+      Power::setMode(POWER_STOP);
+    }
+  } else if (charge_cutoff) {
+    // Unpowered, on charger (timeout)
+    nCHG_PWR::reset();
+    POWER_EN::pull(PULL_NONE);
+    POWER_EN::mode(MODE_INPUT);
+
+    is_charging = false;
+
+    if (enable_watchdog) {
+      ADC1->ISR = ADC_ISR_AWD;
+      NVIC_EnableIRQ(ADC1_IRQn);
+    }
+  } else {
+    // On charger, powered (charging)
+    NVIC_DisableIRQ(ADC1_IRQn);
+   
+    // Don't enable power to charge circuit until a second has passed
+    if (charge_delay < CHARGE_ENABLE_DELAY) {
+      nCHG_PWR::set();
+      charge_delay++;
+    } else {
+      nCHG_PWR::reset();
+    }
+
+    POWER_EN::pull(PULL_UP);
+    POWER_EN::mode(MODE_INPUT);
+    
+    battery_voltage = Analog::values[ADC_VMAIN];
+    is_charging = true;
+  }
 
   // Trap stuck down button
   if (total_release < MINIMUM_RELEASE_UNSTUCK) {
-    if (!new_button) {
+    if (!button_now) {
       total_release++;
     } else {
       total_release = 0;
@@ -196,34 +349,46 @@ void Analog::tick(void) {
   }
 
   // Debounce the button
-  if (bouncy_button != new_button) {
-    bouncy_button = new_button;
+  if (bouncy_button != button_now) {
+    bouncy_button = button_now;
     bouncy_count = 0;
   } else if (++bouncy_count > BOUNCE_LENGTH) {
     button_pressed = bouncy_button;
   }
 
+  bool wipe = hold_count >= POWER_WIPE_TIME && on_charger;
+  bool turn_off = hold_count >= POWER_DOWN_TIME && !wipe;
+  
   if (button_pressed) {
     hold_count++;
-    if (hold_count >= POWER_WIPE_TIME) {
+    if (wipe) {
+      // Reenable power to the head
+      Power::enableHead();
+
       // We will be signaling a recovery
       BODY_TX::reset();
       BODY_TX::mode(MODE_OUTPUT);
-
-      // Reenable power to the head
-      Power::enableHead();
-    } else if (hold_count >= POWER_DOWN_TIME) {
+    } else if (turn_off) {
       Power::disableHead();
-      Lights::disable();
     } else {
-      Power::setMode(POWER_ACTIVE);
       Power::enableHead();
+      Power::setMode(POWER_ACTIVE);
     }
   } else {
-    if (hold_count >= POWER_DOWN_TIME && hold_count < POWER_WIPE_TIME) {
+    if (turn_off) {
       Power::setMode(POWER_STOP);
     }
 
     hold_count = 0;
   }
+}
+
+extern "C" void ADC1_IRQHandler(void) {
+  ADC1->ISR = ADC_ISR_AWD;
+  NVIC_DisableIRQ(ADC1_IRQn);
+
+  POWER_EN::set();
+  POWER_EN::mode(MODE_OUTPUT);
+  POWER_EN::pull(PULL_UP);
+  POWER_EN::mode(MODE_INPUT);
 }

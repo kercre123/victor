@@ -8,10 +8,8 @@
   "timeTilBlissGetout" : 5.0,
   "timeTilNonBlissGetout" : 3.0,
   "numPetsToAdvanceBliss" : 2,
-  "wantsToBeActivatedConditions": [
-    {
-      "conditionType" : "RobotTouched",
-      "minTouchTime" : 0.1
-    }
-  ]
+  "wantsToBeActivatedCondition": {
+    "conditionType" : "RobotTouched",
+    "minTouchTime" : 0.1
+  }
 }

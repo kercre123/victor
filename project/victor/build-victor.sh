@@ -12,7 +12,7 @@ function usage() {
     echo "  -h                      print this message"
     echo "  -v                      print verbose output"
     echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
-    echo "  -p [PLATFORM]           build target platform {android,mac}"
+    echo "  -p [PLATFORM]           build target platform {android,mac,vicos,vicos-staging}"
     echo "  -a                      append cmake platform argument {arg}"
     echo "  -g [GENERATOR]          CMake generator {Ninja,Xcode,Makefiles}"
     echo "  -f                      force-run filelist updates and cmake configure before building"
@@ -290,6 +290,9 @@ fi
 # needed for metabuild if we have to run it
 if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ] || [ $CONFIGURE -eq 1 ] ; then
     GEN_SRC_DIR="${TOPLEVEL}/generated/cmake"
+    if [ $CONFIGURE -eq 1 ] ; then
+      rm -rf "${GEN_SRC_DIR}"
+    fi 
     mkdir -p "${GEN_SRC_DIR}"
 
     # Scan for BUILD.in files
@@ -439,6 +442,10 @@ else
     TARGET_ARG="--target $CMAKE_TARGET"
   fi
   $CMAKE_EXE --build . $TARGET_ARG $*
+  if [ "$PLATFORM" != "mac" ]; then
+    # run install target on robot-platforms
+    $CMAKE_EXE --build . --target install
+  fi
 fi
 
 popd > /dev/null 2>&1

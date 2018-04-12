@@ -16,12 +16,12 @@
 #include "coretech/common/engine/utils/timer.h"
 
 
-#include "cannedAnimLib/animation.h"
-#include "cannedAnimLib/cannedAnimationContainer.h"
-#include "cannedAnimLib/cannedAnimationLoader.h"
-#include "cannedAnimLib/cozmo_anim_generated.h"
-#include "cannedAnimLib/faceAnimationManager.h"
-#include "cannedAnimLib/proceduralFace.h"
+#include "cannedAnimLib/cannedAnims/animation.h"
+#include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
+#include "cannedAnimLib/cannedAnims/cannedAnimationLoader.h"
+#include "cannedAnimLib/baseTypes/cozmo_anim_generated.h"
+#include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
+#include "cannedAnimLib/proceduralFace/proceduralFace.h"
 //#include "anki/cozmo/basestation/animations/animationTransfer.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
@@ -88,8 +88,15 @@ void RobotDataLoader::LoadNonConfigData()
   if (_platform == nullptr) {
     return;
   }
-  CannedAnimationLoader animLoader(_platform, _loadingCompleteRatio, _abortLoad);
+  
+  _spriteSequenceContainer = std::make_unique<SpriteSequenceContainer>();
+  _spriteSequenceContainer->ReadSpriteSequenceDir(_platform);
+  
+  CannedAnimationLoader animLoader(_platform, _spriteSequenceContainer.get(), 
+                                   _loadingCompleteRatio, _abortLoad);
   _cannedAnimations.reset(animLoader.LoadAnimations());
+  
+  SetupProceduralAnimation();  
 }
 
 void RobotDataLoader::LoadAnimationFile(const std::string& path)
@@ -97,7 +104,8 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
   if (_platform == nullptr) {
     return;
   }
-  CannedAnimationLoader animLoader(_platform, _loadingCompleteRatio, _abortLoad);
+  CannedAnimationLoader animLoader(_platform, _spriteSequenceContainer.get(),
+                                   _loadingCompleteRatio, _abortLoad);
   const auto& animsContainer = animLoader.LoadAnimationsFromFile(path);
   for (const auto& name : animsContainer->GetAnimationNames())
   {
@@ -129,6 +137,24 @@ void RobotDataLoader::NotifyAnimAdded(const std::string& animName, uint32_t anim
   msg.animName_length = animName.length();
   msg.animLength = animLength;
   AnimProcessMessages::SendAnimToEngine(msg);
+}
+  
+void RobotDataLoader::SetupProceduralAnimation()
+{
+  // TODO: kevink - This should probably live somewhere else but since robot data loader
+  // currently maintains control of both canned animations and sprite sequences this
+  // is the best spot to put it for the time being
+  _cannedAnimations->AddAnimation(SpriteSequenceContainer::ProceduralAnimName);
+  
+  Animation* anim = _cannedAnimations->GetAnimation(SpriteSequenceContainer::ProceduralAnimName);
+  assert(anim != nullptr);
+  SpriteSequenceKeyFrame kf(SpriteSequenceContainer::ProceduralAnimName);
+  kf.SetSpriteSequenceContainer(_spriteSequenceContainer.get());
+  if(RESULT_OK != anim->AddKeyFrameToBack(kf))
+  {
+    PRINT_NAMED_ERROR("RobotDataLoader.SetupProceduralAnimation.AddProceduralFailed",
+                      "Failed to add keyframe to procedural animation.");
+  }
 }
 
 bool RobotDataLoader::DoNonConfigDataLoading(float& loadingCompleteRatio_out)

@@ -254,13 +254,6 @@ enum int_32 AnimationTrigger
   DEPRECATED_GameSetupIdle,
   DEPRECATED_GameSetupReaction,
   DEPRECATED_GoToSleepGetOut,
-  DEPRECATED_Hiccup,
-  DEPRECATED_HiccupGetIn,
-  DEPRECATED_HiccupPlayerCure,
-  DEPRECATED_HiccupRobotOnBack,
-  DEPRECATED_HiccupRobotOnFace,
-  DEPRECATED_HiccupRobotPickedUp,
-  DEPRECATED_HiccupSelfCure,
   DEPRECATED_HikingDrivingEnd,             // loco-driving anim (so that Cozmo can be humming while hiking) - end
   DEPRECATED_HikingDrivingLoop,            // loco-driving anim (so that Cozmo can be humming while hiking) - loop
   DEPRECATED_HikingDrivingStart,           // loco-driving anim (so that Cozmo can be humming while hiking) - start
@@ -368,45 +361,6 @@ enum int_32 AnimationTrigger
 
   // Count can specify "none" or "unspecified"
   Count, // Keep count at end.
-}
-
-enum int_32 CubeAnimationTrigger
-{
-  // Please keep alphabetical
-
-  Carrying,
-  Connected,
-  CubePouncePlayerLose,
-  CubePouncePlayerWin,
-  Dance_01,
-  Dance_02,
-  Dance_03,
-  Dance_04,
-  Dance_05,
-  Dance_06,
-  DanceFadeOff,
-  DrivingTo,
-  FeedingBlank,
-  FeedingCyanCycle,
-  FeedingCyanSolid,
-  Flash,
-  GatherCubesAllCubesInBeacon,
-  GatherCubesCubeInBeacon,
-  Interacting,
-  InteractingBehaviorLock,
-  Onboarding,
-  Sleep,
-  SleepNoFade,
-  SpeedTapWin,
-  SpeedTapLose,
-  TestAllLeds,
-  TestOffset,
-  TestRotation,
-  Visible,
-  WakeUp,
-  Workout,
-
-  Count
 }
 
 } // end namespace Cozmo

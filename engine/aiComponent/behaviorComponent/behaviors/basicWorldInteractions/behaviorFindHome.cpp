@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/events/animationTriggerHelpers.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -51,7 +51,7 @@ BehaviorFindHome::InstanceConfig::InstanceConfig()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
 {
-  searchAnimTrigger  = JsonTools::ParseAnimationTrigger(config, kSearchAnimKey, debugName);
+  JsonTools::GetCladEnumFromJSON(config, kSearchAnimKey, searchAnimTrigger, debugName);
   numSearches        = JsonTools::ParseUint8(config, kNumSearchesKey, debugName);
   minDrivingDist_mm  = JsonTools::ParseFloat(config, kMinDrivingDistKey, debugName);
   maxDrivingDist_mm  = JsonTools::ParseFloat(config, kMaxDrivingDistKey, debugName);

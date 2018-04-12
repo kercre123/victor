@@ -45,7 +45,7 @@ namespace ActiveBlock {
 
 namespace {
 
-  // Number of cycles (of length SIM_CUBE_TIME_STEP_MS) in between transmission of ObjectAvailable messages
+  // Number of cycles (of length CUBE_TIME_STEP_MS) in between transmission of ObjectAvailable messages
   const u32 OBJECT_AVAILABLE_MESSAGE_PERIOD = 100;
   
   constexpr int kNumCubeLeds = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
@@ -59,6 +59,14 @@ namespace {
   
   webots::Accelerometer* accel_;
   
+  // The cube accelerometer/tap message to be sent to engine
+  CubeAccelData cubeAccelMsg_;
+  
+  // Raw accelerometer readings are buffered before being sent
+  // to engine (due to BLE message rate limits on the cubes),
+  // so keep track of which index we're on.
+  size_t rawCubeAccelInd = 0;
+  
   // Accelerometer filter window
   const u32 MAX_ACCEL_BUFFER_SIZE = 30;
   f32 accelBuffer_[3][MAX_ACCEL_BUFFER_SIZE];
@@ -70,7 +78,7 @@ namespace {
   const u32 TAP_DETECT_WINDOW_MS = 100;
   const f32 CUTOFF_FREQ = 50;
   const f32 RC = 1.0f/(CUTOFF_FREQ*2*3.14f);
-  const f32 dt = 0.001f*SIM_CUBE_TIME_STEP_MS;
+  const f32 dt = 0.001f*CUBE_TIME_STEP_MS;
   const f32 alpha = RC/(RC + dt);
   
   // Pointers to the LED object to set the simulated cube's lights
@@ -153,7 +161,7 @@ Result Init()
 {
   animation_init();
 
-  active_object_controller.step(SIM_CUBE_TIME_STEP_MS);
+  active_object_controller.step(CUBE_TIME_STEP_MS);
   
   webots::Node* selfNode = active_object_controller.getSelf();
   
@@ -222,7 +230,7 @@ Result Init()
   receiver_ = active_object_controller.getReceiver("receiver");
   assert(receiver_ != nullptr);
   receiver_->setChannel(emitterChannel + 1);
-  receiver_->enable(SIM_CUBE_TIME_STEP_MS);
+  receiver_->enable(CUBE_TIME_STEP_MS);
 
   // Get radio emitter for discovery
   discoveryEmitter_ = active_object_controller.getEmitter("discoveryEmitter");
@@ -232,7 +240,7 @@ Result Init()
   // Get accelerometer
   accel_ = active_object_controller.getAccelerometer("accel");
   assert(accel_ != nullptr);
-  accel_->enable(SIM_CUBE_TIME_STEP_MS);
+  accel_->enable(CUBE_TIME_STEP_MS);
   
   return RESULT_OK;
 }
@@ -291,7 +299,7 @@ bool CheckForTap(f32 accelX, f32 accelY, f32 accelZ)
           
           // Fast forward in buffer so that we don't allow tap detection again until
           // TAP_DETECT_WINDOW_MS later.
-          u32 idxOffset = i + (TAP_DETECT_WINDOW_MS / SIM_CUBE_TIME_STEP_MS);
+          u32 idxOffset = i + (TAP_DETECT_WINDOW_MS / CUBE_TIME_STEP_MS);
           accelBufferStartIdx_ = (accelBufferStartIdx_ + idxOffset) % MAX_ACCEL_BUFFER_SIZE;
           if (accelBufferSize_ > idxOffset) {
             accelBufferSize_ -= idxOffset;
@@ -310,8 +318,7 @@ bool CheckForTap(f32 accelX, f32 accelY, f32 accelZ)
 
 
 Result Update() {
-  if (active_object_controller.step(SIM_CUBE_TIME_STEP_MS) != -1) {
-    const s32 currTime_ms = Util::numeric_cast<s32>(active_object_controller.getTime() * 1000.0);
+  if (active_object_controller.step(CUBE_TIME_STEP_MS) != -1) {
     
     // Read incoming messages
     while (receiver_->getQueueLength() > 0) {
@@ -333,13 +340,7 @@ Result Update() {
     }
     
     // Update cube LED animations
-    // animation_tick() gets called once every CUBE_TIME_STEP_MS in the
-    // cube firmware, so call it the appropriate number of times here.
-    static s32 nextAnimationTick_ms = 0;
-    while (nextAnimationTick_ms <= currTime_ms) {
-      animation_tick();
-      nextAnimationTick_ms += CUBE_TIME_STEP_MS;
-    }
+    animation_tick();
     
     // Extract the RGB color for each LED from the
     // intensity variable
@@ -355,30 +356,30 @@ Result Update() {
     // Get accel values (units of m/sec^2)
     const double* accelVals = accel_->getValues();
     
-    // Check for taps and send accelerometer values
-    CubeAccelData cubeAccelMsg;
-    for (int i = 0 ; i < cubeAccelMsg.accel.size() ; i++) {
+    // Tap count just increments if a tap was detected (this emulates
+    // the behavior of the actual cube firmware)
+    if (CheckForTap(accelVals[0], accelVals[1], accelVals[2])) {
+      ++cubeAccelMsg_.tap_count;
+    }
+    
+    // For cube accel message, cube firmware buffers ACCEL_FRAMES_PER_MSG of them before
+    // sending (due to BLE message rate limits)
+    auto& thisRawAccel = cubeAccelMsg_.accelReadings[rawCubeAccelInd];
+    for (int i = 0 ; i < 3 ; i++) {
       // Webots accelerometer returns values in m/sec^2
       // Convert from this to what the actual cube would report.
       // Actual cubes send 16 bit signed accelerations, with a
       // range of -4g to 4g.
       const double accel_g = accelVals[i] / 9.81;
       const double scaledAccelValue = accel_g * std::numeric_limits<int16_t>::max() / 4.0;
-      cubeAccelMsg.accel[i] = Util::numeric_cast_clamped<int16_t>(scaledAccelValue);
+      thisRawAccel.accel[i] = Util::numeric_cast_clamped<int16_t>(scaledAccelValue);
     }
     
-    // In cube firmware, the latest tap information is always transmitted,
-    // and tap cnt increments each time a tap is detected.
-    static decltype(cubeAccelMsg.tap_count) nextTapCnt = 0;
-    if (CheckForTap(accelVals[0], accelVals[1], accelVals[2])) {
-      ++nextTapCnt;
+    // Send the cube accel message if it's time
+    if (++rawCubeAccelInd >= ACCEL_FRAMES_PER_MSG) {
+      SendMessageHelper(emitter_, std::move(cubeAccelMsg_));
+      rawCubeAccelInd = 0;
     }
-    cubeAccelMsg.tap_count = nextTapCnt;
-    cubeAccelMsg.tap_neg = -5000;  // Hard-coded tap intensity.
-    cubeAccelMsg.tap_pos = 5000;
-    cubeAccelMsg.tap_time = static_cast<u32>(active_object_controller.getTime() / 0.035f) % std::numeric_limits<u8>::max();  // Each tapTime count should be 35ms
-    
-    SendMessageHelper(emitter_, std::move(cubeAccelMsg));
 
     // Set any pending LED color fields. This must be done here since setMFVec3f can only
     // be called once per simulation time step for a given field (known Webots R2018a bug)

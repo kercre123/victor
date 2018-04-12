@@ -9,11 +9,12 @@ namespace Cozmo {
   // Text To Speech processing state
   enum uint_8 TextToSpeechState
   {
-    Invalid = 0,   // Initial state
-    Preparing = 1, // Preparing TTS audio
-    Ready = 2,     // Ready to play TTS audio
-    Playing = 3,   // Playing TTS audio
-    Done = 4,      // TTS audio complete
+    Invalid,    // Initial state
+    Preparing,  // Preparing TTS audio
+    Prepared,   // Prepared TTS audio
+    Delivering, // Delivering TTS audio to wwise
+    Delivered,  // Delivered TTS audio to wwise
+    Playing,    // Accompanying animation in progress
   }
 
 } // namespace Cozmo

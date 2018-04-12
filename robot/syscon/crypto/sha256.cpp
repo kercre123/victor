@@ -108,7 +108,7 @@ void sha_init(sha256_state& md)
 
 void sha_process(sha256_state& md, const void* src, u32 inlen)
 {
-    const u32 block_size = sizeof(sha256_state::buf);
+    const u32 block_size = sizeof( (sha256_state){0}.buf ); //sha256_state::buf);
     const unsigned char* in = (const unsigned char*) src;
 
     while(inlen > 0)

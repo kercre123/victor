@@ -34,18 +34,20 @@ int main (void) {
                 | (SYSCFG_CFGR1_MEM_MODE_0 * 3)
                 ;
 
+  // Create safe interrupt state
+  NVIC->ICER[0]  = ~0;
+  __enable_irq();
+
   Power::init();
-  Analog::init();
   Mics::init();
+  Analog::init();
   Contacts::init();
-  Timer::init();
   Comms::init();
   Motors::init();
   Lights::init();
   Touch::init();
   I2C::init();
-
-  __enable_irq(); // Start firing interrupts
+  Timer::init();
 
   // Low priority interrupts are now our main execution
   for (;;) {   

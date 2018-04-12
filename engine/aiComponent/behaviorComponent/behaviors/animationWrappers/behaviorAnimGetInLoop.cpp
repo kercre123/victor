@@ -16,7 +16,7 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
-#include "engine/events/animationTriggerHelpers.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 

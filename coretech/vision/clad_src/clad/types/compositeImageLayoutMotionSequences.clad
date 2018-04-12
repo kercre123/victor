@@ -1,0 +1,17 @@
+/** Clad enum that maps to CompositeImageLayoutMotionSequence resource assets
+*/
+
+
+namespace Anki {
+namespace Vision {
+
+
+enum uint_8 CompositeImageLayoutMotionSequence
+{
+  // Must be last element
+  Count
+}
+
+
+} // namespace Vision
+} // namespace Anki

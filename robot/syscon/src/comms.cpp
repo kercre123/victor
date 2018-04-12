@@ -94,17 +94,6 @@ void Comms::init(void) {
   // Initial values for CRC32
   CRC->INIT = ~0;
 
-  // Configure our GPIO to be wired into USART1's
-  BODY_TX::alternate(0);  // USART1_TX
-  BODY_TX::speed(SPEED_HIGH);
-  BODY_TX::pull(PULL_NONE);
-  BODY_TX::mode(MODE_ALTERNATE);
-
-  BODY_RX::alternate(0);  // USART1_RX
-  BODY_RX::speed(SPEED_HIGH);
-  BODY_RX::pull(PULL_NONE);
-  BODY_RX::mode(MODE_ALTERNATE);
-
   // Configure our USART1 (Using double buffered DMA)
   USART1->BRR = SYSTEM_CLOCK / COMMS_BAUDRATE;
   USART1->CR3 = USART_CR3_DMAR | USART_CR3_OVRDIS;
@@ -260,6 +249,7 @@ static void ProcessMessage(InboundPacket& packet) {
   // Process our packet
   if (foundCRC == footer->checksum) {
     // Emergency eject in case of recovery mode
+    BODY_TX::set();
     BODY_TX::mode(MODE_ALTERNATE);
 
     switch (packet.header.payload_type) {

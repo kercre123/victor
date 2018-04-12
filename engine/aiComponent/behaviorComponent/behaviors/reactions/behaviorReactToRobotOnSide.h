@@ -15,6 +15,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
+#include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
+
 namespace Anki {
 namespace Cozmo {
 
@@ -35,12 +37,15 @@ protected:
     modifiers.wantsToBeActivatedWhenOffTreads = true;
   }
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
-    
+  
+  virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
 
 private:
 
+  std::vector<ConditionOffTreadsState> _offTreadsConditions;
+  
   void ReactToBeingOnSide();
   void AskToBeRighted();
   //Ensures no other behaviors run while Cozmo is still on his side

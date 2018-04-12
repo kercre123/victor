@@ -2,15 +2,12 @@
   "behaviorClass" : "DispatcherQueue",
   "behaviorID" : "FindAndRequestHome",
 
-  "wantsToBeActivatedConditions": 
-  [
-    {
-      "conditionType": "Negate",
-      "operand": {
-        "conditionType": "OnCharger"
-      }
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "OnCharger"
     }
-  ],
+  },
 
   "behaviors": [
     "FindHome",

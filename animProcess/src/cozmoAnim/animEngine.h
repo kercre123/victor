@@ -26,8 +26,9 @@ namespace Anki {
 namespace Anki {
   namespace Cozmo {
     namespace RobotInterface {
-      struct TextToSpeechStart;
-      struct TextToSpeechStop;
+      struct TextToSpeechPrepare;
+      struct TextToSpeechDeliver;
+      struct TextToSpeechCancel;
     }
   }
 }
@@ -42,10 +43,6 @@ namespace Anki {
 namespace Anki {
 namespace Cozmo {
 
-  
-/**
- * Anime Engine class
- */
 class AnimEngine
 {
 public:
@@ -59,19 +56,20 @@ public:
   Result Update(BaseStationTime_t currTime_nanosec);
 
   // Message handlers
-  void HandleMessage(const RobotInterface::TextToSpeechStart& msg);
-  void HandleMessage(const RobotInterface::TextToSpeechStop& msg);
+  void HandleMessage(const RobotInterface::TextToSpeechPrepare& msg);
+  void HandleMessage(const RobotInterface::TextToSpeechDeliver& msg);
+  void HandleMessage(const RobotInterface::TextToSpeechCancel& msg);
 
 protected:
-  
+
   bool               _isInitialized = false;
-  
+
   std::unique_ptr<AnimContext>      _context;
   std::unique_ptr<AnimationStreamer>     _animationStreamer;
   std::unique_ptr<TextToSpeechComponent> _ttsComponent;
-  
+
 }; // class AnimEngine
-  
+
 
 } // namespace Cozmo
 } // namespace Anki

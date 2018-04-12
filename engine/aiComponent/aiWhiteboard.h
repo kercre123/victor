@@ -213,13 +213,6 @@ public:
   inline void SetLastEdgeInformation(const float time_sec, const float closestEdgeDist_mm);
   float GetLastEdgeInformationTime() const { return _edgeInfoTime_sec; }
   float GetLastEdgeClosestDistance() const { return _edgeInfoClosestEdge_mm; }
-  
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Hiccups
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool HasHiccups() const { return _hasHiccups; }
-  void SetHasHiccups(bool hasHiccups) { _hasHiccups = hasHiccups; }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Tracking Game Requests
@@ -325,9 +318,6 @@ private:
   
   // container of beacons currently defined (high level AI concept)
   BeaconList _beacons;
-  
-  // Whether or not Cozmo has the hiccups
-  bool _hasHiccups;
 
   bool _isGameRequestUIRequest;
 

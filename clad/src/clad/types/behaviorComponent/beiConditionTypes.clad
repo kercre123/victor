@@ -14,6 +14,7 @@ enum uint_8 BEIConditionType {
   TrueCondition, // (note: name can't be True due to clad rules)
 
   CliffDetected,
+  Compound,
   ConsoleVar,
   CubeTapped,
   BatteryLevel,
@@ -23,7 +24,6 @@ enum uint_8 BEIConditionType {
   Frustration,
   Lambda,
   MotionDetected,
-  Negate,
   ObjectInitialDetection,
   ObjectMoved,
   ObjectPositionUpdated,
@@ -38,7 +38,10 @@ enum uint_8 BEIConditionType {
   TimedDedup,
   TimerInRange,
   TriggerWordPending,
+  UnexpectedMovement,
   UserIntentPending,
+
+  UnitTestCondition,
 }
 
 } // namespace Cozmo

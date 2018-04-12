@@ -26,10 +26,6 @@
 #include "coretech/common/robot/config.h"
 #include "util/global/globalDefinitions.h"
 
-#if USE_DAS
-#include <DAS/DAS.h>
-#endif
-
 #define LOG_CHANNEL "RobotState"
 
 namespace Anki {
@@ -112,12 +108,6 @@ void RobotManager::RemoveRobot(bool robotRejectedConnection)
     }
 
     _context->GetPerfMetric()->OnRobotDisconnected();
-
-#if USE_DAS
-    // Resume trying to upload DAS files to the server, because at
-    // least now we know we're no longer connected to the robot
-    DASPauseUploadingToServer(false);
-#endif
 
     _robot.reset();
     _initialConnection.reset();

@@ -3,9 +3,7 @@
   "behaviorID": "ReactToObstacle",
   "displayNameKey":"behavior.ReactToObstacle",
   "animTriggers": ["ReactToObstacle"],
-  "wantsToBeActivatedConditions": [
-    {
-      "conditionType" : "ObstacleDetected"
-    }
-  ]
+  "wantsToBeActivatedCondition": {
+    "conditionType" : "ObstacleDetected"
+  }
 }

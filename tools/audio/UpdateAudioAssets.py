@@ -31,13 +31,21 @@ __audioCladDir = path.join(__projectRoot, 'robot', 'clad', 'src', 'clad', 'audio
 __depsFilePath = path.join(__projectRoot, 'DEPS')
 __namespaceList = ['Anki', 'AudioMetaData']
 
+# DEPS JSON keys
+__svn_key = 'svn'
+__repo_names_key = 'repo_names'
+__soundbanks_key = 'victor-audio-assets'
+__version_key = 'version'
+
 __errorMsg = '\'{}\' DOES NOT EXIST. Find your closest project Nerd!!'
+
 
 # Available Command
 __update_command = 'update'
 __generate_command = 'generate'
 __update_alt_workspace = 'update-alt-workspace'
 __generate_maya_cozmo_data = 'generate-maya-cozmo-data'
+__current_version = 'current-version'
 
 # Parse input
 def __parse_input_args(argv):
@@ -63,6 +71,9 @@ def __parse_input_args(argv):
     generate_maya_data_parser = subparsers.add_parser(__generate_maya_cozmo_data, help='Generate json file for maya plug-in')
     generate_maya_data_parser.add_argument('outputFilePath', action='store', help='Location the CozmoMayaPlugIn.json will be stored')
     generate_maya_data_parser.add_argument('groups', nargs='+', help='List of Event Group names to insert into json file')
+
+    # Return the current asset version
+    subparsers.add_parser(__current_version, help='Get the current sound bank version')
 
     options = parser.parse_args(argv)
 
@@ -109,7 +120,42 @@ def main(argv):
     elif __generate_maya_cozmo_data == options.commands:
         __generateMayaCozmoData(options.outputFilePath, options.groups)
 
+    elif __current_version == options.commands:
+        if not __getSoundBankVersion():
+            return os.EX_SOFTWARE
+
     return os.EX_OK
+
+
+def __checkSoundBankDepsPath(deps_json):
+    abortMsg = 'Can not update Soundbank Version!!!!!! Can\'t Find'
+    if __svn_key not in deps_json:
+        logging.error('{} {}'.format(abortMsg, __svn_key))
+        return False
+
+    if __repo_names_key not in deps_json[__svn_key]:
+        logging.error('{} {}'.format(abortMsg, __repo_names_key))
+        return False
+
+    if __soundbanks_key not in deps_json[__svn_key][__repo_names_key]:
+        logging.error('{} {}'.format(abortMsg, __soundbanks_key))
+        return False
+
+    if __version_key not in deps_json[__svn_key][__repo_names_key][__soundbanks_key]:
+        logging.error('{} {}'.format(abortMsg, __version_key))
+        return False
+    return True
+
+
+def __getSoundBankVersion():
+    with open(__depsFilePath) as deps_file:
+            deps_json = json.load(deps_file)
+            if not __checkSoundBankDepsPath(deps_json):
+                return False
+            version = deps_json[__svn_key][__repo_names_key][__soundbanks_key][__version_key]
+            print ('version: {}'.format(version))
+    return True
+
 
 
 def __updateSoundbanks(version, mergeMetadataPath):
@@ -120,31 +166,12 @@ def __updateSoundbanks(version, mergeMetadataPath):
             deps_json = json.load(deps_file)
 
             logging.info('Update Soundbanks Version')
-            svn_key = 'svn'
-            repo_names_key = 'repo_names'
-            cozmosoundbanks_key = 'victor-audio-assets'
-            version_key = 'version'
 
-            abortMsg = 'Can not update Soundbank Version!!!!!! Can\'t Find'
-
-            if svn_key not in deps_json:
-                logging.error('{} {}'.format(abortMsg, svn_key))
-                return False
-
-            if repo_names_key not in deps_json[svn_key]:
-                logging.error('{} {}'.format(abortMsg, repo_names_key))
-                return False
-
-            if cozmosoundbanks_key not in deps_json[svn_key][repo_names_key]:
-                logging.error('{} {}'.format(abortMsg, cozmosoundbanks_key))
-                return False
-
-            if version_key not in deps_json[svn_key][repo_names_key][cozmosoundbanks_key]:
-                logging.error('{} {}'.format(abortMsg, version_key))
+            if not __checkSoundBankDepsPath(deps_json):
                 return False
 
         # Set soundbank version value
-        deps_json[svn_key][repo_names_key][cozmosoundbanks_key][version_key] = version
+        deps_json[__svn_key][__repo_names_key][__soundbanks_key][__version_key] = version
          # Write file
         with open(__depsFilePath, 'w') as deps_file:
             json.dump(deps_json, deps_file, indent=4, sort_keys=True, separators=(',', ': '))
@@ -233,4 +260,3 @@ def __generateMayaCozmoData(outputFilePath, groups):
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
-

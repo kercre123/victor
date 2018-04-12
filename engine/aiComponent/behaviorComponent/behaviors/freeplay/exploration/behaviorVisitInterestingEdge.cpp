@@ -22,7 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/events/animationTriggerHelpers.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "engine/groundPlaneROI.h"
 
 #include "coretech/common/engine/jsonTools.h"

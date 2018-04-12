@@ -6,9 +6,7 @@
 
   "emotionEventOnActivated": "EyeContactReaction",
 
-  "wantsToBeActivatedConditions": [
-    {
-      "conditionType" : "EyeContact"
-    }
-  ]
+  "wantsToBeActivatedCondition": {
+    "conditionType" : "EyeContact"
+  }
 }

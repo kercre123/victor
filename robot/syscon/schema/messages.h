@@ -93,6 +93,7 @@ typedef int32_t Ack;
 enum {
   POWER_ON_CHARGER    = 0x1,
   POWER_IS_CHARGING   = 0x2,
+  POWER_CHARGER_SHORTED = 0x8000
 };
 typedef uint16_t BatteryFlags;
 
@@ -155,6 +156,8 @@ struct BatteryState
   int16_t charger;
   int16_t temperature;
   BatteryFlags flags;
+  int16_t ref_voltage;
+  int16_t _unused;
 };
 
 struct ButtonState
@@ -213,7 +216,6 @@ struct BodyToHead
   struct MotorState motor[4];
   uint16_t cliffSense[4];
   struct BatteryState battery;
-  uint32_t _unused1;
   struct RangeData proximity;
   uint16_t touchLevel[2];
   uint16_t micError[2]; // Raw bits from a segment of mic data (stuck bit detect)

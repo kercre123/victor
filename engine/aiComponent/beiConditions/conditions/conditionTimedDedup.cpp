@@ -43,7 +43,7 @@ ConditionTimedDedup::ConditionTimedDedup(const Json::Value& config)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ConditionTimedDedup::ConditionTimedDedup(IBEIConditionPtr subCondition, float dedupInterval_ms)
-: IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::Negate))
+: IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::TimedDedup))
 {
   _instanceParams.subCondition     = subCondition;
   _instanceParams.dedupInterval_ms = dedupInterval_ms;

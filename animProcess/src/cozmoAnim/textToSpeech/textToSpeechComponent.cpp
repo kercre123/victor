@@ -97,19 +97,21 @@ Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
                                            const float pitchScalar)
 {
   // Prepare to generate TTS on other thread
-  LOG_INFO("TextToSpeechComponent.CreateSpeech", "ttsID %d text '%s' style %hhu durationScalar %f pitchScalar %f",
+  LOG_INFO("TextToSpeechComponent.CreateSpeech",
+           "ttsID %d text '%s' style %hhu durationScalar %f pitchScalar %f",
            ttsID, Util::HidePersonallyIdentifiableInfo(text.c_str()), style, durationScalar, pitchScalar);
 
-  const auto it =_ttsWaveDataMap.emplace(ttsID, TtsBundle());
+  const auto it = _ttsWaveDataMap.emplace(ttsID, TtsBundle());
   if (!it.second) {
     LOG_ERROR("TextToSpeechComponent.CreateSpeech.DispatchAsync", "ttsID %d already in cache", ttsID);
     return RESULT_FAIL_INVALID_PARAMETER;
   }
 
   // Set initial state
-  it.first->second.state = AudioCreationState::Preparing;
-  it.first->second.style = style;
-  it.first->second.pitchScalar = pitchScalar;
+  TtsBundle & ttsBundle = it.first->second;
+  ttsBundle.state = AudioCreationState::Preparing;
+  ttsBundle.style = style;
+  ttsBundle.pitchScalar = pitchScalar;
 
   // Dispatch work onto another thread
   Util::Dispatch::Async(_dispatchQueue, [this, ttsID, text, style, durationScalar]
@@ -138,7 +140,7 @@ Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
       // Put data into cache map
       bundle->state = AudioCreationState::Ready;
       bundle->waveData = audioData;
-      PushEvent({ttsID, TextToSpeechState::Ready});
+      PushEvent({ttsID, TextToSpeechState::Prepared});
     }
   });
 
@@ -161,30 +163,40 @@ TextToSpeechComponent::AudioCreationState TextToSpeechComponent::GetOperationSta
 //
 // Get wwise audio event for a given voice style
 //
-static AudioMetaData::GameEvent::GenericEvent GetAudioEvent(SayTextVoiceStyle style)
+static AudioEngine::AudioEventId GetAudioEvent(SayTextVoiceStyle style)
 {
+  using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+  GenericEvent event = GenericEvent::Invalid;
+
   switch (style) {
     case SayTextVoiceStyle::Unprocessed:
-      return AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vo__External_Unprocessed;
+      event = GenericEvent::Play__Robot_Vo__External_Unprocessed;
+      break;
     case SayTextVoiceStyle::CozmoProcessing_Sentence:
+      event = GenericEvent::Play__Robot_Vo__External_Cozmo_Processing;
+      break;
     case SayTextVoiceStyle::CozmoProcessing_Name:
-      return AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vo__External_Cozmo_Processing;
+      event = GenericEvent::Play__Robot_Vo__External_Cozmo_Processing;
+      break;
     case SayTextVoiceStyle::CozmoProcessing_Name_Question:
-      return AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vo__External_Cozmo_Processing_Question;
+      event= GenericEvent::Play__Robot_Vo__External_Cozmo_Processing_Question;
+      break;
     case SayTextVoiceStyle::Count:
       LOG_ERROR("TextToSpeechComponent.GetAudioEvent", "Invalid SayTextStyle Count");
       break;
   }
-  return AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vo__External_Unprocessed;
+
+  return AudioEngine::ToAudioEventId(event);
 } // GetAudioEvent()
+  
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
 // Deliver audio data to wwise audio engine
 //
 bool TextToSpeechComponent::PrepareAudioEngine(const TTSID_t ttsID,
-                                               SayTextVoiceStyle style,
-                                               float& out_duration_ms)
+                                               float& out_duration_ms,
+                                               AudioEngine::AudioEventId& out_eventId)
 {
   const auto ttsBundle = GetTtsBundle(ttsID);
   if (nullptr == ttsBundle) {
@@ -194,15 +206,13 @@ bool TextToSpeechComponent::PrepareAudioEngine(const TTSID_t ttsID,
 
   const auto state = ttsBundle->state;
 
-if (AudioCreationState::Preparing == state) {
+  if (AudioCreationState::Preparing == state) {
     LOG_WARNING("TextToSpeechComponent.PrepareAudioEngine.AudioPreparing", "Audio is not ready");
-    ClearOperationData(ttsID);
     return false;
   }
 
   if (AudioCreationState::None == state) {
     LOG_WARNING("TextToSpeechComponent.PrepareAudioEngine.AudioNone", "Audio is empty");
-    ClearOperationData(ttsID);
     return false;
   }
 
@@ -221,25 +231,19 @@ if (AudioCreationState::Preparing == state) {
     pluginInterface->ClearWavePortalAudioData();
   }
 
-  // Set OUT value
+  // Set OUT values
   out_duration_ms = ttsBundle->waveData->ApproximateDuration_ms();
+  out_eventId = GetAudioEvent(ttsBundle->style);
 
   // Pass ownership of audio data to plugin
   pluginInterface->GiveWavePortalAudioDataOwnership(ttsBundle->waveData);
   ttsBundle->waveData->ReleaseAudioDataOwnership();
 
-  // Tell audio engine to play audio data
-
-  const auto eventId = static_cast<AudioEngine::AudioEventId>(GetAudioEvent(style));
-  const auto gameObject = static_cast<AudioEngine::AudioGameObject>(kTTSGameObject);
-
-  _audioController->PostAudioEvent(eventId, gameObject);
-
-  // Clear operation from bookkeeping
-  ClearOperationData(ttsID);
+  SetAudioProcessingStyle(ttsBundle->style);
+  SetAudioProcessingPitch(ttsBundle->pitchScalar);
 
   return true;
-} // PrepareToSay()
+} // PrepareAudioEngine()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TextToSpeechComponent::CleanupAudioEngine(const TTSID_t ttsID)
@@ -350,7 +354,6 @@ const TextToSpeechComponent::TtsBundle* TextToSpeechComponent::GetTtsBundle(cons
   if (iter != _ttsWaveDataMap.end()) {
     return &iter->second;
   }
-
   return nullptr;
 } // GetTtsBundle()
 
@@ -361,7 +364,6 @@ TextToSpeechComponent::TtsBundle* TextToSpeechComponent::GetTtsBundle(const TTSI
   if (iter != _ttsWaveDataMap.end()) {
     return &iter->second;
   }
-
   return nullptr;
 } // GetTtsBundle()
 
@@ -422,6 +424,15 @@ void TextToSpeechComponent::SetAudioProcessingPitch(float pitchScalar)
 }
 
 //
+// Send audio trigger event for this utterance
+//
+void TextToSpeechComponent::PostAudioEvent(AudioEngine::AudioEventId eventId)
+{
+  const auto gameObject = static_cast<AudioEngine::AudioGameObject>(kTTSGameObject);
+  _audioController->PostAudioEvent(eventId, gameObject);
+}
+
+//
 // Send a TextToSpeechEvent message from anim to engine.
 // This is called on main thread for thread-safe access to comms.
 //
@@ -435,9 +446,9 @@ static bool SendAnimToEngine(uint8_t ttsID, TextToSpeechState state)
 }
 
 //
-// Called on main thread to handle incoming TextToSpeechStart
+// Called on main thread to handle incoming TextToSpeechPrepare
 //
-void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechStart & msg)
+void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPrepare & msg)
 {
   using Anki::Util::HidePersonallyIdentifiableInfo;
 
@@ -448,13 +459,14 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechStar
   const auto durationScalar = msg.durationScalar;
   const auto pitchScalar = msg.pitchScalar;
 
-  LOG_DEBUG("TextToSpeechComponent.TextToSpeechStart", "ttsID %d text %s style %hhu durationScalar %f pitchScalar %f",
-    ttsID, HidePersonallyIdentifiableInfo(text.c_str()), style, durationScalar, pitchScalar);
+  LOG_DEBUG("TextToSpeechComponent.TextToSpeechPrepare",
+            "ttsID %d text %s style %hhu durationScalar %f pitchScalar %f",
+            ttsID, HidePersonallyIdentifiableInfo(text.c_str()), style, durationScalar, pitchScalar);
 
   // Enqueue request on worker thread
   const Result result = CreateSpeech(ttsID, text, style, durationScalar, pitchScalar);
   if (RESULT_OK != result) {
-    LOG_ERROR("TextToSpeechComponent.TextToSpeechStart", "Unable to create ttsID %d (result %d)", ttsID, result);
+    LOG_ERROR("TextToSpeechComponent.TextToSpeechPrepare", "Unable to create ttsID %d (result %d)", ttsID, result);
     SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
     return;
   }
@@ -464,15 +476,49 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechStar
 }
 
 //
-// Called on main thread to handle incoming TextToSpeechStop
+// Called on main thread to handle incoming TextToSpeechDeliver
+void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechDeliver& msg)
+{
+  const auto ttsID = msg.ttsID;
+  const auto triggeredByAnim = msg.triggeredByAnim;
+
+  LOG_DEBUG("TextToSpeechComponent.TextToSpeechDeliver", "ttsID %d triggeredByAnim %d", ttsID, triggeredByAnim);
+
+  SendAnimToEngine(ttsID, TextToSpeechState::Delivering);
+
+  float duration_ms = 0.f;
+  AudioEngine::AudioEventId eventId = AudioEngine::kInvalidAudioEventId;
+
+  if (!PrepareAudioEngine(ttsID, duration_ms, eventId)) {
+    LOG_ERROR("TextToSpeechComponent.TextToSpeechDeliver", "Unable to prepare audio engine");
+    SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
+    ClearOperationData(ttsID);
+    return;
+  }
+
+  LOG_INFO("TextToSpeechComponent.TextToSpeechDeliver", "ttsID %d will play for %.2f ms", ttsID, duration_ms);
+
+  if (!triggeredByAnim) {
+    // Tell audio engine to play audio data
+    PostAudioEvent(eventId);
+  }
+
+  // Notify engine that tts request is done
+  SendAnimToEngine(ttsID, TextToSpeechState::Delivered);
+
+  // Clear operation from bookkeeping
+  ClearOperationData(ttsID);
+}
+
 //
-void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechStop& msg)
+// Called on main thread to handle incoming TextToSpeechCancel
+//
+void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechCancel& msg)
 {
   const auto ttsID = msg.ttsID;
 
-  LOG_DEBUG("TextToSpeechComponent.HandleMessage.TextToSpeechStop", "ttsID %d", ttsID);
+  LOG_DEBUG("TextToSpeechComponent.HandleMessage.TextToSpeechCancel", "ttsID %d", ttsID);
 
-  // TBD: Cancel animation
   CleanupAudioEngine(ttsID);
 
   // Notify engine that request is now invalid
@@ -509,42 +555,21 @@ void TextToSpeechComponent::OnStatePreparing(const TTSID_t ttsID)
 //
 // Called by Update() in response to event from worker thread
 //
-void TextToSpeechComponent::OnStateReady(const TTSID_t ttsID)
+void TextToSpeechComponent::OnStatePrepared(const TTSID_t ttsID)
 {
-  LOG_DEBUG("TextToSpeechComponent.OnStateReady", "ttsID %d", ttsID);
+  LOG_DEBUG("TextToSpeechComponent.OnStatePrepared", "ttsID %d", ttsID);
 
   const auto * ttsBundle = GetTtsBundle(ttsID);
   if (nullptr == ttsBundle) {
-    LOG_ERROR("TextToSpeechComponent.OnStateReady.InvalidBundle", "Can't find bundle for ttsID %d", ttsID);
+    LOG_ERROR("TextToSpeechComponent.OnStatePrepared.InvalidBundle", "Can't find bundle for ttsID %d", ttsID);
     SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
     ClearOperationData(ttsID);
     return;
   }
 
-  // Notify engine that tts request is ready to play
-  SendAnimToEngine(ttsID, TextToSpeechState::Ready);
+  // Notify engine that tts request has been prepared
+  SendAnimToEngine(ttsID, TextToSpeechState::Prepared);
 
-  //
-  // TBD: Start streaming animation.
-  // For now, just start playing audio.
-  //
-
-  // Notify engine that tts request is now playing
-  SendAnimToEngine(ttsID, TextToSpeechState::Playing);
-
-  SetAudioProcessingStyle(ttsBundle->style);
-  SetAudioProcessingPitch(ttsBundle->pitchScalar);
-
-  float duration_ms = 0.f;
-  PrepareAudioEngine(ttsID, ttsBundle->style, duration_ms);
-
-  LOG_INFO("TextToSpeechComponent.TextToSpeechStart", "ttsID %d will play for %.2f ms", ttsID, duration_ms);
-
-  // Notify engine that tts request is done
-  SendAnimToEngine(ttsID, TextToSpeechState::Done);
-
-  // Clean up request state
-  ClearOperationData(ttsID);
 }
 
 //
@@ -568,12 +593,12 @@ void TextToSpeechComponent::Update()
       case TextToSpeechState::Preparing:
         OnStatePreparing(ttsID);
         break;
-      case TextToSpeechState::Ready:
-        OnStateReady(ttsID);
+      case TextToSpeechState::Prepared:
+        OnStatePrepared(ttsID);
         break;
       default:
         //
-        // We don't expect any other events from the worker thread.  Transition to Playing and Done are
+        // We don't expect any other events from the worker thread.  Transition to Delivering/Delivered are
         // handled by the main thread.
         //
         LOG_ERROR("TextToSpeechComponent.Update.UnexpectedState", "Event ttsID %d unexpected state %hhu",

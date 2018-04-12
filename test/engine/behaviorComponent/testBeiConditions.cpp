@@ -8,6 +8,7 @@
  *
  * Copyright: Anki, Inc. 2018
  *
+ * --gtest_filter=BeiConditions.*
  **/
 
 #include "gtest/gtest.h"
@@ -26,8 +27,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionCompound.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionNegate.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionUnitTest.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/moodSystem/moodManager.h"
@@ -62,40 +64,9 @@ void CreateBEI(const std::string& json, IBEIConditionPtr& cond)
   ASSERT_TRUE( cond != nullptr );
 }
 
-class TestCondition : public IBEICondition
-{
-public:
-  explicit TestCondition()
-    // use an arbitrary type to make the system happy
-    : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::TrueCondition))
-    {
-    }
-
-  virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override {
-    _initCount++;
-  }
-
-  virtual void SetActiveInternal(BehaviorExternalInterface& behaviorExternalInterface, bool setActive) override {
-    if(setActive){
-      _setActiveCount++;
-    } 
-  }
-
-  virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override {
-    _areMetCount++;
-    return _val;
-  }
-
-  bool _val = false;
-
-  int _initCount = 0;
-  int _setActiveCount = 0;
-  mutable int _areMetCount = 0;  
-};
-
 }
 
-TEST(BeiConditions, TestCondition)
+TEST(BeiConditions, TestUnitTestCondition)
 {
   // a test of the test, if you will
 
@@ -103,7 +74,7 @@ TEST(BeiConditions, TestCondition)
   testBehaviorFramework.InitializeStandardBehaviorComponent();
   BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
 
-  auto cond = std::make_shared<TestCondition>();
+  auto cond = std::make_shared<ConditionUnitTest>(false);
 
   EXPECT_EQ(cond->_initCount, 0);
   EXPECT_EQ(cond->_setActiveCount, 0);
@@ -297,15 +268,15 @@ TEST(BeiConditions, Timer)
   kTimeMultiplier = oldVal;
 }
 
-TEST(BeiConditions, Negate)
+TEST(BeiConditions, CompoundNot)
 {
   TestBehaviorFramework testBehaviorFramework(1, nullptr);
   testBehaviorFramework.InitializeStandardBehaviorComponent();
   BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
 
-  auto subCond = std::make_shared<TestCondition>();
+  auto subCond = std::make_shared<ConditionUnitTest>(true);
 
-  auto cond = std::make_shared<ConditionNegate>(subCond);
+  auto cond = ConditionCompound::CreateNotCondition( subCond );
 
   EXPECT_EQ(subCond->_initCount, 0);
   EXPECT_EQ(subCond->_setActiveCount, 0);
@@ -322,18 +293,18 @@ TEST(BeiConditions, Negate)
   EXPECT_EQ(subCond->_areMetCount, 0);
 
 
-  EXPECT_TRUE(cond->AreConditionsMet(bei));
+  EXPECT_FALSE(cond->AreConditionsMet(bei));
   EXPECT_EQ(subCond->_initCount, 1);
   EXPECT_EQ(subCond->_setActiveCount, 1);
   EXPECT_EQ(subCond->_areMetCount, 1);
 
-  EXPECT_TRUE(cond->AreConditionsMet(bei));
+  EXPECT_FALSE(cond->AreConditionsMet(bei));
   EXPECT_EQ(subCond->_initCount, 1);
   EXPECT_EQ(subCond->_setActiveCount, 1);
   EXPECT_EQ(subCond->_areMetCount, 2);
 
-  subCond->_val = true;
-  EXPECT_FALSE(cond->AreConditionsMet(bei));
+  subCond->_val = false;
+  EXPECT_TRUE(cond->AreConditionsMet(bei));
   EXPECT_EQ(subCond->_initCount, 1);
   EXPECT_EQ(subCond->_setActiveCount, 1);
   EXPECT_EQ(subCond->_areMetCount, 3);
@@ -342,19 +313,152 @@ TEST(BeiConditions, Negate)
   EXPECT_EQ(subCond->_setActiveCount, 1);
   EXPECT_EQ(subCond->_areMetCount, 3);
 
-  EXPECT_FALSE(cond->AreConditionsMet(bei));
+  EXPECT_TRUE(cond->AreConditionsMet(bei));
   EXPECT_EQ(subCond->_initCount, 1);
   EXPECT_EQ(subCond->_setActiveCount, 1);
   EXPECT_EQ(subCond->_areMetCount, 4);
 
 }
 
-TEST(BeiConditions, NegateTrue)
+TEST(BeiConditions, CompoundAnd)
+{
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
+
+  auto subCond1 = std::make_shared<ConditionUnitTest>(true);
+  auto subCond2 = std::make_shared<ConditionUnitTest>(true);
+
+  auto cond = ConditionCompound::CreateAndCondition( {subCond1, subCond2} );
+
+  EXPECT_EQ(subCond1->_initCount, 0);
+  EXPECT_EQ(subCond1->_setActiveCount, 0);
+  EXPECT_EQ(subCond1->_areMetCount, 0);
+  EXPECT_EQ(subCond2->_initCount, 0);
+  EXPECT_EQ(subCond2->_setActiveCount, 0);
+  EXPECT_EQ(subCond2->_areMetCount, 0);
+
+  cond->Init(bei);
+  EXPECT_EQ(subCond1->_initCount, 1);
+  EXPECT_EQ(subCond1->_setActiveCount, 0);
+  EXPECT_EQ(subCond1->_areMetCount, 0);
+  EXPECT_EQ(subCond2->_initCount, 1);
+  EXPECT_EQ(subCond2->_setActiveCount, 0);
+  EXPECT_EQ(subCond2->_areMetCount, 0);
+
+  cond->SetActive(bei, true);
+  EXPECT_EQ(subCond1->_initCount, 1);
+  EXPECT_EQ(subCond1->_setActiveCount, 1);
+  EXPECT_EQ(subCond1->_areMetCount, 0);
+  EXPECT_EQ(subCond2->_initCount, 1);
+  EXPECT_EQ(subCond2->_setActiveCount, 1);
+  EXPECT_EQ(subCond2->_areMetCount, 0);
+  
+  subCond1->_val = true;
+  subCond2->_val = true;
+
+  EXPECT_TRUE(cond->AreConditionsMet(bei));
+  EXPECT_EQ(subCond1->_initCount, 1);
+  EXPECT_EQ(subCond1->_setActiveCount, 1);
+  EXPECT_EQ(subCond1->_areMetCount, 1);
+  EXPECT_EQ(subCond2->_initCount, 1);
+  EXPECT_EQ(subCond2->_setActiveCount, 1);
+  EXPECT_EQ(subCond2->_areMetCount, 1);
+
+  EXPECT_TRUE(cond->AreConditionsMet(bei));
+  EXPECT_EQ(subCond1->_initCount, 1);
+  EXPECT_EQ(subCond1->_setActiveCount, 1);
+  EXPECT_EQ(subCond1->_areMetCount, 2);
+  EXPECT_EQ(subCond2->_initCount, 1);
+  EXPECT_EQ(subCond2->_setActiveCount, 1);
+  EXPECT_EQ(subCond2->_areMetCount, 2);
+
+  subCond1->_val = true;
+  subCond2->_val = false;
+  EXPECT_FALSE(cond->AreConditionsMet(bei));
+  
+  subCond1->_val = false;
+  subCond2->_val = true;
+  EXPECT_FALSE(cond->AreConditionsMet(bei));
+  
+  subCond1->_val = false;
+  subCond2->_val = false;
+  EXPECT_FALSE(cond->AreConditionsMet(bei));
+}
+
+TEST(BeiConditions, CompoundOr)
+{
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
+
+  auto subCond1 = std::make_shared<ConditionUnitTest>(true);
+  auto subCond2 = std::make_shared<ConditionUnitTest>(true);
+
+  auto cond = ConditionCompound::CreateOrCondition( {subCond1, subCond2} );
+
+  EXPECT_EQ(subCond1->_initCount, 0);
+  EXPECT_EQ(subCond1->_setActiveCount, 0);
+  EXPECT_EQ(subCond1->_areMetCount, 0);
+  EXPECT_EQ(subCond2->_initCount, 0);
+  EXPECT_EQ(subCond2->_setActiveCount, 0);
+  EXPECT_EQ(subCond2->_areMetCount, 0);
+
+  cond->Init(bei);
+  EXPECT_EQ(subCond1->_initCount, 1);
+  EXPECT_EQ(subCond1->_setActiveCount, 0);
+  EXPECT_EQ(subCond1->_areMetCount, 0);
+  EXPECT_EQ(subCond2->_initCount, 1);
+  EXPECT_EQ(subCond2->_setActiveCount, 0);
+  EXPECT_EQ(subCond2->_areMetCount, 0);
+
+  cond->SetActive(bei, true);
+  EXPECT_EQ(subCond1->_initCount, 1);
+  EXPECT_EQ(subCond1->_setActiveCount, 1);
+  EXPECT_EQ(subCond1->_areMetCount, 0);
+  EXPECT_EQ(subCond2->_initCount, 1);
+  EXPECT_EQ(subCond2->_setActiveCount, 1);
+  EXPECT_EQ(subCond2->_areMetCount, 0);
+  
+  subCond1->_val = true;
+  subCond2->_val = true;
+
+  EXPECT_TRUE(cond->AreConditionsMet(bei));
+  EXPECT_EQ(subCond1->_initCount, 1);
+  EXPECT_EQ(subCond1->_setActiveCount, 1);
+  EXPECT_EQ(subCond1->_areMetCount, 1);
+  EXPECT_EQ(subCond2->_initCount, 1);
+  EXPECT_EQ(subCond2->_setActiveCount, 1);
+  EXPECT_EQ(subCond2->_areMetCount, 1);
+
+  EXPECT_TRUE(cond->AreConditionsMet(bei));
+  EXPECT_EQ(subCond1->_initCount, 1);
+  EXPECT_EQ(subCond1->_setActiveCount, 1);
+  EXPECT_EQ(subCond1->_areMetCount, 2);
+  EXPECT_EQ(subCond2->_initCount, 1);
+  EXPECT_EQ(subCond2->_setActiveCount, 1);
+  EXPECT_EQ(subCond2->_areMetCount, 2);
+
+  subCond1->_val = true;
+  subCond2->_val = false;
+  EXPECT_TRUE(cond->AreConditionsMet(bei));
+  
+  subCond1->_val = false;
+  subCond2->_val = true;
+  EXPECT_TRUE(cond->AreConditionsMet(bei));
+  
+  subCond1->_val = false;
+  subCond2->_val = false;
+  EXPECT_FALSE(cond->AreConditionsMet(bei));
+
+}
+
+TEST(BeiConditions, CompoundNotJson)
 {
   const std::string json = R"json(
   {
-    "conditionType": "Negate",
-    "operand": {
+    "conditionType": "Compound",
+    "not": {
       "conditionType": "TrueCondition"
     }
   })json";
@@ -379,6 +483,197 @@ TEST(BeiConditions, NegateTrue)
   EXPECT_FALSE( cond->AreConditionsMet(bei) );
 }
 
+TEST(BeiConditions, CompoundAndJson)
+{
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
+  
+  // true && true
+  {
+    const std::string json = R"json(
+    {
+      "conditionType": "Compound",
+      "and": [
+        {
+          "conditionType": "TrueCondition"
+        },
+        {
+          "conditionType": "TrueCondition"
+        }
+      ]
+    })json";
+
+    IBEIConditionPtr cond;
+    CreateBEI(json, cond);
+    
+    cond->Init(bei);
+    cond->SetActive(bei, true);
+    EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  }
+  // true && false (use UnitTestCondition as false)
+  {
+    const std::string json = R"json(
+    {
+      "conditionType": "Compound",
+      "and": [
+        {
+          "conditionType": "TrueCondition"
+        },
+        {
+          "conditionType": "UnitTestCondition"
+        }
+      ]
+    })json";
+
+    IBEIConditionPtr cond;
+    CreateBEI(json, cond);
+    
+    cond->Init(bei);
+    cond->SetActive(bei, true);
+    EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  }
+  // false && false (use UnitTestCondition as false)
+  {
+    const std::string json = R"json(
+    {
+      "conditionType": "Compound",
+      "and": [
+        {
+          "conditionType": "UnitTestCondition"
+        },
+        {
+          "conditionType": "UnitTestCondition"
+        }
+      ]
+    })json";
+
+    IBEIConditionPtr cond;
+    CreateBEI(json, cond);
+    
+    cond->Init(bei);
+    cond->SetActive(bei, true);
+    EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  }
+  
+}
+
+TEST(BeiConditions, CompoundOrJson)
+{
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
+  
+  // true || true
+  {
+    const std::string json = R"json(
+    {
+      "conditionType": "Compound",
+      "or": [
+        {
+          "conditionType": "TrueCondition"
+        },
+        {
+          "conditionType": "TrueCondition"
+        }
+      ]
+    })json";
+
+    IBEIConditionPtr cond;
+    CreateBEI(json, cond);
+    
+    cond->Init(bei);
+    cond->SetActive(bei, true);
+    EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  }
+  // true || false (use UnitTestCondition as false)
+  {
+    const std::string json = R"json(
+    {
+      "conditionType": "Compound",
+      "or": [
+        {
+          "conditionType": "TrueCondition"
+        },
+        {
+          "conditionType": "UnitTestCondition"
+        }
+      ]
+    })json";
+
+    IBEIConditionPtr cond;
+    CreateBEI(json, cond);
+    
+    cond->Init(bei);
+    cond->SetActive(bei, true);
+    EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  }
+  // false || false (use UnitTestCondition as false)
+  {
+    const std::string json = R"json(
+    {
+      "conditionType": "Compound",
+      "or": [
+        {
+          "conditionType": "UnitTestCondition"
+        },
+        {
+          "conditionType": "UnitTestCondition"
+        }
+      ]
+    })json";
+
+    IBEIConditionPtr cond;
+    CreateBEI(json, cond);
+    
+    cond->Init(bei);
+    cond->SetActive(bei, true);
+    EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  }
+}
+
+TEST(BeiConditions, CompoundComplex)
+{
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
+  
+
+  const std::string json = R"json(
+  {
+    "conditionType": "Compound",
+    "and": [
+      {
+        "or": [
+          {
+            "conditionType": "TrueCondition"
+          },
+          {
+            "conditionType": "UnitTestCondition"
+          }
+        ]
+      },
+      {
+        "not": {
+          "conditionType": "UnitTestCondition"
+        }
+      },
+      {
+        "conditionType": "UnitTestCondition",
+        "value": true
+      }
+    ]
+  }
+  })json";
+
+  IBEIConditionPtr cond;
+  CreateBEI(json, cond);
+  
+  cond->Init(bei);
+  cond->SetActive(bei, true);
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+}
+
 TEST(BeiConditions, NegateTimerInRange)
 {
   const float oldVal = kTimeMultiplier;
@@ -388,8 +683,8 @@ TEST(BeiConditions, NegateTimerInRange)
   
   const std::string json = R"json(
   {
-    "conditionType": "Negate",
-    "operand": {
+    "conditionType": "Compound",
+    "not": {
       "conditionType": "TimerInRange",
       "begin_s": 30.0,
       "end_s": 35.0

@@ -15,7 +15,7 @@
 #ifndef __Anki_Cozmo_AnimationAudioClient_H__
 #define __Anki_Cozmo_AnimationAudioClient_H__
 
-#include "cannedAnimLib/audioKeyFrameTypes.h"
+#include "cannedAnimLib/baseTypes/audioKeyFrameTypes.h"
 #include "audioEngine/audioTypeTranslator.h"
 #include <set>
 #include <mutex>

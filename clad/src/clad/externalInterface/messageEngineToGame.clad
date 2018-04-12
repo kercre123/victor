@@ -194,11 +194,6 @@ message RobotOnChargerPlatformEvent {
   bool   onCharger
 }
 
-// Whether or not Cozmo has the hiccups
-message RobotHiccupsChanged {
-  bool hasHiccups
-}
-
 // Whether or not the robot's charge contacts are in contact with the charger contacts
 message ChargerEvent {
   bool   onCharger

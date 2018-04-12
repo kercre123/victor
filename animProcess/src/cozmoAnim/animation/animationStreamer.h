@@ -18,8 +18,8 @@
 
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/image.h"
-#include "cannedAnimLib/animation.h"
-#include "cannedAnimLib/track.h"
+#include "cannedAnimLib/cannedAnims/animation.h"
+#include "cannedAnimLib/baseTypes/track.h"
 #include "clad/types/keepFaceAliveParameters.h"
 
 #include <list>
@@ -30,7 +30,6 @@ namespace Cozmo {
   
   // Forward declaration
   class ProceduralFace;
-  class CannedAnimationContainer;
   class AnimContext;
   class TrackLayerComponent;
   

@@ -22,7 +22,7 @@
 #include "clad/types/proceduralFaceTypes.h"
 #include "engine/block.h"
 #include "engine/encodedImage.h"
-#include "engine/events/animationTriggerHelpers.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "simulator/controllers/shared/webotsHelpers.h"
 #include "util/fileUtils/fileUtils.h"

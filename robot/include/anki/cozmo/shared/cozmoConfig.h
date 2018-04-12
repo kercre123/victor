@@ -251,9 +251,8 @@ namespace Cozmo {
   const s32 WEB_SERVER_OVERTIME_WARNING_THRESH_MS = 500;
   const s32 WEB_SERVER_OVERTIME_WARNING_THRESH_US = WEB_SERVER_OVERTIME_WARNING_THRESH_MS * 1000;
   
-  // Time step for actual and simulated cubes
-  const s32 CUBE_TIME_STEP_MS = 5;
-  const s32 SIM_CUBE_TIME_STEP_MS = 10;
+  // Time step for cube tick
+  const s32 CUBE_TIME_STEP_MS = 10;
   
   // Timestep for cube animation LED 'frames'
   const u32 CUBE_LED_FRAME_LENGTH_MS = 30;

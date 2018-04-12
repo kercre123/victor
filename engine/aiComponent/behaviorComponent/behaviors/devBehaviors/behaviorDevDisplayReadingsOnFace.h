@@ -16,7 +16,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "cannedAnimLib/proceduralFace.h"
+#include "cannedAnimLib/proceduralFace/proceduralFace.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/vision/engine/image_impl.h"

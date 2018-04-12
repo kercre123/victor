@@ -47,7 +47,7 @@ BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
   {
     int i = 0;
     for(auto& digit: config[kDigitMapKey]){
-      _instanceParams.intsToImages[i] = digit.asString();
+      _instanceParams.intsToImages[i] = Vision::SpriteNameFromString(digit.asString());
       i++;
     }
     ANKI_VERIFY(i == 10, 
@@ -72,7 +72,8 @@ BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
   if(config.isMember(kStaticElementsKey)){
     for(auto& key: config[kStaticElementsKey].getMemberNames()){
       Vision::SpriteBoxName sbName = Vision::SpriteBoxNameFromString(key);
-      _instanceParams.staticElements[sbName] = config[kStaticElementsKey][key].asString();
+      const std::string spriteName =  config[kStaticElementsKey][key].asString();
+      _instanceParams.staticElements[sbName] = Vision::SpriteNameFromString(spriteName);
     }
   }
 }
@@ -236,7 +237,7 @@ void BehaviorProceduralClock::BehaviorUpdate()
     const int digitToDisplay = _instanceParams.getDigitFunctions[spriteBoxName]();
     isLeadingZero &= (digitToDisplay == 0);
     if(isLeadingZero){
-      imageMap[spriteBoxName] = "empty_grid";
+      imageMap[spriteBoxName] = Vision::SpriteName::Clock_empty_grid;
     }else{
       imageMap[spriteBoxName] = _instanceParams.intsToImages[digitToDisplay];
     }

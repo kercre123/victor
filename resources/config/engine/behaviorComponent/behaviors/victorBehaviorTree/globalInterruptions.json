@@ -6,7 +6,10 @@
 
   "behaviors": [
     "ReactToRobotOnBack",
+    "ReactToRobotOnFace",
+    "ReactToRobotOnSide",
     "ReactToCliff",
+    "ReactToUnexpectedMovement",
     "TriggerWordDetected",
     "TimerUtilityCoordinator",
     "MeetVictor",

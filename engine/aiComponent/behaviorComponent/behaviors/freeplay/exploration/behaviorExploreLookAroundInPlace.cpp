@@ -22,7 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/events/animationTriggerHelpers.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
@@ -142,7 +142,8 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   // [min,max] range for pause for step 2
   _configParams.s2_WaitMin_sec = ParseFloat(config, "s2_WaitMin_sec", debugName);
   _configParams.s2_WaitMax_sec = ParseFloat(config, "s2_WaitMax_sec", debugName);
-  _configParams.s2_WaitAnimTrigger = ParseAnimationTrigger(config, "s2_WaitAnimTrigger", debugName);
+  JsonTools::GetCladEnumFromJSON(config, "s2_WaitAnimTrigger", _configParams.s2_WaitAnimTrigger, debugName);
+
   // [min,max] range for random angle turns for step 3
   _configParams.s3_BodyAngleRangeMin_deg = ParseFloat(config, "s3_BodyAngleRangeMin_deg", debugName);
   _configParams.s3_BodyAngleRangeMax_deg = ParseFloat(config, "s3_BodyAngleRangeMax_deg", debugName);
@@ -157,7 +158,7 @@ void BehaviorExploreLookAroundInPlace::LoadConfig(const Json::Value& config)
   _configParams.s4_HeadAngleChangesMax = ParseUint8(config, "s4_HeadAngleChangesMax", debugName);
   _configParams.s4_WaitBetweenChangesMin_sec = ParseFloat(config, "s4_WaitBetweenChangesMin_sec", debugName);
   _configParams.s4_WaitBetweenChangesMax_sec = ParseFloat(config, "s4_WaitBetweenChangesMax_sec", debugName);
-  _configParams.s4_WaitAnimTrigger = ParseAnimationTrigger(config, "s4_WaitAnimTrigger", debugName);
+  JsonTools::GetCladEnumFromJSON(config, "s4_WaitAnimTrigger", _configParams.s4_WaitAnimTrigger, debugName);
   // [min,max] range for head move  for step 5
   _configParams.s5_BodyAngleRelativeRangeMin_deg = ParseFloat(config, "s5_BodyAngleRelativeRangeMin_deg", debugName);
   _configParams.s5_BodyAngleRelativeRangeMax_deg = ParseFloat(config, "s5_BodyAngleRelativeRangeMax_deg", debugName);

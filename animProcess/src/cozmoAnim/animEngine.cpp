@@ -202,15 +202,21 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
   return RESULT_OK;
 }
 
-void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechStart & msg)
+void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechPrepare & msg)
 {
-  DEV_ASSERT(_ttsComponent, "AnimEngine.HandleMessage.TextToSpeechStart.InvalidTTSComponent");
+  DEV_ASSERT(_ttsComponent, "AnimEngine.TextToSpeechPrepare.InvalidTTSComponent");
   _ttsComponent->HandleMessage(msg);
 }
 
-void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechStop & msg)
+void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechDeliver & msg)
 {
-  DEV_ASSERT(_ttsComponent, "AnimEngine.HandleMessage.TextToSpeechStop.InvalidTTSComponent");
+  DEV_ASSERT(_ttsComponent, "AnimEngine.TextToSpeechDeliver.InvalidTTSComponent");
+  _ttsComponent->HandleMessage(msg);
+}
+
+void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechCancel & msg)
+{
+  DEV_ASSERT(_ttsComponent, "AnimEngine.TextToSpeechCancel.InvalidTTSComponent");
   _ttsComponent->HandleMessage(msg);
 }
 

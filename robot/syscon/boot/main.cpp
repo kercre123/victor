@@ -12,8 +12,6 @@
 #include "common.h"
 #include "hardware.h"
 
-//#define DISABLE_WDOG
-
 extern "C" void StartApplication(const uint32_t* stack, VectorPtr reset);
 
 static const uint16_t MAIN_EXEC_PRESCALE = 4; // Timer prescale
@@ -49,7 +47,7 @@ static bool boot_test(void) {
 
 void timer_init(void) {
   // Start our cheese watchdog
-  #ifndef DISABLE_WDOG
+  #ifndef DEBUG
   // Start the watchdog up
   IWDG->KR = 0xCCCC;
   IWDG->KR = 0x5555;
@@ -83,8 +81,8 @@ extern "C" void TIM14_IRQHandler(void) {
 
 int main(void) {
   Power::init();
-  timer_init();
   Analog::init();
+  timer_init();
 
   // If fingerprint is invalid, cert is invalid, or reset counter is zero
   // 1) Wipe flash
@@ -99,7 +97,7 @@ int main(void) {
     // Hardware watchdog trap
     Comms::run();
   }
-  
+
   // Clear reset pin flag (for reset detect).
   RCC->CSR |= RCC_CSR_RMVF;
 

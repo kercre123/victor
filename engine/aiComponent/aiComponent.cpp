@@ -79,7 +79,7 @@ void AIComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depende
     _aiComponents = std::make_unique<EntityType>();
     {
       auto* faceSelectionComp = new FaceSelectionComponent(*robot, robot->GetFaceWorld(), robot->GetMicDirectionHistory());
-      auto* compositeImageCache = new CompositeImageCache(robot->GetContext()->GetDataLoader()->GetFacePNGPaths());
+      auto* compositeImageCache = new CompositeImageCache(robot->GetContext()->GetDataLoader()->GetSpritePaths());
       
       _aiComponents->AddDependentComponent(AIComponentID::BehaviorComponent,          new BehaviorComponent());
       _aiComponents->AddDependentComponent(AIComponentID::ContinuityComponent,        new ContinuityComponent(*robot));

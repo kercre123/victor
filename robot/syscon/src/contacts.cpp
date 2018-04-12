@@ -106,10 +106,16 @@ extern "C" void USART2_IRQHandler(void) {
   
   // Receive data
   if (USART2->ISR & USART_ISR_RXNE) {
+    uint32_t status = USART2->ISR;
     volatile uint8_t rxd = USART2->RDR;
-
+    
     Analog::delayCharge();
-    if (rxDataIndex < sizeof(rxData.data)) {
+    
+    if( status & (USART_ISR_ORE | USART_ISR_FE) ) { //framing and/or overrun error
+      //rxd = USART2->RDR; //flush the rdr & shift register
+      //rxd = USART2->RDR;
+      USART2->ICR = USART_ICR_ORECF | USART_ICR_FECF; //clear flags
+    } else if (rxDataIndex < sizeof(rxData.data)) {
       rxData.data[rxDataIndex++] = rxd;
     }
   }

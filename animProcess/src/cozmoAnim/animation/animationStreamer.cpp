@@ -19,9 +19,8 @@
 #include "cozmoAnim/animation/animationStreamer.h"
 //#include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 
-#include "cannedAnimLib/cannedAnimationContainer.h"
-#include "cannedAnimLib/faceAnimationManager.h"
-#include "cannedAnimLib/proceduralFaceDrawer.h"
+#include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
+#include "cannedAnimLib/proceduralFace/proceduralFaceDrawer.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/animationAudioClient.h"
 #include "cozmoAnim/audio/proceduralAudioClient.h"
@@ -603,16 +602,17 @@ namespace Cozmo {
 
       if (_streamingAnimation == _proceduralAnimation) {
         _proceduralAnimation->Clear();
-        FaceAnimationManager::getInstance()->ClearAnimation(FaceAnimationManager::ProceduralAnimName);
+        auto* seqContainer = _context->GetDataLoader()->GetSpriteSequenceContainer();
+        seqContainer->ClearAnimation(SpriteSequenceContainer::ProceduralAnimName);
       }
 
-      // Reset the current FaceAnimationKeyFrame if there is one.
+      // Reset the current SpriteSequenceKeyFrame if there is one.
       // Note: This is currently the only keyframe that modifies a variable
       // as it's read and needs to be reset before the next time it's read,
       // which is why we're not resetting all tracks in the same way
-      auto & faceAnimTrack = _streamingAnimation->GetTrack<FaceAnimationKeyFrame>();
-      if (faceAnimTrack.HasFramesLeft()) {
-        auto & faceKeyFrame = faceAnimTrack.GetCurrentKeyFrame();
+      auto & spriteSeqTrack = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>();
+      if (spriteSeqTrack.HasFramesLeft()) {
+        auto & faceKeyFrame = spriteSeqTrack.GetCurrentKeyFrame();
         faceKeyFrame.Reset();
       }
 
@@ -1176,7 +1176,7 @@ namespace Cozmo {
     auto & recordHeadingTrack = anim->GetTrack<RecordHeadingKeyFrame>();
     auto & turnToRecordedHeadingTrack = anim->GetTrack<TurnToRecordedHeadingKeyFrame>();
     auto & eventTrack       = anim->GetTrack<EventKeyFrame>();
-    auto & faceAnimTrack    = anim->GetTrack<FaceAnimationKeyFrame>();
+    auto & spriteSeqTrack    = anim->GetTrack<SpriteSequenceKeyFrame>();
     
 
     if(!_startOfAnimationSent) {
@@ -1251,11 +1251,11 @@ namespace Cozmo {
       // Non-procedural faces (raw pixel data/images) take precedence over procedural faces (parameterized faces
       // like idles, keep alive, or normal animated faces)
       const bool shouldPlayFaceAnim = !IsTrackLocked((u8)AnimTrackFlag::FACE_IMAGE_TRACK) &&
-                                      faceAnimTrack.HasFramesLeft() &&
-                                      faceAnimTrack.GetCurrentKeyFrame().IsTimeToPlay(_streamingTime_ms - _startTime_ms);
+                                      spriteSeqTrack.HasFramesLeft() &&
+                                      spriteSeqTrack.GetCurrentKeyFrame().IsTimeToPlay(_streamingTime_ms - _startTime_ms);
       if(shouldPlayFaceAnim)
       {
-        auto & faceKeyFrame = faceAnimTrack.GetCurrentKeyFrame();
+        auto & faceKeyFrame = spriteSeqTrack.GetCurrentKeyFrame();
         const bool isGrayscale = faceKeyFrame.IsGrayscale();
         bool gotImage = false;
         if (isGrayscale) {
@@ -1295,7 +1295,7 @@ namespace Cozmo {
 
         if(faceKeyFrame.IsDone()) {
           faceKeyFrame.Reset();
-          faceAnimTrack.MoveToNextKeyFrame();
+          spriteSeqTrack.MoveToNextKeyFrame();
         }
       }
       else if(layeredKeyFrames.haveFaceKeyFrame)
@@ -1468,7 +1468,8 @@ namespace Cozmo {
     // Send animState message
     if (--_numTicsToSendAnimState == 0) {
       AnimationState msg;
-      msg.numProcAnimFaceKeyframes = FaceAnimationManager::getInstance()->GetNumFrames(FaceAnimationManager::ProceduralAnimName);
+      auto* seqContainer = _context->GetDataLoader()->GetSpriteSequenceContainer();
+      msg.numProcAnimFaceKeyframes = seqContainer->GetNumFrames(SpriteSequenceContainer::ProceduralAnimName);
       msg.lockedTracks             = _lockedTracks;
       msg.tracksInUse              = _tracksInUse;
 
@@ -1557,27 +1558,29 @@ namespace Cozmo {
     DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetFaceImage.NullProceduralAnimation");
     DEV_ASSERT(img.IsContinuous(), "AnimationStreamer.SetFaceImage.ImageIsNotContinuous");
     
-    FaceAnimationManager* faceAnimMgr = FaceAnimationManager::getInstance();
+    auto* seqContainer = _context->GetDataLoader()->GetSpriteSequenceContainer();
     
-    // Is proceduralAnimation already playing a FaceAnimationKeyFrame?
-    auto& faceAnimTrack = _proceduralAnimation->GetTrack<FaceAnimationKeyFrame>();
-    bool hasFaceAnimKeyFrame = !faceAnimTrack.IsEmpty();
+    // Is proceduralAnimation already playing a SpriteSequenceKeyFrame?
+    auto& spriteSeqTrack = _proceduralAnimation->GetTrack<SpriteSequenceKeyFrame>();
+    bool hasSpriteSeqKeyFrame = !spriteSeqTrack.IsEmpty();
     
-    // Clear FaceAnimationManager if not already playing
-    if (!hasFaceAnimKeyFrame) {
-      faceAnimMgr->ClearAnimation(FaceAnimationManager::ProceduralAnimName);
+    // Clear SpriteSequenceContainer if not already playing
+    if (!hasSpriteSeqKeyFrame) {
+      seqContainer->ClearAnimation(SpriteSequenceContainer::ProceduralAnimName);
     }
     
-    Result result = faceAnimMgr->AddProceduralImage(img, duration_ms);
+    Result result = seqContainer->AddProceduralImage(img, duration_ms);
     if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetFaceImage.AddImageFailed", "")))
     {
       return result;
     }
     
     // Add keyframe if one isn't already there
-    if (!hasFaceAnimKeyFrame) {
+    if (!hasSpriteSeqKeyFrame) {
       // Trigger time of keyframe is 0 since we want it to start playing immediately
-      result = _proceduralAnimation->AddKeyFrameToBack(FaceAnimationKeyFrame(FaceAnimationManager::ProceduralAnimName));
+      SpriteSequenceKeyFrame kf(SpriteSequenceContainer::ProceduralAnimName);
+      kf.SetSpriteSequenceContainer(_context->GetDataLoader()->GetSpriteSequenceContainer());
+      result = _proceduralAnimation->AddKeyFrameToBack(kf);
       if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetFaceImage.FailedToAddKeyFrame", "")))
       {
         return result;

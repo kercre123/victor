@@ -25,12 +25,16 @@
 
 #include <limits>
 
+// Forward declarations
 namespace Anki {
-namespace Util {
-namespace Data {
-class DataPlatform;
+  namespace Util {
+    namespace Data {
+      class DataPlatform;
+    }
+  }
 }
-}
+
+namespace Anki {
 namespace Cozmo {
 
 class SayTextAction : public IAction
@@ -74,43 +78,46 @@ public:
 
 protected:
 
+  // IAction interface methods
+  virtual void OnRobotSet() override final;
   virtual ActionResult Init() override;
   virtual ActionResult CheckIfDone() override;
 
-  virtual void OnRobotSet() override final;
-
 private:
 
+  // TTS parameters
   std::string                    _text;
   SayTextIntent                  _intent = SayTextIntent::Count;
   SayTextVoiceStyle              _style = SayTextVoiceStyle::Count;
   float                          _durationScalar       = 1.f;
   float                          _pitchScalar          = 0.f; // Adjust Cozmo voice processing pitch [-1.0, 1.0]
+  bool                           _fitToDuration        = false;
 
   // Tracks lifetime of TTS utterance for this action
   // ID 0 is reserved for "invalid".
   uint8_t                        _ttsID                = 0;
 
-  // State of this TTS utterance, as reported by animation process
-  // ID 0 is reserved for "invalid".
+  // State of this TTS utterance
   TextToSpeechState              _ttsState             = TextToSpeechState::Invalid;
 
-  //bool                           _isAudioReady         = false;
-  //Animation                      _animation;
-  AnimationTrigger               _animationTrigger     = AnimationTrigger::Count; // Count == use built-in animation
+  // Accompanying animation, if any
+  AnimationTrigger               _animTrigger          = AnimationTrigger::Count; // Count == use built-in animation
   u8                             _ignoreAnimTracks     = (u8)AnimTrackFlag::NO_TRACKS;
-  std::unique_ptr<IActionRunner> _playAnimationAction  = nullptr;
-  bool                           _fitToDuration        = false;
+  std::unique_ptr<IActionRunner> _animAction           = nullptr;
+
+  // Bookkeeping
   f32                            _timeout_sec          = 30.f;
   f32                            _expiration_sec       = 0.f;
   Signal::SmartHandle            _signalHandle;
 
-  // Call to start processing text to speech
-  void GenerateTtsAudio();
-
+  // VIC-2151: Fit-to-duration not supported on victor
   // Append animation by stitching animation trigger group animations together until the animation's duration is
-  // greater or equal to the provided duration
-  void UpdateAnimationToFitDuration(const float duration_ms);
+  // greater or equal to the provided
+  // void UpdateAnimationToFitDuration(const float duration_ms);
+
+  // Internal state machine
+  ActionResult TransitionToDelivering();
+  ActionResult TransitionToPlaying();
 
   // SayTextVoiceStyle lookup up by name
   using SayTextVoiceStyleMap = std::unordered_map<std::string, SayTextVoiceStyle>;
@@ -126,7 +133,7 @@ private:
       float rangeMax = std::numeric_limits<float>::max();;
       float rangeStepSize = 0.0f;
 
-      ConfigTrait();
+      ConfigTrait() = default;
       ConfigTrait(const Json::Value& json);
 
       float GetDuration(Util::RandomGenerator& randomGen) const;
@@ -137,7 +144,7 @@ private:
     std::vector<ConfigTrait> durationTraits;
     std::vector<ConfigTrait> pitchTraits;
 
-    SayTextIntentConfig();
+    SayTextIntentConfig() = default;
     SayTextIntentConfig(const std::string& intentName, const Json::Value& json, const SayTextVoiceStyleMap& styleMap);
 
     const ConfigTrait& FindDurationTraitTextLength(uint textLength) const;

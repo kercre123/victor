@@ -14,7 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorLookForFaceAndCube_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/events/animationTriggerHelpers.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "coretech/vision/engine/faceIdTypes.h"
 #include <set>
 

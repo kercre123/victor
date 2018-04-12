@@ -30,9 +30,9 @@ class CompositeImageCache : public IDependencyManagedComponent<AIComponentID>,
                             private Util::noncopyable
 {
 public:
-  CompositeImageCache(const RobotDataLoader::ImagePathMap& imageMap)
+  CompositeImageCache(const Util::CladEnumToStringMap<Vision::SpriteName>* spriteMap)
   : IDependencyManagedComponent<AIComponentID>(this, AIComponentID::CompositeImageCache)
-  , _imagePathMap(imageMap){}
+  , _spriteMap(spriteMap){}
   // Pass in the template and a map of quadrant name to image name
   // If an image with the same name has been built and cached, only the quadrants
   // different from the cached image will be re-drawn 
@@ -41,7 +41,11 @@ public:
                                       const Vision::CompositeImage& image);
 
   // Give behaviors a way to access the imagePathMap
-  const RobotDataLoader::ImagePathMap& GetImagePathMap(){ return _imagePathMap;}
+  const Util::CladEnumToStringMap<Vision::SpriteName>& GetSpriteMap(){ 
+    DEV_ASSERT(_spriteMap != nullptr, "CompositeImageCache.GetSpriteMap.Nullptr"); 
+    return *_spriteMap;
+  }
+
 private:
   struct CacheEntry{
     CacheEntry(s32 imageWidth, s32 imageHeight)
@@ -53,7 +57,7 @@ private:
     Vision::ImageRGBA preAllocatedImage;
   };
 
-  const RobotDataLoader::ImagePathMap& _imagePathMap;
+  const Util::CladEnumToStringMap<Vision::SpriteName>* _spriteMap;
   std::map<std::string, CacheEntry> _imageCache;
 
   void UpdateCacheEntry(CacheEntry& cacheEntry,

@@ -9,6 +9,7 @@
 #include "clad/externalInterface/messageShared.clad"
 #include "clad/types/actionTypes.clad"
 #include "clad/types/controllerChannels.clad"
+#include "clad/types/cubeAnimationTrigger.clad"
 #include "clad/types/customObjectMarkers.clad"
 #include "clad/types/debugConsoleTypes.clad"
 #include "clad/types/emotionTypes.clad"
@@ -485,6 +486,14 @@ message EnableVisionMode {
    bool       enable
 }
 
+message DevSubscribeVisionModes {
+  uint_32 bitFlags
+}
+
+message DevUnsubscribeVisionModes {
+  uint_32 bitFlags
+}
+
 // Rename given ID+oldName pair to use newName. For safety if current face with given ID
 // does not match oldName, nothing happens.
 // On success, a RobotLoadedKnownFace message with faceID and newName will be sent.
@@ -599,11 +608,6 @@ message SetDefaultHeadAndLiftState {
 
 message SetSparkedMusicState{
   AudioMetaData::SwitchState::Sparked sparkedMusicState
-}
-
-// A message for Game to inform Engine that Cozmo has been overfed and
-// should get the hiccups as a result
-message NotifyOverfeedingShouldTriggerHiccups{
 }
 
 // A message for Game to poll pyramid pre-reqs

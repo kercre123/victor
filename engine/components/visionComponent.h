@@ -323,6 +323,9 @@ struct DockingErrorSignal;
     std::vector<Point3f> _liftCrossBarSource;
 
   protected:
+    
+    // helper method --- unpacks bitflags representation into a set of vision modes
+    std::set<VisionMode> GetVisionModesFromFlags(u32 bitflags) const;
 
     bool _isInitialized = false;
     

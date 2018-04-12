@@ -1,0 +1,16 @@
+/** Clad enum that maps to CompositeImageMap resource assets
+*/
+
+
+namespace Anki {
+namespace Vision {
+
+
+enum uint_8 CompositeImageMap
+{
+  // Must be last element
+  Count
+}
+
+} // namespace Vision
+} // namespace Anki

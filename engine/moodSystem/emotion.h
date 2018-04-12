@@ -27,6 +27,7 @@ namespace Util {
   
 namespace Cozmo {
 
+class MoodDecayEvaulator;
 
 class Emotion
 {
@@ -36,7 +37,7 @@ public:
   
   void Reset();
   
-  void Update(const Anki::Util::GraphEvaluator2d& decayGraph, double currentTime, float timeDelta);
+  void Update(const MoodDecayEvaulator& evaluator, float timeDelta);            
   
   void  Add(float penalizedDeltaValue);
   void  SetValue(float newValue);

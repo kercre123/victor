@@ -1,0 +1,6 @@
+pynacl/
+node_modules/
+__pycache__/
+victorclad/
+msgbuffers/
+*.pyc

@@ -33,7 +33,6 @@ PRIVATE
   libffi.so.6
   libdl.so.2
   libz.so.1
-  libselinux.so.1
   libresolv.so.2
   libgmodule-2.0.so.0
   libpcre.so.1

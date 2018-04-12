@@ -484,8 +484,15 @@ void InternalStatesBehavior::BehaviorUpdate()
     // run and isn't already running
     
     // TODO:(bn) can behaviors be null?
-    if( !IsControlDelegated() && state._behavior->WantsToBeActivated() ) {
-      DelegateIfInControl(state._behavior.get() );
+    if( !IsControlDelegated() ) {
+      if( state._behavior->WantsToBeActivated() ) {
+        DelegateIfInControl( state._behavior.get() );
+      } else if( _lastTransitionTick == BaseStationTimer::getInstance()->GetTickCount() - 1 ) {
+        PRINT_NAMED_WARNING( "InternalStateBehavior.BehaviorUpdate.NoTransition",
+                             "There were no transitions out of state %s and the behavior %s still didn't activate!",
+                             state._name.c_str(),
+                             state._behaviorName.c_str() );
+      }
     }
     // else we'll just sit here doing nothing evaluating the conditions each tick
   }
@@ -533,7 +540,13 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
 
     if( state._behavior->WantsToBeActivated() ) {
       DelegateIfInControl(state._behavior.get() );
+    } else {
+      PRINT_NAMED_WARNING( "InternalStatesBehavior.TransitionToState.NoActivation",
+                           "Transitioning to state %s but behavior %s doesn't want to activate",
+                           state._name.c_str(),
+                           state._behaviorName.c_str() );
     }
+    _lastTransitionTick = BaseStationTimer::getInstance()->GetTickCount();
   }
 }
 

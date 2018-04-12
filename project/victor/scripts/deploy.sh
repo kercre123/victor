@@ -35,9 +35,15 @@ function usage() {
   echo "environment variables:"
   echo '  $ANKI_ROBOT_HOST        hostname or ip address of robot'
   echo '  $ANKI_BUILD_TYPE        build configuration {Debug,Release}'
-  echo '  $BUILD_ROOT             root dir of build artifacts containing {bin,lib,etc,data} dirs'
   echo '  $INSTALL_ROOT           root dir of installed files on target'
-  echo '  $STAGING_DIR            directory to hold staged artifacts before deploy to robot'
+  echo '  $STAGING_DIR            directory that holds staged artifacts before deploy to robot'
+}
+
+function logv() {
+  if [ $VERBOSE -eq 1 ]; then
+    echo -n "[$SCRIPT_NAME] "
+    echo $*;
+  fi
 }
 
 while getopts "hvrc:s:" opt; do
@@ -76,18 +82,31 @@ echo "ANKI_ROBOT_HOST: ${ANKI_ROBOT_HOST}"
 echo "   INSTALL_ROOT: ${INSTALL_ROOT}"
 
 : ${PLATFORM_NAME:="android"}
-: ${BUILD_ROOT:="${TOPLEVEL}/_build/${PLATFORM_NAME}/${ANKI_BUILD_TYPE}"}
 : ${LIB_INSTALL_PATH:="${INSTALL_ROOT}/lib"}
 : ${BIN_INSTALL_PATH:="${INSTALL_ROOT}/bin"}
 : ${RSYNC_BIN_DIR="${TOPLEVEL}/tools/rsync"}
-: ${STAGING_DIR:="${BUILD_ROOT}/staging"}
+: ${STAGING_DIR:="${TOPLEVEL}/_build/staging/${ANKI_BUILD_TYPE}"}
 
+# Remount rootfs read-write if necessary
+MOUNT_STATE=$(\
+    robot_sh "grep ' / ext4.*\sro[\s,]' /proc/mounts > /dev/null 2>&1 && echo ro || echo rw"\
+)
+[[ "$MOUNT_STATE" == "ro" ]] && logv "remount rw /" && robot_sh "/bin/mount -o remount,rw /"
+
+set +e
+( # TRY deploy
+logv "start deploy"
+
+set -e
+
+logv "create target dirs"
 robot_sh mkdir -p "${INSTALL_ROOT}"
 robot_sh mkdir -p "${INSTALL_ROOT}/etc"
 robot_sh mkdir -p "${LIB_INSTALL_PATH}"
 robot_sh mkdir -p "${BIN_INSTALL_PATH}"
 
 # install rsync binary and config if needed
+logv "install rsync if necessary"
 set +e
 robot_sh [ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]
 if [ $? -ne 0 ] || [ $FORCE_RSYNC_BIN -eq 1 ]; then
@@ -100,34 +119,38 @@ set -e
 # Stop any victor services. If services are allowed to run during deployment, exe and shared library 
 # files can't be released.  This may tie up enough disk space to prevent deployment of replacement files.
 # 
+logv "stop victor services"
 robot_sh "/bin/systemctl stop victor.target"
 
-# install.sh is a script that is run here by deploy.sh, but also independently by
-# bitbake when building the Victor OS.
-${SCRIPT_PATH}/install.sh ${BUILD_ROOT} ${STAGING_DIR}
-
-
 pushd ${STAGING_DIR} > /dev/null 2>&1
-
-# Since invoking rsync multiple times is expensive.
-# build an include file list so that we can run a single rsync command
-rm -rf ${BUILD_ROOT}/rsync.*.lst
-RSYNC_LIST="${BUILD_ROOT}/rsync.$$.lst"
-
-find . -type f > ${RSYNC_LIST}
 
 #
 # Use --inplace to avoid consuming temp space & minimize number of writes
 # Use --delete to purge files that are no longer present in build tree
 #
+logv "rsync"
 rsync -rlptD -uzvP \
   --inplace \
   --delete \
   --rsync-path=${DEVICE_RSYNC_BIN_DIR}/rsync.bin \
-  --files-from=${RSYNC_LIST} \
   -e ssh \
-  ./ root@${ANKI_ROBOT_HOST}:/
+  ./anki/ root@${ANKI_ROBOT_HOST}:/${INSTALL_ROOT}/
 
-rm -f "${RSYNC_LIST}"
+logv "finish deploy"
+) # End TRY deploy
+
+DEPLOY_RESULT=$?
+set -e
+
+if [ $DEPLOY_RESULT -eq 0 ]; then
+  logv "deploy succeeded"
+else
+  logv "deploy FAILED"
+fi
+
+# Remount rootfs read-write
+[[ "$MOUNT_STATE" == "ro" ]] && logv "remount ro /" &&  robot_sh "/bin/mount -o remount,ro /"
 
 popd > /dev/null 2>&1
+
+exit $DEPLOY_RESULT

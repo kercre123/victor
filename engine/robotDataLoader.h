@@ -14,7 +14,10 @@
 #define ANKI_COZMO_BASESTATION_ROBOT_DATA_LOADER_H
 
 #include "clad/types/animationTrigger.h"
+#include "clad/types/spriteNames.h"
+#include "clad/types/cubeAnimationTrigger.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "util/cladHelpers/cladEnumToStringMap.h"
 
 #include "util/helpers/noncopyable.h"
 #include <json/json.h>
@@ -31,6 +34,9 @@
 namespace Anki {
 
 namespace Util {
+template<class CladEnum>
+class CladEnumToStringMap;
+
 namespace Data {
 class DataPlatform;
 }
@@ -38,12 +44,12 @@ class DataPlatform;
 
 namespace Cozmo {
 
+// forward declarations
 class AnimationGroupContainer;
 class BackpackLightAnimationContainer;
 class CannedAnimationContainer;
 class CubeLightAnimationContainer;
 class CozmoContext;
-class AnimationTriggerResponsesContainer;
 
 class RobotDataLoader : private Util::noncopyable
 {
@@ -64,7 +70,6 @@ public:
   void LoadRobotConfigs();
 
   using FileJsonMap       = std::unordered_map<std::string, const Json::Value>;
-  using ImagePathMap      = std::unordered_map<std::string, std::string>;
   using BehaviorIDJsonMap = std::unordered_map<BehaviorID,  const Json::Value>;
 
   const FileJsonMap& GetEmotionEventJsons()   const { return _emotionEvents; }
@@ -73,8 +78,8 @@ public:
   CannedAnimationContainer* GetCannedAnimationContainer() const { return _cannedAnimations.get(); }
   CubeLightAnimationContainer* GetCubeLightAnimations() const { return _cubeLightAnimations.get(); }
   AnimationGroupContainer* GetAnimationGroups() const { return _animationGroups.get(); }
-  AnimationTriggerResponsesContainer* GetAnimationTriggerResponses() const { return _animationTriggerResponses.get(); }
-  AnimationTriggerResponsesContainer* GetCubeAnimationTriggerResponses() const { return _cubeAnimationTriggerResponses.get(); }
+  Util::CladEnumToStringMap<AnimationTrigger>* GetAnimationTriggerResponses() const { return _animationTriggerResponses.get(); }
+  Util::CladEnumToStringMap<CubeAnimationTrigger>* GetCubeAnimationTriggerResponses() const { return _cubeAnimationTriggerResponses.get(); }
   BackpackLightAnimationContainer* GetBackpackLightAnimations() const { return _backpackLightAnimations.get(); }
 
   bool HasAnimationForTrigger( AnimationTrigger ev );
@@ -94,7 +99,7 @@ public:
   const Json::Value& GetUserIntentConfig() const             { return _userIntentsConfig; }
 
   // images are stored as a map of stripped file name (no file extension) to full path
-  const ImagePathMap& GetFacePNGPaths()       const { return _facePNGPaths; }
+  const Util::CladEnumToStringMap<Vision::SpriteName>* GetSpritePaths()       const { assert(_spritePaths != nullptr); return _spritePaths.get(); }
 
   bool IsCustomAnimLoadEnabled() const;
 
@@ -128,8 +133,7 @@ private:
 
   void LoadDasBlacklistedAnimationTriggers();
   
-  void LoadFacePNGPaths();
-
+  void LoadSpritePaths();
 
   const CozmoContext* const _context;
   const Util::Data::DataPlatform* _platform;
@@ -146,12 +150,12 @@ private:
   std::unordered_map<int, std::vector<std::string>> _jsonFiles;
 
   // animation data
-  std::unique_ptr<CannedAnimationContainer>           _cannedAnimations;
-  std::unique_ptr<CubeLightAnimationContainer>        _cubeLightAnimations;
-  std::unique_ptr<AnimationGroupContainer>            _animationGroups;
-  std::unique_ptr<AnimationTriggerResponsesContainer> _animationTriggerResponses;
-  std::unique_ptr<AnimationTriggerResponsesContainer> _cubeAnimationTriggerResponses;
-  std::unique_ptr<BackpackLightAnimationContainer>    _backpackLightAnimations;
+  std::unique_ptr<CannedAnimationContainer>            _cannedAnimations;
+  std::unique_ptr<CubeLightAnimationContainer>         _cubeLightAnimations;
+  std::unique_ptr<AnimationGroupContainer>             _animationGroups;
+  std::unique_ptr<Util::CladEnumToStringMap<AnimationTrigger>>     _animationTriggerResponses;
+  std::unique_ptr<Util::CladEnumToStringMap<CubeAnimationTrigger>> _cubeAnimationTriggerResponses;
+  std::unique_ptr<BackpackLightAnimationContainer>     _backpackLightAnimations;
   TimestampMap _animFileTimestamps;
   TimestampMap _groupAnimFileTimestamps;
   TimestampMap _cubeLightAnimFileTimestamps;
@@ -170,7 +174,7 @@ private:
   Json::Value _dasEventConfig;
   Json::Value _userIntentsConfig;
   
-  ImagePathMap _facePNGPaths;
+  std::unique_ptr<Util::CladEnumToStringMap<Vision::SpriteName>> _spritePaths;
 
   bool                  _isNonConfigDataLoaded = false;
   std::mutex            _parallelLoadingMutex;

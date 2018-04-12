@@ -14,6 +14,7 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/components/movementComponent.h"
 #include "engine/robotManager.h"
 #include "engine/moodSystem/moodManager.h"
 #include "util/helpers/templateHelpers.h"
@@ -26,17 +27,24 @@ namespace Cozmo {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToUnexpectedMovement::BehaviorReactToUnexpectedMovement(const Json::Value& config)
 : ICozmoBehavior(config)
+, _unexpectedMovementCondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::UnexpectedMovement))
 {  
-  SubscribeToTags({
-    EngineToGameTag::UnexpectedMovement
-  });
+
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToUnexpectedMovement::WantsToBeActivatedBehavior() const
 {
-  return true;
+  return _unexpectedMovementCondition.AreConditionsMet(GetBEI());;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToUnexpectedMovement::InitBehavior()
+{
+  _unexpectedMovementCondition.Init(GetBEI());
+  _unexpectedMovementCondition.SetActive(GetBEI(), true);
 }
 
 
@@ -52,7 +60,8 @@ void BehaviorReactToUnexpectedMovement::OnBehaviorActivated()
   
   // Lock the wheels if the unexpected movement is behind us so we don't drive backward and delete the created obstacle
   // TODO: Consider using a different animation that drives forward instead of backward? (COZMO-13035)
-  const u8 tracksToLock = Util::EnumToUnderlying(_unexpectedMovementSide == UnexpectedMovementSide::BACK ?
+  const auto& unexpectedMovementSide = GetBEI().GetMovementComponent().GetUnexpectedMovementSide();
+  const u8 tracksToLock = Util::EnumToUnderlying(unexpectedMovementSide == UnexpectedMovementSide::BACK ?
                                                  AnimTrackFlag::BODY_TRACK :
                                                  AnimTrackFlag::NO_TRACKS);
   
@@ -62,18 +71,12 @@ void BehaviorReactToUnexpectedMovement::OnBehaviorActivated()
   AnimationTrigger reactionAnimation = AnimationTrigger::ANTICIPATED_ReactToUnexpectedMovement;
 
   DelegateIfInControl(new TriggerLiftSafeAnimationAction(reactionAnimation,
-                                                 kNumLoops, kInterruptRunning, tracksToLock), [this]()
+                                                         kNumLoops, kInterruptRunning, tracksToLock), [this]()
   {
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToUnexpectedMovement);
   });  
 }
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToUnexpectedMovement::AlwaysHandleInScope(const EngineToGameEvent& event)
-{
-  _unexpectedMovementSide = event.GetData().Get_UnexpectedMovement().movementSide;
-}
   
 }
 }

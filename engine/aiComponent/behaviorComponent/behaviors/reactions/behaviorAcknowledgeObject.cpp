@@ -26,7 +26,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iReactToObjectListener.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/visionComponent.h"
-#include "engine/events/animationTriggerHelpers.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -113,7 +113,7 @@ void BehaviorAcknowledgeObject::LoadConfig(const Json::Value& config)
 {
   using namespace JsonTools;
   
-  JsonTools::GetValueOptional(config,kReactionAnimGroupKey,_params.reactionAnimTrigger);
+  JsonTools::GetCladEnumFromJSON(config,kReactionAnimGroupKey,_params.reactionAnimTrigger, "BehaviorAcknowledgeObject");
   
   if(GetAngleOptional(config, kMaxTurnAngleKey, _params.maxTurnAngle_rad, true)) {
     PRINT_NAMED_DEBUG("ICozmoBehaviorPoseBasedAcknowledgement.LoadConfig.SetMaxTurnAngle",

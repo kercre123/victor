@@ -8,14 +8,11 @@
   "maxTimeToLookForFace_s": 3.0,
   "abortIfNoFaceFound": true,
 
-  "wantsToBeActivatedConditions": 
-  [
-    {
-      "conditionType": "BehaviorTimer",
-      "timerName": "FistBump",
-      "cooldown_s": 1200.0
-    }
-  ],
+  "wantsToBeActivatedCondition": {
+    "conditionType": "BehaviorTimer",
+    "timerName": "FistBump",
+    "cooldown_s": 1200.0
+  },
   
   // Should only be true for the non-sparks fist bump since we only want
   // freeplay fist bump to reset the cooldown timer in the trigger strategy.

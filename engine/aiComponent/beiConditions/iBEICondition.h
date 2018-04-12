@@ -60,6 +60,19 @@ public:
   void SetOwnerDebugLabel(const std::string& ownerLabel) { _ownerLabel = ownerLabel; }
   
   const std::string GetDebugLabel() const { return _debugLabel; }
+  
+  struct DebugFactors {
+    bool operator==(const DebugFactors& other) const { return ((name==other.name) && (value==other.value)); }
+    DebugFactors(const std::string& n, const std::string& v) : name(n), value(v) {}
+    std::string name;
+    std::string value;
+  };
+  using DebugFactorsList = std::vector<DebugFactors>;
+  
+  // Report here whatever factors influence the AreConditionsMetInternal. If the "value" or "name"
+  // change, it will trigger some debug output.
+  // try not to return two elements with the same "name"
+  virtual DebugFactorsList GetDebugFactors() const { return {}; };
 
 protected:
 
@@ -77,19 +90,7 @@ protected:
   // will be automatically managed by the SetActive infrastructure.
   virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const {};
   
-  struct DebugFactors {
-    bool operator==(const DebugFactors& other) const { return ((name==other.name) && (value==other.value)); }
-    DebugFactors(const std::string& n, const std::string& v) : name(n), value(v) {}
-    std::string name;
-    std::string value;
-  };
-  using DebugFactorsList = std::vector<DebugFactors>;
-  
-  // Report here whatever factors influence the AreConditionsMetInternal. If the "value" or "name"
-  // change, it will trigger some debug output. 
-  // try not to return two elements with the same "name"
-  virtual DebugFactorsList GetDebugFactors() const { return {}; };
-  
+  static const char* const kConditionTypeKey;
 
 private:
   

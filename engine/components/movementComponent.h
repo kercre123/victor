@@ -62,6 +62,12 @@ public:
   // - Cozmo is stuck on an object and is unable to turn
   void CheckForUnexpectedMovement(const RobotState& robotState);
   
+  bool IsUnexpectedMovementDetected() const { return _unexpectedMovement.IsDetected(); }
+  
+  UnexpectedMovementSide GetUnexpectedMovementSide() const { return IsUnexpectedMovementDetected() ?
+                                                                    _unexpectedMovementSide        :
+                                                                    UnexpectedMovementSide::UNKNOWN; }
+  
   // True if any motor speed (head, left, or wheels) is non-zero in most recent RobotState message
   bool   IsMoving()        const { return _isMoving; }
   
@@ -136,6 +142,14 @@ public:
                          const f32 accel_rad_per_sec2,
                          const f32 duration_sec = 0.f,
                          MotorActionID* actionID_out = nullptr);
+
+  // Sends raw wheel commands to robot
+  // Generally, you should be using an action instead of calling this directly
+  // unless you have a need to run the wheels for an indeterminate amount of time.
+  Result DriveWheels(const f32 lWheel_speed_mmps,
+                     const f32 rWheel_speed_mmps,
+                     const f32 lWheel_accel_mmps2,
+                     const f32 rWheel_accel_mmps2);
   
   // Sends a message to the robot to turn in place to the specified angle.
   // When the command is received by the robot, it returns a MotorActionAck
@@ -183,7 +197,7 @@ public:
   
   bool IsDirectDriving() const { return ((_drivingWheels || _drivingHead || _drivingLift) && !_ignoreDirectDrive); }
   
-  u8 GetMaxUnexpectedMovementCount() const { return kMaxUnexpectedMovementCount; }
+  u8 GetMaxUnexpectedMovementCount() const { return UnexpectedMovement::kMaxUnexpectedMovementCount; }
   
 private:
   
@@ -253,10 +267,13 @@ private:
     
     UnexpectedMovement() { Reset(); }
     
+    static const u8  kMaxUnexpectedMovementCount;
+    
     u8          GetCount() const { return _count; }
     TimeStamp_t GetStartTime() const { return _startTime; }
     void        GetAvgWheelSpeeds(f32& left, f32& right) const;
     
+    bool IsDetected() const;
     void Increment(u8 countInc, f32 leftSpeed_mmps, f32 rightSpeed_mmps, TimeStamp_t currentTime);
     void Decrement();
     void Reset();
@@ -264,9 +281,10 @@ private:
   
   UnexpectedMovement _unexpectedMovement;
   
+  UnexpectedMovementSide _unexpectedMovementSide = UnexpectedMovementSide::UNKNOWN;
+  
   const f32 kGyroTol_radps                 = DEG_TO_RAD(10);
   const f32 kWheelDifForTurning_mmps       = 30;
-  const u8  kMaxUnexpectedMovementCount    = 10;
   const f32 kMinWheelSpeed_mmps            = 20;
   const f32 kExpectedVsActualGyroTol_radps = 0.2f;
   

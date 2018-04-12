@@ -12,12 +12,13 @@
 
 
 #include "engine/moodSystem/emotion.h"
+
+#include "engine/moodSystem/moodDecayEvaluator.h"
 #include "util/console/consoleInterface.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include <assert.h>
-
 
 namespace Anki {
 namespace Cozmo {
@@ -30,7 +31,6 @@ static constexpr float kEmotionValueMax     =  1.0f;
 #if REMOTE_CONSOLE_ENABLED
 static const char* kEmotionSectionName = "Mood.Emotion";
 #endif // REMOTE_CONSOLE_ENABLED
-CONSOLE_VAR(bool,     kEnableEmotionDecay,       kEmotionSectionName, true);
 CONSOLE_VAR(uint32_t, kMaxEmotionHistorySamples, kEmotionSectionName,  128);
 
 Emotion::Emotion()
@@ -99,26 +99,13 @@ float Emotion::GetHistoryValueSecondsAgo(float secondsBackwards) const
 }
   
   
-void Emotion::Update(const Anki::Util::GraphEvaluator2d& decayGraph, double currentTime, float timeDelta)
+void Emotion::Update(const MoodDecayEvaulator& evaluator, float timeDelta_s)
 {
-  if (kEnableEmotionDecay)
-  {
-    const float prevDecayScalar = decayGraph.EvaluateY(_timeDecaying);
-    assert(prevDecayScalar >= 0.0f);
-    
-    _timeDecaying += timeDelta;
-    
-    const float newDecayScalar = decayGraph.EvaluateY(_timeDecaying);
-    assert(newDecayScalar >= 0.0f);
-    
-    // delta scalar effectively undoes the previous scale and applies the new one
-    const float deltaScalar = FLT_GT(prevDecayScalar, 0.0f) ? (newDecayScalar / prevDecayScalar) : newDecayScalar;
-    
-    const float newValue = _value * deltaScalar;
-    _value = newValue;
-  }
+  _value = evaluator.EvaluateDecay(_value, _timeDecaying, timeDelta_s);
+
+  _timeDecaying += timeDelta_s;
   
-  _history.push_back( HistorySample(_value, timeDelta) );
+  _history.push_back( HistorySample(_value, timeDelta_s) );
 }
 
 

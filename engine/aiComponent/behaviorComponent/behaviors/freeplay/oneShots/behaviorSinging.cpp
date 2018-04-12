@@ -22,7 +22,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/events/animationTriggerHelpers.h"
+#include "util/cladHelpers/cladFromJSONHelpers.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"

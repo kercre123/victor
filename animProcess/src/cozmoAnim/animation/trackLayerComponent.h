@@ -19,7 +19,7 @@
 
 #include "coretech/common/shared/types.h"
 
-#include "cannedAnimLib/animation.h"
+#include "cannedAnimLib/cannedAnims/animation.h"
 
 #include "clad/types/keepFaceAliveParameters.h"
 

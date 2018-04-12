@@ -54,15 +54,6 @@ void Comms::run(void) {
   // CRC Poly
   CRC->INIT = ~0;
 
-  // Configure our GPIO to be wired into USART1
-  BODY_TX::alternate(0);  // USART1_TX
-  BODY_TX::speed(SPEED_HIGH);
-  BODY_TX::mode(MODE_ALTERNATE);
-
-  BODY_RX::alternate(0);  // USART1_RX
-  BODY_RX::speed(SPEED_HIGH);
-  BODY_RX::mode(MODE_ALTERNATE);
-
   // Configure our USART1 (Start interrupt)
   USART1->BRR = SYSTEM_CLOCK / COMMS_BAUDRATE;
   USART1->CR3 = USART_CR3_DMAT | USART_CR3_OVRDIS;
@@ -71,7 +62,6 @@ void Comms::run(void) {
               | USART_CR1_TE
               | USART_CR1_CMIE
               | USART_CR1_UE;
-
 
   // Setup our constants for outbound data
   outbound.header.sync_bytes = SYNC_BODY_TO_HEAD;
@@ -178,6 +168,7 @@ extern "C" void USART1_IRQHandler(void) {
   }
 
   // Emergency eject in case of recovery mode
+  BODY_TX::set();
   BODY_TX::mode(MODE_ALTERNATE);
 
   switch (inbound.header.payload_type) {
