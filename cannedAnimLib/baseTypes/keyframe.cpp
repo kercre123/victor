@@ -332,7 +332,9 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         return true;
       }
 
-      _currentTime_ms += ANIM_TIME_STEP_MS;
+      // Short term fix for VIC-2407: IsDone is called twice per tick, so divide time step by 2
+      // Be careful of calling IsDone until a longer term fix is implemented
+      _currentTime_ms += ANIM_TIME_STEP_MS/2;
 
       // For canned animations we check if GetFaceImage() has been called as many
       // times as there are frames.
