@@ -515,6 +515,13 @@ static robot_sr_t* spine_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8
 {
   //XXX: implement me!
   //return NULL;
+  
+  ConsolePrintf("spineMot %u %u %u %u %u %u\n", NN, sensor, treadL, treadR, lift, head);
+  memset( srbuf, 0, (1+NN)*sizeof(robot_sr_t) );
+  if( !NN )
+    throw ERROR_BAD_ARG;
+  
+  return (robot_sr_t*)srbuf;
 }
 
 //-----------------------------------------------------------------------------

@@ -205,6 +205,7 @@ typedef int error_t;
 #define ERROR_SPINE_PKT_CHECKSUM          412 //received packet with bad checksum (bad wire? check firmware versions)
 #define ERROR_SPINE_PKT_TIMEOUT           413 //timeout waiting for spine packets (check power. bad spine wire?)
 #define ERROR_SPINE_CMD_TIMEOUT           414 //timeout waiting for response to spine command (check power. check firmware versions)
+#define ERROR_SPINE_POWER                 415 //bad power from spine cable
 
 //<export heading> SWD Errors (mcu programming interface)
 #define ERROR_SWD_CHIPINIT                420 // failed to initialze mcu core over SWD (check power & wiring)

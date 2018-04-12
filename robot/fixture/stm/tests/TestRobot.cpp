@@ -4,6 +4,7 @@
 #include "cmd.h"
 #include "console.h"
 #include "contacts.h"
+#include "dut_uart.h"
 #include "emrf.h"
 #include "meter.h"
 #include "portable.h"
@@ -188,21 +189,9 @@ const char* DBG_cmd_substitution(const char *line, int len)
 #define DETECT_CURRENT_MA   100
 #define SYSCON_CHG_PWR_DELAY_MS 250 /*delay from robot's on-charger detect until charging starts*/
 
-int detect_ma = 0; int detect_mv = 0;
+int detect_ma = 0;
 bool TestRobotDetect(void)
 {
-  if( g_fixmode == FIXMODE_ROBOT1 )
-  {
-    //ROBOT1 connected to stump via spine cable. Check for power input.
-    int vdut_mv = Meter::getVoltageMv(PWR_DUTVDD,0);
-    
-    //running average filter, len=2^oversample
-    const int oversample = 6;
-    detect_mv = ( ((1<<oversample)-1)*detect_mv + vdut_mv ) >> oversample;
-    
-    return vdut_mv > 3000;    
-  }
-  
   //on test cleanup/exit, let charger kick back in so we can properly detect removal
   int chargeDelay = (g_isDevicePresent && !Board::powerIsOn(PWR_VEXT)) ? SYSCON_CHG_PWR_DELAY_MS : 0; //condition from app::WaitForDeviceOff()
   
@@ -219,12 +208,31 @@ bool TestRobotDetect(void)
   return i_ma > DETECT_CURRENT_MA || (i_ma > PRESENT_CURRENT_MA && g_isDevicePresent);
 }
 
+int detect_mv = 0;
+void TestRobotDetectSpine(void)
+{
+  rcomSetTarget(1); //rcom -> spine cable
+  
+  //ROBOT1 connected to stump via spine cable. Check for power input.
+  //if( g_fixmode == FIXMODE_ROBOT1 )
+    detect_mv = Meter::getVoltageMv(PWR_DUTVDD,6);
+  //else
+  //  detect_mv = 0;
+  
+  ConsolePrintf("spine voltage %imV\n", detect_mv);
+  if( detect_mv < 3000 || detect_mv > 5000 )
+    throw ERROR_SPINE_POWER;
+}
+
 void TestRobotCleanup(void)
 {
   detect_ma = 0;
+  detect_mv = 0;
   Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT);
   //ConsolePrintf("----DBG: i=%imA\n", Meter::getCurrentMa(PWR_VEXT,4) );
+  DUT_UART::deinit(); //used by rcom/spine layers
+  rcomSetTarget(0); //charge contacts
 }
 
 void read_robot_info_(void)
@@ -254,23 +262,21 @@ void read_robot_info_(void)
 void TestRobotInfo(void)
 {
   Board::powerOn(PWR_VBAT); //XXX Debug: work on body pcba w/o battery
-  
-  if( g_fixmode == FIXMODE_ROBOT1 )
-    ConsolePrintf("detect voltage avg %imV\n", detect_mv);
-  else
-    ConsolePrintf("detect current avg %i mA\n", detect_ma);
+  ConsolePrintf("detect current avg %i mA\n", detect_ma);
   
   ConsolePrintf("Resetting comms interface\n");
-  Board::powerOff(PWR_VEXT, 500); //turn power off to disable charging
-  Contacts::setModeRx();
+  if( g_fixmode == FIXMODE_ROBOT1 ) {
+    DUT_UART::deinit(); //spine comms
+  } else {
+    Board::powerOff(PWR_VEXT, 500); //turn power off to disable charging
+    Contacts::setModeRx();
+  }
   
   read_robot_info_();
   
   //DEBUG: console bridge, manual testing
   if( g_fixmode == FIXMODE_ROBOT0 )
     TestCommon::consoleBridge(TO_CONTACTS, 0, 0, BRIDGE_OPT_LINEBUFFER, DBG_cmd_substitution);
-  if( g_fixmode == FIXMODE_ROBOT1 )
-    TestCommon::consoleBridge(TO_CONTACTS, 1000, 0, BRIDGE_OPT_LINEBUFFER, DBG_cmd_substitution);
   //-*/
 }
 
@@ -707,7 +713,11 @@ TestFunction* TestRobot0GetTests(void) {
 
 TestFunction* TestRobot1GetTests(void) {
   static TestFunction m_tests[] = {
+    TestRobotDetectSpine,
     TestRobotInfo,
+    TestRobotSensors,
+    //TestRobotMotors,
+    //ChargeTest,
     NULL,
   };
   return m_tests;
