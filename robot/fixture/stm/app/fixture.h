@@ -200,6 +200,12 @@ typedef int error_t;
 #define ERROR_TESTPORT_CMD_FAILED         404 //returned fail code
 #define ERROR_TESTPORT_RX_ERROR           405 //driver (uart) overflow or dropped chars detected
 
+#define ERROR_SPINE_RX_ERROR              410 //driver (uart) overflow or dropped chars detected (internal error - Anki code fault)
+#define ERROR_SPINE_PKT_UNSUPPORTED_TYPE  411 //received unsuppoted packet type (check firmware versions)
+#define ERROR_SPINE_PKT_CHECKSUM          412 //received packet with bad checksum (bad wire? check firmware versions)
+#define ERROR_SPINE_PKT_TIMEOUT           413 //timeout waiting for spine packets (check power. bad spine wire?)
+#define ERROR_SPINE_CMD_TIMEOUT           414 //timeout waiting for response to spine command (check power. check firmware versions)
+
 //<export heading> SWD Errors (mcu programming interface)
 #define ERROR_SWD_CHIPINIT                420 // failed to initialze mcu core over SWD (check power & wiring)
 #define ERROR_SWD_INIT_FAIL               421 // failed to initialze mcu core over SWD (check power & wiring)

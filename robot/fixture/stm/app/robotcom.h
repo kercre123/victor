@@ -45,6 +45,12 @@ const int ccr_sr_cnt[12] = {0,2,4,2,2,2,2,4,2,1,1,4}; //number of CCC sensor fie
 //data conversion
 #define RCOM_BAT_RAW_TO_MV(raw)     (((raw)*2800)>>11)  /*robot_sr_t::bat.raw (adc) to millivolts*/
 
+//debug opts
+#define RCOM_PRINT_LEVEL_DEFAULT      0
+#define RCOM_PRINT_LEVEL_CMD          1
+#define RCOM_PRINT_LEVEL_CMD_RSP      3
+#define RCOM_PRINT_LEVEL_CMD_DAT_RSP  7
+
 typedef struct {
   uint32_t hw_rev;
   uint32_t hw_model;
@@ -63,39 +69,18 @@ typedef union {
   struct { int32_t pktCnt; } fccRx; //Fcc mode packet rx (int32)
 } robot_sr_t;
 
+void          rcomSetTarget(bool spine_nCCC); //select charge contacts or spine for command target (sticky)
+
 uint32_t      rcomEsn(); //read robot ESN (Head)
 robot_bsv_t*  rcomBsv(); //read body serial+version info
-robot_sr_t*   rcomMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, int cmd_opts = CMD_OPTS_DEFAULT);
-robot_sr_t*   rcomGet(uint8_t NN, uint8_t sensor, int cmd_opts = CMD_OPTS_DEFAULT); //NN = #drops (sr vals). returns &sensor[0] of [NN-1]
+robot_sr_t*   rcomMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, int printlvl = RCOM_PRINT_LEVEL_DEFAULT);
+robot_sr_t*   rcomGet(uint8_t NN, uint8_t sensor, int printlvl = RCOM_PRINT_LEVEL_DEFAULT); //NN = #drops (sr vals). returns &sensor[0] of [NN-1]
 void          rcomFcc(uint8_t mode, uint8_t cn); //RCOM_FCC_MODE_, {0..39}
-//void          rcomRlg(uint8_t idx);
+void          rcomRlg(uint8_t idx);
 void          rcomEng(uint8_t idx, uint32_t val);
 void          rcomLfe(uint8_t idx, uint32_t val);
 void          rcomSmr(uint8_t idx, uint32_t val);
 uint32_t      rcomGmr(uint8_t idx);
-
-//-----------------------------------------------------------------------------
-//                  Spine HAL
-//-----------------------------------------------------------------------------
-
-#include "../../syscon/schema/messages.h"
-#include "spine_crc.h"
-
-typedef struct {
-  SpineMessageHeader  header;
-  union {
-    HeadToBody        h2b;
-    BodyToHead        b2h;
-    MicroBodyToHead   ub2h;
-    ContactData       contact;
-    VersionInfo       bodyvers;
-    AckMessage        ack;
-  } payload;
-  SpineMessageFooter  footer;
-} spinePacket_t;
-
-int             spineSend(uint8_t *payload, PayloadId type);
-spinePacket_t*  spineReceive(int timeout_us = 10000);
 
 
 #endif //ROBOTCOM_H

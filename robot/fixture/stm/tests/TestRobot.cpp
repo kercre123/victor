@@ -300,7 +300,7 @@ void TestRobotSensors(void)
 typedef struct { int fwd_mid; int fwd_avg; int fwd_travel; int rev_mid; int rev_avg; int rev_travel; } motor_speed_t;
 static motor_speed_t* tread_test_(uint8_t sensor, int8_t power)
 {
-  const int cmd_opts = (CMD_OPTS_DEFAULT);// & ~(CMD_OPTS_LOG_RSP | CMD_OPTS_LOG_ASYNC));
+  const int printlvl = RCOM_PRINT_LEVEL_DEFAULT;
   static motor_speed_t test;
   memset(&test, 0, sizeof(test));
   robot_sr_t* psr;
@@ -311,27 +311,27 @@ static motor_speed_t* tread_test_(uint8_t sensor, int8_t power)
     throw ERROR_BAD_ARG;
   
   //Forward
-  int start_pos = rcomGet(1, sensor, cmd_opts)[0].enc.pos; //get the idle start position
-  psr = rcomMot(100, sensor, pwrL, pwrR, 0, 0 , cmd_opts);
+  int start_pos = rcomGet(1, sensor, printlvl)[0].enc.pos; //get the idle start position
+  psr = rcomMot(100, sensor, pwrL, pwrR, 0, 0 , printlvl);
   test.fwd_mid = psr[49].enc.speed;
   for(int x=10; x<90; x++)
     test.fwd_avg += psr[x].enc.speed;
   test.fwd_avg /= (90-10);
   
   Timer::delayMs(50); //wait for tread to stop spinning
-  int end_pos = rcomGet(1, sensor, cmd_opts)[0].enc.pos;
+  int end_pos = rcomGet(1, sensor, printlvl)[0].enc.pos;
   test.fwd_travel = end_pos - start_pos;
   
   //Reverse
   start_pos = end_pos;
-  psr = rcomMot(100, sensor, (-1)*pwrL, (-1)*pwrR, 0, 0 , cmd_opts);
+  psr = rcomMot(100, sensor, (-1)*pwrL, (-1)*pwrR, 0, 0 , printlvl);
   test.rev_mid = psr[49].enc.speed;
   for(int x=10; x<90; x++)
     test.rev_avg += psr[x].enc.speed;
   test.rev_avg /= (90-10);
   
   Timer::delayMs(50); //wait for tread to stop spinning
-  end_pos = rcomGet(1, sensor, cmd_opts)[0].enc.pos;
+  end_pos = rcomGet(1, sensor, printlvl)[0].enc.pos;
   test.rev_travel = end_pos - start_pos;
   
   return &test;
