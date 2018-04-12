@@ -74,7 +74,7 @@ public:
                                             class className: public Anki::Util::DasMsg \
                                             { \
                                             public: \
-                                              className(const char* format, ...) { va_list args; va_start(args, format); formatEventValue(format, args); va_end(args); } \
+                                              className(const char* format, ...) __attribute__((format(printf,2,3))) { va_list args; va_start(args, format); formatEventValue(format, args); va_end(args); } \
                                               virtual const char* eventName() { return eventNameStr; } \
                                             };
 
