@@ -12,6 +12,10 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+
+#include <readline/readline.h>
+#include <readline/history.h>
+
 #include "signal.h"
 
 @implementation BleCentral
@@ -573,7 +577,6 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
            * Commenting out for visibility because in next pass, going
            * to use this code again to show OTA progress bar.
            */
-          
           if(_currentCommand == "ota-progress" && !_readyForNextCommand) {
             if(_otaStatusCode != 2) {
               _readyForNextCommand = true;
@@ -840,29 +843,27 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   if(_verbose) [self printSuccess:"### Successfully Created Encrypted Channel ###"];
   
   dispatch_async(_commandQueue, [self]{
-    char input[128];
+    char* input;
+    
+    NSString* shellName = @"vector-????";
+    if(_peripheral.name.length >= 4) {
+      shellName = [_peripheral.name substringFromIndex:(_peripheral.name.length - 4)];
+    }
+    int vColor = [_colorArray[(_commVersion - 1) % _colorArray.count] intValue];
+    
+    char prompt[128];
+    sprintf(prompt, "\033[0;%dmvector-%s#\033[0m ", vColor, [shellName UTF8String]);
+    
     // Start shell
     while(true) {
       if(!_readyForNextCommand) {
         continue;
       }
       
-      memset(input, 0, sizeof(input));
+      input = readline((const char*)prompt);
       
-      NSString* shellName = @"vector-????";
-      if(_peripheral.name.length >= 4) {
-        shellName = [_peripheral.name substringFromIndex:(_peripheral.name.length - 4)];
-      }
-      
-      int vColor = [_colorArray[(_commVersion - 1) % _colorArray.count] intValue];
-      
-      printf("\033[0;%dmvector-%s#\033[0m ", vColor, [shellName UTF8String]);
-      fgets(input, sizeof(input), stdin);
-      
-      for(int i = 1; i < sizeof(input); i++) {
-        if(input[i] == '\0' && input[i-1] == '\n') {
-          input[i-1] = '\0';
-        }
+      if(strlen(input) > 0) {
+        add_history(input);
       }
       
       std::vector<std::string> words = [self GetWordsFromLine:input];
@@ -944,6 +945,8 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         _readyForNextCommand = true;
         _currentCommand = "";
         [self printHelp];
+      } else if(!strcmp(words[0].c_str(), "exit")) {
+        exit(0);
       } else {
         printf("Unrecognized command\n");
         _readyForNextCommand = true;
