@@ -248,7 +248,7 @@ void connectCallback(GObject *source_object, GAsyncResult *result, gpointer user
   g_mutex_unlock(&connectMutex);
 }
 
-static const char hiddenAgentPath[] = "/tmp/vic-switchboard/connman-agent";
+static const char* const hiddenAgentPath = "/tmp/vic-switchboard/connman-agent";
 
 static void HiddenAPCallback(GDBusConnection *connection,
                       const gchar *sender,
@@ -350,7 +350,7 @@ bool RegisterAgentHidden(struct WPAConnectInfo *wpaConnectInfo)
                                               wpaConnectInfo,
                                               nullptr,
                                               &error);
-  if (error) {
+  if (agentId == 0 || error != NULL) {
     loge("Error registering agent object");
     return false;
   }
@@ -891,10 +891,6 @@ WiFiState GetWiFiState() {
     }
   }
 
-  if(HasInternet()) {
-    wifiState.connState = WiFiConnState::ONLINE;
-  }
-
   return wifiState;
 }
 
@@ -986,12 +982,6 @@ bool GetIpFromHostName(char* hostName, char* ipAddressOut) {
   strcpy(ipAddressOut, inet_ntoa(*ip[0]));
 
   return true;
-}
-
-bool HasInternet() {
-  std::string google = "google.com";
-  std::string amazon = "amazon.com";
-  return CanConnectToHostName((char*)google.c_str()) || CanConnectToHostName((char*)amazon.c_str());
 }
 
 bool IsAccessPointMode() {
