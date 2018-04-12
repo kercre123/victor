@@ -42,6 +42,10 @@
   {
     "feature": "Singing",
     "enabled": true
+  },
+  {
+    "feature": "Exploring",
+    "enabled": true
   }
 ]
 

@@ -584,7 +584,12 @@ SimpleMoodType MoodManager::GetSimpleMood() const
 {
   const float stimulated = GetEmotion(EmotionType::Stimulated).GetValue();
   const float confident  = GetEmotion(EmotionType::Confident ).GetValue();
+  SimpleMoodType ret = GetSimpleMood( stimulated, confident );
+  return ret;
+}
 
+SimpleMoodType MoodManager::GetSimpleMood(float stimulated, float confident)
+{
   // low stim takes precedence because we don't want to annoy people
   if( stimulated <= 0.2f ) {
     return SimpleMoodType::LowStim;
@@ -606,6 +611,38 @@ SimpleMoodType MoodManager::GetSimpleMood() const
   // aren't provided)
 }
 
+bool MoodManager::DidSimpleMoodTransitionThisTick(SimpleMoodType from, SimpleMoodType to) const
+{
+  bool ret = false;
+  SimpleMoodType currMood = GetSimpleMood();
+  if( currMood == to ) {
+    const float prevStim = GetEmotion( EmotionType::Stimulated ).GetHistoryValueTicksAgo( 1 );
+    const float prevConf  = GetEmotion( EmotionType::Confident ).GetHistoryValueTicksAgo( 1 );
+    SimpleMoodType oldMood = GetSimpleMood( prevStim, prevConf );
+    ret = (oldMood != currMood) && (oldMood == from);
+  }
+  return ret;
+}
+  
+bool MoodManager::DidSimpleMoodTransitionThisTickFrom(SimpleMoodType from) const
+{
+  const float prevStim = GetEmotion( EmotionType::Stimulated ).GetHistoryValueTicksAgo( 1 );
+  const float prevConf  = GetEmotion( EmotionType::Confident ).GetHistoryValueTicksAgo( 1 );
+  SimpleMoodType oldMood = GetSimpleMood( prevStim, prevConf );
+  SimpleMoodType currMood = GetSimpleMood();
+  const bool ret = (oldMood != currMood) && (oldMood == from);
+  return ret;
+}
+  
+bool MoodManager::DidSimpleMoodTransitionThisTick() const
+{
+  const float prevStim = GetEmotion( EmotionType::Stimulated ).GetHistoryValueTicksAgo( 1 );
+  const float prevConf  = GetEmotion( EmotionType::Confident ).GetHistoryValueTicksAgo( 1 );
+  SimpleMoodType oldMood = GetSimpleMood( prevStim, prevConf );
+  SimpleMoodType currMood = GetSimpleMood();
+  const bool ret = (oldMood != currMood);
+  return ret;
+}
   
 #if SEND_MOOD_TO_VIZ_DEBUG
 void MoodManager::AddEvent(const char* eventName)

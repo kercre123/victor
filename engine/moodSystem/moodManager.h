@@ -142,6 +142,11 @@ public:
   
   SimpleMoodType GetSimpleMood() const;
   
+  // true if SimpleMoodType transitioned this tick (with options for from/to)
+  bool DidSimpleMoodTransitionThisTick() const;
+  bool DidSimpleMoodTransitionThisTickFrom(SimpleMoodType from) const;
+  bool DidSimpleMoodTransitionThisTick(SimpleMoodType from, SimpleMoodType to) const;
+  
   float GetLastUpdateTime() const { return _lastUpdateTime; }
 
   // check if the passed in emotion event exists in our map
@@ -164,6 +169,9 @@ public:
   static float GetCurrentTimeInSeconds();
   
 private:
+  
+  static SimpleMoodType GetSimpleMood(float stimulation, float confidence);
+  
   void ReadMoodConfig(const Json::Value& inJson);
   // Load in all data-driven emotion events
   void LoadEmotionEvents(const RobotDataLoader::FileJsonMap& emotionEventData);   

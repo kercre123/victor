@@ -18,9 +18,10 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionCompound.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionConsoleVar.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCubeTapped.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionEmotion.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionEyeContact.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionFacePositionUpdated.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionFrustration.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionFeatureGate.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectMoved.h"
@@ -33,6 +34,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPlacedOnSlope.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotShaken.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotTouched.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionSimpleMood.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimedDedup.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTriggerWordPending.h"
@@ -83,6 +85,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
       strategy = std::make_shared<ConditionConsoleVar>(config);
       break;
     }
+    case BEIConditionType::Emotion:
+    {
+      strategy = std::make_shared<ConditionEmotion>(config);
+      break;
+    }
     case BEIConditionType::EyeContact:
     {
       strategy = std::make_shared<ConditionEyeContact>(config);
@@ -93,9 +100,9 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
       strategy = std::make_shared<ConditionFacePositionUpdated>(config);
       break;
     }
-    case BEIConditionType::Frustration:
+    case BEIConditionType::FeatureGate:
     {
-      strategy = std::make_shared<ConditionFrustration>(config);
+      strategy = std::make_shared<ConditionFeatureGate>(config);
       break;
     }
     case BEIConditionType::MotionDetected:
@@ -146,6 +153,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::RobotTouched:
     {
       strategy = std::make_shared<ConditionRobotTouched>(config);
+      break;
+    }
+    case BEIConditionType::SimpleMood:
+    {
+      strategy = std::make_shared<ConditionSimpleMood>(config);
       break;
     }
     case BEIConditionType::TimerInRange:

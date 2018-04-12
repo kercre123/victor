@@ -6,6 +6,8 @@
   "finalEmotionEvent": "FinishedMinorFrustration",
 
   "wantsToBeActivatedCondition": {
-    "conditionType" : "Frustration"
+    "conditionType" : "Emotion",
+    "emotion": "Confident",
+    "value": 0.5
   } 
 }

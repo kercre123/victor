@@ -22,6 +22,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
@@ -32,9 +33,11 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionUnitTest.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
+#include "engine/cozmoContext.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/components/batteryComponent.h"
 #include "engine/robot.h"
+#include "engine/utils/cozmoFeatureGate.h"
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 #include "util/math/math.h"
 #include "util/console/consoleInterface.h"
@@ -165,18 +168,50 @@ TEST(BeiConditions, True)
   EXPECT_TRUE( cond->AreConditionsMet(bei) );
 }
 
-TEST(BeiConditions, Frustration)
+TEST(BeiConditions, Emotion)
 {
-  const std::string json = R"json(
+  const std::string jsonMax = R"json(
   {
-    "conditionType": "Frustration",
-    "frustrationParams": {
-      "maxConfidence": -0.5
-    }
+    "conditionType": "Emotion",
+    "emotion": "Confident",
+    "max": -0.5
+  })json";
+  const std::string jsonMin = R"json(
+  {
+    "conditionType": "Emotion",
+    "emotion": "Confident",
+    "min": -0.5
+  })json";
+  const std::string jsonRange = R"json(
+  {
+    "conditionType": "Emotion",
+    "emotion": "Confident",
+    "min": -0.75,
+    "max": -0.5
+  })json";
+  const std::string jsonValue = R"json(
+  {
+    "conditionType": "Emotion",
+    "emotion": "Confident",
+    "value": -0.33
+  })json";
+  const std::string jsonStimulation = R"json(
+  {
+    "conditionType": "Emotion",
+    "emotion": "Stimulated",
+    "value": 0.5
   })json";
 
-  IBEIConditionPtr cond;
-  CreateBEI(json, cond);
+  IBEIConditionPtr condMin;
+  IBEIConditionPtr condMax;
+  IBEIConditionPtr condRange;
+  IBEIConditionPtr condValue;
+  IBEIConditionPtr condStim;
+  CreateBEI(jsonMax, condMax);
+  CreateBEI(jsonMin, condMin);
+  CreateBEI(jsonRange, condRange);
+  CreateBEI(jsonValue, condValue);
+  CreateBEI(jsonStimulation, condStim);
 
   TestBehaviorFramework testBehaviorFramework(1, nullptr);
   testBehaviorFramework.InitializeStandardBehaviorComponent();
@@ -187,16 +222,165 @@ TEST(BeiConditions, Frustration)
   MoodManager moodManager;
   InitBEIPartial( { {BEIComponentID::MoodManager, &moodManager}, {BEIComponentID::RobotInfo, &info} }, bei );
   
-  cond->Init(bei);
-  cond->SetActive(bei, true);
-
-  EXPECT_FALSE( cond->AreConditionsMet(bei) );
-
+  // max
+  condMax->Init(bei);
+  condMax->SetActive(bei, true);
+  EXPECT_FALSE( condMax->AreConditionsMet(bei) );
   moodManager.SetEmotion(EmotionType::Confident, -1.0f);
-  EXPECT_TRUE( cond->AreConditionsMet(bei) );
-
+  EXPECT_TRUE( condMax->AreConditionsMet(bei) );
   moodManager.SetEmotion(EmotionType::Confident, 1.0f);
-  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  EXPECT_FALSE( condMax->AreConditionsMet(bei) );
+  
+  // min
+  condMin->Init(bei);
+  condMin->SetActive(bei, true);
+  moodManager.SetEmotion(EmotionType::Confident, -1.0f);
+  EXPECT_FALSE( condMin->AreConditionsMet(bei) );
+  moodManager.SetEmotion(EmotionType::Confident, 1.0f);
+  EXPECT_TRUE( condMin->AreConditionsMet(bei) );
+  
+  // range
+  condRange->Init(bei);
+  condRange->SetActive(bei, true);
+  moodManager.SetEmotion(EmotionType::Confident, -0.8f);
+  EXPECT_FALSE( condRange->AreConditionsMet(bei) );
+  moodManager.SetEmotion(EmotionType::Confident, -0.4f);
+  EXPECT_FALSE( condRange->AreConditionsMet(bei) );
+  moodManager.SetEmotion(EmotionType::Confident, -0.6f);
+  EXPECT_TRUE( condRange->AreConditionsMet(bei) );
+  
+  // value
+  condValue->Init(bei);
+  condValue->SetActive(bei, true);
+  moodManager.SetEmotion(EmotionType::Confident, -1.0f);
+  EXPECT_FALSE( condValue->AreConditionsMet(bei) );
+  moodManager.SetEmotion(EmotionType::Confident, -0.330001f);
+  EXPECT_TRUE( condValue->AreConditionsMet(bei) );
+  
+  // stim
+  condStim->Init(bei);
+  condStim->SetActive(bei, true);
+  moodManager.SetEmotion(EmotionType::Stimulated, -1.0f);
+  EXPECT_FALSE( condStim->AreConditionsMet(bei) );
+  moodManager.SetEmotion(EmotionType::Stimulated, 0.500001f);
+  EXPECT_TRUE( condStim->AreConditionsMet(bei) );
+}
+
+TEST(BeiConditions, SimpleMood)
+{
+  BaseStationTimer::getInstance()->UpdateTime( 0 );
+  
+  const std::string jsonMood = R"json(
+  {
+    "conditionType": "SimpleMood",
+    "mood": "MedStim"
+  })json";
+  const std::string jsonTrans = R"json(
+  {
+    "conditionType": "SimpleMood",
+    "from": "MedStim",
+    "to": "HighStim"
+  })json";
+  const std::string jsonTransFromAny = R"json(
+  {
+    "conditionType": "SimpleMood",
+    "to": "HighStim"
+  })json";
+  const std::string jsonTransToAny = R"json(
+  {
+    "conditionType": "SimpleMood",
+    "from": "Frustrated"
+  })json";
+
+  IBEIConditionPtr condMood;
+  IBEIConditionPtr condTrans;
+  IBEIConditionPtr condTransFromAny;
+  IBEIConditionPtr condTransToAny;
+  CreateBEI(jsonMood, condMood);
+  CreateBEI(jsonTrans, condTrans);
+  CreateBEI(jsonTransFromAny, condTransFromAny);
+  CreateBEI(jsonTransToAny, condTransToAny);
+
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
+  
+  Robot& robot = testBehaviorFramework.GetRobot();
+  BEIRobotInfo info(robot);
+  MoodManager moodManager;
+  InitBEIPartial( { {BEIComponentID::MoodManager, &moodManager}, {BEIComponentID::RobotInfo, &info} }, bei );
+  
+  // whenever SimpleMood definitions change significantly, this test might fail,
+  // so change stimulation with these to be in the mid-range of each definition to reduce
+  // the chance they need changing again
+  const float lowStim = 0.01f;
+  const float medStim = 0.5f;
+  const float highStim = 1.0f;
+  const float notFrustrated = 1.0f;
+  const float frustrated = -0.5f;
+  
+  double gCurrentTime = 0.0; // Fake time for update calls
+  auto tickMoodManager = [&](uint32_t numTicks) {
+    const double kTickTimestep = 0.01;
+    DependencyManagedEntity<RobotComponentID> dependencies;
+    for (uint32_t i=0; i < numTicks; ++i)
+    {
+      gCurrentTime += kTickTimestep;
+      BaseStationTimer::getInstance()->UpdateTime( Util::SecToNanoSec( gCurrentTime ) );
+      moodManager.UpdateDependent(dependencies);
+    }
+  };
+  
+  moodManager.SetEmotion(EmotionType::Stimulated, lowStim);
+  moodManager.SetEmotion(EmotionType::Confident, notFrustrated);
+  
+  // check mood
+  condMood->Init(bei);
+  condMood->SetActive(bei, true);
+  EXPECT_FALSE( condMood->AreConditionsMet(bei) );
+  moodManager.SetEmotion(EmotionType::Stimulated, medStim);
+  EXPECT_TRUE( condMood->AreConditionsMet(bei) );
+  
+  // check transition
+  condTrans->Init(bei);
+  condTrans->SetActive(bei, true);
+  EXPECT_FALSE( condTrans->AreConditionsMet(bei) ); // no transition
+  tickMoodManager( 1 );
+  EXPECT_FALSE( condTrans->AreConditionsMet(bei) );
+  moodManager.SetEmotion(EmotionType::Stimulated, highStim);
+  EXPECT_TRUE( condTrans->AreConditionsMet(bei) ); // med->high, correct transition
+  tickMoodManager( 1 );
+  moodManager.SetEmotion(EmotionType::Stimulated, medStim);
+  EXPECT_FALSE( condTrans->AreConditionsMet(bei) ); // high->med, wrong transition
+  
+  // check transition from any
+  condTransFromAny->Init(bei);
+  condTransFromAny->SetActive(bei, true);
+  tickMoodManager( 1 );
+  EXPECT_FALSE( condTransFromAny->AreConditionsMet(bei) ); // no transition
+  moodManager.SetEmotion(EmotionType::Stimulated, lowStim);
+  EXPECT_FALSE( condTransFromAny->AreConditionsMet(bei) ); // med->low, wrong transition
+  tickMoodManager( 1 );
+  moodManager.SetEmotion(EmotionType::Stimulated, highStim);
+  EXPECT_TRUE( condTransFromAny->AreConditionsMet(bei) ); // low->high, correct transition
+  moodManager.SetEmotion(EmotionType::Stimulated, medStim);
+  tickMoodManager( 1 );
+  moodManager.SetEmotion(EmotionType::Stimulated, highStim);
+  EXPECT_TRUE( condTransFromAny->AreConditionsMet(bei) ); // med->high also a correct transition
+  
+  // check transition to any
+  condTransToAny->Init(bei);
+  condTransToAny->SetActive(bei, true);
+  moodManager.SetEmotion(EmotionType::Confident, frustrated);
+  EXPECT_FALSE( condTransToAny->AreConditionsMet(bei) ); // no transition
+  tickMoodManager( 1 );
+  moodManager.SetEmotion(EmotionType::Confident, notFrustrated);
+  EXPECT_TRUE( condTransToAny->AreConditionsMet(bei) ); // frustrated->highstim, correct transition
+  tickMoodManager( 1 );
+  moodManager.SetEmotion(EmotionType::Confident, frustrated); // highstim->frustrated, wrong transition
+  tickMoodManager( 1 );
+  moodManager.SetEmotion(EmotionType::Stimulated, lowStim);
+  EXPECT_TRUE( condTransToAny->AreConditionsMet(bei) ); // frustrated->lowstim, correct transition
 }
 
 TEST(BeiConditions, Timer)
@@ -1077,5 +1261,37 @@ TEST(BeiConditions, BehaviorTimer)
   
   kTimeMultiplier = oldVal;
 }
+
+TEST(BeiConditions, FeatureGate)
+{
+  const std::string json = R"json(
+  {
+    "conditionType": "FeatureGate",
+    "feature": "Exploring"
+  })json";
+
+  IBEIConditionPtr cond;
+  CreateBEI(json, cond);
+
+  TestBehaviorFramework testBehaviorFramework;
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
+  
+  const auto feature = FeatureType::Exploring;
+  bool oldVal = bei.GetRobotInfo().GetContext()->GetFeatureGate()->IsFeatureEnabled( feature );
+  
+  cond->Init(bei);
+  cond->SetActive(bei, true);
+  
+  bei.GetRobotInfo().GetContext()->GetFeatureGate()->SetFeatureEnabled( feature, true );
+  EXPECT_TRUE( cond->AreConditionsMet(bei) );
+  
+  bei.GetRobotInfo().GetContext()->GetFeatureGate()->SetFeatureEnabled( feature, false );
+  EXPECT_FALSE( cond->AreConditionsMet(bei) );
+  
+  bei.GetRobotInfo().GetContext()->GetFeatureGate()->SetFeatureEnabled( feature, oldVal );
+}
+
+
 
 
