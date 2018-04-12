@@ -297,8 +297,8 @@ namespace Anki {
     
     void UiGameController::HandleActiveObjectMovedBase(const ExternalInterface::ObjectMoved& msg)
     {
-     // PRINT_NAMED_INFO("HandleActiveObjectMovedWrapper", "Received message that object %d moved. Accel=(%f,%f,%f). UpAxis=%s",
-     //                  msg.objectID, msg.accel.x, msg.accel.y, msg.accel.z, UpAxisToString(msg.upAxis));
+      PRINT_NAMED_INFO("HandleActiveObjectMovedWrapper", "Received message that object %d moved",
+                       msg.objectID);
       
       HandleActiveObjectMoved(msg);
     }

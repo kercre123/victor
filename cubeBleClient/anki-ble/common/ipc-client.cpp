@@ -31,6 +31,9 @@ IPCClient::IPCClient(struct ev_loop* loop)
     : IPCEndpoint(loop)
     , connect_watcher_(nullptr)
 {
+  setMinLogLevel(NDEBUG ?
+                 kLogLevelInfo :
+                 kLogLevelDebug);
 }
 
 bool IPCClient::Connect()

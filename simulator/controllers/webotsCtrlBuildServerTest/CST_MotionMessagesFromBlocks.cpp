@@ -8,11 +8,10 @@ enum class TestState {
   Init,
   TapCube,
   CheckForTappedMessage,
-  CheckForStoppedMessage,
   Wait1Sec,
   MoveCube,
   CheckForMovedMessage,
-  CheckForStoppedMessage1,
+  CheckForStoppedMessage,
   CheckForUpAxisChangedMessage,
   Exit
 };
@@ -72,19 +71,11 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
     case TestState::CheckForTappedMessage:
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_wasTapped, 5) {
-        SET_TEST_STATE(CheckForStoppedMessage);
-      }
-      break;
-    }
-
-    case TestState::CheckForStoppedMessage:
-    {
-      IF_CONDITION_WITH_TIMEOUT_ASSERT(_wasStopped, 5) {
         SET_TEST_STATE(Wait1Sec);
       }
       break;
     }
-      
+
     case TestState::Wait1Sec:
     {
       // To prevent double tap detect (and therefore move suppression) with the next lifting of the cube
@@ -99,7 +90,7 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
       _wasTapped = false;
       _wasStopped = false;
       _wasMoved = false;
-      UiGameController::SendApplyForce("cube", 6, 0, 0);
+      UiGameController::SendApplyForce("cube", 10, 0, 20);
       SET_TEST_STATE(CheckForMovedMessage);
       break;
     }
@@ -107,12 +98,12 @@ s32 CST_MotionMessagesFromBlocks::UpdateSimInternal()
     case TestState::CheckForMovedMessage:
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_wasMoved, 5) {
-        SET_TEST_STATE(CheckForStoppedMessage1);
+        SET_TEST_STATE(CheckForStoppedMessage);
       }
       break;
     }
 
-    case TestState::CheckForStoppedMessage1:
+    case TestState::CheckForStoppedMessage:
     {
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_wasStopped, 5) {
         // Rotate the block onto another side

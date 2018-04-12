@@ -23,13 +23,20 @@ namespace CubeAccelListeners {
 namespace {
   // Parameters for movement listener
   const float kHpFilterCoef            = 0.8f;
-  const float kMaxMovementScoreToAdd   = 25.f;
-  const float kMovementScoreDecay      = 2.5f;
-  const float kMaxAllowedMovementScore = 100.f;
+  const float kMaxMovementScoreToAdd   = 500.f;
+  const float kMovementScoreDecay      = 300.f;
+  const float kMaxAllowedMovementScore = 20'000.f;
   
-  // Started/Stopped movement score thresholds
-  const float kStartedMovingThresh = 50.f;
-  const float kStoppedMovingThresh = 20.f;
+  // Started/Stopped movement score thresholds.
+  // Simulator accelerometer behaves differently from real one,
+  // so use different thresholds
+#ifdef SIMULATOR
+  const float kStartedMovingThresh = 3'000.f;
+  const float kStoppedMovingThresh = 1'500.f;
+#else
+  const float kStartedMovingThresh = 10'000.f;
+  const float kStoppedMovingThresh = 5'000.f;
+#endif
 }
 
 MovementStartStopListener::MovementStartStopListener(std::function<void(void)> startedMovingCallback,

@@ -196,7 +196,8 @@ void CubeAccelComponent::ObjectMovedOrStoppedCallback(const ObjectID objectId, c
     DEV_ASSERT(connectedObj->IsActive(), "CubeAccelComponent.ObjectMovedOrStoppedCallback.NonActiveObject");
     
     LOG_INFO("CubeAccelComponent.ObjectMovedOrStoppedCallback.ObjectMovedOrStopped",
-             "ObjectID: %d (Active ID %d), type: %s",
+             "Cube %s, ObjectID: %d (Active ID %d), type: %s",
+             isMoving ? "STARTED MOVING" : "STOPPED MOVING",
              connectedObj->GetID().GetValue(), connectedObj->GetActiveID(),
              EnumToString(connectedObj->GetType()));
     

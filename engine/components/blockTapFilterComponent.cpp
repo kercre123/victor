@@ -32,7 +32,7 @@ CONSOLE_VAR(Anki::TimeStamp_t, kTapWaitOffset_ms, "TapFilter.WaitOffsetTime", 75
 CONSOLE_VAR(Anki::TimeStamp_t, kDoubleTapTime_ms, "TapFilter.DoubleTapTime", 500);
 CONSOLE_VAR(Anki::TimeStamp_t, kIgnoreMoveTimeAfterDoubleTap_ms, "TapFilter.IgnoreMoveTimeAfterDoubleTap", 500);
 CONSOLE_VAR(bool, kCanDoubleTapDirtyPoses, "DoubleTap", true);
-CONSOLE_VAR(bool, kIgnoreMovementWhileWaitingForDoubleTap, "DoubleTap", true);
+CONSOLE_VAR(bool, kIgnoreMovementWhileWaitingForDoubleTap, "DoubleTap", false);
 
 namespace Anki {
 namespace Cozmo {
