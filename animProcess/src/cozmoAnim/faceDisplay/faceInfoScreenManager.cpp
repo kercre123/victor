@@ -44,6 +44,7 @@
 
 #include <chrono>
 #include <fstream>
+#include <iomanip>
 
 #ifndef SIMULATOR
 #include <linux/reboot.h>
@@ -841,7 +842,11 @@ void FaceInfoScreenManager::DrawMain()
   std::stringstream ss;
   if(Factory::GetEMR()->fields.ESN != 0)
   {
-    ss << std::hex << Factory::GetEMR()->fields.ESN;
+    ss << std::hex 
+       << std::setfill('0') 
+       << std::setw(8) 
+       << std::uppercase 
+       << Factory::GetEMR()->fields.ESN;
   }
   else
   {
@@ -856,14 +861,13 @@ void FaceInfoScreenManager::DrawMain()
       std::string line;
       while(std::getline(infile, line))
       {
-	static const std::string kProp = "androidboot.serialno=";
-	size_t index = line.find(kProp);
-	if(index != std::string::npos)
-	{
-	  serialNum = line.substr(index + kProp.length(), 8);
-	}
-      }
-
+        static const std::string kProp = "androidboot.serialno=";
+        size_t index = line.find(kProp);
+        if(index != std::string::npos)
+        {
+          serialNum = line.substr(index + kProp.length(), 8);
+        }
+      }  
       infile.close(); 
     }
     ss << serialNum;
