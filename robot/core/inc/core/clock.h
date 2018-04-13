@@ -10,5 +10,6 @@
 
 uint64_t steady_clock_now(void);
 void microwait(long microsec);
+void milliwait(long millisec);
 
 #endif//CORE_CLOCK_H
