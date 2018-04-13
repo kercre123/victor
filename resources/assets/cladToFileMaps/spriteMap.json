@@ -66,6 +66,30 @@
   {
     "CladEvent": "Face_TimerSet_GetIn_02",
     "SpriteName": "face_timerset_getin_02"
+  },
+  {
+    "CladEvent": "Face_TimerSet_GetOut_01",
+    "SpriteName": "face_timerset_getout_01"
+  },
+  {
+    "CladEvent": "PairingIconKey",
+    "SpriteName": "pairing_icon_key"
+  },
+  {
+    "CladEvent": "PairingIconAwaitingApp",
+    "SpriteName": "pairing_icon_awaiting_app"
+  },
+  {
+    "CladEvent": "PairingIconUpdate",
+    "SpriteName": "pairing_icon_update"
+  },
+  {
+    "CladEvent": "PairingIconUpdateError",
+    "SpriteName": "pairing_icon_update_error"
+  },
+  {
+    "CladEvent": "PairingIconWifi",
+    "SpriteName": "pairing_icon_wifi"
   }
 ]
 

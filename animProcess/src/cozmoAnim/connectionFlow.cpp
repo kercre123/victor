@@ -16,6 +16,7 @@
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
+#include "cozmoAnim/robotDataLoader.h"
 
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -142,8 +143,7 @@ void DrawStartPairingScreen(AnimationStreamer* animStreamer)
 void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* context)
 {
   Vision::ImageRGB key;
-  key.Load(context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, 
-                                                      "config/devOnlySprites/independentSprites/pairing_icon_key.png"));
+  key.Load(context->GetDataLoader()->GetSpritePaths()->GetValue(Vision::SpriteName::PairingIconKey));
 
   Vision::ImageRGB img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
   img.FillWith(0);

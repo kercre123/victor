@@ -22,9 +22,13 @@
 
 namespace Anki {
 namespace Cozmo {
+
+  const std::string CannedAnimationContainer::ProceduralAnimName("_PROCEDURAL_");
   
-  CannedAnimationContainer::CannedAnimationContainer(SpriteSequenceContainer* spriteSequenceContainer)
-  : _spriteSequenceContainer(spriteSequenceContainer)
+  CannedAnimationContainer::CannedAnimationContainer(const CannedAnimLib::SpritePathMap* spriteMap, 
+                                                     SpriteSequenceContainer* spriteSequenceContainer)
+  : _spriteMap(spriteMap)
+  , _spriteSequenceContainer(spriteSequenceContainer)
   {
     DefineHardCoded();
   }
@@ -93,10 +97,7 @@ namespace Cozmo {
     std::vector<std::string> v;
     v.reserve(_animations.size());
     for (std::unordered_map<std::string, Animation>::iterator i=_animations.begin(); i != _animations.end(); ++i) {
-      // Don't include procedural animation name in list of available animations
-      if (i->first != SpriteSequenceContainer::ProceduralAnimName) {
-        v.push_back(i->first);
-      }
+      v.push_back(i->first);
     }
     return v;
   }
@@ -156,10 +157,10 @@ namespace Cozmo {
 
   Animation* CannedAnimationContainer::GetAnimationWrapper(std::string& animationName)
   {
-    if(animationName == SpriteSequenceContainer::ProceduralAnimName) {
+    if(animationName == CannedAnimationContainer::ProceduralAnimName) {
       PRINT_NAMED_ERROR("CannedAnimationContainer.DefineFromJson.ReservedName",
                         "Skipping animation with reserved name '%s'.",
-                        SpriteSequenceContainer::ProceduralAnimName.c_str());
+                        CannedAnimationContainer::ProceduralAnimName.c_str());
       return nullptr;
     }
     
@@ -217,7 +218,7 @@ namespace Cozmo {
     const auto& maxCount = Animations::Track<SpriteSequenceKeyFrame>::ConstMaxFramesPerTrack();
     BOUNDED_WHILE(maxCount, spriteSeqTrack.HasFramesLeft()){
       auto& keyframe = spriteSeqTrack.GetCurrentKeyFrame();
-      keyframe.SetSpriteSequenceContainer(_spriteSequenceContainer);
+      keyframe.GiveKeyframeImageAccess(_spriteMap, _spriteSequenceContainer);
       spriteSeqTrack.MoveToNextKeyFrame();
     }
     spriteSeqTrack.MoveToStart();

@@ -154,6 +154,8 @@ public:
   bool HasFramesLeft() const { return _frameIter != _frames.end(); }
 
   bool IsEmpty() const { return _frames.empty(); }
+  int TrackLength() const { return static_cast<int>(_frames.size()); }
+
 
   void Clear() { _frames.clear(); _frameIter = _frames.end(); }
   

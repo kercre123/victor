@@ -4,7 +4,7 @@
  * Author: Matt Michini
  * Date:   2/6/2018
  *
- * Description: Defines container for image animations that display on the robot's face.
+ * Description: Defines container for sprite sequences that display on the robot's face.
  *
  * Copyright: Anki, Inc. 2018
  **/
@@ -24,24 +24,18 @@ namespace Cozmo {
 class SpriteSequence
 {
 public:
-  
-  bool IsGrayscale() const { return _isGrayscale; };
-  void SetGrayscale(const bool b) { _isGrayscale = b; }
-  
-  time_t GetLastLoadedTime() const { return _lastLoadedTime; }
-  void SetLastLoadedTime(const time_t t) { _lastLoadedTime = t; }
-
-  bool ShouldHold() const { return _hold; }
+  SpriteSequence(bool isGrayscale);
+  virtual ~SpriteSequence();
   
   size_t GetNumFrames() const { return _isGrayscale ? _framesGray.size() : _framesRGB565.size(); }
   
   // Add frames of the given type
   template<class ImageType>
-  void AddFrame(const ImageType& img, bool hold = false);
+  void AddFrame(const ImageType& img);
   
   // Get a frame with the given index
-  void GetFrame(const u32 index, Vision::Image& img);
-  void GetFrame(const u32 index, Vision::ImageRGB565& img);
+  void GetFrame(const u32 index, Vision::Image& img) const;
+  void GetFrame(const u32 index, Vision::ImageRGB565& img) const;
   
   // Pop the front frame
   void PopFront();
@@ -50,9 +44,7 @@ public:
   void Clear() { _framesGray.clear(); _framesRGB565.clear(); };
 
 private:
-  bool _isGrayscale;
-  time_t _lastLoadedTime;
-  bool _hold = false;
+  bool _isGrayscale = true;
   std::deque<Vision::Image> _framesGray;         // underlying image container if isGrayscale == true
   std::deque<Vision::ImageRGB565> _framesRGB565; // underlying image container if images are color
 };

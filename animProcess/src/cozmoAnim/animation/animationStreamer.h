@@ -167,7 +167,7 @@ namespace Cozmo {
     }
     
     template<typename ImageType>
-    Result SetFaceImageHelper(const ImageType& img, const u32 duration_ms);
+    Result SetFaceImageHelper(const ImageType& img, const u32 duration_ms, bool isGrayscale);
     
     // pass the started/stopped animation name to webviz
     void SendAnimationToWebViz( bool starting ) const;
@@ -176,7 +176,9 @@ namespace Cozmo {
     
     Animation*  _streamingAnimation = nullptr;
     Animation*  _neutralFaceAnimation = nullptr;
-    Animation*  _proceduralAnimation = nullptr; // for creating animations "live" or dynamically
+
+     // for creating animations "live" or dynamically
+    Animation*  _proceduralAnimation = nullptr;
 
     std::unique_ptr<TrackLayerComponent>  _trackLayerComponent;
     

@@ -16,6 +16,7 @@
 #ifndef ANKI_COZMO_CANNED_ANIMATION_LOADER_H
 #define ANKI_COZMO_CANNED_ANIMATION_LOADER_H
 
+#include "cannedAnimLib/baseTypes/spritePathMap.h"
 #include "util/helpers/noncopyable.h"
 #include <atomic>
 #include <memory>
@@ -43,10 +44,12 @@ class CannedAnimationLoader : private Util::noncopyable
 {
 public:
   CannedAnimationLoader(const Util::Data::DataPlatform* platform,
+                        const CannedAnimLib::SpritePathMap* spriteMap,
                         SpriteSequenceContainer* spriteSequenceContainer,
                         std::atomic<float>& loadingCompleteRatio,
                         std::atomic<bool>&  abortLoad)
   : _platform(platform)
+  , _spriteMap(spriteMap)
   , _spriteSequenceContainer(spriteSequenceContainer)
   , _loadingCompleteRatio(loadingCompleteRatio)
   , _abortLoad(abortLoad){}
@@ -58,6 +61,7 @@ private:
   
   // params passed in by data loader class
   const Util::Data::DataPlatform* _platform;
+  const CannedAnimLib::SpritePathMap* _spriteMap;
   SpriteSequenceContainer* _spriteSequenceContainer = nullptr;
   std::atomic<float>& _loadingCompleteRatio;
   std::atomic<bool>&  _abortLoad;

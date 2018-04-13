@@ -274,10 +274,53 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
 #pragma mark -
 #pragma mark SpriteSequenceKeyFrame
+
+    SpriteSequenceKeyFrame::SpriteSequenceKeyFrame(Vision::SpriteName sequenceName,
+                                                   bool containsRuntimeSpriteSeq,
+                                                   bool runtimeSequenceIsGrayscale)
+    : _spriteSequenceName(sequenceName) 
+    {
+      if(containsRuntimeSpriteSeq){
+        _runtimeSpriteSequence = std::make_unique<SpriteSequence>(Vision::IsSpriteGreyscale(sequenceName, true));
+        _isGrayscale = runtimeSequenceIsGrayscale;
+      }
+    }
+
+    SpriteSequenceKeyFrame::SpriteSequenceKeyFrame(const SpriteSequenceKeyFrame& other)
+    {
+      _cannedSpriteSequence  = other._cannedSpriteSequence;
+      _rawSeqName            = other._rawSeqName;
+      _spriteSequenceName    = other._spriteSequenceName;
+      _isGrayscale           = other._isGrayscale;
+      _scanlineOpacity       = other._scanlineOpacity;
+      _curFrame              = other._curFrame;
+      _frameDuration_ms      = other._frameDuration_ms;
+      _nextFrameTime_ms      = other._nextFrameTime_ms;
+      _currentTime_ms        = other._currentTime_ms;
+      
+      if(other._runtimeSpriteSequence != nullptr){
+        _runtimeSpriteSequence.reset(new SpriteSequence(*other._runtimeSpriteSequence));
+      }
+      
+    }
+
     
     Result SpriteSequenceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
-      _spriteSequenceName = JsonTools::ParseString(jsonRoot, "animName", "SpriteSequenceKeyframe.MissingName");
+      {
+        std::string strSeqName = JsonTools::ParseString(jsonRoot, "animName", "SpriteSequenceKeyframe.MissingName");
+        // TODO: Take this out once root path is part of AnimationTool!
+        size_t lastSlash = strSeqName.find_last_of("/");
+        if(lastSlash != std::string::npos) {
+          PRINT_NAMED_WARNING("SpriteSequenceKeyFrame.Process",
+                              "%s: Removing path from animation name: %s",
+                              animNameDebug.c_str(),
+                              strSeqName.c_str());
+          strSeqName = strSeqName.substr(lastSlash+1, std::string::npos);
+        }
+        _rawSeqName = strSeqName;
+      }
+
       JsonTools::GetValueOptional(jsonRoot, "scanlineOpacity", _scanlineOpacity);
       JsonTools::GetValueOptional(jsonRoot, "frameDuration_ms", _frameDuration_ms);
 
@@ -286,16 +329,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
 
     Result SpriteSequenceKeyFrame::Process(const std::string& animNameDebug)
     {
-      // TODO: Take this out once root path is part of AnimationTool!
-      size_t lastSlash = _spriteSequenceName.find_last_of("/");
-      if(lastSlash != std::string::npos) {
-        PRINT_NAMED_WARNING("SpriteSequenceKeyFrame.Process",
-                            "%s: Removing path from animation name: %s",
-                            animNameDebug.c_str(),
-                            _spriteSequenceName.c_str());
-        _spriteSequenceName = _spriteSequenceName.substr(lastSlash+1, std::string::npos);
-      }
-      
       // Verify that the scanline opacity is between 0 and 1
       DEV_ASSERT_MSG(Util::InRange(_scanlineOpacity, 0.f, 1.f),
                      "SpriteSequenceKeyFrame.Process.InvalidScanlineOpacity",
@@ -309,6 +342,56 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       return RESULT_OK;
     }
 
+    
+    void SpriteSequenceKeyFrame::GiveKeyframeImageAccess(const CannedAnimLib::SpritePathMap* spriteMap,
+                                                         SpriteSequenceContainer* spriteSequenceContainer) 
+    {
+      DEV_ASSERT((spriteMap != nullptr) && (_runtimeSpriteSequence == nullptr), 
+                 "SpriteSequenceKeyFram.GiveKeyframeImageAccess.InvalidSpriteMap");
+
+      if(ParseSequenceNameFromString(spriteMap)){
+        _cannedSpriteSequence = spriteSequenceContainer->GetSequenceByName(_spriteSequenceName);
+      }else{
+        PRINT_NAMED_WARNING("SpriteSequenceKeyFram.GiveKeyframeImageAccess.NoMatchFoundForSequenceName",
+                            "Sequence name %s does not appear in spriteMap, attempting to grab from unnamed map",
+                            _rawSeqName.c_str());
+        _cannedSpriteSequence = spriteSequenceContainer->GetUnmappedSequenceByFileName(_rawSeqName);
+        ANKI_VERIFY(_cannedSpriteSequence != nullptr,
+                    "SpriteSequenceKeyFram.GiveKeyframeImageAccess.Failed to fild unmaped sequence",
+                    "Missing sequence for %s entirely",
+                    _rawSeqName.c_str());
+      }
+    }
+    
+    bool SpriteSequenceKeyFrame::ParseSequenceNameFromString(const CannedAnimLib::SpritePathMap* spriteMap)
+    {
+      // _rawSeqName is only the folder name - manually check all entries in sprite map
+      // so that just the folder name is pulled out of the full path to try and find a match
+      bool foundMatch = false;
+      for(const auto& key : spriteMap->GetAllKeys()){
+        const auto& fullPath = spriteMap->GetValue(key);
+        const auto& fileName = Util::FileUtils::GetFileName(fullPath);
+        if(fileName == _rawSeqName){
+          foundMatch = true;
+          _spriteSequenceName = key;
+          break;
+        }
+      }
+
+      if(foundMatch){
+        const bool isValidSequence = Vision::IsSpriteSequence(_spriteSequenceName, false);
+        ANKI_VERIFY(isValidSequence,
+                    "SpriteSequenceKeyFrame.SetMembersFromJson.InvalidSequence",
+                    "Sprite %s is not marked as a sprite sequence",
+                    SpriteNameToString(_spriteSequenceName));
+        _isGrayscale = Vision::IsSpriteGreyscale(_spriteSequenceName, true);
+      }
+
+      return foundMatch;
+    }
+
+
+
     Result SpriteSequenceKeyFrame::DefineFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug)
     {
       DEV_ASSERT(faceAnimKeyframe != nullptr, "SpriteSequenceKeyFrame.DefineFromFlatBuf.NullAnim");
@@ -319,7 +402,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
 
     Result SpriteSequenceKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug)
     {
-      this->_spriteSequenceName = faceAnimKeyframe->animName()->str();
+      _rawSeqName = faceAnimKeyframe->animName()->str();
       SafeNumericCast(faceAnimKeyframe->scanlineOpacity(), _scanlineOpacity, animNameDebug.c_str());
 
       return Process(animNameDebug);
@@ -327,14 +410,12 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
     bool SpriteSequenceKeyFrame::IsDone()
     {
-      if(!ANKI_VERIFY(_spriteSequenceContainer != nullptr, 
-                      "SpriteSequenceKeyFrame.IsDone.SpriteSequenceContainerNullptr", "")){
-        return true;
-      }
-
       // Short term fix for VIC-2407: IsDone is called twice per tick, so divide time step by 2
       // Be careful of calling IsDone until a longer term fix is implemented
       _currentTime_ms += ANIM_TIME_STEP_MS/2;
+      if(_currentTime_ms < _nextFrameTime_ms){
+        return false;
+      }
 
       // For canned animations we check if GetFaceImage() has been called as many
       // times as there are frames.
@@ -342,20 +423,28 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       // played in order to avoid unbounded growth (since a procedural animation can
       // be played for an arbitrary period of time) so we check for whether or not
       // there are any frames left.
-      if (_spriteSequenceName == SpriteSequenceContainer::ProceduralAnimName) {
-        return _spriteSequenceContainer->GetNumFrames(_spriteSequenceName) == 0;
+      if(_runtimeSpriteSequence != nullptr){
+        return _runtimeSpriteSequence->GetNumFrames() == 0;
+      }else if(_cannedSpriteSequence != nullptr){
+        return _cannedSpriteSequence->GetNumFrames() <= _curFrame;
       }
-      return (_curFrame >= _spriteSequenceContainer->GetNumFrames(_spriteSequenceName));
+      return true;
     }
-    
-    bool SpriteSequenceKeyFrame::IsGrayscale() const
-    {
-      if(ANKI_VERIFY(_spriteSequenceContainer != nullptr,
-                     "SpriteSequenceKeyFrame.IsGrayscale.SpriteSequenceContainerNullptr", "")){
-        return _spriteSequenceContainer->IsGrayscale(_spriteSequenceName);
+
+    void SpriteSequenceKeyFrame::OverrideIsGrayscale(bool isGrayscale)
+    { 
+      _isGrayscale = isGrayscale;
+      if(_runtimeSpriteSequence != nullptr){
+        if(_runtimeSpriteSequence->GetNumFrames() > 0){
+          PRINT_NAMED_WARNING("SpriteSequenceKeyFrame.OverrideIsGrayscale.RuntimeSequenceHasFrames", 
+                              "Clearing %zu frames out of runtime sprite sequence to change grayscale value",
+                              _runtimeSpriteSequence->GetNumFrames());
+        }
+
+        _runtimeSpriteSequence.reset(new SpriteSequence(isGrayscale));
       }
-      return false;
     }
+
     
     bool SpriteSequenceKeyFrame::GetFaceImage(Vision::Image& img)
     {
@@ -376,20 +465,22 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         _nextFrameTime_ms = _frameDuration_ms;
         return false;
       }
-      
-      if(!ANKI_VERIFY(_spriteSequenceContainer != nullptr, 
-                      "SpriteSequenceKeyFrame.GetFaceImageHelper.SpriteSequenceContainerNullptr", "")){
+
+      if(_currentTime_ms >= _nextFrameTime_ms){
+
+        if(_runtimeSpriteSequence != nullptr){
+          _runtimeSpriteSequence->GetFrame(0, img);
+          _runtimeSpriteSequence->PopFront();
+        }else if(_cannedSpriteSequence != nullptr){
+          _cannedSpriteSequence->GetFrame(_curFrame, img);
+          ++_curFrame;
+        }
+
+        _nextFrameTime_ms = _currentTime_ms + _frameDuration_ms;
+        return true;
+      }else{
         return false;
       }
-      
-      const bool gotFrame = _spriteSequenceContainer->GetFrame(_spriteSequenceName, _curFrame, img);
-      if(_currentTime_ms >= _nextFrameTime_ms)
-      {
-        _nextFrameTime_ms = _currentTime_ms + _frameDuration_ms;
-        ++_curFrame;
-      }
-      
-      return gotFrame;
     }
 
 #pragma mark -

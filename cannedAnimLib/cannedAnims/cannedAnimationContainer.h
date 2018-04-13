@@ -31,8 +31,10 @@ namespace Cozmo {
   class CannedAnimationContainer
   {
   public:
-    
-    CannedAnimationContainer(SpriteSequenceContainer* spriteSequenceContainer);
+    static const std::string ProceduralAnimName;
+
+    CannedAnimationContainer(const CannedAnimLib::SpritePathMap* spriteMap, 
+                             SpriteSequenceContainer* spriteSequenceContainer);
     
     Result DefineHardCoded(); // called at construction
     
@@ -56,6 +58,7 @@ namespace Cozmo {
     void Clear();
     
   private:
+  const CannedAnimLib::SpritePathMap* _spriteMap = nullptr;
     SpriteSequenceContainer* _spriteSequenceContainer = nullptr;
     std::unordered_map<std::string, Animation> _animations;
 

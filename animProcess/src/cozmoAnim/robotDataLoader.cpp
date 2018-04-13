@@ -21,6 +21,7 @@
 #include "cannedAnimLib/cannedAnims/cannedAnimationLoader.h"
 #include "cannedAnimLib/baseTypes/cozmo_anim_generated.h"
 #include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
+#include "cannedAnimLib/spriteSequences/spriteSequenceLoader.h"
 #include "cannedAnimLib/proceduralFace/proceduralFace.h"
 //#include "anki/cozmo/basestation/animations/animationTransfer.h"
 #include "cozmoAnim/animContext.h"
@@ -45,6 +46,9 @@ namespace Cozmo {
 namespace{
 const char* pathToExternalIndependentSprites = "assets/sprites/independentSprites/";
 const char* pathToEngineIndependentSprites = "config/devOnlySprites/independentSprites/";
+const char* pathToExternalFaceAnimSequences = "assets/faceAnimations/";
+const char* pathToExternalSpriteSequences = "assets/sprites/spriteSequences/";
+const char* pathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequences/";
 }
 
 RobotDataLoader::RobotDataLoader(const AnimContext* context)
@@ -95,15 +99,25 @@ void RobotDataLoader::LoadNonConfigData()
     return;
   }
   
-  _spriteSequenceContainer = std::make_unique<SpriteSequenceContainer>();
-  _spriteSequenceContainer->ReadSpriteSequenceDir(_platform);
-  
-  CannedAnimationLoader animLoader(_platform, _spriteSequenceContainer.get(), 
-                                   _loadingCompleteRatio, _abortLoad);
-  _cannedAnimations.reset(animLoader.LoadAnimations());
+  // Dependency Order:
+  //  1) SpritePaths load map of sprite name -> full file path
+  //  2) SpriteSequences use sprite map to load sequenceName -> all images in sequence directory
+  //  3) Canned animations use SpriteSequences for their FaceAnimation keyframe
+  LoadSpritePaths();
+  {
+    std::vector<std::string> spriteSequenceDirs = {pathToExternalSpriteSequences, pathToEngineSpriteSequences, pathToExternalFaceAnimSequences};
+    SpriteSequenceLoader seqLoader;
+    _spriteSequenceContainer.reset(seqLoader.LoadSpriteSequences(_platform, _spritePaths.get(), spriteSequenceDirs));
+  }
+
+  {
+    CannedAnimationLoader animLoader(_platform, 
+                                    _spritePaths.get(), _spriteSequenceContainer.get(), 
+                                    _loadingCompleteRatio, _abortLoad);
+    _cannedAnimations.reset(animLoader.LoadAnimations());
+  }
   
   SetupProceduralAnimation();
-  LoadSpritePaths();
 }
 
 void RobotDataLoader::LoadAnimationFile(const std::string& path)
@@ -111,7 +125,8 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
   if (_platform == nullptr) {
     return;
   }
-  CannedAnimationLoader animLoader(_platform, _spriteSequenceContainer.get(),
+  CannedAnimationLoader animLoader(_platform,
+                                   _spritePaths.get(), _spriteSequenceContainer.get(), 
                                    _loadingCompleteRatio, _abortLoad);
   const auto& animsContainer = animLoader.LoadAnimationsFromFile(path);
   for (const auto& name : animsContainer->GetAnimationNames())
@@ -130,28 +145,53 @@ void RobotDataLoader::LoadSpritePaths()
   // Creates a map of all sprite names to their file names
   _spritePaths->Load(_platform, "assets/cladToFileMaps/spriteMap.json", "SpriteName");
 
-  // Filter out all sprite sequences
-  for(auto& key: _spritePaths->GetAllKeys()){
-    if(IsSpriteSequence(key, false)){
-      _spritePaths->Erase(key);
+  std::map<std::string, std::string> fileNameToFullPath;
+  // Get all independent sprites
+  {
+    auto spritePaths = {pathToExternalIndependentSprites,
+                        pathToEngineIndependentSprites};
+    
+    const bool useFullPath = true;
+    const char* extensions = "png";
+    const bool recurse = true;
+    for(const auto& path: spritePaths){
+      const std::string fullPathFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
+
+      auto fullImagePaths = Util::FileUtils::FilesInDirectory(fullPathFolder, useFullPath, extensions, recurse);
+      for(auto& fullImagePath : fullImagePaths){
+        const std::string fileName = Util::FileUtils::GetFileName(fullImagePath, true, true);
+        fileNameToFullPath.emplace(fileName, fullImagePath);
+      }
     }
   }
-
-  // Get all sprite paths
-  auto independentSpritePaths = {pathToExternalIndependentSprites, pathToEngineIndependentSprites};
-  std::map<std::string, std::string> fileNameToFullPath; 
-  const bool useFullPath = true;
-  const char* extensions = "png";
-  const bool recurse = true;
-  for(const auto& path: independentSpritePaths){
-    const std::string fullPathFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
-
-    auto fullImagePaths = Util::FileUtils::FilesInDirectory(fullPathFolder, useFullPath, extensions, recurse);
-    for(auto& fullImagePath : fullImagePaths){
-      const std::string fileName = Util::FileUtils::GetFileName(fullImagePath, true, true);
-      fileNameToFullPath.emplace(fileName, fullImagePath);
+  
+  // Get all sprite sequences with recursive directory search
+  {
+    std::vector<std::string> directoriesToSearch = {
+       _platform->pathToResource(Util::Data::Scope::Resources, pathToExternalSpriteSequences),
+       _platform->pathToResource(Util::Data::Scope::Resources, pathToEngineSpriteSequences)};
+    
+    auto searchIter = directoriesToSearch.begin();
+    while(searchIter != directoriesToSearch.end()){
+      // Get all directories at this level and add them to the file map
+      std::vector<std::string> outDirNames;
+      Util::FileUtils::ListAllDirectories(*searchIter, outDirNames);
+      for(auto& dirName: outDirNames){
+        // turn name into full path
+        dirName = Util::FileUtils::FullFilePath({*searchIter, dirName});
+        fileNameToFullPath.emplace(Util::FileUtils::GetFileName(dirName), dirName);
+      }
+      directoriesToSearch.erase(searchIter);
+      
+      // Add directories for recursive search and advance to next directory
+      copy(outDirNames.begin(), outDirNames.end(), back_inserter(directoriesToSearch));
+      searchIter = directoriesToSearch.begin();
     }
   }
+  
+  
+  
+  
   
   for (auto key : _spritePaths->GetAllKeys()) {
     auto fullPath = fileNameToFullPath[_spritePaths->GetValue(key)];
@@ -186,12 +226,11 @@ void RobotDataLoader::SetupProceduralAnimation()
   // TODO: kevink - This should probably live somewhere else but since robot data loader
   // currently maintains control of both canned animations and sprite sequences this
   // is the best spot to put it for the time being
-  _cannedAnimations->AddAnimation(SpriteSequenceContainer::ProceduralAnimName);
+  _cannedAnimations->AddAnimation(CannedAnimationContainer::ProceduralAnimName);
   
-  Animation* anim = _cannedAnimations->GetAnimation(SpriteSequenceContainer::ProceduralAnimName);
+  Animation* anim = _cannedAnimations->GetAnimation(CannedAnimationContainer::ProceduralAnimName);
   assert(anim != nullptr);
-  SpriteSequenceKeyFrame kf(SpriteSequenceContainer::ProceduralAnimName);
-  kf.SetSpriteSequenceContainer(_spriteSequenceContainer.get());
+  SpriteSequenceKeyFrame kf(Vision::SpriteName::Count, true, true);
   if(RESULT_OK != anim->AddKeyFrameToBack(kf))
   {
     PRINT_NAMED_ERROR("RobotDataLoader.SetupProceduralAnimation.AddProceduralFailed",

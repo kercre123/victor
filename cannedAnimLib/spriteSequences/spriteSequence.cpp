@@ -4,7 +4,7 @@
  * Author: Matt Michini
  * Date:   2/6/2018
  *
- * Description: Defines container for image animations that display on the robot's face.
+ * Description: Defines container for sprite sequences that display on the robot's face.
  *
  * Copyright: Anki, Inc. 2018
  **/
@@ -15,36 +15,41 @@
 namespace Anki {
 namespace Cozmo {
 
-template<>
-void SpriteSequence::AddFrame(const Vision::Image& img, bool hold)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SpriteSequence::SpriteSequence(bool isGrayscale)
+: _isGrayscale(isGrayscale)
 {
-  DEV_ASSERT(!_hold, "FaceAnimation.AddFrame.AddFrameToHoldingAnim");
-  DEV_ASSERT(_isGrayscale, "AvailableAnim.AddFrame.InvalidType");
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SpriteSequence::~SpriteSequence()
+{
+  
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<>
+void SpriteSequence::AddFrame(const Vision::Image& img)
+{
+  DEV_ASSERT(_isGrayscale, "SpriteSequence.AddFrame.InvalidType");
   _framesGray.push_back(img);
-
-  if(hold)
-  {
-    _framesGray.push_back(Vision::Image());
-  }
-
-  _hold = hold;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<>
-void SpriteSequence::AddFrame(const Vision::ImageRGB565& img, bool hold)
+void SpriteSequence::AddFrame(const Vision::ImageRGB565& img)
 {
-  DEV_ASSERT(!_hold, "FaceAnimation.AddFrame.AddFrameToHoldingAnim");
-  DEV_ASSERT(!_isGrayscale, "AvailableAnim.AddFrame.InvalidType");
+  DEV_ASSERT(!_isGrayscale, "SpriteSequence.AddFrame.InvalidType");
   _framesRGB565.push_back(img);
-
-  if(hold)
-  {
-    _framesRGB565.push_back(Vision::ImageRGB565());
-  }
-
-  _hold = hold;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpriteSequence::PopFront()
 {
   if (_isGrayscale && !_framesGray.empty()) {
@@ -54,16 +59,20 @@ void SpriteSequence::PopFront()
   }
 }
 
-void SpriteSequence::GetFrame(const u32 index, Vision::Image& img)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpriteSequence::GetFrame(const u32 index, Vision::Image& img) const
 {
-  DEV_ASSERT(_isGrayscale, "AvailableAnim.AddFrame.InvalidType");
+  DEV_ASSERT(_isGrayscale, "SpriteSequence.GetFrame.InvalidType");
   DEV_ASSERT(index < _framesGray.size(), "SpriteSequence.GetFrame.InvalidIndex");
   img = _framesGray[index];
 }
 
-void SpriteSequence::GetFrame(const u32 index, Vision::ImageRGB565& img)
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpriteSequence::GetFrame(const u32 index, Vision::ImageRGB565& img) const
 {
-  DEV_ASSERT(!_isGrayscale, "AvailableAnim.AddFrame.InvalidType");
+  DEV_ASSERT(!_isGrayscale, "SpriteSequence.GetFrame.InvalidType");
   DEV_ASSERT(index < _framesRGB565.size(), "SpriteSequence.GetFrame.InvalidIndex");
   img = _framesRGB565[index];
 }

@@ -1,5 +1,5 @@
 /**
- * File: CladEnumToStringMap.h
+ * File: cladEnumToStringMap.h
  *
  * Authors: Kevin M. Karol
  * Created: 4/3/18
@@ -35,13 +35,26 @@ public:
   
   std::vector<CladEnum> GetAllKeys() const;
   std::string GetValue(CladEnum ev) const;
+
+  // Caching the lookup map will allocate additional memory for the class but make
+  // future lookups faster
+  // Returns true if outKey is set, false if lookup failed
+  bool GetKeyForValue(const std::string& value, 
+                      CladEnum& outKey, 
+                      bool shouldCacheLookupMap = false);
+
+  bool GetKeyForValueConst(const std::string& value, 
+                           CladEnum& outKey) const;
+  
   bool HasKey(CladEnum ev) const;
   bool Erase(CladEnum ev);
-  void UpdateValue(CladEnum ev, const std::string& newResponse);
+  void UpdateValue(CladEnum ev, const std::string& newValue);
+
   
 private:
   std::unordered_map<CladEnum, std::string, Anki::Util::EnumHasher> _cladMap;
-  
+  std::unordered_map<std::string, CladEnum> _reverseLookupMap;
+
 }; // class CladEnumToStringMap
   
 
@@ -137,6 +150,42 @@ std::string CladEnumToStringMap<CladEnum>::GetValue(CladEnum enumValue) const
   return retVal->second;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class CladEnum>
+bool CladEnumToStringMap<CladEnum>::GetKeyForValue(const std::string& value, CladEnum& outKey, bool shouldCacheLookupMap)
+{
+  if(shouldCacheLookupMap && _reverseLookupMap.empty()){
+    const auto& allKeys = GetAllKeys();
+    for(const auto& key: allKeys){
+      _reverseLookupMap.emplace(GetValue(key), key);
+    }
+  }
+  return GetKeyForValueConst(value, outKey);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class CladEnum>
+bool CladEnumToStringMap<CladEnum>::GetKeyForValueConst(const std::string& value, CladEnum& outKey) const
+{
+  if(!_reverseLookupMap.empty()){
+    auto resultPair = _reverseLookupMap.find(value);
+    const bool success = resultPair != _reverseLookupMap.end();
+    if(success){
+      outKey = resultPair->second;
+    }
+    return success;
+  }else{
+    const auto& allKeys = GetAllKeys();
+    for(const auto& key: allKeys){
+      if(GetValue(key) == value){
+        outKey = key;
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<class CladEnum>
@@ -155,9 +204,9 @@ bool CladEnumToStringMap<CladEnum>::Erase(CladEnum ev)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<class CladEnum>
-void CladEnumToStringMap<CladEnum>::UpdateValue(CladEnum ev, const std::string& newResponse)
+void CladEnumToStringMap<CladEnum>::UpdateValue(CladEnum ev, const std::string& newValue)
 {
-  _cladMap[ev] = newResponse;
+  _cladMap[ev] = newValue;
 }
 
 

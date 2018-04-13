@@ -20,8 +20,10 @@
 #include "coretech/vision/shared/compositeImage/compositeImageBuilder.h"
 //#include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 
-#include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
 #include "cannedAnimLib/proceduralFace/proceduralFaceDrawer.h"
+#include "cannedAnimLib/spriteSequences/spriteSequence.h"
+#include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
+
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/animationAudioClient.h"
 #include "cozmoAnim/audio/proceduralAudioClient.h"
@@ -592,7 +594,7 @@ namespace Cozmo {
       if(ANKI_VERIFY(builtImage, 
                      "AnimationStreamer.Process_displayCompositeImageChunk.FailedToBuildImage",
                      "Composite image failed to build")){
-        SetFaceImageHelper(outImage.RenderImage().ToGray(), msg.duration_ms);
+        SetFaceImageHelper(outImage.RenderImage().ToGray(), msg.duration_ms, true);
       }
 
       _compositeImageBuilder.reset();
@@ -603,7 +605,7 @@ namespace Cozmo {
 
   Result AnimationStreamer::SetFaceImage(const Vision::Image& img, u32 duration_ms)
   {
-    return SetFaceImageHelper(img, duration_ms);
+    return SetFaceImageHelper(img, duration_ms, true);
   }
 
 
@@ -615,7 +617,7 @@ namespace Cozmo {
       // TODO: Return here or will that screw up stuff on the engine side?
       //return RESULT_OK;
     }
-    return SetFaceImageHelper(imgRGB565, duration_ms);
+    return SetFaceImageHelper(imgRGB565, duration_ms, false);
   }
   
   void AnimationStreamer::Abort()
@@ -641,8 +643,6 @@ namespace Cozmo {
 
       if (_streamingAnimation == _proceduralAnimation) {
         _proceduralAnimation->Clear();
-        auto* seqContainer = _context->GetDataLoader()->GetSpriteSequenceContainer();
-        seqContainer->ClearAnimation(SpriteSequenceContainer::ProceduralAnimName);
       }
 
       // Reset the current SpriteSequenceKeyFrame if there is one.
@@ -1506,9 +1506,10 @@ namespace Cozmo {
 
     // Send animState message
     if (--_numTicsToSendAnimState == 0) {
+      const auto numKeyframes = _proceduralAnimation->GetTrack<SpriteSequenceKeyFrame>().TrackLength();
+
       AnimationState msg;
-      auto* seqContainer = _context->GetDataLoader()->GetSpriteSequenceContainer();
-      msg.numProcAnimFaceKeyframes = seqContainer->GetNumFrames(SpriteSequenceContainer::ProceduralAnimName);
+      msg.numProcAnimFaceKeyframes = static_cast<uint32_t>(numKeyframes);
       msg.lockedTracks             = _lockedTracks;
       msg.tracksInUse              = _tracksInUse;
 
@@ -1592,38 +1593,24 @@ namespace Cozmo {
   }
   
   template<typename ImageType>
-  Result AnimationStreamer::SetFaceImageHelper(const ImageType& img, const u32 duration_ms)
+  Result AnimationStreamer::SetFaceImageHelper(const ImageType& img, const u32 duration_ms, bool isGrayscale)
   {
     DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetFaceImage.NullProceduralAnimation");
     DEV_ASSERT(img.IsContinuous(), "AnimationStreamer.SetFaceImage.ImageIsNotContinuous");
     
-    auto* seqContainer = _context->GetDataLoader()->GetSpriteSequenceContainer();
-    
-    // Is proceduralAnimation already playing a SpriteSequenceKeyFrame?
+    // Clear out any runtime sequences currently set on the procedural animation
     auto& spriteSeqTrack = _proceduralAnimation->GetTrack<SpriteSequenceKeyFrame>();
-    bool hasSpriteSeqKeyFrame = !spriteSeqTrack.IsEmpty();
+    spriteSeqTrack.Clear();
     
-    // Clear SpriteSequenceContainer if not already playing
-    if (!hasSpriteSeqKeyFrame) {
-      seqContainer->ClearAnimation(SpriteSequenceContainer::ProceduralAnimName);
-    }
-    
-    Result result = seqContainer->AddProceduralImage(img, duration_ms);
-    if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetFaceImage.AddImageFailed", "")))
+    // Trigger time of keyframe is 0 since we want it to start playing immediately
+    SpriteSequenceKeyFrame kf(Vision::SpriteName::Count, true, true);
+    kf.OverrideIsGrayscale(isGrayscale);
+    kf.AddFrameToRuntimeSequence(img);
+    kf.SetFrameDuration_ms(duration_ms);
+    Result result = _proceduralAnimation->AddKeyFrameToBack(kf);
+    if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetFaceImage.FailedToAddKeyFrame", "")))
     {
       return result;
-    }
-    
-    // Add keyframe if one isn't already there
-    if (!hasSpriteSeqKeyFrame) {
-      // Trigger time of keyframe is 0 since we want it to start playing immediately
-      SpriteSequenceKeyFrame kf(SpriteSequenceContainer::ProceduralAnimName);
-      kf.SetSpriteSequenceContainer(_context->GetDataLoader()->GetSpriteSequenceContainer());
-      result = _proceduralAnimation->AddKeyFrameToBack(kf);
-      if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetFaceImage.FailedToAddKeyFrame", "")))
-      {
-        return result;
-      }
     }
     
     if (_streamingAnimation != _proceduralAnimation) {

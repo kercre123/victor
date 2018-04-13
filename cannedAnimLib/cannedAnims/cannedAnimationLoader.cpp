@@ -42,7 +42,7 @@ static constexpr float kAnimationsLoadingRatio = 0.7f;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CannedAnimationContainer* CannedAnimationLoader::LoadAnimations()
 {
-  _cannedAnimations = std::make_unique<CannedAnimationContainer>(_spriteSequenceContainer);
+  _cannedAnimations = std::make_unique<CannedAnimationContainer>(_spriteMap, _spriteSequenceContainer);
   {
     ANKI_CPU_PROFILE("CannedAnimationLoader::CollectFiles");
     CollectAnimFiles();
@@ -61,7 +61,7 @@ CannedAnimationContainer* CannedAnimationLoader::LoadAnimations()
 
 CannedAnimationContainer* CannedAnimationLoader::LoadAnimationsFromFile(const std::string& path)
 {
-  _cannedAnimations = std::make_unique<CannedAnimationContainer>(_spriteSequenceContainer);
+  _cannedAnimations = std::make_unique<CannedAnimationContainer>(_spriteMap, _spriteSequenceContainer);
   _jsonFiles.push_back(path);
   {
     ANKI_CPU_PROFILE("CannedAnimationLoader::LoadAnimationFile");
