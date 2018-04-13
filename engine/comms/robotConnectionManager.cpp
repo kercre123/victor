@@ -34,7 +34,7 @@ namespace Cozmo {
 namespace {
 static const int kNumQueueSizeStatsToSendToDas = 4000;
 }
-  
+
 RobotConnectionManager::RobotConnectionManager(RobotManager* robotManager)
 : _currentConnectionData(new RobotConnectionData())
 , _robotManager(robotManager)
@@ -50,7 +50,7 @@ RobotConnectionManager::~RobotConnectionManager()
 void RobotConnectionManager::Init()
 {
 }
-  
+
 Result RobotConnectionManager::Update()
 {
   ANKI_CPU_PROFILE("RobotConnectionManager::Update");
@@ -59,7 +59,7 @@ Result RobotConnectionManager::Update()
   // being cleared
   if( _queueSizeAccumulator.GetNum() >= kNumQueueSizeStatsToSendToDas ) {
     SendAndResetQueueStats();
-  }  
+  }
 
   // If we lose connection to robot, report connection closed
   if (!_udpClient.IsConnected()) {
@@ -93,10 +93,10 @@ bool RobotConnectionManager::IsConnected(RobotID_t robotID) const
   }
   return false;
 }
-  
+
 Result RobotConnectionManager::Connect(RobotID_t robotID)
 {
-  LOG_INFO("RobotConnectionManager.Connect", "Connect to robot %d", robotID);
+  // LOG_DEBUG("RobotConnectionManager.Connect", "Connect to robot %d", robotID);
 
   _currentConnectionData->Clear();
 
@@ -120,7 +120,7 @@ Result RobotConnectionManager::Connect(RobotID_t robotID)
 
   return RESULT_OK;
 }
-  
+
 void RobotConnectionManager::DisconnectCurrent()
 {
   LOG_DEBUG("RobotConnectionManager.DisconnectCurrent", "Disconnect");
@@ -136,7 +136,7 @@ void RobotConnectionManager::DisconnectCurrent()
     SendAndResetQueueStats();
   }
 }
-  
+
 bool RobotConnectionManager::SendData(const uint8_t* buffer, unsigned int size)
 {
   const bool validState = IsValidConnection();
@@ -152,7 +152,7 @@ bool RobotConnectionManager::SendData(const uint8_t* buffer, unsigned int size)
     DisconnectCurrent();
     return false;
   }
-  
+
   return true;
 }
 
@@ -177,7 +177,7 @@ void RobotConnectionManager::ProcessArrivedMessages()
   while (_currentConnectionData->HasMessages())
   {
     RobotConnectionMessageData nextMessage = _currentConnectionData->PopNextMessage();
-    
+
 #if TRACK_INCOMING_PACKET_LATENCY
     const auto& timeReceived = nextMessage.GetTimeReceived();
     if (timeReceived != Util::kNetTimeStampZero)
@@ -188,7 +188,7 @@ void RobotConnectionManager::ProcessArrivedMessages()
 #endif
 
     _queueSizeAccumulator += _currentConnectionData->GetIncomingQueueSize();
-    
+
     if (RobotConnectionMessageType::Data == nextMessage.GetType())
     {
       HandleDataMessage(nextMessage);
@@ -212,7 +212,7 @@ void RobotConnectionManager::ProcessArrivedMessages()
     }
   }
 }
-  
+
 void RobotConnectionManager::HandleDataMessage(RobotConnectionMessageData& nextMessage)
 {
   const bool isConnected = IsValidConnection();
@@ -221,7 +221,7 @@ void RobotConnectionManager::HandleDataMessage(RobotConnectionMessageData& nextM
     LOG_INFO("RobotConnectionManager.HandleDataMessage.NotValidState", "Connection not yet valid, dropping message");
     return;
   }
-  
+
   const bool correctAddress = _currentConnectionData->GetAddress() == nextMessage.GetAddress();
   if (!correctAddress)
   {
@@ -231,7 +231,7 @@ void RobotConnectionManager::HandleDataMessage(RobotConnectionMessageData& nextM
               nextMessage.GetAddress().ToString().c_str());
     return;
   }
-  
+
   _readyData.push_back(std::move(nextMessage.GetData()));
 }
 
@@ -246,7 +246,7 @@ void RobotConnectionManager::HandleConnectionResponseMessage(RobotConnectionMess
               "Got connection response at unexpected time");
     return;
   }
-  
+
   _currentConnectionData->SetState(RobotConnectionData::State::Connected);
 }
 
@@ -255,11 +255,11 @@ void RobotConnectionManager::HandleDisconnectMessage(RobotConnectionMessageData&
   LOG_DEBUG("RobotConnectionManager.HandleDisconnectMessage", "Handle disconnect");
 
   const bool connectionWasInWaitingState = (RobotConnectionData::State::Waiting == _currentConnectionData->GetState());
-  
+
   // This connection is no longer valid.
   // Note not calling DisconnectCurrent because this message means reliableTransport is already deleting this connection data
   _currentConnectionData->Clear();
-  
+
   // This robot is gone.
   Robot* robot =  _robotManager->GetRobot();
   if (nullptr != robot)
@@ -275,12 +275,12 @@ void RobotConnectionManager::HandleConnectionRequestMessage(RobotConnectionMessa
               "Received connection request from %s. Ignoring",
               nextMessage.GetAddress().ToString().c_str());
 }
-  
+
 bool RobotConnectionManager::IsValidConnection() const
 {
   return _currentConnectionData->GetState() == RobotConnectionData::State::Connected;
 }
-  
+
 bool RobotConnectionManager::PopData(std::vector<uint8_t>& data_out)
 {
   if (_readyData.empty()) {
@@ -291,12 +291,12 @@ bool RobotConnectionManager::PopData(std::vector<uint8_t>& data_out)
   _readyData.pop_front();
   return true;
 }
-  
+
 void RobotConnectionManager::ClearData()
 {
   _readyData.clear();
 }
-  
+
 const Anki::Util::Stats::StatsAccumulator& RobotConnectionManager::GetQueuedTimes_ms() const
 {
 #if TRACK_INCOMING_PACKET_LATENCY

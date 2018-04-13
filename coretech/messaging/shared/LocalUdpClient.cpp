@@ -47,7 +47,7 @@ LocalUdpClient::~LocalUdpClient()
 
 bool LocalUdpClient::Connect(const std::string& sockname, const std::string & peername)
 {
-  LOG_INFO("LocalUdpClient.Connect", "Connect from %s to %s", sockname.c_str(), peername.c_str());
+  //LOG_DEBUG("LocalUdpClient.Connect", "Connect from %s to %s", sockname.c_str(), peername.c_str());
 
   if (_socketfd >= 0) {
     LOG_ERROR("LocalUdpClient.Connect", "Already connected");
@@ -97,7 +97,7 @@ bool LocalUdpClient::Connect(const std::string& sockname, const std::string & pe
 
   // Remove any existing socket using this name
   unlink(_sockname.c_str());
-  
+
   // Bind to socket name
   memset(&_sockaddr, 0, sizeof(_sockaddr));
   _sockaddr.sun_family = ai_family;
@@ -127,7 +127,7 @@ bool LocalUdpClient::Connect(const std::string& sockname, const std::string & pe
   // Send connection packet (i.e. something so that the server adds us to the client list)
   const char zero = 0;
   Send(&zero, 1);
-  
+
   return true;
 }
 
@@ -148,7 +148,7 @@ ssize_t LocalUdpClient::Send(const char* data, int size)
     LOG_ERROR("LocalUdpClient.Send", "Socket undefined, skipping send");
     return 0;
   }
-  
+
   //LOG_DEBUG("LocalUdpClient.Send", "Sending %d bytes", size);
 
   const ssize_t bytes_sent = send(_socketfd, data, size, 0);
@@ -172,7 +172,7 @@ ssize_t LocalUdpClient::Recv(char* data, int maxSize)
   }
 
   const ssize_t bytes_received = recv(_socketfd, data, maxSize, 0);
-  
+
   if (bytes_received <= 0) {
     if (errno == EWOULDBLOCK) {
       //LOG_DEBUG("LocalUdpClient.Recv", "No data available");
@@ -183,7 +183,7 @@ ssize_t LocalUdpClient::Recv(char* data, int maxSize)
       return -1;
     }
   }
-  
+
   //LOG_DEBUG("LocalUdpClient.Recv", "Received %d bytes", bytes_received);
   return bytes_received;
 }

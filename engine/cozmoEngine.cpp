@@ -80,6 +80,17 @@
 
 #define MIN_NUM_FACTORY_TEST_LOGS_FOR_ARCHIVING 100
 
+// Local state variables
+namespace {
+
+  // How often do we attempt connection to robot/anim process?
+  constexpr auto connectInterval = std::chrono::seconds(1);
+
+  // When did we last try connecting?
+  auto lastConnectAttempt = std::chrono::steady_clock::time_point();
+
+}
+
 namespace Anki {
 namespace Cozmo {
 
@@ -156,7 +167,7 @@ int GetEngineStatsWebServerHandler(struct mg_connection *conn, void *cbdata)
   std::stringstream ss14;
   ss14 << std::fixed << std::setprecision(3) << robotState.gyro.z;
   const auto& stat_gyroZ = ss14.str();
-  
+
   mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
             stat_poseAngle_rad.c_str(), stat_posePitch_rad.c_str(),
             stat_headAngle_rad.c_str(), stat_liftHeight_mm.c_str(),
@@ -199,7 +210,7 @@ int GetEngineStatsWebServerHandler(struct mg_connection *conn, void *cbdata)
   const auto& stat_carryingObjectOnTopID = std::to_string(robotState.carryingObjectOnTopID);
   const auto& stat_headTrackingObjectID = std::to_string(robotState.headTrackingObjectID);
   const auto& stat_localizedToObjectID = std::to_string(robotState.localizedToObjectID);
-  const auto& stat_status = std::to_string(robotState.status); 
+  const auto& stat_status = std::to_string(robotState.status);
   mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n",
             stat_carryingObjectID.c_str(), stat_carryingObjectOnTopID.c_str(),
             stat_headTrackingObjectID.c_str(), stat_localizedToObjectID.c_str(),
@@ -510,12 +521,23 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     }
     case EngineState::ConnectingToRobot:
     {
-      // Wait for robot process to start up and become ready
-      Result result = ConnectToRobotProcess();
-      if (RESULT_OK != result) {
-        LOG_WARNING("CozmoEngine.Update.ConnectingToRobot", "Unable to connect to robot (result %d)", result);
+      // Is is time to try connecting?
+      const auto now = std::chrono::steady_clock::now();
+      const auto elapsed = (now - lastConnectAttempt);
+      if (elapsed < connectInterval) {
+        // Too soon to try connecting
         break;
       }
+      lastConnectAttempt = now;
+
+      // Attempt to conect
+      Result result = ConnectToRobotProcess();
+      if (RESULT_OK != result) {
+        //LOG_WARNING("CozmoEngine.Update.ConnectingToRobot", "Unable to connect to robot (result %d)", result);
+        break;
+      }
+
+      // Now connected
       LOG_INFO("CozmoEngine.Update.ConnectingToRobot", "Now connected to robot");
       SetEngineState(EngineState::Running);
       break;
@@ -719,7 +741,7 @@ Result CozmoEngine::ConnectToRobotProcess()
   if (!msgHandler->IsConnected(robotID)) {
     Result result = msgHandler->AddRobotConnection(robotID);
     if (RESULT_OK != result) {
-      LOG_WARNING("CozmoEngine.ConnectToRobotProcess", "Unable to connect to robot %d (result %d)", robotID, result);
+      //LOG_WARNING("CozmoEngine.ConnectToRobotProcess", "Unable to connect to robot %d (result %d)", robotID, result);
       return result;
     }
   }
