@@ -431,8 +431,36 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsOtaUpdateResponse: {
           Anki::Victor::ExternalComms::RtsOtaUpdateResponse msg = rtsMsg.Get_RtsOtaUpdateResponse();
           _otaStatusCode = msg.status;
-          _otaProgress = msg.current;
+          
+          if(_otaStatusCode == 2) {
+            _otaProgress = msg.current == 0? _otaProgress : msg.current;
+          } else {
+            _otaProgress = msg.current;
+          }
           _otaExpected = msg.expected;
+          
+          /*
+           * Commenting out for visibility because in next pass, going
+           * to use this code again to show OTA progress bar.
+           */
+          if(_currentCommand == "ota-progress" && !_readyForNextCommand) {
+            if(_otaStatusCode != 2) {
+              _readyForNextCommand = true;
+              _currentCommand = "";
+            }
+            
+            int size = 100;
+            int progress = (int)(((float)_otaProgress/(float)_otaExpected) * size);
+            std::string bar = "";
+            
+            for(int i = 0; i < size; i++) {
+              if(i <= progress) bar += "▓";
+              else bar += "_";
+            }
+            
+            printf("%100s [%d%%] [%llu/%llu] \r", bar.c_str(), progress, msg.current, msg.expected);
+            fflush(stdout);
+          }
           
           break;
         }
