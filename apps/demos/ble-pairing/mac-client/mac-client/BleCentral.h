@@ -106,6 +106,7 @@ enum WiFiAuth : uint8_t {
 - (void) StartScanning;
 - (void) StartScanning:(NSString*)nameFilter;
 - (void) StopScanning;
+- (void) interrupt;
 
 - (std::vector<std::string>) GetWordsFromLine: (std::string)line;
 
@@ -138,6 +139,15 @@ public:
         NSLog(@"The mac client is trying to speak a version we do not know about.");
         break;
     }
+    std::vector<uint8_t> messageData(msg.Size());
+    const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
+    [central send:messageData.data() length:(int)packedSize];
+  }
+  
+  template<typename T, typename... Args>
+  static void SendRtsMessage_2(BleCentral* central, int commVersion, Args&&... args) {
+    Anki::Victor::ExternalComms::ExternalComms msg = Anki::Victor::ExternalComms::ExternalComms(Anki::Victor::ExternalComms::RtsConnection(Anki::Victor::ExternalComms::RtsConnection_2(T(std::forward<Args>(args)...))));
+
     std::vector<uint8_t> messageData(msg.Size());
     const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
     [central send:messageData.data() length:(int)packedSize];

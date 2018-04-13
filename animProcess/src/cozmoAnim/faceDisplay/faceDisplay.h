@@ -15,6 +15,7 @@
 #define ANKI_COZMOANIM_FACE_DISPLAY_H
 
 #include "util/singleton/dynamicSingleton.h"
+#include "anki/cozmo/shared/factory/faultCodes.h"
 
 #include <array>
 #include <memory>
@@ -56,12 +57,20 @@ private:
   std::unique_ptr<Vision::ImageRGB565>  _faceDrawImg[2];
   Vision::ImageRGB565*                  _faceDrawNextImg = nullptr;
   Vision::ImageRGB565*                  _faceDrawCurImg = nullptr;
+  Vision::ImageRGB565*                  _faceDrawLastImg = nullptr;
   std::thread                           _faceDrawThread;
   std::mutex                            _faceDrawMutex;
   bool                                  _stopDrawFace = false;
     
   void DrawFaceLoop();
+  void UpdateNextImgPtr();
+  
+  // Main loop of the fault code thread
+  void FaultCodeLoop();
+  void DrawFaultCode(uint16_t fault);
+  void StopFaultCodeThread();
 
+  std::thread _faultCodeThread;
 }; // class FaceDisplay
   
 } // namespace Cozmo

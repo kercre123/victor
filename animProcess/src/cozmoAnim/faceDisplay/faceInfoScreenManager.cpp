@@ -42,6 +42,7 @@
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include <chrono>
+#include <iomanip>
 
 #ifndef SIMULATOR
 #include <linux/reboot.h>
@@ -353,10 +354,23 @@ void FaceInfoScreenManager::DrawFAC()
   DrawTextOnScreen({"FAC"},
                    NamedColors::BLACK,
                    (Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG ? 
-                      NamedColors::GREEN : NamedColors::RED),
+		    NamedColors::GREEN : NamedColors::RED),
                    { 0, FACE_DISPLAY_HEIGHT-10 },
                    10,
                    3.f);
+}
+
+void FaceInfoScreenManager::UpdateFAC()
+{
+  static bool prevPlaypenPassedFlag = Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG;
+  const bool curPlaypenPassedFlag = Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG;
+
+  if(curPlaypenPassedFlag != prevPlaypenPassedFlag)
+  {
+    DrawFAC();
+  }
+  
+  prevPlaypenPassedFlag = curPlaypenPassedFlag;
 }
   
 void FaceInfoScreenManager::DrawCameraImage(const Vision::ImageRGB565& img)
@@ -812,7 +826,6 @@ ScreenName FaceInfoScreenManager::GetCurrScreenName() const
 
 void FaceInfoScreenManager::Update(const RobotState& state)
 {
-
   ProcessMenuNavigation(state);
   
   const auto currScreenName = GetCurrScreenName();
@@ -827,6 +840,9 @@ void FaceInfoScreenManager::Update(const RobotState& state)
     case ScreenName::MotorInfo:
       DrawMotorInfo(state);
       break;
+    case ScreenName::FAC:
+      UpdateFAC();
+      break;
     default:
       // Other screens are either updated once when SetScreen() is called
       // or updated by their own draw functions that are called externally
@@ -837,7 +853,11 @@ void FaceInfoScreenManager::Update(const RobotState& state)
 void FaceInfoScreenManager::DrawMain()
 {
   std::stringstream ss;
-  ss << std::hex << Factory::GetEMR()->fields.ESN;
+  ss << std::hex 
+     << std::setfill('0') 
+     << std::setw(8) 
+     << std::uppercase
+     << Factory::GetEMR()->fields.ESN;
   const std::string serialNo = "ESN: "  + ss.str();
 
   auto *osstate = OSState::getInstance();
@@ -1183,6 +1203,7 @@ void FaceInfoScreenManager::Reboot()
 
 #endif
 }
+
 
 } // namespace Cozmo
 } // namespace Anki

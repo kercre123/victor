@@ -639,6 +639,7 @@ struct RtsStatusResponse_2
   uint8_t bleState;
   uint8_t batteryState;
   std::string version;
+  bool otaInProgress;
   
   /**** Constructors ****/
   RtsStatusResponse_2() = default;
@@ -653,13 +654,15 @@ struct RtsStatusResponse_2
     bool accessPoint,
     uint8_t bleState,
     uint8_t batteryState,
-    const std::string& version)
+    const std::string& version,
+    bool otaInProgress)
   : wifiSsidHex(wifiSsidHex)
   , wifiState(wifiState)
   , accessPoint(accessPoint)
   , bleState(bleState)
   , batteryState(batteryState)
   , version(version)
+  , otaInProgress(otaInProgress)
   {}
   
   explicit RtsStatusResponse_2(const uint8_t* buff, size_t len);
@@ -680,7 +683,7 @@ struct RtsStatusResponse_2
   
   template <typename Callable>
   void Invoke(Callable&& func) const {
-     func(wifiSsidHex, wifiState, accessPoint, bleState, batteryState, version);
+     func(wifiSsidHex, wifiState, accessPoint, bleState, batteryState, version, otaInProgress);
   }
 };
 
@@ -810,6 +813,43 @@ struct RtsOtaUpdateRequest
 
 extern const char* RtsOtaUpdateRequestVersionHashStr;
 extern const uint8_t RtsOtaUpdateRequestVersionHash[16];
+
+// MESSAGE RtsOtaCancelRequest
+struct RtsOtaCancelRequest
+{
+  
+  /**** Constructors ****/
+  RtsOtaCancelRequest() = default;
+  RtsOtaCancelRequest(const RtsOtaCancelRequest& other) = default;
+  RtsOtaCancelRequest(RtsOtaCancelRequest& other) = default;
+  RtsOtaCancelRequest(RtsOtaCancelRequest&& other) noexcept = default;
+  RtsOtaCancelRequest& operator=(const RtsOtaCancelRequest& other) = default;
+  RtsOtaCancelRequest& operator=(RtsOtaCancelRequest&& other) = default;
+  
+  explicit RtsOtaCancelRequest(const uint8_t* buff, size_t len);
+  explicit RtsOtaCancelRequest(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsOtaCancelRequest& other) const;
+  bool operator!=(const RtsOtaCancelRequest& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func();
+  }
+};
+
+extern const char* RtsOtaCancelRequestVersionHashStr;
+extern const uint8_t RtsOtaCancelRequestVersionHash[16];
 
 // MESSAGE RtsOtaUpdateResponse
 struct RtsOtaUpdateResponse
@@ -1235,6 +1275,10 @@ template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsSshResponse> {
   using type = Anki::Victor::ExternalComms::RtsSshResponse;
 };
+template<>
+struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsOtaCancelRequest> {
+  using type = Anki::Victor::ExternalComms::RtsOtaCancelRequest;
+};
 
 // UNION RtsConnection_2
 class RtsConnection_2
@@ -1423,6 +1467,13 @@ public:
   void Set_RtsSshResponse(const Anki::Victor::ExternalComms::RtsSshResponse& new_RtsSshResponse);
   void Set_RtsSshResponse(Anki::Victor::ExternalComms::RtsSshResponse&& new_RtsSshResponse);
   
+  /** RtsOtaCancelRequest **/
+  static RtsConnection_2 CreateRtsOtaCancelRequest(Anki::Victor::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest);
+  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest);
+  const Anki::Victor::ExternalComms::RtsOtaCancelRequest& Get_RtsOtaCancelRequest() const;
+  void Set_RtsOtaCancelRequest(const Anki::Victor::ExternalComms::RtsOtaCancelRequest& new_RtsOtaCancelRequest);
+  void Set_RtsOtaCancelRequest(Anki::Victor::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest);
+  
   size_t Unpack(const uint8_t* buff, const size_t len);
   size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
   
@@ -1461,6 +1512,7 @@ private:
     Anki::Victor::ExternalComms::RtsWifiAccessPointResponse _RtsWifiAccessPointResponse;
     Anki::Victor::ExternalComms::RtsSshRequest _RtsSshRequest;
     Anki::Victor::ExternalComms::RtsSshResponse _RtsSshResponse;
+    Anki::Victor::ExternalComms::RtsOtaCancelRequest _RtsOtaCancelRequest;
   };
 };
 extern const char* RtsConnection_2VersionHashStr;

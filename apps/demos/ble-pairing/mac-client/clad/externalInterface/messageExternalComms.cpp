@@ -967,6 +967,7 @@ size_t RtsStatusResponse_2::Pack(CLAD::SafeMessageBuffer& buffer) const
   buffer.Write(this->bleState);
   buffer.Write(this->batteryState);
   buffer.WritePString<uint8_t>(this->version);
+  buffer.Write(this->otaInProgress);
   const size_t bytesWritten {buffer.GetBytesWritten()};
   return bytesWritten;
 }
@@ -985,6 +986,7 @@ size_t RtsStatusResponse_2::Unpack(const CLAD::SafeMessageBuffer& buffer)
   buffer.Read(this->bleState);
   buffer.Read(this->batteryState);
   buffer.ReadPString<uint8_t>(this->version);
+  buffer.Read(this->otaInProgress);
   return buffer.GetBytesRead();
 }
 
@@ -1005,6 +1007,8 @@ size_t RtsStatusResponse_2::Size() const
   // version
   result += 1; // uint_8 (string length)
   result += this->version.length(); // uint_8
+  // otaInProgress
+  result += 1; // bool
   return result;
 }
 
@@ -1015,7 +1019,8 @@ bool RtsStatusResponse_2::operator==(const RtsStatusResponse_2& other) const
     this->accessPoint == other.accessPoint &&
     this->bleState == other.bleState &&
     this->batteryState == other.batteryState &&
-    this->version == other.version);
+    this->version == other.version &&
+    this->otaInProgress == other.otaInProgress);
 }
 
 bool RtsStatusResponse_2::operator!=(const RtsStatusResponse_2& other) const
@@ -1024,10 +1029,10 @@ bool RtsStatusResponse_2::operator!=(const RtsStatusResponse_2& other) const
 }
 
 
-const char* RtsStatusResponse_2VersionHashStr = "b27bcdcc814dd969fb9cd35581698f74";
+const char* RtsStatusResponse_2VersionHashStr = "25f0391edee291156a151237ab915393";
 
 const uint8_t RtsStatusResponse_2VersionHash[16] = { 
-    0xb2, 0x7b, 0xcd, 0xcc, 0x81, 0x4d, 0xd9, 0x69, 0xfb, 0x9c, 0xd3, 0x55, 0x81, 0x69, 0x8f, 0x74 
+    0x25, 0xf0, 0x39, 0x1e, 0xde, 0xe2, 0x91, 0x15, 0x6a, 0x15, 0x12, 0x37, 0xab, 0x91, 0x53, 0x93 
 };
 
 // MESSAGE RtsWifiScanRequest
@@ -1225,6 +1230,65 @@ const char* RtsOtaUpdateRequestVersionHashStr = "34abeee2b5da4911bdec8d7e0a7ca1c
 
 const uint8_t RtsOtaUpdateRequestVersionHash[16] = { 
     0x34, 0xab, 0xee, 0xe2, 0xb5, 0xda, 0x49, 0x11, 0xbd, 0xec, 0x8d, 0x7e, 0xa, 0x7c, 0xa1, 0xc6 
+};
+
+// MESSAGE RtsOtaCancelRequest
+
+RtsOtaCancelRequest::RtsOtaCancelRequest(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsOtaCancelRequest::RtsOtaCancelRequest(const uint8_t* buff, size_t len)
+: RtsOtaCancelRequest::RtsOtaCancelRequest({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsOtaCancelRequest::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsOtaCancelRequest::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsOtaCancelRequest::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsOtaCancelRequest::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  return buffer.GetBytesRead();
+}
+
+size_t RtsOtaCancelRequest::Size() const
+{
+  size_t result = 0;
+  return result;
+}
+
+bool RtsOtaCancelRequest::operator==(const RtsOtaCancelRequest& other) const
+{
+return true;
+}
+
+bool RtsOtaCancelRequest::operator!=(const RtsOtaCancelRequest& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsOtaCancelRequestVersionHashStr = "a7d3597d9a697b66c5f4f06ca9e9b3f2";
+
+const uint8_t RtsOtaCancelRequestVersionHash[16] = { 
+    0xa7, 0xd3, 0x59, 0x7d, 0x9a, 0x69, 0x7b, 0x66, 0xc5, 0xf4, 0xf0, 0x6c, 0xa9, 0xe9, 0xb3, 0xf2 
 };
 
 // MESSAGE RtsOtaUpdateResponse
@@ -1829,6 +1893,9 @@ RtsConnection_2::RtsConnection_2(const RtsConnection_2& other)
   case Tag::RtsSshResponse:
     new(&(this->_RtsSshResponse)) Anki::Victor::ExternalComms::RtsSshResponse(other._RtsSshResponse);
     break;
+  case Tag::RtsOtaCancelRequest:
+    new(&(this->_RtsOtaCancelRequest)) Anki::Victor::ExternalComms::RtsOtaCancelRequest(other._RtsOtaCancelRequest);
+    break;
   default:
     _tag = Tag::INVALID;
     break;
@@ -1907,6 +1974,9 @@ RtsConnection_2::RtsConnection_2(RtsConnection_2&& other) noexcept
     break;
   case Tag::RtsSshResponse:
     new(&(this->_RtsSshResponse)) Anki::Victor::ExternalComms::RtsSshResponse(std::move(other._RtsSshResponse));
+    break;
+  case Tag::RtsOtaCancelRequest:
+    new(&(this->_RtsOtaCancelRequest)) Anki::Victor::ExternalComms::RtsOtaCancelRequest(std::move(other._RtsOtaCancelRequest));
     break;
   default:
     _tag = Tag::INVALID;
@@ -1990,6 +2060,9 @@ RtsConnection_2& RtsConnection_2::operator=(const RtsConnection_2& other)
   case Tag::RtsSshResponse:
     new(&(this->_RtsSshResponse)) Anki::Victor::ExternalComms::RtsSshResponse(other._RtsSshResponse);
     break;
+  case Tag::RtsOtaCancelRequest:
+    new(&(this->_RtsOtaCancelRequest)) Anki::Victor::ExternalComms::RtsOtaCancelRequest(other._RtsOtaCancelRequest);
+    break;
   default:
     _tag = Tag::INVALID;
     break;
@@ -2071,6 +2144,9 @@ RtsConnection_2& RtsConnection_2::operator=(RtsConnection_2&& other) noexcept
     break;
   case Tag::RtsSshResponse:
     new(&(this->_RtsSshResponse)) Anki::Victor::ExternalComms::RtsSshResponse(std::move(other._RtsSshResponse));
+    break;
+  case Tag::RtsOtaCancelRequest:
+    new(&(this->_RtsOtaCancelRequest)) Anki::Victor::ExternalComms::RtsOtaCancelRequest(std::move(other._RtsOtaCancelRequest));
     break;
   default:
     _tag = Tag::INVALID;
@@ -3368,6 +3444,62 @@ void RtsConnection_2::Set_RtsSshResponse(Anki::Victor::ExternalComms::RtsSshResp
   }
 }
 
+RtsConnection_2 RtsConnection_2::CreateRtsOtaCancelRequest(Anki::Victor::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest)
+{
+  RtsConnection_2 m;
+  m.Set_RtsOtaCancelRequest(new_RtsOtaCancelRequest);
+  return m;
+}
+
+RtsConnection_2::RtsConnection_2(Anki::Victor::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest)
+{
+  new(&this->_RtsOtaCancelRequest) Anki::Victor::ExternalComms::RtsOtaCancelRequest(std::move(new_RtsOtaCancelRequest));
+  _tag = Tag::RtsOtaCancelRequest;
+}
+
+const Anki::Victor::ExternalComms::RtsOtaCancelRequest& RtsConnection_2::Get_RtsOtaCancelRequest() const
+{
+  assert(_tag == Tag::RtsOtaCancelRequest);
+  return this->_RtsOtaCancelRequest;
+}
+
+void RtsConnection_2::Set_RtsOtaCancelRequest(const Anki::Victor::ExternalComms::RtsOtaCancelRequest& new_RtsOtaCancelRequest)
+{
+  if(this->_tag == Tag::RtsOtaCancelRequest) {
+    this->_RtsOtaCancelRequest = new_RtsOtaCancelRequest;
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsOtaCancelRequest) Anki::Victor::ExternalComms::RtsOtaCancelRequest(new_RtsOtaCancelRequest);
+    _tag = Tag::RtsOtaCancelRequest;
+  }
+}
+
+template<>
+const Anki::Victor::ExternalComms::RtsOtaCancelRequest& RtsConnection_2::Get_<RtsConnection_2::Tag::RtsOtaCancelRequest>() const
+{
+  assert(_tag == Tag::RtsOtaCancelRequest);
+  return this->_RtsOtaCancelRequest;
+}
+
+template<>
+RtsConnection_2 RtsConnection_2::Create_<RtsConnection_2::Tag::RtsOtaCancelRequest>(Anki::Victor::ExternalComms::RtsOtaCancelRequest member)
+{
+  return CreateRtsOtaCancelRequest(std::move(member));
+}
+
+void RtsConnection_2::Set_RtsOtaCancelRequest(Anki::Victor::ExternalComms::RtsOtaCancelRequest&& new_RtsOtaCancelRequest)
+{
+  if (this->_tag == Tag::RtsOtaCancelRequest) {
+    this->_RtsOtaCancelRequest = std::move(new_RtsOtaCancelRequest);
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsOtaCancelRequest) Anki::Victor::ExternalComms::RtsOtaCancelRequest(std::move(new_RtsOtaCancelRequest));
+    _tag = Tag::RtsOtaCancelRequest;
+  }
+}
+
 size_t RtsConnection_2::Unpack(const uint8_t* buff, const size_t len)
 {
   const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -3567,6 +3699,14 @@ size_t RtsConnection_2::Unpack(const CLAD::SafeMessageBuffer& buffer)
       this->_RtsSshResponse.Unpack(buffer);
     }
     break;
+  case Tag::RtsOtaCancelRequest:
+    if (newTag != oldTag) {
+      new(&(this->_RtsOtaCancelRequest)) Anki::Victor::ExternalComms::RtsOtaCancelRequest(buffer);
+    }
+    else {
+      this->_RtsOtaCancelRequest.Unpack(buffer);
+    }
+    break;
   default:
     break;
   }
@@ -3653,6 +3793,9 @@ size_t RtsConnection_2::Pack(CLAD::SafeMessageBuffer& buffer) const
   case Tag::RtsSshResponse:
     this->_RtsSshResponse.Pack(buffer);
     break;
+  case Tag::RtsOtaCancelRequest:
+    this->_RtsOtaCancelRequest.Pack(buffer);
+    break;
   default:
     break;
   }
@@ -3732,6 +3875,9 @@ size_t RtsConnection_2::Size() const
   case Tag::RtsSshResponse:
     result += this->_RtsSshResponse.Size(); // RtsSshResponse
     break;
+  case Tag::RtsOtaCancelRequest:
+    result += this->_RtsOtaCancelRequest.Size(); // RtsOtaCancelRequest
+    break;
   default:
     break;
   }
@@ -3790,6 +3936,8 @@ bool RtsConnection_2::operator==(const RtsConnection_2& other) const
     return this->_RtsSshRequest == other._RtsSshRequest;
   case Tag::RtsSshResponse:
     return this->_RtsSshResponse == other._RtsSshResponse;
+  case Tag::RtsOtaCancelRequest:
+    return this->_RtsOtaCancelRequest == other._RtsOtaCancelRequest;
   default:
     return true;
   }
@@ -3872,6 +4020,9 @@ void RtsConnection_2::ClearCurrent()
   case Tag::RtsSshResponse:
     _RtsSshResponse.~RtsSshResponse();
     break;
+  case Tag::RtsOtaCancelRequest:
+    _RtsOtaCancelRequest.~RtsOtaCancelRequest();
+    break;
   default:
     break;
   }
@@ -3926,15 +4077,17 @@ const char* RtsConnection_2TagToString(const RtsConnection_2Tag tag) {
     return "RtsSshRequest";
   case RtsConnection_2Tag::RtsSshResponse:
     return "RtsSshResponse";
+  case RtsConnection_2Tag::RtsOtaCancelRequest:
+    return "RtsOtaCancelRequest";
   default:
     return "INVALID";
   }
 }
 
-const char* RtsConnection_2VersionHashStr = "1516bb3021b3798036fdb5ae320ac621";
+const char* RtsConnection_2VersionHashStr = "b3b90b6cc8bdb02666dfd894fca8ddb0";
 
 const uint8_t RtsConnection_2VersionHash[16] = { 
-    0x15, 0x16, 0xbb, 0x30, 0x21, 0xb3, 0x79, 0x80, 0x36, 0xfd, 0xb5, 0xae, 0x32, 0xa, 0xc6, 0x21 
+    0xb3, 0xb9, 0xb, 0x6c, 0xc8, 0xbd, 0xb0, 0x26, 0x66, 0xdf, 0xd8, 0x94, 0xfc, 0xa8, 0xdd, 0xb0 
 };
 
 // UNION RtsConnection
