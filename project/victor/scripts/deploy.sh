@@ -21,7 +21,9 @@ source ${SCRIPT_PATH}/victor_env.sh
 : ${FORCE_RSYNC_BIN:=0}
 : ${ANKI_BUILD_TYPE:="Debug"}
 : ${INSTALL_ROOT:="/anki"}
-: ${DEVICE_RSYNC_BIN_DIR:="/usr/bin"}
+: ${DEVTOOLS_INSTALL_ROOT:="/anki-devtools"}
+: ${DEVICE_RSYNC_BIN_DIR:="${DEVTOOLS_INSTALL_ROOT}/bin"}
+: ${DEVICE_RSYNC_CONF_DIR:="/run/systemd/system"}
 
 function usage() {
   echo "$SCRIPT_NAME [OPTIONS]"
@@ -104,6 +106,7 @@ robot_sh mkdir -p "${INSTALL_ROOT}"
 robot_sh mkdir -p "${INSTALL_ROOT}/etc"
 robot_sh mkdir -p "${LIB_INSTALL_PATH}"
 robot_sh mkdir -p "${BIN_INSTALL_PATH}"
+robot_sh mkdir -p "${DEVICE_RSYNC_BIN_DIR}"
 
 # install rsync binary and config if needed
 logv "install rsync if necessary"
@@ -112,6 +115,19 @@ robot_sh [ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]
 if [ $? -ne 0 ] || [ $FORCE_RSYNC_BIN -eq 1 ]; then
   echo "loading rsync to device"
   robot_cp ${RSYNC_BIN_DIR}/rsync.bin ${DEVICE_RSYNC_BIN_DIR}/rsync.bin
+fi
+
+robot_sh [ -f "$DEVICE_RSYNC_CONF_DIR/rsyncd.conf" ]
+if [ $? -ne 0 ] || [ $FORCE_RSYNC_BIN -eq 1 ]; then
+  echo "loading rsync config to device"
+  robot_cp ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}/rsyncd.conf
+fi
+
+robot_sh [ -f "$DEVICE_RSYNC_CONF_DIR/rsyncd.service" ]
+if [ $? -ne 0 ] || [ $FORCE_RSYNC_BIN -eq 1 ]; then
+  echo "loading rsyncd.service to device"
+  robot_cp ${RSYNC_BIN_DIR}/rsyncd.service ${DEVICE_RSYNC_CONF_DIR}/rsyncd.service
+  robot_sh "/bin/systemctl daemon-reload"
 fi
 set -e
 
@@ -122,6 +138,11 @@ set -e
 logv "stop victor services"
 robot_sh "/bin/systemctl stop victor.target"
 
+logv "starting rsync daemon"
+robot_sh "/bin/systemctl is-active rsyncd.service > /dev/null 2>&1\
+          || /bin/systemctl start rsyncd.service"
+
+
 pushd ${STAGING_DIR} > /dev/null 2>&1
 
 #
@@ -129,14 +150,20 @@ pushd ${STAGING_DIR} > /dev/null 2>&1
 # Use --delete to purge files that are no longer present in build tree
 #
 logv "rsync"
+set +e
 rsync -rlptD -uzvP \
   --inplace \
   --delete \
-  --rsync-path=${DEVICE_RSYNC_BIN_DIR}/rsync.bin \
-  -e ssh \
-  ./anki/ root@${ANKI_ROBOT_HOST}:/${INSTALL_ROOT}/
+  ./anki/ rsync://${ANKI_ROBOT_HOST}:1873/anki_root/
+RSYNC_RESULT=$?
+set -e
+
+logv "stop rsync daemon"
+robot_sh "/bin/systemctl stop rsyncd"
 
 logv "finish deploy"
+
+exit $RSYNC_RESULT
 ) # End TRY deploy
 
 DEPLOY_RESULT=$?
