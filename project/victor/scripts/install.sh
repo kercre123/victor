@@ -67,8 +67,8 @@ touch ${DIST_LIST}
 
 find lib -type f -name '*.so' >> ${DIST_LIST}
 find bin -type f -not -name '*.full' >> ${DIST_LIST}
-find etc >> ${DIST_LIST}
-find data >> ${DIST_LIST}
+find etc >> ${DIST_LIST} || true # Don't fail on these folders not existing
+find data >> ${DIST_LIST} || true
 
 # Copy files to distribution directory
 rsync \
