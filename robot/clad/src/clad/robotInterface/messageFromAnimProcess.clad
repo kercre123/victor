@@ -55,5 +55,12 @@ message StreamCameraImages
   bool enable,
 }
 
+// Indicates to engine whether or not anim process
+// is in pairing, customer care, or debug screen
+message DebugScreenMode
+{
+  bool enabled,
+}
+
 } // Cozmo
 } // Anki

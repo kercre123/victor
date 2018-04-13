@@ -21,6 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/devBehaviorComponentMessageHandler.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/robotDataLoader.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "webServerProcess/src/webService.h"
@@ -30,6 +31,7 @@ namespace Cozmo {
 
 namespace {
 static const BehaviorID kBehaviorIDForDevMessage = BEHAVIOR_ID(DevExecuteBehaviorRerun);
+static const BehaviorID kWaitBehaviorID = BEHAVIOR_ID(Wait);
 const std::string kWebVizModuleNameBehaviors = "behaviors";
 const std::string kWebVizModuleNameIntents = "intents";
 }
@@ -89,7 +91,50 @@ void DevBehaviorComponentMessageHandler::InitDependent(Robot* robot, const BCCom
       _robot.GetExternalInterface()->Subscribe(GameToEngineTag::ExecuteBehaviorByID, 
                                                handlerCallback)
     );
-    
+
+
+    // =========== Handle DebugScreenMode message =================
+    // TODO: VIC-2416 - Rename this class since it is used in release.
+    // Get base behavior to execute when exiting debug screens
+    if(_robot.GetContext() == nullptr){
+      PRINT_NAMED_WARNING("DevBehaviorComponentMessageHandler.InitDependent.NoContext", "");
+      return;
+    }
+    auto dataLoader = _robot.GetContext()->GetDataLoader();
+    if(dataLoader == nullptr){
+      PRINT_NAMED_WARNING("DevBehaviorComponentMessageHandler.InitDependent.NoDataLoader", "");
+      return;
+    }
+    const Json::Value& freeplayBehaviorConfig = dataLoader->GetVictorFreeplayBehaviorConfig();
+    if(freeplayBehaviorConfig.empty()){
+      PRINT_NAMED_WARNING("DevBehaviorComponentMessageHandler.InitDependent.NoDefaultFreeplayBehavior", "");
+      return;
+    }
+    BehaviorID freeplayBehaviorID = ICozmoBehavior::ExtractBehaviorIDFromConfig(freeplayBehaviorConfig);
+    ICozmoBehaviorPtr freeplayBehavior = bContainer.FindBehaviorByID(freeplayBehaviorID);
+    ICozmoBehaviorPtr waitBehavior = bContainer.FindBehaviorByID(kWaitBehaviorID);    
+
+    // Go to Wait behavior when debug screens are enabled so as 
+    // not to interrupt while user is trying to look at something.
+    // Go to freeplayBehavior as defined in victor_behavior_config.json
+    // when leaving debug screens
+    auto debugScreenModeHandler = [&bsm, freeplayBehavior, waitBehavior](const RobotToEngineEvent& event) {
+      const auto& msg = event.GetData().Get_debugScreenMode();
+      PRINT_CH_INFO("BehaviorSystem", "DevBehaviorComponentMessageHandler.DebugScreenModeChange", "%d", msg.enabled);
+
+      if (msg.enabled) {
+        bsm.ResetBehaviorStack(waitBehavior.get());
+      } else {
+        bsm.ResetBehaviorStack(freeplayBehavior.get());
+      }
+
+    };
+    _eventHandles.push_back(
+      _robot.GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::debugScreenMode, debugScreenModeHandler)
+    );
+    // =========== End handling of DebugScreenMode message =================
+
+
     SetupUserIntentEvents();
   }
 }

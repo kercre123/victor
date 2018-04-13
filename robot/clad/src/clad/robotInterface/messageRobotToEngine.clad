@@ -181,6 +181,7 @@ union RobotToEngine {
   SwitchboardInterface::EnterPairing  enterPairing  = 0xDC,
   SwitchboardInterface::ExitPairing   exitPairing   = 0xDD,  
   StreamCameraImages         streamCameraImages     = 0xDE,
+  DebugScreenMode            debugScreenMode        = 0xDF,
 
   // Audio
   AudioEngine::Multiplexer::AudioCallbackDuration audioCallbackDuration = 0xE0,

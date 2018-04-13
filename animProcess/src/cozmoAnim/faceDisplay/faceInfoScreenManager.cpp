@@ -286,13 +286,30 @@ void FaceInfoScreenManager::SetShouldDrawFAC(bool draw)
     }
   }
 }
+
+// Returns true if the screen is of the type during which the lift should be disabled
+// and engine behaviors disabled.
+bool FaceInfoScreenManager::IsDebugScreen(ScreenName screen) const
+{
+  switch(screen) {
+    case ScreenName::None:
+    case ScreenName::FAC:
+    case ScreenName::CustomText:
+      return false;
+    default:
+      return true;
+  }
+}
   
 void FaceInfoScreenManager::SetScreen(ScreenName screen)
 {
+  bool prevScreenIsDebug = false;
+  
   // Call ExitScreen
   // _currScreen may be null on the first call of this function
   if (_currScreen != nullptr) {
     _currScreen->ExitScreen();
+    prevScreenIsDebug = IsDebugScreen(GetCurrScreenName());
   }
 
   _currScreen = GetScreen(screen);
@@ -306,16 +323,22 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
     _currScreen = GetScreen(ScreenName::FAC);
   }
   
+  // Check if transitioning between a debug and non-debug screen
+  // and tell engine so that behaviors can be appropriately enabled/disabled
+  bool currScreenIsDebug = IsDebugScreen(GetCurrScreenName());
+  if (currScreenIsDebug != prevScreenIsDebug) {
+    DebugScreenMode msg;
+    msg.enabled = currScreenIsDebug;
+    RobotInterface::SendAnimToEngine(std::move(msg));
+  }
+
 #ifndef SIMULATOR
   // Enable/Disable lift
   // (If the new screen is None, or one of the screens that's normally
   // active during playpen, then re-enable lift power)
-  const bool enableLift = GetCurrScreenName() == ScreenName::None ||
-                          GetCurrScreenName() == ScreenName::FAC  ||
-                          GetCurrScreenName() == ScreenName::CustomText;
   RobotInterface::EnableMotorPower msg;
   msg.motorID = MotorID::MOTOR_LIFT;
-  msg.enable = enableLift;
+  msg.enable = currScreenIsDebug;
   SendAnimToRobot(std::move(msg));
 #endif
   

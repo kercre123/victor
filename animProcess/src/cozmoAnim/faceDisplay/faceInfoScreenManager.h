@@ -92,6 +92,8 @@ public:
 private:
   std::unique_ptr<Vision::ImageRGB565> _scratchDrawingImg;
 
+  bool IsDebugScreen(ScreenName screen) const;
+
   // Sets the current screen
   void SetScreen(ScreenName screen);
   
