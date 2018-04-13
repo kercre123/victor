@@ -45,16 +45,16 @@ target_link_libraries(cozmo_engine
   PUBLIC
   # anki libs
   clad
-  util
   cti_common
   cti_messaging
   robot_interface
   audio_engine
   audio_multiplexer_engine
   engine_clad
+  DAS
+  util
   PRIVATE
   ble_cozmo
-  DAS
   cameraService
   canned_anim_lib_engine
   victor_web_library
@@ -82,9 +82,10 @@ target_compile_options(cozmo_engine PRIVATE
 android_strip(TARGET cozmo_engine)
 
 target_compile_definitions(cozmo_engine
+  PUBLIC
+  USE_DAS=$<BOOL:${USE_DAS}>
   PRIVATE
   CORETECH_ENGINE
-  USE_DAS=$<BOOL:${USE_DAS}>
   "${PLATFORM_COMPILE_DEFS}"
 )
 

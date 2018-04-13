@@ -1,5 +1,8 @@
 project(das_client)
 
+include(anki_build_cxx)
+include(android_strip)
+
 set(SRCS
   src/DAS.cpp
   src/dasAppender.cpp
@@ -16,7 +19,28 @@ set(SRCS
 )
 
 set(PLATFORM_SRCS "")
-if (ANDROID)
+set(PLATFORM_LIBS "")
+set(PLATFORM_INCLUDES "")
+
+if (VICOS OR VICOS_LA OR VICOS_LE)
+
+  message(STATUS "DAS Platform: VICOS")
+
+  set(PLATFORM_SRCS
+    vicos/dasLogMacros.h
+    vicos/dasLocalAppenderImpl.h
+    vicos/dasLocalAppenderImpl.cpp
+    vicos/dasLocalAppenderFactory.cpp
+    vicos/dasPostToServer.cpp
+  )
+
+  set(PLATFORM_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/vicos)
+  set(PLATFORM_LIBS log)
+
+elseif (ANDROID)
+
+  message(STATUS "DAS Platform: ANDROID" )
+
   set(PLATFORM_SRCS
     android/DASNativeLib/jni/dasJni.cpp
     android/DASNativeLib/jni/dasLocalAppenderFactory.cpp
@@ -25,7 +49,16 @@ if (ANDROID)
     android/DASNativeLib/jni/dasLogMacros.h
     android/DASNativeLib/jni/dasPlatform_android.cpp
   )
-elseif (MACOSX OR VICOS)
+  set(PLATFORM_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/android/DASNativeLib/jni)
+  set(PLATFORM_LIBS android log)
+
+  # needed to workaround localeconv issue with c++_shared on android
+  target_compile_definitions(DAS PRIVATE -DNO_LOCALE_SUPPORT=1)
+
+elseif (MACOSX)
+
+  message(STATUS "DAS Platform: UNIX")
+
   set(PLATFORM_SRCS
     unix/dasLocalAppenderFactory.cpp
     unix/dasLocalAppenderImpl.cpp
@@ -33,33 +66,27 @@ elseif (MACOSX OR VICOS)
     unix/dasLogMacros.h
     unix/dasPostToServer.cpp
   )
-endif()
+  set(PLATFORM_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/unix)
 
-set(PLATFORM_LIBS "")
-if (ANDROID)
-  set(PLATFORM_LIBS android log)
-elseif(VICOS)
-  set(PLATFORM_LIBS log)
 endif()
 
 add_library(DAS
   ${SRCS}
   ${PLATFORM_SRCS}
 )
-include(android_strip)
-android_strip(TARGET DAS)
 
-set(PLATFORM_INCLUDES "")
+target_compile_options(DAS
+  PRIVATE
+  ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+)
 
-if (ANDROID)
-  # needed to workaround localeconv issue with c++_shared on android
-  target_compile_definitions(DAS PRIVATE -DNO_LOCALE_SUPPORT=1)
-  set(PLATFORM_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/android/DASNativeLib/jni)
-elseif (MACOSX OR VICOS)
-  set(PLATFORM_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/unix)
-endif()
+target_compile_definitions(DAS
+  PRIVATE
+  ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS}
+)
 
-target_include_directories(DAS PUBLIC
+target_include_directories(DAS 
+  PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/DAS>
@@ -70,3 +97,5 @@ target_include_directories(DAS PUBLIC
 target_link_libraries(DAS
   ${PLATFORM_LIBS}
 )
+
+android_strip(TARGET DAS)

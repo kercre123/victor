@@ -1,0 +1,7 @@
+{
+  "dasConfig" : {
+    "localMinLogLevel": "info",
+    "remoteMinLogLevel": "none",
+    "gameMinLogLevel": "none"
+  }
+}

@@ -1,0 +1,32 @@
+#!/bin/sh -f
+#
+# platform/config/bin/vic-dasmgr.sh
+#
+# Victor DAS Manager
+#
+# This script runs as a background to capture android log output
+# from other victor services.  /usr/bin/logwrapper is used to provide
+# event filtering and log rotation.
+#
+# Default configuration values may be overridden by environment.
+# When run from vic-dasmgr.service, environment values may
+# be set in /anki/etc/vic-dasmgr.env.
+#
+
+: ${VIC_DASMGR_BUFFER:="radio"}
+: ${VIC_DASMGR_DIRECTORY:="/data/data/com.anki.victor/cache/vic-dasmgr"}
+: ${VIC_DASMGR_FILENAME:="vic-dasmgr"}
+: ${VIC_DASMGR_ROTATION_KB:="1024"}
+: ${VIC_DASMGR_ROTATION_COUNT:="16"}
+: ${VIC_DASMGR_FORMAT:="printable"}
+: ${VIC_DASMGR_FILTERSPECS:="*:V"}
+
+/bin/mkdir -p ${VIC_DASMGR_DIRECTORY}
+
+exec /usr/bin/logcat \
+   -b ${VIC_DASMGR_BUFFER} \
+   -f ${VIC_DASMGR_DIRECTORY}/${VIC_DASMGR_FILENAME} \
+   -r ${VIC_DASMGR_ROTATION_KB} \
+   -n ${VIC_DASMGR_ROTATION_COUNT} \
+   -v ${VIC_DASMGR_FORMAT} \
+   ${VIC_DASMGR_FILTERSPECS}

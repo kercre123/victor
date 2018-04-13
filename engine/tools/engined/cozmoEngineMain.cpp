@@ -19,14 +19,21 @@
 #include "engine/utils/parsingConstants/parsingConstants.h"
 
 #include "util/fileUtils/fileUtils.h"
+#include "util/helpers/templateHelpers.h"
 #include "util/logging/androidLogPrintLogger_android.h"
-#include "util/logging/logging.h"
+#include "util/logging/channelFilter.h"
+#include "util/logging/iEventProvider.h"
 #include "util/logging/iFormattedLoggerProvider.h"
+#include "util/logging/logging.h"
+#include "util/logging/multiLoggerProvider.h"
 #include "util/string/stringUtils.h"
 
-#include "util/logging/multiLoggerProvider.h"
-#include "util/logging/channelFilter.h"
-#include "util/helpers/templateHelpers.h"
+#if USE_DAS
+#include "DAS/DAS.h"
+#include "DAS/DASPlatform.h"
+#include "platform/victorDAS/DASPlatform.h"
+#include "platform/victorDAS/DASLogger.h"
+#endif
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
@@ -153,23 +160,50 @@ static int cozmo_start(const Json::Value& configuration)
 
   logPrintLogger->PrintLogD(LOG_PROCNAME, "CozmoStart.ResourcesPath", {}, resourcesPath.c_str());
 
+  #if (USE_DAS || DEV_LOGGER_ENABLED)
+  const std::string& appRunId = Anki::Util::GetUUIDString();
+  #endif
+
   // Initialize logging
   #if DEV_LOGGER_ENABLED
   if(!FACTORY_TEST || (FACTORY_TEST && !Anki::Cozmo::Factory::GetEMR()->fields.PACKED_OUT_FLAG))
   {
     using DevLoggingSystem = Anki::Cozmo::DevLoggingSystem;
-    const std::string& appRunId = Anki::Util::GetUUIDString();
     const std::string& devlogPath = gDataPlatform->pathToResource(Anki::Util::Data::Scope::CurrentGameLog, LOG_PROCNAME);
     DevLoggingSystem::CreateInstance(devlogPath, appRunId);
     loggers.push_back(DevLoggingSystem::GetInstancePrintProvider());
   }
   #endif
 
-  Anki::Util::IEventProvider* eventProvider = nullptr;
-  Anki::Util::MultiLoggerProvider* loggerProvider = new Anki::Util::MultiLoggerProvider(loggers);
+  #if USE_DAS
 
+  // Initialize DAS configuration with no persistent storage.
+  // Message filtering will be determined by configuration file.
+  const std::string& dasConfigPath = gDataPlatform->pathToResource(Anki::Util::Data::Scope::Resources, "config/DAS/vic-engine.json");
+  DASConfigure(dasConfigPath.c_str(), nullptr, nullptr);
+
+  // Initialize DAS platform settings.
+  // This is required for each instance of DAS, even if platform settings
+  // are duplicated by multiple services.
+  auto dasPlatform = std::make_unique<Anki::VictorDAS::DASPlatform>(appRunId);
+
+  dasPlatform->SetAppVersion("app.version");
+  dasPlatform->SetPlatform("vicos");
+  dasPlatform->SetOsVersion("VicOS 1.2");
+  dasPlatform->SetCombinedSystemVersion("VicOS 1.2.3.456");
+
+  DASNativeInit(std::move(dasPlatform), LOG_PROCNAME);
+
+  // Attach log provider to forward log events into DAS.  DAS will garnish each log event
+  // with attributes like apprun and forward to aggregator.
+  auto dasLogger = std::make_unique<Anki::VictorDAS::DASLogger>();
+  Anki::Util::gEventProvider = dasLogger.get();
+  loggers.push_back(dasLogger.release());
+
+  #endif
+
+  Anki::Util::MultiLoggerProvider* loggerProvider = new Anki::Util::MultiLoggerProvider(loggers);
   Anki::Util::gLoggerProvider = loggerProvider;
-  Anki::Util::gEventProvider = eventProvider;
 
   // - console filter for logs
   {
