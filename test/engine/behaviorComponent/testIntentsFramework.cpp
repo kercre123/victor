@@ -57,8 +57,10 @@ bool TestIntentsFramework::TestUserIntentTransition( TestBehaviorFramework& tbf,
   while(uic.IsUserIntentPending(intentTag)){
     tbf.GetBehaviorComponent().UpdateDependent(emptyMap);
     IncrementBaseStationTimerTicks();
-    ASSERT_NAMED(++tics < kMaxTicksToClear, 
-                 "Intent '%s' was not within the tick limit");
+    ASSERT_NAMED_EVENT(++tics < kMaxTicksToClear,
+                       "TestIntentsFramework.IntentNotConsumed",
+                       "Intent '%s' is still pending after the tick limit",
+                       UserIntentTagToString(intentTag));
   }
   // Check the result
   const auto& stack = tbf.GetCurrentBehaviorStack();
