@@ -10,6 +10,8 @@ namespace Anki {
 namespace Cozmo {
   CONSOLE_VAR_EXTERN(bool, kProcFace_HotspotRender)
   CONSOLE_VAR_EXTERN(s32, kProcFace_AntiAliasingSize)
+  CONSOLE_VAR_EXTERN(s32, kProcFace_AntiAliasingSize)
+  CONSOLE_VAR_EXTERN(uint8_t, kProcFace_AntiAliasingFilter);
 }
 }
 
@@ -32,6 +34,7 @@ int main(int argc, char ** argv)
   // For victor rendering
   kProcFace_HotspotRender = true;
   kProcFace_AntiAliasingSize = 5.f;
+  kProcFace_AntiAliasingFilter = 0;
 
   //LEAKING HERE
   Anki::Util::PrintfLoggerProvider* loggerProvider = new Anki::Util::PrintfLoggerProvider();

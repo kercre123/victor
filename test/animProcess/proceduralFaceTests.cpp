@@ -100,7 +100,7 @@ static void testFaceAgainstStoredVersion(const ProceduralFace& procFace, const s
   ProceduralFaceDrawer::DrawFace(procFace, rng, procFaceImg);
 #if GENERATE_TEST_FILES
   const size_t slash = filename.find_last_of("/");
-  const std::string generatedFilename = Util::FileUtils::FullFilePath({'/tmp', filename});
+  const std::string generatedFilename = std::string("/")+Util::FileUtils::FullFilePath({"tmp", filename.substr(slash+1)});
   procFaceImg.Save(generatedFilename);
 
   // Load just generated procedural face

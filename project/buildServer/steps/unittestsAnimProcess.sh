@@ -52,7 +52,7 @@ echo "Entering directory \`${SCRIPTDIR}'"
 cd $SCRIPTDIR
 
 : ${TOPLEVEL:=`$GIT rev-parse --show-toplevel`}
-BUILDPATH=${TOPLEVEL}/_build/${PLATFORM}/${CONFIGURATION}/animProcess
+BUILDPATH=${TOPLEVEL}/_build/${PLATFORM}/${CONFIGURATION}/test/animProcess
 
 XML="*GoogleTest.xml"
 LOG=animProcessUnitGoogleTest.log
