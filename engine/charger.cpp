@@ -57,13 +57,18 @@ namespace Anki {
     , _size(Length, Width, Height)
     , _vizHandle(VizManager::INVALID_HANDLE)
     {
-      // TODO: Support multiple Charger types
-      
       Pose3d frontPose(-M_PI_2_F, Z_AXIS_3D(),
                        Point3f{SlopeLength+PlatformLength, 0, MarkerZPosition});
       
-      // TODO: Update to newer CHARGER_HOME marker once DVT2 chargers are here (VIC-945) [will need to update proto too]
-      _marker = &AddMarker(Vision::MARKER_CHARGER_HOME_EYES, frontPose, Point2f(MarkerWidth, MarkerHeight));
+#ifdef SIMULATOR
+      // Simulation uses new marker with battery
+      const auto markerType = Vision::MARKER_CHARGER_HOME;
+#else
+      // Real robot uses old marker with eyes until VIC-945
+      const auto markerType = Vision::MARKER_CHARGER_HOME_EYES;
+#endif
+      
+      _marker = &AddMarker(markerType, frontPose, Point2f(MarkerWidth, MarkerHeight));
       
     } // Charger() Constructor
 

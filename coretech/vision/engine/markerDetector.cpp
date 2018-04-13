@@ -32,8 +32,14 @@
 namespace Anki {
 namespace Vision {
 
-// Default to false (and remove?) for VIC-945, when we've switched to dark cubes/charger
-CONSOLE_VAR(bool, kMarkerDetector_DarkOnLight, "Vision.MarkerDetection", true);
+// TODO: Default to false (and remove?) for VIC-945, when we've fully switched to dark cubes/charger
+CONSOLE_VAR(bool, kMarkerDetector_DarkOnLight, "Vision.MarkerDetection",
+#ifdef ANDROID
+  true   // Continue to use dark-on-light markers with real robots until we have DVT3 cubes/chargers
+#else
+  false  // Go ahead and start using light-on-dark markers in simulation
+#endif
+);
   
 struct MarkerDetector::Parameters : public Embedded::FiducialDetectionParameters
 {

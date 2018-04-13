@@ -57,7 +57,7 @@ Robot {
             Shape {
               appearance Appearance {
                 material DEF ChargerPlastic Material {
-                  diffuseColor 1.0 1.0 1.0
+                  diffuseColor IS color
                 }
               }
               geometry Box {
@@ -77,6 +77,7 @@ Robot {
                 size %{=fields.platformWidth.value}% %{=fields.platformLength.value}% %{=fields.platformThickness.value}%
               }
               appearance Appearance {
+                material IS ChargerPlastic
                 texture ImageTexture {
                   url [ "textures/chargerStripe.png" ]
                 }

@@ -20,7 +20,8 @@ PROTO CozmoBot2 [
   field SFString controller "webotsCtrlRobot2"
   field SFString controllerArgs ""
 
-  field SFColor bodyColor 0.92 0.92 0.8
+  field SFColor bodyColor 0.3 0.3 0.3
+  field SFColor wheelColor 0.2 0.2 0.2
 
   # Set to TRUE if you just want to use the model for visualization.
   field SFBool vizMode FALSE
@@ -598,7 +599,7 @@ Supervisor {
                     Shape {
                       appearance DEF WHEEL_MATERIAL Appearance {
                         material Material {
-                          diffuseColor 0.7 0.7 0.7
+                          diffuseColor IS wheelColor
                         }
                       }
                       geometry Cylinder {

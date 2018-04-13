@@ -24,30 +24,6 @@ PROTO LightCube [
     filterLogs IS filterLogs
     colorizeStderrOutput IS colorizeStderrOutput
     %{ if fields.objectType.value == "Block_LIGHTCUBE1" then }%
-      blockColor 0.8 0.8 0.8
-      markerImg_front  "lightCubes/lightCubeI_front.png"
-      markerImg_back   "lightCubes/lightCubeI_back.png"
-      markerImg_left   "lightCubes/lightCubeI_left.png"
-      markerImg_right  "lightCubes/lightCubeI_right.png"
-      markerImg_top    "lightCubes/lightCubeI_top.png"
-      markerImg_bottom "lightCubes/lightCubeI_bottom.png"        
-    %{ elseif fields.objectType.value == "Block_LIGHTCUBE2" then }%
-      blockColor 0.8 0.8 0.8
-      markerImg_front  "lightCubes/lightCubeJ_front.png"
-      markerImg_back   "lightCubes/lightCubeJ_back.png"
-      markerImg_left   "lightCubes/lightCubeJ_left.png"
-      markerImg_right  "lightCubes/lightCubeJ_right.png"
-      markerImg_top    "lightCubes/lightCubeJ_top.png"
-      markerImg_bottom "lightCubes/lightCubeJ_bottom.png"
-    %{ elseif fields.objectType.value == "Block_LIGHTCUBE3" then }%
-      blockColor 0.8 0.8 0.8
-      markerImg_front  "lightCubes/lightCubeK_front.png"
-      markerImg_back   "lightCubes/lightCubeK_back.png"
-      markerImg_left   "lightCubes/lightCubeK_left.png"
-      markerImg_right  "lightCubes/lightCubeK_right.png"
-      markerImg_top    "lightCubes/lightCubeK_top.png"
-      markerImg_bottom "lightCubes/lightCubeK_bottom.png"
-    %{ elseif fields.objectType.value == "Block_LIGHTCUBE_CIRCLE" then }%
       blockColor 0.2 0.2 0.2
       markerWidth 0.023
       markerImg_front  "lightCubes/lightCube_circle_front.png"
@@ -56,7 +32,7 @@ PROTO LightCube [
       markerImg_right  "lightCubes/lightCube_circle_right.png"
       markerImg_top    "lightCubes/lightCube_circle_top.png"
       markerImg_bottom "lightCubes/lightCube_circle_bottom.png"
-    %{ elseif fields.objectType.value == "Block_LIGHTCUBE_SQUARE" then }%
+    %{ elseif fields.objectType.value == "Block_LIGHTCUBE2" then }%
       blockColor 0.2 0.2 0.2
       markerWidth 0.023
       markerImg_front  "lightCubes/lightCube_square_front.png"
@@ -65,6 +41,43 @@ PROTO LightCube [
       markerImg_right  "lightCubes/lightCube_square_right.png"
       markerImg_top    "lightCubes/lightCube_square_top.png"
       markerImg_bottom "lightCubes/lightCube_square_bottom.png"
+    %{ elseif fields.objectType.value == "Block_LIGHTCUBE3" then }%
+      blockColor 0.2 0.2 0.2
+      markerWidth 0.023
+      markerImg_front  "lightCubes/lightCubeK_lightOnDark_front.png"
+      markerImg_back   "lightCubes/lightCubeK_lightOnDark_back.png"
+      markerImg_left   "lightCubes/lightCubeK_lightOnDark_left.png"
+      markerImg_right  "lightCubes/lightCubeK_lightOnDark_right.png"
+      markerImg_top    "lightCubes/lightCubeK_lightOnDark_top.png"
+      markerImg_bottom "lightCubes/lightCubeK_lightOnDark_bottom.png"
+
+    # Old Cozmo block definitions, just in case we want to insert one
+    # into Victor's world for a test  
+    %{ elseif fields.objectType.value == "CozmoBlock_LIGHTCUBE1" then }%
+      blockColor 0.8 0.8 0.8
+      markerImg_front  "lightCubes/lightCubeI_front.png"
+      markerImg_back   "lightCubes/lightCubeI_back.png"
+      markerImg_left   "lightCubes/lightCubeI_left.png"
+      markerImg_right  "lightCubes/lightCubeI_right.png"
+      markerImg_top    "lightCubes/lightCubeI_top.png"
+      markerImg_bottom "lightCubes/lightCubeI_bottom.png"        
+    %{ elseif fields.objectType.value == "CozmoBlock_LIGHTCUBE2" then }%
+      blockColor 0.8 0.8 0.8
+      markerImg_front  "lightCubes/lightCubeJ_front.png"
+      markerImg_back   "lightCubes/lightCubeJ_back.png"
+      markerImg_left   "lightCubes/lightCubeJ_left.png"
+      markerImg_right  "lightCubes/lightCubeJ_right.png"
+      markerImg_top    "lightCubes/lightCubeJ_top.png"
+      markerImg_bottom "lightCubes/lightCubeJ_bottom.png"
+    %{ elseif fields.objectType.value == "CozmoBlock_LIGHTCUBE3" then }%
+      blockColor 0.8 0.8 0.8
+      markerImg_front  "lightCubes/lightCubeK_front.png"
+      markerImg_back   "lightCubes/lightCubeK_back.png"
+      markerImg_left   "lightCubes/lightCubeK_left.png"
+      markerImg_right  "lightCubes/lightCubeK_right.png"
+      markerImg_top    "lightCubes/lightCubeK_top.png"
+      markerImg_bottom "lightCubes/lightCubeK_bottom.png"
+
     %{ else 
       error("Markers not defined for LightCube with specified objectType")
     end }%
