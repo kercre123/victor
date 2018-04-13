@@ -4,8 +4,9 @@ function CreateTestImage(varargin)
 markerImageDir = VisionMarkerTrained.TrainingImageDir;
 imageSize = [320 240];
 resolutionScaling = 2;
-headerFilename = '~/Code/cozmo-game/lib/anki/cozmo-engine/robot/test/data/newFiducials_320x240';
+headerFilename = '~/Code/victor/lib/anki/cozmo-engine/robot/test/data/newFiducials_320x240';
 maxImages = 24;
+figureColor = 'k';
 parseVarargin(varargin{:});
 
 aspect = imageSize(1)/imageSize(2);
@@ -15,11 +16,13 @@ imageSize = resolutionScaling * imageSize;
 % For now, assume all the training images were in a "rotated" subdir and
 % we want to create the test image from the parent of that subdir
 
-
 numDirs = length(markerImageDir);
 fnames = cell(numDirs,1);
 for i_dir = 1:numDirs
+  % Remove cozmo images from testing:
+  if ~isempty(strfind(markerImageDir{i_dir}, 'Victor'))
     fnames{i_dir} = getfnames(fullfile(markerImageDir{i_dir}, '..'), 'images', 'useFullPath', true);
+  end
 end
 fnames = vertcat(fnames{:});
 
@@ -44,7 +47,7 @@ numCols = ceil(numImages / numRows);
 
 assert(numRows*numCols >= numImages);
 
-namedFigure('VisionMarkerTrained TestImage', 'Color', 'w');
+namedFigure('VisionMarkerTrained TestImage', 'Color', figureColor);
 clf
 delete(findobj(gcf, 'Type', 'uicontrol'));
 

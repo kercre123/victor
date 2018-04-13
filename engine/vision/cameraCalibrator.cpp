@@ -558,6 +558,7 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_Qbert(std::map<Vision::Ma
     (rotate 45 degree on Z and then -30 degree in Y in this origin)
    */
 
+#if FACTORY_TEST
   const f32 halfMarkerSize_mm = BLEACHER_CALIB_MARKER_SIZE_MM / 2.f;
   const f32 halfTargetFace_mm = BLEACHER_CALIB_TARGET_FACE_SIZE_MM / 2.f;
   const Quad3f originsFrontFace({
@@ -590,7 +591,7 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_Qbert(std::map<Vision::Ma
     p.ApplyTo(whichFace, whichFace);
     return whichFace;
   };
-  
+
   // Bottom row of cubes
   markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_RIGHT]  = GetCoordsForFace(true, 0, 0, 0);
   
@@ -669,6 +670,10 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_Qbert(std::map<Vision::Ma
   markersTo3dCoords[Vision::MARKER_LIGHTCUBEJ_BOTTOM] = GetCoordsForFace(false, 6, -3, 3);
   
   markersTo3dCoords[Vision::MARKER_SDK_2TRIANGLES]    = GetCoordsForFace(false, 7, -4, 3);
+#else
+  PRINT_NAMED_ERROR("CameraCalibrator.GetCalibTargetMarkersTo3dCoords_Qbert.NotInFactoryTest",
+                    "Markers have diverged from factory test build");
+#endif
 }
 
 // TODO: Populate markersNeededToBeSeen should we end up using this target again
@@ -705,7 +710,7 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Visi
    !isFrontFace are the left markers, that will be visible when rotation are applied
    isBottomFace are the markers on the top face
    */
-  
+#if FACTORY_TEST
   const f32 halfMarkerSize_mm = INVERTEDBOX_CALIB_MARKER_SIZE_MM / 2.f;
   const f32 halfTargetFace_mm = INVERTEDBOX_CALIB_TARGET_FACE_SIZE_MM / 2.f;
   const Quad3f originsFrontFace({
@@ -748,7 +753,7 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Visi
     p.ApplyTo(whichFace, whichFace);
     return whichFace;
   };
-  
+
   // Left face
   // Bottom row
   markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_LEFT]   = GetCoordsForFace(true, 0, 0, 0);
@@ -799,6 +804,10 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_InvertedBox(std::map<Visi
   markersTo3dCoords[Vision::MARKER_SDK_3TRIANGLES]    = GetCoordsForFace(false, 2, -3, 3, true);
   
   markersTo3dCoords[Vision::MARKER_SDK_3DIAMONDS]     = GetCoordsForFace(false, 2, -4, 3, true);
+#else
+  PRINT_NAMED_ERROR("CameraCalibrator.GetCalibTargetMarkersTo3dCoords_InvertedBox.NotInFactoryTest",
+                    "Markers have diverged from factory test build");
+#endif
 }
 
 }
