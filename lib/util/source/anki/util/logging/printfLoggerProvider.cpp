@@ -54,5 +54,11 @@ void PrintfLoggerProvider::Log(ILoggerProvider::LogLevel logLevel, const std::st
   }
 }
 
+void PrintfLoggerProvider::Flush()
+{
+  fflush(stderr);
+  fflush(stdout);
+}
+
 } // end namespace Util
 } // end namespace Anki

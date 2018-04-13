@@ -30,6 +30,8 @@ public:
   void SetMinToStderrLevel(int level) { _minToStderrLevel = level; };
   
   void SetColorizeStderrOutput(bool b = true) { _colorizeStderrOutput = b; };
+
+  void Flush() override;
   
 private:
   
