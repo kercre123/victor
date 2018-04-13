@@ -409,7 +409,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     {
       // Short term fix for VIC-2407: IsDone is called twice per tick, so divide time step by 2
       // Be careful of calling IsDone until a longer term fix is implemented
-      _currentTime_ms += ANIM_TIME_STEP_MS/2;
+      _currentTime_ms += ANIM_TIME_STEP_MS;
       if(_currentTime_ms < _nextFrameTime_ms){
         return false;
       }
