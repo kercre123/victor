@@ -16,14 +16,14 @@
     "spriteBoxLayout" : [
       {
         "spriteBoxName": "TensLeftOfColon",
-        "x": 29,
+        "x": 27,
         "y": 26,
         "width": 29,
         "height": 43
       },
       {
         "spriteBoxName": "OnesLeftOfColon",
-        "x": 58,
+        "x": 57,
         "y": 26,
         "width": 29,
         "height": 43
@@ -31,20 +31,20 @@
       {
         "spriteBoxName": "Colon",
         "x": 87,
-        "y": 26,
+        "y": 27,
         "width": 10,
         "height": 43
       },
       {
         "spriteBoxName": "TensRightOfColon",
-        "x": 97,
+        "x": 98,
         "y": 26,
         "width": 29,
         "height": 43
       },
       {
         "spriteBoxName": "OnesRightOfColon",
-        "x": 126,
+        "x": 128,
         "y": 26,
         "width": 29,
         "height": 43
