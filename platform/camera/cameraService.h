@@ -106,7 +106,7 @@ namespace Anki
       // Camera
       u16             _imageCaptureHeight = DEFAULT_CAMERA_RESOLUTION_HEIGHT;
       u16             _imageCaptureWidth  = DEFAULT_CAMERA_RESOLUTION_WIDTH;
-      u32             _imageFrameID;
+      u32             _imageFrameID = 0;
 
 
     }; // class CameraService

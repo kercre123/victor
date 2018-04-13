@@ -46,7 +46,7 @@ int main(int argc, const char* argv[])
   sched_setscheduler(0, SCHED_FIFO, &params);
 
   signal(SIGTERM, Cleanup);
-
+  
   if (argc > 1) {
     ccc_set_shutdown_function(Cleanup);
     ccc_parse_command_line(argc-1, argv+1);

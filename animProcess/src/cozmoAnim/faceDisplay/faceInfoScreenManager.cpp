@@ -354,10 +354,23 @@ void FaceInfoScreenManager::DrawFAC()
   DrawTextOnScreen({"FAC"},
                    NamedColors::BLACK,
                    (Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG ? 
-                      NamedColors::GREEN : NamedColors::RED),
+		    NamedColors::GREEN : NamedColors::RED),
                    { 0, FACE_DISPLAY_HEIGHT-10 },
                    10,
                    3.f);
+}
+
+void FaceInfoScreenManager::UpdateFAC()
+{
+  static bool prevPlaypenPassedFlag = Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG;
+  const bool curPlaypenPassedFlag = Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG;
+
+  if(curPlaypenPassedFlag != prevPlaypenPassedFlag)
+  {
+    DrawFAC();
+  }
+  
+  prevPlaypenPassedFlag = curPlaypenPassedFlag;
 }
   
 void FaceInfoScreenManager::DrawCameraImage(const Vision::ImageRGB565& img)
@@ -813,7 +826,6 @@ ScreenName FaceInfoScreenManager::GetCurrScreenName() const
 
 void FaceInfoScreenManager::Update(const RobotState& state)
 {
-
   ProcessMenuNavigation(state);
   
   const auto currScreenName = GetCurrScreenName();
@@ -827,6 +839,9 @@ void FaceInfoScreenManager::Update(const RobotState& state)
       break;
     case ScreenName::MotorInfo:
       DrawMotorInfo(state);
+      break;
+    case ScreenName::FAC:
+      UpdateFAC();
       break;
     default:
       // Other screens are either updated once when SetScreen() is called
@@ -1188,6 +1203,7 @@ void FaceInfoScreenManager::Reboot()
 
 #endif
 }
+
 
 } // namespace Cozmo
 } // namespace Anki

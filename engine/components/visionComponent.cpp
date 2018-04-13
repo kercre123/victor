@@ -429,7 +429,8 @@ namespace Cozmo {
     {
       // We don't yet have a next image. Get one from camera.
       const bool gotImage = CaptureImage(_bufferedImg);
-
+      _hasStartedCapturingImages = true;
+      
       if(gotImage)
       {
         DEV_ASSERT(!_bufferedImg.IsEmpty(), "VisionComponent.Update.EmptyImageAfterCapture");

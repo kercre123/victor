@@ -16,15 +16,16 @@
 
 #include <inttypes.h>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <sys/un.h>
+#include <sys/stat.h>
+#include <fcntl.h> 
+#include <errno.h>
 
 namespace Anki {
 namespace Cozmo {
 
 namespace FaultCode {
 
-static const char* kFaultCodeSocketName = "/run/error_code";
+static const char* kFaultCodeFifoName = "/run/error_code";
 
 // Enum of fault codes, range 800 - 999
 // Higher numbers take precedence when displaying
@@ -57,35 +58,30 @@ enum : uint16_t {
 };
 
 // Displays a fault code to the face
-// assuming animation process is running
+// Will queue fault codes until animation process is able to read
+// from the fifo
 static int DisplayFaultCode(uint16_t code)
 {
-  struct sockaddr_un name;
-  size_t size;
-
-  // Create a local socket
-  int sock = socket(PF_LOCAL, SOCK_DGRAM, 0);
-  if(sock < 0)
+  // If the fifo doesn't exist create it
+  if(access(FaultCode::kFaultCodeFifoName, F_OK) == -1)
   {
-    printf("DisplayFaultCode: Failed to create socket %d\n", errno);
+    int res = mkfifo(FaultCode::kFaultCodeFifoName, S_IRUSR | S_IWUSR);
+    if(res < 0)
+    {
+      printf("DisplayFaultCode: mkfifo failed %d", errno);
+      return errno;
+    }
+  }
+ 
+  int fifo = open(FaultCode::kFaultCodeFifoName, O_WRONLY);
+  if(fifo < 0)
+  {
+    printf("DisplayFaultCode: Failed to open fifo %d\n", errno);
     return errno;
   }
-
-  name.sun_family = AF_LOCAL;
-  strncpy(name.sun_path, kFaultCodeSocketName, sizeof(name.sun_path));
-  name.sun_path[sizeof(name.sun_path) - 1] = '\0';
-  size = (offsetof(struct sockaddr_un, sun_path) + strlen(name.sun_path));
-
-  // Connect to the named fault code socket
-  int rc = connect(sock, (struct sockaddr*)&name, size);
-  if(rc < 0)
-  {
-    printf("DisplayFaultCode: Connect failed %d\n", errno);
-    return errno;
-  }
-
+  
   // Write the fault code to the socket
-  ssize_t numBytes = write(sock, &code, sizeof(code));
+  ssize_t numBytes = write(fifo, &code, sizeof(code));
   if(numBytes != sizeof(code))
   {
     printf("DisplayFaultCode: Expected to write %u bytes but only wrote %u\n",
@@ -99,10 +95,10 @@ static int DisplayFaultCode(uint16_t code)
     }
   }
   
-  rc = close(sock);
+  int rc = close(fifo);
   if(rc < 0)
   {
-    printf("DisplayFaultCode: Failed to close socket %d\n", errno);
+    printf("DisplayFaultCode: Failed to close fifo %d\n", errno);
     return errno;
   }
   
