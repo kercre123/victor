@@ -21,3 +21,8 @@ void microwait(long microsec)
   time.tv_nsec = nsec % NSEC_PER_SEC;
   nanosleep(&time, NULL);
 }
+
+void milliwait(long millisec)
+{
+  usleep(millisec * 1000);
+}
