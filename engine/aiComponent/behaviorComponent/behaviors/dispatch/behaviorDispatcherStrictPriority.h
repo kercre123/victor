@@ -21,6 +21,8 @@ namespace Cozmo {
 
 class BehaviorDispatcherStrictPriority : public IBehaviorDispatcher
 {
+  using BaseClass = IBehaviorDispatcher;
+  
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;  
   BehaviorDispatcherStrictPriority(const Json::Value& config);
@@ -29,9 +31,16 @@ protected:
   
   virtual ICozmoBehaviorPtr GetDesiredBehavior() override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+
+  virtual void GetLinkedActivatableScopeBehaviors(std::set<IBehavior*>& delegates) const override;
+  virtual bool WantsToBeActivatedBehavior() const override;
+  
 private:
   struct InstanceConfig {
     InstanceConfig();
+
+    // if true, links activation scope and WantsToBeActivated with it's delegates
+    bool linkScope;
   };
 
   struct DynamicVariables {
