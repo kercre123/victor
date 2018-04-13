@@ -1604,7 +1604,7 @@ namespace Cozmo {
     
     // Trigger time of keyframe is 0 since we want it to start playing immediately
     SpriteSequenceKeyFrame kf(Vision::SpriteName::Count, true, true);
-    kf.OverrideIsGrayscale(isGrayscale);
+    kf.SetRuntimeSequenceIsGrayscale(isGrayscale);
     kf.AddFrameToRuntimeSequence(img);
     kf.SetFrameDuration_ms(duration_ms);
     Result result = _proceduralAnimation->AddKeyFrameToBack(kf);

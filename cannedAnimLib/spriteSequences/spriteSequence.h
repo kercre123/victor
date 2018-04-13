@@ -27,6 +27,7 @@ public:
   SpriteSequence(bool isGrayscale);
   virtual ~SpriteSequence();
   
+  bool IsGrayscale() const { return _isGrayscale; }
   size_t GetNumFrames() const { return _isGrayscale ? _framesGray.size() : _framesRGB565.size(); }
   
   // Add frames of the given type

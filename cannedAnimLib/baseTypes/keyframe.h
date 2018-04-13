@@ -281,9 +281,9 @@ namespace Cozmo {
     
     float GetScanlineOpacity() const { return _scanlineOpacity; }
     
-    void OverrideIsGrayscale(bool isGrayscale);
+    void SetRuntimeSequenceIsGrayscale(bool isGrayscale);
     // Return true if the underlying images are stored as grayscale.
-    bool IsGrayscale() const { return _isGrayscale;}
+    bool IsGrayscale() const;
     
     void ClearRuntimeSequence() { _runtimeSpriteSequence.reset(); }
     
@@ -327,7 +327,6 @@ namespace Cozmo {
     std::string              _rawSeqName;
     Vision::SpriteName       _spriteSequenceName;
 
-    bool         _isGrayscale;
     float        _scanlineOpacity = 1.f;
     s32          _curFrame = 0;
 

@@ -145,8 +145,7 @@ void SpriteSequenceLoader::LoadSequenceImageFrames(const std::string& fullDirect
     
     // Load the image
     const std::string fullFilename = Util::FileUtils::FullFilePath({fullDirectoryPath, filename});
-    const bool isGreyscale = Vision::IsSpriteGreyscale(sequenceName, true);
-    if(isGreyscale)
+    if(isGrayscale)
     {
       LoadImage<Vision::Image>(sequence, fullFilename);
     }

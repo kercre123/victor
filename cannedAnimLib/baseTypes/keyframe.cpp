@@ -281,8 +281,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     : _spriteSequenceName(sequenceName) 
     {
       if(containsRuntimeSpriteSeq){
-        _runtimeSpriteSequence = std::make_unique<SpriteSequence>(Vision::IsSpriteGreyscale(sequenceName, true));
-        _isGrayscale = runtimeSequenceIsGrayscale;
+        _runtimeSpriteSequence = std::make_unique<SpriteSequence>(runtimeSequenceIsGrayscale);
       }
     }
 
@@ -291,7 +290,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       _cannedSpriteSequence  = other._cannedSpriteSequence;
       _rawSeqName            = other._rawSeqName;
       _spriteSequenceName    = other._spriteSequenceName;
-      _isGrayscale           = other._isGrayscale;
       _scanlineOpacity       = other._scanlineOpacity;
       _curFrame              = other._curFrame;
       _frameDuration_ms      = other._frameDuration_ms;
@@ -384,7 +382,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
                     "SpriteSequenceKeyFrame.SetMembersFromJson.InvalidSequence",
                     "Sprite %s is not marked as a sprite sequence",
                     SpriteNameToString(_spriteSequenceName));
-        _isGrayscale = Vision::IsSpriteGreyscale(_spriteSequenceName, true);
       }
 
       return foundMatch;
@@ -431,9 +428,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       return true;
     }
 
-    void SpriteSequenceKeyFrame::OverrideIsGrayscale(bool isGrayscale)
+    void SpriteSequenceKeyFrame::SetRuntimeSequenceIsGrayscale(bool isGrayscale)
     { 
-      _isGrayscale = isGrayscale;
       if(_runtimeSpriteSequence != nullptr){
         if(_runtimeSpriteSequence->GetNumFrames() > 0){
           PRINT_NAMED_WARNING("SpriteSequenceKeyFrame.OverrideIsGrayscale.RuntimeSequenceHasFrames", 
@@ -443,6 +439,17 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
 
         _runtimeSpriteSequence.reset(new SpriteSequence(isGrayscale));
       }
+    }
+
+    bool SpriteSequenceKeyFrame::IsGrayscale() const
+    {
+      if(_cannedSpriteSequence != nullptr){
+        return _cannedSpriteSequence->IsGrayscale();
+      }else if(_runtimeSpriteSequence != nullptr){
+        return _runtimeSpriteSequence->IsGrayscale();
+      }
+
+      return true;
     }
 
     
