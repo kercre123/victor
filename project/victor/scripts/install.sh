@@ -65,10 +65,21 @@ DIST_LIST="dist.$$.lst"
 rm -f "dist.*.lst"
 touch ${DIST_LIST}
 
-find lib -type f -name '*.so' >> ${DIST_LIST}
-find bin -type f -not -name '*.full' >> ${DIST_LIST}
-find etc >> ${DIST_LIST}
-find data >> ${DIST_LIST}
+if [ -d lib ]; then
+  find lib -type f -name '*.so' -or -name '*.so.1' >> ${DIST_LIST}
+fi
+
+if [ -d bin ]; then
+  find bin -type f -not -name '*.full' >> ${DIST_LIST}
+fi
+
+if [ -d etc ]; then
+  find etc >> ${DIST_LIST}
+fi
+
+if [ -d data ]; then
+  find data >> ${DIST_LIST}
+fi
 
 # Copy files to distribution directory
 rsync \
