@@ -11,9 +11,9 @@ set(CLAD_CPPLITE "${CLAD_EMITTER_DIR}/CPP_emitter.py")
 set(CLAD_HASH "${CLAD_EMITTER_DIR}/ASTHash_emitter.py")
 
 set(CLAD_INCLUDES
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/"
-    "${CMAKE_CURRENT_SOURCE_DIR}/coretech_common_clad/"
-    "${CMAKE_CURRENT_SOURCE_DIR}/coretech_vision_clad/"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../coretech/vision/clad_src"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../coretech/common"
 )
 
 # Path to helper scripts
