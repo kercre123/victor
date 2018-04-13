@@ -1,0 +1,15 @@
+{
+  "behaviorID" : "InterruptingVoiceReactions",
+  "behaviorClass" : "DispatcherStrictPriority",
+
+  "linkScope": true,
+  "interruptActiveBehavior": true,
+
+  "behaviors": [
+    "ReactToGreeting",
+    "ReactToGoodMorning",
+    "ReactToGoodBye",
+    "ReactToGoodNight",
+    "DoATrickVoiceCommand"
+  ]
+}

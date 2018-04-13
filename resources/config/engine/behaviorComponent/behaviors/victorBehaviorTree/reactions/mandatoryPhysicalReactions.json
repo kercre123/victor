@@ -1,0 +1,15 @@
+{
+  "behaviorID" : "MandatoryPhysicalReactions",
+  "behaviorClass" : "DispatcherStrictPriority",
+
+  "linkScope": true,
+  "interruptActiveBehavior": true,
+
+  "behaviors": [
+    "ReactToRobotOnBack",
+    "ReactToRobotOnFace",
+    "ReactToRobotOnSide",
+    "ReactToCliff",
+    "ReactToUnexpectedMovement"
+  ]
+}

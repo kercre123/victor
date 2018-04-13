@@ -74,7 +74,6 @@ enum uint_8 BehaviorID {
 
   // reactions
   ReactToCubeMoved,
-  ReactToCubeTap,
   ReactToPet,
 
   // singing
@@ -206,8 +205,11 @@ enum uint_8 BehaviorID {
   ReactToUnclaimedIntent,
 
   // victorBehaviorTree/reactions
+  InterruptingVoiceReactions,
+  MandatoryPhysicalReactions,
   ProceduralTurnToMicDirection,
   ReactToCliff,
+  ReactToCubeTap,
   ReactToFrustrationMajor,
   ReactToGoodBye,
   ReactToGoodMorning,
