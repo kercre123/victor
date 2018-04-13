@@ -6,7 +6,7 @@
 #include "hal_timer.h"
 #include "otp.h"
 
-int g_echo_on = 0; //set 1 to enable echo at boot [debug]
+const int g_echo_on = 0; //set 1 to enable echo at boot [debug]
 
 //------------------------------------------------  
 //    manage...stuff
