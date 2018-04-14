@@ -3015,7 +3015,10 @@ Result Robot::UpdateStartupChecks()
       u8* buf = nullptr;
       u32 id = 0;
       TimeStamp_t t = 0;
-      CameraService::getInstance()->CameraGetFrame(buf, id, t);
+      if(CameraService::getInstance()->CameraGetFrame(buf, id, t))
+      {
+        CameraService::getInstance()->CameraReleaseFrame(id);
+      }
     }
     
     // After 4 seconds, check if we have gotten a frame
