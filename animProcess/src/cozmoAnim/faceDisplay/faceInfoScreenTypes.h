@@ -42,6 +42,8 @@ enum class ScreenName {
   Count
 };
 
+constexpr f32 kDefaultScreenTimeoutDuration_s = 180.f;
+
 } // namespace Cozmo
 } // namespace Anki
 

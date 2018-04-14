@@ -22,10 +22,6 @@
 namespace Anki {
 namespace Cozmo {
 
-namespace {
-  const f32 kDefaultScreenTimeoutDuration_s = 180.f;
-}
-
 
 FaceInfoScreen::FaceInfoScreen(ScreenName name,
                                ScreenName buttonGotoScreen)

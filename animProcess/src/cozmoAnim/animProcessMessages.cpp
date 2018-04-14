@@ -119,6 +119,16 @@ namespace {
   CONSOLE_FUNC(ListAnimations, "Animations");
   CONSOLE_FUNC(PlayAnimation, "Animations", const char* name, optional int numLoops);
   CONSOLE_FUNC(AddAnimation, "Animations", const char* path);
+
+  void RecordMicDataClip(ConsoleFunctionContextRef context)
+  {
+    auto * micDataSystem = _context->GetMicDataSystem();
+    if (micDataSystem != nullptr)
+    {
+      micDataSystem->SetForceRecordClip(true);
+    }
+  }
+  CONSOLE_FUNC(RecordMicDataClip, "MicData");
 }
 
 namespace Anki {
@@ -424,7 +434,8 @@ static void HandleRobotStateUpdate(const Anki::Cozmo::RobotState& robotState)
   if (micDataSystem != nullptr)
   {
     const auto liftHeight_mm = ConvertLiftAngleToLiftHeightMM(robotState.liftAngle);
-    if (LIFT_HEIGHT_CARRY-1.f <= liftHeight_mm)
+    const bool isMicFace = FaceInfoScreenManager::getInstance()->GetCurrScreenName() == ScreenName::MicDirectionClock;
+    if (isMicFace && LIFT_HEIGHT_CARRY-1.f <= liftHeight_mm)
     {
       micDataSystem->SetForceRecordClip(true);
     }

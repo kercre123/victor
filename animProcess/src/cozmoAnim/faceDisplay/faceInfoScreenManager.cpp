@@ -147,6 +147,10 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_SCREEN(Pairing, Pairing);
   ADD_SCREEN(FAC, None);
   ADD_SCREEN(CustomText, None);
+  // Give the customText screen an exit action of resetting its timeout back to default, since elsewhere we modify it when using it
+  GetScreen(ScreenName::CustomText)->SetExitScreenAction([this]() {
+    SET_TIMEOUT(CustomText, kDefaultScreenTimeoutDuration_s, None);
+  });
   ADD_SCREEN(Main, Network);
   ADD_SCREEN_WITH_TEXT(ClearUserData, Main, {"CLEAR USER DATA?"});
   ADD_SCREEN_WITH_TEXT(ClearUserDataFail, Main, {"CLEAR USER DATA FAILED"});
@@ -308,6 +312,9 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   // Call ExitScreen
   // _currScreen may be null on the first call of this function
   if (_currScreen != nullptr) {
+    if (screen == GetCurrScreenName()) {
+      return;
+    }
     _currScreen->ExitScreen();
     prevScreenIsDebug = IsDebugScreen(GetCurrScreenName());
   }
@@ -467,16 +474,30 @@ void FaceInfoScreenManager::DrawConfidenceClock(
     }
   }
 
-  if (GetCurrScreenName() != ScreenName::MicDirectionClock)
-  {
-    return;
-  }
-
   if (secondsRemaining > 0)
   {
     const auto drawText = std::string(" ") + std::to_string(secondsRemaining);
-    DrawTextOnScreen({drawText}, NamedColors::WHITE, NamedColors::BLACK,
-    {0, FACE_DISPLAY_HEIGHT-10}, 10, 3.f);
+
+    RobotInterface::DrawTextOnScreen drawTextData{};
+    drawTextData.drawNow = true;
+    drawTextData.textColor.r = NamedColors::WHITE.r();
+    drawTextData.textColor.g = NamedColors::WHITE.g();
+    drawTextData.textColor.b = NamedColors::WHITE.b();
+    drawTextData.bgColor.r = NamedColors::BLACK.r();
+    drawTextData.bgColor.g = NamedColors::BLACK.g();
+    drawTextData.bgColor.b = NamedColors::BLACK.b();
+    std::copy(drawText.c_str(), drawText.c_str() + drawText.length(), &(drawTextData.text[0]));
+    drawTextData.text[drawText.length()] = '\0';
+    drawTextData.text_length = drawText.length();
+
+    SET_TIMEOUT(CustomText, (1.f + (float)secondsRemaining), None);
+    SetCustomText(drawTextData);
+
+    return;
+  }
+
+  if (GetCurrScreenName() != ScreenName::MicDirectionClock)
+  {
     return;
   }
 
@@ -852,6 +873,9 @@ void FaceInfoScreenManager::Update(const RobotState& state)
       break;
     case ScreenName::MotorInfo:
       DrawMotorInfo(state);
+      break;
+    case ScreenName::CustomText:
+      DrawCustomText();
       break;
     default:
       // Other screens are either updated once when SetScreen() is called

@@ -47,9 +47,10 @@ namespace {
       Anki::Util::FileUtils::RemoveDirectory(_debugMicDataWriteLocation);
     }
   }
-  CONSOLE_FUNC(ClearMicData, CONSOLE_GROUP);
+  CONSOLE_FUNC(ClearMicData, "zHiddenForSafety");
 
 #endif
+  CONSOLE_VAR_RANGED(u32, kMicData_ClipRecordTime_ms, CONSOLE_GROUP, 4000, 500, 15000);
 # undef CONSOLE_GROUP
 
 }
@@ -233,20 +234,15 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     }
   }
 
-  const bool isMicFace = FaceInfoScreenManager::getInstance()->GetCurrScreenName() == ScreenName::MicDirectionClock;
-  if (!isMicFace)
-  {
-    _forceRecordClip = false;
-  }
-  else if (_forceRecordClip && nullptr == _saveJob)
+  if (_forceRecordClip && nullptr == _saveJob)
   {
     MicDataInfo* newJob = new MicDataInfo{};
     newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "debugCapture"});
     newJob->_writeNameBase = ""; // Use the autogen names in this subfolder
-    newJob->_numMaxFiles = 30;
+    newJob->_numMaxFiles = 100;
     newJob->EnableDataCollect(MicDataType::Processed, true);
     newJob->EnableDataCollect(MicDataType::Raw, true);
-    newJob->SetTimeToRecord(15000);
+    newJob->SetTimeToRecord(kMicData_ClipRecordTime_ms);
 
     {
       std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
@@ -270,7 +266,11 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     
     std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
     // check if the pointer to the currently streaming job is valid
-    if (!_currentlyStreaming && HasStreamingJob())
+    if (!_currentlyStreaming && HasStreamingJob()
+      #if ANKI_DEV_CHEATS
+        && !_forceRecordClip
+      #endif
+   )
     {
       #if ANKI_DEV_CHEATS
         endTriggerDispTime_ns = currTime_nanosec + kTriggerDisplayTime_ns;
@@ -412,7 +412,7 @@ bool MicDataSystem::HasStreamingJob() const
   std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
   return (_currentStreamingJob != nullptr
   #if ANKI_DEV_CHEATS
-    || _fakeStreamingState
+    || _fakeStreamingState || _forceRecordClip
   #endif
   );
 }
