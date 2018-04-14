@@ -989,7 +989,7 @@
   },
   {
     "CladEvent": "TimerRingGetIn",
-    "AnimName": "ag_codelab_tinyorchestra_celebration"
+    "AnimName": "ag_timer_is_up_getin"
   },
   {
     "CladEvent": "TimerRing",
@@ -997,7 +997,7 @@
   },
   {
     "CladEvent": "TimerRingGetOut",
-    "AnimName": "ag_codelab_getout"
+    "AnimName": "ag_timer_is_up_getout"
   },
   {
     "CladEvent": "DEPRECATED_TurtleRoll",
