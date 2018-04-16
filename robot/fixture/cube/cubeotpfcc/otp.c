@@ -67,7 +67,11 @@ int otp_write(uint32_t *dest, uint32_t *src, int size)
     {
       #if OTP_SIMULATE_WRITE > 0
         #warning "OTP using simulated writes"
-        hal_timer_wait(1000);
+        //hal_timer_wait(1000);
+        volatile int x = 1000;
+        while( --x )
+        {
+        }
         res = 0;
       #else
         res = otpc_write_fifo( (uint32_t)&src[i], dest_addr, 1 );
@@ -108,8 +112,8 @@ void otp_header_init( da14580_otp_header_t* otphead, bdaddr_t *bdaddr )
   otphead->src_32KHz  = OTP_HEADER_32K_SRC_RC32KHZ;
   
   //Note: dev_unique_id[] used as BLE address by Dialog stack. LSB @ 0xD4
-  if( bdaddr )
-    memcpy( (uint8_t*)((int)otphead + OTP_HEADER_BDADDR_OFFSET), (uint8_t*)bdaddr, BDADDR_SIZE );
+  //if( bdaddr )
+  //  memcpy( (uint8_t*)((int)otphead + OTP_HEADER_BDADDR_OFFSET), (uint8_t*)bdaddr, BDADDR_SIZE );
   
   //"keep [default=0] remap 0x00 to SRAM as the right choice?" <IDM> Correct, keep this as SRAM mapped to 0. </IDM>
   //otphead->remap_flag = OTP_HEADER_REMAP_ADDR_0_OTP; //0=OTP_HEADER_REMAP_ADDR_0_SRAM

@@ -32,6 +32,7 @@ void console_write(char* s) {
 
 static inline char* console_process_char_(int c)
 {
+  const int echo = 0;
   const int console_len_max = 32;
   static char console_buf[console_len_max + 1];
   static int console_len = 0;
@@ -43,6 +44,7 @@ static inline char* console_process_char_(int c)
   {
     case '\r': //Return, EOL
     case '\n':
+      if( echo ) hal_uart_putchar(c);
       if(console_len) {
         console_buf[console_len] = '\0';
         console_len = 0;
@@ -55,6 +57,7 @@ static inline char* console_process_char_(int c)
       {
         if( console_len < console_len_max ) {
           console_buf[console_len++] = c;
+          if( echo ) hal_uart_putchar(c);
         }
       }
       //else, ignore all other chars

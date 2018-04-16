@@ -43,16 +43,20 @@ int cmd_process(char* s)
   {
     const int blocksize = 1024; //somewhat arbitrary chunking. save ram & provide nice status updates during long operations
     static uint8_t otp_buf[ blocksize ]; //MAX( blocksize, 2*sizeof(da14580_otp_header_t) ) ];
+    memset( &otp_buf, 0, sizeof(otp_buf) );
     
     writes_( snformat(b,bz,"cubefcc: 0x%08x-0x%08x (%u)\n", g_CubeBoot, g_CubeBootEnd-1, g_CubeBootSize) );
     
     //read current OTP header
-    static uint8_t otp_head_buf1[ sizeof(da14580_otp_header_t) ];
+    //writes_("reading otp header\n");
+    uint8_t otp_head_buf1[ sizeof(da14580_otp_header_t) ];
     da14580_otp_header_t* otphead = (da14580_otp_header_t*)&otp_head_buf1[0];
     otp_read(OTP_ADDR_HEADER, sizeof(da14580_otp_header_t), (uint8_t*)otphead);
+    //-*/
     
     //generate header from current application
-    static uint8_t otp_head_buf2[ sizeof(da14580_otp_header_t) ];
+    //writes_("generate fcc header\n");
+    uint8_t otp_head_buf2[ sizeof(da14580_otp_header_t) ];
     da14580_otp_header_t* binhead = (da14580_otp_header_t*)&otp_head_buf2[0];
     otp_header_init( binhead, NULL );
     
@@ -117,6 +121,7 @@ int cmd_process(char* s)
       writes_("FAIL\n");
       return respond_(STATUS_FAILED_VERIFY);
     }
+    writes_( "ok\n" );
     
     return respond_(STATUS_OK);
   }
