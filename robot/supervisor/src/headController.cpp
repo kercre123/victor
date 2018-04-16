@@ -157,6 +157,11 @@ namespace HeadController {
       potentialBurnoutStartTime_ms_ = 0;
       calState_ = HCS_LOWER_HEAD;
       isCalibrated_ = false;
+
+      // After we're done with calibration it shouldn't continue trying to reach 
+      // the head position it was trying to get to before
+      inPosition_ = true;  
+    
       Messages::SendMotorCalibrationMsg(MotorID::MOTOR_HEAD, true, autoStarted);
     }
 
