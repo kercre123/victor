@@ -27,6 +27,7 @@ extern "C" {
 
 #define FIXMODE_BACKPACK1      16
 
+#define FIXMODE_CUBEFCC        19
 #define FIXMODE_CUBE0          20 /*DEBUG*/
 #define FIXMODE_CUBE1          21
 #define FIXMODE_CUBE2          22
@@ -100,7 +101,7 @@ uint32_t      fixtureGetSerial(void); // Get a serial number for a device in the
   { "BACKPACK1"   , TestBackpackDetect  , TestBackpack1GetTests       , TestBackpackCleanup         , FIXMODE_BACKPACK1   },  /*16*/  \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
   { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
-  { NULL          , NULL                , NULL                        , NULL                        , -1 },                           \
+  { "CUBEFCC"     , TestCubeDetect      , TestCubeFccGetTests         , TestCubeCleanup             , FIXMODE_CUBEFCC     },  /*19*/  \
   { "CUBE0"       , TestCubeDetect      , TestCube0GetTests           , TestCubeCleanup             , FIXMODE_CUBE0       },  /*20*/  \
   { "CUBE1"       , TestCubeDetect      , TestCube1GetTests           , TestCubeCleanup             , FIXMODE_CUBE1       },  /*21*/  \
   { "CUBE2"       , TestCubeDetect      , TestCube2GetTests           , TestCubeCleanup             , FIXMODE_CUBE2       },  /*22*/  \

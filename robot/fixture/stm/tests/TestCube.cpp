@@ -353,7 +353,7 @@ static void CubeTest(void)
   DUT_UART::init(57600);
   
   //DEBUG:
-  if( g_fixmode < FIXMODE_CUBE1 ) {
+  if( g_fixmode == FIXMODE_CUBE0 ) {
     TestCommon::consoleBridge(TO_DUT_UART,3000);
   }
   
@@ -395,14 +395,14 @@ static void CubeTest(void)
   }
   
   //DEBUG
-  if( e != ERROR_OK && g_fixmode == FIXMODE_CUBE0 ) {
+  if( e != ERROR_OK && g_fixmode <= FIXMODE_CUBE0 ) {
     ConsolePrintf("CUBE LED ERROR: %i -- press a key to approve\n", e);
     while( ConsoleReadChar() > -1 );
     uint32_t Tstart = Timer::get();
     while( Timer::elapsedUs(Tstart) < 2*1000*1000 ) {
       if( ConsoleReadChar() > -1 ) { e = ERROR_OK; break; }
     }
-  }
+  }//-*/
   
   if( e != ERROR_OK )
       throw e;
@@ -469,6 +469,25 @@ static void OTPbootloader(void)
     throw ERROR_CUBE_VERIFY_FAILED;
 }
 
+static void burnFCC(void)
+{
+  da14580_load_program_( g_CubeStubFcc, g_CubeStubFccEnd-g_CubeStubFcc, "cube fcc" );
+  Timer::delayMs(250); //wait for ROM+app reboot sequence
+  DUT_UART::init(57600);
+  
+  //XXX: how long should this take?
+  int write_result = -1;
+  Board::powerOn(PWR_DUTPROG);
+  {
+    cmdSend(CMD_IO_DUT_UART, "otp write fcc", 90*1000, (CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS) & ~CMD_OPTS_EXCEPTION_EN );
+    write_result = cmdStatus();
+  }
+  Board::powerOff(PWR_DUTPROG);
+  
+  if( write_result != 0 )
+    throw ERROR_CUBE_VERIFY_FAILED;
+}
+
 void CubeBootDebug(void)
 {
   da14580_load_program_( g_CubeBoot, g_CubeBootEnd-g_CubeBoot, "cube boot" );
@@ -491,8 +510,17 @@ static void CubeFlexFlowReport(void)
   FLEXFLOW::write(b);
 }
 
-TestFunction* TestCube0GetTests(void)
-{
+TestFunction* TestCubeFccGetTests(void) {
+  static TestFunction m_tests[] = {
+    ShortCircuitTest,
+    CubeTest,
+    burnFCC,
+    NULL,
+  };
+  return m_tests;
+}
+
+TestFunction* TestCube0GetTests(void) {
   static TestFunction m_tests[] = {
     ShortCircuitTest,
     CubeTest,
@@ -503,8 +531,7 @@ TestFunction* TestCube0GetTests(void)
   return m_tests;
 }
 
-TestFunction* TestCube1GetTests(void)
-{
+TestFunction* TestCube1GetTests(void) {
   static TestFunction m_tests[] = {
     ShortCircuitTest,
     CubeTest,
