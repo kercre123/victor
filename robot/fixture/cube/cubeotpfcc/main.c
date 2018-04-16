@@ -1,9 +1,6 @@
 #include <stdio.h>
-#include "binaries.h"
 #include "board.h"
 #include "cmd.h"
-#include "hal_timer.h"
-#include "otp.h"
 
 static inline void board_init_optimized_(void)
 {
@@ -33,13 +30,12 @@ void console_write(char* s) {
   hal_uart_write(s);
 }
 
-const int console_len_max = 75;
-static char console_buf[console_len_max + 1];
-static int console_len = 0;
-
-//return ptr to full line, when available
 static inline char* console_process_char_(char c)
 {
+  const int console_len_max = 32;
+  static char console_buf[console_len_max + 1];
+  static int console_len = 0;
+  
   switch(c)
   {
     case '\r': //Return, EOL

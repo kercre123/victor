@@ -3,41 +3,24 @@
 #include <stdarg.h>
 #include <string.h>
 #include "app.h"
-#include "bdaddr.h"
 #include "binaries.h"
 #include "board.h"
 #include "cmd.h"
 #include "console.h"
-#include "hal_timer.h"
 #include "otp.h"
 
 //-----------------------------------------------------------
 //        Output
 //-----------------------------------------------------------
 
-static void writes_(const char *s) { 
+static inline void writes_(const char *s) { 
   if(s) console_write((char*)s); 
 }
 
-static inline int respond_(int status)
-{
-  if( status == 0 )
-    writes_("<<otp 0\n");
-  else
-    writes_("<<otp 1\n");
+static inline int respond_(int status) {
+  static char b[20]; int bz = sizeof(b);
+  writes_( snformat(b,bz,"<<otp %i\n", status) );
   return status;
-  /*
-  char b[10]; int bz = sizeof(b);
-  
-  //<<cmd # [info]
-  writes_(RSP_PREFIX);
-  writes_(cmd);
-  writes_( snformat(b,bz," %i ",status) );
-  writes_(info);
-  writes_("\n");
-  
-  return status;
-  */
 }
 
 static inline int compare(uint8_t* dat1, uint8_t* dat2, int len) {
@@ -74,7 +57,7 @@ int cmd_process(char* s)
     otp_header_init( binhead, NULL );
     
     //let's burn this mother trucker!
-    writes_("burning fcc image:\n");
+    writes_("burning image:\n");
     for(int addr=0; addr < g_CubeBootSize; addr += blocksize)
     {
       int oplen = MIN(blocksize, g_CubeBootSize - addr);
@@ -105,12 +88,14 @@ int cmd_process(char* s)
       }
       src--, dest--;
     }
-    writes_( snformat(b,bz,"done!\n") );
+    writes_("done!\n");
     
-    writes_("verifying otp app.");
-    for(int addr=0; addr < g_CubeBootSize; addr += blocksize) {
+    writes_("verifying image.");
+    for(int addr=0; addr < g_CubeBootSize; addr += blocksize)
+    {
       int oplen = MIN(blocksize, g_CubeBootSize - addr);
       otp_read(OTP_ADDR_BASE+addr, oplen, otp_buf); //read otp into our buffer
+      
       if( compare((uint8_t*)otp_buf, (uint8_t*)&g_CubeBoot[addr], oplen) ) {
         writes_( snformat(b,bz,"[mismatch @ 0x%x]\n", addr) );
         return respond_(STATUS_FAILED_VERIFY);
@@ -119,16 +104,17 @@ int cmd_process(char* s)
     }
     writes_( "ok\n" );
     
-    writes_("verifying otp header...");
-    
     //genetically merge original+app headers into what should now (hopefully) exist in OTP
     for( int x=0; x<OTP_HEADER_SIZE; x++ )
       ((uint8_t*)binhead)[x] |= ((uint8_t*)otphead)[x];
     
     //read actual OTP and compare
+    writes_("verifying otp header...");
     otp_read(OTP_ADDR_HEADER, OTP_HEADER_SIZE, (uint8_t*)otphead); //re-read current OTP into buffer
-    if( compare((uint8_t*)binhead, (uint8_t*)otphead, OTP_HEADER_SIZE) )
+    if( compare((uint8_t*)binhead, (uint8_t*)otphead, OTP_HEADER_SIZE) ) {
+      writes_("FAIL\n");
       return respond_(STATUS_FAILED_VERIFY);
+    }
     
     return respond_(STATUS_OK);
   }

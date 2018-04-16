@@ -4,13 +4,13 @@
 #include "da14580_otp_header.h"
 
 //flash_programmer primitives
-#include "crc32.h"
+//#include "crc32.h"
 #include "otpc.h"
 
 //debug
 #include "console.h"
-#define printf_(...)    console_printf(__VA_ARGS__)
-#include "hal_timer.h"
+//#define printf_(...)    console_printf(__VA_ARGS__)
+//#include "hal_timer.h"
 #define OTP_SIMULATE_WRITE  0
 
 //------------------------------------------------  
