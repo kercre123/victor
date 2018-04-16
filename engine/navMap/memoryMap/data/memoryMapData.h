@@ -35,8 +35,6 @@ public:
   MemoryMapData(EContentType type = EContentType::Unknown, TimeStamp_t time = 0.f) : MemoryMapData(type, time, false) {}
   MemoryMapData(const MemoryMapData&) = default;
   MemoryMapData(MemoryMapData&&) = default;
-  MemoryMapData& operator=(const MemoryMapData&) = default;
-  MemoryMapData& operator=(MemoryMapData&&) = default;
   virtual ~MemoryMapData() = default;
   
   // create a copy of self (of appropriate subclass) and return it
@@ -62,16 +60,16 @@ public:
   
 protected:
   MemoryMapData(MemoryMapTypes::EContentType type, TimeStamp_t time, bool calledFromDerived);
+  
+  static bool HandlesType(MemoryMapTypes::EContentType otherType) {
+    return (otherType != MemoryMapTypes::EContentType::ObstacleProx) &&
+           (otherType != MemoryMapTypes::EContentType::Cliff) &&
+           (otherType != MemoryMapTypes::EContentType::ObstacleObservable);
+  }
 
 private:
   TimeStamp_t firstObserved_ms;
   TimeStamp_t lastObserved_ms;
-  
-  // sneaky way of explicitly accessing protected constructors of derived classes for template casting operation
-  template <class T>
-  struct Concrete: T {
-    Concrete(): T() {}
-  };
 };
 
 inline MemoryMapData::MemoryMapData(MemoryMapTypes::EContentType type, TimeStamp_t time, bool expectsAdditionalData)
@@ -92,7 +90,7 @@ template <class T>
 inline MemoryMapDataWrapper<T> MemoryMapData::MemoryMapDataCast(MemoryMapDataPtr ptr)
 {
   DEV_ASSERT( ptr.GetSharedPtr(), "MemoryMapDataCast.NullQuadData" );
-  DEV_ASSERT( ptr->type == Concrete<T>().type, "MemoryMapDataCast.UnexpectedQuadData" );
+  DEV_ASSERT( T::HandlesType( ptr->type ), "MemoryMapDataCast.UnexpectedQuadData" );
   DEV_ASSERT( std::dynamic_pointer_cast<T>(ptr.GetSharedPtr()), "MemoryMapDataCast.BadQuadDataDynCast" );
   return MemoryMapDataWrapper<T>(std::static_pointer_cast<T>(ptr.GetSharedPtr()));
 }
@@ -100,7 +98,7 @@ inline MemoryMapDataWrapper<T> MemoryMapData::MemoryMapDataCast(MemoryMapDataPtr
 template <class T>
 inline MemoryMapDataWrapper<const T> MemoryMapData::MemoryMapDataCast(MemoryMapDataConstPtr ptr)
 {
-  assert( ptr->type == Concrete<T>().type );
+  assert( T::HandlesType( ptr->type ) );
   assert( std::dynamic_pointer_cast<const T>(ptr.GetSharedPtr()) );
   return MemoryMapDataWrapper<const T>(std::static_pointer_cast<const T>(ptr.GetSharedPtr()));
 }

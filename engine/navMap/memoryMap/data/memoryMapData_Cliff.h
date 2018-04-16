@@ -39,8 +39,9 @@ struct MemoryMapData_Cliff : public MemoryMapData
   // If you add attributes, make sure you add them to ::Equals and ::Clone (if required)
   Pose3d pose; // location and direction we presume for the cliff (from detection)
 
-protected: 
-  MemoryMapData_Cliff() : MemoryMapData(MemoryMapTypes::EContentType::Cliff, 0, true) {}
+  static bool HandlesType(EContentType otherType) {
+    return otherType == EContentType::Cliff;
+  }
 };
  
 } // namespace

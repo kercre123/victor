@@ -41,7 +41,9 @@ public:
   Vec2f directionality; // direction we presume for the collision (based off robot pose when detected)
   
 protected: 
-  MemoryMapData_ProxObstacle() : MemoryMapData(MemoryMapTypes::EContentType::ObstacleProx, 0, true), directionality() {}
+  static bool HandlesType(EContentType otherType) {
+    return (otherType == MemoryMapTypes::EContentType::ObstacleProx);
+  }
 };
  
 } // namespace

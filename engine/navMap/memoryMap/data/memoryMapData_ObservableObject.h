@@ -43,8 +43,9 @@ public:
   const ObjectID id;
   const Poly2f boundingPoly; 
   
-protected: 
-  MemoryMapData_ObservableObject() : MemoryMapData(MemoryMapTypes::EContentType::ObstacleObservable, 0, true), id(), boundingPoly() {}
+  static bool HandlesType(EContentType otherType) {
+    return otherType == EContentType::ObstacleObservable;
+  }
 };
  
 } // namespace
