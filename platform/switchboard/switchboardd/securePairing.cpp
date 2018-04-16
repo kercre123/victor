@@ -605,6 +605,8 @@ void SecurePairing::HandleRtsCancelPairing(const Victor::ExternalComms::RtsConne
   StopPairing();
 }
 
+#ifdef DEBUG
+// only handle ssh message in debug build
 void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& msg) {
   // RtsSsh
   if(!AssertState(CommsState::SecureClad)) {
@@ -628,6 +630,12 @@ void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& m
     WriteFileAtomically(sshPath + "/" + sshFile, data, Anki::kModeUserReadWrite);
   }
 }
+#else
+void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& msg) {
+  // log in release
+  Log::Write("Received ssh key message in non-debug build.");
+}
+#endif
 
 void SecurePairing::HandleRtsAck(const Victor::ExternalComms::RtsConnection_2& msg) {
   Anki::Victor::ExternalComms::RtsAck ack = msg.Get_RtsAck();

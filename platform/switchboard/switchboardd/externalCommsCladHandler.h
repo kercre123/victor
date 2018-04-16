@@ -134,6 +134,7 @@ namespace Switchboard {
           }
           // RtsSsh
           case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsSshRequest: {
+            // only handle ssh message in debug build
             _DEV_ReceiveSshKey.emit(rtsMsg);
             break;
           }
