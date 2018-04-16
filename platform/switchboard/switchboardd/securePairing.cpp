@@ -605,6 +605,8 @@ void SecurePairing::HandleRtsCancelPairing(const Cozmo::ExternalComms::RtsConnec
   StopPairing();
 }
 
+#ifdef DEBUG
+// only handle ssh message in debug build
 void SecurePairing::HandleRtsSsh(const Cozmo::ExternalComms::RtsConnection_2& msg) {
   // RtsSsh
   if(!AssertState(CommsState::SecureClad)) {
@@ -628,6 +630,12 @@ void SecurePairing::HandleRtsSsh(const Cozmo::ExternalComms::RtsConnection_2& ms
     WriteFileAtomically(sshPath + "/" + sshFile, data, Anki::kModeUserReadWrite);
   }
 }
+#else
+void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& msg) {
+  // log in release
+  Log::Write("Received ssh key message in non-debug build.");
+}
+#endif
 
 void SecurePairing::HandleRtsAck(const Cozmo::ExternalComms::RtsConnection_2& msg) {
   Anki::Cozmo::ExternalComms::RtsAck ack = msg.Get_RtsAck();
