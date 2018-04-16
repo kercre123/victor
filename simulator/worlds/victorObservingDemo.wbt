@@ -64,7 +64,7 @@ CozmoBot2 {
   colorizeStderrOutput TRUE
 }
 WebotsKeyboardController {
-  behaviorName "HighLevelAI"
+  intent "{\"intent\": \"intent_play_specific\", \"params\": {\"entity_behavior\": \"fist_bump\"}}"
   consoleVarName "DevDispatchAfterShake"
   consoleVarValue "1"
   colorizeStderrOutput TRUE

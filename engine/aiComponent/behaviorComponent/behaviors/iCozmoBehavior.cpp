@@ -462,6 +462,16 @@ void ICozmoBehavior::InitBehaviorOperationModifiers()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SetDontActivateThisTick(const std::string& coordinatorName)
 {
+  const size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
+  
+  if( currTick - _tickDontActivateSetFor > 2 ) {
+    // only print if we were "recently" stopped from being activated
+    PRINT_CH_DEBUG("Behaviors", "ICozmoBehavior.SetDontActivateThisTick",
+                   "Behavior '%s' being suppresses by coordinator '%s'",
+                   GetDebugLabel().c_str(),
+                   coordinatorName.c_str());
+  }
+  
   _dontActivateCoordinator = coordinatorName;
   _tickDontActivateSetFor = BaseStationTimer::getInstance()->GetTickCount();
 }

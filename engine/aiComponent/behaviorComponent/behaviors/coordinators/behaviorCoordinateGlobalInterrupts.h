@@ -48,7 +48,6 @@ private:
     std::shared_ptr<BehaviorTimerUtilityCoordinator> timerCoordBehavior;
     ICozmoBehaviorPtr highLevelAIBehavior;
     ICozmoBehaviorPtr sleepingBehavior;
-    ICozmoBehaviorPtr keepawayBehavior;
     ICozmoBehaviorPtr reactToObstacleBehavior;
   };
 
@@ -59,6 +58,8 @@ private:
   InstanceConfig   _iConfig;
   DynamicVariables _dVars;
 
+  bool ShouldSuppressProxReaction() const;
+  
 };
 
 } // namespace Cozmo

@@ -14,11 +14,12 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateGlobalInterrupts.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorAnimGetInLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "util/helpers/boundedWhile.h"
@@ -27,6 +28,12 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
+
+  // add behavior _classes_ here if we should disable the prox-based "react to sudden obstacle" behavior while
+  // _any_ behavior of that class is running below us on the stack
+  static const std::set<BehaviorClass> kBehaviorClassesToSuppressProx = {{ BEHAVIOR_CLASS(FistBump),
+                                                                           BEHAVIOR_CLASS(Keepaway),
+                                                                           BEHAVIOR_CLASS(PounceWithProx) }};
 }
 
 
@@ -77,7 +84,6 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
   _iConfig.triggerWordPendingCond = BEIConditionFactory::CreateBEICondition(BEIConditionType::TriggerWordPending, GetDebugLabel());
   _iConfig.triggerWordPendingCond->Init(GetBEI());
   
-  _iConfig.keepawayBehavior        = BC.FindBehaviorByID(BEHAVIOR_ID(Keepaway));
   _iConfig.reactToObstacleBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ReactToObstacle));
 }
 
@@ -123,14 +129,39 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     }
   }
   
-  
-  // Suppress ReactToObstacle if KeepAway is running
-  if (_iConfig.keepawayBehavior->IsActivated()) {
+  // Suppress ReactToObstacle if needed
+  if( ShouldSuppressProxReaction() ) {
     _iConfig.reactToObstacleBehavior->SetDontActivateThisTick(GetDebugLabel());
   }
 
 }
 
+
+bool BehaviorCoordinateGlobalInterrupts::ShouldSuppressProxReaction() const
+{
+  // scan through the stack below this behavior and return true if any behavior is active which is listed in
+  // kBehaviorClassesToSuppressProx
+  
+  // const auto& delegationComponent = GetBEI().GetDelegationComponent();
+
+  // NOTE: (bn) I had to hack around this here because the delegation component has been stripped. A better
+  // solution here would be that instead of fully stripping the delegation component, we support a way to make
+  // it "const only", and then allow us to grab a const behavior component
+  // see VIC-2474
+  
+  const auto& delegationComponent = GetBehaviorComp<DelegationComponent>();
+  
+  const ICozmoBehavior* b = dynamic_cast<const ICozmoBehavior*>(this);
+  BOUNDED_WHILE(100, b != nullptr) {
+    if( kBehaviorClassesToSuppressProx.find( b->GetClass() ) != kBehaviorClassesToSuppressProx.end() ) {
+      return true;
+    }
+    
+    b = dynamic_cast<const ICozmoBehavior*>( delegationComponent.GetBehaviorDelegatedTo(b) );
+  }
+
+  return false;  
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCoordinateGlobalInterrupts::OnPassThroughDeactivated()
