@@ -479,7 +479,7 @@ static void burnFCC(void)
   int write_result = -1;
   Board::powerOn(PWR_DUTPROG);
   {
-    cmdSend(CMD_IO_DUT_UART, "otp write fcc", 90*1000, (CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS) & ~CMD_OPTS_EXCEPTION_EN );
+    cmdSend(CMD_IO_DUT_UART, "otp write fcc", 60*1000, (CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS) & ~CMD_OPTS_EXCEPTION_EN );
     write_result = cmdStatus();
   }
   Board::powerOff(PWR_DUTPROG);
