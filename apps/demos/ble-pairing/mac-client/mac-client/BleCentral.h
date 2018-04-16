@@ -14,6 +14,7 @@
 #include "bleMessageProtocol.h"
 #include "messageExternalComms.h"
 #include <sodium.h>
+#include <arpa/inet.h>
 
 enum RtsState {
   Raw         = 0,
@@ -75,6 +76,9 @@ enum WiFiAuth : uint8_t {
   uint64_t _otaExpected;
   
   bool _verbose;
+  int _commVersion;
+  
+  NSArray* _colorArray;
 }
 
 - (std::string)hexStr:(char*)data length:(int)len;
@@ -85,6 +89,8 @@ enum WiFiAuth : uint8_t {
 - (void) handleReceive:(const void*)bytes length:(int)n;
 - (void) handleReceiveSecure:(const void*)bytes length:(int)n;
 - (void) printHelp;
+
+- (void) SendSshPublicKey:(std::string)filename;
 
 - (void) HandleReceiveHandshake:(const void*)bytes length:(int)n;
 - (void) HandleReceivePublicKey:(const Anki::Victor::ExternalComms::RtsConnRequest&)msg;
@@ -100,6 +106,7 @@ enum WiFiAuth : uint8_t {
 - (void) StartScanning;
 - (void) StartScanning:(NSString*)nameFilter;
 - (void) StopScanning;
+- (void) interrupt;
 
 - (std::vector<std::string>) GetWordsFromLine: (std::string)line;
 
@@ -118,8 +125,29 @@ enum WiFiAuth : uint8_t {
 class Clad {
 public:
   template<typename T, typename... Args>
-  static void SendRtsMessage(BleCentral* central, Args&&... args) {
-    Anki::Victor::ExternalComms::ExternalComms msg = Anki::Victor::ExternalComms::ExternalComms(Anki::Victor::ExternalComms::RtsConnection(T(std::forward<Args>(args)...)));
+  static void SendRtsMessage(BleCentral* central, int commVersion, Args&&... args) {
+    Anki::Victor::ExternalComms::ExternalComms msg;
+    
+    switch(commVersion) {
+      case 1:
+        msg = Anki::Victor::ExternalComms::ExternalComms(Anki::Victor::ExternalComms::RtsConnection_1(T(std::forward<Args>(args)...)));
+        break;
+      case 2:
+        msg = Anki::Victor::ExternalComms::ExternalComms(Anki::Victor::ExternalComms::RtsConnection(Anki::Victor::ExternalComms::RtsConnection_2(T(std::forward<Args>(args)...))));
+        break;
+      default:
+        NSLog(@"The mac client is trying to speak a version we do not know about.");
+        break;
+    }
+    std::vector<uint8_t> messageData(msg.Size());
+    const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
+    [central send:messageData.data() length:(int)packedSize];
+  }
+  
+  template<typename T, typename... Args>
+  static void SendRtsMessage_2(BleCentral* central, int commVersion, Args&&... args) {
+    Anki::Victor::ExternalComms::ExternalComms msg = Anki::Victor::ExternalComms::ExternalComms(Anki::Victor::ExternalComms::RtsConnection(Anki::Victor::ExternalComms::RtsConnection_2(T(std::forward<Args>(args)...))));
+
     std::vector<uint8_t> messageData(msg.Size());
     const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
     [central send:messageData.data() length:(int)packedSize];

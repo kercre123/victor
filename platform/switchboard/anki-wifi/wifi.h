@@ -25,6 +25,16 @@
 
 namespace Anki {
 
+enum WiFiIpFlags : uint8_t {
+  NONE     = 0,
+  HAS_IPV4 = 1 << 0,
+  HAS_IPV6 = 1 << 1,
+};
+
+inline WiFiIpFlags operator|(WiFiIpFlags a, WiFiIpFlags b) {
+  return static_cast<WiFiIpFlags>(static_cast<int>(a) | static_cast<int>(b));
+}
+
 enum WiFiAuth : uint8_t {
       AUTH_NONE_OPEN       = 0,
       AUTH_NONE_WEP        = 1,
@@ -41,6 +51,16 @@ enum WiFiConnState : uint8_t {
   ONLINE        = 1,
   CONNECTED     = 2,
   DISCONNECTED  = 3,
+};
+
+enum WifiScanErrorCode : uint8_t {
+    SUCCESS                   = 0,
+    ERROR_GETTING_PROXY       = 100,
+    ERROR_SCANNING            = 101,
+    FAILED_SCANNING           = 102,
+    ERROR_GETTING_MANAGER     = 103,
+    ERROR_GETTING_SERVICES    = 104,
+    FAILED_GETTING_SERVICES   = 105,
 };
 
 class WiFiScanResult {
@@ -90,7 +110,7 @@ void SetWiFiConfig(std::string ssid, std::string password, WiFiAuth auth, bool i
 std::string GetHexSsidFromServicePath(const std::string& servicePath);
 
 bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData);
-std::vector<WiFiScanResult> ScanForWiFiAccessPoints();
+WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results);
 std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& results);
 void EnableWiFiInterface(const bool enable, ExecCommandCallback callback);
 std::map<std::string, std::string> UnPackWiFiConfig(const std::vector<uint8_t>& packed);
@@ -100,7 +120,7 @@ bool GetIpFromHostName(char* hostname, char* ip);
 bool IsAccessPointMode();
 bool EnableAccessPointMode(std::string ssid, std::string pw);
 bool DisableAccessPointMode();
-int GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits);
+WiFiIpFlags GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits);
 WiFiState GetWiFiState();
 
 } // namespace Anki

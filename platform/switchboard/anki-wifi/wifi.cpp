@@ -38,8 +38,8 @@ static int CalculateSignalLevel(const int strength, const int min, const int max
   }
 }
 
-std::vector<WiFiScanResult> ScanForWiFiAccessPoints() {
-  std::vector<WiFiScanResult> results;
+WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) {
+  results.clear();
 
   bool disabledApMode = DisableAccessPointMode();
   if(!disabledApMode) {
@@ -60,7 +60,7 @@ std::vector<WiFiScanResult> ScanForWiFiAccessPoints() {
                                                               &error);
   if (error) {
     loge("error getting proxy for net.connman /net/connman/technology/wifi");
-    return results;
+    return WifiScanErrorCode::ERROR_GETTING_PROXY;
   }
 
   gboolean success = conn_man_bus_technology_call_scan_sync(tech_proxy,
@@ -69,12 +69,12 @@ std::vector<WiFiScanResult> ScanForWiFiAccessPoints() {
   g_object_unref(tech_proxy);
   if (error) {
     loge("error asking connman to scan for wifi access points");
-    return results;
+    return WifiScanErrorCode::ERROR_SCANNING;
   }
 
   if (!success) {
     loge("connman failed to scan for wifi access points");
-    return results;
+    return WifiScanErrorCode::FAILED_SCANNING;
   }
 
   ConnManBusManager* manager_proxy;
@@ -86,7 +86,7 @@ std::vector<WiFiScanResult> ScanForWiFiAccessPoints() {
                                                               &error);
   if (error) {
     loge("error getting proxy for net.connman /");
-    return results;
+    return WifiScanErrorCode::ERROR_GETTING_MANAGER;
   }
 
   GVariant* services = nullptr;
@@ -97,12 +97,12 @@ std::vector<WiFiScanResult> ScanForWiFiAccessPoints() {
   g_object_unref(manager_proxy);
   if (error) {
     loge("Error getting services from connman");
-    return results;
+    return WifiScanErrorCode::ERROR_GETTING_SERVICES;
   }
 
   if (!success) {
     loge("connman failed to get list of services");
-    return results;
+    return WifiScanErrorCode::FAILED_GETTING_SERVICES;
   }
 
   for (gsize i = 0 ; i < g_variant_n_children(services); i++) {
@@ -190,7 +190,7 @@ std::vector<WiFiScanResult> ScanForWiFiAccessPoints() {
     }
   }
 
-  return results;
+  return WifiScanErrorCode::SUCCESS;
 }
 
 std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& results) {
@@ -248,7 +248,7 @@ void connectCallback(GObject *source_object, GAsyncResult *result, gpointer user
   g_mutex_unlock(&connectMutex);
 }
 
-static const char hiddenAgentPath[] = "/tmp/vic-switchboard/connman-agent";
+static const char* const hiddenAgentPath = "/tmp/vic-switchboard/connman-agent";
 
 static void HiddenAPCallback(GDBusConnection *connection,
                       const gchar *sender,
@@ -350,7 +350,7 @@ bool RegisterAgentHidden(struct WPAConnectInfo *wpaConnectInfo)
                                               wpaConnectInfo,
                                               nullptr,
                                               &error);
-  if (error) {
+  if (agentId == 0 || error != NULL) {
     loge("Error registering agent object");
     return false;
   }
@@ -1119,7 +1119,9 @@ bool DisableAccessPointMode() {
   return true;
 }
 
-int GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {
+WiFiIpFlags GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {
+  WiFiIpFlags wifiFlags = WiFiIpFlags::NONE;
+
   struct ifaddrs* ifaddrs;
 
   // get ifaddrs
@@ -1134,35 +1136,19 @@ int GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {
   const char* interface = IsAccessPointMode()? "tether" : "wlan0";
 
   while(current != nullptr) {
-    int s;
     int family = current->ifa_addr->sa_family;
 
     if ((family == AF_INET || family == AF_INET6) && (strcmp(current->ifa_name, interface) == 0)) {
-      char host[NI_MAXHOST];
-
-      s = getnameinfo(current->ifa_addr,
-              (family == AF_INET) ? sizeof(struct sockaddr_in) :
-                                    sizeof(struct sockaddr_in6),
-              host, NI_MAXHOST,
-              NULL, 0, NI_NUMERICHOST);
-      if (s != 0) {
-        //printf("getnameinfo() failed: %s\n", gai_strerror(s));
-        //exit(EXIT_FAILURE);
-        return -1;
-      }
-
-      // printf("\t\tname: %s\n", current->ifa_name);
-      // printf("\t\taddress: <%s>\n", host);
-
       if(family == AF_INET) {
-        inet_pton(AF_INET, host, ipv4_32bits);
+        // Handle IPv4
+        struct sockaddr_in *sa = (struct sockaddr_in*)current->ifa_addr;
+        memcpy(ipv4_32bits, &sa->sin_addr, sizeof(sa->sin_addr));
+        wifiFlags = wifiFlags | WiFiIpFlags::HAS_IPV4;
       } else {
         // Handle IPv6
-        /*struct sockaddr_in6 sa6;
-        inet_pton(AF_INET6, host, &(sa6.sin6_addr));
-        for(int i = 0; i < 16; i++) {
-          printf("%x ", *(((uint8_t*)&sa6.sin6_addr)+i));
-        } printf("\n");*/
+        struct sockaddr_in6 *sa6 = (struct sockaddr_in6*)current->ifa_addr;
+        memcpy(ipv6_128bits, &sa6->sin6_addr, sizeof(sa6->sin6_addr));
+        wifiFlags = wifiFlags | WiFiIpFlags::HAS_IPV6;
       }
     }
 
@@ -1172,7 +1158,7 @@ int GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {
   // free ifaddrs
   freeifaddrs(ifaddrs);
 
-  return 0;
+  return wifiFlags;
 }
 
 } // namespace Anki

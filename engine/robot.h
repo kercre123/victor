@@ -787,7 +787,9 @@ protected:
   // fully enumerated constructor option, but for the time being use this for dev/testing purposes
   // only since caching etc could blow it all to shreds
   void DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage = false);
-  
+
+  // Performs various startup checks and displays fault codes as appropriate
+  Result UpdateStartupChecks();
 }; // class Robot
 
   
