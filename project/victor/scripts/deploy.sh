@@ -14,22 +14,41 @@ then
 fi
 TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
-source ${SCRIPT_PATH}/android_env.sh
-export -f adb_shell
+source ${SCRIPT_PATH}/victor_env.sh
 
 # Settings can be overridden through environment
 : ${VERBOSE:=0}
+: ${FORCE_RSYNC_BIN:=0}
 : ${ANKI_BUILD_TYPE:="Debug"}
 : ${INSTALL_ROOT:="/anki"}
+: ${DEVTOOLS_INSTALL_ROOT:="/anki-devtools"}
+: ${DEVICE_RSYNC_BIN_DIR:="${DEVTOOLS_INSTALL_ROOT}/bin"}
+: ${DEVICE_RSYNC_CONF_DIR:="/run/systemd/system"}
 
 function usage() {
   echo "$SCRIPT_NAME [OPTIONS]"
+  echo "options:"
   echo "  -h                      print this message"
   echo "  -v                      print verbose output"
-  echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
+  echo "  -r                      force-install rsync binary on robot"
+  echo "  -c CONFIGURATION        build configuration {Debug,Release}"
+  echo "  -s ANKI_ROBOT_HOST      hostname or ip address of robot"
+  echo ""
+  echo "environment variables:"
+  echo '  $ANKI_ROBOT_HOST        hostname or ip address of robot'
+  echo '  $ANKI_BUILD_TYPE        build configuration {Debug,Release}'
+  echo '  $INSTALL_ROOT           root dir of installed files on target'
+  echo '  $STAGING_DIR            directory that holds staged artifacts before deploy to robot'
 }
 
-while getopts "hvc:" opt; do
+function logv() {
+  if [ $VERBOSE -eq 1 ]; then
+    echo -n "[$SCRIPT_NAME] "
+    echo $*;
+  fi
+}
+
+while getopts "hvrc:s:" opt; do
   case $opt in
     h)
       usage && exit 0
@@ -37,8 +56,14 @@ while getopts "hvc:" opt; do
     v)
       VERBOSE=1
       ;;
+    r)
+      FORCE_RSYNC_BIN=1
+      ;;
     c)
       ANKI_BUILD_TYPE="${OPTARG}"
+      ;;
+    s)
+      ANKI_ROBOT_HOST="${OPTARG}"
       ;;
     *)
       usage && exit 1
@@ -46,117 +71,113 @@ while getopts "hvc:" opt; do
   esac
 done
 
-# Settings can be overridden through environment
-: ${VERBOSE:=0}
-: ${ANKI_BUILD_TYPE:="Debug"}
-: ${INSTALL_ROOT:="/anki"}
+robot_set_host
 
-: ${DEVICE_RSYNC_BIN_DIR:="/tmp"}
-: ${DEVICE_RSYNC_CONF_DIR:="/data/rsync"}
+if [ -z "${ANKI_ROBOT_HOST+x}" ]; then
+  echo "ERROR: unspecified robot target. Pass the '-s' flag or set ANKI_ROBOT_HOST"
+  usage
+  exit 1
+fi
 
-# increment the following value if the contents of rsyncd.conf change
-RSYNCD_CONF_VERSION=2
-
-
-function usage() {
-  echo "$SCRIPT_NAME [OPTIONS]"
-  echo "  -h                      print this message"
-  echo "  -v                      print verbose output"
-  echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
-}
-
-while getopts "hvc:" opt; do
-  case $opt in
-    h)
-      usage && exit 0
-      ;;
-    v)
-      VERBOSE=1
-      ;;
-    c)
-      ANKI_BUILD_TYPE="${OPTARG}"
-      ;;
-    *)
-      usage && exit 1
-      ;;
-  esac
-done
-
-# echo "VERBOSE: ${VERBOSE}"
 # echo "ANKI_BUILD_TYPE: ${ANKI_BUILD_TYPE}"
-echo "INSTALL_ROOT: ${INSTALL_ROOT}"
+echo "ANKI_ROBOT_HOST: ${ANKI_ROBOT_HOST}"
+echo "   INSTALL_ROOT: ${INSTALL_ROOT}"
 
 : ${PLATFORM_NAME:="android"}
-: ${BUILD_ROOT:="${TOPLEVEL}/_build/${PLATFORM_NAME}/${ANKI_BUILD_TYPE}"}
 : ${LIB_INSTALL_PATH:="${INSTALL_ROOT}/lib"}
 : ${BIN_INSTALL_PATH:="${INSTALL_ROOT}/bin"}
 : ${RSYNC_BIN_DIR="${TOPLEVEL}/tools/rsync"}
+: ${STAGING_DIR:="${TOPLEVEL}/_build/staging/${ANKI_BUILD_TYPE}"}
 
-$ADB shell mkdir -p "${INSTALL_ROOT}"
-$ADB shell mkdir -p "${INSTALL_ROOT}/etc"
-$ADB shell mkdir -p "${LIB_INSTALL_PATH}"
-$ADB shell mkdir -p "${BIN_INSTALL_PATH}"
+# Remount rootfs read-write if necessary
+MOUNT_STATE=$(\
+    robot_sh "grep ' / ext4.*\sro[\s,]' /proc/mounts > /dev/null 2>&1 && echo ro || echo rw"\
+)
+[[ "$MOUNT_STATE" == "ro" ]] && logv "remount rw /" && robot_sh "/bin/mount -o remount,rw /"
 
-# get device IP Address
-DEVICE_IP_ADDRESS=`$ADB shell ip addr show wlan0 | grep "inet\s" | awk '{print $2}' | awk -F'/' '{print $1}'`
-if [ -z $DEVICE_IP_ADDRESS ]; then
-  DEVICE_IP_ADDRESS=`$ADB shell ip addr show lo | grep "inet\s" | awk '{print $2}' | awk -F'/' '{print $1}'`
-  if [ -z $DEVICE_IP_ADDRESS ]; then
-    echo "no valid android device found"
-    exit 1
-  fi
+set +e
+( # TRY deploy
+logv "start deploy"
 
-  DEVICE_IP_ADDRESS="$DEVICE_IP_ADDRESS:6010"
-  $ADB forward tcp:6010 tcp:1873
-else
-  DEVICE_IP_ADDRESS="$DEVICE_IP_ADDRESS:1873"
-fi
+set -e
+
+logv "create target dirs"
+robot_sh mkdir -p "${INSTALL_ROOT}"
+robot_sh mkdir -p "${INSTALL_ROOT}/etc"
+robot_sh mkdir -p "${LIB_INSTALL_PATH}"
+robot_sh mkdir -p "${BIN_INSTALL_PATH}"
+robot_sh mkdir -p "${DEVICE_RSYNC_BIN_DIR}"
 
 # install rsync binary and config if needed
+logv "install rsync if necessary"
 set +e
-adb_shell "[ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]"
-if [ $? -ne 0 ]; then
+robot_sh [ -f "$DEVICE_RSYNC_BIN_DIR/rsync.bin" ]
+if [ $? -ne 0 ] || [ $FORCE_RSYNC_BIN -eq 1 ]; then
   echo "loading rsync to device"
-  $ADB push ${RSYNC_BIN_DIR}/rsync.bin ${DEVICE_RSYNC_BIN_DIR}/rsync.bin
+  robot_cp ${RSYNC_BIN_DIR}/rsync.bin ${DEVICE_RSYNC_BIN_DIR}/rsync.bin
 fi
 
-RSYNCD_CONF="rsyncd-v${RSYNCD_CONF_VERSION}.conf"
-
-adb_shell "[ -f "$DEVICE_RSYNC_CONF_DIR/$RSYNCD_CONF" ]"
-if [ $? -ne 0 ]; then
+robot_sh [ -f "$DEVICE_RSYNC_CONF_DIR/rsyncd.conf" ]
+if [ $? -ne 0 ] || [ $FORCE_RSYNC_BIN -eq 1 ]; then
   echo "loading rsync config to device"
-  $ADB push ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}/$RSYNCD_CONF
+  robot_cp ${RSYNC_BIN_DIR}/rsyncd.conf ${DEVICE_RSYNC_CONF_DIR}/rsyncd.conf
+fi
+
+robot_sh [ -f "$DEVICE_RSYNC_CONF_DIR/rsyncd.service" ]
+if [ $? -ne 0 ] || [ $FORCE_RSYNC_BIN -eq 1 ]; then
+  echo "loading rsyncd.service to device"
+  robot_cp ${RSYNC_BIN_DIR}/rsyncd.service ${DEVICE_RSYNC_CONF_DIR}/rsyncd.service
+  robot_sh "/bin/systemctl daemon-reload"
 fi
 set -e
 
-# startup rsync daemon
-$ADB shell "${DEVICE_RSYNC_BIN_DIR}/rsync.bin --daemon --config=${DEVICE_RSYNC_CONF_DIR}/${RSYNCD_CONF}"
+#
+# Stop any victor services. If services are allowed to run during deployment, exe and shared library 
+# files can't be released.  This may tie up enough disk space to prevent deployment of replacement files.
+# 
+logv "stop victor services"
+robot_sh "/bin/systemctl stop victor.target"
 
-pushd ${BUILD_ROOT} > /dev/null 2>&1
+logv "starting rsync daemon"
+robot_sh "/bin/systemctl is-active rsyncd.service > /dev/null 2>&1\
+          || /bin/systemctl start rsyncd.service"
 
-# Since invoking rsync multiple times is expensive.
-# build an include file list so that we can run a single rsync command
-RSYNC_LIST="${BUILD_ROOT}/rsync.$$.lst"
-touch ${RSYNC_LIST}
 
-if [ -d lib ]; then
-  find lib -type f -name '*.so' -or -name '*.so.1' >> ${RSYNC_LIST}
+pushd ${STAGING_DIR} > /dev/null 2>&1
+
+#
+# Use --inplace to avoid consuming temp space & minimize number of writes
+# Use --delete to purge files that are no longer present in build tree
+#
+logv "rsync"
+set +e
+rsync -rlptD -uzvP \
+  --inplace \
+  --delete \
+  ./anki/ rsync://${ANKI_ROBOT_HOST}:1873/anki_root/
+RSYNC_RESULT=$?
+set -e
+
+logv "stop rsync daemon"
+robot_sh "/bin/systemctl stop rsyncd"
+
+logv "finish deploy"
+
+exit $RSYNC_RESULT
+) # End TRY deploy
+
+DEPLOY_RESULT=$?
+set -e
+
+if [ $DEPLOY_RESULT -eq 0 ]; then
+  logv "deploy succeeded"
+else
+  logv "deploy FAILED"
 fi
 
-if [ -d bin ]; then
-  find bin -type f -not -name '*.full' >> ${RSYNC_LIST}
-fi
-
-if [ -d etc ]; then
-  find etc >> ${RSYNC_LIST}
-fi
-
-if [ -d data ]; then
-  find data >> ${RSYNC_LIST}
-fi
-
-rsync -rlptD -uzvP --delete --files-from=${RSYNC_LIST} ./ rsync://${DEVICE_IP_ADDRESS}/anki_root/
-
-rm -f ${BUILD_ROOT}/rsync.*.lst
+# Remount rootfs read-write
+[[ "$MOUNT_STATE" == "ro" ]] && logv "remount ro /" &&  robot_sh "/bin/mount -o remount,ro /"
 
 popd > /dev/null 2>&1
+
+exit $DEPLOY_RESULT

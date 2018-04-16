@@ -132,7 +132,6 @@ void lcd_draw_frame2(const uint16_t* frame, size_t size) {
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
 static const char* BACKLIGHT_DEVICES[] = {
-  "/sys/class/leds/face-backlight/brightness",
   "/sys/class/leds/face-backlight-left/brightness",
   "/sys/class/leds/face-backlight-right/brightness"
 };
@@ -153,7 +152,7 @@ void lcd_set_brightness(int brightness)
   int l;
   brightness = MIN(brightness, 20);
   brightness = MAX(brightness, 0);
-  for (l=0; l<3; ++l) {
+  for (l=0; l<2; ++l) {
     _led_set_brightness(brightness, BACKLIGHT_DEVICES[l]);
   }
 }
