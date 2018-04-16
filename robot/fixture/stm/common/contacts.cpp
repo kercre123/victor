@@ -492,7 +492,10 @@ char* Contacts::getline(int timeout_us, int *out_len)
   uint32_t start = Timer::get();
   do { //read 1 char (even if timeout==0)
     if( (c = Contacts::getchar()) > 0 ) //ignore null; messes with ascii parser
+    {
+      if( c == 0x88 ) c = '@';            //syscon debug mode: inserts overflow indicator in the stream
       line = line_process_char_(c, out_len);
+    }
   } while( !line && Timer::elapsedUs(start) < timeout_us );
   
   return line;
