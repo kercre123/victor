@@ -54,6 +54,9 @@ if [ ! -e $errcodes ]; then builderr=-2; fi
 echo restore debug flag
 echo "#define NOT_FOR_FACTORY 1" > $flags_file
 
+#print build info
+cat $buildlog
+
 #build the manifest
 echo $(printf timestamp:%s "$(date +'%m/%d/%Y %H:%M:%S')") > $manifest
 echo $(printf version:%d $version) >> $manifest
@@ -65,6 +68,10 @@ echo $(printf sha-1:%s $(git rev-parse HEAD)) >> $manifest
 if [ "$uncomittedfilez" == "" ]; then isclean=1; else isclean=0; fi
 echo $(printf working-tree-clean:%d $isclean) >> $manifest
 echo $(printf working-tree-changes:%s "$uncomittedfilez") >> $manifest
+
+#print manifest
+echo MANIFEST:
+cat $manifest
 
 #package for shipment
 if [ $builderr = 0 -o $builderr = 1 ]; then #Note: keil return 1=warnings-only
