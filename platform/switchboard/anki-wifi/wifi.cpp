@@ -38,8 +38,8 @@ static int CalculateSignalLevel(const int strength, const int min, const int max
   }
 }
 
-std::vector<WiFiScanResult> ScanForWiFiAccessPoints() {
-  std::vector<WiFiScanResult> results;
+WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) {
+  results.clear();
 
   bool disabledApMode = DisableAccessPointMode();
   if(!disabledApMode) {
@@ -60,7 +60,7 @@ std::vector<WiFiScanResult> ScanForWiFiAccessPoints() {
                                                               &error);
   if (error) {
     loge("error getting proxy for net.connman /net/connman/technology/wifi");
-    return results;
+    return WifiScanErrorCode::ERROR_GETTING_PROXY;
   }
 
   gboolean success = conn_man_bus_technology_call_scan_sync(tech_proxy,
@@ -69,12 +69,12 @@ std::vector<WiFiScanResult> ScanForWiFiAccessPoints() {
   g_object_unref(tech_proxy);
   if (error) {
     loge("error asking connman to scan for wifi access points");
-    return results;
+    return WifiScanErrorCode::ERROR_SCANNING;
   }
 
   if (!success) {
     loge("connman failed to scan for wifi access points");
-    return results;
+    return WifiScanErrorCode::FAILED_SCANNING;
   }
 
   ConnManBusManager* manager_proxy;
@@ -86,7 +86,7 @@ std::vector<WiFiScanResult> ScanForWiFiAccessPoints() {
                                                               &error);
   if (error) {
     loge("error getting proxy for net.connman /");
-    return results;
+    return WifiScanErrorCode::ERROR_GETTING_MANAGER;
   }
 
   GVariant* services = nullptr;
@@ -97,12 +97,12 @@ std::vector<WiFiScanResult> ScanForWiFiAccessPoints() {
   g_object_unref(manager_proxy);
   if (error) {
     loge("Error getting services from connman");
-    return results;
+    return WifiScanErrorCode::ERROR_GETTING_SERVICES;
   }
 
   if (!success) {
     loge("connman failed to get list of services");
-    return results;
+    return WifiScanErrorCode::FAILED_GETTING_SERVICES;
   }
 
   for (gsize i = 0 ; i < g_variant_n_children(services); i++) {
@@ -190,7 +190,7 @@ std::vector<WiFiScanResult> ScanForWiFiAccessPoints() {
     }
   }
 
-  return results;
+  return WifiScanErrorCode::SUCCESS;
 }
 
 std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& results) {
