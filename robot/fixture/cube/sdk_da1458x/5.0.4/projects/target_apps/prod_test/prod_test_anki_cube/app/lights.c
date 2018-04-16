@@ -167,7 +167,7 @@ static void led_calculate(void) {
   led_active->time = dark_time;
 }
 
-extern void main_exec();
+extern void main_exec(void);
 
 static void SWTIM_IRQHandler(void) {
   led_off();
