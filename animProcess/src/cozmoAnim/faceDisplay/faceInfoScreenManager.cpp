@@ -345,7 +345,7 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   // active during playpen, then re-enable lift power)
   RobotInterface::EnableMotorPower msg;
   msg.motorID = MotorID::MOTOR_LIFT;
-  msg.enable = currScreenIsDebug;
+  msg.enable = !currScreenIsDebug;
   SendAnimToRobot(std::move(msg));
 #endif
   
