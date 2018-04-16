@@ -120,10 +120,14 @@ void BehaviorFistBump::OnBehaviorActivated()
   const auto& robotInfo = GetBEI().GetRobotInfo();
   if (robotInfo.GetCarryingComponent().IsCarryingObject()) {
     _dVars.state = State::PutdownObject;
-  } else {
+  } else if( Util::IsFltGT( _iConfig.maxTimeToLookForFace_s, 0.0f ) ) {
     _dVars.state = State::LookForFace;
   }
-
+  else {
+    DEV_ASSERT(!_iConfig.abortIfNoFaceFound, "BehaviorFistBump.InvalidConfig.NoTimeToLookButNeedsFace");
+    // skip looking for face
+    _dVars.state = State::RequestInitialFistBump;
+  }
   
 }
 

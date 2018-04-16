@@ -11,7 +11,8 @@
     {
       "behaviorClass": "FistBump",
       "behaviorName": "FistBumpInternal",
-      "abortIfNoFaceFound": false
+      "abortIfNoFaceFound": false,
+      "maxTimeToLookForFace_s": 0.0
     }
   ]
 }
