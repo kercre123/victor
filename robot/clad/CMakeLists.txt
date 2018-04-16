@@ -13,7 +13,6 @@ set(CLAD_HASH "${CLAD_EMITTER_DIR}/ASTHash_emitter.py")
 set(CLAD_INCLUDES
     "${CMAKE_CURRENT_SOURCE_DIR}/src"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../coretech/vision/clad_src"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../coretech/common"
 )
 
 # Path to helper scripts
@@ -220,4 +219,3 @@ target_include_directories(robot_clad_cpplite
 )
 
 add_dependencies(robot_clad_cpplite cti_vision_clad_cpplite)
-

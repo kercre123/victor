@@ -1,4 +1,4 @@
-project(cti_common_clad)
+project(cti_vision_clad)
 
 include(generate_clad)
 
@@ -11,7 +11,7 @@ set(CLAD_INCLUDES
 set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/coretech/vision")
 set(PY_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladPython")
 
-generate_clad_cpp(LIBRARY "cti_vision_clad" 
+generate_clad_cpp(LIBRARY "cti_vision_clad"
   STATIC
   SRCS "${SRCS}"
   OUTPUT_DIR "${OUTPUT_DIR}"
@@ -37,54 +37,20 @@ target_link_libraries(cti_vision_clad
 )
 
 #
-# cti_vision_clad_cpp - ToDo (kevink): verify whether the engine version
-#  of this library is actually required - see note below on why anim process
-#  needs a seperate library
-#
-
-set(CLAD_INCLUDES_CORETECH
-  "${CMAKE_CURRENT_SOURCE_DIR}/"
-)
-
-set(CPP_ENGINE_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/engine")
-
-file(STRINGS "${ANKI_SRCLIST_DIR}/cti_composite_image_clad.srcs.lst" COMPOSITE_SRCS)
-
-
-generate_clad_cpp(
-  SRCS ${COMPOSITE_SRCS}
-  OUTPUT_DIR "${CPP_ENGINE_OUTPUT_DIR}"
-  INCLUDES "${CLAD_INCLUDES_CORETECH}"
-  OUTPUT_SRCS CLAD_CPPLITE_GEN_SRCS
-)
-
-add_library(cti_vision_clad_cpp STATIC
-  ${CLAD_CPPLITE_GEN_SRCS}
-)
-
-target_include_directories(cti_vision_clad_cpp
-  PUBLIC
-  $<BUILD_INTERFACE:${CPP_ENGINE_OUTPUT_DIR}>
-)
-
-
-target_link_libraries(cti_vision_clad_cpp
-  clad
-)
-
-#
-# cti_vision_clad_cpplite - Need to build cti_vision_clad seperately
-# so that it can be used within EngineToRobot messages - some clad types 
+# cti_vision_clad_cpplite - Need to build cti_vision_clad separately
+# so that it can be used within EngineToRobot messages - some clad types
 # included in the full coretech clad SRCS list violate message size requirements
 # for cpplite
 #
+
+file(STRINGS "${ANKI_SRCLIST_DIR}/cti_composite_image_clad.srcs.lst" COMPOSITE_SRCS)
 
 set(CPPLITE_ROBOT_OUTPUT_DIR  "${CMAKE_SOURCE_DIR}/generated/clad/robot")
 
 generate_clad_cpplite(
   SRCS ${COMPOSITE_SRCS}
   OUTPUT_DIR "${CPPLITE_ROBOT_OUTPUT_DIR}"
-  INCLUDES "${CLAD_INCLUDES_CORETECH}"
+  INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}"
   OUTPUT_SRCS CLAD_CPPLITE_GEN_SRCS
 )
 
