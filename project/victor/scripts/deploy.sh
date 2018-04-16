@@ -12,13 +12,14 @@ then
     echo git not found
     exit 1
 fi
-TOPLEVEL=`$GIT rev-parse --show-toplevel`
+: ${TOPLEVEL:=`$GIT rev-parse --show-toplevel`}
 
 source ${SCRIPT_PATH}/victor_env.sh
 
 # Settings can be overridden through environment
 : ${VERBOSE:=0}
 : ${FORCE_RSYNC_BIN:=0}
+: ${FORCE_DEPLOY:=0}
 : ${ANKI_BUILD_TYPE:="Debug"}
 : ${INSTALL_ROOT:="/anki"}
 : ${DEVTOOLS_INSTALL_ROOT:="/anki-devtools"}
@@ -31,6 +32,7 @@ function usage() {
   echo "  -h                      print this message"
   echo "  -v                      print verbose output"
   echo "  -r                      force-install rsync binary on robot"
+  echo "  -f                      force rsync to (re)deploy all files" 
   echo "  -c CONFIGURATION        build configuration {Debug,Release}"
   echo "  -s ANKI_ROBOT_HOST      hostname or ip address of robot"
   echo ""
@@ -48,7 +50,7 @@ function logv() {
   fi
 }
 
-while getopts "hvrc:s:" opt; do
+while getopts "hvrfc:s:" opt; do
   case $opt in
     h)
       usage && exit 0
@@ -58,6 +60,9 @@ while getopts "hvrc:s:" opt; do
       ;;
     r)
       FORCE_RSYNC_BIN=1
+      ;;
+    f)
+      FORCE_DEPLOY=1
       ;;
     c)
       ANKI_BUILD_TYPE="${OPTARG}"
@@ -149,11 +154,15 @@ pushd ${STAGING_DIR} > /dev/null 2>&1
 # Use --inplace to avoid consuming temp space & minimize number of writes
 # Use --delete to purge files that are no longer present in build tree
 #
+RSYNC_ARGS="-rlptD -uzvP --inplace --delete"
+if [ $FORCE_DEPLOY -eq 1 ]; then
+  # Ignore times, delete before transfer, and force deletion of directories 
+  RSYNC_ARGS="-rlptD -IzvP --inplace --delete --delete-before --force"
+fi
+
 logv "rsync"
 set +e
-rsync -rlptD -uzvP \
-  --inplace \
-  --delete \
+rsync $RSYNC_ARGS \
   ./anki/ rsync://${ANKI_ROBOT_HOST}:1873/anki_root/
 RSYNC_RESULT=$?
 set -e
