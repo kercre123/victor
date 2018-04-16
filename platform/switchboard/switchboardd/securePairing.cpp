@@ -315,10 +315,10 @@ void SecurePairing::SendWifiScanResult() {
     return;
   }
 
-  // TODO: will replace with CLAD message format
-  std::vector<Anki::WiFiScanResult> wifiResults = Anki::ScanForWiFiAccessPoints();
+  std::vector<Anki::WiFiScanResult> wifiResults;
+  WifiScanErrorCode code = Anki::ScanForWiFiAccessPoints(wifiResults);
 
-  const uint8_t statusCode = wifiResults.size() > 0? 0 : 1;
+  const uint8_t statusCode = (uint8_t)code;
 
   std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult> wifiScanResults;
 

@@ -53,6 +53,16 @@ enum WiFiConnState : uint8_t {
   DISCONNECTED  = 3,
 };
 
+enum WifiScanErrorCode : uint8_t {
+    SUCCESS                   = 0,
+    ERROR_GETTING_PROXY       = 100,
+    ERROR_SCANNING            = 101,
+    FAILED_SCANNING           = 102,
+    ERROR_GETTING_MANAGER     = 103,
+    ERROR_GETTING_SERVICES    = 104,
+    FAILED_GETTING_SERVICES   = 105,
+};
+
 class WiFiScanResult {
  public:
   WiFiAuth    auth;
@@ -100,7 +110,7 @@ void SetWiFiConfig(std::string ssid, std::string password, WiFiAuth auth, bool i
 std::string GetHexSsidFromServicePath(const std::string& servicePath);
 
 bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData);
-std::vector<WiFiScanResult> ScanForWiFiAccessPoints();
+WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results);
 std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& results);
 void EnableWiFiInterface(const bool enable, ExecCommandCallback callback);
 std::map<std::string, std::string> UnPackWiFiConfig(const std::vector<uint8_t>& packed);
