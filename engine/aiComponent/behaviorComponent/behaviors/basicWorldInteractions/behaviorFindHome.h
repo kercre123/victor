@@ -35,7 +35,7 @@ public:
   
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
-    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Standard });
+    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
   }
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
@@ -62,6 +62,7 @@ private:
   InstanceConfig   _iConfig;
   DynamicVariables _dVars;
   
+  void TransitionToHeadStraight();
   void TransitionToSearchAnim();
   void TransitionToRandomDrive();
   

@@ -109,6 +109,10 @@ namespace Anki {
         // Pitch angle at which Cozmo is probably having trouble backing up on charger
         const f32 TILT_FAILURE_ANGLE_RAD = DEG_TO_RAD_F32(-30);
         
+        // After excessive pitch angle is detected and the robot begins driving forward,
+        // this is the angle above which the robot is considered to have recovered
+        const f32 TILT_FAILURE_RECOVERY_ANGLE_RAD = DEG_TO_RAD_F32(-10);
+        
         // Amount of time that Cozmo pitch needs to exceed TILT_FAILURE_ANGLE_RAD in order to fail at backing up on charger
         const u32 TILT_FAILURE_DURATION_MS = 250;
         
@@ -335,7 +339,7 @@ namespace Anki {
               case DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF:
                 ProxSensors::EnableCliffDetector(false);
                 SteeringController::ExecuteDirectDrive(kChargerDockingSpeedHigh, kChargerDockingSpeedHigh);
-                transitionTime_ = HAL::GetTimeStamp() + 8000;
+                transitionTime_ = HAL::GetTimeStamp() + 7000;
                 useCliffSensorAlignment_ = (action_ == DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF);
                 mode_ = BACKUP_ON_CHARGER;
                 break;
@@ -833,7 +837,7 @@ namespace Anki {
                 // Drive forward until no tilt or timeout
                 AnkiEvent( "PAP.BACKUP_ON_CHARGER.Tilted", "");
                 SteeringController::ExecuteDirectDrive(40, 40);
-                transitionTime_ = HAL::GetTimeStamp() + 2500;
+                transitionTime_ = HAL::GetTimeStamp() + 1000;
                 ProxSensors::EnableCliffDetector(true);
                 mode_ = DRIVE_FORWARD;
               }
@@ -878,7 +882,8 @@ namespace Anki {
           case DRIVE_FORWARD:
           {
             // For failed charger mounting recovery only
-            if (HAL::GetTimeStamp() > transitionTime_) {
+            if ((IMUFilter::GetPitch() > TILT_FAILURE_RECOVERY_ANGLE_RAD) ||
+                (HAL::GetTimeStamp() > transitionTime_)) {
               SendChargerMountCompleteMessage(false);
               Reset();
             }

@@ -1973,7 +1973,7 @@ namespace Anki {
 
     void TurnTowardsFaceAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
     {
-      requests.insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Low });
+      requests.insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
     }
 
     ActionResult TurnTowardsFaceAction::Init()

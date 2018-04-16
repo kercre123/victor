@@ -156,6 +156,9 @@ namespace Cozmo {
   // to reverse on to it.
   const f32 CHARGER_ALIGNED_MARKER_DISTANCE = 140.f;
   
+  // Slope of the charger platform w.r.t. the ground
+  const f32 kChargerSlopeAngle_rad = DEG_TO_RAD(7.0f);
+  
   
   /***************************************************************************
    *

@@ -99,6 +99,8 @@ public:
   
 protected:
 
+  virtual ActionResult InitInternal() override;
+  
   virtual ActionResult SelectDockAction(ActionableObject* object) override;
   
   virtual PreActionPose::ActionType GetPreActionType() override { return PreActionPose::DOCKING; }
@@ -112,6 +114,9 @@ private:
   // If true, use the cliff sensors to detect the light/dark pattern
   // while reversing onto the charger and adjust accordingly
   const bool _useCliffSensorCorrection;
+  
+  // Pitch angle just before starting the backup action
+  Radians _initialPitchAngle = 0.f;
   
 }; // class BackupOntoChargerAction
 

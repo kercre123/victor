@@ -87,10 +87,9 @@ ActionResult MountChargerAction::CheckIfDone()
   // Tick the turnAndMount action (if needed):
   if (_mountAction != nullptr) {
     result = _mountAction->Update();
-    // If the action fails and the robot has already turned toward
-    // the charger, then position for a retry
-    if ((result != ActionResult::SUCCESS) &&
-        (result != ActionResult::RUNNING)) {
+    // If the action fails with a retry code and the robot has already
+    // turned away from the charger, then position for a retry
+    if (IActionRunner::GetActionResultCategory(result) == ActionResultCategory::RETRY) {
       bool isFacingAwayFromCharger = true;
       const auto* charger = GetRobot().GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
       if (charger != nullptr) {
@@ -119,9 +118,9 @@ ActionResult MountChargerAction::CheckIfDone()
     result = _driveForRetryAction->Update();
     
     // If the action finished successfully, this parent action
-    // should return a NOT_ON_CHARGER to cause a retry.
+    // should return a NOT_ON_CHARGER_RETRY to cause a retry.
     if (result == ActionResult::SUCCESS) {
-      return ActionResult::NOT_ON_CHARGER;
+      return ActionResult::NOT_ON_CHARGER_RETRY;
     }
   }
   
@@ -287,6 +286,13 @@ BackupOntoChargerAction::BackupOntoChargerAction(ObjectID chargerID,
   SetShouldCheckForObjectOnTopOf(false);
 }
 
+
+ActionResult BackupOntoChargerAction::InitInternal()
+{
+  _initialPitchAngle = GetRobot().GetPitchAngle();
+  return ActionResult::SUCCESS;
+}
+
   
 ActionResult BackupOntoChargerAction::SelectDockAction(ActionableObject* object)
 {
@@ -314,11 +320,50 @@ ActionResult BackupOntoChargerAction::Verify()
   // Verify that robot is on charger
   if (GetRobot().GetBatteryComponent().IsOnChargerContacts()) {
     PRINT_CH_INFO("Actions", "BackupOntoChargerAction.Verify.MountingChargerComplete",
-                "Robot has mounted charger.");
+                  "Robot has mounted charger.");
     return ActionResult::SUCCESS;
   }
   
-  return ActionResult::ABORT;
+  // We're not on the charger contacts - but why? Let's find out.
+  const auto& currPitchAngle = GetRobot().GetPitchAngle();
+  const auto& pitchAngleChange = currPitchAngle - _initialPitchAngle;
+  
+  const bool pitchSuggestsOnCharger = pitchAngleChange.IsNear(-kChargerSlopeAngle_rad, DEG_TO_RAD(2.f));
+  const bool pitchSuggestsStillOnGround = pitchAngleChange.IsNear(0.f, DEG_TO_RAD(2.f));
+  
+  if (pitchSuggestsOnCharger) {
+    // The difference in pitch angle suggests that we are
+    // indeed on the charger platform, but we have not sensed
+    // the contacts. It's likely that the charger is unplugged.
+    PRINT_NAMED_WARNING("BackupOntoChargerAction.Verify.ChargerUnplugged",
+                        "Pitch angle says we're on the charger platform, but not sensing contacts. Charger may be unplugged."
+                        "(starting pitch %.2f deg, current pitch %.2f deg)",
+                        _initialPitchAngle.getDegrees(),
+                        currPitchAngle.getDegrees());
+    return ActionResult::CHARGER_UNPLUGGED_ABORT;
+    
+  }
+  
+  if (pitchSuggestsStillOnGround) {
+    // We probably completely missed the charger or otherwise ended
+    // up flat on the ground again, so something is wrong.
+    PRINT_NAMED_WARNING("BackupOntoChargerAction.Verify.StillOnGround",
+                        "Pitch angles says we are still on the ground and not on the charger platform. "
+                        "(starting pitch %.2f deg, current pitch %.2f deg)",
+                        _initialPitchAngle.getDegrees(),
+                        currPitchAngle.getDegrees());
+    return ActionResult::NOT_ON_CHARGER_ABORT;
+  }
+  
+  // We are neither confidently on the charger nor confidently
+  // on the ground, so we should just retry.
+  PRINT_NAMED_WARNING("BackupOntoChargerAction.Verify.Failed",
+                      "We are not sensing the charger contacts, and pitch angle suggests that"
+                      "we are neither on the charger platform nor flat on the ground."
+                      "(starting pitch %.2f deg, current pitch %.2f deg)",
+                      _initialPitchAngle.getDegrees(),
+                      currPitchAngle.getDegrees());
+  return ActionResult::NOT_ON_CHARGER_RETRY;
 }
   
   

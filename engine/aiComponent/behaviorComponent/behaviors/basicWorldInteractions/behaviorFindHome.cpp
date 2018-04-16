@@ -123,7 +123,18 @@ void BehaviorFindHome::OnBehaviorActivated()
 {
   _dVars.numSearchesCompleted = 0;
   
-  TransitionToSearchAnim();
+  // Move head to look straight ahead in case charger is right in
+  // front of us.
+  TransitionToHeadStraight();
+}
+
+
+void BehaviorFindHome::TransitionToHeadStraight()
+{
+  DelegateIfInControl(new MoveHeadToAngleAction(0.f),
+                      [this]() {
+                        TransitionToSearchAnim();
+                      });
 }
 
 
