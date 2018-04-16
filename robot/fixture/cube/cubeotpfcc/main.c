@@ -30,11 +30,14 @@ void console_write(char* s) {
   hal_uart_write(s);
 }
 
-static inline char* console_process_char_(char c)
+static inline char* console_process_char_(int c)
 {
   const int console_len_max = 32;
   static char console_buf[console_len_max + 1];
   static int console_len = 0;
+  
+  if( c < 0 )
+    return NULL;
   
   switch(c)
   {

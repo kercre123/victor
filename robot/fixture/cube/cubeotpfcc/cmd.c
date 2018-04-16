@@ -56,6 +56,8 @@ int cmd_process(char* s)
     da14580_otp_header_t* binhead = (da14580_otp_header_t*)&otp_head_buf2[0];
     otp_header_init( binhead, NULL );
     
+    //--------- No room for stowaways; skip all safetey checks -----------
+    
     //let's burn this mother trucker!
     writes_("burning image:\n");
     for(int addr=0; addr < g_CubeBootSize; addr += blocksize)

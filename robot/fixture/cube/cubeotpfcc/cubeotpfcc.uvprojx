@@ -509,11 +509,6 @@
               <FilePath>..\hal\board.c</FilePath>
             </File>
             <File>
-              <FileName>vbat.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\hal\vbat.h</FilePath>
-            </File>
-            <File>
               <FileName>hal_uart.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\hal\hal_uart.c</FilePath>
