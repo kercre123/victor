@@ -147,7 +147,6 @@ logv "starting rsync daemon"
 robot_sh "/bin/systemctl is-active rsyncd.service > /dev/null 2>&1\
           || /bin/systemctl start rsyncd.service"
 
-
 pushd ${STAGING_DIR} > /dev/null 2>&1
 
 #
@@ -166,6 +165,8 @@ rsync $RSYNC_ARGS \
   ./anki/ rsync://${ANKI_ROBOT_HOST}:1873/anki_root/
 RSYNC_RESULT=$?
 set -e
+
+popd > /dev/null 2>&1
 
 logv "stop rsync daemon"
 robot_sh "/bin/systemctl stop rsyncd"
@@ -186,7 +187,5 @@ fi
 
 # Remount rootfs read-write
 [[ "$MOUNT_STATE" == "ro" ]] && logv "remount ro /" &&  robot_sh "/bin/mount -o remount,ro /"
-
-popd > /dev/null 2>&1
 
 exit $DEPLOY_RESULT
