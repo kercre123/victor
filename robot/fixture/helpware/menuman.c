@@ -44,12 +44,13 @@ void safe_quit(int n)
 }
 
 
-typedef void (*MenuActionHandler)(void);
+typedef void (*MenuActionHandler)(void* param);
 
 typedef struct MenuItem_t {
   const char* text;
   const MenuActionHandler handler;
   const struct MenuLevel_t* submenu;
+  void* param;
 } MenuItem;
 
 typedef struct MenuLevel_t {
@@ -89,7 +90,7 @@ void menu_select()
     if (gMenu.current->item[gMenu.index].handler)
     {
       gMenu.selection_count = 10;
-      gMenu.current->item[gMenu.index].handler();
+      gMenu.current->item[gMenu.index].handler(gMenu.current->item[gMenu.index].param);
      }
     if (gMenu.current->item[gMenu.index].submenu)
     {
@@ -224,25 +225,22 @@ void command_motors(struct HeadToBody* data)
 /****  Menu Handlers ****/
 
 
-void handle_MainPlaySound(void) {
+void handle_MainPlaySound(void* param) {
   printf("PlaySound Selected\n");
   pid_t pidout;
   int fd = pidopen("./testsound.sh", "test.wav", &pidout);
   wait_for_process(pidout, fd);
 }
 
-void handle_MainMotorTest(void) {
+void handle_MainMotorTest(void* param) {
   printf("MotorTest Selected\n");
   start_motor_test();
 }
 
-void handle_SystemCall(void) {
-  printf("System Call Selected\n");
+void handle_SystemCall(void* param) {
   pid_t pidout;
-  char index[4];
-  snprintf(index, sizeof(index), "%d", menu_get_index());
-  printf(">> system.sh %s\n", index);
-  int fd = pidopen("./system.sh", index, &pidout);
+  printf(">> system.sh %s\n", (char*)param);
+  int fd = pidopen("./system.sh", (char*)param, &pidout);
   wait_for_process(pidout, fd);
 }
 
@@ -252,25 +250,58 @@ void handle_SystemCall(void) {
 /************* MENU DEFINITIONS **************/
 
 #define MENU_ITEMS(name) static const MenuItem menu_items_ ## name []
-#define MENU_ACTION(text, tag) { text, handle_ ## tag, NULL }
-#define MENU_SUBMENU(text, name) { text, NULL, &menu_ ## name }
+#define MENU_ACTION(text, tag) { text, handle_ ## tag, NULL, NULL }
+#define MENU_SHELL(text, param) { text, handle_SystemCall, NULL, param }
+#define MENU_SUBMENU(text, name) { text, NULL, &menu_ ## name, NULL }
 #define MENU_BACK(parent) { "Back", NULL, &menu_ ## parent }
 
 #define MENU_CREATE(name) MenuLevel menu_ ## name =  { menu_items_ ## name, sizeof(menu_items_ ## name)/sizeof(MenuItem) }
 
 extern MenuLevel menu_Main;
 
-MENU_ITEMS(System) = {
-  MENU_ACTION("Option 0", SystemCall ),
-  MENU_ACTION("Option 1", SystemCall ),
-  MENU_ACTION("Option 2", SystemCall ),
-  MENU_BACK(Main)
+MENU_ITEMS(TXCW) = {
+  MENU_BACK(Main),
+  MENU_SHELL("STOP TX", "STOP"),
+  MENU_SHELL("Carrier @ 1  2412MHz", "CW 1"),
+  MENU_SHELL("Carrier @ 6  2437MHz", "CW 6"),
+  MENU_SHELL("Carrier @ 11 2462MHz", "CW 11"),
 };
-MENU_CREATE(System);
+MENU_CREATE(TXCW);
+
+MENU_ITEMS(TXN) = {
+  MENU_BACK(Main),
+  MENU_SHELL("STOP TX", "STOP"),
+  MENU_SHELL("11n @ 1  2412MHz", "MCS_65_MBPS 1"),
+  MENU_SHELL("11n @ 6  2437MHz", "MCS_65_MBPS 6"),
+  MENU_SHELL("11n @ 11 2462MHz", "MCS_65_MBPS 11"),
+};
+MENU_CREATE(TXN);
+
+MENU_ITEMS(TXG) = {
+  MENU_BACK(Main),
+  MENU_SHELL("STOP TX", "STOP"),
+  MENU_SHELL("11g @ 1  2412MHz", "11A_54_MBPS 1"),
+  MENU_SHELL("11g @ 6  2437MHz", "11A_54_MBPS 6"),
+  MENU_SHELL("11g @ 11 2462MHz", "11A_54_MBPS 11"),
+};
+MENU_CREATE(TXG);
+
+MENU_ITEMS(TXB) = {
+  MENU_BACK(Main),
+  MENU_SHELL("STOP TX", "STOP"),
+  MENU_SHELL("11b @ 1  2412MHz", "11B_LONG_11_MBPS 1"),
+  MENU_SHELL("11b @ 6  2437MHz", "11B_LONG_11_MBPS 6"),
+  MENU_SHELL("11b @ 11 2462MHz", "11B_LONG_11_MBPS 11"),
+};
+MENU_CREATE(TXB);
 
 MENU_ITEMS(Main) = {
-  MENU_SUBMENU("System Calls", System),
-  MENU_ACTION("PlaySound", MainPlaySound ),
+  MENU_SUBMENU("TX Carrier", TXCW),
+  MENU_SUBMENU("TX 11n", TXN),
+  MENU_SUBMENU("TX 11g", TXG),
+  MENU_SUBMENU("TX 11b", TXB),
+  MENU_ACTION("Burn CPU", MainPlaySound ),
+  MENU_ACTION("Play Sound", MainPlaySound ),
   MENU_ACTION("Motor Test", MainMotorTest ),
 };
 MENU_CREATE(Main);
