@@ -101,7 +101,6 @@ void menu_select()
 
 
 void menu_set_busy(int isBusy) {
-  printf("menu is%sbusy\n", isBusy?" ":"n't ");
   gMenu.is_busy = isBusy;
   gMenu.changed = 1;
 }
@@ -148,6 +147,7 @@ void wait_for_process(pid_t pid, int fd)
 {
   gProcess.wait_pid = pid;
   gProcess.proc_fd = fd;
+  mm_debug_x("waiting for process\n");
   menu_set_busy(1);
 }
 
@@ -168,7 +168,7 @@ void process_monitor(void){
 
     if (waitpid(gProcess.wait_pid, &status, WNOHANG)) {
       gProcess.wait_pid = 0;
-      printf("proc finished\n");
+      mm_debug_x("proc finished\n");
       menu_set_busy(0);
     }
   }
@@ -185,13 +185,19 @@ uint64_t gMotorTestCycles = 0;
 void start_motor_test(void)
 {
   gMotorTestCycles =1 ;
+  mm_debug_x("starting motor test\n");
   menu_set_busy(1);
 }
 
-void stop_motor_test(void)
+//returns true if actually stopped
+int stop_motor_test(void)
 {
-  gMotorTestCycles = 0;
-  menu_set_busy(0);
+  if (gMotorTestCycles) {
+    gMotorTestCycles = 0;
+    menu_set_busy(0);
+    return 1;
+  }
+  return 0;
 }
 
 void command_motors(struct HeadToBody* data)
@@ -299,7 +305,6 @@ const void* get_a_frame(int32_t timeout_ms) {
 void populate_outgoing_frame(void) {
   gHeadData.framecounter++;
   if (gMotorTestCycles) { //if there are conditions to communicate to body, put them here
-//    printf("commanding motors\n");
     command_motors(&gHeadData);
   }
   else {
@@ -322,18 +327,11 @@ void process_incoming_frame(struct BodyToHead* bodyData)
   static int32_t liftMinPosition = INITIAL_LIFT_POS;
   static int32_t treadLastPosition = 0;
   static bool buttonPressed = false;
-  /* static uint8_t filter; */
 
   if (liftMinPosition == INITIAL_LIFT_POS) {
     liftMinPosition = bodyData->motor[MOTOR_LIFT].position;
     treadLastPosition = bodyData->motor[MOTOR_RIGHT].position;
   }
-  /* if (!((filter++)&0x3F)) { */
-    /* mm_debug_x("%d / %d : %d / %d\n", */
-    /*        bodyData->motor[MOTOR_RIGHT].position, treadLastPosition, */
-    /*        bodyData->motor[MOTOR_LIFT].position, liftMinPosition); */
-  /*   mm_debug("[%d, %d]  was %d\n", bodyData->touchLevel[0], bodyData->touchLevel[1], buttonPressed); */
-  /* } */
 
   if (abs(bodyData->motor[MOTOR_RIGHT].position - treadLastPosition) > MENU_TREAD_TRIGGER_DELTA )
   {
@@ -342,10 +340,10 @@ void process_incoming_frame(struct BodyToHead* bodyData)
   }
   if (bodyData->touchLevel[1] > 0 )  {
     if (!buttonPressed) {
-      printf("button pressed\n");
       buttonPressed = true;
-      menu_select();
-      stop_motor_test();
+      if (!stop_motor_test()) {
+        menu_select();
+      }
     }
   }
   else {
