@@ -41,6 +41,7 @@
     // selectors you provide here should be relative to the 
     // document body, e.g., "#myHtmlElement", 
     // not "#moduleTab #myHtmlElement".
+    // Replace the below with an empty string if it's unused.
     return `
       #myHtmlElement {
         background-color: red;

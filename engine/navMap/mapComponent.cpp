@@ -39,6 +39,8 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/console/consoleInterface.h"
 
+#include "webServerProcess/src/webService.h"
+
 // Giving this its own local define, in case we want to control it independently of DEV_CHEATS / NDEBUG, etc.
 #define ENABLE_DRAWING ANKI_DEV_CHEATS
 
@@ -137,6 +139,8 @@ MemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily fam
 
   return retType;
 }
+  
+const char* const kWebVizModuleName = "navmap";
 
 };
 
@@ -148,6 +152,7 @@ MapComponent::MapComponent()
 , _currentMapOriginID(PoseOriginList::UnknownOriginID)
 , _vizMessageDirty(true)
 , _gameMessageDirty(true)
+, _webMessageDirty(false) // web must request it
 , _isRenderEnabled(true)
 , _broadcastRate_sec(-1.0f)
 {
@@ -171,6 +176,16 @@ void MapComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depend
     auto helper = MakeAnkiEventUtil(externalInterface, *this, _eventHandles);
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMemoryMapRenderEnabled>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMemoryMapBroadcastFrequency_sec>();
+  }
+  
+  if( _robot->GetContext() != nullptr ) {
+    auto* webService = _robot->GetContext()->GetWebService();
+    if( webService != nullptr ) {
+      auto onData = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendFunc) {
+        _webMessageDirty = true;
+      };
+      _eventHandles.emplace_back( webService->OnWebVizData( kWebVizModuleName ).ScopedSubscribe( onData ) );
+    }
   }
 }
 
@@ -205,15 +220,22 @@ void MapComponent::UpdateDependent(const RobotCompMap& dependentComps)
     currentNavMemoryMap->GetBroadcastInfo(data);
 
     // send viz Messages
-    if (_vizMessageDirty && ENABLE_DRAWING && _isRenderEnabled)
+    if ( (ENABLE_DRAWING && _vizMessageDirty && _isRenderEnabled) || _webMessageDirty )
     {
       static f32 nextDrawTime_s = currentTime_s;
-      if ( FLT_LE(nextDrawTime_s, currentTime_s) ) {
-        DrawMap(data);
+      const bool doViz = FLT_LE(nextDrawTime_s, currentTime_s);
+      if( doViz ) {
+        BroadcastMapToViz(data);
 
+        
         // Reset the timer but don't accumulate error
         nextDrawTime_s += ((int) (currentTime_s - nextDrawTime_s) / kMapRenderRate_sec + 1) * kMapRenderRate_sec;
         _vizMessageDirty = false;
+      }
+      
+      if( _webMessageDirty ) {
+        BroadcastMapToWeb(data);
+        _webMessageDirty = false;
       }
     } 
     
@@ -222,13 +244,13 @@ void MapComponent::UpdateDependent(const RobotCompMap& dependentComps)
     {
       static f32 nextBroadcastTime_s = currentTime_s;
       if (FLT_LE(nextBroadcastTime_s, currentTime_s)) {
-        BroadcastMap(data);
+        BroadcastMapToSDK(data);
 
         // Reset the timer but don't accumulate error
         nextBroadcastTime_s += ((int) (currentTime_s - nextBroadcastTime_s) / kMapRenderRate_sec + 1) * _broadcastRate_sec;
         _gameMessageDirty = false;
       }
-    } 
+    }
   }
   
   UpdateRobotPose();
@@ -486,28 +508,78 @@ namespace {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MapComponent::DrawMap(const MapBroadcastData& mapData) const
+void MapComponent::BroadcastMapToViz(const MapBroadcastData& mapData) const
 {
   using namespace VizInterface; 
 
   // Send the begin message
   _robot->Broadcast(MessageViz(MemoryMapMessageVizBegin(_currentMapOriginID, mapData.mapInfo)));
-  
   // chunk the quad messages
   for(u32 seqNum = 0; seqNum*kQuadsPerMessage < mapData.quadInfo.size(); seqNum++)
   {
     auto start = seqNum*kQuadsPerMessage;
     auto end   = std::min(mapData.quadInfo.size(), start + kQuadsPerMessage);
-    _robot->Broadcast(MessageViz(MemoryMapMessageViz(_currentMapOriginID, seqNum, 
+    _robot->Broadcast(MessageViz(MemoryMapMessageViz(_currentMapOriginID, seqNum,
       QuadInfoVector(mapData.quadInfo.begin() + start, mapData.quadInfo.begin() + end))));
   }
 
   // Send the end message
   _robot->Broadcast(MessageViz(MemoryMapMessageVizEnd(_currentMapOriginID)));
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MapComponent::BroadcastMapToWeb(const MapBroadcastData& mapData) const
+{
+  auto* webService = _robot->GetContext()->GetWebService();
+  if( webService == nullptr ) {
+    return;
+  }
+  
+  // Send the begin message
+  {
+    Json::Value toWeb;
+    toWeb["type"] = "MemoryMapMessageVizBegin";
+    toWeb["originId"] = _currentMapOriginID;
+    toWeb["mapInfo"] = mapData.mapInfo.GetJSON();
+    webService->SendToWebViz(kWebVizModuleName, toWeb);
+  }
+  
+  // chunk the quad messages
+  for(u32 seqNum = 0; seqNum*kQuadsPerMessage < mapData.quadInfo.size(); seqNum++)
+  {
+    auto start = seqNum*kQuadsPerMessage;
+    auto end   = std::min(mapData.quadInfo.size(), start + kQuadsPerMessage);
+    Json::Value toWeb;
+    toWeb["type"] = "MemoryMapMessageViz";
+    toWeb["originId"] = _currentMapOriginID;
+    toWeb["seqNum"] = seqNum;
+    toWeb["quadInfos"] = Json::arrayValue;
+    auto& quadInfo = toWeb["quadInfos"];
+    for( auto it = mapData.quadInfo.begin() + start; it != mapData.quadInfo.begin() + end; ++it ) {
+      quadInfo.append( it->GetJSON() );
+    }
+    webService->SendToWebViz(kWebVizModuleName, toWeb);
+  }
+
+  // Send the end message
+  {
+    Json::Value toWeb;
+    toWeb["type"] = "MemoryMapMessageVizEnd";
+    toWeb["originId"] = _currentMapOriginID;
+    auto& robotJson = toWeb["robot"];
+    robotJson["x"] = _robot->GetPose().GetTranslation().x();
+    robotJson["y"] = _robot->GetPose().GetTranslation().y();
+    robotJson["z"] = _robot->GetPose().GetTranslation().z();
+    robotJson["qW"] = _robot->GetPose().GetRotation().GetQuaternion().w();
+    robotJson["qX"] = _robot->GetPose().GetRotation().GetQuaternion().x();
+    robotJson["qY"] = _robot->GetPose().GetRotation().GetQuaternion().y();
+    robotJson["qZ"] = _robot->GetPose().GetRotation().GetQuaternion().z();
+    webService->SendToWebViz(kWebVizModuleName, toWeb);
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MapComponent::BroadcastMap(const MemoryMapTypes::MapBroadcastData& mapData) const
+void MapComponent::BroadcastMapToSDK(const MemoryMapTypes::MapBroadcastData& mapData) const
 {
   using namespace ExternalInterface;
 

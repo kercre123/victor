@@ -97,11 +97,10 @@ public:
   // create a new memory map from current robot frame of reference.
   void CreateLocalizedMemoryMap(PoseOriginID_t worldOriginID);
   
-  // Publish navMap to the Viz channel
-  void DrawMap(const MemoryMapTypes::MapBroadcastData& mapData) const;
-  
-  // Publish navMap to the EngineToGame channel (e.g. so SDK can get the data)
-  void BroadcastMap(const MemoryMapTypes::MapBroadcastData& mapData) const;
+  // Publish navMap to the Viz channel / Web / SDK
+  void BroadcastMapToViz(const MemoryMapTypes::MapBroadcastData& mapData) const;
+  void BroadcastMapToWeb(const MemoryMapTypes::MapBroadcastData& mapData) const;
+  void BroadcastMapToSDK(const MemoryMapTypes::MapBroadcastData& mapData) const;
   
   // clear the space in the memory map between the robot and observed markers for the given object,
   // because if we saw the marker, it means there's nothing between us and the marker.
@@ -180,6 +179,7 @@ private:
   // use multiple dirty flags to broadcast to different channels in case they have different broadcast rates
   bool                            _vizMessageDirty;
   bool                            _gameMessageDirty;
+  bool                            _webMessageDirty;
   
   bool                            _isRenderEnabled;
   float                           _broadcastRate_sec = -1.0f;      // (Negative means don't send)

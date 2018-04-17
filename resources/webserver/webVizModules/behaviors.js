@@ -565,6 +565,7 @@
     params.pathOffset = 10;
     params.barHeight = 30;
 
+    $('<h4>Usage: Move your mouse around the main window to see active behaviors and the times they were active. You may also drag your cursor in the bottom window to zoom in on a particular period of time. Click in the same box to zoom out. Zooming will pause live updates, so you should toggle the switch on the left when you\'re done.</h3>').appendTo( elem );
     currentBehaviorDiv = $('<h3 id="currentBehavior"></h3>').appendTo( elem );
 
     var svg = d3.select(elem)

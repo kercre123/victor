@@ -186,7 +186,6 @@ namespace Cozmo {
     
     void SendObjectUpdateToWebViz( const ExternalInterface::RobotDeletedFace& msg ) const;
     void SendObjectUpdateToWebViz( const ExternalInterface::RobotObservedFace& msg ) const;
-    void SendObjectUpdateToWebViz( const std::string& name, Vision::FaceID_t id, uint32_t timestamp ) const;
     
     std::vector<Signal::SmartHandle> _eventHandles;
     

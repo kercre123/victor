@@ -3421,12 +3421,14 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
       return;
     }
     
+    Json::Value toSendToWebViz;
+    
     const ObjectID& locObject = _robot->GetLocalizedTo();
     
     // Note: only drawing objects in current coordinate frame!
     BlockWorldFilter filter;
     filter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame);
-    ModifierFcn visualizeHelper = [this,&locObject](ObservableObject* object)
+    ModifierFcn visualizeHelper = [this,&locObject,&toSendToWebViz](ObservableObject* object)
     {
       if(object->GetID() == _selectedObjectID) {
         // Draw selected object in a different color and draw its pre-action poses
@@ -3459,9 +3461,26 @@ CONSOLE_VAR(float, kUnconnectedObservationCooldownDuration_sec, "BlockWorld", 10
         // Draw "regular" objects in current frame in their internal color
         object->Visualize();
       }
+      
+      if( object->GetFamily() == ObjectFamily::LightCube ) {
+        Json::Value cubeInfo;
+        const auto& pose = object->GetPose();
+        cubeInfo["x"] = pose.GetTranslation().x();
+        cubeInfo["y"] = pose.GetTranslation().y();
+        cubeInfo["z"] = pose.GetTranslation().z();
+        cubeInfo["angle"] = pose.GetRotationAngle<'Z'>().ToFloat();
+        toSendToWebViz["cubes"].append( cubeInfo );
+      }
     };
 
     FindLocatedObjectHelper(filter, visualizeHelper, false);
+    
+    const auto* webService = _robot->GetContext()->GetWebService();
+    if( webService != nullptr ) {
+      toSendToWebViz["type"] = "MemoryMapCubes";
+      const std::string moduleName = "navmap";
+      webService->SendToWebViz( moduleName, toSendToWebViz );
+    }
     
   } // DrawAllObjects()
   

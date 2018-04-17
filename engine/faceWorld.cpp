@@ -870,8 +870,6 @@ namespace Cozmo {
                                                                               trackedFace.GetHeadPose(),
                                                                               drawFaceColor);
     
-    SendObjectUpdateToWebViz( trackedFace.GetName(), trackedFace.GetID(), trackedFace.GetTimeStamp() );
-    
     if(drawInImage)
     {
       // Draw box around recognized face (with ID) now that we have the real ID set
@@ -912,8 +910,8 @@ namespace Cozmo {
     
     const auto* webService = _robot->GetContext()->GetWebService();
     if( webService != nullptr ) {
-      const std::string moduleName = "observedobjects";
-      webService->SendToWebViz( moduleName, data );
+      webService->SendToWebViz( "observedobjects", data );
+      webService->SendToWebViz( "navmap", data );
     }
     
   }
@@ -921,26 +919,41 @@ namespace Cozmo {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void FaceWorld::SendObjectUpdateToWebViz( const ExternalInterface::RobotObservedFace& msg ) const
   {
-    SendObjectUpdateToWebViz( msg.name, msg.faceID, msg.timestamp);
-  }
-  
-  void FaceWorld::SendObjectUpdateToWebViz( const std::string& name, Vision::FaceID_t id, uint32_t timestamp ) const
-  {
-    if( id <= 0 ) {
+    
+    if( msg.faceID <= 0 ) {
       return; // ignore half-recognized or invalid faces
     }
     Json::Value data;
     data["type"] = "RobotObservedFace";
-    data["faceID"] = id;
-    if( !name.empty() ) {
-      data["name"] = name;
+    data["faceID"] = msg.faceID;
+    if( !msg.name.empty() ) {
+      data["name"] = msg.name;
     }
-    data["timestamp"] = timestamp;
+    data["timestamp"] = msg.timestamp;
     
     const auto* webService = _robot->GetContext()->GetWebService();
     if( webService != nullptr ) {
-      const std::string moduleName = "observedobjects";
-      webService->SendToWebViz( moduleName, data );
+      // this is used by two modules
+      {
+        const std::string moduleName = "observedobjects";
+        webService->SendToWebViz( moduleName, data );
+      }
+      
+      {
+        data["type"] = "MemoryMapFace";
+        auto& pose = data["pose"];
+        Pose3d objPose( msg.pose, _robot->GetPoseOriginList() );
+        pose["x"] = objPose.GetTranslation().x();
+        pose["y"] = objPose.GetTranslation().y();
+        pose["z"] = objPose.GetTranslation().z();
+        pose["qW"] = objPose.GetRotation().GetQuaternion().w();
+        pose["qX"] = objPose.GetRotation().GetQuaternion().x();
+        pose["qY"] = objPose.GetRotation().GetQuaternion().y();
+        pose["qZ"] = objPose.GetRotation().GetQuaternion().z();
+        const std::string moduleName = "navmap";
+        webService->SendToWebViz( moduleName, data );
+      }
+      
     }
     
   }
