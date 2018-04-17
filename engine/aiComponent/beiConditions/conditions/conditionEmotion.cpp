@@ -29,8 +29,8 @@ static const char* kDebugKey = "ConditionEmotion";
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionEmotion::ConditionEmotion(const Json::Value& config)
-  : IBEICondition(config)
+ConditionEmotion::ConditionEmotion(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
   LoadJson(config);
 }

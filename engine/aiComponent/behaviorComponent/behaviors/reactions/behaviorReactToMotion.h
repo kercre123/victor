@@ -63,7 +63,7 @@ private:
   MotionArea GetAreaWithMostMotion() const;
   
   struct AreaCondition {
-    AreaCondition(MotionArea a, unsigned int intervalSize, Json::Value& config);
+    AreaCondition(MotionArea a, unsigned int intervalSize, Json::Value& config, BEIConditionFactory& condFactory);
     void Reset();
     
     MotionArea area;

@@ -30,10 +30,10 @@ const char* kDedupIntervalKey = "dedupInterval_ms";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionTimedDedup::ConditionTimedDedup(const Json::Value& config)
-: IBEICondition(config)
+ConditionTimedDedup::ConditionTimedDedup(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
-  _instanceParams.subCondition     = BEIConditionFactory::CreateBEICondition( config[kSubConditionKey], GetDebugLabel() );
+  _instanceParams.subCondition     = factory.CreateBEICondition( config[kSubConditionKey], GetDebugLabel() );
   _instanceParams.dedupInterval_ms = JsonTools::ParseFloat(config,
                                                            kDedupIntervalKey,
                                                            "ConditionTimedDedup.ConfigError.DedupInterval");
@@ -42,8 +42,10 @@ ConditionTimedDedup::ConditionTimedDedup(const Json::Value& config)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionTimedDedup::ConditionTimedDedup(IBEIConditionPtr subCondition, float dedupInterval_ms)
-: IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::TimedDedup))
+ConditionTimedDedup::ConditionTimedDedup(IBEIConditionPtr subCondition,
+                                         float dedupInterval_ms,
+                                         BEIConditionFactory& factory)
+  : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::TimedDedup), factory)
 {
   _instanceParams.subCondition     = subCondition;
   _instanceParams.dedupInterval_ms = dedupInterval_ms;
@@ -83,3 +85,4 @@ void ConditionTimedDedup::SetActiveInternal(BehaviorExternalInterface& bei, bool
 
 } // namespace Cozmo
 } // namespace Anki
+

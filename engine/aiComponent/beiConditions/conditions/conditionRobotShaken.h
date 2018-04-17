@@ -22,7 +22,7 @@ namespace Cozmo {
 class ConditionRobotShaken : public IBEICondition
 {
 public:
-  explicit ConditionRobotShaken(const Json::Value& config);
+  ConditionRobotShaken(const Json::Value& config, BEIConditionFactory& factory);
 
 protected:
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

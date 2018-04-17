@@ -24,7 +24,7 @@ namespace Cozmo {
 class ConditionProxInRange : public IBEICondition
 {
 public:
-  explicit ConditionProxInRange(const Json::Value& config);
+  ConditionProxInRange(const Json::Value& config, BEIConditionFactory& factory);
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
 
 private:

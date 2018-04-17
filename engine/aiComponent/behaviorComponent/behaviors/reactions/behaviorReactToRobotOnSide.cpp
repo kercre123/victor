@@ -30,8 +30,6 @@ static const float kWaitTimeBeforeRepeatAnim_s = 15.f;
 BehaviorReactToRobotOnSide::BehaviorReactToRobotOnSide(const Json::Value& config)
 : ICozmoBehavior(config)
 {
-  _offTreadsConditions.emplace_back(OffTreadsState::OnLeftSide);
-  _offTreadsConditions.emplace_back(OffTreadsState::OnRightSide);
 }
 
 
@@ -50,6 +48,9 @@ bool BehaviorReactToRobotOnSide::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnSide::InitBehavior()
 {
+  _offTreadsConditions.emplace_back(OffTreadsState::OnLeftSide, GetAIComp<BEIConditionFactory>());
+  _offTreadsConditions.emplace_back(OffTreadsState::OnRightSide, GetAIComp<BEIConditionFactory>());
+
   for (auto& condition : _offTreadsConditions) {
     condition.Init(GetBEI());
     condition.SetActive(GetBEI(), true);

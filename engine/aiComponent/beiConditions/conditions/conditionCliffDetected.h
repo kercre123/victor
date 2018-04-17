@@ -24,7 +24,7 @@ class BEIConditionMessageHelper;
 class ConditionCliffDetected : public IBEICondition
 {
 public:
-  ConditionCliffDetected(const Json::Value& config);
+  ConditionCliffDetected(const Json::Value& config, BEIConditionFactory& factory);
 
   virtual ~ConditionCliffDetected() {};
 

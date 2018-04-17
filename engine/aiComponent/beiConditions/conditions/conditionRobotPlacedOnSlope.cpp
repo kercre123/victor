@@ -26,8 +26,8 @@ namespace Anki {
 namespace Cozmo {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionRobotPlacedOnSlope::ConditionRobotPlacedOnSlope(const Json::Value& config)
-: IBEICondition(config)
+ConditionRobotPlacedOnSlope::ConditionRobotPlacedOnSlope(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
   
 }

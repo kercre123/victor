@@ -30,8 +30,8 @@ static const char* kDebugName = "ConditionSimpleMood";
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionSimpleMood::ConditionSimpleMood(const Json::Value& config)
-  : IBEICondition(config)
+ConditionSimpleMood::ConditionSimpleMood(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
   if( !config[kFromKey].isNull() || !config[kToKey].isNull() ) {
     _useTransition = true;

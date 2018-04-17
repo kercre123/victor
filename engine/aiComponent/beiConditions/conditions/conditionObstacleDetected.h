@@ -26,7 +26,7 @@ class Robot;
 class ConditionObstacleDetected : public IBEICondition
 {
 public:
-  explicit ConditionObstacleDetected(const Json::Value& config);
+  ConditionObstacleDetected(const Json::Value& config, BEIConditionFactory& factory);
   
 protected:
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

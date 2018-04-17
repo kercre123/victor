@@ -21,7 +21,7 @@ namespace Cozmo {
 class ConditionEmotion : public IBEICondition
 {
 public:
-  explicit ConditionEmotion(const Json::Value& config);
+  ConditionEmotion(const Json::Value& config, BEIConditionFactory& factory);
 
 protected:
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

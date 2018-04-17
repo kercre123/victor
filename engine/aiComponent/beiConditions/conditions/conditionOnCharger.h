@@ -21,7 +21,7 @@ namespace Cozmo {
 class ConditionOnCharger : public IBEICondition
 {
 public:
-  explicit ConditionOnCharger(const Json::Value& config);
+  ConditionOnCharger(const Json::Value& config, BEIConditionFactory& factory);
 
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& bei) const override;
 };

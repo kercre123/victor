@@ -17,23 +17,25 @@
 namespace Anki {
 namespace Cozmo {
 
-ConditionLambda::ConditionLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc)
-  : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::Lambda))
+ConditionLambda::ConditionLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
+                                 BEIConditionFactory& factory)
+  : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::Lambda), factory)
   , _lambda(areConditionsMetFunc)
 {
 }
 
 ConditionLambda::ConditionLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
-                                 std::set<VisionModeRequest>& requiredVisionModes)
-  : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::Lambda))
+                                 std::set<VisionModeRequest>& requiredVisionModes, BEIConditionFactory& factory)
+  : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::Lambda), factory)
   , _lambda(areConditionsMetFunc)
   , _requiredVisionModes(requiredVisionModes)
 {
 }
 
 ConditionLambda::ConditionLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
-                                 std::function<void(BehaviorExternalInterface& bei, bool setActive)> setActiveFunc)
-  : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::Lambda))
+                                 std::function<void(BehaviorExternalInterface& bei, bool setActive)> setActiveFunc,
+                                 BEIConditionFactory& factory)
+  : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::Lambda), factory)
   , _lambda(areConditionsMetFunc)
   , _setActiveFunc(setActiveFunc)
 {
@@ -41,8 +43,8 @@ ConditionLambda::ConditionLambda(std::function<bool(BehaviorExternalInterface& b
 
 ConditionLambda::ConditionLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
                                  std::function<void(BehaviorExternalInterface& bei, bool setActive)> setActiveFunc,
-                                 std::set<VisionModeRequest>& requiredVisionModes)
-  : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::Lambda))
+                                 std::set<VisionModeRequest>& requiredVisionModes, BEIConditionFactory& factory)
+  : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::Lambda), factory)
   , _lambda(areConditionsMetFunc)
   , _setActiveFunc(setActiveFunc)
   , _requiredVisionModes(requiredVisionModes)

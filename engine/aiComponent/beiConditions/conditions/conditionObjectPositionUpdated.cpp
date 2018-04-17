@@ -37,8 +37,8 @@ const bool kDebugAcknowledgements = false;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionObjectPositionUpdated::ConditionObjectPositionUpdated(const Json::Value& config)
-: IBEICondition(config)
+ConditionObjectPositionUpdated::ConditionObjectPositionUpdated(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
 }
 

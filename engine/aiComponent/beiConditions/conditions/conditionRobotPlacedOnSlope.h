@@ -22,7 +22,7 @@ namespace Cozmo {
 
 class ConditionRobotPlacedOnSlope : public IBEICondition{
 public:
-  explicit ConditionRobotPlacedOnSlope(const Json::Value& config);
+  ConditionRobotPlacedOnSlope(const Json::Value& config, BEIConditionFactory& factory);
 
 protected:
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

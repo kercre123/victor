@@ -23,8 +23,8 @@ namespace Cozmo {
 class ConditionOffTreadsState : public IBEICondition
 {
 public:
-  explicit ConditionOffTreadsState(const Json::Value& config);
-  explicit ConditionOffTreadsState(const OffTreadsState& targetState);
+  ConditionOffTreadsState(const Json::Value& config, BEIConditionFactory& factory);
+  ConditionOffTreadsState(const OffTreadsState& targetState, BEIConditionFactory& factory);
   
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& bei) const override;
 

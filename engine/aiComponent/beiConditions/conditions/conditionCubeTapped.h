@@ -31,7 +31,7 @@ class ConditionCubeTapped : public IBEICondition, private IBEIConditionEventHand
 public:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ConditionCubeTapped( const Json::Value& config );
+  ConditionCubeTapped( const Json::Value& config, BEIConditionFactory& factory);
   virtual ~ConditionCubeTapped();
 
 

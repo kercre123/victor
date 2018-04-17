@@ -28,8 +28,8 @@ const char* kParseDebug = "ConditionConsoleVar";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionConsoleVar::ConditionConsoleVar(const Json::Value& config)
-  : IBEICondition(config)
+ConditionConsoleVar::ConditionConsoleVar(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
   _variableName = JsonTools::ParseString(config, kVariableNameKey, kParseDebug);
   _expectedValue = JsonTools::ParseInt32(config, kValueKey, kParseDebug);

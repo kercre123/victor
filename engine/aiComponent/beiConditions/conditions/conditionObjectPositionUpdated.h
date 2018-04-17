@@ -30,7 +30,7 @@ class BEIConditionMessageHelper;
 class ConditionObjectPositionUpdated : public IBEICondition, private IBEIConditionEventHandler
 {
 public:
-  ConditionObjectPositionUpdated(const Json::Value& config);
+  ConditionObjectPositionUpdated(const Json::Value& config, BEIConditionFactory& factory);
 
   virtual ~ConditionObjectPositionUpdated();
 
@@ -50,7 +50,7 @@ private:
     float       samePoseDistThreshold_sparked_mm   = 30.f;
   } _params;
   
-  // void LoadConfig(const Json::Value& config);
+  // void LoadConfig(const Json::Value& config, BEIConditionFactory& factory);
   
   struct ReactionData
   {

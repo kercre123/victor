@@ -31,8 +31,8 @@ const char* kParseDebug = "ConditionBehaviorTimer";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionBehaviorTimer::ConditionBehaviorTimer(const Json::Value& config)
-  : IBEICondition(config)
+ConditionBehaviorTimer::ConditionBehaviorTimer(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
   _timerName = JsonTools::ParseString(config, kTimerNameKey, kParseDebug);
   _cooldown_s = JsonTools::ParseFloat(config, kCooldownKey, kParseDebug);

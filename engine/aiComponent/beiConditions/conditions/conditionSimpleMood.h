@@ -25,7 +25,7 @@ enum class SimpleMoodType : uint8_t;
 class ConditionSimpleMood : public IBEICondition
 {
 public:
-  explicit ConditionSimpleMood(const Json::Value& config);
+  ConditionSimpleMood(const Json::Value& config, BEIConditionFactory& factory);
 
 protected:
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

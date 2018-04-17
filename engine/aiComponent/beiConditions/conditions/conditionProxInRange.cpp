@@ -34,8 +34,8 @@ const char* kInvalidSensorReturnValue = "invalidSensorReturn";
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionProxInRange::ConditionProxInRange(const Json::Value& config)
-: IBEICondition(config)
+ConditionProxInRange::ConditionProxInRange(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
   const bool gotBegin = JsonTools::GetValueOptional(config, kMinDistKey, _params.minDist_mm);
   const bool gotEnd = JsonTools::GetValueOptional(config, kMaxDistKey, _params.maxDist_mm);

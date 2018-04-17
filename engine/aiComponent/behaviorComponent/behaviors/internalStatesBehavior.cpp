@@ -770,7 +770,8 @@ void InternalStatesBehavior::AddPreDefinedStrategy(const std::string& name,
                GetDebugLabel().c_str(),
                name.c_str() );
 
-  _preDefinedStrategies[name] = std::make_shared<ConditionLambda>(strategyFunc, requiredVisionModes);
+  _preDefinedStrategies[name] = std::make_shared<ConditionLambda>(strategyFunc, requiredVisionModes,
+                                                                  GetAIComp<BEIConditionFactory>());
   _preDefinedStrategies[name]->SetOwnerDebugLabel( GetDebugLabel() );
 }
 
@@ -791,7 +792,7 @@ IBEIConditionPtr InternalStatesBehavior::ParseTransitionStrategy(const Json::Val
   const Json::Value& strategyConfig = transitionConfig["condition"];
   if( strategyConfig.isObject() ) {
     // create state concept strategy from config
-    return BEIConditionFactory::CreateBEICondition(transitionConfig["condition"], GetDebugLabel());
+    return GetAIComp<BEIConditionFactory>().CreateBEICondition(transitionConfig["condition"], GetDebugLabel());
   }
   else {
     // use code-defined named strategy

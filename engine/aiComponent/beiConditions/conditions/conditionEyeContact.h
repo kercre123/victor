@@ -21,7 +21,7 @@ namespace Cozmo {
 class ConditionEyeContact : public IBEICondition
 {
 public:
-  explicit ConditionEyeContact(const Json::Value& config);
+  ConditionEyeContact(const Json::Value& config, BEIConditionFactory& factory);
 
 protected:
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

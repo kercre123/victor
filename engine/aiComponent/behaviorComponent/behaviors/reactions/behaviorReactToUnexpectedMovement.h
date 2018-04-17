@@ -14,14 +14,15 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorReactToUnexpectedMovement_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionUnexpectedMovement.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/types/unexpectedMovementTypes.h"
 #include "util/signals/simpleSignal_fwd.h"
 
 namespace Anki {
 namespace Cozmo {
-  
+
+class ConditionUnexpectedMovement;
+
 class BehaviorReactToUnexpectedMovement : public ICozmoBehavior
 {
 private:
@@ -29,12 +30,12 @@ private:
   
   friend class BehaviorFactory;
   BehaviorReactToUnexpectedMovement(const Json::Value& config);
-  
-  ConditionUnexpectedMovement _unexpectedMovementCondition;
-  
+    
 public:  
+  virtual ~BehaviorReactToUnexpectedMovement();
+
   virtual bool WantsToBeActivatedBehavior() const override;
-  
+
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
@@ -44,6 +45,8 @@ protected:
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override { };
+
+  std::unique_ptr<ConditionUnexpectedMovement> _unexpectedMovementCondition;
 };
   
 }

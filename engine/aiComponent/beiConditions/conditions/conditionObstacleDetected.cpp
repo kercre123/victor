@@ -25,8 +25,8 @@ namespace Cozmo {
 /////
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionObstacleDetected::ConditionObstacleDetected(const Json::Value& config)
-: IBEICondition(config)
+ConditionObstacleDetected::ConditionObstacleDetected(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
 }
 

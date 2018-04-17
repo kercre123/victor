@@ -26,7 +26,7 @@ class BEIConditionMessageHelper;
 class ConditionObjectInitialDetection : public IBEICondition, private IBEIConditionEventHandler
 {
 public:
-  explicit ConditionObjectInitialDetection(const Json::Value& config);
+  ConditionObjectInitialDetection(const Json::Value& config, BEIConditionFactory& factory);
   
   virtual ~ConditionObjectInitialDetection();
   

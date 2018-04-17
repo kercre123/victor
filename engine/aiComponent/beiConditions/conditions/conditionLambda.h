@@ -25,20 +25,23 @@ class ConditionLambda : public IBEICondition
 public:
   
   // NOTE: this strategy takes no config, because it can't be data defined
-  ConditionLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc);
+  ConditionLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
+                  BEIConditionFactory& factory);
 
   // Alternative constructor for Lambda's which have VisionModeRequirements
   ConditionLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
-                  std::set<VisionModeRequest>& requiredVisionModes);
+                  std::set<VisionModeRequest>& requiredVisionModes, BEIConditionFactory& factory);
 
   // Alternative constructor for Lambda's with specialized Active State
   ConditionLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
-                  std::function<void(BehaviorExternalInterface& bei, bool setActive)> setActiveFunc);
+                  std::function<void(BehaviorExternalInterface& bei, bool setActive)> setActiveFunc,
+                  BEIConditionFactory& factory);
 
   // Alternative constructor for Lambda's with specialized Active State AND VisionModeRequirements
   ConditionLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
                   std::function<void(BehaviorExternalInterface& bei, bool setActive)> setActiveFunc,
-                  std::set<VisionModeRequest>& requiredVisionModes);
+                  std::set<VisionModeRequest>& requiredVisionModes,
+                  BEIConditionFactory& factory);
 
 protected:
 

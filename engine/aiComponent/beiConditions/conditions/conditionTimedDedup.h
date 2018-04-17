@@ -25,9 +25,8 @@ namespace Cozmo {
 class ConditionTimedDedup : public IBEICondition
 {
 public:
-  explicit ConditionTimedDedup(const Json::Value& config);
-  explicit ConditionTimedDedup(IBEIConditionPtr subCondition,
-                               float dedupInterval_ms);
+  ConditionTimedDedup(const Json::Value& config, BEIConditionFactory& factory);
+  ConditionTimedDedup(IBEIConditionPtr subCondition, float dedupInterval_ms, BEIConditionFactory& factory);
 
   virtual void InitInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

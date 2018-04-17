@@ -30,8 +30,8 @@ const char* kEndRangeKey = "end_s";
 
 }
 
-ConditionTimerInRange::ConditionTimerInRange(const Json::Value& config)
-  : IBEICondition(config)
+ConditionTimerInRange::ConditionTimerInRange(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
   const bool gotBegin = JsonTools::GetValueOptional(config, kBeginRangeKey, _params._rangeBegin_s);
   const bool gotEnd = JsonTools::GetValueOptional(config, kEndRangeKey, _params._rangeEnd_s);

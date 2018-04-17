@@ -23,8 +23,8 @@ namespace Cozmo {
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionTriggerWordPending::ConditionTriggerWordPending(const Json::Value& config)
-: IBEICondition(config)
+ConditionTriggerWordPending::ConditionTriggerWordPending(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
   
 }

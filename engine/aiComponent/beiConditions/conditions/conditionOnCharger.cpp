@@ -18,8 +18,8 @@
 namespace Anki {
 namespace Cozmo {
 
-ConditionOnCharger::ConditionOnCharger(const Json::Value& config)
-  : IBEICondition(config)
+ConditionOnCharger::ConditionOnCharger(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
 }
 

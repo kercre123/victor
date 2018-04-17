@@ -27,16 +27,20 @@ const char* kNotKey = "not";
 
 struct ConditionCompoundConstructable : public ConditionCompound
 {
+  explicit ConditionCompoundConstructable(BEIConditionFactory& factory)
+    : ConditionCompound(factory)
+    {
+    }
   // this is something that can use the protected ConditionCompound ctor in a std::make_shared
 };
   
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionCompound::ConditionCompound( const Json::Value& config )
-  : IBEICondition( config )
+ConditionCompound::ConditionCompound( const Json::Value& config, BEIConditionFactory& factory )
+  : IBEICondition( config, factory )
 {
-  const int maxDepth = CreateNode( _root, config );
+  const int maxDepth = CreateNode( _root, config, factory );
   
   // If you hit this, try as hard as you can to refactor your conditions. Maybe some of them can
   // go in the behavior as opposed to the json? Maybe some new condition types are needed?
@@ -46,38 +50,42 @@ ConditionCompound::ConditionCompound( const Json::Value& config )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionCompound::ConditionCompound()
-  : IBEICondition( IBEICondition::GenerateBaseConditionConfig(BEIConditionType::Compound) )
+ConditionCompound::ConditionCompound(BEIConditionFactory& factory)
+  : IBEICondition( IBEICondition::GenerateBaseConditionConfig(BEIConditionType::Compound), factory )
 {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBEIConditionPtr ConditionCompound::CreateAndCondition( const std::vector<IBEIConditionPtr>& subConditions )
+IBEIConditionPtr ConditionCompound::CreateAndCondition( const std::vector<IBEIConditionPtr>& subConditions,
+                                                        BEIConditionFactory& factory )
 {
   DEV_ASSERT( !subConditions.empty(), "Cannot create an AND condition with empty subConditions" );
-  IBEIConditionPtr ret = CreateSingleLevelCondition( NodeType::And, subConditions );
+  IBEIConditionPtr ret = CreateSingleLevelCondition( NodeType::And, subConditions, factory );
   return ret;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBEIConditionPtr ConditionCompound::CreateOrCondition(const std::vector<IBEIConditionPtr>& subConditions)
+IBEIConditionPtr ConditionCompound::CreateOrCondition(const std::vector<IBEIConditionPtr>& subConditions,
+                                                      BEIConditionFactory& factory)
 {
   DEV_ASSERT( !subConditions.empty(), "Cannot create an OR condition with empty subConditions" );
-  IBEIConditionPtr ret = CreateSingleLevelCondition( NodeType::Or, subConditions );
+  IBEIConditionPtr ret = CreateSingleLevelCondition( NodeType::Or, subConditions, factory );
   return ret;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBEIConditionPtr ConditionCompound::CreateNotCondition( IBEIConditionPtr subCondition )
+IBEIConditionPtr ConditionCompound::CreateNotCondition( IBEIConditionPtr subCondition, BEIConditionFactory& factory )
 {
-  IBEIConditionPtr ret = CreateSingleLevelCondition( NodeType::Not, {subCondition} );
+  IBEIConditionPtr ret = CreateSingleLevelCondition( NodeType::Not, {subCondition}, factory );
   return ret;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBEIConditionPtr ConditionCompound::CreateSingleLevelCondition( NodeType type, const std::vector<IBEIConditionPtr>& subConditions )
+IBEIConditionPtr ConditionCompound::CreateSingleLevelCondition( NodeType type,
+                                                                const std::vector<IBEIConditionPtr>& subConditions,
+                                                                BEIConditionFactory& factory)
 {
-  auto ret = std::make_shared<ConditionCompoundConstructable>();
+  auto ret = std::make_shared<ConditionCompoundConstructable>(factory);
   ret->_root.reset( new Node );
   ret->_root->type = type;
   ret->_root->children.reserve( subConditions.size() );
@@ -116,7 +124,7 @@ void ConditionCompound::SetActiveInternal( BehaviorExternalInterface& bei, bool 
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-int ConditionCompound::CreateNode( std::unique_ptr<Node>& node, const Json::Value& config )
+int ConditionCompound::CreateNode( std::unique_ptr<Node>& node, const Json::Value& config, BEIConditionFactory& factory)
 {
   int childrenDepth = 0;
   node.reset( new Node );
@@ -124,7 +132,7 @@ int ConditionCompound::CreateNode( std::unique_ptr<Node>& node, const Json::Valu
       && config[kConditionTypeKey].asString() != kCompoundKey ) // not root level
   {
     node->type = NodeType::Condition;
-    IBEIConditionPtr condition = BEIConditionFactory::CreateBEICondition( config, GetDebugLabel() );
+    IBEIConditionPtr condition = factory.CreateBEICondition( config, GetDebugLabel() );
     _operands.push_back( condition );
     node->conditionIndex = _operands.size()-1;
     
@@ -137,7 +145,7 @@ int ConditionCompound::CreateNode( std::unique_ptr<Node>& node, const Json::Valu
     ANKI_VERIFY( !childConfig.isArray(), "ConditionCompound.CreateNode.TooMany", "Too many children for a NOT condition" );
     node->children.reserve(1);
     node->children.push_back({});
-    childrenDepth = 1 + CreateNode( node->children.back(), childConfig );
+    childrenDepth = 1 + CreateNode( node->children.back(), childConfig, factory );
     
   } else {
     
@@ -162,7 +170,7 @@ int ConditionCompound::CreateNode( std::unique_ptr<Node>& node, const Json::Valu
     node->children.reserve( childrenConfig->size() );
     for( const auto& childConfig : *childrenConfig ) {
       node->children.push_back({});
-      int childDepth = 1 + CreateNode( node->children.back(), childConfig );
+      int childDepth = 1 + CreateNode( node->children.back(), childConfig, factory );
       childrenDepth = (childDepth > childrenDepth) ? childDepth : childrenDepth;
     }
   }

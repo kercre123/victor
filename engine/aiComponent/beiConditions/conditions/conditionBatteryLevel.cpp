@@ -19,8 +19,8 @@
 namespace Anki {
 namespace Cozmo {
 
-ConditionBatteryLevel::ConditionBatteryLevel(const Json::Value& config)
-  : IBEICondition(config)
+ConditionBatteryLevel::ConditionBatteryLevel(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
   const std::string& targetLevelStr = JsonTools::ParseString(config, "targetBatteryLevel", "ConditionBatteryLevel.Config");
   ANKI_VERIFY(BatteryLevelFromString(targetLevelStr, _targetBatteryLevel),

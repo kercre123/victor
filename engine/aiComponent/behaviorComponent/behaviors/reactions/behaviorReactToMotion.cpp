@@ -82,9 +82,12 @@ BehaviorReactToMotion::DynamicVariables::DynamicVariables()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorReactToMotion::AreaCondition::AreaCondition(MotionArea a, unsigned int intervalSize, Json::Value& config)
+BehaviorReactToMotion::AreaCondition::AreaCondition(MotionArea a,
+                                                    unsigned int intervalSize,
+                                                    Json::Value& config,
+                                                    BEIConditionFactory& condFactory)
   : area( a )
-  , condition( new ConditionMotionDetected(config) )
+  , condition( new ConditionMotionDetected(config, condFactory) )
 {
   historyBuff.Reset( intervalSize );
   for( size_t i = 0; i < intervalSize; ++i ) {
@@ -162,13 +165,16 @@ void BehaviorReactToMotion::InitBehavior()
   config["motionLevel"] = "Any";
   
   config["motionArea"] = "Left";
-  _dVars.motionConditions.emplace_back( MotionArea::Left, _iConfig.turnIntervalSize, config );
+  _dVars.motionConditions.emplace_back( MotionArea::Left, _iConfig.turnIntervalSize, config,
+                                        GetAIComp<BEIConditionFactory>() );
   _dVars.motionConditions.back().condition->Init( GetBEI() );
   config["motionArea"] = "Right";
-  _dVars.motionConditions.emplace_back( MotionArea::Right, _iConfig.turnIntervalSize, config );
+  _dVars.motionConditions.emplace_back( MotionArea::Right, _iConfig.turnIntervalSize, config,
+                                        GetAIComp<BEIConditionFactory>()  );
   _dVars.motionConditions.back().condition->Init( GetBEI() );
   config["motionArea"] = "Top";
-  _dVars.motionConditions.emplace_back( MotionArea::Top, _iConfig.turnIntervalSize, config );
+  _dVars.motionConditions.emplace_back( MotionArea::Top, _iConfig.turnIntervalSize, config,
+                                        GetAIComp<BEIConditionFactory>()  );
   _dVars.motionConditions.back().condition->Init( GetBEI() );
 }
   

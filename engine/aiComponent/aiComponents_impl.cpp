@@ -26,6 +26,7 @@ class ObjectInteractionInfoCache;
 class PuzzleComponent;
 class TimerUtility;
 class AIWhiteboard;
+class BEIConditionFactory;
 
 } // namespace Cozmo
 
@@ -39,6 +40,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(ObjectInteractionInfoCache, AIComponentID, ObjectInt
 LINK_COMPONENT_TYPE_TO_ENUM(PuzzleComponent,            AIComponentID, Puzzle)
 LINK_COMPONENT_TYPE_TO_ENUM(TimerUtility,               AIComponentID, TimerUtility)
 LINK_COMPONENT_TYPE_TO_ENUM(AIWhiteboard,               AIComponentID, Whiteboard)
+LINK_COMPONENT_TYPE_TO_ENUM(BEIConditionFactory,        AIComponentID, BEIConditionFactory)
 
 // Translate entity into string
 template<>
@@ -57,6 +59,7 @@ std::string GetComponentStringForID<Cozmo::AIComponentID>(Cozmo::AIComponentID e
     case Cozmo::AIComponentID::Puzzle:                     { return "Puzzle";}
     case Cozmo::AIComponentID::TimerUtility:               { return "TimerUtility";}
     case Cozmo::AIComponentID::Whiteboard:                 { return "Whiteboard";}
+    case Cozmo::AIComponentID::BEIConditionFactory:        { return "BeiConditionFactory";}
     case Cozmo::AIComponentID::Count:                      { return "Count";}
   }
 }

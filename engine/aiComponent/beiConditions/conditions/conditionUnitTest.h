@@ -21,13 +21,13 @@ namespace Cozmo {
 class ConditionUnitTest : public IBEICondition
 {
 public:
-  explicit ConditionUnitTest( bool val )
-    : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::UnitTestCondition))
+  ConditionUnitTest( bool val, BEIConditionFactory& factory )
+    : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::UnitTestCondition), factory)
     , _val( val )
   {
   }
-  ConditionUnitTest( const Json::Value& config )
-    : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::UnitTestCondition))
+  ConditionUnitTest( const Json::Value& config, BEIConditionFactory& factory)
+    : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::UnitTestCondition), factory)
     , _val( config.get("value", false).asBool() )
   {
   }

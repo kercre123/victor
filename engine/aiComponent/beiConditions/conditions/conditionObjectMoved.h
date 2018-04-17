@@ -31,7 +31,7 @@ class ReactionObjectData;
 class ConditionObjectMoved : public IBEICondition, private IBEIConditionEventHandler
 {
 public:
-  ConditionObjectMoved(const Json::Value& config);
+  ConditionObjectMoved(const Json::Value& config, BEIConditionFactory& factory);
 
   virtual ~ConditionObjectMoved();
 

@@ -74,7 +74,8 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
   _iConfig.highLevelAIBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(HighLevelAI));
   _iConfig.sleepingBehavior    = BC.FindBehaviorByID(BEHAVIOR_ID(Sleeping));
 
-  _iConfig.triggerWordPendingCond = BEIConditionFactory::CreateBEICondition(BEIConditionType::TriggerWordPending, GetDebugLabel());
+  _iConfig.triggerWordPendingCond = GetAIComp<BEIConditionFactory>().CreateBEICondition(
+    BEIConditionType::TriggerWordPending, GetDebugLabel());
   _iConfig.triggerWordPendingCond->Init(GetBEI());
   
   _iConfig.keepawayBehavior        = BC.FindBehaviorByID(BEHAVIOR_ID(Keepaway));

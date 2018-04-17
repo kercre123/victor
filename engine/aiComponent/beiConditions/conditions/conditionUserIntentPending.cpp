@@ -60,7 +60,7 @@ const char* kList = "list";
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Json::Value ConditionUserIntentPending::GenerateConfig( const Json::Value& config )
+Json::Value ConditionUserIntentPending::GenerateConfig( const Json::Value& config)
 {
   Json::Value ret;
   
@@ -71,8 +71,8 @@ Json::Value ConditionUserIntentPending::GenerateConfig( const Json::Value& confi
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionUserIntentPending::ConditionUserIntentPending( const Json::Value& config )
-  : IBEICondition( config )
+ConditionUserIntentPending::ConditionUserIntentPending( const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition( config, factory )
 {
   
   // provide a list of ways to compare. if any entry is true, this condition will be true. you may:
@@ -91,8 +91,8 @@ ConditionUserIntentPending::ConditionUserIntentPending( const Json::Value& confi
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionUserIntentPending::ConditionUserIntentPending()
-  : IBEICondition{ IBEICondition::GenerateBaseConditionConfig( BEIConditionType::UserIntentPending ) }
+ConditionUserIntentPending::ConditionUserIntentPending(BEIConditionFactory& factory)
+  : IBEICondition{ IBEICondition::GenerateBaseConditionConfig( BEIConditionType::UserIntentPending ), factory }
 {
 }
   

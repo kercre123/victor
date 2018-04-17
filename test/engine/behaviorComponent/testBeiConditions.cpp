@@ -62,7 +62,9 @@ void CreateBEI(const std::string& json, IBEIConditionPtr& cond)
   const bool parsedOK = reader.parse(json, config, false);
   ASSERT_TRUE(parsedOK);
 
-  cond = BEIConditionFactory::CreateBEICondition(config, "testing");
+  BEIConditionFactory factory;
+  
+  cond = factory.CreateBEICondition(config, "testing");
 
   ASSERT_TRUE( cond != nullptr );
 }
@@ -77,7 +79,8 @@ TEST(BeiConditions, TestUnitTestCondition)
   testBehaviorFramework.InitializeStandardBehaviorComponent();
   BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
 
-  auto cond = std::make_shared<ConditionUnitTest>(false);
+  auto& factory = bei.GetAIComponent().GetComponent<BEIConditionFactory>();
+  auto cond = std::make_shared<ConditionUnitTest>(false, factory);
 
   EXPECT_EQ(cond->_initCount, 0);
   EXPECT_EQ(cond->_setActiveCount, 0);
@@ -115,11 +118,13 @@ TEST(BeiConditions, TestUnitTestCondition)
 TEST(BeiConditions, CreateLambda)
 {
   bool val = false;
-  
+
+  BEIConditionFactory factory;
+
   auto cond = std::make_shared<ConditionLambda>(
     [&val](BehaviorExternalInterface& behaviorExternalInterface) {
       return val;
-    });
+    }, factory);
 
   ASSERT_TRUE( cond != nullptr );
 
@@ -458,9 +463,10 @@ TEST(BeiConditions, CompoundNot)
   testBehaviorFramework.InitializeStandardBehaviorComponent();
   BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
 
-  auto subCond = std::make_shared<ConditionUnitTest>(true);
+  auto& factory = bei.GetAIComponent().GetComponent<BEIConditionFactory>();
 
-  auto cond = ConditionCompound::CreateNotCondition( subCond );
+  auto subCond = std::make_shared<ConditionUnitTest>(true, factory);
+  auto cond = ConditionCompound::CreateNotCondition( subCond, factory );
 
   EXPECT_EQ(subCond->_initCount, 0);
   EXPECT_EQ(subCond->_setActiveCount, 0);
@@ -510,10 +516,12 @@ TEST(BeiConditions, CompoundAnd)
   testBehaviorFramework.InitializeStandardBehaviorComponent();
   BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
 
-  auto subCond1 = std::make_shared<ConditionUnitTest>(true);
-  auto subCond2 = std::make_shared<ConditionUnitTest>(true);
+  auto& factory = bei.GetAIComponent().GetComponent<BEIConditionFactory>();
+  
+  auto subCond1 = std::make_shared<ConditionUnitTest>(true, factory);
+  auto subCond2 = std::make_shared<ConditionUnitTest>(true, factory);
 
-  auto cond = ConditionCompound::CreateAndCondition( {subCond1, subCond2} );
+  auto cond = ConditionCompound::CreateAndCondition( {subCond1, subCond2}, factory );
 
   EXPECT_EQ(subCond1->_initCount, 0);
   EXPECT_EQ(subCond1->_setActiveCount, 0);
@@ -576,10 +584,12 @@ TEST(BeiConditions, CompoundOr)
   testBehaviorFramework.InitializeStandardBehaviorComponent();
   BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
 
-  auto subCond1 = std::make_shared<ConditionUnitTest>(true);
-  auto subCond2 = std::make_shared<ConditionUnitTest>(true);
+  auto& factory = bei.GetAIComponent().GetComponent<BEIConditionFactory>();
+  
+  auto subCond1 = std::make_shared<ConditionUnitTest>(true, factory);
+  auto subCond2 = std::make_shared<ConditionUnitTest>(true, factory);
 
-  auto cond = ConditionCompound::CreateOrCondition( {subCond1, subCond2} );
+  auto cond = ConditionCompound::CreateOrCondition( {subCond1, subCond2}, factory );
 
   EXPECT_EQ(subCond1->_initCount, 0);
   EXPECT_EQ(subCond1->_setActiveCount, 0);

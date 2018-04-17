@@ -14,9 +14,10 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionUnexpectedMovement.h"
 #include "engine/components/movementComponent.h"
-#include "engine/robotManager.h"
 #include "engine/moodSystem/moodManager.h"
+#include "engine/robotManager.h"
 #include "util/helpers/templateHelpers.h"
 
 
@@ -27,24 +28,30 @@ namespace Cozmo {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToUnexpectedMovement::BehaviorReactToUnexpectedMovement(const Json::Value& config)
 : ICozmoBehavior(config)
-, _unexpectedMovementCondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::UnexpectedMovement))
 {  
 
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorReactToUnexpectedMovement::~BehaviorReactToUnexpectedMovement()
+{
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToUnexpectedMovement::WantsToBeActivatedBehavior() const
 {
-  return _unexpectedMovementCondition.AreConditionsMet(GetBEI());;
+  return _unexpectedMovementCondition->AreConditionsMet(GetBEI());;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToUnexpectedMovement::InitBehavior()
 {
-  _unexpectedMovementCondition.Init(GetBEI());
-  _unexpectedMovementCondition.SetActive(GetBEI(), true);
+  _unexpectedMovementCondition.reset(new ConditionUnexpectedMovement(
+                                       IBEICondition::GenerateBaseConditionConfig(BEIConditionType::UnexpectedMovement),
+                                       GetAIComp<BEIConditionFactory>()));
+  _unexpectedMovementCondition->Init(GetBEI());
+  _unexpectedMovementCondition->SetActive(GetBEI(), true);
 }
 
 

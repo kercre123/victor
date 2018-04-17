@@ -27,8 +27,8 @@ const float kAccelMagnitudeShakingStartedThreshold = 16000.f;
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionRobotShaken::ConditionRobotShaken(const Json::Value& config)
-: IBEICondition(config)
+ConditionRobotShaken::ConditionRobotShaken(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
 }
 

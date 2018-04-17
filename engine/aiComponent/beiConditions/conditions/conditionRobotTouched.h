@@ -23,7 +23,7 @@ namespace Cozmo {
 class ConditionRobotTouched : public IBEICondition
 {
 public:
-  explicit ConditionRobotTouched(const Json::Value& config);
+  ConditionRobotTouched(const Json::Value& config, BEIConditionFactory& factory);
 
 protected:
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

@@ -26,8 +26,8 @@ static const int kReactToPetNumTimesObserved = 3;
 }    
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionPetInitialDetection::ConditionPetInitialDetection(const Json::Value& config)
-: IBEICondition(config)
+ConditionPetInitialDetection::ConditionPetInitialDetection(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
 }
 

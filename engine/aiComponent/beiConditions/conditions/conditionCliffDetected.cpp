@@ -19,8 +19,8 @@
 namespace Anki {
 namespace Cozmo {
 
-ConditionCliffDetected::ConditionCliffDetected(const Json::Value& config)
-: IBEICondition(config)
+ConditionCliffDetected::ConditionCliffDetected(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
 }
 

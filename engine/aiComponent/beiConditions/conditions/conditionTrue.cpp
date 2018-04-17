@@ -20,8 +20,8 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionTrue::ConditionTrue(const Json::Value& config)
-: IBEICondition(config)
+ConditionTrue::ConditionTrue(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
 }
 

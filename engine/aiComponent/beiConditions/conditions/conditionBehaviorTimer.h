@@ -25,7 +25,7 @@ class ConditionBehaviorTimer : public IBEICondition
 {
 public:
   
-  explicit ConditionBehaviorTimer(const Json::Value& config);
+  ConditionBehaviorTimer(const Json::Value& config, BEIConditionFactory& factory);
   ~ConditionBehaviorTimer();
 
 protected:

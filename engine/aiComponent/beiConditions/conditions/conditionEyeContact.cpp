@@ -19,8 +19,8 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionEyeContact::ConditionEyeContact(const Json::Value& config)
-: IBEICondition(config)
+ConditionEyeContact::ConditionEyeContact(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
 }
   

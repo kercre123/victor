@@ -29,8 +29,8 @@ namespace{
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionObjectInitialDetection::ConditionObjectInitialDetection(const Json::Value& config)
-: IBEICondition(config)
+ConditionObjectInitialDetection::ConditionObjectInitialDetection(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
   const auto& objectTypeStr = JsonTools::ParseString(config,
                                                     kObjectTypeKey,

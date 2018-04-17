@@ -25,7 +25,7 @@ namespace Cozmo {
 class ConditionPetInitialDetection : public IBEICondition
 {
 public:
-  explicit ConditionPetInitialDetection(const Json::Value& config);
+  ConditionPetInitialDetection(const Json::Value& config, BEIConditionFactory& factory);
 
 protected:
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

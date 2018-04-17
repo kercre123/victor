@@ -28,7 +28,7 @@ class BEIConditionMessageHelper;
 class ConditionFacePositionUpdated : public IBEICondition, private IBEIConditionEventHandler
 {
 public:
-  ConditionFacePositionUpdated(const Json::Value& config);
+  ConditionFacePositionUpdated(const Json::Value& config, BEIConditionFactory& factory);
 
   virtual ~ConditionFacePositionUpdated();
 

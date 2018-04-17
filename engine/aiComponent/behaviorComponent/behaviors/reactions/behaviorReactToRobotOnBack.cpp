@@ -33,7 +33,6 @@ static const float kWaitTimeBeforeRepeatAnim_s = 0.5f;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(const Json::Value& config)
   : ICozmoBehavior(config)
-  , _offTreadsCondition(OffTreadsState::OnBack)
 {
 }
 
@@ -41,15 +40,16 @@ BehaviorReactToRobotOnBack::BehaviorReactToRobotOnBack(const Json::Value& config
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToRobotOnBack::WantsToBeActivatedBehavior() const
 {
-  return _offTreadsCondition.AreConditionsMet(GetBEI());
+  return _offTreadsCondition->AreConditionsMet(GetBEI());
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnBack::InitBehavior()
 {
-  _offTreadsCondition.Init(GetBEI());
-  _offTreadsCondition.SetActive(GetBEI(), true);
+  _offTreadsCondition.reset(new ConditionOffTreadsState(OffTreadsState::OnBack, GetAIComp<BEIConditionFactory>()));
+  _offTreadsCondition->Init(GetBEI());
+  _offTreadsCondition->SetActive(GetBEI(), true);
 }
 
 

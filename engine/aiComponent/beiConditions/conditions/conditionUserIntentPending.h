@@ -30,10 +30,10 @@ public:
   
   // ctor for use with json and factory. provide a list of ways to compare to an intent. if any
   // are true, this condition will be true. See method for details
-  explicit ConditionUserIntentPending( const Json::Value& config );
+  ConditionUserIntentPending( const Json::Value& config, BEIConditionFactory& factory);
   
   // special constructor for which you MUST immediately use one of the Add* methods below, or risk an assert
-  ConditionUserIntentPending();
+  explicit ConditionUserIntentPending(BEIConditionFactory& factory);
   
   ~ConditionUserIntentPending();
   

@@ -32,8 +32,8 @@ namespace{
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionRobotTouched::ConditionRobotTouched(const Json::Value& config)
-: IBEICondition(config)
+ConditionRobotTouched::ConditionRobotTouched(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 , _kMinTouchTime(0.0f)
 {
   _kMinTouchTime = JsonTools::ParseFloat(config,

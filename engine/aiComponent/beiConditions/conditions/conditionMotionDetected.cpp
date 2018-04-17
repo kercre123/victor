@@ -26,8 +26,8 @@ const char* kMotionLevelKey = "motionLevel";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionMotionDetected::ConditionMotionDetected(const Json::Value& config)
-: IBEICondition(config)
+ConditionMotionDetected::ConditionMotionDetected(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
   const auto& areaStr = JsonTools::ParseString(config,
                                                kMotionAreaKey,

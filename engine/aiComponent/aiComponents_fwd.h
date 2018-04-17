@@ -50,6 +50,8 @@ enum class AIComponentID{
   TimerUtility,
   // whiteboard for behaviors to share information, or to store information only useful to behaviors
   Whiteboard,
+  // factory to create BEI conditions, including support for injecting custom hardcoded conditions
+  BEIConditionFactory,
   
   Count
 };

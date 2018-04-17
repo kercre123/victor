@@ -93,6 +93,10 @@ public:
   using ComponentPtr = std::unique_ptr<EntityType>;
 
   // IDependencyManagedComponent<AIComponentID> functions
+  virtual void GetInitDependencies(AICompIDSet& dependencies) const override {
+    dependencies.insert(AIComponentID::BEIConditionFactory);
+  }
+  
   virtual void InitDependent(Robot* robot, const AICompMap& dependentComponents) override;
 
   virtual void GetUpdateDependencies(AICompIDSet& dependencies) const override {
@@ -100,6 +104,10 @@ public:
     dependencies.insert(AIComponentID::ContinuityComponent);
     dependencies.insert(AIComponentID::Whiteboard);
   };
+  
+  virtual void AdditionalUpdateAccessibleComponents(AICompIDSet& components) const override {
+    components.insert(AIComponentID::BEIConditionFactory);
+  }
 
   virtual void UpdateDependent(const AICompMap& dependentComps) override;
 

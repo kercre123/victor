@@ -33,8 +33,8 @@ CONSOLE_VAR_RANGED(f32, kFaceReactCooldown_s, "AcknowledgementBehaviors", 4.0f, 
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionFacePositionUpdated::ConditionFacePositionUpdated(const Json::Value& config)
-: IBEICondition(config)
+ConditionFacePositionUpdated::ConditionFacePositionUpdated(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
 }
 

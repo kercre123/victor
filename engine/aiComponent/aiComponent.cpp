@@ -14,23 +14,24 @@
 
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/shared/radiansMath.h"
-#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalyzer.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/continuityComponent.h"
 #include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/aiComponent/freeplayDataTracker.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/aiComponent/puzzleComponent.h"
 #include "engine/aiComponent/timerUtility.h"
-#include "engine/components/sensors/proxSensorComponent.h"
-#include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/progressionUnlockComponent.h"
+#include "engine/components/publicStateBroadcaster.h"
+#include "engine/components/sensors/proxSensorComponent.h"
+#include "engine/cozmoContext.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotStateHistory.h"
@@ -88,6 +89,7 @@ void AIComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depende
       _aiComponents->AddDependentComponent(AIComponentID::Puzzle,                     new PuzzleComponent(*robot));
       _aiComponents->AddDependentComponent(AIComponentID::TimerUtility,               new TimerUtility());
       _aiComponents->AddDependentComponent(AIComponentID::Whiteboard,                 new AIWhiteboard(*robot));
+      _aiComponents->AddDependentComponent(AIComponentID::BEIConditionFactory,        new BEIConditionFactory());
     }
 
     _aiComponents->InitComponents(robot);

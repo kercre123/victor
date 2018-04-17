@@ -434,6 +434,11 @@ protected:
   }
 
   template<typename T>
+  T& GetAIComp() {
+    return GetBEI().GetAIComponent(). template GetComponent<T>();
+  }
+
+  template<typename T>
   T& GetBehaviorComp() const {
     return GetBEI().GetAIComponent().GetComponent<BehaviorComponent>(). template GetComponent<T>();
   }

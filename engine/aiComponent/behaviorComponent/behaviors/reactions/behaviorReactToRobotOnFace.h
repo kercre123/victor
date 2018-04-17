@@ -15,10 +15,10 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
-
 namespace Anki {
 namespace Cozmo {
+
+class ConditionOffTreadsState;
 
 class BehaviorReactToRobotOnFace : public ICozmoBehavior
 {
@@ -46,7 +46,7 @@ private:
   void DelayThenCheckState();
   void CheckFlipSuccess();
   
-  ConditionOffTreadsState _offTreadsCondition;
+  std::unique_ptr<ConditionOffTreadsState> _offTreadsCondition;
 };
 
 }

@@ -12,13 +12,14 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToRobotOnFace.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -32,7 +33,6 @@ static const float kRobotMinLiftAngleForArmUpAnim_s = 45.f;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToRobotOnFace::BehaviorReactToRobotOnFace(const Json::Value& config)
 : ICozmoBehavior(config)
-, _offTreadsCondition(OffTreadsState::OnFace)
 {
 }
 
@@ -40,15 +40,16 @@ BehaviorReactToRobotOnFace::BehaviorReactToRobotOnFace(const Json::Value& config
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToRobotOnFace::WantsToBeActivatedBehavior() const
 {
-  return _offTreadsCondition.AreConditionsMet(GetBEI());
+  return _offTreadsCondition->AreConditionsMet(GetBEI());
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnFace::InitBehavior()
 {
-  _offTreadsCondition.Init(GetBEI());
-  _offTreadsCondition.SetActive(GetBEI(), true);
+  _offTreadsCondition.reset(new ConditionOffTreadsState(OffTreadsState::OnFace, GetAIComp<BEIConditionFactory>()));
+  _offTreadsCondition->Init(GetBEI());
+  _offTreadsCondition->SetActive(GetBEI(), true);
 }
 
 

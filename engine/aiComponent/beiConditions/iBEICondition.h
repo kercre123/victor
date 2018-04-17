@@ -33,14 +33,15 @@ namespace Cozmo {
 class BehaviorExternalInterface;
 class IExternalInterface;
 class Robot;
-  
+class BEIConditionFactory;
+
 class IBEICondition : public IVisionModeSubscriber
 {
 public:
   static Json::Value GenerateBaseConditionConfig(BEIConditionType type);  
   static BEIConditionType ExtractConditionType(const Json::Value& config);
 
-  explicit IBEICondition(const Json::Value& config);
+  IBEICondition(const Json::Value& config, BEIConditionFactory& factory);
   virtual ~IBEICondition() {};
 
   // Called once after construction, and before any other functions are called

@@ -61,8 +61,8 @@ private:
 };
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionObjectMoved::ConditionObjectMoved(const Json::Value& config)
-: IBEICondition(config)
+ConditionObjectMoved::ConditionObjectMoved(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
 }
 

@@ -23,7 +23,7 @@ namespace Cozmo {
 class ConditionTimerInRange : public IBEICondition
 {
 public:
-  explicit ConditionTimerInRange(const Json::Value& config);
+  ConditionTimerInRange(const Json::Value& config, BEIConditionFactory& factory);
 
   // virtual void ResetInternal(BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

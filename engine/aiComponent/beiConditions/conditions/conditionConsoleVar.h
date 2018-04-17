@@ -30,7 +30,7 @@ class ConditionConsoleVar : public IBEICondition
 {
 public:
   
-  explicit ConditionConsoleVar(const Json::Value& config);
+  ConditionConsoleVar(const Json::Value& config, BEIConditionFactory& factory);
   ~ConditionConsoleVar();
 
 protected:

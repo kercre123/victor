@@ -23,7 +23,7 @@ namespace Cozmo {
 class ConditionBatteryLevel : public IBEICondition
 {
 public:
-  explicit ConditionBatteryLevel(const Json::Value& config);
+  ConditionBatteryLevel(const Json::Value& config, BEIConditionFactory& factory);
 
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& bei) const override;
 

@@ -28,8 +28,8 @@ namespace
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionCubeTapped::ConditionCubeTapped( const Json::Value& config ) :
-  IBEICondition( config ),
+ConditionCubeTapped::ConditionCubeTapped( const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition( config, factory ),
   _tapInfo( { ObjectID(), 0.0f } )
 {
   _params.maxTapResponseTime = config.get( kKeyMaxResponseTime, kCubeTapDefaultResponseTime ).asFloat();

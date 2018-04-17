@@ -26,7 +26,7 @@ class ConditionMotionDetected : public IBEICondition,  private IBEIConditionEven
 {
 public:
   // constructor
-  explicit ConditionMotionDetected(const Json::Value& config);
+  ConditionMotionDetected(const Json::Value& config, BEIConditionFactory& factory);
   ~ConditionMotionDetected();
   
   float GetLastObservedMotionLevel() const { return _lifetimeParams.detectedMotionLevel; }

@@ -54,7 +54,7 @@ BEIConditionType IBEICondition::ExtractConditionType(const Json::Value& config)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-IBEICondition::IBEICondition(const Json::Value& config)
+IBEICondition::IBEICondition(const Json::Value& config, BEIConditionFactory& factory)
 : _conditionType(ExtractConditionType(config))
 , _debugLabel( MakeUniqueDebugLabel() )
 , _previouslyMet( false )

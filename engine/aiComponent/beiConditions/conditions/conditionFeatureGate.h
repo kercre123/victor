@@ -24,7 +24,7 @@ enum class FeatureType : uint8_t;
 class ConditionFeatureGate : public IBEICondition
 {
 public:
-  explicit ConditionFeatureGate(const Json::Value& config);
+  ConditionFeatureGate(const Json::Value& config, BEIConditionFactory& factory);
 
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& bei) const override;
 

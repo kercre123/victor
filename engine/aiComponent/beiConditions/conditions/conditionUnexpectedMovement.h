@@ -26,7 +26,7 @@ class ConditionUnexpectedMovement : public IBEICondition
 {
 public:
   // constructor
-  explicit ConditionUnexpectedMovement(const Json::Value& config);
+  ConditionUnexpectedMovement(const Json::Value& config, BEIConditionFactory& factory);
   ~ConditionUnexpectedMovement() = default;
   
 protected:

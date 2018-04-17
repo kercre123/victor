@@ -85,7 +85,8 @@ BehaviorAnimGetInLoop::BehaviorAnimGetInLoop(const Json::Value& config)
                           : static_cast<uint8_t>(AnimTrackFlag::NO_TRACKS);
 
   if(config.isMember(kLoopEndConditionKey)){
-    _iConfig.endLoopCondition = BEIConditionFactory::CreateBEICondition(config[kLoopEndConditionKey], GetDebugLabel()); 
+    _iConfig.endLoopCondition = GetAIComp<BEIConditionFactory>().CreateBEICondition(config[kLoopEndConditionKey],
+                                                                                    GetDebugLabel()); 
    ANKI_VERIFY(_iConfig.endLoopCondition != nullptr,
                "BehaviorAnimGetInLoop.Constructor.InvalidEndLoopCondition",
                "End loop condition specified, but did not build properly");

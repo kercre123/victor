@@ -28,8 +28,8 @@ namespace {
   const char* const kExpectedKey    = "expected"; // optional bool, defaults to true
 }
 
-ConditionFeatureGate::ConditionFeatureGate(const Json::Value& config)
-  : IBEICondition(config)
+ConditionFeatureGate::ConditionFeatureGate(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
   std::string featureStr = JsonTools::ParseString( config, kFeatureTypeKey, "ConditionFeatureGate" );
   ANKI_VERIFY( FeatureTypeFromString( featureStr, _featureType ),

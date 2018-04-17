@@ -21,8 +21,8 @@ namespace Anki {
 namespace Cozmo {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ConditionUnexpectedMovement::ConditionUnexpectedMovement(const Json::Value& config)
-: IBEICondition(config)
+ConditionUnexpectedMovement::ConditionUnexpectedMovement(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
 
 }

@@ -19,8 +19,8 @@
 namespace Anki {
 namespace Cozmo {
 
-ConditionOffTreadsState::ConditionOffTreadsState(const Json::Value& config)
-  : IBEICondition(config)
+ConditionOffTreadsState::ConditionOffTreadsState(const Json::Value& config, BEIConditionFactory& factory)
+  : IBEICondition(config, factory)
 {
   const std::string& targetStateStr = JsonTools::ParseString(config, "targetState", "ConditionOffTreadsState.Config");  
   ANKI_VERIFY(OffTreadsStateFromString(targetStateStr, _targetState),
@@ -29,8 +29,8 @@ ConditionOffTreadsState::ConditionOffTreadsState(const Json::Value& config)
               targetStateStr.c_str());
 }
 
-ConditionOffTreadsState::ConditionOffTreadsState(const OffTreadsState& targetState)
-  : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::OffTreadsState))
+ConditionOffTreadsState::ConditionOffTreadsState(const OffTreadsState& targetState, BEIConditionFactory& factory)
+  : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::OffTreadsState), factory)
 {
   _targetState = targetState;
 }

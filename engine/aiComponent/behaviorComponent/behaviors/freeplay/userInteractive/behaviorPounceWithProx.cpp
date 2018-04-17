@@ -61,7 +61,7 @@ BehaviorPounceWithProx::BehaviorPounceWithProx(const Json::Value& config)
     EngineToGameTag::RobotObservedMotion
   });
   _iConfig.inRangeCondition =
-    BEIConditionFactory::CreateBEICondition( config["wantsToBeActivatedCondition"], GetDebugLabel() );
+    GetAIComp<BEIConditionFactory>().CreateBEICondition( config["wantsToBeActivatedCondition"], GetDebugLabel() );
 }
 
 

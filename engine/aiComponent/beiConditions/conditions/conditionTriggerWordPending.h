@@ -24,7 +24,7 @@ class ConditionTriggerWordPending : public IBEICondition
 {
 public:
   
-  explicit ConditionTriggerWordPending(const Json::Value& config);
+  ConditionTriggerWordPending(const Json::Value& config, BEIConditionFactory& factory);
 
 protected:
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;

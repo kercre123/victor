@@ -44,7 +44,7 @@ protected:
 
 private:
 
-  ConditionOffTreadsState _offTreadsCondition;
+  std::unique_ptr<ConditionOffTreadsState> _offTreadsCondition;
   
   void FlipDownIfNeeded();
   void DelayThenFlipDown();

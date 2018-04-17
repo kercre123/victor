@@ -24,7 +24,7 @@ class ConditionTrue : public IBEICondition
 {
 public:
   // constructor
-  explicit ConditionTrue(const Json::Value& config);
+  ConditionTrue(const Json::Value& config, BEIConditionFactory& factory);
 
 protected:
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override{ return true;}

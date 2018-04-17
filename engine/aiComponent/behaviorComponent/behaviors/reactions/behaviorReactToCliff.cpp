@@ -51,7 +51,8 @@ BehaviorReactToCliff::BehaviorReactToCliff(const Json::Value& config)
     EngineToGameTag::ChargerEvent
   }});
   
-  _cliffDetectedCondition = BEIConditionFactory::CreateBEICondition(BEIConditionType::CliffDetected, GetDebugLabel());
+  _cliffDetectedCondition = GetAIComp<BEIConditionFactory>().CreateBEICondition(BEIConditionType::CliffDetected,
+                                                                                GetDebugLabel());
 }
 
   
