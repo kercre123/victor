@@ -1,5 +1,11 @@
 # victor
 
+**If you have a DVT3 robot, some of these instructions may be outdated. Refer to confluence for the latest. (Their contents should get merged into the repo when things stabilize.)**  
+[https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/221151299/Victor+Build+Setup](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/221151299/Victor+Build+Setup)
+[https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/368476326/Victor+DVT3+ssh+connection](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/368476326/Victor+DVT3+ssh+connection)
+
+
+
 `victor` is the _code name_ for the next iteration of the Cozmo product line. This repo contains code for the embedded firmware (syscon), robotics, animation and engine layers.
 
 If you're looking for the embedded OS that runs on victor hardware, there is not much in the way of formal documentation yet, but you can start by looking at our repo for [vicos-oelinux](https://github.com/anki/vicos-oelinux).
@@ -49,6 +55,8 @@ git clone --recursive <git url>
 ```
 
 ### ADB setup
+
+**DEPRECATED: We now use ssh instead of adb to connect to robots.**
 
 1. Make sure you do not have Android SDK or Android NDK installed from `brew`:
 
@@ -137,7 +145,39 @@ For a more thorough description of build options, run `project/victor/build-vict
 
 ## Deploying Victor
 
+### Install shared victor ssh key
+
+If your robot is >= 0.9.1 then it has a built-in ssh key. To interact with the robot you need to know its IP address and you must have the ssk key on your computer.
+
+1. Download the private key to `~/.ssh/id_rsa_victor_shared`
+```
+curl -sL -o ~/.ssh/id_rsa_victor_shared https://www.dropbox.com/s/mgxgdouo0id6j9m/id_rsa_victor_shared?dl=0
+chmod 600 ~/.ssh/id_rsa_victor_shared
+ssh-add -K ~/.ssh/id_rsa_victor_shared
+``` 
+
+If you're on OS X Sierra you may want to add the `ssh-add` line to your `.bashrc` or `.bash_profile` since adding to keychain with `-K` is broken in Sierra.
+
+1. Build, deploy, and run commands as normal (See []()). You can specify the target robot with `-s` on most of the deploy and run commands or you can set the `ANKI_ROBOT_HOST` environment variable in your shell to set a default host.
+
+```
+export ANKI_ROBOT_HOST="<ip address>"
+```
+
+1. You can open an ssh session on the robot as follows:
+
+```
+ssh root@${ANKI_ROBOT_HOST}
+```
+
+or execute remote commands. e.g. `ssh root@${ANKI_ROBOT_HOST} "logcat -vthreadtime"`
+
+
 ### Connecting over Wifi
+
+**If you have a DVT3 robot you should no longer be using `victor-ble-cli` for configuring wifi over bluetooth. Robots should already connect automatically to the `AnkiRobits` network, but if you need to attach to a diifferent network use the `mac-client` referred to in**  
+[https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/323321886/Victor+OTA+update+using+Mac-Client+tool#VictorOSandOTAupdateusingMac-Clienttool-OTA](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/323321886/Victor+OTA+update+using+Mac-Client+tool#VictorOSandOTAupdateusingMac-Clienttool-OTA))
+
 
 1. Make sure your laptop is connected to the `Anki5Ghz` wifi network. If you are on a home network, follow the instructions [here](/tools/victor-ble-cli#configuring-wifi).
 

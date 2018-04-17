@@ -2,6 +2,8 @@
 
 If you have a question that you get answered (e.g. in a Slack channel) which might plague others, consider creating an entry here for it.
 
+Additional troubleshooting can be found on [Confluence](https://ankiinc.atlassian.net/wiki/spaces/ATT/pages/362807304/Victor+Build+Troubleshooting).
+
 * How do I set my Android NDK?
   - Follow the setup instructions for `adb` in [README.md](/README.md) to get the default Android NDK.
   - Don't try to override the default NDK unless you know what you are doing!
