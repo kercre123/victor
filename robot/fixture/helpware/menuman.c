@@ -25,7 +25,7 @@
 #define mm_debug_x(fmt, args...)
 #endif
 
-#define MENU_TEXT_COLOR_FG lcd_BLUE
+#define MENU_TEXT_COLOR_FG lcd_WHITE
 #define MENU_TEXT_COLOR_BG lcd_BLACK
 
 const struct SpineMessageHeader* hal_read_frame();
@@ -101,6 +101,7 @@ void menu_select()
 
 
 void menu_set_busy(int isBusy) {
+  printf("menu is%sbusy\n", isBusy?" ":"n't ");
   gMenu.is_busy = isBusy;
   gMenu.changed = 1;
 }
@@ -167,6 +168,7 @@ void process_monitor(void){
 
     if (waitpid(gProcess.wait_pid, &status, WNOHANG)) {
       gProcess.wait_pid = 0;
+      printf("proc finished\n");
       menu_set_busy(0);
     }
   }
@@ -184,6 +186,12 @@ void start_motor_test(void)
 {
   gMotorTestCycles =1 ;
   menu_set_busy(1);
+}
+
+void stop_motor_test(void)
+{
+  gMotorTestCycles = 0;
+  menu_set_busy(0);
 }
 
 void command_motors(struct HeadToBody* data)
@@ -313,22 +321,35 @@ void process_incoming_frame(struct BodyToHead* bodyData)
 {
   static int32_t liftMinPosition = INITIAL_LIFT_POS;
   static int32_t treadLastPosition = 0;
-  static uint8_t filter;
+  static bool buttonPressed = false;
+  /* static uint8_t filter; */
 
   if (liftMinPosition == INITIAL_LIFT_POS) {
     liftMinPosition = bodyData->motor[MOTOR_LIFT].position;
     treadLastPosition = bodyData->motor[MOTOR_RIGHT].position;
   }
-  if (!((filter++)&0x3F)) {
-    mm_debug_x("%d / %d : %d / %d\n",
-           bodyData->motor[MOTOR_RIGHT].position, treadLastPosition,
-           bodyData->motor[MOTOR_LIFT].position, liftMinPosition);
-  }
+  /* if (!((filter++)&0x3F)) { */
+    /* mm_debug_x("%d / %d : %d / %d\n", */
+    /*        bodyData->motor[MOTOR_RIGHT].position, treadLastPosition, */
+    /*        bodyData->motor[MOTOR_LIFT].position, liftMinPosition); */
+  /*   mm_debug("[%d, %d]  was %d\n", bodyData->touchLevel[0], bodyData->touchLevel[1], buttonPressed); */
+  /* } */
 
   if (abs(bodyData->motor[MOTOR_RIGHT].position - treadLastPosition) > MENU_TREAD_TRIGGER_DELTA )
   {
     treadLastPosition = bodyData->motor[MOTOR_RIGHT].position;
     menu_advance();
+  }
+  if (bodyData->touchLevel[1] > 0 )  {
+    if (!buttonPressed) {
+      printf("button pressed\n");
+      buttonPressed = true;
+      menu_select();
+      stop_motor_test();
+    }
+  }
+  else {
+    buttonPressed = false;
   }
   if (bodyData->motor[MOTOR_LIFT].position - liftMinPosition > MENU_LIFT_TRIGGER_DELTA)
   {
