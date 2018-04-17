@@ -1,4 +1,4 @@
-process attach --name "webotsCtrlGameEngine" --waitfor --include-existing --continue
+process attach --name "webotsCtrlGameEngine2" --waitfor --include-existing --continue
 
 script
 
