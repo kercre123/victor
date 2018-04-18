@@ -2,6 +2,7 @@
 #include "helpers.h"
 
 #include "tensorflow/core/framework/graph.pb.h"
+#include "tensorflow/core/framework/graph_def_util.h"
 #include "tensorflow/core/framework/tensor.h"
 #include "tensorflow/core/graph/default_device.h"
 #include "tensorflow/core/graph/graph_def_builder.h"
@@ -227,6 +228,63 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
 
   std::cout << "ObjectDetector.Model.LoadGraph.SessionCreated" << std::endl;
 
+  if (_params.verbose)
+  {
+    //const std::string graph_str = tensorflow::SummarizeGraphDef(graph_def);
+    //std::cout << graph_str << std::endl;
+    
+    // Print some weights from each layer as a sanity check
+    int node_count = graph_def.node_size();
+    for (int i = 0; i < node_count; i++)
+    {
+      const auto n = graph_def.node(i);
+      std::cout << "Layer " << i << " - Name: " << n.name() << ", Op: " << n.op() << std::endl;
+      if(n.op() == "Const")
+      {
+        tensorflow::Tensor t;
+        if (!t.FromProto(n.attr().at("value").tensor())) {
+          std::cout << "- Failed to create Tensor from proto" << std::endl;
+          continue;
+        }
+
+        std::cout << "- Summary: " << t.DebugString() << std::endl;
+
+        /*
+        const tensorflow::TensorProto& tensor = n.attr().at("value").tensor();
+        const auto& shape = tensor.tensor_shape();
+        std::cout << "- " << shape.dim_size() << "D shape [Init'd:" << (tensor.IsInitialized() ? "Y" : "N") << "]: " << shape.dim(0).size();
+        for(auto ndims=1; ndims < shape.dim_size(); ++ndims) 
+        {
+           std::cout << "x" << shape.dim(ndims).size();
+        }
+        std::cout << std::endl;
+
+        const size_t kNumWeights = 25;
+        const size_t N = std::min((size_t)tensor.float_val_size(), kNumWeights);
+        std::cout << "- " << N << " " << (tensor.dtype()==1 ? "float" : "unknown") << " items: ";
+
+        for(auto i=0; i<N; ++i)
+        {
+          std::cout << tensor.float_val(i) << " ";
+        }
+
+        std::cout << "- " << N << " " << (tensor.dtype()==1 ? "float" : "unknown") << " items: ";
+        for(auto i=0; i<N; ++i)
+        {
+          std::cout << tensor.float_val(i) << " ";
+        }
+
+        std::cout << std::endl;
+        */
+      }
+      else if(n.op() == "Conv2D")
+      {
+        const auto& filter_node_name = n.input(1);
+        std::cout << "- Filter input from node: " << filter_node_name << std::endl;
+      }
+    }
+    
+  }
   const std::string labels_file_name = FullFilePath(modelPath, _params.labels);
   Result readLabelsResult = ReadLabelsFile(labels_file_name, _labels);
   if (RESULT_OK == readLabelsResult)
