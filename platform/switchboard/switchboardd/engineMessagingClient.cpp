@@ -20,7 +20,7 @@
 #include "switchboardd/engineMessagingClient.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-
+#include "switchboardd/log.h"
 
 using GMessageTag = Anki::Cozmo::ExternalInterface::MessageGameToEngineTag;
 using GMessage = Anki::Cozmo::ExternalInterface::MessageGameToEngine;
@@ -29,32 +29,32 @@ using EMessage = Anki::Cozmo::ExternalInterface::MessageEngineToGame;
 namespace Anki {
 namespace Switchboard {
 
-const char* EngineMessagingClient::kEngineAddress = "127.0.0.1";
 uint8_t EngineMessagingClient::sMessageData[2048];
-
 
 EngineMessagingClient::EngineMessagingClient(struct ev_loop* evloop)
 : loop_(evloop)
-{
-
-}
+{}
 
 bool EngineMessagingClient::Init() {
   ev_timer_init(&_handleEngineMessageTimer.timer, 
                 &EngineMessagingClient::sEvEngineMessageHandler, 
                 kEngineMessageFrequency_s, 
                 kEngineMessageFrequency_s);
-  _handleEngineMessageTimer.client = &client;
+  _handleEngineMessageTimer.client = &_client;
   _handleEngineMessageTimer.signal = &_pairingStatusSignal;
   return true;
 }
 
 bool Anki::Switchboard::EngineMessagingClient::Connect() {
-  bool connected = client.Connect(kEngineAddress, kEnginePort);
+  bool connected = _client.Connect(Anki::Victor::ENGINE_SWITCH_CLIENT_PATH, Anki::Victor::ENGINE_SWITCH_SERVER_PATH);
 
   if(connected) {
     ev_timer_start(loop_, &_handleEngineMessageTimer.timer);
   }
+
+  // Send connection message
+  static uint8_t connectionByte = 0;
+  _client.Send((char*)(&connectionByte), sizeof(connectionByte));
 
   return connected;
 }
@@ -62,8 +62,8 @@ bool Anki::Switchboard::EngineMessagingClient::Connect() {
 bool EngineMessagingClient::Disconnect() {
   bool disconnected = true;
   ev_timer_stop(loop_, &_handleEngineMessageTimer.timer);
-  if (client.IsConnected()) {
-    disconnected = client.Disconnect();
+  if (_client.IsConnected()) {
+    disconnected = _client.Disconnect();
   }
   return disconnected;
 }
@@ -71,27 +71,28 @@ bool EngineMessagingClient::Disconnect() {
 void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct ev_timer* w, int revents) {
   struct ev_EngineMessageTimerStruct *wData = (struct ev_EngineMessageTimerStruct*)w;
 
-  uint8_t bytes_recvd;
-  do {
-    bytes_recvd = wData->client->Recv((char*)sMessageData, sizeof(sMessageData));
-    // Read all the messages that were returned
-    size_t index = 0;
-    while (bytes_recvd >= index + kMessageHeaderLength) {
-      uint16_t message_size = *(uint16_t*)sMessageData;
-      index += kMessageHeaderLength;
-      if (bytes_recvd - index < message_size) {
-        logw("Received partial message from engine");
-      } else {
-        const EMessageTag messageTag = *(EMessageTag*)(sMessageData + index);
-        if (messageTag == EMessageTag::EnterPairing || messageTag == EMessageTag::ExitPairing) {
-          EMessage message;
-          message.Unpack(sMessageData + index, message_size);
-          wData->signal->emit(message);
-        }
-      }
-      index += message_size;
+  int recvSize;
+  
+  while((recvSize = wData->client->Recv((char*)sMessageData, sizeof(sMessageData))) > kMessageHeaderLength) {
+    // Get message tag, and adjust for header size
+    const uint8_t* msgPayload = (const uint8_t*)&sMessageData[kMessageHeaderLength];
+
+    const EMessageTag messageTag = (EMessageTag)*msgPayload;
+
+    if (messageTag == EMessageTag::EnterPairing || messageTag == EMessageTag::ExitPairing) {
+      EMessage message;
+      uint16_t msgSize = *(uint16_t*)sMessageData;
+      size_t unpackedSize = message.Unpack(msgPayload, msgSize);
+
+      if(unpackedSize != (size_t)msgSize) {
+        Log::Error("Received message from engine but had mismatch size when unpacked.");
+        continue;
+      } 
+
+      // Emit signal for message
+      wData->signal->emit(message);
     }
-  } while (bytes_recvd > 0);
+  }
 }
 
 void EngineMessagingClient::SendMessage(const GMessage& message) {
@@ -100,7 +101,7 @@ void EngineMessagingClient::SendMessage(const GMessage& message) {
   message.Pack(buffer + kMessageHeaderLength, message_size);
   memcpy(buffer, &message_size, kMessageHeaderLength);
 
-  client.Send((char*)buffer, sizeof(buffer));
+  _client.Send((char*)buffer, sizeof(buffer));
 }
 
 void EngineMessagingClient::SetPairingPin(std::string pin) {
@@ -112,6 +113,7 @@ void EngineMessagingClient::SetPairingPin(std::string pin) {
 void EngineMessagingClient::ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus status) {
   Anki::Cozmo::SwitchboardInterface::SetConnectionStatus scs;
   scs.status = status;
+
   SendMessage(GMessage::CreateSetConnectionStatus(std::move(scs)));
 }
 
