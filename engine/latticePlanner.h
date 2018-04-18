@@ -30,13 +30,13 @@ class DataPlatform;
 
 namespace Cozmo {
 
-class LatticePlannerImpl;
+class LatticePlannerInternal;
 class Path;
 class Robot;
 
 class LatticePlanner : public IPathPlanner, private Util::noncopyable
 {
-  friend LatticePlannerImpl;
+  friend LatticePlannerInternal;
 public:
   LatticePlanner(Robot* robot, Util::Data::DataPlatform* dataPlatform);
   virtual ~LatticePlanner();
@@ -80,7 +80,7 @@ protected:
   virtual bool GetCompletePath_Internal(const Pose3d& currentRobotPose,
                                         Planning::Path &path,
                                         Planning::GoalID& selectedTargetIndex) override;
-  LatticePlannerImpl* _impl;
+  LatticePlannerInternal* _impl;
 };
 
 }
