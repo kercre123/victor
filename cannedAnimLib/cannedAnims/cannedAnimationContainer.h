@@ -25,16 +25,22 @@ namespace CozmoAnim {
 }
 
 namespace Anki {
+
+namespace Vision{
+class SpriteSequenceContainer;
+}
+
 namespace Cozmo {
-  class SpriteSequenceContainer;
   
   class CannedAnimationContainer
   {
   public:
     static const std::string ProceduralAnimName;
 
-    CannedAnimationContainer(const CannedAnimLib::SpritePathMap* spriteMap, 
-                             SpriteSequenceContainer* spriteSequenceContainer);
+    CannedAnimationContainer(const Vision::SpritePathMap* spriteMap, 
+                             Vision::SpriteSequenceContainer* spriteSequenceContainer);
+                            
+    ~CannedAnimationContainer();
     
     Result DefineHardCoded(); // called at construction
     
@@ -58,8 +64,8 @@ namespace Cozmo {
     void Clear();
     
   private:
-  const CannedAnimLib::SpritePathMap* _spriteMap = nullptr;
-    SpriteSequenceContainer* _spriteSequenceContainer = nullptr;
+  const Vision::SpritePathMap* _spriteMap = nullptr;
+    Vision::SpriteSequenceContainer* _spriteSequenceContainer = nullptr;
     std::unordered_map<std::string, Animation> _animations;
 
     void SetSpriteSequenceContainerOnAnimation(Animation* animation) const;

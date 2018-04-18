@@ -14,13 +14,13 @@
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
-
+#include "coretech/vision/shared/spriteCache/spriteCache.h"
 
 #include "cannedAnimLib/cannedAnims/animation.h"
 #include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
 #include "cannedAnimLib/cannedAnims/cannedAnimationLoader.h"
 #include "cannedAnimLib/baseTypes/cozmo_anim_generated.h"
-#include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
+#include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
 #include "cannedAnimLib/spriteSequences/spriteSequenceLoader.h"
 #include "cannedAnimLib/proceduralFace/proceduralFace.h"
 //#include "anki/cozmo/basestation/animations/animationTransfer.h"
@@ -56,7 +56,8 @@ RobotDataLoader::RobotDataLoader(const AnimContext* context)
 , _platform(_context->GetDataPlatform())
 , _cannedAnimations(nullptr)
 {
-  _spritePaths = std::make_unique<Util::CladEnumToStringMap<Vision::SpriteName>>();
+  _spritePaths = std::make_unique<Vision::SpritePathMap>();
+  _spriteCache = std::make_unique<Vision::SpriteCache>(_spritePaths.get());
 }
 
 RobotDataLoader::~RobotDataLoader()
@@ -107,7 +108,9 @@ void RobotDataLoader::LoadNonConfigData()
   {
     std::vector<std::string> spriteSequenceDirs = {pathToExternalSpriteSequences, pathToEngineSpriteSequences, pathToExternalFaceAnimSequences};
     SpriteSequenceLoader seqLoader;
-    _spriteSequenceContainer.reset(seqLoader.LoadSpriteSequences(_platform, _spritePaths.get(), spriteSequenceDirs));
+    auto* sContainer = seqLoader.LoadSpriteSequences(_platform, _spritePaths.get(), 
+                                                     _spriteCache.get(), spriteSequenceDirs);
+    _spriteSequenceContainer.reset(sContainer);
   }
 
   {
@@ -189,10 +192,6 @@ void RobotDataLoader::LoadSpritePaths()
     }
   }
   
-  
-  
-  
-  
   for (auto key : _spritePaths->GetAllKeys()) {
     auto fullPath = fileNameToFullPath[_spritePaths->GetValue(key)];
     _spritePaths->UpdateValue(key, std::move(fullPath));
@@ -230,7 +229,8 @@ void RobotDataLoader::SetupProceduralAnimation()
   
   Animation* anim = _cannedAnimations->GetAnimation(CannedAnimationContainer::ProceduralAnimName);
   assert(anim != nullptr);
-  SpriteSequenceKeyFrame kf(Vision::SpriteName::Count, true, true);
+  const bool shouldRenderInEyeHue = true;
+  SpriteSequenceKeyFrame kf(shouldRenderInEyeHue, Vision::SpriteName::Count, true);
   if(RESULT_OK != anim->AddKeyFrameToBack(kf))
   {
     PRINT_NAMED_ERROR("RobotDataLoader.SetupProceduralAnimation.AddProceduralFailed",

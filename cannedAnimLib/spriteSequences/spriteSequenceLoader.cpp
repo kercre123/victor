@@ -12,8 +12,9 @@
 *
 **/
 
-#include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
+#include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
 #include "cannedAnimLib/spriteSequences/spriteSequenceLoader.h"
+#include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "util/dispatchWorker/dispatchWorker.h"
 #include <sys/stat.h>
 
@@ -26,9 +27,10 @@ namespace{
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SpriteSequenceContainer* SpriteSequenceLoader::LoadSpriteSequences(const Util::Data::DataPlatform* dataPlatform,
-                                                                   CannedAnimLib::SpritePathMap* spriteMap,
-                                                                   const std::vector<std::string>& spriteSequenceDirs)
+Vision::SpriteSequenceContainer* SpriteSequenceLoader::LoadSpriteSequences(const Util::Data::DataPlatform* dataPlatform,
+                                                                           Vision::SpritePathMap* spriteMap,
+                                                                           Vision::SpriteCache* cache,
+                                                                           const std::vector<std::string>& spriteSequenceDirs)
 {
   if (dataPlatform == nullptr) { 
     return nullptr;
@@ -36,9 +38,9 @@ SpriteSequenceContainer* SpriteSequenceLoader::LoadSpriteSequences(const Util::D
   Util::Data::Scope resourceScope = Util::Data::Scope::Resources;
 
   // Set up the worker that will process all the image frame folders
-  using MyDispatchWorker = Util::DispatchWorker<3, std::string, Vision::SpriteName>;
+  using MyDispatchWorker = Util::DispatchWorker<3, Vision::SpriteCache*, std::string, Vision::SpriteName>;
   MyDispatchWorker::FunctionType workerFunction = std::bind(&SpriteSequenceLoader::LoadSequenceImageFrames, 
-                                                            this, std::placeholders::_1, std::placeholders::_2);
+                                                            this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
   MyDispatchWorker worker(workerFunction);
   for(const auto& path : spriteSequenceDirs){
     const std::string spriteSeqFolder = dataPlatform->pathToResource(resourceScope, path);
@@ -63,7 +65,7 @@ SpriteSequenceContainer* SpriteSequenceLoader::LoadSpriteSequences(const Util::D
       }
             
       // Now we can start looking at the next name, this one is ok to load
-      worker.PushJob(fullDirPath, sequenceName);
+      worker.PushJob(cache, fullDirPath, sequenceName);
       ++nameIter;
     }
     
@@ -71,20 +73,18 @@ SpriteSequenceContainer* SpriteSequenceLoader::LoadSpriteSequences(const Util::D
     worker.Process();
   }
 
-  return new SpriteSequenceContainer(std::move(_mappedSequences), std::move(_unmappedSequences));
+  return new Vision::SpriteSequenceContainer(std::move(_mappedSequences), std::move(_unmappedSequences));
 
 } // LoadSpriteSequences()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SpriteSequenceLoader::LoadSequenceImageFrames(const std::string& fullDirectoryPath, Vision::SpriteName sequenceName)
+void SpriteSequenceLoader::LoadSequenceImageFrames(Vision::SpriteCache* cache,
+                                                   const std::string& fullDirectoryPath, 
+                                                   Vision::SpriteName sequenceName)
 {
   // Setup the sequence that will have image frames loaded into it
-  bool isGrayscale = true;
-  if(sequenceName != Vision::SpriteName::Count){
-    isGrayscale = Vision::IsSpriteGreyscale(sequenceName, true);
-  }
-  SpriteSequence sequence(isGrayscale);
+  Vision::SpriteSequence sequence;
 
 
   // Even though files *might* be sorted alphabetically by the readdir call inside FilesInDirectory,
@@ -138,45 +138,26 @@ void SpriteSequenceLoader::LoadSequenceImageFrames(const std::string& fullDirect
     if(frameNum > 1) { 
       s32 emptyFramesAdded = 0;
       while(sequence.GetNumFrames() < frameNum-1) {
-        sequence.AddFrame(Vision::Image{});
+        auto handle = std::make_shared<Vision::SpriteWrapper>(new Vision::ImageRGBA());
+        sequence.AddFrame(handle);
         ++emptyFramesAdded;
       }
     }
-    
+
     // Load the image
     const std::string fullFilename = Util::FileUtils::FullFilePath({fullDirectoryPath, filename});
-    if(isGrayscale)
-    {
-      LoadImage<Vision::Image>(sequence, fullFilename);
-    }
-    else
-    {
-      LoadImage<Vision::ImageRGB565>(sequence, fullFilename);
-    }
+    auto shouldCache = {Vision::SpriteCache::CacheSpec::CacheGrayscaleIndefinitely};
+    auto handle = cache->GetSpriteHandle(fullFilename, shouldCache);
+    sequence.AddFrame(handle);
   }
 
   // Place the sequence in the appropriate map
+  std::lock_guard<std::mutex> guard(_mapMutex);
   if(sequenceName != Vision::SpriteName::Count){   
     _mappedSequences.emplace(sequenceName, sequence);
   }else{
     _unmappedSequences.emplace(Util::FileUtils::GetFileName(fullDirectoryPath), sequence);
   }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<class ImageType>
-void SpriteSequenceLoader::LoadImage(SpriteSequence& sequence, const std::string& fullFilename)
-{
-  ImageType img;
-  Result loadResult = img.Load(fullFilename);
-  
-  if(loadResult != RESULT_OK) {
-    PRINT_NAMED_ERROR("SpriteSequenceContainer.LoadImage.LoadError", "%s", fullFilename.c_str());
-    return;
-  }
-  
-  sequence.AddFrame(img);
 }
 
 } // namespace Cozmo

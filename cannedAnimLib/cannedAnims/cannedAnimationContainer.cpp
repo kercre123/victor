@@ -12,7 +12,7 @@
  **/
 
 #include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
-#include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
+#include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
 #include "cannedAnimLib/baseTypes/track.h"
 
 #include "util/helpers/boundedWhile.h"
@@ -25,13 +25,19 @@ namespace Cozmo {
 
   const std::string CannedAnimationContainer::ProceduralAnimName("_PROCEDURAL_");
   
-  CannedAnimationContainer::CannedAnimationContainer(const CannedAnimLib::SpritePathMap* spriteMap, 
-                                                     SpriteSequenceContainer* spriteSequenceContainer)
+  CannedAnimationContainer::CannedAnimationContainer(const Vision::SpritePathMap* spriteMap, 
+                                                     Vision::SpriteSequenceContainer* spriteSequenceContainer)
   : _spriteMap(spriteMap)
   , _spriteSequenceContainer(spriteSequenceContainer)
   {
     DefineHardCoded();
   }
+
+  CannedAnimationContainer::~CannedAnimationContainer()
+  {
+    
+  }
+
 
   Result CannedAnimationContainer::AddAnimation(const std::string& name)
   {

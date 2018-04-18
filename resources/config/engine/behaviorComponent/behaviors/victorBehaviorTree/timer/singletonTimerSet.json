@@ -12,7 +12,7 @@
   "displayClockFor_s" : 5,
 
   "clockLayout" : [{  
-    "layerName" : "Layer_1",
+    "layerName" : "Layer_4",
     "spriteBoxLayout" : [
       {
         "spriteBoxName": "TensLeftOfColon",

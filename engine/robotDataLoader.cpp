@@ -14,8 +14,10 @@
 
 #include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
 #include "cannedAnimLib/cannedAnims/cannedAnimationLoader.h"
+#include "cannedAnimLib/spriteSequences/spriteSequenceLoader.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "engine/actions/sayTextAction.h"
 #include "engine/animations/animationContainers/backpackLightAnimationContainer.h"
 #include "engine/animations/animationContainers/cubeLightAnimationContainer.h"
@@ -52,7 +54,11 @@ CONSOLE_VAR(bool, kStressTestThreadedPrintsDuringLoad, "RobotDataLoader", false)
 static Anki::Cozmo::ThreadedPrintStressTester stressTester;
 #endif // REMOTE_CONSOLE_ENABLED
 
-
+const char* pathToExternalIndependentSprites = "assets/sprites/independentSprites/";
+const char* pathToEngineIndependentSprites = "config/devOnlySprites/independentSprites/";
+const char* pathToExternalSpriteSequences = "assets/sprites/spriteSequences/";
+const char* pathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequences/";
+const char* pathToExternalFaceAnimSequences = "assets/faceAnimations/";
 }
 
 namespace Anki {
@@ -68,7 +74,7 @@ RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 , _backpackLightAnimations(new BackpackLightAnimationContainer())
 , _dasBlacklistedAnimationTriggers()
 {
-  _spritePaths = std::make_unique<Util::CladEnumToStringMap<Vision::SpriteName>>();
+  _spritePaths = std::make_unique<Vision::SpritePathMap>();
 }
 
 RobotDataLoader::~RobotDataLoader()
@@ -114,7 +120,17 @@ void RobotDataLoader::LoadNonConfigData()
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadSpritePaths");
     LoadSpritePaths();
+    _spriteCache = std::make_unique<Vision::SpriteCache>(_spritePaths.get());
   }
+  {
+    ANKI_CPU_PROFILE("RobotDataLoader::LoadSpriteSequences");
+    std::vector<std::string> spriteSequenceDirs = {pathToExternalSpriteSequences, pathToEngineSpriteSequences, pathToExternalFaceAnimSequences};
+    SpriteSequenceLoader seqLoader;
+    auto* sContainer = seqLoader.LoadSpriteSequences(_platform, _spritePaths.get(), 
+                                                     _spriteCache.get(), spriteSequenceDirs);
+    _spriteSequenceContainer.reset(sContainer);
+  }
+
 
   if(!FACTORY_TEST)
   {
@@ -425,31 +441,50 @@ void RobotDataLoader::LoadBehaviors()
 
 void RobotDataLoader::LoadSpritePaths()
 {
-  // Creates a map of all sprite names to their file names
+ // Creates a map of all sprite names to their file names
   _spritePaths->Load(_platform, "assets/cladToFileMaps/spriteMap.json", "SpriteName");
 
-  // Filter out all sprite sequences
-  for(auto& key: _spritePaths->GetAllKeys()){
-    if(IsSpriteSequence(key, false)){
-      _spritePaths->Erase(key);
-    }
-  }
-
-  // Get all sprite paths
-  std::map<std::string, std::string> fileNameToFullPath; 
+  std::map<std::string, std::string> fileNameToFullPath;
+  // Get all independent sprites
   {
-    const std::string basePath = "assets/sprites/independentSprites/";
+    auto spritePaths = {pathToExternalIndependentSprites,
+                        pathToEngineIndependentSprites};
+    
     const bool useFullPath = true;
     const char* extensions = "png";
     const bool recurse = true;
+    for(const auto& path: spritePaths){
+      const std::string fullPathFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
+
+      auto fullImagePaths = Util::FileUtils::FilesInDirectory(fullPathFolder, useFullPath, extensions, recurse);
+      for(auto& fullImagePath : fullImagePaths){
+        const std::string fileName = Util::FileUtils::GetFileName(fullImagePath, true, true);
+        fileNameToFullPath.emplace(fileName, fullImagePath);
+      }
+    }
+  }
+  
+  // Get all sprite sequences with recursive directory search
+  {
+    std::vector<std::string> directoriesToSearch = {
+       _platform->pathToResource(Util::Data::Scope::Resources, pathToExternalSpriteSequences),
+       _platform->pathToResource(Util::Data::Scope::Resources, pathToEngineSpriteSequences)};
     
-    const std::string fullPathFolder = _platform->pathToResource(Util::Data::Scope::Resources, basePath);
-
-
-    auto fullImagePaths = Util::FileUtils::FilesInDirectory(fullPathFolder, useFullPath, extensions, recurse);
-    for(auto& fullImagePath : fullImagePaths){
-      const std::string fileName = Util::FileUtils::GetFileName(fullImagePath, true, true);
-      fileNameToFullPath.emplace(fileName, fullImagePath);
+    auto searchIter = directoriesToSearch.begin();
+    while(searchIter != directoriesToSearch.end()){
+      // Get all directories at this level and add them to the file map
+      std::vector<std::string> outDirNames;
+      Util::FileUtils::ListAllDirectories(*searchIter, outDirNames);
+      for(auto& dirName: outDirNames){
+        // turn name into full path
+        dirName = Util::FileUtils::FullFilePath({*searchIter, dirName});
+        fileNameToFullPath.emplace(Util::FileUtils::GetFileName(dirName), dirName);
+      }
+      directoriesToSearch.erase(searchIter);
+      
+      // Add directories for recursive search and advance to next directory
+      copy(outDirNames.begin(), outDirNames.end(), back_inserter(directoriesToSearch));
+      searchIter = directoriesToSearch.begin();
     }
   }
   

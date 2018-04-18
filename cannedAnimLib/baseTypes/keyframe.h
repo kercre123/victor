@@ -20,7 +20,7 @@
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/vision/engine/image.h"
 #include "cannedAnimLib/baseTypes/audioKeyFrameTypes.h"
-#include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
+#include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
 #include "cannedAnimLib/proceduralFace/proceduralFace.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/ledTypes.h"
@@ -47,7 +47,10 @@ namespace CozmoAnim {
 namespace Anki {
   
   namespace Vision {
+    class CompositeImage;
     class ImageRGB565;
+    class SpriteCache;
+    class SpriteSequence;
   }
   
 namespace Cozmo {
@@ -241,12 +244,14 @@ namespace Cozmo {
   class SpriteSequenceKeyFrame : public IKeyFrame
   {
   public:
-    SpriteSequenceKeyFrame(Vision::SpriteName sequenceName = Vision::SpriteName::Count,
-                           bool containsRuntimeSpriteSeq = false,
-                           bool runtimeSequenceIsGrayscale = true);
+    SpriteSequenceKeyFrame(bool shouldRenderInEyeHue = true,
+                           Vision::SpriteName sequenceName = Vision::SpriteName::Count,
+                           bool containsRuntimeSpriteSeq = false);
 
     //Copy constructor
     SpriteSequenceKeyFrame(const SpriteSequenceKeyFrame& other);
+
+    virtual ~SpriteSequenceKeyFrame();
     
     Result DefineFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug);
 
@@ -256,8 +261,8 @@ namespace Cozmo {
     // this function must be called after the keyframe is defined
     // Pass in the sprite sequence container if this keyframe doesn't contain
     // a runtime sprite sequence
-    void GiveKeyframeImageAccess(const CannedAnimLib::SpritePathMap* spriteMap,
-                                 SpriteSequenceContainer* spriteSequenceContainer);
+    void GiveKeyframeImageAccess(const Vision::SpritePathMap* spriteMap,
+                                 Vision::SpriteSequenceContainer* spriteSequenceContainer);
   
     #if CAN_STREAM
       // The face image isn't actually returned via this function since the
@@ -281,24 +286,24 @@ namespace Cozmo {
     
     float GetScanlineOpacity() const { return _scanlineOpacity; }
     
-    void SetRuntimeSequenceIsGrayscale(bool isGrayscale);
-    // Return true if the underlying images are stored as grayscale.
-    bool IsGrayscale() const;
-    
     void ClearRuntimeSequence() { _runtimeSpriteSequence.reset(); }
     
     void SetFrameDuration_ms(u32 duration_ms){ _frameDuration_ms = duration_ms;}
 
-    template<class ImageType>
-    void AddFrameToRuntimeSequence(const ImageType& img);
+    void SetShouldRenderInEyeHue(bool shouldRenederInEyeHue) { _shouldRenderInEyeHue = shouldRenederInEyeHue;}
+    bool ShouldRenderInEyeHue() const { return _shouldRenderInEyeHue;}
 
-    // These functions actually retrieve image data and increment the frame count so that they will retrieve
+    void AddFrameToRuntimeSequence(Vision::SpriteHandle spriteHandle);
+
+    // Transfers ownership to the keyframe
+    void SetCompositeImage(Vision::SpriteCache* spriteCache, Vision::CompositeImage* compImg);
+
+    // These functions retrieve the image handle and increment the frame count so that they will retrieve
     // the next image on the next call. Returns true if the Image field was populated, false otherwise.
     // Empty frames are expected for animations that have a duration longer than ANIM_TIME_STEP_MS, and hence
     // this function may return false even though there are frames remaining. To check if the keyframe is done,
     // use IsDone() rather than the return value of this function.
-    bool GetFaceImage(Vision::Image& img);
-    bool GetFaceImage(Vision::ImageRGB565& img);
+    bool GetFaceImageHandle(Vision::SpriteHandle& handle);
 
     // Resets the keyframe so that the next call to GetFaceImage returns the first image of the set
     void Reset() { _curFrame = 0; _currentTime_ms = 0; _nextFrameTime_ms = _frameDuration_ms; }
@@ -310,17 +315,22 @@ namespace Cozmo {
     virtual Result SetMembersFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug = "");
     
   private:
-    template <typename ImageType>
-    bool GetFaceImageHelper(ImageType& img);
-    
+    // Ensure that a keyframe doesn't have multiple sequence implementations
+    // fighting with each other
+    bool VerifyOnlyOneImplementationSet();
+
     // used to translate _rawSeqName into _spriteSequenceName
-    bool ParseSequenceNameFromString(const CannedAnimLib::SpritePathMap* spriteMap);
+    bool ParseSequenceNameFromString(const Vision::SpritePathMap* spriteMap);
 
     // Keyframe either points to a const sprite sequences within the sprite sequence container
     // or it has a runtime sprite sequence 
-    const SpriteSequence*  _cannedSpriteSequence = nullptr;
-    std::unique_ptr<SpriteSequence> _runtimeSpriteSequence;
+    const Vision::SpriteSequence*  _cannedSpriteSequence = nullptr;
+    std::unique_ptr<Vision::SpriteSequence> _runtimeSpriteSequence;
+    std::unique_ptr<Vision::CompositeImage> _compositeImage; 
 
+    // Defines whether the frame should be rendered as an RGBA image
+    // or a grayscale image rendered in the color of the robot's eye hue
+    bool         _shouldRenderInEyeHue;
     // When a sprite sequence is read in its sequence name is a raw folder name
     // After linking to the sequence container this name is mapped to the CLAD sequence name
     // which is what is used for all internal operations
@@ -335,12 +345,6 @@ namespace Cozmo {
     u32          _currentTime_ms   = 0;
     
   }; // class SpriteSequenceKeyFrame
-  
-  template<class ImageType>
-  void SpriteSequenceKeyFrame::AddFrameToRuntimeSequence(const ImageType& img)
-  {
-    _runtimeSpriteSequence->AddFrame(img);
-  }
 
   class ProceduralFaceKeyFrame : public IKeyFrame
   {

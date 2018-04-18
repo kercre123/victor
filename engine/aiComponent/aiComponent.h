@@ -49,6 +49,7 @@ public:
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::MoodManager);
+    dependencies.insert(RobotComponentID::SpriteCache);
   };
   virtual void UpdateDependent(const RobotCompMap& dependentComponents) override;
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {

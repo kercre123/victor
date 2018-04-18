@@ -13,6 +13,7 @@
 
 
 #include "coretech/vision/shared/compositeImage/compositeImage.h"
+#include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "coretech/vision/engine/image_impl.h"
 #include "util/cladHelpers/cladEnumToStringMap.h"
 #include "util/helpers/templateHelpers.h"
@@ -21,9 +22,11 @@ namespace Anki {
 namespace Vision {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CompositeImage::CompositeImage(const Json::Value& layersSpec,
+CompositeImage::CompositeImage(SpriteCache* spriteCache,
+                               const Json::Value& layersSpec,
                                s32 imageWidth,
                                s32 imageHeight)
+: _spriteCache(spriteCache)
 {
   _width = imageWidth;
   _height = imageHeight;
@@ -35,9 +38,11 @@ CompositeImage::CompositeImage(const Json::Value& layersSpec,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CompositeImage::CompositeImage(const LayerMap&& layers,
+CompositeImage::CompositeImage(SpriteCache* spriteCache,
+                               const LayerMap&& layers,
                                s32 imageWidth,
                                s32 imageHeight)
+: _spriteCache(spriteCache)
 {
   _width   = imageWidth;
   _height  = imageHeight;
@@ -75,12 +80,31 @@ std::vector<CompositeImageChunk> CompositeImage::GetImageChunks() const
       baseChunk.spriteBoxIndex = spriteBoxIdx;
       spriteBoxIdx++;
       baseChunk.spriteBox = spriteBoxPair.second.Serialize();
+      baseChunk.spriteName = SpriteName::Count;
+      
 
       Vision::SpriteName spriteName;
-      if(layerPair.second.GetSpriteName(spriteBoxPair.first, spriteName)){
+      if(layerPair.second.GetSpriteSequenceName(spriteBoxPair.first, spriteName) &&
+        Vision::IsSpriteSequence(spriteName, false)){
         baseChunk.spriteName = spriteName;
+      }else{
+        // perform a reverse lookup on the sprite 
+        Vision::SpriteSequence seq;
+        std::string fullSpritePath;
+        SpriteName spriteName;
+        Vision::SpriteHandle handle;
+        // Get Handle -> Sprite Path -> Sprite name that maps to that path
+        // Each step is reliant on the previous one's value being set
+        if(layerPair.second.GetSpriteSequence(spriteBoxPair.first, seq) &&
+           seq.GetFrame(0, handle) &&
+           handle->GetFullSpritePath(fullSpritePath) &&
+           _spriteCache->GetSpritePathMap()->GetKeyForValueConst(fullSpritePath, spriteName)){
+          baseChunk.spriteName = spriteName;
+        }else{
+          PRINT_NAMED_ERROR("CompositeImage.GetImageChunks.SerializingInvalidCompositeImage",
+                            "Currently only composite images composed solely of sprite names can be serialized");
+        }
       }
-
       chunks.push_back(baseChunk);
     } // end for(spriteBoxPair)
   } // end for(layerPair)
@@ -160,86 +184,134 @@ CompositeImage CompositeImage::GetImageDiff(const CompositeImage& compImg) const
     outLayerMap.emplace(layerPair.first, layer);
   }
   
-  return CompositeImage(std::move(outLayerMap));
+  return CompositeImage(_spriteCache, std::move(outLayerMap));
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ImageRGBA CompositeImage::RenderImage(std::set<Vision::LayerName> layersToIgnore) const
+ImageRGBA CompositeImage::RenderFrame(const u32 frameIdx, std::set<Vision::LayerName> layersToIgnore) const
 {
   ANKI_VERIFY((_height != 0) && (_width != 0),
-              "CompositeImage.RenderImage.InvalidSize",
+              "CompositeImage.RenderFrame.InvalidSize",
               "Attempting to render an image with height %d and width %d",
               _height, _width);
   ImageRGBA outImage(_height, _width);
   outImage.FillWith(Vision::PixelRGBA());
-  OverlayImage(outImage, layersToIgnore);
+  OverlayImageWithFrame(outImage, frameIdx, layersToIgnore);
   return outImage;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CompositeImage::OverlayImage(ImageRGBA& baseImage,
-                                  std::set<Vision::LayerName> layersToIgnore,
-                                  const Point2i& overlayOffset) const
+void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
+                                           const u32 frameIdx,
+                                           std::set<Vision::LayerName> layersToIgnore,
+                                           const Point2i& overlayOffset) const
 {
-  for(const auto& layerPair : _layerMap){
-    // Skip rendering any layers that should be ignored
-    if(layersToIgnore.find(layerPair.first) != layersToIgnore.end()){
-      continue;
+  auto callback = [this, &baseImage, &frameIdx, &overlayOffset, &layersToIgnore]
+                     (Vision::LayerName layerName, SpriteBoxName spriteBoxName, 
+                      const SpriteBox& spriteBox, const SpriteEntry& spriteEntry){
+    if(layersToIgnore.find(layerName) != layersToIgnore.end()){
+      return;
     }
-
-    auto& layoutMap = layerPair.second.GetLayoutMap();
-    auto& imageMap  = layerPair.second.GetImageMap();
-    for(const auto& imagePair : imageMap){
-      auto layoutIter = layoutMap.find(imagePair.first);
-      if(layoutIter != layoutMap.end()){
-        auto& spriteBox = layoutIter->second;
-        // If implementation quad was found, draw it into the image at the point
-        // specified by the layout quad def
-        const ImageRGBA& subImage = LoadSprite(imagePair.second);
-        Point2f topCorner(spriteBox.topLeftCorner.x() + overlayOffset.x(),
-                          spriteBox.topLeftCorner.y() + overlayOffset.y());
-        baseImage.DrawSubImage(subImage, topCorner);
-
-        // dev only verification that image size is as expected
-        ANKI_VERIFY(spriteBox.width == subImage.GetNumCols(), 
-                    "CompositeImageBuilder.BuildCompositeImage.InvalidWidth",
-                    "Quadrant Name:%s Expected Width:%d, Image Width:%d",
-                    SpriteBoxNameToString(spriteBox.spriteBoxName), spriteBox.width, subImage.GetNumCols());
-        ANKI_VERIFY(spriteBox.height == subImage.GetNumRows(), 
-                    "CompositeImageBuilder.BuildCompositeImage.InvalidHeight",
-                    "Quadrant Name:%s Expected Height:%d, Image Height:%d",
-                    SpriteBoxNameToString(spriteBox.spriteBoxName), spriteBox.height, subImage.GetNumRows());
+    // If implementation quad was found, draw it into the image at the point
+    // specified by the layout quad def
+    Vision::SpriteHandle  handle;
+    if(spriteEntry._spriteSequence.GetFrame(frameIdx, handle)){
+      if(handle->IsContentCached()){
+        const ImageRGBA& subImage = handle->GetCachedSpriteContentsRGBA();
+        DrawSubImage(baseImage, subImage, spriteBox, overlayOffset);
+      }else{
+        const ImageRGBA& subImage = handle->GetSpriteContentsRGBA();
+        DrawSubImage(baseImage, subImage, spriteBox, overlayOffset);
       }
-    } // end for(imageMap)
+    }
+  };
+  ProcessAllSpriteBoxes(callback);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImage::OverlayImageWithFrame(Image& baseImage,
+                                           const u32 frameIdx,
+                                           std::set<Vision::LayerName> layersToIgnore,
+                                           const Point2i& overlayOffset) const
+{
+  auto callback = [this, &baseImage, &frameIdx, &overlayOffset, &layersToIgnore]
+                     (Vision::LayerName layerName, SpriteBoxName spriteBoxName, 
+                      const SpriteBox& spriteBox, const SpriteEntry& spriteEntry){
+    if(layersToIgnore.find(layerName) != layersToIgnore.end()){
+      return;
+    }
+    // If implementation quad was found, draw it into the image at the point
+    // specified by the layout quad def
+    Vision::SpriteHandle  handle;
+    if(spriteEntry._spriteSequence.GetFrame(frameIdx, handle)){
+      if(handle->IsContentCached()){
+        const Image& subImage = handle->GetCachedSpriteContentsGrayscale();
+        DrawSubImage(baseImage, subImage, spriteBox, overlayOffset);
+      }else{
+        const Image& subImage = handle->GetSpriteContentsGrayscale();
+        DrawSubImage(baseImage, subImage, spriteBox, overlayOffset);
+      }
+    }
+  };
+  ProcessAllSpriteBoxes(callback);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+uint CompositeImage::GetFullLoopLength(){
+  uint maxSequenceLength = 0;
+  auto callback = [&maxSequenceLength](Vision::LayerName layerName, SpriteBoxName spriteBoxName, 
+                                       const SpriteBox& spriteBox, const SpriteEntry& spriteEntry){
+    const auto numFrames = spriteEntry._spriteSequence.GetNumFrames();
+    maxSequenceLength = (numFrames > maxSequenceLength) ? numFrames : maxSequenceLength;
+  };
+
+  ProcessAllSpriteBoxes(callback);
+
+  return maxSequenceLength;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImage::ProcessAllSpriteBoxes(AllSpriteBoxDataFunc processCallback) const
+{
+    for(const auto& layerPair : _layerMap){
+      auto& layoutMap = layerPair.second.GetLayoutMap();
+      auto& imageMap  = layerPair.second.GetImageMap();
+      for(const auto& imagePair : imageMap){
+        auto layoutIter = layoutMap.find(imagePair.first);
+        if(layoutIter == layoutMap.end()){
+          return;
+        }
+
+        auto& spriteBox = layoutIter->second;
+        processCallback(layerPair.first, imagePair.first, spriteBox, imagePair.second);
+      } // end for(imageMap)
   } // end for(_layerMap)
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ImageRGBA CompositeImage::LoadSprite(Vision::SpriteName spriteName) const
+template<typename ImageType>
+void CompositeImage::DrawSubImage(ImageType& baseImage, const ImageType& subImage, 
+                                  const SpriteBox& spriteBox, const Point2i& overlayOffset) const
 {
-  DEV_ASSERT(_spriteMap != nullptr, "CompositeImage.AttemptingToLoadSpriteWithoutMap");
-  ImageRGBA outImage;
-  const bool isGrayscale = true;
-  const std::string fullImagePath = _spriteMap->GetValue(spriteName);
-  if(isGrayscale){
-    Image grayImage;
-    auto res = grayImage.Load(fullImagePath);
-    ANKI_VERIFY(RESULT_OK == res,
-                "CompositeImage.SpriteBoxImpl.Constructor.GrayLoadFailed",
-                "Failed to load sprite %s",
-                SpriteNameToString(spriteName));
-    outImage = ImageRGBA(grayImage.GetNumRows(), grayImage.GetNumCols());
-    outImage.SetFromGray(grayImage);
-  }else{
-    auto res = outImage.Load(fullImagePath);
-    ANKI_VERIFY(RESULT_OK == res,
-                "CompositeImage.SpriteBoxImpl.Constructor.ColorLoadFailed",
-                "Failed to load sprite %s",
-                SpriteNameToString(spriteName));
-  }
-  return outImage;
+  Point2f topCorner(spriteBox.topLeftCorner.x() + overlayOffset.x(),
+                    spriteBox.topLeftCorner.y() + overlayOffset.y());
+  const bool drawBlankPixels = false;
+  baseImage.DrawSubImage(subImage, topCorner, drawBlankPixels);
+
+  // dev only verification that image size is as expected
+  ANKI_VERIFY(spriteBox.width == subImage.GetNumCols(), 
+              "CompositeImageBuilder.BuildCompositeImage.InvalidWidth",
+              "Quadrant Name:%s Expected Width:%d, Image Width:%d",
+              SpriteBoxNameToString(spriteBox.spriteBoxName), spriteBox.width, subImage.GetNumCols());
+  ANKI_VERIFY(spriteBox.height == subImage.GetNumRows(), 
+              "CompositeImageBuilder.BuildCompositeImage.InvalidHeight",
+              "Quadrant Name:%s Expected Height:%d, Image Height:%d",
+              SpriteBoxNameToString(spriteBox.spriteBoxName), spriteBox.height, subImage.GetNumRows());
 }
 
 

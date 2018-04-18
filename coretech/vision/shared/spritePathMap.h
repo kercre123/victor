@@ -16,7 +16,7 @@
 #include "util/cladHelpers/cladEnumToStringMap.h"
 
 namespace Anki {
-namespace CannedAnimLib {
+namespace Vision {
 
 using SpritePathMap = Util::CladEnumToStringMap<Vision::SpriteName>;
   

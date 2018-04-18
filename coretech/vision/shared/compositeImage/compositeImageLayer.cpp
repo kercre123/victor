@@ -15,6 +15,8 @@
 
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
+
 
 namespace Anki {
 namespace Vision {
@@ -58,13 +60,25 @@ CompositeImageLayer::~CompositeImageLayer()
 
 }
 
-
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool CompositeImageLayer::GetSpriteName(SpriteBoxName sbName, Vision::SpriteName& outName)  const 
+bool CompositeImageLayer::GetSpriteSequenceName(SpriteBoxName sbName, Vision::SpriteName& sequenceName)  const
 {
   auto imageMapIter = _imageMap.find(sbName);
   if(imageMapIter != _imageMap.end()){
-    outName = imageMapIter->second;
+    sequenceName = imageMapIter->second._spriteName;
+    return true;
+  }
+  return false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CompositeImageLayer::GetSpriteSequence(SpriteBoxName sbName, Vision::SpriteSequence& seq)  const 
+{
+  auto imageMapIter = _imageMap.find(sbName);
+  if(imageMapIter != _imageMap.end()){
+    seq = imageMapIter->second._spriteSequence;
     return true;
   }
   return false;
@@ -79,14 +93,16 @@ void CompositeImageLayer::AddToLayout(SpriteBoxName sbName, const SpriteBox& spr
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CompositeImageLayer::AddToImageMap(SpriteBoxName sbName, const Vision::SpriteName& spriteName)
+void CompositeImageLayer::AddToImageMap(SpriteCache* cache, SpriteSequenceContainer* seqContainer,
+                                        SpriteBoxName sbName, const Vision::SpriteName& spriteName)
 {
-  _imageMap.emplace(sbName, spriteName);
+  _imageMap.emplace(sbName, SpriteEntry(cache, seqContainer, spriteName));
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CompositeImageLayer::SetImageMap(const Json::Value& imageMapSpec)
+void CompositeImageLayer::SetImageMap(const Json::Value& imageMapSpec, 
+                                      SpriteCache* cache, SpriteSequenceContainer* seqContainer)
 {
   using namespace CompositeImageConfigKeys;
 
@@ -97,7 +113,11 @@ void CompositeImageLayer::SetImageMap(const Json::Value& imageMapSpec)
     SpriteBoxName sbName           = SpriteBoxNameFromString(sbString);
     const std::string spriteString = JsonTools::ParseString(entry, kSpriteNameKey, implDebugStr);
     Vision::SpriteName spriteName   = Vision::SpriteNameFromString(spriteString);
-    _imageMap.emplace(std::make_pair(sbName, spriteName));
+    auto spriteEntry = Vision::CompositeImageLayer::SpriteEntry(cache,
+                                                                seqContainer,
+                                                                spriteName);
+
+    _imageMap.emplace(std::make_pair(sbName,  std::move(spriteEntry)));
   }
 }
 
@@ -143,6 +163,35 @@ SerializedSpriteBox CompositeImageLayer::SpriteBox::Serialize() const
   return serialized;
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+CompositeImageLayer::SpriteEntry::SpriteEntry(SpriteCache* cache,
+                                              SpriteSequenceContainer* seqContainer,
+                                              Vision::SpriteName spriteName)
+: _spriteName(spriteName)
+{
+  if(Vision::IsSpriteSequence(spriteName, false)){
+    _spriteSequence = *seqContainer->GetSequenceByName(spriteName);
+  }else{
+    _spriteSequence.AddFrame(cache->GetSpriteHandle(spriteName));
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+CompositeImageLayer::SpriteEntry::SpriteEntry(Vision::SpriteSequence&& sequence)
+{
+  _spriteSequence = std::move(sequence);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CompositeImageLayer::SpriteEntry::operator == (const SpriteEntry& other) const {
+  if(_spriteName == Vision::SpriteName::Count){
+    PRINT_NAMED_ERROR("CompositeImageLayer.SpriteEntry.==Invalid",
+                      "Invalid comparison because spriteName is count");
+  }
+  return (_spriteName == other._spriteName);
+}
 
 }; // namespace Vision
 }; // namespace Anki

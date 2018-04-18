@@ -114,7 +114,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _CameraImage: {fileID: 11465920}
-  _OverlayImage: {fileID: 11416994}
+  _OverlayImageWithFrame: {fileID: 11416994}
 --- !u!222 &22238110
 CanvasRenderer:
   m_ObjectHideFlags: 1

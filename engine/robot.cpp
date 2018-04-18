@@ -46,6 +46,7 @@
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
+#include "engine/components/spriteCacheComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/cozmoContext.h"
@@ -208,6 +209,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::MicDirectionHistory,        new MicDirectionHistory());
     _components->AddDependentComponent(RobotComponentID::Battery,                    new BatteryComponent());
     _components->AddDependentComponent(RobotComponentID::FullRobotPose,              new FullRobotPose());
+    _components->AddDependentComponent(RobotComponentID::SpriteCache,                new SpriteCacheComponent());
     _components->InitComponents(this);
   }
       

@@ -85,7 +85,7 @@ void DrawTextCenteredHorizontally(const std::string text,
                                   int font,
                                   float scale,
                                   int thickness,
-                                  Vision::ImageRGB565& img,
+                                  Vision::ImageRGBA& img,
                                   const ColorRGBA& color,
                                   int verticalPos,
                                   bool drawTwiceToMaybeFillGaps)
@@ -126,17 +126,19 @@ void DrawStartPairingScreen(AnimationStreamer* animStreamer)
   animStreamer->EnableKeepFaceAlive(false, 0);
   animStreamer->Abort();
 
-  Vision::ImageRGB565 img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
-  img.FillWith(Vision::PixelRGB565(0, 0, 0));
+  auto* img = new Vision::ImageRGBA(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+  img->FillWith(Vision::PixelRGBA(0, 0));
 
-  DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, 0.5f, 1, img, kColor, 0, false);
+  DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, 0.5f, 1, *img, kColor, 0, false);
 
   cv::Size textSize;
   float scale = 0;
-  MakeTextFillImageWidth(kURL, CV_FONT_NORMAL, 1, img.GetNumCols(), textSize, scale);
-  DrawTextCenteredHorizontally(kURL, CV_FONT_NORMAL, scale, 1, img, kColor, (FACE_DISPLAY_HEIGHT-textSize.height)/2, true);
+  MakeTextFillImageWidth(kURL, CV_FONT_NORMAL, 1, img->GetNumCols(), textSize, scale);
+  DrawTextCenteredHorizontally(kURL, CV_FONT_NORMAL, scale, 1, *img, kColor, (FACE_DISPLAY_HEIGHT-textSize.height)/2, true);
 
-  animStreamer->SetFaceImage(img, 0);
+  auto handle = std::make_shared<Vision::SpriteWrapper>(img);
+  const bool shouldRenderInEyeHue = false;
+  animStreamer->SetFaceImage(handle, shouldRenderInEyeHue, 0);
 }
 
 // Draws BLE name, key icon, and BLE pin to screen
@@ -145,45 +147,52 @@ void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* conte
   Vision::ImageRGB key;
   key.Load(context->GetDataLoader()->GetSpritePaths()->GetValue(Vision::SpriteName::PairingIconKey));
 
-  Vision::ImageRGB img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
-  img.FillWith(0);
+  auto* img = new Vision::ImageRGBA(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+  img->FillWith(Vision::PixelRGBA(0, 0));
 
   Point2f p((FACE_DISPLAY_WIDTH - key.GetNumCols())/2,
             (FACE_DISPLAY_HEIGHT - key.GetNumRows())/2);
-  img.DrawSubImage(key, p);
+  img->DrawSubImage(key, p);
 
-  Vision::ImageRGB565 i;
-  i.SetFromImageRGB(img);
+  DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, 0.5f, 1, *img, kColor, 0, false);
 
-  DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, 0.5f, 1, i, kColor, 0, false);
+  DrawTextCenteredHorizontally(std::to_string(_pin), CV_FONT_NORMAL, 0.7f, 1, *img, kColor, FACE_DISPLAY_HEIGHT-20, false);
 
-  DrawTextCenteredHorizontally(std::to_string(_pin), CV_FONT_NORMAL, 0.7f, 1, i, kColor, FACE_DISPLAY_HEIGHT-20, false);
-
-  animStreamer->SetFaceImage(i, 0);
+  auto handle = std::make_shared<Vision::SpriteWrapper>(img);
+  const bool shouldRenderInEyeHue = false;
+  animStreamer->SetFaceImage(handle, shouldRenderInEyeHue, 0);
 }
 
 // Uses a png sequence animation to draw wifi icon to screen
 void DrawWifiScreen(AnimationStreamer* animStreamer)
 {
-  animStreamer->SetStreamingAnimation("anim_pairing_icon_wifi", 0, 0);
+  const bool shouldInterrupt = true;
+  const bool shouldRenderInEyeHue = false;
+  animStreamer->SetStreamingAnimation("anim_pairing_icon_wifi", 0, 0, shouldInterrupt, shouldRenderInEyeHue);
 }
 
 // Uses a png sequence animation to draw os updating icon to screen
 void DrawUpdatingOSScreen(AnimationStreamer* animStreamer)
 {
-  animStreamer->SetStreamingAnimation("anim_pairing_icon_update", 0, 0);
+  const bool shouldInterrupt = true;
+  const bool shouldRenderInEyeHue = false;
+  animStreamer->SetStreamingAnimation("anim_pairing_icon_update", 0, 0, shouldInterrupt, shouldRenderInEyeHue);
 }
 
 // Uses a png sequence animation to draw os updating error icon to screen
 void DrawUpdatingOSErrorScreen(AnimationStreamer* animStreamer)
 {
-  animStreamer->SetStreamingAnimation("anim_pairing_icon_update_error", 0, 0);
+  const bool shouldInterrupt = true;
+  const bool shouldRenderInEyeHue = false;
+  animStreamer->SetStreamingAnimation("anim_pairing_icon_update_error", 0, 0, shouldInterrupt, shouldRenderInEyeHue);
 }
 
 // Uses a png sequence animation to draw waiting for app icon to screen
 void DrawWaitingForAppScreen(AnimationStreamer* animStreamer)
 {
-  animStreamer->SetStreamingAnimation("anim_pairing_icon_awaitingapp", 0, 0);
+  const bool shouldInterrupt = true;
+  const bool shouldRenderInEyeHue = false;
+  animStreamer->SetStreamingAnimation("anim_pairing_icon_awaitingapp", 0, 0, shouldInterrupt, shouldRenderInEyeHue);
 }
 
 void SetBLEPin(uint32_t pin)

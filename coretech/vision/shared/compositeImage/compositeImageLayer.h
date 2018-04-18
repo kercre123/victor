@@ -18,6 +18,8 @@
 #include "clad/types/spriteNames.h"
 
 #include "coretech/common/engine/math/point.h"
+#include "coretech/vision/shared/spriteCache/spriteCache.h"
+#include "coretech/vision/shared/spriteSequence/spriteSequence.h"
 #include <unordered_map>
 #include "util/helpers/templateHelpers.h"
 
@@ -40,13 +42,15 @@ static const char* kWidthKey           = "width";
 static const char* kHeightKey          = "height";
 }
 
+class SpriteSequenceContainer;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class CompositeImageLayer{
 public:
   struct SpriteBox;
+  struct SpriteEntry;
   using LayoutMap = std::map<SpriteBoxName, SpriteBox>;
-  using ImageMap  = std::unordered_map<SpriteBoxName, Vision::SpriteName, Anki::Util::EnumHasher>;
+  using ImageMap  = std::unordered_map<SpriteBoxName, SpriteEntry, Anki::Util::EnumHasher>;
 
   CompositeImageLayer() {};
   CompositeImageLayer(const Json::Value& layoutSpec);
@@ -60,15 +64,19 @@ public:
   const LayoutMap& GetLayoutMap() const { return _layoutMap;}
   const ImageMap&  GetImageMap()  const { return _imageMap;}
 
-  // Returns true if image has been set for sprite box name and outName has been set
-  bool GetSpriteName(SpriteBoxName sbName, Vision::SpriteName& outName)  const;
+  // Returns true if the spritebox maps to a sprite sequence and the name of that sequence has been set
+  bool GetSpriteSequenceName(SpriteBoxName sbName, Vision::SpriteName& sequenceName)  const;
+  // Returns true if image has been set for sprite box name and seq has been set
+  bool GetSpriteSequence(SpriteBoxName sbName, Vision::SpriteSequence& seq)  const;
 
   // Functions which add on to the current layout
   void AddToLayout(SpriteBoxName sbName, const SpriteBox& spriteBox);
-  void AddToImageMap(SpriteBoxName sbName, const Vision::SpriteName& spriteName);
+  void AddToImageMap(SpriteCache* cache, SpriteSequenceContainer* seqContainer,
+                     SpriteBoxName sbName, const Vision::SpriteName& spriteName);
 
   // Functions which replace existing map with a new map
-  void SetImageMap(const Json::Value& imageMapSpec);
+  void SetImageMap(const Json::Value& imageMapSpec,
+                   SpriteCache* cache, SpriteSequenceContainer* seqContainer);
   void SetImageMap(ImageMap&& imageMap){_imageMap = imageMap;}
   // Checks image map against the Layer's layout to ensure spritebox names match up
   bool IsValidImageMap(const ImageMap& imageMap, bool requireAllSpriteBoxes = false) const;
@@ -102,6 +110,25 @@ struct CompositeImageLayer::SpriteBox{
   Point2i       topLeftCorner;
   int           width;
   int           height;
+};
+
+// TODO: VIC-2414 - currently composite images can only be sent
+// via sprite names in the image map. Should be able to have  a serialized
+// sprite handle fallback that sends file paths or image chunks when appropriate
+struct CompositeImageLayer::SpriteEntry{
+  SpriteEntry(SpriteCache* cache,
+              SpriteSequenceContainer* seqContainer,
+              Vision::SpriteName spriteName);
+
+  SpriteEntry(Vision::SpriteSequence&& sequence);
+          
+  bool operator == (const SpriteEntry& other) const;
+  bool operator != (const SpriteEntry& other) const{ return !(*this == other);}
+
+  Vision::SpriteSequence _spriteSequence;
+  // For serialization only
+  Vision::SpriteName _spriteName = Vision::SpriteName::Count;
+  
 };
 
 }; // namespace Vision

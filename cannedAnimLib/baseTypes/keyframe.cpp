@@ -18,6 +18,7 @@
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/vision/shared/compositeImage/compositeImage.h"
 #include "cannedAnimLib/baseTypes/cozmo_anim_generated.h"
 #include "cannedAnimLib/baseTypes/keyframe.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -275,18 +276,20 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
 #pragma mark -
 #pragma mark SpriteSequenceKeyFrame
 
-    SpriteSequenceKeyFrame::SpriteSequenceKeyFrame(Vision::SpriteName sequenceName,
-                                                   bool containsRuntimeSpriteSeq,
-                                                   bool runtimeSequenceIsGrayscale)
-    : _spriteSequenceName(sequenceName) 
+    SpriteSequenceKeyFrame::SpriteSequenceKeyFrame(bool shouldRenderInEyeHue,
+                                                   Vision::SpriteName sequenceName,
+                                                   bool containsRuntimeSpriteSeq)
+    : _shouldRenderInEyeHue(shouldRenderInEyeHue)
+    , _spriteSequenceName(sequenceName) 
     {
       if(containsRuntimeSpriteSeq){
-        _runtimeSpriteSequence = std::make_unique<SpriteSequence>(runtimeSequenceIsGrayscale);
+        _runtimeSpriteSequence = std::make_unique<Vision::SpriteSequence>();
       }
     }
 
     SpriteSequenceKeyFrame::SpriteSequenceKeyFrame(const SpriteSequenceKeyFrame& other)
     {
+      _shouldRenderInEyeHue = other._shouldRenderInEyeHue;
       _cannedSpriteSequence  = other._cannedSpriteSequence;
       _rawSeqName            = other._rawSeqName;
       _spriteSequenceName    = other._spriteSequenceName;
@@ -297,11 +300,19 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       _currentTime_ms        = other._currentTime_ms;
       
       if(other._runtimeSpriteSequence != nullptr){
-        _runtimeSpriteSequence.reset(new SpriteSequence(*other._runtimeSpriteSequence));
+        _runtimeSpriteSequence.reset(new Vision::SpriteSequence(*other._runtimeSpriteSequence));
+      }
+
+      if(other._compositeImage != nullptr){
+        _compositeImage.reset(new Vision::CompositeImage(*other._compositeImage));
       }
       
     }
 
+    SpriteSequenceKeyFrame::~SpriteSequenceKeyFrame()
+    {
+
+    }
     
     Result SpriteSequenceKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
@@ -341,8 +352,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     }
 
     
-    void SpriteSequenceKeyFrame::GiveKeyframeImageAccess(const CannedAnimLib::SpritePathMap* spriteMap,
-                                                         SpriteSequenceContainer* spriteSequenceContainer) 
+    void SpriteSequenceKeyFrame::GiveKeyframeImageAccess(const Vision::SpritePathMap* spriteMap,
+                                                         Vision::SpriteSequenceContainer* spriteSequenceContainer) 
     {
       DEV_ASSERT((spriteMap != nullptr) && (_runtimeSpriteSequence == nullptr), 
                  "SpriteSequenceKeyFram.GiveKeyframeImageAccess.InvalidSpriteMap");
@@ -360,8 +371,17 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
                     _rawSeqName.c_str());
       }
     }
+
+    bool SpriteSequenceKeyFrame::VerifyOnlyOneImplementationSet()
+    {
+      const bool oneSequenceNull = (_cannedSpriteSequence == nullptr) || (_runtimeSpriteSequence == nullptr);
+      const bool oneRuntimeNull  = (_runtimeSpriteSequence == nullptr) || (_compositeImage == nullptr);
+      const bool oneOtherNull    = (_cannedSpriteSequence == nullptr) || (_compositeImage == nullptr);
+      return oneSequenceNull && oneRuntimeNull && oneOtherNull;
+    }
+
     
-    bool SpriteSequenceKeyFrame::ParseSequenceNameFromString(const CannedAnimLib::SpritePathMap* spriteMap)
+    bool SpriteSequenceKeyFrame::ParseSequenceNameFromString(const Vision::SpritePathMap* spriteMap)
     {
       // _rawSeqName is only the folder name - manually check all entries in sprite map
       // so that just the folder name is pulled out of the full path to try and find a match
@@ -420,51 +440,37 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       // played in order to avoid unbounded growth (since a procedural animation can
       // be played for an arbitrary period of time) so we check for whether or not
       // there are any frames left.
+      if(ANKI_DEV_CHEATS){
+        ANKI_VERIFY(VerifyOnlyOneImplementationSet(), 
+                    "SpriteSequenceKeyFrame.IsDone.MultilpeImplementationsSet", 
+                    "");
+      }
+
       if(_runtimeSpriteSequence != nullptr){
         return _runtimeSpriteSequence->GetNumFrames() == 0;
       }else if(_cannedSpriteSequence != nullptr){
         return _cannedSpriteSequence->GetNumFrames() <= _curFrame;
+      }else if(_compositeImage != nullptr){
+        return _compositeImage->GetFullLoopLength() <= _curFrame;
       }
       return true;
     }
 
-    void SpriteSequenceKeyFrame::SetRuntimeSequenceIsGrayscale(bool isGrayscale)
-    { 
+    void SpriteSequenceKeyFrame::AddFrameToRuntimeSequence(Vision::SpriteHandle spriteHandle)
+    {
       if(_runtimeSpriteSequence != nullptr){
-        if(_runtimeSpriteSequence->GetNumFrames() > 0){
-          PRINT_NAMED_WARNING("SpriteSequenceKeyFrame.OverrideIsGrayscale.RuntimeSequenceHasFrames", 
-                              "Clearing %zu frames out of runtime sprite sequence to change grayscale value",
-                              _runtimeSpriteSequence->GetNumFrames());
-        }
-
-        _runtimeSpriteSequence.reset(new SpriteSequence(isGrayscale));
+        _runtimeSpriteSequence->AddFrame(spriteHandle);
       }
     }
 
-    bool SpriteSequenceKeyFrame::IsGrayscale() const
+    void SpriteSequenceKeyFrame::SetCompositeImage(Vision::SpriteCache* spriteCache, Vision::CompositeImage* compImg)
     {
-      if(_cannedSpriteSequence != nullptr){
-        return _cannedSpriteSequence->IsGrayscale();
-      }else if(_runtimeSpriteSequence != nullptr){
-        return _runtimeSpriteSequence->IsGrayscale();
-      }
-
-      return true;
+      _compositeImage = std::make_unique<Vision::CompositeImage>(spriteCache);
+      _compositeImage.reset(compImg);
     }
 
     
-    bool SpriteSequenceKeyFrame::GetFaceImage(Vision::Image& img)
-    {
-      return GetFaceImageHelper(img);
-    }
-    
-    bool SpriteSequenceKeyFrame::GetFaceImage(Vision::ImageRGB565& img)
-    {
-      return GetFaceImageHelper(img);
-    }
-    
-    template <typename ImageType>
-    bool SpriteSequenceKeyFrame::GetFaceImageHelper(ImageType& img)
+    bool SpriteSequenceKeyFrame::GetFaceImageHandle(Vision::SpriteHandle& handle)
     {
       if(IsDone()) {
         _curFrame = 0;
@@ -473,16 +479,28 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         return false;
       }
 
-      if(_currentTime_ms >= _nextFrameTime_ms){
+      if(ANKI_DEV_CHEATS){
+        ANKI_VERIFY(VerifyOnlyOneImplementationSet(), 
+                    "SpriteSequenceKeyFrame.GetFaceImageHandle.MultilpeImplementationsSet", 
+                    "");
+      }
 
+      if(_currentTime_ms >= _nextFrameTime_ms){
         if(_runtimeSpriteSequence != nullptr){
-          _runtimeSpriteSequence->GetFrame(0, img);
+          _runtimeSpriteSequence->GetFrame(0, handle);
           _runtimeSpriteSequence->PopFront();
         }else if(_cannedSpriteSequence != nullptr){
-          _cannedSpriteSequence->GetFrame(_curFrame, img);
+          _cannedSpriteSequence->GetFrame(_curFrame, handle);
+          ++_curFrame;
+        }else if(_compositeImage != nullptr){
+          // TODO: Kevin K - currently all of our composite images/sequences are grayscale
+          // eventually we'll want to inspect contents and colorize layers that are supposde to be eyes only
+          auto* img = new Vision::Image(_compositeImage->GetHeight(), _compositeImage->GetWidth());
+          img->FillWith(0);
+          _compositeImage->OverlayImageWithFrame(*img, _curFrame);
+          handle = std::make_shared<Vision::SpriteWrapper>(img);
           ++_curFrame;
         }
-
         _nextFrameTime_ms = _currentTime_ms + _frameDuration_ms;
         return true;
       }else{

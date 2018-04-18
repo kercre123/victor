@@ -21,8 +21,8 @@
 //#include "cozmoAnim/animation/trackLayerManagers/faceLayerManager.h"
 
 #include "cannedAnimLib/proceduralFace/proceduralFaceDrawer.h"
-#include "cannedAnimLib/spriteSequences/spriteSequence.h"
-#include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
+#include "coretech/vision/shared/spriteSequence/spriteSequence.h"
+#include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
 
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/animationAudioClient.h"
@@ -38,6 +38,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/helpers/boundedWhile.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
@@ -358,7 +359,7 @@ namespace Cozmo {
     FaceDisplay::removeInstance();
   }
   
-  Result AnimationStreamer::SetStreamingAnimation(const std::string& name, Tag tag, u32 numLoops, bool interruptRunning)
+  Result AnimationStreamer::SetStreamingAnimation(const std::string& name, Tag tag, u32 numLoops, bool interruptRunning, bool shouldRenderInEyeHue)
   {
     // Special case: stop streaming the current animation
     if(name.empty()) {
@@ -371,10 +372,10 @@ namespace Cozmo {
       Abort();
       return RESULT_OK;
     }
-    return SetStreamingAnimation(_context->GetDataLoader()->GetCannedAnimation(name), tag, numLoops, interruptRunning, false);
+    return SetStreamingAnimation(_context->GetDataLoader()->GetCannedAnimation(name), tag, numLoops, interruptRunning, shouldRenderInEyeHue, false);
   }
   
-  Result AnimationStreamer::SetStreamingAnimation(Animation* anim, Tag tag, u32 numLoops, bool interruptRunning, bool isInternalAnim)
+  Result AnimationStreamer::SetStreamingAnimation(Animation* anim, Tag tag, u32 numLoops, bool interruptRunning, bool shouldRenderInEyeHue, bool isInternalAnim)
   {
     if(DEBUG_ANIMATION_STREAMING)
     {
@@ -410,6 +411,20 @@ namespace Cozmo {
     }
 
     _wasAnimationInterruptedWithNothing = false;
+
+    // Override default keyframe assumption that keyframes are grayscale
+    if(!shouldRenderInEyeHue){
+      auto& spriteSeqTrack = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>();
+      const auto& maxCount = Animations::Track<SpriteSequenceKeyFrame>::ConstMaxFramesPerTrack();
+      BOUNDED_WHILE(maxCount, spriteSeqTrack.HasFramesLeft()){
+        auto& keyframe = spriteSeqTrack.GetCurrentKeyFrame();
+        keyframe.SetShouldRenderInEyeHue(false);
+        spriteSeqTrack.MoveToNextKeyFrame();
+      }
+      spriteSeqTrack.MoveToStart();
+    }
+
+
   
     // Get the animation ready to play
     InitStream(_streamingAnimation, tag);
@@ -500,8 +515,12 @@ namespace Cozmo {
     assert(destI == kExpectedNumPixels * (1+msg.chunkIndex));
     
     if (_faceImageChunksReceivedBitMask == kAllFaceImageChunksReceivedMask) {
+      auto* img = new Vision::ImageRGBA(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+      img->SetFromGray(_faceImageGrayscale);
+      auto handle = std::make_shared<Vision::SpriteWrapper>(img);
       //PRINT_CH_DEBUG(kLogChannelName, "AnimationStreamer.Process_displayFaceImageChunk.CompleteFaceReceived", "");
-      SetFaceImage(_faceImageGrayscale, msg.duration_ms);
+      const bool shouldRenderInEyeHue = true;
+      SetFaceImage(handle, shouldRenderInEyeHue, msg.duration_ms);
       _faceImageId = 0;
       _faceImageChunksReceivedBitMask = 0;
     }
@@ -532,8 +551,12 @@ namespace Cozmo {
     std::copy_n(msg.faceData, numPixels, imageData_i + (msg.chunkIndex * kMaxNumPixelsPerChunk) );
     
     if (_faceImageGrayscaleChunksReceivedBitMask == kAllFaceImageGrayscaleChunksReceivedMask) {
+      auto* img = new Vision::ImageRGBA(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+      img->SetFromGray(_faceImageGrayscale);
+      auto handle = std::make_shared<Vision::SpriteWrapper>(img);
       //PRINT_CH_DEBUG(kLogChannelName, "AnimationStreamer.Process_displayFaceImageGrayscaleChunk.CompleteFaceReceived", "");
-      SetFaceImage(_faceImageGrayscale, msg.duration_ms);
+      const bool shouldRenderInEyeHue = true;
+      SetFaceImage(handle, shouldRenderInEyeHue, msg.duration_ms);
       _faceImageGrayscaleId = 0;
       _faceImageGrayscaleChunksReceivedBitMask = 0;
     }
@@ -558,8 +581,12 @@ namespace Cozmo {
     std::copy_n(msg.faceData, numPixels, _faceImageRGB565.GetRawDataPointer() + (msg.chunkIndex * kMaxNumPixelsPerChunk) );
     
     if (_faceImageRGBChunksReceivedBitMask == kAllFaceImageRGBChunksReceivedMask) {
+      auto* img = new Vision::ImageRGBA(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+      img->SetFromRGB565(_faceImageRGB565);
+      auto handle = std::make_shared<Vision::SpriteWrapper>(img);
       //PRINT_CH_DEBUG(kLogChannelName, "AnimationStreamer.Process_displayFaceImageRGBChunk.CompleteFaceReceived", "");
-      SetFaceImage(_faceImageRGB565, msg.duration_ms);
+      const bool shouldRenderInEyeHue = false;
+      SetFaceImage(handle, shouldRenderInEyeHue, msg.duration_ms);
       _faceImageRGBId = 0;
       _faceImageRGBChunksReceivedBitMask = 0;
     }
@@ -578,23 +605,26 @@ namespace Cozmo {
     }
     _compositeImageID = msg.compositeImageID;
    
+    auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
+    auto* spriteSeqContainer = _context->GetDataLoader()->GetSpriteSequenceContainer();
+
     // Add the chunk to the builder
     if(_compositeImageBuilder == nullptr){
-      auto* builder = new Vision::CompositeImageBuilder(_context->GetDataLoader()->GetSpritePaths(),
-                                                        msg.compositeImageChunk);
+      auto* builder = new Vision::CompositeImageBuilder(spriteCache, spriteSeqContainer, msg.compositeImageChunk);
       _compositeImageBuilder.reset(builder);
     }else{
-      _compositeImageBuilder->AddImageChunk(msg.compositeImageChunk);
+      _compositeImageBuilder->AddImageChunk(spriteCache, spriteSeqContainer, msg.compositeImageChunk);
     }
 
     // Display the image if all chunks received
     if(_compositeImageBuilder->CanBuildImage()){
-      Vision::CompositeImage outImage;
-      const bool builtImage = _compositeImageBuilder->GetCompositeImage(outImage);
+      auto* outImage = new Vision::CompositeImage(_context->GetDataLoader()->GetSpriteCache(), 
+                                      _context->GetDataLoader()->GetSpritePaths());
+      const bool builtImage = _compositeImageBuilder->GetCompositeImage(*outImage);
       if(ANKI_VERIFY(builtImage, 
                      "AnimationStreamer.Process_displayCompositeImageChunk.FailedToBuildImage",
                      "Composite image failed to build")){
-        SetFaceImageHelper(outImage.RenderImage().ToGray(), msg.duration_ms, true);
+        SetCompositeImage(outImage, msg.duration_ms);
       }
 
       _compositeImageBuilder.reset();
@@ -602,23 +632,64 @@ namespace Cozmo {
     
   }
 
-
-  Result AnimationStreamer::SetFaceImage(const Vision::Image& img, u32 duration_ms)
-  {
-    return SetFaceImageHelper(img, duration_ms, true);
-  }
-
-
-  Result AnimationStreamer::SetFaceImage(const Vision::ImageRGB565& imgRGB565, u32 duration_ms)
+  Result AnimationStreamer::SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms)
   {
     if (_redirectFaceImagesToDebugScreen) {
-      FaceInfoScreenManager::getInstance()->DrawCameraImage(imgRGB565);
+      Vision::ImageRGB565 debugImg;
+      debugImg.SetFromImageRGB(spriteHandle->GetSpriteContentsRGBA());
+      FaceInfoScreenManager::getInstance()->DrawCameraImage(debugImg);
 
       // TODO: Return here or will that screw up stuff on the engine side?
       //return RESULT_OK;
     }
-    return SetFaceImageHelper(imgRGB565, duration_ms, false);
+
+    DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetFaceImage.NullProceduralAnimation");
+    
+    // Clear out any runtime sequences currently set on the procedural animation
+    auto& spriteSeqTrack = _proceduralAnimation->GetTrack<SpriteSequenceKeyFrame>();
+    spriteSeqTrack.Clear();
+    
+    // Trigger time of keyframe is 0 since we want it to start playing immediately
+    SpriteSequenceKeyFrame kf(shouldRenderInEyeHue, Vision::SpriteName::Count, true);
+    kf.AddFrameToRuntimeSequence(spriteHandle);
+    kf.SetFrameDuration_ms(duration_ms);
+    Result result = _proceduralAnimation->AddKeyFrameToBack(kf);
+    if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetFaceImage.FailedToAddKeyFrame", "")))
+    {
+      return result;
+    }
+    
+    if (_streamingAnimation != _proceduralAnimation) {
+      result = SetStreamingAnimation(_proceduralAnimation, 0);
+    }
+    return result;
   }
+
+  Result AnimationStreamer::SetCompositeImage(Vision::CompositeImage* compImg, u32 duration_ms)
+  {
+    DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetCompositeImage.NullProceduralAnimation");
+    auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
+
+    // Clear out any runtime sequences currently set on the procedural animation
+    auto& spriteSeqTrack = _proceduralAnimation->GetTrack<SpriteSequenceKeyFrame>();
+    spriteSeqTrack.Clear();
+    
+    // Trigger time of keyframe is 0 since we want it to start playing immediately
+    SpriteSequenceKeyFrame kf;
+    kf.SetCompositeImage(spriteCache, compImg);
+    kf.SetFrameDuration_ms(duration_ms);
+    Result result = _proceduralAnimation->AddKeyFrameToBack(kf);
+    if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetCompositeImage.FailedToAddKeyFrame", "")))
+    {
+      return result;
+    }
+    
+    if (_streamingAnimation != _proceduralAnimation) {
+      result = SetStreamingAnimation(_proceduralAnimation, 0);
+    }
+    return result;
+  }
+
   
   void AnimationStreamer::Abort()
   {
@@ -1295,15 +1366,12 @@ namespace Cozmo {
       if(shouldPlayFaceAnim)
       {
         auto & faceKeyFrame = spriteSeqTrack.GetCurrentKeyFrame();
-        const bool isGrayscale = faceKeyFrame.IsGrayscale();
-        bool gotImage = false;
-        if (isGrayscale) {
-          Vision::Image faceGray;
-          gotImage = faceKeyFrame.GetFaceImage(faceGray);
-          if (gotImage) {
-            const float scanlineOpacity = faceKeyFrame.GetScanlineOpacity();
-            const bool applyScanlines = !Util::IsNear(scanlineOpacity, 1.f);
-            
+        Vision::SpriteHandle handle;
+        const bool gotImage = faceKeyFrame.GetFaceImageHandle(handle);
+        if(gotImage){
+          const bool shouldRenderInEyeHue = faceKeyFrame.ShouldRenderInEyeHue();
+          if (shouldRenderInEyeHue) {
+            Vision::Image faceGray = handle->GetSpriteContentsGrayscale();            
             // Create an HSV image from the gray image, replacing the 'hue'
             // channel with the current face hue
             const std::vector<cv::Mat> channels {
@@ -1314,16 +1382,25 @@ namespace Cozmo {
             static Vision::ImageRGB faceHSV;
             cv::merge(channels, faceHSV.get_CvMat_());
             
+            const float scanlineOpacity = faceKeyFrame.GetScanlineOpacity();
+            const bool applyScanlines = !Util::IsNear(scanlineOpacity, 1.f);
             if (applyScanlines) {
               ProceduralFaceDrawer::ApplyScanlines(faceHSV, scanlineOpacity);
             }
               
             // convert HSV -> RGB565
             faceHSV.ConvertHSV2RGB565(_faceDrawBuf);
+          } else {
+            if(handle->IsContentCached()){
+              const auto& imgRGB = handle->GetCachedSpriteContentsRGBA();
+              // Display the ImageRGB565 directly to the face, without modification
+              _faceDrawBuf.SetFromImageRGB(imgRGB);
+            }else{
+              auto imgRGB = handle->GetSpriteContentsRGBA();
+              // Display the ImageRGB565 directly to the face, without modification
+              _faceDrawBuf.SetFromImageRGB(imgRGB);
+            }
           }
-        } else {
-          // Display the ImageRGB565 directly to the face, without modification
-          gotImage = faceKeyFrame.GetFaceImage(_faceDrawBuf);
         }
         
         if (gotImage) {
@@ -1592,33 +1669,7 @@ namespace Cozmo {
     }
   }
   
-  template<typename ImageType>
-  Result AnimationStreamer::SetFaceImageHelper(const ImageType& img, const u32 duration_ms, bool isGrayscale)
-  {
-    DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetFaceImage.NullProceduralAnimation");
-    DEV_ASSERT(img.IsContinuous(), "AnimationStreamer.SetFaceImage.ImageIsNotContinuous");
-    
-    // Clear out any runtime sequences currently set on the procedural animation
-    auto& spriteSeqTrack = _proceduralAnimation->GetTrack<SpriteSequenceKeyFrame>();
-    spriteSeqTrack.Clear();
-    
-    // Trigger time of keyframe is 0 since we want it to start playing immediately
-    SpriteSequenceKeyFrame kf(Vision::SpriteName::Count, true, true);
-    kf.SetRuntimeSequenceIsGrayscale(isGrayscale);
-    kf.AddFrameToRuntimeSequence(img);
-    kf.SetFrameDuration_ms(duration_ms);
-    Result result = _proceduralAnimation->AddKeyFrameToBack(kf);
-    if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetFaceImage.FailedToAddKeyFrame", "")))
-    {
-      return result;
-    }
-    
-    if (_streamingAnimation != _proceduralAnimation) {
-      result = SetStreamingAnimation(_proceduralAnimation, 0);
-    }
-    return result;
-  }
-  
+
   void AnimationStreamer::SendAnimationToWebViz( bool starting ) const
   {
     if( _context != nullptr ) {

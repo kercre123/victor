@@ -20,6 +20,7 @@
 #include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/components/animationComponent.h"
+#include "engine/components/spriteCacheComponent.h"
 #include "engine/faceWorld.h"
 
 
@@ -57,11 +58,6 @@ BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
 
   const std::string kDebugStr = "BehaviorProceduralClock.ParsingIssue";
 
-  // load in the layout
-  if(ANKI_VERIFY(config.isMember(kClockLayoutKey),kDebugStr.c_str(), "Missing layout key")){
-      _instanceParams.compImg = Vision::CompositeImage(config[kClockLayoutKey], FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
-  }
-
   _instanceParams.getInAnim = AnimationTriggerFromString(JsonTools::ParseString(config, kGetInTriggerKey, kDebugStr));
   _instanceParams.getOutAnim = AnimationTriggerFromString(JsonTools::ParseString(config, kGetOutTriggerKey, kDebugStr));
   _instanceParams.totalTimeDisplayClock = JsonTools::ParseUint8(config, kDisplayClockSKey, kDebugStr);
@@ -74,6 +70,11 @@ BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
       const std::string spriteName =  config[kStaticElementsKey][key].asString();
       _instanceParams.staticElements[sbName] = Vision::SpriteNameFromString(spriteName);
     }
+  }
+
+  // load in the layout
+  if(ANKI_VERIFY(config.isMember(kClockLayoutKey),kDebugStr.c_str(), "Missing layout key")){
+    _instanceParams.layout = config[kClockLayoutKey];
   }
 }
 
@@ -95,6 +96,12 @@ void BehaviorProceduralClock::GetBehaviorJsonKeys(std::set<const char*>& expecte
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorProceduralClock::InitBehavior()
 {
+  // Setup the composite image
+  auto& spriteCacheComp = GetBEI().GetComponentWrapper(BEIComponentID::SpriteCache).GetValue<SpriteCacheComponent>();
+  _instanceParams.compImg = std::make_unique<Vision::CompositeImage>(spriteCacheComp.GetSpriteCache(), 
+                                                                     _instanceParams.layout, 
+                                                                     FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
+
   if(_instanceParams.getDigitFunctions.size() == 0){
     // TODO: find a way to load this in from data - for now init the clock as one that counts up based on time
     // and allow behaviors to re-set functionality in code only
@@ -221,9 +228,14 @@ void BehaviorProceduralClock::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BehaviorProceduralClock::BuildAndDisplayProceduralClock(Vision::CompositeImageLayer::ImageMap&& imageMap)
 {
+  auto& cacheComp = GetBEI().GetComponentWrapper(BEIComponentID::SpriteCache).GetValue<SpriteCacheComponent>();
+  auto* spriteCache = cacheComp.GetSpriteCache();
+  auto* seqContainer = cacheComp.GetSpriteSequenceContainer();
+  using Entry = Vision::CompositeImageLayer::SpriteEntry;
   // set static quadrants
   for(auto& entry : _instanceParams.staticElements){
-    imageMap[entry.first] = entry.second;
+    auto mapEntry = Entry(spriteCache, seqContainer,  entry.second);
+    imageMap.emplace(entry.first, std::move(mapEntry));
   }
 
   // set digits
@@ -236,26 +248,27 @@ void BehaviorProceduralClock::BehaviorUpdate()
     const int digitToDisplay = _instanceParams.getDigitFunctions[spriteBoxName]();
     isLeadingZero &= (digitToDisplay == 0);
     if(isLeadingZero){
-      imageMap[spriteBoxName] = Vision::SpriteName::Clock_empty_grid;
+      auto mapEntry = Entry(spriteCache, seqContainer, Vision::SpriteName::Clock_empty_grid);
+      imageMap.emplace(spriteBoxName, std::move(mapEntry));
     }else{
-      imageMap[spriteBoxName] = _instanceParams.intsToImages[digitToDisplay];
+      auto mapEntry = Entry(spriteCache, seqContainer, _instanceParams.intsToImages[digitToDisplay]);
+      imageMap.emplace(spriteBoxName, std::move(mapEntry));
     }
   }
   
-  auto& layerMap = _instanceParams.compImg.GetLayerMap();
-  if(ANKI_VERIFY(layerMap.size() == 1,"BehaviorProceduralClock.BuildAndDisplayProceduralClock.IncorrectLayerNumber",
-                 "Expecting 1 layer in the image, but image has %zu",
-                 layerMap.size())){
+  using namespace Vision;
+
+  CompositeImageLayer* digitLayer = _instanceParams.compImg->GetLayerByName(LayerName::Layer_4);
+
+  if(ANKI_VERIFY(digitLayer != nullptr,"BehaviorProceduralClock.BuildAndDisplayProceduralClock.NoDigitLayer",
+                 "Expected digit layout to be specified on Layer_4")){
     // Grab the image by name and
-    auto name = layerMap.begin()->second.GetLayerName();
-    Vision::CompositeImageLayer* layer = _instanceParams.compImg.GetLayerByName(name);
-    if(layer != nullptr){
-      layer->SetImageMap(std::move(imageMap));
-    }
+    digitLayer->SetImageMap(std::move(imageMap));
   }
-  
+
+   
   // draw it to the face
-  GetBEI().GetAnimationComponent().DisplayFaceImage(_instanceParams.compImg, 1000.0f, true);
+  GetBEI().GetAnimationComponent().DisplayFaceImage(*(_instanceParams.compImg.get()), 1000.0f, true);
 }
 
 

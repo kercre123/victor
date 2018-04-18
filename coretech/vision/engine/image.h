@@ -155,8 +155,10 @@ namespace Vision {
     template<typename DerivedType>
     const DerivedType GetROI(Rectangle<s32>& roiRect) const;
 
+    // If drawBlankPixels is set to false the draw will require slightly more computation
+    // but no pixels with empty value will be copied allowing "transparency" in undrawn areas
     template<typename DerivedType>
-    void DrawSubImage(const DerivedType& subImage, const Point2f& topLeftCorner);
+    void DrawSubImage(const DerivedType& subImage, const Point2f& topLeftCorner, T blankPixelValue, bool drawBlankPixels);
 
     virtual cv::Scalar GetCvColor(const ColorRGBA& color) const;
 
@@ -203,8 +205,8 @@ namespace Vision {
       return ImageBase<u8>::GetDataPointer();
     }
     
-    void DrawSubImage(const Image& subImage, const Point2f& topLeftCorner) { 
-      return ImageBase<u8>::DrawSubImage<Image>(subImage, topLeftCorner); 
+    void DrawSubImage(const Image& subImage, const Point2f& topLeftCorner, bool drawBlankPixels = true) { 
+      return ImageBase<u8>::DrawSubImage<Image>(subImage, topLeftCorner, 0, drawBlankPixels); 
     }
     Image GetROI(Rectangle<s32>& roiRect) { return ImageBase<u8>::GetROI<Image>(roiRect); }
     const Image GetROI(Rectangle<s32>& roiRect) const { return ImageBase<u8>::GetROI<Image>(roiRect); }
@@ -269,8 +271,8 @@ namespace Vision {
     
     ImageRGB(const ImageRGB565& imgRGB565);
     
-    void DrawSubImage(const ImageRGB& subImage, const Point2f& topLeftCorner) { 
-      return ImageBase<PixelRGB>::DrawSubImage<ImageRGB>(subImage, topLeftCorner); 
+    void DrawSubImage(const ImageRGB& subImage, const Point2f& topLeftCorner, bool drawBlankPixels = true) { 
+      return ImageBase<PixelRGB>::DrawSubImage<ImageRGB>(subImage, topLeftCorner, Vision::PixelRGB(), drawBlankPixels); 
     }
     ImageRGB GetROI(Rectangle<s32>& roiRect) { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
     const ImageRGB GetROI(Rectangle<s32>& roiRect) const { return ImageBase<PixelRGB>::GetROI<ImageRGB>(roiRect); }
@@ -322,8 +324,8 @@ namespace Vision {
     // Reference counting assignment (does not copy):
     ImageRGB565& operator= (const ImageBase<PixelRGB565> &other);
 
-    void DrawSubImage(const ImageRGB565& subImage, const Point2f& topLeftCorner) { 
-      return ImageBase<PixelRGB565>::DrawSubImage<ImageRGB565>(subImage, topLeftCorner); 
+    void DrawSubImage(const ImageRGB565& subImage, const Point2f& topLeftCorner, bool drawBlankPixels = true) { 
+      return ImageBase<PixelRGB565>::DrawSubImage<ImageRGB565>(subImage, topLeftCorner, Vision::PixelRGB565(), drawBlankPixels); 
     }
     ImageRGB565 GetROI(Rectangle<s32>& roiRect) { return ImageBase<PixelRGB565>::GetROI<ImageRGB565>(roiRect); }
     const ImageRGB565 GetROI(Rectangle<s32>& roiRect) const { return ImageBase<PixelRGB565>::GetROI<ImageRGB565>(roiRect); }
@@ -377,8 +379,8 @@ namespace Vision {
     ImageRGBA& SetFromGray(const Image& imageGray);   // Set this RGBA image from given gray image
     ImageRGBA& SetFromRGB565(const ImageRGB565& rgb565, const u8 alpha = 255); // Set from given RGB565 image
 
-    void DrawSubImage(const ImageRGBA& subImage, const Point2f& topLeftCorner) { 
-      return ImageBase<PixelRGBA>::DrawSubImage<ImageRGBA>(subImage, topLeftCorner); 
+    void DrawSubImage(const ImageRGBA& subImage, const Point2f& topLeftCorner, bool drawBlankPixels = true) { 
+      return ImageBase<PixelRGBA>::DrawSubImage<ImageRGBA>(subImage, topLeftCorner, Vision::PixelRGBA(), drawBlankPixels); 
     }
     ImageRGBA GetROI(Rectangle<s32>& roiRect) {
       return ImageBase<PixelRGBA>::GetROI<ImageRGBA>(roiRect);

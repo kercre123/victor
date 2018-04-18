@@ -63,6 +63,7 @@ enum class RobotComponentID{
   PublicStateBroadcaster,
   RobotIdleTimeout,
   RobotToEngineImplMessaging,
+  SpriteCache,
   StateHistory,
   TouchSensor,
   Vision,

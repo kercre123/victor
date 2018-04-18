@@ -15,7 +15,7 @@
 
 #include "clad/types/spriteNames.h"
 #include "util/helpers/noncopyable.h"
-#include "util/cladHelpers/cladEnumToStringMap.h"
+#include "coretech/vision/shared/spritePathMap.h"
 
 #include "assert.h"
 #include <json/json.h>
@@ -34,10 +34,14 @@ class DataPlatform;
 }
 }
 
+namespace Vision {
+class SpriteCache;
+class SpriteSequenceContainer;
+}
+
 namespace Cozmo {
 
 class CannedAnimationContainer;
-class SpriteSequenceContainer;
 class Animation;
 class AnimContext;
 
@@ -67,9 +71,10 @@ public:
   std::vector<std::string> GetAnimationNames();
 
   // images are stored as a map of stripped file name (no file extension) to full path
-  const Util::CladEnumToStringMap<Vision::SpriteName>* GetSpritePaths()       const { assert(_spritePaths != nullptr); return _spritePaths.get(); }
+  const Vision::SpritePathMap* GetSpritePaths() const { assert(_spritePaths != nullptr); return _spritePaths.get(); }
+  Vision::SpriteCache* GetSpriteCache() const { assert(_spriteCache != nullptr); return _spriteCache.get();  }
 
-  SpriteSequenceContainer* GetSpriteSequenceContainer() { return _spriteSequenceContainer.get();}
+  Vision::SpriteSequenceContainer* GetSpriteSequenceContainer() { return _spriteSequenceContainer.get();}
 
 private:
   void LoadSpritePaths();
@@ -83,8 +88,9 @@ private:
 
   // animation data
   std::unique_ptr<CannedAnimationContainer>              _cannedAnimations;
-  std::unique_ptr<SpriteSequenceContainer>               _spriteSequenceContainer;
-  std::unique_ptr<Util::CladEnumToStringMap<Vision::SpriteName>> _spritePaths;
+  std::unique_ptr<Vision::SpriteSequenceContainer>       _spriteSequenceContainer;
+  std::unique_ptr<Vision::SpritePathMap>                 _spritePaths;
+  std::unique_ptr<Vision::SpriteCache>                   _spriteCache;
 
 
   // loading properties shared with the animiation loader

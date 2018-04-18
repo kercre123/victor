@@ -80,6 +80,7 @@ void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dep
        &robot->GetPublicStateBroadcaster(),
        robot->GetAudioClient(),
        &robotInfo,
+       robot->GetComponentPtr<SpriteCacheComponent>(),
        &robot->GetTouchSensorComponent(),
        &robot->GetVisionComponent(),
        &robot->GetVisionScheduleMediator());
@@ -109,6 +110,7 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                      PublicStateBroadcaster*        publicStateBroadcaster,
                                      Audio::EngineRobotAudioClient* robotAudioClient,
                                      BEIRobotInfo*                  robotInfo,
+                                     SpriteCacheComponent*                   spriteCache,
                                      TouchSensorComponent*          touchSensorComponent,
                                      VisionComponent*               visionComponent,
                                      VisionScheduleMediator*        visionScheduleMediator)
@@ -135,6 +137,7 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                                      publicStateBroadcaster,
                                                      robotAudioClient,
                                                      robotInfo,
+                                                     spriteCache,
                                                      touchSensorComponent,
                                                      visionComponent,
                                                      visionScheduleMediator);
@@ -175,6 +178,7 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
                                                               PublicStateBroadcaster*        publicStateBroadcaster,
                                                               Audio::EngineRobotAudioClient* robotAudioClient,
                                                               BEIRobotInfo*                  robotInfo,
+                                                              SpriteCacheComponent*                   spriteCache,
                                                               TouchSensorComponent*          touchSensorComponent,
                                                               VisionComponent*               visionComponent,
                                                               VisionScheduleMediator*        visionScheduleMediator)
@@ -201,6 +205,7 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
     {BEIComponentID::PublicStateBroadcaster, BEIComponentWrapper(publicStateBroadcaster)},
     {BEIComponentID::RobotAudioClient,       BEIComponentWrapper(robotAudioClient)},
     {BEIComponentID::RobotInfo,              BEIComponentWrapper(robotInfo)},
+    {BEIComponentID::SpriteCache,            BEIComponentWrapper(spriteCache)},
     {BEIComponentID::TouchSensor,            BEIComponentWrapper(touchSensorComponent)},
     {BEIComponentID::Vision,                 BEIComponentWrapper(visionComponent)},
     {BEIComponentID::VisionScheduleMediator, BEIComponentWrapper(visionScheduleMediator)}

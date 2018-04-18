@@ -20,14 +20,12 @@ namespace Anki {
 namespace Vision {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CompositeImageBuilder::CompositeImageBuilder(const Util::CladEnumToStringMap<Vision::SpriteName>* spriteMap,
-                                             const CompositeImageChunk& chunk)
-: _spriteMap(spriteMap)
-, _expectedNumLayers(chunk.layerMax)
+CompositeImageBuilder::CompositeImageBuilder(SpriteCache* cache, SpriteSequenceContainer* seqContainer, const CompositeImageChunk& chunk)
+: _expectedNumLayers(chunk.layerMax)
 , _width(chunk.imageWidth)
 , _height(chunk.imageHeight)
 {
-  AddImageChunk(chunk);
+  AddImageChunk(cache, seqContainer, chunk);
 }
 
 
@@ -39,7 +37,7 @@ CompositeImageBuilder::~CompositeImageBuilder()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool CompositeImageBuilder::AddImageChunk(const CompositeImageChunk& chunk)
+bool CompositeImageBuilder::AddImageChunk(SpriteCache* cache, SpriteSequenceContainer* seqContainer, const CompositeImageChunk& chunk)
 {
   // Find or create the layer within the builder
   auto layerIter = _layerMap.find(chunk.layerName);
@@ -61,7 +59,7 @@ bool CompositeImageBuilder::AddImageChunk(const CompositeImageChunk& chunk)
     layerIter->second.AddToLayout(chunk.spriteBox.name, std::move(sb));
     
     // Add image name to map
-    layerIter->second.AddToImageMap(chunk.spriteBox.name, chunk.spriteName);
+    layerIter->second.AddToImageMap(cache, seqContainer, chunk.spriteBox.name, chunk.spriteName);
   }
 
   return true;
@@ -97,7 +95,6 @@ bool CompositeImageBuilder::GetCompositeImage(CompositeImage& outImage)
   if(CanBuildImage()){
     auto intentionalCopy = _layerMap;
     outImage.ReplaceCompositeImage(std::move(intentionalCopy), _width, _height);
-    outImage.SetSpriteMap(_spriteMap);
     return true;
   }
   return false; 

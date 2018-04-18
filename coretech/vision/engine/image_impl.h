@@ -15,7 +15,8 @@ namespace Vision {
 
 template<typename T>
 template<typename DerivedType>
-void ImageBase<T>::DrawSubImage(const DerivedType& subImage, const Point2f& topLeftCorner)
+void ImageBase<T>::DrawSubImage(const DerivedType& subImage, const Point2f& topLeftCorner, 
+                                T blankPixelValue, bool drawBlankPixels)
 {
   s32 subImageColOffset = 0;
   s32 subImageRowOffset = 0;
@@ -42,10 +43,22 @@ void ImageBase<T>::DrawSubImage(const DerivedType& subImage, const Point2f& topL
   const s32 destColOffset = rect.GetX();
   const s32 destRowOffset = rect.GetY();
 
-  for(s32 relRowIdx = 0; relRowIdx < numRowsToCopy; ++relRowIdx){
-    const T* source_row = subImage.GetRow(relRowIdx + subImageRowOffset) + subImageColOffset;
-    T* dest_row = Array2d<T>::GetRow(relRowIdx + destRowOffset) + destColOffset;
-    std::memcpy(dest_row, source_row, sizeof(T) * numColsToCopy);
+  if(drawBlankPixels){
+    for(s32 relRowIdx = 0; relRowIdx < numRowsToCopy; ++relRowIdx){
+      const T* source_row = subImage.GetRow(relRowIdx + subImageRowOffset) + subImageColOffset;
+      T* dest_row = Array2d<T>::GetRow(relRowIdx + destRowOffset) + destColOffset;
+      std::memcpy(dest_row, source_row, sizeof(T) * numColsToCopy);
+    }
+  }else{
+    for(s32 relRowIdx = 0; relRowIdx < numRowsToCopy; ++relRowIdx){
+      const T* source_row = subImage.GetRow(relRowIdx + subImageRowOffset) + subImageColOffset;
+      T* dest_row = Array2d<T>::GetRow(relRowIdx + destRowOffset) + destColOffset;
+      for(s32 relColIdx = 0; relColIdx < numColsToCopy; ++relColIdx){
+        if(source_row[relColIdx] != blankPixelValue){
+          dest_row[relColIdx] = source_row[relColIdx];
+        }
+      }
+    }
   }
 }
 

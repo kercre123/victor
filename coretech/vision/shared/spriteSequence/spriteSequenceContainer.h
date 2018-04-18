@@ -15,33 +15,30 @@
 #include <string>
 #include <unordered_map>
 
-#include "cannedAnimLib/baseTypes/spritePathMap.h"
-#include "cannedAnimLib/spriteSequences/spriteSequence.h"
+#include "coretech/vision/shared/spritePathMap.h"
+#include "coretech/vision/shared/spriteSequence/spriteSequence.h"
 #include "clad/types/spriteNames.h"
 #include "coretech/common/shared/types.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
 #include "coretech/vision/engine/image.h"
 #include "util/helpers/noncopyable.h"
 
 namespace Anki {
-namespace Cozmo {
 
+// forward decleration
+namespace Vision{
 class SpriteSequence;
 
 class SpriteSequenceContainer : private Util::noncopyable
 {
 public:
-  using MappedSequenceContainer = std::unordered_map<Vision::SpriteName, const SpriteSequence>;
-  using UnmappedSequenceContainer = std::unordered_map<std::string, const SpriteSequence>;
+  using MappedSequenceContainer = std::unordered_map<Vision::SpriteName, const Vision::SpriteSequence, Util::EnumHasher>;
+  using UnmappedSequenceContainer = std::unordered_map<std::string, const Vision::SpriteSequence>;
   SpriteSequenceContainer(MappedSequenceContainer&& mappedSequences,
                           UnmappedSequenceContainer&& unmappedSequences);
   
-  const SpriteSequence* const GetSequenceByName(Vision::SpriteName sequenceName) const;
+  const Vision::SpriteSequence* const GetSequenceByName(Vision::SpriteName sequenceName) const;
   // stored as file name without extension, not absolute/full file path
-  const SpriteSequence* const GetUnmappedSequenceByFileName(const std::string& fileName) const;
-
-  // Get the total number of available sequences
-  size_t GetSize() const;
+  const Vision::SpriteSequence* const GetUnmappedSequenceByFileName(const std::string& fileName) const;
   
 protected:  
   MappedSequenceContainer   _mappedSequences;
@@ -49,16 +46,7 @@ protected:
 
 }; // class SpriteSequenceContainer
 
-//
-// Inlined Implementations
-//
-
-// Get the total number of available sequences
-inline size_t SpriteSequenceContainer::GetSize() const {
-  return _mappedSequences.size();
-}
-
-} // namespace Cozmo
+} // namespace Vision
 } // namespace Anki
 
 

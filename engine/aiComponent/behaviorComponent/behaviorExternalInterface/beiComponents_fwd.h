@@ -27,6 +27,7 @@ enum class BEIComponentID{
   PublicStateBroadcaster,
   RobotAudioClient,
   RobotInfo,
+  SpriteCache,
   TouchSensor,
   Vision,
   VisionScheduleMediator,

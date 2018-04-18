@@ -16,7 +16,7 @@
 
 #include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
 #include "cannedAnimLib/baseTypes/cozmo_anim_generated.h"
-#include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
+#include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
 #include "cannedAnimLib/proceduralFace/proceduralFace.h"
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"

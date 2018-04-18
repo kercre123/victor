@@ -56,6 +56,7 @@ class PetWorld;
 class ProgressionUnlockComponent;
 class ProxSensorComponent;
 class PublicStateBroadcaster;
+class SpriteCacheComponent;
 class TouchSensorComponent;
 class VisionComponent;
 class VisionScheduleMediator;
@@ -138,6 +139,7 @@ public:
             PublicStateBroadcaster*        publicStateBroadcaster,
             Audio::EngineRobotAudioClient* robotAudioClient,
             BEIRobotInfo*                  robotInfo,
+            SpriteCacheComponent*                   spriteCache,
             TouchSensorComponent*          touchSensorComponent,
             VisionComponent*               visionComponent,
             VisionScheduleMediator*        visionScheduleMediator);
@@ -242,6 +244,7 @@ private:
                        PublicStateBroadcaster*        publicStateBroadcaster,
                        Audio::EngineRobotAudioClient* robotAudioClient,
                        BEIRobotInfo*                  robotInfo,
+                       SpriteCacheComponent*                   spriteCache,
                        TouchSensorComponent*          touchSensorComponent,
                        VisionComponent*               visionComponent,
                        VisionScheduleMediator*        visionSchedulMediator);

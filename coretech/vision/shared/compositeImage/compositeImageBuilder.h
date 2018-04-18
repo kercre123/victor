@@ -32,13 +32,12 @@ class CompositeImageBuilder {
 public:
   // The chunk passed into the constructor will be used to validate all future chunks
   // and determine when all chunks have been received
-  CompositeImageBuilder(const Util::CladEnumToStringMap<Vision::SpriteName>* spriteMap,
-                        const CompositeImageChunk& chunk);
+  CompositeImageBuilder(SpriteCache* cache, SpriteSequenceContainer* seqContainer, const CompositeImageChunk& chunk);
   virtual ~CompositeImageBuilder();
 
   // Add a new chunk to the internal image representation - returns true if
   // the new chunk matches the ID/properties of the constructor chunk
-  bool AddImageChunk(const CompositeImageChunk& chunk);
+  bool AddImageChunk(SpriteCache* cache, SpriteSequenceContainer* seqContainer, const CompositeImageChunk& chunk);
 
   // Returns true if all image chunks have been received
   bool CanBuildImage();
@@ -48,9 +47,7 @@ public:
   bool GetCompositeImage(CompositeImage& outImage);
 
 
-private:
-  const Util::CladEnumToStringMap<Vision::SpriteName>* _spriteMap;
-  
+private:  
   using SpriteBoxCountMap = std::map<Vision::LayerName, uint8_t>;
 
   uint8_t           _expectedNumLayers;

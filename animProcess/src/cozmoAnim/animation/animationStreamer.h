@@ -68,10 +68,14 @@ namespace Cozmo {
     // If name == "" or anim == nullptr, it is equivalent to calling Abort()
     // if there is an animation currently playing, or no-op if there's no
     // animation playing
+    //
+    // If shouldRenderInEyeHue is true the spriteSequence keyframes will be treated as grayscale
+    // and rendered in the robot's eye hue - if it's false the keyframes will be rendered as RGB images
     Result SetStreamingAnimation(const std::string& name,
                                  Tag tag,
                                  u32 numLoops = 1,
-                                 bool interruptRunning = true);
+                                 bool interruptRunning = true,
+                                 bool shouldRenderInEyeHue = true);
     
     Result SetProceduralFace(const ProceduralFace& face, u32 duration_ms);    
 
@@ -80,9 +84,9 @@ namespace Cozmo {
     void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageRGBChunk& msg);
     void Process_displayCompositeImageChunk(const RobotInterface::DisplayCompositeImageChunk& msg);
 
+    Result SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms);
+    Result SetCompositeImage(Vision::CompositeImage* compImg, u32 duration_ms);
 
-    Result SetFaceImage(const Vision::Image& img, u32 duration_ms);
-    Result SetFaceImage(const Vision::ImageRGB565& img, u32 duration_ms);
     
     Audio::ProceduralAudioClient* GetProceduralAudioClient() const { return _proceduralAudioClient.get(); }
     
@@ -129,6 +133,7 @@ namespace Cozmo {
                                  Tag tag,
                                  u32 numLoops = 1,
                                  bool interruptRunning = true,
+                                 bool shouldRenderInEyeHue = true,
                                  bool isInternalAnim = true);
 
     // Initialize the streaming of an animation with a given tag
@@ -165,10 +170,7 @@ namespace Cozmo {
       // a head animation while driving a path.
       StopTracks(_tracksInUse);
     }
-    
-    template<typename ImageType>
-    Result SetFaceImageHelper(const ImageType& img, const u32 duration_ms, bool isGrayscale);
-    
+        
     // pass the started/stopped animation name to webviz
     void SendAnimationToWebViz( bool starting ) const;
     

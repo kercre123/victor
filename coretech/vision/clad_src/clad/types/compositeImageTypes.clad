@@ -17,7 +17,8 @@ enum no_cpp_class uint_8 LayerName
   // "Numbered" layers for arbitrary layouts
   Layer_1,
   Layer_2,
-  Layer_3
+  Layer_3,
+  Layer_4
 
 }
 

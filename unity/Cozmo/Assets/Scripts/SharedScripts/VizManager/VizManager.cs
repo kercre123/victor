@@ -37,9 +37,9 @@ namespace Anki.Cozmo.Viz {
     private ImageReceiver _ImageReceiver = new ImageReceiver("RobotCameraImage");
 
     private bool _OverlayDirty;
-    private Texture2D _OverlayImage;
+    private Texture2D _OverlayImageWithFrame;
 
-    public Texture2D RobotCameraOverlay { get { return _OverlayImage; } }
+    public Texture2D RobotCameraOverlay { get { return _OverlayImageWithFrame; } }
 
     private Color32[] _OverlayClearBuffer = null;
 
@@ -171,8 +171,8 @@ namespace Anki.Cozmo.Viz {
       }
 
       _Channel.Update();
-      if (_OverlayImage != null && _OverlayDirty) {
-        _OverlayImage.Apply();
+      if (_OverlayImageWithFrame != null && _OverlayDirty) {
+        _OverlayImageWithFrame.Apply();
         _OverlayDirty = false;
       }
     }
@@ -829,14 +829,14 @@ namespace Anki.Cozmo.Viz {
     #region OverlayRender
 
     private void ClearOverlay() {
-      if (_OverlayImage == null) {
+      if (_OverlayImageWithFrame == null) {
         return;
       }
       if (_OverlayClearBuffer == null) {
-        _OverlayClearBuffer = new Color32[_OverlayImage.width * _OverlayImage.height];
+        _OverlayClearBuffer = new Color32[_OverlayImageWithFrame.width * _OverlayImageWithFrame.height];
       }
 
-      _OverlayImage.SetPixels32(_OverlayClearBuffer);
+      _OverlayImageWithFrame.SetPixels32(_OverlayClearBuffer);
     }
 
     private void DrawCameraLine(CameraLine camLine) {
@@ -869,11 +869,11 @@ namespace Anki.Cozmo.Viz {
 
     private void DrawOverlayLine(float x0f, float y0f, float x1f, float y1f, Color col) {
 
-      if (_OverlayImage == null) {
+      if (_OverlayImageWithFrame == null) {
         return;
       }
 
-      int h = _OverlayImage.height;
+      int h = _OverlayImageWithFrame.height;
       // invert our y
       y0f = h - y0f - 1;
       y1f = h - y1f - 1;
@@ -933,11 +933,11 @@ namespace Anki.Cozmo.Viz {
 
     private void DrawOverlayOval(float cxf, float cyf, float rx, float ry, Color col) {
 
-      if (_OverlayImage == null) {
+      if (_OverlayImageWithFrame == null) {
         return;
       }
 
-      int h = _OverlayImage.height;
+      int h = _OverlayImageWithFrame.height;
       // invert our y
       cyf = h - cyf - 1;
 
@@ -982,14 +982,14 @@ namespace Anki.Cozmo.Viz {
     // Actually set 4 pixels
     private void SetOverlayPixel(int x, int y, Color c) {
 
-      _OverlayImage.SetPixel(x, y, c);
-      _OverlayImage.SetPixel(x + 1, y, c);
-      _OverlayImage.SetPixel(x, y + 1, c);
-      _OverlayImage.SetPixel(x + 1, y + 1, c);
+      _OverlayImageWithFrame.SetPixel(x, y, c);
+      _OverlayImageWithFrame.SetPixel(x + 1, y, c);
+      _OverlayImageWithFrame.SetPixel(x, y + 1, c);
+      _OverlayImageWithFrame.SetPixel(x + 1, y + 1, c);
     }
 
     private void DrawCameraText(CameraText camText) {
-      if (_OverlayImage == null) {
+      if (_OverlayImageWithFrame == null) {
         return;
       }
 
@@ -997,7 +997,7 @@ namespace Anki.Cozmo.Viz {
 
       var fontTexture = (Texture2D)_CameraFont.material.mainTexture;
 
-      int x = camText.x, y = _OverlayImage.height - 1 - camText.y - _CameraFont.lineHeight;
+      int x = camText.x, y = _OverlayImageWithFrame.height - 1 - camText.y - _CameraFont.lineHeight;
 
       var color = camText.color.ToColor();
       string[] textLines = text.Split(new char[] { '\n' }, 10);
@@ -1039,13 +1039,13 @@ namespace Anki.Cozmo.Viz {
               int jo = x + charInfo.bearing + charInfo.glyphWidth - (swapXY ? 1 + k : j) - charInfo.minX;
               int ko = y + (swapXY ? 1 + j : k) + charInfo.minY;
 
-              Color oldColor = _OverlayImage.GetPixel(jo, ko);
+              Color oldColor = _OverlayImageWithFrame.GetPixel(jo, ko);
 
               Color fontColor = fontTexture.GetPixel(jf, kf);
 
               var newColor = oldColor * (1 - fontColor.a) + color * fontColor.a;
 
-              _OverlayImage.SetPixel(jo, ko, newColor);
+              _OverlayImageWithFrame.SetPixel(jo, ko, newColor);
             }
           }
 
@@ -1063,9 +1063,9 @@ namespace Anki.Cozmo.Viz {
 
     private void HandleReceivedImage(Texture2D image) {
       _OverlayDirty = true;
-      if (_OverlayImage == null) {
-        _OverlayImage = new Texture2D(image.width, image.height);
-        _OverlayImage.name = "RobotOverlayImage";
+      if (_OverlayImageWithFrame == null) {
+        _OverlayImageWithFrame = new Texture2D(image.width, image.height);
+        _OverlayImageWithFrame.name = "RobotOverlayImageWithFrame";
       }
       ClearOverlay();
     }

@@ -72,38 +72,5 @@ enum_concept bool IsSpriteSequence[SpriteName] {
   Count = 0
 }
 
-
-enum_concept bool IsSpriteGreyscale[SpriteName] {
-  // Independent Sprites
-  Clock_00 = 1,
-  Clock_01 = 1,
-  Clock_02 = 1,
-  Clock_03 = 1,
-  Clock_04 = 1,
-  Clock_05 = 1,
-  Clock_06 = 1,
-  Clock_07 = 1,
-  Clock_08 = 1,
-  Clock_09 = 1,
-  Clock_colon = 1,
-  Clock_empty_grid = 1,
-  PairingIconKey   = 0,
-
-  // SpriteSequenceces
-  PairingIconAwaitingApp = 0,
-  PairingIconUpdate      = 0,
-  PairingIconUpdateError = 0,
-  PairingIconWifi        = 0,
-  Face_Bored_Event_02 = 1,
-  Face_Bored_Event_04 = 1,
-  Face_ChargerDocking_SevereRequest = 1,
-  Face_TimerSet_GetIn_01 = 1,
-  Face_TimerSet_GetIn_02 = 1,
-  Face_TimerSet_GetOut_01 = 1,
-
-  // Must be last element
-  Count = 1
-}
-
 } // namespace Vision
 } // namespace Anki

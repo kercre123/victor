@@ -9,8 +9,7 @@
  * Copyright: Anki, Inc. 2015
  **/
 
-#include "cannedAnimLib/spriteSequences/spriteSequenceContainer.h"
-#include "cannedAnimLib/baseTypes/keyframe.h"
+#include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/data/dataScope.h"
 #include "coretech/common/engine/array2d_impl.h"
@@ -25,7 +24,7 @@
 #include <dirent.h>
 
 namespace Anki {
-namespace Cozmo {
+namespace Vision {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SpriteSequenceContainer::SpriteSequenceContainer(MappedSequenceContainer&& mappedSequences,
@@ -37,7 +36,7 @@ SpriteSequenceContainer::SpriteSequenceContainer(MappedSequenceContainer&& mappe
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const SpriteSequence* const SpriteSequenceContainer::GetSequenceByName(Vision::SpriteName sequenceName) const
+const Vision::SpriteSequence* const SpriteSequenceContainer::GetSequenceByName(Vision::SpriteName sequenceName) const
 {
   auto seqIter = _mappedSequences.find(sequenceName);
   if(seqIter == _mappedSequences.end()) {
@@ -51,7 +50,7 @@ const SpriteSequence* const SpriteSequenceContainer::GetSequenceByName(Vision::S
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const SpriteSequence* const SpriteSequenceContainer::GetUnmappedSequenceByFileName(const std::string& fileName) const
+const Vision::SpriteSequence* const SpriteSequenceContainer::GetUnmappedSequenceByFileName(const std::string& fileName) const
 {
   auto seqIter = _unmappedSequences.find(fileName);
   if(seqIter == _unmappedSequences.end()) {

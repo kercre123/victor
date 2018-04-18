@@ -7,7 +7,7 @@ namespace Anki.Cozmo.Viz {
     [SerializeField]
     private RawImage _CameraImage;
     [SerializeField]
-    private RawImage _OverlayImage;
+    private RawImage _OverlayImageWithFrame;
 
     private bool _Initialized = false;
 
@@ -27,7 +27,7 @@ namespace Anki.Cozmo.Viz {
 
       if (VizManager.Instance != null && VizManager.Instance.RobotCameraImage != null) {
         _CameraImage.texture = VizManager.Instance.RobotCameraImage;
-        _OverlayImage.texture = VizManager.Instance.RobotCameraOverlay;
+        _OverlayImageWithFrame.texture = VizManager.Instance.RobotCameraOverlay;
         _Initialized = true;
       }
     }

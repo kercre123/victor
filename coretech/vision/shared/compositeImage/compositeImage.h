@@ -32,16 +32,21 @@ class CladEnumToStringMap;
 
 namespace Vision {
 
+class SpriteCache;
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class CompositeImage {
 public:
   using LayerMap = std::map<Vision::LayerName, CompositeImageLayer>;
-  CompositeImage(){};
-  CompositeImage(const Json::Value& layersSpec,
+  CompositeImage(SpriteCache* spriteCache)
+  : _spriteCache(spriteCache){};
+  CompositeImage(SpriteCache* spriteCache,
+                 const Json::Value& layersSpec,
                  s32 imageWidth = 0,
                  s32 imageHeight = 0);
 
-  CompositeImage(const LayerMap&& layers,
+  CompositeImage(SpriteCache* spriteCache,
+                 const LayerMap&& layers,
                  s32 imageWidth = 0,
                  s32 imageHeight = 0);
 
@@ -74,30 +79,45 @@ public:
 
   // Render the composite image to a newly allocated image
   // Any layers specified in layersToIgnore will not be rendered
-  ImageRGBA RenderImage(std::set<Vision::LayerName> layersToIgnore = {}) const;
+  ImageRGBA RenderFrame(const u32 frameIdx = 0,
+                        std::set<Vision::LayerName> layersToIgnore = {}) const;
   // Overlay the composite image on top of the base image
   // The overlay offset will shift the composite image rendered relative to the base images (0,0)
   // Any layers specified in layersToIgnore will not be rendered
-  void OverlayImage(ImageRGBA& baseImage,
-                    std::set<Vision::LayerName> layersToIgnore = {},
-                    const Point2i& overlayOffset = {}) const;
+  void OverlayImageWithFrame(ImageRGBA& baseImage,
+                             const u32 frameIdx = 0,
+                             std::set<Vision::LayerName> layersToIgnore = {},
+                             const Point2i& overlayOffset = {}) const;
 
-  // TMP function - see note below
-  void SetSpriteMap(const Util::CladEnumToStringMap<Vision::SpriteName>* spriteMap)
-  {
-    _spriteMap = spriteMap;
-  }
+  void OverlayImageWithFrame(Image& baseImage,
+                             const u32 frameIdx = 0,
+                             std::set<Vision::LayerName> layersToIgnore = {},
+                             const Point2i& overlayOffset = {}) const;
+  
+  
+  // Returns the length of the longest subsequence
+  uint GetFullLoopLength();
+  
+  s32 GetWidth(){ return _width;}
+  s32 GetHeight(){ return _height;}
 
 private:
+  using SpriteBox = CompositeImageLayer::SpriteBox;
+  using SpriteEntry = CompositeImageLayer::SpriteEntry;
+  using AllSpriteBoxDataFunc = std::function<void(Vision::LayerName, 
+                                                  SpriteBoxName, const SpriteBox&, 
+                                                  const SpriteEntry&)>;
+  // Call the callback with the data from every spritebox moving from lowest z-index to highest
+  void ProcessAllSpriteBoxes(AllSpriteBoxDataFunc processCallback) const;
+
+  template<typename ImageType>
+  void DrawSubImage(ImageType& baseImage, const ImageType& subImage, 
+                    const SpriteBox& spriteBox, const Point2i& overlayOffset) const;
+
+  SpriteCache* _spriteCache;
   s32 _width = 0;
   s32 _height = 0;
   LayerMap  _layerMap;
-
-  // TMP: If sprite map is set then the composite image can load sprites directly
-  // this is a transitional necessity while engine/anim composite image relationship is in flux
-  // but theoretically image loading should be done externally to the composite image class
-  const Util::CladEnumToStringMap<Vision::SpriteName>* _spriteMap = nullptr;
-  ImageRGBA LoadSprite(Vision::SpriteName spriteName) const;
 
 };
 

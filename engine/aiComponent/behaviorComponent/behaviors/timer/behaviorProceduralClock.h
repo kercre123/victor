@@ -64,7 +64,7 @@ private:
 
 
   struct InstanceParams{
-    Vision::CompositeImage compImg;
+    std::unique_ptr<Vision::CompositeImage> compImg;
     std::map<Vision::SpriteBoxName, Vision::SpriteName> staticElements;
     // TODO: transition these maps to fullyEnumeratedArrays
     std::map<Vision::SpriteBoxName, std::function<int()>> getDigitFunctions; 
@@ -74,6 +74,7 @@ private:
     int totalTimeDisplayClock;
     bool shouldTurnToFace = false;
     std::function<void()> showClockCallback; 
+    Json::Value layout;
   };
 
   struct LifetimeParams{

@@ -17,7 +17,7 @@
 #include "clad/types/spriteNames.h"
 #include "clad/types/cubeAnimationTrigger.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
-#include "util/cladHelpers/cladEnumToStringMap.h"
+#include "coretech/vision/shared/spritePathMap.h"
 
 #include "util/helpers/noncopyable.h"
 #include <json/json.h>
@@ -40,6 +40,11 @@ class CladEnumToStringMap;
 namespace Data {
 class DataPlatform;
 }
+}
+
+namespace Vision{
+class SpriteCache;
+class SpriteSequenceContainer;
 }
 
 namespace Cozmo {
@@ -99,7 +104,9 @@ public:
   const Json::Value& GetUserIntentConfig() const             { return _userIntentsConfig; }
 
   // images are stored as a map of stripped file name (no file extension) to full path
-  const Util::CladEnumToStringMap<Vision::SpriteName>* GetSpritePaths()       const { assert(_spritePaths != nullptr); return _spritePaths.get(); }
+  const Vision::SpritePathMap* GetSpritePaths()       const { assert(_spritePaths != nullptr); return _spritePaths.get(); }
+  Vision::SpriteSequenceContainer* GetSpriteSequenceContainer() { return _spriteSequenceContainer.get();}
+  Vision::SpriteCache* GetSpriteCache() const { assert(_spriteCache != nullptr); return _spriteCache.get();  }
 
   bool IsCustomAnimLoadEnabled() const;
 
@@ -174,7 +181,9 @@ private:
   Json::Value _dasEventConfig;
   Json::Value _userIntentsConfig;
   
-  std::unique_ptr<Util::CladEnumToStringMap<Vision::SpriteName>> _spritePaths;
+  std::unique_ptr<Vision::SpritePathMap> _spritePaths;
+  std::unique_ptr<Vision::SpriteCache>   _spriteCache;
+  std::unique_ptr<Vision::SpriteSequenceContainer>       _spriteSequenceContainer;
 
   bool                  _isNonConfigDataLoaded = false;
   std::mutex            _parallelLoadingMutex;
