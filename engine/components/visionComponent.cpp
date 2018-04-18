@@ -94,21 +94,21 @@ namespace Cozmo {
   CONSOLE_VAR(bool, kVisualizeObservedMarkersIn3D, "Vision.General", false);
   CONSOLE_VAR(bool, kDrawMarkerNames,              "Vision.General", false); // In viz camera view
   CONSOLE_VAR(bool, kDisplayUndistortedImages,     "Vision.General", false);
-    
+
   CONSOLE_VAR(bool, kEnableMirrorMode,             "Vision.General", false);
   CONSOLE_VAR(bool, kDisplayObjectDetectionLabels, "Vision.General", false); // when in mirror mode
-  
+
   // Hack to continue drawing detected objects for a bit after they are detected
   // since object detection is slow
   CONSOLE_VAR(u32, kKeepDrawingDetectionsFor_ms,   "Vision.General", 500);
-  
+
   namespace JsonKey
   {
     const char * const ImageQualityGroup = "ImageQuality";
     const char * const PerformanceLogging = "PerformanceLogging";
     const char * const DropStatsWindowLength = "DropStatsWindowLength_sec";
     const char * const ImageQualityAlertDuration = "TimeBeforeErrorMessage_ms";
-    const char * const ImageQualityAlertSpacing = "RepeatedErrorMessageInverval_ms";
+    const char * const ImageQualityAlertSpacing = "RepeatedErrorMessageInterval_ms";
     const char * const InitialExposureTime = "InitialExposureTime_ms";
   }
 
@@ -128,7 +128,7 @@ namespace Cozmo {
 
   VisionComponent::VisionComponent()
   : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::Vision)
-  {    
+  {
   } // VisionSystem()
 
 
@@ -231,9 +231,9 @@ namespace Cozmo {
     _dropStats.SetChannelName("VisionComponent");
     _dropStats.SetRecentWindowLength(kDropStatsWindowLength_sec * kCameraFrameRate_fps);
 
-    _isInitialized = true;    
+    _isInitialized = true;
   } //ReadVisionConfig()
-  
+
   void VisionComponent::SetCameraCalibration(std::shared_ptr<Vision::CameraCalibration> camCalib)
   {
     const bool calibChanged = _camera->SetCalibration(camCalib);
@@ -466,7 +466,7 @@ namespace Cozmo {
                                 _bufferedImg.GetTimestamp(), _lastReceivedImageTimeStamp_ms);
 
             // This should be recoverable (it could happen if we receive a bunch of garbage image data)
-            // so reset the lastReceived and lastProcessd timestamps so we can set them fresh next time
+            // so reset the lastReceived and lastProcessed timestamps so we can set them fresh next time
             // we get an image
             _lastReceivedImageTimeStamp_ms = 0;
             _lastProcessedImageTimeStamp_ms = 0;
@@ -525,7 +525,7 @@ namespace Cozmo {
       else
       {
         // At this point, we have an image + robot state, continue processing
-        
+
         // "Mirror mode": draw images we process to the robot's screen
         if(_drawImagesToScreen || kEnableMirrorMode)
         {
@@ -572,7 +572,7 @@ namespace Cozmo {
       } // if(!haveHistStateAtLeastAsNewAsImage)
     } // if(_bufferedImg.IsEmpty())
 
-    
+
     UpdateAllResults();
     return;
   }
@@ -788,7 +788,7 @@ namespace Cozmo {
 
     if(iter == _groundPlaneHomographyLUT.end()) {
       PRINT_NAMED_WARNING("VisionComponent.LookupGroundPlaneHomography.KeyNotFound",
-                          "Failed to find homogrphay using headangle of %.2frad (%.1fdeg) as lower bound",
+                          "Failed to find homography using headangle of %.2frad (%.1fdeg) as lower bound",
                           atHeadAngle, RAD_TO_DEG(atHeadAngle));
       --iter;
     } else {
@@ -992,7 +992,7 @@ namespace Cozmo {
         tryAndReport(&VisionComponent::UpdateLaserPoints,         VisionMode::DetectingLaserPoints);
         tryAndReport(&VisionComponent::UpdateDetectedObjects,     VisionMode::Count); // Use Count here to always call UpdateDetectedObjects
         tryAndReport(&VisionComponent::UpdateVisualObstacles,     VisionMode::DetectingVisualObstacles);
-        
+
         // Display any debug images left by the vision system
         if(ANKI_DEV_CHEATS)
         {
@@ -1059,7 +1059,7 @@ namespace Cozmo {
           _processingPeriod_ms = result.timestamp - _lastProcessedImageTimeStamp_ms;
           _lastProcessedImageTimeStamp_ms = result.timestamp;
         }
-        
+
         auto visionModesList = std::vector<VisionMode>();
         for (VisionMode mode = VisionMode::Idle; mode < VisionMode::Count; ++mode)
         {
@@ -1282,10 +1282,10 @@ namespace Cozmo {
     {
       _robot->GetMapComponent().AddDetectedObstacles(edgeFrame);
     }
-    
+
     return RESULT_OK;
   }
-  
+
   Result VisionComponent::UpdateLaserPoints(const VisionProcessingResult& procResult)
   {
     for(auto laserPoint : procResult.laserPoints) // deliberate copy: we move this to the message
@@ -1295,35 +1295,35 @@ namespace Cozmo {
 
     return RESULT_OK;
   } // UpdateMotionCentroid()
-  
+
   Result VisionComponent::UpdateDetectedObjects(const VisionProcessingResult& procResult)
   {
     TimeStamp_t currentTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-    
+
     auto iter = _detectedObjectsToDraw.begin();
     while(iter != _detectedObjectsToDraw.end() && iter->first < currentTime_ms - kKeepDrawingDetectionsFor_ms)
     {
       iter = _detectedObjectsToDraw.erase(iter);
     }
-    
+
     if(procResult.modesProcessed.IsBitFlagSet(VisionMode::DetectingGeneralObjects))
     {
       for(auto const& detectedObject : procResult.generalObjects)
       {
         using namespace ExternalInterface;
         _robot->Broadcast(MessageEngineToGame(RobotObservedGenericObject(detectedObject)));
-        
+
         _detectedObjectsToDraw.push_back({currentTime_ms, detectedObject});
       }
     }
-    
+
     const s32 textHeight = 14;
     s32 offset = textHeight;
     s32 colorIndex = 0;
     for(auto const& objectToDraw : _detectedObjectsToDraw)
     {
       const auto& object = objectToDraw.second;
-      
+
       const Rectangle<s32> rect(object.img_rect.x_topLeft, object.img_rect.y_topLeft,
                                 object.img_rect.width, object.img_rect.height);
       ColorRGBA color = ColorRGBA::CreateFromColorIndex(colorIndex++);
@@ -1331,25 +1331,25 @@ namespace Cozmo {
       const std::string caption(object.name + "[" + std::to_string((s32)std::round(100.f*object.score))
                                 + "] t:" + std::to_string(object.timestamp));
       _vizManager->DrawCameraText(rect.GetTopLeft().CastTo<float>(), caption, color);
-      
+
       if(kDisplayObjectDetectionLabels)
       {
         const std::string str(object.name + ":" + std::to_string((s32)std::round(object.score*100.f)));
-        
+
         std::function<void (Vision::ImageRGB&)> modFcn = [str,offset](Vision::ImageRGB& img)
         {
           img.DrawText({1.f, offset}, str, NamedColors::YELLOW, 0.6f, true);
         };
-        
+
         AddDrawScreenModifier(modFcn);
-        
+
         offset += textHeight;
       }
     }
-    
+
     return RESULT_OK;
   }
-  
+
   Result VisionComponent::UpdateOverheadEdges(const VisionProcessingResult& procResult)
   {
     for(auto & edgeFrame : procResult.overheadEdges)
@@ -1412,7 +1412,7 @@ namespace Cozmo {
     // If auto exposure is not enabled don't set camera settings
     if(_enableAutoExposure)
     {
-      SetExposureSettings(procResult.cameraParams.exposureTime_ms, 
+      SetExposureSettings(procResult.cameraParams.exposureTime_ms,
                           procResult.cameraParams.gain);
     }
 
@@ -1481,8 +1481,8 @@ namespace Cozmo {
   {
     if(_robot->IsPhysical() && _enableWhiteBalance)
     {
-      SetWhiteBalanceSettings(procResult.cameraParams.whiteBalanceGainR, 
-                              procResult.cameraParams.whiteBalanceGainG, 
+      SetWhiteBalanceSettings(procResult.cameraParams.whiteBalanceGainR,
+                              procResult.cameraParams.whiteBalanceGainG,
                               procResult.cameraParams.whiteBalanceGainB);
     }
 
@@ -1575,7 +1575,7 @@ namespace Cozmo {
       // Not a warning, this can legitimately happen
       PRINT_CH_INFO("VisionComponent",
                     "VisionComponent.VisionComponent.AddLiftOccluder.StateHistoryOriginMismatch",
-                    "Cound not get pose at t=%u due to origin change. Skipping.", t_request);
+                    "Could not get pose at t=%u due to origin change. Skipping.", t_request);
       return;
     }
     else if(RESULT_OK != result)
@@ -2280,18 +2280,18 @@ namespace Cozmo {
     SaveFaceAlbumToRobot();
     _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotErasedAllEnrolledFaces()));
   }
-  
+
   void VisionComponent::RequestEnrolledNames()
   {
     ExternalInterface::EnrolledNamesResponse response;
     Lock();
     response.faces = _visionSystem->GetEnrolledNames();
     Unlock();
-    
+
     _robot->Broadcast( ExternalInterface::MessageEngineToGame( std::move(response) ) );
   }
-  
-  
+
+
 
   Result VisionComponent::RenameFace(Vision::FaceID_t faceID, const std::string& oldName, const std::string& newName)
   {
@@ -2308,13 +2308,13 @@ namespace Cozmo {
 
     return result;
   }
-  
+
   bool VisionComponent::IsNameTaken(const std::string& name)
   {
     Lock();
     auto namePairList = _visionSystem->GetEnrolledNames();
     Unlock();
-    
+
     auto tolower = [](const char c) { return std::tolower(c); };
     std::string lcName{name};
     std::transform(lcName.begin(), lcName.end(), lcName.begin(), tolower);
@@ -2407,7 +2407,7 @@ namespace Cozmo {
 
   void VisionComponent::SetWhiteBalanceSettings(f32 gainR, f32 gainG, f32 gainB)
   {
-    if(!_visionSystem->IsGainValid(gainR) || 
+    if(!_visionSystem->IsGainValid(gainR) ||
        !_visionSystem->IsGainValid(gainG) ||
        !_visionSystem->IsGainValid(gainB))
     {
@@ -2570,7 +2570,7 @@ namespace Cozmo {
   {
     EraseAllFaces();
   }
-  
+
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::RequestEnrolledNames& msg)
   {
@@ -2656,19 +2656,19 @@ namespace Cozmo {
   {
     SetSaveImageParameters(payload.mode, payload.path, payload.qualityOnRobot);
   }
-  
+
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::DevSubscribeVisionModes& payload)
   {
     _robot->GetVisionScheduleMediator().DevOnly_SelfSubscribeVisionMode(GetVisionModesFromFlags(payload.bitFlags));
   }
-  
+
   template<>
   void VisionComponent::HandleMessage(const ExternalInterface::DevUnsubscribeVisionModes& payload)
   {
     _robot->GetVisionScheduleMediator().DevOnly_SelfUnsubscribeVisionMode(GetVisionModesFromFlags(payload.bitFlags));
   }
-  
+
   std::set<VisionMode> VisionComponent::GetVisionModesFromFlags(u32 bitflags) const
   {
     Util::BitFlags32<VisionMode> flags;

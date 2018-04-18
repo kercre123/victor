@@ -19,7 +19,7 @@
     "DetectingVisualObstacles"   : false,
     "DetectingGeneralObjects"    : false
   },
-  
+
   "InitialModeSchedules" :
   {
     // If a vision mode is not listed, it is scheduled to run every frame (if enabled)
@@ -29,30 +29,30 @@
     "DetectingOverheadEdges" : [false, true],
     // CheckingQuality and CheckingAWB run every 16 frames but are interleaved so they don't
     // run at the same time and step on each other's toes
-    "CheckingQuality"        : [false, false, false, false, false, false, false, false, 
+    "CheckingQuality"        : [false, false, false, false, false, false, false, false,
                                 false, false, false, false, false, false, false, true],
-    "CheckingWhiteBalance"   : [false, false, false, false, false, false, false, true, 
+    "CheckingWhiteBalance"   : [false, false, false, false, false, false, false, true,
                                 false, false, false, false, false, false, false, false],
     "DetectingLaserPoints"   : 2,
     "ComputingStatistics"    : false,  // NOTE: enabled but not scheduled!
     "DetectingGeneralObjects": 1,
     "SavingImages"           : 5
   },
-  
+
   "ColorImages" : true,        // Whether color images are enabled on startup (can still be toggled later)
-  
+
   "FaceAlbum" : "robot",       // Name of album on disk to load or "robot" to use the one from the robot
-  
+
   "FaceDetection" :
   {
     "DetectionMode": "video"   // "video" or "singleImage"
   },
-  
+
   "FaceRecognition" :
   {
     "RunMode": "asynchronous"  // "synchronous" or "asynchronous"
   },
-  
+
   "ImageQuality" :
   {
     // Auto-exposure settings
@@ -66,18 +66,18 @@
     "MaxChangeFraction"         : 0.80,  // [0.0, 1.0]  (Amount we can change current exposure/gain each update)
     "SubSample"                 : 3,     // >= 1
     "MeterFromDetections"       : true,  // Base auto-exposure on detected markers, faces, etc, if any
-    
+
     "TimeBeforeErrorMessage_ms" :       3000,  // How long VisionSystem must detect "bad" quality before notifying game
-    "RepeatedErrorMessageInverval_ms" : 300000 // Time between error messages once triggered
+    "RepeatedErrorMessageInterval_ms" : 300000 // Time between error messages once triggered
   },
-  
+
   "PerformanceLogging" :
   {
     "DropStatsWindowLength_sec"         : 30,  // How long to average dropped image stats
     "TimeBetweenProfilerInfoPrints_sec" : 60,  // How often to print Profiler info messages to the logs
     "TimeBetweenProfilerDasLogs_sec"    : 600  // How often to log Profiler DAS events
   },
-  
+
   "PetTracker" :
   {
     "MaxPets"             : 4,    // Detectable/trackable at the same time
@@ -92,12 +92,12 @@
 
   "MotionDetector" :
   {
-  	"HorizontalSize"    : 0.3,    // Fraction of the width of the image to be used for peripheral motion detction (right and left)
-  	"VerticalSize"      : 0.3,    // Fraction of the height of the image to be used for peripheral motion detction (top)
+  	"HorizontalSize"    : 0.3,    // Fraction of the width of the image to be used for peripheral motion detection (right and left)
+  	"VerticalSize"      : 0.3,    // Fraction of the height of the image to be used for peripheral motion detection (top)
   	"IncreaseFactor"    : 500.0,  // The higher this number, the more sensitive is motion detection to motion
   	"DecreaseFactor"    : 0.1,    // The higher this number, the more quickly motion detection forgets about motion
-  	"MaxValue"          : 3.0,    // The higher this value, the sooner peripheral motion detection wilkl be triggered
-    "CentroidStability" : 0.6     // Hop quickly should peripheral motion detection track the source of motion.
+  	"MaxValue"          : 3.0,    // The higher this value, the sooner peripheral motion detection will be triggered
+    "CentroidStability" : 0.6     // How quickly should peripheral motion detection track the source of motion.
   },
 
   "OverheadMap" :
@@ -116,26 +116,26 @@
     "OnTheFlyTrain"       : false,
     "FileOrDirName"       : "config/engine/vision/groundClassifier/deskClassifier.yaml"
   },
-  
+
   "ObjectDetector" :
   {
     // How frequently to print or log events about timing
     "ProfilingPrintFrequency_ms"     : 10000,
     "ProfilingEventLogFrequency_ms"  : 30000,
-    
+
     // OpenCV DNN w/ MobileNet SSD Model
     // NOTE: Currently assumes model is symlinked in resources/config/engine/vision/dnn_models to:
     //       ~/DropBox/DeepLearningVisionModels, shared by andrew (until VIC-1071)
-    "graph"  : "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb", 
-    "labels" : "cocostuff-labels.txt", 
+    "graph"  : "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb",
+    "labels" : "cocostuff-labels.txt",
     "mode"   : "detection",
-    "input_width" : 224, 
-    "input_height": 224, 
-    "input_mean_R": 0, 
-    "input_mean_G": 0, 
-    "input_mean_B": 0, 
-    "input_std": 255, 
-    "top_K": 1, 
+    "input_width" : 224,
+    "input_height": 224,
+    "input_mean_R": 0,
+    "input_mean_G": 0,
+    "input_mean_B": 0,
+    "input_std": 255,
+    "top_K": 1,
     "min_score": 0.5
 
     // // SqueezeNet on ImageNet with Caffe
@@ -145,7 +145,7 @@
     // "mode"   : "classification",
     // "input_width" : 227,
     // "input_height" : 227,
-    // "input_mean_R" : 104, 
+    // "input_mean_R" : 104,
     // "input_mean_G" : 117,
     // "input_mean_B" : 123,
     // "input_std"    : 1,
@@ -186,7 +186,7 @@
     // "output_num_detections_layer" :  "num_detections",
     // "top_K"                       : 5,
     // "min_score"                   : 0.5
-    
+
     //"graph"         : "inception_v3_2016_08_28_frozen.pb",
     //"labels"        : "imagenet_slim_labels.txt",
     //"input_width"   : 299,
