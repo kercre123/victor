@@ -103,17 +103,6 @@ cxx_project(
 )
 
 cxx_project(
-    name = 'webotsCtrlHandEmitter',
-    srcs = cxx_src_glob(['controllers/webotsCtrlHandEmitter'],
-                        ),
-    platform_srcs = [],
-    headers = cxx_header_glob(['controllers/webotsCtrlHandEmitter'],
-                              ),
-    platform_headers = [
-    ]
-)
-
-cxx_project(
     name = 'webotsCtrlBuildServerTest',
     srcs = cxx_src_glob(['controllers/webotsCtrlBuildServerTest', 'game'],
                         ),

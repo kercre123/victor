@@ -61,6 +61,9 @@ namespace Cozmo {
     bool _pressBackpackButton = false;
     bool _wasBackpackButtonPressed = false;
     
+    bool _touchBackpackTouchSensor = false;
+    bool _wasBackpackTouchSensorTouched = false;
+
     f32 _commandedLiftSpeed = 0.f;
     f32 _commandedHeadSpeed = 0.f;
     
@@ -1806,6 +1809,11 @@ namespace Cozmo {
     _pressBackpackButton = true;
   }
 
+  void WebotsKeyboardController::TouchBackSensor()
+  {
+    _touchBackpackTouchSensor = true;
+  }
+
   void WebotsKeyboardController::CycleConnectionFlowState()
   {
     static u8 status = 0;
@@ -1871,9 +1879,9 @@ namespace Cozmo {
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::PAGEDOWN, MOD_ALT,       , "", "<PageDown>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::PAGEDOWN, MOD_SHIFT,     , "", "<PageDown>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::PAGEDOWN, MOD_ALT_SHIFT, , "", "<PageDown>");
-    REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,  MOD_NONE,   PressBackButton, "Press backpack button", "<Home>");
-//      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,     MOD_ALT,       , "", "<Home>");
-//      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,     MOD_SHIFT,     , "", "<Home>");
+    REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,  MOD_NONE, PressBackButton, "Press backpack button", "<Home>");
+    REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,  MOD_ALT,  TouchBackSensor, "Touch backpack touch sensor", "<Home>");    
+//      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,     MOD_SHIFT,       , "", "<Home>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,     MOD_ALT_SHIFT, , "", "<Home>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::END,      MOD_NONE,      , "", "<End>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::END,      MOD_ALT,       , "", "<End>");
@@ -2187,6 +2195,7 @@ namespace Cozmo {
     _steeringDir = 0.f;
     _throttleDir = 0.f;
     _pressBackpackButton = false;
+    _touchBackpackTouchSensor = false;
     
     _commandedLiftSpeed = 0.f;
     _commandedHeadSpeed = 0.f;
@@ -2423,6 +2432,12 @@ namespace Cozmo {
     }
     _wasBackpackButtonPressed = _pressBackpackButton;
    
+    if (_touchBackpackTouchSensor && !_wasBackpackTouchSensorTouched) {
+      TouchBackpackTouchSensor(true);
+    } else if (!_touchBackpackTouchSensor && _wasBackpackTouchSensorTouched) {
+      TouchBackpackTouchSensor(false);
+    }
+    _wasBackpackTouchSensorTouched = _touchBackpackTouchSensor;
     
   } // BSKeyboardController::ProcessKeyStroke()
   

@@ -801,6 +801,11 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     (int)payload.state.rwheel_speed_mmps);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_SPEEDS, Anki::NamedColors::GREEN, txt);
 
+  sprintf(txt, "Touch: %u", 
+    payload.state.backpackTouchSensorRaw
+  );
+  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_TOUCH, Anki::NamedColors::GREEN, txt);
+
   sprintf(txt, "Batt: %2.2f V", payload.batteryVolts);
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_BATTERY, Anki::NamedColors::GREEN, txt);
 

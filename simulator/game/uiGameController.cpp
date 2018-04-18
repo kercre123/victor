@@ -1965,7 +1965,7 @@ namespace Anki {
     {
       if (_backpackButtonPressedField == nullptr) {
         if (_robotNode == nullptr) {
-          PRINT_NAMED_ERROR("UiGameController.PressBackpackButton.NullRobotNoe", "");
+          PRINT_NAMED_ERROR("UiGameController.PressBackpackButton.NullRobotNode", "");
           return;
         } else {
           _backpackButtonPressedField = _robotNode->getField("backpackButtonPressed");
@@ -1974,6 +1974,18 @@ namespace Anki {
       _backpackButtonPressedField->setSFBool(pressed);
     }
     
+    void UiGameController::TouchBackpackTouchSensor(bool touched)
+    {
+      if (_touchSensorTouchedField == nullptr) {
+        if (_robotNode == nullptr) {
+          PRINT_NAMED_ERROR("UiGameController.TouchBackpackTouchSensor.NullRobotNode", "");
+          return;
+        } else {
+          _touchSensorTouchedField = _robotNode->getField("touchSensorTouched");
+        }
+      }
+      _touchSensorTouchedField->setSFBool(touched);
+    }
     
     void UiGameController::SetActualRobotPose(const Pose3d& newPose)
     {      

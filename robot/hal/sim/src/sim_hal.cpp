@@ -143,8 +143,8 @@ namespace Anki {
       // Backpack button
       webots::Field* backpackButtonPressedField_ = nullptr;
 
-      // Upper Touch Sensor (for petting)
-      webots::Receiver *backpackTouchSensorReceiver_;
+      // Touch sensor
+      webots::Field* touchSensorTouchedField_;
 
       // For tracking wheel distance travelled
       f32 motorPositions_[MOTOR_COUNT];
@@ -403,13 +403,17 @@ namespace Anki {
       chargeContact_->enablePresence(ROBOT_TIME_STEP_MS);
       wasOnCharger_ = false;
 
-      backpackTouchSensorReceiver_ = webotRobot_.getReceiver("touchSensorUpper");
-      backpackTouchSensorReceiver_->enable(ROBOT_TIME_STEP_MS);
-
       // Backpack button
       backpackButtonPressedField_ =  webotRobot_.getSelf()->getField("backpackButtonPressed");
       if (backpackButtonPressedField_ == nullptr) {
         AnkiError("sim_hal.Init.NoBackpackButtonPressedField", "");
+        return RESULT_FAIL;
+      }
+
+      // Touch sensor
+      touchSensorTouchedField_ =  webotRobot_.getSelf()->getField("touchSensorTouched");
+      if (touchSensorTouchedField_ == nullptr) {
+        AnkiError("sim_hal.Init.NoTouchSensorTouchedField", "");
         return RESULT_FAIL;
       }
 
@@ -813,22 +817,14 @@ namespace Anki {
     {
       switch(button_id) {
         case BUTTON_CAPACITIVE:
-        {
-          double signalStrength = 0.0;
-
-          while(backpackTouchSensorReceiver_->getQueueLength() > 0) {
-            signalStrength = backpackTouchSensorReceiver_->getSignalStrength();
-            backpackTouchSensorReceiver_->nextPacket();
+        {        
+          const u16 touchSignal = 700;
+          const u16 noTouchSignal = 600;
+          if (touchSensorTouchedField_->getSFBool()) {
+            return touchSignal;
+          } else {
+            return noTouchSignal;
           }
-
-          // XXX rescale the signal strength to fit within a u16 (to match real sensor)
-          u16 ss = Util::numeric_cast_clamped<u16>(signalStrength);
-          // HACK: Temp scaling to rough actual values
-          const u16 maxPhysSignal = 700;
-          const u16 minPhysSignal = 600;
-          const f32 maxSimSignal  = std::numeric_limits<u16>::max();
-          ss = (u16)((((maxPhysSignal - minPhysSignal) * ss) / maxSimSignal) + minPhysSignal);
-          return ss;
         }
         case BUTTON_POWER:
         {

@@ -387,6 +387,9 @@ protected:
   // Press or release the backpack button
   void PressBackpackButton(bool pressed);
   
+  // Touch or not touch backpack touch sensor
+  void TouchBackpackTouchSensor(bool touched);
+
   ///
   // @brief      Sets the actual robot pose.
   // @param[in]  newPose  The new pose with translation in millimeters.
@@ -529,6 +532,7 @@ private:
   
   webots::Node* _robotNode       = nullptr;
   webots::Field* _backpackButtonPressedField = nullptr;
+  webots::Field* _touchSensorTouchedField = nullptr;
 
   std::vector<webots::Node*> _lightCubes;
   std::vector<webots::Node*>::iterator _lightCubeOriginIter = _lightCubes.end();

@@ -390,28 +390,6 @@ symlink_target(
   DST "${CONTROLLERS_DIR}/webotsCtrlBuildServerTest/"
 )
 
-#
-# Webots Ctrl Hand Emitter
-#
-
-webots_build_cxx_executable(webotsCtrlHandEmitter ${ANKI_SRCLIST_DIR})
-
-target_include_directories(webotsCtrlHandEmitter
-  PRIVATE
-  ${CMAKE_SOURCE_DIR}
-)
-
-target_link_libraries(webotsCtrlHandEmitter
-  PRIVATE
-  ${PLATFORM_LIBS}
-)
-
-symlink_target(
-  TARGET webotsCtrlHandEmitter
-  DST "${CONTROLLERS_DIR}/webotsCtrlHandEmitter/"
-)
-
-# end -- Webots Controller Hand Emitter
 
 #
 # webotsCtrlDevLog

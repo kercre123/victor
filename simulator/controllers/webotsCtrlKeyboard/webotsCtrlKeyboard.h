@@ -152,6 +152,7 @@ protected:
   
   void ExecuteRobotTestMode();
   void PressBackButton();
+  void TouchBackSensor();
 
   void CycleConnectionFlowState();
   

@@ -237,12 +237,6 @@
             "program": "${workspaceRoot}/simulator/controllers/webotsCtrlGameEngine2/webotsCtrlGameEngine2"
         },
         {
-            "name": "webotsCtrlHandEmitter:attach",
-            "type": "lldb",
-            "request": "attach",
-            "program": "${workspaceRoot}/simulator/controllers/webotsCtrlHandEmitter/webotsCtrlHandEmitter"
-        },
-        {
             "name": "webotsCtrlKeyboard:attach",
             "type": "lldb",
             "request": "attach",

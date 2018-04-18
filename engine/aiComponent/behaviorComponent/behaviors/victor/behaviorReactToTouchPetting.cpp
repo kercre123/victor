@@ -207,6 +207,7 @@ void BehaviorReactToTouchPetting::PlayBlissLoopAnimation()
     }
   };
   
+  CancelDelegates();
   DelegateIfInControl(action, cb);
 }
 

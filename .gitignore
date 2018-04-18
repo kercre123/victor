@@ -60,8 +60,6 @@ simulator/controllers/webotsCtrlKeyboard/resources
 #
 simulator/controllers/webotsCtrlDevLog/webotsCtrlDevLog
 #
-simulator/controllers/webotsCtrlHandEmitter/webotsCtrlHandEmitter
-#
 simulator/plugins/physics/cozmo_physics/libcozmo_physics.dylib
 simulator/worlds/__generated__.wbt
 simulator/worlds/__GENERATED_FOR_*__.wbt

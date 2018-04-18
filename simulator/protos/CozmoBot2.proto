@@ -40,6 +40,9 @@ PROTO CozmoBot2 [
   # Press backpack button
   field SFBool backpackButtonPressed FALSE
   
+  # Touch sensor
+  field SFBool touchSensorTouched FALSE
+
   # Robot battery voltage
   field SFFloat batteryVolts  4.3
   
@@ -495,19 +498,6 @@ Supervisor {
                 }
               ]
             } # BACKPACK_GROUP
-
-            # Touch sensor (upper side of the back. For when pet from above)
-            # Works by receiving on a specific channel that is only emitted
-            # by the hand object proto
-            Receiver {
-              name                "touchSensorUpper"
-              translation         -0.003 0 0.025
-              type                "radio"             # for penetrating obstacles (aka other cozmo components)
-              aperture            3.14159             # full half sphere of detection
-              channel             84                  # arbitrarily chosen
-              signalStrengthNoise 0.1
-              directionNoise      0.1
-            }
             
             # Visualization of the Touch Sensor receiver (a small disc on the back)
             # intersecting this with the hand object will trigger touch measurements
