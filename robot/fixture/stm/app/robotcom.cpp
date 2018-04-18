@@ -112,7 +112,7 @@ int helperGetTempC(int zone)
 
 #include "cmd.h"
 
-#define CCC_DEBUG 1
+#define CCC_DEBUG 0
 #define CCC_CMD_DELAY()     if( CCC_DEBUG > 0 ) { Timer::delayMs(150); }
 
 static struct { //result of most recent command
@@ -323,7 +323,11 @@ static uint16_t payload_size_(PayloadId type, bool h2b) {
 }
 
 void halSpineInit(void) {
+  #if SPINE_HAL_DEBUG > 0
+  ConsolePrintf("hal spine init 3M\n");
+  #endif
   DUT_UART::init(3000000);
+  Timer::wait(500);
 }
 
 typedef struct { int rxDroppedChars; int rxOverflowErrors; int rxFramingErrors; } io_err_t;
@@ -365,6 +369,11 @@ int halSpineSend(uint8_t *payload, PayloadId type)
   
   #if SPINE_HAL_DEBUG > 0
   ConsolePrintf("spine tx: type %04x len %u checksum %08x\n", txPacket.header.payload_type, txPacket.header.bytes_to_follow, footer->checksum );
+  ConsolePrintf(" ->");
+  for(int x=0; x < sizeof(SpineMessageHeader) + payloadlen + sizeof(SpineMessageFooter); x++) {
+    if( !(x&3) ) ConsolePutChar(' ');
+    ConsolePrintf("%02x", ((uint8_t*)&txPacket)[x] );
+  } ConsolePrintf("\n");
   #endif
   
   //send to spine uart
@@ -381,6 +390,10 @@ spinePacket_t* halSpineReceive(int timeout_us)
   static spinePacket_t rxPacket;
   memset( &rxPacket, 0, sizeof(SpineMessageHeader) );
   
+  #if SPINE_HAL_DEBUG > 0
+  ConsolePrintf("spine rx: scanning for sync word\n");
+  #endif
+  
   //scan for packet sync
   uint32_t Tsync = Timer::get();
   while( rxPacket.header.sync_bytes != SYNC_BODY_TO_HEAD )
@@ -394,6 +407,10 @@ spinePacket_t* halSpineReceive(int timeout_us)
     if( ioe.rxDroppedChars || ioe.rxOverflowErrors )
       throw ERROR_SPINE_RX_ERROR;
   }
+  
+  #if SPINE_HAL_DEBUG > 0
+  ConsolePrintf("spine rx: sync found\n");
+  #endif
   
   //get remaining header
   timeout_us = timeout_us > 0 ? 4500 : timeout_us; //alow enough time to rx the packet
@@ -409,6 +426,10 @@ spinePacket_t* halSpineReceive(int timeout_us)
     if( ioe.rxDroppedChars || ioe.rxOverflowErrors )
       throw ERROR_SPINE_RX_ERROR;
   }
+  
+  #if SPINE_HAL_DEBUG > 0
+  ConsolePrintf("spine rx header\n");
+  #endif
   
   //get the rest
   //write = (uint8_t*)&rxPacket.payload;
@@ -451,6 +472,20 @@ spinePacket_t* halSpineReceive(int timeout_us)
   return &rxPacket;
 }
 
+HeadToBody* halSpineH2BFrame(PowerState powerState, int16_t *p4motorPower, uint8_t *p16ledColors)
+{
+  static uint32_t m_framecounter = 0;
+  static HeadToBody h2b;
+  
+  memset(&h2b, 0, sizeof(h2b));
+  h2b.framecounter = ++m_framecounter;
+  h2b.powerState = powerState;
+  if( p4motorPower != NULL ) memcpy( h2b.motorPower, p4motorPower, 4*sizeof(int16_t) );
+  if( p16ledColors != NULL ) memcpy( h2b.ledColors, p16ledColors, 16*sizeof(uint8_t) );
+  
+  return &h2b;
+}
+
 //-----------------------------------------------------------------------------
 //                  Target: Spine
 //-----------------------------------------------------------------------------
@@ -463,6 +498,13 @@ STATIC_ASSERT( sizeof(robot_bsv_t) == sizeof(VersionInfo), version_struct_size_m
 robot_bsv_t* spineBsv_(void)
 {
   static robot_bsv_t m_bsv;
+  
+  //set syscon default state
+  ConsolePrintf("spine idle PAYLOAD_DATA_FRAME\n");
+  for(int n=0; n<2; n++) {
+    halSpineSend((uint8_t*)halSpineH2BFrame(POWER_STATE_ON,0,0), PAYLOAD_DATA_FRAME);
+    Timer::delayMs(5);
+  }
   
   //Send version request packet (0-payload)
   ConsolePrintf("spine request PAYLOAD_VERSION\n");
