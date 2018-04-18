@@ -15,11 +15,13 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/actions/dockActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/carryingComponent.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "engine/faceWorld.h"
 
@@ -115,24 +117,19 @@ void BehaviorRequestToGoHome::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRequestToGoHome::OnBehaviorActivated()
 {
-  _dVars.numNormalRequests = 0;
-  _dVars.numSevereRequests = 0;
-  _dVars.state = EState::Init;
+  _dVars = DynamicVariables(_iConfig);
   UpdateCurrRequestTypeAndLoadParams();
-  
-  // Do we have any known faces?
   _dVars.imageTimestampWhenActivated = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
-  TimeStamp_t maxFaceAge_ms = Util::numeric_cast<TimeStamp_t>(1000.f * _iConfig.maxFaceAge_sec);
-  maxFaceAge_ms = std::min(maxFaceAge_ms, _dVars.imageTimestampWhenActivated);
-  TimeStamp_t oldestFaceTimestamp = _dVars.imageTimestampWhenActivated - maxFaceAge_ms;
   
-  const bool hasFace = GetBEI().GetFaceWorld().HasAnyFaces(oldestFaceTimestamp);
-  if (hasFace) {
-    // Turn to last known face. Even if it fails, still jump to playing the animation
-    DelegateIfInControl(new TurnTowardsLastFacePoseAction(),
-                        &BehaviorRequestToGoHome::TransitionToRequestAnim);
+  // If we're carrying a block, we must first put it down
+  const auto& robotInfo = GetBEI().GetRobotInfo();
+  if (robotInfo.GetCarryingComponent().IsCarryingObject()) {
+    // Put down the block. Even if it fails, we still just want
+    // to move along in the behavior.
+    DelegateIfInControl(new PlaceObjectOnGroundAction(),
+                        &BehaviorRequestToGoHome::TransitionToCheckForFaces);
   } else {
-    TransitionToSearchingForFaces();
+    TransitionToCheckForFaces();
   }
 }
 
@@ -170,6 +167,26 @@ void BehaviorRequestToGoHome::BehaviorUpdate()
       TransitionToRequestAnim();
     }
   }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorRequestToGoHome::TransitionToCheckForFaces()
+{
+  // Do we have any known faces?
+  TimeStamp_t maxFaceAge_ms = Util::numeric_cast<TimeStamp_t>(1000.f * _iConfig.maxFaceAge_sec);
+  maxFaceAge_ms = std::min(maxFaceAge_ms, _dVars.imageTimestampWhenActivated);
+  TimeStamp_t oldestFaceTimestamp = _dVars.imageTimestampWhenActivated - maxFaceAge_ms;
+  
+  const bool hasFace = GetBEI().GetFaceWorld().HasAnyFaces(oldestFaceTimestamp);
+  if (hasFace) {
+    // Turn to last known face. Even if it fails, still jump to playing the animation
+    DelegateIfInControl(new TurnTowardsLastFacePoseAction(),
+                        &BehaviorRequestToGoHome::TransitionToRequestAnim);
+  } else {
+    TransitionToSearchingForFaces();
+  }
+  
 }
 
 
@@ -277,9 +294,9 @@ void BehaviorRequestToGoHome::LoadConfig(const Json::Value& config)
     
     params->numRequests         = JsonTools::ParseUint8(json, kNumRequestsKey, debugName);
    
-    JsonTools::GetCladEnumFromJSON(config, kRequestAnimTriggerKey,         params->requestAnimTrigger, debugName);
-    JsonTools::GetCladEnumFromJSON(config, kRequestGetoutAnimTriggerKey,   params->getoutAnimTrigger, debugName);
-    JsonTools::GetCladEnumFromJSON(config, kRequestWaitLoopAnimTriggerKey, params->waitLoopAnimTrigger, debugName);
+    JsonTools::GetCladEnumFromJSON(json, kRequestAnimTriggerKey,         params->requestAnimTrigger, debugName);
+    JsonTools::GetCladEnumFromJSON(json, kRequestGetoutAnimTriggerKey,   params->getoutAnimTrigger, debugName);
+    JsonTools::GetCladEnumFromJSON(json, kRequestWaitLoopAnimTriggerKey, params->waitLoopAnimTrigger, debugName);
 
     params->idleWaitTime_sec    = JsonTools::ParseFloat(json, kRequestIdleWaitTimeKey, debugName);
   }

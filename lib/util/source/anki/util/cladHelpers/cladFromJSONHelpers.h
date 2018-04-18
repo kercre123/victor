@@ -29,14 +29,14 @@ bool GetCladEnumFromJSON(const Json::Value& config, const std::string& key,  Cla
   const Json::Value& child = config[key];
   if(child.isNull()){
     const char* debugMsg = (debugName + ".GetCladEnumFromJSON.ParseString.KeyMissing").c_str();
-    DEV_ASSERT_MSG(shouldAssertIfMissing, debugMsg, "%s", key.c_str());
+    DEV_ASSERT_MSG(!shouldAssertIfMissing, debugMsg, "%s", key.c_str());
     return false;
   }
   std::string str = child.asString();
   const bool foundValue = Cozmo::EnumFromString(str.c_str(), value);
   if(!foundValue){
     const char* debugMsg = (debugName + "GetCladEnumFromJSON.ParseString.InvalidValue").c_str();
-    DEV_ASSERT_MSG(shouldAssertIfMissing, debugMsg, "%s", key.c_str());
+    DEV_ASSERT_MSG(!shouldAssertIfMissing, debugMsg, "%s", key.c_str());
   }
     
   return foundValue;

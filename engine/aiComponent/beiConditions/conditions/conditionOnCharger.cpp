@@ -25,7 +25,7 @@ ConditionOnCharger::ConditionOnCharger(const Json::Value& config)
 
 bool ConditionOnCharger::AreConditionsMetInternal(BehaviorExternalInterface& bei) const
 {
-  const bool onCharger = bei.GetRobotInfo().IsOnChargerPlatform();
+  const bool onCharger = bei.GetRobotInfo().IsOnChargerContacts();
   return onCharger;
 }
 

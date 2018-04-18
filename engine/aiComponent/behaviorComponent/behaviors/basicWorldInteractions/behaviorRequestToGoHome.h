@@ -34,7 +34,10 @@ public:
   
 protected:
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override { modifiers.wantsToBeActivatedWhenOnCharger = false; }
+  virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
+    modifiers.wantsToBeActivatedWhenOnCharger = false;
+    modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  }
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
   virtual void InitBehavior() override;
@@ -96,6 +99,7 @@ private:
   InstanceConfig   _iConfig;
   DynamicVariables _dVars;
 
+  void TransitionToCheckForFaces();
   void TransitionToSearchingForFaces();
   void TransitionToRequestAnim();
   void TransitionToRequestWaitLoopAnim();

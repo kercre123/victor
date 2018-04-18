@@ -50,7 +50,7 @@ namespace Anki {
       
       virtual const Point3f& GetSize() const override { return _size; }
       
-      f32     GetHeight() const { return Height; }
+      f32     GetHeight() const { return kHeight; }
       
       const Vision::KnownMarker* GetMarker() const { return _marker; }
       
@@ -58,6 +58,10 @@ namespace Anki {
       Pose3d GetRobotDockedPose()  const;
       // Return pose of charger wrt robot when the robot is on the charger
       static Pose3d GetDockPoseRelativeToRobot(const Robot& robot);
+      
+      // Returns a quad describing the area in front of the charger
+      // that must be clear before the robot can dock with the charger.
+      Quad2f GetDockingAreaQuad() const;
       
       //
       // Inherited Virtual Methods
@@ -81,24 +85,24 @@ namespace Anki {
       virtual bool CanBeUsedForLocalization() const override { return false; }
       
       
-      constexpr static f32 GetLength() { return Length; }
+      constexpr static f32 GetLength() { return kLength; }
       
     protected:
       
       // Model dimensions in mm (perhaps these should come from a configuration
       // file instead?)
-      constexpr static const f32 WallWidth      = 12.f;
-      constexpr static const f32 PlatformWidth  = 64.f;
-      constexpr static const f32 Width          = 2*WallWidth + PlatformWidth;
-      constexpr static const f32 Height         = 80.f;
-      constexpr static const f32 SlopeLength    = 94.f;
-      constexpr static const f32 PlatformLength = 0.f;
-      constexpr static const f32 Length         = SlopeLength + PlatformLength + WallWidth;
-      constexpr static const f32 MarkerHeight   = 44.f;
-      constexpr static const f32 MarkerWidth    = 44.f;
-      constexpr static const f32 MarkerZPosition   = 48.5f;  // Middle of marker above ground
-      constexpr static const f32 PreAscentDistance  = 100.f; // for ascending from bottom
-      constexpr static const f32 RobotToChargerDistWhenDocked = 30.f;  // Distance from front of charger to robot origin when docked
+      constexpr static const f32 kWallWidth      = 12.f;
+      constexpr static const f32 kPlatformWidth  = 64.f;
+      constexpr static const f32 kWidth          = 2*kWallWidth + kPlatformWidth;
+      constexpr static const f32 kHeight         = 80.f;
+      constexpr static const f32 kSlopeLength    = 94.f;
+      constexpr static const f32 kPlatformLength = 0.f;
+      constexpr static const f32 kLength         = kSlopeLength + kPlatformLength + kWallWidth;
+      constexpr static const f32 kMarkerHeight   = 44.f;
+      constexpr static const f32 kMarkerWidth    = 44.f;
+      constexpr static const f32 kMarkerZPosition   = 48.5f;  // Middle of marker above ground
+      constexpr static const f32 kPreAscentDistance  = 100.f; // for ascending from bottom
+      constexpr static const f32 kRobotToChargerDistWhenDocked = 30.f;  // Distance from front of charger to robot origin when docked
       
       virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
       

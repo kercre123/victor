@@ -36,15 +36,15 @@ namespace Anki {
     
       static const std::vector<Point3f> CanonicalCorners = {{
         // Bottom corners
-        Point3f(Length, -0.5f*Width,  0.f),
-        Point3f(0,      -0.5f*Width,  0.f),
-        Point3f(0,       0.5f*Width,  0.f),
-        Point3f(Length,  0.5f*Width,  0.f),
+        Point3f(kLength, -0.5f*kWidth,  0.f),
+        Point3f(0,      -0.5f*kWidth,  0.f),
+        Point3f(0,       0.5f*kWidth,  0.f),
+        Point3f(kLength,  0.5f*kWidth,  0.f),
         // Top corners:
-        Point3f(Length, -0.5f*Width,  Height),
-        Point3f(0,      -0.5f*Width,  Height),
-        Point3f(0,       0.5f*Width,  Height),
-        Point3f(Length,  0.5f*Width,  Height),
+        Point3f(kLength, -0.5f*kWidth,  kHeight),
+        Point3f(0,       -0.5f*kWidth,  kHeight),
+        Point3f(0,        0.5f*kWidth,  kHeight),
+        Point3f(kLength,  0.5f*kWidth,  kHeight),
       }};
       
       return CanonicalCorners;
@@ -54,11 +54,11 @@ namespace Anki {
     
     Charger::Charger(ObjectType type)
     : ObservableObject(ObjectFamily::Charger, type), ActionableObject()
-    , _size(Length, Width, Height)
+    , _size(kLength, kWidth, kHeight)
     , _vizHandle(VizManager::INVALID_HANDLE)
     {
       Pose3d frontPose(-M_PI_2_F, Z_AXIS_3D(),
-                       Point3f{SlopeLength+PlatformLength, 0, MarkerZPosition});
+                       Point3f{kSlopeLength+kPlatformLength, 0, kMarkerZPosition});
       
 #ifdef SIMULATOR
       // Simulation uses new marker with battery
@@ -68,7 +68,7 @@ namespace Anki {
       const auto markerType = Vision::MARKER_CHARGER_HOME_EYES;
 #endif
       
-      _marker = &AddMarker(markerType, frontPose, Point2f(MarkerWidth, MarkerHeight));
+      _marker = &AddMarker(markerType, frontPose, Point2f(kMarkerWidth, kMarkerHeight));
       
     } // Charger() Constructor
 
@@ -117,7 +117,7 @@ namespace Anki {
     Pose3d Charger::GetRobotDockedPose() const
     {
       Pose3d pose(M_PI, Z_AXIS_3D(),
-                  Point3f{RobotToChargerDistWhenDocked, 0, 0},
+                  Point3f{kRobotToChargerDistWhenDocked, 0, 0},
                   GetPose());
       
       pose.SetName("Charger" + std::to_string(GetID().GetValue()) + "DockedPose");
@@ -128,9 +128,43 @@ namespace Anki {
     Pose3d Charger::GetDockPoseRelativeToRobot(const Robot& robot)
     {
       return Pose3d(M_PI_F, Z_AXIS_3D(),
-                    Point3f{RobotToChargerDistWhenDocked, 0, 0},
+                    Point3f{kRobotToChargerDistWhenDocked, 0, 0},
                     robot.GetPose(),
                     "ChargerDockPose");
+    }
+    
+    Quad2f Charger::GetDockingAreaQuad() const
+    {
+      // Define the docking area w.r.t. charger. This defines the area in
+      // front of the charger that must be clear of obstacles if the robot
+      // is to successfully dock with the charger.
+      const float xExtent_mm = 120.f;
+      const float yExtent_mm = kWidth;
+      std::vector<Point3f> dockingAreaPts = {{
+        {0.f,         -yExtent_mm/2.f, 0.f},
+        {-xExtent_mm, -yExtent_mm/2.f, 0.f},
+        {0.f,         +yExtent_mm/2.f, 0.f},
+        {-xExtent_mm, +yExtent_mm/2.f, 0.f}
+      }};
+      
+      const auto& chargerPose = GetPose();
+      const RotationMatrix3d& R = chargerPose.GetRotationMatrix();
+      std::vector<Point2f> points;
+      for (auto& pt : dockingAreaPts) {
+        // Rotate to charger pose
+        pt = R*pt;
+        
+        // Project onto XY plane, i.e. just drop the Z coordinate
+        points.emplace_back(pt.x(), pt.y());
+      }
+      
+      Quad2f boundingQuad = GetBoundingQuad(points);
+      
+      // Re-center
+      Point2f center(chargerPose.GetTranslation().x(), chargerPose.GetTranslation().y());
+      boundingQuad += center;
+      
+      return boundingQuad;
     }
     
 #if 0
@@ -146,9 +180,13 @@ namespace Anki {
     void Charger::Visualize(const ColorRGBA& color) const
     {
       Pose3d vizPose = GetPose().GetWithRespectToRoot();
-      _vizHandle = _vizManager->DrawCharger(GetID().GetValue(), Charger::PlatformLength + Charger::WallWidth,
-                                                          Charger::SlopeLength, Charger::Width,
-                                                          Charger::Height, vizPose, color);
+      _vizHandle = _vizManager->DrawCharger(GetID().GetValue(),
+                                            Charger::kPlatformLength + Charger::kWallWidth,
+                                            Charger::kSlopeLength,
+                                            Charger::kWidth,
+                                            Charger::kHeight,
+                                            vizPose,
+                                            color);
     } // Visualize()
     
     
@@ -167,7 +205,7 @@ namespace Anki {
     
     // TODO: Make these dependent on Charger type/size?
     Point3f Charger::GetSameDistanceTolerance() const {
-      Point3f distTol(Length*.5f, Width*.5f, Height*.5f);
+      Point3f distTol(kLength*.5f, kWidth*.5f, kHeight*.5f);
       return distTol;
     }
         

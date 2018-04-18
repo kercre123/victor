@@ -107,6 +107,10 @@ protected:
   
   //virtual f32 GetTimeoutInSeconds() const override { return 5.f; }
   
+  // Add a slight delay before verification to allow the "isOnCharger"
+  // bit to turn on (it has a slight debounce)
+  virtual f32 GetVerifyDelayInSeconds() const override { return 0.25f; }
+  
   virtual ActionResult Verify() override;
   
 private:

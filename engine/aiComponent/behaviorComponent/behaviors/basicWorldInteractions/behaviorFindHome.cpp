@@ -14,10 +14,12 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
+#include "engine/actions/dockActions.h"
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/carryingComponent.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 
 #include "coretech/common/engine/jsonTools.h"
@@ -123,14 +125,24 @@ void BehaviorFindHome::OnBehaviorActivated()
 {
   _dVars.numSearchesCompleted = 0;
   
-  // Move head to look straight ahead in case charger is right in
-  // front of us.
-  TransitionToHeadStraight();
+  
+  // If we're carrying a block, we must first put it down
+  const auto& robotInfo = GetBEI().GetRobotInfo();
+  if (robotInfo.GetCarryingComponent().IsCarryingObject()) {
+    // Put down the block. Even if it fails, we still just want
+    // to move along in the behavior.
+    DelegateIfInControl(new PlaceObjectOnGroundAction(),
+                        &BehaviorFindHome::TransitionToSearchAnim);
+  } else {
+    TransitionToHeadStraight();
+  }
 }
 
 
 void BehaviorFindHome::TransitionToHeadStraight()
 {
+  // Move head to look straight ahead in case charger is right in
+  // front of us.
   DelegateIfInControl(new MoveHeadToAngleAction(0.f),
                       [this]() {
                         TransitionToSearchAnim();
