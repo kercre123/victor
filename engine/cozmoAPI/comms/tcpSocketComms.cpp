@@ -154,6 +154,10 @@ bool TcpSocketComms::SendMessageInternal(const Comms::MsgPacket& msgPacket)
     if (res < 0)
     {
       return false;
+    } 
+    else 
+    {
+      return true;
     }
   }
 

@@ -19,6 +19,7 @@
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/directGameComms.h"
 #include "engine/cozmoAPI/comms/tcpSocketComms.h"
+#include "engine/cozmoAPI/comms/localUdpSocketComms.h"
 #include "engine/cozmoAPI/comms/udpSocketComms.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "engine/messaging/advertisementService.h"
@@ -32,6 +33,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "coretech/messaging/shared/socketConstants.h"
 
 #include "coretech/messaging/engine/IComms.h"
 
@@ -161,9 +163,7 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
         }
         case UiConnectionType::Switchboard:
         {
-          ISocketComms* comms = new TcpSocketComms(true, SWITCHBOARD_TCP_PORT);
-          // Disable ping timeout disconnects
-          comms->SetPingTimeoutForDisconnect(0, nullptr);
+          ISocketComms* comms = new LocalUdpSocketComms(true, Anki::Victor::ENGINE_SWITCH_SERVER_PATH);
           return comms;
         }
         default:
