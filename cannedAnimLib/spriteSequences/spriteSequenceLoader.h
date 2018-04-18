@@ -42,12 +42,13 @@ namespace Cozmo {
 class SpriteSequenceLoader : private Util::noncopyable
 {
 public:
-  SpriteSequenceLoader(){};
+  SpriteSequenceLoader(){}
 
   Vision::SpriteSequenceContainer* LoadSpriteSequences(const Util::Data::DataPlatform* dataPlatform, 
                                                        Vision::SpritePathMap* spriteMap,
                                                        Vision::SpriteCache* cache,
-                                                       const std::vector<std::string>& spriteSequenceDirs);
+                                                       const std::vector<std::string>& spriteSequenceDirs,
+                                                       const std::set<Vision::SpriteCache::CacheSpec>& cacheSpecs = {});
 private:
   std::mutex _mapMutex;
 
@@ -57,7 +58,8 @@ private:
   // NO SEQEUNCES SHOULD BE IN THIS ARRAY FOR MORE THAN A DAY OR TWO AND DEFINITELY NOT IN SHIPPING CODE
   Vision::SpriteSequenceContainer::UnmappedSequenceContainer _unmappedSequences;
 
-  void LoadSequenceImageFrames(Vision::SpriteCache* cache, 
+  void LoadSequenceImageFrames(Vision::SpriteCache* cache,
+                               const std::set<Vision::SpriteCache::CacheSpec>& cacheSpecs,
                                const std::string& fullDirectoryPath, 
                                Vision::SpriteName sequenceName);
 

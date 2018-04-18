@@ -72,7 +72,7 @@ SpriteHandle SpriteCache::GetSpriteHandle(const std::string& fullSpritePath, con
   InternalHandle handle = std::make_shared<SpriteWrapper>(fullSpritePath);
 
   // Add it to the cache as appropriate
-  for(auto& spec : cacheSpecs){
+  for(const auto& spec : cacheSpecs){
     const bool cacheGrayscale = (spec == CacheSpec::CacheGrayscaleIndefinitely);
     handle->CacheSprite(cacheGrayscale);
     _filePathMap.emplace(fullSpritePath, handle);
