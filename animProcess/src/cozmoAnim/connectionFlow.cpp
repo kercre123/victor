@@ -41,6 +41,7 @@ namespace Cozmo {
 namespace {
 u32 _pin = 123456;
 
+const f32 kRobotNameScale = 0.6f;
 const std::string kURL = "anki.com/v";
 const ColorRGBA   kColor(0.9f, 0.9f, 0.9f, 1.f);
 }
@@ -54,7 +55,7 @@ void DrawStartPairingScreen(AnimationStreamer* animStreamer)
   Vision::ImageRGB565 img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
   img.FillWith(Vision::PixelRGB565(0, 0, 0));
 
-  img.DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, 0.5f, 1, kColor, 15, false);
+  img.DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, kRobotNameScale, 1, kColor, 15, false);
 
   cv::Size textSize;
   float scale = 0;
@@ -81,9 +82,9 @@ void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* conte
   Vision::ImageRGB565 i;
   i.SetFromImageRGB(img);
 
-  i.DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, 0.5f, 1, kColor, 15, false);
+  i.DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, kRobotNameScale, 1, kColor, 15, false);
 
-  i.DrawTextCenteredHorizontally(std::to_string(_pin), CV_FONT_NORMAL, 0.7f, 1, kColor, FACE_DISPLAY_HEIGHT-5, false);
+  i.DrawTextCenteredHorizontally(std::to_string(_pin), CV_FONT_NORMAL, 0.8f, 1, kColor, FACE_DISPLAY_HEIGHT-5, false);
 
   animStreamer->SetFaceImage(i, 0);
 }
