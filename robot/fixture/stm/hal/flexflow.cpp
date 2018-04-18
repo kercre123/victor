@@ -46,6 +46,7 @@ void FLEXFLOW::init(int baud)
     USART_InitStruct.USART_Parity     = USART_Parity_No ;
     USART_InitStruct.USART_Mode       = USART_Mode_Tx;
     USART_InitStruct.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+    USART_OverSampling8Cmd(USART1, ENABLE);
     USART_Init(USART1, &USART_InitStruct);
     
     //Enable UART
