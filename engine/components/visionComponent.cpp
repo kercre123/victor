@@ -1213,10 +1213,15 @@ namespace Cozmo {
         if(kDisplayDetectionsInMirrorMode)
         {
           const auto& quad = visionMarker.GetImageCorners();
-          std::function<void (Vision::ImageRGB&)> modFcn = [quad,drawColor](Vision::ImageRGB& img)
+          const auto& name = std::string(visionMarker.GetCodeName());
+          std::function<void (Vision::ImageRGB&)> modFcn = [quad,drawColor,name](Vision::ImageRGB& img)
           {
             const Rectangle<f32> rect(quad);
-            img.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight()), drawColor);
+            img.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight()), drawColor, 3);
+            if(kDrawMarkerNames)
+            {
+              img.DrawText({1., img.GetNumRows()-1}, name.substr(strlen("MARKER_"),std::string::npos), drawColor);
+            }
           };
           
           AddDrawScreenModifier(modFcn);
@@ -1279,11 +1284,16 @@ namespace Cozmo {
       if(kDisplayDetectionsInMirrorMode)
       {
         const auto& rect = faceDetection.GetRect();
+        const auto& name = faceDetection.GetName();
         
-        std::function<void (Vision::ImageRGB&)> modFcn = [rect](Vision::ImageRGB& img)
+        std::function<void (Vision::ImageRGB&)> modFcn = [rect, name](Vision::ImageRGB& img)
         {
           img.DrawRect(DisplayMirroredRectHelper(rect.GetX(), rect.GetY(), rect.GetWidth(), rect.GetHeight()),
-                       NamedColors::YELLOW);
+                       NamedColors::YELLOW, 3);
+          if(!name.empty())
+          {
+            img.DrawText({1.f, img.GetNumRows()-1}, name, NamedColors::YELLOW, 0.6f, true);
+          }
         };
         
         AddDrawScreenModifier(modFcn);
