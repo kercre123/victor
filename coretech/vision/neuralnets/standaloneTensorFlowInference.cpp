@@ -115,7 +115,7 @@ int main(int argc, char **argv)
     {
       if(detector.IsVerbose())
       {
-        std::cout << "Found image" << std::endl;
+        std::cout << "Found image: " << imageFilename << std::endl;
       }
 
       // Get the image

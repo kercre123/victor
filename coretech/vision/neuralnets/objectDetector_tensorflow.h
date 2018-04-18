@@ -61,10 +61,11 @@ private:
     
     int32_t       input_width; // = 299;
     int32_t       input_height; // = 299;
-    uint8_t       input_mean_R; // = 0;
-    uint8_t       input_mean_G; // = 0;
-    uint8_t       input_mean_B; // = 0;
-    int32_t       input_std; // = 255;
+
+    // When input to graph is float, data is first divided by scale and then shifted
+    // I.e.:  float_input = data / scale + shift
+    float         input_shift; // = 0;
+    float         input_scale; // = 255;
     
     float         min_score; // in [0,1]
     

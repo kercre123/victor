@@ -125,7 +125,7 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
   if(_params.verbose)
   {
     std::cout << "Arch: " << _params.architecture << 
-      (_useGrayscale ? ", Color " : ", Grayscale ") << 
+      (_useGrayscale ? ", Grayscale " : ", Color ") << 
       "Input: " << _inputLayerName << ", Outputs: ";
 
     for(auto const& outputLayerName : _outputLayerNames)
@@ -135,13 +135,11 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
     std::cout << std::endl;
   }
 
-  if ("mobilenet" == _params.architecture)
+  if(_useFloatInput)
   {
-    // Only required in classification mode
-    GetFromConfig(input_mean_R);
-    GetFromConfig(input_mean_G);
-    GetFromConfig(input_mean_B);
-    GetFromConfig(input_std);
+    // NOTE: Only used when processing in floating point
+    GetFromConfig(input_shift);
+    GetFromConfig(input_scale);
   }
   
   const std::string graph_file_name = FullFilePath(modelPath, _params.graph);
@@ -370,14 +368,21 @@ Result ObjectDetector::Detect(cv::Mat& img, std::list<DetectedObject>& objects)
   if(_useFloatInput)
   {
     // TODO: Resize and convert directly into the tensor
-    cv::resize(img, img, cv::Size(_params.input_width,_params.input_height), 0, 0, CV_INTER_AREA);
+    if(img.rows != _params.input_height || img.cols != _params.input_width)
+    {
+      cv::resize(img, img, cv::Size(_params.input_width,_params.input_height), 0, 0, CV_INTER_AREA);
+    } 
+    else if(_params.verbose)
+    {
+      std::cout << "Skipping actual resize: image already correct size" << std::endl;
+    }
     assert(img.isContinuous());
 
     image_tensor = tensorflow::Tensor(tensorflow::DT_FLOAT, {
       1, _params.input_height, _params.input_width, img.channels()
     });
 
-    img.convertTo(img, (img.channels() == 1 ? CV_32FC1 : CV_32FC3), 1.f/255.f);
+    img.convertTo(img, (img.channels() == 1 ? CV_32FC1 : CV_32FC3), 1.f/_params.input_scale, _params.input_shift);
     memcpy(image_tensor.tensor<float, 4>().data(), img.data, img.rows*img.cols*img.channels()*sizeof(float));
 
     // float* tensor_data = image_tensor.tensor<float,4>().data();
