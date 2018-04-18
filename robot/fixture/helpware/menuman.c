@@ -402,7 +402,7 @@ int main(int argc, const char* argv[])
   signal(SIGKILL, safe_quit);
 
   lcd_init();
-  lcd_set_brightness(20);
+  lcd_set_brightness(10);
   display_init();
 
   menus_init();
