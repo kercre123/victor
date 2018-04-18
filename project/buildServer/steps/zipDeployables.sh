@@ -1,8 +1,16 @@
 #!/bin/bash
 
+GIT=`which git`
+if [ -z $GIT ]
+then
+    echo git not found
+    exit 1
+fi
+TOPLEVEL=`$GIT rev-parse --show-toplevel`
+
 # Stage android and vicos
-./project/victor/scripts/stage.sh -c Release
-PLATFORM_NAME=vicos ${GIT_PROJ_ROOT}/project/victor/scripts/stage.sh -k -c Release
+${TOPLEVEL}/project/victor/scripts/stage.sh -c Release
+PLATFORM_NAME=vicos ${TOPLEVEL}/project/victor/scripts/stage.sh -k -c Release
 
 ANKI_BUILD_SHA=`git rev-parse --short HEAD`
 DEPLOYABLES_FILE="deployables_${ANKI_BUILD_SHA}.tar.gz"
