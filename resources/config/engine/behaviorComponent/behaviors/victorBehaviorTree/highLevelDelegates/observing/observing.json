@@ -18,13 +18,13 @@
     
       "behaviors": [    
         {
+          "behavior": "ObservingEyeContact",
+          "cooldown_s": 15.0
+        },
+        {
           "behavior": "ObservingLookAtFaces",
           "cooldown_s": 300.0,
           "cooldown_random_factor": 0.5
-        },
-        {
-          "behavior": "ObservingEyeContact",
-          "cooldown_s": 15.0
         },
         {
           "behavior": "ReactToMotion",

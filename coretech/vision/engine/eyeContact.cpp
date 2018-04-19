@@ -20,18 +20,17 @@ namespace Anki {
 namespace Vision {
 
 namespace {
-  // TODO where do we get the short names for the types
   CONSOLE_VAR(u32, kHistorySize,                      "Vision.EyeContact",  6);
   CONSOLE_VAR(f32, kInlierDistanceSq,                 "Vision.EyeContact",  100.f);
   CONSOLE_VAR(u32, kMinNumberOfInliers,               "Vision.EyeContact",  3);
-  CONSOLE_VAR(f32, kEyeContactDistanceSq,             "Vision.EyeContact", 64.f);
+  CONSOLE_VAR(f32, kEyeContactDistanceSq,             "Vision.EyeContact",  64.f);
   // TODO the threshold here is pi/2 really should just use a better
   // approximation of pi
   CONSOLE_VAR(f32, kPitchAngleThreshold_rad,          "Vision.EyeContact",  M_PI_F/2.f);
   CONSOLE_VAR(f32, kYawAngleThreshold_rad,            "Vision.EyeContact",  M_PI_F/2.f);
   // TODO these might need to be adaptive depending on data
-  CONSOLE_VAR(f32, kBlinkAmountThreshold,             "Vision.EyeContact",  73.f);
-  CONSOLE_VAR(f32, kDistanceFromCameraThresholdSq_mm, "Vision.EyeContact",  700.f);
+  CONSOLE_VAR(f32, kBlinkAmountThreshold,             "Vision.EyeContact",  .73f);
+  CONSOLE_VAR(f32, kDistanceFromCameraThresholdSq_mm, "Vision.EyeContact",  700*700.f);
   CONSOLE_VAR(u32, kExpireThreshold,                  "Vision.EyeContact",  50);
 }
 
