@@ -28,7 +28,7 @@
                     "faceAnimations",
                     "sprites/spriteSequences"
                 ],
-                "version": "2842"
+                "version": "2843"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
