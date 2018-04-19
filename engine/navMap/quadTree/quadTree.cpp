@@ -85,16 +85,19 @@ bool QuadTree::Insert(const FastPolygon& poly, MemoryMapDataPtr data)
     if ( node.GetData() == data ) { return; }
 
     node.GetData()->SetLastObservedTime(data->GetLastObservedTime());
+    
+    const bool polyContainsNode = node.IsContainedBy(poly);
+    const bool polyContainsNodeCenter = polyContainsNode || poly.Contains( node.GetCenter() );
 
     // split node if we can unsure if the incoming poly will fill the entire area
-    if ( !node.IsContainedBy(poly) && !node.IsSubdivided() && node.CanSubdivide())
+    if ( !polyContainsNode && !node.IsSubdivided() && node.CanSubdivide())
     {
       node.Subdivide( _processor );
     }
     
     if ( !node.IsSubdivided() )
     {
-      if ( node.GetData()->CanOverrideSelfWithContent(data->type) ) {
+      if ( node.GetData()->CanOverrideSelfWithContent(data, polyContainsNodeCenter) ) {
         node.ForceSetDetectedContentType( data, _processor );
         contentChanged = true;
       }

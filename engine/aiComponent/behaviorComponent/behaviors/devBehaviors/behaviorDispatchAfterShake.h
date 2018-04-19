@@ -53,6 +53,7 @@ private:
     size_t countShaken;
     bool   shakingSession; // with memory, not instantaneous
     float  lastChangeTime_s; // either the last time it was shaken, or the last time it was stopped
+    TimeStamp_t tickPlacedDown;
   };
 
   InstanceConfig   _iConfig;

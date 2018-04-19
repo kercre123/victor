@@ -28,6 +28,8 @@
 #include "engine/viz/vizManager.h"
 
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/fastPolygon2d.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #include "coretech/vision/engine/faceTracker.h"
@@ -233,7 +235,7 @@ bool BehaviorInteractWithFaces::CanDriveIdealDistanceForward()
     const Vec3f ray{kInteractWithFaces_DriveForwardIdealDist_mm, 0.0f, 0.0f};
     const Vec3f toGoal = robotInfo.GetPose() * ray;
     
-    const bool hasCollision = memoryMap->HasCollisionRayWithTypes(fromRobot, toGoal, typesToBlockDriving);
+    const bool hasCollision = memoryMap->HasCollisionWithTypes({{Point2f{fromRobot}, Point2f{toGoal}}}, typesToBlockDriving);
 
     if( kInteractWithFaces_VizMemoryMapCheck ) {
       const char* vizID = "BehaviorInteractWithFaces.MemMapCheck";

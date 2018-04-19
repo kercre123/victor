@@ -10,7 +10,7 @@
  **/
  
 #include "memoryMapData_ObservableObject.h"
-
+#include "clad/types/memoryMap.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 
@@ -44,6 +44,12 @@ bool MemoryMapData_ObservableObject::Equals(const MemoryMapData* other) const
   const MemoryMapData_ObservableObject* castPtr = static_cast<const MemoryMapData_ObservableObject*>( other );
   const bool retv = (id == castPtr->id);
   return retv;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ExternalInterface::ENodeContentTypeEnum MemoryMapData_ObservableObject::GetExternalContentType() const
+{
+  return ExternalInterface::ENodeContentTypeEnum::ObstacleCube;
 }
 
 } // namespace Cozmo

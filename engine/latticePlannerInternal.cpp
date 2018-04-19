@@ -412,7 +412,7 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
    
     MemoryMapTypes::MemoryMapDataConstList observableObjectData;
     MemoryMapTypes::NodePredicate pred = 
-      [](MemoryMapTypes::MemoryMapDataPtr d) -> bool
+      [](MemoryMapTypes::MemoryMapDataConstPtr d) -> bool
       {
           return (d->type == MemoryMapTypes::EContentType::ObstacleObservable);
       };

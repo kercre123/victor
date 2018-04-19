@@ -77,6 +77,10 @@ enum uint_8 BehaviorClass {
   DispatcherStrictPriority,
   DispatcherStrictPriorityWithCooldown,
 
+  // exploring
+  Exploring,
+  ExploringExamineObstacle,
+
   // feeding
   FeedingEat,
 

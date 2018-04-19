@@ -152,6 +152,8 @@ public:
   // True if the last path failed (based on status of failure)
   bool LastPathFailed() const;
   
+  std::shared_ptr<Planning::GoalID> GetLastSelectedIndex() const { return _plannerSelectedPoseIndex; }
+  
   // Execute a manually-assembled path
   Result ExecuteCustomPath(const Planning::Path& path);
 

@@ -16,6 +16,7 @@
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/math/quad.h"
 #include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/fastPolygon2d.h"
 
 #include "util/console/consoleInterface.h"
 
@@ -123,15 +124,23 @@ bool MemoryMap::Merge(const INavMap* other, const Pose3d& transform)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::FillBorder(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured)
+bool MemoryMap::FillBorder(EContentType typeToReplace,
+                           const FullContentArray& neighborsToFillFrom,
+                           const MemoryMapDataPtr& newData)
 {
   // convert into node types and emtpy (no extra info) node content
   using namespace QuadTreeTypes;
   const EContentTypePackedType nodeNeighborsToFillFrom = ConvertContentArrayToFlags(neighborsToFillFrom);
-  MemoryMapData data(newTypeSet, timeMeasured);
-
+  
   // ask the processor to do it
-  return MONITOR_PERFORMANCE( _quadTree.GetProcessor().FillBorder(typeToReplace, nodeNeighborsToFillFrom, data) );
+  return MONITOR_PERFORMANCE( _quadTree.GetProcessor().FillBorder(typeToReplace, nodeNeighborsToFillFrom, newData) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool MemoryMap::FillBorder(const NodePredicate& innerPred, const NodePredicate& outerPred, const MemoryMapDataPtr& newData)
+{
+  // ask the processor to do it
+  return MONITOR_PERFORMANCE( _quadTree.GetProcessor().FillBorder(innerPred, outerPred, newData) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -191,22 +200,33 @@ void MemoryMap::CalculateBorders(EContentType innerType, const FullContentArray&
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MemoryMap::HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& rayTo, const FullContentArray& types) const
+bool MemoryMap::HasCollisionWithTypes(const FastPolygon& poly, const FullContentArray& types) const
 {
   // convert type to quadtree node content and to flag (since processor takes in flags)
   const EContentTypePackedType nodeTypeFlags = ConvertContentArrayToFlags(types);
 
-  bool hasCollision = false;
-
-  QuadTreeTypes::FoldFunctorConst accumulator = 
-    [&hasCollision, &nodeTypeFlags] (const QuadTreeNode& node) {
-      hasCollision |= IsInEContentTypePackedType(node.GetData()->type, nodeTypeFlags);
-    };
-  
-  MONITOR_PERFORMANCE( _quadTree.Fold(accumulator, FastPolygon({rayFrom, rayTo})) );
-  return hasCollision;
+  return Eval( poly, [&nodeTypeFlags] (MemoryMapDataConstPtr data) {
+    return IsInEContentTypePackedType(data->type, nodeTypeFlags);
+  });
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool MemoryMap::Eval(const FastPolygon& poly, const NodePredicate& func) const
+{
+  bool anyMatch = false;
+  if( func == nullptr ) {
+    return anyMatch;
+  }
+  
+  QuadTreeTypes::FoldFunctorConst accumulator = [&anyMatch, &func] (const QuadTreeNode& node) {
+    MemoryMapDataConstPtr data = node.GetData();
+    anyMatch |= func(data);
+  };
+  
+  MONITOR_PERFORMANCE( _quadTree.Fold(accumulator, poly) );
+  return anyMatch;
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool MemoryMap::HasContentType(EContentType type) const
 {
@@ -246,7 +266,7 @@ void MemoryMap::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const
       if ( !node.IsSubdivided() )
       {
         info.quadInfo.emplace_back(
-          ExternalInterface::MemoryMapQuadInfo(ConvertContentType(node.GetData()->type), node.GetLevel()));
+          ExternalInterface::MemoryMapQuadInfo( node.GetData()->GetExternalContentType(), node.GetLevel()));
       }
     };
 
@@ -264,6 +284,19 @@ void MemoryMap::FindContentIf(NodePredicate pred, MemoryMapDataConstList& output
   };
 
   MONITOR_PERFORMANCE( _quadTree.Fold(accumulator) );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MemoryMap::FindContentIf(const FastPolygon& poly, NodePredicate pred, MemoryMapDataConstList& output) const
+{
+  QuadTreeTypes::FoldFunctorConst accumulator = [&output, &pred] (const QuadTreeNode& node) {
+    MemoryMapDataPtr data = node.GetData();
+    if( pred(data) ) { 
+      output.insert( MemoryMapDataConstPtr(node.GetData()) );
+    }
+  };
+
+  MONITOR_PERFORMANCE( _quadTree.Fold(accumulator, poly) );
 }
 
 } // namespace Cozmo

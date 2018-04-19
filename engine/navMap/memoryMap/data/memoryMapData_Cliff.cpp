@@ -9,7 +9,7 @@
  * Copyright: Anki, Inc. 2016
  **/
 #include "memoryMapData_Cliff.h"
-
+#include "clad/types/memoryMap.h"
 #include "coretech/common/engine/math/point_impl.h"
 
 namespace {
@@ -45,6 +45,12 @@ bool MemoryMapData_Cliff::Equals(const MemoryMapData* other) const
   const bool isNearRotation = IsNearlyEqual( pose.GetRotation(), castPtr->pose.GetRotation(), kRotationTolerance );
   
   return ( isNearLocation && isNearRotation );
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ExternalInterface::ENodeContentTypeEnum MemoryMapData_Cliff::GetExternalContentType() const
+{
+  return ExternalInterface::ENodeContentTypeEnum::Cliff;
 }
 
 } // namespace Cozmo

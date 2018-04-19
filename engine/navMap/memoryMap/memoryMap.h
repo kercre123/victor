@@ -45,8 +45,12 @@ public:
   // subclass
   virtual bool Merge(const INavMap* other, const Pose3d& transform) override;
   
-  // change the content type from typeToReplace into newTypeSet if there's a border from any of the typesToFillFrom towards typeToReplace
-  virtual bool FillBorder(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured) override;
+  // change the content type from typeToReplace into newData if there's a border from any of the neighborsToFillFrom towards typeToReplace
+  virtual bool FillBorder(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, const MemoryMapDataPtr& newData) override;
+  
+  // fills inner regions satisfying innerPred( inner node ) && outerPred(neighboring node), converting
+  // the inner region to the given data
+  bool FillBorder(const NodePredicate& innerPred, const NodePredicate& outerPred, const MemoryMapDataPtr& data) override;
   
   // attempt to apply a transformation function to all nodes in the tree
   virtual bool TransformContent(NodeTransformFunction transform) override;
@@ -56,6 +60,9 @@ public:
 
   // populate a list of all data that matches the predicate
   virtual void FindContentIf(NodePredicate pred, MemoryMapDataConstList& output) const override;
+  
+  // populate a list of all data that matches the predicate inside poly
+  virtual void FindContentIf(const FastPolygon& poly, NodePredicate pred, MemoryMapDataConstList& output) const override;
 
   
   // return the size of the area currently explored
@@ -77,8 +84,11 @@ public:
   // the map is modified. Function is expected to clear the vector before returning the new borders
   virtual void CalculateBorders(EContentType innerType, const FullContentArray& outerTypes, BorderRegionVector& outBorders) override;
   
-  // checks if the given ray collides with the given type (any quad with that type)
-  virtual bool HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& rayTo, const FullContentArray& types) const override;
+  // checks if the given polygon collides with the given types (any quad with that type)
+  virtual bool HasCollisionWithTypes(const FastPolygon& poly, const FullContentArray& types) const override;
+  
+  // evaluates func along any node that polygon collides with. returns true if any call to NodePredicate returns true
+  virtual bool Eval(const FastPolygon& poly, const NodePredicate& func) const override;
   
   // returns true if there are any nodes of the given type, false otherwise
   virtual bool HasContentType(EContentType type) const override;

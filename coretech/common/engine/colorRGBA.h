@@ -92,6 +92,7 @@ namespace Anki {
     extern const ColorRGBA LIGHTGRAY;
     extern const ColorRGBA DARKGREEN;
     extern const ColorRGBA OFFWHITE;
+    extern const ColorRGBA PINK;
     extern const ColorRGBA DEFAULT;
     
     const ColorRGBA& GetByString(const std::string& name);

@@ -36,6 +36,8 @@ public:
   // compare to IMemoryMapData and return bool if the data stored is the same
   bool Equals(const MemoryMapData* other) const override;
   
+  virtual ExternalInterface::ENodeContentTypeEnum GetExternalContentType() const override;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

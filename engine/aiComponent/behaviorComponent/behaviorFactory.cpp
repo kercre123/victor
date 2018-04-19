@@ -57,6 +57,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherScoring.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriority.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriorityWithCooldown.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/exploring/behaviorExploring.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/exploring/behaviorExploringExamineObstacle.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/feeding/behaviorFeedingEat.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/behaviorDriveToFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorExploreBringCubeToBeacon.h"
@@ -408,6 +410,18 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::DispatcherStrictPriorityWithCooldown:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDispatcherStrictPriorityWithCooldown(config));
+      break;
+    }
+    
+    case BehaviorClass::Exploring:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorExploring(config));
+      break;
+    }
+    
+    case BehaviorClass::ExploringExamineObstacle:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorExploringExamineObstacle(config));
       break;
     }
     

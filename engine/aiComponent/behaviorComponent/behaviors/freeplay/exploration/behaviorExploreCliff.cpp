@@ -279,6 +279,7 @@
 //    ASSERT_NAMED(nullptr!=extraInfo, "BehaviorExploreCliff.GenerateVantagePoints.CliffBorderWithoutExtraInfo");
 //    
 //    // use directionality from the extra info to point in the same direction
+// NOTE: directionality is replaced by _pose
 //    Vec3f vantagePointDir{extraInfo->directionality.x(), extraInfo->directionality.y(), 0.0f};
 //    const float fwdAngleCos = DotProduct(vantagePointDir, kFwdVector);
 //    const bool isPositiveAngle = (DotProduct(vantagePointDir, kRightVector) >= 0.0f);

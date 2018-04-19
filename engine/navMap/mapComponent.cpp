@@ -85,7 +85,10 @@ CONSOLE_VAR(float, kRobotPositionChangeToReport_mm, "MapComponent", 8.0f);
 
 CONSOLE_VAR(float, kVisionTimeout_ms, "MapComponent", 120.0f * 1000);
 CONSOLE_VAR(float, kCliffTimeout_ms, "MapComponent", 30.0f * 1000);
-
+  
+// the length and half width of two triangles used in FlagProxObstaclesUsingPose (see method)
+CONSOLE_VAR(float, kProxExploredTriangleLength_mm, "MapComponent", 300.0f );
+CONSOLE_VAR(float, kProxExploredTriangleHalfWidth_mm, "MapComponent", 50.0f );
 
 namespace {
 
@@ -446,6 +449,79 @@ void MapComponent::FlagInterestingEdgesAsUseless()
     };
     
   UpdateBroadcastFlags(currentNavMemoryMap->TransformContent(transform));
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MapComponent::FlagProxObstaclesUsingPose()
+{
+  const auto& pose = _robot->GetPose();
+  
+  INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
+  if( currentNavMemoryMap == nullptr ) {
+    return;
+  }
+  
+  // construct a triangle, pointing away from the robot, to mimic the
+  // coverage of the prox sensor, but scaled differently. Any prox obstacle that it
+  // covers will be marked as explored. Since it looks better if the robot comes
+  // close to an object in order to mark it as explored, the poly isnt as tall as the
+  // prox sensor's reach.
+  
+  const auto& rot = pose.GetRotation();
+  Vec3f offset1(kProxExploredTriangleLength_mm,  kProxExploredTriangleHalfWidth_mm, 0);
+  Vec3f offset2(kProxExploredTriangleLength_mm,  -kProxExploredTriangleHalfWidth_mm, 0);
+  const Point2f p1 = pose.GetTranslation();
+  const Point2f p2 = (pose.GetTransform() * Transform3d(rot, offset1)).GetTranslation();
+  const Point2f p3 = (pose.GetTransform() * Transform3d(rot, offset2)).GetTranslation();
+  const Poly2f triangleExplored({p1, p2, p3});
+  
+  // mark any prox obstacle in triangleExplored as explored
+  NodeTransformFunction exploredFunc = [](MemoryMapDataPtr data) -> MemoryMapDataPtr {
+    if( data->type == EContentType::ObstacleProx ) {
+      auto castPtr = MemoryMapData::MemoryMapDataCast<MemoryMapData_ProxObstacle>( data );
+      castPtr->MarkExplored();
+    }
+    return data;
+  };
+  const bool addedExplored = currentNavMemoryMap->TransformContent(triangleExplored, exploredFunc);
+  
+  UpdateBroadcastFlags( addedExplored );
+  
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool MapComponent::FlagProxObstaclesTouchingExplored()
+{
+  INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
+  if( currentNavMemoryMap == nullptr ) {
+    return false;
+  }
+  
+  // mark any NOT_EXPLORED ObstacleProx that is touching an EXPLORED ObstacleProx quad as EXPLORED
+  NodePredicate innerCheckFunc = [](MemoryMapDataConstPtr inside) {
+    if( inside->type == EContentType::ObstacleProx ) {
+      auto castInside = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ProxObstacle>( inside );
+      return (castInside->_explored == MemoryMapData_ProxObstacle::NOT_EXPLORED);
+    } else {
+      return false;
+    }
+  };
+  NodePredicate outerCheckFunc = [](MemoryMapDataConstPtr outside) {
+    if( outside->type == EContentType::ObstacleProx ) {
+      auto castOutside = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ProxObstacle>( outside );
+      return (castOutside->_explored == MemoryMapData_ProxObstacle::EXPLORED);
+    } else {
+      return false;
+    }
+  };
+  MemoryMapData_ProxObstacle toAdd( MemoryMapData_ProxObstacle::EXPLORED, {0.0f, 0.0f, 0.0f}, _robot->GetLastImageTimeStamp());
+  const bool changedBorder = currentNavMemoryMap->FillBorder(innerCheckFunc, outerCheckFunc,
+                                                             toAdd.Clone());
+  
+  UpdateBroadcastFlags( changedBorder );
+  
+  return changedBorder;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -985,7 +1061,14 @@ void MapComponent::ClearRobotToEdge(const Point2f& p, const Point2f& q, const Ti
 {
   // NOTE: (MRW) currently using robot pose center, though to be correct we should use the center of the 
   //       sensor pose. For now this should be good enough.
-  InsertData({p, q, _robot->GetPose().GetTranslation()}, MemoryMapData(INavMap::EContentType::ClearOfObstacle, t));
+  const static float kHalfClearWidth_mm = 1.5f;
+  Vec3f rayOffset1(0,  kHalfClearWidth_mm, 0);
+  Vec3f rayOffset2(0, -kHalfClearWidth_mm, 0);
+  Rotation3d rot = Rotation3d(0.f, Z_AXIS_3D());
+  const Point2f r1 = (_robot->GetPose().GetTransform() * Transform3d(rot, rayOffset1)).GetTranslation();
+  const Point2f r2 = (_robot->GetPose().GetTransform() * Transform3d(rot, rayOffset2)).GetTranslation();
+  auto quad = ConvexPolygon::ConvexHull({p, q, r1, r2});
+  InsertData(quad, MemoryMapData(INavMap::EContentType::ClearOfObstacle, t));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1067,7 +1150,8 @@ void MapComponent::ReviewInterestingEdges(const Quad2f& withinQuad, INavMap* map
       "This array does not define all types once and only once.");
 
     // fill border in memory map
-    map->FillBorder(EContentType::InterestingEdge, typesWhoseEdgesAreNotInteresting, EContentType::NotInterestingEdge, _robot->GetLastImageTimeStamp());
+    MemoryMapData toAdd( EContentType::NotInterestingEdge, _robot->GetLastImageTimeStamp());
+    map->FillBorder(EContentType::InterestingEdge, typesWhoseEdgesAreNotInteresting, toAdd.Clone());
   }
 }
 
@@ -1274,7 +1358,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
           // check if it's occluded before the near plane
           const Vec2f& outerRayFrom = cameraOrigin;
           const Vec2f outerRayTo(rayAtNearPlane.x, rayAtNearPlane.y);
-          occludedBeforeNearPlane = currentNavMemoryMap->HasCollisionRayWithTypes(outerRayFrom, outerRayTo, typesThatOccludeValidInfoOutOfROI);
+          occludedBeforeNearPlane = currentNavMemoryMap->HasCollisionWithTypes({{Point2f{outerRayFrom}, Point2f{outerRayTo}}}, typesThatOccludeValidInfoOutOfROI);
           
           // update innerRayFrom so that the second ray (if needed) only checks the inside of the ROI plane
           innerRayFrom = outerRayTo; // start inner (innerFrom) where the outer ends (outerTo)
@@ -1312,7 +1396,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
         
         // Vec2f innerRayFrom: already calculated for us
         const Vec2f& innerRayTo = candidate3D;
-        occludedInsideROI = currentNavMemoryMap->HasCollisionRayWithTypes(innerRayFrom, innerRayTo, typesThatOccludeValidInfoInsideROI);
+        occludedInsideROI = currentNavMemoryMap->HasCollisionWithTypes({{Point2f{innerRayFrom}, Point2f{innerRayTo}}}, typesThatOccludeValidInfoInsideROI);
       }
       
       // if we cross an object, ignore this point, regardless of whether we saw a border or not

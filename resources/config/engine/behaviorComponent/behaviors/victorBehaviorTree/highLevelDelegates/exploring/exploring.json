@@ -1,0 +1,27 @@
+{
+  "behaviorID": "Exploring",
+  "behaviorClass": "DispatcherStrictPriority",
+
+  "interruptActiveBehavior": true,
+
+  "behaviors": 
+  [
+    "ReactToCliff",         // temp, so this works without GlobalInterruptions
+    "DriveOffCharger",
+    "ExploringInternal",    // doesn't want to activate without a charger
+    "ExploringFindCharger", // only wants to activate when there's no charger
+    "Wait"                  // temp, so this works with DevBaseBehavior when ExploringInternal isnt ready to activate
+  ],
+
+  "anonymousBehaviors": [
+    {
+      "behaviorName" : "ExploringInternal",
+      "behaviorClass": "Exploring",
+
+      "minSearchRadius_m": 0.4,
+      "maxSearchRadius_m": 1.0,
+      "maxChargerDistance_m": 2.0,
+      "pAcceptKnownAreas": 0.4
+    }
+  ]
+}

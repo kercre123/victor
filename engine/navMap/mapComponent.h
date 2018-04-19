@@ -93,6 +93,12 @@ public:
   
   // flags all current interesting edges as too small to give useful information
   void FlagInterestingEdgesAsUseless();
+  
+  // marks any prox obstacles in a small area in front of the robot as explored
+  void FlagProxObstaclesUsingPose();
+  
+  // moves the frontier of explored prox obstacles into touching unexplored prox ostacles
+  bool FlagProxObstaclesTouchingExplored();
 
   // create a new memory map from current robot frame of reference.
   void CreateLocalizedMemoryMap(PoseOriginID_t worldOriginID);
@@ -107,7 +113,8 @@ public:
   // The observed markers are obtained querying the current marker observation time
   void ClearRobotToMarkers(const ObservableObject* object);
 
-  // clear the space between the robot and the line segment defined by points p and q
+  // clear the space between the robot and the line segment defined by points p and q. The base of
+  // the region is a line segment of fixed length that is perpendicular to the robot direction
   void ClearRobotToEdge(const Point2f& p, const Point2f& q, const TimeStamp_t t);
 
 

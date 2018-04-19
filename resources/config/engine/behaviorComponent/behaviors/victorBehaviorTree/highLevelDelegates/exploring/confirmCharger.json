@@ -1,0 +1,8 @@
+{
+  "behaviorID": "ConfirmCharger",
+  // todo: a behavior that confirms the existence of an observable object by driving to it.
+  // for now, timer beeping!
+  // (it might make sense to have this behavior run ExploringFindCharger if it doens't exist near where we expected it to)
+  "behaviorClass": "AnimSequence", 
+  "animTriggers": [ "TimerRing" ]
+}

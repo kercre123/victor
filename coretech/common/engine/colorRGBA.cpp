@@ -69,6 +69,7 @@ namespace Anki {
     const ColorRGBA LIGHTGRAY (0.7f, 0.7f, 0.7f);
     const ColorRGBA DARKGREEN (0.f, 0.5f, 0.0f);
     const ColorRGBA OFFWHITE  (0.8f, 0.8f, 0.8f);
+    const ColorRGBA PINK      (1.0f, 0.078f, 0.58f);
     
     const ColorRGBA& GetByString(const std::string& name)
     {

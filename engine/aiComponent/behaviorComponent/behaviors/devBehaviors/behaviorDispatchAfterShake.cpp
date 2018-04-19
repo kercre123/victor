@@ -38,6 +38,9 @@ CONSOLE_VAR(unsigned int, kDevDispatchAfterShake, "DevBaseBehavior", 0);
 // how long you have to shake/pause
 CONSOLE_VAR_RANGED(float, kShakeTime, "DevBaseBehavior", 0.1f, 0.01f, 2.0f);
   
+// if the robot is put down and no behavior wants to be active after this many ticks, the shake count is reset
+const unsigned int kFailTicksBeforeReset = 10;
+  
 static const BackpackLights kLightsSteady =
 {
   .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
@@ -76,6 +79,7 @@ BehaviorDispatchAfterShake::DynamicVariables::DynamicVariables()
   countShaken = 0;
   shakingSession = false;
   lastChangeTime_s = 0.0f;
+  tickPlacedDown = 0;
 }
 
 
@@ -176,6 +180,10 @@ void BehaviorDispatchAfterShake::BehaviorUpdate()
   
   const bool isOnTreads = (robotInfo.GetOffTreadsState() == OffTreadsState::OnTreads);
   if( (_dVars.countShaken>0) && (!_dVars.shakingSession) && isOnTreads ) {
+    TimeStamp_t currTimeStamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    if( _dVars.tickPlacedDown == 0 ) {
+      _dVars.tickPlacedDown = currTimeStamp;
+    }
     // time to delegate to the data defined delegate
     size_t idx = _dVars.countShaken - 1;
     if( _dVars.countShaken > _iConfig.delegates.size() ) {
@@ -195,11 +203,19 @@ void BehaviorDispatchAfterShake::BehaviorUpdate()
     {
       if( delegate->WantsToBeActivated() ) {
         DelegateIfInControl( delegate.get() );
-        
+        // clear shaken count so you have to shake again to run the behavior again if it completes
+        _dVars.countShaken = 0;
+        _dVars.tickPlacedDown = 0;
+      } else if( currTimeStamp > _dVars.tickPlacedDown + kFailTicksBeforeReset ) {
+        // start over
+        _dVars.countShaken = 0;
+        _dVars.tickPlacedDown = 0;
+        PRINT_NAMED_WARNING( "BehaviorDispatchAfterShake.BehaviorUpdate.NoWant",
+                            "Behavior %s didn't want to be activated",
+                            BehaviorTypesWrapper::BehaviorIDToString(delegate->GetID()) );
       }
     }
-    // clear shaken count so you have to shake again to run the behavior again if it completes
-    _dVars.countShaken = 0;
+    
   }
 }
 

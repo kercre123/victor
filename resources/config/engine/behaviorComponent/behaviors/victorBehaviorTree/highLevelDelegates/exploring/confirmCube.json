@@ -1,0 +1,7 @@
+{
+  "behaviorID": "ConfirmCube",
+  // todo: a behavior that confirms the existence of an observable object by driving to it.
+  // for now, timer beeping!
+  "behaviorClass": "AnimSequence", 
+  "animTriggers": [ "TimerRing" ]
+}

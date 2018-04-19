@@ -77,9 +77,13 @@ public:
   void GetBorders(EContentType innerType, EContentTypePackedType outerTypes, MemoryMapTypes::BorderRegionVector& outBorders);
   
   // fills content regions of filledType that have borders with any content in fillingTypeFlags, converting the filledType
-  // region to the content type given (newContent)
-  bool FillBorder(EContentType filledType, EContentTypePackedType fillingTypeFlags, const MemoryMapData& data);
-    
+  // region to the given data
+  bool FillBorder(EContentType filledType, EContentTypePackedType fillingTypeFlags, const MemoryMapDataPtr& data);
+  
+  // fills inner regions satisfying innerPred( inner node ) && outerPred(neighboring node), converting
+  // the inner region to the given data
+  bool FillBorder(const NodePredicate& innerPred, const NodePredicate& outerPred, const MemoryMapDataPtr& data);
+  
   // returns true if there are any nodes of the given type, false otherwise
   bool HasContentType(EContentType type) const;
  
@@ -111,10 +115,14 @@ private:
   };
   
   using BorderKeyType = uint64_t;
+  using NodeSet = std::unordered_set<const QuadTreeNode*>;
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Query
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // obtains a set of nodes of type typeToFill that satisfy innerPred(node of type typeToFill) && outerPred(neighboring node)
+  void GetNodesToFill(const NodePredicate& innerPred, const NodePredicate& outerPred, NodeSet& output);
   
   // true if we have a need to cache the given content type, false otherwise
   static bool IsCached(EContentType contentType);
@@ -162,7 +170,6 @@ private:
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  using NodeSet = std::unordered_set<const QuadTreeNode*>;
   using NodeSetPerType = std::unordered_map<EContentType, NodeSet, Anki::Util::EnumHasher>;
   using BorderMap = std::map<BorderKeyType, BorderCombination>;
 

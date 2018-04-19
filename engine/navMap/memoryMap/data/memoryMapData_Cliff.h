@@ -33,6 +33,8 @@ struct MemoryMapData_Cliff : public MemoryMapData
   // compare to INavMemoryMapQuadData and return bool if the data stored is the same
   bool Equals(const MemoryMapData* other) const override;
   
+  virtual ExternalInterface::ENodeContentTypeEnum GetExternalContentType() const override;
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

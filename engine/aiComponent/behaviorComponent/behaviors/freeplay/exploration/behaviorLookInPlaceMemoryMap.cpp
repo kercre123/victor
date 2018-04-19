@@ -13,6 +13,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/exploration/behaviorLookInPlaceMemoryMap.h"
 
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/fastPolygon2d.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/math/point_impl.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
@@ -354,7 +356,7 @@ void BehaviorLookInPlaceMemoryMap::CheckIfSectorNeedsVisit(int16_t index)
   DEV_ASSERT(memoryMap, "BehaviorLookInPlaceMemoryMap.NeedMemoryMap"); // checked before
   
   // ask the memory map by tracing the ray cast whether we want to visit the sector
-  const bool hasCollision = memoryMap->HasCollisionRayWithTypes(from3D, to3D, typesWeWantToVisit);
+  const bool hasCollision = memoryMap->HasCollisionWithTypes({{Point2f{from3D}, Point2f{to3D}}}, typesWeWantToVisit);
   const bool needsVisit = hasCollision;
   _sectors[index] = needsVisit ? SectorStatus::Yes_NeedToVisit : SectorStatus::No_NeedToVisit;
   

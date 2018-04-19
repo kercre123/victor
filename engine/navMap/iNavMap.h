@@ -23,10 +23,13 @@
 #include <unordered_set>
 
 namespace Anki {
+  
+class FastPolygon;
+
 namespace Cozmo {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Class INavMemoryMap
+// Class INavMap
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class INavMap
 {
@@ -43,6 +46,7 @@ public:
   using FullContentArray      = MemoryMapTypes::FullContentArray;
   using NodeTransformFunction = MemoryMapTypes::NodeTransformFunction;
   using NodePredicate         = MemoryMapTypes::NodePredicate;
+  using MemoryMapDataPtr      = MemoryMapTypes::MemoryMapDataPtr;
     
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -73,8 +77,11 @@ public:
   // the map is modified. Function is expected to clear the vector before returning the new borders
   virtual void CalculateBorders(EContentType innerType, const FullContentArray& outerTypes, BorderRegionVector& outBorders) = 0;
   
-  // checks if the given ray collides with the given types (any quad with that types)
-  virtual bool HasCollisionRayWithTypes(const Point2f& rayFrom, const Point2f& rayTo, const FullContentArray& types) const = 0;
+  // checks if the given polygon collides with the given types (any quad with that type)
+  virtual bool HasCollisionWithTypes(const FastPolygon& poly, const FullContentArray& types) const = 0;
+  
+  // evaluates func along any node that polygon collides with. returns true if any call to NodePredicate returns true
+  virtual bool Eval(const FastPolygon& poly, const NodePredicate& func) const = 0;
   
   // returns true if there are any nodes of the given type, false otherwise
   virtual bool HasContentType(EContentType type) const = 0;
@@ -87,6 +94,9 @@ public:
 
   // populate a list of all data that matches the predicate
   virtual void FindContentIf(NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output) const = 0;
+  
+  // populate a list of all data that matches the predicate inside poly
+  virtual void FindContentIf(const FastPolygon& poly, NodePredicate pred, MemoryMapTypes::MemoryMapDataConstList& output) const = 0;
   
 protected:
   
@@ -114,8 +124,13 @@ protected:
 
   // TODO: FillBorder should be local (need to specify a max quad that can perform the operation, otherwise the
   // bounds keeps growing as Cozmo explores). Profiling+Performance required.
-  // change the content type from typeToReplace into newTypeSet if there's a border from any of the typesToFillFrom towards typeToReplace
-  virtual bool FillBorder(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, EContentType newTypeSet, TimeStamp_t timeMeasured) = 0;
+  // change the content type from typeToReplace into newData if there's a border from any of the neighborsToFillFrom towards typeToReplace
+  virtual bool FillBorder(EContentType typeToReplace, const FullContentArray& neighborsToFillFrom, const MemoryMapDataPtr& newData) = 0;
+  
+  // fills inner regions satisfying innerPred( inner node ) && outerPred(neighboring node), converting
+  // the inner region to the given data
+  // see VIC-2475: this should be modified to work like the TransformContent method does
+  virtual bool FillBorder(const NodePredicate& innerPred, const NodePredicate& outerPred, const MemoryMapDataPtr& data) = 0;
 
 }; // class
 

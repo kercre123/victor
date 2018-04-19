@@ -135,6 +135,13 @@ enum uint_8 BehaviorID {
   GoHome,
   RequestToGoHome,
 
+  // victorBehaviorTree/highLevelDelegates/hiking
+  ConfirmCharger,
+  ConfirmCube,
+  Exploring,
+  ExploringExamineObstacle,
+  ExploringFindCharger,
+
   // victorBehaviorTree/highLevelDelegates
   InteractWithFaces,
   Keepaway,

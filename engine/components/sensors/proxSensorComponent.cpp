@@ -56,6 +56,7 @@ CONSOLE_VAR(bool, kProxSensorEnabled, "ProxSensorComponent", true);
 
 // extra padding to add to prox obstacle
 CONSOLE_VAR(float, kObsPadding_mm, "ProxSensorComponent", 0.05f);
+CONSOLE_VAR(float, kClearHalfWidth_mm, "ProxSensorComponent", 1.5f);
 
 // distance range for registering an object detected as an obstacle
 CONSOLE_VAR(u16, kMinObsThreshold_mm, "ProxSensorComponent", 30);
@@ -240,14 +241,25 @@ void ProxSensorComponent::UpdateNavMap()
 
     const Pose3d  objectPos = _robot->GetPose() * Pose3d(0, Z_AXIS_3D(), offsetx_mm);    
     
-    // clear out known free space
-    Vec3f rayOffset1(-kObsPadding_mm,  -kObsPadding_mm, 0);   
-    Vec3f rayOffset2(-kObsPadding_mm,   kObsPadding_mm, 0);
+    // pull back the edge of the beam from where the prox obstacle will be inserted below so that
+    // there's no chance that a quad cleared here will then get added below. The distance pulled back
+    // is the half diagonal of the smallest quad. This means that in the case where the map is rotated
+    // by pi/4, any quad whose center is within this region can not be on the other side of the insertion
+    // edge. This hinges on the fact that clear quads are only placed over prox obstacles if their
+    // centers are within the insertion region (see MemoryMapData)
+    // todo: find a better way to do this that doesn't assume the mechanics/resolution of the QT
+    const static float halfQuadDiagonal_mm = 5.0f*sqrtf(2.0f) + kObsPadding_mm;
+    // since the beam must contain the centers, it needs a minimum width to be useful
+    Vec3f rayOffset1(-halfQuadDiagonal_mm,  -kClearHalfWidth_mm, 0);
+    Vec3f rayOffset2(-halfQuadDiagonal_mm,  kClearHalfWidth_mm, 0);
     Rotation3d rot = Rotation3d(0.f, Z_AXIS_3D());
 
     const Point2f t1 = (objectPos.GetTransform() * Transform3d(rot, rayOffset1)).GetTranslation();
-    const Point2f t2 = (objectPos.GetTransform() * Transform3d(rot, rayOffset2)).GetTranslation(); 
-
+    const Point2f t2 = (objectPos.GetTransform() * Transform3d(rot, rayOffset2)).GetTranslation();
+    
+    // note: the size that gets cleared might not be as large as you think, since we only replace
+    // a prox obstacle with clear space if the clear space leaf quad has its center within
+    // the poly from the robot footprint to line segment (t1,t2)
     _robot->GetMapComponent().ClearRobotToEdge(t1, t2, lastTimestamp);
 
     // Add proxObstacle if detected and close to robot, and lift is not interfering
@@ -263,9 +275,11 @@ void ProxSensorComponent::UpdateNavMap()
       const Point2f p4 = (objectPos.GetTransform() * Transform3d(rot, offset1 + offset3)).GetTranslation();
 
       const Poly2f quad({p1, p2, p3, p4});
-      const Vec3f rotatedFwdVector = _robot->GetPose().GetWithRespectToRoot().GetRotation() * X_AXIS_3D();
+      Radians angle = _robot->GetPose().GetRotationAngle<'Z'>();
       
-      MemoryMapData_ProxObstacle proxData(Vec2f{rotatedFwdVector.x(), rotatedFwdVector.y()}, lastTimestamp);      
+      MemoryMapData_ProxObstacle proxData(MemoryMapData_ProxObstacle::NOT_EXPLORED,
+                                          Pose2d{angle, objectPos.GetWithRespectToRoot().GetTranslation().x(), objectPos.GetWithRespectToRoot().GetTranslation().y()},
+                                          lastTimestamp);
       _robot->GetMapComponent().InsertData(quad, proxData);
     }
   }

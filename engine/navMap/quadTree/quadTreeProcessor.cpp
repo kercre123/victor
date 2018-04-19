@@ -317,14 +317,82 @@ void QuadTreeProcessor::GetBorders(EContentType innerType, EContentTypePackedTyp
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool QuadTreeProcessor::FillBorder(EContentType filledType, EContentTypePackedType fillingTypeFlags, const MemoryMapData& data)
+void QuadTreeProcessor::GetNodesToFill(const NodePredicate& innerPred, const NodePredicate& outerPred, NodeSet& output)
 {
-  ANKI_CPU_PROFILE("QuadTreeProcessor.FillBorder");
+  // search direction constants
+  static const EClockDirection clockDir = EClockDirection::CW;
+  static const std::array<EDirection, 4> cwDirs{{ EDirection::North, EDirection::East, EDirection::South, EDirection::West }};
 
+  // find any node of typeToFill that satisfies pred(node, neighbor)
+  std::deque<const QuadTreeNode*> unexpandedNodes;
+  FoldFunctorConst fillTypeFilter = [&] (const QuadTreeNode& node) {
+    // first check if node is typeToFill
+    if ( innerPred( node.GetData() ) ) {
+      QuadTreeNode::NodeCPtrVector neighbors;
+      neighbors.reserve( 1 << node.GetLevel() );
+
+      // check if this nodes has a neighbor of any typesToFillFrom
+      for(const EDirection candidateDir : cwDirs) {
+        neighbors.clear(); // AddSmallestNeighbors does not clear the output list itself
+        node.AddSmallestNeighbors(candidateDir, clockDir, neighbors);
+
+        for(const auto neighbor : neighbors) {
+          if( outerPred( neighbor->GetData() ) ) {
+            unexpandedNodes.push_back( &node );
+            return;
+          }
+        }
+      }
+    }
+  };
+  ((const QuadTree*) _quadTree)->Fold(fillTypeFilter);
+
+  // expand all nodes for fill
+  while(!unexpandedNodes.empty()) {
+    // get the next node and add it to the output list
+    const QuadTreeNode* node = unexpandedNodes.front();
+    unexpandedNodes.pop_front();
+    output.insert(node);
+
+    // get all of this nodes neighbors of the same type
+    QuadTreeNode::NodeCPtrVector neighbors;
+    neighbors.reserve( 1 << node->GetLevel() );
+
+    for(const EDirection candidateDir : cwDirs) {
+      neighbors.clear();
+      node->AddSmallestNeighbors(candidateDir, clockDir, neighbors);
+
+      // for any neighbor of the same type, if it has not already been expanded, add it the unexpanded list
+      for(const auto neighbor : neighbors) {
+        MemoryMapDataConstPtr neighborData = neighbor->GetData();
+        if ( innerPred( neighbor->GetData() ) && (output.find(neighbor) == output.end()) ) {
+          unexpandedNodes.push_back( neighbor );
+        }
+      } // done adding neighbors for this side
+    } // finished all sides
+  } // all nodes expanded
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool QuadTreeProcessor::FillBorder(EContentType filledType, EContentTypePackedType fillingTypeFlags, const MemoryMapDataPtr& data)
+{
   DEV_ASSERT_MSG(IsCached(filledType),
                  "QuadTreeProcessor.FillBorder.FilledTypeNotCached",
                  "%s is not cached, which is needed for fast processing operations",
                  EContentTypeToString(filledType));
+  NodePredicate innerCheckFunc = [&filledType](MemoryMapDataConstPtr inside) {
+    return (filledType == inside->type);
+  };
+  NodePredicate outerCheckFunc = [&fillingTypeFlags](MemoryMapDataConstPtr outside) {
+    return IsInEContentTypePackedType(outside->type, fillingTypeFlags);
+  };
+  return FillBorder( innerCheckFunc, outerCheckFunc, data );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool QuadTreeProcessor::FillBorder(const NodePredicate& innerPred, const NodePredicate& outerPred, const MemoryMapDataPtr& data)
+{
+  ANKI_CPU_PROFILE("QuadTreeProcessor.FillBorder");
 
   // should this timer be a member variable? It's normally desired to time all processors
   // together, but beware when merging stats from different maps (always current is the only one processing)
@@ -342,22 +410,17 @@ bool QuadTreeProcessor::FillBorder(EContentType filledType, EContentTypePackedTy
   // update an iterator from this::OnNodeX events, cache centers and apply. The result algorithm should be
   // slightly slower, but much simpler to understand, debug and profile
   std::vector<Point2f> floodedQuadCenters;
-  std::unordered_set<const QuadTreeNode*> doneQuads;
 
-  // grab borders
-  const BorderCombination& borderInfo = RefreshBorderCombination(filledType, fillingTypeFlags);
-  for( auto& waypoint : borderInfo.waypoints )
-  {
-    const auto& retPair = doneQuads.emplace(waypoint.from);
-    const bool isNew = retPair.second;
-    if ( isNew ) {
-      floodedQuadCenters.emplace_back(waypoint.from->GetCenter());
-    }
+  // grab nodes to fill and find their centers
+  NodeSet nodesToFill;
+  GetNodesToFill(innerPred, outerPred, nodesToFill);
+  for( const auto& node : nodesToFill ) {
+    floodedQuadCenters.emplace_back( node->GetCenter() );
   }
   
-  // add flooded centers to the tree (not this does not cause flood filling)
+  // add flooded centers to the tree (note this does not cause flood filling)
   bool changed = false;
-  MemoryMapDataPtr dataPtr = data.Clone();
+  MemoryMapDataPtr dataPtr = data->Clone();
   for( const auto& center : floodedQuadCenters ) {
     changed |= _quadTree->Insert(Poly2f({center}), dataPtr);
   }
@@ -381,13 +444,26 @@ bool QuadTreeProcessor::HasContentType(EContentType nodeType) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool QuadTreeProcessor::IsCached(EContentType contentType)
 {
-  const bool isCached = (contentType == EContentType::ObstacleObservable   ) ||
-                        (contentType == EContentType::ObstacleProx         ) ||
-                        (contentType == EContentType::ObstacleUnrecognized ) ||
-                        (contentType == EContentType::InterestingEdge      ) ||
-                        (contentType == EContentType::NotInterestingEdge   ) ||
-                        (contentType == EContentType::Cliff );
-  return isCached;
+  switch( contentType ) {
+    case EContentType::ObstacleObservable:
+    case EContentType::ObstacleProx:
+    case EContentType::ObstacleUnrecognized:
+    case EContentType::InterestingEdge:
+    case EContentType::NotInterestingEdge:
+    case EContentType::Cliff:
+    {
+      return true;
+    }
+    case EContentType::Unknown:
+    case EContentType::ClearOfObstacle:
+    case EContentType::ClearOfCliff:
+    case EContentType::ObstacleCharger: // todo: ObstacleCharger should be cached, unless it is absorbed into ObstacleObservable
+    case EContentType::ObstacleChargerRemoved:
+    case EContentType::_Count:
+    {
+      return false;
+    }
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

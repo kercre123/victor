@@ -44,7 +44,6 @@
 #include "engine/mat.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
-#include "engine/navMap/memoryMap/data/memoryMapData_ProxObstacle.h"
 #include "engine/objectPoseConfirmer.h"
 #include "engine/platform.h"
 #include "engine/potentialObjectsForLocalizingTo.h"

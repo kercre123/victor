@@ -1,0 +1,16 @@
+{
+  "behaviorID": "ExploringFindCharger",
+  // todo: a behavior that finds the charger. possibly the same thing as when low on battery?
+  // for now, hiccups, although it won't run
+
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "not": {
+      // todo: activate only when the charger isnt known
+      "conditionType": "TrueCondition"
+    }
+  },
+
+  "behaviorClass": "AnimSequence", 
+  "animTriggers": [ "TimerRing" ]
+}

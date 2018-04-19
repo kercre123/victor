@@ -113,7 +113,7 @@ using MemoryMapDataConstList = std::unordered_set<MemoryMapDataConstPtr, MemoryM
 
 using BorderRegionVector     = std::vector<BorderRegion>;
 using NodeTransformFunction  = std::function<MemoryMapDataPtr (MemoryMapDataPtr)>;
-using NodePredicate          = std::function<bool (MemoryMapDataPtr)>;
+using NodePredicate          = std::function<bool (MemoryMapDataConstPtr)>;
 
 using QuadInfoVector         = std::vector<ExternalInterface::MemoryMapQuadInfo>;
 
@@ -154,6 +154,22 @@ EContentTypePackedType EContentTypeToFlag(EContentType nodeContentType);
 
 // returns true if contentType is in PackedTypes
 bool IsInEContentTypePackedType(EContentType contentType, EContentTypePackedType contentPackedTypes);
+  
+  
+static const MemoryMapTypes::FullContentArray kTypesThatAreObstacles =
+{
+  {MemoryMapTypes::EContentType::Unknown               , false},
+  {MemoryMapTypes::EContentType::ClearOfObstacle       , false},
+  {MemoryMapTypes::EContentType::ClearOfCliff          , false},
+  {MemoryMapTypes::EContentType::ObstacleObservable    , true },
+  {MemoryMapTypes::EContentType::ObstacleCharger       , true },
+  {MemoryMapTypes::EContentType::ObstacleChargerRemoved, false},
+  {MemoryMapTypes::EContentType::ObstacleProx          , true },
+  {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true },
+  {MemoryMapTypes::EContentType::Cliff                 , true },
+  {MemoryMapTypes::EContentType::InterestingEdge       , false},
+  {MemoryMapTypes::EContentType::NotInterestingEdge    , false}
+};
 
 } // namespace MemoryMapTypes
 } // namespace Cozmo

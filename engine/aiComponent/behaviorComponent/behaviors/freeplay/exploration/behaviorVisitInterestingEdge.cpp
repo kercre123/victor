@@ -26,6 +26,7 @@
 #include "engine/groundPlaneROI.h"
 
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
@@ -529,7 +530,7 @@ bool BehaviorVisitInterestingEdge::CheckGoalReachable(const Vec3f& goalPosition)
   // actual corner in the quad
   static_assert( typesThatInvalidateGoals[Util::EnumToUnderlying(MemoryMapTypes::EContentType::InterestingEdge)].Value() == false,
     "toGoal is inside an InterestingEdge. This type needs to be false for current implementation");
-  const bool hasCollision = memoryMap->HasCollisionRayWithTypes(fromRobot, toGoal, typesThatInvalidateGoals);
+  const bool hasCollision = memoryMap->HasCollisionWithTypes({{Point2f{fromRobot}, Point2f{toGoal}}}, typesThatInvalidateGoals);
   
   // debug render this ray
   if ( kVieDrawDebugInfo )
@@ -615,7 +616,7 @@ void BehaviorVisitInterestingEdge::GenerateVantagePoints(const BorderRegionScore
         assert(memoryMap); // otherwise we are not even activatable
         
         // the vantage point is valid if there's no collision with the invalid types (would block the view or the pose)
-        const bool hasCollision = memoryMap->HasCollisionRayWithTypes(fromPoint, toPoint, typesThatInvalidateVantagePoints);
+        const bool hasCollision = memoryMap->HasCollisionWithTypes({{Point2f{fromPoint}, Point2f{toPoint}}}, typesThatInvalidateVantagePoints);
         isValidVantagePoint = !hasCollision;
         
         // debug render this ray

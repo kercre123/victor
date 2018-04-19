@@ -4,7 +4,7 @@
  * Author: Michael Willett
  * Date:   2017-07-31
  *
- * Description: Data for obstacle quads.
+ * Description: Data for obstacle quads (explored and unexplored).
  *
  * Copyright: Anki, Inc. 2017
  **/
@@ -14,7 +14,7 @@
 
 #include "memoryMapData.h"
 
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/engine/math/pose.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -25,25 +25,38 @@ namespace Cozmo {
 class MemoryMapData_ProxObstacle : public MemoryMapData
 {
 public:
+  enum ExploredType {
+    NOT_EXPLORED=0,
+    EXPLORED
+  };
+  
   // constructor
-  MemoryMapData_ProxObstacle(Vec2f dir, TimeStamp_t t);
+  MemoryMapData_ProxObstacle(ExploredType explored, const Pose2d& pose, TimeStamp_t t);
   
   // create a copy of self (of appropriate subclass) and return it
-  MemoryMapDataPtr Clone() const override;
+  virtual MemoryMapDataPtr Clone() const override;
   
   // compare to IMemoryMapData and return bool if the data stored is the same
-  bool Equals(const MemoryMapData* other) const override;
+  virtual bool Equals(const MemoryMapData* other) const override;
+  
+  static bool HandlesType(EContentType otherType) {
+    return (otherType == MemoryMapTypes::EContentType::ObstacleProx);
+  }
+  
+  virtual ExternalInterface::ENodeContentTypeEnum GetExternalContentType() const override;
+  
+  void MarkExplored() { _explored = ExploredType::EXPLORED; }
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Attributes
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // If you add attributes, make sure you add them to ::Equals and ::Clone (if required)
-  Vec2f directionality; // direction we presume for the collision (based off robot pose when detected)
   
-protected: 
-  static bool HandlesType(EContentType otherType) {
-    return (otherType == MemoryMapTypes::EContentType::ObstacleProx);
-  }
+  // Important: this is available in all NOT_EXPLORED obstacles and only some EXPLORED. We lose
+  // these params when flood filling from EXPLORED to NOT_EXPLORED, although that's not ideal. todo: fix this (FillBorder)
+  Pose2d _pose; // assumed obstacle pose (based off robot pose when detected)
+  
+  ExploredType _explored;
 };
  
 } // namespace

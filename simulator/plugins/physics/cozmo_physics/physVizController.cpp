@@ -995,10 +995,11 @@ bool MemoryMapNode::AddChild(SimpleQuadVector& destSimpleQuads, const ExternalIn
       case ENodeContentTypeEnum::ObstacleCube           : { color = Anki::NamedColors::RED;      color.SetAlpha(0.5f); break; }
       case ENodeContentTypeEnum::ObstacleCharger        : { color = Anki::NamedColors::ORANGE;   color.SetAlpha(0.5f); break; }
       case ENodeContentTypeEnum::ObstacleProx           : { color = Anki::NamedColors::CYAN;     color.SetAlpha(0.5f); break; }
-      case ENodeContentTypeEnum::ObstacleUnrecognized   : { color = Anki::NamedColors::MAGENTA;  color.SetAlpha(0.5f); break; }
+      case ENodeContentTypeEnum::ObstacleProxExplored   : { color = Anki::NamedColors::BLUE;    color.SetAlpha(1.0f); break; }
+      case ENodeContentTypeEnum::ObstacleUnrecognized   : { color = Anki::NamedColors::BLACK;   color.SetAlpha(0.5f); break; }
       case ENodeContentTypeEnum::Cliff                  : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.8f); break; }
-      case ENodeContentTypeEnum::InterestingEdge        : { color = Anki::NamedColors::BLUE;     color.SetAlpha(0.5f); break; }
-      case ENodeContentTypeEnum::NotInterestingEdge     : { color = Anki::NamedColors::YELLOW;   color.SetAlpha(0.5f); break; }
+      case ENodeContentTypeEnum::InterestingEdge        : { color = Anki::NamedColors::MAGENTA;  color.SetAlpha(0.5f); break; }
+      case ENodeContentTypeEnum::NotInterestingEdge     : { color = Anki::NamedColors::PINK;     color.SetAlpha(0.8f); break; }
     }
     VizInterface::SimpleQuad quad;
     quad.center[0] = _center.x();

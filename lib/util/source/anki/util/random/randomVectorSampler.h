@@ -4,7 +4,7 @@
  * Author: Brad Neuman
  * Created: 2017-10-31
  *
- * Description: Utility for sampling a random vector with given weights
+ * Description: Utility for sampling a random vector with given weights, with replacement
  *
  * Copyright: Anki, Inc. 2017
  *

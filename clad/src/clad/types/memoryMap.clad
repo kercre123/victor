@@ -24,6 +24,7 @@ enum uint_8 ENodeContentTypeEnum
   ObstacleCube,
   ObstacleCharger,
   ObstacleProx,
+  ObstacleProxExplored,
   ObstacleUnrecognized,
   Cliff,
   InterestingEdge,

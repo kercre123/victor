@@ -40,6 +40,8 @@ public:
   // create a copy of self (of appropriate subclass) and return it
   virtual MemoryMapDataPtr Clone() const { return MemoryMapDataPtr(*this); };
   
+  virtual ExternalInterface::ENodeContentTypeEnum GetExternalContentType() const;
+  
   // compare to MemoryMapData and return bool if the data stored is the same
   virtual bool Equals(const MemoryMapData* other) const { return (type == other->type); }
   
@@ -48,8 +50,9 @@ public:
   TimeStamp_t GetLastObservedTime()  const {return lastObserved_ms;}
   TimeStamp_t GetFirstObservedTime() const {return firstObserved_ms;}
   
-  // returns true if this node can be replaced by the given content type
-  bool CanOverrideSelfWithContent(EContentType newContentType) const;
+  // returns true if this node can be replaced by the given content type. Some content type replacement
+  // rules depend on whether the quad center is fully contained within the insertion polygon (centerContainedByROI)
+  bool CanOverrideSelfWithContent(MemoryMapDataConstPtr newContent, bool centerContainedByROI) const;
   
   // Wrappers for data casting operations  
   template <class T>
@@ -101,71 +104,6 @@ inline MemoryMapDataWrapper<const T> MemoryMapData::MemoryMapDataCast(MemoryMapD
   assert( T::HandlesType( ptr->type ) );
   assert( std::dynamic_pointer_cast<const T>(ptr.GetSharedPtr()) );
   return MemoryMapDataWrapper<const T>(std::static_pointer_cast<const T>(ptr.GetSharedPtr()));
-}
-  
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-inline bool MemoryMapData::CanOverrideSelfWithContent(EContentType newContentType) const
-{
-  EContentType dataType = type;
-  if ( newContentType == EContentType::Cliff )
-  {
-    // Cliff can override any other
-    return true;
-  }
-  else if ( dataType == EContentType::Cliff )
-  {
-    // Cliff can only be overridden by a full ClearOfCliff (the cliff is gone)
-    const bool isTotalClear = (newContentType == EContentType::ClearOfCliff);
-    return isTotalClear;
-  }
-  else if ( newContentType == EContentType::ClearOfObstacle )
-  {
-    // ClearOfObstacle current comes from vision or prox sensor having a direct line of sight
-    // to some object, so it can't clear negative space obstacles (IE cliffs). Additionally,
-    // ClearOfCliff is currently a superset of Clear of Obstacle, so trust ClearOfCliff flags.
-    const bool isTotalClear = ( dataType != EContentType::Cliff ) &&
-                              ( dataType != EContentType::ClearOfCliff );
-    return isTotalClear;
-  }
-  else if ( newContentType == EContentType::InterestingEdge )
-  {
-    // InterestingEdge can only override basic node types, because it would cause data loss otherwise. For example,
-    // we don't want to override a recognized marked cube or a cliff with their own border
-    if ( ( dataType == EContentType::ObstacleObservable   ) ||
-         ( dataType == EContentType::ObstacleCharger      ) ||
-         ( dataType == EContentType::ObstacleUnrecognized ) ||
-         ( dataType == EContentType::Cliff                ) ||
-         ( dataType == EContentType::NotInterestingEdge   ) )
-    {
-      return false;
-    }
-  }
-  else if ( newContentType == EContentType::ObstacleProx )
-  {
-    if ( ( dataType == EContentType::ObstacleObservable   ) ||
-         ( dataType == EContentType::ObstacleCharger      ) ||
-         ( dataType == EContentType::Cliff                ) )
-    {
-      return false;
-    }
-  }
-  else if ( newContentType == EContentType::NotInterestingEdge )
-  {
-    // NotInterestingEdge can only override interesting edges
-    if ( dataType != EContentType::InterestingEdge ) {
-      return false;
-    }
-  }
-  else if ( newContentType == EContentType::ObstacleChargerRemoved )
-  {
-    // ObstacleChargerRemoved can only remove ObstacleCharger
-    if ( dataType != EContentType::ObstacleCharger ) {
-      return false;
-    }
-  }
-  
-  return true;
 }
 
 } // namespace
