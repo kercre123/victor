@@ -325,7 +325,7 @@ void Opto::start(void) {
     writeReg(i, DROP_SENSOR_ADDRESS, MAIN_CTRL, 0x01);
     writeReg(i, DROP_SENSOR_ADDRESS, PS_LED, 6 | (5 << 4));
     writeReg(i, DROP_SENSOR_ADDRESS, PS_PULSES, 8);
-    writeReg(i, DROP_SENSOR_ADDRESS, PS_MEAS_RATE, 4 | (3 << 3) | 0x40);
+    writeReg(i, DROP_SENSOR_ADDRESS, PS_MEAS_RATE, 3 | (3 << 3) | 0x40);
     writeReg(i, DROP_SENSOR_ADDRESS, PS_CAN_0, 0);
     writeReg(i, DROP_SENSOR_ADDRESS, PS_CAN_1, 0);
   }
