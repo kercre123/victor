@@ -48,10 +48,10 @@ DIFF_BRANCH_MSG = "is already a working copy for a different URL"
 
 # Most animation tar files in SVN are packages of JSON files that should be unpacked in the root
 # "animations" directory, but facial animation tar files (packages of PNG files) should be unpacked
-# in a subdirectory of the root "faceAnimations" directory. The following list indicates the groups
+# in a subdirectory of the root "spriteSequences" directory. The following list indicates the groups
 # of tar files that should be unpacked in a subdirectory, which is named after the tar file.
 # TODO: Put this info (unpack files in root directory or subdirectory) somewhere in the DEPS file.
-UNPACK_INTO_SUBDIR = ["faceAnimations", "spriteSequences"]
+UNPACK_INTO_SUBDIR = ["spriteSequences"]
 
 MANIFEST_FILE_NAME = "anim_manifest.json"
 MANIFEST_NAME_KEY = "name"

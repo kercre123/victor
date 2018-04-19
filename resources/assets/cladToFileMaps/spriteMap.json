@@ -60,6 +60,18 @@
     "SpriteName": "face_chargerdocking_severerequest"
   },
   {
+    "CladEvent": "Face_TimerCancel_01",
+    "SpriteName": "face_timercancel_01"
+  },
+  {
+    "CladEvent": "Face_TimerLeft_GetIn_01",
+    "SpriteName": "face_timerleft_getin_01"
+  },
+  {
+    "CladEvent": "Face_TimerLeft_GetOut_01",
+    "SpriteName": "face_timerleft_getout_01"
+  },
+  {
     "CladEvent": "Face_TimerSet_GetIn_01",
     "SpriteName": "face_timerset_getin_01"
   },

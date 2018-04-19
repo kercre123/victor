@@ -58,7 +58,6 @@ const char* pathToExternalIndependentSprites = "assets/sprites/independentSprite
 const char* pathToEngineIndependentSprites = "config/devOnlySprites/independentSprites/";
 const char* pathToExternalSpriteSequences = "assets/sprites/spriteSequences/";
 const char* pathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequences/";
-const char* pathToExternalFaceAnimSequences = "assets/faceAnimations/";
 }
 
 namespace Anki {
@@ -124,7 +123,7 @@ void RobotDataLoader::LoadNonConfigData()
   }
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadSpriteSequences");
-    std::vector<std::string> spriteSequenceDirs = {pathToExternalSpriteSequences, pathToEngineSpriteSequences, pathToExternalFaceAnimSequences};
+    std::vector<std::string> spriteSequenceDirs = {pathToExternalSpriteSequences, pathToEngineSpriteSequences};
     SpriteSequenceLoader seqLoader;
     auto* sContainer = seqLoader.LoadSpriteSequences(_platform, _spritePaths.get(), 
                                                      _spriteCache.get(), spriteSequenceDirs);

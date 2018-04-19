@@ -46,7 +46,6 @@ namespace Cozmo {
 namespace{
 const char* pathToExternalIndependentSprites = "assets/sprites/independentSprites/";
 const char* pathToEngineIndependentSprites = "config/devOnlySprites/independentSprites/";
-const char* pathToExternalFaceAnimSequences = "assets/faceAnimations/";
 const char* pathToExternalSpriteSequences = "assets/sprites/spriteSequences/";
 const char* pathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequences/";
 }
@@ -106,7 +105,7 @@ void RobotDataLoader::LoadNonConfigData()
   //  3) Canned animations use SpriteSequences for their FaceAnimation keyframe
   LoadSpritePaths();
   {
-    std::vector<std::string> spriteSequenceDirs = {pathToExternalSpriteSequences, pathToEngineSpriteSequences, pathToExternalFaceAnimSequences};
+    std::vector<std::string> spriteSequenceDirs = {pathToExternalSpriteSequences, pathToEngineSpriteSequences};
     auto cacheSpec = {Vision::SpriteCache::CacheSpec::CacheGrayscaleIndefinitely};
     SpriteSequenceLoader seqLoader;
     auto* sContainer = seqLoader.LoadSpriteSequences(_platform, _spritePaths.get(), 

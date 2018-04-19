@@ -25,7 +25,6 @@
                 "subdirs": [
                     "animations",
                     "animationGroups",
-                    "faceAnimations",
                     "sprites/spriteSequences"
                 ],
                 "version": "2842"

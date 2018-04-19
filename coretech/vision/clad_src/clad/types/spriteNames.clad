@@ -32,6 +32,9 @@ enum uint_8 SpriteName
   Face_Bored_Event_02,
   Face_Bored_Event_04,
   Face_ChargerDocking_SevereRequest,
+  Face_TimerCancel_01,
+  Face_TimerLeft_GetIn_01,
+  Face_TimerLeft_GetOut_01,
   Face_TimerSet_GetIn_01,
   Face_TimerSet_GetIn_02,
   Face_TimerSet_GetOut_01,
@@ -64,6 +67,9 @@ enum_concept bool IsSpriteSequence[SpriteName] {
   Face_Bored_Event_02 = 1,
   Face_Bored_Event_04 = 1,
   Face_ChargerDocking_SevereRequest = 1,
+  Face_TimerCancel_01 = 1,
+  Face_TimerLeft_GetIn_01 = 1,
+  Face_TimerLeft_GetOut_01 = 1,
   Face_TimerSet_GetIn_01  = 1,
   Face_TimerSet_GetIn_02  = 1,
   Face_TimerSet_GetOut_01 = 1,
@@ -71,6 +77,7 @@ enum_concept bool IsSpriteSequence[SpriteName] {
   // Must be last element
   Count = 0
 }
+
 
 } // namespace Vision
 } // namespace Anki
