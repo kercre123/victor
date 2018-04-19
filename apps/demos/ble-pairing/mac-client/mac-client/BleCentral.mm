@@ -85,6 +85,8 @@ BleCentral* centralContext;
     _otaStatusCode = 0;
     _otaExpected = 0;
     
+    _oldSize = 0;
+    
     //
     // todo: Handle SIGINT to create new
     // prompt line and use CTRL+D to close(like SSH).
@@ -176,6 +178,26 @@ void CancelCommand(int s) {
     NSLog(@"%s", txt);
     printf("\033[0m");
   }
+}
+
+- (size_t)getTerminalWidth {
+  NSPipe *pipe = [NSPipe pipe];
+  NSFileHandle *file = pipe.fileHandleForReading;
+  
+  NSTask *task = [[NSTask alloc] init];
+  task.launchPath = @"/bin/stty";
+  task.arguments = @[@"size"];
+  task.standardOutput = pipe;
+  
+  [task launch];
+  
+  NSData *data = [file readDataToEndOfFile];
+  [file closeFile];
+  
+  NSString *output = [[NSString alloc] initWithData: data encoding: NSUTF8StringEncoding];
+  
+  NSArray* array = [output componentsSeparatedByString:@" "];
+  return (size_t)[((NSString*)array[1]) intValue];
 }
 
 // ----------------------------------------------------------------------------------------------------------------
@@ -449,8 +471,13 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
               _currentCommand = "";
             }
             
-            int size = 100;
+            int size = (int)[self getTerminalWidth] - 35;
             int progress = (int)(((float)_otaProgress/(float)_otaExpected) * size);
+            
+            if(_otaProgress == 0 || _otaExpected == 0) {
+              progress = 0;
+            }
+            
             std::string bar = "";
             
             for(int i = 0; i < size; i++) {
@@ -458,7 +485,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
               else bar += "_";
             }
             
-            printf("%100s [%d%%] [%llu/%llu] \r", bar.c_str(), progress, msg.current, msg.expected);
+            printf("%s [%d%%] [%llu/%llu]\r", bar.c_str(), progress, msg.current, msg.expected);
             fflush(stdout);
           }
           
@@ -611,17 +638,25 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
               _currentCommand = "";
             }
             
-            int size = 100;
+            int termSize = (int)[self getTerminalWidth];
+            int size = termSize - 35;
             int progress = (int)(((float)_otaProgress/(float)_otaExpected) * size);
+            
+            if(_otaProgress == 0 || _otaExpected == 0) {
+              progress = 0;
+            }
+            
             std::string bar = "";
-           
+            
             for(int i = 0; i < size; i++) {
               if(i <= progress) bar += "▓";
               else bar += "_";
             }
-           
-            printf("%100s [%d%%] [%llu/%llu] \r", bar.c_str(), progress, msg.current, msg.expected);
+
+            printf("%s [%d%%] [%llu/%llu]\r", bar.c_str(), progress, msg.current, msg.expected);
             fflush(stdout);
+            
+            _oldSize = termSize;
           }
           
           break;

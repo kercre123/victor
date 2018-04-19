@@ -77,6 +77,7 @@ enum WiFiAuth : uint8_t {
   
   bool _verbose;
   int _commVersion;
+  int _oldSize;
   
   NSArray* _colorArray;
 }
@@ -89,6 +90,8 @@ enum WiFiAuth : uint8_t {
 - (void) handleReceive:(const void*)bytes length:(int)n;
 - (void) handleReceiveSecure:(const void*)bytes length:(int)n;
 - (void) printHelp;
+
+- (size_t)getTerminalWidth;
 
 - (void) SendSshPublicKey:(std::string)filename;
 
