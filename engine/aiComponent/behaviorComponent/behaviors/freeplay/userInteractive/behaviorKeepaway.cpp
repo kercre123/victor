@@ -610,7 +610,6 @@ bool BehaviorKeepaway::TargetHasMoved(const ObservableObject* targetObject)
   // Target is not connected, lets see if we can check for movement by pose
   // If we can't validate that it has moved due to pose parenting changes, assume it hasn't moved
   bool hasMoved = false;
-  Pose3d throwaway;
   Radians angleThreshold;
   angleThreshold.setDegrees(_iConfig.targetUnmovedAngle_deg);
   hasMoved = !targetObject->GetPose().IsSameAs(_dVars.targetPrevPose, 

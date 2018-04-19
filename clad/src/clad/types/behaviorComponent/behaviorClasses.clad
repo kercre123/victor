@@ -104,6 +104,7 @@ enum uint_8 BehaviorClass {
 
   // freeplay/userInteractive
   FistBump,
+  InspectCube,
   Keepaway,
   PounceWithProx,
   PuzzleMaze,
