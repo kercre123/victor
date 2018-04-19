@@ -3,6 +3,9 @@
 // Author: Michelle Sintov
 // Copyright: Anki Inc (c) 2018
 
+#include "clad/types/faceEnrollmentResult.clad"
+#include "clad/types/loadedKnownFace.clad"
+
 namespace Anki {
 namespace Cozmo {
 namespace ExternalInterface {
@@ -93,6 +96,10 @@ message SetFaceToEnroll {
     bool saveToRobot=1,   // Save to robot's NVStorage when done (NOTE: will (re)save everyone enrolled!)
     bool sayName=0,       // Play say-name/celebration animations on success before completing
     bool useMusic=0       // Starts special music during say-name animations (will leave music playing!)
+}
+
+message Error {
+    //
 }
 
 union MeetVictor {
