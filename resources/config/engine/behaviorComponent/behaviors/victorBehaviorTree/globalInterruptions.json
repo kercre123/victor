@@ -6,6 +6,7 @@
 
   "behaviors": [
     "MandatoryPhysicalReactions",
+    "LowBatteryFindAndGoToHome",
     "TriggerWordDetected",
     "TimerUtilityCoordinator",
     "MeetVictor",

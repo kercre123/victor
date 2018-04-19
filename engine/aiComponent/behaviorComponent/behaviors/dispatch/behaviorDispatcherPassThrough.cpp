@@ -95,7 +95,15 @@ void BehaviorDispatcherPassThrough::OnBehaviorActivated()
     OnPassThroughActivated();
   }
   
-  DelegateIfInControl(_iConfig.delegate.get());
+  DEV_ASSERT(_iConfig.delegate != nullptr, "BehaviorDispatcherPassThrough.OnBehaviorActivated.NullDelegate");
+  if (_iConfig.delegate != nullptr &&
+      _iConfig.delegate->WantsToBeActivated()) {
+    DelegateIfInControl(_iConfig.delegate.get());
+  } else {
+    PRINT_NAMED_ERROR("BehaviorDispatcherPassThrough.OnBehaviorActivated.DelegateDoesNotWantToBeActivated",
+                      "Delegate %s does not want to be activated",
+                      _iConfig.delegate->GetDebugLabel().c_str());
+  }
 }
 
 

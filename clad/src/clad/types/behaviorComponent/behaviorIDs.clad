@@ -133,6 +133,7 @@ enum uint_8 BehaviorID {
   FindAndRequestHome,
   FindHome,
   GoHome,
+  LowBatteryFindAndGoToHome,
   RequestToGoHome,
 
   // victorBehaviorTree/highLevelDelegates/hiking
