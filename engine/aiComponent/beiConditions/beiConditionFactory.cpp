@@ -52,14 +52,103 @@ namespace Anki {
 namespace Cozmo {
 
   
-namespace{
+namespace {
+static const char* kCustomConditionKey = "customCondition";
+}
+
+std::map< std::string, IBEIConditionPtr > BEIConditionFactory::_customConditionMap;
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+CustomBEIConditionHandleInternal::CustomBEIConditionHandleInternal(const std::string& conditionName)
+  : _conditionName(conditionName)
+{
+  DEV_ASSERT(!_conditionName.empty(), "CustomBEIConditionHandle.NoConditionName");
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+CustomBEIConditionHandleInternal::~CustomBEIConditionHandleInternal()
+{
+  if( !_conditionName.empty() ) {
+    BEIConditionFactory::RemoveCustomCondition(_conditionName);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+CustomBEIConditionHandle BEIConditionFactory::InjectCustomBEICondition(const std::string& name,
+                                                                       IBEIConditionPtr condition)
+{
+  DEV_ASSERT_MSG(_customConditionMap.find(name) == _customConditionMap.end(),
+                 "BEIConditionFactory.InjectCustomBEICondition.DuplicateName",
+                 "already have a condition with name '%s'",
+                 name.c_str());
+  
+  _customConditionMap[name] = condition;
+  // note: can't use make_shared because constructor is private
+  CustomBEIConditionHandle ret( new CustomBEIConditionHandleInternal( name ) );
+  return ret;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BEIConditionFactory::RemoveCustomCondition(const std::string& name)
+{
+  auto it = _customConditionMap.find(name);
+  if( ANKI_VERIFY( it != _customConditionMap.end(),
+                   "BEIConditionFactory.RemoveCustomCondition.NotFound",
+                   "condition name '%s' not found among our %zu custom conditions",
+                   name.c_str(),
+                   _customConditionMap.size() ) ) {
+    _customConditionMap.erase(it);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BEIConditionFactory::IsValidCondition(const Json::Value& config)
+{
+  if( !config[kCustomConditionKey].isNull() ) {
+    auto it = _customConditionMap.find(config[kCustomConditionKey].asString());
+    const bool found = it != _customConditionMap.end();
+    return found;
+  }
+
+  if( !config[IBEICondition::kConditionTypeKey].isNull() ) {
+    const std::string& typeStr = config[IBEICondition::kConditionTypeKey].asString();
+    BEIConditionType waste;
+    const bool convertedOK =  BEIConditionTypeFromString(typeStr, waste);
+    return convertedOK;
+  }
+
+  // neither key is specified
+  return false;    
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IBEIConditionPtr BEIConditionFactory::GetCustomCondition(const Json::Value& config, const std::string& ownerDebugLabel)
+{
+  DEV_ASSERT( config[IBEICondition::kConditionTypeKey].isNull(), "BEIConditionFactory.SpecifiedCustomConditionAndType" );
+  
+  auto it = _customConditionMap.find(config[kCustomConditionKey].asString());
+  if( ANKI_VERIFY( it != _customConditionMap.end(),
+                    "BEIConditionFactory.GetCustomCondition.NotFound",
+                    "No custom condition with name '%s' found. Have %zu custom conditions",
+                    config[kCustomConditionKey].asCString(),
+                    _customConditionMap.size() ) ) {
+    return it->second;
+  }
+  else {
+    return IBEIConditionPtr{};
+  }
   
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& config, const std::string& ownerDebugLabel)
 {
-
+  
+  if( !config[kCustomConditionKey].isNull() ) {
+    return GetCustomCondition(config, ownerDebugLabel);
+  }
+  
   BEIConditionType strategyType = IBEICondition::ExtractConditionType(config);
   
   IBEIConditionPtr strategy = nullptr;

@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/beiConditions/conditions/conditionCompound.h"
 
+#include "coretech/common/engine/jsonTools.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/unitTestKey.h"
 #include "lib/util/source/anki/util/logging/logging.h"
@@ -21,7 +22,6 @@ namespace Cozmo {
 
 namespace {
 
-const char* kCompoundKey = "Compound";
 const char* kAndKey = "and";
 const char* kOrKey =  "or";
 const char* kNotKey = "not";
@@ -37,7 +37,7 @@ struct ConditionCompoundConstructable : public ConditionCompound
 ConditionCompound::ConditionCompound( const Json::Value& config )
   : IBEICondition( config )
 {
-  const int maxDepth = CreateNode( _root, config );
+  const int maxDepth = CreateNode( _root, config, true );
   
   // If you hit this, try as hard as you can to refactor your conditions. Maybe some of them can
   // go in the behavior as opposed to the json? Maybe some new condition types are needed?
@@ -117,13 +117,11 @@ void ConditionCompound::SetActiveInternal( BehaviorExternalInterface& bei, bool 
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-int ConditionCompound::CreateNode( std::unique_ptr<Node>& node, const Json::Value& config )
+int ConditionCompound::CreateNode( std::unique_ptr<Node>& node, const Json::Value& config, const bool isRoot = false )
 {
   int childrenDepth = 0;
   node.reset( new Node );
-  if( config[kConditionTypeKey].isString()
-      && config[kConditionTypeKey].asString() != kCompoundKey ) // not root level
-  {
+  if( !isRoot && BEIConditionFactory::IsValidCondition(config) ) { // this is a leaf
     node->type = NodeType::Condition;
     IBEIConditionPtr condition = BEIConditionFactory::CreateBEICondition( config, GetDebugLabel() );
     _operands.push_back( condition );
@@ -152,6 +150,8 @@ int ConditionCompound::CreateNode( std::unique_ptr<Node>& node, const Json::Valu
       node->type = NodeType::Or;
       childrenConfig = &config[kOrKey];
     } else {
+      const int maxPrintDepth = 5;
+      JsonTools::PrintJsonError(config, "ConditionCompound.CreateNode.Unknown.Config", maxPrintDepth);
       ASSERT_NAMED( false && "unknown or missing type name", "ConditionCompound.CreateNode.Unknown");
       node->type = NodeType::Invalid;
       return childrenDepth;

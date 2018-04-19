@@ -58,7 +58,7 @@ private:
   static IBEIConditionPtr CreateSingleLevelCondition( NodeType type, const std::vector<IBEIConditionPtr>& subConditions );
   
   // recursively initializes node with config, returns the depth
-  int CreateNode( std::unique_ptr<Node>& node, const Json::Value& config );
+  int CreateNode( std::unique_ptr<Node>& node, const Json::Value& config, const bool isRoot );
   
   // recursively evaluates the tree and returns the result given conditionValues
   bool EvaluateNode( const std::unique_ptr<Node>& node, const std::vector<bool>& conditionValues ) const;

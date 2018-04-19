@@ -37,6 +37,8 @@ class Robot;
 class IBEICondition : public IVisionModeSubscriber
 {
 public:
+  static const char* const kConditionTypeKey;
+
   static Json::Value GenerateBaseConditionConfig(BEIConditionType type);  
   static BEIConditionType ExtractConditionType(const Json::Value& config);
 
@@ -90,8 +92,6 @@ protected:
   // will be automatically managed by the SetActive infrastructure.
   virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const {};
   
-  static const char* const kConditionTypeKey;
-
 private:
   
   // called when whenever AreConditionsMet is evaluated

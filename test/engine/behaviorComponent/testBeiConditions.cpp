@@ -69,6 +69,103 @@ void CreateBEI(const std::string& json, IBEIConditionPtr& cond)
 
 }
 
+TEST(BeiConditions, TestBEIConditionFactory)
+{
+  bool val1 = false;
+  auto cond1 = std::make_shared<ConditionLambda>(
+    [&val1](BehaviorExternalInterface& behaviorExternalInterface) {
+      return val1;
+    });
+
+  bool val2 = false;
+  auto cond2 = std::make_shared<ConditionLambda>(
+    [&val2](BehaviorExternalInterface& behaviorExternalInterface) {
+      return val2;
+    });
+
+  Json::Value cond1Config;
+  cond1Config["customCondition"] = "cond1";
+
+  Json::Value cond2Config;
+  cond2Config["customCondition"] = "cond2";
+
+  {
+    auto handle = BEIConditionFactory::InjectCustomBEICondition("cond1", cond1);
+    auto returned = BEIConditionFactory::CreateBEICondition(cond1Config, "test");
+    ASSERT_TRUE(returned != nullptr);
+    ASSERT_EQ(returned, cond1);
+  }
+
+  {
+    auto handle = BEIConditionFactory::InjectCustomBEICondition("cond2", cond2);
+    auto returned = BEIConditionFactory::CreateBEICondition(cond2Config, "test");
+    ASSERT_TRUE(returned != nullptr);
+    ASSERT_EQ(returned, cond2);
+  }
+
+  const std::string complexJson = R"json(
+  {
+    "conditionType": "Compound",
+    "and": [
+      {
+        "or": [
+          {
+            "conditionType": "Emotion",
+            "emotion": "Confident",
+            "min": -0.5
+          },
+          {
+            "customCondition": "cond2"
+          }
+        ]
+      },      
+      {
+        "and": [
+          {
+            "conditionType": "TrueCondition"
+          },
+          {
+            "customCondition": "cond1"
+          },
+          {
+            "customCondition": "cond2"
+          }
+        ]
+      }
+    ]
+  }
+  })json";
+
+  std::vector<CustomBEIConditionHandle> handles;
+  {
+    auto handle1 = BEIConditionFactory::InjectCustomBEICondition("cond1", cond1);
+    handles.push_back( handle1 );
+    handles.emplace_back( BEIConditionFactory::InjectCustomBEICondition("cond2", cond2) );
+  }
+
+  TestBehaviorFramework testBehaviorFramework(1, nullptr);
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
+
+  IBEIConditionPtr compound;
+  CreateBEI(complexJson, compound);
+
+  ASSERT_TRUE( compound != nullptr );
+  
+  compound->Init(bei);
+  compound->SetActive(bei, true);
+  EXPECT_FALSE( compound->AreConditionsMet(bei) );
+  val1 = true;
+  EXPECT_FALSE( compound->AreConditionsMet(bei) );
+  val2 = true;
+  EXPECT_TRUE( compound->AreConditionsMet(bei) );
+  val1 = false;
+  EXPECT_FALSE( compound->AreConditionsMet(bei) );
+
+  handles.clear();
+  EXPECT_FALSE( compound->AreConditionsMet(bei) );  
+}
+
 TEST(BeiConditions, TestUnitTestCondition)
 {
   // a test of the test, if you will
