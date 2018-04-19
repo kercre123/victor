@@ -4,7 +4,7 @@
 * Author: Kevin M. Karol
 * Created: 2/1/18
 *
-* Description: Component responsible for ensuring decisions by the behavior system 
+* Description: Component responsible for ensuring decisions by the behavior system
 * blend together well by the time they are sent to robot
 *
 * Copyright: Anki, Inc. 2018
@@ -26,17 +26,18 @@ namespace Cozmo {
 
 class Robot;
 
-class ContinuityComponent : public IDependencyManagedComponent<AIComponentID>,  
+class ContinuityComponent : public IDependencyManagedComponent<AIComponentID>,
                             private Util::noncopyable
 {
 public:
   ContinuityComponent(Robot& robot);
-  
+  ~ContinuityComponent();
+
   // IDependencyManagedComponent<AIComponentID> functions
   virtual void UpdateDependent(const AICompMap& dependentComps) override;
   // end IDependencyManagedComponent<AIComponentID> functions
 
-  
+
   // Inform the continuity component of the next desired action
   bool GetIntoAction(IActionRunner* action);
 

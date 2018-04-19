@@ -1,10 +1,10 @@
 /**
-* File: continuityComponent.h
+* File: continuityComponent.cpp
 *
 * Author: Kevin M. Karol
 * Created: 2/1/18
 *
-* Description: Component responsible for ensuring decisions by the behavior system 
+* Description: Component responsible for ensuring decisions by the behavior system
 * blend together well by the time they are sent to robot
 *
 * Copyright: Anki, Inc. 2018
@@ -18,7 +18,7 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ContinuityComponent::ContinuityComponent(Robot& robot)
 : IDependencyManagedComponent<AIComponentID>(this, AIComponentID::ContinuityComponent)
@@ -27,7 +27,12 @@ ContinuityComponent::ContinuityComponent(Robot& robot)
 
 }
 
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ContinuityComponent::~ContinuityComponent()
+{
+  Util::SafeDelete(_nextActionToQueue);
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ContinuityComponent::UpdateDependent(const AICompMap& dependentComps)
 {
