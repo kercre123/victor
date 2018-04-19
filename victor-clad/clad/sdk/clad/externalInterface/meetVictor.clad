@@ -1,0 +1,116 @@
+// Messages related to Meet Victor.
+//  for the C-Like Abstract Data language
+// Author: Michelle Sintov
+// Copyright: Anki Inc (c) 2018
+
+namespace Anki {
+namespace Cozmo {
+namespace ExternalInterface {
+
+// ====================================================
+//                      Meet Victor
+// ====================================================
+
+// The app requests that the robot perform some non-instantaneous action, usually
+// an action with an associated voice command, such as "go to your charger"
+// todo (VIC-1398): eventually AppIntent should be its own union of structures, but
+// currently there's only one intent, with one arg, and it's not possible to transmit
+// a union over the temporary webservice handler. This will need replacing once the
+// real app->engine channel is working
+//
+// Start Meet Victor
+message AppIntent {
+  string intent,
+  string param,
+}
+
+// Tell the app the robot is starting a facial scan for the Meet Victor flow
+message MeetVictorFaceScanStarted
+{
+}
+
+// Tell the app the robot is finishing a facial scan for the Meet Victor flow
+message MeetVictorFaceScanComplete
+{
+}
+
+// RobotEnrolledFace - Broadcast by BehaviorEnrollFace when it completes.
+// Contains either success or error condition.
+message FaceEnrollmentCompleted
+{
+  FaceEnrollmentResult result,
+  int_32               faceID,
+  string               name
+}
+
+// CancelFaceEnrollment - Unsets face enrollment settings, meaning BehaviorEnrollFace will no
+//                        longer be activatable
+//
+// Cancels Meet Victor.
+message CancelFaceEnrollment {
+}
+
+// Request a list of names and IDs
+message RequestEnrolledNames {
+}
+
+// Receives the requested list of names and IDs.
+message EnrolledNamesResponse {
+  Vision::LoadedKnownFace faces[uint_8],
+}
+
+// Rename given ID+oldName pair to use newName. For safety if current face with given ID
+// does not match oldName, nothing happens.
+// On success, a RobotLoadedKnownFace message with faceID and newName will be sent.
+message UpdateEnrolledFaceByID {
+  int_32 faceID,
+  string oldName,
+  string newName
+}
+
+// Erase a face record by ID
+message EraseEnrolledFaceByID {
+  int_32 faceID
+}
+
+// Erase all enrolled faces (use with care!)
+message EraseAllEnrolledFaces {
+}
+
+// SetFaceToEnroll - Send face enrollments settings. Actual face enrollment only happens
+//                   when the BehaviorEnrollFace runs. That behavior requires these settings
+//                   be sent in order to be activatable.
+//
+// If you want to change where the enrolled face is saved (e.g., merge final enrollment into an
+// existing face), use this before `AppIntent`.
+message SetFaceToEnroll {
+    string name,
+
+    int_32 observedID=0,  // The ID of a specific observed face to enroll (0 for next one we see)
+    int_32 saveID=0,      // The ID of an existing face to merge final enrollment into (0 for none,
+                          // i.e. use observedID)
+
+    bool saveToRobot=1,   // Save to robot's NVStorage when done (NOTE: will (re)save everyone enrolled!)
+    bool sayName=0,       // Play say-name/celebration animations on success before completing
+    bool useMusic=0       // Starts special music during say-name animations (will leave music playing!)
+}
+
+union MeetVictor {
+    Error                       Error                       = 0x00,
+    AppIntent                   AppIntent                   = 0x01,
+    MeetVictorFaceScanStarted   MeetVictorFaceScanStarted   = 0x02,
+    MeetVictorFaceScanComplete  MeetVictorFaceScanComplete  = 0x03,
+    FaceEnrollmentCompleted     FaceEnrollmentCompleted     = 0x04,
+    CancelFaceEnrollment        CancelFaceEnrollment        = 0x05,
+    RequestEnrolledNames        RequestEnrolledNames        = 0x06,
+    EnrolledNamesResponse       EnrolledNamesResponse       = 0x07,
+    UpdateEnrolledFaceByID      UpdateEnrolledFaceByID      = 0x08,
+    EraseEnrolledFaceByID       EraseEnrolledFaceByID       = 0x09,
+    EraseAllEnrolledFaces       EraseAllEnrolledFaces       = 0x0A,
+    SetFaceToEnroll             SetFaceToEnroll             = 0x0B,
+}
+
+
+} // namespace ExternalInterface
+} // namespace Cozmo
+} // namespace Anki
