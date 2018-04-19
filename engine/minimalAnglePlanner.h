@@ -30,7 +30,8 @@ public:
   MinimalAnglePlanner() : IPathPlanner("MinimalAngle") {}
   
   virtual EComputePathStatus ComputeNewPathIfNeeded(const Pose3d& startPose,
-                                                    bool forceReplanFromScratch = false) override;
+                                                    bool forceReplanFromScratch = false,
+                                                    bool allowGoalChange = true) override;
 protected:
 
   virtual EComputePathStatus ComputePath(const Pose3d& startPose,

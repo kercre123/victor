@@ -249,7 +249,8 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
 }
 
 EComputePathStatus LatticePlanner::ComputeNewPathIfNeeded(const Pose3d& startPose,
-                                                          bool forceReplanFromScratch)
+                                                          bool forceReplanFromScratch,
+                                                          bool allowGoalChange)
 {
   if( !  _impl->_contextMutex.try_lock() ) {
     // thread is already running, in this case just say no plan needed
@@ -257,6 +258,30 @@ EComputePathStatus LatticePlanner::ComputeNewPathIfNeeded(const Pose3d& startPos
   }
 
   std::lock_guard<std::recursive_mutex> lg( _impl->_contextMutex, std::adopt_lock);
+  
+  // change planner goals if needed
+  if ( !allowGoalChange && (_impl->_context.goals_c.size() > 1) ) {
+    // assuming move-clear-emplace is faster than than removing individual elements, but this has not been benchmarked
+    std::pair<GoalID, State_c> goal_cPair = std::move(_impl->_context.goals_c[_impl->_selectedGoalID]);
+    _impl->_context.goals_c.clear();
+    _impl->_context.goals_c.emplace_back(std::move(goal_cPair));
+  } else if ( allowGoalChange && (_impl->_context.goals_c.size() != _impl->_targetPoses_orig.size()) ) {
+    // only check if the sizes are different. This does assume that the only method to change the goals is 
+    // through ComputePath, which should invalidate paths, and properly sync context's and impl's goals
+    _impl->_context.goals_c.clear();
+    _impl->_context.goals_c.reserve(_impl->_targetPoses_orig.size());
+    
+    for(GoalID goalID = 0; goalID < _impl->_targetPoses_orig.size(); ++goalID) {
+      std::pair<GoalID, State_c> goal_cPair(std::piecewise_construct,
+                                            std::forward_as_tuple(goalID),
+                                            std::forward_as_tuple(_impl->_targetPoses_orig[goalID].GetTranslation().x(),
+                                                                  _impl->_targetPoses_orig[goalID].GetTranslation().y(),
+                                                                  _impl->_targetPoses_orig[goalID].GetRotationAngle<'Z'>().ToFloat()));
+      if (_impl->_planner.GoalIsValid(goal_cPair)) {
+        _impl->_context.goals_c.emplace_back(std::move(goal_cPair));
+      }
+    }
+  }
   
   EComputePathStatus ret = _impl->StartPlanning(startPose, forceReplanFromScratch);
 

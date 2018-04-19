@@ -45,7 +45,8 @@ public:
                                          const std::vector<Pose3d>& targetPoses) override;
 
   virtual EComputePathStatus ComputeNewPathIfNeeded(const Pose3d& startPose,
-                                                    bool forceReplanFromScratch = false) override;
+                                                    bool forceReplanFromScratch = false,
+                                                    bool allowGoalChange = true) override;
   
   virtual bool PreloadObstacles() override;
   

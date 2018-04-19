@@ -49,7 +49,8 @@ EComputePathStatus MinimalAnglePlanner::ComputePath(const Pose3d& startPose,
 }
 
 EComputePathStatus MinimalAnglePlanner::ComputeNewPathIfNeeded(const Pose3d& startPose,
-                                                               bool forceReplanFromScratch)
+                                                               bool forceReplanFromScratch,
+                                                               bool allowGoalChange)
 {
 
   _hasValidPath = false;

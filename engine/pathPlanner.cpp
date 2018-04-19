@@ -75,7 +75,8 @@ EComputePathStatus IPathPlanner::ComputePath(const Pose3d& startPose,
 }
 
 EComputePathStatus IPathPlanner::ComputeNewPathIfNeeded(const Pose3d& startPose,
-                                                        bool forceReplanFromScratch)
+                                                        bool forceReplanFromScratch,
+                                                        bool allowGoalChange)
 {
   return EComputePathStatus::NoPlanNeeded;
 }

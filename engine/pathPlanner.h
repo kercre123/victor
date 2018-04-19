@@ -76,7 +76,8 @@ public:
   // used
   // Default implementation never plans (just gives you the same path as last time)
   virtual EComputePathStatus ComputeNewPathIfNeeded(const Pose3d& startPose,
-                                                    bool forceReplanFromScratch = false);
+                                                    bool forceReplanFromScratch = false,
+                                                    bool allowGoalChange = true);
 
   virtual void StopPlanning() {}
 

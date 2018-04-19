@@ -54,7 +54,8 @@ EComputePathStatus FaceAndApproachPlanner::ComputePath(const Pose3d& startPose,
 }
 
 EComputePathStatus FaceAndApproachPlanner::ComputeNewPathIfNeeded(const Pose3d& startPose,
-                                                                  bool forceReplanFromScratch)
+                                                                  bool forceReplanFromScratch,
+                                                                  bool allowGoalChange)
 {
 
   _hasValidPath = false;
