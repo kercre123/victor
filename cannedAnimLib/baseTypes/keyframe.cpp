@@ -430,7 +430,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       // Short term fix for VIC-2407: IsDone is called twice per tick, so divide time step by 2
       // Be careful of calling IsDone until a longer term fix is implemented
       _currentTime_ms += ANIM_TIME_STEP_MS;
-      if(_currentTime_ms < _nextFrameTime_ms){
+      if(!SequenceShouldAdvance() || (_currentTime_ms < _nextFrameTime_ms)){
         return false;
       }
 
@@ -473,9 +473,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     bool SpriteSequenceKeyFrame::GetFaceImageHandle(Vision::SpriteHandle& handle)
     {
       if(IsDone()) {
-        _curFrame = 0;
-        _currentTime_ms = 0;
-        _nextFrameTime_ms = _frameDuration_ms;
         return false;
       }
 
@@ -488,7 +485,9 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       if(_currentTime_ms >= _nextFrameTime_ms){
         if(_runtimeSpriteSequence != nullptr){
           _runtimeSpriteSequence->GetFrame(0, handle);
-          _runtimeSpriteSequence->PopFront();
+          if(SequenceShouldAdvance()){
+            _runtimeSpriteSequence->PopFront();
+          }
         }else if(_cannedSpriteSequence != nullptr){
           _cannedSpriteSequence->GetFrame(_curFrame, handle);
           ++_curFrame;

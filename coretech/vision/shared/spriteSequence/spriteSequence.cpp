@@ -51,6 +51,10 @@ void SpriteSequence::PopFront()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SpriteSequence::GetFrame(const u32 index, Vision::SpriteHandle& handle) const
 {
+  if(_frames.empty()){
+    return false;
+  }
+  
   u32 modIndex = 0;
   const bool success = GetModdedIndex(index, modIndex);
   if(ANKI_VERIFY(success, 

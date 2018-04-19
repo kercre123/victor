@@ -645,9 +645,13 @@ namespace Cozmo {
 
     DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetFaceImage.NullProceduralAnimation");
     
-    // Clear out any runtime sequences currently set on the procedural animation
-    auto& spriteSeqTrack = _proceduralAnimation->GetTrack<SpriteSequenceKeyFrame>();
-    spriteSeqTrack.Clear();
+    // If this is the first image set on the sequence
+    // Clear out any leftover runtime data from previous sequences
+    if(_streamingAnimation != _proceduralAnimation){
+      auto& spriteSeqTrack = _proceduralAnimation->GetTrack<SpriteSequenceKeyFrame>();
+      spriteSeqTrack.Clear();
+    }
+
     
     // Trigger time of keyframe is 0 since we want it to start playing immediately
     SpriteSequenceKeyFrame kf(shouldRenderInEyeHue, Vision::SpriteName::Count, true);

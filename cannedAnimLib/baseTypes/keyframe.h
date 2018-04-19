@@ -318,6 +318,9 @@ namespace Cozmo {
     // Ensure that a keyframe doesn't have multiple sequence implementations
     // fighting with each other
     bool VerifyOnlyOneImplementationSet();
+    
+    // If frame duration is zero keyframe lasts forever
+    bool SequenceShouldAdvance(){ return _frameDuration_ms != 0;}
 
     // used to translate _rawSeqName into _spriteSequenceName
     bool ParseSequenceNameFromString(const Vision::SpritePathMap* spriteMap);

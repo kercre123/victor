@@ -16,6 +16,8 @@
 #include "cannedAnimLib/spriteSequences/spriteSequenceLoader.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "util/dispatchWorker/dispatchWorker.h"
+
+#include <set>
 #include <sys/stat.h>
 
 
@@ -23,7 +25,12 @@ namespace Anki {
 namespace Cozmo {
 
 namespace{
-
+static const std::set<Vision::SpriteName> kSequencesRefuseCache = {
+  Vision::SpriteName::PairingIconAwaitingApp,
+  Vision::SpriteName::PairingIconUpdate,
+  Vision::SpriteName::PairingIconUpdateError,
+  Vision::SpriteName::PairingIconWifi
+};
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -148,7 +155,13 @@ void SpriteSequenceLoader::LoadSequenceImageFrames(Vision::SpriteCache* cache,
 
     // Load the image
     const std::string fullFilename = Util::FileUtils::FullFilePath({fullDirectoryPath, filename});
-    auto handle = cache->GetSpriteHandle(fullFilename, cacheSpecs);
+    
+    Vision::SpriteHandle handle;
+    if(kSequencesRefuseCache.find(sequenceName) !=  kSequencesRefuseCache.end()){
+      handle = cache->GetSpriteHandle(fullFilename);
+    }else{
+      handle = cache->GetSpriteHandle(fullFilename, cacheSpecs);
+    }
     sequence.AddFrame(handle);
   }
 
