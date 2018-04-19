@@ -10,8 +10,13 @@
 
 alias GET_GIT_ROOT='export GIT_PROJ_ROOT=`git rev-parse --show-toplevel`'
 
-alias victor_audio_update_local_assets='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/tools/audio/UseLocalAudioAssets.py $VICTOR_WWISE_PROJECT_TRUNK_PATH'
-alias victor_audio_1press_update_local_assets='GET_GIT_ROOT; victor_audio_update_local_assets -c Release -b --allow-missing'
+# Update Local assets for Mac, Robot & Maya. This always allows assets to be missing, Sound Designers have the power!
+alias victor_audio_update_local_assets='GET_GIT_ROOT; ${GIT_PROJ_ROOT}/tools/audio/UseLocalAudioAssets.py $VICTOR_WWISE_PROJECT_TRUNK_PATH  --allow-missing'
+# Robot (VICOS) Build & Deploy
+alias victor_audio_robot_build_deploy_update_local_assets='GET_GIT_ROOT; victor_audio_update_local_assets -c Release -b'
+# Mac (Webots) Build
+alias victor_audio_webots_build_update_local_assets='GET_GIT_ROOT; victor_audio_update_local_assets -p mac -c Release -b'
 
+# Clean assset directories
 alias victor_audio_clean_local_assets='GET_GIT_ROOT; rm -rf ${GIT_PROJ_ROOT}/EXTERNALS/local-audio-assets'
 alias victor_audio_clean_project_assets='GET_GIT_ROOT; rm -rf $VICTOR_WWISE_PROJECT_TRUNK_PATH/VictorAudio/GeneratedSoundBanks'
