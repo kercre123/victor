@@ -224,7 +224,7 @@ const std::string& OSState::GetOSBuildVersion()
 {
   if(_osBuildVersion.empty())
   {
-    _osBuildVersion = GetProperty("ro.build.version.release");
+    _osBuildVersion = GetProperty("ro.build.display.id");
   }
   
   return _osBuildVersion;
