@@ -5,7 +5,7 @@
       "emotionAffectors" : [
         {
           "emotionType" : "Stimulated",
-          "value" : 0.8
+          "value" : 1.0
         },
         {
           "emotionType" : "Social",
