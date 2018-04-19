@@ -135,7 +135,8 @@ namespace Anki {
           LCS_IDLE,
           LCS_LOWER_LIFT,
           LCS_WAIT_FOR_STOP,
-          LCS_SET_CURR_ANGLE
+          LCS_SET_CURR_ANGLE,
+          LCS_COMPLETE
         } LiftCalibState;
 
         LiftCalibState calState_ = LCS_IDLE;
@@ -159,7 +160,7 @@ namespace Anki {
 
 
         // Whether or not to command anything to motor
-        bool enable_ = false;
+        bool enable_ = true;
         
         // Whether or not motor was enabled via Enable()
         // which is used to determine if it should be automatically
@@ -254,10 +255,6 @@ namespace Anki {
 
       void StartCalibrationRoutine(bool autoStarted)
       {
-        // Starting calibration effectively re-enables lift motor even if
-        // it was previously disabled external to this file.
-        // Hence we call Enable() here instead of EnableInternal().
-        Enable();  
         calState_ = LCS_LOWER_LIFT;
         isCalibrated_ = false;
         potentialBurnoutStartTime_ms_ = 0;
@@ -332,13 +329,25 @@ namespace Anki {
 
                 HAL::MotorResetPosition(MotorID::MOTOR_LIFT);
                 prevHalPos_ = HAL::MotorGetPosition(MotorID::MOTOR_LIFT);
-                isCalibrated_ = true;
-
-                calState_ = LCS_IDLE;
-                firstCalibration_ = false;
-                Messages::SendMotorCalibrationMsg(MotorID::MOTOR_LIFT, false);
+                calState_ = LCS_COMPLETE;
+                // Intentional fall-through
+              } else {
+                break;
               }
+            case LCS_COMPLETE:
+            {
+              // Turn off motor
+              power_ = 0;
+              HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
+
+              Messages::SendMotorCalibrationMsg(MotorID::MOTOR_LIFT, false);
+
+              isCalibrated_ = true;
+              firstCalibration_ = false;
+              calState_ = LCS_IDLE;
               break;
+            }
+
           }  // end switch(calState_)
 
           // Check if lift is actually moving up when it should be moving down.
@@ -364,15 +373,9 @@ namespace Anki {
                            "Someone is probably messing with lift (low: %fdeg, curr: %fdeg)",
                            RAD_TO_DEG(lowLiftAngleDuringCalib_rad_), RAD_TO_DEG(currAngle));
 
-                  // Turn off motor
-                  power_ = 0;
-                  HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
-
                   // Maintain current calibration
                   ResetAnglePosition(currAngle);
-                  isCalibrated_ = true;
-                  calState_ = LCS_IDLE;
-                  Messages::SendMotorCalibrationMsg(MotorID::MOTOR_LIFT, false);
+                  calState_ = LCS_COMPLETE;
                 }
               }
             } else {
@@ -644,6 +647,8 @@ namespace Anki {
         bracing_ = false;
         if (enabledExternally_) {
           EnableInternal();
+        } else {
+          DisableInternal();
         }
       }
       

@@ -72,7 +72,8 @@ namespace HeadController {
         HCS_IDLE,
         HCS_LOWER_HEAD,
         HCS_WAIT_FOR_STOP,
-        HCS_SET_CURR_ANGLE
+        HCS_SET_CURR_ANGLE,
+        HCS_COMPLETE
       } HeadCalibState;
 
       HeadCalibState calState_ = HCS_IDLE;
@@ -99,7 +100,7 @@ namespace HeadController {
 
       const u32 HEAD_STOP_TIME = 200;  // ms
 
-      bool enable_ = false;
+      bool enable_ = true;
 
       // If disabled, head motor is automatically re-enabled at this time if non-zero.
       u32 enableAtTime_ms_ = 0;
@@ -109,8 +110,7 @@ namespace HeadController {
       const u32 REENABLE_TIMEOUT_MS = 2000;
       
       // Bracing for impact
-      // Lowers head quickly and then disables
-      // Prevents any new angles from being commanded
+      // Lowers head quickly during which time it ignores any new commands
       bool bracing_ = false;
 
     } // "private" members
@@ -153,7 +153,6 @@ namespace HeadController {
 
     void StartCalibrationRoutine(bool autoStarted)
     {
-      Enable();
       potentialBurnoutStartTime_ms_ = 0;
       calState_ = HCS_LOWER_HEAD;
       isCalibrated_ = false;
@@ -220,17 +219,16 @@ namespace HeadController {
             if (!IsMoving()) {
 
               if (HAL::GetTimeStamp() - lastHeadMovedTime_ms > HEAD_STOP_TIME) {
+#ifdef          CALIB_WHILE_APPLYING_POWER
+                AnkiInfo( "HeadController.CalibratedWhileApplyingPower", "");
+                ResetLowAnglePosition();
+                calState_ = HCS_COMPLETE;
+                break;
+#else
                 // Turn off motor
                 power_ = 0.0;
                 HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
 
-#ifdef          CALIB_WHILE_APPLYING_POWER
-                AnkiInfo( "HeadController.CalibratedWhileApplyingPower", "");
-                ResetLowAnglePosition();
-                calState_ = HCS_IDLE;
-                Messages::SendMotorCalibrationMsg(MotorID::MOTOR_HEAD, false);
-                break;
-#else
                 // Set timestamp to be used in next state to wait for motor to "relax"
                 lastHeadMovedTime_ms = HAL::GetTimeStamp();
 
@@ -247,11 +245,23 @@ namespace HeadController {
             if (HAL::GetTimeStamp() - lastHeadMovedTime_ms > HEAD_STOP_TIME) {
               AnkiInfo( "HeadController.Calibrated", "");
               ResetLowAnglePosition();
-              calState_ = HCS_IDLE;
-              firstCalibration_ = false;
-              Messages::SendMotorCalibrationMsg(MotorID::MOTOR_HEAD, false);
+              calState_ = HCS_COMPLETE;
+              // Intentional fall-through
+            } else {
+              break;
             }
+          case HCS_COMPLETE:
+          {
+            // Turn off motor
+            power_ = 0.0;
+            HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
+
+            Messages::SendMotorCalibrationMsg(MotorID::MOTOR_HEAD, false);
+
+            firstCalibration_ = false;
+            calState_ = HCS_IDLE;
             break;
+          }
         } // end switch(calState_)
 
         // Check if head is actually moving up when it should be moving down.
@@ -272,14 +282,11 @@ namespace HeadController {
               AnkiInfo("HeadController.CalibrationUpdate.Abort", 
                         "Someone is probably messing with head (low: %fdeg, curr: %fdeg)",
                         RAD_TO_DEG(lowHeadAngleDuringCalib_rad_), RAD_TO_DEG(currAngle));
-              // Turn off motor
-              power_ = 0.0;
-              HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
+              
 
               // Pretend calibration is fine
               isCalibrated_ = true;
-              calState_ = HCS_IDLE;
-              Messages::SendMotorCalibrationMsg(MotorID::MOTOR_HEAD, false);
+              calState_ = HCS_COMPLETE;
             }
           }
         }
@@ -524,7 +531,6 @@ namespace HeadController {
   
     void Unbrace() {
       bracing_ = false;
-      Enable();
     }
   
     Result Update()
@@ -553,11 +559,6 @@ namespace HeadController {
 
 
       if (!IsCalibrated() || MotorBurnoutProtection()) {
-        return RESULT_OK;
-      }
-      
-      if (bracing_ && IsInPosition()) {
-        Disable();
         return RESULT_OK;
       }
 

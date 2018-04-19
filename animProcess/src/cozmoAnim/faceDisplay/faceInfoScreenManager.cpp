@@ -56,7 +56,11 @@
 #define LOG_CHANNEL    "FaceInfoScreenManager"
 
 // Remove this when BLE switchboard is working
+#ifdef SIMULATOR
+#define FORCE_TRANSITION_TO_PAIRING 1
+#else
 #define FORCE_TRANSITION_TO_PAIRING 0
+#endif
 
 namespace Anki {
 namespace Cozmo {
