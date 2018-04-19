@@ -2,6 +2,10 @@
   "behaviorClass": "ReactToCubeTap",
   "behaviorID": "ReactToCubeTap",
 
+  "wantsToBeActivatedCondition": {
+    "conditionType": "CubeTapped"
+  },
+
   "interactionDuration_s"   : 3.0,
   "onChargerBehavior"       : "GetOffCharger",
 
@@ -13,5 +17,7 @@
 
       "extraDistanceToDrive_mm" : 30.0
     }
-  ]
+  ],
+  
+  "postBehaviorSuggestion": "PlayWithCube"
 }

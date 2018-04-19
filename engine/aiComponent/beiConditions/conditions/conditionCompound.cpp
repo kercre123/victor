@@ -13,6 +13,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionCompound.h"
 
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
+#include "engine/unitTestKey.h"
 #include "lib/util/source/anki/util/logging/logging.h"
 
 namespace Anki {
@@ -283,6 +284,11 @@ std::string ConditionCompound::GetDebugString( const std::unique_ptr<Node>& node
   }
     
   return debugStr;
+}
+  
+std::vector<IBEIConditionPtr> ConditionCompound::TESTONLY_GetOperands(UnitTestKey key) const
+{
+  return _operands;
 }
 
 }

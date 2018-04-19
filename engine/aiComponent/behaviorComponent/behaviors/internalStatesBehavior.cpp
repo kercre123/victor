@@ -329,12 +329,15 @@ void InternalStatesBehavior::OnBehaviorActivated()
   if( !_firstRun ) {
     // resuming this behavior -- see if we should be resuming in a different state than when we were
     // previously de-activated
+    StateID resumeState = _currState;
     const auto it = std::find_if(_resumeReplacements.begin(), _resumeReplacements.end(), [this](const auto& p) {
       return p.first == _currState;
     });
     if( it != _resumeReplacements.end() ) {
-      _currState = it->second;
+      resumeState = it->second;
     }
+    OverrideResumeState( resumeState );
+    _currState = resumeState;
   }
 
   // keep the state the same (either set from constructor or the last run)
@@ -843,6 +846,12 @@ std::vector<std::pair<std::string, std::vector<IBEIConditionPtr>>>
     ret.emplace_back( statePair.second._name, std::move(retTransitions) );
   }
   return ret;
+}
+  
+bool InternalStatesBehavior::TESTONLY_IsStateRunning( UnitTestKey key, const std::string& name ) const
+{
+  return (GetCurrentStateID() != InvalidStateID)
+      && (GetCurrentStateID() == GetStateID(name));
 }
 
 }

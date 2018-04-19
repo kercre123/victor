@@ -2,9 +2,14 @@
   "behaviorID": "ComeHereVoiceCommand",
   "behaviorClass": "DispatcherQueue",
 
+  "respondToUserIntents" : [
+    { "type": "imperative_come" }
+  ],
+
   "behaviors": 
   [
     "DriveOffCharger",
+    // todo: this needs a behavior to find a face if there is no face already known
     "ComeHereInternal"
   ],
 
@@ -16,5 +21,7 @@
       "timeUntilCancelFaceTrack_s": 5.0,
       "minDriveToFaceDistanceKey_mm": 200
     }
-  ]
+  ],
+
+  "postBehaviorSuggestion": "Socialize"
 }

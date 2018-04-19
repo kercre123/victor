@@ -15,17 +15,21 @@
   "resumeReplacements": {
     "Napping" : "ObservingOnCharger"
   },
+  // these are evaluated after resumeReplacements and override them
+  "postBehaviorSuggestionResumeOverrides": {
+    "Socialize": "Socializing",
+    "PlayWithCube": "PlayingWithCube",
+    "Nothing": "Observing"
+  },
 
   "states": [
     {
       "name": "ObservingOnCharger",
-      "behavior": "ObservingOnCharger",
-      "debugColor": "ORANGE"
+      "behavior": "ObservingOnCharger"
     },
     {
       "name": "ObservingOnChargerRecentlyPlaced",
-      "behavior": "ObservingOnCharger",
-      "debugColor": "RED"
+      "behavior": "ObservingOnCharger"
     },
     {
       "name": "DriveOffChargerIntoObserving",
@@ -41,34 +45,24 @@
     },
     {
       "name": "Observing",
-      "behavior": "Observing",
-      "debugColor": "BLUE"
+      "behavior": "Observing"
     },
     {
       "name": "Socializing",
-      "behavior": "Socialize",
-      "debugColor": "MAGENTA"
+      "behavior": "Socialize"
     },
     {
       "name": "PlayingWithCube",
-      "behavior": "PlayWithCube",
-      "debugColor": "DARKGREEN"
-    },
-    {
-      "name": "RollCube",
-      "behavior": "RollCubeVoiceCommand",
-      "clearIntent": "play_specific"
+      "behavior": "PlayWithCube"
     },
     {
       "name": "Napping",
       "behavior": "Sleeping",
-      "debugColor": "GREEN",
       "clearIntent": "system_sleep"
     },
     {
       "name": "NappingOnCharger",
       "behavior": "Sleeping",
-      "debugColor": "GREEN",
       "clearIntent": "system_sleep"
     },
     {
@@ -78,34 +72,11 @@
     {
       "name": "ReturningToCharger",
       "behavior": "FindAndGoToHome",
-      "debugColor": "WHITE",
       "clearIntent": "system_charger"
     },
     {
       "name": "FailedToFindCharger",
       "behavior": "ObservingFailedToFindCharger"
-    },
-    {
-      "name": "FistBump",
-      "behavior": "FistBumpVoiceCommand",
-      "debugColor": "WHITE",
-      "clearIntent": "play_specific"
-    },
-    {
-      "name": "ComeHere",
-      "behavior": "ComeHereVoiceCommand",
-      "clearIntent": "imperative_come"
-    },
-    {
-      "name": "Keepaway",
-      "behavior": "KeepawayVoiceCommand",
-      "debugColor": "YELLOW",
-      "clearIntent": "play_specific"
-    },
-    {
-      "name": "ReactToCubeTap",
-      "behavior": "ReactToCubeTap",
-      "debugColor": "WHITE"
     }
   ],
 
@@ -400,66 +371,6 @@
       ]
     },
 
-    {
-      "from": "FistBump",
-      "exitTransitions": [
-        {
-          "to": "Socializing",
-          "condition": {
-            "conditionType": "TrueCondition"
-          }
-        }
-      ]
-    },
-
-    {
-      "from": "ComeHere",
-      "exitTransitions": [
-        {
-          "to": "Socializing",
-          "condition": {
-            "conditionType": "TrueCondition"
-          }
-        }
-      ]
-    },
-
-    {
-      "from": "Keepaway",
-      "exitTransitions": [
-        {
-          "to": "Socializing",
-          "condition": {
-            "conditionType": "TrueCondition"
-          }
-        }
-      ]
-    },
-
-    {
-      "from": "RollCube",
-      "exitTransitions": [
-        {
-          "to": "Observing",
-          "condition": {
-            "conditionType": "TrueCondition"
-          }
-        }
-      ]
-    },
-
-    {
-      "from": "ReactToCubeTap",
-      "exitTransitions": [
-        {
-          "to": "PlayingWithCube", // play with the cube after you were called to a cube
-          "condition": {
-            "conditionType": "TrueCondition"
-          }
-        }
-      ]
-    },
-
     //***************************
     // VOICE COMMANDS   
     //*************************** 
@@ -470,15 +381,9 @@
         "DriveOffChargerIntoObserving",
         "DriveOffChargerIntoSocializing",
         "DriveOffChargerIntoPlay",
-        "FistBump",
-        "ComeHere",
-        "Keepaway",
         "Observing",
         "ReturningToCharger", // to avoid unclaimed intent
-        "Socializing",
-        "RollCube",
-        "Keepaway",
-        "ReactToCubeTap"
+        "Socializing"
       ],
       "interruptingTransitions": [
         {
@@ -509,317 +414,78 @@
       ]
     },
 
-    // do a fist bump
+    // go to sleep
     {
       "from": [
+        "DriveOffChargerIntoObserving",
+        "DriveOffChargerIntoSocializing",
+        "DriveOffChargerIntoPlay",
+        "Observing",
         "ObservingOnCharger",
         "ObservingOnChargerRecentlyPlaced",
-        "DriveOffChargerIntoObserving",
-        "DriveOffChargerIntoSocializing",
-        "DriveOffChargerIntoPlay",
-        "FistBump",
-        "ComeHere",
-        "Keepaway",
-        "Observing",
         "Socializing",
         "WakingUp",
         "ReturningToCharger",
         "FailedToFindCharger",
-        "ReactToCubeTap"
-      ],
-      "interruptingTransitions": [
-        {
-          "to": "FistBump",
-          "condition": {
-            "conditionType": "UserIntentPending",
-            "list": [
-              {
-                "type": "play_specific",
-                "entity_behavior": "fist_bump"
-              }
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "from": [
-        "PlayingWithCube",
-        "RollCube"
-      ],
-      "nonInterruptingTransitions": [
-        {
-          "to": "FistBump",
-          "condition": {
-            "conditionType": "UserIntentPending",
-            "list": [
-              {
-                "type": "play_specific",
-                "entity_behavior": "fist_bump"
-              }
-            ]
-          }
-        }
-      ]
-    },
-
-    // Play Keepaway
-    {
-      "from": [
-        "ObservingOnCharger",
-        "ObservingOnChargerRecentlyPlaced",
-        "DriveOffChargerIntoObserving",
-        "DriveOffChargerIntoSocializing",
-        "DriveOffChargerIntoPlay",
-        "FistBump",
-        "ComeHere",
-        "Keepaway",
-        "Observing",
-        "Socializing",
-        "WakingUp",
-        "ReturningToCharger",
-        "FailedToFindCharger",
-        "ReactToCubeTap"
-      ],
-      "interruptingTransitions": [
-        {
-          "to": "Keepaway",
-          "condition": {
-            "conditionType": "UserIntentPending",
-            "list": [
-              {
-                "type": "play_specific",
-                "entity_behavior": "keep_away"
-              }
-            ]
-          }
-        }
-      ]
-
-    },
-    {
-      "from": [
-        "PlayingWithCube",
-        "RollCube"
-      ],
-      "nonInterruptingTransitions": [
-        {
-          "to": "Keepaway",
-          "condition": {
-            "conditionType": "UserIntentPending",
-            "list": [
-              {
-                "type": "play_specific",
-                "entity_behavior": "keep_away"
-              }
-            ]
-          }
-        }
-      ]
-    },
-
-    // go to sleep off charger
-    {
-      "from": [
-        "DriveOffChargerIntoObserving",
-        "DriveOffChargerIntoSocializing",
-        "DriveOffChargerIntoPlay",
-        "FistBump",
-        "ComeHere",
-        "Keepaway",
-        "Observing",
-        "Socializing",
-        "WakingUp",
-        "ReturningToCharger",
-        "FailedToFindCharger",
-        "PlayingWithCube",
-        "RollCube",
-        "ReactToCubeTap" // if activated while ON charger, this will immediately get off charger
+        "PlayingWithCube"
       ],
       "interruptingTransitions": [
         {
           "to": "Napping",
           "condition": {
-            "conditionType": "UserIntentPending",
-            "list": [
-              {"type": "system_sleep"}
+            "conditionType": "Compound",
+            "and": [
+              {
+                "conditionType": "UserIntentPending",
+                "list": [
+                  {"type": "system_sleep"}
+                ]
+              },
+              {
+                "conditionType": "Compound",
+                "not": {
+                  "conditionType": "OnCharger"
+                }
+              }
             ]
           }
-        }
-      ]
-    },
-    {
-      "from": [
-        "PlayingWithCube",
-        "RollCube"
-      ],
-      "nonInterruptingTransitions": [
-        {
-          "to": "Napping",
-          "condition": {
-            "conditionType": "UserIntentPending",
-            "list": [
-              {"type": "system_sleep"}
-            ]
-          }
-        }
-      ]
-    },
-
-    // go to sleep on charger
-    {
-      "from": [
-        "ObservingOnCharger",
-        "ObservingOnChargerRecentlyPlaced"
-      ],
-      "interruptingTransitions": [
+        },
         {
           "to": "NappingOnCharger",
           "condition": {
+            "conditionType": "Compound",
+            "and": [
+              {
+                "conditionType": "UserIntentPending",
+                "list": [
+                  {"type": "system_sleep"}
+                ]
+              },
+              {
+                "conditionType": "OnCharger"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "from": [
+        "PlayingWithCube"
+      ],
+      "nonInterruptingTransitions": [
+        {
+          "to": "Napping",
+          "condition": {
             "conditionType": "UserIntentPending",
             "list": [
               {"type": "system_sleep"}
             ]
-          }
-        }
-      ]
-    },
-
-    // roll cube
-    {
-      "from": [
-        "ObservingOnCharger",
-        "ObservingOnChargerRecentlyPlaced",
-        "DriveOffChargerIntoObserving",
-        "DriveOffChargerIntoSocializing",
-        "DriveOffChargerIntoPlay",
-        "ComeHere",
-        "Observing",
-        "Socializing",
-        "WakingUp",
-        "ReturningToCharger",
-        "FailedToFindCharger",
-        "PlayingWithCube",
-        "RollCube",
-        "ReactToCubeTap"
-      ],
-      "interruptingTransitions": [
-        {
-          "to": "RollCube",
-          "condition": {
-            "conditionType": "UserIntentPending",
-            "list": [
-              {
-                "type": "play_specific",
-                "entity_behavior": "roll_cube"
-              }
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "from": [
-        "FistBump",
-        "Keepaway"
-      ],
-      "nonInterruptingTransitions": [
-        {
-          "to": "RollCube",
-          "condition": {
-            "conditionType": "UserIntentPending",
-            "list": [
-              {
-                "type": "play_specific",
-                "entity_behavior": "roll_cube"
-              }
-            ]
-          }
-        }
-      ]
-
-    },
-
-    // come here
-    {
-      "from": [
-        "ObservingOnCharger",
-        "ObservingOnChargerRecentlyPlaced",
-        "DriveOffChargerIntoObserving",
-        "DriveOffChargerIntoSocializing",
-        "DriveOffChargerIntoPlay",
-        "FistBump",
-        "ComeHere",
-        "Keepaway",
-        "Observing",
-        "Socializing",
-        "WakingUp",
-        "ReturningToCharger",
-        "FailedToFindCharger",
-        "ReactToCubeTap"
-      ],
-      "interruptingTransitions": [
-        {
-          "to": "ComeHere",
-          "condition": {
-            "conditionType": "UserIntentPending",
-            "list": [
-              {
-                "type": "imperative_come"
-              }
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "from": [
-        "PlayingWithCube",
-        "RollCube"
-      ],
-      "nonInterruptingTransitions": [
-        {
-          "to": "ComeHere",
-          "condition": {
-            "conditionType": "UserIntentPending",
-            "list": [
-              {
-                "type": "imperative_come"
-              }
-            ]
-          }
-        }
-      ]
-    },
-
-    //***************************
-    // USER INTERACTION COMMANDS
-    //***************************
-
-    {
-      "from": [
-        "ObservingOnCharger",
-        "ObservingOnChargerRecentlyPlaced",
-        "DriveOffChargerIntoObserving",
-        "DriveOffChargerIntoSocializing",
-        "DriveOffChargerIntoPlay",
-        "FistBump",
-        "ComeHere",
-        "Observing",
-        "Socializing",
-        "WakingUp",
-        "ReturningToCharger",
-        "FailedToFindCharger"
-      ],
-      "interruptingTransitions": [
-        {
-          "to": "ReactToCubeTap",
-          "condition": {
-            "conditionType": "CubeTapped"
           }
         }
       ]
     }
+
   ]
 
 }

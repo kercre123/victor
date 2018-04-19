@@ -15,6 +15,9 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorHighLevelAI_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/internalStatesBehavior.h"
+#include "clad/types/behaviorComponent/postBehaviorSuggestions.h"
+
+#include <unordered_map>
 
 namespace Anki {
 namespace Cozmo {
@@ -42,6 +45,8 @@ protected:
   virtual void BehaviorUpdate() override;
   
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  
+  virtual void OverrideResumeState( StateID& resumeState ) const override;
 
 private:
   
@@ -54,6 +59,8 @@ private:
     float goToSleepTimeout_s;
     float minFaceTimeToAllowSleep_s;
     float maxFaceDistanceToSocialize_mm;
+    
+    std::unordered_map< PostBehaviorSuggestions, StateID > pbsResumeOverrides;
   } _params;
   
   PreDefinedStrategiesMap CreatePreDefinedStrategies();

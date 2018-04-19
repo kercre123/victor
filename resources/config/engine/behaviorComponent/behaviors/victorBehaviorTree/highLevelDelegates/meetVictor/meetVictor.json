@@ -13,5 +13,7 @@
     "DriveOffCharger",
     "PutDownBlock",
     "EnrollFace"
-  ] // end behaviors []
+  ], // end behaviors []
+
+  "postBehaviorSuggestion": "Socialize"
 }

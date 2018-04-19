@@ -74,6 +74,7 @@ static const char* kClaimUserIntentDataKey           = "claimUserIntentData";
 static const char* kRespondToTriggerWordKey          = "respondToTriggerWord";
 static const char* kResetTimersKey                   = "resetTimers";
 static const char* kEmotionEventOnActivatedKey       = "emotionEventOnActivated";
+static const char* kPostBehaviorSuggestionKey        = "postBehaviorSuggestion";
 static const std::string kIdleLockPrefix             = "Behavior_";
 
 // Keys for loading in anonymous behaviors
@@ -288,6 +289,15 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
                  "Timer '%s' is invalid",
                  timerName.c_str() );
   }
+  
+  if( config[kPostBehaviorSuggestionKey].isString() ) {
+    const auto& suggestionStr = config[kPostBehaviorSuggestionKey].asString();
+    ANKI_VERIFY( PostBehaviorSuggestionsFromString( suggestionStr, _postBehaviorSuggestion ),
+                 "ICozmoBehavior.ReadFromJson.InvalidPostBehSug",
+                 "Suggestion '%s' invalid in behavior '%s'",
+                 suggestionStr.c_str(),
+                 GetDebugLabel().c_str() );
+  }
 
   return true;
 }
@@ -321,6 +331,7 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
     kResetTimersKey,
     kAnonymousBehaviorMapKey,
     kDisplayNameKey,
+    kPostBehaviorSuggestionKey,
   };
   expectedKeys.insert( expectedKeys.end(), std::begin(baseKeys), std::end(baseKeys) );
   
@@ -829,6 +840,10 @@ void ICozmoBehavior::OnDeactivatedInternal()
     // remove it if not
     auto& uic = GetBehaviorComp<UserIntentComponent>();
     uic.ResetPreservedUserIntents( GetID() );
+  }
+  
+  if( _postBehaviorSuggestion != PostBehaviorSuggestions::Invalid ) {
+    GetAIComp<AIWhiteboard>().OfferPostBehaviorSuggestion( _postBehaviorSuggestion );
   }
   
   DEV_ASSERT(_smartLockIDs.empty(), "ICozmoBehavior.Stop.DisabledReactionsNotEmpty");

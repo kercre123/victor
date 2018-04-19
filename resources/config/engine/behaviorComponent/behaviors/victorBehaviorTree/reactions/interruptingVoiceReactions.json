@@ -10,6 +10,11 @@
     "ReactToGoodMorning",
     "ReactToGoodBye",
     "ReactToGoodNight",
-    "DoATrickVoiceCommand"
+    "DoATrickVoiceCommand",
+    "FistBumpVoiceCommand",
+    "RollCubeVoiceCommand",
+    "KeepawayVoiceCommand",
+    "ComeHereVoiceCommand",
+    "MeetVictor"
   ]
 }

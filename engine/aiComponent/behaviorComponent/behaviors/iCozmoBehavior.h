@@ -31,6 +31,7 @@
 
 #include "clad/types/actionResults.h"
 #include "clad/types/behaviorComponent/behaviorObjectives.h"
+#include "clad/types/behaviorComponent/postBehaviorSuggestions.h"
 #include "clad/types/unlockTypes.h"
 #include "util/console/consoleVariable.h"
 #include "util/logging/logging.h"
@@ -574,6 +575,10 @@ private:
   // anonymous behavior factory
   Json::Value _anonymousBehaviorMapConfig;  
   std::map<std::string,ICozmoBehaviorPtr> _anonymousBehaviorMap;
+  
+  // a NON-BINDING suggestion of what this behavior thinks should occur after de-activation.
+  // this value will be written to the whiteboard upon de-activation, and other behaviors can check it
+  PostBehaviorSuggestions _postBehaviorSuggestion = PostBehaviorSuggestions::Invalid;
   
   // list of member vars in this behavior that have been marked as tunable. upon class
   // desctruction, each console var will be unregistered.

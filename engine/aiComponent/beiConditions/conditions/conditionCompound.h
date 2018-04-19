@@ -17,6 +17,8 @@
 
 namespace Anki {
 namespace Cozmo {
+  
+class UnitTestKey;
 
 class ConditionCompound : public IBEICondition
 {
@@ -71,6 +73,9 @@ private:
   std::unique_ptr<Node> _root;
   
   std::vector<std::string> _conditionNames; // for debugging, matches _operands
+  
+public:
+  std::vector<IBEIConditionPtr> TESTONLY_GetOperands(UnitTestKey key) const;
 };
 
 }

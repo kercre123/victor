@@ -42,7 +42,8 @@ TestIntentsFramework::TestIntentsFramework()
 bool TestIntentsFramework::TestUserIntentTransition( TestBehaviorFramework& tbf,
                                                      const std::vector<IBehavior*>& initialStack,
                                                      UserIntent intentToSend,
-                                                     BehaviorID expectedIntentHandlerID )
+                                                     BehaviorID expectedIntentHandlerID,
+                                                     bool onlyCheckInStack )
 {
   tbf.ReplaceBehaviorStack(initialStack);
   
@@ -65,10 +66,20 @@ bool TestIntentsFramework::TestUserIntentTransition( TestBehaviorFramework& tbf,
   // Check the result
   const auto& stack = tbf.GetCurrentBehaviorStack();
   if( !stack.empty() ) {
-    const IBehavior* topOfStack = stack.back();
-    const auto* castTopOfStack = dynamic_cast<const ICozmoBehavior*>(topOfStack);
+    if( onlyCheckInStack ) {
+      for( const auto* stackElem : stack ) {
+        const auto* castTopOfStack = dynamic_cast<const ICozmoBehavior*>(stackElem);
+        if( castTopOfStack->GetID() == expectedIntentHandlerID ) {
+          return true;
+        }
+      }
+      return false;
+    } else {
+      const IBehavior* topOfStack = stack.back();
+      const auto* castTopOfStack = dynamic_cast<const ICozmoBehavior*>(topOfStack);
 
-    return (castTopOfStack->GetID() == expectedIntentHandlerID);
+      return (castTopOfStack->GetID() == expectedIntentHandlerID);
+    }
   } else {
     return false;
   }

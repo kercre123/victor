@@ -48,11 +48,9 @@ public:
 
   virtual ~InternalStatesBehavior();
   
-  // for unit tests: grab a list of all conditions for each state name
-  std::vector<std::pair<std::string, std::vector<IBEIConditionPtr>>> TESTONLY_GetAllTransitions( UnitTestKey key ) const;
-  
 protected:
-
+  using StateID = size_t;
+  static const StateID InvalidStateID = 0;
   
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void InitBehavior() override;
@@ -62,9 +60,7 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override { }
   virtual bool WantsToBeActivatedBehavior() const override { return true; }
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
-  using StateID = size_t;
-  static const StateID InvalidStateID = 0;
+  virtual void OverrideResumeState( StateID& resumeState ) const {}
   
   // helpers
   
@@ -83,6 +79,7 @@ protected:
   
   // Set up a console var under uniqueVarName that transitions to each state type by name
   void AddConsoleVarTransitions(const char* uniqueVarName, const char* category );
+  
   
 private:
 
@@ -135,6 +132,12 @@ private:
   StateID _consoleFuncState = InvalidStateID;
   
   bool _firstRun = true;
+  
+public:
+  // for unit tests: grab a list of all conditions for each state name
+  std::vector<std::pair<std::string, std::vector<IBEIConditionPtr>>> TESTONLY_GetAllTransitions( UnitTestKey key ) const;
+  // check if the current state is running
+  bool TESTONLY_IsStateRunning( UnitTestKey key, const std::string& name ) const;
 };
 
 }

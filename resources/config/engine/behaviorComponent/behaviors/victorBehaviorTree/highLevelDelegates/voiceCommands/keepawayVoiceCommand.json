@@ -2,9 +2,18 @@
   "behaviorID" : "KeepawayVoiceCommand",
   "behaviorClass" : "DispatcherQueue",
 
+  "respondToUserIntents" : [
+    {
+      "type": "play_specific",
+      "entity_behavior": "keep_away"
+    }
+  ],
+
   "behaviors": [
     "DriveOffCharger",
     "Keepaway"
-  ]
+  ],
+
+  "postBehaviorSuggestion": "Socialize"
 
 }

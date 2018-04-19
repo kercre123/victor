@@ -2,6 +2,13 @@
   "behaviorID" : "RollCubeVoiceCommand",
   "behaviorClass" : "DispatcherQueue",
 
+  "respondToUserIntents" : [
+    {
+      "type": "play_specific",
+      "entity_behavior": "roll_cube"
+    }
+  ],
+
   "behaviors" : [
     "DriveOffCharger",
     "LookForCubeInternal",
@@ -41,5 +48,7 @@
       "lookInPlaceAnimTrigger": "HikingLookAround"
       
     }
-  ]
+  ],
+
+  "postBehaviorSuggestion": "Nothing"
 }

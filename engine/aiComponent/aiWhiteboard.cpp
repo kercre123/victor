@@ -958,6 +958,32 @@ void AIWhiteboard::UpdateBeaconRender()
     }
   }
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::OfferPostBehaviorSuggestion( const PostBehaviorSuggestions& suggestion )
+{
+  ANKI_VERIFY( suggestion != PostBehaviorSuggestions::Invalid,
+               "AIWhiteboard.OfferPostBehaviorSuggestion.Invalid",
+               "The 'Invalid' suggestion was offered" );
+  _postBehaviorSuggestions[ suggestion ] = BaseStationTimer::getInstance()->GetTickCount();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AIWhiteboard::GetPostBehaviorSuggestion( const PostBehaviorSuggestions& suggestion, size_t& tick ) const
+{
+  const auto it = _postBehaviorSuggestions.find( suggestion );
+  const bool exists = it != _postBehaviorSuggestions.end();
+  if( exists ) {
+    tick = it->second;
+  }
+  return exists;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AIWhiteboard::ClearPostBehaviorSuggestions()
+{
+  _postBehaviorSuggestions.clear();
+}
 
 
 } // namespace Cozmo

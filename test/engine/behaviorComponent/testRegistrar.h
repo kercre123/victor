@@ -24,19 +24,21 @@ public:
   explicit TestRegistrar(const std::string& testID)
   {
     // insert if missing (do not punish duplicates)
-    RegisteredTests().insert( testID );
+    RegisteredTestsInternal().insert( testID );
   }
 
   static bool IsRegistered(const std::string& testID)
   {
-    const bool ret = RegisteredTests().find( testID ) != RegisteredTests().end();
+    const bool ret = RegisteredTestsInternal().find( testID ) != RegisteredTestsInternal().end();
     return ret;
   }
+  
+  static const std::set<std::string>& RegisteredTests() { return RegisteredTestsInternal(); }
 
 private:
 
   // singleton table
-  static std::set<std::string>& RegisteredTests()
+  static std::set<std::string>& RegisteredTestsInternal()
   {
     static std::set<std::string> testIDs;
     return testIDs;

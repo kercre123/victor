@@ -12,6 +12,21 @@
 {
   "handledByHighLevelAI": {
 
+    "system_sleep": {
+      "type": "system_sleep"
+    },
+
+    "system_charger": {
+      "type": "system_charger"
+    }
+
+  },
+
+  "handledElsewhere": {
+    "set_timer": {
+      "type": "set_timer"
+    },
+
     "roll_cube": {
       "type": "play_specific",
       "entity_behavior": "roll_cube"
@@ -26,25 +41,14 @@
       "type": "play_specific",
       "entity_behavior": "keep_away"
     },
+    
+    // todo: come here doesn't look for a face or turn to mic direction if it doesnt know of one
+    // "imperative_come": {
+    //   "type": "imperative_come"
+    // },
 
-    "system_sleep": {
-      "type": "system_sleep"
-    },
-
-    "system_charger": {
-      "type": "system_charger"
-    },
-
-    "imperative_come": {
-      "type": "imperative_come"
-    }
-
-
-  },
-
-  "handledElsewhere": {
-    "set_timer": {
-      "type": "set_timer"
+    "meet_victor": {
+      "type": "meet_victor"
     }
   }
 

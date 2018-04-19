@@ -23,6 +23,7 @@
 
 #include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
+#include "clad/types/behaviorComponent/postBehaviorSuggestions.h"
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
@@ -32,6 +33,7 @@
 #include <queue>
 #include <set>
 #include <vector>
+#include <unordered_map>
 
 namespace Anki {
 namespace Cozmo {
@@ -227,6 +229,18 @@ public:
   bool Victor_HasCubeToEat() const { return _victor_cubeToEat.IsSet(); }
   const ObjectID& Victor_GetCubeToEat() const { return _victor_cubeToEat; }
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Post behavior suggestions
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  // write a post-behavior suggestion
+  void OfferPostBehaviorSuggestion( const PostBehaviorSuggestions& suggestion );
+  
+  // returns true if suggestion has been offered, and sets the of the last tick it was offered if so
+  bool GetPostBehaviorSuggestion( const PostBehaviorSuggestions& suggestion, size_t& tick ) const;
+  
+  // clears the post behavior suggestions
+  void ClearPostBehaviorSuggestions();
   
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Events
@@ -322,6 +336,8 @@ private:
   bool _isGameRequestUIRequest;
 
   ObjectID _victor_cubeToEat;
+  
+  std::unordered_map<PostBehaviorSuggestions, size_t> _postBehaviorSuggestions;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

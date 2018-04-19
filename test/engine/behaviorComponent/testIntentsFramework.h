@@ -47,7 +47,8 @@ public:
   bool TestUserIntentTransition( TestBehaviorFramework& tbf,
                                  const std::vector<IBehavior*>& initialStack,
                                  UserIntent intentToSend,
-                                 BehaviorID expectedIntentHandlerID );
+                                 BehaviorID expectedIntentHandlerID,
+                                 bool onlyCheckInStack = false );
 
   // returns true if the sample cloud intent can be parsed into a user intent. If requireMatch, then
   // that user intent can NOT be unmatched_intent. Also sets a non-null intent ptr with the matching intent

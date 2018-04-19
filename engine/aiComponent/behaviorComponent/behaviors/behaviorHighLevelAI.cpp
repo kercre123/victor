@@ -44,6 +44,9 @@ const char* kPlayWithCubeOnChargerCooldownKey = "playWithCubeOnChargerCooldown_s
 const char* kGoToSleepTimeoutKey = "goToSleepTimeout_s";
 const char* kMinFaceTimeToAllowSleepKey = "minFaceTimeToAllowSleep_s";
 const char* kMaxFaceDistanceToSocializeKey = "maxFaceDistanceToSocialize_mm";
+const char* kPostBehaviorSuggestionResumeOverrides = "postBehaviorSuggestionResumeOverrides"; // whew
+  
+const int kMaxTicksForPostBehaviorSuggestions = 5;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -57,6 +60,32 @@ BehaviorHighLevelAI::BehaviorHighLevelAI(const Json::Value& config)
   _params.goToSleepTimeout_s = JsonTools::ParseFloat(config, kGoToSleepTimeoutKey, kDebugName);
   _params.minFaceTimeToAllowSleep_s = JsonTools::ParseFloat(config, kMinFaceTimeToAllowSleepKey, kDebugName);
   _params.maxFaceDistanceToSocialize_mm = JsonTools::ParseFloat(config, kMaxFaceDistanceToSocializeKey, kDebugName);
+  
+  if( config[kPostBehaviorSuggestionResumeOverrides].isObject() ) {
+    const auto& resumeOverrides = config[kPostBehaviorSuggestionResumeOverrides];
+    for( const auto& suggestionName : resumeOverrides.getMemberNames() ) {
+      PostBehaviorSuggestions suggestion = PostBehaviorSuggestions::Invalid;
+      if( ANKI_VERIFY( PostBehaviorSuggestionsFromString( suggestionName, suggestion ),
+                       "BehaviorHighLevelAI.Ctor.PBSInvalid",
+                       "Post behavior suggestion '%s' not valid",
+                       suggestionName.c_str() )
+         && ANKI_VERIFY( suggestion != PostBehaviorSuggestions::Invalid,
+                         "BehaviorHighLevelAI.Ctor.PBSActuallyInvalid",
+                         "The 'Invalid' clad value was specified" ) )
+      {
+        std::string stateName = JsonTools::ParseString( resumeOverrides, suggestionName.c_str(), GetDebugLabel() );
+        StateID state = GetStateID( stateName );
+        if( ANKI_VERIFY( state != InvalidStateID,
+                         "BehaviorHighLevelAI.Ctor.PBSInvalidState",
+                         "State '%s' is no longer a state",
+                         stateName.c_str() ) )
+        {
+          _params.pbsResumeOverrides.emplace( suggestion, state );
+        }
+      }
+      
+    }
+  }
   
   MakeMemberTunable( _params.socializeKnownFaceCooldown_s, kSocializeKnownFaceCooldownKey, kDebugName );
   MakeMemberTunable( _params.playWithCubeOnChargerCooldown_s, kPlayWithCubeOnChargerCooldownKey, kDebugName );
@@ -74,7 +103,8 @@ void BehaviorHighLevelAI::GetBehaviorJsonKeys(std::set<const char*>& expectedKey
     kPlayWithCubeOnChargerCooldownKey,
     kGoToSleepTimeoutKey,
     kMinFaceTimeToAllowSleepKey,
-    kMaxFaceDistanceToSocializeKey
+    kMaxFaceDistanceToSocializeKey,
+    kPostBehaviorSuggestionResumeOverrides,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -251,6 +281,33 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
       }
     }
   };
+}
+  
+void BehaviorHighLevelAI::OverrideResumeState( StateID& resumeState ) const
+{
+  // get the most recent post-behavior suggestion that we care about
+  size_t maxTick = 0;
+  PostBehaviorSuggestions suggestion = PostBehaviorSuggestions::Invalid;
+  StateID maxTickState = InvalidStateID;
+  for( const auto& configSuggestion : _params.pbsResumeOverrides ) {
+    size_t tick = 0;
+    if( GetAIComp<AIWhiteboard>().GetPostBehaviorSuggestion( configSuggestion.first, tick )
+        && (tick >= maxTick) )
+    {
+      maxTick = tick;
+      suggestion = configSuggestion.first;
+      maxTickState = configSuggestion.second;
+    }
+  }
+  // if there's a recent pending suggestion, consume it
+  if( maxTickState != InvalidStateID ) {
+    size_t currTick = BaseStationTimer::getInstance()->GetTickCount();
+    if( maxTick + kMaxTicksForPostBehaviorSuggestions >= currTick ) {
+      // override
+      resumeState = maxTickState;
+      GetAIComp<AIWhiteboard>().ClearPostBehaviorSuggestions();
+    }
+  }
 }
 
 }
