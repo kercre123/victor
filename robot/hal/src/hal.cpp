@@ -697,11 +697,12 @@ bool HAL::BatteryIsOnCharger()
   return bodyData_->battery.flags & POWER_ON_CHARGER;
 }
 
-bool HAL::BatteryIsChargerOOS()
+bool HAL::BatteryIsDisconnected()
 {
-  return false;
-  // BRC: no longer supported in DVT2
-  // bodyData_->battery.flags & chargerOOS;
+  // The POWER_BATTERY_DISCONNECTED flag is set whenever the robot is on
+  // the charge base, but the battery has been disconnected from the 
+  // charging circuit.
+  return bodyData_->battery.flags & POWER_BATTERY_DISCONNECTED;
 }
 
 u8 HAL::GetWatchdogResetCounter()

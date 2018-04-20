@@ -233,6 +233,10 @@ bool BatteryIsOnCharger();
 /// Return whether the USB charger is out of spec (cannot supply enough current)
 bool BatteryIsChargerOOS();
 
+/// Return whether or not the battery has been disconnected from the charging circuit
+/// after being on charge base for more than 30 min.
+bool BatteryIsDisconnected();
+
 /************************************************************************
  * \section Leds
  */

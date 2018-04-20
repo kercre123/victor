@@ -258,7 +258,7 @@ void Analog::tick(void) {
   bool enable_watchdog = (vext_debounce >= MAX_CHARGE_TIME_WD);
   bool button_now = (adc_values[ADC_BUTTON] >= BUTTON_THRESHOLD);
 
-  if (vext_now == last_vext) {
+  if (vext_now && last_vext) {
     if (!vext_now) {
       on_charger = false;
       vext_debounce = 0;
