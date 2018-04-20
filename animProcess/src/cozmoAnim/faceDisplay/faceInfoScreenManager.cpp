@@ -861,7 +861,9 @@ void FaceInfoScreenManager::DrawMain()
   const std::string serialNo = "ESN: "  + ss.str();
 
   auto *osstate = OSState::getInstance();
-  const std::string osVer    = "OS: "   + osstate->GetOSBuildVersion() + (FACTORY_TEST ? " (V3)" : "");
+  const std::string osVer    = "OS: "   + osstate->GetOSBuildVersion() +
+                                          (FACTORY_TEST ? " (V4)" : "") +
+                                          (osstate->IsInRecoveryMode() ? " U" : "");
   const std::string ssid     = "SSID: " + osstate->GetSSID(true);
 
   std::string ip             = osstate->GetIPAddress();
