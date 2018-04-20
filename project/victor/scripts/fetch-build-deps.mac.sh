@@ -31,10 +31,7 @@ vlog "Check homebrew dependencies"
 ./tools/build/tools/ankibuild/installBuildDeps.py \
     -d python2 \
     ninja \
-    python3 \
-    graphviz \
-    --pip2 graphviz \
-    --pip3 graphviz
+    python3
 
 vlog "Android SDK"
 ./tools/build/tools/ankibuild/android.py --install-sdk r3

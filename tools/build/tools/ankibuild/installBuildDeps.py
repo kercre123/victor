@@ -187,12 +187,14 @@ class DependencyInstaller(object):
     for tool in homebrew_deps:
       if not self.installTool(tool):
         return False
-    for package in python2_deps:
-      if not self.installPythonPackage(package, 2):
-        return False
-    for package in python3_deps:
-      if not self.installPythonPackage(package, 3):
-        return False
+    if python2_deps:
+      for package in python2_deps:
+        if not self.installPythonPackage(package, 2):
+          return False
+    if python3_deps:
+      for package in python3_deps:
+        if not self.installPythonPackage(package, 3):
+          return False
     return True
 
 
