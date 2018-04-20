@@ -28,7 +28,7 @@ namespace BluetoothDaemon {
 IPCEndpoint::IPCEndpoint(struct ev_loop* loop)
   : loop_(loop)
 {
-  sockfd_ = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
+  CreateSocket();
   addr_ = (const struct sockaddr_un) { .sun_family = AF_UNIX };
   (void) strlcpy(addr_.sun_path, kSocketName.c_str(), sizeof(addr_.sun_path));
   task_executor_ = new TaskExecutor(loop);
@@ -41,6 +41,11 @@ IPCEndpoint::~IPCEndpoint()
     delete pair.second;
   }
   CloseSocket();
+}
+
+void IPCEndpoint::CreateSocket()
+{
+  sockfd_ = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
 }
 
 void IPCEndpoint::CloseSocket()
@@ -172,6 +177,7 @@ bool IPCEndpoint::SendMessageToPeer(const int fd,
   search->second->AddMessageToQueue(packed_message);
   return true;
 }
+
 void IPCEndpoint::ReadWriteWatcherCallback(ev::io& w, int revents)
 {
   if (revents & ev::ERROR) {
@@ -204,7 +210,7 @@ void IPCEndpoint::SendQueuedMessagesToPeer(const int sockfd)
     ssize_t bytesSent = send(sockfd, packed_message.data(), packed_message.size(), 0);
     if (-1 == bytesSent) {
       if (errno == EAGAIN || errno == EWOULDBLOCK) {
-        logw("ipc-endpoint: send would block");
+        logv("ipc-endpoint: send would block");
         break;
       }
       OnSendError(sockfd, errno);
