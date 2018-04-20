@@ -36,10 +36,11 @@ TEST(UserIntentsParsing, CloudSampleFileParses)
 {
   Json::Value config;
   
-  // eventually we want this set by the build script that runs the tests based on the script that
-  // is run. For now, load the temp file that has been committed to the repo.
-  if( 0 ) {
+  // change to false to test locally
+  if( true ) {
     
+    // this unit test only runs as a required build step of the voice-intent-resolution-config, which
+    // pulls victor master, sets ANKI_TEST_INTENT_SAMPLE_FILE, and runs the mac build
     std::string inFilename;
     const char* szFilename = getenv("ANKI_TEST_INTENT_SAMPLE_FILE");
     if( szFilename != nullptr ) {
@@ -57,7 +58,8 @@ TEST(UserIntentsParsing, CloudSampleFileParses)
     
   } else {
     
-    const std::string jsonFilename = "test/aiTests/tempCloudIntentSamples.json";
+    // you need to generate this file first with makeSampleIntents.py
+    const std::string jsonFilename = "test/aiTests/cloudIntentSamples.json";
     const bool parsedOK = cozmoContext->GetDataPlatform()->readAsJson(Util::Data::Scope::Resources,
                                                                       jsonFilename,
                                                                       config);
