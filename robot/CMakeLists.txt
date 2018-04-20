@@ -226,7 +226,7 @@ if (ANDROID)
     robot_interface
     robot_clad_cpplite
     cti_common_robot
-    cti_messaging
+    cti_messaging_robot
     ${PLATFORM_LIBS}
   )
 
