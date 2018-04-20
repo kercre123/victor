@@ -106,10 +106,9 @@ void RobotDataLoader::LoadNonConfigData()
   LoadSpritePaths();
   {
     std::vector<std::string> spriteSequenceDirs = {pathToExternalSpriteSequences, pathToEngineSpriteSequences};
-    auto cacheSpec = {Vision::SpriteCache::CacheSpec::CacheGrayscaleIndefinitely};
     SpriteSequenceLoader seqLoader;
     auto* sContainer = seqLoader.LoadSpriteSequences(_platform, _spritePaths.get(), 
-                                                     _spriteCache.get(), spriteSequenceDirs, cacheSpec);
+                                                     _spriteCache.get(), spriteSequenceDirs);
     _spriteSequenceContainer.reset(sContainer);
   }
 

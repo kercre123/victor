@@ -1375,7 +1375,15 @@ namespace Cozmo {
         if(gotImage){
           const bool shouldRenderInEyeHue = faceKeyFrame.ShouldRenderInEyeHue();
           if (shouldRenderInEyeHue) {
-            Vision::Image faceGray = handle->GetSpriteContentsGrayscale();            
+            Vision::Image faceGray = handle->GetSpriteContentsGrayscale();
+            if((faceGray.GetNumRows() != FACE_DISPLAY_HEIGHT) ||
+               (faceGray.GetNumCols() != FACE_DISPLAY_WIDTH)){
+              PRINT_NAMED_WARNING("AnimationStreamer.UpdateStream.ImproperImageSize",
+                                  "Anim %s has face w/ height %d and width %d - resizing to face display size",
+                                  anim->GetName().c_str(),
+                                  faceGray.GetNumRows(), faceGray.GetNumCols());
+              faceGray.Resize(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+            }
             // Create an HSV image from the gray image, replacing the 'hue'
             // channel with the current face hue
             const std::vector<cv::Mat> channels {
