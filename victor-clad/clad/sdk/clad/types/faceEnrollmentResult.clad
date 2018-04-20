@@ -10,7 +10,7 @@
 **/
 
 namespace Anki {
-namespace Victor {
+namespace Cozmo {
 
 enum uint_8 FaceEnrollmentResult
 {
@@ -27,5 +27,5 @@ enum uint_8 FaceEnrollmentResult
     UnknownFailure
 }
 
-} // namespace Victor
+} // namespace Cozmo
 } // namespace Anki

@@ -7,7 +7,7 @@
 #include "clad/types/loadedKnownFace.clad"
 
 namespace Anki {
-namespace Victor {
+namespace Cozmo {
 namespace ExternalComms {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -369,5 +369,5 @@ union ExternalComms {
 }
 
 } // namespace ExternalComms
-} // namespace Victor
+} // namespace Cozmo
 } // namespace Anki

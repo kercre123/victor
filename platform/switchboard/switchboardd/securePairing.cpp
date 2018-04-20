@@ -187,7 +187,7 @@ void SecurePairing::Reset(bool forced) {
 // Send data methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-using namespace Anki::Victor::ExternalComms;
+using namespace Anki::Cozmo::ExternalComms;
 
 void SecurePairing::SendHandshake() {
   if(!AssertState(CommsState::Raw)) {
@@ -320,10 +320,10 @@ void SecurePairing::SendWifiScanResult() {
 
   const uint8_t statusCode = wifiResults.size() > 0? 0 : 1;
 
-  std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult> wifiScanResults;
+  std::vector<Anki::Cozmo::ExternalComms::RtsWifiScanResult> wifiScanResults;
 
   for(int i = 0; i < wifiResults.size(); i++) {
-    Anki::Victor::ExternalComms::RtsWifiScanResult result = Anki::Victor::ExternalComms::RtsWifiScanResult(wifiResults[i].auth,
+    Anki::Cozmo::ExternalComms::RtsWifiScanResult result = Anki::Cozmo::ExternalComms::RtsWifiScanResult(wifiResults[i].auth,
       wifiResults[i].signal_level,
       wifiResults[i].ssid);
 
@@ -393,15 +393,15 @@ void SecurePairing::SendOtaProgress(int status, uint64_t progress, uint64_t expe
 // Event handling methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-void SecurePairing::HandleRtsConnResponse(const Anki::Victor::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsConnResponse(const Anki::Cozmo::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::Clad)) {
     return;
   }
 
   if(_state == PairingState::AwaitingPublicKey) {
-    Anki::Victor::ExternalComms::RtsConnResponse connResponse = msg.Get_RtsConnResponse();
+    Anki::Cozmo::ExternalComms::RtsConnResponse connResponse = msg.Get_RtsConnResponse();
 
-    if(connResponse.connectionType == Anki::Victor::ExternalComms::RtsConnType::FirstTimePair) {    
+    if(connResponse.connectionType == Anki::Cozmo::ExternalComms::RtsConnType::FirstTimePair) {    
       if(_isPairing && !_isOtaUpdating) {
         HandleInitialPair((uint8_t*)connResponse.publicKey.data(), crypto_kx_PUBLICKEYBYTES);
         _state = PairingState::AwaitingNonceAck;
@@ -436,13 +436,13 @@ void SecurePairing::HandleRtsConnResponse(const Anki::Victor::ExternalComms::Rts
   }
 }
 
-void SecurePairing::HandleRtsChallengeMessage(const Victor::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsChallengeMessage(const Cozmo::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
 
   if(_state == PairingState::AwaitingChallengeResponse) {
-    Anki::Victor::ExternalComms::RtsChallengeMessage challengeMessage = msg.Get_RtsChallengeMessage();
+    Anki::Cozmo::ExternalComms::RtsChallengeMessage challengeMessage = msg.Get_RtsChallengeMessage();
 
     HandleChallengeResponse((uint8_t*)&challengeMessage.number, sizeof(challengeMessage.number));
   } else {
@@ -452,13 +452,13 @@ void SecurePairing::HandleRtsChallengeMessage(const Victor::ExternalComms::RtsCo
   }
 }
 
-void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsWifiConnectRequest(const Cozmo::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
 
   if(_state == PairingState::ConfirmedSharedSecret) {
-    Anki::Victor::ExternalComms::RtsWifiConnectRequest wifiConnectMessage = msg.Get_RtsWifiConnectRequest();
+    Anki::Cozmo::ExternalComms::RtsWifiConnectRequest wifiConnectMessage = msg.Get_RtsWifiConnectRequest();
 
     Log::Write("Trying to connect to wifi network [%s][pw=%s][sec=%d][hid=%d].", wifiConnectMessage.wifiSsidHex.c_str(), wifiConnectMessage.password.c_str(), wifiConnectMessage.authType, wifiConnectMessage.hidden);
 
@@ -492,7 +492,7 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::Rts
   }
 }
 
-void SecurePairing::HandleRtsWifiIpRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsWifiIpRequest(const Cozmo::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -511,7 +511,7 @@ void SecurePairing::HandleRtsWifiIpRequest(const Victor::ExternalComms::RtsConne
   Log::Write("Received wifi ip request.");
 }
 
-void SecurePairing::HandleRtsStatusRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsStatusRequest(const Cozmo::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -523,7 +523,7 @@ void SecurePairing::HandleRtsStatusRequest(const Victor::ExternalComms::RtsConne
   }
 }
 
-void SecurePairing::HandleRtsWifiScanRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsWifiScanRequest(const Cozmo::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -536,13 +536,13 @@ void SecurePairing::HandleRtsWifiScanRequest(const Victor::ExternalComms::RtsCon
   }
 }
 
-void SecurePairing::HandleRtsOtaUpdateRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsOtaUpdateRequest(const Cozmo::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
 
   if(_state == PairingState::ConfirmedSharedSecret && !_isOtaUpdating) {
-    Anki::Victor::ExternalComms::RtsOtaUpdateRequest otaMessage = msg.Get_RtsOtaUpdateRequest();
+    Anki::Cozmo::ExternalComms::RtsOtaUpdateRequest otaMessage = msg.Get_RtsOtaUpdateRequest();
     _otaUpdateRequestSignal.emit(otaMessage.url);
     _isOtaUpdating = true;
   }
@@ -550,7 +550,7 @@ void SecurePairing::HandleRtsOtaUpdateRequest(const Victor::ExternalComms::RtsCo
   Log::Write("Starting OTA update.");
 }
 
-void SecurePairing::HandleRtsOtaCancelRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsOtaCancelRequest(const Cozmo::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
@@ -567,13 +567,13 @@ void SecurePairing::HandleRtsOtaCancelRequest(const Victor::ExternalComms::RtsCo
   SendStatusResponse();
 }
 
-void SecurePairing::HandleRtsWifiAccessPointRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsWifiAccessPointRequest(const Cozmo::ExternalComms::RtsConnection_2& msg) {
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
 
   if(_state == PairingState::ConfirmedSharedSecret) {
-    Anki::Victor::ExternalComms::RtsWifiAccessPointRequest accessPointMessage = msg.Get_RtsWifiAccessPointRequest();
+    Anki::Cozmo::ExternalComms::RtsWifiAccessPointRequest accessPointMessage = msg.Get_RtsWifiAccessPointRequest();
     if(accessPointMessage.enable) {
       // enable access point mode on Victor
       char vicName[PROPERTY_VALUE_MAX] = {0};
@@ -600,19 +600,19 @@ void SecurePairing::HandleRtsWifiAccessPointRequest(const Victor::ExternalComms:
   }
 }
 
-void SecurePairing::HandleRtsCancelPairing(const Victor::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsCancelPairing(const Cozmo::ExternalComms::RtsConnection_2& msg) {
   Log::Write("Stopping pairing due to client request.");
   StopPairing();
 }
 
-void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsSsh(const Cozmo::ExternalComms::RtsConnection_2& msg) {
   // RtsSsh
   if(!AssertState(CommsState::SecureClad)) {
     return;
   }
 
   if(_state == PairingState::ConfirmedSharedSecret) {
-    Anki::Victor::ExternalComms::RtsSshRequest sshMsg = msg.Get_RtsSshRequest();
+    Anki::Cozmo::ExternalComms::RtsSshRequest sshMsg = msg.Get_RtsSshRequest();
     std::string sshPath = "/home/root/.ssh";
     std::string sshFile = "authorized_keys";
 
@@ -629,10 +629,10 @@ void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& m
   }
 }
 
-void SecurePairing::HandleRtsAck(const Victor::ExternalComms::RtsConnection_2& msg) {
-  Anki::Victor::ExternalComms::RtsAck ack = msg.Get_RtsAck();
+void SecurePairing::HandleRtsAck(const Cozmo::ExternalComms::RtsConnection_2& msg) {
+  Anki::Cozmo::ExternalComms::RtsAck ack = msg.Get_RtsAck();
   if(_state == PairingState::AwaitingNonceAck && 
-    ack.rtsConnectionTag == (uint8_t)Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsNonceMessage) {
+    ack.rtsConnectionTag == (uint8_t)Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsNonceMessage) {
     HandleNonceAck();
   } else {
     // ignore msg
@@ -847,8 +847,8 @@ void SecurePairing::UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStat
 
 template<typename T, typename... Args>
 int SecurePairing::SendRtsMessage(Args&&... args) {
-  Anki::Victor::ExternalComms::ExternalComms msg = Anki::Victor::ExternalComms::ExternalComms(
-    Anki::Victor::ExternalComms::RtsConnection(Anki::Victor::ExternalComms::RtsConnection_2(T(std::forward<Args>(args)...))));
+  Anki::Cozmo::ExternalComms::ExternalComms msg = Anki::Cozmo::ExternalComms::ExternalComms(
+    Anki::Cozmo::ExternalComms::RtsConnection(Anki::Cozmo::ExternalComms::RtsConnection_2(T(std::forward<Args>(args)...))));
   std::vector<uint8_t> messageData(msg.Size());
   const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
 

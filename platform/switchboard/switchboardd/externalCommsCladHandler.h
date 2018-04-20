@@ -19,7 +19,7 @@ namespace Anki {
 namespace Switchboard {
   class ExternalCommsCladHandler {
     public:
-    using RtsConnectionSignal = Signal::Signal<void (const Anki::Victor::ExternalComms::RtsConnection_2& msg)>;
+    using RtsConnectionSignal = Signal::Signal<void (const Anki::Cozmo::ExternalComms::RtsConnection_2& msg)>;
     
     RtsConnectionSignal& OnReceiveRtsConnResponse() {
       return _receiveRtsConnResponse;
@@ -71,8 +71,8 @@ namespace Switchboard {
       return _receiveRtsOtaCancelRequest;
     }
 
-    Anki::Victor::ExternalComms::ExternalComms ReceiveExternalCommsMsg(uint8_t* buffer, size_t length) {
-      Anki::Victor::ExternalComms::ExternalComms extComms;
+    Anki::Cozmo::ExternalComms::ExternalComms ReceiveExternalCommsMsg(uint8_t* buffer, size_t length) {
+      Anki::Cozmo::ExternalComms::ExternalComms extComms;
 
       const size_t unpackSize = extComms.Unpack(buffer, length);
       if(unpackSize != length) {
@@ -80,60 +80,60 @@ namespace Switchboard {
         Log::Write("externalCommsCladHandler - Somehow our bytes didn't pack to the proper size.");
       }
       
-      if(extComms.GetTag() == Anki::Victor::ExternalComms::ExternalCommsTag::RtsConnection) {
-        Anki::Victor::ExternalComms::RtsConnection rstContainer = extComms.Get_RtsConnection();
-        Anki::Victor::ExternalComms::RtsConnection_2 rtsMsg = rstContainer.Get_RtsConnection_2();
+      if(extComms.GetTag() == Anki::Cozmo::ExternalComms::ExternalCommsTag::RtsConnection) {
+        Anki::Cozmo::ExternalComms::RtsConnection rstContainer = extComms.Get_RtsConnection();
+        Anki::Cozmo::ExternalComms::RtsConnection_2 rtsMsg = rstContainer.Get_RtsConnection_2();
         
         switch(rtsMsg.GetTag()) {
-          case Anki::Victor::ExternalComms::RtsConnection_2Tag::Error:
+          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::Error:
             //
             break;
-          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsConnResponse: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsConnResponse: {
             _receiveRtsConnResponse.emit(rtsMsg);          
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsChallengeMessage: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsChallengeMessage: {
             _receiveRtsChallengeMessage.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiConnectRequest: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsWifiConnectRequest: {
             _receiveRtsWifiConnectRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiIpRequest: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsWifiIpRequest: {
             _receiveRtsWifiIpRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsStatusRequest: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsStatusRequest: {
             _receiveRtsStatusRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiScanRequest: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsWifiScanRequest: {
             _receiveRtsWifiScanRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsOtaUpdateRequest: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsOtaUpdateRequest: {
             _receiveRtsOtaUpdateRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsOtaCancelRequest: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsOtaCancelRequest: {
             _receiveRtsOtaCancelRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiAccessPointRequest: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsWifiAccessPointRequest: {
             _receiveRtsWifiAccessPointRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsCancelPairing: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsCancelPairing: {
             _receiveRtsCancelPairing.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsAck: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsAck: {
             _receiveRtsAck.emit(rtsMsg);
             break;
           }
           // RtsSsh
-          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsSshRequest: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsSshRequest: {
             _DEV_ReceiveSshKey.emit(rtsMsg);
             break;
           }
@@ -146,7 +146,7 @@ namespace Switchboard {
       return extComms;
     }
 
-    static std::vector<uint8_t> SendExternalCommsMsg(Anki::Victor::ExternalComms::ExternalComms msg) {
+    static std::vector<uint8_t> SendExternalCommsMsg(Anki::Cozmo::ExternalComms::ExternalComms msg) {
       std::vector<uint8_t> messageData(msg.Size());
 
       const size_t packedSize = msg.Pack(messageData.data(), msg.Size());
