@@ -65,6 +65,9 @@ MENUMAN = menuman
 MENUMAN_SRC = menuman.c kbhit.c display.c pidopen.c
 MENUMAN_OBJ = $(MENUMAN_SRC:%.c=$(OBJDIR)/%.o) $(SPINE_OBJ)
 
+BURN = burn
+BURN_SRC = burn.c
+BURN_OBJ = $(BURN_SRC:%.c=$(OBJDIR)/%.o)
 
 REMOTE_DEST = /data/local/fixture/
 
@@ -93,6 +96,8 @@ $(DISPLAY): $(CORE) $(DISPLAY_OBJ)
 $(HELPER): $(CORE) $(HELPER_OBJ)
 	$(CROSS_COMPILE)gcc -pie $(HELPER_OBJ) $(LIBPATH) $(LIBS)  -o $(HELPER)
 
+$(BURN): $(CORE) $(BURN_OBJ)
+	$(CROSS_COMPILE)gcc -pie $(BURN_OBJ) $(LIBPATH) $(LIBS)  -o $(BURN)
 
 $(COMMANDER): $(CORE) $(COMMANDER_OBJ)
 	$(CROSS_COMPILE)gcc -pie $(COMMANDER_OBJ) $(LIBPATH) $(LIBS) -llog -o $(COMMANDER)

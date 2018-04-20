@@ -41,6 +41,7 @@ void on_exit(void)
 void safe_quit(int n)
 {
   error_exit(app_USAGE, "Caught signal %d \n", n);
+  exit(1);
 }
 
 
@@ -225,10 +226,17 @@ void command_motors(struct HeadToBody* data)
 /****  Menu Handlers ****/
 
 
+void handle_MainBurn(void* param) {
+  printf("Burn Selected\n");
+  pid_t pidout;
+  int fd = pidopen("./burn.sh", "", &pidout);
+  wait_for_process(pidout, fd);
+}
+
 void handle_MainPlaySound(void* param) {
   printf("PlaySound Selected\n");
   pid_t pidout;
-  int fd = pidopen("./testsound.sh", "test.wav", &pidout);
+  int fd = pidopen("./testsound.sh", "", &pidout);
   wait_for_process(pidout, fd);
 }
 
@@ -300,7 +308,7 @@ MENU_ITEMS(Main) = {
   MENU_SUBMENU("TX 11n", TXN),
   MENU_SUBMENU("TX 11g", TXG),
   MENU_SUBMENU("TX 11b", TXB),
-  MENU_ACTION("Burn CPU", MainPlaySound ),
+  MENU_ACTION("Burn CPU", MainBurn ),
   MENU_ACTION("Play Sound", MainPlaySound ),
   MENU_ACTION("Motor Test", MainMotorTest ),
 };
@@ -394,7 +402,8 @@ void process_incoming_frame(struct BodyToHead* bodyData)
 
 int main(int argc, const char* argv[])
 {
-  bool exit = false;
+  bool shouldexit = false;
+  int badcomms = 0;
 
   signal(SIGINT, safe_quit);
   signal(SIGKILL, safe_quit);
@@ -417,18 +426,23 @@ int main(int argc, const char* argv[])
   hal_send_frame(PAYLOAD_DATA_FRAME, &gHeadData, sizeof(gHeadData));
 
 
-  while (!exit)
+  while (!shouldexit)
   {
     draw_menus();
     process_monitor();
 
     const struct SpineMessageHeader* hdr = get_a_frame(5);
     if (!hdr) {
+      if (++badcomms > 100)
+      {
+        exit(1);
+      }
       /* printf("miss\n"); */
       /* struct BodyToHead fakeData = {0}; */
       /* process_incoming_frame(&fakeData); */
     }
     else {
+      badcomms = 0;
       if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
          struct BodyToHead* bodyData = (struct BodyToHead*)(hdr+1);
          process_incoming_frame(bodyData);
