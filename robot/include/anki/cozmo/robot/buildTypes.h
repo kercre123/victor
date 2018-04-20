@@ -16,7 +16,7 @@
 #define ANKI_DEBUG_INFO   1
 #define ANKI_DEBUG_EVENTS 1
 #else // Default is development build
-#define ANKI_DEBUG_LEVEL  ANKI_DEBUG_ALL
+#define ANKI_DEBUG_LEVEL  ANKI_DEBUG_ERRORS_AND_WARNS_AND_ASSERTS
 #define ANKI_DEBUG_INFO   1
 #define ANKI_DEBUG_EVENTS 1
 #endif
