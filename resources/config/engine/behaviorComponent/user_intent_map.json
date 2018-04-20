@@ -14,7 +14,7 @@
       "user_intent": "imperative_come"
     },
     {
-      "cloud_intent": "intent_global_cancel",
+      "cloud_intent": "intent_global_stop",
       "user_intent": "cancel_timer"
     },
     {
