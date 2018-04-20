@@ -56,6 +56,8 @@ namespace {
   const char* kUptimeFile = "/proc/uptime";
   const char* kMemInfoFile = "/proc/meminfo";
   const char* kCPUTimeStatsFile = "/proc/stat";
+  const char* kWifiTxBytesFile = "/sys/class/net/wlan0/statistics/tx_bytes";
+  const char* kWifiRxBytesFile = "/sys/class/net/wlan0/statistics/rx_bytes";  
 
   // System vars
   uint32_t _cpuFreq_kHz;      // CPU freq
@@ -396,6 +398,30 @@ std::string OSState::GetMACAddress() const
     return macStr;
   }
   return "";
+}
+
+uint64_t OSState::GetWifiTxBytes() const
+{
+  uint64_t numBytes = 0;
+  std::ifstream txFile;
+  txFile.open(kWifiTxBytesFile);
+  if (txFile.is_open()) {
+    txFile >> numBytes;
+    txFile.close();
+  }
+  return numBytes;
+}
+
+uint64_t OSState::GetWifiRxBytes() const
+{
+  uint64_t numBytes = 0;
+  std::ifstream rxFile;
+  rxFile.open(kWifiRxBytesFile);
+  if (rxFile.is_open()) {
+    rxFile >> numBytes;
+    rxFile.close();
+  }
+  return numBytes;
 }
 
 bool OSState::IsInRecoveryMode()

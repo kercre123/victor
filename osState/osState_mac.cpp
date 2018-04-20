@@ -44,7 +44,15 @@ namespace {
   RobotID_t _robotID = DEFAULT_ROBOT_ID;
 
   uint32_t _updatePeriod_ms = 0;
-  
+
+  // TODO: Fill this vec with something reasonable if and when
+  //       we ever care to measure CPU stats in sim.
+  std::vector<std::string> _cpu_time_stats_vec = {"cpu 0 1 2 3 4 5 6 7 9 10", 
+                                                  "cpu0 0 1 2 3 4 5 6 7 9 10",
+                                                  "cpu1 0 1 2 3 4 5 6 7 9 10",
+                                                  "cpu2 0 1 2 3 4 5 6 7 9 10",
+                                                  "cpu3 0 1 2 3 4 5 6 7 9 10"};
+
 } // namespace
 
 OSState::OSState()
@@ -139,6 +147,21 @@ const std::string& OSState::GetIPAddress(bool update)
 const std::string& OSState::GetSSID(bool update)
 {
   return _ssid;
+}
+
+uint64_t OSState::GetWifiTxBytes() const
+{
+  return 0;
+}
+
+uint64_t OSState::GetWifiRxBytes() const
+{
+  return 0;
+}
+
+const std::vector<std::string>& OSState::GetCPUTimeStats() const
+{
+  return _cpu_time_stats_vec;
 }
 
 std::string OSState::GetRobotName() const

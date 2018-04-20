@@ -45,6 +45,7 @@ enum uint_8 BehaviorClass {
   CoordinateGlobalInterrupts,
 
   // devBehaviors
+  DevBatteryLogging,
   DevDisplayReadingsOnFace,
   DevImageCapture,
   DevTouchDataCollection,

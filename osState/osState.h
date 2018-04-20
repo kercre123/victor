@@ -81,6 +81,9 @@ public:
   // Returns our mac address
   std::string GetMACAddress() const;
 
+  uint64_t GetWifiTxBytes() const;
+  uint64_t GetWifiRxBytes() const;
+
   // Returns the ESN (electronic serial number) as a u32
   u32 GetSerialNumber()
   {

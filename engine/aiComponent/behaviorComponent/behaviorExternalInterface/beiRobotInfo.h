@@ -129,6 +129,7 @@ private:
   // let the test classes access robot directly
   friend class BehaviorFactoryCentroidExtractor;
   friend class BehaviorFactoryTest;
+  friend class BehaviorDevBatteryLogging;
   friend class BehaviorDockingTestSimple;
   friend class BehaviorLiftLoadTest;
 
