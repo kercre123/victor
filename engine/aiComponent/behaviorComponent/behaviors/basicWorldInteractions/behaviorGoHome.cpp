@@ -290,8 +290,16 @@ void BehaviorGoHome::TransitionToDriveToCharger()
                           deleteFilter.AddAllowedID(_dVars.chargerID);
                           GetBEI().GetBlockWorld().DeleteLocatedObjects(deleteFilter);
                           ActionFailure();
-                        } else if ((resultCategory == ActionResultCategory::RETRY) &&
-                                   (_dVars.driveToRetryCount++ < _iConfig.driveToRetryCount)) {
+                        } else if ((_dVars.driveToRetryCount++ < _iConfig.driveToRetryCount) &&
+                                   ((resultCategory == ActionResultCategory::RETRY) ||
+                                    (result == ActionResult::PATH_PLANNING_FAILED_ABORT))) {
+                          if (result == ActionResult::PATH_PLANNING_FAILED_ABORT) {
+                            PRINT_NAMED_WARNING("BehaviorGoHome.TransitionToDriveToCharger.PathPlanningTimedOut",
+                                                "Path planning timed out probably due to prox obstacles - clearing "
+                                                "an area of the nav map and trying again. NOTE: This should be removed "
+                                                "once path planning is improved and times out less.");
+                            ClearNavMapUpToCharger();
+                          }
                           TransitionToDriveToCharger();
                         } else {
                           // Either out of retries or we got another failure type
@@ -407,6 +415,46 @@ void BehaviorGoHome::PopDrivingAnims()
     drivingAnimHandler.RemoveDrivingAnimations(GetDebugLabel());
     _dVars.drivingAnimsPushed = false;
   }
+}
+  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorGoHome::ClearNavMapUpToCharger()
+{
+  // Take the center point on the line between the robot and the charger,
+  // and clear a 'circular' area of radius slightly larger than the line.
+  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID, ObjectFamily::Charger);
+  if (charger == nullptr) {
+    PRINT_NAMED_ERROR("BehaviorGoHome.ClearNavMapUpToCharger.NullCharger", "Null charger!");
+    return;
+  }
+
+  const auto& robotPoseWrtOrigin = GetBEI().GetRobotInfo().GetPose().GetWithRespectToRoot();
+  const auto& chargerPoseWrtOrigin = charger->GetPose().GetWithRespectToRoot();
+  
+  float distanceBetween_mm = 0.f;
+  if (!ComputeDistanceBetween(robotPoseWrtOrigin, chargerPoseWrtOrigin, distanceBetween_mm)) {
+    DEV_ASSERT(false, "BehaviorGoHome.ClearNavMapUpToCharger.FailedComputeDistanceBetween");
+  }
+  
+  const Point2f centerPoint((robotPoseWrtOrigin.GetTranslation().x() + chargerPoseWrtOrigin.GetTranslation().x()) / 2.f,
+                            (robotPoseWrtOrigin.GetTranslation().y() + chargerPoseWrtOrigin.GetTranslation().y()) / 2.f);
+  
+  // create a poly that approximates a circle around the midpoint
+  const float padding_mm = 40.f;
+  const float radius_mm = (distanceBetween_mm + padding_mm) / 2.f;
+  const int numVertices= 8;
+  Poly2f pointsPoly;
+  for (int i=0 ; i<numVertices ; i++) {
+    const float th = i * M_TWO_PI_F / numVertices;
+    const Point2f pt(centerPoint.x() + radius_mm * std::cos(th),
+                     centerPoint.y() + radius_mm * std::sin(th));
+    pointsPoly.push_back(pt);
+  }
+  
+  const auto lastTimestamp = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
+  GetBEI().GetMapComponent().InsertData(pointsPoly,
+                                        MemoryMapData(MemoryMapTypes::EContentType::ClearOfObstacle, lastTimestamp));
 }
 
 } // namespace Cozmo

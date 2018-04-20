@@ -96,6 +96,10 @@ private:
   
   void PushDrivingAnims();
   void PopDrivingAnims();
+  
+  // Clears the nav map of obstacles in a rough circle
+  // between the robot and the charger, with some padding.
+  void ClearNavMapUpToCharger();
 
 };
   
