@@ -26,10 +26,6 @@ namespace Cozmo {
   
 enum class BEIConditionType : uint8_t;
 
-class CustomBEIConditionHandleInternal;
-
-using CustomBEIConditionHandle = std::shared_ptr<CustomBEIConditionHandleInternal>;
-
 class BEIConditionFactory {
   friend class CustomBEIConditionHandleInternal;
 public:
@@ -71,7 +67,7 @@ public:
 private:
   explicit CustomBEIConditionHandleInternal(const std::string& conditionName);
 
-  const std::string& _conditionName;
+  std::string _conditionName;
 };
 
 } // namespace Cozmo

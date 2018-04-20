@@ -22,6 +22,11 @@ class IBEICondition;
 
 using IBEIConditionPtr = std::shared_ptr<IBEICondition>;
 
+class CustomBEIConditionHandleInternal;
+
+using CustomBEIConditionHandle = std::shared_ptr<CustomBEIConditionHandleInternal>;
+using CustomBEIConditionHandleList = std::vector<CustomBEIConditionHandle>;
+
 }
 }
 

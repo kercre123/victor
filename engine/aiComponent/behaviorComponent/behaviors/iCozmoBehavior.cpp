@@ -175,6 +175,12 @@ std::string ICozmoBehavior::MakeUniqueDebugLabelFromConfig(const Json::Value& co
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehavior::ICozmoBehavior(const Json::Value& config)
+  : ICozmoBehavior(config, {})
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ICozmoBehavior::ICozmoBehavior(const Json::Value& config, const CustomBEIConditionHandleList& customConditionHandles)
 : IBehavior( MakeUniqueDebugLabelFromConfig( config ) )
 , _requiredProcess( AIInformationAnalysis::EProcess::Invalid )
 , _lastRunTime_s(0.0f)

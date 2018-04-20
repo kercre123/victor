@@ -21,6 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/faceWorld.h"
@@ -52,7 +53,7 @@ const int kMaxTicksForPostBehaviorSuggestions = 5;
 ////////////////////////////////////////////////////////////////////////////////
 
 BehaviorHighLevelAI::BehaviorHighLevelAI(const Json::Value& config)
-  : InternalStatesBehavior( config, CreatePreDefinedStrategies() )
+  : InternalStatesBehavior( config, CreateCustomConditions() )
 {
   _params.socializeKnownFaceCooldown_s = JsonTools::ParseFloat(config, kSocializeKnownFaceCooldownKey, kDebugName);
   _params.playWithCubeCooldown_s = JsonTools::ParseFloat(config, kPlayWithCubeCooldownKey, kDebugName);
@@ -146,14 +147,15 @@ void BehaviorHighLevelAI::BehaviorUpdate()
   
 }
 
-InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDefinedStrategies()
+CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
 {
-  return
-  {
-    {
+  CustomBEIConditionHandleList handles;
+
+  handles.emplace_back(
+    BEIConditionFactory::InjectCustomBEICondition(
       "CloseFaceForSocializing",
-      {
-        [this](BehaviorExternalInterface& behaviorExternalInterface) {
+      std::make_shared<ConditionLambda>(
+        [this](BehaviorExternalInterface& bei) {
           const bool valueIfNeverRun = true;
           const auto& timer = GetBEI().GetBehaviorTimerManager().GetTimer( BehaviorTimerTypes::Socializing );
           const bool cooldownExpired = timer.HasCooldownExpired( _params.socializeKnownFaceCooldown_s / kTimeMultiplier, valueIfNeverRun );
@@ -162,14 +164,14 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
             return false;
           }
           
-          auto& faceWorld = behaviorExternalInterface.GetFaceWorld();
+          auto& faceWorld = bei.GetFaceWorld();
           const auto& faces = faceWorld.GetFaceIDs(true);
           for( const auto& faceID : faces ) {
             const auto* face = faceWorld.GetFace(faceID);
             if( face != nullptr ) {
               const Pose3d facePose = face->GetHeadPose();
               float distanceToFace = 0.0f;
-              if( ComputeDistanceSQBetween( behaviorExternalInterface.GetRobotInfo().GetPose(),
+              if( ComputeDistanceSQBetween( bei.GetRobotInfo().GetPose(),
                                             facePose,
                                             distanceToFace ) &&
                   distanceToFace < Util::Square(_params.maxFaceDistanceToSocialize_mm) ) {
@@ -179,15 +181,15 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
           }
           return false;
         },
-        {
+        ConditionLambda::VisionModeSet{
           { VisionMode::DetectingFaces, EVisionUpdateFrequency::Low }
-        }
-      }
-    },
-    {
+        })));
+
+  handles.emplace_back(
+    BEIConditionFactory::InjectCustomBEICondition(
       "WantsToSleep",
-      {
-        [this](BehaviorExternalInterface& behaviorExternalInterface) {
+      std::make_shared<ConditionLambda>(
+        [this](BehaviorExternalInterface& bei) {
           if( GetCurrentStateID() != GetStateID("ObservingOnCharger") ) {
             PRINT_NAMED_WARNING("BehaviorHighLevelAI.WantsToSleepCondition.WrongState",
                                 "This condition only works from ObservingOnCharger");
@@ -198,11 +200,11 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
           if( GetLastTimeStarted( GetStateID("ObservingOnCharger") ) + (_params.goToSleepTimeout_s / kTimeMultiplier) <= currTime_s ) {
 
             // only go to sleep if we haven't recently seen a face
-            auto& faceWorld = behaviorExternalInterface.GetFaceWorld();
+            auto& faceWorld = bei.GetFaceWorld();
             Pose3d waste;
             const bool inRobotOriginOnly = false; // might have been picked up
             const TimeStamp_t lastFaceTime = faceWorld.GetLastObservedFace(waste, inRobotOriginOnly);
-            const TimeStamp_t lastImgTime = behaviorExternalInterface.GetRobotInfo().GetLastImageTimeStamp();
+            const TimeStamp_t lastImgTime = bei.GetRobotInfo().GetLastImageTimeStamp();
             if( lastFaceTime < lastImgTime &&
                 (1000*kTimeMultiplier*(lastImgTime - lastFaceTime) > _params.minFaceTimeToAllowSleep_s) ) {
               return true;
@@ -210,32 +212,34 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
           }
           return false;
         },
-        {
+        ConditionLambda::VisionModeSet{
           { VisionMode::DetectingFaces, EVisionUpdateFrequency::Low }
         }
-      }
-    },
-    {
+        )));
+
+  handles.emplace_back(
+    BEIConditionFactory::InjectCustomBEICondition(
       "ChargerLocated",
-      {
-        [](BehaviorExternalInterface& behaviorExternalInterface) {
+      std::make_shared<ConditionLambda>(
+        [](BehaviorExternalInterface& bei) {
           BlockWorldFilter filter;
           filter.SetFilterFcn( [](const ObservableObject* obj){
               return IsCharger(obj->GetType(), false) && obj->IsPoseStateKnown();
             });
-          const auto& blockWorld = behaviorExternalInterface.GetBlockWorld();
+          const auto& blockWorld = bei.GetBlockWorld();
           const auto* block = blockWorld.FindLocatedMatchingObject(filter);
           return block != nullptr;
         },
-        {
+        ConditionLambda::VisionModeSet{
           { VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low }
         }
-      }
-    },
-    {
+        )));
+  
+  handles.emplace_back(
+    BEIConditionFactory::InjectCustomBEICondition(
       "NeedsToLeaveChargerForPlay",
-      {
-        [this](BehaviorExternalInterface& behaviorExternalInterface) {
+      std::make_shared<ConditionLambda>(
+        [this](BehaviorExternalInterface& bei) {
           // this keeps two separate timers, one for driving off the charger into play, and one for playing.
           // the latter is useful when seeing cubes when in the observing state, and is used by the
           // CloseCubeForPlaying strategy. The former decides whether the robot should leave the
@@ -246,20 +250,21 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
           // again.
           const bool valueIfNeverRun = false;
           const bool hasntDrivenOffChargerForPlay = StateExitCooldownExpired(GetStateID("DriveOffChargerIntoPlay"),
-                                                                            _params.playWithCubeOnChargerCooldown_s / kTimeMultiplier,
-                                                                            valueIfNeverRun);
+                                                                             _params.playWithCubeOnChargerCooldown_s / kTimeMultiplier,
+                                                                             valueIfNeverRun);
           const auto& timer = GetBEI().GetBehaviorTimerManager().GetTimer( BehaviorTimerTypes::PlayingWithCube );
           const bool hasntPlayed = timer.HasCooldownExpired(_params.playWithCubeCooldown_s / kTimeMultiplier, valueIfNeverRun);
           
           return hasntDrivenOffChargerForPlay && hasntPlayed;
-        },
-        {/* Empty Set:: No Vision Requirements*/ }
-      }
-    },
-    {
+        }
+        /* No Vision Requirements*/
+        )));
+
+  handles.emplace_back(
+    BEIConditionFactory::InjectCustomBEICondition(
       "CloseCubeForPlaying",
-      {
-        [this](BehaviorExternalInterface& behaviorExternalInterface) {
+      std::make_shared<ConditionLambda>(
+        [this](BehaviorExternalInterface& bei) {
 
           const auto& timer = GetBEI().GetBehaviorTimerManager().GetTimer( BehaviorTimerTypes::PlayingWithCube );
           if( !timer.HasCooldownExpired(_params.playWithCubeCooldown_s / kTimeMultiplier) ) {
@@ -271,16 +276,16 @@ InternalStatesBehavior::PreDefinedStrategiesMap BehaviorHighLevelAI::CreatePreDe
           filter.SetFilterFcn( [](const ObservableObject* obj) {
               return IsValidLightCube(obj->GetType(), false) && obj->IsPoseStateKnown();
             });
-          const auto& blockWorld = behaviorExternalInterface.GetBlockWorld();
+          const auto& blockWorld = bei.GetBlockWorld();
           const auto* block = blockWorld.FindLocatedMatchingObject(filter);
           return block != nullptr;
         },
-        {
+        ConditionLambda::VisionModeSet{
           { VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low }
         }
-      }
-    }
-  };
+        )));
+
+  return handles;
 }
   
 void BehaviorHighLevelAI::OverrideResumeState( StateID& resumeState ) const

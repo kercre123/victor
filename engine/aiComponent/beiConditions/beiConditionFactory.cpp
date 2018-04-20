@@ -84,6 +84,11 @@ CustomBEIConditionHandle BEIConditionFactory::InjectCustomBEICondition(const std
                  name.c_str());
   
   _customConditionMap[name] = condition;
+
+  PRINT_CH_DEBUG("Behaviors", "BEIConditionFactory.InjectCustomBEICondition",
+                 "Added custom condition '%s'",
+                 name.c_str());
+  
   // note: can't use make_shared because constructor is private
   CustomBEIConditionHandle ret( new CustomBEIConditionHandleInternal( name ) );
   return ret;
@@ -99,6 +104,10 @@ void BEIConditionFactory::RemoveCustomCondition(const std::string& name)
                    name.c_str(),
                    _customConditionMap.size() ) ) {
     _customConditionMap.erase(it);
+
+    PRINT_CH_DEBUG("Behaviors", "BEIConditionFactory.RemoveCustomCondition",
+                   "Removed custom condition '%s'",
+                   name.c_str());
   }
 }
 
@@ -129,10 +138,10 @@ IBEIConditionPtr BEIConditionFactory::GetCustomCondition(const Json::Value& conf
   
   auto it = _customConditionMap.find(config[kCustomConditionKey].asString());
   if( ANKI_VERIFY( it != _customConditionMap.end(),
-                    "BEIConditionFactory.GetCustomCondition.NotFound",
-                    "No custom condition with name '%s' found. Have %zu custom conditions",
-                    config[kCustomConditionKey].asCString(),
-                    _customConditionMap.size() ) ) {
+                   "BEIConditionFactory.GetCustomCondition.NotFound",
+                   "No custom condition with name '%s' found. Have %zu custom conditions",
+                   config[kCustomConditionKey].asString().c_str(),
+                   _customConditionMap.size() ) ) {
     return it->second;
   }
   else {

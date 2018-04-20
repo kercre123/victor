@@ -62,8 +62,8 @@ private:
     
     std::unordered_map< PostBehaviorSuggestions, StateID > pbsResumeOverrides;
   } _params;
-  
-  PreDefinedStrategiesMap CreatePreDefinedStrategies();
+
+  CustomBEIConditionHandleList CreateCustomConditions();
   
 };
 

@@ -15,19 +15,19 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior_fwd.h"
 
 #include "engine/actions/actionContainers.h"
-#include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
+#include "engine/aiComponent/aiInformationAnalysis/aiInformationAnalysisProcessTypes.h"
 #include "engine/aiComponent/aiWhiteboard.h"
-#include "engine/aiComponent/behaviorComponent/iBehavior.h"
+#include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/iBehavior.h"
+#include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator_fwd.h"
 #include "engine/robotInterface/messageHandler.h"
 #include <set>
-
 
 #include "clad/types/actionResults.h"
 #include "clad/types/behaviorComponent/behaviorObjectives.h"
@@ -110,7 +110,12 @@ protected:
 
   // Can't create a public ICozmoBehavior, but derived classes must pass a robot
   // reference into this protected constructor.
-  ICozmoBehavior(const Json::Value& config);
+  explicit ICozmoBehavior(const Json::Value& config);
+
+  // Constructs in the same way, but holds a container which keeps custom injected BEI conditions in
+  // scope. This allows a derived class to declare custom BEI conditions and have them be used here (e.g. for
+  // a WantsToBeActivated json condition)
+  ICozmoBehavior(const Json::Value& config, const CustomBEIConditionHandleList& customConditionHandles);
     
   virtual ~ICozmoBehavior();
     

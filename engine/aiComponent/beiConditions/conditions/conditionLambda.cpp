@@ -24,7 +24,7 @@ ConditionLambda::ConditionLambda(std::function<bool(BehaviorExternalInterface& b
 }
 
 ConditionLambda::ConditionLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
-                                 std::set<VisionModeRequest>& requiredVisionModes)
+                                 const VisionModeSet& requiredVisionModes)
   : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::Lambda))
   , _lambda(areConditionsMetFunc)
   , _requiredVisionModes(requiredVisionModes)
@@ -41,7 +41,7 @@ ConditionLambda::ConditionLambda(std::function<bool(BehaviorExternalInterface& b
 
 ConditionLambda::ConditionLambda(std::function<bool(BehaviorExternalInterface& bei)> areConditionsMetFunc,
                                  std::function<void(BehaviorExternalInterface& bei, bool setActive)> setActiveFunc,
-                                 std::set<VisionModeRequest>& requiredVisionModes)
+                                 const VisionModeSet& requiredVisionModes)
   : IBEICondition(IBEICondition::GenerateBaseConditionConfig(BEIConditionType::Lambda))
   , _lambda(areConditionsMetFunc)
   , _setActiveFunc(setActiveFunc)
@@ -56,7 +56,7 @@ void ConditionLambda::SetActiveInternal(BehaviorExternalInterface& behaviorExter
   }
 }
 
-void ConditionLambda::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
+void ConditionLambda::GetRequiredVisionModes(VisionModeSet& requests) const
 {
   if(!_requiredVisionModes.empty()){
     requests = _requiredVisionModes;

@@ -23,10 +23,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
-#include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
+#include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/unitTestKey.h"
 #include "util/console/consoleFunction.h"
@@ -125,8 +124,9 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////
 
-InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config, PreDefinedStrategiesMap&& predefinedTransitions)
-  : ICozmoBehavior(config)
+InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
+                                               const CustomBEIConditionHandleList& customConditionHandles)
+  : ICozmoBehavior(config, customConditionHandles)
   , _states(new StateMap)
   , _currDebugLights(kLightsOff)
 {
@@ -136,10 +136,6 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config, PreDef
   // First, parse the state definitions to create all of the "state names" as a first pass
   for( const auto& stateConfig : config[kStateConfgKey] ) {
     AddStateName( JsonTools::ParseString(stateConfig, kStateNameConfgKey, "InternalStatesBehavior.StateConfig") );
-  }
-
-  for( auto& pair : predefinedTransitions ) {
-    AddPreDefinedStrategy(pair.first, std::move(pair.second.first), pair.second.second );
   }
   
   // Parse the state config again to create the actual states
@@ -763,20 +759,6 @@ float InternalStatesBehavior::GetLastTimeEnded(StateID state) const
   return _states->at(state)._lastTimeEnded_s;
 }
   
-void InternalStatesBehavior::AddPreDefinedStrategy(const std::string& name, 
-                                                   StrategyFunc&& strategyFunc,
-                                                   std::set<VisionModeRequest>& requiredVisionModes)
-{
-  ANKI_VERIFY( _preDefinedStrategies.find(name) == _preDefinedStrategies.end(),
-               "InternalStatesBehavior.AddPreDefinedStrategy.Duplicate",
-               "Behavior '%s' is adding duplicate strategy '%s'",
-               GetDebugLabel().c_str(),
-               name.c_str() );
-
-  _preDefinedStrategies[name] = std::make_shared<ConditionLambda>(strategyFunc, requiredVisionModes);
-  _preDefinedStrategies[name]->SetOwnerDebugLabel( GetDebugLabel() );
-}
-
 InternalStatesBehavior::StateID InternalStatesBehavior::ParseStateFromJson(const Json::Value& config,
                                                                                      const std::string& key)
 {
@@ -792,26 +774,14 @@ InternalStatesBehavior::StateID InternalStatesBehavior::ParseStateFromJson(const
 IBEIConditionPtr InternalStatesBehavior::ParseTransitionStrategy(const Json::Value& transitionConfig)
 {
   const Json::Value& strategyConfig = transitionConfig["condition"];
-  if( strategyConfig.isObject() ) {
+  if( ANKI_VERIFY( strategyConfig.isObject(), "InternalStatesBehavior.ParseTransitionStrategy.NoCondition",
+                   "Behavior '%s' missing condition config in a transition",
+                   GetDebugLabel().c_str())) {
     // create state concept strategy from config
     return BEIConditionFactory::CreateBEICondition(transitionConfig["condition"], GetDebugLabel());
   }
   else {
-    // use code-defined named strategy
-    const std::string& strategyName = JsonTools::ParseString(transitionConfig,
-                                                             "preDefinedStrategyName",
-                                                             "InternalStatesBehavior.StateConfig");
-
-    auto it = _preDefinedStrategies.find(strategyName);
-    if( ANKI_VERIFY( it != _preDefinedStrategies.end(),
-                     "HighLevelAI.LoadTransitionConfig.PreDefinedStrategy.NotFound",
-                     "No predefined strategy called '%s' exists",
-                     strategyName.c_str()) ) {
-      return it->second;
-    }
-    else {
-      return nullptr;
-    }
+    return nullptr;
   }
 }
 

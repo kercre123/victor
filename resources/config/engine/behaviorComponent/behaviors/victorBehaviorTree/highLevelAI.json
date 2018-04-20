@@ -97,7 +97,7 @@
         },        
         {
           "to": "DriveOffChargerIntoSocializing",
-          "preDefinedStrategyName": "CloseFaceForSocializing"
+          "condition": { "customCondition": "CloseFaceForSocializing" }
         }
       ],
       "nonInterruptingTransitions": [
@@ -111,11 +111,11 @@
         },
         {
           "to": "DriveOffChargerIntoPlay",
-          "preDefinedStrategyName": "NeedsToLeaveChargerForPlay"
+          "condition": { "customCondition": "NeedsToLeaveChargerForPlay" }
         },
         {
           "to": "NappingOnCharger",
-          "preDefinedStrategyName": "WantsToSleep"
+          "condition": { "customCondition": "WantsToSleep" }
         }
       ]
     },
@@ -157,11 +157,11 @@
         },
         {
           "to": "Socializing",
-          "preDefinedStrategyName": "CloseFaceForSocializing"
+          "condition": { "customCondition": "CloseFaceForSocializing" }
         },
         {
           "to": "PlayingWithCube",
-          "preDefinedStrategyName": "CloseCubeForPlaying"
+          "condition": { "customCondition": "CloseCubeForPlaying" }
         }
       ],
       "nonInterruptingTransitions": [
@@ -220,7 +220,7 @@
       "exitTransitions": [
         {
           "to": "Socializing",
-          "preDefinedStrategyName": "CloseFaceForSocializing"
+          "condition": { "customCondition": "CloseFaceForSocializing" }
         },
         {
           // fall back to observing if can't find a face after driving off the charger
@@ -237,7 +237,7 @@
       "exitTransitions": [
         {
           "to": "PlayingWithCube",
-          "preDefinedStrategyName": "CloseCubeForPlaying"
+          "condition": { "customCondition": "CloseCubeForPlaying" }
         },
         {
           // fall back to observing if can't find a cube after driving off the charger
@@ -352,7 +352,7 @@
       "interruptingTransitions": [
         {
           "to": "ReturningToCharger",
-          "preDefinedStrategyName": "ChargerLocated"
+          "condition": { "customCondition": "ChargerLocated" }
         }
       ],
       "exitTransitions": [

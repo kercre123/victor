@@ -31,19 +31,15 @@ class UnitTestKey;
   
 class InternalStatesBehavior : public ICozmoBehavior
 {
-protected:
-  // add a named strategy as a transition type that may be referenced in json
-  using StrategyFunc = std::function<bool(BehaviorExternalInterface&)>;
-  using LambdaArgsPair = std::pair<StrategyFunc, std::set<VisionModeRequest>>;
-  using PreDefinedStrategiesMap = std::unordered_map<std::string, LambdaArgsPair>;
-  
+protected:  
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   InternalStatesBehavior(const Json::Value& config);
   
-  // subclasses of InternalStatesBehavior can pass a map of predefined strategies
-  InternalStatesBehavior(const Json::Value& config, PreDefinedStrategiesMap&& predefinedStrategies);
-  
+  // subclasses of InternalStatesBehavior can pass handles to custom BEI conditions that can be used in
+  // various BEIConditions in this class
+  InternalStatesBehavior(const Json::Value& config, const CustomBEIConditionHandleList& customConditionHandles);
+
 public:
 
   virtual ~InternalStatesBehavior();
@@ -82,10 +78,6 @@ protected:
   
   
 private:
-
-  void AddPreDefinedStrategy(const std::string& name, 
-                             StrategyFunc&& strategyFunc,
-                             std::set<VisionModeRequest>& requiredVisionModes);
   
   class State;
 
@@ -112,8 +104,6 @@ private:
 
   using StateMap = std::map< StateID, State >;
   std::unique_ptr< StateMap > _states;
-
-  std::map< std::string, IBEIConditionPtr > _preDefinedStrategies;
 
   StateID _currState = InvalidStateID;
 
