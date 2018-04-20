@@ -163,15 +163,6 @@
           "to": "PlayingWithCube",
           "condition": { "customCondition": "CloseCubeForPlaying" }
         }
-      ],
-      "nonInterruptingTransitions": [
-        {
-          "to": "ReturningToCharger",
-          "condition": {
-            "conditionType": "BatteryLevel",
-            "targetBatteryLevel": "Low"
-          }
-        }
       ]
     },
 
