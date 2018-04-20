@@ -37,7 +37,7 @@ function usage() {
 
 KEEPARG=""
 
-while getopts "hkrvc:s:" opt; do
+while getopts "hkrfvc:s:" opt; do
   case $opt in
     h)
       usage && exit 0
@@ -52,6 +52,8 @@ while getopts "hkrvc:s:" opt; do
       ANKI_BUILD_TYPE="${OPTARG}"
       ;;
     r)
+      ;;
+    f)
       ;;
     s)
       ;;
