@@ -213,6 +213,9 @@ bool BatteryIsCharging();
 /// Return whether or not the robot is connected to a charger
 bool BatteryIsOnCharger();
 
+/// Return whether or not the battery has been disconnected from the charging circuit
+/// after being on charge base for more than 30 min.
+bool BatteryIsDisconnected();
 /************************************************************************
  * \section LEDs
  */

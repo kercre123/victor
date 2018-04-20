@@ -50,6 +50,8 @@ static int bouncy_count = 0;
 static int hold_count = 0;
 static int total_release = 0;
 
+#define CHARGE_CUTOFF (vext_debounce >= MAX_CHARGE_TIME)
+
 uint16_t volatile Analog::values[ADC_CHANNELS];
 bool Analog::button_pressed = false;
 uint16_t Analog::battery_voltage = 0;
@@ -213,6 +215,7 @@ void Analog::transmit(BodyToHead* data) {
                       | (is_charging ? POWER_IS_CHARGING : 0)
                       | (on_charger ? POWER_ON_CHARGER : 0)
                       | (charger_shorted ? POWER_CHARGER_SHORTED : 0 )
+                      | (CHARGE_CUTOFF ? POWER_BATTERY_DISCONNECTED : 0)
                       ;
 
   data->touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
@@ -229,7 +232,6 @@ void Analog::setPower(bool powered) {
 void Analog::tick(void) {
   // On-charger delay
   bool vext_now = Analog::values[ADC_VEXT] >= TRANSITION_POINT;
-  bool charge_cutoff = vext_debounce >= MAX_CHARGE_TIME;
   bool enable_watchdog = vext_debounce >= MAX_CHARGE_TIME_WD;
   bool button_now = (values[ADC_BUTTON] >= BUTTON_THRESHOLD);
   
@@ -312,7 +314,7 @@ void Analog::tick(void) {
     } else {
       power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
     }
-  } else if (charge_cutoff) {
+  } else if (CHARGE_CUTOFF) {
     // Unpowered, on charger (timeout)
     nCHG_PWR::reset();
     POWER_EN::pull(PULL_NONE);

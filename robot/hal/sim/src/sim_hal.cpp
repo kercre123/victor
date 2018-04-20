@@ -901,6 +901,12 @@ namespace Anki {
       return HAL::BatteryIsCharging();
     }
 
+    bool HAL::BatteryIsDisconnected()
+    {
+      // NOTE: This doesn't simulate syscon cutoff after 30 min
+      return false;
+    }
+
     extern "C" {
     void EnableIRQ() {}
     void DisableIRQ() {}

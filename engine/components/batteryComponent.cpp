@@ -69,11 +69,17 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 {
   _lastMsgTimestamp = msg.timestamp;
   
+  _battDisconnected = (msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED);
+
   // Poll the system voltage if it's the appropriate time
   const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if (now - _lastBatteryVoltsUpdate_sec > kBatteryVoltsUpdatePeriod_sec) {
     _batteryVoltsRaw = msg.batteryVoltage;
-    _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
+
+    // Only update filtered value if the battery isn't disconnected
+    if (!_battDisconnected) {
+      _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
+    }
     _lastBatteryVoltsUpdate_sec = now;
   }
   

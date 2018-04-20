@@ -68,6 +68,14 @@ public:
   // able to wander off the charger and do stuff.
   bool IsBatteryFull() const { return _batteryLevel == BatteryLevel::Full; }
   
+  // If the robot has been on the charger for more than 30 min, the battery
+  // is disconnected from the charging circuit to prevent repeated trickle
+  // discharge/charge cycles that reduce battery expectancy.
+  // (Currently, when disconnected, GetBatteryVoltsRaw() returns a very low (~0.1V)
+  // reading while GetBatteryVolts() holds the last valid filtered voltage reading, 
+  // but this can be changed as needed.)
+  bool IsBatteryDisconnectedFromCharger() const { return _battDisconnected; }
+
   // Indicates that the robot has its charge circuit enabled. Note that
   // this will remain true even after the battery is fully charged.
   bool IsCharging() const { return _isCharging; }
@@ -110,6 +118,7 @@ private:
 
   BatteryLevel _batteryLevel = BatteryLevel::Unknown;
   
+  bool _battDisconnected = false;
   bool _isCharging = false;
   bool _isOnChargerContacts = false;
   bool _isOnChargerPlatform = false;

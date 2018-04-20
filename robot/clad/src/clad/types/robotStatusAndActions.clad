@@ -23,7 +23,7 @@ enum uint_32 RobotStatusFlag {
     LIFT_IN_POS             = 0x00000100,
     HEAD_IN_POS             = 0x00000200,
     // FREE FLAG            = 0x00000400,
-    // FREE FLAG            = 0x00000800,
+    IS_BATTERY_DISCONNECTED = 0x00000800,
     IS_ON_CHARGER           = 0x00001000,
     IS_CHARGING             = 0x00002000,
     CLIFF_DETECTED          = 0x00004000,

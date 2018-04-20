@@ -460,6 +460,14 @@ bool HAL::BatteryIsOnCharger()
   return bodyData_->battery.flags & POWER_ON_CHARGER;
 }
 
+bool HAL::BatteryIsDisconnected()
+{
+  // The POWER_BATTERY_DISCONNECTED flag is set whenever the robot is on
+  // the charge base, but the battery has been disconnected from the 
+  // charging circuit.
+  return bodyData_->battery.flags & POWER_BATTERY_DISCONNECTED;
+}
+
 u8 HAL::GetWatchdogResetCounter()
 {
   // not (yet) implemented in HAL in V2
