@@ -1,0 +1,9 @@
+cxx_project(
+    name = 'vic-testcrash',
+    srcs = glob(['src/victorTestCrashMain.cpp']),
+    platform_srcs = [
+    ],
+    headers = [],
+    platform_headers = [
+    ]
+)

@@ -119,9 +119,9 @@ if (ANDROID)
 
 endif()
 
-#if (ANDROID)
-#  add_subdirectory("lib/crash-reporting-android/Breakpad")
-#endif()
+if (ANDROID)
+  add_subdirectory("lib/crash-reporting-android/Breakpad")
+endif()
 
 #if (NOT breakpad_client)
 #    message(FATAL_ERROR "breakpad_client not defined")
@@ -176,6 +176,9 @@ else()
   # include dirs
   include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
+  include_directories("${CMAKE_CURRENT_SOURCE_DIR}/lib/crash-reporting-android/Breakpad/include/breakpad")
+
+
   import(coretech "coretech")
   add_subdirectory("clad")
   add_subdirectory("cloud")
@@ -184,6 +187,7 @@ else()
   add_subdirectory("cannedAnimLib")
   add_subdirectory("animProcess")
   add_subdirectory("webServerProcess")
+  add_subdirectory("testCrash")
   add_subdirectory("lib/micData")
   add_subdirectory("lib/signalEssence")
   add_subdirectory("platform")
