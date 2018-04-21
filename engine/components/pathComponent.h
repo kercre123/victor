@@ -122,7 +122,11 @@ public:
   // this component, or will get set by the SpeedChooser if this component hasn't been set to use a custom
   // profile
   Result StartDrivingToPose(const std::vector<Pose3d>& poses,
-                            std::shared_ptr<Planning::GoalID> selectedPoseIndex = {});
+                            std::shared_ptr<Planning::GoalID> selectedPoseIndexPtr = {});
+
+  // Can be used to start the planner before calling StartDrivingToPose
+  Result PrecomputePath(const std::vector<Pose3d>& poses,
+                        std::shared_ptr<Planning::GoalID> selectedPoseIndexPtr = {});
 
   // set or clear the custom motion profile that all motion should follow. If cleared, then defaults will be
   // used, or the speed chooser will be used if enabled
@@ -198,6 +202,11 @@ private:
   bool StartPlanner();
   bool StartPlanner(const Pose3d& driveCenterPose);
 
+  // configures the start state and goal states for path, and launches the planner if it is 
+  // not already computing that path
+  Result ConfigureAndStartPlanner(const std::vector<Pose3d>& poses,
+                            std::shared_ptr<Planning::GoalID> selectedPoseIndexPtr = {});
+
   // Abort the plan and any path following, and set the status to Failure
   void AbortAndSetFailure();
 
@@ -252,6 +261,7 @@ private:
   u16                      _lastRecvdPathID              = 0;
   bool                     _plannerActive                = false;
   bool                     _hasCustomMotionProfile       = false;
+  bool                     _startFollowingPath           = true;
 
 
   // keep track of the last path ID we canceled. Note that when we cancel a path we will transition to one of

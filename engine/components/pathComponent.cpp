@@ -42,20 +42,52 @@ static constexpr const float kSendMsgFailedTimeout_s = 1.0f;
 // info for the current plan
 struct PlanParameters
 {
+  PlanParameters() = default;
+  PlanParameters(Cozmo::Robot* robot, const std::vector<Pose3d>& poses);
   void Reset();
+  bool IsEqual(const PlanParameters& otherPlan) const;
   
   // these target poses are in terms of the "drive center" of the robot, which may be different from the
   // "pose" the robot is at when it gets there (e.g. pose may be geometric center, instead of between front
   // wheels)
   std::vector<Pose3d> targetPoses;
 
+  // starting point for the plan
+  Pose3d driveCenter;
+
   // the driver center pose and target poses all must share this origin for the plan to be valid
   PoseOriginID_t commonOriginID = PoseOriginList::UnknownOriginID;
 };
 
+PlanParameters::PlanParameters(Cozmo::Robot* robot, const std::vector<Pose3d>& poses)
+{
+  this->commonOriginID = robot->GetPoseOriginList().GetCurrentOriginID();
+  
+  // Compute drive center pose for start pose and goal poses
+  this->driveCenter = robot->GetDriveCenterPose();
+  this->targetPoses.resize(poses.size());
+  for (int i=0; i< poses.size(); ++i) {
+    robot->ComputeDriveCenterPose(poses[i], this->targetPoses[i]);
+  }
+}
+
 void PlanParameters::Reset() {
   targetPoses.clear();
   commonOriginID = PoseOriginList::UnknownOriginID;
+}
+
+bool PlanParameters::IsEqual(const PlanParameters& otherPlan) const 
+{
+  if ( otherPlan.commonOriginID != this->commonOriginID )               { return false; }
+  if ( otherPlan.targetPoses.size() != this->targetPoses.size())        { return false; }
+  if (!otherPlan.driveCenter.IsSameAs( this->driveCenter, .001, .001 )) { return false; }
+  
+  for (int i = 0; i < this->targetPoses.size(); ++i)
+  {
+    if (!otherPlan.targetPoses[i].IsSameAs(this->targetPoses[i], .001, .001)) { return false; }
+  }
+
+  return true;
 }
 
 PathComponent::PathComponent()
@@ -479,7 +511,9 @@ void PathComponent::UpdatePlanning()
 
     case EPlannerStatus::CompleteWithPlan: {
       _plannerActive = false;
-      HandlePlanComplete();
+      if (_startFollowingPath) {      // wait here until we are clear to drive
+        HandlePlanComplete();
+      }
       break;
     }
 
@@ -711,78 +745,48 @@ const PathMotionProfile& PathComponent::GetCustomMotionProfile() const
   return *_pathMotionProfile;
 }
 
-
-Result PathComponent::StartDrivingToPose(const std::vector<Pose3d>& poses,
-                                         std::shared_ptr<Planning::GoalID> selectedPoseIndexPtr)
+Result PathComponent::ConfigureAndStartPlanner(const std::vector<Pose3d>& poses,
+                                               std::shared_ptr<Planning::GoalID> selectedPoseIndexPtr)
 {
   if( poses.empty() ) {
-    PRINT_NAMED_WARNING("PathComponent.StartDrivingToPose.NoTargetPoses",
+    PRINT_NAMED_WARNING("PathComponent.ConfigureAndStartPlanner.NoTargetPoses",
                         "Can't start driving with no provided targets");
     return RESULT_FAIL;
   }
 
+  PlanParameters newPlanParams(_robot, poses);
   
   if( _plannerActive ) {
-    _selectedPathPlanner->StopPlanning();
-    _plannerActive = false;
+    if ( !_currPlanParams->IsEqual(newPlanParams) ) {
+      _selectedPathPlanner->StopPlanning();
+      _plannerActive = false;
+    } else {
+      // already started the planner, and will now start following the path on update cycle after plan completes
+      return RESULT_OK;
+    }
   }
   
   if( IsActive() ) {
-    // stop doing what we are doing, so we can make a new plan
-    PRINT_CH_INFO("Planner", "PathComponent.StartDrivingToPose.AlreadyBusy",
-                  "Path component status was '%s'. Aborting current plan",
-                  ERobotDriveToPoseStatusToString(_driveToPoseStatus));
-    Abort();
-  }
-
-  _plannerSelectedPoseIndex = selectedPoseIndexPtr;
-
-  _currPlanParams->commonOriginID = _robot->GetPoseOriginList().GetCurrentOriginID();
-  
-  const Pose3d& driveCenterPose = _robot->GetDriveCenterPose();
-  
-  // TODO: this is really a sanity check and is not "free". Disable or make ANKI_DEV_CODE once COZMO-1637 is sorted out
-  const Pose3d& driveCenterOrigin = driveCenterPose.FindRoot();
-  const PoseOriginID_t driveCenterOriginID = driveCenterOrigin.GetID();
-  if(!ANKI_VERIFY(_currPlanParams->commonOriginID == driveCenterOriginID,
-              "PathComponent.StartDrivingToPose.DriveCenterOriginMismatch",
-              "RobotOriginID:%d DriveCenterOrigin:%d(%s)",
-              _currPlanParams->commonOriginID, driveCenterOriginID, driveCenterOrigin.GetName().c_str())) {
-    SetDriveToPoseStatus(ERobotDriveToPoseStatus::Failed);
-    return RESULT_FAIL;
-  }
-  
-  const Pose3d& commonOrigin = _robot->GetPoseOriginList().GetCurrentOrigin();
-  
-  // Compute drive center pose for start pose and goal poses
-  _currPlanParams->targetPoses.resize(poses.size());
-  for (int i=0; i< poses.size(); ++i) {
-    Pose3d& targetPose_i = _currPlanParams->targetPoses[i];
-    
-    _robot->ComputeDriveCenterPose(poses[i], targetPose_i);
-
-    // assure that all targets and the robot share an origin
-    if(!_currPlanParams->targetPoses[i].HasSameRootAs(commonOrigin)) {
-      PRINT_NAMED_WARNING("PathComponent.StartDrivingToPose.OriginMismatch",
-                          "robot origin %s does not match target pose %d origin %s",
-                          commonOrigin.GetName().c_str(),
-                          i,
-                          targetPose_i.FindRoot().GetName().c_str());
-      
-      if(ANKI_DEVELOPER_CODE)
-      {
-        commonOrigin.Print("Planner", "commonOrigin");
-        targetPose_i.FindRoot().Print("Planner", "targetOrigin");
-        targetPose_i.PrintNamedPathToRoot(false);
-      }
-      SetDriveToPoseStatus(ERobotDriveToPoseStatus::Failed);
-      return RESULT_FAIL;
+    // we may be following the same path, so only check the goals and originID for equality
+    newPlanParams.driveCenter = _currPlanParams->driveCenter;
+    if ( !_currPlanParams->IsEqual(newPlanParams) ) {
+      // stop doing what we are doing, so we can make a new plan
+      PRINT_CH_INFO("Planner", "PathComponent.ConfigureAndStartPlanner.AlreadyBusy",
+                    "Path component status was '%s'. Aborting current plan",
+                    ERobotDriveToPoseStatusToString(_driveToPoseStatus));
+      Abort();
+    } else {
+      // already executing this plan
+      return RESULT_OK;
     }
   }
 
+  _plannerSelectedPoseIndex = selectedPoseIndexPtr;
+  _currPlanParams = std::make_unique<PlanParameters>(newPlanParams);
+
   SelectPlanner();
 
-  const bool somePlannerSucceeded = StartPlanner(driveCenterPose);
+  const bool somePlannerSucceeded = StartPlanner(_currPlanParams->driveCenter);
   if( !somePlannerSucceeded ) {
     SetDriveToPoseStatus(ERobotDriveToPoseStatus::Failed);
     return RESULT_FAIL;
@@ -798,6 +802,21 @@ Result PathComponent::StartDrivingToPose(const std::vector<Pose3d>& poses,
   }
 
   return RESULT_OK;
+}
+
+Result PathComponent::PrecomputePath(const std::vector<Pose3d>& poses,
+                                     std::shared_ptr<Planning::GoalID> selectedPoseIndexPtr)
+{
+  _startFollowingPath = false;
+  return ConfigureAndStartPlanner(poses, selectedPoseIndexPtr);
+}
+
+
+Result PathComponent::StartDrivingToPose(const std::vector<Pose3d>& poses,
+                                         std::shared_ptr<Planning::GoalID> selectedPoseIndexPtr)
+{
+  _startFollowingPath = true;
+  return ConfigureAndStartPlanner(poses, selectedPoseIndexPtr);
 }
 
 bool PathComponent::StartPlanner(const Pose3d& driveCenterPose)
