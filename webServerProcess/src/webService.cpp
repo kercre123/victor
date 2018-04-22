@@ -1205,6 +1205,16 @@ void WebService::RegisterRequestHandler(std::string uri, mg_request_handler hand
   mg_set_request_handler(_ctx, uri.c_str(), handler, cbdata);
 }
 
+static std::string sanitize_tag(const std::string& tag)
+{
+  std::string sanitizedTag = tag;
+  for(int i = 0; i < sanitizedTag.size(); ++i) {
+    if (!isalpha(sanitizedTag[i])) {
+      sanitizedTag[i] = '_';
+    }
+  }
+  return sanitizedTag;
+}
 
 void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& category)
 {
@@ -1226,11 +1236,6 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
 
     if (!category.empty() && category != cat) {
       continue;
-    }
-
-    size_t dot = cat.find(".");
-    if (dot != std::string::npos) {
-      cat = cat.substr(0, dot);
     }
 
     if (category_html.find(cat) == category_html.end()) {
@@ -1344,14 +1349,25 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
     }
   }
 
+  html += "<div id=\"tabs\">\n";
+  html += "    <ul>\n";
   for (std::map<std::string, std::string>::const_iterator it = category_html.begin();
-       it != category_html.end();
-       ++it) {
-    html += "            <h3>"+it->first+"</h3>\n";
-    html += "            <div>\n";
-    html += it->second;
-    html += "            </div>\n";
+    it != category_html.end();
+    ++it) {
+    html += "        <li><a href=\"#tabs-"+sanitize_tag(it->first)+"\">"+it->first+"</a></li>\n";
   }
+  html += "    </ul>\n";
+
+  for (std::map<std::string, std::string>::const_iterator it = category_html.begin();
+  it != category_html.end();
+  ++it) {
+    std::string tag = it->first;
+    sanitize_tag(tag);
+    html += "    <div id=\"tabs-"+sanitize_tag(it->first)+"\">\n";
+    html += "    " + it->second+"\n";
+    html += "    </div>\n";
+  }
+  html += "</div>\n";
 
   page = getConsoleVarsTemplate();
 
