@@ -149,16 +149,6 @@ static void write_(cmd_io io, const char* s1, const char* s2, const char* s3) {
     throw (err_num);                                    \
   }
 
-//double-buffered tick handling
-static uint32_t next_tick_interval_ms = 0, active_tick_interval_ms = 0;
-static void(*next_tick_handler)(void) = NULL;
-static void(*active_tick_handler)(void) = NULL;
-
-void cmdTickCallback(uint32_t interval_ms, void(*tick_handler)(void) ) {
-  next_tick_interval_ms = interval_ms && tick_handler ? interval_ms  : 0;
-  next_tick_handler     = interval_ms && tick_handler ? tick_handler : NULL;
-}
-
 char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async_handler)(char*) )
 {
   char b[80]; const int bz = sizeof(b); //str buffer
@@ -168,11 +158,6 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
   
   if( opts & CMD_OPTS_DBG_PRINT_ENTRY )
     ConsolePrintf("cmdSend(%u, \"%s\"%s, ms=%i)\n", io, scmd, (newline ? "\\n" : ""), timeout_ms);
-  
-  //double buffer the tick handler
-  active_tick_interval_ms = next_tick_interval_ms;
-  active_tick_handler = next_tick_handler;
-  next_tick_interval_ms = 0, next_tick_handler = NULL; //single-use
   
   //contact handoff power -> uart
   if( io == CMD_IO_CONTACTS && Contacts::powerIsOn() ) {
@@ -266,15 +251,9 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
         if( io != CMD_IO_CONSOLE && opts & CMD_OPTS_LOG_OTHER ) //echo to log, unchanged
           write_(CMD_IO_CONSOLE, rsp, "\n");
       }
-    }
-    
-    //tick callback
-    if( active_tick_interval_ms > 0 && Timer::elapsedUs(Ttick) >= 1000*active_tick_interval_ms ) {
-      Ttick = Timer::get();
-      if( active_tick_handler != NULL )
-        active_tick_handler();
-    }
-  }
+      
+    }//rsp != NULL
+  }//while( Timer::elapsedUs(Tstart)...
   
   if( opts & CMD_OPTS_DBG_PRINT_RX_PARTIAL ) //see what's leftover in the rx buffer
   {

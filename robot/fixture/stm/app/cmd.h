@@ -50,9 +50,6 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms = CMD_DEFAULT_TIMEOUT,
 int cmdStatus(); //parsed rsp status of most recent cmdSend(). status=1st arg, INT_MIN if !exist or bad format
 uint32_t cmdTimeMs(); //time it took for most recent cmdSend() to finish
 
-//during cmdSend() exectuion, callback at the given interval while waiting for response. ONLY for next cmdSend() call; cleared on exit.
-void cmdTickCallback(uint32_t interval_ms, void(*tick_handler)(void) );
-
 //-----------------------------------------------------------------------------
 //                  Line Parsing
 //-----------------------------------------------------------------------------
