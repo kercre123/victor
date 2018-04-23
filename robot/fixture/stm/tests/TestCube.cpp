@@ -498,16 +498,10 @@ void CubeBootDebug(void)
 
 static void CubeFlexFlowReport(void)
 {
-  char b[80]; const int bz = sizeof(b);
-  snformat(b,bz,"<flex> ESN %08x HWRev %u Model %u\n", cubeid.esn, cubeid.hwrev, cubeid.model);
-  ConsoleWrite(b);
-  FLEXFLOW::write(b);
-  
   int bootSize;
   uint32_t crc = cubebootSignature(0,&bootSize);
-  snformat(b,bz,"<flex> BootSize %i CRC %08x\n", bootSize, crc);
-  ConsoleWrite(b);
-  FLEXFLOW::write(b);
+  FLEXFLOW::printf("<flex> ESN %08x HWRev %u Model %u </flex>\n", cubeid.esn, cubeid.hwrev, cubeid.model);
+  FLEXFLOW::printf("<flex> BootSize %i CRC %08x </flex>\n", bootSize, crc);
 }
 
 TestFunction* TestCubeFccGetTests(void) {

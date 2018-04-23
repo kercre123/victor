@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include "board.h"
+#include "console.h"
 #include "flexflow.h"
 #include "timer.h"
 
@@ -91,6 +92,8 @@ int FLEXFLOW::printf(const char *format, ... )
   va_end(argptr);
   
   FLEXFLOW::write(dest);
+  ConsoleWrite(dest); //XXX also print to console
+  
   return len > sizeof(dest) ? sizeof(dest) : len;
 }
 

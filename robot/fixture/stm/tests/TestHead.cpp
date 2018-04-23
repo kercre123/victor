@@ -101,10 +101,7 @@ void TestHeadDutProgram(void)
 
 static void HeadFlexFlowReport(void)
 {
-  char b[80]; const int bz = sizeof(b);
-  snformat(b,bz,"<flex> ESN %08x\n", headnfo.esn);
-  ConsoleWrite(b);
-  FLEXFLOW::write(b);
+  FLEXFLOW::printf("<flex> ESN %08x </flex>\n", headnfo.esn);
 }
 
 TestFunction* TestHead1GetTests(void)
