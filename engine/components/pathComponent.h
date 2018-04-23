@@ -161,6 +161,10 @@ public:
   // Execute a manually-assembled path
   Result ExecuteCustomPath(const Planning::Path& path);
 
+  // Checks if the path provided is safe. If driveCenter is provided, then check using the angle of that pose 
+  // (PathPlanner interface does not yet support full start state specification, just starting angle)
+  bool IsPathSafe(const Planning::Path& path, const Pose3d* driveCenter = nullptr) const;
+
   // Handle new data from the robot
   void UpdateCurrentPathSegment(s8 currPathSegment);
 

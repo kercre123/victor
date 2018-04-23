@@ -1029,6 +1029,21 @@ Result PathComponent::ExecuteCustomPath(const Planning::Path& path)
   return ExecutePath(path);
 }
 
+bool PathComponent::IsPathSafe(const Planning::Path& path, const Pose3d* driveCenter) const
+{
+  if (driveCenter == nullptr) {
+    driveCenter = &_robot->GetDriveCenterPose();
+  }
+
+  // currently just check the long path planner, since it is the only one that supports collision checking at the moment
+  if (_longPathPlanner) {
+    return _longPathPlanner->CheckIsPathSafe(path, driveCenter->GetRotationAngle<'Z'>().ToFloat());
+  } else {
+    PRINT_NAMED_WARNING("PathComponent.IsPathSafe", "No planner exists that checks collisions, so all paths are safe");
+    return true;
+  }
+}
+
 Result PathComponent::ExecutePath(const Planning::Path& path)
 {  
   Result lastResult = RESULT_FAIL;
