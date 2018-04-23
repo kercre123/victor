@@ -238,9 +238,11 @@ void connectCallback(GObject *source_object, GAsyncResult *result, gpointer user
     return;
   }
 
-  conn_man_bus_service_call_connect_finish (connectData->service,
-                                            result,
-                                            &connectData->error);
+  if (!g_cancellable_is_cancelled(connectData->cancellable)) {
+    conn_man_bus_service_call_connect_finish (connectData->service,
+                                              result,
+                                              &connectData->error);
+  }
 
   g_mutex_lock(&connectMutex);
   connectData->completed = true;
@@ -629,8 +631,13 @@ bool ConnectToWifiService(ConnManBusService* service) {
   connAsyncData.error = nullptr;
   connAsyncData.cond = &connectCond;
   connAsyncData.service = service;
+  connAsyncData.cancellable = g_cancellable_new();
+  if (connAsyncData.cancellable == nullptr) {
+    loge("%s: out of memory", __func__);
+    return false;
+  }
   conn_man_bus_service_call_connect (service,
-                                     nullptr,
+                                     connAsyncData.cancellable,
                                      connectCallback,
                                      (gpointer)&connAsyncData);
 
@@ -638,9 +645,12 @@ bool ConnectToWifiService(ConnManBusService* service) {
   bool timedOut = false;
   while (!connAsyncData.completed) {
     timedOut = !g_cond_wait_until(&connectCond, &connectMutex, end_time);
-    if (timedOut)
+    if (timedOut) {
+      g_cancellable_cancel(connAsyncData.cancellable);
+      g_cond_wait(&connectCond, &connectMutex);
       break;
-  };
+    }
+  }
   g_mutex_unlock(&connectMutex);
 
   bool didConnect = !timedOut && connAsyncData.error == nullptr;
@@ -649,6 +659,7 @@ bool ConnectToWifiService(ConnManBusService* service) {
                timedOut ?
                "timed out waiting on conditional" : connAsyncData.error->message);
   }
+  g_object_unref(connAsyncData.cancellable);
   return didConnect;
 }
 

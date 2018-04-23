@@ -89,6 +89,7 @@ struct ConnectAsyncData {
   bool completed;
   GCond *cond;
   GError *error;
+  GCancellable *cancellable;
   ConnManBusService *service;
 };
 
