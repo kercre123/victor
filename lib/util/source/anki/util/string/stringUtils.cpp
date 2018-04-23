@@ -411,6 +411,24 @@ void StringReplace( std::string& toChange, const std::string& oldStr, const std:
     n += newStr.size();
   }
 }
+  
+void StringTrimWhitespaceFromEnd(std::string& s)
+{
+  s.erase(std::find_if(s.rbegin(), s.rend(),
+                       std::not1(std::ptr_fun<int, int>(std::isspace))).base(), s.end());
+}
+  
+void StringTrimWhitespaceFromStart(std::string& s) {
+    s.erase(s.begin(),
+            std::find_if(s.begin(),
+                         s.end(),
+                         std::not1(std::ptr_fun<int, int>(std::isspace))));
+}
+
+void StringTrimWhitespace(std::string& s) {
+  StringTrimWhitespaceFromStart(s);
+  StringTrimWhitespaceFromEnd(s);
+}
 
 uint32_t EpochSecFromIso8601UTCDateString(const std::string& dateString)
 {

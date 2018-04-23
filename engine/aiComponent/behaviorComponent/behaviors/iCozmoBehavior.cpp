@@ -53,6 +53,8 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/math/numericCast.h"
 
+#include <cxxabi.h>
+
 #define LOG_CHANNEL    "Behaviors"
 
 namespace Anki {
@@ -1426,6 +1428,43 @@ ActionResult ICozmoBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* 
 std::string ICozmoBehavior::GetClassString(BehaviorClass behaviorClass) const
 {
   return BehaviorTypesWrapper::BehaviorClassToString(behaviorClass);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::OnDebugStateTransition( const char* className,
+                                             bool isInitialization,
+                                             const std::string& oldState,
+                                             const std::string& newState )
+{
+  // try demangling the class name
+  int status = 1; // anything but 0
+  std::unique_ptr<char, void(*)(void*)> demangledPtr { abi::__cxa_demangle(className, NULL, NULL, &status), std::free };
+  std::string demangledName = (status==0) ? demangledPtr.get() : className ;
+  
+  // grab just the behavior name from the className string, but don't bother with this in debug
+  if( ANKI_DEVELOPER_CODE ) {
+    // usually the enum class is nested a few class levels deep, separated by ::
+    auto splitParts = Anki::Util::StringSplit( demangledName, ':' );
+    const static std::string behavior = "Behavior";
+    for( const auto& part : splitParts ) {
+      if( part.compare(0, behavior.length(), behavior) == 0 ) {
+        // starts with "Behavior"
+        demangledName = part;
+        break;
+      }
+    }
+  }
+  
+  if( isInitialization ) {
+    PRINT_CH_INFO("Behaviors", "Behavior.TransitionToState", "Behavior:%s, InitializedAs:%s",
+                  demangledName.c_str(),
+                  newState.c_str());
+  } else {
+    PRINT_CH_INFO("Behaviors", "Behavior.TransitionToState", "Behavior:%s, FromState:%s ToState:%s",
+                  demangledName.c_str(),
+                  oldState.c_str(),
+                  newState.c_str());
+  }
 }
 
   

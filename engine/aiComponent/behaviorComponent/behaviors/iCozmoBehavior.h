@@ -154,6 +154,7 @@ public:
 
   BehaviorID         GetID()      const { return _id; }
 
+  // todo: replace with state.ToString() and make private
   const std::string& GetDebugStateName() const { return _debugStateName;}
   ExecutableBehaviorType GetExecutableType() const { return _executableType; }
   const BehaviorClass GetClass() const { return _behaviorClassID; }
@@ -212,9 +213,12 @@ protected:
   // default is no delegates, but behaviors which delegate can overload this
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override { }
 
-  inline void SetDebugStateName(const std::string& inName) {
+  // todo: replace with BEHAVIOR_STATE().
+  inline void SetDebugStateName(const std::string& inName, const std::string& className = "") {
     PRINT_CH_INFO("Behaviors", "Behavior.TransitionToState", "Behavior:%s, FromState:%s ToState:%s",
-                  GetDebugLabel().c_str(), _debugStateName.c_str(), inName.c_str());
+                  (className.empty() ? GetDebugLabel().c_str() : className.c_str()),
+                  _debugStateName.c_str(),
+                  inName.c_str());
     _debugStateName = inName;
   }
   
@@ -458,6 +462,13 @@ protected:
     template <typename T>
     void MakeMemberTunable(T& param, const std::string& name, const char* category = nullptr) {  }
   #endif
+  
+  // called when a behavior transitions its state by assigning to a variable created with BEHAVIOR_STATE( Type, variable );
+  // Since the calling method did not have a this pointer, the best we can do is a mangled className
+  static void OnDebugStateTransition( const char* className,
+                                      bool isInitialization,
+                                      const std::string& oldState,
+                                      const std::string& newState );
   
 private:
   
@@ -712,6 +723,9 @@ void ICozmoBehavior::MakeMemberTunable(T& param, const std::string& name, const 
   _tunableParams.emplace_back( new Util::ConsoleVar<T>( param, uniqueName.c_str(), category, unregisterOnDestruction ) );
 }
 #endif
+  
+// include BEHAVIOR_STATES and BEHAVIOR_STATE and its helper classes
+#include "engine/aiComponent/behaviorComponent/behaviors/behaviorStatesMacro.def"
 
 } // namespace Cozmo
 } // namespace Anki

@@ -58,14 +58,14 @@ private:
   
   void DevTakePhoto() const;
   
-  enum class State : uint8_t {
-    Initial=0,
+  BEHAVIOR_STATES(State,
+    Initial,
     DriveToObstacle, // only runs if canVisitObstacle was set
     FirstTurn,
     ReturnToCenter,
     SecondTurn,
     ReturnToCenterEnd,
-  };
+  );
 
   struct InstanceConfig {
     InstanceConfig();
@@ -75,7 +75,7 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     
-    State state;
+    BEHAVIOR_STATE( State, state );
     
     bool firstTurnDirectionIsLeft;
     float initialPoseAngle_rad;

@@ -95,8 +95,6 @@ namespace {
   };
 }
   
-#define SET_STATE(s) do{ _dVars.state = State::s; PRINT_NAMED_INFO("BehaviorExploringExamineObstacle.State", "State = %s", #s); } while(0);
-  
 using MemoryMapDataConstPtr = MemoryMapTypes::MemoryMapDataConstPtr;
 using EContentTypePackedType = MemoryMapTypes::EContentTypePackedType;
   
@@ -211,7 +209,7 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
     const bool useRobotWidth = true;
     if( RobotPathFreeOfObstacle( kDistanceForStartApproach_mm, useRobotWidth ) ) {
       
-      SET_STATE( DriveToObstacle );
+      _dVars.state = State::DriveToObstacle;
       
       // this will get canceled when we get close
       DriveStraightAction* action = new DriveStraightAction( kDistanceForStartApproach_mm );
@@ -227,7 +225,7 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
   CompoundActionSequential* action = new CompoundActionSequential();
   if( (_dVars.state == State::Initial) || (_dVars.state == State::DriveToObstacle) ) {
     
-    SET_STATE( FirstTurn );
+    _dVars.state = State::FirstTurn;
     // these head motions will probably be animations or something
     action->AddAction( new MoveHeadToAngleAction( DEG_TO_RAD(15.0f) ) );
     action->AddAction( new WaitAction( 0.5f ) );
@@ -260,7 +258,7 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
    
   } else if( _dVars.state == State::ReturnToCenter ) {
     
-    SET_STATE( SecondTurn );
+    _dVars.state = State::SecondTurn;
     
     // now turn the other way
     const float angle = _dVars.firstTurnDirectionIsLeft ? DEG_TO_RAD(kMaxTurnAngle_deg) : -DEG_TO_RAD(kMaxTurnAngle_deg);

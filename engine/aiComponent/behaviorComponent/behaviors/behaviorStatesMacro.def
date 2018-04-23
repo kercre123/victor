@@ -1,0 +1,96 @@
+/**
+ * File: behaviorStatesMacro.def
+ *
+ * Author: ross
+ * Date:   april 23 2018
+ *
+ * Description: A macro to define an enum class for behaviors that will automatically print debug
+ *              information when assigned. This file is so long because all the string stuff is constexpr,
+ *              so the result is quite similar to having a SET_STATE(One) which calls a print method with "One"
+ *
+ * Copyright: Anki, Inc. 2018
+ **/
+
+
+
+// How this works:
+// 1) define your enum class with enum class type 'State':
+//     BEHAVIOR_STATES( State,
+//       One, // comment
+//       Two,
+//       Three, // ending comma is optional but will simplify git history if you add it
+//     );
+// 2) Then define your state with type 'State' and variable name 'state':
+//     BEHAVIOR_STATE( State, state );
+// 3) And use it as you normally would:
+//     state = State:One;
+//    Any assignment will run some dev methods according to how the base class wants it to.
+// You can get the string "One" by running state.ToString();
+
+// Note: BehaviorStatesEnumerator must be templated to get the compiler to trust constexpr functions as const,
+// but it's valid only for the present EnumName.
+
+#define BEHAVIOR_STATES( EnumName, ... ) \
+  enum class EnumName : uint8_t { __VA_ARGS__ }; \
+  template<typename EnumType> \
+  class BehaviorStatesEnumerator \
+  { \
+    using BaseType = uint8_t; \
+  public: \
+    explicit BehaviorStatesEnumerator( BaseType initialValue )\
+      : _value( static_cast<EnumType>( initialValue ) ) \
+      , _firstRun( true ) \
+    { \
+      static_assert( std::is_same< EnumType, EnumName >::value, "Don't use this explicitly" ); \
+    } \
+    \
+    BehaviorStatesEnumerator( ) \
+      : BehaviorStatesEnumerator( 0 ) \
+    {  } \
+    \
+    BehaviorStatesEnumerator& operator =( const EnumType& value ) { \
+      OnDebugStateTransition( typeid(EnumType).name(), _firstRun, ToString(_value), ToString(value) ); \
+      _value = value; \
+      _firstRun = false; \
+      return *this; \
+    } \
+    \
+    operator EnumType() const { \
+      return _value; \
+    } \
+    \
+    constexpr static std::string const& ToString( EnumType arg ) { \
+      return GetStringArray()[ static_cast<BaseType>( arg ) ]; \
+    } \
+    \
+  private: \
+    \
+    constexpr static int EnumSize() { \
+      enum EnumName { __VA_ARGS__ }; \
+      EnumName enumArray[]{ __VA_ARGS__ }; \
+      return sizeof(enumArray) / sizeof(enumArray[0]); \
+    } \
+    \
+    static auto const& GetStringArray() \
+    { \
+      static std::array<std::string, EnumSize()> values; \
+      if (values[0].empty()) { \
+        std::string valuesStr = #__VA_ARGS__; \
+        std::stringstream ss(valuesStr); \
+        for (auto& value : values) { \
+          std::getline(ss, value, ','); \
+          Anki::Util::StringTrimWhitespace(value); \
+        } \
+      } \
+      return values; \
+    }; \
+    EnumType _value; \
+    bool _firstRun; \
+  }; \
+  constexpr static std::string const& ToString( EnumName arg ) { \
+    return BehaviorStatesEnumerator<EnumName>::ToString( arg ); \
+  }
+
+#define BEHAVIOR_STATE( EnumName, enumVariable ) \
+  BehaviorStatesEnumerator<EnumName> enumVariable
+
