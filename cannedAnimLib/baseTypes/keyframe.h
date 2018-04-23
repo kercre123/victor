@@ -289,7 +289,8 @@ namespace Cozmo {
     void ClearRuntimeSequence() { _runtimeSpriteSequence.reset(); }
     
     void SetFrameDuration_ms(u32 duration_ms){ _frameDuration_ms = duration_ms;}
-
+    u32 GetFrameDuration_ms() const { return _frameDuration_ms; }
+    
     void SetShouldRenderInEyeHue(bool shouldRenederInEyeHue) { _shouldRenderInEyeHue = shouldRenederInEyeHue;}
     bool ShouldRenderInEyeHue() const { return _shouldRenderInEyeHue;}
 
