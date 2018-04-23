@@ -186,71 +186,67 @@ TEST(MoodManager, AddEmotionNoPenaltyEachTick)
   TickMoodManager(moodManager, 1, kTickTimestep);
   EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 0.5f);
   EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType1),  0.1f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  1),  0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  2),  0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 99),  0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType1,  1),   0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType1,  2),   0.1f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType1, 99),   0.1f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  0),  0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  1),  0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 98),  0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType1,  0),   0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType1,  1),   0.1f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType1, 98),   0.1f, 0.0f);
   
   moodManager.AddToEmotion(kTestEmoType0, 0.5f, "Test3", gCurrentTime);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 1.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  0),  0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  1),  1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 98),  1.0f, 0.0f);
+  TickMoodManager(moodManager, 1, kTickTimestep);
   EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 1.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  1),  0.5f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  2),  1.0f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 99),  1.0f, 0.0f);
-  TickMoodManager(moodManager, 1, kTickTimestep);
-  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 1.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  1),  0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  2),  0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  3),  1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 99),  1.0f, 0.0f);
   
   moodManager.AddToEmotion(kTestEmoType0, 0.5f, "Test4", gCurrentTime);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 1.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   0),  0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   1),  0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   2),  1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  98),  1.0f, 0.0f);
+  TickMoodManager(moodManager, 1, kTickTimestep);
   EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 1.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   1),  0.0f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   2),  0.5f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   3),  1.0f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  99),  1.0f, 0.0f);
-  TickMoodManager(moodManager, 1, kTickTimestep);
-  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), 1.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   1),  0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   2),  0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   3),  0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   4),  1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  99),  1.0f, 0.0f);
   
   moodManager.AddToEmotion(kTestEmoType0, -1.5f, "Test5", gCurrentTime);
   EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), -0.5f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   0),  0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   1), -1.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   2), -1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   3), -0.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  98), -0.5f, 0.0f);
+  TickMoodManager(moodManager, 1, kTickTimestep);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   1), -1.5f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   2), -1.5f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   3), -1.0f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   4), -0.5f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  99), -0.5f, 0.0f);
-  TickMoodManager(moodManager, 1, kTickTimestep);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   1),  0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   2), -1.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   3), -1.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   4), -1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   5), -0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  99), -0.5f, 0.0f);
   
   moodManager.AddToEmotion(kTestEmoType0, -1.5f, "Test6", gCurrentTime);
+  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), -1.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   0),  0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   1), -2.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   2), -2.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   3), -1.5f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   4), -1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  98), -1.0f, 0.0f);
+  TickMoodManager(moodManager, 1, kTickTimestep);
   EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), -1.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   1), -0.5f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   2), -2.0f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   3), -2.0f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   4), -1.5f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   5), -1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  99), -1.0f, 0.0f);
-  TickMoodManager(moodManager, 1, kTickTimestep);
-  EXPECT_EQ(moodManager.GetEmotionValue(kTestEmoType0), -1.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   1),  0.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   2), -0.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   3), -2.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   4), -2.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   5), -1.5f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,   6), -1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  99), -1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  98), -1.0f, 0.0f);
 }
 
 TEST(MoodManager, DecayFromPositive)
@@ -267,8 +263,8 @@ TEST(MoodManager, DecayFromPositive)
   TickMoodManager(moodManager, 10, kTickTimestep); // now = 0.1f
   EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 1.0f,  0.000001f);
 
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 11), 1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 10), 0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 10), 1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  9), 0.0f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  1), 0.0f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  0), 0.0f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.2f   ), 1.0f, 0.0f);
@@ -280,26 +276,27 @@ TEST(MoodManager, DecayFromPositive)
   EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 1.0f,  0.000001f);
   
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 41), 1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 40), 0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 40), 1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 39), 0.0f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.391f ),  1.0f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.39f   ), 0.0f, 0.0f);
   
   TickMoodManager(moodManager, 10, kTickTimestep); // now = 0.5f
   EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 1.0f,  0.000001f);
   
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 51), 1.0f, 0.0f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 50), 0.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 50), 1.0f, 0.0f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 49), 0.0f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.491f ),  1.0f, 0.0f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.49f   ), 0.0f, 0.0f);
 
   TickMoodManager(moodManager, 30, kTickTimestep); // now = 0.8f
   EXPECT_NEAR(moodManager.GetEmotionValue(kTestEmoType0), 0.94f, 0.000001f);
   
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 81),  0.94f, 0.0001f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 80), -0.06f, 0.0001f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 31), -0.06f, 0.0001f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 16), -0.03f, 0.0001f);
-  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  1),  0.00f, 0.0001f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 80),  0.94f, 0.0001f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 79), -0.06f, 0.0001f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 30), -0.06f, 0.0001f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0, 15), -0.03f, 0.0001f);
+  EXPECT_NEAR(moodManager.GetEmotionDeltaRecentTicks(kTestEmoType0,  0),  0.00f, 0.0001f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.791f ),   0.94f, 0.0001f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.79f  ),  -0.06f, 0.0001f);
   EXPECT_NEAR(moodManager.GetEmotionDeltaRecentSeconds(kTestEmoType0, 0.3f   ),  -0.06f, 0.0001f);

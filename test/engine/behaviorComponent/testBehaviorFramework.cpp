@@ -427,9 +427,10 @@ void InjectBehaviorIntoStack(ICozmoBehavior& injectBehavior, TestBehaviorFramewo
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void IncrementBaseStationTimerTicks(int numTicks)
+void IncrementBaseStationTimerTicks()
 {
-  BaseStationTimer::getInstance()->UpdateTime(BaseStationTimer::getInstance()->GetTickCount() + numTicks);
+  BaseStationTime_t t = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds() + 1e6f * ROBOT_TIME_STEP_MS;
+  BaseStationTimer::getInstance()->UpdateTime( t );
 }
 
 

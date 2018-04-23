@@ -116,7 +116,7 @@ TEST(UserIntentsParsing, CloudSampleFileParses)
   
   // it should be ok if user_intent_map has a cloud intent that isnt completed, but it should
   // exist in dialogflow samples; otherwise it should be considered garbage.
-  UserIntentMap intentMap( cozmoContext->GetDataLoader()->GetUserIntentConfig() );
+  UserIntentMap intentMap( cozmoContext->GetDataLoader()->GetUserIntentConfig(), cozmoContext );
   std::vector<std::string> cloudIntentsList = intentMap.DevGetCloudIntentsList();
   for( const auto& cloudName : cloudIntentsList ) {
     bool found = false;
@@ -134,7 +134,7 @@ TEST(UserIntentsParsing, CompletedInCloudList)
 {
   // tests that every completed intent has a match for both app and cloud in user_intent_map.
   
-  UserIntentMap intentMap( cozmoContext->GetDataLoader()->GetUserIntentConfig() );
+  UserIntentMap intentMap( cozmoContext->GetDataLoader()->GetUserIntentConfig(), cozmoContext );
   
   std::vector<std::string> cloudIntentsList = intentMap.DevGetCloudIntentsList();
   std::vector<std::string> appIntentsList = intentMap.DevGetAppIntentsList();

@@ -141,8 +141,8 @@ TEST(BehaviorHighLevelAI, UserIntentsHandled)
                             "Napping",
                             "NappingOnCharger",
                             "WakingUp",
-                            "FailedToFindCharger"}
-    }
+                            "FailedToFindCharger"} },
+    { "explore_start",     {"Napping", "NappingOnCharger"} },
   };
   // OK YOUR JOB IS DONE
   // *********************************************************
@@ -154,7 +154,7 @@ TEST(BehaviorHighLevelAI, UserIntentsHandled)
   auto labels = tih.GetCompletedLabels( TestIntentsFramework::EHandledLocation::HighLevelAI );
   for( const auto& label : labels ) {
     const auto it = exceptionsList.find(label);
-    ASSERT_FALSE( it == exceptionsList.end() ) << "Completed intent " << label << " not listed";
+    ASSERT_FALSE( it == exceptionsList.end() ) << "Completed intent " << label << " not listed in exceptionsList";
     const auto& exceptions = it->second;
     completedIntents[label] = std::make_pair( tih.GetCompletedIntent(label), exceptions );
   }

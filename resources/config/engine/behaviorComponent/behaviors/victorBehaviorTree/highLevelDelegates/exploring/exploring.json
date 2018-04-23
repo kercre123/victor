@@ -6,11 +6,9 @@
 
   "behaviors": 
   [
-    "ReactToCliff",         // temp, so this works without GlobalInterruptions
     "DriveOffCharger",
     "ExploringInternal",    // doesn't want to activate without a charger
-    "ExploringFindCharger", // only wants to activate when there's no charger
-    "Wait"                  // temp, so this works with DevBaseBehavior when ExploringInternal isnt ready to activate
+    "ExploringFindCharger"  // only wants to activate when there's no charger
   ],
 
   "anonymousBehaviors": [

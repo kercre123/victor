@@ -26,6 +26,7 @@ enum uint_8 BEIConditionType {
   Lambda,
   MotionDetected,
   ObjectInitialDetection,
+  ObjectKnown,
   ObjectMoved,
   ObjectPositionUpdated,
   ObstacleDetected,

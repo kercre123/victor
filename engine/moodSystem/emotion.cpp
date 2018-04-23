@@ -58,6 +58,7 @@ float Emotion::GetHistoryValueTicksAgo(uint32_t numTicksBackwards) const
   const uint32_t numEntries = Util::numeric_cast<uint32_t>(_history.size());
   if ((numEntries > 0) && (numTicksBackwards > 0))
   {
+    ++numTicksBackwards; // so that this method name is accurate, skip the last entry in _history, which is the current _value
     const uint32_t sampleIndex = (numEntries > numTicksBackwards) ? (numEntries - numTicksBackwards) : 0;
     const HistorySample& oldSample = _history[sampleIndex];
     return oldSample._value;

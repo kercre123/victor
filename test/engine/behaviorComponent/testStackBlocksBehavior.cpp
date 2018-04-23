@@ -33,6 +33,7 @@
 #include "engine/robot.h"
 
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
+#include "test/engine/helpers/cubePlacementHelper.h"
 
 using namespace Anki;
 using namespace Anki::Cozmo;
@@ -87,54 +88,6 @@ void CreateStackBehavior(Robot& robot, ICozmoBehaviorPtr& stackBehavior, Behavio
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-namespace {
-
-// TODO refactor this because it's also in blockworld unit tests. This should be a helper
-ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ObjectType objectType)
-{
-  // matching activeID happens through objectID automatically on addition
-  const ActiveID activeID = -1;
-  const FactoryID factoryID = "";
-
-  BlockWorld& blockWorld = robot.GetBlockWorld();
-  Anki::Cozmo::ObservableObject* objectPtr = CreateActiveObjectByType(objectType, activeID, factoryID);
-  ANKI_VERIFY(nullptr != objectPtr, "CreateObjectLocatedAtOrigin.CreatedNull", "");
-  
-  // check it currently doesn't exist in BlockWorld
-  {
-    BlockWorldFilter filter;
-    filter.SetAllowedTypes( {objectPtr->GetType()} );
-    filter.SetAllowedFamilies( {objectPtr->GetFamily()} );
-    ObservableObject* sameBlock = blockWorld.FindLocatedMatchingObject(filter);
-    ANKI_VERIFY(nullptr == sameBlock, "CreateObjectLocatedAtOrigin.TypeAlreadyInUse", "");
-  }
-  
-  // set initial pose & ID (that's responsibility of the system creating the object)
-  ANKI_VERIFY(!objectPtr->GetID().IsSet(), "CreateObjectLocatedAtOrigin.IDSet", "");
-  ANKI_VERIFY(!objectPtr->HasValidPose(), "CreateObjectLocatedAtOrigin.HasValidPose", "");
-  objectPtr->SetID();
-  Anki::Pose3d originPose;
-  originPose.SetParent( robot.GetWorldOrigin() );
-  objectPtr->InitPose( originPose, Anki::PoseState::Known); // posestate could be something else
-  
-  // now they can be added to the world
-  blockWorld.AddLocatedObject(std::shared_ptr<ObservableObject>(objectPtr));
-
-  // need to pretend we observed this object
-  robot.GetObjectPoseConfirmer().AddInExistingPose(objectPtr); // this has to be called after AddLocated just because
-  
-  // verify they are there now
-  ANKI_VERIFY(objectPtr->GetID().IsSet(), "CreateObjectLocatedAtOrigin.IDNotset", "");
-  ANKI_VERIFY(objectPtr->HasValidPose(), "CreateObjectLocatedAtOrigin.InvalidPose", "");
-  ObservableObject* objectInWorld = blockWorld.GetLocatedObjectByID( objectPtr->GetID() );
-  ANKI_VERIFY(objectInWorld == objectPtr, "CreateObjectLocatedAtOrigin.NotSameObject", "");
-  ANKI_VERIFY(nullptr != objectInWorld, "CreateObjectLocatedAtOrigin.NullWorldPointer", "");
-  return objectInWorld;
-}
-
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior,
                     TestBehaviorFramework& testBehaviorFramework,
                     ObjectID& objID1, ObjectID& objID2)
@@ -165,11 +118,11 @@ void SetupStackTest(Robot& robot, ICozmoBehaviorPtr& stackBehavior,
   ASSERT_FALSE(stackBehavior->WantsToBeActivated()) << "behavior should not be activatable with unknown cubes";
 
   // Add two objects
-  ObservableObject* object1 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
+  ObservableObject* object1 = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
   ASSERT_TRUE(nullptr != object1);
   objID1 = object1->GetID();
   
-  ObservableObject* object2 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE2);
+  ObservableObject* object2 = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE2);
   ASSERT_TRUE(nullptr != object2);
   objID2 = object2->GetID();
 

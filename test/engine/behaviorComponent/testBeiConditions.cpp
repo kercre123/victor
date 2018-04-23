@@ -33,10 +33,12 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionUnitTest.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
+#include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/components/batteryComponent.h"
 #include "engine/robot.h"
+#include "test/engine/helpers/cubePlacementHelper.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 #include "util/math/math.h"
@@ -431,6 +433,8 @@ TEST(BeiConditions, SimpleMood)
   moodManager.SetEmotion(EmotionType::Stimulated, lowStim);
   moodManager.SetEmotion(EmotionType::Confident, notFrustrated);
   
+  tickMoodManager( 1 );
+  
   // check mood
   condMood->Init(bei);
   condMood->SetActive(bei, true);
@@ -438,16 +442,17 @@ TEST(BeiConditions, SimpleMood)
   moodManager.SetEmotion(EmotionType::Stimulated, medStim);
   EXPECT_TRUE( condMood->AreConditionsMet(bei) );
   
+  tickMoodManager( 2 );
+  
   // check transition
   condTrans->Init(bei);
   condTrans->SetActive(bei, true);
   EXPECT_FALSE( condTrans->AreConditionsMet(bei) ); // no transition
-  tickMoodManager( 1 );
-  EXPECT_FALSE( condTrans->AreConditionsMet(bei) );
   moodManager.SetEmotion(EmotionType::Stimulated, highStim);
-  EXPECT_TRUE( condTrans->AreConditionsMet(bei) ); // med->high, correct transition
   tickMoodManager( 1 );
+  EXPECT_TRUE( condTrans->AreConditionsMet(bei) ); // med->high, correct transition
   moodManager.SetEmotion(EmotionType::Stimulated, medStim);
+  tickMoodManager( 1 );
   EXPECT_FALSE( condTrans->AreConditionsMet(bei) ); // high->med, wrong transition
   
   // check transition from any
@@ -456,27 +461,30 @@ TEST(BeiConditions, SimpleMood)
   tickMoodManager( 1 );
   EXPECT_FALSE( condTransFromAny->AreConditionsMet(bei) ); // no transition
   moodManager.SetEmotion(EmotionType::Stimulated, lowStim);
-  EXPECT_FALSE( condTransFromAny->AreConditionsMet(bei) ); // med->low, wrong transition
   tickMoodManager( 1 );
+  EXPECT_FALSE( condTransFromAny->AreConditionsMet(bei) ); // med->low, wrong transition
   moodManager.SetEmotion(EmotionType::Stimulated, highStim);
+  tickMoodManager( 1 );
   EXPECT_TRUE( condTransFromAny->AreConditionsMet(bei) ); // low->high, correct transition
   moodManager.SetEmotion(EmotionType::Stimulated, medStim);
   tickMoodManager( 1 );
   moodManager.SetEmotion(EmotionType::Stimulated, highStim);
+  tickMoodManager( 1 );
   EXPECT_TRUE( condTransFromAny->AreConditionsMet(bei) ); // med->high also a correct transition
   
   // check transition to any
   condTransToAny->Init(bei);
   condTransToAny->SetActive(bei, true);
   moodManager.SetEmotion(EmotionType::Confident, frustrated);
+  tickMoodManager( 2 );
   EXPECT_FALSE( condTransToAny->AreConditionsMet(bei) ); // no transition
-  tickMoodManager( 1 );
   moodManager.SetEmotion(EmotionType::Confident, notFrustrated);
-  EXPECT_TRUE( condTransToAny->AreConditionsMet(bei) ); // frustrated->highstim, correct transition
   tickMoodManager( 1 );
+  EXPECT_TRUE( condTransToAny->AreConditionsMet(bei) ); // frustrated->highstim, correct transition
   moodManager.SetEmotion(EmotionType::Confident, frustrated); // highstim->frustrated, wrong transition
   tickMoodManager( 1 );
   moodManager.SetEmotion(EmotionType::Stimulated, lowStim);
+  tickMoodManager( 1 );
   EXPECT_TRUE( condTransToAny->AreConditionsMet(bei) ); // frustrated->lowstim, correct transition
 }
 
@@ -1378,6 +1386,89 @@ TEST(BeiConditions, FeatureGate)
   bei.GetRobotInfo().GetContext()->GetFeatureGate()->SetFeatureEnabled( feature, oldVal );
 }
 
-
+TEST(BeiConditions, ObjectKnown)
+{
+  // tests that the conditions are true only when the object is known, the maxAge_ms params match the object age
+  const ObjectType testType = ObjectType::Block_LIGHTCUBE1; // should match the below json
+  const std::string jsonAnyAge = R"json(
+  {
+    "conditionType": "ObjectKnown",
+    "objectTypes": ["Block_LIGHTCUBE1"]
+  })json";
+  
+  const std::string jsonInitialTick = R"json(
+  {
+    "conditionType": "ObjectKnown",
+    "objectTypes": ["Block_LIGHTCUBE1"],
+    "maxAge_ms": 0
+  })json";
+  
+  const std::string jsonTick1000 = R"json(
+  {
+    "conditionType": "ObjectKnown",
+    "objectTypes": ["Block_LIGHTCUBE1"],
+    "maxAge_ms": 1000
+  })json";
+  
+  // dont start at tick 0 since that is reserved by blockworld
+  float engineTime_ns = 5e6; // 5ms
+  BaseStationTimer::getInstance()->UpdateTime( engineTime_ns );
+  
+  IBEIConditionPtr condAnyAge;
+  IBEIConditionPtr condInitialTick;
+  IBEIConditionPtr cond1000Ms;
+  CreateBEI(jsonAnyAge, condAnyAge);
+  CreateBEI(jsonInitialTick, condInitialTick);
+  CreateBEI(jsonTick1000, cond1000Ms);
+  
+  TestBehaviorFramework testBehaviorFramework;
+  testBehaviorFramework.InitializeStandardBehaviorComponent();
+  BehaviorExternalInterface& bei = testBehaviorFramework.GetBehaviorExternalInterface();
+  
+  condAnyAge->Init(bei);
+  condInitialTick->Init(bei);
+  cond1000Ms->Init(bei);
+  condAnyAge->SetActive(bei, true);
+  condInitialTick->SetActive(bei, true);
+  cond1000Ms->SetActive(bei, true);
+  
+  EXPECT_FALSE( condAnyAge->AreConditionsMet(bei) );
+  EXPECT_FALSE( condInitialTick->AreConditionsMet(bei) );
+  EXPECT_FALSE( cond1000Ms->AreConditionsMet(bei) );
+  
+  // put a cube in front of the robot
+  auto& robot = testBehaviorFramework.GetRobot();
+  Block_Cube1x1 testCube(testType);
+  ObservableObject* object1 = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, testType);
+  ASSERT_TRUE(nullptr != object1);
+  ObjectID objID1 = object1->GetID();
+  const Pose3d obj1Pose(0.0f, Z_AXIS_3D(), {100, 0, 0}, robot.GetPose());
+  auto result = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, obj1Pose, PoseState::Known);
+  ASSERT_EQ(RESULT_OK, result);
+  
+  // lazy man's marker observation
+  robot.GetBlockWorld()._currentObservedMarkerTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  
+  EXPECT_TRUE( condAnyAge->AreConditionsMet(bei) );
+  EXPECT_TRUE( condInitialTick->AreConditionsMet(bei) );
+  EXPECT_TRUE( cond1000Ms->AreConditionsMet(bei) );
+  
+  float incrementEngineTime_ns = 1.004e9f; // 1004 ms (was first observed at 5ms)
+  BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
+  robot.GetBlockWorld()._currentObservedMarkerTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  
+  EXPECT_TRUE( condAnyAge->AreConditionsMet(bei) );
+  EXPECT_FALSE( condInitialTick->AreConditionsMet(bei) );
+  EXPECT_TRUE( cond1000Ms->AreConditionsMet(bei) );
+  
+  incrementEngineTime_ns = 1.006e9f; // 1006 ms (was first observed at 5ms)
+  BaseStationTimer::getInstance()->UpdateTime(incrementEngineTime_ns);
+  robot.GetBlockWorld()._currentObservedMarkerTimestamp = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  
+  EXPECT_TRUE( condAnyAge->AreConditionsMet(bei) );
+  EXPECT_FALSE( condInitialTick->AreConditionsMet(bei) );
+  EXPECT_FALSE( cond1000Ms->AreConditionsMet(bei) );
+  
+}
 
 

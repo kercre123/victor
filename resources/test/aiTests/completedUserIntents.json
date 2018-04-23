@@ -18,6 +18,10 @@
 
     "system_charger": {
       "type": "system_charger"
+    },
+
+    "explore_start": {
+      "type": "explore_start"
     }
 
   },

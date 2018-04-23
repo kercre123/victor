@@ -47,7 +47,7 @@ static const char* kParamsKey = "params";
   
 UserIntentComponent::UserIntentComponent(const Robot& robot, const Json::Value& userIntentMapConfig)
   : IDependencyManagedComponent( this, BCComponentID::UserIntentComponent )
-  , _intentMap( new UserIntentMap(userIntentMapConfig) )
+  , _intentMap( new UserIntentMap(userIntentMapConfig, robot.GetContext()) )
   , _context( robot.GetContext() )
 {
   

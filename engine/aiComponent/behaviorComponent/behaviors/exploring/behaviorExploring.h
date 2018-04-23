@@ -127,6 +127,8 @@ private:
     float angleAtArrival_rad;
     int numDriveAttemps;
     bool hasTakenPitStop;
+    float timeFinishedConfirmCharger_s;
+    float timeFinishedConfirmCube_s;
   };
 
   InstanceConfig _iConfig;

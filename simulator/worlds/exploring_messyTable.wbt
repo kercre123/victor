@@ -78,6 +78,8 @@ VictorCharger {
 WebotsKeyboardController {
   consoleVarName "DevDispatchAfterShake"
   consoleVarValue "2"
+  emotionName "Stimulated"
+  emotionVal 0.1
   filterLogs TRUE
   randomSeed -1
 }

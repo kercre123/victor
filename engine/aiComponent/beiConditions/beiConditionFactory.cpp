@@ -24,6 +24,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionFeatureGate.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectInitialDetection.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionObjectKnown.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectMoved.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectPositionUpdated.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionObstacleDetected.h"
@@ -211,6 +212,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::ObjectInitialDetection:
     {
       strategy = std::make_shared<ConditionObjectInitialDetection>(config);
+      break;
+    }
+    case BEIConditionType::ObjectKnown:
+    {
+      strategy = std::make_shared<ConditionObjectKnown>(config);
       break;
     }
     case BEIConditionType::ObjectMoved:

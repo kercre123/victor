@@ -48,6 +48,11 @@
       "behavior": "Observing"
     },
     {
+      "name": "Exploring",
+      "behavior": "Exploring",
+      "clearIntent": "explore_start"
+    },
+    {
       "name": "Socializing",
       "behavior": "Socialize"
     },
@@ -164,6 +169,47 @@
           "condition": { "customCondition": "CloseCubeForPlaying" }
         }
       ]
+    },
+
+    {
+      "from": "Observing",
+      "nonInterruptingTransitions": [
+        {
+          "to": "Exploring",
+          "condition": {
+            "conditionType": "Compound",
+            "and": [
+              {
+                "conditionType": "FeatureGate",
+                "feature": "Exploring" 
+              },
+              {
+                "conditionType": "SimpleMood",
+                "from": "LowStim",
+                "to": "MedStim"
+              }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "from": "Exploring",
+      // this behavior will end when it doesn't know where the charger is, or when
+      // it has exhausted the search space. If it ends because it doesn't know where
+      // the charger is, currently it will search for the charger before exiting. this logic is in
+      // to many places now, and it should be consolidated (todo)
+      "exitTransitions": [
+        {
+          "to": "Observing",
+          "condition": {
+            "conditionType": "TrueCondition" 
+          }
+        }
+      ]
+      // todo: exit when stimulation changes, or when a face is seen after a cooldown, etc.
+      // for now, we let it run to help evaluate the behavior
     },
 
     {
@@ -374,7 +420,8 @@
         "DriveOffChargerIntoPlay",
         "Observing",
         "ReturningToCharger", // to avoid unclaimed intent
-        "Socializing"
+        "Socializing",
+        "Exploring"
       ],
       "interruptingTransitions": [
         {
@@ -418,7 +465,7 @@
         "WakingUp",
         "ReturningToCharger",
         "FailedToFindCharger",
-        "PlayingWithCube"
+        "Exploring"
       ],
       "interruptingTransitions": [
         {
@@ -475,7 +522,38 @@
           }
         }
       ]
+    },
+
+    // explore voice command
+    {
+      "from": [
+        "DriveOffChargerIntoObserving",
+        "DriveOffChargerIntoSocializing",
+        "DriveOffChargerIntoPlay",
+        "Observing",
+        "ObservingOnCharger",
+        "ObservingOnChargerRecentlyPlaced",
+        "Socializing",
+        "WakingUp",
+        "ReturningToCharger",
+        "FailedToFindCharger",
+        "PlayingWithCube",
+        "Exploring"
+      ],
+      "interruptingTransitions": [
+        {
+          "to": "Exploring",
+          "condition": {
+            "conditionType": "UserIntentPending",
+            "list": [
+              {"type": "explore_start"}
+            ]
+          }
+        }
+      ]
     }
+
+    
 
   ]
 

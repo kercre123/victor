@@ -68,6 +68,12 @@
       "app_substitutions": {
         "param": "username"
       }
+    },
+    {
+      "user_intent": "explore_start",
+      "cloud_intent": "intent_explore_start",
+      "app_intent": "explore_start",
+      "feature_gate": "Exploring"
     }
   ],
 

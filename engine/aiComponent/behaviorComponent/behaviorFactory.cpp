@@ -105,6 +105,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorConfirmObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToTouchPetting.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToUnclaimedIntent.h"
 
@@ -700,6 +701,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ComeHere:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorComeHere(config));
+      break;
+    }
+    
+    case BehaviorClass::ConfirmObject:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorConfirmObject(config));
       break;
     }
     

@@ -126,6 +126,8 @@ BehaviorExploring::DynamicVariables::DynamicVariables()
   angleAtArrival_rad = 0.0f;
   numDriveAttemps = 0;
   hasTakenPitStop = false;
+  timeFinishedConfirmCharger_s = -1.0f;
+  timeFinishedConfirmCube_s = -1.0f;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -155,7 +157,6 @@ bool BehaviorExploring::WantsToBeActivatedBehavior() const
 {
   const bool chargerKnown = IsChargerPositionKnown(); // this should also probably be an IsObjectKnown BEICondition
   const bool hasDelegate = _iConfig.examineBehavior != nullptr;
-  // todo: activate based on stimulation level (BEICondition)
   
   return chargerKnown && hasDelegate;
 }
@@ -203,6 +204,8 @@ void BehaviorExploring::OnBehaviorActivated()
 {
   // reset dynamic variables
   _dVars = DynamicVariables();
+  _dVars.timeFinishedConfirmCharger_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  _dVars.timeFinishedConfirmCube_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   // pick a bunch of points and have the planner choose one and drive there
   SampleAndDrive();
@@ -231,21 +234,30 @@ void BehaviorExploring::BehaviorUpdate()
   }
   
   const bool controlDelegated = IsControlDelegated();
+  const float nextTimeShouldConfirmCharger = _dVars.timeFinishedConfirmCharger_s + kTimeBeforeConfirmCharger_s;
+  const float nextTimeShouldConfirmCube = _dVars.timeFinishedConfirmCube_s + kTimeBeforeConfirmCube_s;
+  const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   
   if( !controlDelegated
-      && (GetActivatedDuration() > kTimeBeforeConfirmCharger_s)
+      && (currTime >= nextTimeShouldConfirmCharger)
       && _iConfig.confirmChargerBehavior->WantsToBeActivated() )
   {
-    DelegateNow( _iConfig.confirmChargerBehavior.get(), &BehaviorExploring::RegainedControl );
+    DelegateNow( _iConfig.confirmChargerBehavior.get(), [this]() {
+      _dVars.timeFinishedConfirmCharger_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      RegainedControl();
+    });
     return;
   }
   
   if( !controlDelegated
-      && (GetActivatedDuration() > kTimeBeforeConfirmCube_s)
+      && (currTime >= nextTimeShouldConfirmCube)
       && IsCubeNearCharger()
       && _iConfig.confirmCubeBehavior->WantsToBeActivated() )
   {
-    DelegateNow( _iConfig.confirmCubeBehavior.get(), &BehaviorExploring::RegainedControl );
+    DelegateNow( _iConfig.confirmCubeBehavior.get(), [this]() {
+      _dVars.timeFinishedConfirmCube_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      RegainedControl();
+    });
     return;
   }
   

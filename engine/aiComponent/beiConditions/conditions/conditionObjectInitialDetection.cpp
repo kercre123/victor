@@ -11,32 +11,21 @@
  **/
 
 #include "engine/aiComponent/beiConditions/conditions/conditionObjectInitialDetection.h"
-
-#include "engine/aiComponent/beiConditions/beiConditionMessageHelper.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/blockWorld/blockWorld.h"
-
+#include "engine/aiComponent/beiConditions/conditions/conditionObjectKnown.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/utils/timer.h"
 
 namespace Anki {
 namespace Cozmo {
 
 namespace{
-  const char* kObjectTypeKey = "objectType";
-  
   const char* kFirstTimeOnlyKey = "firstTimeOnly";
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ConditionObjectInitialDetection::ConditionObjectInitialDetection(const Json::Value& config)
-: IBEICondition(config)
+ : ConditionObjectKnown( config, 0 ) // 0 means "this tick"
 {
-  const auto& objectTypeStr = JsonTools::ParseString(config,
-                                                    kObjectTypeKey,
-                                                    "ConditionObjectInitialDetection.ConfigError.ObjectType");
-  _targetType = ObjectTypeFromString(objectTypeStr);
-  
   _firstTimeOnly = JsonTools::ParseBool(config,
                                         kFirstTimeOnlyKey,
                                         "ConditionObjectInitialDetection.ConfigError.FirstTimeOnly");
@@ -50,15 +39,10 @@ ConditionObjectInitialDetection::~ConditionObjectInitialDetection()
   
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionObjectInitialDetection::InitInternal(BehaviorExternalInterface& behaviorExternalInterface)
+void ConditionObjectInitialDetection::SetActiveInternal(BehaviorExternalInterface& behaviorExternalInterface, bool setActive)
 {
-  _messageHelper.reset(new BEIConditionMessageHelper(this, behaviorExternalInterface));
-  
-  _messageHelper->SubscribeToTags({
-    EngineToGameTag::RobotObservedObject
-  });
+  _reacted = false;
 }
-  
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ConditionObjectInitialDetection::AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
@@ -67,29 +51,12 @@ bool ConditionObjectInitialDetection::AreConditionsMetInternal(BehaviorExternalI
     return false;
   }
   
-  if (_tickOfLastObservation == BaseStationTimer::getInstance()->GetTickCount()) {
+  const bool baseConditionsMet = ConditionObjectKnown::AreConditionsMetInternal( behaviorExternalInterface );
+  if( baseConditionsMet ) {
     _reacted = true;
     return true;
-  }
-
-  return false;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionObjectInitialDetection::HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
-{
-  switch(event.GetData().GetTag()){
-    case EngineToGameTag::RobotObservedObject:
-    {
-      const auto& observedType = event.GetData().Get_RobotObservedObject().objectType;
-      if (observedType == _targetType) {
-        _tickOfLastObservation = BaseStationTimer::getInstance()->GetTickCount();
-      }
-      break;
-    }
-    default:
-      break;
+  } else {
+    return false;
   }
 }
 

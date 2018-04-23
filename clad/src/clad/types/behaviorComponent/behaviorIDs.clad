@@ -125,6 +125,13 @@ enum uint_8 BehaviorID {
   GlobalInterruptions,
   HighLevelAI,
 
+  // victorBehaviorTree/highLevelDelegates/exploring
+  ConfirmCharger,
+  ConfirmCube,
+  Exploring,
+  ExploringExamineObstacle,
+  ExploringFindCharger,
+
   // victorBehaviorTree/highLevelDelegates
   FistBump,
 
@@ -136,13 +143,6 @@ enum uint_8 BehaviorID {
   GoHome,
   LowBatteryFindAndGoToHome,
   RequestToGoHome,
-
-  // victorBehaviorTree/highLevelDelegates/hiking
-  ConfirmCharger,
-  ConfirmCube,
-  Exploring,
-  ExploringExamineObstacle,
-  ExploringFindCharger,
 
   // victorBehaviorTree/highLevelDelegates
   InspectCube,

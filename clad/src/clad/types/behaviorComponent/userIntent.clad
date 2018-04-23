@@ -50,6 +50,7 @@ union dupes_allowed UserIntent
   // PLEASE KEEP ALPHABETIZED 
   // thank you in advance for caring
 
+  UserIntent_Void          explore_start,
   UserIntent_Void          greeting_goodbye,
   UserIntent_Void          greeting_goodmorning,
   UserIntent_Void          greeting_goodnight,

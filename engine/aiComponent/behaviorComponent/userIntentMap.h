@@ -27,12 +27,13 @@
 namespace Anki {
 namespace Cozmo {
 
-  
+class CozmoContext;
+
 class UserIntentMap : private Util::noncopyable
 {
 public:
 
-  explicit UserIntentMap(const Json::Value& config);
+  explicit UserIntentMap(const Json::Value& config, const CozmoContext* ctx);
 
   // returns a user intent that matches cloud intent. If none is found, it will return an intent signaling
   // that there was no match

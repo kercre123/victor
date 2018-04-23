@@ -44,7 +44,7 @@ void DoBehaviorComponentTicks(Robot& robot, ICozmoBehavior& behavior, BehaviorCo
 
 void InjectBehaviorIntoStack(ICozmoBehavior& behavior, TestBehaviorFramework& testFramework);
 
-void IncrementBaseStationTimerTicks(int numTicks = 1);
+void IncrementBaseStationTimerTicks();
 void InjectValidDelegateIntoBSM(TestBehaviorFramework& testFramework,
                                 IBehavior* delegator,
                                 IBehavior* delegated,

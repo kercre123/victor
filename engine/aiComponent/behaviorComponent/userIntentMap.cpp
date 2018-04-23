@@ -12,9 +12,13 @@
 
 #include "engine/aiComponent/behaviorComponent/userIntentMap.h"
 
+#include "clad/types/featureGateTypes.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
+#include "engine/cozmoContext.h"
+#include "engine/utils/cozmoFeatureGate.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "json/json.h"
+#include "util/featureGate/featureGate.h"
 #include "util/logging/logging.h"
 
 #include <unordered_set>
@@ -33,11 +37,12 @@ const char* kCloudVariableSubstitutionsKey = "cloud_substitutions";
 const char* kCloudVariableNumericsKey = "cloud_numerics";
 const char* kAppVariableSubstitutionsKey = "app_substitutions";
 const char* kAppVariableNumericsKey = "app_numerics";
+const char* kFeatureGateKey = "feature_gate";
 
 const char* kDebugName = "UserIntentMap";
 }
 
-UserIntentMap::UserIntentMap(const Json::Value& config)
+UserIntentMap::UserIntentMap(const Json::Value& config, const CozmoContext* ctx)
   : _unmatchedUserIntent{ USER_INTENT(unmatched_intent) }
 {
   // for validation
@@ -57,6 +62,28 @@ UserIntentMap::UserIntentMap(const Json::Value& config)
                  "supplied %s '%s' is invalid",
                  kUserIntentKey,
                  userIntentStr.c_str() );
+    
+    // check if this user intent is enabled (feature gate), and skip it if not
+    {
+      const std::string& featureName = config.get( kFeatureGateKey, "" ).asString();
+      if( !featureName.empty() && (ctx != nullptr) ) {
+        FeatureType feature = FeatureType::Invalid;
+        ANKI_VERIFY( FeatureTypeFromString( featureName, feature ),
+                     "UserIntentMap.Ctor.InvalidFeature",
+                     "Unknown feature gate type '%s' for intent '%s'",
+                     featureName.c_str(),
+                     userIntentStr.c_str() );
+        const bool featureEnabled = ctx->GetFeatureGate()->IsFeatureEnabled( feature );
+        if( !featureEnabled ) {
+          PRINT_NAMED_INFO( "UserIntentMap.Ctor.FeatureGated",
+                            "Disabled feature '%s' is gating intent '%s'",
+                            featureName.c_str(),
+                            userIntentStr.c_str() );
+          // this will be an unmatched intent!
+          continue;
+        }
+      }
+    }
     
     foundUserIntent.insert( intentTag );
     
@@ -119,7 +146,7 @@ UserIntentMap::UserIntentMap(const Json::Value& config)
       std::vector<const char*> validKeys = {
         kCloudIntentKey, kCloudVariableSubstitutionsKey, kCloudVariableNumericsKey,
         kAppIntentKey, kAppVariableSubstitutionsKey, kAppVariableNumericsKey,
-        kUserIntentKey
+        kUserIntentKey, kFeatureGateKey,
       };
       std::vector<std::string> badKeys;
       const bool hasBadKeys = JsonTools::HasUnexpectedKeys( mapping, validKeys, badKeys );

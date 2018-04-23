@@ -35,6 +35,7 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "gtest/gtest.h"
 #include "json/json.h"
+#include "test/engine/helpers/cubePlacementHelper.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -1303,55 +1304,6 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-namespace {
-
-// Helpers can't have TEST assertions
-ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ObjectType objectType)
-{
-  // matching activeID happens through objectID automatically on addition
-  const ActiveID activeID = -1;
-  const FactoryID factoryID = "";
-
-  BlockWorld& blockWorld = robot.GetBlockWorld();
-  Anki::Cozmo::ObservableObject* objectPtr = CreateActiveObjectByType(objectType, activeID, factoryID);
-  DEV_ASSERT(nullptr != objectPtr, "CreateObjectLocatedAtOrigin.CreatedNull");
-  
-  // check it currently doesn't exist in BlockWorld
-  {
-    BlockWorldFilter filter;
-    filter.SetFilterFcn(nullptr); // TODO Should not be needed by default
-    filter.SetAllowedTypes( {objectPtr->GetType()} );
-    filter.SetAllowedFamilies( {objectPtr->GetFamily()} );
-    ObservableObject* sameBlock = blockWorld.FindLocatedMatchingObject(filter);
-    DEV_ASSERT(nullptr == sameBlock, "CreateObjectLocatedAtOrigin.TypeAlreadyInUse");
-  }
-  
-  // set initial pose & ID (that's responsibility of the system creating the object)
-  DEV_ASSERT(!objectPtr->GetID().IsSet(), "CreateObjectLocatedAtOrigin.IDSet");
-  DEV_ASSERT(!objectPtr->HasValidPose(), "CreateObjectLocatedAtOrigin.HasValidPose");
-  objectPtr->SetID();
-  Anki::Pose3d originPose;
-  originPose.SetParent( robot.GetWorldOrigin() );
-  objectPtr->InitPose( originPose, Anki::PoseState::Known); // posestate could be something else
-  
-  // now they can be added to the world
-  blockWorld.AddLocatedObject(std::shared_ptr<ObservableObject>(objectPtr));
-
-  // need to pretend we observed this object
-  robot.GetObjectPoseConfirmer().AddInExistingPose(objectPtr); // this has to be called after AddLocated just because
-  
-  // verify they are there now
-  DEV_ASSERT(objectPtr->GetID().IsSet(), "CreateObjectLocatedAtOrigin.IDNotset");
-  DEV_ASSERT(objectPtr->HasValidPose(), "CreateObjectLocatedAtOrigin.InvalidPose");
-  ObservableObject* objectInWorld = blockWorld.GetLocatedObjectByID( objectPtr->GetID() );
-  DEV_ASSERT(objectInWorld == objectPtr, "CreateObjectLocatedAtOrigin.NotSameObject");
-  DEV_ASSERT(nullptr != objectInWorld, "CreateObjectLocatedAtOrigin.NullWorldPointer");
-  return objectInWorld;
-}
-
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(BlockWorld, CubeStacks)
 {
   using namespace Anki;
@@ -1379,9 +1331,9 @@ TEST(BlockWorld, CubeStacks)
   }
   
   // Create three objects
-  ObservableObject* object1 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
-  ObservableObject* object2 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE2);
-  ObservableObject* object3 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE3);
+  ObservableObject* object1 = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
+  ObservableObject* object2 = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE2);
+  ObservableObject* object3 = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE3);
   
   {
     // verify they are there now
@@ -1585,8 +1537,8 @@ TEST(BlockWorld, DISABLED_UnobserveCubeStack)
   std::vector<ObservableObject*> objects;
 
   // Create objects
-  ObservableObject* object1 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
-  ObservableObject* object2 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE2);
+  ObservableObject* object1 = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
+  ObservableObject* object2 = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE2);
   
   {
     // verify they are there now
@@ -1721,7 +1673,7 @@ TEST(BlockWorld, CopyObjectsFromZombieOrigins)
   ASSERT_EQ(nullptr, obj2);
   
   // Add a new object to this currently empty frame
-  ObservableObject* object3 = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE3);
+  ObservableObject* object3 = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE3);
   ASSERT_NE(nullptr, object3);
   const ObjectID objID3 = object3->GetID();
   ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 2);
@@ -2176,7 +2128,7 @@ TEST(BlockWorld, ObjectRobotCollisionCheck)
   Robot robot(1, cozmoContext);
   robot.FakeSyncRobotAck();
   
-  ObservableObject* object = CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
+  ObservableObject* object = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
   
   ASSERT_NE(nullptr, object);
   const ObjectID& objID = object->GetID();
