@@ -96,7 +96,11 @@ void CompositeImageLayer::AddToLayout(SpriteBoxName sbName, const SpriteBox& spr
 void CompositeImageLayer::AddToImageMap(SpriteCache* cache, SpriteSequenceContainer* seqContainer,
                                         SpriteBoxName sbName, const Vision::SpriteName& spriteName)
 {
-  _imageMap.emplace(sbName, SpriteEntry(cache, seqContainer, spriteName));
+  auto resultPair = _imageMap.emplace(sbName, SpriteEntry(cache, seqContainer, spriteName));
+  // If map entry already exists, just update existing iterator
+  if(!resultPair.second){
+    resultPair.first->second = SpriteEntry(cache, seqContainer, spriteName);
+  }
 }
 
 

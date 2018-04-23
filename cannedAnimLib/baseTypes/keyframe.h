@@ -297,7 +297,10 @@ namespace Cozmo {
     void AddFrameToRuntimeSequence(Vision::SpriteHandle spriteHandle);
 
     // Transfers ownership to the keyframe
-    void SetCompositeImage(Vision::SpriteCache* spriteCache, Vision::CompositeImage* compImg);
+    void SetCompositeImage(Vision::SpriteCache* spriteCache, Vision::CompositeImage* compImg, u32 getFrameInterval_ms);
+    // Returns true if composite image successfully updated
+    bool UpdateCompositeImage(Vision::SpriteCache* spriteCache, Vision::SpriteSequenceContainer* seqContainer,
+                              Vision::LayerName layerName, Vision::SpriteBoxName sbName, Vision::SpriteName spriteName);
 
     // These functions retrieve the image handle and increment the frame count so that they will retrieve
     // the next image on the next call. Returns true if the Image field was populated, false otherwise.
@@ -330,7 +333,10 @@ namespace Cozmo {
     // or it has a runtime sprite sequence 
     const Vision::SpriteSequence*  _cannedSpriteSequence = nullptr;
     std::unique_ptr<Vision::SpriteSequence> _runtimeSpriteSequence;
-    std::unique_ptr<Vision::CompositeImage> _compositeImage; 
+    std::unique_ptr<Vision::CompositeImage> _compositeImage;
+    u32  _compositeImageGetFrameInterval_ms = 0;
+    u32  _timeTillNextCompImgGetFrameCall = 0;
+    bool _compositeImageUpdated = false;
 
     // Defines whether the frame should be rendered as an RGBA image
     // or a grayscale image rendered in the color of the robot's eye hue

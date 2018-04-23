@@ -266,9 +266,14 @@ void BehaviorProceduralClock::BehaviorUpdate()
     digitLayer->SetImageMap(std::move(imageMap));
   }
 
-   
-  // draw it to the face
-  GetBEI().GetAnimationComponent().DisplayFaceImage(*(_instanceParams.compImg.get()), 1000.0f, true);
+  if(!_lifetimeParams.hasBaseImageBeenSent){
+    // Send the base image over the wire
+    GetBEI().GetAnimationComponent().DisplayFaceImage(*(_instanceParams.compImg.get()), ANIM_TIME_STEP_MS, _instanceParams.totalTimeDisplayClock, true);
+    _lifetimeParams.hasBaseImageBeenSent = true;
+  }else{
+    // Just update the composite image
+    GetBEI().GetAnimationComponent().UpdateCompositeFaceImageAssets(LayerName::Layer_4, imageMap);
+  }
 }
 
 

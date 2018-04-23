@@ -82,6 +82,7 @@ private:
     int nextUpdateTime_s = 0;
     BehaviorState currentState = BehaviorState::TurnToFace;
     SmartFaceID targetFaceID;
+    bool hasBaseImageBeenSent = false;
   };
 
   

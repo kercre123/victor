@@ -83,10 +83,13 @@ namespace Cozmo {
     void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageGrayscaleChunk& msg);
     void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageRGBChunk& msg);
     void Process_displayCompositeImageChunk(const RobotInterface::DisplayCompositeImageChunk& msg);
+    void Process_updateCompositeImageAsset(const RobotInterface::UpdateCompositeImageAsset& msg);
 
     Result SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms);
-    Result SetCompositeImage(Vision::CompositeImage* compImg, u32 duration_ms);
-
+    Result SetCompositeImage(Vision::CompositeImage* compImg, u32 getFrameInterval_ms, u32 duration_ms);
+    Result UpdateCompositeImage(Vision::LayerName layerName, 
+                                Vision::SpriteBoxName sbName, 
+                                Vision::SpriteName spriteName);
     
     Audio::ProceduralAudioClient* GetProceduralAudioClient() const { return _proceduralAudioClient.get(); }
     

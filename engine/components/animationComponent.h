@@ -24,6 +24,7 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/types/keepFaceAliveParameters.h"
+#include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/signalHolder.h"
 
@@ -130,7 +131,14 @@ public:
   Result DisplayFaceImage(const Vision::Image& img, u32 duration_ms, bool interruptRunning = false);
   Result DisplayFaceImage(const Vision::ImageRGB& img, u32 duration_ms, bool interruptRunning = false);
   Result DisplayFaceImage(const Vision::ImageRGB565& imgRGB565, u32 duration_ms, bool interruptRunning = false);
-  Result DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 duration_ms, bool interruptRunning = false);
+  // There is only one composite image in the animation process - duration is the amount of time the image will be displayed on screen
+  // getFrameInterval_ms defines how often the composite images' GetFrame function should be called for internal sprite sequences
+  Result DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 getFrameInterval_ms, u32 duration_ms, bool interruptRunning = false);
+  
+  // Calling this function provides no gaurentee that the assets will actually be displayed
+  // If a compositeFaceImage is currently displayed the image map will be updated, but if
+  // something else is displayed on the robot's face this message will have no affect
+  void UpdateCompositeFaceImageAssets(Vision::LayerName layerName, const Vision::CompositeImageLayer::ImageMap& imageMap);
 
   // Enable/Disable KeepFaceAlive
   // If enable == false, disableTimeout_ms is the duration over which the face should 

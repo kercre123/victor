@@ -408,9 +408,18 @@ message SetFaceSaturation
 message DisplayCompositeImageChunk
 {
   uint_32 compositeImageID, // Ensures chunks are for the same image
+  uint_32 get_frame_interval_ms, // Interval at which to call Composite Image's GetFrame
   uint_32 duration_ms,      // Use uint_32 max value to keep the image on the screen
   Vision::CompositeImageChunk compositeImageChunk
 }
+
+message UpdateCompositeImageAsset
+{
+  Vision::LayerName     layerName,
+  Vision::SpriteBoxName spriteBoxName,
+  Vision::SpriteName    spriteName
+}
+
 
 // TODO: Move to messageGameToEngine.clad or shared file
 // DisplayFaceImageBinaryChunk
@@ -599,6 +608,7 @@ union EngineToRobot
 
   DisplayFaceImageGrayscaleChunk   displayFaceImageGrayscaleChunk      = 0x62,
   DisplayCompositeImageChunk       displayCompositeImageChunk          = 0x63,
+  UpdateCompositeImageAsset        updateCompositeImageAsset           = 0x64,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,

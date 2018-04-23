@@ -458,7 +458,7 @@ Result AnimationComponent::DisplayFaceImageHelper(const ImageType& img, u32 dura
   return RESULT_OK;
 }
 
-Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 duration_ms, bool interruptRunning)
+Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 getFrameInterval_ms, u32 duration_ms, bool interruptRunning)
 {
   // TODO: Is this what interruptRunning should mean?
   //       Or should it queue on anim process side and optionally interrupt currently executing anim?
@@ -471,11 +471,25 @@ Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compos
   _compositeImageID++;
   const std::vector<Vision::CompositeImageChunk> imageChunks = compositeImage.GetImageChunks();
   for(const auto& chunk: imageChunks){
-    _robot->SendRobotMessage<RobotInterface::DisplayCompositeImageChunk>(_compositeImageID, duration_ms, chunk);
+    _robot->SendRobotMessage<RobotInterface::DisplayCompositeImageChunk>(_compositeImageID, getFrameInterval_ms, duration_ms, chunk);
   }
 
   return RESULT_OK;
 }
+
+void AnimationComponent::UpdateCompositeFaceImageAssets(Vision::LayerName layerName, const Vision::CompositeImageLayer::ImageMap& imageMap)
+{
+  for(const auto& pair: imageMap){
+    if(pair.second._spriteName == Vision::SpriteName::Count){
+      PRINT_NAMED_WARNING("AnimationComponent.UpdateCompositeFaceImageAsset.InvalidSprite",
+                          "Currently image maps can only be serialized with sprite names - skipping sprite box %s",
+                          Vision::SpriteBoxNameToString(pair.first));
+      continue;
+    }
+    _robot->SendRobotMessage<RobotInterface::UpdateCompositeImageAsset>(layerName, pair.first, pair.second._spriteName);
+  }
+}
+
 
 
 Result AnimationComponent::EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms) const

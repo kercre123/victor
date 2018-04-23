@@ -624,12 +624,17 @@ namespace Cozmo {
       if(ANKI_VERIFY(builtImage, 
                      "AnimationStreamer.Process_displayCompositeImageChunk.FailedToBuildImage",
                      "Composite image failed to build")){
-        SetCompositeImage(outImage, msg.duration_ms);
+        SetCompositeImage(outImage, msg.get_frame_interval_ms, msg.duration_ms);
       }
 
       _compositeImageBuilder.reset();
     }
     
+  }
+
+  void AnimationStreamer::Process_updateCompositeImageAsset(const RobotInterface::UpdateCompositeImageAsset& msg)
+  {
+    UpdateCompositeImage(msg.layerName, msg.spriteBoxName, msg.spriteName);
   }
 
   Result AnimationStreamer::SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms)
@@ -671,7 +676,7 @@ namespace Cozmo {
     return result;
   }
 
-  Result AnimationStreamer::SetCompositeImage(Vision::CompositeImage* compImg, u32 duration_ms)
+  Result AnimationStreamer::SetCompositeImage(Vision::CompositeImage* compImg, u32 getFrameInterval_ms, u32 duration_ms)
   {
     DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetCompositeImage.NullProceduralAnimation");
     auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
@@ -682,7 +687,7 @@ namespace Cozmo {
     
     // Trigger time of keyframe is 0 since we want it to start playing immediately
     SpriteSequenceKeyFrame kf;
-    kf.SetCompositeImage(spriteCache, compImg);
+    kf.SetCompositeImage(spriteCache, compImg, getFrameInterval_ms);
     kf.SetFrameDuration_ms(duration_ms);
     Result result = _proceduralAnimation->AddKeyFrameToBack(kf);
     if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetCompositeImage.FailedToAddKeyFrame", "")))
@@ -696,6 +701,24 @@ namespace Cozmo {
     return result;
   }
 
+  Result AnimationStreamer::UpdateCompositeImage(Vision::LayerName layerName, 
+                                                 Vision::SpriteBoxName sbName, 
+                                                 Vision::SpriteName spriteName)
+  {
+    if (_streamingAnimation != _proceduralAnimation) {
+      return Result::RESULT_FAIL;
+    }
+
+    auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
+    auto* spriteSeqContainer = _context->GetDataLoader()->GetSpriteSequenceContainer();
+    auto& keyframe = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>().GetCurrentKeyFrame();
+    if(keyframe.UpdateCompositeImage(spriteCache, spriteSeqContainer, 
+                                     layerName, sbName, spriteName)){
+      return Result::RESULT_OK;
+    }
+    
+    return Result::RESULT_FAIL;
+  }
   
   void AnimationStreamer::Abort()
   {

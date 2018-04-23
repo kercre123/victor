@@ -463,11 +463,32 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       }
     }
 
-    void SpriteSequenceKeyFrame::SetCompositeImage(Vision::SpriteCache* spriteCache, Vision::CompositeImage* compImg)
+    void SpriteSequenceKeyFrame::SetCompositeImage(Vision::SpriteCache* spriteCache, 
+                                                   Vision::CompositeImage* compImg, 
+                                                   u32 getFrameInterval_ms)
     {
       _compositeImage = std::make_unique<Vision::CompositeImage>(spriteCache);
       _compositeImage.reset(compImg);
+      _compositeImageGetFrameInterval_ms = getFrameInterval_ms;
     }
+
+    bool SpriteSequenceKeyFrame::UpdateCompositeImage(Vision::SpriteCache* spriteCache, 
+                                                      Vision::SpriteSequenceContainer* seqContainer,
+                                                      Vision::LayerName layerName, 
+                                                      Vision::SpriteBoxName sbName, 
+                                                      Vision::SpriteName spriteName)
+    {
+      if(_compositeImage != nullptr){
+        auto* layer = _compositeImage->GetLayerByName(layerName);
+        if(layer != nullptr){
+          layer->AddToImageMap(spriteCache, seqContainer, sbName, spriteName);
+          _compositeImageUpdated = true;
+          return true;
+        }
+      }
+      return false;
+    }
+
 
     
     bool SpriteSequenceKeyFrame::GetFaceImageHandle(Vision::SpriteHandle& handle)
@@ -476,13 +497,24 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         return false;
       }
 
+      // Check for composite image frame updates
+      if(_compositeImage != nullptr){
+        if(_timeTillNextCompImgGetFrameCall < ANIM_TIME_STEP_MS){
+          _compositeImageUpdated = 0;
+          _timeTillNextCompImgGetFrameCall = _compositeImageGetFrameInterval_ms;
+          _compositeImageUpdated = true;
+        }else{
+          _timeTillNextCompImgGetFrameCall -= ANIM_TIME_STEP_MS;
+        }
+      }
+
       if(ANKI_DEV_CHEATS){
         ANKI_VERIFY(VerifyOnlyOneImplementationSet(), 
                     "SpriteSequenceKeyFrame.GetFaceImageHandle.MultilpeImplementationsSet", 
                     "");
       }
 
-      if(_currentTime_ms >= _nextFrameTime_ms){
+      if((_currentTime_ms >= _nextFrameTime_ms) || _compositeImageUpdated){
         if(_runtimeSpriteSequence != nullptr){
           _runtimeSpriteSequence->GetFrame(0, handle);
           if(SequenceShouldAdvance()){
@@ -498,9 +530,15 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           img->FillWith(0);
           _compositeImage->OverlayImageWithFrame(*img, _curFrame);
           handle = std::make_shared<Vision::SpriteWrapper>(img);
-          ++_curFrame;
+          if(_compositeImageUpdated){
+            ++_curFrame;
+          }
         }
-        _nextFrameTime_ms = _currentTime_ms + _frameDuration_ms;
+        if(_compositeImageUpdated){
+          _nextFrameTime_ms = _currentTime_ms + _frameDuration_ms;
+        }
+        _compositeImageUpdated = false;
+
         return true;
       }else{
         return false;
