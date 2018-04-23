@@ -490,6 +490,8 @@ int main(void)
   Board::ledOff(Board::LED_GREEN);
   Board::ledOff(Board::LED_YLW);
   
+  try { fixtureCleanup(); } catch(error_t e) {}
+  
   while (1)
   {  
     MainExecution();
