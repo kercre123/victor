@@ -1055,7 +1055,11 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMotionModelParams>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetRobotCarryingObject>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::StopRobotForSdk>();
-      
+
+    // Messages from switchboard
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetConnectionStatus>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBLEPin>();
+
     // EngineToGame: (in alphabetical order)
     helper.SubscribeEngineToGame<MessageEngineToGameTag::AnimationAborted>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotCompletedAction>();
