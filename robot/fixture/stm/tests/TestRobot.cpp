@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <stdlib.h>
 #include "app.h"
 #include "board.h"
@@ -6,6 +7,7 @@
 #include "contacts.h"
 #include "dut_uart.h"
 #include "emrf.h"
+#include "flexflow.h"
 #include "meter.h"
 #include "portable.h"
 #include "robotcom.h"
@@ -189,7 +191,17 @@ const char* DBG_cmd_substitution(const char *line, int len)
 #define DETECT_CURRENT_MA   100
 #define SYSCON_CHG_PWR_DELAY_MS 250 /*delay from robot's on-charger detect until charging starts*/
 
-int detect_ma = 0;
+int detect_ma = 0, detect_mv = 0;
+
+//test info reported to flexflow
+const int numlogs = 2;
+static struct {
+  uint32_t      esn, hwver, model, lotcode, packoutdate;
+  robot_bsv_t   bsv;
+  char         *log[numlogs];
+  int           bat_mv, bat_raw;
+} flexnfo;
+
 bool TestRobotDetect(void)
 {
   //on test cleanup/exit, let charger kick back in so we can properly detect removal
@@ -208,7 +220,6 @@ bool TestRobotDetect(void)
   return i_ma > DETECT_CURRENT_MA || (i_ma > PRESENT_CURRENT_MA && g_isDevicePresent);
 }
 
-int detect_mv = 0;
 void TestRobotDetectSpine(void)
 {
   rcomSetTarget(1); //rcom -> spine cable
@@ -228,6 +239,8 @@ void TestRobotCleanup(void)
 {
   detect_ma = 0;
   detect_mv = 0;
+  memset( &flexnfo, 0, sizeof(flexnfo) );
+  
   Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT);
   //ConsolePrintf("----DBG: i=%imA\n", Meter::getCurrentMa(PWR_VEXT,4) );
@@ -237,25 +250,38 @@ void TestRobotCleanup(void)
 
 void read_robot_info_(void)
 {
-  uint32_t esn0 = rcomEsn();
-  uint32_t esn1     = rcomGmr( EMR_FIELD_OFS(ESN) );
-  uint32_t hwver    = rcomGmr( EMR_FIELD_OFS(HW_VER) );
-  uint32_t model    = rcomGmr( EMR_FIELD_OFS(MODEL) );
-  uint32_t lot_code = rcomGmr( EMR_FIELD_OFS(LOT_CODE) );
+  uint32_t esnCmd = rcomEsn();
+  
+  flexnfo.esn           = rcomGmr( EMR_FIELD_OFS(ESN) );
+  flexnfo.hwver         = rcomGmr( EMR_FIELD_OFS(HW_VER) );
+  flexnfo.model         = rcomGmr( EMR_FIELD_OFS(MODEL) );
+  flexnfo.lotcode       = rcomGmr( EMR_FIELD_OFS(LOT_CODE) );
   uint32_t playpenready = rcomGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
   uint32_t playpenpass  = rcomGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
   uint32_t packedout    = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
-  uint32_t packoutdate  = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
-  rcomBsv();
+  flexnfo.packoutdate   = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
   
-  ConsolePrintf("EMR[%u] esn         :%08x [%08x]\n", EMR_FIELD_OFS(ESN), esn1, esn0);
-  ConsolePrintf("EMR[%u] hwver       :%u\n", EMR_FIELD_OFS(HW_VER), hwver);
-  ConsolePrintf("EMR[%u] model       :%u\n", EMR_FIELD_OFS(MODEL), model);
-  ConsolePrintf("EMR[%u] lotcode     :%u\n", EMR_FIELD_OFS(LOT_CODE), lot_code);
+  flexnfo.bsv = *rcomBsv();
+  
+  ConsolePrintf("EMR[%u] esn         :%08x [%08x]\n", EMR_FIELD_OFS(ESN), flexnfo.esn, esnCmd);
+  ConsolePrintf("EMR[%u] hwver       :%u\n", EMR_FIELD_OFS(HW_VER), flexnfo.hwver);
+  ConsolePrintf("EMR[%u] model       :%u\n", EMR_FIELD_OFS(MODEL), flexnfo.model);
+  ConsolePrintf("EMR[%u] lotcode     :%u\n", EMR_FIELD_OFS(LOT_CODE), flexnfo.lotcode);
   ConsolePrintf("EMR[%u] playpenready:%u\n", EMR_FIELD_OFS(PLAYPEN_READY_FLAG), playpenready);
   ConsolePrintf("EMR[%u] playpenpass :%u\n", EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), playpenpass);
   ConsolePrintf("EMR[%u] packedout   :%u\n", EMR_FIELD_OFS(PACKED_OUT_FLAG), packedout);
-  ConsolePrintf("EMR[%u] packout-date:%u\n", EMR_FIELD_OFS(PACKED_OUT_DATE), packoutdate);
+  ConsolePrintf("EMR[%u] packout-date:%u\n", EMR_FIELD_OFS(PACKED_OUT_DATE), flexnfo.packoutdate);
+}
+
+//read battery voltage
+static int robot_get_batt_mv(int *out_raw)
+{
+  int bat_raw = rcomGet(1, RCOM_SENSOR_BATTERY)[0].bat.raw;
+  int bat_mv = RCOM_BAT_RAW_TO_MV(bat_raw);
+  if( out_raw ) *out_raw = bat_raw;
+  
+  ConsolePrintf("vbat = %imV (%i)\n", bat_mv, bat_raw);
+  return bat_mv;
 }
 
 //always run this first after detect, to get into comms mode
@@ -273,6 +299,7 @@ void TestRobotInfo(void)
   }
   
   read_robot_info_();
+  robot_get_batt_mv(0);
   
   //DEBUG: console bridge, manual testing
   if( g_fixmode == FIXMODE_ROBOT0 )
@@ -462,16 +489,6 @@ void EmrUpdate(void)
 //                  Recharge
 //-----------------------------------------------------------------------------
 
-//read battery voltage
-int robot_get_batt_mv(void)
-{
-  int raw = rcomGet(1, RCOM_SENSOR_BATTERY)[0].bat.raw;
-  int vBatMv = RCOM_BAT_RAW_TO_MV(raw);
-  
-  ConsolePrintf("vbat = %u.%03uV (%i)\n", vBatMv/1000, vBatMv%1000, raw);
-  return vBatMv;
-}
-
 enum {
   RECHARGE_STATUS_OK = 0,
   RECHARGE_STATUS_OFF_CONTACT,
@@ -550,7 +567,7 @@ int m_Recharge( uint16_t max_charge_time_s, uint16_t bat_limit_mv, uint16_t i_do
   
   Contacts::setModeRx();
   Timer::delayMs(500); //let battery voltage settle
-  int batt_mv = robot_get_batt_mv(); //get initial battery level
+  int batt_mv = robot_get_batt_mv(0); //get initial battery level
   
   uint32_t Tstart = Timer::get();
   while( bat_limit_mv == 0 || batt_mv < bat_limit_mv )
@@ -563,7 +580,7 @@ int m_Recharge( uint16_t max_charge_time_s, uint16_t bat_limit_mv, uint16_t i_do
     ConsolePrintf("total charge time: %ds\n", Timer::elapsedUs(Tstart)/1000000 );
     Contacts::setModeRx();
     Timer::delayMs(500); //let battery voltage settle
-    batt_mv = robot_get_batt_mv();
+    batt_mv = robot_get_batt_mv(0);
     
     //charge loop detected robot removal or charge completion?
     if( chgStat != RECHARGE_STATUS_TIMEOUT )
@@ -600,8 +617,16 @@ void Recharge(void)
 }
 
 extern void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv );
-static void ChargeTest(void) {
-  RobotChargeTest( 425, 4200 );
+static void ChargeTest(void)
+{
+  RobotChargeTest( 425, 4100 ); //test charging circuit
+  
+  //check battery voltage
+  flexnfo.bat_mv = robot_get_batt_mv( &flexnfo.bat_raw );
+  if( flexnfo.bat_mv < 3000 )
+    throw ERROR_BAT_UNDERVOLT;
+  //if( flexnfo.bat_mv > 4100 )
+  //  throw ERROR_BAT_OVERVOLT;
 }
 
 //Test charging circuit by verifying current draw
@@ -614,7 +639,7 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
   
   Contacts::setModeRx(); //switch to comm mode
   Timer::delayMs(500); //let battery voltage settle
-  int batt_mv = robot_get_batt_mv(); //get initial battery level
+  int batt_mv = robot_get_batt_mv(0); //get initial battery level
   
   //Turn on charging power
   Board::powerOn(PWR_VEXT,0);
@@ -677,21 +702,57 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
   
   Contacts::setModeRx(); //switch to comm mode
   Timer::delayMs(500); //let battery voltage settle
-  batt_mv = robot_get_batt_mv(); //get final battery level
+  batt_mv = robot_get_batt_mv(0); //get final battery level
   
   ConsolePrintf("charge-current-ma,%d,sample-cnt,%d\r\n", avg, avgCnt);
   ConsolePrintf("charge-current-dbg,avgMax,%d,%d,iMax,%d,%d\r\n", avgMax, avgMaxTime, iMax, iMaxTime);
   if( avgCnt >= NUM_SAMPLES && avg >= i_done_ma )
     return; //OK
   
-  if( batt_mv >= bat_overvolt_mv ) {
-    //const int BURN_TIME_S = 120;  //time to hit the gym and burn off a few pounds
-    //ConsolePrintf("power-on,%ds\r\n", BURN_TIME_S);
-    //robot_get_batt_mv(BURN_TIME_S,BURN_TIME_S); //reset power-on timer and set face to info screen for the duration
+  if( batt_mv >= bat_overvolt_mv )
     throw ERROR_BAT_OVERVOLT; //error prompts operator to put robot aside for a bit
-  }
   
   throw ERROR_BAT_CHARGER;
+}
+
+//-----------------------------------------------------------------------------
+//                  Flex Flow
+//-----------------------------------------------------------------------------
+
+static void RobotFlexFlowPackoutReport(void)
+{
+  //XXX validate nfo
+  if( !flexnfo.esn || flexnfo.esn == 0xFFFFffff || !flexnfo.bsv.ein[0] || flexnfo.bsv.ein[0] == 0xFFFFffff || !flexnfo.bat_mv )
+    throw ERROR_BAD_ARG;
+  //if( !flexnfo.packoutdate )
+  //  throw ERROR_BAD_ARG;
+  
+  //dump collected robot logs
+  for( int i=0; i<numlogs; i++ ) {
+    FLEXFLOW::printf("<flex> log packout_%08x_log%u.log\n", flexnfo.esn, i);
+    FLEXFLOW::write( flexnfo.log[i] == NULL ? "not found" : flexnfo.log[i]);
+    FLEXFLOW::printf("\n</flex>\n");
+  }
+  
+  //report fixture-collected info
+  FLEXFLOW::printf("<flex> log packout_%08x_fix.log\n", flexnfo.esn);
+  {
+    FLEXFLOW::printf("esn %08x hwver %u model %u\n", flexnfo.esn, flexnfo.hwver, flexnfo.model);
+    FLEXFLOW::printf("lotcode %08x packout-date %08x\n", flexnfo.lotcode, flexnfo.packoutdate );
+    
+    robot_bsv_t* bsv = &flexnfo.bsv;
+    FLEXFLOW::printf("body hwrev %u model %u\n", bsv->hw_rev, bsv->hw_model );
+    FLEXFLOW::printf("body ein %08x %08x %08x %08x\n", bsv->ein[0], bsv->ein[1], bsv->ein[2], bsv->ein[3] );
+    FLEXFLOW::printf("body app vers %08x %08x %08x %08x ", bsv->app_version[0], bsv->app_version[1], bsv->app_version[2], bsv->app_version[3] );
+    for(int x=0; x<16; x++) {
+      int c = ((uint8_t*)&bsv->app_version)[x];
+      if( isprint(c) ) FLEXFLOW::putchar(c); else break;
+    }
+    FLEXFLOW::printf("\n");
+    
+    FLEXFLOW::printf("vbat %imV %i\n", flexnfo.bat_mv, flexnfo.bat_raw);
+  }
+  FLEXFLOW::printf("</flex>\n");
 }
 
 //-----------------------------------------------------------------------------
@@ -749,16 +810,26 @@ TestFunction* TestRobot3GetTests(void) {
   return m_tests;
 }
 
+TestFunction* TestRobotPackoutGetTests(void) { 
+  static TestFunction m_tests[] = {
+    TestRobotInfo,
+    EmrChecks, //check previous test results and reset status flags
+    TestRobotSensors,
+    TestRobotMotors,
+    ChargeTest,
+    EmrUpdate, //set test complete flags
+    RobotFlexFlowPackoutReport,
+    NULL,
+  };
+  return m_tests;
+}
+
 TestFunction* TestRobotInfoGetTests(void) {
   static TestFunction m_tests[] = {
     TestRobotInfo,
     NULL,
   };
   return m_tests;
-}
-
-TestFunction* TestRobotPackoutGetTests(void) { 
-  return TestRobot3GetTests();
 }
 
 TestFunction* TestRobotRechargeGetTests(void) {
