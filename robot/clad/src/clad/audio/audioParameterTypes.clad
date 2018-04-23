@@ -16,6 +16,8 @@ enum uint_32 ParameterType
   Event_Volume = 3530059848,
   External_Name_Duration = 2145805753,
   External_Process_Pitch = 2027863301,
+  External_Shape = 1292394150,
+  External_Speed = 732885492,
   Invalid = 0,
   Mood = 3128647864,
   Music_Mood = 1579946944,

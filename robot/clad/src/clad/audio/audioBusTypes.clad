@@ -16,6 +16,7 @@ enum uint_32 BusType
   Ui = 1551306167,
   Victor_Robot = 3435543205,
   Victor_Robot_External = 1731724381,
+  Victor_Robot_High_Priority = 3187603231,
   Victor_Robot_Sfx_Anim = 3665996615,
   Victor_Robot_Sfx_Procedural = 4089178613,
   Victor_Robot_Vo = 1537517965,
