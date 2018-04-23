@@ -37,81 +37,46 @@ static void get_errs_(cmd_io io, io_err_t *ioe) {
   ioe->rxFramingErrors  = io==CMD_IO_DUT_UART ? DUT_UART::getRxFramingErrors()  : (io==CMD_IO_CONTACTS ? Contacts::getRxFramingErrors()  : 0);
 }
 
-static char rsp_buf[100];
-static int rsp_len = 0;
+const int line_maxlen = 126;
+static char m_line[line_maxlen+1];
+static int m_line_len = 0, linelen_ = 0;
+static char* getline_(int c)
+{
+  if( c == '\r' || c == '\n' ) {
+    linelen_ = m_line_len; //save length
+    m_line[m_line_len] = '\0';
+    m_line_len = 0;
+    return m_line;
+  } else if( c > 0 && c < 128 && m_line_len < line_maxlen ) //ascii (ignore null)
+    m_line[m_line_len++] = c;
+  
+  return NULL;
+}
+
+static int getchar_(cmd_io io) {
+  switch(io) {
+    case CMD_IO_DUT_UART: return DUT_UART::getchar(); //break;
+    case CMD_IO_CONSOLE:  return ConsoleGetCharNoWait(); //break;
+    case CMD_IO_CONTACTS: {
+      int c = Contacts::getchar();
+      if( c == 0x88 ) c = '@'; //syscon debug mode: inserts overflow indicator in the stream
+      return c; //break;
+    }
+    case CMD_IO_SIMULATOR:
+    default: return -1; //break;
+  }
+}
+
 static void flush_(cmd_io io)
 {
-  rsp_len = 0;
-  switch(io)
-  {
-    case CMD_IO_DUT_UART:
-      while( DUT_UART::getchar() > -1 );
-      break;
-    case CMD_IO_CONSOLE:
-      ConsoleFlushLine(); //flush old data in the line buffer
-      while( ConsoleGetCharNoWait() > -1 ); //flush unread dma buf
-      break;
-    case CMD_IO_CONTACTS:
-      while( Contacts::getchar() > -1 );
-      break;
-    default:
-    case CMD_IO_SIMULATOR:
-      break;
-  }
+  m_line[0] = '\0';
+  m_line_len = 0;
+  linelen_ = 0;
   
-  //read errors to clear
+  while( getchar_(io) > -1 );
+  
   io_err_t ioerrs;
-  get_errs_(io, &ioerrs);
-}
-
-static char* getline_(cmd_io io, int timeout_us)
-{
-  char* rsp;
-  int out_len;
-  
-  switch(io)
-  {
-    case CMD_IO_DUT_UART:
-      rsp = DUT_UART::getline( &rsp_buf[rsp_len], sizeof(rsp_buf)-rsp_len, timeout_us, &out_len );
-      rsp_len += out_len;
-      if( rsp ) {
-        rsp = rsp_buf; //point to start of buffer (rx in multiple chunks)
-        rsp_len = 0;
-      }
-      break;
-    case CMD_IO_CONSOLE:
-      rsp = ConsoleGetLine(timeout_us);
-      break;
-    case CMD_IO_CONTACTS:
-      rsp = Contacts::getline(timeout_us);
-      break;
-    default:
-    case CMD_IO_SIMULATOR:
-      rsp = NULL;
-      break;
-  }
-  
-  return rsp;
-}
-
-static char* getline_raw_(cmd_io io, int *out_len) //buffer scraps for debug when cmd times out
-{
-  switch(io)
-  {
-    case CMD_IO_DUT_UART:
-      if( out_len )
-        *out_len = rsp_len;
-      return rsp_buf;
-    case CMD_IO_CONTACTS:
-      return Contacts::getlinebuffer(out_len);
-    default:
-    case CMD_IO_SIMULATOR:
-    case CMD_IO_CONSOLE: //XXX: dummy buffer for console (too lazy to update API)
-      if( out_len )
-        *out_len = 0;
-      rsp_buf[0] = '\0';
-      return rsp_buf;
-  }
+  get_errs_(io, &ioerrs); //read errors to clear
 }
 
 static void write__(cmd_io io, const char* s)
@@ -177,10 +142,12 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
   uint32_t Tstart = Timer::get(), Ttick = Timer::get();
   while( Timer::elapsedUs(Tstart) < timeout_ms*1000 )
   {
-    char *rsp = getline_(io, 1000); //timeout_ms*1000 - Timer::elapsedUs(Tstart) );
+    int c = getchar_(io);
+    char *rsp = getline_(c);
+    
     if( rsp != NULL )
     {
-      int rspLen = strlen(rsp);
+      int rspLen = linelen_; //strlen(rsp);
       
       //find and validate the response
       if( rspLen > sizeof(RSP_PREFIX)-1 && !strncmp(rsp,RSP_PREFIX,sizeof(RSP_PREFIX)-1) ) //response prefix detected
@@ -257,12 +224,11 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
   
   if( opts & CMD_OPTS_DBG_PRINT_RX_PARTIAL ) //see what's leftover in the rx buffer
   {
-    int rlen; char* rawline = getline_raw_(io, &rlen);
-    if( rlen > 0 ) {
+    if( m_line_len > 0 ) {
       write_(CMD_IO_CONSOLE, ".DBG RX PARTIAL '");
-      for(int x=0; x<rlen; x++)
-        write_(CMD_IO_CONSOLE, snformat(b,bz,"%c", rawline[x] >= ' ' && rawline[x] < '~' ? rawline[x] : '*'));
-      write_(CMD_IO_CONSOLE, snformat(b,bz,"' (%i)\n", rlen));
+      for(int x=0; x<m_line_len; x++)
+        write_(CMD_IO_CONSOLE, snformat(b,bz,"%c", m_line[x] >= ' ' && m_line[x] < '~' ? m_line[x] : '*'));
+      write_(CMD_IO_CONSOLE, snformat(b,bz,"' (%i)\n", m_line_len));
     }
   }
   
