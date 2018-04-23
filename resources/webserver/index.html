@@ -156,6 +156,8 @@
                     $("#main_robot_name").html(payload[6]);
                     $("#main_os_build_version").html(payload[7]);
                     $("#main_build_sha").html(payload[8]);
+                    $("#main_robot_mac_address").html(payload[9]);
+                    $("#main_robot_ssid").html(payload[10]);
                 })
             }
         } else if (pageName == "page_consolevars") {
@@ -629,6 +631,12 @@
                 </tr>
                 <tr>
                     <td style='text-align:right'>Robot Serial Number:</td><td id="main_robot_serial_number"></td>
+                </tr>
+                <tr>
+                    <td style='text-align:right'>MAC Address:</td><td id="main_robot_mac_address"></td>
+                </tr>
+                <tr>
+                    <td style='text-align:right'>SSID:</td><td id="main_robot_ssid"></td>
                 </tr>
                 <tr>
                     <td style='text-align:right'>IP Address:</td><td id="main_robot_ip_address"></td>

@@ -533,6 +533,8 @@ static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
   const std::string robotName      = osState->GetRobotName();
   const std::string osBuildVersion = osState->GetOSBuildVersion();
   const std::string sha            = osState->GetBuildSha();
+  const std::string MACAddress     = osState->GetMACAddress();
+  const std::string SSID           = osState->GetSSID();
 
   const std::string buildConfig =
 #if defined(NDEBUG)
@@ -564,11 +566,12 @@ static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
 
 #endif
 
-  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n",
             robotID.c_str(), serialNo.c_str(), ip.c_str(),
             buildConfig.c_str(),
             procVersion.c_str(), procCmdLine.c_str(),
-            robotName.c_str(), osBuildVersion.c_str(), sha.c_str());
+            robotName.c_str(), osBuildVersion.c_str(), sha.c_str(),
+            MACAddress.c_str(), SSID.c_str());
   return 1;
 }
 
