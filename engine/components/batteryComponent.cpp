@@ -28,23 +28,33 @@
 
 #include "util/filters/lowPassFilterSimple.h"
 
+#include <unistd.h>
+
 namespace Anki {
 namespace Cozmo {
 
 namespace {
-  // How often we call into the system to get the current voltage.
-  // This is expensive since it requires file access, so this rate
-  // should be relatively slow.
-  const float kBatteryVoltsUpdatePeriod_sec = 0.5f;
+  // How often the filtered voltage reading is updated
+  // (i.e. Rate of RobotState messages)
+  const float kBatteryVoltsUpdatePeriod_sec =  STATE_MESSAGE_FREQUENCY * ROBOT_TIME_STEP_MS / 1000.f;
   
   // Time constant of the low-pass filter for battery voltage
   const float kBatteryVoltsFilterTimeConstant_sec = 6.0f;
   
   // Voltage above which the battery is considered fully charged
-  const float kFullyChargedThresholdVolts = 4.0f;
+  const float kFullyChargedThresholdVolts = 4.1f;
   
   // Voltage below which battery is considered in a low charge state
-  const float kLowBatteryThresholdVolts = 3.65f;
+  // At 3.6V, there is about 7 minutes of battery life left (if stationary, minimal processing, no wifi transmission, no sound)
+  const float kLowBatteryThresholdVolts = 3.6f;
+
+  // Approaching syscon cutoff voltage.
+  // Shutdown will occur in ~30 seconds.
+  const float kCriticalBatteryThresholdVolts = 3.45f;
+
+  // How often to call sync() when battery is critical
+  const float kCriticalBatterySyncPeriod_sec = 10.f;
+  float _nextSyncTime_sec = 0;
 }
 
 BatteryComponent::BatteryComponent()
@@ -68,21 +78,17 @@ void BatteryComponent::Init(Cozmo::Robot* robot)
 void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 {
   _lastMsgTimestamp = msg.timestamp;
-  
+  const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  // Update raw voltage
+  _batteryVoltsRaw = msg.batteryVoltage;
+
+  // Only update filtered value if the battery isn't disconnected
   _battDisconnected = (msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED);
-
-  // Poll the system voltage if it's the appropriate time
-  const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if (now - _lastBatteryVoltsUpdate_sec > kBatteryVoltsUpdatePeriod_sec) {
-    _batteryVoltsRaw = msg.batteryVoltage;
-
-    // Only update filtered value if the battery isn't disconnected
-    if (!_battDisconnected) {
-      _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
-    }
-    _lastBatteryVoltsUpdate_sec = now;
+  if (!_battDisconnected) {
+    _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
   }
-  
+
   // Update isCharging / isOnChargerContacts
   SetOnChargeContacts(msg.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
   SetIsCharging(msg.status & (uint32_t)RobotStatusFlag::IS_CHARGING);
@@ -93,16 +99,24 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     level = BatteryLevel::Full;
   } else if (_batteryVoltsFilt < kLowBatteryThresholdVolts) {
     level = BatteryLevel::Low;
+
+    // Battery is critical 
+    // Power shutdown is practically imminent so call
+    // sync() every once in a while.
+    if ((_batteryVoltsFilt < kCriticalBatteryThresholdVolts) &&
+        (now_sec > _nextSyncTime_sec)) {
+      sync();
+      _nextSyncTime_sec = now_sec + kCriticalBatterySyncPeriod_sec;
+    }
   }
   
   if (level != _batteryLevel) {
-    const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     PRINT_NAMED_INFO("BatteryComponent.BatteryLevelChanged",
                      "New battery level %s (previously %s for %f seconds)",
                      BatteryLevelToString(level),
                      BatteryLevelToString(_batteryLevel),
-                     now - _lastBatteryLevelChange_sec);
-    _lastBatteryLevelChange_sec = now;
+                     now_sec - _lastBatteryLevelChange_sec);
+    _lastBatteryLevelChange_sec = now_sec;
     _batteryLevel = level;
   }
 }
@@ -112,8 +126,8 @@ float BatteryComponent::GetFullyChargedTimeSec() const
 {
   float timeSinceFullyCharged_sec = 0.f;
   if (_batteryLevel == BatteryLevel::Full) {
-    const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    timeSinceFullyCharged_sec = now - _lastBatteryLevelChange_sec;
+    const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    timeSinceFullyCharged_sec = now_sec - _lastBatteryLevelChange_sec;
   }
   return timeSinceFullyCharged_sec;
 }
@@ -123,8 +137,8 @@ float BatteryComponent::GetLowBatteryTimeSec() const
 {
   float timeSinceLowBattery_sec = 0.f;
   if (_batteryLevel == BatteryLevel::Low) {
-    const float now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    timeSinceLowBattery_sec = now - _lastBatteryLevelChange_sec;
+    const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    timeSinceLowBattery_sec = now_sec - _lastBatteryLevelChange_sec;
   }
   return timeSinceLowBattery_sec;
 }

@@ -111,8 +111,6 @@ private:
   
   Robot* _robot = nullptr;
   
-  float _lastBatteryVoltsUpdate_sec = 0.f;
-  
   float _batteryVoltsRaw = 0.f;
   float _batteryVoltsFilt = 0.f;
 
