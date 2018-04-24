@@ -311,6 +311,7 @@ typedef int error_t;
 #define ERROR_BAD_ARG                     763 // Argument errror
 #define ERROR_THROW_0                     764 // Test threw exception with ERROR_OK?
 #define ERROR_UNHANDLED_EXCEPTION         765 // 'safe' operation threw an uncategorized error
+#define ERROR_BUFFER_TOO_SMALL            766 // provided buffer was too small
 
 //<export end>
 
