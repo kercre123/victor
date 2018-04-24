@@ -224,7 +224,7 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
   }
   
   // if we're here, we either skipped or have finished the initial approach maneuver
-  CompoundActionSequential* action = new CompoundActionSequential();
+  auto action = std::make_unique<CompoundActionSequential>();
   if( (_dVars.state == State::Initial) || (_dVars.state == State::DriveToObstacle) ) {
     
     SET_STATE( FirstTurn );
@@ -275,7 +275,7 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
     return;
   }
   
-  DelegateNow( action, [&](ActionResult res) {
+  DelegateNow(action.release(), [&](ActionResult res) {
     // if we got here, it wasn't canceled because of the absence of an obstacle.
     TransitionToNextAction();
   });
