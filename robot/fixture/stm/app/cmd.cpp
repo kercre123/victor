@@ -114,7 +114,7 @@ static void write_(cmd_io io, const char* s1, const char* s2, const char* s3) {
     throw (err_num);                                    \
   }
 
-char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async_handler)(char*) )
+char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async_handler)(char*), cmd_dbuf_t *dbuf )
 {
   char b[80]; const int bz = sizeof(b); //str buffer
   
@@ -130,6 +130,12 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
     Contacts::setModeRx(); //explicit mode change
   }
   
+  if( dbuf ) {
+    dbuf->wlen = 0;
+    if( !dbuf->p || dbuf->size < 1 )
+      throw ERROR_BAD_ARG; //dbuf = NULL;
+  }
+  
   //send command out the selected io channel (append prefix)
   flush_(io); //flush rx buffers first for correct response detection
   if( io != CMD_IO_CONSOLE && opts & CMD_OPTS_LOG_CMD ) //echo to log BEFORE the DUT write or we'll miss response chars
@@ -143,6 +149,9 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
   while( Timer::elapsedUs(Tstart) < timeout_ms*1000 )
   {
     int c = getchar_(io);
+    if( c > 0 && c < 128 && dbuf && dbuf->wlen < dbuf->size-1 )
+      dbuf->p[ dbuf->wlen++ ] = c;
+    
     char *rsp = getline_(c);
     
     if( rsp != NULL )
@@ -155,6 +164,9 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
         m_time_ms = Timer::elapsedUs(Tstart)/1000; //time to response rx
         
         rsp += sizeof(RSP_PREFIX)-1; //'strip' prefix
+        
+        if( dbuf )
+          dbuf->p[ dbuf->wlen ] = '\0';
         
         //echo to log (optionally append debug stats)
         if( opts & CMD_OPTS_LOG_RSP ) {
