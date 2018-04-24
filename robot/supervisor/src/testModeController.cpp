@@ -542,7 +542,7 @@ namespace Anki {
       Result DriveTestUpdate()
       {
         // Change direction (or at least print speed
-        if (ticCnt_++ >= WHEEL_TOGGLE_DIRECTION_PERIOD_MS / TIME_STEP) {
+        if (ticCnt_++ >= WHEEL_TOGGLE_DIRECTION_PERIOD_MS / ROBOT_TIME_STEP_MS) {
 
           f32 lSpeed_filt, rSpeed_filt;
           WheelController::GetFilteredWheelSpeeds(lSpeed_filt,rSpeed_filt);
@@ -623,7 +623,7 @@ namespace Anki {
         AnkiInfo( "TestModeController.LiftTestInit", "flags = %d, powerPercent = %d", mode, powerPercent);
         ticCnt_ = 0;
         ticCnt2_ = 0;
-        printCyclePeriod_ = 250 / TIME_STEP;
+        printCyclePeriod_ = 250 / ROBOT_TIME_STEP_MS;
 
         increasePower_ = powerPercent == 0;
         if (!increasePower_) {
@@ -655,7 +655,7 @@ namespace Anki {
             const f32 midHeight = 0.5f * (highHeight + lowHeight);
             const f32 amplitude = highHeight - midHeight;
 
-            const f32 thetaStep = 2*M_PI_F / liftNodCycleTime_ms_ * TIME_STEP;
+            const f32 thetaStep = 2*M_PI_F / liftNodCycleTime_ms_ * ROBOT_TIME_STEP_MS;
 
             f32 newHeight = amplitude * sinf(theta.ToFloat()) + midHeight;
             LiftController::SetDesiredHeight(newHeight);
@@ -680,7 +680,7 @@ namespace Anki {
             }
 
             // Change direction
-            if (ticCnt_++ >= 1000 / TIME_STEP) {
+            if (ticCnt_++ >= 1000 / ROBOT_TIME_STEP_MS) {
 
               if (liftTestMode_ == LiftTestFlags::LiftTF_TEST_HEIGHTS) {
                 up = !up;
@@ -752,7 +752,7 @@ namespace Anki {
       Result LiftToggleTestInit()
       {
         AnkiInfo( "TestModeController.LiftToggleTestInit", "");
-        printCyclePeriod_ = 200 / TIME_STEP;
+        printCyclePeriod_ = 200 / ROBOT_TIME_STEP_MS;
         return RESULT_OK;
       }
 
@@ -801,7 +801,7 @@ namespace Anki {
         AnkiInfo( "TestModeController.HeadTestInit", "flags = %d, powerPercent = %d", mode, powerPercent);
         ticCnt_ = 0;
         ticCnt2_ = 0;
-        printCyclePeriod_ = 250 / TIME_STEP;
+        printCyclePeriod_ = 250 / ROBOT_TIME_STEP_MS;
         
         increasePower_ = powerPercent == 0;
         if (!increasePower_) {
@@ -836,7 +836,7 @@ namespace Anki {
             }
             
             // Change direction
-            if (ticCnt_++ >= headNodCycleTime_ms_ / TIME_STEP) {
+            if (ticCnt_++ >= headNodCycleTime_ms_ / ROBOT_TIME_STEP_MS) {
 
               if (headTestMode_ == HeadTestFlags::HTF_TEST_ANGLES) {
                 up = !up;
@@ -881,7 +881,7 @@ namespace Anki {
             const f32 midAngle = 0.5f * (highAngle + lowAngle);
             const f32 amplitude = highAngle - midAngle;
 
-            const f32 thetaStep = 2*M_PI_F / headNodCycleTime_ms_ * TIME_STEP;
+            const f32 thetaStep = 2*M_PI_F / headNodCycleTime_ms_ * ROBOT_TIME_STEP_MS;
 
             f32 newAngle = amplitude * sinf(theta.ToFloat()) + midAngle;
             HeadController::SetDesiredAngle(newAngle);
@@ -941,7 +941,7 @@ namespace Anki {
         }
 
         // Print gyro readings
-        if (++ticCnt_ >= 200 / TIME_STEP) {
+        if (++ticCnt_ >= 200 / ROBOT_TIME_STEP_MS) {
 
           // Raw HAL readings
           HAL::IMU_DataStructure data = IMUFilter::GetLatestRawData();
@@ -997,7 +997,7 @@ namespace Anki {
         }
 
         // Cycle through all channels
-        if (ticCnt_++ > 2000 / TIME_STEP) {
+        if (ticCnt_++ > 2000 / ROBOT_TIME_STEP_MS) {
           AnkiInfo( "TestModeController.LightTestUpdate", "LED channel %hhu, color 0x%x", ledID_, LEDColorList_[ledColorIdx_]);
           //HAL::SetLED(ledID_, LEDColorList_[ledColorIdx_]);
           (void)LEDColorList_; // Prevent compiler error. Don't need this when SetLED call restored.
@@ -1038,7 +1038,7 @@ namespace Anki {
 
       Result StopTestUpdate()
       {
-        if (ticCnt_++ > ST_period_ms / TIME_STEP) {
+        if (ticCnt_++ > ST_period_ms / ROBOT_TIME_STEP_MS) {
           ST_go = !ST_go;
           if(ST_go) {
             // Toggle speed
@@ -1093,7 +1093,7 @@ namespace Anki {
       Result MaxPowerTestUpdate()
       {
         static f32 pwr = 1.0;
-        if (ticCnt_++ > 5000 / TIME_STEP) {
+        if (ticCnt_++ > 5000 / ROBOT_TIME_STEP_MS) {
           AnkiInfo( "TestModeController.MaxPowerTestUpdate", "SWITCHING POWER: %f", pwr);
           HAL::MotorSetPower(MotorID::MOTOR_LEFT_WHEEL, 1.0);
           HAL::MotorSetPower(MotorID::MOTOR_RIGHT_WHEEL, 1.0);

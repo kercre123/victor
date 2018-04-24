@@ -16,7 +16,7 @@
  * Copyright: Anki, Inc. 2016
  *
  **/
-#include "engine/components/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLightComponent.h"
 
 #include "engine/activeCube.h"
 #include "engine/activeObject.h"
@@ -36,8 +36,6 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "clad/externalInterface/messageToActiveObject.h"
-
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 
@@ -49,11 +47,11 @@
 // Scales colors by this factor when applying white balancing
 static constexpr f32 kWhiteBalanceScale = 0.6f;
 
-static constexpr int kNumCubeLeds = 4;
-
 namespace Anki {
 namespace Cozmo {
 
+static constexpr int kNumCubeLeds = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
+  
 static const ObjectLights kCubeLightsOff = {
   .onColors               = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
   .offColors              = {{NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK, NamedColors::BLACK}},
@@ -62,7 +60,7 @@ static const ObjectLights kCubeLightsOff = {
   .transitionOnPeriod_ms  = {{0,0,0,0}},
   .transitionOffPeriod_ms = {{0,0,0,0}},
   .offset                 = {{0,0,0,0}},
-  .rotationPeriod_ms      = 0,
+  .rotate                 = false,
   .makeRelative           = MakeRelativeMode::RELATIVE_LED_MODE_OFF,
   .relativePoint          = {0,0}
 };
@@ -77,7 +75,7 @@ bool ObjectLights::operator==(const ObjectLights& other) const
   this->transitionOnPeriod_ms  == other.transitionOnPeriod_ms &&
   this->transitionOffPeriod_ms == other.transitionOffPeriod_ms &&
   this->offset                 == other.offset &&
-  this->rotationPeriod_ms      == other.rotationPeriod_ms &&
+  this->rotate                 == other.rotate &&
   this->makeRelative           == other.makeRelative &&
   this->relativePoint          == other.relativePoint;
 }
@@ -642,7 +640,7 @@ void CubeLightComponent::ApplyAnimModifier(const LightAnim& anim,
       pattern.lights.transitionOnPeriod_ms[i] += modifier.transitionOnPeriod_ms[i];
       pattern.lights.transitionOffPeriod_ms[i] += modifier.transitionOffPeriod_ms[i];
       pattern.lights.offset[i] += modifier.offset[i];
-      pattern.lights.rotationPeriod_ms += modifier.rotationPeriod_ms;
+      pattern.lights.rotate |= modifier.rotate;
     }
     pattern.lights.makeRelative = modifier.makeRelative;
     pattern.lights.relativePoint = modifier.relativePoint;
@@ -888,7 +886,7 @@ void CubeLightComponent::SendTransitionMessage(const ObjectID& objectID, const O
       msg.lights[i].offset = MS_TO_LED_FRAMES(values.offset[i]);
     }
     
-    msg.lightRotation_ms = values.rotationPeriod_ms;
+    msg.lightRotation = values.rotate;
     
     _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
   }
@@ -930,7 +928,7 @@ const char* CubeLightComponent::LayerToString(const AnimLayerEnum& layer) const
 // =============Message handlers for cube lights==================
 
 template<>
-void CubeLightComponent::HandleMessage(const ObjectConnectionState& msg)
+void CubeLightComponent::HandleMessage(const ExternalInterface::ObjectConnectionState& msg)
 {
   if(msg.connected && IsValidLightCube(msg.object_type, false))
   {
@@ -994,7 +992,7 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::SetAllActiveObje
     .transitionOnPeriod_ms  = msg.transitionOnPeriod_ms,
     .transitionOffPeriod_ms = msg.transitionOffPeriod_ms,
     .offset                 = msg.offset,
-    .rotationPeriod_ms      = msg.rotationPeriod_ms,
+    .rotate                 = msg.rotate,
     .makeRelative           = msg.makeRelative,
     .relativePoint          = {msg.relativeToX,msg.relativeToY}
   };
@@ -1016,7 +1014,7 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::SetActiveObjectL
                   msg.turnOffUnspecifiedLEDs,
                   msg.makeRelative,
                   {msg.relativeToX, msg.relativeToY},
-                  msg.rotationPeriod_ms);
+                  msg.rotate);
 }
 
 template<>
@@ -1133,7 +1131,7 @@ Result CubeLightComponent::SetObjectLights(const ObjectID& objectID, const Objec
   // NOTE: if make relative mode is "off", this call doesn't do anything:
   activeCube->MakeStateRelativeToXY(values.relativePoint, values.makeRelative);
   
-  return SetLights(activeObject, values.rotationPeriod_ms);
+  return SetLights(activeObject, values.rotate);
 }
 
 Result CubeLightComponent::SetObjectLights(const ObjectID& objectID,
@@ -1147,7 +1145,7 @@ Result CubeLightComponent::SetObjectLights(const ObjectID& objectID,
                                             const bool turnOffUnspecifiedLEDs,
                                             const MakeRelativeMode makeRelative,
                                             const Point2f& relativeToPoint,
-                                            const u32 rotationPeriod_ms)
+                                            const bool rotate)
 {
   ActiveCube* activeCube = nullptr;
   if ( makeRelative == MakeRelativeMode::RELATIVE_LED_MODE_OFF )
@@ -1179,7 +1177,7 @@ Result CubeLightComponent::SetObjectLights(const ObjectID& objectID,
                       transitionOnPeriod_ms, transitionOffPeriod_ms, 0,
                       turnOffUnspecifiedLEDs);
   
-  return SetLights(activeCube, rotationPeriod_ms);
+  return SetLights(activeCube, rotate);
 }
 
   
@@ -1193,10 +1191,10 @@ bool CubeLightComponent::CanEngineSetLightsOnCube(const ObjectID& objectID)
 }
 
 
-Result CubeLightComponent::SetLights(const ActiveObject* object, const u32 rotationPeriod_ms)
+Result CubeLightComponent::SetLights(const ActiveObject* object, const bool rotate)
 {
   CubeLights cubeLights;
-  cubeLights.rotationPeriod_frames = MS_TO_LED_FRAMES(rotationPeriod_ms);
+  cubeLights.rotate = rotate;
   for(int i = 0; i < kNumCubeLeds; ++i)
   {
     // Apply white balancing and encode colors

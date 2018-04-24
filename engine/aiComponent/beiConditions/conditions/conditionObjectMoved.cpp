@@ -39,8 +39,9 @@ public:
   bool ObjectOutsideIgnoreArea(BehaviorExternalInterface& behaviorExternalInterface);
   
   // update values for reactionObject
-  void ObjectStartedMoving(BehaviorExternalInterface& behaviorExternalInterface, const ObjectMoved& msg);
+  void ObjectStartedMoving(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::ObjectMoved& msg);
   void ObjectStoppedMoving(BehaviorExternalInterface& behaviorExternalInterface);
+  void ObjectUpAxisChanged(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::ObjectUpAxisChanged& msg);
   void ObjectObserved(BehaviorExternalInterface& behaviorExternalInterface);
   void ResetObject();
   
@@ -145,7 +146,7 @@ void ConditionObjectMoved::HandleEvent(const EngineToGameEvent& event, BehaviorE
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionObjectMoved::HandleObjectMoved(BehaviorExternalInterface& behaviorExternalInterface, const ObjectMoved& msg)
+void ConditionObjectMoved::HandleObjectMoved(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::ObjectMoved& msg)
 {
   auto iter = GetReactionaryIterator(msg.objectID);
   iter->ObjectStartedMoving(behaviorExternalInterface, msg);
@@ -153,7 +154,7 @@ void ConditionObjectMoved::HandleObjectMoved(BehaviorExternalInterface& behavior
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionObjectMoved::HandleObjectStopped(BehaviorExternalInterface& behaviorExternalInterface, const ObjectStoppedMoving& msg)
+void ConditionObjectMoved::HandleObjectStopped(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::ObjectStoppedMoving& msg)
 {
   auto iter = GetReactionaryIterator(msg.objectID);
   iter->ObjectStoppedMoving(behaviorExternalInterface);
@@ -161,10 +162,10 @@ void ConditionObjectMoved::HandleObjectStopped(BehaviorExternalInterface& behavi
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ConditionObjectMoved::HandleObjectUpAxisChanged(BehaviorExternalInterface& behaviorExternalInterface, const ObjectUpAxisChanged& msg)
+void ConditionObjectMoved::HandleObjectUpAxisChanged(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::ObjectUpAxisChanged& msg)
 {
   auto iter = GetReactionaryIterator(msg.objectID);
-  iter->ObjectUpAxisHasChanged(behaviorExternalInterface);
+  iter->ObjectUpAxisChanged(behaviorExternalInterface, msg);
 }
 
 
@@ -283,7 +284,7 @@ bool ReactionObjectData::ObjectOutsideIgnoreArea(BehaviorExternalInterface& beha
 
 // update values for reactionObject
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ReactionObjectData::ObjectStartedMoving(BehaviorExternalInterface& behaviorExternalInterface, const ObjectMoved& msg)
+void ReactionObjectData::ObjectStartedMoving(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::ObjectMoved& msg)
 {
   const ObservableObject* object = behaviorExternalInterface.GetBlockWorld().GetLocatedObjectByID(_objectID);
   if(object == nullptr){
@@ -292,12 +293,6 @@ void ReactionObjectData::ObjectStartedMoving(BehaviorExternalInterface& behavior
   }else if(!_isObjectMoving){
     _isObjectMoving = true;
     _timeStartedMoving = msg.timestamp;
-    _axisOfAccel = msg.axisOfAccel;
-  }else{
-    if(msg.axisOfAccel != _axisOfAccel){
-      _hasUpAxisChanged = true;
-      _axisOfAccel = msg.axisOfAccel;
-    }
   }
 }
 
@@ -306,6 +301,16 @@ void ReactionObjectData::ObjectStartedMoving(BehaviorExternalInterface& behavior
 void ReactionObjectData::ObjectStoppedMoving(BehaviorExternalInterface& behaviorExternalInterface)
 {
   _isObjectMoving = false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ReactionObjectData::ObjectUpAxisChanged(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::ObjectUpAxisChanged& msg)
+{
+  if (msg.upAxis != _axisOfAccel) {
+    _hasUpAxisChanged = true;
+    _axisOfAccel = msg.upAxis;
+  }
 }
 
 

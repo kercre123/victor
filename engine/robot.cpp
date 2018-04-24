@@ -33,9 +33,9 @@
 #include "engine/components/bodyLightComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
-#include "engine/components/cubeAccelComponent.h"
+#include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
-#include "engine/components/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/inventoryComponent.h"
 #include "engine/components/movementComponent.h"
@@ -1434,12 +1434,10 @@ Result Robot::Update()
   BEGIN_DONT_RUN_AFTER_PACKOUT
   /////////// Update path planning / following ////////////
   GetPathComponent().Update();
-  END_DONT_RUN_AFTER_PACKOUT
-  
+    
   /////////// Update cube comms ////////////
   GetCubeCommsComponent().Update();
   
-  BEGIN_DONT_RUN_AFTER_PACKOUT
   // update and broadcast map
   GetMapComponent().Update();
   END_DONT_RUN_AFTER_PACKOUT

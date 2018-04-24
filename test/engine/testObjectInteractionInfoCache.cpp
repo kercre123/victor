@@ -39,7 +39,7 @@ ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ObjectType objectTyp
 {
   // matching activeID happens through objectID automatically on addition
   const ActiveID activeID = -1;
-  const FactoryID factoryID = 0;
+  const FactoryID factoryID = "";
   
   BlockWorld& blockWorld = robot.GetBlockWorld();
   Anki::Cozmo::ObservableObject* objectPtr = CreateActiveObjectByType(objectType, activeID, factoryID);
