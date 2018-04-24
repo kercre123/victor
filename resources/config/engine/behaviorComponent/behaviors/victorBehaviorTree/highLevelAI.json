@@ -216,7 +216,8 @@
           "to": "ObservingOnChargerRecentlyPlaced",
           "condition": {
             "conditionType": "OnCharger"
-          }
+          },
+          "emotionEvent": "PlacedOnCharger"
         }
       ]
     },        
@@ -471,7 +472,8 @@
           "to": "ObservingOnChargerRecentlyPlaced",
           "condition": {
             "conditionType": "OnCharger"
-          }
+          },
+          "emotionEvent": "PlacedOnCharger"
         },
         {
           "to": "Napping",
