@@ -1,5 +1,5 @@
 {
-  "behaviorID" : "DriveOffChargerIntoPlay",
+  "behaviorID" : "ObservingDriveOffCharger",
   "behaviorClass" : "DispatcherQueue",
 
   "behaviors": [

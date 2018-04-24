@@ -254,6 +254,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::DevBatteryLogging:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDevBatteryLogging(config));
+      break;
+    }
+    
     case BehaviorClass::DevDisplayReadingsOnFace:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDevDisplayReadingsOnFace(config));
@@ -266,12 +272,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::DevBatteryLogging:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorDevBatteryLogging(config));
-      break;
-    }
-
     case BehaviorClass::DevTouchDataCollection:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDevTouchDataCollection(config));

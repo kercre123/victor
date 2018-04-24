@@ -161,9 +161,8 @@ enum uint_8 BehaviorID {
   NothingToDo_Idle,
 
   // victorBehaviorTree/highLevelDelegates/observing
-  DriveOffChargerIntoObserving,
-  DriveOffChargerIntoPlay,
   Observing,
+  ObservingDriveOffCharger,
   ObservingEyeContact,
   ObservingFailedToFindCharger,
   ObservingFindFaces,

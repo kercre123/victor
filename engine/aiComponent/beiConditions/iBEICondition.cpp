@@ -88,7 +88,14 @@ void IBEICondition::SetActive(BehaviorExternalInterface& bei, bool setToActive)
 void IBEICondition::Init(BehaviorExternalInterface& bei)
 {
   if( _isInitialized ) {
-    PRINT_NAMED_WARNING("IBEICondition.Init.AlreadyInitialized", "Init called multiple times");
+    // TODO:(bn) this will currently get called multiple times for custom conditions if they are used as
+    // operands in multiple compound conditions. I don't think there's a great way around this at the
+    // moment...
+    if( _conditionType != BEIConditionType::Lambda ) {
+      PRINT_NAMED_WARNING("IBEICondition.Init.AlreadyInitialized", "Init called multiple times");
+    }
+
+    return;
   }
   
   InitInternal(bei);

@@ -237,7 +237,7 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
   
   handles.emplace_back(
     BEIConditionFactory::InjectCustomBEICondition(
-      "NeedsToLeaveChargerForPlay",
+      "WantsToLeaveChargerForPlay",
       std::make_shared<ConditionLambda>(
         [this](BehaviorExternalInterface& bei) {
           // this keeps two separate timers, one for driving off the charger into play, and one for playing.
@@ -249,7 +249,7 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
           // for playing, but it recently played with a cube, then it shouldn't try to drive off the charger
           // again.
           const bool valueIfNeverRun = false;
-          const bool hasntDrivenOffChargerForPlay = StateExitCooldownExpired(GetStateID("DriveOffChargerIntoPlay"),
+          const bool hasntDrivenOffChargerForPlay = StateExitCooldownExpired(GetStateID("ObservingDriveOffCharger"),
                                                                              _params.playWithCubeOnChargerCooldown_s / kTimeMultiplier,
                                                                              valueIfNeverRun);
           const auto& timer = GetBEI().GetBehaviorTimerManager().GetTimer( BehaviorTimerTypes::PlayingWithCube );

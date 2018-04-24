@@ -32,17 +32,13 @@
       "behavior": "ObservingOnCharger"
     },
     {
-      "name": "DriveOffChargerIntoObserving",
-      "behavior": "DriveOffChargerIntoObserving"
+      "name": "ObservingDriveOffCharger",
+      "behavior": "ObservingDriveOffCharger"
     },
     {
       "name": "DriveOffChargerIntoSocializing",
       "behavior": "DriveOffChargerIntoSocializing"
-    },
-    {
-      "name": "DriveOffChargerIntoPlay",
-      "behavior": "DriveOffChargerIntoPlay"
-    },
+    },    
     {
       "name": "Observing",
       "behavior": "Observing"
@@ -121,23 +117,66 @@
         },        
         {
           "to": "DriveOffChargerIntoSocializing",
-          "condition": { "customCondition": "CloseFaceForSocializing" }
+          "condition": {
+            "conditionType": "Compound",
+            "and": [
+              {
+                "customCondition": "CloseFaceForSocializing"
+              },
+              {
+                "conditionType": "Emotion",
+                "emotion": "Stimulated",
+                "min": 0.7
+              }
+            ]
+          }
         }
       ],
       "nonInterruptingTransitions": [
         {
-          "to": "DriveOffChargerIntoObserving",
+          "to": "ObservingDriveOffCharger",
           "condition": {
-            "customCondition": "BoredOfObserving"
+            "conditionType": "Compound",
+            "and": [
+              {
+                "customCondition": "BoredOfObserving"
+              },
+              {
+                "conditionType": "SimpleMood",
+                "mood": "HighStim"
+              }
+            ]
           }
         },
         {
-          "to": "DriveOffChargerIntoPlay",
-          "condition": { "customCondition": "NeedsToLeaveChargerForPlay" }
+          "to": "ObservingDriveOffCharger",
+          "condition": {
+            "conditionType": "Compound",
+            "and": [
+              {
+                "customCondition": "WantsToLeaveChargerForPlay"
+              },
+              {
+                "conditionType": "SimpleMood",
+                "mood": "HighStim"
+              }
+            ]
+          }
         },
         {
           "to": "NappingOnCharger",
-          "condition": { "customCondition": "WantsToSleep" }
+          "condition": {
+            "conditionType": "Compound",
+            "and": [
+              {
+                "customCondition": "WantsToSleep"
+              },
+              {
+                "conditionType": "SimpleMood",
+                "mood": "LowStim"
+              }
+            ]
+          }
         }
       ]
     },
@@ -167,27 +206,56 @@
     },
 
     {
-      "from": "Observing",
+      "from": [
+        "Observing",
+        "Socializing",
+        "PlayingWithCube"
+      ],
       "interruptingTransitions": [
         {
           "to": "ObservingOnChargerRecentlyPlaced",
           "condition": {
             "conditionType": "OnCharger"
           }
-        },
-        {
-          "to": "Socializing",
-          "condition": { "customCondition": "CloseFaceForSocializing" }
-        },
-        {
-          "to": "PlayingWithCube",
-          "condition": { "customCondition": "CloseCubeForPlaying" }
         }
       ]
-    },
+    },        
 
     {
       "from": "Observing",
+      "interruptingTransitions": [
+        {
+          "to": "Socializing",
+          "condition": {
+            "conditionType": "Compound",
+            "and": [
+              {
+                "customCondition": "CloseFaceForSocializing"
+              },
+              {
+                "conditionType": "Emotion",
+                "emotion": "Stimulated",
+                "min": 0.5
+              }
+            ]
+          }
+        },
+        {
+          "to": "PlayingWithCube",
+          "condition": {
+            "conditionType": "Compound",
+            "and": [
+              {
+                "customCondition": "CloseCubeForPlaying"
+              },
+              {
+                "conditionType": "SimpleMood",
+                "mood": "HighStim"
+              }
+            ]
+          }
+        }
+      ],
       "nonInterruptingTransitions": [
         {
           "to": "Exploring",
@@ -211,88 +279,70 @@
 
     {
       "from": "Exploring",
-      // this behavior will end when it doesn't know where the charger is, or when
-      // it has exhausted the search space. If it ends because it doesn't know where
-      // the charger is, currently it will search for the charger before exiting. this logic is in
-      // to many places now, and it should be consolidated (todo)
-      "exitTransitions": [
-        {
-          "to": "Observing",
-          "condition": {
-            "conditionType": "TrueCondition" 
-          }
-        }
-      ]
-      // todo: exit when stimulation changes, or when a face is seen after a cooldown, etc.
-      // for now, we let it run to help evaluate the behavior
-    },
-
-    {
-      "from": "Socializing",
       "interruptingTransitions": [
-        {
-          "to": "ObservingOnChargerRecentlyPlaced",
-          "condition": {
-            "conditionType": "OnCharger"
-          }
-        }
-      ],
-      "exitTransitions": [
-        {
-          "to": "Observing",
-          "condition": {
-            "conditionType": "TrueCondition" 
-          }
-        }
-      ]
-    },
-
-    {
-      "from": "PlayingWithCube",
-      "interruptingTransitions": [
-        {
-          "to": "ObservingOnChargerRecentlyPlaced",
-          "condition": {
-            "conditionType": "OnCharger"
-          }
-        }
-      ],
-      "exitTransitions": [
-        {
-          "to": "Observing",
-          "condition": {
-            "conditionType": "TrueCondition" 
-          }
-        }
-      ]
-    },
-
-    {
-      "from": "DriveOffChargerIntoObserving",
-      "exitTransitions": [
         {
           "to": "Socializing",
-          "condition": { "customCondition": "CloseFaceForSocializing" }
-        },
-        {
-          // fall back to observing if can't find a face after driving off the charger
-          "to": "Observing",
           "condition": {
-            "conditionType": "TrueCondition"
+            "conditionType": "Compound",
+            "and": [
+              {
+                "customCondition": "CloseFaceForSocializing"
+              },
+              {
+                "conditionType": "Emotion",
+                "emotion": "Stimulated",
+                "min": 0.7
+              }
+            ]
           }
         }
       ]
     },
 
     {
-      "from": "DriveOffChargerIntoPlay",
+      "from": [
+        "Socializing",
+        "PlayingWithCube",
+        "Exploring"
+      ],
       "exitTransitions": [
         {
-          "to": "PlayingWithCube",
-          "condition": { "customCondition": "CloseCubeForPlaying" }
+          "to": "Observing",
+          "condition": {
+            "conditionType": "TrueCondition" 
+          }
+        }
+      ]
+    },
+
+    {
+      "from": "ObservingDriveOffCharger",
+      "exitTransitions": [
+        {
+          // even though we weren't planning to socialize, if we can now then we should (socializing is important)
+          "to": "Socializing",
+          "condition": {
+            "customCondition": "CloseFaceForSocializing"
+          }
         },
         {
-          // fall back to observing if can't find a cube after driving off the charger
+          "to": "PlayingWithCube",
+          "condition": {
+            "conditionType": "Compound",
+            "and": [
+              {
+                "customCondition": "CloseCubeForPlaying"
+              },
+              {
+                // NOTE: it's possible that stim dropped during the driving off of the charger, in this case we'll
+                // fall back to observing but any additional stim should quickly get us back into playing range
+                "conditionType": "SimpleMood",
+                "mood": "HighStim"
+              }
+            ]
+          }
+        },
+        {
           "to": "Observing",
           "condition": {
             "conditionType": "TrueCondition"
@@ -338,6 +388,16 @@
           "condition": {
             "customCondition": "WakeUpFromNap"
           }
+        },
+        {
+          "to": "WakingUp",
+          "condition": {
+            "conditionType": "Compound",
+            "not": {
+              "conditionType": "SimpleMood",
+              "mood": "LowStim"
+            }
+          }
         }
       ]
     },
@@ -346,7 +406,8 @@
       "from": "Napping",
       "interruptingTransitions": [
         {
-          "to": "WakingUp",
+           // TODO:(bn) used to go to waking up, double check what we want
+          "to": "NappingOnCharger",
           "condition": {
             "conditionType": "OnCharger"
           }
@@ -400,7 +461,9 @@
       "interruptingTransitions": [
         {
           "to": "ReturningToCharger",
-          "condition": { "customCondition": "ChargerLocated" }
+          "condition": {
+            "customCondition": "ChargerLocated"
+          }
         }
       ],
       "exitTransitions": [
@@ -426,9 +489,8 @@
     // go to your charger
     {
       "from": [
-        "DriveOffChargerIntoObserving",
+        "ObservingDriveOffCharger",
         "DriveOffChargerIntoSocializing",
-        "DriveOffChargerIntoPlay",
         "Observing",
         "ReturningToCharger", // to avoid unclaimed intent
         "Socializing",
@@ -466,9 +528,8 @@
     // go to sleep
     {
       "from": [
-        "DriveOffChargerIntoObserving",
+        "ObservingDriveOffCharger",
         "DriveOffChargerIntoSocializing",
-        "DriveOffChargerIntoPlay",
         "Observing",
         "ObservingOnCharger",
         "ObservingOnChargerRecentlyPlaced",
@@ -476,6 +537,7 @@
         "WakingUp",
         "ReturningToCharger",
         "FailedToFindCharger",
+        "PlayingWithCube",
         "Exploring"
       ],
       "interruptingTransitions": [
@@ -538,9 +600,8 @@
     // explore voice command
     {
       "from": [
-        "DriveOffChargerIntoObserving",
         "DriveOffChargerIntoSocializing",
-        "DriveOffChargerIntoPlay",
+        "ObservingDriveOffCharger",
         "Observing",
         "ObservingOnCharger",
         "ObservingOnChargerRecentlyPlaced",
@@ -563,8 +624,6 @@
         }
       ]
     }
-
-    
 
   ]
 
