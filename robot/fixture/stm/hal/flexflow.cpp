@@ -92,8 +92,6 @@ int FLEXFLOW::printf(const char *format, ... )
   va_end(argptr);
   
   FLEXFLOW::write(dest);
-  ConsoleWrite(dest); //XXX also print to console
-  
   return len > sizeof(dest) ? sizeof(dest) : len;
 }
 
@@ -114,5 +112,7 @@ void FLEXFLOW::putchar(char c)
     //while( !(USART1->SR & USART_SR_TXE) ); //dat moved to shift register (ok to write a new data)
     //while( !(USART1->SR & USART_SR_TC)  ); //wait for transmit complete
   }
+  
+  ConsolePutChar(c); //XXX also print to console
 }
 
