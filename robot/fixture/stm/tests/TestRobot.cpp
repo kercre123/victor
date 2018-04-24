@@ -199,6 +199,7 @@ static struct {
   uint32_t      esn, hwver, model, lotcode, packoutdate;
   robot_bsv_t   bsv;
   char         *log[numlogs];
+  int           loglen[numlogs];
   int           bat_mv, bat_raw;
 } flexnfo;
 
@@ -719,6 +720,32 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
 //                  Flex Flow
 //-----------------------------------------------------------------------------
 
+char* const logbuf = (char*)app_global_buffer;
+const int logbufsize = APP_GLOBAL_BUF_SIZE;
+const int logbufmax = 1024 + 4096;
+STATIC_ASSERT( APP_GLOBAL_BUF_SIZE >= logbufmax , log_buffer_size_check );
+
+static void RobotLogCollect(void)
+{
+  int ofs = 0;
+  for( int i=0; i<numlogs; i++ )
+  {
+    ConsolePrintf("reading robot log%u:\n", i);
+    int bufsize = logbufsize-ofs;
+    int len = rcomRlg(i, &logbuf[ofs], bufsize);
+    
+    ConsolePrintf("DEBUG: log%u len=%i\n", i, len);
+    if( len >= bufsize )
+      throw ERROR_BUFFER_TOO_SMALL;
+    if( len > 0 ) {
+      flexnfo.log[i] = &logbuf[ofs];
+      flexnfo.loglen[i] = len-1; //strlen
+    }
+    
+    ofs += len;
+  }
+}
+
 static void RobotFlexFlowPackoutReport(void)
 {
   //XXX validate nfo
@@ -767,6 +794,10 @@ TestFunction* TestRobot0GetTests(void) {
     TestRobotInfo,
     //DBG_test_all,
     //DBG_test_emr,
+    TestRobotSensors,
+    //ChargeTest,
+    RobotLogCollect,
+    //RobotFlexFlowPackoutReport,
     NULL,
   };
   return m_tests;
@@ -817,6 +848,7 @@ TestFunction* TestRobotPackoutGetTests(void) {
     TestRobotSensors,
     TestRobotMotors,
     ChargeTest,
+    RobotLogCollect,
     EmrUpdate, //set test complete flags
     RobotFlexFlowPackoutReport,
     NULL,
