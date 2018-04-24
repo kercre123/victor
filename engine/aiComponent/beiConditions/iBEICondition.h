@@ -60,6 +60,7 @@ public:
   BEIConditionType GetConditionType(){return _conditionType;}
   
   void SetOwnerDebugLabel(const std::string& ownerLabel) { _ownerLabel = ownerLabel; }
+  const std::string& GetOwnerDebugLabel() { return _ownerLabel; }
   
   const std::string GetDebugLabel() const { return _debugLabel; }
   
