@@ -879,6 +879,8 @@ void PathComponent::RestartPlannerIfNeeded()
   // if we are already planning, don't cut that off
   if( _plannerActive ) {
     return;
+  } else if (_isReplanning) {
+    _isReplanning = false;
   }
   
   switch( _selectedPathPlanner->ComputeNewPathIfNeeded( _robot->GetDriveCenterPose() ) ) {
@@ -907,6 +909,7 @@ void PathComponent::RestartPlannerIfNeeded()
         Planning::Path validSubPath;
         if (!_selectedPathPlanner->CheckIsPathSafe(currPath, startAngle, validSubPath))
         {
+          _isReplanning = true;
           // entire path is not safe, set the current path to just the valid portion
           if (_pdo->GetLastDoledIdx() >= validSubPath.GetNumSegments()) 
           {

@@ -150,6 +150,9 @@ public:
   // Opposite of IsReady, this component is actively doing something (planning, following, etc)
   bool IsActive() const;
 
+  // only returns true if the automatic replanning is running, but not during the initial planning stage
+  bool IsReplanning() const { return _isReplanning; }
+  
   // True if there is a path to follow (state is following path or waiting to begin)
   bool HasPathToFollow() const;
 
@@ -266,6 +269,7 @@ private:
   bool                     _plannerActive                = false;
   bool                     _hasCustomMotionProfile       = false;
   bool                     _startFollowingPath           = true;
+  bool                     _isReplanning     = false;
 
 
   // keep track of the last path ID we canceled. Note that when we cancel a path we will transition to one of
