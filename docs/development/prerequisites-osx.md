@@ -32,7 +32,7 @@ Python can cause problems, so it's recommended to install through brew:
 
 ``` bash
 brew install python3
-brew install python
+brew install python@2
 ```
 
 You will also need to install the python yaml module, `pyyaml`, for both python2
