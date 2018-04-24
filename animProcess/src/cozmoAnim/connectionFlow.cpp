@@ -45,6 +45,8 @@ u32 _pin = 123456;
 const f32 kRobotNameScale = 0.6f;
 const std::string kURL = "anki.com/v";
 const ColorRGBA   kColor(0.9f, 0.9f, 0.9f, 1.f);
+
+SwitchboardInterface::ConnectionStatus _curStatus = SwitchboardInterface::ConnectionStatus::NONE;
 }
 
 // Draws BLE name and url to screen
@@ -112,12 +114,6 @@ void DrawUpdatingOSErrorScreen(AnimationStreamer* animStreamer)
   const bool shouldInterrupt = true;
   const bool shouldRenderInEyeHue = false;
   animStreamer->SetStreamingAnimation("anim_pairing_icon_update_error", 0, 0, shouldInterrupt, shouldRenderInEyeHue);
-}
-
-// Uses a png sequence animation to draw os updating error icon to screen
-void DrawUpdatingOSErrorScreen(AnimationStreamer* animStreamer)
-{
-  animStreamer->SetStreamingAnimation("anim_pairing_icon_update_error", 0, 0);
 }
 
 // Uses a png sequence animation to draw waiting for app icon to screen
