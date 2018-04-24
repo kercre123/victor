@@ -26,6 +26,8 @@
 #include "clad/externalInterface/messageEngineToCube.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
 namespace Anki {
 namespace Cozmo {
   
@@ -57,6 +59,7 @@ CubeCommsComponent::CubeCommsComponent()
 
 void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
 {
+  BEGIN_DONT_RUN_AFTER_PACKOUT
   _robot = robot;
   // Game to engine message handling:
   if (_robot->HasExternalInterface()) {
@@ -77,6 +80,7 @@ void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
     PRINT_NAMED_ERROR("CubeCommsComponent.InitDependent.FailedToInitBleClient",
                       "Failed to initialize cubeBleClient");
   }
+  END_DONT_RUN_AFTER_PACKOUT
 }
 
 

@@ -1434,12 +1434,10 @@ Result Robot::Update()
   BEGIN_DONT_RUN_AFTER_PACKOUT
   /////////// Update path planning / following ////////////
   GetPathComponent().Update();
-  END_DONT_RUN_AFTER_PACKOUT
-  
+    
   /////////// Update cube comms ////////////
   GetCubeCommsComponent().Update();
   
-  BEGIN_DONT_RUN_AFTER_PACKOUT
   // update and broadcast map
   GetMapComponent().Update();
   END_DONT_RUN_AFTER_PACKOUT
