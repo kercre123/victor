@@ -98,6 +98,10 @@ void MoodManager::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depende
     ReadMoodConfig(context->GetDataLoader()->GetRobotMoodConfig());
     LoadEmotionEvents(context->GetDataLoader()->GetEmotionEventJsons());
   }
+  
+  if( ANKI_DEV_CHEATS ) {
+    SubscribeToWebViz();
+  }
 }
 
 
@@ -308,6 +312,8 @@ void MoodManager::SendMoodToWebViz(const CozmoContext* context, const std::strin
   if( ! emotionEvent.empty() ) {
     data["emotionEvent"] = emotionEvent;
   }
+  
+  data["simpleMood"] = SimpleMoodTypeToString(GetSimpleMood());
 
   const auto* web = context->GetWebService();
   if( nullptr != web ) {
@@ -642,6 +648,90 @@ bool MoodManager::DidSimpleMoodTransitionThisTick() const
   SimpleMoodType currMood = GetSimpleMood();
   const bool ret = (oldMood != currMood);
   return ret;
+}
+  
+void MoodManager::SubscribeToWebViz()
+{
+  if( _robot == nullptr ) {
+    return;
+  }
+  const auto* context = _robot->GetContext();
+  if( context == nullptr ) {
+    return;
+  }
+  auto* webService = context->GetWebService();
+  if( webService == nullptr ) {
+    return;
+  }
+      
+  auto onSubscribedBehaviors = [this](const std::function<void(const Json::Value&)>& sendToClient) {
+    // a client subscribed. send them min/max values for each emotion, and a list of SimpleMoods
+    // and arbitrary emotion values for each SimpleMood
+
+    Json:: Value subscriptionData;
+    auto& data = subscriptionData["info"];
+    auto& emotions = data["emotions"];
+    for( uint8_t i=0; i<static_cast<uint8_t>(EmotionType::Count); ++i ) {
+      Json::Value emotionEntry;
+      auto emotion = static_cast<EmotionType>(i);
+      emotionEntry["emotionType"] = EmotionTypeToString(emotion);
+      
+      const auto& map = GetStaticMoodData().GetEmotionValueRangeMap();
+      auto it = map.find(emotion);
+      if( it != map.end() ) {
+        emotionEntry["min"] = it->second.first;
+        emotionEntry["max"] = it->second.second;
+      } else {
+        emotionEntry["min"] = kEmotionValueMin;
+        emotionEntry["max"] = kEmotionValueMax;
+      }
+      emotions.append( emotionEntry );
+    }
+    auto& simpleMoods = data["simpleMoods"];
+    // some example values that, if received, would transition to the given simple mood.
+    // only some emotions are provided, so that only those will be sent back, leaving others unchanged
+    simpleMoods["LowStim"]["Stimulated"] = 0.1;
+    simpleMoods["MedStim"]["Confident"] = -0.1;
+    simpleMoods["MedStim"]["Stimulated"] = 0.5;
+    simpleMoods["HighStim"]["Confident"] = -0.1;
+    simpleMoods["HighStim"]["Stimulated"] = 0.9;
+    simpleMoods["Frustrated"]["Confident"] = -0.4;
+    simpleMoods["Frustrated"]["Stimulated"] = 0.3;
+    
+    // do some verification that the above numbers are still valid
+    {
+      static_assert( SimpleMoodTypeNumEntries == 6, "Please update the values above with the new simple moods.");
+      const auto moodList = {SimpleMoodType::LowStim, SimpleMoodType::MedStim, SimpleMoodType::HighStim, SimpleMoodType::Frustrated};
+      for( const auto& simpleMood : moodList )  {
+        const float stim = simpleMoods[SimpleMoodTypeToString(simpleMood)]["Stimulated"].isDouble()
+                             ? simpleMoods[SimpleMoodTypeToString(simpleMood)]["Stimulated"].asDouble()
+                             : 0.0f;
+        const float conf = simpleMoods[SimpleMoodTypeToString(simpleMood)]["Confident"].isDouble()
+                             ? simpleMoods[SimpleMoodTypeToString(simpleMood)]["Confident"].asDouble()
+                             : 0.0f;
+        ANKI_VERIFY( (GetSimpleMood( stim, conf ) == simpleMood)
+                     && (stim >= GetStaticMoodData().GetEmotionValueRangeMap().at(EmotionType::Stimulated).first)
+                     && (stim <= GetStaticMoodData().GetEmotionValueRangeMap().at(EmotionType::Stimulated).second)
+                     && (conf >= -1.0f) && (conf <= 1.0f),
+                     "MoodManager.SubscribeToWebViz.ValsNeedsUpdate",
+                     "Update this dev method with new emotion/simplemood values" );
+      }
+    }
+    sendToClient( subscriptionData );
+  };
+  
+  auto onDataBehaviors = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
+    // if the client sent any emotion types, set them
+    for( uint8_t i=0; i<EmotionTypeNumEntries; ++i ) {
+      auto emotion = static_cast<EmotionType>(i);
+      if( data[EmotionTypeToString(emotion)].isDouble() ) {
+        SetEmotion( emotion, data[EmotionTypeToString(emotion)].asDouble() );
+      }
+    }
+  };
+  
+  _signalHandles.emplace_back( webService->OnWebVizSubscribed( kWebVizModuleName ).ScopedSubscribe( onSubscribedBehaviors ) );
+  _signalHandles.emplace_back( webService->OnWebVizData( kWebVizModuleName ).ScopedSubscribe( onDataBehaviors ) );
 }
   
 #if SEND_MOOD_TO_VIZ_DEBUG

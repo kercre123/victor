@@ -53,6 +53,8 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/math/numericCast.h"
 
+#include "webServerProcess/src/webService.h"
+
 #define LOG_CHANNEL    "Behaviors"
 
 namespace Anki {
@@ -1432,6 +1434,20 @@ ActionResult ICozmoBehavior::UseSecondClosestPreActionPose(DriveToObjectAction* 
 std::string ICozmoBehavior::GetClassString(BehaviorClass behaviorClass) const
 {
   return BehaviorTypesWrapper::BehaviorClassToString(behaviorClass);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SetDebugStateNameToWebViz() const
+{
+  const auto* context = GetBEI().GetRobotInfo().GetContext();
+  if( context != nullptr ) {
+    const auto* webService = context->GetWebService();
+    if( webService != nullptr ){
+      Json::Value data;
+      data["debugState"] = _debugStateName;
+      webService->SendToWebViz( "behaviors", data );
+    }
+  }
 }
 
   

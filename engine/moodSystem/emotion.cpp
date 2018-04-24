@@ -24,9 +24,9 @@ namespace Anki {
 namespace Cozmo {
 
   
-static constexpr float kEmotionValueMin     = -1.0f;
-static constexpr float kEmotionValueDefault =  0.0f;
-static constexpr float kEmotionValueMax     =  1.0f;
+const float kEmotionValueMin     = -1.0f;
+const float kEmotionValueDefault =  0.0f;
+const float kEmotionValueMax     =  1.0f;
   
 #if REMOTE_CONSOLE_ENABLED
 static const char* kEmotionSectionName = "Mood.Emotion";

@@ -28,6 +28,10 @@ namespace Util {
 namespace Cozmo {
 
 class MoodDecayEvaulator;
+  
+extern const float kEmotionValueMin;
+extern const float kEmotionValueDefault;
+extern const float kEmotionValueMax;
 
 class Emotion
 {

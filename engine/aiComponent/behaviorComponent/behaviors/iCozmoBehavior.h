@@ -221,6 +221,9 @@ protected:
     PRINT_CH_INFO("Behaviors", "Behavior.TransitionToState", "Behavior:%s, FromState:%s ToState:%s",
                   GetDebugLabel().c_str(), _debugStateName.c_str(), inName.c_str());
     _debugStateName = inName;
+    if( ANKI_DEV_CHEATS ) {
+      SetDebugStateNameToWebViz();
+    }
   }
   
   using EvalUserIntentFunc = std::function<bool(const UserIntent&)>; // should be true if data matches
@@ -467,6 +470,8 @@ protected:
 private:
   
   std::string MakeUniqueDebugLabelFromConfig(const Json::Value& config);
+  
+  void SetDebugStateNameToWebViz() const;
 
   float _lastRunTime_s;
   float _activatedTime_s;

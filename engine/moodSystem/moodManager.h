@@ -209,6 +209,7 @@ private:
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( void AddEvent(const char* eventName) );
 
   void SendMoodToWebViz(const CozmoContext* context, const std::string& emotionEvent = "");
+  void SubscribeToWebViz();
     
   // ============================== Private Member Vars ==============================
   
