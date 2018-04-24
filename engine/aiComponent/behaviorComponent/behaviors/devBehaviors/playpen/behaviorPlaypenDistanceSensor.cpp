@@ -198,7 +198,7 @@ void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  TurnInPlaceAction* action = new TurnInPlaceAction(0, false);
+  auto action = std::make_unique<TurnInPlaceAction>(0, false);
 
   // Get the pose of the marker we should be seeing
   Pose3d markerPose;
@@ -241,7 +241,7 @@ void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn()
   }
   
   // Once we are perpendicular to the marker, start recording distance sensor readings
-  DelegateIfInControl(action, [this]() { TransitionToRecordSensor(); });
+  DelegateIfInControl(action.release(), [this]() { TransitionToRecordSensor(); });
 }
 
 void BehaviorPlaypenDistanceSensor::TransitionToRecordSensor()
