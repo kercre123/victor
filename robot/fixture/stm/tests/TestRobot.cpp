@@ -722,34 +722,36 @@ void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv )
 
 char* const logbuf = (char*)app_global_buffer;
 const int logbufsize = APP_GLOBAL_BUF_SIZE;
-const int logbufmax = 1024 + 4096;
-STATIC_ASSERT( APP_GLOBAL_BUF_SIZE >= logbufmax , log_buffer_size_check );
+STATIC_ASSERT( APP_GLOBAL_BUF_SIZE >= (1024 + 4096) , log_buffer_size_check );
 
 static void RobotLogCollect(void)
 {
   int ofs = 0;
   for( int i=0; i<numlogs; i++ )
   {
-    ConsolePrintf("reading robot log%u:\n", i);
-    int bufsize = logbufsize-ofs;
-    int len = rcomRlg(i, &logbuf[ofs], bufsize);
+    //ConsolePrintf("reading robot log%u:\n", i);
+    int len = rcomRlg(i, &logbuf[ofs], logbufsize-1-ofs);
     
-    ConsolePrintf("DEBUG: log%u len=%i\n", i, len);
-    if( len >= bufsize )
-      throw ERROR_BUFFER_TOO_SMALL;
     if( len > 0 ) {
+      logbuf[ofs+len] = '\0'; //null terminate
       flexnfo.log[i] = &logbuf[ofs];
-      flexnfo.loglen[i] = len-1; //strlen
+      flexnfo.loglen[i] = len;
+      ofs += (len+1);
     }
     
-    ofs += len;
+    /*/DEBUG:
+    ConsolePrintf("-----DEBUG: log%u len=%i-----\n", i, len);
+    ConsolePrintf("RECVD:\"");
+    ConsoleWrite(flexnfo.log[i] ? flexnfo.log[i] : (char*)"NA");
+    ConsolePrintf("\"\n");
+    //-*/
   }
 }
 
 static void RobotFlexFlowPackoutReport(void)
 {
   //XXX validate nfo
-  if( !flexnfo.esn || flexnfo.esn == 0xFFFFffff || !flexnfo.bsv.ein[0] || flexnfo.bsv.ein[0] == 0xFFFFffff || !flexnfo.bat_mv )
+  if( !flexnfo.esn || flexnfo.esn == 0xFFFFffff || !flexnfo.bsv.ein[0] || flexnfo.bsv.ein[0] == 0xFFFFffff ) //|| !flexnfo.bat_mv )
     throw ERROR_BAD_ARG;
   //if( !flexnfo.packoutdate )
   //  throw ERROR_BAD_ARG;
@@ -764,13 +766,17 @@ static void RobotFlexFlowPackoutReport(void)
   //report fixture-collected info
   FLEXFLOW::printf("<flex> log packout_%08x_fix.log\n", flexnfo.esn);
   {
-    FLEXFLOW::printf("esn %08x hwver %u model %u\n", flexnfo.esn, flexnfo.hwver, flexnfo.model);
-    FLEXFLOW::printf("lotcode %08x packout-date %08x\n", flexnfo.lotcode, flexnfo.packoutdate );
+    FLEXFLOW::printf("esn %08x\n", flexnfo.esn );
+    FLEXFLOW::printf("hwver %u\n", flexnfo.hwver );
+    FLEXFLOW::printf("model %u\n", flexnfo.model );
+    FLEXFLOW::printf("lotcode %08x\n", flexnfo.lotcode );
+    FLEXFLOW::printf("packout-date %08x\n", flexnfo.packoutdate );
     
     robot_bsv_t* bsv = &flexnfo.bsv;
-    FLEXFLOW::printf("body hwrev %u model %u\n", bsv->hw_rev, bsv->hw_model );
-    FLEXFLOW::printf("body ein %08x %08x %08x %08x\n", bsv->ein[0], bsv->ein[1], bsv->ein[2], bsv->ein[3] );
-    FLEXFLOW::printf("body app vers %08x %08x %08x %08x ", bsv->app_version[0], bsv->app_version[1], bsv->app_version[2], bsv->app_version[3] );
+    FLEXFLOW::printf("body-ein %08x %08x %08x %08x\n", bsv->ein[0], bsv->ein[1], bsv->ein[2], bsv->ein[3] );
+    FLEXFLOW::printf("body-hwrev %u\n", bsv->hw_rev );
+    FLEXFLOW::printf("body-model %u\n", bsv->hw_model );
+    FLEXFLOW::printf("body-app-vers %08x %08x %08x %08x ", bsv->app_version[0], bsv->app_version[1], bsv->app_version[2], bsv->app_version[3] );
     for(int x=0; x<16; x++) {
       int c = ((uint8_t*)&bsv->app_version)[x];
       if( isprint(c) ) FLEXFLOW::putchar(c); else break;
@@ -797,7 +803,7 @@ TestFunction* TestRobot0GetTests(void) {
     TestRobotSensors,
     //ChargeTest,
     RobotLogCollect,
-    //RobotFlexFlowPackoutReport,
+    RobotFlexFlowPackoutReport,
     NULL,
   };
   return m_tests;
