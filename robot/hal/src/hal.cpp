@@ -48,6 +48,10 @@ namespace { // "Private members"
   struct spine_ctx spine_;
   uint8_t frameBuffer_[SPINE_B2H_FRAME_LEN];
   uint8_t readBuffer_[4096];
+  BodyToHead BootBodyData_ = { //dummy data for boot stub frames
+    .framecounter = 0
+  };
+  static const f32 kBatteryScale = 2.8f / 2048.f;
 } // "private" namespace
 
 // Forward Declarations
@@ -72,19 +76,19 @@ ssize_t robot_io(spine_ctx_t spine)
   int fd = spine_get_fd(spine);
 
   EventStart(EventType::ROBOT_IO_READ);
-  
+
   ssize_t r = read(fd, readBuffer_, sizeof(readBuffer_));
-  
+
   EventAddToMisc(EventType::ROBOT_IO_READ, (uint32_t)r);
   EventStop(EventType::ROBOT_IO_READ);
-  
-  if (r > 0) 
+
+  if (r > 0)
   {
     EventStart(EventType::ROBOT_IO_RECEIVE);
     r = spine_receive_data(spine, (const void*)readBuffer_, r);
     EventStop(EventType::ROBOT_IO_RECEIVE);
-  } 
-  else if (r < 0) 
+  }
+  else if (r < 0)
   {
     if (errno == EAGAIN) {
       r = 0;
@@ -219,8 +223,8 @@ Result spine_get_frame() {
     if (r < 0)
     {
       continue;
-    } 
-    else if (r > 0) 
+    }
+    else if (r > 0)
     {
       const struct SpineMessageHeader* hdr = (const struct SpineMessageHeader*)frame_buffer;
       if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
@@ -235,6 +239,16 @@ Result spine_get_frame() {
       else if (hdr->payload_type == PAYLOAD_VERSION) {
          LOGD("Handling VR payload type %x\n", hdr->payload_type);
         record_body_version( (VersionInfo*)(hdr+1) );
+      }
+      else if (hdr->payload_type == PAYLOAD_BOOT_FRAME) {
+        //extract button data from stub packet and put in fake full packet
+        uint8_t button_pressed = ((struct MicroBodyToHead*)(hdr+1))->buttonPressed;
+        BootBodyData_.touchLevel[1] = button_pressed ? 0xFFFF : 0x0000;
+        BootBodyData_.battery.flags = POWER_ON_CHARGER;
+
+        BootBodyData_.battery.battery = (int16_t)(5.0/kBatteryScale);
+        BootBodyData_.battery.charger = (int16_t)(5.0/kBatteryScale);
+        bodyData_ = &BootBodyData_;
       }
       else {
         LOGD("Unknown Frame Type %x\n", hdr->payload_type);
@@ -294,7 +308,7 @@ Result HAL::Step(void)
       spine_write_ccc_frame(&spine_, ccc_response);
     }
     last_packet_send = now;
-  }  
+  }
 
 #if !PROCESS_IMU_ON_THREAD
   ProcessIMUEvents();
@@ -440,7 +454,6 @@ bool HAL::HandleLatestMicData(SendDataFunction sendDataFunc)
 f32 HAL::BatteryGetVoltage()
 {
   // scale raw ADC counts to voltage (conversion factor from Vandiver)
-  static const f32 kBatteryScale = 2.8f / 2048.f;
   return kBatteryScale * bodyData_->battery.battery;
 }
 
@@ -463,7 +476,7 @@ bool HAL::BatteryIsOnCharger()
 bool HAL::BatteryIsDisconnected()
 {
   // The POWER_BATTERY_DISCONNECTED flag is set whenever the robot is on
-  // the charge base, but the battery has been disconnected from the 
+  // the charge base, but the battery has been disconnected from the
   // charging circuit.
   return bodyData_->battery.flags & POWER_BATTERY_DISCONNECTED;
 }

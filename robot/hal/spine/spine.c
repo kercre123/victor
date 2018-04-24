@@ -269,6 +269,8 @@ int spine_get_payload_len(PayloadId payload_type, enum MsgDir dir)
     break;
   case PAYLOAD_SHUT_DOWN:
     return 0;
+  case PAYLOAD_BOOT_FRAME:
+    return sizeof(struct MicroBodyToHead);
     break;
   default:
     break;
