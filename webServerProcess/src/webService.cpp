@@ -1241,6 +1241,11 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
       continue;
     }
 
+    size_t dot = cat.find(".");
+    if (dot != std::string::npos) {
+      cat = cat.substr(0, dot);
+    }
+
     if (category_html.find(cat) == category_html.end()) {
       category_html[cat] = "";
     }
