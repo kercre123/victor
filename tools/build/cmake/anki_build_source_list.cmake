@@ -1,4 +1,8 @@
-
+#
+# anki_build_source_list.cmake
+#
+# Helper macros to integrate cmake + metabuild.py
+#
 macro(anki_build_source_list target_name srclist_dir)
 
 set(SRC_LIST_FILE "${srclist_dir}/${target_name}.srcs.lst")
@@ -17,22 +21,30 @@ endif()
 
 set(_ab_PLATFORM_SRCS "")
 set(_ab_PLATFORM_HEADERS "")
-set(_ab_GO_DIR "")
+
 if (ANDROID)
-  if (EXISTS "${srclist_dir}/${target_name}_android.srcs.lst")
-    file(STRINGS "${srclist_dir}/${target_name}_android.srcs.lst" _ab_PLATFORM_SRCS)
-  endif()
-  if (EXISTS "${srclist_dir}/${target_name}_android.headers.lst")
-    file(STRINGS "${srclist_dir}/${target_name}_android.headers.lst" _ab_PLATFORM_HEADERS)
-  endif()
+  set(_ab_srcfile "${srclist_dir}/${target_name}_android.srcs.lst")
+  set(_ab_hdrfile "${srclist_dir}/${target_name}_android.headers.lst")
 elseif (MACOSX)
-  if (EXISTS "${srclist_dir}/${target_name}_mac.srcs.lst")
-    file(STRINGS "${srclist_dir}/${target_name}_mac.srcs.lst" _ab_PLATFORM_SRCS)
-  endif()
-  if (EXISTS "${srclist_dir}/${target_name}_mac.headers.lst")
-    file(STRINGS "${srclist_dir}/${target_name}_mac.headers.lst" _ab_PLATFORM_HEADERS)
-  endif()
+  set(_ab_srcfile "${srclist_dir}/${target_name}_mac.srcs.lst")
+  set(_ab_hdrfile "${srclist_dir}/${target_name}_mac.headers.lst")
+elseif (VICOS)
+  set(_ab_srcfile "${srclist_dir}/${target_name}_vicos.srcs.lst")
+  set(_ab_hdrfile "${srclist_dir}/${target_name}_vicos.headers.lst")
+else()
+  set(_ab_srcfile "")
+  set(_ab_hdrfile "")
 endif()
+
+if (EXISTS ${_ab_srcfile})
+  file(STRINGS ${_ab_srcfile} _ab_PLATFORM_SRCS)
+endif()
+
+if (EXISTS ${_ab_hdrfile})
+  file(STRINGS ${_ab_hdrfile} _ab_PLATFORM_HEADERS)
+endif()
+
+set(_ab_GO_DIR "")
 if (EXISTS "${srclist_dir}/${target_name}.godir.lst")
   file(STRINGS "${srclist_dir}/${target_name}.godir.lst" _ab_GO_DIR)
 endif()
