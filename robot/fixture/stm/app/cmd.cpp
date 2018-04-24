@@ -166,7 +166,7 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
         rsp += sizeof(RSP_PREFIX)-1; //'strip' prefix
         
         if( dbuf )
-          dbuf->p[ dbuf->wlen ] = '\0';
+          dbuf->p[ dbuf->wlen++ ] = '\0';
         
         //echo to log (optionally append debug stats)
         if( opts & CMD_OPTS_LOG_RSP ) {
