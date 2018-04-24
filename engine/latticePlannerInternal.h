@@ -48,6 +48,8 @@ public:
   EComputePathStatus StartPlanning(const Pose3d& startPose, bool forceReplanFromScratch);
 
   EPlannerStatus CheckPlanningStatus() const;
+  
+  EPlannerErrorType GetErrorType() const;
 
   bool GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path, Planning::GoalID& selectedTargetIndex);
   
@@ -83,12 +85,13 @@ public:
   std::recursive_mutex        _contextMutex;
   std::condition_variable_any _threadRequest;
 
-  volatile bool           _timeToPlan            = false;                 // start planning now if it isn't already
-  volatile bool           _runPlanner            = true;                  // passed in to the planner to allow it to stop early
-  volatile bool           _stopThread            = false;                 // clean up and stop the thread (entirely)
-  volatile bool           _plannerRunning        = false;                 // toggled by the planner thread when it is crunching
-  volatile EPlannerStatus _internalComputeStatus = EPlannerStatus::Error; // this is also locked by _contextMutex, due to laziness
-  volatile int            _msToBlock             = 0;                     // wait this many extra milliseconds to simulate a slower planner (test only)
+  volatile bool              _timeToPlan            = false;                 // start planning now if it isn't already
+  volatile bool              _runPlanner            = true;                  // passed in to the planner to allow it to stop early
+  volatile bool              _stopThread            = false;                 // clean up and stop the thread (entirely)
+  volatile bool              _plannerRunning        = false;                 // toggled by the planner thread when it is crunching
+  volatile EPlannerStatus    _internalComputeStatus = EPlannerStatus::Error; // this is also locked by _contextMutex, due to laziness
+  volatile EPlannerErrorType _errorType             = EPlannerErrorType::PlannerFailed;
+  volatile int               _msToBlock             = 0;                     // wait this many extra milliseconds to simulate a slower planner (test only)
 };
 
 } // Cozmo

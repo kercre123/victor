@@ -313,7 +313,7 @@ bool xythetaPlannerImpl::NeedsReplan() const
 {
   // TODO:(bn) json. This value balances between keeping the old plan (to look smooth) and being dumb by going
   // too far out of the way, in case the new plan differs from old
-  const float default_maxDistanceToReUse_mm = 40.0f;
+  const float default_maxDistanceToReUse_mm = 300.0f;
   return ! _context.env.PlanIsSafe( _plan, default_maxDistanceToReUse_mm );
 }
 

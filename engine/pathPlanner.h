@@ -39,6 +39,12 @@ enum class EPlannerStatus {
   CompleteWithPlan, // Planner has finished, and has a valid plan
   CompleteNoPlan, // Planner has finished, but has no plan (either encountered an error, or stopped early)
 };
+  
+enum class EPlannerErrorType {
+  PlannerFailed,
+  TooFarFromPlan,
+  InvalidAppendant
+};
 
 class IPathPlanner
 {
@@ -82,6 +88,8 @@ public:
   virtual void StopPlanning() {}
 
   virtual EPlannerStatus CheckPlanningStatus() const;
+  
+  virtual EPlannerErrorType GetErrorType() const;
   
   // Returns true if the path avoids obstacles. Some planners don't know about obstacles, so the default is always true.
   // If provided, clears and fills validPath to be that portion of path that is below the max obstacle penalty.
@@ -166,6 +174,18 @@ private:
 
   
 }; // Interface IPathPlanner
+  
+constexpr const char* EPlannerStatusToString(EPlannerStatus status)
+{
+#define HANDLE_EPS_CASE(v) case EPlannerStatus::v: return #v
+  switch(status) {
+    HANDLE_EPS_CASE(Error);
+    HANDLE_EPS_CASE(Running);
+    HANDLE_EPS_CASE(CompleteWithPlan);
+    HANDLE_EPS_CASE(CompleteNoPlan);
+  }
+#undef HANDLE_ETDTPS_CASE
+}
 
 // A stub class that never plans
 class PathPlannerStub : public IPathPlanner

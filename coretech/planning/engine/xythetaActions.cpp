@@ -32,6 +32,8 @@ namespace Planning {
 #define LATTICE_PLANNER_ROT_DECEL 10
   
 #define LATTICE_PLANNER_POINT_TURN_TOL DEG_TO_RAD(2)
+  
+#define LATTICE_PLANNER_MAX_LINE_LENGTH 50
 
 CONSOLE_VAR(f32, kXYTPlanner_PointTurnTolOverride_deg, "Planner", 2.0f);
 
@@ -260,9 +262,13 @@ u8 MotionPrimitive::AddSegmentsToPath(State_c start, Path& path) const
         bool oldSign = path[path.GetNumSegments()-1].GetTargetSpeed() > 0;
         bool newSign = segment.GetTargetSpeed() > 0;
         if(oldSign == newSign) {
-          path[endIdx].GetDef().line.endPt_x = segment.GetDef().line.endPt_x;
-          path[endIdx].GetDef().line.endPt_y = segment.GetDef().line.endPt_y;
-          shouldAdd = false;
+          const float dx = (segment.GetDef().line.endPt_x - path[endIdx].GetDef().line.startPt_x);
+          const float dy = (segment.GetDef().line.endPt_y - path[endIdx].GetDef().line.startPt_y);
+          if( dx*dx + dy*dy <= LATTICE_PLANNER_MAX_LINE_LENGTH*LATTICE_PLANNER_MAX_LINE_LENGTH ) {
+            path[endIdx].GetDef().line.endPt_x = segment.GetDef().line.endPt_x;
+            path[endIdx].GetDef().line.endPt_y = segment.GetDef().line.endPt_y;
+            shouldAdd = false;
+          }
         }
         break;
       }

@@ -699,7 +699,7 @@ namespace Anki {
     
     ActionResult DriveStraightAction::CheckIfDone()
     {
-      if(GetRobot().GetDrivingAnimationHandler().IsPlayingEndAnim())
+      if(GetRobot().GetDrivingAnimationHandler().IsPlayingDrivingEndAnim())
       {
         return ActionResult::RUNNING;
       }
@@ -715,7 +715,7 @@ namespace Anki {
         {
           PRINT_CH_DEBUG("Actions", "DriveStraightAction.CheckIfDone.PathJustStarted", "");
           if(_shouldPlayDrivingAnimation) {
-            GetRobot().GetDrivingAnimationHandler().PlayStartAnim();
+            GetRobot().GetDrivingAnimationHandler().StartDrivingAnim();
           }
         }
       }
@@ -723,7 +723,7 @@ namespace Anki {
       if ( _hasStarted && !GetRobot().GetPathComponent().IsActive() ) {
         PRINT_CH_DEBUG("Actions", "DriveStraightAction.CheckIfDone.PathJustCompleted", "");
         if( _shouldPlayDrivingAnimation ) {
-          if( GetRobot().GetDrivingAnimationHandler().PlayEndAnim()) {
+          if( GetRobot().GetDrivingAnimationHandler().EndDrivingAnim()) {
             return ActionResult::RUNNING;
           }
         }
