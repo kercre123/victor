@@ -239,10 +239,13 @@ void cccFcc(uint8_t mode, uint8_t cn) {
   cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"fcc %02x %02x 00 00 00 00", mode, cn), 500);
 }
 
-void cccRlg(uint8_t idx) {
+int cccRlg(uint8_t idx, char *buf, int buf_max_size) {
   CCC_CMD_DELAY();
-  ConsolePrintf("XXX: rlg not implemented\n");
-  throw ERROR_EMPTY_COMMAND;
+  char b[22]; const int bz = sizeof(b);
+  const int opts = CMD_OPTS_DEFAULT; // & ~(CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER);  
+  cmd_dbuf_t dbuf = { buf, buf_max_size, 0 };
+  cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"rlg %02x 00 00 00 00 00", idx), 3000, opts, 0, (buf ? &dbuf : 0) );
+  return dbuf.wlen;
 }
 
 void ccc_IdxVal32_(uint8_t idx, uint32_t val, const char* cmd, void(*handler)(char*), bool print_verbose = true ) {
@@ -420,7 +423,12 @@ spinePacket_t* halSpineReceive(int timeout_us)
     if( timeout_us > 0 && Timer::elapsedUs(Tsync) > timeout_us )
       throw ERROR_SPINE_PKT_TIMEOUT; //return NULL;
     if( (c = DUT_UART::getchar(0)) > -1 )
+    {
       *write++ = c;
+      #if SPINE_HAL_DEBUG > 0
+      //DUT_UART::putchar(c);
+      #endif
+    }
     
     halSpineGetRxErrs(&ioe);
     if( ioe.rxDroppedChars || ioe.rxOverflowErrors )
@@ -605,7 +613,7 @@ robot_sr_t* rcomGet(uint8_t NN, uint8_t sensor, int printlvl)
 }
 
 void rcomFcc(uint8_t mode, uint8_t cn)  { if( !rcom_target_spine_nCCC ) cccFcc(mode, cn); }
-void rcomRlg(uint8_t idx)               { if( !rcom_target_spine_nCCC ) cccRlg(idx); }
+int  rcomRlg(uint8_t idx, char *buf, int buf_max_size) { return !rcom_target_spine_nCCC ? cccRlg(idx,buf,buf_max_size) : 0; }
 void rcomEng(uint8_t idx, uint32_t val) { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(idx, val, "eng", 0); }
 void rcomLfe(uint8_t idx, uint32_t val) { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(idx, val, "lfe", 0); }
 void rcomSmr(uint8_t idx, uint32_t val) { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(idx, val, "smr", 0, false); }

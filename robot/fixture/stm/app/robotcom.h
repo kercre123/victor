@@ -76,7 +76,7 @@ robot_bsv_t*  rcomBsv(); //read body serial+version info
 robot_sr_t*   rcomMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, int printlvl = RCOM_PRINT_LEVEL_DEFAULT);
 robot_sr_t*   rcomGet(uint8_t NN, uint8_t sensor, int printlvl = RCOM_PRINT_LEVEL_DEFAULT); //NN = #drops (sr vals). returns &sensor[0] of [NN-1]
 void          rcomFcc(uint8_t mode, uint8_t cn); //RCOM_FCC_MODE_, {0..39}
-void          rcomRlg(uint8_t idx);
+int           rcomRlg(uint8_t idx, char *buf, int buf_max_size); //read log 'idx' into buf (NULL terminated). return num chars written to buf [e.g. strlen(buf)+1]
 void          rcomEng(uint8_t idx, uint32_t val);
 void          rcomLfe(uint8_t idx, uint32_t val);
 void          rcomSmr(uint8_t idx, uint32_t val);
