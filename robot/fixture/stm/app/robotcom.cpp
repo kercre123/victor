@@ -239,12 +239,29 @@ void cccFcc(uint8_t mode, uint8_t cn) {
   cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"fcc %02x %02x 00 00 00 00", mode, cn), 500);
 }
 
-int cccRlg(uint8_t idx, char *buf, int buf_max_size) {
+int cccRlg(uint8_t idx, char *buf, int buf_max_size)
+{
   CCC_CMD_DELAY();
   char b[22]; const int bz = sizeof(b);
-  const int opts = CMD_OPTS_DEFAULT; // & ~(CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER);  
+  //const int opts = CMD_OPTS_DEFAULT; // & ~(CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER);
+        #warning "DEBUG" 
+        const int opts = CMD_OPTS_DEFAULT & ~(CMD_OPTS_EXCEPTION_EN);
   cmd_dbuf_t dbuf = { buf, buf_max_size, 0 };
-  cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"rlg %02x 00 00 00 00 00", idx), 3000, opts, 0, (buf ? &dbuf : 0) );
+  cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"rlg %02x 00 00 00 00 00", idx), 1000, opts, 0, (dbuf.p ? &dbuf : 0) );
+  
+  //detect and remove the ":LOG n" line inserted by vic-robot parser
+  if( dbuf.p && dbuf.wlen > 4 && !strncmp(buf, ":LOG", 4) ) {
+    char *end = strchr(dbuf.p, '\n');
+    if( end ) {
+      int rmlen = (end - dbuf.p) + 1;
+      if( rmlen <= dbuf.wlen ) {
+        //ConsolePrintf("DEBUG: REMOVED \"%.*s\"\n", rmlen-1, dbuf.p);
+        memmove(dbuf.p, end+1, dbuf.wlen-rmlen);
+        dbuf.wlen -= rmlen;
+      }
+    }
+  }
+  
   return dbuf.wlen;
 }
 

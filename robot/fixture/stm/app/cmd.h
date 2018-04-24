@@ -48,7 +48,7 @@ typedef struct { char *p; int size; int wlen; } cmd_dbuf_t;
 //@return response (NULL if timeout)
 //e.g. send(IO_DUT, snformat(x,x,"lcdshow %u %s /"Victor DVT/"", solo=0, color="ib"), timeout=100 );
 //@param async_handler: user handler, any line beginning with ASYNC_PREFIX
-//@param dbuf: if provided, rx dat between cmd and response lines will be copied here. wlen includes \0.
+//@param dbuf: if provided, rx dat between cmd and response lines will be copied here (raw char stream, not null terminated)
 char* cmdSend(cmd_io io, const char* scmd, int timeout_ms = CMD_DEFAULT_TIMEOUT, int opts = CMD_OPTS_DEFAULT, void(*async_handler)(char*) = 0, cmd_dbuf_t *dbuf = 0 );
 int cmdStatus(); //parsed rsp status of most recent cmdSend(). status=1st arg, INT_MIN if !exist or bad format
 uint32_t cmdTimeMs(); //time it took for most recent cmdSend() to finish

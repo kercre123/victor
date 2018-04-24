@@ -149,10 +149,16 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
   while( Timer::elapsedUs(Tstart) < timeout_ms*1000 )
   {
     int c = getchar_(io);
-    if( c > 0 && c < 128 && dbuf && dbuf->wlen < dbuf->size-1 )
-      dbuf->p[ dbuf->wlen++ ] = c;
-    
     char *rsp = getline_(c);
+    
+    //copy char stream to data buffer
+    if( dbuf && c > 0 && c < 128 ) {
+      //if( io != CMD_IO_CONSOLE && opts & CMD_OPTS_LOG_OTHER ) ConsolePutChar(c); //DEBUG inspect
+      if( dbuf->wlen < dbuf->size )
+        dbuf->p[ dbuf->wlen++ ] = c;
+      else
+        throw ERROR_BUFFER_TOO_SMALL;
+    }
     
     if( rsp != NULL )
     {
@@ -162,11 +168,14 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
       if( rspLen > sizeof(RSP_PREFIX)-1 && !strncmp(rsp,RSP_PREFIX,sizeof(RSP_PREFIX)-1) ) //response prefix detected
       {
         m_time_ms = Timer::elapsedUs(Tstart)/1000; //time to response rx
-        
         rsp += sizeof(RSP_PREFIX)-1; //'strip' prefix
         
-        if( dbuf )
-          dbuf->p[ dbuf->wlen++ ] = '\0';
+        //remove the final response line from dbuf datastream
+        if( dbuf ) {
+          dbuf->wlen -= (rspLen+1); //line + raw \n char
+          if( dbuf->wlen < (rspLen+1) ) //sanity check
+            throw ERROR_INVALID_STATE;
+        }
         
         //echo to log (optionally append debug stats)
         if( opts & CMD_OPTS_LOG_RSP ) {
