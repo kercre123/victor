@@ -28,6 +28,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
+#include "engine/moodSystem/moodManager.h"
 #include "engine/unitTestKey.h"
 #include "util/console/consoleFunction.h"
 #include "util/console/consoleInterface.h"
@@ -48,6 +49,7 @@ constexpr const char* kTransitionDefinitionsKey = "transitionDefinitions";
 constexpr const char* kInitialStateKey = "initialState";
 constexpr const char* kStateTimerConditionsKey = "stateTimerConditions";
 constexpr const char* kBeginTimeKey = "begin_s";
+constexpr const char* kEmotionEventKey = "emotionEvent";
 
 static const BackpackLights kLightsOff = {
   .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
@@ -80,16 +82,26 @@ static constexpr const float kHeartbeatPeriod_s = 0.6f;
 class InternalStatesBehavior::State
 {
 public:
-  
-  State(const std::string& stateName, const std::string& behaviorName);
+
+  struct Transition {
+    Transition(StateID state, IBEIConditionPtr cond, const std::string& emotionEvent = "")
+      : toState(state)
+      , condition(cond)
+      , emotionEvent(emotionEvent)
+      {
+      }
+      
+    StateID toState;
+    IBEIConditionPtr condition;
+    std::string emotionEvent;
+  };
+      
   explicit State(const Json::Value& config);
 
   // initialize this state after construction to fill in the behavior pointer
   void Init(BehaviorExternalInterface& bei);
   
-  void AddInterruptingTransition(StateID toState, IBEIConditionPtr condition );
-  void AddNonInterruptingTransition(StateID toState, IBEIConditionPtr condition );
-  void AddExitTransition(StateID toState, IBEIConditionPtr condition);
+  void AddTransition(TransitionType transType, const Transition& transition);
 
   void OnActivated(BehaviorExternalInterface& bei, bool isResuming);
   void OnDeactivated(BehaviorExternalInterface& bei);
@@ -117,19 +129,12 @@ public:
   
   // Transitions are evaluated in order, and if the function returns true, we will transition to the given
   // state id.
-  using Transitions = std::vector< std::pair< StateID, IBEIConditionPtr > >;
+  using Transitions = std::vector<Transition>;
 
-  // transitions that can happen while the state is active (and in the middle of doing something)
-  Transitions _interruptingTransitions;
+  using TransitionMap = std::map<TransitionType, Transitions>;
 
-  // transitions that can happen when the currently delegated-to behavior thinks it's a decent time for a
-  // gentle interruption (or if there is no currently delegated behavior)
-  Transitions _nonInterruptingTransitions;
-
-  // exit transitions only run if the currently-delegated-to behavior stop itself. Note that these are
-  // checked _after_ all of the other transitions
-  Transitions _exitTransitions;
-
+  TransitionMap _transitions;
+  
   // optional light debugging color
   ColorRGBA _debugColor = NamedColors::BLACK;
   
@@ -137,6 +142,7 @@ public:
 };  
 
 ////////////////////////////////////////////////////////////////////////////////
+
 
 InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
                                                const CustomBEIConditionHandleList& customConditionHandles)
@@ -200,32 +206,25 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
 
       State& fromState = _states->at(fromStateID);
 
-      for( const auto& transitionConfig : transitionDefConfig["interruptingTransitions"] ) {
-        StateID toState = ParseStateFromJson(transitionConfig, "to");
-        IBEIConditionPtr strategy = ParseTransitionStrategy(transitionConfig);
-        if( strategy ) {
-          fromState.AddInterruptingTransition(toState, strategy);
-          allToStates.insert(toState);
-        }
-      }
 
-      for( const auto& transitionConfig : transitionDefConfig["nonInterruptingTransitions"] ) {
-        StateID toState = ParseStateFromJson(transitionConfig, "to");
-        IBEIConditionPtr strategy = ParseTransitionStrategy(transitionConfig);
-        if( strategy ) {
-          fromState.AddNonInterruptingTransition(toState, strategy);
-          allToStates.insert(toState);
-        }
-      }
+      auto parseTransitions =
+        [this, &transitionDefConfig, &allToStates, &fromState](const std::string& key,
+                                                               const TransitionType transitionType) {
+        
+        for( const auto& transitionConfig : transitionDefConfig[key] ) {
+          const StateID toState = ParseStateFromJson(transitionConfig, "to");
+          IBEIConditionPtr condition = ParseTransitionStrategy(transitionConfig);
+          const std::string& emotionEvent = transitionConfig.get(kEmotionEventKey, "").asString();
 
-      for( const auto& transitionConfig : transitionDefConfig["exitTransitions"] ) {
-        StateID toState = ParseStateFromJson(transitionConfig, "to");
-        IBEIConditionPtr strategy = ParseTransitionStrategy(transitionConfig);
-        if( strategy ) {
-          fromState.AddExitTransition(toState, strategy);
+          fromState.AddTransition(transitionType, State::Transition{toState, condition, emotionEvent});
+
           allToStates.insert(toState);
         }
-      }
+      };
+
+      parseTransitions("interruptingTransitions", TransitionType::Interrupting);
+      parseTransitions("nonInterruptingTransitions", TransitionType::NonInterrupting);
+      parseTransitions("exitTransitions", TransitionType::Exit);
     }
   }
 
@@ -312,7 +311,8 @@ void InternalStatesBehavior::GetBehaviorJsonKeys(std::set<const char*>& expected
     kResumeReplacementsKey,
     kTransitionDefinitionsKey,
     kInitialStateKey,
-    kStateTimerConditionsKey
+    kStateTimerConditionsKey,
+    kEmotionEventKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -470,13 +470,20 @@ void InternalStatesBehavior::BehaviorUpdate()
     }
   }
 
-  // first check the interrupting conditions
-  for( const auto& transitionPair : state._interruptingTransitions ) {
-    const auto stateID = transitionPair.first;
-    const auto& iConditionPtr = transitionPair.second;
+  auto tryTransition = [this](const auto& transition) {
+    if( transition.condition->AreConditionsMet(GetBEI()) ) {
+      if( !transition.emotionEvent.empty() ) {
+        GetBEI().GetMoodManager().TriggerEmotionEvent(transition.emotionEvent);
+      }      
+      TransitionToState(transition.toState);
+      return true;
+    }
+    return false;
+  };
 
-    if( iConditionPtr->AreConditionsMet(GetBEI()) ) {
-      TransitionToState(stateID);
+  // first check the interrupting conditions
+  for( const auto& transition : state._transitions[TransitionType::Interrupting] ) {
+    if( tryTransition(transition) ) {
       return;
     }
   }
@@ -501,24 +508,16 @@ void InternalStatesBehavior::BehaviorUpdate()
   }
 
   if( okToDispatch ) {
-    for( const auto& transitionPair : state._nonInterruptingTransitions ) {
-      const auto stateID = transitionPair.first;
-      const auto& iConditionPtr = transitionPair.second;
-      
-      if( iConditionPtr->AreConditionsMet(GetBEI()) ) {
-        TransitionToState(stateID);
+    for( const auto& transition : state._transitions[TransitionType::NonInterrupting] ) {
+      if( tryTransition(transition) ) {
         return;
       }
     }
 
     if( ! IsControlDelegated() ) {
       // Now there have been no interrupting or non-interrupting transitions, so check the exit conditions
-      for( const auto& transitionPair : state._exitTransitions ) {
-        const auto stateID = transitionPair.first;
-        const auto& iConditionPtr = transitionPair.second;
-      
-        if( iConditionPtr->AreConditionsMet(GetBEI()) ) {
-          TransitionToState(stateID);
+      for( const auto& transition : state._transitions[TransitionType::Exit] ) {
+        if( tryTransition(transition) ) {
           return;
         }
       }
@@ -606,12 +605,8 @@ float InternalStatesBehavior::GetCurrentStateActiveTime_s() const
   return activeTime;
 }
 
+////////////////////////////////////////////////////////////////////////////////
 
-InternalStatesBehavior::State::State(const std::string& stateName, const std::string& behaviorName)
-  : _name(stateName)
-  , _behaviorName(behaviorName)
-{
-}
 
 InternalStatesBehavior::State::State(const Json::Value& config)
 {
@@ -643,33 +638,16 @@ void InternalStatesBehavior::State::Init(BehaviorExternalInterface& bei)
 
 void InternalStatesBehavior::State::GetAllTransitions( std::set<IBEIConditionPtr>& allTransitions )
 {
-  for( auto& transitionPair : _interruptingTransitions ) {
-    allTransitions.insert(transitionPair.second);
-  }
-  for( auto& transitionPair : _nonInterruptingTransitions ) {
-    allTransitions.insert(transitionPair.second);
-  }
-  for( auto& transitionPair : _exitTransitions ) {
-    allTransitions.insert(transitionPair.second);
+  for( const auto& transitionTypes : _transitions ) {
+    for( const auto& transition : transitionTypes.second ) {
+      allTransitions.insert(transition.condition);
+    }
   }
 }
 
-void InternalStatesBehavior::State::AddInterruptingTransition(StateID toState,
-                                                                   IBEIConditionPtr condition)
+void InternalStatesBehavior::State::AddTransition(TransitionType transType, const Transition& transition)
 {
-  // TODO:(bn) references / rvalue / avoid copies?
-  _interruptingTransitions.emplace_back(toState, condition);
-}
-
-void InternalStatesBehavior::State::AddNonInterruptingTransition(StateID toState,
-                                                                      IBEIConditionPtr condition )
-{
-  _nonInterruptingTransitions.emplace_back(toState, condition);
-}
-
-void InternalStatesBehavior::State::AddExitTransition(StateID toState, IBEIConditionPtr condition)
-{
-  _exitTransitions.emplace_back(toState, condition);
+  _transitions[transType].emplace_back(transition);
 }
 
 void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei, bool isResuming)
@@ -680,18 +658,11 @@ void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei, 
       uic.ClearUserIntent( _clearIntent );
     }
   }
-  
-  for( const auto& transitionPair : _interruptingTransitions ) {
-    const auto& iConditionPtr = transitionPair.second;
-    iConditionPtr->SetActive(bei, true);
-  }
-  for( const auto& transitionPair : _nonInterruptingTransitions ) {
-    const auto& iConditionPtr = transitionPair.second;
-    iConditionPtr->SetActive(bei, true);
-  }
-  for( const auto& transitionPair : _exitTransitions ) {
-    const auto& iConditionPtr = transitionPair.second;
-    iConditionPtr->SetActive(bei, true);
+
+  for( const auto& transitionTypes : _transitions ) {
+    for( const auto& transition : transitionTypes.second ) {
+      transition.condition->SetActive(bei, true);
+    }
   }
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -726,17 +697,10 @@ void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei, 
 
 void InternalStatesBehavior::State::OnDeactivated(BehaviorExternalInterface& bei)
 {
-  for( const auto& transitionPair : _interruptingTransitions ) {
-    const auto& iConditionPtr = transitionPair.second;
-    iConditionPtr->SetActive(bei, false);
-  }
-  for( const auto& transitionPair : _nonInterruptingTransitions ) {
-    const auto& iConditionPtr = transitionPair.second;
-    iConditionPtr->SetActive(bei, false);
-  }
-  for( const auto& transitionPair : _exitTransitions ) {
-    const auto& iConditionPtr = transitionPair.second;
-    iConditionPtr->SetActive(bei, false);
+  for( const auto& transitionTypes : _transitions ) {
+    for( const auto& transition : transitionTypes.second ) {
+      transition.condition->SetActive(bei, false);
+    }
   }
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -888,14 +852,13 @@ std::vector<std::pair<std::string, std::vector<IBEIConditionPtr>>>
   std::vector<std::pair<std::string, std::vector<IBEIConditionPtr>>> ret;
   for( const auto& statePair : *_states ) {
     std::vector<IBEIConditionPtr> retTransitions;
-    const State::Transitions* transitionTypes[3] = {&statePair.second._interruptingTransitions,
-                                                    &statePair.second._nonInterruptingTransitions,
-                                                    &statePair.second._exitTransitions};
-    for( const auto& transitions : transitionTypes ) {
-      for( const auto& transPair : *transitions ) {
-        retTransitions.push_back( transPair.second );
+
+    for( const auto& transitionTypes : statePair.second._transitions ) {
+      for( const auto& transition : transitionTypes.second ) {
+        retTransitions.push_back( transition.condition );
       }
     }
+
     ret.emplace_back( statePair.second._name, std::move(retTransitions) );
   }
   return ret;

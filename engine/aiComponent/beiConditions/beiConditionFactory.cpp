@@ -89,6 +89,11 @@ CustomBEIConditionHandle BEIConditionFactory::InjectCustomBEICondition(const std
   PRINT_CH_DEBUG("Behaviors", "BEIConditionFactory.InjectCustomBEICondition",
                  "Added custom condition '%s'",
                  name.c_str());
+
+  if( condition->GetOwnerDebugLabel().empty() ) {
+    // set debug label to include name for easier debugging
+    condition->SetOwnerDebugLabel( "@" + name );
+  }
   
   // note: can't use make_shared because constructor is private
   CustomBEIConditionHandle ret( new CustomBEIConditionHandleInternal( name ) );

@@ -82,8 +82,15 @@ private:
   class State;
 
   enum class TransitionType {
+    // transitions that can happen when the currently delegated-to behavior thinks it's a decent time for a
+    // gentle interruption (or if there is no currently delegated behavior)
     NonInterrupting,
+
+    // transitions that can happen while the state is active (and in the middle of doing something)
     Interrupting,
+
+    // exit transitions only run if the currently-delegated-to behavior stop itself. Note that these are
+    // checked _after_ all of the other transitions
     Exit
   };
 

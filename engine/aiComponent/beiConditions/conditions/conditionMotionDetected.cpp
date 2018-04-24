@@ -63,7 +63,15 @@ bool ConditionMotionDetected::AreConditionsMetInternal(BehaviorExternalInterface
   // within last tick
   return _lifetimeParams.tickCountMotionObserved + 1 >= BaseStationTimer::getInstance()->GetTickCount();
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IBEICondition::DebugFactorsList ConditionMotionDetected::GetDebugFactors() const
+{
+  DebugFactorsList ret;
+  ret.emplace_back("detectedLevel", std::to_string(_lifetimeParams.detectedMotionLevel));
+  return ret;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ConditionMotionDetected::HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface)
 {
