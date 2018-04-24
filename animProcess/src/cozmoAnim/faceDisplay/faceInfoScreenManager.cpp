@@ -163,6 +163,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
 
   ADD_SCREEN(MicDirectionClock, Camera);  
   ADD_SCREEN(Camera, Main);    // Last screen cycles back to Main
+  ADD_SCREEN(CameraMotorTest, Camera);
 
   // Recovery screen
   FaceInfoScreen::MenuItemAction rebootAction = [this]() {
@@ -232,6 +233,20 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   GetScreen(ScreenName::Camera)->SetEnterScreenAction(cameraEnterAction);
   GetScreen(ScreenName::Camera)->SetExitScreenAction(cameraExitAction);
 
+  // Camera Motor Test
+  // Add menu item to camera screen to start a test mode where the motors run back and forth
+  // and camera images are streamed to the face
+  ADD_MENU_ITEM(Camera, "TEST MODE", CameraMotorTest);
+  SET_TIMEOUT(CameraMotorTest, 300.f, None);
+
+  GetScreen(ScreenName::CameraMotorTest)->SetEnterScreenAction(cameraEnterAction);
+  FaceInfoScreen::ScreenAction cameraMotorTestExitAction = [cameraExitAction]() {
+    cameraExitAction();
+    SendAnimToRobot(RobotInterface::StopAllMotors());
+  };
+  GetScreen(ScreenName::CameraMotorTest)->SetExitScreenAction(cameraMotorTestExitAction);
+
+  
   // Check if we booted in recovery mode
   if (OSState::getInstance()->IsInRecoveryMode()) {
     LOG_WARNING("FaceInfoScreenManager.Init.RecoveryModeFileFound", "Going into recovery mode");
@@ -310,7 +325,8 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   // active during playpen, then re-enable lift power)
   const bool enableLift = GetCurrScreenName() == ScreenName::None ||
                           GetCurrScreenName() == ScreenName::FAC  ||
-                          GetCurrScreenName() == ScreenName::CustomText;
+                          GetCurrScreenName() == ScreenName::CustomText ||
+                          GetCurrScreenName() == ScreenName::CameraMotorTest;
   RobotInterface::EnableMotorPower msg;
   msg.motorID = MotorID::MOTOR_LIFT;
   msg.enable = enableLift;
@@ -375,7 +391,8 @@ void FaceInfoScreenManager::UpdateFAC()
   
 void FaceInfoScreenManager::DrawCameraImage(const Vision::ImageRGB565& img)
 {
-  if (GetCurrScreenName() != ScreenName::Camera) {
+  if (GetCurrScreenName() != ScreenName::Camera &&
+      GetCurrScreenName() != ScreenName::CameraMotorTest) {
     return;
   }
 
@@ -850,6 +867,9 @@ void FaceInfoScreenManager::Update(const RobotState& state)
     case ScreenName::FAC:
       UpdateFAC();
       break;
+    case ScreenName::CameraMotorTest:
+      UpdateCameraTestMode(state.timestamp);
+      break;
     default:
       // Other screens are either updated once when SetScreen() is called
       // or updated by their own draw functions that are called externally
@@ -1211,6 +1231,49 @@ void FaceInfoScreenManager::Reboot()
   }
 
 #endif
+}
+
+void FaceInfoScreenManager::UpdateCameraTestMode(uint32_t curTime_ms)
+{
+  const ScreenName curScreen = FaceInfoScreenManager::getInstance()->GetCurrScreenName();
+  if(curScreen != ScreenName::CameraMotorTest)
+  {
+    return;
+  }
+
+  // Every alternateTime_ms, while we are in the camera test mode,
+  // send alternating motor commands
+  static const uint32_t alternateTime_ms = 2000;
+  static BaseStationTime_t lastMovement_ms = curTime_ms;
+  if(curTime_ms - lastMovement_ms > alternateTime_ms)
+  {
+    lastMovement_ms = curTime_ms;
+    static bool up = false;
+
+    RobotInterface::SetHeadAngle head;
+    head.angle_rad = (up ? MAX_HEAD_ANGLE : MIN_HEAD_ANGLE);
+    head.duration_sec = alternateTime_ms / 1000.f;
+    head.max_speed_rad_per_sec = MAX_HEAD_SPEED_RAD_PER_S;
+    head.accel_rad_per_sec2 = MAX_HEAD_ACCEL_RAD_PER_S2;
+      
+    RobotInterface::SetLiftHeight lift;
+    lift.height_mm = (up ? LIFT_HEIGHT_CARRY : 50);
+    lift.duration_sec = alternateTime_ms / 1000.f;
+    lift.max_speed_rad_per_sec = MAX_LIFT_SPEED_RAD_PER_S;
+    lift.accel_rad_per_sec2 = MAX_LIFT_ACCEL_RAD_PER_S2;
+
+    RobotInterface::DriveWheels wheels;
+    wheels.lwheel_speed_mmps = (up ? 60 : -60);
+    wheels.rwheel_speed_mmps = (up ? 60 : -60);
+    wheels.lwheel_accel_mmps2 = MAX_WHEEL_ACCEL_MMPS2;
+    wheels.rwheel_accel_mmps2 = MAX_WHEEL_ACCEL_MMPS2;
+
+    SendAnimToRobot(std::move(head));
+    SendAnimToRobot(std::move(lift));
+    SendAnimToRobot(std::move(wheels));
+
+    up = !up;
+  }
 }
 
 
