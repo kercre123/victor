@@ -346,6 +346,46 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(BEIConditionType type, 
   Json::Value config = IBEICondition::GenerateBaseConditionConfig( type );
   return CreateBEICondition( config, ownerDebugLabel );
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BEIConditionFactory::CheckConditionsAreUsed(const CustomBEIConditionHandleList& handles,
+                                                 const std::string& debugStr)
+{
+  bool ret = true;
   
+  for( const auto& handle : handles ) {
+    if( handle == nullptr ) {
+      ret = false;
+      PRINT_NAMED_WARNING("BEIConditionFactory.AreConditionsUsed.NullHandle",
+                          "One of the handles in the container was empty");
+      continue;
+    }
+
+    auto it = _customConditionMap.find( handle->_conditionName );
+    if( it == _customConditionMap.end() ) {
+      ret = false;
+      PRINT_NAMED_ERROR("BEIConditionFactory.AreConditionsUsed.HandleNotContained",
+                        "The handle with name '%s' was not found in the map. This is a bug",
+                        handle->_conditionName.c_str());
+      continue;
+    }
+
+    const long numUses = it->second.use_count();
+
+    if( numUses <= 1 ) {
+      PRINT_NAMED_WARNING("BEIConditionFactory.AreConditionsUsed.NotUsed",
+                          "%s: BEI condition '%s' only has a use count of %lu, may not have been used",
+                          debugStr.c_str(),
+                          handle != nullptr ? handle->_conditionName.c_str() : "<NULL>",
+                          numUses);
+      ret = false;
+      // continue looping to print all relevant warnings
+    }
+  }
+
+  return ret;
+}
+  
+
 } // namespace Cozmo
 } // namespace Anki

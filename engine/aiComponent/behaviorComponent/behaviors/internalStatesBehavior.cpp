@@ -24,6 +24,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
@@ -36,6 +37,8 @@
 namespace Anki {
 namespace Cozmo {
 
+CONSOLE_VAR_EXTERN(float, kTimeMultiplier);
+
 namespace {
 
 constexpr const char* kStateConfgKey = "states";
@@ -43,7 +46,8 @@ constexpr const char* kStateNameConfgKey = "name";
 constexpr const char* kResumeReplacementsKey = "resumeReplacements";
 constexpr const char* kTransitionDefinitionsKey = "transitionDefinitions";
 constexpr const char* kInitialStateKey = "initialState";
-
+constexpr const char* kStateTimerConditionsKey = "stateTimerConditions";
+constexpr const char* kBeginTimeKey = "begin_s";
 
 static const BackpackLights kLightsOff = {
   .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
@@ -93,14 +97,24 @@ public:
 
   // fills in allTransitions with the transitions present in this state
   void GetAllTransitions( std::set<IBEIConditionPtr>& allTransitions );
-    
+
+  // Get the time this state has been active. This timer starts when the state is activated. If there's an
+  // interruption, the timer pauses rather than resetting (or continuing to track) and resumes if the state is
+  // resumed.
+  float GetTimeActive();
+  
   std::string _name;
   std::string _behaviorName;
   ICozmoBehaviorPtr _behavior;
 
+  // note that these also count a state as "starting" and "ending" when this behavior itself is interrupted
+  // (even if we later "resume" the state)
   float _lastTimeStarted_s = -std::numeric_limits<float>::min();
   float _lastTimeEnded_s = -std::numeric_limits<float>::min();
 
+  // This tracks an "adjusted" start time for use with GetTimeActive()
+  float _adjustedStartTime_s = -std::numeric_limits<float>::min();
+  
   // Transitions are evaluated in order, and if the function returns true, we will transition to the given
   // state id.
   using Transitions = std::vector< std::pair< StateID, IBEIConditionPtr > >;
@@ -133,6 +147,9 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
   
   _useDebugLights = config.get("use_debug_lights", true).asBool();
 
+  // create custom BEI conditions for timers (if any are specified)
+  CustomBEIConditionHandleList customTimerHandles = CreateCustomTimerConditions(config);
+  
   // First, parse the state definitions to create all of the "state names" as a first pass
   for( const auto& stateConfig : config[kStateConfgKey] ) {
     AddStateName( JsonTools::ParseString(stateConfig, kStateNameConfgKey, "InternalStatesBehavior.StateConfig") );
@@ -250,11 +267,38 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
     }
   }
 
+  // warn if any of the custom conditions aren't used
+  BEIConditionFactory::CheckConditionsAreUsed(customTimerHandles, GetDebugLabel());
 }
   
 InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config)
   : InternalStatesBehavior( config, {} )
 {
+}
+
+CustomBEIConditionHandleList InternalStatesBehavior::CreateCustomTimerConditions(const Json::Value& config)
+{
+  CustomBEIConditionHandleList handles;
+
+  static const char* kDebugName = "InternalStatesBehavior.CreateCustomTimerConditions";
+  
+  for( const auto& timerConfig : config[kStateTimerConditionsKey] ) {
+    const std::string& name = JsonTools::ParseString(timerConfig, kStateNameConfgKey, kDebugName);
+    const float beginTime_s = JsonTools::ParseFloat(timerConfig, kBeginTimeKey, kDebugName);
+  
+    handles.emplace_back(
+      BEIConditionFactory::InjectCustomBEICondition(
+        name,
+        std::make_shared<ConditionLambda>(
+          [this, beginTime_s](BehaviorExternalInterface& bei) {
+            const float activatedTime = GetCurrentStateActiveTime_s();
+            const float ffwdTime = kTimeMultiplier * activatedTime;
+            const bool val = ffwdTime >= beginTime_s;
+            return val;
+          })));
+  }
+  
+  return handles;
 }
 
 InternalStatesBehavior::~InternalStatesBehavior()
@@ -267,7 +311,8 @@ void InternalStatesBehavior::GetBehaviorJsonKeys(std::set<const char*>& expected
     kStateConfgKey,
     kResumeReplacementsKey,
     kTransitionDefinitionsKey,
-    kInitialStateKey
+    kInitialStateKey,
+    kStateTimerConditionsKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -549,6 +594,18 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
   }
 }
 
+float InternalStatesBehavior::GetCurrentStateActiveTime_s() const
+{
+  if( _currState == InvalidStateID ) {
+    PRINT_NAMED_ERROR("InternalStatesBehavior.GetCurrentStateActiveTime.InvalidState",
+                      "Attempted to get state time but state isn't set");
+    return 0.0f;
+  }
+
+  const float activeTime = _states->at(_currState).GetTimeActive();
+  return activeTime;
+}
+
 
 InternalStatesBehavior::State::State(const std::string& stateName, const std::string& behaviorName)
   : _name(stateName)
@@ -624,37 +681,47 @@ void InternalStatesBehavior::State::OnActivated(BehaviorExternalInterface& bei, 
     }
   }
   
-  auto resetTimer = [](const IBEIConditionPtr& condition) {
-    auto timerCondition = std::dynamic_pointer_cast<ConditionTimerInRange>( condition );
-    if( timerCondition != nullptr ) {
-      timerCondition->Reset();
-    }
-  };
-  
   for( const auto& transitionPair : _interruptingTransitions ) {
     const auto& iConditionPtr = transitionPair.second;
     iConditionPtr->SetActive(bei, true);
-    if( !isResuming && (iConditionPtr->GetConditionType() == BEIConditionType::TimerInRange) ) {
-      resetTimer( iConditionPtr );
-    }
   }
   for( const auto& transitionPair : _nonInterruptingTransitions ) {
     const auto& iConditionPtr = transitionPair.second;
     iConditionPtr->SetActive(bei, true);
-    if( !isResuming && (iConditionPtr->GetConditionType() == BEIConditionType::TimerInRange) ) {
-      resetTimer( iConditionPtr );
-    }
   }
   for( const auto& transitionPair : _exitTransitions ) {
     const auto& iConditionPtr = transitionPair.second;
     iConditionPtr->SetActive(bei, true);
-    if( !isResuming && (iConditionPtr->GetConditionType() == BEIConditionType::TimerInRange) ) {
-      resetTimer( iConditionPtr );
-    }
   }
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  _lastTimeStarted_s = currTime_s;       
+  _lastTimeStarted_s = currTime_s;
+
+  const bool adjustedTimeNeverSet = ( _adjustedStartTime_s <= 0.0f );
+  if( !isResuming || adjustedTimeNeverSet ) {
+    // initial activation of this state
+    _adjustedStartTime_s = currTime_s;
+  }
+  else {
+    // this is a "resume" of the state, so subtract the time that this was "paused" (due to this behavior
+    // itself being interrupted)
+    const float pausedFor_s = currTime_s - _lastTimeEnded_s;
+    if( ANKI_VERIFY( pausedFor_s >= 0.0f,
+                     "InternalStatesBehavior.State.OnActivated.AdjustedTimeInvalid",
+                     "State '%s' looks like it's been paused for %f s (%f - %f)",
+                     _name.c_str(),
+                     pausedFor_s,
+                     currTime_s,
+                     _lastTimeEnded_s ) ) {
+      
+      _adjustedStartTime_s += pausedFor_s;
+
+      PRINT_CH_DEBUG("Behaviors", "InternalStatesBehavior.State.PausedFor",
+                     "State '%s' was paused for %fs",
+                     _name.c_str(),
+                     pausedFor_s);
+    }
+  }
 }
 
 void InternalStatesBehavior::State::OnDeactivated(BehaviorExternalInterface& bei)
@@ -674,6 +741,19 @@ void InternalStatesBehavior::State::OnDeactivated(BehaviorExternalInterface& bei
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _lastTimeEnded_s = currTime_s;
+}
+
+float InternalStatesBehavior::State::GetTimeActive()
+{
+  const bool adjustedTimeNeverSet = ( _adjustedStartTime_s == -std::numeric_limits<float>::min() );
+  if( adjustedTimeNeverSet ) {
+    return 0.0f;
+  }
+
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  const float returnTime = currTime_s - _adjustedStartTime_s;
+  DEV_ASSERT( Util::IsFltGE(returnTime, 0.0f), "InternalStatesBehavior.State.AdjustedTime.NegativeTimeBug" );
+  return returnTime;
 }
 
 bool InternalStatesBehavior::StateExitCooldownExpired(StateID state, float timeout, bool valueIfNeverRun) const
@@ -760,13 +840,16 @@ float InternalStatesBehavior::GetLastTimeEnded(StateID state) const
 }
   
 InternalStatesBehavior::StateID InternalStatesBehavior::ParseStateFromJson(const Json::Value& config,
-                                                                                     const std::string& key)
+                                                                           const std::string& key)
 {
   if( ANKI_VERIFY( config[key].isString(),
                    "HighLevelAI.ParseStateFromJson.InvalidJson",
                    "key '%s' not present in json",
                    key.c_str() ) ) {
     return GetStateID( config[key].asString() );
+  }
+  else {
+    JsonTools::PrintJsonError(config, "HighLevelAI.ParseStateFromJson.InvalidJson", 2);
   }
   return InvalidStateID;
 }

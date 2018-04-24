@@ -99,6 +99,12 @@ private:
   
   void TransitionToState(StateID targetState);
 
+  // return the "adjusted" time of the current state (time it's been active - time it's been paused because
+  // this behavior was interrupted)
+  float GetCurrentStateActiveTime_s() const;
+
+  CustomBEIConditionHandleList CreateCustomTimerConditions(const Json::Value& config);
+
   using NameToIdMapType = std::map< std::string, StateID >;
   NameToIdMapType _stateNameToID;
 

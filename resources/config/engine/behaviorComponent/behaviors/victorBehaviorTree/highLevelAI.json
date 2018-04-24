@@ -85,6 +85,25 @@
     }
   ],
 
+  "stateTimerConditions": [
+    {
+      "name": "BoredOfObserving",
+      "begin_s": 1100.0
+    },
+    {
+      "name": "NoLongerRecentlyPlaced",
+      "begin_s": 1200.0
+    },
+    {
+      "name": "WakeUpFromNap",
+      "begin_s": 14400.0
+    },
+    {
+      "name": "FailedToFindCharger",
+      "begin_s": 300.0
+    }
+  ],
+
   "transitionDefinitions": [
     {
       // TODO:(bn) split this up into multiple files?
@@ -109,9 +128,7 @@
         {
           "to": "DriveOffChargerIntoObserving",
           "condition": {
-            "conditionType": "TimerInRange",
-            "begin_s": 1100.0,
-            "manualResetOnly": true
+            "customCondition": "BoredOfObserving"
           }
         },
         {
@@ -139,13 +156,11 @@
           }
         }
       ],
-      "nonInterruptingTransitions": [        
+      "nonInterruptingTransitions": [
         {
           "to": "ObservingOnCharger",
           "condition": {
-            "conditionType": "TimerInRange",
-            "begin_s": 1200.0,
-            "manualResetOnly": true
+            "customCondition": "NoLongerRecentlyPlaced"
           }
         }
       ]
@@ -321,9 +336,7 @@
         {
           "to": "WakingUp",
           "condition": {
-            "conditionType": "TimerInRange",
-            "begin_s": 14400.0,
-            "manualResetOnly": true
+            "customCondition": "WakeUpFromNap"
           }
         }
       ]
@@ -368,9 +381,7 @@
         {
           "to": "FailedToFindCharger",
           "condition": {
-            "conditionType": "TimerInRange",
-            "begin_s": 300.0,
-            "manualResetOnly": true
+            "customCondition": "FailedToFindCharger"
           }
         }
       ],

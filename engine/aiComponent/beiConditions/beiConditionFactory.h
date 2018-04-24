@@ -45,6 +45,9 @@ public:
   // Check if the given json looks like a condition (contains condition type or name keys)
   static bool IsValidCondition(const Json::Value& config);
 
+  // utility to check and print warnings if any conditions seem unused (internally checks ref count)
+  static bool CheckConditionsAreUsed(const CustomBEIConditionHandleList& handles, const std::string& debugStr);
+
 private:
 
   static void RemoveCustomCondition(const std::string& name);
