@@ -39,6 +39,8 @@ protected:
   {
     requiredVisionModes.insert( {VisionMode::DetectingMotion, EVisionUpdateFrequency::High} );
   }
+
+  virtual DebugFactorsList GetDebugFactors() const override;
   
 private:
   enum class MotionArea{
