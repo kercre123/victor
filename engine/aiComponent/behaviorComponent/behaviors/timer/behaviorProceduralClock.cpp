@@ -268,7 +268,7 @@ void BehaviorProceduralClock::BehaviorUpdate()
 
   if(!_lifetimeParams.hasBaseImageBeenSent){
     // Send the base image over the wire
-    GetBEI().GetAnimationComponent().DisplayFaceImage(*(_instanceParams.compImg.get()), ANIM_TIME_STEP_MS, _instanceParams.totalTimeDisplayClock, true);
+    GetBEI().GetAnimationComponent().DisplayFaceImage(*(_instanceParams.compImg.get()), ANIM_TIME_STEP_MS, 0, true);
     _lifetimeParams.hasBaseImageBeenSent = true;
   }else{
     // Just update the composite image

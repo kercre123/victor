@@ -500,7 +500,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       // Check for composite image frame updates
       if(_compositeImage != nullptr){
         if(_timeTillNextCompImgGetFrameCall < ANIM_TIME_STEP_MS){
-          _compositeImageUpdated = 0;
           _timeTillNextCompImgGetFrameCall = _compositeImageGetFrameInterval_ms;
           _compositeImageUpdated = true;
         }else{
@@ -524,21 +523,23 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           _cannedSpriteSequence->GetFrame(_curFrame, handle);
           ++_curFrame;
         }else if(_compositeImage != nullptr){
+          ANKI_VERIFY(_compositeImageUpdated,
+                      "SpriteSequenceKeyFrame.GetFaceImageHandle.CompositeImageUpdateIssue",
+                      "Composite images only have on frame, but next frame is being requested via _nextFrameTime_ms");
           // TODO: Kevin K - currently all of our composite images/sequences are grayscale
           // eventually we'll want to inspect contents and colorize layers that are supposde to be eyes only
           auto* img = new Vision::Image(_compositeImage->GetHeight(), _compositeImage->GetWidth());
           img->FillWith(0);
           _compositeImage->OverlayImageWithFrame(*img, _curFrame);
           handle = std::make_shared<Vision::SpriteWrapper>(img);
-          if(_compositeImageUpdated){
-            ++_curFrame;
-          }
+          ++_curFrame;
         }
-        if(_compositeImageUpdated){
+
+        if(!_compositeImageUpdated){
           _nextFrameTime_ms = _currentTime_ms + _frameDuration_ms;
         }
-        _compositeImageUpdated = false;
 
+        _compositeImageUpdated = false;
         return true;
       }else{
         return false;
