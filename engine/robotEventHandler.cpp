@@ -87,7 +87,7 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceObjec
 template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceObjectOnGround& msg)
 {
-  // Create an action to drive to specied pose and then put down the carried
+  // Create an action to drive to specified pose and then put down the carried
   // object.
   // TODO: Better way to set the object's z height and parent? (This assumes object's origin is 22mm off the ground!)
   Rotation3d rot(UnitQuaternion(msg.qw, msg.qx, msg.qy, msg.qz));
@@ -934,7 +934,7 @@ RobotEventHandler::RobotEventHandler(const CozmoContext* context)
     // We'll use this callback for all action events
     auto actionEventCallback = std::bind(&RobotEventHandler::HandleActionEvents, this, std::placeholders::_1);
       
-    // This macro makes adding handler defitions less painful/verbose by adding namespaces
+    // This macro makes adding handler definitions less painful/verbose by adding namespaces
     // and grabbing the right function pointer for the right method in the templated
     // GetActionWrapper helper struct above.
 #   define DEFINE_HANDLER(__actionTag__, __g2eTag__, __numRetries__) \
@@ -1096,13 +1096,13 @@ void RobotEventHandler::HandleActionEvents(const GameToEngineEvent& event)
   auto const& msg = event.GetData();
   auto handlerIter = _gameToEngineHandlerLUT.find(msg.GetTag());
   if(handlerIter == _gameToEngineHandlerLUT.end())
-    {
+  {
     // This should really never happen because we are supposed to be guaranteed at
     // compile time that all action tags are inserted.
     PRINT_NAMED_ERROR("RobotEventHandler.HandleActionEvents.MissingTag",
                       "%s (%hhu)", MessageGameToEngineTagToString(msg.GetTag()), msg.GetTag());
-      return;
-    }
+    return;
+  }
   
   // Now we fill out our Action and possibly update number of retries:
   IActionRunner* newAction = handlerIter->second.first(*robot, msg);
@@ -1199,6 +1199,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::QueueCompoundActi
       PRINT_NAMED_ERROR("RobotEventHandler.HandleQueueCompoundAction.MissingActionTag",
                         "Action %zu: %s (%hhu)", iAction,
                         RobotActionUnionTagToString(actionUnion.GetTag()), actionUnion.GetTag());
+      delete compoundAction;
       return;
     }
     
