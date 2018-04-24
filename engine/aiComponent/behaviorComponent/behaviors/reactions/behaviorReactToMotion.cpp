@@ -159,7 +159,7 @@ void BehaviorReactToMotion::InitBehavior()
 {
   Json::Value config;
   config["conditionType"] = "MotionDetected";
-  config["motionLevel"] = "Any";
+  config["motionLevel"] = "Low";
   
   config["motionArea"] = "Left";
   _dVars.motionConditions.emplace_back( MotionArea::Left, _iConfig.turnIntervalSize, config );
