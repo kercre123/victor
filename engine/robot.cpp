@@ -111,6 +111,15 @@ CONSOLE_VAR(bool, kUseVisionOnlyWhileOnTreads,    "Robot", false);
 
 // Enable to enable example code of face image drawing
 CONSOLE_VAR(bool, kEnableTestFaceImageRGBDrawing,  "Robot", false);
+  
+// TEMP support for 'old' chargers with black stripe and white body
+CONSOLE_VAR(bool, kChargerStripeIsBlack, "Robot",
+#ifdef SIMULATOR
+            false
+#else
+            true
+#endif
+            );
 
 #if REMOTE_CONSOLE_ENABLED
 
@@ -1213,6 +1222,12 @@ Result Robot::Update()
     return RESULT_OK;
   }
 
+  static bool wasChargerStripeIsBlack = kChargerStripeIsBlack;
+  if (kChargerStripeIsBlack != wasChargerStripeIsBlack) {
+    SendMessage(RobotInterface::EngineToRobot(RobotInterface::ChargerDockingStripeColor(kChargerStripeIsBlack)));
+    wasChargerStripeIsBlack = kChargerStripeIsBlack;
+  }
+  
 #if(0)
   ActiveBlockLightTest(1);
   return RESULT_OK;

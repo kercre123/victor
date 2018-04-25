@@ -98,8 +98,8 @@ namespace Anki {
       constexpr static const f32 kSlopeLength    = 94.f;
       constexpr static const f32 kPlatformLength = 0.f;
       constexpr static const f32 kLength         = kSlopeLength + kPlatformLength + kWallWidth;
-      constexpr static const f32 kMarkerHeight   = 44.f;
-      constexpr static const f32 kMarkerWidth    = 44.f;
+      constexpr static const f32 kMarkerHeight   = 44.f; // this should be changed to 46 mm for the new markers (VIC-945)
+      constexpr static const f32 kMarkerWidth    = 44.f; // this should be changed to 46 mm for the new markers (VIC-945)
       constexpr static const f32 kMarkerZPosition   = 48.5f;  // Middle of marker above ground
       constexpr static const f32 kPreAscentDistance  = 100.f; // for ascending from bottom
       constexpr static const f32 kRobotToChargerDistWhenDocked = 30.f;  // Distance from front of charger to robot origin when docked

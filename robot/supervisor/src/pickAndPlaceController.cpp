@@ -94,6 +94,12 @@ namespace Anki {
         // For charger mounting, whether or not to use cliff sensors to align the robot.
         bool useCliffSensorAlignment_ = false;
         
+#ifdef SIMULATOR
+        bool chargerStripeIsBlack_ = false;
+#else
+        bool chargerStripeIsBlack_ = true;
+#endif
+        
         // Threshold used to distinguish black stripe on charger from the white body
 #ifdef SIMULATOR
         const u16 kChargerCliffBlackThreshold = 880;
@@ -159,6 +165,9 @@ namespace Anki {
         
       } // "private" namespace
 
+      void SetChargerStripeIsBlack(const bool b) {
+        chargerStripeIsBlack_ = b;
+      }
 
       Mode GetMode() {
         return mode_;
@@ -855,22 +864,22 @@ namespace Anki {
               const bool isBlackBL = cliffBL < kChargerCliffBlackThreshold;
               const bool isBlackBR = cliffBR < kChargerCliffBlackThreshold;
 
-              // TODO: Only keep the simulated logic (for white stripe on dark charger) (VIC-945)
-#ifdef SIMULATOR
-              // Slow down one of the sides if it's seeing white
-              if (!isBlackBL && isBlackBR) {
-                leftSpeed = kChargerDockingSpeedLow;
-              } else if (isBlackBL && !isBlackBR) {
-                rightSpeed = kChargerDockingSpeedLow;
+              // TODO: Only keep the logic for white stripe on dark charger (VIC-945)
+              if (chargerStripeIsBlack_) {
+                // Slow down one of the sides if it's seeing black
+                if (isBlackBL && !isBlackBR) {
+                  leftSpeed = kChargerDockingSpeedLow;
+                } else if (!isBlackBL && isBlackBR) {
+                  rightSpeed = kChargerDockingSpeedLow;
+                }
+              } else {
+                // Slow down one of the sides if it's seeing white
+                if (!isBlackBL && isBlackBR) {
+                  leftSpeed = kChargerDockingSpeedLow;
+                } else if (isBlackBL && !isBlackBR) {
+                  rightSpeed = kChargerDockingSpeedLow;
+                }
               }
-#else
-              // Slow down one of the sides if it's seeing black
-              if (isBlackBL && !isBlackBR) {
-                leftSpeed = kChargerDockingSpeedLow;
-              } else if (!isBlackBL && isBlackBR) {
-                rightSpeed = kChargerDockingSpeedLow;
-              }
-#endif
               
               SteeringController::ExecuteDirectDrive(leftSpeed, rightSpeed);
               tiltedOnChargerStartTime_ = 0;
