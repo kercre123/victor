@@ -101,18 +101,18 @@ static void dbg_test_emr_(bool blank_only, bool dont_clear)
   ConsolePrintf("EMR test %s: %u errors\n", mismatch > 0 ? "FAILED" : "passed", mismatch);
 }
 
-static void dbg_test_comm_loop_(int nloops, int rmax, int rmin)
+static void dbg_test_comm_loop_(int nloops, int rmin, int rmax)
 {
   rmin = rmin<=0 ?   1 : rmin&0xff; //limit for random generator
   rmax = rmax<=0 ? 255 : rmax&0xff; //upper limit for random generator
   if( rmin > rmax )
     rmin = rmax;
   
-  ConsolePrintf("STRESS TEST COMMS: %i loops, NN=rand{%i..%i}\n", nloops, rmin, rmax);
-  int rmod = rmax-rmin+1; //modulo
+  static int sensorSelect = -1;
+  sensorSelect += 1;
   
-  //static int sensorSelect = -1;
-  //sensorSelect += 1;
+  ConsolePrintf("STRESS TEST COMMS: %i loops, NN=rand{%i..%i}, sensor=%i\n", nloops, rmin, rmax, sensorSelect);
+  int rmod = rmax-rmin+1; //modulo
   
   srand(Timer::get());
   for(int x = 0; x < nloops; x++)
