@@ -30,14 +30,17 @@ anki_build_copy_assets(
     OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
 )
 
-anki_build_copy_assets(
-    TARGET cozmo_resources_webserver
-    SRCLIST_DIR ${ANKI_SRCLIST_DIR}
-    OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
-    RELATIVE_OUTPUT_DIR "cozmo_resources"
-    OUT_DSTS ASSET_OUTPUT_FILES
-    OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
-)
+# Factory test shouldn't have webserver resources
+if (NOT FACTORY_TEST)
+  anki_build_copy_assets(
+      TARGET cozmo_resources_webserver
+      SRCLIST_DIR ${ANKI_SRCLIST_DIR}
+      OUTPUT_DIR "${CMAKE_BINARY_DIR}/data/assets/cozmo_resources"
+      RELATIVE_OUTPUT_DIR "cozmo_resources"
+      OUT_DSTS ASSET_OUTPUT_FILES
+      OUT_RELATIVE_DSTS ASSET_OUTPUT_RELATIVE_DSTS
+  )
+endif()
 
 anki_build_copy_assets(
     TARGET cozmo_bundle
@@ -63,6 +66,12 @@ set(ASSET_TARGETS
     cozmo_resources_tts
     cozmo_resources_sound
     cozmo_bundle)
+
+# Remove webserver resources from asset targets if we are building
+# for the factory test
+if (FACTORY_TEST)
+   list(REMOVE_ITEM ASSET_TARGETS cozmo_resources_webserver)
+endif()
 
 # Bundle test assets on OSX
 if (MACOSX)
