@@ -39,8 +39,8 @@ protected:
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
-  virtual void OnEnteredActivatableScopeInternal() override;
-  virtual void OnLeftActivatableScopeInternal() override;
+  virtual void OnBehaviorEnteredActivatableScope() override;
+  virtual void OnBehaviorLeftActivatableScope() override;
 
 private:
   
