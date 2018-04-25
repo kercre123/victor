@@ -33,8 +33,7 @@ namespace Factory {
 
   namespace 
   {
-    static const char* kEMRFile = "/factory/birthcertificate";
-    // static const char* kEMRFile = "/data/data/com.anki.victor/birthcertificate";
+    static const char* kEMRFile = "/dev/block/bootdevice/by-name/emr";
 
     static Factory::EMR* _emr = nullptr;
 
@@ -49,10 +48,6 @@ namespace Factory {
         LOG_ERROR("Factory.CheckEMRForPackout.OpenFailed", "%d", errno);
         return nullptr; // exit instead? will probably end up crashing in WriteEMR or GetEMR will return null
       }
-      
-      // Makes the file the correct size, only does something if the file was just
-      // created otherwise it should always be the size of the EMR struct
-      ftruncate(fd, sizeof(Factory::EMR));
 
       // Memory map the file as shared since multiple processes have access to these functions
       Factory::EMR* emr = (Factory::EMR*)(mmap(nullptr, sizeof(EMR), protFlags, MAP_SHARED, fd, 0));
