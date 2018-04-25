@@ -326,10 +326,10 @@ def setup_exe(generator, build_type, exe):
   exec_this(['codesign', '-f', '-s', CERTIFICATE_NAME, exe])
   output = exec_this([SOCKETFILTERFW, '--add', exe])
   if 'already a part of the firewall' not in output:
-    print("You must run webotsTest.py -g '{}' -b {} --setupFirewall to add {}".format(generator.name, build_type.name, exe))
+    print("You must run \"webotsTest.py -g '{}' -b {} --setupFirewall\" to add {}.".format(generator.name, build_type.name, exe))
   output = exec_this([SOCKETFILTERFW, '--unblock', exe])
   if 'is permitted' not in output:
-    print("You must run webotsTest.py -g '{}' -b {} --setupFirewall to unblock {}".format(generator.name, build_type.name, exe))
+    print("You must run \"webotsTest.py -g '{}' -b {} --setupFirewall\" to unblock {}.".format(generator.name, build_type.name, exe))
 
 def setup_exes(generator, build_type, exes):
   if not is_firewall_enabled(''):
@@ -337,6 +337,7 @@ def setup_exes(generator, build_type, exes):
     return
   if not is_certificate_installed():
     print('Firewall certificate is not installed. Unable to sign executables.')
+    print("You must run \"webotsTest.py -g '{}' -b {} --setupFirewall\" to install firewall certificate.".format(generator.name, build_type.name))
     return
   for exe in exes:
     setup_exe(generator, build_type, exe)
