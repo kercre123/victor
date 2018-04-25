@@ -39,6 +39,15 @@ enum uint_8 SpriteName
   Face_TimerSet_GetIn_02,
   Face_TimerSet_GetOut_01,
 
+  // Weather SpriteSequences
+  Face_Cloud_01,
+  Face_Cloud_02,
+  Face_Cloud_03,
+  Face_Cloud_04,
+  Face_Clouds_Mist,
+  Face_Snow_Mist,
+  Face_Snow_01,
+
   // Must be last element
   Count
 }
@@ -73,6 +82,15 @@ enum_concept bool IsSpriteSequence[SpriteName] {
   Face_TimerSet_GetIn_01  = 1,
   Face_TimerSet_GetIn_02  = 1,
   Face_TimerSet_GetOut_01 = 1,
+
+  // Weather SpriteSequences
+  Face_Cloud_01    = 1,
+  Face_Cloud_02    = 1,
+  Face_Cloud_03    = 1,
+  Face_Cloud_04    = 1,
+  Face_Clouds_Mist = 1,
+  Face_Snow_Mist   = 1,
+  Face_Snow_01     = 1,
 
   // Must be last element
   Count = 0

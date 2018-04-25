@@ -102,6 +102,34 @@
   {
     "CladEvent": "PairingIconWifi",
     "SpriteName": "pairing_icon_wifi"
+  },
+  {
+    "CladEvent": "Face_Cloud_01",
+    "SpriteName": "face_cloud01"
+  },
+  {
+    "CladEvent": "Face_Cloud_02",
+    "SpriteName": "face_cloud02"
+  },
+  {
+    "CladEvent": "Face_Cloud_03",
+    "SpriteName": "face_cloud03"
+  },
+  {
+    "CladEvent": "Face_Cloud_04",
+    "SpriteName": "face_cloud04"
+  },
+  {
+    "CladEvent": "Face_Clouds_Mist",
+    "SpriteName": "face_clouds_mist"
+  },
+  {
+    "CladEvent": "Face_Snow_Mist",
+    "SpriteName": "face_snow_mist"
+  },
+  {
+    "CladEvent": "Face_Snow_01",
+    "SpriteName": "face_snow01"
   }
 ]
 
