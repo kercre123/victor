@@ -114,6 +114,7 @@ int helperGetTempC(int zone)
 
 #define CCC_DEBUG 0
 #define CCC_CMD_DELAY()     if( CCC_DEBUG > 0 ) { Timer::delayMs(150); }
+#define CCC_CMD_OPTS        (CMD_OPTS_DEFAULT | CMD_OPTS_DBG_SYSCON_OVF_ERR)
 
 static struct { //result of most recent command
   error_t err;
@@ -154,7 +155,7 @@ uint32_t cccEsn()
   CCC_CMD_DELAY();
   memset( &m_ccc, 0, sizeof(m_ccc) );
   const char *cmd = "esn 00 00 00 00 00 00";
-  cmdSend(CMD_IO_CONTACTS, cmd, 500, CMD_OPTS_DEFAULT, esn_handler_);
+  cmdSend(CMD_IO_CONTACTS, cmd, 500, CCC_CMD_OPTS, esn_handler_);
   
   #if CCC_DEBUG > 0
   ConsolePrintf("esn=%08x\n", m_ccc.rsp.esn );
@@ -182,7 +183,7 @@ robot_bsv_t* cccBsv()
   CCC_CMD_DELAY();
   memset( &m_ccc, 0, sizeof(m_ccc) );
   const char *cmd = "bsv 00 00 00 00 00 00";
-  cmdSend(CMD_IO_CONTACTS, cmd, 500, CMD_OPTS_DEFAULT, bsv_handler_);
+  cmdSend(CMD_IO_CONTACTS, cmd, 500, CCC_CMD_OPTS, bsv_handler_);
   
   #if CCC_DEBUG > 0
   robot_bsv_t* bsv = &m_ccc.rsp.bsv;
@@ -216,7 +217,7 @@ static robot_sr_t* ccc_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t
   if( !NN || sensor >= sizeof(ccr_sr_cnt) )
     throw ERROR_BAD_ARG;
   
-  int cmd_opts = CMD_OPTS_DEFAULT;
+  int cmd_opts = CCC_CMD_OPTS;
   switch( printlvl) {
     case RCOM_PRINT_LEVEL_CMD:          cmd_opts &= ~(CMD_OPTS_LOG_RSP | CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER); break;
     case RCOM_PRINT_LEVEL_CMD_RSP:      cmd_opts &= ~(                   CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER); break;
@@ -236,16 +237,16 @@ static robot_sr_t* ccc_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t
 void cccFcc(uint8_t mode, uint8_t cn) {
   CCC_CMD_DELAY();
   char b[22]; const int bz = sizeof(b);
-  cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"fcc %02x %02x 00 00 00 00", mode, cn), 500);
+  cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"fcc %02x %02x 00 00 00 00", mode, cn), 500, CCC_CMD_OPTS);
 }
 
 int cccRlg(uint8_t idx, char *buf, int buf_max_size)
 {
   CCC_CMD_DELAY();
   char b[22]; const int bz = sizeof(b);
-  //const int opts = CMD_OPTS_DEFAULT; // & ~(CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER);
+  //const int opts = CCC_CMD_OPTS; // & ~(CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER);
         #warning "DEBUG" 
-        const int opts = CMD_OPTS_DEFAULT & ~(CMD_OPTS_EXCEPTION_EN);
+        const int opts = CCC_CMD_OPTS & ~(CMD_OPTS_EXCEPTION_EN);
   cmd_dbuf_t dbuf = { buf, buf_max_size, 0 };
   cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"rlg %02x 00 00 00 00 00", idx), 1000, opts, 0, (dbuf.p ? &dbuf : 0) );
   
@@ -270,7 +271,7 @@ void ccc_IdxVal32_(uint8_t idx, uint32_t val, const char* cmd, void(*handler)(ch
   memset( &m_ccc, 0, sizeof(m_ccc) );
   char b[22]; const int bz = sizeof(b);
   snformat(b,bz,"%s %02x %02x %02x %02x %02x 00", cmd, idx, (val>>0)&0xFF, (val>>8)&0xFF, (val>>16)&0xFF, (val>>24)&0xFF );
-  int opts = print_verbose ? CMD_OPTS_DEFAULT : CMD_OPTS_DEFAULT & ~(CMD_OPTS_LOG_CMD | CMD_OPTS_LOG_RSP);
+  int opts = print_verbose ? CCC_CMD_OPTS : CCC_CMD_OPTS & ~(CMD_OPTS_LOG_CMD | CMD_OPTS_LOG_RSP);
   cmdSend(CMD_IO_CONTACTS, b, 500, opts, handler );
 }
 

@@ -40,6 +40,7 @@ typedef enum cmd_io_e cmd_io;
 #define CMD_OPTS_LOG_ALL              0x03F0  //print-log all
 #define CMD_OPTS_DBG_PRINT_ENTRY      0x1000  //debug: print function entry with parsed params
 #define CMD_OPTS_DBG_PRINT_RX_PARTIAL 0x2000  //debug: print any unexpected chars, partial line left in rx buffer at cmd end
+#define CMD_OPTS_DBG_SYSCON_OVF_ERR   0x4000  //debug: throw error if syscon tx overflow detected
 #define CMD_OPTS_DEFAULT              (CMD_OPTS_EXCEPTION_EN | CMD_OPTS_REQUIRE_STATUS_CODE | CMD_OPTS_LOG_ALL | CMD_OPTS_DBG_PRINT_RX_PARTIAL)
 
 typedef struct { char *p; int size; int wlen; } cmd_dbuf_t;
@@ -52,6 +53,9 @@ typedef struct { char *p; int size; int wlen; } cmd_dbuf_t;
 char* cmdSend(cmd_io io, const char* scmd, int timeout_ms = CMD_DEFAULT_TIMEOUT, int opts = CMD_OPTS_DEFAULT, void(*async_handler)(char*) = 0, cmd_dbuf_t *dbuf = 0 );
 int cmdStatus(); //parsed rsp status of most recent cmdSend(). status=1st arg, INT_MIN if !exist or bad format
 uint32_t cmdTimeMs(); //time it took for most recent cmdSend() to finish
+
+//DEBUG:
+int cmdSysconOvfCnt(); //get syscon tx overflow cnt from most recent cmdSend(CMD_IO_CONTACTS) [reported by syscon debug builds]
 
 //-----------------------------------------------------------------------------
 //                  Line Parsing

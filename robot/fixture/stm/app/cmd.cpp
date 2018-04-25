@@ -25,6 +25,11 @@ uint32_t cmdTimeMs() {
   return m_time_ms;
 }
 
+static int syscon_tx_ovf_cnt;
+int cmdSysconOvfCnt() {
+  return syscon_tx_ovf_cnt;
+}
+
 //-----------------------------------------------------------------------------
 //          Master/Send
 //-----------------------------------------------------------------------------
@@ -59,7 +64,10 @@ static int getchar_(cmd_io io) {
     case CMD_IO_CONSOLE:  return ConsoleGetCharNoWait(); //break;
     case CMD_IO_CONTACTS: {
       int c = Contacts::getchar();
-      if( c == 0x88 ) c = '@'; //syscon debug mode: inserts overflow indicator in the stream
+      if( c == 0x88 ) { //syscon DEBUG_TX_OVF_DETECT=1 inserts overflow indicator in the stream
+        c = '@'; //printable char is easier to see...
+        syscon_tx_ovf_cnt++;
+      }
       return c; //break;
     }
     case CMD_IO_SIMULATOR:
@@ -74,6 +82,7 @@ static void flush_(cmd_io io)
   linelen_ = 0;
   
   while( getchar_(io) > -1 );
+  syscon_tx_ovf_cnt = 0;
   
   io_err_t ioerrs;
   get_errs_(io, &ioerrs); //read errors to clear
@@ -192,6 +201,13 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
             write_(CMD_IO_CONSOLE, snformat(b,bz,"IO ERROR ovfl=%i dropRx=%i frame=%i", m_ioerr.rxOverflowErrors, m_ioerr.rxDroppedChars, m_ioerr.rxFramingErrors));
           ERROR_HANDLE("IO_ERROR\n", ERROR_TESTPORT_RX_ERROR);
           //return NULL; //if no exception, allow cmd validation to continue
+        }
+        if( syscon_tx_ovf_cnt > 0 ) {
+          if( opts & CMD_OPTS_LOG_ERRORS )
+            write_(CMD_IO_CONSOLE, snformat(b,bz,"SYSCON ERROR: TX OVERFLOW CNT = %i\n", syscon_tx_ovf_cnt));
+          if( opts & CMD_OPTS_DBG_SYSCON_OVF_ERR ) {
+            ERROR_HANDLE("IO_ERROR\n", ERROR_TESTPORT_RX_ERROR);
+          }
         }
         
         //make sure response matches our command word
