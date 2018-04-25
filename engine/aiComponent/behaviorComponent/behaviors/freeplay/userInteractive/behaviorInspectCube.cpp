@@ -322,6 +322,7 @@ void BehaviorInspectCube::TransitionToTracking()
                 "BehaviorInspectCube.DistanceTriggerReset", 
                 "Cube must get within %f mm of victor before withdrawal to trigger keepaway",
                 _iConfig.triggerDistance_mm);
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceReactToCube));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -334,8 +335,10 @@ void BehaviorInspectCube::UpdateTracking()
   }
 
   if(!IsControlDelegated()){
-    DelegateIfInControl(new TrackObjectAction(_dVars.targetID, true),
-                        &BehaviorInspectCube::TransitionToSearching);
+    TrackObjectAction* trackAction = new TrackObjectAction(_dVars.targetID, true);
+    trackAction->SetPanDuration(0.2f);
+    trackAction->SetTiltDuration(0.1f);
+    DelegateIfInControl(trackAction, &BehaviorInspectCube::TransitionToSearching);
   } 
 
   // Monitor for the user "teasing" victor with a cube
@@ -348,9 +351,11 @@ void BehaviorInspectCube::UpdateTracking()
                   _iConfig.triggerDistance_mm,
                   _iConfig.minWithdrawalSpeed_mmpers,
                   _iConfig.minWithdrawalDist_mm);
+    CancelDelegates(false);
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceReactToCube));
+
     _dVars.nearApproachTriggered = true;
   }
-
   if(!_dVars.nearApproachTriggered){
    return;
   }
@@ -393,8 +398,7 @@ void BehaviorInspectCube::UpdateTracking()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorInspectCube::TransitionToKeepaway()
 {
-  CancelDelegates(false);
-  // TODO:(str) Add a transitional behavior here to provide "GameOn" sensation to the user
+  CancelDelegates(false);      
   DelegateIfInControl(_iConfig.keepawayBehavior.get(),
                       [this](){
                         CancelSelf();

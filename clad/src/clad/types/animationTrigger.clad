@@ -45,6 +45,7 @@ enum int_32 AnimationTrigger
   CubePouncePounceNormal,
   CubePounceWinHand,
   CubePounceWinSession,
+  CubePounceReactToCube,
   DriveEndAngry,
   DriveEndDefault,
   DriveEndHappy,

@@ -188,6 +188,10 @@
     "AnimName": "ag_keepaway_idleliftdown"
   },
   {
+    "CladEvent": "CubePounceReactToCube",
+    "AnimName": "ag_rtpkeepaway_reacttocube"
+  },
+  {
     "CladEvent": "DEPRECATED_DanceMambo",
     "AnimName": "ag_dancing_mambo"
   },
