@@ -34,6 +34,7 @@ message RtsWifiScanResult {
     uint_8      authType,
     uint_8      signalStrength,
     string      wifiSsidHex,
+    bool        hidden,
 }
 
 message RtsConnRequest {

@@ -66,6 +66,7 @@ enum WiFiAuth : uint8_t {
   NSString* _filter;
   
   NSMutableDictionary* _wifiAuth;
+  NSMutableSet* _wifiHidden;
   dispatch_queue_t _commandQueue;
   
   std::string _currentCommand;

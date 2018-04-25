@@ -57,6 +57,7 @@ struct RtsWifiScanResult
   uint8_t authType;
   uint8_t signalStrength;
   std::string wifiSsidHex;
+  bool hidden;
   
   /**** Constructors ****/
   RtsWifiScanResult() = default;
@@ -68,10 +69,12 @@ struct RtsWifiScanResult
   
   explicit RtsWifiScanResult(uint8_t authType,
     uint8_t signalStrength,
-    const std::string& wifiSsidHex)
+    const std::string& wifiSsidHex,
+    bool hidden)
   : authType(authType)
   , signalStrength(signalStrength)
   , wifiSsidHex(wifiSsidHex)
+  , hidden(hidden)
   {}
   
   explicit RtsWifiScanResult(const uint8_t* buff, size_t len);
@@ -92,7 +95,7 @@ struct RtsWifiScanResult
   
   template <typename Callable>
   void Invoke(Callable&& func) const {
-     func(authType, signalStrength, wifiSsidHex);
+     func(authType, signalStrength, wifiSsidHex, hidden);
   }
 };
 
