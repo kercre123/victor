@@ -138,6 +138,19 @@ static void dbg_test_comm_loop_(int nloops, int rmin, int rmax)
   }
 }
 
+static void dbg_test_readlogs_(int first, int last)
+{
+  first = first<0 ? 0 : first;
+  last = last<0 ? 0 : last;
+  if( first > last )
+    first = last;
+  
+  ConsolePrintf("READ LOGS {%i..%i}\n", first, last);
+  for(int i=first; i<=last; i++) {
+    int len = rcomRlg(i, 0, 0);
+  }
+}
+
 static void run_debug(int arg[])
 {
   if( arg[0] == 1 )
@@ -145,6 +158,8 @@ static void run_debug(int arg[])
   if( arg[0] == 2 )
     dbg_test_comm_loop_(arg[1], arg[2], arg[3]);
   if( arg[0] == 3 )
+    dbg_test_readlogs_(arg[1], arg[2]);
+  if( arg[0] == 4 )
     dbg_test_emr_( arg[1], arg[2] );
 }
 
@@ -196,7 +211,7 @@ int detect_ma = 0, detect_mv = 0;
 //test info reported to flexflow
 const int numlogs = 2;
 static struct {
-  uint32_t      esn, hwver, model, lotcode, packoutdate;
+  uint32_t      esn, hwver, model, packoutdate;
   robot_bsv_t   bsv;
   char         *log[numlogs];
   int           loglen[numlogs];
@@ -256,7 +271,7 @@ void read_robot_info_(void)
   flexnfo.esn           = rcomGmr( EMR_FIELD_OFS(ESN) );
   flexnfo.hwver         = rcomGmr( EMR_FIELD_OFS(HW_VER) );
   flexnfo.model         = rcomGmr( EMR_FIELD_OFS(MODEL) );
-  flexnfo.lotcode       = rcomGmr( EMR_FIELD_OFS(LOT_CODE) );
+  uint32_t lotcode      = rcomGmr( EMR_FIELD_OFS(LOT_CODE) );
   uint32_t playpenready = rcomGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
   uint32_t playpenpass  = rcomGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
   uint32_t packedout    = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
@@ -267,7 +282,7 @@ void read_robot_info_(void)
   ConsolePrintf("EMR[%u] esn         :%08x [%08x]\n", EMR_FIELD_OFS(ESN), flexnfo.esn, esnCmd);
   ConsolePrintf("EMR[%u] hwver       :%u\n", EMR_FIELD_OFS(HW_VER), flexnfo.hwver);
   ConsolePrintf("EMR[%u] model       :%u\n", EMR_FIELD_OFS(MODEL), flexnfo.model);
-  ConsolePrintf("EMR[%u] lotcode     :%u\n", EMR_FIELD_OFS(LOT_CODE), flexnfo.lotcode);
+  ConsolePrintf("EMR[%u] lotcode     :%u\n", EMR_FIELD_OFS(LOT_CODE), lotcode);
   ConsolePrintf("EMR[%u] playpenready:%u\n", EMR_FIELD_OFS(PLAYPEN_READY_FLAG), playpenready);
   ConsolePrintf("EMR[%u] playpenpass :%u\n", EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), playpenpass);
   ConsolePrintf("EMR[%u] packedout   :%u\n", EMR_FIELD_OFS(PACKED_OUT_FLAG), packedout);
@@ -769,7 +784,6 @@ static void RobotFlexFlowPackoutReport(void)
     FLEXFLOW::printf("esn %08x\n", flexnfo.esn );
     FLEXFLOW::printf("hwver %u\n", flexnfo.hwver );
     FLEXFLOW::printf("model %u\n", flexnfo.model );
-    FLEXFLOW::printf("lotcode %08x\n", flexnfo.lotcode );
     FLEXFLOW::printf("packout-date %08x\n", flexnfo.packoutdate );
     
     robot_bsv_t* bsv = &flexnfo.bsv;
