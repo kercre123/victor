@@ -954,9 +954,12 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         bool hidden = false;
         WiFiAuth auth = AUTH_WPA_PSK;
         
-        if([_wifiAuth valueForKey:ssidS] != nullptr) {
+        NSString* ssidHex = [NSString stringWithUTF8String:[self hexStr:(char*)words[1].c_str() length:ssidS.length].c_str()];
+      
+        if(![_wifiHidden containsObject:ssidHex] && [_wifiAuth valueForKey:ssidS] != nullptr) {
           auth = (WiFiAuth)[[_wifiAuth objectForKey:ssidS] intValue];
         } else {
+          printf("[Hidden network]\n");
           hidden = true;
         }
         
@@ -1045,6 +1048,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   printf("Wifi scan results...\n");
   printf("Signal      Security      SSID\n");
   _wifiAuth = [[NSMutableDictionary alloc] init];
+  _wifiHidden = [[NSMutableSet alloc] init];
   
   for(int i = 0; i < msg.scanResult.size(); i++) {
     std::string sec = "none";
@@ -1080,10 +1084,15 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     
     std::string ssidAscii = [self asciiStr:(char*)msg.scanResult[i].wifiSsidHex.c_str() length:(int)msg.scanResult[i].wifiSsidHex.length()];
     
-    printf("%d           %s          %s\n", msg.scanResult[i].signalStrength, sec.c_str(), ssidAscii.c_str());
+    printf("%d           %s          %s %s\n", msg.scanResult[i].signalStrength, sec.c_str(), ssidAscii.c_str(), msg.scanResult[i].hidden? "H" : "_");
     
     NSString* ssidStr = [NSString stringWithUTF8String:ssidAscii.c_str()];
     [_wifiAuth setValue:[NSNumber numberWithInt:msg.scanResult[i].authType] forKey:ssidStr];
+    
+    if(msg.scanResult[i].hidden) {
+      NSString* ssid = [NSString stringWithUTF8String:msg.scanResult[i].wifiSsidHex.c_str()];
+      [_wifiHidden addObject:ssid];
+    }
   }
   
   if(_currentCommand == "wifi-scan" && !_readyForNextCommand) {

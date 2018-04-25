@@ -330,7 +330,8 @@ void SecurePairing::SendWifiScanResult() {
   for(int i = 0; i < wifiResults.size(); i++) {
     Anki::Victor::ExternalComms::RtsWifiScanResult result = Anki::Victor::ExternalComms::RtsWifiScanResult(wifiResults[i].auth,
       wifiResults[i].signal_level,
-      wifiResults[i].ssid);
+      wifiResults[i].ssid,
+      wifiResults[i].hidden);
 
       wifiScanResults.push_back(result);
   }

@@ -72,6 +72,7 @@ size_t RtsWifiScanResult::Pack(CLAD::SafeMessageBuffer& buffer) const
   buffer.Write(this->authType);
   buffer.Write(this->signalStrength);
   buffer.WritePString<uint8_t>(this->wifiSsidHex);
+  buffer.Write(this->hidden);
   const size_t bytesWritten {buffer.GetBytesWritten()};
   return bytesWritten;
 }
@@ -87,6 +88,7 @@ size_t RtsWifiScanResult::Unpack(const CLAD::SafeMessageBuffer& buffer)
   buffer.Read(this->authType);
   buffer.Read(this->signalStrength);
   buffer.ReadPString<uint8_t>(this->wifiSsidHex);
+  buffer.Read(this->hidden);
   return buffer.GetBytesRead();
 }
 
@@ -100,6 +102,8 @@ size_t RtsWifiScanResult::Size() const
   // wifiSsidHex
   result += 1; // uint_8 (string length)
   result += this->wifiSsidHex.length(); // uint_8
+  // hidden
+  result += 1; // bool
   return result;
 }
 
@@ -107,7 +111,8 @@ bool RtsWifiScanResult::operator==(const RtsWifiScanResult& other) const
 {
   return (this->authType == other.authType &&
     this->signalStrength == other.signalStrength &&
-    this->wifiSsidHex == other.wifiSsidHex);
+    this->wifiSsidHex == other.wifiSsidHex &&
+    this->hidden == other.hidden);
 }
 
 bool RtsWifiScanResult::operator!=(const RtsWifiScanResult& other) const
@@ -116,10 +121,10 @@ bool RtsWifiScanResult::operator!=(const RtsWifiScanResult& other) const
 }
 
 
-const char* RtsWifiScanResultVersionHashStr = "84ba9b5455488d84ec8c026a622bc113";
+const char* RtsWifiScanResultVersionHashStr = "688b83b567ea645ef62b27514115087e";
 
 const uint8_t RtsWifiScanResultVersionHash[16] = { 
-    0x84, 0xba, 0x9b, 0x54, 0x55, 0x48, 0x8d, 0x84, 0xec, 0x8c, 0x2, 0x6a, 0x62, 0x2b, 0xc1, 0x13 
+    0x68, 0x8b, 0x83, 0xb5, 0x67, 0xea, 0x64, 0x5e, 0xf6, 0x2b, 0x27, 0x51, 0x41, 0x15, 0x8, 0x7e 
 };
 
 // MESSAGE RtsConnRequest

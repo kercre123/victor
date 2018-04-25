@@ -105,8 +105,13 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
     return WifiScanErrorCode::FAILED_GETTING_SERVICES;
   }
 
+  // Get hidden flag
+  std::string configSsid = "";
+  std::string fieldString = "Hidden";
+  bool configIsHidden = GetConfigField(fieldString, configSsid) == "true";
+
   for (gsize i = 0 ; i < g_variant_n_children(services); i++) {
-    WiFiScanResult result{WiFiAuth::AUTH_NONE_OPEN, false, false, 0, ""};
+    WiFiScanResult result{WiFiAuth::AUTH_NONE_OPEN, false, false, 0, "", false};
     GVariant* child = g_variant_get_child_value(services, i);
     GVariant* attrs = g_variant_get_child_value(child, 1);
     bool type_is_wifi = false;
@@ -186,6 +191,11 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
 
     if (type_is_wifi && iface_is_wlan0) {
       result.ssid = GetHexSsidFromServicePath(GetObjectPathForService(child));
+
+      if(result.ssid == configSsid) {
+        result.hidden = configIsHidden;
+      }
+
       results.push_back(result);
     }
   }
@@ -1170,6 +1180,46 @@ WiFiIpFlags GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {
   freeifaddrs(ifaddrs);
 
   return wifiFlags;
+}
+
+std::string GetConfigField(std::string& field, std::string& outSsid) {
+  // This method returns the value of given 'field' (and sets SSID) in 'outSsid'
+  // Currently this method assumes that there is only one wifi network in the config.
+
+  std::vector<uint8_t> bytes;
+  bool readSuccess = ReadFileIntoVector(GetPathToWiFiConfigFile(), bytes);
+
+  if(!readSuccess) {
+    // If we can't read file, return empty string
+    return "";
+  }
+
+  std::string fileContents(reinterpret_cast<char const*>(bytes.data()), bytes.size());
+
+  std::string configField = "";
+
+  std::string line;
+  std::stringstream ss(fileContents);
+  const std::string delim = "=";
+  const std::string ssid = "SSID";
+
+  while(std::getline(ss, line, '\n')) {
+    size_t index = line.find(delim);
+
+    if(index == std::string::npos) {
+      continue;
+    }
+
+    std::string fieldName = line.substr(0, index);
+
+    if(fieldName == field) {
+      configField = line.substr(index + 1);
+    } else if(fieldName == ssid) {
+      outSsid = line.substr(index + 1);
+    }
+  }
+
+  return configField;
 }
 
 } // namespace Anki
