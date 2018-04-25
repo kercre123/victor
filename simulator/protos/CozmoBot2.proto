@@ -44,11 +44,11 @@ PROTO CozmoBot2 [
   field SFBool touchSensorTouched FALSE
 
   # Robot battery voltage
-  field SFFloat batteryVolts  4.3
+  field SFFloat batteryVolts  4.2
   
   # Rates at which battery voltage changes while on/off the charger
   field SFFloat batteryChargeRate_voltsPerMin     0.09
-  field SFFloat batteryDischargeRate_voltsPerMin -0.03
+  field SFFloat batteryDischargeRate_voltsPerMin -0.02
 ]
 {
 

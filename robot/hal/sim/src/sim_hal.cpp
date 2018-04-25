@@ -253,8 +253,8 @@ namespace Anki {
         float batteryVolts = batteryVoltsField_->getSFFloat() + batteryDeltaVolts;
 
         // Clamp to logical voltages
-        const float minBatteryVolts = 3.0f;
-        const float maxBatteryVolts = 4.3f;
+        const float minBatteryVolts = 3.4f;
+        const float maxBatteryVolts = 4.21f;
         batteryVolts = Util::Clamp(batteryVolts,
                                    minBatteryVolts,
                                    maxBatteryVolts);

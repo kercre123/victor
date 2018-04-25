@@ -63,6 +63,8 @@ private:
     bool stressWifi;
     bool stressCPU;
     bool stressSpeaker;
+
+    bool driveOffChargerWhenFull;
   };
 
   InstanceConfig   _iConfig;

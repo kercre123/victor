@@ -42,8 +42,13 @@ namespace {
   const float kBatteryVoltsFilterTimeConstant_sec = 6.0f;
   
   // Voltage above which the battery is considered fully charged
-  const float kFullyChargedThresholdVolts = 4.1f;
+  // after _saturationChargeTimeRemaining_sec expires.
+  const float kSaturationChargingThresholdVolts = 4.1f;
   
+  // Max time to wait after kSaturationChargingThresholdVolts is reached
+  // before battery is considered "fully charged".
+  const float kMaxSaturationTime_sec = 7 * 60.f;
+
   // Voltage below which battery is considered in a low charge state
   // At 3.6V, there is about 7 minutes of battery life left (if stationary, minimal processing, no wifi transmission, no sound)
   const float kLowBatteryThresholdVolts = 3.6f;
@@ -59,6 +64,7 @@ namespace {
 
 BatteryComponent::BatteryComponent()
   : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::Battery)
+  , _saturationChargeTimeRemaining_sec(kMaxSaturationTime_sec)  
   , _chargerFilter(std::make_unique<BlockWorldFilter>())
 {
   // setup battery voltage low pass filter (samples come in at kBatteryVoltsUpdatePeriod_sec)
@@ -84,18 +90,82 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   _batteryVoltsRaw = msg.batteryVoltage;
 
   // Only update filtered value if the battery isn't disconnected
+  bool wasDisconnected = _battDisconnected;
   _battDisconnected = (msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED);
   if (!_battDisconnected) {
     _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
+  }
+
+  // Battery should always be full when battery disconnects.
+  // If it isn't, we may need to adjust kSaturationChargingThresholdVolts
+  // or possibly the syscon cutoff time
+  if (_battDisconnected && !wasDisconnected && !IsBatteryFull()) {
+    PRINT_NAMED_WARNING("BatteryComponent.NotifyOfRobotState.FullBatteryExpected", "%f", _batteryVoltsFilt);
   }
 
   // Update isCharging / isOnChargerContacts
   SetOnChargeContacts(msg.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
   SetIsCharging(msg.status & (uint32_t)RobotStatusFlag::IS_CHARGING);
   
+  // Check if saturation charging
+  bool isSaturationCharging = _isCharging && _batteryVoltsFilt > kSaturationChargingThresholdVolts;
+  bool isFullyCharged = false;
+  if (isSaturationCharging) {
+    if (_saturationChargingStartTime_sec <= 0.f) {
+      // Saturation charging has started
+      _saturationChargingStartTime_sec = now_sec;
+
+      // The amount of time until fully charged is the (discounted) amount of time 
+      // that has elapsed since the last time it was saturation charging
+      // plus the amount of saturation charge time that was left when it ended
+      // to a max time of kMaxSaturationTime_sec.
+      //
+      // kSaturationTimeReplenishmentSpeed represents a heuristic that very roughly 
+      // approximates the amount of saturation charge time required to offset the 
+      // amount of time spent since it was last saturation charging (which obviously 
+      // depends on exactly what it was doing off charger).
+      //
+      // NOTE: This replenish rate of 60% seems to work fine based on a test
+      //       where the wheels were run full speed right after coming fully charged
+      //       off the charger and returning to charger after 7 minutes. This resulted in 
+      //       just over 4 minutes of saturation charge time and seemed to yield as much  
+      //       subsequent discharge time as a fully charged battery.
+      const float kSaturationTimeReplenishmentSpeed = 0.6f;  //  1: Replenish at real-time rate
+                                                             // >1: Replenish faster (i.e. Takes longer to reach full)
+                                                             // <1: Replenish slower (i.e. Faster to reach full)
+      const float newPossibleSaturationChargeTimeRemaining_sec = _saturationChargeTimeRemaining_sec + 
+                                                                 (kSaturationTimeReplenishmentSpeed * 
+                                                                  (now_sec - _lastSaturationChargingEndTime_sec));
+      _saturationChargeTimeRemaining_sec = std::min(kMaxSaturationTime_sec, newPossibleSaturationChargeTimeRemaining_sec);
+
+      Util::sEventF("BatteryComponent.NotifyOfRobotState.SaturationChargeStartVoltage",
+                    {{DDATA, std::to_string(_batteryVoltsFilt).c_str()}}, "%f", _saturationChargeTimeRemaining_sec);
+    }
+    _lastSaturationChargingEndTime_sec = now_sec;
+
+    isFullyCharged = now_sec > _saturationChargingStartTime_sec + _saturationChargeTimeRemaining_sec;
+
+    // If transitioning to full, write DAS log
+    if (isFullyCharged && !IsBatteryFull()) {
+       Util::sEventF("BatteryComponent.NotifyOfRobotState.FullyChargedVoltage",
+                     {{DDATA, std::to_string(_batteryVoltsFilt).c_str()}}, "");
+    }
+
+  } else if (_saturationChargingStartTime_sec > 0.f) {
+    // Saturation charging has stopped so update the amount of 
+    // saturation charge time remaining by subtracting the amount of 
+    // time that has elapsed since saturation charging started
+    const float newPossibleSaturationChargeTimeRemaining_sec = _saturationChargeTimeRemaining_sec - 
+                                                               (now_sec - _saturationChargingStartTime_sec);
+    _saturationChargeTimeRemaining_sec = std::max(0.f, newPossibleSaturationChargeTimeRemaining_sec);
+    _saturationChargingStartTime_sec = 0.f;
+  }
+
   // Update battery charge level
   BatteryLevel level = BatteryLevel::Nominal;
-  if (_batteryVoltsFilt > kFullyChargedThresholdVolts) {
+  if (isFullyCharged) {
+    // NOTE: Given the dependence on isFullyCharged, this means BatteryLevel::Full is a state 
+    //       that can only be achieved while on charger
     level = BatteryLevel::Full;
   } else if (_batteryVoltsFilt < kLowBatteryThresholdVolts) {
     level = BatteryLevel::Low;

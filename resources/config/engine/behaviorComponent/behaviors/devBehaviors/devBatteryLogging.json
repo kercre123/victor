@@ -8,5 +8,7 @@
 
   "startMovingVoltage" : 3.0,
   "stressCPU" : true,
-  "stressSpeaker" : true
+  "stressSpeaker" : true,
+
+  "driveOffChargerWhenFull" : true
 }

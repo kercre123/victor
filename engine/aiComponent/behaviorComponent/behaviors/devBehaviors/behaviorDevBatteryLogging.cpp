@@ -57,6 +57,7 @@ namespace {
 
   static const char* kStressCPU = "stressCPU";
   static const char* kStressSpeaker = "stressSpeaker";
+  static const char* kDriveOffChargerWhenFull = "driveOffChargerWhenFull";
 
   bool _startMovingVoltageReached = false;
 }
@@ -73,6 +74,8 @@ BehaviorDevBatteryLogging::InstanceConfig::InstanceConfig()
   stressWifi = false;
   stressCPU = false;
   stressSpeaker = false;
+
+  driveOffChargerWhenFull = false;
 }
 
 
@@ -87,18 +90,20 @@ BehaviorDevBatteryLogging::BehaviorDevBatteryLogging(const Json::Value& config)
   _iConfig.startMovingVoltage = config.get(kStartMovingVoltageKey, 0.f).asFloat();
   _iConfig.stressCPU = config.get(kStressCPU, false).asBool();
   _iConfig.stressSpeaker = config.get(kStressSpeaker, false).asBool();
+
+  _iConfig.driveOffChargerWhenFull = config.get(kDriveOffChargerWhenFull, false).asBool();
 }
 
 void BehaviorDevBatteryLogging::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
-  //InternalStatesBehavior::GetBehaviorJsonKeys( expectedKeys );
   const char* list[] = {
     kWheelSpeedKey,
     kLiftSpeedKey,
     kHeadSpeedKey,
     kStartMovingVoltageKey,
     kStressCPU,
-    kStressSpeaker
+    kStressSpeaker,
+    kDriveOffChargerWhenFull
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -168,6 +173,13 @@ void BehaviorDevBatteryLogging::BehaviorUpdate()
 {  
   if(!IsActivated()){
     return;
+  }
+
+  // Drive off charger when full
+  const auto& battComp = GetBEI().GetRobotInfo()._robot.GetBatteryComponent();
+  if (_iConfig.driveOffChargerWhenFull && battComp.IsBatteryFull()) {
+    DriveStraightAction* driveAction = new DriveStraightAction(40.f);
+    DelegateIfInControl(driveAction);
   }
 
   // Start motors if voltage threshold has been reached

@@ -125,6 +125,10 @@ private:
   
   float _lastBatteryLevelChange_sec = 0;
   
+  float _saturationChargingStartTime_sec = 0.f;
+  float _saturationChargeTimeRemaining_sec = 0.f;
+  float _lastSaturationChargingEndTime_sec = 0.f;
+
   // The timestamp of the RobotState message with the latest data
   TimeStamp_t _lastMsgTimestamp = 0;
   
