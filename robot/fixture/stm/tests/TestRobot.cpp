@@ -111,30 +111,30 @@ static void dbg_test_comm_loop_(int nloops, int rmax, int rmin)
   ConsolePrintf("STRESS TEST COMMS: %i loops, NN=rand{%i..%i}\n", nloops, rmin, rmax);
   int rmod = rmax-rmin+1; //modulo
   
-  static int sensorSelect = -1;
-  sensorSelect += 1;
+  //static int sensorSelect = -1;
+  //sensorSelect += 1;
   
   srand(Timer::get());
   for(int x = 0; x < nloops; x++)
   {
     rcomEsn(); rcomBsv();
-    if( sensorSelect == 0 ) {}
-    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_BATTERY);
-    else if( sensorSelect == 1 )
+    //if( sensorSelect == 0 ) {}
+    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_BATTERY);
+    //else if( sensorSelect == 1 )
     rcomGet(rmin+rand()%rmod, RCOM_SENSOR_CLIFF);
-    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_LEFT);
-    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_RIGHT);
-    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_LIFT);
-    //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_HEAD);
-    else if( sensorSelect == 2 )
+    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_LEFT);
+    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_RIGHT);
+    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_LIFT);
+    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_HEAD);
+    //else if( sensorSelect == 2 )
     rcomGet(rmin+rand()%rmod, RCOM_SENSOR_PROX_TOF);
-    else if( sensorSelect == 3 )
+    //else if( sensorSelect == 3 )
     rcomGet(rmin+rand()%rmod, RCOM_SENSOR_BTN_TOUCH);
     //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_RSSI);
     //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_RX_PKT);
-    else if( sensorSelect == 4 )
+    //else if( sensorSelect == 4 )
     rcomGet(rmin+rand()%rmod, RCOM_SENSOR_DEBUG_INC);
-    else { sensorSelect = -1; break; }
+    //else { sensorSelect = -1; break; }
   }
 }
 
@@ -299,13 +299,13 @@ void TestRobotInfo(void)
     Contacts::setModeRx();
   }
   
-  read_robot_info_();
-  robot_get_batt_mv(0);
-  
   //DEBUG: console bridge, manual testing
   if( g_fixmode == FIXMODE_ROBOT0 )
     TestCommon::consoleBridge(TO_CONTACTS, 0, 0, BRIDGE_OPT_LINEBUFFER, DBG_cmd_substitution);
   //-*/
+  
+  read_robot_info_();
+  robot_get_batt_mv(0);
 }
 
 //robot_sr_t get(uint8_t NN, uint8_t sensor
