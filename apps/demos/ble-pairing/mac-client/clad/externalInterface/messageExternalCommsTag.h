@@ -38,6 +38,9 @@ enum class RtsConnection_2Tag : uint8_t {
   RtsSshRequest              = 0x15, // 21
   RtsSshResponse             = 0x16, // 22
   RtsOtaCancelRequest        = 0x17, // 23
+  RtsLogRequest              = 0x18, // 24
+  RtsLogResponse             = 0x19, // 25
+  RtsFileDownload            = 0x1a, // 26
   INVALID                    = 255
 };
 

@@ -8,3 +8,5 @@ add_subdirectory(camera)
 add_subdirectory(switchboard)
 
 add_subdirectory(update-engine)
+
+add_subdirectory(diagnostics-logger)

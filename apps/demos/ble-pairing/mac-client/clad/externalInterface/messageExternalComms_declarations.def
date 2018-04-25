@@ -26,6 +26,9 @@ void Process_RtsWifiAccessPointResponse(const Anki::Victor::ExternalComms::RtsWi
 void Process_RtsSshRequest(const Anki::Victor::ExternalComms::RtsSshRequest& msg);
 void Process_RtsSshResponse(const Anki::Victor::ExternalComms::RtsSshResponse& msg);
 void Process_RtsOtaCancelRequest(const Anki::Victor::ExternalComms::RtsOtaCancelRequest& msg);
+void Process_RtsLogRequest(const Anki::Victor::ExternalComms::RtsLogRequest& msg);
+void Process_RtsLogResponse(const Anki::Victor::ExternalComms::RtsLogResponse& msg);
+void Process_RtsFileDownload(const Anki::Victor::ExternalComms::RtsFileDownload& msg);
 void Process_Error(const Anki::Victor::ExternalComms::Error& msg);
 void Process_RtsConnection_2(const Anki::Victor::ExternalComms::RtsConnection_2& msg);
 void Process_Error(const Anki::Victor::ExternalComms::Error& msg);

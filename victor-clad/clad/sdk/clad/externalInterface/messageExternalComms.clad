@@ -154,6 +154,24 @@ message RtsSshResponse {
     
 }
 
+message RtsLogRequest {
+    uint_8      mode,
+    string      filter[uint_16],
+}
+
+message RtsLogResponse {
+    uint_8      exitCode,
+    uint_32     fileId,
+}
+
+message RtsFileDownload {
+    uint_8      status,
+    uint_32     fileId,
+    uint_32     packetNumber,
+    uint_32     packetTotal,
+    uint_8      fileChunk[uint_16],
+}
+
 message Error {
     //
 }
@@ -189,6 +207,9 @@ union RtsConnection_2 {
     RtsSshResponse                  RtsSshResponse              = 0x16,
     // New in v2
     RtsOtaCancelRequest             RtsOtaCancelRequest         = 0x17,     // * new in v2
+    RtsLogRequest                   RtsLogRequest               = 0x18,     // * new in v2
+    RtsLogResponse                  RtsLogResponse              = 0x19,     // * new in v2
+    RtsFileDownload                 RtsFileDownload             = 0x1A,     // * new in v2
 }
 
 // The post-factory set of versions

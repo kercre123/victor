@@ -79,6 +79,11 @@ enum WiFiAuth : uint8_t {
   int _commVersion;
   
   NSArray* _colorArray;
+  
+  // file download
+  uint32_t _currentFileId;
+  std::vector<uint8_t> _currentFileBuffer;
+  NSString* _downloadFilePath;
 }
 
 - (std::string)hexStr:(char*)data length:(int)len;
@@ -89,6 +94,7 @@ enum WiFiAuth : uint8_t {
 - (void) handleReceive:(const void*)bytes length:(int)n;
 - (void) handleReceiveSecure:(const void*)bytes length:(int)n;
 - (void) printHelp;
+- (void) showProgress: (float)current expected:(float)expected;
 
 - (void) SendSshPublicKey:(std::string)filename;
 
