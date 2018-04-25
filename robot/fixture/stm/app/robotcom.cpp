@@ -248,7 +248,7 @@ int cccRlg(uint8_t idx, char *buf, int buf_max_size)
         #warning "DEBUG" 
         const int opts = CCC_CMD_OPTS & ~(CMD_OPTS_EXCEPTION_EN);
   cmd_dbuf_t dbuf = { buf, buf_max_size, 0 };
-  cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"rlg %02x 00 00 00 00 00", idx), 1000, opts, 0, (dbuf.p && dbuf.size>0 ? &dbuf : 0) );
+  cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"rlg %02x 00 00 00 00 00", idx), -1000, opts, 0, (dbuf.p && dbuf.size>0 ? &dbuf : 0) );
   
   //detect and remove the ":LOG n" line inserted by vic-robot parser
   if( dbuf.p && dbuf.wlen > 4 && !strncmp(dbuf.p, ":LOG", 4) ) {

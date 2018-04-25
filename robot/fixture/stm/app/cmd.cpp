@@ -145,6 +145,13 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
       throw ERROR_BAD_ARG; //dbuf = NULL;
   }
   
+  //negative timeout: renew on activity
+  bool renew_timer_on_activity = 0;
+  if( timeout_ms < 0 ) {
+    timeout_ms = (-1)*timeout_ms;
+    renew_timer_on_activity = 1;
+  }
+  
   //send command out the selected io channel (append prefix)
   flush_(io); //flush rx buffers first for correct response detection
   if( io != CMD_IO_CONSOLE && opts & CMD_OPTS_LOG_CMD ) //echo to log BEFORE the DUT write or we'll miss response chars
@@ -154,10 +161,13 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
   //Get response
   memset( &m_ioerr, 0, sizeof(m_ioerr) ); //clear io errs
   m_status = INT_MIN;
-  uint32_t Tstart = Timer::get(), Ttick = Timer::get();
-  while( Timer::elapsedUs(Tstart) < timeout_ms*1000 )
+  uint32_t Tstart = Timer::get(), Twait = Timer::get();
+  while( Timer::elapsedUs(Twait) < timeout_ms*1000 )
   {
     int c = getchar_(io);
+    if( c > -1 && renew_timer_on_activity )
+      Twait = Timer::get(); //reset timeout
+    
     char *rsp = getline_(c);
     
     //copy char stream to data buffer
@@ -261,7 +271,7 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
       }
       
     }//rsp != NULL
-  }//while( Timer::elapsedUs(Tstart)...
+  }//while( Timer::elapsedUs(Twait)...
   
   if( opts & CMD_OPTS_DBG_PRINT_RX_PARTIAL ) //see what's leftover in the rx buffer
   {

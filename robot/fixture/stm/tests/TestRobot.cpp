@@ -146,9 +146,14 @@ static void dbg_test_readlogs_(int first, int last)
     first = last;
   
   ConsolePrintf("READ LOGS {%i..%i}\n", first, last);
+  
+  error_t err = ERROR_OK;
   for(int i=first; i<=last; i++) {
-    int len = rcomRlg(i, 0, 0);
+    try { rcomRlg(i, 0, 0); } catch(int e) { err = e; }
   }
+  
+  if( err != ERROR_OK )
+    throw err;
 }
 
 static void run_debug(int arg[])
