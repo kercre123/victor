@@ -45,11 +45,22 @@ void BehaviorStack::InitBehaviorStack(IBehavior* baseOfStack)
   ANKI_VERIFY(_behaviorStack.empty(),
               "BehaviorSystemManager.BehaviorStack.InitBehaviorStack.StackNotEmptyOnInit",
               "");
+
+  StackMetadataEntry rootMetaData;
+  rootMetaData.delegates.insert(baseOfStack);
+  rootMetaData.RecursivelyGatherLinkedBehaviors(baseOfStack, rootMetaData.linkedActivationScope);
   
+  _stackMetadataMap.insert(std::make_pair(nullptr, std::move(rootMetaData)));
+  
+  PrepareDelegatesToEnterScope(nullptr);
+   
   baseOfStack->OnEnteredActivatableScope();
+
   ANKI_VERIFY(baseOfStack->WantsToBeActivated(),
-              "BehaviorSystemManager.BehaviorStack.InitConfig.BasebehaviorDoesn'tWantToRun",
-              "");
+              "BehaviorSystemManager.BehaviorStack.InitConfig.BasebehaviorDoesntWantToBeActivated",
+              "%s",
+              baseOfStack->GetDebugLabel().c_str());
+  
   PushOntoStack(baseOfStack);
 }
 
@@ -71,9 +82,12 @@ void BehaviorStack::ClearStack()
                  "") ) {
     IBehavior* oldBaseBehavior = _behaviorStack.back();
     PopStack();
+    PrepareDelegatesForRemovalFromStack(nullptr);
     oldBaseBehavior->OnLeftActivatableScope();
   }
-  
+
+  _stackMetadataMap.erase(nullptr);
+
   DEV_ASSERT(_behaviorStack.empty(), "BehaviorStack.Destructor.NotAllBehaviorsPoppedFromStack");
 
 }
@@ -296,6 +310,10 @@ Json::Value BehaviorStack::BuildDebugBehaviorTree(BehaviorExternalInterface& beh
   
   // construct flat table of tree relationships
   for( const auto& elem : _stackMetadataMap ) {
+    if( elem.first == nullptr )  {
+      // skip root node
+      continue;
+    }
     for( const auto& child : elem.second.delegates ) {
       Json::Value relationship;
       relationship["behaviorID"] = child->GetDebugLabel();

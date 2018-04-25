@@ -74,7 +74,7 @@ public:
   
 private:
   struct StackMetadataEntry{
-    IBehavior* behavior;
+    IBehavior* behavior = nullptr;
     int        indexInStack = -1; // negative = not in stack
     std::set<IBehavior*> delegates;
     std::set<IBehavior*> linkedActivationScope;
