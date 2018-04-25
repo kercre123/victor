@@ -31,7 +31,8 @@ vlog "Check homebrew dependencies"
 ./tools/build/tools/ankibuild/installBuildDeps.py \
     -d python2 \
     ninja \
-    python3
+    python3 \
+    libsndfile
 
 vlog "Android SDK"
 ./tools/build/tools/ankibuild/android.py --install-sdk r3
