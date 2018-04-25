@@ -214,11 +214,66 @@ void InitConnectionFlow(AnimationStreamer* animStreamer)
   }
 }
 
+void UpdatePairingLight(bool on)
+{
+  static bool isOn = false;
+  if(!isOn && on)
+  {
+    // Start system pairing light (pulsing orange/green)
+    RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
+          .light = {
+            .onColor = 0xFFFF0000,
+            .offColor = 0x00000000,
+            .onFrames = 16,
+            .offFrames = 16,
+            .transitionOnFrames = 16,
+            .transitionOffFrames = 16,
+            .offset = 0
+          }}));
+    AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
+    isOn = on; 
+  }
+  else if(isOn && !on)
+  {
+    // Turn system pairing light off
+    RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
+          .light = {
+            .onColor = 0x00000000,
+            .offColor = 0x00000000,
+            .onFrames = 1,
+            .offFrames = 1,
+            .transitionOnFrames = 0,
+            .transitionOffFrames = 0,
+            .offset = 0
+          }}));
+    AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
+    isOn = on;
+  }
+}
+  
+bool IsInConnectionFlow()
+{
+  using namespace SwitchboardInterface;
+  return (_curStatus != ConnectionStatus::NONE &&
+          _curStatus != ConnectionStatus::START_PAIRING &&
+          _curStatus != ConnectionStatus::END_PAIRING);
+
+}
+
 void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
                           AnimationStreamer* animStreamer,
                           const AnimContext* context)
 {
   using namespace SwitchboardInterface;
+
+  // Update the pairing light
+  // Turn it on if we are on the START_PAIRING or SHOW_PIN screen
+  // Otherwise turn it off
+  UpdatePairingLight((msg.status == ConnectionStatus::START_PAIRING ||
+                      msg.status == ConnectionStatus::SHOW_PIN));
+  
+
+  _curStatus = msg.status;
 
   switch(msg.status)
   {
@@ -230,20 +285,7 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
     case ConnectionStatus::START_PAIRING:
     {
       FaceInfoScreenManager::getInstance()->EnablePairingScreen(true);
-
-      // Start system pairing light (pulsing orange/green)
-      RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
-        .light = {
-          .onColor = 0xFFFF0000,
-          .offColor = 0x00000000,
-          .onFrames = 16,
-          .offFrames = 16,
-          .transitionOnFrames = 16,
-          .transitionOffFrames = 16,
-          .offset = 0
-      }}));
-      AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
-      
+   
       // Throttling square is annoying when trying to inspect the display so disable
       NativeAnkiUtilConsoleSetValueWithString("DisplayThermalThrottling", "false");
       DrawStartPairingScreen(animStreamer);
@@ -257,20 +299,7 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
     case ConnectionStatus::SETTING_WIFI:
     {
       DrawWifiScreen(animStreamer);
-
-      // Turn off system pairing light
-      RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
-        .light = {
-          .onColor = 0x00000000,
-          .offColor = 0x00000000,
-          .onFrames = 1,
-          .offFrames = 1,
-          .transitionOnFrames = 0,
-          .transitionOffFrames = 0,
-          .offset = 0
-      }}));
-      AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
-    }
+     }
     break;
     case ConnectionStatus::UPDATING_OS:
     {
@@ -304,20 +333,6 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
         animStreamer->EnableKeepFaceAlive(true, 0);
       }
       FaceInfoScreenManager::getInstance()->EnablePairingScreen(false);
-
-
-      // Safe guard to make sure system pairing light is turned off
-      RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
-        .light = {
-          .onColor = 0x00000000,
-          .offColor = 0x00000000,
-          .onFrames = 1,
-          .offFrames = 1,
-          .transitionOnFrames = 0,
-          .transitionOffFrames = 0,
-          .offset = 0
-      }}));
-      AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
     }
     break;
     case ConnectionStatus::COUNT:
