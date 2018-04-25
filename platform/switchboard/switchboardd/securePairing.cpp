@@ -175,7 +175,9 @@ void SecurePairing::Reset(bool forced) {
   if(forced) {
     Log::Write("Client disconnected. Stopping pairing.");
     ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
-    _engineClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+    if(!_isOtaUpdating) {
+      _engineClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+    }
   } else if(++_totalPairingAttempts < kMaxPairingAttempts) {
     Init();
     Log::Write("SecurePairing restarting.");
