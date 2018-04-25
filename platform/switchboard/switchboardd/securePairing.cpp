@@ -148,6 +148,7 @@ void SecurePairing::SubscribeToCladMessages() {
   _rtsOtaCancelRequestHandle = _cladHandler->OnReceiveRtsOtaCancelRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsOtaCancelRequest, this, std::placeholders::_1));
   _rtsWifiAccessPointRequestHandle = _cladHandler->OnReceiveRtsWifiAccessPointRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsWifiAccessPointRequest, this, std::placeholders::_1));
   _rtsCancelPairingHandle = _cladHandler->OnReceiveCancelPairingRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsCancelPairing, this, std::placeholders::_1));
+  _rtsLogRequestHandle = _cladHandler->OnReceiveRtsLogRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsLogRequest, this, std::placeholders::_1));
   _rtsAckHandle = _cladHandler->OnReceiveRtsAck().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsAck, this, std::placeholders::_1));
   _rtsSshHandle = _cladHandler->OnReceiveRtsSsh().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsSsh, this, std::placeholders::_1));
 }
@@ -391,6 +392,28 @@ void SecurePairing::SendOtaProgress(int status, uint64_t progress, uint64_t expe
   Log::Write("Sending OTA Progress Update");
 }
 
+void SecurePairing::SendFile(uint32_t fileId, std::vector<uint8_t> fileBytes) {
+  // Send File
+  const size_t chunkSize = 256; // can't be more than 2^16
+  size_t fileSizeBytes = fileBytes.size();
+  uint8_t status = 0; // not sure if we need status byte, but reserving so I don't regret ~PRA
+
+  size_t remaining = fileSizeBytes;
+
+  while((ssize_t)remaining > 0) {
+    size_t msgSize = remaining >= chunkSize? chunkSize : remaining;
+    size_t bytesWritten = fileSizeBytes - remaining;
+
+    std::vector<uint8_t> dataChunk;
+    auto fileIter = fileBytes.begin() + bytesWritten;
+    std::copy(fileIter, fileIter + msgSize, back_inserter(dataChunk));
+
+    SendRtsMessage<RtsFileDownload>(status, fileId, bytesWritten + msgSize, fileSizeBytes, dataChunk);
+
+    remaining -= msgSize;    
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Event handling methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -600,6 +623,31 @@ void SecurePairing::HandleRtsWifiAccessPointRequest(const Cozmo::ExternalComms::
       Log::Write("Received request to disable access point mode.");
     }
   }
+}
+
+void SecurePairing::HandleRtsLogRequest(const Cozmo::ExternalComms::RtsConnection_2& msg) {
+  if(!AssertState(CommsState::SecureClad)) {
+    return;
+  }
+
+  std::string output;
+  int exitCode = ExecCommand({"python", "/anki/bin/diagnostics-logger"}, output);
+
+  std::vector<uint8_t> logBytes;
+
+  bool readSuccess = ReadFileIntoVector("/data/diagnostics/logs.tar.bz2", logBytes);
+
+  if(!readSuccess) {
+    exitCode = -1;
+  }
+
+  // Send RtsLogResponse
+  uint32_t fileId = 0;
+  randombytes_buf(&fileId, sizeof(fileId));
+  SendRtsMessage<RtsLogResponse>(exitCode, fileId);
+
+  // Send file
+  SendFile(fileId, logBytes);
 }
 
 void SecurePairing::HandleRtsCancelPairing(const Cozmo::ExternalComms::RtsConnection_2& msg) {

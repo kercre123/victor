@@ -9,3 +9,5 @@ add_subdirectory(switchboard)
 add_subdirectory(update-engine)
 
 add_subdirectory(victorDAS)
+
+add_subdirectory(diagnostics-logger)

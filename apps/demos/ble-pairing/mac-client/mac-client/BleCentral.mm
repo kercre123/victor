@@ -34,6 +34,21 @@ BleCentral* centralContext;
   printf("  status                                       Get Vector's general status.\n");
   printf("  ssh-send [filename]                          Generates/Sends a public SSH key to Victor.\n");
   printf("  ssh-start                                    Tries to start an SSH session with Victor.\n");
+  printf("  logs [directory]                             Downloads logs tar from Victor, with optional supplied directory path.\n");
+}
+
+- (void)showProgress: (float)current expected:(float)expected {
+  int size = 100;
+  int progress = (int)(((float)current/(float)expected) * size);
+  std::string bar = "";
+  
+  for(int i = 0; i < size; i++) {
+    if(i <= progress) bar += "▓";
+    else bar += "_";
+  }
+  
+  printf("%100s [%d%%] [%llu/%llu] \r", bar.c_str(), progress, (uint64_t)current, (uint64_t)expected);
+  fflush(stdout);
 }
 
 - (void)setVerbose:(bool)enabled {
@@ -626,6 +641,59 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           
           break;
         }
+        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsLogResponse: {
+          // Handle receive RtsLogResponse message
+          Anki::Victor::ExternalComms::RtsLogResponse msg = rtsMsg.Get_RtsLogResponse();
+          
+          _currentFileId = msg.fileId;
+          _currentFileBuffer.clear();
+          
+          break;
+        }
+        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsFileDownload: {
+          // Handle receive RtsLogResponse message
+          Anki::Victor::ExternalComms::RtsFileDownload msg = rtsMsg.Get_RtsFileDownload();
+          
+          if(msg.fileId != _currentFileId) {
+            break;
+          }
+          
+          // Add to buffer
+          _currentFileBuffer.insert(_currentFileBuffer.end(), msg.fileChunk.begin(), msg.fileChunk.end());
+          
+          [self showProgress:(float)msg.packetNumber expected:(float)msg.packetTotal];
+          
+          if(msg.packetNumber == msg.packetTotal) {
+            NSError *error = nil;
+            
+            
+            NSData* data = [NSData dataWithBytes:_currentFileBuffer.data() length:_currentFileBuffer.size()];
+            NSFileManager* fileManager = [NSFileManager defaultManager];
+            
+            NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+            [dateFormatter setDateFormat:@"yyyy-MM-dd-HH-mm-ss"];
+            NSString* fileName = [NSString stringWithFormat:@"vic-logs-%@.tar.bz2", [dateFormatter stringFromDate:[NSDate date]]];
+            
+            NSArray* pathParts = [NSArray arrayWithObjects:_downloadFilePath, fileName, nil];
+            NSString* dirPath = _downloadFilePath;
+            NSString* logPath = [NSString pathWithComponents:pathParts];
+            
+            bool createdDirSuccess = [fileManager createDirectoryAtPath:dirPath withIntermediateDirectories:true attributes:nil error:nil];
+            bool success = [data writeToFile:logPath options:NSDataWritingAtomic error:&error];
+            
+            if(!success || !createdDirSuccess) {
+              printf("IO error while trying to write logs.\n");
+            }
+            
+            if(_currentCommand == "logs" && !_readyForNextCommand) {
+              printf("\nDownloaded logs to %s\n", [logPath UTF8String]);
+              
+              _readyForNextCommand = true;
+            }
+          }
+          
+          break;
+        }
         case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsCancelPairing: {
           _rtsState = Raw;
           break;
@@ -933,7 +1001,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       } else if(strcmp(words[0].c_str(), "wifi-ip") == 0) {
         Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiIpRequest>(self, _commVersion);
       } else if(strcmp(words[0].c_str(), "ota-start") == 0) {
-        std::string url = "http://sai-general.s3.amazonaws.com/build-assets/ota-test.tar";
+        std::string url = "http://ota-cdn.anki.com/vic/dev/werih2382df23ij/full/latest.ota";
         if(words.size() > 1) {
           url = words[1];
         }
@@ -953,6 +1021,24 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         _currentCommand = "ota-progress";
       } else if(strcmp(words[0].c_str(), "status") == 0) {
         Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsStatusRequest>(self, _commVersion);
+      } else if(strcmp(words[0].c_str(), "logs") == 0) {
+        if(_commVersion < 2) {
+          printf("logs not supported in version %d\n", _commVersion);
+        } else {
+          _readyForNextCommand = false;
+          _currentCommand = "logs";
+          
+          NSArray* pathParts = [NSArray arrayWithObjects:NSHomeDirectory(), @"Downloads", @"mac-client-logs", nil];
+          _downloadFilePath = [NSString pathWithComponents:pathParts];
+          
+          if(words.size() > 1) {
+            _downloadFilePath = [NSString stringWithUTF8String:words[1].c_str()];
+          }
+          
+          printf("Downloading log dump over BLE. This may take a couple minutes.\n");
+          std::vector<std::string> filter;
+          Clad::SendRtsMessage_2<Anki::Victor::ExternalComms::RtsLogRequest>(self, _commVersion, 0, filter);
+        }
       } else if(strcmp(words[0].c_str(), "ssh-send") == 0) {
         NSArray* pathParts = [NSArray arrayWithObjects:NSHomeDirectory(), @".ssh", @"id_rsa_vic_dev.pub", nil];
         NSString* keyPath = [NSString pathWithComponents:pathParts];
