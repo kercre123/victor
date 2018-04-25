@@ -248,15 +248,17 @@ int cccRlg(uint8_t idx, char *buf, int buf_max_size)
         #warning "DEBUG" 
         const int opts = CCC_CMD_OPTS & ~(CMD_OPTS_EXCEPTION_EN);
   cmd_dbuf_t dbuf = { buf, buf_max_size, 0 };
-  cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"rlg %02x 00 00 00 00 00", idx), 1000, opts, 0, (dbuf.p ? &dbuf : 0) );
+  cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"rlg %02x 00 00 00 00 00", idx), 1000, opts, 0, (dbuf.p && dbuf.size>0 ? &dbuf : 0) );
   
   //detect and remove the ":LOG n" line inserted by vic-robot parser
-  if( dbuf.p && dbuf.wlen > 4 && !strncmp(buf, ":LOG", 4) ) {
+  if( dbuf.p && dbuf.wlen > 4 && !strncmp(dbuf.p, ":LOG", 4) ) {
     char *end = strchr(dbuf.p, '\n');
     if( end ) {
       int rmlen = (end - dbuf.p) + 1;
       if( rmlen <= dbuf.wlen ) {
-        //ConsolePrintf("DEBUG: REMOVED \"%.*s\"\n", rmlen-1, dbuf.p);
+        #if CCC_DEBUG > 0
+        ConsolePrintf("REMOVED \"%.*s\"\n", rmlen-1, dbuf.p);
+        #endif
         memmove(dbuf.p, end+1, dbuf.wlen-rmlen);
         dbuf.wlen -= rmlen;
       }

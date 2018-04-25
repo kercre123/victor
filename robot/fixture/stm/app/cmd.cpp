@@ -165,8 +165,12 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
       //if( io != CMD_IO_CONSOLE && opts & CMD_OPTS_LOG_OTHER ) ConsolePutChar(c); //DEBUG inspect
       if( dbuf->wlen < dbuf->size )
         dbuf->p[ dbuf->wlen++ ] = c;
-      else
-        throw ERROR_BUFFER_TOO_SMALL;
+      else {
+        if( opts & CMD_OPTS_LOG_ERRORS && dbuf->wlen == dbuf->size ) //one-shot report
+          write_(CMD_IO_CONSOLE, LOG_RSP_PREFIX, "DBUF_OVERFLOW\n");
+        if( opts & CMD_OPTS_EXCEPTION_EN )
+          throw ERROR_BUFFER_TOO_SMALL;
+      }
     }
     
     if( rsp != NULL )
