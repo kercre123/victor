@@ -254,7 +254,7 @@ if [ ! -f ${CMAKE_EXE} ]; then
 fi
 
 if [ -z "${GOROOT+x}" ]; then
-    GO_EXE=`tools/build/tools/ankibuild/go.py`
+    GO_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/go.py`
     export GOROOT=$(dirname $(dirname $GO_EXE))
 else
     GO_EXE=$GOROOT/bin/go
@@ -267,7 +267,7 @@ if [ ! -f ${GO_EXE} ]; then
   exit 1
 fi
 
-tools/build/tools/ankibuild/go.py --check-version $GO_EXE
+${TOPLEVEL}/tools/build/tools/ankibuild/go.py --check-version $GO_EXE
 
 #
 # Remove assets in build directory if requested. This will force the
