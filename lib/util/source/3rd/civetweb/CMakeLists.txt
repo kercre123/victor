@@ -316,6 +316,16 @@ if (MINGW)
 endif()
 if (NOT CIVETWEB_ALLOW_WARNINGS)
   add_c_compiler_flag(-Werror)
+# <ANKI CHANGE>
+# shawn: hide spurious warnings for civetweb on switchboard
+else ()
+  add_c_compiler_flag(-Wno-missing-variable-declarations)
+  add_c_compiler_flag(-Wno-date-time)
+  add_c_compiler_flag(-Wno-cast-qual)
+  add_c_compiler_flag(-Wno-shorten-64-to-32)
+  add_c_compiler_flag(-Wno-comma)
+  add_c_compiler_flag(-Wno-reserved-id-macro)
+# </ANKI CHANGE>
 endif()
 add_c_compiler_flag(/WX)
 add_c_compiler_flag(-pedantic-errors)
@@ -390,6 +400,16 @@ if (CIVETWEB_ENABLE_CXX)
   endif()
   if (NOT CIVETWEB_ALLOW_WARNINGS)
     add_cxx_compiler_flag(-Werror)
+  # <ANKI CHANGE>
+  # shawn: hide spurious warnings for civetweb on switchboard
+  else ()
+    add_cxx_compiler_flag(-Wno-missing-variable-declarations)
+    add_cxx_compiler_flag(-Wno-date-time)
+    add_cxx_compiler_flag(-Wno-cast-qual)
+    add_cxx_compiler_flag(-Wno-shorten-64-to-32)
+    add_cxx_compiler_flag(-Wno-comma)
+    add_cxx_compiler_flag(-Wno-reserved-id-macro)
+  # </ANKI CHANGE>
   endif()
   add_cxx_compiler_flag(/WX)
   add_cxx_compiler_flag(-pedantic-errors)
