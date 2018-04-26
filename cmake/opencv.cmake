@@ -104,12 +104,12 @@ list(APPEND OPENCV_LIBS ${OPENCV_EXTERNAL_LIBS})
 
 # Use jpeg-turbo 
 if (ANDROID)
-  add_library(libjpeg SHARED IMPORTED)
-  set_target_properties(libjpeg PROPERTIES IMPORTED_LOCATION
-    ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/android_armv7_libs/libjpeg.so)
-  add_library(libturbojpeg SHARED IMPORTED)
-  set_target_properties(libturbojpeg PROPERTIES IMPORTED_LOCATION
-    ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/android_armv7_libs/libturbojpeg.so)
+#   add_library(libjpeg SHARED IMPORTED)
+#   set_target_properties(libjpeg PROPERTIES IMPORTED_LOCATION
+#     ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/android_armv7_libs/libjpeg.so)
+#   add_library(libturbojpeg SHARED IMPORTED)
+#   set_target_properties(libturbojpeg PROPERTIES IMPORTED_LOCATION
+#     ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/android_armv7_libs/libturbojpeg.so)
 elseif (MACOSX)
   # TODO: Restore jpeg-turbo usage for mac? (Getting linker errors)
   #add_library(libjpeg STATIC IMPORTED)
@@ -151,7 +151,8 @@ if (ANDROID)
   set(INSTALL_LIBS
       "${OPENCV_LIBS}"
       tbb
-      libturbojpeg)
+      #libturbojpeg
+      )
   
   message(STATUS "opencv libs: ${INSTALL_LIBS}")
   

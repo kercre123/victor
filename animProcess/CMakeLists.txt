@@ -6,6 +6,7 @@ project(animProcess)
 option(USE_DAS "Enable DAS reporting" OFF)
 
 include(anki_build_cxx)
+include(aubio)
 include(flatbuffers)
 include(opencv)
 include(text2speech)
@@ -56,6 +57,8 @@ target_link_libraries(victor_anim
   ${SENSORY_LIBS}
   # platform
   ${PLATFORM_LIBS}
+  # Aubio beat detection
+  ${AUBIO_LIBS}
   PUBLIC
   victor_web_library
   robot_interface  # Needs to be public for cozmoConfig.h
