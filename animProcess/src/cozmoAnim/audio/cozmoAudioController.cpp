@@ -270,9 +270,9 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     config.audioLocale = AudioLocaleType::EnglishUS;
 
     // Engine Memory
-    config.defaultMemoryPoolSize      = ( 2 * 1024 * 1024 );      // 2 MB
-    config.defaultLEMemoryPoolSize    = ( 1024 * 1024 );          // 1 MB
-    config.ioMemorySize               = ( (1024 + 512) * 1024 );  // 1.5 MB
+    config.defaultMemoryPoolSize      = ( 3 * 1024 * 1024 );  // 3 MB
+    config.defaultLEMemoryPoolSize    = ( 2 * 1024 * 1024 );  // 2 MB
+    config.ioMemorySize               = ( 2 * 1024 * 1024 );  // 2 MB
     config.defaultMaxNumPools         = 30;
     config.enableGameSyncPreparation  = true;
     config.enableStreamCache          = true;
