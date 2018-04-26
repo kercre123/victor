@@ -46,7 +46,10 @@ void Daemon::Start() {
   _loop = ev_default_loop(0);
   _taskExecutor = std::make_unique<Anki::TaskExecutor>(_loop);
 
+  // InitializeWebsocketServer();
   InitializeEngineComms();
+  _websocketServer = std::make_unique<WebsocketServer>(_engineMessagingClient);
+  _websocketServer->Start();
   Log::Write("Finished Starting");
 
   // Initialize Ota Timer

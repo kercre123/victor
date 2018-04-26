@@ -152,6 +152,11 @@ elseif(VICOS)
   add_subdirectory("clad")
 
   # include only required deps from util
+  set(CIVETWEB_ALLOW_WARNINGS ON CACHE BOOL "Allow warnings in civetweb" FORCE)
+  set(SAVE_BUILD_WITH_INSTALL_RPATH ${CMAKE_BUILD_WITH_INSTALL_RPATH})
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+  add_subdirectory("lib/util/source/3rd/civetweb")
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH ${SAVE_BUILD_WITH_INSTALL_RPATH})
   add_subdirectory("lib/util/source/3rd/jsoncpp")
   add_subdirectory("lib/util/source/anki/clad")
 

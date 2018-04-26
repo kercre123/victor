@@ -46,6 +46,7 @@ bool EngineMessagingClient::Init() {
                 kEngineMessageFrequency_s);
   _handleEngineMessageTimer.client = &client;
   _handleEngineMessageTimer.signal = &_pairingStatusSignal;
+  _handleEngineMessageTimer.websocketSignal = &_engineMessageSignal;
   return true;
 }
 
@@ -77,7 +78,7 @@ void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct
     // Read all the messages that were returned
     size_t index = 0;
     while (bytes_recvd >= index + kMessageHeaderLength) {
-      uint16_t message_size = *(uint16_t*)sMessageData;
+      uint16_t message_size = *(uint16_t*)(sMessageData + index);
       index += kMessageHeaderLength;
       if (bytes_recvd - index < message_size) {
         logw("Received partial message from engine");
@@ -87,6 +88,10 @@ void EngineMessagingClient::sEvEngineMessageHandler(struct ev_loop* loop, struct
           EMessage message;
           message.Unpack(sMessageData + index, message_size);
           wData->signal->emit(message);
+        } else {
+          EMessage message;
+          message.Unpack(sMessageData + index, message_size);
+          wData->websocketSignal->emit(message);
         }
       }
       index += message_size;

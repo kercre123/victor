@@ -28,29 +28,34 @@ namespace Switchboard {
 
 class EngineMessagingClient {
 public:
-  using PairingStatusSignal = Signal::Signal<void (Anki::Cozmo::ExternalInterface::MessageEngineToGame)>;
+  using EngineMessageSignal = Signal::Signal<void (Anki::Cozmo::ExternalInterface::MessageEngineToGame)>;
   explicit EngineMessagingClient(struct ev_loop* loop);
   bool Init();
   bool Connect();
   bool Disconnect();
+  void SendMessage(const Anki::Cozmo::ExternalInterface::MessageGameToEngine& message);
   void SetPairingPin(std::string pin);
   void ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus status);
-  PairingStatusSignal& OnReceivePairingStatus() {
+  EngineMessageSignal& OnReceivePairingStatus() {
     return _pairingStatusSignal;
   }
+  EngineMessageSignal& OnReceiveEngineMessage() {
+    return _engineMessageSignal;
+  }
   static void sEvEngineMessageHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
-private:
-  void SendMessage(const Anki::Cozmo::ExternalInterface::MessageGameToEngine& message);
 
+private:
   TcpClient client;
-  PairingStatusSignal _pairingStatusSignal;
+  EngineMessageSignal _pairingStatusSignal;
+  EngineMessageSignal _engineMessageSignal;
   // anything that isn't pairing status should be attached to a different signal
 
   struct ev_loop* loop_;
   struct ev_EngineMessageTimerStruct {
     ev_timer timer;
     TcpClient* client;
-    PairingStatusSignal* signal;
+    EngineMessageSignal* signal;
+    EngineMessageSignal* websocketSignal;
   } _handleEngineMessageTimer;
 
   static uint8_t sMessageData[2048];

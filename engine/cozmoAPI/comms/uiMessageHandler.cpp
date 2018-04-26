@@ -347,24 +347,6 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
 
         while (connectionType < UiConnectionType::Count)
         {
-          // Only allow Enter/ExitPairing messages to be sent to switchboard
-          if(connectionType == UiConnectionType::Switchboard)
-          {
-            if(message.GetTag() != ExternalInterface::MessageEngineToGameTag::EnterPairing &&
-               message.GetTag() != ExternalInterface::MessageEngineToGameTag::ExitPairing)
-            {
-              if(sendToEveryone)
-              {
-                ++connectionType;
-                continue;
-              }
-              else
-              {
-                return;
-              }
-            }
-          }
-
           ISocketComms* socketComms = GetSocketComms(connectionType);
           if (socketComms)
           {
