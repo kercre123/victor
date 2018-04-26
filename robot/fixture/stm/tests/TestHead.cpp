@@ -93,7 +93,7 @@ void TestHeadDutProgram(void)
   //helper head does the rest
   snformat(b,bz,"dutprogram %u %08x %s", timeout_s, headnfo.esn, g_fixmode == FIXMODE_HELPER1 ? "helper" : "");
   cmdSend(CMD_IO_HELPER, b, (timeout_s+10)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
-  if( cmdStatus() >= 960 && cmdStatus() <= 970 ) //headprogram exit code range
+  if( cmdStatus() >= ERROR_HEADPGM && cmdStatus() < ERROR_HEADPGM_RANGE_END ) //headprogram exit code range
     throw cmdStatus();
   else if( cmdStatus() != 0 )
     throw ERROR_HEADPGM; //default
