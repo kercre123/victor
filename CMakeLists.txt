@@ -175,7 +175,7 @@ else()
 
   import(coretech "coretech")
   add_subdirectory("clad")
-  add_subdirectory("cloud")
+  #add_subdirectory("cloud")
   add_subdirectory("cubeBleClient")
   add_subdirectory("osState")
   add_subdirectory("cannedAnimLib")
