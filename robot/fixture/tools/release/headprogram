@@ -48,8 +48,9 @@ dd if=/dev/zero of=emmcdl/factory.img count=4 bs=1M       || exit $ERROR_HEADPGM
 yes | mkfs.ext4 emmcdl/factory.img                        || exit $ERROR_HEADPGM_FAC_IMG
 mount -o loop emmcdl/factory.img /data/img                || exit $ERROR_HEADPGM_FAC_IMG
 mkdir /data/img/cloud                                     || exit $ERROR_HEADPGM_FAC_IMG
-# Set up birth certificate on factory partition
-./makebc /data/img/birthcertificate $ESN $HW_VER $MODEL   || exit $ERROR_HEADPGM_FAC_IMG
+# Set up birth certificate as its own partition
+rm emmcdl/emr.img
+./makebc emmcdl/emr.img $ESN $HW_VER $MODEL   || exit $ERROR_HEADPGM_FAC_IMG
 
 # Prepare cloud data for this ESN
 if [ $cloudcert -gt 0 ]; then
@@ -73,4 +74,3 @@ fi
 
 # Flash the robot
 ./emmcdl/emmcdl -p 0 -f emmcdl/prog_emmc_firehose_8909_ddr.mbn -x emmcdl/anki.xml -SetActivePartition 0
-
