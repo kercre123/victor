@@ -32,7 +32,13 @@ bool validate(void) {
 static bool boot_test(void) {
   // Failure count reached max
   if (APP->faultCounter[MAX_FAULT_COUNT - 1] != FAULT_NONE) {
-    BODY_TX::reset();
+    if (APP->faultCounter[MAX_FAULT_COUNT - 1] == FAULT_USER_WIPE) {
+      BODY_TX::mode(MODE_ALTERNATE);
+    } else {
+      // Signal recovery
+      BODY_TX::reset();
+    }
+
     return false;
   }
 
@@ -62,7 +68,7 @@ void timer_init(void) {
   TIM14->DIER = TIM_DIER_UIE;
   TIM14->CR1 = TIM_CR1_CEN;
 
-  NVIC_SetPriority(TIM14_IRQn, 3);
+  NVIC_SetPriority(TIM14_IRQn, 1);
   NVIC_EnableIRQ(TIM14_IRQn);
 }
 

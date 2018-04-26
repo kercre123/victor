@@ -37,7 +37,8 @@ static struct {
 
 static const int EXTRA_BYTES = sizeof(SpineMessageHeader) + sizeof(SpineMessageFooter);
 static volatile bool g_exitRuntime = false;
-static Ack next_ack = ACK_BOOTED;
+static Ack next_ack = ACK_UNUSED;
+static void check_buffer();
 
 static uint32_t crc(const void* ptr, int bytes) {
   int length = bytes / sizeof(uint32_t);
@@ -50,30 +51,47 @@ static uint32_t crc(const void* ptr, int bytes) {
   return CRC->DR;
 }
 
+static void reset_dma() {
+  // Turn off dma
+  DMA1_Channel3->CCR = 0;
+
+  // Reconfigure dma
+  DMA1_Channel3->CPAR = (uint32_t)&USART1->RDR;
+  DMA1_Channel3->CMAR = (uint32_t)&inbound;
+  DMA1_Channel3->CNDTR = sizeof(inbound);
+  DMA1_Channel3->CCR = DMA_CCR_MINC
+                     | DMA_CCR_EN
+                     ;
+}
+
 void Comms::run(void) {
   // CRC Poly
   CRC->INIT = ~0;
 
   // Configure our USART1 (Start interrupt)
   USART1->BRR = SYSTEM_CLOCK / COMMS_BAUDRATE;
-  USART1->CR3 = USART_CR3_DMAT | USART_CR3_OVRDIS;
+  USART1->CR3 = USART_CR3_DMAR | USART_CR3_DMAT | USART_CR3_OVRDIS;
   USART1->CR2 = (SYNC_HEAD_TO_BODY & 0xFF) << 24;
   USART1->CR1 = USART_CR1_RE
               | USART_CR1_TE
-              | USART_CR1_CMIE
               | USART_CR1_UE;
 
   // Setup our constants for outbound data
   outbound.header.sync_bytes = SYNC_BODY_TO_HEAD;
   outbound.header.bytes_to_follow = sizeof(outbound.payload);
 
-  // Configure our interrupts
-  NVIC_SetPriority(USART1_IRQn, 2);
-  NVIC_EnableIRQ(USART1_IRQn);
+  next_ack = ACK_BOOTED;
 
-  while (!g_exitRuntime) __wfi();
+  // Start reading into a DMA buffer
+  reset_dma();
+  
+  while (!g_exitRuntime) {
+    __wfi();
+    check_buffer();
+  }
 
-  NVIC_DisableIRQ(USART1_IRQn);
+  DMA1_Channel3->CCR = 0;
+  USART1->CR1 = 0;
 }
 
 void Comms::tick() {
@@ -85,6 +103,7 @@ void Comms::tick() {
   DMA1_Channel2->CMAR = (uint32_t)&outbound;
   DMA1_Channel2->CNDTR = sizeof(outbound);
 
+  // Process sync / ack period
   if (next_ack == ACK_UNUSED) {
     // Frame a dummy packet
     outbound.header.payload_type = PAYLOAD_BOOT_FRAME;
@@ -100,31 +119,9 @@ void Comms::tick() {
   DMA1_Channel2->CCR |= DMA_CCR_EN;
 }
 
-static void sendAck(Ack c) {
-  next_ack = c;
-}
-
-extern "C" void USART1_IRQHandler(void) {
-  static uint16_t writeIndex = 0;
-
-  // Character match (used to mark the start of a packet)
-  if (USART1->ISR & USART_ISR_CMF) {
-    USART1->ICR = USART_ICR_CMCF;
-    USART1->CR1 |= USART_CR1_RXNEIE;
-  }
-
-  // Flush overflows
-  if (USART1->ISR & USART_ISR_ORE) {
-    USART1->ICR = USART_ICR_ORECF;
-  }
-
-  // No data available
-  if (~USART1->ISR & USART_ISR_RXNE) {
-    return ;
-  }
-
-  // Receive data
-  inbound.raw[writeIndex++] = USART1->RDR;
+static void check_buffer() {
+  // Find where we are in our DMA buffer
+  uint16_t writeIndex = sizeof(inbound) - DMA1_Channel3->CNDTR;
 
   // We've not finished receiving a header
   if (writeIndex < sizeof(SpineMessageHeader)) {
@@ -133,9 +130,7 @@ extern "C" void USART1_IRQHandler(void) {
 
   // Sync failure
   if (inbound.header.sync_bytes != SYNC_HEAD_TO_BODY) {
-    USART1->CR1 &= ~USART_CR1_RXNEIE;
-    USART1->RQR = USART_RQR_RXFRQ;
-    writeIndex = 0;
+    reset_dma();
     return ;
   }
 
@@ -143,9 +138,8 @@ extern "C" void USART1_IRQHandler(void) {
 
   // This packet is too large, ignore it
   if (inboundSize > sizeof(inbound)) {
-    USART1->CR1 &= ~USART_CR1_RXNEIE;
-    USART1->RQR = USART_RQR_RXFRQ;
-    writeIndex = 0;
+    reset_dma();
+    next_ack = NACK_BAD_COMMAND;
     return ;
   }
 
@@ -155,15 +149,13 @@ extern "C" void USART1_IRQHandler(void) {
   }
 
   //Ready to receive another packet
-  USART1->CR1 &= ~USART_CR1_RXNEIE;
-  USART1->RQR = USART_RQR_RXFRQ;
-  writeIndex = 0;
+  reset_dma();
 
   uint32_t expected_crc = crc(&inbound.raw_payload, inbound.header.bytes_to_follow);
   SpineMessageFooter* message_end = (SpineMessageFooter*)(&inbound.raw_payload[inbound.header.bytes_to_follow]);
 
   if (expected_crc != message_end->checksum) {
-    sendAck(NACK_CRC_FAILED);
+    next_ack = NACK_CRC_FAILED;
     return ;
   }
 
@@ -185,7 +177,7 @@ extern "C" void USART1_IRQHandler(void) {
       // If signature fails, wipe application
       if (!validate()) {
         Flash::eraseApplication();
-        sendAck(NACK_CERT_FAILED);
+        next_ack = NACK_CERT_FAILED;
         return ;
       }
 
@@ -203,20 +195,20 @@ extern "C" void USART1_IRQHandler(void) {
 
       // We can only work with aligned addresses
       if (inbound.writeDFU.address & 3) {
-        sendAck(NACK_SIZE_ALIGN);
+        next_ack = NACK_SIZE_ALIGN;
         return;
       }
 
       // Address is out of bounds
       if ((inbound.writeDFU.address + word_size + 8) > COZMO_APPLICATION_SIZE) {
-        sendAck(NACK_BAD_ADDRESS);
+        next_ack = NACK_BAD_ADDRESS;
         return ;
       }
 
       // Check if the space is erased
       for (int i = 0; i < inbound.writeDFU.wordCount; i++) {
         if (dst[i] != 0xFFFFFFFF) {
-          sendAck(NACK_NOT_ERASED);
+          next_ack = NACK_NOT_ERASED;
           return ;
         }
       }
@@ -227,7 +219,7 @@ extern "C" void USART1_IRQHandler(void) {
       // Verify flash
       for (int i = 0; i < inbound.writeDFU.wordCount; i++) {
         if (dst[i] != src[i]) {
-          sendAck(NACK_FLASH_FAILED);
+          next_ack = NACK_FLASH_FAILED;
           return ;
         }
       }
@@ -236,9 +228,9 @@ extern "C" void USART1_IRQHandler(void) {
     break ;
 
   default:
-    sendAck(NACK_BAD_COMMAND);
+    next_ack = NACK_BAD_COMMAND;
     return ;
   }
 
-  sendAck(ACK_PAYLOAD);
+  next_ack = ACK_PAYLOAD;
 }

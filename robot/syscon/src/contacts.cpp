@@ -18,22 +18,47 @@ static bool transmitting;
 
 static const ContactData boot_msg = {"\xFF\xFF\xFF\xFF\nbooted\n"};
 
-void Contacts::init(void) {
-  VEXT_TX::alternate(1);  // USART2_TX
-  VEXT_TX::speed(SPEED_HIGH);
-  VEXT_TX::pull(PULL_NONE);
-  VEXT_TX::mode(MODE_ALTERNATE);
+static inline void set_rx() {
+  USART2->CR1 = 0;
+  __nop(); __nop(); __nop(); __nop(); __nop();
 
-  // Configure our USART2
+  USART2->RQR = USART_RQR_RXFRQ;
   USART2->BRR = SYSTEM_CLOCK / CONTACT_BAUDRATE;
-
   USART2->CR3 = USART_CR3_HDSEL;
   USART2->CR1 = USART_CR1_UE
-              | USART_CR1_TE
               | USART_CR1_RE
+              | USART_CR1_TE
               | USART_CR1_RXNEIE
               ;
 
+  USART2->TDR = 0xFF;
+
+  transmitting = false;
+}
+
+static inline void set_tx() {
+  USART2->CR1 = 0;
+  __nop(); __nop(); __nop(); __nop(); __nop();
+
+  USART2->BRR = SYSTEM_CLOCK / CONTACT_BAUDRATE;
+  USART2->CR3 = 0;
+  USART2->CR1 = USART_CR1_UE
+              | USART_CR1_TE
+              | USART_CR1_TXEIE
+              ;
+
+  USART2->TDR = 0xFF;
+
+  transmitting = true;
+}
+
+void Contacts::init(void) {
+  VEXT_TX::alternate(1);  // USART2_TX
+  VEXT_TX::pull(PULL_NONE);
+
+  // Configure our USART2
+  set_rx();
+  
   NVIC_SetPriority(USART2_IRQn, PRIORITY_CONTACTS_COMMS);
   NVIC_EnableIRQ(USART2_IRQn);
 
@@ -41,29 +66,36 @@ void Contacts::init(void) {
   rxDataIndex = 0;
   txReadIndex = 0;
   txWriteIndex = 0;
-  transmitting = false;
 
   Contacts::forward( boot_msg );
 }
 
+#define DEBUG_TX_OVF_DETECT 0
 void Contacts::forward(const ContactData& pkt) {
   NVIC_DisableIRQ(USART2_IRQn);
+
+  Analog::delayCharge();
 
   for (int i = 0; i < sizeof(pkt.data); i++) {
     uint8_t byte = pkt.data[i];
     if (!byte) continue ;
 
-    txData[txWriteIndex++] = byte;
+    //prevent buffer wrap by dropping chars
+    int nextWriteIndex = txWriteIndex+1 >= sizeof(txData) ? 0 : txWriteIndex+1;
+    if( nextWriteIndex == txReadIndex ) continue;
 
-    if (txWriteIndex >= sizeof(txData)) txWriteIndex = 0;
+    #if DEBUG_TX_OVF_DETECT > 0
+    #warning contact overflow detection is active
+      int lastReadIndex = txReadIndex-1 < 0 ? sizeof(txData)-1 : txReadIndex-1;
+      if( nextWriteIndex == lastReadIndex ) //'overflow' 1 char early so we can insert debug value
+        byte = 0x88; //out of ascii range
+    #endif
+
+    txData[txWriteIndex] = byte;
+    txWriteIndex = nextWriteIndex;
 
     if (!transmitting) {
-      transmitting = true;
-      Analog::delayCharge();
-      USART2->CR1 &= ~USART_CR1_RE;
-      USART2->TDR = 0xFF;
-      VEXT_TX::pull(PULL_UP);
-      USART2->CR1 |= USART_CR1_TXEIE;
+      set_tx();
     }
   }
 
@@ -85,25 +117,38 @@ void Contacts::tick(void) {
 
 extern "C" void USART2_IRQHandler(void) {
   // Transmit data
-  if (USART2->ISR & USART_ISR_TXE) {
-    if (txReadIndex != txWriteIndex) {
-      USART2->TDR = txData[txReadIndex++];
-      if (txReadIndex >= sizeof(txData)) txReadIndex = 0;
-    } else {
-      USART2->CR1 &= ~USART_CR1_TXEIE;
-      USART2->CR1 |= USART_CR1_TCIE;
+  if (transmitting)
+  {
+    if( USART2->CR1 & USART_CR1_TCIE ) {  //STATE: transmit-complete
+      if (txReadIndex != txWriteIndex) {  //corner-case: more data arrived between TXE and TC ints
+        USART2->CR1 = USART_CR1_UE
+                    | USART_CR1_TE
+                    | USART_CR1_TXEIE
+                    ;
+      } else {
+        set_rx();
+      }
     }
+    
+    if( USART2->CR1 & USART_CR1_TXEIE ) { //STATE: transmit-active
+      if (txReadIndex != txWriteIndex) {
+        if (USART2->ISR & USART_ISR_TXE) {
+          USART2->TDR = txData[txReadIndex++];
+          if (txReadIndex >= sizeof(txData)) txReadIndex = 0;
+        } else {
+          //unhandled error
+        }
+      } else { //final byte. wait for transmit complete
+        USART2->CR1 = USART_CR1_UE
+                    | USART_CR1_TE
+                    | USART_CR1_TCIE
+                    ;
+      }
+    }
+    
+    return ;
   }
 
-  if (USART2->ISR & USART_ISR_TC) {
-    if (txReadIndex == txWriteIndex) {
-      VEXT_TX::pull(PULL_NONE);
-      USART2->CR1 &= ~USART_CR1_TCIE;
-      USART2->CR1 |= USART_CR1_RE;
-      transmitting = false;
-    }
-  }
-  
   // Receive data
   if (USART2->ISR & USART_ISR_RXNE) {
     uint32_t status = USART2->ISR;

@@ -86,6 +86,7 @@ enum {
   NACK_SIZE_ALIGN   = -6,
   NACK_BAD_COMMAND  = -7,
   NACK_NOT_VALID    = -8,
+  NACK_OVERFLOW     = -9
 };
 typedef int32_t Ack;
 

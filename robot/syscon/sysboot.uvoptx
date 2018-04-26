@@ -177,32 +177,17 @@
         <Ww>
           <count>0</count>
           <WinNumber>1</WinNumber>
-          <ItemText>Analog::values[0] * 2.8 / 4096.0</ItemText>
+          <ItemText>writeIndex</ItemText>
         </Ww>
         <Ww>
           <count>1</count>
           <WinNumber>1</WinNumber>
-          <ItemText>Analog::values[1] * 2.8 / 4096.0</ItemText>
+          <ItemText>inbound</ItemText>
         </Ww>
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>Analog::values[2] * 2.8 / 2048.0</ItemText>
-        </Ww>
-        <Ww>
-          <count>3</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>Analog::values[4] * 2.8 / 4096.0</ItemText>
-        </Ww>
-        <Ww>
-          <count>4</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>button_pressed</ItemText>
-        </Ww>
-        <Ww>
-          <count>5</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>battery_voltage  * 2.8 / 4096.0</ItemText>
+          <ItemText>*(unsigned long*)0x4002005C</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
@@ -261,7 +246,7 @@
       <GroupNumber>1</GroupNumber>
       <FileNumber>1</FileNumber>
       <FileType>8</FileType>
-      <tvExp>0</tvExp>
+      <tvExp>1</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
       <PathWithFileName>.\boot\main.cpp</PathWithFileName>

@@ -44,7 +44,6 @@ int main (void) {
   Contacts::init();
   Comms::init();
   Motors::init();
-  Lights::init();
   Touch::init();
   I2C::init();
   Timer::init();

@@ -9,6 +9,7 @@
 #include "encoders.h"
 #include "opto.h"
 #include "mics.h"
+#include "lights.h"
 
 #include "contacts.h"
 
@@ -159,11 +160,12 @@ void Power::enableHead(void) {
   MAIN_EN::mode(MODE_OUTPUT);
   MAIN_EN::set();
   Mics::start();
+  Lights::init();
 }
 
 void Power::disableHead(void) {
   MAIN_EN::mode(MODE_OUTPUT);
   MAIN_EN::reset();
   Mics::stop();
+  Lights::disable();
 }
-

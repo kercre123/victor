@@ -112,14 +112,11 @@ void Comms::init(void) {
   outboundPacket.sync.header.payload_type = PAYLOAD_DATA_FRAME;
   outboundPacket.sync.header.bytes_to_follow = sizeof(outboundPacket.sync.payload);
 
-  static const AckMessage ack = { ACK_APPLICATION };
-  enqueue(PAYLOAD_ACK, &ack, sizeof(ack));
-
   // Configure our interrupts
   NVIC_SetPriority(DMA1_Channel4_5_IRQn, PRIORITY_SPINE_COMMS);
   NVIC_EnableIRQ(DMA1_Channel4_5_IRQn);
 
-  // Start reading in a circul
+  // Start reading in a circular buffer
   DMA1_Channel5->CPAR = (uint32_t)&USART1->RDR;
   DMA1_Channel5->CMAR = (uint32_t)inbound_raw;
   DMA1_Channel5->CNDTR = sizeof(inbound_raw);
@@ -129,6 +126,9 @@ void Comms::init(void) {
                      | DMA_CCR_HTIE
                      | DMA_CCR_EN
                      ;
+
+  static const AckMessage ack = { ACK_APPLICATION };
+  enqueue(PAYLOAD_ACK, &ack, sizeof(ack));
 }
 
 void Comms::enqueue(PayloadId kind, const void* packet, int size) {

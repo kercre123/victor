@@ -185,7 +185,7 @@
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>\\vmware-host\Shared Folders\vmware-host\Shared Folders\github\victor\robot\syscon\src\vectors.s</Filename>
+          <Filename>\vmware-host\Shared Folders\github\victor\robot\syscon\src\vectors.s</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\syscon\src/vectors.s\127</Expression>
         </Bp>
@@ -201,7 +201,7 @@
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>\\vmware-host\Shared Folders\vmware-host\Shared Folders\github\victor\robot\syscon\src\vectors.s</Filename>
+          <Filename>\vmware-host\Shared Folders\github\victor\robot\syscon\src\vectors.s</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\syscon\src/vectors.s\122</Expression>
         </Bp>
@@ -217,7 +217,7 @@
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>\\vmware-host\Shared Folders\vmware-host\Shared Folders\github\victor\robot\syscon\src\vectors.s</Filename>
+          <Filename>\vmware-host\Shared Folders\github\victor\robot\syscon\src\vectors.s</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\syscon\src/vectors.s\131</Expression>
         </Bp>
@@ -233,7 +233,7 @@
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>\\vmware-host\Shared Folders\vmware-host\Shared Folders\github\victor\robot\syscon\src\vectors.s</Filename>
+          <Filename>\vmware-host\Shared Folders\github\victor\robot\syscon\src\vectors.s</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\syscon\src/vectors.s\135</Expression>
         </Bp>
@@ -249,7 +249,7 @@
           <SizeOfObject>0</SizeOfObject>
           <BreakByAccess>0</BreakByAccess>
           <BreakIfRCount>1</BreakIfRCount>
-          <Filename>\\vmware-host\Shared Folders\vmware-host\Shared Folders\github\victor\robot\syscon\src\vectors.s</Filename>
+          <Filename>\vmware-host\Shared Folders\github\victor\robot\syscon\src\vectors.s</Filename>
           <ExecCommand></ExecCommand>
           <Expression>\\syscon\src/vectors.s\139</Expression>
         </Bp>
