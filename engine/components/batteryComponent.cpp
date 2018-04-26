@@ -91,16 +91,11 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 
   // Only update filtered value if the battery isn't disconnected
   bool wasDisconnected = _battDisconnected;
-  _battDisconnected = (msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED);
+  _battDisconnected = (msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED) 
+                      || (_batteryVoltsRaw < 3);  // Just in case syscon doesn't report IS_BATTERY_DISCONNECTED for some reason.
+                                                  // Anything under 3V doesn't make sense.
   if (!_battDisconnected) {
     _batteryVoltsFilt = _batteryVoltsFilter->AddSample(_batteryVoltsRaw);
-  }
-
-  // Battery should always be full when battery disconnects.
-  // If it isn't, we may need to adjust kSaturationChargingThresholdVolts
-  // or possibly the syscon cutoff time
-  if (_battDisconnected && !wasDisconnected && !IsBatteryFull()) {
-    PRINT_NAMED_WARNING("BatteryComponent.NotifyOfRobotState.FullBatteryExpected", "%f", _batteryVoltsFilt);
   }
 
   // Update isCharging / isOnChargerContacts
@@ -159,6 +154,23 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
                                                                (now_sec - _saturationChargingStartTime_sec);
     _saturationChargeTimeRemaining_sec = std::max(0.f, newPossibleSaturationChargeTimeRemaining_sec);
     _saturationChargingStartTime_sec = 0.f;
+  }
+
+  // Battery should always be full when battery disconnects.
+  // If it isn't, we may need to adjust kSaturationChargingThresholdVolts
+  // or possibly the syscon cutoff time.
+  // Current battery voltage should also be non-zero, otherwise it means
+  // the engine started while the battery was already disconnected which
+  // does not warrant a warning.
+  if (_battDisconnected) {
+    if (!wasDisconnected && !IsBatteryFull() && !NEAR_ZERO(_batteryVoltsFilt) ) {
+      PRINT_NAMED_WARNING("BatteryComponent.NotifyOfRobotState.FullBatteryExpected", "%f", _batteryVoltsFilt);
+    }
+
+    // Force full battery state when disconnected.
+    // It's not going to get anymore charged so might as well
+    // pretend we're full.
+    isFullyCharged = true;
   }
 
   // Update battery charge level
