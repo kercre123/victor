@@ -57,11 +57,11 @@ namespace Anki {
     inline T GetY()      const;
     inline T GetWidth()  const;
     inline T GetHeight() const;
-    
+
     // Get x+width or y+height
     inline T GetXmax()   const;
     inline T GetYmax()   const;
-    
+
     // Get x+width/2 or y+height/2
     inline T GetXmid()   const;
     inline T GetYmid()   const;

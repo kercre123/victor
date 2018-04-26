@@ -107,7 +107,7 @@ namespace Vision {
     
     PixelRGB565(u8 r, u8 g, u8 b)
     {
-      SetValue((u16(0xF8 & r) << 8) | (u16(0xFC & g) << 3) | (u16(0xF8 & b) >> 3));
+      SetValue(r, g, b);
     }
     
     PixelRGB565(const PixelRGB& pixRGB)
@@ -129,6 +129,7 @@ namespace Vision {
     inline u32 ToRGBA32(u8 alpha = 0xFF) const;
 
     inline void SetValue(u16 value){ *((u16*)&(this->operator[](0))) = value; }
+    inline void SetValue(u8 r, u8 g, u8 b) { SetValue((u16(0xF8 & r) << 8) | (u16(0xFC & g) << 3) | (u16(0xF8 & b) >> 3)); };
     inline u16 GetValue()    const { return *((u16*)&(this->operator[](0))); }
     inline u8  GetHighByte() const { return this->operator[](1); }
     inline u8  GetLowByte()  const { return this->operator[](0); }

@@ -877,19 +877,6 @@ namespace Cozmo {
     }
     else
     {
-
-#if PROCEDURALFACE_NOISE_FEATURE
-      if(kProcFace_NoiseNumFrames == 0) {
-#else
-      {
-#endif
-        static ProceduralFace previousFace;
-        if (previousFace == procFace) {
-          return;
-        }
-        previousFace = procFace;
-      }
-        
       DEV_ASSERT(_context != nullptr, "AnimationStreamer.BufferFaceToSend.NoContext");
       DEV_ASSERT(_context->GetRandom() != nullptr, "AnimationStreamer.BufferFaceToSend.NoRNGinContext");
 

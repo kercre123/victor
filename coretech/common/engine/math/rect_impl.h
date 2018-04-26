@@ -88,7 +88,7 @@ namespace Anki {
   template<typename T>
   T Rectangle<T>::GetHeight() const
   { return height; }
-  
+
   template<typename T>
   T Rectangle<T>::GetXmax()   const
   { return x + width; }
@@ -96,7 +96,7 @@ namespace Anki {
   template<typename T>
   T Rectangle<T>::GetYmax()   const
   { return y + height; }
-  
+
   template<typename T>
   T Rectangle<T>::GetXmid()   const
   { return x + width/2; }
