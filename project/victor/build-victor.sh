@@ -118,6 +118,10 @@ done
 shift $(($OPTIND - 1))
 
 #
+# Run everything from ${TOPLEVEL}, even if invoked from somewhere else
+cd ${TOPLEVEL}
+
+#
 # settings
 #
 
