@@ -28,6 +28,7 @@
 #include "util/math/math.h"
 
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
+#include "clad/cloud/mic.h"
 
 #include <iomanip>
 #include <sstream>
@@ -182,39 +183,42 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
 
   bool receivedStopMessage = false;
   static constexpr int kMaxReceiveBytes = 2000;
-  char receiveArray[kMaxReceiveBytes];
+  uint8_t receiveArray[kMaxReceiveBytes];
   
-  const ssize_t bytesReceived = _udpServer->Recv(receiveArray, kMaxReceiveBytes);
-  if (bytesReceived == 2)
-  {
-    if (receiveArray[0] == 0 && receiveArray[1] == 0)
-    {
-      PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.StopSignal", "");
-      receivedStopMessage = true;
-    }
-#if ANKI_DEV_CHEATS
-    else if (receiveArray[0] == 0 && receiveArray[1] == 1)
-    {
-      PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.FakeTrigger", "");
-      _fakeStreamingState = true;
+  const ssize_t bytesReceived = _udpServer->Recv((char*)receiveArray, kMaxReceiveBytes);
+  if (bytesReceived > 0) {
+    CloudMic::Message msg{receiveArray, (size_t)bytesReceived};
+    switch (msg.GetTag()) {
 
-      // Set up a message to send out about the triggerword
-      RobotInterface::TriggerWordDetected twDetectedMessage;
-      const auto mostRecentTimestamp_ms = static_cast<TimeStamp_t>(currTime_nanosec / (1000 * 1000));
-      twDetectedMessage.timestamp = mostRecentTimestamp_ms;
-      twDetectedMessage.direction = kFirstIndex;
-      auto engineMessage = std::unique_ptr<RobotInterface::RobotToEngine>(
-        new RobotInterface::RobotToEngine(std::move(twDetectedMessage)));
+      case CloudMic::MessageTag::stopSignal:
+        PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.StopSignal", "");
+        receivedStopMessage = true;
+        break;
+
+      #if ANKI_DEV_CHEATS
+      case CloudMic::MessageTag::testStarted:
       {
-        std::lock_guard<std::mutex> lock(_msgsMutex);
-        _msgsToEngine.push_back(std::move(engineMessage));
+        PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.FakeTrigger", "");
+        _fakeStreamingState = true;
+
+        // Set up a message to send out about the triggerword
+        RobotInterface::TriggerWordDetected twDetectedMessage;
+        const auto mostRecentTimestamp_ms = static_cast<TimeStamp_t>(currTime_nanosec / (1000 * 1000));
+        twDetectedMessage.timestamp = mostRecentTimestamp_ms;
+        twDetectedMessage.direction = kFirstIndex;
+        auto engineMessage = std::unique_ptr<RobotInterface::RobotToEngine>(
+          new RobotInterface::RobotToEngine(std::move(twDetectedMessage)));
+        {
+          std::lock_guard<std::mutex> lock(_msgsMutex);
+          _msgsToEngine.push_back(std::move(engineMessage));
+        }
+        break;
       }
-    } 
-#endif
-    else
-    {
-      PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.UnexpectedSignal", "0x%x 0x%x", receiveArray[0], receiveArray[1]);
-      receivedStopMessage = true;
+      #endif
+
+      default:
+        PRINT_NAMED_INFO("MicDataSystem.Update.RecvCloudProcess.UnexpectedSignal", "0x%x 0x%x", receiveArray[0], receiveArray[1]);
+        receivedStopMessage = true;
     }
   }
 
@@ -281,9 +285,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         _streamingAudioIndex = 0;
   
         // Send out the message announcing the trigger word has been detected
-        static const char* const hotwordSignal = "hotword";
-        static const size_t hotwordSignalLen = std::strlen(hotwordSignal) + 1;
-        _udpServer->Send(hotwordSignal, Util::numeric_cast<int>(hotwordSignalLen));
+        SendUdpMessage(CloudMic::Message::Createhotword({}));
         PRINT_NAMED_INFO("MicDataSystem.Update.StreamingStart", "");
       }
       else
@@ -320,8 +322,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
           {
             for(const auto& audioChunk : newAudio)
             {
-              const auto entrySize = !audioChunk.empty() ? sizeof(audioChunk[0]) : 0;
-              _udpServer->Send((char*)audioChunk.data(), Util::numeric_cast<int>(audioChunk.size() * entrySize));
+              SendUdpMessage(CloudMic::Message::Createaudio(CloudMic::AudioData{audioChunk}));
             }
           }
         }
@@ -457,9 +458,15 @@ void MicDataSystem::AudioSaveCallback(const std::string& dest)
 {
   if (_udpServer->HasClient())
   {
-    std::string sendData = "file" + dest;
-    _udpServer->Send(sendData.c_str(), (int)(sendData.length() + 1));
+    SendUdpMessage(CloudMic::Message::CreatedebugFile(CloudMic::Filename{"file" + dest}));
   }
+}
+
+void MicDataSystem::SendUdpMessage(const CloudMic::Message& msg)
+{
+  std::vector<uint8_t> buf(msg.Size());
+  msg.Pack(buf.data(), buf.size());
+  _udpServer->Send((const char*)buf.data(), (int)buf.size());
 }
 
 } // namespace MicData

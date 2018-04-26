@@ -43,6 +43,7 @@ static const float kPreservedTimeToClear = 60*60*24;
 
 static const char* kCloudIntentJsonKey = "intent";
 static const char* kParamsKey = "params";
+static const char* kAltParamsKey = "parameters"; // "params" is reserved in CLAD
 }
   
 UserIntentComponent::UserIntentComponent(const Robot& robot, const Json::Value& userIntentMapConfig)
@@ -306,6 +307,11 @@ bool UserIntentComponent::SetCloudIntentPendingFromJSON(const std::string& cloud
     return false;
   }
 
+  return SetCloudIntentPendingFromJSONValue(std::move(json));
+}
+
+bool UserIntentComponent::SetCloudIntentPendingFromJSONValue(Json::Value json)
+{
   std::string cloudIntent;
   if( !JsonTools::GetValueOptional(json, kCloudIntentJsonKey, cloudIntent) ) {
     PRINT_NAMED_WARNING("UserIntentComponent.SetCloudIntentPendingFromJSON.MissingIntentKey",
@@ -377,9 +383,40 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
   
   {
     std::lock_guard<std::mutex> lock{_mutex};
-    if( !_pendingCloudIntent.empty() ) {
-      SetCloudIntentPendingFromJSON( _pendingCloudIntent );
-      _pendingCloudIntent.clear();
+    if( _pendingCloudIntent.GetTag() != CloudMic::MessageTag::INVALID ) {
+      switch ( _pendingCloudIntent.GetTag() ) {
+        case CloudMic::MessageTag::result:
+        {
+          auto json = _pendingCloudIntent.Get_result().GetJSON();
+          bool ok = true;
+          if ( json[kAltParamsKey].isString() ) {
+            // params are encoded as a string, but we need to make it a Json::Value
+            std::string jsonStr{ json[kAltParamsKey].asString() };
+            if ( jsonStr.size() > 0 ) {
+              Json::Reader reader;
+              Json::Value val;
+              ok = reader.parse( jsonStr, val, false );
+              if( !ok ) {
+                PRINT_NAMED_WARNING( "UserIntentComponent.UpdatePendingIntent.BadJson",
+                                    "Could not parse json from cloud string: %s", jsonStr.c_str() );
+              }
+              else if ( val.size() > 0 ) {
+                json[kParamsKey] = std::move(val);
+              }
+            }
+            json.removeMember(kAltParamsKey);
+          }
+          if ( ok ) {
+            SetCloudIntentPendingFromJSONValue( std::move( json ) );
+          }
+          break;
+        }
+        default:
+          PRINT_NAMED_WARNING("UserIntentComponent.UpdatePendingIntent.SkipError",
+                        "Skipping non-intent result cloud message: '%s'",
+                        CloudMic::MessageTagToString( _pendingCloudIntent.GetTag() ) );
+      }
+      _pendingCloudIntent = {};
     }
   }
   
@@ -437,12 +474,12 @@ void UserIntentComponent::UpdateDependent(const BCCompMap& dependentComps)
   }
 }
   
-void UserIntentComponent::OnCloudData(std::string&& data)
+void UserIntentComponent::OnCloudData(CloudMic::Message&& data)
 {
-  PRINT_CH_INFO( "BehaviorSystem", "UserIntentComponent.OnCloudData", "'%s'", data.c_str() );
+  PRINT_CH_INFO( "BehaviorSystem", "UserIntentComponent.OnCloudData", "'%s'", CloudMic::MessageTagToString(data.GetTag()) );
   
   std::lock_guard<std::mutex> lock{_mutex};
-  _pendingCloudIntent = data;
+  _pendingCloudIntent = std::move(data);
 }
   
 void UserIntentComponent::OnAppIntent(const ExternalInterface::AppIntent& appIntent )

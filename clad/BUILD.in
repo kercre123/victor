@@ -24,7 +24,13 @@ cxx_project(
     platform_srcs = [],
     headers = [
         'robot/src/clad/robotInterface/messageEngineToRobot.clad',
-        'robot/src/clad/robotInterface/messageRobotToEngine.clad' 
+        'robot/src/clad/robotInterface/messageRobotToEngine.clad'
     ],
     platform_headers = [],
+)
+
+cxx_project(
+    name = 'cloud_clad',
+    srcs = glob(['src/clad/cloud/**/*.clad']),
+    headers = []
 )

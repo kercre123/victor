@@ -428,11 +428,56 @@ def write_c_file(output_directory, output_file, output_callback,
             output.write('#endif // {inclusion_guard}\n'.format(inclusion_guard=inclusion_guard))
 
 def write_cs_file(output_directory, output_file, output_callback, comment_lines=None, usings=None):
-    
+
     write_c_file(output_directory, output_file, output_callback,
         comment_lines, use_inclusion_guards=False,
         system_headers=None, local_headers=None, usings=usings)
-        
+
+def go_main(emitter, options, scanner=None):
+    tree = parse(options)
+    main_output_file = get_output_file(options, '.go')
+    comment_lines = get_comment_lines(options, 'Go')
+
+    def output_callback(output):
+        emitter(output).visit(tree)
+
+    properties = dict()
+    if scanner is not None:
+        scanner(properties).visit(tree)
+
+    write_go_file(options.output_directory, main_output_file, output_callback,
+        comment_lines=comment_lines, package=options.package, properties=properties)
+
+def write_go_file(output_directory, output_file, output_callback, comment_lines=None, package=None,
+    imports=None, properties=dict()):
+
+    includes = []
+    if properties.get('use_bytes', True):
+        includes.append('bytes')
+    if properties.get('use_binary', True):
+        includes.append('encoding/binary')
+    if properties.get('use_errors', True):
+        includes.append('errors')
+    if properties.get('use_clad', True):
+        includes.append('anki/clad')
+    if properties.get('use_fmt', True):
+        includes.append('fmt')
+
+    if package == None:
+        full_path = os.path.join(output_directory, output_file)
+        package = os.path.basename(os.path.normpath(os.path.dirname(full_path)))
+    with get_output(output_directory, output_file) as output:
+        if comment_lines:
+            output.write('\n'.join('// {0}'.format(line) for line in comment_lines))
+            output.write('\n\n')
+        output.write('package {}\n\n'.format(package))
+        output.write('import (\n')
+        includes = ['\t"' + x + '"\n' for x in includes]
+        output.write(''.join(includes))
+        output.write(')\n\n')
+
+        output_callback(output)
+
 def write_python_file(output_directory, output_file, output_callback,
         comment_lines=None, future_features=('absolute_import', 'print_function'),
         additional_paths=None, import_modules=None):
@@ -550,4 +595,4 @@ def _convert_abspaths_to_relpaths(args):
     lcp = os.path.dirname(os.path.commonprefix(paths))
     rel_args = [os.path.relpath(a, lcp) if os.path.isabs(a) else a for a in args]
     return rel_args
-    
+

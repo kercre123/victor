@@ -16,7 +16,8 @@ if (!(deps != null && typeof deps === 'object')) {
   console.error("Dependencies in godeps.json should be an object; parse error");
   process.exit(1);
 }
-const gopath = execSyncTrim('go env GOPATH');
+const allGopaths = execSyncTrim('go env GOPATH').split(':');
+const gopath = allGopaths[0];
 const gopathSrc = gopath + '/src/';
 console.log('Using GOPATH=' + gopath);
 
@@ -281,7 +282,7 @@ function runRoutine(args) {
   // multiple dependent packages live in the same repository
   while (remainingDeps.length > 0) {
     // is this dep part of a remote repo? see if its git toplevel is the same as our toplevel
-    const dir = getDir(remainingDeps[0]);
+    const dir = getDirAllPaths(remainingDeps[0]);
     const toplevel = execSyncTrimDir(dir, 'git rev-parse --show-toplevel');
     if (toplevel != ourToplevel) {
       // this is in a remote repo - add the package name implied by the toplevel name to our dependency list
@@ -387,6 +388,13 @@ function getCloneCommand(name) {
 
 function getDir(name) {
   return gopathSrc + name;
+}
+
+
+function getDirAllPaths(name) {
+  const path = allGopaths.reduce((val, path) => val ? val :
+    (fs.existsSync(path + '/src/' + name) ? path + '/src/' + name : undefined), undefined);
+  return path || getDir(name)
 }
 
 

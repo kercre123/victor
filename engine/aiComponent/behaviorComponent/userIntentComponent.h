@@ -13,6 +13,7 @@
 #ifndef __Engine_AiComponent_UserIntentComponent_H__
 #define __Engine_AiComponent_UserIntentComponent_H__
 
+#include "clad/cloud/mic.h"
 #include "coretech/common/shared/types.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
@@ -133,6 +134,7 @@ public:
   // matches. Returns true if successfully converted (including if it matched against the default), and false
   // if there was an error (e.g. malformed json, incorrect data fields, etc)
   bool SetCloudIntentPendingFromJSON(const std::string& cloudJsonStr);
+  bool SetCloudIntentPendingFromJSONValue(Json::Value cloudJson);
   
   // get list of cloud/app intents from json
   std::vector<std::string> DevGetCloudIntentsList() const;
@@ -141,7 +143,7 @@ public:
 private:
   
   // callback from the cloud
-  void OnCloudData(std::string&& data);
+  void OnCloudData(CloudMic::Message&& data);
   
   // message received from app
   void OnAppIntent( const ExternalInterface::AppIntent& appIntent );
@@ -173,7 +175,7 @@ private:
   std::vector<::Signal::SmartHandle> _eventHandles;
   
   std::mutex _mutex;
-  std::string _pendingCloudIntent; // only pending for as long as it takes this thread to obtain a lock
+  CloudMic::Message _pendingCloudIntent; // only pending for as long as it takes this thread to obtain a lock
   std::unique_ptr<BehaviorComponentCloudServer> _server;
   
   bool _wasIntentUnclaimed = false;

@@ -44,6 +44,7 @@ target_link_libraries(victor_anim
   cti_messaging_robot
   robot_clad_cpplite
   robot_transport
+  cloud_clad_cpp
   audio_engine
   audio_multiplexer_robot
   osState

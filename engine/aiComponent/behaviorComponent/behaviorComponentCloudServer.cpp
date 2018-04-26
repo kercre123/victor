@@ -14,6 +14,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponentCloudServer.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "clad/cloud/mic.h"
 #include "engine/cozmoContext.h"
 #include "util/threading/threadPriority.h"
 #include <chrono>
@@ -58,7 +59,7 @@ void BehaviorComponentCloudServer::RunThread(std::string sockName)
     // ignore an empty reconnect packet that LocalUdpServer might forward
     const bool isReconnect = (received == 1 && buf[0] == '\0');
     if (received > 0 && !isReconnect) {
-      std::string msg{buf, buf+received};
+      CloudMic::Message msg{(const uint8_t*)buf, (size_t)received};
       const bool isDebug = AddDebugResult(msg);
       if (!isDebug) {
         _callback(std::move(msg));
@@ -68,15 +69,10 @@ void BehaviorComponentCloudServer::RunThread(std::string sockName)
   }
 }
 
-bool BehaviorComponentCloudServer::AddDebugResult(const std::string& str)
+bool BehaviorComponentCloudServer::AddDebugResult(const CloudMic::Message& msg)
 {
   #if SEND_CLOUD_DEV_RESULTS
-  Json::Value value;
-  Json::Reader reader;
-  if (!reader.parse(str, value)) {
-    value = Json::objectValue;
-    value["error"] = "Could not parse: " + str;
-  }
+  Json::Value value = msg.GetJSON();
 
   auto epochTime = std::chrono::system_clock::now().time_since_epoch();
   value["time"] = std::chrono::duration_cast<std::chrono::seconds>(epochTime).count();
@@ -93,7 +89,7 @@ bool BehaviorComponentCloudServer::AddDebugResult(const std::string& str)
   }
 
   _context->GetWebService()->SendToWebViz(kWebVizTab, _devResults.back());
-  return _devResults.back().isMember("debug");
+  return _devResults.back()["type"] == "debugFile";
   #else
   return false;
   #endif

@@ -27,11 +27,15 @@
 namespace Anki {
 namespace Cozmo {
 
+namespace CloudMic {
+class Message;
+}
+
 class CozmoContext;
 
 class BehaviorComponentCloudServer : private Util::SignalHolder {
 public:
-  using CallbackFunc = std::function<void(std::string)>;
+  using CallbackFunc = std::function<void(CloudMic::Message)>;
 
   BehaviorComponentCloudServer(const CozmoContext* context, CallbackFunc callback, const std::string& name, int sleepMs = 40);
   ~BehaviorComponentCloudServer();
@@ -53,7 +57,7 @@ private:
   using WebService = WebService::WebService;
   void OnClientInit(const WebService::SendToClientFunc& sendFunc);
   #endif
-  bool AddDebugResult(const std::string& str);
+  bool AddDebugResult(const CloudMic::Message& msg);
 };
 
 }

@@ -4,7 +4,10 @@ import (
 	"anki/log"
 	"anki/util"
 	"bytes"
+	"clad/cloud"
+	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"sync"
 
 	"github.com/anki/sai-chipper-voice/client/chipper"
@@ -14,29 +17,38 @@ type voiceContext struct {
 	conn        *chipper.Conn
 	stream      *chipper.Stream
 	process     *Process
-	samples     []byte
+	bytes       []byte
 	audioStream chan []byte
 	once        sync.Once
+	closed      bool
 }
 
 type cloudChans struct {
-	intent chan<- string
+	intent chan<- *cloud.IntentResult
 	err    chan<- string
 }
 
-func (ctx *voiceContext) addSamples(samples []byte) {
-	ctx.samples = append(ctx.samples, samples...)
+func (ctx *voiceContext) addSamples(samples []int16) {
+	var buf bytes.Buffer
+	binary.Write(&buf, binary.LittleEndian, samples)
+	ctx.addBytes(buf.Bytes())
+}
+
+func (ctx *voiceContext) addBytes(bytes []byte) {
+	ctx.bytes = append(ctx.bytes, bytes...)
 	streamSize := ctx.process.StreamSize()
-	if len(ctx.samples) >= streamSize {
+	if len(ctx.bytes) >= streamSize {
 		// we have enough samples to stream - slice them off and pass them to another
 		// thread for sending to server
-		samples := ctx.samples[:streamSize]
-		ctx.samples = ctx.samples[streamSize:]
-		ctx.audioStream <- samples
+		data := ctx.bytes[:streamSize]
+		ctx.bytes = ctx.bytes[streamSize:]
+		ctx.audioStream <- data
 	}
 }
 
 func (ctx *voiceContext) close() error {
+	ctx.closed = true
+	close(ctx.audioStream)
 	var err util.Errors
 	err.Append(ctx.stream.Close())
 	err.Append(ctx.conn.Close())
@@ -49,7 +61,7 @@ func (p *Process) newVoiceContext(conn *chipper.Conn, stream *chipper.Stream, cl
 		conn:        conn,
 		stream:      stream,
 		process:     p,
-		samples:     make([]byte, 0, p.StreamSize()*2),
+		bytes:       make([]byte, 0, p.StreamSize()*2),
 		audioStream: audioStream}
 
 	go func() {
@@ -77,33 +89,36 @@ func (ctx *voiceContext) sendAudio(samples []byte, cloudChan cloudChans) {
 	ctx.once.Do(func() {
 		go func() {
 			resp, err := ctx.stream.WaitForIntent()
+			if ctx.closed {
+				if err != nil {
+					log.Println("Ignoring error on closed context")
+				} else {
+					log.Println("Ignoring response on closed context")
+				}
+				return
+			}
 			if err != nil {
 				log.Println("CCE error:", err)
 				cloudChan.err <- err.Error()
 				return
 			}
 			log.Println("Intent response ->", resp)
-			sendJSONResponse(resp, cloudChan)
+			sendResponse(resp, cloudChan)
 		}()
 	})
 }
 
-func sendJSONResponse(resp *chipper.IntentResult, cloudChan cloudChans) {
-	outResponse := make(map[string]interface{})
-	outResponse["intent"] = resp.Action
-	if resp.Parameters != nil && len(resp.Parameters) > 0 {
-		outResponse["params"] = resp.Parameters
-	}
-	outResponse["metadata"] = struct {
-		SpeechText       string
-		IntentConfidence float32
-	}{resp.QueryText, resp.IntentConfidence}
+func sendResponse(resp *chipper.IntentResult, cloudChan cloudChans) {
+	metadata := fmt.Sprintf("text/confidence: %s/%f", resp.QueryText, resp.IntentConfidence)
 	buf := bytes.Buffer{}
-	encoder := json.NewEncoder(&buf)
-	if err := encoder.Encode(outResponse); err != nil {
-		log.Println("JSON encode error:", err)
-		cloudChan.err <- "json"
-		return
+	if resp.Parameters != nil && len(resp.Parameters) > 0 {
+		encoder := json.NewEncoder(&buf)
+		if err := encoder.Encode(resp.Parameters); err != nil {
+			log.Println("JSON encode error:", err)
+			cloudChan.err <- "json"
+			return
+		}
 	}
-	cloudChan.intent <- buf.String()
+
+	cloudChan.intent <- &cloud.IntentResult{Intent: resp.Action, Parameters: buf.String(), Metadata: metadata}
 }

@@ -4,6 +4,8 @@ import (
 	"anki/cloudproc"
 	"anki/ipc"
 	"anki/log"
+	"bytes"
+	"clad/cloud"
 	"flag"
 	"time"
 )
@@ -22,7 +24,7 @@ func getSocketWithRetry(name string, client string) ipc.Conn {
 	}
 }
 
-func testReader(serv ipc.Server, send cloudproc.Sender) {
+func testReader(serv ipc.Server, send cloudproc.MsgSender) {
 	for conn := range serv.NewConns() {
 		go func(conn ipc.Conn) {
 			for {
@@ -31,11 +33,12 @@ func testReader(serv ipc.Server, send cloudproc.Sender) {
 					conn.Close()
 					return
 				}
-				if str := string(msg); str == cloudproc.HotwordMessage {
-					send.SendMessage(str)
-				} else {
-					send.SendAudio(msg)
+				var cmsg cloud.Message
+				if err := cmsg.Unpack(bytes.NewBuffer(msg)); err != nil {
+					log.Println("Test reader unpack error:", err)
+					continue
 				}
+				send.Send(&cmsg)
 			}
 		}(conn)
 	}
@@ -69,7 +72,7 @@ func main() {
 		}
 		defer testSock.Close()
 
-		var testSend cloudproc.Sender
+		var testSend cloudproc.MsgIO
 		testSend, testRecv = cloudproc.NewMemPipe()
 		go testReader(testSock, testSend)
 		log.Println("Test channel created")
@@ -84,7 +87,7 @@ func main() {
 	if testRecv != nil {
 		process.AddTestReceiver(testRecv)
 	}
-	process.AddIntentWriter(aiSock)
+	process.AddIntentWriter(&cloudproc.IPCMsgSender{Conn: aiSock})
 	options := []cloudproc.Option{cloudproc.WithChunkMs(120), cloudproc.WithSaveAudio(true)}
 	//options = append(options, WithCompression(true))
 	if *ms {

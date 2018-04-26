@@ -2,8 +2,6 @@ package main
 
 import (
 	"anki/ipc"
-	"bytes"
-	"encoding/binary"
 	"flag"
 	"fmt"
 	"io"
@@ -13,6 +11,7 @@ import (
 
 	"anki/cloudproc"
 	"anki/cloudproc/harness"
+	"clad/cloud"
 
 	wav "github.com/youpy/go-wav"
 )
@@ -62,7 +61,7 @@ func main() {
 	}
 	fmt.Println("Read", len(data), "samples")
 
-	var sender cloudproc.Sender
+	var msgIO cloudproc.MsgIO
 	if *makeproc {
 		cloudproc.SetVerbose(*verbose)
 		options := []cloudproc.Option{cloudproc.WithCompression(*compress)}
@@ -75,13 +74,13 @@ func main() {
 			return
 		}
 		defer proc.Close()
-		sender = proc
+		msgIO = proc
 
 		wg := sync.WaitGroup{}
 		go func() {
 			wg.Add(1)
 			defer wg.Done()
-			intent, _ := proc.ReadIntent()
+			intent, _ := proc.ReadMessage()
 			fmt.Println("Got AI response:", intent)
 		}()
 		defer wg.Wait()
@@ -92,7 +91,7 @@ func main() {
 			return
 		}
 		defer conn.Close()
-		sender = cloudproc.NewIpcSender(conn)
+		msgIO = cloudproc.NewIpcIO(conn)
 	}
 
 	// simulate real-time recording and delay between each send
@@ -102,7 +101,7 @@ func main() {
 
 	// send hotword
 	fmt.Println("Sent: 0 samples")
-	sender.SendMessage(cloudproc.HotwordMessage)
+	msgIO.Send(cloud.NewMessageWithHotword(&cloud.Void{}))
 	buf := data
 	sent := 0
 	const chunkSamples = 16000 / 1000 * chunkMs
@@ -114,12 +113,9 @@ func main() {
 		temp := buf[:chunkSamples]
 		buf = buf[chunkSamples:]
 
-		data := &bytes.Buffer{}
-		binary.Write(data, binary.LittleEndian, temp)
-
-		n, err := sender.SendAudio(data.Bytes())
-		if n != len(data.Bytes()) || err != nil {
-			fmt.Println("Expected to send", len(data.Bytes()), "but instead sent", n, "with error:", err)
+		err := msgIO.Send(cloud.NewMessageWithAudio(&cloud.AudioData{Data: temp}))
+		if err != nil {
+			fmt.Println("Audio send error:", err)
 		}
 		sent += len(temp)
 		fmt.Println("\rSent:", sent, "samples")

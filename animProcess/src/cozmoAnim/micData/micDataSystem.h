@@ -30,6 +30,9 @@
 // Declarations
 namespace Anki {
   namespace Cozmo {
+    namespace CloudMic {
+      class Message;
+    }
     namespace MicData {
       class MicDataInfo;
       class MicDataProcessor;
@@ -108,6 +111,7 @@ private:
 
   void ClearCurrentStreamingJob();
   float GetIncomingMicDataPercentUsed();
+  void SendUdpMessage(const CloudMic::Message& msg);
 };
 
 } // namespace MicData

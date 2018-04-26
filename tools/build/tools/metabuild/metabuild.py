@@ -349,8 +349,9 @@ def go_project(name,
                search_base,
                dir):
 
+    gopaths = os.environ['GOPATH'].split(':')
     deps = cxx_glob(search_base,
-                    [os.path.relpath(os.environ['GOPATH'], search_base)],
+                    [os.path.relpath(gopaths[0], search_base)],
                     FindSrc.ANKI_GO_SRC_EXTS,
                     platform=list(FindSrc.ANKI_BUILD_PLATFORMS))
 

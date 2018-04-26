@@ -3,9 +3,8 @@ package cloudproc
 import (
 	"anki/log"
 	"anki/util"
+	"clad/cloud"
 	"context"
-	"encoding/json"
-	"io"
 	"net"
 	"strings"
 
@@ -26,10 +25,6 @@ var (
 	platformOpts  []chipper.ConnOpt
 )
 
-type socketMsg struct {
-	buf []byte
-}
-
 const (
 	// DefaultChunkMs is the default value for how often audio is sent to the cloud
 	DefaultChunkMs = 120
@@ -46,10 +41,9 @@ const (
 // being started with Run()
 type Process struct {
 	receivers []*Receiver
-	intents   []io.Writer
+	intents   []MsgSender
 	kill      chan struct{}
 	msg       chan messageEvent
-	audio     chan socketMsg
 	opts      options
 }
 
@@ -59,7 +53,6 @@ func (p *Process) AddReceiver(r *Receiver) {
 	if p.receivers == nil {
 		p.receivers = make([]*Receiver, 0, 4)
 		p.msg = make(chan messageEvent)
-		p.audio = make(chan socketMsg)
 	}
 	if p.kill == nil {
 		p.kill = make(chan struct{})
@@ -79,7 +72,7 @@ func (p *Process) AddTestReceiver(r *Receiver) {
 }
 
 type messageEvent struct {
-	msg    string
+	msg    *cloud.Message
 	isTest bool
 }
 
@@ -91,8 +84,6 @@ func (p *Process) addMultiplexRoutine(r *Receiver) {
 				return
 			case msg := <-r.msg:
 				p.msg <- messageEvent{msg: msg, isTest: r.isTest}
-			case msg := <-r.audio:
-				p.audio <- msg
 			}
 		}
 	}()
@@ -100,11 +91,11 @@ func (p *Process) addMultiplexRoutine(r *Receiver) {
 
 // AddIntentWriter adds the given Writer to the list of writers that will receive
 // intents from the cloud
-func (p *Process) AddIntentWriter(w io.Writer) {
+func (p *Process) AddIntentWriter(s MsgSender) {
 	if p.intents == nil {
-		p.intents = make([]io.Writer, 0, 4)
+		p.intents = make([]MsgSender, 0, 4)
 	}
-	p.intents = append(p.intents, w)
+	p.intents = append(p.intents, s)
 }
 
 // Run starts the cloud process, which will run until stopped on the given channel
@@ -118,7 +109,7 @@ func (p *Process) Run(options ...Option) {
 		opt(&p.opts)
 	}
 
-	cloudIntent := make(chan string)
+	cloudIntent := make(chan *cloud.IntentResult)
 	cloudError := make(chan string)
 	cloudChan := cloudChans{intent: cloudIntent, err: cloudError}
 
@@ -127,18 +118,19 @@ procloop:
 	for {
 		select {
 		case msg := <-p.msg:
-			switch {
-			case msg.msg == HotwordMessage:
+			switch msg.msg.Tag() {
+			case cloud.MessageTag_Hotword:
 				// hotword = get ready to stream data
 				if ctx != nil {
 					log.Println("Got hotword event while already streaming, weird...")
-					close(ctx.audioStream)
-					ctx.close()
+					if err := ctx.close(); err != nil {
+						log.Println("Error closing context:")
+					}
 				}
 
 				// if this is from a test receiver, notify the mic to send the AI a hotword on our behalf
 				if msg.isTest {
-					p.writeMic([]byte{0, 1})
+					p.writeMic(cloud.NewMessageWithTestStarted(&cloud.Void{}))
 				}
 
 				var stream *chipper.Stream
@@ -189,16 +181,17 @@ procloop:
 
 				logVerbose("Received hotword event, created context in", int(ctxTime), "ms")
 
-			case len(msg.msg) > 4 && msg.msg[:4] == "file":
-				p.writeResponse([]byte("{\"debug\":\"" + msg.msg[4:] + "\"}"))
-			}
+			case cloud.MessageTag_DebugFile:
+				p.writeResponse(msg.msg)
 
-		case msg := <-p.audio:
-			// add samples to our buffer
-			if ctx != nil {
-				ctx.addSamples(msg.buf)
-			} else {
-				logVerbose("No active context, discarding", len(msg.buf), "bytes")
+			case cloud.MessageTag_Audio:
+				// add samples to our buffer
+				buf := msg.msg.GetAudio().Data
+				if ctx != nil {
+					ctx.addSamples(buf)
+				} else {
+					logVerbose("No active context, discarding", len(buf), "samples")
+				}
 			}
 
 		case intent := <-cloudIntent:
@@ -207,19 +200,21 @@ procloop:
 			p.signalMicStop()
 
 			// send intent to AI
-			p.writeResponse([]byte(intent))
+			p.writeResponse(cloud.NewMessageWithResult(intent))
 
 			// stop streaming until we get another hotword event
-			close(ctx.audioStream)
-			ctx.close()
+			if err := ctx.close(); err != nil {
+				log.Println("Error closing context:")
+			}
 			ctx = nil
 
 		case err := <-cloudError:
 			logVerbose("Received error from cloud:", err)
 			p.signalMicStop()
 			p.writeError("server", err)
-			close(ctx.audioStream)
-			ctx.close()
+			if err := ctx.close(); err != nil {
+				log.Println("Error closing context:")
+			}
 			ctx = nil
 
 		case <-p.opts.stop:
@@ -248,32 +243,27 @@ func SetVerbose(value bool) {
 }
 
 func (p *Process) writeError(reason string, extra string) {
-	jsonMap := map[string]string{"error": reason, "extra": extra}
-	buf, err := json.Marshal(jsonMap)
-	if err != nil {
-		log.Println("Couldn't encode json error for "+reason+": ", err)
-	}
-	p.writeResponse(buf)
+	p.writeResponse(cloud.NewMessageWithError(&cloud.IntentError{Error: reason, Extra: extra}))
 }
 
-func (p *Process) writeResponse(response []byte) {
+func (p *Process) writeResponse(response *cloud.Message) {
 	for _, r := range p.intents {
-		n, err := r.Write(response)
-		if n != len(response) || err != nil {
-			log.Println("AI write error:", n, err)
+		err := r.Send(response)
+		if err != nil {
+			log.Println("AI write error:", err)
 		}
 	}
 }
 
 func (p *Process) signalMicStop() {
-	p.writeMic([]byte{0, 0})
+	p.writeMic(cloud.NewMessageWithStopSignal(&cloud.Void{}))
 }
 
-func (p *Process) writeMic(buf []byte) {
+func (p *Process) writeMic(msg *cloud.Message) {
 	for _, r := range p.receivers {
-		n, err := r.writeBack(buf)
-		if n != len(buf) || err != nil {
-			log.Println("Mic write error:", n, err)
+		err := r.writeBack(msg)
+		if err != nil {
+			log.Println("Mic write error:", err)
 		}
 	}
 }

@@ -2,68 +2,89 @@ package cloudproc
 
 import (
 	"anki/ipc"
-	"anki/util"
+	"bytes"
+	"clad/cloud"
 )
 
-// Sender defines the API for sending audio data from an external source into
-// the cloud process
-type Sender interface {
-	SendMessage(msg string) error
-	SendAudio(buf []byte) (int, error)
-	Read() ([]byte, error)
+type MsgSender interface {
+	Send(*cloud.Message) error
 }
 
-type ipcSender struct {
-	conn ipc.Conn
+type MsgReader interface {
+	Read() (*cloud.Message, error)
 }
 
-func (s *ipcSender) SendMessage(msg string) error {
-	_, err := s.conn.Write([]byte(msg))
+// MsgIO defines the API for sending audio data from an external source into
+// the cloud process (and potentially receiving info back)
+type MsgIO interface {
+	MsgSender
+	MsgReader
+}
+
+type IPCMsgSender struct {
+	Conn ipc.Conn
+}
+
+type ipcIO struct {
+	*IPCMsgSender
+}
+
+func (s *IPCMsgSender) Send(msg *cloud.Message) error {
+	var buf bytes.Buffer
+	if err := msg.Pack(&buf); err != nil {
+		return err
+	}
+	_, err := s.Conn.Write(buf.Bytes())
 	return err
 }
 
-func (s *ipcSender) SendAudio(buf []byte) (int, error) {
-	return s.conn.Write(buf)
+func (s *ipcIO) Read() (*cloud.Message, error) {
+	buf := s.Conn.ReadBlock()
+	var msg cloud.Message
+	if err := msg.Unpack(bytes.NewBuffer(buf)); err != nil {
+		return nil, err
+	}
+	return &msg, nil
 }
 
-func (s *ipcSender) Read() ([]byte, error) {
-	return s.conn.ReadBlock(), nil
-}
-
-// NewIpcSender returns a sender that uses the given IPC connection to
+// NewIpcIO returns a MsgIO that uses the given IPC connection to
 // send audio data to the cloud process
-func NewIpcSender(conn ipc.Conn) Sender {
-	return &ipcSender{conn}
+func NewIpcIO(conn ipc.Conn) MsgIO {
+	return &ipcIO{&IPCMsgSender{conn}}
 }
 
-type memSender struct {
-	recv chan []byte
+type memIO struct {
+	recv chan *cloud.Message
 	dest *Receiver
 }
 
-func (s *memSender) SendMessage(msg string) error {
+func (s *memIO) Send(msg *cloud.Message) error {
 	s.dest.msg <- msg
 	return nil
 }
 
-func (s *memSender) SendAudio(buf []byte) (int, error) {
-	s.dest.audio <- socketMsg{buf}
-	return len(buf), nil
+func (s *memIO) Read() (*cloud.Message, error) {
+	return <-s.recv, nil
 }
 
-func (s *memSender) Read() ([]byte, error) {
-	buf := <-s.recv
-	return buf, nil
+type ChanMsgSender struct {
+	Ch chan *cloud.Message
 }
 
-// NewMemPipe returns a connected pair of a Sender and a Receiver that directly
+func (c *ChanMsgSender) Send(msg *cloud.Message) error {
+	go func() {
+		c.Ch <- msg
+	}()
+	return nil
+}
+
+// NewMemPipe returns a connected pair of a MsgIO and a Receiver that directly
 // transmit data over channels; the Receiver should be passed in to the cloud
-// process to get data from the Sender
-func NewMemPipe() (Sender, *Receiver) {
-	sender := &memSender{make(chan []byte), nil}
-	receiver := &Receiver{msg: make(chan string),
-		audio:  make(chan socketMsg),
-		writer: util.AsyncWriter(util.NewChanWriter(sender.recv))}
-	sender.dest = receiver
-	return sender, receiver
+// process to get data from the MsgIO
+func NewMemPipe() (MsgIO, *Receiver) {
+	io := &memIO{make(chan *cloud.Message), nil}
+	receiver := &Receiver{msg: make(chan *cloud.Message),
+		writer: &ChanMsgSender{io.recv}}
+	io.dest = receiver
+	return io, receiver
 }

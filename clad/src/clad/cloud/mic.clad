@@ -1,0 +1,41 @@
+namespace Anki {
+namespace Cozmo {
+namespace CloudMic {
+
+structure Void {
+}
+
+structure Filename {
+	string file
+}
+
+structure AudioData {
+	int_16 data[uint_16]
+}
+
+structure IntentResult {
+	string intent,
+	string parameters,
+	string metadata
+}
+
+structure IntentError {
+	string error,
+	string extra
+}
+
+union dupes_allowed Message {
+	Void hotword,
+	AudioData audio,
+	Void stopSignal,
+	Filename debugFile,
+	Void testStarted,
+	Void streamTimeout,
+	IntentResult result,
+	IntentError error
+}
+
+
+}
+}
+}

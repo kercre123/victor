@@ -31,6 +31,9 @@ default all simple big tree random_fuzz fixed_fuzz clean:
 	@echo $(call HILITE_TEXT,"C $@ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 	$(MAKE) -C c $@
 	@echo ""
+	@echo $(call HILITE_TEXT,"GO $@ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+	$(MAKE) -C go $@
+	@echo ""
 	@echo $(call HILITE_TEXT,"DONE $@ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
 	@echo ""
 

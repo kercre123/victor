@@ -259,7 +259,7 @@ if [ -z "${GOROOT+x}" ]; then
 else
     GO_EXE=$GOROOT/bin/go
 fi
-export GOPATH=${TOPLEVEL}/cloud/go
+export GOPATH=${TOPLEVEL}/cloud/go:${TOPLEVEL}/generated/cladgo:${TOPLEVEL}/tools/message-buffers/support/go
 
 if [ ! -f ${GO_EXE} ]; then
   echo "Missing Go executable: ${GO_EXE}"
@@ -292,7 +292,7 @@ if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ] || [ $CONFIGURE -eq 1 ] ; then
     GEN_SRC_DIR="${TOPLEVEL}/generated/cmake"
     if [ $CONFIGURE -eq 1 ] ; then
       rm -rf "${GEN_SRC_DIR}"
-    fi 
+    fi
     mkdir -p "${GEN_SRC_DIR}"
 
     # Scan for BUILD.in files
@@ -306,7 +306,10 @@ if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
       -o ${GEN_SRC_DIR} \
       ${METABUILD_INPUTS}
   # Check out specified revisions of repositories we've versioned
-  (cd ${TOPLEVEL}; PATH="$PATH:$(dirname $GO_EXE)" ./godeps.js execute ${GEN_SRC_DIR})
+  # Append a dummy dir to the GOPATH so that `go get` doesn't barf
+  # on nonexistent clad files
+  GODUMMY=${TOPLEVEL}/cloud/dummy
+  (cd ${TOPLEVEL}; PATH="$PATH:$(dirname $GO_EXE)" GOPATH="$GOPATH:$GODUMMY" ./godeps.js execute ${GEN_SRC_DIR})
 else
   echo "Ignore Go dependencies"
 fi

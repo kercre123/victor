@@ -7,7 +7,7 @@
 # commands
 function(generate_clad)
     set(options "")
-    set(oneValueArgs LIBRARY RELATIVE_SRC_DIR OUTPUT_FILE OUTPUT_DIR EMITTER)
+    set(oneValueArgs TARGET LIBRARY RELATIVE_SRC_DIR OUTPUT_FILE OUTPUT_DIR EMITTER)
     set(multiValueArgs SRCS OUTPUT_EXTS INCLUDES FLAGS OUTPUT_SRCS)
     cmake_parse_arguments(genclad "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -77,6 +77,12 @@ function(generate_clad)
 
     if (genclad_LIBRARY)
         add_library(${genclad_LIBRARY} STATIC
+            ${OUTPUT_FILES}
+        )
+    endif()
+
+    if (genclad_TARGET)
+        add_custom_target(${genclad_TARGET} ALL DEPENDS
             ${OUTPUT_FILES}
         )
     endif()

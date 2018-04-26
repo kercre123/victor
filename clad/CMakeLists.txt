@@ -6,6 +6,7 @@ set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/victor-clad/tools/message-buffers")
 set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
 set(CLAD_CPP "${CLAD_EMITTER_DIR}/CPP_emitter.py")
 set(CLAD_CS "${CLAD_EMMITER_DIR}/CSharp_emitter.py")
+set(CLAD_GO "${CLAD_EMITTER_DIR}/Go_emitter.py")
 set(CLAD_PY "${CLAD_EMITTER_DIR}/Python_emitter.py")
 set(CLAD_HASH "${CLAD_EMITTER_DIR}/ASTHash_emitter.py")
 
@@ -24,6 +25,7 @@ set(CLAD_CPP_FLAGS "--output-union-helper-constructors --output-json")
 
 set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/engine")
 set(CLAD_CS_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladCSharp")
+set(CLAD_GO_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladgo/src")
 set(CLAD_PY_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladPython")
 #set(OUTPUT_DIR "../generated/clad/engine")
 
@@ -176,6 +178,33 @@ generate_clad(
     OUTPUT_EXTS "_hash.cs"
     INCLUDES "${CLAD_INCLUDES}"
     OUTPUT_SRCS CLAD_HASH_CS_GEN_SRCS
+)
+
+file(STRINGS "${ANKI_SRCLIST_DIR}/cloud_clad.srcs.lst" CLOUD_SRCS)
+generate_clad(
+    TARGET "cloud_clad_go"
+    SRCS "${CLOUD_SRCS}"
+    RELATIVE_SRC_DIR "src"
+    OUTPUT_DIR "${CLAD_GO_OUTPUT_DIR}"
+    EMITTER "${CLAD_GO}"
+    OUTPUT_EXTS ".go"
+    INCLUDES ""
+    OUTPUT_SRCS CLAD_GO_GEN_SRCS
+)
+
+set(CLAD_GO_GEN_SRCS ${CLAD_GO_GEN_SRCS} PARENT_SCOPE)
+string(REPLACE "cladgo/src" "clad/engine" CLAD_CLOUD_CPP_GEN_SRCS ${CLAD_GO_GEN_SRCS})
+string(REPLACE ".go" ".cpp" CLAD_CLOUD_CPP_GEN_SRCS ${CLAD_CLOUD_CPP_GEN_SRCS})
+
+add_library(cloud_clad_cpp STATIC
+    ${CLAD_CLOUD_CPP_GEN_SRCS}
+)
+target_include_directories(cloud_clad_cpp
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/engine>
+)
+target_link_libraries(cloud_clad_cpp
+    clad
 )
 
 add_custom_target(engine_clad_python_hash ALL DEPENDS ${CLAD_HASH_PY_GEN_SRCS})
