@@ -6,7 +6,7 @@
 // Top-level object contains a nested object for each supported platform.
 // Each platform object contains a nested object for each supported language.
 //
-// Note that Acapala TTS SDK does not support pitch setting on all platforms.
+// Note that Acapela TTS SDK does not support pitch setting on all platforms.
 // Pitch values are included here for documentation but pitch adjustment
 // is actually performed by audio layer.
 //
@@ -20,7 +20,7 @@
   {
     "en":
     {
-      "voice": "Klaus22k_CO",
+      "voice": "Ryan22k_CO",
       "speed": 79
     },
     "fr":
@@ -45,7 +45,7 @@
   {
     "en":
     {
-      "voice": "co-German-Klaus-22khz/ged/ged_klaus_22k_co.fl.ini",
+      "voice": "co-USEnglish-Ryan-22khz/enu/enu_ryan_22k_co.fl.ini",
       "speed": 79
     },
     "fr":

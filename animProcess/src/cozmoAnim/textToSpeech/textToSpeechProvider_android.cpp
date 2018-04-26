@@ -80,7 +80,7 @@ TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* context, c
   const auto tts_license = AcapelaTTS::GetLicense();
 
   // Set up default parameters
-  _tts_voice = "co-German-Klaus-22khz/ged/ged_klaus_22k_co.fl.ini";
+  _tts_voice = "co-USEnglish-Ryan-22khz/enu/enu_ryan_22k_co.fl.ini";
   _tts_speed = 100;
   _tts_shaping = 100;
   _tts_pitch = 100;
