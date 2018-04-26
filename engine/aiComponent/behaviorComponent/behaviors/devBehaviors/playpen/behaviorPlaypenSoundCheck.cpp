@@ -60,7 +60,7 @@ void BehaviorPlaypenSoundCheck::TransitionToPlayingSound()
   // Start recording mic audio of the sound and run an FFT on the audio to check that we actually heard the
   // sound we played
   const bool runFFT = true;
-  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingMics(PlaypenConfig::kDurationOfAudioToRecord_ms,
+  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingMicsRaw(PlaypenConfig::kDurationOfAudioToRecord_ms,
                                                                                      runFFT,
                                                                                      GetLogger().GetLogName()+"beep")));
 

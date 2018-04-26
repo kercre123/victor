@@ -48,7 +48,7 @@ class FaceWorld;
 class ICozmoBehavior;
 class IExternalInterface;
 class MapComponent;
-class MicDirectionHistory;
+class MicComponent;
 class MoodManager;
 class MovementComponent;
 class ObjectPoseConfirmer;
@@ -129,7 +129,7 @@ public:
             DelegationComponent*           delegationComponent,
             FaceWorld*                     faceWorld,
             MapComponent*                  mapComponent,
-            MicDirectionHistory*           micDirectionHistory,
+            MicComponent*                  micComponent,
             MoodManager*                   moodManager,
             MovementComponent*             movementComponent,
             ObjectPoseConfirmer*           objectPoseConfirmer,
@@ -211,8 +211,8 @@ public:
   inline bool HasBodyLightComponent() const { return GetComponentWrapper(BEIComponentID::BodyLightComponent).IsValueValid();}
   BodyLightComponent& GetBodyLightComponent() const { return GetComponentWrapper(BEIComponentID::BodyLightComponent).GetValue<BodyLightComponent>();}
 
-  inline bool HasMicDirectionHistory() const { return GetComponentWrapper(BEIComponentID::MicDirectionHistory).IsValueValid();}
-  const MicDirectionHistory& GetMicDirectionHistory() const {return GetComponentWrapper(BEIComponentID::MicDirectionHistory).GetValue<MicDirectionHistory>();}
+  inline bool HasMicComponent() const { return GetComponentWrapper(BEIComponentID::MicComponent).IsValueValid();}
+  MicComponent& GetMicComponent() const {return GetComponentWrapper(BEIComponentID::MicComponent).GetValue<MicComponent>();}
 
 
   // Util functions
@@ -234,7 +234,7 @@ private:
                        DelegationComponent*           delegationComponent,
                        FaceWorld*                     faceWorld,
                        MapComponent*                  mapComponent,
-                       MicDirectionHistory*           micDirectionHistory,
+                       MicComponent*                  micComponent,
                        MoodManager*                   moodManager,
                        MovementComponent*             movementComponent,
                        ObjectPoseConfirmer*           objectPoseConfirmer,

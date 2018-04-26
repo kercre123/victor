@@ -32,7 +32,8 @@
 #include "engine/components/movementComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
-#include "engine/micDirectionHistory.h"
+#include "engine/components/mics/micComponent.h"
+#include "engine/components/mics/micDirectionHistory.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "micDataTypes.h"
@@ -394,7 +395,7 @@ MicDirectionIndex BehaviorReactToVoiceCommand::GetReactionDirection() const
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MicDirectionIndex BehaviorReactToVoiceCommand::GetSelectedDirectionFromMicHistory() const
 {
-  const MicDirectionHistory& history = GetBEI().GetMicDirectionHistory();
+  const MicDirectionHistory& history = GetBEI().GetMicComponent().GetMicDirectionHistory();
   return history.GetSelectedDirection();
 }
 

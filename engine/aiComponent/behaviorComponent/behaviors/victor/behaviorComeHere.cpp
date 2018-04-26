@@ -20,7 +20,8 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/faceWorld.h"
-#include "engine/micDirectionHistory.h"
+#include "engine/components/mics/micComponent.h"
+#include "engine/components/mics/micDirectionHistory.h"
 
 #include <math.h>
 
@@ -79,7 +80,7 @@ void BehaviorComeHere::TurnTowardsMicDirection()
 {
   DEBUG_SET_STATE(TurnTowardsMicDirection);
   // Calculate radians to turn based on mic data
-  MicDirectionIndex dirIdx = GetBEI().GetMicDirectionHistory().GetRecentDirection();
+  MicDirectionIndex dirIdx = GetBEI().GetMicComponent().GetMicDirectionHistory().GetRecentDirection();
   dirIdx = dirIdx < 6 ? dirIdx : -(dirIdx - 6);
   const float radiansPerIdx = (2.0f/12.0f);
   const bool isAbsolute = false;

@@ -1,0 +1,10 @@
+{
+  "behaviorClass" : "PlaybackMessage",
+  "behaviorID"    : "PlaybackMessage",
+
+  "respondToUserIntents" :
+  [
+    { "type": "message_playback" }
+  ],
+  "claimUserIntentData" : true
+}

@@ -120,6 +120,16 @@ void MicDataSystem::ProcessMicDataPayload(const RobotInterface::MicData& payload
 
 void MicDataSystem::RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT)
 {
+  RecordAudioInternal(duration_ms, path, MicDataType::Raw, runFFT);
+}
+
+void MicDataSystem::RecordProcessedAudio(uint32_t duration_ms, const std::string& path)
+{
+  RecordAudioInternal(duration_ms, path, MicDataType::Processed, false);
+}
+
+void MicDataSystem::RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT)
+{
   MicDataInfo* newJob = new MicDataInfo{};
   
   // If the input path has a file separator, remove the filename at the end and use as the write directory
@@ -137,7 +147,7 @@ void MicDataSystem::RecordRawAudio(uint32_t duration_ms, const std::string& path
   }
   newJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, this, std::placeholders::_1);
   
-  newJob->EnableDataCollect(MicDataType::Raw, true);
+  newJob->EnableDataCollect(type, true);
   newJob->SetTimeToRecord(duration_ms);
   newJob->_doFFTProcess = runFFT;
   if (runFFT)

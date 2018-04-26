@@ -79,6 +79,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorTrackLaser.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorEnrollFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorRespondToRenameFace.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/messaging/behaviorLeaveAMessage.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/messaging/behaviorPlaybackMessage.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingLookAtFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingOnCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/proxBehaviors/behaviorProxGetToDistance.h"
@@ -719,6 +721,18 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ReactToUnclaimedIntent:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToUnclaimedIntent(config));
+      break;
+    }
+
+    case BehaviorClass::LeaveAMessage:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorLeaveAMessage(config));
+      break;
+    }
+
+    case BehaviorClass::PlaybackMessage:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlaybackMessage(config));
       break;
     }
     

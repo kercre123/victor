@@ -82,7 +82,7 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
            GetFromMap<DelegationComponent>(map, BEIComponentID::Delegation),
            GetFromMap<FaceWorld>(map, BEIComponentID::FaceWorld),
            GetFromMap<MapComponent>(map, BEIComponentID::Map),
-           GetFromMap<MicDirectionHistory>(map, BEIComponentID::MicDirectionHistory),
+           GetFromMap<MicComponent>(map, BEIComponentID::MicComponent),
            GetFromMap<MoodManager>(map, BEIComponentID::MoodManager),
            GetFromMap<MovementComponent>(map, BEIComponentID::MovementComponent),
            GetFromMap<ObjectPoseConfirmer>(map, BEIComponentID::ObjectPoseConfirmer),

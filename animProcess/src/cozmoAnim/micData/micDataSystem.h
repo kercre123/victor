@@ -63,6 +63,7 @@ public:
 
   void ProcessMicDataPayload(const RobotInterface::MicData& payload);
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
+  void RecordProcessedAudio(uint32_t duration_ms, const std::string& path);
   void Update(BaseStationTime_t currTime_nanosec);
 
 #if ANKI_DEV_CHEATS
@@ -80,6 +81,8 @@ public:
   void AudioSaveCallback(const std::string& dest);
 
 private:
+  void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
+
   std::string _writeLocationDir = "";
   // Members for the the mic jobs
   std::deque<std::shared_ptr<MicDataInfo>> _micProcessingJobs;

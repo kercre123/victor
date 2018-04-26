@@ -17,6 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/components/mics/micComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/cozmoContext.h"
@@ -70,7 +71,7 @@ void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dep
        &delegationComponent,
        &faceWorld,
        &robot->GetMapComponent(),
-       &robot->GetMicDirectionHistory(),
+       &robot->GetMicComponent(),
        &robot->GetMoodManager(),
        &robot->GetMoveComponent(),
        &robot->GetObjectPoseConfirmer(),
@@ -100,7 +101,7 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                      DelegationComponent*           delegationComponent,
                                      FaceWorld*                     faceWorld,
                                      MapComponent*                  mapComponent,
-                                     MicDirectionHistory*           micDirectionHistory,
+                                     MicComponent*                  micComponent,
                                      MoodManager*                   moodManager,
                                      MovementComponent*             movementComponent,
                                      ObjectPoseConfirmer*           objectPoseConfirmer,
@@ -127,7 +128,7 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                                      delegationComponent,
                                                      faceWorld,
                                                      mapComponent,
-                                                     micDirectionHistory,
+                                                     micComponent,
                                                      moodManager,
                                                      movementComponent,
                                                      objectPoseConfirmer,
@@ -168,7 +169,7 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
                                                               DelegationComponent*           delegationComponent,
                                                               FaceWorld*                     faceWorld,
                                                               MapComponent*                  mapComponent,
-                                                              MicDirectionHistory*           micDirectionHistory,
+                                                              MicComponent*                  micComponent,
                                                               MoodManager*                   moodManager,
                                                               MovementComponent*             movementComponent,
                                                               ObjectPoseConfirmer*           objectPoseConfirmer,
@@ -195,7 +196,7 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
     {BEIComponentID::Delegation,             BEIComponentWrapper(delegationComponent)},
     {BEIComponentID::FaceWorld,              BEIComponentWrapper(faceWorld)},
     {BEIComponentID::Map,                    BEIComponentWrapper(mapComponent)},
-    {BEIComponentID::MicDirectionHistory,    BEIComponentWrapper(micDirectionHistory)},
+    {BEIComponentID::MicComponent,           BEIComponentWrapper(micComponent)},
     {BEIComponentID::MoodManager,            BEIComponentWrapper(moodManager)},
     {BEIComponentID::MovementComponent,      BEIComponentWrapper(movementComponent)},
     {BEIComponentID::ObjectPoseConfirmer,    BEIComponentWrapper(objectPoseConfirmer)},

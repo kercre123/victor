@@ -48,7 +48,7 @@ Result BehaviorPlaypenDriveForwards::OnBehaviorActivatedInternal()
                             (PlaypenConfig::kDistanceToTriggerBackCliffs_mm / PlaypenConfig::kCliffSpeed_mmps) + 
                             (PlaypenConfig::kDistanceToDriveOverCliff_mm / DEFAULT_PATH_MOTION_PROFILE.speed_mmps));
 
-  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingMics(Util::SecToMilliSec((float)recordTime_s),
+  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingMicsRaw(Util::SecToMilliSec((float)recordTime_s),
                                                                                      false,
                                                                                      GetLogger().GetLogName()+"wheels")));
 

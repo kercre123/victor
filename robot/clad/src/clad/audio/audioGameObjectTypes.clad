@@ -13,6 +13,7 @@ enum uint_64 GameObjectType
   Animation,
   Behavior,
   TextToSpeech,
+  VoiceRecording,
   
   End, // Need end val so I can enumerate through GameObjects
 

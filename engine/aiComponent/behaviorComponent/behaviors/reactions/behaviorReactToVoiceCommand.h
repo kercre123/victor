@@ -16,7 +16,7 @@
 #include "clad/audio/audioEventTypes.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/bodyLightComponentTypes.h"
-#include "engine/micDirectionTypes.h"
+#include "engine/components/mics/micDirectionTypes.h"
 
 
 namespace Anki {

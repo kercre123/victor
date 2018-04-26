@@ -25,6 +25,16 @@ structure UserIntent_TimeInSeconds
   uint_32 time_s
 }
 
+structure UserIntent_RecordMessage
+{
+  string given_name,
+}
+
+structure UserIntent_PlaybackMessage
+{
+  string given_name,
+}
+
 // test structs. todo: get rid of these in favor of actual structs once
 // there are legit user intents. tests can use the actual structs
 enum uint_8 UserIntent_Test_Time_Units
@@ -65,6 +75,8 @@ union dupes_allowed UserIntent
   UserIntent_Void          system_charger,
   UserIntent_Void          status_feeling,
   UserIntent_Void          system_sleep,
+  UserIntent_RecordMessage    message_record,
+  UserIntent_PlaybackMessage  message_playback,
 
 
   // for tests

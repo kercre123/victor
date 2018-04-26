@@ -2,6 +2,7 @@
 #include "cozmoAnim/animContext.h"
 
 #include "audioEngine/multiplexer/audioMultiplexer.h"
+#include "cozmoAnim/audio/audioPlaybackSystem.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/robotDataLoader.h"
@@ -33,6 +34,7 @@ AnimContext::AnimContext(Util::Data::DataPlatform* dataPlatform)
   , _dataLoader(new RobotDataLoader(this))
   , _micDataSystem(new MicData::MicDataSystem(dataPlatform))
   , _webService(new WebService::WebService())
+  , _audioPlayer(new Audio::AudioPlaybackSystem(this))
   , _threadIdHolder(new ThreadIDInternal)
 {
   InitAudio(_dataPlatform);

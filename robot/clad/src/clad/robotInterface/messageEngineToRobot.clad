@@ -368,10 +368,21 @@ message SetSystemLight
   LightState light
 }
 
-message StartRecordingMics
+message StartRecordingMicsRaw
 {
   uint_32 duration_ms,
   bool    runFFT,
+  string  path
+}
+
+message StartRecordingMicsProcessed
+{
+  uint_32 duration_ms,
+  string  path
+}
+
+message StartPlaybackAudio
+{
   string  path
 }
 
@@ -598,7 +609,6 @@ union EngineToRobot
   AddAnim                       addAnim                     = 0x52,
   AbortAnimation                abortAnimation              = 0x53,
 
-  StartRecordingMics            startRecordingMics          = 0x54,
   DrawTextOnScreen              drawTextOnScreen            = 0x55,
 
   DisplayProceduralFace         displayProceduralFace       = 0x56,
@@ -630,6 +640,10 @@ union EngineToRobot
   TextToSpeechPrepare           textToSpeechPrepare         = 0x92,
   TextToSpeechDeliver           textToSpeechDeliver         = 0x93,
   TextToSpeechCancel            textToSpeechCancel          = 0x94,
+
+  StartRecordingMicsRaw         startRecordingMicsRaw       = 0x95,
+  StartRecordingMicsProcessed   startRecordingMicsProcessed = 0x96,
+  StartPlaybackAudio            playbackAudioStart          = 0x97,
 
   SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA1,

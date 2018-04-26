@@ -105,7 +105,7 @@ class ProxSensorComponent;
 class TouchSensorComponent;
 class AnimationComponent;
 class MapComponent;
-class MicDirectionHistory;
+class MicComponent;
 class BatteryComponent;
 
 namespace Audio {
@@ -283,8 +283,8 @@ public:
   const DrivingAnimationHandler& GetDrivingAnimationHandler() const { return GetComponent<DrivingAnimationHandler>(); }
   DrivingAnimationHandler& GetDrivingAnimationHandler() { return GetComponent<DrivingAnimationHandler>(); }
 
-  const MicDirectionHistory& GetMicDirectionHistory() const { return GetComponent<MicDirectionHistory>(); }
-  MicDirectionHistory&       GetMicDirectionHistory()       { return GetComponent<MicDirectionHistory>(); }
+  const MicComponent& GetMicComponent() const { return GetComponent<MicComponent>(); }
+  MicComponent&       GetMicComponent()       { return GetComponent<MicComponent>(); }
 
   const BatteryComponent&    GetBatteryComponent()    const { return GetComponent<BatteryComponent>(); }
   BatteryComponent&          GetBatteryComponent()          { return GetComponent<BatteryComponent>(); }

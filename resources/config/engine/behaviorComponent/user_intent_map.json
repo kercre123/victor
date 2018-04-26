@@ -70,6 +70,16 @@
       }
     },
     {
+      "user_intent": "message_record",
+      "cloud_intent": "intent_message_recordmessage",
+      "app_intent": "intent_message_recordmessage"
+    },
+    {
+      "user_intent": "message_playback",
+      "cloud_intent": "intent_message_playmessage",
+      "app_intent": "intent_message_playmessage"
+    },
+    {
       "user_intent": "explore_start",
       "cloud_intent": "intent_explore_start",
       "app_intent": "explore_start",

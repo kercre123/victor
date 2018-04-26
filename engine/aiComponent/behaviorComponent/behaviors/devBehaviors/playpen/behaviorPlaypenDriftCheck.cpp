@@ -32,7 +32,7 @@ Result BehaviorPlaypenDriftCheck::OnBehaviorActivatedInternal()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingMics(PlaypenConfig::kDurationOfAudioToRecord_ms,
+  robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::StartRecordingMicsRaw(PlaypenConfig::kDurationOfAudioToRecord_ms,
                                                                                      false,
                                                                                      GetLogger().GetLogName()+"head_lift")));
 

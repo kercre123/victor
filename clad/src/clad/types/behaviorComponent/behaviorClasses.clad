@@ -107,6 +107,8 @@ enum uint_8 BehaviorClass {
   FistBump,
   InspectCube,
   Keepaway,
+  LeaveAMessage,
+  PlaybackMessage,
   PounceWithProx,
   PuzzleMaze,
   TrackLaser,

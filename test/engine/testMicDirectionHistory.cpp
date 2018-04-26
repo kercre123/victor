@@ -11,7 +11,7 @@
  * --gtest_filter=MicDirectionHistory*
  **/
 
-#include "engine/micDirectionHistory.h"
+#include "engine/components/mics/micDirectionHistory.h"
 
 #include "util/logging/logging.h"
 

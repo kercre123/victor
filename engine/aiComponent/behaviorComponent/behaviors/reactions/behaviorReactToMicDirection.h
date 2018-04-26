@@ -14,7 +14,7 @@
 #define __Cozmo__BehaviorReactToMicDirection_h__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/micDirectionTypes.h"
+#include "engine/components/mics/micDirectionTypes.h"
 
 #include "util/helpers/templateHelpers.h"
 #include <vector>

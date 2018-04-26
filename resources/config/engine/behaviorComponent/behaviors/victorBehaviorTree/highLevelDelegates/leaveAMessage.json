@@ -1,0 +1,10 @@
+{
+  "behaviorClass" : "LeaveAMessage",
+  "behaviorID"    : "LeaveAMessage",
+
+  "respondToUserIntents" :
+  [
+    { "type": "message_record" }
+  ],
+  "claimUserIntentData" : true
+}

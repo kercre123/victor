@@ -24,6 +24,7 @@
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/aiComponent/puzzleComponent.h"
 #include "engine/aiComponent/timerUtility.h"
+#include "engine/components/mics/micComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/publicStateBroadcaster.h"
 #include "engine/components/progressionUnlockComponent.h"
@@ -77,7 +78,8 @@ void AIComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depende
   {
     _aiComponents = std::make_unique<EntityType>();
     {
-      auto* faceSelectionComp = new FaceSelectionComponent(*robot, robot->GetFaceWorld(), robot->GetMicDirectionHistory());
+      const MicDirectionHistory& micDirectionHistory = robot->GetMicComponent().GetMicDirectionHistory();
+      auto* faceSelectionComp = new FaceSelectionComponent(*robot, robot->GetFaceWorld(), micDirectionHistory);
       
       _aiComponents->AddDependentComponent(AIComponentID::BehaviorComponent,          new BehaviorComponent());
       _aiComponents->AddDependentComponent(AIComponentID::ContinuityComponent,        new ContinuityComponent(*robot));

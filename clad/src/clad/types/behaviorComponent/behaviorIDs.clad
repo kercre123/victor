@@ -208,6 +208,8 @@ enum uint_8 BehaviorID {
   DoATrickVoiceCommand,
   FistBumpVoiceCommand,
   KeepawayVoiceCommand,
+  LeaveAMessage,
+  PlaybackMessage,
 
   // victorBehaviorTree
   ReactToTouchPetting,

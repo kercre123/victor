@@ -14,7 +14,7 @@
 #define __Cozmo__BehaviorReactToSound_h__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/micDirectionTypes.h"
+#include "engine/components/mics/micDirectionTypes.h"
 
 #include <vector>
 

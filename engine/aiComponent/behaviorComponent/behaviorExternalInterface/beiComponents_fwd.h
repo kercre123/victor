@@ -17,7 +17,7 @@ enum class BEIComponentID{
   Delegation,
   FaceWorld,
   Map,
-  MicDirectionHistory,
+  MicComponent,
   MoodManager,
   MovementComponent,
   ObjectPoseConfirmer,

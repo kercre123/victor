@@ -55,7 +55,7 @@
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/fullRobotPose.h"
-#include "engine/micDirectionHistory.h"
+#include "engine/components/mics/micComponent.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/moodSystem/stimulationFaceDisplay.h"
 #include "engine/navMap/mapComponent.h"
@@ -258,7 +258,7 @@ Robot::Robot(const RobotID_t robotID, const CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::BlockTapFilter,             new BlockTapFilterComponent());
     _components->AddDependentComponent(RobotComponentID::RobotToEngineImplMessaging, new RobotToEngineImplMessaging());
     _components->AddDependentComponent(RobotComponentID::RobotIdleTimeout,           new RobotIdleTimeoutComponent());
-    _components->AddDependentComponent(RobotComponentID::MicDirectionHistory,        new MicDirectionHistory());
+    _components->AddDependentComponent(RobotComponentID::MicComponent,               new MicComponent());
     _components->AddDependentComponent(RobotComponentID::Battery,                    new BatteryComponent());
     _components->AddDependentComponent(RobotComponentID::FullRobotPose,              new FullRobotPose());
     _components->AddDependentComponent(RobotComponentID::SpriteCache,                new SpriteCacheComponent());

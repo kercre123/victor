@@ -15,7 +15,7 @@
 
 #include "engine/actions/basicActions.h"
 #include "engine/faceWorld.h"
-#include "engine/micDirectionHistory.h"
+#include "engine/components/mics/micDirectionHistory.h"
 #include "engine/robot.h"
 #include "engine/smartFaceId.h"
 

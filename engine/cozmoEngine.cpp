@@ -25,7 +25,8 @@
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/deviceData/deviceDataManager.h"
-#include "engine/micDirectionHistory.h"
+#include "engine/components/mics/micComponent.h"
+#include "engine/components/mics/micDirectionHistory.h"
 #include "engine/perfMetric.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
 #include "engine/viz/vizManager.h"
@@ -216,7 +217,7 @@ int GetEngineStatsWebServerHandler(struct mg_connection *conn, void *cbdata)
             stat_headTrackingObjectID.c_str(), stat_localizedToObjectID.c_str(),
             stat_status.c_str());
 
-  const auto& micDirectionHistory = robot->GetMicDirectionHistory();
+  const auto& micDirectionHistory = robot->GetMicComponent().GetMicDirectionHistory();
   const auto& stat_micRecentDirection = std::to_string(micDirectionHistory.GetRecentDirection());
   const auto& stat_micSelectedDirection = std::to_string(micDirectionHistory.GetSelectedDirection());
   mg_printf(conn, "%s\n%s\n",

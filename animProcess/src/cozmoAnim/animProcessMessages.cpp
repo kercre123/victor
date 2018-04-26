@@ -18,6 +18,7 @@
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
+#include "cozmoAnim/audio/audioPlaybackSystem.h"
 #include "cozmoAnim/audio/proceduralAudioClient.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animEngine.h"
@@ -316,7 +317,7 @@ void Process_setDebugConsoleVarMessage(const Anki::Cozmo::RobotInterface::SetDeb
   }
 }
 
-void Process_startRecordingMics(const Anki::Cozmo::RobotInterface::StartRecordingMics& msg)
+void Process_startRecordingMicsRaw(const Anki::Cozmo::RobotInterface::StartRecordingMicsRaw& msg)
 {
   auto* micDataSystem = _context->GetMicDataSystem();
   if (micDataSystem == nullptr)
@@ -328,6 +329,32 @@ void Process_startRecordingMics(const Anki::Cozmo::RobotInterface::StartRecordin
                                 std::string(msg.path,
                                             msg.path_length),
                                 msg.runFFT);
+}
+
+void Process_startRecordingMicsProcessed(const Anki::Cozmo::RobotInterface::StartRecordingMicsProcessed& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if (micDataSystem == nullptr)
+  {
+    return;
+  }
+
+  micDataSystem->RecordProcessedAudio(msg.duration_ms,
+                                      std::string(msg.path,
+                                                  msg.path_length));
+}
+
+void Process_playbackAudioStart(const Anki::Cozmo::RobotInterface::StartPlaybackAudio& msg)
+{
+  using namespace Audio;
+
+  AudioPlaybackSystem* audioPlayer = _context->GetAudioPlaybackSystem();
+  if (audioPlayer == nullptr)
+  {
+    return;
+  }
+
+  audioPlayer->PlaybackAudio( std::string(msg.path, msg.path_length) );
 }
 
 void Process_drawTextOnScreen(const Anki::Cozmo::RobotInterface::DrawTextOnScreen& msg)
@@ -552,6 +579,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   MonitorConnectionState();
 
   _context->GetMicDataSystem()->Update(currTime_nanosec);
+  _context->GetAudioPlaybackSystem()->Update(currTime_nanosec);
 
   // Process incoming messages from engine
   u32 dataLen;

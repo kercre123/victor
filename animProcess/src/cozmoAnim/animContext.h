@@ -45,6 +45,7 @@ class RobotDataLoader;
 class ThreadIDInternal;
   
 namespace Audio {
+class AudioPlaybackSystem;
 class CozmoAudioController;
 }
 namespace RobotInterface {
@@ -82,6 +83,7 @@ public:
   AudioMultiplexer*                     GetAudioMultiplexer() const { return _audioMux.get(); }
   MicData::MicDataSystem*               GetMicDataSystem() const { return _micDataSystem.get(); }
   WebService::WebService*               GetWebService() const { return _webService.get(); }
+  Audio::AudioPlaybackSystem*           GetAudioPlaybackSystem() const { return _audioPlayer.get(); }
 
   void SetRandomSeed(uint32_t seed);
 
@@ -103,6 +105,7 @@ private:
   std::unique_ptr<RobotDataLoader>               _dataLoader;
   std::unique_ptr<MicData::MicDataSystem>        _micDataSystem;
   std::unique_ptr<WebService::WebService>        _webService;
+  std::unique_ptr<Audio::AudioPlaybackSystem>    _audioPlayer;
 
   // for holding the thread id (and avoiding needed to include the .h here)
   std::unique_ptr<ThreadIDInternal> _threadIdHolder;

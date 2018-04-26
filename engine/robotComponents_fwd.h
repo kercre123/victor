@@ -50,7 +50,7 @@ enum class RobotComponentID{
   GyroDriftDetector,
   Inventory,
   Map,
-  MicDirectionHistory,
+  MicComponent,
   MoodManager,
   StimulationFaceDisplay,
   Movement,

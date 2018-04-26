@@ -55,7 +55,7 @@ class ProgressionUnlockComponent;
 class BlockTapFilterComponent;
 class RobotToEngineImplMessaging;
 class RobotIdleTimeoutComponent;
-class MicDirectionHistory;
+class MicComponent;
 class BatteryComponent;
 class FullRobotPose;
 class SpriteCacheComponent;
@@ -98,7 +98,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(ProgressionUnlockComponent,    RobotComponentID, Pro
 LINK_COMPONENT_TYPE_TO_ENUM(BlockTapFilterComponent,       RobotComponentID, BlockTapFilter)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotToEngineImplMessaging,    RobotComponentID, RobotToEngineImplMessaging)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotIdleTimeoutComponent,     RobotComponentID, RobotIdleTimeout)
-LINK_COMPONENT_TYPE_TO_ENUM(MicDirectionHistory,           RobotComponentID, MicDirectionHistory)
+LINK_COMPONENT_TYPE_TO_ENUM(MicComponent,                  RobotComponentID, MicComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(BatteryComponent,              RobotComponentID, Battery)
 LINK_COMPONENT_TYPE_TO_ENUM(FullRobotPose,                 RobotComponentID, FullRobotPose)
 LINK_COMPONENT_TYPE_TO_ENUM(SpriteCacheComponent,          RobotComponentID, SpriteCache)
@@ -131,7 +131,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::GyroDriftDetector:          { return "GyroDriftDetector";}
     case Cozmo::RobotComponentID::Inventory:                  { return "Inventory";}
     case Cozmo::RobotComponentID::Map:                        { return "Map";}
-    case Cozmo::RobotComponentID::MicDirectionHistory:        { return "MicDirectionHistory";}
+    case Cozmo::RobotComponentID::MicComponent:               { return "MicComponent"; }
     case Cozmo::RobotComponentID::MoodManager:                { return "MoodManager";}
     case Cozmo::RobotComponentID::StimulationFaceDisplay:     { return "StimulationFaceDisplay";}
     case Cozmo::RobotComponentID::Movement:                   { return "Movement";}

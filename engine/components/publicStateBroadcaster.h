@@ -77,7 +77,7 @@ public:
     dependencies.insert(RobotComponentID::BlockTapFilter);
     dependencies.insert(RobotComponentID::RobotToEngineImplMessaging);
     dependencies.insert(RobotComponentID::RobotIdleTimeout);
-    dependencies.insert(RobotComponentID::MicDirectionHistory);
+    dependencies.insert(RobotComponentID::MicComponent);
   };
   
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;

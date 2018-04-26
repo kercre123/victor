@@ -16,7 +16,8 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/micDirectionHistory.h"
+#include "engine/components/mics/micComponent.h"
+#include "engine/components/mics/micDirectionHistory.h"
 #include "clad/types/animationTrigger.h"
 
 #include "coretech/common/engine/jsonTools.h"
@@ -257,7 +258,7 @@ void BehaviorReactToSound::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MicDirectionNodeList BehaviorReactToSound::GetLatestMicDirectionData() const
 {
-  const MicDirectionHistory& micHistory = GetBEI().GetMicDirectionHistory();
+  const MicDirectionHistory& micHistory = GetBEI().GetMicComponent().GetMicDirectionHistory();
   MicDirectionNodeList nodeList = micHistory.GetRecentHistory( kSoundReaction_MaxReactionTime );
   if ( !nodeList.empty() )
   {

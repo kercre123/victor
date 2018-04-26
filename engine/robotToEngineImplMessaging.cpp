@@ -32,7 +32,8 @@
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/micDirectionHistory.h"
+#include "engine/components/mics/micComponent.h"
+#include "engine/components/mics/micDirectionHistory.h"
 #include "engine/pathPlanner.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
@@ -719,7 +720,7 @@ void RobotToEngineImplMessaging::HandleRobotPoked(const AnkiEvent<RobotInterface
 void RobotToEngineImplMessaging::HandleMicDirection(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
   const auto & payload = message.GetData().Get_micDirection();
-  robot->GetMicDirectionHistory().AddDirectionSample(payload.timestamp,
+  robot->GetMicComponent().GetMicDirectionHistory().AddDirectionSample(payload.timestamp,
                                                      payload.direction, payload.confidence,
                                                      payload.selectedDirection);
 }
