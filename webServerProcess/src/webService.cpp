@@ -1234,21 +1234,12 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
   for (Anki::Util::ConsoleSystem::VariableDatabase::const_iterator it = varDatabase.begin();
        it != varDatabase.end();
        ++it) {
-    std::string label = it->second->GetID();
     std::string cat = it->second->GetCategory();
-
     if (!category.empty() && category != cat) {
       continue;
     }
 
-    size_t dot = cat.find(".");
-    if (dot != std::string::npos) {
-      cat = cat.substr(0, dot);
-    }
-
-    if (category_html.find(cat) == category_html.end()) {
-      category_html[cat] = "";
-    }
+    std::string label = it->second->GetID();
 
     if (it->second->IsToggleable()) {
       category_html[cat] += "                <div>\n";
@@ -1330,18 +1321,13 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
   for (Anki::Util::ConsoleSystem::FunctionDatabase::const_iterator it = funcDatabase.begin();
        it != funcDatabase.end();
        ++it) {
-    std::string label = it->second->GetID();
     std::string cat = it->second->GetCategory();
-
     if (!category.empty() && category != cat) {
       continue;
     }
 
+    std::string label = it->second->GetID();
     std::string sig = it->second->GetSignature();
-    size_t dot = cat.find(".");
-    if (dot != std::string::npos) {
-      cat = cat.substr(0, dot);
-    }
 
     if (sig.empty()) {
       category_html[cat] += "                <div>\n";
@@ -1355,22 +1341,53 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
       category_html[cat] += "                  <input type=\"submit\" id=\""+label+"_function\" value=\"Call\" class=\"function\">\n";
       category_html[cat] += "                </div><br>\n";
     }
+
   }
 
+  // merge all categories, categories without subcategories
+
+  std::map<std::string, std::string> category_merged_html;
+  for (std::map<std::string, std::string>::const_iterator it = category_html.begin();
+       it != category_html.end();
+       ++it) {
+    std::string cat = it->first;
+    size_t dot = cat.find(".");
+    if (dot == std::string::npos) {
+      category_merged_html[cat] += it->second;
+    }
+  }
+
+  // then, append subcategories within <fieldset></fieldset>
+  for (std::map<std::string, std::string>::const_iterator it = category_html.begin();
+       it != category_html.end();
+       ++it) {
+    std::string cat = it->first;
+    size_t dot = cat.find(".");
+    if (dot != std::string::npos) {
+      std::string group = cat.substr(dot+1);
+      cat = cat.substr(0, dot);
+
+      category_merged_html[cat] += "                <fieldset>\n";
+      category_merged_html[cat] += "                    <legend>"+group+"</legend>\n";
+      category_merged_html[cat] += it->second;
+      category_merged_html[cat] += "                </fieldset>\n";
+    }
+  }
+
+  // finally, generate tabs
   html += "<div id=\"tabs\">\n";
   html += "    <ul>\n";
-  for (std::map<std::string, std::string>::const_iterator it = category_html.begin();
-    it != category_html.end();
+  for (std::map<std::string, std::string>::const_iterator it = category_merged_html.begin();
+    it != category_merged_html.end();
     ++it) {
     html += "        <li><a href=\"#tabs-"+sanitize_tag(it->first)+"\">"+it->first+"</a></li>\n";
   }
   html += "    </ul>\n";
 
-  for (std::map<std::string, std::string>::const_iterator it = category_html.begin();
-  it != category_html.end();
+  for (std::map<std::string, std::string>::const_iterator it = category_merged_html.begin();
+  it != category_merged_html.end();
   ++it) {
     std::string tag = it->first;
-    sanitize_tag(tag);
     html += "    <div id=\"tabs-"+sanitize_tag(it->first)+"\">\n";
     html += "    " + it->second+"\n";
     html += "    </div>\n";
