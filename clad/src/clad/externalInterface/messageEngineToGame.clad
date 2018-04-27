@@ -5,9 +5,9 @@
 
 #include "clad/audio/audioCallbackMessage.clad"
 #include "clad/externalInterface/messageShared.clad"
-#include "clad/externalInterface/messageFromActiveObject.clad"
 #include "clad/types/actionTypes.clad"
 #include "clad/types/actionResults.clad"
+#include "clad/types/activeObjectAccel.clad"
 #include "clad/types/animationEvents.clad"
 #include "clad/types/behaviorComponent/behaviorObjectives.clad"
 #include "clad/types/debugConsoleTypes.clad"
@@ -97,7 +97,7 @@ message EngineRobotCLADVersionMismatch {
 // Indicates that a previously advertising object is no longer advertising
 message ObjectUnavailable
 {
-  uint_32      factory_id,
+  string       factory_id,
 }
 
 // Responds to Unity request for feature toggles
@@ -549,6 +549,58 @@ message AnimationEvent {
   AnimEvent event_id
 }
 
+///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////  CUBES  ////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// Indicates that a cube is advertising, but not connected.
+message ObjectAvailable
+{
+  string      factory_id,
+  ObjectType  objectType,
+  int_8       rssi
+}
+
+// Indicates that a cube has connected or disconnected
+message ObjectConnectionState
+{  
+  uint_32 objectID,
+  string factoryID,
+  ObjectType  object_type,
+  bool connected
+}
+
+message ObjectMoved
+{
+  uint_32     timestamp,
+  uint_32     objectID,
+}
+
+message ObjectStoppedMoving
+{
+  uint_32 timestamp,
+  uint_32 objectID,
+}
+
+message ObjectUpAxisChanged
+{
+  uint_32 timestamp,
+  uint_32 objectID,
+  UpAxis  upAxis,
+}
+
+message ObjectTapped
+{
+  uint_32 timestamp,
+  uint_32 objectID,
+}
+
+message ObjectAccel
+{
+  uint_32 timestamp,
+  uint_32 objectID,
+  ActiveAccel accel,
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////  META  /////////////////////////////////////
@@ -701,12 +753,12 @@ message EngineErrorCodeMessage {
 // Sent when a cube lights change in CubeLightComponent
 message CubeLightsStateTransition {
   uint_32 objectID,
-  uint_32 factoryID,
+  string  factoryID,
   ObjectType objectType,
   // Colors are encoded as uint with 5 bits per color
   // To convert from frames to seconds divide by 30 (30 frames per second)
   LightState lights[4],
-  uint_32 lightRotation_ms
+  bool lightRotation
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -714,7 +766,7 @@ message CubeLightsStateTransition {
 ///////////////////////////////////////////////////////////////////////////////
 
 structure BlockPoolBlockData {
-  uint_32 factoryID,
+  string factoryID,
   ObjectType objectType
 }
 
@@ -930,6 +982,6 @@ autounion MessageEngineToGame
   UiDeviceConnected                 UiDeviceConnected                  = 0x00, // DO NOT CHANGE THIS VALUE
 }
 
-} // namespace G2U
+} // namespace ExternalInterface
 } // namespace Cozmo
 } // namespace Anki

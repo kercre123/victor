@@ -148,6 +148,7 @@ void SecurePairing::SubscribeToCladMessages() {
   _rtsOtaCancelRequestHandle = _cladHandler->OnReceiveRtsOtaCancelRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsOtaCancelRequest, this, std::placeholders::_1));
   _rtsWifiAccessPointRequestHandle = _cladHandler->OnReceiveRtsWifiAccessPointRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsWifiAccessPointRequest, this, std::placeholders::_1));
   _rtsCancelPairingHandle = _cladHandler->OnReceiveCancelPairingRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsCancelPairing, this, std::placeholders::_1));
+  _rtsLogRequestHandle = _cladHandler->OnReceiveRtsLogRequest().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsLogRequest, this, std::placeholders::_1));
   _rtsAckHandle = _cladHandler->OnReceiveRtsAck().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsAck, this, std::placeholders::_1));
   _rtsSshHandle = _cladHandler->OnReceiveRtsSsh().ScopedSubscribe(std::bind(&SecurePairing::HandleRtsSsh, this, std::placeholders::_1));
 }
@@ -174,12 +175,16 @@ void SecurePairing::Reset(bool forced) {
   if(forced) {
     Log::Write("Client disconnected. Stopping pairing.");
     ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
+    if(!_isOtaUpdating) {
+      _engineClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+    }
   } else if(++_totalPairingAttempts < kMaxPairingAttempts) {
     Init();
     Log::Write("SecurePairing restarting.");
   } else {
     Log::Write("SecurePairing ending due to multiple failures. Requires external restart.");
     ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
+    _engineClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
   }
 }
 
@@ -315,17 +320,18 @@ void SecurePairing::SendWifiScanResult() {
     return;
   }
 
-  // TODO: will replace with CLAD message format
-  std::vector<Anki::WiFiScanResult> wifiResults = Anki::ScanForWiFiAccessPoints();
+  std::vector<Anki::WiFiScanResult> wifiResults;
+  WifiScanErrorCode code = Anki::ScanForWiFiAccessPoints(wifiResults);
 
-  const uint8_t statusCode = wifiResults.size() > 0? 0 : 1;
+  const uint8_t statusCode = (uint8_t)code;
 
   std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult> wifiScanResults;
 
   for(int i = 0; i < wifiResults.size(); i++) {
     Anki::Victor::ExternalComms::RtsWifiScanResult result = Anki::Victor::ExternalComms::RtsWifiScanResult(wifiResults[i].auth,
       wifiResults[i].signal_level,
-      wifiResults[i].ssid);
+      wifiResults[i].ssid,
+      wifiResults[i].hidden);
 
       wifiScanResults.push_back(result);
   }
@@ -387,6 +393,28 @@ void SecurePairing::SendOtaProgress(int status, uint64_t progress, uint64_t expe
   // Send Ota Progress
   SendRtsMessage<RtsOtaUpdateResponse>(status, progress, expectedTotal);
   Log::Write("Sending OTA Progress Update");
+}
+
+void SecurePairing::SendFile(uint32_t fileId, std::vector<uint8_t> fileBytes) {
+  // Send File
+  const size_t chunkSize = 256; // can't be more than 2^16
+  size_t fileSizeBytes = fileBytes.size();
+  uint8_t status = 0; // not sure if we need status byte, but reserving so I don't regret ~PRA
+
+  size_t remaining = fileSizeBytes;
+
+  while((ssize_t)remaining > 0) {
+    size_t msgSize = remaining >= chunkSize? chunkSize : remaining;
+    size_t bytesWritten = fileSizeBytes - remaining;
+
+    std::vector<uint8_t> dataChunk;
+    auto fileIter = fileBytes.begin() + bytesWritten;
+    std::copy(fileIter, fileIter + msgSize, back_inserter(dataChunk));
+
+    SendRtsMessage<RtsFileDownload>(status, fileId, bytesWritten + msgSize, fileSizeBytes, dataChunk);
+
+    remaining -= msgSize;    
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -600,11 +628,38 @@ void SecurePairing::HandleRtsWifiAccessPointRequest(const Victor::ExternalComms:
   }
 }
 
+void SecurePairing::HandleRtsLogRequest(const Victor::ExternalComms::RtsConnection_2& msg) {
+  if(!AssertState(CommsState::SecureClad)) {
+    return;
+  }
+
+  std::string output;
+  int exitCode = ExecCommand({"python", "/anki/bin/diagnostics-logger"}, output);
+
+  std::vector<uint8_t> logBytes;
+
+  bool readSuccess = ReadFileIntoVector("/data/diagnostics/logs.tar.bz2", logBytes);
+
+  if(!readSuccess) {
+    exitCode = -1;
+  }
+
+  // Send RtsLogResponse
+  uint32_t fileId = 0;
+  randombytes_buf(&fileId, sizeof(fileId));
+  SendRtsMessage<RtsLogResponse>(exitCode, fileId);
+
+  // Send file
+  SendFile(fileId, logBytes);
+}
+
 void SecurePairing::HandleRtsCancelPairing(const Victor::ExternalComms::RtsConnection_2& msg) {
   Log::Write("Stopping pairing due to client request.");
   StopPairing();
 }
 
+#ifdef DEBUG
+// only handle ssh message in debug build
 void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& msg) {
   // RtsSsh
   if(!AssertState(CommsState::SecureClad)) {
@@ -628,6 +683,12 @@ void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& m
     WriteFileAtomically(sshPath + "/" + sshFile, data, Anki::kModeUserReadWrite);
   }
 }
+#else
+void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& msg) {
+  // log in release
+  Log::Write("Received ssh key message in non-debug build.");
+}
+#endif
 
 void SecurePairing::HandleRtsAck(const Victor::ExternalComms::RtsConnection_2& msg) {
   Anki::Victor::ExternalComms::RtsAck ack = msg.Get_RtsAck();

@@ -11,9 +11,10 @@ PROTO LightCube [
   # Maps to CLAD ObjectType
   field SFString   objectType "Block_LIGHTCUBE1"
   
-  # If <= 0, factoryID defaults to the light cube's type (e.g. Block_LIGHTCUBE1 would have an ID of 1)
+  # If empty, factoryID is a randomly generated string indicating
+  # a 6-byte unique identifier in hex (e.g. "ED:BB:02:DE:85:23").
   # See activeBlock.cpp
-  field SFInt32    factoryID    0
+  field SFString   factoryID    ""
 ]
 {
   Block1x1 {

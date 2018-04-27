@@ -45,7 +45,7 @@ private:
       
   virtual s32 UpdateSimInternal() override;
   
-  virtual void HandleActiveObjectConnectionState(const ObjectConnectionState& msg) override;
+  virtual void HandleActiveObjectConnectionState(const ExternalInterface::ObjectConnectionState& msg) override;
   virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction &msg) override;
   
   // Helpers:
@@ -347,7 +347,7 @@ void CST_PickupFromStack::HandleRobotCompletedAction(const ExternalInterface::Ro
 }
   
   
-void CST_PickupFromStack::HandleActiveObjectConnectionState(const ObjectConnectionState& msg)
+void CST_PickupFromStack::HandleActiveObjectConnectionState(const ExternalInterface::ObjectConnectionState& msg)
 {
   if (msg.connected) {
     ++_numObjectsConnected;

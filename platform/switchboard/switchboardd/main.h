@@ -51,7 +51,11 @@ namespace Switchboard {
       void Stop();
     
     private:
+      const std::string kUpdateEngineDataPath = "/run/update-engine";
+      const std::string kUpdateEngineExecPath = "/anki/bin";
+  
       static void HandleEngineTimer(struct ev_loop* loop, struct ev_timer* w, int revents);
+      static void HandleAnkibtdTimer(struct ev_loop* loop, struct ev_timer* w, int revents);
       static void sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents);
       void HandleReboot();
 
@@ -61,11 +65,13 @@ namespace Switchboard {
       void InitializeBleComms();
       void OnConnected(int connId, INetworkStream* stream);
       void OnDisconnected(int connId, INetworkStream* stream);
+      void OnBleIpcDisconnected();
       void OnPinUpdated(std::string pin);
       void OnOtaUpdatedRequest(std::string url);
       void OnEndPairing();
       void OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame message);
       bool TryConnectToEngineServer();
+      bool TryConnectToAnkiBluetoothDaemon();
       void HandleOtaUpdateExit(int rc, const std::string& output);
       void HandleOtaUpdateProgress();
       int GetOtaProgress(uint64_t* progress, uint64_t* expected);
@@ -74,9 +80,14 @@ namespace Switchboard {
       Signal::SmartHandle _otaHandle;
       Signal::SmartHandle _endHandle;
 
+      Signal::SmartHandle _bleOnConnectedHandle;
+      Signal::SmartHandle _bleOnDisconnectedHandle;
+      Signal::SmartHandle _bleOnIpcPeerDisconnectedHandle;
+
       void UpdateAdvertisement(bool pairing);
 
       const uint8_t kOtaUpdateInterval_s = 1;
+      const float kRetryInterval_s = 0.2f;
 
       int _connectionId = -1;
 
@@ -88,10 +99,8 @@ namespace Switchboard {
       bool _isPairing;
       bool _isOtaUpdating;
 
-      struct ev_EngineTimerStruct {
-        ev_timer timer;
-        Daemon* daemon;
-      } _engineTimer;
+      ev_timer _engineTimer;
+      ev_timer _ankibtdTimer;
 
       struct ev_TimerStruct {
         ev_timer timer;

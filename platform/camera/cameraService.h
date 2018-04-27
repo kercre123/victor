@@ -3,7 +3,7 @@
  *
  * Author: chapados
  * Created: 02/07/2018
- * 
+ *
  * based on androidHAL.h
  * Author: Kevin Yoon
  * Created: 02/17/2017
@@ -67,7 +67,7 @@ namespace Anki
       // TODO: Add functions for adjusting ROI of cameras?
       //
 
-      void InitCamera();
+      Result InitCamera();
 
       // Sets the camera parameters (non-blocking call)
       void CameraSetParameters(u16 exposure_ms, f32 gain);

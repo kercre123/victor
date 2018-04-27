@@ -15,10 +15,9 @@
 
 #include "engine/actions/basicActions.h"
 #include "engine/actions/compoundActions.h"
+#include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
-
-#include "cubeBleClient/cubeBleClient.h"
 
 #include "util/fileUtils/fileUtils.h"
 
@@ -28,15 +27,19 @@ namespace Cozmo {
 BehaviorPlaypenEndChecks::BehaviorPlaypenEndChecks(const Json::Value& config)
 : IBehaviorPlaypen(config)
 {
-
+  SubscribeToTags({
+    EngineToGameTag::ObjectAvailable
+  });
 }
 
 
-void BehaviorPlaypenEndChecks::InitBehaviorInternal()
+void BehaviorPlaypenEndChecks::OnBehaviorEnteredActivatableScope()
 {
-  CubeBleClient::GetInstance()->RegisterObjectAvailableCallback(std::bind(&BehaviorPlaypenEndChecks::HandleObjectAvailable, 
-                                                                          this, 
-                                                                          std::placeholders::_1));
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
+  
+  // Tell cube comms to broadcast object available messages so we can
+  // hear from advertising cubes
+  robot.GetCubeCommsComponent().SetBroadcastObjectAvailable();
 }
 
 
@@ -82,12 +85,15 @@ void BehaviorPlaypenEndChecks::OnBehaviorDeactivated()
   _heardFromLightCube = false;
 }
 
-void BehaviorPlaypenEndChecks::HandleObjectAvailable(const ObjectAvailable& payload)
+void BehaviorPlaypenEndChecks::AlwaysHandleInScope(const EngineToGameEvent& event)
 {
-  if(IsValidLightCube(payload.objectType, false))
-  {
-    _heardFromLightCube = true;
-  } 
+  const auto& eventData = event.GetData();
+  if (eventData.GetTag() == EngineToGameTag::ObjectAvailable) {
+    if(IsValidLightCube(eventData.Get_ObjectAvailable().objectType, false))
+    {
+      _heardFromLightCube = true;
+    }
+  }
 }
 
 }

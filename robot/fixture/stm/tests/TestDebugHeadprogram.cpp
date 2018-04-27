@@ -39,27 +39,43 @@ void TestDebugCleanup(void)
 
 void TestDebugInit(void)
 {
+  srand(Timer::get());
 }
 
-void TestDebugProcess(void)
+void TestDebugShellScriptTimeout(void)
 {
-  static int ofs = -2;
-  srand(Timer::get());
-  //uint32_t esn = ((rand()&0xffff)<<16) | (rand()&0xffff);
+  const uint32_t esn = 0x80000000 | ((rand()&0xffff)<<16) | (rand()&0xffff); //0xabcd1234
   
   const int shell_timeout_s = 5;
+  static int ofs = -2;
   int script_delay_s = shell_timeout_s + ofs;
   ofs *= (-1);
   
-  char b[40]; const int bz = sizeof(b);
-  cmdSend(CMD_IO_HELPER, snformat(b,bz,"dutprogram %u %u", shell_timeout_s, script_delay_s), (shell_timeout_s+10)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
+  char b[60]; const int bz = sizeof(b);
+  snformat(b,bz,"dutprogram %u %08x %u", shell_timeout_s, esn, script_delay_s);
+  cmdSend(CMD_IO_HELPER, b, (shell_timeout_s+10)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
+}
+
+void TestDebugShellArgParsing(void)
+{
+  const int shell_timeout_s = 5;
+  const uint32_t esn = 0x80000000 | ((rand()&0xffff)<<16) | (rand()&0xffff); //0xabcd1234
+  
+  char b[60]; const int bz = sizeof(b);
+  snformat(b,bz,"dutprogram %u %08x", shell_timeout_s, esn);
+  cmdSend(CMD_IO_HELPER, b, (shell_timeout_s+10)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
+  
+  int param1 = ABS(rand()) & 0x1ff;
+  snformat(b,bz,"dutprogram %u %08x   %i  param2  param3  ", shell_timeout_s, esn, param1);
+  cmdSend(CMD_IO_HELPER, b, (shell_timeout_s+10)*1000, CMD_OPTS_DEFAULT | CMD_OPTS_ALLOW_STATUS_ERRS );
 }
 
 TestFunction* TestDebugGetTests(void)
 {
   static TestFunction m_tests[] = {
     TestDebugInit,
-    TestDebugProcess,
+    //TestDebugShellScriptTimeout,
+    TestDebugShellArgParsing,
     NULL
   };
   return m_tests;

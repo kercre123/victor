@@ -95,27 +95,6 @@ void ActiveObject::SetLEDs(const std::array<u32,NUM_LEDS>& onColors,
     _ledState[iLED].offColor     = offColors[iLED];
     _ledState[iLED].onPeriod_ms  = onPeriods_ms[iLED];
     _ledState[iLED].offPeriod_ms = offPeriods_ms[iLED];
-    
-    // Handle some special cases (we want to avoid on/off times of 0 for the
-    // sake of the real active blocks)
-    if(onPeriods_ms[iLED] == 0 && offPeriods_ms[iLED] > 0) {
-      // Looks like we mean for this LED to be solid "off" color
-      _ledState[iLED].onColor = offColors[iLED];
-      _ledState[iLED].onPeriod_ms = std::numeric_limits<u32>::max();
-    }
-    else if(offPeriods_ms[iLED] == 0 && onPeriods_ms[iLED] > 0) {
-      // Looks like we mean for this LED to be solid "on" color
-      _ledState[iLED].offColor = onColors[iLED];
-      _ledState[iLED].offPeriod_ms = std::numeric_limits<u32>::max();
-    }
-    else if(onPeriods_ms[iLED]==0 && offPeriods_ms[iLED]==0) {
-      // Looks like we mean for this LED to actually turn off
-      _ledState[iLED].onColor = 0;
-      _ledState[iLED].offColor = 0;
-      _ledState[iLED].onPeriod_ms = std::numeric_limits<u32>::max();
-      _ledState[iLED].offPeriod_ms = std::numeric_limits<u32>::max();
-    }
-    
     _ledState[iLED].transitionOnPeriod_ms = transitionOnPeriods_ms[iLED];
     _ledState[iLED].transitionOffPeriod_ms = transitionOffPeriods_ms[iLED];
     _ledState[iLED].offset = offsets[iLED];

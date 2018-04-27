@@ -61,6 +61,10 @@ namespace Switchboard {
       return _receiveRtsAck;
     }
 
+    RtsConnectionSignal& OnReceiveRtsLogRequest() {
+      return _receiveRtsLogRequest;
+    }
+
     // RtsSsh
     RtsConnectionSignal& OnReceiveRtsSsh() {
       return _DEV_ReceiveSshKey;
@@ -132,8 +136,13 @@ namespace Switchboard {
             _receiveRtsAck.emit(rtsMsg);
             break;
           }
+          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsLogRequest: {
+            _receiveRtsLogRequest.emit(rtsMsg);
+            break;
+          }
           // RtsSsh
           case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsSshRequest: {
+            // only handle ssh message in debug build
             _DEV_ReceiveSshKey.emit(rtsMsg);
             break;
           }
@@ -171,6 +180,7 @@ namespace Switchboard {
       RtsConnectionSignal _receiveRtsCancelPairing;
       RtsConnectionSignal _receiveRtsAck;
       RtsConnectionSignal _receiveRtsOtaCancelRequest;
+      RtsConnectionSignal _receiveRtsLogRequest;
 
       // RtsSsh 
       RtsConnectionSignal _DEV_ReceiveSshKey;

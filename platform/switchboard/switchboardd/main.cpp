@@ -49,6 +49,9 @@ void Daemon::Start() {
   InitializeEngineComms();
   Log::Write("Finished Starting");
 
+  // Initialize Ble Ipc Timer
+  ev_timer_init(&_ankibtdTimer, HandleAnkibtdTimer, kRetryInterval_s, kRetryInterval_s);
+
   // Initialize Ota Timer
   _handleOtaTimer.signal = &_otaUpdateTimerSignal;
   _otaUpdateTimerSignal.SubscribeForever(std::bind(&Daemon::HandleOtaUpdateProgress, this));
@@ -66,7 +69,7 @@ void Daemon::Stop() {
     _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
   }
 
-  ev_timer_stop(_loop, &_engineTimer.timer);
+  ev_timer_stop(_loop, &_engineTimer);
   ev_timer_stop(_loop, &_handleOtaTimer.timer);
 }
 
@@ -74,9 +77,9 @@ void Daemon::InitializeEngineComms() {
   _engineMessagingClient = std::make_shared<EngineMessagingClient>(_loop);
   _engineMessagingClient->Init();
   _engineMessagingClient->OnReceivePairingStatus().SubscribeForever(std::bind(&Daemon::OnPairingStatus, this, std::placeholders::_1));
-  _engineTimer.daemon = this;
-  ev_timer_init(&_engineTimer.timer, HandleEngineTimer, 0.1f, 0.1f);
-  ev_timer_start(_loop, &_engineTimer.timer);
+  _engineTimer.data = this;
+  ev_timer_init(&_engineTimer, HandleEngineTimer, kRetryInterval_s, kRetryInterval_s);
+  ev_timer_start(_loop, &_engineTimer);
 }
 
 bool Daemon::TryConnectToEngineServer() {
@@ -91,21 +94,35 @@ bool Daemon::TryConnectToEngineServer() {
   return connected;
 }
 
-void Daemon::InitializeBleComms() {
-  Log::Write("Initialize BLE");
-  _bleClient = std::make_unique<Anki::Switchboard::BleClient>(_loop);
-  _bleClient->OnConnectedEvent().SubscribeForever(std::bind(&Daemon::OnConnected, this, std::placeholders::_1, std::placeholders::_2));
-  _bleClient->OnDisconnectedEvent().SubscribeForever(std::bind(&Daemon::OnDisconnected, this, std::placeholders::_1, std::placeholders::_2));
+bool Daemon::TryConnectToAnkiBluetoothDaemon() {
+  if(!_bleClient->IsConnected()) {
+    (void)_bleClient->Connect();
+  }
 
-  bool connected = _bleClient->Connect();
-
-  if(connected) {
+  if(_bleClient->IsConnected()) {
     Log::Write("Ble IPC client connected.");
     UpdateAdvertisement(false);
   } else {
-    Log::Write("Fatal error. Could not connect to ankibluetoothd.");
-    // todo:// should probably exit program so that systemd will restart?
+    Log::Write("Failed to connect to ankibluetoothd ... trying again.");
   }
+
+  return _bleClient->IsConnected();
+}
+
+void Daemon::InitializeBleComms() {
+  Log::Write("Initialize BLE");
+
+  if(_bleClient.get() == nullptr) {
+    _bleClient = std::make_unique<Anki::Switchboard::BleClient>(_loop);
+
+    _bleOnConnectedHandle = _bleClient->OnConnectedEvent().ScopedSubscribe(std::bind(&Daemon::OnConnected, this, std::placeholders::_1, std::placeholders::_2));
+    _bleOnDisconnectedHandle = _bleClient->OnDisconnectedEvent().ScopedSubscribe(std::bind(&Daemon::OnDisconnected, this, std::placeholders::_1, std::placeholders::_2));
+    _bleOnIpcPeerDisconnectedHandle = _bleClient->OnIpcDisconnection().ScopedSubscribe(std::bind(&Daemon::OnBleIpcDisconnected, this));
+
+    _ankibtdTimer.data = this;
+  }
+
+  ev_timer_again(_loop, &_ankibtdTimer);
 }
 
 void Daemon::UpdateAdvertisement(bool pairing) {
@@ -167,6 +184,11 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
   }
 }
 
+void Daemon::OnBleIpcDisconnected() {
+  // Reinitialize Ble Comms
+  InitializeBleComms();
+}
+
 void Daemon::OnPinUpdated(std::string pin) {
   _engineMessagingClient->SetPairingPin(pin);
   _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::START_PAIRING);
@@ -207,8 +229,8 @@ int Daemon::GetOtaProgress(uint64_t* progressVal, uint64_t* expectedVal) {
   *progressVal = 0;
   *expectedVal = 0;
 
-  progressFile.open("/data/update-engine/progress");
-  expectedFile.open("/data/update-engine/expected-size");
+  progressFile.open(kUpdateEngineDataPath + "/progress");
+  expectedFile.open(kUpdateEngineDataPath + "/expected-size");
 
   if(!progressFile.is_open() || !expectedFile.is_open()) {
     return -1;
@@ -318,7 +340,7 @@ void Daemon::OnOtaUpdatedRequest(std::string url) {
   // remove progress files if exist
   Log::Write("Ota Update Initialized...");
   std::string stdout = "";
-  int clearFilesStatus = ExecCommand({"/bin/update-engine"}, stdout);
+  int clearFilesStatus = ExecCommand({ kUpdateEngineExecPath + "/update-engine"}, stdout);
 
   if(clearFilesStatus != 0) {
     // we *shouldn't* let progress file errors keep us from trying to update
@@ -326,7 +348,7 @@ void Daemon::OnOtaUpdatedRequest(std::string url) {
   }
 
   Log::Write("Cleared files? %s", stdout.c_str());
-  ExecCommandInBackground({"/bin/update-engine", url}, std::bind(&Daemon::HandleOtaUpdateExit, this, std::placeholders::_1, std::placeholders::_2));
+  ExecCommandInBackground({ kUpdateEngineExecPath + "/update-engine", url}, std::bind(&Daemon::HandleOtaUpdateExit, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame message) {
@@ -359,12 +381,22 @@ void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame
 }
 
 void Daemon::HandleEngineTimer(struct ev_loop* loop, struct ev_timer* w, int revents) {
-  ev_EngineTimerStruct* t = (ev_EngineTimerStruct*)w;
-  bool connected = t->daemon->TryConnectToEngineServer();
+  Daemon* daemon = (Daemon*)w->data;
+  bool connected = daemon->TryConnectToEngineServer();
 
   if(connected) {
-    ev_timer_stop(loop, &t->timer);
-    t->daemon->InitializeBleComms();
+    ev_timer_stop(loop, w);
+    daemon->InitializeBleComms();
+  }
+}
+
+void Daemon::HandleAnkibtdTimer(struct ev_loop* loop, struct ev_timer* w, int revents) {
+  Daemon* daemon = (Daemon*)w->data;
+  bool connected = daemon->TryConnectToAnkiBluetoothDaemon();
+
+  if(connected) {
+    ev_timer_stop(loop, w);
+    Log::Write("Initialization complete.");
   }
 }
 

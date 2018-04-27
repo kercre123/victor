@@ -126,6 +126,8 @@ private:
 
   // Updates the FAC screen if needed
   void UpdateFAC();
+
+  void UpdateCameraTestMode(uint32_t curTime_ms);
   
   static const Point2f kDefaultTextStartingLoc_pix;
   static const u32 kDefaultTextSpacing_pix;

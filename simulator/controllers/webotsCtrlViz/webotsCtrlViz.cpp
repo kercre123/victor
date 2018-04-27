@@ -10,7 +10,7 @@
 
 #include "vizControllerImpl.h"
 #include "../shared/ctrlCommonInitialization.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "clad/types/vizTypes.h"
 #include "clad/vizInterface/messageViz.h"
 #include "coretech/messaging/shared/UdpServer.h"
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
   //
   // Main Execution loop
   //
-  while (vizSupervisor.step(Anki::Cozmo::TIME_STEP) != -1)
+  while (vizSupervisor.step(Anki::Cozmo::BS_TIME_STEP_MS) != -1)
   {
     // Any messages received?
     while ((numBytesRecvd = server.Recv((char*)data, maxPacketSize)) > 0) {

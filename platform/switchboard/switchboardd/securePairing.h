@@ -134,6 +134,8 @@ namespace Switchboard {
     void SendWifiConnectResult();
     void SendWifiAccessPointResponse(bool success, std::string ssid, std::string pw);
     void SendStatusResponse();
+
+    void SendFile(uint32_t fileId, std::vector<uint8_t> fileBytes);
     
     void IncrementAbnormalityCount();
     void IncrementChallengeCount();
@@ -170,6 +172,9 @@ namespace Switchboard {
 
     Signal::SmartHandle _rtsAckHandle;
     void HandleRtsAck(const Victor::ExternalComms::RtsConnection_2& msg);
+
+    Signal::SmartHandle _rtsLogRequestHandle;
+    void HandleRtsLogRequest(const Victor::ExternalComms::RtsConnection_2& msg);
 
     Signal::SmartHandle _rtsSshHandle;
     void HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& msg);

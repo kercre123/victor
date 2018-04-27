@@ -25,7 +25,7 @@ namespace DUT_UART {
   static int current_baud = 0;
   
   //recieve buffer
-  static const int rx_fifo_size = 0x40;
+  static const int rx_fifo_size = 0x80;
   static struct {
     char buf[rx_fifo_size]; 
     volatile int len; 

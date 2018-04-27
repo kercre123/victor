@@ -72,6 +72,7 @@ size_t RtsWifiScanResult::Pack(CLAD::SafeMessageBuffer& buffer) const
   buffer.Write(this->authType);
   buffer.Write(this->signalStrength);
   buffer.WritePString<uint8_t>(this->wifiSsidHex);
+  buffer.Write(this->hidden);
   const size_t bytesWritten {buffer.GetBytesWritten()};
   return bytesWritten;
 }
@@ -87,6 +88,7 @@ size_t RtsWifiScanResult::Unpack(const CLAD::SafeMessageBuffer& buffer)
   buffer.Read(this->authType);
   buffer.Read(this->signalStrength);
   buffer.ReadPString<uint8_t>(this->wifiSsidHex);
+  buffer.Read(this->hidden);
   return buffer.GetBytesRead();
 }
 
@@ -100,6 +102,8 @@ size_t RtsWifiScanResult::Size() const
   // wifiSsidHex
   result += 1; // uint_8 (string length)
   result += this->wifiSsidHex.length(); // uint_8
+  // hidden
+  result += 1; // bool
   return result;
 }
 
@@ -107,7 +111,8 @@ bool RtsWifiScanResult::operator==(const RtsWifiScanResult& other) const
 {
   return (this->authType == other.authType &&
     this->signalStrength == other.signalStrength &&
-    this->wifiSsidHex == other.wifiSsidHex);
+    this->wifiSsidHex == other.wifiSsidHex &&
+    this->hidden == other.hidden);
 }
 
 bool RtsWifiScanResult::operator!=(const RtsWifiScanResult& other) const
@@ -116,10 +121,10 @@ bool RtsWifiScanResult::operator!=(const RtsWifiScanResult& other) const
 }
 
 
-const char* RtsWifiScanResultVersionHashStr = "84ba9b5455488d84ec8c026a622bc113";
+const char* RtsWifiScanResultVersionHashStr = "688b83b567ea645ef62b27514115087e";
 
 const uint8_t RtsWifiScanResultVersionHash[16] = { 
-    0x84, 0xba, 0x9b, 0x54, 0x55, 0x48, 0x8d, 0x84, 0xec, 0x8c, 0x2, 0x6a, 0x62, 0x2b, 0xc1, 0x13 
+    0x68, 0x8b, 0x83, 0xb5, 0x67, 0xea, 0x64, 0x5e, 0xf6, 0x2b, 0x27, 0x51, 0x41, 0x15, 0x8, 0x7e 
 };
 
 // MESSAGE RtsConnRequest
@@ -1746,6 +1751,230 @@ const uint8_t RtsSshResponseVersionHash[16] = {
     0xcb, 0xe, 0xb9, 0x8b, 0x10, 0x3a, 0x38, 0xcf, 0x34, 0xa2, 0x4f, 0x44, 0x22, 0x20, 0x97, 0x11 
 };
 
+// MESSAGE RtsLogRequest
+
+RtsLogRequest::RtsLogRequest(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsLogRequest::RtsLogRequest(const uint8_t* buff, size_t len)
+: RtsLogRequest::RtsLogRequest({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsLogRequest::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsLogRequest::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  buffer.Write(this->mode);
+  buffer.WritePStringVArray<uint16_t, uint8_t>(this->filter);
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsLogRequest::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsLogRequest::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  buffer.Read(this->mode);
+  buffer.ReadPStringVArray<uint16_t, uint8_t>(this->filter);
+  return buffer.GetBytesRead();
+}
+
+size_t RtsLogRequest::Size() const
+{
+  size_t result = 0;
+  // mode
+  result += 1; // uint_8
+  // filter
+  result += 2; // uint_16 (array length)
+  result += 1 * this->filter.size(); // uint_8 (string lengths)
+  for (const std::string& m : this->filter) {
+    result += m.length();
+  }
+  return result;
+}
+
+bool RtsLogRequest::operator==(const RtsLogRequest& other) const
+{
+  return (this->mode == other.mode &&
+    this->filter == other.filter);
+}
+
+bool RtsLogRequest::operator!=(const RtsLogRequest& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsLogRequestVersionHashStr = "810562ad55beb91ee6f05f371e3b493e";
+
+const uint8_t RtsLogRequestVersionHash[16] = { 
+    0x81, 0x5, 0x62, 0xad, 0x55, 0xbe, 0xb9, 0x1e, 0xe6, 0xf0, 0x5f, 0x37, 0x1e, 0x3b, 0x49, 0x3e 
+};
+
+// MESSAGE RtsLogResponse
+
+RtsLogResponse::RtsLogResponse(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsLogResponse::RtsLogResponse(const uint8_t* buff, size_t len)
+: RtsLogResponse::RtsLogResponse({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsLogResponse::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsLogResponse::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  buffer.Write(this->exitCode);
+  buffer.Write(this->fileId);
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsLogResponse::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsLogResponse::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  buffer.Read(this->exitCode);
+  buffer.Read(this->fileId);
+  return buffer.GetBytesRead();
+}
+
+size_t RtsLogResponse::Size() const
+{
+  size_t result = 0;
+  // exitCode
+  result += 1; // uint_8
+  // fileId
+  result += 4; // uint_32
+  return result;
+}
+
+bool RtsLogResponse::operator==(const RtsLogResponse& other) const
+{
+  return (this->exitCode == other.exitCode &&
+    this->fileId == other.fileId);
+}
+
+bool RtsLogResponse::operator!=(const RtsLogResponse& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsLogResponseVersionHashStr = "df59c1cfa0b204dc0c34a454780f4fde";
+
+const uint8_t RtsLogResponseVersionHash[16] = { 
+    0xdf, 0x59, 0xc1, 0xcf, 0xa0, 0xb2, 0x4, 0xdc, 0xc, 0x34, 0xa4, 0x54, 0x78, 0xf, 0x4f, 0xde 
+};
+
+// MESSAGE RtsFileDownload
+
+RtsFileDownload::RtsFileDownload(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsFileDownload::RtsFileDownload(const uint8_t* buff, size_t len)
+: RtsFileDownload::RtsFileDownload({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsFileDownload::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsFileDownload::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  buffer.Write(this->status);
+  buffer.Write(this->fileId);
+  buffer.Write(this->packetNumber);
+  buffer.Write(this->packetTotal);
+  buffer.WriteVArray<uint8_t, uint16_t>(this->fileChunk);
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsFileDownload::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsFileDownload::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  buffer.Read(this->status);
+  buffer.Read(this->fileId);
+  buffer.Read(this->packetNumber);
+  buffer.Read(this->packetTotal);
+  buffer.ReadVArray<uint8_t, uint16_t>(this->fileChunk);
+  return buffer.GetBytesRead();
+}
+
+size_t RtsFileDownload::Size() const
+{
+  size_t result = 0;
+  // status
+  result += 1; // uint_8
+  // fileId
+  result += 4; // uint_32
+  // packetNumber
+  result += 4; // uint_32
+  // packetTotal
+  result += 4; // uint_32
+  // fileChunk
+  result += 2; // uint_16 (array length)
+  result += 1 * this->fileChunk.size(); // uint_8
+  return result;
+}
+
+bool RtsFileDownload::operator==(const RtsFileDownload& other) const
+{
+  return (this->status == other.status &&
+    this->fileId == other.fileId &&
+    this->packetNumber == other.packetNumber &&
+    this->packetTotal == other.packetTotal &&
+    this->fileChunk == other.fileChunk);
+}
+
+bool RtsFileDownload::operator!=(const RtsFileDownload& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsFileDownloadVersionHashStr = "4b499c8a4a58c7c24d6661931f35305e";
+
+const uint8_t RtsFileDownloadVersionHash[16] = { 
+    0x4b, 0x49, 0x9c, 0x8a, 0x4a, 0x58, 0xc7, 0xc2, 0x4d, 0x66, 0x61, 0x93, 0x1f, 0x35, 0x30, 0x5e 
+};
+
 // MESSAGE Error
 
 Error::Error(const CLAD::SafeMessageBuffer& buffer)
@@ -1896,6 +2125,15 @@ RtsConnection_2::RtsConnection_2(const RtsConnection_2& other)
   case Tag::RtsOtaCancelRequest:
     new(&(this->_RtsOtaCancelRequest)) Anki::Victor::ExternalComms::RtsOtaCancelRequest(other._RtsOtaCancelRequest);
     break;
+  case Tag::RtsLogRequest:
+    new(&(this->_RtsLogRequest)) Anki::Victor::ExternalComms::RtsLogRequest(other._RtsLogRequest);
+    break;
+  case Tag::RtsLogResponse:
+    new(&(this->_RtsLogResponse)) Anki::Victor::ExternalComms::RtsLogResponse(other._RtsLogResponse);
+    break;
+  case Tag::RtsFileDownload:
+    new(&(this->_RtsFileDownload)) Anki::Victor::ExternalComms::RtsFileDownload(other._RtsFileDownload);
+    break;
   default:
     _tag = Tag::INVALID;
     break;
@@ -1977,6 +2215,15 @@ RtsConnection_2::RtsConnection_2(RtsConnection_2&& other) noexcept
     break;
   case Tag::RtsOtaCancelRequest:
     new(&(this->_RtsOtaCancelRequest)) Anki::Victor::ExternalComms::RtsOtaCancelRequest(std::move(other._RtsOtaCancelRequest));
+    break;
+  case Tag::RtsLogRequest:
+    new(&(this->_RtsLogRequest)) Anki::Victor::ExternalComms::RtsLogRequest(std::move(other._RtsLogRequest));
+    break;
+  case Tag::RtsLogResponse:
+    new(&(this->_RtsLogResponse)) Anki::Victor::ExternalComms::RtsLogResponse(std::move(other._RtsLogResponse));
+    break;
+  case Tag::RtsFileDownload:
+    new(&(this->_RtsFileDownload)) Anki::Victor::ExternalComms::RtsFileDownload(std::move(other._RtsFileDownload));
     break;
   default:
     _tag = Tag::INVALID;
@@ -2063,6 +2310,15 @@ RtsConnection_2& RtsConnection_2::operator=(const RtsConnection_2& other)
   case Tag::RtsOtaCancelRequest:
     new(&(this->_RtsOtaCancelRequest)) Anki::Victor::ExternalComms::RtsOtaCancelRequest(other._RtsOtaCancelRequest);
     break;
+  case Tag::RtsLogRequest:
+    new(&(this->_RtsLogRequest)) Anki::Victor::ExternalComms::RtsLogRequest(other._RtsLogRequest);
+    break;
+  case Tag::RtsLogResponse:
+    new(&(this->_RtsLogResponse)) Anki::Victor::ExternalComms::RtsLogResponse(other._RtsLogResponse);
+    break;
+  case Tag::RtsFileDownload:
+    new(&(this->_RtsFileDownload)) Anki::Victor::ExternalComms::RtsFileDownload(other._RtsFileDownload);
+    break;
   default:
     _tag = Tag::INVALID;
     break;
@@ -2147,6 +2403,15 @@ RtsConnection_2& RtsConnection_2::operator=(RtsConnection_2&& other) noexcept
     break;
   case Tag::RtsOtaCancelRequest:
     new(&(this->_RtsOtaCancelRequest)) Anki::Victor::ExternalComms::RtsOtaCancelRequest(std::move(other._RtsOtaCancelRequest));
+    break;
+  case Tag::RtsLogRequest:
+    new(&(this->_RtsLogRequest)) Anki::Victor::ExternalComms::RtsLogRequest(std::move(other._RtsLogRequest));
+    break;
+  case Tag::RtsLogResponse:
+    new(&(this->_RtsLogResponse)) Anki::Victor::ExternalComms::RtsLogResponse(std::move(other._RtsLogResponse));
+    break;
+  case Tag::RtsFileDownload:
+    new(&(this->_RtsFileDownload)) Anki::Victor::ExternalComms::RtsFileDownload(std::move(other._RtsFileDownload));
     break;
   default:
     _tag = Tag::INVALID;
@@ -3500,6 +3765,174 @@ void RtsConnection_2::Set_RtsOtaCancelRequest(Anki::Victor::ExternalComms::RtsOt
   }
 }
 
+RtsConnection_2 RtsConnection_2::CreateRtsLogRequest(Anki::Victor::ExternalComms::RtsLogRequest&& new_RtsLogRequest)
+{
+  RtsConnection_2 m;
+  m.Set_RtsLogRequest(new_RtsLogRequest);
+  return m;
+}
+
+RtsConnection_2::RtsConnection_2(Anki::Victor::ExternalComms::RtsLogRequest&& new_RtsLogRequest)
+{
+  new(&this->_RtsLogRequest) Anki::Victor::ExternalComms::RtsLogRequest(std::move(new_RtsLogRequest));
+  _tag = Tag::RtsLogRequest;
+}
+
+const Anki::Victor::ExternalComms::RtsLogRequest& RtsConnection_2::Get_RtsLogRequest() const
+{
+  assert(_tag == Tag::RtsLogRequest);
+  return this->_RtsLogRequest;
+}
+
+void RtsConnection_2::Set_RtsLogRequest(const Anki::Victor::ExternalComms::RtsLogRequest& new_RtsLogRequest)
+{
+  if(this->_tag == Tag::RtsLogRequest) {
+    this->_RtsLogRequest = new_RtsLogRequest;
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsLogRequest) Anki::Victor::ExternalComms::RtsLogRequest(new_RtsLogRequest);
+    _tag = Tag::RtsLogRequest;
+  }
+}
+
+template<>
+const Anki::Victor::ExternalComms::RtsLogRequest& RtsConnection_2::Get_<RtsConnection_2::Tag::RtsLogRequest>() const
+{
+  assert(_tag == Tag::RtsLogRequest);
+  return this->_RtsLogRequest;
+}
+
+template<>
+RtsConnection_2 RtsConnection_2::Create_<RtsConnection_2::Tag::RtsLogRequest>(Anki::Victor::ExternalComms::RtsLogRequest member)
+{
+  return CreateRtsLogRequest(std::move(member));
+}
+
+void RtsConnection_2::Set_RtsLogRequest(Anki::Victor::ExternalComms::RtsLogRequest&& new_RtsLogRequest)
+{
+  if (this->_tag == Tag::RtsLogRequest) {
+    this->_RtsLogRequest = std::move(new_RtsLogRequest);
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsLogRequest) Anki::Victor::ExternalComms::RtsLogRequest(std::move(new_RtsLogRequest));
+    _tag = Tag::RtsLogRequest;
+  }
+}
+
+RtsConnection_2 RtsConnection_2::CreateRtsLogResponse(Anki::Victor::ExternalComms::RtsLogResponse&& new_RtsLogResponse)
+{
+  RtsConnection_2 m;
+  m.Set_RtsLogResponse(new_RtsLogResponse);
+  return m;
+}
+
+RtsConnection_2::RtsConnection_2(Anki::Victor::ExternalComms::RtsLogResponse&& new_RtsLogResponse)
+{
+  new(&this->_RtsLogResponse) Anki::Victor::ExternalComms::RtsLogResponse(std::move(new_RtsLogResponse));
+  _tag = Tag::RtsLogResponse;
+}
+
+const Anki::Victor::ExternalComms::RtsLogResponse& RtsConnection_2::Get_RtsLogResponse() const
+{
+  assert(_tag == Tag::RtsLogResponse);
+  return this->_RtsLogResponse;
+}
+
+void RtsConnection_2::Set_RtsLogResponse(const Anki::Victor::ExternalComms::RtsLogResponse& new_RtsLogResponse)
+{
+  if(this->_tag == Tag::RtsLogResponse) {
+    this->_RtsLogResponse = new_RtsLogResponse;
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsLogResponse) Anki::Victor::ExternalComms::RtsLogResponse(new_RtsLogResponse);
+    _tag = Tag::RtsLogResponse;
+  }
+}
+
+template<>
+const Anki::Victor::ExternalComms::RtsLogResponse& RtsConnection_2::Get_<RtsConnection_2::Tag::RtsLogResponse>() const
+{
+  assert(_tag == Tag::RtsLogResponse);
+  return this->_RtsLogResponse;
+}
+
+template<>
+RtsConnection_2 RtsConnection_2::Create_<RtsConnection_2::Tag::RtsLogResponse>(Anki::Victor::ExternalComms::RtsLogResponse member)
+{
+  return CreateRtsLogResponse(std::move(member));
+}
+
+void RtsConnection_2::Set_RtsLogResponse(Anki::Victor::ExternalComms::RtsLogResponse&& new_RtsLogResponse)
+{
+  if (this->_tag == Tag::RtsLogResponse) {
+    this->_RtsLogResponse = std::move(new_RtsLogResponse);
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsLogResponse) Anki::Victor::ExternalComms::RtsLogResponse(std::move(new_RtsLogResponse));
+    _tag = Tag::RtsLogResponse;
+  }
+}
+
+RtsConnection_2 RtsConnection_2::CreateRtsFileDownload(Anki::Victor::ExternalComms::RtsFileDownload&& new_RtsFileDownload)
+{
+  RtsConnection_2 m;
+  m.Set_RtsFileDownload(new_RtsFileDownload);
+  return m;
+}
+
+RtsConnection_2::RtsConnection_2(Anki::Victor::ExternalComms::RtsFileDownload&& new_RtsFileDownload)
+{
+  new(&this->_RtsFileDownload) Anki::Victor::ExternalComms::RtsFileDownload(std::move(new_RtsFileDownload));
+  _tag = Tag::RtsFileDownload;
+}
+
+const Anki::Victor::ExternalComms::RtsFileDownload& RtsConnection_2::Get_RtsFileDownload() const
+{
+  assert(_tag == Tag::RtsFileDownload);
+  return this->_RtsFileDownload;
+}
+
+void RtsConnection_2::Set_RtsFileDownload(const Anki::Victor::ExternalComms::RtsFileDownload& new_RtsFileDownload)
+{
+  if(this->_tag == Tag::RtsFileDownload) {
+    this->_RtsFileDownload = new_RtsFileDownload;
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsFileDownload) Anki::Victor::ExternalComms::RtsFileDownload(new_RtsFileDownload);
+    _tag = Tag::RtsFileDownload;
+  }
+}
+
+template<>
+const Anki::Victor::ExternalComms::RtsFileDownload& RtsConnection_2::Get_<RtsConnection_2::Tag::RtsFileDownload>() const
+{
+  assert(_tag == Tag::RtsFileDownload);
+  return this->_RtsFileDownload;
+}
+
+template<>
+RtsConnection_2 RtsConnection_2::Create_<RtsConnection_2::Tag::RtsFileDownload>(Anki::Victor::ExternalComms::RtsFileDownload member)
+{
+  return CreateRtsFileDownload(std::move(member));
+}
+
+void RtsConnection_2::Set_RtsFileDownload(Anki::Victor::ExternalComms::RtsFileDownload&& new_RtsFileDownload)
+{
+  if (this->_tag == Tag::RtsFileDownload) {
+    this->_RtsFileDownload = std::move(new_RtsFileDownload);
+  }
+  else {
+    ClearCurrent();
+    new(&this->_RtsFileDownload) Anki::Victor::ExternalComms::RtsFileDownload(std::move(new_RtsFileDownload));
+    _tag = Tag::RtsFileDownload;
+  }
+}
+
 size_t RtsConnection_2::Unpack(const uint8_t* buff, const size_t len)
 {
   const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
@@ -3707,6 +4140,30 @@ size_t RtsConnection_2::Unpack(const CLAD::SafeMessageBuffer& buffer)
       this->_RtsOtaCancelRequest.Unpack(buffer);
     }
     break;
+  case Tag::RtsLogRequest:
+    if (newTag != oldTag) {
+      new(&(this->_RtsLogRequest)) Anki::Victor::ExternalComms::RtsLogRequest(buffer);
+    }
+    else {
+      this->_RtsLogRequest.Unpack(buffer);
+    }
+    break;
+  case Tag::RtsLogResponse:
+    if (newTag != oldTag) {
+      new(&(this->_RtsLogResponse)) Anki::Victor::ExternalComms::RtsLogResponse(buffer);
+    }
+    else {
+      this->_RtsLogResponse.Unpack(buffer);
+    }
+    break;
+  case Tag::RtsFileDownload:
+    if (newTag != oldTag) {
+      new(&(this->_RtsFileDownload)) Anki::Victor::ExternalComms::RtsFileDownload(buffer);
+    }
+    else {
+      this->_RtsFileDownload.Unpack(buffer);
+    }
+    break;
   default:
     break;
   }
@@ -3796,6 +4253,15 @@ size_t RtsConnection_2::Pack(CLAD::SafeMessageBuffer& buffer) const
   case Tag::RtsOtaCancelRequest:
     this->_RtsOtaCancelRequest.Pack(buffer);
     break;
+  case Tag::RtsLogRequest:
+    this->_RtsLogRequest.Pack(buffer);
+    break;
+  case Tag::RtsLogResponse:
+    this->_RtsLogResponse.Pack(buffer);
+    break;
+  case Tag::RtsFileDownload:
+    this->_RtsFileDownload.Pack(buffer);
+    break;
   default:
     break;
   }
@@ -3878,6 +4344,15 @@ size_t RtsConnection_2::Size() const
   case Tag::RtsOtaCancelRequest:
     result += this->_RtsOtaCancelRequest.Size(); // RtsOtaCancelRequest
     break;
+  case Tag::RtsLogRequest:
+    result += this->_RtsLogRequest.Size(); // RtsLogRequest
+    break;
+  case Tag::RtsLogResponse:
+    result += this->_RtsLogResponse.Size(); // RtsLogResponse
+    break;
+  case Tag::RtsFileDownload:
+    result += this->_RtsFileDownload.Size(); // RtsFileDownload
+    break;
   default:
     break;
   }
@@ -3938,6 +4413,12 @@ bool RtsConnection_2::operator==(const RtsConnection_2& other) const
     return this->_RtsSshResponse == other._RtsSshResponse;
   case Tag::RtsOtaCancelRequest:
     return this->_RtsOtaCancelRequest == other._RtsOtaCancelRequest;
+  case Tag::RtsLogRequest:
+    return this->_RtsLogRequest == other._RtsLogRequest;
+  case Tag::RtsLogResponse:
+    return this->_RtsLogResponse == other._RtsLogResponse;
+  case Tag::RtsFileDownload:
+    return this->_RtsFileDownload == other._RtsFileDownload;
   default:
     return true;
   }
@@ -4023,6 +4504,15 @@ void RtsConnection_2::ClearCurrent()
   case Tag::RtsOtaCancelRequest:
     _RtsOtaCancelRequest.~RtsOtaCancelRequest();
     break;
+  case Tag::RtsLogRequest:
+    _RtsLogRequest.~RtsLogRequest();
+    break;
+  case Tag::RtsLogResponse:
+    _RtsLogResponse.~RtsLogResponse();
+    break;
+  case Tag::RtsFileDownload:
+    _RtsFileDownload.~RtsFileDownload();
+    break;
   default:
     break;
   }
@@ -4079,15 +4569,21 @@ const char* RtsConnection_2TagToString(const RtsConnection_2Tag tag) {
     return "RtsSshResponse";
   case RtsConnection_2Tag::RtsOtaCancelRequest:
     return "RtsOtaCancelRequest";
+  case RtsConnection_2Tag::RtsLogRequest:
+    return "RtsLogRequest";
+  case RtsConnection_2Tag::RtsLogResponse:
+    return "RtsLogResponse";
+  case RtsConnection_2Tag::RtsFileDownload:
+    return "RtsFileDownload";
   default:
     return "INVALID";
   }
 }
 
-const char* RtsConnection_2VersionHashStr = "b3b90b6cc8bdb02666dfd894fca8ddb0";
+const char* RtsConnection_2VersionHashStr = "0a115855dc4fe2f67fed4cf0389dca58";
 
 const uint8_t RtsConnection_2VersionHash[16] = { 
-    0xb3, 0xb9, 0xb, 0x6c, 0xc8, 0xbd, 0xb0, 0x26, 0x66, 0xdf, 0xd8, 0x94, 0xfc, 0xa8, 0xdd, 0xb0 
+    0xa, 0x11, 0x58, 0x55, 0xdc, 0x4f, 0xe2, 0xf6, 0x7f, 0xed, 0x4c, 0xf0, 0x38, 0x9d, 0xca, 0x58 
 };
 
 // UNION RtsConnection

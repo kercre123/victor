@@ -39,7 +39,9 @@ bool IPCClient::Connect()
     connect_watcher_ = new ev::io(loop_);
     connect_watcher_->set <IPCClient, &IPCClient::ConnectWatcherCallback> (this);
   }
-
+  if (sockfd_ == -1) {
+    CreateSocket();
+  }
   int rc = connect(sockfd_, (struct sockaddr *)&addr_, sizeof(addr_));
   if (rc == -1) {
     if (errno == EALREADY || errno == EINPROGRESS) {
@@ -119,6 +121,32 @@ void IPCClient::OnReceiveIPCMessage(const int sockfd,
                          value);
       }
       break;
+    case IPCMessageType::OnCharacteristicReadResult:
+      {
+        logv("ipc-case: OnCharacteristicReadResult");
+        OnCharacteristicReadResultArgs* args = (OnCharacteristicReadResultArgs *) data.data();
+        std::string characteristic_uuid(args->characteristic_uuid);
+        std::vector<uint8_t> value(args->value, args->value + args->length);
+        OnCharacteristicReadResult(args->connection_id,
+                                   args->error,
+                                   characteristic_uuid,
+                                   value);
+      }
+      break;
+    case IPCMessageType::OnDescriptorReadResult:
+      {
+        logv("ipc-case: OnDescriptorReadResult");
+        OnDescriptorReadResultArgs* args = (OnDescriptorReadResultArgs *) data.data();
+        std::string characteristic_uuid(args->characteristic_uuid);
+        std::string descriptor_uuid(args->descriptor_uuid);
+        std::vector<uint8_t> value(args->value, args->value + args->length);
+        OnDescriptorReadResult(args->connection_id,
+                               args->error,
+                               characteristic_uuid,
+                               descriptor_uuid,
+                               value);
+      }
+      break;
     case IPCMessageType::OnScanResults:
       {
         logv("ipc-client: OnScanResults");
@@ -148,6 +176,15 @@ void IPCClient::OnReceiveIPCMessage(const int sockfd,
                                    records);
       }
       break;
+    case IPCMessageType::OnRequestConnectionParameterUpdateResult:
+      {
+        logv("ipc-client: OnRequestConnectionParameterUpdateResult");
+        OnRequestConnectionParameterUpdateResultArgs* args =
+            (OnRequestConnectionParameterUpdateResultArgs *) data.data();
+        OnRequestConnectionParameterUpdateResult(std::string(args->address),
+                                                 args->status);
+      }
+      break;
     default:
       loge("ipc-client: Unknown IPC message : %d", (int) type);
       break;
@@ -173,6 +210,36 @@ void IPCClient::SendMessage(const int connection_id,
                          args_length,
                          (uint8_t *) args);
   free(args);
+}
+
+void IPCClient::ReadCharacteristic(const int connection_id,
+                                   const std::string& characteristic_uuid)
+{
+  CharacteristicReadRequestArgs args;
+  args.connection_id = connection_id;
+  (void) strlcpy(args.characteristic_uuid,
+                 characteristic_uuid.c_str(),
+                 sizeof(args.characteristic_uuid));
+  SendIPCMessageToServer(IPCMessageType::CharacteristicReadRequest,
+                         sizeof(args),
+                         (uint8_t *) &args);
+}
+
+void IPCClient::ReadDescriptor(const int connection_id,
+                               const std::string& characteristic_uuid,
+                               const std::string& descriptor_uuid)
+{
+  DescriptorReadRequestArgs args;
+  args.connection_id = connection_id;
+  (void) strlcpy(args.characteristic_uuid,
+                 characteristic_uuid.c_str(),
+                 sizeof(args.characteristic_uuid));
+  (void) strlcpy(args.descriptor_uuid,
+                 descriptor_uuid.c_str(),
+                 sizeof(args.descriptor_uuid));
+  SendIPCMessageToServer(IPCMessageType::DescriptorReadRequest,
+                         sizeof(args),
+                         (uint8_t *) &args);
 }
 
 void IPCClient::Disconnect(const int connection_id)
@@ -258,6 +325,24 @@ void IPCClient::ConnectToPeripheral(const std::string& address)
                          sizeof(args),
                          (uint8_t *) &args);
 }
+
+void IPCClient::RequestConnectionParameterUpdate(const std::string& address,
+                                                 int min_interval,
+                                                 int max_interval,
+                                                 int latency,
+                                                 int timeout)
+{
+  RequestConnectionParameterUpdateArgs args = {{0}};
+  (void) strlcpy(args.address, address.c_str(), sizeof(args.address));
+  args.min_interval = min_interval;
+  args.max_interval = max_interval;
+  args.latency = latency;
+  args.timeout = timeout;
+  SendIPCMessageToServer(IPCMessageType::RequestConnectionParameterUpdate,
+                         sizeof(args),
+                         (uint8_t *) &args);
+}
+
 
 void IPCClient::StopScan()
 {

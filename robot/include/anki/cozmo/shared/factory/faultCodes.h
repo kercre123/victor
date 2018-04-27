@@ -32,7 +32,12 @@ static const char* kFaultCodeFifoName = "/run/error_code";
 enum : uint16_t {
   NONE = 0,
 
-  WIFI = 800,
+  // Should always be 800 as the fault code
+  // display image for this fault is hardcoded into
+  // the animfail program
+  NO_ANIM_PROCESS = 800,
+    
+  WIFI,
   NO_SWITCHBOARD,
   SYSTEMD,
     

@@ -108,12 +108,12 @@ protected:
   virtual void HandleRobotConnected(const ExternalInterface::RobotConnectionResponse& msg){};
   virtual void HandleRobotCompletedAction(const ExternalInterface::RobotCompletedAction& msg){};
   virtual void HandleImageChunk(const ImageChunk& msg){};
-  virtual void HandleActiveObjectAccel(const ObjectAccel& msg){};
-  virtual void HandleActiveObjectConnectionState(const ObjectConnectionState& msg){};
-  virtual void HandleActiveObjectMoved(const ObjectMoved& msg){};
-  virtual void HandleActiveObjectStoppedMoving(const ObjectStoppedMoving& msg){};
-  virtual void HandleActiveObjectTapped(const ObjectTapped& msg){};
-  virtual void HandleActiveObjectUpAxisChanged(const ObjectUpAxisChanged& msg){};
+  virtual void HandleActiveObjectAccel(const ExternalInterface::ObjectAccel& msg){};
+  virtual void HandleActiveObjectConnectionState(const ExternalInterface::ObjectConnectionState& msg){};
+  virtual void HandleActiveObjectMoved(const ExternalInterface::ObjectMoved& msg){};
+  virtual void HandleActiveObjectStoppedMoving(const ExternalInterface::ObjectStoppedMoving& msg){};
+  virtual void HandleActiveObjectTapped(const ExternalInterface::ObjectTapped& msg){};
+  virtual void HandleActiveObjectUpAxisChanged(const ExternalInterface::ObjectUpAxisChanged& msg){};
   virtual void HandleLocatedObjectStates(const ExternalInterface::LocatedObjectStates& msg){};
   virtual void HandleConnectedObjectStates(const ExternalInterface::ConnectedObjectStates& msg){};
   virtual void HandleAnimationAvailable(const ExternalInterface::AnimationAvailable& msg){};
@@ -162,7 +162,6 @@ protected:
   void SendMoveHeadToAngle(const f32 rad, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
   void SendMoveLiftToHeight(const f32 mm, const f32 speed, const f32 accel, const f32 duration_sec = 0.f);
   void SendEnableLiftPower(bool enable);
-  void SendTapBlockOnGround(const u8 numTaps);
   void SendStopAllMotors();
   void SendImageRequest(ImageSendMode mode);
   void SendSetRobotImageSendMode(ImageSendMode mode);
@@ -298,7 +297,6 @@ protected:
   void SendNVClearPartialPendingWriteData();
   void SendEnableBlockTapFilter(bool enable);
   void SendEnableBlockPool(double maxDiscoveryTime, bool enabled);
-  void SendStreamObjectAccel(const u32 objectID, bool enable = true);
 
   ///
   // @brief      Send SetActiveObjectLEDs CLAD message
@@ -314,7 +312,7 @@ protected:
                                const u32 transitionOnPeriod_ms,
                                const u32 transitionOffPeriod_ms,
                                const s32 offset,
-                               const u32 rotationPeriod_ms,
+                               const bool rotate,
                                const f32 relativeToX,
                                const f32 relativeToY,
                                const WhichCubeLEDs whichLEDs,
@@ -329,7 +327,7 @@ protected:
                                   const std::array<u32, 4> transitionOnPeriod_ms,
                                   const std::array<u32, 4> transitionOffPeriod_ms,
                                   const std::array<s32, 4> offset,
-                                  const u32 rotationPeriod_ms,
+                                  const bool rotate,
                                   const f32 relativeToX,
                                   const f32 relativeToY,
                                   const MakeRelativeMode makeRelative);
@@ -423,7 +421,7 @@ protected:
   // @param[in]  factoryID  FactoryID of cube to be added. (If 0, then factoryID is auto-generated based on ObjectType)
   // @return     Whether or not it was successfully added
   //
-  bool AddLightCubeByType(ObjectType type, const Pose3d& p, const u32 factoryID = 0);
+  bool AddLightCubeByType(ObjectType type, const Pose3d& p, const std::string& factoryID = "");
 
   // Sets the "pluggedIn" field for the given charger.
   void SetChargerPluggedIn(webots::Node* chargerNode, const bool pluggedIn);
@@ -488,12 +486,12 @@ private:
   void HandleRobotConnectedBase(const ExternalInterface::RobotConnectionResponse& msg);
   void HandleRobotCompletedActionBase(const ExternalInterface::RobotCompletedAction& msg);
   void HandleImageChunkBase(const ImageChunk& msg);
-  void HandleActiveObjectAccelBase(const ObjectAccel& msg);
-  void HandleActiveObjectConnectionStateBase(const ObjectConnectionState& msg);
-  void HandleActiveObjectMovedBase(const ObjectMoved& msg);
-  void HandleActiveObjectStoppedMovingBase(const ObjectStoppedMoving& msg);
-  void HandleActiveObjectTappedBase(const ObjectTapped& msg);
-  void HandleActiveObjectUpAxisChangedBase(const ObjectUpAxisChanged& msg);
+  void HandleActiveObjectAccelBase(const ExternalInterface::ObjectAccel& msg);
+  void HandleActiveObjectConnectionStateBase(const ExternalInterface::ObjectConnectionState& msg);
+  void HandleActiveObjectMovedBase(const ExternalInterface::ObjectMoved& msg);
+  void HandleActiveObjectStoppedMovingBase(const ExternalInterface::ObjectStoppedMoving& msg);
+  void HandleActiveObjectTappedBase(const ExternalInterface::ObjectTapped& msg);
+  void HandleActiveObjectUpAxisChangedBase(const ExternalInterface::ObjectUpAxisChanged& msg);
   void HandleLocatedObjectStatesBase(const ExternalInterface::LocatedObjectStates& msg);
   void HandleConnectedObjectStatesBase(const ExternalInterface::ConnectedObjectStates& msg);
   void HandleAnimationAvailableBase(const ExternalInterface::AnimationAvailable& msg);

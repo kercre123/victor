@@ -22,8 +22,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorListenerInterfaces/iFeedingListener.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/animationComponent.h"
-#include "engine/components/cubeAccelComponent.h"
-#include "engine/components/cubeAccelComponentListeners.h"
+#include "engine/components/cubes/cubeAccelComponent.h"
+#include "engine/components/cubes/cubeAccelListeners/movementListener.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robotInterface/messageHandler.h"
@@ -205,13 +205,9 @@ void BehaviorFeedingEat::OnBehaviorDeactivated()
 
   GetBEI().GetRobotInfo().EnableStopOnCliff(true);
   
-  const bool removeSuccessfull = GetBEI().HasCubeAccelComponent() &&
-    GetBEI().GetCubeAccelComponent().RemoveListener(_targetID, _cubeMovementListener);
-  ANKI_VERIFY(removeSuccessfull,
-             "BehaviorFeedingEat.StopInternal.FailedToRemoveAccellComponent",
-              "");
-  _cubeMovementListener.reset();
-  _targetID.UnSet();
+  // Release the cube accel listener
+  //_iConfig.cubeMovementListener.reset();
+  //_dVars.targetID.UnSet();
 }
 
 

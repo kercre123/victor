@@ -12,6 +12,10 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+
+#include <readline/readline.h>
+#include <readline/history.h>
+
 #include "signal.h"
 
 @implementation BleCentral
@@ -30,6 +34,21 @@ BleCentral* centralContext;
   printf("  status                                       Get Vector's general status.\n");
   printf("  ssh-send [filename]                          Generates/Sends a public SSH key to Victor.\n");
   printf("  ssh-start                                    Tries to start an SSH session with Victor.\n");
+  printf("  logs [directory]                             Downloads logs tar from Victor, with optional supplied directory path.\n");
+}
+
+- (void)showProgress: (float)current expected:(float)expected {
+  int size = 100;
+  int progress = (int)(((float)current/(float)expected) * size);
+  std::string bar = "";
+  
+  for(int i = 0; i < size; i++) {
+    if(i <= progress) bar += "▓";
+    else bar += "_";
+  }
+  
+  printf("%100s [%d%%] [%llu/%llu] \r", bar.c_str(), progress, (uint64_t)current, (uint64_t)expected);
+  fflush(stdout);
 }
 
 - (void)setVerbose:(bool)enabled {
@@ -427,8 +446,36 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsOtaUpdateResponse: {
           Anki::Victor::ExternalComms::RtsOtaUpdateResponse msg = rtsMsg.Get_RtsOtaUpdateResponse();
           _otaStatusCode = msg.status;
-          _otaProgress = msg.current;
+          
+          if(_otaStatusCode == 2) {
+            _otaProgress = msg.current == 0? _otaProgress : msg.current;
+          } else {
+            _otaProgress = msg.current;
+          }
           _otaExpected = msg.expected;
+          
+          /*
+           * Commenting out for visibility because in next pass, going
+           * to use this code again to show OTA progress bar.
+           */
+          if(_currentCommand == "ota-progress" && !_readyForNextCommand) {
+            if(_otaStatusCode != 2) {
+              _readyForNextCommand = true;
+              _currentCommand = "";
+            }
+            
+            int size = 100;
+            int progress = (int)(((float)_otaProgress/(float)_otaExpected) * size);
+            std::string bar = "";
+            
+            for(int i = 0; i < size; i++) {
+              if(i <= progress) bar += "▓";
+              else bar += "_";
+            }
+            
+            printf("%100s [%d%%] [%llu/%llu] \r", bar.c_str(), progress, msg.current, msg.expected);
+            fflush(stdout);
+          }
           
           break;
         }
@@ -573,7 +620,6 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
            * Commenting out for visibility because in next pass, going
            * to use this code again to show OTA progress bar.
            */
-          
           if(_currentCommand == "ota-progress" && !_readyForNextCommand) {
             if(_otaStatusCode != 2) {
               _readyForNextCommand = true;
@@ -591,6 +637,59 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
            
             printf("%100s [%d%%] [%llu/%llu] \r", bar.c_str(), progress, msg.current, msg.expected);
             fflush(stdout);
+          }
+          
+          break;
+        }
+        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsLogResponse: {
+          // Handle receive RtsLogResponse message
+          Anki::Victor::ExternalComms::RtsLogResponse msg = rtsMsg.Get_RtsLogResponse();
+          
+          _currentFileId = msg.fileId;
+          _currentFileBuffer.clear();
+          
+          break;
+        }
+        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsFileDownload: {
+          // Handle receive RtsLogResponse message
+          Anki::Victor::ExternalComms::RtsFileDownload msg = rtsMsg.Get_RtsFileDownload();
+          
+          if(msg.fileId != _currentFileId) {
+            break;
+          }
+          
+          // Add to buffer
+          _currentFileBuffer.insert(_currentFileBuffer.end(), msg.fileChunk.begin(), msg.fileChunk.end());
+          
+          [self showProgress:(float)msg.packetNumber expected:(float)msg.packetTotal];
+          
+          if(msg.packetNumber == msg.packetTotal) {
+            NSError *error = nil;
+            
+            
+            NSData* data = [NSData dataWithBytes:_currentFileBuffer.data() length:_currentFileBuffer.size()];
+            NSFileManager* fileManager = [NSFileManager defaultManager];
+            
+            NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+            [dateFormatter setDateFormat:@"yyyy-MM-dd-HH-mm-ss"];
+            NSString* fileName = [NSString stringWithFormat:@"vic-logs-%@.tar.bz2", [dateFormatter stringFromDate:[NSDate date]]];
+            
+            NSArray* pathParts = [NSArray arrayWithObjects:_downloadFilePath, fileName, nil];
+            NSString* dirPath = _downloadFilePath;
+            NSString* logPath = [NSString pathWithComponents:pathParts];
+            
+            bool createdDirSuccess = [fileManager createDirectoryAtPath:dirPath withIntermediateDirectories:true attributes:nil error:nil];
+            bool success = [data writeToFile:logPath options:NSDataWritingAtomic error:&error];
+            
+            if(!success || !createdDirSuccess) {
+              printf("IO error while trying to write logs.\n");
+            }
+            
+            if(_currentCommand == "logs" && !_readyForNextCommand) {
+              printf("\nDownloaded logs to %s\n", [logPath UTF8String]);
+              
+              _readyForNextCommand = true;
+            }
           }
           
           break;
@@ -840,29 +939,27 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   if(_verbose) [self printSuccess:"### Successfully Created Encrypted Channel ###"];
   
   dispatch_async(_commandQueue, [self]{
-    char input[128];
+    char* input;
+    
+    NSString* shellName = @"vector-????";
+    if(_peripheral.name.length >= 4) {
+      shellName = [_peripheral.name substringFromIndex:(_peripheral.name.length - 4)];
+    }
+    int vColor = [_colorArray[(_commVersion - 1) % _colorArray.count] intValue];
+    
+    char prompt[128];
+    sprintf(prompt, "\033[0;%dmvector-%s#\033[0m ", vColor, [shellName UTF8String]);
+    
     // Start shell
     while(true) {
       if(!_readyForNextCommand) {
         continue;
       }
       
-      memset(input, 0, sizeof(input));
+      input = readline((const char*)prompt);
       
-      NSString* shellName = @"vector-????";
-      if(_peripheral.name.length >= 4) {
-        shellName = [_peripheral.name substringFromIndex:(_peripheral.name.length - 4)];
-      }
-      
-      int vColor = [_colorArray[(_commVersion - 1) % _colorArray.count] intValue];
-      
-      printf("\033[0;%dmvector-%s#\033[0m ", vColor, [shellName UTF8String]);
-      fgets(input, sizeof(input), stdin);
-      
-      for(int i = 1; i < sizeof(input); i++) {
-        if(input[i] == '\0' && input[i-1] == '\n') {
-          input[i-1] = '\0';
-        }
+      if(strlen(input) > 0) {
+        add_history(input);
       }
       
       std::vector<std::string> words = [self GetWordsFromLine:input];
@@ -886,9 +983,12 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         bool hidden = false;
         WiFiAuth auth = AUTH_WPA_PSK;
         
-        if([_wifiAuth valueForKey:ssidS] != nullptr) {
+        NSString* ssidHex = [NSString stringWithUTF8String:[self hexStr:(char*)words[1].c_str() length:ssidS.length].c_str()];
+      
+        if(![_wifiHidden containsObject:ssidHex] && [_wifiAuth valueForKey:ssidS] != nullptr) {
           auth = (WiFiAuth)[[_wifiAuth objectForKey:ssidS] intValue];
         } else {
+          printf("[Hidden network]\n");
           hidden = true;
         }
         
@@ -904,7 +1004,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       } else if(strcmp(words[0].c_str(), "wifi-ip") == 0) {
         Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiIpRequest>(self, _commVersion);
       } else if(strcmp(words[0].c_str(), "ota-start") == 0) {
-        std::string url = "http://sai-general.s3.amazonaws.com/build-assets/ota-test.tar";
+        std::string url = "http://ota-cdn.anki.com/vic/dev/werih2382df23ij/full/latest.ota";
         if(words.size() > 1) {
           url = words[1];
         }
@@ -924,6 +1024,24 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         _currentCommand = "ota-progress";
       } else if(strcmp(words[0].c_str(), "status") == 0) {
         Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsStatusRequest>(self, _commVersion);
+      } else if(strcmp(words[0].c_str(), "logs") == 0) {
+        if(_commVersion < 2) {
+          printf("logs not supported in version %d\n", _commVersion);
+        } else {
+          _readyForNextCommand = false;
+          _currentCommand = "logs";
+          
+          NSArray* pathParts = [NSArray arrayWithObjects:NSHomeDirectory(), @"Downloads", @"mac-client-logs", nil];
+          _downloadFilePath = [NSString pathWithComponents:pathParts];
+          
+          if(words.size() > 1) {
+            _downloadFilePath = [NSString stringWithUTF8String:words[1].c_str()];
+          }
+          
+          printf("Downloading log dump over BLE. This may take a couple minutes.\n");
+          std::vector<std::string> filter;
+          Clad::SendRtsMessage_2<Anki::Victor::ExternalComms::RtsLogRequest>(self, _commVersion, 0, filter);
+        }
       } else if(strcmp(words[0].c_str(), "ssh-send") == 0) {
         NSArray* pathParts = [NSArray arrayWithObjects:NSHomeDirectory(), @".ssh", @"id_rsa_vic_dev.pub", nil];
         NSString* keyPath = [NSString pathWithComponents:pathParts];
@@ -944,6 +1062,8 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         _readyForNextCommand = true;
         _currentCommand = "";
         [self printHelp];
+      } else if(!strcmp(words[0].c_str(), "exit")) {
+        exit(0);
       } else {
         printf("Unrecognized command\n");
         _readyForNextCommand = true;
@@ -959,6 +1079,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   printf("Wifi scan results...\n");
   printf("Signal      Security      SSID\n");
   _wifiAuth = [[NSMutableDictionary alloc] init];
+  _wifiHidden = [[NSMutableSet alloc] init];
   
   for(int i = 0; i < msg.scanResult.size(); i++) {
     std::string sec = "none";
@@ -994,10 +1115,15 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     
     std::string ssidAscii = [self asciiStr:(char*)msg.scanResult[i].wifiSsidHex.c_str() length:(int)msg.scanResult[i].wifiSsidHex.length()];
     
-    printf("%d           %s          %s\n", msg.scanResult[i].signalStrength, sec.c_str(), ssidAscii.c_str());
+    printf("%d           %s          %s %s\n", msg.scanResult[i].signalStrength, sec.c_str(), ssidAscii.c_str(), msg.scanResult[i].hidden? "H" : "_");
     
     NSString* ssidStr = [NSString stringWithUTF8String:ssidAscii.c_str()];
     [_wifiAuth setValue:[NSNumber numberWithInt:msg.scanResult[i].authType] forKey:ssidStr];
+    
+    if(msg.scanResult[i].hidden) {
+      NSString* ssid = [NSString stringWithUTF8String:msg.scanResult[i].wifiSsidHex.c_str()];
+      [_wifiHidden addObject:ssid];
+    }
   }
   
   if(_currentCommand == "wifi-scan" && !_readyForNextCommand) {

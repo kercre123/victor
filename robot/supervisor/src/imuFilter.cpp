@@ -1066,11 +1066,11 @@ namespace Anki {
         recordDataIdx_ = 0;
         imuChunkMsg_.seqId++;
         imuChunkMsg_.chunkId=0;
-        imuChunkMsg_.totalNumChunks = length_ms / (TIME_STEP * IMU_CHUNK_SIZE);
+        imuChunkMsg_.totalNumChunks = length_ms / (ROBOT_TIME_STEP_MS * IMU_CHUNK_SIZE);
 #else
         imuRawDataMsg_.order = 0; // 0 == first message of sequence
         sentIMUDataMsgs_ = 0;
-        totalIMUDataMsgsToSend_ = length_ms / TIME_STEP;
+        totalIMUDataMsgsToSend_ = length_ms / ROBOT_TIME_STEP_MS;
 #endif
       }
 
