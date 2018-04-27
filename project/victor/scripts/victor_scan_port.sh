@@ -30,7 +30,6 @@ do
     if [[ $line = *":"* ]]; then
         proto="${line:0:3}" 
         port=${line##*:}
-        
         if [[ $port =~ $number_rg ]] ; then
            ports[$index]="$proto:$port"
            index=$(( index+1 ))
