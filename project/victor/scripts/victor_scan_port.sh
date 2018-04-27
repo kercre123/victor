@@ -38,4 +38,3 @@ do
     fi
 done
 echo ${ports[*]}
-
