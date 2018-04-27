@@ -16,8 +16,8 @@
       var d = new Date(0);
       d.setUTCSeconds(elem.time);
       delete elem.time;
-      if (elem.debug) {
-        $('<div>' + d + ' - <a href="' + elem.debug.substr('/data/data/com.anki.victor'.length) 
+      if (elem.type == "debugFile") {
+        $('<div>' + d + ' - <a href="' + elem.file.substr('/data/data/com.anki.victor'.length)
           + '">Captured audio link</a></div>').appendTo(parent);
       }
       else {
