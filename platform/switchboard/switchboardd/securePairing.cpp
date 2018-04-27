@@ -325,10 +325,10 @@ void SecurePairing::SendWifiScanResult() {
 
   const uint8_t statusCode = (uint8_t)code;
 
-  std::vector<Anki::Cozmo::ExternalComms::RtsWifiScanResult> wifiScanResults;
+  std::vector<Anki::Cozmo::ExternalComms::RtsWifiScanResult_2> wifiScanResults;
 
   for(int i = 0; i < wifiResults.size(); i++) {
-    Anki::Cozmo::ExternalComms::RtsWifiScanResult result = Anki::Cozmo::ExternalComms::RtsWifiScanResult(wifiResults[i].auth,
+    Anki::Cozmo::ExternalComms::RtsWifiScanResult_2 result = Anki::Cozmo::ExternalComms::RtsWifiScanResult_2(wifiResults[i].auth,
       wifiResults[i].signal_level,
       wifiResults[i].ssid,
       wifiResults[i].hidden);
@@ -337,7 +337,7 @@ void SecurePairing::SendWifiScanResult() {
   }
 
   Log::Write("Sending wifi scan results.");
-  SendRtsMessage<RtsWifiScanResponse>(statusCode, wifiScanResults);
+  SendRtsMessage<RtsWifiScanResponse_2>(statusCode, wifiScanResults);
 }
 
 void SecurePairing::SendWifiConnectResult() {
@@ -684,7 +684,7 @@ void SecurePairing::HandleRtsSsh(const Cozmo::ExternalComms::RtsConnection_2& ms
   }
 }
 #else
-void SecurePairing::HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& msg) {
+void SecurePairing::HandleRtsSsh(const Cozmo::ExternalComms::RtsConnection_2& msg) {
   // log in release
   Log::Write("Received ssh key message in non-debug build.");
 }

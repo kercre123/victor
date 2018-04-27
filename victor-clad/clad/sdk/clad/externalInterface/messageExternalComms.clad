@@ -34,6 +34,12 @@ message RtsWifiScanResult {
     uint_8      authType,
     uint_8      signalStrength,
     string      wifiSsidHex,
+}
+
+message RtsWifiScanResult_2 {
+    uint_8      authType,
+    uint_8      signalStrength,
+    string      wifiSsidHex,
     bool        hidden,
 }
 
@@ -118,6 +124,11 @@ message RtsWifiScanResponse {
     RtsWifiScanResult       scanResult[uint_8],
 }
 
+message RtsWifiScanResponse_2 {
+    uint_8                  statusCode,
+    RtsWifiScanResult_2     scanResult[uint_8],
+}
+
 message RtsOtaUpdateRequest {
     string      url
 }
@@ -199,7 +210,7 @@ union RtsConnection_2 {
     RtsStatusRequest                RtsStatusRequest            = 0x0A,
     RtsStatusResponse_2             RtsStatusResponse_2         = 0x0B,     // This message is update from v1 to include build version.
     RtsWifiScanRequest              RtsWifiScanRequest          = 0x0C,
-    RtsWifiScanResponse             RtsWifiScanResponse         = 0x0D,
+    RtsWifiScanResponse_2           RtsWifiScanResponse_2       = 0x0D,     // This message is update from v1 to include hidden flag.
     RtsOtaUpdateRequest             RtsOtaUpdateRequest         = 0x0E,
     RtsOtaUpdateResponse            RtsOtaUpdateResponse        = 0x0F,
     RtsCancelPairing                RtsCancelPairing            = 0x10,

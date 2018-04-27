@@ -595,9 +595,9 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           
           break;
         }
-        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiScanResponse: {
-          Anki::Victor::ExternalComms::RtsWifiScanResponse msg = rtsMsg.Get_RtsWifiScanResponse();
-          [self HandleWifiScanResponse:msg];
+        case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiScanResponse_2: {
+          Anki::Victor::ExternalComms::RtsWifiScanResponse_2 msg = rtsMsg.Get_RtsWifiScanResponse_2();
+          [self HandleWifiScanResponse_2:msg];
           break;
         }
         case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiAccessPointResponse: {
@@ -983,7 +983,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         bool hidden = false;
         WiFiAuth auth = AUTH_WPA_PSK;
         
-        NSString* ssidHex = [NSString stringWithUTF8String:[self hexStr:(char*)words[1].c_str() length:ssidS.length].c_str()];
+        NSString* ssidHex = [NSString stringWithUTF8String:[self hexStr:(char*)words[1].c_str() length:(int)ssidS.length].c_str()];
       
         if(![_wifiHidden containsObject:ssidHex] && [_wifiAuth valueForKey:ssidS] != nullptr) {
           auth = (WiFiAuth)[[_wifiAuth objectForKey:ssidS] intValue];
@@ -1076,6 +1076,57 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 }
 
 - (void) HandleWifiScanResponse:(const Anki::Victor::ExternalComms::RtsWifiScanResponse&)msg {
+  printf("Wifi scan results...\n");
+  printf("Signal      Security      SSID\n");
+  _wifiAuth = [[NSMutableDictionary alloc] init];
+  _wifiHidden = [[NSMutableSet alloc] init];
+  
+  for(int i = 0; i < msg.scanResult.size(); i++) {
+    std::string sec = "none";
+    
+    switch(msg.scanResult[i].authType) {
+      case 0:
+        sec = "none";
+        break;
+      case 1:
+        sec = "WEP ";
+        break;
+      case 2:
+        sec = "WEPS";
+        break;
+      case 3:
+        sec = "IEEE";
+        break;
+      case 4:
+        sec = "PSKo";
+        break;
+      case 5:
+        sec = "EAPo";
+        break;
+      case 6:
+        sec = "PSK ";
+        break;
+      case 7:
+        sec = "EAP";
+        break;
+      default:
+        break;
+    }
+    
+    std::string ssidAscii = [self asciiStr:(char*)msg.scanResult[i].wifiSsidHex.c_str() length:(int)msg.scanResult[i].wifiSsidHex.length()];
+    
+    printf("%d           %s          %s\n", msg.scanResult[i].signalStrength, sec.c_str(), ssidAscii.c_str());
+    
+    NSString* ssidStr = [NSString stringWithUTF8String:ssidAscii.c_str()];
+    [_wifiAuth setValue:[NSNumber numberWithInt:msg.scanResult[i].authType] forKey:ssidStr];
+  }
+  
+  if(_currentCommand == "wifi-scan" && !_readyForNextCommand) {
+    _readyForNextCommand = true;
+  }
+}
+
+- (void) HandleWifiScanResponse_2:(const Anki::Victor::ExternalComms::RtsWifiScanResponse_2&)msg {
   printf("Wifi scan results...\n");
   printf("Signal      Security      SSID\n");
   _wifiAuth = [[NSMutableDictionary alloc] init];
