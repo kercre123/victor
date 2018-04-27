@@ -15,7 +15,7 @@ void Process_RtsWifiIpResponse(const Anki::Victor::ExternalComms::RtsWifiIpRespo
 void Process_RtsStatusRequest(const Anki::Victor::ExternalComms::RtsStatusRequest& msg);
 void Process_RtsStatusResponse_2(const Anki::Victor::ExternalComms::RtsStatusResponse_2& msg);
 void Process_RtsWifiScanRequest(const Anki::Victor::ExternalComms::RtsWifiScanRequest& msg);
-void Process_RtsWifiScanResponse(const Anki::Victor::ExternalComms::RtsWifiScanResponse& msg);
+void Process_RtsWifiScanResponse_2(const Anki::Victor::ExternalComms::RtsWifiScanResponse_2& msg);
 void Process_RtsOtaUpdateRequest(const Anki::Victor::ExternalComms::RtsOtaUpdateRequest& msg);
 void Process_RtsOtaUpdateResponse(const Anki::Victor::ExternalComms::RtsOtaUpdateResponse& msg);
 void Process_RtsCancelPairing(const Anki::Victor::ExternalComms::RtsCancelPairing& msg);

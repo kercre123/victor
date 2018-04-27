@@ -27,7 +27,7 @@ enum class RtsConnection_2Tag : uint8_t {
   RtsStatusRequest           = 0xa,  // 10
   RtsStatusResponse_2        = 0xb,  // 11
   RtsWifiScanRequest         = 0xc,  // 12
-  RtsWifiScanResponse        = 0xd,  // 13
+  RtsWifiScanResponse_2      = 0xd,  // 13
   RtsOtaUpdateRequest        = 0xe,  // 14
   RtsOtaUpdateResponse       = 0xf,  // 15
   RtsCancelPairing           = 0x10, // 16

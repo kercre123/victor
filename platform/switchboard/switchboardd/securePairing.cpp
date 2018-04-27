@@ -325,10 +325,10 @@ void SecurePairing::SendWifiScanResult() {
 
   const uint8_t statusCode = (uint8_t)code;
 
-  std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult> wifiScanResults;
+  std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult_2> wifiScanResults;
 
   for(int i = 0; i < wifiResults.size(); i++) {
-    Anki::Victor::ExternalComms::RtsWifiScanResult result = Anki::Victor::ExternalComms::RtsWifiScanResult(wifiResults[i].auth,
+    Anki::Victor::ExternalComms::RtsWifiScanResult_2 result = Anki::Victor::ExternalComms::RtsWifiScanResult_2(wifiResults[i].auth,
       wifiResults[i].signal_level,
       wifiResults[i].ssid,
       wifiResults[i].hidden);
@@ -337,7 +337,7 @@ void SecurePairing::SendWifiScanResult() {
   }
 
   Log::Write("Sending wifi scan results.");
-  SendRtsMessage<RtsWifiScanResponse>(statusCode, wifiScanResults);
+  SendRtsMessage<RtsWifiScanResponse_2>(statusCode, wifiScanResults);
 }
 
 void SecurePairing::SendWifiConnectResult() {

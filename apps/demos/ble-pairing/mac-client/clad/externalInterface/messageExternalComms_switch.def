@@ -45,8 +45,8 @@ case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsStatusResponse_2:
 case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsWifiScanRequest:
   Process_RtsWifiScanRequest(msg.Get_RtsWifiScanRequest());
   break;
-case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsWifiScanResponse:
-  Process_RtsWifiScanResponse(msg.Get_RtsWifiScanResponse());
+case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsWifiScanResponse_2:
+  Process_RtsWifiScanResponse_2(msg.Get_RtsWifiScanResponse_2());
   break;
 case Anki::Victor::ExternalComms::RtsConnection_2::Tag::RtsOtaUpdateRequest:
   Process_RtsOtaUpdateRequest(msg.Get_RtsOtaUpdateRequest());
