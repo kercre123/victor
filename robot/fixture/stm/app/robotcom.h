@@ -81,6 +81,7 @@ void          rcomEng(uint8_t idx, uint32_t val);
 void          rcomLfe(uint8_t idx, uint32_t val);
 void          rcomSmr(uint8_t idx, uint32_t val);
 uint32_t      rcomGmr(uint8_t idx);
+void          rcomPwr(uint8_t st); //st={0,1} -> {on,off}
 
 
 #endif //ROBOTCOM_H

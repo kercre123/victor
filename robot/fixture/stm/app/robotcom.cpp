@@ -594,6 +594,11 @@ static robot_sr_t* spine_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8
   return (robot_sr_t*)srbuf;
 }
 
+void spinePwr(uint8_t st) {
+  //XXX: implement me
+  throw ERROR_EMPTY_COMMAND;
+}
+
 //-----------------------------------------------------------------------------
 //                  Robot Communications
 //-----------------------------------------------------------------------------
@@ -637,6 +642,7 @@ int  rcomRlg(uint8_t idx, char *buf, int buf_max_size) { return !rcom_target_spi
 void rcomEng(uint8_t idx, uint32_t val) { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(idx, val, "eng", 0); }
 void rcomLfe(uint8_t idx, uint32_t val) { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(idx, val, "lfe", 0); }
 void rcomSmr(uint8_t idx, uint32_t val) { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(idx, val, "smr", 0, false); }
+void rcomPwr(uint8_t st)                { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(st,  0,   "pwr", 0); else spinePwr(st); }
 
 uint32_t rcomGmr(uint8_t idx) { 
   return !rcom_target_spine_nCCC ? cccGmr(idx) : 0;
