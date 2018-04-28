@@ -40,6 +40,9 @@ class ILoggerProvider;
 class ChannelFilter;
 class IEventProvider;
 
+using KVPair = std::pair<const char *, const char *>;
+using KVPairVector = std::vector<KVPair>;
+
 const uint8_t DASMaxSvalLength = 128;
 
 std::string HexDump(const void *value, const size_t len, char delimiter);
@@ -55,63 +58,66 @@ extern bool _errG;
 // Global flag to control break-on-error behavior
 extern bool _errBreakOnError;
 
+//__attribute__((__deprecated__))
 __attribute__((__used__))
-void sEventF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__((format(printf,3,4)));
+void sEventF(const char* name, const KVPairVector & keyvals, const char* format, ...) __attribute__((format(printf,3,4)));
+
+//__attribute__((__deprecated__))
+__attribute__((__used__))
+void sEventV(const char* name, const KVPairVector & keyvals, const char* format, va_list args) __attribute__((format(printf,3,0)));
+
+//__attribute__((__deprecated__))
+__attribute__((__used__))
+void sEvent(const char* name, const KVPairVector & keyvals, const char* strval);
 
 __attribute__((__used__))
-void sEventV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args) __attribute__((format(printf,3,0)));
+void sErrorF(const char* name, const KVPairVector & keyvals, const char* format, ...) __attribute__((format(printf,3,4)));
 
 __attribute__((__used__))
-void sEvent(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
+void sErrorV(const char* name, const KVPairVector & keyvals, const char* format, va_list args) __attribute__((format(printf,3,0)));
 
 __attribute__((__used__))
-void sErrorF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__((format(printf,3,4)));
+void sError(const char* name, const KVPairVector & keyvals, const char* strval);
 
 __attribute__((__used__))
-void sErrorV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args) __attribute__((format(printf,3,0)));
+void sWarningF(const char* name, const KVPairVector & keyvals, const char* format, ...) __attribute__((format(printf,3,4)));
 
 __attribute__((__used__))
-void sError(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
+void sWarningV(const char* name, const KVPairVector & keyvals, const char* format, va_list args) __attribute__((format(printf,3,0)));
 
 __attribute__((__used__))
-void sWarningF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__((format(printf,3,4)));
+void sWarning(const char* name, const KVPairVector & keyvals, const char* strval);
 
 __attribute__((__used__))
-void sWarningV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args) __attribute__((format(printf,3,0)));
+void sInfoF(const char* name, const KVPairVector & keyvals, const char* format, ...) __attribute__((format(printf,3,4)));
 
 __attribute__((__used__))
-void sWarning(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
+void sInfoV(const char* name, const KVPairVector & keyvals, const char* format, va_list args) __attribute__((format(printf,3,0)));
 
 __attribute__((__used__))
-void sInfoF(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__((format(printf,3,4)));
+void sInfo(const char* name, const KVPairVector & keyvals, const char* strval);
 
 __attribute__((__used__))
-void sChanneledInfoF(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__((format(printf,4,5)));
+void sChanneledInfoF(const char* channel, const char* name, const KVPairVector & keyvals, const char* format, ...) __attribute__((format(printf,4,5)));
 
 __attribute__((__used__))
-void sInfoV(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args) __attribute__((format(printf,3,0)));
+void sChanneledInfoV(const char* channel, const char* name, const KVPairVector & keyvals, const char* format, va_list args) __attribute__((format(printf,4,0)));
 
 __attribute__((__used__))
-void sChanneledInfoV(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args) __attribute__((format(printf,4,0)));
+void sChanneledInfo(const char* channel, const char* name, const KVPairVector & keyvals, const char* strval);
 
 __attribute__((__used__))
-void sInfo(const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
+void sChanneledDebugF(const char* channel, const char* name, const KVPairVector & keyvals, const char* format, ...) __attribute__((format(printf,4,5)));
 
 __attribute__((__used__))
-void sChanneledInfo(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
+void sChanneledDebugV(const char* channel, const char* name, const KVPairVector & keyvals, const char* format, va_list args) __attribute__((format(printf,4,0)));
 
 __attribute__((__used__))
-void sChanneledDebugF(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, ...) __attribute__((format(printf,4,5)));
-
-__attribute__((__used__))
-void sChanneledDebugV(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* format, va_list args) __attribute__((format(printf,4,0)));
-
-__attribute__((__used__))
-void sChanneledDebug(const char* channelName, const char* eventName, const std::vector<std::pair<const char*, const char*>>& keyValues, const char* eventValue);
+void sChanneledDebug(const char* channel, const char* name, const KVPairVector & keyvals, const char* strval);
 
 // Helper for use with ANKI_VERIFY macro. Always returns false.
 __attribute__((__used__))
-bool sVerifyFailedReturnFalse(const char* eventName, const char* format, ...) __attribute__((format(printf,2,3)));
+bool sVerifyFailedReturnFalse(const char* name, const char* format, ...) __attribute__((format(printf,2,3)));
 
 
 void sSetGlobal(const char* key, const char* value);
@@ -154,7 +160,11 @@ __attribute__((noreturn)) void sAbort();
 } // namespace Util
 } // namespace Anki
 
-#define DEFAULT_CHANNEL_NAME "Unnamed"
+// Special channel names
+constexpr const char * LOG_UNNAMED = "Unnamed";
+constexpr const char * LOG_UNFILTERED = "Unfiltered";
+
+#define DEFAULT_CHANNEL_NAME LOG_UNNAMED
 
 //
 // Logging with names.
@@ -258,25 +268,25 @@ PRINT_PERIODIC_CH_HELPER(sChanneledInfoF, period, channel, name, format, ##__VA_
 PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, period, channel, name, format, ##__VA_ARGS__)
 
 // Streams
-#define PRINT_STREAM_ERROR(eventName, args) do{         \
+#define PRINT_STREAM_ERROR(name, args) do{         \
       std::stringstream ss; ss<<args;                   \
-      ::Anki::Util::sError(eventName, {}, ss.str().c_str()); \
+      ::Anki::Util::sError(name, {}, ss.str().c_str()); \
     } while(0)
 
-#define PRINT_STREAM_WARNING(eventName, args) do{       \
+#define PRINT_STREAM_WARNING(name, args) do{       \
       std::stringstream ss; ss<<args;                   \
-      ::Anki::Util::sWarning(eventName, {}, ss.str().c_str()); \
+      ::Anki::Util::sWarning(name, {}, ss.str().c_str()); \
     } while(0)
 
-#define PRINT_STREAM_INFO(eventName, args) do{          \
+#define PRINT_STREAM_INFO(name, args) do{          \
       std::stringstream ss; ss<<args;                   \
-      ::Anki::Util::sChanneledInfo(DEFAULT_CHANNEL_NAME, eventName, {}, ss.str().c_str()); \
+      ::Anki::Util::sChanneledInfo(DEFAULT_CHANNEL_NAME, name, {}, ss.str().c_str()); \
     } while(0)
 
 #if ALLOW_DEBUG_LOGGING
-#define PRINT_STREAM_DEBUG(eventName, args) do{         \
+#define PRINT_STREAM_DEBUG(name, args) do {         \
       std::stringstream ss; ss<<args;                   \
-      ::Anki::Util::sChanneledDebug(DEFAULT_CHANNEL_NAME, eventName, {}, ss.str().c_str()); \
+      ::Anki::Util::sChanneledDebug(DEFAULT_CHANNEL_NAME, name, {}, ss.str().c_str()); \
     } while(0)
 #else
 #define PRINT_STREAM_DEBUG(eventName, args)
@@ -284,9 +294,9 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, period, channel, name, format, ##__VA
 
 // Auto streams
 #if ALLOW_DEBUG_LOGGING
-#define PRINT_AUTOSTREAM_DEBUG(args) do{ \
-    char eventNameBuf[256]; GENERATE_EVENT_NAME(eventNameBuf, sizeof(eventNameBuf)); \
-    PRINT_STREAM_DEBUG(eventNameBuf, args); }while(0)
+#define PRINT_AUTOSTREAM_DEBUG(args) do { \
+    char nameBuf[256]; GENERATE_EVENT_NAME(nameBuf, sizeof(nameBuf)); \
+    PRINT_STREAM_DEBUG(nameBuf, args); } while(0)
 #else
 #define PRINT_AUTOSTREAM_DEBUG(args)
 #endif

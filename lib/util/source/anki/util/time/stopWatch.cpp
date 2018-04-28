@@ -3,9 +3,9 @@
  *
  * Author: damjan
  * Created: 11/20/12
- * 
+ *
  * Description: Utility class for measuring time and averaging recorded times and finding maximums.
- * 
+ *
  *
  * Copyright: Anki, Inc. 2012
  *
@@ -75,7 +75,7 @@ void StopWatch::LogStats()
 {
   // log some data
   #define SEND_STOPWATCH_STATS(eventNameThird, stat) \
-  { string eventName ("StopWatch."+ id_ + eventNameThird); LOG_EVENT(eventName.c_str(), "%f", (double)stat); }
+  { string eventName ("StopWatch."+ id_ + eventNameThird); PRINT_NAMED_INFO(eventName.c_str(), "%f", (double)stat); }
 
   SEND_STOPWATCH_STATS(".f_average", average_);
   SEND_STOPWATCH_STATS(".i_tickCount", count_);
@@ -92,4 +92,3 @@ void StopWatch::LogStats()
 } // namespace Time
 } // namespace Util
 } // namespace Anki
-

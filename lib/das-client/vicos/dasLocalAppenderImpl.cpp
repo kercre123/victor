@@ -39,11 +39,9 @@ void DasLocalAppenderImpl::append(DASLogLevel level, const char* eventName, cons
 
   switch (level) {
   case DASLogLevel_Debug:
-    priority = ANDROID_LOG_VERBOSE;
-    break;
-  case DASLogLevel_Info:
     priority = ANDROID_LOG_DEBUG;
     break;
+  case DASLogLevel_Info:
   case DASLogLevel_Event:
     priority = ANDROID_LOG_INFO;
     break;

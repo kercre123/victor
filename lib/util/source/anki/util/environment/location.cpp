@@ -103,7 +103,7 @@ void Location::StartProvider(const Location::ProviderConfig& config)
       Location location;
       bool parsingSuccess = ParseLocationFromJsonFile(downloadPath, location);
       if (!parsingSuccess) {
-        Util::sEventF("util.location.failed_to_parse", {}, "%s", request.uri.c_str());
+        PRINT_NAMED_INFO("util.location.failed_to_parse", "%s", request.uri.c_str());
         FileUtils::DeleteFile(downloadPath);
         return;
       }
@@ -139,7 +139,7 @@ bool Location::GetCurrentLocation(Location& location)
   if (sHaveCachedLocation) {
     location = sCachedLocation;
   } else {
-    Util::sEventF("util.get_current_location.do_not_have_cached_location", {}, "");
+    PRINT_NAMED_INFO("util.get_current_location.do_not_have_cached_location", "");
   }
 
   return sHaveCachedLocation;

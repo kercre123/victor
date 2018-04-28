@@ -27,9 +27,8 @@ static inline android_LogPriority GetPriority(LogLevel level)
 {
   switch (level) {
     case LogLevel::LOG_LEVEL_DEBUG:
-      return ANDROID_LOG_VERBOSE;
-    case LogLevel::LOG_LEVEL_INFO:
       return ANDROID_LOG_DEBUG;
+    case LogLevel::LOG_LEVEL_INFO:
     case LogLevel::LOG_LEVEL_EVENT:
       return ANDROID_LOG_INFO;
     case LogLevel::LOG_LEVEL_WARN:

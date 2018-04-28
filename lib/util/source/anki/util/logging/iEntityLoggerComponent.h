@@ -23,10 +23,12 @@ public:
   // loggers
   virtual void ErrorF(const char* eventName, const char* eventValueFormat, ...) const __attribute((format(printf, 3, 4))) {};
   virtual void WarnF(const char *eventName, const char *eventValueFormat, ...) const __attribute((format(printf, 3, 4))) {};
-  virtual void EventF(const char *eventName, const char *eventValueFormat, ...) const __attribute((format(printf, 3, 4))) {};
   virtual void InfoF(const char* eventName, const char* eventValueFormat, ...) const __attribute((format(printf, 3, 4))) {};
   virtual void ChanneledInfoF(const char* channelName, const char* eventName, const char* eventValueFormat, ...) const __attribute((format(printf, 4, 5))) {};
   virtual void DebugF(const char* eventName, const char* eventValueFormat, ...) const __attribute((format(printf, 3, 4))) {};
+
+  //__attribute__((__deprecated__))
+  virtual void EventF(const char *eventName, const char *eventValueFormat, ...) const __attribute((format(printf, 3, 4))) {};
 };
 
 
