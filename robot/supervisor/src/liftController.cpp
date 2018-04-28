@@ -625,7 +625,7 @@ namespace Anki {
             // Stop messing with the lift! Going limp until you do!
             AnkiInfo("LiftController.MotorBurnoutProtection.GoingLimp", "");
             Messages::SendMotorAutoEnabledMsg(MotorID::MOTOR_LIFT, false);
-            Disable(true);
+            DisableInternal(true);
           } else {
             // Burnout protection triggered. Recalibrating.
             AnkiInfo("LiftController.MotorBurnoutProtection.Recalibrating", "");            
@@ -670,9 +670,11 @@ namespace Anki {
           // Disables motor if robot placed on charger and it's
           // not currently moving to a target angle.
           DisableInternal();
-        } else if (enabledExternally_) {
+        } else if (enabledExternally_ && enableAtTime_ms_ == 0) {
           // Otherwise re-enables lift if it wasn't disabled external
-          // to this file (e.g. via EnableMotorPower msg).
+          // to this file (e.g. via EnableMotorPower msg) and it's
+          // not scheduled to auto-enable because it was originally
+          // disabled by motor burnout protection
           EnableInternal();
         }
 #endif
@@ -687,9 +689,9 @@ namespace Anki {
           if (IsMoving()) {
             enableAtTime_ms_ = currTime + REENABLE_TIMEOUT_MS;
             return RESULT_OK;
-          } else if (currTime >= enableAtTime_ms_) {
+          } else if (enabledExternally_ && currTime >= enableAtTime_ms_) {
             Messages::SendMotorAutoEnabledMsg(MotorID::MOTOR_LIFT, true);
-            Enable();
+            EnableInternal();
           } else {
             return RESULT_OK;
           }
