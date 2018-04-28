@@ -29,15 +29,18 @@
     },
     {
       "name": "ObservingOnChargerRecentlyPlaced",
-      "behavior": "ObservingOnCharger"
+      "behavior": "ObservingOnCharger",
+      "getInBehavior": "ObservingOnChargerGetIn"
     },
     {
       "name": "ObservingDriveOffCharger",
-      "behavior": "ObservingDriveOffCharger"
+      "behavior": "ObservingDriveOffCharger",
+      "getInBehavior": "ObservingOnChargerGetOut"
     },
     {
       "name": "DriveOffChargerIntoSocializing",
-      "behavior": "DriveOffChargerIntoSocializing"
+      "behavior": "DriveOffChargerIntoSocializing",
+      "getInBehavior": "ObservingOnChargerGetOut"
     },    
     {
       "name": "Observing",
@@ -111,10 +114,10 @@
           "condition": {
             "conditionType": "Compound",
             "not": {
-              "conditionType": "OnCharger"
+              "conditionType": "OnChargerPlatform"
             }
           }
-        },        
+        },
         {
           "to": "DriveOffChargerIntoSocializing",
           "condition": {
@@ -178,6 +181,17 @@
             ]
           }
         }
+      ],
+      "exitTransitions": [
+        {
+          "to": "Observing",
+          "condition": {
+            "conditionType": "Compound" ,
+            "not": {
+              "conditionType": "OnCharger"
+            }
+          }
+        }
       ]
     },
 
@@ -190,7 +204,7 @@
           "condition": {
             "conditionType": "Compound",
             "not": {
-              "conditionType": "OnCharger"
+              "conditionType": "OnChargerPlatform"
             }
           }
         }
@@ -200,6 +214,17 @@
           "to": "ObservingOnCharger",
           "condition": {
             "customCondition": "NoLongerRecentlyPlaced"
+          }
+        }
+      ],
+      "exitTransitions": [
+        {
+          "to": "Observing",
+          "condition": {
+            "conditionType": "Compound",
+            "not": {
+              "conditionType": "OnCharger"
+            }
           }
         }
       ]

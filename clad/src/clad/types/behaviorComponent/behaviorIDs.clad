@@ -169,6 +169,8 @@ enum uint_8 BehaviorID {
   ObservingFindFaces,
   ObservingLookAtFaces,
   ObservingOnCharger,
+  ObservingOnChargerGetIn,
+  ObservingOnChargerGetOut,
   ObservingOnChargerIdle,
   ObservingOnChargerIdleAnim,
   ReactToMotion,
