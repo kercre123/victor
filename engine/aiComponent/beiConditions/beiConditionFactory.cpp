@@ -30,6 +30,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionObstacleDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionOffTreadsState.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionOnCharger.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionOnChargerPlatform.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionPetInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionProxInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPlacedOnSlope.h"
@@ -302,6 +303,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::OnCharger:
     {
       strategy = std::make_shared<ConditionOnCharger>(config);
+      break;
+    }
+    case BEIConditionType::OnChargerPlatform:
+    {
+      strategy = std::make_shared<ConditionOnChargerPlatform>(config);
       break;
     }
     case BEIConditionType::OffTreadsState:

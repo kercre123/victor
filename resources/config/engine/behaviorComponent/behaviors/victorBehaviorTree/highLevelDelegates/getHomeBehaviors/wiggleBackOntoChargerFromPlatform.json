@@ -1,0 +1,8 @@
+{
+  "behaviorClass" : "WiggleOntoChargerContacts",
+  "behaviorID" : "WiggleBackOntoChargerFromPlatform",
+
+  "wantsToBeActivatedCondition": {
+    "conditionType": "OnChargerPlatform"
+  }
+}

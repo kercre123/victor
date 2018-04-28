@@ -40,6 +40,7 @@ enum uint_8 BehaviorClass {
   StackBlocks,
   Turn,
   TurnToFace,
+  WiggleOntoChargerContacts,
 
   // coordinators
   CoordinateGlobalInterrupts,

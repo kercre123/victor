@@ -143,6 +143,7 @@ enum uint_8 BehaviorID {
   GoHome,
   LowBatteryFindAndGoToHome,
   RequestToGoHome,
+  WiggleBackOntoChargerFromPlatform,
 
   // victorBehaviorTree/highLevelDelegates
   InspectCube,
