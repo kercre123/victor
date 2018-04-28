@@ -294,7 +294,7 @@
               },
               {
                 "conditionType": "SimpleMood",
-                "from": "LowStim",
+                "from": "HighStim",
                 "to": "MedStim"
               }
             ]
