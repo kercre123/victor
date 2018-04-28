@@ -53,6 +53,9 @@ namespace Cozmo {
   // Private members:
   namespace {
 
+  static const Transform3d kTeleportToChargerOffset({ M_PI_2_F, Z_AXIS_3D() },
+                                                    { 0.0f, 76.696196f, 6.0f });
+
     std::set<int> lastKeysPressed_;
     
     s8 _steeringDir = 0;  // -1 = left, 0 = straight, 1 = right
@@ -755,6 +758,35 @@ namespace Cozmo {
     
     SendMountSelectedCharger(pathMotionProfile_,
                              useCliffSensorCorrection);
+  }
+
+  void WebotsKeyboardController::TeleportOntoCharger()
+  {
+    if( _chargerNode == nullptr ) {
+      // look for charger node
+      const char* nodeName = "VictorCharger";
+      const auto& chargerNodeInfo = WebotsHelpers::GetFirstMatchingSceneTreeNode(GetSupervisor(), nodeName);
+      if( chargerNodeInfo.nodePtr == nullptr ) {
+        PRINT_NAMED_WARNING("WebotsKeyboardController.TeleportOntoCharger.NoChargerNode",
+                            "can't find node '%s'",
+                            nodeName);
+        return;
+      }
+
+      _chargerNode = chargerNodeInfo.nodePtr;
+    }
+
+    const Pose3d chargerPose = GetPose3dOfNode(_chargerNode);
+    Pose3d targetPose(kTeleportToChargerOffset, chargerPose);
+    const bool transformOK = targetPose.GetWithRespectTo(_webotsOrigin, targetPose);
+    if( !transformOK ) {
+      PRINT_NAMED_WARNING("WebotsKeyboardController.TeleportOntoCharger.PoseChainError",
+                          "Cannot get target pose W.R.T. webots origin");
+      return;
+    }
+      
+    SetActualRobotPose(targetPose);
+    SendForceDelocalize();
   }
   
   
@@ -2066,7 +2098,7 @@ namespace Cozmo {
     REGISTER_KEY_FCN('R', MOD_NONE,      MountSelectedCharger, "Dock to charger using cliff sensor correction");
     REGISTER_KEY_FCN('R', MOD_SHIFT,     MountSelectedCharger, "Dock to charger without using cliff sensor correction");
     REGISTER_KEY_FCN('R', MOD_ALT,       FlipSelectedBlock,    "Flips the selected cube");
-//      REGISTER_KEY_FCN('R', MOD_ALT_SHIFT, , "");
+    REGISTER_KEY_FCN('R', MOD_ALT_SHIFT, TeleportOntoCharger,  "Teleport the robot onto the charger");
     
     REGISTER_KEY_FCN('S', MOD_NONE,      MoveHeadUp, "Move head up");
     REGISTER_KEY_FCN('S', MOD_SHIFT,     MoveHeadUp, "Move head up (half speed)");
