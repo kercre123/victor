@@ -3,7 +3,7 @@
  *
  * Author: bsofman (boris) (yes he did, Damjan cleaned it up for util namespace)
  * Created: 6/11/2012
- * 
+ *
  * Description: Random number generator class
  *
  **/
@@ -26,16 +26,16 @@ void RandomGenerator::SetSeed(const std::string& who, uint32_t seed)
     std::random_device rd;
     seed = rd();
   }
-  
+
   rng.seed(seed);
-  
+
   if(!who.empty())
   {
     // Log the actual random seed used and who set it
-    Util::sEventF("app.random_seed", {{DDATA, who.c_str()}}, "%u", seed);
+    Util::sInfoF("app.random_seed", {{DDATA, who.c_str()}}, "%u", seed);
   }
 }
-  
+
 double RandomGenerator::GetNextDbl() const
 {
   double r = uniDbl(rng);
@@ -51,7 +51,7 @@ double RandomGenerator::RandDbl(double maxVal) const
   return maxVal * GetNextDbl();
 }
 
- 
+
 // Returns a random floating point number in the range [minVal, maxVal]
 double RandomGenerator::RandDblInRange(double minVal, double maxVal) const
 {
@@ -62,7 +62,7 @@ double RandomGenerator::RandDblInRange(double minVal, double maxVal) const
 // Returns a random integer in the range [0,numVals-1]
 int RandomGenerator::RandInt(int numVals) const
 {
-  return (int)(RandDbl() * numVals); 
+  return (int)(RandDbl() * numVals);
 }
 
 
@@ -75,5 +75,3 @@ int RandomGenerator::RandIntInRange(int minVal, int maxVal) const
 
 } // namespace BaseStation
 } // namespace
-
-

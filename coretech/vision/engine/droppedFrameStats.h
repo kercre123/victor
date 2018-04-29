@@ -20,39 +20,39 @@ namespace Vision {
 class DroppedFrameStats
 {
 public:
-  
+
   DroppedFrameStats() { }
-  
+
   // Defines how long the window is for computing "recent" drop stats,
   // in number of frames. Default is 100.
   void SetRecentWindowLength(u32 N) { _recentN = N; }
-  
+
   // Set channel name for PRINT_CH_INFO messages. Default is "Performance".
   void SetChannelName(const char* channelName) { _channelName = channelName; }
-  
+
   void Update(bool isDroppingFrame)
   {
     ++_numFrames;
     ++_numRecentFrames;
-    
+
     if(isDroppingFrame)
     {
       ++_numTotalDrops;
       ++_numRecentDrops;
     }
-    
+
     if(_numRecentFrames == _recentN)
     {
       // NOTE: Logging drop counts, putting associated frame count in Data field
       // So to get rate, divide s_val (count) by frame count (ddata)
-      Util::sEventF("robot.vision.dropped_frame_overall_count",
-                    {{DDATA, std::to_string(_numFrames).c_str()}},
-                    "%u", _numTotalDrops);
-      
-      Util::sEventF("robot.vision.dropped_frame_recent_count",
-                    {{DDATA, std::to_string(_numRecentFrames).c_str()}},
-                    "%u", _numRecentDrops);
-      
+      Util::sInfoF("robot.vision.dropped_frame_overall_count",
+                   {{DDATA, std::to_string(_numFrames).c_str()}},
+                   "%u", _numTotalDrops);
+
+      Util::sInfoF("robot.vision.dropped_frame_recent_count",
+                   {{DDATA, std::to_string(_numRecentFrames).c_str()}},
+                   "%u", _numRecentDrops);
+
       if(_numRecentDrops > 0)
       {
         PRINT_CH_INFO(_channelName, "DroppedFrameStats",
@@ -62,25 +62,25 @@ public:
                       _numRecentDrops, _numRecentFrames,
                       (f32)_numRecentDrops / (f32)_numRecentFrames * 100.f);
       }
-      
+
       _numRecentFrames = 0;
       _numRecentDrops = 0;
     }
   }
-  
+
 private:
-  
+
   const char* _channelName = "Performance";
-  
+
   u32  _recentN         = 100;
   u32  _numFrames       = 0;
   u32  _numRecentFrames = 0;
   u32  _numTotalDrops   = 0;
   u32  _numRecentDrops  = 0;
-  
+
 }; // class DroppedFrameStats
 
-  
+
 } // namespace Cozmo
 } // namespace Anki
 

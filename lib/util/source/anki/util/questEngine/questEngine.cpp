@@ -26,7 +26,7 @@
 namespace Anki {
 namespace Util {
 namespace QuestEngine {
-  
+
 const uint8_t kPersistentFileMarker = 7;
 
 QuestEngine::QuestEngine(const std::string& fileName)
@@ -48,7 +48,7 @@ QuestEngine::~QuestEngine()
   SafeDelete(_availableSignal);
   SafeDelete(_triggeredSignal);
 }
-  
+
 void QuestEngine::IncrementEvent(const std::string& eventName, const uint16_t count)
 {
   _countMap[eventName] += count;
@@ -59,15 +59,15 @@ void QuestEngine::ResetEvent(const std::string& eventName)
 {
   _countMap.erase(eventName);
 }
-  
+
 uint32_t QuestEngine::GetEventCount(const std::string& eventName)
 {
   const auto it = _countMap.find(eventName);
-  
+
   if( it != _countMap.end() ) {
     return it->second;
   }
-  
+
   return 0;
 }
 
@@ -86,7 +86,7 @@ void QuestEngine::Load()
     fileIn.close();
     success = true;
   }
-  
+
   if( success && body.size() > 0 ) {
     uint8_t marker = body[0];
     if( marker != kPersistentFileMarker ) {
@@ -96,13 +96,13 @@ void QuestEngine::Load()
       uint8_t* buffer = body.data();
       QuestStore store;
       store.Unpack(buffer+1, body.size()-1);
-      
+
       _countMap.clear();
       for (auto eventIterator = store.eventStats.begin(); eventIterator != store.eventStats.end(); ++eventIterator) {
         const std::string& eventName = eventIterator->eventName;
         _countMap[eventName] = eventIterator->count;
       }
-      
+
       _notices.clear();
       for (auto noticeIterator = store.notices.begin(); noticeIterator != store.notices.end(); ++noticeIterator) {
         const bool noticeForce = noticeIterator->force;
@@ -117,7 +117,7 @@ void QuestEngine::Load()
         QuestNotice questNotice(noticeForce, noticePriority, noticeTime, guid, target, titleKey, descriptionKey, buttonKey, navigationAction);
         _notices.insert(questNotice);
       }
-      
+
       _triggerHistoryMap.clear();
       for (auto triggerIterator = store.ruleTriggers.begin(); triggerIterator != store.ruleTriggers.end(); ++triggerIterator) {
         const std::string& ruleId = triggerIterator->ruleId;
@@ -131,7 +131,7 @@ void QuestEngine::Load()
     PRINT_NAMED_WARNING("QuestEngine.Load", "Failed!");
   }
 }
-  
+
 void QuestEngine::Save()
 {
   QuestStore store;
@@ -151,13 +151,13 @@ void QuestEngine::Save()
     }
     store.ruleTriggers.push_back(log);
   }
-  
+
   size_t bufferSize = store.Size()+1;
   uint8_t* buffer = new uint8_t[bufferSize];
   buffer[0] = kPersistentFileMarker;
   store.Pack(buffer+1, store.Size());
-  
-  Util::sEvent("quest_engine.save", {}, std::to_string(store.Size()).c_str());
+
+  Util::sInfo("quest_engine.save", {}, std::to_string(store.Size()).c_str());
 
   // write file
   bool success = false;
@@ -169,16 +169,16 @@ void QuestEngine::Save()
     success = true;
   }
   delete[] buffer;
-  
+
   if( !success ) {
     PRINT_NAMED_ERROR("QuestEngine.Save", "Failed!");
   }
 }
-  
+
 bool QuestEngine::AddRule(QuestRule* rule)
 {
   assert(nullptr != rule);
-  
+
   const std::vector<std::string>& eventNames = rule->GetEventNames();
   const std::string& ruleId = rule->GetId();
   if( !eventNames.empty() && !ruleId.empty() && _ruleIds.find(ruleId) == _ruleIds.end() ) {
@@ -194,14 +194,14 @@ bool QuestEngine::AddRule(QuestRule* rule)
         std::vector<QuestRule*>& eventRules = eventRulesIterator->second;
         eventRules.push_back(rule);
       }
-      
+
     }
     _addedSignal->emit(*rule);
     return true;
   }
   return false;
 }
-  
+
 void QuestEngine::ClearRules()
 {
   for (auto it = _rules.begin(); it != _rules.end(); ++it) {
@@ -221,12 +221,12 @@ const std::vector<Util::QuestEngine::QuestRule*> QuestEngine::GetAvailableRules(
   }
   return availableRules;
 }
-  
+
 void QuestEngine::AddNotice(const QuestNotice& questNotice)
 {
   _notices.insert(questNotice);
 }
-  
+
 void QuestEngine::ConsumeNotice(const QuestNotice& questNotice)
 {
   auto it = _notices.find(questNotice);
@@ -234,29 +234,29 @@ void QuestEngine::ConsumeNotice(const QuestNotice& questNotice)
     _notices.erase(it);
   }
 }
-  
+
 bool QuestEngine::HasTriggered(const std::string& ruleId)
 {
   const auto& found = _triggerHistoryMap.find(ruleId);
   return found != _triggerHistoryMap.end();
 }
-  
+
 const std::time_t& QuestEngine::LastTriggeredAt(const std::string& ruleId)
 {
   const TriggerHistory& ruleHistory = _triggerHistoryMap[ruleId];
   return ruleHistory.at(ruleHistory.size()-1);
 }
-  
 
-  
+
+
 // Private methods
-  
+
 void QuestEngine::AppendTriggerHistory(const std::string& ruleId, const time_t triggerTime)
 {
   TriggerHistory& ruleHistory = _triggerHistoryMap[ruleId];
   ruleHistory.push_back(triggerTime);
 }
-  
+
 void QuestEngine::ProcessRules(const std::string& eventName)
 {
   auto eventRulesIterator = _eventRulesMap.find(eventName);
@@ -271,20 +271,20 @@ void QuestEngine::ProcessRules(const std::string& eventName)
       if( !isRepeatable && hasTriggered ) {
         continue;
       }
-      
+
       bool isAvailable = (*it)->IsAvailable(*this, localNow);
       if( !isAvailable ) {
         _availableSignal->emit(**it, false);
         continue;
       }
       _availableSignal->emit(**it, true);
-      
+
       bool isTriggered = (*it)->IsTriggered(*this, localNow);
       if( !isTriggered ) {
         continue;
       }
       _triggeredSignal->emit(**it);
-      
+
       AbstractAction* action = (*it)->GetAction();
       action->PerformAction(*this);
       AppendTriggerHistory((*it)->GetId(), now);
@@ -292,7 +292,7 @@ void QuestEngine::ProcessRules(const std::string& eventName)
   }
 }
 
-  
+
 } // namespace QuestEngine
 } // namespace Util
 } // namespace Anki

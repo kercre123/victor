@@ -22,7 +22,7 @@ namespace Anki
 
 // Static initialization
 const PoseOriginID_t PoseOriginList::UnknownOriginID = 0;
-  
+
 PoseOriginList::PoseOriginList()
 : _current{.originID = UnknownOriginID, .originPtr = nullptr}
 {
@@ -31,8 +31,8 @@ PoseOriginList::PoseOriginList()
 
 PoseOriginList::~PoseOriginList()
 {
-  LOG_EVENT("poseoriginlist.destructor", "%zu", GetSize());
-  
+  PRINT_NAMED_INFO("poseoriginlist.destructor", "%zu", GetSize());
+
   // Ignore whether unowned parents are allowed so we can delete
   // pose origins without worrying about the ordering here (since
   // an origin that's a parent of another "origin", thanks to rejiggering
@@ -51,15 +51,15 @@ bool PoseOriginList::ContainsOriginID(PoseOriginID_t ID) const
   auto iter = _origins.find(ID);
   return (iter != _origins.end());
 }
-  
+
 PoseOriginID_t PoseOriginList::AddNewOrigin()
 {
   PoseOriginID_t ID = _nextID;
-  
+
   const bool success = AddOriginWithID(ID);
   ANKI_VERIFY(success, "PoseOriginList.AddNewOrigin.AddWithIDFailed", "ID:%d", ID);
 # pragma unused(success) // avoid unused var warnings in release/shipping
-  
+
   return ID;
 }
 
@@ -75,12 +75,12 @@ bool PoseOriginList::AddOriginWithID(PoseOriginID_t ID)
     }
     return false;
   }
-  
+
   result.first->second->SetID(ID);
   _current.originID  = ID;
   _current.originPtr = result.first->second.get();
   _nextID = std::max(ID + 1, _nextID);
-  
+
   return true;
 }
 
@@ -92,9 +92,9 @@ const PoseOrigin& PoseOriginList::GetOriginByID(PoseOriginID_t ID) const
     static const PoseOrigin DefaultOrigin("OriginListDefaultOrigin");
     return DefaultOrigin;
   }
-  
+
   DEV_ASSERT_MSG(nullptr != iter->second, "PoseOriginList.GetOriginByID.NullOrigin", "%d", ID);
-  
+
   return *iter->second;
 }
 
@@ -106,15 +106,15 @@ Result PoseOriginList::Rejigger(const PoseOrigin& newOrigin, const Transform3d& 
   {
     return RESULT_FAIL;
   }
-  
+
   if(!ANKI_VERIFY(_current.originID != newOriginID, "PoseOriginList.Rejigger.NewOriginIsCurrent", "ID:%d", newOriginID))
   {
     return RESULT_FAIL;
   }
-  
+
   auto origIter = _origins.find(_current.originID);
   auto newIter  = _origins.find(newOriginID);
-  
+
   DEV_ASSERT_MSG(origIter != _origins.end(),
                  "PoseOriginList.Rejigger.InvalidCurrentOriginID", "ID:%d", _current.originID);
   DEV_ASSERT_MSG(newIter != _origins.end(),
@@ -123,13 +123,13 @@ Result PoseOriginList::Rejigger(const PoseOrigin& newOrigin, const Transform3d& 
                  "PoseOriginList.Rejigger.CurrentOriginShouldBeIdentity",
                  "Current origin (before rejigger) should be identity transform, not %s",
                  origIter->second->GetTranslation().ToString().c_str());
-                                                                 
+
   origIter->second->GetTransform() = transform;
   origIter->second->SetParent(*newIter->second);
   origIter->second->SetName( origIter->second->GetName() + "_REJ");
-  
+
   assert(origIter->second->IsRoot() == false);
-  
+
   _current.originPtr = newIter->second.get();
   _current.originID  = newIter->first;
   DEV_ASSERT_MSG(_current.originID == newOriginID, "PoseOriginList.Rejigger.BadFinalCurrentOriginID",
@@ -139,22 +139,22 @@ Result PoseOriginList::Rejigger(const PoseOrigin& newOrigin, const Transform3d& 
   {
     SanityCheckOwnership();
   }
-  
+
   return RESULT_OK;
 }
-  
+
 void PoseOriginList::Flatten(PoseOriginID_t worldOriginID)
 {
   DEV_ASSERT_MSG(ContainsOriginID(worldOriginID), "PoseOriginList.Flatten.BadID", "ID:%d", worldOriginID);
-  
+
   const Pose3d& worldOrigin = GetOriginByID(worldOriginID);
-  
+
   for(auto & originAndIdPair : _origins)
   {
     Pose3d* origin = originAndIdPair.second.get();
-    
+
     DEV_ASSERT(origin != nullptr, "PoseOriginList.Flatten.NullOrigin"); // Should REALLY never happen
-    
+
     // if this origin has a parent and it's not the world origin, we want to update
     // this origin to be a direct child of the world origin
     if ( origin->HasParent() && !origin->IsChildOf(worldOrigin) )
@@ -169,13 +169,13 @@ void PoseOriginList::Flatten(PoseOriginID_t worldOriginID)
       }
     }
   }
-  
+
   if(ANKI_DEV_CHEATS)
   {
     SanityCheckOwnership();
   }
 }
-  
+
 bool PoseOriginList::SanityCheckOwnership() const
 {
   bool allPosesOwned = true;
@@ -185,7 +185,7 @@ bool PoseOriginList::SanityCheckOwnership() const
     allPosesOwned &= ANKI_VERIFY(origin->IsOwned(),
                                  "PoseOriginList.SanityCheckOwnership.UnownedOrigin",
                                  "Pose %d(%s) is unowned", origin->GetID(), origin->GetName().c_str());
-    
+
     if(origin->HasParent())
     {
       const Pose3d& parent = origin->GetParent();
@@ -196,8 +196,8 @@ bool PoseOriginList::SanityCheckOwnership() const
                                    parent.GetID(), parent.GetName().c_str());
     }
   }
-  
+
   return allPosesOwned;
 }
-  
+
 } // namespace Anki
