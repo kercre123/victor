@@ -38,7 +38,7 @@
         },
         {
           "emotionType" : "Stimulated",
-          "value" : 0.8
+          "value" : 0.4
         }
       ]
     },
@@ -51,7 +51,7 @@
         },
         {
           "emotionType" : "Stimulated",
-          "value" : 0.5
+          "value" : 0.2
         }
       ]
     },
@@ -81,7 +81,7 @@
         },
         {
           "emotionType" : "Stimulated",
-          "value" : 0.8
+          "value" : 0.5
         }
       ]
     },
