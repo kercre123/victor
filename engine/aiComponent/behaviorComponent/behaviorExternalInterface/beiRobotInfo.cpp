@@ -164,6 +164,12 @@ OffTreadsState BEIRobotInfo::GetOffTreadsState() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TimeStamp_t BEIRobotInfo::GetOffTreadsStateLastChangedTime_ms() const
+{
+  return _robot.GetOffTreadsStateLastChangedTime_ms();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 PathComponent& BEIRobotInfo::GetPathComponent() const
 {
   return _robot.GetPathComponent();
