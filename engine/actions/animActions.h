@@ -46,6 +46,8 @@ namespace Anki {
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override;
       
       virtual f32 GetTimeoutInSeconds() const override { return _timeout_sec; }
+
+      static f32 GetDefaultTimeoutInSeconds() { return _kDefaultTimeout_sec; }
       
     protected:
       

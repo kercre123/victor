@@ -166,7 +166,15 @@ void BehaviorObservingOnCharger::Loop()
 
     DEV_ASSERT(animToPlay != AnimationTrigger::Count, "BehaviorObservingOnCharger.Loop.NoAnimation");
 
-    DelegateIfInControl(new TriggerAnimationAction(animToPlay), &BehaviorObservingOnCharger::Loop);
+    const u32 numLoops = 1;
+    const bool interruptRunning = true;
+    const u8 tracksToLock = (u8)AnimTrackFlag::BODY_TRACK;
+    const float timeout = TriggerAnimationAction::GetDefaultTimeoutInSeconds();
+    const bool strictCooldown = true;
+    
+    auto* action = new TriggerAnimationAction(animToPlay, numLoops, interruptRunning, tracksToLock, timeout, strictCooldown);
+    
+    DelegateIfInControl(action, &BehaviorObservingOnCharger::Loop);
   }
 }
 
