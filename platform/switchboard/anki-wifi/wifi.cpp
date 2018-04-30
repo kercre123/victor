@@ -14,6 +14,9 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <ifaddrs.h>
+#include <dirent.h>
+#include <sys/stat.h>
+#include <stdio.h>
 #include "exec_command.h"
 #include "fileutils.h"
 #include "anki-ble/stringutils.h"
@@ -714,6 +717,11 @@ static std::string GetPathToWiFiConfigFile()
   return "/data/lib/connman/wifi.config";
 }
 
+static std::string GetPathToWiFiConfigDir()
+{
+  return "/data/lib/connman";
+}
+
 std::map<std::string, std::string> UnPackWiFiConfig(const std::vector<uint8_t>& packed) {
   std::map<std::string, std::string> networks;
   // The payload is (<SSID>\0<PSK>\0)*
@@ -735,6 +743,44 @@ std::map<std::string, std::string> UnPackWiFiConfig(const std::vector<uint8_t>& 
   return networks;
 }
 
+bool RemoveAllConfigDirs() {
+  std::string dirConfig = GetPathToWiFiConfigDir();
+
+  DIR *d;
+  struct dirent *dir;
+  d = opendir(dirConfig.c_str());
+
+  if(d) {
+    while((dir = readdir(d)) != nullptr) {
+      struct stat statInfo;
+      std::string fullPath = dirConfig + "/" + std::string(dir->d_name);
+
+      int statSuccess = stat(fullPath.c_str(), &statInfo);
+      Log::Write("Found: %s", dir->d_name);
+
+      if(statSuccess != 0) {
+        Log::Write("Stat broke: %d", errno);
+        continue;
+      }
+
+      Log::Write("Stat was successful.");
+
+      // S_ISDIR(statInfo.st_mode) // wtf
+      if((strncmp(dir->d_name, "wifi_", 5) == 0)) {
+        Log::Write("Deleting: %s", dir->d_name);
+        int deleteSuccess = remove(fullPath.c_str());
+
+        if(deleteSuccess != 0) {
+          Log::Write("Failed to delete [%d].", errno);
+        }
+      }
+    }
+    closedir(d);
+  }
+
+  return true;
+}
+
 void SetWiFiConfig(std::string ssid, std::string password, WiFiAuth auth, bool isHidden) {
   std::vector<WiFiConfig> networks;
   WiFiConfig config;
@@ -749,6 +795,8 @@ void SetWiFiConfig(std::string ssid, std::string password, WiFiAuth auth, bool i
 
 void SetWiFiConfig(const std::vector<WiFiConfig>& networks, ExecCommandCallback callback) {
   std::ostringstream wifiConfigStream;
+
+  RemoveAllConfigDirs();
 
   int count = 0;
   for (auto const& config : networks) {

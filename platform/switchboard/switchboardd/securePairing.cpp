@@ -505,6 +505,7 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::Rts
     bool online = state.connState == WiFiConnState::ONLINE;
 
     if(online) {
+      Log::Write("[$] We think we are online.");
       SendWifiConnectResult();
     } else {
       ev_timer_again(_loop, &_handleInternet.timer);
@@ -890,6 +891,7 @@ void SecurePairing::HandleInternetTimerTick() {
 
   if(online || _inetTimerCount > _wifiConnectTimeout_s) {
     ev_timer_stop(_loop, &_handleInternet.timer);
+    Log::Write("[$] We think we are online or time has expired.");
     SendWifiConnectResult();
   }
 }

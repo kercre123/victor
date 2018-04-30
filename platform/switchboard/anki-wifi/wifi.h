@@ -108,6 +108,7 @@ std::string GetObjectPathForService(GVariant* service);
 bool ConnectToWifiService(ConnManBusService* service);
 bool DisconnectFromWifiService(ConnManBusService* service);
 ConnManBusService* GetServiceForPath(std::string objectPath);
+bool RemoveAllConfigDirs();
 void SetWiFiConfig(std::string ssid, std::string password, WiFiAuth auth, bool isHidden);
 std::string GetHexSsidFromServicePath(const std::string& servicePath);
 
