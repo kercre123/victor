@@ -22,6 +22,7 @@
 #include "util/logging/androidLogPrintLogger_android.h"
 #include "util/fileUtils/fileUtils.h"
 
+#include "platform/victorCrashReports/google_breakpad.h"
 
 #include <stdio.h>
 #include <chrono>
@@ -114,6 +115,9 @@ int main(void)
 {
   signal(SIGTERM, Shutdown);
 
+  static char const* filenamePrefix = "anim";
+  GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
+
   // - create and set logger
   Util::AndroidLogPrintLogger logPrintLogger("vic-anim");
   Util::gLoggerProvider = &logPrintLogger;
@@ -199,6 +203,7 @@ int main(void)
   LOG_INFO("CozmoAnimMain.main.Shutdown", "Shutting down (exit %d)", result);
 
   delete animEngine;
+  GoogleBreakpad::UnInstallGoogleBreakpad();
   sync();
   exit(result);
 }

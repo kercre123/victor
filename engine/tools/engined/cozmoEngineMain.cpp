@@ -36,6 +36,7 @@
 #endif
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
+#include "platform/victorCrashReports/google_breakpad.h"
 
 #if !defined(DEV_LOGGER_ENABLED)
   #if FACTORY_TEST
@@ -283,124 +284,129 @@ static int cozmo_stop()
 
 int main(int argc, char* argv[])
 {
-    // Install signal handler
-    signal(SIGTERM, sigterm);
+  // Install signal handler
+  signal(SIGTERM, sigterm);
 
-    char cwd[PATH_MAX] = { 0 };
-    getcwd(cwd, sizeof(cwd));
-    printf("CWD: %s\n", cwd);
-    printf("argv[0]: %s\n", argv[0]);
-    printf("exe path: %s/%s\n", cwd, argv[0]);
+  static char const* filenamePrefix = "engine";
+  GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
 
-    int verbose_flag = 0;
-    int help_flag = 0;
+  char cwd[PATH_MAX] = { 0 };
+  getcwd(cwd, sizeof(cwd));
+  printf("CWD: %s\n", cwd);
+  printf("argv[0]: %s\n", argv[0]);
+  printf("exe path: %s/%s\n", cwd, argv[0]);
 
-    const char *opt_string = "vhc:";
+  int verbose_flag = 0;
+  int help_flag = 0;
 
-    const struct option long_options[] = {
-        { "verbose",    no_argument,            &verbose_flag,  'v' },
-        { "config",     required_argument,      NULL,           'c' },
-        { "help",       no_argument,            &help_flag,     'h' },
-        { NULL,         no_argument,            NULL,           0   }
-    };
+  const char *opt_string = "vhc:";
 
-    char config_file_path[PATH_MAX] = { 0 };
-    const char* env_config = getenv("VIC_ENGINE_CONFIG");
-    if (env_config != NULL) {
-      strncpy(config_file_path, env_config, sizeof(config_file_path));
+  const struct option long_options[] = {
+      { "verbose",    no_argument,            &verbose_flag,  'v' },
+      { "config",     required_argument,      NULL,           'c' },
+      { "help",       no_argument,            &help_flag,     'h' },
+      { NULL,         no_argument,            NULL,           0   }
+  };
+
+  char config_file_path[PATH_MAX] = { 0 };
+  const char* env_config = getenv("VIC_ENGINE_CONFIG");
+  if (env_config != NULL) {
+    strncpy(config_file_path, env_config, sizeof(config_file_path));
+  }
+
+  while(1) {
+    int option_index = 0;
+    int c = getopt_long(argc, argv, opt_string, long_options, &option_index);
+
+    if (-1 == c) {
+      break;
     }
 
-    while(1) {
-      int option_index = 0;
-      int c = getopt_long(argc, argv, opt_string, long_options, &option_index);
-
-      if (-1 == c) {
+    switch(c) {
+      case 0:
+      case 1:
+      {
+        if (long_options[option_index].flag != 0)
+          break;
+        printf ("option %s", long_options[option_index].name);
+        if (optarg)
+          printf (" with arg %s", optarg);
+        printf ("\n");
         break;
       }
-
-      switch(c) {
-        case 0:
-        case 1:
-        {
-          if (long_options[option_index].flag != 0)
-            break;
-          printf ("option %s", long_options[option_index].name);
-          if (optarg)
-            printf (" with arg %s", optarg);
-          printf ("\n");
-          break;
-        }
-        case 'c':
-        {
-          strncpy(config_file_path, optarg, sizeof(config_file_path));
-          config_file_path[PATH_MAX-1] = 0;
-          break;
-        }
-        case 'v':
-          verbose_flag = 1;
-          break;
-        case 'h':
-          help_flag = 1;
-          break;
-        case '?':
-          break;
-        default:
-          abort();
-      }
-    }
-
-    printf("help_flag: %d\n", help_flag);
-
-    if (help_flag) {
-      char* prog_name = basename(argv[0]);
-      printf("%s <OPTIONS>\n", prog_name);
-      printf("  -h, --help                          print this help message\n");
-      printf("  -v, --verbose                       dump verbose output\n");
-      printf("  -c, --config [JSON FILE]            load config json file\n");
-      return 1;
-    }
-
-    if (verbose_flag) {
-      printf("verbose!\n");
-    }
-
-    Json::Value config;
-
-    printf("config_file: %s\n", config_file_path);
-    if (strlen(config_file_path)) {
-      std::string config_file{config_file_path};
-      if (!Anki::Util::FileUtils::FileExists(config_file)) {
-        fprintf(stderr, "config file not found: %s\n", config_file_path);
-        return (int)1;
-      }
-
-      std::string jsonContents = Anki::Util::FileUtils::ReadFile(config_file);
-      printf("jsonContents: %s\n", jsonContents.c_str());
-      Json::Reader reader;
-      if (!reader.parse(jsonContents, config)) {
-        PRINT_STREAM_ERROR("cozmo_startup", "json configuration parsing error: " << reader.getFormattedErrorMessages());
-        return (int)1;
-      }
-    }
-
-    int res = cozmo_start(config);
-    if (0 != res) {
-        printf("failed to start engine\n");
-        exit(res);
-    }
-
-    LOG_INFO("CozmoEngineMain.main", "Engine started");
-
-    while (!gShutdown) {
-      if (!cozmo_is_running()) {
-        LOG_INFO("CozmoEngineMain.main", "Engine has stopped");
+      case 'c':
+      {
+        strncpy(config_file_path, optarg, sizeof(config_file_path));
+        config_file_path[PATH_MAX-1] = 0;
         break;
       }
-      usleep(SLEEP_DELAY_US);
+      case 'v':
+        verbose_flag = 1;
+        break;
+      case 'h':
+        help_flag = 1;
+        break;
+      case '?':
+        break;
+      default:
+        abort();
+    }
+  }
+
+  printf("help_flag: %d\n", help_flag);
+
+  if (help_flag) {
+    char* prog_name = basename(argv[0]);
+    printf("%s <OPTIONS>\n", prog_name);
+    printf("  -h, --help                          print this help message\n");
+    printf("  -v, --verbose                       dump verbose output\n");
+    printf("  -c, --config [JSON FILE]            load config json file\n");
+    return 1;
+  }
+
+  if (verbose_flag) {
+    printf("verbose!\n");
+  }
+
+  Json::Value config;
+
+  printf("config_file: %s\n", config_file_path);
+  if (strlen(config_file_path)) {
+    std::string config_file{config_file_path};
+    if (!Anki::Util::FileUtils::FileExists(config_file)) {
+      fprintf(stderr, "config file not found: %s\n", config_file_path);
+      return (int)1;
     }
 
-    LOG_INFO("CozmoEngineMain.main", "Stopping engine");
-    res = cozmo_stop();
+    std::string jsonContents = Anki::Util::FileUtils::ReadFile(config_file);
+    printf("jsonContents: %s\n", jsonContents.c_str());
+    Json::Reader reader;
+    if (!reader.parse(jsonContents, config)) {
+      PRINT_STREAM_ERROR("cozmo_startup", "json configuration parsing error: " << reader.getFormattedErrorMessages());
+      return (int)1;
+    }
+  }
 
-    return res;
+  int res = cozmo_start(config);
+  if (0 != res) {
+      printf("failed to start engine\n");
+      exit(res);
+  }
+
+  LOG_INFO("CozmoEngineMain.main", "Engine started");
+
+  while (!gShutdown) {
+    if (!cozmo_is_running()) {
+      LOG_INFO("CozmoEngineMain.main", "Engine has stopped");
+      break;
+    }
+    usleep(SLEEP_DELAY_US);
+  }
+
+  LOG_INFO("CozmoEngineMain.main", "Stopping engine");
+  res = cozmo_stop();
+
+  GoogleBreakpad::UnInstallGoogleBreakpad();
+
+  return res;
 }

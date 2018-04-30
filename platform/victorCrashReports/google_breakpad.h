@@ -4,7 +4,7 @@
  * Author: chapados
  * Created: 10/08/2014
  *
- * Description: Android-specific methods used by RushHour instance
+ * Description: Google breakpad platform-specific methods
  *
  * Copyright: Anki, Inc. 2014
  *
@@ -15,7 +15,7 @@
 
 namespace GoogleBreakpad {
 
-void InstallGoogleBreakpad(const char *path);
+void InstallGoogleBreakpad(const char* filenamePrefix);
 void UnInstallGoogleBreakpad();
 
 }

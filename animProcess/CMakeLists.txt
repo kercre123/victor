@@ -20,6 +20,7 @@ set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
 
 if (ANDROID)
+    include(breakpad)
     set(PLATFORM_LIBS
         android
         log
@@ -89,9 +90,11 @@ if (ANDROID)
   target_link_libraries(vic-anim
     PRIVATE
     victor_anim
+    victorCrashReports
     cti_common_robot
     util
     jsoncpp
+    breakpad_client
     ${PLATFORM_LIBS}
   )
 
