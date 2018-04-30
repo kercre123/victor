@@ -799,10 +799,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
     }
   }
 
-  // If this screen has a menu or
-  // it is the pairing screen and we are not in the connection flow (haven't started showing
-  // the pin, wifi, or ota screens)
-  if (_currScreen->HasMenu() || (currScreenName == ScreenName::Pairing && !IsInConnectionFlow())) {
+  if (_currScreen->HasMenu() || currScreenName == ScreenName::Pairing) {
     // Process lift motion for confirming current menu selection
     const auto liftAngle = state.liftAngle;
     if (liftAngle > kMenuLiftHighThresh_rad) {
