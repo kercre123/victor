@@ -24,6 +24,8 @@
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "util/helpers/boundedWhile.h"
 
+#include <deque>
+
 namespace Anki {
 namespace Cozmo {
 
@@ -92,6 +94,10 @@ void BehaviorCoordinateGlobalInterrupts::InitPassThrough()
 void BehaviorCoordinateGlobalInterrupts::OnPassThroughActivated() 
 {
   _iConfig.triggerWordPendingCond->SetActive(GetBEI(), true);
+  
+  if( ANKI_DEV_CHEATS ) {
+    CreateConsoleVars();
+  }
 }
 
 
@@ -133,6 +139,15 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
   if( ShouldSuppressProxReaction() ) {
     _iConfig.reactToObstacleBehavior->SetDontActivateThisTick(GetDebugLabel());
   }
+  
+  // Suppress behaviors disabled via console vars
+  if( ANKI_DEV_CHEATS ) {
+    for( const auto& behPair : _iConfig.devActivatableOverrides ) {
+      if( !behPair.second && (behPair.first != nullptr) ) {
+        behPair.first->SetDontActivateThisTick( "CV:" + GetDebugLabel() );
+      }
+    }
+  }
 
 }
 
@@ -168,6 +183,32 @@ void BehaviorCoordinateGlobalInterrupts::OnPassThroughDeactivated()
 {
   _iConfig.triggerWordPendingCond->SetActive(GetBEI(), false);
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorCoordinateGlobalInterrupts::CreateConsoleVars()
+{
+  const auto& BC = GetBEI().GetBehaviorContainer();
+  std::set<IBehavior*> passThroughList;
+  GetLinkedActivatableScopeBehaviors( passThroughList );
+  if( !passThroughList.empty() ) {
+    std::set<IBehavior*> globalInterruptions;
+    (*passThroughList.begin())->GetAllDelegates( globalInterruptions );
+    for( const auto* delegate : globalInterruptions ) {
+      const auto* cozmoDelegate = dynamic_cast<const ICozmoBehavior*>( delegate );
+      if( cozmoDelegate != nullptr ) {
+        BehaviorID id = cozmoDelegate->GetID();
+        auto pairIt = _iConfig.devActivatableOverrides.emplace( BC.FindBehaviorByID(id), true );
+        // deque can contain non-copyable objects. its kept here to keep the header cleaner
+        static std::deque<Anki::Util::ConsoleVar<bool>> vars;
+        vars.emplace_back( pairIt.first->second,
+                           BehaviorTypesWrapper::BehaviorIDToString( id ),
+                           "BehaviorCoordinateGlobalInterrupts",
+                           true );
+      }
+    }
+  }
+}
+  
 
 
 } // namespace Cozmo
