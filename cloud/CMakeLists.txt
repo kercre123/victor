@@ -5,8 +5,6 @@ include(anki_build_cxx)
 include(anki_build_go)
 include(anki_build_util)
 
-set(__extra_go_deps "${CLAD_GO_GEN_SRCS}")
-
 if (NOT EXISTS "${ANKI_EXTERNAL_DIR}/chipper_key")
   message(WARNING "Need chipper_key file to be able to connect to cloud services!")
   message(WARNING "Check your VPN settings. You must be on VPN or office network to get chipper key.")
@@ -33,19 +31,11 @@ macro(_add_chipper_flags target_name)
   anki_go_add_c_library(${target_name} opus)
 endmacro()
 
-macro(_build_cloud_executable target_name)
-  anki_build_go_executable(${target_name} ${ANKI_SRCLIST_DIR} "${__extra_go_deps}")
-endmacro()
-
-macro(_build_cloud_c_library target_name header_name)
-  anki_build_go_c_library(${target_name} ${header_name} ${ANKI_SRCLIST_DIR} "${__extra_go_deps}")
-endmacro()
-
 # voicetest project (mac only)
 if (MACOSX)
 
   # create Go target
-  _build_cloud_c_library(voicego VOICEGO_HEADER)
+  anki_build_go_c_library(voicego VOICEGO_HEADER ${ANKI_SRCLIST_DIR})
   _add_chipper_flags(voicego)
   get_filename_component(VOICEGO_HEADER_DIR ${VOICEGO_HEADER} DIRECTORY)
 
@@ -76,7 +66,7 @@ if (MACOSX)
 
 
   # proctest - test victor audio process w/ laptop mic
-  _build_cloud_c_library(proctest_go PROCTEST_GO_HEADER)
+  anki_build_go_c_library(proctest_go PROCTEST_GO_HEADER ${ANKI_SRCLIST_DIR})
   _add_chipper_flags(proctest_go)
   get_filename_component(PROCTEST_HEADER_DIR ${PROCTEST_GO_HEADER} DIRECTORY)
   anki_build_cxx_executable(proctest ${ANKI_SRCLIST_DIR} ${PROCTEST_GO_HEADER})
@@ -85,24 +75,24 @@ if (MACOSX)
   target_link_libraries(proctest PRIVATE util_audio proctest_go ${SECURITY_FRAMEWORK})
   anki_disable_default_build(proctest)
 
-  _build_cloud_executable(opusupload)
+  anki_build_go_executable(opusupload ${ANKI_SRCLIST_DIR})
   _add_chipper_flags(opusupload)
 
 endif()
 
 # ipctest - for testing interop capability of C++ and Go socket code
-_build_cloud_executable(ipctest_go)
+anki_build_go_executable(ipctest_go ${ANKI_SRCLIST_DIR})
 anki_disable_default_build(ipctest_go)
 anki_build_cxx_executable(ipctest_cpp ${ANKI_SRCLIST_DIR})
 target_link_libraries(ipctest_cpp PRIVATE cti_messaging)
 anki_disable_default_build(ipctest_cpp)
 
 # ipc server test things
-_build_cloud_executable(servbench)
+anki_build_go_executable(servbench ${ANKI_SRCLIST_DIR})
 anki_disable_default_build(servbench)
 
 # cloud process
-_build_cloud_executable(vic-cloud)
+anki_build_go_executable(vic-cloud ${ANKI_SRCLIST_DIR})
 _add_chipper_flags(vic-cloud)
 # copy opusfile to lib dir
 if (ANDROID)
@@ -112,7 +102,7 @@ endif()
 #
 # wavtest
 #
-_build_cloud_executable(wavtest)
+anki_build_go_executable(wavtest ${ANKI_SRCLIST_DIR})
 _add_chipper_flags(wavtest)
 
 if (ANDROID)
@@ -122,6 +112,6 @@ endif()
 #
 # opusenc
 #
-_build_cloud_executable(opusenc)
+anki_build_go_executable(opusenc ${ANKI_SRCLIST_DIR})
 _add_chipper_flags(opusenc)
 anki_disable_default_build(opusenc)

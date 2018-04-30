@@ -14,7 +14,7 @@ import sys
 import toolget
 
 GO = 'go'
-DEFAULT_VERSION = '1.10.1'
+DEFAULT_VERSION = '1.9.4'
 
 def get_go_version_from_command(go_exe):
     version = None
@@ -48,9 +48,7 @@ def install_go(version):
 
     sha_map = {
         '1.9.4-darwin': '0e694bfa289453ecb056cc70456e42fa331408cfa6cc985a14edb01d8b4fec51',
-        '1.9.4-linux': '15b0937615809f87321a457bb1265f946f9f6e736c563d6c5e0bd2c22e44f779',
-        '1.10.1-darwin': '0a5bbcbbb0d150338ba346151d2864fd326873beaedf964e2057008c8a4dc557',
-        '1.10.1-linux': '72d820dec546752e5a8303b33b009079c15c2390ce76d67cf514991646c6127b'
+        '1.9.4-linux': '15b0937615809f87321a457bb1265f946f9f6e736c563d6c5e0bd2c22e44f779'
     }
 
     platform_name = platform.system().lower()
