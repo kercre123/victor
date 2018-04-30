@@ -1073,7 +1073,7 @@
   },
   {
     "CladEvent": "ObservingIdleWithHeadLookingStraight",
-    "AnimName": "ag_keepalive_eyesandhead_loop_01"
+    "AnimName": "ag_observe_oncharger_observing"
   },
   {
     "CladEvent": "DEPRECATED_LookDownForLaser",

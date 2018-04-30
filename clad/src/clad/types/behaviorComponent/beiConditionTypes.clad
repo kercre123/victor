@@ -32,6 +32,7 @@ enum uint_8 BEIConditionType {
   ObstacleDetected,
   OffTreadsState,
   OnCharger,
+  OnChargerPlatform,
   PetInitialDetection,
   ProxInRange,
   RobotPlacedOnSlope,

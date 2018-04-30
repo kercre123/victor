@@ -264,8 +264,8 @@ protected:
   // into this list instead of assigning it.
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const = 0;
   
-  virtual void OnEnteredActivatableScopeInternal() override;
-  virtual void OnLeftActivatableScopeInternal() override;
+  virtual void OnEnteredActivatableScopeInternal() final override;
+  virtual void OnLeftActivatableScopeInternal() final override;
 
   virtual void OnBehaviorEnteredActivatableScope() { }
   virtual void OnBehaviorLeftActivatableScope() { }

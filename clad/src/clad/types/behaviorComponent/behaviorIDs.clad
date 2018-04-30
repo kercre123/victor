@@ -143,6 +143,7 @@ enum uint_8 BehaviorID {
   GoHome,
   LowBatteryFindAndGoToHome,
   RequestToGoHome,
+  WiggleBackOntoChargerFromPlatform,
 
   // victorBehaviorTree/highLevelDelegates
   InspectCube,
@@ -168,6 +169,8 @@ enum uint_8 BehaviorID {
   ObservingFindFaces,
   ObservingLookAtFaces,
   ObservingOnCharger,
+  ObservingOnChargerGetIn,
+  ObservingOnChargerGetOut,
   ObservingOnChargerIdle,
   ObservingOnChargerIdleAnim,
   ReactToMotion,

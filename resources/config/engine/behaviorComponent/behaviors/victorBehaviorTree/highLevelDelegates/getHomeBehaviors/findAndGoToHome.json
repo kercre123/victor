@@ -3,6 +3,7 @@
   "behaviorID" : "FindAndGoToHome",
 
   "interruptActiveBehavior" : true,
+  "linkScope": true,
 
   "behaviors" : [
     {
