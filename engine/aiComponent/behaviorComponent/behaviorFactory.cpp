@@ -110,6 +110,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorConfirmObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToTouchPetting.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToUnclaimedIntent.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/weather/behaviorDisplayWeather.h"
 
 #include "clad/types/behaviorComponent/behaviorTypes.h"
 
@@ -733,6 +734,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::PlaybackMessage:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorPlaybackMessage(config));
+      break;
+    }
+    
+    case BehaviorClass::DisplayWeather:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDisplayWeather(config));
       break;
     }
     

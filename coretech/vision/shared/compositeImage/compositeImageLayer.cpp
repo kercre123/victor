@@ -94,6 +94,21 @@ bool CompositeImageLayer::GetSpriteSequence(SpriteBoxName sbName, Vision::Sprite
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImageLayer::MergeInLayer(const CompositeImageLayer& otherLayer)
+{
+  // Merge layout info
+  for(const auto& entry : otherLayer.GetLayoutMap()){
+    AddToLayout(entry.first, entry.second);
+  }
+
+  // Merge image info
+  for(const auto& entry : otherLayer.GetImageMap()){
+    AddToImageMap(entry.first, entry.second);
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CompositeImageLayer::AddToLayout(SpriteBoxName sbName, const SpriteBox& spriteBox)
 {
   auto resultPair = _layoutMap.emplace(sbName, spriteBox);
@@ -112,6 +127,16 @@ void CompositeImageLayer::AddToImageMap(SpriteCache* cache, SpriteSequenceContai
   // If map entry already exists, just update existing iterator
   if(!resultPair.second){
     resultPair.first->second = SpriteEntry(cache, seqContainer, spriteName);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImageLayer::AddToImageMap(SpriteBoxName sbName, const SpriteEntry& spriteEntry)
+{
+  auto resultPair = _imageMap.emplace(sbName, spriteEntry);
+  // If map entry already exists, just update existing iterator
+  if(!resultPair.second){
+    resultPair.first->second = spriteEntry;
   }
 }
 

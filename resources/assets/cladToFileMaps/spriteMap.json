@@ -48,6 +48,58 @@
     "SpriteName": "clock_empty_grid"
   },
   {
+    "CladEvent": "Weather_Temp_Cel",
+    "SpriteName": "weather_celsius_indicator"
+  },
+  {
+    "CladEvent": "Weather_Temp_Fahr",
+    "SpriteName": "weather_fahrenheit_indicator"
+  },
+  {
+    "CladEvent": "Weather_Temp_Neg",
+    "SpriteName": "weather_negative_indicator"
+  },
+  {
+    "CladEvent": "Weather_Temp_0",
+    "SpriteName": "weather_temp_0"
+  },
+  {
+    "CladEvent": "Weather_Temp_1",
+    "SpriteName": "weather_temp_1"
+  },
+  {
+    "CladEvent": "Weather_Temp_2",
+    "SpriteName": "weather_temp_2"
+  },
+  {
+    "CladEvent": "Weather_Temp_3",
+    "SpriteName": "weather_temp_3"
+  },
+  {
+    "CladEvent": "Weather_Temp_4",
+    "SpriteName": "weather_temp_4"
+  },
+  {
+    "CladEvent": "Weather_Temp_5",
+    "SpriteName": "weather_temp_5"
+  },
+  {
+    "CladEvent": "Weather_Temp_6",
+    "SpriteName": "weather_temp_6"
+  },
+  {
+    "CladEvent": "Weather_Temp_7",
+    "SpriteName": "weather_temp_7"
+  },
+  {
+    "CladEvent": "Weather_Temp_8",
+    "SpriteName": "weather_temp_8"
+  },
+  {
+    "CladEvent": "Weather_Temp_9",
+    "SpriteName": "weather_temp_9"
+  },
+  {
     "CladEvent": "Face_Bored_Event_02",
     "SpriteName": "face_bored_event_02"
   },

@@ -249,6 +249,18 @@ enum uint_8 BehaviorID {
   // victorBehaviorTree
   TriggerWordDetected,
   Wait,
+
+  // victorBehaviorTree/weather/genericResponses
+  WeatherCloudyGeneric,
+  WeatherColdClearGeneric,
+  WeatherRainGeneric,
+  WeatherSnowGeneric,
+  WeatherStarsGeneric,
+  WeatherSunnyGeneric,
+  WeatherWindyGeneric,
+
+  // victorBehaviorTree/weather
+  WeatherResponses,
 }
 
 }

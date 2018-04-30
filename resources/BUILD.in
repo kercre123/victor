@@ -21,6 +21,8 @@ asset_project(
                 ('externals/animation-assets', 'sprites/**/*.png'),
                 ('externals/animation-assets', 'faceAnimations/**/*.png'),
                 ('externals/animation-assets', 'anim_manifest.json'),
+                ('externals/animation-assets', 'compositeImageResources/imageLayouts/**/*.json'),
+                ('externals/animation-assets', 'compositeImageResources/imageMaps/**/*.json'),
                 ],
                 prefix = 'assets'
             ),

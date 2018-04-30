@@ -157,6 +157,9 @@ enum uint_8 BehaviorClass {
   ConfirmObject,
   ReactToTouchPetting,
   ReactToUnclaimedIntent,
+
+  // weather
+  DisplayWeather,
 }
 
 }

@@ -21,7 +21,7 @@
 #include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/components/animationComponent.h"
-#include "engine/components/spriteCacheComponent.h"
+#include "engine/components/dataAccessorComponent.h"
 #include "engine/faceWorld.h"
 
 
@@ -98,9 +98,9 @@ void BehaviorProceduralClock::GetBehaviorJsonKeys(std::set<const char*>& expecte
 void BehaviorProceduralClock::InitBehavior()
 {
   // Setup the composite image
-  auto& spriteCacheComp = GetBEI().GetComponentWrapper(BEIComponentID::SpriteCache).GetValue<SpriteCacheComponent>();
+  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
   Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
-  _instanceParams.compImg = std::make_unique<Vision::CompositeImage>(spriteCacheComp.GetSpriteCache(),
+  _instanceParams.compImg = std::make_unique<Vision::CompositeImage>(dataAccessorComp.GetSpriteCache(),
                                                                      faceHueAndSaturation,
                                                                      _instanceParams.layout, 
                                                                      FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
@@ -231,9 +231,9 @@ void BehaviorProceduralClock::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BehaviorProceduralClock::BuildAndDisplayProceduralClock(Vision::CompositeImageLayer::ImageMap&& imageMap)
 {
-  auto& cacheComp = GetBEI().GetComponentWrapper(BEIComponentID::SpriteCache).GetValue<SpriteCacheComponent>();
-  auto* spriteCache = cacheComp.GetSpriteCache();
-  auto* seqContainer = cacheComp.GetSpriteSequenceContainer();
+  auto& accessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+  auto* spriteCache = accessorComp.GetSpriteCache();
+  auto* seqContainer = accessorComp.GetSpriteSequenceContainer();
   using Entry = Vision::CompositeImageLayer::SpriteEntry;
   // set static quadrants
   for(auto& entry : _instanceParams.staticElements){

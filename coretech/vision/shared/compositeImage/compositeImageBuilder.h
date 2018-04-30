@@ -55,7 +55,7 @@ private:
   
   uint32_t _width;
   uint32_t _height;
-  CompositeImage::LayerMap _layerMap;
+  CompositeImage::LayerLayoutMap _layerMap;
 };
 
 }; // namespace Vision

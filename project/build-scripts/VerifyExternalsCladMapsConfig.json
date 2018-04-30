@@ -14,7 +14,7 @@
   },
   {
     "mapPath"       : "/resources/assets/cladToFileMaps/CompositeImageLayoutMap.json",
-    "resourceKey" : "AnimName",
+    "resourceKey" : "LayoutName",
 
     "cladPath"      : "/coretech/vision/clad_src/clad/types/compositeImageLayouts.clad",
 
@@ -40,7 +40,7 @@
   },
   {
     "mapPath"       : "/resources/assets/cladToFileMaps/CompositeImageMapMap.json",
-    "resourceKey" : "AnimName",
+    "resourceKey" : "MapName",
 
     "cladPath"      : "/coretech/vision/clad_src/clad/types/compositeImageMaps.clad",
 
