@@ -662,7 +662,7 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
 //    "put_delete_auth_file",
 //    passwordFile.c_str(),
 //    "authentication_domain",
-//    "anki.com",
+//    "vector.anki.com",
     "websocket_timeout_ms",
     "3600000", // 1 hour
 //#if defined(SHIPPING)
