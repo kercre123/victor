@@ -52,7 +52,7 @@ CONSOLE_VAR_EXTERN(float, kTimeMultiplier);
 namespace {
 static const char* kActionResultEmotionEventKey = "actionResultEmotionEvents";
 static const char* kAudioParametersMapKey = "audioParameterMap";
-  
+
 CONSOLE_VAR(bool, kSendMoodToViz, "VizDebug", true);
 
 CONSOLE_VAR(float, kAudioSendPeriod_s, "MoodManager", 0.5f);
@@ -64,15 +64,15 @@ StaticMoodData& MoodManager::GetStaticMoodData()
 {
   return sStaticMoodData;
 }
-  
+
 
 float MoodManager::GetCurrentTimeInSeconds()
 {
   const float currentTimeInSeconds = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   return currentTimeInSeconds;
 }
-  
-  
+
+
 MoodManager::MoodManager()
 : IDependencyManagedComponent(this, RobotComponentID::MoodManager)
 , _lastUpdateTime(0.0f)
@@ -98,7 +98,7 @@ void MoodManager::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depende
     ReadMoodConfig(context->GetDataLoader()->GetRobotMoodConfig());
     LoadEmotionEvents(context->GetDataLoader()->GetEmotionEventJsons());
   }
-  
+
   if( ANKI_DEV_CHEATS ) {
     SubscribeToWebViz();
   }
@@ -110,16 +110,16 @@ void MoodManager::ReadMoodConfig(const Json::Value& inJson)
   GetStaticMoodData().Init(inJson);
 
   LoadAudioParameterMap(inJson[kAudioParametersMapKey]);
-  LoadActionCompletedEventMap(inJson[kActionResultEmotionEventKey]);  
+  LoadActionCompletedEventMap(inJson[kActionResultEmotionEventKey]);
 
   // set values per mood if we have them
   for( const auto& valueRangeEntry : GetStaticMoodData().GetEmotionValueRangeMap() ) {
     const auto& emotionType = valueRangeEntry.first;
     const auto& range = valueRangeEntry.second;
-    
+
     GetEmotion(emotionType).SetEmotionValueRange(range.first, range.second);
   }
-  
+
   if (nullptr != _robot) {
     if( _robot->HasExternalInterface() ) {
       auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _signalHandles);
@@ -148,7 +148,7 @@ void MoodManager::LoadEmotionEvents(const RobotDataLoader::FileJsonMap& emotionE
     }
   }
 }
-  
+
 bool MoodManager::LoadEmotionEvents(const Json::Value& inJson)
 {
   return GetStaticMoodData().LoadEmotionEvents(inJson);
@@ -189,7 +189,7 @@ void MoodManager::LoadActionCompletedEventMap(const Json::Value& inJson)
 
         for(auto resultIt = actionIt->begin(); resultIt != actionIt->end(); ++resultIt) {
           if( ! resultIt->isNull() ) {
-            
+
             ActionResultCategory resultCategory = ActionResultCategoryFromString(resultIt.key().asCString());
             _actionCompletedEventMap.insert( { {actionType, resultCategory}, resultIt->asString() } );
           }
@@ -242,7 +242,7 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
   }
 
   timeDelta *= kTimeMultiplier;
-  
+
   _lastUpdateTime = currentTime;
 
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( VizInterface::RobotMood robotMood );
@@ -252,7 +252,7 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
   {
     const EmotionType emotionType = (EmotionType)i;
     Emotion& emotion = GetEmotionByIndex(i);
-    
+
     emotion.Update(GetStaticMoodData().GetDecayEvaluator(emotionType), timeDelta);
 
     SEND_MOOD_TO_VIZ_DEBUG_ONLY( robotMood.emotion.push_back(emotion.GetValue()) );
@@ -268,13 +268,13 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
       SendMoodToWebViz(dependentComps.GetValue<ContextWrapper>().context);
     }
   }
-  
+
   SendEmotionsToGame();
 
   #if SEND_MOOD_TO_VIZ_DEBUG
   robotMood.recentEvents = std::move(_eventNames);
   _eventNames.clear();
-  
+
   // Can have null robot for unit tests
   if ((nullptr != _robot) &&
       _robot->HasComponent(RobotComponentID::CozmoContextWrapper) &&
@@ -290,19 +290,19 @@ void MoodManager::SendMoodToWebViz(const CozmoContext* context, const std::strin
   if( nullptr == context ) {
     return;
   }
-             
+
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   Json::Value data;
   data["time"] = currentTime_s;
 
   auto& moodData = data["moods"];
-  
+
   for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
   {
     const EmotionType emotionType = (EmotionType)i;
     const float val = GetEmotionByIndex(i).GetValue();
-    
+
     Json::Value entry;
     entry["emotion"] = EmotionTypeToString( emotionType );
     entry["value"] = val;
@@ -312,14 +312,14 @@ void MoodManager::SendMoodToWebViz(const CozmoContext* context, const std::strin
   if( ! emotionEvent.empty() ) {
     data["emotionEvent"] = emotionEvent;
   }
-  
+
   data["simpleMood"] = SimpleMoodTypeToString(GetSimpleMood());
 
   const auto* web = context->GetWebService();
   if( nullptr != web ) {
     web->SendToWebViz( kWebVizModuleName, data );
   }
-  
+
   _lastWebVizSendTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
 
@@ -341,7 +341,7 @@ void MoodManager::HandleActionEnded(const ExternalInterface::RobotCompletedActio
                    RobotActionTypeToString(completion.actionType),
                    ActionResultCategoryToString(resultCategory),
                    it->second.c_str());
-    
+
     TriggerEmotionEvent(it->second, GetCurrentTimeInSeconds());
   }
 }
@@ -378,23 +378,23 @@ void MoodManager::HandleMessage(const ExternalInterface::MoodMessage& msg)
       assert(0);
   }
 }
-  
-  
+
+
 void MoodManager::SendEmotionsToGame()
 {
   ANKI_CPU_PROFILE("MoodManager::SendEmotionsToGame"); // ~1ms per tick (iPhone 5S in Release) - could send every N ticks?
-  
+
   if (_robot)
   {
     std::vector<float> emotionValues;
     emotionValues.reserve((size_t)EmotionType::Count);
-    
+
     for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
     {
       const Emotion& emotion = GetEmotionByIndex(i);
       emotionValues.push_back(emotion.GetValue());
     }
-    
+
     ExternalInterface::MoodState message(std::move(emotionValues));
     _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
   }
@@ -416,27 +416,27 @@ void MoodManager::SendEmotionsToAudio(Audio::EngineRobotAudioClient& audioClient
 
   _lastAudioSendTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 }
-  
+
 // updates the most recent time this event was triggered, and returns how long it's been since the event was last seen
 // returns FLT_MAX if this is the first time the event has been seen
 float MoodManager::UpdateLatestEventTimeAndGetTimeElapsedInSeconds(const std::string& eventName, float currentTimeInSeconds)
 {
   auto newEntry = _moodEventTimes.insert( MoodEventTimes::value_type(eventName, currentTimeInSeconds) );
-  
+
   if (newEntry.second)
   {
-    // first time event has occured, map insert has successfully updated the time seen
+    // first time event has occurred, map insert has successfully updated the time seen
     return FLT_MAX;
   }
   else
   {
-    // event has happened before - calculate time since it last occured and the matching penalty, then update the time
-    
-    float& timeEventLastOccured = newEntry.first->second;
-    const float timeSinceLastOccurrence = Util::numeric_cast<float>(currentTimeInSeconds - timeEventLastOccured);
-    
-    timeEventLastOccured = currentTimeInSeconds;
-    
+    // event has happened before - calculate time since it last occurred and the matching penalty, then update the time
+
+    float& timeEventLastOccurred = newEntry.first->second;
+    const float timeSinceLastOccurrence = Util::numeric_cast<float>(currentTimeInSeconds - timeEventLastOccurred);
+
+    timeEventLastOccurred = currentTimeInSeconds;
+
     return timeSinceLastOccurrence;
   }
 }
@@ -445,9 +445,9 @@ float MoodManager::UpdateLatestEventTimeAndGetTimeElapsedInSeconds(const std::st
 float MoodManager::UpdateEventTimeAndCalculateRepetitionPenalty(const std::string& eventName, float currentTimeInSeconds)
 {
   const float timeSinceLastOccurrence = UpdateLatestEventTimeAndGetTimeElapsedInSeconds(eventName, currentTimeInSeconds);
-  
+
   const EmotionEvent* emotionEvent = GetStaticMoodData().GetEmotionEventMapper().FindEvent(eventName);
-  
+
   if (emotionEvent)
   {
     // Use the emotionEvent with the matching name for calculating the repetition penalty
@@ -460,7 +460,7 @@ float MoodManager::UpdateEventTimeAndCalculateRepetitionPenalty(const std::strin
     PRINT_NAMED_WARNING("MoodManager.UpdateEventTimeAndCalculateRepetitionPenalty.NoEvent",
                         "Could not find event '%s', using default repetition penalty",
                         eventName.c_str());
-    
+
     // No matching event name - use the default repetition penalty
     const float repetitionPenalty = GetStaticMoodData().GetDefaultRepetitionPenalty().EvaluateY(timeSinceLastOccurrence);
     return repetitionPenalty;
@@ -485,7 +485,7 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
   if (emotionEvent)
   {
     PRINT_CH_INFO("Mood", "TriggerEmotionEvent", "%s", eventName.c_str());
-    
+
     // update webviz before the event
     if( ANKI_DEV_CHEATS && kWebVizPeriod_s >= 0.0f && nullptr != _robot ) {
       SendMoodToWebViz(_robot->GetContext());
@@ -506,14 +506,14 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
       // update audio now instead of waiting for the next natural update
       SendEmotionsToAudio(_robot->GetComponent<Audio::EngineRobotAudioClient>());
     }
-    
+
     SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(eventName.c_str()) );
-    
+
     // Trying to answer the question of why emotions are changing
     std::ostringstream stream;
     std::for_each(_emotions, _emotions+((size_t)(EmotionType::Count)),
                   [&stream](const Emotion &iter){ stream<<iter.GetValue(); stream<<","; });
-    Anki::Util::sEvent("robot.mood_values", {{DDATA,eventName.c_str()}}, stream.str().c_str());
+    Anki::Util::sInfo("robot.mood_values", {{DDATA,eventName.c_str()}}, stream.str().c_str());
 
     // and update webviz after, with the name of the event that happened
     if( ANKI_DEV_CHEATS && kWebVizPeriod_s >= 0.0f && nullptr != _robot ) {
@@ -542,14 +542,14 @@ void MoodManager::AddToEmotions(EmotionType emotionType1, float baseValue1,
   const float repetitionPenalty = UpdateEventTimeAndCalculateRepetitionPenalty(uniqueIdString, currentTimeInSeconds);
   const float penalizedDeltaValue1 = baseValue1 * repetitionPenalty;
   const float penalizedDeltaValue2 = baseValue2 * repetitionPenalty;
-  
+
   GetEmotion(emotionType1).Add(penalizedDeltaValue1);
   GetEmotion(emotionType2).Add(penalizedDeltaValue2);
-  
+
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(uniqueIdString) );
 }
 
-  
+
 void MoodManager::AddToEmotions(EmotionType emotionType1, float baseValue1,
                                 EmotionType emotionType2, float baseValue2,
                                 EmotionType emotionType3, float baseValue3, const char* uniqueIdString, float currentTimeInSeconds)
@@ -558,11 +558,11 @@ void MoodManager::AddToEmotions(EmotionType emotionType1, float baseValue1,
   const float penalizedDeltaValue1 = baseValue1 * repetitionPenalty;
   const float penalizedDeltaValue2 = baseValue2 * repetitionPenalty;
   const float penalizedDeltaValue3 = baseValue3 * repetitionPenalty;
-  
+
   GetEmotion(emotionType1).Add(penalizedDeltaValue1);
   GetEmotion(emotionType2).Add(penalizedDeltaValue2);
   GetEmotion(emotionType3).Add(penalizedDeltaValue3);
-    
+
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(uniqueIdString) );
 }
 
@@ -629,7 +629,7 @@ bool MoodManager::DidSimpleMoodTransitionThisTick(SimpleMoodType from, SimpleMoo
   }
   return ret;
 }
-  
+
 bool MoodManager::DidSimpleMoodTransitionThisTickFrom(SimpleMoodType from) const
 {
   const float prevStim = GetEmotion( EmotionType::Stimulated ).GetHistoryValueTicksAgo( 1 );
@@ -639,7 +639,7 @@ bool MoodManager::DidSimpleMoodTransitionThisTickFrom(SimpleMoodType from) const
   const bool ret = (oldMood != currMood) && (oldMood == from);
   return ret;
 }
-  
+
 bool MoodManager::DidSimpleMoodTransitionThisTick() const
 {
   const float prevStim = GetEmotion( EmotionType::Stimulated ).GetHistoryValueTicksAgo( 1 );
@@ -649,7 +649,7 @@ bool MoodManager::DidSimpleMoodTransitionThisTick() const
   const bool ret = (oldMood != currMood);
   return ret;
 }
-  
+
 void MoodManager::SubscribeToWebViz()
 {
   if( _robot == nullptr ) {
@@ -663,7 +663,7 @@ void MoodManager::SubscribeToWebViz()
   if( webService == nullptr ) {
     return;
   }
-      
+
   auto onSubscribedBehaviors = [this](const std::function<void(const Json::Value&)>& sendToClient) {
     // a client subscribed. send them min/max values for each emotion, and a list of SimpleMoods
     // and arbitrary emotion values for each SimpleMood
@@ -675,7 +675,7 @@ void MoodManager::SubscribeToWebViz()
       Json::Value emotionEntry;
       auto emotion = static_cast<EmotionType>(i);
       emotionEntry["emotionType"] = EmotionTypeToString(emotion);
-      
+
       const auto& map = GetStaticMoodData().GetEmotionValueRangeMap();
       auto it = map.find(emotion);
       if( it != map.end() ) {
@@ -697,7 +697,7 @@ void MoodManager::SubscribeToWebViz()
     simpleMoods["HighStim"]["Stimulated"] = 0.9;
     simpleMoods["Frustrated"]["Confident"] = -0.4;
     simpleMoods["Frustrated"]["Stimulated"] = 0.3;
-    
+
     // do some verification that the above numbers are still valid
     {
       static_assert( SimpleMoodTypeNumEntries == 6, "Please update the values above with the new simple moods.");
@@ -719,7 +719,7 @@ void MoodManager::SubscribeToWebViz()
     }
     sendToClient( subscriptionData );
   };
-  
+
   auto onDataBehaviors = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
     // if the client sent any emotion types, set them
     for( uint8_t i=0; i<EmotionTypeNumEntries; ++i ) {
@@ -729,11 +729,11 @@ void MoodManager::SubscribeToWebViz()
       }
     }
   };
-  
+
   _signalHandles.emplace_back( webService->OnWebVizSubscribed( kWebVizModuleName ).ScopedSubscribe( onSubscribedBehaviors ) );
   _signalHandles.emplace_back( webService->OnWebVizData( kWebVizModuleName ).ScopedSubscribe( onDataBehaviors ) );
 }
-  
+
 #if SEND_MOOD_TO_VIZ_DEBUG
 void MoodManager::AddEvent(const char* eventName)
 {
@@ -744,7 +744,6 @@ void MoodManager::AddEvent(const char* eventName)
 }
 #endif // SEND_MOOD_TO_VIZ_DEBUG
 
-  
+
 } // namespace Cozmo
 } // namespace Anki
-

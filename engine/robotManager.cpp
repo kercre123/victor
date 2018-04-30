@@ -69,7 +69,7 @@ void RobotManager::Init(const Json::Value& config)
     }
   }
 
-  LOG_EVENT("robot.init.time_spent_ms", "%lld", timeSpent_millis);
+  PRINT_NAMED_INFO("robot.init.time_spent_ms", "%lld", timeSpent_millis);
 }
 
 void RobotManager::Shutdown()

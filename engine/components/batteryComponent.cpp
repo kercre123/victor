@@ -37,14 +37,14 @@ namespace {
   // How often the filtered voltage reading is updated
   // (i.e. Rate of RobotState messages)
   const float kBatteryVoltsUpdatePeriod_sec =  STATE_MESSAGE_FREQUENCY * ROBOT_TIME_STEP_MS / 1000.f;
-  
+
   // Time constant of the low-pass filter for battery voltage
   const float kBatteryVoltsFilterTimeConstant_sec = 6.0f;
-  
+
   // Voltage above which the battery is considered fully charged
   // after _saturationChargeTimeRemaining_sec expires.
   const float kSaturationChargingThresholdVolts = 4.1f;
-  
+
   // Max time to wait after kSaturationChargingThresholdVolts is reached
   // before battery is considered "fully charged".
   const float kMaxSaturationTime_sec = 7 * 60.f;
@@ -64,13 +64,13 @@ namespace {
 
 BatteryComponent::BatteryComponent()
   : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::Battery)
-  , _saturationChargeTimeRemaining_sec(kMaxSaturationTime_sec)  
+  , _saturationChargeTimeRemaining_sec(kMaxSaturationTime_sec)
   , _chargerFilter(std::make_unique<BlockWorldFilter>())
 {
   // setup battery voltage low pass filter (samples come in at kBatteryVoltsUpdatePeriod_sec)
   _batteryVoltsFilter = std::make_unique<Util::LowPassFilterSimple>(kBatteryVoltsUpdatePeriod_sec,
                                                                     kBatteryVoltsFilterTimeConstant_sec);
-  
+
   // setup block world filter to find chargers:
   _chargerFilter->AddAllowedFamily(ObjectFamily::Charger);
   _chargerFilter->AddAllowedType(ObjectType::Charger_Basic);
@@ -91,7 +91,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 
   // Only update filtered value if the battery isn't disconnected
   bool wasDisconnected = _battDisconnected;
-  _battDisconnected = (msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED) 
+  _battDisconnected = (msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED)
                       || (_batteryVoltsRaw < 3);  // Just in case syscon doesn't report IS_BATTERY_DISCONNECTED for some reason.
                                                   // Anything under 3V doesn't make sense.
   if (!_battDisconnected) {
@@ -101,7 +101,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   // Update isCharging / isOnChargerContacts
   SetOnChargeContacts(msg.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
   SetIsCharging(msg.status & (uint32_t)RobotStatusFlag::IS_CHARGING);
-  
+
   // Check if saturation charging
   bool isSaturationCharging = _isCharging && _batteryVoltsFilt > kSaturationChargingThresholdVolts;
   bool isFullyCharged = false;
@@ -110,31 +110,31 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
       // Saturation charging has started
       _saturationChargingStartTime_sec = now_sec;
 
-      // The amount of time until fully charged is the (discounted) amount of time 
+      // The amount of time until fully charged is the (discounted) amount of time
       // that has elapsed since the last time it was saturation charging
       // plus the amount of saturation charge time that was left when it ended
       // to a max time of kMaxSaturationTime_sec.
       //
-      // kSaturationTimeReplenishmentSpeed represents a heuristic that very roughly 
-      // approximates the amount of saturation charge time required to offset the 
-      // amount of time spent since it was last saturation charging (which obviously 
+      // kSaturationTimeReplenishmentSpeed represents a heuristic that very roughly
+      // approximates the amount of saturation charge time required to offset the
+      // amount of time spent since it was last saturation charging (which obviously
       // depends on exactly what it was doing off charger).
       //
       // NOTE: This replenish rate of 60% seems to work fine based on a test
       //       where the wheels were run full speed right after coming fully charged
-      //       off the charger and returning to charger after 7 minutes. This resulted in 
-      //       just over 4 minutes of saturation charge time and seemed to yield as much  
+      //       off the charger and returning to charger after 7 minutes. This resulted in
+      //       just over 4 minutes of saturation charge time and seemed to yield as much
       //       subsequent discharge time as a fully charged battery.
       const float kSaturationTimeReplenishmentSpeed = 0.6f;  //  1: Replenish at real-time rate
                                                              // >1: Replenish faster (i.e. Takes longer to reach full)
                                                              // <1: Replenish slower (i.e. Faster to reach full)
-      const float newPossibleSaturationChargeTimeRemaining_sec = _saturationChargeTimeRemaining_sec + 
-                                                                 (kSaturationTimeReplenishmentSpeed * 
+      const float newPossibleSaturationChargeTimeRemaining_sec = _saturationChargeTimeRemaining_sec +
+                                                                 (kSaturationTimeReplenishmentSpeed *
                                                                   (now_sec - _lastSaturationChargingEndTime_sec));
       _saturationChargeTimeRemaining_sec = std::min(kMaxSaturationTime_sec, newPossibleSaturationChargeTimeRemaining_sec);
 
-      Util::sEventF("BatteryComponent.NotifyOfRobotState.SaturationChargeStartVoltage",
-                    {{DDATA, std::to_string(_batteryVoltsFilt).c_str()}}, "%f", _saturationChargeTimeRemaining_sec);
+      Util::sInfoF("BatteryComponent.NotifyOfRobotState.SaturationChargeStartVoltage",
+                   {{DDATA, std::to_string(_batteryVoltsFilt).c_str()}}, "%f", _saturationChargeTimeRemaining_sec);
     }
     _lastSaturationChargingEndTime_sec = now_sec;
 
@@ -142,15 +142,15 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 
     // If transitioning to full, write DAS log
     if (isFullyCharged && !IsBatteryFull()) {
-       Util::sEventF("BatteryComponent.NotifyOfRobotState.FullyChargedVoltage",
-                     {{DDATA, std::to_string(_batteryVoltsFilt).c_str()}}, "");
+       Util::sInfoF("BatteryComponent.NotifyOfRobotState.FullyChargedVoltage",
+                    {{DDATA, std::to_string(_batteryVoltsFilt).c_str()}}, "");
     }
 
   } else if (_saturationChargingStartTime_sec > 0.f) {
-    // Saturation charging has stopped so update the amount of 
-    // saturation charge time remaining by subtracting the amount of 
+    // Saturation charging has stopped so update the amount of
+    // saturation charge time remaining by subtracting the amount of
     // time that has elapsed since saturation charging started
-    const float newPossibleSaturationChargeTimeRemaining_sec = _saturationChargeTimeRemaining_sec - 
+    const float newPossibleSaturationChargeTimeRemaining_sec = _saturationChargeTimeRemaining_sec -
                                                                (now_sec - _saturationChargingStartTime_sec);
     _saturationChargeTimeRemaining_sec = std::max(0.f, newPossibleSaturationChargeTimeRemaining_sec);
     _saturationChargingStartTime_sec = 0.f;
@@ -176,13 +176,13 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   // Update battery charge level
   BatteryLevel level = BatteryLevel::Nominal;
   if (isFullyCharged) {
-    // NOTE: Given the dependence on isFullyCharged, this means BatteryLevel::Full is a state 
+    // NOTE: Given the dependence on isFullyCharged, this means BatteryLevel::Full is a state
     //       that can only be achieved while on charger
     level = BatteryLevel::Full;
   } else if (_batteryVoltsFilt < kLowBatteryThresholdVolts) {
     level = BatteryLevel::Low;
 
-    // Battery is critical 
+    // Battery is critical
     // Power shutdown is practically imminent so call
     // sync() every once in a while.
     if ((_batteryVoltsFilt < kCriticalBatteryThresholdVolts) &&
@@ -191,7 +191,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
       _nextSyncTime_sec = now_sec + kCriticalBatterySyncPeriod_sec;
     }
   }
-  
+
   if (level != _batteryLevel) {
     PRINT_NAMED_INFO("BatteryComponent.BatteryLevelChanged",
                      "New battery level %s (previously %s for %f seconds)",
@@ -233,7 +233,7 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
   if (onChargeContacts)
   {
     const Pose3d& poseWrtRobot = Charger::GetDockPoseRelativeToRobot(*_robot);
-    
+
     // find instance in current origin
     ObservableObject* chargerInstance = _robot->GetBlockWorld().FindLocatedMatchingObject(*_chargerFilter);
     if (nullptr == chargerInstance)
@@ -242,22 +242,22 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
       chargerInstance = new Charger();
       chargerInstance->SetID();
     }
-    
+
     // pretend the instance we created was an observation. Note that lastObservedTime will be 0 in this case, since
     // that timestamp refers to visual observations only (TODO: maybe that should be more explicit or any
     // observation should set that timestamp)
     _robot->GetObjectPoseConfirmer().AddRobotRelativeObservation(chargerInstance, poseWrtRobot, PoseState::Known);
   }
-  
+
   // Log events and send message if state changed
   if (onChargeContacts != _isOnChargerContacts) {
     _isOnChargerContacts = onChargeContacts;
     if (onChargeContacts) {
-      LOG_EVENT("robot.on_charger", "");
+      PRINT_NAMED_INFO("robot.on_charger", "");
       // if we are on the charger, we must also be on the charger platform.
       SetOnChargerPlatform(true);
     } else {
-      LOG_EVENT("robot.off_charger", "");
+      PRINT_NAMED_INFO("robot.off_charger", "");
     }
     // Broadcast to game
     using namespace ExternalInterface;
@@ -270,14 +270,14 @@ void BatteryComponent::SetOnChargerPlatform(bool onPlatform)
 {
   // Can only not be on platform if not on charge contacts
   onPlatform = onPlatform || IsOnChargerContacts();
-  
+
   const bool stateChanged = _isOnChargerPlatform != onPlatform;
   _isOnChargerPlatform = onPlatform;
-  
+
   if (stateChanged) {
     using namespace ExternalInterface;
     _robot->Broadcast(MessageEngineToGame(RobotOnChargerPlatformEvent(_isOnChargerPlatform)));
-    
+
     // pause the freeplay tracking if we are on the charger
     _robot->GetAIComponent().GetComponent<FreeplayDataTracker>().SetFreeplayPauseFlag(_isOnChargerPlatform, FreeplayPauseFlag::OnCharger);
   }

@@ -57,7 +57,7 @@ void ProgressionUnlockComponent::InitDependent(Cozmo::Robot* robot, const RobotC
                           "invalid element in unlock id's list (not a string)");
         continue;
       }
-      
+
       UnlockId uid = UnlockIdFromString(unlockIdJson.asString());
       _freeplayOverrides.insert(uid);
 
@@ -73,7 +73,7 @@ void ProgressionUnlockComponent::InitDependent(Cozmo::Robot* robot, const RobotC
   }
 
   ReadCurrentUnlocksFromRobot();
-  
+
   // register to get unlock requests
   if( _robot->HasExternalInterface() ) {
     auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _signalHandles);
@@ -92,7 +92,7 @@ const std::set<UnlockId>& ProgressionUnlockComponent::GetDefaultUnlocks(const Co
   }
   return _defaultUnlocks;
 }
-  
+
 bool ProgressionUnlockComponent::InitConfig(const CozmoContext* context, Json::Value &config)
 {
   if( context == nullptr || context->GetDataPlatform() == nullptr)
@@ -109,7 +109,7 @@ bool ProgressionUnlockComponent::InitConfig(const CozmoContext* context, Json::V
                       "Unlock Json config file %s not found.",
                       jsonFilename.c_str());
   }
-  
+
   if( _defaultUnlocks.empty() )
   {
     // load default unlocks from json
@@ -120,10 +120,10 @@ bool ProgressionUnlockComponent::InitConfig(const CozmoContext* context, Json::V
                             "invalid element in unlock id's list (not a string)");
           continue;
         }
-        
+
         UnlockId uid = UnlockIdFromString(unlockIdJson.asString());
         _defaultUnlocks.insert(uid);
-        
+
         //PRINT_CH_DEBUG("ProgressionUnlockComponent.InitDefaults", "ProgressionUnlockComponent.DefaultValue",
         //               "%s defaults to true",
         //               UnlockIdToString(uid));
@@ -151,7 +151,7 @@ bool ProgressionUnlockComponent::IsUnlockIdValid(UnlockId id)
   }
   return true;
 }
-  
+
 void ProgressionUnlockComponent::NotifyGameDefaultUnlocksSet()
 {
   // Let unity know what the default unlocks were.
@@ -165,7 +165,7 @@ void ProgressionUnlockComponent::NotifyGameDefaultUnlocksSet()
 bool ProgressionUnlockComponent::SetUnlock(UnlockId unlock, bool unlocked)
 {
   bool success = false;
-  
+
   if(unlock == UnlockId::All)
   {
     for(u8 i = (u8)UnlockId::Invalid; i < (u8)UnlockId::Count; ++i)
@@ -194,7 +194,7 @@ bool ProgressionUnlockComponent::SetUnlock(UnlockId unlock, bool unlocked)
     {
       // we want to unlock (= add to the set of unlocked)
       auto ret = _currentUnlocks.insert(unlock);
-      
+
       // debug the result
       if ( ret.second ) {
         // successfully unlocked
@@ -229,12 +229,12 @@ bool ProgressionUnlockComponent::SetUnlock(UnlockId unlock, bool unlocked)
       }
     }
   }
-  
+
   if(success)
   {
     WriteCurrentUnlocksToRobot(unlock, unlocked);
   }
-  
+
   return true;
 }
 
@@ -243,7 +243,7 @@ bool ProgressionUnlockComponent::IsUnlocked(UnlockId unlock, bool forFreeplay) c
 {
   // Hack for Victor: everything is always unlocked
   return true;
-  
+
   if (_robot->GetContext()->IsInSdkMode())
   {
     // Progression is irrelevant in sdk mode - just force everything unlocked
@@ -258,7 +258,7 @@ bool ProgressionUnlockComponent::IsUnlocked(UnlockId unlock, bool forFreeplay) c
       return true;
     }
   }
-  
+
   const auto matchIt = _currentUnlocks.find(unlock);
   const bool isUnlocked = (matchIt != _currentUnlocks.end());
   return isUnlocked;
@@ -275,7 +275,7 @@ void ProgressionUnlockComponent::SendUnlockStatus() const
                 "SendUnlockStatus",
                 "Sending current unlock status (%zu unlocked)",
                 _currentUnlocks.size());
-  
+
   // now send
   _robot->GetExternalInterface()->Broadcast( ExternalInterface::MessageEngineToGame(
                                               ExternalInterface::UnlockStatus(
@@ -291,7 +291,7 @@ void ProgressionUnlockComponent::UpdateDependent(const RobotCompMap& dependentCo
 void ProgressionUnlockComponent::WriteCurrentUnlocksToRobot(UnlockId id, bool unlocked)
 {
   ANKI_CPU_PROFILE("ProgressionUnlockComponent::WriteCurrentUnlocksToRobot");
-  
+
   UnlockedIdsList unlockedIds;
   unlockedIds.unlockedIds.fill(UnlockId::Invalid);
   int index = 0;
@@ -299,10 +299,10 @@ void ProgressionUnlockComponent::WriteCurrentUnlocksToRobot(UnlockId id, bool un
   {
     unlockedIds.unlockedIds[index++] = id;
   }
-  
+
   u8 buf[unlockedIds.Size()];
   size_t numBytes = unlockedIds.Pack(buf, sizeof(buf));
-  
+
   if(!_robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_GameUnlocks, buf, numBytes,
                                           [this, id, unlocked](NVStorage::NVResult res)
                                           {
@@ -347,12 +347,12 @@ void ProgressionUnlockComponent::ReadCurrentUnlocksFromRobot()
                                                 PRINT_CH_INFO("UnlockComponent",
                                                               "ReadGameUnlocks",
                                                               "No unlock data found on robot unlocking defaults");
-                                                
+
                                                 _currentUnlocks = _defaultUnlocks;
-                                                
+
                                                 SendUnlockStatus();
                                                 NotifyGameDefaultUnlocksSet();
-                                                
+
                                               }
                                               // Otherwise something went wrong with reading from the robot so try again
                                               else
@@ -365,26 +365,26 @@ void ProgressionUnlockComponent::ReadCurrentUnlocksFromRobot()
                                             else
                                             {
                                               UnlockedIdsList unlockedIds;
-                                              
+
                                               if(size < NVStorageComponent::MakeWordAligned(unlockedIds.Size()))
                                               {
                                                 PRINT_NAMED_INFO("ProgressionUnlockComponent.ReadFewerUnlocks",
                                                                  "Padding unlock data due to size mismatch");
-                                                
+
                                                 std::vector<u8> padded = std::vector<u8>(data, data + size);
-                                                
+
                                                 for(int i = 0; i < unlockedIds.Size() - size; ++i)
                                                 {
                                                   padded.insert(padded.end(), 0);
                                                 }
-                                                
+
                                                 DEV_ASSERT(unlockedIds.Size() == padded.size(),
                                                            "unlockIds and padded not equal in size");
-                                                
+
                                                 size = unlockedIds.Size();
                                                 data = padded.data();
                                               }
-                                              
+
                                               if(size != NVStorageComponent::MakeWordAligned(unlockedIds.Size()))
                                               {
                                                 PRINT_NAMED_ERROR("UnlockComponent.ReadGameUnlocks",
@@ -396,11 +396,11 @@ void ProgressionUnlockComponent::ReadCurrentUnlocksFromRobot()
                                               {
                                                 unlockedIds.Unpack(data, size);
                                                 _currentUnlocks.clear();
-                                                
+
                                                 // For Needs, the default unlocks have changed, so we need to grant
                                                 // the new default unlocks if the player haven't done so yet.
                                                 _currentUnlocks = _defaultUnlocks;
-                                                
+
                                                 for(const UnlockId& id : unlockedIds.unlockedIds)
                                                 {
                                                   if(id > UnlockId::Invalid && id < UnlockId::Count)
@@ -408,7 +408,7 @@ void ProgressionUnlockComponent::ReadCurrentUnlocksFromRobot()
                                                     _currentUnlocks.insert(id);
                                                   }
                                                 }
-                                                
+
                                                 SendUnlockStatus();
                                               }
                                             }
@@ -423,7 +423,7 @@ void ProgressionUnlockComponent::ReadCurrentUnlocksFromRobot()
 template<>
 void ProgressionUnlockComponent::HandleMessage(const ExternalInterface::RequestSetUnlock& msg)
 {
-  LOG_EVENT("meta.unlock.engineHandle","%s %d",EnumToString(msg.unlockID), msg.unlocked);
+  PRINT_NAMED_INFO("meta.unlock.engineHandle","%s %d",EnumToString(msg.unlockID), msg.unlocked);
   if(msg.unlockID <= UnlockId::Invalid ||
      msg.unlockID >= UnlockId::Count)
   {

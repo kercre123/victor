@@ -111,7 +111,7 @@ CONSOLE_VAR(bool, kUseVisionOnlyWhileOnTreads,    "Robot", false);
 
 // Enable to enable example code of face image drawing
 CONSOLE_VAR(bool, kEnableTestFaceImageRGBDrawing,  "Robot", false);
-  
+
 // TEMP support for 'old' chargers with black stripe and white body
 CONSOLE_VAR(bool, kChargerStripeIsBlack, "Robot",
 #ifdef SIMULATOR
@@ -325,7 +325,7 @@ Robot::~Robot()
   _components->RemoveComponent(RobotComponentID::Map);
   _components->RemoveComponent(RobotComponentID::ObjectPoseConfirmer);
 
-  LOG_EVENT("robot.destructor", "%d", GetID());
+  PRINT_NAMED_INFO("robot.destructor", "%d", GetID());
 }
 
 
@@ -445,9 +445,9 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     // Falling seems worthy of a DAS event
     if (_awaitingConfirmationTreadState == OffTreadsState::Falling) {
       _fallingStartedTime_ms = GetLastMsgTimestamp();
-      LOG_EVENT("Robot.CheckAndUpdateTreadsState.FallingStarted",
-                        "t=%dms",
-                        _fallingStartedTime_ms);
+      PRINT_NAMED_INFO("Robot.CheckAndUpdateTreadsState.FallingStarted",
+                       "t=%dms",
+                       _fallingStartedTime_ms);
 
       // Stop all actions
       GetActionList().Cancel();
@@ -455,9 +455,9 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
     } else if (_offTreadsState == OffTreadsState::Falling) {
       // This is not an exact measurement of fall time since it includes some detection delays on the robot side
       // It may also include kRobotTimeToConsiderOfftreads_ms depending on how the robot lands
-      LOG_EVENT("Robot.CheckAndUpdateTreadsState.FallingStopped",
-                        "t=%dms, duration=%dms",
-                        GetLastMsgTimestamp(), GetLastMsgTimestamp() - _fallingStartedTime_ms);
+      PRINT_NAMED_INFO("Robot.CheckAndUpdateTreadsState.FallingStopped",
+                       "t=%dms, duration=%dms",
+                       GetLastMsgTimestamp(), GetLastMsgTimestamp() - _fallingStartedTime_ms);
       _fallingStartedTime_ms = 0;
     }
 
@@ -569,8 +569,8 @@ void Robot::Delocalize(bool isCarryingObject)
                  worldOriginID, worldOrigin.GetID());
 
   // Log delocalization, new origin name, and num origins to DAS
-  LOG_EVENT("Robot.Delocalize", "Delocalizing robot %d. New origin: %s. NumOrigins=%zu",
-            GetID(), worldOrigin.GetName().c_str(), GetPoseOriginList().GetSize());
+  PRINT_NAMED_INFO("Robot.Delocalize", "Delocalizing robot %d. New origin: %s. NumOrigins=%zu",
+                   GetID(), worldOrigin.GetName().c_str(), GetPoseOriginList().GetSize());
 
   GetComponent<FullRobotPose>().GetPose().SetRotation(0, Z_AXIS_3D());
   GetComponent<FullRobotPose>().GetPose().SetTranslation({0.f, 0.f, 0.f});
@@ -1227,7 +1227,7 @@ Result Robot::Update()
     SendMessage(RobotInterface::EngineToRobot(RobotInterface::ChargerDockingStripeColor(kChargerStripeIsBlack)));
     wasChargerStripeIsBlack = kChargerStripeIsBlack;
   }
-  
+
 #if(0)
   ActiveBlockLightTest(1);
   return RESULT_OK;
@@ -1728,10 +1728,10 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   const Pose3d& origOrigin = GetPoseOriginList().GetCurrentOrigin();
   if (!existingObject->GetPose().HasSameRootAs(origOrigin))
   {
-    LOG_EVENT("Robot.LocalizeToObject.RejiggeringOrigins",
-              "Robot %d's current origin is %s, about to localize to origin %s.",
-              GetID(), origOrigin.GetName().c_str(),
-              existingObject->GetPose().FindRoot().GetName().c_str());
+    PRINT_NAMED_INFO("Robot.LocalizeToObject.RejiggeringOrigins",
+                     "Robot %d's current origin is %s, about to localize to origin %s.",
+                     GetID(), origOrigin.GetName().c_str(),
+                     existingObject->GetPose().FindRoot().GetName().c_str());
 
     const PoseOriginID_t origOriginID = GetPoseOriginList().GetCurrentOriginID();
 

@@ -21,14 +21,14 @@ const float kDriftCheckMaxRate_rad_per_sec = DEG_TO_RAD(10.f);
 const float kDriftCheckPeriod_ms = 5000.f;
 const float kDriftCheckGyroZMotionThresh_rad_per_sec = DEG_TO_RAD(1.f);
 const float kDriftCheckMaxAngleChangeRate_rad_per_sec = DEG_TO_RAD(0.1f);
-  
+
 const float kAccelMovingThresh_mmps2 = 50.f; // highpass-filtered accelerometer magnitude must be below this to be considered stationary
 const uint32_t kBiasCheckDuration_ms = 5000; // duration that robot must be stationary before checking for gyro bias
 const int kBiasCheckMinReadings = 50; // minimum required number of readings for bias detection
 const float kBiasDetectionThresh_rad_per_sec = DEG_TO_RAD(0.1f); // near-constant gyro readings above this value is considered 'bias'
 const float kBiasMaxRange_rad_per_sec = DEG_TO_RAD(0.05f); // maximum allowed difference between min and max gyro readings during bias check period.
 } // anonymous namespace
-  
+
 
 RobotGyroDriftDetector::RobotGyroDriftDetector()
 : IDependencyManagedComponent(this, RobotComponentID::GyroDriftDetector)
@@ -46,9 +46,9 @@ void RobotGyroDriftDetector::InitDependent(Cozmo::Robot* robot, const RobotCompM
 void RobotGyroDriftDetector::DetectGyroDrift(const RobotState& msg)
 {
   f32 gyroZ = msg.gyro.z;
-  
+
   if (!_gyroDriftReported) {
-    
+
     // Reset gyro drift detector if
     // 1) Wheels are moving
     // 2) Raw gyro reading exceeds possible drift value
@@ -59,15 +59,15 @@ void RobotGyroDriftDetector::DetectGyroDrift(const RobotState& msg)
         (std::fabsf(gyroZ) > kDriftCheckMaxRate_rad_per_sec) ||
         _robot->GetCliffSensorComponent().IsCliffDetected() ||
         !_robot->IsHeadCalibrated() ||
-        
+
         ((_startTime_ms != 0) &&
          ((std::fabsf(_startGyroZ_rad_per_sec - gyroZ) > kDriftCheckGyroZMotionThresh_rad_per_sec) ||
           (_startPoseFrameId != _robot->GetPoseFrameID())))
-        
+
         ) {
       _startTime_ms = 0;
     }
-    
+
     // Robot's not moving. Initialize drift detection.
     else if (_startTime_ms == 0) {
       _startPoseFrameId        = _robot->GetPoseFrameID();
@@ -79,14 +79,14 @@ void RobotGyroDriftDetector::DetectGyroDrift(const RobotState& msg)
       _maxGyroZ_rad_per_sec    = gyroZ;
       _numReadings             = 1;
     }
-    
+
     // If gyro readings have been accumulating for long enough...
     else if (msg.timestamp - _startTime_ms > kDriftCheckPeriod_ms) {
-      
+
       // ...check if there was a sufficient change in heading angle or pitch. Otherwise, reset detector.
       const f32 headingAngleChange = std::fabsf((_startAngle_rad - _robot->GetPose().GetRotation().GetAngleAroundZaxis()).ToFloat());
       const f32 angleChangeThresh = kDriftCheckMaxAngleChangeRate_rad_per_sec * Util::MilliSecToSec(kDriftCheckPeriod_ms);
-      
+
       if (headingAngleChange > angleChangeThresh) {
         // Report drift detected just one time during a session
         Util::sWarningF("robot.detect_gyro_drift.drift_detected",
@@ -97,10 +97,10 @@ void RobotGyroDriftDetector::DetectGyroDrift(const RobotState& msg)
                         RAD_TO_DEG(_maxGyroZ_rad_per_sec));
         _gyroDriftReported = true;
       }
-      
+
       _startTime_ms = 0;
     }
-    
+
     // Record min and max observed gyro readings and cumulative sum for later mean computation
     else {
       if (gyroZ > _maxGyroZ_rad_per_sec) {
@@ -131,11 +131,11 @@ void RobotGyroDriftDetector::DetectBias(const RobotState& msg)
   const float currAccelMag = _robot->GetHeadAccelMagnitude();
   _hpFiltAccelMag = kFiltAccel * (currAccelMag - _accelMagPrev + _hpFiltAccelMag);
   _accelMagPrev = currAccelMag;
-  
+
   if (std::abs(_hpFiltAccelMag) > kAccelMovingThresh_mmps2) {
     isMoving = true;
   }
-  
+
   if (!isMoving) {
     if (_biasCheckStartTime_ms == 0) {
       _biasCheckStartTime_ms = msg.timestamp;
@@ -160,9 +160,9 @@ void RobotGyroDriftDetector::DetectBias(const RobotState& msg)
             // s_val: "<min gyro value>,<max gyro value>" (values in 1000s of deg/sec, e.g. 1000 = 1 deg/sec)
             // data: axis of bias
             const char* axisStr = (i==0 ? "x" : (i==1 ? "y" : "z"));
-            Anki::Util::sEvent("robot.detect_gyro_bias.bias_detected",
-                               {{DDATA, axisStr}},
-                               (minGyroStr + "," + maxGyroStr).c_str());
+            Anki::Util::sInfo("robot.detect_gyro_bias.bias_detected",
+                              {{DDATA, axisStr}},
+                              (minGyroStr + "," + maxGyroStr).c_str());
             PRINT_NAMED_WARNING("RobotGyroDriftDetector.BiasDetected",
                                 "Gyro bias detected on %s axis (min=%.2f deg/sec, max=%.2f deg/sec)",
                                 axisStr,
@@ -172,12 +172,12 @@ void RobotGyroDriftDetector::DetectBias(const RobotState& msg)
           }
         }
       }
-      
+
       ResetBiasDetector();
     }
-    
+
     ++_nReadings;
-    
+
     // Apply low-pass filter to gyro data
     const auto& gyro = Vec3f{msg.gyro.x, msg.gyro.y, msg.gyro.z};
     const float kFiltGyro = 0.95f;
@@ -196,12 +196,12 @@ void RobotGyroDriftDetector::ResetBiasDetector()
 {
   _biasCheckStartTime_ms = 0;
   _nReadings = 0;
-  
+
   const auto inf = std::numeric_limits<float>::infinity();
   _minFiltGyroVals = {inf, inf, inf};
   _maxFiltGyroVals = {0.f, 0.f, 0.f};
 }
-  
-  
+
+
 } // namespace Cozmo
 } // namespace Anki

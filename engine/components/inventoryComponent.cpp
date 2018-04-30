@@ -24,7 +24,7 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
 static const int kMinimumTimeBetweenRobotSaves_sec = 5;
 static const std::string kInventoryTypeCapsConfigKey = "InventoryTypeCaps";
 
@@ -48,7 +48,7 @@ void InventoryComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
 {
   _robot = robot;
   ReadCurrentInventoryFromRobot();
-  
+
   // Subscribe to messages
   if (_robot->HasExternalInterface())
   {
@@ -83,7 +83,7 @@ void InventoryComponent::ReadInventoryConfig(const Json::Value& config)
     }
   }
 }
-  
+
 void InventoryComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
   if( !_isWritingToRobot && _robotWritePending)
@@ -91,7 +91,7 @@ void InventoryComponent::UpdateDependent(const RobotCompMap& dependentComps)
     TryWriteCurrentInventoryToRobot();
   }
 }
-  
+
 void InventoryComponent::SetInventoryAmount(InventoryType inventoryID, int total)
 {
   PRINT_CH_INFO(CONSOLE_GROUP_NAME,"InventoryComponent.SetInventoryAmount","%s : %d",
@@ -113,7 +113,7 @@ void InventoryComponent::SetInventoryAmount(InventoryType inventoryID, int total
     PRINT_CH_DEBUG(CONSOLE_GROUP_NAME,"InventoryComponent.SetInventoryAmount.ComponentNotReady","");
   }
 }
-  
+
 void InventoryComponent::AddInventoryAmount(InventoryType inventoryID, int delta)
 {
   SetInventoryAmount(inventoryID,GetInventoryAmount(inventoryID) + delta);
@@ -123,18 +123,18 @@ void InventoryComponent::AddInventoryAmount(InventoryType inventoryID, int delta
   // DAS Event: "meta.inventory.change"
   // s_val: Sparks inventory type
   // data: Change (delta) in count
-  Anki::Util::sEvent("meta.inventory.change",
-                     {{DDATA, std::to_string(delta).c_str()}},
-                     inventoryType.c_str());
+  Anki::Util::sInfo("meta.inventory.change",
+                    {{DDATA, std::to_string(delta).c_str()}},
+                    inventoryType.c_str());
 
   // DAS Event: "meta.inventory.balance"
   // s_val: Sparks inventory type
   // data: New inventory balance
-  Anki::Util::sEvent("meta.inventory.balance",
-                     {{DDATA, std::to_string(GetInventoryAmount(inventoryID)).c_str()}},
-                     inventoryType.c_str());
+  Anki::Util::sInfo("meta.inventory.balance",
+                    {{DDATA, std::to_string(GetInventoryAmount(inventoryID)).c_str()}},
+                    inventoryType.c_str());
 }
-  
+
 int  InventoryComponent::GetInventoryAmount(InventoryType inventoryID) const
 {
   return _currentInventory.inventoryItemAmount[static_cast<size_t>(inventoryID)];
@@ -151,7 +151,7 @@ int InventoryComponent::GetInventorySpaceRemaining(InventoryType inventoryID) co
 {
   const int cap = GetInventoryCap(inventoryID);
   const int currentAmount = GetInventoryAmount(inventoryID);
-  
+
   if (cap == kInfinity)
   {
     return kInfinity;
@@ -161,14 +161,14 @@ int InventoryComponent::GetInventorySpaceRemaining(InventoryType inventoryID) co
     ? cap - currentAmount
     : 0;
 }
-  
+
 void InventoryComponent::SendInventoryAllToGame()
 {
   if( _readFromRobot && _robot->HasExternalInterface())
   {
     ExternalInterface::InventoryStatus message(_currentInventory);
     _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(message)));
-    
+
 #if ANKI_DEV_CHEATS
     for( int i = 0; i < InventoryTypeNumEntries; ++i )
     {
@@ -180,10 +180,10 @@ void InventoryComponent::SendInventoryAllToGame()
       }
     }
 #endif
-    
+
   }
 }
-  
+
 template<>
 void InventoryComponent::HandleMessage(const ExternalInterface::InventoryRequestAdd& msg)
 {
@@ -201,7 +201,7 @@ void InventoryComponent::HandleMessage(const ExternalInterface::InventoryRequest
 {
   SendInventoryAllToGame();
 }
-  
+
 void InventoryComponent::ReadCurrentInventoryFromRobot()
 {
   PRINT_CH_INFO(CONSOLE_GROUP_NAME,"InventoryComponent.ReadCurrentInventoryFromRobot","");
@@ -218,9 +218,9 @@ void InventoryComponent::ReadCurrentInventoryFromRobot()
                                               PRINT_NAMED_ERROR("InventoryComponent.ReadCurrentInventoryFromRobot.ReadError","");
                                             }
                                             // If the tag doesn't exist on the robot indicating the robot is new or has been
-                                            // wiped so assume 0, inited in constructor.
+                                            // wiped so assume 0, initialized in constructor.
                                             SendInventoryAllToGame();
-                                            
+
                                             // Unity has the default inventory for sparks, so request and it will get added
                                             if( res == NVStorage::NVResult::NV_NOT_FOUND && _robot->HasExternalInterface())
                                             {
@@ -259,7 +259,7 @@ void InventoryComponent::WriteCurrentInventoryToRobot()
   PRINT_CH_INFO(CONSOLE_GROUP_NAME,"InventoryComponent.WriteCurrentInventoryToRobot","");
   u8 buf[_currentInventory.Size()];
   size_t numBytes = _currentInventory.Pack(buf, sizeof(buf));
-  
+
   if(!_robot->GetNVStorageComponent().Write(NVStorage::NVEntryTag::NVEntry_InventoryData, buf, numBytes,
                                            [this](NVStorage::NVResult res)
                                            {

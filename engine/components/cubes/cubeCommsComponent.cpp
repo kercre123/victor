@@ -28,21 +28,21 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
 namespace {
   // How long to remain in discovery mode
   const float kDefaultDiscoveryTime_sec = 3.f;
-  
+
   // How often do we check for disconnected objects
   const float kDisconnectCheckPeriod_sec = 2.0f;
-  
+
   // How long must the object be disconnected before we really remove it from the list of connected objects
   const float kDisconnectTimeout_sec = 5.0f;
-  
-  const int kNumCubeLeds = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
+
+  const int kNumCubeLEDs = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
 }
 
-  
+
 CubeCommsComponent::CubeCommsComponent()
 : IDependencyManagedComponent(this, RobotComponentID::CubeComms)
 , _cubeBleClient(std::make_unique<CubeBleClient>())
@@ -72,7 +72,7 @@ void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
   _cubeBleClient->SetScanDuration(kDefaultDiscoveryTime_sec);
   _cubeBleClient->StartScanUponConnection();
   _discovering = true;
-  
+
   if (!_cubeBleClient->Init()) {
     PRINT_NAMED_ERROR("CubeCommsComponent.InitDependent.FailedToInitBleClient",
                       "Failed to initialize cubeBleClient");
@@ -88,9 +88,9 @@ void CubeCommsComponent::UpdateDependent(const RobotCompMap& dependentComps)
                       "Failed updating CubeBleClient");
     return;
   }
-  
+
   const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
+
   // If we're connected to a cube, then it's assumed that we're communicating with
   // it. So just update the lastHeardTime_sec here to prevent accidental removal
   // in the disconnection check logic below when Discovery mode is first started.
@@ -100,7 +100,7 @@ void CubeCommsComponent::UpdateDependent(const RobotCompMap& dependentComps)
       cube.lastHeardTime_sec = now_sec;
     }
   }
-  
+
   // Every once in a while, ensure we've heard from all the cubes recently
   // and remove stale cubes from the list if not.
   if (now_sec > _nextDisconnectCheckTime_sec) {
@@ -113,7 +113,7 @@ void CubeCommsComponent::UpdateDependent(const RobotCompMap& dependentComps)
                          "Removing unconnected cube with factory ID %s since we haven't heard from it recently.",
                          cube.factoryId.c_str());
         it = _availableCubes.erase(it);
-        
+
         if (_broadcastObjectAvailableMsg) {
           _robot->Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::ObjectUnavailable(cube.factoryId)));
         }
@@ -121,7 +121,7 @@ void CubeCommsComponent::UpdateDependent(const RobotCompMap& dependentComps)
         ++it;
       }
     }
-    
+
     _nextDisconnectCheckTime_sec = now_sec + kDisconnectCheckPeriod_sec;
   }
 }
@@ -159,7 +159,7 @@ void CubeCommsComponent::EnableDiscovery(const bool enable, const float discover
 bool CubeCommsComponent::SendCubeMessage(const ActiveID& activeId, const MessageEngineToCube& msg)
 {
   const auto* cube = GetCubeByActiveId(activeId);
-  
+
   if (nullptr == cube) {
     PRINT_NAMED_WARNING("CubeCommsComponent.SendCubeMessage.InvalidCube", "Could not find cube with activeID %d", activeId);
     return false;
@@ -168,7 +168,7 @@ bool CubeCommsComponent::SendCubeMessage(const ActiveID& activeId, const Message
     PRINT_NAMED_WARNING("CubeCommsComponent.SendCubeMessage.NotConnected", "Cannot send message to unconnected to cube (activeID %d)", activeId);
     return false;
   }
-  
+
   const auto factoryId = cube->factoryId;
   const bool res = _cubeBleClient->SendMessageToLightCube(factoryId, msg);
   return res;
@@ -181,9 +181,9 @@ void CubeCommsComponent::GenerateCubeLightMessages(const CubeLights& cubeLights,
 {
   DEV_ASSERT(cubeLightKeyframeChunks.empty(), "CubeCommsComponent.GenerateCubeLightMessages.CubeLightKeyframeChunksNotEmpty");
   cubeLightKeyframeChunks.clear();
-  
+
   DEV_ASSERT(!(cubeLights.playOnce && cubeLights.rotate), "CubeCommsComponent.GenerateCubeLightMessages.CannotHaveBothPlayOnceAndRotation");
-  
+
   int baseIndex = 0;
   std::vector<LedAnimation> animations;
   for (const auto& lightState : cubeLights.lights) {
@@ -196,18 +196,18 @@ void CubeCommsComponent::GenerateCubeLightMessages(const CubeLights& cubeLights,
     // with the proper base index
     baseIndex += anim.GetKeyframes().size();
   }
-  
+
   // There should be one LedAnimation for each LED on the cube
-  DEV_ASSERT(animations.size() == kNumCubeLeds, "CubeCommsComponent.GenerateCubeLightMessages.WrongNumAnimations");
-  
+  DEV_ASSERT(animations.size() == kNumCubeLEDs, "CubeCommsComponent.GenerateCubeLightMessages.WrongNumAnimations");
+
   // If rotation is specified, then link the animations appropriately,
   // wrapping around if necessary.
   if (cubeLights.rotate) {
-    for (int i=0 ; i<kNumCubeLeds ; i++) {
-      animations[(i + 1) % kNumCubeLeds].LinkToOther(animations[i]);
+    for (int i=0 ; i<kNumCubeLEDs ; i++) {
+      animations[(i + 1) % kNumCubeLEDs].LinkToOther(animations[i]);
     }
   }
-  
+
   // Create CubeLightSequence message, which indicates the starting keyframe
   // indices for each LED.
   cubeLightSequence.flags = 0;
@@ -215,7 +215,7 @@ void CubeCommsComponent::GenerateCubeLightMessages(const CubeLights& cubeLights,
   for (const auto& anim : animations) {
     cubeLightSequence.initialIndex[ledIndex++] = anim.GetStartingIndex();
   }
-  
+
   // Loop over all led animations, and separate chunks of 3 into messages. This
   // essentially concatenates the keyframes of all 4 LED animations then separates
   // the entire list into chunks of 3 for sending over the wire.
@@ -231,7 +231,7 @@ void CubeCommsComponent::GenerateCubeLightMessages(const CubeLights& cubeLights,
       }
       CubeLightKeyframeChunk& currChunk = cubeLightKeyframeChunks.back();
       currChunk.keyframes[innerIndex] = keyframe;
-      
+
       ++keyframeIndex;
     }
   }
@@ -242,11 +242,11 @@ bool CubeCommsComponent::SendCubeLights(const ActiveID& activeId, const CubeLigh
 {
   CubeLightSequence cubeLightSequence;
   std::vector<CubeLightKeyframeChunk> cubeLightKeyframeChunks;
-  
+
   GenerateCubeLightMessages(cubeLights,
                             cubeLightSequence,
                             cubeLightKeyframeChunks);
-  
+
   const auto cube = GetCubeByActiveId(activeId);
   if ((nullptr != cube) && cube->connected) {
     for (auto& keyframeMsg : cubeLightKeyframeChunks) {
@@ -268,15 +268,15 @@ bool CubeCommsComponent::SendCubeLights(const ActiveID& activeId, const CubeLigh
   return true;
 }
 
-  
+
 void CubeCommsComponent::SendBlockPoolData() const
 {
   // Persistent pool not yet implemented! (VIC-782)
   PRINT_NAMED_WARNING("CubeCommsComponent.SendBlockPoolData.NotImplemented",
                       "Not sending BlockPoolDataMessage - persistent pool  is not yet implemented!");
 }
- 
-  
+
+
 void CubeCommsComponent::HandleGameEvents(const AnkiEvent<ExternalInterface::MessageGameToEngine>& event)
 {
   const auto& tag = event.GetData().GetTag();
@@ -302,16 +302,16 @@ void CubeCommsComponent::HandleGameEvents(const AnkiEvent<ExternalInterface::Mes
   }
 }
 
-  
+
 void CubeCommsComponent::HandleObjectAvailable(const ExternalInterface::ObjectAvailable& msg)
 {
   // Ensure that this message is referring to a light cube, not some other object
   DEV_ASSERT(IsValidLightCube(msg.objectType, false), "CubeCommsComponent.HandleObjectAvailable.UnknownType");
-  
+
   // Is this cube already in our list?
   auto* cube = GetCubeByFactoryId(msg.factory_id);
   const bool alreadyInList = (cube != nullptr);
-  
+
   if (alreadyInList) {
     // Update lastHeardTime and RSSI:
     cube->lastRssi = msg.rssi;
@@ -326,14 +326,14 @@ void CubeCommsComponent::HandleObjectAvailable(const ExternalInterface::ObjectAv
     newCube.connected = false;
     AddCubeToList(newCube);
   }
-  
+
   if (_broadcastObjectAvailableMsg) {
     using namespace ExternalInterface;
     _robot->Broadcast(MessageEngineToGame(ObjectAvailable(msg)));
   }
 }
 
-  
+
 void CubeCommsComponent::HandleCubeMessage(const BleFactoryId& factoryId, const MessageCubeToEngine& msg)
 {
   const auto it = _factoryIdToActiveIdMap.find(factoryId);
@@ -341,14 +341,14 @@ void CubeCommsComponent::HandleCubeMessage(const BleFactoryId& factoryId, const 
     PRINT_NAMED_WARNING("CubeCommsComponent.HandleCubeMessage.NoActiveId", "Could not find ActiveId for block with factory ID %s", factoryId.c_str());
     return;
   }
-  
+
   const auto activeId = it->second;
-  
+
   auto* cube = GetCubeByActiveId(activeId);
   DEV_ASSERT(cube != nullptr, "CubeCommsComponent.HandleCubeMessage.CubeNotFound");
-  
+
   cube->lastHeardTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
+
   switch (msg.GetTag()) {
     case MessageCubeToEngineTag::accelData:
     {
@@ -364,7 +364,7 @@ void CubeCommsComponent::HandleCubeMessage(const BleFactoryId& factoryId, const 
       break;
     }
   }
-  
+
 }
 
 
@@ -375,12 +375,12 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
     PRINT_NAMED_WARNING("CubeCommsComponent.HandleCubeConnected.NullCube", "Could not find cube with factory ID %s", factoryId.c_str());
     return;
   }
-  
+
   // grab the active ID:
   const auto it = _factoryIdToActiveIdMap.find(factoryId);
   DEV_ASSERT(it != _factoryIdToActiveIdMap.end(), "CubeCommsComponent.HandleCubeConnected.NotFound");
   const auto& activeId = it->second;
-  
+
   // If we're already connected to this cube, don't need to do anything else
   if (connected == cube->connected) {
     PRINT_NAMED_WARNING("CubeCommsComponent.HandleCubeConnected.NoStateChange",
@@ -389,16 +389,16 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
                         cube->factoryId.c_str());
     return;
   }
-  
+
   cube->connected = connected;
-  
+
   ObjectID objID;
   if (connected)
   {
     // log event to das
-    Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"connected"}}, "%s,%s",
-                        cube->factoryId.c_str(), EnumToString(cube->objectType));
-    
+    Anki::Util::sInfoF("robot.accessory_connection", {{DDATA,"connected"}}, "%s,%s",
+                       cube->factoryId.c_str(), EnumToString(cube->objectType));
+
     // Add active object to blockworld
     objID = _robot->GetBlockWorld().AddConnectedActiveObject(activeId, cube->factoryId, cube->objectType);
     if (objID.IsSet()) {
@@ -408,19 +408,19 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
     }
   } else {
     // log event to das
-    Anki::Util::sEventF("robot.accessory_connection", {{DDATA,"disconnected"}}, "%s,%s",
-                        cube->factoryId.c_str(), EnumToString(cube->objectType));
-    
+    Anki::Util::sInfoF("robot.accessory_connection", {{DDATA,"disconnected"}}, "%s,%s",
+                       cube->factoryId.c_str(), EnumToString(cube->objectType));
+
     // Remove active object from blockworld if it exists, and remove all instances in all origins
     objID = _robot->GetBlockWorld().RemoveConnectedActiveObject(activeId);
   }
-  
+
   PRINT_NAMED_INFO("CubeCommsComponent.HandleConnectionStateChange.Recvd", "FactoryID %s, connected %d",
                    cube->factoryId.c_str(), cube->connected);
-  
+
   // Viz info
   _robot->GetContext()->GetVizManager()->SendObjectConnectionState(activeId, cube->objectType, cube->connected);
-  
+
   // TODO: arguably blockworld should do this, because when do we want to remove/add objects and not notify?
   if (objID.IsSet()) {
     // Send connection message to game
@@ -431,30 +431,30 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
                                                                 cube->connected)));
   }
 }
-  
+
 
 void CubeCommsComponent::HandleScanForCubesFinished()
 {
   _discovering = false;
-  
+
   PRINT_NAMED_INFO("CubeCommsComponent.HandleScanForCubesFinished.ScanningForCubesEnded",
                    "Done scanning for cubes");
 
   // Discovery period has ended. Loop over list of available cubes and connect to
   // as many as possible, preferring those with high RSSI.
-  
+
   // For each object type, keep track of the max rssi seen for that type
   std::map<ObjectType, int> maxRssiByType;
-  
+
   // Keep track of which cubes to connect to. Map is keyed on ObjectType to
   // ensure we only connect to _one_ object of a given type.
   std::map<ObjectType, BleFactoryId> objectsToConnectTo;
-  
+
   for (const auto& mapEntry : _availableCubes) {
     const auto& cube = mapEntry.second;
     const auto& type = cube.objectType;
     const auto& rssi = cube.lastRssi;
-    
+
     // If this is the first cube of this type to be seen or if this cube's rssi
     // is higher than the max seen, add it to the list of cubes to connect to
     if ((maxRssiByType.find(type) == maxRssiByType.end()) ||
@@ -463,7 +463,7 @@ void CubeCommsComponent::HandleScanForCubesFinished()
       objectsToConnectTo[type] = cube.factoryId;;
     }
   }
-  
+
   // Connect to the selected cubes
   for (const auto& entry : objectsToConnectTo) {
     const auto& factoryId = entry.second;
@@ -488,7 +488,7 @@ bool CubeCommsComponent::AddCubeToList(const CubeInfo& cube)
                                _availableCubes.end(),
                                [&cube](const std::pair<ActiveID, CubeInfo>& mapItem){ return mapItem.second.factoryId == cube.factoryId; });
   const bool alreadyInList = (it != _availableCubes.end());
-  
+
   if (!alreadyInList) {
     // See if we have an existing ActiveID for this factoryID
     const auto mapIt = _factoryIdToActiveIdMap.find(cube.factoryId);
@@ -504,14 +504,14 @@ bool CubeCommsComponent::AddCubeToList(const CubeInfo& cube)
       _factoryIdToActiveIdMap[cube.factoryId] = activeId;
     }
   }
-  
+
   return !alreadyInList;
 }
-  
+
 bool CubeCommsComponent::RemoveCubeFromList(const BleFactoryId& factoryId)
 {
   bool success = true;
-  
+
   // Look up the corresponding ActiveID for this cube:
   const auto it = _factoryIdToActiveIdMap.find(factoryId);
   if (it != _factoryIdToActiveIdMap.end()) {
@@ -548,8 +548,8 @@ CubeCommsComponent::CubeInfo* CubeCommsComponent::GetCubeByFactoryId(const BleFa
   }
   return nullptr;
 }
-  
-  
-  
+
+
+
 } // Cozmo namespace
 } // Anki namespace

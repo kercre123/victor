@@ -10,7 +10,7 @@
  * Copyright: Anki, Inc. 2017
  *
  **/
- 
+
 #include "engine/navMap/mapComponent.h"
 
 #include "coretech/vision/engine/observableObjectLibrary.h"
@@ -46,10 +46,10 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
 // how often we request redrawing maps. Added because I think clad is getting overloaded with the amount of quads
 CONSOLE_VAR(float, kMapRenderRate_sec, "MapComponent", 0.25f);
-  
+
 // kObjectRotationChangeToReport_deg: if the rotation of an object changes by this much, memory map will be notified
 CONSOLE_VAR(float, kObjectRotationChangeToReport_deg, "MapComponent", 10.0f);
 // kObjectPositionChangeToReport_mm: if the position of an object changes by this much, memory map will be notified
@@ -85,7 +85,7 @@ CONSOLE_VAR(float, kRobotPositionChangeToReport_mm, "MapComponent", 8.0f);
 
 CONSOLE_VAR(float, kVisionTimeout_ms, "MapComponent", 120.0f * 1000);
 CONSOLE_VAR(float, kCliffTimeout_ms, "MapComponent", 30.0f * 1000);
-  
+
 // the length and half width of two triangles used in FlagProxObstaclesUsingPose (see method)
 CONSOLE_VAR(float, kProxExploredTriangleLength_mm, "MapComponent", 300.0f );
 CONSOLE_VAR(float, kProxExploredTriangleHalfWidth_mm, "MapComponent", 50.0f );
@@ -105,7 +105,7 @@ MemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily fam
       retType = isAdding ? ContentType::ObstacleObservable : ContentType::ClearOfObstacle;
       break;
     case ObjectFamily::Charger:
-      // this scase should be merged into observable object types (COZMO-16117)
+      // this case should be merged into observable object types (COZMO-16117)
       retType = isAdding ? ContentType::ObstacleCharger : ContentType::ObstacleChargerRemoved;
       break;
     case ObjectFamily::MarkerlessObject:
@@ -126,13 +126,13 @@ MemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily fam
       }
       break;
     }
-      
+
     case ObjectFamily::CustomObject:
     {
       retType = isAdding ? ContentType::ObstacleObservable : ContentType::ClearOfObstacle;
       break;
     }
-      
+
     case ObjectFamily::Invalid:
     case ObjectFamily::Unknown:
     case ObjectFamily::Ramp:
@@ -142,7 +142,7 @@ MemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily fam
 
   return retType;
 }
-  
+
 const char* const kWebVizModuleName = "navmap";
 
 };
@@ -173,14 +173,14 @@ void MapComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depend
 {
   _robot = robot;
   if(_robot->HasExternalInterface())
-  {    
+  {
     using namespace ExternalInterface;
     IExternalInterface& externalInterface = *_robot->GetExternalInterface();
     auto helper = MakeAnkiEventUtil(externalInterface, *this, _eventHandles);
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMemoryMapRenderEnabled>();
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetMemoryMapBroadcastFrequency_sec>();
   }
-  
+
   if( _robot->GetContext() != nullptr ) {
     auto* webService = _robot->GetContext()->GetWebService();
     if( webService != nullptr ) {
@@ -209,14 +209,14 @@ void MapComponent::HandleMessage(const ExternalInterface::SetMemoryMapBroadcastF
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::UpdateDependent(const RobotCompMap& dependentComps)
-{ 
+{
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   if (currentNavMemoryMap)
   {
     // check for object timeouts in navMap
     TimeoutObjects();
 
-    // Check if we should broadcast changes to navMap to different channels 
+    // Check if we should broadcast changes to navMap to different channels
     const f32 currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
     MemoryMapTypes::MapBroadcastData data;
@@ -230,18 +230,18 @@ void MapComponent::UpdateDependent(const RobotCompMap& dependentComps)
       if( doViz ) {
         BroadcastMapToViz(data);
 
-        
+
         // Reset the timer but don't accumulate error
         nextDrawTime_s += ((int) (currentTime_s - nextDrawTime_s) / kMapRenderRate_sec + 1) * kMapRenderRate_sec;
         _vizMessageDirty = false;
       }
-      
+
       if( _webMessageDirty ) {
         BroadcastMapToWeb(data);
         _webMessageDirty = false;
       }
-    } 
-    
+    }
+
     // send SDK messages
     if (_gameMessageDirty && (_broadcastRate_sec >= 0.0f))
     {
@@ -255,7 +255,7 @@ void MapComponent::UpdateDependent(const RobotCompMap& dependentComps)
       }
     }
   }
-  
+
   UpdateRobotPose();
 }
 
@@ -282,7 +282,7 @@ void MapComponent::UpdateMapOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t n
 
   const Pose3d& oldOrigin = _robot->GetPoseOriginList().GetOriginByID(oldOriginID);
   const Pose3d& newOrigin = _robot->GetPoseOriginList().GetOriginByID(newOriginID);
-  
+
   // before we merge the object information from the memory maps, apply rejiggering also to their
   // reported poses
   UpdateOriginsOfObjects(oldOriginID, newOriginID);
@@ -290,7 +290,7 @@ void MapComponent::UpdateMapOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t n
   // grab the underlying memory map and merge them
   INavMap* oldMap = _navMaps[oldOriginID].get();
   INavMap* newMap = _navMaps[newOriginID].get();
-  
+
   // COZMO-6184: the issue localizing to a zombie map was related to a cube being disconnected while we delocalized.
   // The issue has been fixed, but this code here would have prevented a crash and produce an error instead, so I
   // am going to keep the code despite it may not run anymore
@@ -300,10 +300,10 @@ void MapComponent::UpdateMapOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t n
     PRINT_NAMED_ERROR("MapComponent.UpdateMapOrigins.NullMapFound",
                       "Origin '%s' did not have a memory map. Creating empty",
                       newOrigin.GetName().c_str());
-    
+
     // create empty map since somehow we lost the one we had
     INavMap* emptyMemoryMap = NavMapFactory::CreateMemoryMap();
-    
+
     // set in the container of maps
     _navMaps[newOriginID].reset(emptyMemoryMap);
     // set the pointer to this newly created instance
@@ -315,10 +315,10 @@ void MapComponent::UpdateMapOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t n
   const bool success = oldOrigin.GetWithRespectTo(newOrigin, oldWrtNew);
   DEV_ASSERT(success, "MapComponent.UpdateMapOrigins.BadOldWrtNull");
   UpdateBroadcastFlags(newMap->Merge(oldMap, oldWrtNew));
-  
+
   // switch back to what is becoming the new map
   _currentMapOriginID = newOriginID;
-  
+
   // now we can delete what is become the old map, since we have merged its data into the new one
   _navMaps.erase( oldOriginID ); // smart pointer will delete memory
 }
@@ -327,19 +327,19 @@ void MapComponent::UpdateMapOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t n
 void MapComponent::UpdateRobotPose()
 {
   ANKI_CPU_PROFILE("MapComponent::UpdateRobotPoseInMemoryMap");
-  
+
   // grab current robot pose
   DEV_ASSERT(_robot->GetPoseOriginList().GetCurrentOriginID() == _currentMapOriginID,
              "MapComponent.OnRobotPoseChanged.InvalidWorldOrigin");
   const Pose3d& robotPose = _robot->GetPose();
   const Pose3d& robotPoseWrtOrigin = robotPose.GetWithRespectToRoot();
-  
+
   // check if we have moved far enough that we need to resend
   const Point3f distThreshold(kRobotPositionChangeToReport_mm, kRobotPositionChangeToReport_mm, kRobotPositionChangeToReport_mm);
   const Radians angleThreshold( DEG_TO_RAD(kRobotRotationChangeToReport_deg) );
   const bool isPrevSet = _reportedRobotPose.HasParent();
   const bool isFarFromPrev = !isPrevSet || (!robotPoseWrtOrigin.IsSameAs(_reportedRobotPose, distThreshold, angleThreshold));
-    
+
   // if we need to add
   const bool addAgain = isFarFromPrev;
   if ( addAgain )
@@ -361,7 +361,7 @@ void MapComponent::UpdateRobotPose()
 
     // regular clear of obstacle
     InsertData(Poly2f(robotQuad), MemoryMapData(EContentType::ClearOfObstacle, currentTimestamp));
-		
+
     _robot->GetAIComponent().GetComponent<AIWhiteboard>().ProcessClearQuad(robotQuad);
     // update las reported pose
     _reportedRobotPose = robotPoseWrtOrigin;
@@ -381,7 +381,7 @@ void MapComponent::TimeoutObjects()
     const TimeStamp_t cliffTooOld  = (currentTime <= kCliffTimeout_ms)  ? 0 : currentTime - kCliffTimeout_ms;
     const TimeStamp_t visionTooOld = (currentTime <= kVisionTimeout_ms) ? 0 : currentTime - kVisionTimeout_ms;
 
-    NodeTransformFunction timeoutObjects = 
+    NodeTransformFunction timeoutObjects =
       [cliffTooOld, visionTooOld] (MemoryMapDataPtr data) -> MemoryMapDataPtr
       {
         const EContentType nodeType = data->type;
@@ -389,7 +389,7 @@ void MapComponent::TimeoutObjects()
 
         if ((EContentType::Cliff              == nodeType && lastObs <= cliffTooOld)  ||
             (EContentType::InterestingEdge    == nodeType && lastObs <= visionTooOld) ||
-            (EContentType::NotInterestingEdge == nodeType && lastObs <= visionTooOld)) 
+            (EContentType::NotInterestingEdge == nodeType && lastObs <= visionTooOld))
         {
           return MemoryMapDataPtr();
         }
@@ -407,11 +407,11 @@ void MapComponent::FlagGroundPlaneROIInterestingEdgesAsUncertain()
   const Pose3d& curRobotPose = _robot->GetPose().GetWithRespectToRoot();
   Quad3f groundPlaneWrtRobot;
   curRobotPose.ApplyTo(GroundPlaneROI::GetGroundQuad(), groundPlaneWrtRobot);
-  
+
   // ask memory map to clear
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   DEV_ASSERT(currentNavMemoryMap, "MapComponent.FlagGroundPlaneROIInterestingEdgesAsUncertain.NullMap");
-  
+
   NodeTransformFunction transform = [] (MemoryMapDataPtr oldData) -> MemoryMapDataPtr
     {
         if (EContentType::InterestingEdge == oldData->type) {
@@ -419,7 +419,7 @@ void MapComponent::FlagGroundPlaneROIInterestingEdgesAsUncertain()
         }
         return oldData;
     };
-  
+
   UpdateBroadcastFlags(currentNavMemoryMap->TransformContent(Poly2f((Quad2f)groundPlaneWrtRobot), transform));
 }
 
@@ -436,10 +436,10 @@ void MapComponent::FlagInterestingEdgesAsUseless()
   // we detected something, but we discarded it because it didn't have enough info; however that increases
   // complexity when raycasting, finding boundaries, readding edges, etc. By flagging Unknown we simply say
   // "there was something here, but we are not sure what it was", which can be good to re-explore the area
-    
+
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   DEV_ASSERT(currentNavMemoryMap, "MapComponent.FlagInterestingEdgesAsUseless.NullMap");
-  
+
   NodeTransformFunction transform = [] (MemoryMapDataPtr oldData) -> MemoryMapDataPtr
     {
         if (EContentType::InterestingEdge == oldData->type) {
@@ -447,26 +447,26 @@ void MapComponent::FlagInterestingEdgesAsUseless()
         }
         return oldData;
     };
-    
+
   UpdateBroadcastFlags(currentNavMemoryMap->TransformContent(transform));
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::FlagProxObstaclesUsingPose()
 {
   const auto& pose = _robot->GetPose();
-  
+
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   if( currentNavMemoryMap == nullptr ) {
     return;
   }
-  
+
   // construct a triangle, pointing away from the robot, to mimic the
   // coverage of the prox sensor, but scaled differently. Any prox obstacle that it
   // covers will be marked as explored. Since it looks better if the robot comes
-  // close to an object in order to mark it as explored, the poly isnt as tall as the
+  // close to an object in order to mark it as explored, the poly isn't as tall as the
   // prox sensor's reach.
-  
+
   const auto& rot = pose.GetRotation();
   Vec3f offset1(kProxExploredTriangleLength_mm,  kProxExploredTriangleHalfWidth_mm, 0);
   Vec3f offset2(kProxExploredTriangleLength_mm,  -kProxExploredTriangleHalfWidth_mm, 0);
@@ -474,7 +474,7 @@ void MapComponent::FlagProxObstaclesUsingPose()
   const Point2f p2 = (pose.GetTransform() * Transform3d(rot, offset1)).GetTranslation();
   const Point2f p3 = (pose.GetTransform() * Transform3d(rot, offset2)).GetTranslation();
   const Poly2f triangleExplored({p1, p2, p3});
-  
+
   // mark any prox obstacle in triangleExplored as explored
   NodeTransformFunction exploredFunc = [](MemoryMapDataPtr data) -> MemoryMapDataPtr {
     if( data->type == EContentType::ObstacleProx ) {
@@ -484,11 +484,11 @@ void MapComponent::FlagProxObstaclesUsingPose()
     return data;
   };
   const bool addedExplored = currentNavMemoryMap->TransformContent(triangleExplored, exploredFunc);
-  
+
   UpdateBroadcastFlags( addedExplored );
-  
+
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool MapComponent::FlagProxObstaclesTouchingExplored()
 {
@@ -496,7 +496,7 @@ bool MapComponent::FlagProxObstaclesTouchingExplored()
   if( currentNavMemoryMap == nullptr ) {
     return false;
   }
-  
+
   // mark any NOT_EXPLORED ObstacleProx that is touching an EXPLORED ObstacleProx quad as EXPLORED
   NodePredicate innerCheckFunc = [](MemoryMapDataConstPtr inside) {
     if( inside->type == EContentType::ObstacleProx ) {
@@ -517,11 +517,11 @@ bool MapComponent::FlagProxObstaclesTouchingExplored()
   MemoryMapData_ProxObstacle toAdd( MemoryMapData_ProxObstacle::EXPLORED, {0.0f, 0.0f, 0.0f}, _robot->GetLastImageTimeStamp());
   const bool changedBorder = currentNavMemoryMap->FillBorder(innerCheckFunc, outerCheckFunc,
                                                              toAdd.Clone());
-  
+
   UpdateBroadcastFlags( changedBorder );
-  
+
   return changedBorder;
-  
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -543,9 +543,9 @@ void MapComponent::CreateLocalizedMemoryMap(PoseOriginID_t worldOriginID)
     const bool isZombie = _robot->GetBlockWorld().IsZombiePoseOrigin( iter->first );
     if ( isZombie ) {
       // PRINT_CH_DEBUG("MapComponent", "CreateLocalizedMemoryMap", "Deleted map (%p) because it was zombie", iter->first);
-      LOG_EVENT("MapComponent.memory_map.deleting_zombie_map", "%d", worldOriginID );
+      PRINT_NAMED_INFO("MapComponent.memory_map.deleting_zombie_map", "%d", worldOriginID );
       iter = _navMaps.erase(iter);
-      
+
       // also remove the reported poses in this origin for every object (fixes a leak, and better tracks where objects are)
       for( auto& posesForObjectIt : _reportedPoses ) {
         OriginToPoseInMapInfo& posesPerOriginForObject = posesForObjectIt.second;
@@ -554,11 +554,11 @@ void MapComponent::CreateLocalizedMemoryMap(PoseOriginID_t worldOriginID)
       }
     } else {
       //PRINT_CH_DEBUG("MapComponent", "CreateLocalizedMemoryMap", "Map (%p) is still good", iter->first);
-      LOG_EVENT("MapComponent.memory_map.keeping_alive_map", "%d", worldOriginID );
+      PRINT_NAMED_INFO("MapComponent.memory_map.keeping_alive_map", "%d", worldOriginID );
       ++iter;
     }
   }
-  
+
   // if the origin is null, we would never merge the map, which could leak if a new one was created
   // do not support this by not creating one at all if the origin is null
   if ( PoseOriginList::UnknownOriginID != worldOriginID )
@@ -586,7 +586,7 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::BroadcastMapToViz(const MapBroadcastData& mapData) const
 {
-  using namespace VizInterface; 
+  using namespace VizInterface;
 
   // Send the begin message
   _robot->Broadcast(MessageViz(MemoryMapMessageVizBegin(_currentMapOriginID, mapData.mapInfo)));
@@ -602,7 +602,7 @@ void MapComponent::BroadcastMapToViz(const MapBroadcastData& mapData) const
   // Send the end message
   _robot->Broadcast(MessageViz(MemoryMapMessageVizEnd(_currentMapOriginID)));
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::BroadcastMapToWeb(const MapBroadcastData& mapData) const
 {
@@ -610,7 +610,7 @@ void MapComponent::BroadcastMapToWeb(const MapBroadcastData& mapData) const
   if( webService == nullptr ) {
     return;
   }
-  
+
   // Send the begin message
   {
     Json::Value toWeb;
@@ -619,7 +619,7 @@ void MapComponent::BroadcastMapToWeb(const MapBroadcastData& mapData) const
     toWeb["mapInfo"] = mapData.mapInfo.GetJSON();
     webService->SendToWebViz(kWebVizModuleName, toWeb);
   }
-  
+
   // chunk the quad messages
   for(u32 seqNum = 0; seqNum*kQuadsPerMessage < mapData.quadInfo.size(); seqNum++)
   {
@@ -659,12 +659,12 @@ void MapComponent::BroadcastMapToSDK(const MemoryMapTypes::MapBroadcastData& map
 {
   using namespace ExternalInterface;
 
-  // Send the begin message      
+  // Send the begin message
   _robot->Broadcast(MessageEngineToGame(MemoryMapMessageBegin(
-      _currentMapOriginID, mapData.mapInfo.rootDepth, mapData.mapInfo.rootSize_mm, 
+      _currentMapOriginID, mapData.mapInfo.rootDepth, mapData.mapInfo.rootSize_mm,
       mapData.mapInfo.rootCenterX, mapData.mapInfo.rootCenterY)
   ));
-  
+
   // chunk the quad messages
   for(u32 seqNum = 0; seqNum*kQuadsPerMessage < mapData.quadInfo.size(); seqNum++)
   {
@@ -676,7 +676,7 @@ void MapComponent::BroadcastMapToSDK(const MemoryMapTypes::MapBroadcastData& map
 
   // Send the end message
   _robot->Broadcast(MessageEngineToGame(MemoryMapMessageEnd()));
-} 
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::ClearRender()
@@ -713,12 +713,12 @@ void MapComponent::SetRenderEnabled(bool enabled)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 INavMap* MapComponent::GetCurrentMemoryMapHelper() const
-{    
+{
   // current map (if any) must match current robot origin
-  DEV_ASSERT((PoseOriginList::UnknownOriginID == _currentMapOriginID) || 
+  DEV_ASSERT((PoseOriginList::UnknownOriginID == _currentMapOriginID) ||
       (_robot->GetPoseOriginList().GetCurrentOriginID() == _currentMapOriginID), "MapComponent.GetNavMemoryMap.Bad Origin");
 
-    
+
   INavMap* curMap = nullptr;
   if ( PoseOriginList::UnknownOriginID != _currentMapOriginID ) {
     auto matchPair = _navMaps.find(_currentMapOriginID);
@@ -728,7 +728,7 @@ INavMap* MapComponent::GetCurrentMemoryMapHelper() const
       DEV_ASSERT(false, "MapComponent.GetNavMemoryMap.MissingMap");
     }
   }
-  
+
   return curMap;
 }
 
@@ -737,16 +737,16 @@ void MapComponent::UpdateObjectPose(const ObservableObject& object, const Pose3d
 {
   const ObjectID& objectID = object.GetID();
   DEV_ASSERT(objectID.IsSet(), "MapComponent.OnObjectPoseChanged.InvalidObjectID");
-  
+
   const PoseState newPoseState = object.GetPoseState();
   const ObjectFamily family = object.GetFamily();
   bool objectTrackedInMemoryMap = true;
   if (family == ObjectFamily::MarkerlessObject && !kAddUnrecognizedMarkerlessObjectsToMemMap) {
     objectTrackedInMemoryMap = false; // COZMO-7496?
   }
-  
+
   if( objectTrackedInMemoryMap )
-  {	
+  {
     /*
       Three things can happen:
        a) first time we see an object: OldPoseState=!Valid, NewPoseState= Valid
@@ -786,7 +786,7 @@ void MapComponent::UpdateObjectPose(const ObservableObject& object, const Pose3d
         const PoseInMapInfo& info = poseInNewOriginIter->second;
         const bool isFarFromPrev =
           ( !info.isInMap || (!object.GetPose().IsSameAs(info.pose, Point3f(distThreshold), angleThreshold)));
-        
+
         // if it is far from previous (or previous was not in the map, remove-add)
         if ( isFarFromPrev ) {
           if (object.IsUnique())
@@ -843,7 +843,7 @@ void MapComponent::AddObservableObject(const ObservableObject& object, const Pos
     Pose3d objWrtRobot;
     if ( newPose.GetWithRespectTo(_robot->GetPose(), objWrtRobot) )
     {
-      
+
       const bool isFloating = object.IsPoseTooHigh(objWrtRobot, 1.f, STACKED_HEIGHT_TOL_MM, 0.f);
       if ( isFloating )
       {
@@ -872,10 +872,10 @@ void MapComponent::AddObservableObject(const ObservableObject& object, const Pos
             InsertData(Poly2f(newQuad), MemoryMapData(addType, _robot->GetLastImageTimeStamp()));
             break;
         }
-        
+
         // store in as a reported pose
         _reportedPoses[objectId][originID] = PoseInMapInfo(newPoseWrtOrigin, true);
-        
+
         // since we added an obstacle, any borders we saw while dropping it should not be interesting
         const float kScaledQuadToIncludeEdges = 2.0f;
         // kScaledQuadToIncludeEdges: we want to consider interesting edges around this obstacle as non-interesting,
@@ -901,7 +901,7 @@ void MapComponent::AddObservableObject(const ObservableObject& object, const Pos
   else
   {
     // if the map was removed (for zombies), we shouldn't be asking to add an object to it
-    PRINT_NAMED_ERROR("MapComponent.AddObservableObject.NoMapForOrigin", 
+    PRINT_NAMED_ERROR("MapComponent.AddObservableObject.NoMapForOrigin",
                       "Tried to insert an observable object without creating a map first");
   }
 }
@@ -933,20 +933,20 @@ void MapComponent::RemoveObservableObject(const ObservableObject& object, PoseOr
     // for Cubes, we can lookup by ID
     NodeTransformFunction transform = [id, removalType, timeStamp](MemoryMapDataPtr data)
     {
-      if (data->type == EContentType::ObstacleObservable) 
+      if (data->type == EContentType::ObstacleObservable)
       {
         // eventually we will want to store multiple ID's to the node data in the case for multiple blocks
         // however, we have no mechanism for merging data, so for now we are just completely replacing
         // the NodeContent if the ID matches.
         const auto currentCubeData = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ObservableObject>(data);
-        if (currentCubeData->id == id) 
+        if (currentCubeData->id == id)
         {
-          return MemoryMapData(removalType, timeStamp).Clone(); 
-        } 
-      } 
+          return MemoryMapData(removalType, timeStamp).Clone();
+        }
+      }
       return data;
     };
-     
+
     UpdateBroadcastFlags(matchPair->second->TransformContent(transform));
   } else {
     // if the map was removed (for zombies), we shouldn't be asking to remove an object from it
@@ -979,7 +979,7 @@ void MapComponent::UpdateOriginsOfObjects(PoseOriginID_t curOriginID, PoseOrigin
                     "Could not find object ID '%d' in MapComponent updating their quads", pairIdToPoseInfoByOrigin.first );
       continue;
     }
-  
+
     // find the reported pose for this object in the current origin
     OriginToPoseInMapInfo& poseInfoByOriginForObj = pairIdToPoseInfoByOrigin.second;
     const auto& matchInCurOrigin = poseInfoByOriginForObj.find(curOriginID);
@@ -994,7 +994,7 @@ void MapComponent::UpdateOriginsOfObjects(PoseOriginID_t curOriginID, PoseOrigin
       // Additionally we don't have to worry about the container we are iterating changing, since iterators are not
       // affected by changing a boolean, but are if we erased from it.
       RemoveObservableObject(*object, relocalizedOriginID);
-      
+
       // we are bringing over the current info into the relocalized origin, update the reported pose in the
       // relocalized origin to be that of the newest information
       poseInfoByOriginForObj[relocalizedOriginID].isInMap = matchInCurOrigin->second.isInMap;
@@ -1031,7 +1031,7 @@ void MapComponent::ClearRobotToMarkers(const ObservableObject* object)
 
   // only clear to the markers, since for custom object types, the object might be significantly larger than the marker
   for ( const auto& observedMarkerIt : observedMarkers )
-  {    
+  {
     // NOTE: (mrw) We are making assumptions here that the marker is both normal to the map plane, and is oriented
     //       to a 90° angle (up/down/left/right). Additionally, this will clear all the way to the marker, so even
     //       if the object's physical properties extend in front of the marker, we might be overwritting that region
@@ -1042,7 +1042,7 @@ void MapComponent::ClearRobotToMarkers(const ObservableObject* object)
     // grab the lowest two points
     const Point3f* p1 = &markerCorners[(Quad::CornerName) 0];
     const Point3f* p2 = &markerCorners[(Quad::CornerName) 1];
-     
+
     for (Quad::CornerName i = (Quad::CornerName) 1; i < Quad::NumCorners; ++i) {
       if ( FLT_LT(markerCorners[i].z(), p1->z()) ) {
         p2 = p1;
@@ -1051,7 +1051,7 @@ void MapComponent::ClearRobotToMarkers(const ObservableObject* object)
         p2 = &markerCorners[i];
       }
     }
-  
+
     ClearRobotToEdge(*p1, *p2, _robot->GetLastImageTimeStamp());
   }
 }
@@ -1059,7 +1059,7 @@ void MapComponent::ClearRobotToMarkers(const ObservableObject* object)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::ClearRobotToEdge(const Point2f& p, const Point2f& q, const TimeStamp_t t)
 {
-  // NOTE: (MRW) currently using robot pose center, though to be correct we should use the center of the 
+  // NOTE: (MRW) currently using robot pose center, though to be correct we should use the center of the
   //       sensor pose. For now this should be good enough.
   const static float kHalfClearWidth_mm = 1.5f;
   Vec3f rayOffset1(0,  kHalfClearWidth_mm, 0);
@@ -1121,16 +1121,16 @@ void MapComponent::ReviewInterestingEdges(const Quad2f& withinQuad, INavMap* map
   // on how many nodes of each type there are (interesting vs quads within 'withinQuad'), so it can potentially
   // be faster depending on the case. Unless profiling shows up for this, no need to listen to Note
 
-    
+
   // check if merge is enabled
   if ( !kReviewInterestingEdges ) {
     return;
   }
-  
+
   // ask the memory map to do the merge
   // some implementations make require parameters like max distance to merge, but for now trust continuity
   if( map )
-  {	
+  {
     // interesting edges adjacent to any of these types will be deemed not interesting
     constexpr FullContentArray typesWhoseEdgesAreNotInteresting =
     {
@@ -1170,11 +1170,11 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
 {
   ANKI_CPU_PROFILE("MapComponent::AddVisionOverheadEdges");
   _robot->GetContext()->GetVizManager()->EraseSegments("MapComponent.AddVisionOverheadEdges");
-  
+
   // check conditions to add edges
   DEV_ASSERT(!frameInfo.chains.GetVector().empty(), "AddVisionOverheadEdges.NoEdges");
   DEV_ASSERT(frameInfo.groundPlaneValid, "AddVisionOverheadEdges.InvalidGroundPlane");
-  
+
   // we are only processing edges for the memory map, so if there's no map, don't do anything
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   if( nullptr == currentNavMemoryMap && !kDebugRenderOverheadEdges )
@@ -1194,7 +1194,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
     // go any further either.
     return RESULT_OK;
   }
-  
+
   const bool poseIsGood = ( RESULT_OK == poseRet ) && (histState != nullptr);
   if ( !poseIsGood ) {
     // this can happen if robot status messages are lost
@@ -1205,7 +1205,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
                   _robot->GetStateHistory()->GetNewestTimeStamp());
     return RESULT_OK;
   }
-  
+
   // If we can't transfor the observedPose to the current origin, it's ok, that means that the timestamp
   // for the edges we just received is from before delocalizing, so we should discard it.
   Pose3d observedPose;
@@ -1214,9 +1214,9 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
                   "Received timestamp %d, but could not translate that timestamp into current origin.", frameInfo.timestamp);
     return RESULT_OK;
   }
-  
+
   const Point3f& cameraOrigin = observedPose.GetTranslation();
-  
+
   // Ideally we would do clamping with quad in robot coordinates, but this is an optimization to prevent
   // having to transform segments twice. We transform the segments to world space so that we can
   // calculate variations in angles, in order to merge together small variations. Once we have transformed
@@ -1233,7 +1233,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
 
   // quads that are clear, either because there are not borders behind them or from the camera to that border
   std::vector<Quad2f> visionQuadsClear;
- 
+
   // detected borders are simply lines
   struct Segment {
     Segment(const Point2f& f, const Point2f& t) : from(f), to(t) {}
@@ -1241,10 +1241,10 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
     Point2f to;
   };
   std::vector<Segment> visionSegmentsWithInterestingBorders;
-  
+
   // we store the closest detected edge every time in the whiteboard
   float closestPointDist_mm2 = std::numeric_limits<float>::quiet_NaN();
-  
+
   // iterate every chain finding contiguous segments
   for( const auto& chain : frameInfo.chains.GetVector() )
   {
@@ -1276,14 +1276,14 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
       Point2f wrtOrigin2DBR = observedPose * Point3f(frameInfo.groundplane[Quad::BottomRight].x(),
                                                      frameInfo.groundplane[Quad::BottomRight].y(),
                                                      0.0f);
-      
+
       Quad2f groundPlaneWRTOrigin(wrtOrigin2DTL, wrtOrigin2DBL, wrtOrigin2DTR, wrtOrigin2DBR);
       VizManager* vizManager = _robot->GetContext()->GetVizManager();
       vizManager->DrawQuadAsSegments("MapComponent.AddVisionOverheadEdges", groundPlaneWRTOrigin, kDebugRenderOverheadEdgesZ_mm, NamedColors::BLACK, false);
     }
 
     DEV_ASSERT(chain.points.size() > 2,"AddVisionOverheadEdges.ChainWithTooLittlePoints");
-    
+
     // when we are processing a non-edge chain, points can be discarded. Variables to track segments
     bool hasValidSegmentStart = false;
     Point3f segmentStart;
@@ -1295,16 +1295,16 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
     {
       // get candidate point to merge into previous segment
       Point3f candidate3D = EdgePointToPoint3f(chain.points[curPointInChainIdx], observedPose);
-      
+
       // this is to prevent vision clear quads that cross an object from clearing that object. This could be
       // optimized by passing in a flag to AddQuad that tells the QuadTree that it should not override
       // these types. However, if we have not seen an edge, and we crossed an object, it can potentially clear
-      // behind that object, which is equaly wrong. Ideally, HasCollisionWithRay would provide the closest
+      // behind that object, which is equally wrong. Ideally, HasCollisionWithRay would provide the closest
       // collision point to "from", so that we can clear up to that point, and discard any information after.
       // Consider that in the future if performance-wise it's ok top have these checks here, and the memory
       // map can efficiently figure out the order in which to check for collision (there's a fast check
       // I can think of that involves simply knowing from which quadrant the ray starts)
-      
+
       bool occludedBeforeNearPlane = false;
       bool occludedInsideROI = false;
       Vec2f innerRayFrom = cameraOrigin; // it will be updated with the intersection with the near plane (if found)
@@ -1317,13 +1317,13 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
         kmVec2 kmFrom{cameraOrigin.x(), cameraOrigin.y()};
         kmVec2 kmTo  {candidate3D.x() , candidate3D.y() };
         kmRay2FillWithEndpoints(&fullRay, &kmFrom, &kmTo);
-        
+
         // near plane segment
         kmRay2 nearPlaneSegment;
         kmVec2 kmNearL{nearPlaneLeft.x() , nearPlaneLeft.y() };
         kmVec2 kmNearR{nearPlaneRight.x(), nearPlaneRight.y()};
         kmRay2FillWithEndpoints(&nearPlaneSegment, &kmNearL, &kmNearR);
-        
+
         // find the intersection between the two
         kmVec2 rayAtNearPlane;
         const kmBool foundNearPlane = kmSegment2WithSegmentIntersection(&fullRay, &nearPlaneSegment , &rayAtNearPlane);
@@ -1331,7 +1331,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
         {
           /*
             Note on occludedBeforeNearPlane vs occludedInsideROI:
-            We want to check two different zones: one from cameraOrigin to nearPlane and another from nearPlane to candidate3D. 
+            We want to check two different zones: one from cameraOrigin to nearPlane and another from nearPlane to candidate3D.
             The first one, being out of the current ground ROI can be more restrictive (fail on borders), since we
             literally have no information to back up a ClearOfObstacle, however the second one can't fail on borders,
             since borders are exactly what we are detecting, so the point can't become invalid when a border is detected.
@@ -1354,23 +1354,23 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
           };
           static_assert(MemoryMapTypes::IsSequentialArray(typesThatOccludeValidInfoOutOfROI),
             "This array does not define all types once and only once.");
-          
+
           // check if it's occluded before the near plane
           const Vec2f& outerRayFrom = cameraOrigin;
           const Vec2f outerRayTo(rayAtNearPlane.x, rayAtNearPlane.y);
           occludedBeforeNearPlane = currentNavMemoryMap->HasCollisionWithTypes({{Point2f{outerRayFrom}, Point2f{outerRayTo}}}, typesThatOccludeValidInfoOutOfROI);
-          
+
           // update innerRayFrom so that the second ray (if needed) only checks the inside of the ROI plane
           innerRayFrom = outerRayTo; // start inner (innerFrom) where the outer ends (outerTo)
         }
       }
-  
+
       // - calculate occlusion inside ROI
       if ( !occludedBeforeNearPlane )
       {
         /*
           Note on occludedBeforeNearPlane vs occludedInsideROI:
-          We want to check two different zones: one from cameraOrigin to nearPlane and another from nearPlane to candidate3D. 
+          We want to check two different zones: one from cameraOrigin to nearPlane and another from nearPlane to candidate3D.
           The first one, being out of the current ground ROI can be more restrictive (fail on borders), since we
           literally have no information to back up a ClearOfObstacle, however the second one can't fail on borders,
           since borders are exactly what we are detecting, so the point can't become invalid when a border is detected.
@@ -1393,17 +1393,17 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
         };
         static_assert(MemoryMapTypes::IsSequentialArray(typesThatOccludeValidInfoInsideROI),
           "This array does not define all types once and only once.");
-        
+
         // Vec2f innerRayFrom: already calculated for us
         const Vec2f& innerRayTo = candidate3D;
         occludedInsideROI = currentNavMemoryMap->HasCollisionWithTypes({{Point2f{innerRayFrom}, Point2f{innerRayTo}}}, typesThatOccludeValidInfoInsideROI);
       }
-      
+
       // if we cross an object, ignore this point, regardless of whether we saw a border or not
       // this is because if we are crossing an object, chances are we are seeing its border, of we should have,
       // so the info is more often disrupting than helpful
       bool isValidPoint = !occludedBeforeNearPlane && !occludedInsideROI;
-      
+
       // this flag is set by a point that can't merge into the previous segment and wants to start one
       // on its own
       bool shouldCreateNewSegment = false;
@@ -1434,7 +1434,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
         else
         {
           // there's a running segment already, check if we can merge into it
-    
+
           // epsilon to merge points into the same edge segment. If adding a point to a segment creates
           // a deviation with respect to the first direction of the segment bigger than this epsilon,
           // then the point will not be added to that segment
@@ -1443,11 +1443,11 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
           // cos(30deg) = 0.866025...
           // cos(40deg) = 0.766044...
           const float kDotBorderEpsilon = 0.7660f;
-    
+
           // calculate the normal that this candidate would have with respect to the previous point
           Vec3f candidateNormal = candidate3D - segmentEnd;
           candidateNormal.MakeUnitLength();
-      
+
           // check the dot product of that normal with respect to the running segment's normal
           const float dotProduct = DotProduct(segmentNormal, candidateNormal);
           bool canMerge = (dotProduct >= kDotBorderEpsilon); // if dotProduct is bigger, angle between is smaller
@@ -1464,7 +1464,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
             shouldCreateNewSegment = true;
           }
         }
-        
+
         // store distance to valid points that belong to a detected border for behaviors quick access
         if ( chain.isBorder )
         {
@@ -1507,7 +1507,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
           }
         }
         // else { not enough points in the segment to send. That's ok, just do not send }
-        
+
         // if it was a valid point but could not merge, it wanted to start a new segment
         if ( shouldCreateNewSegment )
         {
@@ -1540,7 +1540,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
           hasValidSegmentEnd   = false;
         }
       } // sendSegmentToMap?
-        
+
       // move to next point
       ++curPointInChainIdx;
     } while (curPointInChainIdx < chain.points.size()); // while we still have points
@@ -1561,18 +1561,18 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
              \      /                         \ |---| /
               \    /                           \ | | /
                \__/                             \_|_/
-   
+
   */
   // for the same reason, if the far edge is too small, the triangle is very narrow, so it can be turned into a line,
   // and thanks to intersection we will probably not notice anything
-  
+
   // Any quad whose closest edge is smaller than kOverheadEdgeNarrowCone_mm will be considered a triangle
   // const float minFarLenToBeReportedSq = kOverheadEdgeFarMinLenForClearReport_mm*kOverheadEdgeFarMinLenForClearReport_mm;
   const float maxFarLenToBeLineSq = kOverheadEdgeFarMaxLenForLine_mm*kOverheadEdgeFarMaxLenForLine_mm;
   const float maxCloseLenToBeTriangleSq = kOverheadEdgeCloseMaxLenForTriangle_mm*kOverheadEdgeCloseMaxLenForTriangle_mm;
   for ( const auto& potentialClearQuad2D : visionQuadsClear )
   {
-  
+
 // rsam note: I want to filter out small ones, but there were instances were this was not very good, for example if it
 // happened at the border, since we would completely miss it. I will leave this out unless profiling says we need
 // more optimizations
@@ -1593,7 +1593,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
 //        continue;
 //      }
     const float farLenSq   = (potentialClearQuad2D.GetTopLeft() - potentialClearQuad2D.GetTopRight()).LengthSq();
-    
+
     // test whether we can report as Line, Triangle or Quad
     const bool isLine = FLT_LE(farLenSq, maxFarLenToBeLineSq);
     if ( isLine )
@@ -1601,7 +1601,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
       // far segment is small enough that a single line would be fine
       const Point2f& clearFrom = (potentialClearQuad2D.GetBottomLeft() + potentialClearQuad2D.GetBottomRight()) * 0.5f;
       const Point2f& clearTo   = (potentialClearQuad2D.GetTopLeft()    + potentialClearQuad2D.GetTopRight()   ) * 0.5f;
-    
+
       if ( kDebugRenderOverheadEdgeClearQuads )
       {
         ColorRGBA color = Anki::NamedColors::CYAN;
@@ -1623,7 +1623,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
       {
         // far segment is big, but close one is small enough that a triangle would be fine
         const Point2f& triangleClosePoint = (potentialClearQuad2D.GetBottomLeft() + potentialClearQuad2D.GetBottomRight()) * 0.5f;
-        
+
         Triangle2f clearTri2D(triangleClosePoint, potentialClearQuad2D.GetTopLeft(), potentialClearQuad2D.GetTopRight());
         if ( kDebugRenderOverheadEdgeClearQuads )
         {
@@ -1661,7 +1661,7 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
       }
     }
   }
-  
+
   // send border segments to memory map
   for ( const auto& borderSegment : visionSegmentsWithInterestingBorders )
   {
@@ -1674,11 +1674,11 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
         Point3f(borderSegment.to.x(), borderSegment.to.y(), kDebugRenderOverheadEdgesZ_mm),
         color, false);
     }
-  
+
     // add interesting edge
     InsertData({borderSegment.from, borderSegment.to}, MemoryMapData(EContentType::InterestingEdge, frameInfo.timestamp));
   }
-  
+
   // now merge interesting edges into non-interesting
   const bool addedEdges = !visionSegmentsWithInterestingBorders.empty();
   if ( addedEdges )
@@ -1696,19 +1696,19 @@ Result MapComponent::AddVisionOverheadEdges(const OverheadEdgeFrame& frameInfo)
     Point2f wrtOrigin2DBR = observedPose * Point3f(frameInfo.groundplane[Quad::BottomRight].x(),
                                                    frameInfo.groundplane[Quad::BottomRight].y(),
                                                    0.0f);
-    
+
     Quad2f groundPlaneWRTOrigin(wrtOrigin2DTL, wrtOrigin2DBL, wrtOrigin2DTR, wrtOrigin2DBR);
     if (currentNavMemoryMap)
     {
       ReviewInterestingEdges(groundPlaneWRTOrigin, currentNavMemoryMap);
     }
   }
-  
+
   // notify the whiteboard we just processed edge information from a frame
   const float closestPointDist_mm = std::isnan(closestPointDist_mm2) ?
     std::numeric_limits<float>::quiet_NaN() : sqrt(closestPointDist_mm2);
   _robot->GetAIComponent().GetComponent<AIWhiteboard>().SetLastEdgeInformation(frameInfo.timestamp, closestPointDist_mm);
-  
+
   return RESULT_OK;
 }
 

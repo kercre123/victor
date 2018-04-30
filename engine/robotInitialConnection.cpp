@@ -38,11 +38,11 @@ namespace RobotInitialConnectionConsoleVars
   CONSOLE_VAR(bool, kSkipFirmwareAutoUpdate, "Firmware", false);
   CONSOLE_VAR(bool, kAlwaysDoFirmwareUpdate, "Firmware", false);
 }
-  
+
 using namespace ExternalInterface;
 using namespace RobotInterface;
 using namespace RobotInitialConnectionConsoleVars;
-  
+
 RobotInitialConnection::RobotInitialConnection(const CozmoContext* context)
 : _notified(false)
 , _externalInterface(context != nullptr ? context->GetExternalInterface() : nullptr)
@@ -60,7 +60,7 @@ RobotInitialConnection::RobotInitialConnection(const CozmoContext* context)
 
   auto handleFirmwareFunc = std::bind(&RobotInitialConnection::HandleFirmwareVersion, this, std::placeholders::_1);
   AddSignalHandle(_robotMessageHandler->Subscribe(RobotToEngineTag::firmwareVersion, handleFirmwareFunc));
-  
+
   auto handleAvailableFunc = std::bind(&RobotInitialConnection::HandleRobotAvailable, this, std::placeholders::_1);
   AddSignalHandle(_robotMessageHandler->Subscribe(RobotToEngineTag::robotAvailable, handleAvailableFunc));
 }
@@ -111,8 +111,8 @@ void RobotInitialConnection::HandleFactoryFirmware(const AnkiEvent<RobotToEngine
   }
 
   PRINT_NAMED_INFO("RobotInitialConnection.HandleFactoryFirmware", "robot has factory firmware");
-  
-  Util::sEventF("robot.factory_firmware_version", {}, "0");
+
+  Util::sInfoF("robot.factory_firmware_version", {}, "0");
 
   const auto result = RobotConnectionResult::OutdatedFirmware;
   OnNotified(result, 0);
@@ -128,7 +128,7 @@ void RobotInitialConnection::HandleFirmwareVersion(const AnkiEvent<RobotToEngine
   // spoof the member variables as if a connection is successful
   // punting on this issue until Victor's firmware/engine update
   // flow is ready for development
-  
+
   _robotForcedToFirmwareUpdate = false;
   _validFirmware               = true;
   if (!_robotIsAvailable) {
@@ -163,13 +163,13 @@ void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t r
       const auto& payload = message.GetData().Get_mfgId();
       _serialNumber = payload.esn;
       _bodyHWVersion = payload.hw_version;
-      
+
       if (ANKI_DEV_CHEATS)
       {
         // Once we've successfully connected, reset our forced firmware update tracker
         _robotForcedToFirmwareUpdate = false;
       }
-      
+
       const BodyColor bodyColor = static_cast<BodyColor>(payload.body_color);
       if(bodyColor <= BodyColor::UNKNOWN ||
          bodyColor >= BodyColor::COUNT ||
@@ -182,19 +182,19 @@ void RobotInitialConnection::OnNotified(RobotConnectionResult result, uint32_t r
       {
         _bodyColor = bodyColor;
       }
-      
+
       SendConnectionResponse(result, robotFwVersion);
 
       _context->GetExperiments()->ReadLabAssignmentsFromRobot(_serialNumber);
     }));
-    
+
     _robotMessageHandler->SendMessage(RobotInterface::EngineToRobot{RobotInterface::GetManufacturingInfo{}});
   }
   else {
     SendConnectionResponse(result, robotFwVersion);
   }
 }
-  
+
 void RobotInitialConnection::SendConnectionResponse(RobotConnectionResult result, uint32_t robotFwVersion)
 {
   _notified = true;

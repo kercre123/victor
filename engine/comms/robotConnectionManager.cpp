@@ -75,12 +75,12 @@ void RobotConnectionManager::SendAndResetQueueStats()
 {
   // s_val: min:mean:max as ints
   // data: num
-  Util::sEventF("cozmo_engine.robot_msg_queue.recent_incoming_size",
-                {{DDATA, std::to_string( _queueSizeAccumulator.GetNum() ).c_str()}},
-                "%d:%d:%d",
-                (int)std::round(_queueSizeAccumulator.GetMin()),
-                (int)std::round(_queueSizeAccumulator.GetMean()),
-                (int)std::round(_queueSizeAccumulator.GetMax()));
+  Util::sInfoF("cozmo_engine.robot_msg_queue.recent_incoming_size",
+               {{DDATA, std::to_string( _queueSizeAccumulator.GetNum() ).c_str()}},
+               "%d:%d:%d",
+               (int)std::round(_queueSizeAccumulator.GetMin()),
+               (int)std::round(_queueSizeAccumulator.GetMean()),
+               (int)std::round(_queueSizeAccumulator.GetMax()));
 
   // clear accumulator so we only send recent stats
   _queueSizeAccumulator.Clear();

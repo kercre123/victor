@@ -54,7 +54,7 @@
 #define LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT 5.0
 
 // scaling for robot size when inserting for Configuration Space expansion (to avoid clipping corners)
-#define LATTICE_PLANNER_ROBOT_EXPANSION_SCALING 1.2 
+#define LATTICE_PLANNER_ROBOT_EXPANSION_SCALING 1.2
 
 
 // a global max so planning doesn't run forever
@@ -179,7 +179,7 @@ void LatticePlannerInternal::DoPlanning()
   }
 
   using namespace std::chrono;
-  
+
   high_resolution_clock::time_point start = high_resolution_clock::now();
   const bool result = _planner.Replan(LATTICE_PLANNER_MAX_EXPANSIONS, &_runPlanner);
   high_resolution_clock::time_point end = high_resolution_clock::now();
@@ -191,12 +191,12 @@ void LatticePlannerInternal::DoPlanning()
   auto duration_ms = duration_cast<std::chrono::milliseconds>(end - start);
 
   const std::string& eventName = result ? "robot.lattice_planner_success" : "robot.lattice_planner_failure";
-  
-  Util::sEventF(eventName.c_str(),
-                {{DDATA, std::to_string(duration_ms.count()).c_str()}},
-                "%d:%d",
-                _planner.GetLastNumExpansions(),
-                _planner.GetLastNumConsiderations());
+
+  Util::sInfoF(eventName.c_str(),
+               {{DDATA, std::to_string(duration_ms.count()).c_str()}},
+               "%d:%d",
+               _planner.GetLastNumExpansions(),
+               _planner.GetLastNumConsiderations());
 
   if(!result) {
     _internalComputeStatus = EPlannerStatus::Error;
@@ -343,12 +343,12 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
 
   const TimeStamp_t timeOfLastChange = _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp();
   const bool didObjectsChange = (_timeOfLastObjectsImport < timeOfLastChange);
-  
-  if(!isReplanning ||  // get obstacles if theyve changed or we're not replanning
+
+  if(!isReplanning ||  // get obstacles if they've changed or we're not replanning
      didObjectsChange)
   {
     _timeOfLastObjectsImport = timeOfLastChange;
-    
+
     // Configuration of memory map to check for obstacles
     constexpr MemoryMapTypes::FullContentArray typesToCalculateBordersWithInterestingEdges =
     {
@@ -366,8 +366,8 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
     };
     static_assert(MemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithInterestingEdges),
       "This array does not define all types once and only once.");
-      
-      
+
+
     constexpr MemoryMapTypes::FullContentArray typesToCalculateBordersWithNotInterestingEdges =
     {
       {MemoryMapTypes::EContentType::Unknown               , true},
@@ -401,24 +401,24 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
     };
     static_assert(MemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithProx),
       "This array does not define all types once and only once.");
-    
+
     // GetNavMap Polys
     std::vector<ConvexPolygon> convexHulls;
     INavMap* memoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
-    
-    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithInterestingEdges, MemoryMapTypes::EContentType::InterestingEdge, convexHulls);    
+
+    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithInterestingEdges, MemoryMapTypes::EContentType::InterestingEdge, convexHulls);
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, convexHulls);
-    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithProx, MemoryMapTypes::EContentType::ObstacleProx, convexHulls);    
-   
+    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithProx, MemoryMapTypes::EContentType::ObstacleProx, convexHulls);
+
     MemoryMapTypes::MemoryMapDataConstList observableObjectData;
-    MemoryMapTypes::NodePredicate pred = 
+    MemoryMapTypes::NodePredicate pred =
       [](MemoryMapTypes::MemoryMapDataConstPtr d) -> bool
       {
           return (d->type == MemoryMapTypes::EContentType::ObstacleObservable);
       };
-      
+
     memoryMap->FindContentIf(pred, observableObjectData);
-    for (const auto& nodeData : observableObjectData) 
+    for (const auto& nodeData : observableObjectData)
     {
       auto castPtr = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ObservableObject>( nodeData );
       convexHulls.emplace_back( castPtr->boundingPoly );
@@ -428,17 +428,17 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
     for(auto& hull : convexHulls) {
       hull.RadialExpand(obstaclePadding);
       hull.SetClockDirection(ConvexPolygon::CW);
-    }  
-    
+    }
+
     // clear old obstacles
     // note: (mrw) This is most definitely a hack. Right now VizManager does not enforce that new objects
-    //       are inserted with unique IDs. Since the vizManager renders polygons as paths, for now, to 
-    //       prevent ID collision with the robot path, always set our start index to be one higher the the 
-    //       robot ID (this relies on any call the render the robot path to set its ID to the robot ID, 
-    //       but that cannot be enforced here). See ticket (VIC-647) for generating unique ids in vizManager 
+    //       are inserted with unique IDs. Since the vizManager renders polygons as paths, for now, to
+    //       prevent ID collision with the robot path, always set our start index to be one higher the the
+    //       robot ID (this relies on any call the render the robot path to set its ID to the robot ID,
+    //       but that cannot be enforced here). See ticket (VIC-647) for generating unique ids in vizManager
     //       to prevent future collisions.
 
-    unsigned int startIdx = _robot->GetID() + 1;      
+    unsigned int startIdx = _robot->GetID() + 1;
     if(vizColor != nullptr) {
       for (int i = startIdx; i <= _context.env.GetNumObstacles() + startIdx; ++i)
       {
@@ -459,10 +459,10 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
       Pose3d robotDriveCenterPose = Pose3d(thetaRads, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f});
       Pose3d robotOriginPose;
       _robot->ComputeOriginPose(robotDriveCenterPose, robotOriginPose);
-      
+
       // Get the robot polygon, and inflate it by a bit to handle error
       Poly2f robotPoly(_robot->GetBoundingQuadXY(robotOriginPose, robotPadding).Scale(LATTICE_PLANNER_ROBOT_EXPANSION_SCALING) );
-      
+
       const Pose2d& robotPose = (_robot->GetPose());
       const State_c robotState(robotPose.GetX(), robotPose.GetY(), robotPose.GetAngle().ToFloat());
       for(const auto& boundingPoly : convexHulls) {
@@ -538,7 +538,7 @@ EComputePathStatus LatticePlannerInternal::StartPlanning(const Pose3d& startPose
 
   DEV_ASSERT(startPose.IsRoot() || startPose.GetParent().IsRoot(),
              "LatticePlannerInternal.StartPlanning.StartPoseNotWrtRoot");
-  
+
   State_c currentRobotState(startPose.GetTranslation().x(),
                             startPose.GetTranslation().y(),
                             startPose.GetRotationAngle<'Z'>().ToFloat());
@@ -566,11 +566,11 @@ EComputePathStatus LatticePlannerInternal::StartPlanning(const Pose3d& startPose
   }
 
   // TODO:(bn) param. This is linked to other uses of this parameter as well
-  const float maxDistancetoFollowOldPlan_mm = 40.0;
+  const float maxDistanceToFollowOldPlan_mm = 40.0;
 
   if(_context.forceReplanFromScratch ||
      ! _context.env.PlanIsSafe(_totalPlan,
-                               maxDistancetoFollowOldPlan_mm,
+                               maxDistanceToFollowOldPlan_mm,
                                static_cast<int>(planIdx),
                                lastSafeState,
                                validOldPlan)) {
@@ -650,7 +650,7 @@ EComputePathStatus LatticePlannerInternal::StartPlanning(const Pose3d& startPose
 
       if( _isSynchronous ) {
         PRINT_CH_INFO("Planner", "LatticePlanner.RunSynchronous.DoPlanning",
-                      "Do planning now in StartPlanning...");        
+                      "Do planning now in StartPlanning...");
         DoPlanning();
       }
       else {
@@ -664,7 +664,7 @@ EComputePathStatus LatticePlannerInternal::StartPlanning(const Pose3d& startPose
       PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug",
                     "StartPlanning: return running (release lock)");
     }
-    
+
     return EComputePathStatus::Running;
   }
   else {
@@ -717,10 +717,10 @@ bool LatticePlannerInternal::GetCompletePath(const Pose3d& currentRobotPose,
                 planIdx);
 
   if(offsetFromPlan >= PLAN_ERROR_FOR_REPLAN) {
-    LOG_EVENT("LatticePlanner.GetCompletePath.RobotPositionError",
-              "%04d %f",
-              planIdx,
-              offsetFromPlan);
+    PRINT_NAMED_INFO("LatticePlanner.GetCompletePath.RobotPositionError",
+                     "%04d %f",
+                     planIdx,
+                     offsetFromPlan);
     _totalPlan.Clear();
     _internalComputeStatus = EPlannerStatus::Error;
     return false;
@@ -729,14 +729,14 @@ bool LatticePlannerInternal::GetCompletePath(const Pose3d& currentRobotPose,
   PRINT_CH_DEBUG("Planner", "LatticePlannerInternal", "total path:");
   _context.env.GetActionSpace().AppendToPath(_totalPlan, path, planIdx);
   path.PrintPath();
- 
-  
+
+
   // Do final check on how close the plan's goal angle is to the originally requested goal angle
   // and either add a point turn at the end or modify the last point turn action.
   u8 numSegments = path.GetNumSegments();
   assert(_selectedGoalID < _targetPoses_orig.size());
   Radians desiredGoalAngle = _targetPoses_orig[_selectedGoalID].GetRotationAngle<'Z'>();
-    
+
   if (numSegments > 0) {
 
     // Get last non-point turn segment of path
@@ -744,11 +744,11 @@ bool LatticePlannerInternal::GetCompletePath(const Pose3d& currentRobotPose,
 
     f32 end_x, end_y, end_angle;
     lastSeg.GetEndPose(end_x, end_y, end_angle);
-      
+
     while(lastSeg.GetType() == Planning::PST_POINT_TURN) {
       path.PopBack(1);
       --numSegments;
-        
+
       if (numSegments > 0) {
         lastSeg = path[numSegments-1];
         lastSeg.GetEndPose(end_x, end_y, end_angle);
@@ -756,20 +756,20 @@ bool LatticePlannerInternal::GetCompletePath(const Pose3d& currentRobotPose,
         break;
       }
     }
-      
+
     Radians plannedGoalAngle(end_angle);
     f32 angDiff = (desiredGoalAngle - plannedGoalAngle).ToFloat();
-      
-    
+
+
     f32 turnDir = angDiff > 0 ? 1.f : -1.f;
     f32 rotSpeed = TERMINAL_POINT_TURN_SPEED * turnDir;
-      
-    PRINT_CH_INFO("Planner", 
+
+    PRINT_CH_INFO("Planner",
                   "LatticePlanner.ReplanIfNeeded.FinalAngleCorrection",
                   "LatticePlanner: Final angle off by %f rad. DesiredAng = %f, endAngle = %f, rotSpeed = %f. "
                   "Adding point turn.",
                   angDiff, desiredGoalAngle.ToFloat(), end_angle, rotSpeed );
-      
+
     path.AppendPointTurn(end_x, end_y, plannedGoalAngle.ToFloat(), desiredGoalAngle.ToFloat(),
                          rotSpeed,
                          TERMINAL_POINT_TURN_ACCEL,
@@ -779,7 +779,7 @@ bool LatticePlannerInternal::GetCompletePath(const Pose3d& currentRobotPose,
 
   }
 
-  return true;  
+  return true;
 }
 
 

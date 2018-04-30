@@ -262,14 +262,14 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   _context->SetEngineThread();
 
   // log additional das info
-  LOG_EVENT("device.language_locale", "%s", _context->GetLocale()->GetLocaleString().c_str());
+  PRINT_NAMED_INFO("device.language_locale", "%s", _context->GetLocale()->GetLocaleString().c_str());
   std::time_t t = std::time(nullptr);
   std::tm tm = *std::localtime(&t);
   std::stringstream timeZoneString;
   timeZoneString << std::put_time(&tm, "%Z");
   std::stringstream timeZoneOffset;
   timeZoneOffset << std::put_time(&tm, "%z");
-  Util::sEventF("device.timezone", {{DDATA, timeZoneOffset.str().c_str()}}, "%s", timeZoneString.str().c_str());
+  Util::sInfoF("device.timezone", {{DDATA, timeZoneOffset.str().c_str()}}, "%s", timeZoneString.str().c_str());
 
   auto helper = MakeAnkiEventUtil(*_context->GetExternalInterface(), *this, _signalHandles);
 
@@ -384,7 +384,7 @@ Result CozmoEngine::Init(const Json::Value& config) {
   // DAS Event: "cozmo_engine.init.build_configuration"
   // s_val: Build configuration
   // data: Unused
-  Anki::Util::sEvent("cozmo_engine.init.build_configuration", {},
+  Anki::Util::sInfo("cozmo_engine.init.build_configuration", {},
 #if defined(NDEBUG)
                      "RELEASE");
 #else
@@ -585,9 +585,9 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     if (updateLengthMs > maxUpdateDuration)
     {
       static const std::string targetMs = std::to_string(BS_TIME_STEP_MS);
-      Anki::Util::sEventF("cozmo_engine.update.run.slow",
-                          {{DDATA, targetMs.c_str()}},
-                          "%.2f", updateLengthMs);
+      Anki::Util::sInfoF("cozmo_engine.update.run.slow",
+                         {{DDATA, targetMs.c_str()}},
+                         "%.2f", updateLengthMs);
     }
   }
 #endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS
@@ -707,7 +707,7 @@ void CozmoEngine::SetEngineState(EngineState newState)
 
   _context->GetExternalInterface()->BroadcastToGame<ExternalInterface::UpdateEngineState>(oldState, newState);
 
-  Anki::Util::sEventF("app.engine.state", {{DDATA,EngineStateToString(newState)}}, "%s", EngineStateToString(oldState));
+  Anki::Util::sInfoF("app.engine.state", {{DDATA,EngineStateToString(newState)}}, "%s", EngineStateToString(oldState));
 }
 
 Result CozmoEngine::InitInternal()
