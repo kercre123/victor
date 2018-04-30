@@ -31,7 +31,7 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
 using namespace ExternalInterface;
 
 namespace{
@@ -39,7 +39,7 @@ static const float kCliffBackupDist_mm = 60.0f;
 static const float kCliffBackupSpeed_mmps = 100.0f;
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToCliff::BehaviorReactToCliff(const Json::Value& config)
 : ICozmoBehavior(config)
@@ -50,11 +50,11 @@ BehaviorReactToCliff::BehaviorReactToCliff(const Json::Value& config)
     EngineToGameTag::RobotStopped,
     EngineToGameTag::ChargerEvent
   }});
-  
+
   _cliffDetectedCondition = BEIConditionFactory::CreateBEICondition(BEIConditionType::CliffDetected, GetDebugLabel());
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::InitBehavior()
 {
@@ -68,7 +68,7 @@ bool BehaviorReactToCliff::WantsToBeActivatedBehavior() const
   return _cliffDetectedCondition->AreConditionsMet(GetBEI());
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::OnBehaviorActivated()
 {
@@ -76,7 +76,7 @@ void BehaviorReactToCliff::OnBehaviorActivated()
     auto& moodManager = GetBEI().GetMoodManager();
     moodManager.TriggerEmotionEvent("CliffReact", MoodManager::GetCurrentTimeInSeconds());
   }
-  
+
   switch( _state ) {
     case State::PlayingStopReaction:
     {
@@ -84,13 +84,13 @@ void BehaviorReactToCliff::OnBehaviorActivated()
 
       // Record cliff detection threshold before at start of stop
       _cliffDetectThresholdAtStart = robotInfo.GetCliffSensorComponent().GetCliffDetectThreshold(0);
-      
+
       // Wait function for determining if the cliff is suspicious
       auto waitForStopLambda = [this, &robotInfo](Robot& robot) {
         if ( robotInfo.GetMoveComponent().AreWheelsMoving() ) {
           return false;
         }
-        
+
         if (_cliffDetectThresholdAtStart != robotInfo.GetCliffSensorComponent().GetCliffDetectThreshold(0)) {
           // There was a change in the cliff detection threshold so assuming
           // it was a false cliff and aborting reaction
@@ -99,7 +99,7 @@ void BehaviorReactToCliff::OnBehaviorActivated()
         }
         return true;
       };
-      
+
       // skip the "huh" animation if in severe energy or repair
       auto callbackFunc = &BehaviorReactToCliff::TransitionToPlayingStopReaction;
 
@@ -117,11 +117,11 @@ void BehaviorReactToCliff::OnBehaviorActivated()
                         "Init called with invalid state");
     }
   }
-  
-  
+
+
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::TransitionToPlayingStopReaction()
 {
@@ -131,7 +131,7 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction()
     SendFinishedReactToCliffMessage();
     return;
   }
-  
+
   // in case latency spiked between the Stop and Cliff message, add a small extra delay
   const float latencyDelay_s = 0.05f;
   const float maxWaitTime_s = (1.0f / 1000.0f ) * CLIFF_EVENT_DELAY_MS + latencyDelay_s;
@@ -146,30 +146,30 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction()
   DelegateIfInControl(action, &BehaviorReactToCliff::TransitionToPlayingCliffReaction);
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
 {
   DEBUG_SET_STATE(PlayingCliffReaction);
-  
+
   if(ShouldStreamline()){
     TransitionToBackingUp();
   }
   else if( _gotCliff || ALWAYS_PLAY_REACT_TO_CLIFF) {
-    Anki::Util::sEvent("robot.cliff_detected", {}, "");
-    
-    
+    Anki::Util::sInfo("robot.cliff_detected", {}, "");
+
+
     AnimationTrigger reactionAnim = AnimationTrigger::ReactToCliff;
     auto action = GetCliffPreReactAction(_detectedFlags);
 
     action->AddAction(new TriggerLiftSafeAnimationAction(reactionAnim));
-    
+
     DelegateIfInControl(action, &BehaviorReactToCliff::TransitionToBackingUp);
   }
   // else end the behavior now
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::TransitionToBackingUp()
 {
@@ -187,15 +187,15 @@ void BehaviorReactToCliff::TransitionToBackingUp()
     BehaviorObjectiveAchieved(BehaviorObjective::ReactedToCliff);
   }
 }
-  
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::SendFinishedReactToCliffMessage() {
   // Send message that we're done reacting
   //robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotCliffEventFinished()));
 }
-  
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::OnBehaviorDeactivated()
 {
@@ -204,7 +204,7 @@ void BehaviorReactToCliff::OnBehaviorDeactivated()
   _detectedFlags = 0;
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::BehaviorUpdate()
 {
@@ -218,10 +218,10 @@ void BehaviorReactToCliff::BehaviorUpdate()
   }
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::HandleWhileInScopeButNotActivated(const EngineToGameEvent& event)
-{  
+{
   switch( event.GetData().GetTag() ) {
     case EngineToGameTag::CliffEvent: {
       const auto detectedFlags = event.GetData().Get_CliffEvent().detectedFlags;
@@ -255,7 +255,7 @@ void BehaviorReactToCliff::HandleWhileInScopeButNotActivated(const EngineToGameE
   }
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::HandleWhileActivated(const EngineToGameEvent& event)
 {
@@ -282,7 +282,7 @@ void BehaviorReactToCliff::HandleWhileActivated(const EngineToGameEvent& event)
       break;
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(uint8_t cliffDetectedFlags)
 {
@@ -291,13 +291,13 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(uint8_t c
   const uint8_t FR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_FR));
   const uint8_t BL = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BL));
   const uint8_t BR = (1<<Util::EnumToUnderlying(CliffSensor::CLIFF_BR));
-  
+
   auto action = new CompoundActionSequential();
-  
+
   float amountToTurn_deg = 0.f;
   float amountToDrive_mm = 0.f;
   bool turnThenDrive = true;
-  
+
   // TODO: These actions should most likely be replaced by animations.
   switch (cliffDetectedFlags) {
     case (FL | FR):
@@ -347,15 +347,15 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(uint8_t c
       action->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliffDetectorStop));
       break;
   }
-  
+
   auto turnAction = new TurnInPlaceAction(DEG_TO_RAD(amountToTurn_deg), false);
   turnAction->SetAccel(MAX_BODY_ROTATION_ACCEL_RAD_PER_SEC2);
   turnAction->SetMaxSpeed(MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
-  
+
   auto driveAction = new DriveStraightAction(amountToDrive_mm, MAX_WHEEL_SPEED_MMPS, false);
   driveAction->SetAccel(MAX_WHEEL_ACCEL_MMPS2);
   driveAction->SetDecel(MAX_WHEEL_ACCEL_MMPS2);
-  
+
   if (turnThenDrive) {
     if (amountToTurn_deg != 0.f) {
       action->AddAction(turnAction);
@@ -371,7 +371,7 @@ CompoundActionSequential* BehaviorReactToCliff::GetCliffPreReactAction(uint8_t c
       action->AddAction(turnAction);
     }
   }
-  
+
   return action;
 }
 

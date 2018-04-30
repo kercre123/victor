@@ -20,7 +20,7 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToReturnedToTreads::BehaviorReactToReturnedToTreads(const Json::Value& config)
@@ -43,8 +43,8 @@ void BehaviorReactToReturnedToTreads::OnBehaviorActivated()
   // Wait for a bit to allow pitch to correct
   DelegateIfInControl(new WaitAction(0.5f),
               &BehaviorReactToReturnedToTreads::CheckForHighPitch);
-  
-  
+
+
 }
 
 
@@ -60,7 +60,7 @@ void BehaviorReactToReturnedToTreads::CheckForHighPitch()
   // 10 degrees was a selected as a conservative value, but we should keep an eye out
   // for unnecessary head calibrations.
   if (std::fabsf(robotInfo.GetPitchAngle().getDegrees()) > 10.f) {
-    LOG_EVENT("BehaviorReactToReturnedToTreads.CalibratingHead", "%f", robotInfo.GetPitchAngle().getDegrees());
+    PRINT_NAMED_INFO("BehaviorReactToReturnedToTreads.CalibratingHead", "%f", robotInfo.GetPitchAngle().getDegrees());
     DelegateIfInControl(new CalibrateMotorAction(true, false));
   }
 }

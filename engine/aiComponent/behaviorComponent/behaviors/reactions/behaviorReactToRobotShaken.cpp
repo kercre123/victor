@@ -4,7 +4,7 @@
  * Author: Matt Michini
  * Created: 2017-01-11
  *
- * Description: 
+ * Description:
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -23,7 +23,7 @@
 namespace Anki {
 namespace Cozmo {
 
-namespace{  
+namespace{
 // Accelerometer magnitude threshold corresponding to "no longer shaking"
 const float kAccelMagnitudeShakingStoppedThreshold = 13000.f;
 // Dizzy factor thresholds for playing the soft, medium, or hard reactions
@@ -31,7 +31,7 @@ const float kShakenDurationThresholdHard   = 5.0f;
 const float kShakenDurationThresholdMedium = 2.5f;
 
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToRobotShaken::BehaviorReactToRobotShaken(const Json::Value& config)
 : ICozmoBehavior(config)
@@ -41,23 +41,23 @@ BehaviorReactToRobotShaken::BehaviorReactToRobotShaken(const Json::Value& config
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotShaken::OnBehaviorActivated()
-{    
+{
   // Reset variables:
   _maxShakingAccelMag = 0.f;
   _shakingStartedTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _shakenDuration_s = 0.f;
   _reactionPlayed = EReaction::None;
-  
+
   // Start the animations:
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DEPRECATED_DizzyShakeLoop, 0));
-  
+
   // Kick off the state machine:
   _state = EState::Shaking;
-  
-  
+
+
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotShaken::BehaviorUpdate()
 {
@@ -72,7 +72,7 @@ void BehaviorReactToRobotShaken::BehaviorUpdate()
       const auto& robotInfo = GetBEI().GetRobotInfo();
       const float accMag = robotInfo.GetHeadAccelMagnitudeFiltered();
       _maxShakingAccelMag = std::max(_maxShakingAccelMag, accMag);
-      
+
       // Done shaking? Then transition to the next state.
       if (accMag < kAccelMagnitudeShakingStoppedThreshold) {
         // Now that shaking has ended, determine how long it lasted:
@@ -80,7 +80,7 @@ void BehaviorReactToRobotShaken::BehaviorUpdate()
         _shakenDuration_s = now_s - _shakingStartedTime_s;
         _state = EState::DoneShaking;
       }
-      
+
       break;
     }
     case EState::DoneShaking:
@@ -89,9 +89,9 @@ void BehaviorReactToRobotShaken::BehaviorUpdate()
       CompoundActionSequential* action = new CompoundActionSequential({new TriggerAnimationAction(AnimationTrigger::DEPRECATED_DizzyShakeStop),
                                                                        new TriggerAnimationAction(AnimationTrigger::DEPRECATED_DizzyStillPickedUp)});
       DelegateIfInControl(action);
-      
+
       _state = EState::WaitTilOnTreads;
-      
+
       break;
     }
     case EState::WaitTilOnTreads:
@@ -104,7 +104,7 @@ void BehaviorReactToRobotShaken::BehaviorUpdate()
         _reactionPlayed = EReaction::StillPickedUp;
         _state = EState::Finished;
       }
-      
+
       break;
     }
     case EState::ActDizzy:
@@ -121,7 +121,7 @@ void BehaviorReactToRobotShaken::BehaviorUpdate()
         DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::DEPRECATED_DizzyReactionSoft));
         _reactionPlayed = EReaction::Soft;
       }
-      
+
       _state = EState::Finished;
       break;
     }
@@ -136,9 +136,9 @@ void BehaviorReactToRobotShaken::BehaviorUpdate()
     }
     default:
       break;
-  }  
+  }
 }
-  
+
 
 void BehaviorReactToRobotShaken::OnBehaviorDeactivated()
 {
@@ -147,10 +147,10 @@ void BehaviorReactToRobotShaken::OnBehaviorDeactivated()
   const int maxShakenAccelMag = std::round(_maxShakingAccelMag);
   // DAS event string: "<shakenDuration_ms>:<maxShakenAccelMag>"
   const std::string& data = std::to_string(shakenDuration_ms) + ":" + std::to_string(maxShakenAccelMag);
-  Anki::Util::sEvent("robot.dizzy_reaction",
-                     {{DDATA, data.c_str()}},
-                     EReactionToString(_reactionPlayed));
-  
+  Anki::Util::sInfo("robot.dizzy_reaction",
+                    {{DDATA, data.c_str()}},
+                    EReactionToString(_reactionPlayed));
+
   // Log human-readable completion info:
   PRINT_NAMED_INFO("BehaviorReactToRobotShaken.DizzyReaction",
                    "shakenDuration = %.3fs, maxShakingAccelMag = %.1f, reactionPlayed = '%s'",
@@ -158,8 +158,8 @@ void BehaviorReactToRobotShaken::OnBehaviorDeactivated()
                    _maxShakingAccelMag,
                    EReactionToString(_reactionPlayed));
 }
-  
-  
+
+
 const char* BehaviorReactToRobotShaken::EReactionToString(EReaction reaction) const
 {
   switch(reaction) {
@@ -177,7 +177,7 @@ const char* BehaviorReactToRobotShaken::EReactionToString(EReaction reaction) co
       return "";
   }
 }
-        
-  
+
+
 } // namespace Cozmo
 } // namespace Anki

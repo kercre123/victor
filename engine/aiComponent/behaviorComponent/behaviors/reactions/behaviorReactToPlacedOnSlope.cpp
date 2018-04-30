@@ -27,41 +27,41 @@ BehaviorReactToPlacedOnSlope::BehaviorReactToPlacedOnSlope(const Json::Value& co
 {
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToPlacedOnSlope::WantsToBeActivatedBehavior() const
 {
   return true;
 }
-  
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToPlacedOnSlope::OnBehaviorActivated()
 {
   const double now = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   const bool hasBehaviorRunRecently = (now - _lastBehaviorTime < 10.0);
-  
+
   // Double check that we should play the animation or recalibrate:
   if (hasBehaviorRunRecently && _endedOnInclineLastTime) {
     const auto& robotInfo = GetBEI().GetRobotInfo();
     // Don't run the animation. Instead, run a motor cal since his head may be out of calibration.
-    LOG_EVENT("BehaviorReactToPlacedOnSlope.CalibratingHead", "%f", robotInfo.GetPitchAngle().getDegrees());
+    PRINT_NAMED_INFO("BehaviorReactToPlacedOnSlope.CalibratingHead", "%f", robotInfo.GetPitchAngle().getDegrees());
     DelegateIfInControl(new CalibrateMotorAction(true, false));
     _endedOnInclineLastTime = false;
   } else {
     // Play the animation then check if we're still on a slope or if we were perched on something:
-    
+
     AnimationTrigger reactionAnim = AnimationTrigger::ANTICIPATED_ReactToPerchedOnBlock;
-    
+
     DelegateIfInControl(new TriggerAnimationAction(reactionAnim),
                         &BehaviorReactToPlacedOnSlope::CheckPitch);
   }
 
   _lastBehaviorTime = now;
-  
+
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToPlacedOnSlope::CheckPitch()
 {

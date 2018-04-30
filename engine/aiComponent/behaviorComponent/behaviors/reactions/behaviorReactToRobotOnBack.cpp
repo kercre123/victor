@@ -4,7 +4,7 @@
  * Author: Brad Neuman
  * Created: 2016-05-06
  *
- * Description: 
+ * Description:
  *
  * Copyright: Anki, Inc. 2016
  *
@@ -24,7 +24,7 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
 using namespace ExternalInterface;
 
 static const float kWaitTimeBeforeRepeatAnim_s = 0.5f;
@@ -56,7 +56,7 @@ void BehaviorReactToRobotOnBack::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToRobotOnBack::OnBehaviorActivated()
 {
-  FlipDownIfNeeded(); 
+  FlipDownIfNeeded();
 }
 
 
@@ -69,12 +69,12 @@ void BehaviorReactToRobotOnBack::FlipDownIfNeeded()
     // If not, then calibrate head because we're not likely to be on back if no cliff detected.
     if (robotInfo.GetCliffSensorComponent().IsCliffDetectedStatusBitOn()) {
       AnimationTrigger anim = AnimationTrigger::ANTICIPATED_FlipDownFromBack;
-    
+
       DelegateIfInControl(new TriggerAnimationAction(anim),
                   &BehaviorReactToRobotOnBack::DelayThenFlipDown);
     } else {
       const auto cliffs = robotInfo.GetCliffSensorComponent().GetCliffDataRaw();
-      LOG_EVENT("BehaviorReactToRobotOnBack.FlipDownIfNeeded.CalibratingHead", "%d %d %d %d", cliffs[0], cliffs[1], cliffs[2], cliffs[3]);
+      PRINT_NAMED_INFO("BehaviorReactToRobotOnBack.FlipDownIfNeeded.CalibratingHead", "%d %d %d %d", cliffs[0], cliffs[1], cliffs[2], cliffs[3]);
       DelegateIfInControl(new CalibrateMotorAction(true, false),
                   &BehaviorReactToRobotOnBack::DelayThenFlipDown);
     }

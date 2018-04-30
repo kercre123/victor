@@ -46,8 +46,8 @@ FreeplayDataTracker::FreeplayDataTracker()
 }
 
 void FreeplayDataTracker::InitDependent(Cozmo::Robot* robot, const AICompMap& dependentComps)
-{ 
-  // Toggle flag to "start" the tracking process - legacy assumption that freeeplay is not
+{
+  // Toggle flag to "start" the tracking process - legacy assumption that freeplay is not
   // active on app start - full fix requires a deeper update to the data tracking system
   // that is outside of scope for this PR but should be addressed in VIC-626
   SetFreeplayPauseFlag(true, FreeplayPauseFlag::OffTreads);
@@ -83,14 +83,14 @@ void FreeplayDataTracker::SetFreeplayPauseFlag(FreeplayPauseFlag flag)
   const BaseStationTime_t currTime_ns = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
 
   const bool wasActive = IsActive();
-      
+
   if( wasActive ) {
     // we are currently in active freeplay, but are about to be paused. accumulate previous active time (if any)
     if( _countFreeplayFromTime_ns > 0 ) {
       _timeData_ns += (currTime_ns - _countFreeplayFromTime_ns);
     }
   }
-    
+
   _pausedFlags.insert(flag);
 
   if( wasActive ) {
@@ -112,7 +112,7 @@ void FreeplayDataTracker::ClearFreeplayPauseFlag(FreeplayPauseFlag flag)
                    FreeplayPauseFlagToString(flag));
     // return early so we don't update time
     return;
-  }    
+  }
 
   const size_t num_removed = _pausedFlags.erase(flag);
 
@@ -141,13 +141,13 @@ void FreeplayDataTracker::ClearFreeplayPauseFlag(FreeplayPauseFlag flag)
 void FreeplayDataTracker::SendData()
 {
   const BaseStationTime_t currTime_ns = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
-  
+
   // if we are currently active, then accumulate time now
   if( IsActive() && _countFreeplayFromTime_ns > 0 ) {
 
     // freeplay starts off disabled, so starting time should always be more than 0 nanoseconds
     //DEV_ASSERT(_countFreeplayFromTime_ns > 0, "FreeplayDataTracker.FreeplayStartedAtZero");
-    
+
     _timeData_ns += (currTime_ns - _countFreeplayFromTime_ns);
     PRINT_CH_DEBUG("Behaviors",
                    "FreeplayDataTracker.SendData.Accumulate",
@@ -174,22 +174,22 @@ void FreeplayDataTracker::SendData()
     }
     else {
       // data looks good, send it up
-  
+
       // send data with integer seconds. Note that this may round to 0, but send it anyway (so we know some
       // freeplay occurred, but less than 0.5 seconds worth)
-      Util::sEventF("robot.active_freeplay_time",
-                    {},
-                    "%d",
-                    freeplayTime_s);
+      Util::sInfoF("robot.active_freeplay_time",
+                   {},
+                   "%d",
+                   freeplayTime_s);
     }
   }
-  
+
   // reset timers
   _timeData_ns = 0;
   if( IsActive() ) {
     _countFreeplayFromTime_ns = currTime_ns;
   }
-  
+
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _timeToSendData_s = currTime_s + kUpdatePeriod_s;
 }
@@ -204,10 +204,10 @@ std::string FreeplayDataTracker::GetDebugStateStr() const
   if( IsActive() ) {
     return "active";
   }
-  
+
   std::stringstream ss;
   ss << "paused( ";
-  
+
   for( auto flag : _pausedFlags ) {
     ss << FreeplayPauseFlagToString(flag) << ' ';
   }

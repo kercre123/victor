@@ -27,7 +27,7 @@
 
 
 namespace Anki {
-  
+
   namespace Cozmo {
 
     #pragma mark ---- PlayAnimationAction ----
@@ -51,16 +51,16 @@ namespace Anki {
          (timeout_sec == _kDefaultTimeout_sec)){
         _timeout_sec = _kDefaultTimeoutForInfiniteLoops_sec;
       }
-      
+
     }
-        
+
     PlayAnimationAction::~PlayAnimationAction()
     {
       if (HasStarted() && !_stoppedPlaying) {
         PRINT_NAMED_INFO("PlayAnimationAction.Destructor.StillStreaming",
                          "Action destructing, but AnimationComponent is still playing: %s. Telling it to stop.",
                          _animName.c_str());
-        GetRobot().GetAnimationComponent().StopAnimByName(_animName);          
+        GetRobot().GetAnimationComponent().StopAnimByName(_animName);
       }
     }
 
@@ -75,15 +75,15 @@ namespace Anki {
           _wasAborted = true;
         }
       };
-      
+
       Result res = GetRobot().GetAnimationComponent().PlayAnimByName(_animName, _numLoopsRemaining, _interruptRunning, callback, GetTag(), _timeout_sec);
-      
+
       if(res != RESULT_OK) {
         _stoppedPlaying = true;
         _wasAborted = true;
         return ActionResult::ANIM_ABORTED;
       }
-      
+
       return ActionResult::SUCCESS;
     }
 
@@ -106,7 +106,7 @@ namespace Anki {
     }
 
     #pragma mark ---- TriggerAnimationAction ----
-    
+
     TriggerAnimationAction::TriggerAnimationAction(AnimationTrigger animEvent,
                                                    u32 numLoops,
                                                    bool interruptRunning,
@@ -131,7 +131,7 @@ namespace Anki {
     void TriggerAnimationAction::SetAnimGroupFromTrigger(AnimationTrigger animTrigger)
     {
       _animTrigger = animTrigger;
-    
+
       auto* data_ldr = GetRobot().GetContext()->GetDataLoader();
       if( data_ldr->HasAnimationForTrigger(_animTrigger) )
       {
@@ -141,7 +141,7 @@ namespace Anki {
                               "Event: %s", EnumToString(_animTrigger));
         }
       }
-      
+
     }
 
     ActionResult TriggerAnimationAction::Init()
@@ -150,10 +150,10 @@ namespace Anki {
       {
         PRINT_NAMED_WARNING("TriggerAnimationAction.NoAnimationForTrigger",
                             "Event: %s", EnumToString(_animTrigger));
-        
+
         return ActionResult::NO_ANIM_NAME;
       }
-      
+
       _animName = GetRobot().GetAnimationComponent().GetAnimationNameFromGroup(_animGroupName, _strictCooldown);
 
       if( _animName.empty() ) {
@@ -161,23 +161,23 @@ namespace Anki {
       }
       else {
         const ActionResult res = PlayAnimationAction::Init();
-        
+
         auto* dataLoader = GetRobot().GetContext()->GetDataLoader();
         const std::set<AnimationTrigger>& dasBlacklistedTriggers = dataLoader->GetDasBlacklistedAnimationTriggers();
         const bool isBlacklisted = std::find(dasBlacklistedTriggers.begin(), dasBlacklistedTriggers.end(), _animTrigger) != dasBlacklistedTriggers.end();
-        
+
         if( res == ActionResult::SUCCESS && !isBlacklisted ) {
           const std::string& dataStr = std::string(AnimationTriggerToString(_animTrigger)) + ":" + _animGroupName;
-          Anki::Util::sEvent("robot.play_animation",
-                             {{DDATA, dataStr.c_str()}},
-                             _animName.c_str());
+          Anki::Util::sInfo("robot.play_animation",
+                            {{DDATA, dataStr.c_str()}},
+                            _animName.c_str());
         }
 
         return res;
       }
     }
 
-    
+
     #pragma mark ---- TriggerLiftSafeAnimationAction ----
 
     TriggerLiftSafeAnimationAction::TriggerLiftSafeAnimationAction(AnimationTrigger animEvent,
@@ -189,17 +189,17 @@ namespace Anki {
     : TriggerAnimationAction(animEvent, numLoops, interruptRunning, tracksToLock, timeout_sec, strictCooldown)
     {
     }
-    
-    
+
+
     u8 TriggerLiftSafeAnimationAction::TracksToLock(Robot& robot, u8 tracksCurrentlyLocked)
     {
-      
+
       // Ensure animation doesn't throw cube down, but still can play get down animations
       if(robot.GetCarryingComponent().IsCarryingObject()
          && robot.GetOffTreadsState() == OffTreadsState::OnTreads){
         tracksCurrentlyLocked = tracksCurrentlyLocked | (u8) AnimTrackFlag::LIFT_TRACK;
       }
-      
+
       return tracksCurrentlyLocked;
     }
 
@@ -207,6 +207,6 @@ namespace Anki {
     {
       SetTracksToLock(TracksToLock(GetRobot(), GetTracksToLock()));
     }
-  
+
   }
 }

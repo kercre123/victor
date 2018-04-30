@@ -74,13 +74,13 @@ void AIComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depende
   if(context == nullptr ) {
     PRINT_NAMED_WARNING("AIComponent.Init.NoContext", "wont be able to load some componenets. May be OK in unit tests");
   }
-  
+
   {
     _aiComponents = std::make_unique<EntityType>();
     {
       const MicDirectionHistory& micDirectionHistory = robot->GetMicComponent().GetMicDirectionHistory();
       auto* faceSelectionComp = new FaceSelectionComponent(*robot, robot->GetFaceWorld(), micDirectionHistory);
-      
+
       _aiComponents->AddDependentComponent(AIComponentID::BehaviorComponent,          new BehaviorComponent());
       _aiComponents->AddDependentComponent(AIComponentID::ContinuityComponent,        new ContinuityComponent(*robot));
       _aiComponents->AddDependentComponent(AIComponentID::FaceSelection,              faceSelectionComp);
@@ -93,10 +93,10 @@ void AIComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& depende
     }
 
     _aiComponents->InitComponents(robot);
-  }  
+  }
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIComponent::UpdateDependent(const RobotCompMap& dependentComponents)
 {
@@ -104,7 +104,7 @@ void AIComponent::UpdateDependent(const RobotCompMap& dependentComponents)
   CheckForSuddenObstacle(*_robot);
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIComponent::OnRobotDelocalized()
 {
@@ -116,19 +116,19 @@ void AIComponent::OnRobotRelocalized()
 {
   GetComponent<AIWhiteboard>().OnRobotRelocalized();
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AIComponent::CheckForSuddenObstacle(Robot& robot)
-{  
+{
   // calculate average sensor value over several samples
   f32 avgProxValue_mm       = 0;  // average forward sensor value
-  f32 avgRobotSpeed_mmps    = 0;  // average foward wheel speed
+  f32 avgRobotSpeed_mmps    = 0;  // average forward wheel speed
   std::vector<Radians> angleVec;  // set of angles from history
   angleVec.reserve(kNumRequiredSamples);
-  
+
   const auto&       states  = robot.GetStateHistory()->GetRawPoses();
   const TimeStamp_t endTime = robot.GetLastMsgTimestamp() - kObsSampleWindow_ms;
-  
+
   int n = 0;
   for(auto st = states.rbegin(); st != states.rend() && st->first > endTime; ++st) {
     const auto& state = st->second;
@@ -139,11 +139,11 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
     if (proxData.isLiftInFOV || proxData.isTooPitched) {
       continue;
     }
-    
+
     // If signal quality was low, then assume some fixed far
     // distance since the actual reading can vary wildly.
-    avgProxValue_mm    += proxData.isValidSignalQuality ? 
-                          state.GetProxSensorVal_mm() : 
+    avgProxValue_mm    += proxData.isValidSignalQuality ?
+                          state.GetProxSensorVal_mm() :
                           kLowQualityProxDistance_mm;
 
     avgRobotSpeed_mmps += state.GetLeftWheelSpeed_mmps() + state.GetRightWheelSpeed_mmps();
@@ -151,7 +151,7 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
     n++;
   }
 
-  // Check that there are a sufficient number of samples 
+  // Check that there are a sufficient number of samples
   if (n < kNumRequiredSamples) {
     _suddenObstacleDetected = false;
     return;
@@ -173,15 +173,15 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
   // Get latest distance reading and assess validity
   const auto& proxData = robot.GetProxSensorComponent().GetLatestProxData();
   const u16 latestDistance_mm = proxData.distance_mm;
-  const bool readingIsValid = proxData.isValidSignalQuality && 
-                              !proxData.isLiftInFOV && 
+  const bool readingIsValid = proxData.isValidSignalQuality &&
+                              !proxData.isLiftInFOV &&
                               !proxData.isTooPitched;
-  
+
   // (Not-exactly) "average" speed at which object is approaching robot
-  // If it was looking at nothing and then an obstacle appears in front of it, 
+  // If it was looking at nothing and then an obstacle appears in front of it,
   // this speed should be quite high
   f32 avgObjectSpeed_mmps = (avgProxValue_mm - latestDistance_mm) / kObsSampleWindow_s;
-  
+
   // Sudden obstacle detection conditions
   // 1) Signal quality sufficiently indicates that something was detected
   // 2) Robot is stationary or moving forward
@@ -197,18 +197,18 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
                             (angleRange_rad <= kObsMaxRotation_rad) &&
                             (avgObjectSpeed_mmps >= kObsMinObjectSpeed_mmps) &&
                             (latestDistance_mm   <= kObsMaxObjectDistance_mm);
-  
+
   if (_suddenObstacleDetected) {
-    Anki::Util::sEventF("robot.obstacle_detected", {}, 
-                        "dist: %4.2f objSpeed: %4.2f roboSpeed: %4.2f", 
-                        avgProxValue_mm, avgObjectSpeed_mmps, avgRobotSpeed_mmps);
+    Anki::Util::sInfoF("robot.obstacle_detected", {},
+                       "dist: %4.2f objSpeed: %4.2f robotSpeed: %4.2f",
+                       avgProxValue_mm, avgObjectSpeed_mmps, avgRobotSpeed_mmps);
     PRINT_NAMED_INFO("AIComponent.Update.CheckForSuddenObstacle","SuddenObstacleDetected");
-  } 
+  }
 }
 
 #if ANKI_DEV_CHEATS
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorContainer& AIComponent::GetBehaviorContainer() 
+BehaviorContainer& AIComponent::GetBehaviorContainer()
 {
   auto& behaviorComponent = GetComponent<BehaviorComponent>();
   return behaviorComponent.GetBehaviorContainer();

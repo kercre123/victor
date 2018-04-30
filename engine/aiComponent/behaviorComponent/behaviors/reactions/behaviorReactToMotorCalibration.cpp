@@ -18,30 +18,30 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToMotorCalibration::BehaviorReactToMotorCalibration(const Json::Value& config)
 : ICozmoBehavior(config)
-{  
+{
   SubscribeToTags({
     EngineToGameTag::MotorCalibration
   });
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToMotorCalibration::WantsToBeActivatedBehavior() const
 {
   return true;
 }
 
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToMotorCalibration::OnBehaviorActivated()
 {
-  LOG_EVENT("BehaviorReactToMotorCalibration.InitInternalReactionary.Start", "");  
+  PRINT_NAMED_INFO("BehaviorReactToMotorCalibration.InitInternalReactionary.Start", "");
   auto& robotInfo = GetBEI().GetRobotInfo();
-  
+
   // Start a hang action just to keep this behavior alive until the calibration complete message is received
   DelegateIfInControl(new WaitAction(_kTimeout_sec), [&robotInfo](ActionResult res)
     {
@@ -53,8 +53,8 @@ void BehaviorReactToMotorCalibration::OnBehaviorActivated()
       }
     });
 }
-  
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToMotorCalibration::HandleWhileActivated(const EngineToGameEvent& event)
 {
@@ -76,6 +76,6 @@ void BehaviorReactToMotorCalibration::HandleWhileActivated(const EngineToGameEve
   }
 }
 
-  
+
 }
 }
