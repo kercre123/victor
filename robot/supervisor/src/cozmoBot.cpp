@@ -163,7 +163,7 @@ namespace Anki {
 
         // Check if there is a new or dropped connection to a basestation
         if (HAL::RadioIsConnected() && !wasConnected_) {
-          AnkiEvent( "CozmoBot.Radio.Connected", "");
+          AnkiInfo("CozmoBot.Radio.Connected", "");
           wasConnected_ = true;
 
 #ifdef SIMULATOR

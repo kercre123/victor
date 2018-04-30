@@ -64,7 +64,7 @@ AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
   , _context(std::make_unique<AnimContext>(dataPlatform))
   , _animationStreamer(std::make_unique<AnimationStreamer>(_context.get()))
 {
-#if ANKI_CPU_PROFILER_ENABLED 
+#if ANKI_CPU_PROFILER_ENABLED
   // Initialize CPU profiler early and put tracing file at known location with no dependencies on other systems
   Anki::Util::CpuProfiler::GetInstance();
   Anki::Util::CpuThreadProfiler::SetChromeTracingFile(
@@ -178,9 +178,9 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
     const double maxUpdateDuration = ANIM_TIME_STEP_MS;
     if (updateLengthMs > maxUpdateDuration)
     {
-      Anki::Util::sEventF("cozmo_anim.update.run.slow",
-                          {{DDATA,std::to_string(ANIM_TIME_STEP_MS).c_str()}},
-                          "%.2f", updateLengthMs);
+      Anki::Util::sInfoF("cozmo_anim.update.run.slow",
+                         {{DDATA,std::to_string(ANIM_TIME_STEP_MS).c_str()}},
+                         "%.2f", updateLengthMs);
     }
   }
 #endif // ENABLE_CE_RUN_TIME_DIAGNOSTICS

@@ -288,11 +288,11 @@ namespace Anki {
       // end_pos reached during starting acc phase. Consider reducing acc_start duration or decreasing vel_start magnitude
 
       // TODO: Consider shorter acceleration/deceleration periods that could make this profile work?
-      
-      AnkiEvent( "VPG.StartProfile_fixedDuration.EndPosReachedDuringStartingAcc", "");
+
+      AnkiInfo("VPG.StartProfile_fixedDuration.EndPosReachedDuringStartingAcc", "");
       return false;
     }
-    
+
 
     float distWhenVelMidIsVelStart = vel_start * (duration - acc_end_duration) + 0.5f*(vel_start * acc_end_duration);
     bool isVelMidGTVelStart = (dist >= distWhenVelMidIsVelStart);
@@ -322,7 +322,7 @@ namespace Anki {
 
       float sqrtDiscr = sqrtf(discr);
       vm = (-B + sqrtDiscr) / (2*A);
-    
+
       AnkiConditionalWarnAndReturnValue(vm <= 0, false, "VPG.StartProfile_fixedDuration.NegativeVm", "vm > 0  (A = %f, B = %f, C = %f)", A, B, C);
 
     } else {
@@ -416,13 +416,13 @@ namespace Anki {
       // If we're not already at endVel_...
       if (currVel_ != endVel_) {
         currVel_ += deltaVelPerTimeStepEnd_;
-        
+
         // If maxReachableVel == endVel, currVel approaches endVel from startVel
         const bool currVelHasPassedEndVelFromStartVel = (maxReachableVel_ == endVel_) && ((currVel_ > endVel_) == (currVel_ > startVel_));
-        
+
         // If maxReachableVel != endVel, currVel approaches endVel from maxReachableVel
         const bool currVelHasPassedEndVelFromMaxReachableVel = (maxReachableVel_ != endVel_) && ((currVel_ > endVel_) == (currVel_ > maxReachableVel_));
-        
+
         if (currVelHasPassedEndVelFromStartVel || currVelHasPassedEndVelFromMaxReachableVel) {
           currVel_ = endVel_;
         }

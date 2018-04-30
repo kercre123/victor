@@ -50,7 +50,7 @@ namespace HeadController {
       f32 Ki_ = 0.03f; // integral control constant
       f32 MAX_ERROR_SUM = 15.f;
 #endif
-      
+
       // Motor burnout protection
       u32 potentialBurnoutStartTime_ms_ = 0;
       const f32 BURNOUT_POWER_THRESH = Ki_ * MAX_ERROR_SUM + Kp_ * HEAD_ANGLE_TOL;
@@ -87,7 +87,7 @@ namespace HeadController {
 
       // Last time head movement was detected
       u32 lastHeadMovedTime_ms = 0;
-      
+
       // Parameters for determining if head is being messed with during
       // calibration in which case calibration is retried or aborted
       f32 lowHeadAngleDuringCalib_rad_;
@@ -104,11 +104,11 @@ namespace HeadController {
 
       // If disabled, head motor is automatically re-enabled at this time if non-zero.
       u32 enableAtTime_ms_ = 0;
-      
+
       // If enableAtTime_ms_ is non-zero, this is the time beyond current time
       // that the motor will be re-enabled if the head is not moving.
       const u32 REENABLE_TIMEOUT_MS = 2000;
-      
+
       // Bracing for impact
       // Lowers head quickly during which time it ignores any new commands
       bool bracing_ = false;
@@ -137,13 +137,13 @@ namespace HeadController {
 
         potentialBurnoutStartTime_ms_ = 0;
         bracing_ = false;
-        
+
         if (!IsCalibrating()) {
           power_ = 0;
           HAL::MotorSetPower(MotorID::MOTOR_HEAD, power_);
         }
       }
-      
+
       enableAtTime_ms_ = 0;
       if (autoReEnable) {
         enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;
@@ -157,10 +157,10 @@ namespace HeadController {
       calState_ = HCS_LOWER_HEAD;
       isCalibrated_ = false;
 
-      // After we're done with calibration it shouldn't continue trying to reach 
+      // After we're done with calibration it shouldn't continue trying to reach
       // the head position it was trying to get to before
-      inPosition_ = true;  
-    
+      inPosition_ = true;
+
       Messages::SendMotorCalibrationMsg(MotorID::MOTOR_HEAD, true, autoStarted);
     }
 
@@ -168,17 +168,17 @@ namespace HeadController {
     {
       return isCalibrated_;
     }
-  
+
     bool IsCalibrating()
     {
       return calState_ != HCS_IDLE;
     }
-  
+
     void ClearCalibration()
     {
       isCalibrated_ = false;
     }
-    
+
     void ResetLowAnglePosition()
     {
       currentAngle_ = MIN_HEAD_ANGLE;
@@ -274,15 +274,15 @@ namespace HeadController {
 
           if (currAngle - lowHeadAngleDuringCalib_rad_ > UPWARDS_HEAD_MOTION_FOR_CALIB_ABORT_RAD) {
             if (firstCalibration_) {
-              AnkiWarn("HeadController.CalibrationUpdate.RestartingCalib", 
+              AnkiWarn("HeadController.CalibrationUpdate.RestartingCalib",
                         "Someone is probably messing with head (low: %fdeg, curr: %fdeg)",
                         RAD_TO_DEG(lowHeadAngleDuringCalib_rad_), RAD_TO_DEG(currAngle));
               calState_ = HCS_LOWER_HEAD;
             } else {
-              AnkiInfo("HeadController.CalibrationUpdate.Abort", 
+              AnkiInfo("HeadController.CalibrationUpdate.Abort",
                         "Someone is probably messing with head (low: %fdeg, curr: %fdeg)",
                         RAD_TO_DEG(lowHeadAngleDuringCalib_rad_), RAD_TO_DEG(currAngle));
-              
+
 
               // Pretend calibration is fine
               isCalibrated_ = true;
@@ -344,7 +344,7 @@ namespace HeadController {
     {
       return radSpeed_;
     }
-  
+
     void SetAngularVelocity(const f32 speed_rad_per_sec, const f32 accel_rad_per_sec2)
     {
       // Command a target angle based on the sign of the desired speed
@@ -373,10 +373,10 @@ namespace HeadController {
       if (NEAR_ZERO(accelRad_)) {
         accelRad_ = MAX_HEAD_ACCEL_RAD_PER_S2;
       }
-      
+
       maxSpeedRad_ = CLIP(maxSpeedRad_, 0, MAX_HEAD_SPEED_RAD_PER_S);
       accelRad_    = CLIP(accelRad_, 0, MAX_HEAD_ACCEL_RAD_PER_S2);
-      
+
     }
 
     // TODO: There is common code with the other SetDesiredAngle() that can be pulled out into a shared function.
@@ -386,9 +386,9 @@ namespace HeadController {
       if (!enable_ || bracing_) {
         return;
       }
-      
+
       SetMaxSpeedAndAccel(speed_rad_per_sec, accel_rad_per_sec2);
-      
+
       // Do range check on angle
       angle = CLIP(angle, MIN_HEAD_ANGLE, MAX_HEAD_ANGLE);
 
@@ -443,15 +443,15 @@ namespace HeadController {
                                               MAX_HEAD_ACCEL_RAD_PER_S2,
                                               duration_seconds,
                                               CONTROL_DT);
-        
+
         if (!res) {
-          AnkiEvent( "HeadController.SetDesiredAngle.VPGFixedDurationFailed", "startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.",
-                    startRadSpeed,
-                    startRad,
-                    acc_start_frac,
-                    acc_end_frac,
-                    desiredAngle_.ToFloat(),
-                    duration_seconds);
+          AnkiInfo("HeadController.SetDesiredAngle.VPGFixedDurationFailed", "startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.",
+                   startRadSpeed,
+                   startRad,
+                   acc_start_frac,
+                   acc_end_frac,
+                   desiredAngle_.ToFloat(),
+                   duration_seconds);
         }
 
       }
@@ -463,7 +463,7 @@ namespace HeadController {
           vpgSpeed = 1000000.f;
           vpgAccel = 1000000.f;
         }
-        
+
         vpg_.StartProfile(startRadSpeed, startRad,
                           vpgSpeed, vpgAccel,
                           0, desiredAngle_.ToFloat(),
@@ -495,18 +495,18 @@ namespace HeadController {
       return inPosition_;
     }
 
-  
+
     // Check for conditions that could lead to motor burnout.
     // If motor is powered at greater than BURNOUT_POWER_THRESH for more than BURNOUT_TIME_THRESH_MS, stop it!
     // Assuming that motor is mis-calibrated and it's hitting the low or high hard limit. Do calibration.
     // Returns true if a protection action was triggered.
     bool MotorBurnoutProtection() {
-      
+
       if (ABS(power_) < BURNOUT_POWER_THRESH || bracing_) {
         potentialBurnoutStartTime_ms_ = 0;
         return false;
       }
-      
+
       if (potentialBurnoutStartTime_ms_ == 0) {
         potentialBurnoutStartTime_ms_ = HAL::GetTimeStamp();
       } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms_ > BURNOUT_TIME_THRESH_MS) {
@@ -528,23 +528,23 @@ namespace HeadController {
       SetDesiredAngle(MIN_HEAD_ANGLE, MAX_HEAD_SPEED_RAD_PER_S, MAX_HEAD_ACCEL_RAD_PER_S2);
       bracing_ = true;
     }
-  
+
     void Unbrace() {
       bracing_ = false;
     }
-  
+
     Result Update()
     {
       CalibrationUpdate();
 
       PoseAndSpeedFilterUpdate();
-      
+
       // If disabled, do not activate motors
       if(!enable_) {
         if (enableAtTime_ms_ == 0) {
           return RESULT_OK;
         }
-        
+
         // Auto-enable check
         if (IsMoving()) {
           enableAtTime_ms_ = HAL::GetTimeStamp() + REENABLE_TIMEOUT_MS;

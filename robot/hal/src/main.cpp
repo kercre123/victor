@@ -56,7 +56,7 @@ int main(int argc, const char* argv[])
     ccc_parse_command_line(argc-1, argv+1);
   }
 
-  AnkiEvent("robot.main", "Starting robot process");
+  AnkiInfo("robot.main", "Starting robot process");
 
   //Robot::Init calls HAL::INIT before anything else.
   // TODO: move HAL::Init here into HAL main.
@@ -78,7 +78,7 @@ int main(int argc, const char* argv[])
   auto timeOfPowerOn = start;
   wasPackedOutAtBoot = Anki::Cozmo::Factory::GetEMR()->fields.PACKED_OUT_FLAG;
 #endif
-  
+
   for (;;) {
     //HAL::Step should never return !OK, but if it does, best not to trust its data.
     if (Anki::Cozmo::HAL::Step() == Anki::RESULT_OK) {
@@ -101,8 +101,8 @@ int main(int argc, const char* argv[])
 #if FACTORY_TEST
     // If we are packed out and have not yet seen the charger
     if (wasPackedOutAtBoot &&
-        shutdownSignal == 0 && 
-        seenChargerCnt < MAX_SEEN_CHARGER_CNT) 
+        shutdownSignal == 0 &&
+        seenChargerCnt < MAX_SEEN_CHARGER_CNT)
     {
       // Need to be on the charger for some number of ticks
       if (Anki::Cozmo::HAL::BatteryIsOnCharger())

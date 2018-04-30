@@ -29,7 +29,7 @@ namespace Anki {
       // Internal function declarations
       void EnableInternal();
       void DisableInternal(bool autoReEnable = false);
-      
+
       namespace {
 
         // How long the lift needs to stop moving for before it is considered to be limited.
@@ -50,7 +50,7 @@ namespace Anki {
         // Physical limits in radians
         const f32 LIFT_ANGLE_LOW_LIMIT_RAD = ConvertLiftHeightToLiftAngleRad(LIFT_HEIGHT_LOWDOCK);
         const f32 LIFT_ANGLE_HIGH_LIMIT_RAD = ConvertLiftHeightToLiftAngleRad(LIFT_HEIGHT_CARRY);
-        
+
         // If the lift angle falls outside of the range defined by these thresholds, do not use D control.
         // This is to prevent vibrating that tends to occur at the physical limits.
         const f32 NO_D_ANGULAR_RANGE_RAD = DEG_TO_RAD(5.f);
@@ -88,20 +88,20 @@ namespace Anki {
         // Constant power bias to counter gravity
         const f32 ANTI_GRAVITY_POWER_BIAS = 0.15f;
 #endif
-        
+
         // Amount by which angleErrorSum decays to MAX_ANGLE_ERROR_SUM_IN_POSITION
         const f32 ANGLE_ERROR_SUM_DECAY_STEP = 0.02f;
-        
+
         // If it exceeds this value, applied power should decay to this value when in position.
         // This value should be slightly less than the motor burnout protection threshold (POWER_THRESHOLD[])
         // in syscon's motors.cpp since the actual applied power can be slightly more than this.
         const f32 MAX_POWER_IN_POSITION = 0.24f;
-        
+
         // Motor burnout protection
         u32 potentialBurnoutStartTime_ms_ = 0;
         const f32 BURNOUT_POWER_THRESH =  Ki_ * MAX_ERROR_SUM + Kp_ * LIFT_ANGLE_TOL;
         const u32 BURNOUT_TIME_THRESH_MS = 2000.f;
-        
+
         // Angle of the main lift arm.
         // On the real robot, this is the angle between the lower lift joint on the robot body
         // and the lower lift joint on the forklift assembly.
@@ -161,7 +161,7 @@ namespace Anki {
 
         // Whether or not to command anything to motor
         bool enable_ = true;
-        
+
         // Whether or not motor was enabled via Enable()
         // which is used to determine if it should be automatically
         // re-enabled after it leaves the charger.
@@ -169,11 +169,11 @@ namespace Anki {
 
         // If disabled, lift motor is automatically re-enabled at this time if non-zero.
         u32 enableAtTime_ms_ = 0;
-        
+
         // If enableAtTime_ms_ is non-zero, this is the time beyond current time
         // that the motor will be re-enabled if the lift is not moving.
         const u32 REENABLE_TIMEOUT_MS = 2000;
-        
+
         // Bracing for impact
         // Lowers lift quickly and then disables
         // Prevents any new heights from being commanded
@@ -237,7 +237,7 @@ namespace Anki {
             power_ = 0;
             HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
           }
-          
+
           potentialBurnoutStartTime_ms_ = 0;
           bracing_ = false;
         }
@@ -266,12 +266,12 @@ namespace Anki {
       {
         return isCalibrated_;
       }
-      
+
       bool IsCalibrating()
       {
         return calState_ != LCS_IDLE;
       }
-      
+
       void ClearCalibration()
       {
         isCalibrated_ = false;
@@ -364,12 +364,12 @@ namespace Anki {
               ++liftAngleHigherThanCalibAbortAngleCount_;
               if (liftAngleHigherThanCalibAbortAngleCount_ >= UPWARDS_LIFT_MOTION_FOR_CALIB_ABORT_CNT) {
                 if (firstCalibration_) {
-                  AnkiWarn("LiftController.CalibrationUpdate.RestartingCalib", 
+                  AnkiWarn("LiftController.CalibrationUpdate.RestartingCalib",
                            "Someone is probably messing with lift (low: %fdeg, curr: %fdeg)",
                            RAD_TO_DEG(lowLiftAngleDuringCalib_rad_), RAD_TO_DEG(currAngle));
                   calState_ = LCS_LOWER_LIFT;
                 } else {
-                  AnkiInfo("LiftController.CalibrationUpdate.Abort", 
+                  AnkiInfo("LiftController.CalibrationUpdate.Abort",
                            "Someone is probably messing with lift (low: %fdeg, curr: %fdeg)",
                            RAD_TO_DEG(lowLiftAngleDuringCalib_rad_), RAD_TO_DEG(currAngle));
 
@@ -406,7 +406,7 @@ namespace Anki {
       {
         maxSpeedRad_ = ABS(max_speed_rad_per_sec);
         accelRad_ = ABS(accel_rad_per_sec2);
-        
+
         if (NEAR_ZERO(maxSpeedRad_)) {
           maxSpeedRad_ = MAX_LIFT_SPEED_RAD_PER_S;
         }
@@ -477,7 +477,7 @@ namespace Anki {
         if (!enable_ || bracing_) {
           return;
         }
-        
+
         SetMaxSpeedAndAccel(speed_rad_per_sec, accel_rad_per_sec2);
 
         // Do range check on height
@@ -532,7 +532,7 @@ namespace Anki {
           vpg_.Step(startRadSpeed, startRad);
         } else {
           // If already in position, reset angleErrorSum_.
-          // Small and short lift motions can be overpowered by the unwinding of 
+          // Small and short lift motions can be overpowered by the unwinding of
           // accumulated error and not render well/consistently.
           angleErrorSum_ = 0.f;
         }
@@ -551,13 +551,13 @@ namespace Anki {
                                                    CONTROL_DT);
 
           if (!res) {
-            AnkiEvent( "LiftController.SetDesiredHeight.VPGFixedDurationFailed", "startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.",
-                      startRadSpeed,
-                      startRad,
-                      acc_start_frac,
-                      acc_end_frac,
-                      desiredAngle_.ToFloat(),
-                      duration_seconds);
+            AnkiInfo("LiftController.SetDesiredHeight.VPGFixedDurationFailed", "startVel %f, startPos %f, acc_start_frac %f, acc_end_frac %f, endPos %f, duration %f. Trying VPG without fixed duration.",
+                     startRadSpeed,
+                     startRad,
+                     acc_start_frac,
+                     acc_end_frac,
+                     desiredAngle_.ToFloat(),
+                     duration_seconds);
           }
         }
         if (!res) {
@@ -568,7 +568,7 @@ namespace Anki {
             vpgSpeed = 1000000.f;
             vpgAccel = 1000000.f;
           }
-          
+
           vpg_.StartProfile(startRadSpeed, startRad,
                             vpgSpeed, vpgAccel,
                             0, desiredAngle_.ToFloat(),
@@ -596,7 +596,7 @@ namespace Anki {
         SetDesiredHeight_internal(height_mm, DEFAULT_START_ACCEL_FRAC, DEFAULT_END_ACCEL_FRAC, 0,
                                   speed_rad_per_sec, accel_rad_per_sec2, useVPG);
       }
-      
+
       f32 GetDesiredHeight()
       {
         return desiredHeight_;
@@ -612,12 +612,12 @@ namespace Anki {
       // If the lift was not in position, assuming that it's mis-calibrated and it's hitting the low or high hard limit. Do calibration.
       // Returns true if a protection action was triggered.
       bool MotorBurnoutProtection() {
-        
+
         if (fabsf(power_ - ANTI_GRAVITY_POWER_BIAS) < BURNOUT_POWER_THRESH || bracing_) {
           potentialBurnoutStartTime_ms_ = 0;
           return false;
         }
-        
+
         if (potentialBurnoutStartTime_ms_ == 0) {
           potentialBurnoutStartTime_ms_ = HAL::GetTimeStamp();
         } else if (HAL::GetTimeStamp() - potentialBurnoutStartTime_ms_ > BURNOUT_TIME_THRESH_MS) {
@@ -628,21 +628,21 @@ namespace Anki {
             DisableInternal(true);
           } else {
             // Burnout protection triggered. Recalibrating.
-            AnkiInfo("LiftController.MotorBurnoutProtection.Recalibrating", "");            
+            AnkiInfo("LiftController.MotorBurnoutProtection.Recalibrating", "");
             StartCalibrationRoutine(true);
           }
           return true;
         }
-        
+
         return false;
       }
-      
+
       void Brace() {
         EnableInternal();
         SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, MAX_LIFT_SPEED_RAD_PER_S, MAX_LIFT_ACCEL_RAD_PER_S2);
         bracing_ = true;
       }
-      
+
       void Unbrace() {
         bracing_ = false;
         if (enabledExternally_) {
@@ -651,11 +651,11 @@ namespace Anki {
           DisableInternal();
         }
       }
-      
+
       Result Update()
       {
         u32 currTime = HAL::GetTimeStamp();
-        
+
         // Update routine for calibration sequence
         CalibrationUpdate();
 
@@ -684,7 +684,7 @@ namespace Anki {
           if (enableAtTime_ms_ == 0) {
             return RESULT_OK;
           }
-          
+
           // Auto-enable check
           if (IsMoving()) {
             enableAtTime_ms_ = currTime + REENABLE_TIMEOUT_MS;
@@ -696,7 +696,7 @@ namespace Anki {
             return RESULT_OK;
           }
         }
-        
+
         if (MotorBurnoutProtection()) {
           return RESULT_OK;
         }
@@ -712,7 +712,7 @@ namespace Anki {
           disengageGripperAtDest_ = false;
         }
 #endif
-        
+
         if (checkingForLoadStartTime_ > 0) {
           if (currTime > checkingForLoadStartTime_ + CHECKING_FOR_LOAD_TIMEOUT_MS) {
             AnkiInfo( "LiftController.Update.NoLoadDetected", "");
@@ -765,11 +765,11 @@ namespace Anki {
              currDesiredAngle_ > USE_PI_CONTROL_LIFT_ANGLE_HIGH_THRESH_RAD)) {
           power_ -= powerD;
         }
-        
+
 
         // If accurately tracking final desired angle...
         if((ABS(angleError) < LIFT_ANGLE_TOL) && (desiredAngle_ == currDesiredAngle_)) {
-          
+
           // Decay angleErrorSum as long as power exceeds MAX_POWER_IN_POSITION
           if (ABS(power_) > MAX_POWER_IN_POSITION) {
             const f32 decay = ANGLE_ERROR_SUM_DECAY_STEP * (angleErrorSum_ > 0 ? 1.f : -1.f);
@@ -780,7 +780,7 @@ namespace Anki {
             AnkiInfo( "LiftController.Update.CheckingForLoad", "%d", checkingForLoadStartTime_);
             power_ = 0;
           }
-          
+
           if (lastInPositionTime_ms_ == 0) {
             lastInPositionTime_ms_ = currTime;
           } else if (currTime - lastInPositionTime_ms_ > IN_POSITION_TIME_MS) {
@@ -793,15 +793,15 @@ namespace Anki {
         } else {
           // Not near final desired angle yet
           lastInPositionTime_ms_ = 0;
-          
+
           // Only accumulate integral error when not in position
           angleErrorSum_ += angleError;
         }
-        
+
         // Clip integral error term
         angleErrorSum_ = CLIP(angleErrorSum_, -MAX_ERROR_SUM, MAX_ERROR_SUM);
         prevAngleError_ = angleError;
-        
+
 
 #if(DEBUG_LIFT_CONTROLLER)
         AnkiDebugPeriodic(50, "LiftController.Update.Values", "LIFT: currA %f, curDesA %f, currVel %f, desA %f, err %f, errSum %f, inPos %d",
@@ -839,13 +839,13 @@ namespace Anki {
       {
         SetAngularVelocity(0);
       }
-      
+
       void SendLiftLoadMessage(bool hasLoad) {
         RobotInterface::LiftLoad msg;
         msg.hasLoad = hasLoad;
         RobotInterface::SendMessage(msg);
       }
-      
+
       void CheckForLoad(void (*callback)(bool))
       {
 #ifdef SIMULATOR

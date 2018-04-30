@@ -38,7 +38,7 @@ namespace Anki {
         // like to be after backing out
         const f32 BACKOUT_DISTANCE_MM = 60;
         const f32 BACKOUT_SPEED_MMPS = 60;
-        
+
         // Max amount of time to wait for lift to get into position before backing out.
         // Used for placement only when the lift tends to get stuck due to block friction.
         const u32 START_BACKOUT_PLACE_HIGH_TIMEOUT_MS = 500;
@@ -57,14 +57,14 @@ namespace Anki {
         // Distance at which robot should start driving blind
         // along last generated docking path during PICKUP_LOW and PLACE_HIGH.
         const u32 LOW_DOCK_POINT_OF_NO_RETURN_DIST_MM = ORIGIN_TO_LOW_LIFT_DIST_MM + 10;
-        
+
         const f32 DEFAULT_LIFT_SPEED_RAD_PER_SEC = 1.5;
         const f32 DEFAULT_LIFT_ACCEL_RAD_PER_SEC2 = 10;
 
         Mode mode_ = IDLE;
 
         DockAction action_ = DockAction::DA_PICKUP_LOW;
-        
+
         // Whether or not to check for load on lift after docking.
         // Only relevant for pickup actions.
         bool doLiftLoadCheck_;
@@ -87,19 +87,19 @@ namespace Anki {
 
         // When to transition to the next state. Only some states use this.
         u32 transitionTime_ = 0;
-        
+
         // Time when robot first becomes tilted on charger (while docking)
         u32 tiltedOnChargerStartTime_ = 0;
-        
+
         // For charger mounting, whether or not to use cliff sensors to align the robot.
         bool useCliffSensorAlignment_ = false;
-        
+
 #ifdef SIMULATOR
         bool chargerStripeIsBlack_ = false;
 #else
         bool chargerStripeIsBlack_ = true;
 #endif
-        
+
         // Threshold used to distinguish black stripe on charger from the white body
 #ifdef SIMULATOR
         const u16 kChargerCliffBlackThreshold = 880;
@@ -114,31 +114,31 @@ namespace Anki {
 
         // Pitch angle at which Cozmo is probably having trouble backing up on charger
         const f32 TILT_FAILURE_ANGLE_RAD = DEG_TO_RAD_F32(-30);
-        
+
         // After excessive pitch angle is detected and the robot begins driving forward,
         // this is the angle above which the robot is considered to have recovered
         const f32 TILT_FAILURE_RECOVERY_ANGLE_RAD = DEG_TO_RAD_F32(-10);
-        
+
         // Amount of time that Cozmo pitch needs to exceed TILT_FAILURE_ANGLE_RAD in order to fail at backing up on charger
         const u32 TILT_FAILURE_DURATION_MS = 250;
-        
+
         typedef enum
         {
           WAITING_TO_MOVE,
           MOVING_BACK,
           NOTHING,
         } PickupAnimMode;
-        
+
         // State of the pickup animation
         PickupAnimMode pickupAnimMode_ = NOTHING;
-        
+
         const u8 PICKUP_ANIM_SPEED_MMPS = 20;
         const u8 PICKUP_ANIM_DIST_MM = 8;
         const u8 PICKUP_ANIM_STARTING_DIST_MM = 20;
         const u8 PICKUP_ANIM_TRANSITION_TIME_MS = 100;
         const u8 PICKUP_ANIM_ACCEL_MMPS2 = 100;
 
-        
+
         // Deep roll action params
         // Note: These are mainly for tuning the deep roll and can be removed once it's locked down.
         f32 _rollLiftHeight_mm = 35;        // The lift height to command when engaging the block for roll
@@ -146,7 +146,7 @@ namespace Anki {
         f32 _rollDriveAccel_mmps2 = 40;     // The forward driving accel while engaging the block for roll
         u32 _rollDriveDuration_ms = 1500;   // The forward driving duration while engaging the block for roll
         f32 _rollBackupDist_mm = 100;       // The amount to back up once the lift has engaged the block for roll
-        
+
         // Deep roll actions const params for a scooch adjustment
         // Seems to help avoid treads rubbing up against cube corners causing roll to fail
         const f32 _kRollLiftScoochSpeed_rad_per_sec = DEG_TO_RAD_F32(50);
@@ -160,9 +160,9 @@ namespace Anki {
         const f32 _facePlantStartBackupPitch_rad = DEG_TO_RAD_F32(-25.f);
         const f32 _facePlantLiftTime_ms = 1000;
         const f32 _facePlantTimeout_ms = 500;
-        
+
         const u32 _kPopAWheelieTimeout_ms = 500;
-        
+
       } // "private" namespace
 
       void SetChargerStripeIsBlack(const bool b) {
@@ -196,7 +196,7 @@ namespace Anki {
       {
         Localization::GetCurrPose(ptStamp_.x, ptStamp_.y, angleStamp_);
       }
-      
+
       Result SendPickAndPlaceResultMessage(const bool success,
                                            const BlockStatus blockStatus)
       {
@@ -205,7 +205,7 @@ namespace Anki {
         msg.didSucceed = success;
         msg.blockStatus = blockStatus;
         msg.result = DockingController::GetDockingResult();
-        
+
         if(RobotInterface::SendMessage(msg)) {
           return RESULT_OK;
         }
@@ -232,7 +232,7 @@ namespace Anki {
         }
         return RESULT_FAIL;
       }
-      
+
       static void StartBackingOut()
       {
         static const f32 MIN_BACKOUT_DIST_MM = 35.f;
@@ -270,7 +270,7 @@ namespace Anki {
             AnkiError( "PAP.StartBackingOut.InvalidAction", "%hhu", action_);
           }
         }
-        
+
         const f32 backoutTime_sec = backoutDist_mm / BACKOUT_SPEED_MMPS;
 
         AnkiInfo( "PAP.StartBackingOut.Dist", "Starting %.1fmm backout (%.2fsec duration)", backoutDist_mm, backoutTime_sec);
@@ -510,7 +510,7 @@ namespace Anki {
             AnkiDebug( "PAP", "SETTING LIFT POSTDOCK\n");
 #endif
             SendMovingLiftPostDockMessage();
-            
+
             mode_ = MOVING_LIFT_POSTDOCK;
             switch(action_) {
               case DockAction::DA_PLACE_LOW:
@@ -524,15 +524,15 @@ namespace Anki {
               case DockAction::DA_PICKUP_HIGH:
               {
                 LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
-                
+
                 // When a block is picked up we want an "animation" to play where Cozmo moves forwards and backwards
                 // a little bit while picking up the block, gives a sense of momentum
                 PathFollower::ClearPath();
-                
+
                 f32 x, y;
                 Radians a;
                 Localization::GetDriveCenterPose(x, y, a);
-                
+
                 PathFollower::AppendPathSegment_Line(x-(PICKUP_ANIM_STARTING_DIST_MM)*cosf(a.ToFloat()),
                                                      y-(PICKUP_ANIM_STARTING_DIST_MM)*sinf(a.ToFloat()),
                                                      x+(PICKUP_ANIM_DIST_MM)*cosf(a.ToFloat()),
@@ -540,7 +540,7 @@ namespace Anki {
                                                      PICKUP_ANIM_SPEED_MMPS,
                                                      PICKUP_ANIM_ACCEL_MMPS2,
                                                      PICKUP_ANIM_ACCEL_MMPS2);
-                
+
                 PathFollower::StartPathTraversal();
                 mode_ = PICKUP_ANIM;
                 break;
@@ -561,7 +561,7 @@ namespace Anki {
                 // TODO: Can these be replaced with DEFAULT_LIFT_SPEED_RAD_PER_SEC and DEFAULT_LIFT_ACCEL_RAD_PER_SEC2?
                 const f32 LIFT_SPEED_FOR_ROLL = 0.75f;
                 const f32 LIFT_ACCEL_FOR_ROLL = 100.f;
-                
+
                 if (action_ == DockAction::DA_DEEP_ROLL_LOW) {
                   LiftController::SetDesiredHeight(_rollLiftHeight_mm, LIFT_SPEED_FOR_ROLL, LIFT_ACCEL_FOR_ROLL);
                   SteeringController::ExecuteDirectDrive(_rollDriveSpeed_mmps, _rollDriveSpeed_mmps,
@@ -604,10 +604,10 @@ namespace Anki {
           {
             if (LiftController::GetHeightMM() <= LIFT_HEIGHT_LOW_ROLL) {
               SteeringController::ExecuteDirectDrive(-60, -60);
-              
+
               // In case lift has trouble getting to low position, we don't want to back up forever.
               transitionTime_ = HAL::GetTimeStamp() + 1000;
-              
+
               mode_ = MOVING_LIFT_POSTDOCK;
             }
             break;
@@ -615,7 +615,7 @@ namespace Anki {
           case MOVING_LIFT_FOR_DEEP_ROLL:
           {
             if (HAL::GetTimeStamp() > transitionTime_ || IMUFilter::GetPitch() > DEG_TO_RAD_F32(35.f)) {
-              
+
               // Just a little lift raise when the robot is most pitched.
               // Thinking this helps the lift scooch forward a bit more to make sure
               // it catches the lip of the corner.
@@ -678,12 +678,12 @@ namespace Anki {
                 case DockAction::DA_POST_DOCK_ROLL:
                 {
                   LiftController::SetDesiredHeight(LIFT_HEIGHT_LOWDOCK, DEFAULT_LIFT_SPEED_RAD_PER_SEC, DEFAULT_LIFT_ACCEL_RAD_PER_SEC2);
-                
+
                   #ifdef SIMULATOR
                   // Prevents lift from attaching to block right after a roll
                   HAL::DisengageGripper();
                   #endif
-                  
+
                   // Fall through...
                 }
                 case DockAction::DA_PLACE_LOW:
@@ -700,7 +700,7 @@ namespace Anki {
 
               // Switch to BACKOUT
               StartBackingOut();
-              
+
             } // if (LiftController::IsInPosition())
             break;
           }
@@ -829,13 +829,13 @@ namespace Anki {
           case BACKUP_ON_CHARGER:
           {
             if (HAL::GetTimeStamp() > transitionTime_) {
-              AnkiEvent( "PAP.BACKUP_ON_CHARGER.Timeout", "");
+              AnkiInfo("PAP.BACKUP_ON_CHARGER.Timeout", "");
               SendChargerMountCompleteMessage(false);
               Reset();
             } else if (ProxSensors::GetCliffDetectedFlags() == ((1<<HAL::CLIFF_BL) | (1<<HAL::CLIFF_BR))) {
               // Cliff detection is disabled now, so double check that we are not seeing a cliff
               // on BOTH rear cliff sensors (which may indicate a real cliff and not a spurious trip)
-              AnkiEvent( "PAP.BACKUP_ON_CHARGER.Cliff", "");
+              AnkiInfo("PAP.BACKUP_ON_CHARGER.Cliff", "");
               SendChargerMountCompleteMessage(false);
               Reset();
             } else if (IMUFilter::GetPitch() < TILT_FAILURE_ANGLE_RAD) {
@@ -844,20 +844,20 @@ namespace Anki {
                 tiltedOnChargerStartTime_ = HAL::GetTimeStamp();
               } else if (HAL::GetTimeStamp() - tiltedOnChargerStartTime_ > TILT_FAILURE_DURATION_MS) {
                 // Drive forward until no tilt or timeout
-                AnkiEvent( "PAP.BACKUP_ON_CHARGER.Tilted", "");
+                AnkiInfo( "PAP.BACKUP_ON_CHARGER.Tilted", "");
                 SteeringController::ExecuteDirectDrive(40, 40);
                 transitionTime_ = HAL::GetTimeStamp() + 1000;
                 ProxSensors::EnableCliffDetector(true);
                 mode_ = DRIVE_FORWARD;
               }
             } else if (HAL::BatteryIsOnCharger()) {
-              AnkiEvent( "PAP.BACKUP_ON_CHARGER.Success", "");
+              AnkiInfo("PAP.BACKUP_ON_CHARGER.Success", "");
               SendChargerMountCompleteMessage(true);
               Reset();
-            } else if (useCliffSensorAlignment_) {              
+            } else if (useCliffSensorAlignment_) {
               const u16 cliffBL = ProxSensors::GetCliffValue((int) HAL::CLIFF_BL);
               const u16 cliffBR = ProxSensors::GetCliffValue((int) HAL::CLIFF_BR);
-              
+
               float leftSpeed  = kChargerDockingSpeedHigh;
               float rightSpeed = kChargerDockingSpeedHigh;
 
@@ -880,7 +880,7 @@ namespace Anki {
                   rightSpeed = kChargerDockingSpeedLow;
                 }
               }
-              
+
               SteeringController::ExecuteDirectDrive(leftSpeed, rightSpeed);
               tiltedOnChargerStartTime_ = 0;
             } else {
@@ -946,7 +946,7 @@ namespace Anki {
 
         action_ = action;
         doLiftLoadCheck_ = doLiftLoadCheck;
-        
+
         dockSpeed_mmps_ = speed_mmps;
         dockAccel_mmps2_ = accel_mmps2;
         dockDecel_mmps2_ = decel_mmps2;
@@ -963,7 +963,7 @@ namespace Anki {
 
         transitionTime_ = 0;
         mode_ = SET_LIFT_PREDOCK;
-        
+
         DockingController::SetMaxRetries(numRetries);
 
       }
@@ -984,7 +984,7 @@ namespace Anki {
                     rel_angle);
       }
 
-      
+
       void SetRollActionParams(const f32 liftHeight_mm,
                                const f32 driveSpeed_mmps,
                                const f32 driveAccel_mmps2,
@@ -993,15 +993,15 @@ namespace Anki {
       {
         AnkiDebug( "PAP.SetRollActionParams", "liftHeight: %f, speed: %f, accel: %f, duration %d, backupDist %f",
                   liftHeight_mm, driveSpeed_mmps, driveAccel_mmps2, driveDuration_ms, backupDist_mm);
-        
+
         _rollLiftHeight_mm = liftHeight_mm;
         _rollDriveSpeed_mmps = driveSpeed_mmps;
         _rollDriveAccel_mmps2 = driveAccel_mmps2;
         _rollDriveDuration_ms = driveDuration_ms;
         _rollBackupDist_mm = backupDist_mm;
-        
+
       }
-      
+
     } // namespace PickAndPlaceController
   } // namespace Cozmo
 } // namespace Anki

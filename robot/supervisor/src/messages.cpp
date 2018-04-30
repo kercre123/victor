@@ -34,7 +34,7 @@ namespace Anki {
 
       namespace {
 
-        
+
         constexpr auto IS_MOVING = EnumToUnderlyingType(RobotStatusFlag::IS_MOVING);
         constexpr auto IS_CARRYING_BLOCK = EnumToUnderlyingType(RobotStatusFlag::IS_CARRYING_BLOCK);
         constexpr auto IS_PICKING_OR_PLACING = EnumToUnderlyingType(RobotStatusFlag::IS_PICKING_OR_PLACING);
@@ -44,12 +44,12 @@ namespace Anki {
         constexpr auto IS_PATHING = EnumToUnderlyingType(RobotStatusFlag::IS_PATHING);
         constexpr auto LIFT_IN_POS = EnumToUnderlyingType(RobotStatusFlag::LIFT_IN_POS);
         constexpr auto HEAD_IN_POS = EnumToUnderlyingType(RobotStatusFlag::HEAD_IN_POS);
-        constexpr auto IS_BATTERY_DISCONNECTED = EnumToUnderlyingType(RobotStatusFlag::IS_BATTERY_DISCONNECTED);        
+        constexpr auto IS_BATTERY_DISCONNECTED = EnumToUnderlyingType(RobotStatusFlag::IS_BATTERY_DISCONNECTED);
         constexpr auto IS_ON_CHARGER = EnumToUnderlyingType(RobotStatusFlag::IS_ON_CHARGER);
         constexpr auto IS_CHARGING = EnumToUnderlyingType(RobotStatusFlag::IS_CHARGING);
         constexpr auto CLIFF_DETECTED = EnumToUnderlyingType(RobotStatusFlag::CLIFF_DETECTED);
         constexpr auto ARE_WHEELS_MOVING = EnumToUnderlyingType(RobotStatusFlag::ARE_WHEELS_MOVING);
-        
+
         u8 pktBuffer_[2048];
 
         static RobotState robotState_;
@@ -109,9 +109,9 @@ namespace Anki {
           robotState_.cliffDataRaw[i] = ProxSensors::GetCliffValue(i);
         }
         robotState_.proxData = ProxSensors::GetProxData();
-        
+
         robotState_.backpackTouchSensorRaw = HAL::GetButtonState(HAL::BUTTON_CAPACITIVE);
-        
+
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
 
         robotState_.status = 0;
@@ -128,7 +128,7 @@ namespace Anki {
         robotState_.status |= (PathFollower::IsTraversingPath() ? IS_PATHING : 0);
         robotState_.status |= (LiftController::IsInPosition() ? LIFT_IN_POS : 0);
         robotState_.status |= (HeadController::IsInPosition() ? HEAD_IN_POS : 0);
-        robotState_.status |= HAL::BatteryIsDisconnected() ? IS_BATTERY_DISCONNECTED : 0;        
+        robotState_.status |= HAL::BatteryIsDisconnected() ? IS_BATTERY_DISCONNECTED : 0;
         robotState_.status |= HAL::BatteryIsOnCharger() ? IS_ON_CHARGER : 0;
         robotState_.status |= HAL::BatteryIsCharging() ? IS_CHARGING : 0;
         robotState_.status |= ProxSensors::IsAnyCliffDetected() ? CLIFF_DETECTED : 0;
@@ -162,7 +162,7 @@ namespace Anki {
         // Reset pose history and frameID to zero
         Localization::ResetPoseFrame();
 
-        AnkiEvent( "watchdog_reset_count", "%d", HAL::GetWatchdogResetCounter());
+        AnkiInfo("watchdog_reset_count", "%d", HAL::GetWatchdogResetCounter());
       } // ProcessRobotInit()
 
 
@@ -216,7 +216,7 @@ namespace Anki {
       {
         // Send ACK of SyncRobot message when system is ready
         if (!syncRobotAckSent_) {
-          if (syncRobotReceived_ && 
+          if (syncRobotReceived_ &&
               IMUFilter::IsBiasFilterComplete() &&
               LiftController::IsCalibrated() &&
               HeadController::IsCalibrated()) {
@@ -227,10 +227,10 @@ namespace Anki {
             // Send up gyro calibration
             // Since the bias is typically calibrate before the robot is even connected,
             // this is the time when the data can actually be sent up to engine.
-            AnkiEvent( "Messages.Update.GyroCalibrated", "%f %f %f",
-                      RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[0]),
-                      RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[1]),
-                      RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[2]));
+            AnkiInfo("Messages.Update.GyroCalibrated", "%f %f %f",
+                     RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[0]),
+                     RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[1]),
+                     RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[2]));
           }
         }
 
@@ -242,7 +242,7 @@ namespace Anki {
         while((dataLen = HAL::RadioGetNextPacket(pktBuffer_)) > 0)
         {
           Anki::Cozmo::RobotInterface::EngineToRobot msgBuf;
-          
+
           // Copy into structured memory
           memcpy(msgBuf.GetBuffer(), pktBuffer_, dataLen);
           if (!msgBuf.IsValid())
@@ -296,7 +296,7 @@ namespace Anki {
 
       void Process_dockWithObject(const DockWithObject& msg)
       {
-        AnkiInfo( "Messages.Process_dockWithObject.Recvd", "action %hhu, dockMethod %hhu, doLiftLoadCheck %d, speed %f, acccel %f, decel %f", 
+        AnkiInfo( "Messages.Process_dockWithObject.Recvd", "action %hhu, dockMethod %hhu, doLiftLoadCheck %d, speed %f, accel %f, decel %f",
                  msg.action, msg.dockingMethod, msg.doLiftLoadCheck, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2);
 
         DockingController::SetDockingMethod(msg.dockingMethod);
@@ -369,7 +369,7 @@ namespace Anki {
           RobotInterface::SendMessage(ack);
         }
       }
-      
+
       void Process_liftHeight(const RobotInterface::SetLiftHeight& msg) {
         //AnkiInfo( "Messages.Process_liftHeight.Recvd", "height %f, maxSpeed %f, duration %f", msg.height_mm, msg.max_speed_rad_per_sec, msg.duration_sec);
         if (msg.duration_sec > 0) {
@@ -566,7 +566,7 @@ namespace Anki {
       {
         IMUFilter::EnableBraceWhenFalling(msg.enable);
       }
-      
+
       void Process_chargerDockingStripeColor(const RobotInterface::ChargerDockingStripeColor& msg)
       {
         PickAndPlaceController::SetChargerStripeIsBlack(msg.isBlack);
@@ -592,7 +592,7 @@ namespace Anki {
       {
         BackpackLightController::SetParams(msg);
       }
-      
+
       void Process_setSystemLight(RobotInterface::SetSystemLight const& msg)
       {
         BackpackLightController::SetParams(msg);
@@ -686,12 +686,12 @@ namespace Anki {
         //Stuff msgID up front
         int newSize = size + 1;
         u8 buf[newSize];
-        
+
         memcpy(buf, &msgID, 1);
         memcpy(buf + 1, buffer, size);
-        
+
         //fprintf(stderr, "RadioSendMsg: %02x [%d]", msgID, newSize);
-        
+
         return HAL::RadioSendPacket(buf, newSize);
       }
 
@@ -699,4 +699,3 @@ namespace Anki {
     } // namespace HAL
   } // namespace Cozmo
 } // namespace Anki
-
