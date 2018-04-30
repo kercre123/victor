@@ -67,6 +67,8 @@ namespace {
   Anki::Cozmo::Audio::EngineRobotAudioInput* _audioInput = nullptr;
   const Anki::Cozmo::AnimContext*       _context = nullptr;
 
+  bool _connectionFlowInited = false;
+  
   static void ListAnimations(ConsoleFunctionContextRef context)
   {
     context->channel->WriteLog("<html>\n");
@@ -463,7 +465,7 @@ Result AnimProcessMessages::Init(AnimEngine* animEngine,
   _audioInput   = audioInput;
   _context      = context;
 
-  InitConnectionFlow(_animStreamer);
+  _connectionFlowInited = InitConnectionFlow(_animStreamer);
 
   return RESULT_OK;
 }
@@ -522,6 +524,13 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
 
 Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 {
+  // Keep trying to init the connection flow until it works
+  // which will be when the robot name has been set by switchboard
+  if(!_connectionFlowInited)
+  {
+    _connectionFlowInited = InitConnectionFlow(_animStreamer);
+  }
+  
   if (!AnimComms::IsConnectedToRobot()) {
     LOG_WARNING("AnimProcessMessages.Update", "No connection to robot");
     FaultCode::DisplayFaultCode(FaultCode::NO_ROBOT_PROCESS);

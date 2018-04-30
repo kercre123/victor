@@ -61,6 +61,7 @@ namespace Switchboard {
 
       using EvTimerSignal = Signal::Signal<void ()>;
 
+      void Christen();
       void InitializeEngineComms();
       void InitializeBleComms();
       void OnConnected(int connId, INetworkStream* stream);
@@ -69,6 +70,7 @@ namespace Switchboard {
       void OnPinUpdated(std::string pin);
       void OnOtaUpdatedRequest(std::string url);
       void OnEndPairing();
+      void OnCompletedPairing();
       void OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame message);
       bool TryConnectToEngineServer();
       bool TryConnectToAnkiBluetoothDaemon();
@@ -79,6 +81,7 @@ namespace Switchboard {
       Signal::SmartHandle _pinHandle;
       Signal::SmartHandle _otaHandle;
       Signal::SmartHandle _endHandle;
+      Signal::SmartHandle _completedPairingHandle;
 
       Signal::SmartHandle _bleOnConnectedHandle;
       Signal::SmartHandle _bleOnDisconnectedHandle;

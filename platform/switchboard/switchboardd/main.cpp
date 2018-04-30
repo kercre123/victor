@@ -30,6 +30,8 @@
 #include "anki-ble/anki_ble_uuids.h"
 #include "anki-ble/ble_advertise_settings.h"
 #include "anki-wifi/wifi.h"
+#include "cutils/properties.h"
+#include "switchboardd/christen.h"
 #include "switchboardd/main.h"
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -45,6 +47,9 @@ void Daemon::Start() {
   Log::Write("Loading up Switchboard Daemon");
   _loop = ev_default_loop(0);
   _taskExecutor = std::make_unique<Anki::TaskExecutor>(_loop);
+
+  // Christen
+  Christen();
 
   InitializeEngineComms();
   Log::Write("Finished Starting");
@@ -71,6 +76,45 @@ void Daemon::Stop() {
 
   ev_timer_stop(_loop, &_engineTimer);
   ev_timer_stop(_loop, &_handleOtaTimer.timer);
+}
+
+void Daemon::Christen() {
+  Log::Write("[Chr] Christening");
+  RtsKeys savedSession = SavedSessionManager::LoadRtsKeys();
+  bool hasName = false;
+
+  if(savedSession.keys.version == SB_PAIRING_PROTOCOL_VERSION) {
+    // if saved session file is valid, retrieve saved hasName field
+    hasName = savedSession.keys.id.hasName;
+    Log::Write("[Chr] Valid version.");
+  }
+
+  if(!hasName) {
+    Log::Write("[Chr] No name, we must Christen.");
+
+    // the name field has enough space for 11 characters,
+    // and an additional null character
+    char name[12] = {0};
+
+    std::string nameString = Christen::GenerateName();
+    strcpy(name, nameString.c_str());
+
+    if(nameString.length() <= sizeof(name)) {
+      strcpy((char*)&savedSession.keys.id.name, (char*)&name);
+    }
+
+    Log::Write("[Chr] and his name shall be called, \"%s\"!", nameString.c_str());
+
+    savedSession.keys.id.hasName = true;
+
+    // explicit null termination
+    savedSession.keys.id.name[sizeof(name) - 1] = 0;
+
+    SavedSessionManager::SaveRtsKeys(savedSession);
+  }
+
+  // Set name property
+  (void)property_set("persist.anki.robot.name", savedSession.keys.id.name);
 }
 
 void Daemon::InitializeEngineComms() {
@@ -146,6 +190,11 @@ void Daemon::UpdateAdvertisement(bool pairing) {
   mdata.push_back(Anki::kVictorProductIdentifier); // distinguish from future Anki products
   mdata.push_back(pairing?'p':0x00); // to indicate whether we are pairing
   settings.GetAdvertisement().SetManufacturerData(mdata);
+
+  RtsKeys rtsSession = SavedSessionManager::LoadRtsKeys();
+  const char* name = rtsSession.keys.id.name;
+  
+  _bleClient->SetAdapterName(std::string(name));
   _bleClient->StartAdvertising(settings);
 }
 
@@ -158,6 +207,7 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
       _pinHandle = _securePairing->OnUpdatedPinEvent().ScopedSubscribe(std::bind(&Daemon::OnPinUpdated, this, std::placeholders::_1));
       _otaHandle = _securePairing->OnOtaUpdateRequestEvent().ScopedSubscribe(std::bind(&Daemon::OnOtaUpdatedRequest, this, std::placeholders::_1));
       _endHandle = _securePairing->OnStopPairingEvent().ScopedSubscribe(std::bind(&Daemon::OnEndPairing, this));
+      _completedPairingHandle = _securePairing->OnCompletedPairingEvent().ScopedSubscribe(std::bind(&Daemon::OnCompletedPairing, this));
     }
     
     // Initiate pairing process
@@ -180,6 +230,7 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
     _pinHandle = nullptr;
     _otaHandle = nullptr;
     _endHandle = nullptr;
+    _completedPairingHandle = nullptr;
     _securePairing = nullptr;
   }
 }
@@ -197,6 +248,12 @@ void Daemon::OnPinUpdated(std::string pin) {
 }
 
 void Daemon::OnEndPairing() {
+  UpdateAdvertisement(false);
+}
+
+void Daemon::OnCompletedPairing() {
+  // Handle Successful Pairing Event
+  // (for now, the handling may be no different than failed pairing)
   UpdateAdvertisement(false);
 }
 

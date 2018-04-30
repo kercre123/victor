@@ -101,7 +101,7 @@ public:
   // Returns the semi-unique name of this robot, Vector_XYXY
   // Where X is a letter and Y is a digit
   // The name can change over the lifetime of the robot
-  std::string GetRobotName() const;
+  const std::string& GetRobotName() const;
   
   // Returns whether or not the robot has booted in recovery mode
   // which is done by holding the backpack button down for ~12 seconds

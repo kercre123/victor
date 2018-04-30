@@ -16,6 +16,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 #include "switchboardd/log.h"
 #include "libev/libev.h"
 #include "switchboardd/INetworkStream.h"
@@ -24,6 +25,7 @@
 #include "switchboardd/taskExecutor.h"
 #include "switchboardd/externalCommsCladHandler.h"
 #include "switchboardd/engineMessagingClient.h"
+#include "switchboardd/savedSessionManager.h"
 
 namespace Anki {
 namespace Switchboard {
@@ -48,7 +50,7 @@ namespace Switchboard {
     using ReceivedWifiCredentialsSignal = Signal::Signal<void (std::string, std::string)>;
     using UpdatedPinSignal = Signal::Signal<void (std::string)>;
     using OtaUpdateSignal = Signal::Signal<void (std::string)>;
-    using StopPairingSignal = Signal::Signal<void ()>;
+    using PairingSignal = Signal::Signal<void ()>;
     
     // Constructors
     SecurePairing(INetworkStream* stream, struct ev_loop* evloop, std::shared_ptr<EngineMessagingClient> engineClient, bool isPairing, bool isOtaUpdating);
@@ -82,8 +84,12 @@ namespace Switchboard {
       return _updatedPinSignal;
     }
 
-    StopPairingSignal& OnStopPairingEvent() {
+    PairingSignal& OnStopPairingEvent() {
       return _stopPairingSignal;
+    }
+
+    PairingSignal& OnCompletedPairingEvent() {
+      return _completedPairingSignal;
     }
 
     OtaUpdateSignal& OnOtaUpdateRequestEvent() {
@@ -105,6 +111,8 @@ namespace Switchboard {
     // Methods
     void Init();
     void Reset(bool forced=false);
+    bool LoadKeys();
+    void SaveKeys();
     
     void HandleMessageReceived(uint8_t* bytes, uint32_t length);
     void HandleDecryptionFailed();
@@ -202,6 +210,7 @@ namespace Switchboard {
     CommsState _commsState;
     INetworkStream* _stream;
     PairingState _state = PairingState::Initial;
+    RtsKeys _rtsKeys;
     
     std::unique_ptr<KeyExchange> _keyExchange;
     std::unique_ptr<TaskExecutor> _taskExecutor;
@@ -230,7 +239,8 @@ namespace Switchboard {
     bool _isPairing = false;
     bool _isOtaUpdating = false;
     OtaUpdateSignal _otaUpdateRequestSignal;
-    StopPairingSignal _stopPairingSignal;
+    PairingSignal _completedPairingSignal;
+    PairingSignal _stopPairingSignal;
   };
 } // Switchboard
 } // Anki
