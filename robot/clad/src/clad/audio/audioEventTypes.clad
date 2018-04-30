@@ -394,6 +394,7 @@ enum uint_32 GenericEvent
   Play__Robot_Vic_Sfx__Lift_Up_Short = 1322012872,
   Play__Robot_Vic_Sfx__Purr_Increase_Level = 2071056089,
   Play__Robot_Vic_Sfx__Purr_Loop_Play = 3953422061,
+  Play__Robot_Vic_Sfx__Scan_Face_Loop_Play = 3711429789,
   Play__Robot_Vic_Sfx__Scan_Loop_Play = 203477807,
   Play__Robot_Vic_Sfx__Scan_One_Shot = 2955541383,
   Play__Robot_Vic_Sfx__Scrn_Angry = 2459769158,
@@ -429,6 +430,7 @@ enum uint_32 GenericEvent
   Play__Robot_Vic_Vo__React_Surprised = 3602654771,
   Play__Robot_Vic_Vo__React_Wake_Word = 3499138811,
   Play__Robot_Vic_Vo__React_Wake_Word_Surprised = 515534641,
+  Play__Robot_Vic_Vo__Temp_Fist_Bump = 1376298574,
   Play__Robot_Vic__External_Voice_Message = 3168753800,
   Play__Robot_Vo__Codelab_Conducting_01 = 2126150744,
   Play__Robot_Vo__Codelab_Countdown_01 = 2593818563,
@@ -868,6 +870,7 @@ enum uint_32 GenericEvent
   Stop__Robot_Vic_Sfx__Head_Loop_Stop = 797290054,
   Stop__Robot_Vic_Sfx__Lift_Loop_Stop = 736173087,
   Stop__Robot_Vic_Sfx__Purr_Loop_Stop = 3624594237,
+  Stop__Robot_Vic_Sfx__Scan_Face_Loop_Stop = 670694969,
   Stop__Robot_Vic_Sfx__Scan_Loop_Stop = 3329286691,
   Stop__Robot_Vic_Sfx__Tread_Loop_Stop = 990175872,
   Stop__Robot_Vo__Cozmo_Singing_Stop = 3704466058,
@@ -1129,6 +1132,8 @@ enum uint_32 Robot_Vic_Sfx
   Purr_Increase_Level = 2071056089,
   Purr_Loop_Play = 3953422061,
   Purr_Loop_Stop = 3624594237,
+  Scan_Face_Loop_Play = 3711429789,
+  Scan_Face_Loop_Stop = 670694969,
   Scan_Loop_Play = 203477807,
   Scan_Loop_Stop = 3329286691,
   Scan_One_Shot = 2955541383,
@@ -1171,6 +1176,7 @@ enum uint_32 Robot_Vic_Vo
   React_Surprised = 3602654771,
   React_Wake_Word = 3499138811,
   React_Wake_Word_Surprised = 515534641,
+  Temp_Fist_Bump = 1376298574,
 }
 
 enum uint_32 Robot_Vo
