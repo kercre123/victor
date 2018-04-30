@@ -45,8 +45,6 @@ u32 _pin = 123456;
 const f32 kRobotNameScale = 0.6f;
 const std::string kURL = "anki.com/v";
 const ColorRGBA   kColor(0.9f, 0.9f, 0.9f, 1.f);
-
-SwitchboardInterface::ConnectionStatus _curStatus = SwitchboardInterface::ConnectionStatus::NONE;
 }
 
 // Draws BLE name and url to screen
@@ -185,15 +183,6 @@ void UpdatePairingLight(bool on)
     isOn = on;
   }
 }
-  
-bool IsInConnectionFlow()
-{
-  using namespace SwitchboardInterface;
-  return (_curStatus != ConnectionStatus::NONE &&
-          _curStatus != ConnectionStatus::START_PAIRING &&
-          _curStatus != ConnectionStatus::END_PAIRING);
-
-}
 
 void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
                           AnimationStreamer* animStreamer,
@@ -207,8 +196,6 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
   UpdatePairingLight((msg.status == ConnectionStatus::START_PAIRING ||
                       msg.status == ConnectionStatus::SHOW_PIN));
   
-
-  _curStatus = msg.status;
 
   switch(msg.status)
   {
