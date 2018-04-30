@@ -136,7 +136,7 @@ namespace Switchboard {
             _receiveRtsAck.emit(rtsMsg);
             break;
           }
-          case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsLogRequest: {
+          case Anki::Cozmo::ExternalComms::RtsConnection_2Tag::RtsLogRequest: {
             _receiveRtsLogRequest.emit(rtsMsg);
             break;
           }

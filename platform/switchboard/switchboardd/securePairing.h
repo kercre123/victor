@@ -182,7 +182,7 @@ namespace Switchboard {
     void HandleRtsAck(const Cozmo::ExternalComms::RtsConnection_2& msg);
 
     Signal::SmartHandle _rtsLogRequestHandle;
-    void HandleRtsLogRequest(const Victor::ExternalComms::RtsConnection_2& msg);
+    void HandleRtsLogRequest(const Cozmo::ExternalComms::RtsConnection_2& msg);
 
     Signal::SmartHandle _rtsSshHandle;
     void HandleRtsSsh(const Cozmo::ExternalComms::RtsConnection_2& msg);
