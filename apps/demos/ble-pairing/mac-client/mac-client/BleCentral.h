@@ -85,6 +85,8 @@ enum WiFiAuth : uint8_t {
   uint32_t _currentFileId;
   std::vector<uint8_t> _currentFileBuffer;
   NSString* _downloadFilePath;
+
+  bool _isPairing;
 }
 
 - (std::string)hexStr:(char*)data length:(int)len;

@@ -100,13 +100,7 @@ BleCentral* centralContext;
     _otaStatusCode = 0;
     _otaExpected = 0;
     
-    //
-    // todo: Handle SIGINT to create new
-    // prompt line and use CTRL+D to close(like SSH).
-    //
-    // handle exit signal
-    // centralContext = self;
-    // signal(SIGINT, &CancelCommand);
+    _isPairing = false;
   }
   
   return self;
@@ -843,6 +837,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
                                                                        publicKeyArray);
   } else {
     crypto_kx_keypair(_publicKey, _secretKey);
+    
     memcpy(_remotePublicKey, msg.publicKey.data(), sizeof(_remotePublicKey));
   
     std::array<uint8_t, crypto_kx_PUBLICKEYBYTES> publicKeyArray;
@@ -861,8 +856,14 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   
     // Hash mix of pin and decryptKey to form new decryptKey
     
+    if(!_isPairing) {
+      printf("* Double tap backpack button to put Vector in pairing mode and restart mac-client.\n");
+      exit(0);
+    }
+    
     Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsConnResponse>(self, _commVersion, Anki::Victor::ExternalComms::RtsConnType::FirstTimePair,
                                                                        publicKeyArray);
+    
     char pin[6];
     char garbage[1];
     printf("> Enter pin:\n");
@@ -1252,6 +1253,8 @@ didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic
   
   NSString* savedName = [[NSUserDefaults standardUserDefaults] stringForKey:@"victorName"];
   knownName = [savedName isEqualToString:peripheral.name];
+  
+  _isPairing = isPairing;
   
   //NSLog(@"[%@] isPairing:%d knownName:%d isAnki:%d", peripheral.name, isPairing, knownName, isAnki);
   

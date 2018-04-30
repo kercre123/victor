@@ -50,15 +50,22 @@ SwitchboardInterface::ConnectionStatus _curStatus = SwitchboardInterface::Connec
 }
 
 // Draws BLE name and url to screen
-void DrawStartPairingScreen(AnimationStreamer* animStreamer)
+bool DrawStartPairingScreen(AnimationStreamer* animStreamer)
 {
+  // Robot name will be empty until switchboard has set the property
+  std::string robotName = OSState::getInstance()->GetRobotName();
+  if(robotName == "")
+  {
+    return false;
+  }
+  
   animStreamer->EnableKeepFaceAlive(false, 0);
   animStreamer->Abort();
 
   auto* img = new Vision::ImageRGBA(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
   img->FillWith(Vision::PixelRGBA(0, 0));
 
-  img->DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, kRobotNameScale, 1, kColor, 15, false);
+  img->DrawTextCenteredHorizontally(robotName, CV_FONT_NORMAL, kRobotNameScale, 1, kColor, 15, false);
 
   cv::Size textSize;
   float scale = 0;
@@ -68,6 +75,8 @@ void DrawStartPairingScreen(AnimationStreamer* animStreamer)
   auto handle = std::make_shared<Vision::SpriteWrapper>(img);
   const bool shouldRenderInEyeHue = false;
   animStreamer->SetFaceImage(handle, shouldRenderInEyeHue, 0);
+  
+  return true;
 }
 
 // Draws BLE name, key icon, and BLE pin to screen
@@ -129,18 +138,15 @@ void SetBLEPin(uint32_t pin)
   _pin = pin;
 }
 
-void InitConnectionFlow(AnimationStreamer* animStreamer)
+bool InitConnectionFlow(AnimationStreamer* animStreamer)
 {
-  if(FACTORY_TEST)
+  // Don't start connection flow if not packed out
+  if(!Factory::GetEMR()->fields.PACKED_OUT_FLAG)
   {
-    // Don't start connection flow if not packed out
-    if(!Factory::GetEMR()->fields.PACKED_OUT_FLAG)
-    {
-      return;
-    }
-
-    DrawStartPairingScreen(animStreamer);
+    return true;
   }
+
+  return DrawStartPairingScreen(animStreamer);
 }
 
 void UpdatePairingLight(bool on)

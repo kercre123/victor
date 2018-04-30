@@ -348,6 +348,14 @@ void IPCClient::RequestConnectionParameterUpdate(const std::string& address,
                          (uint8_t *) &args);
 }
 
+void IPCClient::SetAdapterName(const std::string& name)
+{
+  SetAdapterNameArgs args = {{0}};
+  (void) strlcpy(args.name, name.c_str(), sizeof(args.name));
+  SendIPCMessageToServer(IPCMessageType::SetAdapterName,
+                         sizeof(args),
+                         (uint8_t *) &args);
+}
 
 void IPCClient::StopScan()
 {

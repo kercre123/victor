@@ -54,6 +54,7 @@ class IPCClient : public IPCEndpoint {
                                         int max_interval,
                                         int latency,
                                         int timeout);
+  void SetAdapterName(const std::string& name);
 
  protected:
   virtual void OnReceiveIPCMessage(const int sockfd,
