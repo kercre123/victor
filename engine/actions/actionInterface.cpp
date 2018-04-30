@@ -185,11 +185,27 @@ namespace Anki {
     IActionRunner::~IActionRunner()
     {
       if(!_preppedForCompletion) {
-        PRINT_NAMED_ERROR("IActionRunner.Destructor.NotPreppedForCompletion", "[%d]", GetTag());
+        if( HasStarted() ) {
+          PRINT_NAMED_ERROR("IActionRunner.Destructor.NotPreppedForCompletion", "[%d]", GetTag());
+        }
+        else {
+          PRINT_CH_INFO(kLogChannelName, "IActionRunner.Destructor.NotPreppedForCompletionAndNotStarted",
+                        "[%d]", GetTag());
+        }
       }
 
+      // Erase the tags as they are no longer in use
+      IActionRunner::sInUseTagSet.erase(_customTag);
+      IActionRunner::sInUseTagSet.erase(_idTag);
+
       if(!HasRobot()){
-        PRINT_NAMED_ERROR("IActionRunner.Destructor.RobotNotSet", "");
+        if( HasStarted() ) {
+          PRINT_NAMED_ERROR("IActionRunner.Destructor.RobotNotSet", "[%d]", GetTag());
+        }
+        else {
+          PRINT_CH_INFO(kLogChannelName, "IActionRunner.Destructor.RobotNotSetAndNotStarted",
+                        "[%d] robot not set, but action also not started so this is OK", GetTag());
+        }
         return;
       }
 
@@ -197,10 +213,6 @@ namespace Anki {
       if(_shouldClearMotionProfile ) {
         GetRobot().GetPathComponent().ClearCustomMotionProfile();
       }
-
-      // Erase the tags as they are no longer in use
-      IActionRunner::sInUseTagSet.erase(_customTag);
-      IActionRunner::sInUseTagSet.erase(_idTag);
 
       // Stop motion on any movement tracks that are locked by this action
       // and that are currently moving.
