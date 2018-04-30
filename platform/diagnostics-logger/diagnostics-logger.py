@@ -17,7 +17,10 @@ output_path = "/data/diagnostics/"
 cmd_tar = [ "tar", "tar -cvjf " + output_path + "logs.tar.bz2 " + output_path + "logs/ " ]
 
 def run_cmd(cmd):
-    return subprocess.check_output(cmd, shell=True)
+    try:
+        return subprocess.check_output(cmd, shell=True)
+    except subprocess.CalledProcessError as e:
+        return e.output
 
 def run_commands():
     if not os.path.exists(output_path + "logs/"):
