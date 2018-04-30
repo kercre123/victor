@@ -63,7 +63,7 @@ public:
   , _micDirectionHistory(micDirectionHistory){}
   ~FaceSelectionComponent();
 
-  SmartFaceID GetBestFaceToUse(const FaceSelectionFactorMap& criteriaMap, const std::set<SmartFaceID>& possibleFaces) const;
+  SmartFaceID GetBestFaceToUse(const FaceSelectionFactorMap& criteriaMap, const std::vector<SmartFaceID>& possibleFaces) const;
 
 
   // Convert string to enum

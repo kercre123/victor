@@ -32,7 +32,8 @@ FaceSelectionComponent::~FaceSelectionComponent()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SmartFaceID FaceSelectionComponent::GetBestFaceToUse(const FaceSelectionFactorMap& criteriaMap, const std::set<SmartFaceID>& possibleFaces) const
+SmartFaceID FaceSelectionComponent::GetBestFaceToUse(const FaceSelectionFactorMap& criteriaMap,
+                                                     const std::vector<SmartFaceID>& possibleFaces) const
 {
   if( possibleFaces.empty() ) {
     SmartFaceID invalidID;
@@ -58,6 +59,9 @@ SmartFaceID FaceSelectionComponent::GetBestFaceToUse(const FaceSelectionFactorMa
 
 
   // add up score for all criteria
+
+  // NOTE: it is possible that multiple entries in this vector are actually the same face (even if they
+  // weren't when inserted). This is OK
   float bestScore = std::numeric_limits<float>::max();
   SmartFaceID bestID;
   for(auto& currentID: possibleFaces){

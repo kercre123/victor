@@ -430,9 +430,9 @@ void BehaviorInteractWithFaces::SelectFaceToTrack() const
   std::set< Vision::FaceID_t > faces = GetBEI().GetFaceWorld().GetFaceIDsObservedSince(_dVars.lastImageTimestampWhileRunning,
                                                                                  considerTrackingOnlyFaces);
   
-  std::set<SmartFaceID> smartFaces;
+  std::vector<SmartFaceID> smartFaces;
   for(auto& entry : faces){
-    smartFaces.insert(GetBEI().GetFaceWorld().GetSmartFaceID(entry));
+    smartFaces.emplace_back(GetBEI().GetFaceWorld().GetSmartFaceID(entry));
   }
   const auto& faceSelection = GetAIComp<FaceSelectionComponent>();
   FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;

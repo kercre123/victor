@@ -178,10 +178,5 @@ bool SmartFaceID::operator==(const SmartFaceID& other) const
   }
 }
 
-bool SmartFaceID::operator<(const SmartFaceID& other) const
-{
-  return GetID() < other.GetID();
-}
-
 }
 }

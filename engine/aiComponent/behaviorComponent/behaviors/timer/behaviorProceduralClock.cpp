@@ -297,9 +297,9 @@ SmartFaceID BehaviorProceduralClock::UpdateTargetFace()
   const bool considerTrackingOnlyFaces = false;
   std::set< Vision::FaceID_t > faces = GetBEI().GetFaceWorld().GetFaceIDs(considerTrackingOnlyFaces);
   
-  std::set<SmartFaceID> smartFaces;
+  std::vector<SmartFaceID> smartFaces;
   for(auto& entry : faces){
-    smartFaces.insert(GetBEI().GetFaceWorld().GetSmartFaceID(entry));
+    smartFaces.emplace_back(GetBEI().GetFaceWorld().GetSmartFaceID(entry));
   }
 
   const auto& faceSelection = GetAIComp<FaceSelectionComponent>();

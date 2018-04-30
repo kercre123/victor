@@ -156,16 +156,12 @@ TEST(SmartFaceID, CopyConstructor)
   SmartFaceID sfid2(sfid);
 
   EXPECT_TRUE(sfid2 == sfid);
-  EXPECT_FALSE(sfid2 < sfid);
-  EXPECT_FALSE(sfid < sfid2);
   EXPECT_TRUE(sfid2.IsValid());
   EXPECT_TRUE(sfid2.MatchesFaceID(20));
 
   ChangeFaceID(robot, 20, 30);
 
   EXPECT_TRUE(sfid2 == sfid);
-  EXPECT_FALSE(sfid2 < sfid);
-  EXPECT_FALSE(sfid < sfid2);
   EXPECT_TRUE(sfid.IsValid());
   EXPECT_TRUE(sfid.MatchesFaceID(30));
   EXPECT_TRUE(sfid2.IsValid());
@@ -175,8 +171,6 @@ TEST(SmartFaceID, CopyConstructor)
   robot.GetFaceWorld().UpdateSmartFaceToID(10, sfid2);
 
   EXPECT_FALSE(sfid2 == sfid);
-  EXPECT_TRUE(sfid2 < sfid);
-  EXPECT_FALSE(sfid < sfid2);
   EXPECT_TRUE(sfid.IsValid());
   EXPECT_TRUE(sfid.MatchesFaceID(30));
   EXPECT_TRUE(sfid2.IsValid());
@@ -226,8 +220,6 @@ TEST(SmartFaceID, CopyWithDelete)
     SmartFaceID sfid2(*sfidPtr);
 
     EXPECT_TRUE(sfid2 == *sfidPtr);
-    EXPECT_FALSE(sfid2 < *sfidPtr);
-    EXPECT_FALSE(*sfidPtr < sfid2);
     EXPECT_TRUE(sfidPtr->IsValid());
     EXPECT_TRUE(sfidPtr->MatchesFaceID(42));
     EXPECT_TRUE(sfid2.IsValid());
@@ -236,8 +228,6 @@ TEST(SmartFaceID, CopyWithDelete)
     ChangeFaceID(robot, 42, 52);
 
     EXPECT_TRUE(sfid2 == *sfidPtr);
-    EXPECT_FALSE(sfid2 < *sfidPtr);
-    EXPECT_FALSE(*sfidPtr < sfid2);
     EXPECT_TRUE(sfidPtr->IsValid());
     EXPECT_TRUE(sfidPtr->MatchesFaceID(52));
     EXPECT_TRUE(sfid2.IsValid());
@@ -245,8 +235,6 @@ TEST(SmartFaceID, CopyWithDelete)
 
     robot.GetFaceWorld().UpdateSmartFaceToID(10, sfid2);
     EXPECT_FALSE(sfid2 == *sfidPtr);
-    EXPECT_TRUE(sfid2 < *sfidPtr);
-    EXPECT_FALSE(*sfidPtr < sfid2);    
     EXPECT_TRUE(sfidPtr->IsValid());
     EXPECT_TRUE(sfidPtr->MatchesFaceID(52));
     EXPECT_TRUE(sfid2.IsValid());
@@ -270,8 +258,6 @@ TEST(SmartFaceID, CopyWithDelete)
     sfid3 = *sfidPtr;
 
     EXPECT_TRUE(sfid3 == *sfidPtr);
-    EXPECT_FALSE(sfid3 < *sfidPtr);
-    EXPECT_FALSE(*sfidPtr < sfid3);
     EXPECT_TRUE(sfidPtr->IsValid());
     EXPECT_TRUE(sfidPtr->MatchesFaceID(55));
     EXPECT_TRUE(sfid3.IsValid());
@@ -280,16 +266,12 @@ TEST(SmartFaceID, CopyWithDelete)
     SmartFaceID sfid4 = robot.GetFaceWorld().GetSmartFaceID(100);
 
     EXPECT_FALSE(sfid4 == *sfidPtr);
-    EXPECT_FALSE(sfid4 < *sfidPtr);
-    EXPECT_TRUE(*sfidPtr < sfid4);    
     EXPECT_TRUE(sfid4.IsValid());
     EXPECT_TRUE(sfid4.MatchesFaceID(100));
 
     sfid4 = *sfidPtr;
 
     EXPECT_TRUE(sfid4 == *sfidPtr);
-    EXPECT_FALSE(sfid4 < *sfidPtr);
-    EXPECT_FALSE(*sfidPtr < sfid4);    
     EXPECT_TRUE(sfidPtr->IsValid());
     EXPECT_TRUE(sfidPtr->MatchesFaceID(55));
     EXPECT_TRUE(sfid4.IsValid());
@@ -340,8 +322,6 @@ TEST(SmartFaceID, CopyWithDelete)
     EXPECT_TRUE(sfid5.MatchesFaceID(0));
 
     EXPECT_TRUE(sfid3 == sfid4);
-    EXPECT_FALSE(sfid4 < sfid3);
-    EXPECT_FALSE(sfid3 < sfid4);
   }
 }
 

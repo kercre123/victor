@@ -46,7 +46,7 @@ public:
 
   virtual void AddListener(IReactToFaceListener* listener) override;
   
-  void SetFacesToAcknowledge(const std::set<SmartFaceID> targetFaces){_desiredTargets = targetFaces;}
+  void SetFacesToAcknowledge(const std::vector<SmartFaceID> targetFaces){_desiredTargets = targetFaces;}
   
 protected:
   // Enforce creation through BehaviorFactory
@@ -75,7 +75,7 @@ private:
   SmartFaceID _targetFace;
 
   // everything we want to react to before we stop (to handle multiple faces in the same frame)
-  std::set<SmartFaceID> _desiredTargets;
+  std::vector<SmartFaceID> _desiredTargets;
   
   bool _shouldStart = false;
 

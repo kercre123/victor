@@ -42,7 +42,6 @@ public:
 
   bool operator==(const SmartFaceID& other) const;
   bool operator!=(const SmartFaceID& other) const { return !(other == *this);}
-  bool operator<(const SmartFaceID& other) const;
 
   void Reset();
 

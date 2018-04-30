@@ -160,7 +160,10 @@ void BehaviorAcknowledgeFace::BeginIteration()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAcknowledgeFace::FinishIteration()
 {
-  _desiredTargets.erase( _targetFace );
+  _desiredTargets.erase(std::remove_if(_desiredTargets.begin(), _desiredTargets.end(),
+                                       [this](const SmartFaceID& sfid) {
+                                         return sfid == _targetFace;
+                                       }));
  
   // notify the listeners that a face reaction has completed fully
   for(auto& listener: _faceListeners){

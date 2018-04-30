@@ -94,11 +94,11 @@ void BehaviorComeHere::TurnTowardsFace()
 {
   DEBUG_SET_STATE(TurnTowardsFace);
   // Get all faces we have locations for  
-  std::set<SmartFaceID> allFaces; 
+  std::vector<SmartFaceID> allFaces;
   {
     const std::set<Vision::FaceID_t> possibleFaces = GetBEI().GetFaceWorld().GetFaceIDs();
     for(auto& entry : possibleFaces){
-      allFaces.insert(GetBEI().GetFaceWorld().GetSmartFaceID(entry));
+      allFaces.emplace_back(GetBEI().GetFaceWorld().GetSmartFaceID(entry));
     }
   }
 
