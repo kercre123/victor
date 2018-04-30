@@ -86,6 +86,8 @@ struct WiFiState {
   WiFiConnState connState;
 };
 
+static const unsigned MAX_NUM_ATTEMPTS = 5;
+
 struct ConnectAsyncData {
   bool completed;
   GCond *cond;
@@ -102,6 +104,7 @@ struct WPAConnectInfo {
   guint agentId;
   GDBusConnection *connection;
   ConnManBusManager *manager;
+  bool errRetry;
 };
 
 std::string GetObjectPathForService(GVariant* service);
