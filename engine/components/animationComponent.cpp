@@ -268,6 +268,40 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
   
   return RESULT_OK;
 }
+
+
+Result AnimationComponent::PlayCompositeAnimation(const std::string& animName,
+                                                  const Vision::CompositeImage& compositeImage, 
+                                                  u32 getFrameInterval_ms,
+                                                  u32 duration_ms,
+                                                  bool interruptRunning)
+{
+  if (!_isInitialized) {
+    PRINT_NAMED_WARNING("AnimationComponent.PlayCompositeAnimation.Uninitialized", "");
+    return RESULT_FAIL;
+  }
+
+  // Check that animName is valid
+  auto it = _availableAnims.find(animName);
+  if (it == _availableAnims.end()) {
+    PRINT_NAMED_WARNING("AnimationComponent.PlayCompositeAnimation.AnimNotFound", "%s", animName.c_str());
+    return RESULT_FAIL;
+  }
+  
+  PRINT_CH_DEBUG(kLogChannelName, "AnimationComponent.PlayCompositeAnimation.PlayingAnim", "%s", it->first.c_str());
+  
+  // TODO: Is this what interruptRunning should mean?
+  //       Or should it queue on anim process side and optionally interrupt currently executing anim?
+  if (IsPlayingAnimation() && !interruptRunning) {
+    PRINT_CH_INFO(kLogChannelName, "AnimationComponent.PlayCompositeAnimation.WontInterruptCurrentAnim", "");
+    return RESULT_FAIL;
+  }
+
+  const Tag currTag = GetNextTag();
+  _robot->SendRobotMessage<RobotInterface::PlayCompositeAnimation>(_compositeImageID, currTag, animName);
+  return DisplayFaceImage(compositeImage, getFrameInterval_ms, duration_ms, interruptRunning);
+}
+
   
 AnimationComponent::Tag AnimationComponent::IsAnimPlaying(const std::string& animName)
 {
@@ -468,12 +502,12 @@ Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compos
   }
 
   // Send the image to the animation process in chunks
-  _compositeImageID++;
   const std::vector<Vision::CompositeImageChunk> imageChunks = compositeImage.GetImageChunks();
   for(const auto& chunk: imageChunks){
     _robot->SendRobotMessage<RobotInterface::DisplayCompositeImageChunk>(_compositeImageID, getFrameInterval_ms, duration_ms, chunk);
   }
 
+  _compositeImageID++;
   return RESULT_OK;
 }
 

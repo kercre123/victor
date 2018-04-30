@@ -13,6 +13,7 @@
 **/
 
 #include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
+#include "cannedAnimLib/proceduralFace/proceduralFace.h"
 #include "cannedAnimLib/spriteSequences/spriteSequenceLoader.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "util/dispatchWorker/dispatchWorker.h"
@@ -155,15 +156,16 @@ void SpriteSequenceLoader::LoadSequenceImageFrames(Vision::SpriteCache* cache,
 
     // Load the image
     const std::string fullFilename = Util::FileUtils::FullFilePath({fullDirectoryPath, filename});
-    
+    Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
     Vision::SpriteHandle handle;
     if(kSequencesRefuseCache.find(sequenceName) !=  kSequencesRefuseCache.end()){
-      handle = cache->GetSpriteHandle(fullFilename);
+      handle = cache->GetSpriteHandle(fullFilename, faceHueAndSaturation);
     }else{
-      handle = cache->GetSpriteHandle(fullFilename, cacheSpecs);
+      handle = cache->GetSpriteHandle(fullFilename, faceHueAndSaturation, cacheSpecs);
     }
     sequence.AddFrame(handle);
   }
+  
 
   // Place the sequence in the appropriate map
   std::lock_guard<std::mutex> guard(_mapMutex);

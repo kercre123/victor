@@ -33,6 +33,7 @@ bool GetCladEnumFromJSON(const Json::Value& config, const std::string& key,  Cla
     return false;
   }
   std::string str = child.asString();
+  // Note - this functionality can only be used in engine until VIC-2545 is imlemented
   const bool foundValue = Cozmo::EnumFromString(str.c_str(), value);
   if(!foundValue){
     const char* debugMsg = (debugName + "GetCladEnumFromJSON.ParseString.InvalidValue").c_str();

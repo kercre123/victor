@@ -18,6 +18,7 @@
 #include "coretech/vision/engine/image.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/proceduralFaceTypes.h"
+#include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include <array>
 #include <vector>
@@ -37,6 +38,15 @@ namespace CozmoAnim {
 }
 
 namespace Anki {
+  
+namespace Util {
+  class IConsoleFunction;
+}
+
+namespace Vision{
+  class HueSatWrapper;
+}
+
 namespace Cozmo {
   
 // Forward declarations
@@ -140,10 +150,15 @@ public:
 
   // Get an image filled with the current hue value
   static Vision::Image& GetHueImage();
-  
+  static Vision::Image* GetHueImagePtr();
+
   // Get an image filled with a saturation value suitable for
   // creating an HSV face image
   static Vision::Image& GetSaturationImage();
+  static Vision::Image* GetSaturationImagePtr();
+
+  // Get a pointer that encapsulates the procedural face's hue and saturation images
+  static std::shared_ptr<Vision::HueSatWrapper> GetHueSatWrapper();
 
   // Initialize scanline distortion
   void InitScanlineDistorter(s32 maxAmount_pix, f32 noiseProb);
@@ -194,7 +209,9 @@ public:
   void RegisterFaceWithConsoleVars();
 
 private:
-  
+  static Vision::Image _hueImage;
+  static Vision::Image _satImage;
+
   std::array<EyeParamArray, 2> _eyeParams{{}};
   
   std::unique_ptr<ScanlineDistorter> _scanlineDistorter;
@@ -208,6 +225,13 @@ private:
 
   static Value    _hue;
   static Value    _saturation;
+  
+  
+  static void HueConsoleFunction(ConsoleFunctionContextRef context);
+  static void SaturationConsoleFunction(ConsoleFunctionContextRef context);
+  
+  static std::unique_ptr<Anki::Util::IConsoleFunction> _hueConsoleFunc;
+  static std::unique_ptr<Anki::Util::IConsoleFunction> _saturationConsoleFunc;
 
   void SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& eyeArray);
   void CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamArray& eyeArray1);
@@ -330,14 +354,21 @@ inline ProceduralFace::Value ProceduralFace::GetSaturation() {
 }
 
 inline Vision::Image& ProceduralFace::GetHueImage() {
-  static Vision::Image hueImage(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, static_cast<u8>(_hue * std::numeric_limits<u8>::max()));
-  return hueImage;
+  return _hueImage;
+}
+
+inline Vision::Image* ProceduralFace::GetHueImagePtr() {
+  return &_hueImage;
 }
 
 inline Vision::Image& ProceduralFace::GetSaturationImage() {
-  static Vision::Image satImage(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, std::numeric_limits<u8>::max());
-  return satImage;
+  return _satImage;
 }
+
+inline Vision::Image* ProceduralFace::GetSaturationImagePtr() {
+  return &_satImage;
+}
+
   
 } // namespace Cozmo
 } // namespace Anki

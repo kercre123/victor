@@ -24,7 +24,6 @@
 #include "coretech/vision/shared/spriteSequence/spriteSequence.h"
 #include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
 
-#include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/audio/animationAudioClient.h"
 #include "cozmoAnim/audio/proceduralAudioClient.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
@@ -292,8 +291,7 @@ namespace Cozmo {
   , _longEnoughSinceLastStreamTimeout_s(kDefaultLongEnoughSinceLastStreamTimeout_s)
   , _numTicsToSendAnimState(kAnimStateReportingPeriod_tics)
   {
-    _proceduralAnimation = new Animation(EnumToString(AnimConstants::PROCEDURAL_ANIM));
-    _proceduralAnimation->SetIsLive(true);
+    CopyIntoProceduralAnimation();
 
     if(ANKI_DEV_CHEATS) {
       if (!s_faceDataOverrideRegistered) {
@@ -618,8 +616,10 @@ namespace Cozmo {
 
     // Display the image if all chunks received
     if(_compositeImageBuilder->CanBuildImage()){
-      auto* outImage = new Vision::CompositeImage(_context->GetDataLoader()->GetSpriteCache(), 
-                                      _context->GetDataLoader()->GetSpritePaths());
+      Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
+      auto* outImage = new Vision::CompositeImage(_context->GetDataLoader()->GetSpriteCache(),
+                                                  faceHueAndSaturation,
+                                                  _context->GetDataLoader()->GetSpritePaths());
       const bool builtImage = _compositeImageBuilder->GetCompositeImage(*outImage);
       if(ANKI_VERIFY(builtImage, 
                      "AnimationStreamer.Process_displayCompositeImageChunk.FailedToBuildImage",
@@ -635,6 +635,12 @@ namespace Cozmo {
   void AnimationStreamer::Process_updateCompositeImageAsset(const RobotInterface::UpdateCompositeImageAsset& msg)
   {
     UpdateCompositeImage(msg.layerName, msg.spriteBoxName, msg.spriteName);
+  }
+  
+  void AnimationStreamer::Process_playCompositeAnimation(const std::string& name, Tag tag)
+  {
+    CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(name));
+    SetStreamingAnimation(_proceduralAnimation, tag);
   }
 
   Result AnimationStreamer::SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms)
@@ -856,16 +862,16 @@ namespace Cozmo {
   }
   
   
-  void AnimationStreamer::BufferFaceToSend(const ProceduralFace& procFace)
+  void AnimationStreamer::GetStreamableFace(const ProceduralFace& procFace, Vision::ImageRGB565& outImage) const
   {
     if(kProcFace_Display == (int)FaceDisplayType::Test)
     {
       // Display three color strips increasing in brightness from left to right
       for(int i=0; i<FACE_DISPLAY_HEIGHT/3; ++i)
       {
-        Vision::PixelRGB565* red_i   = _faceDrawBuf.GetRow(i);
-        Vision::PixelRGB565* green_i = _faceDrawBuf.GetRow(i + FACE_DISPLAY_HEIGHT/3);
-        Vision::PixelRGB565* blue_i  = _faceDrawBuf.GetRow(i + 2*FACE_DISPLAY_HEIGHT/3);
+        Vision::PixelRGB565* red_i   = outImage.GetRow(i);
+        Vision::PixelRGB565* green_i = outImage.GetRow(i + FACE_DISPLAY_HEIGHT/3);
+        Vision::PixelRGB565* blue_i  = outImage.GetRow(i + 2*FACE_DISPLAY_HEIGHT/3);
         for(int j=0; j<FACE_DISPLAY_WIDTH; ++j)
         {
           const u8 value = Util::numeric_cast_clamped<u8>(std::round((f32)j/(f32)FACE_DISPLAY_WIDTH * 255.f));
@@ -962,13 +968,11 @@ namespace Cozmo {
           newProcFace.SetScanlineOpacity(s_faceDataOverride.GetScanlineOpacity());
         }
 
-        ProceduralFaceDrawer::DrawFace(newProcFace, *_context->GetRandom(), _faceDrawBuf);
+        ProceduralFaceDrawer::DrawFace(newProcFace, *_context->GetRandom(), outImage);
       } else {
-        ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), _faceDrawBuf);
+        ProceduralFaceDrawer::DrawFace(procFace, *_context->GetRandom(), outImage);
       }
     }
-    
-    BufferFaceToSend(_faceDrawBuf);
   }
 
   // Conversions to and from linear space i.e. sRGB to linear and linear to sRGB
@@ -995,7 +999,7 @@ namespace Cozmo {
     }
   }
 
-  void AnimationStreamer::UpdateCaptureFace(Vision::ImageRGB565& faceImg565)
+  void AnimationStreamer::UpdateCaptureFace(const Vision::ImageRGB565& faceImg565)
   {
     if(s_framesToCapture > 0) {
       clock_t end = clock();
@@ -1268,7 +1272,8 @@ namespace Cozmo {
       const bool shouldDrawFaceLayer = BaseStationTimer::getInstance()->GetCurrentTimeStamp() > _nextProceduralFaceAllowedTime_ms;
       if(layeredKeyFrames.haveFaceKeyFrame && shouldDrawFaceLayer)
       {
-        BufferFaceToSend(layeredKeyFrames.faceKeyFrame.GetFace());
+        GetStreamableFace(layeredKeyFrames.faceKeyFrame.GetFace(), _faceDrawBuf);
+        BufferFaceToSend(_faceDrawBuf);
       }
       
       // Increment fake "streaming" time, so we can evaluate below whether
@@ -1382,6 +1387,15 @@ namespace Cozmo {
       if(shouldPlayFaceAnim)
       {
         auto & faceKeyFrame = spriteSeqTrack.GetCurrentKeyFrame();
+        
+        // Insert animation face keyframes into composite image
+        if(faceKeyFrame.HasCompositeImage() && 
+           layeredKeyFrames.haveFaceKeyFrame){
+          auto& compImg = faceKeyFrame.GetCompositeImage();
+          InsertFaceKeyframeIntoCompImg(layeredKeyFrames, compImg);
+        }
+        
+        // Render and display the face
         Vision::SpriteHandle handle;
         const bool gotImage = faceKeyFrame.GetFaceImageHandle(handle);
         if(gotImage){
@@ -1415,12 +1429,18 @@ namespace Cozmo {
             // convert HSV -> RGB565
             faceHSV.ConvertHSV2RGB565(_faceDrawBuf);
           } else {
-            if(handle->IsContentCached()){
-              const auto& imgRGB = handle->GetCachedSpriteContentsRGBA();
+            // Composite images apply their own hs/internally
+            Vision::HSImageHandle hsHandle = std::make_shared<Vision::HueSatWrapper>(0,0);
+            if(!faceKeyFrame.HasCompositeImage()){
+              hsHandle = ProceduralFace::GetHueSatWrapper();
+            }
+            
+            if(handle->IsContentCached(hsHandle).rgba){
+              const auto& imgRGB = handle->GetCachedSpriteContentsRGBA(hsHandle);
               // Display the ImageRGB565 directly to the face, without modification
               _faceDrawBuf.SetFromImageRGB(imgRGB);
             }else{
-              auto imgRGB = handle->GetSpriteContentsRGBA();
+              auto imgRGB = handle->GetSpriteContentsRGBA(hsHandle);
               // Display the ImageRGB565 directly to the face, without modification
               _faceDrawBuf.SetFromImageRGB(imgRGB);
             }
@@ -1440,7 +1460,8 @@ namespace Cozmo {
       }
       else if(layeredKeyFrames.haveFaceKeyFrame)
       {
-        BufferFaceToSend(layeredKeyFrames.faceKeyFrame.GetFace());
+        GetStreamableFace(layeredKeyFrames.faceKeyFrame.GetFace(), _faceDrawBuf);
+        BufferFaceToSend(_faceDrawBuf);
       }
       
       if(layeredKeyFrames.haveBackpackKeyFrame)
@@ -1707,6 +1728,52 @@ namespace Cozmo {
     }
   }
   
+  void AnimationStreamer::CopyIntoProceduralAnimation(Animation* desiredAnim)
+  {
+    Util::SafeDelete(_proceduralAnimation);
+    if(desiredAnim != nullptr){
+      _proceduralAnimation = new Animation(*desiredAnim);
+    }else{
+      _proceduralAnimation = new Animation();
+    }
+    _proceduralAnimation->SetName(EnumToString(AnimConstants::PROCEDURAL_ANIM));
+    _proceduralAnimation->SetIsLive(true);
+  }
+
+  void AnimationStreamer::InsertFaceKeyframeIntoCompImg(
+    const TrackLayerComponent::LayeredKeyFrames& layeredKeyFrames,
+    Vision::CompositeImage& image)
+  {
+    Vision::ImageRGB565 img565(_faceDrawBuf.GetNumRows(), _faceDrawBuf.GetNumCols());
+    GetStreamableFace(layeredKeyFrames.faceKeyFrame.GetFace(), img565);
+    
+    auto* rgbaImg = new Vision::ImageRGBA(img565.GetNumRows(), img565.GetNumCols());
+    rgbaImg->SetFromRGB565(img565);
+    auto handle = std::make_shared<Vision::SpriteWrapper>(rgbaImg);
+    
+    using namespace Vision;
+    using Entry = Vision::CompositeImageLayer::SpriteEntry;
+    
+    SpriteRenderConfig renderConfig;
+    renderConfig.renderMethod = SpriteRenderMethod::CustomHue;
+    // Set up sprite box layout
+    CompositeImageLayer::SpriteBox sb(SpriteBoxName::FaceKeyframe, renderConfig, 
+                                      Point2i(0,0), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
+    CompositeImageLayer::LayoutMap map;
+    map.emplace(SpriteBoxName::FaceKeyframe, sb);
+    CompositeImageLayer eyeLayer(LayerName::Procedural_Eyes, std::move(map));
+    
+    // set up image map for layer
+    SpriteSequence seq;
+    seq.AddFrame(handle);
+    
+    CompositeImageLayer::ImageMap imageMap;
+    imageMap.emplace(SpriteBoxName::FaceKeyframe, Entry(std::move(seq)));
+    eyeLayer.SetImageMap(std::move(imageMap));
+    
+    // add layer to comp image
+    image.AddLayer(std::move(eyeLayer));
+  }
   
 } // namespace Cozmo
 } // namespace Anki

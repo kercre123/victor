@@ -16,6 +16,7 @@
     "spriteBoxLayout" : [
       {
         "spriteBoxName": "TensLeftOfColon",
+        "spriteRenderMethod" : "CustomHue",
         "x": 27,
         "y": 26,
         "width": 29,
@@ -23,6 +24,7 @@
       },
       {
         "spriteBoxName": "OnesLeftOfColon",
+        "spriteRenderMethod" : "CustomHue",
         "x": 57,
         "y": 26,
         "width": 29,
@@ -30,6 +32,7 @@
       },
       {
         "spriteBoxName": "Colon",
+        "spriteRenderMethod" : "CustomHue",
         "x": 87,
         "y": 27,
         "width": 10,
@@ -37,6 +40,7 @@
       },
       {
         "spriteBoxName": "TensRightOfColon",
+        "spriteRenderMethod" : "CustomHue",
         "x": 98,
         "y": 26,
         "width": 29,
@@ -44,6 +48,7 @@
       },
       {
         "spriteBoxName": "OnesRightOfColon",
+        "spriteRenderMethod" : "CustomHue",
         "x": 128,
         "y": 26,
         "width": 29,

@@ -23,10 +23,12 @@ namespace Vision {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompositeImage::CompositeImage(SpriteCache* spriteCache,
+                               ConstHSImageHandle faceHSImageHandle,
                                const Json::Value& layersSpec,
                                s32 imageWidth,
                                s32 imageHeight)
 : _spriteCache(spriteCache)
+, _faceHSImageHandle(faceHSImageHandle)
 {
   _width = imageWidth;
   _height = imageHeight;
@@ -39,10 +41,12 @@ CompositeImage::CompositeImage(SpriteCache* spriteCache,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompositeImage::CompositeImage(SpriteCache* spriteCache,
+                               ConstHSImageHandle faceHSImageHandle,
                                const LayerMap&& layers,
                                s32 imageWidth,
                                s32 imageHeight)
 : _spriteCache(spriteCache)
+, _faceHSImageHandle(faceHSImageHandle)
 {
   _width   = imageWidth;
   _height  = imageHeight;
@@ -127,8 +131,12 @@ void CompositeImage::ReplaceCompositeImage(const LayerMap&& layers,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CompositeImage::AddLayer(CompositeImageLayer&& layer)
 {
-  const auto pair = _layerMap.emplace(layer.GetLayerName(), std::move(layer));
-  return pair.second;
+  auto resultPair = _layerMap.emplace(layer.GetLayerName(), std::move(layer));
+  // If map entry already exists, just update existing iterator
+  if(!resultPair.second){
+    resultPair.first->second = std::move(layer);
+  }
+  return true;
 }
 
 
@@ -184,7 +192,8 @@ CompositeImage CompositeImage::GetImageDiff(const CompositeImage& compImg) const
     outLayerMap.emplace(layerPair.first, layer);
   }
   
-  return CompositeImage(_spriteCache, std::move(outLayerMap));
+  
+  return CompositeImage(_spriteCache, _faceHSImageHandle, std::move(outLayerMap));
 }
 
 
@@ -218,41 +227,50 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
     // specified by the layout quad def
     Vision::SpriteHandle  handle;
     if(spriteEntry._spriteSequence.GetFrame(frameIdx, handle)){
-      if(handle->IsContentCached()){
-        const ImageRGBA& subImage = handle->GetCachedSpriteContentsRGBA();
-        DrawSubImage(baseImage, subImage, spriteBox, overlayOffset);
-      }else{
-        const ImageRGBA& subImage = handle->GetSpriteContentsRGBA();
-        DrawSubImage(baseImage, subImage, spriteBox, overlayOffset);
-      }
-    }
-  };
-  ProcessAllSpriteBoxes(callback);
-}
+      switch(spriteBox.renderConfig.renderMethod){
+        case SpriteRenderMethod::RGBA:
+        {
+          // Check to see if the RGBA image is cached
+          if(handle->IsContentCached().rgba){
+            const ImageRGBA& subImage = handle->GetCachedSpriteContentsRGBA();
+            DrawSubImage(baseImage, subImage, spriteBox, overlayOffset);
+          }else{
+            const ImageRGBA& subImage = handle->GetSpriteContentsRGBA();
+            DrawSubImage(baseImage, subImage, spriteBox, overlayOffset);
+          }
+          break;
+        }
+        case SpriteRenderMethod::CustomHue:
+        {
+          std::pair<uint32_t,uint32_t> widthAndHeight = {spriteBox.width, spriteBox.height};
+          std::shared_ptr<Vision::HueSatWrapper> hsImageHandle;
 
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CompositeImage::OverlayImageWithFrame(Image& baseImage,
-                                           const u32 frameIdx,
-                                           std::set<Vision::LayerName> layersToIgnore,
-                                           const Point2i& overlayOffset) const
-{
-  auto callback = [this, &baseImage, &frameIdx, &overlayOffset, &layersToIgnore]
-                     (Vision::LayerName layerName, SpriteBoxName spriteBoxName, 
-                      const SpriteBox& spriteBox, const SpriteEntry& spriteEntry){
-    if(layersToIgnore.find(layerName) != layersToIgnore.end()){
-      return;
-    }
-    // If implementation quad was found, draw it into the image at the point
-    // specified by the layout quad def
-    Vision::SpriteHandle  handle;
-    if(spriteEntry._spriteSequence.GetFrame(frameIdx, handle)){
-      if(handle->IsContentCached()){
-        const Image& subImage = handle->GetCachedSpriteContentsGrayscale();
-        DrawSubImage(baseImage, subImage, spriteBox, overlayOffset);
-      }else{
-        const Image& subImage = handle->GetSpriteContentsGrayscale();
-        DrawSubImage(baseImage, subImage, spriteBox, overlayOffset);
+          if((spriteBox.renderConfig.hue == 0) &&
+             (spriteBox.renderConfig.saturation == 0)){
+            // Render the sprite with procedural face hue/saturation
+            // TODO: Kevin K. Copy is happening here due to way we can resize image handles with cached data
+            // do something better
+            auto hue = _faceHSImageHandle->GetHue();
+            auto sat = _faceHSImageHandle->GetSaturation();
+            hsImageHandle = std::make_shared<Vision::HueSatWrapper>(hue,
+                                                                     sat,
+                                                                     widthAndHeight);
+          }else{
+            hsImageHandle = std::make_shared<Vision::HueSatWrapper>(spriteBox.renderConfig.hue,
+                                                                     spriteBox.renderConfig.saturation,
+                                                                     widthAndHeight);
+          }
+          
+          // Render the sprite - use the cached RGBA image if possible
+          if(handle->IsContentCached(hsImageHandle).rgba){
+            const ImageRGBA& subImage =handle->GetCachedSpriteContentsRGBA(hsImageHandle);
+            DrawSubImage(baseImage, subImage, spriteBox, overlayOffset);
+          }else{
+            const ImageRGBA& subImage = handle->GetSpriteContentsRGBA(hsImageHandle);
+            DrawSubImage(baseImage, subImage, spriteBox, overlayOffset);
+          }
+          break;
+        }
       }
     }
   };

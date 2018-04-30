@@ -14,8 +14,10 @@
 
 #include "coretech/vision/shared/spriteCache/spriteWrapper.h"
 
+#include "coretech/vision/engine/image_impl.h"
 #include "coretech/vision/engine/image.h"
 #include "util/cladHelpers/cladEnumToStringMap.h"
+#include "util/helpers/templateHelpers.h"
 
 namespace Anki {
 namespace Vision {
@@ -24,8 +26,6 @@ namespace Vision {
 SpriteWrapper::SpriteWrapper(const Util::CladEnumToStringMap<SpriteName>* spriteMap,
                              SpriteName spriteName)
 : _fullSpritePath(spriteMap->GetValue(spriteName))
-, _isGrayscaleSpriteSet(false)
-, _spriteIsCached(false)
 {
 }
 
@@ -33,8 +33,6 @@ SpriteWrapper::SpriteWrapper(const Util::CladEnumToStringMap<SpriteName>* sprite
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SpriteWrapper::SpriteWrapper(const std::string& fullSpritePath)
 : _fullSpritePath(fullSpritePath)
-, _isGrayscaleSpriteSet(false)
-, _spriteIsCached(false)
 {
   
 }
@@ -42,8 +40,6 @@ SpriteWrapper::SpriteWrapper(const std::string& fullSpritePath)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SpriteWrapper::SpriteWrapper(ImageRGBA* sprite)
-: _isGrayscaleSpriteSet(false)
-, _spriteIsCached(true)
 {
   _spriteRGBA.reset(sprite);
 }
@@ -51,8 +47,6 @@ SpriteWrapper::SpriteWrapper(ImageRGBA* sprite)
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SpriteWrapper::SpriteWrapper(Image* sprite)
-: _isGrayscaleSpriteSet(true)
-, _spriteIsCached(true)
 {
   _spriteGrayscale.reset(sprite);
 }
@@ -66,52 +60,86 @@ SpriteWrapper::~SpriteWrapper()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ImageRGBA SpriteWrapper::GetSpriteContentsRGBA()
+ISpriteWrapper::ImgTypeCacheSpec SpriteWrapper::IsContentCached(const HSImageHandle& hsImage) const
 {
-  if(_spriteIsCached){
-    if(_isGrayscaleSpriteSet){
-      ImageRGBA outImage;
-      outImage.SetFromGray(*_spriteGrayscale);
-      return outImage;
-    }else{
-      return *_spriteRGBA;
+  ISpriteWrapper::ImgTypeCacheSpec whatsCached;
+
+  if(_spriteGrayscale != nullptr){
+    whatsCached.grayscale = true;
+  }
+
+  if(_spriteRGBA != nullptr){
+    if(hsImage->GetHSID() == _hsID){
+      whatsCached.rgba = true;
     }
-  }else{
+  }
+
+  return whatsCached;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ImageRGBA SpriteWrapper::GetSpriteContentsRGBA(const HSImageHandle& hsImage)
+{
+  // Return cahed RGBA if possible
+  if((_spriteRGBA != nullptr) &&
+     (hsImage->GetHSID() == _hsID)){
+    return *_spriteRGBA;
+  }
+  
+  // See if the value channel from the SpriteRGBA can be re-used
+  if(_spriteRGBA != nullptr){
     ImageRGBA outImage;
-    LoadSprite(outImage);
+    const Image grayImg = _spriteRGBA->ToGray();
+    ApplyHS(grayImg, hsImage, outImage);
     return outImage;
   }
+
+  // Otherwise, see if hue can be applied to cached grayscale image
+  if((hsImage->GetHSID() != 0) &&
+     (_spriteGrayscale != nullptr)){
+    ImageRGBA outImage;
+    ApplyHS(*_spriteGrayscale, hsImage, outImage);
+    return outImage;
+  }
+  
+
+  // Last resort - load from disk and apply hue/saturation directly
+  ImageRGBA outImage;
+  LoadSprite(outImage, hsImage);
+  return outImage;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Image SpriteWrapper::GetSpriteContentsGrayscale()
-{  
-  if(_spriteIsCached){
-    if(_isGrayscaleSpriteSet){
-      return *_spriteGrayscale;
-    }else{
-      Image outImage = _spriteRGBA->ToGray();
-      return outImage;
-    }
-  }else{
-    Image outImage;
-    LoadSprite(outImage);
+{ 
+  // Try returning cached memory
+  if(_spriteGrayscale != nullptr){
+    return *_spriteGrayscale;
+  }else if(_spriteRGBA != nullptr){
+    Image outImage = _spriteRGBA->ToGray();
     return outImage;
   }
 
+  // Otherwise load from disk
+  Image outImage;
+  LoadSprite(outImage);
+  return outImage;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const ImageRGBA& SpriteWrapper::GetCachedSpriteContentsRGBA()
+const ImageRGBA& SpriteWrapper::GetCachedSpriteContentsRGBA(const HSImageHandle& hsImage)
 {
-  if(!_spriteIsCached || _isGrayscaleSpriteSet){
+  if((_spriteRGBA == nullptr) ||
+     (hsImage->GetHSID() != _hsID)){
     PRINT_NAMED_ERROR("SpriteWrapper.GetCachedGetCachedSpriteContents.InvalidContentAccess",
                       "Access to %s was requested as a reference, but sprite is not cached",
                       _fullSpritePath.c_str());
-    const bool cacheGrayscale = false;
-    CacheSprite(cacheGrayscale);
+                      
+    ISpriteWrapper::ImgTypeCacheSpec typesToCache = {false, true};
+    CacheSprite(typesToCache, hsImage);
   }
   return *_spriteRGBA;
 }
@@ -120,12 +148,12 @@ const ImageRGBA& SpriteWrapper::GetCachedSpriteContentsRGBA()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const Image& SpriteWrapper::GetCachedSpriteContentsGrayscale()
 {
-  if(!_spriteIsCached || !_isGrayscaleSpriteSet){
+  if(_spriteGrayscale == nullptr){
     PRINT_NAMED_ERROR("SpriteWrapper.GetCachedGetCachedSpriteContents.InvalidContentAccess",
                       "Access to %s was requested as a reference, but sprite is not cached",
                       _fullSpritePath.c_str());
-    const bool cacheGrayscale = true;
-    CacheSprite(cacheGrayscale);
+    ISpriteWrapper::ImgTypeCacheSpec typesToCache = {true, false};
+    CacheSprite(typesToCache);
   }
   return *_spriteGrayscale;
 }
@@ -144,56 +172,56 @@ bool SpriteWrapper::GetFullSpritePath(std::string& fullSpritePath)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SpriteWrapper::CacheSprite(bool cacheGrayscale)
+void SpriteWrapper::CacheSprite(const ImgTypeCacheSpec& typesToCache, const HSImageHandle& hsImage)
 {
-  if(_spriteIsCached && (_isGrayscaleSpriteSet == cacheGrayscale)){
-    PRINT_NAMED_WARNING("SpriteWrapper.CacheSprite.SpriteAlreadyCached",
+  // Check to see if Grayscale is already cached
+  if(typesToCache.grayscale &&
+    _spriteGrayscale != nullptr){
+    PRINT_NAMED_WARNING("SpriteWrapper.CacheSprite.GrayscaleSpriteAlreadyCached",
+                        "CacheSprite called on %s which is already cached",
+                        _fullSpritePath.c_str());
+  }
+
+  // Check to see if RGBA is already cached
+  const bool isRGBACached = (_spriteRGBA != nullptr) && (hsImage->GetHSID() == _hsID);
+  if(typesToCache.rgba &&
+     isRGBACached){
+    PRINT_NAMED_WARNING("SpriteWrapper.CacheSprite.RGBASpriteAlreadyCached",
                         "CacheSprite called on %s which is already cached",
                         _fullSpritePath.c_str());
     return;
   }
 
-  if(_fullSpritePath.empty()){
-    PRINT_NAMED_ERROR("SpriteWrapper.CacheSprite.NoPathToCache",
-                      "CacheSprite called on sprite with empty path - can't load image");
-    // Check to make sure memory is allocated even if it's total garbage - better to
-    // display a grabage image than crash on a nullptr issue
-    if(cacheGrayscale && (_spriteGrayscale == nullptr)){
-      _spriteGrayscale.reset(new Image());
-    }else if(!cacheGrayscale && (_spriteRGBA == nullptr)){
-      _spriteRGBA.reset(new ImageRGBA());
-    }
-
-    return;
-  }
-
-  // Ensure we don't have extra allocated memory 
-  _spriteGrayscale.reset();
-  _spriteRGBA.reset();
-  
-  _spriteIsCached = true;
-
-  if(cacheGrayscale){
-    _isGrayscaleSpriteSet = true;
-    _spriteGrayscale.reset(new Image());
+  // Cache Grayscale sprite if appropriate
+  if(typesToCache.grayscale &&
+     _spriteGrayscale == nullptr){
     LoadSprite(*_spriteGrayscale);
-  }else{
-    _isGrayscaleSpriteSet = false;
-    _spriteRGBA.reset(new ImageRGBA());
-    LoadSprite(*_spriteRGBA);
   }
+
+  // Cache RGBA sprite if appropritae
+  if(typesToCache.rgba &&
+     !isRGBACached){
+    if((_spriteGrayscale != nullptr) &&
+       (hsImage->GetHSID() == 0)){
+      ApplyHS(*_spriteGrayscale, hsImage, *_spriteRGBA);
+    }else{
+      LoadSprite(*_spriteRGBA, hsImage);
+    }
+  } 
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpriteWrapper::ClearCachedSprite()
 {
-  if(!_spriteIsCached){
-    PRINT_NAMED_WARNING("SpriteWrapper.ClearCachedSprite.SpriteIsNotCached",
+  if((_spriteRGBA == nullptr) && 
+     (_spriteGrayscale == nullptr)){
+    PRINT_NAMED_WARNING("SpriteWrapper.ClearCachedSprite.NoSpritesCached",
                         "ClearCachedSprite called on %s which is not cached",
                         _fullSpritePath.c_str());
     return;
   }
+
   if(_fullSpritePath.empty()){
     PRINT_NAMED_WARNING("SpriteWrapper.ClearCachedSprite.NoSprite Path",
                         "ClearCachedSprite called on SpriteWrapper which stores image directly - sprite cannot be recovered");
@@ -201,7 +229,6 @@ void SpriteWrapper::ClearCachedSprite()
 
   _spriteRGBA.reset();
   _spriteGrayscale.reset();
-  _spriteIsCached = false;
 }
 
 
@@ -217,14 +244,67 @@ void SpriteWrapper::LoadSprite(Image& outImage) const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SpriteWrapper::LoadSprite(ImageRGBA& outImage) const
+void SpriteWrapper::LoadSprite(ImageRGBA& outImage, const HSImageHandle& hsImage) const
 {
-  auto res = outImage.Load(_fullSpritePath.c_str());
-  ANKI_VERIFY(RESULT_OK == res,
-              "CompositeImage.SpriteBoxImpl.Constructor.ColorLoadFailed",
-              "Failed to load sprite %s",
-              _fullSpritePath.c_str());
+  if(hsImage->GetHSID() != 0){
+    // Load the image as a grayscale image and merge it with a hue image
+    Image grayImg;
+    grayImg.Load(_fullSpritePath.c_str());
+    ApplyHS(grayImg, hsImage, outImage);
+  }else{
+    // Load the image in as an RGB directly 
+    auto res = outImage.Load(_fullSpritePath.c_str());
+    ANKI_VERIFY(RESULT_OK == res,
+                "CompositeImage.SpriteBoxImpl.Constructor.ColorLoadFailed",
+                "Failed to load sprite %s",
+                _fullSpritePath.c_str());
+  }
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpriteWrapper::ApplyHS(const Image& grayImg, const HSImageHandle& hsImage, ImageRGBA& outImg) const
+{
+  std::pair<uint32_t, uint32_t> imageSize = {grayImg.GetNumCols(), grayImg.GetNumRows()};
+  Vision::Image* hueImage = nullptr;
+  Vision::Image* saturationImage = nullptr;
+  bool memoryAllocated = false;
+
+  if(hsImage->AreImagesCached()){
+    hsImage->GetCachedImages(hueImage, saturationImage, imageSize);
+  }else{
+    hsImage->AllocateImages(hueImage, saturationImage, imageSize);
+    memoryAllocated = true;
+  }
+
+  // Create an HSV image from the gray image, replacing the 'hue' channel 
+  // with the specified value
+  const std::vector<cv::Mat> channels {
+    hueImage->get_CvMat_(),
+    saturationImage->get_CvMat_(),
+    grayImg.get_CvMat_()
+  };
+  ImageRGB imageHSV;
+  cv::merge(channels, imageHSV.get_CvMat_());
+  ImageRGB565 im565;
+  imageHSV.ConvertHSV2RGB565(im565);
+  const bool dimensionsMatch = (outImg.GetNumRows() == grayImg.GetNumRows()) &&
+                               (outImg.GetNumCols() == grayImg.GetNumCols());
+  if(!dimensionsMatch){
+    PRINT_NAMED_INFO("SpriteWrapper.ApplyHS.AllocatingNewRGBAImage", 
+                     "Existing dimensions (%d,%d) did not match grayscale dimensions (%d,%d)",
+                     outImg.GetNumCols(), outImg.GetNumRows(),
+                     grayImg.GetNumCols(),  grayImg.GetNumRows());
+    outImg = ImageRGBA(grayImg.GetNumRows(), grayImg.GetNumCols());
+  }
+  outImg.SetFromRGB565(im565);
+
+  if(memoryAllocated){
+    Util::SafeDelete(hueImage);
+    Util::SafeDelete(saturationImage);
+  }
+}
+
 
 } // namespace Vision
 } // namespace Anki

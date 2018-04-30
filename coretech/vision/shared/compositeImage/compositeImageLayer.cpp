@@ -42,14 +42,22 @@ CompositeImageLayer::CompositeImageLayer(const Json::Value& layoutSpec)
 
   // Load in the sprite boxes from the layout
   for(auto& entry: layoutSpec[kSpriteBoxLayoutKey]){
-    const std::string sbString = JsonTools::ParseString(entry, kSpriteBoxNameKey, templateDebugStr);
     const int x                = JsonTools::ParseInt32(entry,  kCornerXKey,       templateDebugStr);
     const int y                = JsonTools::ParseInt32(entry,  kCornerYKey,       templateDebugStr);
     const int width            = JsonTools::ParseInt32(entry,  kWidthKey,         templateDebugStr);
     const int height           = JsonTools::ParseInt32(entry,  kHeightKey,        templateDebugStr);
-    
+
+    SpriteRenderConfig renderConfig;
+    JsonTools::GetValueOptional(entry,  kHueKey,        renderConfig.hue);
+    JsonTools::GetValueOptional(entry,  kSaturationKey,  renderConfig.saturation);
+
+    const std::string renderString = JsonTools::ParseString(entry, kRenderMethodKey, templateDebugStr);
+    renderConfig.renderMethod = SpriteRenderMethodFromString(renderString);
+
+    const std::string sbString = JsonTools::ParseString(entry, kSpriteBoxNameKey, templateDebugStr);
     SpriteBoxName sbName = SpriteBoxNameFromString(sbString);
-    _layoutMap.emplace(std::make_pair(sbName, SpriteBox(sbName, Point2i(x, y), width, height)));
+    
+    _layoutMap.emplace(std::make_pair(sbName, SpriteBox(sbName, renderConfig, Point2i(x, y), width, height)));
   }
 }
 
@@ -88,7 +96,11 @@ bool CompositeImageLayer::GetSpriteSequence(SpriteBoxName sbName, Vision::Sprite
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CompositeImageLayer::AddToLayout(SpriteBoxName sbName, const SpriteBox& spriteBox)
 {
-  _layoutMap.emplace(sbName, spriteBox);
+  auto resultPair = _layoutMap.emplace(sbName, spriteBox);
+  // If map entry already exists, just update existing iterator
+  if(!resultPair.second){
+    resultPair.first->second = spriteBox;
+  }  
 }
 
 
@@ -163,6 +175,7 @@ SerializedSpriteBox CompositeImageLayer::SpriteBox::Serialize() const
   serialized.width    = width;
   serialized.height   = height;
   serialized.name     = spriteBoxName;
+  serialized.renderConfig = renderConfig;
 
   return serialized;
 }

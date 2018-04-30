@@ -49,19 +49,26 @@ public:
   virtual ~SpriteCache();
 
   const Vision::SpritePathMap* GetSpritePathMap(){ return _spriteMap;}  
-  SpriteHandle GetSpriteHandle(SpriteName spriteName, const std::set<CacheSpec>& cacheSpecs = {});
-  SpriteHandle GetSpriteHandle(const std::string& fullSpritePath, const std::set<CacheSpec>& cacheSpecs = {});
+  SpriteHandle GetSpriteHandle(SpriteName spriteName, 
+                               const HSImageHandle& hueAndSaturation = {}, 
+                               const std::set<CacheSpec>& cacheSpecs = {});
+  SpriteHandle GetSpriteHandle(const std::string& fullSpritePath, 
+                               const HSImageHandle& hueAndSaturation = {}, 
+                               const std::set<CacheSpec>& cacheSpecs = {});
 
 private:
   using InternalHandle = std::shared_ptr<SpriteWrapper>;
-  std::mutex _spriteNameMutex;
-  std::mutex _pathMutex;
-
   const Vision::SpritePathMap* _spriteMap;
-  std::unordered_map<SpriteName, InternalHandle,  Util::EnumHasher> _wrapperMap;
-  std::unordered_map<std::string, InternalHandle> _filePathMap;
+  std::mutex _hueSaturationMapMutex;
 
+  struct HandleMaps{
+    std::unordered_map<SpriteName, InternalHandle,  Util::EnumHasher> _wrapperMap;
+    std::unordered_map<std::string, InternalHandle> _filePathMap;
+  };
 
+  std::unordered_map<uint16_t, HandleMaps> _hueSaturationMap;
+
+  HandleMaps& GetHandleMapForHue(const HSImageHandle& hueAndSaturation);
 };
 
 }; // namespace Vision

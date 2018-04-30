@@ -106,6 +106,14 @@ public:
                         AnimationCompleteCallback callback = nullptr,
                         const u32 actionTag = 0,
                         float timeout_sec = _kDefaultTimeout_sec);
+
+  // Tell animation process to render the specified animation
+  // to the Procedural_Eyes layer of the specified composite image
+  Result PlayCompositeAnimation(const std::string& animName,
+                                const Vision::CompositeImage& compositeImage, 
+                                u32 getFrameInterval_ms,
+                                u32 duration_ms,
+                                bool interruptRunning = true);
   
   bool IsPlayingAnimation() const { return _callbackMap.size() > 0; }
   

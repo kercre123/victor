@@ -18,6 +18,7 @@
 
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/image.h"
+#include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cannedAnimLib/cannedAnims/animation.h"
 #include "cannedAnimLib/baseTypes/track.h"
 #include "clad/types/keepFaceAliveParameters.h"
@@ -84,6 +85,8 @@ namespace Cozmo {
     void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageRGBChunk& msg);
     void Process_displayCompositeImageChunk(const RobotInterface::DisplayCompositeImageChunk& msg);
     void Process_updateCompositeImageAsset(const RobotInterface::UpdateCompositeImageAsset& msg);
+    void Process_playCompositeAnimation(const std::string& name, Tag tag);
+
 
     Result SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms);
     Result SetCompositeImage(Vision::CompositeImage* compImg, u32 getFrameInterval_ms, u32 duration_ms);
@@ -176,6 +179,13 @@ namespace Cozmo {
         
     // pass the started/stopped animation name to webviz
     void SendAnimationToWebViz( bool starting ) const;
+
+    // Copy the contents of the animation into the procedural animation
+    // while maintaining expected properties of the procedural anim
+    void CopyIntoProceduralAnimation(Animation* desiredAnim = nullptr);
+
+    void InsertFaceKeyframeIntoCompImg(const TrackLayerComponent::LayeredKeyFrames& layeredKeyFrames,
+                                       Vision::CompositeImage& image);
     
     const AnimContext* _context = nullptr;
     
@@ -187,10 +197,10 @@ namespace Cozmo {
 
     std::unique_ptr<TrackLayerComponent>  _trackLayerComponent;
     
-    void BufferFaceToSend(const ProceduralFace& procFace);
+    void GetStreamableFace(const ProceduralFace& procFace, Vision::ImageRGB565& outImage) const;
     void BufferFaceToSend(Vision::ImageRGB565& image);
 
-    void UpdateCaptureFace(Vision::ImageRGB565& faceImg565);
+    void UpdateCaptureFace(const Vision::ImageRGB565& faceImg565);
 
     // Used to stream _just_ the stuff left in the various layers (all procedural stuff)
     Result StreamLayers();

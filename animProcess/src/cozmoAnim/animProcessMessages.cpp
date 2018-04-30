@@ -213,6 +213,14 @@ void Process_updateCompositeImageAsset(const Anki::Cozmo::RobotInterface::Update
   _animStreamer->Process_updateCompositeImageAsset(msg);
 }
 
+void Process_playCompositeAnimation(const Anki::Cozmo::RobotInterface::PlayCompositeAnimation& msg)
+{
+  const std::string animName(msg.animName, msg.animName_length);
+  
+  _animStreamer->Process_playCompositeAnimation(animName, msg.tag);
+}
+
+
 void Process_enableKeepFaceAlive(const Anki::Cozmo::RobotInterface::EnableKeepFaceAlive& msg)
 {
   _animStreamer->EnableKeepFaceAlive(msg.enable, msg.disableTimeout_ms);

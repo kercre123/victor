@@ -74,6 +74,7 @@ public:
   
   void Clear();
 
+  void SetName(const std::string& name) { _name = name; }
   const std::string& GetName() const { return _name; }
   
   bool IsLive() const { return _isLive; }

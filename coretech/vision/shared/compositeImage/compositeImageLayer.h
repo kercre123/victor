@@ -35,6 +35,9 @@ namespace CompositeImageConfigKeys{
 static const char* kLayerNameKey       = "layerName";
 static const char* kSpriteBoxLayoutKey = "spriteBoxLayout";
 static const char* kSpriteBoxNameKey   = "spriteBoxName";
+static const char* kRenderMethodKey    = "spriteRenderMethod";
+static const char* kHueKey             = "renderHue";
+static const char* kSaturationKey      = "renderSaturation";
 static const char* kSpriteNameKey      = "spriteName";
 static const char* kCornerXKey         = "x";
 static const char* kCornerYKey         = "y";
@@ -91,22 +94,29 @@ private:
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 struct CompositeImageLayer::SpriteBox{
   SpriteBox(SpriteBoxName spriteBoxName,
+            SpriteRenderConfig renderConfig,
             const Point2i& topLeftCorner, 
             int width, int height)
   : spriteBoxName(spriteBoxName)
+  , renderConfig(renderConfig)
   , topLeftCorner(topLeftCorner)
   , width(width)
   , height(height){}
 
   SpriteBox(const SerializedSpriteBox& spriteBox)
   : spriteBoxName(spriteBox.name)
+  , renderConfig(spriteBox.renderConfig)
   , topLeftCorner(spriteBox.topLeftX, spriteBox.topLeftY)
   , width(spriteBox.width)
   , height(spriteBox.height){}
 
   SerializedSpriteBox Serialize() const;
 
-  SpriteBoxName spriteBoxName;
+  SpriteBoxName          spriteBoxName;
+  // When the render method is custom hue a hue/saturation value of 0,0 
+  // indicates that the sprite box should be rendered the color of the robot's eyes
+  SpriteRenderConfig     renderConfig;
+
   Point2i       topLeftCorner;
   int           width;
   int           height;

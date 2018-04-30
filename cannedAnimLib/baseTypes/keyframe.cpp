@@ -455,6 +455,13 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       }
       return true;
     }
+    
+    bool SpriteSequenceKeyFrame::ShouldRenderInEyeHue() const
+    {
+      // Composite images handle their own eye coloring
+      return (_compositeImage == nullptr) && _shouldRenderInEyeHue;
+    }
+
 
     void SpriteSequenceKeyFrame::AddFrameToRuntimeSequence(Vision::SpriteHandle spriteHandle)
     {
@@ -467,7 +474,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
                                                    Vision::CompositeImage* compImg, 
                                                    u32 getFrameInterval_ms)
     {
-      _compositeImage = std::make_unique<Vision::CompositeImage>(spriteCache);
+      Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
+      _compositeImage = std::make_unique<Vision::CompositeImage>(spriteCache, faceHueAndSaturation);
       _compositeImage.reset(compImg);
       _compositeImageGetFrameInterval_ms = getFrameInterval_ms;
     }
@@ -526,10 +534,9 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           ANKI_VERIFY(_compositeImageUpdated,
                       "SpriteSequenceKeyFrame.GetFaceImageHandle.CompositeImageUpdateIssue",
                       "Composite images only have on frame, but next frame is being requested via _nextFrameTime_ms");
-          // TODO: Kevin K - currently all of our composite images/sequences are grayscale
-          // eventually we'll want to inspect contents and colorize layers that are supposde to be eyes only
-          auto* img = new Vision::Image(_compositeImage->GetHeight(), _compositeImage->GetWidth());
-          img->FillWith(0);
+          auto* img = new Vision::ImageRGBA(_compositeImage->GetHeight(),
+                                            _compositeImage->GetWidth());
+          img->FillWith(Vision::PixelRGBA());
           _compositeImage->OverlayImageWithFrame(*img, _curFrame);
           handle = std::make_shared<Vision::SpriteWrapper>(img);
           ++_curFrame;

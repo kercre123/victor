@@ -422,6 +422,15 @@ message SetFaceSaturation
     float_32 saturation // [0,1]
 }
 
+// Play animation as part of a composite image
+// Image chunks are sent seperately
+message PlayCompositeAnimation
+{
+  uint_32 compositeImageID, // Link to composite image chunks
+  uint_8  tag,
+  string  animName,
+}
+
 message DisplayCompositeImageChunk
 {
   uint_32 compositeImageID, // Ensures chunks are for the same image
@@ -628,6 +637,7 @@ union EngineToRobot
   DisplayFaceImageGrayscaleChunk   displayFaceImageGrayscaleChunk      = 0x62,
   DisplayCompositeImageChunk       displayCompositeImageChunk          = 0x63,
   UpdateCompositeImageAsset        updateCompositeImageAsset           = 0x64,
+  PlayCompositeAnimation           playCompositeAnimation              = 0x65,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,

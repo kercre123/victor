@@ -292,7 +292,7 @@ namespace Cozmo {
     u32 GetFrameDuration_ms() const { return _frameDuration_ms; }
     
     void SetShouldRenderInEyeHue(bool shouldRenederInEyeHue) { _shouldRenderInEyeHue = shouldRenederInEyeHue;}
-    bool ShouldRenderInEyeHue() const { return _shouldRenderInEyeHue;}
+    bool ShouldRenderInEyeHue() const;
 
     void AddFrameToRuntimeSequence(Vision::SpriteHandle spriteHandle);
 
@@ -313,6 +313,10 @@ namespace Cozmo {
     void Reset() { _curFrame = 0; _currentTime_ms = 0; _nextFrameTime_ms = _frameDuration_ms; }
     
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
+    
+    // tmp exposure for procedural eye layer
+    bool HasCompositeImage() const { return _compositeImage != nullptr;}
+    Vision::CompositeImage& GetCompositeImage() { assert(_compositeImage != nullptr); return *_compositeImage;}
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;

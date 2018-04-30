@@ -43,31 +43,32 @@ public:
 
   virtual ~SpriteWrapper();
 
-  virtual bool IsContentCached() override { return _spriteIsCached;}
+  // Pair represents Grayscale/RGBA
+  virtual ImgTypeCacheSpec IsContentCached(const HSImageHandle& hsImage) const override;
 
-  virtual ImageRGBA GetSpriteContentsRGBA() override;
+  virtual ImageRGBA GetSpriteContentsRGBA(const HSImageHandle& hsImage) override;
   virtual Image GetSpriteContentsGrayscale() override;
-  virtual const ImageRGBA& GetCachedSpriteContentsRGBA() override;
+  virtual const ImageRGBA& GetCachedSpriteContentsRGBA(const HSImageHandle& hsImage) override;
   virtual const Image& GetCachedSpriteContentsGrayscale() override;
 
   virtual bool GetFullSpritePath(std::string& fullSpritePath) override;
 
-  // cacheGrayscale defines whether to load the sprite into memory as a grayscale
-  // or RGBA image
-  void CacheSprite(bool cacheGrayscale);
+  // cacheGrayscale defines what compbination of Grayscale/RGBA to load into memory
+  void CacheSprite(const ImgTypeCacheSpec& typesToCache = {false, false}, const HSImageHandle& hsImage = {});
   void ClearCachedSprite();
 
 private:
   void LoadSprite(Image& outImage) const;
-  void LoadSprite(ImageRGBA& outImage) const;
+  void LoadSprite(ImageRGBA& outImage, const HSImageHandle& hsImage) const;
+  void ApplyHS(const Image& grayImg, const HSImageHandle& hsImage, ImageRGBA& outImg) const;
 
   const std::string _fullSpritePath;
-  bool _isGrayscaleSpriteSet; 
+  // Keep track of what hue/satruation have been applied to the image if appropriate
+  uint16_t _hsID = 0;
 
   std::unique_ptr<ImageRGBA> _spriteRGBA;
   std::unique_ptr<Image> _spriteGrayscale;
 
-  bool _spriteIsCached;
 
 
 };

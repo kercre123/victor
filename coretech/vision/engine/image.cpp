@@ -368,6 +368,11 @@ namespace Vision {
   {
     
   }
+
+  Image::~Image()
+  {
+
+  }
   
   Image::Image(s32 nrows, s32 ncols)
   : ImageBase<u8>(nrows, ncols)

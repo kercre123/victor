@@ -35,12 +35,16 @@ SpriteCache::~SpriteCache()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SpriteHandle SpriteCache::GetSpriteHandle(SpriteName spriteName, const std::set<CacheSpec>& cacheSpecs)
+SpriteHandle SpriteCache::GetSpriteHandle(SpriteName spriteName, 
+                                          const HSImageHandle& hueAndSaturation, 
+                                          const std::set<CacheSpec>& cacheSpecs)
 {
-  std::lock_guard<std::mutex> guard(_spriteNameMutex);
+  std::lock_guard<std::mutex> guard(_hueSaturationMapMutex);
+
+  auto& wrapperMap = GetHandleMapForHue(hueAndSaturation)._wrapperMap;
   // See if handle can be returned from the cache
-  auto iter = _wrapperMap.find(spriteName);
-  if(iter != _wrapperMap.end()){
+  auto iter = wrapperMap.find(spriteName);
+  if(iter != wrapperMap.end()){
     return iter->second;
   }
 
@@ -48,23 +52,29 @@ SpriteHandle SpriteCache::GetSpriteHandle(SpriteName spriteName, const std::set<
   InternalHandle handle = std::make_shared<SpriteWrapper>(_spriteMap, spriteName);
 
   // Add it to the cache as appropriate
+  ISpriteWrapper::ImgTypeCacheSpec typesToCache;
   for(auto& spec : cacheSpecs){
-    const bool cacheGrayscale = (spec == CacheSpec::CacheGrayscaleIndefinitely);
-    handle->CacheSprite(cacheGrayscale);
-    _wrapperMap.emplace(spriteName, handle);
+    typesToCache.grayscale = (spec == CacheSpec::CacheGrayscaleIndefinitely);
+    typesToCache.rgba = (spec == CacheSpec::CacheRGBAIndefinitely);
   }
+  handle->CacheSprite(typesToCache, hueAndSaturation);
+  wrapperMap.emplace(spriteName, handle);
 
   return handle;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SpriteHandle SpriteCache::GetSpriteHandle(const std::string& fullSpritePath, const std::set<CacheSpec>& cacheSpecs)
+SpriteHandle SpriteCache::GetSpriteHandle(const std::string& fullSpritePath, 
+                                          const HSImageHandle& hueAndSaturation, 
+                                          const std::set<CacheSpec>& cacheSpecs)
 {
-  std::lock_guard<std::mutex> guard(_pathMutex);
+  std::lock_guard<std::mutex> guard(_hueSaturationMapMutex);
+
+  auto& filePathMap = GetHandleMapForHue(hueAndSaturation)._filePathMap;
   // See if handle can be returned from the cache
-  auto iter = _filePathMap.find(fullSpritePath);
-  if(iter != _filePathMap.end()){
+  auto iter = filePathMap.find(fullSpritePath);
+  if(iter != filePathMap.end()){
     return iter->second;
   }
 
@@ -72,16 +82,31 @@ SpriteHandle SpriteCache::GetSpriteHandle(const std::string& fullSpritePath, con
   InternalHandle handle = std::make_shared<SpriteWrapper>(fullSpritePath);
 
   // Add it to the cache as appropriate
-  for(const auto& spec : cacheSpecs){
-    const bool cacheGrayscale = (spec == CacheSpec::CacheGrayscaleIndefinitely);
-    handle->CacheSprite(cacheGrayscale);
-    _filePathMap.emplace(fullSpritePath, handle);
+  ISpriteWrapper::ImgTypeCacheSpec typesToCache;
+  for(auto& spec : cacheSpecs){
+    typesToCache.grayscale = (spec == CacheSpec::CacheGrayscaleIndefinitely);
+    typesToCache.rgba = (spec == CacheSpec::CacheRGBAIndefinitely);
   }
+  
+  handle->CacheSprite(typesToCache, hueAndSaturation);
+  filePathMap.emplace(fullSpritePath, handle);
 
   return handle;
 
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+auto SpriteCache::GetHandleMapForHue(const HSImageHandle& hueAndSaturation) -> HandleMaps&
+{
+  const uint16_t compressedKey = hueAndSaturation != nullptr ? hueAndSaturation->GetHSID() : 0;
+  auto iter = _hueSaturationMap.find(compressedKey);
+  if(iter == _hueSaturationMap.end()){
+    iter = _hueSaturationMap.emplace(compressedKey, HandleMaps()).first;
+  }
+
+  return iter->second;
+}
 
 
 } // namespace Vision

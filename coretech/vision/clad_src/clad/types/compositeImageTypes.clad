@@ -18,8 +18,16 @@ enum no_cpp_class uint_8 LayerName
   Layer_1,
   Layer_2,
   Layer_3,
-  Layer_4
 
+  // Layer which procedural keyframes will be rendered to
+  Procedural_Eyes,
+
+
+  Layer_4,
+  Layer_5,
+  Layer_6,
+  Layer_7,
+  Layer_8
 }
 
 // Names for SpriteBoxes
@@ -30,8 +38,27 @@ enum no_cpp_class uint_8 SpriteBoxName
   OnesLeftOfColon,
   Colon,
   TensRightOfColon,
-  OnesRightOfColon
+  OnesRightOfColon,
 
+  // Box for rendering animation keyframes into composite images
+  FaceKeyframe,
+
+}
+
+// Define how the contents of this sprite box should be rendered
+// RGBA - load the image off disk as an RGBA image and render it as is
+// CustomHue - load the image off disk as a Grayscale image and render it in the specified color
+enum uint_8 SpriteRenderMethod{
+  RGBA,
+  CustomHue
+}
+
+// Wrap render method and rgb color (represented as RGB565) for messaging
+structure SpriteRenderConfig{
+  uint_8 hue = 0,
+  uint_8 saturation = 0,
+  SpriteRenderMethod renderMethod,
+  uint_8 padding[1]
 }
 
 // Structures for serializing CompositeImages as clad
@@ -41,8 +68,9 @@ structure SerializedSpriteBox
   int_16 topLeftY,
   int_16 width,
   int_16 height,
+  SpriteRenderConfig renderConfig,
   SpriteBoxName name,
-  uint_8 padding[3],
+  uint_8 padding[3]
 }
 
 // Structures for serializing CompositeImages as clad

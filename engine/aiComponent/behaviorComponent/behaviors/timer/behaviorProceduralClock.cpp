@@ -13,6 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 
+#include "cannedAnimLib/proceduralFace/proceduralFace.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -98,7 +99,9 @@ void BehaviorProceduralClock::InitBehavior()
 {
   // Setup the composite image
   auto& spriteCacheComp = GetBEI().GetComponentWrapper(BEIComponentID::SpriteCache).GetValue<SpriteCacheComponent>();
-  _instanceParams.compImg = std::make_unique<Vision::CompositeImage>(spriteCacheComp.GetSpriteCache(), 
+  Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
+  _instanceParams.compImg = std::make_unique<Vision::CompositeImage>(spriteCacheComp.GetSpriteCache(),
+                                                                     faceHueAndSaturation,
                                                                      _instanceParams.layout, 
                                                                      FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
 
@@ -256,6 +259,7 @@ void BehaviorProceduralClock::BehaviorUpdate()
     }
   }
   
+  
   using namespace Vision;
 
   CompositeImageLayer* digitLayer = _instanceParams.compImg->GetLayerByName(LayerName::Layer_4);
@@ -268,7 +272,10 @@ void BehaviorProceduralClock::BehaviorUpdate()
 
   if(!_lifetimeParams.hasBaseImageBeenSent){
     // Send the base image over the wire
-    GetBEI().GetAnimationComponent().DisplayFaceImage(*(_instanceParams.compImg.get()), ANIM_TIME_STEP_MS, 0, true);
+    GetBEI().GetAnimationComponent().DisplayFaceImage(*(_instanceParams.compImg.get()), 
+                                                      ANIM_TIME_STEP_MS, 
+                                                      0, 
+                                                      true);
     _lifetimeParams.hasBaseImageBeenSent = true;
   }else{
     // Just update the composite image

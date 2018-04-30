@@ -38,14 +38,18 @@ class SpriteCache;
 class CompositeImage {
 public:
   using LayerMap = std::map<Vision::LayerName, CompositeImageLayer>;
-  CompositeImage(SpriteCache* spriteCache)
-  : _spriteCache(spriteCache){};
+  CompositeImage(SpriteCache* spriteCache,   
+                 ConstHSImageHandle faceHSImageHandle)
+  : _spriteCache(spriteCache)
+  , _faceHSImageHandle(faceHSImageHandle){};
   CompositeImage(SpriteCache* spriteCache,
+                 ConstHSImageHandle faceHSImageHandle,
                  const Json::Value& layersSpec,
                  s32 imageWidth = 0,
                  s32 imageHeight = 0);
 
   CompositeImage(SpriteCache* spriteCache,
+                 ConstHSImageHandle faceHSImageHandle,
                  const LayerMap&& layers,
                  s32 imageWidth = 0,
                  s32 imageHeight = 0);
@@ -88,12 +92,6 @@ public:
                              const u32 frameIdx = 0,
                              std::set<Vision::LayerName> layersToIgnore = {},
                              const Point2i& overlayOffset = {}) const;
-
-  void OverlayImageWithFrame(Image& baseImage,
-                             const u32 frameIdx = 0,
-                             std::set<Vision::LayerName> layersToIgnore = {},
-                             const Point2i& overlayOffset = {}) const;
-  
   
   // Returns the length of the longest subsequence
   uint GetFullLoopLength();
@@ -115,6 +113,10 @@ private:
                     const SpriteBox& spriteBox, const Point2i& overlayOffset) const;
 
   SpriteCache* _spriteCache;
+  // To allow sprite boxes to be rendered the color of the robot's eyes
+  // store references to the static face hue/saturation images internally
+  const ConstHSImageHandle _faceHSImageHandle;
+
   s32 _width = 0;
   s32 _height = 0;
   LayerMap  _layerMap;

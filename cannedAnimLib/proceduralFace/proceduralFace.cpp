@@ -16,7 +16,7 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/math/matrix_impl.h"
 #include "coretech/common/engine/math/point_impl.h"
-#include "util/console/consoleInterface.h"
+#include "coretech/vision/shared/hueSatWrapper.h"
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/helpers/templateHelpers.h"
 
@@ -25,7 +25,28 @@ namespace Cozmo {
   
 ProceduralFace* ProceduralFace::_resetData = nullptr;
 ProceduralFace::Value ProceduralFace::_hue = DefaultHue;
+
 ProceduralFace::Value ProceduralFace::_saturation = DefaultSaturation;
+Vision::Image ProceduralFace::_hueImage = Vision::Image(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, static_cast<u8>(_hue * std::numeric_limits<u8>::max()));
+Vision::Image ProceduralFace::_satImage = Vision::Image(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH, static_cast<u8>(_saturation * std::numeric_limits<u8>::max()));
+
+  
+// Set up hue and saturation console functions
+std::unique_ptr<Anki::Util::IConsoleFunction> ProceduralFace::_hueConsoleFunc = std::unique_ptr<Anki::Util::IConsoleFunction>(new Anki::Util::IConsoleFunction("ProcFace_Hue", HueConsoleFunction, "ProceduralFace", "float hue") );
+std::unique_ptr<Anki::Util::IConsoleFunction> ProceduralFace::_saturationConsoleFunc = std::unique_ptr<Anki::Util::IConsoleFunction>(new Anki::Util::IConsoleFunction("ProcFace_Saturation", SaturationConsoleFunction, "ProceduralFace", "float saturation") );
+
+
+void ProceduralFace::HueConsoleFunction(ConsoleFunctionContextRef context)
+{
+  const float hue = ConsoleArg_Get_Float(context, "hue");
+  ProceduralFace::SetHue(hue);
+}
+
+void ProceduralFace::SaturationConsoleFunction(ConsoleFunctionContextRef context)
+{
+  const float saturation = ConsoleArg_Get_Float(context, "saturation");
+  ProceduralFace::SetSaturation(saturation);
+}
 
 namespace {
 # define CONSOLE_GROUP "ProceduralFace"
@@ -110,12 +131,10 @@ void ProceduralFace::Reset()
     *this = *_resetData;
   }
 }
+
   
 ProceduralFace::ProceduralFace()
 {
-  static Anki::Util::ConsoleVar<Value> cvar_hue( _hue, "ProcFace_Hue", "ProceduralFace", 0.f, 1.f, false );
-  static Anki::Util::ConsoleVar<Value> cvar_saturation( _saturation, "ProcFace_Saturation", "ProceduralFace", 0.f, 1.f, false );
-
   for (std::underlying_type<Parameter>::type iParam=0; iParam < Util::EnumToUnderlying(Parameter::NumParameters); ++iParam)
   {
     _eyeParams[WhichEye::Left][iParam] = kEyeParamInfoLUT[iParam].Value().defaultValue;
@@ -681,6 +700,13 @@ void ProceduralFace::EnableClippingWarning(bool enable)
   } else {
     ClipWarnFcn = NoClipWarning;
   }
+}
+
+std::shared_ptr<Vision::HueSatWrapper> ProceduralFace::GetHueSatWrapper()
+{
+  static std::shared_ptr<Vision::HueSatWrapper> hsImg(
+    new Vision::HueSatWrapper(GetHueImagePtr(), GetSaturationImagePtr()));
+  return hsImg;
 }
     
 void ProceduralFace::InitScanlineDistorter(s32 maxAmount_pix, f32 noiseProb)

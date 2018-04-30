@@ -179,6 +179,7 @@ namespace Vision {
     
     // Create an empty image
     Image();
+    virtual ~Image();
     
     // Allocate a new image
     Image(s32 nrows, s32 ncols);
@@ -380,7 +381,7 @@ namespace Vision {
     ImageRGBA& SetFromRGB565(const ImageRGB565& rgb565, const u8 alpha = 255); // Set from given RGB565 image
 
     void DrawSubImage(const ImageRGBA& subImage, const Point2f& topLeftCorner, bool drawBlankPixels = true) { 
-      return ImageBase<PixelRGBA>::DrawSubImage<ImageRGBA>(subImage, topLeftCorner, Vision::PixelRGBA(), drawBlankPixels); 
+      return ImageBase<PixelRGBA>::DrawSubImage<ImageRGBA>(subImage, topLeftCorner, Vision::PixelRGBA(0,0,0,255), drawBlankPixels); 
     }
     ImageRGBA GetROI(Rectangle<s32>& roiRect) {
       return ImageBase<PixelRGBA>::GetROI<ImageRGBA>(roiRect);
