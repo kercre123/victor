@@ -468,7 +468,7 @@ void MicDataSystem::AudioSaveCallback(const std::string& dest)
 {
   if (_udpServer->HasClient())
   {
-    SendUdpMessage(CloudMic::Message::CreatedebugFile(CloudMic::Filename{"file" + dest}));
+    SendUdpMessage(CloudMic::Message::CreatedebugFile(CloudMic::Filename{dest}));
   }
 }
 
