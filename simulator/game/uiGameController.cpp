@@ -1139,6 +1139,7 @@ namespace Anki {
       ExternalInterface::TrackToObject m;
       m.objectID = objectID;
       m.headOnly = headOnly;
+      m.moveEyes = false;
       
       ExternalInterface::MessageGameToEngine message;
       message.Set_TrackToObject(m);
@@ -1150,6 +1151,7 @@ namespace Anki {
       ExternalInterface::TrackToFace m;
       m.faceID = faceID;
       m.headOnly = headOnly;
+      m.moveEyes = false;
       
       ExternalInterface::MessageGameToEngine message;
       message.Set_TrackToFace(m);

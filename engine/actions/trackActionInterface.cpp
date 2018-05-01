@@ -215,8 +215,7 @@ void ITrackAction::SetMaxHeadAngle(const Radians& maxHeadAngle_rads)
 void ITrackAction::SetMoveEyes(bool moveEyes)
 {
   DEV_ASSERT(!HasStarted(), "ITrackAction.SetMoveEyes.ActionAlreadyStarted");
-  // Note: PROCEDURAL_EYE_LEADING is a compile-time option to enable/disable eye leading
-  _moveEyes = (moveEyes && PROCEDURAL_EYE_LEADING);
+  _moveEyes = moveEyes;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -551,13 +550,14 @@ ActionResult ITrackAction::CheckIfDone()
         if(std::abs(relPanAngle) > _minPanAngleForSound) {
           angleLargeEnoughForSound = true;
         }
-        
-        if(_moveEyes) {
-          // Compute horizontal eye movement
-          // Note: assuming screen is about the same x distance from the neck joint as the head cam
-          const f32 x_mm = std::tan(relPanAngle) * HEAD_CAM_POSITION[0];
-          eyeShiftX = x_mm * (static_cast<f32>(GetRobot().GetDisplayWidthInPixels()/2) / SCREEN_SIZE[0]);
-        }
+      }
+      
+      
+      if(_moveEyes) {
+        // Compute horizontal eye movement
+        // Note: assuming screen is about the same x distance from the neck joint as the head cam
+        const f32 x_mm = std::tan(relPanAngle) * HEAD_CAM_POSITION[0];
+        eyeShiftX = x_mm * (static_cast<f32>(GetRobot().GetDisplayWidthInPixels()/2) / SCREEN_SIZE[0]);
       }
       
       // Play sound if it's time and either angle was big enough
@@ -652,6 +652,8 @@ ActionResult ITrackAction::CheckIfDone()
           PRINT_CH_INFO(kLogChannelName, "ITrackAction.CheckIfDone.Timeout",
                         "No tracking angle update received in %f seconds, returning done.",
                         _updateTimeout_sec);
+          // Remove eye shift
+          GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName, BS_TIME_STEP_MS);
           
           // If no stop criteria are set, we consider this a success
           // If we have stop criteria, then this is a timeout
@@ -667,11 +669,11 @@ ActionResult ITrackAction::CheckIfDone()
                          "Current t=%f, LastUpdate t=%f, Timeout=%f",
                          currentTime, _lastUpdateTime, _updateTimeout_sec);
         }
+      } else {
+        // Remove eye shift once "locked on" target
+        GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName, BS_TIME_STEP_MS);
       }
       
-      // Remove eye shift once "locked on" target
-      GetRobot().GetAnimationComponent().RemoveEyeShift(_kEyeShiftLayerName, BS_TIME_STEP_MS);
-
       break;
     }
       

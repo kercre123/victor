@@ -111,6 +111,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorConfirmObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToTouchPetting.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToUnclaimedIntent.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorTrackCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/weather/behaviorDisplayWeather.h"
 
 #include "clad/types/behaviorComponent/behaviorTypes.h"
@@ -558,6 +559,18 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::LeaveAMessage:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorLeaveAMessage(config));
+      break;
+    }
+    
+    case BehaviorClass::PlaybackMessage:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPlaybackMessage(config));
+      break;
+    }
+    
     case BehaviorClass::ObservingLookAtFaces:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorObservingLookAtFaces(config));
@@ -731,16 +744,10 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToUnclaimedIntent(config));
       break;
     }
-
-    case BehaviorClass::LeaveAMessage:
+    
+    case BehaviorClass::TrackCube:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorLeaveAMessage(config));
-      break;
-    }
-
-    case BehaviorClass::PlaybackMessage:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorPlaybackMessage(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorTrackCube(config));
       break;
     }
     

@@ -149,6 +149,7 @@ enum uint_8 BehaviorID {
   InspectCube,
   InteractWithFaces,
   Keepaway,
+  LeaveAMessage,
   LookInPlaceHeadUp,
 
   // victorBehaviorTree/highLevelDelegates/meetVictor
@@ -184,6 +185,9 @@ enum uint_8 BehaviorID {
   PopAWheelie,
   RollCubeVoiceCommand,
 
+  // victorBehaviorTree/highLevelDelegates
+  PlaybackMessage,
+
   // victorBehaviorTree/highLevelDelegates/pounceWithProx
   SingletonPounceApproachWithProx,
   SingletonPounceDispatcher,
@@ -207,12 +211,13 @@ enum uint_8 BehaviorID {
   Socialize,
   SocializeGame,
 
+  // victorBehaviorTree/highLevelDelegates
+  TrackCube,
+
   // victorBehaviorTree/highLevelDelegates/voiceCommands
   DoATrickVoiceCommand,
   FistBumpVoiceCommand,
   KeepawayVoiceCommand,
-  LeaveAMessage,
-  PlaybackMessage,
 
   // victorBehaviorTree
   ReactToTouchPetting,

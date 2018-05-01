@@ -284,7 +284,8 @@ message SetLiftHeight {
 //   Use objectID = u32_MAX to disable tracking.
 message TrackToFace {
     uint_32 faceID,
-    bool    headOnly
+    bool    headOnly,
+    bool    moveEyes,
 }
 
 // TrackToObject
@@ -294,7 +295,8 @@ message TrackToFace {
 //   Use objectID = u32_MAX to disable tracking.
 message TrackToObject {
     uint_32 objectID,
-    bool    headOnly
+    bool    headOnly,
+    bool    moveEyes,
 }
 
 // TrackToLaserPoint

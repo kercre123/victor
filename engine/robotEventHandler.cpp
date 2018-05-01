@@ -673,7 +673,7 @@ template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TrackToFace& trackFace)
 {
   TrackFaceAction* action = new TrackFaceAction(trackFace.faceID);
-  action->SetMoveEyes(true);
+  action->SetMoveEyes(trackFace.moveEyes);
 
   // TODO: Support body-only mode
   if(trackFace.headOnly) {
@@ -697,7 +697,7 @@ template<>
 IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::TrackToObject& trackObject)
 {
   TrackObjectAction* action = new TrackObjectAction(trackObject.objectID);
-  action->SetMoveEyes(true);
+  action->SetMoveEyes(trackObject.moveEyes);
 
   // TODO: Support body-only mode
   if(trackObject.headOnly) {

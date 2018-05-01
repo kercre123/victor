@@ -108,8 +108,6 @@ enum uint_8 BehaviorClass {
   FistBump,
   InspectCube,
   Keepaway,
-  LeaveAMessage,
-  PlaybackMessage,
   PounceWithProx,
   PuzzleMaze,
   TrackLaser,
@@ -117,6 +115,10 @@ enum uint_8 BehaviorClass {
   // meetCozmo
   EnrollFace,
   RespondToRenameFace,
+
+  // messaging
+  LeaveAMessage,
+  PlaybackMessage,
 
   // observing
   ObservingLookAtFaces,
@@ -158,6 +160,7 @@ enum uint_8 BehaviorClass {
   ConfirmObject,
   ReactToTouchPetting,
   ReactToUnclaimedIntent,
+  TrackCube,
 
   // weather
   DisplayWeather,

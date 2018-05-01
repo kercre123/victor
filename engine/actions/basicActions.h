@@ -215,7 +215,7 @@ namespace Cozmo {
       void SetMaxTiltSpeed(f32 maxSpeed_radPerSec);
       void SetTiltAccel(f32 accel_radPerSec2);
       void SetTiltTolerance(const Radians& angleTol_rad);
-      void SetMoveEyes(bool enable) { _moveEyes = enable; }
+      void SetMoveEyes(bool enable) { _moveEyes = (enable && PROCEDURAL_EYE_LEADING); }
       
       Radians GetBodyPanAngleTolerance() const { return _panAngleTol; }
       Radians GetHeadTiltAngleTolerance() const { return _tiltAngleTol; }
