@@ -25,6 +25,10 @@ message SyncTimeAck
 {
 }
 
+message PrepForShutdown
+{
+}
+
 message RobotPoked
 {
 }
@@ -110,7 +114,7 @@ union RobotToEngine {
 
   // Init / Debug
   SyncTimeAck                syncTimeAck            = 0xB0,
-  //  FREE SLOT!!!                                  = 0xB1,
+  PrepForShutdown            prepForShutdown        = 0xB1,
   MotorActionAck             motorActionAck         = 0xB2,
 
   // Motors / Driving
