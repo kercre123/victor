@@ -274,9 +274,7 @@ int cccRlg(uint8_t idx, char *buf, int buf_max_size)
 {
   CCC_CMD_DELAY();
   char b[22]; const int bz = sizeof(b);
-  //const int opts = CCC_CMD_OPTS; // & ~(CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER);
-        #warning "DEBUG" 
-        const int opts = CCC_CMD_OPTS & ~(CMD_OPTS_EXCEPTION_EN);
+  const int opts = CCC_CMD_OPTS; // | CMD_OPTS_LOG_RAW_RX_DBG) & ~(CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER);
   cmd_dbuf_t dbuf = { buf, buf_max_size, 0 };
   cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"rlg %02x 00 00 00 00 00", idx), -1000, opts, 0, (dbuf.p && dbuf.size>0 ? &dbuf : 0) );
   
