@@ -24,7 +24,7 @@ static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 200;  // 1s
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(3.6);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(4.0), ~0);
 
-static const int POWER_DOWN_TIME = 200 * 6;   // Shutdown
+static const int POWER_DOWN_TIME = 200 * 4.5;   // Shutdown
 static const int POWER_WIPE_TIME = 200 * 12;  // Enter recovery mode
 static const int MINIMUM_VEXT_TIME = 20; // 0.1s
 static const int CHARGE_ENABLE_DELAY = 50; // 0.25s
