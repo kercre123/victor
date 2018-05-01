@@ -1,6 +1,25 @@
 
 include(anki_build_source_list)
 
+set(ANKI_GO_VERSION 1.10.2)
+
+# Check correct Go version
+execute_process(COMMAND ${GOROOT}/bin/go version
+  OUTPUT_VARIABLE GO_VERSION_OUTPUT)
+string(REGEX MATCH "[0-9]+\.[0-9]+(\.[0-9]+)?"
+  GO_VERSION_MATCH ${GO_VERSION_OUTPUT})
+if (NOT ${GO_VERSION_MATCH} STREQUAL ${ANKI_GO_VERSION})
+  message(FATAL_ERROR "Detected version of Go is ${GO_VERSION_MATCH}, but we want ${ANKI_GO_VERSION}\n"
+    "This should be set correctly by build scripts, maybe you need to reconfigure (with -f)?")
+endif()
+
+# Write Go version to file to use as dependency (only updates if version has changed)
+set(GO_VERSION_FILE ${CMAKE_BINARY_DIR}/goversion)
+set(__GO_VERSION_TMP ${CMAKE_BINARY_DIR}/goversion_tmp)
+file(WRITE ${__GO_VERSION_TMP} ${ANKI_GO_VERSION})
+execute_process(COMMAND cmake -E copy_if_different ${__GO_VERSION_TMP} ${GO_VERSION_FILE})
+file(REMOVE ${__GO_VERSION_TMP})
+
 # internal use - set up build environment for go, based on platform
 # vars that should already be set up: __gobuild_out
 macro(__anki_setup_go_environment target_basedir)
@@ -15,7 +34,6 @@ macro(__anki_setup_go_environment target_basedir)
 
   list(GET __gobuild_out 0 __gobuild_primary_out)
 
-  list(APPEND __go_build_flags "-i")
   list(APPEND __go_build_flags "-o" "${__gobuild_primary_out}")
 
   if (ANDROID)
@@ -33,7 +51,7 @@ endmacro()
 
 # internal use - execute go build with the environment
 # set up in `__go_compile_env`, `__go_build_flags`, and `__go_deps`
-macro(__anki_run_go_build target_name)
+macro(__anki_run_go_build target_name extra_deps)
 
   set(__targ_includes $<TARGET_PROPERTY:${target_name}_fake_dep,INCLUDE_DIRECTORIES>)
   set(__include_env "CGO_CPPFLAGS=$<$<BOOL:${__targ_includes}>:-I $<JOIN:${__targ_includes}, -I >>")
@@ -48,7 +66,7 @@ macro(__anki_run_go_build target_name)
     OUTPUT ${__gobuild_out}
     COMMAND ${CMAKE_COMMAND} -E env ${__go_compile_env} ${__include_env} ${__link_env}
                              ${GOROOT}/bin/go build ${__go_build_flags} ${__ldflags_str} ${__go_build_ldflags} ${__gobuild_basedir}
-    DEPENDS ${SRCS} ${CLAD_GO_GEN_SRCS} ${_ab_PLATFORM_SRCS} ${__go_deps}
+    DEPENDS ${SRCS} ${_ab_PLATFORM_SRCS} ${__go_deps} ${extra_deps} ${GO_VERSION_FILE}
   )
 endmacro()
 
@@ -95,7 +113,7 @@ endmacro()
 # from the library) location will be stored
 # usage: anki_build_go_c_library(mytarget generated_header_variable "path/to/source/directory"
 #                                "path/to/GOPATH/directory" ${ANKI_SRCLIST_DIR})
-macro(anki_build_go_c_library target_name gensrc_var srclist_dir)
+macro(anki_build_go_c_library target_name gensrc_var srclist_dir extra_deps)
   anki_build_absolute_source_list(${target_name} ${srclist_dir})
 
   # set the locations of the .a and .h files that will be generated
@@ -123,7 +141,7 @@ macro(anki_build_go_c_library target_name gensrc_var srclist_dir)
 
   set_target_properties(${target_name} PROPERTIES GO_CLINK_FOLDERS "")
 
-  __anki_run_go_build(${target_name})
+  __anki_run_go_build(${target_name} "${extra_deps}")
 
   # export the location of the generated C header:
   set(${gensrc_var} ${__gobuild_header})
@@ -133,7 +151,7 @@ endmacro()
 # build a go executable
 # usage: anki_build_go_executable(mytarget "path/to/source/directory" "path/to/GOPATH/directory" ${ANKI_SRCLIST_DIR})
 
-macro(anki_build_go_executable target_name srclist_dir)
+macro(anki_build_go_executable target_name srclist_dir extra_deps)
   anki_build_absolute_source_list(${target_name} ${srclist_dir})
 
   set(__gobuild_out "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${target_name}")
@@ -159,7 +177,7 @@ macro(anki_build_go_executable target_name srclist_dir)
                                                   EXCLUDE_FROM_ALL FALSE)
 
   __anki_setup_go_environment(${_ab_GO_DIR})
-  __anki_run_go_build(${target_name})
+  __anki_run_go_build(${target_name} "${extra_deps}")
 
 
 endmacro()
