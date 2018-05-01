@@ -611,7 +611,7 @@ robot_bsv_t* spineBsv(void)
   return retval;
 }
 
-void spinePwr(uint8_t st) {
+void spinePwr(rcom_pwr_st_e st) {
   //XXX: implement me
   throw ERROR_EMPTY_COMMAND;
 }
@@ -656,9 +656,9 @@ robot_bsv_t* rcomBsv() {
     return spineBsv();
 }
 
-void rcomPwr(uint8_t st) { 
+void rcomPwr(rcom_pwr_st_e st) { 
   if( !rcom_target_spine_nCCC )
-    ccc_IdxVal32_(st,  0,   "pwr", 0);
+    ccc_IdxVal32_((int)st,  0,   "pwr", 0);
   else 
     spinePwr(st);
 }

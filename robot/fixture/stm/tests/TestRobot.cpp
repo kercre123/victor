@@ -257,6 +257,7 @@ static struct {
   int           bat_mv, bat_raw;
 } flexnfo;
 
+int cleanup_preserve_vext = 0;
 bool TestRobotDetect(void)
 {
   //on test cleanup/exit, let charger kick back in so we can properly detect removal
@@ -264,6 +265,7 @@ bool TestRobotDetect(void)
   
   Board::powerOn(PWR_VEXT, chargeDelay);
   //Board::powerOn(PWR_VBAT); //XXX DEBUG
+  cleanup_preserve_vext = 0;
   
   int i_ma = Meter::getCurrentMa(PWR_VEXT,0);
   
@@ -296,7 +298,11 @@ void TestRobotCleanup(void)
   detect_mv = 0;
   memset( &flexnfo, 0, sizeof(flexnfo) );
   
-  Board::powerOff(PWR_VEXT);
+  if( !cleanup_preserve_vext )
+    Board::powerOff(PWR_VEXT);
+  //else ConsolePrintf("cleanup_preserve_vext\n"); //DEBUG
+  cleanup_preserve_vext = 0;
+  
   Board::powerOff(PWR_VBAT);
   //ConsolePrintf("----DBG: i=%imA\n", Meter::getCurrentMa(PWR_VEXT,4) );
   DUT_UART::deinit(); //used by rcom/spine layers
@@ -541,6 +547,15 @@ void EmrUpdate(void)
   if( g_fixmode == FIXMODE_PACKOUT ) {
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 1 );
   }
+}
+
+void RobotPowerDown(void)
+{
+  ConsolePrintf("robot power down\n");
+  rcomPwr(RCOM_PWR_OFF);
+  
+  Contacts::powerOn(); //immdediately turn on power to prevent rebooting
+  cleanup_preserve_vext = 1; //leave power on for removal detection (no cleanup pwr cycle)
 }
 
 //-----------------------------------------------------------------------------
@@ -859,6 +874,7 @@ TestFunction* TestRobot0GetTests(void) {
     TestRobotSensors,
     //ChargeTest,
     RobotLogCollect,
+    RobotPowerDown,
     RobotFlexFlowPackoutReport,
     NULL,
   };
@@ -912,6 +928,7 @@ TestFunction* TestRobotPackoutGetTests(void) {
     ChargeTest,
     RobotLogCollect,
     EmrUpdate, //set test complete flags
+    RobotPowerDown,
     RobotFlexFlowPackoutReport,
     NULL,
   };

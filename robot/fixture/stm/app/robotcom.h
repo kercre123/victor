@@ -37,10 +37,10 @@ int   helperGetTempC(int zone = DEFAULT_TEMP_ZONE);
 const int ccr_sr_cnt[12] = {0,2,4,2,2,2,2,4,2,1,1,4}; //number of CCC sensor fields per line for each type (internal:parsing & error checking)
 
 //FCC test modes
-#define RCOM_FCC_MODE_TX_CARRIER    0
-#define RCOM_FCC_MODE_TX_PACKETS    1
-#define RCOM_FCC_MODE_RX_POWER      2
-#define RCOM_FCC_MODE_RX_PACKETS    3
+//#define RCOM_FCC_MODE_TX_CARRIER    0
+//#define RCOM_FCC_MODE_TX_PACKETS    1
+//#define RCOM_FCC_MODE_RX_POWER      2
+//#define RCOM_FCC_MODE_RX_PACKETS    3
 
 //data conversion
 #define RCOM_BAT_RAW_TO_MV(raw)     (((raw)*2800)>>11)  /*robot_sr_t::bat.raw (adc) to millivolts*/
@@ -51,6 +51,12 @@ const int ccr_sr_cnt[12] = {0,2,4,2,2,2,2,4,2,1,1,4}; //number of CCC sensor fie
 #define RCOM_PRINT_LEVEL_CMD_RSP      1
 #define RCOM_PRINT_LEVEL_CMD          2
 #define RCOM_PRINT_LEVEL_NONE         3
+
+enum rcom_pwr_st_e {
+  RCOM_PWR_ON = 0,
+  RCOM_PWR_OFF = 1,
+  RCOM_PWR_OFF_IMMEDIATE = 2,
+};
 
 typedef struct {
   uint32_t hw_rev;
@@ -74,7 +80,7 @@ void          rcomSetTarget(bool spine_nCCC); //select charge contacts or spine 
 
 uint32_t      rcomEsn(); //read robot ESN (Head)
 robot_bsv_t*  rcomBsv(); //read body serial+version info
-void          rcomPwr(uint8_t st); //st={0,1} -> {on,off}
+void          rcomPwr(rcom_pwr_st_e st);
 void          rcomLed(uint8_t *leds, int printlvl = RCOM_PRINT_LEVEL_DEFAULT); //leds[12] {led0R,G,B,led1R,G,B...}
 robot_sr_t*   rcomMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, int printlvl = RCOM_PRINT_LEVEL_DEFAULT);
 robot_sr_t*   rcomGet(uint8_t NN, uint8_t sensor, int printlvl = RCOM_PRINT_LEVEL_DEFAULT); //NN = #drops (sr vals). returns &sensor[0] of [NN-1]
