@@ -38,10 +38,9 @@ public:
   }
   
 private:
-  // // TODO: These methods are examples for where the handlers should go.
-  // //       they should be removed once there are any real ones implemented.
-  // void HandleMeetVictor(Anki::Victor::ExternalComms::MeetVictor meetVictor);
-  // void HandleMeetVictor_MeetVictorRequest(float lwheel_speed_mmps, float rwheel_speed_mmps);
+  void HandleMotorControl(Anki::Cozmo::ExternalComms::MotorControl unionInstance);
+  void HandleMotorControl_DriveWheels(Anki::Cozmo::ExternalComms::DriveWheels sdkMessage);
+  void HandleMotorControl_DriveArc(Anki::Cozmo::ExternalComms::DriveArc sdkMessage);
 
   Signal::SmartHandle _onEngineMessageHandle;
   SendToWebsocketSignal _sendSignal;

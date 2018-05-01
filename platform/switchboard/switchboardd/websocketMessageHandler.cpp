@@ -32,24 +32,35 @@ WebsocketMessageHandler::WebsocketMessageHandler(std::shared_ptr<EngineMessaging
   // bind send to websocketServer
 }
 
-// // Note: example message_sender
-// void WebsocketMessageHandler::HandleMeetVictor_MeetVictorRequest(float lwheel_speed_mmps, float rwheel_speed_mmps) {
-//       Anki::Cozmo::ExternalInterface::DriveWheels dw;
-//       dw.lwheel_speed_mmps = lwheel_speed_mmps;
-//       dw.rwheel_speed_mmps = rwheel_speed_mmps;
-//       _engineMessaging->SendMessage(G2EMessage::CreateDriveWheels(std::move(dw)));
-// }
+void WebsocketMessageHandler::HandleMotorControl_DriveWheels( Anki::Cozmo::ExternalComms::DriveWheels sdkMessage ) {
+      Anki::Cozmo::ExternalInterface::DriveWheels engineMessage;
+      engineMessage.lwheel_speed_mmps = sdkMessage.lwheel_speed_mmps;
+      engineMessage.rwheel_speed_mmps = sdkMessage.rwheel_speed_mmps;
+      engineMessage.lwheel_accel_mmps2 = sdkMessage.lwheel_accel_mmps2;
+      engineMessage.rwheel_accel_mmps2 = sdkMessage.rwheel_accel_mmps2;
+      _engineMessaging->SendMessage(G2EMessage::CreateDriveWheels(std::move(engineMessage)));
+}
 
-// // Note: example handler
-// void WebsocketMessageHandler::HandleMeetVictor(Anki::Cozmo::ExternalComms::MeetVictor meetVictor) {
-//   switch(meetVictor.GetTag()) {
-//     case Anki::Cozmo::ExternalComms::MeetVictorTag::MeetVictorRequest:
-//       HandleMeetVictor_MeetVictorRequest(100, -100);
-//       break;
-//     default:
-//       return;
-//   }
-// }
+void WebsocketMessageHandler::HandleMotorControl_DriveArc( Anki::Cozmo::ExternalComms::DriveArc sdkMessage ) {
+      Anki::Cozmo::ExternalInterface::DriveArc engineMessage;
+      engineMessage.speed = sdkMessage.speed;
+      engineMessage.accel = sdkMessage.accel;
+      engineMessage.curvatureRadius_mm = sdkMessage.curvatureRadius_mm;
+      _engineMessaging->SendMessage(G2EMessage::CreateDriveArc(std::move(engineMessage)));
+}
+
+void WebsocketMessageHandler::HandleMotorControl(Anki::Cozmo::ExternalComms::MotorControl unionInstance) {
+  switch(unionInstance.GetTag()) {
+    case Anki::Cozmo::ExternalComms::MotorControlTag::DriveWheels:
+      HandleMotorControl_DriveWheels( unionInstance.Get_DriveWheels() );
+      break;
+    case Anki::Cozmo::ExternalComms::MotorControlTag::DriveArc:
+      HandleMotorControl_DriveArc( unionInstance.Get_DriveArc() );
+      break;
+    default:
+      return;
+  }
+}
 
 void WebsocketMessageHandler::Receive(uint8_t* buffer, size_t size) {
   if(size < 1) {
@@ -64,10 +75,9 @@ void WebsocketMessageHandler::Receive(uint8_t* buffer, size_t size) {
     Log::Write("WebsocketMessageHandler - Somehow our bytes didn't pack to the proper size.");
   }
   switch (extComms.GetTag()) {
-    // // Note: example case
-    // case ExtCommsMessageTag::MeetVictor:
-    //   HandleMeetVictor(extComms.Get_MeetVictor());
-    //   break;
+    case ExtCommsMessageTag::MotorControl:
+       HandleMotorControl(extComms.Get_MotorControl());
+       break;
     default:
       Log::Write("Unhandled external comms message tag: %d", extComms.GetTag());
       return;
