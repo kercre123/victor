@@ -203,6 +203,7 @@ else()
   if (ANDROID)
       add_subdirectory("project/victor/tools")
       include(android-ndk-stl-config)
+      include(gen-version)
   endif()
 
   add_subdirectory("resources")

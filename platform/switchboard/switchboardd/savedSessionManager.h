@@ -10,36 +10,57 @@
  *
  **/
 
+#include <sodium.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string>
 #include <stdlib.h>
 #include <fstream>
+#include <vector>
 
 #pragma once
 
 namespace Anki {
 namespace Switchboard {
 
+struct __attribute__ ((packed)) RtsIdData {
+  bool hasName;
+  char name[12];
+  uint8_t publicKey[crypto_kx_PUBLICKEYBYTES];
+  uint8_t privateKey[crypto_kx_SECRETKEYBYTES];
+};
+
+struct __attribute__ ((packed)) RtsClientData {
+  uint8_t publicKey[crypto_kx_PUBLICKEYBYTES];
+  uint8_t sessionRx[crypto_kx_SESSIONKEYBYTES];
+  uint8_t sessionTx[crypto_kx_SESSIONKEYBYTES];
+};
+
+struct __attribute__ ((packed)) RtsKeysData {
+  uint8_t magic[8];
+  uint32_t version;
+  RtsIdData id;
+  uint8_t numKnownClients;
+};
+
+struct RtsKeys {
+  RtsKeysData keys;
+  std::vector<RtsClientData> clients;
+};
+
 class SavedSessionManager {
 public:
-  static void SaveKey(const uint8_t* key, size_t size, const std::string& path);
-  static uint32_t LoadKey(uint8_t* keyOut, size_t size, const std::string& path);
-
-  static void SaveSession(const uint8_t* clientPublicKey, const uint8_t* sessionKeyEncrypt, const uint8_t* sessionKeyDecrypt); 
-  static uint32_t LoadSession(uint8_t* clientPublicKeyOut, uint8_t* sessionKeyEncryptOut, uint8_t* sessionKeyDecryptOut);
-
-  static const std::string kPublicKeyPath;
-  static const std::string kPrivateKeyPath;
+  static RtsKeys LoadRtsKeys();
+  static void SaveRtsKeys(RtsKeys& keys);
+  static const std::string kRtsKeyPath;
 
 private:
-  static bool MakeDirectory();
-  
   static const std::string kSaveFolder;
-  static const std::string kKnownSessionsPath;
   static const std::ios_base::openmode kWriteMode;
   static const std::ios_base::openmode kReadMode;
+  static const uint8_t kMaxNumberClients;
   static const char* kPrefix;
+  static const uint32_t kNativeBufferSize;
 };
 
 } // Switchboard

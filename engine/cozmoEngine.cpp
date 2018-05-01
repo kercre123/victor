@@ -401,8 +401,13 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
 
       // Let the robot manager do whatever it's gotta do to update the
       // robots in the world.
-      _context->GetRobotManager()->UpdateRobot();
-
+      result = _context->GetRobotManager()->UpdateRobot();
+      if(result != RESULT_OK)
+      {
+        LOG_WARNING("CozmoEngine.Update.UpdateRobotFailed", "Update robot failed with %d", result);
+        return result;
+      }
+      
       UpdateLatencyInfo();
       break;
     }

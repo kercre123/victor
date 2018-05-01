@@ -546,6 +546,7 @@ u8 HAL::GetWatchdogResetCounter()
 
 void HAL::Shutdown()
 {
+  HAL::Stop();
   spine_shutdown(&spine_);
 }
 

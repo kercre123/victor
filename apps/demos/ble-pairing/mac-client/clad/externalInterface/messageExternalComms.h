@@ -57,7 +57,6 @@ struct RtsWifiScanResult
   uint8_t authType;
   uint8_t signalStrength;
   std::string wifiSsidHex;
-  bool hidden;
   
   /**** Constructors ****/
   RtsWifiScanResult() = default;
@@ -69,12 +68,10 @@ struct RtsWifiScanResult
   
   explicit RtsWifiScanResult(uint8_t authType,
     uint8_t signalStrength,
-    const std::string& wifiSsidHex,
-    bool hidden)
+    const std::string& wifiSsidHex)
   : authType(authType)
   , signalStrength(signalStrength)
   , wifiSsidHex(wifiSsidHex)
-  , hidden(hidden)
   {}
   
   explicit RtsWifiScanResult(const uint8_t* buff, size_t len);
@@ -95,12 +92,63 @@ struct RtsWifiScanResult
   
   template <typename Callable>
   void Invoke(Callable&& func) const {
-     func(authType, signalStrength, wifiSsidHex, hidden);
+     func(authType, signalStrength, wifiSsidHex);
   }
 };
 
 extern const char* RtsWifiScanResultVersionHashStr;
 extern const uint8_t RtsWifiScanResultVersionHash[16];
+
+// MESSAGE RtsWifiScanResult_2
+struct RtsWifiScanResult_2
+{
+  uint8_t authType;
+  uint8_t signalStrength;
+  std::string wifiSsidHex;
+  bool hidden;
+  
+  /**** Constructors ****/
+  RtsWifiScanResult_2() = default;
+  RtsWifiScanResult_2(const RtsWifiScanResult_2& other) = default;
+  RtsWifiScanResult_2(RtsWifiScanResult_2& other) = default;
+  RtsWifiScanResult_2(RtsWifiScanResult_2&& other) noexcept = default;
+  RtsWifiScanResult_2& operator=(const RtsWifiScanResult_2& other) = default;
+  RtsWifiScanResult_2& operator=(RtsWifiScanResult_2&& other) = default;
+  
+  explicit RtsWifiScanResult_2(uint8_t authType,
+    uint8_t signalStrength,
+    const std::string& wifiSsidHex,
+    bool hidden)
+  : authType(authType)
+  , signalStrength(signalStrength)
+  , wifiSsidHex(wifiSsidHex)
+  , hidden(hidden)
+  {}
+  
+  explicit RtsWifiScanResult_2(const uint8_t* buff, size_t len);
+  explicit RtsWifiScanResult_2(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsWifiScanResult_2& other) const;
+  bool operator!=(const RtsWifiScanResult_2& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(authType, signalStrength, wifiSsidHex, hidden);
+  }
+};
+
+extern const char* RtsWifiScanResult_2VersionHashStr;
+extern const uint8_t RtsWifiScanResult_2VersionHash[16];
 
 // MESSAGE RtsConnRequest
 struct RtsConnRequest
@@ -775,6 +823,51 @@ struct RtsWifiScanResponse
 extern const char* RtsWifiScanResponseVersionHashStr;
 extern const uint8_t RtsWifiScanResponseVersionHash[16];
 
+// MESSAGE RtsWifiScanResponse_2
+struct RtsWifiScanResponse_2
+{
+  uint8_t statusCode;
+  std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult_2> scanResult;
+  
+  /**** Constructors ****/
+  RtsWifiScanResponse_2() = default;
+  RtsWifiScanResponse_2(const RtsWifiScanResponse_2& other) = default;
+  RtsWifiScanResponse_2(RtsWifiScanResponse_2& other) = default;
+  RtsWifiScanResponse_2(RtsWifiScanResponse_2&& other) noexcept = default;
+  RtsWifiScanResponse_2& operator=(const RtsWifiScanResponse_2& other) = default;
+  RtsWifiScanResponse_2& operator=(RtsWifiScanResponse_2&& other) = default;
+  
+  explicit RtsWifiScanResponse_2(uint8_t statusCode,
+    const std::vector<Anki::Victor::ExternalComms::RtsWifiScanResult_2>& scanResult)
+  : statusCode(statusCode)
+  , scanResult(scanResult)
+  {}
+  
+  explicit RtsWifiScanResponse_2(const uint8_t* buff, size_t len);
+  explicit RtsWifiScanResponse_2(const CLAD::SafeMessageBuffer& buffer);
+  
+  /**** Pack ****/
+  size_t Pack(uint8_t* buff, size_t len) const;
+  size_t Pack(CLAD::SafeMessageBuffer& buffer) const;
+  
+  /**** Unpack ****/
+  size_t Unpack(const uint8_t* buff, const size_t len);
+  size_t Unpack(const CLAD::SafeMessageBuffer& buffer);
+  
+  size_t Size() const;
+  
+  bool operator==(const RtsWifiScanResponse_2& other) const;
+  bool operator!=(const RtsWifiScanResponse_2& other) const;
+  
+  template <typename Callable>
+  void Invoke(Callable&& func) const {
+     func(statusCode, scanResult);
+  }
+};
+
+extern const char* RtsWifiScanResponse_2VersionHashStr;
+extern const uint8_t RtsWifiScanResponse_2VersionHash[16];
+
 // MESSAGE RtsOtaUpdateRequest
 struct RtsOtaUpdateRequest
 {
@@ -1383,8 +1476,8 @@ struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsWifiScanRequest> {
   using type = Anki::Victor::ExternalComms::RtsWifiScanRequest;
 };
 template<>
-struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsWifiScanResponse> {
-  using type = Anki::Victor::ExternalComms::RtsWifiScanResponse;
+struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsWifiScanResponse_2> {
+  using type = Anki::Victor::ExternalComms::RtsWifiScanResponse_2;
 };
 template<>
 struct RtsConnection_2_TagToType<RtsConnection_2Tag::RtsOtaUpdateRequest> {
@@ -1556,12 +1649,12 @@ public:
   void Set_RtsWifiScanRequest(const Anki::Victor::ExternalComms::RtsWifiScanRequest& new_RtsWifiScanRequest);
   void Set_RtsWifiScanRequest(Anki::Victor::ExternalComms::RtsWifiScanRequest&& new_RtsWifiScanRequest);
   
-  /** RtsWifiScanResponse **/
-  static RtsConnection_2 CreateRtsWifiScanResponse(Anki::Victor::ExternalComms::RtsWifiScanResponse&& new_RtsWifiScanResponse);
-  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsWifiScanResponse&& new_RtsWifiScanResponse);
-  const Anki::Victor::ExternalComms::RtsWifiScanResponse& Get_RtsWifiScanResponse() const;
-  void Set_RtsWifiScanResponse(const Anki::Victor::ExternalComms::RtsWifiScanResponse& new_RtsWifiScanResponse);
-  void Set_RtsWifiScanResponse(Anki::Victor::ExternalComms::RtsWifiScanResponse&& new_RtsWifiScanResponse);
+  /** RtsWifiScanResponse_2 **/
+  static RtsConnection_2 CreateRtsWifiScanResponse_2(Anki::Victor::ExternalComms::RtsWifiScanResponse_2&& new_RtsWifiScanResponse_2);
+  explicit RtsConnection_2(Anki::Victor::ExternalComms::RtsWifiScanResponse_2&& new_RtsWifiScanResponse_2);
+  const Anki::Victor::ExternalComms::RtsWifiScanResponse_2& Get_RtsWifiScanResponse_2() const;
+  void Set_RtsWifiScanResponse_2(const Anki::Victor::ExternalComms::RtsWifiScanResponse_2& new_RtsWifiScanResponse_2);
+  void Set_RtsWifiScanResponse_2(Anki::Victor::ExternalComms::RtsWifiScanResponse_2&& new_RtsWifiScanResponse_2);
   
   /** RtsOtaUpdateRequest **/
   static RtsConnection_2 CreateRtsOtaUpdateRequest(Anki::Victor::ExternalComms::RtsOtaUpdateRequest&& new_RtsOtaUpdateRequest);
@@ -1682,7 +1775,7 @@ private:
     Anki::Victor::ExternalComms::RtsStatusRequest _RtsStatusRequest;
     Anki::Victor::ExternalComms::RtsStatusResponse_2 _RtsStatusResponse_2;
     Anki::Victor::ExternalComms::RtsWifiScanRequest _RtsWifiScanRequest;
-    Anki::Victor::ExternalComms::RtsWifiScanResponse _RtsWifiScanResponse;
+    Anki::Victor::ExternalComms::RtsWifiScanResponse_2 _RtsWifiScanResponse_2;
     Anki::Victor::ExternalComms::RtsOtaUpdateRequest _RtsOtaUpdateRequest;
     Anki::Victor::ExternalComms::RtsOtaUpdateResponse _RtsOtaUpdateResponse;
     Anki::Victor::ExternalComms::RtsCancelPairing _RtsCancelPairing;

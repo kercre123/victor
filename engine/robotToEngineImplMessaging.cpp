@@ -208,6 +208,13 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                        robot->Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::ExitPairing()));
                                                      }));
 
+  GetSignalHandles().push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::prepForShutdown,
+                                                     [robot](const AnkiEvent<RobotInterface::RobotToEngine>& message){
+                                                       LOG_INFO("RobotMessageHandler.ProcessMessage.Shutdown","");
+                                                       robot->Shutdown();
+                                                     }));
+
+  
   if (robot->HasExternalInterface())
   {
     using namespace ExternalInterface;

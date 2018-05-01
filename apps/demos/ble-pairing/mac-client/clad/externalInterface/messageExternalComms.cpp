@@ -72,7 +72,6 @@ size_t RtsWifiScanResult::Pack(CLAD::SafeMessageBuffer& buffer) const
   buffer.Write(this->authType);
   buffer.Write(this->signalStrength);
   buffer.WritePString<uint8_t>(this->wifiSsidHex);
-  buffer.Write(this->hidden);
   const size_t bytesWritten {buffer.GetBytesWritten()};
   return bytesWritten;
 }
@@ -88,11 +87,86 @@ size_t RtsWifiScanResult::Unpack(const CLAD::SafeMessageBuffer& buffer)
   buffer.Read(this->authType);
   buffer.Read(this->signalStrength);
   buffer.ReadPString<uint8_t>(this->wifiSsidHex);
-  buffer.Read(this->hidden);
   return buffer.GetBytesRead();
 }
 
 size_t RtsWifiScanResult::Size() const
+{
+  size_t result = 0;
+  // authType
+  result += 1; // uint_8
+  // signalStrength
+  result += 1; // uint_8
+  // wifiSsidHex
+  result += 1; // uint_8 (string length)
+  result += this->wifiSsidHex.length(); // uint_8
+  return result;
+}
+
+bool RtsWifiScanResult::operator==(const RtsWifiScanResult& other) const
+{
+  return (this->authType == other.authType &&
+    this->signalStrength == other.signalStrength &&
+    this->wifiSsidHex == other.wifiSsidHex);
+}
+
+bool RtsWifiScanResult::operator!=(const RtsWifiScanResult& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsWifiScanResultVersionHashStr = "84ba9b5455488d84ec8c026a622bc113";
+
+const uint8_t RtsWifiScanResultVersionHash[16] = { 
+    0x84, 0xba, 0x9b, 0x54, 0x55, 0x48, 0x8d, 0x84, 0xec, 0x8c, 0x2, 0x6a, 0x62, 0x2b, 0xc1, 0x13 
+};
+
+// MESSAGE RtsWifiScanResult_2
+
+RtsWifiScanResult_2::RtsWifiScanResult_2(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsWifiScanResult_2::RtsWifiScanResult_2(const uint8_t* buff, size_t len)
+: RtsWifiScanResult_2::RtsWifiScanResult_2({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsWifiScanResult_2::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsWifiScanResult_2::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  buffer.Write(this->authType);
+  buffer.Write(this->signalStrength);
+  buffer.WritePString<uint8_t>(this->wifiSsidHex);
+  buffer.Write(this->hidden);
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsWifiScanResult_2::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsWifiScanResult_2::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  buffer.Read(this->authType);
+  buffer.Read(this->signalStrength);
+  buffer.ReadPString<uint8_t>(this->wifiSsidHex);
+  buffer.Read(this->hidden);
+  return buffer.GetBytesRead();
+}
+
+size_t RtsWifiScanResult_2::Size() const
 {
   size_t result = 0;
   // authType
@@ -107,7 +181,7 @@ size_t RtsWifiScanResult::Size() const
   return result;
 }
 
-bool RtsWifiScanResult::operator==(const RtsWifiScanResult& other) const
+bool RtsWifiScanResult_2::operator==(const RtsWifiScanResult_2& other) const
 {
   return (this->authType == other.authType &&
     this->signalStrength == other.signalStrength &&
@@ -115,16 +189,16 @@ bool RtsWifiScanResult::operator==(const RtsWifiScanResult& other) const
     this->hidden == other.hidden);
 }
 
-bool RtsWifiScanResult::operator!=(const RtsWifiScanResult& other) const
+bool RtsWifiScanResult_2::operator!=(const RtsWifiScanResult_2& other) const
 {
   return !(operator==(other));
 }
 
 
-const char* RtsWifiScanResultVersionHashStr = "688b83b567ea645ef62b27514115087e";
+const char* RtsWifiScanResult_2VersionHashStr = "312324e7c38765237119903f33814f7d";
 
-const uint8_t RtsWifiScanResultVersionHash[16] = { 
-    0x68, 0x8b, 0x83, 0xb5, 0x67, 0xea, 0x64, 0x5e, 0xf6, 0x2b, 0x27, 0x51, 0x41, 0x15, 0x8, 0x7e 
+const uint8_t RtsWifiScanResult_2VersionHash[16] = { 
+    0x31, 0x23, 0x24, 0xe7, 0xc3, 0x87, 0x65, 0x23, 0x71, 0x19, 0x90, 0x3f, 0x33, 0x81, 0x4f, 0x7d 
 };
 
 // MESSAGE RtsConnRequest
@@ -1173,6 +1247,80 @@ const uint8_t RtsWifiScanResponseVersionHash[16] = {
     0xab, 0x3d, 0xab, 0x44, 0x6c, 0xbe, 0x21, 0x30, 0x2e, 0x1b, 0x1f, 0x76, 0xfc, 0x17, 0xc3, 0x30 
 };
 
+// MESSAGE RtsWifiScanResponse_2
+
+RtsWifiScanResponse_2::RtsWifiScanResponse_2(const CLAD::SafeMessageBuffer& buffer)
+
+{
+  Unpack(buffer);
+}
+
+RtsWifiScanResponse_2::RtsWifiScanResponse_2(const uint8_t* buff, size_t len)
+: RtsWifiScanResponse_2::RtsWifiScanResponse_2({const_cast<uint8_t*>(buff), len, false})
+{
+}
+
+size_t RtsWifiScanResponse_2::Pack(uint8_t* buff, size_t len) const
+{
+  CLAD::SafeMessageBuffer buffer(buff, len, false);
+  return Pack(buffer);
+}
+
+size_t RtsWifiScanResponse_2::Pack(CLAD::SafeMessageBuffer& buffer) const
+{
+  buffer.Write(this->statusCode);
+  buffer.Write(static_cast<uint8_t>(scanResult.size()));
+  for (const Anki::Victor::ExternalComms::RtsWifiScanResult_2& m : scanResult) {
+    m.Pack(buffer);
+  }
+  const size_t bytesWritten {buffer.GetBytesWritten()};
+  return bytesWritten;
+}
+
+size_t RtsWifiScanResponse_2::Unpack(const uint8_t* buff, const size_t len)
+{
+  const CLAD::SafeMessageBuffer buffer(const_cast<uint8_t*>(buff), len, false);
+  return Unpack(buffer);
+}
+
+size_t RtsWifiScanResponse_2::Unpack(const CLAD::SafeMessageBuffer& buffer)
+{
+  buffer.Read(this->statusCode);
+  buffer.ReadCompoundTypeVArray<Anki::Victor::ExternalComms::RtsWifiScanResult_2, uint8_t>(this->scanResult);
+  return buffer.GetBytesRead();
+}
+
+size_t RtsWifiScanResponse_2::Size() const
+{
+  size_t result = 0;
+  // statusCode
+  result += 1; // uint_8
+  // scanResult
+  result += 1; // uint_8 (array length)
+  for (const Anki::Victor::ExternalComms::RtsWifiScanResult_2& m : this->scanResult) {
+    result += m.Size();
+  }
+  return result;
+}
+
+bool RtsWifiScanResponse_2::operator==(const RtsWifiScanResponse_2& other) const
+{
+  return (this->statusCode == other.statusCode &&
+    this->scanResult == other.scanResult);
+}
+
+bool RtsWifiScanResponse_2::operator!=(const RtsWifiScanResponse_2& other) const
+{
+  return !(operator==(other));
+}
+
+
+const char* RtsWifiScanResponse_2VersionHashStr = "e380e17b42f1e675b6c2624d27fa8572";
+
+const uint8_t RtsWifiScanResponse_2VersionHash[16] = { 
+    0xe3, 0x80, 0xe1, 0x7b, 0x42, 0xf1, 0xe6, 0x75, 0xb6, 0xc2, 0x62, 0x4d, 0x27, 0xfa, 0x85, 0x72 
+};
+
 // MESSAGE RtsOtaUpdateRequest
 
 RtsOtaUpdateRequest::RtsOtaUpdateRequest(const CLAD::SafeMessageBuffer& buffer)
@@ -2092,8 +2240,8 @@ RtsConnection_2::RtsConnection_2(const RtsConnection_2& other)
   case Tag::RtsWifiScanRequest:
     new(&(this->_RtsWifiScanRequest)) Anki::Victor::ExternalComms::RtsWifiScanRequest(other._RtsWifiScanRequest);
     break;
-  case Tag::RtsWifiScanResponse:
-    new(&(this->_RtsWifiScanResponse)) Anki::Victor::ExternalComms::RtsWifiScanResponse(other._RtsWifiScanResponse);
+  case Tag::RtsWifiScanResponse_2:
+    new(&(this->_RtsWifiScanResponse_2)) Anki::Victor::ExternalComms::RtsWifiScanResponse_2(other._RtsWifiScanResponse_2);
     break;
   case Tag::RtsOtaUpdateRequest:
     new(&(this->_RtsOtaUpdateRequest)) Anki::Victor::ExternalComms::RtsOtaUpdateRequest(other._RtsOtaUpdateRequest);
@@ -2183,8 +2331,8 @@ RtsConnection_2::RtsConnection_2(RtsConnection_2&& other) noexcept
   case Tag::RtsWifiScanRequest:
     new(&(this->_RtsWifiScanRequest)) Anki::Victor::ExternalComms::RtsWifiScanRequest(std::move(other._RtsWifiScanRequest));
     break;
-  case Tag::RtsWifiScanResponse:
-    new(&(this->_RtsWifiScanResponse)) Anki::Victor::ExternalComms::RtsWifiScanResponse(std::move(other._RtsWifiScanResponse));
+  case Tag::RtsWifiScanResponse_2:
+    new(&(this->_RtsWifiScanResponse_2)) Anki::Victor::ExternalComms::RtsWifiScanResponse_2(std::move(other._RtsWifiScanResponse_2));
     break;
   case Tag::RtsOtaUpdateRequest:
     new(&(this->_RtsOtaUpdateRequest)) Anki::Victor::ExternalComms::RtsOtaUpdateRequest(std::move(other._RtsOtaUpdateRequest));
@@ -2277,8 +2425,8 @@ RtsConnection_2& RtsConnection_2::operator=(const RtsConnection_2& other)
   case Tag::RtsWifiScanRequest:
     new(&(this->_RtsWifiScanRequest)) Anki::Victor::ExternalComms::RtsWifiScanRequest(other._RtsWifiScanRequest);
     break;
-  case Tag::RtsWifiScanResponse:
-    new(&(this->_RtsWifiScanResponse)) Anki::Victor::ExternalComms::RtsWifiScanResponse(other._RtsWifiScanResponse);
+  case Tag::RtsWifiScanResponse_2:
+    new(&(this->_RtsWifiScanResponse_2)) Anki::Victor::ExternalComms::RtsWifiScanResponse_2(other._RtsWifiScanResponse_2);
     break;
   case Tag::RtsOtaUpdateRequest:
     new(&(this->_RtsOtaUpdateRequest)) Anki::Victor::ExternalComms::RtsOtaUpdateRequest(other._RtsOtaUpdateRequest);
@@ -2371,8 +2519,8 @@ RtsConnection_2& RtsConnection_2::operator=(RtsConnection_2&& other) noexcept
   case Tag::RtsWifiScanRequest:
     new(&(this->_RtsWifiScanRequest)) Anki::Victor::ExternalComms::RtsWifiScanRequest(std::move(other._RtsWifiScanRequest));
     break;
-  case Tag::RtsWifiScanResponse:
-    new(&(this->_RtsWifiScanResponse)) Anki::Victor::ExternalComms::RtsWifiScanResponse(std::move(other._RtsWifiScanResponse));
+  case Tag::RtsWifiScanResponse_2:
+    new(&(this->_RtsWifiScanResponse_2)) Anki::Victor::ExternalComms::RtsWifiScanResponse_2(std::move(other._RtsWifiScanResponse_2));
     break;
   case Tag::RtsOtaUpdateRequest:
     new(&(this->_RtsOtaUpdateRequest)) Anki::Victor::ExternalComms::RtsOtaUpdateRequest(std::move(other._RtsOtaUpdateRequest));
@@ -3149,59 +3297,59 @@ void RtsConnection_2::Set_RtsWifiScanRequest(Anki::Victor::ExternalComms::RtsWif
   }
 }
 
-RtsConnection_2 RtsConnection_2::CreateRtsWifiScanResponse(Anki::Victor::ExternalComms::RtsWifiScanResponse&& new_RtsWifiScanResponse)
+RtsConnection_2 RtsConnection_2::CreateRtsWifiScanResponse_2(Anki::Victor::ExternalComms::RtsWifiScanResponse_2&& new_RtsWifiScanResponse_2)
 {
   RtsConnection_2 m;
-  m.Set_RtsWifiScanResponse(new_RtsWifiScanResponse);
+  m.Set_RtsWifiScanResponse_2(new_RtsWifiScanResponse_2);
   return m;
 }
 
-RtsConnection_2::RtsConnection_2(Anki::Victor::ExternalComms::RtsWifiScanResponse&& new_RtsWifiScanResponse)
+RtsConnection_2::RtsConnection_2(Anki::Victor::ExternalComms::RtsWifiScanResponse_2&& new_RtsWifiScanResponse_2)
 {
-  new(&this->_RtsWifiScanResponse) Anki::Victor::ExternalComms::RtsWifiScanResponse(std::move(new_RtsWifiScanResponse));
-  _tag = Tag::RtsWifiScanResponse;
+  new(&this->_RtsWifiScanResponse_2) Anki::Victor::ExternalComms::RtsWifiScanResponse_2(std::move(new_RtsWifiScanResponse_2));
+  _tag = Tag::RtsWifiScanResponse_2;
 }
 
-const Anki::Victor::ExternalComms::RtsWifiScanResponse& RtsConnection_2::Get_RtsWifiScanResponse() const
+const Anki::Victor::ExternalComms::RtsWifiScanResponse_2& RtsConnection_2::Get_RtsWifiScanResponse_2() const
 {
-  assert(_tag == Tag::RtsWifiScanResponse);
-  return this->_RtsWifiScanResponse;
+  assert(_tag == Tag::RtsWifiScanResponse_2);
+  return this->_RtsWifiScanResponse_2;
 }
 
-void RtsConnection_2::Set_RtsWifiScanResponse(const Anki::Victor::ExternalComms::RtsWifiScanResponse& new_RtsWifiScanResponse)
+void RtsConnection_2::Set_RtsWifiScanResponse_2(const Anki::Victor::ExternalComms::RtsWifiScanResponse_2& new_RtsWifiScanResponse_2)
 {
-  if(this->_tag == Tag::RtsWifiScanResponse) {
-    this->_RtsWifiScanResponse = new_RtsWifiScanResponse;
+  if(this->_tag == Tag::RtsWifiScanResponse_2) {
+    this->_RtsWifiScanResponse_2 = new_RtsWifiScanResponse_2;
   }
   else {
     ClearCurrent();
-    new(&this->_RtsWifiScanResponse) Anki::Victor::ExternalComms::RtsWifiScanResponse(new_RtsWifiScanResponse);
-    _tag = Tag::RtsWifiScanResponse;
+    new(&this->_RtsWifiScanResponse_2) Anki::Victor::ExternalComms::RtsWifiScanResponse_2(new_RtsWifiScanResponse_2);
+    _tag = Tag::RtsWifiScanResponse_2;
   }
 }
 
 template<>
-const Anki::Victor::ExternalComms::RtsWifiScanResponse& RtsConnection_2::Get_<RtsConnection_2::Tag::RtsWifiScanResponse>() const
+const Anki::Victor::ExternalComms::RtsWifiScanResponse_2& RtsConnection_2::Get_<RtsConnection_2::Tag::RtsWifiScanResponse_2>() const
 {
-  assert(_tag == Tag::RtsWifiScanResponse);
-  return this->_RtsWifiScanResponse;
+  assert(_tag == Tag::RtsWifiScanResponse_2);
+  return this->_RtsWifiScanResponse_2;
 }
 
 template<>
-RtsConnection_2 RtsConnection_2::Create_<RtsConnection_2::Tag::RtsWifiScanResponse>(Anki::Victor::ExternalComms::RtsWifiScanResponse member)
+RtsConnection_2 RtsConnection_2::Create_<RtsConnection_2::Tag::RtsWifiScanResponse_2>(Anki::Victor::ExternalComms::RtsWifiScanResponse_2 member)
 {
-  return CreateRtsWifiScanResponse(std::move(member));
+  return CreateRtsWifiScanResponse_2(std::move(member));
 }
 
-void RtsConnection_2::Set_RtsWifiScanResponse(Anki::Victor::ExternalComms::RtsWifiScanResponse&& new_RtsWifiScanResponse)
+void RtsConnection_2::Set_RtsWifiScanResponse_2(Anki::Victor::ExternalComms::RtsWifiScanResponse_2&& new_RtsWifiScanResponse_2)
 {
-  if (this->_tag == Tag::RtsWifiScanResponse) {
-    this->_RtsWifiScanResponse = std::move(new_RtsWifiScanResponse);
+  if (this->_tag == Tag::RtsWifiScanResponse_2) {
+    this->_RtsWifiScanResponse_2 = std::move(new_RtsWifiScanResponse_2);
   }
   else {
     ClearCurrent();
-    new(&this->_RtsWifiScanResponse) Anki::Victor::ExternalComms::RtsWifiScanResponse(std::move(new_RtsWifiScanResponse));
-    _tag = Tag::RtsWifiScanResponse;
+    new(&this->_RtsWifiScanResponse_2) Anki::Victor::ExternalComms::RtsWifiScanResponse_2(std::move(new_RtsWifiScanResponse_2));
+    _tag = Tag::RtsWifiScanResponse_2;
   }
 }
 
@@ -4052,12 +4200,12 @@ size_t RtsConnection_2::Unpack(const CLAD::SafeMessageBuffer& buffer)
       this->_RtsWifiScanRequest.Unpack(buffer);
     }
     break;
-  case Tag::RtsWifiScanResponse:
+  case Tag::RtsWifiScanResponse_2:
     if (newTag != oldTag) {
-      new(&(this->_RtsWifiScanResponse)) Anki::Victor::ExternalComms::RtsWifiScanResponse(buffer);
+      new(&(this->_RtsWifiScanResponse_2)) Anki::Victor::ExternalComms::RtsWifiScanResponse_2(buffer);
     }
     else {
-      this->_RtsWifiScanResponse.Unpack(buffer);
+      this->_RtsWifiScanResponse_2.Unpack(buffer);
     }
     break;
   case Tag::RtsOtaUpdateRequest:
@@ -4220,8 +4368,8 @@ size_t RtsConnection_2::Pack(CLAD::SafeMessageBuffer& buffer) const
   case Tag::RtsWifiScanRequest:
     this->_RtsWifiScanRequest.Pack(buffer);
     break;
-  case Tag::RtsWifiScanResponse:
-    this->_RtsWifiScanResponse.Pack(buffer);
+  case Tag::RtsWifiScanResponse_2:
+    this->_RtsWifiScanResponse_2.Pack(buffer);
     break;
   case Tag::RtsOtaUpdateRequest:
     this->_RtsOtaUpdateRequest.Pack(buffer);
@@ -4311,8 +4459,8 @@ size_t RtsConnection_2::Size() const
   case Tag::RtsWifiScanRequest:
     result += this->_RtsWifiScanRequest.Size(); // RtsWifiScanRequest
     break;
-  case Tag::RtsWifiScanResponse:
-    result += this->_RtsWifiScanResponse.Size(); // RtsWifiScanResponse
+  case Tag::RtsWifiScanResponse_2:
+    result += this->_RtsWifiScanResponse_2.Size(); // RtsWifiScanResponse_2
     break;
   case Tag::RtsOtaUpdateRequest:
     result += this->_RtsOtaUpdateRequest.Size(); // RtsOtaUpdateRequest
@@ -4391,8 +4539,8 @@ bool RtsConnection_2::operator==(const RtsConnection_2& other) const
     return this->_RtsStatusResponse_2 == other._RtsStatusResponse_2;
   case Tag::RtsWifiScanRequest:
     return this->_RtsWifiScanRequest == other._RtsWifiScanRequest;
-  case Tag::RtsWifiScanResponse:
-    return this->_RtsWifiScanResponse == other._RtsWifiScanResponse;
+  case Tag::RtsWifiScanResponse_2:
+    return this->_RtsWifiScanResponse_2 == other._RtsWifiScanResponse_2;
   case Tag::RtsOtaUpdateRequest:
     return this->_RtsOtaUpdateRequest == other._RtsOtaUpdateRequest;
   case Tag::RtsOtaUpdateResponse:
@@ -4471,8 +4619,8 @@ void RtsConnection_2::ClearCurrent()
   case Tag::RtsWifiScanRequest:
     _RtsWifiScanRequest.~RtsWifiScanRequest();
     break;
-  case Tag::RtsWifiScanResponse:
-    _RtsWifiScanResponse.~RtsWifiScanResponse();
+  case Tag::RtsWifiScanResponse_2:
+    _RtsWifiScanResponse_2.~RtsWifiScanResponse_2();
     break;
   case Tag::RtsOtaUpdateRequest:
     _RtsOtaUpdateRequest.~RtsOtaUpdateRequest();
@@ -4547,8 +4695,8 @@ const char* RtsConnection_2TagToString(const RtsConnection_2Tag tag) {
     return "RtsStatusResponse_2";
   case RtsConnection_2Tag::RtsWifiScanRequest:
     return "RtsWifiScanRequest";
-  case RtsConnection_2Tag::RtsWifiScanResponse:
-    return "RtsWifiScanResponse";
+  case RtsConnection_2Tag::RtsWifiScanResponse_2:
+    return "RtsWifiScanResponse_2";
   case RtsConnection_2Tag::RtsOtaUpdateRequest:
     return "RtsOtaUpdateRequest";
   case RtsConnection_2Tag::RtsOtaUpdateResponse:
@@ -4580,10 +4728,10 @@ const char* RtsConnection_2TagToString(const RtsConnection_2Tag tag) {
   }
 }
 
-const char* RtsConnection_2VersionHashStr = "0a115855dc4fe2f67fed4cf0389dca58";
+const char* RtsConnection_2VersionHashStr = "3ef2a15e2df3baa973fe886381a98c9a";
 
 const uint8_t RtsConnection_2VersionHash[16] = { 
-    0xa, 0x11, 0x58, 0x55, 0xdc, 0x4f, 0xe2, 0xf6, 0x7f, 0xed, 0x4c, 0xf0, 0x38, 0x9d, 0xca, 0x58 
+    0x3e, 0xf2, 0xa1, 0x5e, 0x2d, 0xf3, 0xba, 0xa9, 0x73, 0xfe, 0x88, 0x63, 0x81, 0xa9, 0x8c, 0x9a 
 };
 
 // UNION RtsConnection

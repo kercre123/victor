@@ -27,10 +27,6 @@
 extern "C" {
 #endif
 
-int __android_log_print(int prio, const char* tag, const char* fmt) {
-  return -1;
-}
-
 /* System properties are *small* name value pairs managed by the
 ** property service.  If your data doesn't fit in the provided
 ** space it is not appropriate for a system property.

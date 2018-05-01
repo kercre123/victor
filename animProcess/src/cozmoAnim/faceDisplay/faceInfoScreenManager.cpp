@@ -76,12 +76,6 @@ namespace {
   
   const f32 kMenuHeadLowThresh_rad  = DEG_TO_RAD(-15);
   const f32 kMenuHeadHighThresh_rad = DEG_TO_RAD(40);
-  
-  // Amount of time the backpack button must be held before sync() is called
-  const f32 kButtonHoldTimeForSync_s = 1.f;
-  
-  // Time at which sync() should be called
-  f32 syncTime_s = 0.f; 
 }
 
   
@@ -702,25 +696,11 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
 {
   static bool buttonWasPressed = false;
   const bool buttonIsPressed = static_cast<bool>(state.status & (uint16_t)RobotStatusFlag::IS_BUTTON_PRESSED);
-  const bool buttonPressedEvent = !buttonWasPressed && buttonIsPressed;
+  //const bool buttonPressedEvent = !buttonWasPressed && buttonIsPressed;
   const bool buttonReleasedEvent = buttonWasPressed && !buttonIsPressed;
   buttonWasPressed = buttonIsPressed;
 
   const bool isOnCharger = static_cast<bool>(state.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER);
-
-  const auto currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
-  // Call sync() when button held nearly long enough for shutdown
-  // before the power is pulled to make sure pending writes are flushed
-  if (buttonPressedEvent) {
-    syncTime_s = currentTime_s + kButtonHoldTimeForSync_s;
-  }
-  if (buttonIsPressed) {
-    if (syncTime_s > 0.f && (currentTime_s > syncTime_s)) {
-      sync();
-      syncTime_s = 0.f;
-    }
-  }
 
   const ScreenName currScreenName = GetCurrScreenName();
 
@@ -799,10 +779,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
     }
   }
 
-  // If this screen has a menu or
-  // it is the pairing screen and we are not in the connection flow (haven't started showing
-  // the pin, wifi, or ota screens)
-  if (_currScreen->HasMenu() || (currScreenName == ScreenName::Pairing && !IsInConnectionFlow())) {
+  if (_currScreen->HasMenu() || currScreenName == ScreenName::Pairing) {
     // Process lift motion for confirming current menu selection
     const auto liftAngle = state.liftAngle;
     if (liftAngle > kMenuLiftHighThresh_rad) {

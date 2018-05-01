@@ -85,6 +85,8 @@ enum WiFiAuth : uint8_t {
   uint32_t _currentFileId;
   std::vector<uint8_t> _currentFileBuffer;
   NSString* _downloadFilePath;
+
+  bool _isPairing;
 }
 
 - (std::string)hexStr:(char*)data length:(int)len;
@@ -105,6 +107,7 @@ enum WiFiAuth : uint8_t {
 - (void) HandleChallengeMessage:(const Anki::Victor::ExternalComms::RtsChallengeMessage&)msg;
 - (void) HandleChallengeSuccessMessage:(const Anki::Victor::ExternalComms::RtsChallengeSuccessMessage&)msg;
 - (void) HandleWifiScanResponse:(const Anki::Victor::ExternalComms::RtsWifiScanResponse&)msg;
+- (void) HandleWifiScanResponse_2:(const Anki::Victor::ExternalComms::RtsWifiScanResponse_2&)msg;
 - (void) HandleReceiveAccessPointResponse:(const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&)msg;
 
 - (void) send:(const void*)bytes length:(int)n;

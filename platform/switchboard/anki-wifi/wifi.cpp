@@ -421,8 +421,6 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidd
 
   std::string nameFromHex = hexStringToAsciiString(ssid);
 
-  Log::Write("NameFromHex: {%s}", nameFromHex.c_str());
-
   error = nullptr;
   tech_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
                                                               G_DBUS_PROXY_FLAGS_NONE,

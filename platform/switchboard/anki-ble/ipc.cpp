@@ -38,8 +38,9 @@ IPCEndpoint::~IPCEndpoint()
 {
   delete task_executor_; task_executor_ = nullptr;
   for (auto& pair : peers_) {
-    delete pair.second;
+    delete pair.second; pair.second = nullptr;
   }
+  peers_.clear();
   CloseSocket();
 }
 
@@ -50,7 +51,7 @@ void IPCEndpoint::CreateSocket()
 
 void IPCEndpoint::CloseSocket()
 {
-  peers_.erase(sockfd_);
+  RemovePeerByFD(sockfd_);
   (void) close(sockfd_); sockfd_ = -1;
 }
 
@@ -136,6 +137,16 @@ void IPCEndpoint::AddPeerByFD(const int fd)
   peers_[fd] = new PeerState(read_write_watcher, task_executor_);
 }
 
+void IPCEndpoint::RemovePeerByFD(const int fd)
+{
+  auto search = peers_.find(fd);
+  if (search == peers_.end()) {
+    return;
+  }
+  delete search->second; search->second = nullptr;
+  peers_.erase(fd);
+}
+
 bool IPCEndpoint::SendMessageToAllPeers(const IPCMessageType type,
                                         uint32_t length,
                                         uint8_t* val)
@@ -177,7 +188,6 @@ bool IPCEndpoint::SendMessageToPeer(const int fd,
   search->second->AddMessageToQueue(packed_message);
   return true;
 }
-
 void IPCEndpoint::ReadWriteWatcherCallback(ev::io& w, int revents)
 {
   if (revents & ev::ERROR) {
@@ -225,28 +235,27 @@ void IPCEndpoint::SendQueuedMessagesToPeer(const int sockfd)
   }
 }
 
-void IPCEndpoint::OnReceiveError(const int sockfd)
+void IPCEndpoint::HandleSocketCloseOrError(const int sockfd)
 {
-  peers_.erase(sockfd);
+  RemovePeerByFD(sockfd);
   if (sockfd == sockfd_) {
     CloseSocket();
   }
+}
+
+void IPCEndpoint::OnReceiveError(const int sockfd)
+{
+  HandleSocketCloseOrError(sockfd);
 }
 
 void IPCEndpoint::OnPeerClose(const int sockfd)
 {
-  peers_.erase(sockfd);
-  if (sockfd == sockfd_) {
-    CloseSocket();
-  }
+  HandleSocketCloseOrError(sockfd);
 }
 
 void IPCEndpoint::OnSendError(const int sockfd, const int error)
 {
-  peers_.erase(sockfd);
-  if (sockfd == sockfd_) {
-    CloseSocket();
-  }
+  HandleSocketCloseOrError(sockfd);
 }
 
 IPCEndpoint::PeerState::~PeerState()

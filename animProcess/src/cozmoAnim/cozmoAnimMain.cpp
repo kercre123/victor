@@ -190,4 +190,6 @@ int main(void)
     }
 
   }
+  
+  Cleanup(0);
 }

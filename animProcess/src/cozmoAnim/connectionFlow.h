@@ -27,9 +27,7 @@ namespace SwitchboardInterface {
 
 void SetBLEPin(uint32_t pin);
 
-bool IsInConnectionFlow();
- 
-void InitConnectionFlow(AnimationStreamer* animStreamer);
+bool InitConnectionFlow(AnimationStreamer* animStreamer);
 
 void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
                           AnimationStreamer* animStreamer,

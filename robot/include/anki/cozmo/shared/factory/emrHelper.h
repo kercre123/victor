@@ -51,13 +51,17 @@ namespace Factory {
 
       // Memory map the file as shared since multiple processes have access to these functions
       Factory::EMR* emr = (Factory::EMR*)(mmap(nullptr, sizeof(EMR), protFlags, MAP_SHARED, fd, 0));
-
+      
       if(emr == MAP_FAILED)
       {
         LOG_ERROR("Factory.CheckEMRForPackout.MmapFailed", "%d", errno);
+        close(fd);
         return nullptr; // exit instead? will probably end up crashing in WriteEMR or GetEMR will return null
       }
 
+      // Close our fd, mmap will add a reference to it so the mapping will still be valid
+      close(fd);
+      
       return emr;
     }
   
