@@ -46,6 +46,8 @@ static void dbg_test_all_(void)
   rcomGet(1, RCOM_SENSOR_RSSI); ConsolePutChar('\n');
   rcomGet(1, RCOM_SENSOR_RX_PKT); ConsolePutChar('\n');
   rcomGet(1, RCOM_SENSOR_DEBUG_INC); ConsolePutChar('\n');
+  rcomRlg(0, 0, 0);
+  rcomRlg(1, 0, 0);
 }
 
 static void dbg_test_emr_(bool blank_only=0, bool dont_clear=0);
@@ -135,29 +137,28 @@ static void dbg_test_comm_loop_(int nloops, int rmin, int rmax)
     //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_RX_PKT);
     //else if( sensorSelect == 4 )
       rcomGet(rmin+rand()%rmod, RCOM_SENSOR_DEBUG_INC);
-    //else { sensorSelect = -1; break; }
+    //else { sensorSelect = -1; break; }    
+    rcomRlg(0, 0, 0);
+    rcomRlg(1, 0, 0);
+    try { for(int x=2; x<=8; x++) { rcomRlg(x, 0, 0); } } catch(int e) {}
   }
 }
 
 static void dbg_test_readlogs_(int first, int last)
 {
   first = first<0 ? 0 : first;
-  last = last<0 ? 0 : last;
-  if( last < first )
-    last = first;
-  
+  last = last<first ? first : last;
   ConsolePrintf("READ LOGS {%i..%i}\n", first, last);
   
   error_t err = ERROR_OK;
   for(int i=first; i<=last; i++) {
     try { rcomRlg(i, 0, 0); } catch(int e) { err = e; }
   }
-  
   if( err != ERROR_OK )
     throw err;
 }
 
-static void dbg_test_leds_(int on_time_ms, int unused_)
+static void dbg_test_leds_(int on_time_ms, int colorfade)
 {
   on_time_ms = on_time_ms < 1 ? 500 : on_time_ms;
   ConsolePrintf("LED Test (%ims)\n", on_time_ms);
@@ -171,18 +172,21 @@ static void dbg_test_leds_(int on_time_ms, int unused_)
   }
   
   //color fade
-  for(int i=0; i<3; i++) {
-    memset(leds,0,sizeof(leds));
-    const int delay_ms = 50;
-    for(int bright=0x00; bright < 0xF0; bright+=0x10) {
-      leds[0+i] = leds[3+i] = leds[6+i] = leds[9+i] = bright;
-      rcomLed(leds, RCOM_PRINT_LEVEL_CMD); Timer::delayMs(delay_ms);
-    }
-    for(int bright=0xF0; bright >= 0x10; bright-=0x10) {
-      leds[0+i] = leds[3+i] = leds[6+i] = leds[9+i] = bright;
-      rcomLed(leds, RCOM_PRINT_LEVEL_CMD); Timer::delayMs(delay_ms);
+  if( colorfade > 0 ) {
+    for(int i=0; i<3; i++) {
+      memset(leds,0,sizeof(leds));
+      const int delay_ms = 50;
+      for(int bright=0x00; bright < 0xF0; bright+=0x10) {
+        leds[0+i] = leds[3+i] = leds[6+i] = leds[9+i] = bright;
+        rcomLed(leds, RCOM_PRINT_LEVEL_CMD); Timer::delayMs(delay_ms);
+      }
+      for(int bright=0xF0; bright >= 0x10; bright-=0x10) {
+        leds[0+i] = leds[3+i] = leds[6+i] = leds[9+i] = bright;
+        rcomLed(leds, RCOM_PRINT_LEVEL_CMD); Timer::delayMs(delay_ms);
+      }
     }
   }
+  
   memset(leds,0,sizeof(leds));
   rcomLed(leds, RCOM_PRINT_LEVEL_CMD);
 }
@@ -206,6 +210,12 @@ const char* DBG_cmd_substitution(const char *line, int len)
 {
   static char buf[25];
   
+  //parse cmd line args (ints)
+  int larg[6];
+  int nargs = cmdNumArgs((char*)line);
+  for(int x=0; x<sizeof(larg)/sizeof(int); x++)
+    larg[x] = nargs > x+1 ? cmdParseInt32(cmdGetArg((char*)line,x+1) ) : 0;
+  
   if( !strcmp(line, "esn") )
     return ">>esn 00 00 00 00 00 00";
   if( !strcmp(line, "bsv") )
@@ -213,25 +223,19 @@ const char* DBG_cmd_substitution(const char *line, int len)
   if( !strcmp(line, "mot") )
     return ">>mot ff 03";
   if( !strcmp(line, "get") )
-    return ">>get 01 00";
-  if( !strncmp(line,"smr",3) || !strncmp(line,"gmr",3) || !strncmp(line,"rlg",3) || !strncmp(line,"eng",3) || !strncmp(line,"pwr",3) ) {
-    int nargs = cmdNumArgs((char*)line);
-    int ix  = nargs >= 2 ? cmdParseInt32(cmdGetArg((char*)line,1)) : 0;
-    int val = nargs >= 3 ? cmdParseInt32(cmdGetArg((char*)line,2)) : 0;
+    return ">>get 01 00"; 
+  if( !strncmp(line,"eng",3) || !strncmp(line,"pwr",3) || !strncmp(line,"rlg",3) )
+    return snformat(buf,sizeof(buf),">>%c%c%c %02x %02x %02x %02x %02x %02x", line[0],line[1],line[2],larg[0],larg[1],larg[2],larg[3],larg[4],larg[5]);
+  if( !strncmp(line,"smr",3) || !strncmp(line,"gmr",3) ) {
+    int ix  = larg[0];
+    int val = larg[1];
     return snformat(buf,sizeof(buf),">>%c%c%c %02x %02x %02x %02x %02x 00", line[0],line[1],line[2], ix, val&0xFF, (val>>8)&0xff, (val>>16)&0xff, (val>>24)&0xff);
   }
-  if( !strncmp(line,"debug",5) )
-  {
-    int arg[4];
-    int nargs = cmdNumArgs((char*)line);
-    for(int x=0; x<sizeof(arg)/4; x++)
-      arg[x] = nargs > x+1 ? cmdParseInt32(cmdGetArg((char*)line,x+1) ) : 0;
-    
+  if( !strncmp(line,"debug",5) ) {
     int dbgErr = 0;
-    ConsolePrintf("========== DEBUG %i %i %i %i ==========\n", arg[0], arg[1], arg[2], arg[3]);
-    try { run_debug(arg); } catch(int e) { dbgErr = e; }
-    ConsolePrintf("========== DEBUG %s e%03d ==========\n", !dbgErr ? "OK" : "FAIL", dbgErr);
-    
+    ConsolePrintf("========== DEBUG %i %i %i %i %i %i ==========\n", larg[0], larg[1], larg[2], larg[3], larg[4], larg[5]);
+    try { run_debug(larg); } catch(int e) { dbgErr = e; }
+    ConsolePrintf("========== DEBUG %s e%03d ===================\n", !dbgErr ? "OK" : "FAIL", dbgErr);
     return "\n"; //sends the debug line to charge contacts (ignored by robot, but keeps cmd in recall buffer)
   }
   return 0;
