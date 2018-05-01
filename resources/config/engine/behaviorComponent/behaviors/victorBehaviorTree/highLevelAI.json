@@ -30,7 +30,8 @@
     {
       "name": "ObservingOnChargerRecentlyPlaced",
       "behavior": "ObservingOnCharger",
-      "getInBehavior": "ObservingOnChargerGetIn"
+      "getInBehavior": "ObservingOnChargerGetIn",
+      "resetBehaviorTimer": "ObservingOnCharger"
     },
     {
       "name": "ObservingDriveOffCharger",
@@ -44,7 +45,8 @@
     },    
     {
       "name": "Observing",
-      "behavior": "Observing"
+      "behavior": "Observing",
+      "resetBehaviorTimer": "ObservingOffCharger"
     },
     {
       "name": "Exploring",

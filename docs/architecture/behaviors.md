@@ -25,7 +25,7 @@ field and pressing "Shift+C"
 
 ## Examples
 
-1. The very simple ["observing on charger"](/engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingOnCharger.h) behavior
+1. The very simple ["observing without turn"](/engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingWithoutTurn.h) behavior
    which simply looks up and down with random delays (and can run on the charger)
 
 2. The ["come here"](/engine/aiComponent/behaviorComponent/behaviors/victor/behaviorComeHere.h) behavior

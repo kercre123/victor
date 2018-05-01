@@ -1,12 +1,8 @@
 {
   "behaviorClass": "ObservingWithoutTurn",
-  "behaviorID": "ObservingOnChargerIdle",
-
-  "wantsToBeActivatedCondition": {
-    "conditionType": "OnCharger"
-  },
+  "behaviorID": "ObservingOffChargerHeadOnly",
   
-  "behaviorTimer": "ObservingOnCharger",
+  "behaviorTimer": "ObservingOffCharger",
   
   "small_motion_period_s": {
     "nodes": [

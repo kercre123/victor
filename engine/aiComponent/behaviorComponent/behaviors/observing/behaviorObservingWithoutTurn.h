@@ -1,17 +1,17 @@
 /**
- * File: behaviorObservingOnCharger.h
+ * File: behaviorObservingWithoutTurn.h
  *
  * Author: Brad Neuman
  * Created: 2017-11-20
  *
- * Description: "idle" looking behavior to observe things while Victor is sitting on the charger
+ * Description: "idle" looking behavior to observe things without turning the body
  *
  * Copyright: Anki, Inc. 2017
  *
  **/
 
-#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_Victor_BehaviorObservingOnCharger_H__
-#define __Engine_AiComponent_BehaviorComponent_Behaviors_Victor_BehaviorObservingOnCharger_H__
+#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_Victor_BehaviorObservingWithoutTurn_H__
+#define __Engine_AiComponent_BehaviorComponent_Behaviors_Victor_BehaviorObservingWithoutTurn_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
@@ -20,30 +20,34 @@ namespace Cozmo {
 
 enum class AnimationTrigger : int32_t;
 
-class BehaviorObservingOnCharger : public ICozmoBehavior
+class BehaviorObservingWithoutTurn : public ICozmoBehavior
 {
 public:
 
-  virtual ~BehaviorObservingOnCharger();
+  virtual ~BehaviorObservingWithoutTurn();
 
 protected:
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;  
-  BehaviorObservingOnCharger(const Json::Value& config);
+  BehaviorObservingWithoutTurn(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Low});
-    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });    
   }
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   virtual bool CanBeGentlyInterruptedNow() const override;
   virtual void OnBehaviorActivated() override;
 
-  virtual bool WantsToBeActivatedBehavior() const override;
+  virtual bool WantsToBeActivatedBehavior() const override { return true; }
 
 private:
+
+  enum class State {
+    LookingUp,
+    LookingStraight
+  };
 
   void TransitionToLookingUp();
   void TransitionToLookingStraight();
@@ -56,11 +60,6 @@ private:
 
   // when it's time for a small head move, this function will return which anim to use
   AnimationTrigger GetSmallHeadMoveAnim() const;
-  
-  enum class State {
-    LookingUp,
-    LookingStraight
-  };
 
   void SetState_internal(State state, const std::string& stateName);
 

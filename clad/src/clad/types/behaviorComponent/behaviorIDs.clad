@@ -171,6 +171,7 @@ enum uint_8 BehaviorID {
   ObservingFailedToFindCharger,
   ObservingFindFaces,
   ObservingLookAtFaces,
+  ObservingOffChargerHeadOnly,
   ObservingOnCharger,
   ObservingOnChargerGetIn,
   ObservingOnChargerGetOut,

@@ -83,7 +83,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/messaging/behaviorLeaveAMessage.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/messaging/behaviorPlaybackMessage.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingLookAtFaces.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingOnCharger.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingWithoutTurn.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/proxBehaviors/behaviorProxGetToDistance.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeCubeMoved.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAcknowledgeFace.h"
@@ -577,9 +577,9 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::ObservingOnCharger:
+    case BehaviorClass::ObservingWithoutTurn:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorObservingOnCharger(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorObservingWithoutTurn(config));
       break;
     }
     

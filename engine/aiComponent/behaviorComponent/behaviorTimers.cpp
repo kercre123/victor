@@ -73,8 +73,14 @@ void BehaviorTimer::Reset()
                    "BehaviorTimer.Reset",
                    "Cannot reset the default timer") )
   {
+    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
-    _baseTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    PRINT_CH_DEBUG("Behaviors", "BeahviorTimer.Reset",
+                   "Timer '%s' reset at t=%f",
+                   BehaviorTimerTypesToString(_timerType),
+                   currTime_s);
+    
+    _baseTime = currTime_s;
     _hasBeenReset = true;
   }
 }

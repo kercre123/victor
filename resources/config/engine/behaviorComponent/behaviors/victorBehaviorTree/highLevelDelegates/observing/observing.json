@@ -22,8 +22,9 @@
           "cooldown_s": 15.0
         },
         {
+          // NOTE: internally has stim requirments so it won't constantly run
           "behavior": "ObservingLookAtFaces",
-          "cooldown_s": 300.0,
+          "cooldown_s": 30.0,
           "cooldown_random_factor": 0.5
         },
         {
@@ -31,7 +32,9 @@
           "cooldown_s": 0.0
         },
         {
-          "behavior": "Wait", // todo: this should be an animation that doesnt move the head
+          // TODO:(bn) need to make stim go up here if faces are seen. maybe need a general purpose way to do
+          // this? Just always do it?
+          "behavior": "ObservingOffChargerHeadOnly",
           "cooldown_s": 0.0
         }
       ]

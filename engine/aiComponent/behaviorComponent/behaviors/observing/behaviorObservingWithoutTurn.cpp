@@ -1,22 +1,23 @@
 /**
- * File: behaviorObservingOnCharger.cpp
+ * File: behaviorObservingWithoutTurn.cpp
  *
  * Author: Brad Neuman
  * Created: 2017-11-20
  *
- * Description: "idle" looking behavior to observe things while Victor is sitting on the charger
+ * Description: "idle" looking behavior to observe things without turning the body
  *
  * Copyright: Anki, Inc. 2017
  *
  **/
 
+#include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingWithoutTurn.h"
 
-#include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingOnCharger.h"
-
+#include "clad/types/behaviorComponent/behaviorTimerTypes.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "util/graphEvaluator/graphEvaluator2d.h"
 
 #define SET_STATE(s) SetState_internal(State::s, #s)
@@ -29,13 +30,14 @@ const char* const kSmallMotionPeriodKey = "small_motion_period_s";
 const char* const kSmallMotionPeriodRandomFactorKey = "small_motion_period_random_factor";
 const char* const kLookUpPeriodMultiplierKey = "look_up_period_multiplier";
 const char* const kLookStraightPeriodMultiplierKey = "look_straight_period_multiplier";
+const char* const kBehaviorTimerKey = "behaviorTimer";
 }
 
-struct BehaviorObservingOnCharger::Params
+struct BehaviorObservingWithoutTurn::Params
 {
   Params(const Json::Value& config);
     
-  // x = time robot has been on the charger, in seconds
+  // x = Specified behavior timer value (e.g. time robot has been on the charger), in seconds
   // y = desired period of head motions, in seconds
   Util::GraphEvaluator2d _smallMotionPeriod;
 
@@ -44,9 +46,11 @@ struct BehaviorObservingOnCharger::Params
 
   float _lookUpPeriodMultiplier;
   float _lookStraightPeriodMultiplier;
+
+  BehaviorTimerTypes _behaviorTimer = BehaviorTimerTypes::Invalid;
 };
 
-BehaviorObservingOnCharger::Params::Params(const Json::Value& config)
+BehaviorObservingWithoutTurn::Params::Params(const Json::Value& config)
 {
   _smallMotionPeriod.ReadFromJson(config[kSmallMotionPeriodKey]);
   _smallMotionPeriodRandomFactor = config.get(kSmallMotionPeriodRandomFactorKey, 0.0f).asFloat();
@@ -54,96 +58,99 @@ BehaviorObservingOnCharger::Params::Params(const Json::Value& config)
 
   _lookUpPeriodMultiplier = JsonTools::ParseFloat(config,
                                                   kLookUpPeriodMultiplierKey,
-                                                  "BehaviorObservingOnCharger.Params.LookUpPeriodMultiplier");
+                                                  "BehaviorObservingWithoutTurn.Params.LookUpPeriodMultiplier");
 
+  const std::string& timerStr = JsonTools::ParseString(config,
+                                                       kBehaviorTimerKey,
+                                                       "BehaviorObservingWithoutTurn.Params.BehaviorTimer");
+  _behaviorTimer = BehaviorTimerManager::BehaviorTimerFromString( timerStr );
   
   _lookStraightPeriodMultiplier = JsonTools::ParseFloat(
     config,
     kLookStraightPeriodMultiplierKey,
-    "BehaviorObservingOnCharger.Params.LookStraightPeriodMultiplier");
+    "BehaviorObservingWithoutTurn.Params.LookStraightPeriodMultiplier");
 }
 
-BehaviorObservingOnCharger::BehaviorObservingOnCharger(const Json::Value& config)
+BehaviorObservingWithoutTurn::BehaviorObservingWithoutTurn(const Json::Value& config)
   : ICozmoBehavior(config)
 {
   _params = std::make_unique<Params>(config);
 }
 
-BehaviorObservingOnCharger::~BehaviorObservingOnCharger()
+BehaviorObservingWithoutTurn::~BehaviorObservingWithoutTurn()
 {
 
 }
 
-void BehaviorObservingOnCharger::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+void BehaviorObservingWithoutTurn::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   const char* list[] = {
     kSmallMotionPeriodKey,
     kSmallMotionPeriodRandomFactorKey,
     kLookUpPeriodMultiplierKey,
     kLookStraightPeriodMultiplierKey,
+    kBehaviorTimerKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
-bool BehaviorObservingOnCharger::CanBeGentlyInterruptedNow() const
+bool BehaviorObservingWithoutTurn::CanBeGentlyInterruptedNow() const
 {
   return !_isTransitioning;
 }
 
-bool BehaviorObservingOnCharger::WantsToBeActivatedBehavior() const
-{
-  // _only_ wants to run on the charger
-  return GetBEI().GetRobotInfo().IsOnChargerContacts();
-}
 
-void BehaviorObservingOnCharger::OnBehaviorActivated()
+void BehaviorObservingWithoutTurn::OnBehaviorActivated()
 {
+  const auto& timer = GetBEI().GetBehaviorTimerManager().GetTimer( _params->_behaviorTimer );
+  const float currBehaviorTimerTime = timer.GetElapsedTimeInSeconds();
+  PRINT_CH_INFO("Behaviors", "BehaviorObservingWithoutTurn.Activated",
+                "%s: behavior timer '%s' current value is %f",
+                GetDebugLabel().c_str(),
+                BehaviorTimerTypesToString(_params->_behaviorTimer),
+                currBehaviorTimerTime);                
+  
   TransitionToLookingUp();
 }
 
-void BehaviorObservingOnCharger::TransitionToLookingUp()
+void BehaviorObservingWithoutTurn::TransitionToLookingUp()
 {
   SET_STATE(LookingUp);
   _isTransitioning = true;
   ResetSmallHeadMoveTimer();
   
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ObservingLookUp),
-                      &BehaviorObservingOnCharger::Loop);
+                      &BehaviorObservingWithoutTurn::Loop);
 }
 
-void BehaviorObservingOnCharger::TransitionToLookingStraight()
+void BehaviorObservingWithoutTurn::TransitionToLookingStraight()
 {
   SET_STATE(LookingStraight);
   _isTransitioning = true;
   ResetSmallHeadMoveTimer();
 
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ObservingLookStraight),
-                      &BehaviorObservingOnCharger::Loop);
+                      &BehaviorObservingWithoutTurn::Loop);
 }
 
-void BehaviorObservingOnCharger::ResetSmallHeadMoveTimer()
+void BehaviorObservingWithoutTurn::ResetSmallHeadMoveTimer()
 {
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _lastSmallHeadMoveTime_s = currTime_s;
 
-  const TimeStamp_t lastChargingTime_ms = GetBEI().GetRobotInfo().GetLastChargingStateChangeTimestamp();
-  const TimeStamp_t currRobotTime_ms = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
-  const TimeStamp_t timeOnCharger_ms = currRobotTime_ms > lastChargingTime_ms ?
-                                       currRobotTime_ms - lastChargingTime_ms :
-                                       0;
-  
-  _currSmallMovePeriod_s = _params->_smallMotionPeriod.EvaluateY( timeOnCharger_ms / 1000.0f );
+  const float time_s = GetBEI().GetBehaviorTimerManager().GetTimer( _params->_behaviorTimer ).GetElapsedTimeInSeconds();
+  _currSmallMovePeriod_s = _params->_smallMotionPeriod.EvaluateY(time_s);
   if( _params->_smallMotionPeriodRandomFactor > 0.0f ) {
     const float randomRange = _currSmallMovePeriod_s * _params->_smallMotionPeriodRandomFactor;
     _currSmallMovePeriod_s += GetRNG().RandDblInRange( -randomRange, randomRange );
   }
   
-  PRINT_CH_DEBUG("Behaviors", "BehaviorObservingOnCharger.NextSmallMotion",
+  PRINT_CH_DEBUG("Behaviors", "BehaviorObservingWithoutTurn.NextSmallMotion",
                  "Next small motion will be in %f seconds",
                  _currSmallMovePeriod_s);
 }
 
-void BehaviorObservingOnCharger::Loop()
+void BehaviorObservingWithoutTurn::Loop()
 {
   _isTransitioning = false;
 
@@ -164,21 +171,23 @@ void BehaviorObservingOnCharger::Loop()
       animToPlay = AnimationTrigger::ObservingIdleEyesOnly;
     }
 
-    DEV_ASSERT(animToPlay != AnimationTrigger::Count, "BehaviorObservingOnCharger.Loop.NoAnimation");
+    DEV_ASSERT(animToPlay != AnimationTrigger::Count, "BehaviorObservingWithoutTurn.Loop.NoAnimation");
 
     const u32 numLoops = 1;
     const bool interruptRunning = true;
-    const u8 tracksToLock = (u8)AnimTrackFlag::BODY_TRACK;
     const float timeout = TriggerAnimationAction::GetDefaultTimeoutInSeconds();
     const bool strictCooldown = true;
+
+    const bool onCharger = GetBEI().GetRobotInfo().IsOnChargerContacts();
+    const u8 tracksToLock = onCharger ? (u8)AnimTrackFlag::BODY_TRACK : (u8)AnimTrackFlag::NO_TRACKS;
     
     auto* action = new TriggerAnimationAction(animToPlay, numLoops, interruptRunning, tracksToLock, timeout, strictCooldown);
     
-    DelegateIfInControl(action, &BehaviorObservingOnCharger::Loop);
+    DelegateIfInControl(action, &BehaviorObservingWithoutTurn::Loop);
   }
 }
 
-AnimationTrigger BehaviorObservingOnCharger::GetSmallHeadMoveAnim() const
+AnimationTrigger BehaviorObservingWithoutTurn::GetSmallHeadMoveAnim() const
 {
   switch( _state ) {
     case State::LookingUp: return AnimationTrigger::ObservingIdleWithHeadLookingUp;
@@ -186,7 +195,7 @@ AnimationTrigger BehaviorObservingOnCharger::GetSmallHeadMoveAnim() const
   } 
 }
 
-float BehaviorObservingOnCharger::GetStateChangePeriod() const
+float BehaviorObservingWithoutTurn::GetStateChangePeriod() const
 {
   switch(_state) {
     case State::LookingUp:
@@ -196,7 +205,7 @@ float BehaviorObservingOnCharger::GetStateChangePeriod() const
   }
 }
 
-void BehaviorObservingOnCharger::SwitchState()
+void BehaviorObservingWithoutTurn::SwitchState()
 {
   switch(_state) {
     case State::LookingUp:
@@ -209,7 +218,7 @@ void BehaviorObservingOnCharger::SwitchState()
 }
 
 
-void BehaviorObservingOnCharger::SetState_internal(State state, const std::string& stateName)
+void BehaviorObservingWithoutTurn::SetState_internal(State state, const std::string& stateName)
 {
   _lastStateChangeTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _state = state;
