@@ -42,9 +42,6 @@
 #endif
 
 // Keil doesn't seem to reliably error on these not being defined below so trigger explicitly.
-#ifndef ANKI_DEBUG_EVENTS
-#error ANKI_DEBUG_EVENTS not defined
-#endif
 #ifndef ANKI_DEBUG_INFO
 #error ANKI_DEBUG_INFO not defined
 #endif
@@ -55,15 +52,6 @@
 namespace Anki {
   namespace Cozmo {
     namespace RobotInterface {
-
-#if ANKI_DEBUG_EVENTS
-      #define AnkiEvent(nameString, fmtString, ...) \
-      { \
-        log_event(nameString, fmtString, ##__VA_ARGS__); \
-      }
-#else
-      #define AnkiEvent(...)
-#endif
 
 #if ANKI_DEBUG_INFO
       #define AnkiInfo(nameString, fmtString, ...) \

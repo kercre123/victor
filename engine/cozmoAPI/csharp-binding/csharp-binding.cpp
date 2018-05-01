@@ -72,14 +72,6 @@ const char* ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
 CozmoAPI* engineAPI = nullptr;
 Anki::Util::Data::DataPlatform* dataPlatform = nullptr;
 
-void Unity_DAS_Event(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount) {
-  std::vector<std::pair<const char*, const char *>> keyValues;
-  for(int i = 0; i < keyValueCount; ++i) {
-    keyValues.push_back(std::pair<const char *, const char *>(keys[i], values[i]));
-  }
-  Anki::Util::sEventF(eventName, keyValues, "%s", eventValue);
-}
-
 void Unity_DAS_LogE(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount) {
   std::vector<std::pair<const char*, const char *>> keyValues;
   for(int i = 0; i < keyValueCount; ++i) {

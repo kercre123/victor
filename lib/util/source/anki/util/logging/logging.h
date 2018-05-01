@@ -43,8 +43,6 @@ class IEventProvider;
 using KVPair = std::pair<const char *, const char *>;
 using KVPairVector = std::vector<KVPair>;
 
-const uint8_t DASMaxSvalLength = 128;
-
 std::string HexDump(const void *value, const size_t len, char delimiter);
 
 extern ITickTimeProvider* gTickTimeProvider;
@@ -58,15 +56,20 @@ extern bool _errG;
 // Global flag to control break-on-error behavior
 extern bool _errBreakOnError;
 
-//__attribute__((__deprecated__))
+//
+// "Event level" logging is no longer a thing. Do not use it.
+// Messages intended for DAS should use the explicit DASMESSAGE interface.
+// Other messages should use INFO or DEBUG as appropriate.
+//
+__attribute__((__deprecated__))
 __attribute__((__used__))
 void sEventF(const char* name, const KVPairVector & keyvals, const char* format, ...) __attribute__((format(printf,3,4)));
 
-//__attribute__((__deprecated__))
+__attribute__((__deprecated__))
 __attribute__((__used__))
 void sEventV(const char* name, const KVPairVector & keyvals, const char* format, va_list args) __attribute__((format(printf,3,0)));
 
-//__attribute__((__deprecated__))
+__attribute__((__deprecated__))
 __attribute__((__used__))
 void sEvent(const char* name, const KVPairVector & keyvals, const char* strval);
 
@@ -398,19 +401,12 @@ PRINT_PERIODIC_CH_HELPER(sChanneledDebugF, period, channel, name, format, ##__VA
 //
 // DAS events are structured messages for use with backend analytics.
 // Event name and data fields are determined by the analytics team.
-// Do NOT use LOG_EVENT to report random messages from your code!
 //
 #define DPHYS "$phys"
 #define DDATA "$data"
 #define DGROUP "$group"
 #define DGAME "$game"
 #define DCONNECTSESSION "$session_id"
-
-// send BI event
-#define LOG_EVENT(name, format, ...) do { \
-  ::Anki::Util::sEventF(name, {}, format, ##__VA_ARGS__); \
-} while(0)
-
 
 //
 // Compact version of PRINT_NAMED_ERROR & friends
