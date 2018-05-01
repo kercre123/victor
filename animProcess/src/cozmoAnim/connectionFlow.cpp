@@ -138,13 +138,17 @@ void SetBLEPin(uint32_t pin)
 
 bool InitConnectionFlow(AnimationStreamer* animStreamer)
 {
-  // Don't start connection flow if not packed out
-  if(!Factory::GetEMR()->fields.PACKED_OUT_FLAG)
+  if(FACTORY_TEST)
   {
-    return true;
-  }
+    // Don't start connection flow if not packed out
+    if(!Factory::GetEMR()->fields.PACKED_OUT_FLAG)
+    {
+      return true;
+    }
 
-  return DrawStartPairingScreen(animStreamer);
+    return DrawStartPairingScreen(animStreamer);
+  }
+  return true;
 }
 
 void UpdatePairingLight(bool on)
