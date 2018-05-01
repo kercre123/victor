@@ -29,6 +29,7 @@ u8 g_fixtureReleaseVersion = (NOT_FOR_FACTORY) ? 0 : (APP_RELEASE_VERSION);
 #define BUILD_INFO "Victor DVT3"
 
 #define USE_START_BTN 0
+#define APP_DEBUG 1
 
 //other global dat
 app_reset_dat_t g_app_reset;
@@ -147,6 +148,10 @@ void WaitForDeviceOff(bool error, int debounce_ms)
   Board::powerOff(PWR_DUTVDD);
   Board::powerOff(PWR_UAMP);
   
+  #if APP_DEBUG > 0
+  ConsolePrintf("waiting for device off (%ims)\n", debounce_ms);
+  #endif
+  
   u32 debounce = 0;
   u8 buz = 0, annoy = 0;
   while (g_isDevicePresent)
@@ -177,6 +182,10 @@ void WaitForDeviceOff(bool error, int debounce_ms)
     }
   }
   
+  #if APP_DEBUG > 0
+  ConsolePrintf("device removed\n");
+  #endif
+  
   Board::ledOff(Board::LED_RED);
   Board::buzzerOff();
   
@@ -197,7 +206,7 @@ static void RunTests()
   Board::ledOn(Board::LED_YLW); //test in-progress
   
   //char b[10]; int bz = sizeof(b);
-  cmdSend(CMD_IO_HELPER, "logstart", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN );
+  cmdSend(CMD_IO_HELPER, "logstart", CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~(CMD_OPTS_EXCEPTION_EN | CMD_OPTS_LOG_ALL) );
   
   ConsolePrintf("[TEST:START]\n");
   printFixtureInfo();
@@ -374,8 +383,13 @@ static void MainExecution()
   
   #else
     //legacy DUT connect starts the test
-    if( isPresent || g_forceStart )
+    if( isPresent || g_forceStart ) {
+      #if APP_DEBUG > 0
+      if( isPresent ) ConsolePrintf("device detected\n");
+      if( g_forceStart) ConsolePrintf("force start\n");
+      #endif
       g_forceStart = 0, start = 1;
+    }
   
   #endif
   

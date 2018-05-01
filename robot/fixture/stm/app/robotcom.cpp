@@ -21,20 +21,22 @@ STATIC_ASSERT( APP_GLOBAL_BUF_SIZE >= srdatMaxSize , rcom_sensor_buffer_size_che
 //                  Helper Comms: Cmd + response parse
 //-----------------------------------------------------------------------------
 
-#define HELPER_LCD_CMD_TIMEOUT 150 /*ms*/
+#define HELPER_LCD_CMD_TIMEOUT  150 /*ms*/
+#define HELPER_CMD_OPTS_LOGGED  (CMD_OPTS_DEFAULT & ~(CMD_OPTS_EXCEPTION_EN))
+#define HELPER_CMD_OPTS_NOLOG   (CMD_OPTS_DEFAULT & ~(CMD_OPTS_EXCEPTION_EN | CMD_OPTS_LOG_ALL))
 
 void helperLcdShow(bool solo, bool invert, char color_rgbw, const char* center_text)
 {
   char b[50]; int bz = sizeof(b);
   if( color_rgbw != 'r' && color_rgbw != 'g' && color_rgbw != 'b' && color_rgbw != 'w' )
     color_rgbw = 'w';
-  cmdSend(CMD_IO_HELPER, snformat(b,bz,"lcdshow %u %s%c %s", solo, invert?"i":"", color_rgbw, center_text), HELPER_LCD_CMD_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
+  cmdSend(CMD_IO_HELPER, snformat(b,bz,"lcdshow %u %s%c %s", solo, invert?"i":"", color_rgbw, center_text), HELPER_LCD_CMD_TIMEOUT, HELPER_CMD_OPTS_NOLOG);
 }
 
 void helperLcdSetLine(int n, const char* line)
 {
   char b[50]; int bz = sizeof(b);
-  cmdSend(CMD_IO_HELPER, snformat(b,bz,"lcdset %u %s", n, line), HELPER_LCD_CMD_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN);
+  cmdSend(CMD_IO_HELPER, snformat(b,bz,"lcdset %u %s", n, line), HELPER_LCD_CMD_TIMEOUT, HELPER_CMD_OPTS_NOLOG);
 }
 
 void helperLcdClear(void)
@@ -57,7 +59,7 @@ char* helperGetEmmcdlVersion(int timeout_ms)
 {
   memset( &emmcdl_version, 0, sizeof(emmcdl_version) );
   emmcdl_read_cnt = 0;
-  cmdSend(CMD_IO_HELPER, "get_emmcdl_ver", timeout_ms, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN, emmcdl_ver_handler_);
+  cmdSend(CMD_IO_HELPER, "get_emmcdl_ver", timeout_ms, HELPER_CMD_OPTS_LOGGED, emmcdl_ver_handler_);
   
   if( cmdStatus() == 0 && emmcdl_read_cnt == 1 && strlen(emmcdl_version) > 0 )
     return emmcdl_version;
@@ -95,7 +97,7 @@ int helperGetTempC(int zone)
   temp_cnt = 0;
   temp_zone = zone >= 0 ? zone : DEFAULT_TEMP_ZONE;
   tempC = TEMP_ERR_HELPER_NO_RESPONSE;
-  cmdSend(CMD_IO_HELPER, b, CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN, temperature_handler);
+  cmdSend(CMD_IO_HELPER, b, CMD_DEFAULT_TIMEOUT, HELPER_CMD_OPTS_NOLOG, temperature_handler);
   
   if( cmdStatus() != 0 )
     return TEMP_ERR_HELPER_CMD_ERR;
