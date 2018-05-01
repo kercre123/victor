@@ -102,7 +102,9 @@
                 var args = "";
             }
             console.log("Call consolefunccall with func:" + func + " and args:" + args);
-            $.post("consolefunccall", {func: func, args: args}, function(result){});
+            // Passing as string (instead of json object) prevents encoding of commas
+            var optionsString = "func=" + func + "&args=" + args;
+            $.post("consolefunccall", optionsString, function(result){});
         })
     });
 // -- generated script --
