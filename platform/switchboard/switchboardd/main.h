@@ -42,6 +42,7 @@ namespace Switchboard {
         _loop(loop),
         _isPairing(false),
         _isOtaUpdating(false),
+        _connectionFailureCounter(kFailureCountToLog),
         _taskExecutor(nullptr),
         _bleClient(nullptr),
         _securePairing(nullptr),
@@ -92,6 +93,7 @@ namespace Switchboard {
 
       const uint8_t kOtaUpdateInterval_s = 1;
       const float kRetryInterval_s = 0.2f;
+      const uint32_t kFailureCountToLog = 20;
 
       int _connectionId = -1;
 
@@ -102,6 +104,7 @@ namespace Switchboard {
       struct ev_loop* _loop;
       bool _isPairing;
       bool _isOtaUpdating;
+      uint32_t _connectionFailureCounter;
 
       ev_timer _engineTimer;
       ev_timer _ankibtdTimer;

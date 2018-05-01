@@ -135,8 +135,12 @@ bool Daemon::TryConnectToEngineServer() {
 
   if (connected) {
     Log::Write("Initialize EngineMessagingClient");
+    _connectionFailureCounter = kFailureCountToLog;
   } else {
-    Log::Write("Failed to Initialize EngineMessagingClient ... trying again.");
+    if(++_connectionFailureCounter >= kFailureCountToLog) {
+      Log::Write("Failed to Initialize EngineMessagingClient ... trying again.");
+      _connectionFailureCounter = 0;
+    }
   }
 
   return connected;
@@ -150,8 +154,12 @@ bool Daemon::TryConnectToAnkiBluetoothDaemon() {
   if(_bleClient->IsConnected()) {
     Log::Write("Ble IPC client connected.");
     UpdateAdvertisement(false);
+    _connectionFailureCounter = kFailureCountToLog;
   } else {
-    Log::Write("Failed to connect to ankibluetoothd ... trying again.");
+    if(++_connectionFailureCounter >= kFailureCountToLog) {
+      Log::Write("Failed to connect to ankibluetoothd ... trying again.");
+      _connectionFailureCounter = 0;
+    }
   }
 
   return _bleClient->IsConnected();
