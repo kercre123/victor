@@ -46,10 +46,11 @@ const int ccr_sr_cnt[12] = {0,2,4,2,2,2,2,4,2,1,1,4}; //number of CCC sensor fie
 #define RCOM_BAT_RAW_TO_MV(raw)     (((raw)*2800)>>11)  /*robot_sr_t::bat.raw (adc) to millivolts*/
 
 //debug opts
-#define RCOM_PRINT_LEVEL_DEFAULT      0
-#define RCOM_PRINT_LEVEL_CMD          1
-#define RCOM_PRINT_LEVEL_CMD_RSP      3
-#define RCOM_PRINT_LEVEL_CMD_DAT_RSP  7
+#define RCOM_PRINT_LEVEL_DEFAULT      RCOM_PRINT_LEVEL_CMD_DAT_RSP
+#define RCOM_PRINT_LEVEL_CMD_DAT_RSP  0
+#define RCOM_PRINT_LEVEL_CMD_RSP      1
+#define RCOM_PRINT_LEVEL_CMD          2
+#define RCOM_PRINT_LEVEL_NONE         3
 
 typedef struct {
   uint32_t hw_rev;
@@ -73,15 +74,16 @@ void          rcomSetTarget(bool spine_nCCC); //select charge contacts or spine 
 
 uint32_t      rcomEsn(); //read robot ESN (Head)
 robot_bsv_t*  rcomBsv(); //read body serial+version info
+void          rcomPwr(uint8_t st); //st={0,1} -> {on,off}
+void          rcomLed(uint8_t *leds, int printlvl = RCOM_PRINT_LEVEL_DEFAULT); //leds[12] {led0R,G,B,led1R,G,B...}
 robot_sr_t*   rcomMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, int printlvl = RCOM_PRINT_LEVEL_DEFAULT);
 robot_sr_t*   rcomGet(uint8_t NN, uint8_t sensor, int printlvl = RCOM_PRINT_LEVEL_DEFAULT); //NN = #drops (sr vals). returns &sensor[0] of [NN-1]
-void          rcomFcc(uint8_t mode, uint8_t cn); //RCOM_FCC_MODE_, {0..39}
 int           rcomRlg(uint8_t idx, char *buf, int buf_max_size); //read log 'idx' into buf (NOT null-terminated). return num chars written to buf [e.g. strlen(buf)]
 void          rcomEng(uint8_t idx, uint32_t val);
-void          rcomLfe(uint8_t idx, uint32_t val);
 void          rcomSmr(uint8_t idx, uint32_t val);
 uint32_t      rcomGmr(uint8_t idx);
-void          rcomPwr(uint8_t st); //st={0,1} -> {on,off}
+//void          rcomFcc(uint8_t mode, uint8_t cn); //RCOM_FCC_MODE_, {0..39}
+//void          rcomLfe(uint8_t idx, uint32_t val);
 
 
 #endif //ROBOTCOM_H

@@ -127,6 +127,17 @@ static struct { //result of most recent command
   } rsp;
 } m_ccc;
 
+//map robotcom's 'printlvl' to cmd option flags
+static inline int printlvl2cmdopts( int printlvl ) {
+  switch( printlvl) {
+    default:
+    case RCOM_PRINT_LEVEL_CMD_DAT_RSP:  return CCC_CMD_OPTS & ~(               0 |                0 |                  0 | CMD_OPTS_LOG_OTHER); //break;
+    case RCOM_PRINT_LEVEL_CMD_RSP:      return CCC_CMD_OPTS & ~(               0 |                0 | CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER); //break;
+    case RCOM_PRINT_LEVEL_CMD:          return CCC_CMD_OPTS & ~(               0 | CMD_OPTS_LOG_RSP | CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER); //break;
+    case RCOM_PRINT_LEVEL_NONE:         return CCC_CMD_OPTS & ~(CMD_OPTS_LOG_CMD | CMD_OPTS_LOG_RSP | CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER); //break;
+  }
+}
+
 //common error check function
 static bool ccc_error_check_(int required_handler_cnt)
 {
@@ -195,6 +206,29 @@ robot_bsv_t* cccBsv()
   return !ccc_error_check_(10) ? &m_ccc.rsp.bsv : NULL;
 }
 
+void cccLed(uint8_t *leds, int printlvl) {
+  CCC_CMD_DELAY();
+  char b[22]; const int bz = sizeof(b);
+  
+  //encode led values into ccc cmd format
+  uint8_t arg[6];
+  for(int i=0; i<12; i++) {
+    if( (i&1) == 0 )
+      arg[i>>1] = (leds[i] & 0xF0);
+    else
+      arg[i>>1] |= (leds[i] & 0xF0) >> 4;
+  }
+  
+  #if CCC_DEBUG > 0
+  ConsolePrintf("leds"); for(int i=0; i<12; i++) { ConsolePrintf(" %02x", leds[i]); } ConsolePutChar('\n');
+  ConsolePrintf("args"); for(int i=0; i<6; i++) { ConsolePrintf(" %02x", arg[i]); } ConsolePutChar('\n');
+  #endif
+  
+  int cmd_opts = printlvl2cmdopts(printlvl);
+  snformat(b,bz,"led %02x %02x %02x %02x %02x %02x", arg[0],arg[1],arg[2],arg[3],arg[4],arg[5] );
+  cmdSend(CMD_IO_CONTACTS, b, 100, cmd_opts );
+}
+
 void sensor_handler_(char* s) {
   robot_sr_t *psr = &((robot_sr_t*)srbuf)[m_ccc.handler_cnt++];
   if( m_ccc.handler_cnt <= 256 ) { //don't overflow buffer
@@ -217,13 +251,7 @@ static robot_sr_t* ccc_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t
   if( !NN || sensor >= sizeof(ccr_sr_cnt) )
     throw ERROR_BAD_ARG;
   
-  int cmd_opts = CCC_CMD_OPTS;
-  switch( printlvl) {
-    case RCOM_PRINT_LEVEL_CMD:          cmd_opts &= ~(CMD_OPTS_LOG_RSP | CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER); break;
-    case RCOM_PRINT_LEVEL_CMD_RSP:      cmd_opts &= ~(                   CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER); break;
-    case RCOM_PRINT_LEVEL_CMD_DAT_RSP:  cmd_opts &= ~(                                        CMD_OPTS_LOG_OTHER); break;
-  }
-  
+  int cmd_opts = printlvl2cmdopts(printlvl);
   cmdSend(CMD_IO_CONTACTS, b, 500 + (int)NN*10, cmd_opts, sensor_handler_);
   
   #if CCC_DEBUG > 0
@@ -234,11 +262,11 @@ static robot_sr_t* ccc_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t
   return !ccc_error_check_(NN) ? (robot_sr_t*)srbuf : NULL;
 }
 
-void cccFcc(uint8_t mode, uint8_t cn) {
+/*void cccFcc(uint8_t mode, uint8_t cn) {
   CCC_CMD_DELAY();
   char b[22]; const int bz = sizeof(b);
   cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"fcc %02x %02x 00 00 00 00", mode, cn), 500, CCC_CMD_OPTS);
-}
+}*/
 
 int cccRlg(uint8_t idx, char *buf, int buf_max_size)
 {
@@ -581,6 +609,16 @@ robot_bsv_t* spineBsv(void)
   return retval;
 }
 
+void spinePwr(uint8_t st) {
+  //XXX: implement me
+  throw ERROR_EMPTY_COMMAND;
+}
+
+void spineLed(uint8_t *leds, int printlvl) {
+  //XXX: implement me
+  throw ERROR_EMPTY_COMMAND;
+}
+
 static robot_sr_t* spine_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, int printlvl)
 {
   //XXX: implement me!
@@ -592,11 +630,6 @@ static robot_sr_t* spine_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8
     throw ERROR_BAD_ARG;
   
   return (robot_sr_t*)srbuf;
-}
-
-void spinePwr(uint8_t st) {
-  //XXX: implement me
-  throw ERROR_EMPTY_COMMAND;
 }
 
 //-----------------------------------------------------------------------------
@@ -621,6 +654,20 @@ robot_bsv_t* rcomBsv() {
     return spineBsv();
 }
 
+void rcomPwr(uint8_t st) { 
+  if( !rcom_target_spine_nCCC )
+    ccc_IdxVal32_(st,  0,   "pwr", 0);
+  else 
+    spinePwr(st);
+}
+
+void rcomLed(uint8_t *leds, int printlvl) {
+  if( !rcom_target_spine_nCCC )
+    cccLed(leds, printlvl);
+  else 
+    spineLed(leds, printlvl);
+}
+
 robot_sr_t* rcomMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, int printlvl)
 {
   if( !rcom_target_spine_nCCC )
@@ -637,12 +684,11 @@ robot_sr_t* rcomGet(uint8_t NN, uint8_t sensor, int printlvl)
     return spine_MotGet_(NN, sensor, 0, 0, 0, 0, printlvl);
 }
 
-void rcomFcc(uint8_t mode, uint8_t cn)  { if( !rcom_target_spine_nCCC ) cccFcc(mode, cn); }
 int  rcomRlg(uint8_t idx, char *buf, int buf_max_size) { return !rcom_target_spine_nCCC ? cccRlg(idx,buf,buf_max_size) : 0; }
 void rcomEng(uint8_t idx, uint32_t val) { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(idx, val, "eng", 0); }
-void rcomLfe(uint8_t idx, uint32_t val) { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(idx, val, "lfe", 0); }
 void rcomSmr(uint8_t idx, uint32_t val) { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(idx, val, "smr", 0, false); }
-void rcomPwr(uint8_t st)                { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(st,  0,   "pwr", 0); else spinePwr(st); }
+//void rcomFcc(uint8_t mode, uint8_t cn)  { if( !rcom_target_spine_nCCC ) cccFcc(mode, cn); }
+//void rcomLfe(uint8_t idx, uint32_t val) { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(idx, val, "lfe", 0); }
 
 uint32_t rcomGmr(uint8_t idx) { 
   return !rcom_target_spine_nCCC ? cccGmr(idx) : 0;
