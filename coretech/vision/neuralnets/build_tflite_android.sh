@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 
-if [ "$#" -ne 2 ]; then
-  echo Usage: $0 VICTOR_REPO_PATH OUTPUT_BINARY
+if [ "$#" -ne 3 ]; then
+  echo Usage: $0 VICTOR_REPO_PATH NDK_ROOT OUTPUT_BINARY
   exit 1
 fi
 
 VICTOR_REPO_PATH=$1
-OUTPUT_BINARY=$2
+NDK_ROOT=$2
+OUTPUT_BINARY=$3
 CORETECH_EXTERNAL_DIR=${VICTOR_REPO_PATH}/EXTERNALS/coretech_external
 TENSORFLOW_PATH=${CORETECH_EXTERNAL_DIR}/tensorflow
-FRAMEWORK_PATH=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.13.sdk/System/Library/Frameworks
 
-echo "--Looking for frameworks at ${FRAMEWORK_PATH}"
+echo "--Using Android NDK at ${NDK_ROOT}"
 echo "--Looking for tensorflow at ${TENSORFLOW_PATH}"
 
 if [ ! -d ${TENSORFLOW_PATH} ] 
@@ -20,17 +20,18 @@ then
   exit 1
 fi
 
-# Note: build TFLite static lib simply using "make -f tensorflow/contrib/lite/Makefile"
+CC=${NDK_ROOT}/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-g++
 
-CC=g++
-
-${CC} --std=c++11 \
+${CC} --std=c++11 -fPIE -mfloat-abi=softfp -mfpu=neon -pie \
   -DTFLITE \
+  --sysroot ${NDK_ROOT}/platforms/android-21/arch-arm \
+  -I${NDK_ROOT}/sources/android/support/include \
+  -I${NDK_ROOT}/sources/cxx-stl/gnu-libstdc++/4.9/include \
+  -I${NDK_ROOT}/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a/include \
   -I${TENSORFLOW_PATH} \
   -I${TENSORFLOW_PATH}/bazel-tensorflow/external/eigen_archive \
-  -I${TENSORFLOW_PATH}/bazel-genfiles \
   -I${TENSORFLOW_PATH}/tensorflow/contrib/lite/downloads/flatbuffers/include \
-  -I${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/mac \
+  -I${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/android/sdk/native/jni/include \
   -I${CORETECH_EXTERNAL_DIR}/opencv-3.4.0/modules/core/include \
   -I${CORETECH_EXTERNAL_DIR}/opencv-3.4.0/modules/imgcodecs/include \
   -I${CORETECH_EXTERNAL_DIR}/opencv-3.4.0/modules/imgproc/include \
@@ -39,9 +40,10 @@ ${CC} --std=c++11 \
   standaloneForwardInference.cpp \
   objectDetector_tflite.cpp \
   ${VICTOR_REPO_PATH}/tools/message-buffers/support/cpp/source/jsoncpp.cpp \
-  ${TENSORFLOW_PATH}/tensorflow/contrib/lite/gen_OSX/lib/libtensorflow-lite.a \
-  -L${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/mac/lib/Release -lopencv_imgproc -lopencv_imgcodecs -lopencv_core \
-  -L${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/mac/3rdparty/lib/Release -lippicv -lippiw -llibpng -llibjpeg -llibtiff -lzlib -littnotify -llibjasper -lIlmImf \
-  -F${FRAMEWORK_PATH} -framework OpenCL -framework Accelerate \
-  -lstdc++ -lm \
+  ${TENSORFLOW_PATH}/tensorflow/contrib/lite/gen_ANDROID/lib/libtensorflow-lite.a \
+  -L${NDK_ROOT}/sources/cxx-stl/gnu-libstdc++/4.9/libs/armeabi-v7a \
+  -L${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/android/sdk/native/libs/armeabi-v7a \
+  -lopencv_imgproc -lopencv_core -lopencv_imgcodecs \
+  -lgnustl_static -llog -lz -lm -ldl -latomic \
   -o ${OUTPUT_BINARY}
+
