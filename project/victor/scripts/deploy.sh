@@ -100,6 +100,14 @@ MOUNT_STATE=$(\
 )
 [[ "$MOUNT_STATE" == "ro" ]] && logv "remount rw /" && robot_sh "/bin/mount -o remount,rw /"
 
+function cleanup() {
+  # Remount rootfs read-only
+  [[ "$MOUNT_STATE" == "ro" ]] && logv "remount ro /" &&  robot_sh "/bin/mount -o remount,ro /"    
+}
+
+# trap ctrl-c and call ctrl_c()
+trap cleanup INT
+
 set +e
 ( # TRY deploy
 logv "start deploy"
@@ -185,7 +193,6 @@ else
   logv "deploy FAILED"
 fi
 
-# Remount rootfs read-write
-[[ "$MOUNT_STATE" == "ro" ]] && logv "remount ro /" &&  robot_sh "/bin/mount -o remount,ro /"
+cleanup
 
 exit $DEPLOY_RESULT

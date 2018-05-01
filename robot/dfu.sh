@@ -32,23 +32,35 @@ fi
 cd "${SCRIPT_PATH}"
 
 # Settings can be overridden through environment
-: ${STAGING_DIR:="/run/dfu"}
+: ${VERBOSE:=0}
+: ${STAGING_DIR:="/anki/bin/dfu_staging"}
 DFU_PROGRAM="${SCRIPT_PATH}/hal/dfu/dfu"
 DFU_PAYLOAD="${SCRIPT_PATH}/syscon/build/syscon.dfu"
+
+function logv() {
+  if [ $VERBOSE -eq 1 ]; then
+    echo -n "[$SCRIPT_NAME] "
+    echo $*;
+  fi
+}
 
 function usage() {
   echo "$SCRIPT_NAME [OPTIONS]"
   echo "options:"
   echo "  -h                      print this message"
+  echo "  -v                      print verbose output"
   echo "  -d DFU_PROGRAM          DFU program to use"
   echo "  -p DFU_PAYLOAD          syscon payload file to use"
   echo "  -s ANKI_ROBOT_HOST      hostname or ip address of robot"
 }
 
-while getopts "hd:p:s:" opt; do
+while getopts "hvd:p:s:" opt; do
   case $opt in
     h)
       usage && exit 0
+      ;;
+    v)
+      VERBOSE=1
       ;;
     d)
       DFU_PROGRAM="${OPTARG}"
@@ -88,10 +100,25 @@ fi
 echo "Stopping robot processes"
 robot_sh systemctl stop anki-robot.target
 
+# Remount rootfs read-write if necessary
+MOUNT_STATE=$(\
+    robot_sh "grep ' / ext4.*\sro[\s,]' /proc/mounts > /dev/null 2>&1 && echo ro || echo rw"\
+)
+[[ "$MOUNT_STATE" == "ro" ]] && logv "remount rw /" && robot_sh "/bin/mount -o remount,rw /"
+
+function cleanup() {
+  # Remount rootfs read-only
+  [[ "$MOUNT_STATE" == "ro" ]] && logv "remount ro /" &&  robot_sh "/bin/mount -o remount,ro /"    
+}
+
+# trap ctrl-c and call ctrl_c()
+trap cleanup INT
+
 echo "Uploading dfu files"
 robot_sh mkdir -p ${STAGING_DIR}
 robot_cp ${DFU_PROGRAM} ${STAGING_DIR}
 robot_cp ${DFU_PAYLOAD} ${STAGING_DIR}
+
 
 DFU_PROGRAM_BASENAME=$(basename $DFU_PROGRAM)
 DFU_PAYLOAD_BASENAME=$(basename $DFU_PAYLOAD)
@@ -121,16 +148,19 @@ while [ $NUM_RETRIES -ge 0 ]; do
 EOF
     )
 
-    #echo "RESULT: ${status}"
+    logv "RESULT: ${status}"
     if [[ $status = *"DFU_SUCCESS"* ]]; then
-    echo "DFU SUCCESS"
-    exit
+      echo "DFU SUCCESS"
+      break
     fi
 
     let NUM_RETRIES=NUM_RETRIES-1
     if [ $NUM_RETRIES -ge 0 ]; then
-    echo "Retrying... (Num retries left: ${NUM_RETRIES})"
+      echo "Retrying... (Num retries left: ${NUM_RETRIES})"
+    else
+      echo "DFU FAILED"
+      break
     fi
 done # end while
 
-echo "DFU FAILED"
+cleanup
