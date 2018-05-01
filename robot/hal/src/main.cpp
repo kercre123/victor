@@ -11,6 +11,8 @@
 #include  "../spine/cc_commander.h"
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
+#include "platform/victorCrashReports/google_breakpad.h"
+
 // For development purposes, while HW is scarce, it's useful to be able to run on phones
 #ifdef HAL_DUMMY_BODY
   #define HAL_NOT_PROVIDING_CLOCK
@@ -51,6 +53,9 @@ int main(int argc, const char* argv[])
 
   signal(SIGTERM, Cleanup);
 
+  static char const* filenamePrefix = "robot";
+  GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
+
   if (argc > 1) {
     ccc_set_shutdown_function(Cleanup);
     ccc_parse_command_line(argc-1, argv+1);
@@ -63,6 +68,7 @@ int main(int argc, const char* argv[])
   const Result result = Anki::Cozmo::Robot::Init(&shutdownSignal);
   if (result != Result::RESULT_OK) {
     AnkiError("robot.main.InitFailed", "Unable to initialize (result %d)", result);
+    GoogleBreakpad::UnInstallGoogleBreakpad();
     sync();
     if (shutdownSignal == SIGTERM) {
       return 0;
@@ -84,6 +90,7 @@ int main(int argc, const char* argv[])
     if (Anki::Cozmo::HAL::Step() == Anki::RESULT_OK) {
       if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK) {
         AnkiError("robot.main", "MainExecution failed");
+        GoogleBreakpad::UnInstallGoogleBreakpad();
         return -1;
       }
     }
@@ -132,6 +139,7 @@ int main(int argc, const char* argv[])
 
     if (shutdownSignal != 0 && --shutdownCounter == 0) {
       AnkiInfo("robot.main.shutdown", "%d", shutdownSignal);
+      GoogleBreakpad::UnInstallGoogleBreakpad();
       sync();
       exit(0);
     }

@@ -42,7 +42,7 @@ CompositeImage::CompositeImage(SpriteCache* spriteCache,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompositeImage::CompositeImage(SpriteCache* spriteCache,
                                ConstHSImageHandle faceHSImageHandle,
-                               const LayerMap&& layers,
+                               const LayerLayoutMap&& layers,
                                s32 imageWidth,
                                s32 imageHeight)
 : _spriteCache(spriteCache)
@@ -87,7 +87,7 @@ std::vector<CompositeImageChunk> CompositeImage::GetImageChunks() const
       baseChunk.spriteName = SpriteName::Count;
       
 
-      Vision::SpriteName spriteName;
+      Vision::SpriteName spriteName = SpriteName::Count;
       if(layerPair.second.GetSpriteSequenceName(spriteBoxPair.first, spriteName) &&
         Vision::IsSpriteSequence(spriteName, false)){
         baseChunk.spriteName = spriteName;
@@ -95,7 +95,6 @@ std::vector<CompositeImageChunk> CompositeImage::GetImageChunks() const
         // perform a reverse lookup on the sprite 
         Vision::SpriteSequence seq;
         std::string fullSpritePath;
-        SpriteName spriteName;
         Vision::SpriteHandle handle;
         // Get Handle -> Sprite Path -> Sprite name that maps to that path
         // Each step is reliant on the previous one's value being set
@@ -118,13 +117,30 @@ std::vector<CompositeImageChunk> CompositeImage::GetImageChunks() const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CompositeImage::ReplaceCompositeImage(const LayerMap&& layers,
+void CompositeImage::ReplaceCompositeImage(const LayerLayoutMap&& layers,
                                            s32 imageWidth,
                                            s32 imageHeight)
 {
   _width   = imageWidth;
   _height  = imageHeight;
   _layerMap  = std::move(layers);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImage::MergeInImage(const CompositeImage& otherImage)
+{
+  const auto& layoutMap = otherImage.GetLayerLayoutMap();
+  for(const auto& entry : layoutMap){
+    // If the layer exists, merge the images/sprite boxes into the existing layer
+    // otherwise, copy the layer and add it to this image
+    auto* layer = GetLayerByName(entry.first);
+    if(layer != nullptr){
+      layer->MergeInLayer(entry.second);
+    }else{
+      CompositeImageLayer intentionalCopy = entry.second;
+      AddLayer(std::move(intentionalCopy));
+    }
+  }
 }
 
 
@@ -149,51 +165,6 @@ CompositeImageLayer* CompositeImage::GetLayerByName(LayerName name)
   }else{
     return nullptr;
   }
-}
-
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CompositeImage CompositeImage::GetImageDiff(const CompositeImage& compImg) const
-{ 
-  //NOTE ON READABILITY: In all instances throughout this function:
-  // .first = enum value for layername/sprite box name
-  // .second = actual layer/sprite box implementation class
-
-  LayerMap outLayerMap;
-  auto& compLayerMap = compImg.GetLayerMap();
-  for(const auto& layerPair : _layerMap){
-    // If the layer doesn't exist in the compImg, add the whole layer to the outLayerMap
-    auto compLayerIter = compLayerMap.find(layerPair.first);
-    if(compLayerIter == compLayerMap.end()){
-      outLayerMap.emplace(layerPair.first, layerPair.second);
-      continue;
-    }
-    // Build a new layer that's a diff of the sprite boxes
-    CompositeImageLayer::ImageMap  diffLayerPathMap;
-    CompositeImageLayer::LayoutMap diffLayerLayoutMap;
-    const CompositeImageLayer::ImageMap& compImageMap = compLayerIter->second.GetImageMap();
-    for(const auto& imageMapPair: layerPair.second.GetImageMap()){
-      // If the sprite box doesn't exist in compImg, or the images don't match, add it to the diff layer
-      auto compImageIter = compImageMap.find(imageMapPair.first);
-      if((compImageIter == compImageMap.end()) ||
-         (compImageIter->second != imageMapPair.second)){
-        // Find the image path and sprite box for the changed sprite box name
-        diffLayerPathMap.emplace(imageMapPair.first, imageMapPair.second);
-        auto spriteBoxIter = layerPair.second.GetLayoutMap().find(imageMapPair.first);
-        if(ANKI_VERIFY(spriteBoxIter != layerPair.second.GetLayoutMap().end(),
-                       "CompositeImage.GetImageDiff.MissingLayoutKey",
-                       "")){
-          diffLayerLayoutMap.emplace(imageMapPair.first, spriteBoxIter->second);
-        }
-      }
-    }
-    CompositeImageLayer layer(layerPair.first, std::move(diffLayerLayoutMap));
-    layer.SetImageMap(std::move(diffLayerPathMap));
-    outLayerMap.emplace(layerPair.first, layer);
-  }
-  
-  
-  return CompositeImage(_spriteCache, _faceHSImageHandle, std::move(outLayerMap));
 }
 
 
@@ -263,7 +234,7 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
           
           // Render the sprite - use the cached RGBA image if possible
           if(handle->IsContentCached(hsImageHandle).rgba){
-            const ImageRGBA& subImage =handle->GetCachedSpriteContentsRGBA(hsImageHandle);
+            const ImageRGBA& subImage = handle->GetCachedSpriteContentsRGBA(hsImageHandle);
             DrawSubImage(baseImage, subImage, spriteBox, overlayOffset);
           }else{
             const ImageRGBA& subImage = handle->GetSpriteContentsRGBA(hsImageHandle);

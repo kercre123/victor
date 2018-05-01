@@ -32,16 +32,16 @@ protected:
   BehaviorObservingOnCharger(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override{
+    modifiers.wantsToBeActivatedWhenOnCharger = true;
+    
     modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Low});
-    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
+    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });    
   }
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   virtual bool CanBeGentlyInterruptedNow() const override;
   virtual void OnBehaviorActivated() override;
 
-  virtual bool WantsToBeActivatedBehavior() const override {
-    return true;
-  }
+  virtual bool WantsToBeActivatedBehavior() const override;
 
 private:
 

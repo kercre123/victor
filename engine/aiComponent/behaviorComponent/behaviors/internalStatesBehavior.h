@@ -121,6 +121,8 @@ private:
   StateID _currState = InvalidStateID;
 
   StateID _defaultState = InvalidStateID;
+
+  bool _isRunningGetIn = false;
   
   size_t _lastTransitionTick = 0;
   

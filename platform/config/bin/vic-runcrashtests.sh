@@ -10,11 +10,7 @@ echo "Running crash tests..."
 ./vic-testcrash SIGABRT 0.25 2
 ./vic-testcrash SIGFPE 0.25 2
 ./vic-testcrash SIGILL 0.25 2
-./vic-testcrash SIGINT 0.25 2
 ./vic-testcrash SIGSEGV 0.25 2
-./vic-testcrash SIGTERM 0.25 2
-
-./vic-testcrash exitfailure 0.25 2
 
 ./vic-testcrash null 0.5 10
 

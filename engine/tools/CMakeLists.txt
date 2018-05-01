@@ -26,9 +26,11 @@ target_link_libraries(vic-engine
   # anki libs
   util
   cozmo_engine
+  victorCrashReports
+  # vendor
+  breakpad_client
   # platform
   ${PLATFORM_LIBS}
 )
 
 android_strip(TARGET vic-engine)
-

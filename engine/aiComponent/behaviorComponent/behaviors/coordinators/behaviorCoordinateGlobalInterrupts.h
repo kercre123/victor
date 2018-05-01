@@ -41,6 +41,9 @@ protected:
   virtual void OnPassThroughDeactivated() override;
 
 private:
+  
+  void CreateConsoleVars();
+  
   struct InstanceConfig{
     InstanceConfig();
     IBEIConditionPtr  triggerWordPendingCond;
@@ -49,6 +52,8 @@ private:
     ICozmoBehaviorPtr highLevelAIBehavior;
     ICozmoBehaviorPtr sleepingBehavior;
     ICozmoBehaviorPtr reactToObstacleBehavior;
+    
+    std::unordered_map<ICozmoBehaviorPtr, bool> devActivatableOverrides;
   };
 
   struct DynamicVariables{

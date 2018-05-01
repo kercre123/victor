@@ -1004,7 +1004,8 @@ void ICozmoBehavior::UpdateInternal()
     if(_operationModifiers.behaviorAlwaysDelegates && !IsControlDelegated()){
       shouldCancelSelf = true;
       PRINT_NAMED_INFO((baseDebugStr + "ControlNotDelegated").c_str(),
-                       "Behavior always delegates, so cancel self");
+                       "Behavior %s always delegates, so cancel self",
+                       GetDebugLabel().c_str());
     }
 
     // Check wants to cancel self strategies

@@ -50,6 +50,8 @@ constexpr const char* kInitialStateKey = "initialState";
 constexpr const char* kStateTimerConditionsKey = "stateTimerConditions";
 constexpr const char* kBeginTimeKey = "begin_s";
 constexpr const char* kEmotionEventKey = "emotionEvent";
+constexpr const char* kBehaviorKey = "behavior";
+constexpr const char* kGetInBehaviorKey = "getInBehavior";
 
 static const BackpackLights kLightsOff = {
   .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
@@ -116,8 +118,6 @@ public:
   float GetTimeActive();
   
   std::string _name;
-  std::string _behaviorName;
-  ICozmoBehaviorPtr _behavior;
 
   // note that these also count a state as "starting" and "ending" when this behavior itself is interrupted
   // (even if we later "resume" the state)
@@ -139,6 +139,13 @@ public:
   ColorRGBA _debugColor = NamedColors::BLACK;
   
   UserIntentTag _clearIntent = USER_INTENT(INVALID);
+
+  std::string _behaviorName;
+  ICozmoBehaviorPtr _behavior;
+
+  std::string _getInBehaviorName;
+  ICozmoBehaviorPtr _getInBehavior;
+
 };  
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -356,6 +363,9 @@ void InternalStatesBehavior::GetAllDelegates(std::set<IBehavior*>& delegates) co
     if( statePair.second._behavior != nullptr ) {
       delegates.insert(statePair.second._behavior.get());
     }
+    if( statePair.second._getInBehavior != nullptr ) {
+      delegates.insert(statePair.second._getInBehavior.get());
+    }
   }
 }
 
@@ -490,6 +500,22 @@ void InternalStatesBehavior::BehaviorUpdate()
 
   // if we get here, then there must be no interrupting conditions that activated
 
+  if( _isRunningGetIn ) {
+    if( !IsControlDelegated() ) {
+      // we were running a get in but it stopped, transition on to the normal state behavior
+      PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.GetInBehavior.Complete",
+                    "%s: in state '%s', finished get in behavior",
+                    GetDebugLabel().c_str(),
+                    state._name.c_str());
+      _isRunningGetIn = false;
+      if( state._behavior->WantsToBeActivated() ) {
+        DelegateIfInControl(state._behavior.get() );
+      }
+    }
+    // else, the get in is still running, so don't evaluate non-interrupting conditions (or exit conditions)
+    return;
+  }
+  
   // it's ok to dispatch now if either we aren't dispatched to anything, or the behavior we are dispatched to
   // is ok with a "gentle" interruption
   bool okToDispatch = ! IsControlDelegated();
@@ -565,8 +591,11 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
                 "Transition from state '%s' -> '%s'",
                 _currState  != InvalidStateID ? _states->at(_currState )._name.c_str() : "<NONE>",
                 targetState != InvalidStateID ? _states->at(targetState)._name.c_str() : "<NONE>");
-
+  
   _currState = targetState;
+
+  // any transition clears the "get in" that may be playing
+  _isRunningGetIn = false;
 
   if( _currState != InvalidStateID ) {
     State& state = _states->at(_currState);
@@ -581,7 +610,27 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
       }
     }
 
-    if( state._behavior->WantsToBeActivated() ) {
+    const bool canPlayGetIn = !isResuming || _firstRun;
+    if( canPlayGetIn && state._getInBehavior != nullptr ) {
+      if( state._getInBehavior->WantsToBeActivated() ) {
+        _isRunningGetIn = true;
+        PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.GetInBehavior.Delegate",
+                      "%s: transitioning into state '%s', so will delegate to get in '%s'",
+                      GetDebugLabel().c_str(),
+                      state._name.c_str(),
+                      state._getInBehavior->GetDebugLabel().c_str());
+        DelegateIfInControl(state._getInBehavior.get());
+      }
+      else {
+        PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.GetInBehavior.Skip",
+                      "%s: transitioning into state '%s', but get in behavior '%s' doesn't want to activate",
+                      GetDebugLabel().c_str(),
+                      state._name.c_str(),
+                      state._getInBehavior->GetDebugLabel().c_str());
+      }
+    }         
+
+    if( !IsControlDelegated() && state._behavior->WantsToBeActivated() ) {
       DelegateIfInControl(state._behavior.get() );
     } else {
       PRINT_NAMED_WARNING( "InternalStatesBehavior.TransitionToState.NoActivation",
@@ -611,7 +660,8 @@ float InternalStatesBehavior::GetCurrentStateActiveTime_s() const
 InternalStatesBehavior::State::State(const Json::Value& config)
 {
   _name = JsonTools::ParseString(config, kStateNameConfgKey, "InternalStatesBehavior.StateConfig");
-  _behaviorName = JsonTools::ParseString(config, "behavior", "InternalStatesBehavior.StateConfig");
+  _behaviorName = JsonTools::ParseString(config, kBehaviorKey, "InternalStatesBehavior.StateConfig");
+  _getInBehaviorName = config.get(kGetInBehaviorKey, "").asString();
 
   const std::string& debugColorStr = config.get("debugColor", "BLACK").asString();
   _debugColor = NamedColors::GetByString(debugColorStr);
@@ -633,6 +683,19 @@ void InternalStatesBehavior::State::Init(BehaviorExternalInterface& bei)
                  "State '%s' cannot find behavior '%s'",
                  _name.c_str(),
                  _behaviorName.c_str());
+  if( !_getInBehaviorName.empty() ) {
+    _getInBehavior = BC.FindBehaviorByID( BehaviorTypesWrapper::BehaviorIDFromString( _getInBehaviorName ) );
+    DEV_ASSERT_MSG(_getInBehavior != nullptr, "HighLevelAI.State.NoGetInBehavior",
+                   "State '%s' cannot find getInBehavior '%s'",
+                   _name.c_str(),
+                   _getInBehaviorName.c_str());
+
+    PRINT_CH_INFO("Behaviors", "InternalStatesBehavior.GetInBehavior.Defined",
+                  "state '%s' found behavior %p matching name '%s'",
+                  _name.c_str(),
+                  _getInBehavior.get(),
+                  _getInBehaviorName.c_str());
+  }
 }
 
 

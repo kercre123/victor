@@ -23,6 +23,22 @@ enum uint_8 SpriteName
   Clock_empty_grid,
   PairingIconKey,
 
+  // Weather Temperature Sprites
+  Weather_Temp_Cel,
+  Weather_Temp_Fahr,
+  Weather_Temp_Neg,
+  Weather_Temp_0,
+  Weather_Temp_1,
+  Weather_Temp_2,
+  Weather_Temp_3,
+  Weather_Temp_4,
+  Weather_Temp_5,
+  Weather_Temp_6,
+  Weather_Temp_7,
+  Weather_Temp_8,
+  Weather_Temp_9,
+
+
 
   // SpriteSequenceces
   PairingIconAwaitingApp,
@@ -48,6 +64,7 @@ enum uint_8 SpriteName
   Face_Snow_Mist,
   Face_Snow_01,
 
+
   // Must be last element
   Count
 }
@@ -67,6 +84,20 @@ enum_concept bool IsSpriteSequence[SpriteName] {
   Clock_colon = 0,
   Clock_empty_grid = 0,
   PairingIconKey   = 0,
+
+  Weather_Temp_Cel  = 0,
+  Weather_Temp_Fahr = 0,
+  Weather_Temp_Neg  = 0,
+  Weather_Temp_0    = 0,
+  Weather_Temp_1    = 0,
+  Weather_Temp_2    = 0,
+  Weather_Temp_3    = 0,
+  Weather_Temp_4    = 0,
+  Weather_Temp_5    = 0,
+  Weather_Temp_6    = 0,
+  Weather_Temp_7    = 0,
+  Weather_Temp_8    = 0,
+  Weather_Temp_9    = 0,
 
   // SpriteSequenceces
   PairingIconAwaitingApp = 1,

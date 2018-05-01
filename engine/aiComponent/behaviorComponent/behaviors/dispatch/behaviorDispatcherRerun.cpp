@@ -106,8 +106,10 @@ void BehaviorDispatcherRerun::OnBehaviorActivated()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherRerun::BehaviorUpdate()
-{    
-  CheckRerunState();
+{
+  if( IsActivated() ) {
+    CheckRerunState();
+  }
 }
 
 

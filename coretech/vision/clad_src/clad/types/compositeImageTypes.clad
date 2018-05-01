@@ -21,6 +21,8 @@ enum no_cpp_class uint_8 LayerName
 
   // Layer which procedural keyframes will be rendered to
   Procedural_Eyes,
+  
+  Weather_Temperature,
 
 
   Layer_4,
@@ -42,6 +44,20 @@ enum no_cpp_class uint_8 SpriteBoxName
 
   // Box for rendering animation keyframes into composite images
   FaceKeyframe,
+
+  // Boxes for rendering weather temperature
+  TemperatureNegativeIndicator,
+  TemperatureDegreeIndicator,
+  TemperatureOnesDigit,
+  TemperatureTensDigit,
+  TemperatureHundredsDigit,
+
+  // Boxes for rendering weather conditions
+  WeatherBox_1,
+  WeatherBox_2,
+  WeatherBox_3,
+  WeatherBox_4,
+  WeatherBox_5,
 
 }
 

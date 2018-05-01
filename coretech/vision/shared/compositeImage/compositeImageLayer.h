@@ -33,6 +33,7 @@ namespace Vision {
 
 namespace CompositeImageConfigKeys{
 static const char* kLayerNameKey       = "layerName";
+static const char* kImagesListKey      = "images";
 static const char* kSpriteBoxLayoutKey = "spriteBoxLayout";
 static const char* kSpriteBoxNameKey   = "spriteBoxName";
 static const char* kRenderMethodKey    = "spriteRenderMethod";
@@ -72,10 +73,14 @@ public:
   // Returns true if image has been set for sprite box name and seq has been set
   bool GetSpriteSequence(SpriteBoxName sbName, Vision::SpriteSequence& seq)  const;
 
+  // Merges all sprite boxes/image maps from other image into this image
+  void MergeInLayer(const CompositeImageLayer& otherLayer);
+
   // Functions which add on to the current layout
   void AddToLayout(SpriteBoxName sbName, const SpriteBox& spriteBox);
   void AddToImageMap(SpriteCache* cache, SpriteSequenceContainer* seqContainer,
                      SpriteBoxName sbName, const Vision::SpriteName& spriteName);
+  void AddToImageMap(SpriteBoxName sbName, const SpriteEntry& spriteEntry);
 
   // Functions which replace existing map with a new map
   void SetImageMap(const Json::Value& imageMapSpec,

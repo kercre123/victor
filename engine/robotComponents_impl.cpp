@@ -58,7 +58,7 @@ class RobotIdleTimeoutComponent;
 class MicComponent;
 class BatteryComponent;
 class FullRobotPose;
-class SpriteCacheComponent;
+class DataAccessorComponent;
 
 } // namespace Cozmo
 
@@ -101,7 +101,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(RobotIdleTimeoutComponent,     RobotComponentID, Rob
 LINK_COMPONENT_TYPE_TO_ENUM(MicComponent,                  RobotComponentID, MicComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(BatteryComponent,              RobotComponentID, Battery)
 LINK_COMPONENT_TYPE_TO_ENUM(FullRobotPose,                 RobotComponentID, FullRobotPose)
-LINK_COMPONENT_TYPE_TO_ENUM(SpriteCacheComponent,          RobotComponentID, SpriteCache)
+LINK_COMPONENT_TYPE_TO_ENUM(DataAccessorComponent,          RobotComponentID, DataAccessor)
 
 // Translate entity into string
 template<>
@@ -124,6 +124,7 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::CubeAccel:                  { return "CubeAccel";}
     case Cozmo::RobotComponentID::CubeComms:                  { return "CubeComms";}
     case Cozmo::RobotComponentID::CubeLights:                 { return "CubeLights";}
+    case Cozmo::RobotComponentID::DataAccessor:               { return "DataAccessor";}
     case Cozmo::RobotComponentID::Docking:                    { return "Docking";}
     case Cozmo::RobotComponentID::DrivingAnimationHandler:    { return "DrivingAnimationHandler";}
     case Cozmo::RobotComponentID::EngineAudioClient:          { return "EngineAudioClient";}
@@ -145,7 +146,6 @@ std::string GetComponentStringForID<Cozmo::RobotComponentID>(Cozmo::RobotCompone
     case Cozmo::RobotComponentID::FullRobotPose:              { return "FullRobotPose";}
     case Cozmo::RobotComponentID::RobotIdleTimeout:           { return "RobotIdleTimeout";}
     case Cozmo::RobotComponentID::RobotToEngineImplMessaging: { return "RobotToEngineImplMessaging";}
-    case Cozmo::RobotComponentID::SpriteCache:                { return "SpriteCache";}
     case Cozmo::RobotComponentID::StateHistory:               { return "StateHistory";}
     case Cozmo::RobotComponentID::TouchSensor:                { return "TouchSensor";}
     case Cozmo::RobotComponentID::Vision:                     { return "Vision";}

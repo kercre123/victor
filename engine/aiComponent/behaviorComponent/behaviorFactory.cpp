@@ -29,6 +29,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorStackBlocks.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorTurn.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorTurnToFace.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorWiggleOntoChargerContacts.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateGlobalInterrupts.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevBatteryLogging.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevDisplayReadingsOnFace.h"
@@ -110,6 +111,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorConfirmObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToTouchPetting.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToUnclaimedIntent.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/weather/behaviorDisplayWeather.h"
 
 #include "clad/types/behaviorComponent/behaviorTypes.h"
 
@@ -247,6 +249,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::TurnToFace:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorTurnToFace(config));
+      break;
+    }
+    
+    case BehaviorClass::WiggleOntoChargerContacts:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorWiggleOntoChargerContacts(config));
       break;
     }
     
@@ -733,6 +741,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::PlaybackMessage:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorPlaybackMessage(config));
+      break;
+    }
+    
+    case BehaviorClass::DisplayWeather:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDisplayWeather(config));
       break;
     }
     

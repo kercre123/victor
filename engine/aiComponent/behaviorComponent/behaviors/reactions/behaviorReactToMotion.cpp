@@ -173,20 +173,16 @@ void BehaviorReactToMotion::InitBehavior()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToMotion::OnEnteredActivatableScopeInternal()
+void BehaviorReactToMotion::OnBehaviorEnteredActivatableScope()
 {
-  ICozmoBehavior::OnEnteredActivatableScopeInternal();
-  
   for( const auto& condPair : _dVars.motionConditions ) {
     condPair.condition->SetActive( GetBEI(), true );
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToMotion::OnLeftActivatableScopeInternal()
+void BehaviorReactToMotion::OnBehaviorLeftActivatableScope()
 {
-  ICozmoBehavior::OnLeftActivatableScopeInternal();
-  
   for( const auto& condPair : _dVars.motionConditions ) {
     condPair.condition->SetActive( GetBEI(), false );
   }

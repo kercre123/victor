@@ -4,7 +4,7 @@ cxx_project(
                         excludes = ['*_android.*',
                                     'android/**/*',
                                     '*_mac.*',
-                                    'cozmoWebServerMain.cpp']),
+                                    'victorWebServerMain.cpp']),
     platform_srcs = [
         ('android', glob(['android/**/*.cpp',
                           '**/*_android.cpp'])),
@@ -18,7 +18,7 @@ cxx_project(
 
 cxx_project(
     name = 'vic-webserver',
-    srcs = glob(['src/cozmoWebServerMain.cpp']),
+    srcs = glob(['src/victorWebServerMain.cpp']),
     platform_srcs = [
     ],
     headers = [],

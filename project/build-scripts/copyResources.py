@@ -55,6 +55,8 @@ class CopyResources(object):
                         action='store', default=None, help='where all clad to file maps are located')
     parser.add_argument('--rewardedActionsPath', dest='rewardedActionsPath', required=True,
                         action='store', default=None, help='Where rewarded actions data is located')
+    parser.add_argument('--compositeImageResourcePath', dest='compositeImageResourcePath', required=True,
+                        action='store', default=None, help='Where composite image specifications are located')
     parser.add_argument('--engineResourcesPath', dest='engineResourcesPath', required=True,
                         action='store', default=None, help='where engine resources are located')
     parser.add_argument('--ttsResourcesPath', dest='ttsResourcesPath', required=True,
@@ -161,6 +163,14 @@ class CopyResources(object):
       ankibuild.util.File.rm_rf(rewardedActionsPath)
     if not ankibuild.util.File.cptree(self.options.rewardedActionsPath, rewardedActionsPath):
       self.log.error("error copying {0} to {1}".format (self.options.rewardedActionsPath, rewardedActionsPath))
+      return False
+
+    # composite image resources
+   compositeImageResourcePath = os.path.join(cozmoResourcesPath, 'assets/compositeImageResources')
+    if os.path.isdir(compositeImageResourcePath):
+      ankibuild.util.File.rm_rf(compositeImageResourcePath)
+    if not ankibuild.util.File.cptree(self.options.compositeImageResourcePath, compositeImageResourcePath):
+      self.log.error("error copying {0} to {1}".format (self.options.compositeImageResourcePath, compositeImageResourcePath))
       return False
 
     # engine resources

@@ -90,11 +90,15 @@ bool BehaviorObservingOnCharger::CanBeGentlyInterruptedNow() const
   return !_isTransitioning;
 }
 
+bool BehaviorObservingOnCharger::WantsToBeActivatedBehavior() const
+{
+  // _only_ wants to run on the charger
+  return GetBEI().GetRobotInfo().IsOnChargerContacts();
+}
+
 void BehaviorObservingOnCharger::OnBehaviorActivated()
 {
   TransitionToLookingUp();
-  
-  
 }
 
 void BehaviorObservingOnCharger::TransitionToLookingUp()

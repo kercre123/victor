@@ -14,9 +14,13 @@
 #define ANKI_COZMO_BASESTATION_ROBOT_DATA_LOADER_H
 
 #include "clad/types/animationTrigger.h"
-#include "clad/types/spriteNames.h"
+#include "clad/types/compositeImageLayouts.h"
+#include "clad/types/compositeImageMaps.h"
 #include "clad/types/cubeAnimationTrigger.h"
+#include "clad/types/spriteNames.h"
+
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "coretech/vision/shared/compositeImage/compositeImage.h"
 #include "coretech/vision/shared/spritePathMap.h"
 
 #include "util/helpers/noncopyable.h"
@@ -43,6 +47,7 @@ class DataPlatform;
 }
 
 namespace Vision{
+class CompositeImage;
 class SpriteCache;
 class SpriteSequenceContainer;
 }
@@ -108,6 +113,14 @@ public:
   Vision::SpriteSequenceContainer* GetSpriteSequenceContainer() { return _spriteSequenceContainer.get();}
   Vision::SpriteCache* GetSpriteCache() const { assert(_spriteCache != nullptr); return _spriteCache.get();  }
 
+  // composite image assets loaded from externals
+  using CompImageMap      = std::unordered_map<Vision::CompositeImageMap, Vision::CompositeImage::LayerImageMap, Anki::Util::EnumHasher>;
+  using CompLayoutMap     = std::unordered_map<Vision::CompositeImageLayout, Vision::CompositeImage, Anki::Util::EnumHasher>;
+  
+  const CompImageMap*  GetCompImageMap()  const { return _compImageMap.get();}
+  const CompLayoutMap* GetCompLayoutMap() const { return _compLayoutMap.get();}
+  
+
   bool IsCustomAnimLoadEnabled() const;
 
   #if ANKI_DEV_CHEATS
@@ -141,6 +154,12 @@ private:
   void LoadDasBlacklistedAnimationTriggers();
   
   void LoadSpritePaths();
+
+  void LoadCompositeImageMaps();
+
+  // Outputs a map of file name (no path or extensions) to the full file path
+  // Useful for clad mappings/lookups
+  std::map<std::string, std::string> CreateFileNameToFullPathMap(const std::vector<const char*> & srcDirs, const std::string& fileExtensions) const;
 
   const CozmoContext* const _context;
   const Util::Data::DataPlatform* _platform;
@@ -184,6 +203,10 @@ private:
   std::unique_ptr<Vision::SpritePathMap> _spritePaths;
   std::unique_ptr<Vision::SpriteCache>   _spriteCache;
   std::unique_ptr<Vision::SpriteSequenceContainer>       _spriteSequenceContainer;
+
+  std::unique_ptr<CompImageMap>  _compImageMap;
+  std::unique_ptr<CompLayoutMap> _compLayoutMap;
+
 
   bool                  _isNonConfigDataLoaded = false;
   std::mutex            _parallelLoadingMutex;
