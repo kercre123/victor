@@ -26,6 +26,17 @@
 #include "clad/externalInterface/messageEngineToCube.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
+// NOTE: Can get rid of this when VIC-782 is done and 
+//       there's some ability to check that cubes have the
+//       correct firmware version
+#ifdef SIMULATOR
+#define DONT_CONNECT_TO_CUBES 0
+#else
+#define DONT_CONNECT_TO_CUBES 1
+#endif
+
+
+
 namespace Anki {
 namespace Cozmo {
 
@@ -439,6 +450,10 @@ void CubeCommsComponent::HandleScanForCubesFinished()
 
   PRINT_NAMED_INFO("CubeCommsComponent.HandleScanForCubesFinished.ScanningForCubesEnded",
                    "Done scanning for cubes");
+
+#if (DONT_CONNECT_TO_CUBES==1)
+  return;
+#endif
 
   // Discovery period has ended. Loop over list of available cubes and connect to
   // as many as possible, preferring those with high RSSI.
