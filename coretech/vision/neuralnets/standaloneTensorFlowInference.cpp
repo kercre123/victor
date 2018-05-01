@@ -16,8 +16,10 @@
 #  include "objectDetector_caffe2.h"
 #elif defined(OPENCV_DNN)
 #  include "objectDetector_opencvdnn.h"
+#elif defined(TFLITE)
+#  include "objectDetector_tflite.h"
 #else 
-#  error TENSORFLOW or CAFFE2 or OPENCVDNN must be defined
+#  error TENSORFLOW or CAFFE2 or OPENCVDNN or TFLITE must be defined
 #endif
 
 #include <atomic>
@@ -49,6 +51,9 @@ void Toc(TimePoint startTime, const std::string& name) {
   }
 }
 
+cv::Mat read_bmp(const std::string& input_bmp_name); // defined below, after main()
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int main(int argc, char **argv)
 {
   // For calling destructor when process is killed
@@ -120,7 +125,16 @@ int main(int argc, char **argv)
 
       // Get the image
       auto startTime = Tic();
-      cv::Mat img = cv::imread(imageFilename);
+      cv::Mat img;
+      
+      const std::string ext = imageFilename.substr(imageFilename.size()-3,3);
+      if(ext == "bmp")
+      {
+        img = read_bmp(imageFilename); // Converts to RGB internally
+      } 
+      else {
+        img = cv::imread(imageFilename);
+      }
       Toc(startTime, "ImageRead");
 
       // Detect what's in it
@@ -224,4 +238,87 @@ int main(int argc, char **argv)
   }
 
   return 0;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+cv::Mat read_bmp(const std::string& input_bmp_name) 
+{
+  int begin, end;
+
+  std::ifstream file(input_bmp_name, std::ios::in | std::ios::binary);
+  if (!file) {
+    std::cerr << "Input file " << input_bmp_name << " not found" << std::endl;
+    exit(-1);
+  }
+
+  begin = file.tellg();
+  file.seekg(0, std::ios::end);
+  end = file.tellg();
+  size_t len = end - begin;
+
+  // Decode the bmp header
+  const uint8_t* img_bytes = new uint8_t[len];
+  file.seekg(0, std::ios::beg);
+  file.read((char*)img_bytes, len);
+  const int32_t header_size = *(reinterpret_cast<const int32_t*>(img_bytes + 10));
+  const int32_t width = *(reinterpret_cast<const int32_t*>(img_bytes + 18));
+  const int32_t height = *(reinterpret_cast<const int32_t*>(img_bytes + 22));
+  const int32_t bpp = *(reinterpret_cast<const int32_t*>(img_bytes + 28));
+  const int32_t channels = bpp / 8;
+
+  // there may be padding bytes when the width is not a multiple of 4 bytes
+  // 8 * channels == bits per pixel
+  const int row_size = (8 * channels * width + 31) / 32 * 4;
+
+  // if height is negative, data layout is top down
+  // otherwise, it's bottom up
+  const bool top_down = (height < 0);
+  const int32_t absHeight = abs(height);
+
+  // Decode image, allocating tensor once the image size is known
+  cv::Mat img(height, width, CV_8UC(channels));
+  uint8_t* output = img.data;
+
+  const uint8_t* input = &img_bytes[header_size];
+
+  for (int i = 0; i < absHeight; i++) 
+  {
+    int src_pos;
+    int dst_pos;
+
+    for (int j = 0; j < width; j++) 
+    {
+      if (!top_down) {
+        src_pos = ((absHeight - 1 - i) * row_size) + j * channels;
+      } else {
+        src_pos = i * row_size + j * channels;
+      }
+
+      dst_pos = (i * width + j) * channels;
+
+      switch (channels) {
+        case 1:
+          output[dst_pos] = input[src_pos];
+          break;
+        case 3:
+          // BGR -> RGB
+          output[dst_pos] = input[src_pos + 2];
+          output[dst_pos + 1] = input[src_pos + 1];
+          output[dst_pos + 2] = input[src_pos];
+          break;
+        case 4:
+          // BGRA -> RGBA
+          output[dst_pos] = input[src_pos + 2];
+          output[dst_pos + 1] = input[src_pos + 1];
+          output[dst_pos + 2] = input[src_pos];
+          output[dst_pos + 3] = input[src_pos + 3];
+          break;
+        default:
+          std::cerr << "Unexpected number of channels: " << channels << std::endl;
+          return img;
+      }
+    }
+  }
+
+  return img;
 }

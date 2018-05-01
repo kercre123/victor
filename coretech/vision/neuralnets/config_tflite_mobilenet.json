@@ -1,0 +1,19 @@
+{
+    "graph"  : "mobilenet_v1_1.0_128_quant.tflite", 
+    
+    "labels" : "mobilenet_labels.txt", 
+
+    "input_width" : 128, 
+    "input_height": 128, 
+
+    "use_grayscale":   false,
+
+    // NOTE: scale/shift only used with floating point (non-quantized) models!
+    "input_scale": 1.0, 
+    "input_shift": 0, 
+    
+    "top_K": 1, 
+    "min_score": 0.0,
+
+    "verbose" : 1
+}
