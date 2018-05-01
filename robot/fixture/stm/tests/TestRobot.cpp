@@ -45,6 +45,7 @@ static void dbg_test_all_(void)
   rcomGet(1, RCOM_SENSOR_BTN_TOUCH); ConsolePutChar('\n');
   rcomGet(1, RCOM_SENSOR_RSSI); ConsolePutChar('\n');
   rcomGet(1, RCOM_SENSOR_RX_PKT); ConsolePutChar('\n');
+  rcomGet(1, RCOM_SENSOR_DEBUG_INC); ConsolePutChar('\n');
 }
 
 static void dbg_test_emr_(bool blank_only=0, bool dont_clear=0);
@@ -119,21 +120,21 @@ static void dbg_test_comm_loop_(int nloops, int rmin, int rmax)
   {
     rcomEsn(); rcomBsv();
     //if( sensorSelect == 0 ) {}
-    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_BATTERY);
+      rcomGet(rmin+rand()%rmod, RCOM_SENSOR_BATTERY);
     //else if( sensorSelect == 1 )
-    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_CLIFF);
-    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_LEFT);
-    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_RIGHT);
-    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_LIFT);
-    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_HEAD);
+      rcomGet(rmin+rand()%rmod, RCOM_SENSOR_CLIFF);
+      rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_LEFT);
+      rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_RIGHT);
+      rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_LIFT);
+      rcomGet(rmin+rand()%rmod, RCOM_SENSOR_MOT_HEAD);
     //else if( sensorSelect == 2 )
-    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_PROX_TOF);
+      rcomGet(rmin+rand()%rmod, RCOM_SENSOR_PROX_TOF);
     //else if( sensorSelect == 3 )
-    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_BTN_TOUCH);
+      rcomGet(rmin+rand()%rmod, RCOM_SENSOR_BTN_TOUCH);
     //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_RSSI);
     //rcomGet(rmin+rand()%rmod, RCOM_SENSOR_RX_PKT);
     //else if( sensorSelect == 4 )
-    rcomGet(rmin+rand()%rmod, RCOM_SENSOR_DEBUG_INC);
+      rcomGet(rmin+rand()%rmod, RCOM_SENSOR_DEBUG_INC);
     //else { sensorSelect = -1; break; }
   }
 }
@@ -142,8 +143,8 @@ static void dbg_test_readlogs_(int first, int last)
 {
   first = first<0 ? 0 : first;
   last = last<0 ? 0 : last;
-  if( first > last )
-    first = last;
+  if( last < first )
+    last = first;
   
   ConsolePrintf("READ LOGS {%i..%i}\n", first, last);
   
@@ -156,6 +157,36 @@ static void dbg_test_readlogs_(int first, int last)
     throw err;
 }
 
+static void dbg_test_leds_(int on_time_ms, int unused_)
+{
+  on_time_ms = on_time_ms < 1 ? 500 : on_time_ms;
+  ConsolePrintf("LED Test (%ims)\n", on_time_ms);
+  uint8_t leds[12]; memset(leds,0,sizeof(leds));
+  
+  //color cycle
+  for(int i=0; i<12; i++) {
+    memset(leds,0,sizeof(leds));
+    leds[i] = 255;
+    rcomLed(leds); Timer::delayMs(on_time_ms);
+  }
+  
+  //color fade
+  for(int i=0; i<3; i++) {
+    memset(leds,0,sizeof(leds));
+    const int delay_ms = 50;
+    for(int bright=0x00; bright < 0xF0; bright+=0x10) {
+      leds[0+i] = leds[3+i] = leds[6+i] = leds[9+i] = bright;
+      rcomLed(leds, RCOM_PRINT_LEVEL_CMD); Timer::delayMs(delay_ms);
+    }
+    for(int bright=0xF0; bright >= 0x10; bright-=0x10) {
+      leds[0+i] = leds[3+i] = leds[6+i] = leds[9+i] = bright;
+      rcomLed(leds, RCOM_PRINT_LEVEL_CMD); Timer::delayMs(delay_ms);
+    }
+  }
+  memset(leds,0,sizeof(leds));
+  rcomLed(leds, RCOM_PRINT_LEVEL_CMD);
+}
+
 static void run_debug(int arg[])
 {
   if( arg[0] == 1 )
@@ -165,6 +196,9 @@ static void run_debug(int arg[])
   if( arg[0] == 3 )
     dbg_test_readlogs_(arg[1], arg[2]);
   if( arg[0] == 4 )
+    dbg_test_leds_(arg[1], arg[2]);
+  
+  if( arg[0] == 14 )
     dbg_test_emr_( arg[1], arg[2] );
 }
 
@@ -180,7 +214,7 @@ const char* DBG_cmd_substitution(const char *line, int len)
     return ">>mot ff 03";
   if( !strcmp(line, "get") )
     return ">>get 01 00";
-  if( !strncmp(line,"smr",3) || !strncmp(line,"gmr",3) || !strncmp(line,"rlg",3) || !strncmp(line,"eng",3) || !strncmp(line,"lfe",3) || !strncmp(line,"fcc",3) ) {
+  if( !strncmp(line,"smr",3) || !strncmp(line,"gmr",3) || !strncmp(line,"rlg",3) || !strncmp(line,"eng",3) || !strncmp(line,"pwr",3) ) {
     int nargs = cmdNumArgs((char*)line);
     int ix  = nargs >= 2 ? cmdParseInt32(cmdGetArg((char*)line,1)) : 0;
     int val = nargs >= 3 ? cmdParseInt32(cmdGetArg((char*)line,2)) : 0;
@@ -272,26 +306,29 @@ void TestRobotCleanup(void)
 void read_robot_info_(void)
 {
   uint32_t esnCmd = rcomEsn();
-  
-  flexnfo.esn           = rcomGmr( EMR_FIELD_OFS(ESN) );
-  flexnfo.hwver         = rcomGmr( EMR_FIELD_OFS(HW_VER) );
-  flexnfo.model         = rcomGmr( EMR_FIELD_OFS(MODEL) );
-  uint32_t lotcode      = rcomGmr( EMR_FIELD_OFS(LOT_CODE) );
-  uint32_t playpenready = rcomGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
-  uint32_t playpenpass  = rcomGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
-  uint32_t packedout    = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
-  flexnfo.packoutdate   = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
-  
   flexnfo.bsv = *rcomBsv();
   
-  ConsolePrintf("EMR[%u] esn         :%08x [%08x]\n", EMR_FIELD_OFS(ESN), flexnfo.esn, esnCmd);
-  ConsolePrintf("EMR[%u] hwver       :%u\n", EMR_FIELD_OFS(HW_VER), flexnfo.hwver);
-  ConsolePrintf("EMR[%u] model       :%u\n", EMR_FIELD_OFS(MODEL), flexnfo.model);
-  ConsolePrintf("EMR[%u] lotcode     :%u\n", EMR_FIELD_OFS(LOT_CODE), lotcode);
-  ConsolePrintf("EMR[%u] playpenready:%u\n", EMR_FIELD_OFS(PLAYPEN_READY_FLAG), playpenready);
-  ConsolePrintf("EMR[%u] playpenpass :%u\n", EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), playpenpass);
-  ConsolePrintf("EMR[%u] packedout   :%u\n", EMR_FIELD_OFS(PACKED_OUT_FLAG), packedout);
-  ConsolePrintf("EMR[%u] packout-date:%u\n", EMR_FIELD_OFS(PACKED_OUT_DATE), flexnfo.packoutdate);
+  if( g_fixmode == FIXMODE_ROBOT1 ) {
+    memset( &flexnfo, 0, sizeof(flexnfo) );
+  } else {
+    flexnfo.esn           = rcomGmr( EMR_FIELD_OFS(ESN) );
+    flexnfo.hwver         = rcomGmr( EMR_FIELD_OFS(HW_VER) );
+    flexnfo.model         = rcomGmr( EMR_FIELD_OFS(MODEL) );
+    uint32_t lotcode      = rcomGmr( EMR_FIELD_OFS(LOT_CODE) );
+    uint32_t playpenready = rcomGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
+    uint32_t playpenpass  = rcomGmr( EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG) );
+    uint32_t packedout    = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_FLAG) );
+    flexnfo.packoutdate   = rcomGmr( EMR_FIELD_OFS(PACKED_OUT_DATE) );
+    
+    ConsolePrintf("EMR[%u] esn         :%08x [%08x]\n", EMR_FIELD_OFS(ESN), flexnfo.esn, esnCmd);
+    ConsolePrintf("EMR[%u] hwver       :%u\n", EMR_FIELD_OFS(HW_VER), flexnfo.hwver);
+    ConsolePrintf("EMR[%u] model       :%u\n", EMR_FIELD_OFS(MODEL), flexnfo.model);
+    ConsolePrintf("EMR[%u] lotcode     :%u\n", EMR_FIELD_OFS(LOT_CODE), lotcode);
+    ConsolePrintf("EMR[%u] playpenready:%u\n", EMR_FIELD_OFS(PLAYPEN_READY_FLAG), playpenready);
+    ConsolePrintf("EMR[%u] playpenpass :%u\n", EMR_FIELD_OFS(PLAYPEN_PASSED_FLAG), playpenpass);
+    ConsolePrintf("EMR[%u] packedout   :%u\n", EMR_FIELD_OFS(PACKED_OUT_FLAG), packedout);
+    ConsolePrintf("EMR[%u] packout-date:%u\n", EMR_FIELD_OFS(PACKED_OUT_DATE), flexnfo.packoutdate);
+  }
 }
 
 //read battery voltage
