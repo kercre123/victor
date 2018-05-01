@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdarg.h>
@@ -169,6 +170,14 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
       Twait = Timer::get(); //reset timeout
     
     char *rsp = getline_(c);
+    
+    //DEBUG inspect raw rx
+    if( (opts & CMD_OPTS_LOG_RAW_RX_DBG) && c > 0 && c < 0xff ) {
+      if( c == '\n' )         { ConsoleWrite((char*)"\\n"); ConsolePutChar(c); }
+      else if( c == '\r' )    { ConsoleWrite((char*)"\\r"); ConsolePutChar(c); }
+      else if( !isprint(c) )  { ConsolePrintf("\\%02x",c); }
+      else                    { ConsolePutChar(c); }
+    }
     
     //copy char stream to data buffer
     if( dbuf && c > 0 && c < 128 ) {

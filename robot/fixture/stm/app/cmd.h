@@ -37,6 +37,7 @@ typedef enum cmd_io_e cmd_io;
 #define CMD_OPTS_LOG_ASYNC            0x0080  //print-log async line (:async)
 #define CMD_OPTS_LOG_OTHER            0x0100  //print-log 'other' rx'd line (informational,uncategorized)
 #define CMD_OPTS_LOG_ERRORS           0x0200  //print-log extra error info
+#define CMD_OPTS_LOG_RAW_RX_DBG       0x0400  //print-log raw rx stream (DEBUG)
 #define CMD_OPTS_LOG_ALL              0x03F0  //print-log all
 #define CMD_OPTS_DBG_PRINT_ENTRY      0x1000  //debug: print function entry with parsed params
 #define CMD_OPTS_DBG_PRINT_RX_PARTIAL 0x2000  //debug: print any unexpected chars, partial line left in rx buffer at cmd end
