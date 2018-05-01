@@ -21,10 +21,12 @@ namespace Cozmo {
   
 namespace {
 const char* kBehaviorsKey = "behaviors";
+const char* kLinkScopeKey = "linkScope";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDispatcherStrictPriorityWithCooldown::InstanceConfig::InstanceConfig()
+  : linkScope(false)
 {
 
 }
@@ -41,6 +43,9 @@ BehaviorDispatcherStrictPriorityWithCooldown::DynamicVariables::DynamicVariables
 BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcherStrictPriorityWithCooldown(const Json::Value& config)
   : BaseClass(config)
 {
+
+  _iConfig.linkScope = config.get(kLinkScopeKey, false).asBool();
+
   const Json::Value& behaviorArray = config[kBehaviorsKey];
   DEV_ASSERT_MSG(!behaviorArray.isNull(),
                  "BehaviorDispatcherStrictPriorityWithCooldown.BehaviorsNotSpecified",
@@ -66,7 +71,41 @@ BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcherStrictPriorityWi
 void BehaviorDispatcherStrictPriorityWithCooldown::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   expectedKeys.insert( kBehaviorsKey );
+  expectedKeys.insert( kLinkScopeKey );
   IBehaviorDispatcher::GetBehaviorJsonKeys(expectedKeys);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherStrictPriorityWithCooldown::GetLinkedActivatableScopeBehaviors(
+  std::set<IBehavior*>& delegates) const
+{
+  if( _iConfig.linkScope ) {
+    // all delegates are also linked in scope
+    BaseClass::GetAllDelegates(delegates);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorDispatcherStrictPriorityWithCooldown::WantsToBeActivatedBehavior() const
+{
+  if( !_iConfig.linkScope ) {
+    // not linking, use the default implementation
+    return BaseClass::WantsToBeActivatedBehavior();
+  }
+
+  const size_t numBehaviors = _iConfig.cooldownInfo.size();
+
+  for( size_t idx = 0; idx < numBehaviors; ++idx ) {
+    auto& cooldownInfo = _iConfig.cooldownInfo.at(idx);
+    const auto& behavior = IBehaviorDispatcher::GetAllPossibleDispatches().at(idx);
+
+    if( !cooldownInfo.OnCooldown() &&
+        behavior->WantsToBeActivated() ) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

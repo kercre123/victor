@@ -11,88 +11,20 @@
 */
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "platform/victorCrashReports/google_breakpad.h"
+
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/logging/androidLogPrintLogger_android.h"
 
 #include <stdio.h>
-#include <chrono>
-#include <sstream>
 #include <iomanip>
 #include <thread>
 
 using namespace Anki;
-using namespace Anki::Cozmo;
 
 #define LOG_CHANNEL "VictorTestCrash"
 
-#if (defined(ANDROID) && defined(USE_GOOGLE_BREAKPAD))
-#include <client/linux/handler/exception_handler.h>
-#include <client/linux/handler/minidump_descriptor.h>
-
-#include <fcntl.h>
-#include <unistd.h>
-#include <string.h>
-#include <sys/stat.h>
-#endif
-
-namespace GoogleBreakpad {
-
-#if (defined(ANDROID) && defined(USE_GOOGLE_BREAKPAD))
-// Google Breakpad setup
-namespace {
-
-static char dumpPath[1024] = {'\0'};
-static int fd = -1;
-static google_breakpad::ExceptionHandler* exceptionHandler;
-
-bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor,
-                  void* context, bool succeeded)
-{
-  LOG_INFO("GoogleBreakpad.DumpCallback",
-           "Dump path: '%s', fd = %d, context = %p, succeeded = %s",
-           dumpPath, descriptor.fd(), context, succeeded ? "true" : "false");
-  if (descriptor.fd() == fd && fd >= 0) {
-    (void) close(fd); fd = -1;
-  }
-  return succeeded;
-}
-
-} // anon namespace
-
-void InstallGoogleBreakpad(const char *path)
-{
-  (void) strlcpy(dumpPath, path, sizeof(dumpPath));
-  fd = open(path, O_WRONLY | O_CREAT | O_TRUNC | O_EXCL, 0600);
-  google_breakpad::MinidumpDescriptor descriptor(fd);
-  exceptionHandler = new google_breakpad::ExceptionHandler(descriptor, NULL, DumpCallback, NULL, true, -1);
-}
-
-void UnInstallGoogleBreakpad()
-{
-  delete exceptionHandler;
-  exceptionHandler = nullptr;
-  if (fd >= 0) {
-    (void) close(fd); fd = -1;
-  }
-  if (dumpPath[0] != '\0') {
-    struct stat dumpStat;
-    memset(&dumpStat, 0, sizeof(dumpStat));
-    int rc = stat(dumpPath, &dumpStat);
-    if (!rc && !dumpStat.st_size) {
-      (void) unlink(dumpPath);
-    }
-  }
-}
-
-#else
-
-void InstallGoogleBreakpad(const char *path) {}
-void UnInstallGoogleBreakpad() {}
-
-#endif
-
-} // namespace GoogleBreakpad
 
 namespace {
   bool gShutdown = false;
@@ -102,13 +34,10 @@ namespace {
     CT_NullPointer,
     CT_Abort,
     CT_StackOverflow,
-    CT_ExitFailure,
     CT_SIGABRT,
     CT_SIGFPE,
     CT_SIGILL,
-    CT_SIGINT,
     CT_SIGSEGV,
-    CT_SIGTERM,
     NumCrashTypes
   };
 
@@ -116,13 +45,10 @@ namespace {
     "null",
     "abort",
     "stackoverflow",
-    "exitfailure",
     "SIGABRT",
     "SIGFPE",
     "SIGILL",
-    "SIGINT",
-    "SIGSEGV",
-    "SIGTERM"
+    "SIGSEGV"
   };
 
   static const float kDefaultCrashTime_s = 1.0f;
@@ -165,17 +91,10 @@ static int DoStackOverflow(int counter)
   return StackOverflowFoo(counter - 1);
 }
 
-static void DoExitFailure()
-{
-  exit(EXIT_FAILURE);
-}
-
 void DoSIGABRT() { raise(SIGABRT); } __attribute__((noinline))
 void DoSIGFPE()  { raise(SIGFPE); }  __attribute__((noinline))
 void DoSIGILL()  { raise(SIGILL); }  __attribute__((noinline))
-void DoSIGINT()  { raise(SIGINT); }  __attribute__((noinline))
 void DoSIGSEGV() { raise(SIGSEGV); } __attribute__((noinline))
-void DoSIGTERM() { raise(SIGTERM); } __attribute__((noinline))
 
 
 static void CrashMe(int crashType, int cmdLineSpecialCount)
@@ -204,54 +123,20 @@ static void CrashMe(int crashType, int cmdLineSpecialCount)
       }
       break;
 
-    case CT_ExitFailure:
-      {
-        DoExitFailure();
-      }
-      break;
-
     case CT_SIGABRT:  DoSIGABRT();  break;
     case CT_SIGFPE:   DoSIGFPE();   break;
     case CT_SIGILL:   DoSIGILL();   break;
-    case CT_SIGINT:   DoSIGINT();   break;
     case CT_SIGSEGV:  DoSIGSEGV();  break;
-    case CT_SIGTERM:  DoSIGTERM();  break;
   }
 }
 
-using ClockType = std::chrono::system_clock;
-
-std::string GetDateTimeString()
-{
-  const auto now = ClockType::now();
-  const auto numSecs = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch());
-  const auto millisLeft = std::chrono::duration_cast<std::chrono::milliseconds>((now - numSecs).time_since_epoch());
-  
-  const auto currTime_t = ClockType::to_time_t(now);
-  struct tm localTime; // This is local scoped to make it thread safe
-  // For some reason this is giving this error message: "__bionic_open_tzdata: couldn't find any tzdata when looking for GMT!"
-  localtime_r(&currTime_t, &localTime);
-  
-  // Use the old fashioned strftime for thread safety, instead of std::put_time
-  char formatTimeBuffer[256];
-  strftime(formatTimeBuffer, sizeof(formatTimeBuffer), "%FT%H-%M-%S-", &localTime);
-  
-  std::ostringstream stringStream;
-  stringStream << formatTimeBuffer << std::setfill('0') << std::setw(3) << millisLeft.count();
-
-  return stringStream.str();
-}
-  
 
 int main(int argc, char* argv[])
 {
   signal(SIGTERM, Shutdown);
 
-  std::string path = "/data/data/com.anki.victor/cache/crashDumps/";
-  Util::FileUtils::CreateDirectory(path);
-
-  std::string crashFile = path + GetDateTimeString() + ".dmp";
-  GoogleBreakpad::InstallGoogleBreakpad(crashFile.c_str());
+  static const char* filenamePrefix = "testCrash";
+  GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
 
   // - create and set logger
   Util::AndroidLogPrintLogger logPrintLogger("vic-testcrash");

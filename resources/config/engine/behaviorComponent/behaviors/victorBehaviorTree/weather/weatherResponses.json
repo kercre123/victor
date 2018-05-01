@@ -1,0 +1,17 @@
+{
+  "behaviorID" : "WeatherResponses",
+  "behaviorClass" : "DispatcherStrictPriority",
+
+  "linkScope": true,
+  "interruptActiveBehavior": true,
+
+  "behaviors": [
+    "WeatherCloudyGeneric",
+    "WeatherColdClearGeneric",
+    "WeatherRainGeneric",
+    "WeatherSnowGeneric",
+    "WeatherStarsGeneric",
+    "WeatherSunnyGeneric",
+    "WeatherWindyGeneric"
+  ]
+}

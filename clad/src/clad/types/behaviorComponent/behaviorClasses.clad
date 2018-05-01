@@ -40,6 +40,7 @@ enum uint_8 BehaviorClass {
   StackBlocks,
   Turn,
   TurnToFace,
+  WiggleOntoChargerContacts,
 
   // coordinators
   CoordinateGlobalInterrupts,
@@ -157,6 +158,9 @@ enum uint_8 BehaviorClass {
   ConfirmObject,
   ReactToTouchPetting,
   ReactToUnclaimedIntent,
+
+  // weather
+  DisplayWeather,
 }
 
 }

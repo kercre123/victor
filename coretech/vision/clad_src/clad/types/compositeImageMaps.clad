@@ -8,6 +8,15 @@ namespace Vision {
 
 enum uint_8 CompositeImageMap
 {
+  // Images for weather conditions
+  WeatherCondCloudy_01,
+  WeatherCondColdClear_01,
+  WeatherCondRain_01,
+  WeatherCondSnow_01,
+  WeatherCondStars_01,
+  WeatherCondSunny_01,
+  WeatherCondWindy_01,
+
   // Must be last element
   Count
 }

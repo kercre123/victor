@@ -143,6 +143,7 @@ enum uint_8 BehaviorID {
   GoHome,
   LowBatteryFindAndGoToHome,
   RequestToGoHome,
+  WiggleBackOntoChargerFromPlatform,
 
   // victorBehaviorTree/highLevelDelegates
   InspectCube,
@@ -168,6 +169,8 @@ enum uint_8 BehaviorID {
   ObservingFindFaces,
   ObservingLookAtFaces,
   ObservingOnCharger,
+  ObservingOnChargerGetIn,
+  ObservingOnChargerGetOut,
   ObservingOnChargerIdle,
   ObservingOnChargerIdleAnim,
   ReactToMotion,
@@ -249,6 +252,18 @@ enum uint_8 BehaviorID {
   // victorBehaviorTree
   TriggerWordDetected,
   Wait,
+
+  // victorBehaviorTree/weather/genericResponses
+  WeatherCloudyGeneric,
+  WeatherColdClearGeneric,
+  WeatherRainGeneric,
+  WeatherSnowGeneric,
+  WeatherStarsGeneric,
+  WeatherSunnyGeneric,
+  WeatherWindyGeneric,
+
+  // victorBehaviorTree/weather
+  WeatherResponses,
 }
 
 }

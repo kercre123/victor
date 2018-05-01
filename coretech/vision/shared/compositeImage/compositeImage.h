@@ -37,11 +37,17 @@ class SpriteCache;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class CompositeImage {
 public:
-  using LayerMap = std::map<Vision::LayerName, CompositeImageLayer>;
+  using LayerLayoutMap = std::map<Vision::LayerName, CompositeImageLayer>;
+  using LayerImageMap = std::map<Vision::LayerName, CompositeImageLayer::ImageMap>;
   CompositeImage(SpriteCache* spriteCache,   
-                 ConstHSImageHandle faceHSImageHandle)
+                 ConstHSImageHandle faceHSImageHandle,
+                 s32 imageWidth = 0,
+                 s32 imageHeight = 0)
   : _spriteCache(spriteCache)
-  , _faceHSImageHandle(faceHSImageHandle){};
+  , _faceHSImageHandle(faceHSImageHandle)
+  , _width(imageWidth)
+  , _height(imageHeight){};
+  
   CompositeImage(SpriteCache* spriteCache,
                  ConstHSImageHandle faceHSImageHandle,
                  const Json::Value& layersSpec,
@@ -50,7 +56,7 @@ public:
 
   CompositeImage(SpriteCache* spriteCache,
                  ConstHSImageHandle faceHSImageHandle,
-                 const LayerMap&& layers,
+                 const LayerLayoutMap&& layers,
                  s32 imageWidth = 0,
                  s32 imageHeight = 0);
 
@@ -59,27 +65,22 @@ public:
   std::vector<CompositeImageChunk> GetImageChunks() const;
 
   // Clear out the existing image and replace it with the new layer map 
-  void ReplaceCompositeImage(const LayerMap&& layers,
+  void ReplaceCompositeImage(const LayerLayoutMap&& layers,
                              s32 imageWidth = 0,
                              s32 imageHeight = 0);
+
+  // Merges all layout/image info from other image into this image
+  void MergeInImage(const CompositeImage& otherImage);
                              
   // Returns true if layer added successfully
   // Returns false if the layer name already exists
   bool AddLayer(CompositeImageLayer&& layer);
 
-  const LayerMap& GetLayerMap() const { return _layerMap;}
-  LayerMap& GetLayerMap()             { return _layerMap;}
+  const LayerLayoutMap& GetLayerLayoutMap() const { return _layerMap;}
+  LayerLayoutMap& GetLayerLayoutMap()             { return _layerMap;}
   // Returns a pointer to the layer within the composite image
   // Returns nullptr if layer by that name does not exist
   CompositeImageLayer* GetLayerByName(LayerName name);
-  
-  // Returns an image that consists of all implementation differences
-  // between this image and the one passed in - layouts are assumed to be the same
-  // NOTE: The images/quadrants returned are the ones which are:
-  //   1) Present in this image and not in the compImg
-  //   2) The image paths internal to this image different from the compImg
-  // i.e. no image paths present in compImg will be returned
-  CompositeImage GetImageDiff(const CompositeImage& compImg) const;
 
   // Render the composite image to a newly allocated image
   // Any layers specified in layersToIgnore will not be rendered
@@ -119,7 +120,7 @@ private:
 
   s32 _width = 0;
   s32 _height = 0;
-  LayerMap  _layerMap;
+  LayerLayoutMap  _layerMap;
 
 };
 

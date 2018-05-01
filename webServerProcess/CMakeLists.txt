@@ -6,7 +6,6 @@ project(webServerProcess)
 option(USE_DAS "Enable DAS reporting" OFF)
 
 include(anki_build_cxx)
-include(opencv)
 
 #
 # victor_web_library
@@ -19,6 +18,7 @@ set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
 
 if (ANDROID)
+    include(breakpad)
     set(PLATFORM_LIBS
         android
         log
@@ -68,6 +68,8 @@ if (ANDROID)
     victor_web_library
     cti_common
     util
+    victorCrashReports
+    breakpad_client
     ${PLATFORM_LIBS}
   )
 

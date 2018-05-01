@@ -17,6 +17,7 @@
 #include "cannedAnimLib/spriteSequences/spriteSequenceLoader.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/vision/shared/compositeImage/compositeImage.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "engine/actions/sayTextAction.h"
 #include "engine/animations/animationContainers/backpackLightAnimationContainer.h"
@@ -74,6 +75,8 @@ RobotDataLoader::RobotDataLoader(const CozmoContext* context)
 , _dasBlacklistedAnimationTriggers()
 {
   _spritePaths = std::make_unique<Vision::SpritePathMap>();
+  _compLayoutMap = std::make_unique<CompLayoutMap>();
+  _compImageMap = std::make_unique<CompImageMap>();
 }
 
 RobotDataLoader::~RobotDataLoader()
@@ -130,7 +133,6 @@ void RobotDataLoader::LoadNonConfigData()
     _spriteSequenceContainer.reset(sContainer);
   }
 
-
   if(!FACTORY_TEST)
   {
     {
@@ -170,6 +172,10 @@ void RobotDataLoader::LoadNonConfigData()
       // Load SayText Action Intent Config
       ANKI_CPU_PROFILE("RobotDataLoader::LoadSayTextActionIntentConfigs");
       SayTextAction::LoadMetadata(*_context->GetDataPlatform());
+    }
+    {
+      ANKI_CPU_PROFILE("RobotDataLoader::LoadCompositeImageMaps");
+      LoadCompositeImageMaps();
     }
   }
   
@@ -443,25 +449,9 @@ void RobotDataLoader::LoadSpritePaths()
  // Creates a map of all sprite names to their file names
   _spritePaths->Load(_platform, "assets/cladToFileMaps/spriteMap.json", "SpriteName");
 
-  std::map<std::string, std::string> fileNameToFullPath;
-  // Get all independent sprites
-  {
-    auto spritePaths = {pathToExternalIndependentSprites,
-                        pathToEngineIndependentSprites};
-    
-    const bool useFullPath = true;
-    const char* extensions = "png";
-    const bool recurse = true;
-    for(const auto& path: spritePaths){
-      const std::string fullPathFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
-
-      auto fullImagePaths = Util::FileUtils::FilesInDirectory(fullPathFolder, useFullPath, extensions, recurse);
-      for(auto& fullImagePath : fullImagePaths){
-        const std::string fileName = Util::FileUtils::GetFileName(fullImagePath, true, true);
-        fileNameToFullPath.emplace(fileName, fullImagePath);
-      }
-    }
-  }
+  auto spritePaths = {pathToExternalIndependentSprites,
+                      pathToEngineIndependentSprites};
+  auto fileNameToFullPath = CreateFileNameToFullPathMap(spritePaths, "png");
   
   // Get all sprite sequences with recursive directory search
   {
@@ -489,10 +479,142 @@ void RobotDataLoader::LoadSpritePaths()
   
   for (auto key : _spritePaths->GetAllKeys()) {
     auto fullPath = fileNameToFullPath[_spritePaths->GetValue(key)];
-    _spritePaths->UpdateValue(key, std::move(fullPath));
+    if(fullPath.empty()){
+      PRINT_NAMED_ERROR("RobotDataLoader.LoadSpritePaths.EmptyPath",
+                        "No path found for %s",
+                        EnumToString(key));
+    }else{
+      _spritePaths->UpdateValue(key, std::move(fullPath));
+    }
   }
 }
 
+void RobotDataLoader::LoadCompositeImageMaps()
+{
+  const bool useFullPath = false;
+  const char* extensions = ".json";
+  const bool recurse = true;
+  const bool shouldCacheLookup = true;
+
+  // Load in image layouts
+  {
+    // Load the layout map file and fileName Map
+    const auto layoutBasePath = "assets/compositeImageResources/imageLayouts/";
+    const std::string layoutFullPath = _platform->pathToResource(Util::Data::Scope::Resources,
+                                                                 layoutBasePath);
+    Util::CladEnumToStringMap<Vision::CompositeImageLayout> layoutMap;
+    layoutMap.Load(_platform, "assets/cladToFileMaps/CompositeImageLayoutMap.json", "LayoutName");
+    auto fileNameToFullPath = CreateFileNameToFullPathMap({layoutBasePath}, "json");
+
+    // Iterate through all files in the directory and extract the associated
+    // enum value
+    auto fullImagePaths = Util::FileUtils::FilesInDirectory(layoutFullPath, useFullPath, extensions, recurse);
+    for(auto& fullImagePath : fullImagePaths){
+      const std::string fileName = Util::FileUtils::GetFileName(fullImagePath, true, true);
+      Vision::CompositeImageLayout ev = Vision::CompositeImageLayout::Count;
+      if(layoutMap.GetKeyForValue(fileName, ev, shouldCacheLookup)){
+        // Load the layout contents into a composite image and place it in the map
+        Json::Value contents;
+        const auto& fullPath = fileNameToFullPath[fileName];
+        const bool success = _platform->readAsJson(fullPath, contents);
+        if(success){
+          auto compImg = Vision::CompositeImage(_spriteCache.get(), ProceduralFace::GetHueSatWrapper(),contents);
+          _compLayoutMap->emplace(ev, std::move(compImg));
+        }
+      }else{
+        PRINT_NAMED_WARNING("RobotDataLoader.LoadCompositeImageLayouts",
+                            "Failed to find %s in map", 
+                            CompositeImageLayoutToString(ev));
+      }
+    }
+  }
+
+  // Load in image map
+  {
+    // Load the image map file and fileName Map
+    const auto mapBasePath = "assets/compositeImageResources/imageMaps/";
+    const std::string mapFullPath = _platform->pathToResource(Util::Data::Scope::Resources,
+                                                              mapBasePath);
+    Util::CladEnumToStringMap<Vision::CompositeImageMap> mapMap;
+    mapMap.Load(_platform, "assets/cladToFileMaps/CompositeImageMapMap.json", "MapName");
+    auto fileNameToFullPath = CreateFileNameToFullPathMap({mapBasePath}, "json");
+
+    // Iterate through all files in the directory and extract the associated
+    // enum value
+    auto fullImagePaths = Util::FileUtils::FilesInDirectory(mapFullPath, useFullPath, extensions, recurse);
+    for(auto& fullImagePath : fullImagePaths){
+      const std::string fileName = Util::FileUtils::GetFileName(fullImagePath, true, true);
+      Vision::CompositeImageMap ev = Vision::CompositeImageMap::Count;
+      if(mapMap.GetKeyForValue(fileName, ev, shouldCacheLookup)){
+        // Load the layout contents into a composite image and place it in the map
+        Json::Value contents;
+        const auto& fullPath = fileNameToFullPath[fileName];
+        const bool success = _platform->readAsJson(fullPath, contents);
+        if(success){
+          const std::string debugStr = "RobotDataLoader.LoadCompositeImageMaps.";
+
+          Vision::CompositeImage::LayerImageMap fullImageMap;
+          for(auto& mapEntry: contents){
+            // Extract Layer Name
+            const std::string strLayerName = JsonTools::ParseString(mapEntry, Vision::CompositeImageConfigKeys::kLayerNameKey, debugStr + "NoLayerName");
+            const Vision::LayerName layerName = Vision::LayerNameFromString(strLayerName);
+
+            // Extract all image entries for the layer
+            if(mapEntry.isMember(Vision::CompositeImageConfigKeys::kImagesListKey)){
+              Vision::CompositeImageLayer::ImageMap partialMap;
+              Json::Value imageArray = mapEntry[Vision::CompositeImageConfigKeys::kImagesListKey];
+              for(auto& imageEntry: imageArray){
+                // Extract Sprite Box Name
+                const std::string strSpriteBox = JsonTools::ParseString(imageEntry, Vision::CompositeImageConfigKeys::kSpriteBoxNameKey, debugStr + "NoSpriteBoxName");
+                const Vision::SpriteBoxName sbName = Vision::SpriteBoxNameFromString(strSpriteBox);
+                // Extract Sprite Name
+                const std::string strSpriteName = JsonTools::ParseString(imageEntry, Vision::CompositeImageConfigKeys::kSpriteNameKey, debugStr + "NoSpriteName");
+                const Vision::SpriteName spriteName = Vision::SpriteNameFromString(strSpriteName);
+
+                auto spriteEntry = Vision::CompositeImageLayer::SpriteEntry(_spriteCache.get(), _spriteSequenceContainer.get(), spriteName);
+                partialMap.emplace(sbName, std::move(spriteEntry));
+              }
+              
+              fullImageMap.emplace(layerName, partialMap);
+            }else{
+              PRINT_NAMED_WARNING("RobotDataLoader.LoadCompositeImageMap.MissingKey", 
+                                  "Missing image map key %s",
+                                  Vision::CompositeImageConfigKeys::kImagesListKey);
+            }
+          }// end for(contents)
+
+          _compImageMap->emplace(ev, std::move(fullImageMap));
+        }
+      }else{
+        PRINT_NAMED_WARNING("RobotDataLoader.LoadCompositeImageMaps",
+                            "Failed to find %s in map", 
+                            Vision::CompositeImageMapToString(ev));
+      }
+    }
+  }
+}
+
+
+std::map<std::string, std::string> RobotDataLoader::CreateFileNameToFullPathMap(const std::vector<const char*> & srcDirs, const std::string& fileExtensions) const
+{
+  std::map<std::string, std::string> fileNameToFullPath;
+  // Get all independent sprites
+  {
+    const bool useFullPath = true;
+    const bool recurse = true;
+    for(const auto& dir: srcDirs){
+      const std::string fullPathFolder = _platform->pathToResource(Util::Data::Scope::Resources, dir);
+
+      auto fullImagePaths = Util::FileUtils::FilesInDirectory(fullPathFolder, useFullPath, fileExtensions.c_str(), recurse);
+      for(auto& fullImagePath : fullImagePaths){
+        const std::string fileName = Util::FileUtils::GetFileName(fullImagePath, true, true);
+        fileNameToFullPath.emplace(fileName, fullImagePath);
+      }
+    }
+  }
+
+  return fileNameToFullPath;
+}
 
 void RobotDataLoader::LoadAnimationTriggerResponses()
 {
