@@ -64,6 +64,7 @@ protected:
   
   void PickOrPlaceObject();
   void MountSelectedCharger();
+  void TeleportOntoCharger();
   void FlipSelectedBlock();
   
   void PopAWheelie();
@@ -187,6 +188,8 @@ protected:
 private:
 
   bool _shouldQuit = false;
+
+  webots::Node* _chargerNode = nullptr;
   
 }; // class WebotsKeyboardController
 } // namespace Cozmo

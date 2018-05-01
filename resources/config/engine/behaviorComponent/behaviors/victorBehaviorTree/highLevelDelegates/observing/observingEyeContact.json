@@ -3,6 +3,7 @@
   "behaviorID": "ObservingEyeContact",
 
   "animTriggers" : ["HikingSquintStart"],
+  "playOnChargerWithoutBody": true,
 
   "emotionEventOnActivated": "EyeContactReaction",
 

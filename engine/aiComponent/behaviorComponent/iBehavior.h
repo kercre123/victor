@@ -121,9 +121,9 @@ private:
   std::string ActivationStateToString(ActivationState state) const;
   
   // Functions for ensuring apropriate activation state is maintained
-  void SetActivationState_DevOnly(ActivationState newState);
-  void AssertActivationState_DevOnly(ActivationState state) const;
-  void AssertNotActivationState_DevOnly(ActivationState state) const;
+  void SetActivationState_DevOnly(ActivationState newState, const std::string& debugStr);
+  void AssertActivationState_DevOnly(ActivationState state, const std::string& debugStr) const;
+  void AssertNotActivationState_DevOnly(ActivationState state, const std::string& debugStr) const;
 
   
   #if ANKI_DEV_CHEATS

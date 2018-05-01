@@ -12,6 +12,10 @@
       "ignoreFastForward": true
     },
     {
+      "behavior": "ObservingEyeContact",
+      "cooldown_s": 15.0
+    },
+    {
       "behavior": "ReactToMotionOnCharger",
       "cooldown_s": 0.0
     },
