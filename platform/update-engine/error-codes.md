@@ -16,7 +16,7 @@ Codes in this document must not change after release, they are add only.
 | 208  | I/O error                             |
 | 209  | Signature validation error            |
 | 210  | Decryption error                      |
-| 211  |                                       |
+| 211  | Wrong base version                    |
 | 212  |                                       |
 | 213  |                                       |
 | 214  |                                       |
