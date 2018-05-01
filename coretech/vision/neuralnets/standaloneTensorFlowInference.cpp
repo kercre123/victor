@@ -134,6 +134,7 @@ int main(int argc, char **argv)
       } 
       else {
         img = cv::imread(imageFilename);
+        cv::cvtColor(img, img, CV_BGR2RGB); // OpenCV loads BGR, TF expects RGB
       }
       Toc(startTime, "ImageRead");
 
