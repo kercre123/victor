@@ -1,0 +1,8 @@
+{
+  "behaviorClass": "ReactToPlacedOnSlope",
+  "behaviorID": "ReactToPlacedOnSlope",
+
+  "wantsToBeActivatedCondition": {
+    "conditionType": "RobotPlacedOnSlope"
+  }
+}

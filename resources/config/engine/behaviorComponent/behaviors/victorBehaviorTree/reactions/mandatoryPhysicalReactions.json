@@ -10,6 +10,7 @@
     "ReactToRobotOnFace",
     "ReactToRobotOnSide",
     "ReactToCliff",
+    "ReactToPlacedOnSlope",
     "ReactToUnexpectedMovement"
   ]
 }

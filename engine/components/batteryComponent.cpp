@@ -278,6 +278,10 @@ void BatteryComponent::SetOnChargerPlatform(bool onPlatform)
     using namespace ExternalInterface;
     _robot->Broadcast(MessageEngineToGame(RobotOnChargerPlatformEvent(_isOnChargerPlatform)));
 
+    PRINT_NAMED_DEBUG("robot.SetOnChargerPlatform",
+                      "robot is now %s the charger platform",
+                      onPlatform ? "ON" : "OFF");
+
     // pause the freeplay tracking if we are on the charger
     _robot->GetAIComponent().GetComponent<FreeplayDataTracker>().SetFreeplayPauseFlag(_isOnChargerPlatform, FreeplayPauseFlag::OnCharger);
   }

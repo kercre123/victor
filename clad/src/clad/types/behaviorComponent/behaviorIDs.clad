@@ -237,6 +237,7 @@ enum uint_8 BehaviorID {
   ReactToGoodNight,
   ReactToGreeting,
   ReactToObstacle,
+  ReactToPlacedOnSlope,
   ReactToRobotOnBack,
   ReactToRobotOnFace,
   ReactToRobotOnSide,
