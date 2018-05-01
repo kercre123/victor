@@ -92,7 +92,7 @@
     },
     {
       "name": "NoLongerRecentlyPlaced",
-      "begin_s": 1200.0
+      "begin_s": 150.0
     },
     {
       "name": "WakeUpFromNap",
