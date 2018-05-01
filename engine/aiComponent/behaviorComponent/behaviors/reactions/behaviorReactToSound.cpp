@@ -74,7 +74,7 @@ namespace {
 
   const BehaviorReactToSound::DirectionTrigger kTriggerThreshold_Awake[] =
   {
-    /*  0 */ { kDefaultTriggerThreshold },
+    /*  0 */ { 21000 }, // higher for now as a hack to work around hearing his own audio
     /*  1 */ { kDefaultTriggerThreshold },
     /*  2 */ { kDefaultTriggerThreshold },
     /*  3 */ { kDefaultTriggerThreshold },
