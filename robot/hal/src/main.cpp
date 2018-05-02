@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <chrono>
+#include <csignal>
 #include <thread>
 #include <sys/mman.h>
 #include <sched.h>

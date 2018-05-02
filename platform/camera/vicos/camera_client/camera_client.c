@@ -10,10 +10,13 @@
  * Copyright: Anki, Inc. 2018
  *
  **/
+// To properly include `pthread_setname_np` function we need to define GNU_SOURCE
+#define _GNU_SOURCE
 
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/un.h>

@@ -1,5 +1,5 @@
 /**
- * File: textToSpeechProvider_android.cpp
+ * File: textToSpeechProvider_vicos.cpp
  *
  * Description: Implementation-specific details of text-to-speech conversion
  *
@@ -9,9 +9,9 @@
 
 #include "util/helpers/ankiDefines.h"
 
-#if defined(ANKI_PLATFORM_ANDROID)
+#if defined(ANKI_PLATFORM_VICOS)
 
-#include "textToSpeechProvider_android.h"
+#include "textToSpeechProvider_vicos.h"
 #include "textToSpeechProvider_acapela.h"
 
 #include "cozmoAnim/animContext.h"
@@ -347,28 +347,4 @@ Result TextToSpeechProviderImpl::CreateAudioData(const std::string& text,
 } // end namespace Cozmo
 } // end namespace Anki
 
-//
-// Acapela libbabile.a relies on some glibc library functions that are not supported by Victor's standard libraries.
-// Missing functions are implemented here to satisfy the linker.
-//
-extern "C"
-{
-  volatile int * __errno_location()
-  {
-    return &errno;
-  }
-
-  int __isoc99_sscanf (const char *s, const char *format, ...)
-  {
-    va_list args;
-
-    va_start (args, format);
-    int done = vsscanf (s, format, args);
-    va_end (args);
-
-    return done;
-  }
-
-}
-
-#endif // ANKI_PLATFORM_ANDROID
+#endif // ANKI_PLATFORM_VICOS

@@ -22,6 +22,8 @@ set (PLATFORM_LIBS "")
 
 if (ANDROID)
   set(PLATFORM_LIBS log)
+elseif (VICOS)
+  set(PLATFORM_LIBS log)
 elseif (MACOSX)
   find_library(FOUNDATION Foundation)
   set(PLATFORM_LIBS ${FOUNDATION})

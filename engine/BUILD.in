@@ -3,12 +3,17 @@ cxx_project(
     srcs = cxx_src_glob(['.'],
                         excludes = [
                             '**/android/*',
+                            '**/vicos/*',
                             'tools/**/*',
                         ]),
     platform_srcs = [
         ('android', glob([
                             '**/*_android.cpp',
                             '**/android/*.cpp',
+                         ])),
+        ('vicos', glob([
+                            '**/*_vicos.cpp',
+                            '**/vicos/*.cpp',
                          ])),
         ('mac', glob([
                         '**/*_iososx*.mm',
@@ -22,6 +27,10 @@ cxx_project(
         ('android', glob([
                             '**/*_android.h',
                             '**/android/*.h',
+                         ])),
+        ('vicos', glob([
+                            '**/*_vicos.h',
+                            '**/vicos/*.h',
                          ])),
         ('mac', glob([
                         '**/*_ios*.h',

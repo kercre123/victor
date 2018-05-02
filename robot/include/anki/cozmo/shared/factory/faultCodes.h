@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <fcntl.h> 
 #include <errno.h>
+#include <stdio.h>
 
 namespace Anki {
 namespace Cozmo {

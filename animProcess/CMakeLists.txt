@@ -20,9 +20,8 @@ set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
 
-if (ANDROID)
+if (VICOS)
     set(PLATFORM_LIBS
-        android
         log
         robot_core)
 elseif (MACOSX)
@@ -77,7 +76,7 @@ target_include_directories(victor_anim
 
 # victor_animator binary only builds on Android now
 # mac implementation uses (webotsCtrlAnim)
-if (ANDROID)
+if (VICOS)
 
   anki_build_cxx_executable(vic-anim ${ANKI_SRCLIST_DIR})
 

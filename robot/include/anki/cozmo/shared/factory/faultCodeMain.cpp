@@ -12,6 +12,7 @@
 
 #include "faultCodes.h"
 #include <stdlib.h>
+#include <csignal>
 
 void handle(int sig)
 {

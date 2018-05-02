@@ -19,7 +19,7 @@ if (MACOSX)
   set(PLATFORM_COMPILE_DEFS
     SIMULATOR
   )
-elseif (ANDROID)
+elseif (VICOS)
   set(PLATFORM_COMPILE_DEFS
     DEVELOPMENT
   )
@@ -77,7 +77,7 @@ set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
-if (ANDROID)
+if (VICOS)
   set(PLATFORM_LIBS
     robot_hal
   )
@@ -168,8 +168,8 @@ set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
-if (ANDROID)
-  set(PLATFORM_LIBS android log)
+if (VICOS)
+  set(PLATFORM_LIBS log)
   set(PLATFORM_COMPILE_DEFS
     DEVELOPMENT
   )
@@ -186,7 +186,7 @@ endif()
 #
 # spine
 #
-if (ANDROID)
+if (VICOS)
 
   anki_build_cxx_library(spine ${ANKI_SRCLIST_DIR} STATIC)
 
@@ -208,7 +208,7 @@ endif()
 #
 # robot_supervisor
 #
-if (ANDROID)
+if (VICOS)
 
   anki_build_cxx_executable(vic-robot ${ANKI_SRCLIST_DIR})
 

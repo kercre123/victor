@@ -16,7 +16,8 @@
 #elif defined (ANDROID)
 #include "engine/ble/BLECozmoController_android.h"
 #else
-#error "BLESystem has no controller implementation for this platform!"
+  #define NO_BLE_CONTROLLER
+  namespace Anki { namespace Cozmo { class IBLECozmoController{}; } }
 #endif
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/dispatchQueue/dispatchQueue.h"
@@ -44,8 +45,10 @@ BLESystem::BLESystem()
   , _bleMessageInProgress(new BLECozmoMessage())
   , _connectedCozmos(UUIDDirectCompare)
 {
+  #ifndef NO_BLE_CONTROLLER
   _bleCozmoController.reset(new BLECozmoController(this));
   _bleCozmoController->StartDiscoveringVehicles();
+  #endif
 }
   
 BLESystem::~BLESystem()
@@ -56,10 +59,12 @@ BLESystem::~BLESystem()
   
 void BLESystem::OnVehicleDiscovered(const UUIDBytes& vehicleId)
 {
+  #ifndef NO_BLE_CONTROLLER
   Util::Dispatch::Async(_queue, [vehicleId, this] {
     PRINT_NAMED_DEBUG("BLESystem.OnVehicleDiscovered", "ID: %s", StringFromUUIDBytes(const_cast<UUIDBytes* const>(&vehicleId)));
     _bleCozmoController->Connect(vehicleId);
   });
+  #endif
 }
 
 void BLESystem::OnVehicleDisappeared(const UUIDBytes& vehicleId)
@@ -165,7 +170,9 @@ void BLESystem::SendMessage(const UUIDBytes& robotId, const RobotInterface::Engi
   
   for (int i=0; i < numChunks; i++)
   {
+    #ifndef NO_BLE_CONTROLLER
     _bleCozmoController->SendMessage(robotId, cozmoMessage.GetChunkData(i), BLECozmoMessage::kMessageExactMessageLength);
+    #endif
   }
 }
 

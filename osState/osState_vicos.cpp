@@ -1,5 +1,5 @@
 /**
- * File: OSState_android.cpp
+ * File: OSState_vicos.cpp
  *
  * Authors: Kevin Yoon
  * Created: 2017-12-11
@@ -24,7 +24,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include <net/if.h>
 #include <netinet/in.h>
 
 #include <linux/wireless.h>
@@ -34,7 +33,7 @@
 #include <stdlib.h>
 
 #ifdef SIMULATOR
-#error SIMULATOR should NOT be defined by any target using osState_android.cpp
+#error SIMULATOR should NOT be defined by any target using osState_vicos.cpp
 #endif
 
 namespace Anki {

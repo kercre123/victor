@@ -9,9 +9,8 @@ anki_build_cxx_library(cubeBleClient ${ANKI_SRCLIST_DIR})
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
-if (ANDROID)
+if (VICOS)
     set(PLATFORM_LIBS
-        android
         log)
 elseif (MACOSX)
     include(webots)

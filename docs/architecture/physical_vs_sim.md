@@ -5,7 +5,7 @@ The Victor project utilizes [Webots](https://www.cyberbotics.com) for simulation
 
 In the Robot process, this code is referred to as the [HAL](arch_overview.md#HAL) and its interface is defined in [hal.h](../../robot/hal/include/anki/cozmo/robot/hal.h). There exists both a [simulated](../../robot/hal/sim)(which uses simulated Webots sensors, motors, displays, etc.) and [physical](../../robot/hal/src) version of the implmentation.
 
-In the animation and engine processes, this separation is done on a per-hardware component basis with a class dedicated to each. For example, the animation process's interface to the face display is defined by [`faceDisplay.h`](../../animProcess/src/cozmoAnim/faceDisplay/faceDisplay.h). The simulated implementation is defined by [`faceDisplayImpl_mac.cpp`](../../animProcess/src/cozmoAnim/faceDisplay/faceDisplayImpl_mac.cpp) while the physical version is defined by by [`faceDisplayImpl_android.cpp`](../../animProcess/src/cozmoAnim/faceDisplay/faceDisplayImpl_android.cpp)
+In the animation and engine processes, this separation is done on a per-hardware component basis with a class dedicated to each. For example, the animation process's interface to the face display is defined by [`faceDisplay.h`](../../animProcess/src/cozmoAnim/faceDisplay/faceDisplay.h). The simulated implementation is defined by [`faceDisplayImpl_mac.cpp`](../../animProcess/src/cozmoAnim/faceDisplay/faceDisplayImpl_mac.cpp) while the physical version is defined by by [`faceDisplayImpl_vicos.cpp`](../../animProcess/src/cozmoAnim/faceDisplay/faceDisplayImpl_vicos.cpp)
 
 
 ### `#ifdef SIMULATOR`

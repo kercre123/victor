@@ -16,9 +16,8 @@ set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
 
-if (ANDROID)
+if (VICOS)
     set(PLATFORM_LIBS
-        android
         log
     )
 elseif (MACOSX)
@@ -55,9 +54,9 @@ target_include_directories(victor_web_library
   ${PLATFORM_INCLUDES}
 )
 
-# victor_web_server binary only builds on Android now
+# victor_web_server binary only builds on VICOS now
 # mac implementation uses (webotsCtrlWebServer)
-if (ANDROID)
+if (VICOS)
 
   anki_build_cxx_executable(vic-webserver ${ANKI_SRCLIST_DIR})
 

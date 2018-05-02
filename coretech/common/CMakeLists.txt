@@ -48,6 +48,13 @@ target_link_libraries(cti_common
   z
 )
 
+if (VICOS)
+  copy_opencv_android_libs()
+  add_dependencies(cti_common
+    copy_opencv_libs
+  )
+endif()
+
 #
 # CLAD headers must be generated before building library
 #

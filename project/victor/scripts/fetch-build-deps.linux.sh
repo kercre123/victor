@@ -49,8 +49,8 @@ vlog "Android SDK"
 # BRC: r3 is not supported on Linux. AndroidSDK is not required for build, but adb is currently required for deploy
 #./tools/build/tools/ankibuild/android.py --install-sdk r3
 
-vlog "Android NDK"
-./tools/build/tools/ankibuild/android.py --install-ndk r15b
+vlog "vicos-sdk"
+./tools/build/tools/ankibuild/vicos.py --install 0.9-r03
 
 vlog "CMake"
 ./tools/build/tools/ankibuild/cmake.py

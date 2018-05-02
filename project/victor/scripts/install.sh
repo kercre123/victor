@@ -66,7 +66,7 @@ rm -f "dist.*.lst"
 touch ${DIST_LIST}
 
 if [ -d lib ]; then
-  find lib -type f -name '*.so' -or -name '*.so.1' >> ${DIST_LIST}
+  find lib -type f -regex '.*\.so\(\.[0-9][0-9]*\)*' >> ${DIST_LIST}
 fi
 
 if [ -d bin ]; then
