@@ -20,6 +20,7 @@
 #include "engine/robot.h"
 #include "engine/robotToEngineImplMessaging.h"
 
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #include "clad/externalInterface/messageCubeToEngine.h"
@@ -83,6 +84,12 @@ void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
   _cubeBleClient->SetScanDuration(kDefaultDiscoveryTime_sec);
   _cubeBleClient->StartScanUponConnection();
   _discovering = true;
+  
+  const Util::Data::DataPlatform* platform = robot->GetContextDataPlatform();
+  if(platform) {
+    const auto cubeFirmwarePath = platform->pathToResource(Util::Data::Scope::Resources, "assets/cube.dfu");
+    _cubeBleClient->SetCubeFirmwareFilepath(cubeFirmwarePath);
+  }
 
   if (!_cubeBleClient->Init()) {
     PRINT_NAMED_ERROR("CubeCommsComponent.InitDependent.FailedToInitBleClient",

@@ -76,6 +76,8 @@ public:
   void StartScanUponConnection();
   
   void SetScanDuration(const float duration_sec);
+
+  void SetCubeFirmwareFilepath(const std::string& cubeFirmwarePath);
   
   void StartScanning();
   

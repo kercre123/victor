@@ -311,5 +311,11 @@ bool CubeBleClient::Update()
 }
 
 
+void CubeBleClient::SetCubeFirmwareFilepath(const std::string& cubeFirmwarePath)
+{
+  // not needed for mac build, since we don't flash cubes with mac builds
+}
+
+
 } // namespace Cozmo
 } // namespace Anki

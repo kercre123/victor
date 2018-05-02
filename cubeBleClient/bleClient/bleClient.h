@@ -59,10 +59,13 @@ namespace Cozmo {
     void SetStartScanUponConnection(const bool set = true) {
       _startScanUponConnection = set;
     }
+
+    void FlashCube(std::vector<uint8_t> cubeFirmware);
     
     using AdvertisementCallback = std::function<void(const std::string& addr, const int rssi)>;
     using ReceiveDataCallback = std::function<void(const std::string& addr, const std::vector<uint8_t>& data)>;
     using ScanFinishedCallback = std::function<void(void)>;
+    using ReceiveFirmwareVersionCallback = std::function<void(const std::string& addr, const std::string& version)>; 
     
     // Advertisement callback gets called whenever we have new scanning results
     void RegisterAdvertisementCallback(const AdvertisementCallback& callback) {
@@ -79,17 +82,29 @@ namespace Cozmo {
     void RegisterScanFinishedCallback(const ScanFinishedCallback& callback) {
       _scanFinishedCallback = callback;
     }
+
+    void RegisterReceiveFirmwareVersionCallback(const ReceiveFirmwareVersionCallback& callback) {
+      _receiveFirmwareVersionCallback = callback;
+    }
     
   protected:
     virtual void OnScanResults(int error,
                                const std::vector<BluetoothDaemon::ScanResultRecord>& records) override;
+
     virtual void OnOutboundConnectionChange(const std::string& address,
                                             const int connected,
                                             const int connection_id,
                                             const std::vector<BluetoothDaemon::GattDbRecord>& records) override;
+
     virtual void OnReceiveMessage(const int connection_id,
                                   const std::string& characteristic_uuid,
                                   const std::vector<uint8_t>& value) override;
+
+    // will flash the cube if the versions do not match
+    virtual void OnCharacteristicReadResult(const int connection_id,
+                                            const int error,
+                                            const std::string& characteristic_uuid,
+                                            const std::vector<uint8_t>& data) override;
 
   private:
 
@@ -105,6 +120,9 @@ namespace Cozmo {
     
     // Callback for "scanning for cubes" timer
     void ScanningTimerCallback(ev::timer& w, int revents);
+
+    // Callback for flashing the cube
+    void AsyncFlashCubeCallback(ev::async& w, int revents);
     
     // Connection id for the single cube we are connected to.
     // Equal to -1 if we are not connected to a cube.
@@ -113,9 +131,10 @@ namespace Cozmo {
     // Address of the cube to connect to (can only connect to one at a time)
     std::string _cubeAddress;
     
-    AdvertisementCallback _advertisementCallback;
-    ReceiveDataCallback   _receiveDataCallback;
-    ScanFinishedCallback  _scanFinishedCallback;
+    AdvertisementCallback          _advertisementCallback;
+    ReceiveDataCallback            _receiveDataCallback;
+    ScanFinishedCallback           _scanFinishedCallback;
+    ReceiveFirmwareVersionCallback _receiveFirmwareVersionCallback;
     
     // The thread that runs the ev loop for server comms callbacks
     std::thread _loopThread;
@@ -134,12 +153,18 @@ namespace Cozmo {
     
     // Timer used to terminate scanning for cubes
     ev::timer _scanningTimer;
+
+    // Async signal to begin flashing the cube
+    ev::async _asyncFlashCubeSignal;
     
     // Should we start scanning for cubes immediately upon connection with server?
     std::atomic<bool> _startScanUponConnection{false};
     
     // How long to scan for cubes for
     std::atomic<ev_tstamp> _scanDuration_sec{3.f};
+
+    // path to cube firmware
+    std::vector<uint8_t> _cubeFirmware;
   };
 
 } // Cozmo

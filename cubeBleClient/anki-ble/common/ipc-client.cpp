@@ -181,6 +181,15 @@ void IPCClient::OnReceiveIPCMessage(const int sockfd,
                                    records);
       }
       break;
+    case IPCMessageType::OnRequestConnectionParameterUpdateResult:
+      {
+        logv("ipc-client: OnRequestConnectionParameterUpdateResult");
+        OnRequestConnectionParameterUpdateResultArgs* args =
+            (OnRequestConnectionParameterUpdateResultArgs *) data.data();
+        OnRequestConnectionParameterUpdateResult(std::string(args->address),
+                                                 args->status);
+      }
+      break;
     default:
       loge("ipc-client: Unknown IPC message : %d", (int) type);
       break;
@@ -318,6 +327,32 @@ void IPCClient::ConnectToPeripheral(const std::string& address)
   ConnectToPeripheralArgs args = {{0}};
   (void) strlcpy(args.address, address.c_str(), sizeof(args.address));
   SendIPCMessageToServer(IPCMessageType::ConnectToPeripheral,
+                         sizeof(args),
+                         (uint8_t *) &args);
+}
+
+void IPCClient::RequestConnectionParameterUpdate(const std::string& address,
+                                                 int min_interval,
+                                                 int max_interval,
+                                                 int latency,
+                                                 int timeout)
+{
+  RequestConnectionParameterUpdateArgs args = {{0}};
+  (void) strlcpy(args.address, address.c_str(), sizeof(args.address));
+  args.min_interval = min_interval;
+  args.max_interval = max_interval;
+  args.latency = latency;
+  args.timeout = timeout;
+  SendIPCMessageToServer(IPCMessageType::RequestConnectionParameterUpdate,
+                         sizeof(args),
+                         (uint8_t *) &args);
+}
+
+void IPCClient::SetAdapterName(const std::string& name)
+{
+  SetAdapterNameArgs args = {{0}};
+  (void) strlcpy(args.name, name.c_str(), sizeof(args.name));
+  SendIPCMessageToServer(IPCMessageType::SetAdapterName,
                          sizeof(args),
                          (uint8_t *) &args);
 }

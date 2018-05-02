@@ -49,6 +49,12 @@ class IPCClient : public IPCEndpoint {
   void StartScan(const std::string& serviceUUID);
   void StopScan();
   void ConnectToPeripheral(const std::string& address);
+  void RequestConnectionParameterUpdate(const std::string& address,
+                                        int min_interval,
+                                        int max_interval,
+                                        int latency,
+                                        int timeout);
+  void SetAdapterName(const std::string& name);
 
  protected:
   virtual void OnReceiveIPCMessage(const int sockfd,
@@ -76,6 +82,8 @@ class IPCClient : public IPCEndpoint {
                                       const std::string& characteristic_uuid,
                                       const std::string& descriptor_uuid,
                                       const std::vector<uint8_t>& data) {}
+  virtual void OnRequestConnectionParameterUpdateResult(const std::string& address,
+                                                        const int status) {}
 
  private:
   void ConnectWatcherCallback(ev::io& w, int revents);

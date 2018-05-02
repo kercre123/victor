@@ -218,6 +218,7 @@ std::vector<uint8_t> FileUtils::ReadFileAsBinary(const std::string& fileName)
   std::ifstream fileIn;
   fileIn.open(fileName, std::ios::in | std::ifstream::binary);
   if( fileIn.is_open() ) {
+    fileIn.unsetf(std::ios::skipws);
     std::vector<uint8_t> data{std::istreambuf_iterator<char>(fileIn), std::istreambuf_iterator<char>()};
     fileIn.close();
     return data;

@@ -21,6 +21,8 @@
 
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
+#include "util/string/stringUtils.h"
+#include "util/fileUtils/fileUtils.h"
 
 #include <queue>
 #include <thread>
@@ -35,6 +37,12 @@ namespace Cozmo {
 namespace {
   // The one and only cube we are connecting/connected to
   std::string _cubeAddress;
+
+  // file location on disk where the cube firmware binary is located
+  std::string _cubeFirmwarePath;
+
+  // Flag indicating whether we've already flashed one cube on connection
+  bool _checkedCubeFirmwareVersion = false;
   
   // Are we currently connected to the cube?
   bool _connected = false;
@@ -60,6 +68,9 @@ namespace {
 
   // Flag indicating when scanning for cubes has completed
   std::atomic<bool> _scanningFinished{false};
+
+  // Flag indicating whether the connected cube's firmware version is correct
+  std::atomic<bool> _cubeFirmwareVersionMatch{true};
 }
 
   
@@ -81,6 +92,16 @@ CubeBleClient::CubeBleClient()
   _bleClient->RegisterScanFinishedCallback([](){
     _scanningFinished = true;
   });
+
+  _bleClient->RegisterReceiveFirmwareVersionCallback([](const std::string& addr, const std::string& connectedCubeFirmwareVersion) {
+    std::string versionOnDisk = "";
+    std::vector<uint8_t> firmware = Util::FileUtils::ReadFileAsBinary(_cubeFirmwarePath);
+    size_t offset = 0x10; // The first 16 bytes of the firmware data are the version string
+    if(firmware.size() > offset) {
+      versionOnDisk = std::string(firmware.begin(), firmware.begin() + offset);
+    }
+    _cubeFirmwareVersionMatch = connectedCubeFirmwareVersion.compare(versionOnDisk)==0;
+  });
 }
 
 
@@ -92,17 +113,15 @@ CubeBleClient::~CubeBleClient()
   _loop = nullptr;
 }
 
-
 bool CubeBleClient::Init()
 {
   DEV_ASSERT(!_inited, "CubeBleClient.Init.AlreadyInitialized");
-  
+
   _bleClient->Start();
   
   _inited = true;
   return true;
 }
-
 
 bool CubeBleClient::Update()
 {
@@ -150,6 +169,15 @@ bool CubeBleClient::Update()
     }
     swapCubeAdvertisementBuffer.pop();
   }
+
+  // check firmware versions -- if no match, prepare to flash the cube
+  // note: only do this once after connecting to a cube
+  if(!_cubeFirmwareVersionMatch && !_checkedCubeFirmwareVersion) {
+    std::vector<uint8_t> firmware = Util::FileUtils::ReadFileAsBinary(_cubeFirmwarePath);
+    _bleClient->FlashCube(std::move(firmware));
+    _checkedCubeFirmwareVersion = true;
+    _cubeFirmwareVersionMatch = true;
+  }
   
   // Pull cube messages from queue into a temp queue,
   // to avoid holding onto the mutex for too long.
@@ -190,6 +218,11 @@ void CubeBleClient::StartScanUponConnection()
 void CubeBleClient::SetScanDuration(const float duration_sec)
 {
   _bleClient->SetScanDuration(duration_sec);
+}
+
+void CubeBleClient::SetCubeFirmwareFilepath(const std::string& cubeFirmwarePath)
+{
+  _cubeFirmwarePath = cubeFirmwarePath;
 }
 
 
