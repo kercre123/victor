@@ -16,6 +16,8 @@
 
 if [ ! -h /usr/bin/clang ] && [ ! -h /usr/bin/clang++ ]; then
   echo ">>> Updating apt-get"
+  # for golang
+  sudo add-apt-repository -y ppa:gophers/archive
   sudo apt-get update --fix-missing
 
   echo ">>> Installing Valgrind v3.10.1"
@@ -42,10 +44,12 @@ if [ ! -h /usr/bin/clang ] && [ ! -h /usr/bin/clang++ ]; then
   libbluetooth-dev \
   python2.7 \
   python-pip \
+  golang-1.10-go \
   unzip
 
   sudo ln -s /usr/bin/clang-3.6 /usr/bin/clang
   sudo ln -s /usr/bin/clang++-3.6 /usr/bin/clang++
+  sudo ln -s /usr/lib/go-1.10/bin/go /usr/bin/go
 
 else
   echo ">>> Already privisioned Vagrant for Linux Valgrind run"

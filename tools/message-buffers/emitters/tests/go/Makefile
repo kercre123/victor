@@ -34,14 +34,20 @@ GO?=go
 GOFLAGS?=
 GOPATH?=`pwd`/build:`pwd`/../../../support/go
 TEST_BIN=$(OUTPUT_DIR)/testGo
-CXXFLAGS="-I ./build/cpp -I ../../../support/cpp/include -std=c++14"
+CXXFLAGS="-I ./build/cpp -I ../../../support/cpp/include -std=c++11"
 
 CLAD_INPUT_DIRS=$(shell find $(SRC_DIR) -type d)
 CLAD_INPUT_SRC=$(subst $(SRC_DIR)/, ,$(shell find $(SRC_DIR) -type f -iname '*.clad'))
 IGNORED_C_FILES=
 CLAD_C_INPUT_SRC=$(filter-out $(IGNORED_C_FILES),$(CLAD_INPUT_SRC))
-GENERATED_GO=$(patsubst %.clad, %.go, $(addprefix $(OUTPUT_GO_DIR)/,$(shell basename $(CLAD_INPUT_SRC))))
+GENERATED_GO=$(patsubst %.clad, %.go, $(addprefix $(OUTPUT_GO_DIR)/,$(shell basename -a $(CLAD_INPUT_SRC))))
 GENERATED_C=$(patsubst %.clad, $(OUTPUT_CPP_DIR)/%.cpp, $(CLAD_C_INPUT_SRC))
+
+UNAME := $(shell uname)
+ifeq ($(UNAME), Linux)
+EXTRA_ENV?=CC=clang CXX=clang++
+endif
+EXTRA_ENV?=
 
 vpath %.clad $(CLAD_INPUT_DIRS)
 
@@ -60,7 +66,7 @@ $(OUTPUT_CPP_DIR)/%.cpp : %.clad $(C_EMITTER)
 	$(CLAD_C) -C $(SRC_DIR) -o $(OUTPUT_CPP_DIR) $(subst $(SRC_DIR)/, ,$(DEP))
 
 $(TEST_BIN): $(GENERATED_GO) $(GO_TEST_SRC) $(GENERATED_C)
-	GOPATH=$(GOPATH) CGO_CXXFLAGS=$(CXXFLAGS) $(GO) test $(GOFLAGS) -v -o $@
+	GOPATH=$(GOPATH) $(EXTRA_ENV) CGO_CXXFLAGS=$(CXXFLAGS) $(GO) test $(GOFLAGS) -v -o $@
 
 test: $(TEST_BIN)
 
