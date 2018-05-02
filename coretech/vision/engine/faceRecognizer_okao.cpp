@@ -672,11 +672,9 @@ namespace Vision {
   {
     Anki::Util::SetThreadName(pthread_self(), "FaceRecognizer");
     const char* threadName = "FaceRecognizer";
-    #if defined(LINUX) || defined(ANDROID)
-    pthread_setname_np(pthread_self(), threadName);
-    #else
-    pthread_setname_np(threadName);
-    #endif
+    Util::SetThreadName(pthread_self(), threadName);
+    
+    
 
 
     while(_isRunningAsync)

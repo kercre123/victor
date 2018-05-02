@@ -34,7 +34,7 @@ asset_project(
     name = 'cozmo_resources_sound',
     srcs = [],
     platform_srcs = [
-        ('android', subdir_glob([
+        ('vicos', subdir_glob([
             ('externals/victor-audio-assets/victor_robot/victor_linux', '**/*')
             ],
             prefix = 'sound')
@@ -51,7 +51,7 @@ asset_project(
     name = 'cozmo_resources_local_sound',
     srcs = [],
     platform_srcs = [
-        ('android', subdir_glob([
+        ('vicos', subdir_glob([
             ('externals/local-audio-assets/victor_robot/victor_linux', '**/*')
             ],
             prefix = 'sound')
@@ -108,7 +108,7 @@ asset_project(
             ],
             prefix = 'tts')
         ),
-        ('android', subdir_glob([
+        ('vicos', subdir_glob([
             ('externals/anki-thirdparty/acapela/Voices_for_Android_iOS_LinuxEmbedded','**/*'),
             ],
             prefix = 'tts')

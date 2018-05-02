@@ -9,7 +9,7 @@
 //
 // This file is not used on victor. Contents are preserved for reference.
 //
-#if !defined(VICOS_LA) && !defined(VICOS_LE)
+#if !defined(VICOS)
 
 #ifndef __CSharpBinding__csharp_binding__
 #define __CSharpBinding__csharp_binding__

@@ -12,6 +12,6 @@ void error_exit(CoreAppErrorCode code, const char* msg, ...)
   vprintf(msg, args);
   va_end(args);
   printf("\n\n");
-  on_exit();
+  core_common_on_exit();
   exit(code);
 }

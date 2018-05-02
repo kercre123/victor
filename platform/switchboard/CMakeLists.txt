@@ -62,4 +62,6 @@ target_include_directories(vic-switchboard
   ${PLATFORM_INCLUDES}
 )
 
+anki_build_strip(TARGET vic-switchboard)
+
 endif(VICOS)

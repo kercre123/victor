@@ -2,9 +2,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <string.h>
 #include <ctype.h>
 #include <fcntl.h>
 #include <assert.h>
+#include <errno.h>
 
 enum {
   ERR_PENDING = -1, //does not return right away
@@ -475,7 +477,7 @@ const char* handle_quit_command(const char* text, int len)
 
 #ifdef STANDALONE_UTILITY
 
-void on_exit(void)
+void core_common_on_exit(void)
 {
   hal_terminate();
   enable_kbhit(0);
@@ -1003,7 +1005,7 @@ int main(int argc, const char* argv[])
 
   }
 
-  on_exit();
+  core_common_on_exit();
 
   return 0;
 }

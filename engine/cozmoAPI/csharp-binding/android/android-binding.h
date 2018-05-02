@@ -13,7 +13,7 @@
 //
 // This file is not used on victor.  Contents are preserved for reference.
 //
-#if !defined(VICOS_LA) && !defined(VICOS_LE)
+#if !defined(VICOS)
 
 #ifndef ANKI_COZMOAPI_ANDROID_BINDING_H
 #define ANKI_COZMOAPI_ANDROID_BINDING_H

@@ -3,14 +3,14 @@ cmake_minimum_required(VERSION 3.6)
 project(engine_tools)
 
 include(anki_build_cxx)
-include(android_strip)
+include(anki_build_strip)
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
 
-if (ANDROID)
+if (VICOS)
   set(PLATFORM_LIBS log)
 elseif (MACOSX)
   find_library(FOUNDATION Foundation)
@@ -26,11 +26,13 @@ target_link_libraries(vic-engine
   # anki libs
   util
   cozmo_engine
-  victorCrashReports
+  # FIXME: We need to build Breakpad libs for VICOS
+  # victorCrashReports
   # vendor
-  breakpad_client
+  # FIXME: We need to build Breakpad libs for VICOS
+  # breakpad_client
   # platform
   ${PLATFORM_LIBS}
 )
 
-android_strip(TARGET vic-engine)
+anki_build_strip(TARGET vic-engine)

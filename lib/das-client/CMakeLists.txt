@@ -1,7 +1,7 @@
 project(das_client)
 
 include(anki_build_cxx)
-include(android_strip)
+include(anki_build_strip)
 
 set(SRCS
   src/DAS.cpp
@@ -22,7 +22,7 @@ set(PLATFORM_SRCS "")
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 
-if (VICOS OR VICOS_LA OR VICOS_LE)
+if (VICOS)
 
   message(STATUS "DAS Platform: VICOS")
 
@@ -98,4 +98,4 @@ target_link_libraries(DAS
   ${PLATFORM_LIBS}
 )
 
-android_strip(TARGET DAS)
+anki_build_strip(TARGET DAS)

@@ -6,6 +6,8 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include <errno.h>
+#include <string.h>
 
 #include "core/gpio.h"
 #include "core/common.h"

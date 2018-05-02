@@ -1,6 +1,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <errno.h>
 
 #undef FACTORY_TEST
 #define FACTORY_TEST 1

@@ -160,7 +160,7 @@ void helper_lcd_busy_spinner(void) {
 
 
 
-void on_exit(void) {
+void core_common_on_exit(void) {
   lcd_shutdown();
 }
 

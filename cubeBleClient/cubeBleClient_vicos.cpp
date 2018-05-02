@@ -1,5 +1,5 @@
 /**
- * File: cubeBleClient_android.cpp
+ * File: cubeBleClient_vicos.cpp
  *
  * Author: Matt Michini
  * Created: 12/1/2017
@@ -28,7 +28,7 @@
 #include <thread>
 
 #ifdef SIMULATOR
-#error SIMULATOR should NOT be defined by any target using cubeBleClient_android.cpp
+#error SIMULATOR should NOT be defined by any target using cubeBleClient_vicos.cpp
 #endif
 
 namespace Anki {

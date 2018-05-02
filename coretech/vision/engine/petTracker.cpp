@@ -27,7 +27,7 @@
 #include "DetectionInfo.h"
 #include "DetectorComDef.h"
 
-#ifndef ANDROID
+#if !defined(ANDROID) && !defined(VICOS)
 extern "C"
 {
   // These two functions must exist to avoid linker errors but until we need to use the

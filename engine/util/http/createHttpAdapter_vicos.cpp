@@ -1,5 +1,5 @@
 /**
- * File: createHttpAdapter_android
+ * File: createHttpAdapter_vicos
  *
  * Author: baustin
  * Date: 7/22/16
@@ -10,7 +10,7 @@
  **/
 
 #include "engine/util/http/createHttpAdapter.h"
-#include "util/http/httpAdapter_android.h"
+#include "util/http/httpAdapter_vicos.h"
 
 Anki::Util::IHttpAdapter* CreateHttpAdapter()
 {

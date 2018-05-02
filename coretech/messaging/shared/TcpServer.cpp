@@ -99,7 +99,7 @@ bool TcpServer::StartListening(const unsigned short port)
   if (status != 0) {
     DEBUG_TCP_SERVER("TcpServer: Unable to set SO_NOSIGPIPE, errno=" << strerror(errno));
   }
-  #endif // defined(LINUX) || defined(ANDROID)
+  #endif // defined(LINUX) || defined(ANDROID) || defined(VICOS)
   
   status = setsockopt(socketfd, IPPROTO_TCP, TCP_NODELAY, &yes, sizeof(yes));
   if (status != 0) {

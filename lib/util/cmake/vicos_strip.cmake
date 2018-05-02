@@ -1,11 +1,11 @@
-function(android_strip)
+function(vicos_strip)
     set(options "")
     set(oneValueArgs TARGET)
     set(multiValueArgs "")
     cmake_parse_arguments(astrip "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (NOT ANDROID)
-        # Skip separate strip step if not on Android
+    if (NOT VICOS)
+        # Skip separate strip step if not on VICOS
         return()
     endif()
 
@@ -15,8 +15,8 @@ function(android_strip)
         return()
     endif()
 
-    set(STRIP_CMD "${ANDROID_TOOLCHAIN_PREFIX}strip")
-    set(OBJCOPY_CMD "${ANDROID_TOOLCHAIN_PREFIX}objcopy")
+    set(STRIP_CMD "${VICOS_TOOLCHAIN_PREFIX}strip")
+    set(OBJCOPY_CMD "${VICOS_TOOLCHAIN_PREFIX}objcopy")
     add_custom_command(TARGET ${astrip_TARGET} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
             $<TARGET_FILE:${astrip_TARGET}>

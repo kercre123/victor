@@ -1,5 +1,5 @@
 /**
- * File: OSState_android.cpp
+ * File: OSState_vicos.cpp
  *
  * Authors: Kevin Yoon
  * Created: 2017-12-11
@@ -24,7 +24,6 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include <net/if.h>
 #include <netinet/in.h>
 
 #include <linux/wireless.h>
@@ -34,7 +33,7 @@
 #include <stdlib.h>
 
 #ifdef SIMULATOR
-#error SIMULATOR should NOT be defined by any target using osState_android.cpp
+#error SIMULATOR should NOT be defined by any target using osState_vicos.cpp
 #endif
 
 namespace Anki {
@@ -57,7 +56,7 @@ namespace {
   const char* kMemInfoFile = "/proc/meminfo";
   const char* kCPUTimeStatsFile = "/proc/stat";
   const char* kWifiTxBytesFile = "/sys/class/net/wlan0/statistics/tx_bytes";
-  const char* kWifiRxBytesFile = "/sys/class/net/wlan0/statistics/rx_bytes";  
+  const char* kWifiRxBytesFile = "/sys/class/net/wlan0/statistics/rx_bytes";
 
   // System vars
   uint32_t _cpuFreq_kHz;      // CPU freq
@@ -302,7 +301,7 @@ const std::string& OSState::GetOSBuildVersion()
 {
   if(_osBuildVersion.empty())
   {
-    _osBuildVersion = GetProperty("ro.build.display.id");
+    _osBuildVersion = GetProperty("ro.build.version.release");
   }
   
   return _osBuildVersion;

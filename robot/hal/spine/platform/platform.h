@@ -9,7 +9,7 @@
  * PLATFORM_SIM ?
  */
 
-#ifdef ANDROID
+#if defined(ANDROID) || defined(VICOS)
 #define  PLATFORM_ANDROID 1
 #else
 #define  PLATFORM_OSX 1

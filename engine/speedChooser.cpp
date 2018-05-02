@@ -16,6 +16,7 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "util/logging/logging.h"
 
+#include <limits>
 
 namespace Anki {
   namespace Cozmo{
@@ -77,7 +78,7 @@ namespace Anki {
       
       // Pick the goal pose that is closest to the robot
       Pose3d closestPoseToRobot = goals.front();
-      f32 closestDist = MAXFLOAT;
+      f32 closestDist = std::numeric_limits<float>::max();
       for(auto & pose : goals)
       {
         Pose3d p;

@@ -244,7 +244,7 @@ IConsoleFunction* ConsoleSystem::FindFunction( const char* name )
 }
 
 //------------------------------------------------------------------------------------------------------------------------------
-bool ConsoleSystem::Eval (const char *text, IConsoleChannel& channel )
+bool ConsoleSystem::Eval(const char *text, IConsoleChannel& channel )
 {
   bool success = false;
   
@@ -322,20 +322,23 @@ bool ConsoleSystem::ParseConsoleFunctionCall( IConsoleFunction* functor, const c
   {
     CONSOLE_DEBUG( "Calling Console Function [%s]", functor->GetID().c_str() );
     
-    string input;
-    
     // Format our arguments so there is a single space between each argument.
-    while ( token != NULL )
-    {
-      if ( !input.empty() )
-      {
+    // Allocate our editable string, copy in the const text.
+    string input;
+    char funcArgs[TEXT_PARSING_MAX_LENGTH];
+    strncpy( funcArgs, token, TEXT_PARSING_MAX_LENGTH );
+    funcArgs[TEXT_PARSING_MAX_LENGTH-1] = '\0'; // Ensure the string is null terminated.
+    char* arg;
+    char* lastPtr;
+    
+    for (arg = strtok_r( funcArgs, ARGS_PARSING_TOKENS, &lastPtr ); arg != NULL;
+         arg = strtok_r(NULL, ARGS_PARSING_TOKENS, &lastPtr) ) {
+      if ( !input.empty() ) {
         input += " ";
       }
-      
-      input += token;
-      token = strtok( NULL, ARGS_PARSING_TOKENS );
+      input += arg;
     }
-    
+
     IConsoleFunction::ERROR_CODE error = functor->ParseText( input );
     if ( error == IConsoleFunction::ERROR_OK )
     {

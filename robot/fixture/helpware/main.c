@@ -438,7 +438,7 @@ int user_terminal(void) {
 }
 
 
-void on_exit(void)
+void core_common_on_exit(void)
 {
   if (gSerialFd >= 0) {
     close(gSerialFd);
@@ -495,7 +495,7 @@ int main(int argc, const char* argv[])
     usleep(1000); //1ms to yeild
  }
 
-  on_exit();
+  core_common_on_exit();
 
   return 0;
 

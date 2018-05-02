@@ -4,9 +4,8 @@ set(FLATBUFFERS_LIBS
   flatbuffers
 )
 
-if (ANDROID)
-  set(FLATBUFFERS_LIB_PATH "${CORETECH_EXTERNAL_DIR}/flatbuffers/android/armeabi-v7a")
-  list(APPEND FLATBUFFERS_LIBS flatbuffers_extra)
+if (VICOS)
+  set(FLATBUFFERS_LIB_PATH "${CORETECH_EXTERNAL_DIR}/flatbuffers/vicos")
 elseif (MACOSX)
   set(FLATBUFFERS_LIB_PATH "${CORETECH_EXTERNAL_DIR}/flatbuffers/ios/Release")
 endif()

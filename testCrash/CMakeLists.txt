@@ -7,6 +7,7 @@ include(anki_build_cxx)
 set(PLATFORM_LIBS "")
 set(PLATFORM_COMPILE_DEFS "")
 
+# FIXME: We need to build Breakpad libs for VICOS
 if (ANDROID)
     include(breakpad)
     set(PLATFORM_LIBS

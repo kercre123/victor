@@ -63,7 +63,7 @@ while getopts "hkrfvc:s:" opt; do
   esac
 done
 
-: ${PLATFORM_NAME:="android"}
+: ${PLATFORM_NAME:="vicos"}
 : ${BUILD_ROOT:="${TOPLEVEL}/_build/${PLATFORM_NAME}/${ANKI_BUILD_TYPE}"}
 : ${STAGING_DIR:="${TOPLEVEL}/_build/staging/${ANKI_BUILD_TYPE}"}
 

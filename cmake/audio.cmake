@@ -15,18 +15,38 @@ set(ANKI_LIB_AUDIO_PLUGINS
   AE_AK_FLANGER_FX
   AE_AK_TREMOLO_FX
   AE_AK_HARMONIZER_FX
+  AE_AK_MATRIX_REVERB_FX
+  AE_AK_ROOM_VERB_FX
+  AE_AK_SOUND_SEED_IMPACT_FX
+  AE_AK_GUITAR_DISTORTION_FX
+  AE_AK_STEREO_DELAY_FX
+  AE_AK_CONVOLUTION_REVERB_FX
+  AE_AK_RECORDER_FX
+  AE_MCDSP_LIMITER_FX
+  AE_MCDSP_FUTZ_BOX_FX
   # Source Plugins	
   AE_AK_SILENCE_SOURCE
   AE_AK_SINE_GENERATOR_SOURCE
   AE_AK_TONE_GENERATOR_SOURCE
+  AE_AK_SOUND_SEED_WOOSH_SOURCE
+  AE_AK_SOUND_SEED_WIND_SOURCE
+  AE_AK_SYNTH_ONE_SOURCE
 )
 
-if(VICOS OR VICOS_STAGING OR VICOS_LA)
+if(VICOS)
 list(APPEND ANKI_LIB_AUDIO_PLUGINS
   # Sink Plugins
   AE_AK_ALSA_SINK
+
+  # Linux specific plugins
+  AE_iZotope_HybridReverb_FX
+  AE_iZotope_TrashBoxModeler_FX
+  AE_iZotope_TrashDelay_FX
+  AE_iZotope_TrashDistortion_FX
+  AE_iZotope_TrashDynamics_FX
+  AE_iZotope_TrashFilters_FX
+  AE_iZotope_TrashMultibandDistortion_FX
 )
 endif()
 
 import(audio "lib/audio")
-

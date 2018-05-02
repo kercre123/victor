@@ -38,7 +38,6 @@ set(VICOS_CPP_FEATURES rtti exceptions)
 file(TO_CMAKE_PATH "${VICOS_SDK}" VICOS_SDK)
 
 # Standard cross-compiling stuff.
-set(VICOS_LE TRUE)
 set(VICOS TRUE)
 
 set(CMAKE_SYSTEM_NAME Linux)
@@ -64,6 +63,8 @@ set(VICOS_TOOLCHAIN_ROOT arm-oe-linux-gnueabi)
 
 # uname -p on vicos returns unknown
 set(CMAKE_SYSTEM_PROCESSOR arm)
+
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 
 set(VICOS_LLVM_TRIPLE arm-oe-linux-gnueabi)
 

@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.6)
 project(robot)
 
 include(anki_build_cxx)
-include(android_strip)
+include(anki_build_strip)
 
 add_library(robot_interface INTERFACE IMPORTED GLOBAL)
 set_property(TARGET robot_interface
@@ -22,7 +22,6 @@ if (MACOSX)
   set(PLATFORM_COMPILE_DEFS
     SIMULATOR
   )
-elseif (ANDROID)
 endif()
 
 
@@ -83,8 +82,9 @@ set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
-if (ANDROID)
-  include(breakpad)
+if (VICOS)
+  # FIXME: We need to build Breakpad libs for VICOS
+  # include(breakpad)
   set(PLATFORM_LIBS
     robot_hal
   )
@@ -164,8 +164,8 @@ set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
-if (ANDROID)
-  set(PLATFORM_LIBS android log)
+if (VICOS)
+  set(PLATFORM_LIBS log)
 elseif (MACOSX)
   find_library(FOUNDATION Foundation)
   set(PLATFORM_LIBS
@@ -179,7 +179,7 @@ endif()
 #
 # spine
 #
-if (ANDROID)
+if (VICOS)
 
   anki_build_cxx_library(spine ${ANKI_SRCLIST_DIR} STATIC)
 
@@ -201,7 +201,7 @@ endif()
 #
 # robot_supervisor
 #
-if (ANDROID)
+if (VICOS)
 
   anki_build_cxx_executable(vic-robot ${ANKI_SRCLIST_DIR})
 
@@ -231,11 +231,12 @@ if (ANDROID)
     robot_clad_cpplite
     cti_common_robot
     cti_messaging_robot
-    victorCrashReports
-    breakpad_client
+    # FIXME: We need to build Breakpad libs for VICOS
+    # victorCrashReports
+    # breakpad_client
     ${PLATFORM_LIBS}
   )
 
-  android_strip(TARGET vic-robot)
+  anki_build_strip(TARGET vic-robot)
 
 endif()

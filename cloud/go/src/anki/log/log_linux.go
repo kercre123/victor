@@ -8,7 +8,7 @@ import "fmt"
 
 // Go cannot call variadic C functions directly
 static int android_log(int prio, const char* tag, const char* str) {
-	return __android_log_print(prio, tag, str);
+	return __android_log_print(prio, tag, "%s", str);
 }
 */
 import "C"

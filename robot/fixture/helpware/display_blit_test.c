@@ -22,7 +22,7 @@
 
 
 
-void on_exit(void) {
+void core_common_on_exit(void) {
   lcd_shutdown();
 }
 

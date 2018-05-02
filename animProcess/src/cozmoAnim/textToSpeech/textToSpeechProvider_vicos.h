@@ -1,5 +1,5 @@
 /**
- * File: textToSpeechProvider_android.h
+ * File: textToSpeechProvider_vicos.h
  *
  * Description: Implementation-specific wrapper to generate audio data from a given string.
  * This class insulates engine and audio code from details of text-to-speech implementation.
@@ -9,12 +9,12 @@
  */
 
 
-#ifndef __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_android_H__
-#define __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_android_H__
+#ifndef __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_vicos_H__
+#define __Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_vicos_H__
 
 #include "util/helpers/ankiDefines.h"
 
-#if defined(ANKI_PLATFORM_ANDROID)
+#if defined(ANKI_PLATFORM_VICOS)
 
 #include "textToSpeechProvider.h"
 #include <string>
@@ -73,6 +73,6 @@ private:
 } // end namespace Cozmo
 } // end namespace Anki
 
-#endif // ANKI_PLATFORM_ANDROID
+#endif // ANKI_PLATFORM_VICOS
 
-#endif //__Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_android_H__
+#endif //__Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechProvider_vicos_H__

@@ -2,6 +2,7 @@ set(BREAKPAD_INCLUDE_PATHS
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 
+# FIXME: We need to build Breakpad libs for VICOS
 # Android platform-specific library
 set(BREAKPAD_LIBS "")
 

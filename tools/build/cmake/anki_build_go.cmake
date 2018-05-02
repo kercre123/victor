@@ -36,16 +36,15 @@ macro(__anki_setup_go_environment target_basedir)
 
   list(APPEND __go_build_flags "-o" "${__gobuild_primary_out}")
 
-  if (ANDROID)
-    # set android flags for `go build`
-    list(APPEND __go_compile_env "GOOS=android")
+  if (VICOS)
+    # set vicos flags for `go build`
+    list(APPEND __go_compile_env "GOOS=linux")
     list(APPEND __go_compile_env "GOARCH=arm")
     list(APPEND __go_compile_env "GOARM=7")
-    list(APPEND __go_compile_env "CC=${ANDROID_TOOLCHAIN_CC}")
-    list(APPEND __go_compile_env "CXX=${ANDROID_TOOLCHAIN_CXX}")
+    list(APPEND __go_compile_env "CC=${VICOS_C_COMPILER}")
+    list(APPEND __go_compile_env "CXX=${VICOS_CXX_COMPILER}")
     list(APPEND __go_compile_env "CGO_FLAGS=\"-g -march=armv7-a\"")
     list(APPEND __go_build_flags "-pkgdir" "${CMAKE_CURRENT_BINARY_DIR}/pkgdir")
-    list(APPEND __go_deps android_toolchain)
   endif()
 endmacro()
 
@@ -96,7 +95,7 @@ endmacro()
 # repackaged to work with custom go targets.
 #
 
-macro(anki_build_go_android_strip output output_full)
+macro(anki_build_go_vicos_strip output output_full)
   add_custom_command(
     OUTPUT ${output_full}
     DEPENDS ${output}
@@ -158,13 +157,13 @@ macro(anki_build_go_executable target_name srclist_dir extra_deps)
   set(__gobuild_out_full "")
 
   #
-  # On android, generate additional commands to strip executable.
+  # On vicos, generate additional commands to strip executable.
   # Debug symbols are stored in a ".full" file. The build target
   # depends on both exe and exe.full so they will be created together.
   #
-  if (ANDROID)
+  if (VICOS)
     set(__gobuild_out_full "${__gobuild_out}.full")
-    anki_build_go_android_strip(${__gobuild_out} ${__gobuild_out_full})
+    anki_build_go_vicos_strip(${__gobuild_out} ${__gobuild_out_full})
   endif()
 
   add_custom_target(${target_name} DEPENDS ${__gobuild_out} ${__gobuild_out_full})

@@ -9,7 +9,7 @@
 //
 // This file is not used on victor. Contents are preserved for reference.
 //
-#if !defined(VICOS_LA) && !defined(VICOS_LE)
+#if !defined(VICOS)
 
 #include "engine/cozmoAPI/csharp-binding/csharp-binding.h"
 
