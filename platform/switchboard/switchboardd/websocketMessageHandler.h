@@ -41,6 +41,8 @@ private:
   void HandleMotorControl(Anki::Cozmo::ExternalComms::MotorControl unionInstance);
   void HandleMotorControl_DriveWheels(Anki::Cozmo::ExternalComms::DriveWheels sdkMessage);
   void HandleMotorControl_DriveArc(Anki::Cozmo::ExternalComms::DriveArc sdkMessage);
+  void HandleMotorControl_MoveHead(Anki::Cozmo::ExternalComms::MoveHead sdkMessage);
+  void HandleMotorControl_MoveLift(Anki::Cozmo::ExternalComms::MoveLift sdkMessage);
 
   Signal::SmartHandle _onEngineMessageHandle;
   SendToWebsocketSignal _sendSignal;

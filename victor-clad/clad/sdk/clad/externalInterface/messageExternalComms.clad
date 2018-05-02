@@ -379,10 +379,20 @@ message DriveArc {
                                 // 0: Point turn
 }
 
+message MoveHead {
+    float_32 speed_rad_per_sec
+}
+
+message MoveLift {
+    float_32 speed_rad_per_sec
+}
+
 union MotorControl {
     Error                       Error                       = 0x00,
     DriveWheels                 DriveWheels                 = 0x01,
     DriveArc                    DriveArc                    = 0x02,
+    MoveHead                    MoveHead                    = 0x03,
+    MoveLift                    MoveLift                    = 0x04,
 }
 
 // ====================================================

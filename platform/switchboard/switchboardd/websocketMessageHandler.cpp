@@ -49,6 +49,18 @@ void WebsocketMessageHandler::HandleMotorControl_DriveArc( Anki::Cozmo::External
       _engineMessaging->SendMessage(G2EMessage::CreateDriveArc(std::move(engineMessage)));
 }
 
+void WebsocketMessageHandler::HandleMotorControl_MoveHead( Anki::Cozmo::ExternalComms::MoveHead sdkMessage ) {
+      Anki::Cozmo::ExternalInterface::MoveHead engineMessage;
+      engineMessage.speed_rad_per_sec = sdkMessage.speed_rad_per_sec;
+      _engineMessaging->SendMessage(G2EMessage::CreateMoveHead(std::move(engineMessage)));
+}
+
+void WebsocketMessageHandler::HandleMotorControl_MoveLift( Anki::Cozmo::ExternalComms::MoveLift sdkMessage ) {
+      Anki::Cozmo::ExternalInterface::MoveLift engineMessage;
+      engineMessage.speed_rad_per_sec = sdkMessage.speed_rad_per_sec;
+      _engineMessaging->SendMessage(G2EMessage::CreateMoveLift(std::move(engineMessage)));
+}
+
 void WebsocketMessageHandler::HandleMotorControl(Anki::Cozmo::ExternalComms::MotorControl unionInstance) {
   switch(unionInstance.GetTag()) {
     case Anki::Cozmo::ExternalComms::MotorControlTag::DriveWheels:
@@ -56,6 +68,12 @@ void WebsocketMessageHandler::HandleMotorControl(Anki::Cozmo::ExternalComms::Mot
       break;
     case Anki::Cozmo::ExternalComms::MotorControlTag::DriveArc:
       HandleMotorControl_DriveArc( unionInstance.Get_DriveArc() );
+      break;
+    case Anki::Cozmo::ExternalComms::MotorControlTag::MoveHead:
+      HandleMotorControl_MoveHead( unionInstance.Get_MoveHead() );
+      break;
+    case Anki::Cozmo::ExternalComms::MotorControlTag::MoveLift:
+      HandleMotorControl_MoveLift( unionInstance.Get_MoveLift() );
       break;
     default:
       return;

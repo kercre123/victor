@@ -33,6 +33,20 @@ class Robot:
 
         await self.socket.send(outerWrappedMessage.pack())
 
+    async def set_head_motor(self, speed):
+        message = cladMessage.MoveHead(speed_rad_per_sec=speed)
+        innerWrappedMessage = cladMessage.MotorControl(MoveHead=message)
+        outerWrappedMessage = cladMessage.ExternalComms(MotorControl=innerWrappedMessage)
+
+        await self.socket.send(outerWrappedMessage.pack())
+
+    async def set_lift_motor(self, speed):
+        message = cladMessage.MoveLift(speed_rad_per_sec=speed)
+        innerWrappedMessage = cladMessage.MotorControl(MoveLift=message)
+        outerWrappedMessage = cladMessage.ExternalComms(MotorControl=innerWrappedMessage)
+
+        await self.socket.send(outerWrappedMessage.pack())
+
     # User facing exposed functions
     async def drive_straight(self, distance_mm, speed_mmps=100.0, accel_mmps2=0.0):
         # @TODO: When actions are exposed, this should be done through an explicit drive-straight action
@@ -72,6 +86,18 @@ def run_program(main_function, uri):
 
 
 async def main(robot):
+    await robot.set_head_motor(5.0)
+    await asyncio.sleep(1.0)
+    await robot.set_head_motor(-5.0)
+    await asyncio.sleep(1.0)
+    await robot.set_head_motor(0.0)
+
+    await robot.set_lift_motor(5.0)
+    await asyncio.sleep(1.0)
+    await robot.set_lift_motor(-5.0)
+    await asyncio.sleep(1.0)
+    await robot.set_lift_motor(0.0)
+
     await robot.drive_straight(100.0)
     await robot.turn_in_place(math.pi*2)
     await robot.drive_straight(-100.0)
