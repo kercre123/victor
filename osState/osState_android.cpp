@@ -39,7 +39,7 @@
 
 namespace Anki {
 namespace Cozmo {
-  
+
 namespace {
 
   std::ifstream _cpuFile;
@@ -50,7 +50,7 @@ namespace {
   const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone3/temp";
   const char* kMACAddressFile = "/sys/class/net/wlan0/address";
   const char* kRecoveryModeFile = "/data/unbrick";
-  
+
   // System vars
   uint32_t _cpuFreq_kHz; // CPU freq
   uint32_t _cpuTemp_C;   // Temperature in Celsius
@@ -99,7 +99,7 @@ std::string GetProperty(const std::string& key)
   }
 
   infile.close();
-  
+
   return "";
 }
 
@@ -115,7 +115,7 @@ OSState::OSState()
   else {
     PRINT_NAMED_WARNING("OSState.Constructor.FailedToOpenNominalCPUFreqFile", "%s", kNominalCPUFreqFile);
   }
-  
+
   _cpuFreq_kHz = kNominalCPUFreq_kHz;
   _cpuTemp_C = 0;
 
@@ -143,7 +143,7 @@ void OSState::Update()
   if (_updatePeriod_ms != 0) {
     const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
     if (now_ms - _lastUpdateTime_ms > _updatePeriod_ms) {
-      
+
       // Update cpu freq
       _cpuFreq_kHz = UpdateCPUFreq_kHz();
 
@@ -168,7 +168,7 @@ uint32_t OSState::UpdateCPUFreq_kHz() const
   _cpuFile >> cpuFreq_kHz;
   return cpuFreq_kHz;
 }
-      
+
 uint32_t OSState::UpdateTemperature_C() const
 {
   // Update temperature reading
@@ -216,7 +216,7 @@ const std::string& OSState::GetSerialNumberAsString()
 
     infile.close();
   }
-  
+
   return _serialNumString;
 }
 
@@ -226,20 +226,20 @@ const std::string& OSState::GetOSBuildVersion()
   {
     _osBuildVersion = GetProperty("ro.build.display.id");
   }
-  
+
   return _osBuildVersion;
 }
 
 const std::string& OSState::GetRobotName() const
 {
-  static std::string name = GetProperty("persist.anki.robot.name");
+  static std::string name = GetProperty("anki.robot.name");
   if(name.empty())
   {
-    name = GetProperty("persist.anki.robot.name");
+    name = GetProperty("anki.robot.name");
   }
   return  name;
 }
-  
+
 void OSState::UpdateWifiInfo()
 {
   // Open a socket to figure out the ip adress of the wlan0 (wifi) interface
@@ -272,7 +272,7 @@ void OSState::UpdateWifiInfo()
   strcpy(req.ifr_name, if_name);
   req.u.data.pointer = (iw_statistics*)malloc(sizeof(iw_statistics));
   req.u.data.length = sizeof(iw_statistics);
-  
+
   const int kSSIDBufferSize = 32;
   char buffer[kSSIDBufferSize];
   memset(buffer, 0, sizeof(buffer));
@@ -328,4 +328,3 @@ bool OSState::IsInRecoveryMode()
 
 } // namespace Cozmo
 } // namespace Anki
-
