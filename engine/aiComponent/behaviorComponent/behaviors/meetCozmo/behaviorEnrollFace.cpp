@@ -673,7 +673,7 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
                                 "Found face %d to enroll. Timeout set to %.1fsec",
                                 _faceID, _timeout_sec);
 
-                  auto getInAnimAction = new TriggerAnimationAction(AnimationTrigger::MeetCozmoLookFaceGetIn);
+                  auto getInAnimAction = new TriggerAnimationAction(AnimationTrigger::MeetVictorGetIn);
 
                   IActionRunner* action = nullptr;
                   if(CanMoveTreads())
@@ -734,7 +734,7 @@ void BehaviorEnrollFace::TransitionToEnrolling()
 
   // Play the scanning animation in parallel while we're tracking
   const s32 numLoops = 0; // loop forever
-  TriggerAnimationAction* scanLoop  = new TriggerAnimationAction(AnimationTrigger::MeetCozmoScanningIdle, numLoops);
+  TriggerAnimationAction* scanLoop  = new TriggerAnimationAction(AnimationTrigger::MeetVictorLookFace, numLoops);
 
   CompoundActionParallel* compoundAction = new CompoundActionParallel({trackAction, scanLoop});
 
@@ -752,7 +752,7 @@ void BehaviorEnrollFace::TransitionToScanningInterrupted()
   // Make sure we stop tracking necessary (in case we timed out while tracking)
   CancelDelegates(false);
 
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::MeetCozmoLookFaceInterrupt),
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::MeetVictorLookFaceInterrupt),
               [this]() {
                 SET_STATE(TimedOut);
               });
@@ -766,11 +766,8 @@ void BehaviorEnrollFace::TransitionToSayingName()
   // Stop tracking/scanning the face
   CancelDelegates(false);
 
-  // Get out of the scanning face
-  CompoundActionSequential* finalAnimation = new CompoundActionSequential({
-    new TriggerAnimationAction(AnimationTrigger::MeetCozmoLookFaceGetOut)
-  });
-
+  CompoundActionSequential* finalAnimation = new CompoundActionSequential();
+  
   if(_sayName)
   {
     if(_saveID == Vision::UnknownFaceID)
@@ -788,29 +785,23 @@ void BehaviorEnrollFace::TransitionToSayingName()
       {
         // 1. Say name once
         SayTextAction* sayNameAction1 = new SayTextAction(_faceName, SayTextIntent::Name_FirstIntroduction_1);
-        sayNameAction1->SetAnimationTrigger(AnimationTrigger::MeetCozmoFirstEnrollmentSayName);
+        sayNameAction1->SetAnimationTrigger(AnimationTrigger::MeetVictorSayName);
         finalAnimation->AddAction(sayNameAction1);
       }
 
       {
         // 2. Repeat name
         SayTextAction* sayNameAction2 = new SayTextAction(_faceName, SayTextIntent::Name_FirstIntroduction_2);
-        sayNameAction2->SetAnimationTrigger(AnimationTrigger::MeetCozmoFirstEnrollmentRepeatName);
+        sayNameAction2->SetAnimationTrigger(AnimationTrigger::MeetVictorSayNameAgain);
         finalAnimation->AddAction(sayNameAction2);
       }
 
-      {
-        // 3. Big celebrate (no name being said)
-        TriggerAnimationAction* celebrateAction = new TriggerAnimationAction(AnimationTrigger::MeetCozmoFirstEnrollmentCelebration);
-        finalAnimation->AddAction(celebrateAction);
-      }
     }
     else
     {
-      // This is a re-enrollment, so do the more subdued animation
+      // This is a re-enrollment
       SayTextAction* sayNameAction = new SayTextAction(_faceName, SayTextIntent::Name_Normal);
-      sayNameAction->SetAnimationTrigger(AnimationTrigger::MeetCozmoReEnrollmentSayName);
-
+      sayNameAction->SetAnimationTrigger(AnimationTrigger::MeetVictorSayName);
       finalAnimation->AddAction(sayNameAction);
     }
 
@@ -877,8 +868,8 @@ void BehaviorEnrollFace::TransitionToFailedState( State state, const std::string
   _failedState = state;
 
   CancelDelegates(false);
-
-  auto* action = new TriggerLiftSafeAnimationAction(AnimationTrigger::MeetCozmoConfusion);
+  
+  auto* action = new TriggerLiftSafeAnimationAction(AnimationTrigger::MeetVictorConfusion);
 
   DelegateIfInControl(action, [this, state, stateName](ActionResult result) {
     if( ActionResult::SUCCESS != result ) {
@@ -992,7 +983,7 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(Vision::FaceID_t 
   {
     // If we we are enrolling, we need to get out of the "scanning face" animation while
     // doing this
-    liftAndTurnTowardsAction->AddAction(new TriggerAnimationAction(AnimationTrigger::MeetCozmoLookFaceInterrupt));
+    liftAndTurnTowardsAction->AddAction(new TriggerAnimationAction(AnimationTrigger::MeetVictorLookFaceInterrupt));
   }
 
   if(!CanMoveTreads())

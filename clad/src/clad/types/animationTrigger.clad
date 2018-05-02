@@ -77,17 +77,18 @@ enum int_32 AnimationTrigger
   InteractWithFacesInitialUnnamed,
   LookInPlaceForFacesBodyPause,
   LookInPlaceForFacesHeadMovePause,
-  MeetCozmoLookFaceGetIn,               // 1. Transition into "scanning" player's face
-  MeetCozmoLookFaceGetOut,              // 3. Transition out of the "scanning" of player's face
-  MeetCozmoScanningIdle,                // 2. Looping animation while "scanning"
-  MeetCozmoFirstEnrollmentSayName,      // 3a. First-time enrollment, say player's name
-  MeetCozmoFirstEnrollmentRepeatName,   // 4. First-time enrollment, confirm player's name
+  MeetVictorConfusion,
+  MeetVictorGetIn,
+  MeetVictorLookFace,
+  MeetVictorLookFaceInterrupt,
+  MeetVictorSayName,
+  MeetVictorSayNameAgain,
+
   MeetCozmoFirstEnrollmentCelebration,  // 5. First-time enrollment, big special celebration for new name
   MeetCozmoReEnrollmentSayName,         // 3b. Re-enrollment, say player's name
   MeetCozmoRenameFaceSayName,           // Say player's new name when rename occurs
-  MeetCozmoLookFaceInterrupt,           // Triggered when the scanning is interrupted
   MeetCozmoDuplicateName,               // the given name is already taken
-  MeetCozmoConfusion,                   // too many faces, a different name to the same face, etc.
+  
   NothingToDoBoredIdle,                 // Cozmo doesn't have anything to do in freeplay - idling (not playing game sequence)
 
   ObservingIdleEyesOnly,

@@ -484,52 +484,32 @@
     "AnimName": "ag_majorwin"
   },
   {
-    "CladEvent": "DEPRECATED_MeetCozmoGetIn",
-    "AnimName" : "ag_meetcozmo_getin"
+    "CladEvent": "MeetVictorGetIn",
+    "AnimName" : "ag_meetvictor_getin"
   },
   {
-    "CladEvent": "MeetCozmoLookFaceGetIn",
-    "AnimName" : "ag_meetcozmo_lookface_getin"
+    "CladEvent": "MeetVictorLookFace",
+    "AnimName" : "ag_meetvictor_lookface"
   },
   {
-    "CladEvent": "MeetCozmoLookFaceGetOut",
-    "AnimName" : "ag_meetcozmo_lookface_getout"
+    "CladEvent": "MeetVictorSayName",
+    "AnimName" : "ag_meetvictor_sayname_01"
   },
   {
-    "CladEvent": "MeetCozmoScanningIdle",
-    "AnimName" : "ag_meetcozmo_lookface"
+    "CladEvent": "MeetVictorSayNameAgain",
+    "AnimName" : "ag_meetvictor_sayname_02"
   },
   {
-    "CladEvent": "MeetCozmoFirstEnrollmentSayName",
-    "AnimName" : "ag_meetcozmo_sayname_01"
+    "CladEvent": "MeetVictorLookFaceInterrupt",
+    "AnimName" : "ag_meetvictor_interrupt"
   },
   {
-    "CladEvent": "MeetCozmoFirstEnrollmentRepeatName",
-    "AnimName" : "ag_meetcozmo_sayname_02"
-  },
-  {
-    "CladEvent": "MeetCozmoFirstEnrollmentCelebration",
-    "AnimName" : "ag_meetcozmo_celebration"
-  },
-  {
-    "CladEvent": "MeetCozmoReEnrollmentSayName",
-    "AnimName" : "ag_meetcozmo_reenrollment_sayname"
-  },
-  {
-    "CladEvent": "MeetCozmoRenameFaceSayName",
-    "AnimName" : "ag_meetcozmo_reenrollment_sayname"
-  },
-  {
-    "CladEvent": "MeetCozmoLookFaceInterrupt",
-    "AnimName": "ag_meetcozmo_interrupt"
+    "CladEvent": "MeetVictorConfusion",
+    "AnimName": "ag_meetvictor_timeout"
   },
   {
     "CladEvent": "MeetCozmoDuplicateName",
     "AnimName": "ag_pounceonmotionfail"
-  },
-  {
-    "CladEvent": "MeetCozmoConfusion",
-    "AnimName": "ag_attention_lookatdevice"
   },
   {
     "CladEvent": "DEPRECATED_NamedFaceInitialGreeting",
