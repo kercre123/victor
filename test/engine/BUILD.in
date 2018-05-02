@@ -4,7 +4,6 @@ cxx_project(
                         excludes = [
                             '**/android/*',
                             'latticePlannerTest.cpp',
-                            'pathComponentTest.cpp',
                             'testActionList.cpp'
                         ]),
     platform_srcs = [
