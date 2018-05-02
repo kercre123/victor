@@ -65,6 +65,7 @@ _isOtaUpdating(isOtaUpdating)
   // Register with private events
   _pairingTimeoutSignal.SubscribeForever(std::bind(&SecurePairing::HandleTimeout, this));
   _internetTimerSignal.SubscribeForever(std::bind(&SecurePairing::HandleInternetTimerTick, this));
+  _idleConnectionSignal.SubscribeForever(std::bind(&SecurePairing::HandleIdleTimeout, this));
 
   // Initialize the key exchange object
   _keyExchange = std::make_unique<KeyExchange>(kNumPinDigits);
@@ -84,6 +85,10 @@ _isOtaUpdating(isOtaUpdating)
   _handleInternet.signal = &_internetTimerSignal;
   ev_timer_init(&_handleInternet.timer, &SecurePairing::sEvTimerHandler, kWifiConnectInterval_s, kWifiConnectInterval_s);
 
+  _idleConnectionTimer.signal = &_idleConnectionSignal;
+  ev_timer_init(&_idleConnectionTimer.timer, &SecurePairing::sEvTimerHandler, kBleIdleConnectionTimeout_s, 0);
+  ev_timer_start(_loop, &_idleConnectionTimer.timer);
+  
   Log::Write("SecurePairing starting up.");
 }
 
@@ -94,7 +99,8 @@ SecurePairing::~SecurePairing() {
 
   ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
   ev_timer_stop(_loop, &_handleInternet.timer);
-
+  ev_timer_stop(_loop, &_idleConnectionTimer.timer);
+  
   Log::Write("Destroying SecurePairing object.");
 }
 
@@ -203,21 +209,24 @@ void SecurePairing::Reset(bool forced) {
 
   // Stop timers
   ev_timer_stop(_loop, &_handleInternet.timer);
-
+  ev_timer_stop(_loop, &_idleConnectionTimer.timer);
+  
   // Put us back in initial state
   if(forced) {
     Log::Write("Client disconnected. Stopping pairing.");
     ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
+
     if(!_isOtaUpdating) {
-      _engineClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+      _stopPairingSignal.emit();
     }
   } else if(++_totalPairingAttempts < kMaxPairingAttempts) {
     Init();
     Log::Write("SecurePairing restarting.");
+    UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::START_PAIRING);
   } else {
     Log::Write("SecurePairing ending due to multiple failures. Requires external restart.");
     ev_timer_stop(_loop, &_handleTimeoutTimer.timer);
-    _engineClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+    _stopPairingSignal.emit();
   }
 }
 
@@ -439,6 +448,7 @@ void SecurePairing::HandleRtsConnResponse(const Anki::Cozmo::ExternalComms::RtsC
 
     if(connResponse.connectionType == Anki::Cozmo::ExternalComms::RtsConnType::FirstTimePair) {
       if(_isPairing && !_isOtaUpdating) {
+        ev_timer_stop(_loop, &_idleConnectionTimer.timer);
         HandleInitialPair((uint8_t*)connResponse.publicKey.data(), crypto_kx_PUBLICKEYBYTES);
         _state = PairingState::AwaitingNonceAck;
       } else {
@@ -804,6 +814,7 @@ void SecurePairing::HandleChallengeResponse(uint8_t* pingChallengeAnswer, uint32
   if(success) {
     // Inform client that we are good to go and
     // update our state
+    ev_timer_stop(_loop, &_idleConnectionTimer.timer);
     SendChallengeSuccess();
     _state = PairingState::ConfirmedSharedSecret;
     Log::Green("Challenge answer was accepted. Encrypted channel established.");
@@ -913,6 +924,11 @@ void SecurePairing::HandleInternetTimerTick() {
     ev_timer_stop(_loop, &_handleInternet.timer);
     SendWifiConnectResult();
   }
+}
+
+void SecurePairing::HandleIdleTimeout() {
+  Log::Write("Connection idled. Terminating session.");
+  _stopPairingSignal.emit();
 }
 
 void SecurePairing::UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus state) {
