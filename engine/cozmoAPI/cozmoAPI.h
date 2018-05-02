@@ -52,7 +52,8 @@ public:
   // Send messages to game, receive messages from game
   ANKI_VISIBLE size_t SendMessages(uint8_t* buffer, size_t bufferSize);
   ANKI_VISIBLE void ReceiveMessages(const uint8_t* buffer, size_t size);
-  ANKI_VISIBLE void ExecuteBackgroundTransfers();
+
+  //ANKI_VISIBLE void ExecuteBackgroundTransfers();
 
   // Activate A/B experiment
   ANKI_VISIBLE uint32_t ActivateExperiment(const uint8_t* requestBuffer, size_t requestLen,

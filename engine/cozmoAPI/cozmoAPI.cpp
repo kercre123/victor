@@ -136,14 +136,14 @@ void CozmoAPI::ReceiveMessages(const uint8_t* buffer, size_t size)
   messagePipe->PushFromGameMessages(buffer, size);
 }
 
-void CozmoAPI::ExecuteBackgroundTransfers()
-{
-  CozmoEngine* engine = (_cozmoRunner != nullptr) ? _cozmoRunner->GetEngine() : nullptr;
-  if (engine == nullptr) {
-    return;
-  }
-  engine->ExecuteBackgroundTransfers();
-}
+//void CozmoAPI::ExecuteBackgroundTransfers()
+//{
+//  CozmoEngine* engine = (_cozmoRunner != nullptr) ? _cozmoRunner->GetEngine() : nullptr;
+//  if (engine == nullptr) {
+//    return;
+//  }
+//  engine->ExecuteBackgroundTransfers();
+//}
 
 uint32_t CozmoAPI::ActivateExperiment(const uint8_t* requestBuffer, size_t requestLen,
                                       uint8_t* responseBuffer, size_t responseLen)

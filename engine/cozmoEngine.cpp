@@ -868,10 +868,10 @@ void CozmoEngine::HandleMessage(const ExternalInterface::RedirectViz& msg)
 }
 
 
-void CozmoEngine::ExecuteBackgroundTransfers()
-{
-  _context->GetTransferQueue()->ExecuteTransfers();
-}
+//void CozmoEngine::ExecuteBackgroundTransfers()
+//{
+//  _context->GetTransferQueue()->ExecuteTransfers();
+//}
 
 Util::AnkiLab::AssignmentStatus CozmoEngine::ActivateExperiment(
   const Util::AnkiLab::ActivateExperimentRequest& request, std::string& outVariationKey)

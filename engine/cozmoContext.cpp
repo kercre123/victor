@@ -7,8 +7,8 @@
 #include "engine/perfMetric.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotManager.h"
-#include "engine/util/transferQueue/gameLogTransferTask.h"
-#include "engine/util/transferQueue/transferQueueMgr.h"
+//#include "engine/util/transferQueue/gameLogTransferTask.h"
+//#include "engine/util/transferQueue/transferQueueMgr.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "engine/viz/vizManager.h"
@@ -39,15 +39,15 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _dataLoader(new RobotDataLoader(this))
   , _robotMgr(new RobotManager(this))
   , _vizManager(new VizManager())
-  , _transferQueueMgr(new Anki::Util::TransferQueueMgr())
-  , _gameLogTransferTask(new Anki::Util::GameLogTransferTask())
+  //, _transferQueueMgr(new Anki::Util::TransferQueueMgr())
+  //, _gameLogTransferTask(new Anki::Util::GameLogTransferTask())
   , _cozmoExperiments(new CozmoExperiments(this))
   , _perfMetric(new PerfMetric(this))
   , _webService(new WebService::WebService())
   , _appToEngineHandler( new AppToEngineHandler() )
   , _threadIdHolder(new ThreadIDInternal)
 {
-  _gameLogTransferTask->Init(_transferQueueMgr.get());
+  //_gameLogTransferTask->Init(_transferQueueMgr.get());
   _appToEngineHandler->Init( _webService.get(), _externalInterface );
 }
 
