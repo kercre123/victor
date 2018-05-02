@@ -49,7 +49,7 @@ enum {
 #define MAX_KNOWN_LOG  16
 #define RESPONSE_CHUNK_SZ  (sizeof(struct ContactData)-SLUG_PAD_SIZE)
 
-#define FACTORY_FILENAME_TEMPLATE "/factory/log%.2d.json"
+#define FACTORY_FILENAME_TEMPLATE "/factory/log%d"
 #define MAX_FACTORY_FILENAME_LEN  sizeof(FACTORY_FILENAME_TEMPLATE)
 
 #define BSV_LINES 6
@@ -58,7 +58,7 @@ static int gLogFd = 0;
 
 
 typedef void (*ShutdownFunction)(int);
-
+static int gShutdownCountdown = 0;
 
 const struct SpineMessageHeader* hal_read_frame();
 void start_overrride(int count);
@@ -78,6 +78,7 @@ enum {
   show_TOUCH,
   show_RSSI,
   show_PACKETS,
+  show_DEBUG_COUNTER,
   show_LAST_SENSOR,
   show_LOGS,
   show_BSV,
@@ -281,7 +282,8 @@ int LogShowLine(void) {
   int nchars = read(gLogFd, logline, RESPONSE_CHUNK_SZ-1);
   ccc_debug("CCC Showing log line of %d chars from (%d) ", nchars, gLogFd);
   if (nchars >0 ) {
-    print_response("%.30s", logline); //THIS MUST BE <=SIZEOF(ContactData)-SLUG_PAD_SIZE
+    logline[nchars]='\0';
+    print_response("%.*s", RESPONSE_CHUNK_SZ, logline);
   }
   else {
     ccc_debug("CCC closing logfile (%d)", gLogFd);
@@ -448,13 +450,34 @@ uint8_t handle_gmr_command(const uint8_t args[]) {
 }
 
 
+int SetLeds(const uint8_t* leds, int nleds);
+
+uint8_t handle_led_command(const uint8_t args[])
+{
+  int i;
+  uint8_t leds[12];
+  //each nibble gets doubled.
+  for (i=0;i<6;i++) {
+    uint8_t nibble = (args[i]>>4)&0x0F;
+    leds[2*i] = nibble<<4|nibble;
+    nibble = (args[i])&0x0F;
+    leds[2*i+1] = nibble<<4|nibble;
+  }
+  return SetLeds(leds, sizeof(leds));
+}
+
+
+#define SHUTDOWN_CYCLES 200   // 0.1 second
 uint8_t handle_pwr_command(const uint8_t args[]) {
+
   switch (args[0]) {
     case 0:
       //no action
       break;
     case 1: //reboot
-      hal_terminate();
+      start_overrride(400); //2 secs
+      gShutdownCountdown = SHUTDOWN_CYCLES;
+
       break;
     case 2:  //shutdown
       hal_terminate();
@@ -512,6 +535,7 @@ static const CommandHandler handlers[] = {
   REGISTER_COMMAND(smr),
   REGISTER_COMMAND(gmr),
   REGISTER_COMMAND(pwr),
+  REGISTER_COMMAND(led),
  /* ^^ insert new commands here ^^ */
   {0}  /* MUST BE 0 TERMINATED */
 };
@@ -662,6 +686,16 @@ const void* get_a_frame(int32_t timeout_ms)
 }
 
 
+
+
+int SetLeds(const uint8_t* leds, int nleds) {
+  assert(nleds < sizeof(gHeadData.ledColors));
+  memcpy(gHeadData.ledColors, leds, sizeof(gHeadData.ledColors));
+  start_overrride(400); //2 secs
+  return 0;
+}
+
+
 void populate_outgoing_frame(void) {
   gHeadData.framecounter++;
   if (ActiveCycleCountdown()) {
@@ -674,7 +708,6 @@ void populate_outgoing_frame(void) {
     memset(gActiveState.motorValues, 0, sizeof(gActiveState.motorValues));
     memset(gHeadData.motorPower, 0, sizeof(gHeadData.motorPower));
   }
-
 }
 
 #ifdef STANDALONE_TEST
@@ -750,13 +783,6 @@ void show_body_version(int linect) {
 
 
 uint16_t show_legend(uint16_t mask) {
-//  print_response("framect ");
-  /* if (mask & (1<<show_ENCODER)) { */
-  /*   print_response("encs:left right lift head \n"); */
-  /* } */
-  /* if (mask & (1<<show_SPEED)) { */
-  /*   print_response("speed:left right lift head \n"); */
-  /* } */
   if (mask & (1<<show_MOTOR0)) {
     print_response("LEFT pos speed\n");
   }
@@ -823,6 +849,14 @@ void show_rssi(void) {
 
 }
 
+void show_debug_counter(void) {
+  static int debug_count = 1000;
+  print_response(":%04d %04d %04d %04d\n",
+                 debug_count, debug_count+1, debug_count+2, debug_count+3);
+  debug_count+=4;
+  debug_count%=10000;
+}
+
 
 void process_incoming_frame(struct BodyToHead* bodyData)
 {
@@ -833,11 +867,6 @@ void process_incoming_frame(struct BodyToHead* bodyData)
     if (printmask != oldmask) {
       oldmask = show_legend(printmask);
     }
-
-/*     if (printmask) { */
-/*       print_response("%d ", bodyData->framecounter); */
-/*     } */
-
 
     if (printmask & (1<<show_MOTOR0)) {
       show_motor(0, bodyData->motor);
@@ -887,6 +916,9 @@ void process_incoming_frame(struct BodyToHead* bodyData)
     if (printmask & (1<<show_PACKETS)) {
       show_packet_count();
     }
+    if (printmask & (1<<show_DEBUG_COUNTER)) {
+      show_debug_counter();
+    }
     if (printmask & (1<<show_LOGS)) {
       if (LogShowLine()) {
         gActiveState.result = ERR_OK;
@@ -903,17 +935,17 @@ void process_incoming_frame(struct BodyToHead* bodyData)
       oldmask = 0; //force headers every new print.
     }
   }
+  if (gShutdownCountdown) {
+    if (--gShutdownCountdown==0) {
+      hal_terminate();
+    }
+  }
 }
-
-/* //finish one active cycle */
-/* void ActiveCycleEnd(void) { */
-/*   if (ActiveCyclesModify(-1) == 0) { */
-
-/* } */
 
 #define CCC_COOLDOWN_TIME 100 //half second
 
 void start_overrride(int count) {
+  if (count < gRemainingActiveCycles) count = gRemainingActiveCycles;
   ccc_debug_x("CCC active for %d cycles", count + ActiveCycleCountdown());
   gRemainingActiveCycles = count;
 }
