@@ -11,12 +11,16 @@ import urllib2
 import subprocess
 import tarfile
 import zlib
+import shutil
 import ConfigParser
 from hashlib import sha256
+from collections import OrderedDict
 
-BOOT_STEM = "/dev/block/bootdevice/by-name/boot"
-SYSTEM_STEM = "/dev/block/bootdevice/by-name/system"
+BOOT_DEVICE = "/dev/block/bootdevice/by-name"
 STATUS_DIR = "/run/update-engine"
+MOUNT_POINT = "/mnt/sdcard"
+ANKI_REV_FILE = "/anki/etc/revision"
+ANKI_VER_FILE = "/anki/etc/version"
 EXPECTED_DOWNLOAD_SIZE_FILE = os.path.join(STATUS_DIR, "expected-download-size")
 EXPECTED_WRITE_SIZE_FILE = os.path.join(STATUS_DIR, "expected-size")
 PROGRESS_FILE = os.path.join(STATUS_DIR, "progress")
@@ -27,7 +31,7 @@ MANIFEST_SIG = os.path.join(STATUS_DIR, "manifest.sha256")
 BOOT_STAGING = os.path.join(STATUS_DIR, "boot.img")
 OTA_PUB_KEY = "/anki/etc/ota.pub"
 DD_BLOCK_SIZE = 1024*256
-SUPPORTED_MANIFEST_VERSIONS = ["0.9.2"]
+SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4"]
 
 DEBUG = False
 SIGNATURE_VALIDATION_DISABLED = True
@@ -55,11 +59,27 @@ def die(code, text):
     exit(code)
 
 
+def open_slot(partition, slot, mode):
+    "Opens a partition slot"
+    if slot == "f":
+        assert mode == "r"  # No writing to F slot
+        if partition == "system":
+            label = "recoveryfs"
+        elif partition == "boot":
+            label = "recovery"
+        else:
+            raise ValueError("Unknown partition")
+    else:
+        label = partition + "_" + slot
+    return open(os.path.join(BOOT_DEVICE, label), mode + "b")
+
+
 def zero_slot(target_slot):
     "Writes zeros to the first block of the destination slot boot and system to ensure they aren't booted"
+    assert target_slot == 'a' or target_slot == 'b'  # Make sure we don't zero f
     zeroblock = b"\x00"*DD_BLOCK_SIZE
-    open(BOOT_STEM   + "_" + target_slot, "wb").write(zeroblock)
-    open(SYSTEM_STEM + "_" + target_slot, "wb").write(zeroblock)
+    open_slot("boot", target_slot, "w").write(zeroblock)
+    open_slot("system", target_slot, "w").write(zeroblock)
 
 
 def call(*args):
@@ -132,12 +152,16 @@ def open_url_stream(url):
     try:
         assert url.startswith("http")  # Accepts http and https but not ftp or file
         os_version = get_prop("ro.anki.version")
+        victor_version = get_prop("ro.anki.victor.version")
         if '?' in url:  # Already has a querry string
             if not url.endswith('?'):
                 url += '&'
         else:
             url += '?'
-        url += "emresn={0:s}&ankiversion={1:s}".format(get_prop("ro.serialno"), os_version)
+        url += "emresn={0:s}&ankiversion={1:s}&victorversion={2:s}".format(
+                get_prop("ro.serialno"),
+                os_version,
+                victor_version)
         request = urllib2.Request(url)
         opener = urllib2.build_opener()
         opener.addheaders = opener.addheaders = [('User-Agent', 'Victor/{0:s}'.format(os_version))]
@@ -146,12 +170,37 @@ def open_url_stream(url):
         die(203, "Failed to open URL: " + str(e))
 
 
-def make_tar_stream(fileobj):
+def make_tar_stream(fileobj, open_mode="r|"):
     "Converts a file like object into a streaming tar object"
     try:
-        return tarfile.open(mode='r|', fileobj=fileobj)
+        return tarfile.open(mode=open_mode, fileobj=fileobj)
     except Exception as e:
         die(204, "Couldn't open contents as tar file " + str(e))
+
+
+class ShaFile(object):
+    "A fileobject wrapper that calculates a sha256 digest as it's processed"
+
+    def __init__(self, fileobj):
+        "Setup the wrapper"
+        self.fileobj = fileobj
+        self.sum = sha256()
+        self.len = 0
+
+    def read(self, *args):
+        "Read function wrapper which adds calculates the shasum as it goes"
+        block = self.fileobj.read(*args)
+        self.sum.update(block)
+        self.len += len(block)
+        return block
+
+    def digest(self):
+        "Calculate the hexdigest"
+        return self.sum.hexdigest()
+
+    def bytes(self):
+        "Return the total bytes read from the file"
+        return self.len
 
 
 def GZStreamGenerator(fileobj, block_size, wbits):
@@ -166,6 +215,155 @@ def GZStreamGenerator(fileobj, block_size, wbits):
         yield output_block
         output_block = decompressor.decompress(decompressor.unconsumed_tail, block_size)
     yield output_block
+
+
+def handle_boot_system(target_slot, manifest, tar_stream):
+    "Process 0.9.2 format manifest files"
+    total_size = manifest.getint("BOOT", "bytes") + manifest.getint("SYSTEM", "bytes")
+    write_status(EXPECTED_WRITE_SIZE_FILE, total_size)
+    written_size = 0
+    write_status(PROGRESS_FILE, written_size)
+    # Extract boot image
+    if DEBUG:
+        print("Boot")
+    boot_ti = tar_stream.next()
+    if not boot_ti.name.endswith("boot.img.gz"):
+        die(200, "Expected boot.img.gz to be next in tar but found \"{}\"".format(boot_ti.name))
+    wbits = manifest.getint("BOOT", "wbits")
+    digest = sha256()
+    with open(BOOT_STAGING, "wb") as boot_fh:
+        for boot_block in GZStreamGenerator(tar_stream.extractfile(boot_ti), DD_BLOCK_SIZE, wbits):
+            boot_fh.write(boot_block)
+            digest.update(boot_block)
+            written_size += len(boot_block)
+            write_status(PROGRESS_FILE, written_size)
+            if DEBUG:
+                sys.stdout.write("{0:0.3f}\r".format(float(written_size)/float(total_size)))
+                sys.stdout.flush()
+    # Verify boot hash
+    if digest.hexdigest() != manifest.get("BOOT", "sha256"):
+        zero_slot(target_slot)
+        die(209, "Boot image hash doesn't match signed manifest")
+    # Extract system images
+    if DEBUG:
+        print("System")
+    system_ti = tar_stream.next()
+    if not system_ti.name.endswith("sysfs.img.gz"):
+        die(200, "Expected sysfs.img.gz to be next in tar but found \"{}\"".format(system_ti.name))
+    wbits = manifest.getint("SYSTEM", "wbits")
+    digest = sha256()
+    with open_slot("system", target_slot, "w") as system_slot:
+        for system_block in GZStreamGenerator(tar_stream.extractfile(system_ti), DD_BLOCK_SIZE, wbits):
+            system_slot.write(system_block)
+            digest.update(system_block)
+            written_size += len(system_block)
+            write_status(PROGRESS_FILE, written_size)
+            if DEBUG:
+                sys.stdout.write("{0:0.3f}\r".format(float(written_size)/float(total_size)))
+                sys.stdout.flush()
+    # Verify system image hash
+    if digest.hexdigest() != manifest.get("SYSTEM", "sha256"):
+        zero_slot(target_slot)
+        die(209, "System image hash doesn't match signed manifest")
+    # Actually write the boot image now
+    with open(BOOT_STAGING, "rb") as src:
+        with open_slot("boot", target_slot, "w") as dst:
+            dst.write(src.read())
+
+
+def copy_slot(partition, src_slot, dst_slot):
+    "Copy the contents of a partition slot from one to the other"
+    with open_slot(partition, src_slot, "r") as src:
+        with open_slot(partition, dst_slot, "w") as dst:
+            buffer = src.read(DD_BLOCK_SIZE)
+            while len(buffer) == DD_BLOCK_SIZE:
+                dst.write(buffer)
+                buffer = src.read(DD_BLOCK_SIZE)
+            dst.write(buffer)
+
+
+def update_build_props(mount_point):
+    "Updates (or creates) a property in the build.prop file specified"
+    # Get the Anki Victor info
+    victor_build_ver = open(os.path.join(mount_point, ANKI_VER_FILE), "r").read().strip()
+    victor_build_rev = open(os.path.join(mount_point, ANKI_REV_FILE), "r").read().strip()
+    build_prop_path_name = os.path.join(mount_point, "build.prop")
+    # Get all the old OS properties
+    props = OrderedDict()
+    for key, value in [p.strip().split('=') for p in open(build_prop_path_name, "r").readlines()]:
+        props[key] = value
+    os_version = props['ro.anki.version']
+    os_build_timestamp = props['ro.build.version.release']
+    os_rev = ""  # TODO find this somewhere
+    props["ro.revision"] = "anki-{VICTOR_BUILD_REV}_os-{REV}".format(VICTOR_BUILD_REV=victor_build_rev, REV=os_rev)
+    props["ro.anki.victor.version"] = victor_build_ver
+    version_id = "v{VICTOR_BUILD_VERSION}_os{OS_VERSION}".format(
+        VICTOR_BUILD_VERSION=victor_build_ver,
+        OS_VERSION=os_version
+    )
+    build_id = "v{VICTOR_BUILD_VERSION}{VICTOR_REV_TAG}_os{OS_VERSION}{REV_TAG}-{BUILD_TIMESTAMP}".format(
+        VICTOR_BUILD_VERSION=victor_build_ver,
+        VICTOR_REV_TAG="-" + victor_build_rev if victor_build_rev else "",
+        OS_VERSION=os_version,
+        REV_TAG="-" + os_rev if os_rev else "",
+        BUILD_TIMESTAMP=os_build_timestamp
+    )
+    props["ro.build.fingerprint"] = build_id
+    props["ro.build.id"] = build_id
+    props["ro.build.display.id"] = version_id
+
+    with open(build_prop_path_name, "w") as propfile:
+        propfile.write("\n".join(["=".join(prop) for prop in props.items()]))
+        propfile.write("\n")
+
+
+def handle_delta(current_slot, target_slot, manifest, tar_stream):
+    "Apply a delta update to the boot and system partitions"
+    current_version = get_prop("ro.anki.version")
+    delta_base_version = manifest.get("DELTA", "base_version")
+    if current_version != delta_base_version:
+        die(211, "My version is {} not {}".format(current_version, delta_base_version))
+    write_status(EXPECTED_WRITE_SIZE_FILE, manifest.getint("DELTA", "bytes"))
+    write_status(PROGRESS_FILE, 0)
+    die(207, "Delta updates not actually implemented")
+
+
+def handle_anki(current_slot, target_slot, manifest, tar_stream):
+    "Update the Anki folder only"
+    write_status(EXPECTED_WRITE_SIZE_FILE, 4)  # We're faking progress here with just stages 0-N
+    write_status(PROGRESS_FILE, 0)
+    if DEBUG:
+        print("Copying system from {} to {}".format(current_slot, target_slot))
+    copy_slot("system", current_slot, target_slot)
+    write_status(PROGRESS_FILE, 1)
+    if DEBUG:
+        print("Installing new Anki")
+    if not call(["mount", os.path.join(BOOT_DEVICE, "system" + "_" + target_slot), MOUNT_POINT]):
+        die(208, "Couldn't mount target system partition")
+    try:
+        anki_path = os.path.join(MOUNT_POINT, "anki")
+        shutil.rmtree(anki_path)
+        write_status(PROGRESS_FILE, 2)
+        anki_ti = tar_stream.next()
+        sha_fh = ShaFile(tar_stream.extractfile(anki_ti))
+        anki_tar = make_tar_stream(sha_fh, "r|" + manifest.get("ANKI", "compression"))
+        anki_tar.extractall(MOUNT_POINT)
+        update_build_props(MOUNT_POINT)
+    finally:
+        call(["umount", MOUNT_POINT])
+    write_status(PROGRESS_FILE, 3)
+    # Verify anki tar hash
+    if sha_fh.bytes() != manifest.getint("ANKI", "bytes"):
+        zero_slot(target_slot)
+        die(209, "Anki archive wrong size")
+    if sha_fh.digest() != manifest.get("ANKI", "sha256"):
+        zero_slot(target_slot)
+        die(209, "Anki archive didn't match signed manifest")
+    # Copy over the boot partition since we passed
+    if DEBUG:
+        print("Sig passed, installing kernel")
+    copy_slot("boot", current_slot, target_slot)
+    write_status(PROGRESS_FILE, 4)
 
 
 def update_from_url(url):
@@ -208,69 +406,28 @@ def update_from_url(url):
         # Inspect the manifest
         if manifest.get("META", "manifest_version") not in SUPPORTED_MANIFEST_VERSIONS:
             die(201, "Unexpected manifest version")
-        if manifest.getint("META", "num_images") != 2:
-            die(201, "Unexpected number of images in OTA")
-        try:
-            total_size = manifest.getint("BOOT", "bytes") + manifest.getint("SYSTEM", "bytes")
-        except Exception as e:
-            print("Unable to get total bytes of download: ", e)
-        else:
-            write_status(EXPECTED_WRITE_SIZE_FILE, total_size)
-        written_size = 0
-        write_status(PROGRESS_FILE, written_size)
         if DEBUG:
             print("Updating to version {}".format(manifest.get("META", "update_version")))
         # Mark target unbootable
         if not call(['/bin/bootctl', current_slot, 'set_unbootable', target_slot]):
             die(202, "Could not mark target slot unbootable")
         zero_slot(target_slot)  # Make it doubly unbootable just in case
-        # Extract boot image
-        if DEBUG:
-            print("Boot")
-        boot_ti = tar_stream.next()
-        if not boot_ti.name.endswith("boot.img.gz"):
-            die(200, "Expected boot.img.gz to be next in tar but found \"{}\"".format(boot_ti.name))
-        wbits = manifest.getint("BOOT", "wbits")
-        digest = sha256()
-        with open(BOOT_STAGING, "wb") as boot_fh:
-            for boot_block in GZStreamGenerator(tar_stream.extractfile(boot_ti), DD_BLOCK_SIZE, wbits):
-                boot_fh.write(boot_block)
-                digest.update(boot_block)
-                written_size += len(boot_block)
-                write_status(PROGRESS_FILE, written_size)
-                if DEBUG:
-                    sys.stdout.write("{0:0.3f}\r".format(float(written_size)/float(total_size)))
-                    sys.stdout.flush()
-        # Verify boot hash
-        if digest.hexdigest() != manifest.get("BOOT", "sha256"):
-            zero_slot(target_slot)
-            die(209, "Boot image hash doesn't match signed manifest")
-        # Extract system images
-        if DEBUG:
-            print("System")
-        system_ti = tar_stream.next()
-        if not system_ti.name.endswith("sysfs.img.gz"):
-            die(200, "Expected sysfs.img.gz to be next in tar but found \"{}\"".format(system_ti.name))
-        wbits = manifest.getint("SYSTEM", "wbits")
-        digest = sha256()
-        with open(SYSTEM_STEM + "_" + target_slot, "wb") as system_slot:
-            for system_block in GZStreamGenerator(tar_stream.extractfile(system_ti), DD_BLOCK_SIZE, wbits):
-                system_slot.write(system_block)
-                digest.update(system_block)
-                written_size += len(system_block)
-                write_status(PROGRESS_FILE, written_size)
-                if DEBUG:
-                    sys.stdout.write("{0:0.3f}\r".format(float(written_size)/float(total_size)))
-                    sys.stdout.flush()
-        # Verify system image hash
-        if digest.hexdigest() != manifest.get("SYSTEM", "sha256"):
-            zero_slot(target_slot)
-            die(209, "System image hash doesn't match signed manifest")
+        num_images = manifest.getint("META", "num_images")
+        if num_images == 2:
+            if manifest.has_section("BOOT") and manifest.has_section("SYSTEM"):
+                handle_boot_system(target_slot, manifest, tar_stream)
+            else:
+                die(201, "Two images specified but couldn't find boot or system")
+        elif num_images == 1:
+            if manifest.has_section("DELTA"):
+                handle_delta(current_slot, target_slot, manifest, tar_stream)
+            if manifest.has_section("ANKI"):
+                handle_anki(current_slot, target_slot, manifest, tar_stream)
+            else:
+                die(201, "One image specified but not DELTA or ANKI")
+        else:
+            die(201, "Unexpected manifest configuration")
     stream.close()
-    # Actually write the boot image now
-    with open(BOOT_STAGING, "rb") as src:
-        with open(BOOT_STEM + "_" + target_slot, "wb") as dst:
-            dst.write(src.read())
     # Mark the slot bootable now
     if not call(["/bin/bootctl", current_slot, "set_active", target_slot]):
         die(202, "Could not set target slot as active")
