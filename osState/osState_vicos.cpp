@@ -19,6 +19,8 @@
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
+#include "cutils/properties.h"
+
 // For getting our ip address
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -60,46 +62,18 @@ namespace {
 
 } // namespace
 
-// Searches the .prop property files for the given key and returns the value
-// __system_get_property() from sys/system_properties.h does
-// not work for some reason so we have to read the files manually
 std::string GetProperty(const std::string& key)
 {
-  const std::string kProp = key + "=";
-
-  // First check the regular build.prop
-  std::ifstream infile("/build.prop");
-
-  std::string line;
-  while(std::getline(infile, line))
+  char propBuf[PROPERTY_VALUE_MAX] = {0};
+  int rc = property_get(key.c_str(), propBuf, "");
+  if(rc <= 0)
   {
-    size_t index = line.find(kProp);
-    if(index != std::string::npos)
-    {
-      infile.close();
-      return line.substr(kProp.length());
-    }
+    PRINT_NAMED_WARNING("OSState.GetProperty.FailedToFindProperty",
+                        "Property %s not found",
+                        key.c_str());
   }
 
-  infile.close();
-
-  // If the key wasn't found in /build.prop, then
-  // check the persistent build.prop
-  infile.open("/data/persist/build.prop");
-
-  while(std::getline(infile, line))
-  {
-    size_t index = line.find(kProp);
-    if(index != std::string::npos)
-    {
-      infile.close();
-      return line.substr(kProp.length());
-    }
-  }
-
-  infile.close();
-
-  return "";
+  return std::string(propBuf);
 }
 
 OSState::OSState()
