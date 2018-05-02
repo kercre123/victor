@@ -25,7 +25,9 @@ CC=${NDK_ROOT}/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/a
 # TensorFlow uses a factory pattern that requires we forcibly include 
 # everything from the the tensorflow-core library. Thus the --whole-archive flags
 
-${CC} --std=c++11 -fPIE -mfloat-abi=softfp -mfpu=neon -pie \
+# TODO: Investigate whey -O2 / -O3 don't work (cause seg fault when constructing an ifstream)
+
+${CC} --std=c++11 -fPIE -mfloat-abi=softfp -mfpu=neon -pie -DNDEBUG -Os \
   -DTENSORFLOW \
   --sysroot ${NDK_ROOT}/platforms/android-21/arch-arm \
   -I${NDK_ROOT}/sources/android/support/include \
