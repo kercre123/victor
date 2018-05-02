@@ -22,6 +22,7 @@
 #include "opencv2/highgui.hpp"
 
 #include <chrono>
+#include <errno.h>
 
 namespace Anki {
 namespace Cozmo {
@@ -29,7 +30,7 @@ namespace Cozmo {
 namespace {
   int _faultCodeSock = -1;
   uint16_t _fault = FaultCode::NONE;
-
+  
   static const std::string kFaultURL = "support.anki.com";
 }
   
@@ -230,7 +231,7 @@ void FaceDisplay::FaultCodeLoop()
   size = (offsetof(struct sockaddr_un, sun_path) + strlen(name.sun_path));
 
   // Bind the socket to the kFaultCodeSocketName
-  int rc = bind(_faultCodeSock, (struct sockaddr*)&name, size);
+  long rc = bind(_faultCodeSock, (struct sockaddr*)&name, (uint32_t)size);
   if(rc < 0)
   {
     PRINT_NAMED_WARNING("FaceDisplay.FaultCodeLoop.BindSocketFailed","%d", errno);
@@ -243,7 +244,7 @@ void FaceDisplay::FaultCodeLoop()
   {
     // Block until read has data
     rc = read(_faultCodeSock, buf, sizeof(buf));
-    int numBytes = rc;
+    long numBytes = rc;
     // Pull off kFaultSize number of bytes from the read data
     // and try to draw it, repeat until there is not enough data
     // left

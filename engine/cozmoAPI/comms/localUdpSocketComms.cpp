@@ -112,7 +112,7 @@ bool LocalUdpSocketComms::SendMessageInternal(const Comms::MsgPacket& msgPacket)
   ANKI_CPU_PROFILE("LocalUdpSocketComms::SendMessage");
   
   if (IsConnected()) {
-    const int res = _udpServer->Send((const char*)&msgPacket.dataLen, sizeof(msgPacket.dataLen) + msgPacket.dataLen);
+    const ssize_t res = _udpServer->Send((const char*)&msgPacket.dataLen, sizeof(msgPacket.dataLen) + msgPacket.dataLen);
 
     if (res < 0) {
       return false;

@@ -18,6 +18,9 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <errno.h>
+#include <cstdio>
+#include <cstring>
 
 namespace Anki {
 namespace Cozmo {
@@ -74,8 +77,11 @@ static int DisplayFaultCode(uint16_t code)
   name.sun_family = AF_LOCAL;
   strncpy(name.sun_path, kFaultCodeSocketName, sizeof(name.sun_path));
   name.sun_path[sizeof(name.sun_path) - 1] = '\0';
+#ifdef ANDROID
   size = (offsetof(struct sockaddr_un, sun_path) + strlen(name.sun_path));
-
+#else
+  size = SUN_LEN(&name);
+#endif
   // Connect to the named fault code socket
   int rc = connect(sock, (struct sockaddr*)&name, size);
   if(rc < 0)
@@ -88,7 +94,7 @@ static int DisplayFaultCode(uint16_t code)
   ssize_t numBytes = write(sock, &code, sizeof(code));
   if(numBytes != sizeof(code))
   {
-    printf("DisplayFaultCode: Expected to write %u bytes but only wrote %u\n",
+    printf("DisplayFaultCode: Expected to write %lu bytes but only wrote %li\n",
 	   sizeof(code),
 	   numBytes);
 
