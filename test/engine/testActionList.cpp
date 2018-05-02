@@ -11,7 +11,6 @@
  * --gtest_filter=QueueAction*
  **/
 
-#include "anki/common/types.h"
 #include "engine/actions/actionContainers.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/actions/actionWatcher.h"
@@ -22,24 +21,24 @@
 #include "engine/robot.h"
 #include "gtest/gtest.h"
 #include "util/helpers/templateHelpers.h"
-#include <limits.h>
-#include <stdlib.h>
-#include <time.h>
-#include <vector>
 
+#include <vector>
 
 using namespace Anki::Cozmo;
 
-std::vector<std::string> actionsDestroyed;
-uint8_t track1 = (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
-uint8_t track2 = (u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK | (u8)AnimTrackFlag::AUDIO_TRACK;
-uint8_t track3 = (u8)AnimTrackFlag::FACE_IMAGE_TRACK | (u8)AnimTrackFlag::EVENT_TRACK;
+constexpr uint8_t track1 = (u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK | (u8)AnimTrackFlag::LIFT_TRACK;
+constexpr uint8_t track2 = (u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK | (u8)AnimTrackFlag::AUDIO_TRACK;
+constexpr uint8_t track3 = (u8)AnimTrackFlag::FACE_IMAGE_TRACK | (u8)AnimTrackFlag::EVENT_TRACK;
+
+namespace {
+  std::vector<std::string> actionsDestroyed;
+}
 
 // Simple action that can be set to complete
 class TestAction : public IAction
 {
   public:
-    TestAction(std::string name, RobotActionType type, u8 tracks = 0);
+    TestAction(Robot& r, const std::string & name, RobotActionType type, u8 tracks = 0);
     virtual ~TestAction() { actionsDestroyed.push_back(GetName()); }
     int _numRetries = 0;
     bool _complete = false;
@@ -48,15 +47,16 @@ class TestAction : public IAction
     virtual ActionResult CheckIfDone() override;
 };
 
-TestAction::TestAction(std::string name, RobotActionType type, u8 tracks)
-: IAction(name,
-          type,
-          tracks)
+TestAction::TestAction(Robot& r, const std::string & name, RobotActionType type, u8 tracks)
+: IAction(name, type, tracks)
 {
-
+  SetRobot(&r);
 }
 
-ActionResult TestAction::Init() { return ActionResult::SUCCESS; }
+ActionResult TestAction::Init()
+{
+  return ActionResult::SUCCESS;
+}
 
 ActionResult TestAction::CheckIfDone()
 {
@@ -72,7 +72,7 @@ ActionResult TestAction::CheckIfDone()
 class TestInterruptAction : public IAction
 {
 public:
-  TestInterruptAction(std::string name, RobotActionType type, u8 tracks = 0);
+  TestInterruptAction(Robot & r, const std::string & name, RobotActionType type, u8 tracks = 0);
   virtual ~TestInterruptAction() { actionsDestroyed.push_back(GetName()); }
   bool _complete;
 protected:
@@ -82,15 +82,17 @@ protected:
 };
 
 
-TestInterruptAction::TestInterruptAction(std::string name, RobotActionType type, u8 tracks)
-: IAction(name,
-          type,
-          tracks)
+TestInterruptAction::TestInterruptAction(Robot& r, const std::string & name, RobotActionType type, u8 tracks)
+: IAction(name, type, tracks)
 {
   _complete = false;
+  SetRobot(&r);
 }
 
-ActionResult TestInterruptAction::Init() { return ActionResult::SUCCESS; }
+ActionResult TestInterruptAction::Init()
+{
+  return ActionResult::SUCCESS;
+}
 
 ActionResult TestInterruptAction::CheckIfDone()
 {
@@ -101,45 +103,51 @@ ActionResult TestInterruptAction::CheckIfDone()
 class TestCompoundActionSequential : public CompoundActionSequential
 {
 public:
-  TestCompoundActionSequential(std::initializer_list<IActionRunner*> actions, std::string name);
+  TestCompoundActionSequential(Robot& r,
+                               const std::initializer_list<IActionRunner*> & actions,
+                               const std::string & name);
   virtual ~TestCompoundActionSequential() { actionsDestroyed.push_back(_name); }
   virtual std::list<std::shared_ptr<IActionRunner>>& GetActions() { return _actions; }
 private:
   std::string _name;
 };
 
-TestCompoundActionSequential::TestCompoundActionSequential(std::initializer_list<IActionRunner*> actions,
-                                                           std::string name)
+TestCompoundActionSequential::TestCompoundActionSequential(Robot& r,
+                                                           const std::initializer_list<IActionRunner*> & actions,
+                                                           const std::string & name)
 : CompoundActionSequential(actions)
 {
   _name = name;
   SetName(name);
+  SetRobot(&r);
 }
 
 // Simple parallel action with a function to expose its internal list of actions
 class TestCompoundActionParallel : public CompoundActionParallel
 {
 public:
-  TestCompoundActionParallel(std::initializer_list<IActionRunner*> actions, std::string name);
+  TestCompoundActionParallel(Robot& r, const std::initializer_list<IActionRunner*> & actions, const std::string & name);
   virtual ~TestCompoundActionParallel() { actionsDestroyed.push_back(_name); }
   virtual std::list<std::shared_ptr<IActionRunner>>& GetActions() { return _actions; }
 private:
   std::string _name;
 };
 
-TestCompoundActionParallel::TestCompoundActionParallel(std::initializer_list<IActionRunner*> actions,
-                                                       std::string name)
+TestCompoundActionParallel::TestCompoundActionParallel(Robot& r,
+                                                       const std::initializer_list<IActionRunner*> & actions,
+                                                       const std::string & name)
 : CompoundActionParallel(actions)
 {
   _name = name;
   SetName(name);
+  SetRobot(&r);
 }
 
 // Simple Interruptable action that can be set to complete
 class TestActionWithinAction : public IAction
 {
 public:
-  TestActionWithinAction(std::string name, RobotActionType type);
+  TestActionWithinAction(Robot& r, const std::string & name, RobotActionType type);
   virtual ~TestActionWithinAction() { actionsDestroyed.push_back(GetName()); }
   TestCompoundActionSequential* GetAction() { return &_compoundAction; }
   bool _complete;
@@ -151,23 +159,20 @@ private:
   TestCompoundActionSequential _compoundAction;
 };
 
-TestActionWithinAction::TestActionWithinAction(std::string name, RobotActionType type)
-: IAction(name,
-          type,
-          track1 | track2)
-, _compoundAction(robot, {}, "Comp1")
+TestActionWithinAction::TestActionWithinAction(Robot& r, const std::string & name, RobotActionType type)
+: IAction(name, type, track1 | track2)
+, _compoundAction(r, {}, "Comp1")
 {
   _complete = false;
+   SetRobot(&r);
 }
 
 ActionResult TestActionWithinAction::Init()
 {
-  _compoundAction.AddAction(new TestAction(_robot, "Test1", RobotActionType::WAIT, track1));
-  _compoundAction.AddAction(new TestAction(_robot, "Test2", RobotActionType::WAIT, track2));
+  _compoundAction.AddAction(new TestAction(GetRobot(), "Test1", RobotActionType::WAIT, track1));
+  _compoundAction.AddAction(new TestAction(GetRobot(), "Test2", RobotActionType::WAIT, track2));
   _compoundAction.ShouldSuppressTrackLocking(true);
-  
   _compoundAction.Update();
-  
   return ActionResult::SUCCESS;
 }
 
@@ -185,19 +190,19 @@ ActionResult TestActionWithinAction::CheckIfDone()
 class TestActionThatCancels : public IAction
 {
 public:
-  TestActionThatCancels(std::string name, RobotActionType type, u8 tracks = 0);
+  TestActionThatCancels(Robot& r, const std::string & name, RobotActionType type, u8 tracks = 0);
   virtual ~TestActionThatCancels()
   {
     actionsDestroyed.push_back(GetName());
     if(_clearInsteadOfCancel)
     {
-      _robot.GetActionList().Clear();
+      GetRobot().GetActionList().Clear();
     }
     else
     {
       for(auto tag : _tagsToCancelOnDestroy)
       {
-        _robot.GetActionList().Cancel(tag);
+        GetRobot().GetActionList().Cancel(tag);
       }
     }
   }
@@ -210,15 +215,16 @@ protected:
   virtual ActionResult CheckIfDone() override;
 };
 
-TestActionThatCancels::TestActionThatCancels(std::string name, RobotActionType type, u8 tracks)
-: IAction(name,
-          type,
-          tracks)
+TestActionThatCancels::TestActionThatCancels(Robot& r, const std::string & name, RobotActionType type, u8 tracks)
+: IAction(name, type, tracks)
 {
-
+  SetRobot(&r);
 }
 
-ActionResult TestActionThatCancels::Init() { return ActionResult::SUCCESS; }
+ActionResult TestActionThatCancels::Init()
+{
+  return ActionResult::SUCCESS;
+}
 
 ActionResult TestActionThatCancels::CheckIfDone()
 {
@@ -234,7 +240,7 @@ ActionResult TestActionThatCancels::CheckIfDone()
 void CheckActionDestroyed(std::vector<std::string> actualNames)
 {
   ASSERT_EQ(actionsDestroyed.size(), actualNames.size());
-  
+
   for(int i = 0; i < actionsDestroyed.size(); i++)
   {
     EXPECT_TRUE(actionsDestroyed[i] == actualNames[i]);
@@ -246,7 +252,7 @@ void CheckActionDestroyed(std::vector<std::string> actualNames)
 void CheckActionDestroyedUnordered(std::vector<std::string> actualNames)
 {
   ASSERT_EQ(actionsDestroyed.size(), actualNames.size());
-  
+
   for (const auto& actualName : actualNames)
   {
     bool hasBeenDestroyed = false;
@@ -276,28 +282,39 @@ void CheckTracksUnlocked(Robot& r, u8 track)
 
 extern Anki::Cozmo::CozmoContext* cozmoContext;
 
-// Tests queueing a single and letting it complete normally
+//
+// Perform a single update tick of action list.
+//
+static void Update(ActionList& actionList)
+{
+  static const Anki::Cozmo::RobotCompMap dependentComps;
+  actionList.UpdateDependent(dependentComps);
+}
+
+// Tests queueing a single action and letting it complete normally
 TEST(QueueAction, SingleActionFinishes)
 {
   Robot r(0, cozmoContext);
   TestAction* testAction = new TestAction(r, "Test", RobotActionType::WAIT, track1);
-  
+
   EXPECT_EQ(&(testAction->GetRobot()), &r);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::NOW, testAction);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().Update();
-  
+
+  auto & actionList = r.GetActionList();
+  actionList.QueueAction(QueueActionPosition::NOW, testAction);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track1);
-  
+
   testAction->_complete = true;
-  r.GetActionList().Update();
-  
-  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+
+  Update(actionList);
+
+  EXPECT_FALSE(actionList.IsCurrAction("Test"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 0);
   CheckActionDestroyed({"Test"});
   CheckTracksUnlocked(r, track1);
 }
@@ -307,21 +324,23 @@ TEST(QueueAction, SingleActionCancel)
 {
   Robot r(0, cozmoContext);
   TestAction* testAction = new TestAction(r, "Test", RobotActionType::WAIT, track1);
-  
+
   EXPECT_EQ(&(testAction->GetRobot()), &r);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::NOW, testAction);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().Update();
+
+  auto & actionList = r.GetActionList();
+  actionList.QueueAction(QueueActionPosition::NOW, testAction);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track1);
-  
-  r.GetActionList().Cancel(RobotActionType::WAIT);
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
-  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test"));
+
+  actionList.Cancel(RobotActionType::WAIT);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 0);
+  EXPECT_FALSE(actionList.IsCurrAction("Test"));
   CheckActionDestroyed({"Test"});
   CheckTracksUnlocked(r, track1);
 }
@@ -333,48 +352,58 @@ TEST(QueueAction, ThreeActionsFinish)
   TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
   TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
   TestAction* testAction3 = new TestAction(r, "Test3", RobotActionType::WAIT, track3);
-  
+
   EXPECT_EQ(&(testAction1->GetRobot()), &r);
   EXPECT_EQ(&(testAction2->GetRobot()), &r);
   EXPECT_EQ(&(testAction3->GetRobot()), &r);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction1);
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction2);
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction3);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 3);
-  
-  r.GetActionList().Update();
+
+  auto & actionList = r.GetActionList();
+
+  actionList.QueueAction(QueueActionPosition::AT_END, testAction1);
+  actionList.QueueAction(QueueActionPosition::AT_END, testAction2);
+  actionList.QueueAction(QueueActionPosition::AT_END, testAction3);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test1"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 3);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track1);
-  
+
   testAction1->_complete = true;
-  
-  r.GetActionList().Update();
-  
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track1);
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
-  
-  r.GetActionList().Update();
+  EXPECT_TRUE(actionList.IsCurrAction("Test2"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 2);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track2);
-  
+
   testAction2->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track2);
-  
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksLocked(r, track3);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test3"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
   testAction3->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track3);
-  
-  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+
+  EXPECT_FALSE(actionList.IsCurrAction("Test3"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 0);
+
   CheckActionDestroyed({"Test1", "Test2", "Test3"});
 }
 
@@ -385,40 +414,48 @@ TEST(QueueAction, ThreeActionsCancelSecond)
   TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
   TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::TURN_IN_PLACE, track2);
   TestAction* testAction3 = new TestAction(r, "Test3", RobotActionType::TRACK_OBJECT, track3);
-  
+
   EXPECT_EQ(&(testAction1->GetRobot()), &r);
   EXPECT_EQ(&(testAction2->GetRobot()), &r);
   EXPECT_EQ(&(testAction3->GetRobot()), &r);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction1);
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction2);
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction3);
-  
-  r.GetActionList().Cancel(RobotActionType::TURN_IN_PLACE);
+
+  auto & actionList = r.GetActionList();
+
+  actionList.QueueAction(QueueActionPosition::AT_END, testAction1);
+  actionList.QueueAction(QueueActionPosition::AT_END, testAction2);
+  actionList.QueueAction(QueueActionPosition::AT_END, testAction3);
+
+  actionList.Cancel(RobotActionType::TURN_IN_PLACE);
   CheckTracksUnlocked(r, track2);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
-  
-  r.GetActionList().Update();
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test1"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 2);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track1);
-  
+
   testAction1->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track1);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().Update();
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test3"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track3);
-  
+
   testAction3->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track3);
-  
-  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+
+  EXPECT_FALSE(actionList.IsCurrAction("Test3"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 0);
   CheckActionDestroyed({"Test2", "Test1", "Test3"});
 }
 
@@ -429,21 +466,23 @@ TEST(QueueAction, ThreeActionsCancelAll)
   TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
   TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
   TestAction* testAction3 = new TestAction(r, "Test3", RobotActionType::WAIT, track3);
-  
+
   EXPECT_EQ(&(testAction1->GetRobot()), &r);
   EXPECT_EQ(&(testAction2->GetRobot()), &r);
   EXPECT_EQ(&(testAction3->GetRobot()), &r);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction1);
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction2);
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction3);
-  r.GetActionList().Cancel(RobotActionType::WAIT);
-  
-  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test2"));
-  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
-  
+
+  auto & actionList = r.GetActionList();
+
+  actionList.QueueAction(QueueActionPosition::AT_END, testAction1);
+  actionList.QueueAction(QueueActionPosition::AT_END, testAction2);
+  actionList.QueueAction(QueueActionPosition::AT_END, testAction3);
+  actionList.Cancel(RobotActionType::WAIT);
+
+  EXPECT_FALSE(actionList.IsCurrAction("Test1"));
+  EXPECT_FALSE(actionList.IsCurrAction("Test2"));
+  EXPECT_FALSE(actionList.IsCurrAction("Test3"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 0);
+
   CheckTracksUnlocked(r, track1);
   CheckTracksUnlocked(r, track2);
   CheckActionDestroyed({"Test1", "Test2", "Test3"});
@@ -455,94 +494,108 @@ TEST(QueueAction, ThreeActionsCancelAll)
 TEST(QueueAction, InterruptActionNotRunning)
 {
   Robot r(0, cozmoContext);
-  TestAction* testAction = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
-  TestInterruptAction* testInterruptAction = new TestInterruptAction(r, "Test2", RobotActionType::TURN_IN_PLACE,
-                                                                     track2);
-  
+  auto * testAction = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
+  auto * testInterruptAction = new TestInterruptAction(r, "Test2", RobotActionType::TURN_IN_PLACE, track2);
+
   EXPECT_EQ(&(testAction->GetRobot()), &r);
   EXPECT_EQ(&(testInterruptAction->GetRobot()), &r);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testInterruptAction);
-  r.GetActionList().QueueAction(QueueActionPosition::NOW_AND_RESUME, testAction);
-  
+
+  auto & actionList = r.GetActionList();
+
+  actionList.QueueAction(QueueActionPosition::AT_END, testInterruptAction);
+  actionList.QueueAction(QueueActionPosition::NOW_AND_RESUME, testAction);
+
   // Interrupt test2 for test1 which is now current
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
-  
-  r.GetActionList().Update();
+  EXPECT_TRUE(actionList.IsCurrAction("Test1"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 2);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track1);
-  
+
   // Test1 completes and Test2 is current
   testAction->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track1);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().Update();
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test2"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track2);
-  
+
   // Test2 completes
   testInterruptAction->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track2);
-  
-  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test2"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+
+  EXPECT_FALSE(actionList.IsCurrAction("Test2"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 0);
   CheckActionDestroyed({"Test1", "Test2"});
 }
 
-// Tests queueing two actions where the first one ,which has started running, is interruptable so queueing
+// Tests queueing two actions where the first one, which has started running, is interruptable so queueing
 // the second action interrupts it. The second action completes and the interrupted action
 // resumes and completes.
 TEST(QueueAction, InterruptActionRunning)
 {
   Robot r(0, cozmoContext);
-  TestAction* testAction = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
-  TestInterruptAction* testInterruptAction = new TestInterruptAction(r, "Test2", RobotActionType::TURN_IN_PLACE,
-                                                                     track2);
-  
+  auto * testAction = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
+  auto * testInterruptAction = new TestInterruptAction(r, "Test2", RobotActionType::TURN_IN_PLACE, track2);
+
   EXPECT_EQ(&(testAction->GetRobot()), &r);
   EXPECT_EQ(&(testInterruptAction->GetRobot()), &r);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testInterruptAction);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
+
+  auto & actionList = r.GetActionList();
+
+  actionList.QueueAction(QueueActionPosition::AT_END, testInterruptAction);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test2"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
   // Move it out of queue to currentAction
-  r.GetActionList().Update();
+  Update(actionList);
+
   CheckTracksLocked(r, track2);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::NOW_AND_RESUME, testAction);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test2"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  actionList.QueueAction(QueueActionPosition::NOW_AND_RESUME, testAction);
+
   CheckTracksUnlocked(r, track2);
-  
+
   EXPECT_EQ(&(testAction->GetRobot()), &r);
   EXPECT_EQ(&(testInterruptAction->GetRobot()), &r);
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  
-  r.GetActionList().Update();
+  EXPECT_EQ(actionList.GetQueueLength(0), 2);
+  EXPECT_TRUE(actionList.IsCurrAction("Test1"));
+
+  Update(actionList);
+
   CheckTracksLocked(r, track1);
-  
+
   testInterruptAction->_complete = true;
   testAction->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track1);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().Update();
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test2"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track2);
-  
-  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test2"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+
+  EXPECT_FALSE(actionList.IsCurrAction("Test1"));
+  EXPECT_FALSE(actionList.IsCurrAction("Test2"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 0);
   CheckActionDestroyed({"Test1", "Test2"});
 }
 
@@ -550,27 +603,32 @@ TEST(QueueAction, InterruptActionRunning)
 TEST(QueueAction, CompoundActionSequentialSingle)
 {
   Robot r(0, cozmoContext);
-  TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
-  TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
-  TestCompoundActionSequential* compoundAction = new TestCompoundActionSequential(r, {testAction1, testAction2}, "Comp1");
-  
+  auto * testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
+  auto * testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
+  auto * compoundAction = new TestCompoundActionSequential(r, {testAction1, testAction2}, "Comp1");
+
   EXPECT_EQ(&(testAction1->GetRobot()), &r);
   EXPECT_EQ(&(testAction2->GetRobot()), &r);
   EXPECT_EQ(&(compoundAction->GetRobot()), &r);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction);
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().Update();
+
+  auto & actionList = r.GetActionList();
+
+  actionList.QueueAction(QueueActionPosition::AT_END, compoundAction);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track1);
-  
+
   testAction1->_complete = true;
   testAction2->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track1 | track2);
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 0);
   CheckActionDestroyed({"Test1", "Test2", "Comp1"});
 }
 
@@ -578,35 +636,42 @@ TEST(QueueAction, CompoundActionSequentialSingle)
 TEST(QueueAction, CompoundActionMultipleUpdates)
 {
   Robot r(0, cozmoContext);
-  TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
-  TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
-  TestCompoundActionSequential* compoundAction = new TestCompoundActionSequential(r, {testAction1, testAction2}, "Comp1");
-  
+  auto * testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
+  auto * testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
+  auto * compoundAction = new TestCompoundActionSequential(r, {testAction1, testAction2}, "Comp1");
+
   EXPECT_EQ(&(testAction1->GetRobot()), &r);
   EXPECT_EQ(&(testAction2->GetRobot()), &r);
   EXPECT_EQ(&(compoundAction->GetRobot()), &r);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction);
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+
+  auto & actionList = r.GetActionList();
+
+  actionList.QueueAction(QueueActionPosition::AT_END, compoundAction);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
   EXPECT_EQ(&(compoundAction->GetRobot()), &r);
-  
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksLocked(r, track1);
-  
+
   testAction1->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track1);
   CheckTracksLocked(r, track2);
-  
+
   EXPECT_EQ(&(testAction2->GetRobot()), &r);
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
   testAction2->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track2);
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 0);
   CheckActionDestroyed({"Test1", "Test2", "Comp1"});
 }
 
@@ -615,11 +680,11 @@ TEST(QueueAction, CompoundActionMultipleUpdates)
 TEST(QueueAction, CompoundActionAddAfterQueued)
 {
   Robot r(0, cozmoContext);
-  TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
-  TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
-  TestAction* testAction3 = new TestAction(r, "Test3", RobotActionType::WAIT, track3);
-  TestCompoundActionSequential* compoundAction = new TestCompoundActionSequential(r, {testAction1, testAction2}, "Comp1");
-  
+  auto * testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
+  auto * testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
+  auto * testAction3 = new TestAction(r, "Test3", RobotActionType::WAIT, track3);
+  auto * compoundAction = new TestCompoundActionSequential(r, {testAction1, testAction2}, "Comp1");
+
   EXPECT_EQ(&(testAction1->GetRobot()), &r);
   EXPECT_EQ(&(testAction2->GetRobot()), &r);
   EXPECT_EQ(&(testAction3->GetRobot()), &r);
@@ -629,45 +694,49 @@ TEST(QueueAction, CompoundActionAddAfterQueued)
   u32 tag2 = testAction2->GetTag();
   u32 tag3 = testAction3->GetTag();
   u32 tagCompound = compoundAction->GetTag();
-  
-  // Make sure the action watcher callacks are tracking everything
+
+  auto & actionList = r.GetActionList();
+
+  // Make sure the action watcher callbacks are tracking everything
   std::set<u32> completedTags;
-  auto& watcher = r.GetActionList().GetActionWatcher();
+  auto& watcher = actionList.GetActionWatcher();
   watcher.RegisterActionEndedCallbackForAllActions(
     [&completedTags](const ExternalInterface::RobotCompletedAction& completion) {
       const bool inserted = completedTags.insert(completion.idTag).second;
       EXPECT_TRUE(inserted) << "set already contained tag " << completion.idTag;
     });
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction);
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().Update();
+
+  actionList.QueueAction(QueueActionPosition::AT_END, compoundAction);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track1);
-  
+
   compoundAction->AddAction(testAction3);
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
   CheckTracksUnlocked(r, track3);
-  
+
   testAction1->_complete = true;
   testAction2->_complete = true;
   testAction3->_complete = true;
-  
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track1 | track2 | track3);
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().Update();
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  Update(actionList);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 0);
 
   EXPECT_TRUE(completedTags.find(tag1) != completedTags.end());
   EXPECT_TRUE(completedTags.find(tag2) != completedTags.end());
   EXPECT_TRUE(completedTags.find(tag3) != completedTags.end());
   EXPECT_TRUE(completedTags.find(tagCompound) != completedTags.end());
-  
+
   CheckActionDestroyed({"Test1", "Test2", "Test3", "Comp1"});
 }
 
@@ -675,11 +744,11 @@ TEST(QueueAction, CompoundActionAddAfterQueued)
 TEST(QueueAction, CompoundActionAddAfterQueued2)
 {
   Robot r(0, cozmoContext);
-  TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
-  TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
-  TestAction* testAction3 = new TestAction(r, "Test3", RobotActionType::WAIT, track3);
-  TestCompoundActionSequential* compoundAction = new TestCompoundActionSequential(r, {}, "Comp1");
-  
+  auto * testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
+  auto * testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
+  auto * testAction3 = new TestAction(r, "Test3", RobotActionType::WAIT, track3);
+  auto * compoundAction = new TestCompoundActionSequential(r, {}, "Comp1");
+
   EXPECT_EQ(&(testAction1->GetRobot()), &r);
   EXPECT_EQ(&(testAction2->GetRobot()), &r);
   EXPECT_EQ(&(testAction3->GetRobot()), &r);
@@ -689,46 +758,51 @@ TEST(QueueAction, CompoundActionAddAfterQueued2)
   u32 tag2 = testAction2->GetTag();
   u32 tag3 = testAction3->GetTag();
   u32 tagCompound = compoundAction->GetTag();
-  
-  // Make sure the action watcher callacks are tracking everything
+
+  auto & actionList = r.GetActionList();
+
+  // Make sure the action watcher callbacks are tracking everything
   std::set<u32> completedTags;
-  auto& watcher = r.GetActionList().GetActionWatcher();
+  auto& watcher = actionList.GetActionWatcher();
   watcher.RegisterActionEndedCallbackForAllActions(
     [&completedTags](const ExternalInterface::RobotCompletedAction& completion) {
       const bool inserted = completedTags.insert(completion.idTag).second;
       EXPECT_TRUE(inserted) << "set already contained tag " << completion.idTag;
     });
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction);
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
+
+  actionList.QueueAction(QueueActionPosition::AT_END, compoundAction);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
   compoundAction->AddAction(testAction1);
-  
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksLocked(r, track1);
-  
+
   compoundAction->AddAction(testAction2);
   compoundAction->AddAction(testAction3);
-  
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track2);
   CheckTracksUnlocked(r, track3);
-  
+
   testAction1->_complete = true;
   testAction2->_complete = true;
   testAction3->_complete = true;
-  
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track1 | track2 | track3);
-  
-  r.GetActionList().Update();
+
+  Update(actionList);
 
   EXPECT_TRUE(completedTags.find(tag1) != completedTags.end());
   EXPECT_TRUE(completedTags.find(tag2) != completedTags.end());
   EXPECT_TRUE(completedTags.find(tag3) != completedTags.end());
   EXPECT_TRUE(completedTags.find(tagCompound) != completedTags.end());
-  
+
   CheckActionDestroyed({"Test1", "Test2", "Test3", "Comp1"});
 }
 
@@ -736,10 +810,10 @@ TEST(QueueAction, CompoundActionAddAfterQueued2)
 TEST(QueueAction, ParallelActionImmediateComplete)
 {
   Robot r(0, cozmoContext);
-  TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
-  TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
-  TestCompoundActionParallel* compoundAction = new TestCompoundActionParallel(r, {testAction1, testAction2}, "Comp1");
-  
+  auto * testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
+  auto * testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
+  auto * compoundAction = new TestCompoundActionParallel(r, {testAction1, testAction2}, "Comp1");
+
   EXPECT_EQ(&(testAction1->GetRobot()), &r);
   EXPECT_EQ(&(testAction2->GetRobot()), &r);
   EXPECT_EQ(&(compoundAction->GetRobot()), &r);
@@ -747,29 +821,34 @@ TEST(QueueAction, ParallelActionImmediateComplete)
   u32 tag1 = testAction1->GetTag();
   u32 tag2 = testAction2->GetTag();
   u32 tagCompound = compoundAction->GetTag();
-  
-  // Make sure the action watcher callacks are tracking everything
+
+  auto & actionList = r.GetActionList();
+
+  // Make sure the action watcher callbacks are tracking everything
   std::set<u32> completedTags;
-  auto& watcher = r.GetActionList().GetActionWatcher();
+  auto& watcher = actionList.GetActionWatcher();
   watcher.RegisterActionEndedCallbackForAllActions(
     [&completedTags](const ExternalInterface::RobotCompletedAction& completion) {
       const bool inserted = completedTags.insert(completion.idTag).second;
       EXPECT_TRUE(inserted) << "set already contained tag " << completion.idTag;
     });
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction);
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().Update();
+
+  actionList.QueueAction(QueueActionPosition::AT_END, compoundAction);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track1 | track2);
-  
+
   testAction1->_complete = true;
   testAction2->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track1 | track2);
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 0);
 
   EXPECT_TRUE(completedTags.find(tag1) != completedTags.end());
   EXPECT_TRUE(completedTags.find(tag2) != completedTags.end());
@@ -782,27 +861,30 @@ TEST(QueueAction, ParallelActionImmediateComplete)
 TEST(QueueAction, ParallelActionOneCompleteBefore)
 {
   Robot r(0, cozmoContext);
-  TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT);
-  TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT);
+  auto * testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT);
+  auto * testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT);
   testAction1->_complete = true;
-  TestCompoundActionParallel* compoundAction = new TestCompoundActionParallel(r, {testAction1, testAction2}, "Comp1");
-  
+  auto * compoundAction = new TestCompoundActionParallel(r, {testAction1, testAction2}, "Comp1");
+
   EXPECT_EQ(&(testAction1->GetRobot()), &r);
   EXPECT_EQ(&(testAction2->GetRobot()), &r);
   EXPECT_EQ(&(compoundAction->GetRobot()), &r);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction);
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().Update();
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
+
+  auto & actionList = r.GetActionList();
+
+  actionList.QueueAction(QueueActionPosition::AT_END, compoundAction);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  Update(actionList);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
   testAction2->_complete = true;
-  r.GetActionList().Update();
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+
+  Update(actionList);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 0);
   CheckActionDestroyed({"Test1", "Test2", "Comp1"});
 }
 
@@ -813,43 +895,54 @@ TEST(QueueAction, QueueNow)
   TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
   TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
   TestAction* testAction3 = new TestAction(r, "Test3", RobotActionType::WAIT, track3);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::NOW, testAction1);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::NOW, testAction2);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::NOW, testAction3);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 3);
-  
-  r.GetActionList().Update();
+
+  auto & actionList = r.GetActionList();
+
+  actionList.QueueAction(QueueActionPosition::NOW, testAction1);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test1"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  actionList.QueueAction(QueueActionPosition::NOW, testAction2);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test2"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 2);
+
+  actionList.QueueAction(QueueActionPosition::NOW, testAction3);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test3"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 3);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track3);
-  
+
   testAction3->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track3);
-  
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksLocked(r, track2);
-  
+
   testAction2->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track2);
-  
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksLocked(r, track1);
-  
+
   testAction1->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track1);
-  
+
   CheckActionDestroyed({"Test3", "Test2", "Test1"});
 }
 
@@ -861,48 +954,59 @@ TEST(QueueAction, QueueNext)
   TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
   TestAction* testAction3 = new TestAction(r, "Test3", RobotActionType::WAIT, track3);
 
-  r.GetActionList().QueueAction(QueueActionPosition::NEXT, testAction1);
+  auto & actionList = r.GetActionList();
 
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  actionList.QueueAction(QueueActionPosition::NEXT, testAction1);
 
-  r.GetActionList().QueueAction(QueueActionPosition::NEXT, testAction2);
+  EXPECT_TRUE(actionList.IsCurrAction("Test1"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
 
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
+  actionList.QueueAction(QueueActionPosition::NEXT, testAction2);
 
-  r.GetActionList().QueueAction(QueueActionPosition::NEXT, testAction3);
+  EXPECT_TRUE(actionList.IsCurrAction("Test1"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 2);
 
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 3);
-  
-  r.GetActionList().Update();
+  actionList.QueueAction(QueueActionPosition::NEXT, testAction3);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test1"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 3);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track1);
 
   testAction1->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track1);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
-  
-  r.GetActionList().Update();
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test3"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 2);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track3);
-  
+
   testAction3->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track3);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().Update();
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test2"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track2);
-  
+
   testAction2->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track2);
-  
+
   CheckActionDestroyed({"Test1", "Test3", "Test2"});
 }
 
@@ -913,51 +1017,62 @@ TEST(QueueAction, QueueAtEnd)
   TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
   TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
   TestAction* testAction3 = new TestAction(r, "Test3", RobotActionType::WAIT, track3);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction1);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction2);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction3);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 3);
-  
-  r.GetActionList().Update();
+
+  auto & actionList = r.GetActionList();
+
+  actionList.QueueAction(QueueActionPosition::AT_END, testAction1);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test1"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  actionList.QueueAction(QueueActionPosition::AT_END, testAction2);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test1"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 2);
+
+  actionList.QueueAction(QueueActionPosition::AT_END, testAction3);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test1"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 3);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track1);
-  
+
   testAction1->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track1);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
-  
-  r.GetActionList().Update();
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test2"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 2);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track2);
-  
+
   testAction2->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track2);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().Update();
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test3"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track3);
-  
+
   testAction3->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track3);
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
-  
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 0);
+
   CheckActionDestroyed({"Test1", "Test2", "Test3"});
 }
 
@@ -968,36 +1083,42 @@ TEST(QueueAction, QueueNowAndClearRemaining)
   TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
   TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
   TestAction* testAction3 = new TestAction(r, "Test3", RobotActionType::WAIT, track3);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction1);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().Update();
+
+  auto & actionList = r.GetActionList();
+
+  actionList.QueueAction(QueueActionPosition::AT_END, testAction1);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test1"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track1);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction2);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::NOW_AND_CLEAR_REMAINING, testAction3);
+
+  actionList.QueueAction(QueueActionPosition::AT_END, testAction2);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test1"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 2);
+
+  actionList.QueueAction(QueueActionPosition::NOW_AND_CLEAR_REMAINING, testAction3);
   CheckTracksUnlocked(r, track1);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().Update();
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test3"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track3);
-  
+
   testAction3->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track3);
-  
-  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
-  
+
+  EXPECT_FALSE(actionList.IsCurrAction("Test3"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 0);
+
   CheckActionDestroyed({"Test1", "Test2", "Test3"});
 }
 
@@ -1008,70 +1129,79 @@ TEST(QueueAction, QueueInParallel)
   TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
   TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
   TestAction* testAction3 = new TestAction(r, "Test3", RobotActionType::WAIT, track3);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, testAction1);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(1), 1);
-  EXPECT_EQ(r.GetActionList().GetNumQueues(), 1);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, testAction2);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(1), 1);
-  EXPECT_EQ(r.GetActionList().GetQueueLength(2), 1);
-  EXPECT_EQ(r.GetActionList().GetNumQueues(), 2);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, testAction3);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(1), 1);
-  EXPECT_EQ(r.GetActionList().GetQueueLength(2), 1);
-  EXPECT_EQ(r.GetActionList().GetQueueLength(3), 1);
-  EXPECT_EQ(r.GetActionList().GetNumQueues(), 3);
-  
-  r.GetActionList().Update();
+
+  auto & actionList = r.GetActionList();
+
+  actionList.QueueAction(QueueActionPosition::IN_PARALLEL, testAction1);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test1"));
+  EXPECT_EQ(actionList.GetQueueLength(1), 1);
+  EXPECT_EQ(actionList.GetNumQueues(), 1);
+
+  actionList.QueueAction(QueueActionPosition::IN_PARALLEL, testAction2);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test1"));
+  EXPECT_TRUE(actionList.IsCurrAction("Test2"));
+  EXPECT_EQ(actionList.GetQueueLength(1), 1);
+  EXPECT_EQ(actionList.GetQueueLength(2), 1);
+  EXPECT_EQ(actionList.GetNumQueues(), 2);
+
+  actionList.QueueAction(QueueActionPosition::IN_PARALLEL, testAction3);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test1"));
+  EXPECT_TRUE(actionList.IsCurrAction("Test2"));
+  EXPECT_TRUE(actionList.IsCurrAction("Test3"));
+  EXPECT_EQ(actionList.GetQueueLength(1), 1);
+  EXPECT_EQ(actionList.GetQueueLength(2), 1);
+  EXPECT_EQ(actionList.GetQueueLength(3), 1);
+  EXPECT_EQ(actionList.GetNumQueues(), 3);
+
+  Update(actionList);
+
   CheckTracksLocked(r, track1 | track2 | track3);
-  
+
   testAction1->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track1);
-  
-  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test2"));
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(1), 0);
-  EXPECT_EQ(r.GetActionList().GetQueueLength(2), 1);
-  EXPECT_EQ(r.GetActionList().GetQueueLength(3), 1);
-  EXPECT_EQ(r.GetActionList().GetNumQueues(), 2);
-  
+
+  EXPECT_FALSE(actionList.IsCurrAction("Test1"));
+  EXPECT_TRUE(actionList.IsCurrAction("Test2"));
+  EXPECT_TRUE(actionList.IsCurrAction("Test3"));
+  EXPECT_EQ(actionList.GetQueueLength(1), 0);
+  EXPECT_EQ(actionList.GetQueueLength(2), 1);
+  EXPECT_EQ(actionList.GetQueueLength(3), 1);
+  EXPECT_EQ(actionList.GetNumQueues(), 2);
+
   testAction2->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track2);
-  
-  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test2"));
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(1), 0);
-  EXPECT_EQ(r.GetActionList().GetQueueLength(2), 0);
-  EXPECT_EQ(r.GetActionList().GetQueueLength(3), 1);
-  EXPECT_EQ(r.GetActionList().GetNumQueues(), 1);
-  
+
+  EXPECT_FALSE(actionList.IsCurrAction("Test1"));
+  EXPECT_FALSE(actionList.IsCurrAction("Test2"));
+  EXPECT_TRUE(actionList.IsCurrAction("Test3"));
+  EXPECT_EQ(actionList.GetQueueLength(1), 0);
+  EXPECT_EQ(actionList.GetQueueLength(2), 0);
+  EXPECT_EQ(actionList.GetQueueLength(3), 1);
+  EXPECT_EQ(actionList.GetNumQueues(), 1);
+
   testAction3->_complete = true;
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track3);
-  
-  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test2"));
-  EXPECT_FALSE(r.GetActionList().IsCurrAction("Test3"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(1), 0);
-  EXPECT_EQ(r.GetActionList().GetQueueLength(2), 0);
-  EXPECT_EQ(r.GetActionList().GetQueueLength(3), 0);
-  EXPECT_EQ(r.GetActionList().GetNumQueues(), 0);
-  
+
+  EXPECT_FALSE(actionList.IsCurrAction("Test1"));
+  EXPECT_FALSE(actionList.IsCurrAction("Test2"));
+  EXPECT_FALSE(actionList.IsCurrAction("Test3"));
+  EXPECT_EQ(actionList.GetQueueLength(1), 0);
+  EXPECT_EQ(actionList.GetQueueLength(2), 0);
+  EXPECT_EQ(actionList.GetQueueLength(3), 0);
+  EXPECT_EQ(actionList.GetNumQueues(), 0);
+
   CheckActionDestroyed({"Test1", "Test2", "Test3"});
 }
 
@@ -1079,17 +1209,19 @@ TEST(QueueAction, QueueInParallel)
 TEST(QueueAction, QueueActionWithinAction)
 {
   Robot r(0, cozmoContext);
-  TestActionWithinAction* testActionWithinAction = new TestActionWithinAction(r, "TestActionWithinAction", RobotActionType::UNKNOWN);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testActionWithinAction);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("TestActionWithinAction"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+  auto * testActionWithinAction = new TestActionWithinAction(r, "TestActionWithinAction", RobotActionType::UNKNOWN);
+  auto & actionList = r.GetActionList();
+
+  actionList.QueueAction(QueueActionPosition::AT_END, testActionWithinAction);
+
+  EXPECT_TRUE(actionList.IsCurrAction("TestActionWithinAction"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
   EXPECT_EQ(&(testActionWithinAction->GetRobot()), &r);
-  
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksLocked(r, track1);
-  
+
   // Sets the subActions of testActionWithinAction to be complete so that testActionWithinAction can complete
   auto& subActions = testActionWithinAction->GetAction()->GetActions();
   for(auto& action : subActions)
@@ -1098,12 +1230,14 @@ TEST(QueueAction, QueueActionWithinAction)
     EXPECT_EQ(&(((TestAction*)action.get())->GetRobot()), &r);
     ((TestAction*)action.get())->_complete = true;
   }
-  
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track1 | track2);
-  
-  EXPECT_FALSE(r.GetActionList().IsCurrAction("TestActionWithinAction"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+
+  EXPECT_FALSE(actionList.IsCurrAction("TestActionWithinAction"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 0);
+
   // TestActionWithinAction has a compound action with 2 actions for a total of 4 actions
   // In this case the parent action TestActionWithinAction succeeds before the sub actions officially succeed
   // (TestActionWithinAction is checked if it is done before the sub actions) so it completes which destroys
@@ -1115,44 +1249,49 @@ TEST(QueueAction, QueueActionWithinAction)
 TEST(QueueAction, ActionFailureRetry)
 {
   Robot r(0, cozmoContext);
-  TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
-  TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
-  TestCompoundActionSequential* compoundAction = new TestCompoundActionSequential(r, {testAction1, testAction2}, "Comp1");
+  auto * testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
+  auto * testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT, track2);
+  auto * compoundAction = new TestCompoundActionSequential(r, {testAction1, testAction2}, "Comp1");
 
   testAction1->_complete = true;
   testAction2->_complete = true;
   testAction2->SetNumRetries(3);
   testAction2->_numRetries = 2;
-  
+
   EXPECT_EQ(&(testAction1->GetRobot()), &r);
   EXPECT_EQ(&(testAction2->GetRobot()), &r);
   EXPECT_EQ(&(compoundAction->GetRobot()), &r);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, compoundAction);
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
+
+  auto & actionList = r.GetActionList();
+
+  actionList.QueueAction(QueueActionPosition::AT_END, compoundAction);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
   EXPECT_EQ(&(compoundAction->GetRobot()), &r);
-  
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   // testAction1 completed and unlocked its tracks and testAction2 had to retry so it also unlocked its tracks
   CheckTracksUnlocked(r, track1 | track2);
-  
+
   // Both actions are set to complete but testAction2 is going to retry once
   // so it is still left
   auto& actions = compoundAction->GetActions();
   EXPECT_EQ(actions.size(), 1);
   EXPECT_EQ(actions.front()->GetName(), "Test2");
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
   // Make sure the action that is being retried relocks its tracks
-  r.GetActionList().Update();
+  Update(actionList);
+
   CheckTracksUnlocked(r, track1);
   CheckTracksLocked(r, track2);
-  
-  r.GetActionList().Update();
+
+  Update(actionList);
+
   CheckTracksUnlocked(r, track1 | track2);
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 0);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 0);
   CheckActionDestroyed({"Test1", "Test2", "Comp1"});
 }
 
@@ -1162,100 +1301,105 @@ TEST(QueueAction, QueueDuplicate)
   Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction1);
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction2);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
-  
-  EXPECT_EQ(r.GetActionList().QueueAction(QueueActionPosition::AT_END, testAction1), Anki::RESULT_FAIL);
-  EXPECT_EQ(r.GetActionList().QueueAction(QueueActionPosition::NEXT, testAction1), Anki::RESULT_FAIL);
-  EXPECT_EQ(r.GetActionList().QueueAction(QueueActionPosition::NOW, testAction1), Anki::RESULT_FAIL);
-  EXPECT_EQ(r.GetActionList().QueueAction(QueueActionPosition::NOW_AND_RESUME, testAction1), Anki::RESULT_FAIL);
-  EXPECT_EQ(r.GetActionList().QueueAction(QueueActionPosition::NOW_AND_CLEAR_REMAINING, testAction1),
-            Anki::RESULT_FAIL);
-  EXPECT_EQ(r.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, testAction1), Anki::RESULT_FAIL);
-  
-  EXPECT_TRUE(r.GetActionList().IsCurrAction("Test1"));
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
-  EXPECT_EQ(r.GetActionList().GetNumQueues(), 1);
+
+  auto & actionList = r.GetActionList();
+
+  actionList.QueueAction(QueueActionPosition::AT_END, testAction1);
+  actionList.QueueAction(QueueActionPosition::AT_END, testAction2);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test1"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 2);
+
+  EXPECT_EQ(actionList.QueueAction(QueueActionPosition::AT_END, testAction1), Anki::RESULT_FAIL);
+  EXPECT_EQ(actionList.QueueAction(QueueActionPosition::NEXT, testAction1), Anki::RESULT_FAIL);
+  EXPECT_EQ(actionList.QueueAction(QueueActionPosition::NOW, testAction1), Anki::RESULT_FAIL);
+  EXPECT_EQ(actionList.QueueAction(QueueActionPosition::NOW_AND_RESUME, testAction1), Anki::RESULT_FAIL);
+  EXPECT_EQ(actionList.QueueAction(QueueActionPosition::NOW_AND_CLEAR_REMAINING, testAction1), Anki::RESULT_FAIL);
+  EXPECT_EQ(actionList.QueueAction(QueueActionPosition::IN_PARALLEL, testAction1), Anki::RESULT_FAIL);
+
+  EXPECT_TRUE(actionList.IsCurrAction("Test1"));
+  EXPECT_EQ(actionList.GetQueueLength(0), 2);
+  EXPECT_EQ(actionList.GetNumQueues(), 1);
 }
 
 TEST(QueueAction, CancelFromDestructor)
 {
   Robot r(0, cozmoContext);
-  
-  TestAction* action = new TestAction(r, "TestAction", RobotActionType::WAIT);
-  TestAction* action2 = new TestAction(r, "TestAction2", RobotActionType::WAIT);
-  TestActionThatCancels* actionThatCancels = new TestActionThatCancels(r, "TestActionThatCancels", RobotActionType::WAIT);
+
+  auto * action = new TestAction(r, "TestAction", RobotActionType::WAIT);
+  auto * action2 = new TestAction(r, "TestAction2", RobotActionType::WAIT);
+  auto * actionThatCancels = new TestActionThatCancels(r, "TestActionThatCancels", RobotActionType::WAIT);
   actionThatCancels->_tagsToCancelOnDestroy.push_back(action->GetTag());
   actionThatCancels->_tagsToCancelOnDestroy.push_back(action2->GetTag());
-  
-  r.GetActionList().QueueAction(QueueActionPosition::NEXT, action);
-  r.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, actionThatCancels);
-  r.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, action2);
-  
-  r.GetActionList().Clear();
-  
+
+  auto & actionList = r.GetActionList();
+
+  actionList.QueueAction(QueueActionPosition::NEXT, action);
+  actionList.QueueAction(QueueActionPosition::IN_PARALLEL, actionThatCancels);
+  actionList.QueueAction(QueueActionPosition::IN_PARALLEL, action2);
+
+  actionList.Clear();
+
   EXPECT_TRUE(r.GetActionList().IsEmpty());
 }
 
 TEST(QueueAction, CancelAlreadyCancelledFromDestructor)
 {
   Robot r(0, cozmoContext);
-  
+
   // Cancel by tag
-  TestActionThatCancels* actionThatCancels = new TestActionThatCancels(r, "TestActionThatCancels", RobotActionType::WAIT);
+  auto * actionThatCancels = new TestActionThatCancels(r, "TestActionThatCancels", RobotActionType::WAIT);
   actionThatCancels->_tagsToCancelOnDestroy.push_back(actionThatCancels->GetTag());
-  
-  r.GetActionList().QueueAction(QueueActionPosition::NEXT, actionThatCancels);
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().Cancel(actionThatCancels->GetTag());
-  
-  r.GetActionList().Update();
-  
-  EXPECT_TRUE(r.GetActionList().IsEmpty());
-  
+
+  auto & actionList = r.GetActionList();
+
+  actionList.QueueAction(QueueActionPosition::NEXT, actionThatCancels);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  actionList.Cancel(actionThatCancels->GetTag());
+
+  Update(actionList);
+
+  EXPECT_TRUE(actionList.IsEmpty());
+
   // Cancel by type
   TestActionThatCancels* actionThatCancels2 = new TestActionThatCancels(r, "TestActionThatCancels", RobotActionType::WAIT);
   actionThatCancels2->_tagsToCancelOnDestroy.push_back(actionThatCancels2->GetTag());
-  
-  r.GetActionList().QueueAction(QueueActionPosition::NEXT, actionThatCancels2);
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 1);
-  
-  r.GetActionList().Cancel(actionThatCancels2->GetType());
-  
-  r.GetActionList().Update();
-  
-  EXPECT_TRUE(r.GetActionList().IsEmpty());
-  
+
+  actionList.QueueAction(QueueActionPosition::NEXT, actionThatCancels2);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 1);
+
+  actionList.Cancel(actionThatCancels2->GetType());
+
+  Update(actionList);
+
+  EXPECT_TRUE(actionList.IsEmpty());
+
   // Cancel by clearing
   TestActionThatCancels* actionThatCancels3 = new TestActionThatCancels(r, "TestActionThatCancels", RobotActionType::WAIT);
   actionThatCancels3->_tagsToCancelOnDestroy.push_back(actionThatCancels3->GetTag());
   actionThatCancels3->_clearInsteadOfCancel = true;
   TestAction* action = new TestAction(r, "Test1", RobotActionType::WAIT);
-  
-  r.GetActionList().QueueAction(QueueActionPosition::NEXT, actionThatCancels3);
-  r.GetActionList().QueueAction(QueueActionPosition::NEXT, action);
-  
-  EXPECT_EQ(r.GetActionList().GetQueueLength(0), 2);
 
-  r.GetActionList().Clear();
-  
-  EXPECT_TRUE(r.GetActionList().IsEmpty());
+  actionList.QueueAction(QueueActionPosition::NEXT, actionThatCancels3);
+  actionList.QueueAction(QueueActionPosition::NEXT, action);
+
+  EXPECT_EQ(actionList.GetQueueLength(0), 2);
+
+  actionList.Clear();
+
+  EXPECT_TRUE(actionList.IsEmpty());
 }
 
 
 TEST(QueueAction, ComplexNestedAction)
 {
   Robot r(0, cozmoContext);
-  
+
   using WeakAction = std::weak_ptr<IActionRunner>;
-  
+
   WeakAction testRef1;
   WeakAction testRef2;
   WeakAction testRef3;
@@ -1265,7 +1409,7 @@ TEST(QueueAction, ComplexNestedAction)
   WeakAction compRef2;
   WeakAction compRef3;
   WeakAction compRef4;
-  
+
   {
     // This Test1 Track locking intentionally results in Test2 not being able to begin due to Test1 locking all tracks, which is verified below
     TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT, track1);
@@ -1277,7 +1421,7 @@ TEST(QueueAction, ComplexNestedAction)
     TestCompoundActionSequential* compoundAction2 = new TestCompoundActionSequential(r, {}, "Comp2");
     TestCompoundActionParallel* compoundAction3 = new TestCompoundActionParallel(r, {}, "Comp3");
     TestCompoundActionParallel* compoundAction4 = new TestCompoundActionParallel(r, {}, "Comp4");
-    
+
     constexpr bool ignoreThisActionSuccessResult = true;
     testRef5 = compoundAction4->AddAction(testAction5);
     testRef4 = compoundAction2->AddAction(testAction4);
@@ -1287,10 +1431,13 @@ TEST(QueueAction, ComplexNestedAction)
     testRef2 = compoundAction3->AddAction(testAction2, ignoreThisActionSuccessResult);
     testRef1 = compoundAction1->AddAction(testAction1);
     compRef3 = compoundAction1->AddAction(compoundAction3);
-    
+
     compRef1 = compoundAction1;
   }
-  
+
+  auto & actionList = r.GetActionList();
+  auto & watcher = actionList.GetActionWatcher();
+
   std::set<u32> allTags = {testRef1.lock()->GetTag(),
                            testRef2.lock()->GetTag(),
                            testRef3.lock()->GetTag(),
@@ -1301,7 +1448,7 @@ TEST(QueueAction, ComplexNestedAction)
                            compRef3.lock()->GetTag(),
                            compRef4.lock()->GetTag()};
   std::set<u32> completedTags;
-  auto& watcher = r.GetActionList().GetActionWatcher();
+
   watcher.RegisterActionEndedCallbackForAllActions(
     [&completedTags](const ExternalInterface::RobotCompletedAction& completion) {
       const bool inserted = completedTags.insert(completion.idTag).second;
@@ -1309,9 +1456,10 @@ TEST(QueueAction, ComplexNestedAction)
     });
 
   actionsDestroyed.clear();
-  r.GetActionList().QueueAction(QueueActionPosition::AT_END, compRef1);
 
-  r.GetActionList().Update();
+  actionList.QueueAction(QueueActionPosition::AT_END, compRef1);
+
+  Update(actionList);
 
   // Tries to complete a TestAction, returning success
   auto completeIfExists = [] (WeakAction& weakActionRef) -> bool {
@@ -1319,7 +1467,7 @@ TEST(QueueAction, ComplexNestedAction)
     {
       return false;
     }
-    
+
     auto strongActionRef = weakActionRef.lock();
     auto* testActionPtr = dynamic_cast<TestAction*>(strongActionRef.get());
     if (testActionPtr)
@@ -1331,20 +1479,24 @@ TEST(QueueAction, ComplexNestedAction)
   };
 
   ASSERT_EQ(true, completeIfExists(testRef1));
-  r.GetActionList().Update();
+
+  Update(actionList);
 
   ASSERT_EQ(false, completeIfExists(testRef2));
-  r.GetActionList().Update();
+
+  Update(actionList);
 
   ASSERT_EQ(true, completeIfExists(testRef3));
-  r.GetActionList().Update();
-  
+
+  Update(actionList);
+
   ASSERT_EQ(true, completeIfExists(testRef4));
   ASSERT_EQ(true, completeIfExists(testRef5));
-  r.GetActionList().Update();
+
+  Update(actionList);
 
   // One extra update to account for highest-level compound action
-  r.GetActionList().Update();
+  Update(actionList);
 
   CheckTracksUnlocked(r, track1 | track2 | track3);
 
@@ -1361,15 +1513,15 @@ TEST(ActionTag, UniqueUnityTags)
   TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT);
   TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT);
   EXPECT_NE(testAction1->GetTag(), testAction2->GetTag());
-  
+
   testAction1->SetTag(20000);
   EXPECT_NE(testAction1->GetTag(), testAction2->GetTag());
   EXPECT_EQ(testAction1->GetTag(), 20000);
-  
+
   testAction2->SetTag(20001);
   EXPECT_NE(testAction1->GetTag(), testAction2->GetTag());
   EXPECT_EQ(testAction2->GetTag(), 20001);
-  
+
   delete testAction1;
   delete testAction2;
 }
@@ -1382,15 +1534,15 @@ TEST(ActionTag, ConflictingUnityTags)
   TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT);
   u32 origTag2 = testAction2->GetTag();
   EXPECT_NE(testAction1->GetTag(), testAction2->GetTag());
-  
+
   EXPECT_TRUE(testAction1->SetTag(100));
   EXPECT_NE(testAction1->GetTag(), testAction2->GetTag());
   EXPECT_EQ(testAction1->GetTag(), 100);
-  
+
   EXPECT_FALSE(testAction2->SetTag(100));
   EXPECT_NE(testAction1->GetTag(), testAction2->GetTag());
   EXPECT_EQ(testAction2->GetTag(), origTag2); // Tag will not change because of conflict
-  
+
   delete testAction1;
   delete testAction2;
 }
@@ -1404,15 +1556,15 @@ TEST(ActionTag, ConflictingNormalTags)
   u32 origTag1 = testAction1->GetTag();
   u32 origTag2 = testAction2->GetTag();
   EXPECT_NE(testAction1->GetTag(), testAction2->GetTag());
-  
+
   EXPECT_FALSE(testAction1->SetTag(origTag2));
   EXPECT_NE(testAction1->GetTag(), testAction2->GetTag());
   EXPECT_EQ(testAction1->GetTag(), origTag1); // Tag will not change because of conflict
-  
+
   EXPECT_FALSE(testAction2->SetTag(origTag1));
   EXPECT_NE(testAction1->GetTag(), testAction2->GetTag());
   EXPECT_EQ(testAction2->GetTag(), origTag2); // Tag will not change because of conflict
-  
+
   actionsDestroyed.clear();
   // Trying to queue an action with a bad tag should delete the action
   r.GetActionList().QueueAction(QueueActionPosition::NOW, testAction1);
@@ -1426,11 +1578,11 @@ TEST(ActionTag, ConflictAutoGeneratedTag)
   Robot r(0, cozmoContext);
   TestAction* testAction1 = new TestAction(r, "Test1", RobotActionType::WAIT);
   u32 origTag1 = testAction1->GetTag();
-  
+
   EXPECT_TRUE(testAction1->SetTag(origTag1+1));
-  
+
   EXPECT_EQ(testAction1->GetTag(), origTag1+1);
-  
+
   // First auto-generated tag will conflict with the set tag of testAction1 so testAction2's tag will be 2 greater
   // than testAction1's instead of 1 greater
   TestAction* testAction2 = new TestAction(r, "Test2", RobotActionType::WAIT);
@@ -1438,7 +1590,7 @@ TEST(ActionTag, ConflictAutoGeneratedTag)
   EXPECT_EQ(testAction2->GetTag(), origTag2);
   EXPECT_EQ(origTag2, origTag1+2);
   EXPECT_NE(testAction1->GetTag(), testAction2->GetTag());
-  
+
   delete testAction1;
   delete testAction2;
 }
@@ -1448,7 +1600,7 @@ TEST(ActionWatcher, AddAndRemoveCallbacks)
   Robot robot(0, cozmoContext);
 
   using ActionTag = uint32_t;
-  
+
   struct CallbackResult {
     ActionTag tag;
     RobotActionType type;
@@ -1466,35 +1618,37 @@ TEST(ActionWatcher, AddAndRemoveCallbacks)
     callbackResults[2] = {completion.idTag, completion.actionType, completion.result};
   };
 
-  auto& watcher = robot.GetActionList().GetActionWatcher();
-  
+  auto & actionList = robot.GetActionList();
+  auto & watcher = actionList.GetActionWatcher();
+
   ActionEndedCallbackID cbID1 = watcher.RegisterActionEndedCallbackForAllActions( cb1 );
 
-  robot.GetActionList().Update();
-  robot.GetActionList().Update();
+  Update(actionList);
+  Update(actionList);
 
-  EXPECT_TRUE( callbackResults.empty() );
-  
+  EXPECT_TRUE(callbackResults.empty());
+
   TestAction* testAction1 = new TestAction(robot, "Test1", RobotActionType::WAIT, track1);
   auto action1Tag = testAction1->GetTag();
-  
-  robot.GetActionList().QueueAction(QueueActionPosition::NOW, testAction1);  
-  robot.GetActionList().Update();
 
-  EXPECT_TRUE( callbackResults.empty() );
-  
+  actionList.QueueAction(QueueActionPosition::NOW, testAction1);
+
+  Update(actionList);
+
+  EXPECT_TRUE(callbackResults.empty());
+
   testAction1->_complete = true;
 
-  EXPECT_TRUE( callbackResults.empty() );
+  EXPECT_TRUE(callbackResults.empty());
 
-  robot.GetActionList().Update();
+  Update(actionList);
 
-  EXPECT_FALSE( callbackResults.empty() );
-  EXPECT_FALSE( callbackResults.find(1) == callbackResults.end() );
-  EXPECT_EQ( callbackResults.size(), 1 );
-  EXPECT_EQ( callbackResults[1].tag, action1Tag );
-  EXPECT_EQ( callbackResults[1].type, RobotActionType::WAIT );
-  EXPECT_EQ( callbackResults[1].result, ActionResult::SUCCESS );
+  EXPECT_FALSE(callbackResults.empty());
+  EXPECT_FALSE(callbackResults.find(1) == callbackResults.end());
+  EXPECT_EQ(callbackResults.size(), 1);
+  EXPECT_EQ(callbackResults[1].tag, action1Tag);
+  EXPECT_EQ(callbackResults[1].type, RobotActionType::WAIT);
+  EXPECT_EQ(callbackResults[1].result, ActionResult::SUCCESS);
 
   // add another watcher callback
   ActionEndedCallbackID cbID2 = watcher.RegisterActionEndedCallbackForAllActions( cb2 );
@@ -1503,54 +1657,63 @@ TEST(ActionWatcher, AddAndRemoveCallbacks)
 
   TestAction* testAction2 = new TestAction(robot, "Test2", RobotActionType::WAIT, track1);
   auto action2Tag = testAction2->GetTag();
-  
-  robot.GetActionList().QueueAction(QueueActionPosition::NOW, testAction2);
-  robot.GetActionList().Update();
-  testAction2->_complete = true;
-  robot.GetActionList().Update();
 
-  EXPECT_FALSE( callbackResults.empty() );
-  EXPECT_FALSE( callbackResults.find(1) == callbackResults.end() );
-  EXPECT_FALSE( callbackResults.find(2) == callbackResults.end() );
-  EXPECT_EQ( callbackResults.size(), 2 );
-  EXPECT_EQ( callbackResults[1].tag, action2Tag );
-  EXPECT_EQ( callbackResults[1].type, RobotActionType::WAIT );
-  EXPECT_EQ( callbackResults[1].result, ActionResult::SUCCESS );
-  EXPECT_EQ( callbackResults[2].tag, action2Tag );
-  EXPECT_EQ( callbackResults[2].type, RobotActionType::WAIT );
-  EXPECT_EQ( callbackResults[2].result, ActionResult::SUCCESS );
+  actionList.QueueAction(QueueActionPosition::NOW, testAction2);
+
+  Update(actionList);
+
+  testAction2->_complete = true;
+
+  Update(actionList);
+
+  EXPECT_FALSE(callbackResults.empty());
+  EXPECT_FALSE(callbackResults.find(1) == callbackResults.end());
+  EXPECT_FALSE(callbackResults.find(2) == callbackResults.end());
+  EXPECT_EQ(callbackResults.size(), 2);
+  EXPECT_EQ(callbackResults[1].tag, action2Tag);
+  EXPECT_EQ(callbackResults[1].type, RobotActionType::WAIT);
+  EXPECT_EQ(callbackResults[1].result, ActionResult::SUCCESS);
+  EXPECT_EQ(callbackResults[2].tag, action2Tag);
+  EXPECT_EQ(callbackResults[2].type, RobotActionType::WAIT);
+  EXPECT_EQ(callbackResults[2].result, ActionResult::SUCCESS);
 
   // Remove one callback
-  EXPECT_TRUE( watcher.UnregisterCallback(cbID1) );
-  EXPECT_FALSE( watcher.UnregisterCallback(cbID1) ) << "already removed";
+  EXPECT_TRUE(watcher.UnregisterCallback(cbID1));
+  EXPECT_FALSE(watcher.UnregisterCallback(cbID1)) << "already removed";
   callbackResults.clear();
 
   TestAction* testAction3 = new TestAction(robot, "Test3", RobotActionType::WAIT, track1);
   auto action3Tag = testAction3->GetTag();
-  
-  robot.GetActionList().QueueAction(QueueActionPosition::NOW, testAction3);
-  robot.GetActionList().Update();
-  testAction3->_complete = true;
-  robot.GetActionList().Update();
 
-  EXPECT_FALSE( callbackResults.empty() );
-  EXPECT_TRUE( callbackResults.find(1) == callbackResults.end() );
-  EXPECT_FALSE( callbackResults.find(2) == callbackResults.end() );
-  EXPECT_EQ( callbackResults.size(), 1 );
-  EXPECT_EQ( callbackResults[2].tag, action3Tag );
-  EXPECT_EQ( callbackResults[2].type, RobotActionType::WAIT );
-  EXPECT_EQ( callbackResults[2].result, ActionResult::SUCCESS );
+  actionList.QueueAction(QueueActionPosition::NOW, testAction3);
+
+  Update(actionList);
+
+  testAction3->_complete = true;
+
+  Update(actionList);
+
+  EXPECT_FALSE(callbackResults.empty());
+  EXPECT_TRUE(callbackResults.find(1) == callbackResults.end());
+  EXPECT_FALSE(callbackResults.find(2) == callbackResults.end());
+  EXPECT_EQ(callbackResults.size(), 1);
+  EXPECT_EQ(callbackResults[2].tag, action3Tag);
+  EXPECT_EQ(callbackResults[2].type, RobotActionType::WAIT);
+  EXPECT_EQ(callbackResults[2].result, ActionResult::SUCCESS);
 
   // Remove the final callback
-  EXPECT_TRUE( watcher.UnregisterCallback(cbID2) );
-  EXPECT_FALSE( watcher.UnregisterCallback(cbID2) ) << "already removed";
+  EXPECT_TRUE(watcher.UnregisterCallback(cbID2));
+  EXPECT_FALSE(watcher.UnregisterCallback(cbID2)) << "already removed";
   callbackResults.clear();
 
-  TestAction* testAction4 = new TestAction(robot, "Test4", RobotActionType::WAIT, track1);  
-  robot.GetActionList().QueueAction(QueueActionPosition::NOW, testAction4);
-  robot.GetActionList().Update();
-  testAction4->_complete = true;
-  robot.GetActionList().Update();
+  TestAction* testAction4 = new TestAction(robot, "Test4", RobotActionType::WAIT, track1);
+  actionList.QueueAction(QueueActionPosition::NOW, testAction4);
 
-  EXPECT_TRUE( callbackResults.empty() );  
+  Update(actionList);
+
+  testAction4->_complete = true;
+
+  Update(actionList);
+
+  EXPECT_TRUE(callbackResults.empty());
 }
