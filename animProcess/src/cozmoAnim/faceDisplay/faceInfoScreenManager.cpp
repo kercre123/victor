@@ -837,6 +837,10 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
       }
     }
   }
+  else
+  {
+    _liftTriggerReady = false;
+  }
 
   
   // Process head motion for going from Main screen to "hidden" debug info screens

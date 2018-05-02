@@ -42,103 +42,39 @@ namespace Cozmo {
 namespace {
 u32 _pin = 123456;
 
+const f32 kRobotNameScale = 0.6f;
 const std::string kURL = "anki.com/v";
-const ColorRGBA   kColor(0.7f, 0.7f, 0.7f, 1.f);
-}
-
-// Outputs textSize and scale in order to make text fill
-// imageWidth
-void MakeTextFillImageWidth(const std::string& text,
-                            int font,
-                            int thickness,
-                            int imageWidth,
-                            cv::Size& textSize,
-                            float& scale)
-{
-  int baseline = 0;
-  scale = 0.1f;
-  cv::Size prevTextSize(0,0);
-  for(; scale < 3.f; scale += 0.05f)
-  {
-    textSize = cv::getTextSize(text, 
-                               CV_FONT_NORMAL,
-                               scale, 
-                               1, 
-                               &baseline);
-
-    if(textSize.width > imageWidth)
-    {
-      scale -= 0.05f;
-      textSize = prevTextSize;
-      break;
-    }
-    prevTextSize = textSize;
-  }
-}
-
-// Draws text on img centered horizontally at verticalPos
-// OpenCV does not draw filled text so depending on the scale
-// there may be some empty pixels so drawTwiceToMaybeFillGaps
-// draws the text a second time at a slight offset to try and
-// fill the gaps
-void DrawTextCenteredHorizontally(const std::string text,
-                                  int font,
-                                  float scale,
-                                  int thickness,
-                                  Vision::ImageRGBA& img,
-                                  const ColorRGBA& color,
-                                  int verticalPos,
-                                  bool drawTwiceToMaybeFillGaps)
-{
-  int baseline = 0;
-  cv::Size textSize = cv::getTextSize(text, 
-                                      font,
-                                      scale, 
-                                      thickness, 
-                                      &baseline);
-
-  Point2f p((img.GetNumCols() - textSize.width)/2, 
-            verticalPos + textSize.height);
-
-  img.DrawText(p,
-               text,
-               color,
-               scale,
-               false,
-               thickness);
-
-  if(drawTwiceToMaybeFillGaps)
-  {
-    p.y() += 1;
-
-    img.DrawText(p,
-               text,
-               color,
-               scale,
-               false,
-               thickness);
-  }
+const ColorRGBA   kColor(0.9f, 0.9f, 0.9f, 1.f);
 }
 
 // Draws BLE name and url to screen
-void DrawStartPairingScreen(AnimationStreamer* animStreamer)
+bool DrawStartPairingScreen(AnimationStreamer* animStreamer)
 {
+  // Robot name will be empty until switchboard has set the property
+  std::string robotName = OSState::getInstance()->GetRobotName();
+  if(robotName == "")
+  {
+    return false;
+  }
+  
   animStreamer->EnableKeepFaceAlive(false, 0);
   animStreamer->Abort();
 
   auto* img = new Vision::ImageRGBA(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
   img->FillWith(Vision::PixelRGBA(0, 0));
 
-  DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, 0.5f, 1, *img, kColor, 0, false);
+  img->DrawTextCenteredHorizontally(robotName, CV_FONT_NORMAL, kRobotNameScale, 1, kColor, 15, false);
 
   cv::Size textSize;
   float scale = 0;
-  MakeTextFillImageWidth(kURL, CV_FONT_NORMAL, 1, img->GetNumCols(), textSize, scale);
-  DrawTextCenteredHorizontally(kURL, CV_FONT_NORMAL, scale, 1, *img, kColor, (FACE_DISPLAY_HEIGHT-textSize.height)/2, true);
+  Vision::Image::MakeTextFillImageWidth(kURL, CV_FONT_NORMAL, 1, img->GetNumCols(), textSize, scale);
+  img->DrawTextCenteredHorizontally(kURL, CV_FONT_NORMAL, scale, 1, kColor, (FACE_DISPLAY_HEIGHT + textSize.height)/2, true);
 
   auto handle = std::make_shared<Vision::SpriteWrapper>(img);
   const bool shouldRenderInEyeHue = false;
   animStreamer->SetFaceImage(handle, shouldRenderInEyeHue, 0);
+  
+  return true;
 }
 
 // Draws BLE name, key icon, and BLE pin to screen
@@ -154,9 +90,9 @@ void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* conte
             (FACE_DISPLAY_HEIGHT - key.GetNumRows())/2);
   img->DrawSubImage(key, p);
 
-  DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, 0.5f, 1, *img, kColor, 0, false);
+  img->DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, kRobotNameScale, 1, kColor, 15, false);
 
-  DrawTextCenteredHorizontally(std::to_string(_pin), CV_FONT_NORMAL, 0.7f, 1, *img, kColor, FACE_DISPLAY_HEIGHT-20, false);
+  img->DrawTextCenteredHorizontally(std::to_string(_pin), CV_FONT_NORMAL, 0.8f, 1, kColor, FACE_DISPLAY_HEIGHT-5, false);
 
   auto handle = std::make_shared<Vision::SpriteWrapper>(img);
   const bool shouldRenderInEyeHue = false;
@@ -200,17 +136,55 @@ void SetBLEPin(uint32_t pin)
   _pin = pin;
 }
 
-void InitConnectionFlow(AnimationStreamer* animStreamer)
+bool InitConnectionFlow(AnimationStreamer* animStreamer)
 {
   if(FACTORY_TEST)
   {
     // Don't start connection flow if not packed out
     if(!Factory::GetEMR()->fields.PACKED_OUT_FLAG)
     {
-      return;
+      return true;
     }
 
-    DrawStartPairingScreen(animStreamer);
+    return DrawStartPairingScreen(animStreamer);
+  }
+  return true;
+}
+
+void UpdatePairingLight(bool on)
+{
+  static bool isOn = false;
+  if(!isOn && on)
+  {
+    // Start system pairing light (pulsing orange/green)
+    RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
+          .light = {
+            .onColor = 0xFFFF0000,
+            .offColor = 0x00000000,
+            .onFrames = 16,
+            .offFrames = 16,
+            .transitionOnFrames = 16,
+            .transitionOffFrames = 16,
+            .offset = 0
+          }}));
+    AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
+    isOn = on; 
+  }
+  else if(isOn && !on)
+  {
+    // Turn system pairing light off
+    RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
+          .light = {
+            .onColor = 0x00000000,
+            .offColor = 0x00000000,
+            .onFrames = 1,
+            .offFrames = 1,
+            .transitionOnFrames = 0,
+            .transitionOffFrames = 0,
+            .offset = 0
+          }}));
+    AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
+    isOn = on;
   }
 }
 
@@ -219,6 +193,13 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
                           const AnimContext* context)
 {
   using namespace SwitchboardInterface;
+
+  // Update the pairing light
+  // Turn it on if we are on the START_PAIRING or SHOW_PIN screen
+  // Otherwise turn it off
+  UpdatePairingLight((msg.status == ConnectionStatus::START_PAIRING ||
+                      msg.status == ConnectionStatus::SHOW_PIN));
+  
 
   switch(msg.status)
   {
@@ -231,19 +212,6 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
     {
       FaceInfoScreenManager::getInstance()->EnablePairingScreen(true);
 
-      // Start system pairing light (pulsing orange/green)
-      RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
-        .light = {
-          .onColor = 0xFFFF0000,
-          .offColor = 0x00000000,
-          .onFrames = 16,
-          .offFrames = 16,
-          .transitionOnFrames = 16,
-          .transitionOffFrames = 16,
-          .offset = 0
-      }}));
-      AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
-      
       // Throttling square is annoying when trying to inspect the display so disable
       NativeAnkiUtilConsoleSetValueWithString("DisplayThermalThrottling", "false");
       DrawStartPairingScreen(animStreamer);
@@ -257,20 +225,7 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
     case ConnectionStatus::SETTING_WIFI:
     {
       DrawWifiScreen(animStreamer);
-
-      // Turn off system pairing light
-      RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
-        .light = {
-          .onColor = 0x00000000,
-          .offColor = 0x00000000,
-          .onFrames = 1,
-          .offFrames = 1,
-          .transitionOnFrames = 0,
-          .transitionOffFrames = 0,
-          .offset = 0
-      }}));
-      AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
-    }
+     }
     break;
     case ConnectionStatus::UPDATING_OS:
     {
@@ -304,20 +259,6 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
         animStreamer->EnableKeepFaceAlive(true, 0);
       }
       FaceInfoScreenManager::getInstance()->EnablePairingScreen(false);
-
-
-      // Safe guard to make sure system pairing light is turned off
-      RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
-        .light = {
-          .onColor = 0x00000000,
-          .offColor = 0x00000000,
-          .onFrames = 1,
-          .offFrames = 1,
-          .transitionOnFrames = 0,
-          .transitionOffFrames = 0,
-          .offset = 0
-      }}));
-      AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
     }
     break;
     case ConnectionStatus::COUNT:

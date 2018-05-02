@@ -71,6 +71,8 @@ namespace {
 
   CONSOLE_VAR(bool, kDebugFaceDraw_CycleWithButton, "DebugFaceDraw", true);
 
+  bool _connectionFlowInited = false;
+  
   static void ListAnimations(ConsoleFunctionContextRef context)
   {
     context->channel->WriteLog("<html>\n");
@@ -537,7 +539,7 @@ Result AnimProcessMessages::Init(AnimEngine* animEngine,
   _engAudioInput          = audioInput;
   _context                = context;
 
-  InitConnectionFlow(_animStreamer);
+  _connectionFlowInited = InitConnectionFlow(_animStreamer);
 
   return RESULT_OK;
 }
@@ -579,6 +581,13 @@ Result AnimProcessMessages::MonitorConnectionState(void)
 
 Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 {
+  // Keep trying to init the connection flow until it works
+  // which will be when the robot name has been set by switchboard
+  if(!_connectionFlowInited)
+  {
+    _connectionFlowInited = InitConnectionFlow(_animStreamer);
+  }
+  
   if (!AnimComms::IsConnectedToRobot()) {
     LOG_WARNING("AnimProcessMessages.Update", "No connection to robot");
     return RESULT_FAIL_IO_CONNECTION_CLOSED;

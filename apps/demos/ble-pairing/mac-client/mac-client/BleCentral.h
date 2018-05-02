@@ -66,6 +66,7 @@ enum WiFiAuth : uint8_t {
   NSString* _filter;
   
   NSMutableDictionary* _wifiAuth;
+  NSMutableSet* _wifiHidden;
   dispatch_queue_t _commandQueue;
   
   std::string _currentCommand;
@@ -79,6 +80,13 @@ enum WiFiAuth : uint8_t {
   int _commVersion;
   
   NSArray* _colorArray;
+  
+  // file download
+  uint32_t _currentFileId;
+  std::vector<uint8_t> _currentFileBuffer;
+  NSString* _downloadFilePath;
+
+  bool _isPairing;
 }
 
 - (std::string)hexStr:(char*)data length:(int)len;
@@ -89,6 +97,7 @@ enum WiFiAuth : uint8_t {
 - (void) handleReceive:(const void*)bytes length:(int)n;
 - (void) handleReceiveSecure:(const void*)bytes length:(int)n;
 - (void) printHelp;
+- (void) showProgress: (float)current expected:(float)expected;
 
 - (void) SendSshPublicKey:(std::string)filename;
 
@@ -98,6 +107,7 @@ enum WiFiAuth : uint8_t {
 - (void) HandleChallengeMessage:(const Anki::Victor::ExternalComms::RtsChallengeMessage&)msg;
 - (void) HandleChallengeSuccessMessage:(const Anki::Victor::ExternalComms::RtsChallengeSuccessMessage&)msg;
 - (void) HandleWifiScanResponse:(const Anki::Victor::ExternalComms::RtsWifiScanResponse&)msg;
+- (void) HandleWifiScanResponse_2:(const Anki::Victor::ExternalComms::RtsWifiScanResponse_2&)msg;
 - (void) HandleReceiveAccessPointResponse:(const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&)msg;
 
 - (void) send:(const void*)bytes length:(int)n;

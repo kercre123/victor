@@ -39,6 +39,7 @@ const uint32_t kIPCMessageVersion = 1;
 const size_t k128BitUUIDSize = 37;
 const size_t k16BitUUIDSize = 5;
 const size_t kAddressSize = 18;
+const size_t kAdapterNameSize = 240;
 const size_t kLocalNameSize = 32;
 const size_t kManufacturerDataMaxSize = 32;
 const size_t kServiceDataMaxSize = 32;
@@ -61,7 +62,14 @@ enum class IPCMessageType {
     StopScan,
     OnScanResults,
     ConnectToPeripheral,
-    OnOutboundConnectionChange
+    OnOutboundConnectionChange,
+    CharacteristicReadRequest,
+    OnCharacteristicReadResult,
+    DescriptorReadRequest,
+    OnDescriptorReadResult,
+    RequestConnectionParameterUpdate,
+    OnRequestConnectionParameterUpdateResult,
+    SetAdapterName
 };
 
 typedef struct __attribute__ ((__packed__)) IPCMessage {
@@ -79,6 +87,17 @@ typedef struct __attribute__ ((__packed__)) SendMessageArgs {
   uint8_t value[];
 } SendMessageArgs;
 
+typedef struct __attribute__ ((__packed__)) CharacteristicReadRequestArgs {
+  int connection_id;
+  char characteristic_uuid[k128BitUUIDSize];
+} CharacteristicReadRequestArgs;
+
+typedef struct __attribute__ ((__packed__)) DescriptorReadRequestArgs {
+  int connection_id;
+  char characteristic_uuid[k128BitUUIDSize];
+  char descriptor_uuid[k128BitUUIDSize];
+} DescriptorReadRequestArgs;
+
 typedef struct __attribute__ ((__packed__)) OnInboundConnectionChangeArgs {
   int connection_id;
   int connected;
@@ -90,6 +109,23 @@ typedef struct __attribute__ ((__packed__)) OnReceiveMessageArgs {
   uint32_t length;
   uint8_t value[];
 } OnReceiveMessageArgs;
+
+typedef struct __attribute__ ((__packed__)) OnCharacteristicReadResultArgs {
+  int connection_id;
+  char characteristic_uuid[k128BitUUIDSize];
+  int error;
+  uint32_t length;
+  uint8_t value[];
+} OnCharacteristicReadResultArgs;
+
+typedef struct __attribute__ ((__packed__)) OnDescriptorReadResultArgs {
+  int connection_id;
+  char characteristic_uuid[k128BitUUIDSize];
+  char descriptor_uuid[k128BitUUIDSize];
+  int error;
+  uint32_t length;
+  uint8_t value[];
+} OnDescriptorReadResultArgs;
 
 typedef struct __attribute__ ((__packed__)) DisconnectArgs {
   int connection_id;
@@ -176,6 +212,23 @@ typedef struct __attribute__ ((__packed__)) OnOutboundConnectionChangeArgs {
   GattDbRecord records[];
 } OnOutboundConnectionChangeArgs;
 
+typedef struct __attribute__ ((__packed__)) RequestConnectionParameterUpdateArgs {
+  char address[kAddressSize];
+  int min_interval;
+  int max_interval;
+  int latency;
+  int timeout;
+} RequestConnectionParameterUpdateArgs;
+
+typedef struct __attribute__ ((__packed__)) OnRequestConnectionParameterUpdateResultArgs {
+  char address[kAddressSize];
+  int status;
+} OnRequestConnectionParameterUpdateResultArgs;
+
+typedef struct __attribute__ ((__packed__)) SetAdapterNameArgs {
+  char name[kAdapterNameSize];
+} SetAdapterNameArgs;
+
 class IPCEndpoint {
  public:
   IPCEndpoint(struct ev_loop* loop);
@@ -216,9 +269,12 @@ class IPCEndpoint {
     TaskExecutor* task_executor_;
   };
   void AddPeerByFD(const int fd);
+  void RemovePeerByFD(const int fd);
+  void CreateSocket();
   void CloseSocket();
   void ReceiveMessage(PeerState* p);
   void SendQueuedMessagesToPeer(const int sockfd);
+  void HandleSocketCloseOrError(const int sockfd);
   virtual void OnReceiveError(const int sockfd);
   virtual void OnPeerClose(const int sockfd);
   virtual void OnReceiveIPCMessage(const int sockfd,

@@ -30,6 +30,8 @@
 #include "anki-ble/anki_ble_uuids.h"
 #include "anki-ble/ble_advertise_settings.h"
 #include "anki-wifi/wifi.h"
+#include "cutils/properties.h"
+#include "switchboardd/christen.h"
 #include "switchboardd/main.h"
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -46,11 +48,16 @@ void Daemon::Start() {
   _loop = ev_default_loop(0);
   _taskExecutor = std::make_unique<Anki::TaskExecutor>(_loop);
 
-  // InitializeWebsocketServer();
+  // Christen
+  Christen();
+
   InitializeEngineComms();
   _websocketServer = std::make_unique<WebsocketServer>(_engineMessagingClient);
   _websocketServer->Start();
   Log::Write("Finished Starting");
+
+  // Initialize Ble Ipc Timer
+  ev_timer_init(&_ankibtdTimer, HandleAnkibtdTimer, kRetryInterval_s, kRetryInterval_s);
 
   // Initialize Ota Timer
   _handleOtaTimer.signal = &_otaUpdateTimerSignal;
@@ -69,17 +76,56 @@ void Daemon::Stop() {
     _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
   }
 
-  ev_timer_stop(_loop, &_engineTimer.timer);
+  ev_timer_stop(_loop, &_engineTimer);
   ev_timer_stop(_loop, &_handleOtaTimer.timer);
+}
+
+void Daemon::Christen() {
+  Log::Write("[Chr] Christening");
+  RtsKeys savedSession = SavedSessionManager::LoadRtsKeys();
+  bool hasName = false;
+
+  if(savedSession.keys.version == SB_PAIRING_PROTOCOL_VERSION) {
+    // if saved session file is valid, retrieve saved hasName field
+    hasName = savedSession.keys.id.hasName;
+    Log::Write("[Chr] Valid version.");
+  }
+
+  if(!hasName) {
+    Log::Write("[Chr] No name, we must Christen.");
+
+    // the name field has enough space for 11 characters,
+    // and an additional null character
+    char name[12] = {0};
+
+    std::string nameString = Christen::GenerateName();
+    strcpy(name, nameString.c_str());
+
+    if(nameString.length() <= sizeof(name)) {
+      strcpy((char*)&savedSession.keys.id.name, (char*)&name);
+    }
+
+    Log::Write("[Chr] and his name shall be called, \"%s\"!", nameString.c_str());
+
+    savedSession.keys.id.hasName = true;
+
+    // explicit null termination
+    savedSession.keys.id.name[sizeof(name) - 1] = 0;
+
+    SavedSessionManager::SaveRtsKeys(savedSession);
+  }
+
+  // Set name property
+  (void)property_set("persist.anki.robot.name", savedSession.keys.id.name);
 }
 
 void Daemon::InitializeEngineComms() {
   _engineMessagingClient = std::make_shared<EngineMessagingClient>(_loop);
   _engineMessagingClient->Init();
   _engineMessagingClient->OnReceivePairingStatus().SubscribeForever(std::bind(&Daemon::OnPairingStatus, this, std::placeholders::_1));
-  _engineTimer.daemon = this;
-  ev_timer_init(&_engineTimer.timer, HandleEngineTimer, 0.1f, 0.1f);
-  ev_timer_start(_loop, &_engineTimer.timer);
+  _engineTimer.data = this;
+  ev_timer_init(&_engineTimer, HandleEngineTimer, kRetryInterval_s, kRetryInterval_s);
+  ev_timer_start(_loop, &_engineTimer);
 }
 
 bool Daemon::TryConnectToEngineServer() {
@@ -94,21 +140,35 @@ bool Daemon::TryConnectToEngineServer() {
   return connected;
 }
 
-void Daemon::InitializeBleComms() {
-  Log::Write("Initialize BLE");
-  _bleClient = std::make_unique<Anki::Switchboard::BleClient>(_loop);
-  _bleClient->OnConnectedEvent().SubscribeForever(std::bind(&Daemon::OnConnected, this, std::placeholders::_1, std::placeholders::_2));
-  _bleClient->OnDisconnectedEvent().SubscribeForever(std::bind(&Daemon::OnDisconnected, this, std::placeholders::_1, std::placeholders::_2));
+bool Daemon::TryConnectToAnkiBluetoothDaemon() {
+  if(!_bleClient->IsConnected()) {
+    (void)_bleClient->Connect();
+  }
 
-  bool connected = _bleClient->Connect();
-
-  if(connected) {
+  if(_bleClient->IsConnected()) {
     Log::Write("Ble IPC client connected.");
     UpdateAdvertisement(false);
   } else {
-    Log::Write("Fatal error. Could not connect to ankibluetoothd.");
-    // todo:// should probably exit program so that systemd will restart?
+    Log::Write("Failed to connect to ankibluetoothd ... trying again.");
   }
+
+  return _bleClient->IsConnected();
+}
+
+void Daemon::InitializeBleComms() {
+  Log::Write("Initialize BLE");
+
+  if(_bleClient.get() == nullptr) {
+    _bleClient = std::make_unique<Anki::Switchboard::BleClient>(_loop);
+
+    _bleOnConnectedHandle = _bleClient->OnConnectedEvent().ScopedSubscribe(std::bind(&Daemon::OnConnected, this, std::placeholders::_1, std::placeholders::_2));
+    _bleOnDisconnectedHandle = _bleClient->OnDisconnectedEvent().ScopedSubscribe(std::bind(&Daemon::OnDisconnected, this, std::placeholders::_1, std::placeholders::_2));
+    _bleOnIpcPeerDisconnectedHandle = _bleClient->OnIpcDisconnection().ScopedSubscribe(std::bind(&Daemon::OnBleIpcDisconnected, this));
+
+    _ankibtdTimer.data = this;
+  }
+
+  ev_timer_again(_loop, &_ankibtdTimer);
 }
 
 void Daemon::UpdateAdvertisement(bool pairing) {
@@ -132,6 +192,11 @@ void Daemon::UpdateAdvertisement(bool pairing) {
   mdata.push_back(Anki::kVictorProductIdentifier); // distinguish from future Anki products
   mdata.push_back(pairing?'p':0x00); // to indicate whether we are pairing
   settings.GetAdvertisement().SetManufacturerData(mdata);
+
+  RtsKeys rtsSession = SavedSessionManager::LoadRtsKeys();
+  const char* name = rtsSession.keys.id.name;
+  
+  _bleClient->SetAdapterName(std::string(name));
   _bleClient->StartAdvertising(settings);
 }
 
@@ -144,6 +209,7 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
       _pinHandle = _securePairing->OnUpdatedPinEvent().ScopedSubscribe(std::bind(&Daemon::OnPinUpdated, this, std::placeholders::_1));
       _otaHandle = _securePairing->OnOtaUpdateRequestEvent().ScopedSubscribe(std::bind(&Daemon::OnOtaUpdatedRequest, this, std::placeholders::_1));
       _endHandle = _securePairing->OnStopPairingEvent().ScopedSubscribe(std::bind(&Daemon::OnEndPairing, this));
+      _completedPairingHandle = _securePairing->OnCompletedPairingEvent().ScopedSubscribe(std::bind(&Daemon::OnCompletedPairing, this));
     }
     
     // Initiate pairing process
@@ -166,8 +232,14 @@ void Daemon::OnDisconnected(int connId, INetworkStream* stream) {
     _pinHandle = nullptr;
     _otaHandle = nullptr;
     _endHandle = nullptr;
+    _completedPairingHandle = nullptr;
     _securePairing = nullptr;
   }
+}
+
+void Daemon::OnBleIpcDisconnected() {
+  // Reinitialize Ble Comms
+  InitializeBleComms();
 }
 
 void Daemon::OnPinUpdated(std::string pin) {
@@ -178,6 +250,12 @@ void Daemon::OnPinUpdated(std::string pin) {
 }
 
 void Daemon::OnEndPairing() {
+  UpdateAdvertisement(false);
+}
+
+void Daemon::OnCompletedPairing() {
+  // Handle Successful Pairing Event
+  // (for now, the handling may be no different than failed pairing)
   UpdateAdvertisement(false);
 }
 
@@ -362,12 +440,22 @@ void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame
 }
 
 void Daemon::HandleEngineTimer(struct ev_loop* loop, struct ev_timer* w, int revents) {
-  ev_EngineTimerStruct* t = (ev_EngineTimerStruct*)w;
-  bool connected = t->daemon->TryConnectToEngineServer();
+  Daemon* daemon = (Daemon*)w->data;
+  bool connected = daemon->TryConnectToEngineServer();
 
   if(connected) {
-    ev_timer_stop(loop, &t->timer);
-    t->daemon->InitializeBleComms();
+    ev_timer_stop(loop, w);
+    daemon->InitializeBleComms();
+  }
+}
+
+void Daemon::HandleAnkibtdTimer(struct ev_loop* loop, struct ev_timer* w, int revents) {
+  Daemon* daemon = (Daemon*)w->data;
+  bool connected = daemon->TryConnectToAnkiBluetoothDaemon();
+
+  if(connected) {
+    ev_timer_stop(loop, w);
+    Log::Write("Initialization complete.");
   }
 }
 

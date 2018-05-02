@@ -313,10 +313,14 @@ const std::string& OSState::GetBuildSha()
   return _buildSha;
 }
 
-std::string OSState::GetRobotName() const
+const std::string& OSState::GetRobotName() const
 {
   static std::string name = GetProperty("persist.anki.robot.name");
-  return (name.empty() ? "Vector_0000" : name);
+  if(name.empty())
+  {
+    name = GetProperty("persist.anki.robot.name");
+  }
+  return  name;
 }
   
 void OSState::UpdateWifiInfo()

@@ -164,9 +164,10 @@ const std::vector<std::string>& OSState::GetCPUTimeStats() const
   return _cpu_time_stats_vec;
 }
 
-std::string OSState::GetRobotName() const
+const std::string& OSState::GetRobotName() const
 {
-  return "Vector_0000";
+  static const std::string name = "Vector_0000";
+  return name;
 }
 
 bool OSState::IsInRecoveryMode()

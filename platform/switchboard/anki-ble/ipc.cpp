@@ -28,7 +28,7 @@ namespace BluetoothDaemon {
 IPCEndpoint::IPCEndpoint(struct ev_loop* loop)
   : loop_(loop)
 {
-  sockfd_ = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
+  CreateSocket();
   addr_ = (const struct sockaddr_un) { .sun_family = AF_UNIX };
   (void) strlcpy(addr_.sun_path, kSocketName.c_str(), sizeof(addr_.sun_path));
   task_executor_ = new TaskExecutor(loop);
@@ -38,14 +38,20 @@ IPCEndpoint::~IPCEndpoint()
 {
   delete task_executor_; task_executor_ = nullptr;
   for (auto& pair : peers_) {
-    delete pair.second;
+    delete pair.second; pair.second = nullptr;
   }
+  peers_.clear();
   CloseSocket();
+}
+
+void IPCEndpoint::CreateSocket()
+{
+  sockfd_ = socket(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0);
 }
 
 void IPCEndpoint::CloseSocket()
 {
-  peers_.erase(sockfd_);
+  RemovePeerByFD(sockfd_);
   (void) close(sockfd_); sockfd_ = -1;
 }
 
@@ -131,6 +137,16 @@ void IPCEndpoint::AddPeerByFD(const int fd)
   peers_[fd] = new PeerState(read_write_watcher, task_executor_);
 }
 
+void IPCEndpoint::RemovePeerByFD(const int fd)
+{
+  auto search = peers_.find(fd);
+  if (search == peers_.end()) {
+    return;
+  }
+  delete search->second; search->second = nullptr;
+  peers_.erase(fd);
+}
+
 bool IPCEndpoint::SendMessageToAllPeers(const IPCMessageType type,
                                         uint32_t length,
                                         uint8_t* val)
@@ -204,7 +220,7 @@ void IPCEndpoint::SendQueuedMessagesToPeer(const int sockfd)
     ssize_t bytesSent = send(sockfd, packed_message.data(), packed_message.size(), 0);
     if (-1 == bytesSent) {
       if (errno == EAGAIN || errno == EWOULDBLOCK) {
-        logw("ipc-endpoint: send would block");
+        logv("ipc-endpoint: send would block");
         break;
       }
       OnSendError(sockfd, errno);
@@ -219,28 +235,27 @@ void IPCEndpoint::SendQueuedMessagesToPeer(const int sockfd)
   }
 }
 
-void IPCEndpoint::OnReceiveError(const int sockfd)
+void IPCEndpoint::HandleSocketCloseOrError(const int sockfd)
 {
-  peers_.erase(sockfd);
+  RemovePeerByFD(sockfd);
   if (sockfd == sockfd_) {
     CloseSocket();
   }
+}
+
+void IPCEndpoint::OnReceiveError(const int sockfd)
+{
+  HandleSocketCloseOrError(sockfd);
 }
 
 void IPCEndpoint::OnPeerClose(const int sockfd)
 {
-  peers_.erase(sockfd);
-  if (sockfd == sockfd_) {
-    CloseSocket();
-  }
+  HandleSocketCloseOrError(sockfd);
 }
 
 void IPCEndpoint::OnSendError(const int sockfd, const int error)
 {
-  peers_.erase(sockfd);
-  if (sockfd == sockfd_) {
-    CloseSocket();
-  }
+  HandleSocketCloseOrError(sockfd);
 }
 
 IPCEndpoint::PeerState::~PeerState()
