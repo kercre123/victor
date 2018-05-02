@@ -17,7 +17,7 @@ endif()
 set(GO_VERSION_FILE ${CMAKE_BINARY_DIR}/goversion)
 set(__GO_VERSION_TMP ${CMAKE_BINARY_DIR}/goversion_tmp)
 file(WRITE ${__GO_VERSION_TMP} ${ANKI_GO_VERSION})
-execute_process(COMMAND cmake -E copy_if_different ${__GO_VERSION_TMP} ${GO_VERSION_FILE})
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${__GO_VERSION_TMP} ${GO_VERSION_FILE})
 file(REMOVE ${__GO_VERSION_TMP})
 
 # internal use - set up build environment for go, based on platform
