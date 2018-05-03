@@ -436,9 +436,9 @@ void BehaviorInteractWithFaces::SelectFaceToTrack() const
   }
   const auto& faceSelection = GetAIComp<FaceSelectionComponent>();
   FaceSelectionComponent::FaceSelectionFactorMap criteriaMap;
-  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::UnnamedFace, 1000));
-  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 1));
-  criteriaMap.insert(std::make_pair(FaceSelectionComponent::FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3));
+  criteriaMap.insert(std::make_pair(FaceSelectionPenaltyMultiplier::UnnamedFace, 1000));
+  criteriaMap.insert(std::make_pair(FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 1));
+  criteriaMap.insert(std::make_pair(FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3));
   _dVars.targetFace = faceSelection.GetBestFaceToUse(criteriaMap, smartFaces);
 }
 

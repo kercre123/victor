@@ -1,0 +1,13 @@
+{
+  "behaviorClass": "AnimSequence",
+  "behaviorID": "ObservingOnChargerEyeContact",
+
+  "animTriggers" : ["HikingSquintStart"],
+  "playOnChargerWithoutBody": true,
+
+  "emotionEventOnActivated": "EyeContactReaction",
+
+  "wantsToBeActivatedCondition": {
+    "conditionType" : "EyeContact"
+  }
+}

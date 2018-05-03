@@ -14,15 +14,33 @@
 #include "engine/aiComponent/faceSelectionComponent.h"
 
 #include "engine/actions/basicActions.h"
-#include "engine/faceWorld.h"
 #include "engine/components/mics/micDirectionHistory.h"
+#include "engine/faceWorld.h"
 #include "engine/robot.h"
 #include "engine/smartFaceId.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/helpers/fullEnumToValueArrayChecker.h"
+
+#include "json/json.h"
 
 namespace Anki {
 namespace Cozmo {
+
+namespace {
+static const char* kPenaltyFactorKey = "factor";
+static const char* kPenaltyMultiplierKey = "multiplier";
+
+CONSOLE_VAR(bool, kFaceSelectionDebugging, "FaceSelection", false);
+}
+
+const FaceSelectionComponent::FaceSelectionFactorMap FaceSelectionComponent::kDefaultSelectionCriteria = {
+  {FaceSelectionPenaltyMultiplier::Distance_m, 4.0f},
+  {FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians, 3.0f},
+  {FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians, 0.1f},
+  {FaceSelectionPenaltyMultiplier::TimeSinceSeen_s, 20.0f},
+  {FaceSelectionPenaltyMultiplier::NotMakingEyeContact, 1.0f} };
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 FaceSelectionComponent::~FaceSelectionComponent()
@@ -30,6 +48,38 @@ FaceSelectionComponent::~FaceSelectionComponent()
 
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool FaceSelectionComponent::ParseFaceSelectionFactorMap(const Json::Value& config, FaceSelectionFactorMap& output)
+{
+  // use a local map to avoid corrupting the output if we fail to parse later on
+  FaceSelectionFactorMap map;
+
+  for( const auto& entry : config ) {
+    if( !entry[kPenaltyFactorKey].isString() || !entry[kPenaltyMultiplierKey].isNumeric() ) {
+      return false;
+    }
+
+    map.emplace( FaceSelectionPenaltyMultiplierFromString( entry[kPenaltyFactorKey].asString() ),
+                 entry[kPenaltyMultiplierKey].asFloat() );
+  }
+
+  // all parsed ok if we get here
+  output.swap(map);
+  return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SmartFaceID FaceSelectionComponent::GetBestFaceToUse(const FaceSelectionFactorMap& criteriaMap) const
+{
+  const auto& faces = _faceWorld.GetFaceIDs();
+  std::vector<SmartFaceID> smartFaces;
+
+  for(auto faceID : faces) {
+    smartFaces.emplace_back( _faceWorld.GetSmartFaceID( faceID ) );
+  }
+  
+  return GetBestFaceToUse(criteriaMap, smartFaces);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SmartFaceID FaceSelectionComponent::GetBestFaceToUse(const FaceSelectionFactorMap& criteriaMap,
@@ -46,13 +96,27 @@ SmartFaceID FaceSelectionComponent::GetBestFaceToUse(const FaceSelectionFactorMa
   
   // Set up the scoring callback functions
   typedef std::function<int(const Vision::TrackedFace*)> calcScoreFunction;
-  using FullCalcScoreArray = Util::FullEnumToValueArrayChecker::FullEnumToValueArray<FaceSelectionPenaltyMultiplier, calcScoreFunction, FaceSelectionPenaltyMultiplier::Count>;
+  using FullCalcScoreArray = Util::FullEnumToValueArrayChecker::FullEnumToValueArray<
+    FaceSelectionPenaltyMultiplier,
+    calcScoreFunction,
+    FaceSelectionPenaltyMultiplier::Count>;  
+  
   static const FullCalcScoreArray kFullScoreCalcMap = {
-    {FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians,    std::bind(&FaceSelectionComponent::CalculateBodyAngleCost, this, std::placeholders::_1)},
-    {FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians,    std::bind(&FaceSelectionComponent::CalculateHeadAngleCost, this, std::placeholders::_1)},
-    {FaceSelectionPenaltyMultiplier::RelativeMicDirectionRadians, std::bind(&FaceSelectionComponent::CalculateMicDirectionCost, this, std::placeholders::_1)},
-    {FaceSelectionPenaltyMultiplier::UnnamedFace,                 std::bind(&FaceSelectionComponent::CalculateUnnamedCost, this, std::placeholders::_1)},
-    {FaceSelectionPenaltyMultiplier::TimeSinceSeen_s,             std::bind(&FaceSelectionComponent::CalculateTimeSinceSeenCost, this, std::placeholders::_1)}
+    {FaceSelectionPenaltyMultiplier::RelativeBodyAngleRadians,
+     std::bind(&FaceSelectionComponent::CalculateBodyAngleCost, this, std::placeholders::_1)},
+    {FaceSelectionPenaltyMultiplier::RelativeHeadAngleRadians,
+     std::bind(&FaceSelectionComponent::CalculateHeadAngleCost, this, std::placeholders::_1)},
+    {FaceSelectionPenaltyMultiplier::RelativeMicDirectionRadians,
+     std::bind(&FaceSelectionComponent::CalculateMicDirectionCost, this, std::placeholders::_1)},
+    {FaceSelectionPenaltyMultiplier::UnnamedFace,
+     std::bind(&FaceSelectionComponent::CalculateUnnamedCost, this, std::placeholders::_1)},
+    {FaceSelectionPenaltyMultiplier::TimeSinceSeen_s,
+     std::bind(&FaceSelectionComponent::CalculateTimeSinceSeenCost, this, std::placeholders::_1)},
+    {FaceSelectionPenaltyMultiplier::NotMakingEyeContact,
+     std::bind(&FaceSelectionComponent::CalculateNotMakingEyeContact, this, std::placeholders::_1)},
+    {FaceSelectionPenaltyMultiplier::Distance_m,
+     std::bind(&FaceSelectionComponent::CalculateDistanceCost, this, std::placeholders::_1)}
+
   };
   DEV_ASSERT(IsSequentialArray(kFullScoreCalcMap), 
              "FaceSelectionComponent.GetBestFaceToUse.ScoreFuncsNotSequenttial");
@@ -76,7 +140,24 @@ SmartFaceID FaceSelectionComponent::GetBestFaceToUse(const FaceSelectionFactorMa
       const float criteriaScore = scoringFunc(currentFace);
       const float criteriaFactor = criteriaPair.second;
       currentScore += (criteriaScore * criteriaFactor);
+
+      if( kFaceSelectionDebugging ) {
+        PRINT_CH_DEBUG("Behaviors", "FaceSelectionComponent.Scoring",
+                       "%s: %s = %f * factor %f",
+                       currentID.GetDebugStr().c_str(),
+                       FaceSelectionPenaltyMultiplierToString(criteriaPair.first),
+                       criteriaScore,
+                       criteriaFactor);
+      }                       
     }
+
+    if( kFaceSelectionDebugging ) {
+      PRINT_CH_DEBUG("Behaviors", "FaceSelectionComponent.Scoring",
+                     "%s: total = %f",
+                     currentID.GetDebugStr().c_str(),
+                     currentScore);
+    }                       
+
     
     if(currentScore < bestScore){
       bestScore = currentScore;
@@ -89,25 +170,9 @@ SmartFaceID FaceSelectionComponent::GetBestFaceToUse(const FaceSelectionFactorMa
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-FaceSelectionComponent::FaceSelectionPenaltyMultiplier FaceSelectionComponent::FaceSelectionPenaltyFromString(const std::string& str)
-{
-  using ID = FaceSelectionComponent::FaceSelectionPenaltyMultiplier;
-  if(str =="RelativeBodyAngleRadians")   { return ID::RelativeBodyAngleRadians;}
-  if(str =="RelativeHeadAngleRadians")   { return ID::RelativeHeadAngleRadians;}
-  if(str =="RelativeMicDirectionRadians"){ return ID::RelativeMicDirectionRadians;}
-  if(str =="UnnamedFace")                { return ID::UnnamedFace;}
-  if(str =="TimeSinceSeen_s")            { return ID::TimeSinceSeen_s;}
-
-  DEV_ASSERT(false, "FaceSelectionComponent.FaceSelectionPenaltyFromString.NoMatch");
-  return ID::Count;
-}
-
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float FaceSelectionComponent::CalculateHeadAngleCost(const Vision::TrackedFace* currentFace) const
 {
-  Pose3d poseWrtRobot;    
+  Pose3d poseWrtRobot;
   if( ! currentFace->GetHeadPose().GetWithRespectTo(_robot.GetPose(), poseWrtRobot) ) {
     // no transform, probably a different origin
     return 0.0f;
@@ -158,6 +223,27 @@ float FaceSelectionComponent::CalculateUnnamedCost(const Vision::TrackedFace* cu
 float FaceSelectionComponent::CalculateTimeSinceSeenCost(const Vision::TrackedFace* currentFace) const
 {
   return currentFace->GetTimeStamp()/1000.0f;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float FaceSelectionComponent::CalculateNotMakingEyeContact(const Vision::TrackedFace* currentFace) const
+{
+  // apply a penalty if not making eye contact
+  return currentFace->IsMakingEyeContact() ? 0.0f : 1.0f;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float FaceSelectionComponent::CalculateDistanceCost(const Vision::TrackedFace* currentFace) const
+{
+
+  float distanceBetween_mm = 0.0f;
+  
+  if( ! ComputeDistanceBetween(currentFace->GetHeadPose(), _robot.GetPose(), distanceBetween_mm) ) {
+    // no transform, probably a different origin
+    return 0.0f;
+  }
+
+  return MM_TO_M(distanceBetween_mm);
 }
 
 } // namespace Cozmo

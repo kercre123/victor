@@ -17,6 +17,9 @@
 #include "engine/aiComponent/faceSelectionComponent.h"
 #include "engine/smartFaceId.h"
 
+#include "clad/types/faceSelectionTypes.h"
+
+
 namespace Anki {
 namespace Cozmo {
 
@@ -43,7 +46,6 @@ protected:
   virtual void OnBehaviorActivated() override;
 
 private:
-  using FaceSelectionPenaltyMultiplier = FaceSelectionComponent::FaceSelectionPenaltyMultiplier;
   enum class ComeHereState{
     TurnTowardsMicDirection,
     TurnTowardsFace,
@@ -57,7 +59,7 @@ private:
     bool   preferMicData = false;
   } _params;
 
-  std::vector<FaceSelectionComponent::FaceSelectionPenaltyMultiplier> _facePriorities;
+  std::vector<FaceSelectionPenaltyMultiplier> _facePriorities;
   SmartFaceID _currentFaceID;
 
   void TurnTowardsMicDirection();
