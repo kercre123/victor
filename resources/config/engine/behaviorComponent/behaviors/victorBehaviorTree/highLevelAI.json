@@ -234,7 +234,8 @@
       "from": [
         "Observing",
         "Socializing",
-        "PlayingWithCube"
+        "PlayingWithCube",
+        "Exploring"
       ],
       "interruptingTransitions": [
         {
