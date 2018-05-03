@@ -9,8 +9,8 @@
     "use_grayscale":   false,
 
     // NOTE: scale/shift only used with floating point (non-quantized) models!
-    "input_scale": 1.0, 
-    "input_shift": 0, 
+    "input_scale": 127.5, 
+    "input_shift": -1, 
     
     "top_K": 1, 
     "min_score": 0.0,
