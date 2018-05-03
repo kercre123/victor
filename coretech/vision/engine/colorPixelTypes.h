@@ -257,7 +257,7 @@ namespace Vision {
   {
     union cast_t {
       struct {
-#if defined(ANDROID)
+#if defined(VICOS)
         u8 b;
         u8 g;
         u8 r;
@@ -285,7 +285,7 @@ namespace Vision {
   {
     union cast_t {
       struct {
-#if defined(ANDROID)
+#if defined(VICOS)
         u8 r;
         u8 g;
         u8 b;

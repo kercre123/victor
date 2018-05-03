@@ -83,7 +83,7 @@ ImageRGBA SpriteWrapper::GetSpriteContentsRGBA(const HSImageHandle& hsImage)
 {
   // Return cahed RGBA if possible
   if((_spriteRGBA != nullptr) &&
-     (hsImage->GetHSID() == _hsID)){
+     (hsImage == nullptr || hsImage->GetHSID() == _hsID)){
     return *_spriteRGBA;
   }
   
