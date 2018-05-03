@@ -77,8 +77,10 @@ static void mcu_flash_program_(uint32_t flash_addr, const uint8_t *bin, const ui
   mcu_swd_init_();
   
   int size = binEnd - bin;
-  if( size < 1 )
+  if( size < 1 ) {
+    ConsolePrintf("BAD_ARG: mcu_flash_program_() size=%i\n", size );
     throw ERROR_BAD_ARG;
+  }
   
   ConsolePrintf("load %s: %u kB\n", name?name:"program", CEILDIV(size,1024));
   try { swd_stm32_flash(flash_addr, bin, binEnd, verify); }

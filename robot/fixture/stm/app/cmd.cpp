@@ -142,8 +142,10 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
   
   if( dbuf ) {
     dbuf->wlen = 0;
-    if( !dbuf->p || dbuf->size < 1 )
+    if( !dbuf->p || dbuf->size < 1 ) {
+      ConsolePrintf("BAD_ARG: cmdSend() dbuf.p=%08x dbuf.size=%i\n", (uint32_t)dbuf->p, dbuf->size);
       throw ERROR_BAD_ARG; //dbuf = NULL;
+    }
   }
   
   //negative timeout: renew on activity

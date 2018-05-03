@@ -408,8 +408,10 @@ static motor_speed_t* tread_test_(uint8_t sensor, int8_t power)
   
   int8_t pwrL = sensor == RCOM_SENSOR_MOT_LEFT ? power : 0;
   int8_t pwrR = sensor == RCOM_SENSOR_MOT_RIGHT ? power : 0;
-  if( sensor != RCOM_SENSOR_MOT_LEFT && sensor != RCOM_SENSOR_MOT_RIGHT )
+  if( sensor != RCOM_SENSOR_MOT_LEFT && sensor != RCOM_SENSOR_MOT_RIGHT ) {
+    ConsolePrintf("BAD_ARG: tread_test_() sensor=%i\n", sensor);
     throw ERROR_BAD_ARG;
+  }
   
   //Forward
   int start_pos = rcomGet(1, sensor, printlvl)[0].enc.pos; //get the idle start position
@@ -827,8 +829,11 @@ static void RobotLogCollect(void)
 static void RobotFlexFlowPackoutReport(void)
 {
   //XXX validate nfo
-  if( !flexnfo.esn || flexnfo.esn == 0xFFFFffff || !flexnfo.bsv.ein[0] || flexnfo.bsv.ein[0] == 0xFFFFffff ) //|| !flexnfo.bat_mv )
+  if( !flexnfo.esn || flexnfo.esn == 0xFFFFffff || !flexnfo.bsv.ein[0] || flexnfo.bsv.ein[0] == 0xFFFFffff ) //|| !flexnfo.bat_mv ) 
+  {
+    ConsolePrintf("BAD_ARG: PackoutReport() esn=%08x ein=%08x bat_mv=%i\n", flexnfo.esn, flexnfo.bsv.ein[0], flexnfo.bat_mv);
     throw ERROR_BAD_ARG;
+  }
   //if( !flexnfo.packoutdate )
   //  throw ERROR_BAD_ARG;
   

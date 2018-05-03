@@ -250,8 +250,10 @@ static robot_sr_t* ccc_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t
   memset( &m_ccc, 0, sizeof(m_ccc) );
   memset( srbuf, 0, (1+NN)*sizeof(robot_sr_t) );
   m_ccc.sr_cnt = ccr_sr_cnt[sensor]; //expected number of sensor values per drop/line
-  if( !NN || sensor >= sizeof(ccr_sr_cnt) )
+  if( !NN || sensor >= sizeof(ccr_sr_cnt) ) {
+    ConsolePrintf("BAD_ARG: ccc_MotGet_() NN=%i sensor=%i>=%i\n", NN, sensor, sizeof(ccr_sr_cnt));
     throw ERROR_BAD_ARG;
+  }
   
   int cmd_opts = printlvl2cmdopts(printlvl);
   cmdSend(CMD_IO_CONTACTS, b, 500 + (int)NN*10, cmd_opts, sensor_handler_);
@@ -274,9 +276,13 @@ int cccRlg(uint8_t idx, char *buf, int buf_max_size)
 {
   CCC_CMD_DELAY();
   char b[22]; const int bz = sizeof(b);
-  const int opts = CCC_CMD_OPTS; // | CMD_OPTS_LOG_RAW_RX_DBG) & ~(CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER);
+  const int opts = CCC_CMD_OPTS | CMD_OPTS_ALLOW_STATUS_ERRS; // | CMD_OPTS_LOG_RAW_RX_DBG) & ~(CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER);
   cmd_dbuf_t dbuf = { buf, buf_max_size, 0 };
   cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"rlg %02x 00 00 00 00 00", idx), -1000, opts, 0, (dbuf.p && dbuf.size>0 ? &dbuf : 0) );
+  if( cmdStatus() == 3 )
+    throw ERROR_ROBOT_MISSING_LOGFILE;
+  else if( cmdStatus() != 0 )
+    throw ERROR_TESTPORT_CMD_FAILED;
   
   //detect and remove the ":LOG n" line inserted by vic-robot parser
   if( dbuf.p && dbuf.wlen > 4 && !strncmp(dbuf.p, ":LOG", 4) ) {
@@ -404,8 +410,10 @@ int halSpineSend(uint8_t *payload, PayloadId type)
 {
   spinePacket_t txPacket;
   uint16_t payloadlen = payload ? payload_size_(type,1) : 0; //allow 0-length payload
-  if( payload && !payloadlen ) //unsupported type
+  if( payload && !payloadlen ) { //unsupported type
+    ConsolePrintf("BAD_ARG: halSpineSend() payload=%08x len=%i\n", (uint32_t)payload, payloadlen);
     throw ERROR_BAD_ARG;
+  }
   
   txPacket.header.sync_bytes = SYNC_HEAD_TO_BODY;
   txPacket.header.payload_type = type;
@@ -626,8 +634,10 @@ static robot_sr_t* spine_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8
   
   ConsolePrintf("spineMot %u %u %u %u %u %u\n", NN, sensor, treadL, treadR, lift, head);
   memset( srbuf, 0, (1+NN)*sizeof(robot_sr_t) );
-  if( !NN )
+  if( !NN || sensor >= sizeof(ccr_sr_cnt) ) {
+    ConsolePrintf("BAD_ARG: spine_MotGet_() NN=%i sensor=%i>=%i\n", NN, sensor, sizeof(ccr_sr_cnt));
     throw ERROR_BAD_ARG;
+  }
   
   return (robot_sr_t*)srbuf;
 }
