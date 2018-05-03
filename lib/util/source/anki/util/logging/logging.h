@@ -310,10 +310,13 @@ constexpr const char * LOG_UNFILTERED = "Unfiltered";
   ::Anki::Util::sChanneledInfoF(channel, name, {}, format, ##__VA_ARGS__); \
 } while(0)
 
+#if ALLOW_DEBUG_LOGGING
 #define PRINT_CH_DEBUG(channel, name, format, ...) do { \
   ::Anki::Util::sChanneledDebugF(channel, name, {}, format, ##__VA_ARGS__); \
 } while(0)
-
+#else
+#define PRINT_CH_DEBUG(channel, name, format, ...)
+#endif
 //
 // Periodic logging with channels.
 //
