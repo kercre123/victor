@@ -5,7 +5,7 @@
     },
     "remoteMinLogLevel": "event",
     "gameMinLogLevel": "info",
-    "url": "https://sqs.us-west-2.amazonaws.com/792379844846/DasInternal-dasinternalSqs-1HN6JX3NZPGNT",
+    "url": "TBD",
     "flushInterval": 15,
     "maxLogLength": 150000,
     "maxLogFiles": 5000

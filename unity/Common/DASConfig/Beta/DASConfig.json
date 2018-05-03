@@ -5,7 +5,7 @@
     },
     "remoteMinLogLevel": "event",
     "gameMinLogLevel": "info",
-    "url": "https://sqs.us-west-2.amazonaws.com/792379844846/DasBeta-dasbetaSqs-1UXG3IR38L4LR",
+    "url": "TBD",
     "flushInterval": 15,
     "maxLogLength": 150000,
     "maxLogFiles": 5000

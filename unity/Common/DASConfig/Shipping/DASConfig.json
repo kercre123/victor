@@ -5,7 +5,7 @@
     },
     "remoteMinLogLevel": "event",
     "gameMinLogLevel": "event",
-    "url": "https://sqs.us-west-2.amazonaws.com/792379844846/DasProd-dasprodSqs-1845FTIME3RHN",
+    "url": "TBD",
     "flushInterval": 15,
     "maxLogLength": 150000,
     "maxLogFiles": 5000
