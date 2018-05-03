@@ -3,7 +3,6 @@ cxx_project(
     srcs = cxx_src_glob(['.'],
                         excludes = [
                             '**/android/*',
-                            'latticePlannerTest.cpp',
                         ]),
     platform_srcs = [
         ('android', glob([
