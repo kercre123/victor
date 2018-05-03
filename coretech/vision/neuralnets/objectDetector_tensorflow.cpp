@@ -423,12 +423,14 @@ Result ObjectDetector::Detect(cv::Mat& img, std::list<DetectedObject>& objects)
       _params.input_width << "x" << _params.input_height << " " << typeStr << " tensor" << std::endl;
   }
 
+  const auto kResizeMethod = CV_INTER_LINEAR;
+
   if(_useFloatInput)
   {
     // TODO: Resize and convert directly into the tensor
     if(img.rows != _params.input_height || img.cols != _params.input_width)
     {
-      cv::resize(img, img, cv::Size(_params.input_width,_params.input_height), 0, 0, CV_INTER_AREA);
+      cv::resize(img, img, cv::Size(_params.input_width,_params.input_height), 0, 0, kResizeMethod);
     } 
     else if(_params.verbose)
     {
@@ -468,7 +470,7 @@ Result ObjectDetector::Detect(cv::Mat& img, std::list<DetectedObject>& objects)
                      (img.channels() == 1 ? CV_8UC1 : CV_8UC3),
                      image_tensor.tensor<uint8_t, 4>().data());
 
-    cv::resize(img, cvTensor, cv::Size(_params.input_width,_params.input_height), 0, 0, CV_INTER_AREA);
+    cv::resize(img, cvTensor, cv::Size(_params.input_width,_params.input_height), 0, 0, kResizeMethod);
   }
     
   if(_params.verbose)
