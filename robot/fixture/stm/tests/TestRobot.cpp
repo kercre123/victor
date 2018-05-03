@@ -57,7 +57,7 @@ static void dbg_test_emr_(bool blank_only, bool dont_clear)
   ConsolePrintf("EMR READ/WRITE TEST\n");
   
   //reset EMR to blank
-  for(idx=0; idx < 256; idx++)
+  for(idx=1; idx < 256; idx++)
     rcomSmr(idx, 0);
   if( blank_only )
     return;
@@ -66,6 +66,11 @@ static void dbg_test_emr_(bool blank_only, bool dont_clear)
   srand(Timer::get());
   for(idx=0; idx < 256; idx++)
   {
+    if( !idx ) { //index 0 esn is non-writable
+      m_emr[idx] = rcomGmr(idx);
+      continue;
+    }
+    
     uint32_t val = ((rand()&0xffff) << 16) | (rand()&0xffff);
     
     //keep some fields 0 to prevent strange robot behavior
@@ -98,7 +103,7 @@ static void dbg_test_emr_(bool blank_only, bool dont_clear)
     return;
   
   //reset EMR to blank
-  for(idx=0; idx < 256; idx++)
+  for(idx=1; idx < 256; idx++)
     rcomSmr(idx, 0);
   
   ConsolePrintf("EMR test %s: %u errors\n", mismatch > 0 ? "FAILED" : "passed", mismatch);
