@@ -31,6 +31,7 @@ DONE_FILE = os.path.join(STATUS_DIR, "done")
 MANIFEST_FILE = os.path.join(STATUS_DIR, "manifest.ini")
 MANIFEST_SIG = os.path.join(STATUS_DIR, "manifest.sha256")
 BOOT_STAGING = os.path.join(STATUS_DIR, "boot.img")
+DELTA_STAGING = os.path.join(STATUS_DIR, "delta.bin")
 OTA_PUB_KEY = "/anki/etc/ota.pub"
 OTA_ENC_PASSWORD = "/anki/etc/ota.pas"
 DD_BLOCK_SIZE = 1024*256
@@ -39,6 +40,12 @@ SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5"]
 DEBUG = False
 SIGNATURE_VALIDATION_DISABLED = False
 
+
+def safe_delete(name):
+    if os.path.isfile(name):
+        os.remove(name)
+    elif os.path.isdir(name):
+        shutil.rmtree(name)
 
 def clear_status():
     "Clear everything out of the status directory"
@@ -163,6 +170,7 @@ def get_section_encryption(manifest, section):
 def get_password():
     "Returns the encryption password"
     return open(OTA_ENC_PASSWORD, "rb").read()
+
 
 
 def open_url_stream(url):
@@ -404,9 +412,57 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
     delta_base_version = manifest.get("DELTA", "base_version")
     if current_version != delta_base_version:
         die(211, "My version is {} not {}".format(current_version, delta_base_version))
-    write_status(EXPECTED_WRITE_SIZE_FILE, manifest.getint("DELTA", "bytes"))
+    total_size = manifest.getint("DELTA", "bytes")
+    write_status(EXPECTED_WRITE_SIZE_FILE, total_size)
+    written_size = 0
     write_status(PROGRESS_FILE, 0)
-    die(207, "Delta updates not actually implemented")
+    # Extract delta file
+    if DEBUG:
+        print("Delta")
+    delta_ti = tar_stream.next()
+    if not delta_ti.name.endswith("delta.bin.gz"):
+        die(200,
+            "Expected delta.bin.gz to be next in tar but found \"{}\""
+            .format(delta_ti.name))
+    wbits = manifest.getint("DELTA", "wbits")
+    digest = sha256()
+    with open(DELTA_STAGING, "wb") as delta_fh:
+        src_file = tar_stream.extractfile(delta_ti)
+        enc = get_section_encryption(manifest, "DELTA")
+        if enc == 1:
+            src_file = CryptStream(src_file, get_password())
+        elif enc != 0:
+            die(210, "Unsupported enc value")
+        for delta_block in GZStreamGenerator(src_file, DD_BLOCK_SIZE, wbits):
+            delta_fh.write(delta_block)
+            digest.update(delta_block)
+            written_size += len(delta_block)
+            write_status(PROGRESS_FILE, written_size)
+            if DEBUG:
+                sys.stdout.write("{0:0.3f}\r".format(float(written_size)/float(total_size)))
+                sys.stdout.flush()
+    # Verify delta hash
+    if digest.hexdigest() != manifest.get("DELTA", "sha256"):
+        safe_delete(DELTA_STAGING)
+        die(209, "delta.bin hash doesn't match manifest value")
+    paycheck = subprocess.Popen(["/usr/bin/paycheck.py",
+                                 "--do-not-truncate-to-expected-size",
+                                 DELTA_STAGING,
+                                 os.path.join(BOOT_DEVICE, "boot_" + target_slot),
+                                 os.path.join(BOOT_DEVICE, "system_" + target_slot),
+                                 os.path.join(BOOT_DEVICE, "boot_" + current_slot),
+                                 os.path.join(BOOT_DEVICE, "system_" + current_slot)],
+                                shell=False,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+    ret_code = paycheck.wait()
+    paycheck_out, paycheck_err = paycheck.communicate()
+    safe_delete(DELTA_STAGING)
+    if ret_code != 0:
+        die(219,
+            "Failed to apply delta. paycheck.py returned {0}\n{1}\n{2}"
+            .format(ret_code, paycheck_out, paycheck_err))
+
 
 
 def handle_anki(current_slot, target_slot, manifest, tar_stream):
@@ -509,7 +565,7 @@ def update_from_url(url):
         elif num_images == 1:
             if manifest.has_section("DELTA"):
                 handle_delta(current_slot, target_slot, manifest, tar_stream)
-            if manifest.has_section("ANKI"):
+            elif manifest.has_section("ANKI"):
                 handle_anki(current_slot, target_slot, manifest, tar_stream)
             else:
                 die(201, "One image specified but not DELTA or ANKI")
