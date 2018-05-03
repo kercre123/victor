@@ -197,6 +197,11 @@ message SyncTime
   float_32 driveCenterOffset
 }
 
+message CalmPowerMode
+{
+  bool enable
+}
+
 // Tells syscon to pull the plug
 message Shutdown
 {
@@ -497,6 +502,7 @@ union EngineToRobot
   GetManufacturingInfo          getMfgInfo                  = 0x01,
   SyncTime                      syncTime                    = 0x02,
   Shutdown                      shutdown                    = 0x03,
+  CalmPowerMode                 calmPowerMode               = 0x04,
 
   // Debug / Test
   StartControllerTestMode       startControllerTestMode     = 0x0A,

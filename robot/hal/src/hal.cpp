@@ -50,6 +50,24 @@ namespace { // "Private members"
   // so we cache the last non-0xFFFF value and return this as the latest touch sensor reading
   u16 lastValidTouchIntensity_;
 
+  PowerState desiredPowerMode_;
+
+  // Time since the desired power mode was last set
+  TimeStamp_t lastPowerSetModeTime_ms_ = 0;
+
+  // Last time a HeadToBody frame was sent
+  TimeStamp_t lastH2BSendTime_ms_ = 0;
+
+  // The maximum time expected to elapse before we're sure that 
+  // syscon should have changed to the desired power mode,
+  // indexed by desired power mode. 
+  static const TimeStamp_t MAX_POWER_MODE_SWITCH_TIME_MS[2] = {100,          // Calm->Active timeout
+                                                               1000 + 100};  // Active->Calm timeout
+
+  // Number of frames to skip sending to body when in calm power mode
+  static const int NUM_CALM_MODE_SKIP_FRAMES = 12;  // Every 60ms
+  int calmModeSkipFrameCount_ = 0;
+
   struct spine_ctx spine_;
   uint8_t frameBuffer_[SPINE_B2H_FRAME_LEN];
   uint8_t readBuffer_[4096];
@@ -209,6 +227,8 @@ Result HAL::Init()
   {
     AnkiInfo("HAL.Init.StartingSpineHAL", "");
 
+    desiredPowerMode_ = POWER_MODE_ACTIVE;
+
     spine_init(&spine_);
     struct spine_params params = {
       .devicename = SPINE_TTY,
@@ -349,8 +369,28 @@ Result HAL::Step(void)
     struct HeadToBody* h2bp = (commander_is_active) ? ccc_data_get_response() : &headData_;
 
     EventStart(EventType::WRITE_SPINE);
-    spine_write_h2b_frame(&spine_, h2bp);
+    const TimeStamp_t now_ms = GetTimeStamp();
+    if (desiredPowerMode_ == POWER_MODE_CALM) {
+      if (++calmModeSkipFrameCount_ > NUM_CALM_MODE_SKIP_FRAMES) {
+        spine_set_lights(&spine_, &(h2bp->lightState));
+        calmModeSkipFrameCount_ = 0;
+      }
+    } else {
+      spine_write_h2b_frame(&spine_, h2bp);
+      lastH2BSendTime_ms_ = now_ms;
+    }
     EventStop(EventType::WRITE_SPINE);
+
+    // Print warning if power mode is unexpected
+    const HAL::PowerState currPowerMode = PowerGetMode();
+    if ((currPowerMode != desiredPowerMode_) && (lastPowerSetModeTime_ms_ > 0)) {
+      if (now_ms - lastPowerSetModeTime_ms_ > MAX_POWER_MODE_SWITCH_TIME_MS[desiredPowerMode_]) {
+        AnkiWarn("HAL.Step.UnexpectedPowerMode", 
+                 "Curr mode: %u, Desired mode: %u, now: %ums, lastSetModeTime: %ums, lastH2BSendTime: %ums",
+                 currPowerMode, desiredPowerMode_, now_ms, lastPowerSetModeTime_ms_, lastH2BSendTime_ms_);
+        lastPowerSetModeTime_ms_ = 0;  // Reset time to avoid spamming warning
+      }
+    }
 
     struct ContactData* ccc_response = ccc_text_response();
     if (ccc_response) {
@@ -440,9 +480,9 @@ void HAL::SetLED(LEDId led_id, u32 color)
   uint8_t r = (color >> LED_RED_SHIFT) & LED_CHANNEL_MASK;
   uint8_t g = (color >> LED_GRN_SHIFT) & LED_CHANNEL_MASK;
   uint8_t b = (color >> LED_BLU_SHIFT) & LED_CHANNEL_MASK;
-  headData_.ledColors[ledIdx * LED_CHANEL_CT + LED0_RED] = r;
-  headData_.ledColors[ledIdx * LED_CHANEL_CT + LED0_GREEN] = g;
-  headData_.ledColors[ledIdx * LED_CHANEL_CT + LED0_BLUE] = b;
+  headData_.lightState.ledColors[ledIdx * LED_CHANEL_CT + LED0_RED] = r;
+  headData_.lightState.ledColors[ledIdx * LED_CHANEL_CT + LED0_GREEN] = g;
+  headData_.lightState.ledColors[ledIdx * LED_CHANEL_CT + LED0_BLUE] = b;
 }
 
 void HAL::SetSystemLED(u32 color)
@@ -450,10 +490,10 @@ void HAL::SetSystemLED(u32 color)
   uint8_t r = (color >> LED_RED_SHIFT) & LED_CHANNEL_MASK;
   uint8_t g = (color >> LED_GRN_SHIFT) & LED_CHANNEL_MASK;
   uint8_t b = (color >> LED_BLU_SHIFT) & LED_CHANNEL_MASK;
-  headData_.ledColors[LED3_RED] = r;
+  headData_.lightState.ledColors[LED3_RED] = r;
   // Technically have no control over green, it is always on
-  headData_.ledColors[LED3_GREEN] = g;
-  headData_.ledColors[LED3_BLUE] = b;
+  headData_.lightState.ledColors[LED3_GREEN] = g;
+  headData_.lightState.ledColors[LED3_BLUE] = b;
 }
 
 u32 HAL::GetID()
@@ -549,6 +589,19 @@ void HAL::Shutdown()
   HAL::Stop();
   spine_shutdown(&spine_);
 }
+
+
+void HAL::PowerSetMode(const PowerState state)
+{
+  desiredPowerMode_ = state;
+  lastPowerSetModeTime_ms_ = HAL::GetTimeStamp();
+}
+
+HAL::PowerState HAL::PowerGetMode()
+{
+  return (bodyData_->flags & RUNNING_FLAGS_SENSORS_VALID) ? POWER_MODE_ACTIVE : POWER_MODE_CALM;
+}
+
 
 } // namespace Cozmo
 } // namespace Anki
