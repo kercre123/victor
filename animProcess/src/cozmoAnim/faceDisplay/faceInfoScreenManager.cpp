@@ -6,7 +6,7 @@
 *
 * Description: Handles navigation and drawing of the Customer Support Menu / Debug info screens.
 *
-* Usage: Add drawing functionality as needed from various components. 
+* Usage: Add drawing functionality as needed from various components.
 *        Add a corresponding ScreenName in faceInfoScreenTypes.h.
 *        In the new drawing functionality, return early if the ScreenName does not match appropriately.
 *
@@ -62,6 +62,22 @@
 #define FORCE_TRANSITION_TO_PAIRING 0
 #endif
 
+#if !FACTORY_TEST
+
+// Return true if we can connect to Anki OTA service
+static bool HasInternet()
+{
+  return Anki::Util::InternetUtils::CanConnectToHostName("ota-cdn.anki.com", 443);
+}
+
+// Return true if we can connect to Anki voice service
+static bool HasVoiceAccess()
+{
+  return Anki::Util::InternetUtils::CanConnectToHostName("chipper-dev.api.anki.com", 443);
+}
+
+#endif
+
 namespace Anki {
 namespace Cozmo {
 
@@ -74,23 +90,23 @@ namespace {
   // Number of tics that a wheel needs to be moving for before it registers
   // as a signal to move the menu cursor
   const u32 kMenuCursorMoveCountThresh = 10;
-  
+
   const f32 kWheelMotionThresh_mmps = 3.f;
-  
+
   const f32 kMenuLiftLowThresh_rad  = DEG_TO_RAD(-5);
   const f32 kMenuLiftHighThresh_rad = DEG_TO_RAD(40);
-  
+
   const f32 kMenuHeadLowThresh_rad  = DEG_TO_RAD(-15);
   const f32 kMenuHeadHighThresh_rad = DEG_TO_RAD(40);
-  
+
   // Amount of time the backpack button must be held before sync() is called
   const f32 kButtonHoldTimeForSync_s = 1.f;
-  
+
   // Time at which sync() should be called
-  f32 syncTime_s = 0.f; 
+  f32 syncTime_s = 0.f;
 }
 
-  
+
 FaceInfoScreenManager::FaceInfoScreenManager()
 : _scratchDrawingImg(new Vision::ImageRGB565())
 , _wheelMovingForwardsCount(0)
@@ -113,12 +129,12 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
 
   // allow us to send debug info out to the web server
   _webService = context->GetWebService();
-  
+
   #define ADD_SCREEN(name, gotoScreen) \
     _screenMap.emplace(std::piecewise_construct, \
                        std::forward_as_tuple(ScreenName::name), \
                        std::forward_as_tuple(ScreenName::name, ScreenName::gotoScreen));
-  
+
   #define ADD_SCREEN_WITH_TEXT(name, gotoScreen, staticText) \
   { \
     std::vector<std::string> temp = staticText; \
@@ -126,7 +142,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
                        std::forward_as_tuple(ScreenName::name), \
                        std::forward_as_tuple(ScreenName::name, ScreenName::gotoScreen, temp)); \
   }
-  
+
   #define ADD_MENU_ITEM(screen, itemText, gotoScreen) \
     GetScreen(ScreenName::screen)->AppendMenuItem(itemText, ScreenName::gotoScreen);
 
@@ -171,7 +187,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
     ADD_SCREEN(MicInfo, MicDirectionClock);
   }
 
-  ADD_SCREEN(MicDirectionClock, Camera);  
+  ADD_SCREEN(MicDirectionClock, Camera);
   ADD_SCREEN(Camera, Main);    // Last screen cycles back to Main
 
   // Recovery screen
@@ -185,14 +201,14 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_MENU_ITEM(Recovery, "CONTINUE", None);
   DISABLE_TIMEOUT(Recovery);
 
-  // None screen 
-#if FACTORY_TEST  
+  // None screen
+#if FACTORY_TEST
   FaceInfoScreen::ScreenAction drawInitConnectionScreen = [animStreamer]() {
     InitConnectionFlow(animStreamer);
   };
   GetScreen(ScreenName::None)->SetEnterScreenAction(drawInitConnectionScreen);
-#endif  
-  
+#endif
+
   // FAC screen
   DISABLE_TIMEOUT(FAC);
 
@@ -204,16 +220,16 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_MENU_ITEM(Main, "EXIT", None);
   // ADD_MENU_ITEM(Main, "Self Test", SelfTest);   // TODO: VIC-1498
   ADD_MENU_ITEM(Main, "CLEAR USER DATA", ClearUserData);
-  
+
   // Self test screen
   ADD_MENU_ITEM(SelfTest, "EXIT", Main);
   ADD_MENU_ITEM(SelfTest, "CONFIRM", Main);        // TODO: VIC-1498
-  
+
   // Clear User Data menu
   FaceInfoScreen::MenuItemAction confirmClearUserData = [this]() {
     // Write this file to indicate that the data partition should be wiped on reboot
     if (!Util::FileUtils::WriteFile("/run/wipe-data", "1")) {
-      LOG_WARNING("FaceInfoSCreenManager.ClearUserData.Failed", "");
+      LOG_WARNING("FaceInfoScreenManager.ClearUserData.Failed", "");
       return ScreenName::ClearUserDataFail;
     }
 
@@ -225,7 +241,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_MENU_ITEM(ClearUserData, "EXIT", Main);
   ADD_MENU_ITEM_WITH_ACTION(ClearUserData, "CONFIRM", confirmClearUserData);
   SET_TIMEOUT(ClearUserDataFail, 2.f, Main);
-  
+
   // Camera screen
   FaceInfoScreen::ScreenAction cameraEnterAction = [animStreamer]() {
     StreamCameraImages m;
@@ -250,12 +266,12 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
     SetScreen(ScreenName::None);
   }
 }
-  
+
 FaceInfoScreen* FaceInfoScreenManager::GetScreen(ScreenName name)
 {
   auto it = _screenMap.find(name);
   DEV_ASSERT(it != _screenMap.end(), "FaceInfoScreenManager.GetScreen.ScreenNotFound");
-  
+
   return &(it->second);
 }
 
@@ -270,8 +286,8 @@ bool FaceInfoScreenManager::IsActivelyDrawingToScreen() const
   }
 }
 
-void FaceInfoScreenManager::SetShouldDrawFAC(bool draw) 
-{ 
+void FaceInfoScreenManager::SetShouldDrawFAC(bool draw)
+{
   // TODO(Al): Remove once BC is written to persistent storage and it is easy to revert robots
   // to factory firmware to rerun them through playpen
   if(!FACTORY_TEST)
@@ -280,10 +296,10 @@ void FaceInfoScreenManager::SetShouldDrawFAC(bool draw)
   }
 
   bool changed = (_drawFAC != draw);
-  _drawFAC = draw; 
+  _drawFAC = draw;
 
-  if(changed && GetCurrScreenName() != ScreenName::Recovery) 
-  { 
+  if(changed && GetCurrScreenName() != ScreenName::Recovery)
+  {
     if(draw)
     {
       SetScreen(ScreenName::FAC);
@@ -308,11 +324,11 @@ bool FaceInfoScreenManager::IsDebugScreen(ScreenName screen) const
       return true;
   }
 }
-  
+
 void FaceInfoScreenManager::SetScreen(ScreenName screen)
 {
   bool prevScreenIsDebug = false;
-  
+
   // Call ExitScreen
   // _currScreen may be null on the first call of this function
   if (_currScreen != nullptr) {
@@ -333,7 +349,7 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   {
     _currScreen = GetScreen(ScreenName::FAC);
   }
-  
+
   // Check if transitioning between a debug and non-debug screen
   // and tell engine so that behaviors can be appropriately enabled/disabled
   bool currScreenIsDebug = IsDebugScreen(GetCurrScreenName());
@@ -352,7 +368,7 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   msg.enable = !currScreenIsDebug;
   SendAnimToRobot(std::move(msg));
 #endif
-  
+
   _scratchDrawingImg->FillWith(0);
   DrawScratch();
 
@@ -389,13 +405,13 @@ void FaceInfoScreenManager::DrawFAC()
 {
   DrawTextOnScreen({"FAC"},
                    NamedColors::BLACK,
-                   (Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG ? 
+                   (Factory::GetEMR()->fields.PLAYPEN_PASSED_FLAG ?
                       NamedColors::GREEN : NamedColors::RED),
                    { 0, FACE_DISPLAY_HEIGHT-10 },
                    10,
                    3.f);
 }
-  
+
 void FaceInfoScreenManager::DrawCameraImage(const Vision::ImageRGB565& img)
 {
   if (GetCurrScreenName() != ScreenName::Camera) {
@@ -525,7 +541,7 @@ void FaceInfoScreenManager::DrawConfidenceClock(
 
   // Multiplying factors (cos/sin) for the clock directions.
   // NOTE: Needs to have the 13th value so the unknown direction dot can display properly
-  static const std::array<Point2f, 13> barLenFactor = 
+  static const std::array<Point2f, 13> barLenFactor =
   {{
     {0.f, 1.f}, // 12 o'clock - in front of robot so point down
     {-angleFactorB, angleFactorA}, // 1 o'clock
@@ -544,7 +560,7 @@ void FaceInfoScreenManager::DrawConfidenceClock(
 
   // Precalculated offsets for the center of the base of each of the direction bars,
   // to be added to the center point of the clock
-  static const std::array<Point2i, 12> barBaseOffset = 
+  static const std::array<Point2i, 12> barBaseOffset =
   {{
     {0, innerRadius_px}, // 12 o'clock - in front of robot, point down
     {-innerRadB_px, innerRadA_px}, // 1 o'clock
@@ -562,7 +578,7 @@ void FaceInfoScreenManager::DrawConfidenceClock(
 
   // Precalculated offsets for the lower left and lower right points of the direction bars
   // (relative to a bar pointing at 12 o'clock on the drawn face, aka 6 o'clock relative to victor).
-  static const std::array<std::array<Point2i, 2>, 12> barWidthFactor = 
+  static const std::array<std::array<Point2i, 2>, 12> barWidthFactor =
   {{
     {{{halfBarWidth_px, 0}, {-halfBarWidth_px, 0}}},// 12 o'clock -  point down
     {{{barWidthA_px, barWidthB_px}, {-barWidthA_px, -barWidthB_px}}}, // 1 o'clock
@@ -595,13 +611,13 @@ void FaceInfoScreenManager::DrawConfidenceClock(
       {baseX + barWidthFactor[i][0].x() + lenX, baseY + barWidthFactor[i][0].y() + lenY},
       {baseX + barWidthFactor[i][1].x() + lenX, baseY + barWidthFactor[i][1].y() + lenY},
       {baseX + barWidthFactor[i][1].x(), baseY + barWidthFactor[i][1].y()}
-      }, 
+      },
       NamedColors::BLUE);
   }
 
   // Draw the circle indicating the current dominant direction
   drawImg.DrawFilledCircle({
-    (float) (center_px.x() + (int)(barLenFactor[winningIndex].x() * (float)(circleRadius_px + 1.f))), 
+    (float) (center_px.x() + (int)(barLenFactor[winningIndex].x() * (float)(circleRadius_px + 1.f))),
     (float) (center_px.y() + (int)(barLenFactor[winningIndex].y() * (float)(circleRadius_px + 1.f)))
     }, NamedColors::RED, 5);
 
@@ -611,7 +627,7 @@ void FaceInfoScreenManager::DrawConfidenceClock(
   if (micData.activeState != 0)
   {
     drawImg.DrawFilledCircle({
-      (float) FACE_DISPLAY_WIDTH - activeCircleRad_px, 
+      (float) FACE_DISPLAY_WIDTH - activeCircleRad_px,
       (float) FACE_DISPLAY_HEIGHT - activeCircleRad_px
       }, NamedColors::BLUE, activeCircleRad_px);
   }
@@ -623,13 +639,13 @@ void FaceInfoScreenManager::DrawConfidenceClock(
   if (triggerRecognized)
   {
     drawImg.DrawFilledConvexPolygon({
-      {FACE_DISPLAY_WIDTH - triggerDispWidth_px, 
+      {FACE_DISPLAY_WIDTH - triggerDispWidth_px,
         FACE_DISPLAY_HEIGHT - activeCircleRad_px*2 - triggerOffsetFromActiveCircle_px},
-      {FACE_DISPLAY_WIDTH - triggerDispWidth_px, 
+      {FACE_DISPLAY_WIDTH - triggerDispWidth_px,
         FACE_DISPLAY_HEIGHT - activeCircleRad_px*2 - triggerOffsetFromActiveCircle_px + triggerDispHeight},
-      {FACE_DISPLAY_WIDTH, 
+      {FACE_DISPLAY_WIDTH,
         FACE_DISPLAY_HEIGHT - activeCircleRad_px*2 - triggerOffsetFromActiveCircle_px + triggerDispHeight/2}
-      }, 
+      },
       NamedColors::GREEN);
   }
 
@@ -646,18 +662,18 @@ void FaceInfoScreenManager::DrawConfidenceClock(
     {buffFullBarWidth_px, FACE_DISPLAY_HEIGHT},
     {buffFullBarWidth_px + endOfBarWidth_px, FACE_DISPLAY_HEIGHT},
     {buffFullBarWidth_px + endOfBarWidth_px, FACE_DISPLAY_HEIGHT - endOfBarHeight_px}
-    }, 
+    },
     NamedColors::RED);
-    
+
   // Draw the bar showing the mic data buffer fullness
   drawImg.DrawFilledConvexPolygon({
     {0, FACE_DISPLAY_HEIGHT - endOfBarHeight_px + buffFullBarHeight_px / 2},
     {0, FACE_DISPLAY_HEIGHT - buffFullBarHeight_px / 2},
     {(int) (bufferFullPercent * (float) buffFullBarWidth_px), FACE_DISPLAY_HEIGHT - buffFullBarHeight_px / 2},
     {(int) (bufferFullPercent * (float) buffFullBarWidth_px), FACE_DISPLAY_HEIGHT - endOfBarHeight_px + buffFullBarHeight_px / 2}
-    }, 
+    },
     NamedColors::RED);
-    
+
   const std::string confidenceString = std::to_string(micData.confidence);
   drawImg.DrawText( {0.0f, 10.0f}, confidenceString, NamedColors::WHITE, 0.5f );
 
@@ -674,7 +690,7 @@ void FaceInfoScreenManager::DrawConfidenceClock(
 
   // Draw the debug page number
   DrawScratch();
-}  
+}
 
 
 bool CheckForDoublePress(bool buttonReleased)
@@ -688,7 +704,7 @@ bool CheckForDoublePress(bool buttonReleased)
 
   // If it has been too long since the first button release then
   // reset time and buttonTappedCount
-  if(timeDoublePressStart_ms > 0 && 
+  if(timeDoublePressStart_ms > 0 &&
      curTime_ms - timeDoublePressStart_ms > kDoublePressWindow_ms)
   {
     timeDoublePressStart_ms = 0;
@@ -729,7 +745,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
   const bool isOnCharger = static_cast<bool>(state.status & (uint16_t)RobotStatusFlag::IS_ON_CHARGER);
 
   const auto currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  
+
   // Call sync() when button held nearly long enough for shutdown
   // before the power is pulled to make sure pending writes are flushed
   if (buttonPressedEvent) {
@@ -745,18 +761,18 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
   const ScreenName currScreenName = GetCurrScreenName();
 
   // Check for conditions to enter BLE pairing mode
-  if (isOnCharger && 
+  if (isOnCharger &&
       // Only enter pairing from these three screens which include
       // screens that are normally active during playpen test
-      (currScreenName == ScreenName::None || 
-       currScreenName == ScreenName::FAC  || 
-       currScreenName == ScreenName::CustomText) && 
+      (currScreenName == ScreenName::None ||
+       currScreenName == ScreenName::FAC  ||
+       currScreenName == ScreenName::CustomText) &&
       CheckForDoublePress(buttonReleasedEvent)) {
     LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.GotDoublePress", "Entering pairing");
     RobotInterface::SendAnimToEngine(SwitchboardInterface::EnterPairing());
 
     if (FORCE_TRANSITION_TO_PAIRING) {
-      LOG_WARNING("FaceInfoScreenManager.ProcessMenuNavigation.ForcedPairing", 
+      LOG_WARNING("FaceInfoScreenManager.ProcessMenuNavigation.ForcedPairing",
                   "Remove FORCE_TRANSITION_TO_PAIRING when switchboard is working");
       SetScreen(ScreenName::Pairing);
     }
@@ -764,23 +780,23 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
 
   // Check for button press to go to next debug screen
   if (buttonReleasedEvent) {
-    if (_debugInfoScreensUnlocked && 
+    if (_debugInfoScreensUnlocked &&
         (currScreenName != ScreenName::None &&
           currScreenName != ScreenName::FAC &&
-          currScreenName != ScreenName::Pairing && 
+          currScreenName != ScreenName::Pairing &&
           currScreenName != ScreenName::Recovery) ) {
       SetScreen(_currScreen->GetButtonGotoScreen());
     }
   }
-  
+
   // Check for screen timeout
   if (_currScreen->IsTimedOut()) {
     SetScreen(_currScreen->GetTimeoutScreen());
   }
-  
+
 
   if (_currScreen->HasMenu()) {
-    
+
     // Process wheel motion for moving the menu select cursor.
     // NOTE: Due to lack of quadrature encoding on the wheels
     //       when they are not actively powered the reported speed
@@ -792,21 +808,21 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
     const auto lWheelSpeed = state.lwheel_speed_mmps;
     const auto rWheelSpeed = state.rwheel_speed_mmps;
     if (rWheelSpeed > kWheelMotionThresh_mmps) {
-      
+
       ++_wheelMovingForwardsCount;
       _wheelMovingBackwardsCount = 0;
-      
+
       if (_wheelMovingForwardsCount == kMenuCursorMoveCountThresh) {
         // Move menu cursor up
         _currScreen->MoveMenuCursorUp();
         DrawScratch();
       }
-      
+
     } else if (lWheelSpeed < -kWheelMotionThresh_mmps) {
-      
+
       ++_wheelMovingBackwardsCount;
       _wheelMovingForwardsCount = 0;
-      
+
       if (_wheelMovingBackwardsCount == kMenuCursorMoveCountThresh) {
         // Move menu cursor down
         _currScreen->MoveMenuCursorDown();
@@ -842,7 +858,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
     _liftTriggerReady = false;
   }
 
-  
+
   // Process head motion for going from Main screen to "hidden" debug info screens
   if (currScreenName == ScreenName::Main) {
     const auto headAngle = state.headAngle;
@@ -856,22 +872,22 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
       DrawScratch();
     }
   }
-  
-}
-  
 
-ScreenName FaceInfoScreenManager::GetCurrScreenName() const 
-{ 
-  return _currScreen->GetName(); 
+}
+
+
+ScreenName FaceInfoScreenManager::GetCurrScreenName() const
+{
+  return _currScreen->GetName();
 }
 
 void FaceInfoScreenManager::Update(const RobotState& state)
 {
 
   ProcessMenuNavigation(state);
-  
+
   const auto currScreenName = GetCurrScreenName();
-  
+
   switch(currScreenName) {
     case ScreenName::SensorInfo:
       DrawSensorInfo(state);
@@ -897,10 +913,10 @@ void FaceInfoScreenManager::DrawMain()
   std::stringstream ss;
   if(Factory::GetEMR()->fields.ESN != 0)
   {
-    ss << std::hex 
-       << std::setfill('0') 
-       << std::setw(8) 
-       << std::uppercase 
+    ss << std::hex
+       << std::setfill('0')
+       << std::setw(8)
+       << std::uppercase
        << Factory::GetEMR()->fields.ESN;
   }
   else
@@ -922,8 +938,8 @@ void FaceInfoScreenManager::DrawMain()
         {
           serialNum = line.substr(index + kProp.length(), 8);
         }
-      }  
-      infile.close(); 
+      }
+      infile.close();
     }
     ss << serialNum;
   }
@@ -934,32 +950,32 @@ void FaceInfoScreenManager::DrawMain()
   const std::string ssid     = "SSID: " + osstate->GetSSID(true);
 
 #if ANKI_DEV_CHEATS
-  const std::string sha      = "SHA: "  + osstate->GetBuildSha(); 
+  const std::string sha      = "SHA: "  + osstate->GetBuildSha();
  #endif
-  
+
   std::string ip             = osstate->GetIPAddress();
   if (ip.empty()) {
     ip = "XXX.XXX.XXX.XXX";
   }
 
 #if !FACTORY_TEST
-  const bool hasInternet = Util::InternetUtils::HasInternet();
-#endif  
-  
+  const bool hasInternet = HasInternet();
+#endif
 
-  ColoredTextLines lines = { {serialNo}, 
-                             {osVer}, 
-                             {ssid}, 
+
+  ColoredTextLines lines = { {serialNo},
+                             {osVer},
+                             {ssid},
 #if FACTORY_TEST
                              {"IP: " + ip},
 #else
                              { {"IP: "}, {ip, (hasInternet ? NamedColors::GREEN : NamedColors::RED)} },
-#endif                             
+#endif
 #if ANKI_DEV_CHEATS
 			     {sha},
 #endif
                            };
-   
+
   DrawTextOnScreen(lines);
 }
 
@@ -977,12 +993,12 @@ void FaceInfoScreenManager::DrawNetwork()
   }
 
 #if !FACTORY_TEST
-  const bool hasInternet = Util::InternetUtils::HasInternet();
+  const bool hasInternet = HasInternet();
 
   // TODO (VIC-1816): Check actual hosts for connectivity
   const bool hasAuthAccess  = false;
   const bool hasOTAAccess   = false;
-  const bool hasVoiceAccess = Util::InternetUtils::CanConnectToHostName("chipper-dev.api.anki.com", 443);
+  const bool hasVoiceAccess = HasVoiceAccess();
 
   const ColoredText online("ONLINE", NamedColors::GREEN);
   const ColoredText offline("UNAVAILABLE", NamedColors::RED);
@@ -992,14 +1008,14 @@ void FaceInfoScreenManager::DrawNetwork()
   const ColoredText voiceStatus = hasVoiceAccess ? online : offline;
 #endif
 
-  ColoredTextLines lines = { {ble}, 
-                             {mac}, 
-                             {ssid}, 
+  ColoredTextLines lines = { {ble},
+                             {mac},
+                             {ssid},
 #if FACTORY_TEST
                              {"IP: " + ip},
-#else                             
+#else
                              { {"IP: "}, {ip, (hasInternet ? NamedColors::GREEN : NamedColors::RED)} },
-#endif                             
+#endif
                              { },
 
                              // TODO: VIC-1816
@@ -1023,12 +1039,12 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
           state.cliffDataRaw[3]);
   const std::string cliffs = temp;
 
-  
+
   sprintf(temp,
           "DIST:   %3umm",
           state.proxData.distance_mm);
   const std::string prox1 = temp;
-  
+
   sprintf(temp,
           "        (%2.1f %2.1f %3.f)",
           state.proxData.signalIntensity,
@@ -1036,7 +1052,7 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
           state.proxData.spadCount);
   const std::string prox2 = temp;
 
-  
+
   sprintf(temp,
           "TOUCH: %u",
           state.backpackTouchSensorRaw);
@@ -1051,7 +1067,7 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
           "TEMP:  %uC",
           OSState::getInstance()->GetTemperature_C());
   const std::string tempC = temp;
-  
+
 
   DrawTextOnScreen({cliffs, prox1, prox2, touch, batt, tempC});
 }
@@ -1091,7 +1107,7 @@ void FaceInfoScreenManager::DrawMotorInfo(const RobotState& state)
   char temp[32] = "";
   sprintf(temp, "HEAD:   %3.1f deg", RAD_TO_DEG(state.headAngle));
   const std::string head = temp;
-  
+
   sprintf(temp, "LIFT:   %3.1f deg", RAD_TO_DEG(state.liftAngle));
   const std::string lift = temp;
 
@@ -1100,7 +1116,7 @@ void FaceInfoScreenManager::DrawMotorInfo(const RobotState& state)
 
   sprintf(temp, "RSPEED: %3.1f mm/s", state.rwheel_speed_mmps);
   const std::string rSpeed = temp;
-  
+
   DrawTextOnScreen({head, lift, lSpeed, rSpeed});
 }
 
@@ -1113,23 +1129,23 @@ void FaceInfoScreenManager::DrawMicInfo(const RobotInterface::MicData& micData)
   }
 
   char temp[32] = "";
-  sprintf(temp, 
-          "%d", 
+  sprintf(temp,
+          "%d",
           micData.data[0]);
   const std::string micData0 = temp;
 
-  sprintf(temp, 
-          "%d", 
+  sprintf(temp,
+          "%d",
           micData.data[1]);
   const std::string micData1 = temp;
 
-  sprintf(temp, 
-          "%d", 
+  sprintf(temp,
+          "%d",
           micData.data[2]);
   const std::string micData2 = temp;
 
-  sprintf(temp, 
-          "%d", 
+  sprintf(temp,
+          "%d",
           micData.data[3]);
   const std::string micData3 = temp;
 
@@ -1137,7 +1153,7 @@ void FaceInfoScreenManager::DrawMicInfo(const RobotInterface::MicData& micData)
 }
 
 void FaceInfoScreenManager::SetCustomText(const RobotInterface::DrawTextOnScreen& text)
-{ 
+{
   _customText = text;
 
   if(text.drawNow)
@@ -1161,7 +1177,7 @@ void FaceInfoScreenManager::DrawCustomText()
 
 // Draws each element of the textVec on a separate line (spacing determined by textSpacing_pix)
 // in textColor with a background of bgColor.
-void FaceInfoScreenManager::DrawTextOnScreen(const std::vector<std::string>& textVec, 
+void FaceInfoScreenManager::DrawTextOnScreen(const std::vector<std::string>& textVec,
                                     const ColorRGBA& textColor,
                                     const ColorRGBA& bgColor,
                                     const Point2f& loc,
@@ -1190,7 +1206,7 @@ void FaceInfoScreenManager::DrawTextOnScreen(const std::vector<std::string>& tex
   DrawScratch();
 }
 
-void FaceInfoScreenManager::DrawTextOnScreen(const ColoredTextLines& lines, 
+void FaceInfoScreenManager::DrawTextOnScreen(const ColoredTextLines& lines,
                                              const ColorRGBA& bgColor,
                                              const Point2f& loc,
                                              u32 textSpacing_pix,
@@ -1201,7 +1217,7 @@ void FaceInfoScreenManager::DrawTextOnScreen(const ColoredTextLines& lines,
   const u8  textLineThickness = 8;
 
   f32 textLocY = loc.y();
-  for(const auto& line : lines) 
+  for(const auto& line : lines)
   {
     f32 textLocX = loc.x();
     for(const auto& coloredText : line)
@@ -1246,7 +1262,7 @@ void FaceInfoScreenManager::DrawScratch()
     Rectangle<f32> rect(FACE_DISPLAY_WIDTH - 2, 0, 2, 2);
     _scratchDrawingImg->DrawFilledRect(rect, NamedColors::WHITE);
   }
-  
+
   FaceDisplay::getInstance()->DrawToFaceDebug(*_scratchDrawingImg);
 }
 
@@ -1255,7 +1271,7 @@ void FaceInfoScreenManager::Reboot()
 #ifdef SIMULATOR
   LOG_WARNING("FaceInfoScreenManager.Reboot.NotSupportInSimulator", "");
 #else
-  
+
   // Need to call reboot in forked process for some reason.
   // Otherwise, reboot doesn't actually happen.
   // Also useful for transitioning to "REBOOTING..." screen anyway.
@@ -1271,7 +1287,7 @@ void FaceInfoScreenManager::Reboot()
     // parent process
     LOG_INFO("FaceInfoScreenManager.Reboot.Rebooting", "");
   }
-  else 
+  else
   {
     // fork failed
     LOG_WARNING("FaceInfoScreenManager.Reboot.Failed", "");
