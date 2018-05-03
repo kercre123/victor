@@ -307,7 +307,6 @@ static void HiddenAPCallback(GDBusConnection *connection,
 
     GVariant *response = g_variant_builder_end(dict_builder);
     g_variant_builder_unref(dict_builder);
-    logi("%s", g_variant_print(response, true));
 
     g_dbus_method_invocation_return_value(invocation, response);
   }
