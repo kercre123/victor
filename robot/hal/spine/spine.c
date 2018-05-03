@@ -558,6 +558,12 @@ ssize_t spine_write_ccc_frame(spine_ctx_t spine, const struct ContactData* ccc_p
                        sizeof(struct SpineMessageHeader) + sizeof(struct ContactData) + sizeof(struct SpineMessageFooter));
 }
 
+ssize_t spine_set_lights(spine_ctx_t spine, const struct LightState* light_state)
+{
+  ssize_t r = spine_write_frame(spine, PAYLOAD_LIGHT_STATE, light_state, sizeof(struct LightState));
+  return r;    
+}
+
 ssize_t spine_set_mode(spine_ctx_t spine, int new_mode)
 {
   printf("Sending Mode Change %x\n", PAYLOAD_MODE_CHANGE);

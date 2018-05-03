@@ -175,6 +175,17 @@ void SayText(ConsoleFunctionContextRef context)
 
 CONSOLE_FUNC(SayText, kSayTextPath, const char* text);
 
+
+static void EnableCalmPowerMode(ConsoleFunctionContextRef context)
+{
+  if (_thisRobot != nullptr) {
+    const bool enableCalm = ConsoleArg_Get_Bool(context, "enable");
+    _thisRobot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::CalmPowerMode(enableCalm)));
+  }
+}
+
+CONSOLE_FUNC(EnableCalmPowerMode, "EnableCalmPowerMode", bool enable);
+
 } // end namespace
 
 #endif

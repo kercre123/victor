@@ -145,6 +145,21 @@ namespace Anki {
 */
 
         //////////////////////////////////////////////////////////////
+        // Check power mode
+        //////////////////////////////////////////////////////////////
+        
+        // If power mode changed from CALM to ACTIVE, trigger calibration
+        static HAL::PowerState lastPowerMode = HAL::POWER_MODE_ACTIVE;
+        HAL::PowerState currPowerMode = HAL::PowerGetMode();
+        if (currPowerMode == HAL::POWER_MODE_ACTIVE && lastPowerMode == HAL::POWER_MODE_CALM) {
+          AnkiInfo("CozmoBot.Update.CalmToActiveCalibration", "");
+          LiftController::StartCalibrationRoutine(true);
+          HeadController::StartCalibrationRoutine(true);
+        }
+        lastPowerMode = currPowerMode;
+      
+
+        //////////////////////////////////////////////////////////////
         // Test Mode
         //////////////////////////////////////////////////////////////
         MARK_NEXT_TIME_PROFILE(CozmoBot, TEST);

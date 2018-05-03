@@ -114,15 +114,15 @@ function cleanup() {
 # trap ctrl-c and call ctrl_c()
 trap cleanup INT
 
+set +e
+
 echo "Uploading dfu files"
 robot_sh mkdir -p ${STAGING_DIR}
 robot_cp ${DFU_PROGRAM} ${STAGING_DIR}
 robot_cp ${DFU_PAYLOAD} ${STAGING_DIR}
 
-
 DFU_PROGRAM_BASENAME=$(basename $DFU_PROGRAM)
 DFU_PAYLOAD_BASENAME=$(basename $DFU_PAYLOAD)
-
 
 echo "Running DFU"
 NUM_RETRIES=5

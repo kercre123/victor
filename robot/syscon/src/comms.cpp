@@ -29,6 +29,7 @@ struct InboundPacket {
     uint8_t raw[];
   };
   union {
+    LightState lightState;
     HeadToBody headToBody;
     ContactData contactData;
     AckMessage ack;
@@ -220,6 +221,8 @@ static int sizeOfInboundPayload(PayloadId id) {
     case PAYLOAD_ERASE:
     case PAYLOAD_VERSION:
       return 0;
+    case PAYLOAD_LIGHT_STATE:
+      return sizeof(LightState);
     case PAYLOAD_DATA_FRAME:
       return sizeof(HeadToBody);
     case PAYLOAD_CONT_DATA:
@@ -257,8 +260,6 @@ static void ProcessMessage(InboundPacket& packet) {
         Power::setMode(POWER_STOP);
         break ;
       case PAYLOAD_MODE_CHANGE:
-        missed_frames = 0;
-        Power::setMode(POWER_ACTIVE);
         break ;
       case PAYLOAD_VERSION:
         Comms::sendVersion();
@@ -266,10 +267,14 @@ static void ProcessMessage(InboundPacket& packet) {
       case PAYLOAD_ERASE:
         Power::setMode(POWER_ERASE);
         break ;
+      case PAYLOAD_LIGHT_STATE:
+        Lights::receive(packet.lightState.ledColors);
+        break ;
       case PAYLOAD_DATA_FRAME:
         missed_frames = 0;
+        Power::wakeUp();
         Motors::receive(&packet.headToBody);
-        Lights::receive(packet.headToBody.ledColors);
+        Lights::receive(packet.headToBody.lightState.ledColors);
         break ;
       case PAYLOAD_CONT_DATA:
         Contacts::forward(packet.contactData);

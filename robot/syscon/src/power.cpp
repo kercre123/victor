@@ -122,6 +122,12 @@ static void enterBootloader(void) {
   SoftReset(*(uint32_t*)0x08000004);
 }
 
+void Power::wakeUp() {
+  if (desiredState == POWER_CALM) {
+    desiredState = POWER_ACTIVE;
+  }
+}
+
 void Power::setMode(PowerMode set) {
   desiredState = set;
 }

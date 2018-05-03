@@ -129,6 +129,8 @@ protected:
   void SayText();
   void PlayCubeAnimation();
   
+  void TogglePowerMode();
+
   void TurnTowardsImagePoint();
   void QuitKeyboardController();
   void ToggleLiftPower();

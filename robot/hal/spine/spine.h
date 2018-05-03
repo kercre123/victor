@@ -79,6 +79,11 @@ ssize_t spine_receive_data(spine_ctx_t spine, const void* bytes, size_t len);
 // write all pending output data
 ssize_t spine_write_h2b_frame(spine_ctx_t spine, const struct HeadToBody* h2b_payload);
 
+// write message to set lights
+// Only useful if not already sending h2b frames which 
+// contains light commands. (i.e. calm mode)
+ssize_t spine_set_lights(spine_ctx_t spine, const struct LightState* light_state);
+
 // write message to change mode
 ssize_t spine_set_mode(spine_ctx_t spine, int new_mode);
 
