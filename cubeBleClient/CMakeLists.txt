@@ -30,7 +30,7 @@ PRIVATE
   ${PLATFORM_LIBS}
 )
 
-android_strip(TARGET cubeBleClient)
+anki_build_strip(TARGET cubeBleClient)
 
 target_compile_definitions(cubeBleClient
   PRIVATE

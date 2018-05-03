@@ -6,7 +6,7 @@ include(opencv)
 include(okao)
 include(flatbuffers)
 include(archive)
-include(android_strip)
+include(anki_build_strip)
 include(anki_build_cxx)
 
 anki_build_cxx_library(cozmo_engine ${ANKI_SRCLIST_DIR})
@@ -89,7 +89,7 @@ target_compile_options(cozmo_engine PRIVATE
   "${PLATFORM_FLAGS}"
 )
 
-android_strip(TARGET cozmo_engine)
+anki_build_strip(TARGET cozmo_engine)
 
 target_compile_definitions(cozmo_engine
   PRIVATE

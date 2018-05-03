@@ -2,7 +2,7 @@
 project(libankiutil LANGUAGES CXX)
 
 include(anki_build_cxx)
-include(android_strip)
+include(anki_build_strip)
 
 anki_build_cxx_library(util ${ANKI_SRCLIST_DIR})
 
@@ -39,5 +39,5 @@ target_link_libraries(util
   ${PLATFORM_LIBS}
 )
 
-android_strip(TARGET util)
+anki_build_strip(TARGET util)
 

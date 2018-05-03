@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.6)
 project(engine_tools)
 
 include(anki_build_cxx)
-include(android_strip)
+include(anki_build_strip)
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
@@ -30,5 +30,4 @@ target_link_libraries(vic-engine
   ${PLATFORM_LIBS}
 )
 
-android_strip(TARGET vic-engine)
-
+anki_build_strip(TARGET vic-engine)

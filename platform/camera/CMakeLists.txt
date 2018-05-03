@@ -63,7 +63,7 @@ PRIVATE
   ${PLATFORM_LIBS}
 )
 
-android_strip(TARGET cameraService)
+anki_build_strip(TARGET cameraService)
 
 target_compile_definitions(cameraService
   PRIVATE

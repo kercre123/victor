@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.6)
 
 project(robot)
 
+include(anki_build_cxx)
+include(anki_build_strip)
+
 add_library(robot_interface INTERFACE IMPORTED GLOBAL)
 set_property(TARGET robot_interface
              PROPERTY INTERFACE_INCLUDE_DIRECTORIES
@@ -242,6 +245,6 @@ if (VICOS)
     ${PLATFORM_LIBS}
   )
 
-  android_strip(TARGET vic-robot)
+  anki_build_strip(TARGET vic-robot)
 
 endif()

@@ -28,7 +28,7 @@ PRIVATE
   ${PLATFORM_LIBS}
 )
 
-android_strip(TARGET osState)
+anki_build_strip(TARGET osState)
 
 target_compile_definitions(osState
   PRIVATE

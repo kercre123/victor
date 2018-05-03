@@ -76,7 +76,7 @@ endmacro()
 # repackaged to work with custom go targets.
 #
 
-macro(anki_build_go_android_strip output output_full)
+macro(anki_build_go_vicos_strip output output_full)
   add_custom_command(
     OUTPUT ${output_full}
     DEPENDS ${output}
@@ -142,7 +142,7 @@ macro(anki_build_go_executable target_name srclist_dir)
   #
   if (VICOS)
     set(__gobuild_out_full "${__gobuild_out}.full")
-    anki_build_go_android_strip(${__gobuild_out} ${__gobuild_out_full})
+    anki_build_go_vicos_strip(${__gobuild_out} ${__gobuild_out_full})
   endif()
 
   add_custom_target(${target_name} DEPENDS ${__gobuild_out} ${__gobuild_out_full})

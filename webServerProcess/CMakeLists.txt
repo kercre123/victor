@@ -40,7 +40,7 @@ target_link_libraries(victor_web_library
   robot_interface  # Needs to be public for cozmoConfig.h
 )
 
-android_strip(TARGET victor_web_library)
+anki_build_strip(TARGET victor_web_library)
 
 target_compile_definitions(victor_web_library
   PRIVATE
@@ -68,6 +68,6 @@ if (VICOS)
     ${PLATFORM_LIBS}
   )
 
-  android_strip(TARGET vic-webserver)
-    
+  anki_build_strip(TARGET vic-webserver)
+
 endif()

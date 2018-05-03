@@ -60,7 +60,7 @@ target_link_libraries(victor_anim
   robot_interface  # Needs to be public for cozmoConfig.h
 )
 
-android_strip(TARGET victor_anim)
+anki_build_strip(TARGET victor_anim)
 
 target_compile_definitions(victor_anim
   PRIVATE
@@ -89,6 +89,6 @@ if (VICOS)
     ${PLATFORM_LIBS}
   )
 
-  android_strip(TARGET vic-anim)
-    
+  anki_build_strip(TARGET vic-anim)
+
 endif()
