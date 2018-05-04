@@ -741,7 +741,7 @@ namespace Anki {
             // Initialize the block pool to detect cubes automatically. Ideally we would put this in
             // InitInternal but it is called before engine can receive messages
             if (_doAutoBlockPool && !_isBlockPoolInitialized) {
-              SendEnableBlockPool(0, true);
+              SendEnableBlockPool(0, true, false);
               _isBlockPoolInitialized = true;
             }
             
@@ -1715,9 +1715,9 @@ namespace Anki {
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
     }
 
-    void UiGameController::SendEnableBlockPool(double maxDiscoveryTime, bool enabled)
+    void UiGameController::SendEnableBlockPool(double maxDiscoveryTime, bool enabled, bool reset)
     {
-      ExternalInterface::BlockPoolEnabledMessage m(maxDiscoveryTime, enabled);
+      ExternalInterface::BlockPoolEnabledMessage m(maxDiscoveryTime, enabled, reset);
       
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(m)));
     }

@@ -296,7 +296,7 @@ protected:
   void SendNVStorageEraseEntry(NVStorage::NVEntryTag tag);
   void SendNVClearPartialPendingWriteData();
   void SendEnableBlockTapFilter(bool enable);
-  void SendEnableBlockPool(double maxDiscoveryTime, bool enabled);
+  void SendEnableBlockPool(double maxDiscoveryTime, bool enabled, bool reset);
 
   ///
   // @brief      Send SetActiveObjectLEDs CLAD message

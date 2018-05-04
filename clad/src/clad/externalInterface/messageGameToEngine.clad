@@ -1001,21 +1001,12 @@ message PerfMetricGetStatus {
 
 message BlockPoolEnabledMessage {
   float_32 discoveryTimeSecs,
-  bool enabled
-}
-
-// Query for E2GMessage: InitBlockPoolMessage
-message GetBlockPoolMessage {
+  bool enable,
+  bool reset
 }
 
 message SendAvailableObjects {
   bool enable
-}
-
-// Resets blockpool
-message BlockPoolResetMessage {
-  bool enable = 1, // Enables/disables blockpool after resetting
-  bool maintainPersistentPool = 0 // If true prevents the PersistentPool from being cleared
 }
 
 

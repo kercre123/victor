@@ -22,6 +22,7 @@
 #include "util/signals/simpleSignal_fwd.h" // Signal::SmartHandle
 
 #include <unordered_map>
+#include <unordered_set>
 
 namespace Anki {
 namespace Cozmo {
@@ -154,6 +155,10 @@ private:
   // Find a cube in the list by factoryId and return a pointer to it. Returns nullptr if not found.
   CubeInfo* GetCubeByFactoryId(const BleFactoryId& factoryId);
   
+  void SaveBlockPoolListToJson(const std::string& blockPoolFile) const;
+  
+  // cached list of preferred blocks to connect to
+  std::unordered_set<std::string> _blockPoolFactoryIds;
 };
 
 

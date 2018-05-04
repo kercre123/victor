@@ -22,21 +22,15 @@
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/common/engine/jsonTools.h"
 
 #include "clad/externalInterface/messageCubeToEngine.h"
 #include "clad/externalInterface/messageEngineToCube.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 
-// NOTE: Can get rid of this when VIC-782 is done and 
-//       there's some ability to check that cubes have the
-//       correct firmware version
-#ifdef SIMULATOR
-#define DONT_CONNECT_TO_CUBES 0
-#else
-#define DONT_CONNECT_TO_CUBES 1
-#endif
-
-
+#include "util/fileUtils/fileUtils.h"
+#include "util/jsonWriter/jsonWriter.h"
+#include "util/console/consoleInterface.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -52,8 +46,20 @@ namespace {
   const float kDisconnectTimeout_sec = 5.0f;
 
   const int kNumCubeLEDs = Util::EnumToUnderlying(CubeConstants::NUM_CUBE_LEDS);
+  
+  const std::string kBlockFacIdsKey = "blockFactoryIds";
+  
+  static bool sResetBlockPoolList = false;
 }
 
+  
+#if ANKI_DEV_CHEATS
+void ResetBlockPoolList(ConsoleFunctionContextRef context)
+{
+  sResetBlockPoolList = true;
+}
+CONSOLE_FUNC(ResetBlockPoolList, "BlockPool");
+#endif
 
 CubeCommsComponent::CubeCommsComponent()
 : IDependencyManagedComponent(this, RobotComponentID::CubeComms)
@@ -65,19 +71,43 @@ CubeCommsComponent::CubeCommsComponent()
   _cubeBleClient->RegisterCubeConnectionCallback(std::bind(&CubeCommsComponent::HandleConnectionStateChange, this, std::placeholders::_1, std::placeholders::_2));
   _cubeBleClient->RegisterScanFinishedCallback(std::bind(&CubeCommsComponent::HandleScanForCubesFinished, this));
 }
-
-
 void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
 {
   _robot = robot;
+  
+  _blockPoolFactoryIds.clear();
+  
   // Game to engine message handling:
   if (_robot->HasExternalInterface()) {
     auto callback = std::bind(&CubeCommsComponent::HandleGameEvents, this, std::placeholders::_1);
     auto* extInterface = _robot->GetExternalInterface();
     _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockPoolEnabledMessage, callback));
-    _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::BlockPoolResetMessage, callback));
-    _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::GetBlockPoolMessage, callback));
     _signalHandles.push_back(extInterface->Subscribe(ExternalInterface::MessageGameToEngineTag::SendAvailableObjects, callback));
+  }
+  
+  // initialize the persistent blockpool from file
+  // - create empty block pool file if missing
+  // - warn if the json wasn't parsed correctly
+  const Util::Data::DataPlatform* platform = robot->GetContextDataPlatform();
+  DEV_ASSERT(platform!=nullptr, "CubeCommsComponent.InitDependent.DataPlatformIsNull");
+  const auto blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, "blockPoolList.json");
+  bool parsingSuccessful = false;
+  if(Util::FileUtils::FileExists(blockPoolFile)) {
+    std::string contents = Util::FileUtils::ReadFile(blockPoolFile);
+    Json::Value root;
+    Json::Reader reader;
+    if(reader.parse(contents, root)) {
+      std::vector<std::string> blockFacIds;
+      if(JsonTools::GetVectorOptional(root, kBlockFacIdsKey, blockFacIds)) {
+        std::copy(blockFacIds.begin(), blockFacIds.end(), std::inserter(_blockPoolFactoryIds, _blockPoolFactoryIds.begin()));
+        parsingSuccessful = true;
+      }
+    }
+  }
+  
+  if(!parsingSuccessful) {
+    PRINT_NAMED_WARNING("CubeCommsComponent.InitDependent.FailedLoadingBlockPoolFromFile","");
+    SaveBlockPoolListToJson(blockPoolFile);
   }
 
   // Tell Ble client to start discovering right away discovering for cubes right away
@@ -85,7 +115,6 @@ void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
   _cubeBleClient->StartScanUponConnection();
   _discovering = true;
   
-  const Util::Data::DataPlatform* platform = robot->GetContextDataPlatform();
   if(platform) {
     const auto cubeFirmwarePath = platform->pathToResource(Util::Data::Scope::Resources, "assets/cubeFirmware/cube.dfu");
     _cubeBleClient->SetCubeFirmwareFilepath(cubeFirmwarePath);
@@ -100,6 +129,16 @@ void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
 
 void CubeCommsComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
+  // handle console function request to delete saved blockpool
+  if(sResetBlockPoolList) {
+    _blockPoolFactoryIds.clear();
+    const Util::Data::DataPlatform* platform = _robot->GetContextDataPlatform();
+    const auto blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, "blockPoolList.json");
+    SaveBlockPoolListToJson(blockPoolFile);
+    sResetBlockPoolList = false;
+    EnableDiscovery(true,0);
+  }
+  
   // Update the CubeBleClient instance
   if (!_cubeBleClient->Update()) {
     PRINT_NAMED_ERROR("CubeCommsComponent.Update.CubeBleUpdateFailed",
@@ -299,15 +338,16 @@ void CubeCommsComponent::HandleGameEvents(const AnkiEvent<ExternalInterface::Mes
 {
   const auto& tag = event.GetData().GetTag();
   switch(tag) {
-    case ExternalInterface::MessageGameToEngineTag::GetBlockPoolMessage:
-      SendBlockPoolData();
-      break;
     case ExternalInterface::MessageGameToEngineTag::BlockPoolEnabledMessage:
-      EnableDiscovery(event.GetData().Get_BlockPoolEnabledMessage().enabled,
+      // delete the persist block pool file, and clear the cached list
+      if(event.GetData().Get_BlockPoolEnabledMessage().reset) {
+        _blockPoolFactoryIds.clear();
+        const Util::Data::DataPlatform* platform = _robot->GetContextDataPlatform();
+        const auto blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, "blockPoolList.json");
+        Util::FileUtils::DeleteFile(blockPoolFile);
+      }
+      EnableDiscovery(event.GetData().Get_BlockPoolEnabledMessage().enable,
                       event.GetData().Get_BlockPoolEnabledMessage().discoveryTimeSecs);
-      break;
-    case ExternalInterface::MessageGameToEngineTag::BlockPoolResetMessage:
-      EnableDiscovery(event.GetData().Get_BlockPoolResetMessage().enable, 0);
       break;
     case ExternalInterface::MessageGameToEngineTag::SendAvailableObjects:
       _broadcastObjectAvailableMsg = event.GetData().Get_SendAvailableObjects().enable;
@@ -424,6 +464,15 @@ void CubeCommsComponent::HandleConnectionStateChange(const BleFactoryId& factory
                        "Object %d (activeID %d, factoryID %s, objectType '%s')",
                        objID.GetValue(), activeId, cube->factoryId.c_str(), EnumToString(cube->objectType));
     }
+    
+    // save this cube to preferred cubes to connect to (block pool)
+    auto got = _blockPoolFactoryIds.find(cube->factoryId);
+    if(got==_blockPoolFactoryIds.end()) {
+      _blockPoolFactoryIds.insert(cube->factoryId);
+    }
+    const Util::Data::DataPlatform* platform = _robot->GetContextDataPlatform();
+    const std::string blockPoolFile = platform->pathToResource(Util::Data::Scope::Persistent, "blockPoolList.json");
+    SaveBlockPoolListToJson(blockPoolFile);
   } else {
     // log event to das
     Anki::Util::sInfoF("robot.accessory_connection", {{DDATA,"disconnected"}}, "%s,%s",
@@ -457,38 +506,61 @@ void CubeCommsComponent::HandleScanForCubesFinished()
 
   PRINT_NAMED_INFO("CubeCommsComponent.HandleScanForCubesFinished.ScanningForCubesEnded",
                    "Done scanning for cubes");
-
-#if (DONT_CONNECT_TO_CUBES==1)
-  return;
-#endif
-
+  
   // Discovery period has ended. Loop over list of available cubes and connect to
   // as many as possible, preferring those with high RSSI.
 
-  // For each object type, keep track of the max rssi seen for that type
-  std::map<ObjectType, int> maxRssiByType;
-
-  // Keep track of which cubes to connect to. Map is keyed on ObjectType to
-  // ensure we only connect to _one_ object of a given type.
-  std::map<ObjectType, BleFactoryId> objectsToConnectTo;
+  struct CandidateCubeInfo
+  {
+    int maxRssiSeen;
+    BleFactoryId factoryId;
+    bool inBlockPool;
+  };
+  
+  // list of valid objects to connect to, ordered by type
+  //  if we encounter multiple objects of the same-type
+  //  then we select the one with highest rssi seen in the
+  //        discovery period, if it is blockpool preferred
+  std::map<ObjectType, CandidateCubeInfo> candidates;
 
   for (const auto& mapEntry : _availableCubes) {
     const auto& cube = mapEntry.second;
     const auto& type = cube.objectType;
     const auto& rssi = cube.lastRssi;
-
+    const auto& facId = cube.factoryId;
+    
     // If this is the first cube of this type to be seen or if this cube's rssi
     // is higher than the max seen, add it to the list of cubes to connect to
-    if ((maxRssiByType.find(type) == maxRssiByType.end()) ||
-        (rssi > maxRssiByType[type])) {
-      maxRssiByType[type] = rssi;
-      objectsToConnectTo[type] = cube.factoryId;;
+    auto got = candidates.find(type);
+    const bool inBlockPool = _blockPoolFactoryIds.find(facId)!=_blockPoolFactoryIds.end();
+    if(got==candidates.end()) {
+      candidates[type] = CandidateCubeInfo{rssi, facId, inBlockPool};
+    } else if(( got->second.inBlockPool &&  inBlockPool && got->second.maxRssiSeen < rssi) ||
+              (!got->second.inBlockPool && (inBlockPool || got->second.maxRssiSeen < rssi))) {
+      // truth table: used to decide if we want to overwrite old with new
+      //   old cube         new cube
+      // in block pool?   in block pool?    higher rssi?    should overwrite?
+      //    (A)               (B)               (C)             (D)
+      //  yes               yes               yes             yes
+      //  yes               yes               no              no
+      //  yes               no                yes             no
+      //  yes               no                no              no
+      //  no                yes               yes             yes
+      //  no                yes               no              yes
+      //  no                no                yes             yes
+      //  no                no                no              no
+      //
+      //  expression:
+      //    D = (A & B & C) || (!A & (B | C))
+      //
+      // prefer the cubes in the blockpool over higher rssi cubes
+      candidates[type] = CandidateCubeInfo{rssi, facId, inBlockPool};
     }
   }
 
   // Connect to the selected cubes
-  for (const auto& entry : objectsToConnectTo) {
-    const auto& factoryId = entry.second;
+  for (const auto& entry : candidates) {
+    const auto& factoryId = entry.second.factoryId;
     if (!_cubeBleClient->ConnectToCube(factoryId)) {
       PRINT_NAMED_WARNING("CubeCommsComponent.HandleScanForCubesFinished.FailedConnecting", "Failed connecting to cube with factory ID %s", factoryId.c_str());
     }
@@ -569,6 +641,17 @@ CubeCommsComponent::CubeInfo* CubeCommsComponent::GetCubeByFactoryId(const BleFa
     return GetCubeByActiveId(it->second);
   }
   return nullptr;
+}
+  
+void CubeCommsComponent::SaveBlockPoolListToJson(const std::string& blockPoolFile) const
+{
+  Util::JsonWriter writer(blockPoolFile);
+  writer.StartList(kBlockFacIdsKey);
+  for(const auto& item : _blockPoolFactoryIds) {
+    writer.AddRawListEntry(item);
+  }
+  writer.EndList();
+  writer.Close();
 }
 
 

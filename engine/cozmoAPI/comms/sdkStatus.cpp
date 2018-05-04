@@ -173,7 +173,9 @@ void SdkStatus::OnConnectionSuccess(const ExternalInterface::UiDeviceConnectionS
     {
       // Reset BlockPool on connection, enabling it if it was disabled. The persistentPool is maintained so
       // we can quickly reconnect to previously connected objects without having to go through the discovery phase
-      _externalInterface->Broadcast(ExternalInterface::MessageGameToEngine(ExternalInterface::BlockPoolResetMessage(true, true)));
+      const bool enabled = true;
+      const bool reset = false;
+      _externalInterface->Broadcast(ExternalInterface::MessageGameToEngine(ExternalInterface::BlockPoolEnabledMessage(0, enabled, reset)));
     }
   }
   else
@@ -223,7 +225,9 @@ void SdkStatus::OnDisconnect(bool isExitingSDKMode)
       // The persistentPool is maintained so we can quickly reconnect to previously connected objects
       // without having to go through the discovery phase
       // This will cause us to disconnect from all connected objects
-      _externalInterface->Broadcast(ExternalInterface::MessageGameToEngine(ExternalInterface::BlockPoolResetMessage(false, true)));
+      const bool enabled = false;
+      const bool reset = false;
+      _externalInterface->Broadcast(ExternalInterface::MessageGameToEngine(ExternalInterface::BlockPoolEnabledMessage(0, enabled, reset)));
     }
 
     _isConnected = false;
