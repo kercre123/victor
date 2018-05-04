@@ -330,12 +330,13 @@ Robot::~Robot()
   // ActionList must be cleared before it is destroyed because pending actions may attempt to make use of the pointer.
   GetActionList().Clear();
 
-  // Remove (destroy) the vision component, map component and object pose confirmer explicitly since
+  // Remove (destroy) certain components explicitly since
   // they contains poses that use the contents of FullRobotPose as a parent
   // and there's no guarantee on entity/component destruction order
   _components->RemoveComponent(RobotComponentID::Vision);
   _components->RemoveComponent(RobotComponentID::Map);
   _components->RemoveComponent(RobotComponentID::ObjectPoseConfirmer);
+  _components->RemoveComponent(RobotComponentID::PathPlanning);
 
   PRINT_NAMED_INFO("robot.destructor", "%d", GetID());
 }
