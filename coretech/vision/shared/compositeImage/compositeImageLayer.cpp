@@ -142,6 +142,19 @@ void CompositeImageLayer::AddToImageMap(SpriteBoxName sbName, const SpriteEntry&
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CompositeImageLayer::GetSpriteEntry(const SpriteBox& sb, SpriteEntry& outEntry) const
+{
+  auto iter = _imageMap.find(sb.spriteBoxName);
+  if(iter != _imageMap.end()){
+    outEntry = iter->second;
+    return true;
+  }
+
+  return false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CompositeImageLayer::SetImageMap(const Json::Value& imageMapSpec, 
                                       SpriteCache* cache, SpriteSequenceContainer* seqContainer)
 {

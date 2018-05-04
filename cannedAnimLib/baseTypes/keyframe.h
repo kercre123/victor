@@ -20,6 +20,7 @@
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/vision/engine/image.h"
 #include "cannedAnimLib/baseTypes/audioKeyFrameTypes.h"
+#include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
 #include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
 #include "cannedAnimLib/proceduralFace/proceduralFace.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
@@ -51,6 +52,7 @@ namespace Anki {
     class ImageRGB565;
     class SpriteCache;
     class SpriteSequence;
+    class SpriteSequenceContainer;
   }
   
 namespace Cozmo {
@@ -64,7 +66,7 @@ namespace Cozmo {
     ~IKeyFrame();
     
     // Returns true if the animation's time has reached frame's "trigger" time
-    bool IsTimeToPlay(TimeStamp_t animationTime_ms) const;
+    bool IsTimeToPlay(TimeStamp_t timeSinceAnimStart_ms) const;
     // Returns true if current time has reached frame's "trigger" time, relative
     // to the given start time
     bool IsTimeToPlay(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms) const;
@@ -87,24 +89,21 @@ namespace Cozmo {
     #if CAN_STREAM
       // Fill some kind of message for streaming and return it. Return nullptr
       // if not available.
-      virtual RobotInterface::EngineToRobot* GetStreamMessage() = 0;
+      virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) = 0;
     #endif
 
-    // Whether or not this KeyFrame is "done" after calling GetStreamMessage().
+    // Whether or not this KeyFrame is "done" after calling GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms).
     // Override for special keyframes that need to keep parceling out data into
     // multiple returned messages.
-    virtual bool IsDone() { return true; }
+    virtual bool IsDone(const TimeStamp_t timeSinceAnimStart_ms) { return true; }
     
   protected:
-    
     // Populate members from Json
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") = 0;
     
-    TimeStamp_t GetCurrentTime() const { return _currentTime_ms; }
-    
     // Increments member currentTime_ms by ANIM_TIME_STEP_MS and checks it against durationTime_ms.
     // Once currentTime_ms >= durationTime, it gets reset to 0 to be ready to call again.
-    bool IsDoneHelper(TimeStamp_t durationTime_ms);
+    bool IsDoneHelper(const TimeStamp_t timeSinceAnimStart_ms, TimeStamp_t durationTime_ms);
     
     //void SetIsValid(bool isValid) { _isValid = isValid; }
     
@@ -114,11 +113,8 @@ namespace Cozmo {
     TimeStamp_t   _triggerTime_ms = 0;
 
   private:
-    
     // A random number generator for all keyframes to share (for adding variability)
     static Util::RandomGenerator sRNG;
-
-    TimeStamp_t   _currentTime_ms = 0;
     
   }; // class IKeyFrame
   
@@ -138,8 +134,8 @@ namespace Cozmo {
     Result DefineFromFlatBuf(const CozmoAnim::HeadAngle* headAngleKeyframe, const std::string& animNameDebug);
 
     #if CAN_STREAM
-    virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
-    virtual bool IsDone() override;
+    virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) override;
+    virtual bool IsDone(const TimeStamp_t timeSinceAnimStart_ms) override;
     #endif
 
     static const std::string& GetClassName() {
@@ -173,8 +169,8 @@ namespace Cozmo {
     Result DefineFromFlatBuf(const CozmoAnim::LiftHeight* liftHeightKeyframe, const std::string& animNameDebug);
 
     #if CAN_STREAM
-      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
-      virtual bool IsDone() override;      
+      virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) override;
+      virtual bool IsDone(const TimeStamp_t timeSinceAnimStart_ms) override;
     #endif
 
     static const std::string& GetClassName() {
@@ -210,7 +206,7 @@ namespace Cozmo {
 
     #if CAN_STREAM
       // NOTE: Always returns nullptr for RobotAudioKeyframe!
-      virtual RobotInterface::EngineToRobot* GetStreamMessage() override { return nullptr; };
+      virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) override { return nullptr; };
     #endif
 
     static const std::string& GetClassName() {
@@ -239,7 +235,7 @@ namespace Cozmo {
     
 
   // A SpriteSequenceKeyFrame is for streaming a set of images to display on the
-  // robot's face. It will return a non-NULL message each time GetStreamMessage()
+  // robot's face. It will return a non-NULL message each time GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms)
   // is called until there are no more frames left in the animation.
   class SpriteSequenceKeyFrame : public IKeyFrame
   {
@@ -269,7 +265,7 @@ namespace Cozmo {
       // message does not go to robot process. Instead, images are grabbed via GetFaceImage().
       // TODO: Is it better to create a wrapper EngineToRobot message so that we don't have
       //       to duplicate keyframe checking logic in animationStreamer?
-      virtual RobotInterface::EngineToRobot* GetStreamMessage() override {return nullptr;}
+      virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) override {return nullptr;}
     #endif
     
     static const std::string& GetClassName() {
@@ -280,7 +276,7 @@ namespace Cozmo {
       return className;
     }
 
-    virtual bool IsDone() override;
+    virtual bool IsDone(const TimeStamp_t timeSinceAnimStart_ms) override;
     
     Vision::SpriteName GetName() const { return _spriteSequenceName; }
     
@@ -296,21 +292,44 @@ namespace Cozmo {
 
     void AddFrameToRuntimeSequence(Vision::SpriteHandle spriteHandle);
 
+
+   struct CompositeImageUpdateSpec{
+      CompositeImageUpdateSpec(Vision::SpriteCache* sCache, 
+                               Vision::SpriteSequenceContainer* sContainer,
+                               Vision::LayerName lName, 
+                               Vision::CompositeImageLayer::SpriteBox sBox,
+                               Vision::SpriteName sName)
+      : spriteCache(sCache)
+      , seqContainer(sContainer)
+      , layerName(lName)
+      , spriteBox(sBox)
+      , spriteName(sName){}
+
+      Vision::SpriteCache* spriteCache; 
+      Vision::SpriteSequenceContainer* seqContainer;
+      Vision::LayerName layerName;
+      Vision::CompositeImageLayer::SpriteBox spriteBox;
+      Vision::SpriteName spriteName;
+    };
+
     // Transfers ownership to the keyframe
     void SetCompositeImage(Vision::SpriteCache* spriteCache, Vision::CompositeImage* compImg, u32 getFrameInterval_ms);
-    // Returns true if composite image successfully updated
-    bool UpdateCompositeImage(Vision::SpriteCache* spriteCache, Vision::SpriteSequenceContainer* seqContainer,
-                              Vision::LayerName layerName, Vision::SpriteBoxName sbName, Vision::SpriteName spriteName);
 
+    void QueueCompositeImageUpdate(CompositeImageUpdateSpec&& updateSpec,
+                                   u32 applyAt_ms);
+
+    // Depending on the contents of the keyframe there may or may not be updates to images
+    // Checking this function ensures there aren't unnecessary re-draws
+    bool NewImageContentAvailable(const TimeStamp_t timeSinceAnimStart_ms) const;
     // These functions retrieve the image handle and increment the frame count so that they will retrieve
     // the next image on the next call. Returns true if the Image field was populated, false otherwise.
     // Empty frames are expected for animations that have a duration longer than ANIM_TIME_STEP_MS, and hence
     // this function may return false even though there are frames remaining. To check if the keyframe is done,
     // use IsDone() rather than the return value of this function.
-    bool GetFaceImageHandle(Vision::SpriteHandle& handle);
+    bool GetFaceImageHandle(const TimeStamp_t timeSinceAnimStart_ms, Vision::SpriteHandle& handle);
 
     // Resets the keyframe so that the next call to GetFaceImage returns the first image of the set
-    void Reset() { _curFrame = 0; _currentTime_ms = 0; _nextFrameTime_ms = _frameDuration_ms; }
+    void Reset() { _curFrame = 0; _nextFrameTime_ms = 0; }
     
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
     
@@ -332,7 +351,11 @@ namespace Cozmo {
 
     // used to translate _rawSeqName into _spriteSequenceName
     bool ParseSequenceNameFromString(const Vision::SpritePathMap* spriteMap);
+ 
+    // Apply the update to the composite image
+    void ApplyCompositeImageUpdate(CompositeImageUpdateSpec&& updateSpec);
 
+    
     // Keyframe either points to a const sprite sequences within the sprite sequence container
     // or it has a runtime sprite sequence 
     const Vision::SpriteSequence*  _cannedSpriteSequence = nullptr;
@@ -340,7 +363,10 @@ namespace Cozmo {
     std::unique_ptr<Vision::CompositeImage> _compositeImage;
     u32  _compositeImageGetFrameInterval_ms = 0;
     u32  _timeTillNextCompImgGetFrameCall = 0;
+
+    // CompositeImage specific variables
     bool _compositeImageUpdated = false;
+    std::multimap<u32, CompositeImageUpdateSpec> _compositeImageUpdateMap;
 
     // Defines whether the frame should be rendered as an RGBA image
     // or a grayscale image rendered in the color of the robot's eye hue
@@ -356,7 +382,6 @@ namespace Cozmo {
 
     u32          _frameDuration_ms = ANIM_TIME_STEP_MS;
     u32          _nextFrameTime_ms = 0;
-    u32          _currentTime_ms   = 0;
     
   }; // class SpriteSequenceKeyFrame
 
@@ -371,7 +396,7 @@ namespace Cozmo {
     #if CAN_STREAM
       // Always returns nullptr. Use GetInterpolatedFace() to get the face stored in this
       // keyframe.
-      virtual RobotInterface::EngineToRobot* GetStreamMessage() override { return nullptr; }
+      virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) override { return nullptr; }
     #endif
     
     // Returns message for the face interpolated between the stored face in this
@@ -387,7 +412,7 @@ namespace Cozmo {
       return ClassName;
     }
     
-    virtual bool IsDone() override;
+    virtual bool IsDone(const TimeStamp_t timeSinceAnimStart_ms) override;
     
     const ProceduralFace& GetFace() const { return _procFace; }
     
@@ -404,7 +429,7 @@ namespace Cozmo {
     
     #if CAN_STREAM
       // This is what actually populates the message to stream, and is used
-      // by GetStreamMessage() and GetInterpolatedStreamMessage().
+      // by GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) and GetInterpolatedStreamMessage().
       RobotInterface::EngineToRobot* GetStreamMessageHelper(const ProceduralFace& procFace);
     #endif
     
@@ -431,7 +456,7 @@ namespace Cozmo {
     Result DefineFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug);
     
     #if CAN_STREAM
-     virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+     virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) override;
     #endif
 
     static const std::string& GetClassName() {
@@ -463,7 +488,7 @@ namespace Cozmo {
     Result DefineFromFlatBuf(CozmoAnim::BackpackLights* backpackKeyframe, const std::string& animNameDebug);
     
     #if CAN_STREAM
-      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+      virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) override;
     #endif
     
     static const std::string& GetClassName() {
@@ -473,7 +498,7 @@ namespace Cozmo {
     
     void SetDuration(s32 duration_ms) { _durationTime_ms = duration_ms; }
     
-    virtual bool IsDone() override;
+    virtual bool IsDone(const TimeStamp_t timeSinceAnimStart_ms) override;
     
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms + _durationTime_ms;}
     
@@ -506,7 +531,7 @@ namespace Cozmo {
     Result ProcessRadiusString(const std::string& radiusStr, const std::string& animNameDebug);
 
     #if CAN_STREAM
-      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+      virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) override;
     #endif
 
     static const std::string& GetClassName() {
@@ -514,7 +539,7 @@ namespace Cozmo {
       return ClassName;
     }
     
-    virtual bool IsDone() override;
+    virtual bool IsDone(const TimeStamp_t timeSinceAnimStart_ms) override;
     
     s32 GetDurationTime_ms() const { return _durationTime_ms; }
     void EnableStopMessage(bool enable) { _enableStopMessage = enable; }
@@ -527,7 +552,6 @@ namespace Cozmo {
     
   private:
     
-    TimeStamp_t   _currentTime_ms = 0;
     s32 _durationTime_ms;
     bool _enableStopMessage = true;
     
@@ -547,7 +571,7 @@ namespace Cozmo {
     Result DefineFromFlatBuf(const CozmoAnim::RecordHeading* recordHeadingKeyframe, const std::string& animNameDebug);
     
     #if CAN_STREAM
-      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+      virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) override;
     #endif
     
     static const std::string& GetClassName() {
@@ -555,7 +579,7 @@ namespace Cozmo {
       return ClassName;
     }
     
-    virtual bool IsDone() override;
+    virtual bool IsDone(const TimeStamp_t timeSinceAnimStart_ms) override;
     
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms;}
     
@@ -592,7 +616,7 @@ namespace Cozmo {
     void CheckRotationSpeed(const std::string& animNameDebug);
     
     #if CAN_STREAM
-      virtual RobotInterface::EngineToRobot* GetStreamMessage() override;
+      virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) override;
     #endif
     
     static const std::string& GetClassName() {
@@ -600,7 +624,7 @@ namespace Cozmo {
       return ClassName;
     }
     
-    virtual bool IsDone() override;
+    virtual bool IsDone(const TimeStamp_t timeSinceAnimStart_ms) override;
     
     s32 GetDurationTime_ms() const { return _durationTime_ms; }
     virtual TimeStamp_t GetKeyFrameFinalTimestamp_ms() const override { return _triggerTime_ms + _durationTime_ms;}

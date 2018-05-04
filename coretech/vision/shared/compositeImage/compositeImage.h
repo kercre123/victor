@@ -75,6 +75,7 @@ public:
   // Returns true if layer added successfully
   // Returns false if the layer name already exists
   bool AddLayer(CompositeImageLayer&& layer);
+  void ClearLayerByName(LayerName name);
 
   const LayerLayoutMap& GetLayerLayoutMap() const { return _layerMap;}
   LayerLayoutMap& GetLayerLayoutMap()             { return _layerMap;}

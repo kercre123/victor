@@ -62,9 +62,11 @@ public:
     _frameIter(_frames.begin()),
     _isLive(other._isLive)
   {
-    // Advance iterator to preserve original position
-    for (auto pos = other._frames.begin(); pos != other._frameIter; ++pos) {
-      ++_frameIter;
+    if(!other._frames.empty()){
+      // Advance iterator to preserve original position
+      for (auto pos = other._frames.begin(); pos != other._frameIter; ++pos) {
+        ++_frameIter;
+      }
     }
   }
   
@@ -114,10 +116,7 @@ public:
   // Return the Streaming message for the current KeyFrame if it is time,
   // nullptr otherwise. Also returns nullptr if there are no KeyFrames
   // left in the track.
-  RobotInterface::EngineToRobot* GetCurrentStreamingMessage(TimeStamp_t animationTime_ms);
-  
-  // Compare current time with start time.
-  RobotInterface::EngineToRobot* GetCurrentStreamingMessage(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms);
+  RobotInterface::EngineToRobot* GetCurrentStreamingMessage(const TimeStamp_t relativeStreamingTime_ms);
   
   FRAME_TYPE* GetCurrentKeyFrame(TimeStamp_t animationTime_ms);
   
@@ -389,7 +388,7 @@ FRAME_TYPE* Track<FRAME_TYPE>::GetCurrentKeyFrame(TimeStamp_t animationTime_ms)
     FRAME_TYPE& currentKeyFrame = GetCurrentKeyFrame();
     if (currentKeyFrame.IsTimeToPlay(animationTime_ms)) {
       
-      if(currentKeyFrame.IsDone()) {
+      if(currentKeyFrame.IsDone(animationTime_ms)) {
         MoveToNextKeyFrame();
       }
       
@@ -400,16 +399,16 @@ FRAME_TYPE* Track<FRAME_TYPE>::GetCurrentKeyFrame(TimeStamp_t animationTime_ms)
 }
 
 template<typename FRAME_TYPE>
-RobotInterface::EngineToRobot* Track<FRAME_TYPE>::GetCurrentStreamingMessage(TimeStamp_t animationTime_ms)
+RobotInterface::EngineToRobot* Track<FRAME_TYPE>::GetCurrentStreamingMessage(const TimeStamp_t relativeStreamingTime_ms)
 {
   RobotInterface::EngineToRobot* msg = nullptr;
   
   if(HasFramesLeft()) {
     FRAME_TYPE& currentKeyFrame = GetCurrentKeyFrame();
-    if(currentKeyFrame.IsTimeToPlay(animationTime_ms))
+    if(currentKeyFrame.IsTimeToPlay(relativeStreamingTime_ms))
     {
-      msg = currentKeyFrame.GetStreamMessage();
-      if(currentKeyFrame.IsDone()) {
+      msg = currentKeyFrame.GetStreamMessage(relativeStreamingTime_ms);
+      if(currentKeyFrame.IsDone(relativeStreamingTime_ms)) {
         MoveToNextKeyFrame();
       }
     }
@@ -418,24 +417,6 @@ RobotInterface::EngineToRobot* Track<FRAME_TYPE>::GetCurrentStreamingMessage(Tim
   return msg;
 }
 
-template<typename FRAME_TYPE>
-RobotInterface::EngineToRobot* Track<FRAME_TYPE>::GetCurrentStreamingMessage(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms)
-{
-  RobotInterface::EngineToRobot* msg = nullptr;
-
-  if(HasFramesLeft()) {
-    FRAME_TYPE& currentKeyFrame = GetCurrentKeyFrame();
-    if(currentKeyFrame.IsTimeToPlay(currTime_ms - startTime_ms))
-    {
-      msg = currentKeyFrame.GetStreamMessage();
-      if(currentKeyFrame.IsDone()) {
-        MoveToNextKeyFrame();
-      }
-    }
-  }
-
-  return msg;
-}
 
 template<typename FRAME_TYPE>
 Result Track<FRAME_TYPE>::AddKeyFrameToBack(const CozmoAnim::LiftHeight* liftKeyframe, const std::string& animNameDebug)

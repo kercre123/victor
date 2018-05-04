@@ -373,7 +373,9 @@ namespace Cozmo {
     return SetStreamingAnimation(_context->GetDataLoader()->GetCannedAnimation(name), tag, numLoops, interruptRunning, shouldRenderInEyeHue, false);
   }
   
-  Result AnimationStreamer::SetStreamingAnimation(Animation* anim, Tag tag, u32 numLoops, bool interruptRunning, bool shouldRenderInEyeHue, bool isInternalAnim)
+  Result AnimationStreamer::SetStreamingAnimation(Animation* anim, Tag tag, u32 numLoops,
+                                                  bool interruptRunning, bool shouldRenderInEyeHue,
+                                                  bool isInternalAnim, bool shouldClearProceduralAnim)
   {
     if(DEBUG_ANIMATION_STREAMING)
     {
@@ -400,7 +402,7 @@ namespace Cozmo {
                           anim != nullptr ? anim->GetName().c_str() : "NULL",
                           _streamingAnimation->GetName().c_str());
 
-      Abort();                          
+      Abort(shouldClearProceduralAnim);
     }
     
     _streamingAnimation = anim;
@@ -632,15 +634,21 @@ namespace Cozmo {
     
   }
 
-  void AnimationStreamer::Process_updateCompositeImageAsset(const RobotInterface::UpdateCompositeImageAsset& msg)
+  void AnimationStreamer::Process_updateCompositeImage(const RobotInterface::UpdateCompositeImage& msg)
   {
-    UpdateCompositeImage(msg.layerName, msg.spriteBoxName, msg.spriteName);
+    Vision::CompositeImageLayer::SpriteBox sb(msg.serializedSpriteBox);
+    UpdateCompositeImage(msg.layerName, sb, msg.spriteName, msg.applyAt_ms);
   }
   
   void AnimationStreamer::Process_playCompositeAnimation(const std::string& name, Tag tag)
   {
+    const u32 numLoops = 1;
+    const bool interruptRunning = true;
+    const bool shouldRenderInEyeHue = false;
+    const bool isInternalAnim = false;
+    
     CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(name));
-    SetStreamingAnimation(_proceduralAnimation, tag);
+    SetStreamingAnimation(_proceduralAnimation, tag, numLoops, interruptRunning, shouldRenderInEyeHue, isInternalAnim);
   }
 
   Result AnimationStreamer::SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms)
@@ -656,15 +664,22 @@ namespace Cozmo {
 
     DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetFaceImage.NullProceduralAnimation");
     
+    
     auto& spriteSeqTrack = _proceduralAnimation->GetTrack<SpriteSequenceKeyFrame>();
-    // If this is the first image set on the sequence
-    // or the current sprite sequence keyframe has a frame duration of 0 (hold indefinitely)
-    // Clear out any leftover runtime data from previous sequences
-    if(_streamingAnimation != _proceduralAnimation ||
-       spriteSeqTrack.GetCurrentKeyFrame().GetFrameDuration_ms() == 0)
-    {
+    
+    if(_streamingAnimation == _proceduralAnimation){
+      // If the current keyframe will end, leave it alone
+      // Otherwise, clear the track and set the streaming animation to nullptr so that the new
+      // procedural animation will be initialized below
+      if(spriteSeqTrack.GetCurrentKeyFrame().GetFrameDuration_ms() == 0){
+        spriteSeqTrack.Clear();
+        SetStreamingAnimation(nullptr, 0);
+      }
+    }else{
+      // Procedural animation is not playing, so clear the previous track
       spriteSeqTrack.Clear();
     }
+    
     
     // Trigger time of keyframe is 0 since we want it to start playing immediately
     SpriteSequenceKeyFrame kf(shouldRenderInEyeHue, Vision::SpriteName::Count, true);
@@ -676,7 +691,7 @@ namespace Cozmo {
       return result;
     }
     
-    if (_streamingAnimation != _proceduralAnimation) {
+    if(_streamingAnimation != _proceduralAnimation){
       result = SetStreamingAnimation(_proceduralAnimation, 0);
     }
     return result;
@@ -685,13 +700,27 @@ namespace Cozmo {
   Result AnimationStreamer::SetCompositeImage(Vision::CompositeImage* compImg, u32 getFrameInterval_ms, u32 duration_ms)
   {
     DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetCompositeImage.NullProceduralAnimation");
-    auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
-
+    // If procedural animation is streaming set the streaming animation to nullptr 
+    // without clearing it out so that the animation can be re-strated with the composite image data
+    Tag preserveTag = 0;
+    if(_streamingAnimation == _proceduralAnimation){
+      preserveTag = _tag;
+      const u32 numLoops = 1;
+      const bool interruptRunning = true;
+      const bool shouldRenderInEyeHue = true;
+      const bool isInternalAnim = true;
+      const bool shouldClearProceduralAnim = false;
+      SetStreamingAnimation(nullptr, 0, numLoops,
+                            interruptRunning, shouldRenderInEyeHue,
+                            isInternalAnim, shouldClearProceduralAnim);
+    }
+    
     // Clear out any runtime sequences currently set on the procedural animation
     auto& spriteSeqTrack = _proceduralAnimation->GetTrack<SpriteSequenceKeyFrame>();
     spriteSeqTrack.Clear();
     
     // Trigger time of keyframe is 0 since we want it to start playing immediately
+    auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
     SpriteSequenceKeyFrame kf;
     kf.SetCompositeImage(spriteCache, compImg, getFrameInterval_ms);
     kf.SetFrameDuration_ms(duration_ms);
@@ -701,32 +730,44 @@ namespace Cozmo {
       return result;
     }
     
-    if (_streamingAnimation != _proceduralAnimation) {
-      result = SetStreamingAnimation(_proceduralAnimation, 0);
-    }
-    return result;
+    const u32 numLoops = 1;
+    const bool interruptRunning = true;
+    const bool shouldRenderInEyeHue = true;
+    const bool isInternalAnim = false;
+    return SetStreamingAnimation(_proceduralAnimation, preserveTag, numLoops, interruptRunning, shouldRenderInEyeHue, isInternalAnim);
   }
 
   Result AnimationStreamer::UpdateCompositeImage(Vision::LayerName layerName, 
-                                                 Vision::SpriteBoxName sbName, 
-                                                 Vision::SpriteName spriteName)
+                                                 const Vision::CompositeImageLayer::SpriteBox& spriteBox, 
+                                                 Vision::SpriteName spriteName,
+                                                 u32 applyAt_ms)
   {
     if (_streamingAnimation != _proceduralAnimation) {
       return Result::RESULT_FAIL;
     }
 
-    auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
-    auto* spriteSeqContainer = _context->GetDataLoader()->GetSpriteSequenceContainer();
+
     auto& keyframe = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>().GetCurrentKeyFrame();
-    if(keyframe.UpdateCompositeImage(spriteCache, spriteSeqContainer, 
-                                     layerName, sbName, spriteName)){
-      return Result::RESULT_OK;
+    if(keyframe.HasCompositeImage()){
+      auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
+      auto* spriteSeqContainer = _context->GetDataLoader()->GetSpriteSequenceContainer();
+      SpriteSequenceKeyFrame::CompositeImageUpdateSpec spec(spriteCache, 
+                                                            spriteSeqContainer, 
+                                                            layerName, 
+                                                            spriteBox, 
+                                                            spriteName);
+
+      keyframe.QueueCompositeImageUpdate(std::move(spec), applyAt_ms);
+    }else{
+      PRINT_NAMED_WARNING("AnimationStreamer.UpdateCompositeImage.NoCompositeImage", 
+                          "Keyframe does not have a composite image to update");
     }
-    
+
+
     return Result::RESULT_FAIL;
   }
   
-  void AnimationStreamer::Abort()
+  void AnimationStreamer::Abort(bool shouldClearProceduralAnim)
   {
     if (nullptr != _streamingAnimation)
     {
@@ -747,7 +788,8 @@ namespace Cozmo {
 
       _animAudioClient->AbortAnimation();
 
-      if (_streamingAnimation == _proceduralAnimation) {
+      if ((_streamingAnimation == _proceduralAnimation) &&
+          shouldClearProceduralAnim) {
         _proceduralAnimation->Clear();
       }
 
@@ -780,10 +822,7 @@ namespace Cozmo {
       _tag = withTag;
       
       _startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      
-      // Initialize "fake" streaming time to the same start time so we can compare
-      // to it for determining when its time to stream out a keyframe
-      _streamingTime_ms = _startTime_ms;
+      _relativeStreamTime_ms = 0;
 
       _endOfAnimationSent = false;
       _startOfAnimationSent = false;
@@ -1212,7 +1251,7 @@ namespace Cozmo {
     if(DEBUG_ANIMATION_STREAMING) {
       PRINT_CH_INFO(kLogChannelName,
                     "AnimationStreamer.SendEndOfAnimation", "Tag=%d, Name=%s, t=%dms, loopCtr=%d, numLoops=%d",
-                    _tag, streamingAnimName.c_str(), _streamingTime_ms - _startTime_ms, _loopCtr, _numLoops);
+                    _tag, streamingAnimName.c_str(), _relativeStreamTime_ms, _loopCtr, _numLoops);
     }
     
     if (abortingAnim || (_loopCtr == _numLoops - 1)) {
@@ -1256,14 +1295,14 @@ namespace Cozmo {
       TrackLayerComponent::LayeredKeyFrames layeredKeyFrames;
       _trackLayerComponent->ApplyLayersToAnim(nullptr,
                                               _startTime_ms,
-                                              _streamingTime_ms,
+                                              _startTime_ms + _relativeStreamTime_ms,
                                               layeredKeyFrames,
                                               false);
       
       // If we have backpack keyframes to send
       if(layeredKeyFrames.haveBackpackKeyFrame)
       {
-        if (SendIfTrackUnlocked(layeredKeyFrames.backpackKeyFrame.GetStreamMessage(), AnimTrackFlag::BACKPACK_LIGHTS_TRACK)) {
+        if (SendIfTrackUnlocked(layeredKeyFrames.backpackKeyFrame.GetStreamMessage(_relativeStreamTime_ms), AnimTrackFlag::BACKPACK_LIGHTS_TRACK)) {
           EnableBackpackAnimationLayer(true);
         }
       }
@@ -1276,10 +1315,7 @@ namespace Cozmo {
         BufferFaceToSend(_faceDrawBuf);
       }
       
-      // Increment fake "streaming" time, so we can evaluate below whether
-      // it's time to stream out any of the other tracks. Note that it is still
-      // relative to the same start time.
-      _streamingTime_ms += ANIM_TIME_STEP_MS;
+
     }
     
     return lastResult;
@@ -1339,7 +1375,7 @@ namespace Cozmo {
       TrackLayerComponent::LayeredKeyFrames layeredKeyFrames;
       _trackLayerComponent->ApplyLayersToAnim(anim,
                                               _startTime_ms,
-                                              _streamingTime_ms,
+                                              _startTime_ms + _relativeStreamTime_ms,
                                               layeredKeyFrames,
                                               storeFace);
             
@@ -1348,16 +1384,16 @@ namespace Cozmo {
                   PRINT_CH_INFO(kLogChannelName, \
                                 "AnimationStreamer.UpdateStream", \
                                 "Streaming %sKeyFrame at t=%dms.", __KF_NAME__, \
-                                _streamingTime_ms - _startTime_ms)
+                                _relativeStreamTime_ms)
 #     else
 #       define DEBUG_STREAM_KEYFRAME_MESSAGE(__KF_NAME__)
 #     endif
       
-      if(SendIfTrackUnlocked(headTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::HEAD_TRACK)) {
+      if(SendIfTrackUnlocked(headTrack.GetCurrentStreamingMessage(_relativeStreamTime_ms), AnimTrackFlag::HEAD_TRACK)) {
         DEBUG_STREAM_KEYFRAME_MESSAGE("HeadAngle");
       }
       
-      if(SendIfTrackUnlocked(liftTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::LIFT_TRACK)) {
+      if(SendIfTrackUnlocked(liftTrack.GetCurrentStreamingMessage(_relativeStreamTime_ms), AnimTrackFlag::LIFT_TRACK)) {
         DEBUG_STREAM_KEYFRAME_MESSAGE("LiftHeight");
       }
 
@@ -1383,7 +1419,10 @@ namespace Cozmo {
       // like idles, keep alive, or normal animated faces)
       const bool shouldPlayFaceAnim = !IsTrackLocked((u8)AnimTrackFlag::FACE_IMAGE_TRACK) &&
                                       spriteSeqTrack.HasFramesLeft() &&
-                                      spriteSeqTrack.GetCurrentKeyFrame().IsTimeToPlay(_streamingTime_ms - _startTime_ms);
+                                      spriteSeqTrack.GetCurrentKeyFrame().IsTimeToPlay(_relativeStreamTime_ms) &&
+                                      spriteSeqTrack.GetCurrentKeyFrame().NewImageContentAvailable(_relativeStreamTime_ms);
+
+          
       if(shouldPlayFaceAnim)
       {
         auto & faceKeyFrame = spriteSeqTrack.GetCurrentKeyFrame();
@@ -1397,7 +1436,7 @@ namespace Cozmo {
         
         // Render and display the face
         Vision::SpriteHandle handle;
-        const bool gotImage = faceKeyFrame.GetFaceImageHandle(handle);
+        const bool gotImage = faceKeyFrame.GetFaceImageHandle(_relativeStreamTime_ms, handle);
         if(gotImage){
           const bool shouldRenderInEyeHue = faceKeyFrame.ShouldRenderInEyeHue();
           if (shouldRenderInEyeHue) {
@@ -1431,10 +1470,7 @@ namespace Cozmo {
           } else {
             // Composite images apply their own hs/internally
             Vision::HSImageHandle hsHandle = std::make_shared<Vision::HueSatWrapper>(0,0);
-            if(!faceKeyFrame.HasCompositeImage()){
-              hsHandle = ProceduralFace::GetHueSatWrapper();
-            }
-            
+
             if(handle->IsContentCached(hsHandle).rgba){
               const auto& imgRGB = handle->GetCachedSpriteContentsRGBA(hsHandle);
               // Display the ImageRGB565 directly to the face, without modification
@@ -1453,7 +1489,7 @@ namespace Cozmo {
           _nextProceduralFaceAllowedTime_ms = currTime_ms + kMinTimeBetweenLastNonProcFaceAndNextProcFace_ms;
         }
 
-        if(faceKeyFrame.IsDone()) {
+        if(faceKeyFrame.IsDone(_relativeStreamTime_ms)) {
           faceKeyFrame.Reset();
           spriteSeqTrack.MoveToNextKeyFrame();
         }
@@ -1466,20 +1502,20 @@ namespace Cozmo {
       
       if(layeredKeyFrames.haveBackpackKeyFrame)
       {
-        if (SendIfTrackUnlocked(layeredKeyFrames.backpackKeyFrame.GetStreamMessage(), AnimTrackFlag::BACKPACK_LIGHTS_TRACK)) {
+        if (SendIfTrackUnlocked(layeredKeyFrames.backpackKeyFrame.GetStreamMessage(_relativeStreamTime_ms), AnimTrackFlag::BACKPACK_LIGHTS_TRACK)) {
           EnableBackpackAnimationLayer(true);
         }
       }
       
-      if(SendIfTrackUnlocked(bodyTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::BODY_TRACK)) {
+      if(SendIfTrackUnlocked(bodyTrack.GetCurrentStreamingMessage(_relativeStreamTime_ms), AnimTrackFlag::BODY_TRACK)) {
         DEBUG_STREAM_KEYFRAME_MESSAGE("BodyMotion");
       }
       
-      if(SendIfTrackUnlocked(recordHeadingTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::BODY_TRACK)) {
+      if(SendIfTrackUnlocked(recordHeadingTrack.GetCurrentStreamingMessage(_relativeStreamTime_ms), AnimTrackFlag::BODY_TRACK)) {
         DEBUG_STREAM_KEYFRAME_MESSAGE("RecordHeading");
       }
 
-      if(SendIfTrackUnlocked(turnToRecordedHeadingTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::BODY_TRACK)) {
+      if(SendIfTrackUnlocked(turnToRecordedHeadingTrack.GetCurrentStreamingMessage(_relativeStreamTime_ms), AnimTrackFlag::BODY_TRACK)) {
         DEBUG_STREAM_KEYFRAME_MESSAGE("TurnToRecordedHeading");
       }
       
@@ -1489,7 +1525,7 @@ namespace Cozmo {
       // Increment fake "streaming" time, so we can evaluate below whether
       // it's time to stream out any of the other tracks. Note that it is still
       // relative to the same start time.
-      _streamingTime_ms += ANIM_TIME_STEP_MS;
+      _relativeStreamTime_ms += ANIM_TIME_STEP_MS;
       
     } // while(buffering frames)
     
@@ -1621,6 +1657,7 @@ namespace Cozmo {
         lastResult = StreamLayers();
       }
     }
+    
 
     // Tick audio engine
     _animAudioClient->Update();

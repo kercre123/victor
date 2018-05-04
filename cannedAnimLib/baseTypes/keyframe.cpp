@@ -23,6 +23,7 @@
 #include "cannedAnimLib/baseTypes/keyframe.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "util/helpers/boundedWhile.h"
 #include "util/helpers/quoteMacro.h"
 #include "util/logging/logging.h"
 
@@ -57,9 +58,9 @@ namespace Anki {
       
     }
     
-    bool IKeyFrame::IsTimeToPlay(TimeStamp_t animationTime_ms) const
+    bool IKeyFrame::IsTimeToPlay(TimeStamp_t timeSinceAnimStart_ms) const
     {
-      return GetTriggerTime() <= animationTime_ms;
+      return GetTriggerTime() <= timeSinceAnimStart_ms;
     }
     
     bool IKeyFrame::IsTimeToPlay(TimeStamp_t startTime_ms, TimeStamp_t currTime_ms) const
@@ -88,16 +89,9 @@ namespace Anki {
       return lastResult;
     }
     
-    bool IKeyFrame::IsDoneHelper(TimeStamp_t durationTime_ms)
+    bool IKeyFrame::IsDoneHelper(const TimeStamp_t timeSinceAnimStart_ms, TimeStamp_t durationTime_ms)
     {
-      // Done once enough time has ticked by or if we're not sending a done message
-      _currentTime_ms += ANIM_TIME_STEP_MS;
-      if(_currentTime_ms >= durationTime_ms) {
-        _currentTime_ms = 0; // Reset for next time
-        return true;
-      } else {
-        return false;
-      }
+      return timeSinceAnimStart_ms >= durationTime_ms;
     }
     
 #pragma mark -
@@ -154,9 +148,9 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
      }
     
     #if CAN_STREAM
-      RobotInterface::EngineToRobot* HeadAngleKeyFrame::GetStreamMessage()
+      RobotInterface::EngineToRobot* HeadAngleKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms)
       {
-        if (GetCurrentTime() > 0) {
+        if (timeSinceAnimStart_ms > 0) {
           return nullptr;
         }
 
@@ -173,9 +167,9 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         return new RobotInterface::EngineToRobot(_streamHeadMsg);
       }
 
-      bool HeadAngleKeyFrame::IsDone() 
+      bool HeadAngleKeyFrame::IsDone(const TimeStamp_t timeSinceAnimStart_ms)
       {
-        return IsDoneHelper(_durationTime_ms);
+        return IsDoneHelper(timeSinceAnimStart_ms, _durationTime_ms);
       }
 
     #endif
@@ -222,9 +216,9 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     }
     
     #if CAN_STREAM
-      RobotInterface::EngineToRobot* LiftHeightKeyFrame::GetStreamMessage()
+      RobotInterface::EngineToRobot* LiftHeightKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms)
       {
-        if (GetCurrentTime() > 0) {
+        if (timeSinceAnimStart_ms > 0) {
           return nullptr;
         }
 
@@ -241,9 +235,9 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         return new RobotInterface::EngineToRobot(_streamLiftMsg);
       }
 
-      bool LiftHeightKeyFrame::IsDone() 
+      bool LiftHeightKeyFrame::IsDone(const TimeStamp_t timeSinceAnimStart_ms)
       {
-        return IsDoneHelper(_durationTime_ms);
+        return IsDoneHelper(timeSinceAnimStart_ms, _durationTime_ms);
       }
     #endif
 
@@ -297,7 +291,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       _curFrame              = other._curFrame;
       _frameDuration_ms      = other._frameDuration_ms;
       _nextFrameTime_ms      = other._nextFrameTime_ms;
-      _currentTime_ms        = other._currentTime_ms;
       
       if(other._runtimeSpriteSequence != nullptr){
         _runtimeSpriteSequence.reset(new Vision::SpriteSequence(*other._runtimeSpriteSequence));
@@ -407,6 +400,33 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       return foundMatch;
     }
 
+    void SpriteSequenceKeyFrame::ApplyCompositeImageUpdate(CompositeImageUpdateSpec&& updateSpec)
+    {
+      auto& compImg = GetCompositeImage();
+      auto* layer = compImg.GetLayerByName(updateSpec.layerName);
+      if(layer != nullptr){
+        // clear the whole layer if no sprite box name specified
+        if(updateSpec.spriteBox.spriteBoxName == Vision::SpriteBoxName::Count){
+          compImg.ClearLayerByName(updateSpec.layerName);
+          PRINT_NAMED_INFO("AnimationStreamer.UpdateCompositeImage.ClearingLayer", 
+                           "Layer %s cleared from image because spriteBox with count value received",
+                           LayerNameToString(updateSpec.layerName));
+        }else{
+          layer->AddToLayout(updateSpec.spriteBox.spriteBoxName, updateSpec.spriteBox);
+          layer->AddToImageMap(updateSpec.spriteCache, updateSpec.seqContainer,
+                               updateSpec.spriteBox.spriteBoxName, updateSpec.spriteName);
+        }
+      }else{
+        Vision::CompositeImageLayer layer(updateSpec.layerName);
+        layer.AddToLayout(updateSpec.spriteBox.spriteBoxName, updateSpec.spriteBox);
+        Vision::CompositeImageLayer::SpriteEntry entry(updateSpec.spriteCache, updateSpec.seqContainer, updateSpec.spriteName);
+        layer.AddToImageMap(updateSpec.spriteBox.spriteBoxName, entry);
+        compImg.AddLayer(std::move(layer));
+        PRINT_NAMED_INFO("AnimationStreamer.UpdateCompositeImage.AddingLayer",
+                         "Layer %s added to composite image",
+                         LayerNameToString(updateSpec.layerName));
+      }
+    }
 
 
     Result SpriteSequenceKeyFrame::DefineFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe, const std::string& animNameDebug)
@@ -425,12 +445,9 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       return Process(animNameDebug);
     }
     
-    bool SpriteSequenceKeyFrame::IsDone()
+    bool SpriteSequenceKeyFrame::IsDone(const TimeStamp_t timeSinceAnimStart_ms)
     {
-      // Short term fix for VIC-2407: IsDone is called twice per tick, so divide time step by 2
-      // Be careful of calling IsDone until a longer term fix is implemented
-      _currentTime_ms += ANIM_TIME_STEP_MS;
-      if(!SequenceShouldAdvance() || (_currentTime_ms < _nextFrameTime_ms)){
+      if(!SequenceShouldAdvance() || (timeSinceAnimStart_ms < _nextFrameTime_ms)){
         return false;
       }
 
@@ -480,28 +497,35 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       _compositeImageGetFrameInterval_ms = getFrameInterval_ms;
     }
 
-    bool SpriteSequenceKeyFrame::UpdateCompositeImage(Vision::SpriteCache* spriteCache, 
-                                                      Vision::SpriteSequenceContainer* seqContainer,
-                                                      Vision::LayerName layerName, 
-                                                      Vision::SpriteBoxName sbName, 
-                                                      Vision::SpriteName spriteName)
+    void SpriteSequenceKeyFrame::QueueCompositeImageUpdate(CompositeImageUpdateSpec&& updateSpec,
+                                                           u32 applyAt_ms)
     {
-      if(_compositeImage != nullptr){
-        auto* layer = _compositeImage->GetLayerByName(layerName);
-        if(layer != nullptr){
-          layer->AddToImageMap(spriteCache, seqContainer, sbName, spriteName);
-          _compositeImageUpdated = true;
-          return true;
-        }
-      }
-      return false;
+      _compositeImageUpdateMap.emplace(applyAt_ms, std::move(updateSpec));
+      _compositeImageUpdated = true;
     }
 
 
-    
-    bool SpriteSequenceKeyFrame::GetFaceImageHandle(Vision::SpriteHandle& handle)
+    bool SpriteSequenceKeyFrame::NewImageContentAvailable(const TimeStamp_t timeSinceAnimStart_ms) const
     {
-      if(IsDone()) {
+      if(timeSinceAnimStart_ms == 0){
+        return true;
+      }
+      
+      if(_cannedSpriteSequence != nullptr){
+        return _nextFrameTime_ms <= timeSinceAnimStart_ms;
+      }else if(_runtimeSpriteSequence != nullptr){
+        return _runtimeSpriteSequence->GetNumFrames() > 1;
+      }else if(_compositeImage != nullptr){
+        return (_compositeImage->GetFullLoopLength() > 1) || _compositeImageUpdated;
+      }
+      
+      return false;
+    }
+
+    
+    bool SpriteSequenceKeyFrame::GetFaceImageHandle(const TimeStamp_t timeSinceAnimStart_ms, Vision::SpriteHandle& handle)
+    {
+      if(IsDone(timeSinceAnimStart_ms)) {
         return false;
       }
 
@@ -521,7 +545,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
                     "");
       }
 
-      if((_currentTime_ms >= _nextFrameTime_ms) || _compositeImageUpdated){
+      if((timeSinceAnimStart_ms >= _nextFrameTime_ms) || _compositeImageUpdated){
         if(_runtimeSpriteSequence != nullptr){
           _runtimeSpriteSequence->GetFrame(0, handle);
           if(SequenceShouldAdvance()){
@@ -531,9 +555,25 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           _cannedSpriteSequence->GetFrame(_curFrame, handle);
           ++_curFrame;
         }else if(_compositeImage != nullptr){
+
           ANKI_VERIFY(_compositeImageUpdated,
                       "SpriteSequenceKeyFrame.GetFaceImageHandle.CompositeImageUpdateIssue",
                       "Composite images only have on frame, but next frame is being requested via _nextFrameTime_ms");
+          // Apply any composite image updates queued
+          auto iter = _compositeImageUpdateMap.begin();
+          const auto mapBound = _compositeImageUpdateMap.size() + 1;
+          BOUNDED_WHILE(mapBound, iter != _compositeImageUpdateMap.end()){
+            if(iter->first <= timeSinceAnimStart_ms){
+              auto updateSpec = iter->second;
+              ApplyCompositeImageUpdate(std::move(updateSpec));
+              // erase element/move iterator
+              _compositeImageUpdateMap.erase(iter);
+              iter = _compositeImageUpdateMap.begin();
+            }else{
+              break;
+            }
+          }
+
           auto* img = new Vision::ImageRGBA(_compositeImage->GetHeight(),
                                             _compositeImage->GetWidth());
           img->FillWith(Vision::PixelRGBA());
@@ -543,7 +583,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         }
 
         if(!_compositeImageUpdated){
-          _nextFrameTime_ms = _currentTime_ms + _frameDuration_ms;
+          _nextFrameTime_ms = timeSinceAnimStart_ms + _frameDuration_ms;
         }
 
         _compositeImageUpdated = false;
@@ -583,7 +623,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       _isDone = false;
     }
     
-    bool ProceduralFaceKeyFrame::IsDone()
+    bool ProceduralFaceKeyFrame::IsDone(const TimeStamp_t timeSinceAnimStart_ms)
     {
       bool retVal = _isDone;
       if(_isDone) {
@@ -991,7 +1031,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     //
     
     #if CAN_STREAM
-      RobotInterface::EngineToRobot* EventKeyFrame::GetStreamMessage()
+      RobotInterface::EngineToRobot* EventKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms)
       {
         // This function isn't actually used. Instead GetAnimEvent() is used by animationStreamer.
         DEV_ASSERT(false, "EventKeyFrame.GetStreamMessage.ShouldntCallThis");
@@ -1101,16 +1141,16 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     }
   
     #if CAN_STREAM
-      RobotInterface::EngineToRobot* BackpackLightsKeyFrame::GetStreamMessage()
+      RobotInterface::EngineToRobot* BackpackLightsKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms)
       {
         return new RobotInterface::EngineToRobot(_streamMsg);
       }
     #endif
   
   
-    bool BackpackLightsKeyFrame::IsDone()
+    bool BackpackLightsKeyFrame::IsDone(const TimeStamp_t timeSinceAnimStart_ms)
     {
-      return IsDoneHelper(_durationTime_ms);
+      return IsDoneHelper(timeSinceAnimStart_ms, _durationTime_ms);
     }
     
 #pragma mark -
@@ -1257,15 +1297,15 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     }
 
     #if CAN_STREAM
-      RobotInterface::EngineToRobot* BodyMotionKeyFrame::GetStreamMessage()
+      RobotInterface::EngineToRobot* BodyMotionKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms)
       {
         //PRINT_NAMED_INFO("BodyMotionKeyFrame.GetStreamMessage",
-        //                 "currentTime=%d, duration=%d\n", _currentTime_ms, _duration_ms);
+        //                 "currentTime=%d, duration=%d\n", timeSinceAnimStart_ms, _duration_ms);
         
-        if(_currentTime_ms == 0) {
+        if(timeSinceAnimStart_ms == 0) {
           // Send the motion command at the beginning
           return new RobotInterface::EngineToRobot(_streamMsg);
-        } else if(_enableStopMessage && _currentTime_ms >= _durationTime_ms) {
+        } else if(_enableStopMessage && timeSinceAnimStart_ms >= _durationTime_ms) {
           // Send a stop command when the duration has passed
           return new RobotInterface::EngineToRobot(_stopMsg);
         } else {
@@ -1277,18 +1317,13 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
       }
     #endif
     
-    bool BodyMotionKeyFrame::IsDone()
+    bool BodyMotionKeyFrame::IsDone(const TimeStamp_t timeSinceAnimStart_ms)
     {
       // Done once enough time has ticked by or if we're not sending a done message
-      if(!_enableStopMessage || (_currentTime_ms >= _durationTime_ms)) {
-        _currentTime_ms = 0; // Reset for next time
+      if(!_enableStopMessage || (timeSinceAnimStart_ms >= _durationTime_ms)) {
         return true;
       } 
 
-      // Increment time _after_ comparing to duration (unlike IsDoneHelper) so that
-      // this frame is current for one tick after it has technically completed so
-      // that the stop message can be sent if necessary.
-      _currentTime_ms += ANIM_TIME_STEP_MS;
       return false;
     }
 
@@ -1318,16 +1353,16 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     }
     
     #if CAN_STREAM
-      RobotInterface::EngineToRobot* RecordHeadingKeyFrame::GetStreamMessage()
+      RobotInterface::EngineToRobot* RecordHeadingKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms)
       {
-        if (GetCurrentTime() == 0) {
+        if (timeSinceAnimStart_ms == 0) {
           return new RobotInterface::EngineToRobot(_streamMsg);
         }
         return nullptr;
       }
     #endif
     
-    bool RecordHeadingKeyFrame::IsDone()
+    bool RecordHeadingKeyFrame::IsDone(const TimeStamp_t timeSinceAnimStart_ms)
     {
       return true;
     }
@@ -1439,18 +1474,18 @@ _streamMsg.lights[__LED_NAME__].offset = 0; } while(0)
     }
     
     #if CAN_STREAM
-      RobotInterface::EngineToRobot* TurnToRecordedHeadingKeyFrame::GetStreamMessage()
+      RobotInterface::EngineToRobot* TurnToRecordedHeadingKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms)
       {
-        if (GetCurrentTime() == 0) {
+        if (timeSinceAnimStart_ms == 0) {
           return new RobotInterface::EngineToRobot(_streamMsg);
         }
         return nullptr;
       }
     #endif
     
-    bool TurnToRecordedHeadingKeyFrame::IsDone()
+    bool TurnToRecordedHeadingKeyFrame::IsDone(const TimeStamp_t timeSinceAnimStart_ms)
     {
-      return IsDoneHelper(_durationTime_ms);
+      return IsDoneHelper(timeSinceAnimStart_ms, _durationTime_ms);
     }
     
   } // namespace Cozmo
