@@ -1545,10 +1545,10 @@ void WebService::OnReceiveWebSocket(struct mg_connection* conn, const Json::Valu
                        "",
                        waitAndSendResponse);
       }
-      if( data["type"].asString() == "unsubscribe" ) {
+      else if( data["type"].asString() == "unsubscribe" ) {
         it->subscribedModules.erase( moduleName );
       }
-      if( (data["type"].asString() == "data") && !data["data"].isNull() ) {
+      else if( (data["type"].asString() == "data") && !data["data"].isNull() ) {
         const bool waitAndSendResponse = false;
         std::stringstream ss;
         ss << data["data"];
@@ -1560,6 +1560,10 @@ void WebService::OnReceiveWebSocket(struct mg_connection* conn, const Json::Valu
                        waitAndSendResponse);
       }
 
+    } else if( !data["keepalive"].isNull() ) {
+      Json::Value response;
+      response["keepalive"] = true;
+      SendToWebSocket( it->conn, response );
     }
   } else {
     std::stringstream ss;
