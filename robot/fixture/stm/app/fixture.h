@@ -227,8 +227,7 @@ typedef int error_t;
 #define ERROR_HEADPGM_BAD_CERT            502 // detect bad,corrupt cloud certificate file
 #define ERROR_HEADPGM_FAC_IMG             503 // error provisioning factory partition image
 #define ERROR_HEADPGM_USB_DEV_NOT_FOUND   504 // no valid DUT detected on USB - check power and wiring
-//#define ERROR_HEAD_RADIO_SYNC           510 // Can't sync with radio
-//#define ERROR_HEAD_SPEAKER              520 // Speaker not connected/damaged
+#define ERROR_HEADPGM_USB_MODE_SWITCH     505 // fixture usb driver error - failed to enter otg host mode - POWER CYCLE FIXTURE
 #define ERROR_HEADPGM_RANGE_END           520 // RANGE CHECK FOR HEADPGM ERRORS, do not throw this!
 
 //<export heading> Body Errors
