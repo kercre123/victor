@@ -29,7 +29,11 @@ u8 g_fixtureReleaseVersion = (NOT_FOR_FACTORY) ? 0 : (APP_RELEASE_VERSION);
 #define BUILD_INFO "Victor DVT3"
 
 #define USE_START_BTN 0
-#define APP_DEBUG 1
+#define APP_DEBUG 0
+
+#if APP_DEBUG > 0
+#warning APP_DEBUG
+#endif
 
 //other global dat
 app_reset_dat_t g_app_reset;
@@ -194,7 +198,7 @@ void WaitForDeviceOff(bool error, int debounce_ms)
 }
 
 static void printFixtureInfo() {
-  ConsolePrintf("fixture,hw,%i,%s,serial,%i,%04x\n", Board::revision(), Board::revString(), FIXTURE_SERIAL, FIXTURE_SERIAL);
+  ConsolePrintf("fixture,hw,%i,%s,serial,%i,%03x,seq,%05x\n", Board::revision(), Board::revString(), FIXTURE_SERIAL, FIXTURE_SERIAL, fixtureReadSequence());
   ConsolePrintf("fixture,build,%s,%s %s\n", BUILD_INFO, __DATE__, __TIME__);
   ConsolePrintf("fixture,fw,%03d,%s,mode,%i,%s\n", g_fixtureReleaseVersion, (NOT_FOR_FACTORY > 0 ? "debug" : "release"), g_fixmode, fixtureName() );
 }

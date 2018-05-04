@@ -77,6 +77,7 @@ TestFunction* fixtureGetTests(void); //gets tests for the current fixmode
 int           fixtureGetTestCount(void); //gets the # of test functions for the current fixmode
 bool          fixtureValidateFixmodeInfo(bool print=0); //dev tool - validate const info array. print=1 -> print the array to console
 uint32_t      fixtureGetSerial(void); // Get a serial number for a device in the normal 12.20 fixture.sequence format
+int           fixtureReadSequence(void); //read the current sequence #. DOES NOT make any sequence changes. reporting API only.
 #endif
 
 //Init data for g_fixmode_info[] - keep all mode info organized in one file!
