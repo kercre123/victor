@@ -4,7 +4,7 @@ asset_project(
     srcs = subdir_glob([
                 ('assets', 'cladToFileMaps/*.json'),
                 ('assets', 'RewardedActions/RewardedActions.json'),
-                ('assets','cube.dfu'),
+                ('assets', 'cubeFirmware/cube.dfu'),
                 ('externals/anki-thirdparty/sensory', 'hey_cosmo_and_commands/trigger_anki_x_en_us_01_hey_cosmo_sfs14_b3e3cbba/anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery01_am.raw'),
                 ('externals/anki-thirdparty/sensory', 'hey_cosmo_and_commands/trigger_anki_x_en_us_01_hey_cosmo_sfs14_b3e3cbba/anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery01_search_4.raw'),
                 ('externals/anki-thirdparty/sensory', 'hey_cosmo_and_commands/trigger_anki_x_en_us_02_hey_cosmo_sfs14_b3e3cbba/anki_x_hey_cosmo_en_us_sfs14_b3e3cbba_delivery02_am.raw'),

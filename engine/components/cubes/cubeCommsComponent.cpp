@@ -87,7 +87,7 @@ void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
   
   const Util::Data::DataPlatform* platform = robot->GetContextDataPlatform();
   if(platform) {
-    const auto cubeFirmwarePath = platform->pathToResource(Util::Data::Scope::Resources, "assets/cube.dfu");
+    const auto cubeFirmwarePath = platform->pathToResource(Util::Data::Scope::Resources, "assets/cubeFirmware/cube.dfu");
     _cubeBleClient->SetCubeFirmwareFilepath(cubeFirmwarePath);
   }
 
