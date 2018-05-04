@@ -60,15 +60,7 @@ namespace Anki {
       Pose3d frontPose(-M_PI_2_F, Z_AXIS_3D(),
                        Point3f{kSlopeLength+kPlatformLength, 0, kMarkerZPosition});
       
-#ifdef SIMULATOR
-      // Simulation uses new marker with battery
-      const auto markerType = Vision::MARKER_CHARGER_HOME;
-#else
-      // Real robot uses old marker with eyes until VIC-945
-      const auto markerType = Vision::MARKER_CHARGER_HOME_EYES;
-#endif
-      
-      _marker = &AddMarker(markerType, frontPose, Point2f(kMarkerWidth, kMarkerHeight));
+      _marker = &AddMarker(Vision::MARKER_CHARGER_HOME, frontPose, Point2f(kMarkerWidth, kMarkerHeight));
       
     } // Charger() Constructor
 

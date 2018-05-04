@@ -31,15 +31,6 @@
 
 namespace Anki {
 namespace Vision {
-
-// TODO: Default to false (and remove?) for VIC-945, when we've fully switched to dark cubes/charger
-CONSOLE_VAR(bool, kMarkerDetector_DarkOnLight, "Vision.MarkerDetection",
-#ifdef ANDROID
-  true   // Continue to use dark-on-light markers with real robots until we have DVT3 cubes/chargers
-#else
-  false  // Go ahead and start using light-on-dark markers in simulation
-#endif
-);
   
 struct MarkerDetector::Parameters : public Embedded::FiducialDetectionParameters
 {
@@ -48,9 +39,6 @@ struct MarkerDetector::Parameters : public Embedded::FiducialDetectionParameters
   f32         minSideLengthFraction;
   f32         maxSideLengthFraction;
   bool        isInitialized;
-  
-  // selected when (kMarkerDetector_DarkOnLight==false)
-  s32 scaleImage_thresholdMultiplier_lightOnDark = static_cast<s32>(65536.f * 0.9f);
   
   Parameters();
   void Initialize(); // TODO: Initialize from Json config
@@ -111,12 +99,6 @@ Result MarkerDetector::Memory::ResetBuffers(s32 numRows, s32 numCols, s32 maxMar
   return RESULT_OK;
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MarkerDetector::IsDarkOnLight()
-{
-  return kMarkerDetector_DarkOnLight;
-}
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MarkerDetector::MarkerDetector(const Camera& camera)
 : _camera(camera)
@@ -208,15 +190,13 @@ Result MarkerDetector::Detect(const Image& inputImageGray, std::list<ObservedMar
   _params->SetComputeComponentMinNumPixels(inputImageGray.GetNumRows(), inputImageGray.GetNumCols());
   _params->SetComputeComponentMaxNumPixels(inputImageGray.GetNumRows(), inputImageGray.GetNumCols());
   
-  if(!kMarkerDetector_DarkOnLight)
-  {
-    _params->scaleImage_thresholdMultiplier = _params->scaleImage_thresholdMultiplier_lightOnDark;
-  }
+  // Victor markers are all light-on-dark
+  const bool kDarkOnLightMode = false;
   
   const Result result = DetectFiducialMarkers(grayscaleImage,
                                               markers,
                                               *_params,
-                                              kMarkerDetector_DarkOnLight,
+                                              kDarkOnLightMode,
                                               _memory->_ccmScratch,
                                               _memory->_onchipScratch,
                                               _memory->_offchipScratch);
@@ -283,7 +263,9 @@ void MarkerDetector::Parameters::Initialize()
   useIntegralImageFiltering = true;
   useIlluminationNormalization = true;
   
-  scaleImage_thresholdMultiplier = static_cast<s32>(65536.f * 0.8f);
+  // NOTE: 0.8 was good for dark-on-light (Cozmo) markers, 0.9 for light-on-dark Victor markers
+  scaleImage_thresholdMultiplier = static_cast<s32>(65536.f * 0.9f);
+  
   //scaleImage_thresholdMultiplier = 65536; // 1.0*(2^16)=65536
   //scaleImage_thresholdMultiplier = 49152; // 0.75*(2^16)=49152
   

@@ -94,8 +94,9 @@ namespace Anki {
         // For charger mounting, whether or not to use cliff sensors to align the robot.
         bool useCliffSensorAlignment_ = false;
 
-#ifdef SIMULATOR
-        bool chargerStripeIsBlack_ = false;
+        // TODO: Default this to false once we have enough dark gray chargers (VIC-2755)
+#ifdef  SIMULATOR
+        bool chargerStripeIsBlack_ = false; // simulated chargers are "correct": dark gray with white stripe
 #else
         bool chargerStripeIsBlack_ = true;
 #endif
@@ -106,7 +107,6 @@ namespace Anki {
 #else
         const u16 kChargerCliffBlackThreshold = 400;
 #endif
-
 
         // Charger docking wheel speeds for backing onto the charger:
         const float kChargerDockingSpeedHigh = -30.f;
@@ -864,7 +864,7 @@ namespace Anki {
               const bool isBlackBL = cliffBL < kChargerCliffBlackThreshold;
               const bool isBlackBR = cliffBR < kChargerCliffBlackThreshold;
 
-              // TODO: Only keep the logic for white stripe on dark charger (VIC-945)
+              // TODO: Only keep the logic for white stripe on dark charger once we have enough chargers (VIC-2755)
               if (chargerStripeIsBlack_) {
                 // Slow down one of the sides if it's seeing black
                 if (isBlackBL && !isBlackBR) {

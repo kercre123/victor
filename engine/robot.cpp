@@ -112,12 +112,13 @@ CONSOLE_VAR(bool, kUseVisionOnlyWhileOnTreads,    "Robot", false);
 // Enable to enable example code of face image drawing
 CONSOLE_VAR(bool, kEnableTestFaceImageRGBDrawing,  "Robot", false);
 
-// TEMP support for 'old' chargers with black stripe and white body
+// TEMP support for 'old' chargers with black stripe and white body (VIC-2755)
+// Set to true to allow the robot to dock with older white chargers (that have a light-on-dark marker sticker)
 CONSOLE_VAR(bool, kChargerStripeIsBlack, "Robot",
 #ifdef SIMULATOR
-            false
+            false  // Simulated chargers are gray with white stripe
 #else
-            true
+            true   // *Most* real chargers are white with a sticker, and thus have a black stripe
 #endif
             );
 

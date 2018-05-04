@@ -300,7 +300,6 @@ TEST(VisionSystem, MarkerDetectionTests)
   {
     std::string subDir;
     f32         expectedFailureRate;
-    bool        isDarkOnLight;
     std::function<bool(const std::list<Vision::ObservedMarker>&, const std::string& filename)> didSucceedFcn;
   };
 
@@ -318,31 +317,9 @@ TEST(VisionSystem, MarkerDetectionTests)
   };
   
   const std::vector<TestDefinition> testDefinitions = {
-
-    TestDefinition{
-      .subDir = "BacklitStack",
-      .expectedFailureRate = 0.f,
-      .isDarkOnLight = true,
-      .didSucceedFcn = [](const std::list<Vision::ObservedMarker>& markers, const std::string&) -> bool
-      {
-        return markers.size() >= 2;
-      }
-    },
-
-    TestDefinition{
-      .subDir = "LowLight",
-      .expectedFailureRate = .02f,
-      .isDarkOnLight = true,
-      .didSucceedFcn = [](const std::list<Vision::ObservedMarker>& markers, const std::string&) -> bool
-      {
-        return !markers.empty();
-      }
-    },
-
     TestDefinition{
       .subDir = "NoMarkers",
       .expectedFailureRate = 0.f,
-      .isDarkOnLight = true,
       .didSucceedFcn = [](const std::list<Vision::ObservedMarker>& markers, const std::string&) -> bool
       {
         return markers.empty();
@@ -352,26 +329,24 @@ TEST(VisionSystem, MarkerDetectionTests)
     TestDefinition{
       .subDir = "LightOnDark_Circle",
       .expectedFailureRate = 0.05f, // Should be 0 VIC-1165
-      .isDarkOnLight = false,
       .didSucceedFcn = matchFilenameFcn,
     },
 
     TestDefinition{
       .subDir = "LightOnDark_Square",
       .expectedFailureRate = 0.f,
-      .isDarkOnLight = false,
       .didSucceedFcn = matchFilenameFcn,
     },
 
     TestDefinition{
       .subDir = "LightOnDark_Charger",
       .expectedFailureRate = 0.05f, // Should be 0 VIC-1165
-      .isDarkOnLight = false,
       .didSucceedFcn = [](const std::list<Vision::ObservedMarker>& markers, const std::string& filename) -> bool
       {
         return (markers.size() == 1) && (strncmp("MARKER_CHARGER_HOME", markers.front().GetCodeName(), 19) == 0);
       }
     },
+
   };
 
 
@@ -385,7 +360,7 @@ TEST(VisionSystem, MarkerDetectionTests)
     const std::vector<std::string> testFiles_png = Util::FileUtils::FilesInDirectory(Util::FileUtils::FullFilePath({testImageDir, subDir}), false, ".png");
     std::copy(testFiles_png.begin(), testFiles_png.end(), std::back_inserter(testFiles));
 
-    NativeAnkiUtilConsoleSetValueWithString("MarkerDetector_DarkOnLight", (testDefinition.isDarkOnLight ? "1" : "0"));
+    EXPECT_FALSE(testFiles.empty());
     
     u32 numFailures = 0;
     for(auto & filename : testFiles)

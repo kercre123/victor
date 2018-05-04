@@ -65,7 +65,7 @@
 namespace Anki {
 namespace Cozmo {
   
-  CONSOLE_VAR_RANGED(u8,  kUseCLAHE_u8,     "Vision.PreProcessing", 4, 0, 4);  // One of MarkerDetectionCLAHE enum
+  CONSOLE_VAR_RANGED(u8,  kUseCLAHE_u8,     "Vision.PreProcessing", 0, 0, 4);  // One of MarkerDetectionCLAHE enum
   CONSOLE_VAR(s32, kClaheClipLimit,         "Vision.PreProcessing", 32);
   CONSOLE_VAR(s32, kClaheTileSize,          "Vision.PreProcessing", 4);
   CONSOLE_VAR(u8,  kClaheWhenDarkThreshold, "Vision.PreProcessing", 80); // In MarkerDetectionCLAHE::WhenDark mode, only use CLAHE when img avg < this
@@ -1405,26 +1405,21 @@ namespace Cozmo {
       _currentCameraParams = _nextCameraParams.second;
       cameraParamsRequested = false;
     }
-    
-    MarkerDetectionCLAHE useCLAHE = MarkerDetectionCLAHE::Off;
+
+    // Apply CLAHE if enabled:
+    DEV_ASSERT(kUseCLAHE_u8 < Util::EnumToUnderlying(MarkerDetectionCLAHE::Count),
+               "VisionSystem.ApplyCLAHE.BadUseClaheVal");
+    MarkerDetectionCLAHE useCLAHE = static_cast<MarkerDetectionCLAHE>(kUseCLAHE_u8);
     Vision::Image claheImage;
-    if(_markerDetector->IsDarkOnLight())
-    {
-      // Apply CLAHE if enabled:
-      DEV_ASSERT(kUseCLAHE_u8 < Util::EnumToUnderlying(MarkerDetectionCLAHE::Count),
-                 "VisionSystem.ApplyCLAHE.BadUseClaheVal");
-      
-      useCLAHE = static_cast<MarkerDetectionCLAHE>(kUseCLAHE_u8);
-      
-      // Note: this will do nothing and leave claheImage empty if CLAHE is disabled
-      // entirely or for this frame.
-      lastResult = ApplyCLAHE(imageCache, useCLAHE, claheImage);
-      if(RESULT_OK != lastResult) {
-        PRINT_NAMED_WARNING("VisionSystem.Update.FailedCLAHE", "");
-        return lastResult;
-      }
-    }
     
+    // Note: this will do nothing and leave claheImage empty if CLAHE is disabled
+    // entirely or for this frame.
+    lastResult = ApplyCLAHE(imageCache, useCLAHE, claheImage);
+    if(RESULT_OK != lastResult) {
+      PRINT_NAMED_WARNING("VisionSystem.Update.FailedCLAHE", "");
+      return lastResult;
+    }
+
     // Rolling shutter correction
     if(_doRollingShutterCorrection)
     {
