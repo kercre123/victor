@@ -13,7 +13,7 @@
 #include "util/time/universalTime.h"
 #if defined(__MACH__) && defined(__APPLE__)
 #include <mach/mach_time.h>
-#elif defined(ANDROID) || defined(LINUX)
+#elif defined(ANDROID) || defined(LINUX) || defined(VICOS)
 #include <time.h>
 #endif
 #include "util/math/numericCast.h"
@@ -34,7 +34,7 @@ unsigned long long int UniversalTime::GetCurrentTimeInNanoseconds()
   }
 
   return (unsigned long long int)((mach_absolute_time() * s_timebase_info.numer) /  s_timebase_info.denom);
-#elif defined(ANDROID) || defined(LINUX)
+#elif defined(ANDROID) || defined(LINUX) || defined(VICOS)
   timespec t;
   clock_gettime(CLOCK_MONOTONIC, &t);
   return (unsigned long long)(t.tv_sec*1000000000ULL) + (unsigned long long)t.tv_nsec;
@@ -66,7 +66,7 @@ unsigned long long int UniversalTime::GetCurrentTimeValue()
 {
 #if defined(__MACH__) && defined(__APPLE__)
   return mach_absolute_time();
-#elif defined(ANDROID)  || defined(LINUX)
+#elif defined(ANDROID)  || defined(LINUX) || defined(VICOS)
   timespec t;
   clock_gettime(CLOCK_MONOTONIC, &t);
   return (unsigned long long)(t.tv_sec*1000000000ULL) + (unsigned long long)t.tv_nsec;
@@ -101,7 +101,7 @@ unsigned long long int UniversalTime::GetNanosecondsElapsedSince(unsigned long l
   // Do the maths. We hope that the multiplication doesn't
   // overflow; the price you pay for working in fixed point.
   return elapsed * sTimebaseInfo.numer / sTimebaseInfo.denom;
-#elif defined(ANDROID) || defined(LINUX)
+#elif defined(ANDROID) || defined(LINUX) || defined(VICOS)
   timespec t;
   clock_gettime(CLOCK_MONOTONIC, &t);
   return ((unsigned long long)(t.tv_sec*1000000000ULL) + (unsigned long long)t.tv_nsec) - previousTime;
