@@ -1,4 +1,4 @@
-/**
+/** 
 * File: cozmoEngineMain.cpp
 *
 * Author: Various Artists
@@ -294,7 +294,7 @@ int main(int argc, char* argv[])
   // GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
 
   char cwd[PATH_MAX] = { 0 };
-  getcwd(cwd, sizeof(cwd));
+  (void)getcwd(cwd, sizeof(cwd));
   printf("CWD: %s\n", cwd);
   printf("argv[0]: %s\n", argv[0]);
   printf("exe path: %s/%s\n", cwd, argv[0]);
