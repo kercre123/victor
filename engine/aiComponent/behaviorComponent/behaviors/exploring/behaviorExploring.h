@@ -84,6 +84,7 @@ private:
   // retPoses contains however many samples have been accepted (which might be none!)
   void SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
                                       bool tooFarFromCharger,
+                                      bool chargerEqualsRobot,
                                       const Point2f& chargerPos,
                                       const Point2f& robotPos,
                                       std::vector<Pose3d>& retPoses ) const;
@@ -92,10 +93,6 @@ private:
   void SampleVisitLocationsFacingObstacle( const INavMap* memoryMap,
                                            const ObservableObject* charger,
                                            std::vector<Pose3d>& retPoses ) const;
-  
-  // get a vector of values in [0,1] such that all values sum to 1 and divide the unit interval
-  // with a random number of segments, up to maxNumSegments
-  std::vector<float> SampleUnitPartition( unsigned int maxNumSegments ) const;
   
   
   enum class State : uint8_t {
@@ -106,6 +103,7 @@ private:
   };
 
   struct InstanceConfig {
+    bool allowNoCharger;
     float minSearchRadius_m;
     float maxSearchRadius_m;
     float maxChargerDistance_m;

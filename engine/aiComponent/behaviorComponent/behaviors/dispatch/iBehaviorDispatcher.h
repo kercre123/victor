@@ -72,10 +72,12 @@ private:
     std::vector<ICozmoBehaviorPtr> behaviors;
 
     bool shouldInterruptActiveBehavior;
+    int maxBehaviorActivations; // if non-negative, the dispatcher will activate children this many times then CancelSelf
   };
 
   struct DynamicVariables {
     DynamicVariables();
+    unsigned int numActivations;
   };
 
   InstanceConfig   _iConfig;

@@ -40,10 +40,11 @@ namespace {
   const char* const kMaxSearchRadiusKey = "maxSearchRadius_m";
   const char* const kMaxChargerDistanceKey = "maxChargerDistance_m";
   const char* const kPAcceptKnownAreasKey = "pAcceptKnownAreas";
+  const char* const kAllowNoChargerKey = "allowNoCharger";
   
   // todo: params for this:
-  const unsigned int kMaxNumStops = 4;
-  const float kProbHeadMove = 1.0f;
+  const float kMinScanAngle = M_PI_F / 4;
+  const float kMaxScanAngle = M_PI_F;
   const float kCliffRectDepth_mm = 100.0f;
   const float kCliffRectHalfWidth_mm = 50.0f;
   const float kTimeBeforeConfirmCharger_s = 10*60.0f;
@@ -140,6 +141,8 @@ BehaviorExploring::BehaviorExploring(const Json::Value& config)
   
   _iConfig.pAcceptKnownAreas = JsonTools::ParseFloat( config, kPAcceptKnownAreasKey, kDebugName );
   
+  _iConfig.allowNoCharger = config.get( kAllowNoChargerKey, false ).asBool();
+  
   MakeMemberTunable(_iConfig.minSearchRadius_m, kMinSearchRadiusKey, kDebugName);
   MakeMemberTunable(_iConfig.maxSearchRadius_m, kMaxSearchRadiusKey, kDebugName);
   MakeMemberTunable(_iConfig.maxChargerDistance_m, kMaxChargerDistanceKey, kDebugName);
@@ -155,7 +158,7 @@ BehaviorExploring::~BehaviorExploring()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorExploring::WantsToBeActivatedBehavior() const
 {
-  const bool chargerKnown = IsChargerPositionKnown(); // this should also probably be an IsObjectKnown BEICondition
+  const bool chargerKnown = _iConfig.allowNoCharger || IsChargerPositionKnown(); // this should also probably be an IsObjectKnown BEICondition
   const bool hasDelegate = _iConfig.examineBehavior != nullptr;
   
   return chargerKnown && hasDelegate;
@@ -195,6 +198,7 @@ void BehaviorExploring::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys)
     kMaxSearchRadiusKey,
     kMaxChargerDistanceKey,
     kPAcceptKnownAreasKey,
+    kAllowNoChargerKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -225,8 +229,8 @@ void BehaviorExploring::BehaviorUpdate()
   
   // make sure the lift is down
   PrepRobotForProx();
-  
-  if( !IsChargerPositionKnown() ) {
+  const bool isChargerPositionKnown = IsChargerPositionKnown();
+  if( !isChargerPositionKnown && !_iConfig.allowNoCharger ) {
     // a behavior in a queue after this one will find the charger. this is different than the
     // confirm charger behavior (which actually could run a find charger behavior if
     // reconfirming fails). Once that behavior is made, it could alternatively be a delegate here
@@ -240,6 +244,7 @@ void BehaviorExploring::BehaviorUpdate()
   
   if( !controlDelegated
       && (currTime >= nextTimeShouldConfirmCharger)
+      && isChargerPositionKnown
       && _iConfig.confirmChargerBehavior->WantsToBeActivated() )
   {
     DelegateNow( _iConfig.confirmChargerBehavior.get(), [this]() {
@@ -422,33 +427,13 @@ void BehaviorExploring::TransitionToArrived()
   _dVars.numDriveAttemps = 0;
   _dVars.angleAtArrival_rad = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>().ToFloat();
   
-  // put together a random sequence of actions to look around. This action could get interrupted if a
-  // new prox obstacle is spotted
-  CompoundActionSequential* action = new CompoundActionSequential();
-  
-  // partition [0,1], where the # of segments and the partition are chosen randomly.
-  // the result is later scaled to [0, 2pi]
-  std::vector<float> partition = SampleUnitPartition( kMaxNumStops );
-  
-  // create actions
-  for( const auto& angleChangePerc : partition ) {
-    const float angleChange = M_TWO_PI_F * angleChangePerc;
-    
-    // sometimes do a head move first
-    if( GetRNG().RandDbl() < kProbHeadMove ) {
-      action->AddAction( new MoveHeadToAngleAction( DEG_TO_RAD(15.0f) ) );
-      action->AddAction( new WaitAction( 0.5f ) );
-      action->AddAction( new MoveHeadToAngleAction( DEG_TO_RAD(0.0f) ) );
-    } else {
-      action->AddAction( new WaitAction( 0.5f ) );
-    }
-    const bool isAbsAngle = false;
-    auto* turnAction = new TurnInPlaceAction( angleChange, isAbsAngle );
-    turnAction->SetMaxSpeed(M_PI_2);
-    action->AddAction( turnAction );
-  }
+  // turn a random angle
+  const float angleChange = GetRNG().RandDblInRange( kMinScanAngle, kMaxScanAngle );
+  const bool isAbsAngle = false;
+  auto* turnAction = new TurnInPlaceAction( angleChange, isAbsAngle );
+  turnAction->SetMaxSpeed(M_PI_2);
 
-  DelegateNow( action, [this](const ActionResult& res) {
+  DelegateNow( turnAction, [this](const ActionResult& res) {
     // this could get canceled if an obstacle is seen
     SampleAndDrive();
   });
@@ -466,16 +451,20 @@ std::vector<Pose3d> BehaviorExploring::SampleVisitLocations() const
   DEV_ASSERT( nullptr != memoryMap, "BehaviorExploring.SampleVisitLocations.NeedMemoryMap" );
   
   const ObservableObject* charger = GetCharger();
-  if( charger == nullptr ) {
+  if( charger == nullptr && !_iConfig.allowNoCharger ) {
     return retPoses;
   }
   
-  const auto& chargerPose = charger->GetPose();
-  Point2f chargerPos{ chargerPose.GetTranslation() };
+  const Pose3d currRobotPose = robotInfo.GetPose();
+  
+  // all the logic below works just fine if the charger position is centered directly on the robot.
+  // we use that if the charger positions is not known, which can happen if this behavior is started with
+  // a voice command
+  const bool chargerEqualsRobot = ( charger == nullptr && _iConfig.allowNoCharger );
+  const auto& chargerPose = chargerEqualsRobot ? currRobotPose : charger->GetPose();
   
   // check how far the robot is from the charger.. if it's far enough, only sample points to get it closer
-  
-  const Pose3d currRobotPose = robotInfo.GetPose();
+  Point2f chargerPos{ chargerPose.GetTranslation() };
   Point2f currRobotPos{ currRobotPose.GetTranslation() };
   const float distFromCharger_mm = ComputeDistanceBetween( chargerPos, currRobotPos );
   
@@ -487,6 +476,7 @@ std::vector<Pose3d> BehaviorExploring::SampleVisitLocations() const
   if( (kNumPositionsForSearch > 0) || tooFarFromCharger ) {
     SampleVisitLocationsOpenSpace( memoryMap,
                                    tooFarFromCharger,
+                                   chargerEqualsRobot,
                                    chargerPos,
                                    currRobotPos,
                                    retPoses );
@@ -502,6 +492,7 @@ std::vector<Pose3d> BehaviorExploring::SampleVisitLocations() const
   
 void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
                                                        bool tooFarFromCharger,
+                                                       bool chargerEqualsRobot,
                                                        const Point2f& chargerPos,
                                                        const Point2f& robotPos,
                                                        std::vector<Pose3d>& retPoses ) const
@@ -645,18 +636,27 @@ void BehaviorExploring::SampleVisitLocationsFacingObstacle( const INavMap* memor
                                                             const ObservableObject* charger,
                                                             std::vector<Pose3d>& retPoses ) const
 {
-  // build a quad around the charger that fits within the charger circle
-  Quad2f chargerFootprint = charger->GetBoundingQuadXY();
-  const float chargerScaleFactor = M_TO_MM(_iConfig.maxChargerDistance_m) / kChargerRadius_mm;
-  chargerFootprint.Scale( chargerScaleFactor );
-  Poly2f chargerPoly;
-  chargerPoly.ImportQuad2d(chargerFootprint);
-  
   MemoryMapTypes::MemoryMapDataConstList unexploredProxObstacles;
   MemoryMapTypes::NodePredicate findFunc = [](MemoryMapTypes::MemoryMapDataConstPtr d){
-    return (d->type == MemoryMapTypes::EContentType::ObstacleProx);
+    if( d->type == MemoryMapTypes::EContentType::ObstacleProx ) {
+      auto castPtr = MemoryMapData::MemoryMapDataCast<MemoryMapData_ProxObstacle>( d );
+      return !castPtr->_explored;
+    } else {
+      return false;
+    }
   };
-  memoryMap->FindContentIf(chargerPoly, findFunc, unexploredProxObstacles);
+  if( charger != nullptr ) {
+    // build a quad around the charger that fits within the charger circle
+    Quad2f chargerFootprint = charger->GetBoundingQuadXY();
+    const float chargerScaleFactor = M_TO_MM(_iConfig.maxChargerDistance_m) / kChargerRadius_mm;
+    chargerFootprint.Scale( chargerScaleFactor );
+    Poly2f chargerPoly;
+    chargerPoly.ImportQuad2d(chargerFootprint);
+    
+    memoryMap->FindContentIf(chargerPoly, findFunc, unexploredProxObstacles);
+  } else {
+    memoryMap->FindContentIf(findFunc, unexploredProxObstacles);
+  }
   
   // returns a pose that is kProxPoseOffset_mm away from ptr and antiparallel to its normal
   auto getOffsetPose = [this](const MemoryMapDataConstPtr& ptr) {
@@ -722,41 +722,6 @@ void BehaviorExploring::SampleVisitLocationsFacingObstacle( const INavMap* memor
       }
     }
   }
-}
-
-std::vector<float> BehaviorExploring::SampleUnitPartition( unsigned int maxNumSegments ) const
-{
-  // this is equivalent to sampling from a dirichlet distribution, so look that up for an explanation
-  
-  std::vector<float> partition;
-  partition.reserve( maxNumSegments );
-  if( maxNumSegments < 1 ) {
-    return partition;
-  }
-  
-  unsigned int numSegments = GetRNG().RandIntInRange(1, maxNumSegments);
-  std::vector<float> samples;
-  samples.push_back( 0.0f );
-  for( unsigned int i=1; i<numSegments; ++i ) {
-    samples.push_back( GetRNG().RandDblInRange(0.0f, 1.0f) );
-  }
-  samples.push_back( 1.0f );
-  
-  std::sort( samples.begin(), samples.end() );
-  
-  // this could be done in place with samples but is less clear
-  for( unsigned int i=1; i<numSegments+1; ++i ) {
-    partition.push_back( samples[i] - samples[i-1] );
-  }
-  if( ANKI_DEVELOPER_CODE ) {
-    // check sum to 1
-    float sum = 0.0f;
-    for( const auto& x : partition ) {
-      sum += x;
-    }
-    DEV_ASSERT( NEAR_ZERO(sum-1.0f), "Partition should sum to 1");
-  }
-  return partition;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

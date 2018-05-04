@@ -129,8 +129,10 @@ enum uint_8 BehaviorID {
   ConfirmCharger,
   ConfirmCube,
   Exploring,
+  ExploringDispatcher,
   ExploringExamineObstacle,
   ExploringFindCharger,
+  ExploringVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates
   FistBump,

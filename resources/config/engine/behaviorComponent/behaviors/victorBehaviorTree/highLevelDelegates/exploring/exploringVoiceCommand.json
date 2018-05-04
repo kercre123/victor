@@ -1,0 +1,30 @@
+{
+  "behaviorID": "ExploringVoiceCommand",
+  "behaviorClass": "DispatcherStrictPriority",
+
+  "respondToUserIntents": [
+    { "type": "explore_start" }
+  ],
+
+  "interruptActiveBehavior": true,
+
+  "behaviors": 
+  [
+    "DriveOffCharger",
+    "ExploringInternal"
+  ],
+
+  "anonymousBehaviors": [
+    {
+      "behaviorName" : "ExploringInternal",
+      "behaviorClass": "Exploring",
+
+      "allowNoCharger": true,
+
+      "minSearchRadius_m": 0.4,
+      "maxSearchRadius_m": 1.0,
+      "maxChargerDistance_m": 2.0,
+      "pAcceptKnownAreas": 0.4
+    }
+  ]
+}

@@ -139,6 +139,10 @@ bool BehaviorExploringExamineObstacle::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploringExamineObstacle::GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const
 {
+  // permissive since this behavior is owned
+  modifiers.wantsToBeActivatedWhenCarryingObject = true;
+  modifiers.wantsToBeActivatedWhenOffTreads = true;
+  modifiers.wantsToBeActivatedWhenOnCharger = true;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -186,7 +190,7 @@ void BehaviorExploringExamineObstacle::OnBehaviorActivated()
     
     // todo: should probably back up if this behavior activates and it's too close. for now, the reaction
     // animation moves it back a little bit
-    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::AudioOnlyHuh), [this](ActionResult res){
+    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ReactToObstacle), [this](ActionResult res){
       TransitionToNextAction();
     });
   }

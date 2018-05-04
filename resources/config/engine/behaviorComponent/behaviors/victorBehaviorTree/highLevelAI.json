@@ -48,8 +48,7 @@
     },
     {
       "name": "Exploring",
-      "behavior": "Exploring",
-      "clearIntent": "explore_start"
+      "behavior": "ExploringDispatcher"
     },
     {
       "name": "Socializing",
@@ -297,6 +296,10 @@
                 "conditionType": "SimpleMood",
                 "from": "HighStim",
                 "to": "MedStim"
+              },
+              {
+                "conditionType": "ObjectKnown",
+                "objectTypes": ["Charger_Basic"]
               }
             ]
           }
