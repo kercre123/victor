@@ -261,8 +261,10 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   //
   _context->SetEngineThread();
 
-  // log additional das info
-  PRINT_NAMED_INFO("device.language_locale", "%s", _context->GetLocale()->GetLocaleString().c_str());
+  DAS_MSG(locale, "device.language_locale", "Prints out the language locale of the robot")
+  FILL_ITEM(s1, _context->GetLocale()->GetLocaleString().c_str(), "Locale on start up")
+  SEND_DAS_MSG_EVENT()
+
   std::time_t t = std::time(nullptr);
   std::tm tm = *std::localtime(&t);
   std::stringstream timeZoneString;

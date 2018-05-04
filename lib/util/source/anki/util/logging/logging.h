@@ -56,6 +56,35 @@ extern bool _errG;
 // Global flag to control break-on-error behavior
 extern bool _errBreakOnError;
 
+struct DasItem
+{
+  std::string value;
+  DasItem(std::string valueStr) {value = valueStr;}
+  DasItem(int64_t valueInt) {value = std::to_string(valueInt);}
+  DasItem() {value = "";}
+};
+
+struct DasMsg
+{
+  DasItem s1;
+  DasItem s2;
+  DasItem s3;
+  DasItem s4;
+  DasItem i1;
+  DasItem i2;
+  DasItem i3;
+  DasItem i4;
+  std::string event;
+  DasMsg(std::string eventStr) {event = eventStr;}
+};
+
+#define DAS_MSG(ezRef, eventName, documentation) { Anki::Util::DasMsg msg(eventName);
+#define FILL_ITEM(dasEntry, value, comment) msg.dasEntry = Anki::Util::DasItem(value);
+#define SEND_DAS_MSG_EVENT() sEventD(msg); }
+#define SEND_DAS_MSG_WARN() sWarningD(msg); }
+#define SEND_DAS_MSG_ERROR() sErrorD(msg); }
+
+//__attribute__((__deprecated__))
 //
 // "Event level" logging is no longer a thing. Do not use it.
 // Messages intended for DAS should use the explicit DASMESSAGE interface.
@@ -69,7 +98,9 @@ __attribute__((__deprecated__))
 __attribute__((__used__))
 void sEventV(const char* name, const KVPairVector & keyvals, const char* format, va_list args) __attribute__((format(printf,3,0)));
 
-__attribute__((__deprecated__))
+__attribute__((__used__))
+void sEventD(DasMsg& dasMessage);
+
 __attribute__((__used__))
 void sEvent(const char* name, const KVPairVector & keyvals, const char* strval);
 
@@ -80,6 +111,9 @@ __attribute__((__used__))
 void sErrorV(const char* name, const KVPairVector & keyvals, const char* format, va_list args) __attribute__((format(printf,3,0)));
 
 __attribute__((__used__))
+void sErrorD(DasMsg& dasMessage);
+
+__attribute__((__used__))
 void sError(const char* name, const KVPairVector & keyvals, const char* strval);
 
 __attribute__((__used__))
@@ -87,6 +121,9 @@ void sWarningF(const char* name, const KVPairVector & keyvals, const char* forma
 
 __attribute__((__used__))
 void sWarningV(const char* name, const KVPairVector & keyvals, const char* format, va_list args) __attribute__((format(printf,3,0)));
+
+__attribute__((__used__))
+void sWarningD(DasMsg& dasMessage);
 
 __attribute__((__used__))
 void sWarning(const char* name, const KVPairVector & keyvals, const char* strval);

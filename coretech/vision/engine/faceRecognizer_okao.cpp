@@ -618,9 +618,10 @@ namespace Vision {
 
         // Log the enrollment ID we just completed and how many album entries it now has
         const size_t numAlbumEntries = entryToReturn.GetAlbumEntries().size();
-        Util::sInfoF("robot.vision.face_enrollment_count_reached",
-                     {{DDATA, std::to_string(numAlbumEntries).c_str()}},
-                     "%d", _enrollmentID);
+        DAS_MSG(count, "robot.vision.face_enrollment_count_reached", "This will be shown when the most number of faces we support is shown")
+        FILL_ITEM(i1, numAlbumEntries, "The current num of entries")
+        FILL_ITEM(i2, _enrollmentID, "The enrollment ID")
+        SEND_DAS_MSG_EVENT()
 
         enrollmentCountReached = _origEnrollmentCount;
         _origEnrollmentCount = 0; // signifies we've already returned it

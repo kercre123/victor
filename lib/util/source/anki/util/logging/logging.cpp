@@ -157,7 +157,6 @@ void LogChannelDebug(const char* channel, const char* name, const KVV& keyvals, 
 
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sEventF(const char* name, const KVV& keyvals, const char* format, ...)
 {
@@ -196,6 +195,21 @@ void sEvent(const char* name, const KVV& keyvals, const char* strval)
   gLoggerProvider->PrintEvent(name, keyvals, strval);
 }
 
+void sEventD(DasMsg& dasMessage)
+{
+  if (nullptr == gLoggerProvider) {
+    return;
+  }
+  gLoggerProvider->PrintEvent(dasMessage.event.c_str(), { { "$s1", dasMessage.s1.value.c_str() },
+                                                          { "$s2", dasMessage.s2.value.c_str() },
+                                                          { "$s3", dasMessage.s3.value.c_str() },
+                                                          { "$s4", dasMessage.s4.value.c_str() },
+                                                          { "$i1", dasMessage.i1.value.c_str() },
+                                                          { "$i2", dasMessage.i2.value.c_str() },
+                                                          { "$i3", dasMessage.i3.value.c_str() },
+                                                          { "$i4", dasMessage.i4.value.c_str() } }, "");
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sErrorF(const char* name, const KVV& keyvals, const char* format, ...)
 {
@@ -228,6 +242,22 @@ void sErrorV(const char* name, const KVV& keyvals, const char* format, va_list a
   // log it
   LogError(name, keyvals, logString);
 }
+
+void sErrorD(DasMsg& dasMessage)
+{
+  if (nullptr == gLoggerProvider) {
+    return;
+  }
+  LogError(dasMessage.event.c_str(), { { "$s1", dasMessage.s1.value.c_str() },
+                                       { "$s2", dasMessage.s2.value.c_str() },
+                                       { "$s3", dasMessage.s3.value.c_str() },
+                                       { "$s4", dasMessage.s4.value.c_str() },
+                                       { "$i1", dasMessage.i1.value.c_str() },
+                                       { "$i2", dasMessage.i2.value.c_str() },
+                                       { "$i3", dasMessage.i3.value.c_str() },
+                                       { "$i4", dasMessage.i4.value.c_str() } }, "");
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sError(const char* name, const KVV& keyvals, const char* strval)
@@ -314,6 +344,20 @@ void sInfoV(const char* name, const KVV& keyvals, const char* format, va_list ar
   sInfo(name, keyvals, logString);
 }
 
+void sWarningD(DasMsg& dasMessage)
+{
+  if (nullptr == gLoggerProvider) {
+    return;
+  }
+  LogWarning(dasMessage.event.c_str(), { { "$s1", dasMessage.s1.value.c_str() },
+                                         { "$s2", dasMessage.s2.value.c_str() },
+                                         { "$s3", dasMessage.s3.value.c_str() },
+                                         { "$s4", dasMessage.s4.value.c_str() },
+                                         { "$i1", dasMessage.i1.value.c_str() },
+                                         { "$i2", dasMessage.i2.value.c_str() },
+                                         { "$i3", dasMessage.i3.value.c_str() },
+                                         { "$i4", dasMessage.i4.value.c_str() } }, "");
+}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sInfo(const char* name, const KVV& keyvals, const char* strval)
 {

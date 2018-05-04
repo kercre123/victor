@@ -147,7 +147,9 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
       const double maxLatency = ANIM_TIME_STEP_MS + ANIM_OVERTIME_WARNING_THRESH_MS;
       if (timeSinceLastUpdate > maxLatency)
       {
-        Anki::Util::sEventF("cozmo_anim.update.sleep.slow", {{DDATA,TO_DDATA_STR(ANIM_TIME_STEP_MS)}}, "%.2f", timeSinceLastUpdate);
+        DAS_MSG(slow, "cozmo_anim.update.sleep.slow", "This will be show on the slow updates and as such should not be seen very often")
+        FILL_ITEM(s1, timeSinceLastUpdate, "timeSinceLastUpdate as a float")
+        SEND_DAS_MSG_EVENT()
       }
     }
     lastUpdateTimeMs = startUpdateTimeMs;
