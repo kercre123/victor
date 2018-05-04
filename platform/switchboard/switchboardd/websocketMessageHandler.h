@@ -44,6 +44,13 @@ private:
   void HandleMotorControl_MoveHead(Anki::Cozmo::ExternalComms::MoveHead sdkMessage);
   void HandleMotorControl_MoveLift(Anki::Cozmo::ExternalComms::MoveLift sdkMessage);
 
+  void HandleMovementAction(Anki::Cozmo::ExternalComms::MovementAction unionInstance);
+  void HandleMovementAction_DriveOffChargerContacts(Anki::Cozmo::ExternalComms::DriveOffChargerContacts sdkMessage);
+  void HandleMovementAction_DriveStraight(Anki::Cozmo::ExternalComms::DriveStraight sdkMessage);
+  void HandleMovementAction_TurnInPlace(Anki::Cozmo::ExternalComms::TurnInPlace sdkMessage);
+  void HandleMovementAction_SetHeadAngle(Anki::Cozmo::ExternalComms::SetHeadAngle sdkMessage);
+  void HandleMovementAction_SetLiftHeight(Anki::Cozmo::ExternalComms::SetLiftHeight sdkMessage);
+
   Signal::SmartHandle _onEngineMessageHandle;
   SendToWebsocketSignal _sendSignal;
   std::shared_ptr<EngineMessagingClient> _engineMessaging;

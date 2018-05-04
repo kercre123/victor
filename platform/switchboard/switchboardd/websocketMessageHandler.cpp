@@ -80,6 +80,69 @@ void WebsocketMessageHandler::HandleMotorControl(Anki::Cozmo::ExternalComms::Mot
   }
 }
 
+void WebsocketMessageHandler::HandleMovementAction_DriveOffChargerContacts(Anki::Cozmo::ExternalComms::DriveOffChargerContacts sdkMessage) {
+      Anki::Cozmo::ExternalInterface::DriveOffChargerContacts engineMessage;
+      _engineMessaging->SendMessage(G2EMessage::CreateDriveOffChargerContacts(std::move(engineMessage)));
+}
+
+void WebsocketMessageHandler::HandleMovementAction_DriveStraight(Anki::Cozmo::ExternalComms::DriveStraight sdkMessage) {
+      Anki::Cozmo::ExternalInterface::DriveStraight engineMessage;
+      engineMessage.speed_mmps = sdkMessage.speed_mmps;
+      engineMessage.dist_mm = sdkMessage.dist_mm;
+      engineMessage.shouldPlayAnimation = sdkMessage.shouldPlayAnimation;
+      _engineMessaging->SendMessage(G2EMessage::CreateDriveStraight(std::move(engineMessage)));
+}
+
+void WebsocketMessageHandler::HandleMovementAction_TurnInPlace(Anki::Cozmo::ExternalComms::TurnInPlace sdkMessage) {
+      Anki::Cozmo::ExternalInterface::TurnInPlace engineMessage;
+      engineMessage.angle_rad = sdkMessage.angle_rad;
+      engineMessage.speed_rad_per_sec = sdkMessage.speed_rad_per_sec;
+      engineMessage.accel_rad_per_sec2 = sdkMessage.accel_rad_per_sec2;
+      engineMessage.tol_rad = sdkMessage.tol_rad;
+      engineMessage.isAbsolute = sdkMessage.isAbsolute;
+      _engineMessaging->SendMessage(G2EMessage::CreateTurnInPlace(std::move(engineMessage)));
+}
+
+void WebsocketMessageHandler::HandleMovementAction_SetHeadAngle(Anki::Cozmo::ExternalComms::SetHeadAngle sdkMessage) {
+      Anki::Cozmo::ExternalInterface::SetHeadAngle engineMessage;
+      engineMessage.angle_rad = sdkMessage.angle_rad;
+      engineMessage.max_speed_rad_per_sec = sdkMessage.max_speed_rad_per_sec;
+      engineMessage.accel_rad_per_sec2 = sdkMessage.accel_rad_per_sec2;
+      engineMessage.duration_sec = sdkMessage.duration_sec;
+      _engineMessaging->SendMessage(G2EMessage::CreateSetHeadAngle(std::move(engineMessage)));
+}
+
+void WebsocketMessageHandler::HandleMovementAction_SetLiftHeight(Anki::Cozmo::ExternalComms::SetLiftHeight sdkMessage) {
+      Anki::Cozmo::ExternalInterface::SetLiftHeight engineMessage;
+      engineMessage.height_mm = sdkMessage.height_mm;
+      engineMessage.max_speed_rad_per_sec = sdkMessage.max_speed_rad_per_sec;
+      engineMessage.accel_rad_per_sec2 = sdkMessage.accel_rad_per_sec2;
+      engineMessage.duration_sec = sdkMessage.duration_sec;
+      _engineMessaging->SendMessage(G2EMessage::CreateSetLiftHeight(std::move(engineMessage)));
+}
+
+void WebsocketMessageHandler::HandleMovementAction(Anki::Cozmo::ExternalComms::MovementAction unionInstance) {
+  switch(unionInstance.GetTag()) {
+    case Anki::Cozmo::ExternalComms::MovementActionTag::DriveOffChargerContacts:
+      HandleMovementAction_DriveOffChargerContacts( unionInstance.Get_DriveOffChargerContacts() );
+      break;
+    case Anki::Cozmo::ExternalComms::MovementActionTag::DriveStraight:
+      HandleMovementAction_DriveStraight( unionInstance.Get_DriveStraight() );
+      break;
+    case Anki::Cozmo::ExternalComms::MovementActionTag::TurnInPlace:
+      HandleMovementAction_TurnInPlace( unionInstance.Get_TurnInPlace() );
+      break;
+    case Anki::Cozmo::ExternalComms::MovementActionTag::SetHeadAngle:
+      HandleMovementAction_SetHeadAngle( unionInstance.Get_SetHeadAngle() );
+      break;
+    case Anki::Cozmo::ExternalComms::MovementActionTag::SetLiftHeight:
+      HandleMovementAction_SetLiftHeight( unionInstance.Get_SetLiftHeight() );
+      break;
+    default:
+      return;
+  }
+}
+
 void WebsocketMessageHandler::Receive(uint8_t* buffer, size_t size) {
   if(size < 1) {
     return;
@@ -95,6 +158,9 @@ void WebsocketMessageHandler::Receive(uint8_t* buffer, size_t size) {
   switch (extComms.GetTag()) {
     case ExtCommsMessageTag::MotorControl:
        HandleMotorControl(extComms.Get_MotorControl());
+       break;
+    case ExtCommsMessageTag::MovementAction:
+       HandleMovementAction(extComms.Get_MovementAction());
        break;
     default:
       Log::Write("Unhandled external comms message tag: %d", extComms.GetTag());

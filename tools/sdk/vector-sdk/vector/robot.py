@@ -13,14 +13,18 @@ class Robot:
     def __init__(self, socket):
         self.socket = socket
 
-    # Unexposed low level message wrappers
-    async def set_wheel_motors(self, left_wheel_speed, right_wheel_speed, left_wheel_accel, right_wheel_accel):
-        message = _clad_message.DriveWheels(lwheel_speed_mmps=left_wheel_speed, rwheel_speed_mmps=right_wheel_speed, lwheel_accel_mmps2=left_wheel_accel, rwheel_accel_mmps2=right_wheel_accel)
+    # Low level motor functions
+    async def set_wheel_motors(self, left_wheel_speed, right_wheel_speed, left_wheel_accel=0.0, right_wheel_accel=0.0):
+        message = _clad_message.DriveWheels(
+            lwheel_speed_mmps=left_wheel_speed,
+            rwheel_speed_mmps=right_wheel_speed,
+            lwheel_accel_mmps2=left_wheel_accel,
+            rwheel_accel_mmps2=right_wheel_accel)
         innerWrappedMessage = _clad_message.MotorControl(DriveWheels=message)
         outerWrappedMessage = _clad_message.ExternalComms(MotorControl=innerWrappedMessage)
         await self.socket.send(outerWrappedMessage.pack())
 
-    async def set_wheel_motors_turn(self, turn_speed, turn_accel):
+    async def set_wheel_motors_turn(self, turn_speed, turn_accel=0.0):
         message = _clad_message.DriveArc(speed=turn_speed, accel=turn_accel)
         innerWrappedMessage = _clad_message.MotorControl(DriveArc=message)
         outerWrappedMessage = _clad_message.ExternalComms(MotorControl=innerWrappedMessage)
@@ -41,30 +45,55 @@ class Robot:
 
         await self.socket.send(outerWrappedMessage.pack())
 
-    # User facing exposed functions
-    async def drive_straight(self, distance_mm, speed_mmps=100.0, accel_mmps2=0.0):
-        # @TODO: When actions are exposed, this should be done through an explicit drive-straight action
-        speed_sign = (distance_mm / abs(distance_mm)) if (distance_mm != 0) else 0
-        wheel_speed = speed_mmps * speed_sign
-        drive_time = abs(distance_mm) / speed_mmps
+    # Mid level movement actions
+    async def drive_off_contacts(self):
+        message = _clad_message.DriveOffChargerContacts()
+        innerWrappedMessage = _clad_message.MovementAction(DriveOffChargerContacts=message)
+        outerWrappedMessage = _clad_message.ExternalComms(MovementAction=innerWrappedMessage)
 
-        await self.set_wheel_motors(wheel_speed, wheel_speed, accel_mmps2, accel_mmps2)
-        await asyncio.sleep(drive_time)
-        await self.set_wheel_motors(0.0, 0.0, 0.0, 0.0)
+        await self.socket.send(outerWrappedMessage.pack())
 
-        self.action_in_progress = False
+    async def drive_straight(self, distance_mm, speed_mmps=100.0, play_animation=True):
+        message = _clad_message.DriveStraight(
+            speed_mmps=speed_mmps,
+            dist_mm=distance_mm,
+            shouldPlayAnimation=play_animation)
+        innerWrappedMessage = _clad_message.MovementAction(DriveStraight=message)
+        outerWrappedMessage = _clad_message.ExternalComms(MovementAction=innerWrappedMessage)
 
-    async def turn_in_place(self, angle_radians, speed_radps=math.pi, accel_radps2=0.0):
-        # @TODO: When actions are exposed, this should be done through an explicit turn-in-place action
-        turn_sign = (angle_radians / abs(angle_radians)) if (angle_radians != 0) else 0
-        turn_speed = speed_radps * turn_sign
-        turn_accel = accel_radps2 * turn_sign
-        turn_time = abs(angle_radians) / speed_radps
+        await self.socket.send(outerWrappedMessage.pack())
 
-        await self.set_wheel_motors_turn(turn_speed, turn_accel)
-        await asyncio.sleep(turn_time)
-        await self.set_wheel_motors_turn(0.0, 0.0)
-        self.action_in_progress = False
+    async def turn_in_place(self, angle_rad, speed_radps=math.pi, accel_radps2=0.0):
+        message = _clad_message.TurnInPlace(
+            angle_rad=angle_rad,
+            speed_rad_per_sec=speed_radps,
+            accel_rad_per_sec2=accel_radps2)
+        innerWrappedMessage = _clad_message.MovementAction(TurnInPlace=message)
+        outerWrappedMessage = _clad_message.ExternalComms(MovementAction=innerWrappedMessage)
+
+        await self.socket.send(outerWrappedMessage.pack())
+
+    async def set_head_angle(self, angle_rad, max_speed_radps=0.0, accel_radps2=0.0, duration_sec=0.0):
+        message = _clad_message.SetHeadAngle(
+            angle_rad=angle_rad,
+            max_speed_rad_per_sec=max_speed_radps,
+            accel_rad_per_sec2=accel_radps2,
+            duration_sec=duration_sec)
+        innerWrappedMessage = _clad_message.MovementAction(SetHeadAngle=message)
+        outerWrappedMessage = _clad_message.ExternalComms(MovementAction=innerWrappedMessage)
+
+        await self.socket.send(outerWrappedMessage.pack())
+
+    async def set_lift_height(self, height_mm, max_speed_radps=0.0, accel_radps2=0.0, duration_sec=0.0):
+        message = _clad_message.SetLiftHeight(
+            height_mm=height_mm,
+            max_speed_rad_per_sec=max_speed_radps,
+            accel_rad_per_sec2=accel_radps2,
+            duration_sec=duration_sec)
+        innerWrappedMessage = _clad_message.MovementAction(SetLiftHeight=message)
+        outerWrappedMessage = _clad_message.ExternalComms(MovementAction=innerWrappedMessage)
+
+        await self.socket.send(outerWrappedMessage.pack())
 
 async def _bootstrap(main_function, uri):
     async with websockets.connect(uri) as websocket:

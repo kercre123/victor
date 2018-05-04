@@ -429,6 +429,63 @@ union MotorControl {
 }
 
 // ====================================================
+//                   Movement Actions
+// ====================================================
+
+// DriveOffChargerContacts
+//  Mostly useful for SDK usage where motors are locked while on the charger.
+//  This action drives forward slightly to get off the charger.
+message DriveOffChargerContacts {
+
+}
+
+// DriveStraight
+//  Drives a straight line forward or backward without using the planner.
+message DriveStraight {
+   float_32 speed_mmps,  // Speed should be positive
+   float_32 dist_mm,     // Use +ve for forward, -ve for backward
+   bool shouldPlayAnimation = 1
+}
+
+// TurnInPlace
+// If isAbsolute == 0, turns the specified number of radians, *relative to the robot's current heading*
+// If isAbsolute != 0, turns to the specified absolute orientation.
+message TurnInPlace {
+    float_32 angle_rad, // relative mode: postive turns left negative turns right
+    float_32 speed_rad_per_sec = 0.0,
+    float_32 accel_rad_per_sec2 = 0.0,
+    float_32 tol_rad = 0.0, // This should be no smaller than POINT_TURN_ANGLE_TOL from cozmoEngineConfig.h.
+                            // Smaller values are ignored except 0 which is interpreted to mean
+                            // default tolerance of POINT_TURN_ANGLE_TOL.
+    uint_8 isAbsolute       // 0: angle_rad is relative to current orientation, 1: angle_rad is absolute angle to turn to
+}
+
+// SetHeadAngle
+message SetHeadAngle {
+    float_32 angle_rad,
+    float_32 max_speed_rad_per_sec,
+    float_32 accel_rad_per_sec2,
+    float_32 duration_sec
+}
+
+// SetLiftHeight
+message SetLiftHeight {
+    float_32 height_mm,
+    float_32 max_speed_rad_per_sec,
+    float_32 accel_rad_per_sec2,
+    float_32 duration_sec
+}
+
+union MovementAction {
+    Error                       Error                       = 0x00,
+    DriveOffChargerContacts     DriveOffChargerContacts     = 0x01,
+    DriveStraight               DriveStraight               = 0x02,
+    TurnInPlace                 TurnInPlace                 = 0x03,
+    SetHeadAngle                SetHeadAngle                = 0x04,
+    SetLiftHeight               SetLiftHeight               = 0x05,
+}
+
+// ====================================================
 //                      Outer Union
 // ====================================================
 
@@ -439,6 +496,7 @@ union ExternalComms {
     AppGeneral                  AppGeneral                  = 0x02,
     MeetVictor                  MeetVictor                  = 0x03,
     MotorControl                MotorControl                = 0x05,
+    MovementAction              MovementAction              = 0x06,
 }
 
 } // namespace ExternalComms
