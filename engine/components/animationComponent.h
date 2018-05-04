@@ -41,11 +41,9 @@ class CompositeImage;
 namespace Cozmo {
 
 // Forward declarations
-class Animation;
 class AnimationGroupContainer;
-class CozmoContext;
-class DataAccessorComponent;
 class Robot;
+class CozmoContext;
   
 class AnimationComponent : public IDependencyManagedComponent<RobotComponentID>, 
                            private Anki::Util::noncopyable, 
@@ -71,7 +69,6 @@ public:
   virtual void InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
-    dependencies.insert(RobotComponentID::DataAccessor);
   };
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::AIComponent);
@@ -112,13 +109,11 @@ public:
 
   // Tell animation process to render the specified animation
   // to the Procedural_Eyes layer of the specified composite image
-  // OutDuration_ms is set to the length of the animation that is playing back
   Result PlayCompositeAnimation(const std::string& animName,
                                 const Vision::CompositeImage& compositeImage, 
                                 u32 getFrameInterval_ms,
-                                int& outDuration_ms,
-                                bool interruptRunning = true,
-                                AnimationCompleteCallback callback = nullptr);
+                                u32 duration_ms,
+                                bool interruptRunning = true);
   
   bool IsPlayingAnimation() const { return _callbackMap.size() > 0; }
   
@@ -149,15 +144,10 @@ public:
   Result DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 getFrameInterval_ms, u32 duration_ms, bool interruptRunning = false);
   
   // Calling this function provides no gaurentee that the assets will actually be displayed
-  // If a compositeFaceImage is currently displayed on the face all layers/image maps within
-  // the compositeImage argument will be updated to their new values - set Count in the sprite map
-  // for any sprite boxes that should no longer be displayed
-  void UpdateCompositeImage(const Vision::CompositeImage& compositeImage, u32 applyAt_ms = 0);
-  
-  // Helper function that clears composite image layer - can be accomplished through UpdateCompositeImage
-  // as well by specifying count values for sprite boxes/sprites if more nuance is required
-  void ClearCompositeImageLayer(Vision::LayerName layerName, u32 applyAt_ms = 0);
-  
+  // If a compositeFaceImage is currently displayed the image map will be updated, but if
+  // something else is displayed on the robot's face this message will have no affect
+  void UpdateCompositeFaceImageAssets(Vision::LayerName layerName, const Vision::CompositeImageLayer::ImageMap& imageMap);
+
   // Enable/Disable KeepFaceAlive
   // If enable == false, disableTimeout_ms is the duration over which the face should 
   // return to no adjustments
@@ -246,13 +236,6 @@ private:
 
   template <typename MessageType, typename ImageType>
   Result DisplayFaceImageHelper(const ImageType& imgRGB565, u32 duration_ms, bool interruptRunning);
-
-  void SetAnimationCallback(const std::string& animName,
-                            AnimationCompleteCallback callback, 
-                            const u32 currTag,
-                            const u32 actionTag,
-                            int numLoops,
-                            float timeout_sec);
   
   static constexpr float _kDefaultTimeout_sec = 60.f;
 
@@ -260,8 +243,6 @@ private:
   Tag  _tagCtr;
   
   Robot* _robot = nullptr;
-  DataAccessorComponent* _dataAccessor = nullptr;
-
   struct AnimationGroupWrapper{
     AnimationGroupWrapper(AnimationGroupContainer&  container)
     : _container(container){}

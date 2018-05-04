@@ -54,14 +54,12 @@ public:
 
   const RobotDataLoader::CompImageMap* GetCompImgMap() { return _compImgMap; }
   const RobotDataLoader::CompLayoutMap* GetCompLayoutMap() { return _compLayoutMap; }
-  const CannedAnimationContainer* GetCannedAnimationContainer() { return _cannedAnimationContainer; }
 
 private:
   Vision::SpriteCache* _spriteCache = nullptr;
   Vision::SpriteSequenceContainer* _spriteSequenceContainer = nullptr;
   const RobotDataLoader::CompImageMap* _compImgMap = nullptr;
   const RobotDataLoader::CompLayoutMap* _compLayoutMap = nullptr;
-  const CannedAnimationContainer* _cannedAnimationContainer = nullptr;
 
 }; // __Cozmo_Basestation_Components_DataAccessorComponent_H__
 

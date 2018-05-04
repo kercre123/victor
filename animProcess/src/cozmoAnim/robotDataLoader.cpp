@@ -48,7 +48,6 @@ const char* pathToExternalIndependentSprites = "assets/sprites/independentSprite
 const char* pathToEngineIndependentSprites = "config/devOnlySprites/independentSprites/";
 const char* pathToExternalSpriteSequences = "assets/sprites/spriteSequences/";
 const char* pathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequences/";
-const char* kProceduralAnimName = "_PROCEDURAL_";
 }
 
 RobotDataLoader::RobotDataLoader(const AnimContext* context)
@@ -114,28 +113,10 @@ void RobotDataLoader::LoadNonConfigData()
   }
 
   {
-    // Set up container
-    _cannedAnimations = std::make_unique<CannedAnimationContainer>();
-
-    // Gather the files to load into the animation container
-    CannedAnimationLoader animLoader(_platform,
+    CannedAnimationLoader animLoader(_platform, 
                                     _spritePaths.get(), _spriteSequenceContainer.get(), 
                                     _loadingCompleteRatio, _abortLoad);
-
-    std::vector<std::string> paths;
-    if(FACTORY_TEST)
-    {
-      // Only need to load engine animations
-      paths = {"config/engine/animations/"};
-    }
-    else
-    {
-      paths = {"assets/animations/", "config/engine/animations/"};
-    }
-
-    // Load the gathered files into the container
-    const auto& fileInfo = animLoader.CollectAnimFiles(paths);
-    animLoader.LoadAnimationsIntoContainer(fileInfo, _cannedAnimations.get());
+    _cannedAnimations.reset(animLoader.LoadAnimations());
   }
   
   SetupProceduralAnimation();
@@ -149,13 +130,16 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
   CannedAnimationLoader animLoader(_platform,
                                    _spritePaths.get(), _spriteSequenceContainer.get(), 
                                    _loadingCompleteRatio, _abortLoad);
-  
-  animLoader.LoadAnimationIntoContainer(path, _cannedAnimations.get());
+  const auto& animsContainer = animLoader.LoadAnimationsFromFile(path);
+  for (const auto& name : animsContainer->GetAnimationNames())
+  {
+    auto* anim = animsContainer->GetAnimation(name);
+    _cannedAnimations->AddAnimation(anim);
 
-  
-  const auto animName = Util::FileUtils::GetFileName(path);
-  const auto* anim = _cannedAnimations->GetAnimation(animName);
-  NotifyAnimAdded(animName, anim->GetLastKeyFrameEndTime_ms());
+    NotifyAnimAdded(name, anim->GetLastKeyFrameEndTime_ms());
+  }
+  animsContainer->Clear();
+  delete animsContainer;
 }
 
 void RobotDataLoader::LoadSpritePaths()
@@ -240,10 +224,9 @@ void RobotDataLoader::SetupProceduralAnimation()
   // TODO: kevink - This should probably live somewhere else but since robot data loader
   // currently maintains control of both canned animations and sprite sequences this
   // is the best spot to put it for the time being
-  Animation proceduralAnim(kProceduralAnimName);
-  _cannedAnimations->AddAnimation(std::move(proceduralAnim));
+  _cannedAnimations->AddAnimation(CannedAnimationContainer::ProceduralAnimName);
   
-  Animation* anim = _cannedAnimations->GetAnimation(kProceduralAnimName);
+  Animation* anim = _cannedAnimations->GetAnimation(CannedAnimationContainer::ProceduralAnimName);
   assert(anim != nullptr);
   const bool shouldRenderInEyeHue = true;
   SpriteSequenceKeyFrame kf(shouldRenderInEyeHue, Vision::SpriteName::Count, true);

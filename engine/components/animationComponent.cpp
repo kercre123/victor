@@ -14,7 +14,6 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/animations/animationGroup/animationGroupContainer.h"
 #include "engine/components/animationComponent.h"
-#include "engine/components/dataAccessorComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
@@ -23,8 +22,6 @@
 
 #include "clad/types/animationTypes.h"
 
-#include "cannedAnimLib/cannedAnims/animation.h"
-#include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
 #include "coretech/common/engine/array2d_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -64,7 +61,6 @@ AnimationComponent::AnimationComponent()
 void AnimationComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
 {
   _robot = robot;
-  _dataAccessor = dependentComponents.GetBasePtr<DataAccessorComponent>();
   const CozmoContext* context = _robot->GetContext();
   _animationGroups = std::make_unique<AnimationGroupWrapper>(*(context->GetDataLoader()->GetAnimationGroups()));
   if (context) {
@@ -254,7 +250,20 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
 
   const Tag currTag = GetNextTag();
   if (_robot->SendRobotMessage<RobotInterface::PlayAnim>(numLoops, currTag, animName) == RESULT_OK) {
-    SetAnimationCallback(animName, callback, currTag, actionTag, numLoops, timeout_sec);
+    // Check if tag already exists in callback map.
+    // If so, trigger callback with Stale
+    {
+      auto it = _callbackMap.find(currTag);
+      if (it != _callbackMap.end()) {
+        PRINT_NAMED_WARNING("AnimationComponent.PlayAnimByName.StaleTag", "%d", currTag);
+        it->second.ExecuteCallback(AnimResult::Stale);
+        _callbackMap.erase(it);
+      }
+    }
+    const float abortTime_sec = (numLoops > 0 ? BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + timeout_sec : 0);
+    _callbackMap.emplace(std::piecewise_construct,
+                         std::forward_as_tuple(currTag),
+                         std::forward_as_tuple(animName, callback, actionTag, abortTime_sec));
   }
   
   return RESULT_OK;
@@ -264,9 +273,8 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
 Result AnimationComponent::PlayCompositeAnimation(const std::string& animName,
                                                   const Vision::CompositeImage& compositeImage, 
                                                   u32 getFrameInterval_ms,
-                                                  int& outDuration_ms,
-                                                  bool interruptRunning,
-                                                  AnimationCompleteCallback callback)
+                                                  u32 duration_ms,
+                                                  bool interruptRunning)
 {
   if (!_isInitialized) {
     PRINT_NAMED_WARNING("AnimationComponent.PlayCompositeAnimation.Uninitialized", "");
@@ -289,30 +297,9 @@ Result AnimationComponent::PlayCompositeAnimation(const std::string& animName,
     return RESULT_FAIL;
   }
 
-  const Animation* anim = nullptr;
-  bool gotAnim = false;
-  if(_dataAccessor != nullptr){
-    const auto* animContainer = _dataAccessor->GetCannedAnimationContainer();
-    if(animContainer != nullptr){
-      anim = animContainer->GetAnimation(animName);
-      gotAnim = (anim != nullptr);
-    }
-  }
-  
-  if(!gotAnim){
-    PRINT_NAMED_WARNING("AnimationComponent.PlayCompositeAnimation.AnimationNotFoundInContainer", 
-                        "Animations need to be manually loaded on engine side - %s is not", animName.c_str());
-    return RESULT_FAIL;
-  }
-
   const Tag currTag = GetNextTag();
   _robot->SendRobotMessage<RobotInterface::PlayCompositeAnimation>(_compositeImageID, currTag, animName);
-  if(callback != nullptr){
-    SetAnimationCallback(animName, callback, currTag, 0, 0, 0);
-  }
-
-  outDuration_ms = anim->GetLastKeyFrameEndTime_ms();
-  return DisplayFaceImage(compositeImage, getFrameInterval_ms, outDuration_ms, interruptRunning);
+  return DisplayFaceImage(compositeImage, getFrameInterval_ms, duration_ms, interruptRunning);
 }
 
   
@@ -505,31 +492,6 @@ Result AnimationComponent::DisplayFaceImageHelper(const ImageType& img, u32 dura
   return RESULT_OK;
 }
 
-
-void AnimationComponent::SetAnimationCallback(const std::string& animName,
-                                              AnimationCompleteCallback callback,
-                                              const u32 currTag,
-                                              const u32 actionTag,
-                                              int numLoops,
-                                              float timeout_sec)
-{
-  // Check if tag already exists in callback map.
-  // If so, trigger callback with Stale
-  {
-    auto it = _callbackMap.find(currTag);
-    if (it != _callbackMap.end()) {
-      PRINT_NAMED_WARNING("AnimationComponent.SetAnimationCallback.StaleTag", "%d", currTag);
-      it->second.ExecuteCallback(AnimResult::Stale);
-      _callbackMap.erase(it);
-    }
-  }
-  const float abortTime_sec = (numLoops > 0 ? BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + timeout_sec : 0);
-  _callbackMap.emplace(std::piecewise_construct,
-                        std::forward_as_tuple(currTag),
-                        std::forward_as_tuple(animName, callback, actionTag, abortTime_sec));
-}
-
-
 Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compositeImage, u32 getFrameInterval_ms, u32 duration_ms, bool interruptRunning)
 {
   // TODO: Is this what interruptRunning should mean?
@@ -549,38 +511,20 @@ Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compos
   return RESULT_OK;
 }
 
-void AnimationComponent::UpdateCompositeImage(const Vision::CompositeImage& compositeImage, u32 applyAt_ms)
+void AnimationComponent::UpdateCompositeFaceImageAssets(Vision::LayerName layerName, const Vision::CompositeImageLayer::ImageMap& imageMap)
 {
-  for(const auto& layoutPair : compositeImage.GetLayerLayoutMap()){
-    Vision::LayerName layerName = layoutPair.first;
-    for(const auto& spritePair : layoutPair.second.GetLayoutMap()){
-      Vision::SerializedSpriteBox serializedSpriteBox = spritePair.second.Serialize();
-      Vision::CompositeImageLayer::SpriteEntry entry;
-      layoutPair.second.GetSpriteEntry(spritePair.second, entry);
-      _robot->SendRobotMessage<RobotInterface::UpdateCompositeImage>(serializedSpriteBox, 
-                                                                     applyAt_ms, 
-                                                                     layerName, 
-                                                                     entry._spriteName);
+  for(const auto& pair: imageMap){
+    if(pair.second._spriteName == Vision::SpriteName::Count){
+      PRINT_NAMED_WARNING("AnimationComponent.UpdateCompositeFaceImageAsset.InvalidSprite",
+                          "Currently image maps can only be serialized with sprite names - skipping sprite box %s",
+                          Vision::SpriteBoxNameToString(pair.first));
+      continue;
     }
+    _robot->SendRobotMessage<RobotInterface::UpdateCompositeImageAsset>(layerName, pair.first, pair.second._spriteName);
   }
 }
 
 
-void AnimationComponent::ClearCompositeImageLayer(Vision::LayerName layerName, u32 applyAt_ms)
-{
-  // Setup empty sprite entry
-  Vision::CompositeImageLayer::SpriteEntry entry;
-
-  // Setup empty spriteBox
-  Vision::SpriteRenderConfig renderConfig;
-  Point2i topLeft(0,0);
-  Vision::CompositeImageLayer::SpriteBox sb(Vision::SpriteBoxName::Count, renderConfig, topLeft, 0, 0);
-  
-  _robot->SendRobotMessage<RobotInterface::UpdateCompositeImage>(sb.Serialize(), 
-                                                                 applyAt_ms, 
-                                                                 layerName, 
-                                                                 entry._spriteName);
-}
 
 Result AnimationComponent::EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms) const
 {

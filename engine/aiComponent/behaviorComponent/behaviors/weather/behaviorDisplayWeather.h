@@ -14,7 +14,6 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorDisplayWeather__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/components/animationComponent.h"
 
 namespace Anki {
 
@@ -51,30 +50,23 @@ private:
     const Json::Value& compLayoutConfig;
     const Json::Value& compMapConfig;
     std::unique_ptr<Vision::CompositeImage> compImg;
-
-    // Animation metadata
     std::string animationName;
-    const Animation* animationPtr = nullptr;
-    u32 timeTempShouldAppear_ms = 0;
-    u32 timeTempShouldDisappear_ms = 0;
 
     std::vector<Vision::SpriteName> temperatureAssets;
     // layouts stored least -> greatest pos followed by least -> greatest neg
     std::vector<Vision::CompositeImage> temperatureLayouts;
-
-    bool devIsRunnable = false; 
   };
 
   struct DynamicVariables {
     DynamicVariables();
-    Vision::CompositeImage* temperatureImg = nullptr;
   };
 
   std::unique_ptr<InstanceConfig> _iConfig;
   DynamicVariables _dVars;
 
-  bool GenerateTemperatureImage(int temp, bool isFahrenheit, Vision::CompositeImage*& outImg) const;
-  void ParseDisplayTempTimesFromAnim();
+  bool GenerateTemperatureLayer(int temp, bool isFahrenheit, Vision::CompositeImage*& outImg);
+
+
   
 };
 

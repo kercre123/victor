@@ -278,12 +278,8 @@ void BehaviorProceduralClock::BehaviorUpdate()
                                                       true);
     _lifetimeParams.hasBaseImageBeenSent = true;
   }else{
-    Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
-    CompositeImage compImg(accessorComp.GetSpriteCache(), faceHueAndSaturation);
-    auto intentionalCopy = *digitLayer;
-    compImg.AddLayer(std::move(intentionalCopy));
-    // Just update the numbers in the image
-    GetBEI().GetAnimationComponent().UpdateCompositeImage(compImg);
+    // Just update the composite image
+    GetBEI().GetAnimationComponent().UpdateCompositeFaceImageAssets(LayerName::Layer_4, imageMap);
   }
 }
 

@@ -18,7 +18,6 @@
 
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/image.h"
-#include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cannedAnimLib/cannedAnims/animation.h"
 #include "cannedAnimLib/baseTypes/track.h"
@@ -85,16 +84,15 @@ namespace Cozmo {
     void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageGrayscaleChunk& msg);
     void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageRGBChunk& msg);
     void Process_displayCompositeImageChunk(const RobotInterface::DisplayCompositeImageChunk& msg);
-    void Process_updateCompositeImage(const RobotInterface::UpdateCompositeImage& msg);
+    void Process_updateCompositeImageAsset(const RobotInterface::UpdateCompositeImageAsset& msg);
     void Process_playCompositeAnimation(const std::string& name, Tag tag);
 
 
     Result SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms);
     Result SetCompositeImage(Vision::CompositeImage* compImg, u32 getFrameInterval_ms, u32 duration_ms);
     Result UpdateCompositeImage(Vision::LayerName layerName, 
-                                const Vision::CompositeImageLayer::SpriteBox& spriteBox, 
-                                Vision::SpriteName spriteName,
-                                u32 applyAt_ms);
+                                Vision::SpriteBoxName sbName, 
+                                Vision::SpriteName spriteName);
     
     Audio::ProceduralAudioClient* GetProceduralAudioClient() const { return _proceduralAudioClient.get(); }
     
@@ -102,7 +100,7 @@ namespace Cozmo {
     Result Update();
 
     // Stop currently running animation
-    void Abort(bool shouldClearProceduralAnim = true);
+    void Abort();
     
     const std::string GetStreamingAnimationName() const;
     const Animation* GetStreamingAnimation() const { return _streamingAnimation; }
@@ -142,8 +140,7 @@ namespace Cozmo {
                                  u32 numLoops = 1,
                                  bool interruptRunning = true,
                                  bool shouldRenderInEyeHue = true,
-                                 bool isInternalAnim = true,
-                                 bool shouldClearProceduralAnim = true);
+                                 bool isInternalAnim = true);
 
     // Initialize the streaming of an animation with a given tag
     // (This will call anim->Init())
@@ -232,7 +229,7 @@ namespace Cozmo {
     // robot (silence or actual audio), this increments by one audio sample
     // length, since that's what keeps time for streaming animations (not a
     // clock)
-    TimeStamp_t _relativeStreamTime_ms;
+    TimeStamp_t _streamingTime_ms;
     
     // Time when procedural face layer can next be applied.
     // There's a minimum amount of time that must pass since the last

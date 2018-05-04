@@ -83,8 +83,7 @@ ImageRGBA SpriteWrapper::GetSpriteContentsRGBA(const HSImageHandle& hsImage)
 {
   // Return cahed RGBA if possible
   if((_spriteRGBA != nullptr) &&
-     (hsImage != nullptr) &&
-     (hsImage->GetHSID() == _hsID)){
+     (hsImage == nullptr || hsImage->GetHSID() == _hsID)){
     return *_spriteRGBA;
   }
   
@@ -97,9 +96,8 @@ ImageRGBA SpriteWrapper::GetSpriteContentsRGBA(const HSImageHandle& hsImage)
   }
 
   // Otherwise, see if hue can be applied to cached grayscale image
-  if((_spriteGrayscale != nullptr) &&
-     (hsImage != nullptr) &&
-     (hsImage->GetHSID() != 0)){
+  if((hsImage->GetHSID() != 0) &&
+     (_spriteGrayscale != nullptr)){
     ImageRGBA outImage;
     ApplyHS(*_spriteGrayscale, hsImage, outImage);
     return outImage;
@@ -204,7 +202,6 @@ void SpriteWrapper::CacheSprite(const ImgTypeCacheSpec& typesToCache, const HSIm
   if(typesToCache.rgba &&
      !isRGBACached){
     if((_spriteGrayscale != nullptr) &&
-       (hsImage != nullptr) &&
        (hsImage->GetHSID() == 0)){
       ApplyHS(*_spriteGrayscale, hsImage, *_spriteRGBA);
     }else{
@@ -249,21 +246,18 @@ void SpriteWrapper::LoadSprite(Image& outImage) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpriteWrapper::LoadSprite(ImageRGBA& outImage, const HSImageHandle& hsImage) const
 {
-  if((hsImage != nullptr) &&
-     hsImage->GetHSID() != 0){
+  if(hsImage->GetHSID() != 0){
     // Load the image as a grayscale image and merge it with a hue image
     Image grayImg;
     grayImg.Load(_fullSpritePath.c_str());
     ApplyHS(grayImg, hsImage, outImage);
-  }else if(!_fullSpritePath.empty()){
+  }else{
     // Load the image in as an RGB directly 
     auto res = outImage.Load(_fullSpritePath.c_str());
     ANKI_VERIFY(RESULT_OK == res,
                 "CompositeImage.SpriteBoxImpl.Constructor.ColorLoadFailed",
                 "Failed to load sprite %s",
                 _fullSpritePath.c_str());
-  }else{
-    PRINT_NAMED_ERROR("SpriteWrapper.LoadSprite.NoPathToLoadFrom", "");
   }
 }
 
@@ -276,12 +270,7 @@ void SpriteWrapper::ApplyHS(const Image& grayImg, const HSImageHandle& hsImage, 
   Vision::Image* saturationImage = nullptr;
   bool memoryAllocated = false;
 
-  if(hsImage == nullptr){
-    PRINT_NAMED_ERROR("SpriteWrapper.ApplyHS.HSImageNull",
-                      "Cannot apply null HS image to grayImg");
-    outImg.SetFromGray(grayImg);
-    return;
-  }else if(hsImage->AreImagesCached()){
+  if(hsImage->AreImagesCached()){
     hsImage->GetCachedImages(hueImage, saturationImage, imageSize);
   }else{
     hsImage->AllocateImages(hueImage, saturationImage, imageSize);

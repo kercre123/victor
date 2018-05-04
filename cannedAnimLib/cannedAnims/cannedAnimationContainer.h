@@ -15,33 +15,62 @@
 #ifndef ANKI_COZMO_CANNED_ANIMATION_CONTAINER_H
 #define ANKI_COZMO_CANNED_ANIMATION_CONTAINER_H
 
+#include "coretech/common/engine/jsonTools.h"
 #include "cannedAnimLib/cannedAnims/animation.h"
 #include <unordered_map>
 #include <vector>
 
+namespace CozmoAnim {
+  struct AnimClip;
+}
+
 namespace Anki {
 
+namespace Vision{
+class SpriteSequenceContainer;
+}
+
 namespace Cozmo {
+  
+  class CannedAnimationContainer
+  {
+  public:
+    static const std::string ProceduralAnimName;
 
-class CannedAnimationContainer
-{
-public:
-  CannedAnimationContainer();
-                          
-  ~CannedAnimationContainer();
-  
-  bool  HasAnimation(const std::string& name) const;
-  Animation* GetAnimation(const std::string& name);
-  const Animation* GetAnimation(const std::string& name) const;
-  void AddAnimation(Animation&& animation);
+    CannedAnimationContainer(const Vision::SpritePathMap* spriteMap, 
+                             Vision::SpriteSequenceContainer* spriteSequenceContainer);
+                            
+    ~CannedAnimationContainer();
+    
+    Result DefineHardCoded(); // called at construction
+    
+    Result DefineFromJson(const Json::Value& jsonRoot, std::string& loadedAnimName);
 
-  std::vector<std::string> GetAnimationNames();
-  
-private:
-  using AnimMap = std::unordered_map<std::string, Animation>;
-  std::unordered_map<std::string, Animation> _animations;
-  
-}; // class CannedAnimationContainer
+    Result DefineFromFlatBuf(const CozmoAnim::AnimClip* animClip, std::string& animName);
+
+    Animation* GetAnimationWrapper(std::string& animationName);
+
+    Result SanityCheck(Result lastResult, Animation* animation, std::string& animationName);
+    
+    Result AddAnimation(const std::string& name);
+    Result AddAnimation(Animation* animation);
+    
+    Animation* GetAnimation(const std::string& name);
+    const Animation* GetAnimation(const std::string& name) const;
+    bool  HasAnimation(const std::string& name) const;
+    
+    std::vector<std::string> GetAnimationNames();
+    
+    void Clear();
+    
+  private:
+  const Vision::SpritePathMap* _spriteMap = nullptr;
+    Vision::SpriteSequenceContainer* _spriteSequenceContainer = nullptr;
+    std::unordered_map<std::string, Animation> _animations;
+
+    void SetSpriteSequenceContainerOnAnimation(Animation* animation) const;
+    
+  }; // class CannedAnimationContainer
   
 } // namespace Cozmo
 } // namespace Anki

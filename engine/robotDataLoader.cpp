@@ -59,12 +59,6 @@ const char* pathToExternalIndependentSprites = "assets/sprites/independentSprite
 const char* pathToEngineIndependentSprites = "config/devOnlySprites/independentSprites/";
 const char* pathToExternalSpriteSequences = "assets/sprites/spriteSequences/";
 const char* pathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequences/";
-
-const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
-  "assets/animations/anim_weather_cloud_01.bin",
-  "assets/animations/anim_weather_snow_01.bin",
-};
-
 }
 
 namespace Anki {
@@ -186,16 +180,10 @@ void RobotDataLoader::LoadNonConfigData()
   }
   
   {
-    CannedAnimationLoader animLoader(_platform,
-                                     _spritePaths.get(), _spriteSequenceContainer.get(), 
-                                     _loadingCompleteRatio, _abortLoad);
-    // Create the canned animation container, but don't load any data into it
-    // Engine side animations are loaded only when requested
-    _cannedAnimations = std::make_unique<CannedAnimationContainer>();
-    for(const auto& path : kPathsToEngineAccessibleAnimations){
-      const auto fullPath =  _platform->pathToResource(Util::Data::Scope::Resources, path);
-      animLoader.LoadAnimationIntoContainer(fullPath, _cannedAnimations.get());
-    }
+    // Load animations into engine - disabled for the time being to save the 30 MB hit
+    // of loading animations into engine in addition to anim process
+    //CannedAnimationLoader animLoader(_platform, _loadingCompleteRatio, _abortLoad);
+    //_cannedAnimations.reset(animLoader.LoadAnimations());
   }
 
   // this map doesn't need to be persistent

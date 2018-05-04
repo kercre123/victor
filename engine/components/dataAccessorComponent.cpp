@@ -46,7 +46,6 @@ void DataAccessorComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMa
   _spriteSequenceContainer = dataLoader.GetSpriteSequenceContainer();
   _compImgMap = dataLoader.GetCompImageMap();
   _compLayoutMap = dataLoader.GetCompLayoutMap();
-  _cannedAnimationContainer = dataLoader.GetCannedAnimationContainer();
 }
 
   

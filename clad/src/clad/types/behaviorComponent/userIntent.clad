@@ -25,14 +25,6 @@ structure UserIntent_TimeInSeconds
   uint_32 time_s
 }
 
-structure UserIntent_WeatherResponse
-{
-  string  city,
-  string  condition,
-  uint_32 temperature,
-  string  temperatureUnit
-}
-
 structure UserIntent_RecordMessage
 {
   string given_name,

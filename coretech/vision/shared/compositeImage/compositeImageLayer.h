@@ -56,8 +56,7 @@ public:
   using LayoutMap = std::map<SpriteBoxName, SpriteBox>;
   using ImageMap  = std::unordered_map<SpriteBoxName, SpriteEntry, Anki::Util::EnumHasher>;
 
-  CompositeImageLayer(LayerName layerName = LayerName::StaticBackground)
-  : _layerName(layerName){};
+  CompositeImageLayer() {};
   CompositeImageLayer(const Json::Value& layoutSpec);
   CompositeImageLayer(LayerName layerName,
                       LayoutMap&& layoutSpec)
@@ -82,10 +81,6 @@ public:
   void AddToImageMap(SpriteCache* cache, SpriteSequenceContainer* seqContainer,
                      SpriteBoxName sbName, const Vision::SpriteName& spriteName);
   void AddToImageMap(SpriteBoxName sbName, const SpriteEntry& spriteEntry);
-  
-  // Returns true if composite image has an image map entry that matches the sprite box
-  // Returns false if image is not set
-  bool GetSpriteEntry(const SpriteBox& sb, SpriteEntry& outEntry) const;
 
   // Functions which replace existing map with a new map
   void SetImageMap(const Json::Value& imageMapSpec,
@@ -95,7 +90,7 @@ public:
   bool IsValidImageMap(const ImageMap& imageMap, bool requireAllSpriteBoxes = false) const;
 
 private:
-  LayerName _layerName;
+  LayerName _layerName = LayerName::StaticBackground;
   LayoutMap _layoutMap;
   ImageMap  _imageMap;
 };
@@ -136,7 +131,6 @@ struct CompositeImageLayer::SpriteBox{
 // via sprite names in the image map. Should be able to have  a serialized
 // sprite handle fallback that sends file paths or image chunks when appropriate
 struct CompositeImageLayer::SpriteEntry{
-  SpriteEntry(){};
   SpriteEntry(SpriteCache* cache,
               SpriteSequenceContainer* seqContainer,
               Vision::SpriteName spriteName);

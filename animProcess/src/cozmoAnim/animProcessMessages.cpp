@@ -210,9 +210,9 @@ void Process_displayCompositeImageChunk(const Anki::Cozmo::RobotInterface::Displ
   _animStreamer->Process_displayCompositeImageChunk(msg);
 }
 
-void Process_updateCompositeImage(const Anki::Cozmo::RobotInterface::UpdateCompositeImage& msg)
+void Process_updateCompositeImageAsset(const Anki::Cozmo::RobotInterface::UpdateCompositeImageAsset& msg)
 {
-  _animStreamer->Process_updateCompositeImage(msg);
+  _animStreamer->Process_updateCompositeImageAsset(msg);
 }
 
 void Process_playCompositeAnimation(const Anki::Cozmo::RobotInterface::PlayCompositeAnimation& msg)

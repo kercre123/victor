@@ -59,8 +59,6 @@ enum no_cpp_class uint_8 SpriteBoxName
   WeatherBox_4,
   WeatherBox_5,
 
-  Count
-
 }
 
 // Define how the contents of this sprite box should be rendered

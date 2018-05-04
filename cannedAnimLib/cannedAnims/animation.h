@@ -84,10 +84,10 @@ public:
   void AppendAnimation(const Animation& appendAnim);
   
   // Get last key frame time_ms
-  uint32_t GetLastKeyFrameTime_ms() const;
+  uint32_t GetLastKeyFrameTime_ms();
   
   // Get last key frame + duration of keyframe
-  uint32_t GetLastKeyFrameEndTime_ms() const;
+  uint32_t GetLastKeyFrameEndTime_ms();
 
 
 private:
@@ -112,12 +112,12 @@ private:
   // Compare if the track's last key frame time is gerater then the lastFrameTime_ms argument
   // Return the greater time
   template<class KeyFrameType>
-  TimeStamp_t CompareLastFrameTime(const TimeStamp_t lastFrameTime_ms) const;
+  TimeStamp_t CompareLastFrameTime(const TimeStamp_t lastFrameTime_ms);
   
   // Compare if the track's last key frame + duration time is greater then the lastFrameTime_ms argument
   // Return the greater time
   template<class KeyFrameType>
-  TimeStamp_t CompareLastFrameEndTime(const TimeStamp_t lastFrameTime_ms) const;
+  TimeStamp_t CompareLastFrameEndTime(const TimeStamp_t lastFrameTime_ms);
   
 }; // class Animation
 
