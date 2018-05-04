@@ -334,8 +334,7 @@
     {
       "from": [
         "Socializing",
-        "PlayingWithCube",
-        "Exploring"
+        "PlayingWithCube"
       ],
       "exitTransitions": [
         {
