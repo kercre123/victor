@@ -347,6 +347,7 @@ if [ $CONFIGURE -eq 1 ]; then
             -DMACOSX=1
             -DANDROID=0
             -DVICOS=0
+            -DCMAKE_TOOLCHAIN_FILE="${CMAKE_MODULE_DIR}/macosx.toolchain.cmake"
         )
     elif [ "$PLATFORM" == "vicos" ] ; then
         #
