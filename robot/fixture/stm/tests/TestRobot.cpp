@@ -873,6 +873,12 @@ static void RobotFlexFlowPackoutReport(void)
   FLEXFLOW::printf("</flex>\n");
 }
 
+void TurkeysDone(void)
+{
+  rcomEng(RCOM_ENG_IDX_SOUND, RCOM_ENG_SOUND_DAT0_TONE_BELL, 127 /*volume*/);
+  Timer::delayMs(750); //wait for sound to finish
+}
+
 //-----------------------------------------------------------------------------
 //                  Get Tests
 //-----------------------------------------------------------------------------
@@ -928,6 +934,7 @@ TestFunction* TestRobot3GetTests(void) {
     TestRobotMotors,
     ChargeTest,
     EmrUpdate, //set test complete flags
+    TurkeysDone,
     NULL,
   };
   return m_tests;

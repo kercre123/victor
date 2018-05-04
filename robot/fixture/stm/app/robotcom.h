@@ -42,6 +42,16 @@ const int ccr_sr_cnt[12] = {0,2,4,2,2,2,2,4,2,1,1,4}; //number of CCC sensor fie
 //#define RCOM_FCC_MODE_RX_POWER      2
 //#define RCOM_FCC_MODE_RX_PACKETS    3
 
+//rcomEng: index (test selection)
+#define RCOM_ENG_IDX_NONE             0
+#define RCOM_ENG_IDX_MICS             1 /*XXX not implemented*/
+#define RCOM_ENG_IDX_SOUND            2 /*play a tone out the speaker*/
+
+//rcomEng: SOUND params
+#define RCOM_ENG_SOUND_DAT0_TONE_BEEP       0
+#define RCOM_ENG_SOUND_DAT0_TONE_BELL       1
+#define RCOM_ENG_SOUND_DAT1_VOLUME(pctx100) ((pctx100*255)/100)
+
 //data conversion
 #define RCOM_BAT_RAW_TO_MV(raw)     (((raw)*2800)>>11)  /*robot_sr_t::bat.raw (adc) to millivolts*/
 
@@ -85,7 +95,7 @@ void          rcomLed(uint8_t *leds, int printlvl = RCOM_PRINT_LEVEL_DEFAULT); /
 robot_sr_t*   rcomMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, int printlvl = RCOM_PRINT_LEVEL_DEFAULT);
 robot_sr_t*   rcomGet(uint8_t NN, uint8_t sensor, int printlvl = RCOM_PRINT_LEVEL_DEFAULT); //NN = #drops (sr vals). returns &sensor[0] of [NN-1]
 int           rcomRlg(uint8_t idx, char *buf, int buf_max_size); //read log 'idx' into buf (NOT null-terminated). return num chars written to buf [e.g. strlen(buf)]
-void          rcomEng(uint8_t idx, uint32_t val);
+void          rcomEng(uint8_t idx, uint8_t dat0=0, uint8_t dat1=0);
 void          rcomSmr(uint8_t idx, uint32_t val);
 uint32_t      rcomGmr(uint8_t idx);
 //void          rcomFcc(uint8_t mode, uint8_t cn); //RCOM_FCC_MODE_, {0..39}
