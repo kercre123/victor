@@ -1,5 +1,5 @@
 /**
- * File: cozmoAudioController.h
+ * File: cozmoAudioController.cpp
  *
  * Author: Jordan Rivas
  * Created: 09/07/2017
@@ -50,11 +50,15 @@ static Anki::Cozmo::Audio::CozmoAudioController* sThis = nullptr;
 const std::string kProfilerCaptureFileName    = "VictorProfilerSession.prof";
 const std::string kAudioOutputCaptureFileName = "VictorOutputSession.wav";
 const std::string kPersistentVolumeFilePath   = "audio/PersistentVolumeSettings.json";
-// Volume const
 using APT = Anki::AudioMetaData::GameParameter::ParameterType;
+// Volumes
 const auto kMasterVolumeChannel = APT::Robot_Vic_Volume_Master;
-const std::set<APT> kVolumeChannels = { kMasterVolumeChannel, APT::Robot_Vic_Volume_Animation,
-                                        APT::Robot_Vic_Volume_Behavior, APT::Robot_Vic_Volume_Procedural };
+const std::set<APT> kVolumeChannels =
+  { kMasterVolumeChannel, APT::Robot_Vic_Volume_Animation,
+    APT::Robot_Vic_Volume_Behavior, APT::Robot_Vic_Volume_Procedural };
+// Consumable Parameters
+const std::set<APT> kConsumableParameters =
+  { APT::Robot_Vic_Meter_Bus_Sfx, APT::Robot_Vic_Meter_Bus_Tts, APT::Robot_Vic_Meter_Bus_Vo };
 }
 
 namespace Anki {
@@ -310,6 +314,7 @@ CozmoAudioController::CozmoAudioController( const AnimContext* context )
     RegisterCladGameObjectsWithAudioController();
     SetDefaultListeners( { ToAudioGameObject( AudioMetaData::GameObjectType::Victor_Listener ) } );
     SetInitialVolume();
+    SetupConsumableAudioParameters();
   }
   if (sThis == nullptr) {
     sThis = this;
@@ -430,6 +435,65 @@ void CozmoAudioController::SetDefaultVolumes( bool store )
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CozmoAudioController::ActivateParameterValueUpdates( bool activate )
+{
+  bool success = false;
+  if ( ParameterUpdatesIsActive() == activate ) {
+    // Active state did not change
+    return success;
+  }
+  
+  if ( activate ) {
+    // Register callbacks
+    AudioEngineCallbackFunc callbackFunc = [this]( AudioEngineCallbackId callbackId,
+                                                   AudioEngineCallbackFlag callbackType )
+    {
+      using namespace AudioEngine;
+      for ( auto& paramKVP : _consumableParameterValues ) {
+        AudioRTPCValue val;
+        AudioRTPCValueType type = AudioRTPCValueType::Global;
+        bool success = this->GetParameterValue( ToAudioParameterId( paramKVP.first ),
+                                                kInvalidAudioGameObject,
+                                                kInvalidAudioPlayingId,
+                                                val,
+                                                type );
+        if ( success ) {
+          paramKVP.second = val;
+        }
+      }
+    };
+    _parameterUpdateCallbackId = RegisterGlobalCallback( AudioEngine::AudioEngineCallbackFlag::EndFrameRender,
+                                                         std::move( callbackFunc ) );
+    success = ParameterUpdatesIsActive();
+  }
+  else {
+    // Unregister callbacks
+    success = UnregisterGlobalCallback( _parameterUpdateCallbackId );
+    _parameterUpdateCallbackId = kInvalidAudioEngineCallbackId;
+  }
+  return success;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CozmoAudioController::GetActivatedParameterValue( AudioMetaData::GameParameter::ParameterType parameter,
+                                                       AudioEngine::AudioRTPCValue& out_value )
+{
+  bool success = false;
+  out_value = 0.0f;
+  if ( !ParameterUpdatesIsActive() ) {
+    // Not Active
+    return success;
+  }
+  
+  const auto paramIt = _consumableParameterValues.find( parameter );
+  if ( paramIt != _consumableParameterValues.end() ) {
+    success = true;
+    out_value = paramIt->second;
+  }
+  return success;
+}
+
 // Private Methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CozmoAudioController::RegisterCladGameObjectsWithAudioController()
@@ -457,6 +521,16 @@ void CozmoAudioController::SetInitialVolume()
   LoadVolumeSettings();
   for ( const auto kvp : _volumeMap ) {
     SetVolume( kvp.first, kvp.second, 0, AudioEngine::AudioCurveType::Linear, false );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CozmoAudioController::SetupConsumableAudioParameters()
+{
+  _parameterUpdateCallbackId = kInvalidAudioEngineCallbackId;
+  _consumableParameterValues.clear();
+  for ( const auto consumableParameter : kConsumableParameters ) {
+    _consumableParameterValues.emplace( consumableParameter, 0.0f );
   }
 }
   

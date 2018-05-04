@@ -16,8 +16,10 @@
 #define __Anki_Cozmo_CozmoAudioController_H__
 
 #include "audioEngine/audioEngineController.h"
+#include <atomic>
 #include <memory>
-#include <unordered_map>
+#include <map>
+
 
 namespace Anki {
 namespace AudioEngine {
@@ -71,12 +73,24 @@ public:
   // Reset all volume channels to default value
   // store default values to persistent storage
   void SetDefaultVolumes( bool store = true );
+  
+  // Activate consumable parameters to get updated Audio Engine runtime values
+  // See cozmoAudioController.cpp for "consumable parameters" list
+  // Return true if successfully activated/deactivated
+  bool ActivateParameterValueUpdates( bool activate );
+  bool GetActivatedParameterValue( AudioMetaData::GameParameter::ParameterType parameter,
+                                   AudioEngine::AudioRTPCValue& out_value );
 
 private:
   
   const AnimContext* _animContext = nullptr;
   std::unique_ptr<AudioEngine::SoundbankLoader> _soundbankLoader;
-  std::unordered_map<AudioMetaData::GameParameter::ParameterType, AudioEngine::AudioRTPCValue> _volumeMap;
+  // Volume Settings
+  std::map<AudioMetaData::GameParameter::ParameterType, AudioEngine::AudioRTPCValue> _volumeMap;
+  // Parameter Value Update functionality
+  AudioEngine::AudioEngineCallbackId _parameterUpdateCallbackId = AudioEngine::kInvalidAudioEngineCallbackId;
+  std::map<AudioMetaData::GameParameter::ParameterType,
+           std::atomic<AudioEngine::AudioRTPCValue>> _consumableParameterValues;
   
   // Register CLAD Game Objects
   void RegisterCladGameObjectsWithAudioController();
@@ -84,11 +98,16 @@ private:
   // Set initial volumes at startup
   void SetInitialVolume();
   
+  // Setup the structures of consumable Audio Engine Parameters
+  void SetupConsumableAudioParameters();
+  
   // Load/Store persistent volume values
   void LoadVolumeSettings();
   void StoreVolumeSettings();
   bool IsValidVolumeChannel( AudioMetaData::GameParameter::ParameterType volumeChannel );
   
+  bool ParameterUpdatesIsActive() const
+  { return ( _parameterUpdateCallbackId != AudioEngine::kInvalidAudioEngineCallbackId ); }
   
 };
 
