@@ -11,6 +11,8 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string>
@@ -55,6 +57,9 @@ namespace Anki {
 
     void HAL::DisconnectRadio(void)
     {
+      RobotInterface::RobotServerDisconnect msg;
+      RobotInterface::SendMessage(msg);
+      
       server.Disconnect();
       recvBufSize_ = 0;
     }

@@ -25,6 +25,10 @@ message SyncRobotAck
 {
 }
 
+message RobotServerDisconnect
+{
+}
+
 message RobotPoked
 {
 }
@@ -160,7 +164,8 @@ union RobotToEngine {
   ManufacturingID            mfgId                  = 0xCB,
   FirmwareVersion            firmwareVersion        = 0xCC,
 
-  DisplayedFaceImageRGBChunk displayedFaceImageRGBChunk = 0xCD,
+  RobotServerDisconnect      robotServerDisconnect  = 0xCD,
+
   // FREE SLOTS 0xCE to 0xD2
 
   // Messages from animation process to engine
@@ -189,6 +194,7 @@ union RobotToEngine {
   AudioEngine::Multiplexer::AudioCallbackComplete audioCallbackComplete = 0xE2,
   AudioEngine::Multiplexer::AudioCallbackError    audioCallbackError    = 0xE3,
 
+  DisplayedFaceImageRGBChunk displayedFaceImageRGBChunk = 0xE4,
 
   // ====== 0xF0 to 0x FE: Unreliable message to the Engine =====
   // From robot process

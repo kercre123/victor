@@ -490,6 +490,11 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
   const auto tag = msg.tag;
   switch (tag)
   {
+    case RobotInterface::RobotToEngine::Tag_robotServerDisconnect:
+    {
+      AnimComms::DisconnectRobot();
+    }
+    break;
     case RobotInterface::RobotToEngine::Tag_micData:
     {
       const auto& payload = msg.micData;
