@@ -33,7 +33,7 @@ VictorCharger {
   rotation 0 0 1 0
 }
 LightCube {
-  translation -0.14 -0.24 0.022
+  translation -0.04 -0.24 0.022
 }
 LightCube {
   translation 0.2 -0.075 0.022

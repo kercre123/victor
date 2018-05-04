@@ -12,11 +12,14 @@
 
 #include "simulator/game/cozmoSimTestController.h"
 
+#include "simulator/controllers/shared/webotsHelpers.h"
+
 namespace Anki {
 namespace Cozmo {
   
 enum class TestState {
   Init,
+  ShiftChargerSlightly,
   TestDone
 };
   
@@ -42,8 +45,27 @@ s32 CST_ChargerDocking::UpdateSimInternal()
       using namespace ExternalInterface;
       SendMessage(MessageGameToEngine(ExecuteBehaviorByID("FindAndGoToHome", -1)));
       
-      SET_TEST_STATE(TestDone);
+      SET_TEST_STATE(ShiftChargerSlightly);
       break;
+    }
+    case TestState::ShiftChargerSlightly:
+    {
+      // Wait until the robot is turned around away from the charger
+      // and about to dock, then move the charger a tiny bit to force
+      // the robot to auto-correct with the cliff sensors
+      auto* chargerNode = WebotsHelpers::GetFirstMatchingSceneTreeNode(GetSupervisor(), "VictorCharger").nodePtr;
+      auto chargerPose = GetPose3dOfNode(chargerNode);
+      const auto& robotPose = GetRobotPoseActual();
+      const float distanceAway_mm = ComputeDistanceBetween(chargerPose, robotPose);
+      const float angleBetween_deg = (chargerPose.GetRotationAngle<'Z'>() - robotPose.GetRotationAngle<'Z'>()).getDegrees();
+      if (distanceAway_mm < 180.f &&
+          NEAR(angleBetween_deg, -90.f, 10.f)) {
+        auto chargerTranslation = chargerPose.GetTranslation();
+        chargerTranslation.x() += 10.f;
+        chargerPose.SetTranslation(chargerTranslation);
+        SetNodePose(chargerNode, chargerPose);
+        SET_TEST_STATE(TestDone);
+      }
     }
     case TestState::TestDone:
     {
