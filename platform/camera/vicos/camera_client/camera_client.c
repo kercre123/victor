@@ -192,27 +192,6 @@ static ssize_t writen(int fd, const void *vptr, size_t n)
   return (n);
 }
 
-static void debug_dump_image_frame(uint8_t *frame, int width, int height, int bpp)
-{
-  char file_name[512];
-  static int frame_idx = 0;
-  const char *name = "anki_camera";
-  const char *ext = "rgb";
-  int file_fd;
-
-  snprintf(file_name, sizeof(file_name), "/tmp/cc_%04d.%s", frame_idx++, ext);
-  file_fd = open(file_name, O_RDWR | O_CREAT, 0777);
-  if (file_fd < 0) {
-    loge("%s: cannot open file %s \n", __func__, file_name);
-  }
-  else {
-    writen(file_fd, frame, width * height * bpp / 8);
-  }
-
-  close(file_fd);
-  logi("%s: wrote %s\n", __func__, file_name);
-}
-
 static int socket_connect(int *out_fd)
 {
   struct sockaddr_un caddr;
