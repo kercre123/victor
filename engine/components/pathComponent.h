@@ -136,6 +136,9 @@ public:
   // Set a motion profile and have it cleared automatically when the action finishes. Note that this will
   // clear when the action is _destroyed_.
   void SetCustomMotionProfileForAction(const PathMotionProfile& motionProfile, IActionRunner* action);
+  
+  // Determines if replanning can select a different goal than was originally selected. no effect if there is only one goal
+  void SetCanReplanningChangeGoal(bool canChangeGoal) { _replanningCanChangeGoal = canChangeGoal; }
 
   // check / get the custom motion profile. Note that there is always _some_ motion profile that paths follow,
   // but these functions refer to the _custom_ profile which, for example, might get set by a behavior
@@ -269,7 +272,8 @@ private:
   bool                     _plannerActive                = false;
   bool                     _hasCustomMotionProfile       = false;
   bool                     _startFollowingPath           = true;
-  bool                     _isReplanning     = false;
+  bool                     _isReplanning                 = false;
+  bool                     _replanningCanChangeGoal      = true;
 
 
   // keep track of the last path ID we canceled. Note that when we cancel a path we will transition to one of

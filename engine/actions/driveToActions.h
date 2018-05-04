@@ -71,6 +71,9 @@ namespace Anki {
                       const Pose3d& objectPoseGoalsGeneratedFrom,
                       const Point3f& distThreshold  = DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM,
                       const Radians& angleThreshold = DEFAULT_POSE_EQUAL_ANGLE_THRESHOLD_RAD);
+      
+      // If true and if multiple goals were provided, only the originally-selected goal will be used
+      void SetMustContinueToOriginalGoal(bool mustUse) { _mustUseOriginalGoal = mustUse; }
 
     protected:
       virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
@@ -96,6 +99,8 @@ namespace Anki {
       // The pose of the object that the _goalPoses were generated from
       Pose3d _objectPoseGoalsGeneratedFrom;
       bool _useObjectPose = false;
+      
+      bool _mustUseOriginalGoal = false;
       
       int _debugPrintCtr = 0;
       

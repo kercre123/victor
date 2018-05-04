@@ -55,6 +55,7 @@ enum uint_8 BehaviorClass {
   DockingTestSimple,
   FactoryCentroidExtractor,
   LiftLoadTest,
+  PlannerTest,
 
   // devBehaviors/playpen
   PlaypenCameraCalibration,

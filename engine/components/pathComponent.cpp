@@ -883,7 +883,8 @@ void PathComponent::RestartPlannerIfNeeded()
     _isReplanning = false;
   }
 
-  switch( _selectedPathPlanner->ComputeNewPathIfNeeded( _robot->GetDriveCenterPose() ) ) {
+  const bool forceReplan = false;
+  switch( _selectedPathPlanner->ComputeNewPathIfNeeded( _robot->GetDriveCenterPose(), forceReplan, _replanningCanChangeGoal ) ) {
     case EComputePathStatus::Error:
       if( ReplanWithFallbackPlanner() ) {
         PRINT_CH_INFO("Planner", "PathComponent.RestartIfNeeded.Error.Fallback",

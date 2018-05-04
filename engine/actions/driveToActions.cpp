@@ -695,6 +695,8 @@ namespace Anki {
         Result planningResult = RESULT_OK;
         
         *_selectedGoalIndex = 0;
+        
+        pathComponent.SetCanReplanningChangeGoal( !_mustUseOriginalGoal );
                 
         planningResult = pathComponent.StartDrivingToPose(_goalPoses,
                                                           _selectedGoalIndex);
