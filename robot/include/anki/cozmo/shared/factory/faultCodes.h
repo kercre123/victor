@@ -64,7 +64,7 @@ enum : uint16_t {
 static int DisplayFaultCode(uint16_t code)
 {
   struct sockaddr_un name;
-  size_t size;
+  socklen_t size;
 
   // Create a local socket
   int sock = socket(PF_LOCAL, SOCK_DGRAM, 0);
@@ -77,11 +77,8 @@ static int DisplayFaultCode(uint16_t code)
   name.sun_family = AF_LOCAL;
   strncpy(name.sun_path, kFaultCodeSocketName, sizeof(name.sun_path));
   name.sun_path[sizeof(name.sun_path) - 1] = '\0';
-#ifdef ANDROID
-  size = (offsetof(struct sockaddr_un, sun_path) + strlen(name.sun_path));
-#else
-  size = SUN_LEN(&name);
-#endif
+  size = (socklen_t)SUN_LEN(&name);
+
   // Connect to the named fault code socket
   int rc = connect(sock, (struct sockaddr*)&name, size);
   if(rc < 0)
@@ -94,7 +91,7 @@ static int DisplayFaultCode(uint16_t code)
   ssize_t numBytes = write(sock, &code, sizeof(code));
   if(numBytes != sizeof(code))
   {
-    printf("DisplayFaultCode: Expected to write %lu bytes but only wrote %li\n",
+    printf("DisplayFaultCode: Expected to write %zu bytes but only wrote %zd\n",
 	   sizeof(code),
 	   numBytes);
 

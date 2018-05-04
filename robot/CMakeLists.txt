@@ -129,6 +129,8 @@ target_include_directories(robot_transport
 add_executable(displayFaultCode
   ${CMAKE_SOURCE_DIR}/robot/include/anki/cozmo/shared/factory/faultCodeMain.cpp
 )
+target_compile_options(displayFaultCode PRIVATE ${ANKI_BUILD_CXX_COMPILE_OPTIONS})
+target_compile_definitions(displayFaultCode PRIVATE ${ANKI_BUILD_CXX_COMPILE_DEFINITIONS})
 
 anki_build_cxx_library(supervisor ${ANKI_SRCLIST_DIR} STATIC
   ${PLATFORM_SRCS}
