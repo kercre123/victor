@@ -109,6 +109,7 @@ MOUNT_STATE=$(\
 function cleanup() {
   # Remount rootfs read-only
   [[ "$MOUNT_STATE" == "ro" ]] && logv "remount ro /" &&  robot_sh "/bin/mount -o remount,ro /"    
+  exit
 }
 
 # trap ctrl-c and call ctrl_c()
