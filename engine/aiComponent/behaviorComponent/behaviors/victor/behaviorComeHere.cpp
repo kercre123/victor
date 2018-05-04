@@ -41,7 +41,7 @@ BehaviorComeHere::BehaviorComeHere(const Json::Value& config)
 : ICozmoBehavior(config)
 {
   for(auto& entry: config[kFaceSelectionPriorityKey]){
-    _facePriorities.push_back(FaceSelectionComponent::FaceSelectionPenaltyFromString(entry.asString()));
+    _facePriorities.push_back(FaceSelectionPenaltyMultiplierFromString(entry.asString()));
   }
 
   JsonTools::GetValueOptional(config, kPreferMicDirectionKey, _params.preferMicData);

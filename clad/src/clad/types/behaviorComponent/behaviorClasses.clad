@@ -123,7 +123,7 @@ enum uint_8 BehaviorClass {
 
   // observing
   ObservingLookAtFaces,
-  ObservingOnCharger,
+  ObservingWithoutTurn,
 
   // proxBehaviors
   ProxGetToDistance,

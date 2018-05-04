@@ -12,6 +12,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/internalStatesBehavior.h"
 
+#include "clad/types/behaviorComponent/behaviorTimerTypes.h"
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -20,6 +21,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
@@ -52,6 +54,7 @@ constexpr const char* kBeginTimeKey = "begin_s";
 constexpr const char* kEmotionEventKey = "emotionEvent";
 constexpr const char* kBehaviorKey = "behavior";
 constexpr const char* kGetInBehaviorKey = "getInBehavior";
+constexpr const char* kResetBehaviorTimerKey = "resetBehaviorTimer";
 
 static const BackpackLights kLightsOff = {
   .onColors               = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
@@ -145,6 +148,8 @@ public:
 
   std::string _getInBehaviorName;
   ICozmoBehaviorPtr _getInBehavior;
+
+  BehaviorTimerTypes _behaviorTimer = BehaviorTimerTypes::Invalid;
 
 };  
 
@@ -628,7 +633,11 @@ void InternalStatesBehavior::TransitionToState(const StateID targetState)
                       state._name.c_str(),
                       state._getInBehavior->GetDebugLabel().c_str());
       }
-    }         
+    }
+
+    if( canPlayGetIn && state._behaviorTimer != BehaviorTimerTypes::Invalid ) {
+      GetBEI().GetBehaviorTimerManager().GetTimer( state._behaviorTimer  ).Reset();
+    }
 
     if( !IsControlDelegated() && state._behavior->WantsToBeActivated() ) {
       DelegateIfInControl(state._behavior.get() );
@@ -662,6 +671,10 @@ InternalStatesBehavior::State::State(const Json::Value& config)
   _name = JsonTools::ParseString(config, kStateNameConfgKey, "InternalStatesBehavior.StateConfig");
   _behaviorName = JsonTools::ParseString(config, kBehaviorKey, "InternalStatesBehavior.StateConfig");
   _getInBehaviorName = config.get(kGetInBehaviorKey, "").asString();
+
+  if( config[kResetBehaviorTimerKey].isString() ) {    
+    _behaviorTimer = BehaviorTimerManager::BehaviorTimerFromString( config[kResetBehaviorTimerKey].asString() );
+  }
 
   const std::string& debugColorStr = config.get("debugColor", "BLACK").asString();
   _debugColor = NamedColors::GetByString(debugColorStr);

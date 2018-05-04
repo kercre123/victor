@@ -19,6 +19,10 @@
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 
+#include "json/json-forwards.h"
+
+#include "clad/types/faceSelectionTypes.h"
+
 #include <set>
 #include <unordered_map>
 
@@ -37,37 +41,33 @@ class FaceWorld;
 class MicDirectionHistory;
 class SmartFaceID;
 
-
   
 class FaceSelectionComponent : public IDependencyManagedComponent<AIComponentID>,  
                                private Util::noncopyable
 {
 public:
-  // Enum that specifies the way that score penalties are applied when selecting face
-  // enums that are unspecified apply a penalty of 0
-  enum class FaceSelectionPenaltyMultiplier{
-    RelativeBodyAngleRadians,
-    RelativeHeadAngleRadians,
-    RelativeMicDirectionRadians,
-    UnnamedFace,
-    TimeSinceSeen_s,
-
-    Count
-  };
   using FaceSelectionFactorMap = std::unordered_map<FaceSelectionPenaltyMultiplier, float>;
+
+  static const FaceSelectionFactorMap kDefaultSelectionCriteria;
   
-  explicit FaceSelectionComponent(const Robot& robot, const FaceWorld& faceWorld, const MicDirectionHistory& micDirectionHistory)
+  explicit FaceSelectionComponent(const Robot& robot,
+                                  const FaceWorld& faceWorld,
+                                  const MicDirectionHistory& micDirectionHistory)
   : IDependencyManagedComponent<AIComponentID>(this, AIComponentID::FaceSelection)
   , _robot(robot)
   , _faceWorld(faceWorld)
   , _micDirectionHistory(micDirectionHistory){}
   ~FaceSelectionComponent();
 
-  SmartFaceID GetBestFaceToUse(const FaceSelectionFactorMap& criteriaMap, const std::vector<SmartFaceID>& possibleFaces) const;
+  // try to read a list of factor penalties from the given json config. Return true and modify the passed in
+  // criteria on success, false otherwise
+  static bool ParseFaceSelectionFactorMap(const Json::Value& config, FaceSelectionFactorMap& output);
 
+  SmartFaceID GetBestFaceToUse(const FaceSelectionFactorMap& criteriaMap,
+                               const std::vector<SmartFaceID>& possibleFaces) const;
 
-  // Convert string to enum
-  static FaceSelectionPenaltyMultiplier FaceSelectionPenaltyFromString(const std::string& str);
+  // defaults to using any known face present in face world
+  SmartFaceID GetBestFaceToUse(const FaceSelectionFactorMap& criteriaMap) const;
 
 private:
   const Robot& _robot;
@@ -79,6 +79,8 @@ private:
   float CalculateMicDirectionCost(const Vision::TrackedFace* currentFace) const;
   float CalculateUnnamedCost(const Vision::TrackedFace* currentFace) const;
   float CalculateTimeSinceSeenCost(const Vision::TrackedFace* currentFace) const;
+  float CalculateNotMakingEyeContact(const Vision::TrackedFace* currentFace) const;
+  float CalculateDistanceCost(const Vision::TrackedFace* currentFace) const;
 
 };
 

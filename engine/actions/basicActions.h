@@ -667,7 +667,8 @@ namespace Cozmo {
       TurnTowardsLastFacePoseAction(Radians maxTurnAngle = M_PI_F, bool sayName = false)
       : TurnTowardsFaceAction(SmartFaceID(), maxTurnAngle, sayName)
       {
-        
+        // must see face for action to succeed
+        SetRequireFaceConfirmation(true); 
       }
     };
   
