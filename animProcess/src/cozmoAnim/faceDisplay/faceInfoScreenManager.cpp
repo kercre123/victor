@@ -45,6 +45,7 @@
 #include <chrono>
 #include <fstream>
 #include <iomanip>
+#include <thread>
 
 #ifndef SIMULATOR
 #include <linux/reboot.h>
@@ -65,7 +66,7 @@
 #if !FACTORY_TEST
 
 // Return true if we can connect to Anki OTA service
-static bool HasInternet()
+static bool HasOTAAccess()
 {
   return Anki::Util::InternetUtils::CanConnectToHostName("ota-cdn.anki.com", 443);
 }
@@ -104,6 +105,14 @@ namespace {
 
   // Time at which sync() should be called
   f32 syncTime_s = 0.f;
+
+  // Variables for performing connectivity checks in threads
+  // and triggering redrawing of screens
+  std::atomic<bool> _redrawMain{false};
+  std::atomic<bool> _redrawNetwork{false};
+  std::atomic<bool> _hasAuthAccess{false};
+  std::atomic<bool> _hasOTAAccess{false};
+  std::atomic<bool> _hasVoiceAccess{false};
 }
 
 
@@ -171,12 +180,22 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   GetScreen(ScreenName::CustomText)->SetExitScreenAction([this]() {
     SET_TIMEOUT(CustomText, kDefaultScreenTimeoutDuration_s, None);
   });
+
   ADD_SCREEN(Main, Network);
+  GetScreen(ScreenName::Main)->SetEnterScreenAction([]() {
+    _redrawMain = false;
+  });
+
   ADD_SCREEN_WITH_TEXT(ClearUserData, Main, {"CLEAR USER DATA?"});
   ADD_SCREEN_WITH_TEXT(ClearUserDataFail, Main, {"CLEAR USER DATA FAILED"});
   ADD_SCREEN_WITH_TEXT(Rebooting, Rebooting, {"REBOOTING..."});
   ADD_SCREEN_WITH_TEXT(SelfTest, Main, {"START SELF TEST?"});
+
   ADD_SCREEN(Network, SensorInfo);
+  GetScreen(ScreenName::Network)->SetEnterScreenAction([]() {
+    _redrawNetwork = false;
+  });
+
   ADD_SCREEN(SensorInfo, IMUInfo);
   ADD_SCREEN(IMUInfo, MotorInfo);
   ADD_SCREEN(MotorInfo, MicInfo);
@@ -384,11 +403,41 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   // One-shot operations for screens that don't need to be updated by Update()
   switch(GetCurrScreenName()) {
     case ScreenName::Main:
+    {
       DrawMain();
+#if !FACTORY_TEST
+      // Redraw Main screen after connection checks have completed
+      static std::future<void> mainChecksFuture;
+      if (!AsyncExec(mainChecksFuture, []() {
+        _hasOTAAccess = HasOTAAccess();
+        _redrawMain = true;
+      })) {
+        LOG_WARNING("FaceInfoScreenManager.SetScreen.MainScreenConnectionCheckBlocking", "");
+      }
+#endif      
       break;
+    }
     case ScreenName::Network:
+    {
       DrawNetwork();
+#if !FACTORY_TEST
+      static std::future<void> networkChecksFuture;
+      // Redraw Network screen after connection checks have completed
+      if (!AsyncExec(networkChecksFuture, []() {
+        // TODO (VIC-1816): Check actual hosts for connectivity
+        auto t1 = std::thread([](){ _hasAuthAccess = false; });
+        auto t2 = std::thread([](){ _hasOTAAccess  = HasOTAAccess(); });
+        _hasVoiceAccess = HasVoiceAccess();
+
+        t1.join();
+        t2.join();
+        _redrawNetwork = true;
+      })) {
+        LOG_WARNING("FaceInfoScreenManager.SetScreen.NetworkScreenConnectionCheckBlocking", "");
+      }
+#endif      
       break;
+    }
     case ScreenName::FAC:
       DrawFAC();
       break;
@@ -399,6 +448,20 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
       break;
   }
 
+}
+
+bool FaceInfoScreenManager::AsyncExec(std::future<void>& fut, std::function<void()> func)
+{
+  bool valid = fut.valid();
+  std::future_status status = std::future_status::ready;
+  if (valid) {
+    status = fut.wait_for(std::chrono::milliseconds(0));
+  }
+  if (status == std::future_status::ready) {
+    fut = std::async(std::launch::async, func);
+    return true;
+  } 
+  return false;
 }
 
 void FaceInfoScreenManager::DrawFAC()
@@ -889,6 +952,18 @@ void FaceInfoScreenManager::Update(const RobotState& state)
   const auto currScreenName = GetCurrScreenName();
 
   switch(currScreenName) {
+    case ScreenName::Main:
+      if (_redrawMain) {
+        _redrawMain = false;
+        DrawMain();
+      }
+      break;
+    case ScreenName::Network:
+      if (_redrawNetwork) {
+        _redrawNetwork = false;
+        DrawNetwork();
+      }
+      break;
     case ScreenName::SensorInfo:
       DrawSensorInfo(state);
       break;
@@ -958,18 +1033,13 @@ void FaceInfoScreenManager::DrawMain()
     ip = "XXX.XXX.XXX.XXX";
   }
 
-#if !FACTORY_TEST
-  const bool hasInternet = HasInternet();
-#endif
-
-
   ColoredTextLines lines = { {serialNo},
                              {osVer},
                              {ssid},
 #if FACTORY_TEST
                              {"IP: " + ip},
 #else
-                             { {"IP: "}, {ip, (hasInternet ? NamedColors::GREEN : NamedColors::RED)} },
+                             { {"IP: "}, {ip, (_hasOTAAccess ? NamedColors::GREEN : NamedColors::RED)} },
 #endif
 #if ANKI_DEV_CHEATS
 			     {sha},
@@ -978,7 +1048,6 @@ void FaceInfoScreenManager::DrawMain()
 
   DrawTextOnScreen(lines);
 }
-
 
 void FaceInfoScreenManager::DrawNetwork()
 {
@@ -993,19 +1062,12 @@ void FaceInfoScreenManager::DrawNetwork()
   }
 
 #if !FACTORY_TEST
-  const bool hasInternet = HasInternet();
+  const ColoredText reachable("REACHABLE", NamedColors::GREEN);
+  const ColoredText unreachable("UNREACHABLE", NamedColors::RED);
 
-  // TODO (VIC-1816): Check actual hosts for connectivity
-  const bool hasAuthAccess  = false;
-  const bool hasOTAAccess   = false;
-  const bool hasVoiceAccess = HasVoiceAccess();
-
-  const ColoredText online("ONLINE", NamedColors::GREEN);
-  const ColoredText offline("UNAVAILABLE", NamedColors::RED);
-
-  const ColoredText authStatus  = hasAuthAccess  ? online : offline;
-  const ColoredText otaStatus   = hasOTAAccess   ? online : offline;
-  const ColoredText voiceStatus = hasVoiceAccess ? online : offline;
+  const ColoredText authStatus  = _hasAuthAccess  ? reachable : unreachable;
+  const ColoredText otaStatus   = _hasOTAAccess   ? reachable : unreachable;
+  const ColoredText voiceStatus = _hasVoiceAccess ? reachable : unreachable;
 #endif
 
   ColoredTextLines lines = { {ble},
@@ -1014,19 +1076,15 @@ void FaceInfoScreenManager::DrawNetwork()
 #if FACTORY_TEST
                              {"IP: " + ip},
 #else
-                             { {"IP: "}, {ip, (hasInternet ? NamedColors::GREEN : NamedColors::RED)} },
-#endif
+                             { {"IP: "}, {ip, (_hasOTAAccess ? NamedColors::GREEN : NamedColors::RED)} },
                              { },
-
-                             // TODO: VIC-1816
-                            //  { {"AUTH: "}, authStatus },
-                            //  { {"OTA: "}, otaStatus },
-                            //  { {"VOICE: "}, voiceStatus }
+                             { {"AUTH:  "}, authStatus },
+                             { {"OTA:   "}, otaStatus },
+                             { {"VOICE: "}, voiceStatus }
                            };
-
+#endif
   DrawTextOnScreen(lines);
 }
-
 
 void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
 {

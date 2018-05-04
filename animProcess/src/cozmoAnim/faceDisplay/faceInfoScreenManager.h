@@ -26,6 +26,7 @@
 
 #include "util/singleton/dynamicSingleton.h"
 
+#include <future>
 #include <memory>
 #include <unordered_map>
 #include <vector>
@@ -113,6 +114,11 @@ private:
   // Map of all screen names to their associated screen objects
   std::unordered_map<ScreenName, FaceInfoScreen> _screenMap;
   FaceInfoScreen* _currScreen;
+
+  // If the given future is not already associated with a running function
+  // or a function that has completed, it runs the given function asynchronously and returns true.
+  // If the given future is associated with a function that has not yet completed it returns false.
+  bool AsyncExec(std::future<void>& fut, std::function<void()> func);
 
   // Internal draw functions that
   void DrawFAC();
