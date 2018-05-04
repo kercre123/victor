@@ -50,6 +50,21 @@ private:
   void HandleMovementAction_TurnInPlace(Anki::Cozmo::ExternalComms::TurnInPlace sdkMessage);
   void HandleMovementAction_SetHeadAngle(Anki::Cozmo::ExternalComms::SetHeadAngle sdkMessage);
   void HandleMovementAction_SetLiftHeight(Anki::Cozmo::ExternalComms::SetLiftHeight sdkMessage);
+  
+  void HandleMeetVictor(Anki::Cozmo::ExternalComms::MeetVictor meetVictor);
+  void HandleMeetVictor_AppIntent(Anki::Cozmo::ExternalComms::AppIntent sdkMessage);
+  void HandleMeetVictor_CancelFaceEnrollment();
+  void HandleMeetVictor_RequestEnrolledNames();
+  void HandleMeetVictor_UpdateEnrolledFaceByID(Anki::Cozmo::ExternalComms::UpdateEnrolledFaceByID sdkMessage);
+  void HandleMeetVictor_EraseEnrolledFaceByID(Anki::Cozmo::ExternalComms::EraseEnrolledFaceByID sdkMessage);
+  void HandleMeetVictor_EraseAllEnrolledFaces(Anki::Cozmo::ExternalComms::EraseAllEnrolledFaces sdkMessage);
+  void HandleMeetVictor_SetFaceToEnroll(Anki::Cozmo::ExternalComms::SetFaceToEnroll sdkMessage);
+
+  Anki::Cozmo::ExternalComms::ExternalComms SendMeetVictorStarted(const Anki::Cozmo::ExternalInterface::MeetVictorStarted& msg);
+  Anki::Cozmo::ExternalComms::ExternalComms SendMeetVictorFaceScanStarted(const Anki::Cozmo::ExternalInterface::MeetVictorFaceScanStarted& msg);
+  Anki::Cozmo::ExternalComms::ExternalComms SendMeetVictorFaceScanComplete(const Anki::Cozmo::ExternalInterface::MeetVictorFaceScanComplete& msg);
+  Anki::Cozmo::ExternalComms::ExternalComms SendFaceEnrollmentCompleted(const Anki::Cozmo::ExternalInterface::FaceEnrollmentCompleted& msg);
+  Anki::Cozmo::ExternalComms::ExternalComms SendEnrolledNamesResponse(const Anki::Cozmo::ExternalInterface::EnrolledNamesResponse& msg);
 
   Signal::SmartHandle _onEngineMessageHandle;
   SendToWebsocketSignal _sendSignal;

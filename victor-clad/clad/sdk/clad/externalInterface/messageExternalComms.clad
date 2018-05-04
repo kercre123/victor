@@ -303,6 +303,12 @@ message AppIntent {
   string param,
 }
 
+// Status messages that will be superceded by some sort of generic status message (VIC-1423)
+message MeetVictorStarted
+{
+    string name
+}
+
 // Tell the app the robot is starting a facial scan for the Meet Victor flow
 message MeetVictorFaceScanStarted
 {
@@ -377,16 +383,17 @@ message SetFaceToEnroll {
 union MeetVictor {
     Error                       Error                       = 0x00,
     AppIntent                   AppIntent                   = 0x01,
-    MeetVictorFaceScanStarted   MeetVictorFaceScanStarted   = 0x02,
-    MeetVictorFaceScanComplete  MeetVictorFaceScanComplete  = 0x03,
-    FaceEnrollmentCompleted     FaceEnrollmentCompleted     = 0x04,
-    CancelFaceEnrollment        CancelFaceEnrollment        = 0x05,
-    RequestEnrolledNames        RequestEnrolledNames        = 0x06,
-    EnrolledNamesResponse       EnrolledNamesResponse       = 0x07,
-    UpdateEnrolledFaceByID      UpdateEnrolledFaceByID      = 0x08,
-    EraseEnrolledFaceByID       EraseEnrolledFaceByID       = 0x09,
-    EraseAllEnrolledFaces       EraseAllEnrolledFaces       = 0x0A,
-    SetFaceToEnroll             SetFaceToEnroll             = 0x0B,
+    MeetVictorStarted           MeetVictorStarted           = 0x02,
+    MeetVictorFaceScanStarted   MeetVictorFaceScanStarted   = 0x03,
+    MeetVictorFaceScanComplete  MeetVictorFaceScanComplete  = 0x04,
+    FaceEnrollmentCompleted     FaceEnrollmentCompleted     = 0x05,
+    CancelFaceEnrollment        CancelFaceEnrollment        = 0x06,
+    RequestEnrolledNames        RequestEnrolledNames        = 0x07,
+    EnrolledNamesResponse       EnrolledNamesResponse       = 0x08,
+    UpdateEnrolledFaceByID      UpdateEnrolledFaceByID      = 0x09,
+    EraseEnrolledFaceByID       EraseEnrolledFaceByID       = 0x0A,
+    EraseAllEnrolledFaces       EraseAllEnrolledFaces       = 0x0B,
+    SetFaceToEnroll             SetFaceToEnroll             = 0x0C,
 }
 
 // ====================================================

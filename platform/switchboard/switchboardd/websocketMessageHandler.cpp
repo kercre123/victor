@@ -1,5 +1,5 @@
 /**
- * File: websocketMessageProtocol.cpp
+ * File: websocketMessageHandler.cpp
  *
  * Author: paluri
  * Created: 2/13/2018
@@ -74,6 +74,83 @@ void WebsocketMessageHandler::HandleMotorControl(Anki::Cozmo::ExternalComms::Mot
       break;
     case Anki::Cozmo::ExternalComms::MotorControlTag::MoveLift:
       HandleMotorControl_MoveLift( unionInstance.Get_MoveLift() );
+      break;       
+     default:
+      return;
+   }
+ }
+
+void WebsocketMessageHandler::HandleMeetVictor_AppIntent(Anki::Cozmo::ExternalComms::AppIntent sdkMessage) {
+      Anki::Cozmo::ExternalInterface::AppIntent ai;
+      ai.intent = sdkMessage.intent;
+      ai.param = sdkMessage.param;
+      _engineMessaging->SendMessage(G2EMessage::CreateAppIntent(std::move(ai)));
+}
+
+void WebsocketMessageHandler::HandleMeetVictor_CancelFaceEnrollment() {
+      Anki::Cozmo::ExternalInterface::CancelFaceEnrollment cfe;
+      _engineMessaging->SendMessage(G2EMessage::CreateCancelFaceEnrollment(std::move(cfe)));
+}
+
+void WebsocketMessageHandler::HandleMeetVictor_RequestEnrolledNames() {
+      Anki::Cozmo::ExternalInterface::RequestEnrolledNames ref;
+      _engineMessaging->SendMessage(G2EMessage::CreateRequestEnrolledNames(std::move(ref)));
+}
+
+void WebsocketMessageHandler::HandleMeetVictor_UpdateEnrolledFaceByID(Anki::Cozmo::ExternalComms::UpdateEnrolledFaceByID sdkMessage) {
+      Anki::Cozmo::ExternalInterface::UpdateEnrolledFaceByID uef;
+      uef.faceID = sdkMessage.faceID;
+      uef.oldName = sdkMessage.oldName;
+      uef.newName = sdkMessage.newName;
+      _engineMessaging->SendMessage(G2EMessage::CreateUpdateEnrolledFaceByID(std::move(uef)));
+}
+
+void WebsocketMessageHandler::HandleMeetVictor_EraseEnrolledFaceByID(Anki::Cozmo::ExternalComms::EraseEnrolledFaceByID sdkMessage) {
+      Anki::Cozmo::ExternalInterface::EraseEnrolledFaceByID eef;
+      eef.faceID = sdkMessage.faceID;
+      _engineMessaging->SendMessage(G2EMessage::CreateEraseEnrolledFaceByID(std::move(eef)));
+}
+
+void WebsocketMessageHandler::HandleMeetVictor_EraseAllEnrolledFaces(Anki::Cozmo::ExternalComms::EraseAllEnrolledFaces sdkMessage) {
+      Anki::Cozmo::ExternalInterface::EraseAllEnrolledFaces eaef;
+      _engineMessaging->SendMessage(G2EMessage::CreateEraseAllEnrolledFaces(std::move(eaef)));
+}
+
+void WebsocketMessageHandler::HandleMeetVictor_SetFaceToEnroll(Anki::Cozmo::ExternalComms::SetFaceToEnroll sdkMessage) {
+      Anki::Cozmo::ExternalInterface::SetFaceToEnroll sfte;
+      sfte.name = sdkMessage.name;
+      sfte.observedID = sdkMessage.observedID;
+      sfte.saveID = sdkMessage.saveID;
+      sfte.saveToRobot = sdkMessage.saveToRobot;
+      sfte.sayName = sdkMessage.sayName;
+      sfte.useMusic = sdkMessage.useMusic;
+      _engineMessaging->SendMessage(G2EMessage::CreateSetFaceToEnroll(std::move(sfte)));
+}
+
+void WebsocketMessageHandler::HandleMeetVictor(Anki::Cozmo::ExternalComms::MeetVictor unionInstance) {
+  using MeetVictorTag = Anki::Cozmo::ExternalComms::MeetVictorTag;
+
+  switch(unionInstance.GetTag()) {
+    case MeetVictorTag::AppIntent:
+      HandleMeetVictor_AppIntent(unionInstance.Get_AppIntent());
+      break;
+    case MeetVictorTag::CancelFaceEnrollment:
+      HandleMeetVictor_CancelFaceEnrollment();
+      break;
+    case MeetVictorTag::RequestEnrolledNames:
+      HandleMeetVictor_RequestEnrolledNames();
+      break;
+    case MeetVictorTag::UpdateEnrolledFaceByID:
+      HandleMeetVictor_UpdateEnrolledFaceByID(unionInstance.Get_UpdateEnrolledFaceByID());
+      break;
+    case MeetVictorTag::EraseEnrolledFaceByID:
+      HandleMeetVictor_EraseEnrolledFaceByID(unionInstance.Get_EraseEnrolledFaceByID());
+      break;
+    case MeetVictorTag::EraseAllEnrolledFaces:
+      HandleMeetVictor_EraseAllEnrolledFaces(unionInstance.Get_EraseAllEnrolledFaces());
+      break;
+    case MeetVictorTag::SetFaceToEnroll:
+      HandleMeetVictor_SetFaceToEnroll(unionInstance.Get_SetFaceToEnroll());
       break;
     default:
       return;
@@ -147,7 +224,7 @@ void WebsocketMessageHandler::Receive(uint8_t* buffer, size_t size) {
   if(size < 1) {
     return;
   }
-  // TODO: Unpack to ExternalComms then convert that to GameToEngine
+
   ExtCommsMessage extComms;
 
   const size_t unpackSize = extComms.Unpack(buffer, size);
@@ -162,17 +239,97 @@ void WebsocketMessageHandler::Receive(uint8_t* buffer, size_t size) {
     case ExtCommsMessageTag::MovementAction:
        HandleMovementAction(extComms.Get_MovementAction());
        break;
+    case ExtCommsMessageTag::MeetVictor:
+      HandleMeetVictor(extComms.Get_MeetVictor());
+      break;
     default:
       Log::Write("Unhandled external comms message tag: %d", extComms.GetTag());
       return;
   }
 }
 
-bool WebsocketMessageHandler::Send(const E2GMessage& msg) {
-  // TODO: convert from EngineToGame to ExternalComms
+ExtCommsMessage WebsocketMessageHandler::SendMeetVictorStarted(const Anki::Cozmo::ExternalInterface::MeetVictorStarted& msg) {
+      Anki::Cozmo::ExternalComms::MeetVictorStarted mvs;
+      mvs.name = msg.name;
+
+      auto externalComms = Anki::Cozmo::ExternalComms::MeetVictor::CreateMeetVictorStarted(std::move(mvs));
+      return ExtCommsMessage::CreateMeetVictor(std::move(externalComms));
+}
+
+ExtCommsMessage WebsocketMessageHandler::SendMeetVictorFaceScanStarted(const Anki::Cozmo::ExternalInterface::MeetVictorFaceScanStarted& msg) {
+      Anki::Cozmo::ExternalComms::MeetVictorFaceScanStarted mvfss;
+
+      auto externalComms = Anki::Cozmo::ExternalComms::MeetVictor::CreateMeetVictorFaceScanStarted(std::move(mvfss));
+      return ExtCommsMessage::CreateMeetVictor(std::move(externalComms));
+}
+
+ExtCommsMessage WebsocketMessageHandler::SendMeetVictorFaceScanComplete(const Anki::Cozmo::ExternalInterface::MeetVictorFaceScanComplete& msg) {
+      Anki::Cozmo::ExternalComms::MeetVictorFaceScanComplete mvfsc;
+
+      auto externalComms = Anki::Cozmo::ExternalComms::MeetVictor::CreateMeetVictorFaceScanComplete(std::move(mvfsc));
+      return ExtCommsMessage::CreateMeetVictor(std::move(externalComms));
+}
+
+ExtCommsMessage WebsocketMessageHandler::SendFaceEnrollmentCompleted(const Anki::Cozmo::ExternalInterface::FaceEnrollmentCompleted& msg) {
+      Anki::Cozmo::ExternalComms::FaceEnrollmentCompleted fec;
+      fec.result = msg.result;
+      fec.faceID = msg.faceID;
+      fec.name = msg.name;
+
+      auto externalComms = Anki::Cozmo::ExternalComms::MeetVictor::CreateFaceEnrollmentCompleted(std::move(fec));
+      return ExtCommsMessage::CreateMeetVictor(std::move(externalComms));
+}
+
+ExtCommsMessage WebsocketMessageHandler::SendEnrolledNamesResponse(const Anki::Cozmo::ExternalInterface::EnrolledNamesResponse& msg) {
+      Anki::Cozmo::ExternalComms::EnrolledNamesResponse enr;
+      enr.faces = msg.faces;
+      for( const auto& faceEntry : msg.faces ) {
+        Anki::Vision::LoadedKnownFace knownFace;
+
+        knownFace.secondsSinceFirstEnrolled = faceEntry.secondsSinceFirstEnrolled;
+        knownFace.secondsSinceLastUpdated = faceEntry.secondsSinceLastUpdated;
+        knownFace.secondsSinceLastSeen = faceEntry.secondsSinceLastSeen;
+        knownFace.faceID = faceEntry.faceID;
+        knownFace.name = faceEntry.name;
+
+        enr.faces.push_back(knownFace);
+      }
+
+      auto externalComms = Anki::Cozmo::ExternalComms::MeetVictor::CreateEnrolledNamesResponse(std::move(enr));
+      return ExtCommsMessage::CreateMeetVictor(std::move(externalComms));
+}
+
+// Convert from EngineToGame to ExternalComms
+bool WebsocketMessageHandler::Send(const E2GMessage& e2gMessage) {
   ExtCommsMessage result;
-  switch (msg.GetTag()) {
-    // Handle conversion from EngineToGame to ExternalComms here
+
+  auto tag = e2gMessage.GetTag();
+  switch (tag) {
+    case E2GMessageTag::MeetVictorStarted:
+    {
+      result = SendMeetVictorStarted(e2gMessage.Get_MeetVictorStarted());
+      break;
+    }
+    case E2GMessageTag::MeetVictorFaceScanStarted:
+    {
+      result = SendMeetVictorFaceScanStarted(e2gMessage.Get_MeetVictorFaceScanStarted());
+      break;
+    }
+    case E2GMessageTag::MeetVictorFaceScanComplete:
+    {
+      result = SendMeetVictorFaceScanComplete(e2gMessage.Get_MeetVictorFaceScanComplete());
+      break;
+    }
+    case E2GMessageTag::FaceEnrollmentCompleted:
+    {
+      result = SendFaceEnrollmentCompleted(e2gMessage.Get_FaceEnrollmentCompleted());
+      break;
+    }
+    case E2GMessageTag::EnrolledNamesResponse:
+    {
+      result = SendEnrolledNamesResponse(e2gMessage.Get_EnrolledNamesResponse());
+      break;
+    }
     default:
       // Unhandled message
       return false;

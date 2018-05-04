@@ -45,6 +45,69 @@ class Robot:
 
         await self.socket.send(outerWrappedMessage.pack())
 
+    async def meet_victor(self, name):
+        message = _clad_message.AppIntent('intent_meet_victor', name)
+        innerWrappedMessage = _clad_message.MeetVictor(AppIntent=message)
+        outerWrappedMessage = _clad_message.ExternalComms(MeetVictor=innerWrappedMessage)
+
+        await self.socket.send(outerWrappedMessage.pack())
+
+    async def cancel_face_enrollment(self):
+        message = _clad_message.CancelFaceEnrollment()
+        innerWrappedMessage = _clad_message.MeetVictor(CancelFaceEnrollment=message)
+        outerWrappedMessage = _clad_message.ExternalComms(MeetVictor=innerWrappedMessage)
+
+        await self.socket.send(outerWrappedMessage.pack())
+
+    async def request_enrolled_names(self):
+        message = _clad_message.RequestEnrolledNames()
+        innerWrappedMessage = _clad_message.MeetVictor(RequestEnrolledNames=message)
+        outerWrappedMessage = _clad_message.ExternalComms(MeetVictor=innerWrappedMessage)
+
+        await self.socket.send(outerWrappedMessage.pack())
+
+    async def update_enrolled_face_by_id(self, face_id, old_name, new_name):
+        '''Update the name enrolled for a given face.
+
+        Args:
+            face_id (int): The ID of the face to rename.
+            old_name (string): The old name of the face (must be correct, otherwise message is ignored).
+            new_name (string): The new name for the face.
+        '''        
+        message = _clad_message.UpdateEnrolledFaceByID(face_id, old_name, new_name)
+        innerWrappedMessage = _clad_message.MeetVictor(UpdateEnrolledFaceByID=message)
+        outerWrappedMessage = _clad_message.ExternalComms(MeetVictor=innerWrappedMessage)
+
+        await self.socket.send(outerWrappedMessage.pack())
+
+    async def erase_enrolled_face_by_id(self, face_id):
+        '''Erase the enrollment (name) record for the face with this ID.
+
+        Args:
+            face_id (int): The ID of the face to erase.
+        '''        
+        message = _clad_message.EraseEnrolledFaceByID(face_id)
+        innerWrappedMessage = _clad_message.MeetVictor(EraseEnrolledFaceByID=message)
+        outerWrappedMessage = _clad_message.ExternalComms(MeetVictor=innerWrappedMessage)
+
+        await self.socket.send(outerWrappedMessage.pack())
+
+    async def erase_all_enrolled_faces(self):
+        '''Erase the enrollment (name) records for all faces.
+        '''        
+        message = _clad_message.EraseAllEnrolledFaces()
+        innerWrappedMessage = _clad_message.MeetVictor(EraseAllEnrolledFaces=message)
+        outerWrappedMessage = _clad_message.ExternalComms(MeetVictor=innerWrappedMessage)
+
+        await self.socket.send(outerWrappedMessage.pack())
+
+    async def set_face_to_enroll(self, name, observedID=0, saveID=0, saveToRobot=True, sayName=False, useMusic=False):
+        message = _clad_message.SetFaceToEnroll(name, observedID, saveID, saveToRobot, sayName, useMusic)
+        innerWrappedMessage = _clad_message.MeetVictor(SetFaceToEnroll=message)
+        outerWrappedMessage = _clad_message.ExternalComms(MeetVictor=innerWrappedMessage)
+        
+        await self.socket.send(outerWrappedMessage.pack())        
+
     # Mid level movement actions
     async def drive_off_contacts(self):
         message = _clad_message.DriveOffChargerContacts()
@@ -52,8 +115,12 @@ class Robot:
         outerWrappedMessage = _clad_message.ExternalComms(MovementAction=innerWrappedMessage)
 
         await self.socket.send(outerWrappedMessage.pack())
-
+    
     async def drive_straight(self, distance_mm, speed_mmps=100.0, play_animation=True):
+        '''Tells Vector to drive in a straight line
+
+        Vector will drive for the specified distance (forwards or backwards)
+        '''
         message = _clad_message.DriveStraight(
             speed_mmps=speed_mmps,
             dist_mm=distance_mm,
@@ -64,6 +131,8 @@ class Robot:
         await self.socket.send(outerWrappedMessage.pack())
 
     async def turn_in_place(self, angle_rad, speed_radps=math.pi, accel_radps2=0.0):
+        '''Turn the robot around its current position.
+        '''
         message = _clad_message.TurnInPlace(
             angle_rad=angle_rad,
             speed_rad_per_sec=speed_radps,
@@ -96,7 +165,9 @@ class Robot:
         await self.socket.send(outerWrappedMessage.pack())
 
 async def _bootstrap(main_function, uri):
+    print("Attempting websockets.connect...")
     async with websockets.connect(uri) as websocket:
+        print("websockets.connect success")
         robot = Robot(websocket)
         await main_function(robot)
 
