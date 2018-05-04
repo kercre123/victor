@@ -55,8 +55,8 @@ static const char* kAudioParametersMapKey = "audioParameterMap";
 
 CONSOLE_VAR(bool, kSendMoodToViz, "VizDebug", true);
 
-CONSOLE_VAR(float, kAudioSendPeriod_s, "MoodManager", 0.5f);
-CONSOLE_VAR(float, kWebVizPeriod_s, "MoodManager", 1.0f);
+CONSOLE_VAR(float, kMoodManager_AudioSendPeriod_s, "MoodManager", 0.5f);
+CONSOLE_VAR(float, kMoodManager_WebVizPeriod_s, "MoodManager", 1.0f);
 }
 
 
@@ -259,12 +259,12 @@ void MoodManager::UpdateDependent(const RobotCompMap& dependentComps)
   }
 
   const bool hasAudioComp = dependentComps.HasComponent(RobotComponentID::EngineAudioClient);
-  if( hasAudioComp && ( (currentTime - _lastAudioSendTime_s) > kAudioSendPeriod_s ) ) {
+  if( hasAudioComp && ( (currentTime - _lastAudioSendTime_s) > kMoodManager_AudioSendPeriod_s ) ) {
     SendEmotionsToAudio(dependentComps.GetValue<Audio::EngineRobotAudioClient>());
   }
 
   if( ANKI_DEV_CHEATS && dependentComps.HasComponent(RobotComponentID::CozmoContextWrapper) ) {
-    if( (currentTime - _lastWebVizSendTime_s) > kWebVizPeriod_s ) {
+    if( (currentTime - _lastWebVizSendTime_s) > kMoodManager_WebVizPeriod_s ) {
       SendMoodToWebViz(dependentComps.GetValue<ContextWrapper>().context);
     }
   }
@@ -487,7 +487,7 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
     PRINT_CH_INFO("Mood", "TriggerEmotionEvent", "%s", eventName.c_str());
 
     // update webviz before the event
-    if( ANKI_DEV_CHEATS && kWebVizPeriod_s >= 0.0f && nullptr != _robot ) {
+    if( ANKI_DEV_CHEATS && kMoodManager_WebVizPeriod_s >= 0.0f && nullptr != _robot ) {
       SendMoodToWebViz(_robot->GetContext());
     }
 
@@ -516,7 +516,7 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
     Anki::Util::sInfo("robot.mood_values", {{DDATA,eventName.c_str()}}, stream.str().c_str());
 
     // and update webviz after, with the name of the event that happened
-    if( ANKI_DEV_CHEATS && kWebVizPeriod_s >= 0.0f && nullptr != _robot ) {
+    if( ANKI_DEV_CHEATS && kMoodManager_WebVizPeriod_s >= 0.0f && nullptr != _robot ) {
       SendMoodToWebViz(_robot->GetContext(), eventName);
     }
   }
@@ -571,7 +571,7 @@ void MoodManager::SetEmotion(EmotionType emotionType, float value)
 {
   GetEmotion(emotionType).SetValue(value);
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent("SetEmotion") );
-  if( ANKI_DEV_CHEATS && kWebVizPeriod_s >= 0.0f && nullptr != _robot ) {
+  if( ANKI_DEV_CHEATS && kMoodManager_WebVizPeriod_s >= 0.0f && nullptr != _robot ) {
     SendMoodToWebViz(_robot->GetContext(), "SetEmotion");
   }
 }

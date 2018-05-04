@@ -36,6 +36,7 @@
   var emoToIdxMap = {}
   var moodData = [];
   var plotData = [];
+  var dumpedData = [];
   var chart;
   var ignoreOnChange = false;
   var draggingSlider;
@@ -204,13 +205,45 @@
     var leftControls = $('<div id="leftControls"></div>').appendTo(bottomContainer);
     leftControls.append('<input type="checkbox" id="showEvents" checked/>' +
                         '<label for="showEvents">Show events</label>');
+    leftControls.append('<div id="periodControl"' +
+                        '<label for="sendPeriod">Update period (seconds)</label>' +
+                        '<input type="text" id="sendPeriod" min="0" max="10.0" value="1.0" size="4"/>' +
+                        '</div');
     leftControls.append('<div id="simpleMoodDisplay"></div>');
+    leftControls.append('<div>' +
+                        '<input type="checkbox" id="dumpData"/>' +
+                        '<label for="dumpData">Dump raw data</label>' +
+                        '</div>');
+    leftControls.append('<div id="downloadDataDump"></div>');
+
     $('#showEvents').change(function() {
       var isChecked =  $(this).is(':checked');
       $('.verticalLabel').toggle( isChecked );
       chart.getOptions().grid.markings = isChecked ? gridMarkings : undefined;
       chart.setupGrid();
       chart.draw();
+    });
+
+    $('#dumpData').change(function() {
+      var isChecked =  $(this).is(':checked');
+      if( isChecked ) {
+        $('#downloadDataDump').text('dumping... (stop to enable download)');
+        var link = $('#downloadDataDumpLink');
+        if( link ) {
+          link.remove();
+        }
+      }
+      else {
+        $('#downloadDataDump').empty();
+        var url = "data:text/plain;charset=utf-8," + encodeURIComponent(JSON.stringify(dumpedData, null, 2));
+        var link = $('#downloadDataDump').append('<a id="downloadDataDumpLink" download="mood_data.json"'+
+                                                 ' href=' + url + '>download json</a>'); 
+      }
+    });
+
+    $('#sendPeriod').change(function() {
+      var value = this.value;
+      $.post('consolevarset', {key: 'MoodManager_WebVizPeriod_s', value: value}, function(result){});
     });
 
     $('body').on('click', '.legendLabel', function () {
@@ -247,6 +280,10 @@
     if( typeof data.info !== 'undefined' ) {
       CreateControls( elem, data.info );
       return;
+    }
+
+    if( $('#dumpData').is(':checked') ) {
+      dumpedData.push( data );
     }
 
     if( "simpleMood" in data ) {
@@ -425,6 +462,9 @@
         -webkit-transform: translateY(-10px) translateX(-10px) rotate(-45deg); 
       }
       #showEvents {
+        margin: 0px 3px 10px 0;
+      }
+      #sendPeriod {
         margin: 0px 3px 10px 0;
       }
 
