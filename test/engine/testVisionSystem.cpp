@@ -316,7 +316,7 @@ TEST(VisionSystem, MarkerDetectionTests)
     return (strncmp(codeName, filename.c_str(), strlen(codeName)) == 0);
   };
   
-  const std::vector<TestDefinition> testDefinitions = {
+  std::vector<TestDefinition> testDefinitions = {
     TestDefinition{
       .subDir = "NoMarkers",
       .expectedFailureRate = 0.f,
@@ -348,8 +348,25 @@ TEST(VisionSystem, MarkerDetectionTests)
     },
 
   };
-
-
+    
+  const std::vector<std::string> markerDirs = {
+    "MARKER_CHARGER_HOME", "MARKER_LIGHTCUBE_CIRCLE_BACK", "MARKER_LIGHTCUBE_CIRCLE_BOTTOM",
+    "MARKER_LIGHTCUBE_CIRCLE_FRONT", "MARKER_LIGHTCUBE_CIRCLE_LEFT",  "MARKER_LIGHTCUBE_CIRCLE_RIGHT",
+    "MARKER_LIGHTCUBE_CIRCLE_TOP"
+  };
+  
+  for(auto const& markerDir : markerDirs)
+  {
+    testDefinitions.push_back(TestDefinition{
+      .subDir = markerDir,
+      .expectedFailureRate = 0.1f, // Can we get this to 0? (VIC-1165)
+      .didSucceedFcn = [&markerDir](const std::list<Vision::ObservedMarker>& markers, const std::string& filename) -> bool
+      {
+        return (markers.size() == 1) && (markerDir.compare(0, markerDir.length(), markers.front().GetCodeName()) == 0);
+      }
+    });
+  }
+    
   Vision::ImageCache imageCache;
 
   for(auto & testDefinition : testDefinitions)
