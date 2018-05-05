@@ -402,21 +402,36 @@ void TestRobotSensors(void)
   
 }
 
+typedef struct { 
+  int fwd_mid; int fwd_avg; int fwd_travel;
+  int rev_mid; int rev_avg; int rev_travel;
+} robot_tread_dat_t;
+
+void print_tread_dat(robot_tread_dat_t* dat, const char* treadname) {
+  const char *name = treadname ? treadname : "(NULL)";
+  ConsolePrintf("tread %s FWD speed:%+i avg:%+i travel:%+i\n", name, dat->fwd_mid, dat->fwd_avg, dat->fwd_travel);
+  ConsolePrintf("tread %s REV speed:%+i avg:%+i travel:%+i\n", name, dat->rev_mid, dat->rev_avg, dat->rev_travel);
+}
+
 //measure tread speed, distance etc.
-typedef struct { int fwd_mid; int fwd_avg; int fwd_travel; int rev_mid; int rev_avg; int rev_travel; } motor_speed_t;
-static motor_speed_t* tread_test_(uint8_t sensor, int8_t power)
+static robot_tread_dat_t* robot_tread_test_(uint8_t sensor, int8_t power)
 {
-  const int printlvl = RCOM_PRINT_LEVEL_DEFAULT;
-  static motor_speed_t test;
-  memset(&test, 0, sizeof(test));
-  robot_sr_t* psr;
-  
-  int8_t pwrL = sensor == RCOM_SENSOR_MOT_LEFT ? power : 0;
-  int8_t pwrR = sensor == RCOM_SENSOR_MOT_RIGHT ? power : 0;
+  power = ABS(power);
   if( sensor != RCOM_SENSOR_MOT_LEFT && sensor != RCOM_SENSOR_MOT_RIGHT ) {
-    ConsolePrintf("BAD_ARG: tread_test_() sensor=%i\n", sensor);
+    ConsolePrintf("BAD_ARG: robot_tread_test_() sensor=%i\n", sensor);
     throw ERROR_BAD_ARG;
   }
+  
+  const bool left = (sensor == RCOM_SENSOR_MOT_LEFT);
+  //const bool DEBUG_PRINT = !g_isReleaseBuild;
+  const int printlvl = RCOM_PRINT_LEVEL_CMD; //g_isReleaseBuild ? RCOM_PRINT_LEVEL_CMD : RCOM_PRINT_LEVEL_CMD_DAT_RSP;
+  static robot_tread_dat_t test;
+  memset(&test, 0, sizeof(test));
+  robot_sr_t* psr;
+  int8_t pwrL = left  ? power : 0;
+  int8_t pwrR = !left ? power : 0;
+  
+  ConsolePrintf("%s tread test. power %i\n", left?"LEFT":"RIGHT", (left ? pwrL : pwrR));
   
   //Forward
   int start_pos = rcomGet(1, sensor, printlvl)[0].enc.pos; //get the idle start position
@@ -445,84 +460,171 @@ static motor_speed_t* tread_test_(uint8_t sensor, int8_t power)
   return &test;
 }
 
-typedef struct {
-  int start_active;   //starting position, while motor is pushing to absolute limit
-  int start_passive;  //starting position, with motor idle
-} motor_limits_t;
-
-void TestRobotMotors(void)
+static void TestRobotTreads_(int8_t power, int min_speed, int min_travel)
 {
-  motor_speed_t treadL = *tread_test_(RCOM_SENSOR_MOT_LEFT, 127);
-  motor_speed_t treadR = *tread_test_(RCOM_SENSOR_MOT_RIGHT, -127);
+  robot_tread_dat_t treadL = *robot_tread_test_(RCOM_SENSOR_MOT_LEFT, power);
+  robot_tread_dat_t treadR = *robot_tread_test_(RCOM_SENSOR_MOT_RIGHT, -power);
+  print_tread_dat(&treadL, "LEFT ");
+  print_tread_dat(&treadR, "RIGHT");
   
-  //check range of motion
-  int lift_start = rcomMot(50, RCOM_SENSOR_MOT_LIFT, 0, 0, -100,    0 )[49].enc.pos; //start at bottom
-  int lift_top   = rcomMot(35, RCOM_SENSOR_MOT_LIFT, 0, 0,  100,    0 )[34].enc.pos; //up
-  int lift_bot   = rcomMot(35, RCOM_SENSOR_MOT_LIFT, 0, 0, -100,    0 )[34].enc.pos; //down
-  int lift_travel_up = lift_top - lift_start;
-  int lift_travel_down = lift_top - lift_bot;
-  int head_start = rcomMot(65, RCOM_SENSOR_MOT_HEAD, 0, 0,    0, -127 )[64].enc.pos; //start at bottom
-  int head_top   = rcomMot(65, RCOM_SENSOR_MOT_HEAD, 0, 0,    0,  100 )[64].enc.pos; //up
-  int head_bot   = rcomMot(65, RCOM_SENSOR_MOT_HEAD, 0, 0,    0, -100 )[64].enc.pos; //down
-  int head_travel_up    = head_top - head_start;
-  int head_travel_down  = head_top - head_bot;
-  
-  ConsolePutChar('\n');
-  ConsolePrintf("tread LEFT  fwd speed:%i avg:%i travel:%i\n", treadL.fwd_mid, treadL.fwd_avg, treadL.fwd_travel);
-  ConsolePrintf("tread LEFT  rev speed:%i avg:%i travel:%i\n", treadL.rev_mid, treadL.rev_avg, treadL.rev_travel);
-  ConsolePrintf("tread RIGHT fwd speed:%i avg:%i travel:%i\n", treadR.fwd_mid, treadR.fwd_avg, treadR.fwd_travel);
-  ConsolePrintf("tread RIGHT rev speed:%i avg:%i travel:%i\n", treadR.rev_mid, treadR.rev_avg, treadR.rev_travel);
-  ConsolePrintf("lift pos: start,up,down %i,%i,%i travel: up,down %i,%i\n", lift_start, lift_top, lift_bot, lift_travel_up, lift_travel_down );
-  ConsolePrintf("head pos: start,up,down %i,%i,%i travel: up,down %i,%i\n", head_start, head_top, head_bot, head_travel_up, head_travel_down );
-  ConsolePutChar('\n');
-  
-  const int min_speed = 1500; //we normally see 1700-2000
   if( treadL.fwd_avg < min_speed || (-1)*treadL.rev_avg < min_speed ) {
-    ConsolePrintf("insufficient LEFT tread speed %i %i\n", treadL.fwd_avg, treadL.rev_avg);
+    ConsolePrintf("insufficient LEFT tread speed %i,%i < %i\n", treadL.fwd_avg, treadL.rev_avg, min_speed);
     throw ERROR_MOTOR_LEFT; //ERROR_MOTOR_LEFT_SPEED
   }
-  if( (-1)*treadR.fwd_avg < min_speed || treadR.rev_avg < min_speed ) {
-    ConsolePrintf("insufficient RIGHT tread speed %i %i\n", treadR.fwd_avg, treadR.rev_avg);
+  if( treadR.fwd_avg < min_speed || (-1)*treadR.rev_avg < min_speed ) {
+    ConsolePrintf("insufficient RIGHT tread speed %i,%i < %i\n", treadR.fwd_avg, treadR.rev_avg, min_speed);
     throw ERROR_MOTOR_RIGHT; //ERROR_MOTOR_RIGHT_SPEED
   }
-  
-  const int min_travel = 600;
   if( treadL.fwd_travel < min_travel || (-1)*treadL.rev_travel < min_travel ) {
-    ConsolePrintf("insufficient LEFT tread travel %i %i\n", treadL.fwd_travel, treadL.rev_travel);
+    ConsolePrintf("insufficient LEFT tread travel %i,%i < %i\n", treadL.fwd_travel, treadL.rev_travel, min_travel);
     throw ERROR_MOTOR_LEFT;
   }
-  if( (-1)*treadR.fwd_travel < min_travel || treadR.rev_travel < min_travel ) {
-    ConsolePrintf("insufficient RIGHT tread travel %i %i\n", treadR.fwd_travel, treadR.rev_travel);
+  if( treadR.fwd_travel < min_travel || (-1)*treadR.rev_travel < min_travel ) {
+    ConsolePrintf("insufficient RIGHT tread travel %i,%i < %i\n", treadR.fwd_travel, treadR.rev_travel, min_travel);
     throw ERROR_MOTOR_RIGHT;
   }
-  
-  /*/XXX: calibration sample of 1, travel should be about -230
-  lift_travel *= -1; //positive travel comparisons
-  if( (-1)*lift_travel > 20 )
-    throw ERROR_MOTOR_LIFT_BACKWARD;
-  else if( lift_travel < 20 )
-    throw ERROR_MOTOR_LIFT; //can't move?
-  else if( lift_travel < 100 )
-    throw ERROR_MOTOR_LIFT_RANGE; //moves, but not enough...
-  else if( lift_travel > 300 )
-    throw ERROR_MOTOR_LIFT_NOSTOP; //moves too much!
-  //-*/
-  
-  /*/XXX: calibration sample of 1, travel should be about -570
-  head_travel *= -1; //positive travel comparisons
-  if( (-1)*head_travel > 20 )
-    throw ERROR_MOTOR_HEAD_BACKWARD;
-  else if( head_travel < 20 )
-    throw ERROR_MOTOR_HEAD; //can't move?
-  else if( head_travel < 400 )
-    throw ERROR_MOTOR_HEAD_RANGE; //moves, but not enough...
-  else if( head_travel > 700 )
-    throw ERROR_MOTOR_HEAD_NOSTOP; //moves too much!
-  //-*/
 }
 
-void TestRobotMotorsSlow(void)
+void TestRobotTreads(void)
 {
+  //anecdotal norms @ full power: speed 1700-2000, travel 800+
+  TestRobotTreads_(127, 1500, 600);
+  
+  //anecdotal norms @ low power: (???)
+  TestRobotTreads_(75, 800, 400);
+}
+
+typedef struct {
+  int start_active, start_passive; //starting positions: active = motor is pushing to absolute limit, passive = with motor idle
+  int up_mid, up_avg, up_travel;   //median/avg speed + travel distance
+  int dn_mid, dn_avg, dn_travel;   //"
+} robot_range_dat_t;
+
+void print_range_dat(robot_range_dat_t* dat, const char* sensorname) {
+  const char *name = sensorname ? sensorname : "(NULL)";
+  ConsolePrintf("%s POS start:%i passive:%i delta:%i\n", name, dat->start_active, dat->start_passive, dat->start_active-dat->start_passive);
+  ConsolePrintf("%s UP  speed:%+i avg:%+i travel:%+i\n", name, dat->up_mid, dat->up_avg, dat->up_travel);
+  ConsolePrintf("%s DN  speed:%+i avg:%+i travel:%+i\n", name, dat->dn_mid, dat->dn_avg, dat->dn_travel);
+}
+
+//measure speed and range of motion
+static robot_range_dat_t* robot_range_test_(uint8_t sensor, int8_t power)
+{
+  power = ABS(power);
+  if( sensor != RCOM_SENSOR_MOT_LIFT && sensor != RCOM_SENSOR_MOT_HEAD ) {
+    ConsolePrintf("BAD_ARG: robot_range_test_() sensor=%i\n", sensor);
+    throw ERROR_BAD_ARG;
+  }
+  
+  const bool lift = (sensor == RCOM_SENSOR_MOT_LIFT);
+  const bool DEBUG_PRINT = !g_isReleaseBuild; const int printlvl = g_isReleaseBuild ? RCOM_PRINT_LEVEL_CMD : RCOM_PRINT_LEVEL_CMD_DAT_RSP;
+    //#warning "RANGE TEST DEBUG"
+    //const bool DEBUG_PRINT = 0; const int printlvl = RCOM_PRINT_LEVEL_CMD;
+  static robot_range_dat_t test;
+  memset(&test, 0, sizeof(test));
+  robot_sr_t* psr;
+  int8_t liftPwr    = lift  ? MIN(power, 80) : 0;
+  int8_t liftPwrMax = lift  ?            80  : 0;
+  int8_t headPwr    = !lift ? MIN(power,100) : 0;
+  int8_t headPwrMax = !lift ?           100  : 0;
+  
+  ConsolePrintf("%s range test. power %i\n", lift?"LIFT":"HEAD", (lift ? liftPwr : headPwr));
+  
+  //calibrated test params for lift vs head
+  uint8_t NNstart = lift ? 35 : 65;
+  uint8_t NNtest  = lift ? (power >= 75 ? 45 : 85) : (power >= 90 ? 65 : 125);
+  const uint8_t NNsettle = 50;
+  
+  //force to known starting position
+  if( DEBUG_PRINT ) ConsolePrintf("%s move to starting position [%i,%i]\n", lift ? "LIFT" : "HEAD", -liftPwrMax, -headPwrMax);
+  test.start_active = rcomMot(NNstart, sensor, 0, 0, -liftPwrMax, -headPwrMax, printlvl)[NNstart-1].enc.pos;
+  if( DEBUG_PRINT ) ConsolePrintf("%s get passive start position\n", lift ? "LIFT" : "HEAD");
+  test.start_passive = rcomGet(NNsettle, sensor, printlvl)[NNsettle-1].enc.pos; //allow time for mechanics to settle
+  
+  //move up
+  if( DEBUG_PRINT ) ConsolePrintf("%s move up [%i,%i]\n", lift ? "LIFT" : "HEAD", liftPwr, headPwr);
+  psr = rcomMot(NNtest, sensor, 0, 0, liftPwr, headPwr, printlvl );
+  int avg_cnt = 0;
+  for(int x=1; x<NNtest; x++) { if( psr[x].enc.speed > 0 ) { avg_cnt++; test.up_avg += psr[x].enc.speed; } }
+  test.up_avg = avg_cnt > 0 ? test.up_avg/avg_cnt : 0;
+  test.up_mid = psr[avg_cnt>>1].enc.speed; //rough midnpoint of motion
+  test.up_travel = psr[NNtest-1].enc.pos - psr[0].enc.pos;
+  
+  //force to top (sticky or power too low)
+  //if( DEBUG_PRINT ) ConsolePrintf("%s force up [%i,%i]\n", lift ? "LIFT" : "HEAD", liftPwrMax, headPwrMax);
+  //const uint8_t NNadjust = (power >= 100 ? 15 : 30);
+  //rcomMot(NNadjust, sensor, 0, 0, liftPwrMax, headPwrMax, printlvl );
+  
+  //move down
+  if( DEBUG_PRINT ) ConsolePrintf("%s move down [%i,%i]\n", lift ? "LIFT" : "HEAD", -liftPwr, -headPwr);
+  psr = rcomMot(NNtest, sensor, 0, 0, -liftPwr, -headPwr, printlvl );
+  avg_cnt = 0;
+  for(int x=1; x<NNtest; x++) { 
+    #warning "temporary bugfix for robot incorrectly reporting ABS(speed) for head/lift"
+    psr[x].enc.speed *= (-1); //temporarily "fix" the bug
+    if( psr[x].enc.speed < 0 ) { avg_cnt++; test.dn_avg += psr[x].enc.speed; }
+  }
+  test.dn_avg = avg_cnt > 0 ? test.dn_avg/avg_cnt : 0;
+  test.dn_mid = psr[avg_cnt>>1].enc.speed; //rough midnpoint of motion
+  test.dn_travel = psr[NNtest-1].enc.pos - psr[0].enc.pos;
+  
+  //engine PID settle
+  //if( DEBUG_PRINT ) ConsolePrintf("%s settling time\n", lift ? "LIFT" : "HEAD");
+  //rcomGet(NNsettle, sensor, printlvl);
+  
+  return &test;
+}
+
+void TestRobotRange(int8_t liftPwr, int8_t headPwr, int lift_speed_min, int head_speed_min)
+{
+  robot_range_dat_t lift = *robot_range_test_(RCOM_SENSOR_MOT_LIFT, liftPwr);
+  robot_range_dat_t head = *robot_range_test_(RCOM_SENSOR_MOT_HEAD, headPwr);
+  print_range_dat(&lift, "LIFT");
+  print_range_dat(&head, "HEAD");
+
+  const int lift_travel_min = 170; //lift travel should be ~200 in each direction
+  const int lift_travel_max = 300; //something's wrong. should have hit the stop
+  const int lift_start_delta_max = 50;
+  
+  lift.dn_travel *= -1; lift.dn_avg *= -1; //positive comparisons
+  if( lift.up_travel < -20 || lift.dn_travel < -20 )
+    throw ERROR_MOTOR_LIFT_BACKWARD;
+  else if( lift.up_travel < 20 || lift.dn_travel < 20 )
+    throw ERROR_MOTOR_LIFT; //can't move?
+  else if( lift.up_travel < lift_travel_min || lift.dn_travel < lift_travel_min )
+    throw ERROR_MOTOR_LIFT_RANGE; //moves, but not enough...
+  else if( lift.up_travel > lift_travel_max || lift.dn_travel > lift_travel_max )
+    throw ERROR_MOTOR_LIFT_NOSTOP; //moves too much!
+  else if( lift_speed_min > 0 && (lift.up_avg < lift_speed_min || lift.dn_avg < lift_speed_min) )
+    throw ERROR_MOTOR_LIFT_SPEED;
+  else if( ABS(lift.start_active-lift.start_passive) > lift_start_delta_max )
+    throw ERROR_MOTOR_LIFT_RANGE; //range met only when force applied
+  
+  const int head_travel_min = 480; //head travel should be ~540 in each direction
+  const int head_travel_max = 650; //something's wrong. should have hit the stop
+  const int head_start_delta_max = 50;
+  
+  head.dn_travel *= -1; head.dn_avg *= -1; //positive comparisons
+  if( head.up_travel < -20 || head.dn_travel < -20 )
+    throw ERROR_MOTOR_HEAD_BACKWARD;
+  else if( head.up_travel < 20 || head.dn_travel < 20 )
+    throw ERROR_MOTOR_HEAD; //can't move?
+  else if( head.up_travel < head_travel_min || head.dn_travel < head_travel_min )
+    throw ERROR_MOTOR_HEAD_RANGE; //moves, but not enough...
+  else if( head.up_travel > head_travel_max || head.dn_travel > head_travel_max )
+    throw ERROR_MOTOR_HEAD_NOSTOP; //moves too much!
+  else if( head_speed_min > 0 && (head.up_avg < head_speed_min || head.dn_avg < head_speed_min) )
+    throw ERROR_MOTOR_HEAD_SPEED;
+  else if( ABS(head.start_active-head.start_passive) > head_start_delta_max )
+    throw ERROR_MOTOR_HEAD_RANGE; //range met only when force applied
+}
+
+void TestRobotRange(void)
+{
+  if( g_fixmode <= FIXMODE_ROBOT3 )
+    TestRobotRange(75, 127, 1300, 2100); //High Power
+  
+  TestRobotRange(45, 50, 500, 750); //Low Power
 }
 
 void EmrChecks(void)
@@ -893,9 +995,9 @@ TestFunction* TestRobot0GetTests(void) {
     //DBG_test_emr,
     TestRobotSensors,
     //ChargeTest,
-    RobotLogCollect,
-    RobotPowerDown,
-    RobotFlexFlowPackoutReport,
+    //RobotLogCollect,
+    //RobotPowerDown,
+    //RobotFlexFlowPackoutReport,
     NULL,
   };
   return m_tests;
@@ -906,8 +1008,9 @@ TestFunction* TestRobot1GetTests(void) {
     TestRobotDetectSpine,
     TestRobotInfo,
     TestRobotSensors,
-    //TestRobotMotors,
-    //ChargeTest,
+    //TestRobotTreads, //XXX
+    //TestRobotRange, //XXX
+    //ChargeTest, //XXX
     NULL,
   };
   return m_tests;
@@ -917,10 +1020,11 @@ TestFunction* TestRobot2GetTests(void) {
   static TestFunction m_tests[] = {
     TestRobotInfo,
     //DBG_test_emr,
-    TestRobotSensors,
-    //TestRobotMotors,
-    ChargeTest,
-    TestRobotSensors,
+    //TestRobotSensors,
+    TestRobotTreads,
+    TestRobotRange,
+    //ChargeTest,
+    TurkeysDone,
     NULL,
   };
   return m_tests;
@@ -931,7 +1035,8 @@ TestFunction* TestRobot3GetTests(void) {
     TestRobotInfo,
     EmrChecks, //check previous test results and reset status flags
     TestRobotSensors,
-    TestRobotMotors,
+    TestRobotTreads,
+    TestRobotRange,
     ChargeTest,
     EmrUpdate, //set test complete flags
     TurkeysDone,
@@ -945,12 +1050,14 @@ TestFunction* TestRobotPackoutGetTests(void) {
     TestRobotInfo,
     EmrChecks, //check previous test results and reset status flags
     TestRobotSensors,
-    TestRobotMotors,
+    TestRobotTreads,
+    TestRobotRange,
     ChargeTest,
     RobotLogCollect,
     EmrUpdate, //set test complete flags
-    RobotPowerDown,
     RobotFlexFlowPackoutReport,
+    TurkeysDone,
+    RobotPowerDown,
     NULL,
   };
   return m_tests;
