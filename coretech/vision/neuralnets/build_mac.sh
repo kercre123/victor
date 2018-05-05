@@ -20,7 +20,6 @@ then
   exit 1
 fi
 
-
 CC=g++
 
 ${CC} --std=c++11 \
@@ -39,7 +38,7 @@ ${CC} --std=c++11 \
   standaloneTensorFlowInference.cpp \
   objectDetector_tensorflow.cpp \
   ${VICTOR_REPO_PATH}/tools/message-buffers/support/cpp/source/jsoncpp.cpp \
-  -Wl,-force_load ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/lib/libtensorflow-core.a \
+  -Wl,-force_load ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_OSX/lib/libtensorflow-core.a \
   -L${TENSORFLOW_PATH}/tensorflow/contrib/makefile/downloads/nsync/builds/default.macos.c++11 -lnsync \
   -L${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/mac/lib/Release   -lopencv_imgproc -lopencv_imgcodecs -lopencv_core \
   -L${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/mac/3rdparty/lib/Release -lippicv -lippiw -llibpng -llibjpeg -llibtiff -lzlib -littnotify -llibjasper -lIlmImf \

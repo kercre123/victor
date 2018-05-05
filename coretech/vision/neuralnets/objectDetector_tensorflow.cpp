@@ -355,6 +355,46 @@ void ObjectDetector::GetClassification(const tensorflow::Tensor& output_tensor, 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ObjectDetector::GetLocalizedBinaryClassification(const tensorflow::Tensor& output_tensor, TimeStamp_t timestamp, 
+                                                      std::list<DetectedObject>& objects)
+{
+  // Create a detection box for each grid cell that is above threshold
+
+  const float* output_data = output_tensor.tensor<float, 2>().data();
+
+  // TODO: Get size from output_tensor somehow
+  const int numBoxCols = 6;
+  const int numBoxRows = 6;
+
+  // Box size in normalized image coordiantes
+  const float boxWidth  = 1.f / (float)numBoxCols;
+  const float boxHeight = 1.f / (float)numBoxRows;
+
+  for(int iBox=0; iBox < numBoxRows; ++iBox)
+  {
+    for(int jBox=0; jBox < numBoxCols; ++jBox)
+    {
+      const int outputIndex= iBox*numBoxCols + jBox;
+      const float score = output_data[outputIndex];
+      if(score > _params.min_score)
+      {
+        DetectedObject box{
+          .timestamp = timestamp, 
+          .score = score,
+          .name = "",
+          .xmin = boxWidth  * (float)jBox,
+          .ymin = boxHeight * (float)iBox, 
+          .xmax = boxWidth  * (float)(jBox+1),
+          .ymax = boxHeight * (float)(iBox+1),
+        };
+
+        objects.push_back(std::move(box));
+      }
+    }
+  }
+} 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ObjectDetector::GetDetectedObjects(const std::vector<tensorflow::Tensor>& output_tensors, TimeStamp_t timestamp,
                                         std::list<DetectedObject>& objects)
 {
@@ -406,7 +446,7 @@ void ObjectDetector::GetDetectedObjects(const std::vector<tensorflow::Tensor>& o
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectDetector::Detect(cv::Mat& img, std::list<DetectedObject>& objects)
+Result ObjectDetector::Detect(cv::Mat& img, const TimeStamp_t t, std::list<DetectedObject>& objects)
 {
   tensorflow::Tensor image_tensor;
 
@@ -487,12 +527,12 @@ Result ObjectDetector::Detect(cv::Mat& img, std::list<DetectedObject>& objects)
     return RESULT_FAIL;
   }
 
-  // TODO: Get timestamp somehow
-  const TimeStamp_t t = 0;
-
   if(output_tensors.size() == 1)
   {
+    // TODO: Switch between these two based on config somehow
+    //GetLocalizedBinaryClassification(output_tensors[0], t, objects);
     GetClassification(output_tensors[0], t, objects);
+    
   }
   else
   {

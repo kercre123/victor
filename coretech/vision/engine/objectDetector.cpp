@@ -189,6 +189,12 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
           const std::string tempFilename = Util::FileUtils::FullFilePath({_cachePath, "temp.png"});
           _imgBeingProcessed.Save(tempFilename);
           
+          const std::string timestampFilename = Util::FileUtils::FullFilePath({_cachePath, "timestamp.txt"});
+          const std::string timestampString = std::to_string(_imgBeingProcessed.GetTimestamp());
+          std::ofstream timestampFile(timestampFilename);
+          timestampFile << timestampString;
+          timestampFile.close();
+
           // Rename to what TF process expects once the data is fully written (poor man's "lock")
           const std::string imageFilename = Util::FileUtils::FullFilePath({_cachePath, "objectDetectionImage.png"});
           if(0 != rename(tempFilename.c_str(), imageFilename.c_str()))

@@ -1398,7 +1398,7 @@ namespace Cozmo {
 
       const Rectangle<s32> rect(object.img_rect.x_topLeft, object.img_rect.y_topLeft,
                                 object.img_rect.width, object.img_rect.height);
-      ColorRGBA color = ColorRGBA::CreateFromColorIndex(colorIndex++);
+      const ColorRGBA color = (object.name.empty() ? NamedColors::RED : ColorRGBA::CreateFromColorIndex(colorIndex++));
       _vizManager->DrawCameraRect(rect, color);
       const std::string caption(object.name + "[" + std::to_string((s32)std::round(100.f*object.score))
                                 + "] t:" + std::to_string(object.timestamp));
@@ -1406,11 +1406,18 @@ namespace Cozmo {
       
       if(kDisplayDetectionsInMirrorMode)
       {
-        const std::string str(object.name + ":" + std::to_string((s32)std::round(object.score*100.f)));
+        std::string str(object.name);
+        if(!str.empty())
+        {
+          str += ":" + std::to_string((s32)std::round(object.score*100.f));
+        }
         const auto& rect = object.img_rect;
         std::function<void (Vision::ImageRGB&)> modFcn = [str,offset,rect,color](Vision::ImageRGB& img)
         {
-          img.DrawText({1.f, offset}, str, NamedColors::YELLOW, 0.6f, true);
+          if(!str.empty())
+          {
+            img.DrawText({1.f, offset}, str, NamedColors::YELLOW, 0.6f, true);
+          }
           img.DrawRect(DisplayMirroredRectHelper(rect.x_topLeft, rect.y_topLeft, rect.width, rect.height), color);
         };
 

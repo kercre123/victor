@@ -94,6 +94,8 @@ int main(int argc, char **argv)
                                      argv[4] :
                                      FullFilePath(cachePath, "objectDetectionImage.png")); 
 
+  const std::string timestampFilename = FullFilePath(cachePath, "timestamp.txt");
+
   std::cout << (imageFileProvided ? "Loading given image: " : "Polling for images at: ") << 
     imageFilename << std::endl;
 
@@ -137,12 +139,20 @@ int main(int argc, char **argv)
         img = cv::imread(imageFilename);
         cv::cvtColor(img, img, CV_BGR2RGB); // OpenCV loads BGR, TF expects RGB
       }
+      TimeStamp_t timestamp=0;
+      if(FileExists(timestampFilename))
+      {
+        std::ifstream file(timestampFilename);
+        std::string line;
+        std::getline(file, line);
+        timestamp = std::stoi(line);
+      }
       Toc(startTime, "ImageRead");
 
       // Detect what's in it
       startTime = Tic();
       std::list<ObjectDetector::DetectedObject> objects;
-      Result result = detector.Detect(img, objects);
+      Result result = detector.Detect(img, timestamp, objects);
       Toc(startTime, "Detect");
 
       Json::Value detectionResults;

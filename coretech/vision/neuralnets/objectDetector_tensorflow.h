@@ -39,7 +39,7 @@ public:
     float           xmin, ymin, xmax, ymax;
   };
 
-  Result Detect(cv::Mat& img, std::list<DetectedObject>& objects);
+  Result Detect(cv::Mat& img, const TimeStamp_t t, std::list<DetectedObject>& objects);
 
   bool IsVerbose() const { return _params.verbose; }
 
@@ -49,6 +49,9 @@ private:
 
   void GetClassification(const tensorflow::Tensor& output_tensor, TimeStamp_t timestamp, 
                          std::list<DetectedObject>& objects);
+
+  void GetLocalizedBinaryClassification(const tensorflow::Tensor& output_tensor, TimeStamp_t timestamp, 
+                                        std::list<DetectedObject>& objects);
 
   void GetDetectedObjects(const std::vector<tensorflow::Tensor>& output_tensors, TimeStamp_t timestamp,
                           std::list<DetectedObject>& objects);
