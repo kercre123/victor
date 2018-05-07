@@ -614,9 +614,6 @@ void BehaviorTrackLaser::TransitionToTrackLaser()
 
   // set params on track action
   {
-    auto const& laserMsgTag = ExternalInterface::MessageEngineToGameTag::RobotObservedLaserPoint;
-    TrackGroundPointAction* trackAction = new TrackGroundPointAction(laserMsgTag);
-
     trackAction->SetUpdateTimeout(_iConfig.trackingTimeout_sec);
     trackAction->SetMoveEyes(true);
 
