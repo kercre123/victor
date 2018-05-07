@@ -56,6 +56,7 @@ func main() {
 	// flag.BoolVar(&test, "test", false, "enable test channel")
 
 	ms := flag.Bool("ms", false, "force microsoft handling on the server end")
+	lex := flag.Bool("lex", false, "force amazon handling on the server end")
 	flag.Parse()
 
 	micSock := getSocketWithRetry(ipc.GetSocketPath("mic_sock"), "cp_mic")
@@ -92,6 +93,8 @@ func main() {
 	//options = append(options, WithCompression(true))
 	if *ms {
 		options = append(options, cloudproc.WithHandler(cloudproc.HandlerMicrosoft))
+	} else if *lex {
+		options = append(options, cloudproc.WithHandler(cloudproc.HandlerAmazon))
 	}
 	process.Run(options...)
 }
