@@ -39,11 +39,19 @@ static const float kCliffBackupDist_mm = 60.0f;
 static const float kCliffBackupSpeed_mmps = 100.0f;
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorReactToCliff::DynamicVariables::DynamicVariables()
+{
+  cliffDetectThresholdAtStart = 0;
+  quitReaction = false;
+  state = State::PlayingStopReaction;
+  gotCliff = false;
+  detectedFlags = 0;
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToCliff::BehaviorReactToCliff(const Json::Value& config)
 : ICozmoBehavior(config)
-, _shouldStopDueToCharger(false)
 {
   SubscribeToTags({{
     EngineToGameTag::CliffEvent,
@@ -51,39 +59,42 @@ BehaviorReactToCliff::BehaviorReactToCliff(const Json::Value& config)
     EngineToGameTag::ChargerEvent
   }});
 
-  _cliffDetectedCondition = BEIConditionFactory::CreateBEICondition(BEIConditionType::CliffDetected, GetDebugLabel());
+  _iConfig.cliffDetectedCondition = BEIConditionFactory::CreateBEICondition(BEIConditionType::CliffDetected, GetDebugLabel());
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::InitBehavior()
 {
-  _cliffDetectedCondition->Init(GetBEI());
-  _cliffDetectedCondition->SetActive(GetBEI(), true);
+  _iConfig.cliffDetectedCondition->Init(GetBEI());
+  _iConfig.cliffDetectedCondition->SetActive(GetBEI(), true);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToCliff::WantsToBeActivatedBehavior() const
 {
-  return _cliffDetectedCondition->AreConditionsMet(GetBEI());
+  return _iConfig.cliffDetectedCondition->AreConditionsMet(GetBEI());
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::OnBehaviorActivated()
 {
+  // reset dvars
+  _dVars = DynamicVariables();
+  
   if(GetBEI().HasMoodManager()){
     auto& moodManager = GetBEI().GetMoodManager();
     moodManager.TriggerEmotionEvent("CliffReact", MoodManager::GetCurrentTimeInSeconds());
   }
 
-  switch( _state ) {
+  switch( _dVars.state ) {
     case State::PlayingStopReaction:
     {
       auto& robotInfo = GetBEI().GetRobotInfo();
 
       // Record cliff detection threshold before at start of stop
-      _cliffDetectThresholdAtStart = robotInfo.GetCliffSensorComponent().GetCliffDetectThreshold(0);
+      _dVars.cliffDetectThresholdAtStart = robotInfo.GetCliffSensorComponent().GetCliffDetectThreshold(0);
 
       // Wait function for determining if the cliff is suspicious
       auto waitForStopLambda = [this, &robotInfo](Robot& robot) {
@@ -91,11 +102,11 @@ void BehaviorReactToCliff::OnBehaviorActivated()
           return false;
         }
 
-        if (_cliffDetectThresholdAtStart != robotInfo.GetCliffSensorComponent().GetCliffDetectThreshold(0)) {
+        if (_dVars.cliffDetectThresholdAtStart != robotInfo.GetCliffSensorComponent().GetCliffDetectThreshold(0)) {
           // There was a change in the cliff detection threshold so assuming
           // it was a false cliff and aborting reaction
           PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.QuittingDueToSuspiciousCliff", "");
-          _quitReaction = true;
+          _dVars.quitReaction = true;
         }
         return true;
       };
@@ -108,7 +119,7 @@ void BehaviorReactToCliff::OnBehaviorActivated()
       break;
     }
     case State::PlayingCliffReaction:
-      _gotCliff = true;
+      _dVars.gotCliff = true;
       TransitionToPlayingCliffReaction();
       break;
 
@@ -127,7 +138,7 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction()
 {
   DEBUG_SET_STATE(PlayingStopReaction);
 
-  if(_quitReaction) {
+  if(_dVars.quitReaction) {
     SendFinishedReactToCliffMessage();
     return;
   }
@@ -140,7 +151,7 @@ void BehaviorReactToCliff::TransitionToPlayingStopReaction()
 
   // Wait for the cliff event before jumping to cliff reaction
   auto waitForCliffLambda = [this](Robot& robot) {
-    return _gotCliff;
+    return _dVars.gotCliff;
   };
   action->AddAction(new WaitForLambdaAction(waitForCliffLambda, maxWaitTime_s), true);
   DelegateIfInControl(action, &BehaviorReactToCliff::TransitionToPlayingCliffReaction);
@@ -155,12 +166,12 @@ void BehaviorReactToCliff::TransitionToPlayingCliffReaction()
   if(ShouldStreamline()){
     TransitionToBackingUp();
   }
-  else if( _gotCliff || ALWAYS_PLAY_REACT_TO_CLIFF) {
+  else if( _dVars.gotCliff || ALWAYS_PLAY_REACT_TO_CLIFF) {
     Anki::Util::sInfo("robot.cliff_detected", {}, "");
 
 
     AnimationTrigger reactionAnim = AnimationTrigger::ReactToCliff;
-    auto action = GetCliffPreReactAction(_detectedFlags);
+    auto action = GetCliffPreReactAction(_dVars.detectedFlags);
 
     action->AddAction(new TriggerLiftSafeAnimationAction(reactionAnim));
 
@@ -199,9 +210,7 @@ void BehaviorReactToCliff::SendFinishedReactToCliffMessage() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToCliff::OnBehaviorDeactivated()
 {
-  _state = State::PlayingStopReaction;
-  _gotCliff = false;
-  _detectedFlags = 0;
+  
 }
 
 
@@ -212,8 +221,8 @@ void BehaviorReactToCliff::BehaviorUpdate()
     return;
   }
 
-  if(_shouldStopDueToCharger){
-    _shouldStopDueToCharger = false;
+  if(_dVars.shouldStopDueToCharger){
+    _dVars.shouldStopDueToCharger = false;
     CancelSelf();
   }
 }
@@ -225,20 +234,20 @@ void BehaviorReactToCliff::HandleWhileInScopeButNotActivated(const EngineToGameE
   switch( event.GetData().GetTag() ) {
     case EngineToGameTag::CliffEvent: {
       const auto detectedFlags = event.GetData().Get_CliffEvent().detectedFlags;
-      if((detectedFlags != 0) && !_quitReaction) {
+      if((detectedFlags != 0) && !_dVars.quitReaction) {
         PRINT_NAMED_WARNING("BehaviorReactToCliff.CliffWithoutStop",
                             "Got a cliff event but stop isn't running, skipping straight to cliff react (bad latency?)");
         // this should only happen if latency gets bad because otherwise we should stay in the stop reaction
-        _detectedFlags = detectedFlags;
-        _gotCliff = true;
-        _state = State::PlayingCliffReaction;
+        _dVars.detectedFlags = detectedFlags;
+        _dVars.gotCliff = true;
+        _dVars.state = State::PlayingCliffReaction;
       }
       break;
     }
 
     case EngineToGameTag::RobotStopped: {
-      _quitReaction = false;
-      _state = State::PlayingStopReaction;
+      _dVars.quitReaction = false;
+      _dVars.state = State::PlayingStopReaction;
       break;
     }
     case EngineToGameTag::ChargerEvent:
@@ -262,10 +271,10 @@ void BehaviorReactToCliff::HandleWhileActivated(const EngineToGameEvent& event)
   switch( event.GetData().GetTag() ) {
     case EngineToGameTag::CliffEvent: {
       const auto detectedFlags = event.GetData().Get_CliffEvent().detectedFlags;
-      if( !_gotCliff && (detectedFlags != 0) ) {
+      if( !_dVars.gotCliff && (detectedFlags != 0) ) {
         PRINT_NAMED_DEBUG("BehaviorReactToCliff.GotCliff", "Got cliff event while running");
-        _gotCliff = true;
-        _detectedFlags = detectedFlags;
+        _dVars.gotCliff = true;
+        _dVars.detectedFlags = detectedFlags;
       }
       break;
     }
@@ -274,7 +283,7 @@ void BehaviorReactToCliff::HandleWhileActivated(const EngineToGameEvent& event)
       // This isn't a real cliff, cozmo should stop reacting and let the drive off
       // charger action be selected
       if(event.GetData().Get_ChargerEvent().onCharger){
-        _shouldStopDueToCharger = true;
+        _dVars.shouldStopDueToCharger = true;
       }
       break;
     }
