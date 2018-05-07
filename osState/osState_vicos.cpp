@@ -1,5 +1,5 @@
 /**
- * File: OSState_android.cpp
+ * File: OSState_vicos.cpp
  *
  * Authors: Kevin Yoon
  * Created: 2017-12-11
@@ -19,12 +19,13 @@
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
+#include "cutils/properties.h"
+
 // For getting our ip address
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include <net/if.h>
 #include <netinet/in.h>
 
 #include <linux/wireless.h>
@@ -34,12 +35,12 @@
 #include <stdlib.h>
 
 #ifdef SIMULATOR
-#error SIMULATOR should NOT be defined by any target using osState_android.cpp
+#error SIMULATOR should NOT be defined by any target using osState_vicos.cpp
 #endif
 
 namespace Anki {
 namespace Cozmo {
-  
+
 namespace {
 
   std::ifstream _cpuFile;
@@ -50,7 +51,7 @@ namespace {
   const char* kTemperatureFile = "/sys/devices/virtual/thermal/thermal_zone3/temp";
   const char* kMACAddressFile = "/sys/class/net/wlan0/address";
   const char* kRecoveryModeFile = "/data/unbrick";
-  
+
   // System vars
   uint32_t _cpuFreq_kHz; // CPU freq
   uint32_t _cpuTemp_C;   // Temperature in Celsius
@@ -61,46 +62,18 @@ namespace {
 
 } // namespace
 
-// Searches the .prop property files for the given key and returns the value
-// __system_get_property() from sys/system_properties.h does
-// not work for some reason so we have to read the files manually
 std::string GetProperty(const std::string& key)
 {
-  const std::string kProp = key + "=";
-
-  // First check the regular build.prop
-  std::ifstream infile("/build.prop");
-
-  std::string line;
-  while(std::getline(infile, line))
+  char propBuf[PROPERTY_VALUE_MAX] = {0};
+  int rc = property_get(key.c_str(), propBuf, "");
+  if(rc <= 0)
   {
-    size_t index = line.find(kProp);
-    if(index != std::string::npos)
-    {
-      infile.close();
-      return line.substr(kProp.length());
-    }
+    PRINT_NAMED_WARNING("OSState.GetProperty.FailedToFindProperty",
+                        "Property %s not found",
+                        key.c_str());
   }
 
-  infile.close();
-
-  // If the key wasn't found in /build.prop, then
-  // check the persistent build.prop
-  infile.open("/data/persist/build.prop");
-
-  while(std::getline(infile, line))
-  {
-    size_t index = line.find(kProp);
-    if(index != std::string::npos)
-    {
-      infile.close();
-      return line.substr(kProp.length());
-    }
-  }
-
-  infile.close();
-  
-  return "";
+  return std::string(propBuf);
 }
 
 OSState::OSState()
@@ -115,7 +88,7 @@ OSState::OSState()
   else {
     PRINT_NAMED_WARNING("OSState.Constructor.FailedToOpenNominalCPUFreqFile", "%s", kNominalCPUFreqFile);
   }
-  
+
   _cpuFreq_kHz = kNominalCPUFreq_kHz;
   _cpuTemp_C = 0;
 
@@ -143,7 +116,7 @@ void OSState::Update()
   if (_updatePeriod_ms != 0) {
     const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
     if (now_ms - _lastUpdateTime_ms > _updatePeriod_ms) {
-      
+
       // Update cpu freq
       _cpuFreq_kHz = UpdateCPUFreq_kHz();
 
@@ -168,7 +141,7 @@ uint32_t OSState::UpdateCPUFreq_kHz() const
   _cpuFile >> cpuFreq_kHz;
   return cpuFreq_kHz;
 }
-      
+
 uint32_t OSState::UpdateTemperature_C() const
 {
   // Update temperature reading
@@ -216,7 +189,7 @@ const std::string& OSState::GetSerialNumberAsString()
 
     infile.close();
   }
-  
+
   return _serialNumString;
 }
 
@@ -226,20 +199,20 @@ const std::string& OSState::GetOSBuildVersion()
   {
     _osBuildVersion = GetProperty("ro.build.display.id");
   }
-  
+
   return _osBuildVersion;
 }
 
 const std::string& OSState::GetRobotName() const
 {
-  static std::string name = GetProperty("persist.anki.robot.name");
+  static std::string name = GetProperty("anki.robot.name");
   if(name.empty())
   {
-    name = GetProperty("persist.anki.robot.name");
+    name = GetProperty("anki.robot.name");
   }
   return  name;
 }
-  
+
 void OSState::UpdateWifiInfo()
 {
   // Open a socket to figure out the ip adress of the wlan0 (wifi) interface
@@ -272,7 +245,7 @@ void OSState::UpdateWifiInfo()
   strcpy(req.ifr_name, if_name);
   req.u.data.pointer = (iw_statistics*)malloc(sizeof(iw_statistics));
   req.u.data.length = sizeof(iw_statistics);
-  
+
   const int kSSIDBufferSize = 32;
   char buffer[kSSIDBufferSize];
   memset(buffer, 0, sizeof(buffer));
@@ -328,4 +301,3 @@ bool OSState::IsInRecoveryMode()
 
 } // namespace Cozmo
 } // namespace Anki
-

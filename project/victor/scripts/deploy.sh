@@ -83,7 +83,7 @@ fi
 echo "ANKI_ROBOT_HOST: ${ANKI_ROBOT_HOST}"
 echo "   INSTALL_ROOT: ${INSTALL_ROOT}"
 
-: ${PLATFORM_NAME:="android"}
+: ${PLATFORM_NAME:="vicos"}
 : ${LIB_INSTALL_PATH:="${INSTALL_ROOT}/lib"}
 : ${BIN_INSTALL_PATH:="${INSTALL_ROOT}/bin"}
 : ${RSYNC_BIN_DIR="${TOPLEVEL}/tools/rsync"}

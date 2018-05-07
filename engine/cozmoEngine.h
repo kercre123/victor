@@ -91,7 +91,7 @@ public:
   
   Robot* GetRobot();
 
-  void ExecuteBackgroundTransfers();
+  //void ExecuteBackgroundTransfers();
 
   Util::AnkiLab::AssignmentStatus ActivateExperiment(const Util::AnkiLab::ActivateExperimentRequest& request,
                                                      std::string& outVariationKey);

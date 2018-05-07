@@ -28,7 +28,7 @@ asset_project(
     name = 'cozmo_resources_sound',
     srcs = [],
     platform_srcs = [
-        ('android', subdir_glob([
+        ('vicos', subdir_glob([
             ('sound/victor_linux', '*')
             ],
             prefix = 'sound')
@@ -85,7 +85,7 @@ asset_project(
             ],
             prefix = 'tts')
         ),
-        ('android', subdir_glob([
+        ('vicos', subdir_glob([
             ('externals/anki-thirdparty/acapela/Voices_for_Android_iOS_LinuxEmbedded','**/*'),
             ],
             prefix = 'tts')

@@ -19,7 +19,7 @@
 namespace Anki {
 namespace Cozmo {
 
-#ifdef ANDROID
+#if defined(ANDROID) || defined(VICOS)
   
 // Calculates the ratio of channel1 * (1 / channel2) and compares it to 
 // kMotionThresh vector
@@ -346,7 +346,7 @@ s32 MotionDetector::RatioTestNeon(const ImageType& image, Vision::Image& ratioIm
 {  
   s32 numAboveThresh = 0;
 
-#ifdef ANDROID
+#if defined(ANDROID) || defined(VICOS)
 
   const bool isImageContinuous = image.IsContinuous();
   const bool isPrevImageContinuous = _prevImageRGB.IsContinuous();

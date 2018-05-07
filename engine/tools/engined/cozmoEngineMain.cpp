@@ -7,7 +7,7 @@
 #include "engine/utils/parsingConstants/parsingConstants.h"
 
 #include "util/fileUtils/fileUtils.h"
-#include "util/logging/androidLogPrintLogger_android.h"
+#include "util/logging/androidLogPrintLogger_vicos.h"
 #include "util/logging/logging.h"
 #include "util/logging/iFormattedLoggerProvider.h"
 #include "util/string/stringUtils.h"
@@ -36,6 +36,7 @@
 #include <libgen.h>
 #include <limits.h>
 #include <unistd.h>
+#include <csignal>
 
 
 // What IP do we use for advertisement?

@@ -17,7 +17,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "util/logging/logging.h"
-#include "util/logging/androidLogPrintLogger_android.h"
+#include "util/logging/androidLogPrintLogger_vicos.h"
 #include "util/fileUtils/fileUtils.h"
 
 
@@ -26,6 +26,7 @@
 #include <fstream>
 #include <thread>
 #include <unistd.h>
+#include <csignal>
 
 using namespace Anki;
 using namespace Anki::Cozmo;

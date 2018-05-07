@@ -8,7 +8,7 @@
  *              the incoming and outgoing external pairing and
  *              communication between Victor and BLE/WiFi clients.
  *              Switchboard accepts CLAD messages from engine/anim
- *              processes and routes them correctly to attached 
+ *              processes and routes them correctly to attached
  *              clients, and vice versa. Switchboard also handles
  *              the initial authentication/secure pairing process
  *              which establishes confidential and authenticated
@@ -19,7 +19,7 @@
  *
  **/
 #include <unistd.h>
-#include <stdio.h> 
+#include <stdio.h>
 #include <sodium.h>
 #include <signals/simpleSignal.hpp>
 #include <linux/reboot.h>
@@ -61,6 +61,11 @@ void Daemon::Start() {
   _handleOtaTimer.signal = &_otaUpdateTimerSignal;
   _otaUpdateTimerSignal.SubscribeForever(std::bind(&Daemon::HandleOtaUpdateProgress, this));
   ev_timer_init(&_handleOtaTimer.timer, &Daemon::sEvTimerHandler, kOtaUpdateInterval_s, kOtaUpdateInterval_s);
+
+  // Initialize Pairing Timer
+  _pairingTimer.signal = &_pairingPreConnectionSignal;
+  _pairingPreConnectionSignal.SubscribeForever(std::bind(&Daemon::HandlePairingTimeout, this));
+  ev_timer_init(&_pairingTimer.timer, &Daemon::sEvTimerHandler, kPairingPreConnectionTimeout_s, 0);
 }
 
 void Daemon::Stop() {
@@ -79,6 +84,7 @@ void Daemon::Stop() {
 }
 
 void Daemon::Christen() {
+  static const size_t NAME_LEN = 12;
   Log::Write("[Chr] Christening");
   RtsKeys savedSession = SavedSessionManager::LoadRtsKeys();
   bool hasName = false;
@@ -94,7 +100,7 @@ void Daemon::Christen() {
 
     // the name field has enough space for 11 characters,
     // and an additional null character
-    char name[12] = {0};
+    char name[NAME_LEN] = {0};
 
     std::string nameString = Christen::GenerateName();
     strcpy(name, nameString.c_str());
@@ -114,7 +120,18 @@ void Daemon::Christen() {
   }
 
   // Set name property
-  (void)property_set("persist.anki.robot.name", savedSession.keys.id.name);
+  (void)property_set("anki.robot.name", savedSession.keys.id.name);
+
+  // Set hostname
+  {
+    // Transform space to -
+    char hostname[NAME_LEN] = {0};
+    for (size_t i=0; i<NAME_LEN; ++i) {
+      if (savedSession.keys.id.name[i] == ' ') hostname[i] = '-';
+      else hostname[i] = savedSession.keys.id.name[i];
+    }
+    sethostname(hostname, strnlen(hostname, NAME_LEN));
+  }
 }
 
 void Daemon::InitializeEngineComms() {
@@ -201,15 +218,20 @@ void Daemon::UpdateAdvertisement(bool pairing) {
 
   RtsKeys rtsSession = SavedSessionManager::LoadRtsKeys();
   const char* name = rtsSession.keys.id.name;
-  
+
   _bleClient->SetAdapterName(std::string(name));
   _bleClient->StartAdvertising(settings);
 }
 
 void Daemon::OnConnected(int connId, INetworkStream* stream) {
   Log::Write("OnConnected");
-  _taskExecutor->Wake([stream, this](){
+  _taskExecutor->Wake([connId, stream, this](){
+    // Stop pairing timer
+    ev_timer_stop(_loop, &_pairingTimer.timer);
+
     Log::Write("Connected to a BLE central.");
+    _connectionId = connId;
+
     if(_securePairing == nullptr) {
       _securePairing = std::make_unique<Anki::Switchboard::SecurePairing>(stream, _loop, _engineMessagingClient, _isPairing, _isOtaUpdating);
       _pinHandle = _securePairing->OnUpdatedPinEvent().ScopedSubscribe(std::bind(&Daemon::OnPinUpdated, this, std::placeholders::_1));
@@ -217,7 +239,7 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
       _endHandle = _securePairing->OnStopPairingEvent().ScopedSubscribe(std::bind(&Daemon::OnEndPairing, this));
       _completedPairingHandle = _securePairing->OnCompletedPairingEvent().ScopedSubscribe(std::bind(&Daemon::OnCompletedPairing, this));
     }
-    
+
     // Initiate pairing process
     _securePairing->BeginPairing();
     Log::Write("Done task");
@@ -250,19 +272,37 @@ void Daemon::OnBleIpcDisconnected() {
 
 void Daemon::OnPinUpdated(std::string pin) {
   _engineMessagingClient->SetPairingPin(pin);
-  _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::START_PAIRING);
   _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SHOW_PIN);
   Log::Blue((" " + pin + " ").c_str());
 }
 
 void Daemon::OnEndPairing() {
+  Log::Write("Turning off Pairing Mode and Disconnecting from Client");
+
   UpdateAdvertisement(false);
+
+  if(_bleClient != nullptr) {
+    Log::Write("Pairing ended: Disconnecting from BLE Central [%d]", _connectionId);
+    _bleClient->Disconnect(_connectionId);
+  }
+
+  if(_engineMessagingClient != nullptr) {
+    _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+  }
 }
 
 void Daemon::OnCompletedPairing() {
   // Handle Successful Pairing Event
   // (for now, the handling may be no different than failed pairing)
   UpdateAdvertisement(false);
+}
+
+void Daemon::HandlePairingTimeout() {
+  Log::Write("[PT] Pairing timed-out before connection made.");
+  UpdateAdvertisement(false);
+  if(_engineMessagingClient != nullptr) {
+    _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+  }
 }
 
 void Daemon::HandleOtaUpdateProgress() {
@@ -275,7 +315,7 @@ void Daemon::HandleOtaUpdateProgress() {
 
     if(status == -1) {
       _securePairing->SendOtaProgress(OtaStatusCode::UNKNOWN, progressVal, expectedVal);
-      return;  
+      return;
     }
 
     Log::Write("Downloaded %llu/%llu bytes.", progressVal, expectedVal);
@@ -351,7 +391,7 @@ void Daemon::HandleOtaUpdateExit(int rc, const std::string& output) {
         }
 
         if(progressVal != 0 && progressVal == expectedVal) {
-          Log::Write("Update download finished successfully. Rebooting in 3 seconds."); 
+          Log::Write("Update download finished successfully. Rebooting in 3 seconds.");
           auto when = std::chrono::steady_clock::now() + std::chrono::seconds(3);
           _taskExecutor->WakeAfter([this]() {
             this->HandleReboot();
@@ -382,8 +422,8 @@ void Daemon::HandleOtaUpdateExit(int rc, const std::string& output) {
 
     if(rc != 0) {
       if(_securePairing == nullptr) {
-        // Change the face back to end pairing state *only* if 
-        // we didn't update successfully and there is no BLE connection 
+        // Change the face back to end pairing state *only* if
+        // we didn't update successfully and there is no BLE connection
         _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
       } else {
         _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::UPDATING_OS_ERROR);
@@ -421,12 +461,16 @@ void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame
 
   switch(tag){
     case Anki::Cozmo::ExternalInterface::MessageEngineToGameTag::EnterPairing: {
-      printf("Enter pairing: %hhu\n", tag);    
+      printf("Enter pairing: %hhu\n", tag);
       if(_securePairing != nullptr) {
-        _securePairing->SetIsPairing(true);
-      }
+        break;
+      } 
+      
       UpdateAdvertisement(true);
-      _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::START_PAIRING);
+      _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SHOW_PRE_PIN);
+      ev_timer_set(&_pairingTimer.timer, kPairingPreConnectionTimeout_s, 0);
+      ev_timer_start(_loop, &_pairingTimer.timer);
+      Log::Write("[PT] Starting pairing timer... pairing will timeout in %d seconds.", kPairingPreConnectionTimeout_s);
       break;
     }
     case Anki::Cozmo::ExternalInterface::MessageEngineToGameTag::ExitPairing: {
@@ -481,7 +525,7 @@ void Daemon::HandleReboot() {
 }
 
 void Daemon::sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int revents)
-{  
+{
   struct ev_TimerStruct *wData = (struct ev_TimerStruct*)w;
   wData->signal->emit();
 }
@@ -517,7 +561,7 @@ static void SignalCallback(struct ev_loop* loop, struct ev_signal* w, int revent
   ExitHandler();
 }
 
-static void Tick(struct ev_loop* loop, struct ev_timer* w, int revents) {  
+static void Tick(struct ev_loop* loop, struct ev_timer* w, int revents) {
   // noop
 }
 
@@ -528,7 +572,7 @@ int main() {
   ev_signal_start(sLoop, &sIntSig);
   ev_signal_init(&sTermSig, SignalCallback, SIGTERM);
   ev_signal_start(sLoop, &sTermSig);
-  
+
   // initialize daemon
   _daemon = std::make_unique<Anki::Switchboard::Daemon>(sLoop);
   _daemon->Start();

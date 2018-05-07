@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <fcntl.h> 
 #include <errno.h>
+#include <stdio.h>
 
 namespace Anki {
 namespace Cozmo {
@@ -32,32 +33,45 @@ static const char* kFaultCodeFifoName = "/run/error_code";
 enum : uint16_t {
   NONE = 0,
 
+  //Use higher numbers for head self-tests
+  //display precedence over (external) body tests
+  DISPLAY_FAILURE       = 990, //nobody will ever see this :(
+  
+  CAMERA_FAILURE        = 980,
+  
+  //WIFI                  = 970,
+  WIFI_HW_FAILURE       = 970, //local wifi hw checks only
+  
+  IMU_FAILURE           = 960,
+  
+  //critical processes
+  SYSTEMD               = 919,
+  NO_ROBOT_PROCESS      = 917,
+  NO_ENGINE_PROCESS     = 915,
+  NO_SWITCHBOARD        = 913,
+  AUDIO_FAILURE         = 911,
+  
+  //Body and external errors
+  NO_BODY               = 899, //no response from syscon
+
+  //Sensor Errors
+  TOUCH_SENSOR          = 895,
+  TOF                   = 894,
+  CLIFF_BL              = 893,
+  CLIFF_BR              = 892,
+  CLIFF_FL              = 891,
+  CLIFF_FR              = 890,
+  
+  //Mic Errors
+  MIC_BL                = 873,
+  MIC_BR                = 872,
+  MIC_FL                = 871,
+  MIC_FR                = 870,
+  
   // Should always be 800 as the fault code
   // display image for this fault is hardcoded into
   // the animfail program
-  NO_ANIM_PROCESS = 800,
-    
-  WIFI,
-  NO_SWITCHBOARD,
-  SYSTEMD,
-    
-  NO_ENGINE_PROCESS,
-
-  CLIFF_FR,
-  CLIFF_FL,
-  CLIFF_BR,
-  CLIFF_BL,
-  TOF,
-  TOUCH_SENSOR,
-  MIC_FR,
-  MIC_FL,
-  MIC_BR,
-  MIC_BL,
-  NO_BODY,
-
-  NO_ROBOT_PROCESS,
-    
-  CAMERA_FAILURE, // Needs to be higher than NO_BODY
+  NO_ANIM_PROCESS       = 800,
 
   COUNT = 1000
 };

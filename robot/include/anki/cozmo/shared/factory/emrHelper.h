@@ -19,6 +19,7 @@
 #include <sys/mman.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #define BEGIN_DONT_RUN_AFTER_PACKOUT \
   if(!Factory::GetEMR()->fields.PACKED_OUT_FLAG) {

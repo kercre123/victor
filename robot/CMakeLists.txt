@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.6)
 
 project(robot)
 
+include(anki_build_cxx)
+include(anki_build_strip)
+
 add_library(robot_interface INTERFACE IMPORTED GLOBAL)
 set_property(TARGET robot_interface
              PROPERTY INTERFACE_INCLUDE_DIRECTORIES
@@ -19,7 +22,7 @@ if (MACOSX)
   set(PLATFORM_COMPILE_DEFS
     SIMULATOR
   )
-elseif (ANDROID)
+elseif (VICOS)
   set(PLATFORM_COMPILE_DEFS
     DEVELOPMENT
   )
@@ -77,7 +80,7 @@ set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
-if (ANDROID)
+if (VICOS)
   set(PLATFORM_LIBS
     robot_hal
   )
@@ -168,8 +171,8 @@ set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
-if (ANDROID)
-  set(PLATFORM_LIBS android log)
+if (VICOS)
+  set(PLATFORM_LIBS log)
   set(PLATFORM_COMPILE_DEFS
     DEVELOPMENT
   )
@@ -186,7 +189,7 @@ endif()
 #
 # spine
 #
-if (ANDROID)
+if (VICOS)
 
   anki_build_cxx_library(spine ${ANKI_SRCLIST_DIR} STATIC)
 
@@ -208,7 +211,7 @@ endif()
 #
 # robot_supervisor
 #
-if (ANDROID)
+if (VICOS)
 
   anki_build_cxx_executable(vic-robot ${ANKI_SRCLIST_DIR})
 
@@ -242,6 +245,6 @@ if (ANDROID)
     ${PLATFORM_LIBS}
   )
 
-  android_strip(TARGET vic-robot)
+  anki_build_strip(TARGET vic-robot)
 
 endif()

@@ -1,5 +1,5 @@
 /**
- * File: faceDisplayImpl_android.cpp
+ * File: faceDisplayImpl_vicos.cpp
  *
  * Author: Kevin Yoon
  * Created: 07/20/2017
@@ -49,7 +49,7 @@ namespace Cozmo {
 } // namespace Cozmo
 } // namespace Anki
 
-extern "C" void on_exit(void)
+extern "C" void core_common_on_exit(void)
 {
   lcd_shutdown();
 }

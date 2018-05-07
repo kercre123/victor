@@ -15,7 +15,7 @@
 #include "clad/types/pathEventTypes.clad"
 #include "clad/types/factoryFWOnly.clad"
 #include "clad/types/robotToSwitchboard.clad"
-
+#include "clad/robotInterface/factoryMessages.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -148,6 +148,7 @@ union RobotToEngine {
   // TODO: Can probably get rid of these eventually since engine
   //       can access most of this info directly now.
   FWVersionInfo              factoryFirmwareVersion = 0xC9, ///< DEPRECATED, only used by factory firmware
+  RunFactoryTest             runFactoryTest         = 0xCA,
   ManufacturingID            mfgId                  = 0xCB,
   FirmwareVersion            firmwareVersion        = 0xCC,
 

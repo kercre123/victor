@@ -2,15 +2,15 @@ set(OPENCV_VERSION 3.4.0)
 
 set(OPENCV_DIR opencv-${OPENCV_VERSION})                                                                        
 
-if (ANDROID)
-  set(OPENCV_3RDPARTY_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/android/3rdparty/lib/armeabi-v7a)
+if(VICOS)
+  set(OPENCV_3RDPARTY_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/vicos/3rdparty/lib)
   
-  set(OPENCV_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/android/sdk/native/libs/armeabi-v7a)
+  set(OPENCV_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/vicos/lib)
   
   set(OPENCV_INCLUDE_PATHS 
       ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR} 
-      ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/android
-      ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/android/sdk/native/jni/include) 
+      ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/vicos
+      ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/vicos/include)
 
 else()
   set(OPENCV_3RDPARTY_LIB_DIR ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/mac/3rdparty/lib/Release)
@@ -38,9 +38,11 @@ set(OPENCV_LIBS
 # Static libs for mac, shared for android
 set(LIB_EXT a)
 set(LIB_TYPE STATIC)
-if(ANDROID)
+set(LIB_POSTFIX "")
+if(VICOS)
   set(LIB_EXT so)
   set(LIB_TYPE SHARED)
+  set(LIB_POSTFIX .3.4)
 endif()
 
 # Add the include directory for each OpenCV module:
@@ -55,7 +57,7 @@ foreach(OPENCV_MODULE ${OPENCV_LIBS})
 
   set_target_properties(${OPENCV_MODULE} PROPERTIES
                         IMPORTED_LOCATION
-                        ${OPENCV_LIB_DIR}/libopencv_${OPENCV_MODULE}.${LIB_EXT}
+                        ${OPENCV_LIB_DIR}/libopencv_${OPENCV_MODULE}.${LIB_EXT}${LIB_POSTFIX}
                         INTERFACE_INCLUDE_DIRECTORIES
                         "${include_paths}")
 
@@ -69,14 +71,13 @@ set_target_properties(opencv_interface PROPERTIES
     "${OPENCV_INCLUDE_PATHS}"
 )
 
-if (ANDROID)
+if(VICOS)
   set(OPENCV_EXTERNAL_LIBS     
       libpng
       libtiff
-      cpufeatures 
-      #libjpeg # Using turbo jpeg below
+      #cpufeatures # missing for vicos build?
+      libjpeg # NOT using turbo jpeg below
       libprotobuf) 
-  # NOTE: tbb is also an external lib, but is "special" and lives with the opencv modules
 else()
   set(OPENCV_EXTERNAL_LIBS
       IlmImf
@@ -102,25 +103,6 @@ message(STATUS "including OpenCV-${OPENCV_VERSION}, [Modules: ${OPENCV_LIBS}], [
 
 list(APPEND OPENCV_LIBS ${OPENCV_EXTERNAL_LIBS})
 
-# Use jpeg-turbo 
-if (ANDROID)
-  add_library(libjpeg SHARED IMPORTED)
-  set_target_properties(libjpeg PROPERTIES IMPORTED_LOCATION
-    ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/android_armv7_libs/libjpeg.so)
-  add_library(libturbojpeg SHARED IMPORTED)
-  set_target_properties(libturbojpeg PROPERTIES IMPORTED_LOCATION
-    ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/android_armv7_libs/libturbojpeg.so)
-elseif (MACOSX)
-  # TODO: Restore jpeg-turbo usage for mac? (Getting linker errors)
-  #add_library(libjpeg STATIC IMPORTED)
-  #set_target_properties(libjpeg PROPERTIES IMPORTED_LOCATION
-  #  ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/mac_libs/libjpeg.a)
-  #add_library(libturbojpeg STATIC IMPORTED)
-  #set_target_properties(libturbojpeg PROPERTIES IMPORTED_LOCATION
-  #  ${CORETECH_EXTERNAL_DIR}/libjpeg-turbo/mac_libs/libturbojpeg.a)
-  #list(APPEND OPENCV_LIBS libjpeg libturbojpeg)
-endif()
-
 if (MACOSX)
   # Add Frameworks
   find_library(ACCELERATE Accelerate)
@@ -131,27 +113,13 @@ endif()
 
 # On Android, we need to copy shared libs to our library output folder
 macro(copy_opencv_android_libs)
-if (ANDROID)
+if(VICOS)
   if (TARGET copy_opencv_libs)
       return()
   endif()
-
-  add_library(tbb SHARED IMPORTED)
-
-  set(include_paths
-      ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/android/sdk/native/jni/include/opencv2/${OPENCV_MODULE}
-      ${OPENCV_INCLUDE_PREFIX}
-      ${OPENCV2_INCLUDE_PATH})
-  
-  # For some reason tbb is special and lives alongside the opencv modules instead of being in 3rd party
-  set_target_properties(tbb PROPERTIES
-      IMPORTED_LOCATION
-      ${CORETECH_EXTERNAL_DIR}/build/${OPENCV_DIR}/android/sdk/native/libs/armeabi-v7a/libtbb.so)
   
   set(INSTALL_LIBS
-      "${OPENCV_LIBS}"
-      tbb
-      libturbojpeg)
+    "${OPENCV_LIBS}")
   
   message(STATUS "opencv libs: ${INSTALL_LIBS}")
   
@@ -161,7 +129,7 @@ if (ANDROID)
       get_target_property(LIB_PATH ${lib} IMPORTED_LOCATION)
       get_filename_component(LIB_FILENAME ${LIB_PATH} NAME)
       set(DST_PATH "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${LIB_FILENAME}") 
-      # message(STATUS "copy opencv lib: ${lib} ${LIB_PATH} -> ${DST_PATH}")
+      message(STATUS "copy opencv lib: ${lib} ${LIB_PATH} -> ${DST_PATH}")
       add_custom_command(
           OUTPUT "${DST_PATH}"
           COMMAND ${CMAKE_COMMAND}

@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.6)
 project(victor_tools)
 
-include(android_strip)
+include(anki_build_strip)
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
-if (ANDROID)
+if (VICOS)
   set(PLATFORM_LIBS log)
 elseif (MACOSX)
   find_library(FOUNDATION Foundation)
@@ -35,6 +35,6 @@ if (BUILD_AXATTR)
     -Os
   )
 
-  android_strip(TARGET axattr)
+  anki_build_strip(TARGET axattr)
 
 endif(BUILD_AXATTR)

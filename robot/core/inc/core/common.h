@@ -32,7 +32,7 @@ void error_exit(CoreAppErrorCode, const char*, ...);
 
 /// Applications must implement this
 // it should cleanup any open resources
-extern void on_exit(void);
+extern void core_common_on_exit(void);
 
 
 #endif//CORE_COMMON_H

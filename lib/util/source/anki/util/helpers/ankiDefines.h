@@ -35,6 +35,9 @@
 #elif defined(ANDROID)
   #define ANKI_PLATFORM_ANDROID 1
 
+#elif defined(VICOS)
+  #define ANKI_PLATFORM_VICOS 1
+
 #elif defined(LINUX)
   #define ANKI_PLATFORM_LINUX 1
 

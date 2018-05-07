@@ -16,9 +16,8 @@ set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
 
-if (ANDROID)
+if (VICOS)
     set(PLATFORM_LIBS
-        android
         log
     )
 elseif (MACOSX)
@@ -41,7 +40,7 @@ target_link_libraries(victor_web_library
   robot_interface  # Needs to be public for cozmoConfig.h
 )
 
-android_strip(TARGET victor_web_library)
+anki_build_strip(TARGET victor_web_library)
 
 target_compile_definitions(victor_web_library
   PRIVATE
@@ -55,9 +54,9 @@ target_include_directories(victor_web_library
   ${PLATFORM_INCLUDES}
 )
 
-# victor_web_server binary only builds on Android now
+# victor_web_server binary only builds on VICOS now
 # mac implementation uses (webotsCtrlWebServer)
-if (ANDROID)
+if (VICOS)
 
   anki_build_cxx_executable(vic-webserver ${ANKI_SRCLIST_DIR})
 
@@ -69,6 +68,6 @@ if (ANDROID)
     ${PLATFORM_LIBS}
   )
 
-  android_strip(TARGET vic-webserver)
-    
+  anki_build_strip(TARGET vic-webserver)
+
 endif()

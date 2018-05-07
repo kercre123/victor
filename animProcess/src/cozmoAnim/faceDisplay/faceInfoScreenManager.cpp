@@ -56,6 +56,22 @@
 // Remove this when BLE switchboard is working
 #define FORCE_TRANSITION_TO_PAIRING 0
 
+#if !FACTORY_TEST
+
+// Return true if we can connect to Anki OTA service
+static bool HasInternet()
+{
+  return Anki::Util::InternetUtils::CanConnectToHostName("ota-cdn.anki.com", 443);
+}
+
+// Return true if we can connect to Anki voice service
+static bool HasVoiceAccess()
+{
+  return Anki::Util::InternetUtils::CanConnectToHostName("chipper-dev.api.anki.com", 443);
+}
+
+#endif
+
 namespace Anki {
 namespace Cozmo {
 
@@ -876,7 +892,7 @@ void FaceInfoScreenManager::DrawMain()
   }
 
 #if !FACTORY_TEST
-  const bool hasInternet = Util::InternetUtils::HasInternet();
+  const bool hasInternet = HasInternet();
 #endif  
   
 
@@ -907,12 +923,12 @@ void FaceInfoScreenManager::DrawNetwork()
   }
 
 #if !FACTORY_TEST
-  const bool hasInternet = Util::InternetUtils::HasInternet();
+  const bool hasInternet = HasInternet();
 
   // TODO (VIC-1816): Check actual hosts for connectivity
   const bool hasAuthAccess  = false;
   const bool hasOTAAccess   = false;
-  const bool hasVoiceAccess = Util::InternetUtils::CanConnectToHostName("chipper-dev.api.anki.com", 443);
+  const bool hasVoiceAccess = HasVoiceAccess();
 
   const ColoredText online("ONLINE", NamedColors::GREEN);
   const ColoredText offline("UNAVAILABLE", NamedColors::RED);

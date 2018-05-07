@@ -58,8 +58,8 @@ add_library(ble_cozmo
   ${PLATFORM_SRCS}
 )
 
-include(android_strip)
-android_strip(TARGET ble_cozmo)
+include(anki_build_strip)
+anki_build_strip(TARGET ble_cozmo)
 
 target_link_libraries(ble_cozmo
   PUBLIC

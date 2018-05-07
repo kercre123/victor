@@ -17,7 +17,7 @@ extern "C" {
 
   // Hook for initialization code. If this errors out, do not run anything else.
   int cozmo_startup(const char *configuration_data);
-    
+
   // Hook for deinitialization. Should be fine to call startup after this call, even on failure.
   // Return value is just for informational purposes. Should never fail, even if not initialized.
   int cozmo_shutdown();
@@ -29,8 +29,8 @@ extern "C" {
   void cozmo_transmit_game_to_engine(const uint8_t* buffer, size_t size);
 
   // Invoked by background OS notifications when we have internet
-  void cozmo_execute_background_transfers();
-  
+  //void cozmo_execute_background_transfers();
+
   // Hook for triggering setup of the desired wifi details
   int cozmo_wifi_setup(const char* wifiSSID, const char* wifiPasskey);
 
@@ -43,24 +43,24 @@ extern "C" {
 
   uint32_t cozmo_activate_experiment(const uint8_t* requestBuffer, size_t requestSize,
                                      uint8_t* responseBuffer, size_t responseSize);
-  
+
   // Called from C# to locate device ID file. Android only.
   const char * cozmo_get_device_id_file_path(const char * persistentDataPath);
-  
+
   void Unity_DAS_Event(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount);
-  
+
   void Unity_DAS_LogE(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount);
-  
+
   void Unity_DAS_LogW(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount);
-  
+
   void Unity_DAS_LogI(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount);
-  
+
   void Unity_DAS_LogD(const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount);
-  
+
   void Unity_DAS_Ch_LogI(const char* channelName, const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount);
-  
+
   void Unity_DAS_Ch_LogD(const char* channelName, const char* eventName, const char* eventValue, const char** keys, const char** values, unsigned keyValueCount);
-  
+
   void Unity_DAS_SetGlobal(const char* key, const char* value);
 
 #ifndef _cplusplus

@@ -14,8 +14,8 @@
 // Which provider implementation do we use for this platform?
 #if defined(ANKI_PLATFORM_OSX)
 #include "textToSpeechProvider_mac.h"
-#elif defined(ANKI_PLATFORM_ANDROID)
-#include "textToSpeechProvider_android.h"
+#elif defined(ANKI_PLATFORM_VICOS)
+#include "textToSpeechProvider_vicos.h"
 #else
 #error "No text-to-speech provider implemented for this platform"
 #endif
@@ -35,8 +35,8 @@ TextToSpeechProvider::TextToSpeechProvider(const AnimContext * ctx, const Json::
   Json::Value tts_platform_config = tts_config["osx"];
 #elif defined(ANKI_PLATFORM_IOS)
   Json::Value tts_platform_config = tts_config["ios"];
-#elif defined(ANKI_PLATFORM_ANDROID)
-  Json::Value tts_platform_config = tts_config["android"];
+#elif defined(ANKI_PLATFORM_VICOS)
+  Json::Value tts_platform_config = tts_config["vicos"];
 #endif
 
   // Instantiate provider for this platform
