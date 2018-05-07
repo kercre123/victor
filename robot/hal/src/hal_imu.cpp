@@ -13,6 +13,7 @@
 // Our Includes
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/shared/factory/faultCodes.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
@@ -105,6 +106,7 @@ bool OpenIMU()
   const char* err = imu_open();
   if (err) {
     AnkiError("HAL.InitIMU.OpenFailed", "%s", err);
+    FaultCode::DisplayFaultCode(FaultCode::IMU_FAILURE);
     return false;
   }
   imu_init();

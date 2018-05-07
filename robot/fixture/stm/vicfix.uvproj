@@ -473,6 +473,11 @@
               <FileType>8</FileType>
               <FilePath>.\app\cmd.cpp</FilePath>
             </File>
+            <File>
+              <FileName>robotcom.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\app\robotcom.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -580,6 +585,11 @@
               <FileName>crc32.c</FileName>
               <FileType>8</FileType>
               <FilePath>.\lib\crc32.c</FilePath>
+            </File>
+            <File>
+              <FileName>spine_crc.c</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\lib\spine_crc.c</FilePath>
             </File>
             <File>
               <FileName>nvReset.c</FileName>

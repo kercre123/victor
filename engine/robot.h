@@ -603,15 +603,15 @@ public:
 
   void SetBodyColor(const s32 color);
   const BodyColor GetBodyColor() const { return _bodyColor; }
+  
+  bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterTimeSync; }
 
-  bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterRobotSync; }
-
-protected:
-  // Context is stored both as a member variable and as a component (within a wrapper)
-  // This allows components to easily access context via component where appropriate
-  // but also ensures access to context during component destruction in case the
-  // wrapper component is destroyed first
-  const CozmoContext* _context;
+  void Shutdown() { _toldToShutdown = true; }
+  bool ToldToShutdown() const { return _toldToShutdown; }
+  
+protected:  
+  bool _toldToShutdown = false;
+  
   std::unique_ptr<PoseOriginList> _poseOrigins;
 
   using EntityType = DependencyManagedEntity<RobotComponentID>;
@@ -749,6 +749,8 @@ protected:
   // only since caching etc could blow it all to shreds
   void DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage = false);
 
+  // Performs various startup checks and displays fault codes as appropriate
+  Result UpdateStartupChecks();
 }; // class Robot
 
 

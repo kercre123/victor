@@ -30,6 +30,7 @@ uint32_t cmdTimeMs() {
 //-----------------------------------------------------------------------------
 
 typedef struct { int rxDroppedChars; int rxOverflowErrors; int rxFramingErrors; } io_err_t;
+static io_err_t m_ioerr;
 static void get_errs_(cmd_io io, io_err_t *ioe) {
   ioe->rxDroppedChars   = io==CMD_IO_DUT_UART ? DUT_UART::getRxDroppedChars()   : (io==CMD_IO_CONTACTS ? Contacts::getRxDroppedChars()   : 0);
   ioe->rxOverflowErrors = io==CMD_IO_DUT_UART ? DUT_UART::getRxOverflowErrors() : (io==CMD_IO_CONTACTS ? Contacts::getRxOverflowErrors() : 0);
@@ -181,11 +182,12 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
   
   //send command out the selected io channel (append prefix)
   flush_(io); //flush rx buffers first for correct response detection
-  if( io != CMD_IO_CONSOLE ) //echo to log BEFORE to DUT write or we'll miss response chars
+  if( io != CMD_IO_CONSOLE && opts & CMD_OPTS_LOG_CMD ) //echo to log BEFORE the DUT write or we'll miss response chars
     write_(CMD_IO_CONSOLE, LOG_CMD_PREFIX, scmd, (newline ? "\n" : NULL) );
   write_(io, CMD_PREFIX, scmd, (newline ? "\n" : NULL) );
 
   //Get response
+  memset( &m_ioerr, 0, sizeof(m_ioerr) ); //clear io errs
   m_status = INT_MIN;
   uint32_t Tstart = Timer::get(), Ttick = Timer::get();
   while( Timer::elapsedUs(Tstart) < timeout_ms*1000 )
@@ -203,16 +205,18 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
         rsp += sizeof(RSP_PREFIX)-1; //'strip' prefix
         
         //echo to log (optionally append debug stats)
-        write_(CMD_IO_CONSOLE, io == CMD_IO_CONSOLE ? RSP_PREFIX : LOG_RSP_PREFIX, rsp); //differentiate prefix depending on the sender
-        if( opts & CMD_OPTS_DBG_PRINT_RSP_TIME )
-          write_(CMD_IO_CONSOLE, snformat(b,bz," [%ums]", m_time_ms));
-        write_(CMD_IO_CONSOLE, "\n");
+        if( opts & CMD_OPTS_LOG_RSP ) {
+          write_(CMD_IO_CONSOLE, io == CMD_IO_CONSOLE ? RSP_PREFIX : LOG_RSP_PREFIX, rsp); //differentiate prefix depending on the sender
+          if( opts & CMD_OPTS_LOG_RSP_TIME )
+            write_(CMD_IO_CONSOLE, snformat(b,bz," [%ums]", m_time_ms));
+          write_(CMD_IO_CONSOLE, "\n");
+        }
         
         //check for rx errors
-        io_err_t ioerr;
-        get_errs_(io, &ioerr);
-        if( ioerr.rxOverflowErrors > 0 || ioerr.rxDroppedChars > 0 ) {
-          write_(CMD_IO_CONSOLE, snformat(b,bz,"--> IO ERROR ovfl=%i dropRx=%i frame=%i", ioerr.rxOverflowErrors, ioerr.rxDroppedChars, ioerr.rxFramingErrors));
+        get_errs_(io, &m_ioerr);
+        if( m_ioerr.rxOverflowErrors > 0 || m_ioerr.rxDroppedChars > 0 ) {
+          if( opts & CMD_OPTS_LOG_ERRORS )
+            write_(CMD_IO_CONSOLE, snformat(b,bz,"IO ERROR ovfl=%i dropRx=%i frame=%i", m_ioerr.rxOverflowErrors, m_ioerr.rxDroppedChars, m_ioerr.rxFramingErrors));
           ERROR_HANDLE("IO_ERROR\n", ERROR_TESTPORT_RX_ERROR);
           //return NULL; //if no exception, allow cmd validation to continue
         }
@@ -248,16 +252,19 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
         //passed all checks
         return rsp;
       }
-      else
+      else if( rspLen > sizeof(ASYNC_PREFIX)-1 && !strncmp(rsp,ASYNC_PREFIX,sizeof(ASYNC_PREFIX)-1) )
       {
-        if( io != CMD_IO_CONSOLE ) //echo to log, unchanged
+        if( io != CMD_IO_CONSOLE && opts & CMD_OPTS_LOG_ASYNC ) //echo to log, unchanged
           write_(CMD_IO_CONSOLE, rsp, "\n");
         
         //async data while waiting for cmd completion
-        if( async_handler != NULL ) {
-          if( !strncmp(rsp,ASYNC_PREFIX,sizeof(ASYNC_PREFIX)-1) && rspLen > sizeof(ASYNC_PREFIX)-1 )
-            async_handler(rsp + sizeof(ASYNC_PREFIX)-1);
-        }
+        if( async_handler != NULL )
+          async_handler(rsp + sizeof(ASYNC_PREFIX)-1);
+      }
+      else //uncategorized, informational
+      {
+        if( io != CMD_IO_CONSOLE && opts & CMD_OPTS_LOG_OTHER ) //echo to log, unchanged
+          write_(CMD_IO_CONSOLE, rsp, "\n");
       }
     }
     
@@ -269,23 +276,23 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
     }
   }
   
-  //DEBUG: see what's leftover in the rx buffer
-  int rlen;
-  char* rawline = getline_raw_(io, &rlen);
-  if( rlen > 0 ) {
-    write_(CMD_IO_CONSOLE, ".DBG RX PARTIAL '");
-    for(int x=0; x<rlen; x++)
-      write_(CMD_IO_CONSOLE, snformat(b,bz,"%c", rawline[x] >= ' ' && rawline[x] < '~' ? rawline[x] : '*'));
-    write_(CMD_IO_CONSOLE, snformat(b,bz,"' (%i)\n", rlen));
+  if( opts & CMD_OPTS_DBG_PRINT_RX_PARTIAL ) //see what's leftover in the rx buffer
+  {
+    int rlen; char* rawline = getline_raw_(io, &rlen);
+    if( rlen > 0 ) {
+      write_(CMD_IO_CONSOLE, ".DBG RX PARTIAL '");
+      for(int x=0; x<rlen; x++)
+        write_(CMD_IO_CONSOLE, snformat(b,bz,"%c", rawline[x] >= ' ' && rawline[x] < '~' ? rawline[x] : '*'));
+      write_(CMD_IO_CONSOLE, snformat(b,bz,"' (%i)\n", rlen));
+    }
   }
   
   //check for rx errors
-  io_err_t ioerr;
-  get_errs_(io, &ioerr);
-  if( ioerr.rxOverflowErrors > 0 || ioerr.rxDroppedChars > 0 ) {
-    write_(CMD_IO_CONSOLE, snformat(b,bz,"--> IO ERROR ovfl=%i dropRx=%i frame=%i", ioerr.rxOverflowErrors, ioerr.rxDroppedChars, ioerr.rxFramingErrors));
+  get_errs_(io, &m_ioerr);
+  if( m_ioerr.rxOverflowErrors > 0 || m_ioerr.rxDroppedChars > 0 ) {
+    if( opts & CMD_OPTS_LOG_ERRORS )
+      write_(CMD_IO_CONSOLE, snformat(b,bz,"IO ERROR ovfl=%i dropRx=%i frame=%i", m_ioerr.rxOverflowErrors, m_ioerr.rxDroppedChars, m_ioerr.rxFramingErrors));
     ERROR_HANDLE("IO_ERROR\n", ERROR_TESTPORT_RX_ERROR);
-    //return NULL; //if no exception, allow cmd validation to continue
   }
   
   m_time_ms = timeout_ms;
@@ -468,242 +475,5 @@ void cmdDbgParseTestbench(void)
   }
   DBG_PRINTF("\n");
 #endif
-}
-
-//-----------------------------------------------------------------------------
-//                  Robot (Charge Contacts)
-//-----------------------------------------------------------------------------
-
-#define CCC_DEBUG 0
-#define CCC_ERROR_HANDLE(e) if( CCC_DEBUG > 0 ) { return 0; } else { throw (e); }
-#define CCC_CMD_DELAY()     if( CCC_DEBUG > 0 ) { Timer::delayMs(150); }
-
-//buffer for sensor data
-static uint8_t *srbuf = app_global_buffer;
-static const int srdatMaxSize = sizeof(ccr_sr_t) * 256;
-STATIC_ASSERT( APP_GLOBAL_BUF_SIZE >= srdatMaxSize , cmd_get_sensor_buffer_size_check );
-
-#include "emrf.h"
-
-static struct { //result of most recent command
-  error_t ccr_err;
-  int handler_cnt;
-  int sr_cnt;
-  union { 
-    ccr_esn_t esn; 
-    ccr_bsv_t bsv;
-  } rsp;
-} m_dat;
-
-void esn_handler_(char* s) {
-  m_dat.rsp.esn.esn = cmdParseHex32( cmdGetArg(s,0) );
-  m_dat.ccr_err = errno != 0 ? ERROR_TESTPORT_RSP_BAD_ARG: m_dat.ccr_err;
-  m_dat.handler_cnt++;
-}
-
-ccr_esn_t* cmdRobotEsn()
-{
-  CCC_CMD_DELAY();
-  memset( &m_dat, 0, sizeof(m_dat) );
-  const char *cmd = "esn 00 00 00 00 00 00";
-  cmdSend(CMD_IO_CONTACTS, cmd, 500, CMD_OPTS_DEFAULT, esn_handler_);
-  
-  #if CCC_DEBUG > 0
-  ConsolePrintf("esn=%08x\n", m_dat.rsp.esn.esn );
-  #endif
-  
-  if( m_dat.handler_cnt != 1 || m_dat.ccr_err != ERROR_OK ) {
-    ConsolePrintf("ESN ERROR %i, handler cnt %i\n", m_dat.ccr_err, m_dat.handler_cnt);
-    CCC_ERROR_HANDLE(m_dat.ccr_err);
-  }
-  return &m_dat.rsp.esn;
-}
-
-void bsv_handler_(char* s)
-{
-  uint32_t *dat = (uint32_t*)&m_dat.rsp; //esn,bsv are both uint32_t arrays
-  const int nwords_max = sizeof(m_dat.rsp)/sizeof(uint32_t);
-  
-  if( m_dat.handler_cnt <= nwords_max-2 ) {
-    dat[m_dat.handler_cnt+0] = cmdParseHex32( cmdGetArg(s,0) );
-    m_dat.ccr_err = errno != 0 ? ERROR_TESTPORT_RSP_BAD_ARG: m_dat.ccr_err;
-    dat[m_dat.handler_cnt+1] = cmdParseHex32(cmdGetArg(s,1));
-    m_dat.ccr_err = errno != 0 ? ERROR_TESTPORT_RSP_BAD_ARG: m_dat.ccr_err;
-  }
-  m_dat.handler_cnt += 2;
-}
-
-ccr_bsv_t* cmdRobotBsv()
-{
-  CCC_CMD_DELAY();
-  memset( &m_dat, 0, sizeof(m_dat) );
-  const char *cmd = "bsv 00 00 00 00 00 00";
-  cmdSend(CMD_IO_CONTACTS, cmd, 500, CMD_OPTS_DEFAULT, bsv_handler_);
-  
-  #if CCC_DEBUG > 0
-  ConsolePrintf("bsv hw.rev,model %u %u\n", m_dat.rsp.bsv.hw_rev, m_dat.rsp.bsv.hw_model );
-  ConsolePrintf("bsv ein %08x %08x %08x %08x\n", m_dat.rsp.bsv.ein[0], m_dat.rsp.bsv.ein[1], m_dat.rsp.bsv.ein[2], m_dat.rsp.bsv.ein[3] );
-  ConsolePrintf("bsv app vers %08x %08x %08x %08x\n", m_dat.rsp.bsv.app_version[0], m_dat.rsp.bsv.app_version[1], m_dat.rsp.bsv.app_version[2], m_dat.rsp.bsv.app_version[3] );
-  #endif
-  
-  if( m_dat.handler_cnt != 10 || m_dat.ccr_err != ERROR_OK ) {
-    ConsolePrintf("BSV ERROR %i, handler cnt %i\n", m_dat.ccr_err, m_dat.handler_cnt);
-    CCC_ERROR_HANDLE(m_dat.ccr_err);
-  }
-  return &m_dat.rsp.bsv;
-}
-
-void sensor_handler_(char* s) {
-  ccr_sr_t *psr = &((ccr_sr_t*)srbuf)[m_dat.handler_cnt++];
-  if( m_dat.handler_cnt <= 256 ) { //don't overflow buffer
-    for(int x=0; x < m_dat.sr_cnt; x++) {
-      psr->val[x] = cmdParseInt32( cmdGetArg(s,x) );
-      m_dat.ccr_err = errno != 0 ? ERROR_TESTPORT_RSP_BAD_ARG : m_dat.ccr_err;
-    }
-  }
-}
-
-static ccr_sr_t* cmdRobot_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, const char* cmd)
-{
-  CCC_CMD_DELAY();
-  char b[22]; const int bz = sizeof(b);
-  snformat(b,bz,"%s %02x %02x %02x %02x %02x %02x", cmd, NN, sensor, (uint8_t)treadL, (uint8_t)treadR, (uint8_t)lift, (uint8_t)head);
-  
-  memset( &m_dat, 0, sizeof(m_dat) );
-  memset( srbuf, 0, (1+NN)*sizeof(ccr_sr_t) );
-  m_dat.sr_cnt = sensor >= sizeof(ccr_sr_cnt) ? 0 : ccr_sr_cnt[sensor]; //expected number of sensor values per drop/line
-  if( !NN )
-    throw ERROR_BAD_ARG;
-  
-  cmdSend(CMD_IO_CONTACTS, b, 500 + (int)NN*6, CMD_OPTS_DEFAULT, sensor_handler_);
-  
-  #if CCC_DEBUG > 0
-  ccr_sr_t* psr = (ccr_sr_t*)srbuf;
-  ConsolePrintf("NN=%u sr vals %i %i %i %i\n", NN, psr[NN-1].val[0], psr[NN-1].val[1], psr[NN-1].val[2], psr[NN-1].val[3] );
-  #endif
-  
-  if( m_dat.handler_cnt != NN || m_dat.ccr_err != ERROR_OK ) {
-    ConsolePrintf("SR ERROR %i, handler cnt %i/%i\n", m_dat.ccr_err, m_dat.handler_cnt, NN);
-    CCC_ERROR_HANDLE(m_dat.ccr_err);
-  }
-  
-  return (ccr_sr_t*)srbuf;
-}
-ccr_sr_t* cmdRobotMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head) {
-  return cmdRobot_MotGet_(NN, sensor, treadL, treadR, lift, head, "mot");
-}
-ccr_sr_t* cmdRobotGet(uint8_t NN, uint8_t sensor) {
-  return cmdRobot_MotGet_(NN, sensor, 0, 0, 0, 0, "get");
-}
-
-void cmdRobotFcc(uint8_t mode, uint8_t cn) {
-  CCC_CMD_DELAY();
-  memset( &m_dat, 0, sizeof(m_dat) );
-  char b[22]; const int bz = sizeof(b);
-  cmdSend(CMD_IO_CONTACTS, snformat(b,bz,"fcc %02x %02x 00 00 00 00", mode, cn), 500);
-}
-
-void cmdRobotRlg(uint8_t idx) {
-  CCC_CMD_DELAY();
-  memset( &m_dat, 0, sizeof(m_dat) );
-  ConsolePrintf("XXX: rlg not implemented\n");
-  throw ERROR_EMPTY_COMMAND;
-}
-
-void cmdRobot_IdxVal32_(uint8_t idx, uint32_t val, const char* cmd, void(*handler)(char*) ) {
-  CCC_CMD_DELAY();
-  memset( &m_dat, 0, sizeof(m_dat) );
-  char b[22]; const int bz = sizeof(b);
-  snformat(b,bz,"%s %02x %02x %02x %02x %02x 00", cmd, idx, (val>>0)&0xFF, (val>>8)&0xFF, (val>>16)&0xFF, (val>>24)&0xFF );
-  cmdSend(CMD_IO_CONTACTS, b, 500, CMD_OPTS_DEFAULT, handler );
-}
-void cmdRobotEng(uint8_t idx, uint32_t val) { cmdRobot_IdxVal32_(idx, val, "eng", 0); }
-void cmdRobotLfe(uint8_t idx, uint32_t val) { cmdRobot_IdxVal32_(idx, val, "lfe", 0); }
-void cmdRobotSmr(uint8_t idx, uint32_t val) { cmdRobot_IdxVal32_(idx, val, "smr", 0); }
-
-void gmr_handler_(char* s) {
-  m_dat.handler_cnt++;
-  m_dat.rsp.esn.esn = cmdParseHex32( cmdGetArg(s,0) );
-  m_dat.ccr_err = errno != 0 ? ERROR_TESTPORT_RSP_BAD_ARG : m_dat.ccr_err;
-}
-
-////#define EMR_FIELD_OFS(fieldname)    offsetof((fieldname),Anki::Cozmo::Factory::EMR)
-uint32_t cmdRobotGmr(uint8_t idx)
-{
-  cmdRobot_IdxVal32_(idx, 0, "gmr", gmr_handler_);
-  ConsolePrintf("gmr=%08x\n", m_dat.rsp.esn.esn);
-  
-  if( m_dat.handler_cnt != 1 || m_dat.ccr_err != ERROR_OK ) {
-    ConsolePrintf("GMR ERROR %i, handler cnt %i\n", m_dat.ccr_err, m_dat.handler_cnt);
-    CCC_ERROR_HANDLE(m_dat.ccr_err);
-  }
-  return m_dat.rsp.esn.esn;
-}
-
-//-----------------------------------------------------------------------------
-//                  Additional Cmd + response parsing
-//-----------------------------------------------------------------------------
-
-#define EMMCDL_VER_MAX_LEN  20
-static char emmcdl_version[EMMCDL_VER_MAX_LEN+1];
-static int emmcdl_read_cnt;
-
-void emmcdl_ver_handler_(char* s) {
-  strncpy(emmcdl_version, s, EMMCDL_VER_MAX_LEN);
-  emmcdl_version[EMMCDL_VER_MAX_LEN] = '\0';
-  emmcdl_read_cnt++;
-}
-
-char* cmdGetEmmcdlVersion(int timeout_ms)
-{
-  memset( &emmcdl_version, 0, sizeof(emmcdl_version) );
-  emmcdl_read_cnt = 0;
-  cmdSend(CMD_IO_HELPER, "get_emmcdl_ver", timeout_ms, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN, emmcdl_ver_handler_);
-  
-  if( cmdStatus() == 0 && emmcdl_read_cnt == 1 && strlen(emmcdl_version) > 0 )
-    return emmcdl_version;
-  
-  //else
-  static const char estring[] = "read-error";
-  return (char*)estring;
-}
-
-enum temp_errs_e {
-  TEMP_ERR_HELPER_READ_FAULT  = -1, //returned by helper on file read err, bad zone etc.
-  TEMP_ERR_HELPER_NO_RESPONSE = -2, //didn't receive matching zone# response from helper
-  TEMP_ERR_HELPER_CMD_ERR     = -3, //helper returned error code to cmd
-  TEMP_ERR_LOCAL_PARSE_FAULT  = -4, //internal parsing failed
-  TEMP_ERR_LOCAL_PARSE_CNT    = -5, //parser unexpected response count
-};
-
-static int tempC, temp_cnt, temp_zone;
-
-void temperature_handler(char* s) {
-  temp_cnt++;
-  int zone = cmdParseInt32( cmdGetArg(s,0) );
-  if( zone == temp_zone ) {
-    tempC = cmdParseInt32( cmdGetArg(s,1) );
-    if( tempC == INT_MIN ) //parse failed
-      tempC = TEMP_ERR_LOCAL_PARSE_FAULT;
-  }
-}
-
-int cmdGetHelperTempC(int zone)
-{
-  char b[40]; const int bz = sizeof(b);
-  snformat(b,bz, (zone >= 0 ? "get_temperature %i" : "get_temperature 0 1 2 3 4 5 6 7 8 9"), zone);
-  
-  temp_cnt = 0;
-  temp_zone = zone >= 0 ? zone : DEFAULT_TEMP_ZONE;
-  tempC = TEMP_ERR_HELPER_NO_RESPONSE;
-  cmdSend(CMD_IO_HELPER, b, CMD_DEFAULT_TIMEOUT, CMD_OPTS_DEFAULT & ~CMD_OPTS_EXCEPTION_EN, temperature_handler);
-  
-  if( cmdStatus() != 0 )
-    return TEMP_ERR_HELPER_CMD_ERR;
-  
-  if( (zone < 0 && temp_cnt != 10) || (zone >= 0 && temp_cnt != 1) )
-    return TEMP_ERR_LOCAL_PARSE_CNT;
-  
-  return tempC > 1000 ? tempC/1000 : tempC; //some zones given in mC
 }
 

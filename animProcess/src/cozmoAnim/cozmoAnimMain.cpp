@@ -19,7 +19,7 @@
 
 #include "util/console/consoleSystem.h"
 #include "util/logging/logging.h"
-#include "util/logging/androidLogPrintLogger_android.h"
+#include "util/logging/androidLogPrintLogger_vicos.h"
 #include "util/fileUtils/fileUtils.h"
 
 // FIXME: We need to build Breakpad libs for VICOS

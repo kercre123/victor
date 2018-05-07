@@ -35,6 +35,7 @@ enum class ScreenName {
   IMUInfo,
   MotorInfo,
   Camera,
+  CameraMotorTest,
   MicInfo,
   MicDirectionClock,
   CustomText,

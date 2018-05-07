@@ -88,6 +88,7 @@
 #include "util/transport/reliableConnection.h"
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
+#include "anki/cozmo/shared/factory/faultCodes.h"
 
 #include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/highgui/highgui.hpp" // For imwrite() in ProcessImage
@@ -1229,7 +1230,16 @@ Result Robot::Update()
     _syncRobotSentTime_sec = 0.0f;
   }
 
-  if (!_gotStateMsgAfterRobotSync)
+  //////////// CameraService Update ////////////
+  CameraService::getInstance()->Update();
+
+  const Result factoryRes = UpdateStartupChecks();
+  if(factoryRes != RESULT_OK)
+  {
+    return factoryRes;
+  }
+  
+  if (!_gotStateMsgAfterTimeSync)
   {
     LOG_DEBUG("Robot.Update", "Waiting for first full robot state to be handled");
     return RESULT_OK;
@@ -1258,9 +1268,6 @@ Result Robot::Update()
      }
      lastUpdateTime = currentTime_sec;
   */
-
-  //////////// CameraService Update ////////////
-  CameraService::getInstance()->Update();
 
   if(FACTORY_TEST && !Factory::GetEMR()->fields.PACKED_OUT_FLAG)
   {
@@ -2850,6 +2857,56 @@ void Robot::DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage)
                                             explicitUpcast,
                                             shouldManage);
 }
+
+Result Robot::UpdateStartupChecks()
+{
+  enum State {
+    FAILED = -1,
+    WAITING,
+    PASSED,
+  };
+
+  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  static float firstUpdateTime_sec = currentTime_sec;
+  static State state = State::WAITING;
+
+  if(state == State::WAITING)
+  {
+    // Manually capture images here until VisionComponent is up and running
+    if(!GetVisionComponent().HasStartedCapturingImages())
+    {
+      // Try to get a frame
+      u8* buf = nullptr;
+      u32 id = 0;
+      TimeStamp_t t = 0;
+      if(CameraService::getInstance()->CameraGetFrame(buf, id, t))
+      {
+        CameraService::getInstance()->CameraReleaseFrame(id);
+      }
+    }
+    
+    // After 4 seconds, check if we have gotten a frame
+    if(currentTime_sec - firstUpdateTime_sec > 4.f)
+    {
+      using namespace RobotInterface;
+    
+      // If we haven't gotten a frame then display an error code
+      if(!CameraService::getInstance()->HaveGottenFrame())
+      {
+        state = State::FAILED;
+        FaultCode::DisplayFaultCode(FaultCode::CAMERA_FAILURE);
+      }
+      // Otherwise the camera works
+      else
+      {
+        state = State::PASSED;
+      }
+    }
+  }
+  
+  return (state == State::FAILED ? RESULT_FAIL : RESULT_OK);
+}
+
 
 } // namespace Cozmo
 } // namespace Anki

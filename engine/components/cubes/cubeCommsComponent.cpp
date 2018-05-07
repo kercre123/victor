@@ -31,6 +31,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/jsonWriter/jsonWriter.h"
 #include "util/console/consoleInterface.h"
+#include "anki/cozmo/shared/factory/emrHelper.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -73,6 +74,7 @@ CubeCommsComponent::CubeCommsComponent()
 }
 void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& dependentComponents)
 {
+  BEGIN_DONT_RUN_AFTER_PACKOUT
   _robot = robot;
   
   _blockPoolFactoryIds.clear();
@@ -124,6 +126,7 @@ void CubeCommsComponent::InitDependent(Cozmo::Robot* robot, const RobotCompMap& 
     PRINT_NAMED_ERROR("CubeCommsComponent.InitDependent.FailedToInitBleClient",
                       "Failed to initialize cubeBleClient");
   }
+  END_DONT_RUN_AFTER_PACKOUT
 }
 
 

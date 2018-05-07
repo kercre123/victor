@@ -16,5 +16,4 @@ source ${TOPLEVEL}/project/victor/scripts/victor_env.sh
 source ${TOPLEVEL}/project/victor/scripts/host_robot_ip_override.sh
 
 robot_set_host
-
 robot_cp_from -r /data/data/com.anki.victor/cache/camera/images/$1 .

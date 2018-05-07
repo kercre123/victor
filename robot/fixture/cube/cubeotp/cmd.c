@@ -219,6 +219,7 @@ int cmd_process(char* s)
     da14580_otp_header_t* binhead = (da14580_otp_header_t*)&otp_head_buf[sizeof(da14580_otp_header_t)];
     str2bdaddr( console_getargl(s,2) , &bdaddr); //try parse bd-address argument (fault clears to 0/invalid)
     otp_header_init( binhead, &bdaddr );
+    binhead->jtag_enable = OTP_HEADER_JTAG_DISABLED; //Lock JTAG
     
 //    if( nargs < 2 || (nargs > 3 /*&& !strcmp(console_getargl(s,3),"debug")*/) ) //debug
 //    {
@@ -328,6 +329,7 @@ int cmd_process(char* s)
       
       //burn the header
       writes_("burning otp header...");
+      writes_( snformat(b,bz,"JTAG %s (0x%02X)\n", binhead->jtag_enable == OTP_HEADER_JTAG_DISABLED ? "disabled" : "UNLOCKED", binhead->jtag_enable) );
       uint32_t *src  = (uint32_t*)((int)binhead    + OTP_HEADER_SIZE - 4 );
       uint32_t *dest = (uint32_t*)(OTP_ADDR_HEADER + OTP_HEADER_SIZE - 4 );
       uint32_t *end  = (uint32_t*)(OTP_ADDR_HEADER);

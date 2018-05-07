@@ -15,7 +15,7 @@
 #include "clad/types/pathEventTypes.clad"
 #include "clad/types/factoryFWOnly.clad"
 #include "clad/types/robotToSwitchboard.clad"
-
+#include "clad/robotInterface/factoryMessages.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -26,6 +26,10 @@ message SyncRobotAck
 }
 
 message RobotServerDisconnect
+{
+}
+
+message PrepForShutdown
 {
 }
 
@@ -126,8 +130,8 @@ union RobotToEngine {
   //                     Everything between the anim and robot processes is UNRELIABLE!
 
   // Init / Debug
-  SyncRobotAck               syncRobotAck           = 0xB0,
-  //  FREE SLOT!!!                                  = 0xB1,
+  SyncTimeAck                syncTimeAck            = 0xB0,
+  PrepForShutdown            prepForShutdown        = 0xB1,
   MotorActionAck             motorActionAck         = 0xB2,
 
   // Motors / Driving
@@ -161,6 +165,7 @@ union RobotToEngine {
   // TODO: Can probably get rid of these eventually since engine
   //       can access most of this info directly now.
   FWVersionInfo              factoryFirmwareVersion = 0xC9, ///< DEPRECATED, only used by factory firmware
+  RunFactoryTest             runFactoryTest         = 0xCA,
   ManufacturingID            mfgId                  = 0xCB,
   FirmwareVersion            firmwareVersion        = 0xCC,
 

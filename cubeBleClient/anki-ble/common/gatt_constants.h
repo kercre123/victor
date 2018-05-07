@@ -100,7 +100,6 @@ const uint8_t kGattWriteTypeNoResponse = 1;
 const uint8_t kGattWriteTypeWithResponse = 2;
 const uint8_t kGattWriteTypePrepare = 3;
 
-
 const int kGattConnectionIntervalMinimumDefault = 24; /* 30ms = 24 * 1.25ms */
 const int kGattConnectionIntervalMaximumDefault = 40; /* 50ms = 40 * 1.25ms */
 const int kGattConnectionLatencyDefault = 0;

@@ -13,7 +13,9 @@ import tarfile
 import zlib
 import shutil
 import ConfigParser
-from hashlib import sha256
+from Crypto.Cipher import AES
+from Crypto.Util.number import bytes_to_long, long_to_bytes
+from hashlib import sha256, md5
 from collections import OrderedDict
 
 BOOT_DEVICE = "/dev/block/bootdevice/by-name"
@@ -29,12 +31,21 @@ DONE_FILE = os.path.join(STATUS_DIR, "done")
 MANIFEST_FILE = os.path.join(STATUS_DIR, "manifest.ini")
 MANIFEST_SIG = os.path.join(STATUS_DIR, "manifest.sha256")
 BOOT_STAGING = os.path.join(STATUS_DIR, "boot.img")
+DELTA_STAGING = os.path.join(STATUS_DIR, "delta.bin")
 OTA_PUB_KEY = "/anki/etc/ota.pub"
+OTA_ENC_PASSWORD = "/anki/etc/ota.pas"
 DD_BLOCK_SIZE = 1024*256
-SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4"]
+SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5"]
 
 DEBUG = False
-SIGNATURE_VALIDATION_DISABLED = True
+SIGNATURE_VALIDATION_DISABLED = False
+
+
+def safe_delete(name):
+    if os.path.isfile(name):
+        os.remove(name)
+    elif os.path.isdir(name):
+        shutil.rmtree(name)
 
 def clear_status():
     "Clear everything out of the status directory"
@@ -147,6 +158,21 @@ def get_manifest(fileobj):
     return config
 
 
+def get_section_encryption(manifest, section):
+    "Returns the encryption setting of the section"
+    try:
+        enc = manifest.getint(section, "encryption")
+    except ConfigParser.NoOptionError:
+        enc = 0
+    return enc
+
+
+def get_password():
+    "Returns the encryption password"
+    return open(OTA_ENC_PASSWORD, "rb").read()
+
+
+
 def open_url_stream(url):
     "Open a URL as a filelike stream"
     try:
@@ -203,13 +229,64 @@ class ShaFile(object):
         return self.len
 
 
+class AESCtr(object):
+    "AES Counter Object"
+    def __init__(self, nonce):
+        self.c = bytes_to_long(nonce)
+
+    def __call__(self):
+        r = long_to_bytes(self.c)
+        self.c += 1
+        return r
+
+
+class CryptStream(ShaFile):
+    "A file like object for decrypting openssl created AES-256-CTR data"
+
+    def __init__(self, fileobj, password, calc_sha=False):
+        "Initalize the CryptStream from a source file object and password"
+        ShaFile.__init__(self, fileobj)
+        def evp_bytes_to_key(password, salt, key_len, iv_len):
+            "Private key parsing function"
+            m = md5()
+            m.update(password)
+            m.update(salt)
+            dtot = m.digest()
+            d = [dtot]
+            while len(dtot) < (iv_len + key_len):
+                m = md5()
+                m.update(d[-1])
+                m.update(password)
+                m.update(salt)
+                d.append(m.digest())
+                dtot = dtot + d[-1]
+            return bytes(dtot[:key_len]), bytes(dtot[key_len:key_len+iv_len])
+
+        magic = fileobj.read(8)
+        if magic != 'Salted__':
+            raise ValueError('Openssl magic not found')
+        salt = fileobj.read(8)
+        (key, iv) = evp_bytes_to_key(password, salt, 32, 16)
+        self.aes_decrypter = AES.new(key, AES.MODE_CTR, counter=AESCtr(iv))
+        self.do_sha = calc_sha
+
+    def read(self, *args):
+        "Read method for crypt stream"
+        block = self.aes_decrypter.decrypt(self.fileobj.read(*args))
+        if self.do_sha:
+            self.sum.update(block)
+        self.len += len(block)
+        return block
+
+
 def GZStreamGenerator(fileobj, block_size, wbits):
     "A generator for decompressing gzip data from a filelike object"
     decompressor = zlib.decompressobj(wbits)
     block = fileobj.read(block_size)
-    while len(block) == block_size:
+    while len(block) >= block_size:
         yield decompressor.decompress(block, block_size)
-        block = decompressor.unconsumed_tail + fileobj.read(block_size - len(decompressor.unconsumed_tail))
+        if len(decompressor.unconsumed_tail) < block_size:
+            block = decompressor.unconsumed_tail + fileobj.read(block_size - len(decompressor.unconsumed_tail))
     output_block = decompressor.decompress(block, block_size)
     while len(output_block) == block_size:
         yield output_block
@@ -232,7 +309,13 @@ def handle_boot_system(target_slot, manifest, tar_stream):
     wbits = manifest.getint("BOOT", "wbits")
     digest = sha256()
     with open(BOOT_STAGING, "wb") as boot_fh:
-        for boot_block in GZStreamGenerator(tar_stream.extractfile(boot_ti), DD_BLOCK_SIZE, wbits):
+        src_file = tar_stream.extractfile(boot_ti)
+        enc = get_section_encryption(manifest, "BOOT")
+        if enc == 1:
+            src_file = CryptStream(src_file, get_password())
+        elif enc != 0:
+            die(210, "Unsupported enc value")
+        for boot_block in GZStreamGenerator(src_file, DD_BLOCK_SIZE, wbits):
             boot_fh.write(boot_block)
             digest.update(boot_block)
             written_size += len(boot_block)
@@ -253,7 +336,13 @@ def handle_boot_system(target_slot, manifest, tar_stream):
     wbits = manifest.getint("SYSTEM", "wbits")
     digest = sha256()
     with open_slot("system", target_slot, "w") as system_slot:
-        for system_block in GZStreamGenerator(tar_stream.extractfile(system_ti), DD_BLOCK_SIZE, wbits):
+        src_file = tar_stream.extractfile(system_ti)
+        enc = get_section_encryption(manifest, "SYSTEM")
+        if enc == 1:
+            src_file = CryptStream(src_file, get_password())
+        elif enc != 0:
+            die(210, "Unsupported enc value")
+        for system_block in GZStreamGenerator(src_file, DD_BLOCK_SIZE, wbits):
             system_slot.write(system_block)
             digest.update(system_block)
             written_size += len(system_block)
@@ -323,9 +412,57 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
     delta_base_version = manifest.get("DELTA", "base_version")
     if current_version != delta_base_version:
         die(211, "My version is {} not {}".format(current_version, delta_base_version))
-    write_status(EXPECTED_WRITE_SIZE_FILE, manifest.getint("DELTA", "bytes"))
+    total_size = manifest.getint("DELTA", "bytes")
+    write_status(EXPECTED_WRITE_SIZE_FILE, total_size)
+    written_size = 0
     write_status(PROGRESS_FILE, 0)
-    die(207, "Delta updates not actually implemented")
+    # Extract delta file
+    if DEBUG:
+        print("Delta")
+    delta_ti = tar_stream.next()
+    if not delta_ti.name.endswith("delta.bin.gz"):
+        die(200,
+            "Expected delta.bin.gz to be next in tar but found \"{}\""
+            .format(delta_ti.name))
+    wbits = manifest.getint("DELTA", "wbits")
+    digest = sha256()
+    with open(DELTA_STAGING, "wb") as delta_fh:
+        src_file = tar_stream.extractfile(delta_ti)
+        enc = get_section_encryption(manifest, "DELTA")
+        if enc == 1:
+            src_file = CryptStream(src_file, get_password())
+        elif enc != 0:
+            die(210, "Unsupported enc value")
+        for delta_block in GZStreamGenerator(src_file, DD_BLOCK_SIZE, wbits):
+            delta_fh.write(delta_block)
+            digest.update(delta_block)
+            written_size += len(delta_block)
+            write_status(PROGRESS_FILE, written_size)
+            if DEBUG:
+                sys.stdout.write("{0:0.3f}\r".format(float(written_size)/float(total_size)))
+                sys.stdout.flush()
+    # Verify delta hash
+    if digest.hexdigest() != manifest.get("DELTA", "sha256"):
+        safe_delete(DELTA_STAGING)
+        die(209, "delta.bin hash doesn't match manifest value")
+    paycheck = subprocess.Popen(["/usr/bin/paycheck.py",
+                                 "--do-not-truncate-to-expected-size",
+                                 DELTA_STAGING,
+                                 os.path.join(BOOT_DEVICE, "boot_" + target_slot),
+                                 os.path.join(BOOT_DEVICE, "system_" + target_slot),
+                                 os.path.join(BOOT_DEVICE, "boot_" + current_slot),
+                                 os.path.join(BOOT_DEVICE, "system_" + current_slot)],
+                                shell=False,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+    ret_code = paycheck.wait()
+    paycheck_out, paycheck_err = paycheck.communicate()
+    safe_delete(DELTA_STAGING)
+    if ret_code != 0:
+        die(219,
+            "Failed to apply delta. paycheck.py returned {0}\n{1}\n{2}"
+            .format(ret_code, paycheck_out, paycheck_err))
+
 
 
 def handle_anki(current_slot, target_slot, manifest, tar_stream):
@@ -345,7 +482,14 @@ def handle_anki(current_slot, target_slot, manifest, tar_stream):
         shutil.rmtree(anki_path)
         write_status(PROGRESS_FILE, 2)
         anki_ti = tar_stream.next()
-        sha_fh = ShaFile(tar_stream.extractfile(anki_ti))
+        src_file = tar_stream.extractfile(anki_ti)
+        enc = get_section_encryption(manifest, "ANKI")
+        if enc == 1:
+            sha_fh = CryptStream(src_file, get_password(), True)
+        elif enc != 0:
+            die(210, "Unsupported enc value")
+        else:
+            sha_fh = ShaFile(src_file)
         anki_tar = make_tar_stream(sha_fh, "r|" + manifest.get("ANKI", "compression"))
         anki_tar.extractall(MOUNT_POINT)
         update_build_props(MOUNT_POINT)
@@ -421,13 +565,16 @@ def update_from_url(url):
         elif num_images == 1:
             if manifest.has_section("DELTA"):
                 handle_delta(current_slot, target_slot, manifest, tar_stream)
-            if manifest.has_section("ANKI"):
+            elif manifest.has_section("ANKI"):
                 handle_anki(current_slot, target_slot, manifest, tar_stream)
             else:
                 die(201, "One image specified but not DELTA or ANKI")
         else:
             die(201, "Unexpected manifest configuration")
     stream.close()
+    # Ensure new images are synced to disk
+    if not call(["/bin/sync"]):
+        die(208, "Couldn't sync OS images to disk")
     # Mark the slot bootable now
     if not call(["/bin/bootctl", current_slot, "set_active", target_slot]):
         die(202, "Could not set target slot as active")

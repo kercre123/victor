@@ -270,6 +270,8 @@ protected:
   virtual void OnBehaviorEnteredActivatableScope() { }
   virtual void OnBehaviorLeftActivatableScope() { }
 
+  virtual void OnBehaviorEnteredActivatableScope() { };
+  
   virtual void OnBehaviorActivated() = 0;
   
   void InitInternal() override final;

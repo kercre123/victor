@@ -24,6 +24,9 @@
 #include "timeProfiler.h"
 #include "wheelController.h"
 
+#ifndef SIMULATOR
+#include <unistd.h>
+#endif
 
 namespace Anki {
   namespace Cozmo {
@@ -49,7 +52,6 @@ namespace Anki {
         const u32 MAIN_TOO_LATE_TIME_THRESH_USEC = ROBOT_TIME_STEP_MS * 1500;  // Normal cycle time plus 50% margin
         const u32 MAIN_TOO_LONG_TIME_THRESH_USEC = 700;
         const u32 MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC = 1000000;
-
       } // Robot private namespace
 
       //
@@ -110,6 +112,95 @@ namespace Anki {
         BackpackLightController::TurnOffAll();
       }
 
+      void CheckForShutdown()
+      {
+        // Shutdown sequence will be begin if the button is held down for this
+        // amount of time
+        static const int SHUTDOWN_TIME_MS = 4000;
+
+        // Wait this amount of time after sending PrepForShutdown message and calling
+        // sync(). The assumption is that whoever is handling the PrepForShutdown message
+        // is able to do so within this amount of time
+        static const int TIME_TO_WAIT_UNTIL_SYNC_MS = 350;
+
+        // Wait this amount of time after syncing before sending the shutdown
+        // command to syscon
+        static const int TIME_TO_WAIT_AFTER_SYNC_MS = 100;
+        
+        enum ShutdownState
+        {
+          NONE,
+          START,
+          SYNC,
+        };
+        static ShutdownState state = NONE;
+        static bool buttonWasPressed = false;
+        static TimeStamp_t timeMark_ms = 0;
+        static bool buttonReleasedAfterShutdownStarted = false;
+        
+        const TimeStamp_t curTime_ms = HAL::GetTimeStamp();
+        const bool buttonIsPressed = HAL::GetButtonState(HAL::ButtonID::BUTTON_POWER);
+
+        if(state != NONE && !buttonIsPressed)
+        {
+          buttonReleasedAfterShutdownStarted = true;
+        }
+        
+        switch(state)
+        {
+          case NONE:
+            if(buttonIsPressed)
+            {
+              // If button has just been pressed, record time
+              if(!buttonWasPressed)
+              {
+                timeMark_ms = curTime_ms;
+              }
+              // If button has been held down for more than SHUTDOWN_TIME_MS
+              else if(curTime_ms - timeMark_ms > SHUTDOWN_TIME_MS)
+              {
+                timeMark_ms = curTime_ms;
+                state = START;
+                // Send a shutdown message to anim/engine
+                AnkiWarn("CozmoBot.CheckForButtonHeld.Shutdown", "Sending PrepForShutdown");
+                RobotInterface::PrepForShutdown msg;
+                RobotInterface::SendMessage(msg);
+              }
+            }
+            else
+            {
+              timeMark_ms = 0;
+            }
+            break;
+
+          case START:
+            // If it has been more than TIME_TO_WAIT_UNTIL_SYNC_MS
+            // then we should sync()
+            if(curTime_ms - timeMark_ms > TIME_TO_WAIT_UNTIL_SYNC_MS)
+            {
+              AnkiWarn("CozmoBot.CheckForButtonHeld.Sync", "");
+              sync();
+              state = SYNC;
+              timeMark_ms = curTime_ms;
+            }
+            break;
+ 
+          case SYNC:
+            // Waiting for either the button to be released
+            // or syscon's power down time to be reached
+            if(buttonReleasedAfterShutdownStarted &&
+               curTime_ms - timeMark_ms > TIME_TO_WAIT_AFTER_SYNC_MS)
+            {
+              AnkiWarn("CozmoBot.CheckForButtonHeld.HALShutdown","");
+              HAL::Shutdown();
+            }
+            break;
+        }
+
+        buttonWasPressed = buttonIsPressed;
+      }
+
+      
       Result step_MainExecution()
       {
         EventStart(EventType::MAIN_STEP);
@@ -129,7 +220,7 @@ namespace Anki {
           }
         }
 
-
+        CheckForShutdown();
 /*
         // Test code for measuring number of mainExecution tics per second
         static u32 cnt = 0;

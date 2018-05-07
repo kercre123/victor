@@ -15,6 +15,7 @@
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logEvent.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/factory/faultCodes.h"
 
 #include "../spine/spine.h"
 #include "../spine/cc_commander.h"
@@ -74,6 +75,7 @@ namespace { // "Private members"
 
 // Forward Declarations
 Result InitRadio();
+void StopRadio();
 void InitIMU();
 void StopIMU();
 void ProcessIMUEvents();
@@ -89,11 +91,45 @@ extern "C" {
   }
 }
 
+// Tries to select from the spine fd
+// If it times out too many times then
+// syscon must be hosed or there is no spine
+// connection
+bool check_select_timeout(spine_ctx_t spine)
+{
+  int fd = spine_get_fd(spine);
+
+  static u8 selectTimeoutCount = 0;
+  if(selectTimeoutCount >= 5)
+  {
+    return true;
+  }
+
+  static fd_set fdSet;
+  FD_ZERO(&fdSet);
+  FD_SET(fd, &fdSet);
+  static timeval timeout;
+  timeout.tv_sec = 1;
+  timeout.tv_usec = 0;
+  ssize_t s = select(FD_SETSIZE, &fdSet, NULL, NULL, &timeout);
+  if(s == 0)
+  {
+    selectTimeoutCount++;
+    return true;
+  }
+  return false;
+}
+
 ssize_t robot_io(spine_ctx_t spine)
 {
   int fd = spine_get_fd(spine);
 
   EventStart(EventType::ROBOT_IO_READ);
+
+  if(check_select_timeout(spine))
+  {
+    return -1;
+  }
 
   ssize_t r = read(fd, readBuffer_, sizeof(readBuffer_));
 
@@ -117,12 +153,23 @@ ssize_t robot_io(spine_ctx_t spine)
 
 Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
 {
+  TimeStamp_t startWait_ms = HAL::GetTimeStamp();
   bool initialized = false;
   int read_count = 0;
 
   assert(shutdownSignal != nullptr);
 
   while (!initialized && *shutdownSignal == 0) {
+    // If we spend more than 2 seconds waiting for the first frame,
+    // something must be wrong. Likely there is no body or head to body
+    // connection
+    if(HAL::GetTimeStamp() - startWait_ms > 2000)
+    {
+      AnkiError("spine_wait_for_first_frame.timeout","");
+      FaultCode::DisplayFaultCode(FaultCode::NO_BODY);
+      return RESULT_FAIL;
+    }
+
     ssize_t r = spine_parse_frame(spine, &frameBuffer_, sizeof(frameBuffer_), NULL);
 
     if (r < 0) {
@@ -197,7 +244,15 @@ Result HAL::Init(const int * shutdownSignal)
     spine_set_mode(&spine_, RobotMode_RUN);
 
     AnkiDebug("HAL.Init.WaitingForDataFrame", "");
-    const Result result = spine_wait_for_first_frame(&spine_, shutdownSignal);
+
+    const Result res =  spine_wait_for_first_frame(&spine_, shutdownSignal);
+    if(res != RESULT_OK)
+    {
+      AnkiError("HAL.Init.NoFirstFrame", "");
+      return res;
+    }
+    AnkiDebug("HAL.Init.GotFirstFrame", "");
+
     request_version();  //get version so we have it when we need it.
     if (RESULT_OK != result) {
       AnkiError("HAL.Init.SpineWait", "Unable to synchronize spine (result %d)", result);
@@ -382,6 +437,8 @@ Result HAL::Step(void)
 
 void HAL::Stop()
 {
+  AnkiInfo("HAL.Stop", "");
+  StopRadio();
   StopIMU();
 }
 
@@ -529,6 +586,7 @@ u8 HAL::GetWatchdogResetCounter()
 
 void HAL::Shutdown()
 {
+  HAL::Stop();
   spine_shutdown(&spine_);
 }
 

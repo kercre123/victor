@@ -13,6 +13,7 @@
 #include "meter.h"
 #include "motorled.h"
 #include "nvReset.h"
+#include "robotcom.h"
 #include "timer.h"
 
 // Which character to escape into command code
@@ -376,7 +377,6 @@ static void BinVersionCmd(void)
   binPrintInfo(format_csv);
 }
 
-extern void HelperLcdSetLine(int n, const char* line);
 static void emmcdlVersionCmd(void)
 {
   int display = 0, timeout_ms = 0;
@@ -389,11 +389,11 @@ static void emmcdlVersionCmd(void)
   
   //read version from head and format display string
   char b[31]; int bz=sizeof(b);
-  snformat(b,bz,"emmcdl: %s", cmdGetEmmcdlVersion(timeout_ms));
+  snformat(b,bz,"emmcdl: %s", helperGetEmmcdlVersion(timeout_ms));
   ConsolePrintf("%s\n", b);
   
   if( display ) {
-    HelperLcdSetLine(2, b);
+    helperLcdSetLine(2, b);
     SetFixtureText();
   }
 }
@@ -403,7 +403,7 @@ static void GetTemperatureCmd(void)
   int zone = DEFAULT_TEMP_ZONE;
   try { zone = strtol(GetArgument(1),0,0); } catch (int e) { }
   
-  int tempC = cmdGetHelperTempC(zone);
+  int tempC = helperGetTempC(zone);
   ConsolePrintf("zone %i: %iC\n", zone >= 0 ? zone : DEFAULT_TEMP_ZONE, tempC);
 }
 
