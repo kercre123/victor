@@ -44,6 +44,10 @@ private:
   void HandleMotorControl_MoveHead(Anki::Cozmo::ExternalComms::MoveHead sdkMessage);
   void HandleMotorControl_MoveLift(Anki::Cozmo::ExternalComms::MoveLift sdkMessage);
 
+  void HandleAnimations(Anki::Cozmo::ExternalComms::Animations unionInstance);
+  void HandleAnimations_PlayAnimation(Anki::Cozmo::ExternalComms::PlayAnimation sdkMessage);
+  void HandleAnimations_RequestAvailableAnimations(Anki::Cozmo::ExternalComms::RequestAvailableAnimations sdkMessage);
+
   void HandleMovementAction(Anki::Cozmo::ExternalComms::MovementAction unionInstance);
   void HandleMovementAction_DriveOffChargerContacts(Anki::Cozmo::ExternalComms::DriveOffChargerContacts sdkMessage);
   void HandleMovementAction_DriveStraight(Anki::Cozmo::ExternalComms::DriveStraight sdkMessage);

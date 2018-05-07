@@ -62,18 +62,47 @@ void WebsocketMessageHandler::HandleMotorControl_MoveLift( Anki::Cozmo::External
 }
 
 void WebsocketMessageHandler::HandleMotorControl(Anki::Cozmo::ExternalComms::MotorControl unionInstance) {
+    switch(unionInstance.GetTag()) {
+      case Anki::Cozmo::ExternalComms::MotorControlTag::DriveWheels:
+          HandleMotorControl_DriveWheels( unionInstance.Get_DriveWheels() );
+          break;
+      case Anki::Cozmo::ExternalComms::MotorControlTag::DriveArc:
+          HandleMotorControl_DriveArc( unionInstance.Get_DriveArc() );
+          break;
+      case Anki::Cozmo::ExternalComms::MotorControlTag::MoveHead:
+          HandleMotorControl_MoveHead( unionInstance.Get_MoveHead() );
+          break;
+      case Anki::Cozmo::ExternalComms::MotorControlTag::MoveLift:
+          HandleMotorControl_MoveLift( unionInstance.Get_MoveLift() );
+          break;
+      default:
+          return;
+    }
+}
+
+void WebsocketMessageHandler::HandleAnimations_PlayAnimation(Anki::Cozmo::ExternalComms::PlayAnimation sdkMessage) {
+  Anki::Cozmo::ExternalInterface::PlayAnimation engineMessage;
+  engineMessage.numLoops = sdkMessage.numLoops;
+  engineMessage.animationName = sdkMessage.animationName;
+  engineMessage.ignoreBodyTrack = sdkMessage.ignoreBodyTrack;
+  engineMessage.ignoreHeadTrack = sdkMessage.ignoreHeadTrack;
+  engineMessage.ignoreLiftTrack = sdkMessage.ignoreLiftTrack;
+  _engineMessaging->SendMessage(G2EMessage::CreatePlayAnimation(std::move(engineMessage)));
+}
+
+void WebsocketMessageHandler::HandleAnimations_RequestAvailableAnimations(Anki::Cozmo::ExternalComms::RequestAvailableAnimations sdkMessage) {
+  Anki::Cozmo::ExternalInterface::RequestAvailableAnimations engineMessage;
+  _engineMessaging->SendMessage(G2EMessage::CreateRequestAvailableAnimations(std::move(engineMessage)));
+}
+
+void WebsocketMessageHandler::HandleAnimations(Anki::Cozmo::ExternalComms::Animations unionInstance) {
+  using AnimationsTag = Anki::Cozmo::ExternalComms::AnimationsTag;
   switch(unionInstance.GetTag()) {
-    case Anki::Cozmo::ExternalComms::MotorControlTag::DriveWheels:
-      HandleMotorControl_DriveWheels( unionInstance.Get_DriveWheels() );
+    case AnimationsTag::playAnimation:
+      HandleAnimations_PlayAnimation(unionInstance.Get_playAnimation());
       break;
-    case Anki::Cozmo::ExternalComms::MotorControlTag::DriveArc:
-      HandleMotorControl_DriveArc( unionInstance.Get_DriveArc() );
-      break;
-    case Anki::Cozmo::ExternalComms::MotorControlTag::MoveHead:
-      HandleMotorControl_MoveHead( unionInstance.Get_MoveHead() );
-      break;
-    case Anki::Cozmo::ExternalComms::MotorControlTag::MoveLift:
-      HandleMotorControl_MoveLift( unionInstance.Get_MoveLift() );
+    case AnimationsTag::requestAvailableAnimations:
+      HandleAnimations_RequestAvailableAnimations(unionInstance.Get_requestAvailableAnimations());
       break;       
      default:
       return;
@@ -235,6 +264,9 @@ void WebsocketMessageHandler::Receive(uint8_t* buffer, size_t size) {
   switch (extComms.GetTag()) {
     case ExtCommsMessageTag::MotorControl:
        HandleMotorControl(extComms.Get_MotorControl());
+       break;
+    case ExtCommsMessageTag::Animations:
+       HandleAnimations(extComms.Get_Animations());
        break;
     case ExtCommsMessageTag::MovementAction:
        HandleMovementAction(extComms.Get_MovementAction());
