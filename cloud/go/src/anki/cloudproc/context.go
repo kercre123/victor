@@ -19,7 +19,8 @@ type voiceContext struct {
 	process     *Process
 	bytes       []byte
 	audioStream chan []byte
-	once        sync.Once
+	initOnce    sync.Once
+	respOnce    sync.Once
 	closed      bool
 }
 
@@ -80,30 +81,34 @@ func (ctx *voiceContext) sendAudio(samples []byte, cloudChan cloudChans) {
 	})
 	if err != nil {
 		log.Println("Cloud error:", err)
-		cloudChan.err <- err.Error()
+		ctx.respOnce.Do(func() {
+			cloudChan.err <- err.Error()
+		})
 		return
 	}
 	logVerbose("Sent", len(samples), "bytes to Chipper (call took", int(sendTime), "ms)")
 
 	// set up response routine if this is the first stream
-	ctx.once.Do(func() {
+	ctx.initOnce.Do(func() {
 		go func() {
 			resp, err := ctx.stream.WaitForIntent()
-			if ctx.closed {
-				if err != nil {
-					log.Println("Ignoring error on closed context")
-				} else {
-					log.Println("Ignoring response on closed context")
+			ctx.respOnce.Do(func() {
+				if ctx.closed {
+					if err != nil {
+						log.Println("Ignoring error on closed context")
+					} else {
+						log.Println("Ignoring response on closed context")
+					}
+					return
 				}
-				return
-			}
-			if err != nil {
-				log.Println("CCE error:", err)
-				cloudChan.err <- err.Error()
-				return
-			}
-			log.Println("Intent response ->", resp)
-			sendResponse(resp, cloudChan)
+				if err != nil {
+					log.Println("CCE error:", err)
+					cloudChan.err <- err.Error()
+					return
+				}
+				log.Println("Intent response ->", resp)
+				sendResponse(resp, cloudChan)
+			})
 		}()
 	})
 }
