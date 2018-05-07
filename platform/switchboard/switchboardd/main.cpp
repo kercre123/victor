@@ -61,6 +61,11 @@ void Daemon::Start() {
   _handleOtaTimer.signal = &_otaUpdateTimerSignal;
   _otaUpdateTimerSignal.SubscribeForever(std::bind(&Daemon::HandleOtaUpdateProgress, this));
   ev_timer_init(&_handleOtaTimer.timer, &Daemon::sEvTimerHandler, kOtaUpdateInterval_s, kOtaUpdateInterval_s);
+
+  // Initialize Pairing Timer
+  _pairingTimer.signal = &_pairingPreConnectionSignal;
+  _pairingPreConnectionSignal.SubscribeForever(std::bind(&Daemon::HandlePairingTimeout, this));
+  ev_timer_init(&_pairingTimer.timer, &Daemon::sEvTimerHandler, kPairingPreConnectionTimeout_s, 0);
 }
 
 void Daemon::Stop() {
@@ -221,6 +226,9 @@ void Daemon::UpdateAdvertisement(bool pairing) {
 void Daemon::OnConnected(int connId, INetworkStream* stream) {
   Log::Write("OnConnected");
   _taskExecutor->Wake([connId, stream, this](){
+    // Stop pairing timer
+    ev_timer_stop(_loop, &_pairingTimer.timer);
+
     Log::Write("Connected to a BLE central.");
     _connectionId = connId;
 
@@ -287,6 +295,14 @@ void Daemon::OnCompletedPairing() {
   // Handle Successful Pairing Event
   // (for now, the handling may be no different than failed pairing)
   UpdateAdvertisement(false);
+}
+
+void Daemon::HandlePairingTimeout() {
+  Log::Write("[PT] Pairing timed-out before connection made.");
+  UpdateAdvertisement(false);
+  if(_engineMessagingClient != nullptr) {
+    _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::END_PAIRING);
+  }
 }
 
 void Daemon::HandleOtaUpdateProgress() {
@@ -452,6 +468,9 @@ void Daemon::OnPairingStatus(Anki::Cozmo::ExternalInterface::MessageEngineToGame
       
       UpdateAdvertisement(true);
       _engineMessagingClient->ShowPairingStatus(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SHOW_PRE_PIN);
+      ev_timer_set(&_pairingTimer.timer, kPairingPreConnectionTimeout_s, 0);
+      ev_timer_start(_loop, &_pairingTimer.timer);
+      Log::Write("[PT] Starting pairing timer... pairing will timeout in %d seconds.", kPairingPreConnectionTimeout_s);
       break;
     }
     case Anki::Cozmo::ExternalInterface::MessageEngineToGameTag::ExitPairing: {
