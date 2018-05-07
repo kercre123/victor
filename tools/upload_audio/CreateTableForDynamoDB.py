@@ -15,22 +15,6 @@ table = dynamodb.create_table(
             'AttributeName': 'date',
             'KeyType': 'RANGE'  #Sort key
         }
-        # {
-        #     'AttributeName': 'age',
-        #     'KeyType': 'RANGE'  #Sort key
-        # },
-        # {
-        #     'AttributeName': 'gender',
-        #     'KeyType': 'RANGE'  #Sort key
-        # },
-        # {
-        #     'AttributeName': 'distance',
-        #     'KeyType': 'RANGE'  #Sort key
-        # },
-        # {
-        #     'AttributeName': 'dbpath',
-        #     'KeyType': 'RANGE'  #Sort key
-        # }
     ],
     AttributeDefinitions=[
         {
@@ -41,23 +25,6 @@ table = dynamodb.create_table(
             'AttributeName': 'date',
             'AttributeType': 'S'
         }
-        # {
-        #     'AttributeName': 'age',
-        #     'AttributeType': 'S'
-        # },
-        # {
-        #     'AttributeName': 'gender',
-        #     'AttributeType': 'S'
-        # },
-        # {
-        #     'AttributeName': 'distance',
-        #     'AttributeType': 'S'
-        # },
-        # {
-        #     'AttributeName': 'dbpath',
-        #     'AttributeType': 'S'
-        # }
-
     ],
     ProvisionedThroughput={
         'ReadCapacityUnits': 2,

@@ -19,13 +19,6 @@ from dropbox.files import WriteMode
 from dropbox.exceptions import ApiError, AuthError
 import settings
 
-# Access token
-# TOKEN = '<Generated after after App creation in step 2 in Prerequisites>'
-# TOKEN = '3SuO4H3AFGAAAAAAAAAABV0ZCvK-Z1y8tIy94Tju3X8fPrUEw7buJYucpZCMKIrl'
-
-# LOCALFILE = 'D:\\2016.txt'
-# BACKUPPATH = '/backup.txt' # Keep the forward slash before destination filename
-
 class DropboxFileUploader():
 
     TOKEN = settings.TOKEN

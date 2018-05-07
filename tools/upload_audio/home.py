@@ -1,7 +1,5 @@
 from flask import Flask, flash, redirect, render_template, request, session, abort
 from werkzeug import secure_filename
-# import sys
-# sys.path.insert(0, 'dropbox/')
 import os, json, shutil
 from DropboxFileUploader import DropboxFileUploader
 from DynamoDB import DynamoDB
@@ -16,7 +14,6 @@ DATADIR = os.path.join(SRCDIR, 'upload')
 @app.route("/")
 def home():
     return render_template('home.html')
-
 
 @app.route("/query", methods=['GET', 'POST'])
 def query():
@@ -42,8 +39,6 @@ def query():
             return render_template('data_table.html', list = dataList)
     return render_template('query.html')
 
-
-
 @app.route("/upload", methods=['GET', 'POST'])
 def upload():
     if request.method == 'POST':
@@ -54,7 +49,7 @@ def upload():
         date = request.form['date']
         gender = request.form['radio']
         file_obj = request.files['file']
-        #########################
+
         if file_obj:
             filename = secure_filename(file_obj.filename)
             file_full = os.path.join(DATADIR, filename)

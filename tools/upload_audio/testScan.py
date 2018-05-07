@@ -26,21 +26,7 @@ esk = None
 
 
 response = table.scan(
-    FilterExpression=Key('age').eq('43')
-    # ProjectionExpression=pe,
-    # ExpressionAttributeNames=ean
-    )
+    FilterExpression=Key('age').eq('43'))
 
 for i in response['Items']:
     print(json.dumps(i, cls=DecimalEncoder))
-
-# while 'LastEvaluatedKey' in response:
-#     response = table.scan(
-#         # ProjectionExpression=pe,
-#         # FilterExpression=Attr('name').eq('efdef'),
-#         # ExpressionAttributeNames= ean,
-#         # ExclusiveStartKey=response['LastEvaluatedKey']
-#         )
-
-#     for i in response['Items']:
-#         print(json.dumps(i, cls=DecimalEncoder))
