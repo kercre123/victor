@@ -5,11 +5,14 @@
 
 #include "touch.h"
 
-static uint16_t touch;
+static const int OVERSAMPLE = 8;
+static const int MAX_SAMPLE_TIME = 0xFFFF / OVERSAMPLE;
+static int samples;
+static uint32_t touch;
 
 void Touch::init(void) {
   TIM16->PSC = 0;
-  TIM16->ARR = 0xFFFF;
+  TIM16->ARR = MAX_SAMPLE_TIME;
 
   TIM16->CCMR1 = 0
     | (TIM_CCMR1_IC1F_0 * 4)    // Four sample debounce
@@ -33,24 +36,32 @@ void Touch::init(void) {
   NVIC_SetPriority(TIM16_IRQn, PRIORITY_TOUCH_SENSE);
 }
 
-extern "C" void TIM16_IRQHandler(void) {
-  touch = (TIM16->SR & TIM_SR_CC1IF) ? TIM16->CCR1 : 0xFFFF;
-
-  CAPO::reset();
-  TIM16->SR = 0;
-}
-
-void Touch::transmit(uint16_t* data) {
-  *data = touch;
-}
-
-void Touch::tick(void) {
-  // Start Counting
-  __disable_irq();
+static void kickoff() {
   TIM16->CR1 = 0
     | TIM_CR1_OPM               // One pulse mode
     | TIM_CR1_CEN               // Enabled
     ;
   CAPO::set();
+}
+
+extern "C" void TIM16_IRQHandler(void) {
+  touch += (TIM16->SR & TIM_SR_CC1IF) ? TIM16->CCR1 : MAX_SAMPLE_TIME;
+
+  CAPO::reset();
+  TIM16->SR = 0;
+
+  if (--samples) kickoff();
+}
+
+void Touch::transmit(uint16_t* data) {
+  *data = (uint16_t) touch;
+}
+
+void Touch::tick(void) {
+  samples = OVERSAMPLE;
+
+  // Start Counting
+  __disable_irq();
+  kickoff();
   __enable_irq();
 }
