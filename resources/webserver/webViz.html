@@ -371,10 +371,19 @@
       }, dt);
     }
 
+    var hasShownAlert = false;
     var onNewData = function(moduleName, data) {
       if( typeof modules[moduleName] !== 'undefined' ) {
         var elem = $('#tab-' + moduleName)[0];
-        modules[moduleName].onData(data, elem);
+        try {
+          modules[moduleName].onData(data, elem);
+        } catch(err) {
+          console.log(err);
+          if( !hasShownAlert ) {
+            alert('The module ' + moduleName + ' has an error. Displayed results may be invalid');
+            hasShownAlert = true;
+          }
+        }
       }
     }
 
