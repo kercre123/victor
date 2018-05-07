@@ -101,7 +101,7 @@ Result BehaviorSystemManager::InitConfiguration(Robot& robot,
     DEV_ASSERT(baseBehavior != nullptr, "BehaviorSystemManager.InitConfiguration.ForcingPlaypen.Null");
   }
 
-  // Assumes there's only one instance of the behavior external Intarfec
+  // Assumes there's only one instance of the behavior external interface
   _behaviorExternalInterface = &behaviorExternalInterface;
   _asyncMessageComponent = asyncMessageComponent;
   ResetBehaviorStack(baseBehavior);
