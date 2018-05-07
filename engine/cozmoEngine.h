@@ -64,7 +64,6 @@ class CozmoContext;
 class UiMessageHandler;
 class GameMessagePort;
 class AnimationTransfer;
-class BLESystem;
 class DeviceDataManager;
 
 template <typename Type>
@@ -120,7 +119,6 @@ protected:
   Json::Value                                               _config;
   std::unique_ptr<UiMessageHandler>                         _uiMsgHandler;
   std::unique_ptr<CozmoContext>                             _context;
-  std::unique_ptr<BLESystem>                                _bleSystem;
   std::unique_ptr<DeviceDataManager>                        _deviceDataManager;
   Anki::Cozmo::DebugConsoleManager                          _debugConsoleManager;
   Anki::Cozmo::DasToSdkHandler                              _dasToSdkHandler;
