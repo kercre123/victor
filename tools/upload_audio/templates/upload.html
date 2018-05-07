@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<style>
+body {font-family: Arial, Helvetica, sans-serif;}
+* {box-sizing: border-box}
+
+/* Full-width input fields */
+input[type=text], input[type=password], input[type=file], input[type=date] {
+    width: 100%;
+    padding: 15px;
+    margin: 5px 0 22px 0;
+    display: inline-block;
+    border: none;
+    background: #f1f1f1;
+}
+input[type=date] {
+    width: 30%;
+}
+
+input[type=text]:focus, input[type=password]:focus, input[type=date]:focus, input[type=file]:focus {
+    background-color: #ddd;
+    outline: none;
+}
+
+hr {
+    border: 1px solid #f1f1f1;
+    margin-bottom: 25px;
+}
+
+/* Set a style for all buttons */
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    opacity: 0.9;
+}
+
+button:hover {
+    opacity:1;
+}
+
+/* Extra styles for the cancel button */
+.cancelbtn {
+    padding: 14px 20px;
+    background-color: #f44336;
+}
+
+/* Float cancel and signup buttons and add an equal width */
+.cancelbtn, .signupbtn {
+  float: left;
+  width: 50%;
+}
+
+/* Add padding to container elements */
+.container {
+    padding: 16px;
+}
+
+/* Clear floats */
+.clearfix::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+/* Change styles for cancel button and signup button on extra small screens */
+@media screen and (max-width: 300px) {
+    .cancelbtn, .signupbtn {
+       width: 100%;
+    }
+}
+ /* Create a custom radio button */
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 25px;
+    width: 25px;
+    background-color: #eee;
+    border-radius: 50%;
+}
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+</style>
+<body>
+
+<form action="" method="post" role="form" enctype="multipart/form-data" style="border:1px solid #ccc">
+  <div class="container">
+    <h1>Vector Audio Service</h1>
+    <p>Please fill in this form to upload an audio file.</p>
+    <hr>
+
+    <label><b>Date</b></label></p>
+    <input type="date" placeholder="Select Date" name="date" required>
+
+    </p>
+    <label><b>Name</b></label>
+    <input type="text" placeholder="Enter Name" name="name" required>
+    
+    <label ><b>Age</b></label>
+    <input type="text" placeholder="Enter Age" name="age" required>
+    
+    <label><b>Gender</b></label>
+
+    <label class="container">Male
+    <input type="radio" checked="checked" name="radio" value="male">
+    <span class="checkmark"></span>
+    </label>
+    <label class="container">Female
+    <input type="radio" name="radio" value="female">
+    <span class="checkmark"></span>
+    </label>
+    </p>
+
+    <label><b>Distance</b></label>
+    <input type="text" placeholder="Enter Distance" name="distance" required>
+    
+    <label><b>Audio file</b></label>
+    <input type="file" name="file" multiple required>
+    
+    <label><b>Dropbox folder</b></label>
+    <input type="text" name="dropbox_path" placeholder="Enter the folder path on Dropbox" required>
+
+    <div class="clearfix">
+      <button type="submit" class="btnUpload" value="Submit">Upload</button>
+      <button type="reset" class="btnCancel" value="Reset">Reset</button>
+    </div>
+  </div>
+</form>
+
+<br>
+</body>
+</html>

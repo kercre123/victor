@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<style>
+table {
+    font-family: arial, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+td, th {
+    border: 1px solid #dddddd;
+    text-align: left;
+    padding: 8px;
+}
+
+tr:nth-child(even) {
+    background-color: #dddddd;
+}
+
+a {
+    background-color: #4CAF50;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+    opacity: 0.9;
+}
+
+a:hover {
+    opacity:1;
+}
+
+</style>
+<body>
+    <div class="container">
+        <table class="centered thick-border">
+            <tr>
+                <th>Date</th>
+                <th>Name</th>
+                <th>Age</th>
+                <th>Gender</th>
+                <th>Distance</th>
+                <th>Dropbox path</th>
+            </tr>
+            {% for dict in list %}
+                <tr>
+                    <td>{{ dict['date'] }}</td>
+                    <td>{{ dict['name'] }}</td>
+                    <td>{{ dict['age'] }}</td>
+                    <td>{{ dict['gender'] }}</td>
+                    <td>{{ dict['distance'] }}</td>
+                    <td>{{ dict['dropbox_path'] }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        </br>
+        <a type="button" id="home" href="/">Back to Home</a>
+    </div>
+</body>
+</html>
