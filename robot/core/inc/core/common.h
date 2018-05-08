@@ -4,12 +4,12 @@
 #include <stdio.h>
 
 //#define DEBUG_CORE
+#undef dprintf
 #ifdef DEBUG_CORE
 #define dprintf printf
 #else
 #define dprintf(s, ...)
 #endif
-
 
 
 typedef enum CoreAppErrorCode_t {

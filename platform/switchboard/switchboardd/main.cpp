@@ -130,7 +130,7 @@ void Daemon::Christen() {
       if (savedSession.keys.id.name[i] == ' ') hostname[i] = '-';
       else hostname[i] = savedSession.keys.id.name[i];
     }
-    sethostname(hostname, strnlen(hostname, NAME_LEN));
+    (void)sethostname(hostname, strnlen(hostname, NAME_LEN));
   }
 }
 

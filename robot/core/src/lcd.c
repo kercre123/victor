@@ -96,7 +96,7 @@ static void lcd_spi_transfer(int cmd, int bytes, const void* data) {
   while (bytes > 0) {
     const size_t count = bytes > MAX_TRANSFER ? MAX_TRANSFER : bytes;
 
-    write(spi_fd, tx_buf, count);
+    (void)write(spi_fd, tx_buf, count);
 
     bytes -= count;
     tx_buf += count;
@@ -160,7 +160,7 @@ static void _led_set_brightness(const int brightness, const char* led)
   if (fd) {
     char buf[3];
     snprintf(buf,3,"%02d\n",brightness);
-    write(fd, buf, 3);
+    (void)write(fd, buf, 3);
     close(fd);
   }
 }
