@@ -122,7 +122,6 @@ namespace Switchboard {
     void HandleNonceAck();
     void HandleTimeout();
     void HandleInternetTimerTick();
-    void HandleIdleTimeout();
     void HandleOtaRequest();
     void HandleChallengeResponse(uint8_t* bytes, uint32_t length);
 
@@ -198,7 +197,6 @@ namespace Switchboard {
     const uint8_t kWifiApPasswordSize = 8;
     const uint8_t kWifiConnectMinTimeout_s = 1;
     const uint8_t kWifiConnectInterval_s = 1;
-    const uint8_t kBleIdleConnectionTimeout_s = 5;
     
     std::string _pin;
     uint8_t _challengeAttempts;
@@ -224,7 +222,6 @@ namespace Switchboard {
 
     PairingTimeoutSignal _pairingTimeoutSignal;
     PairingTimeoutSignal _internetTimerSignal;
-    PairingTimeoutSignal _idleConnectionSignal;
     
     struct ev_loop* _loop;
     ev_timer _timer;
@@ -235,8 +232,6 @@ namespace Switchboard {
     } _handleTimeoutTimer;
 
     struct ev_TimerStruct _handleInternet;
-
-    struct ev_TimerStruct _idleConnectionTimer;
     
     UpdatedPinSignal _updatedPinSignal;
     ReceivedWifiCredentialsSignal _receivedWifiCredentialSignal;
