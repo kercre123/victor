@@ -250,7 +250,8 @@ void TestBehaviorFramework::ReplaceBehaviorStack(std::vector<IBehavior*> newStac
 
   if(newStack.size() > 0){
     auto baseBehaviorIter = newStack.begin();
-    bsm._behaviorStack->InitBehaviorStack(*baseBehaviorIter);
+    bsm._behaviorStack->InitBehaviorStack(*baseBehaviorIter, 
+      GetBehaviorExternalInterface().GetRobotInfo().GetExternalInterface());
     newStack.erase(baseBehaviorIter);
   }
   

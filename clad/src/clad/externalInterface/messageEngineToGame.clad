@@ -955,6 +955,11 @@ message FeedingSFXStageUpdate {
   float_32 chargePercentage = 0.0
 }
 
+message AudioBehaviorBranchUpdate {
+  bool activated,
+  string branch
+}
+
 message ResponseLocale {
   string locale
 }

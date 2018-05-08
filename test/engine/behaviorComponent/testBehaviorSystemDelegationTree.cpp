@@ -113,3 +113,57 @@ TEST(DelegationTree, DumpBehaviorTransitionsToFile)
   auto res = Anki::Util::FileUtils::WriteFile( outFilename, ss.str() );
   EXPECT_EQ(res, true) << "Error writing file " << outFilename;
 }
+
+TEST(DelegationTree, DumpBehaviorTreeBranchesToFile)	
+{	
+  // Creates a file that lists all possible behavior stacks
+  std::string outFilename;	
+  char* szFilename = getenv("ANKI_TEST_BEHAVIOR_BRANCHES");	
+  if( szFilename != nullptr ) {	
+    outFilename = szFilename;	
+  } else {	
+    return;	
+  }
+
+  std::stringstream ss;	
+
+  // Get the base behavior for default stack
+  TestBehaviorFramework tbf;
+  tbf.InitializeStandardBehaviorComponent();
+  tbf.SetDefaultBaseBehavior();
+  auto currentStack = tbf.GetCurrentBehaviorStack();  
+  DEV_ASSERT(1 == currentStack.size(), "CanStackOccurDuringFreeplay.SizeMismatch");
+  IBehavior* base = currentStack.front();
+
+  // Get ready for a full tree walk to compare stacks 
+  std::map<IBehavior*,std::set<IBehavior*>> delegateMap;
+  std::set<IBehavior*> tmpDelegates;
+  base->GetAllDelegates(tmpDelegates);
+  delegateMap.insert(std::make_pair(base, tmpDelegates));
+
+  // tree walk callback
+  auto evaluateTree = [&ss, &tbf](){
+    auto currentStack = tbf.GetCurrentBehaviorStack();
+    ss << BehaviorStack::StackToBehaviorString(currentStack);
+    ss << ",\n";
+
+    // Append all behaviors with a slash followed by a comma to seperate the next entry
+    int i = 0;
+    for(auto* behavior : currentStack){
+      auto* cozmoBehavior = static_cast<ICozmoBehavior*>(behavior);
+      ASSERT_NE(cozmoBehavior, nullptr);
+      if(i != 0){
+        ss << "/";
+      }
+      i++;
+      ss << BehaviorTypesWrapper::BehaviorIDToString(cozmoBehavior->GetID());
+    }
+    // seperator
+    ss << ",\n";
+  };
+
+  tbf.FullTreeWalk(delegateMap, evaluateTree);
+  	
+  auto res = Anki::Util::FileUtils::WriteFile( outFilename, ss.str() );	
+  EXPECT_EQ(res, true) << "Error writing file " << outFilename;	
+}

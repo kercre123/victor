@@ -14,10 +14,13 @@
 
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
+#include "engine/externalInterface/externalInterface.h"
 #include "engine/viz/vizManager.h"
 #include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
@@ -38,13 +41,36 @@ namespace{
 BehaviorStack::~BehaviorStack()
 {
 }
-  
+
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorStack::InitBehaviorStack(IBehavior* baseOfStack)
+std::string BehaviorStack::StackToBehaviorString(std::vector<IBehavior*> stack)
+{
+  std::stringstream ss;
+  int i = 0;
+  for(auto* behavior : stack){
+    auto* cozmoBehavior = dynamic_cast<ICozmoBehavior*>(behavior);
+    if(cozmoBehavior == nullptr){
+      continue;
+    }
+    if(i != 0){
+      ss << "/";
+    }
+    i++;
+    ss << BehaviorTypesWrapper::BehaviorIDToString(cozmoBehavior->GetID());
+  }
+
+  return ss.str();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorStack::InitBehaviorStack(IBehavior* baseOfStack, IExternalInterface* externalInterface)
 {
   ANKI_VERIFY(_behaviorStack.empty(),
               "BehaviorSystemManager.BehaviorStack.InitBehaviorStack.StackNotEmptyOnInit",
               "");
+  _externalInterface = externalInterface;
 
   StackMetadataEntry rootMetaData;
   rootMetaData.delegates.insert(baseOfStack);
@@ -172,6 +198,7 @@ void BehaviorStack::PushOntoStack(IBehavior* behavior)
   _behaviorStack.push_back(behavior);
 
   PrepareDelegatesToEnterScope(behavior);
+  BroadcastAudioBranch(true);
   behavior->OnActivated();
   
   behaviorWebVizDirty = true;
@@ -182,7 +209,8 @@ void BehaviorStack::PushOntoStack(IBehavior* behavior)
 void BehaviorStack::PopStack()
 {
   PrepareDelegatesForRemovalFromStack(_behaviorStack.back());
-
+  BroadcastAudioBranch(false);
+  
   _behaviorStack.back()->OnDeactivated();
   
   _stackMetadataMap.erase(_behaviorStack.back());
@@ -225,6 +253,19 @@ bool BehaviorStack::IsValidDelegation(IBehavior* delegator, IBehavior* delegated
     return (iter->second.delegates.find(delegated) != iter->second.delegates.end());
   }
   return false;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorStack::BroadcastAudioBranch(bool activated)
+{
+  if(ANKI_VERIFY(_externalInterface != nullptr, 
+                 "BehaviorStack.BroadcastAudioBranch.NoExternalInterface",
+                 "")){
+    std::string branchName = BehaviorStack::StackToBehaviorString(_behaviorStack);
+    ExternalInterface::AudioBehaviorBranchUpdate msg(activated, branchName) ;
+    _externalInterface->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+  }
 }
 
 

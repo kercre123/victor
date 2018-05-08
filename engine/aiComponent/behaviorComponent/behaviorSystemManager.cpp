@@ -16,8 +16,9 @@
 #include "engine/aiComponent/behaviorComponent/asyncMessageGateComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorEventComponent.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
@@ -149,7 +150,7 @@ void BehaviorSystemManager::UpdateDependent(const BCCompMap& dependentComponents
 
     IBehavior* baseBehavior = _baseBehaviorTmp;
     
-    _behaviorStack->InitBehaviorStack(baseBehavior);
+    _behaviorStack->InitBehaviorStack(baseBehavior, bei.GetRobotInfo().GetExternalInterface());
     _baseBehaviorTmp = nullptr;
   }
 

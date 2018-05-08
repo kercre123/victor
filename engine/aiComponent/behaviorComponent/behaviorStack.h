@@ -32,8 +32,9 @@ namespace Cozmo {
 // forward declarations
 class AsyncMessageGateComponent;
 class BehaviorExternalInterface;
-class IBehavior;
 class CozmoContext;
+class IBehavior;
+class IExternalInterface;
   
 namespace ExternalInterface{
 struct RobotCompletedAction;
@@ -43,13 +44,18 @@ class BehaviorStack : private Util::noncopyable {
 public:
   BehaviorStack(){};
   virtual ~BehaviorStack();
+
+  // Convert a stack to a standardized string format
+  // Currently only used for audio - please avoid using this function if possible
+  static std::string StackToBehaviorString(std::vector<IBehavior*> stack);
+
   
-  void InitBehaviorStack(IBehavior* baseOfStack);
+  void InitBehaviorStack(IBehavior* baseOfStack, IExternalInterface* externalInterface);
   // Clear the stack if it needs to be re-initialized
   void ClearStack();
   
   void UpdateBehaviorStack(BehaviorExternalInterface& behaviorExternalInterface,
-                          std::vector<ExternalInterface::RobotCompletedAction>& actionsCompletedThisTick,
+                           std::vector<ExternalInterface::RobotCompletedAction>& actionsCompletedThisTick,
                            AsyncMessageGateComponent& asyncMessageGateComp,
                            std::set<IBehavior*>& tickedInStack);
   
@@ -88,11 +94,13 @@ private:
   
   std::vector<IBehavior*> _behaviorStack;
   std::unordered_map<const IBehavior*, StackMetadataEntry> _stackMetadataMap;
+  IExternalInterface* _externalInterface = nullptr;
   
   bool behaviorWebVizDirty = false;
+
+  // Let the audio system know that a branch has been activated/deactivated
+  void BroadcastAudioBranch(bool activated);
   
-
-
   // calls all appropriate functions to prep the delegates of something about to be added to the stack
   void PrepareDelegatesToEnterScope(IBehavior* delegated);
   
