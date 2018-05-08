@@ -204,6 +204,8 @@ char* cmdSend(cmd_io io, const char* scmd, int timeout_ms, int opts, void(*async
         m_time_ms = Timer::elapsedUs(Tstart)/1000; //time to response rx
         rsp += sizeof(RSP_PREFIX)-1; //'strip' prefix
         
+        Timer::wait(1000); //bus turnaround
+        
         //remove the final response line from dbuf datastream
         if( dbuf ) {
           dbuf->wlen -= (rspLen+1); //line + raw \n char
