@@ -11,6 +11,7 @@
 #include "memoryMap.h"
 
 #include "memoryMapTypes.h"
+#include "data/memoryMapData_ProxObstacle.h"
 #include "engine/robot.h"
 
 #include "coretech/common/engine/math/pose.h"
@@ -34,6 +35,7 @@ namespace Cozmo {
 
 CONSOLE_VAR(bool, kMapPerformanceTestsEnabled, "ProxSensorComponent", false);
 CONSOLE_VAR(int,  kMapPerformanceTestsSampleWindow, "ProxSensorComponent", 128);
+CONSOLE_VAR(bool, kRenderProxBeliefs, "ProxSensorComponent", false);
 
 namespace
 {
@@ -239,7 +241,15 @@ bool MemoryMap::HasContentType(EContentType type) const
 bool MemoryMap::Insert(const Poly2f& poly, const MemoryMapData& data)
 {
   // clone data to make into a shared pointer.
-  return MONITOR_PERFORMANCE( _quadTree.Insert(poly, data.Clone()) );
+  const auto& dataPtr = data.Clone();
+  return MONITOR_PERFORMANCE( _quadTree.Insert(poly, [&dataPtr] (auto _) { return dataPtr; }) );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool MemoryMap::Insert(const Poly2f& poly, NodeTransformFunction transform)
+{
+  // clone data to make into a shared pointer.
+  return MONITOR_PERFORMANCE( _quadTree.Insert(poly, transform) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -265,8 +275,14 @@ void MemoryMap::GetBroadcastInfo(MemoryMapTypes::MapBroadcastData& info) const
       // leaf node
       if ( !node.IsSubdivided() )
       {
+        // TODO: make a `Pack` virtual member of MemoryMapData
+        float aux = 1.f;
+        if (node.GetData()->type == EContentType::ObstacleProx && kRenderProxBeliefs) {
+          u8 val = MemoryMapData::MemoryMapDataCast<MemoryMapData_ProxObstacle>( node.GetData() )->GetObstacleConfidence();
+          aux = std::fmax(0.f, std::fmin(val/100.f, 1.f));
+        }
         info.quadInfo.emplace_back(
-          ExternalInterface::MemoryMapQuadInfo( node.GetData()->GetExternalContentType(), node.GetLevel()));
+          ExternalInterface::MemoryMapQuadInfo( node.GetData()->GetExternalContentType(), node.GetLevel(), aux));
       }
     };
 

@@ -117,7 +117,7 @@ public:
   // the region is a line segment of fixed length that is perpendicular to the robot direction
   void ClearRobotToEdge(const Point2f& p, const Point2f& q, const TimeStamp_t t);
 
-
+  void AddProxData(const Poly2f& poly, const MemoryMapData& data);
   
   ////////////////////////////////////////////////////////////////////////////////
   // Accessors

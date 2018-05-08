@@ -35,7 +35,7 @@ class MemoryMapNode
 public:
   MemoryMapNode(int depth, float size_m, const Point3f& center);
   
-  bool AddChild(SimpleQuadVector& destSimpleQuads, const ExternalInterface::ENodeContentTypeEnum content, const int depth);
+  bool AddChild(SimpleQuadVector& destSimpleQuads, const ExternalInterface::MemoryMapQuadInfo& quad);
   
 private:
   int     _depth;

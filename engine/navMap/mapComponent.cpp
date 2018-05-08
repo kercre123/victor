@@ -501,7 +501,7 @@ bool MapComponent::FlagProxObstaclesTouchingExplored()
   NodePredicate innerCheckFunc = [](MemoryMapDataConstPtr inside) {
     if( inside->type == EContentType::ObstacleProx ) {
       auto castInside = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ProxObstacle>( inside );
-      return (castInside->_explored == MemoryMapData_ProxObstacle::NOT_EXPLORED);
+      return !(castInside->IsExplored());
     } else {
       return false;
     }
@@ -509,7 +509,7 @@ bool MapComponent::FlagProxObstaclesTouchingExplored()
   NodePredicate outerCheckFunc = [](MemoryMapDataConstPtr outside) {
     if( outside->type == EContentType::ObstacleProx ) {
       auto castOutside = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ProxObstacle>( outside );
-      return (castOutside->_explored == MemoryMapData_ProxObstacle::EXPLORED);
+      return (castOutside->IsExplored());
     } else {
       return false;
     }
@@ -1059,16 +1059,56 @@ void MapComponent::ClearRobotToMarkers(const ObservableObject* object)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::ClearRobotToEdge(const Point2f& p, const Point2f& q, const TimeStamp_t t)
 {
-  // NOTE: (MRW) currently using robot pose center, though to be correct we should use the center of the
-  //       sensor pose. For now this should be good enough.
-  const static float kHalfClearWidth_mm = 1.5f;
-  Vec3f rayOffset1(0,  kHalfClearWidth_mm, 0);
-  Vec3f rayOffset2(0, -kHalfClearWidth_mm, 0);
-  Rotation3d rot = Rotation3d(0.f, Z_AXIS_3D());
-  const Point2f r1 = (_robot->GetPose().GetTransform() * Transform3d(rot, rayOffset1)).GetTranslation();
-  const Point2f r2 = (_robot->GetPose().GetTransform() * Transform3d(rot, rayOffset2)).GetTranslation();
-  auto quad = ConvexPolygon::ConvexHull({p, q, r1, r2});
-  InsertData(quad, MemoryMapData(INavMap::EContentType::ClearOfObstacle, t));
+  INavMap* currentMap = GetCurrentMemoryMap();
+  if (currentMap)
+  {
+    // NOTE: (MRW) currently using robot pose center, though to be correct we should use the center of the 
+    //       sensor pose. For now this should be good enough.
+    const static float kHalfClearWidth_mm = 1.5f;
+    Vec3f rayOffset1(0,  kHalfClearWidth_mm, 0);
+    Vec3f rayOffset2(0, -kHalfClearWidth_mm, 0);
+    Rotation3d rot = Rotation3d(0.f, Z_AXIS_3D());
+    const Point2f r1 = (_robot->GetPose().GetTransform() * Transform3d(rot, rayOffset1)).GetTranslation();
+    const Point2f r2 = (_robot->GetPose().GetTransform() * Transform3d(rot, rayOffset2)).GetTranslation();
+    auto quad = ConvexPolygon::ConvexHull({p, q, r1, r2});
+
+    MemoryMapDataPtr clearData = MemoryMapData(INavMap::EContentType::ClearOfObstacle, t).Clone();
+    NodeTransformFunction trfm = [&clearData] (MemoryMapDataPtr currentData) {
+      if (currentData->type == EContentType::ObstacleProx) {
+        auto castPtr = MemoryMapData::MemoryMapDataCast<MemoryMapData_ProxObstacle>( currentData );
+        castPtr->MarkClear();
+        return (castPtr->IsConfirmedClear()) ? clearData : currentData;
+      } else if ( currentData->CanOverrideSelfWithContent(clearData) ) {
+        return clearData;
+      } else {
+        return currentData;
+      }
+    };
+    UpdateBroadcastFlags(currentMap->Insert(quad, trfm));
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MapComponent::AddProxData(const Poly2f& poly, const MemoryMapData& data)
+{
+  INavMap* currentMap = GetCurrentMemoryMap();
+  if (currentMap)
+  {
+    MemoryMapDataPtr newData = data.Clone();
+    NodeTransformFunction trfm = [&newData] (MemoryMapDataPtr currentData) {
+
+      if (currentData->type == EContentType::ObstacleProx) {
+        auto castPtr = MemoryMapData::MemoryMapDataCast<MemoryMapData_ProxObstacle>( currentData );
+        castPtr->MarkObserved();
+        return currentData;
+      } else if ( currentData->CanOverrideSelfWithContent(newData) ) {
+        return newData;
+      } else {
+        return currentData;
+      }
+    };
+    UpdateBroadcastFlags(currentMap->Insert(poly, trfm));
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
