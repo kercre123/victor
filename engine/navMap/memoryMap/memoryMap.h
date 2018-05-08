@@ -38,6 +38,7 @@ public:
   
   // add data to the memory map defined by poly
   virtual bool Insert(const Poly2f& poly, const MemoryMapData& data) override;
+  virtual bool Insert(const Poly2f& poly, NodeTransformFunction transform) override;
   
   // merge the given map into this map by applying to the other's information the given transform
   // although this methods allows merging any INavMemoryMap into any INavMemoryMap, subclasses are not

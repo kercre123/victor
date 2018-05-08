@@ -414,7 +414,7 @@ bool BehaviorExploringExamineObstacle::RobotSeesObstacleInFront( float dist_mm, 
     if( data->type == MemoryMapTypes::EContentType::ObstacleProx ) {
       if( onlyUnexplored ) {
         auto castPtr = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ProxObstacle>( data );
-        ret = (castPtr->_explored == MemoryMapData_ProxObstacle::NOT_EXPLORED);
+        ret = !castPtr->IsExplored();
       } else {
         ret = true;
       }
@@ -461,7 +461,7 @@ bool BehaviorExploringExamineObstacle::RobotSeesNewObstacleInCone( float dist_mm
     const bool newObstacle = data->GetFirstObservedTime() >= earliestTime;
     if( sameType && newObstacle ) {
       auto castPtr = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ProxObstacle>( data );
-      position = Point2f{castPtr->_pose.GetTranslation()};
+      position = Point2f{castPtr->GetObservationPose().GetTranslation()};
     }
     return sameType && newObstacle;
   };

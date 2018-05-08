@@ -1,11 +1,11 @@
 import scipy.signal as signal
 from json import dumps
 
-DECIMATION 			= 96
-PDM_FTL_SAMPLE_F   	= 1500
-PDM_FTL_CUT_OFF    	= 5.9 # Nyquist
-BYTE_TAPS 		   	= 32
-TAPS 			   	= BYTE_TAPS * 8
+DECIMATION          = 96
+PDM_FTL_SAMPLE_F    = 1500
+BYTE_TAPS           = 32
+TAPS                = BYTE_TAPS * 8
+PDM_FTL_CUT_OFF     = 5.859375 #Ideal PDM_FTL_SAMPLE_F / TAPS
 
 taps = (signal.firwin(TAPS, PDM_FTL_CUT_OFF, nyq=PDM_FTL_SAMPLE_F/2) * 0x7FFFFFFF).astype(int)
 

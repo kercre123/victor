@@ -69,7 +69,8 @@ void ISocketComms::Update()
 
 void ISocketComms::HandlePingResponse(const ExternalInterface::Ping& pingMsg)
 {
-  const double latency_ms = (Util::Time::UniversalTime::GetCurrentTimeInMilliseconds() - pingMsg.timeSent_ms);
+  const double now_ms = Util::Time::UniversalTime::GetCurrentTimeInMilliseconds();
+  const double latency_ms = (now_ms - pingMsg.timeSent_ms);
   _latencyStats.AddStat(latency_ms);
   if (kPrintUiMessageLatency)
   {
@@ -87,7 +88,7 @@ void ISocketComms::HandlePingResponse(const ExternalInterface::Ping& pingMsg)
     }
   }
   
-  _lastPingTime_ms = static_cast<uint32_t>(Util::Time::UniversalTime::GetCurrentTimeInMilliseconds());
+  _lastPingTime_ms = static_cast<uint32_t>(now_ms);
 }
 
 void ISocketComms::SetPingTimeoutForDisconnect(uint32_t ms, DisconnectCallback cb)

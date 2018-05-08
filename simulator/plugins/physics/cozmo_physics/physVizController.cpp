@@ -555,7 +555,7 @@ void PhysVizController::ProcessVizMemoryMapMessageEnd(const AnkiEvent<VizInterfa
       {
         for (const auto& quad : quadInfo.second)
         {
-          rootNode.AddChild(destSimpleQuads, quad.content, quad.depth);
+          rootNode.AddChild(destSimpleQuads, quad);
         }
         ++expectedSeqNum;
       }
@@ -980,26 +980,29 @@ MemoryMapNode::MemoryMapNode(int depth, float size_m, const Point3f& center)
   _nextChild = 0;
 }
 
-bool MemoryMapNode::AddChild(SimpleQuadVector& destSimpleQuads, const ExternalInterface::ENodeContentTypeEnum content, const int depth)
+bool MemoryMapNode::AddChild(SimpleQuadVector& destSimpleQuads, const ExternalInterface::MemoryMapQuadInfo& quad)
 {
   using namespace ExternalInterface;
   
-  if (_depth == depth)
+  if (_depth == quad.depth)
   {
     ColorRGBA color = Anki::NamedColors::WHITE;
-    switch(content)
+    float scale = quad.aux;
+    switch(quad.content)
     {
       case ENodeContentTypeEnum::Unknown                : { color = Anki::NamedColors::DARKGRAY; color.SetAlpha(0.2f); break; }
       case ENodeContentTypeEnum::ClearOfObstacle        : { color = Anki::NamedColors::GREEN;    color.SetAlpha(0.5f); break; }
       case ENodeContentTypeEnum::ClearOfCliff           : { color = Anki::NamedColors::DARKGREEN;color.SetAlpha(0.8f); break; }
       case ENodeContentTypeEnum::ObstacleCube           : { color = Anki::NamedColors::RED;      color.SetAlpha(0.5f); break; }
       case ENodeContentTypeEnum::ObstacleCharger        : { color = Anki::NamedColors::ORANGE;   color.SetAlpha(0.5f); break; }
-      case ENodeContentTypeEnum::ObstacleProx           : { color = Anki::NamedColors::CYAN;     color.SetAlpha(0.5f); break; }
-      case ENodeContentTypeEnum::ObstacleProxExplored   : { color = Anki::NamedColors::BLUE;    color.SetAlpha(1.0f); break; }
-      case ENodeContentTypeEnum::ObstacleUnrecognized   : { color = Anki::NamedColors::BLACK;   color.SetAlpha(0.5f); break; }
+      case ENodeContentTypeEnum::ObstacleUnrecognized   : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.5f); break; }
       case ENodeContentTypeEnum::Cliff                  : { color = Anki::NamedColors::BLACK;    color.SetAlpha(0.8f); break; }
       case ENodeContentTypeEnum::InterestingEdge        : { color = Anki::NamedColors::MAGENTA;  color.SetAlpha(0.5f); break; }
       case ENodeContentTypeEnum::NotInterestingEdge     : { color = Anki::NamedColors::PINK;     color.SetAlpha(0.8f); break; }
+      case ENodeContentTypeEnum::ObstacleProx           : 
+        { color = (Anki::NamedColors::CYAN * scale) + (Anki::NamedColors::GREEN * (1 - scale));  color.SetAlpha(0.5f + .5*scale); break; }
+      case ENodeContentTypeEnum::ObstacleProxExplored   : 
+        { color = (Anki::NamedColors::BLUE * scale) + (Anki::NamedColors::GREEN * (1 - scale));  color.SetAlpha(0.5f + .5*scale); break; }
     }
     VizInterface::SimpleQuad quad;
     quad.center[0] = _center.x();
@@ -1028,7 +1031,7 @@ bool MemoryMapNode::AddChild(SimpleQuadVector& destSimpleQuads, const ExternalIn
     _children.push_back(MemoryMapNode(nextDepth, nextSize, center4));
   }
   
-  if (_children[_nextChild].AddChild(destSimpleQuads, content, depth))
+  if (_children[_nextChild].AddChild(destSimpleQuads, quad))
   {
     // All children below this child have been processed
     _nextChild++;

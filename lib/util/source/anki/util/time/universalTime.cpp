@@ -15,9 +15,11 @@
 #include <mach/mach_time.h>
 #elif defined(ANDROID) || defined(LINUX) || defined(VICOS)
 #include <time.h>
+#else
+#error Attempting build for unsupported OS
 #endif
 #include "util/math/numericCast.h"
-
+#include <cassert>
 
 namespace Anki{ namespace Util {
 
@@ -39,6 +41,8 @@ unsigned long long int UniversalTime::GetCurrentTimeInNanoseconds()
   clock_gettime(CLOCK_MONOTONIC, &t);
   return (unsigned long long)(t.tv_sec*1000000000ULL) + (unsigned long long)t.tv_nsec;
 #else
+  // What OS did you build for?
+  assert(false);
   return 0;
 #endif
 }
@@ -71,6 +75,8 @@ unsigned long long int UniversalTime::GetCurrentTimeValue()
   clock_gettime(CLOCK_MONOTONIC, &t);
   return (unsigned long long)(t.tv_sec*1000000000ULL) + (unsigned long long)t.tv_nsec;
 #else
+  // What OS did you build for?
+  assert(false);
   return 0;
 #endif
 }

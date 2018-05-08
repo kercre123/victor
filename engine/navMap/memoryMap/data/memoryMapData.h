@@ -52,7 +52,7 @@ public:
   
   // returns true if this node can be replaced by the given content type. Some content type replacement
   // rules depend on whether the quad center is fully contained within the insertion polygon (centerContainedByROI)
-  bool CanOverrideSelfWithContent(MemoryMapDataConstPtr newContent, bool centerContainedByROI) const;
+  bool CanOverrideSelfWithContent(MemoryMapDataConstPtr newContent) const;
   
   // Wrappers for data casting operations  
   template <class T>

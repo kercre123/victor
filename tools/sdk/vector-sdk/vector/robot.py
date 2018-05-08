@@ -13,6 +13,22 @@ class Robot:
     def __init__(self, socket):
         self.socket = socket
 
+    # Animations
+    async def get_anim_names(self):
+        message = _clad_message.RequestAvailableAnimations()
+        innerWrappedMessage = _clad_message.Animations(requestAvailableAnimations=message)
+        outerWrappedMessage = _clad_message.ExternalComms(Animations=innerWrappedMessage)
+        await self.socket.send(outerWrappedMessage.pack()) 
+        # TODO (VIC-2784): wait for the list...d
+        return []
+
+    async def play_anim(self, animation_name, loop_count=1, ignore_body_track = True, ignore_head_track = True, ignore_lift_track = True ):
+        message = _clad_message.PlayAnimation(
+            animationName = animation_name, numLoops = loop_count, ignoreBodyTrack = ignore_body_track, ignoreHeadTrack = ignore_head_track, ignoreLiftTrack = ignore_lift_track)
+        innerWrappedMessage = _clad_message.Animations(playAnimation=message)
+        outerWrappedMessage = _clad_message.ExternalComms(Animations=innerWrappedMessage)
+        await self.socket.send(outerWrappedMessage.pack()) 
+
     # Low level motor functions
     async def set_wheel_motors(self, left_wheel_speed, right_wheel_speed, left_wheel_accel=0.0, right_wheel_accel=0.0):
         message = _clad_message.DriveWheels(

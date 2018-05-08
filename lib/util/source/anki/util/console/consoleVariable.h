@@ -23,7 +23,8 @@
 #include <vector>
 #include <assert.h>
 
-namespace Anki{ namespace Util {
+namespace Anki {
+namespace Util {
 
 
 //******************************************************************************************************************************
@@ -36,16 +37,16 @@ public:
   const std::string& GetID() const { return id_; }
   const std::string& GetCategory() const { return category_; }
   const std::string GetFullPathString() const { return ( category_ + "." + id_ ); }
-  
+
   virtual bool ParseText( const char* text ) = 0;
-  
+
   virtual std::string ToString() const = 0;
   virtual std::string GetDefaultAsString() const = 0;
-  
+
   virtual double    GetAsDouble() const = 0;
   virtual int64_t   GetAsInt64()  const = 0;
   virtual uint64_t  GetAsUInt64() const = 0;
-  
+
   virtual double    GetMinAsDouble()  const = 0;
   virtual double    GetMaxAsDouble()  const = 0;
   virtual int64_t   GetMinAsInt64()   const = 0;
@@ -56,7 +57,7 @@ public:
   virtual void ToggleValue() = 0;
   virtual void ResetToDefault() = 0;
   virtual bool IsDefaultValue() const = 0;
-  
+
   virtual bool IsToggleable() const = 0;
   virtual bool IsIntegerType() const = 0; // i.e. not a floating point type
   virtual bool IsSignedType() const = 0;
@@ -86,7 +87,7 @@ public:
     , _maxValue(std::numeric_limits<T>::max())
     , _defaultValue( value )
   { }
-  
+
   ConsoleVar( T& value, const char* id, const char* category, const T& minValue, const T& maxValue, bool unregisterInDestructor )
     : IConsoleVariable( id, category, unregisterInDestructor )
     , _value( value )
@@ -95,7 +96,7 @@ public:
     , _defaultValue( value )
   {
   }
-  
+
   ConsoleVar( T& value, const char* id, const char* category, const char* values, bool unregisterInDestructor )
     : IConsoleVariable( id, category, unregisterInDestructor )
     , _value( value )
@@ -123,18 +124,18 @@ public:
   virtual double    GetAsDouble() const override { return numeric_cast_clamped<double>(_value);  }
   virtual int64_t   GetAsInt64()  const override { return numeric_cast_clamped<int64_t>(_value); }
   virtual uint64_t  GetAsUInt64() const override { return numeric_cast_clamped<uint64_t>(_value); }
-  
+
   virtual double    GetMinAsDouble()  const override { return numeric_cast_clamped<double>(_minValue);  }
   virtual double    GetMaxAsDouble()  const override { return numeric_cast_clamped<double>(_maxValue);  }
-  virtual int64_t   GetMinAsInt64()  const override { return numeric_cast_clamped<T>(_minValue);  }
-  virtual int64_t   GetMaxAsInt64()  const override { return numeric_cast_clamped<T>(_maxValue);  }
-  virtual uint64_t  GetMinAsUInt64()  const override { return numeric_cast_clamped<T>(_minValue);  }
-  virtual uint64_t  GetMaxAsUInt64()  const override { return numeric_cast_clamped<T>(_maxValue);  }
+  virtual int64_t   GetMinAsInt64()  const override { return numeric_cast_clamped<int64_t>(_minValue);  }
+  virtual int64_t   GetMaxAsInt64()  const override { return numeric_cast_clamped<int64_t>(_maxValue);  }
+  virtual uint64_t  GetMinAsUInt64()  const override { return numeric_cast_clamped<uint64_t>(_minValue);  }
+  virtual uint64_t  GetMaxAsUInt64()  const override { return numeric_cast_clamped<uint64_t>(_maxValue);  }
 
   virtual void ToggleValue() override { _value = !((bool)_value); }
   virtual void ResetToDefault() override { _value = _defaultValue; }
   virtual bool IsDefaultValue() const override { return (_value == _defaultValue); }
-  
+
   virtual bool IsToggleable()  const override { return (std::numeric_limits<T>::digits == 1); }
   virtual bool IsIntegerType() const override { return (std::numeric_limits<T>::is_integer);  }
   virtual bool IsSignedType()  const override { return (std::numeric_limits<T>::is_signed);   }
@@ -151,7 +152,7 @@ protected:
   T  _maxValue;
   T  _defaultValue;
   std::vector<std::string> _enumValues;
-  
+
   ConsoleVar();
   ConsoleVar( const ConsoleVar& );
 };
@@ -165,7 +166,7 @@ inline std::string ConsoleVar<T>::ToString( T value ) const
   std::ostringstream ss;
   ss.setf( std::ios::boolalpha | std::ios::showpoint );
   ss.setf( std::ios::fixed, std::ios::floatfield );
-  
+
   ss << value;
   return ss.str();
 }
@@ -179,29 +180,29 @@ inline bool ConsoleVar<T>::ParseText( const char* text )
     _value = (T)(found - _enumValues.begin());
     return true;
   }
-  
+
   std::istringstream is( text );
-  
+
   T temp;
   is >> temp;
-  
+
   const bool parsedOK = !is.fail();
-  
+
   if (parsedOK)
   {
     _value = temp;
   }
-  
+
   return parsedOK;
 }
-  
+
 //==============================================================================================================================
 // Declarations for typedef specializations
 // must be declared specializations here (implemented in cpp) otherwise compiler will just use the defaults
-  
+
 //==============================================================================================================================
-// Specailizations for signed/unsigned char as stringstream treats them as ASCII otherwise
-  
+// Specializations for signed/unsigned char as stringstream treats them as ASCII otherwise
+
 template<>
 std::string ConsoleVar<signed char>::ToString(signed char value) const;
 
@@ -213,7 +214,7 @@ std::string ConsoleVar<unsigned char>::ToString(unsigned char value) const;
 
 template<>
 bool ConsoleVar<unsigned char>::ParseText(const char* text);
-  
+
 //==============================================================================================================================
 // Specializations for bool to handle string based true/false values
 
@@ -221,8 +222,8 @@ template<>
 bool ConsoleVar<bool>::ParseText(const char* text);
 
 
+} // namespace Util
 } // namespace Anki
-} //namespace Util
 
 
 #endif // ANKIUTIL_CONSOLE_VARIABLE

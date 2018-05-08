@@ -51,19 +51,6 @@ protected:
 private:
   using base = ICozmoBehavior;
   
-  IBEIConditionPtr _cliffDetectedCondition;
-  
-  enum class State {
-    PlayingStopReaction,
-    PlayingCliffReaction,
-    BackingUp
-  };
-
-  State _state = State::PlayingStopReaction;
-
-  bool _gotCliff = false;
-  uint8_t _detectedFlags = 0;
-  
   void TransitionToPlayingStopReaction();
   void TransitionToPlayingCliffReaction();
   void TransitionToBackingUp();
@@ -71,12 +58,29 @@ private:
   
   // Based on which cliff sensor(s) was tripped, select an appropriate pre-animation action
   CompoundActionSequential* GetCliffPreReactAction(uint8_t cliffDetectedFlags);
-
-  u16 _cliffDetectThresholdAtStart = 0;
-  bool _quitReaction = false;
   
-  bool _shouldStopDueToCharger;
+  enum class State {
+    PlayingStopReaction,
+    PlayingCliffReaction,
+    BackingUp
+  };
   
+  struct InstanceConfig {
+    IBEIConditionPtr cliffDetectedCondition;
+  };
+  
+  struct DynamicVariables {
+    DynamicVariables();
+    u16 cliffDetectThresholdAtStart;
+    bool quitReaction;
+    State state;
+    bool gotCliff;
+    uint8_t detectedFlags;
+    bool shouldStopDueToCharger;
+  };
+  
+  InstanceConfig _iConfig;
+  DynamicVariables _dVars;
   
 }; // class BehaviorReactToCliff
   

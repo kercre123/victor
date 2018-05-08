@@ -103,10 +103,15 @@ list(APPEND VICOS_COMPILER_FLAGS
 	-fdata-sections
 	-funwind-tables
 	-fstack-protector-strong
+#  -flto
+#  -fvisibility=hidden
+#  -fsanitize=cfi
 	-no-canonical-prefixes)
 list(APPEND VICOS_COMPILER_FLAGS_CXX
 	-fno-exceptions
 	-fno-rtti)
+list(APPEND VICOS_COMPILER_FLAGS_RELEASE
+  -D_FORTIFY_SOURCE=2)
 list(APPEND VICOS_LINKER_FLAGS
 	-Wl,--build-id
 	-Wl,--gdb-index
@@ -187,8 +192,8 @@ list(APPEND VICOS_COMPILER_FLAGS -mthumb)
 
 list(APPEND VICOS_COMPILER_FLAGS
     -mfpu=neon)
-list(APPEND VICOS_COMPILER_FLAGS
-    -Wa,--noexecstack)
+#list(APPEND VICOS_COMPILER_FLAGS
+#    -Wa,--noexecstack)
 list(APPEND VICOS_LINKER_FLAGS
     -Wl,-z,noexecstack)
 
@@ -260,6 +265,8 @@ set(CMAKE_CXX_FLAGS_RELEASE   "${VICOS_COMPILER_FLAGS_RELEASE} ${CMAKE_CXX_FLAGS
 set(CMAKE_SHARED_LINKER_FLAGS "${VICOS_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS}")
 set(CMAKE_MODULE_LINKER_FLAGS "${VICOS_LINKER_FLAGS} ${CMAKE_MODULE_LINKER_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS    "${VICOS_LINKER_FLAGS} ${VICOS_LINKER_FLAGS_EXE} ${CMAKE_EXE_LINKER_FLAGS}")
+
+set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 
 # <anki>
 # Work around missing CMAKE_SIZEOF_VOID_P

@@ -640,7 +640,7 @@ void BehaviorExploring::SampleVisitLocationsFacingObstacle( const INavMap* memor
   MemoryMapTypes::NodePredicate findFunc = [](MemoryMapTypes::MemoryMapDataConstPtr d){
     if( d->type == MemoryMapTypes::EContentType::ObstacleProx ) {
       auto castPtr = MemoryMapData::MemoryMapDataCast<MemoryMapData_ProxObstacle>( d );
-      return !castPtr->_explored;
+      return !castPtr->IsExplored();
     } else {
       return false;
     }
@@ -661,9 +661,9 @@ void BehaviorExploring::SampleVisitLocationsFacingObstacle( const INavMap* memor
   // returns a pose that is kProxPoseOffset_mm away from ptr and antiparallel to its normal
   auto getOffsetPose = [this](const MemoryMapDataConstPtr& ptr) {
     auto castPtr = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ProxObstacle>( ptr );
-    Pose3d pose{ castPtr->_pose.GetAngle(),
+    Pose3d pose{ castPtr->GetObservationPose().GetAngle(),
                  Z_AXIS_3D(),
-                 { castPtr->_pose.GetTranslation().x(), castPtr->_pose.GetTranslation().y(), 0.0f},
+                 { castPtr->GetObservationPose().GetTranslation().x(), castPtr->GetObservationPose().GetTranslation().y(), 0.0f},
                  GetBEI().GetRobotInfo().GetWorldOrigin() };
     pose.TranslateForward(-kProxPoseOffset_mm);
     return pose;
@@ -674,7 +674,7 @@ void BehaviorExploring::SampleVisitLocationsFacingObstacle( const INavMap* memor
                                              const std::vector<Pose3d>& existing ) {
     for( auto itOthers = currListBegin; itOthers != existing.end(); ++itOthers ) {
       Point2f otherPoint{ itOthers->GetTranslation() };
-      Point2f dataPoint { data->_pose.GetTranslation() };
+      Point2f dataPoint { data->GetObservationPose().GetTranslation() };
       const float distSq = (otherPoint - dataPoint).LengthSq();
       if( distSq < kMinProxObstacleSeparation_mm*kMinProxObstacleSeparation_mm ) {
         return true;

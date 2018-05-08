@@ -35,7 +35,8 @@ enum uint_8 ENodeContentTypeEnum
 structure MemoryMapQuadInfo
 {
   ENodeContentTypeEnum content,
-  uint_8               depth
+  uint_8               depth,
+  float_32             aux
 }
 
 

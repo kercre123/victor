@@ -422,7 +422,7 @@ bool QuadTreeProcessor::FillBorder(const NodePredicate& innerPred, const NodePre
   bool changed = false;
   MemoryMapDataPtr dataPtr = data->Clone();
   for( const auto& center : floodedQuadCenters ) {
-    changed |= _quadTree->Insert(Poly2f({center}), dataPtr);
+    changed |= _quadTree->Insert(Poly2f({center}), [&dataPtr] (auto _) { return dataPtr; });
   }
   
   timer.Toc("QuadTreeProcessor.FillBorder");

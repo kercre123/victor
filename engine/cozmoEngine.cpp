@@ -16,7 +16,6 @@
 #include "engine/events/ankiEvent.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/ankiEventUtil.h"
-#include "engine/ble/BLESystem.h"
 #include "engine/debug/cladLoggerProvider.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -231,8 +230,6 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   : _uiMsgHandler(new UiMessageHandler(1, messagePipe))
   , _context(new CozmoContext(dataPlatform, _uiMsgHandler.get()))
   , _deviceDataManager(new DeviceDataManager(_uiMsgHandler.get()))
-  // TODO:(lc) Once the BLESystem state machine has been implemented, create it here
-  //, _bleSystem(new BLESystem())
   ,_animationTransferHandler(new AnimationTransfer(_uiMsgHandler.get(),dataPlatform))
 {
 #if ANKI_CPU_PROFILER_ENABLED

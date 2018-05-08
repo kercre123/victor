@@ -15,6 +15,8 @@ const (
 	HandlerGoogle Handler = pb.IntentService_DIALOGFLOW
 	// HandlerMicrosoft will have Microsoft's Bing/LUIS speech service handle requests
 	HandlerMicrosoft Handler = pb.IntentService_BING_LUIS
+	// HandlerAmazon will have Amazon's Lex service handle requests
+	HandlerAmazon Handler = pb.IntentService_LEX
 )
 
 // Option defines an option that can be set on the cloud process

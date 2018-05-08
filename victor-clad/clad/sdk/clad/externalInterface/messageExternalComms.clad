@@ -436,6 +436,28 @@ union MotorControl {
 }
 
 // ====================================================
+//          Robot Animation Messages
+// ====================================================
+
+// PlayAnimation
+message PlayAnimation {
+    uint_32 numLoops,
+    string animationName,
+    bool    ignoreBodyTrack=0,
+    bool    ignoreHeadTrack=0,
+    bool    ignoreLiftTrack=0
+}
+
+// RequestAvailableAnimations
+message RequestAvailableAnimations {
+  
+}
+
+union Animations {
+  PlayAnimation                 playAnimation = 0x00,
+  RequestAvailableAnimations    requestAvailableAnimations = 0x01,
+}
+
 //                   Movement Actions
 // ====================================================
 
@@ -504,6 +526,7 @@ union ExternalComms {
     MeetVictor                  MeetVictor                  = 0x03,
     MotorControl                MotorControl                = 0x05,
     MovementAction              MovementAction              = 0x06,
+    Animations                  Animations                  = 0x07,
 }
 
 } // namespace ExternalComms
