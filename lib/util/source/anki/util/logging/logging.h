@@ -83,11 +83,11 @@ struct DasMsg
   DasMsg(std::string eventStr) {event = eventStr;}
 };
 
-#define DAS_MSG(ezRef, eventName, documentation) { Anki::Util::DasMsg msg(eventName);
-#define FILL_ITEM(dasEntry, value, comment) msg.dasEntry = Anki::Util::DasItem(value);
-#define SEND_DAS_MSG_EVENT() sEventD(msg); }
-#define SEND_DAS_MSG_WARN() sWarningD(msg); }
-#define SEND_DAS_MSG_ERROR() sErrorD(msg); }
+#define DAS_MSG(ezRef, eventName, documentation) { Anki::Util::DasMsg __DAS_msg(eventName);
+#define FILL_ITEM(dasEntry, value, comment) __DAS_msg.dasEntry = Anki::Util::DasItem(value);
+#define SEND_DAS_MSG_EVENT() sEventD(__DAS_msg); }
+#define SEND_DAS_MSG_WARN() sWarningD(__DAS_msg); }
+#define SEND_DAS_MSG_ERROR() sErrorD(__DAS_msg); }
 
 //__attribute__((__deprecated__))
 //

@@ -258,7 +258,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform, GameMessagePort
   //
   _context->SetEngineThread();
 
-  DAS_MSG(locale, "device.language_locale", "Prints out the language locale of the robot")
+  DAS_MSG(locale, "device.language_locale", "Sends the language locale of the robot up to DAS")
   FILL_ITEM(s1, _context->GetLocale()->GetLocaleString().c_str(), "Locale on start up")
   SEND_DAS_MSG_EVENT()
 

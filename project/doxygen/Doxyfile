@@ -32,7 +32,7 @@ DOXYFILE_ENCODING      = UTF-8
 # title of most generated pages and in a few other places.
 # The default value is: My Project.
 
-PROJECT_NAME           = "My Project"
+PROJECT_NAME           = Victor
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. This
 # could be handy for archiving the generated documentation or if some version
@@ -2152,9 +2152,11 @@ PREDEFINED             = ENABLE_CE_SLEEP_TIME_DIAGNOSTICS
 # definition found in the source code.
 # This tag requires that the tag ENABLE_PREPROCESSING is set to YES.
 
-EXPAND_AS_DEFINED      = DASMESSAGE_EVENT \
-                         DASMESSAGE_WARN \
-                         DASMESSAGE_ERROR
+EXPAND_AS_DEFINED      = SEND_DAS_MSG_EVENT \
+                         SEND_DAS_MSG_WARN \
+                         SEND_DAS_MSG_ERROR \
+                         DAS_MSG \
+                         FILL_ITEM
 
 # If the SKIP_FUNCTION_MACROS tag is set to YES then doxygen's preprocessor will
 # remove all references to function-like macros that are alone on a line, have
