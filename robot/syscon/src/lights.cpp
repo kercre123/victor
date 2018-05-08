@@ -38,7 +38,7 @@ static const int LIGHT_SHIFT      = 17 + 2; // 2 is to account for prescalar
 static const uint8_t DARK_OFFSET  = 200; // 245 = 0% dark
 
 static uint8_t value[LIGHT_CHANNELS][LIGHT_COLORS] = {
-  { 0x80, 0x80, 0x80 },
+  { 0xFF, 0xFF, 0xFF },
   { 0x00, 0x00, 0x00 },
   { 0x00, 0x00, 0x00 },
   { 0x00, 0x00, 0x00 }
