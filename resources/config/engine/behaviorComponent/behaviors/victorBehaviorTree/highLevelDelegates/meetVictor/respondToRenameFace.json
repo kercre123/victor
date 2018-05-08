@@ -1,6 +1,5 @@
 {
   "behaviorClass": "RespondToRenameFace",
   "behaviorID": "RespondToRenameFace",
-  "displayNameKey":"behavior.RespondToRenameFace",
   "animationTrigger": "MeetCozmoRenameFaceSayName"
 }

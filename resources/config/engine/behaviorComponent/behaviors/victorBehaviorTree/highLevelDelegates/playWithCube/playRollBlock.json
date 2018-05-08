@@ -1,5 +1,8 @@
 {
   "behaviorClass": "RollBlock",
   "behaviorID": "PlayRollBlock",
+
+  "associaitedActiveFeature": "RollBlock",
+
   "isBlockRotationImportant" : false
 }

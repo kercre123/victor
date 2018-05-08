@@ -2,6 +2,8 @@
   "behaviorClass": "ReactToCubeTap",
   "behaviorID": "ReactToCubeTap",
 
+  "associaitedActiveFeature": "ReactToCubeTap",
+
   "wantsToBeActivatedCondition": {
     "conditionType": "CubeTapped"
   },

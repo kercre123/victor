@@ -1,5 +1,8 @@
 {
   "behaviorClass": "AnimSequence",
   "behaviorID" : "SingletonCancelTimer",
+
+  "associaitedActiveFeature": "TimerCanceled",
+  
   "animTriggers": ["TimerCancelTimer"]
 }

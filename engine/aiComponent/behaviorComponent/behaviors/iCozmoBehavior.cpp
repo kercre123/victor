@@ -48,6 +48,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/userIntent.h"
+#include "clad/types/behaviorComponent/activeFeatures.h"
 
 #include "util/enums/stringToEnumMapper.hpp"
 #include "util/fileUtils/fileUtils.h"
@@ -77,6 +78,8 @@ static const char* kRespondToTriggerWordKey          = "respondToTriggerWord";
 static const char* kResetTimersKey                   = "resetTimers";
 static const char* kEmotionEventOnActivatedKey       = "emotionEventOnActivated";
 static const char* kPostBehaviorSuggestionKey        = "postBehaviorSuggestion";
+static const char* kAssociatedActiveFeature          = "associaitedActiveFeature";
+
 static const std::string kIdleLockPrefix             = "Behavior_";
 
 // Keys for loading in anonymous behaviors
@@ -84,7 +87,6 @@ static const char* kAnonymousBehaviorMapKey          = "anonymousBehaviors";
 static const char* kAnonymousBehaviorName            = "behaviorName";
 
 static const char* kBehaviorDebugLabel               = "debugLabel";
-static const char* kDisplayNameKey                   = "displayNameKey";
 }
 
 
@@ -307,6 +309,16 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
                  GetDebugLabel().c_str() );
   }
 
+  if( config[kAssociatedActiveFeature].isString() ) {
+    _associatedActiveFeature.reset(new ActiveFeature);
+    const auto& featureStr = config[kAssociatedActiveFeature].asString();
+    ANKI_VERIFY( ActiveFeatureFromString( featureStr, *_associatedActiveFeature ),
+                 "ICozmoBehavior.ReadFromJson.InvalidActiveFeature",
+                 "Active feature '%s' invalid in behavior '%s'",
+                 featureStr.c_str(),
+                 GetDebugLabel().c_str() );
+  } 
+  
   return true;
 }
 
@@ -338,8 +350,8 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
     kEmotionEventOnActivatedKey,
     kResetTimersKey,
     kAnonymousBehaviorMapKey,
-    kDisplayNameKey,
     kPostBehaviorSuggestionKey,
+    kAssociatedActiveFeature,
   };
   expectedKeys.insert( expectedKeys.end(), std::begin(baseKeys), std::end(baseKeys) );
 
@@ -494,6 +506,18 @@ void ICozmoBehavior::SetDontActivateThisTick(const std::string& coordinatorName)
   _dontActivateCoordinator = coordinatorName;
   _tickDontActivateSetFor = BaseStationTimer::getInstance()->GetTickCount();
 }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ICozmoBehavior::GetAssociatedActiveFeature(ActiveFeature& feature) const
+{
+  if( _associatedActiveFeature != nullptr ) {
+    feature = *_associatedActiveFeature;
+    return true;
+  }
+  else {
+    return false;
+  }
+}      
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::map<std::string,ICozmoBehaviorPtr> ICozmoBehavior::TESTONLY_GetAnonBehaviors( UnitTestKey key ) const
@@ -750,7 +774,7 @@ void ICozmoBehavior::OnActivatedInternal()
   if( !_emotionEventOnActivated.empty() ) {
     GetBEI().GetMoodManager().TriggerEmotionEvent(_emotionEventOnActivated, currTime_s);
   }
-
+  
   OnBehaviorActivated();
 }
 
@@ -842,7 +866,7 @@ void ICozmoBehavior::OnDeactivatedInternal()
 
   _lockingNameToTracksMap.clear();
   _customLightObjects.clear();
-
+  
   if( (_respondToUserIntent != nullptr) && (!_claimUserIntentData) ) {
     // make sure a delegate of this behavior claimed the intent that we preserved for them, and
     // remove it if not

@@ -2,6 +2,8 @@
   "behaviorClass" : "ReactToSound",
   "behaviorID" : "ReactToSoundAwake",
 
+  "associaitedActiveFeature": "NoFeature",
+
   "emotionEventOnActivated": "ReactToSoundAwake",
 
   "FromSleep" : false

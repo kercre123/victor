@@ -2,8 +2,8 @@
   "behaviorClass": "FistBump",
   "behaviorID": "FistBump",
   "executableBehaviorType": "FistBump",
-  "displayNameKey": "behavior.FistBump",
   "requiredUnlockId": "FistBump",
+  "associaitedActiveFeature": "FistBump",
 
   "maxTimeToLookForFace_s": 3.0,
   "abortIfNoFaceFound": true,

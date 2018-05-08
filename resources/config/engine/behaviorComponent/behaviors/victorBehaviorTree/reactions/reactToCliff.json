@@ -1,4 +1,6 @@
 {
   "behaviorClass": "ReactToCliff",
-  "behaviorID": "ReactToCliff"
+  "behaviorID": "ReactToCliff",
+
+  "associaitedActiveFeature": "ReactToCliff"
 }

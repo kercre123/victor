@@ -1,7 +1,6 @@
 {
   "behaviorClass": "AnimSequenceWithObject",
   "behaviorID": "AcknowledgeCharger",
-  "displayNameKey":"behavior.AcknowledgeCharger",
 
   "objectType" : "Charger_Basic",
   "animTriggers" : ["ChargerReaction"],

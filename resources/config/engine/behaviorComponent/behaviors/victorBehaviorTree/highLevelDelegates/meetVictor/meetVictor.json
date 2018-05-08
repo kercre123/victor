@@ -2,6 +2,8 @@
   "behaviorClass": "DispatcherStrictPriority",
   "behaviorID": "MeetVictor",
 
+  "associaitedActiveFeature": "MeetVictor",
+
   "respondToUserIntents" : [
     {"type": "meet_victor"}
   ],

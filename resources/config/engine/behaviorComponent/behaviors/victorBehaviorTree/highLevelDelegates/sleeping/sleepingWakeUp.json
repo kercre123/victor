@@ -2,6 +2,8 @@
   "behaviorID" : "SleepingWakeUp",
   "behaviorClass" : "AnimSequence",
 
+  "associaitedActiveFeature": "Sleeping",
+  
   "playOnChargerWithoutBody": true,
   
   "animTriggers": [

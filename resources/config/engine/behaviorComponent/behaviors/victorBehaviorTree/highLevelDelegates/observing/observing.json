@@ -2,6 +2,8 @@
   "behaviorID" : "Observing",
   "behaviorClass" : "DispatcherStrictPriority",
 
+  "associaitedActiveFeature": "Observing",
+
   "interruptActiveBehavior": true,
 
   "behaviors": [

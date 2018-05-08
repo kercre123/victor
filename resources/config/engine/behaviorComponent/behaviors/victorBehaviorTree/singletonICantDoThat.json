@@ -1,5 +1,6 @@
 {
   "behaviorClass": "AnimSequence",
   "behaviorID": "SingletonICantDoThat",
+  "associaitedActiveFeature": "CantDoThat",
   "animTriggers": ["ICantDoThat"]
 }

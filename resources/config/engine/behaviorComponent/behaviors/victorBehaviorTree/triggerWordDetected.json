@@ -2,6 +2,8 @@
   "behaviorClass": "ReactToVoiceCommand",
   "behaviorID": "TriggerWordDetected",
 
+  "associaitedActiveFeature": "NoFeature",
+
   "playListeningGetInAnim"  : true,
 
   "earConAudioEventBegin"   : "Play__Robot_Vic_Sfx__Wake_Word_On",

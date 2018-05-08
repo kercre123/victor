@@ -1,4 +1,5 @@
 {
   "behaviorClass": "ReactToUnexpectedMovement",
-  "behaviorID": "ReactToUnexpectedMovement"
+  "behaviorID": "ReactToUnexpectedMovement",
+  "associaitedActiveFeature": "NoFeature"
 }

@@ -2,6 +2,8 @@
   "behaviorClass" : "PlaybackMessage",
   "behaviorID"    : "PlaybackMessage",
 
+  "associaitedActiveFeature": "PlayingMessage",
+  
   "respondToUserIntents" :
   [
     { "type": "message_playback" }

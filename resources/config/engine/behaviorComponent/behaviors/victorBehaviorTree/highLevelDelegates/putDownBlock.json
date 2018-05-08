@@ -1,4 +1,5 @@
 {
   "behaviorClass": "PutDownBlock",
-  "behaviorID": "PutDownBlock"
+  "behaviorID": "PutDownBlock",
+  "associaitedActiveFeature": "NoFeature"
 }

@@ -17,6 +17,7 @@
     {
       "behaviorName" : "ComeHereInternal",
       "behaviorClass" : "DriveToFace",
+      "associaitedActiveFeature": "ComeHere",
 
       "timeUntilCancelFaceTrack_s": 5.0,
       "minDriveToFaceDistanceKey_mm": 200

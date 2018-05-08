@@ -40,7 +40,7 @@ public:
   virtual bool IsControlDelegated(const IBehavior* delegator) = 0;
   virtual bool CanDelegate(IBehavior* delegator) = 0;
   virtual bool Delegate(IBehavior* delegator, IBehavior* delegated) = 0;
-  virtual void CancelDelegates(IBehavior* delegator) = 0;
+  virtual bool CancelDelegates(IBehavior* delegator) = 0;
   virtual void CancelSelf(IBehavior* delegator) = 0;
   
 

@@ -1,6 +1,9 @@
 {
   "behaviorID"       : "SingletonTimerRinging",
   "behaviorClass"    : "AnimGetInLoop",
+
+  "associaitedActiveFeature": "TimerRinging",
+  
   "getIn"            : "TimerRingGetIn",
   "loopAnimation"    : "TimerRing",
   "getOut"           : "TimerRingGetOut",

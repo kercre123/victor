@@ -1,0 +1,13 @@
+{
+  "behaviorClass": "AnimSequence",
+  "behaviorID": "ReactToHello",
+
+  "emotionEventOnActivated": "RespondToShortVoiceCommand",
+
+  "animTriggers": ["ReactToGreeting"],
+  "respondToUserIntents": [
+    {
+      "type": "greeting_hello"
+    }
+  ]
+}

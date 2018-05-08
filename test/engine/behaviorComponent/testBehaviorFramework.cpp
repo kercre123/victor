@@ -307,6 +307,12 @@ void TestBehaviorFramework::SetBehaviorStackByName(const std::string& stackName)
 void TestBehaviorFramework::FullTreeWalk(std::map<IBehavior*,std::set<IBehavior*>>& delegateMap,
                                          std::function<void(void)> evaluateTreeCallback)
 {
+  FullTreeWalk(delegateMap, [&](bool leaf){ evaluateTreeCallback(); });
+}
+
+void TestBehaviorFramework::FullTreeWalk(std::map<IBehavior*,std::set<IBehavior*>>& delegateMap,
+                                         std::function<void(bool)> evaluateTreeCallback)
+{
   if(delegateMap.empty()){
     return;
   }else{
@@ -319,18 +325,26 @@ void TestBehaviorFramework::FullTreeWalk(std::map<IBehavior*,std::set<IBehavior*
         // Cancel any behaviors delegated to on activation
         // we'll push them on manually later
         bsm.CancelDelegates(delegate);
-        if(evaluateTreeCallback != nullptr){
-          evaluateTreeCallback();
+
+        // if we don't have the new delegates in the map yet then add them now
+        auto nextDelegates = delegateMap.find(delegate);
+        if( nextDelegates == delegateMap.end() ) {
+          std::set<IBehavior*> tmpDelegates;
+          delegate->GetAllDelegates(tmpDelegates);
+          nextDelegates = delegateMap.insert(std::make_pair(delegate, std::move(tmpDelegates))).first;
         }
+
+        ASSERT_NAMED(nextDelegates != delegateMap.end(), "TestBehaviorFramework.TreeWalk.InvalidDelegates");
+        
+        if(evaluateTreeCallback != nullptr){
+          const bool isLeaf = nextDelegates->second.empty();
+          evaluateTreeCallback(isLeaf);
+        }
+        
         FullTreeWalk(delegateMap, evaluateTreeCallback);
       }
       delegateMap.erase(iter);
       bsm.CancelSelf(topOfStack);
-    }else{
-      std::set<IBehavior*> tmpDelegates;
-      topOfStack->GetAllDelegates(tmpDelegates);
-      delegateMap.insert(std::make_pair(topOfStack, std::move(tmpDelegates)));
-      FullTreeWalk(delegateMap, evaluateTreeCallback);
     }
   }
 }

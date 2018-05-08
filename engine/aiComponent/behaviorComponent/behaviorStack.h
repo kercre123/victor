@@ -46,7 +46,7 @@ public:
   virtual ~BehaviorStack();
 
   // Convert a stack to a standardized string format
-  // Currently only used for audio - please avoid using this function if possible
+  // Currently only used for development output (e.g. audio). Don't use this internally for anything important
   static std::string StackToBehaviorString(std::vector<IBehavior*> stack);
 
   
@@ -60,6 +60,7 @@ public:
                            std::set<IBehavior*>& tickedInStack);
   
   inline IBehavior* GetTopOfStack(){ return _behaviorStack.empty() ? nullptr : _behaviorStack.back();}
+  inline IBehavior* GetBottomOfStack(){ return _behaviorStack.empty() ? nullptr : _behaviorStack.front();}
   inline bool IsInStack(const IBehavior* behavior) { return _stackMetadataMap.find(behavior) != _stackMetadataMap.end();}
   
   // if the passed in behavior is in the stack, return a pointer to the behavior which is above it in the

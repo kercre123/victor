@@ -75,6 +75,7 @@ fi
 # uncomment to generate a build artifact of all behaviors and their relationships
 # export ANKI_TEST_BEHAVIOR_FILE="behavior_transitions.txt"
 export ANKI_TEST_BEHAVIOR_BRANCHES="behavior_branches.txt"
+export ANKI_TEST_BEHAVIOR_FEATURES="behavior_active_features.txt"
 
 # unit test(s) look for this file to run cloud intent tests
 # comment out to skip generating it and running the tests

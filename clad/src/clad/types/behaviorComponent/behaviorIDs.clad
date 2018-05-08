@@ -16,6 +16,7 @@ enum uint_8 BehaviorID {
   Wait_TestInjectable,
 
   // <root>
+  FindFaces_sdk,
   StackBlocks,
 
   // devBehaviors
@@ -160,8 +161,6 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates/meetVictor
   EnrollFace,
-  MeetCozmo_FindFaces_Socialize,
-  MeetCozmo_InteractWithFaces,
   MeetVictor,
   RespondToRenameFace,
 
@@ -215,7 +214,6 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates/socialize
   DriveOffChargerIntoSocializing,
-  FindFaces_socialize,
   Socialize,
   SocializeGame,
 
@@ -242,6 +240,7 @@ enum uint_8 BehaviorID {
   ReactToGoodMorning,
   ReactToGoodNight,
   ReactToGreeting,
+  ReactToHello,
   ReactToObstacle,
   ReactToPlacedOnSlope,
   ReactToRobotOnBack,

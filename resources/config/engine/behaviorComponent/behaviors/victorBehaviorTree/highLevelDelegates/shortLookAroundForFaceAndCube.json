@@ -4,7 +4,9 @@
 {
   "behaviorClass": "LookForFaceAndCube",
   "behaviorID": "ShortLookAroundForFaceAndCube",
-  
+
+  "associaitedActiveFeature": "NoFeature",
+
   // behavior configuration
   "bodyTurnSpeed_degPerSec": 180,
   "headTurnSpeed_degPerSec": 120,

@@ -1,6 +1,6 @@
 {
   "behaviorClass": "DriveOffCharger",
   "behaviorID": "DriveOffCharger",
-  "displayNameKey":"behavior.DriveOffCharger",
-  "extraDistanceToDrive_mm": 60.0
+  "extraDistanceToDrive_mm": 60.0,
+  "associaitedActiveFeature": "NoFeature"
 }

@@ -2,6 +2,8 @@
   "behaviorClass": "ReactToFrustration",
   "behaviorID": "ReactToFrustrationMajor",
 
+  "associaitedActiveFeature": "Frustrated",
+
   "anim": "FrustratedByFailureMajor",
   "finalEmotionEvent": "FinishedMajorFrustration",
   "randomDriveMinDist_mm": 150.0,

@@ -29,6 +29,8 @@
 
 #include "osState/osState.h"
 
+#include "coretech/common/engine/utils/timer.h"
+
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
@@ -220,6 +222,17 @@ const IBehavior* BehaviorSystemManager::GetBehaviorDelegatedTo(const IBehavior* 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const IBehavior* BehaviorSystemManager::GetBaseBeahvior() const
+{
+  if( _behaviorStack != nullptr ) {
+    return _behaviorStack->GetBottomOfStack();
+  }
+  else {
+    return nullptr;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Json::Value BehaviorSystemManager::BuildDebugBehaviorTree(BehaviorExternalInterface& bei) const
 {
   if( _behaviorStack != nullptr ) {
@@ -273,31 +286,43 @@ bool BehaviorSystemManager::Delegate(IBehavior* delegator, IBehavior* delegated)
   _behaviorStack->PushOntoStack(delegated);
   
   _behaviorStack->DebugPrintStack("AfterDelegation");
+
+  _lastBehaviorStackUpdateTick = BaseStationTimer::getInstance()->GetTickCount();
   
   return true;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSystemManager::CancelDelegates(IBehavior* delegator)
+bool BehaviorSystemManager::CancelDelegates(IBehavior* delegator)
 {
+  bool anyPopped = false;
+
   if(_behaviorStack->IsInStack(delegator)){
     BOUNDED_WHILE(kArbitrarilyLargeCancelBound,
                   _behaviorStack->GetTopOfStack() != delegator){
       _behaviorStack->PopStack();
+      anyPopped = true;
     }
   }
 
-  PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.CancelDelegates",
-                "'%s' canceled its delegates",
-                delegator->GetDebugLabel().c_str());
+  if( anyPopped ) {
+    PRINT_CH_INFO("BehaviorSystem", "BehaviorSystemManager.CancelDelegates",
+                  "'%s' canceled its delegates",
+                  delegator->GetDebugLabel().c_str());
 
-  _behaviorStack->DebugPrintStack("AfterCancelDelgates");
+    _behaviorStack->DebugPrintStack("AfterCancelDelgates");
+  }
+
+  if( anyPopped ) {
+    _lastBehaviorStackUpdateTick = BaseStationTimer::getInstance()->GetTickCount();
+  }
+
+  return anyPopped;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// TODO:(bn) kevink: consider rename to "stop" rather than cancel
 void BehaviorSystemManager::CancelSelf(IBehavior* delegator)
 {
   if(!ANKI_VERIFY(_behaviorStack->IsInStack(delegator),
@@ -320,6 +345,9 @@ void BehaviorSystemManager::CancelSelf(IBehavior* delegator)
                 delegator->GetDebugLabel().c_str());
 
   _behaviorStack->DebugPrintStack("AfterCancelSelf");
+
+  _lastBehaviorStackUpdateTick = BaseStationTimer::getInstance()->GetTickCount();
+
 }
 
 } // namespace Cozmo

@@ -55,6 +55,8 @@ enum class ObjectInteractionIntention;
 class UnitTestKey;
 class UserIntent;
 enum class UserIntentTag : uint8_t;
+enum class ActiveFeature : uint32_t;
+class ActiveFeatureMetaData;
 
 class ISubtaskListener;
 class IReactToFaceListener;
@@ -208,6 +210,9 @@ public:
   // to bypass one of the behaviors InActivatableScope so that it can be handled by something
   // further down the stack
   void SetDontActivateThisTick(const std::string& coordinatorName);
+
+  // if an active feature is associated with this behavior, return true and set it in arguments
+  bool GetAssociatedActiveFeature(ActiveFeature& feature) const;
   
   std::map<std::string,ICozmoBehaviorPtr> TESTONLY_GetAnonBehaviors( UnitTestKey key ) const;
 
@@ -517,6 +522,10 @@ private:
   // if a behavior is waiting for a specific intent and it got it, and _claimUserIntentData,
   // then the intent will be here just prior to activation. otherwise it will be null
   std::unique_ptr<UserIntent> _pendingIntent;
+
+  // A behavior can specify an associated ActiveFeature. If it does, the ActiveFeatureComponent can check this
+  // while the behavior is active on the stack
+  std::unique_ptr<ActiveFeature> _associatedActiveFeature;
   
   // true when the trigger word is pending, in which case ICozmoBehavior will
   // 1) WantToBeActivated, in the absence of other negative conditions

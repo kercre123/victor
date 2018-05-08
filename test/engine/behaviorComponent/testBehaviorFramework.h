@@ -105,10 +105,13 @@ public:
    // Set the active behavior stack using a namedBehviorStack from namedBehaviorStacks.json
   void SetBehaviorStackByName(const std::string& behaviorStackName);
 
-  // Delegate through all valid tree states
-  // TreeCallback is called after each delegation
+  // Delegate through all valid tree states TreeCallback is called after each delegation (and optionally takes
+  // a bool which is true if the node is a leaf, false otherwise)
   void FullTreeWalk(std::map<IBehavior*,std::set<IBehavior*>>& delegateMap,
-                    std::function<void(void)> evaluateTreeCallback = nullptr);
+                    std::function<void(void)> evaluateTreeCallback);
+
+  void FullTreeWalk(std::map<IBehavior*,std::set<IBehavior*>>& delegateMap,
+                    std::function<void(bool)> evaluateTreeCallback = nullptr);
 
   // Walks the full freeplay tree to see whether the stack can occur
   static bool CanStackOccurDuringFreeplay(const std::vector<IBehavior*>& stackToBuild);
