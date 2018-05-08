@@ -80,7 +80,7 @@ JNIEXPORT void JNICALL
 Java_com_anki_cozmo_BackgroundConnectivity_ExecuteBackgroundTransfers(JNIEnv* env, jclass clazz)
 {
   PRINT_NAMED_INFO("AndroidBinding.BackgroundConnectivity", "received transfer request");
-  //cozmo_execute_background_transfers();
+  cozmo_execute_background_transfers();
 }
 
 JNIEXPORT void JNICALL

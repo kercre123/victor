@@ -31,7 +31,6 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/jsonWriter/jsonWriter.h"
 #include "util/console/consoleInterface.h"
-#include "anki/cozmo/shared/factory/emrHelper.h"
 
 namespace Anki {
 namespace Cozmo {

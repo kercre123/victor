@@ -196,7 +196,7 @@ or execute remote commands. e.g. `ssh root@${ANKI_ROBOT_HOST} "logcat -vthreadti
 1. We no longer use adb to connect to the robot. Instead we use SSH which is more reliable. You need to do this ONE-TIME operation for each different robot you want to connect to, on the laptop you're connecting from. Run this script:
 
     ```
-    ./tools/victor-ble-cli/vic_robot_set_key.sh VICTOR_xxxxxx
+    ./tools/victor-ble-cli/vic_set_robot_key.sh VICTOR_xxxxxx
     ```
 
     where 'xxxxxx' is the bluetooth ID of the robot (as mentioned above, for example VICTOR_1a3d273d, or "VECTOR R2D2"). This script will generate an SSH key pair, install it on your laptop, and then connect to the robot and install the public key on the robot. It will also modify your `~/.ssh/config` file to add some lines that will prevent unnecessary prompts and warnings. Finally, it will show you the robot's IP address, and write that IP address to a file on your laptop.

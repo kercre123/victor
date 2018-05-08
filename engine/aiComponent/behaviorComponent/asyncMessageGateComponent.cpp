@@ -15,8 +15,6 @@
 
 #include "util/logging/logging.h"
 
-#include "anki/cozmo/shared/factory/emrHelper.h"
-
 namespace Anki {
 namespace Cozmo {
   
@@ -241,6 +239,8 @@ void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
       _engineToGameSubscribers[tag].insert(subscriber);
     }
   }
+  
+  
 }
 
 
