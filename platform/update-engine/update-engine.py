@@ -13,11 +13,13 @@ import tarfile
 import zlib
 import shutil
 import ConfigParser
-import errno
-import select
+from select import select
 from hashlib import sha256
 from collections import OrderedDict
 from fcntl import fcntl, F_GETFL, F_SETFL
+
+sys.path.append("/anki/lib")
+import update_payload
 
 BOOT_DEVICE = "/dev/block/bootdevice/by-name"
 STATUS_DIR = "/run/update-engine"
@@ -35,9 +37,9 @@ BOOT_STAGING = os.path.join(STATUS_DIR, "boot.img")
 DELTA_STAGING = os.path.join(STATUS_DIR, "delta.bin")
 OTA_PUB_KEY = "/anki/etc/ota.pub"
 OTA_ENC_PASSWORD = "/anki/etc/ota.pas"
-DD_BLOCK_SIZE = 1024*256
 HTTP_BLOCK_SIZE = 1024*2  # Tuned to what seems to work best with DD_BLOCK_SIZE
-SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5"]
+DD_BLOCK_SIZE = HTTP_BLOCK_SIZE*1024
+SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5", "0.9.5"]
 
 DEBUG = False
 
@@ -165,7 +167,7 @@ def get_slot(kernel_command_line):
 
 def get_manifest(fileobj):
     "Returns config parsed from INI file in filelike object"
-    config = ConfigParser.ConfigParser({'encryption': '0'})
+    config = ConfigParser.ConfigParser({'encryption': '0', 'cache': str(5*1024*1024)})
     config.readfp(fileobj)
     return config
 
@@ -195,7 +197,7 @@ class StreamDecompressor(object):
                                          stderr=sys.stderr)
             make_blocking(self.proc.stdout, False)
         else:
-            raise ValueError("No procs")
+            die(201, "Unhandled section format for expansion")
 
     def __del__(self):
         "Ensure all subprocesses are closed when class goes away"
@@ -203,16 +205,14 @@ class StreamDecompressor(object):
             self.proc.kill()
 
     def read(self, length=-1):
-        """Pumps the input and reads output
-        NOTE: This read function may return more than the requested number of bytes while decompression is in progress
-        but will not return fewer than the requested number of bytes unless the end of file has been reached."""
+        """Pumps the input and reads output"""
         block = b""
         while (length < 0 or len(block) < length) and (self.pos + len(block)) < self.len:
-            rlist, wlist, xlist = select.select((self.proc.stdout,),
-                                                (self.proc.stdin,),
-                                                (self.proc.stdout, self.proc.stdin))
+            rlist, wlist, xlist = select((self.proc.stdout,),
+                                         (self.proc.stdin,),
+                                         (self.proc.stdout, self.proc.stdin))
             if xlist:
-                die(205, "Decompressor subprocess exceptional status")
+                die(212, "Decompressor subprocess exceptional status")
             if self.proc.stdin in wlist:
                 curl = self.fileobj.read(HTTP_BLOCK_SIZE)
                 if len(curl) == HTTP_BLOCK_SIZE:
@@ -221,7 +221,8 @@ class StreamDecompressor(object):
                     block += self.proc.communicate(curl)[0]
                     break
             if self.proc.stdout in rlist:
-                block += self.proc.stdout.read(length)
+                read_len = length - len(block) if length >= 0 else length
+                block += self.proc.stdout.read(read_len)
         if self.sum:
             self.sum.update(block)
         self.pos += len(block)
@@ -297,6 +298,68 @@ class ShaFile(object):
     def bytes(self):
         "Return the total bytes read from the file"
         return self.len
+
+
+class CacheStream(object):
+    "A fileobject wrapper for streams which caches the first N bytes in memory allowing seeking back to them."
+
+    def __init__(self, fileobj, cache_first, progress_callback=None):
+        "Sets up the cachestream caching the first N bytes"
+        self.src_file = fileobj
+        self.cache = self.src_file.read(cache_first)
+        self.fetched = len(self.cache)
+        self.pos = 0
+        self.progress = 0
+        self.progress_callback = progress_callback
+
+    def _update_pos(self, new_pos):
+        "Update the position and track progress"
+        self.pos = new_pos
+        if new_pos > self.progress:
+            self.progress = new_pos
+            if callable(self.progress_callback):
+                self.progress_callback(self.progress)
+
+    def seek(self, offset):
+        "Seek on the file if possible"
+        if offset < len(self.cache):
+            self._update_pos(offset)
+        elif offset == self.fetched:
+            self._update_pos(self.fetched)
+        elif offset > self.fetched:
+            _ = self.src_file.read(offset - self.fetched)
+            self.fetched = offset
+            self._update_pos(offset)
+        else:
+            raise IOError("Invalid seek on CacheStream({}): {}".format(len(self.cache), offset))
+        return self.pos
+
+    def read(self, length):
+        "Read the given file"
+        if self.pos + length <= len(self.cache):
+            old_pos = self.pos
+            self._update_pos(self.pos + length)
+            return self.cache[old_pos:self.pos]
+        elif self.pos < len(self.cache):
+            if self.fetched == len(self.cache):
+                need_to_read = self.pos + length - self.fetched
+                read = self.src_file.read(need_to_read)
+                self.fetched += len(read)
+                self._update_pos(self.fetched)
+                return self.cache[self.pos:] + read
+            else:
+                raise IOError("Invalid read on CacheStream({}): pos={}, length={}".format(len(self.cache),
+                                                                                          self.pos,
+                                                                                          length))
+        elif self.pos == self.fetched:
+            read = self.src_file.read(length)
+            self.fetched += len(read)
+            self._update_pos(self.fetched)
+            return read
+        else:
+            raise IOError("Invalid read on CacheStream({}): pos={}, length={}".format(len(self.cache),
+                                                                                      self.pos,
+                                                                                      length))
 
 
 def handle_boot_system(target_slot, manifest, tar_stream):
@@ -425,34 +488,25 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
         die(200,
             "Expected delta.bin.gz to be next in tar but found \"{}\""
             .format(delta_ti.name))
-    with open(DELTA_STAGING, "wb") as delta_fh:
-        decompressor = StreamDecompressor(tar_stream.extractfile(delta_ti),
-                                          manifest.getint("DELTA", "encryption"),
-                                          manifest.get("DELTA", "compression"),
-                                          manifest.getint("DELTA", "bytes"),
-                                          True)
-        decompressor.read_to_file(delta_fh, DD_BLOCK_SIZE, progress_update)
-        # Verify delta hash
-        if decompressor.digest() != manifest.get("DELTA", "sha256"):
-            safe_delete(DELTA_STAGING)
-            die(209, "delta.bin hash doesn't match manifest value")
-    paycheck = subprocess.Popen(["/usr/bin/paycheck.py",
-                                 "--do-not-truncate-to-expected-size",
-                                 DELTA_STAGING,
-                                 os.path.join(BOOT_DEVICE, "boot_" + target_slot),
-                                 os.path.join(BOOT_DEVICE, "system_" + target_slot),
-                                 os.path.join(BOOT_DEVICE, "boot_" + current_slot),
-                                 os.path.join(BOOT_DEVICE, "system_" + current_slot)],
-                                shell=False,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-    ret_code = paycheck.wait()
-    paycheck_out, paycheck_err = paycheck.communicate()
-    safe_delete(DELTA_STAGING)
-    if ret_code != 0:
-        die(207,
-            "Failed to apply delta. paycheck.py returned {0}\n{1}\n{2}"
-            .format(ret_code, paycheck_out, paycheck_err))
+    decompressor = StreamDecompressor(tar_stream.extractfile(delta_ti),
+                                      manifest.getint("DELTA", "encryption"),
+                                      manifest.get("DELTA", "compression"),
+                                      manifest.getint("DELTA", "bytes"),
+                                      True)
+    try:
+        payload = update_payload.Payload(CacheStream(decompressor, manifest.getint("DELTA", "cache"), progress_update))
+        payload.Init()
+        payload.Apply(os.path.join(BOOT_DEVICE, "boot_" + target_slot),
+                      os.path.join(BOOT_DEVICE, "system_" + target_slot),
+                      os.path.join(BOOT_DEVICE, "boot_" + current_slot),
+                      os.path.join(BOOT_DEVICE, "system_" + current_slot),
+                      truncate_to_expected_size=False)
+    except update_payload.PayloadError as pay_err:
+        die(207, "Delta payload error: {!s}".format(pay_err))
+    # Verify delta hash
+    if decompressor.digest() != manifest.get("DELTA", "sha256"):
+        zero_slot(target_slot)
+        die(209, "delta.bin hash doesn't match manifest value")
 
 
 def handle_anki(current_slot, target_slot, manifest, tar_stream):
