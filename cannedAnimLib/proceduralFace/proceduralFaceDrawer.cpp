@@ -21,6 +21,7 @@ namespace Cozmo {
     None           = 0,
     BoxFilter      = 1,
     GaussianFilter = 2,
+    NEONBoxFilter  = 3, // Note: anti-aliasing size is hard-coded to 3 for this option
   };
 
 #if ANKI_CPU_PROFILER_ENABLED
@@ -40,7 +41,7 @@ namespace Cozmo {
 #if PROCEDURALFACE_GLOW_FEATURE
   CONSOLE_VAR_RANGED(f32, kProcFace_GlowSizeMultiplier,           CONSOLE_GROUP, 1.f, 0.f, 1.f);
   CONSOLE_VAR_RANGED(f32, kProcFace_GlowLightnessMultiplier,      CONSOLE_GROUP, 1.f, 0.f, 10.f);
-  CONSOLE_VAR_ENUM(uint8_t, kProcFace_GlowFilter,                 CONSOLE_GROUP, (uint8_t)Filter::BoxFilter, "None,Box,Gaussian");
+  CONSOLE_VAR_ENUM(uint8_t, kProcFace_GlowFilter,                 CONSOLE_GROUP, (uint8_t)Filter::BoxFilter, "None,Box,Gaussian,Box (NEON code; size 3)");
 #endif
 
 #if PROCEDURALFACE_NOISE_FEATURE
@@ -53,8 +54,9 @@ namespace Cozmo {
   CONSOLE_VAR_EXTERN(s32, kProcFace_NoiseNumFrames);
 #endif
 
-  CONSOLE_VAR_RANGED(s32,   kProcFace_AntiAliasingSize,           CONSOLE_GROUP, 5, 0, 15); // full image antialiasing
-  CONSOLE_VAR_ENUM(uint8_t, kProcFace_AntiAliasingFilter,         CONSOLE_GROUP, (uint8_t)Filter::BoxFilter, "None,Box,Gaussian");
+  CONSOLE_VAR_RANGED(s32,   kProcFace_AntiAliasingSize,           CONSOLE_GROUP, 3, 0, 15); // full image antialiasing
+  CONSOLE_VAR_ENUM(uint8_t, kProcFace_AntiAliasingFilter,         CONSOLE_GROUP, (uint8_t)Filter::NEONBoxFilter, "None,Box,Gaussian,Box (NEON code; size 3)");
+  CONSOLE_VAR_RANGED(f32,   kProcFace_AntiAliasingSigmaFraction,  CONSOLE_GROUP, 0.5f, 0.0f, 1.0f);
 
   static void VictorFaceRenderer(ConsoleFunctionContextRef context)
   {
@@ -393,11 +395,16 @@ namespace Cozmo {
 
     // Make sure the upper left and bottom right points are in bounds (note that we loop over
     // pixels below *inclusive* of the bottom right point, so we use HEIGHT/WIDTH-1)
-    upperLeft.x() = std::max(0.f, upperLeft.x());
-    upperLeft.y() = std::max(0.f, upperLeft.y());
-    // Push bottom-right co-ordinate to avoid un-antialiased edges
-    bottomRight.x() = std::min((f32)(ProceduralFace::WIDTH-1), bottomRight.x()+1);
-    bottomRight.y() = std::min((f32)(ProceduralFace::HEIGHT-1), bottomRight.y()+1);
+
+    // Note: visual artifacts can be seen with the NEON pathway, only slightly on the top/left border, which
+    //       is fixed by extending the ROI by half the filter size (as expected).
+    //       However, they are very clearly visible on the bottom/right and only disappear by extending the
+    //       ROI by kProcFace_AntiAliasingSize.
+
+    upperLeft.x() = std::max(0.f, upperLeft.x()-kProcFace_AntiAliasingSize*.5f);
+    upperLeft.y() = std::max(0.f, upperLeft.y()-kProcFace_AntiAliasingSize*.5f);
+    bottomRight.x() = std::min((f32)(ProceduralFace::WIDTH-1), bottomRight.x()+kProcFace_AntiAliasingSize);
+    bottomRight.y() = std::min((f32)(ProceduralFace::HEIGHT-1), bottomRight.y()+kProcFace_AntiAliasingSize);
 
     // Create the bounding that we're returning from the upperLeft and bottomRight points
     eyeBoundingBox = Rectangle<f32>(upperLeft, bottomRight);
@@ -507,12 +514,18 @@ namespace Cozmo {
           ++glowSizeY;
         }
 
-        if(kProcFace_GlowFilter == (uint8_t)Filter::BoxFilter) {
-          cv::boxFilter(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), -1, cv::Size(glowSizeX,glowSizeY));
-        } else if(kProcFace_GlowFilter == (uint8_t)Filter::GaussianFilter) {
-          cv::GaussianBlur(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), cv::Size(glowSizeX,glowSizeY),
-                           (f32)glowSizeX, (f32)glowSizeY);
-        }
+        switch(kProcFace_GlowFilter) {
+          case (uint8_t)Filter::BoxFilter:
+            cv::boxFilter(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), -1, cv::Size(glowSizeX,glowSizeY));
+            break;
+          case (uint8_t)Filter::GaussianFilter:
+            cv::GaussianBlur(eyeShapeROI.get_CvMat_(), glowImgROI.get_CvMat_(), cv::Size(glowSizeX,glowSizeY),
+                             (f32)glowSizeX, (f32)glowSizeY);
+            break;
+          case (uint8_t)Filter::NEONBoxFilter: {
+            eyeShapeROI.BoxFilter(glowImgROI, 3);
+            break;
+          }
       }
 #endif
 
@@ -522,12 +535,23 @@ namespace Cozmo {
         if(kProcFace_AntiAliasingSize % 2 == 0) {
           ++kProcFace_AntiAliasingSize; // Antialiasing filter size should be odd
         }
-        if(kProcFace_AntiAliasingFilter == (uint8_t)Filter::BoxFilter) {
-          cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize));
-        } else if(kProcFace_AntiAliasingFilter == (uint8_t)Filter::GaussianFilter) {
-          const f32 kAntiAliasingSigmaFraction = 0.5f;
-          cv::GaussianBlur(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize),
-                           (f32)kProcFace_AntiAliasingSize * kAntiAliasingSigmaFraction);
+        switch(kProcFace_AntiAliasingFilter) {
+          case (uint8_t)Filter::BoxFilter:
+            cv::boxFilter(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), -1, cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize));
+            break;
+          case (uint8_t)Filter::GaussianFilter:
+            cv::GaussianBlur(eyeShapeROI.get_CvMat_(), eyeShapeROI.get_CvMat_(), cv::Size(kProcFace_AntiAliasingSize,kProcFace_AntiAliasingSize),
+                             (f32)kProcFace_AntiAliasingSize * kProcFace_AntiAliasingSigmaFraction);
+            break;
+          case (uint8_t)Filter::NEONBoxFilter: {
+            kProcFace_AntiAliasingSize = 3;
+
+            static Vision::Image temp(_eyeShape.GetNumRows(), _eyeShape.GetNumCols());
+            Vision::Image tempImage = temp.GetROI(eyeBoundingBoxS32);
+            eyeShapeROI.BoxFilter(tempImage,kProcFace_AntiAliasingSize);
+            std::swap(_eyeShape, temp);
+            break;
+          }
         }
       }
 
