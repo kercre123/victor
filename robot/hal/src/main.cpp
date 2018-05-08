@@ -33,12 +33,15 @@ bool wasPackedOutAtBoot = false;
 
 static void Cleanup(int signum)
 {
-  Anki::Cozmo::Robot::Destroy();
-
-  // Need to HAL::Step() in order for light commands to go down to robot
-  // so set shutdownSignal here to signal process shutdown after
-  // shutdownCounter more tics of main loop.
-  shutdownSignal = signum;
+  if (shutdownSignal == 0) {
+    AnkiInfo("robot.cleanup", "Preparing to shutdown");
+    Anki::Cozmo::Robot::Destroy();
+  
+    // Need to HAL::Step() in order for light commands to go down to robot
+    // so set shutdownSignal here to signal process shutdown after
+    // shutdownCounter more tics of main loop.
+    shutdownSignal = signum;
+  }
 }
 
 

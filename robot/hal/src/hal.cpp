@@ -383,6 +383,7 @@ Result HAL::Step(void)
 void HAL::Stop()
 {
   StopIMU();
+  DisconnectRadio();
 }
 
 void ProcessTouchLevel(void)
