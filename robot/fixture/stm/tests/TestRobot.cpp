@@ -320,12 +320,15 @@ void TestRobotCleanup(void)
 
 void read_robot_info_(void)
 {
-  uint32_t esnCmd = rcomEsn();
-  flexnfo.bsv = *rcomBsv();
-  
   if( g_fixmode == FIXMODE_ROBOT1 ) {
-    memset( &flexnfo, 0, sizeof(flexnfo) );
+    //memset( &flexnfo, 0, sizeof(flexnfo) );
+    flexnfo.bsv = *rcomBsv();
+    rcomPrintBsv(&flexnfo.bsv); //log
+    
   } else {
+    uint32_t esnCmd = rcomEsn(); //not really necesary anymore since GMR[0] is esn
+    flexnfo.bsv = *rcomBsv();
+    
     flexnfo.esn           = rcomGmr( EMR_FIELD_OFS(ESN) );
     flexnfo.hwver         = rcomGmr( EMR_FIELD_OFS(HW_VER) );
     flexnfo.model         = rcomGmr( EMR_FIELD_OFS(MODEL) );
@@ -1094,9 +1097,9 @@ TestFunction* TestRobot0GetTests(void) {
 TestFunction* TestRobot1GetTests(void) {
   static TestFunction m_tests[] = {
     TestRobotDetectSpine,
-    TestRobotButton,
+    //TestRobotButton,
     TestRobotInfo,
-    TestRobotSensors,
+    //TestRobotSensors,
     //TestRobotTreads, //XXX
     //TestRobotRange, //XXX
     //ChargeTest, //XXX

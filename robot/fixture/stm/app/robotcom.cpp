@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -201,10 +202,7 @@ robot_bsv_t* cccBsv()
   cmdSend(CMD_IO_CONTACTS, cmd, 500, CCC_CMD_OPTS, bsv_handler_);
   
   #if CCC_DEBUG > 0
-  robot_bsv_t* bsv = &m_ccc.rsp.bsv;
-  ConsolePrintf("bsv hw.rev,model %u %u\n", bsv->hw_rev, bsv->hw_model );
-  ConsolePrintf("bsv ein %08x %08x %08x %08x\n", bsv->ein[0], bsv->ein[1], bsv->ein[2], bsv->ein[3] );
-  ConsolePrintf("bsv app vers %08x %08x %08x %08x\n", bsv->app_version[0], bsv->app_version[1], bsv->app_version[2], bsv->app_version[3] );
+  rcomPrintBsv(&m_ccc.rsp.bsv);
   #endif
   
   return !ccc_error_check_(10) ? &m_ccc.rsp.bsv : NULL;
@@ -329,7 +327,9 @@ uint32_t cccGmr(uint8_t idx) {
 //                  Spine HAL
 //-----------------------------------------------------------------------------
 
-#define SPINE_HAL_DEBUG  1
+#define SPINE_HAL_DEBUG            0
+#define SPINE_HAL_DEBUG_RX_VERBOSE 0
+#define SPINE_HAL_DEBUG_TX_VERBOSE 0
 
 #include "../../syscon/schema/messages.h"
 #include "spine_crc.h"
@@ -430,7 +430,9 @@ int halSpineSend(uint8_t *payload, PayloadId type)
   
   #if SPINE_HAL_DEBUG > 0
   ConsolePrintf("spine tx: type %04x len %u checksum %08x\n", txPacket.header.payload_type, txPacket.header.bytes_to_follow, footer->checksum );
-  ConsolePrintf(" ->");
+  #endif
+  
+  #if SPINE_HAL_DEBUG_TX_VERBOSE > 0
   for(int x=0; x < sizeof(SpineMessageHeader) + payloadlen + sizeof(SpineMessageFooter); x++) {
     if( !(x&3) ) ConsolePutChar(' ');
     ConsolePrintf("%02x", ((uint8_t*)&txPacket)[x] );
@@ -451,7 +453,7 @@ spinePacket_t* halSpineReceive(int timeout_us)
   static spinePacket_t rxPacket;
   memset( &rxPacket, 0, sizeof(SpineMessageHeader) );
   
-  #if SPINE_HAL_DEBUG > 0
+  #if SPINE_HAL_DEBUG_RX_VERBOSE > 0
   ConsolePrintf("spine rx: scanning for sync word\n");
   #endif
   
@@ -462,43 +464,46 @@ spinePacket_t* halSpineReceive(int timeout_us)
     if( timeout_us > 0 && Timer::elapsedUs(Tsync) > timeout_us )
       throw ERROR_SPINE_PKT_TIMEOUT; //return NULL;
     if( (c = DUT_UART::getchar(0)) > -1 )
-      rxPacket.header.sync_bytes = (rxPacket.header.sync_bytes << 24) | (c & 0xff);
+      rxPacket.header.sync_bytes = (c << 24) | (rxPacket.header.sync_bytes >> 8); //sync definition big endian??
     
     halSpineGetRxErrs(&ioe);
     if( ioe.rxDroppedChars || ioe.rxOverflowErrors )
       throw ERROR_SPINE_RX_ERROR;
   }
   
-  #if SPINE_HAL_DEBUG > 0
-  ConsolePrintf("spine rx: sync found\n");
+  #if SPINE_HAL_DEBUG_RX_VERBOSE > 0
+  ConsolePrintf("spine rx: header\n");
   #endif
   
   //get remaining header
-  timeout_us = timeout_us > 0 ? 4500 : timeout_us; //alow enough time to rx the packet
+  timeout_us = timeout_us > 0 ? 10000 : timeout_us; //alow enough time to rx the packet
   uint8_t *write = (uint8_t*)&rxPacket.header + sizeof(rxPacket.header.sync_bytes);
   while( write < (uint8_t*)&rxPacket.header + sizeof(SpineMessageHeader) )
   {
     if( timeout_us > 0 && Timer::elapsedUs(Tsync) > timeout_us )
       throw ERROR_SPINE_PKT_TIMEOUT; //return NULL;
     if( (c = DUT_UART::getchar(0)) > -1 )
-    {
       *write++ = c;
-      #if SPINE_HAL_DEBUG > 0
-      //DUT_UART::putchar(c);
-      #endif
-    }
     
     halSpineGetRxErrs(&ioe);
     if( ioe.rxDroppedChars || ioe.rxOverflowErrors )
       throw ERROR_SPINE_RX_ERROR;
   }
   
-  #if SPINE_HAL_DEBUG > 0
-  ConsolePrintf("spine rx header\n");
+  #if SPINE_HAL_DEBUG_RX_VERBOSE > 0
+  for(int x=0; x < sizeof(SpineMessageHeader); x++) {
+    if( !(x&3) ) ConsolePutChar(' ');
+    ConsolePrintf("%02x", ((uint8_t*)&rxPacket.header)[x] );
+  } ConsolePutChar('\n');
+  #endif
+  
+  #if SPINE_HAL_DEBUG_RX_VERBOSE > 0
+  ConsolePrintf("spine rx: payload %i bytes_to_follow\n", rxPacket.header.bytes_to_follow);
   #endif
   
   //get the rest
   //write = (uint8_t*)&rxPacket.payload;
+  timeout_us = timeout_us > 0 ? 10000 : timeout_us; //alow enough time to rx the packet
   uint16_t payloadlen = rxPacket.header.bytes_to_follow;
   while( write < (uint8_t*)&rxPacket.payload + payloadlen + sizeof(SpineMessageFooter) )
   {
@@ -512,22 +517,29 @@ spinePacket_t* halSpineReceive(int timeout_us)
       throw ERROR_SPINE_RX_ERROR;
   }
   
+  #if SPINE_HAL_DEBUG_RX_VERBOSE > 0
+  for(int x=0; x < payloadlen; x++) {
+    if( !(x&3) ) ConsolePutChar(' ');
+    ConsolePrintf("%02x", ((uint8_t*)&rxPacket.payload)[x] );
+  } ConsolePutChar('\n');
+  #endif
+  
   //process footer
   SpineMessageFooter* footer = (SpineMessageFooter*)((uint32_t)&rxPacket.payload + payloadlen);
-  memcpy( &rxPacket.footer, footer, sizeof(SpineMessageFooter) ); //move to proper pkt locale
+  memmove( &rxPacket.footer, footer, sizeof(SpineMessageFooter) ); //move to proper pkt locale
   crc_t expected_checksum = calc_crc((const uint8_t*)&rxPacket.payload, payloadlen);
   
   bool type_valid = payload_type_is_valid_(rxPacket.header.payload_type);
   uint16_t expected_len = payload_size_(rxPacket.header.payload_type,0);
   
   #if SPINE_HAL_DEBUG > 0
-    ConsolePrintf("spine rx: type %04x len %u checksum %08x\n", rxPacket.header.payload_type, rxPacket.header.bytes_to_follow, rxPacket.footer.checksum );
-    if( !type_valid )
-      ConsolePrintf("  BAD TYPE: %0x04\n", rxPacket.header.payload_type);
-    if( payloadlen != expected_len )
-      ConsolePrintf("  BAD LEN: %u/%u\n", payloadlen, expected_len);
-    if( expected_checksum != rxPacket.footer.checksum )
-      ConsolePrintf("  BAD CHECKSUM: %08x %08x %08x ----\n", expected_checksum, rxPacket.footer.checksum, footer->checksum);
+  ConsolePrintf("spine rx: type %04x len %u checksum %08x\n", rxPacket.header.payload_type, rxPacket.header.bytes_to_follow, rxPacket.footer.checksum );
+  if( !type_valid )
+    ConsolePrintf("  BAD TYPE: %0x04\n", rxPacket.header.payload_type);
+  if( payloadlen != expected_len )
+    ConsolePrintf("  BAD LEN: %u/%u\n", payloadlen, expected_len);
+  if( expected_checksum != rxPacket.footer.checksum )
+    ConsolePrintf("  BAD CHECKSUM: %08x %08x %08x ----\n", expected_checksum, rxPacket.footer.checksum, footer->checksum);
   #endif
   
   if( !type_valid || !expected_len )
@@ -556,7 +568,7 @@ HeadToBody* halSpineH2BFrame(PowerState powerState, int16_t *p4motorPower, uint8
 //                  Target: Spine
 //-----------------------------------------------------------------------------
 
-#define SPINE_DEBUG  1
+#define SPINE_DEBUG  0
 
 //verify body version structs are equivalent
 STATIC_ASSERT( sizeof(robot_bsv_t) == sizeof(VersionInfo), version_struct_size_match_check );
@@ -566,14 +578,18 @@ robot_bsv_t* spineBsv_(void)
   static robot_bsv_t m_bsv;
   
   //set syscon default state
+  #if SPINE_DEBUG > 0
   ConsolePrintf("spine idle PAYLOAD_DATA_FRAME\n");
+  #endif
   for(int n=0; n<2; n++) {
     halSpineSend((uint8_t*)halSpineH2BFrame(POWER_STATE_ON,0,0), PAYLOAD_DATA_FRAME);
     Timer::delayMs(5);
   }
   
   //Send version request packet (0-payload)
+  #if SPINE_DEBUG > 0
   ConsolePrintf("spine request PAYLOAD_VERSION\n");
+  #endif
   halSpineRxFlush();
   halSpineSend(NULL, PAYLOAD_VERSION);
   
@@ -587,10 +603,7 @@ robot_bsv_t* spineBsv_(void)
       memcpy( &m_bsv, (VersionInfo*)&pkt->payload, sizeof(robot_bsv_t) );
       
       #if SPINE_DEBUG > 0
-      robot_bsv_t* bsv = &m_bsv;
-      ConsolePrintf("bsv hw.rev,model %u %u\n", bsv->hw_rev, bsv->hw_model );
-      ConsolePrintf("bsv ein %08x %08x %08x %08x\n", bsv->ein[0], bsv->ein[1], bsv->ein[2], bsv->ein[3] );
-      ConsolePrintf("bsv app vers %08x %08x %08x %08x\n", bsv->app_version[0], bsv->app_version[1], bsv->app_version[2], bsv->app_version[3] );
+      rcomPrintBsv(&m_bsv);
       #endif
       
       return &m_bsv;
@@ -704,5 +717,18 @@ void rcomSmr(uint8_t idx, uint32_t val) { if( !rcom_target_spine_nCCC ) ccc_IdxV
 
 uint32_t rcomGmr(uint8_t idx) { 
   return !rcom_target_spine_nCCC ? cccGmr(idx) : 0;
+}
+
+void rcomPrintBsv(robot_bsv_t* bsv) {
+  ConsolePrintf("bsv hwrev %u\n", bsv->hw_rev );
+  ConsolePrintf("bsv model %u\n", bsv->hw_model );
+  ConsolePrintf("bsv ein %08x %08x %08x %08x\n", bsv->ein[0], bsv->ein[1], bsv->ein[2], bsv->ein[3] );
+  ConsolePrintf("bsv app-vers %08x %08x %08x %08x ", bsv->app_version[0], bsv->app_version[1], bsv->app_version[2], bsv->app_version[3] );
+  for(int x=0; x<16; x++) {
+    int c = ((uint8_t*)&bsv->app_version)[x];
+    if( !isprint(c) ) break; //end on first non-printable char
+    ConsolePutChar(c);
+  }
+  ConsolePutChar('\n');
 }
 

@@ -103,6 +103,7 @@ uint32_t      rcomGmr(uint8_t idx);
 //void          rcomFcc(uint8_t mode, uint8_t cn); //RCOM_FCC_MODE_, {0..39}
 //void          rcomLfe(uint8_t idx, uint32_t val);
 
+void          rcomPrintBsv(robot_bsv_t* bsv);
 
 #endif //ROBOTCOM_H
 
