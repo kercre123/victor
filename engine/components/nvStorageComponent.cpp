@@ -942,6 +942,10 @@ int NVStorageComponent::OpenCameraCalibFile(int openFlags)
 
 void NVStorageComponent::ReadCameraCalibFile()
 {
+  #ifdef SIMULATOR
+  return;
+  #endif
+  
   int fd = OpenCameraCalibFile(O_RDONLY);
   if(fd == -1)
   {
