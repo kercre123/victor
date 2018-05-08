@@ -260,16 +260,9 @@ typedef int error_t;
 
 //<export heading> Backpack Errors
 #define ERROR_BACKP_LED                   650 // Backpack LED miswired or bad LED
-//#define ERROR_ENCODER_FAULT             651 // Encoder wire/solder broken
-//#define ERROR_MOTOR_BACKWARD            652 // Motor or encoder is wired backward
-//#define ERROR_MOTOR_SLOW                653 // Motor cannot turn easily (too tight or debris inside)
-//#define ERROR_BACKP_BTN_THRESH          654 // Button voltage detected outside digital thresholds
-//#define ERROR_BACKP_BTN_PRESS_TIMEOUT   655 // Timeout waiting for backpack button to be pressed
-//#define ERROR_BACKP_BTN_RELEASE_TIMEOUT 656 // Timeout waiting for backpack button to be released
-//#define ERROR_MOTOR_FAST                664 // Encoder does not meet Anki spec (can't count every tick at speed)
-//#define ERROR_ENCODER_UNDERVOLT         665 // Encoder does not meet Anki spec (can't meet minimum voltage)
-//#define ERROR_ENCODER_SPEED_FAULT       666 // Encoder does not meet Anki spec (rise/fall threshold)
-//#define ERROR_ENCODER_RISE_TIME         667 // Encoder does not meet Anki spec (A vs B rise time)
+#define ERROR_BACKP_BTN_PRESS_TIMEOUT     651 // Timeout waiting for backpack button to be pressed
+#define ERROR_BACKP_BTN_RELEASE_TIMEOUT   652 // Timeout waiting for backpack button to be released
+//#define ERROR_BACKP_BTN_THRESH          653 // Button voltage detected outside digital thresholds
 
 //<export heading> Cube Errors
 #define ERROR_CUBE_CANNOT_WRITE           700 // MCU is locked

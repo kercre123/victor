@@ -424,7 +424,7 @@ static robot_tread_dat_t* robot_tread_test_(uint8_t sensor, int8_t power)
   
   const bool left = (sensor == RCOM_SENSOR_MOT_LEFT);
   //const bool DEBUG_PRINT = !g_isReleaseBuild;
-  const int printlvl = RCOM_PRINT_LEVEL_CMD; //g_isReleaseBuild ? RCOM_PRINT_LEVEL_CMD : RCOM_PRINT_LEVEL_CMD_DAT_RSP;
+  const int printlvl = g_isReleaseBuild ? RCOM_PRINT_LEVEL_CMD : RCOM_PRINT_LEVEL_CMD_DAT_RSP;
   static robot_tread_dat_t test;
   memset(&test, 0, sizeof(test));
   robot_sr_t* psr;
@@ -669,6 +669,94 @@ void RobotPowerDown(void)
   
   Contacts::powerOn(); //immdediately turn on power to prevent rebooting
   cleanup_preserve_vext = 1; //leave power on for removal detection (no cleanup pwr cycle)
+}
+
+//-----------------------------------------------------------------------------
+//                  Button
+//-----------------------------------------------------------------------------
+
+static void led_manage_(bool reset)
+{
+  static const uint8_t leds[][12] = {
+    {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, //off
+    {0xFF,0x00,0x00,0xFF,0x00,0x00,0xFF,0x00,0x00,0x00,0x00,0x00}, //R.0,1,2
+    {0x00,0xFF,0x00,0x00,0xFF,0x00,0x00,0xFF,0x00,0x00,0x00,0x00}, //G.0,1,2
+    {0x00,0x00,0xFF,0x00,0x00,0xFF,0x00,0x00,0xFF,0x00,0x00,0x00}  //B.0,1,2
+  };
+  const int led_frame_count = sizeof(leds)/12;
+  const int printlvl = RCOM_PRINT_LEVEL_NONE; //RCOM_PRINT_LEVEL_CMD;
+  
+  static int Tframe = 0, idx = 0;
+  if( reset ) {
+    rcomLed( (uint8_t*)leds[0], printlvl );
+    Tframe = 0;
+    idx = 0;
+  }
+  else if( !Tframe || Timer::elapsedUs(Tframe) > 250*1000 ) {
+    Tframe = Timer::get();
+    idx = idx+1 >= led_frame_count ? 1 : idx+1;
+    rcomLed( (uint8_t*)leds[idx], printlvl );
+  }
+}
+
+static void btn_sample_(int *press_cnt, int *release_cnt)
+{
+  static uint32_t Tsample = 0;
+  if( Timer::elapsedUs(Tsample) > 30*1000 )
+  {
+    Tsample = Timer::get();
+    const int printlvl = RCOM_PRINT_LEVEL_NONE; //RCOM_PRINT_LEVEL_DAT
+    bool pressed = rcomGet(1, RCOM_SENSOR_BTN_TOUCH, printlvl)[0].btn.btn > 0;
+    
+    //DEBUG inspect data and measure sample period (~30ms for cmd round-trip)
+    //ConsolePrintf("btn %i rcomGet() cmdTime %ims\n", pressed, cmdTimeMs());
+    //ConsolePrintf("btn %i\n", pressed);
+    
+    if(press_cnt != NULL)
+      *press_cnt = !pressed ? 0 : (*press_cnt >= 65535 ? 65535 : *press_cnt+1);
+    if(release_cnt != NULL)
+      *release_cnt = pressed ? 0 : (*release_cnt >= 65535 ? 65535 : *release_cnt+1);
+  }
+}
+
+void TestRobotButton(void)
+{
+  led_manage_(1); //reset leds
+  
+  ConsolePrintf("Waiting for button...\n");
+  
+  //wait for button press
+  int btn_press_cnt = 0;
+  uint32_t btn_start = Timer::get();
+  while( btn_press_cnt < 3 ) {
+    btn_sample_( &btn_press_cnt, 0 );
+    led_manage_(0);
+    if( Timer::get() - btn_start > 7*1000*1000 ) {
+      ConsolePrintf("ERROR_BACKP_BTN_PRESS_TIMEOUT\n");
+      led_manage_(1); //reset leds
+      throw ERROR_BACKP_BTN_PRESS_TIMEOUT;
+      //break;
+    }
+  }
+  
+  ConsolePrintf("btn pressed\n");
+  
+  //wait for button release
+  int btn_release_cnt = 0;
+  btn_start = Timer::get();
+  while( btn_release_cnt < 5 ) {
+    btn_sample_( 0, &btn_release_cnt );
+    led_manage_(0);
+    if( Timer::get() - btn_start > 3500*1000 ) {
+      ConsolePrintf("ERROR_BACKP_BTN_RELEASE_TIMEOUT\n");
+      led_manage_(1); //reset leds
+      throw ERROR_BACKP_BTN_RELEASE_TIMEOUT;
+      //break;
+    }
+  }
+  
+  ConsolePrintf("btn released\n");
+  led_manage_(1); //reset leds
 }
 
 //-----------------------------------------------------------------------------
@@ -990,6 +1078,7 @@ void DBG_test_emr(void) { dbg_test_emr_(); }
 
 TestFunction* TestRobot0GetTests(void) {
   static TestFunction m_tests[] = {
+    //TestRobotButton,
     TestRobotInfo,
     //DBG_test_all,
     //DBG_test_emr,
@@ -1006,6 +1095,7 @@ TestFunction* TestRobot0GetTests(void) {
 TestFunction* TestRobot1GetTests(void) {
   static TestFunction m_tests[] = {
     TestRobotDetectSpine,
+    TestRobotButton,
     TestRobotInfo,
     TestRobotSensors,
     //TestRobotTreads, //XXX
@@ -1018,6 +1108,7 @@ TestFunction* TestRobot1GetTests(void) {
 
 TestFunction* TestRobot2GetTests(void) {
   static TestFunction m_tests[] = {
+    TestRobotButton,
     TestRobotInfo,
     //DBG_test_emr,
     //TestRobotSensors,
@@ -1032,6 +1123,7 @@ TestFunction* TestRobot2GetTests(void) {
 
 TestFunction* TestRobot3GetTests(void) {
   static TestFunction m_tests[] = {
+    TestRobotButton,
     TestRobotInfo,
     EmrChecks, //check previous test results and reset status flags
     TestRobotSensors,
@@ -1047,6 +1139,7 @@ TestFunction* TestRobot3GetTests(void) {
 
 TestFunction* TestRobotPackoutGetTests(void) { 
   static TestFunction m_tests[] = {
+    TestRobotButton,
     TestRobotInfo,
     EmrChecks, //check previous test results and reset status flags
     TestRobotSensors,
