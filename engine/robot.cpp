@@ -2840,7 +2840,6 @@ Result Robot::UpdateStartupChecks()
       u8* buf = nullptr;
       u32 id = 0;
       TimeStamp_t t = 0;
-      PRINT_NAMED_ERROR("","GETTING CAMERA FRAME");
       if(CameraService::getInstance()->CameraGetFrame(buf, id, t))
       {
         CameraService::getInstance()->CameraReleaseFrame(id);
