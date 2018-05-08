@@ -632,15 +632,21 @@ namespace Cozmo {
     
   }
 
-  void AnimationStreamer::Process_updateCompositeImageAsset(const RobotInterface::UpdateCompositeImageAsset& msg)
+  void AnimationStreamer::Process_updateCompositeImage(const RobotInterface::UpdateCompositeImage& msg)
   {
-    UpdateCompositeImage(msg.layerName, msg.spriteBoxName, msg.spriteName);
+    Vision::CompositeImageLayer::SpriteBox sb(msg.serializedSpriteBox);
+    UpdateCompositeImage(msg.layerName, sb, msg.spriteName);
   }
   
   void AnimationStreamer::Process_playCompositeAnimation(const std::string& name, Tag tag)
   {
+    const u32 numLoops = 1;
+    const bool interruptRunning = true;
+    const bool shouldRenderInEyeHue = false;
+    const bool isInternalAnim = false;
+    
     CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(name));
-    SetStreamingAnimation(_proceduralAnimation, tag);
+    SetStreamingAnimation(_proceduralAnimation, tag, numLoops, interruptRunning, shouldRenderInEyeHue, isInternalAnim);
   }
 
   Result AnimationStreamer::SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms)
@@ -695,6 +701,7 @@ namespace Cozmo {
     SpriteSequenceKeyFrame kf;
     kf.SetCompositeImage(spriteCache, compImg, getFrameInterval_ms);
     kf.SetFrameDuration_ms(duration_ms);
+    kf.Reset();
     Result result = _proceduralAnimation->AddKeyFrameToBack(kf);
     if(!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetCompositeImage.FailedToAddKeyFrame", "")))
     {
@@ -708,7 +715,7 @@ namespace Cozmo {
   }
 
   Result AnimationStreamer::UpdateCompositeImage(Vision::LayerName layerName, 
-                                                 Vision::SpriteBoxName sbName, 
+                                                 const Vision::CompositeImageLayer::SpriteBox& spriteBox, 
                                                  Vision::SpriteName spriteName)
   {
     if (_streamingAnimation != _proceduralAnimation) {
@@ -718,11 +725,37 @@ namespace Cozmo {
     auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
     auto* spriteSeqContainer = _context->GetDataLoader()->GetSpriteSequenceContainer();
     auto& keyframe = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>().GetCurrentKeyFrame();
-    if(keyframe.UpdateCompositeImage(spriteCache, spriteSeqContainer, 
-                                     layerName, sbName, spriteName)){
-      return Result::RESULT_OK;
+    if(keyframe.HasCompositeImage()){
+      auto& compImg = keyframe.GetCompositeImage();
+      auto* layer = compImg.GetLayerByName(layerName);
+      if(layer != nullptr){
+        // clear the whole layer if no sprite box name specified
+        if(spriteBox.spriteBoxName == Vision::SpriteBoxName::Count){
+          compImg.ClearLayerByName(layerName);
+          PRINT_NAMED_INFO("AnimationStreamer.UpdateCompositeImage.ClearingLayer", 
+                           "Layer %s cleared from image because spriteBox with count value received",
+                           LayerNameToString(layerName));
+        }else{
+          layer->AddToLayout(spriteBox.spriteBoxName, spriteBox);
+          layer->AddToImageMap(spriteCache, spriteSeqContainer,
+                              spriteBox.spriteBoxName, spriteName);
+        }
+      }else{
+        Vision::CompositeImageLayer layer(layerName);
+        layer.AddToLayout(spriteBox.spriteBoxName, spriteBox);
+        Vision::CompositeImageLayer::SpriteEntry entry(spriteCache, spriteSeqContainer, spriteName);
+        layer.AddToImageMap(spriteBox.spriteBoxName, entry);
+        compImg.AddLayer(std::move(layer));
+        PRINT_NAMED_INFO("AnimationStreamer.UpdateCompositeImage.AddingLayer",
+                         "Layer %s added to composite image",
+                         LayerNameToString(layerName));
+      }
+    }else{
+      PRINT_NAMED_WARNING("AnimationStreamer.UpdateCompositeImage.NoCompositeImage", 
+                          "Keyframe does not have a composite image to update");
     }
-    
+
+
     return Result::RESULT_FAIL;
   }
   
@@ -1431,10 +1464,7 @@ namespace Cozmo {
           } else {
             // Composite images apply their own hs/internally
             Vision::HSImageHandle hsHandle = std::make_shared<Vision::HueSatWrapper>(0,0);
-            if(!faceKeyFrame.HasCompositeImage()){
-              hsHandle = ProceduralFace::GetHueSatWrapper();
-            }
-            
+
             if(handle->IsContentCached(hsHandle).rgba){
               const auto& imgRGB = handle->GetCachedSpriteContentsRGBA(hsHandle);
               // Display the ImageRGB565 directly to the face, without modification

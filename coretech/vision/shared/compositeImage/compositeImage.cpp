@@ -157,6 +157,18 @@ bool CompositeImage::AddLayer(CompositeImageLayer&& layer)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImage::ClearLayerByName(LayerName name)
+{
+  const auto numRemoved = _layerMap.erase(name);
+  if(numRemoved == 0){
+    PRINT_NAMED_WARNING("CompositeImage.ClearLayerByName.LayerNotFound",
+                        "Layer %s not found in composite image",
+                        LayerNameToString(name));
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompositeImageLayer* CompositeImage::GetLayerByName(LayerName name)
 {
   auto iter = _layerMap.find(name);

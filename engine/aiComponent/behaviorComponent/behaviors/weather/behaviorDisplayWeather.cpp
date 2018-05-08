@@ -15,13 +15,17 @@
 
 #include "engine/components/animationComponent.h"
 #include "engine/components/dataAccessorComponent.h"
+#include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
 #include "cannedAnimLib/proceduralFace/proceduralFace.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/shared/compositeImage/compositeImage.h"
 
 namespace Anki {
 namespace Cozmo {
   
 namespace{
+const char* kConsoleVarGroup    = "WeatherBehavior";
+
 const char* kImageLayoutListKey = "imageLayouts";
 const char* kImageMapListKey    = "imageMaps";
 const char* kAnimationNameKey   = "animationName";
@@ -54,6 +58,8 @@ const std::vector<Vision::CompositeImageLayout> kNegTemperatureLayouts  = {
 };
 
 }
+CONSOLE_VAR_RANGED(int, kTestTemperature, kConsoleVarGroup, 0, -100, 100);
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDisplayWeather::InstanceConfig::InstanceConfig(const Json::Value& layoutConfig,
@@ -81,6 +87,8 @@ BehaviorDisplayWeather::BehaviorDisplayWeather(const Json::Value& config)
                       "Behavior %s does not have all layout keys defined",
                       GetDebugLabel().c_str());
   }
+  
+  MakeMemberTunable(_iConfig->devIsRunnable, "isRunnable", kConsoleVarGroup);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -91,7 +99,7 @@ BehaviorDisplayWeather::~BehaviorDisplayWeather()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDisplayWeather::WantsToBeActivatedBehavior() const
 {
-  return false;
+  return _iConfig->devIsRunnable;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -195,27 +203,56 @@ void BehaviorDisplayWeather::OnBehaviorActivated()
 {
   // reset dynamic variables
   _dVars = DynamicVariables();
-
-  Vision::CompositeImage* temperatureLayer = nullptr;
-
-  // Set the temperature appropriately
-  const auto testTemp = 22;
-  const auto success = GenerateTemperatureLayer(testTemp, true, temperatureLayer);
-  if(!success){
-    return;
-  }
-  _iConfig->compImg->MergeInImage(*temperatureLayer);
   
+  ParseDisplayTempTimesFromAnim();
+
+  auto animationCallback = [this](const AnimationComponent::AnimResult res){
+    CancelSelf();
+  };
+
+  int outAnimationDuration = 0;
+  const bool shouldInterrupt = true;
   GetBEI().GetAnimationComponent().PlayCompositeAnimation(_iConfig->animationName,
                                                           *(_iConfig->compImg.get()),
                                                           ANIM_TIME_STEP_MS,
-                                                          1000, //tmp
-                                                          true);
+                                                          outAnimationDuration,
+                                                          shouldInterrupt,
+                                                          animationCallback);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorDisplayWeather::GenerateTemperatureLayer(int temp, bool isFahrenheit, Vision::CompositeImage*& outImg)
+void BehaviorDisplayWeather::BehaviorUpdate()
+{
+  if(!IsActivated()){
+    return;
+  }
+
+  const TimeStamp_t time_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  if((time_ms > _dVars.timeTempShouldAppear_ms) &&
+     (time_ms < _dVars.timeTempShouldDisappear_ms) &&
+     (_dVars.temperatureImg == nullptr)){
+    // Set the temperature appropriately
+    const auto temperature = _iConfig->devIsRunnable ? kTestTemperature : 0;
+    const auto success = GenerateTemperatureImage(temperature, true, _dVars.temperatureImg);
+    if(!success){
+      return;
+    }
+    GetBEI().GetAnimationComponent().UpdateCompositeImage(*_dVars.temperatureImg);
+  }
+
+  if((time_ms > _dVars.timeTempShouldDisappear_ms) &&
+     (_dVars.temperatureImg != nullptr))
+  {
+    GetBEI().GetAnimationComponent().ClearCompositeImageLayer(Vision::LayerName::Weather_Temperature);
+    _dVars.temperatureImg = nullptr;
+  }
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenheit, Vision::CompositeImage*& outImg) const
 {
   // Grab the image from temperature layouts - indexed least -> greatest pos followed by least -> greatest neg
   if(temp > 0){
@@ -237,7 +274,7 @@ bool BehaviorDisplayWeather::GenerateTemperatureLayer(int temp, bool isFahrenhei
     }
   }
   if(!ANKI_VERIFY(outImg->GetLayerLayoutMap().size() == 1, 
-                  "BehaviorDisplayWeather.GenerateTemperatureLayer.ImproperNumberOfLayers",
+                  "BehaviorDisplayWeather.GenerateTemperatureImage.ImproperNumberOfLayers",
                   "Expected one layer, but image has %zu",
                   outImg->GetLayerLayoutMap().size())){
     return false; 
@@ -284,6 +321,47 @@ bool BehaviorDisplayWeather::GenerateTemperatureLayer(int temp, bool isFahrenhei
   }
 
   return true;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDisplayWeather::ParseDisplayTempTimesFromAnim()
+{
+  auto& dataAccessorComp = GetBEI().GetComponentWrapper(BEIComponentID::DataAccessor).GetValue<DataAccessorComponent>();
+
+  const Animation* anim = nullptr;
+  bool gotAnim = false;
+
+  const auto* animContainer = dataAccessorComp.GetCannedAnimationContainer();
+  if(animContainer != nullptr){
+    anim = animContainer->GetAnimation(_iConfig->animationName);
+    gotAnim = (anim != nullptr);
+  }
+
+  if(!gotAnim){
+    PRINT_NAMED_WARNING("BehaviorDisplayWeather.ParseDisplayTempTimesFromAnim.AnimationNotFoundInContainer", 
+                        "Animations need to be manually loaded on engine side - %s is not", _iConfig->animationName.c_str());
+    return;
+  }
+
+  const TimeStamp_t time_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+
+  const auto& track = anim->GetTrack<EventKeyFrame>();
+  if(track.TrackLength() == 2){
+    // assumes only one keyframe per eating anim
+    _dVars.timeTempShouldAppear_ms =  time_ms + track.GetFirstKeyFrame()->GetTriggerTime();
+    _dVars.timeTempShouldDisappear_ms = time_ms + track.GetLastKeyFrame()->GetTriggerTime();
+    PRINT_CH_INFO("Behaviors",
+                  "BehaviorDisplayWeather.ParseDisplayTempTimesFromAnim.TemperatureTimes",
+                  "For animation named %s temp will appear at %d and dissapear at %d",
+                  _iConfig->animationName.c_str(),
+                  _dVars.timeTempShouldAppear_ms,
+                  _dVars.timeTempShouldDisappear_ms);
+  }else{
+    PRINT_NAMED_ERROR("BehaviorDisplayWeather.ParseDisplayTempTimesFromAnim.IncorrectNumberOfKeyframes",
+                      "Expected 2 keyframes in event track, but track has %d",
+                      track.TrackLength());
+  }
 }
 
 

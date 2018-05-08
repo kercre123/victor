@@ -62,9 +62,11 @@ public:
     _frameIter(_frames.begin()),
     _isLive(other._isLive)
   {
-    // Advance iterator to preserve original position
-    for (auto pos = other._frames.begin(); pos != other._frameIter; ++pos) {
-      ++_frameIter;
+    if(!other._frames.empty()){
+      // Advance iterator to preserve original position
+      for (auto pos = other._frames.begin(); pos != other._frameIter; ++pos) {
+        ++_frameIter;
+      }
     }
   }
   

@@ -435,7 +435,7 @@ void Animation::AppendAnimation(const Animation& appendAnim)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint32_t Animation::GetLastKeyFrameTime_ms()
+uint32_t Animation::GetLastKeyFrameTime_ms() const
 {
   // Get Last keyframe of every track to find the last one in time_ms
   TimeStamp_t lastFrameTime_ms = 0;
@@ -456,7 +456,7 @@ uint32_t Animation::GetLastKeyFrameTime_ms()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint32_t Animation::GetLastKeyFrameEndTime_ms()
+uint32_t Animation::GetLastKeyFrameEndTime_ms() const
 {
   // Get Last keyframe of every track to find the last one in time_ms
   TimeStamp_t lastFrameTime_ms = 0;
@@ -477,7 +477,7 @@ uint32_t Animation::GetLastKeyFrameEndTime_ms()
 
   
 template<class KeyFrameType>
-TimeStamp_t Animation::CompareLastFrameTime(const TimeStamp_t lastFrameTime_ms)
+TimeStamp_t Animation::CompareLastFrameTime(const TimeStamp_t lastFrameTime_ms) const
 {
   const auto& track = GetTrack<KeyFrameType>();
   if (!track.IsEmpty()) {
@@ -490,7 +490,7 @@ TimeStamp_t Animation::CompareLastFrameTime(const TimeStamp_t lastFrameTime_ms)
   
   
 template<class KeyFrameType>
-TimeStamp_t Animation::CompareLastFrameEndTime(const TimeStamp_t lastFrameTime_ms)
+TimeStamp_t Animation::CompareLastFrameEndTime(const TimeStamp_t lastFrameTime_ms) const
 {
   const auto& track = GetTrack<KeyFrameType>();
   if (!track.IsEmpty()) {

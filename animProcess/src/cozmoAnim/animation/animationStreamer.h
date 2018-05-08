@@ -18,6 +18,7 @@
 
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/image.h"
+#include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cannedAnimLib/cannedAnims/animation.h"
 #include "cannedAnimLib/baseTypes/track.h"
@@ -84,14 +85,14 @@ namespace Cozmo {
     void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageGrayscaleChunk& msg);
     void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageRGBChunk& msg);
     void Process_displayCompositeImageChunk(const RobotInterface::DisplayCompositeImageChunk& msg);
-    void Process_updateCompositeImageAsset(const RobotInterface::UpdateCompositeImageAsset& msg);
+    void Process_updateCompositeImage(const RobotInterface::UpdateCompositeImage& msg);
     void Process_playCompositeAnimation(const std::string& name, Tag tag);
 
 
     Result SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms);
     Result SetCompositeImage(Vision::CompositeImage* compImg, u32 getFrameInterval_ms, u32 duration_ms);
     Result UpdateCompositeImage(Vision::LayerName layerName, 
-                                Vision::SpriteBoxName sbName, 
+                                const Vision::CompositeImageLayer::SpriteBox& spriteBox, 
                                 Vision::SpriteName spriteName);
     
     Audio::ProceduralAudioClient* GetProceduralAudioClient() const { return _proceduralAudioClient.get(); }
