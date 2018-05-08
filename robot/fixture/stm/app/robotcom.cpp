@@ -135,7 +135,9 @@ static inline int printlvl2cmdopts( int printlvl ) {
     default:
     case RCOM_PRINT_LEVEL_CMD_DAT_RSP:  return CCC_CMD_OPTS & ~(               0 |                0 |                  0 | CMD_OPTS_LOG_OTHER); //break;
     case RCOM_PRINT_LEVEL_CMD_RSP:      return CCC_CMD_OPTS & ~(               0 |                0 | CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER); //break;
+    case RCOM_PRINT_LEVEL_CMD_DAT:      return CCC_CMD_OPTS & ~(               0 | CMD_OPTS_LOG_RSP |                  0 | CMD_OPTS_LOG_OTHER); //break;
     case RCOM_PRINT_LEVEL_CMD:          return CCC_CMD_OPTS & ~(               0 | CMD_OPTS_LOG_RSP | CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER); //break;
+    case RCOM_PRINT_LEVEL_DAT:          return CCC_CMD_OPTS & ~(CMD_OPTS_LOG_CMD | CMD_OPTS_LOG_RSP |                  0 | CMD_OPTS_LOG_OTHER); //break;
     case RCOM_PRINT_LEVEL_NONE:         return CCC_CMD_OPTS & ~(CMD_OPTS_LOG_CMD | CMD_OPTS_LOG_RSP | CMD_OPTS_LOG_ASYNC | CMD_OPTS_LOG_OTHER); //break;
   }
 }
