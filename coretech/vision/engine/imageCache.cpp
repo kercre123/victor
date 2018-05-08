@@ -55,7 +55,7 @@ namespace Vision {
 template<>
 inline Image& ImageCache::ResizedEntry::Get<Image>(bool computeFromOpposite)
 {
-  if(computeFromOpposite)
+  if(computeFromOpposite && !_hasValidGray)
   {
     DEV_ASSERT(_hasValidRGB, "ImageCache.ResizedEntry.GetGray.NoColorAvailable");
     _rgb.FillGray(_gray);
@@ -70,7 +70,7 @@ inline Image& ImageCache::ResizedEntry::Get<Image>(bool computeFromOpposite)
 template<>
 inline ImageRGB& ImageCache::ResizedEntry::Get<ImageRGB>(bool computeFromOpposite)
 {
-  if(computeFromOpposite)
+  if(computeFromOpposite && !_hasValidRGB)
   {
     DEV_ASSERT(!_gray.IsEmpty(), "ImageCache.ResizedEntry.GetRGB.NoGrayAvailable");
     _rgb.SetFromGray(_gray);
