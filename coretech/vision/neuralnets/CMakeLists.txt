@@ -9,13 +9,13 @@
 
 message(STATUS "Building NeuralNets process with external build script")
 
-set(TARGET_NAME standaloneTensorFlowProcess)
+set(TARGET_NAME vic-neuralnets)
 set(REPO_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 set(OUTPUT_BINARY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${TARGET_NAME})
 
-if(ANDROID)
+if(VICOS)
   
-  set(BUILD_CMD "./build_android.sh" ${REPO_ROOT} ${ANDROID_NDK} ${OUTPUT_BINARY})
+  set(BUILD_CMD "./build_vicos.sh" ${REPO_ROOT} ${VICOS_SDK} ${OUTPUT_BINARY})
   
 else()
 
@@ -25,7 +25,7 @@ endif()
 
 add_custom_target(${TARGET_NAME} ALL
     COMMAND ${BUILD_CMD}
-    SOURCES standaloneTensorFlowInference.cpp objectDetector_tensorflow.h objectDetector_tensorflow.cpp
+    SOURCES standaloneForwardInference.cpp objectDetector_tensorflow.h objectDetector_tensorflow.cpp
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMENT "Building standalone TensorFlow process")
+    COMMENT "Building standalone neuralnets process")
 

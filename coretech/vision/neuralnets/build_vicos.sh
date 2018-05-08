@@ -20,16 +20,16 @@ then
   exit 1
 fi
 
-CC=${SDK_ROOT}/dist/0.9.0-r01/prebuilt/bin/arm-oe-linux-gnueabi-clang++
+CC=${SDK_ROOT}/prebuilt/bin/arm-oe-linux-gnueabi-clang++
 
 # TensorFlow uses a factory pattern that requires we forcibly include 
 # everything from the the tensorflow-core library. Thus the --whole-archive flags
 
 ${CC} --std=c++11 -fPIE -mfloat-abi=softfp -mfpu=neon -pie -O3 \
   -DTENSORFLOW \
-  -I${SDK_ROOT}/dist/0.9.0-r01/sysroot/usr/include \
-  -I${SDK_ROOT}/dist/0.9.0-r01/sysroot/usr/include/c++/4.9.3 \
-  -I${SDK_ROOT}/dist/0.9.0-r01/sysroot/usr/include/c++/4.9.3/arm-oe-linux-gnueabi \
+  -I${SDK_ROOT}/sysroot/usr/include \
+  -I${SDK_ROOT}/sysroot/usr/include/c++/4.9.3 \
+  -I${SDK_ROOT}/sysroot/usr/include/c++/4.9.3/arm-oe-linux-gnueabi \
   -I${TENSORFLOW_PATH} \
   -I${TENSORFLOW_PATH}/bazel-tensorflow/external/eigen_archive \
   -I${TENSORFLOW_PATH}/bazel-genfiles \
@@ -47,10 +47,10 @@ ${CC} --std=c++11 -fPIE -mfloat-abi=softfp -mfpu=neon -pie -O3 \
   -L${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/lib \
   -Wl,--whole-archive -ltensorflow-core -Wl,--no-whole-archive \
   ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/protobuf_vicos/armeabi-v7a/lib/libprotobuf.a -pthread \
-  -L${SDK_ROOT}/dist/0.9.0-r01/sysroot/usr/lib \
+  -L${SDK_ROOT}/sysroot/usr/lib \
   -L${TENSORFLOW_PATH}/tensorflow/contrib/makefile/downloads/nsync/builds/default.vicos.c++11 -lnsync \
   -L${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/vicos/lib \
   -lopencv_imgproc -lopencv_core -lopencv_imgcodecs \
   -lstdc++ -llog -lz -lm -ldl -latomic \
+  -rpath /anki/lib \
   -o ${OUTPUT_BINARY}
-
