@@ -8,7 +8,10 @@
 static const int OVERSAMPLE = 8;
 static const int MAX_SAMPLE_TIME = 0xFFFF / OVERSAMPLE;
 static int samples;
+
+static uint32_t touch_sum;
 static uint32_t touch;
+static bool sample_edge;
 
 void Touch::init(void) {
   TIM16->PSC = 0;
@@ -41,16 +44,23 @@ static void kickoff() {
     | TIM_CR1_OPM               // One pulse mode
     | TIM_CR1_CEN               // Enabled
     ;
-  CAPO::set();
+
+  if (sample_edge = !sample_edge) {
+    CAPO::set();
+    samples--;
+  }
 }
 
 extern "C" void TIM16_IRQHandler(void) {
-  touch += (TIM16->SR & TIM_SR_CC1IF) ? TIM16->CCR1 : MAX_SAMPLE_TIME;
-
-  CAPO::reset();
+  if (sample_edge) {
+    touch_sum += (TIM16->SR & TIM_SR_CC1IF) ? TIM16->CCR1 : MAX_SAMPLE_TIME;
+  }
   TIM16->SR = 0;
+  CAPO::reset();
 
-  if (--samples) kickoff();
+  if (samples >= 0) {
+    kickoff();
+  }
 }
 
 void Touch::transmit(uint16_t* data) {
@@ -58,8 +68,11 @@ void Touch::transmit(uint16_t* data) {
 }
 
 void Touch::tick(void) {
+  touch = touch_sum;
+  touch_sum = 0;
   samples = OVERSAMPLE;
-
+  sample_edge = false;  // Will sample next
+  
   // Start Counting
   __disable_irq();
   kickoff();
