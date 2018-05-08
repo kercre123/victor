@@ -86,6 +86,14 @@ int main(int argc, char **argv)
       PRINT_NAMED_ERROR(argv[0], "Could not read config file: %s", configFilename.c_str());
       return -1;
     }
+
+    if(!config.isMember("ObjectDetector"))
+    {
+      PRINT_NAMED_ERROR(argv[0], "Config file missing 'ObjectDetector' field");
+      return -1;
+    }
+
+    config = config["ObjectDetector"];
   }
 
   const bool imageFileProvided = (argc > 4);

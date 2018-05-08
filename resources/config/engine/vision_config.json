@@ -123,20 +123,41 @@
     "ProfilingPrintFrequency_ms"     : 10000,
     "ProfilingEventLogFrequency_ms"  : 30000,
 
-    // OpenCV DNN w/ MobileNet SSD Model
-    // NOTE: Currently assumes model is symlinked in resources/config/engine/vision/dnn_models to:
-    //       ~/DropBox/DeepLearningVisionModels, shared by andrew (until VIC-1071)
-    "graph"  : "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb",
-    "labels" : "cocostuff-labels.txt",
-    "mode"   : "detection",
-    "input_width" : 224,
-    "input_height": 224,
-    "input_mean_R": 0,
-    "input_mean_G": 0,
-    "input_mean_B": 0,
-    "input_std": 255,
-    "top_K": 1,
-    "min_score": 0.5
+    //
+    // Model definition:
+    //
+
+    // Standalone TF model
+    "graph"           : "mobilenet_from_scratch_transfer_victor.pb", 
+    "memoryMapGraph"  : 0,
+    "labels"          : "person-labels.txt", 
+    "architecture"    : "custom",
+    "input"           : "input_1",
+    "output"          : "output_node0",
+    "use_float_input" : 1,
+    "use_grayscale"   : 0,
+    "input_width"     : 128, 
+    "input_height"    : 128, 
+    "input_scale"     : 127.5, 
+    "input_shift"     : -1, 
+    "min_score"       : 0.5,
+    "verbose"         : 1
+
+
+    // // OpenCV DNN w/ MobileNet SSD Model
+    // // NOTE: Currently assumes model is symlinked in resources/config/engine/vision/dnn_models to:
+    // //       ~/DropBox/DeepLearningVisionModels, shared by andrew (until VIC-1071)
+    // "graph"  : "ssd_mobilenet_v1_coco_11_06_2017_frozen.pb",
+    // "labels" : "cocostuff-labels.txt",
+    // "mode"   : "detection",
+    // "input_width" : 224,
+    // "input_height": 224,
+    // "input_mean_R": 0,
+    // "input_mean_G": 0,
+    // "input_mean_B": 0,
+    // "input_std": 255,
+    // "top_K": 1,
+    // "min_score": 0.5
 
     // // SqueezeNet on ImageNet with Caffe
     // // See also: https://github.com/DeepScale/SqueezeNet
