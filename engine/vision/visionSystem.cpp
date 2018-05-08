@@ -251,8 +251,15 @@ Result VisionSystem::Init(const Json::Value& config)
     if(Util::FileUtils::DirectoryExists(modelPath)) // TODO: Remove once DNN models are checked in somewhere (VIC-1071)
     {
       const Json::Value& objDetectorConfig = config["ObjectDetector"];
+        
+#     ifdef VICOS
+      // Until /data becomes fast tmpfs partition, use /run (VIC-XXXX)
+      const std::string dnnCachePath = "/run/vision/object_detector";
+#     elif
+      const std::string dnnCachePath = Util::FileUtils::FullFilePath({cachePath, "object_detector");
+#     endif
       Result objDetectorResult = _generalObjectDetector->Init(modelPath,
-                                                              Util::FileUtils::FullFilePath({cachePath, "object_detector"}),
+                                                              dnnCachePath,
                                                               objDetectorConfig);
       if(RESULT_OK != objDetectorResult)
       {
