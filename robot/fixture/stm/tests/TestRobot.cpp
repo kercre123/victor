@@ -559,9 +559,8 @@ static robot_range_dat_t* robot_range_test_(uint8_t sensor, int8_t power)
   if( DEBUG_PRINT ) ConsolePrintf("%s move down [%i,%i]\n", lift ? "LIFT" : "HEAD", -liftPwr, -headPwr);
   psr = rcomMot(NNtest, sensor, 0, 0, -liftPwr, -headPwr, printlvl );
   avg_cnt = 0;
-  for(int x=1; x<NNtest; x++) { 
-    #warning "temporary bugfix for robot incorrectly reporting ABS(speed) for head/lift"
-    psr[x].enc.speed *= (-1); //temporarily "fix" the bug
+  for(int x=1; x<NNtest; x++) {
+    psr[x].enc.speed *= (-1); //XXX: workaround for syscon bug, reports ABS(speed) for head/lift
     if( psr[x].enc.speed < 0 ) { avg_cnt++; test.dn_avg += psr[x].enc.speed; }
   }
   test.dn_avg = avg_cnt > 0 ? test.dn_avg/avg_cnt : 0;
