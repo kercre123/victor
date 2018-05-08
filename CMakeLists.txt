@@ -53,6 +53,12 @@ add_compile_options(
     $<$<CONFIG:Release>:-O2>
 )
 
+# RPATH options
+if (VICOS)
+  set(CMAKE_INSTALL_RPATH "/anki/lib")
+  set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+endif()
+
 #
 # Factory build options
 #
