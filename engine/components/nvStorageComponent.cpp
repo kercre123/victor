@@ -1027,7 +1027,7 @@ bool NVStorageComponent::WriteCameraCalibFile(const TagDataMap::iterator& iter)
   else if(numBytesWritten != kNumBytesForCalib)
   {
     PRINT_NAMED_ERROR("NVStorageComponent.WriteEntryToFile.FailedToWriteBlockDevice",
-                      "Only wrote %d bytes instead of %d",
+                      "Only wrote %zd bytes instead of %d",
                       numBytesWritten,
                       kNumBytesForCalib);
     ret = false;

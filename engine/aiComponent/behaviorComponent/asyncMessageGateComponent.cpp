@@ -196,7 +196,6 @@ void AsyncMessageGateComponent::ClearCache()
 void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
                                                 std::set<ExternalInterface::MessageGameToEngineTag>&& tags)
 {
-  BEGIN_DONT_RUN_AFTER_PACKOUT
   if(_externalInterface == nullptr){
     return;
   }
@@ -216,7 +215,6 @@ void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
       _gameToEngineSubscribers[tag].insert(subscriber);
     }
   }
-  END_DONT_RUN_AFTER_PACKOUT
 }
 
 
@@ -224,7 +222,6 @@ void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
 void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
                                                 std::set<ExternalInterface::MessageEngineToGameTag>&& tags)
 {
-  BEGIN_DONT_RUN_AFTER_PACKOUT
   if(_externalInterface == nullptr){
     return;
   }
@@ -244,7 +241,6 @@ void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
       _engineToGameSubscribers[tag].insert(subscriber);
     }
   }
-  END_DONT_RUN_AFTER_PACKOUT
 }
 
 
@@ -252,7 +248,6 @@ void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
 void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
                                                 std::set<RobotInterface::RobotToEngineTag>&& tags)
 {
-  BEGIN_DONT_RUN_AFTER_PACKOUT
   if(_robotInterface == nullptr){
     return;
   }
@@ -273,7 +268,6 @@ void AsyncMessageGateComponent::SubscribeToTags(IBehavior* subscriber,
       _robotToEngineSubscribers[tag].insert(subscriber);
     }
   }
-  END_DONT_RUN_AFTER_PACKOUT
 }
 
 } // namespace Cozmo

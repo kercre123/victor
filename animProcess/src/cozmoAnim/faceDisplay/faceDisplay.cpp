@@ -234,7 +234,7 @@ void FaceDisplay::FaultCodeLoop()
   using namespace std::chrono_literals;
   std::this_thread::sleep_for(10s);
 
-  int rc = 0;
+  ssize_t rc = 0;
   const ssize_t kFaultSize = sizeof(uint16_t);
   u8 buf[128];
   while(true)
@@ -249,7 +249,7 @@ void FaceDisplay::FaultCodeLoop()
       return;
     }
 
-    int numBytes = rc;
+    ssize_t numBytes = rc;
 
     // Pull off kFaultSize number of bytes from the read data
     // and try to draw it, repeat until there is not enough data

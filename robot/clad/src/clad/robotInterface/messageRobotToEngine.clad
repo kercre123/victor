@@ -130,7 +130,7 @@ union RobotToEngine {
   //                     Everything between the anim and robot processes is UNRELIABLE!
 
   // Init / Debug
-  SyncTimeAck                syncTimeAck            = 0xB0,
+  SyncRobotAck               syncRobotAck           = 0xB0,
   PrepForShutdown            prepForShutdown        = 0xB1,
   MotorActionAck             motorActionAck         = 0xB2,
 

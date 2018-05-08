@@ -692,7 +692,7 @@ const void* get_a_frame(int32_t timeout_ms)
 
 int SetLeds(const uint8_t* leds, int nleds) {
   assert(nleds < sizeof(gHeadData.ledColors));
-  memcpy(gHeadData.ledColors, leds, sizeof(gHeadData.ledColors));
+  memcpy(&gHeadData.lightState, leds, sizeof(gHeadData.lightState));
   start_overrride(400); //2 secs
   return 0;
 }

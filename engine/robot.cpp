@@ -1239,7 +1239,7 @@ Result Robot::Update()
     return factoryRes;
   }
   
-  if (!_gotStateMsgAfterTimeSync)
+  if (!_gotStateMsgAfterRobotSync)
   {
     LOG_DEBUG("Robot.Update", "Waiting for first full robot state to be handled");
     return RESULT_OK;
@@ -1268,45 +1268,6 @@ Result Robot::Update()
      }
      lastUpdateTime = currentTime_sec;
   */
-
-  if(FACTORY_TEST && !Factory::GetEMR()->fields.PACKED_OUT_FLAG)
-  {
-    // Once we have gotten a frame from the camera play a sound to indicate
-    // a "successful" boot
-    static bool playedSound = false;
-    if(!playedSound &&
-       CameraService::getInstance()->HaveGottenFrame())
-    {
-      GetExternalInterface()->BroadcastToEngine<ExternalInterface::SetRobotVolume>(1.f);
-      CompoundActionParallel* action = new CompoundActionParallel();
-      std::weak_ptr<IActionRunner> soundAction = action->AddAction(new PlayAnimationAction("soundTestAnim"));
-
-      // Start WaitForLambdaAction in parallel that will cancel the sound action after 200 milliseconds
-      WaitForLambdaAction* waitAction = new WaitForLambdaAction([soundAction](Robot& robot){
-	static TimeStamp_t start = 0;
-	if(start == 0)
-	{
-	  start = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-	}
-
-	if(BaseStationTimer::getInstance()->GetCurrentTimeStamp() - start > 200)
-	{
-	  start = 0;
-	  auto sp = soundAction.lock();
-	  if(sp != nullptr)
-	  {
-	    sp->Cancel();
-	    return true;
-	  }
-	}
-
-	return false;
-      });
-      action->AddAction(waitAction);
-      GetActionList().AddConcurrentAction(action);
-      playedSound = true;
-    }
-  }
 
   // Check if we have driven off the charger platform - this has to happen before the behaviors which might
   // need this information. This state is useful for knowing not to play a cliff react when just driving off
@@ -2879,6 +2840,7 @@ Result Robot::UpdateStartupChecks()
       u8* buf = nullptr;
       u32 id = 0;
       TimeStamp_t t = 0;
+      PRINT_NAMED_ERROR("","GETTING CAMERA FRAME");
       if(CameraService::getInstance()->CameraGetFrame(buf, id, t))
       {
         CameraService::getInstance()->CameraReleaseFrame(id);

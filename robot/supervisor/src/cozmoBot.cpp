@@ -179,7 +179,9 @@ namespace Anki {
             if(curTime_ms - timeMark_ms > TIME_TO_WAIT_UNTIL_SYNC_MS)
             {
               AnkiWarn("CozmoBot.CheckForButtonHeld.Sync", "");
+              #ifdef VICOS
               sync();
+              #endif
               state = SYNC;
               timeMark_ms = curTime_ms;
             }

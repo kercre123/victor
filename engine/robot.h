@@ -604,14 +604,15 @@ public:
   void SetBodyColor(const s32 color);
   const BodyColor GetBodyColor() const { return _bodyColor; }
   
-  bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterTimeSync; }
+  bool HasReceivedFirstStateMessage() const { return _gotStateMsgAfterRobotSync; }
 
   void Shutdown() { _toldToShutdown = true; }
   bool ToldToShutdown() const { return _toldToShutdown; }
   
 protected:  
   bool _toldToShutdown = false;
-  
+
+  const CozmoContext* _context;
   std::unique_ptr<PoseOriginList> _poseOrigins;
 
   using EntityType = DependencyManagedEntity<RobotComponentID>;

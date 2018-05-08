@@ -254,10 +254,6 @@ Result HAL::Init(const int * shutdownSignal)
     AnkiDebug("HAL.Init.GotFirstFrame", "");
 
     request_version();  //get version so we have it when we need it.
-    if (RESULT_OK != result) {
-      AnkiError("HAL.Init.SpineWait", "Unable to synchronize spine (result %d)", result);
-      return result;
-    }
   }
 #else
   bodyData_ = &dummyBodyData_;

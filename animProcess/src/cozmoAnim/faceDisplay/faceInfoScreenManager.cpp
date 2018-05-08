@@ -79,22 +79,6 @@ static bool HasVoiceAccess()
 
 #endif
 
-#if !FACTORY_TEST
-
-// Return true if we can connect to Anki OTA service
-static bool HasInternet()
-{
-  return Anki::Util::InternetUtils::CanConnectToHostName("ota-cdn.anki.com", 443);
-}
-
-// Return true if we can connect to Anki voice service
-static bool HasVoiceAccess()
-{
-  return Anki::Util::InternetUtils::CanConnectToHostName("chipper-dev.api.anki.com", 443);
-}
-
-#endif
-
 namespace Anki {
 namespace Cozmo {
 
@@ -405,13 +389,6 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
 
 #ifndef SIMULATOR
   // Enable/Disable lift
-  // (If the new screen is None, or one of the screens that's normally
-  // active during playpen, then re-enable lift power)
-  const bool enableLift = GetCurrScreenName() == ScreenName::None ||
-                          GetCurrScreenName() == ScreenName::FAC  ||
-                          GetCurrScreenName() == ScreenName::CustomText ||
-                          GetCurrScreenName() == ScreenName::CameraMotorTest;
-
   RobotInterface::EnableMotorPower msg;
   msg.motorID = MotorID::MOTOR_LIFT;
   msg.enable = !currScreenIsDebug;
@@ -1070,11 +1047,6 @@ void FaceInfoScreenManager::DrawMain()
   if (ip.empty()) {
     ip = "XXX.XXX.XXX.XXX";
   }
-
-#if !FACTORY_TEST
-  const bool hasInternet = HasInternet();
-#endif  
-  
 
   ColoredTextLines lines = { {serialNo}, 
                              {osVer}, 
