@@ -57,13 +57,14 @@ cv::Mat read_bmp(const std::string& input_bmp_name); // defined below, after mai
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int main(int argc, char **argv)
 {
-  // For calling destructor when process is killed
+  // For calling destructor when process is interrupted or terminated
   // https://stackoverflow.com/questions/4250013/is-destructor-called-if-sigint-or-sigstp-issued
   struct sigaction sa;
   memset( &sa, 0, sizeof(sa) );
   sa.sa_handler = got_signal;
   sigfillset(&sa.sa_mask);
   sigaction(SIGINT,&sa,NULL);
+  sigaction(SIGTERM,&sa,NULL);
 
   if(argc < 4)
   {
@@ -94,6 +95,12 @@ int main(int argc, char **argv)
     }
 
     config = config["ObjectDetector"];
+
+    if(!config.isMember("poll_period_ms")) 
+    {
+      PRINT_NAMED_ERROR(argv[0], "No poll_period_ms specified in config file");
+      return -1;
+    }
   }
 
   const bool imageFileProvided = (argc > 4);
@@ -107,7 +114,7 @@ int main(int argc, char **argv)
   std::cout << (imageFileProvided ? "Loading given image: " : "Polling for images at: ") << 
     imageFilename << std::endl;
 
-  const int kPollFrequency_ms = 10;
+  const int kPollPeriod_ms = config["poll_period_ms"].asInt();
 
   // Initialize the detector
   ObjectDetector detector;
@@ -218,11 +225,13 @@ int main(int argc, char **argv)
       
       if(imageFileProvided)
       {
+        // If we loaded in image file specified on the command line, we are done 
         break;
       }
       else
       {
-        // Remove the image file we were working with
+        // Remove the image file we were working with to signal that we're done with it 
+        // and ready for a new image
         if(detector.IsVerbose())
         {
           std::cout << "Deleting image file: " << imageFilename << std::endl;
@@ -241,13 +250,13 @@ int main(int argc, char **argv)
       {
         const int kVerbosePrintFreq_ms = 1000;
         static int count = 0;
-        if(count++ * kPollFrequency_ms >= kVerbosePrintFreq_ms)
+        if(count++ * kPollPeriod_ms >= kVerbosePrintFreq_ms)
         {
           std::cout << "Waiting for image..." << std::endl;
           count = 0;
         }
       }
-      std::this_thread::sleep_for(std::chrono::milliseconds(kPollFrequency_ms));  
+      std::this_thread::sleep_for(std::chrono::milliseconds(kPollPeriod_ms));  
     }
 
     if(quit.load()) 

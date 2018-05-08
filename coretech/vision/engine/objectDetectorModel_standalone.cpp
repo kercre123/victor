@@ -32,7 +32,6 @@ namespace Anki {
 namespace Vision {
 
 namespace {
-  CONSOLE_VAR_RANGED(u32, kObjectDetection_PollPeriod_ms,        "Vision.ObjectDetector", 10, 1, 250);
   CONSOLE_VAR_RANGED(f32, kObjectDetection_TimeoutDuration_sec,  "Vision.ObjectDetector", 10.f, 1., 15.f);
 }
   
@@ -55,6 +54,7 @@ public:
 private:
   
   std::string _cachePath;
+  int         _pollPeriod_ms;
   
   Profiler& _profiler;
   
@@ -64,6 +64,15 @@ private:
 Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const std::string& cachePath, const Json::Value& config)
 {
   _cachePath = cachePath;
+
+  if(!config.isMember("poll_period_ms")) 
+  {
+    PRINT_NAMED_ERROR("ObjectDetector.Model.LoadModel.MissingPollPeriod", "");
+    return RESULT_FAIL;
+  }
+
+  _pollPeriod_ms = config["poll_period_ms"].asInt();
+
   return RESULT_OK;
 }
 
@@ -73,46 +82,49 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<ObjectDetector:
   objects.clear();
 
   // Profiling will be from time we write file to when we get results
-  _profiler.Tic("StandaloneInferenceProcess");
+  auto totalTicToc = _profiler.TicToc("ObjectDetector.Model.Run");
   
   // Write image to a temporary file
-  _profiler.Tic("StandaloneInferenceProcess.WriteImage");
-  const std::string tempFilename = Util::FileUtils::FullFilePath({_cachePath, "temp.png"});
-  img.Save(tempFilename);
-  
-  const std::string timestampFilename = Util::FileUtils::FullFilePath({_cachePath, "timestamp.txt"});
-  const std::string timestampString = std::to_string(img.GetTimestamp());
-  std::ofstream timestampFile(timestampFilename);
-  timestampFile << timestampString;
-  timestampFile.close();
-
-  // Rename to what standalone process expects once the data is fully written (poor man's "lock")
   const std::string imageFilename = Util::FileUtils::FullFilePath({_cachePath, "objectDetectionImage.png"});
-  if(0 != rename(tempFilename.c_str(), imageFilename.c_str()))
   {
-    PRINT_NAMED_ERROR("StandaloneInferenceProces.FailedToRenameFile",
-                      "%s -> %s", tempFilename.c_str(), imageFilename.c_str());
-    return RESULT_FAIL;
-  }
-  _profiler.Toc("StandaloneInferenceProcess.WriteImage");
+    auto writeTicToc = _profiler.TicToc("ObjectDetector.Model.Run.WriteImage");
+    const std::string tempFilename = Util::FileUtils::FullFilePath({_cachePath, "temp.png"});
+    img.Save(tempFilename);
+    
+    const std::string timestampFilename = Util::FileUtils::FullFilePath({_cachePath, "timestamp.txt"});
+    const std::string timestampString = std::to_string(img.GetTimestamp());
+    std::ofstream timestampFile(timestampFilename);
+    timestampFile << timestampString;
+    timestampFile.close();
 
-  PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Model.SavedImageFileForProcessing", "%s t:%d",
+    // Rename to what standalone process expects once the data is fully written (poor man's "lock")
+    if(0 != rename(tempFilename.c_str(), imageFilename.c_str()))
+    {
+      PRINT_NAMED_ERROR("StandaloneInferenceProcess.FailedToRenameFile",
+                        "%s -> %s", tempFilename.c_str(), imageFilename.c_str());
+      return RESULT_FAIL;
+    }
+
+    PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Model.SavedImageFileForProcessing", "%s t:%d",
                  imageFilename.c_str(), img.GetTimestamp());
-  
-  _profiler.Tic("StandaloneInferenceProcess.Polling");
-  const f32 startTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  f32 currentTime_sec = startTime_sec;
-  
+  }
+
   // Wait for result JSON to appear
   const std::string resultFilename = Util::FileUtils::FullFilePath({_cachePath, "objectDetectionResults.json"});
   bool resultAvailable = false;
-  while( !resultAvailable && (currentTime_sec - startTime_sec < kObjectDetection_TimeoutDuration_sec) )
+  f32 startTime_sec = 0.f, currentTime_sec = 0.f;
   {
-    std::this_thread::sleep_for(std::chrono::milliseconds(kObjectDetection_PollPeriod_ms));
-    resultAvailable = Util::FileUtils::FileExists(resultFilename);
-    currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    auto pollTicToc = _profiler.TicToc("StandaloneInferenceProcess.Polling");
+    startTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    currentTime_sec = startTime_sec;
+    
+    while( !resultAvailable && (currentTime_sec - startTime_sec < kObjectDetection_TimeoutDuration_sec) )
+    {
+      std::this_thread::sleep_for(std::chrono::milliseconds(_pollPeriod_ms));
+      resultAvailable = Util::FileUtils::FileExists(resultFilename);
+      currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    }
   }
-  _profiler.Toc("StandaloneInferenceProcess.Polling");
 
   // Delete image file (whether or not we got the result or timed out)
   PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Detect.DeletingImageFile", "%s, deleting %s",
@@ -121,7 +133,7 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<ObjectDetector:
   
   if(resultAvailable)
   {
-    auto ticToc = _profiler.TicToc("StandaloneInferenceProcess.ReadingResult");
+    auto readTicToc = _profiler.TicToc("StandaloneInferenceProcess.ReadingResult");
     
     PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Model.FoundDetectionResultsJSON", "%s",
                    resultFilename.c_str());
@@ -172,8 +184,6 @@ Result ObjectDetector::Model::Run(const ImageRGB& img, std::list<ObjectDetector:
                         "Start:%.1fsec Current:%.1f Timeout:%.1fsec",
                         startTime_sec, currentTime_sec, kObjectDetection_TimeoutDuration_sec);
   }
-  
-  _profiler.Toc("StandaloneInferenceProcess");        
   
   return RESULT_OK;
 }

@@ -77,7 +77,7 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
   GetFromConfig(input_height);
   GetFromConfig(input_width);
   GetFromConfig(architecture);
-  GetFromConfig(memoryMapGraph);
+  GetFromConfig(memory_map_graph);
   
   if("ssd_mobilenet" == _params.architecture)
   {
@@ -160,7 +160,7 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
 
   tensorflow::GraphDef graph_def;
   
-  if(_params.memoryMapGraph)
+  if(_params.memory_map_graph)
   {
     // See also: https://www.tensorflow.org/mobile/optimizing
 

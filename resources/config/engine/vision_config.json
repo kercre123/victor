@@ -129,7 +129,7 @@
 
     // Standalone TF model
     "graph"           : "mobilenet_from_scratch_transfer_victor.pb", 
-    "memoryMapGraph"  : 0,
+    "memory_map_graph": 0,
     "labels"          : "person-labels.txt", 
     "architecture"    : "custom",
     "input"           : "input_1",
@@ -141,7 +141,8 @@
     "input_scale"     : 127.5, 
     "input_shift"     : -1, 
     "min_score"       : 0.5,
-    "verbose"         : 1
+    "verbose"         : 1,
+    "poll_period_ms"  : 10
 
 
     // // OpenCV DNN w/ MobileNet SSD Model

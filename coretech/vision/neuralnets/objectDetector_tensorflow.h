@@ -74,7 +74,7 @@ private:
     
     bool          verbose;
 
-    bool          memoryMapGraph;
+    bool          memory_map_graph;
 
   } _params;
 
