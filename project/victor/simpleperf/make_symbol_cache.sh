@@ -12,7 +12,7 @@ TOPLEVEL=`$GIT rev-parse --show-toplevel`
 
 : ${ANKI_PROFILE_SYMBOLCACHE:="$1"}
 : ${FORCE:=0}
-: ${BUILD_ROOT:="${TOPLEVEL}/_build/android/Release"}
+: ${BUILD_ROOT:="${TOPLEVEL}/_build/vicos/Release"}
 : ${INSTALL_ROOT:="/anki"}
 
 # Warn if BUILD_ROOT points to Debug output
