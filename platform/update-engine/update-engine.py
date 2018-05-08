@@ -18,7 +18,7 @@ from hashlib import sha256
 from collections import OrderedDict
 from fcntl import fcntl, F_GETFL, F_SETFL
 
-sys.path.append("/anki/lib")
+sys.path.append("/usr/bin")
 import update_payload
 
 BOOT_DEVICE = "/dev/block/bootdevice/by-name"
@@ -39,7 +39,7 @@ OTA_PUB_KEY = "/anki/etc/ota.pub"
 OTA_ENC_PASSWORD = "/anki/etc/ota.pas"
 HTTP_BLOCK_SIZE = 1024*2  # Tuned to what seems to work best with DD_BLOCK_SIZE
 DD_BLOCK_SIZE = HTTP_BLOCK_SIZE*1024
-SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5", "0.9.5"]
+SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5"]
 
 DEBUG = False
 
@@ -167,7 +167,7 @@ def get_slot(kernel_command_line):
 
 def get_manifest(fileobj):
     "Returns config parsed from INI file in filelike object"
-    config = ConfigParser.ConfigParser({'encryption': '0', 'cache': str(5*1024*1024)})
+    config = ConfigParser.ConfigParser({'encryption': '0'})
     config.readfp(fileobj)
     return config
 
@@ -409,14 +409,15 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
     if current_version != delta_base_version:
         die(211, "My version is {} not {}".format(current_version, delta_base_version))
     delta_bytes = manifest.getint("DELTA", "bytes")
-    write_status(EXPECTED_WRITE_SIZE_FILE, delta_bytes*4)  # Download expected not to take more than 25% of the time
+    download_progress_denominator = 4  # Download expected not to take more than 25% of the time
+    write_status(EXPECTED_WRITE_SIZE_FILE, delta_bytes*download_progress_denominator)
     write_status(PROGRESS_FILE, 0)
 
     def progress_update(progress):
         "Update delta download progress"
         write_status(PROGRESS_FILE, progress)
         if DEBUG:
-            sys.stdout.write("{0:0.3f}\r".format(float(progress)/float(delta_bytes*4)))
+            sys.stdout.write("{0:0.3f}\r".format(float(progress)/float(delta_bytes*download_progress_denominator)))
             sys.stdout.flush()
 
     # Extract delta file
@@ -443,7 +444,7 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
 
         # Update progress estimate
         num_operations = len(payload.manifest.install_operations) + len(payload.manifest.kernel_install_operations)
-        progress = num_operations / 4
+        progress = num_operations / download_progress_denominator
         num_operations += progress
         write_status(PROGRESS_FILE, progress)
         write_status(EXPECTED_WRITE_SIZE_FILE, num_operations)
