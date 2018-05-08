@@ -85,8 +85,9 @@ private:
   // We process asynchronsously, so need a copy of the image data
   Vision::ImageRGB _imgBeingProcessed;
   
-  std::string _cachePath = "";
   bool        _isInitialized = false;
+  s32         _processingWidth;
+  s32         _processingHeight;
   f32         _widthScale = 1.f;
   f32         _heightScale = 1.f;
   

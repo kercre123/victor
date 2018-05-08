@@ -37,8 +37,10 @@
 //#  endif
 //#elif USE_TENSORFLOW_LITE
 //#  include "objectDetectorModel_tensorflow_lite.cpp"
+//#elif USE_OPENCV_DNN
+//#  include "objectDetectorModel_opencvdnn.cpp"
 //#else
-#  include "objectDetectorModel_opencvdnn.cpp"
+#include "objectDetectorModel_standalone.cpp"
 //#endif
 
 namespace Anki {
@@ -48,11 +50,7 @@ namespace Vision {
 // static const char * const kLogChannelName = "VisionSystem";
  
 namespace {
-  CONSOLE_VAR(f32,  kObjectDetection_Gamma,                "Vision.ObjectDetector", 1.0f); // set to 1.0 to disable
-  
-  CONSOLE_VAR(bool,       kObjectDetection_UseTensorFlowProcess, "Vision.ObjectDetector", true);
-  CONSOLE_VAR_RANGED(u32, kObjectDetection_PollPeriod_ms,        "Vision.ObjectDetector", 10, 1, 250);
-  CONSOLE_VAR_RANGED(f32, kObjectDetection_TimeoutDuration_sec,  "Vision.ObjectDetector", 10.f, 1., 15.f);
+  CONSOLE_VAR(f32,        kObjectDetection_Gamma,                "Vision.ObjectDetector", 1.0f); // set to 1.0 to disable
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -74,28 +72,30 @@ Result ObjectDetector::Init(const std::string& modelPath, const std::string& cac
 {
   Result result = RESULT_OK;
   
-  _cachePath = cachePath;
-  if(kObjectDetection_UseTensorFlowProcess)
+  _profiler.Tic("LoadModel");
+  result = _model->LoadModel(modelPath, cachePath, config);
+  _profiler.Toc("LoadModel");
+  
+  // Get the input height/width so we can do the resize and only need to share/copy/write as
+  // small an image as possible for the standalone CNN process to pick up
+  if(false == JsonTools::GetValueOptional(config, "input_height", _processingHeight))
   {
-    PRINT_NAMED_INFO("ObjectDetector.Init.CachePathSet", "%s", _cachePath.c_str());
-    
-    // Clear the cache on startup
-    Util::FileUtils::RemoveDirectory(_cachePath);
-    Util::FileUtils::CreateDirectory(_cachePath);
-  }
-  else
-  {
-    _profiler.Tic("LoadModel");
-    result = _model->LoadModel(modelPath, config);
-    _profiler.Toc("LoadModel");
-    
-    if(RESULT_OK != result)
-    {
-      PRINT_NAMED_ERROR("ObjectDetector.Init.LoadModelFailed", "");
-      return result;
-    }
+    PRINT_NAMED_ERROR("ObjectDetector.Init.MissingConfig", "input_height");
+    return RESULT_FAIL;
   }
   
+  if(false == JsonTools::GetValueOptional(config, "input_width", _processingWidth))
+  {
+    PRINT_NAMED_ERROR("ObjectDetector.Init.MissingConfig", "input_width");
+    return RESULT_FAIL;
+  }
+  
+  if(RESULT_OK != result)
+  {
+    PRINT_NAMED_ERROR("ObjectDetector.Init.LoadModelFailed", "");
+    return result;
+  }
+
   PRINT_NAMED_INFO("ObjectDetector.Init.LoadModelTime", "Loading model from '%s' took %.1fsec",
                    modelPath.c_str(), Util::MilliSecToSec(_profiler.AverageToc("LoadModel")));
 
@@ -106,7 +106,41 @@ Result ObjectDetector::Init(const std::string& modelPath, const std::string& cac
   return result;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+static void ApplyGamma(ImageRGB& img)
+{
+  static f32 currentGamma = 1.f;
+  static std::array<u8,256> gammaLUT{};
+  if(!Util::IsFltNear(kObjectDetection_Gamma, currentGamma))
+  {
+    currentGamma = kObjectDetection_Gamma;
+    const f32 gamma = 1.f / currentGamma;
+    const f32 divisor = 1.f / 255.f;
+    for(s32 value=0; value<256; ++value)
+    {
+      gammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, gamma));
+    }
+  }
   
+  s32 nrows = img.GetNumRows();
+  s32 ncols = img.GetNumCols();
+  if(img.IsContinuous()) {
+    ncols *= nrows;
+    nrows = 1;
+  }
+  for(s32 i=0; i<nrows; ++i)
+  {
+    Vision::PixelRGB* img_i = img.GetRow(i);
+    for(s32 j=0; j<ncols; ++j)
+    {
+      Vision::PixelRGB& pixel = img_i[j];
+      pixel.r() = gammaLUT[pixel.r()];
+      pixel.g() = gammaLUT[pixel.g()];
+      pixel.b() = gammaLUT[pixel.b()];
+    }
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
 {
@@ -120,191 +154,50 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
   if(!_future.valid())
   {
     // Require color data
-    if(imageCache.HasColor())
-    {
-      // This is just the size to grab from cache to copy to the asynchronous processing call.
-      // It will still be resized by the actual detector implementation to the exact size specified
-      // in the params.
-      // TODO: resize here instead of the Model, to copy less data
-      // TODO: avoid copying data entirely somehow? (but maybe who cares b/c it's tiny and fwd inference time likely dwarfs the copy)
-      const ImageCache::Size kImageSize = ImageCache::Size::Full;
-      
-      // Grab a copy of the image
-      imageCache.GetRGB(kImageSize).CopyTo(_imgBeingProcessed);
-      
-      // Use gamma to make it easier to see
-      // TODO: Do this on the final image size, so we don't waste time applying gamma unnecessarily
-      if(!Util::IsFltNear(kObjectDetection_Gamma, 1.f))
-      {
-        auto ticToc = _profiler.TicToc("Gamma");
-
-        static f32 currentGamma = 1.f;
-        static std::array<u8,256> gammaLUT{};
-        if(!Util::IsFltNear(kObjectDetection_Gamma, currentGamma))
-        {
-          currentGamma = kObjectDetection_Gamma;
-          const f32 gamma = 1.f / currentGamma;
-          const f32 divisor = 1.f / 255.f;
-          for(s32 value=0; value<256; ++value)
-          {
-            gammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, gamma));
-          }
-        }
-
-        s32 nrows = _imgBeingProcessed.GetNumRows();
-        s32 ncols = _imgBeingProcessed.GetNumCols();
-        if(_imgBeingProcessed.IsContinuous()) {
-          ncols *= nrows;
-          nrows = 1;
-        }
-        for(s32 i=0; i<nrows; ++i)
-        {
-          Vision::PixelRGB* img_i = _imgBeingProcessed.GetRow(i);
-          for(s32 j=0; j<ncols; ++j)
-          {
-            Vision::PixelRGB& pixel = img_i[j];
-            pixel.r() = gammaLUT[pixel.r()];
-            pixel.g() = gammaLUT[pixel.g()];
-            pixel.b() = gammaLUT[pixel.b()];
-          }
-        }
-      }
-      
-      // Store its size relative to original size so we can rescale object detections later
-      _widthScale = (f32)imageCache.GetOrigNumRows() / (f32)_imgBeingProcessed.GetNumRows();
-      _heightScale = (f32)imageCache.GetOrigNumCols() / (f32)_imgBeingProcessed.GetNumCols();
-      
-      PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Detect.ProcessingImage", "Detecting objects in %dx%d image t=%u",
-                    _imgBeingProcessed.GetNumCols(), _imgBeingProcessed.GetNumRows(), _imgBeingProcessed.GetTimestamp());
-      
-      _future = std::async(std::launch::async, [this]() {
-        std::list<DetectedObject> objects;
-        if(kObjectDetection_UseTensorFlowProcess)
-        {
-          // Profiling will be from time we write file to when we get results
-          _profiler.Tic("StandaloneInferenceProcess");
-          
-          // Write image to a temporary file
-          _profiler.Tic("StandaloneInferenceProcess.WriteImage");
-          const std::string tempFilename = Util::FileUtils::FullFilePath({_cachePath, "temp.png"});
-          _imgBeingProcessed.Save(tempFilename);
-          
-          const std::string timestampFilename = Util::FileUtils::FullFilePath({_cachePath, "timestamp.txt"});
-          const std::string timestampString = std::to_string(_imgBeingProcessed.GetTimestamp());
-          std::ofstream timestampFile(timestampFilename);
-          timestampFile << timestampString;
-          timestampFile.close();
-
-          // Rename to what TF process expects once the data is fully written (poor man's "lock")
-          const std::string imageFilename = Util::FileUtils::FullFilePath({_cachePath, "objectDetectionImage.png"});
-          if(0 != rename(tempFilename.c_str(), imageFilename.c_str()))
-          {
-            PRINT_NAMED_ERROR("StandaloneInferenceProces.FailedToRenameFile",
-                              "%s -> %s", tempFilename.c_str(), imageFilename.c_str());
-            return objects;
-          }
-          _profiler.Toc("StandaloneInferenceProcess.WriteImage");
-
-          PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Model.SavedImageFileForProcessing", "%s t:%d",
-                         imageFilename.c_str(), _imgBeingProcessed.GetTimestamp());
-          
-          _profiler.Tic("StandaloneInferenceProcess.Polling");
-          const f32 startTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-          f32 currentTime_sec = startTime_sec;
-          
-          // Wait for result JSON to appear
-          const std::string resultFilename = Util::FileUtils::FullFilePath({_cachePath, "objectDetectionResults.json"});
-          bool resultAvailable = false;
-          while( !resultAvailable && (currentTime_sec - startTime_sec < kObjectDetection_TimeoutDuration_sec) )
-          {
-            std::this_thread::sleep_for(std::chrono::milliseconds(kObjectDetection_PollPeriod_ms));
-            resultAvailable = Util::FileUtils::FileExists(resultFilename);
-            currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-          }
-          _profiler.Toc("StandaloneInferenceProcess.Polling");
-
-          // Delete image file (whether or not we got the result or timed out)
-          PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Detect.DeletingImageFile", "%s, deleting %s",
-                         (resultAvailable ? "Result found" : "Polling timed out"), imageFilename.c_str());
-          Util::FileUtils::DeleteFile(imageFilename);
-          
-          if(resultAvailable)
-          {
-            auto ticToc = _profiler.TicToc("StandaloneInferenceProcess.ReadingResult");
-            
-            PRINT_CH_DEBUG(kLogChannelName, "ObjectDetector.Model.FoundDetectionResultsJSON", "%s",
-                           resultFilename.c_str());
-            
-            Json::Reader reader;
-            Json::Value detectionResult;
-            std::ifstream file(resultFilename);
-            const bool success = reader.parse(file, detectionResult);
-            if(!success)
-            {
-              PRINT_NAMED_ERROR("ObjectDetector.Model.FailedToReadJSON", "%s", resultFilename.c_str());
-            }
-            else
-            {
-              const Json::Value& detectedObjects = detectionResult["objects"];
-              if(detectedObjects.isArray())
-              {
-                for(auto const& object : detectedObjects)
-                {
-                  DEV_ASSERT(object.isMember("xmin") && object.isMember("xmax") &&
-                             object.isMember("ymin") && object.isMember("ymax"),
-                             "ObjectDetector.Model.MissingJsonFieldsXY");
-                  
-                  const int xmin = std::round(object["xmin"].asFloat() * _imgBeingProcessed.GetNumCols());
-                  const int ymin = std::round(object["ymin"].asFloat() * _imgBeingProcessed.GetNumRows());
-                  const int xmax = std::round(object["xmax"].asFloat() * _imgBeingProcessed.GetNumCols());
-                  const int ymax = std::round(object["ymax"].asFloat() * _imgBeingProcessed.GetNumRows());
-                  
-                  DEV_ASSERT(object.isMember("timestamp"), "ObjectDetector.Model.MissingJsonFieldTimestamp");
-                  DEV_ASSERT(object.isMember("score"),     "ObjectDetector.Model.MissingJsonFieldScore");
-                  DEV_ASSERT(object.isMember("name"),      "ObjectDetector.Model.MissingJsonFieldName");
-                  
-                  objects.emplace_back(DetectedObject{
-                    .timestamp = object["timestamp"].asUInt(),
-                    .score = object["score"].asFloat(),
-                    .name = object["name"].asString(),
-                    .rect = Rectangle<s32>(xmin, ymin, xmax-xmin, ymax-ymin)
-                  });
-                }
-              }
-            }
-            file.close();
-            Util::FileUtils::DeleteFile(resultFilename);
-          }
-          else
-          {
-            PRINT_NAMED_WARNING("ObjectDetector.Model.PollingForResultTimedOut",
-                                "Start:%.1fsec Current:%.1f Timeout:%.1fsec",
-                                startTime_sec, currentTime_sec, kObjectDetection_TimeoutDuration_sec);
-          }
-          
-          _profiler.Toc("StandaloneInferenceProcess");      
-        }
-        else
-        {
-          _profiler.Tic("Inference");
-          Result result = _model->Run(_imgBeingProcessed, objects);
-          _profiler.Toc("Inference");
-          if(RESULT_OK != result)
-          {
-            PRINT_NAMED_WARNING("ObjectDetector.Detect.AsyncLambda.ModelRunFailed", "");
-          }
-        }
-        return objects;
-      });
-      
-      return true;
-    }
-    else
+    if(!imageCache.HasColor())
     {
       PRINT_PERIODIC_CH_DEBUG(30, kLogChannelName, "ObjectDetector.Detect.NeedColorData", "");
     }
+  
+    // Resize to processing size
+    _imgBeingProcessed.Allocate(_processingHeight, _processingWidth);
+    const ImageCache::Size kImageSize = ImageCache::Size::Full;
+    const Vision::ResizeMethod kResizeMethod = Vision::ResizeMethod::Linear;
+    imageCache.GetRGB(kImageSize).Resize(_imgBeingProcessed, kResizeMethod);
+    
+    // Apply gamma since networks are generally trained on gamma-corrected data
+    if(!Util::IsFltNear(kObjectDetection_Gamma, 1.f))
+    {
+      auto ticToc = _profiler.TicToc("Gamma");
+      ApplyGamma(_imgBeingProcessed);
+    }
+    
+    // Store its size relative to original size so we can rescale object detections later
+    _widthScale = (f32)imageCache.GetOrigNumRows() / (f32)_imgBeingProcessed.GetNumRows();
+    _heightScale = (f32)imageCache.GetOrigNumCols() / (f32)_imgBeingProcessed.GetNumCols();
+    
+    PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Detect.ProcessingImage", "Detecting objects in %dx%d image t=%u",
+                  _imgBeingProcessed.GetNumCols(), _imgBeingProcessed.GetNumRows(), _imgBeingProcessed.GetTimestamp());
+    
+    _future = std::async(std::launch::async, [this]() {
+      std::list<DetectedObject> objects;
+  
+      _profiler.Tic("Model.Run");
+      Result result = _model->Run(_imgBeingProcessed, objects);
+      _profiler.Toc("Model.Run");
+      if(RESULT_OK != result)
+      {
+        PRINT_NAMED_WARNING("ObjectDetector.Detect.AsyncLambda.ModelRunFailed", "");
+      }
+    
+      return objects;
+    });
+    
+    // We did start processing the given image
+    return true;
   }
   
+  // We were not idle, so did not start processing the new image
   return false;
 }
   
