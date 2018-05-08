@@ -40,12 +40,6 @@
 #include <iomanip>
 #include <sstream>
 
-
-#if USE_DAS
-#include <DAS/DAS.h>
-#include <DAS/DASPlatform.h>
-#endif
-
 #define LOG_CHANNEL    "AnimEngine"
 
 #if ANKI_PROFILING_ENABLED && !defined(SIMULATOR)

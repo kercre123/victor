@@ -35,10 +35,15 @@
 namespace Anki {
 namespace Util {
 
+using KVPair = std::pair<const char *, const char *>;
+using KVPairVector = std::vector<KVPair>;
+
 class ITickTimeProvider;
 class ILoggerProvider;
 class ChannelFilter;
 class IEventProvider;
+
+const uint8_t DASMaxSvalLength = 128;
 
 using KVPair = std::pair<const char *, const char *>;
 using KVPairVector = std::vector<KVPair>;

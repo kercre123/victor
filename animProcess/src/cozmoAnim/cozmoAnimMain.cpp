@@ -18,9 +18,9 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "util/console/consoleSystem.h"
-#include "util/logging/logging.h"
-#include "util/logging/androidLogPrintLogger_android.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/victorLogger.h"
+#include "util/string/stringUtils.h"
 
 #include "platform/victorCrashReports/google_breakpad.h"
 
@@ -34,6 +34,7 @@
 using namespace Anki;
 using namespace Anki::Cozmo;
 
+#define LOG_PROCNAME "vic-anim"
 #define LOG_CHANNEL "CozmoAnimMain"
 
 namespace {
@@ -50,11 +51,11 @@ Anki::Util::Data::DataPlatform* createPlatform(const std::string& persistentPath
                                          const std::string& cachePath,
                                          const std::string& resourcesPath)
 {
-    Anki::Util::FileUtils::CreateDirectory(persistentPath);
-    Anki::Util::FileUtils::CreateDirectory(cachePath);
-    Anki::Util::FileUtils::CreateDirectory(resourcesPath);
+  Anki::Util::FileUtils::CreateDirectory(persistentPath);
+  Anki::Util::FileUtils::CreateDirectory(cachePath);
+  Anki::Util::FileUtils::CreateDirectory(resourcesPath);
 
-    return new Anki::Util::Data::DataPlatform(persistentPath, cachePath, resourcesPath);
+  return new Anki::Util::Data::DataPlatform(persistentPath, cachePath, resourcesPath);
 }
 
 Anki::Util::Data::DataPlatform* createPlatform()
@@ -105,10 +106,7 @@ Anki::Util::Data::DataPlatform* createPlatform()
     PRINT_NAMED_ERROR("cozmoAnimMain.createPlatform.DataPlatformResourcesPathUndefined", "");
   }
 
-  Util::Data::DataPlatform* dataPlatform =
-    createPlatform(persistentPath, cachePath, resourcesPath);
-
-  return dataPlatform;
+  return createPlatform(persistentPath, cachePath, resourcesPath);
 }
 
 
@@ -120,10 +118,26 @@ int main(void)
   GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
 
   // - create and set logger
-  Util::AndroidLogPrintLogger logPrintLogger("vic-anim");
-  Util::gLoggerProvider = &logPrintLogger;
+  auto logger = std::make_unique<Anki::Util::VictorLogger>(LOG_PROCNAME);
 
-  Util::Data::DataPlatform* dataPlatform = createPlatform();
+  Util::gLoggerProvider = logger.get();
+  Util::gEventProvider = logger.get();
+
+  auto dataPlatform = createPlatform();
+
+  // Log a test event
+  {
+    DAS_MSG(hello, "anim.main.hello", "Application start");
+    FILL_ITEM(s1, "str1", "Example string 1");
+    FILL_ITEM(s2, "str2", "Example string 2");
+    FILL_ITEM(s3, "str3", "Example string 3")
+    FILL_ITEM(s4, "str4" ,"Example string 4");
+    FILL_ITEM(i1, 1, "Example int 1");
+    FILL_ITEM(i2, 2, "Example int 2");
+    FILL_ITEM(i3, 3, "Example int 3");
+    FILL_ITEM(i4, 4, "Example int 4");
+    SEND_DAS_MSG_EVENT();
+  }
 
   // Set up the console vars to load from file, if it exists
   ANKI_CONSOLE_SYSTEM_INIT(dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "consoleVarsAnim.ini").c_str());
@@ -135,6 +149,8 @@ int main(void)
   if (RESULT_OK != result) {
     LOG_ERROR("CozmoAnimMain.main.InitFailed", "Unable to initialize (exit %d)", result);
     delete animEngine;
+    Util::gLoggerProvider = nullptr;
+    Util::gEventProvider = nullptr;
     sync();
     exit(result);
   }
@@ -204,6 +220,10 @@ int main(void)
   LOG_INFO("CozmoAnimMain.main.Shutdown", "Shutting down (exit %d)", result);
 
   delete animEngine;
+
+  Util::gLoggerProvider = nullptr;
+  Util::gEventProvider = nullptr;
+
   GoogleBreakpad::UnInstallGoogleBreakpad();
   sync();
   exit(result);

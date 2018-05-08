@@ -34,6 +34,10 @@ elseif (MACOSX)
 endif()
 
 target_link_libraries(victor_anim
+  PUBLIC
+  victor_web_library
+  robot_interface  # Needs to be public for cozmoConfig.h
+  DAS
   PRIVATE
   util
   util_audio
@@ -49,7 +53,6 @@ target_link_libraries(victor_anim
   audio_multiplexer_robot
   osState
   micdata
-  DAS
   # vendor
   ${OPENCV_LIBS}
   ${FLATBUFFERS_LIBS}
