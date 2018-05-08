@@ -20,8 +20,7 @@
 #include "util/logging/logging.h"
 #include "util/logging/androidLogPrintLogger_android.h"
 
-// FIXME: We need to build Breakpad libs for VICOS
-// #include "platform/victorCrashReports/google_breakpad.h"
+#include "platform/victorCrashReports/google_breakpad.h"
 
 #include <stdio.h>
 #include <chrono>
@@ -113,9 +112,8 @@ int main(void)
 {
   signal(SIGTERM, Shutdown);
 
-  // FIXME: We need to build Breakpad libs for VICOS
-  // static char const* filenamePrefix = "webserver";
-  // GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
+  static char const* filenamePrefix = "webserver";
+  GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
 
   // - create and set logger
   Util::AndroidLogPrintLogger logPrintLogger("vic-webserver");
@@ -191,8 +189,7 @@ int main(void)
 
   LOG_INFO("victorWebServerMain", "exit(0)");
   Util::gLoggerProvider = nullptr;
-  // FIXME: We need to build Breakpad libs for VICOS
-  // GoogleBreakpad::UnInstallGoogleBreakpad();
+  GoogleBreakpad::UnInstallGoogleBreakpad();
   sync();
   exit(0);
 }

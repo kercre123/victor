@@ -7,8 +7,7 @@ include(anki_build_cxx)
 set(PLATFORM_LIBS "")
 set(PLATFORM_COMPILE_DEFS "")
 
-# FIXME: We need to build Breakpad libs for VICOS
-if (ANDROID)
+if (VICOS)
     include(breakpad)
     set(PLATFORM_LIBS
     )
@@ -20,7 +19,7 @@ elseif (MACOSX)
     set(PLATFORM_COMPILE_DEFS "-DSIMULATOR")
 endif()
 
-if (ANDROID)
+if (VICOS)
 
   anki_build_cxx_executable(vic-testcrash ${ANKI_SRCLIST_DIR})
 
@@ -34,6 +33,6 @@ if (ANDROID)
     robot_interface  # Needs to be public for cozmoConfig.h
   )
 
-  android_strip(TARGET vic-testcrash)
+  anki_build_strip(TARGET vic-testcrash)
     
 endif()

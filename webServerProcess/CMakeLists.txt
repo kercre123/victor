@@ -18,8 +18,7 @@ set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
 
 if (VICOS)
-    # FIXME: We need to build Breakpad libs for VICOS
-    # include(breakpad)
+    include(breakpad)
     set(PLATFORM_LIBS
         log
     )
@@ -68,9 +67,8 @@ if (VICOS)
     victor_web_library
     cti_common
     util
-    # FIXME: We need to build Breakpad libs for VICOS
-    # victorCrashReports
-    # breakpad_client
+    victorCrashReports
+    breakpad_client
     ${PLATFORM_LIBS}
   )
 

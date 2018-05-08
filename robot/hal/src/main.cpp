@@ -12,8 +12,7 @@
 #include  "../spine/cc_commander.h"
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
-// FIXME: We need to build Breakpad libs for VICOS
-// #include "platform/victorCrashReports/google_breakpad.h"
+#include "platform/victorCrashReports/google_breakpad.h"
 
 // For development purposes, while HW is scarce, it's useful to be able to run on phones
 #ifdef HAL_DUMMY_BODY
@@ -55,9 +54,8 @@ int main(int argc, const char* argv[])
 
   signal(SIGTERM, Cleanup);
 
-  // FIXME: We need to build Breakpad libs for VICOS
-  // static char const* filenamePrefix = "robot";
-  // GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
+  static char const* filenamePrefix = "robot";
+  GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
 
   if (argc > 1) {
     ccc_set_shutdown_function(Cleanup);
@@ -71,8 +69,7 @@ int main(int argc, const char* argv[])
   const Result result = Anki::Cozmo::Robot::Init(&shutdownSignal);
   if (result != Result::RESULT_OK) {
     AnkiError("robot.main.InitFailed", "Unable to initialize (result %d)", result);
-    // FIXME: We need to build Breakpad libs for VICOS
-    // GoogleBreakpad::UnInstallGoogleBreakpad();
+    GoogleBreakpad::UnInstallGoogleBreakpad();
     sync();
     if (shutdownSignal == SIGTERM) {
       return 0;
@@ -94,8 +91,7 @@ int main(int argc, const char* argv[])
     if (Anki::Cozmo::HAL::Step() == Anki::RESULT_OK) {
       if (Anki::Cozmo::Robot::step_MainExecution() != Anki::RESULT_OK) {
         AnkiError("robot.main", "MainExecution failed");
-        // FIXME: We need to build Breakpad libs for VICOS
-        // GoogleBreakpad::UnInstallGoogleBreakpad();
+        GoogleBreakpad::UnInstallGoogleBreakpad();
         return -1;
       }
     }
@@ -144,8 +140,7 @@ int main(int argc, const char* argv[])
 
     if (shutdownSignal != 0 && --shutdownCounter == 0) {
       AnkiInfo("robot.main.shutdown", "%d", shutdownSignal);
-      // FIXME: We need to build Breakpad libs for VICOS
-      // GoogleBreakpad::UnInstallGoogleBreakpad();
+      GoogleBreakpad::UnInstallGoogleBreakpad();
       sync();
       exit(0);
     }

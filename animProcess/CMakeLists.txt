@@ -20,8 +20,7 @@ set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
 
 if (VICOS)
-    # FIXME: We need to build Breakpad libs for VICOS
-    # include(breakpad)
+    include(breakpad)
     set(PLATFORM_LIBS
         log
         robot_core)
@@ -90,9 +89,8 @@ if (VICOS)
   target_link_libraries(vic-anim
     PRIVATE
     victor_anim
-    # FIXME: We need to build Breakpad libs for VICOS
-    # victorCrashReports
-    # breakpad_client
+    victorCrashReports
+    breakpad_client
     cti_common_robot
     util
     jsoncpp

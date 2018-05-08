@@ -22,8 +22,7 @@
 #include "util/logging/androidLogPrintLogger_android.h"
 #include "util/fileUtils/fileUtils.h"
 
-// FIXME: We need to build Breakpad libs for VICOS
-// #include "platform/victorCrashReports/google_breakpad.h"
+#include "platform/victorCrashReports/google_breakpad.h"
 
 #include <stdio.h>
 #include <chrono>
@@ -117,9 +116,8 @@ int main(void)
 {
   signal(SIGTERM, Shutdown);
 
-  // FIXME: We need to build Breakpad libs for VICOS
-  // static char const* filenamePrefix = "anim";
-  // GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
+  static char const* filenamePrefix = "anim";
+  GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
 
   // - create and set logger
   Util::AndroidLogPrintLogger logPrintLogger("vic-anim");
@@ -206,8 +204,7 @@ int main(void)
   LOG_INFO("CozmoAnimMain.main.Shutdown", "Shutting down (exit %d)", result);
 
   delete animEngine;
-  // FIXME: We need to build Breakpad libs for VICOS
-  // GoogleBreakpad::UnInstallGoogleBreakpad();
+  GoogleBreakpad::UnInstallGoogleBreakpad();
   sync();
   exit(result);
 }

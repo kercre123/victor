@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <iomanip>
 #include <thread>
+#include <signal.h>
 
 using namespace Anki;
 

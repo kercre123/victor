@@ -36,8 +36,7 @@
 #endif
 
 #include "anki/cozmo/shared/factory/emrHelper.h"
-// FIXME: We need to build Breakpad libs for VICOS
-// #include "platform/victorCrashReports/google_breakpad.h"
+#include "platform/victorCrashReports/google_breakpad.h"
 
 #if !defined(DEV_LOGGER_ENABLED)
   #if FACTORY_TEST
@@ -289,9 +288,8 @@ int main(int argc, char* argv[])
   // Install signal handler
   signal(SIGTERM, sigterm);
 
-  // FIXME: We need to build Breakpad libs for VICOS
-  // static char const* filenamePrefix = "engine";
-  // GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
+  static char const* filenamePrefix = "engine";
+  GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
 
   char cwd[PATH_MAX] = { 0 };
   (void)getcwd(cwd, sizeof(cwd));
@@ -409,8 +407,7 @@ int main(int argc, char* argv[])
   LOG_INFO("CozmoEngineMain.main", "Stopping engine");
   res = cozmo_stop();
 
-  // FIXME: We need to build Breakpad libs for VICOS
-  // GoogleBreakpad::UnInstallGoogleBreakpad();
+  GoogleBreakpad::UnInstallGoogleBreakpad();
 
   return res;
 }

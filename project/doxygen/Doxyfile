@@ -902,6 +902,7 @@ EXCLUDE_PATTERNS       = */_build/* \
                          */lib/util/tools/simpleperf/* \
                          */lib/util/source/3rd/* \
                          */lib/crash-reporting-android/* \
+                         */lib/crash-reporting-vicos/* \
                          */lib/das-client/testing/* \
                          */platform/* \
                          */lib/HockeySDK-iOS/* \

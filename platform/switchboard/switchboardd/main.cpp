@@ -34,6 +34,8 @@
 #include "switchboardd/christen.h"
 #include "switchboardd/main.h"
 
+#include "platform/victorCrashReports/google_breakpad.h"
+
 // --------------------------------------------------------------------------------------------------------------------
 // Switchboard Daemon
 // --------------------------------------------------------------------------------------------------------------------
@@ -516,6 +518,9 @@ static void Tick(struct ev_loop* loop, struct ev_timer* w, int revents) {
 }
 
 int main() {
+  static char const* filenamePrefix = "switchboard";
+  GoogleBreakpad::InstallGoogleBreakpad(filenamePrefix);
+
   sLoop = ev_default_loop(0);
 
   ev_signal_init(&sIntSig, SignalCallback, SIGINT);
@@ -532,6 +537,7 @@ int main() {
   ev_timer_start(sLoop, &sTimer);
   ev_loop(sLoop, 0);
   ExitHandler();
+  GoogleBreakpad::UnInstallGoogleBreakpad();
   return 0;
 }
 // ####################################################################################################################
