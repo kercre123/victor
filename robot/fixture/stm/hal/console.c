@@ -300,6 +300,25 @@ static void SetSerial(void)
   __enable_irq();
 }
 
+static void BurnSerials_(void)
+{
+  //required format "burn # serials"
+  int num = -1;
+  try {
+    if( !strncmp(GetArgument(2), "serials", 7) )
+      num = strtol(GetArgument(1),0,0);
+  } catch (int e) { num = -2; }
+
+  if( num < 0 ) {
+    ConsolePrintf("invalid format: \"burn # serials\"\n");
+    return;
+  }
+  
+  ConsolePrintf("burning %i serial numbers\n", num);
+  for(int n=0; n<num; n++)
+    fixtureGetSerial();
+}
+
 extern int g_canary;
 static void GetSerialCmd(void)
 {
@@ -483,6 +502,7 @@ static CommandFunction m_functions[] =
   {"SetMotor", SetMotor, FALSE},
   {"DUTProg", DutProgCmd_, FALSE},
   {"SetDetect", SetDetect_, FALSE},
+  {"Burn", BurnSerials_, FALSE},
   {"Reset", ConsoleReset_, FALSE},
   {"Exit", NULL, FALSE}, //processed directly - include here so it prints in 'help' list
 };
