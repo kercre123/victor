@@ -141,9 +141,11 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
       const double maxLatency = ANIM_TIME_STEP_MS + ANIM_OVERTIME_WARNING_THRESH_MS;
       if (timeSinceLastUpdate > maxLatency)
       {
-        DAS_MSG(slow, "cozmo_anim.update.sleep.slow", "This will be show on the slow updates and as such should not be seen very often")
-        FILL_ITEM(i1, timeSinceLastUpdate, "timeSinceLastUpdate as a float")
-        SEND_DAS_MSG_EVENT()
+        DASMSG(cozmo_anim_update_sleep_slow,
+               "cozmo_anim.update.sleep.slow",
+               "This will be shown on the slow updates and as such should not be seen very often")
+        DASMSG_SET(s1, timeSinceLastUpdate, "timeSinceLastUpdate as a float")
+        DASMSG_SEND()
       }
     }
     lastUpdateTimeMs = startUpdateTimeMs;
