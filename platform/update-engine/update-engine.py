@@ -84,10 +84,9 @@ def die(code, text):
     exit(code)
 
 
-def open_slot(partition, slot, mode):
-    "Opens a partition slot"
+def get_slot_name(partition, slot):
+    "Get slot dev path name"
     if slot == "f":
-        assert mode == "r"  # No writing to F slot
         if partition == "system":
             label = "recoveryfs"
         elif partition == "boot":
@@ -96,7 +95,14 @@ def open_slot(partition, slot, mode):
             raise ValueError("Unknown partition")
     else:
         label = partition + "_" + slot
-    return open(os.path.join(BOOT_DEVICE, label), mode + "b")
+    return os.path.join(BOOT_DEVICE, label)
+
+
+def open_slot(partition, slot, mode):
+    "Opens a partition slot"
+    if slot == "f":
+        assert mode == "r"  # No writing to F slot
+    return open(os.path.join(BOOT_DEVICE, get_slot_name(partition, slot)), mode + "b")
 
 
 def zero_slot(target_slot):
@@ -461,10 +467,10 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
                 yield
 
         payload.progress_tick_callback = progress_ticker(progress, num_operations)
-        payload.Apply(os.path.join(BOOT_DEVICE, "boot_" + target_slot),
-                      os.path.join(BOOT_DEVICE, "system_" + target_slot),
-                      os.path.join(BOOT_DEVICE, "boot_" + current_slot),
-                      os.path.join(BOOT_DEVICE, "system_" + current_slot),
+        payload.Apply(get_slot_name("boot", target_slot),
+                      get_slot_name("system", target_slot),
+                      get_slot_name("boot", current_slot),
+                      get_slot_name("system", current_slot),
                       truncate_to_expected_size=False)
 
     except update_payload.PayloadError as pay_err:
