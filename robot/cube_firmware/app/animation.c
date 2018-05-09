@@ -33,7 +33,7 @@ static AnimationFrame animation[MAX_KEYFRAMES];
 static AnimationFrame staging[MAX_KEYFRAMES];
 
 extern uint8_t intensity[ANIMATION_CHANNELS * COLOR_CHANNELS];
-static uint32_t div_tbl[0x100] = { 0xFFFFFFFF };
+static uint32_t div_tbl[0x100];
 
 static void setup_frame(int index, const AnimationFrame* frame) {
   AnimationChannel* channel = &state[index];
@@ -56,6 +56,7 @@ void animation_init(void) {
   memset(&animation, 0, sizeof(animation));
   memset(&staging, 0, sizeof(staging));
 
+  div_tbl[0] = 0x1000000;
   for (int i = 1; i < 0x100; i++) {
     div_tbl[i] = 0x1000000 / i;
   }
@@ -74,7 +75,7 @@ void animation_frames(const FrameCommand* frames) {
   uint8_t index = frames->flags;
   
   for (int i = 0; i < FRAMES_PER_COMMAND; i++, source++) {
-    AnimationFrame* target = &staging[index++];
+    AnimationFrame* target = &staging[index++ % MAX_KEYFRAMES];
 
     // Unpack our solid color
     memcpy(target->colors, source->colors, sizeof(target->colors));
@@ -82,7 +83,7 @@ void animation_frames(const FrameCommand* frames) {
     // Animation settings
     target->decay = source->decay;
     target->hold = source->hold;
-    target->next = &animation[source->link];
+    target->next = &animation[source->link % MAX_KEYFRAMES];
   }
 }
 
@@ -90,12 +91,14 @@ void animation_index(const MapCommand* map) {
   memcpy(animation, staging, sizeof(animation));
 
   for (int c = 0; c < 4; c++) {
-    setup_frame(c, &animation[map->initial[c]]);
+    setup_frame(c, &animation[map->initial[c] % MAX_KEYFRAMES]);
   }
 }
 
 void animation_tick(void) {
-  static const int DIVIDER = 6;
+  // animation_tick gets called at 10 ms, and we want to
+  // tick the animation controller every 30 ms.
+  static const int DIVIDER = 3;
   static int overflow = 0;
 
   if (++overflow < DIVIDER) return ;
