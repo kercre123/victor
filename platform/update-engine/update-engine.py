@@ -13,11 +13,13 @@ import tarfile
 import zlib
 import shutil
 import ConfigParser
-import errno
-import select
+from select import select
 from hashlib import sha256
 from collections import OrderedDict
 from fcntl import fcntl, F_GETFL, F_SETFL
+
+sys.path.append("/usr/bin")
+import update_payload
 
 BOOT_DEVICE = "/dev/block/bootdevice/by-name"
 STATUS_DIR = "/run/update-engine"
@@ -35,8 +37,8 @@ BOOT_STAGING = os.path.join(STATUS_DIR, "boot.img")
 DELTA_STAGING = os.path.join(STATUS_DIR, "delta.bin")
 OTA_PUB_KEY = "/anki/etc/ota.pub"
 OTA_ENC_PASSWORD = "/anki/etc/ota.pas"
-DD_BLOCK_SIZE = 1024*256
 HTTP_BLOCK_SIZE = 1024*2  # Tuned to what seems to work best with DD_BLOCK_SIZE
+DD_BLOCK_SIZE = HTTP_BLOCK_SIZE*1024
 SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5"]
 
 DEBUG = False
@@ -82,10 +84,9 @@ def die(code, text):
     exit(code)
 
 
-def open_slot(partition, slot, mode):
-    "Opens a partition slot"
+def get_slot_name(partition, slot):
+    "Get slot dev path name"
     if slot == "f":
-        assert mode == "r"  # No writing to F slot
         if partition == "system":
             label = "recoveryfs"
         elif partition == "boot":
@@ -94,7 +95,14 @@ def open_slot(partition, slot, mode):
             raise ValueError("Unknown partition")
     else:
         label = partition + "_" + slot
-    return open(os.path.join(BOOT_DEVICE, label), mode + "b")
+    return os.path.join(BOOT_DEVICE, label)
+
+
+def open_slot(partition, slot, mode):
+    "Opens a partition slot"
+    if slot == "f":
+        assert mode == "r"  # No writing to F slot
+    return open(os.path.join(BOOT_DEVICE, get_slot_name(partition, slot)), mode + "b")
 
 
 def zero_slot(target_slot):
@@ -195,7 +203,7 @@ class StreamDecompressor(object):
                                          stderr=sys.stderr)
             make_blocking(self.proc.stdout, False)
         else:
-            raise ValueError("No procs")
+            die(201, "Unhandled section format for expansion")
 
     def __del__(self):
         "Ensure all subprocesses are closed when class goes away"
@@ -203,16 +211,14 @@ class StreamDecompressor(object):
             self.proc.kill()
 
     def read(self, length=-1):
-        """Pumps the input and reads output
-        NOTE: This read function may return more than the requested number of bytes while decompression is in progress
-        but will not return fewer than the requested number of bytes unless the end of file has been reached."""
+        """Pumps the input and reads output"""
         block = b""
         while (length < 0 or len(block) < length) and (self.pos + len(block)) < self.len:
-            rlist, wlist, xlist = select.select((self.proc.stdout,),
-                                                (self.proc.stdin,),
-                                                (self.proc.stdout, self.proc.stdin))
+            rlist, wlist, xlist = select((self.proc.stdout,),
+                                         (self.proc.stdin,),
+                                         (self.proc.stdout, self.proc.stdin))
             if xlist:
-                die(205, "Decompressor subprocess exceptional status")
+                die(212, "Decompressor subprocess exceptional status")
             if self.proc.stdin in wlist:
                 curl = self.fileobj.read(HTTP_BLOCK_SIZE)
                 if len(curl) == HTTP_BLOCK_SIZE:
@@ -221,7 +227,8 @@ class StreamDecompressor(object):
                     block += self.proc.communicate(curl)[0]
                     break
             if self.proc.stdout in rlist:
-                block += self.proc.stdout.read(length)
+                read_len = length - len(block) if length >= 0 else length
+                block += self.proc.stdout.read(read_len)
         if self.sum:
             self.sum.update(block)
         self.pos += len(block)
@@ -407,14 +414,16 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
     delta_base_version = manifest.get("DELTA", "base_version")
     if current_version != delta_base_version:
         die(211, "My version is {} not {}".format(current_version, delta_base_version))
-    write_status(EXPECTED_WRITE_SIZE_FILE, manifest.getint("DELTA", "bytes"))
+    delta_bytes = manifest.getint("DELTA", "bytes")
+    download_progress_denominator = 4  # Download expected not to take more than 25% of the time
+    write_status(EXPECTED_WRITE_SIZE_FILE, delta_bytes*download_progress_denominator)
     write_status(PROGRESS_FILE, 0)
 
     def progress_update(progress):
         "Update delta download progress"
         write_status(PROGRESS_FILE, progress)
         if DEBUG:
-            sys.stdout.write("{0:0.3f}\r".format(float(progress)/float(manifest.getint("DELTA", "bytes"))))
+            sys.stdout.write("{0:0.3f}\r".format(float(progress)/float(delta_bytes*download_progress_denominator)))
             sys.stdout.flush()
 
     # Extract delta file
@@ -425,34 +434,48 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
         die(200,
             "Expected delta.bin.gz to be next in tar but found \"{}\""
             .format(delta_ti.name))
-    with open(DELTA_STAGING, "wb") as delta_fh:
-        decompressor = StreamDecompressor(tar_stream.extractfile(delta_ti),
-                                          manifest.getint("DELTA", "encryption"),
-                                          manifest.get("DELTA", "compression"),
-                                          manifest.getint("DELTA", "bytes"),
-                                          True)
-        decompressor.read_to_file(delta_fh, DD_BLOCK_SIZE, progress_update)
-        # Verify delta hash
-        if decompressor.digest() != manifest.get("DELTA", "sha256"):
-            safe_delete(DELTA_STAGING)
-            die(209, "delta.bin hash doesn't match manifest value")
-    paycheck = subprocess.Popen(["/usr/bin/paycheck.py",
-                                 "--do-not-truncate-to-expected-size",
-                                 DELTA_STAGING,
-                                 os.path.join(BOOT_DEVICE, "boot_" + target_slot),
-                                 os.path.join(BOOT_DEVICE, "system_" + target_slot),
-                                 os.path.join(BOOT_DEVICE, "boot_" + current_slot),
-                                 os.path.join(BOOT_DEVICE, "system_" + current_slot)],
-                                shell=False,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE)
-    ret_code = paycheck.wait()
-    paycheck_out, paycheck_err = paycheck.communicate()
-    safe_delete(DELTA_STAGING)
-    if ret_code != 0:
-        die(207,
-            "Failed to apply delta. paycheck.py returned {0}\n{1}\n{2}"
-            .format(ret_code, paycheck_out, paycheck_err))
+    decompressor = StreamDecompressor(tar_stream.extractfile(delta_ti),
+                                      manifest.getint("DELTA", "encryption"),
+                                      manifest.get("DELTA", "compression"),
+                                      manifest.getint("DELTA", "bytes"),
+                                      True)
+    decompressor.read_to_file(open(DELTA_STAGING, "wb"), DD_BLOCK_SIZE, progress_update)
+    # Verify delta hash
+    if decompressor.digest() != manifest.get("DELTA", "sha256"):
+        safe_delete(DELTA_STAGING)
+        die(209, "delta.bin hash doesn't match manifest value")
+    try:
+        payload = update_payload.Payload(open(DELTA_STAGING, "rb"))
+        payload.Init()
+
+        # Update progress estimate
+        num_operations = len(payload.manifest.install_operations) + len(payload.manifest.kernel_install_operations)
+        progress = num_operations / download_progress_denominator
+        num_operations += progress
+        write_status(PROGRESS_FILE, progress)
+        write_status(EXPECTED_WRITE_SIZE_FILE, num_operations)
+
+        def progress_ticker(start, total):
+            "Delta application callback"
+            progress = start
+            while True:
+                progress += 1
+                write_status(PROGRESS_FILE, progress)
+                if DEBUG:
+                    sys.stdout.write("{0:0.3f}\r".format(float(progress)/float(total)))
+                    sys.stdout.flush()
+                yield
+
+        payload.progress_tick_callback = progress_ticker(progress, num_operations)
+        payload.Apply(get_slot_name("boot", target_slot),
+                      get_slot_name("system", target_slot),
+                      get_slot_name("boot", current_slot),
+                      get_slot_name("system", current_slot),
+                      truncate_to_expected_size=False)
+
+    except update_payload.PayloadError as pay_err:
+        zero_slot(target_slot)
+        die(207, "Delta payload error: {!s}".format(pay_err))
 
 
 def handle_anki(current_slot, target_slot, manifest, tar_stream):
