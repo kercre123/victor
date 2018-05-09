@@ -430,7 +430,7 @@ namespace Cozmo {
     }
 
     if (!_enabled) {
-      PRINT_CH_INFO("VisionComponent", "VisionComponent.Update.NotEnabled", "");
+      PRINT_PERIODIC_CH_INFO(200, "VisionComponent", "VisionComponent.Update.NotEnabled", "If persistent, camera calibration is probably missing");
       return;
     }
 
