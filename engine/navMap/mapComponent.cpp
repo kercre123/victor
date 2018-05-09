@@ -85,6 +85,8 @@ CONSOLE_VAR(float, kRobotPositionChangeToReport_mm, "MapComponent", 8.0f);
 
 CONSOLE_VAR(float, kVisionTimeout_ms, "MapComponent", 120.0f * 1000);
 CONSOLE_VAR(float, kCliffTimeout_ms, "MapComponent", 30.0f * 1000);
+CONSOLE_VAR(float, kProxTimeout_ms, "MapComponent", 600.0f * 1000);
+CONSOLE_VAR(float, kTimeoutUpdatePeriod_ms, "MapComponent", 5.0f * 1000);
 
 // the length and half width of two triangles used in FlagProxObstaclesUsingPose (see method)
 CONSOLE_VAR(float, kProxExploredTriangleLength_mm, "MapComponent", 300.0f );
@@ -153,6 +155,7 @@ using namespace MemoryMapTypes;
 MapComponent::MapComponent()
 : IDependencyManagedComponent(this, RobotComponentID::Map)
 , _currentMapOriginID(PoseOriginList::UnknownOriginID)
+, _nextTimeoutUpdate_ms(0)
 , _vizMessageDirty(true)
 , _gameMessageDirty(true)
 , _webMessageDirty(false) // web must request it
@@ -219,11 +222,16 @@ void MapComponent::UpdateDependent(const RobotCompMap& dependentComps)
     // Check if we should broadcast changes to navMap to different channels
     const f32 currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
+    const bool shouldSendViz = (ENABLE_DRAWING && _vizMessageDirty && _isRenderEnabled) || _webMessageDirty;
+    const bool shouldSendSDK = _gameMessageDirty && (_broadcastRate_sec >= 0.0f);
+    
     MemoryMapTypes::MapBroadcastData data;
-    currentNavMemoryMap->GetBroadcastInfo(data);
+    if( shouldSendViz || shouldSendSDK ) {
+      currentNavMemoryMap->GetBroadcastInfo(data);
+    }
 
     // send viz Messages
-    if ( (ENABLE_DRAWING && _vizMessageDirty && _isRenderEnabled) || _webMessageDirty )
+    if ( shouldSendViz )
     {
       static f32 nextDrawTime_s = currentTime_s;
       const bool doViz = FLT_LE(nextDrawTime_s, currentTime_s);
@@ -243,7 +251,7 @@ void MapComponent::UpdateDependent(const RobotCompMap& dependentComps)
     }
 
     // send SDK messages
-    if (_gameMessageDirty && (_broadcastRate_sec >= 0.0f))
+    if ( shouldSendSDK )
     {
       static f32 nextBroadcastTime_s = currentTime_s;
       if (FLT_LE(nextBroadcastTime_s, currentTime_s)) {
@@ -374,22 +382,28 @@ void MapComponent::TimeoutObjects()
   INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
   if (currentNavMemoryMap)
   {
-    // check for object timeouts in navMap
+    // check for object timeouts in navMap occasionally
     const TimeStamp_t currentTime = _robot->GetLastMsgTimestamp();
-
+    if( currentTime <= _nextTimeoutUpdate_ms ) {
+      return;
+    }
+    _nextTimeoutUpdate_ms = currentTime + kTimeoutUpdatePeriod_ms;
+    
     // ternary to prevent uInt wrapping on subtract
     const TimeStamp_t cliffTooOld  = (currentTime <= kCliffTimeout_ms)  ? 0 : currentTime - kCliffTimeout_ms;
     const TimeStamp_t visionTooOld = (currentTime <= kVisionTimeout_ms) ? 0 : currentTime - kVisionTimeout_ms;
-
+    const TimeStamp_t proxTooOld   = (currentTime <= kProxTimeout_ms)   ? 0 : currentTime - kProxTimeout_ms;
+    
     NodeTransformFunction timeoutObjects =
-      [cliffTooOld, visionTooOld] (MemoryMapDataPtr data) -> MemoryMapDataPtr
+      [cliffTooOld, visionTooOld, proxTooOld] (MemoryMapDataPtr data) -> MemoryMapDataPtr
       {
         const EContentType nodeType = data->type;
         const TimeStamp_t lastObs = data->GetLastObservedTime();
 
         if ((EContentType::Cliff              == nodeType && lastObs <= cliffTooOld)  ||
             (EContentType::InterestingEdge    == nodeType && lastObs <= visionTooOld) ||
-            (EContentType::NotInterestingEdge == nodeType && lastObs <= visionTooOld))
+            (EContentType::NotInterestingEdge == nodeType && lastObs <= visionTooOld) ||
+            (EContentType::ObstacleProx       == nodeType && lastObs <= proxTooOld))
         {
           return MemoryMapDataPtr();
         }
