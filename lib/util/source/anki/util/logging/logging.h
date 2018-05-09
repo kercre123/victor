@@ -83,11 +83,33 @@ struct DasMsg
   DasMsg(std::string eventStr) {event = eventStr;}
 };
 
-#define DASMSG(ezRef, eventName, documentation) { Anki::Util::DasMsg msg(eventName);
-#define DASMSG_SET(dasEntry, value, comment) msg.dasEntry = Anki::Util::DasItem(value);
-#define DASMSG_SEND() sEventD(msg); }
-#define DASMSG_SEND_WARNING() sWarningD(msg); }
-#define DASMSG_SEND_ERROR() sErrorD(msg); }
+#ifndef DOXYGEN
+
+#define DASMSG(ezRef, eventName, documentation) { Anki::Util::DasMsg __DAS_msg(eventName);
+#define DASMSG_SET(dasEntry, value, comment) __DAS_msg.dasEntry = Anki::Util::DasItem(value);
+#define DASMSG_SEND() sEventD(__DAS_msg); }
+#define DASMSG_SEND_WARNING() sWarningD(__DAS_msg); }
+#define DASMSG_SEND_ERROR() sErrorD(__DAS_msg); }
+
+#else
+
+/*! \defgroup dasmsg Das Messages
+*/
+
+class DasDoxMsg() {}
+
+
+#define DASMSG(ezRef, eventName, documentation)  }}}}}}}}/** \ingroup dasmsg */ \
+                                            /** \brief eventName */ \
+                                            /** documentation */ \
+                                            class ezRef(): public DasDoxMsg() { \
+                                            public:
+#define DASMSG_SET(dasEntry, value, comment) /** @param dasEntry comment \n*/
+#define DASMSG_SEND }; {{{{{{{{
+#define DASMSG_SEND_WARNING }; {{{{{{{{
+#define DASMSG_SEND_ERROR }; {{{{{{{{
+
+#endif
 
 //__attribute__((__deprecated__))
 //
