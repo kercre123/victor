@@ -497,6 +497,7 @@ std::unique_ptr<Anki::Switchboard::Daemon> _daemon;
 
 static void ExitHandler(int status = 0) {
   // todo: smoothly handle termination
+  GoogleBreakpad::UnInstallGoogleBreakpad();
   _exit(status);
 }
 
@@ -537,7 +538,6 @@ int main() {
   ev_timer_start(sLoop, &sTimer);
   ev_loop(sLoop, 0);
   ExitHandler();
-  GoogleBreakpad::UnInstallGoogleBreakpad();
   return 0;
 }
 // ####################################################################################################################
