@@ -21,25 +21,25 @@ import settings
 
 class DropboxFileUploader():
 
-    TOKEN = settings.TOKEN
+    token = settings.TOKEN
 
-    LOCALFILE = ""
-    BACKUPPATH = "" # Keep the forward slash before destination filename
-    FOLDERPATH = ""
+    localfile = ""
+    backuppath = "" # Keep the forward slash before destination filename
+    folderpath = ""
 
     def __init__(self, local_file, folder_path):
-        self.LOCALFILE = local_file
-        self.FOLDERPATH = folder_path
+        self.localfile = local_file
+        self.folderpath = folder_path
 
-    # Uploads contents of LOCALFILE to Dropbox
+    # Uploads contents of localfile to Dropbox
     def backup(self, dbx):
-        self.BACKUPPATH = "{}{}".format(self.FOLDERPATH, os.path.basename(self.LOCALFILE))
-        with open(self.LOCALFILE, 'rb') as f:
+        self.backuppath = "{}{}".format(self.folderpath, os.path.basename(self.localfile))
+        with open(self.localfile, 'rb') as f:
             # We use WriteMode=overwrite to make sure that the settings in the file
             # are changed on upload
-            print("Uploading " + self.LOCALFILE + " to Dropbox as " + self.BACKUPPATH + "...")
+            print("Uploading " + self.localfile + " to Dropbox as " + self.backuppath + "...")
             try:
-                dbx.files_upload(f.read(), self.BACKUPPATH, mode=WriteMode('overwrite'))
+                dbx.files_upload(f.read(), self.backuppath, mode=WriteMode('overwrite'))
             except ApiError as err:
                 # This checks for the specific error where a user doesn't have enough Dropbox space quota to upload this file
                 if (err.error.is_path() and
@@ -63,12 +63,12 @@ class DropboxFileUploader():
 
     def uploadFile(self):
         # Check for an access token
-        if (len(self.TOKEN) == 0):
+        if (len(self.token) == 0):
             sys.exit("ERROR: Looks like you didn't add your access token. Open up backup-and-restore-example.py in a text editor and paste in your token in line 14.")
 
         # Create an instance of a Dropbox class, which can make requests to the API.
         print("Creating a Dropbox object...")
-        dbx = dropbox.Dropbox(self.TOKEN)
+        dbx = dropbox.Dropbox(self.token)
 
         # Check that the access token is valid
         try:
