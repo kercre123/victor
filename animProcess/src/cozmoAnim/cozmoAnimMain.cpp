@@ -152,6 +152,7 @@ int main(void)
     delete animEngine;
     Util::gLoggerProvider = nullptr;
     Util::gEventProvider = nullptr;
+    GoogleBreakpad::UnInstallGoogleBreakpad();
     sync();
     exit(result);
   }

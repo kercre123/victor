@@ -130,6 +130,7 @@ int main(void)
     LOG_ERROR("victorWebServerMain.WebServerConfigNotFound",
               "Web server config file %s not found or failed to parse",
               wsConfigPath.c_str());
+    GoogleBreakpad::UnInstallGoogleBreakpad();
     exit(1);
   }
 

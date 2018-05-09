@@ -398,6 +398,7 @@ int main(int argc, char* argv[])
   int res = cozmo_start(config);
   if (0 != res) {
       printf("failed to start engine\n");
+      GoogleBreakpad::UnInstallGoogleBreakpad();
       exit(res);
   }
 
