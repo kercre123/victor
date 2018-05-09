@@ -53,7 +53,7 @@
 
 #define APP_DIS_MANUFACTURER_NAME       ("Anki")
 #define APP_DIS_MANUFACTURER_NAME_LEN   ((sizeof(APP_DIS_MANUFACTURER_NAME)-1))
-#define APP_DIS_MODEL_NB_STR            ("DVT3")
+#define APP_DIS_MODEL_NB_STR            ("DVT4")
 #define APP_DIS_MODEL_NB_STR_LEN        ((sizeof(APP_DIS_MODEL_NB_STR)-1))
 #define APP_DIS_SW_REV                  DA14580_REFDES_SW_VERSION
 #define APP_DIS_FIRM_REV                DA14580_SW_VERSION
