@@ -50,8 +50,8 @@ rsync $PROGRESS --exclude=fixture/ -rte "ssh" nathan@anki-vm-keil:$HOSTNAME/$PRJ
 #file check
 if [ $buildCube -gt 0 ]; then #Cube
   ls -la cube_firmware/build/app/cube_application.bin
-  ls -la cube_firmware/build/app/cube.dfu
-  if [ $buildBoot -gt 0 ]; then ls -la cube_firmware/cubeboot.bin; fi
+  ls -la cube_firmware/build/cube.dfu
+  if [ $buildBoot -gt 0 ]; then ls -la cube_firmware/build/cubeboot.bin; fi
 else #Syscon
   ls -la syscon/build/syscon_raw.bin
   ls -la syscon/build/syscon.dfu

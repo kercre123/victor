@@ -69,12 +69,11 @@ factory.on('connected', (cube) => {
 	            && Math.abs(z-1) < ACCEL_THRESH;
 
 	        if (last !== test) {
-	        	console.log(test);
 				cube.send(test ? pass : fail);
 	        	last = test;
 	        }
 
-	        console.log(data);
+	        console.log("APP_DATA:", data);
 		});
 	}
 
