@@ -15,6 +15,7 @@ namespace Cozmo {
     Delivering, // Delivering TTS audio to wwise
     Delivered,  // Delivered TTS audio to wwise
     Playing,    // Accompanying animation in progress
+    Finished    // Utterance finished playing according to AudioEngine
   }
 
 } // namespace Cozmo

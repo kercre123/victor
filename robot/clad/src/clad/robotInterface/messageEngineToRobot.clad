@@ -391,6 +391,10 @@ message StartPlaybackAudio
   string  path
 }
 
+message StartWakeWordlessStreaming
+{
+}
+
 structure ColorRGB
 {
   uint_8 r,
@@ -660,6 +664,8 @@ union EngineToRobot
   StartRecordingMicsRaw         startRecordingMicsRaw       = 0x95,
   StartRecordingMicsProcessed   startRecordingMicsProcessed = 0x96,
   StartPlaybackAudio            playbackAudioStart          = 0x97,
+
+  StartWakeWordlessStreaming    startWakeWordlessStreaming  = 0x98,
 
   SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA1,

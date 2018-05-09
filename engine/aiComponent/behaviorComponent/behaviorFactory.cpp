@@ -105,6 +105,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToSound.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToUnexpectedMovement.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/robotDrivenDialog/behaviorPromptUserForVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sleeping/behaviorSleeping.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorProceduralClock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
@@ -707,6 +708,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ReactToVoiceCommand:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToVoiceCommand(config));
+      break;
+    }
+    
+    case BehaviorClass::PromptUserForVoiceCommand:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorPromptUserForVoiceCommand(config));
       break;
     }
     

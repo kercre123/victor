@@ -64,6 +64,7 @@ public:
   void ProcessMicDataPayload(const RobotInterface::MicData& payload);
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
   void RecordProcessedAudio(uint32_t duration_ms, const std::string& path);
+  void StartWakeWordlessStreaming();
   void Update(BaseStationTime_t currTime_nanosec);
 
 #if ANKI_DEV_CHEATS

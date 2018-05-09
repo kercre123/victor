@@ -302,8 +302,12 @@ ActionResult SayTextAction::TransitionToPlaying()
 {
   LOG_DEBUG("SayTextAction::TransitionToPlaying", "ttsID %d is ready to play", _ttsID);
   _ttsState = TextToSpeechState::Playing;
-  _animAction = std::make_unique<TriggerAnimationAction>(_animTrigger, 1, false, _ignoreAnimTracks);
-  _animAction->SetRobot(&GetRobot());
+
+  if(AnimationTrigger::Count != _animTrigger){
+    _animAction = std::make_unique<TriggerAnimationAction>(_animTrigger, 1, false, _ignoreAnimTracks);
+    _animAction->SetRobot(&GetRobot());
+  }
+
   return ActionResult::RUNNING;
 }
 
@@ -348,17 +352,24 @@ ActionResult SayTextAction::CheckIfDone()
     case TextToSpeechState::Delivered:
     {
       // Audio has been sent to wwise, play animation (if any)
-      if (_animTrigger != AnimationTrigger::Count) {
-        result = TransitionToPlaying();
-      } else {
-        result = ActionResult::SUCCESS;
-      }
+      result = TransitionToPlaying();
       break;
     }
     case TextToSpeechState::Playing:
     {
-      // Wait for animation to complete
-      result = _animAction->Update();
+      if(AnimationTrigger::Count != _animTrigger){
+        // Wait for animation to complete
+        result = _animAction->Update();
+      } else {
+        // Don't exit the action until we hear back from the AudioEngine that the
+        // utterance has finished playing
+        result = ActionResult::RUNNING;
+      }
+      break;
+    }
+    case TextToSpeechState::Finished:
+    {
+      result = ActionResult::SUCCESS;
       break;
     }
   }

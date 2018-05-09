@@ -52,6 +52,7 @@ namespace {
 
 #endif
   CONSOLE_VAR_RANGED(u32, kMicData_ClipRecordTime_ms, CONSOLE_GROUP, 4000, 500, 15000);
+  CONSOLE_VAR(bool, kMicData_SaveRawFullIntent_Wakewordless, CONSOLE_GROUP, false);
 # undef CONSOLE_GROUP
 
 }
@@ -126,6 +127,37 @@ void MicDataSystem::RecordRawAudio(uint32_t duration_ms, const std::string& path
 void MicDataSystem::RecordProcessedAudio(uint32_t duration_ms, const std::string& path)
 {
   RecordAudioInternal(duration_ms, path, MicDataType::Processed, false);
+}
+
+void MicDataSystem::StartWakeWordlessStreaming()
+{
+  if(HasStreamingJob())
+  {
+    PRINT_NAMED_WARNING("micDataProcessor.OverlappingStreamRequests",
+                        "Received StartWakeWorldlessStreaming message from engine, but micDataSystem is already streaming");
+    return;
+  }
+
+  MicDataInfo* newJob = new MicDataInfo{};
+  newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});
+  newJob->_writeNameBase = ""; //use autogen names
+  newJob->_numMaxFiles = 100;
+  bool saveToFile = false;
+#if ANKI_DEV_CHEATS
+  saveToFile = true;
+  if(kMicData_SaveRawFullIntent_Wakewordless){
+    newJob->EnableDataCollect(MicDataType::Raw, true);
+  }
+  newJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, this, std::placeholders::_1);
+#endif
+  newJob->EnableDataCollect(MicDataType::Processed, saveToFile);
+  newJob->SetTimeToRecord(MicDataInfo::kMaxRecordTime_ms);
+
+  const bool isStreamingJob = true;
+  AddMicDataJob(std::shared_ptr<MicDataInfo>(newJob), isStreamingJob);
+
+  PRINT_NAMED_INFO("MicDataSystem.StartStreaming",
+                   "Starting Wake Wordless streaming");
 }
 
 void MicDataSystem::RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT)

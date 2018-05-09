@@ -354,6 +354,16 @@ void Process_startRecordingMicsProcessed(const Anki::Cozmo::RobotInterface::Star
                                                   msg.path_length));
 }
 
+void Process_startWakeWordlessStreaming(const Anki::Cozmo::RobotInterface::StartWakeWordlessStreaming& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if(micDataSystem == nullptr){
+    return;
+  }
+
+  micDataSystem->StartWakeWordlessStreaming();
+}
+
 void Process_playbackAudioStart(const Anki::Cozmo::RobotInterface::StartPlaybackAudio& msg)
 {
   using namespace Audio;

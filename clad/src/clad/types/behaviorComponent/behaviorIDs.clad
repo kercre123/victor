@@ -26,6 +26,7 @@ enum uint_8 BehaviorID {
   DevPlannerTest,
   DevTouchDataCollection,
   DevTurnInPlaceTest,
+  DevTestPromptUser,
   DockingTestSimple,
   FactoryCentroidExtractor,
   LiftLoadTest,

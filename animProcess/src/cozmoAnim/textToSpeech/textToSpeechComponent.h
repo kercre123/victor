@@ -185,7 +185,10 @@ private:
   // Audio helpers
   void SetAudioProcessingStyle(SayTextVoiceStyle style);
   void SetAudioProcessingPitch(float pitchScalar);
-  void PostAudioEvent(AudioEngine::AudioEventId eventId);
+  void PostAudioEvent(AudioEngine::AudioEventId eventId, uint8_t ttsID);
+
+  // AudioEngine Callbacks
+  void OnUtteranceCompleted(uint8_t ttsID) const;
 
 }; // class TextToSpeechComponent
 
