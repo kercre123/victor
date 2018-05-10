@@ -170,3 +170,7 @@ Short name|Long name              |N/A|Description
           |--profile_from_launch  |X  |Profile an activity from initial launch. It should be used with -p, -a, and --arch options.
 -r        |--record_options       |   |Set options for `simpleperf record` command. See also [annotated-profiler-events.md](annotated-profiler-events.md)
 -t        |--test                 |X  |When profiling an Android app, start an instrumentation test before profiling. It restarts the app if the app is already running.
+
+# Anki Profiling
+
+`#define ANKI_EMBEDDED_BENCHMARKS` to enable benchmarking within the Vision component.
