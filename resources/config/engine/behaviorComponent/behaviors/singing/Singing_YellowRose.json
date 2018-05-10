@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_YellowRose",
-  "displayNameKey":"behavior.singing.YellowRose",
-  "requiredUnlockId":"Singing_YellowRose",
-  "audioSwitchGroup":"Cozmo_Sings_100Bpm",
-  "audioSwitch":"Cozmo_Sings_Yellow_Rose"
-}

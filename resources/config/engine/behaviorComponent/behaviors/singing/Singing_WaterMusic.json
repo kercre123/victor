@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_WaterMusic",
-  "displayNameKey":"behavior.singing.WaterMusic",
-  "requiredUnlockId":"Singing_WaterMusic",
-  "audioSwitchGroup":"Cozmo_Sings_80Bpm",
-  "audioSwitch":"Cozmo_Sings_Water_Music"
-}

@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_VivaldiSpring",
-  "displayNameKey":"behavior.singing.VivaldiSpring",
-  "requiredUnlockId":"Singing_VivaldiSpring",
-  "audioSwitchGroup":"Cozmo_Sings_80Bpm",
-  "audioSwitch":"Cozmo_Sings_Vivaldi_Spring"
-}

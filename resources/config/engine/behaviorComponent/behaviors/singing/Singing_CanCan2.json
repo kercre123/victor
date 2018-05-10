@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_CanCan2",
-  "displayNameKey":"behavior.singing.CanCan2",
-  "requiredUnlockId":"Singing_CanCan2",
-  "audioSwitchGroup":"Cozmo_Sings_100Bpm",
-  "audioSwitch":"Cozmo_Sings_Can_Can_2"
-}

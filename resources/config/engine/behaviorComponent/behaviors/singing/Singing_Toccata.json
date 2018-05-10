@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_Toccata",
-  "displayNameKey":"behavior.singing.Toccata",
-  "requiredUnlockId":"Singing_Toccata",
-  "audioSwitchGroup":"Cozmo_Sings_120Bpm",
-  "audioSwitch":"Cozmo_Sings_Toccata"
-}

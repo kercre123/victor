@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_MountainKing",
-  "displayNameKey":"behavior.singing.MountainKing",
-  "requiredUnlockId":"Singing_MountainKing",
-  "audioSwitchGroup":"Cozmo_Sings_100Bpm",
-  "audioSwitch":"Cozmo_Sings_Mountain_King"
-}

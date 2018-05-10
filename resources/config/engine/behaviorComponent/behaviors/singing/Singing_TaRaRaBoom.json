@@ -1,8 +1,0 @@
-{
-  "behaviorClass":"Singing",
-  "behaviorID":"Singing_TaRaRaBoom",
-  "displayNameKey":"behavior.singing.TaRaRaBoom",
-  "requiredUnlockId":"Singing_TaRaRaBoom",
-  "audioSwitchGroup":"Cozmo_Sings_100Bpm",
-  "audioSwitch":"Cozmo_Sings_Ta_Ra_Ra_Boom"
-}
