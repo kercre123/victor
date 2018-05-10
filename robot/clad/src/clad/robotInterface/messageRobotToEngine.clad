@@ -48,7 +48,8 @@ message MicDirection
   uint_16   selectedDirection,
   int_16    selectedConfidence,
   float_32  confidenceList[13],
-  int_32  activeState,
+  int_32    activeState,
+  float_32  latestPowerValue,
 }
 
 // This message indicates that the robot experienced a freefall event

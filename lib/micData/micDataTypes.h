@@ -50,12 +50,13 @@ namespace MicData {
 
   struct MicDirectionData
   {
-    int                   activeState = 0;
     DirectionIndex        winningDirection = 0;
     DirectionConfidence   winningConfidence = 0;
     DirectionIndex        selectedDirection = 0;
     DirectionConfidence   selectedConfidence = 0;
     DirectionConfidences  confidenceList{};
+    int                   activeState = 0;
+    float                 latestPowerValue = 0.f;
   };
 } // namespace MicData
 } // namespace Cozmo
