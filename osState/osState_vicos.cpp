@@ -21,6 +21,8 @@
 
 #include "cutils/properties.h"
 
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
 // For getting our ip address
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -32,6 +34,7 @@
 
 #include <fstream>
 #include <array>
+#include <iomanip>
 #include <stdlib.h>
 
 #ifdef SIMULATOR
@@ -92,6 +95,10 @@ std::string GetProperty(const std::string& key)
 
 OSState::OSState()
 {
+  // Suppress unused function error for WriteEMR
+  (void)static_cast<void(*)(size_t, void*, size_t)>(Factory::WriteEMR);
+  (void)static_cast<void(*)(size_t, uint32_t)>(Factory::WriteEMR);
+  
   // Get nominal CPU frequency for this robot
   _tempFile.open(kNominalCPUFreqFile, std::ifstream::in);
   if(_tempFile.is_open()) {
@@ -252,22 +259,14 @@ const std::string& OSState::GetSerialNumberAsString()
 {
   if(_serialNumString.empty())
   {
-    std::ifstream infile("/proc/cmdline");
-
-    std::string line;
-    while(std::getline(infile, line))
-    {
-      static const std::string kProp = "androidboot.serialno=";
-      size_t index = line.find(kProp);
-      if(index != std::string::npos)
-      {
-        _serialNumString = line.substr(index + kProp.length(), 8);
-      }
-    }
-
-    infile.close();
+    std::stringstream ss;
+    ss << std::hex 
+       << std::setfill('0') 
+       << std::setw(8) 
+       << std::uppercase
+       << Factory::GetEMR()->fields.ESN;
+    _serialNumString = ss.str();
   }
-
   return _serialNumString;
 }
 

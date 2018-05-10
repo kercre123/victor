@@ -996,17 +996,10 @@ void FaceInfoScreenManager::Update(const RobotState& state)
 
 void FaceInfoScreenManager::DrawMain()
 {
-  std::stringstream ss;
+  auto *osstate = OSState::getInstance();
 
-  if(Factory::GetEMR()->fields.ESN != 0)
-  {
-    ss << std::hex
-       << std::setfill('0')
-       << std::setw(8)
-       << std::uppercase
-       << Factory::GetEMR()->fields.ESN;
-  }
-  else
+  std::string esn = osstate->GetSerialNumberAsString();
+  if(esn.empty())
   {
     // TODO Remove once DVT2s are phased out
     // ESN is 0 assume this is a DVT2 with a fake birthcertificate
@@ -1028,12 +1021,11 @@ void FaceInfoScreenManager::DrawMain()
       }
       infile.close();
     }
-    ss << serialNum;
+    esn =  serialNum;
   }
 
-  const std::string serialNo = "ESN: "  + ss.str();
+  const std::string serialNo = "ESN: "  + esn;
 
-  auto *osstate = OSState::getInstance();
   const std::string osVer    = "OS: "   + osstate->GetOSBuildVersion() +
                                           (FACTORY_TEST ? " (V4)" : "") +
                                           (osstate->IsInRecoveryMode() ? " U" : "");
