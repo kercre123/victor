@@ -51,15 +51,14 @@ void TestHeadCleanup(void)
   DUT_CS::init(MODE_INPUT, PULL_NONE);
 }
 
-void TestHeadDutProgram(void)
+void TestHeadForceBoot(void)
 {
-  const int timeout_s = 210 + 90; //XXX: DVT3 from LE helper clocked in at ~210s. Add some margin.
-  char b[40]; int bz = sizeof(b);
-  
   //Power cycle to reset DUT head
   Board::powerOff(PWR_VEXT);
   Board::powerOff(PWR_VBAT);
   Timer::delayMs(1000);
+  
+  ConsolePrintf("Force USB Boot\n");
   
   //FORCE_USB signal at POR preps for OS bootload
   DUT_CS::reset();
@@ -85,6 +84,12 @@ void TestHeadDutProgram(void)
         ConsolePrintf("%us\n", timeout_s);
     }
   }
+}
+
+void TestHeadDutProgram(void)
+{
+  const int timeout_s = 90 + 60; //XXX: DVT4-RC clocked in at ~87s. Add some margin.
+  char b[40]; int bz = sizeof(b);
   
   //provision ESN
   headnfo.esn = g_fixmode == FIXMODE_HELPER1 ? 0 : fixtureGetSerial();
@@ -107,6 +112,7 @@ static void HeadFlexFlowReport(void)
 TestFunction* TestHead1GetTests(void)
 {
   static TestFunction m_tests[] = {
+    TestHeadForceBoot,
     TestHeadDutProgram,
     HeadFlexFlowReport,
     NULL,
@@ -117,13 +123,7 @@ TestFunction* TestHelper1GetTests(void) {
   return TestHead1GetTests();
 }
 
-TestFunction* TestHead2GetTests(void)
-{
-  static TestFunction m_tests[] = {
-    TestHeadDutProgram,
-    HeadFlexFlowReport,
-    NULL,
-  };
-  return m_tests;
+TestFunction* TestHead2GetTests(void) {
+  return TestHead1GetTests();
 }
 
