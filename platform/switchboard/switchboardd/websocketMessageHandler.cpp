@@ -249,6 +249,28 @@ void WebsocketMessageHandler::HandleMovementAction(Anki::Cozmo::ExternalComms::M
   }
 }
 
+void WebsocketMessageHandler::HandleVictorDisplay_SetBackpackLEDs(Anki::Cozmo::ExternalComms::SetBackpackLEDs sdkMessage) {
+      Anki::Cozmo::ExternalInterface::SetBackpackLEDs engineMessage;
+      engineMessage.onColor = sdkMessage.onColor;
+      engineMessage.offColor = sdkMessage.offColor;
+      engineMessage.onPeriod_ms = sdkMessage.onPeriod_ms;
+      engineMessage.offPeriod_ms = sdkMessage.offPeriod_ms;
+      engineMessage.transitionOnPeriod_ms = sdkMessage.transitionOnPeriod_ms;
+      engineMessage.transitionOffPeriod_ms = sdkMessage.transitionOffPeriod_ms;
+      engineMessage.offset = sdkMessage.offset;
+      _engineMessaging->SendMessage(G2EMessage::CreateSetBackpackLEDs(std::move(engineMessage)));
+}
+
+void WebsocketMessageHandler::HandleVictorDisplay(Anki::Cozmo::ExternalComms::VictorDisplay unionInstance) {
+  switch(unionInstance.GetTag()) {
+    case Anki::Cozmo::ExternalComms::VictorDisplayTag::SetBackpackLEDs:
+      HandleVictorDisplay_SetBackpackLEDs( unionInstance.Get_SetBackpackLEDs() );
+      break;
+    default:
+      return;
+  }
+}
+
 void WebsocketMessageHandler::Receive(uint8_t* buffer, size_t size) {
   if(size < 1) {
     return;
@@ -272,8 +294,11 @@ void WebsocketMessageHandler::Receive(uint8_t* buffer, size_t size) {
        HandleMovementAction(extComms.Get_MovementAction());
        break;
     case ExtCommsMessageTag::MeetVictor:
-      HandleMeetVictor(extComms.Get_MeetVictor());
-      break;
+       HandleMeetVictor(extComms.Get_MeetVictor());
+       break;
+    case ExtCommsMessageTag::VictorDisplay:
+       HandleVictorDisplay(extComms.Get_VictorDisplay());
+       break;
     default:
       Log::Write("Unhandled external comms message tag: %d", extComms.GetTag());
       return;

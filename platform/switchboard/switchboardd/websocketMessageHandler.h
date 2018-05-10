@@ -64,6 +64,9 @@ private:
   void HandleMeetVictor_EraseAllEnrolledFaces(Anki::Cozmo::ExternalComms::EraseAllEnrolledFaces sdkMessage);
   void HandleMeetVictor_SetFaceToEnroll(Anki::Cozmo::ExternalComms::SetFaceToEnroll sdkMessage);
 
+  void HandleVictorDisplay(Anki::Cozmo::ExternalComms::VictorDisplay unionInstance);
+  void HandleVictorDisplay_SetBackpackLEDs(Anki::Cozmo::ExternalComms::SetBackpackLEDs sdkMessage);
+
   Anki::Cozmo::ExternalComms::ExternalComms SendMeetVictorStarted(const Anki::Cozmo::ExternalInterface::MeetVictorStarted& msg);
   Anki::Cozmo::ExternalComms::ExternalComms SendMeetVictorFaceScanStarted(const Anki::Cozmo::ExternalInterface::MeetVictorFaceScanStarted& msg);
   Anki::Cozmo::ExternalComms::ExternalComms SendMeetVictorFaceScanComplete(const Anki::Cozmo::ExternalInterface::MeetVictorFaceScanComplete& msg);
