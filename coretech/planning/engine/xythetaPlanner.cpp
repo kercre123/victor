@@ -12,6 +12,7 @@
 
 #include "coretech/planning/engine/xythetaPlanner.h"
 #include "coretech/planning/engine/xythetaPlannerContext.h"
+#include "coretech/common/engine/math/point_impl.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/boundedWhile.h"
 #include "util/helpers/templateHelpers.h"
@@ -35,6 +36,12 @@ namespace Planning {
 // When doing the soft obstacle goal heuristic expansion, keep expanding until this many states "escape" the
 // penalty zone
 #define COLLISION_GOAL_HEURISTIC_NUM_ESCAPES 1
+  
+// temporary toggle to compare A* implementations - remove soon
+#define USE_NEW_SEARCH 1
+
+// Extra metric tracking if we want to print debugger stats, at the cost of extra operations internal to the loop
+#define PRINT_DEBUG_PLANNER_STATS 0
   
 xythetaPlanner::xythetaPlanner(const xythetaPlannerContext& context)
 {
@@ -76,7 +83,8 @@ bool xythetaPlanner::Replan(unsigned int maxExpansions, volatile bool* runPlan)
   using namespace std::chrono;
 
   high_resolution_clock::time_point start = high_resolution_clock::now();
-  bool ret = _impl->ComputePath(maxExpansions, runPlan);
+  bool ret = (USE_NEW_SEARCH) ? _impl->AStar(maxExpansions, runPlan)
+                              : _impl->ComputePath(maxExpansions, runPlan);
   high_resolution_clock::time_point end = high_resolution_clock::now();
 
   duration<double> time_d = duration_cast<duration<double>>(end - start);
@@ -763,6 +771,238 @@ void xythetaPlannerImpl::BuildPlan()
   _plan.start_ = _start;
 
   PRINT_NAMED_INFO("xythetaPlanner.BuildPlan", "Created plan of length %lu", (unsigned long)_plan.Size());
+}
+
+bool xythetaPlannerImpl::AStar(unsigned int maxExpansions, volatile bool* runPlan)
+{
+  _runPlan = runPlan;
+
+  bool fromScratch = _context.forceReplanFromScratch;
+
+  // handle context
+  GoalStateIDPairs newGoalIDs;
+  if( ! CheckContextGoals( newGoalIDs, _goals_c ) ) {
+    // all goals invalid
+    return false;
+  }
+
+  if( newGoalIDs != _goalStateIDs ) {
+    _goalsChanged = true;
+    _goalStateIDs = newGoalIDs;
+    
+    // invert the map for seeing if a popped state is a goal
+    _goalState2GoalID.clear();
+    _goalState2GoalID.reserve(newGoalIDs.size());
+    for(const auto& goalPair : newGoalIDs) {
+      _goalState2GoalID[goalPair.second] = goalPair.first;
+    }
+
+    // for now, replan if any goals change, but this isn't necessary. Instead, we could just re-order the open
+    // list and continue as usual
+    fromScratch = true;
+  }
+  assert(!_goalStateIDs.empty());
+  
+
+  GraphState newStart;
+  if( ! CheckContextStart( newStart ) ) {
+    // invalid start
+    return false;
+  }
+
+  StateID newStartID = newStart.GetStateID();
+  if( newStartID != _startID ) {
+    // start has changed, so current expansions are invalid
+    fromScratch = true;
+    _start = newStart;
+    _startID = newStartID;
+  }
+
+  if(fromScratch || NeedsReplan()) {
+    Reset_New();
+  }
+  else {
+    PRINT_NAMED_INFO("xythetaPlanner.ComputePath.NoReplan", "No replan needed");
+    return true;
+  }
+
+  // push starting state
+  _open2.emplace(_start.GetStateID());
+
+  bool foundGoal = false;
+  ClosedState testState;
+  u32 remainingExpansions = maxExpansions;
+
+  // search loop
+  while( !foundGoal && !_open2.empty() && !(_runPlan && !*_runPlan) && remainingExpansions )  {
+    testState = _open2.pop();
+    foundGoal = IsGoalState(testState);
+
+    // if the insert was successful, expand
+    const auto& it = _closed.emplace( std::move(testState) );
+    if ( it.second ) {
+      ExpandState_New( *(it.first) );
+      --remainingExpansions;
+    } 
+  }
+  _expansions = maxExpansions - remainingExpansions;
+
+  // A* finished, so build the plan if a goal was found
+  if(foundGoal) {
+    BuildPlan_New(testState);
+
+    PRINT_NAMED_INFO("xythetaPlanner.ExpandGoal", "expanded goal %d at state %u! cost = %f", 
+                     (int)_chosenGoalID, (u32)_chosenGoalStateID, _finalCost);
+    PRINT_NAMED_INFO("xythetaPlanner.CompleteA*", "finished after %d expansions. foundGoal = %d, open size = %zu",
+                     _expansions, foundGoal, _open2.size());
+  } else {    
+    if(_expansions > maxExpansions) {
+      PRINT_NAMED_WARNING("xythetaPlanner.ExceededMaxExpansions", "exceeded max expansions of %u, stopping", maxExpansions);
+    } else {
+      PRINT_NAMED_INFO("xythetaPlanner.NoPlanFound", "");
+    }
+  }
+
+  // accumulate expanded states if we need to for debug
+  if(PLANNER_DEBUG_PLOT_STATES_CONSIDERED) {
+    _debugExpPlotFile = fopen("expanded.txt", "w");
+
+    for (const auto& state : _closed) {
+      State_c c = _context.env.State2State_c(GraphState(state.curr));
+      fprintf(_debugExpPlotFile, "%f %f %f %d\n", c.x_mm, c.y_mm, c.theta, testState.curr.s.theta);
+    }
+
+    fclose(_debugExpPlotFile);
+  }
+
+  return foundGoal;
+}
+
+namespace {
+  const float kDiagScale = std::sqrt(2)-1.f;
+}
+
+// NOTE: this is technically not an admissable heuristic, could result in slightly suboptimal paths if we care
+inline Cost xythetaPlannerImpl::heur_octile(GraphState s) {
+  Cost minCost = FLT_MAX;
+  size_t len = _goals_c.size();
+  for(size_t i=0; i<len; ++i) {
+    const auto& goal = _goals_c[i].second;
+    Point2f d = (s.GetPointXY_mm() - goal.GetPointXY_mm()).Abs();
+    Cost h = (std::fmax(d.x(), d.y()) + kDiagScale * std::fmin(d.x(), d.y())) * _context.env.GetActionSpace().GetOneOverMaxVelocity();
+
+    if (h < minCost) { minCost = h; }
+  }
+
+  return minCost;
+}
+
+inline void xythetaPlannerImpl::ExpandState_New(const PlannerState& currState)
+{ 
+  SuccessorIterator it = SuccessorIterator(&_context.env, currState.curr, currState.g, false);
+  it.Next( _context.env );
+
+  // for all possible actions
+  while(!it.Done( _context.env )) {
+    #if PRINT_DEBUG_PLANNER_STATS
+      ++_considerations;
+    #endif
+
+    // if successor has been expanded, don't insert. This saves us some extra heap inserts and memory.
+    if ( IsClosedState(it.Front().stateID) ) {
+      it.Next( _context.env );
+      continue;
+    }
+
+    float newG = it.Front().g;
+
+    // ignore new action cost if turning in place at the end
+    // (MRW) alternatively, if we are allowing free turn in place at the end, we can have the goal check conditionally
+    //       exclude  theta, rather than check all the goals here. We just need to add a point turn at the end of searching
+    if(_context.allowFreeTurnInPlaceAtGoal) {
+      for(const auto& goalPair : _goalStateIDs) {
+        if ((currState.curr.s.x == goalPair.second.s.x) && (currState.curr.s.y == goalPair.second.s.y)) {
+          newG = currState.g;
+          break;
+        }
+      }
+    }
+
+    // (MRW) consider normalizing the cost here from an exact time to traverse, to some linear scale of this. 
+    // if we consider a scale by Max Velocity, we can remove a multiplacation here, and exact soft obstacle penalties
+    // and reverse penelaties will still have the same compute cost. The problem is just that the cost is less
+    // intuitively obvious. We could even provide a helper method to convert planner cost to traversal time to help
+    // with debugging/human reading
+
+    // convert heuristic which is a distance to a time-to-traverse cost
+    _open2.emplace( 
+      it.Front().stateID,
+      currState.curr,
+      it.Front().actionID,
+      it.Front().penalty,
+      newG,
+      heur_octile(it.Front().stateID)
+    ); 
+    it.Next( _context.env );
+  }
+
+  #if PRINT_DEBUG_PLANNER_STATS
+    if( ((_expansions>>13) & 1) == 1 ) { // every 8k iterations
+      PRINT_NAMED_INFO("xythetaPlanner.PLANDEBUG", "%8d expansions, cost top: %8.5f", _expansions, _open2.top().g);
+    }
+  #endif
+}
+
+inline bool xythetaPlannerImpl::IsGoalState(const PlannerState& candidate)
+{
+  return ( _goalState2GoalID.find(candidate.curr) != _goalState2GoalID.end() );
+}
+
+inline bool xythetaPlannerImpl::IsClosedState(StateID state)
+{
+  return ( _closed.find(ClosedState(state)) != _closed.end() );
+}
+
+void xythetaPlannerImpl::BuildPlan_New(const PlannerState& goal)
+{  
+  auto it = _goalState2GoalID.find(goal.curr);
+  assert( it != _goalState2GoalID.end() );  // this should only have been called if goal was found.
+
+  _chosenGoalID = it->second;
+  _chosenGoalStateID = goal.curr;
+  _finalCost = goal.g;
+
+  // build plan backwards
+  StateID curr = goal.curr;
+  BOUNDED_WHILE(1000, !(curr == _startID)) {
+    auto it = _closed.find(ClosedState(curr));
+    assert(it != _closed.end());
+
+    _plan.Push(it->action, it->penalty);
+    curr = it->prev;
+  }  
+  _plan.Reverse();
+  _plan.start_ = _start;
+
+  PRINT_NAMED_INFO("xythetaPlanner.BuildPlan", "Created plan of length %zu", _plan.Size());
+}
+
+
+void xythetaPlannerImpl::Reset_New()
+{
+  _plan.Clear();
+
+  // TODO:(bn) shouln't need to clear these if I use searchNum_ properly
+  _closed.clear();
+  _open2.clear();
+
+  _expansions = 0;
+  _considerations = 0;
+  _collisionChecks = 0;
+
+  _goalsChanged = false;
+
+  _finalCost = 0.0f;
 }
 
 void xythetaPlannerImpl::GetTestPlan(xythetaPlan& plan)
