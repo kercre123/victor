@@ -893,7 +893,6 @@ EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = */_build/* \
                          */EXTERNALS/* \
                          */generated/* \
-                         */cloud/* \
                          */lib/audio/* \
                          */robot/* \
                          */apps/xamarin/* \
@@ -904,7 +903,6 @@ EXCLUDE_PATTERNS       = */_build/* \
                          */lib/crash-reporting-android/* \
                          */lib/crash-reporting-vicos/* \
                          */lib/das-client/testing/* \
-                         */platform/* \
                          */lib/HockeySDK-iOS/* \
                          */lib/util/libs/framework/gtest-linux/* \
                          */project/build-scripts/* \
@@ -913,8 +911,38 @@ EXCLUDE_PATTERNS       = */_build/* \
                          */lib/util/libs/framework/gtest.framework/* \
                          */test/* \
                          */simulator/* \
-                         */webServerProcess/* \
-                         */tools/*
+                         */tools/android/* \
+                         */tools/arduino_led/* \
+                         */tools/audio/* \
+                         */tools/battery_logging/* \
+                         */tools/birther/* \
+                         */tools/brokenLinkCheck/* \
+                         */tools/build/* \
+                         */tools/camera-test/* \
+                         */tools/captureImages/* \
+                         */tools/config/* \
+                         */tools/controller_tuning/* \
+                         */tools/cozmo-ble-ios/* \
+                         */tools/debug/* \
+                         */tools/emacs/* \
+                         */tools/gyp/* \
+                         */tools/imuDataTools/* \
+                         */tools/json/* \
+                         */tools/message-buffers/* \
+                         */tools/modulate_led/* \
+                         */tools/purgeDuplicateFaceFrames/* \
+                         */tools/puzzles/* \
+                         */tools/recognizeFaces/* \
+                         */tools/rsync/* \
+                         */tools/scratch/* \
+                         */tools/sdk/* \
+                         */tools/sdk_devonly/* \
+                         */tools/showVoxels/* \
+                         */tools/smartling/* \
+                         */tools/squawkbox/* \
+                         */tools/turnInPlaceTests/* \
+                         */tools/versionGenerator/* \
+                         */tools/victor-ble-cli/*
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names
 # (namespaces, classes, functions, etc.) that should be excluded from the
