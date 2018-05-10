@@ -331,7 +331,7 @@ uint32_t cccGmr(uint8_t idx) {
 //                  Spine HAL
 //-----------------------------------------------------------------------------
 
-#define SPINE_HAL_DEBUG_RX         1
+#define SPINE_HAL_DEBUG_RX         0
 #define SPINE_HAL_DEBUG_RX_VERBOSE 0
 #define SPINE_HAL_DEBUG_TX         0
 #define SPINE_HAL_DEBUG_TX_VERBOSE 0
@@ -596,6 +596,18 @@ spinePacket_t* halSpineReceive(int timeout_us)
   return &rxPacket;
 }
 
+//get packet, filtering for given type
+spinePacket_t* halSpineReceive(int timeout_us, PayloadId type)
+{
+  uint32_t Tstart = Timer::get();
+  while( timeout_us < 1 || Timer::elapsedUs(Tstart) < timeout_us ) {
+    spinePacket_t *pkt = halSpineReceive(timeout_us);
+    if( pkt != NULL && pkt->header.payload_type == type )
+      return pkt;
+  }
+  throw ERROR_SPINE_PKT_TIMEOUT; //return NULL;
+}
+
 HeadToBody* halSpineH2BFrame(PowerState powerState, int16_t *p4motorPower, uint8_t *p12ledColors)
 {
   static uint32_t m_framecounter = 0;
@@ -604,7 +616,7 @@ HeadToBody* halSpineH2BFrame(PowerState powerState, int16_t *p4motorPower, uint8
   memset(&h2b, 0, sizeof(h2b));
   h2b.framecounter = ++m_framecounter;
   h2b.powerState = powerState;
-  if( p4motorPower != NULL ) memcpy( h2b.motorPower, p4motorPower, 4*sizeof(int16_t) );
+  if( p4motorPower != NULL ) memcpy( (void*)h2b.motorPower, (void*)p4motorPower, 4*sizeof(int16_t) );
   if( p12ledColors != NULL ) memcpy( h2b.ledColors, p12ledColors, 12 );
   
   return &h2b;
@@ -614,7 +626,8 @@ HeadToBody* halSpineH2BFrame(PowerState powerState, int16_t *p4motorPower, uint8
 //                  Target: Spine
 //-----------------------------------------------------------------------------
 
-#define SPINE_DEBUG  0
+#define SPINE_DEBUG         0
+#define SPINE_DEBUG_MOTORS  1
 
 //verify body version structs are equivalent
 STATIC_ASSERT( sizeof(robot_bsv_t) == sizeof(VersionInfo), version_struct_size_match_check );
@@ -638,21 +651,13 @@ robot_bsv_t* spineBsv(void)
   halSpineRxFlush();
   halSpineSend(NULL, PAYLOAD_VERSION);
   
-  //Poll for version response
-  uint32_t Tstart = Timer::get();
-  while( Timer::elapsedUs(Tstart) < 100000 )
-  {
-    spinePacket_t* pkt = halSpineReceive(15000);
-    if( pkt != NULL && pkt->header.payload_type == PAYLOAD_VERSION )
-    {
-      memcpy( &m_bsv, (VersionInfo*)&pkt->payload, sizeof(robot_bsv_t) );
-      
-      #if SPINE_DEBUG > 0
+  //read version response
+  spinePacket_t* pkt = halSpineReceive(25000, PAYLOAD_VERSION);
+  if( pkt != NULL ) {
+    memcpy( &m_bsv, (VersionInfo*)&pkt->payload, sizeof(robot_bsv_t) );
+    if( SPINE_DEBUG )
       rcomPrintBsv(&m_bsv);
-      #endif
-      
-      return &m_bsv;
-    }
+    return &m_bsv;
   }
   
   #if SPINE_DEBUG > 0
@@ -688,23 +693,13 @@ void spineLed(uint8_t *leds12, int printlvl)
     ConsolePrintf("<spine leds %i\n", 0);
 }
 
-static inline void spine_set_motors_(int8_t treadL, int8_t treadR, int8_t lift, int8_t head) {
-  int16_t motPower[MOTOR_COUNT]; 
-    motPower[MOTOR_LEFT]  = treadL;
-    motPower[MOTOR_RIGHT] = treadR;
-    motPower[MOTOR_LIFT]  = lift;
-    motPower[MOTOR_HEAD]  = head;
-  HeadToBody* frame = halSpineH2BFrame(POWER_STATE_ON, motPower, 0);
-  halSpineSend((uint8_t*)frame, PAYLOAD_DATA_FRAME);
-}
-
 static inline void spine_get_sr_(robot_sr_t* out_sr, uint8_t sensor)
 {
   static int32_t lastpos[4] = {0,0,0,0};
   static int debug_sensor_cnt = 1000;
   
-  spinePacket_t* pkt = halSpineReceive(15000);
-  if( pkt != NULL && pkt->header.payload_type == PAYLOAD_DATA_FRAME )
+  spinePacket_t* pkt = halSpineReceive(15000, PAYLOAD_DATA_FRAME);
+  if( pkt != NULL )
   {
     BodyToHead *b2h = (BodyToHead*)&pkt->payload;
     switch(sensor)
@@ -782,14 +777,26 @@ static robot_sr_t* spine_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8
   if( printlvl2cmdopts(printlvl) & CMD_OPTS_LOG_CMD )
     ConsolePrintf(">spine mot-get %02x %02x %02x %02x %02x %02x\n", NN, sensor, (uint8_t)treadL, (uint8_t)treadR, (uint8_t)lift, (uint8_t)head);
 
+  #if SPINE_DEBUG_MOTORS > 0
+  uint8_t leds[12] = { //show active motor/direction on the backpack leds
+    treadL<0?0xFF:0, treadL>0?0xFF:0, head<0?0xFF:0,  //LED0.RGB
+    treadR<0?0xFF:0, treadR>0?0xFF:0,             0,  //LED1.RGB
+      lift<0?0xFF:0,   lift>0?0xFF:0, head>0?0xFF:0,  //LED2.RGB
+                  0,               0,             0}; //LED3.RxB
+  #else
+  uint8_t *leds = 0;
+  #endif
+  
   halSpineRxFlush();
   for(int n=0; n<NN; n++)
   {
     //send H2B packets
-    spine_set_motors_(treadL,treadR,lift,head);
+    int16_t motPower[MOTOR_COUNT] = { treadL<<8, treadR<<8, lift<<8, head<<8 };
+    HeadToBody* frame = halSpineH2BFrame(POWER_STATE_ON, motPower, leds);
+    halSpineSend((uint8_t*)frame, PAYLOAD_DATA_FRAME, 0); //no tx throttle. let packet RX drive timing
     
     //read B2H packest (sensor vals)
-    robot_sr_t *psr = &((robot_sr_t*)srbuf)[n]; //(robot_sr_t*)&srbuf;
+    robot_sr_t *psr = &((robot_sr_t*)srbuf)[n];
     spine_get_sr_(psr, sensor); //parse out requested sensor data
     
     //log print sr values
@@ -799,6 +806,10 @@ static robot_sr_t* spine_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8
       ConsolePutChar('\n');
     }
   }
+  
+  #if SPINE_DEBUG_MOTORS > 0 //reset led states
+  halSpineSend((uint8_t*)halSpineH2BFrame(POWER_STATE_ON, 0, 0), PAYLOAD_DATA_FRAME);
+  #endif
   
   if( printlvl2cmdopts(printlvl) & CMD_OPTS_LOG_RSP )
     ConsolePrintf("<spine mot-get %i\n", 0);
