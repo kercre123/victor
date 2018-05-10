@@ -42,7 +42,7 @@ VICOSSRC="_build/vicos/Release"
 ANKI_TAR=anki.tar.gz
 MANIFEST=${BUILD}/manifest.ini
 MAN_SIG=${BUILD}/manifest.sha256
-: ${OTAKEY=resources/config/ota_test.key}
+: ${OTAKEY=project/victor/ota_test.key}
 
 GZIP_MODE=--best
 GZIP_WBITS=31
