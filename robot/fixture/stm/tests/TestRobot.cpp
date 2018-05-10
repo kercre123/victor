@@ -5,7 +5,6 @@
 #include "cmd.h"
 #include "console.h"
 #include "contacts.h"
-#include "dut_uart.h"
 #include "emrf.h"
 #include "flexflow.h"
 #include "meter.h"
@@ -288,17 +287,14 @@ bool TestRobotDetect(void)
 
 void TestRobotDetectSpine(void)
 {
-  rcomSetTarget(1); //rcom -> spine cable
-  
   //ROBOT1 connected to stump via spine cable. Check for power input.
-  //if( g_fixmode == FIXMODE_ROBOT1 )
-    detect_mv = Meter::getVoltageMv(PWR_DUTVDD,6);
-  //else
-  //  detect_mv = 0;
-  
+  detect_mv = Meter::getVoltageMv(PWR_DUTVDD,6);
   ConsolePrintf("spine voltage %imV\n", detect_mv);
-  if( detect_mv < 3000 || detect_mv > 5000 )
+  
+  if( detect_mv < 3100 || detect_mv > 5100 )
     throw ERROR_SPINE_POWER;
+  
+  rcomSetTarget(1); //rcom -> spine cable (init's DUT_UART)
 }
 
 void TestRobotCleanup(void)
@@ -314,8 +310,7 @@ void TestRobotCleanup(void)
   
   Board::powerOff(PWR_VBAT);
   //ConsolePrintf("----DBG: i=%imA\n", Meter::getCurrentMa(PWR_VEXT,4) );
-  DUT_UART::deinit(); //used by rcom/spine layers
-  rcomSetTarget(0); //charge contacts
+  rcomSetTarget(0); //reset rcom to charge contacts (de-init's spine layers)
 }
 
 void read_robot_info_(void)
@@ -363,13 +358,11 @@ static int robot_get_batt_mv(int *out_raw)
 //always run this first after detect, to get into comms mode
 void TestRobotInfo(void)
 {
-  Board::powerOn(PWR_VBAT); //XXX Debug: work on body pcba w/o battery
+  //Board::powerOn(PWR_VBAT); //XXX Debug: work on body pcba w/o battery
   ConsolePrintf("detect current avg %i mA\n", detect_ma);
   
-  ConsolePrintf("Resetting comms interface\n");
-  if( g_fixmode == FIXMODE_ROBOT1 ) {
-    DUT_UART::deinit(); //spine comms
-  } else {
+  if( g_fixmode > FIXMODE_ROBOT1 ) {
+    ConsolePrintf("Resetting comms interface\n");
     Board::powerOff(PWR_VEXT, 500); //turn power off to disable charging
     Contacts::setModeRx();
   }
@@ -386,20 +379,16 @@ void TestRobotInfo(void)
 //robot_sr_t get(uint8_t NN, uint8_t sensor
 void TestRobotSensors(void)
 {
-  //XXX struct copies don't seem to work correctly...
   robot_sr_t bat    = rcomGet(3, RCOM_SENSOR_BATTERY   )[1];
   robot_sr_t cliff  = rcomGet(3, RCOM_SENSOR_CLIFF     )[1];
   robot_sr_t prox   = rcomGet(3, RCOM_SENSOR_PROX_TOF  )[1];
   robot_sr_t btn    = rcomGet(3, RCOM_SENSOR_BTN_TOUCH )[1];
-  //robot_sr_t rssi   = rcomGet(3, RCOM_SENSOR_RSSI      )[1];
-  //robot_sr_t pktcnt = rcomGet(3, RCOM_SENSOR_RX_PKT    )[1];
   
   ConsolePrintf("Sensor Values:\n");
   ConsolePrintf("  battery = %i.%03iV\n", bat.bat.raw/1000, bat.bat.raw%1000);
   ConsolePrintf("  cliff = fL:%i fR:%i bR:%i bL:%i\n", cliff.cliff.fL, cliff.cliff.fR, cliff.cliff.bR, cliff.cliff.bL);
   ConsolePrintf("  prox = %imm sigRate:%i spad:%i ambientRate:%i\n", prox.prox.rangeMM, prox.prox.signalRate, prox.prox.spadCnt, prox.prox.ambientRate);
   ConsolePrintf("  btn = %i touch=%i\n", btn.btn.btn, btn.btn.touch);
-  //ConsolePrintf("  rf = %idBm %i packets\n", rssi.fccRssi.rssi, rssi.fccRx.pktCnt);
   
   //XXX: what should "good" sensor values look like?
   
@@ -494,7 +483,8 @@ void TestRobotTreads(void)
   TestRobotTreads_(127, 1500, 600);
   
   //anecdotal norms @ low power: (???)
-  TestRobotTreads_(75, 800, 400);
+  if( g_fixmode <= FIXMODE_ROBOT3 )
+    TestRobotTreads_(75, 800, 400);
 }
 
 typedef struct {
@@ -633,7 +623,7 @@ void EmrChecks(void)
 {
   //Make sure previous tests have passed
   if( g_fixmode == FIXMODE_ROBOT3 ) {
-    //XXX: ROBOT1,2,MIC_TEST etc results in EMR.fixture[?]
+    //no previous. first fixture with head attached
   }
   if( g_fixmode == FIXMODE_PACKOUT ) {
     uint32_t ppReady  = rcomGmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG) );
@@ -650,6 +640,7 @@ void EmrChecks(void)
     rcomSmr( EMR_FIELD_OFS(PLAYPEN_READY_FLAG), 0 );
   }
   if( g_fixmode == FIXMODE_PACKOUT ) {
+    //will throw error if Robit has been packed out
     rcomSmr( EMR_FIELD_OFS(PACKED_OUT_FLAG), 0 );
   }
 }
@@ -677,28 +668,60 @@ void RobotPowerDown(void)
 //                  Button
 //-----------------------------------------------------------------------------
 
-static void led_manage_(bool reset)
+static void led_manage_(int reset, int frame_period = 250*1000, int printlvl = RCOM_PRINT_LEVEL_NONE);
+static void led_manage_(int reset, int frame_period, int printlvl)
 {
   static const uint8_t leds[][12] = {
     {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, //off
     {0xFF,0x00,0x00,0xFF,0x00,0x00,0xFF,0x00,0x00,0x00,0x00,0x00}, //R.0,1,2
     {0x00,0xFF,0x00,0x00,0xFF,0x00,0x00,0xFF,0x00,0x00,0x00,0x00}, //G.0,1,2
     {0x00,0x00,0xFF,0x00,0x00,0xFF,0x00,0x00,0xFF,0x00,0x00,0x00}  //B.0,1,2
+    
+    /*/DEBUG: ROBOT1
+    ,
+    {0xFF,0x00,0x00,0xFF,0x00,0x00,0xFF,0x00,0x00,0x00,0x00,0x00}, //R.0,1,2
+    {0x00,0xFF,0x00,0x00,0xFF,0x00,0x00,0xFF,0x00,0x00,0x00,0x00}, //G.0,1,2
+    {0x00,0x00,0xFF,0x00,0x00,0xFF,0x00,0x00,0xFF,0x00,0x00,0x00},  //B.0,1,2
+    {0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+    {0x00,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+    {0x00,0x00,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+    {0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+    {0x00,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00},
+    {0x00,0x00,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0x00,0x00,0x00},
+    {0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0x00,0x00},
+    {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0x00,0x00,0x00,0x00},
+    {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xFF,0x00,0x00,0x00} //-*/
   };
   const int led_frame_count = sizeof(leds)/12;
-  const int printlvl = RCOM_PRINT_LEVEL_NONE; //RCOM_PRINT_LEVEL_CMD;
+  static uint32_t Tframe=0, idx=0, last_idx=0;
   
-  static int Tframe = 0, idx = 0;
-  if( reset ) {
-    rcomLed( (uint8_t*)leds[0], printlvl );
-    Tframe = 0;
-    idx = 0;
+  if( reset & 1 ) {
+    for(int x=0; x < (g_fixmode==FIXMODE_ROBOT1 ? 10 : 1); x++)
+      rcomLed( (uint8_t*)leds[0], printlvl );
+    Tframe=0, idx=0, last_idx=0;
+    return;
   }
-  else if( !Tframe || Timer::elapsedUs(Tframe) > 250*1000 ) {
+  
+  if( !Tframe || Timer::elapsedUs(Tframe) > frame_period ) {
     Tframe = Timer::get();
     idx = idx+1 >= led_frame_count ? 1 : idx+1;
-    rcomLed( (uint8_t*)leds[idx], printlvl );
   }
+  
+  if( idx != last_idx ) //new frame
+    rcomLed( (uint8_t*)leds[idx], printlvl );
+  else if( g_fixmode == FIXMODE_ROBOT1 ) //spine requires packet spamming
+    rcomLed( (uint8_t*)leds[idx], RCOM_PRINT_LEVEL_NONE );
+  
+  last_idx = idx;
+}
+
+void DEBUG_TestRobotLeds(void) {
+  //const int framerate = 250*1000; const int testtime = 10*1000*1000;
+  const int framerate = 1000*1000; const int testtime = 20*1000*1000;
+  uint32_t Tstart = Timer::get();
+  led_manage_(1, framerate, RCOM_PRINT_LEVEL_CMD);
+  while( Timer::elapsedUs(Tstart) < testtime ) { led_manage_(0, framerate, RCOM_PRINT_LEVEL_CMD); }
+  led_manage_(1, framerate, RCOM_PRINT_LEVEL_CMD);
 }
 
 static void btn_sample_(int *press_cnt, int *release_cnt)
@@ -1065,8 +1088,12 @@ static void RobotFlexFlowPackoutReport(void)
   FLEXFLOW::printf("</flex>\n");
 }
 
-void TurkeysDone(void)
-{
+void SadBeep(void) {
+  rcomEng(RCOM_ENG_IDX_SOUND, RCOM_ENG_SOUND_DAT0_TONE_BEEP, 200 /*volume*/);
+  Timer::delayMs(750); //wait for sound to finish
+}
+
+void TurkeysDone(void) {
   rcomEng(RCOM_ENG_IDX_SOUND, RCOM_ENG_SOUND_DAT0_TONE_BELL, 127 /*volume*/);
   Timer::delayMs(750); //wait for sound to finish
 }
@@ -1099,7 +1126,8 @@ TestFunction* TestRobot1GetTests(void) {
     TestRobotDetectSpine,
     //TestRobotButton,
     TestRobotInfo,
-    //TestRobotSensors,
+    TestRobotSensors,
+    DEBUG_TestRobotLeds,
     //TestRobotTreads, //XXX
     //TestRobotRange, //XXX
     //ChargeTest, //XXX
@@ -1149,10 +1177,10 @@ TestFunction* TestRobotPackoutGetTests(void) {
     TestRobotRange,
     ChargeTest,
     RobotLogCollect,
-    EmrUpdate, //set test complete flags
-    RobotFlexFlowPackoutReport,
-    TurkeysDone,
+    SadBeep, //eng sound cmd only works before packout flag set
+    EmrUpdate, //set packout flag, timestamp
     RobotPowerDown,
+    RobotFlexFlowPackoutReport,
     NULL,
   };
   return m_tests;

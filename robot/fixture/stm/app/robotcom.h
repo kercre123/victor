@@ -80,8 +80,8 @@ typedef struct {
 typedef union {
   int32_t val[4];
   struct { int32_t raw; int32_t temp; } bat; //battery: raw-adc, temperature (2x int16)
-  struct { int32_t fL; int32_t fR; int32_t bR; int32_t bL; } cliff; //cliff sensors: front/back L/R (4x uint16)
-  struct { int32_t pos; int32_t speed; } enc; //encoder: position, speed (2x int32)
+  struct { int32_t fL; int32_t fR; int32_t bL; int32_t bR; } cliff; //cliff sensors: front/back L/R (4x uint16)
+  struct { int32_t pos; int32_t speed; int32_t delta; } enc; //encoder: position, speed, [delta,spine-only] (2[3]x int32)
   struct { int32_t rangeMM; int32_t spadCnt; int32_t signalRate; int32_t ambientRate; } prox; //proximity,TOF (4x uint16)
   struct { int32_t touch; int32_t btn; } btn; //touch & button (2x uint16)
   struct { int32_t rssi; } fccRssi; //FCC mode RSSI (int8)
@@ -93,7 +93,7 @@ void          rcomSetTarget(bool spine_nCCC); //select charge contacts or spine 
 uint32_t      rcomEsn(); //read robot ESN (Head)
 robot_bsv_t*  rcomBsv(); //read body serial+version info
 void          rcomPwr(rcom_pwr_st_e st);
-void          rcomLed(uint8_t *leds, int printlvl = RCOM_PRINT_LEVEL_DEFAULT); //leds[12] {led0R,G,B,led1R,G,B...}
+void          rcomLed(uint8_t *leds12, int printlvl = RCOM_PRINT_LEVEL_DEFAULT); //leds[12] {led0R,G,B,led1R,G,B...}
 robot_sr_t*   rcomMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, int printlvl = RCOM_PRINT_LEVEL_DEFAULT);
 robot_sr_t*   rcomGet(uint8_t NN, uint8_t sensor, int printlvl = RCOM_PRINT_LEVEL_DEFAULT); //NN = #drops (sr vals). returns &sensor[0] of [NN-1]
 int           rcomRlg(uint8_t idx, char *buf, int buf_max_size); //read log 'idx' into buf (NOT null-terminated). return num chars written to buf [e.g. strlen(buf)]

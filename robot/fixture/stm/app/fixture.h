@@ -195,7 +195,8 @@ typedef int error_t;
 
 //<export heading> Robot Errors
 #define ERROR_ROBOT_TEST_SEQUENCE         370 // This test cannot run until all previous tests have passed
-#define ERROR_ROBOT_MISSING_LOGFILE       371 // expected logfile not found on this robot
+#define ERROR_ROBOT_PACKED_OUT            371 // test or function is locked because the robot is packed out
+#define ERROR_ROBOT_MISSING_LOGFILE       372 // expected logfile not found on this robot
 
 //<export heading> Testport Errors - charge contact communications (BODY ROBOT PACKOUT)
 #define ERROR_TESTPORT_CMD_TIMEOUT        400 //timeout waiting for response to a command

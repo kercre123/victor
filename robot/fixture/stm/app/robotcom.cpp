@@ -302,13 +302,17 @@ int cccRlg(uint8_t idx, char *buf, int buf_max_size)
   return dbuf.wlen;
 }
 
-void ccc_IdxVal32_(uint8_t idx, uint32_t val, const char* cmd, void(*handler)(char*), bool print_verbose = true ) {
+int ccc_IdxVal32_(uint8_t idx, uint32_t val, const char* cmd, void(*handler)(char*), bool print_verbose = true, bool thow_status_errs = true ) {
   CCC_CMD_DELAY();
   memset( &m_ccc, 0, sizeof(m_ccc) );
   char b[22]; const int bz = sizeof(b);
   snformat(b,bz,"%s %02x %02x %02x %02x %02x 00", cmd, idx, (val>>0)&0xFF, (val>>8)&0xFF, (val>>16)&0xFF, (val>>24)&0xFF );
   int opts = print_verbose ? CCC_CMD_OPTS : CCC_CMD_OPTS & ~(CMD_OPTS_LOG_CMD | CMD_OPTS_LOG_RSP);
-  cmdSend(CMD_IO_CONTACTS, b, 500, opts, handler );
+  
+  cmdSend(CMD_IO_CONTACTS, b, 500, opts|CMD_OPTS_ALLOW_STATUS_ERRS, handler );
+  if( cmdStatus() != 0 && thow_status_errs )
+    throw ERROR_TESTPORT_CMD_FAILED;
+  return cmdStatus();
 }
 
 void gmr_handler_(char* s) {
@@ -327,8 +331,9 @@ uint32_t cccGmr(uint8_t idx) {
 //                  Spine HAL
 //-----------------------------------------------------------------------------
 
-#define SPINE_HAL_DEBUG            0
+#define SPINE_HAL_DEBUG_RX         1
 #define SPINE_HAL_DEBUG_RX_VERBOSE 0
+#define SPINE_HAL_DEBUG_TX         0
 #define SPINE_HAL_DEBUG_TX_VERBOSE 0
 
 #include "../../syscon/schema/messages.h"
@@ -381,35 +386,68 @@ static uint16_t payload_size_(PayloadId type, bool h2b) {
   return 0;
 }
 
+static bool hal_spine_initialized = 0;
 void halSpineInit(void) {
-  #if SPINE_HAL_DEBUG > 0
-  ConsolePrintf("hal spine init 3M\n");
-  #endif
-  DUT_UART::init(3000000);
-  Timer::wait(500);
+  if( !hal_spine_initialized ) {
+    ConsolePrintf("%08u hal spine init 3Mbaud\n", Timer::get());
+    DUT_UART::init(3000000);
+    Timer::wait(500);
+    hal_spine_initialized = 1;
+  }
 }
 
 typedef struct { int rxDroppedChars; int rxOverflowErrors; int rxFramingErrors; } io_err_t;
 static void halSpineGetRxErrs(io_err_t *ioe) {
-  ioe->rxDroppedChars   = DUT_UART::getRxDroppedChars();
-  ioe->rxOverflowErrors = DUT_UART::getRxOverflowErrors();
-  ioe->rxFramingErrors  = DUT_UART::getRxFramingErrors();
+  if( hal_spine_initialized ) {
+    ioe->rxDroppedChars   = DUT_UART::getRxDroppedChars();
+    ioe->rxOverflowErrors = DUT_UART::getRxOverflowErrors();
+    ioe->rxFramingErrors  = DUT_UART::getRxFramingErrors();
+  } else {
+    ConsolePrintf("halSpineGetRxErrs() ERROR_INVALID_STATE\n");
+    throw ERROR_INVALID_STATE;
+  }
 }
 
 void halSpineRxFlush(void) {
-  while( DUT_UART::getchar() > -1 ) ; //empty rx buf
-  io_err_t ioe;
-  halSpineGetRxErrs(&ioe); //read to clear errs
+  if( hal_spine_initialized ) {
+    #if SPINE_HAL_DEBUG_RX_VERBOSE > 0
+    ConsolePrintf("%08u hal spine flush\n", Timer::get());
+    #endif
+    while( DUT_UART::getchar() > -1 ) ; //empty rx buf
+    io_err_t ioe;
+    halSpineGetRxErrs(&ioe); //read to clear errs
+  } else {
+    ConsolePrintf("halSpineRxFlush() ERROR_INVALID_STATE\n");
+    throw ERROR_INVALID_STATE;
+  }
 }
 
 void halSpineTeardown(void) {
-  halSpineRxFlush();
-  DUT_UART::deinit();
+  if( hal_spine_initialized ) {
+    ConsolePrintf("%08u hal spine teardown\n", Timer::get());
+    halSpineRxFlush();
+    DUT_UART::deinit();
+    hal_spine_initialized = 0;
+  }
 }
 
 //transmit a spine packet with given payload data
-int halSpineSend(uint8_t *payload, PayloadId type)
+int halSpineSend(uint8_t *payload, PayloadId type, int throttle_us = 5000);
+int halSpineSend(uint8_t *payload, PayloadId type, int throttle_us)
 {
+  if( !hal_spine_initialized ) {
+    ConsolePrintf("halSpineSend() ERROR_INVALID_STATE\n");
+    throw ERROR_INVALID_STATE;
+    //return 0;
+  }
+  
+  static uint32_t Tlast = 0;
+  if( throttle_us > 0 ) {
+    while( Timer::elapsedUs(Tlast) < throttle_us ) //packet throttle
+      ;
+  }
+  Tlast = Timer::get();
+  
   spinePacket_t txPacket;
   uint16_t payloadlen = payload ? payload_size_(type,1) : 0; //allow 0-length payload
   if( payload && !payloadlen ) { //unsupported type
@@ -428,8 +466,9 @@ int halSpineSend(uint8_t *payload, PayloadId type)
   SpineMessageFooter* footer = (SpineMessageFooter*)((uint32_t)&txPacket.payload + payloadlen);
   footer->checksum = calc_crc((const uint8_t*)&txPacket.payload, payloadlen);
   
-  #if SPINE_HAL_DEBUG > 0
-  ConsolePrintf("spine tx: type %04x len %u checksum %08x\n", txPacket.header.payload_type, txPacket.header.bytes_to_follow, footer->checksum );
+  #if SPINE_HAL_DEBUG_TX > 0 || SPINE_HAL_DEBUG_TX_VERBOSE > 0
+  ConsolePrintf("%08u spine tx: type %04x len %u checksum %08x\n", Timer::get(), 
+    txPacket.header.payload_type, txPacket.header.bytes_to_follow, footer->checksum );
   #endif
   
   #if SPINE_HAL_DEBUG_TX_VERBOSE > 0
@@ -453,6 +492,12 @@ spinePacket_t* halSpineReceive(int timeout_us)
   static spinePacket_t rxPacket;
   memset( &rxPacket, 0, sizeof(SpineMessageHeader) );
   
+  if( !hal_spine_initialized ) {
+    ConsolePrintf("halSpineReceive() ERROR_INVALID_STATE\n");
+    throw ERROR_INVALID_STATE;
+    //return 0;
+  }
+  
   #if SPINE_HAL_DEBUG_RX_VERBOSE > 0
   ConsolePrintf("spine rx: scanning for sync word\n");
   #endif
@@ -464,7 +509,7 @@ spinePacket_t* halSpineReceive(int timeout_us)
     if( timeout_us > 0 && Timer::elapsedUs(Tsync) > timeout_us )
       throw ERROR_SPINE_PKT_TIMEOUT; //return NULL;
     if( (c = DUT_UART::getchar(0)) > -1 )
-      rxPacket.header.sync_bytes = (c << 24) | (rxPacket.header.sync_bytes >> 8); //sync definition big endian??
+      rxPacket.header.sync_bytes = (c << 24) | (rxPacket.header.sync_bytes >> 8);
     
     halSpineGetRxErrs(&ioe);
     if( ioe.rxDroppedChars || ioe.rxOverflowErrors )
@@ -472,7 +517,7 @@ spinePacket_t* halSpineReceive(int timeout_us)
   }
   
   #if SPINE_HAL_DEBUG_RX_VERBOSE > 0
-  ConsolePrintf("spine rx: header\n");
+  ConsolePrintf("%08u spine rx: header\n", Timer::get());
   #endif
   
   //get remaining header
@@ -532,8 +577,9 @@ spinePacket_t* halSpineReceive(int timeout_us)
   bool type_valid = payload_type_is_valid_(rxPacket.header.payload_type);
   uint16_t expected_len = payload_size_(rxPacket.header.payload_type,0);
   
-  #if SPINE_HAL_DEBUG > 0
-  ConsolePrintf("spine rx: type %04x len %u checksum %08x\n", rxPacket.header.payload_type, rxPacket.header.bytes_to_follow, rxPacket.footer.checksum );
+  #if SPINE_HAL_DEBUG_RX > 0
+  ConsolePrintf("%08u spine rx: type %04x len %u checksum %08x\n", Timer::get(), 
+    rxPacket.header.payload_type, rxPacket.header.bytes_to_follow, rxPacket.footer.checksum );
   if( !type_valid )
     ConsolePrintf("  BAD TYPE: %0x04\n", rxPacket.header.payload_type);
   if( payloadlen != expected_len )
@@ -550,7 +596,7 @@ spinePacket_t* halSpineReceive(int timeout_us)
   return &rxPacket;
 }
 
-HeadToBody* halSpineH2BFrame(PowerState powerState, int16_t *p4motorPower, uint8_t *p16ledColors)
+HeadToBody* halSpineH2BFrame(PowerState powerState, int16_t *p4motorPower, uint8_t *p12ledColors)
 {
   static uint32_t m_framecounter = 0;
   static HeadToBody h2b;
@@ -559,7 +605,7 @@ HeadToBody* halSpineH2BFrame(PowerState powerState, int16_t *p4motorPower, uint8
   h2b.framecounter = ++m_framecounter;
   h2b.powerState = powerState;
   if( p4motorPower != NULL ) memcpy( h2b.motorPower, p4motorPower, 4*sizeof(int16_t) );
-  if( p16ledColors != NULL ) memcpy( h2b.ledColors, p16ledColors, 16*sizeof(uint8_t) );
+  if( p12ledColors != NULL ) memcpy( h2b.ledColors, p12ledColors, 12 );
   
   return &h2b;
 }
@@ -573,7 +619,7 @@ HeadToBody* halSpineH2BFrame(PowerState powerState, int16_t *p4motorPower, uint8
 //verify body version structs are equivalent
 STATIC_ASSERT( sizeof(robot_bsv_t) == sizeof(VersionInfo), version_struct_size_match_check );
 
-robot_bsv_t* spineBsv_(void)
+robot_bsv_t* spineBsv(void)
 {
   static robot_bsv_t m_bsv;
   
@@ -581,12 +627,11 @@ robot_bsv_t* spineBsv_(void)
   #if SPINE_DEBUG > 0
   ConsolePrintf("spine idle PAYLOAD_DATA_FRAME\n");
   #endif
-  for(int n=0; n<2; n++) {
+  for(int n=0; n<2; n++)
     halSpineSend((uint8_t*)halSpineH2BFrame(POWER_STATE_ON,0,0), PAYLOAD_DATA_FRAME);
-    Timer::delayMs(5);
-  }
   
   //Send version request packet (0-payload)
+  ConsolePrintf("spine read body version info\n");
   #if SPINE_DEBUG > 0
   ConsolePrintf("spine request PAYLOAD_VERSION\n");
   #endif
@@ -597,7 +642,7 @@ robot_bsv_t* spineBsv_(void)
   uint32_t Tstart = Timer::get();
   while( Timer::elapsedUs(Tstart) < 100000 )
   {
-    spinePacket_t* pkt = halSpineReceive(10000);
+    spinePacket_t* pkt = halSpineReceive(15000);
     if( pkt != NULL && pkt->header.payload_type == PAYLOAD_VERSION )
     {
       memcpy( &m_bsv, (VersionInfo*)&pkt->payload, sizeof(robot_bsv_t) );
@@ -617,42 +662,146 @@ robot_bsv_t* spineBsv_(void)
   throw ERROR_SPINE_CMD_TIMEOUT; //return NULL;
 }
 
-robot_bsv_t* spineBsv(void)
-{
-  robot_bsv_t* retval = NULL;
-  error_t err = ERROR_OK;
-  
-  halSpineInit();
-  try { retval = spineBsv_(); } catch(int e) { err = e; }
-  halSpineTeardown();
-  
-  if( err != ERROR_OK )
-    throw err;
-  
-  return retval;
-}
-
 void spinePwr(rcom_pwr_st_e st) {
   //XXX: implement me
+  ConsolePrintf("ERROR_EMPTY_COMMAND spinePwr()\n");
   throw ERROR_EMPTY_COMMAND;
 }
 
-void spineLed(uint8_t *leds, int printlvl) {
-  //XXX: implement me
-  throw ERROR_EMPTY_COMMAND;
+void spineLed(uint8_t *leds12, int printlvl)
+{
+  static uint32_t Tlast = 0;
+  while( Timer::elapsedUs(Tlast) < 5000 ) //throttle agressive callers
+    ;
+  Tlast = Timer::get();
+  
+  if( printlvl2cmdopts(printlvl) & CMD_OPTS_LOG_CMD )
+    ConsolePrintf(">spine leds %x%x%x %x%x%x %x%x%x %x%x%x\n",
+      leds12[0]>>4, leds12[1]>>4, leds12[2]>>4,
+      leds12[3]>>4, leds12[4]>>4, leds12[5]>>4,
+      leds12[6]>>4, leds12[7]>>4, leds12[8]>>4,
+      leds12[9]>>4, leds12[10]>>4,leds12[11]>>4);
+  
+  halSpineRxFlush();
+  halSpineSend((uint8_t*)halSpineH2BFrame(POWER_STATE_ON, 0, leds12), PAYLOAD_DATA_FRAME);
+  if( printlvl2cmdopts(printlvl) & CMD_OPTS_LOG_RSP )
+    ConsolePrintf("<spine leds %i\n", 0);
+}
+
+static inline void spine_set_motors_(int8_t treadL, int8_t treadR, int8_t lift, int8_t head) {
+  int16_t motPower[MOTOR_COUNT]; 
+    motPower[MOTOR_LEFT]  = treadL;
+    motPower[MOTOR_RIGHT] = treadR;
+    motPower[MOTOR_LIFT]  = lift;
+    motPower[MOTOR_HEAD]  = head;
+  HeadToBody* frame = halSpineH2BFrame(POWER_STATE_ON, motPower, 0);
+  halSpineSend((uint8_t*)frame, PAYLOAD_DATA_FRAME);
+}
+
+static inline void spine_get_sr_(robot_sr_t* out_sr, uint8_t sensor)
+{
+  static int32_t lastpos[4] = {0,0,0,0};
+  static int debug_sensor_cnt = 1000;
+  
+  spinePacket_t* pkt = halSpineReceive(15000);
+  if( pkt != NULL && pkt->header.payload_type == PAYLOAD_DATA_FRAME )
+  {
+    BodyToHead *b2h = (BodyToHead*)&pkt->payload;
+    switch(sensor)
+    {
+      case RCOM_SENSOR_BATTERY:
+        out_sr->bat.raw = b2h->battery.battery;
+        out_sr->bat.temp = b2h->battery.temperature;
+        break;
+      case RCOM_SENSOR_CLIFF:
+        out_sr->cliff.fL = b2h->cliffSense[DROP_SENSOR_FRONT_LEFT];
+        out_sr->cliff.fR = b2h->cliffSense[DROP_SENSOR_FRONT_RIGHT];
+        out_sr->cliff.bL = b2h->cliffSense[DROP_SENSOR_BACK_LEFT];
+        out_sr->cliff.bR = b2h->cliffSense[DROP_SENSOR_BACK_RIGHT];
+        break;
+      case RCOM_SENSOR_MOT_LEFT:
+      case RCOM_SENSOR_MOT_RIGHT:
+      case RCOM_SENSOR_MOT_LIFT:
+      case RCOM_SENSOR_MOT_HEAD:
+        {
+          const int motor_id = (sensor - RCOM_SENSOR_MOT_LEFT); //strict order: LEFT,RIGHT,LIFT,HEAD
+          const struct MotorState* m = &b2h->motor[motor_id];
+          
+          const int SYSCON_CLOCK_FREQ = 48000000;
+          const int HAL_TICKS_PER_US =  (SYSCON_CLOCK_FREQ / 1000000) * 256;
+          int32_t dist = m->delta * 1000000;
+          int32_t microsec = m->time / HAL_TICKS_PER_US;
+          int32_t speed = (microsec>0 && m->position != lastpos[motor_id]) ? 
+            (dist/microsec) : 0;
+          
+          lastpos[motor_id] = m->position;
+          out_sr->enc.pos = m->position;
+          out_sr->enc.speed = speed;
+          out_sr->enc.delta = m->delta;
+        }
+        break;
+      case RCOM_SENSOR_PROX_TOF:
+        out_sr->prox.rangeMM = b2h->proximity.rangeMM;
+        out_sr->prox.spadCnt = b2h->proximity.spadCount;
+        out_sr->prox.signalRate = b2h->proximity.signalRate;
+        out_sr->prox.ambientRate = b2h->proximity.ambientRate;
+        break;
+      case RCOM_SENSOR_BTN_TOUCH:
+        out_sr->btn.touch = b2h->touchLevel[0];
+        out_sr->btn.btn   = b2h->touchLevel[1];
+        break;
+      case RCOM_SENSOR_RSSI:
+        out_sr->fccRssi.rssi = -128;
+        break;
+      case RCOM_SENSOR_RX_PKT:
+        out_sr->fccRx.pktCnt = -1;
+        break;
+      case RCOM_SENSOR_DEBUG_INC:
+        out_sr->val[0] = debug_sensor_cnt++;
+        out_sr->val[1] = debug_sensor_cnt++;
+        out_sr->val[2] = debug_sensor_cnt++;
+        out_sr->val[3] = debug_sensor_cnt++;
+      case RCOM_SENSOR_NONE:
+      default:
+        break;
+    }
+  }
+  else
+    throw ERROR_SPINE_PKT_TIMEOUT;
 }
 
 static robot_sr_t* spine_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, int printlvl)
 {
-  //XXX: implement me!
-  //return NULL;
-  
-  ConsolePrintf("spineMot %u %u %u %u %u %u\n", NN, sensor, treadL, treadR, lift, head);
   memset( srbuf, 0, (1+NN)*sizeof(robot_sr_t) );
+  int sr_cnt = ccr_sr_cnt[sensor]; //expected number of sensor values per drop/line
   if( !NN || sensor >= sizeof(ccr_sr_cnt) ) {
     ConsolePrintf("BAD_ARG: spine_MotGet_() NN=%i sensor=%i>=%i\n", NN, sensor, sizeof(ccr_sr_cnt));
     throw ERROR_BAD_ARG;
   }
+  
+  if( printlvl2cmdopts(printlvl) & CMD_OPTS_LOG_CMD )
+    ConsolePrintf(">spine mot-get %02x %02x %02x %02x %02x %02x\n", NN, sensor, (uint8_t)treadL, (uint8_t)treadR, (uint8_t)lift, (uint8_t)head);
+
+  halSpineRxFlush();
+  for(int n=0; n<NN; n++)
+  {
+    //send H2B packets
+    spine_set_motors_(treadL,treadR,lift,head);
+    
+    //read B2H packest (sensor vals)
+    robot_sr_t *psr = &((robot_sr_t*)srbuf)[n]; //(robot_sr_t*)&srbuf;
+    spine_get_sr_(psr, sensor); //parse out requested sensor data
+    
+    //log print sr values
+    if( printlvl2cmdopts(printlvl) & CMD_OPTS_LOG_ASYNC ) {
+      ConsolePutChar(':');
+      for(int i=0; i<sr_cnt; i++) ConsolePrintf("%i ", psr->val[i]);
+      ConsolePutChar('\n');
+    }
+  }
+  
+  if( printlvl2cmdopts(printlvl) & CMD_OPTS_LOG_RSP )
+    ConsolePrintf("<spine mot-get %i\n", 0);
   
   return (robot_sr_t*)srbuf;
 }
@@ -664,8 +813,12 @@ static robot_sr_t* spine_MotGet_(uint8_t NN, uint8_t sensor, int8_t treadL, int8
 #define RCOM_DEBUG 0
 
 static bool rcom_target_spine_nCCC = 0;
-void rcomSetTarget(bool spine_nCCC) {
+void rcomSetTarget(bool spine_nCCC)
+{
+  halSpineTeardown();
   rcom_target_spine_nCCC = spine_nCCC;
+  if( rcom_target_spine_nCCC )
+    halSpineInit();
 }
 
 uint32_t rcomEsn() {
@@ -711,7 +864,15 @@ robot_sr_t* rcomGet(uint8_t NN, uint8_t sensor, int printlvl)
 
 int  rcomRlg(uint8_t idx, char *buf, int buf_max_size) { return !rcom_target_spine_nCCC ? cccRlg(idx,buf,buf_max_size) : 0; }
 void rcomEng(uint8_t idx, uint8_t dat0, uint8_t dat1) { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(idx, ((dat1<<8)|dat0), "eng", 0); }
-void rcomSmr(uint8_t idx, uint32_t val) { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(idx, val, "smr", 0, false); }
+void rcomSmr(uint8_t idx, uint32_t val) {
+  if( !rcom_target_spine_nCCC ) {
+    int cmdStatus = ccc_IdxVal32_(idx, val, "smr", 0, false, false);
+    if( cmdStatus == 4 /*ERR_LOCKED*/ )
+      throw ERROR_ROBOT_PACKED_OUT;
+    else if( cmdStatus != 0 )
+      throw ERROR_TESTPORT_CMD_FAILED;
+  }
+}
 //void rcomFcc(uint8_t mode, uint8_t cn)  { if( !rcom_target_spine_nCCC ) cccFcc(mode, cn); }
 //void rcomLfe(uint8_t idx, uint32_t val) { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(idx, val, "lfe", 0); }
 
