@@ -416,7 +416,9 @@ static robot_tread_dat_t* robot_tread_test_(uint8_t sensor, int8_t power)
   
   const bool left = (sensor == RCOM_SENSOR_MOT_LEFT);
   //const bool DEBUG_PRINT = !g_isReleaseBuild;
-  const int printlvl = g_isReleaseBuild ? RCOM_PRINT_LEVEL_CMD : RCOM_PRINT_LEVEL_CMD_DAT_RSP;
+  //const int printlvl = g_isReleaseBuild ? RCOM_PRINT_LEVEL_CMD : RCOM_PRINT_LEVEL_CMD_DAT_RSP;
+    #warning "TREAD TEST DEBUG"
+    const bool DEBUG_PRINT = 0; const int printlvl = RCOM_PRINT_LEVEL_CMD;
   static robot_tread_dat_t test;
   memset(&test, 0, sizeof(test));
   robot_sr_t* psr;
@@ -510,9 +512,10 @@ static robot_range_dat_t* robot_range_test_(uint8_t sensor, int8_t power)
   }
   
   const bool lift = (sensor == RCOM_SENSOR_MOT_LIFT);
-  const bool DEBUG_PRINT = !g_isReleaseBuild; const int printlvl = g_isReleaseBuild ? RCOM_PRINT_LEVEL_CMD : RCOM_PRINT_LEVEL_CMD_DAT_RSP;
-    //#warning "RANGE TEST DEBUG"
-    //const bool DEBUG_PRINT = 0; const int printlvl = RCOM_PRINT_LEVEL_CMD;
+  //const bool DEBUG_PRINT = !g_isReleaseBuild; 
+  //const int printlvl = g_isReleaseBuild ? RCOM_PRINT_LEVEL_CMD : RCOM_PRINT_LEVEL_CMD_DAT_RSP;
+    #warning "RANGE TEST DEBUG"
+    const bool DEBUG_PRINT = 0; const int printlvl = RCOM_PRINT_LEVEL_CMD;
   static robot_range_dat_t test;
   memset(&test, 0, sizeof(test));
   robot_sr_t* psr;
@@ -529,10 +532,14 @@ static robot_range_dat_t* robot_range_test_(uint8_t sensor, int8_t power)
   const uint8_t NNsettle = 50;
   
   //force to known starting position
-  if( DEBUG_PRINT ) ConsolePrintf("%s move to starting position [%i,%i]\n", lift ? "LIFT" : "HEAD", -liftPwrMax, -headPwrMax);
-  test.start_active = rcomMot(NNstart, sensor, 0, 0, -liftPwrMax, -headPwrMax, printlvl)[NNstart-1].enc.pos;
+  if( g_fixmode != FIXMODE_ROBOT1 ) {
+    if( DEBUG_PRINT ) ConsolePrintf("%s move to starting position [%i,%i]\n", lift ? "LIFT" : "HEAD", -liftPwrMax, -headPwrMax);
+    test.start_active = rcomMot(NNstart, sensor, 0, 0, -liftPwrMax, -headPwrMax, printlvl)[NNstart-1].enc.pos;
+  }
   if( DEBUG_PRINT ) ConsolePrintf("%s get passive start position\n", lift ? "LIFT" : "HEAD");
   test.start_passive = rcomGet(NNsettle, sensor, printlvl)[NNsettle-1].enc.pos; //allow time for mechanics to settle
+  if( g_fixmode == FIXMODE_ROBOT1 )
+    test.start_active = test.start_passive;
   
   //move up
   if( DEBUG_PRINT ) ConsolePrintf("%s move up [%i,%i]\n", lift ? "LIFT" : "HEAD", liftPwr, headPwr);
@@ -567,45 +574,40 @@ static robot_range_dat_t* robot_range_test_(uint8_t sensor, int8_t power)
   return &test;
 }
 
-void TestRobotRange(int8_t liftPwr, int8_t headPwr, int lift_speed_min, int head_speed_min)
+typedef struct { int8_t power; int travel_min; int travel_max; int speed_min; } robot_range_t;
+void TestRobotRange(robot_range_t *testlift, robot_range_t *testhead)
 {
-  robot_range_dat_t lift = *robot_range_test_(RCOM_SENSOR_MOT_LIFT, liftPwr);
-  robot_range_dat_t head = *robot_range_test_(RCOM_SENSOR_MOT_HEAD, headPwr);
+  robot_range_dat_t lift = *robot_range_test_(RCOM_SENSOR_MOT_LIFT, testlift->power);
+  robot_range_dat_t head = *robot_range_test_(RCOM_SENSOR_MOT_HEAD, testhead->power);
   print_range_dat(&lift, "LIFT");
   print_range_dat(&head, "HEAD");
 
-  const int lift_travel_min = 170; //lift travel should be ~200 in each direction
-  const int lift_travel_max = 300; //something's wrong. should have hit the stop
   const int lift_start_delta_max = 50;
-  
   lift.dn_travel *= -1; lift.dn_avg *= -1; //positive comparisons
   if( lift.up_travel < -20 || lift.dn_travel < -20 )
     throw ERROR_MOTOR_LIFT_BACKWARD;
   else if( lift.up_travel < 20 || lift.dn_travel < 20 )
     throw ERROR_MOTOR_LIFT; //can't move?
-  else if( lift.up_travel < lift_travel_min || lift.dn_travel < lift_travel_min )
+  else if( lift.up_travel < testlift->travel_min || lift.dn_travel < testlift->travel_min )
     throw ERROR_MOTOR_LIFT_RANGE; //moves, but not enough...
-  else if( lift.up_travel > lift_travel_max || lift.dn_travel > lift_travel_max )
+  else if( lift.up_travel > testlift->travel_max || lift.dn_travel > testlift->travel_max )
     throw ERROR_MOTOR_LIFT_NOSTOP; //moves too much!
-  else if( lift_speed_min > 0 && (lift.up_avg < lift_speed_min || lift.dn_avg < lift_speed_min) )
+  else if( testlift->speed_min > 0 && (lift.up_avg < testlift->speed_min || lift.dn_avg < testlift->speed_min) )
     throw ERROR_MOTOR_LIFT_SPEED;
   else if( ABS(lift.start_active-lift.start_passive) > lift_start_delta_max )
     throw ERROR_MOTOR_LIFT_RANGE; //range met only when force applied
   
-  const int head_travel_min = 480; //head travel should be ~540 in each direction
-  const int head_travel_max = 650; //something's wrong. should have hit the stop
   const int head_start_delta_max = 50;
-  
   head.dn_travel *= -1; head.dn_avg *= -1; //positive comparisons
   if( head.up_travel < -20 || head.dn_travel < -20 )
     throw ERROR_MOTOR_HEAD_BACKWARD;
   else if( head.up_travel < 20 || head.dn_travel < 20 )
     throw ERROR_MOTOR_HEAD; //can't move?
-  else if( head.up_travel < head_travel_min || head.dn_travel < head_travel_min )
+  else if( head.up_travel < testhead->travel_min || head.dn_travel < testhead->travel_min )
     throw ERROR_MOTOR_HEAD_RANGE; //moves, but not enough...
-  else if( head.up_travel > head_travel_max || head.dn_travel > head_travel_max )
+  else if( head.up_travel > testhead->travel_max || head.dn_travel > testhead->travel_max )
     throw ERROR_MOTOR_HEAD_NOSTOP; //moves too much!
-  else if( head_speed_min > 0 && (head.up_avg < head_speed_min || head.dn_avg < head_speed_min) )
+  else if( testhead->speed_min > 0 && (head.up_avg < testhead->speed_min || head.dn_avg < testhead->speed_min) )
     throw ERROR_MOTOR_HEAD_SPEED;
   else if( ABS(head.start_active-head.start_passive) > head_start_delta_max )
     throw ERROR_MOTOR_HEAD_RANGE; //range met only when force applied
@@ -613,10 +615,53 @@ void TestRobotRange(int8_t liftPwr, int8_t headPwr, int lift_speed_min, int head
 
 void TestRobotRange(void)
 {
-  if( g_fixmode <= FIXMODE_ROBOT3 )
-    TestRobotRange(75, 127, 1300, 2100); //High Power
+  //High Power
+  if( g_fixmode == FIXMODE_ROBOT1 ) {
+    //NO HEAD/ARMS ATTACHED = NO STOP!
+    //lift travel ~450-500 in each direction
+    //head travel ~800-850 in each direction
+    robot_range_t lift = { /*power*/  75, /*travel_min*/ 400, /*travel_max*/ 9999, /*speed_min*/ 1800 };
+    robot_range_t head = { /*power*/ 100, /*travel_min*/ 700, /*travel_max*/ 9999, /*speed_min*/ 2300 };
+    TestRobotRange( &lift, &head );
+  } else if( g_fixmode <= FIXMODE_ROBOT3 ) { //skip PACKOUT
+    //lift travel ~200 in each direction
+    //head travel ~540 in each direction
+    robot_range_t lift = { /*power*/  75, /*travel_min*/ 170, /*travel_max*/ 300, /*speed_min*/ 1300 };
+    robot_range_t head = { /*power*/ 100, /*travel_min*/ 480, /*travel_max*/ 650, /*speed_min*/ 2100 };
+    TestRobotRange( &lift, &head );
+  }
   
-  TestRobotRange(45, 50, 500, 750); //Low Power
+  //Low Power
+  if( g_fixmode == FIXMODE_ROBOT1 ) {
+    //NO HEAD/ARMS ATTACHED = NO STOP!
+    //lift travel ~550-600 in each direction
+    //head travel ~650-??? in each direction
+    robot_range_t lift = { /*power*/  45, /*travel_min*/ 450, /*travel_max*/ 9999, /*speed_min*/ 1000 };
+    robot_range_t head = { /*power*/  50, /*travel_min*/ 550, /*travel_max*/ 9999, /*speed_min*/ 800 };
+    TestRobotRange( &lift, &head );
+  } else { //ROBOT3,PACKOUT
+    robot_range_t lift = { /*power*/  45, /*travel_min*/ 170, /*travel_max*/  300, /*speed_min*/ 500 };
+    robot_range_t head = { /*power*/  50, /*travel_min*/ 480, /*travel_max*/  650, /*speed_min*/ 750 };
+    TestRobotRange( &lift, &head );
+  }
+  
+  /*/ROBOT1 sample log test results
+  LIFT range test. power 75
+  HEAD range test. power 100
+  LIFT POS start:-2024 passive:-2024 delta:0
+  LIFT UP  speed:+2557 avg:+2387 travel:+514
+  LIFT DN  speed:-2569 avg:-2454 travel:-448
+  HEAD POS start:-1738 passive:-1738 delta:0
+  HEAD UP  speed:+3063 avg:+2710 travel:+864
+  HEAD DN  speed:-2983 avg:-2807 travel:-798
+  LIFT range test. power 45
+  HEAD range test. power 50
+  LIFT POS start:-2180 passive:-2180 delta:0
+  LIFT UP  speed:+1489 avg:+1407 travel:+590
+  LIFT DN  speed:-1530 avg:-1451 travel:-576
+  HEAD POS start:-1838 passive:-1838 delta:0
+  HEAD UP  speed:+1098 avg:+1057 travel:+660
+  HEAD DN  speed:-1117 avg:-1091 travel:-652 */
 }
 
 void EmrChecks(void)
@@ -1127,9 +1172,9 @@ TestFunction* TestRobot1GetTests(void) {
     //TestRobotButton,
     TestRobotInfo,
     TestRobotSensors,
-    DEBUG_TestRobotLeds,
-    //TestRobotTreads, //XXX
-    //TestRobotRange, //XXX
+    //DEBUG_TestRobotLeds,
+    TestRobotTreads, //XXX
+    TestRobotRange, //XXX
     //ChargeTest, //XXX
     NULL,
   };
