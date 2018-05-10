@@ -624,10 +624,10 @@ void TestRobotRange(void)
     robot_range_t head = { /*power*/ 100, /*travel_min*/ 700, /*travel_max*/ 9999, /*speed_min*/ 2300 };
     TestRobotRange( &lift, &head );
   } else if( g_fixmode <= FIXMODE_ROBOT3 ) { //skip PACKOUT
-    //lift travel ~200 in each direction
-    //head travel ~540 in each direction
-    robot_range_t lift = { /*power*/  75, /*travel_min*/ 170, /*travel_max*/ 300, /*speed_min*/ 1300 };
-    robot_range_t head = { /*power*/ 100, /*travel_min*/ 480, /*travel_max*/ 650, /*speed_min*/ 2100 };
+    //lift travel ~200-220 in each direction
+    //head travel ~540-560 in each direction
+    robot_range_t lift = { /*power*/  75, /*travel_min*/ 170, /*travel_max*/ 260, /*speed_min*/ 1300 };
+    robot_range_t head = { /*power*/ 100, /*travel_min*/ 480, /*travel_max*/ 600, /*speed_min*/ 2000 };
     TestRobotRange( &lift, &head );
   }
   
@@ -640,8 +640,10 @@ void TestRobotRange(void)
     robot_range_t head = { /*power*/  50, /*travel_min*/ 550, /*travel_max*/ 9999, /*speed_min*/ 800 };
     TestRobotRange( &lift, &head );
   } else { //ROBOT3,PACKOUT
-    robot_range_t lift = { /*power*/  45, /*travel_min*/ 170, /*travel_max*/  300, /*speed_min*/ 500 };
-    robot_range_t head = { /*power*/  50, /*travel_min*/ 480, /*travel_max*/  650, /*speed_min*/ 750 };
+    //lift travel ~200-220 in each direction
+    //head travel ~540-560 in each direction
+    robot_range_t lift = { /*power*/  45, /*travel_min*/ 170, /*travel_max*/  300, /*speed_min*/ 550 };
+    robot_range_t head = { /*power*/  50, /*travel_min*/ 480, /*travel_max*/  650, /*speed_min*/ 700 };
     TestRobotRange( &lift, &head );
   }
   
@@ -662,6 +664,24 @@ void TestRobotRange(void)
   HEAD POS start:-1838 passive:-1838 delta:0
   HEAD UP  speed:+1098 avg:+1057 travel:+660
   HEAD DN  speed:-1117 avg:-1091 travel:-652 */
+  
+  /*/ROBOT3 sample log test results
+  LIFT range test. power 75
+  HEAD range test. power 100
+  LIFT POS start:-26 passive:-2 delta:-24
+  LIFT UP  speed:+1869 avg:+1607 travel:+211
+  LIFT DN  speed:-1975 avg:-1819 travel:-214
+  HEAD POS start:-356 passive:-341 delta:-15
+  HEAD UP  speed:+2680 avg:+2393 travel:+545
+  HEAD DN  speed:-2865 avg:-2495 travel:-556
+  LIFT range test. power 45
+  HEAD range test. power 50
+  LIFT POS start:-27 passive:0 delta:-27
+  LIFT UP  speed:+794 avg:+774 travel:+200
+  LIFT DN  speed:-1187 avg:-1147 travel:-216
+  HEAD POS start:-358 passive:-340 delta:-18
+  HEAD UP  speed:+1001 avg:+857 travel:+522
+  HEAD DN  speed:-1095 avg:-1067 travel:-544 */
 }
 
 void EmrChecks(void)
