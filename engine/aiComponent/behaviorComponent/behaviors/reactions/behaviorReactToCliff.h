@@ -75,6 +75,7 @@ private:
     bool quitReaction;
     State state;
     bool gotCliff;
+    bool gotStop;
     uint8_t detectedFlags;
     bool shouldStopDueToCharger;
   };

@@ -75,7 +75,7 @@ void BehaviorTimer::Reset()
   {
     const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     
-    PRINT_CH_DEBUG("Behaviors", "BeahviorTimer.Reset",
+    PRINT_CH_DEBUG("Behaviors", "BehaviorTimer.Reset",
                    "Timer '%s' reset at t=%f",
                    BehaviorTimerTypesToString(_timerType),
                    currTime_s);

@@ -26,6 +26,7 @@
 
 #include "osState/osState.h"
 
+#include "util/console/consoleInterface.h"
 #include "util/filters/lowPassFilterSimple.h"
 
 #include <unistd.h>
@@ -60,6 +61,10 @@ namespace {
   // How often to call sync() when battery is critical
   const float kCriticalBatterySyncPeriod_sec = 10.f;
   float _nextSyncTime_sec = 0;
+
+  // Console var for faking low battery
+  CONSOLE_VAR(bool, kFakeLowBattery, "BatteryComponent", false);
+  const float kFakeLowBatteryVoltage = 3.5f;
 }
 
 BatteryComponent::BatteryComponent()
@@ -88,6 +93,16 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 
   // Update raw voltage
   _batteryVoltsRaw = msg.batteryVoltage;
+
+  // Check if faking low battery
+  static bool wasFakeLowBattery = false;
+  if (kFakeLowBattery) {
+    _batteryVoltsRaw  = kFakeLowBatteryVoltage;
+    _batteryVoltsFilter->Reset();
+  } else if (wasFakeLowBattery) {
+    _batteryVoltsFilter->Reset();
+  }
+  wasFakeLowBattery = kFakeLowBattery;
 
   // Only update filtered value if the battery isn't disconnected
   bool wasDisconnected = _battDisconnected;
