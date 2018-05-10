@@ -5,9 +5,9 @@ if [ -z $DOXYGEN ];then
 
   BREW=`which brew`
   APT_GET=`which apt-get`
-  if [ -z $BREW ];then
+  if [ -n $BREW ];then
     $BREW install doxygen
-  elif [ -z $APT_GET ];then
+  elif [ -n $APT_GET ];then
     sudo $APT_GET install doxygen
   else
     echo "Please install doxygen"
