@@ -12,9 +12,9 @@ function usage() {
     echo "  -h                      print this message"
     echo "  -v                      print verbose output"
     echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
-    echo "  -p [PLATFORM]           build target platform {android,mac}"
+    echo "  -p [PLATFORM]           build target platform {mac,vicos}"
     echo "  -a                      append cmake platform argument {arg}"
-    echo "  -g [GENERATOR]          CMake generator {Ninja,Xcode,Makefile}"
+    echo "  -g [GENERATOR]          CMake generator {Ninja,Xcode,Makefiles}"
     echo "  -f                      force-run filelist updates and cmake configure before building"
     echo "  -X                      delete build assets, forcing assets to be re-copied"
     echo "  -d                      DEBUG: generate file lists and exit"
@@ -42,7 +42,7 @@ IGNORE_EXTERNAL_DEPENDENCIES=0
 BUILD_SHARED_LIBS=1
 
 CONFIGURATION=Debug
-PLATFORM=android
+PLATFORM=vicos
 GENERATOR=Ninja
 FEATURES=""
 ADDITIONAL_PLATFORM_ARGS=()
@@ -122,7 +122,9 @@ shift $(($OPTIND - 1))
 #
 
 if [ -z "${CMAKE_EXE+x}" ]; then
-    CMAKE_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/cmake.py --install-cmake 3.9.6`
+    echo "Attempting to install cmake"
+    ${TOPLEVEL}/tools/build/tools/ankibuild/cmake.py --install-cmake 3.9.6
+    CMAKE_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/cmake.py --find-cmake 3.9.6`
 fi
 
 if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
@@ -146,6 +148,29 @@ case "${CONFIGURATION}" in
     ;;
   *)
     echo "${SCRIPT_NAME}: Unknown configuration '${CONFIGURATION}'"
+    usage
+    exit 1
+    ;;
+esac
+
+#
+# Validate generator
+#
+case "${GENERATOR}" in
+  [Nn][Ii][Nn][Jj][Aa])
+    GENERATOR="Ninja"
+    ;;
+  [Xx][Cc][Oo][Dd][Ee])
+    GENERATOR="Xcode"
+    ;;
+  [Mm][Aa][Kk][Ee][Ff][Ii][Ll][Ee][Ss])
+    GENERATOR="Makefiles"
+    ;;
+  "Unix Makefiles")
+    GENERATOR="Makefiles"
+    ;;
+  *)
+    echo "${SCRIPT_NAME}: Unknown generator '${GENERATOR}'"
     usage
     exit 1
     ;;
@@ -187,7 +212,7 @@ fi
 
 # For non-ninja builds, add generator type to build dir
 BUILD_SYSTEM_TAG=""
-if [ ${GENERATOR} != "Ninja" ]; then
+if [ "${GENERATOR}" != "Ninja" ]; then
     BUILD_SYSTEM_TAG="-${GENERATOR}"
 fi
 : ${BUILD_DIR:="${TOPLEVEL}/_build/${PLATFORM}/${CONFIGURATION}${BUILD_SYSTEM_TAG}"}
@@ -197,9 +222,9 @@ case ${GENERATOR} in
         PROJECT_FILE="build.ninja"
         ;;
     "Xcode")
-        PROJECT_FILE="cozmo.xcodeproj"
+        PROJECT_FILE="victor.xcodeproj"
         ;;
-    "Makefile")
+    "Makefiles")
         PROJECT_FILE="Makefile"
         GENERATOR="CodeBlocks - Unix Makefiles"
       ;;
@@ -322,48 +347,20 @@ if [ $CONFIGURE -eq 1 ]; then
             -DMACOSX=1
             -DANDROID=0
             -DVICOS=0
-            -DVICOS_STAGING=0
+            -DCMAKE_TOOLCHAIN_FILE="${CMAKE_MODULE_DIR}/macosx.toolchain.cmake"
         )
-    elif [ "$PLATFORM" == "android" ]; then
-        #
-        # If ANDROID_NDK is set, use it, else provide default location
-        #
-        if [ -z "${ANDROID_NDK+x}" ]; then
-          ANDROID_NDK=`${TOPLEVEL}/tools/build/tools/ankibuild/android.py`
-        fi
-
-        PLATFORM_ARGS=(
-            -DMACOSX=0
-            -DANDROID=1
-            -DVICOS=0
-            -DVICOS_STAGING=0
-            -DANDROID_NDK="${ANDROID_NDK}"
-            -DCMAKE_TOOLCHAIN_FILE="${CMAKE_MODULE_DIR}/android.toolchain.patched.cmake"
-            -DANDROID_TOOLCHAIN_NAME=clang
-            -DANDROID_ABI='armeabi-v7a with NEON'
-            -DANDROID_NATIVE_API_LEVEL=24
-            -DANDROID_PLATFORM=android-24
-            -DANDROID_STL=c++_shared
-            -DANDROID_CPP_FEATURES='rtti exceptions'
-        )
-    elif [ "$PLATFORM" == "vicos" ] || [ "$PLATFORM" == "vicos-staging" ] ; then
+    elif [ "$PLATFORM" == "vicos" ] ; then
         #
         # If VICOS_SDK is set, use it, else provide default location
         #
         if [ -z "${VICOS_SDK+x}" ]; then
-            VICOS_SDK=$(${TOPLEVEL}/tools/build/tools/ankibuild/vicos.py --install 0.8.0-r01 | tail -1)
+            VICOS_SDK=$(${TOPLEVEL}/tools/build/tools/ankibuild/vicos.py --install 0.9-r03 | tail -1)
         fi
-
-        VICOS_STAGING=0
-        if [ "$PLATFORM" == "vicos-staging" ]; then
-            VICOS_STAGING=1
-        fi
-
+ 
         PLATFORM_ARGS=(
             -DMACOSX=0
             -DANDROID=0
             -DVICOS=1
-            -DVICOS_STAGING=${VICOS_STAGING}
             -DVICOS_SDK="${VICOS_SDK}"
             -DCMAKE_TOOLCHAIN_FILE="${CMAKE_MODULE_DIR}/vicos.oelinux.toolchain.cmake"
             -DVICOS_CPP_FEATURES='rtti exceptions'
@@ -414,6 +411,10 @@ else
     TARGET_ARG="--target $CMAKE_TARGET"
   fi
   $CMAKE_EXE --build . $TARGET_ARG $*
+  if [ "$PLATFORM" != "mac" ]; then
+    # run install target on robot-platforms
+    $CMAKE_EXE --build . --target install
+  fi
 fi
 
 popd > /dev/null 2>&1

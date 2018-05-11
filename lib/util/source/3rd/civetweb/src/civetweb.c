@@ -1623,7 +1623,7 @@ static struct mg_option config_options[] = {
     {"put_delete_auth_file", CONFIG_TYPE_FILE, NULL},
     {"cgi_interpreter", CONFIG_TYPE_FILE, NULL},
     {"protect_uri", CONFIG_TYPE_STRING, NULL},
-    {"authentication_domain", CONFIG_TYPE_STRING, "mydomain.com"},
+    {"authentication_domain", CONFIG_TYPE_STRING, "vector.anki.com"},
     {"ssi_pattern", CONFIG_TYPE_EXT_PATTERN, "**.shtml$|**.shtm$"},
     {"throttle", CONFIG_TYPE_STRING, NULL},
     {"access_log_file", CONFIG_TYPE_FILE, NULL},

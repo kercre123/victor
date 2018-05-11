@@ -1,3 +1,5 @@
+#include <stdint.h>
+
 #ifndef CORE_SERIAL_H
 #define CORE_SERIAL_H
 

@@ -145,7 +145,7 @@ bool RobotManager::DoesRobotExist(const RobotID_t withID) const
 }
 
 
-void RobotManager::UpdateRobot()
+Result RobotManager::UpdateRobot()
 {
   ANKI_CPU_PROFILE("RobotManager::UpdateRobot");
 
@@ -175,8 +175,17 @@ void RobotManager::UpdateRobot()
       LOG_PERIODIC_INFO(10, "RobotManager.UpdateRobot",
                         "Not sending robot %d state (none available).", _robot->GetID());
     }
+
+    // If the robot got a message to shutdown
+    if(_robot->ToldToShutdown())
+    {
+      LOG_INFO("RobotManager.UpdateRobot.Shutdown","");
+      Shutdown();
+      return RESULT_SHUTDOWN;
+    }
   }
 
+  return RESULT_OK;
 }
 
 Result RobotManager::UpdateRobotConnection()

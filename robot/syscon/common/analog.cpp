@@ -23,7 +23,7 @@ static const uint16_t POWER_DOWN_POINT = ADC_VOLTS(3.4);
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.5);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(TRANSITION_POINT, ~0);
 
-static const int POWER_DOWN_TIME = 200 * 2;   // Shutdown
+static const int POWER_DOWN_TIME = 200 * 3.5; // Shutdown
 static const int POWER_WIPE_TIME = 200 * 10;  // Enter recovery mode
 static const int MINIMUM_VEXT_TIME = 20; // 0.1s
 

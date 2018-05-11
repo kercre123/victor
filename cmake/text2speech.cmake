@@ -13,7 +13,7 @@ set(TEXT2SPEECH_LIB_DIR "")
 # List of library targets for this platform
 set(TEXT2SPEECH_LIBS "")
 
-if (ANDROID)
+if (VICOS)
 
   #
   # Use Acapela TTS for Linux Embedded V8.511

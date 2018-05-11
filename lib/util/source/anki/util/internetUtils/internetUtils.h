@@ -28,9 +28,6 @@ public:
   // Convert URL to IP address
   static bool GetIpFromHostName(const char* hostName, char* ipAddressOut);
 
-  // Tests internet connectivity by checking connectability to amazon or google
-  static bool HasInternet();
-  
 };
 
 } // namespace Util

@@ -70,6 +70,7 @@ class WiFiScanResult {
   bool        wps;
   uint8_t     signal_level;
   std::string ssid;
+  bool        hidden;
 };
 
 class WiFiConfig {
@@ -89,6 +90,7 @@ struct ConnectAsyncData {
   bool completed;
   GCond *cond;
   GError *error;
+  GCancellable *cancellable;
   ConnManBusService *service;
 };
 
@@ -120,6 +122,7 @@ bool GetIpFromHostName(char* hostname, char* ip);
 bool IsAccessPointMode();
 bool EnableAccessPointMode(std::string ssid, std::string pw);
 bool DisableAccessPointMode();
+std::string GetConfigField(std::string& field, std::string& outSsid);
 WiFiIpFlags GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits);
 WiFiState GetWiFiState();
 

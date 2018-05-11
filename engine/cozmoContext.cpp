@@ -7,9 +7,9 @@
 #include "engine/perfMetric.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotManager.h"
-#include "engine/util/transferQueue/dasTransferTask.h"
-#include "engine/util/transferQueue/gameLogTransferTask.h"
-#include "engine/util/transferQueue/transferQueueMgr.h"
+//#include "engine/util/transferQueue/dasTransferTask.h"
+//#include "engine/util/transferQueue/gameLogTransferTask.h"
+//#include "engine/util/transferQueue/transferQueueMgr.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "engine/viz/vizManager.h"
@@ -41,11 +41,11 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _dataLoader(new RobotDataLoader(this))
   , _robotMgr(new RobotManager(this))
   , _vizManager(new VizManager())
-  , _transferQueueMgr(new Anki::Util::TransferQueueMgr())
+  //, _transferQueueMgr(new Anki::Util::TransferQueueMgr())
   #if USE_DAS
-  , _dasTransferTask(new Anki::Util::DasTransferTask())
+  //, _dasTransferTask(new Anki::Util::DasTransferTask())
   #endif
-  , _gameLogTransferTask(new Anki::Util::GameLogTransferTask())
+  //, _gameLogTransferTask(new Anki::Util::GameLogTransferTask())
   , _cozmoExperiments(new CozmoExperiments(this))
   , _perfMetric(new PerfMetric(this))
   // , _webService(new WebService::WebService())
@@ -54,9 +54,9 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
 {
 
   #if USE_DAS
-  _dasTransferTask->Init(_transferQueueMgr.get());
+  //_dasTransferTask->Init(_transferQueueMgr.get());
   #endif
-  _gameLogTransferTask->Init(_transferQueueMgr.get());
+  //_gameLogTransferTask->Init(_transferQueueMgr.get());
 
   // This needs to happen after the audio server is set up
   _voiceCommandComponent.reset(new VoiceCommand::VoiceCommandComponent(*this));

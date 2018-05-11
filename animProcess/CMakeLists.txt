@@ -20,9 +20,8 @@ set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
 
-if (ANDROID)
+if (VICOS)
     set(PLATFORM_LIBS
-        android
         log
         robot_core)
 elseif (MACOSX)
@@ -61,7 +60,7 @@ target_link_libraries(victor_anim
   robot_interface  # Needs to be public for cozmoConfig.h
 )
 
-android_strip(TARGET victor_anim)
+anki_build_strip(TARGET victor_anim)
 
 target_compile_definitions(victor_anim
   PRIVATE
@@ -77,7 +76,7 @@ target_include_directories(victor_anim
 
 # victor_animator binary only builds on Android now
 # mac implementation uses (webotsCtrlAnim)
-if (ANDROID)
+if (VICOS)
 
   anki_build_cxx_executable(vic-anim ${ANKI_SRCLIST_DIR})
 
@@ -90,6 +89,6 @@ if (ANDROID)
     ${PLATFORM_LIBS}
   )
 
-  android_strip(TARGET vic-anim)
-    
+  anki_build_strip(TARGET vic-anim)
+
 endif()

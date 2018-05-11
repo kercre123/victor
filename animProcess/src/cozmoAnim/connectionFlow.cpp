@@ -41,20 +41,28 @@ namespace Cozmo {
 namespace {
 u32 _pin = 123456;
 
+const f32 kRobotNameScale = 0.6f;
 const std::string kURL = "anki.com/v";
 const ColorRGBA   kColor(0.9f, 0.9f, 0.9f, 1.f);
 }
 
 // Draws BLE name and url to screen
-void DrawStartPairingScreen(AnimationStreamer* animStreamer)
+bool DrawStartPairingScreen(AnimationStreamer* animStreamer)
 {
+  // Robot name will be empty until switchboard has set the property
+  std::string robotName = OSState::getInstance()->GetRobotName();
+  if(robotName == "")
+  {
+    return false;
+  }
+  
   animStreamer->EnableKeepFaceAlive(false, 0);
   animStreamer->Abort();
 
   Vision::ImageRGB565 img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
   img.FillWith(Vision::PixelRGB565(0, 0, 0));
 
-  img.DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, 0.5f, 1, kColor, 15, false);
+  img.DrawTextCenteredHorizontally(robotName, CV_FONT_NORMAL, kRobotNameScale, 1, kColor, 15, false);
 
   cv::Size textSize;
   float scale = 0;
@@ -62,10 +70,11 @@ void DrawStartPairingScreen(AnimationStreamer* animStreamer)
   img.DrawTextCenteredHorizontally(kURL, CV_FONT_NORMAL, scale, 1, kColor, (FACE_DISPLAY_HEIGHT + textSize.height)/2, true);
 
   animStreamer->SetFaceImage(img, 0);
+  return true;
 }
 
 // Draws BLE name, key icon, and BLE pin to screen
-void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* context)
+void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* context, const std::string& pin)
 {
   Vision::ImageRGB key;
   key.Load(context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, 
@@ -81,9 +90,9 @@ void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* conte
   Vision::ImageRGB565 i;
   i.SetFromImageRGB(img);
 
-  i.DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, 0.5f, 1, kColor, 15, false);
+  i.DrawTextCenteredHorizontally(OSState::getInstance()->GetRobotName(), CV_FONT_NORMAL, kRobotNameScale, 1, kColor, 15, false);
 
-  i.DrawTextCenteredHorizontally(std::to_string(_pin), CV_FONT_NORMAL, 0.7f, 1, kColor, FACE_DISPLAY_HEIGHT-5, false);
+  i.DrawTextCenteredHorizontally(pin, CV_FONT_NORMAL, 0.8f, 1, kColor, FACE_DISPLAY_HEIGHT-5, false);
 
   animStreamer->SetFaceImage(i, 0);
 }
@@ -117,15 +126,52 @@ void SetBLEPin(uint32_t pin)
   _pin = pin;
 }
 
-void InitConnectionFlow(AnimationStreamer* animStreamer)
+bool InitConnectionFlow(AnimationStreamer* animStreamer)
 {
   // Don't start connection flow if not packed out
   if(!Factory::GetEMR()->fields.PACKED_OUT_FLAG)
   {
-    return;
+    return true;
   }
 
-  DrawStartPairingScreen(animStreamer);
+  return DrawStartPairingScreen(animStreamer);
+}
+
+void UpdatePairingLight(bool on)
+{
+  static bool isOn = false;
+  if(!isOn && on)
+  {
+    // Start system pairing light (pulsing orange/green)
+    RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
+          .light = {
+            .onColor = 0xFFFF0000,
+            .offColor = 0x00000000,
+            .onFrames = 16,
+            .offFrames = 16,
+            .transitionOnFrames = 16,
+            .transitionOffFrames = 16,
+            .offset = 0
+          }}));
+    AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
+    isOn = on; 
+  }
+  else if(isOn && !on)
+  {
+    // Turn system pairing light off
+    RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
+          .light = {
+            .onColor = 0x00000000,
+            .offColor = 0x00000000,
+            .onFrames = 1,
+            .offFrames = 1,
+            .transitionOnFrames = 0,
+            .transitionOffFrames = 0,
+            .offset = 0
+          }}));
+    AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
+    isOn = on;
+  }
 }
 
 void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
@@ -133,6 +179,20 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
                           const AnimContext* context)
 {
   using namespace SwitchboardInterface;
+
+  // Update the pairing light
+  // Turn it on if we are on the START_PAIRING, SHOW_PRE_PIN, or SHOW_PIN screen
+  // Otherwise turn it off
+  UpdatePairingLight((msg.status == ConnectionStatus::START_PAIRING ||
+                      msg.status == ConnectionStatus::SHOW_PRE_PIN ||
+                      msg.status == ConnectionStatus::SHOW_PIN));
+
+  // Enable pairing screen if status is anything besides NONE, COUNT, and END_PAIRING
+  // Should do nothing if called multiple times with same argument such as when transitioning from
+  // START_PAIRING to SHOW_PRE_PIN
+  FaceInfoScreenManager::getInstance()->EnablePairingScreen((msg.status != ConnectionStatus::NONE &&
+                                                             msg.status != ConnectionStatus::COUNT &&
+                                                             msg.status != ConnectionStatus::END_PAIRING));
 
   switch(msg.status)
   {
@@ -143,48 +203,25 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
     break;
     case ConnectionStatus::START_PAIRING:
     {
-      FaceInfoScreenManager::getInstance()->EnablePairingScreen(true);
-
-      // Start system pairing light (pulsing orange/green)
-      RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
-        .light = {
-          .onColor = 0xFFFF0000,
-          .offColor = 0x00000000,
-          .onFrames = 16,
-          .offFrames = 16,
-          .transitionOnFrames = 16,
-          .transitionOffFrames = 16,
-          .offset = 0
-      }}));
-      AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
-      
       // Throttling square is annoying when trying to inspect the display so disable
       NativeAnkiUtilConsoleSetValueWithString("DisplayThermalThrottling", "false");
       DrawStartPairingScreen(animStreamer);
     }
     break;
+    case ConnectionStatus::SHOW_PRE_PIN:
+    {
+      DrawShowPinScreen(animStreamer, context, "######");
+    }
+    break;
     case ConnectionStatus::SHOW_PIN:
     {
-      DrawShowPinScreen(animStreamer, context);
+      DrawShowPinScreen(animStreamer, context, std::to_string(_pin));
     }
     break;
     case ConnectionStatus::SETTING_WIFI:
     {
       DrawWifiScreen(animStreamer);
-
-      // Turn off system pairing light
-      RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
-        .light = {
-          .onColor = 0x00000000,
-          .offColor = 0x00000000,
-          .onFrames = 1,
-          .offFrames = 1,
-          .transitionOnFrames = 0,
-          .transitionOffFrames = 0,
-          .offset = 0
-      }}));
-      AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
-    }
+     }
     break;
     case ConnectionStatus::UPDATING_OS:
     {
@@ -217,21 +254,6 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
         // Reenable keep face alive
         animStreamer->EnableKeepFaceAlive(true, 0);
       }
-      FaceInfoScreenManager::getInstance()->EnablePairingScreen(false);
-
-
-      // Safe guard to make sure system pairing light is turned off
-      RobotInterface::EngineToRobot m(RobotInterface::SetSystemLight({
-        .light = {
-          .onColor = 0x00000000,
-          .offColor = 0x00000000,
-          .onFrames = 1,
-          .offFrames = 1,
-          .transitionOnFrames = 0,
-          .transitionOffFrames = 0,
-          .offset = 0
-      }}));
-      AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
     }
     break;
     case ConnectionStatus::COUNT:

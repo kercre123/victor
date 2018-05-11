@@ -6,8 +6,7 @@ include(opencv)
 include(okao)
 include(flatbuffers)
 include(archive)
-include(routing_http_server)
-include(android_strip)
+include(anki_build_strip)
 include(anki_build_cxx)
 
 anki_build_cxx_library(cozmo_engine ${ANKI_SRCLIST_DIR})
@@ -20,9 +19,9 @@ set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
-if (ANDROID)
+if (VICOS)
   include(breakpad)
-  set(PLATFORM_LIBS android log GLESv2)
+  set(PLATFORM_LIBS log)
   set(PLATFORM_COMPILE_DEFS
     THF_FUNCTIONALITY=0
     VC_AUDIOCAPTURE_FUNCTIONALITY=0
@@ -33,7 +32,6 @@ elseif (MACOSX)
   set(PLATFORM_LIBS
     ${FOUNDATION}
     ${OPENCV_LIBS}
-    ${ROUTING_HTTP_LIBS}
     ${WEBOTS_LIBS}
   )
   set(PLATFORM_COMPILE_DEFS
@@ -43,6 +41,15 @@ elseif (MACOSX)
   )
 endif()
 
+if(ANKI_HAS_LIBARCHIVE)
+  list(APPEND PLATFORM_COMPILE_DEFS
+    ANKI_HAS_LIBARCHIVE=1
+  )
+else()
+  list(APPEND PLATFORM_COMPILE_DEFS
+    ANKI_HAS_LIBARCHIVE=0
+  )
+endif()
 
 target_link_libraries(cozmo_engine
   PUBLIC
@@ -82,7 +89,7 @@ target_compile_options(cozmo_engine PRIVATE
   "${PLATFORM_FLAGS}"
 )
 
-android_strip(TARGET cozmo_engine)
+anki_build_strip(TARGET cozmo_engine)
 
 target_compile_definitions(cozmo_engine
   PRIVATE
@@ -99,14 +106,15 @@ target_include_directories(cozmo_engine
   #$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/anki/cozmo/basestation/cozmoAPI>
 )
 
-if (ANDROID)
-  copy_opencv_android_libs()
-  add_dependencies(cozmo_engine
-    copy_opencv_libs
+if (VICOS)
+  # TODO: support tools on mac
+  add_subdirectory(tools)
+
+  # Placeholder install task for cozmo_engine. We will eventually transition to using
+  # install for all libs & binaries in order to assign appropriate permissions.
+  install(TARGETS cozmo_engine
+    LIBRARY DESTINATION ${CMAKE_BINARY_DIR}/dist/lib
+    ARCHIVE DESTINATION ${CMAKE_BINARY_DIR}/dist/lib
   )
 endif()
 
-if (ANDROID)
-  # TODO: support tools on mac
-  add_subdirectory(tools)
-endif(ANDROID)

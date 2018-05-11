@@ -33,7 +33,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionUserIntentPending.h"
 #include "engine/aiComponent/continuityComponent.h"
 #include "engine/components/carryingComponent.h"
-#include "engine/components/cubeLightComponent.h"
+#include "engine/components/cubes/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/progressionUnlockComponent.h"
@@ -667,6 +667,7 @@ void ICozmoBehavior::OnEnteredActivatableScopeInternal()
     strategy->SetActive(GetBEI(), true);
   }
 
+  OnBehaviorEnteredActivatableScope();
 }
 
 

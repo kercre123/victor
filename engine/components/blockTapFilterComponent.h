@@ -25,18 +25,17 @@
 #include "engine/robotComponents_fwd.h"
 #include "coretech/common/engine/objectIDs.h"
 
-
-
-
 #include <list>
 
 namespace Anki {
 namespace Cozmo {
 
 class Robot;
-struct ObjectTapped;
-struct ObjectMoved;
-struct ObjectStoppedMoving;
+namespace ExternalInterface {
+  struct ObjectTapped;
+  struct ObjectMoved;
+  struct ObjectStoppedMoving;
+}
 
 class BlockTapFilterComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
@@ -62,9 +61,10 @@ public:
   
   bool ShouldIgnoreMovementDueToDoubleTap(const ObjectID& objectID);
   
-  void HandleActiveObjectTapped(const ObjectTapped& message);
-  void HandleActiveObjectMoved(const ObjectMoved& message);
-  void HandleActiveObjectStopped(const ObjectStoppedMoving& message);
+  void HandleObjectTapped(const ExternalInterface::ObjectTapped& message);
+  
+  template<typename T>
+  void HandleMessage(const T& msg);
 
 private:
   
@@ -75,6 +75,9 @@ private:
   Robot* _robot = nullptr;
 
   Signal::SmartHandle _gameToEngineSignalHandle;
+  
+  std::list<Signal::SmartHandle> _eventHandles;
+  
   bool _enabled;
   Anki::TimeStamp_t _waitToTime;
   
@@ -92,7 +95,7 @@ private:
   };
   
   std::map<ObjectID, DoubleTapInfo> _doubleTapObjects;
-  std::list<ObjectTapped> _tapInfo;
+  std::vector<ExternalInterface::ObjectTapped> _tapInfo;
   
 #if ANKI_DEV_CHEATS
   void HandleSendTapFilterStatus(const AnkiEvent<ExternalInterface::MessageGameToEngine>& message);

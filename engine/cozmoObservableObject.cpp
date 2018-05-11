@@ -19,6 +19,8 @@ namespace Cozmo {
 // Only localize to / identify active objects within this distance
 CONSOLE_VAR_RANGED(f32, kMaxLocalizationDistance_mm, "PoseConfirmation", 250.f, 50.f, 1000.f);
 
+const FactoryID ObservableObject::InvalidFactoryID = "";
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 f32 ObservableObject::GetMaxLocalizationDistance_mm()
 {

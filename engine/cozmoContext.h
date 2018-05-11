@@ -23,10 +23,11 @@
 // ---------- BEGIN FORWARD DECLARATIONS ----------
 namespace Anki {
 namespace Util {
-  class DasTransferTask;
-  class GameLogTransferTask;
+  //class DasTransferTask;
+  //class GameLogTransferTask;
+  //class TransferQueueMgr;
   class RandomGenerator;
-  class TransferQueueMgr;
+
   class Locale;
   namespace AnkiLab {
     class AnkiLab;
@@ -96,7 +97,7 @@ public:
   RobotDataLoader*                      GetDataLoader() const { return _dataLoader.get(); }
   RobotManager*                         GetRobotManager() const { return _robotMgr.get(); }
   VizManager*                           GetVizManager() const { return _vizManager.get(); }
-  Util::TransferQueueMgr*               GetTransferQueue() const { return _transferQueueMgr.get(); }
+  //Util::TransferQueueMgr*               GetTransferQueue() const { return _transferQueueMgr.get(); }
   VoiceCommand::VoiceCommandComponent*  GetVoiceCommandComponent() const { return _voiceCommandComponent.get(); }
   CozmoExperiments*                     GetExperiments() const { return _cozmoExperiments.get(); }
   PerfMetric*                           GetPerfMetric() const { return _perfMetric.get(); }
@@ -131,9 +132,9 @@ private:
   std::unique_ptr<RobotDataLoader>                      _dataLoader;
   std::unique_ptr<RobotManager>                         _robotMgr;
   std::unique_ptr<VizManager>                           _vizManager;
-  std::unique_ptr<Util::TransferQueueMgr>               _transferQueueMgr;
-  std::unique_ptr<Util::DasTransferTask>                _dasTransferTask;
-  std::unique_ptr<Util::GameLogTransferTask>            _gameLogTransferTask;
+  //std::unique_ptr<Util::TransferQueueMgr>               _transferQueueMgr;
+  //std::unique_ptr<Util::DasTransferTask>                _dasTransferTask;
+  //std::unique_ptr<Util::GameLogTransferTask>            _gameLogTransferTask;
   std::unique_ptr<VoiceCommand::VoiceCommandComponent>  _voiceCommandComponent;
   std::unique_ptr<CozmoExperiments>                     _cozmoExperiments;
   std::unique_ptr<PerfMetric>                           _perfMetric;

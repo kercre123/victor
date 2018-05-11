@@ -57,7 +57,7 @@ public:
   void RemoveRobot(bool robotRejectedConnection);
 
   // Call Robot's Update() function
-  void UpdateRobot();
+  Result UpdateRobot();
 
   // Update robot connection state
   Result UpdateRobotConnection();

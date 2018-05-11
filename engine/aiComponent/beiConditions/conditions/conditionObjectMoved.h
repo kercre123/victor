@@ -46,9 +46,9 @@ private:
   
   typedef std::vector<ReactionObjectData>::iterator Reaction_iter;
   
-  void HandleObjectMoved(BehaviorExternalInterface& behaviorExternalInterface, const ObjectMoved& msg);
-  void HandleObjectStopped(BehaviorExternalInterface& behaviorExternalInterface, const ObjectStoppedMoving& msg);
-  void HandleObjectUpAxisChanged(BehaviorExternalInterface& behaviorExternalInterface, const ObjectUpAxisChanged& msg);
+  void HandleObjectMoved(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::ObjectMoved& msg);
+  void HandleObjectStopped(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::ObjectStoppedMoving& msg);
+  void HandleObjectUpAxisChanged(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::ObjectUpAxisChanged& msg);
   void HandleObservedObject(BehaviorExternalInterface& behaviorExternalInterface, const ExternalInterface::RobotObservedObject& msg);
   void HandleRobotDelocalized();
   Reaction_iter GetReactionaryIterator(ObjectID objectID);

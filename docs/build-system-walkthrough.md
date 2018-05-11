@@ -190,7 +190,7 @@ PRIVATE
 )
 
 # Add a post build step on Android to strip the library if necessary
-android_strip(TARGET victor_anim)
+anki_build_strip(TARGET victor_anim)
 
 # Define the preprocessor definitions for victor_anim
 target_compile_definitions(victor_anim

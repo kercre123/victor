@@ -16,8 +16,6 @@
 
 #include "coretech/common/shared/types.h"
 
-#include "util/singleton/dynamicSingleton.h"
-
 #include <vector>
 #include <functional>
 
@@ -28,25 +26,25 @@ namespace webots {
 
 namespace Anki {
 namespace Cozmo {
-  
-struct ObjectAvailable;
-namespace BlockMessages {
-  class LightCubeMessage;
+
+namespace ExternalInterface {
+  struct ObjectAvailable;
 }
+class MessageEngineToCube;
+class MessageCubeToEngine;
 
 // Alias for BLE factory ID (TODO: should be defined in CLAD)
-using BleFactoryId = int;
+using BleFactoryId = std::string;
   
-class CubeBleClient : private Util::DynamicSingleton<CubeBleClient>
+class CubeBleClient
 {
-  ANKIUTIL_FRIEND_SINGLETON(CubeBleClient);
-  
 public:
-
-  // Method to fetch singleton instance.
-  static CubeBleClient* GetInstance();
+  CubeBleClient();
+  ~CubeBleClient();
   
-  Result Update();
+  bool Init();
+  
+  bool Update();
 
 #ifdef SIMULATOR
   // Assign Webots supervisor
@@ -55,28 +53,36 @@ public:
   static void SetSupervisor(webots::Supervisor *sup);
 #endif
 
-  using ObjectAvailableCallback   = std::function<void(const ObjectAvailable&)>;
-  using LightCubeMessageCallback  = std::function<void(const BleFactoryId&, const BlockMessages::LightCubeMessage&)>;
-  using CubeConnectedCallback     = std::function<void(const BleFactoryId&)>;
-  using CubeDisconnectedCallback  = std::function<void(const BleFactoryId&)>;
+  using ObjectAvailableCallback   = std::function<void(const ExternalInterface::ObjectAvailable&)>;
+  using CubeMessageCallback       = std::function<void(const BleFactoryId&, const MessageCubeToEngine&)>;
+  using CubeConnectionCallback    = std::function<void(const BleFactoryId&, const bool connected)>;
+  using ScanFinishedCallback      = std::function<void(void)>;
   
   void RegisterObjectAvailableCallback(const ObjectAvailableCallback& callback) {
     _objectAvailableCallbacks.push_back(callback);
   }
-  void RegisterLightCubeMessageCallback(const LightCubeMessageCallback& callback) {
-    _lightCubeMessageCallbacks.push_back(callback);
+  void RegisterCubeMessageCallback(const CubeMessageCallback& callback) {
+    _cubeMessageCallbacks.push_back(callback);
   }
-
-  void RegisterCubeConnectedCallback(const CubeConnectedCallback& callback) {
-    _cubeConnectedCallbacks.push_back(callback);
+  void RegisterCubeConnectionCallback(const CubeConnectionCallback& callback) {
+    _cubeConnectionCallbacks.push_back(callback);
   }
-
-  void RegisterCubeDisconnectedCallback(const CubeDisconnectedCallback& callback) {
-    _cubeDisconnectedCallbacks.push_back(callback);
+  void RegisterScanFinishedCallback(const ScanFinishedCallback& callback) {
+    _scanFinishedCallbacks.push_back(callback);
   }
   
+  // Tells the bleClient to start scanning for cubes immediately upon connection
+  // to the anki bluetooth daemon
+  void StartScanUponConnection();
+  
+  void SetScanDuration(const float duration_sec);
+  
+  void StartScanning();
+  
+  void StopScanning();
+  
   // Send a message to the specified light cube. Returns true on success.
-  bool SendMessageToLightCube(const BleFactoryId&, const BlockMessages::LightCubeMessage&);
+  bool SendMessageToLightCube(const BleFactoryId&, const MessageEngineToCube&);
   
   // Request to connect to an advertising cube. Returns true on success.
   bool ConnectToCube(const BleFactoryId&);
@@ -89,20 +95,19 @@ public:
   
 private:
   
-  // private constructor:
-  CubeBleClient();
-  
   // callbacks for advertisement messages:
   std::vector<ObjectAvailableCallback> _objectAvailableCallbacks;
   
   // callbacks for raw light cube messages:
-  std::vector<LightCubeMessageCallback> _lightCubeMessageCallbacks;
+  std::vector<CubeMessageCallback> _cubeMessageCallbacks;
   
-  // callbacks for when a cube is connected:
-  std::vector<CubeConnectedCallback> _cubeConnectedCallbacks;
+  // callbacks for when a cube is connected/disconnected:
+  std::vector<CubeConnectionCallback> _cubeConnectionCallbacks;
   
-  // callbacks for when a cube is disconnected:
-  std::vector<CubeDisconnectedCallback> _cubeDisconnectedCallbacks;
+  // callbacks for when scanning for cubes has completed:
+  std::vector<ScanFinishedCallback> _scanFinishedCallbacks;
+  
+  bool _inited = false;
   
 }; // class CubeBleClient
   

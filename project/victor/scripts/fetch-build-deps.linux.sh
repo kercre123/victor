@@ -29,7 +29,7 @@ function check_dep()
     echo ""
     echo "sudo apt install gawk chrpath texinfo p7zip-full android-tools-fsutils"
     echo ""
-    echo "sudo apt install libsndfile-dev ruby ninja-build subversion libssl-dev nodejs"
+    echo "sudo apt install ruby ninja-build subversion libssl-dev nodejs"
     echo ""
     exit 1
 }
@@ -42,7 +42,6 @@ $GIT config --global url."git@github.com:".insteadOf https://github.com
 check_dep which python2
 check_dep which python3
 check_dep which ninja
-check_dep pkg-config sndfile
 
 echo `pwd`
 
@@ -50,8 +49,8 @@ vlog "Android SDK"
 # BRC: r3 is not supported on Linux. AndroidSDK is not required for build, but adb is currently required for deploy
 #./tools/build/tools/ankibuild/android.py --install-sdk r3
 
-vlog "Android NDK"
-./tools/build/tools/ankibuild/android.py --install-ndk r15b
+vlog "vicos-sdk"
+./tools/build/tools/ankibuild/vicos.py --install 0.9-r03
 
 vlog "CMake"
 ./tools/build/tools/ankibuild/cmake.py

@@ -188,6 +188,7 @@ void BehaviorPounceOnMotion::TransitionToInitialPounce()
   // Skip the initial pounce and go straight to search if streamlined
   if(ShouldStreamline())
   {
+    delete potentialCliffSafetyTurn;
     TransitionToInitialSearch();
   }
   else

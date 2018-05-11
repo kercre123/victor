@@ -3,7 +3,7 @@
  *
  * Author: chapados
  * Created: 02/07/2018
- * 
+ *
  * based on androidHAL_android.cpp
  * Author: Kevin Yoon
  * Created: 02/17/2017
@@ -114,7 +114,7 @@ namespace Anki {
       if (nullptr != _engineSupervisor) {
 
         // Is the step time defined in the world file >= than the robot time? It should be!
-        DEV_ASSERT(TIME_STEP >= _engineSupervisor->getBasicTimeStep(), "cameraService_mac.UnexpectedTimeStep");
+        DEV_ASSERT(ROBOT_TIME_STEP_MS >= _engineSupervisor->getBasicTimeStep(), "cameraService_mac.UnexpectedTimeStep");
 
         if (VISION_TIME_STEP % static_cast<u32>(_engineSupervisor->getBasicTimeStep()) != 0) {
           PRINT_NAMED_WARNING("cameraService_mac.InvalidVisionTimeStep",
@@ -155,7 +155,7 @@ namespace Anki {
     Result CameraService::Update()
     {
       if (nullptr != _engineSupervisor) {
-        if (_engineSupervisor->step(Cozmo::TIME_STEP) == -1) {
+        if (_engineSupervisor->step(Cozmo::ROBOT_TIME_STEP_MS) == -1) {
           return RESULT_FAIL;
         }
         // AudioUpdate();
@@ -232,9 +232,9 @@ namespace Anki {
     }
 
 
-    void CameraService::InitCamera()
+    Result CameraService::InitCamera()
     {
-      return;
+      return RESULT_OK;
     }
 
     // Starts camera frame synchronization
@@ -246,7 +246,7 @@ namespace Anki {
 
       const TimeStamp_t currentTime_ms = GetTimeStamp();
 
-      // This computation is based on Cyberbotics support's explaination for how to compute
+      // This computation is based on Cyberbotics support's explanation for how to compute
       // the actual capture time of the current available image from the simulated camera
       // *except* I seem to need the extra "- VISION_TIME_STEP" for some reason.
       // (The available frame is still one frame behind? I.e. we are just *about* to capture

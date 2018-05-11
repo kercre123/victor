@@ -1,6 +1,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <linux/spi/spidev.h>
@@ -38,7 +39,7 @@ typedef struct {
 } INIT_SCRIPT;
 
 static const INIT_SCRIPT init_scr[] = {
-  { 0x11, 1, { 0x00 }, 120}, // Sleep out
+  { 0x10, 1, { 0x00 }, 120}, // Sleep in
   { 0x2A, 4, { 0x00, RSHIFT, (LCD_FRAME_WIDTH + RSHIFT - 1) >> 8, (LCD_FRAME_WIDTH + RSHIFT - 1) & 0xFF } }, // Column address set
   { 0x2B, 4, { 0x00, 0x00, (LCD_FRAME_HEIGHT -1) >> 8, (LCD_FRAME_HEIGHT -1) & 0xFF } }, // Row address set
   { 0x36, 1, { 0x00 }, 0 }, // Memory data access control
@@ -57,11 +58,14 @@ static const INIT_SCRIPT init_scr[] = {
   { 0xE1, 14, { 0xD0, 0x11, 0x19, 0x0A, 0x09, 0x25, 0x3D, 0x35, 0x54, 0x17, 0x15, 0x12, 0x36, 0x3C }, 0 }, // Negative voltage gamma control
   { 0xE9, 3, { 0x05, 0x05, 0x01 }, 0 }, // Equalize time control
   { 0x21, 1, { 0x00 }, 0 }, // Display inversion on
-  { 0x11, 1, { 0x00 }, 120 }, // Sleep out (again?)
-  { 0x29, 1, { 0x00 }, 120 }, // Display on
   { 0 }
 };
 
+static const INIT_SCRIPT display_on_scr[] = {
+  { 0x11, 1, { 0x00 }, 120 }, // Sleep out
+  { 0x29, 1, { 0x00 }, 120 }, // Display on
+  {0}
+};
 
 
 /************* LCD SPI Interface ***************/
@@ -92,23 +96,37 @@ static void lcd_spi_transfer(int cmd, int bytes, const void* data) {
   while (bytes > 0) {
     const size_t count = bytes > MAX_TRANSFER ? MAX_TRANSFER : bytes;
 
-    write(spi_fd, tx_buf, count);
+    (void)write(spi_fd, tx_buf, count);
 
     bytes -= count;
     tx_buf += count;
   }
 }
 
+static void lcd_run_script(const INIT_SCRIPT* script)
+{
+  int idx;
+  for (idx = 0; script[idx].cmd; idx++) {
+    lcd_spi_transfer(TRUE, 1, &script[idx].cmd);
+    lcd_spi_transfer(FALSE, script[idx].data_bytes, script[idx].data);
+    milliwait(script[idx].delay_ms);
+  }
+}
+
 /************ LCD Device Interface *************/
 
-static void lcd_device_init() {
-  int idx;
-  
-  for (idx = 0; init_scr[idx].cmd; idx++) {
-    lcd_spi_transfer(TRUE, 1, &init_scr[idx].cmd);
-    lcd_spi_transfer(FALSE, init_scr[idx].data_bytes, init_scr[idx].data);
-    milliwait(init_scr[idx].delay_ms);
-  }
+static void lcd_device_init()
+{
+  // Init registers and put the display in sleep mode
+  lcd_run_script(init_scr);
+
+  // Clear lcd memory before turning display on
+  // as the contents of memory are set randomly on
+  // power on
+  lcd_clear_screen();
+
+  // Turn display on
+  lcd_run_script(display_on_scr);
 }
 
 void lcd_clear_screen(void) {
@@ -132,7 +150,6 @@ void lcd_draw_frame2(const uint16_t* frame, size_t size) {
 #define MIN(a,b) (((a)<(b))?(a):(b))
 
 static const char* BACKLIGHT_DEVICES[] = {
-  "/sys/class/leds/face-backlight/brightness",
   "/sys/class/leds/face-backlight-left/brightness",
   "/sys/class/leds/face-backlight-right/brightness"
 };
@@ -143,7 +160,7 @@ static void _led_set_brightness(const int brightness, const char* led)
   if (fd) {
     char buf[3];
     snprintf(buf,3,"%02d\n",brightness);
-    write(fd, buf, 3);
+    (void)write(fd, buf, 3);
     close(fd);
   }
 }
@@ -153,7 +170,7 @@ void lcd_set_brightness(int brightness)
   int l;
   brightness = MIN(brightness, 20);
   brightness = MAX(brightness, 0);
-  for (l=0; l<3; ++l) {
+  for (l=0; l<2; ++l) {
     _led_set_brightness(brightness, BACKLIGHT_DEVICES[l]);
   }
 }
@@ -182,8 +199,6 @@ int lcd_init(void) {
   microwait(50);
 
   lcd_device_init();
-
-  lcd_clear_screen();
 
   return 0;
 }

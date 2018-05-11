@@ -6,6 +6,8 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <ctype.h>
+#include <errno.h>
+#include <string.h>
 
 #include "core/gpio.h"
 #include "core/common.h"
@@ -67,7 +69,7 @@ GPIO gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initi
      free(gp);
      error_exit(app_DEVICE_OPEN_ERROR, "Can't create exporter %d- %s\n", errno, strerror(errno));
    }
-   write(fd, ioname, strlen(ioname));
+   (void)write(fd, ioname, strlen(ioname));
    close(fd);
 
 
@@ -115,10 +117,10 @@ void gpio_set_direction(GPIO gp, enum Gpio_Dir direction)
    snprintf(ioname, 40, "/sys/class/gpio/gpio%d/direction", gp->pin+gpio_get_base_offset());
    int fd =  open(ioname, O_WRONLY );
    if (direction == gpio_DIR_OUTPUT) {
-      write(fd, "out", 3);
+      (void)write(fd, "out", 3);
    }
    else {
-      write(fd, "in", 2);
+      (void)write(fd, "in", 2);
    }
    close(fd);
 }
@@ -130,7 +132,7 @@ void gpio_set_value(GPIO gp, enum Gpio_Level value) {
     return;
   }
   static const char* trigger[] = {"0","1"};
-  write(gp->fd, trigger[value!=0], 1);
+  (void)write(gp->fd, trigger[value!=0], 1);
 }
 
 void gpio_close(GPIO gp) {

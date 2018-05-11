@@ -58,6 +58,9 @@
 // Anonymous namespace for private declarations
 namespace {
 
+  static const int kNumTicksToShutdown = 5;
+  int _countToShutdown = -1;
+  
   // For comms with engine
   constexpr int MAX_PACKET_BUFFER_SIZE = 2048;
   u8 pktBuffer_[MAX_PACKET_BUFFER_SIZE];
@@ -65,8 +68,10 @@ namespace {
   Anki::Cozmo::AnimEngine*                   _animEngine = nullptr;
   Anki::Cozmo::AnimationStreamer*            _animStreamer = nullptr;
   Anki::Cozmo::Audio::EngineRobotAudioInput* _audioInput = nullptr;
-  const Anki::Cozmo::AnimContext*       _context = nullptr;
+  const Anki::Cozmo::AnimContext*            _context = nullptr;
 
+  bool _connectionFlowInited = false;
+  
   static void ListAnimations(ConsoleFunctionContextRef context)
   {
     context->channel->WriteLog("<html>\n");
@@ -415,6 +420,14 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
   const auto tag = msg.tag;
   switch (tag)
   {
+    case RobotInterface::RobotToEngine::Tag_prepForShutdown:
+    {
+      PRINT_NAMED_INFO("AnimProcessMessages.ProcessMessageFromRobot.Shutdown","");
+      // Need to wait a couple ticks before actually shutting down so that this message
+      // can be forwarded up to engine
+      _countToShutdown = kNumTicksToShutdown;
+    }
+    break;
     case RobotInterface::RobotToEngine::Tag_micData:
     {
       const auto& payload = msg.micData;
@@ -463,7 +476,7 @@ Result AnimProcessMessages::Init(AnimEngine* animEngine,
   _audioInput   = audioInput;
   _context      = context;
 
-  InitConnectionFlow(_animStreamer);
+  _connectionFlowInited = InitConnectionFlow(_animStreamer);
 
   return RESULT_OK;
 }
@@ -522,6 +535,24 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
 
 Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 {
+  if(_countToShutdown > 0)
+  {
+    if(--_countToShutdown == 0)
+    {
+      LOG_INFO("AnimProcessMessages.Update.Shutdown","");
+      // RESULT_SHUTDOWN will kick us out of the main update loop
+      // and cause the process to exit cleanly
+      return RESULT_SHUTDOWN;
+    }
+  }
+    
+  // Keep trying to init the connection flow until it works
+  // which will be when the robot name has been set by switchboard
+  if(!_connectionFlowInited)
+  {
+    _connectionFlowInited = InitConnectionFlow(_animStreamer);
+  }
+  
   if (!AnimComms::IsConnectedToRobot()) {
     LOG_WARNING("AnimProcessMessages.Update", "No connection to robot");
     FaultCode::DisplayFaultCode(FaultCode::NO_ROBOT_PROCESS);

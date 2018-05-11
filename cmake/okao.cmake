@@ -5,7 +5,7 @@ set(OKAO_INCLUDE_PATH "${CORETECH_EXTERNAL_DIR}/okaoVision/include")
 set(WHOLE_ARCHIVE_FLAG "")
 set(NO_WHOLE_ARCHIVE_FLAG "")
 
-if (ANDROID)
+if (VICOS)
   set(OKAO_LIB_PATH "${CORETECH_EXTERNAL_DIR}/okaoVision/lib/Android/armeabi-v7a")
   set(WHOLE_ARCHIVE_FLAG "-Wl,--whole-archive")
   set(NO_WHOLE_ARCHIVE_FLAG "-Wl,--no-whole-archive")

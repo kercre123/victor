@@ -153,15 +153,41 @@ For a more thorough description of build options, run `project/victor/build-vict
 
     The `inet addr` for `wlan0` is the robot's IP address.
 
-1. Connect to the robot over `adb` by running
+1. We no longer use adb to connect to the robot. Instead we use SSH which is more reliable. You need to do this ONE-TIME operation for each different robot you want to connect to, on the laptop you're connecting from. Run this script:
 
     ```
-    adb connect <Robot's IP address>
+    ./tools/victor-ble-cli/vic_robot_set_key.sh VICTOR_xxxxxx
     ```
 
-    You should now see the robot's IP as a connected device when you run `adb devices`.
+    where 'xxxxxx' is the bluetooth ID of the robot (as mentioned above, for example VICTOR_1a3d273d, or "VECTOR R2D2"). This script will generate an SSH key pair, install it on your laptop, and then connect to the robot and install the public key on the robot. It will also modify your `~/.ssh/config` file to add some lines that will prevent unnecessary prompts and warnings. Finally, it will show you the robot's IP address, and write that IP address to a file on your laptop.
 
-1. If the operation times out or otherwise fails, power cycle the robot and try again. Alternatively, you can connect to the robot via the BLE tool and restart `adb` on the robot. To do this, navigate to the `tools/victor-ble-cli/` directory and run `node index.js`. Then run `scan`, and when you see your robot on the list, run `connect VICTOR_xxxxxx`. Then run `restart-adb` and try the connection process again.
+1. Once that one-time step is done, all of the existing scripts (victor_start, victor_deploy, victor_log, etc.) will work as before, but without using adb.<br/><br/>You can also run a command on the robot with:
+
+    ```
+    ssh root@<robotIP> <command> <arguments>
+    ```
+
+    where 'robotIP' is the robot's IP address. You can also shell in to the robot with:
+
+    ```
+    ssh root@<robotIP>
+    ```
+
+1. Unless you're running the `ssh` command, however, you won't need to enter the robot IP address again, for the other scripts, e.g. victor_log, victor_deploy, etc. If you want to switch to another robot, first make sure the vic_robot_set_key script (above) has been run on your laptop for that robot, if you haven't done so already. Then, run
+
+    ```
+    ./project/victor/scripts/victor_set_robot_ip.sh <robotIP>
+    ```
+
+    to switch to the new robot's IP address. From that point forward the victor_log, etc. scripts will use that new IP address.
+
+1. For convenience when working with multiple robots, or if you just want to be sure you're targeting a specific robot, almost all of the commands accept a robot IP with the -s option. For example:
+
+    ```
+    victor_deploy_release -s 192.168.43.45
+    ```
+
+    will deploy the release version to the robot at 192.168.43.45.
 
 ### Deploying binaries and assets to physical robot
 

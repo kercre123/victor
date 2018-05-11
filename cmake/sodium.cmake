@@ -1,7 +1,4 @@
-if (ANDROID)
-  set(LIBSODIUM_INCLUDE_PATH "${CORETECH_EXTERNAL_DIR}/build/libsodium/android-armv7a/include")
-  set(LIBSODIUM_LIB_PATH "${CORETECH_EXTERNAL_DIR}/build/libsodium/android-armv7a/lib")
-elseif (VICOS)
+if (VICOS)
   set(LIBSODIUM_INCLUDE_PATH "${CORETECH_EXTERNAL_DIR}/build/libsodium/vicos/include")
   set(LIBSODIUM_LIB_PATH "${CORETECH_EXTERNAL_DIR}/build/libsodium/vicos/lib")
 elseif (MACOSX)

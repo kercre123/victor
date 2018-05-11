@@ -11,6 +11,7 @@ enum uint_8 ConnectionStatus
   NONE,
   
   START_PAIRING,
+  SHOW_PRE_PIN,
   SHOW_PIN,
   SETTING_WIFI,
   UPDATING_OS,

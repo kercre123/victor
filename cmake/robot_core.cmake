@@ -1,4 +1,4 @@
-if (ANDROID)
+if (VICOS)
   file(GLOB ROBOT_CORE_SRCS ${CMAKE_SOURCE_DIR}/robot/core/src/*.c)
   file(GLOB ROBOT_CORE_INCS ${CMAKE_SOURCE_DIR}/robot/core/inc/*.h)
 

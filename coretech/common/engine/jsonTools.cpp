@@ -106,7 +106,7 @@ std::string ParseString(const Json::Value& config, const char* key, const std::s
     return node.asUInt();
   }
 
-#ifndef __ANDROID__
+#if !defined(__ANDROID__) && !defined(VICOS)
   template<>
   uint32_t GetValue<uint32_t>(const Json::Value& node) {
     return node.asUInt();
