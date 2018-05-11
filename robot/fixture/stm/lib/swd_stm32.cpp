@@ -193,8 +193,10 @@ int swd_stm32_read(uint32_t flash_addr, uint8_t *out_buf, int size)
   
   if( !swd_initialized )
     THROW_RETURN( ERROR_INVALID_STATE );
-  if( !out_buf || size < 1 )
+  if( !out_buf || size < 1 ) {
+    ConsolePrintf("BAD_ARG: swd_stm32_read() out_buf=%08x size=%i\n", (uint32_t)out_buf, size);
     THROW_RETURN( ERROR_BAD_ARG );
+  }
   
   uint32_t remain = size;
   uint32_t Tstart = Timer::get();
@@ -215,8 +217,10 @@ int swd_stm32_verify(uint32_t flash_addr, const uint8_t* bin_start, const uint8_
   
   if( !swd_initialized )
     THROW_RETURN( ERROR_INVALID_STATE );
-  if( !bin_start || !bin_end || bin_end <= bin_start )
+  if( !bin_start || !bin_end || bin_end <= bin_start ) {
+    ConsolePrintf("BAD_ARG: swd_stm32_verify() start=%06x end=%06x size=%i\n", bin_start, bin_end, (int)bin_end-(int)bin_start);
     THROW_RETURN( ERROR_BAD_ARG );
+  }
   
   /*/ Unlock flash chip
   int r = 0;
@@ -302,8 +306,10 @@ int swd_stm32_flash(uint32_t flash_addr, const uint8_t* bin_start, const uint8_t
   SwdPrintf("flash write, %u bytes (%u pages) @ 0x%08x-0x%08x\n", size, CEILDIV(size,pagesize), flash_addr, flash_addr+size-1 );
   if( !swd_initialized )
     THROW_RETURN( ERROR_INVALID_STATE );
-  if( !bin_start || !bin_end || bin_end <= bin_start )
+  if( !bin_start || !bin_end || bin_end <= bin_start ) {
+    ConsolePrintf("BAD_ARG: swd_stm32_flash() start=%06x end=%06x size=%i\n", bin_start, bin_end, (int)bin_end-(int)bin_start);
     THROW_RETURN( ERROR_BAD_ARG );
+  }
   
   // For reasons I don't understand, must flash one page at a time
   {

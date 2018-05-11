@@ -300,14 +300,37 @@ static void SetSerial(void)
   __enable_irq();
 }
 
+static void BurnSerials_(void)
+{
+  //required format "burn # serials"
+  int num = -1;
+  try {
+    if( !strncmp(GetArgument(2), "serials", 7) )
+      num = strtol(GetArgument(1),0,0);
+  } catch (int e) { num = -2; }
+
+  if( num < 0 ) {
+    ConsolePrintf("invalid format: \"burn # serials\"\n");
+    return;
+  }
+  
+  ConsolePrintf("burning %i serial numbers\n", num);
+  for(int n=0; n<num; n++)
+    fixtureGetSerial();
+}
+
 extern int g_canary;
 static void GetSerialCmd(void)
 {
+  uint32_t sequence = fixtureReadSequence();
+  
   // Serial number, fixture type, build version
-  ConsolePrintf("serial,%i,%s,%i\n", 
+  ConsolePrintf("serial,%i,%s,%i,%i,%08x\n", 
     FIXTURE_SERIAL, 
     fixtureName(),
-    g_canary == 0xcab00d1e ? FIXTURE_VERSION : 0xbadc0de);    // This part is hard to explain
+    g_canary == 0xcab00d1e ? FIXTURE_VERSION : 0xbadc0de,    // This part is hard to explain
+    sequence,
+    (FIXTURE_SERIAL<<20) | sequence );
 }
 static void SetLotCode(void)
 {
@@ -483,6 +506,7 @@ static CommandFunction m_functions[] =
   {"SetMotor", SetMotor, FALSE},
   {"DUTProg", DutProgCmd_, FALSE},
   {"SetDetect", SetDetect_, FALSE},
+  {"Burn", BurnSerials_, FALSE},
   {"Reset", ConsoleReset_, FALSE},
   {"Exit", NULL, FALSE}, //processed directly - include here so it prints in 'help' list
 };

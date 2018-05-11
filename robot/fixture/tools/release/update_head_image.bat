@@ -18,6 +18,8 @@ if not exist "emmcdl" (
 )
 
 echo update head scripts and image files...
+adb shell "echo 1094400 > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq && sleep 1"
+REM adb shell "echo cpu clock $(cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq)"
 adb shell -x "mkdir -p /data/local/fixture"
 adb push headprogram /data/local/fixture/
 adb push usbserial.ko /data/local/fixture/

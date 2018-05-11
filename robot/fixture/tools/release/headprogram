@@ -1,6 +1,6 @@
 #!/bin/sh
 ESN=$(echo $1 | xargs)
-HW_VER=0001
+HW_VER=0004
 MODEL=0001
 echo headprogram esn $ESN hwvers $((HW_VER)) model $((MODEL))
 
@@ -14,6 +14,7 @@ ERROR_HEADPGM_MISSING_CERT=$((501-$ERROR_OFFSET))
 ERROR_HEADPGM_BAD_CERT=$((502-$ERROR_OFFSET))
 ERROR_HEADPGM_FAC_IMG=$((503-$ERROR_OFFSET))
 ERROR_HEADPGM_USB_DEV_NOT_FOUND=$((504-$ERROR_OFFSET))
+ERROR_HEADPGM_USB_MODE_SWITCH=$((505-$ERROR_OFFSET))
 
 cloudcert=1; helper=0
 for arg in "$@"; do
@@ -26,6 +27,7 @@ done
 # Enable USB
 mode=$(cat /sys/kernel/debug/msm_otg/mode)
 if [ "$mode" != "host" ]; then
+  echo otg mode "$mode"
 # echo cpu clock $(cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq)
   echo none > /sys/kernel/debug/msm_otg/mode
   echo host > /sys/kernel/debug/msm_otg/mode
@@ -37,7 +39,10 @@ fi
 # Reboot if USB did not switch the first time - only a reboot can fix it
 mode=$(cat /sys/kernel/debug/msm_otg/mode)
 if [ "$mode" != "host" ]; then
-  reboot
+  echo otg mode "$mode"
+  echo otg mode change failed
+  exit $ERROR_HEADPGM_USB_MODE_SWITCH
+  #reboot
 fi
 
 # Prepare factory partition image
