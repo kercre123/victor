@@ -174,3 +174,7 @@ Short name|Long name              |N/A|Description
 # Anki Profiling
 
 `#define ANKI_EMBEDDED_BENCHMARKS` to enable benchmarking within the Vision component.
+
+`#define ANKI_VISION_PROFILER` to enable profiling metrics for the Vision system. 
+
+When logged to DAS these have the prefix `robot.vision.profiler`
