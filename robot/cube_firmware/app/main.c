@@ -14,6 +14,7 @@ int main(void) {
   hal_acc_init();
 
   animation_init(); // Setup animation controller
+  return 0;
 }
 
 void deinit(void) {

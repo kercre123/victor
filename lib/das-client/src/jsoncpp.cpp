@@ -239,6 +239,7 @@ static inline void fixNumericLocaleInput(char* begin, char* end) {
 #include <set>
 #include <limits>
 
+#if !defined(snprintf)
 #if defined(_MSC_VER)
 #if !defined(WINCE) && defined(__STDC_SECURE_LIB__) && _MSC_VER >= 1500 // VC++ 9.0 and above 
 #define snprintf sprintf_s
@@ -252,6 +253,7 @@ static inline void fixNumericLocaleInput(char* begin, char* end) {
 #elif __cplusplus >= 201103L
 #if !defined(__MINGW32__) && !defined(__CYGWIN__)
 #define snprintf std::snprintf
+#endif
 #endif
 #endif
 
@@ -4134,6 +4136,7 @@ Value& Path::make(Value& root) const {
 #endif
 #endif
 
+#if !defined(snprintf)
 #if defined(_MSC_VER)
 #if !defined(WINCE) && defined(__STDC_SECURE_LIB__) && _MSC_VER >= 1500 // VC++ 9.0 and above
 #define snprintf sprintf_s
@@ -4147,6 +4150,7 @@ Value& Path::make(Value& root) const {
 #elif __cplusplus >= 201103L
 #if !defined(__MINGW32__) && !defined(__CYGWIN__)
 #define snprintf std::snprintf
+#endif
 #endif
 #endif
 
