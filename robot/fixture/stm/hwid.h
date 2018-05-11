@@ -18,6 +18,7 @@
 #define CUBEID_HWREV_DVT1       0 //early cubes didn't have hw.rev written
 #define CUBEID_HWREV_DVT2       2
 #define CUBEID_HWREV_DVT3       3
+#define CUBEID_HWREV_DVT4       4
 
 #define CUBEID_MODEL_INVALID    0 //unprogrammed/empty OTP value
 #define CUBEID_MODEL_CUBE1      1

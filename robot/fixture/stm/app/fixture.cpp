@@ -104,7 +104,7 @@ bool fixtureValidateFixmodeInfo(bool print)
 //-----------------------------------------------------------------------------
 
 //get the next # in a power-safe, non-repeating sequence from 0-0x7ffff
-static int GetSequence(void)
+static int GetSequence(bool allocate_permanently)
 {
   u32 sequence;
   u8 bit;
@@ -118,7 +118,11 @@ static int GetSequence(void)
       if (sequence > 0x7ffff)
       {
         ConsolePrintf("fixtureSequence,-1\n");
-        throw ERROR_OUT_OF_SERIALS;
+        ConsolePrintf("ERROR_OUT_OF_SERIALS\n");
+        if( !allocate_permanently )
+          return -1;
+        else
+          throw ERROR_OUT_OF_SERIALS;
       }
     }
     
@@ -133,13 +137,16 @@ static int GetSequence(void)
     sequence += bit;
   }
   
-  // Reserve this test sequence
-  FLASH_Unlock();
-  FLASH_ProgramByte(FLASH_SERIAL_BITS + (sequence >> 3), ~(1 << bit));
-  FLASH_Lock();
-  
-  ConsolePrintf("fixtureSequence,%i,%i\n", FIXTURE_SERIAL, sequence);
-  //SlowPrintf("Allocated serial: %x\n", sequence);
+  if( allocate_permanently )
+  {
+    // Reserve this test sequence
+    FLASH_Unlock();
+    FLASH_ProgramByte(FLASH_SERIAL_BITS + (sequence >> 3), ~(1 << bit));
+    FLASH_Lock();
+    
+    ConsolePrintf("fixtureSequence,%i,%i\n", FIXTURE_SERIAL, sequence);
+    //SlowPrintf("Allocated serial: %x\n", sequence);
+  }
   
   return sequence;
 }
@@ -151,6 +158,9 @@ uint32_t fixtureGetSerial(void)
     ConsolePrintf("fixture serial out of range for esn generation\n");
     throw ERROR_SERIAL_INVALID;
   }
-  return (FIXTURE_SERIAL << 20) | (GetSequence() & 0x0Fffff);
+  return (FIXTURE_SERIAL << 20) | (GetSequence(1) & 0x0Fffff);
 }
 
+int fixtureReadSequence(void) {
+  return GetSequence(0); //read only, no sequence changes or flash update
+}
