@@ -35,7 +35,7 @@
 #define SYSCON_HEADER_SIZE        16
 #define SYSCON_EVIL               0x4F4D3243 /*first word of syscon header, indicates valid app*/
 
-static const int CURRENT_HW_REV = BODYID_HWREV_DVT3;
+static const int CURRENT_HW_REV = CUBEID_HWREV_DVT4;
 
 //-----------------------------------------------------------------------------
 //                  STM Load

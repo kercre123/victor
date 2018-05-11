@@ -1,6 +1,6 @@
 #!/bin/sh
 ESN=$(echo $1 | xargs)
-HW_VER=0001
+HW_VER=0004
 MODEL=0001
 echo headprogram esn $ESN hwvers $((HW_VER)) model $((MODEL))
 
