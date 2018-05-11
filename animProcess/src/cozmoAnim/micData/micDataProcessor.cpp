@@ -325,6 +325,7 @@ void MicDataProcessor::ProcessRawAudio(TimeStamp_t timestamp,
     newMessage.selectedConfidence = directionResult.selectedConfidence;
     newMessage.activeState = directionResult.activeState;
     newMessage.latestPowerValue = directionResult.latestPowerValue;
+    newMessage.latestNoiseFloor = directionResult.latestNoiseFloor;
     std::copy(
       directionResult.confidenceList.begin(),
       directionResult.confidenceList.end(),
@@ -360,6 +361,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   // We only care about checking one channel, and since the channel data is uninterleaved when passed in here,
   // we simply give the start of the buffer as the input to run the vad detection on
   float latestPowerValue = 0.f;
+  float latestNoiseFloor = 0.f;
   int activityFlag = 0;
   {
     ANKI_CPU_PROFILE("ProcessVAD");
@@ -373,6 +375,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
                           vadConfidence,               // confidence it is okay to measure noise floor, i.e. no known activity like gear noise
                           (int16_t*)audioChunk);       // pointer to input data
     latestPowerValue = _sVadObject->AvePowerInBlock;
+    latestNoiseFloor = _sVadObject->NoiseFloor;
     if (robotIsMoving)
     {
       activityFlag = 1;
@@ -389,6 +392,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   MicDirectionData result{};
   result.activeState = activityFlag;
   result.latestPowerValue = latestPowerValue;
+  result.latestNoiseFloor = latestNoiseFloor;
   if (robotIsMoving)
   {
     result.winningDirection = result.selectedDirection = kDirectionUnknown;

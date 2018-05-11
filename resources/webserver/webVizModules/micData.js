@@ -40,6 +40,7 @@
   var first = true;
   var plotData = [];
   var mic0data = [];
+  var mic0NoiseFloor = [];
   var chart;
 
   function GetLegendLabel(label, series) {
@@ -122,10 +123,24 @@
     $(elem).append('<div id="chartContainer"></div>');
 
     $('body').on('click', '.legendLabel', function () {
-      plotData[0].lines.show = !plotData[0].lines.show;
-      chart.setData(plotData);
-      chart.setupGrid();
-      chart.draw();
+      var labelName = this.innerText;
+      var labelIdx = -1;
+      for (i=0; i < plotData.length; i++)
+      {
+        if (plotData[i].label == labelName)
+        {
+          labelIdx = i;
+          break;
+        }
+      }
+
+      if (labelIdx != -1)
+      {
+        plotData[labelIdx].lines.show = !plotData[labelIdx].lines.show;
+        chart.setData(plotData);
+        chart.setupGrid();
+        chart.draw();
+      }
     });
   };
 
@@ -196,6 +211,12 @@
                       data: mic0data,
                       lines: {show: true} };
       plotData.push( newData );
+
+      newData = { label: "Mic0 Floor (back-left)",
+                      data: mic0NoiseFloor,
+                      lines: {show: true} };
+      plotData.push( newData );
+
       chart = $.plot("#chartContainer", plotData, chartOptions);
       first = false;
     }
@@ -203,12 +224,20 @@
     // Update data used in the chart
     var newMic0Value = Math.log(parseFloat(data["latestPowerValue"]))/Math.LN10;
     mic0data.push( [data["time"], newMic0Value] );
+    
+    var newMic0FloorValue = Math.log(parseFloat(data["latestNoiseFloor"]))/Math.LN10;
+    mic0NoiseFloor.push( [data["time"], newMic0FloorValue] );
 
     // Remove old data 
     var dt = data["time"] - mic0data[0][0];
     while( dt > maxWidth_s && mic0data.length > 0 ) {
       mic0data.shift();
       dt = data["time"] - mic0data[0][0];
+    }
+    dt = data["time"] - mic0NoiseFloor[0][0];
+    while( dt > maxWidth_s && mic0NoiseFloor.length > 0 ) {
+      mic0NoiseFloor.shift();
+      dt = data["time"] - mic0NoiseFloor[0][0];
     }
 
     // fixed width data

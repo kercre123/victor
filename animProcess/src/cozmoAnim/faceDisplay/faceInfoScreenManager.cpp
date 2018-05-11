@@ -547,6 +547,7 @@ void FaceInfoScreenManager::DrawConfidenceClock(
       webData["triggerDetected"] = triggerRecognized;
       webData["delayTime"] = delayTime_ms;
       webData["latestPowerValue"] = (double)micData.latestPowerValue;
+      webData["latestNoiseFloor"] = (double)micData.latestNoiseFloor;
 
       Json::Value& directionValues = webData["directions"];
       for ( float confidence : micData.confidenceList )

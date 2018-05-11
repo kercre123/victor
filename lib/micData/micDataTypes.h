@@ -57,6 +57,7 @@ namespace MicData {
     DirectionConfidences  confidenceList{};
     int                   activeState = 0;
     float                 latestPowerValue = 0.f;
+    float                 latestNoiseFloor = 0.f;
   };
 } // namespace MicData
 } // namespace Cozmo
