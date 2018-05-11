@@ -33,7 +33,6 @@ namespace Anki {
     // forward declarations
     class BlockWorld;
     class IDockAction;
-    class ExamineProxExtentsAction;
 
     class DriveToPoseAction : public IAction
     {
@@ -76,15 +75,6 @@ namespace Anki {
       // If true and if multiple goals were provided, only the originally-selected goal will be used
       void SetMustContinueToOriginalGoal(bool mustUse) { _mustUseOriginalGoal = mustUse; }
 
-      // If shouldPlay, the robot will play planning animations while it computes a plan or replans,
-      // for any planner that doesn't return a path immediately.
-      // If !shouldPlay, the robot will plan and start driving in one fowl swoop, without any logic for planning animations.
-      // If shouldPlay && examine, then when the robot is replanning for a new obstacle, it may drive up to it and
-      // examine it (by turning left and right to see its extents with the prox sensor) before continuing.
-      // Whether or not this occurs depends on how long replanning takes, and a speedy planner will
-      // cause it to be skipped.
-      void SetShouldUsePlanningAnims(bool shouldPlay, bool examine=true) { _precompute = shouldPlay; _examine = examine; }
-
     protected:
       virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const override;
       virtual f32 GetTimeoutInSeconds() const override;
@@ -92,14 +82,8 @@ namespace Anki {
       virtual ActionResult CheckIfDone() override;
       
     private:
-      
-      ActionResult ConfigureExamineAction();
-      ActionResult HandleComputingAndFollowingPath();
-      
       bool     _isGoalSet;
       bool     _driveWithHeadDown;
-      bool     _precompute = false;
-      bool     _examine    = false;
       
       std::vector<Pose3d> _goalPoses;
       std::shared_ptr<Planning::GoalID> _selectedGoalIndex;
@@ -117,9 +101,6 @@ namespace Anki {
       bool _useObjectPose = false;
       
       bool _mustUseOriginalGoal = false;
-
-      std::unique_ptr<ExamineProxExtentsAction> _examineAction;
-      bool _examineActionRunning;
       
       int _debugPrintCtr = 0;
       

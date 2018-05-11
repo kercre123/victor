@@ -90,7 +90,7 @@ public:
   volatile bool              _stopThread            = false;                 // clean up and stop the thread (entirely)
   volatile bool              _plannerRunning        = false;                 // toggled by the planner thread when it is crunching
   volatile EPlannerStatus    _internalComputeStatus = EPlannerStatus::Error; // this is also locked by _contextMutex, due to laziness
-  volatile EPlannerErrorType _errorType             = EPlannerErrorType::PlannerFailed;
+  volatile EPlannerErrorType _errorType             = EPlannerErrorType::None;
   volatile int               _msToBlock             = 0;                     // wait this many extra milliseconds to simulate a slower planner (test only)
 };
 

@@ -127,8 +127,6 @@ public:
   // Can be used to start the planner before calling StartDrivingToPose
   Result PrecomputePath(const std::vector<Pose3d>& poses,
                         std::shared_ptr<Planning::GoalID> selectedPoseIndexPtr = {});
-  // Check if a precomputed path is ready
-  bool IsPlanReady() const;
 
   // set or clear the custom motion profile that all motion should follow. If cleared, then defaults will be
   // used, or the speed chooser will be used if enabled
@@ -184,16 +182,6 @@ public:
   // Stops planning and path following. Returns RESULT_OK if successfully aborted (this may fail, e.g., if
   // message sending to the robot fails)
   Result Abort();
-  
-  // If you called PrecomputePath, the robot will not start following the path until StartDrivingToPose
-  // is called. For replanning, the robot will automatically start following the path unless you call this
-  // with autoStart == false. Call it again with autoStart == true to start driving when replanning is finished,
-  // or now if replanning already finished
-  void SetShouldStartPath(bool autoStart);
-  
-  // If freeze == true, this caches the current robot pose and uses that for any replanning, until this
-  // is called again with freeze == false.
-  void FreezeStartingPose( bool freeze );
 
   // These should only be used for debugging / printing. Use more direct functions for checking the state of
   // this component
@@ -311,8 +299,6 @@ private:
   Robot* _robot;
   
   Signal::SmartHandle _pathEventHandle;
-  
-  std::unique_ptr<Pose3d> _frozenPose;
   
 };
 

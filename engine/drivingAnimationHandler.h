@@ -60,19 +60,11 @@ public:
     AnimationTrigger drivingStartAnim;
     AnimationTrigger drivingLoopAnim;
     AnimationTrigger drivingEndAnim;
-    AnimationTrigger planningStartAnim;
-    AnimationTrigger planningLoopAnim;
-    AnimationTrigger planningEndAnim;
   };
       
   // Sets the driving animations
   void PushDrivingAnimations(const DrivingAnimations& drivingAnimations, const std::string& lockName);
   void RemoveDrivingAnimations(const std::string& lockName);
-  
-  // Returns true if any driving animation is playing or just finished (start/loop/end/finished)
-  bool InDrivingAnimsState() const;
-  // Returns true if any planning animation is playing or just finished (start/loop/end/finished)
-  bool InPlanningAnimsState() const;
       
   // Returns true if the drivingEnd animation is currently playing
   // Calling action should return ActionResult::RUNNING as long as this is true.
@@ -81,19 +73,12 @@ public:
   // Returns true if the drivingEnd animation has finished.
   // Once this is true, action's CheckIfDone can return return a non-running ActionResult.
   bool HasFinishedDrivingEndAnim() const { return (_state == AnimState::FinishedDriving); }
-  
-  bool HasFinishedPlanningEndAnim() const { return (_state == AnimState::FinishedPlanning); }
       
   // Takes in the tag of the action that is calling this and whether or not it is suppressing track locking
   // If keepLoopingWithoutPath is false, endAnim is played automatically once no path is being followed.
   // If true, then calling action must call EndDrivingAnim.
   void Init(const u8 tracksToUnlock, const u32 tag, const bool isActionSuppressingLockingTracks,
             const bool keepLoopingWithoutPath = false);
-  
-  // start the sequence of (planningStartAnim, planningLoopAnim,...)
-  void StartPlanningAnim();
-  // finish with planningEndAnim
-  bool EndPlanningAnim();
   
   // Starts playing drivingStart or drivingLoop if drivingStart isn't specified
   void StartDrivingAnim();
@@ -111,10 +96,6 @@ private:
       
   void UpdateCurrDrivingAnimations();
   
-  void PlayPlanningStartAnim();
-  void PlayPlanningLoopAnim();
-  void PlayPlanningEndAnim();
-
   // Queues the respective driving animation
   void PlayDrivingStartAnim();
   void PlayDrivingLoopAnim();
@@ -123,10 +104,6 @@ private:
   enum class AnimState
   {
     Waiting,         // State after Init() has been called
-      PlanningStart,   // Currently playing the planning start anim
-      PlanningLoop,    // Currently playing the planning loop anim
-      PlanningEnd,     // Currently playing the planning end anim
-      FinishedPlanning,// End planning anim has finished but driving anims haven't started yet
       DrivingStart,    // Currently playing the driving start anim
       DrivingLoop,     // Currently playing the driving loop anim
       DrivingEnd,      // Currently playing the driving end anim
@@ -155,9 +132,6 @@ private:
   u32 _drivingStartAnimTag = ActionConstants::INVALID_TAG;
   u32 _drivingLoopAnimTag = ActionConstants::INVALID_TAG;
   u32 _drivingEndAnimTag = ActionConstants::INVALID_TAG;
-  u32 _planningStartAnimTag = ActionConstants::INVALID_TAG;
-  u32 _planningLoopAnimTag = ActionConstants::INVALID_TAG;
-  u32 _planningEndAnimTag = ActionConstants::INVALID_TAG;
 };
 
 }

@@ -149,7 +149,6 @@ namespace Anki {
         case RobotActionType::DRIVE_TO_FLIP_BLOCK_POSE:
         case RobotActionType::DRIVE_TO_PLACE_CARRIED_OBJECT:
         case RobotActionType::DRIVE_TO_POSE:
-        case RobotActionType::EXAMINE_PROX_EXTENTS:
         case RobotActionType::FLIP_BLOCK:
         case RobotActionType::HANG:
         case RobotActionType::MOUNT_CHARGER:
@@ -169,7 +168,6 @@ namespace Anki {
         case RobotActionType::TURN_TOWARDS_IMAGE_POINT:
         case RobotActionType::TURN_TOWARDS_LAST_FACE_POSE:
         case RobotActionType::TURN_TOWARDS_POSE:
-        case RobotActionType::TURN_UNTIL_FREE:
         case RobotActionType::UNKNOWN:
         case RobotActionType::VISUALLY_VERIFY_FACE:
         case RobotActionType::VISUALLY_VERIFY_NO_OBJECT_AT_POSE:

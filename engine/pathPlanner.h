@@ -41,6 +41,7 @@ enum class EPlannerStatus {
 };
   
 enum class EPlannerErrorType {
+  None=0,
   PlannerFailed,
   TooFarFromPlan,
   InvalidAppendant

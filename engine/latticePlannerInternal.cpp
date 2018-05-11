@@ -155,6 +155,7 @@ LatticePlannerInternal::~LatticePlannerInternal()
 void LatticePlannerInternal::DoPlanning()
 {
   _internalComputeStatus = EPlannerStatus::Running;
+  _errorType             = EPlannerErrorType::None;
 
   if( LATTICE_PLANNER_THREAD_DEBUG ) {
     PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "DoPlanning: running replan...");

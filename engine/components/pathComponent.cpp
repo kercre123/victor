@@ -391,7 +391,6 @@ void PathComponent::UpdateDependent(const RobotCompMap& dependentComps)
   const bool tooFarFromReplanStart = _waitingToMatchReplanOrigin
                                      && _hasStoppedBeforeExecuting
                                      && (_selectedPathPlanner != nullptr)
-                                     && (_selectedPathPlanner->CheckPlanningStatus() == EPlannerStatus::Error)
                                      && (_selectedPathPlanner->GetErrorType() == EPlannerErrorType::TooFarFromPlan)
                                      && (_driveToPoseStatus == ERobotDriveToPoseStatus::ComputingPath);
   if( (_driveToPoseStatus == ERobotDriveToPoseStatus::FollowingPath) || tooFarFromReplanStart ) {
@@ -425,8 +424,7 @@ void PathComponent::HandlePossibleOriginChanges()
     return;
   }
   
-  const bool tooFar __attribute((unused)) = (_selectedPathPlanner->CheckPlanningStatus() == EPlannerStatus::Error)
-                                            && (_selectedPathPlanner->GetErrorType() == EPlannerErrorType::TooFarFromPlan);
+  const bool tooFar __attribute((unused)) = (_selectedPathPlanner->GetErrorType() == EPlannerErrorType::TooFarFromPlan);
   DEV_ASSERT( (_driveToPoseStatus == ERobotDriveToPoseStatus::FollowingPath)
              || ((_driveToPoseStatus == ERobotDriveToPoseStatus::ComputingPath) && tooFar),
              "PathComponent.Update.FollowingStateMismatch");
@@ -606,7 +604,6 @@ void PathComponent::TryCompletingPath()
   // start following the path. In the latter case, set a flag so that we can retry picking up this
   // path up until reaching the end of it
   if( (newPath.GetNumSegments() == 0)
-      && (_selectedPathPlanner->CheckPlanningStatus() == EPlannerStatus::Error)
       && (_selectedPathPlanner->GetErrorType() == EPlannerErrorType::TooFarFromPlan) )
   {
     if( wasReplanning ) {
@@ -843,9 +840,6 @@ Result PathComponent::ConfigureAndStartPlanner(const std::vector<Pose3d>& poses,
       Abort();
     } else {
       // it's already executing this plan.
-      if( !_plannerActive && IsPlanReady() && _startFollowingPath ) {
-        TryCompletingPath();
-      }
       return RESULT_OK;
     }
   }
@@ -945,8 +939,7 @@ void PathComponent::RestartPlannerIfNeeded()
     return;
   }
   
-  const bool tooFar __attribute((unused)) = (_selectedPathPlanner->CheckPlanningStatus() == EPlannerStatus::Error)
-                                            && (_selectedPathPlanner->GetErrorType() == EPlannerErrorType::TooFarFromPlan);
+  const bool tooFar __attribute((unused)) = (_selectedPathPlanner->GetErrorType() == EPlannerErrorType::TooFarFromPlan);
   DEV_ASSERT((_driveToPoseStatus == ERobotDriveToPoseStatus::FollowingPath)
              || ((_driveToPoseStatus == ERobotDriveToPoseStatus::ComputingPath) && tooFar),
              "PathComponent.RestartPlannerIfNeeded.WrongState");
@@ -956,9 +949,8 @@ void PathComponent::RestartPlannerIfNeeded()
     return;
   }
 
-  const auto& startPose = (_frozenPose == nullptr || _frozenPose->IsNull()) ? _robot->GetDriveCenterPose() : *_frozenPose;
   const bool forceReplan = false;
-  switch( _selectedPathPlanner->ComputeNewPathIfNeeded( startPose, forceReplan, _replanningCanChangeGoal ) ) {
+  switch( _selectedPathPlanner->ComputeNewPathIfNeeded( _robot->GetDriveCenterPose(), forceReplan, _replanningCanChangeGoal ) ) {
 
     case EComputePathStatus::Error:
     {
@@ -1050,15 +1042,6 @@ Result PathComponent::TrimRobotPathToLength( uint8_t length )
   }
   
   return result;
-}
-
-bool PathComponent::IsPlanReady() const
-{
-  bool ready = false;
-  if( _selectedPathPlanner != nullptr ) {
-    ready = (_selectedPathPlanner->CheckPlanningStatus() == EPlannerStatus::CompleteWithPlan);
-  }
-  return ready;
 }
 
 bool PathComponent::IsActive() const
@@ -1212,24 +1195,6 @@ void PathComponent::SetDriveToPoseStatus(ERobotDriveToPoseStatus newValue)
                   ERobotDriveToPoseStatusToString(newValue));
 
     _driveToPoseStatus = newValue;
-  }
-}
-  
-void PathComponent::FreezeStartingPose( bool freeze )
-{
-  if( freeze ) {
-    _frozenPose.reset( new Pose3d{_robot->GetDriveCenterPose()} );
-  } else {
-    _frozenPose.reset();
-  }
-}
-  
-void PathComponent::SetShouldStartPath(bool autoStart)
-{
-  const bool needsRestarting = (autoStart && !_startFollowingPath && IsPlanReady() && HasPathToFollow());
-  _startFollowingPath = autoStart;
-  if( needsRestarting ) {
-    TryCompletingPath();
   }
 }
 

@@ -97,8 +97,9 @@ EPlannerStatus IPathPlanner::CheckPlanningStatus() const
   
 EPlannerErrorType IPathPlanner::GetErrorType() const
 {
-  DEV_ASSERT( CheckPlanningStatus() == EPlannerStatus::Error, "IPathPlanner.GetErrorType.NoError" );
-  return EPlannerErrorType::PlannerFailed;
+  return (CheckPlanningStatus() == EPlannerStatus::Error)
+         ? EPlannerErrorType::PlannerFailed // generic
+         : EPlannerErrorType::None;
 }
 
 bool IPathPlanner::GetCompletePath(const Pose3d& currentRobotPose,
