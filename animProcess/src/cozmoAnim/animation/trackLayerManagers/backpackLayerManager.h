@@ -28,7 +28,6 @@ public:
   
   BackpackLayerManager(const Util::RandomGenerator& rng);
   
-  // TODO: VIC-447: Restore glitching
   // Generates a track of all keyframes necessary for glitchy backpack lights
   void GenerateGlitchLights(Animations::Track<BackpackLightsKeyFrame>& track) const;
   

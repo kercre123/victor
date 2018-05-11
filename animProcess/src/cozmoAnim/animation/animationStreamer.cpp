@@ -1293,12 +1293,6 @@ namespace Cozmo {
                                               layeredKeyFrames,
                                               false);
       
-      // If we have audio keyframe to play
-      if(layeredKeyFrames.haveAudioKeyFrame)
-      {
-        _animAudioClient->PlayAudioKeyFrame( layeredKeyFrames.audioKeyFrame, _context->GetRandom() );
-      }
-      
       // If we have backpack keyframes to send
       if(layeredKeyFrames.haveBackpackKeyFrame)
       {
@@ -1339,6 +1333,7 @@ namespace Cozmo {
     
     // Grab references to some of the tracks
     // Some tracks are managed by the TrackLayerComponent
+    auto & robotAudioTrack  = anim->GetTrack<RobotAudioKeyFrame>();
     auto & headTrack        = anim->GetTrack<HeadAngleKeyFrame>();
     auto & liftTrack        = anim->GetTrack<LiftHeightKeyFrame>();
     auto & bodyTrack        = anim->GetTrack<BodyMotionKeyFrame>();
@@ -1351,6 +1346,15 @@ namespace Cozmo {
     if(!_startOfAnimationSent) {
       SendStartOfAnimation();
       _animAudioClient->InitAnimation();
+    }
+    
+    // Is it time to play robot audio?
+    // TODO: Do it this way or with GetCurrentStreamingMessage() like all the other tracks?
+    if (robotAudioTrack.HasFramesLeft() &&
+        robotAudioTrack.GetCurrentKeyFrame().IsTimeToPlay(_startTime_ms, currTime_ms))
+    {
+      _animAudioClient->PlayAudioKeyFrame( robotAudioTrack.GetCurrentKeyFrame(), _context->GetRandom() );
+      robotAudioTrack.MoveToNextKeyFrame();
     }
 
     // Send keyframes at appropriates times
@@ -1495,11 +1499,6 @@ namespace Cozmo {
         if (SendIfTrackUnlocked(layeredKeyFrames.backpackKeyFrame.GetStreamMessage(), AnimTrackFlag::BACKPACK_LIGHTS_TRACK)) {
           EnableBackpackAnimationLayer(true);
         }
-      }
-      
-      if(layeredKeyFrames.haveAudioKeyFrame)
-      {
-        _animAudioClient->PlayAudioKeyFrame( layeredKeyFrames.audioKeyFrame, _context->GetRandom() );
       }
       
       if(SendIfTrackUnlocked(bodyTrack.GetCurrentStreamingMessage(_startTime_ms, _streamingTime_ms), AnimTrackFlag::BODY_TRACK)) {
@@ -1669,6 +1668,7 @@ namespace Cozmo {
       RobotInterface::SendAnimToEngine(msg);
       _numTicsToSendAnimState = kAnimStateReportingPeriod_tics;
     }
+
 
     return lastResult;
   } // AnimationStreamer::Update()

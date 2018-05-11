@@ -4,7 +4,6 @@
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/matrix.h"
 #include "cannedAnimLib/proceduralFace/proceduralFace.h"
-#include "cannedAnimLib/proceduralFace/proceduralFaceModifierTypes.h"
 #include "coretech/vision/engine/image.h"
 
 namespace Anki {
@@ -78,7 +77,7 @@ namespace Cozmo {
     // indicates there are no more blink frames and the face is back in its
     // original state. The output "offset" indicates the desired timing since
     // the previous state.
-    static bool GetNextBlinkFrame(ProceduralFace& faceData, BlinkState& blinkState, TimeStamp_t& offset);
+    static bool GetNextBlinkFrame(ProceduralFace& faceData, TimeStamp_t& offset);
     
     // Actually draw the face with the current parameters
     static void DrawFace(const ProceduralFace& faceData, const Util::RandomGenerator& rng, Vision::ImageRGB565& output);

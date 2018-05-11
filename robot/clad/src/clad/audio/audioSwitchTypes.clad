@@ -157,13 +157,11 @@ enum uint_32 Robot_Vic_Mood_Switch
 {
   Angry = 1206605712,
   Curious = 620622945,
-  Effort = 2445358259,
   Excited = 2633337909,
   Happy = 1427264549,
   Invalid = 0,
   Neutral = 670611050,
   Sad = 443572635,
-  Surprised = 2662801688,
 }
 
 enum uint_32 Robot_Vic_Mvmt_Size
@@ -172,15 +170,6 @@ enum uint_32 Robot_Vic_Mvmt_Size
   Robot_Vic_Mvmt_Long = 3071588350,
   Robot_Vic_Mvmt_Micro = 414260672,
   Robot_Vic_Mvmt_Short = 3300471426,
-}
-
-enum uint_32 Robot_Vic_Scrn_Procedural
-{
-  Blink = 3379926649,
-  Invalid = 0,
-  Shift_Long = 3156794696,
-  Shift_Short = 3265274760,
-  Squint = 1347280069,
 }
 
 enum uint_32 Robot_Vic_Stim_Switch
@@ -231,7 +220,6 @@ enum uint_32 SwitchGroupType
   Robot_Vic_Lift_Direction = 3690255634,
   Robot_Vic_Mood_Switch = 1492705913,
   Robot_Vic_Mvmt_Size = 1553011127,
-  Robot_Vic_Scrn_Procedural = 612876373,
   Robot_Vic_Stim_Switch = 2087220263,
   Robot_Vic_Tread_Drive = 4283612440,
   Robot_Vic_Tread_Speed = 724346585,

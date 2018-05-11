@@ -17,14 +17,13 @@
 #ifndef __Anki_Cozmo_TrackLayerComponent_H__
 #define __Anki_Cozmo_TrackLayerComponent_H__
 
-#include "cannedAnimLib/cannedAnims/animation.h"
-#include "clad/types/keepFaceAliveParameters.h"
 #include "coretech/common/shared/types.h"
-#include <functional>
-#include <map>
-#include <memory>
-#include <vector>
 
+#include "cannedAnimLib/cannedAnims/animation.h"
+
+#include "clad/types/keepFaceAliveParameters.h"
+
+#include <memory>
 
 namespace Anki {
 namespace Cozmo {
@@ -51,7 +50,6 @@ public:
     bool haveFaceKeyFrame = false;
     ProceduralFaceKeyFrame faceKeyFrame;
   };
-  
   
   TrackLayerComponent(const AnimContext* context);
   ~TrackLayerComponent();
@@ -82,10 +80,10 @@ public:
   // Call this when KeepFaceAlive timing parameters have changed.
   void ResetKeepFaceAliveTimers();
   
-  // Returns true if any of the layerManagers have layers to send
-  bool HaveLayersToSend() const;
+  // Make Cozmo blink
+  void AddBlink();
   
-  // Make Victor squint (will continue to squint until removed)
+  // Make Cozmo squint (will continue to squint until removed)
   void AddSquint(const std::string& name, f32 squintScaleX, f32 squintScaleY, f32 upperLidAngle);
 
   // Removes specified squint after duration_ms has passed
@@ -110,48 +108,13 @@ public:
   // Make Cozmo glitch
   void AddGlitch(f32 glitchDegree);
   
+  // Returns true if any of the layerManagers have layers to send
+  bool HaveLayersToSend() const;
+  
   u32 GetMaxBlinkSpacingTimeForScreenProtection_ms() const;
   
 private:
-  
-  // The KeepFaceAlive system consists of multiple Modifiers applied to the face by the
-  // AnimationStreamer when no animation is controlling the face -- to keep the robot
-  // looking "alive". For example, blinks are one Modifier, and eye darts are another. Multiple
-  // Modifiers exist on separate layers and can be run at the same time. A priority flag
-  // could be added in the future to handle more complicated cases.
-  
-  struct KeepAliveModifier {
-    using ParameterMap = std::map<KeepFaceAliveParameter,f32>;
-    using ActivityPerformFunc = std::function<bool(const ParameterMap& parameterMap)>;
-    using ActivityGetNextPerformanceTimeFunc = std::function<s32(const ParameterMap& parameterMap)>;
-    std::string name;
-    ActivityPerformFunc performFunc = nullptr;
-    ActivityGetNextPerformanceTimeFunc getNextPerformanceTimeFunc = nullptr;
-    bool hasFaceLayers = false; // If false, we need to use idle face layers
-    s32 nextPerformanceTime_ms = 0;
-    KeepAliveModifier(const std::string& name,
-                      ActivityPerformFunc performFunc,
-                      ActivityGetNextPerformanceTimeFunc getNextPerformanceTimeFunc,
-                      bool hasFaceLayers = false)
-    : name(name)
-    , performFunc(performFunc)
-    , getNextPerformanceTimeFunc(getNextPerformanceTimeFunc)
-    , hasFaceLayers(hasFaceLayers) {}
-    
-    void UpdateNextPerformanceTime(const ParameterMap& parameterMap)
-    { nextPerformanceTime_ms = getNextPerformanceTimeFunc(parameterMap); }
-  };
-  
-  std::unique_ptr<AudioLayerManager>    _audioLayerManager;
-  std::unique_ptr<BackpackLayerManager> _backpackLayerManager;
-  std::unique_ptr<FaceLayerManager>     _faceLayerManager;
-  std::unique_ptr<ProceduralFace>       _lastProceduralFace;
-  std::vector<KeepAliveModifier>        _keepAliveModifiers;
-  
-  // Setup and add keep face alive activites to _keepAliveActivities vector
-  void SetupKeepFaceAliveActivities();
-  
-  // Handle track layer
+
   void ApplyAudioLayersToAnim(Animation* anim,
                               TimeStamp_t startTime_ms,
                               TimeStamp_t streamTime_ms,
@@ -168,6 +131,11 @@ private:
                              LayeredKeyFrames& layeredKeyFrames,
                              bool storeFace);
   
+  std::unique_ptr<AudioLayerManager>    _audioLayerManager;
+  std::unique_ptr<BackpackLayerManager> _backpackLayerManager;
+  std::unique_ptr<FaceLayerManager>     _faceLayerManager;
+  
+  std::unique_ptr<ProceduralFace> _lastProceduralFace;
 };
   
 }

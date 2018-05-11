@@ -13,13 +13,10 @@
 #ifndef __Anki_Cozmo_AudioLayerManager_H__
 #define __Anki_Cozmo_AudioLayerManager_H__
 
-#include "cannedAnimLib/baseTypes/track.h"
-#include "cannedAnimLib/cannedAnims/animation.h"
-#include "cannedAnimLib/proceduralFace/proceduralFaceModifierTypes.h"
 #include "coretech/common/shared/types.h"
+#include "cannedAnimLib/cannedAnims/animation.h"
 #include "cozmoAnim/animation/trackLayerManagers/iTrackLayerManager.h"
-#include <string>
-
+#include "cannedAnimLib/baseTypes/track.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -30,15 +27,6 @@ public:
   
   AudioLayerManager(const Util::RandomGenerator& rng);
   
-  // Add Audio Keyframes for Eye Blink
-  Result AddEyeBlinkToAudioTrack(const std::string& layerName, const BlinkEventList& eventList);
-  // Add Audio Keyframes for Eye Dart
-  Result AddEyeDartToAudioTrack(const std::string& layerName, TimeStamp_t interpolationTime_ms);
-  // Add Audio keyframes for Eye Squint
-  Result AddEyeSquintToAudioTrack(const std::string& layerName);
-  
-  
-  // TODO: VIC-447: Restore glitching
   // Generates a track of all audio "keyframes" necessary for creating audio glitch sounds
   // Needs to know how many keyframes to generate so that the audio matches with other
   // animation tracks

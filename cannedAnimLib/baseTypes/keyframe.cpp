@@ -618,15 +618,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       _audioReferences.push_back( std::move(audioRef) );
       return RESULT_OK;
     }
-    
-    void RobotAudioKeyFrame::MergeKeyFrame(RobotAudioKeyFrame& otherFrame)
-    {
-      _audioReferences.insert(_audioReferences.end(),
-                              std::make_move_iterator(otherFrame._audioReferences.begin()),
-                              std::make_move_iterator(otherFrame._audioReferences.end()));
-      // Remove junk
-      otherFrame._audioReferences.clear();
-    }
 
     Result RobotAudioKeyFrame::DefineFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe, const std::string& animNameDebug)
     {
