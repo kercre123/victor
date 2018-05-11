@@ -20,7 +20,7 @@
 #include "timer.h"
 
 #define TESTCUBE_DEBUG 1
-static const int CURRENT_HW_REV = CUBEID_HWREV_DVT3;
+static const int CURRENT_HW_REV = CUBEID_HWREV_DVT4;
 
 //generate signature for the cube bootloader binary
 uint32_t cubebootSignature(bool dbg_print, int *out_cubeboot_size)
@@ -498,16 +498,10 @@ void CubeBootDebug(void)
 
 static void CubeFlexFlowReport(void)
 {
-  char b[80]; const int bz = sizeof(b);
-  snformat(b,bz,"<flex> ESN %08x HWRev %u Model %u\n", cubeid.esn, cubeid.hwrev, cubeid.model);
-  ConsoleWrite(b);
-  FLEXFLOW::write(b);
-  
   int bootSize;
   uint32_t crc = cubebootSignature(0,&bootSize);
-  snformat(b,bz,"<flex> BootSize %i CRC %08x\n", bootSize, crc);
-  ConsoleWrite(b);
-  FLEXFLOW::write(b);
+  FLEXFLOW::printf("<flex> ESN %08x HWRev %u Model %u </flex>\n", cubeid.esn, cubeid.hwrev, cubeid.model);
+  FLEXFLOW::printf("<flex> BootSize %i CRC %08x </flex>\n", bootSize, crc);
 }
 
 TestFunction* TestCubeFccGetTests(void) {

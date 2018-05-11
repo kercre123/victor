@@ -4,6 +4,13 @@
 #include "portable.h"
 #include "timer.h"
 
+#define BOARD_DEBUG 0
+
+#if BOARD_DEBUG > 0
+#warning "BOARD_DEBUG"
+#include "console.h"
+#endif
+
 namespace Board
 {
   static board_rev_t m_board_revision = BOARD_REV_INVALID;
@@ -12,7 +19,7 @@ namespace Board
   //                  Init
   //-----------------------------------------------------------------------------
   
-  enum pinstate_e { HIGH, LOW, Z };
+  enum pinstate_e { HIGH = '1', LOW = '0', Z = 'Z', CAP2GND = 'C' };
   static pinstate_e test_pin_state_(GPIO_TypeDef* GPIOx, uint32_t pin)
   {
     uint16_t GPIO_Pin = (1 << pin);
@@ -21,25 +28,36 @@ namespace Board
     GPIO_StructInit( &GPIO_InitStructure ); //set struct defaults
     GPIO_InitStructure.GPIO_Pin = GPIO_Pin;
     
-    //test value with internal pull-up
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
+    //initial state, pull down & discharge
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
     GPIO_Init(GPIOx, &GPIO_InitStructure);
-    Timer::wait(100);
-    u8 pu_val = GPIO_ReadInputDataBit(GPIOx, GPIO_Pin);
+    Timer::wait(1000);
+    
+    //flip on the internal pull-up, measure rise time (if it rises) and final pin state
+    //GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP
+    //GPIO_Init(GPIOx, &GPIO_InitStructure);
+    const int ctr_max = 2000; //100us @ ~50ns loop time
+    int ctr=0, read=0;
+    GPIOx->PUPDR = (GPIOx->PUPDR & ~(GPIO_PUPDR_PUPDR0<<(pin*2))) | ((GPIO_PuPd_UP)<<(pin*2));
+    do {
+      read = (GPIOx->IDR & GPIO_Pin) > 0; //GPIO_ReadInputDataBit(GPIOx, GPIO_Pin);
+    } while( !read && ++ctr < ctr_max );
+    int pu_val = read; //final pin value
+    int pu_ctr = ctr;  //rise time
     
     //test value with internal pull-down
     GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_DOWN;
     GPIO_Init(GPIOx, &GPIO_InitStructure);
     Timer::wait(100);
-    u8 pd_val = GPIO_ReadInputDataBit(GPIOx, GPIO_Pin);
+    int pd_val = GPIO_ReadInputDataBit(GPIOx, GPIO_Pin);
     
     pinstate_e state;
     if( !pu_val && !pd_val )    //pulled low externally
       state = LOW;
     else if( pu_val && pd_val ) //pulled high exeternally
       state = HIGH;
-    else if( pu_val && !pd_val ) //floating
-      state = Z;
+    else if( pu_val && !pd_val ) //floating or capacitor to gnd
+      state = pu_ctr > 2 ? CAP2GND : Z;
     else //if( !pu_val && pd_val ) //bizarro world?
       assert( false );
     
@@ -48,6 +66,10 @@ namespace Board
       GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
       GPIO_Init(GPIOB, &GPIO_InitStructure);
     }
+    
+    #if BOARD_DEBUG > 0
+    ConsolePrintf("test_pin_state_(%i)=%c : up/dn=%i/%i upctr=%i\n", pin, (char)state, pu_val, pd_val, pu_ctr );
+    #endif
     
     return state;
   }
@@ -58,6 +80,10 @@ namespace Board
     pinstate_e board_id1 = test_pin_state_( PC14_BRD_REV1::bank, PC14_BRD_REV1::pin );
     pinstate_e board_id2 = test_pin_state_( PC15_BRD_REV2::bank, PC15_BRD_REV2::pin );
     
+    #if BOARD_DEBUG > 0
+    ConsolePrintf("BOARD REVISION DETECT BITS: <%c%c%c>\n", (char)board_id2, (char)board_id1, (char)board_id0);
+    #endif
+    
     //ambiguity confuses and infuriates us! Ahhh!
     if( board_id0 == Z || board_id1 == Z || board_id2 == Z )
       return BOARD_REV_INVALID;
@@ -67,6 +93,9 @@ namespace Board
     
     if( board_id0 == HIGH && board_id1 == LOW && board_id2 == LOW )
       return BOARD_REV_2_0;
+    
+    if( board_id0 == HIGH && board_id1 == CAP2GND && board_id2 == CAP2GND )
+      return BOARD_REV_A;
     
     return BOARD_REV_FUTURE; //time travel is possible
   }
@@ -180,7 +209,8 @@ namespace Board
     switch( revision() ) {
       case BOARD_REV_1_0:       return (char*)"1.0"; //break;
       case BOARD_REV_2_0:       return (char*)"2.0"; //break;
-      default:                  return (char*)"?.?"; //break;
+      case BOARD_REV_A:         return (char*)"A";   //break;
+      default:                  return (char*)"?";   //break;
     }
   }
 

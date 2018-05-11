@@ -35,7 +35,7 @@
 #define SYSCON_HEADER_SIZE        16
 #define SYSCON_EVIL               0x4F4D3243 /*first word of syscon header, indicates valid app*/
 
-static const int CURRENT_HW_REV = BODYID_HWREV_DVT3;
+static const int CURRENT_HW_REV = CUBEID_HWREV_DVT4;
 
 //-----------------------------------------------------------------------------
 //                  STM Load
@@ -77,8 +77,10 @@ static void mcu_flash_program_(uint32_t flash_addr, const uint8_t *bin, const ui
   mcu_swd_init_();
   
   int size = binEnd - bin;
-  if( size < 1 )
+  if( size < 1 ) {
+    ConsolePrintf("BAD_ARG: mcu_flash_program_() size=%i\n", size );
     throw ERROR_BAD_ARG;
+  }
   
   ConsolePrintf("load %s: %u kB\n", name?name:"program", CEILDIV(size,1024));
   try { swd_stm32_flash(flash_addr, bin, binEnd, verify); }
@@ -299,10 +301,7 @@ static void BodyBootcheckProductionFirmware(void)
 
 static void BodyFlexFlowReport(void)
 {
-  char b[80]; const int bz = sizeof(b);
-  snformat(b,bz,"<flex> ESN %08x HwRev %u Model %u\n", bodyid.esn, bodyid.hwrev, bodyid.model);
-  ConsoleWrite(b);
-  FLEXFLOW::write(b);
+  FLEXFLOW::printf("<flex> ESN %08x HwRev %u Model %u </flex>\n", bodyid.esn, bodyid.hwrev, bodyid.model);
 }
 
 static void BodyChargeContactElectricalDebug(void)

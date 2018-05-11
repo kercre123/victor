@@ -77,6 +77,7 @@ TestFunction* fixtureGetTests(void); //gets tests for the current fixmode
 int           fixtureGetTestCount(void); //gets the # of test functions for the current fixmode
 bool          fixtureValidateFixmodeInfo(bool print=0); //dev tool - validate const info array. print=1 -> print the array to console
 uint32_t      fixtureGetSerial(void); // Get a serial number for a device in the normal 12.20 fixture.sequence format
+int           fixtureReadSequence(void); //read the current sequence #. DOES NOT make any sequence changes. reporting API only.
 #endif
 
 //Init data for g_fixmode_info[] - keep all mode info organized in one file!
@@ -181,17 +182,21 @@ typedef int error_t;
 #define ERROR_MOTOR_LIFT_RANGE            331 // Lift can't reach full range (bad encoder/mechanical blockage)
 #define ERROR_MOTOR_LIFT_BACKWARD         332 // Lift is wired backward
 #define ERROR_MOTOR_LIFT_NOSTOP           333 // Lift does not hit stop (bad encoder/missing lift arm)
+#define ERROR_MOTOR_LIFT_SPEED            334 // Lift moving too slowly (sticky). check obstructions & gearbox
 //#define ERROR_MOTOR_LIFT_JAM            334 // Jamming test failed on lift motor
 
 #define ERROR_MOTOR_HEAD                  340 // Problem driving head motor
 #define ERROR_MOTOR_HEAD_RANGE            341 // Head can't reach full range (bad encoder/mechanical blockage)
 #define ERROR_MOTOR_HEAD_BACKWARD         342 // Head is wired backward
 #define ERROR_MOTOR_HEAD_NOSTOP           343 // Head does not hit stop (bad encoder/missing head arm)
+#define ERROR_MOTOR_HEAD_SPEED            344 // Head moving too slowly (sticky). check obstructions & gearbox
 //#define ERROR_MOTOR_HEAD_SLOW_RANGE     345 // Head can't reach full range when run at low voltage
 //#define ERROR_MOTOR_HEAD_JAM            346 // Jamming test failed on head motor
 
 //<export heading> Robot Errors
 #define ERROR_ROBOT_TEST_SEQUENCE         370 // This test cannot run until all previous tests have passed
+#define ERROR_ROBOT_PACKED_OUT            371 // test or function is locked because the robot is packed out
+#define ERROR_ROBOT_MISSING_LOGFILE       372 // expected logfile not found on this robot
 
 //<export heading> Testport Errors - charge contact communications (BODY ROBOT PACKOUT)
 #define ERROR_TESTPORT_CMD_TIMEOUT        400 //timeout waiting for response to a command
@@ -225,8 +230,7 @@ typedef int error_t;
 #define ERROR_HEADPGM_BAD_CERT            502 // detect bad,corrupt cloud certificate file
 #define ERROR_HEADPGM_FAC_IMG             503 // error provisioning factory partition image
 #define ERROR_HEADPGM_USB_DEV_NOT_FOUND   504 // no valid DUT detected on USB - check power and wiring
-//#define ERROR_HEAD_RADIO_SYNC           510 // Can't sync with radio
-//#define ERROR_HEAD_SPEAKER              520 // Speaker not connected/damaged
+#define ERROR_HEADPGM_USB_MODE_SWITCH     505 // fixture usb driver error - failed to enter otg host mode - POWER CYCLE FIXTURE
 #define ERROR_HEADPGM_RANGE_END           520 // RANGE CHECK FOR HEADPGM ERRORS, do not throw this!
 
 //<export heading> Body Errors
@@ -257,16 +261,9 @@ typedef int error_t;
 
 //<export heading> Backpack Errors
 #define ERROR_BACKP_LED                   650 // Backpack LED miswired or bad LED
-//#define ERROR_ENCODER_FAULT             651 // Encoder wire/solder broken
-//#define ERROR_MOTOR_BACKWARD            652 // Motor or encoder is wired backward
-//#define ERROR_MOTOR_SLOW                653 // Motor cannot turn easily (too tight or debris inside)
-//#define ERROR_BACKP_BTN_THRESH          654 // Button voltage detected outside digital thresholds
-//#define ERROR_BACKP_BTN_PRESS_TIMEOUT   655 // Timeout waiting for backpack button to be pressed
-//#define ERROR_BACKP_BTN_RELEASE_TIMEOUT 656 // Timeout waiting for backpack button to be released
-//#define ERROR_MOTOR_FAST                664 // Encoder does not meet Anki spec (can't count every tick at speed)
-//#define ERROR_ENCODER_UNDERVOLT         665 // Encoder does not meet Anki spec (can't meet minimum voltage)
-//#define ERROR_ENCODER_SPEED_FAULT       666 // Encoder does not meet Anki spec (rise/fall threshold)
-//#define ERROR_ENCODER_RISE_TIME         667 // Encoder does not meet Anki spec (A vs B rise time)
+#define ERROR_BACKP_BTN_PRESS_TIMEOUT     651 // Timeout waiting for backpack button to be pressed
+#define ERROR_BACKP_BTN_RELEASE_TIMEOUT   652 // Timeout waiting for backpack button to be released
+//#define ERROR_BACKP_BTN_THRESH          653 // Button voltage detected outside digital thresholds
 
 //<export heading> Cube Errors
 #define ERROR_CUBE_CANNOT_WRITE           700 // MCU is locked
@@ -311,6 +308,7 @@ typedef int error_t;
 #define ERROR_BAD_ARG                     763 // Argument errror
 #define ERROR_THROW_0                     764 // Test threw exception with ERROR_OK?
 #define ERROR_UNHANDLED_EXCEPTION         765 // 'safe' operation threw an uncategorized error
+#define ERROR_BUFFER_TOO_SMALL            766 // provided buffer was too small
 
 //<export end>
 
