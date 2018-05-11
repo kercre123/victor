@@ -417,7 +417,9 @@ class CPPEnumEmitter(HEnumEmitter):
           self.output.write(textwrap.dedent('''\
               auto it = stringToEnumMap.find(str);
               if(it == stringToEnumMap.end()) {{
+              #ifndef NDEBUG
               std::cerr << "error: string '" << str << "' is not a valid {enum_name} value" << std::endl;
+              #endif // NDEBUG
               assert(false && "string must be a valid {enum_name} value");
               return {enum_name}::{first_val};
               }}

@@ -350,7 +350,9 @@ class CPPEnumEmitter(HEnumEmitter):
             self.output.write(textwrap.dedent('''\
             {enum_name} returnVal;
             if( !EnumFromString(str, returnVal) ) {{
+              #ifndef NDEBUG
               std::cerr << "error: string '" << str << "' is not a valid {enum_name} value" << std::endl;
+              #endif // NDEBUG
               assert(false && "string must be a valid {enum_name} value");
               return {enum_name}::{first_val};
             }}
