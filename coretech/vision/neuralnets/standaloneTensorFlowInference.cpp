@@ -170,6 +170,11 @@ int main(int argc, char **argv)
       Result result = detector.Detect(img, timestamp, objects);
       Toc(startTime, "Detect");
 
+      if(RESULT_OK != result)
+      {
+        PRINT_NAMED_ERROR(argv[0], "Detect failed!");
+      }
+
       Json::Value detectionResults;
       
       // Convert the results to JSON
@@ -272,18 +277,17 @@ int main(int argc, char **argv)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 cv::Mat read_bmp(const std::string& input_bmp_name) 
 {
-  int begin, end;
-
   std::ifstream file(input_bmp_name, std::ios::in | std::ios::binary);
   if (!file) {
     std::cerr << "Input file " << input_bmp_name << " not found" << std::endl;
     exit(-1);
   }
 
-  begin = file.tellg();
+  const auto begin = file.tellg();
   file.seekg(0, std::ios::end);
-  end = file.tellg();
-  size_t len = end - begin;
+  const auto end = file.tellg();
+  assert(end >= begin);
+  const size_t len = (size_t) (end - begin);
 
   // Decode the bmp header
   const uint8_t* img_bytes = new uint8_t[len];

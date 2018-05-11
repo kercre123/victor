@@ -38,9 +38,9 @@ static inline void SetFromConfigHelper(const Json::Value& json, std::string& val
   value = json.asString();
 }
 
-static inline void SetFromConfigHelper(const Json::Value& json, uint8_t& value) {
-  value = json.asUInt();
-}
+// static inline void SetFromConfigHelper(const Json::Value& json, uint8_t& value) {
+//   value = json.asUInt();
+// }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ObjectDetector::ObjectDetector() 
