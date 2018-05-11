@@ -322,16 +322,19 @@ static void BurnSerials_(void)
 extern int g_canary;
 static void GetSerialCmd(void)
 {
-  uint32_t sequence = fixtureReadSequence();
-  
   // Serial number, fixture type, build version
-  ConsolePrintf("serial,%i,%s,%i,%i,%08x\n", 
+  ConsolePrintf("serial,%i,%s,%i\n", 
     FIXTURE_SERIAL, 
     fixtureName(),
-    g_canary == 0xcab00d1e ? FIXTURE_VERSION : 0xbadc0de,    // This part is hard to explain
-    sequence,
-    (FIXTURE_SERIAL<<20) | sequence );
+    g_canary == 0xcab00d1e ? FIXTURE_VERSION : 0xbadc0de);    // This part is hard to explain
 }
+
+static void GetEsnCmd(void)
+{
+  uint32_t sequence = fixtureReadSequence();
+  ConsolePrintf("serial,%i,sequence,%i,esn,%08x\n", FIXTURE_SERIAL, sequence, (FIXTURE_SERIAL<<20) | sequence);
+}
+
 static void SetLotCode(void)
 {
   char* arg = GetArgument(1);
@@ -498,6 +501,7 @@ static CommandFunction m_functions[] =
   {"SetLotCode", SetLotCode, FALSE},
   {"SetMode", SetMode, FALSE},
   {"GetModes", ConsolePrintModes_, FALSE},
+  {"GetEsn", GetEsnCmd, FALSE},
   {"SetSerial", SetSerial, FALSE},
   {"SetTime", SetTime, FALSE},
   {"Current", TestCurrent, FALSE},
