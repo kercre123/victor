@@ -44,6 +44,10 @@ void DoBehaviorComponentTicks(Robot& robot, ICozmoBehavior& behavior, BehaviorCo
 
 void InjectBehaviorIntoStack(ICozmoBehavior& behavior, TestBehaviorFramework& testFramework);
 
+// return true if the stacks a and b "match" with arbitrary prefix. In other words, check from the back of the
+// stacks so that a/b/c/d would match c/d
+bool CheckStackSuffixMatch(const std::vector<IBehavior*>& a, const std::vector<IBehavior*>& b);
+
 void IncrementBaseStationTimerTicks();
 void InjectValidDelegateIntoBSM(TestBehaviorFramework& testFramework,
                                 IBehavior* delegator,

@@ -677,5 +677,22 @@ void TestBehaviorFramework::LoadNamedBehaviorStacks()
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool CheckStackSuffixMatch(const std::vector<IBehavior*>& a, const std::vector<IBehavior*>& b)
+{
+  auto aIter = a.rbegin();
+  auto bIter = b.rbegin();
+
+  while( aIter != a.rend() && bIter != b.rend() ) {
+    if( *aIter != *bIter ) {
+      return false;
+    }
+    aIter++;
+    bIter++;
+  }
+
+  return true;
+}
+
 }
 }
