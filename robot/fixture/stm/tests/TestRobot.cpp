@@ -415,10 +415,9 @@ static robot_tread_dat_t* robot_tread_test_(uint8_t sensor, int8_t power)
   }
   
   const bool left = (sensor == RCOM_SENSOR_MOT_LEFT);
-  //const bool DEBUG_PRINT = !g_isReleaseBuild;
-  //const int printlvl = g_isReleaseBuild ? RCOM_PRINT_LEVEL_CMD : RCOM_PRINT_LEVEL_CMD_DAT_RSP;
-    #warning "TREAD TEST DEBUG"
-    const bool DEBUG_PRINT = 0; const int printlvl = RCOM_PRINT_LEVEL_CMD;
+  const int printlvl = g_isReleaseBuild ? RCOM_PRINT_LEVEL_CMD : RCOM_PRINT_LEVEL_CMD_DAT_RSP;
+    //#warning "TREAD TEST DEBUG"
+    //const int printlvl = RCOM_PRINT_LEVEL_CMD;
   static robot_tread_dat_t test;
   memset(&test, 0, sizeof(test));
   robot_sr_t* psr;
@@ -512,10 +511,10 @@ static robot_range_dat_t* robot_range_test_(uint8_t sensor, int8_t power)
   }
   
   const bool lift = (sensor == RCOM_SENSOR_MOT_LIFT);
-  //const bool DEBUG_PRINT = !g_isReleaseBuild; 
-  //const int printlvl = g_isReleaseBuild ? RCOM_PRINT_LEVEL_CMD : RCOM_PRINT_LEVEL_CMD_DAT_RSP;
-    #warning "RANGE TEST DEBUG"
-    const bool DEBUG_PRINT = 0; const int printlvl = RCOM_PRINT_LEVEL_CMD;
+  const bool DEBUG_PRINT = !g_isReleaseBuild; 
+  const int printlvl = g_isReleaseBuild ? RCOM_PRINT_LEVEL_CMD : RCOM_PRINT_LEVEL_CMD_DAT_RSP;
+    //#warning "RANGE TEST DEBUG"
+    //const bool DEBUG_PRINT = 0; const int printlvl = RCOM_PRINT_LEVEL_CMD;
   static robot_range_dat_t test;
   memset(&test, 0, sizeof(test));
   robot_sr_t* psr;
@@ -1189,13 +1188,14 @@ TestFunction* TestRobot0GetTests(void) {
 TestFunction* TestRobot1GetTests(void) {
   static TestFunction m_tests[] = {
     TestRobotDetectSpine,
-    //TestRobotButton,
+    TestRobotButton,
     TestRobotInfo,
     TestRobotSensors,
     //DEBUG_TestRobotLeds,
-    TestRobotTreads, //XXX
-    TestRobotRange, //XXX
-    //ChargeTest, //XXX
+    TestRobotTreads,
+    TestRobotRange,
+    ChargeTest,
+    //RobotPowerDown,
     NULL,
   };
   return m_tests;
@@ -1203,14 +1203,14 @@ TestFunction* TestRobot1GetTests(void) {
 
 TestFunction* TestRobot2GetTests(void) {
   static TestFunction m_tests[] = {
-    TestRobotButton,
+    //TestRobotButton,
     TestRobotInfo,
     //DBG_test_emr,
     //TestRobotSensors,
-    TestRobotTreads,
+    //TestRobotTreads,
     TestRobotRange,
     //ChargeTest,
-    TurkeysDone,
+    //TurkeysDone,
     NULL,
   };
   return m_tests;

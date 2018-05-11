@@ -627,7 +627,7 @@ HeadToBody* halSpineH2BFrame(PowerState powerState, int16_t *p4motorPower, uint8
 //-----------------------------------------------------------------------------
 
 #define SPINE_DEBUG         0
-#define SPINE_DEBUG_MOTORS  1
+#define SPINE_DEBUG_MOTORS  0
 
 //verify body version structs are equivalent
 STATIC_ASSERT( sizeof(robot_bsv_t) == sizeof(VersionInfo), version_struct_size_match_check );
