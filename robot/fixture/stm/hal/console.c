@@ -322,12 +322,15 @@ static void BurnSerials_(void)
 extern int g_canary;
 static void GetSerialCmd(void)
 {
-  // Serial number, fixture type, build version
-  ConsolePrintf("serial,%i,%s,%i\n", 
-    FIXTURE_SERIAL, 
-    fixtureName(),
-    g_canary == 0xcab00d1e ? FIXTURE_VERSION : 0xbadc0de);    // This part is hard to explain
+  uint32_t sequence = fixtureReadSequence();
+  
+  // Serial number, fixture type etc
+  ConsolePrintf("serial,%i,%i,%08x,%i,%s\n", 
+    FIXTURE_SERIAL, sequence, (FIXTURE_SERIAL<<20)|sequence,
+    g_canary == 0xcab00d1e ? FIXTURE_VERSION : 0xbadc0de,    // This part is hard to explain
+    fixtureName());
 }
+
 static void SetLotCode(void)
 {
   char* arg = GetArgument(1);
