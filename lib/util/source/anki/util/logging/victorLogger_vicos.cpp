@@ -56,11 +56,8 @@ void VictorLogger::LogEvent(android_LogPriority prio,
   // Name may not be null
   assert(name != nullptr);
 
-  // Get next sequence number
-  auto seq = _seq++;
-
   //
-  // Marshal values for each DAS v2 event field.
+  // Marshal values for each DAS v2 event fields that must be provided.
   // Note some fields will be provided by the log record itself,
   // while others will be provided by the aggregator.
   //
@@ -69,11 +66,11 @@ void VictorLogger::LogEvent(android_LogPriority prio,
   //const char * LEVEL = ""; (represented by android log level)
   //const char * ROBOT = ""; (provided by aggregator)
   //const char * ROBOT_VERSION = ""; (provided by aggregator)
+  //const char * SEQ = seq; (provided by aggregator)
+  //const char * PROFILE_ID = ""; (provided by aggregator)
+  //const char * FEATURE_TYPE = ""; (provided by aggregator)
+  //const char * FEATURE_RUN_ID = ""; (provided by aggregator)
   //const char * EVENT = name; (provided by caller)
-  //const char * SEQ = seq; (provided above)
-  const char * profile = "";
-  const char * feature_type = "";
-  const char * feature_run = "";
   const char * str1 = "";
   const char * str2 = "";
   const char * str3 = "";
@@ -94,13 +91,7 @@ void VictorLogger::LogEvent(android_LogPriority prio,
     assert(kv.first != nullptr);
     assert(kv.second != nullptr);
     const char * key = kv.first;
-    if (strcmp(key, DAS::PROFILE) == 0) {
-      profile = kv.second;
-    } else if (strcmp(key, DAS::FEATURE_TYPE) == 0) {
-      feature_type = kv.second;
-    } else if (strcmp(key, DAS::FEATURE_RUN) == 0) {
-      feature_run = kv.second;
-    } else if (strcmp(key, DAS::STR1) == 0) {
+    if (strcmp(key, DAS::STR1) == 0) {
       str1 = kv.second;
     } else if (strcmp(key, DAS::STR2) == 0) {
       str2 = kv.second;
@@ -124,9 +115,8 @@ void VictorLogger::LogEvent(android_LogPriority prio,
   // Format fields into a compact CSV format.
   // Leading @ serves as a hint that this row is in compact CSV format.
   // TO DO: Escape any colons in user data
-  __android_log_print(prio, _tag.c_str(), "@%s:%llu:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s:%s",
-                      name, seq, str1, str2, str3, str4, int1, int2, int3, int4,
-                      profile, feature_type, feature_run);
+  __android_log_print(prio, _tag.c_str(), "@%s:%s:%s:%s:%s:%s:%s:%s:%s",
+                      name, str1, str2, str3, str4, int1, int2, int3, int4);
 
 }
 

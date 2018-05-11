@@ -1,5 +1,5 @@
 /**
- * File: logging
+ * File: util/logging/logging.h
  *
  * Author: damjan
  * Created: 4/3/2014
@@ -10,7 +10,7 @@
  *   style: f - takes (...) , v - takes va_list
  *   functions are spelled out, instead of stacked (sErrorF -> calls sErrorV -> calls sError)
  *   to improve on the stack space. If you think about improving on this, please consider macros to re-use code.
- *   If you however feel that we should stack them into one set of function that uses LogLevel as a param, think about
+ *   If you however feel that we should stack them into one set of functions that use LogLevel as a param, think about
  *   need to translate Ank::Util::LogLevel to DasLogLevel and then to ios/android LogLevel.
  *
  * Copyright: Anki, Inc. 2014
@@ -61,16 +61,22 @@ extern bool _errG;
 // Global flag to control break-on-error behavior
 extern bool _errBreakOnError;
 
+// DAS message field
 struct DasItem
 {
+  DasItem() = default;
+  DasItem(const std::string & valueStr) { value = valueStr; }
+  DasItem(int64_t valueInt) { value = std::to_string(valueInt); }
+
   std::string value;
-  DasItem(std::string valueStr) {value = valueStr;}
-  DasItem(int64_t valueInt) {value = std::to_string(valueInt);}
-  DasItem() {value = "";}
 };
 
+// DAS message struct
 struct DasMsg
 {
+  DasMsg(const std::string & eventStr) { event = eventStr; }
+
+  std::string event;
   DasItem s1;
   DasItem s2;
   DasItem s3;
@@ -79,10 +85,11 @@ struct DasMsg
   DasItem i2;
   DasItem i3;
   DasItem i4;
-  std::string event;
-  DasMsg(std::string eventStr) {event = eventStr;}
 };
 
+//
+// DAS message macros
+//
 #ifndef DOXYGEN
 
 #define DASMSG(ezRef, eventName, documentation) { Anki::Util::DasMsg __DAS_msg(eventName);
@@ -98,7 +105,6 @@ struct DasMsg
 
 class DasDoxMsg() {}
 
-
 #define DASMSG(ezRef, eventName, documentation)  }}}}}}}}/** \ingroup dasmsg */ \
                                             /** \brief eventName */ \
                                             /** documentation */ \
@@ -111,10 +117,9 @@ class DasDoxMsg() {}
 
 #endif
 
-//__attribute__((__deprecated__))
 //
 // "Event level" logging is no longer a thing. Do not use it.
-// Messages intended for DAS should use the explicit DASMESSAGE interface.
+// Messages intended for DAS should use the explicit DASMSG interface declared above.
 // Other messages should use INFO or DEBUG as appropriate.
 //
 __attribute__((__deprecated__))
@@ -317,6 +322,7 @@ constexpr const char * LOG_UNFILTERED = "Unfiltered";
 #else
 #define PRINT_CH_DEBUG(channel, name, format, ...)
 #endif
+
 //
 // Periodic logging with channels.
 //

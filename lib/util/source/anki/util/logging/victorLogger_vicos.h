@@ -58,7 +58,6 @@ public:
   virtual void GetGlobals(std::map<std::string, std::string> & globals);
 
 private:
-  std::atomic<unsigned long long> _seq{0};
   std::string _tag;
   std::mutex _mutex;
   std::map<std::string, std::string> _globals;
