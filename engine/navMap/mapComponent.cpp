@@ -84,7 +84,7 @@ CONSOLE_VAR(float, kRobotRotationChangeToReport_deg, "MapComponent", 20.0f);
 CONSOLE_VAR(float, kRobotPositionChangeToReport_mm, "MapComponent", 8.0f);
 
 CONSOLE_VAR(float, kVisionTimeout_ms, "MapComponent", 120.0f * 1000);
-CONSOLE_VAR(float, kCliffTimeout_ms, "MapComponent", 30.0f * 1000);
+CONSOLE_VAR(float, kCliffTimeout_ms, "MapComponent", 120.0f * 1000);
 CONSOLE_VAR(float, kProxTimeout_ms, "MapComponent", 600.0f * 1000);
 CONSOLE_VAR(float, kTimeoutUpdatePeriod_ms, "MapComponent", 5.0f * 1000);
 

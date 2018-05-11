@@ -2,6 +2,13 @@
   "behaviorID": "ExploringDispatcher",
   "behaviorClass": "DispatcherStrictPriority",
 
+  "wantsToCancelSelfCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "OffTreadsState",
+      "targetState": "OnTreads"
+    }
+  },
   "maxBehaviorActivations": 1,
 
   "interruptActiveBehavior": false,

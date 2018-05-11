@@ -1,12 +1,10 @@
 {
   "behaviorID": "ExploringVoiceCommand",
-  "behaviorClass": "DispatcherStrictPriority",
+  "behaviorClass": "DispatcherQueue",
 
   "respondToUserIntents": [
     { "type": "explore_start" }
   ],
-
-  "interruptActiveBehavior": true,
 
   "behaviors": 
   [
@@ -21,10 +19,15 @@
 
       "allowNoCharger": true,
 
-      "minSearchRadius_m": 0.4,
-      "maxSearchRadius_m": 1.0,
+      "minSearchRadius_m": 0.25,
+      "maxSearchRadius_m": 0.75,
       "maxChargerDistance_m": 2.0,
-      "pAcceptKnownAreas": 0.4
+      "pAcceptKnownAreas": 0.4,
+
+      "motionProfile": {
+        "speed_mmps": 120.0,
+        "isCustom": true
+      }
     }
   ]
 }

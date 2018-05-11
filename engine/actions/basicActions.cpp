@@ -1039,6 +1039,7 @@ namespace Anki {
         {Preset::HIGH_DOCK,  LIFT_HEIGHT_HIGHDOCK},
         {Preset::CARRY,      LIFT_HEIGHT_CARRY},
         {Preset::OUT_OF_FOV, -1.f},
+        {Preset::JUST_ABOVE_PROX, LIFT_HEIGHT_ABOVE_PROX},
       };
       
       return LUT.at(preset);
@@ -1051,6 +1052,7 @@ namespace Anki {
         {Preset::HIGH_DOCK,  "HighDock"},
         {Preset::CARRY,      "HeightCarry"},
         {Preset::OUT_OF_FOV, "OutOfFOV"},
+        {Preset::JUST_ABOVE_PROX, "JustAboveProx"},
       };
       
       static const std::string unknown("UnknownPreset");

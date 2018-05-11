@@ -69,6 +69,7 @@ namespace Cozmo {
   const f32 LIFT_HEIGHT_HIGHDOCK                  = 76.f; // For interfacing with a cube that is stacked on top of another cube.
   const f32 LIFT_HEIGHT_CARRY                     = 92.f; // Cube carrying height.
   const f32 LIFT_HEIGHT_LOW_ROLL                  = 68.f; // For rolling a cube that is on the ground.
+  const f32 LIFT_HEIGHT_ABOVE_PROX                = 59.f; // Just above prox sensor. Useful for driving in cluttered spaces.
   
   // Distance between the lift shoulder joint and the lift "wrist" joint where arm attaches to fork assembly
   const f32 LIFT_ARM_LENGTH = 66.f;

@@ -327,6 +327,17 @@
             ]
           }
         }
+      ],
+      "nonInterruptingTransitions": [
+        {
+          "to": "Observing",
+          "condition":
+          {
+            "conditionType": "SimpleMood",
+            "from": "MedStim",
+            "to": "LowStim"
+          }
+        }
       ]
     },
 

@@ -4,7 +4,7 @@
  * Author: ross
  * Created: 2018-03-25
  *
- * Description: prototype exploration behavior
+ * Description: exploration behavior
  *
  * Copyright: Anki, Inc. 2018
  *
@@ -14,6 +14,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/exploring/behaviorExploring.h"
 
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/lineSegment2d.h"
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/basicActions.h"
@@ -41,16 +42,20 @@ namespace {
   const char* const kMaxChargerDistanceKey = "maxChargerDistance_m";
   const char* const kPAcceptKnownAreasKey = "pAcceptKnownAreas";
   const char* const kAllowNoChargerKey = "allowNoCharger";
+  const char* const kMotionProfileKey = "motionProfile";
   
   // todo: params for this:
   const float kMinScanAngle = M_PI_F / 4;
   const float kMaxScanAngle = M_PI_F;
-  const float kCliffRectDepth_mm = 100.0f;
-  const float kCliffRectHalfWidth_mm = 50.0f;
+  constexpr float kMinCliffPenaltyDist_mm = 30.0f;
+  constexpr float kMaxCliffPenaltyDist_mm = 60.0f;
   const float kTimeBeforeConfirmCharger_s = 10*60.0f;
   const float kTimeBeforeConfirmCube_s = 2*60.0f;
   const float kProxPoseOffset_mm = 120.0f;
+  const float kMaxDistToProxPose_mm = 750.0f;
   const float kMaxCubeFromChargerDist_mm = 2000.0f;
+
+  static_assert( kMinCliffPenaltyDist_mm < kMaxCliffPenaltyDist_mm, "Max must be > min" );
   
   // if driving to a goal this far away, it's ok if the robot stops to examine a nearby obstacle
   const float kMinGoalDistForPitStop_mm = 300.0f;
@@ -142,6 +147,11 @@ BehaviorExploring::BehaviorExploring(const Json::Value& config)
   _iConfig.pAcceptKnownAreas = JsonTools::ParseFloat( config, kPAcceptKnownAreasKey, kDebugName );
   
   _iConfig.allowNoCharger = config.get( kAllowNoChargerKey, false ).asBool();
+
+  if( !config[kMotionProfileKey].isNull() ) {
+    _iConfig.customMotionProfile = std::make_unique<PathMotionProfile>();
+    _iConfig.customMotionProfile->SetFromJSON( config[kMotionProfileKey] );
+  }
   
   MakeMemberTunable(_iConfig.minSearchRadius_m, kMinSearchRadiusKey, kDebugName);
   MakeMemberTunable(_iConfig.maxSearchRadius_m, kMaxSearchRadiusKey, kDebugName);
@@ -199,6 +209,7 @@ void BehaviorExploring::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys)
     kMaxChargerDistanceKey,
     kPAcceptKnownAreasKey,
     kAllowNoChargerKey,
+    kMotionProfileKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -210,6 +221,10 @@ void BehaviorExploring::OnBehaviorActivated()
   _dVars = DynamicVariables();
   _dVars.timeFinishedConfirmCharger_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _dVars.timeFinishedConfirmCube_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  
+  if( _iConfig.customMotionProfile != nullptr ) {
+    SmartSetMotionProfile( *_iConfig.customMotionProfile );
+  }
   
   // pick a bunch of points and have the planner choose one and drive there
   SampleAndDrive();
@@ -226,14 +241,16 @@ void BehaviorExploring::BehaviorUpdate()
     CancelSelf();
     return;
   }
+  if( GetBEI().GetRobotInfo().IsOnChargerPlatform() ) {
+    // user must have placed it on the charger
+    CancelSelf();
+    return;
+  }
   
-  // make sure the lift is down
+  // make sure the lift is out of the prox fov
   PrepRobotForProx();
   const bool isChargerPositionKnown = IsChargerPositionKnown();
   if( !isChargerPositionKnown && !_iConfig.allowNoCharger ) {
-    // a behavior in a queue after this one will find the charger. this is different than the
-    // confirm charger behavior (which actually could run a find charger behavior if
-    // reconfirming fails). Once that behavior is made, it could alternatively be a delegate here
     CancelSelf();
   }
   
@@ -397,15 +414,20 @@ void BehaviorExploring::TransitionToDriving()
   _dVars.state = State::Driving;
   ++_dVars.numDriveAttemps;
   
+  
+  auto* action = new CompoundActionSequential();
+  
+  action->AddAction( new MoveLiftToHeightAction( MoveLiftToHeightAction::Preset::JUST_ABOVE_PROX ) );
+  
   const bool forceHeadDown = false;
-  auto* action = new DriveToPoseAction( _dVars.sampledPoses, forceHeadDown );
+  action->AddAction( new DriveToPoseAction( _dVars.sampledPoses, forceHeadDown ) );
   
   DelegateIfInControl( action, [this](ActionResult res) {
     if( res != ActionResult::SUCCESS ) {
       // this can happen if we cleared all but one of the goal poses, then the robot stopped to
       // examine something midway, then when trying to start again, there is no path to the selected
       // goal. try a couple more times (maybe this needs more precise ActionResult types?)
-      if( _dVars.numDriveAttemps <= 2 ) {
+      if( _dVars.numDriveAttemps <= 4 ) {
         SampleAndDrive();
       } else {
         PRINT_NAMED_INFO("BehaviorExploring.TransitionToDriving.NoPath", "Could not plan a path after %d attempts", _dVars.numDriveAttemps);
@@ -484,7 +506,7 @@ std::vector<Pose3d> BehaviorExploring::SampleVisitLocations() const
   
   // also sample poses pointing at known but unexplored prox obstacle
   if( (kNumProxPoses > 0) && !tooFarFromCharger ) {
-    SampleVisitLocationsFacingObstacle( memoryMap, charger, retPoses );
+    SampleVisitLocationsFacingObstacle( memoryMap, charger, currRobotPos, retPoses );
   }
 
   return retPoses;
@@ -512,25 +534,13 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
   }
   const float r1sq = r1*r1;
   
-  // gather a list of rotated rectangles, one for each cliff obstacle, that are tangent to the
-  // cliff faces. We'll use these rects to check that a sampled point is not "behind" a cliff.
-  // todo: it might be better if, when inserting cliff obstacles, it looks for existing cliff
-  // obstacles and connects two that are nearby with a similar normal angle with a single cliff. Then
-  // this method would expand the width of the rects accordingly instead of just 2*kCliffRectHalfWidth_mm
-  std::vector<RotatedRectangle> cliffRects;
+  // gather a list of cliff pose pointers that should not be used outside this method
+  std::set<const Pose3d*> cliffs;
   MemoryMapTypes::MemoryMapDataConstList wasteList;
-  memoryMap->FindContentIf([&cliffRects](MemoryMapDataConstPtr data){
+  memoryMap->FindContentIf([&cliffs](MemoryMapDataConstPtr data){
     if( data->type == MemoryMapTypes::EContentType::Cliff ) {
       const auto& cliffData = MemoryMapData::MemoryMapDataCast<MemoryMapData_Cliff>(data);
-      const float x = cliffData->pose.GetTranslation().x();
-      const float y = cliffData->pose.GetTranslation().y();
-      const float angle = cliffData->pose.GetRotationAngle<'Z'>().ToFloat();
-      // get two points on the rectangle for the side tangent to the cliff
-      const float x0 = x - kCliffRectHalfWidth_mm * sinf( angle );
-      const float y0 = y + kCliffRectHalfWidth_mm * cosf( angle );
-      const float x1 = x + kCliffRectHalfWidth_mm * sinf( angle );
-      const float y1 = y - kCliffRectHalfWidth_mm * cosf( angle );
-      cliffRects.emplace_back( x0, y0, x1, y1, kCliffRectDepth_mm );
+      cliffs.insert( &cliffData->pose );
     }
     return false; // don't actually gather any data
   }, wasteList);
@@ -556,6 +566,7 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
     // sample only from unknown points... maybe this needs the iNavMap method FindContentIf, and
     //    then sampled from that? depends on how big the return set is and how many quads share a data obj
     // sample only in angles near the current angle? hopefully the planner does this job for us
+    // todo: rejection sampling helper class
     
     // check distance to charger, reject if too far
     {
@@ -565,12 +576,43 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
       }
     }
     
-    // check if the sample point is within any of the cliff rects generated above, and reject if so.
+    // check if a vector from the robot to the sample point crosses through a line aligned with the cliff
+    // edge and reject if that intersection point occurs close to the cliff
     {
-      const auto itCliff = std::find_if( cliffRects.begin(), cliffRects.end(), [&](const auto& rect) {
-        return rect.Contains( sampledPos.x(), sampledPos.y() );
-      });
-      if( itCliff != cliffRects.end() ) {
+      LineSegment lineRobotToSample{ sampledPos, robotPos };
+      float pAccept = 1.0f; // this may be decremented for multiple cliffs
+      for( const auto* cliffPose : cliffs ) {
+        const Vec3f cliffDirection = (cliffPose->GetRotation() * X_AXIS_3D());
+        // do this in 2d
+        const Vec2f cliffEdgeDirection = CrossProduct( Z_AXIS_3D(), cliffDirection ); // sign doesn't matter
+        const Point2f cliffPos = cliffPose->GetTranslation();
+        // find intersection of lineRobotToSample with cliffEdgeDirection
+        LineSegment cliffLine{ cliffPos + cliffEdgeDirection * kMaxCliffPenaltyDist_mm,
+                               cliffPos - cliffEdgeDirection * kMaxCliffPenaltyDist_mm };
+        Point2f intersectionPoint;
+        const bool intersects = lineRobotToSample.IntersectsAt( cliffLine, intersectionPoint );
+        if( intersects ) {
+          // confirm intersection point lies on cliff edge
+          DEV_ASSERT( AreVectorsAligned( (intersectionPoint - cliffPos), cliffEdgeDirection, 0.001f ),
+                      "BehaviorExploring.SampleVisitLocationsOpenSpace.BadIntersection" );
+          // if the intersection pos is close to the cliff pos, reject. If it's far, accept. interpolate in between.
+          const float distFromCliffSq = (intersectionPoint - cliffPos).LengthSq();
+          const static float minSq = kMinCliffPenaltyDist_mm * kMinCliffPenaltyDist_mm;
+          if( distFromCliffSq < minSq ) {
+            continue;
+          }
+          const static float maxSq = kMaxCliffPenaltyDist_mm * kMaxCliffPenaltyDist_mm;
+          const float p = (distFromCliffSq > maxSq)
+                          ? 0.0f
+                          : 1.0f - (distFromCliffSq - minSq) / (maxSq - minSq);
+          // multiple cliffs can contribute to the acceptance probability
+          pAccept -= p;
+          if( pAccept <= 0.0f ) {
+            continue;
+          }
+        }
+      }
+      if( pAccept < GetRNG().RandDbl() ) {
         continue;
       }
     }
@@ -634,6 +676,7 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
   
 void BehaviorExploring::SampleVisitLocationsFacingObstacle( const INavMap* memoryMap,
                                                             const ObservableObject* charger,
+                                                            const Point2f& robotPos,
                                                             std::vector<Pose3d>& retPoses ) const
 {
   MemoryMapTypes::MemoryMapDataConstList unexploredProxObstacles;
@@ -670,17 +713,21 @@ void BehaviorExploring::SampleVisitLocationsFacingObstacle( const INavMap* memor
   };
   
   const auto currListBegin = retPoses.begin(); // to mark the position of the beginning before adding more
-  auto isCloseToExisting = [&currListBegin]( const MemoryMapDataWrapper<const MemoryMapData_ProxObstacle>& data,
-                                             const std::vector<Pose3d>& existing ) {
+  // not too close to existing sampled poses, and close to the robot
+  auto isPositionedWell = [&currListBegin,&robotPos]( const MemoryMapDataWrapper<const MemoryMapData_ProxObstacle>& data,
+                                            const std::vector<Pose3d>& existing ) {
+    Point2f dataPoint { data->GetObservationPose().GetTranslation() };
+    if( (dataPoint - robotPos).LengthSq() > kMaxDistToProxPose_mm*kMaxDistToProxPose_mm ) {
+      return false;
+    }
     for( auto itOthers = currListBegin; itOthers != existing.end(); ++itOthers ) {
       Point2f otherPoint{ itOthers->GetTranslation() };
-      Point2f dataPoint { data->GetObservationPose().GetTranslation() };
       const float distSq = (otherPoint - dataPoint).LengthSq();
       if( distSq < kMinProxObstacleSeparation_mm*kMinProxObstacleSeparation_mm ) {
-        return true;
+        return false;
       }
     }
-    return false;
+    return true;
   };
   
   
@@ -690,7 +737,7 @@ void BehaviorExploring::SampleVisitLocationsFacingObstacle( const INavMap* memor
       bool add = true;
       if( it != unexploredProxObstacles.begin() ) {
         auto castPtr = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ProxObstacle>( *it );
-        add = !isCloseToExisting( castPtr, retPoses );
+        add = isPositionedWell( castPtr, retPoses );
       }
       if( add ) {
         retPoses.push_back( getOffsetPose(*it) );
@@ -711,8 +758,8 @@ void BehaviorExploring::SampleVisitLocationsFacingObstacle( const INavMap* memor
       int nextSample = sampler.GetNext( GetRNG() );
       const auto& sampled = obstacleVec[nextSample];
       auto castPtr = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ProxObstacle>( sampled );
-      const bool closeToSomething = isCloseToExisting( castPtr, retPoses );
-      if( !closeToSomething ) {
+      const bool positionedWell = isPositionedWell( castPtr, retPoses );
+      if( positionedWell ) {
         // accept!
         retPoses.push_back( getOffsetPose( sampled ) );
         
@@ -733,7 +780,7 @@ void BehaviorExploring::PrepRobotForProx()
   if( !isSensorReadingValid ) {
     const bool liftBlocking = proxSensor.IsLiftInFOV();
     if( !IsControlDelegated() && liftBlocking ) {
-      DelegateIfInControl( new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK) );
+      DelegateIfInControl( new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::JUST_ABOVE_PROX) );
     }
   }
 }

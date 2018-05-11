@@ -364,7 +364,8 @@ namespace Cozmo {
         LOW_DOCK,
         HIGH_DOCK,
         CARRY,
-        OUT_OF_FOV // Moves to low or carry, depending on which is closer to current height
+        OUT_OF_FOV, // Moves to low or carry, depending on which is closer to current height
+        JUST_ABOVE_PROX, // High enough to avoid the prox sensor, and improves driving over cluttered spaces
       };
       
       MoveLiftToHeightAction(const f32 height_mm,
