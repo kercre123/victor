@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from flask import Flask, flash, redirect, render_template, request, session, abort
 from werkzeug import secure_filename
 import os, json, shutil
