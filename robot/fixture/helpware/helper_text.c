@@ -16,8 +16,6 @@
 #define HELPER_SMALL_TEXT_COLOR_FG lcd_BLUE
 #define HELPER_SMALL_TEXT_COLOR_BG lcd_BLACK
 
-static inline int min(int a, int b){  return a<b?a:b;}
-
 
 void helper_text_small(int line, const char *text, int len) {
   display_draw_text(DISPLAY_LAYER_SMALL, line-1, HELPER_SMALL_TEXT_COLOR_FG, HELPER_SMALL_TEXT_COLOR_BG,  text, len, 0);
@@ -156,7 +154,7 @@ void helper_lcd_busy_spinner(void) {
 
 
 
-void on_exit(void) {
+void on_vic_exit(void) {
   lcd_shutdown();
 }
 

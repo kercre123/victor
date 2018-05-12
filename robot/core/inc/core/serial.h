@@ -1,6 +1,8 @@
 #ifndef CORE_SERIAL_H
 #define CORE_SERIAL_H
 
+#include <stdint.h>
+
 /// Opens serial port at `devicename` with given `baud` enum.
 /// Returns file descriptor.
 int serial_init(const char* devicename, int baud);

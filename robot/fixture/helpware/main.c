@@ -5,6 +5,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <termios.h>
+#include <errno.h>
+#include <limits.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 
@@ -398,7 +400,7 @@ int user_terminal(void) {
 }
 
 
-void on_exit(void)
+void on_vic_exit(void)
 {
   if (gSerialFd >= 0) {
     close(gSerialFd);
@@ -455,7 +457,7 @@ int main(int argc, const char* argv[])
     usleep(1000); //1ms to yeild
  }
 
-  on_exit();
+  on_vic_exit();
 
   return 0;
 

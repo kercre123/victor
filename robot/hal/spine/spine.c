@@ -494,7 +494,7 @@ ssize_t spine_write_frame(spine_ctx_t spine, PayloadId type, const void* data, i
   const ssize_t outBufferLen = sizeof(spine->buf_tx);
   ssize_t remaining = outBufferLen;
 
-  struct SpineMessageHeader* outHeader = (struct SpineMessageHeader*)spine->buf_tx;
+  struct SpineMessageHeader* outHeader = (struct SpineMessageHeader*)outBytes;
   ssize_t r = spine_construct_header(type, len, outHeader);
   if (r < 0) {
     return r;

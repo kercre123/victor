@@ -1,14 +1,17 @@
-ANDROID_NDK_ROOT:=~/.anki/android/ndk-repository/android-ndk-r15b
 
-ANDROID_ARM_TOOLS_ROOT:=../../../generated/android/tools/arm
-ANDROID_ARM_TOOLS_BIN:=$(ANDROID_ARM_TOOLS_ROOT)/bin
+VICOS_BUILD_TOOL_VER:=0.9-r03
+
+
+VICOS_ARM_TOOLS_ROOT:=~/.anki/vicos-sdk/dist/$(VICOS_BUILD_TOOL_VER)
+
+VICOS_ARM_TOOLS_BIN:=$(VICOS_ARM_TOOLS_ROOT)/prebuilt/bin
+
 # Compilation Tools
 
-CROSS_COMPILE = $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-
-CFLAGS = -c -fPIC -Wall -pie
+CROSS_COMPILE = $(VICOS_ARM_TOOLS_BIN)/arm-oe-linux-gnueabi-
 
+CFLAGS = -c -fPIC -Wall -Werror
 
-CROSS_COMPILE = $(ANDROID_ARM_TOOLS_BIN)/arm-linux-androideabi-
 
 
 CORE_DIR = ../../core
@@ -71,45 +74,45 @@ BURN_OBJ = $(BURN_SRC:%.c=$(OBJDIR)/%.o)
 
 REMOTE_DEST = /data/local/fixture/
 
-all: $(ANDROID_ARM_TOOLS_ROOT) $(DFU) $(ANIMATE) $(DISPLAY) $(HELPER)
+all: $(VICOS_ARM_TOOLS_BIN) $(DFU) $(ANIMATE) $(DISPLAY) $(HELPER)
 
 $(CORE):
 	cd $(CORE_DIR) && make all
 
-$(ANDROID_ARM_TOOLS_ROOT):
-	$(ANDROID_NDK_ROOT)/build/tools/make_standalone_toolchain.py --arch arm --install-dir $(ANDROID_ARM_TOOLS_ROOT) --api 24
+$(VICOS_ARM_TOOLS_BIN):
+	../../tools/build/tools/ankibuild/vicos.py --install $(VICOS_BUILD_TOOL_VER)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
 	mkdir -p $(OBJDIR)
-	$(CROSS_COMPILE)gcc $(CFLAGS) $<  -o $@
+	$(CROSS_COMPILE)clang $(CFLAGS) $<  -o $@
 
 
 $(DFU): $(CORE) $(DFU_OBJ)
-	$(CROSS_COMPILE)gcc -pie $(DFU_OBJ) $(LIBPATH) $(LIBS)  -o $(DFU)
+	$(CROSS_COMPILE)clang -pie $(DFU_OBJ) $(LIBPATH) $(LIBS)  -o $(DFU)
 
 $(ANIMATE): $(CORE) $(ANIMATE_OBJ)
-	$(CROSS_COMPILE)gcc -pie $(ANIMATE_OBJ) $(LIBPATH) $(LIBS)  -o $(ANIMATE)
+	$(CROSS_COMPILE)clang -pie $(ANIMATE_OBJ) $(LIBPATH) $(LIBS)  -o $(ANIMATE)
 
 $(DISPLAY): $(CORE) $(DISPLAY_OBJ)
-	$(CROSS_COMPILE)gcc -pie $(DISPLAY_OBJ) $(LIBPATH) $(LIBS)  -o $(DISPLAY)
+	$(CROSS_COMPILE)clang -pie $(DISPLAY_OBJ) $(LIBPATH) $(LIBS)  -o $(DISPLAY)
 
 $(HELPER): $(CORE) $(HELPER_OBJ)
-	$(CROSS_COMPILE)gcc -pie $(HELPER_OBJ) $(LIBPATH) $(LIBS)  -o $(HELPER)
+	$(CROSS_COMPILE)clang -pie $(HELPER_OBJ) $(LIBPATH) $(LIBS)  -o $(HELPER)
 
 $(BURN): $(CORE) $(BURN_OBJ)
-	$(CROSS_COMPILE)gcc -pie $(BURN_OBJ) $(LIBPATH) $(LIBS)  -o $(BURN)
+	$(CROSS_COMPILE)clang -pie $(BURN_OBJ) $(LIBPATH) $(LIBS)  -o $(BURN)
 
 $(COMMANDER): $(CORE) $(COMMANDER_OBJ)
-	$(CROSS_COMPILE)gcc -pie $(COMMANDER_OBJ) $(LIBPATH) $(LIBS) -llog -o $(COMMANDER)
+	$(CROSS_COMPILE)clang -pie $(COMMANDER_OBJ) $(LIBPATH) $(LIBS) -llog -o $(COMMANDER)
 
 $(OBJDIR)/spine_hal.o:
-	$(CROSS_COMPILE)gcc $(CFLAGS) ../../hal/spine/spine_hal.c  -o $@
+	$(CROSS_COMPILE)clang $(CFLAGS) ../../hal/spine/spine_hal.c  -o $@
 $(OBJDIR)/spine_crc.o:
-	$(CROSS_COMPILE)gcc $(CFLAGS) ../../hal/spine/spine_crc.c  -o $@
+	$(CROSS_COMPILE)clang $(CFLAGS) ../../hal/spine/spine_crc.c  -o $@
 
 
 $(MENUMAN): $(CORE) $(MENUMAN_OBJ)
-	$(CROSS_COMPILE)gcc -pie $(MENUMAN_OBJ) $(LIBPATH) $(LIBS) -llog  -o $(MENUMAN)
+	$(CROSS_COMPILE)clang -pie $(MENUMAN_OBJ) $(LIBPATH) $(LIBS) -llog  -o $(MENUMAN)
 
 
 app=$(HELPER)

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
 #include <ctype.h>
@@ -32,7 +33,7 @@ const struct SpineMessageHeader* hal_read_frame();
 struct HeadToBody gHeadData = {0};
 
 
-void on_exit(void)
+void on_vic_exit(void)
 {
   //TODO: hal_terminate();
 }
@@ -140,10 +141,11 @@ void draw_menus(void) {
 }
 
 
-static struct {
+typedef struct Process_t {
   pid_t wait_pid;
   int proc_fd;
-} gProcess;
+} Process;
+static Process gProcess;
 
 void wait_for_process(pid_t pid, int fd)
 {
@@ -154,22 +156,21 @@ void wait_for_process(pid_t pid, int fd)
 }
 
 
-void process_monitor(void){
-  if (gProcess.wait_pid)
+void process_monitor(Process* proc){
+  if (proc->wait_pid)
   {
-
     int status;
 
-    if (wait_for_data(gProcess.proc_fd, 0)) {
+    if (wait_for_data(proc->proc_fd, 0)) {
       char buffer[512];
-      int n = read(gProcess.proc_fd, buffer, 512);
+      int n = read(proc->proc_fd, buffer, 512);
       if (n>0) {
         printf("%.*s", n, buffer);
       }
     }
 
-    if (waitpid(gProcess.wait_pid, &status, WNOHANG)) {
-      gProcess.wait_pid = 0;
+    if (waitpid(proc->wait_pid, &status, WNOHANG)) {
+      proc->wait_pid = 0;
       mm_debug_x("proc finished\n");
       menu_set_busy(0);
     }
@@ -184,11 +185,13 @@ void process_monitor(void){
 
 uint64_t gMotorTestCycles = 0;
 
-void start_motor_test(void)
+void start_motor_test(bool lockMenus)
 {
-  gMotorTestCycles =1 ;
+  if (!gMotorTestCycles) {
+    gMotorTestCycles =1 ;
+  }
   mm_debug_x("starting motor test\n");
-  menu_set_busy(1);
+  menu_set_busy(lockMenus);
 }
 
 //returns true if actually stopped
@@ -223,6 +226,100 @@ void command_motors(struct HeadToBody* data)
 }
 
 
+#define CHARGE_DISABLE_PERIOD 40 // 200ms
+
+typedef struct lifeTester_ {
+  /* types of tests */
+  bool battery;
+  bool cpu;
+  bool flash;
+  bool motors;
+  bool screen;
+  /* status */
+  bool do_discharge;
+  uint16_t cc_cycles; //charge contact cycles
+  Process burn_proc;
+} LifeTester;
+
+LifeTester  gLifeTesting;
+
+
+#define LCD_FRAME_RATE 20  //1/10th second
+void screen_test(void)
+{
+  static LcdFrame frame={{0}};
+  static uint16_t update_period = LCD_FRAME_RATE;
+  static uint16_t color = 0;
+  static uint16_t row = 0;
+  if (--update_period == 0) {
+    update_period = LCD_FRAME_RATE;
+    int i;
+    for (i=0;i<LCD_FRAME_WIDTH;i++) {
+      frame.data[i+row*LCD_FRAME_WIDTH] = color++;
+    }
+    if (++row > LCD_FRAME_HEIGHT) {row=0;}
+    lcd_draw_frame(&frame);
+  }
+}
+
+void write_ccc_frame(void) {
+  struct ContactData ccdata={{0}};
+  hal_send_frame(PAYLOAD_CONT_DATA, &ccdata, sizeof(ccdata));
+}
+
+void manage_life_tests() {
+  if (gLifeTesting.battery && gLifeTesting.do_discharge) {
+    if (++gLifeTesting.cc_cycles >= CHARGE_DISABLE_PERIOD) {
+      //write a cc frame to disable charging for a while
+      write_ccc_frame();
+    }
+  }
+  if (gLifeTesting.flash) {
+  }
+  if (gLifeTesting.motors ) {
+    start_motor_test(false);
+  }
+  if (gLifeTesting.screen) {
+    screen_test();
+  }
+  if (gLifeTesting.cpu) {
+    //print any output;
+    process_monitor(&gLifeTesting.burn_proc);
+  }
+}
+
+#define BATTERY_SCALE (2.8/2048)
+#define BAT_CHARGED_THRESHOLD ((uint16_t)(4.1 / BATTERY_SCALE))
+#define BAT_DISCHARGED_THRESHOLD ((uint16_t)(3.7 / BATTERY_SCALE))
+
+void check_battery_discharge(struct BodyToHead*  bodyData) {
+  static uint32_t charge_cycles = 0;
+  if (gLifeTesting.battery) {
+    charge_cycles++;
+
+    if ((charge_cycles & 0x7F)==0) { printf("battery is %d\n", bodyData->battery.battery); }
+
+    if (bodyData->battery.battery > BAT_CHARGED_THRESHOLD) {
+      if (!gLifeTesting.do_discharge) {
+        mm_debug("Battery charged for %d cycles to %fV", charge_cycles,
+                 bodyData->battery.battery * BATTERY_SCALE);
+        if (gLifeTesting.battery)
+          gLifeTesting.do_discharge = true;
+        charge_cycles = 0;
+      }
+    }
+    if (bodyData->battery.battery < BAT_DISCHARGED_THRESHOLD) {
+      if (gLifeTesting.do_discharge) {
+        mm_debug("Battery discharged for %d cycles to %fV", charge_cycles,
+                 bodyData->battery.battery * BATTERY_SCALE);
+        gLifeTesting.do_discharge = false;
+        charge_cycles = 0;
+      }
+    }
+  }
+}
+
+
 /****  Menu Handlers ****/
 
 
@@ -242,7 +339,7 @@ void handle_MainPlaySound(void* param) {
 
 void handle_MainMotorTest(void* param) {
   printf("MotorTest Selected\n");
-  start_motor_test();
+  start_motor_test(true);
 }
 
 void handle_SystemCall(void* param) {
@@ -253,6 +350,33 @@ void handle_SystemCall(void* param) {
 }
 
 
+void handle_LifeTestBattery(void* param)
+{
+  gLifeTesting.battery = true;
+  gLifeTesting.do_discharge = true;
+}
+
+void handle_LifeTestCpu(void* param)
+{
+  gLifeTesting.burn_proc.proc_fd = pidopen("./burn.sh", "", &gLifeTesting.burn_proc.wait_pid);
+  gLifeTesting.cpu = true;
+}
+
+void handle_LifeTestMotors(void* param)
+{
+  gLifeTesting.motors = true;
+}
+void handle_LifeTestScreen(void* param)
+{
+  gLifeTesting.screen = true;
+}
+
+void handle_LifeTestAll(void* param) {
+  handle_LifeTestBattery(param);
+  handle_LifeTestCpu(param);
+  handle_LifeTestMotors(param);
+  handle_LifeTestScreen(param);
+}
 
 
 /************* MENU DEFINITIONS **************/
@@ -303,6 +427,16 @@ MENU_ITEMS(TXB) = {
 };
 MENU_CREATE(TXB);
 
+MENU_ITEMS(LifeTest)= {
+  MENU_BACK(Main),
+  MENU_ACTION("Burn Battery", LifeTestBattery),
+  MENU_ACTION("CPU / Flash ", LifeTestCpu),
+  MENU_ACTION("Run Motors", LifeTestMotors),
+  MENU_ACTION("Cycle Screens", LifeTestScreen),
+  MENU_ACTION("ALL", LifeTestAll),
+};
+MENU_CREATE(LifeTest);
+
 MENU_ITEMS(Main) = {
   MENU_SUBMENU("TX Carrier", TXCW),
   MENU_SUBMENU("TX 11n", TXN),
@@ -311,6 +445,7 @@ MENU_ITEMS(Main) = {
   MENU_ACTION("Burn CPU", MainBurn ),
   MENU_ACTION("Play Sound", MainPlaySound ),
   MENU_ACTION("Motor Test", MainMotorTest ),
+  MENU_SUBMENU("Life Testing", LifeTest),
 };
 MENU_CREATE(Main);
 
@@ -352,16 +487,14 @@ void populate_outgoing_frame(void) {
   }
 }
 
-static const float HAL_SEC_PER_TICK = (1.0 / 256) / 48000000;
+//static const float HAL_SEC_PER_TICK = (1.0 / 256) / 48000000;
 
 #define MENU_TREAD_VELOCITY_THRESHOLD 1
 #define MENU_TREAD_TRIGGER_DELTA       120
 #define MENU_LIFT_TRIGGER_DELTA       75
-
-
 #define INITIAL_LIFT_POS 0x0FFFffff
 
-void process_incoming_frame(struct BodyToHead* bodyData)
+void process_menu_controls(struct BodyToHead* bodyData)
 {
   static int32_t liftMinPosition = INITIAL_LIFT_POS;
   static int32_t treadLastPosition = 0;
@@ -372,31 +505,46 @@ void process_incoming_frame(struct BodyToHead* bodyData)
     treadLastPosition = bodyData->motor[MOTOR_RIGHT].position;
   }
 
-  if (abs(bodyData->motor[MOTOR_RIGHT].position - treadLastPosition) > MENU_TREAD_TRIGGER_DELTA )
-  {
-    treadLastPosition = bodyData->motor[MOTOR_RIGHT].position;
-    menu_advance();
+  if (!gLifeTesting.motors) {
+
+    if (abs(bodyData->motor[MOTOR_RIGHT].position - treadLastPosition) > MENU_TREAD_TRIGGER_DELTA )
+    {
+      treadLastPosition = bodyData->motor[MOTOR_RIGHT].position;
+      menu_advance();
+    }
+    if (bodyData->motor[MOTOR_LIFT].position - liftMinPosition > MENU_LIFT_TRIGGER_DELTA)
+    {
+      menu_select();
+      liftMinPosition = bodyData->motor[MOTOR_LIFT].position;
+    }
+    else if (bodyData->motor[MOTOR_LIFT].position < liftMinPosition)
+    {
+      liftMinPosition = bodyData->motor[MOTOR_LIFT].position;
+    }
   }
+
   if (bodyData->touchLevel[1] > 0 )  {
     if (!buttonPressed) {
       buttonPressed = true;
       if (!stop_motor_test()) {
         menu_select();
       }
+      else {
+        gLifeTesting.motors=0;
+      }
     }
   }
   else {
     buttonPressed = false;
   }
-  if (bodyData->motor[MOTOR_LIFT].position - liftMinPosition > MENU_LIFT_TRIGGER_DELTA)
-  {
-    menu_select();
-    liftMinPosition = bodyData->motor[MOTOR_LIFT].position;
-  }
-  else if (bodyData->motor[MOTOR_LIFT].position < liftMinPosition)
-  {
-    liftMinPosition = bodyData->motor[MOTOR_LIFT].position;
-  }
+
+}
+
+
+void process_incoming_frame(struct BodyToHead* bodyData)
+{
+  process_menu_controls(bodyData);
+  check_battery_discharge(bodyData);
 }
 
 
@@ -429,7 +577,7 @@ int main(int argc, const char* argv[])
   while (!shouldexit)
   {
     draw_menus();
-    process_monitor();
+    process_monitor(&gProcess);
 
     const struct SpineMessageHeader* hdr = get_a_frame(5);
     if (!hdr) {
@@ -446,6 +594,7 @@ int main(int argc, const char* argv[])
       if (hdr->payload_type == PAYLOAD_DATA_FRAME) {
          struct BodyToHead* bodyData = (struct BodyToHead*)(hdr+1);
          process_incoming_frame(bodyData);
+         manage_life_tests();
          populate_outgoing_frame();
          hal_send_frame(PAYLOAD_DATA_FRAME, &gHeadData, sizeof(gHeadData));
       }
@@ -455,7 +604,7 @@ int main(int argc, const char* argv[])
     }
   }
 
-  on_exit();
+  on_vic_exit();
 
   return 0;
 }

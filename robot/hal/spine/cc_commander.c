@@ -475,7 +475,7 @@ const char* handle_quit_command(const char* text, int len)
 
 #ifdef STANDALONE_UTILITY
 
-void on_exit(void)
+void on_vic_exit(void)
 {
   hal_terminate();
   enable_kbhit(0);
@@ -1003,7 +1003,7 @@ int main(int argc, const char* argv[])
 
   }
 
-  on_exit();
+  on_vic_exit();
 
   return 0;
 }

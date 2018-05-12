@@ -3,7 +3,7 @@
 /* #include <stdbool.h> */
 /* #include <stdlib.h> */
 /* #include <assert.h> */
-/* #include <string.h> */
+#include <string.h>
 #include <ctype.h>
 /* #include <fcntl.h> */
 #include <unistd.h>
@@ -97,7 +97,7 @@ int display_parse(const char* command, int linelen)
 
 }
 
-void on_exit(void) {
+void on_vic_exit(void) {
   lcd_shutdown();
 }
 

@@ -29,7 +29,7 @@ static void animate(const char* fn) {
 #define ENDLESS 1
 
 
-void on_exit(void) {
+void on_vic_exit(void) {
    lcd_shutdown();
 }
 
@@ -53,6 +53,6 @@ int main(int argc, char** argv) {
      error_exit(app_USAGE, "Usage: %s <filename>\n", argv[0]);
   }
 
-  on_exit();
+  on_vic_exit();
   return 0;
 }

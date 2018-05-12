@@ -36,7 +36,7 @@ static struct {
 
 
 //Clean up open file handles and memory
-void on_exit(void)
+void on_vic_exit(void)
 {
   if (gDFU.imageFd) {
     close(gDFU.imageFd);
@@ -178,9 +178,6 @@ int main(int argc, const char* argv[])
   }
   printf("Flash successful\n");
 
-  on_exit();
+  on_vic_exit();
   return 0;
 }
-
-
-

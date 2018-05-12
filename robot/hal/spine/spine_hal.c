@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <termios.h>
-/* #include <string.h> */
+#include <string.h>
 
 #include "schema/messages.h"
 #include "spine_crc.h"
@@ -153,6 +153,9 @@ static int get_payload_len(PayloadId payload_type, enum MsgDir dir)
   case PAYLOAD_DATA_FRAME:
     return (dir == dir_SEND) ? sizeof(struct HeadToBody) : sizeof(struct BodyToHead);
     break;
+  case PAYLOAD_CONT_DATA:
+    return sizeof(struct ContactData);
+    break;
   case PAYLOAD_VERSION:
     return (dir == dir_SEND) ? 0 : sizeof(struct VersionInfo);
     break;
@@ -167,6 +170,12 @@ static int get_payload_len(PayloadId payload_type, enum MsgDir dir)
     break;
   case PAYLOAD_DFU_PACKET:
     return sizeof(struct WriteDFU);
+    break;
+  case PAYLOAD_SHUT_DOWN:
+    return 0;
+    break;
+  case PAYLOAD_BOOT_FRAME:
+    return sizeof(struct MicroBodyToHead);
     break;
   default:
     break;

@@ -83,7 +83,7 @@ void ProcessIMUEvents()
   {
     tempCount = 0;
     imu_update_temperature();
-  } 
+  }
 
   IMURawData rawData[IMU_MAX_SAMPLES_PER_READ];
   HAL::IMU_DataStructure imuData;
@@ -125,7 +125,7 @@ void ProcessLoop()
     const auto start = std::chrono::steady_clock::now();
     ProcessIMUEvents();
     const auto end = std::chrono::steady_clock::now();
-    
+
     // Sleep such that there are 5ms between ProcessIMUEvent calls
     auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     std::chrono::duration<double, std::micro> sleepTime = std::chrono::milliseconds(5) - elapsed;

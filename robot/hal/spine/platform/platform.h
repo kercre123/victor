@@ -1,10 +1,10 @@
 #ifndef SPINE_PLATFORM_H
 #define SPINE_PLATFORM_H
 
-#ifdef ANDROID
-#define  PLATFORM_ANDROID 1
-#else
+#ifdef OSX
 #define  PLATFORM_OSX 1
+#else
+#define  PLATFORM_VICOS 1
 #endif
 
 /* Platform selector. **
@@ -16,7 +16,7 @@
  * PLATFORM_SIM ?
  */
 
-#if PLATFORM_ANDROID
+#if PLATFORM_VICOS
 #include "android/spine_logging.h"
 #include "android/serial_support.h"
 #include <unistd.h>
