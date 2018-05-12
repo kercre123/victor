@@ -8,6 +8,7 @@ import struct
 import websockets
 
 from . import lights
+from ._clad import _animation_trigger
 from ._clad import _clad_message
 
 class Robot:
@@ -124,6 +125,31 @@ class Robot:
         outerWrappedMessage = _clad_message.ExternalComms(MeetVictor=innerWrappedMessage)
         
         await self.socket.send(outerWrappedMessage.pack())        
+
+    async def say_text(self, text, play_event=_animation_trigger.Count, voice_style=3,
+                 duration_scalar=1.0, voice_pitch=0.0):
+        #TODO Add enum for voice style
+        #Set AnimationTrigger::Count to only play the Tts without an animation
+
+        '''Have Vector say text.
+
+        Args:
+            text (string): The words for Vector to say.
+            play_event (bool): Whether to also play an 
+                animation while speaking.
+            voice_style (bool): Whether to use Vector's robot voice
+                (otherwise, he uses a generic human male voice).
+            duration_scalar (float): Adjust the relative duration of the
+                generated text to speech audio.
+            voice_pitch (float): Adjust the pitch of Vector's robot voice [-1.0, 1.0]
+        '''
+        fit_to_duration = False
+        message = _clad_message.SayText(text, play_event, voice_style,
+                 duration_scalar, voice_pitch, fit_to_duration)
+        innerWrappedMessage = _clad_message.Animations(SayText=message)
+        outerWrappedMessage = _clad_message.ExternalComms(Animations=innerWrappedMessage)
+
+        await self.socket.send(outerWrappedMessage.pack())
 
     # Mid level movement actions
     async def drive_off_contacts(self):

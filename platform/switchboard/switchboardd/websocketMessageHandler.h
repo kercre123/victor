@@ -47,6 +47,7 @@ private:
   void HandleAnimations(Anki::Cozmo::ExternalComms::Animations unionInstance);
   void HandleAnimations_PlayAnimation(Anki::Cozmo::ExternalComms::PlayAnimation sdkMessage);
   void HandleAnimations_RequestAvailableAnimations(Anki::Cozmo::ExternalComms::RequestAvailableAnimations sdkMessage);
+  void HandleAnimations_SayText(Anki::Cozmo::ExternalComms::SayText sdkMessage);
 
   void HandleMovementAction(Anki::Cozmo::ExternalComms::MovementAction unionInstance);
   void HandleMovementAction_DriveOffChargerContacts(Anki::Cozmo::ExternalComms::DriveOffChargerContacts sdkMessage);
@@ -66,6 +67,7 @@ private:
 
   void HandleVictorDisplay(Anki::Cozmo::ExternalComms::VictorDisplay unionInstance);
   void HandleVictorDisplay_SetBackpackLEDs(Anki::Cozmo::ExternalComms::SetBackpackLEDs sdkMessage);
+
 
   Anki::Cozmo::ExternalComms::ExternalComms SendMeetVictorStarted(const Anki::Cozmo::ExternalInterface::MeetVictorStarted& msg);
   Anki::Cozmo::ExternalComms::ExternalComms SendMeetVictorFaceScanStarted(const Anki::Cozmo::ExternalInterface::MeetVictorFaceScanStarted& msg);

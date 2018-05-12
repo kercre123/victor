@@ -3,8 +3,10 @@
 // Author: Nicolas Kent
 // Copyright: Anki Inc (c) 2018
 
+#include "clad/types/animationTrigger.clad"
 #include "clad/types/faceEnrollmentResult.clad"
 #include "clad/types/loadedKnownFace.clad"
+#include "clad/types/sayTextStylesSDK.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -453,11 +455,23 @@ message RequestAvailableAnimations {
   
 }
 
+message SayText {
+  string                 text,
+  AnimationTrigger       playEvent,      // Set AnimationTrigger::Count to only play the Tts without an animation
+  SayTextVoiceStyleSDK   voiceStyle,
+  float_32               durationScalar = 1.0,
+  float_32               voicePitch = 0.0,
+  bool                   fitToDuration   // No longer supported
+}
+
 union Animations {
   PlayAnimation                 playAnimation = 0x00,
   RequestAvailableAnimations    requestAvailableAnimations = 0x01,
+  SayText                       SayText = 0x02,
+
 }
 
+// ====================================================
 //                   Movement Actions
 // ====================================================
 
