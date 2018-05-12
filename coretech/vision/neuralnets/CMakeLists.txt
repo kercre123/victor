@@ -14,15 +14,11 @@ set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_FLAGS "")
 
-set(CMAKE_CXX_STANDARD 11)
-
 if (VICOS)
-
-  set(CMAKE_CXX_FLAGS "")
 
   set(PLATFORM_FLAGS
     --std=c++11 
-    -stdlib=libc++
+    -stdlib=libc++    # NOTE: VicOS uses libc++, so TensorFlow must be built to match
     -fPIE 
     -mfloat-abi=softfp 
     -mfpu=neon 
@@ -30,40 +26,47 @@ if (VICOS)
   )
   
   set(PLATFORM_INCLUDES
-    #${VICOS_SDK}/sysroot/usr/include
-    #${VICOS_SDK}/sysroot/usr/include/c++/4.9.3
-    #${VICOS_SDK}/sysroot/usr/include/c++/4.9.3/arm-oe-linux-gnueabi
     ${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/vicos/include
   )
 
-  
   set(PLATFORM_LIBS
     -Wl,--whole-archive 
     ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/lib/libtensorflow-core.a
     -Wl,--no-whole-archive
     ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/protobuf/armeabi-v7a/lib/libprotobuf.a 
     ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/downloads/nsync/builds/default.vicos.c++11/libnsync.a
-    ${OPENCV_LIB_DIR}/libopencv_imgproc.so
-    ${OPENCV_LIB_DIR}/libopencv_core.so
-    ${OPENCV_LIB_DIR}/libopencv_imgcodecs.so
-    c++
+    c++   # NOTE: VicOS uses libc++, so TensorFlow must be built to match
     dl
     log
     z
   )
 
 elseif (MACOSX)
+  
+  include(webots)
+
+  set(PLATFORM_FLAGS
+    --std=c++11 
+    -DSIMULATOR
+  )
+  
+  set(PLATFORM_INCLUDES
+    ${CORETECH_EXTERNAL_DIR}/build/opencv-3.4.0/mac
+  )
+
+  set(PLATFORM_LIBS
+    -Wl,-force_load
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/lib/libtensorflow-core.a
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/protobuf/lib/libprotobuf.a
+    ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/downloads/nsync/builds/default.macos.c++11/libnsync.a
+    ${WEBOTS_LIBS}
+    stdc++
+    m
+  )
 
 endif()
 
 anki_build_cxx_executable(vic-neuralnets ${ANKI_SRCLIST_DIR})
-
-#add_executable(vic-neuralnets
-#  standaloneForwardInference.cpp
-#  objectDetector_tensorflow.cpp
-#  objectDetector_tensorflow.h
-#  ${VICTOR_REPO_PATH}/tools/message-buffers/support/cpp/source/jsoncpp.cpp
-#)
 
 target_compile_definitions(vic-neuralnets 
   PRIVATE
@@ -93,9 +96,13 @@ target_include_directories(vic-neuralnets
   ${OPENCV_INCLUDE_PATHS}
 )
 
+# Link against OpenCV libs, but don't include OpenCV's protobuf as TF has its own
+list(REMOVE_ITEM OPENCV_LIBS libprotobuf)
+
 target_link_libraries(vic-neuralnets
   PRIVATE
   jsoncpp
+  ${OPENCV_LIBS}    # NOTE: Order may matter here? (OpenCV before platform?)
   ${PLATFORM_LIBS}
 )
 

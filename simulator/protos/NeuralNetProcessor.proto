@@ -1,0 +1,12 @@
+PROTO NeuralNetProcessor [
+  field SFString name "NeuralNetProcessor"
+]
+{
+Supervisor {
+  name IS name
+  controller "webotsCtrlNeuralNets"
+
+  controllerArgs "resources/config/engine/vision_config.json resources/config/engine/vision/dnn_models resources/../../../playbackLogs/webotsCtrlGameEngine2/vision/object_detector/"
+
+} # Supervisor definition
+} # PROTO definition

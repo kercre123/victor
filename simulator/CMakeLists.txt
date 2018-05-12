@@ -426,3 +426,15 @@ symlink_target(
   TARGET webotsCtrlDevLog
   DST "${CONTROLLERS_DIR}/webotsCtrlDevLog/"
 )
+
+#
+# webotsCtrlNeuralNets
+#
+
+add_custom_target(webotsCtrlNeuralNets ALL
+    COMMENT "Symlinking webotsCtrlNeuralNets to vic-neuralnets"  
+    WORKING_DIRECTORY ${CONTROLLERS_DIR}
+    COMMAND mkdir -p webotsCtrlNeuralNets
+    COMMAND ln -s -f ${CMAKE_BINARY_DIR}/bin/vic-neuralnets webotsCtrlNeuralNets/webotsCtrlNeuralNets
+    COMMAND ln -s -F ${BUILT_RESOURCES_DIR} webotsCtrlNeuralNets/resources
+)

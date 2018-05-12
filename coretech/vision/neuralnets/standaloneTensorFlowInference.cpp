@@ -22,6 +22,10 @@
 #  error TENSORFLOW or CAFFE2 or OPENCVDNN or TFLITE must be defined
 #endif
 
+#ifdef SIMULATOR
+#  include <webots/Supervisor.hpp>
+#endif
+
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -57,6 +61,10 @@ cv::Mat read_bmp(const std::string& input_bmp_name); // defined below, after mai
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int main(int argc, char **argv)
 {
+# ifdef SIMULATOR
+  webots::Supervisor webotsSupervisor;
+# endif
+
   // For calling destructor when process is interrupted or terminated
   // https://stackoverflow.com/questions/4250013/is-destructor-called-if-sigint-or-sigstp-issued
   struct sigaction sa;
@@ -261,7 +269,17 @@ int main(int argc, char **argv)
           count = 0;
         }
       }
+
+#     ifdef SIMULATOR
+      const int rc = webotsSupervisor.step(kPollPeriod_ms);
+      if(rc == -1)
+      {
+        std::cout << "Webots terminating " << argv[0] << std::endl;
+        break;
+      }
+#     else
       std::this_thread::sleep_for(std::chrono::milliseconds(kPollPeriod_ms));  
+#     endif
     }
 
     if(quit.load()) 
