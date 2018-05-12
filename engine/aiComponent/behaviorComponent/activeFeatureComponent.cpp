@@ -14,8 +14,11 @@
 
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "engine/cozmoContext.h"
+#include "webServerProcess/src/webService.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -23,6 +26,11 @@ namespace Cozmo {
 ActiveFeatureComponent::ActiveFeatureComponent()
   : IDependencyManagedComponent( this, BCComponentID::ActiveFeature )
 {
+}
+
+void ActiveFeatureComponent::InitDependent( Robot* robot, const BCCompMap& dependentComponents )
+{
+  _context = dependentComponents.GetValue<BEIRobotInfo>().GetContext();
 }
 
 void ActiveFeatureComponent::UpdateDependent(const BCCompMap& dependentComponents)
@@ -68,10 +76,25 @@ void ActiveFeatureComponent::SetActiveFeature(ActiveFeature newFeature)
     if( newFeature != ActiveFeature::NoFeature ) {
       PRINT_CH_INFO("BehaviorSystem", "active_feature.start",
                     "%s",
-                    ActiveFeatureToString(newFeature));      
+                    ActiveFeatureToString(newFeature));
     }
 
     _activeFeature = newFeature;
+    SendActiveFeatureToWebViz();
+  }
+}
+
+void ActiveFeatureComponent::SendActiveFeatureToWebViz() const
+{
+  if( _activeFeature != ActiveFeature::NoFeature ) {
+    if( _context != nullptr ) {
+      const auto* webService = _context->GetWebService();
+      if( webService != nullptr ){
+        Json::Value data;
+        data["activeFeature"] = ActiveFeatureToString(_activeFeature);
+        webService->SendToWebViz("behaviors", data);
+      }
+    }
   }
 }
 

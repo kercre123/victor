@@ -26,6 +26,8 @@
 namespace Anki {
 namespace Cozmo {
 
+class CozmoContext;
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class ActiveFeatureComponent : public IDependencyManagedComponent<BCComponentID>
                              , public Anki::Util::noncopyable
@@ -33,8 +35,10 @@ class ActiveFeatureComponent : public IDependencyManagedComponent<BCComponentID>
 public:
   ActiveFeatureComponent();
 
-  virtual void GetInitDependencies( BCCompIDSet& dependencies ) const override { }
-  virtual void InitDependent( Robot* robot, const BCCompMap& dependentComponents ) override { }
+  virtual void GetInitDependencies( BCCompIDSet& dependencies ) const override {
+    dependencies.insert(BCComponentID::RobotInfo);
+  }
+  virtual void InitDependent( Robot* robot, const BCCompMap& dependentComponents ) override;
   
   virtual void GetUpdateDependencies( BCCompIDSet& dependencies ) const override {
     // ensure the bsm updates first so that the stack is in the new state when this component ticks
@@ -49,8 +53,12 @@ public:
 private:
 
   void SetActiveFeature(ActiveFeature newFeature);
+
+  void SendActiveFeatureToWebViz() const;
   
   ActiveFeature _activeFeature = ActiveFeature::NoFeature;
+
+  const CozmoContext* _context = nullptr;
 };
 
 }
