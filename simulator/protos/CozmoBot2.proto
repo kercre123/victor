@@ -280,6 +280,11 @@ Supervisor {
                   colorizeStderrOutput IS colorizeStderrOutput
                 }
 
+                # NeuralNet process:
+                NeuralNetProcessor {
+
+                }
+
                 # This IMU is positioned in the same place as the one in CozmoEngine2.proto
                 # as way to simulate access to the same IMU from both the robot and engine processes 
                 # which we might in theory be able to eventually do via AndroidHAL.
