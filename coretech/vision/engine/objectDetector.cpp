@@ -173,8 +173,8 @@ bool ObjectDetector::StartProcessingIfIdle(ImageCache& imageCache)
     }
     
     // Store its size relative to original size so we can rescale object detections later
-    _widthScale = (f32)imageCache.GetOrigNumRows() / (f32)_imgBeingProcessed.GetNumRows();
-    _heightScale = (f32)imageCache.GetOrigNumCols() / (f32)_imgBeingProcessed.GetNumCols();
+    _heightScale = (f32)imageCache.GetOrigNumRows() / (f32)_imgBeingProcessed.GetNumRows();
+    _widthScale  = (f32)imageCache.GetOrigNumCols() / (f32)_imgBeingProcessed.GetNumCols();
     
     PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Detect.ProcessingImage", "Detecting objects in %dx%d image t=%u",
                   _imgBeingProcessed.GetNumCols(), _imgBeingProcessed.GetNumRows(), _imgBeingProcessed.GetTimestamp());
