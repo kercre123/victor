@@ -45,7 +45,7 @@ class ObjectDetector::Model
 {
 public:
 
-  Model(Profiler& profiler) : _profiler(profiler) { }
+  Model(Profiler& profiler);
   
   Result LoadModel(const std::string& modelPath, const std::string& cachePath, const Json::Value& config);
 
@@ -60,10 +60,22 @@ private:
   
 }; // class Model
   
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ObjectDetector::Model::Model(Profiler& profiler) 
+: _profiler(profiler) 
+{ 
+
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const std::string& cachePath, const Json::Value& config)
 {
   _cachePath = cachePath;
+
+  // Clear the cache of any stale images/results:
+  Util::FileUtils::RemoveDirectory(_cachePath);
+  Util::FileUtils::CreateDirectory(_cachePath);
 
   if(!config.isMember("poll_period_ms")) 
   {
