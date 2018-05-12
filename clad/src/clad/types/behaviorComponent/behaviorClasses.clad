@@ -28,6 +28,7 @@ enum uint_8 BehaviorClass {
   RollBlock,
 
   // basicWorldInteractions
+  ClearChargerArea,
   DriveOffCharger,
   FindFaces,
   FindHome,

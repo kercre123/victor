@@ -141,11 +141,13 @@ enum uint_8 BehaviorID {
 
   // victorBehaviorTree/highLevelDelegates/getHomeBehaviors
   AcknowledgeCharger,
+  ClearChargerArea,
   FindAndGoToHome,
   FindAndRequestHome,
   FindHome,
   GoHome,
   LowBatteryFindAndGoToHome,
+  RequestHomeBecauseStuck,
   RequestToGoHome,
   WiggleBackOntoChargerFromPlatform,
 

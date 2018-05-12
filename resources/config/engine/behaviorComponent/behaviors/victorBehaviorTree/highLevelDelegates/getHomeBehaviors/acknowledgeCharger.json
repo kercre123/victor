@@ -11,7 +11,7 @@
   "wantsToBeActivatedCondition": {
     "conditionType" : "ObjectInitialDetection",
     "objectTypes" : ["Charger_Basic"],
-    "firstTimeOnly" : false
+    "firstTimeOnly" : true
   }
 
 }

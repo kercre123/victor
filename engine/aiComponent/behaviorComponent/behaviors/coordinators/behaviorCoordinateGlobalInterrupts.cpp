@@ -35,6 +35,7 @@ namespace{
   // _any_ behavior of that class is running below us on the stack
   static const std::set<BehaviorClass> kBehaviorClassesToSuppressProx = {{ BEHAVIOR_CLASS(FistBump),
                                                                            BEHAVIOR_CLASS(Keepaway),
+                                                                           BEHAVIOR_CLASS(RollBlock),
                                                                            BEHAVIOR_CLASS(PounceWithProx) }};
 }
 

@@ -53,16 +53,6 @@ BehaviorRollBlock::InstanceConfig::InstanceConfig()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorRollBlock::DynamicVariables::DynamicVariables()
-{
-  didAttemptDock        = false;
-  upAxisOnBehaviorStart = AxisName::X_POS;
-  behaviorState         = State::RollingBlock;
-  rollRetryCount        = 0;
-};
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorRollBlock::BehaviorRollBlock(const Json::Value& config)
 : ICozmoBehavior(config)
 {  
@@ -96,8 +86,17 @@ bool BehaviorRollBlock::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRollBlock::OnBehaviorActivated()
 {
+  ObjectID potentiallyCarryoverID;
+  if(_dVars.idSetExternally){
+    potentiallyCarryoverID = _dVars.targetID;
+  }
   _dVars = DynamicVariables();
-  CalculateTargetID(_dVars.targetID);
+  
+  if(potentiallyCarryoverID.IsSet()){
+    _dVars.targetID = potentiallyCarryoverID;
+  }else{
+    CalculateTargetID(_dVars.targetID);
+  }
 
   const ObservableObject* object = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.targetID);
   if(object != nullptr){

@@ -1,29 +1,21 @@
 {
   "behaviorClass": "RequestToGoHome",
-  "behaviorID": "RequestToGoHome",
-  "displayNameKey":"behavior.RequestToGoHome",
-  
-  "wantsToBeActivatedCondition": {
-    "conditionType": "Compound",
-    "not": {
-      "conditionType": "ObjectKnown",
-      "objectTypes": ["Charger_Basic"]
-    }
-  },
+  "behaviorID": "RequestHomeBecauseStuck",
+  "displayNameKey":"behavior.RequestHomeBecauseStuck",
   
   "normal" : {
-    "numRequests"         : 1,
+    "numRequests"         : 0,
     "requestAnimTrigger"  : "ChargerDockingRequest",
     "getoutAnimTrigger"   : "ChargerDockingRequestGetout",
     "waitLoopAnimTrigger" : "ChargerDockingRequestWaitLoop",
     "idleWaitTime_sec"    : 30.0
   }, 
   "severe" : {
-    "numRequests"         : 1,
+    "numRequests"         : 3,
     "requestAnimTrigger"  : "ChargerDockingSevereRequest",
     "getoutAnimTrigger"   : "ChargerDockingSevereRequestGetout",
     "waitLoopAnimTrigger" : "ChargerDockingRequestWaitLoop",
-    "idleWaitTime_sec"    : 30.0
+    "idleWaitTime_sec"    : 15.0
   },
   
   "pickupAnimTrigger" : "ChargerDockingRequestPickup",
