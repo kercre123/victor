@@ -1,7 +1,6 @@
 {
   "behaviorClass": "RequestToGoHome",
   "behaviorID": "RequestHomeBecauseStuck",
-  "displayNameKey":"behavior.RequestHomeBecauseStuck",
   
   "normal" : {
     "numRequests"         : 0,
