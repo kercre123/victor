@@ -251,13 +251,11 @@ void Analog::tick(void) {
   last_vext = vext_now;
   on_charger = vext_debounce >= MINIMUM_VEXT_TIME;
 
-  // Button current injection work around
   temperature = *TEMP30_CAL_ADDR - ((Analog::values[ADC_TEMP] * TEMP_VOLT_ADJ) >> 20);
   temperature = ((temperature * TEMP_SCALE_ADJ) >> 20) + 30;
 
-  //bool emergency_shutoff = temperature >= 60;    // Will immediately cause a reboot
-  //if (temperature >= 45) disable_vmain = true;
-  bool emergency_shutoff = false;
+  bool emergency_shutoff = temperature >= 60;    // Will immediately cause a reboot
+  if (temperature >= 45) disable_vmain = true;
 
   #ifdef BOOTLOADER
   static bool has_booted = false;
