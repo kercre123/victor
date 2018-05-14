@@ -134,6 +134,7 @@
     "architecture"    : "custom",
     "input"           : "input_1",
     "output"          : "output_node0",
+    "output_type"     : "classification",
     "use_float_input" : 1,
     "use_grayscale"   : 0,
     "input_width"     : 128, 

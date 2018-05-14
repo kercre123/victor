@@ -59,8 +59,8 @@ private:
   struct 
   {
     std::string   graph; // = "tensorflow/examples/label_image/data/inception_v3_2016_08_28_frozen.pb";
-    std::string   architecture; // "classification" or "detection"
     std::string   labels; // = "tensorflow/examples/label_image/data/imagenet_slim_labels.txt";
+    std::string   architecture;
     
     int32_t       input_width; // = 299;
     int32_t       input_height; // = 299;
@@ -83,6 +83,14 @@ private:
   bool                                 _useFloatInput = false;
   bool                                 _useGrayscale = false;
   
+  enum class OutputType {
+    Classification,
+    BinaryLocalization,
+    SSD_Boxes,
+  };
+
+  OutputType _outputType;
+
   std::unique_ptr<tensorflow::Session>      _session;
   std::unique_ptr<tensorflow::MemmappedEnv> _memmapped_env;
   std::unique_ptr<tensorflow::Session>      _imageReadSession;

@@ -85,6 +85,9 @@ Result ObjectDetector::Model::LoadModel(const std::string& modelPath, const std:
 
   _pollPeriod_ms = config["poll_period_ms"].asInt();
 
+  PRINT_CH_INFO(kLogChannelName, "ObjectDetector.Model.LoadModel.Success", 
+                "Polling period: %dms, Cache: %s", _pollPeriod_ms, _cachePath.c_str());
+
   return RESULT_OK;
 }
 

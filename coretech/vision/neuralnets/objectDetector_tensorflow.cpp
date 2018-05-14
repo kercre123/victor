@@ -78,25 +78,28 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
   GetFromConfig(input_width);
   GetFromConfig(architecture);
   GetFromConfig(memory_map_graph);
-  
+
   if("ssd_mobilenet" == _params.architecture)
   {
     _inputLayerName = "image_tensor";
     _outputLayerNames = {"detection_scores", "detection_classes", "detection_boxes", "num_detections"};
     _useFloatInput = false;
+    _outputType = OutputType::SSD_Boxes;
   }
   else if(("mobilenet" == _params.architecture) || ("mobilenet_v1" == _params.architecture))
   { 
     _inputLayerName = "input";
     _outputLayerNames = {"MobilenetV1/Predictions/Softmax"};
     _useFloatInput = true;
+    _outputType = OutputType::Classification;
   }
   else if("custom" == _params.architecture)
   {
-    if(!config.isMember("input") || !config.isMember("output") || !config.isMember("use_float_input"))
+    if(!config.isMember("input") || !config.isMember("output") || 
+       !config.isMember("use_float_input") || !config.isMember("output_type"))
     {
       PRINT_NAMED_ERROR("ObjectDetector.LoadModel.MissingInputOutput", 
-                        "Custom architecture requires input/output names and use_float_input to be specified");
+                        "Custom architecture requires input/output names, use_float_input, and output_type to be specified");
       return RESULT_FAIL;
     }
     SetFromConfigHelper(config["input"], _inputLayerName);
@@ -109,7 +112,30 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
     else {
       _outputLayerNames.push_back(outputs.asString());
     }
+    
     SetFromConfigHelper(config["use_float_input"], _useFloatInput);
+
+    std::string output_type_str;
+    SetFromConfigHelper(config["output_type"], output_type_str);
+    const std::map<std::string, OutputType> kOutputTypeMap{
+      {"classification",        OutputType::Classification}, 
+      {"binary_localization",   OutputType::BinaryLocalization},
+      {"ssd_boxes",             OutputType::SSD_Boxes},
+    };
+
+    auto iter = kOutputTypeMap.find(output_type_str);
+    if(iter == kOutputTypeMap.end()) {
+      std::string validKeys;
+      for(auto const& entry : kOutputTypeMap) {
+        validKeys += entry.first;
+        validKeys += " ";
+      }
+      PRINT_NAMED_ERROR("ObjectDetector.LoadModel.BadOutputType", "Valid keys: %s", validKeys.c_str());
+      return RESULT_FAIL;
+    }
+    else {
+      _outputType = iter->second;
+    }
 
     if(config.isMember("use_grayscale"))
     {
@@ -527,16 +553,23 @@ Result ObjectDetector::Detect(cv::Mat& img, const TimeStamp_t t, std::list<Detec
     return RESULT_FAIL;
   }
 
-  if(output_tensors.size() == 1)
+  switch(_outputType)
   {
-    // TODO: Switch between these two based on config somehow
-    //GetLocalizedBinaryClassification(output_tensors[0], t, objects);
-    GetClassification(output_tensors[0], t, objects);
-    
-  }
-  else
-  {
-    GetDetectedObjects(output_tensors, t, objects);  
+    case OutputType::Classification:
+    {
+      GetClassification(output_tensors[0], t, objects);
+      break;
+    }
+    case OutputType::BinaryLocalization:
+    {
+      GetLocalizedBinaryClassification(output_tensors[0], t, objects);
+      break;
+    }
+    case OutputType::SSD_Boxes:
+    {
+      GetDetectedObjects(output_tensors, t, objects);  
+      break;
+    }
   }
 
   if(_params.verbose)
