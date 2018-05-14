@@ -2,7 +2,7 @@
   "behaviorClass": "ReactToFrustration",
   "behaviorID": "ReactToFrustrationMajor",
 
-  "associaitedActiveFeature": "Frustrated",
+  "associatedActiveFeature": "Frustrated",
 
   "anim": "FrustratedByFailureMajor",
   "finalEmotionEvent": "FinishedMajorFrustration",

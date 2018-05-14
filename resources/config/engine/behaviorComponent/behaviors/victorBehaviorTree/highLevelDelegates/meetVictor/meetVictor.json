@@ -2,7 +2,7 @@
   "behaviorClass": "DispatcherStrictPriority",
   "behaviorID": "MeetVictor",
 
-  "associaitedActiveFeature": "MeetVictor",
+  "associatedActiveFeature": "MeetVictor",
 
   "respondToUserIntents" : [
     {"type": "meet_victor"}

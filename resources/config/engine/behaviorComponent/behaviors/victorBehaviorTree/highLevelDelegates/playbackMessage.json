@@ -2,7 +2,7 @@
   "behaviorClass" : "PlaybackMessage",
   "behaviorID"    : "PlaybackMessage",
 
-  "associaitedActiveFeature": "PlayingMessage",
+  "associatedActiveFeature": "PlayingMessage",
   
   "respondToUserIntents" :
   [

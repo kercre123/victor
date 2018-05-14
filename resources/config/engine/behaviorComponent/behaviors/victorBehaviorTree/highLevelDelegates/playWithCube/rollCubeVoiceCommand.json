@@ -2,7 +2,7 @@
   "behaviorID" : "RollCubeVoiceCommand",
   "behaviorClass" : "DispatcherQueue",
 
-  "associaitedActiveFeature": "RollBlock",
+  "associatedActiveFeature": "RollBlock",
   
   "respondToUserIntents" : [
     {

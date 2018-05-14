@@ -3,7 +3,7 @@
   "behaviorClass" : "DispatcherStrictPriority",
   "interruptActiveBehavior": true,
 
-  "associaitedActiveFeature": "PounceOnFinger",
+  "associatedActiveFeature": "PounceOnFinger",
   
   "wantsToCancelSelfCondition": {
     "conditionType": "TimerInRange",

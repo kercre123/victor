@@ -1,5 +1,5 @@
 {
   "behaviorClass": "ReactToUnclaimedIntent",
   "behaviorID": "ReactToUnclaimedIntent",
-  "associaitedActiveFeature": "UnmatchedVoiceIntent"
+  "associatedActiveFeature": "UnmatchedVoiceIntent"
 }

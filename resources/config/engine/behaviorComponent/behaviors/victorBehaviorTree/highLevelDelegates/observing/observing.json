@@ -2,7 +2,7 @@
   "behaviorID" : "Observing",
   "behaviorClass" : "DispatcherStrictPriority",
 
-  "associaitedActiveFeature": "Observing",
+  "associatedActiveFeature": "Observing",
 
   "interruptActiveBehavior": true,
 

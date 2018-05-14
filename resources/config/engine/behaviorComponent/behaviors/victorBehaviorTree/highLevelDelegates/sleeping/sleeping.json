@@ -2,7 +2,7 @@
   "behaviorID" : "Sleeping",
   "behaviorClass" : "DispatcherQueue",
 
-  "associaitedActiveFeature": "Sleeping",
+  "associatedActiveFeature": "Sleeping",
   
   "behaviors": [
     "GoToSleep",

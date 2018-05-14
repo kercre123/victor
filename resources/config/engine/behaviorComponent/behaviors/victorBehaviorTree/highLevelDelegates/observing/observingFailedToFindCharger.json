@@ -2,7 +2,7 @@
   "behaviorClass" : "DispatcherQueue",
   "behaviorID" : "ObservingFailedToFindCharger",
 
-  "associaitedActiveFeature": "RequestCharger",
+  "associatedActiveFeature": "RequestCharger",
 
   "behaviors" : [
     "ReactToFrustrationMajor", // TODO:(bn) custom animation

@@ -2,7 +2,7 @@
   "behaviorClass" : "LeaveAMessage",
   "behaviorID"    : "LeaveAMessage",
   
-  "associaitedActiveFeature": "RecordingMessage",
+  "associatedActiveFeature": "RecordingMessage",
   
   "respondToUserIntents" :
   [

@@ -2,7 +2,7 @@
   "behaviorClass": "RollBlock",
   "behaviorID": "PlayRollBlock",
 
-  "associaitedActiveFeature": "RollBlock",
+  "associatedActiveFeature": "RollBlock",
 
   "isBlockRotationImportant" : false
 }

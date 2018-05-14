@@ -2,7 +2,7 @@
   "behaviorID" : "WeatherResponses",
   "behaviorClass" : "DispatcherStrictPriority",
 
-  "associaitedActiveFeature": "Weather",
+  "associatedActiveFeature": "Weather",
   
   "linkScope": true,
   "interruptActiveBehavior": true,

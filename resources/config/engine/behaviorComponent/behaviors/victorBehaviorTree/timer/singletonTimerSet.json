@@ -2,7 +2,7 @@
   "behaviorClass" : "ProceduralClock",
   "behaviorID" : "SingletonTimerSet",
 
-  "associaitedActiveFeature": "TimerSet",
+  "associatedActiveFeature": "TimerSet",
   
   "respondToUserIntents": [
     {

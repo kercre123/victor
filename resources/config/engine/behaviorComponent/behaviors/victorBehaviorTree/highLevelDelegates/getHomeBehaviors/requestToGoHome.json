@@ -1,7 +1,7 @@
 {
   "behaviorClass": "RequestToGoHome",
   "behaviorID": "RequestToGoHome",
-  "associaitedActiveFeature": "RequestCharger",
+  "associatedActiveFeature": "RequestCharger",
   
   "wantsToBeActivatedCondition": {
     "conditionType": "Compound",

@@ -78,7 +78,7 @@ static const char* kRespondToTriggerWordKey          = "respondToTriggerWord";
 static const char* kResetTimersKey                   = "resetTimers";
 static const char* kEmotionEventOnActivatedKey       = "emotionEventOnActivated";
 static const char* kPostBehaviorSuggestionKey        = "postBehaviorSuggestion";
-static const char* kAssociatedActiveFeature          = "associaitedActiveFeature";
+static const char* kAssociatedActiveFeature          = "associatedActiveFeature";
 
 static const std::string kIdleLockPrefix             = "Behavior_";
 

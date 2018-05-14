@@ -2,7 +2,7 @@
   "behaviorID": "ExploringDispatcher",
   "behaviorClass": "DispatcherStrictPriority",
 
-  "associaitedActiveFeature": "Exploring",
+  "associatedActiveFeature": "Exploring",
 
   "wantsToCancelSelfCondition": {
     "conditionType": "Compound",

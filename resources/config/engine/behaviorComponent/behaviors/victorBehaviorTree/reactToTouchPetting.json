@@ -1,7 +1,7 @@
 {
   "behaviorClass" : "ReactToTouchPetting",
   "behaviorID"    : "ReactToTouchPetting",
-  "associaitedActiveFeature": "Petting",
+  "associatedActiveFeature": "Petting",
   "animGroupGetin" : "ReactToTouchInitial",
   "animGroupNames" : ["PettingLevel1", "PettingLevel2", "PettingLevel3","PettingLevel4","PettingBlissLoop"],
   "animGroupNamesGetout" : [ "PettingLevel1Getout", "PettingLevel2Getout", "PettingLevel3Getout", "PettingLevel4Getout","PettingBlissGetout"],

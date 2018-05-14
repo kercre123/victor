@@ -2,7 +2,7 @@
   "behaviorClass": "Keepaway",
   "behaviorID": "Keepaway",
 
-  "associaitedActiveFeature": "Keepaway",
+  "associatedActiveFeature": "Keepaway",
   
   "naturalGameEndTimeout_s":          180.0, // Game will end after the next point when this expires
   "targetUnmovedGameEndTimeout_s":    20.0, // Game will end with "Bored" if the cube is unmoved for this long  

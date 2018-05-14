@@ -2,7 +2,7 @@
   "behaviorClass": "AnimSequence",
   "behaviorID": "ReactToObstacle",
   
-  "associaitedActiveFeature": "NoFeature",
+  "associatedActiveFeature": "NoFeature",
 
   "animTriggers": ["ReactToObstacle"],
   "wantsToBeActivatedCondition": {

@@ -6,7 +6,7 @@
   "interruptActiveBehavior": true,
 
   // all behaviors below this count as "greetings"
-  "associaitedActiveFeature": "VC_Greeting",
+  "associatedActiveFeature": "VC_Greeting",
 
   "behaviors": [
     "ReactToHello",

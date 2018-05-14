@@ -2,7 +2,7 @@
   "behaviorClass": "ReactToVoiceCommand",
   "behaviorID": "TriggerWordDetected",
 
-  "associaitedActiveFeature": "NoFeature",
+  "associatedActiveFeature": "NoFeature",
 
   "playListeningGetInAnim"  : true,
 

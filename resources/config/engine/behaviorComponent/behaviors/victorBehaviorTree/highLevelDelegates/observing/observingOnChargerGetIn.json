@@ -2,7 +2,7 @@
   "behaviorID": "ObservingOnChargerGetIn",
   "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
 
-  "associaitedActiveFeature": "ObservingOnCharger",
+  "associatedActiveFeature": "ObservingOnCharger",
 
   "interruptActiveBehavior": false,
   "linkScope": true,

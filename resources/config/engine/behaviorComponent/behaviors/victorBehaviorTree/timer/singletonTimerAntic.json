@@ -2,7 +2,7 @@
   "behaviorClass" : "ProceduralClock",
   "behaviorID" : "SingletonTimerAntic",
 
-  "associaitedActiveFeature": "TimerReminder",
+  "associatedActiveFeature": "TimerReminder",
 
   "getInAnimTrigger" : "TimerSetGetIn",
   "getOutAnimTrigger" : "TimerSetGetOut",

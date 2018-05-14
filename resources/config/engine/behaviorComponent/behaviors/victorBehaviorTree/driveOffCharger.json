@@ -2,5 +2,5 @@
   "behaviorClass": "DriveOffCharger",
   "behaviorID": "DriveOffCharger",
   "extraDistanceToDrive_mm": 60.0,
-  "associaitedActiveFeature": "NoFeature"
+  "associatedActiveFeature": "NoFeature"
 }

@@ -2,7 +2,7 @@
   "behaviorID" : "FistBumpVoiceCommand",
   "behaviorClass" : "DispatcherQueue",
 
-  "associaitedActiveFeature": "FistBump",
+  "associatedActiveFeature": "FistBump",
 
   "respondToUserIntents" : [
     {

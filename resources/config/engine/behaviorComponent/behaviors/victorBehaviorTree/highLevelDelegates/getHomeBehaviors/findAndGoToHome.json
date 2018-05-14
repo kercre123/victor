@@ -2,7 +2,7 @@
   "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
   "behaviorID" : "FindAndGoToHome",
 
-  "associaitedActiveFeature": "GoHome",
+  "associatedActiveFeature": "GoHome",
 
   "interruptActiveBehavior" : true,
   "linkScope": true,
