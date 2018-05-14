@@ -73,9 +73,6 @@ public:
   // Send CubeLights message to the specified cube
   bool SendCubeLights(const ActiveID& activeId, const CubeLights& cubeLights);
   
-  // Sends current available cube list to game
-  void SendBlockPoolData() const;
-  
   void SetBroadcastObjectAvailable(const bool enable = true) { _broadcastObjectAvailableMsg = enable; }
   
 private:
