@@ -288,13 +288,44 @@ bool TestRobotDetect(void)
 void TestRobotDetectSpine(void)
 {
   //ROBOT1 connected to stump via spine cable. Check for power input.
-  detect_mv = Meter::getVoltageMv(PWR_DUTVDD,6);
-  ConsolePrintf("spine voltage %imV\n", detect_mv);
-  
-  if( detect_mv < 3100 || detect_mv > 5100 )
-    throw ERROR_SPINE_POWER;
+  const int spine_voltage_low = 3100;
+  const int spine_voltage_high = 5100;
   
   rcomSetTarget(1); //rcom -> spine cable (init's DUT_UART)
+  
+  //wait for syscon to turn on head power
+  uint32_t Tstart = Timer::get();
+  while( Timer::elapsedUs(Tstart) < 2*1000*1000 )
+  {
+    //kick syscon out of bed
+    rcomPwr(RCOM_PWR_ON, RCOM_PRINT_LEVEL_NONE); //RCOM_PRINT_LEVEL_DEFAULT
+    
+    detect_mv = Meter::getVoltageMv(PWR_DUTVDD,4); //6);
+    if( detect_mv >= spine_voltage_low && detect_mv <= spine_voltage_high )
+      break;
+  }
+  
+  ConsolePrintf("spine voltage %imV\n", detect_mv);
+  if( detect_mv < spine_voltage_low || detect_mv > spine_voltage_high )
+    throw ERROR_SPINE_POWER;
+  
+  //check for packet response. give syscon app time to boot
+  Tstart = Timer::get();
+  bool working = 0;
+  while( !working )
+  {
+    if( Timer::elapsedUs(Tstart) > 3.5*1000*1000 )
+      throw ERROR_SPINE_CMD_TIMEOUT;
+    
+    rcomPwr(RCOM_PWR_ON, RCOM_PRINT_LEVEL_NONE); //kick syscon out of bed
+    try { 
+      rcomGet(1, RCOM_SENSOR_BTN_TOUCH, RCOM_PRINT_LEVEL_NONE);
+      working = 1;
+    } catch(...){
+    }
+  }
+  
+  ConsolePrintf("spine comms established\n");
 }
 
 void TestRobotCleanup(void)
