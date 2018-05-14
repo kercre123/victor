@@ -753,32 +753,30 @@ void EmrUpdate(void)
 void RobotPowerDown(void)
 {
   ConsolePrintf("robot power down\n");
-  rcomPwr(RCOM_PWR_OFF);
   
   if( g_fixmode >= FIXMODE_ROBOT2 )
   {
+    rcomPwr(RCOM_PWR_OFF);
     Contacts::powerOn(); //immdediately turn on power to prevent rebooting
     cleanup_preserve_vext = 1; //leave power on for removal detection (no cleanup pwr cycle)
   } 
   else //ROBOT1
   {
+    Contacts::powerOn(); //turn on power to prevent rebooting
+    cleanup_preserve_vext = 1; //leave power on for removal detection (no cleanup pwr cycle)
+    rcomPwr(RCOM_PWR_OFF);
+    
     //wait for syscon to turn off head power
-    int spine_mv = 999;
+    int spine_mv, cnt = 0;
     uint32_t Tstart = Timer::get();
-    while( spine_mv > 300 )
-    {
-      rcomPwr(RCOM_PWR_OFF, RCOM_PRINT_LEVEL_NONE);
-      
-      if( Timer::elapsedUs(Tstart) > 1*1000*1000 ) {
-        //ConsolePrintf("spine off voltage %imV\n", spine_mv);
-        //throw ERROR_BODY_VMAIN_SWITCH; //power won't shut off
-        ConsolePrintf("ERROR_BODY_VMAIN_SWITCH\n");
-        break;
-      }
-      
-      spine_mv = Meter::getVoltageMv(PWR_DUTVDD,4); //6);
-    }
+    do {
+      spine_mv = Meter::getVoltageMv(PWR_DUTVDD,5);
+      cnt = spine_mv < 50 ? cnt+1 : 0;
+    } while( cnt < 4 && Timer::elapsedUs(Tstart) < 1*1000*1000 );
+    
     ConsolePrintf("spine off voltage %imV\n", spine_mv);
+    if( spine_mv > 250 )
+      throw ERROR_BODY_VMAIN_SWITCH; //power won't shut off
   }
 }
 

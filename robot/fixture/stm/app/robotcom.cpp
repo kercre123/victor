@@ -673,6 +673,9 @@ void spinePwr(rcom_pwr_st_e st, int printlvl)
   
   HeadToBody* frame = halSpineH2BFrame( st==RCOM_PWR_ON ? POWER_STATE_ON : POWER_STATE_OFF, 0, 0);
   halSpineSend((uint8_t*)frame, PAYLOAD_DATA_FRAME);
+  
+  if( st != RCOM_PWR_ON )
+    halSpineSend((uint8_t*)0, PAYLOAD_SHUT_DOWN);
 }
 
 void spineLed(uint8_t *leds12, int printlvl)
