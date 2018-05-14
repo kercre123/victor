@@ -302,13 +302,12 @@ int cccRlg(uint8_t idx, char *buf, int buf_max_size)
   return dbuf.wlen;
 }
 
-int ccc_IdxVal32_(uint8_t idx, uint32_t val, const char* cmd, void(*handler)(char*), bool print_verbose = true, bool thow_status_errs = true ) {
+int ccc_IdxVal32_(uint8_t idx, uint32_t val, const char* cmd, void(*handler)(char*), int printlvl = RCOM_PRINT_LEVEL_DEFAULT, bool thow_status_errs = true ) {
   CCC_CMD_DELAY();
   memset( &m_ccc, 0, sizeof(m_ccc) );
   char b[22]; const int bz = sizeof(b);
   snformat(b,bz,"%s %02x %02x %02x %02x %02x 00", cmd, idx, (val>>0)&0xFF, (val>>8)&0xFF, (val>>16)&0xFF, (val>>24)&0xFF );
-  int opts = print_verbose ? CCC_CMD_OPTS : CCC_CMD_OPTS & ~(CMD_OPTS_LOG_CMD | CMD_OPTS_LOG_RSP);
-  
+  int opts = printlvl2cmdopts(printlvl);
   cmdSend(CMD_IO_CONTACTS, b, 500, opts|CMD_OPTS_ALLOW_STATUS_ERRS, handler );
   if( cmdStatus() != 0 && thow_status_errs )
     throw ERROR_TESTPORT_CMD_FAILED;
@@ -322,7 +321,7 @@ void gmr_handler_(char* s) {
 }
 
 uint32_t cccGmr(uint8_t idx) {
-  ccc_IdxVal32_(idx, 0, "gmr", gmr_handler_, false);
+  ccc_IdxVal32_(idx, 0, "gmr", gmr_handler_, RCOM_PRINT_LEVEL_DAT);
   //ConsolePrintf("emr[%u] = %08x\n", idx, m_ccc.rsp.emr_val);
   return !ccc_error_check_(1) ? m_ccc.rsp.emr_val : 0;
 }
@@ -667,10 +666,13 @@ robot_bsv_t* spineBsv(void)
   throw ERROR_SPINE_CMD_TIMEOUT; //return NULL;
 }
 
-void spinePwr(rcom_pwr_st_e st) {
-  //XXX: implement me
-  ConsolePrintf("ERROR_EMPTY_COMMAND spinePwr()\n");
-  throw ERROR_EMPTY_COMMAND;
+void spinePwr(rcom_pwr_st_e st, int printlvl)
+{  
+  if( printlvl2cmdopts(printlvl) & CMD_OPTS_LOG_CMD )
+    ConsolePrintf(">spine pwr %i %s\n", (int)st, st==0?"on":"off");
+  
+  HeadToBody* frame = halSpineH2BFrame( st==RCOM_PWR_ON ? POWER_STATE_ON : POWER_STATE_OFF, 0, 0);
+  halSpineSend((uint8_t*)frame, PAYLOAD_DATA_FRAME);
 }
 
 void spineLed(uint8_t *leds12, int printlvl)
@@ -843,11 +845,11 @@ robot_bsv_t* rcomBsv() {
     return spineBsv();
 }
 
-void rcomPwr(rcom_pwr_st_e st) { 
+void rcomPwr(rcom_pwr_st_e st, int printlvl) { 
   if( !rcom_target_spine_nCCC )
-    ccc_IdxVal32_((int)st,  0,   "pwr", 0);
+    ccc_IdxVal32_((int)st, 0, "pwr", 0, printlvl);
   else 
-    spinePwr(st);
+    spinePwr(st, printlvl);
 }
 
 void rcomLed(uint8_t *leds, int printlvl) {
@@ -877,7 +879,7 @@ int  rcomRlg(uint8_t idx, char *buf, int buf_max_size) { return !rcom_target_spi
 void rcomEng(uint8_t idx, uint8_t dat0, uint8_t dat1) { if( !rcom_target_spine_nCCC ) ccc_IdxVal32_(idx, ((dat1<<8)|dat0), "eng", 0); }
 void rcomSmr(uint8_t idx, uint32_t val) {
   if( !rcom_target_spine_nCCC ) {
-    int cmdStatus = ccc_IdxVal32_(idx, val, "smr", 0, false, false);
+    int cmdStatus = ccc_IdxVal32_(idx, val, "smr", 0, RCOM_PRINT_LEVEL_DAT, false);
     if( cmdStatus == 4 /*ERR_LOCKED*/ )
       throw ERROR_ROBOT_PACKED_OUT;
     else if( cmdStatus != 0 )

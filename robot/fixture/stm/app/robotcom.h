@@ -92,7 +92,7 @@ void          rcomSetTarget(bool spine_nCCC); //select charge contacts or spine 
 
 uint32_t      rcomEsn(); //read robot ESN (Head)
 robot_bsv_t*  rcomBsv(); //read body serial+version info
-void          rcomPwr(rcom_pwr_st_e st);
+void          rcomPwr(rcom_pwr_st_e st, int printlvl = RCOM_PRINT_LEVEL_DEFAULT);
 void          rcomLed(uint8_t *leds12, int printlvl = RCOM_PRINT_LEVEL_DEFAULT); //leds[12] {led0R,G,B,led1R,G,B...}
 robot_sr_t*   rcomMot(uint8_t NN, uint8_t sensor, int8_t treadL, int8_t treadR, int8_t lift, int8_t head, int printlvl = RCOM_PRINT_LEVEL_DEFAULT);
 robot_sr_t*   rcomGet(uint8_t NN, uint8_t sensor, int printlvl = RCOM_PRINT_LEVEL_DEFAULT); //NN = #drops (sr vals). returns &sensor[0] of [NN-1]
