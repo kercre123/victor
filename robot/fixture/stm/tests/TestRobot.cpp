@@ -1035,13 +1035,6 @@ extern void RobotChargeTest( u16 i_done_ma, u16 bat_overvolt_mv );
 static void ChargeTest(void)
 {
   RobotChargeTest( 425, 4100 ); //test charging circuit
-  
-  //check battery voltage
-  flexnfo.bat_mv = robot_get_batt_mv( &flexnfo.bat_raw );
-  if( flexnfo.bat_mv < 3000 )
-    throw ERROR_BAT_UNDERVOLT;
-  //if( flexnfo.bat_mv > 4100 )
-  //  throw ERROR_BAT_OVERVOLT;
 }
 
 //Test charging circuit by verifying current draw
@@ -1204,6 +1197,29 @@ static void RobotFlexFlowPackoutReport(void)
   FLEXFLOW::printf("</flex>\n");
 }
 
+//-----------------------------------------------------------------------------
+//                  Other
+//-----------------------------------------------------------------------------
+
+static void BatteryCheck(void)
+{
+  const int VBAT_MV_MINIMUM = 3600;
+  const int VBAT_MV_MAXIMUM = 4050;
+  
+  ConsolePrintf("battery check\n");
+  Contacts::setModeRx(); //disable charge power
+  Timer::delayMs(500);  //wait for battery voltage to settle
+  
+  flexnfo.bat_mv = robot_get_batt_mv( &flexnfo.bat_raw );
+  if( flexnfo.bat_mv < VBAT_MV_MINIMUM )
+    throw ERROR_BAT_UNDERVOLT;
+  
+  if( g_fixmode == FIXMODE_PACKOUT ) {
+    if( flexnfo.bat_mv > VBAT_MV_MAXIMUM )
+      throw ERROR_BAT_OVERVOLT;
+  }
+}
+
 void SadBeep(void) {
   rcomEng(RCOM_ENG_IDX_SOUND, RCOM_ENG_SOUND_DAT0_TONE_BEEP, 200 /*volume*/);
   Timer::delayMs(750); //wait for sound to finish
@@ -1247,6 +1263,7 @@ TestFunction* TestRobot1GetTests(void) {
     TestRobotTreads,
     TestRobotRange,
     ChargeTest,
+    BatteryCheck,
     RobotPowerDown,
     NULL,
   };
@@ -1262,6 +1279,7 @@ TestFunction* TestRobot2GetTests(void) {
     //TestRobotTreads,
     TestRobotRange,
     //ChargeTest,
+    BatteryCheck,
     //TurkeysDone,
     NULL,
   };
@@ -1277,6 +1295,7 @@ TestFunction* TestRobot3GetTests(void) {
     TestRobotTreads,
     TestRobotRange,
     ChargeTest,
+    BatteryCheck,
     EmrUpdate, //set test complete flags
     TurkeysDone,
     NULL,
@@ -1293,6 +1312,7 @@ TestFunction* TestRobotPackoutGetTests(void) {
     TestRobotTreads,
     TestRobotRange,
     ChargeTest,
+    BatteryCheck,
     RobotLogCollect,
     SadBeep, //eng sound cmd only works before packout flag set
     EmrUpdate, //set packout flag, timestamp
