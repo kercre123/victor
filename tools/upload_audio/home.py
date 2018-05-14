@@ -9,8 +9,17 @@ import settings
 app = Flask(__name__)
 app.config.from_object(settings)
 
+upload_folder = 'upload'
 SRCDIR = os.path.dirname(os.path.abspath(__file__))
-DATADIR = os.path.join(SRCDIR, 'upload')
+DATADIR = os.path.join(SRCDIR, upload_folder)
+
+# The name of column in table
+column_name = 'name'
+column_age = 'age'
+column_distance = 'distance'
+column_date = 'date'
+column_dropbox_path = 'dropbox_path'
+column_gender = 'gender'
 
 @app.route("/")
 def home():
@@ -18,6 +27,7 @@ def home():
 
 @app.route("/query", methods=['GET', 'POST'])
 def query():
+    ERROR_MESSAGE = 'You should fill at least one field.'
     if request.method == 'POST':
         name_obj = request.form['name']
         age = request.form['age']
@@ -25,15 +35,15 @@ def query():
         date = request.form['date']
         json_data = {}
         if name_obj != "":
-            json_data['name'] = name_obj
+            json_data[column_name] = name_obj
         if age != "":
-            json_data['age'] = age
+            json_data[column_age] = age
         if distance != "":
-            json_data['distance'] = distance
+            json_data[column_distance] = distance
         if date != "":
-            json_data['date'] = date
+            json_data[column_date] = date
         if not json_data:
-            flash('You should fill at least one field.')
+            flash(ERROR_MESSAGE)
         else:
             dynamoDB = DynamoDB(json_data)
             dataList = dynamoDB.filterValues()
@@ -68,18 +78,18 @@ def upload():
             ######################
 
             json_data = {}
-            json_data['name'] = name_obj
-            json_data['age'] = age
-            json_data['distance'] = distance
-            json_data['dropbox_path'] = "{}{}".format(dropbox_path, filename)
-            json_data['date'] = date
-            json_data['gender'] = gender
+            json_data[column_name] = name_obj
+            json_data[column_age] = age
+            json_data[column_distance] = distance
+            json_data[column_dropbox_path] = "{}{}".format(dropbox_path, filename)
+            json_data[column_date] = date
+            json_data[column_gender] = gender
             
             dynamoDB = DynamoDB(json_data)
             dynamoDB.putItem()
             # Delete temp file
             for the_file in os.listdir(DATADIR):
-                file_path = os.path.join(folder, the_file)
+                file_path = os.path.join(upload_folder, the_file)
                 try:
                     if os.path.isfile(file_path):
                         os.unlink(file_path)

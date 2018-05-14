@@ -3,15 +3,22 @@ import boto3
 import json
 import decimal
 from boto3.dynamodb.conditions import Key, Attr
+import settings
 
 class DynamoDB():
 
-    JSON_DATA = ""
-    dynamodb = boto3.resource('dynamodb', region_name='us-east-2')
-    table = dynamodb.Table('FileInfo')
+    DATABASE = 'dynamodb'
+    REGION = settings.REGION_NAME
+    TABLE = settings.TABLE_NAME
+
+    ITEM = u'Items'
+
+    json_data = ""
+    dynamodb = boto3.resource(DATABASE, region_name=REGION)
+    table = dynamodb.Table(TABLE)
 
     def __init__(self, json_data):
-        self.JSON_DATA = json.dumps(json_data)
+        self.json_data = json.dumps(json_data)
 
     def putItemToTable(self, table, item):
         table.put_item(Item={
@@ -25,21 +32,21 @@ class DynamoDB():
         )
 
     def putItem(self):
-        items = json.loads(self.JSON_DATA, parse_float = decimal.Decimal)
+        items = json.loads(self.json_data, parse_float = decimal.Decimal)
         self.putItemToTable(self.table, items)
         print("Done")
 
     def filterValues(self):
         datas = None
-        for key, value in json.loads(self.JSON_DATA, parse_float = decimal.Decimal).items():
+        for key, value in json.loads(self.json_data, parse_float = decimal.Decimal).items():
             if datas == None:
                 datas = Key(key).eq(value)
             else:
                 datas = datas & Key(key).eq(value)
         response = self.table.scan(FilterExpression=datas)
-        for i in response[u'Items']:
+        for i in response[self.ITEM]:
             print(json.dumps(i, cls=DecimalEncoder))
-        return response[u'Items']
+        return response[self.ITEM]
 
     # Helper compare json
     def ordered(obj):
@@ -54,9 +61,10 @@ class DynamoDB():
 # Helper class to convert a DynamoDB item to JSON.
 class DecimalEncoder(json.JSONEncoder):
     def default(self, o):
+        obj = super(DecimalEncoder, self).default(o)
         if isinstance(o, decimal.Decimal):
             if o % 1 > 0:
-                return float(o)
+                obj = float(o)
             else:
-                return int(o)
-        return super(DecimalEncoder, self).default(o)
+                obj = int(o)
+        return obj
