@@ -16,6 +16,8 @@ To setup the website for upload audio into Dropbox and put information into Dyna
 ### Running:
 
 - Run `python3 home.py` at the main directory.
-- Open http://<ip adrress>:8012
+- Open http://\<ip address\>:8012
 - Click **Upload** if you want to upload audio.
+![Imgur Image](https://i.imgur.com/fvLHsuY.png)
 - Click **Query** if you want to query the uploaded audio file on DynamoDB.
+![Imgur Image](https://i.imgur.com/O2diEQU.png)
