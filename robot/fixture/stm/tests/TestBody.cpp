@@ -133,7 +133,7 @@ void TestBodyCleanup(void)
   mcu_power_down_();
 }
 
-static void ShortCircuitTest(void)
+static void BodyShortCircuitTest(void)
 {
   ConsolePrintf("short circuit tests\n");
   
@@ -281,7 +281,7 @@ static void BodyBootcheckProductionFirmware(void)
   uint32_t Tstart = Timer::get();
   while(1)
   {
-    if( Timer::elapsedUs(Tstart) > 5*1000*1000 ) { //nominal delay is ~2.5s
+    if( Timer::elapsedUs(Tstart) > 4*1000*1000 ) { //nominal delay is ~2.5s
       ConsolePrintf("timeout waiting for syscon boot\n");
       throw ERROR_BODY_NO_BOOT_MSG;
     }
@@ -297,6 +297,35 @@ static void BodyBootcheckProductionFirmware(void)
         break;
     }
   }
+}
+
+//check if this board has been factory programmed (swd lockout)
+static void BodyCheckProgramLockout(void)
+{
+  ConsolePrintf("test swd connection\n");
+  error_t err = ERROR_OK;
+  
+  mcu_power_up_();
+  try {
+    mcu_swd_init_();
+    swd_read32(FLASH_ADDR_SYSBOOT+16); //dummy read
+  } catch(int e) { 
+    err = e;
+  }
+  
+  if( err == ERROR_SWD_CHIPINIT || err == ERROR_SWD_INIT_FAIL )
+  {
+    ConsolePrintf("swd [chip]init fail %i. boot checking...\n", err);
+    
+    //if we don't detect boot msg, assume unprogrammed and throw the original swd error
+    try { BodyBootcheckProductionFirmware(); } catch(...) { throw err; }
+    
+    throw ERROR_BODY_PROGRAMMED; //detected boot msg. this board is programmed/locked
+  }
+  
+  mcu_power_down_();
+  if( err != ERROR_OK )
+    throw err;
 }
 
 static void BodyFlexFlowReport(void)
@@ -356,14 +385,16 @@ static void BodyChargeContactElectricalDebug(void)
 TestFunction* TestBody0GetTests(void)
 {
   static TestFunction m_tests_0a[] = {
-    ShortCircuitTest,
+    BodyShortCircuitTest,
+    BodyCheckProgramLockout,
     BodyTryReadSerial, //--skip serial read to force blank state
     //BodyLoadTestFirmware,
     BodyChargeContactElectricalDebug,
     NULL,
   };
   static TestFunction m_tests_0[] = {
-    ShortCircuitTest,
+    BodyShortCircuitTest,
+    BodyCheckProgramLockout,
     BodyTryReadSerial,
     BodyLoadTestFirmware,
     BodyLoadProductionFirmware,
@@ -376,7 +407,8 @@ TestFunction* TestBody0GetTests(void)
 TestFunction* TestBody1GetTests(void)
 {
   static TestFunction m_tests[] = {
-    ShortCircuitTest,
+    BodyShortCircuitTest,
+    BodyCheckProgramLockout,
     BodyTryReadSerial,
     BodyLoadTestFirmware,
     BodyLoadProductionFirmware,
@@ -390,7 +422,8 @@ TestFunction* TestBody1GetTests(void)
 TestFunction* TestBody2GetTests(void)
 {
   static TestFunction m_tests[] = {
-    ShortCircuitTest,
+    BodyShortCircuitTest,
+    BodyCheckProgramLockout,
     BodyTryReadSerial, //skip serial read to force blank state (generate new ESN)
     //BodyLoadTestFirmware,
     BodyLoadProductionFirmware,
@@ -404,7 +437,8 @@ TestFunction* TestBody2GetTests(void)
 TestFunction* TestBody3GetTests(void)
 {
   static TestFunction m_tests[] = {
-    ShortCircuitTest,
+    BodyShortCircuitTest,
+    BodyCheckProgramLockout,
     BodyTryReadSerial,
     BodyLoadProductionFirmware,
     //BodyBootcheckProductionFirmware,

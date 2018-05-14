@@ -243,6 +243,7 @@ typedef int error_t;
 //#define ERROR_BODYCOLOR_INVALID         556 // an invalid color code was detected
 //#define ERROR_BODYCOLOR_FULL            557 // no space to write new bodycolor. requires full erase/re-program.
 //#define ERROR_BODY_FLASHLIGHT           558 // forward IR LED (flashlight) failure
+#define ERROR_BODY_PROGRAMMED             558 // already has production fw (jtag lock prevents reprogram)
 #define ERROR_BODY_NO_BOOT_MSG            559 // Could not detect production fw boot msg
 
 //<export heading> Drop Sensor Errors
