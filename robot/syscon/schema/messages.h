@@ -153,8 +153,7 @@ struct BatteryState
   int16_t charger;
   int16_t temperature;
   BatteryFlags flags;
-  int16_t ref_voltage;
-  int16_t _unused;
+  int16_t _unused[2];
 };
 
 struct ButtonState

@@ -16,7 +16,6 @@ static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL4
   | ADC_CHSELR_CHSEL6
   | ADC_CHSELR_CHSEL16
-  | ADC_CHSELR_CHSEL17
   ;
 
 static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.4);
@@ -85,13 +84,16 @@ void Analog::init(void) {
               | ADC_CFGR2_CKMODE_1
               ;
   ADC1->SMPR  = 0
+              | ADC_SMPR_SMP_0  // ~0.4us
+              | ADC_SMPR_SMP_2
               ;
+
   ADC1->IER = ADC_IER_AWDIE;
   ADC1->TR = FALLING_EDGE;
 
   ADC->CCR = 0
            | ADC_CCR_TSEN
-           | ADC_CCR_VREFEN;
+           ;
 
   // Enable ADC
   ADC1->ISR = ADC_ISR_ADRDY;
@@ -214,7 +216,6 @@ void Analog::transmit(BodyToHead* data) {
   data->battery.battery = values[ADC_VMAIN];
   data->battery.charger = values[ADC_VEXT];
   data->battery.temperature = (int16_t) temperature;
-  data->battery.ref_voltage = values[ADC_VREF];
   data->battery.flags = 0
                       | (is_charging ? POWER_IS_CHARGING : 0)
                       | (on_charger ? POWER_ON_CHARGER : 0)
