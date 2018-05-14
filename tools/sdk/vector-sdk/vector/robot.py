@@ -208,7 +208,7 @@ class Robot:
         await self.socket.send(outerWrappedMessage.pack())
 
     # Vector Display
-    async def set_backpack_lights(self, light1, light2, light3):
+    async def set_backpack_lights(self, light1, light2, light3, backpack_color_profile=lights.white_balanced_backpack_profile):
         '''Set the lights on Vector's backpack.
 
         The light descriptions below are all from Vector's perspective.
@@ -221,21 +221,21 @@ class Robot:
         message = _clad_message.SetBackpackLEDs()
         for i, light in enumerate( (light1, light2, light3) ):
             if light is not None:
-                lights._set_light(message, i, light)
+                lights._set_light(message, i, light, backpack_color_profile)
 
         innerWrappedMessage = _clad_message.VictorDisplay(SetBackpackLEDs=message)
         outerWrappedMessage = _clad_message.ExternalComms(VictorDisplay=innerWrappedMessage)
 
         await self.socket.send(outerWrappedMessage.pack())
 
-    async def set_all_backpack_lights(self, light):
+    async def set_all_backpack_lights(self, light, backpack_color_profile=lights.white_balanced_backpack_profile):
         '''Set the lights on Vector's backpack to the same color.
 
         Args:
             light (:class:`cozmo.lights.Light`): The lights for Vector's backpack.
         '''
         light_arr = [ light ] * 3
-        await self.set_backpack_lights(*light_arr)
+        await self.set_backpack_lights(*light_arr, backpack_color_profile)
 
 async def _bootstrap(main_function, uri):
     print("Attempting websockets.connect...")

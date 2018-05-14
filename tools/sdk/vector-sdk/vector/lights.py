@@ -52,6 +52,58 @@ white = Color(name="white", int_color=0xffffffff)
 off = Color(name="off")
 
 
+class BackpackColorProfile:
+    '''A Color profile send to be used with messaged involving the robot's backpack LEDs.
+
+    Args:
+        red_multiplier (float): Scaling value for the brightness of backpack red LED's
+        green_multiplier (float): Scaling value for the brightness of backpack green LED's
+        blue_multiplier (float): Scaling value for the brightness of backpack blue LED's
+    '''
+
+    def __init__(self, red_multiplier, green_multiplier, blue_multiplier):
+        self._red_multiplier = red_multiplier
+        self._green_multiplier = green_multiplier
+        self._blue_multiplier = blue_multiplier
+
+    def augment_color(self, color):
+        rgb = [
+            (color.int_color >> 24) & 0xff,
+            (color.int_color >> 16) & 0xff,
+            (color.int_color >> 8) & 0xff
+            ]
+
+        rgb[0] = int(self._red_multiplier * rgb[0])
+        rgb[1] = int(self._green_multiplier * rgb[1])
+        rgb[2] = int(self._blue_multiplier * rgb[2])
+
+        result_int_code = (rgb[0] << 24) | (rgb[1] << 16) | (rgb[2] << 8) | 0xff
+        return Color(result_int_code)
+
+    @property
+    def red_multiplier(self):
+        '''float: The multiplier used on the red channel.'''
+        return self._red_multiplier
+
+    @property
+    def green_multiplier(self):
+        '''float: The multiplier used on the red channel.'''
+        return self._green_multiplier
+
+    @property
+    def blue_multiplier(self):
+        '''float: The multiplier used on the red channel.'''
+        return self._blue_multiplier
+
+
+#: :class:`BackpackColorProfile`:  Color profile to get the maximum possible brightness out of each LED.
+max_brightness_backpack_profile = BackpackColorProfile(red_multiplier=1.0, green_multiplier=1.0, blue_multiplier=1.0)
+
+#: :class:`BackpackColorProfile`:  Color profile balanced so that a max color value more closely resembles pure white.
+#TODO: Balance this more carefully once robots with proper color pipe hardware becomes available
+white_balanced_backpack_profile = BackpackColorProfile(red_multiplier=1.0, green_multiplier=0.825, blue_multiplier=0.81)
+
+
 class Light:
     '''Lights are used with LightCubes and Vector's backpack.
 
@@ -134,12 +186,12 @@ class Light:
             raise ValueError("Invalid value")
         self._transition_off_period_ms = ms
 
-def _set_light(msg, idx, light):
+def _set_light(msg, idx, light, profile):
     # For use with clad light messages specifically.
     if not isinstance(light, Light):
         raise TypeError("Expected a lights.Light")
-    msg.onColor[idx] = light.on_color.int_color
-    msg.offColor[idx] = light.off_color.int_color
+    msg.onColor[idx] = profile.augment_color( light.on_color ).int_color
+    msg.offColor[idx] = profile.augment_color( light.off_color ).int_color
     msg.onPeriod_ms[idx] = light.on_period_ms
     msg.offPeriod_ms[idx] = light.off_period_ms
     msg.transitionOnPeriod_ms[idx] = light.transition_on_period_ms
