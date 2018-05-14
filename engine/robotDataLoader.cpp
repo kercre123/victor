@@ -63,6 +63,8 @@ const char* pathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequenc
 const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
   "assets/animations/anim_weather_cloud_01.bin",
   "assets/animations/anim_weather_snow_01.bin",
+  "assets/animations/anim_weather_rain_01.bin",
+  "assets/animations/anim_weather_sunny_01.bin",
 };
 
 }
