@@ -93,7 +93,8 @@ namespace Cozmo {
     Result SetCompositeImage(Vision::CompositeImage* compImg, u32 getFrameInterval_ms, u32 duration_ms);
     Result UpdateCompositeImage(Vision::LayerName layerName, 
                                 const Vision::CompositeImageLayer::SpriteBox& spriteBox, 
-                                Vision::SpriteName spriteName);
+                                Vision::SpriteName spriteName,
+                                u32 applyAt_ms);
     
     Audio::ProceduralAudioClient* GetProceduralAudioClient() const { return _proceduralAudioClient.get(); }
     
@@ -101,7 +102,7 @@ namespace Cozmo {
     Result Update();
 
     // Stop currently running animation
-    void Abort();
+    void Abort(bool shouldClearProceduralAnim = true);
     
     const std::string GetStreamingAnimationName() const;
     const Animation* GetStreamingAnimation() const { return _streamingAnimation; }
@@ -117,8 +118,8 @@ namespace Cozmo {
       { _longEnoughSinceLastStreamTimeout_s = time_s; }
     void ResetKeepFaceAliveLastStreamTimeout();
     
-    TrackLayerComponent* GetTrackLayerComponent() { return _trackLayerComponent.get(); }
-    const TrackLayerComponent* GetTrackLayerComponent() const { return _trackLayerComponent.get(); }
+    TrackLayerComponent* GetProceduralTrackComponent() { return _proceduralTrackComponent.get(); }
+    const TrackLayerComponent* GetProceduralTrackComponent() const { return _proceduralTrackComponent.get(); }
 
     // Sets all tracks that should be locked
     void SetLockedTracks(u8 whichTracks)   { _lockedTracks = whichTracks; }
@@ -141,14 +142,23 @@ namespace Cozmo {
                                  u32 numLoops = 1,
                                  bool interruptRunning = true,
                                  bool shouldRenderInEyeHue = true,
-                                 bool isInternalAnim = true);
+                                 bool isInternalAnim = true,
+                                 bool shouldClearProceduralAnim = true);
 
     // Initialize the streaming of an animation with a given tag
     // (This will call anim->Init())
-    Result InitStream(Animation* anim, Tag withTag);
+    Result InitStreamingAnimation(Tag withTag);
     
+    // Update Stream of either the streaming animation or procedural tracks
+    Result StreamTracks();
     // Actually stream the animation (called each tick)
-    Result UpdateStream(Animation* anim, bool storeFace);
+    Result UpdateStreamingAnimation(bool storeFace);
+    // Used to stream _just_ the stuff left in the various layers (all procedural stuff)
+    Result StreamProceduralTracks();
+
+    void SetKeepAliveIfAppropriate();
+    // Indicates if keep alive is currently playing
+    bool IsKeepAlivePlaying() const;
     
     // This performs the test cases for the animation while loop
     bool ShouldProcessAnimationFrame( Animation* anim, TimeStamp_t startTime_ms, TimeStamp_t streamingTime_ms );
@@ -166,7 +176,7 @@ namespace Cozmo {
     Result EnableBackpackAnimationLayer(bool enable);
     
     // Check whether the animation is done
-    bool IsFinished(Animation* anim) const;
+    bool IsStreamingAnimFinished() const;
     
     void StopTracks(const u8 whichTracks);
     
@@ -196,15 +206,12 @@ namespace Cozmo {
      // for creating animations "live" or dynamically
     Animation*  _proceduralAnimation = nullptr;
 
-    std::unique_ptr<TrackLayerComponent>  _trackLayerComponent;
+    std::unique_ptr<TrackLayerComponent>  _proceduralTrackComponent;
     
     void GetStreamableFace(const ProceduralFace& procFace, Vision::ImageRGB565& outImage) const;
     void BufferFaceToSend(Vision::ImageRGB565& image);
 
     void UpdateCaptureFace(const Vision::ImageRGB565& faceImg565);
-
-    // Used to stream _just_ the stuff left in the various layers (all procedural stuff)
-    Result StreamLayers();
     
     u32 _numLoops = 1;
     u32 _loopCtr  = 0;
@@ -230,7 +237,11 @@ namespace Cozmo {
     // robot (silence or actual audio), this increments by one audio sample
     // length, since that's what keeps time for streaming animations (not a
     // clock)
-    TimeStamp_t _streamingTime_ms;
+    TimeStamp_t _relativeStreamTime_ms;
+    // There are a few special cases where time should not be incremented for a tick
+    // e.g. looping animations which are initialized one tick, but don't get their first
+    // update call until the next tick
+    bool _incrementTimeThisTick = true;
     
     // Time when procedural face layer can next be applied.
     // There's a minimum amount of time that must pass since the last
@@ -241,7 +252,7 @@ namespace Cozmo {
     TimeStamp_t _nextProceduralFaceAllowedTime_ms = 0;
     
     // Last time we streamed anything
-    f32 _lastStreamTime = std::numeric_limits<f32>::lowest();
+    f32 _lastAnimationStreamTime = std::numeric_limits<f32>::lowest();
 
 #   define PLAY_ROBOT_AUDIO_ON_DEVICE 0
 #   if PLAY_ROBOT_AUDIO_ON_DEVICE

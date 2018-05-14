@@ -245,7 +245,7 @@ void Process_setKeepFaceAliveParameter(const Anki::Cozmo::RobotInterface::SetKee
 void Process_addOrUpdateEyeShift(const Anki::Cozmo::RobotInterface::AddOrUpdateEyeShift& msg)
 {
   const std::string layerName(msg.name, msg.name_length);
-  _animStreamer->GetTrackLayerComponent()->AddOrUpdateEyeShift(layerName,
+  _animStreamer->GetProceduralTrackComponent()->AddOrUpdateEyeShift(layerName,
                                                                msg.xPix,
                                                                msg.yPix,
                                                                msg.duration_ms,
@@ -259,19 +259,19 @@ void Process_addOrUpdateEyeShift(const Anki::Cozmo::RobotInterface::AddOrUpdateE
 void Process_removeEyeShift(const Anki::Cozmo::RobotInterface::RemoveEyeShift& msg)
 {
   const std::string layerName(msg.name, msg.name_length);
-  _animStreamer->GetTrackLayerComponent()->RemoveEyeShift(layerName, msg.disableTimeout_ms);
+  _animStreamer->GetProceduralTrackComponent()->RemoveEyeShift(layerName, msg.disableTimeout_ms);
 }
 
 void Process_addSquint(const Anki::Cozmo::RobotInterface::AddSquint& msg)
 {
   const std::string layerName(msg.name, msg.name_length);
-  _animStreamer->GetTrackLayerComponent()->AddSquint(layerName, msg.squintScaleX, msg.squintScaleY, msg.upperLidAngle);
+  _animStreamer->GetProceduralTrackComponent()->AddSquint(layerName, msg.squintScaleX, msg.squintScaleY, msg.upperLidAngle);
 }
 
 void Process_removeSquint(const Anki::Cozmo::RobotInterface::RemoveSquint& msg)
 {
   const std::string layerName(msg.name, msg.name_length);
-  _animStreamer->GetTrackLayerComponent()->RemoveSquint(layerName, msg.disableTimeout_ms);
+  _animStreamer->GetProceduralTrackComponent()->RemoveSquint(layerName, msg.disableTimeout_ms);
 }
 
 void Process_postAudioEvent(const Anki::AudioEngine::Multiplexer::PostAudioEvent& msg)

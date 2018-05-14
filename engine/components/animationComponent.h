@@ -152,11 +152,11 @@ public:
   // If a compositeFaceImage is currently displayed on the face all layers/image maps within
   // the compositeImage argument will be updated to their new values - set Count in the sprite map
   // for any sprite boxes that should no longer be displayed
-  void UpdateCompositeImage(const Vision::CompositeImage& compositeImage);
+  void UpdateCompositeImage(const Vision::CompositeImage& compositeImage, u32 applyAt_ms = 0);
   
   // Helper function that clears composite image layer - can be accomplished through UpdateCompositeImage
   // as well by specifying count values for sprite boxes/sprites if more nuance is required
-  void ClearCompositeImageLayer(Vision::LayerName layerName);
+  void ClearCompositeImageLayer(Vision::LayerName layerName, u32 applyAt_ms = 0);
   
   // Enable/Disable KeepFaceAlive
   // If enable == false, disableTimeout_ms is the duration over which the face should 

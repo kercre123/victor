@@ -134,7 +134,7 @@ void RobotDataLoader::LoadNonConfigData()
     }
 
     // Load the gathered files into the container
-    const auto& fileInfo = animLoader.CollectAnimFiles(_platform, paths);
+    const auto& fileInfo = animLoader.CollectAnimFiles(paths);
     animLoader.LoadAnimationsIntoContainer(fileInfo, _cannedAnimations.get());
   }
   

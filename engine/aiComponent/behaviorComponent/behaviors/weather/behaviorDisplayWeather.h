@@ -42,7 +42,6 @@ protected:
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void InitBehavior() override;
-  virtual void BehaviorUpdate() override;
 
 private:
 
@@ -52,7 +51,12 @@ private:
     const Json::Value& compLayoutConfig;
     const Json::Value& compMapConfig;
     std::unique_ptr<Vision::CompositeImage> compImg;
+
+    // Animation metadata
     std::string animationName;
+    const Animation* animationPtr = nullptr;
+    u32 timeTempShouldAppear_ms = 0;
+    u32 timeTempShouldDisappear_ms = 0;
 
     std::vector<Vision::SpriteName> temperatureAssets;
     // layouts stored least -> greatest pos followed by least -> greatest neg
@@ -63,8 +67,6 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
-    uint32_t timeTempShouldAppear_ms = 0;
-    uint32_t timeTempShouldDisappear_ms = 0;
     Vision::CompositeImage* temperatureImg = nullptr;
   };
 

@@ -26,6 +26,18 @@ class Image;
 // Thin interface to hide caching/clearing functions for handlers
 class HueSatWrapper{
 public:
+  struct ImageSize{
+    ImageSize()
+    : numRows(0)
+    , numCols(0){}
+    
+    ImageSize(uint32_t rows, uint32_t cols)
+    : numRows(rows)
+    , numCols(cols){}
+    uint32_t numRows;
+    uint32_t numCols;
+  };
+  
   // Pass in pointers to externally managed hue/saturation images
   // Class does not take ownership of the associated memory or have safeguards if
   // the images are deleted while the wrapper persists
@@ -34,7 +46,7 @@ public:
   // If an image size is passed in images will be allocated at construction time
   // Otherwise size must be passed into the allocate image function
   HueSatWrapper(uint8_t hue, uint8_t saturation, 
-                 const std::pair<uint32_t, uint32_t>& imageSize = {});
+                 const ImageSize& imageSize = {});
 
   virtual ~HueSatWrapper();
 
@@ -45,17 +57,19 @@ public:
   uint8_t GetHue() const;
   uint8_t GetSaturation() const;
 
-  bool AreImagesCached() const { return _hueImg != nullptr;}
+  bool AreImagesCached(const ImageSize& imageSize) const;
 
   // Memory will be allocated for new hue/saturation images filled with the appropriate values
   // The pointers passed in will be set to point to these images and the caller is responsible for
   // managing the memory after the call
-  void AllocateImages(Image*& hueImg, Image*& saturationImg, std::pair<uint32_t, uint32_t> imageSize);
+  void AllocateImages(Image*& hueImg, Image*& saturationImg,
+                      const ImageSize& imageSize);
 
   // Returns hue and saturation images from the internally cached values
   // No allocation cost is incurred if allocateNow was set to true in the constructor
   // Otherwise an error will print and allocation will happen at calltime
-  void GetCachedImages(Image*& hueImg, Image*& saturationImg, const std::pair<uint32_t, uint32_t>& imageSize);
+  void GetCachedImages(Image*& hueImg, Image*& saturationImg,
+                       const ImageSize& imageSize);
   
 
 private:
@@ -72,7 +86,7 @@ private:
   std::shared_ptr<Image> _saturationImg;
 
   void AllocateImagesInternal(Image*& hueImg, Image*& saturationImg,
-                              const std::pair<uint32_t, uint32_t>& imageSize);
+                              const ImageSize& imageSize);
   
   // Extracts the value of the first pixel in the image
   // If the image is empty, set the default value

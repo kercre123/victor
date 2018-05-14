@@ -451,6 +451,7 @@ message DisplayCompositeImageChunk
 message UpdateCompositeImage
 {
   Vision::SerializedSpriteBox serializedSpriteBox, // SpriteBox named count indicates clear the whole layer
+  uint_32                     applyAt_ms, // specify the time in ms from the start of the animation that the update should be applied
   Vision::LayerName           layerName,
   Vision::SpriteName          spriteName // Use Count to indicate erase sprite
 }

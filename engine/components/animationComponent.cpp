@@ -518,7 +518,7 @@ void AnimationComponent::SetAnimationCallback(const std::string& animName,
   {
     auto it = _callbackMap.find(currTag);
     if (it != _callbackMap.end()) {
-      PRINT_NAMED_WARNING("AnimationComponent.PlayAnimByName.StaleTag", "%d", currTag);
+      PRINT_NAMED_WARNING("AnimationComponent.SetAnimationCallback.StaleTag", "%d", currTag);
       it->second.ExecuteCallback(AnimResult::Stale);
       _callbackMap.erase(it);
     }
@@ -549,7 +549,7 @@ Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compos
   return RESULT_OK;
 }
 
-void AnimationComponent::UpdateCompositeImage(const Vision::CompositeImage& compositeImage)
+void AnimationComponent::UpdateCompositeImage(const Vision::CompositeImage& compositeImage, u32 applyAt_ms)
 {
   for(const auto& layoutPair : compositeImage.GetLayerLayoutMap()){
     Vision::LayerName layerName = layoutPair.first;
@@ -557,13 +557,16 @@ void AnimationComponent::UpdateCompositeImage(const Vision::CompositeImage& comp
       Vision::SerializedSpriteBox serializedSpriteBox = spritePair.second.Serialize();
       Vision::CompositeImageLayer::SpriteEntry entry;
       layoutPair.second.GetSpriteEntry(spritePair.second, entry);
-      _robot->SendRobotMessage<RobotInterface::UpdateCompositeImage>(serializedSpriteBox, layerName, entry._spriteName);
+      _robot->SendRobotMessage<RobotInterface::UpdateCompositeImage>(serializedSpriteBox, 
+                                                                     applyAt_ms, 
+                                                                     layerName, 
+                                                                     entry._spriteName);
     }
   }
 }
 
 
-void AnimationComponent::ClearCompositeImageLayer(Vision::LayerName layerName)
+void AnimationComponent::ClearCompositeImageLayer(Vision::LayerName layerName, u32 applyAt_ms)
 {
   // Setup empty sprite entry
   Vision::CompositeImageLayer::SpriteEntry entry;
@@ -573,7 +576,10 @@ void AnimationComponent::ClearCompositeImageLayer(Vision::LayerName layerName)
   Point2i topLeft(0,0);
   Vision::CompositeImageLayer::SpriteBox sb(Vision::SpriteBoxName::Count, renderConfig, topLeft, 0, 0);
   
-  _robot->SendRobotMessage<RobotInterface::UpdateCompositeImage>(sb.Serialize(), layerName, entry._spriteName);
+  _robot->SendRobotMessage<RobotInterface::UpdateCompositeImage>(sb.Serialize(), 
+                                                                 applyAt_ms, 
+                                                                 layerName, 
+                                                                 entry._spriteName);
 }
 
 Result AnimationComponent::EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms) const
