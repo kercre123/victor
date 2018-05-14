@@ -79,11 +79,6 @@ bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor,
 
 void InstallGoogleBreakpad(const char* filenamePrefix)
 {
-  // FIXME:  Temporarily disabling creation of crash dumps, until we get a
-  // system that uploads and deletes them.  Otherwise all of our robots
-  // will start accumulating them, and we have shutdown crashes already.
-  return;
-
   const std::string path = "/data/data/com.anki.victor/cache/crashDumps/";
   Anki::Util::FileUtils::CreateDirectory(path);
 
