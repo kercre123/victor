@@ -173,6 +173,7 @@
   Anki::Victor::ExternalComms::RtsOtaUpdateResponse res;
   
   long status = 0;
+  bool earlyExit = false;
   while(true) {
     status = dispatch_semaphore_wait(_responseSemaphore, [self getTimeout]);
     
@@ -192,11 +193,16 @@
         if(res.expected != 0) {
           [self showProgress:(float)res.current expected:(float)res.expected];
         }
+      } else if(res.status >= 6) {
+        // update-engine exit
+        _success = kFailure;
+        earlyExit = true;
+        break;
       }
     }
   }
   
-  if(dispatch_semaphore_wait(_responseSemaphore, [self getTimeout]) == 0) {
+  if(earlyExit || dispatch_semaphore_wait(_responseSemaphore, [self getTimeout]) == 0) {
     res = _currentMessage.Get_RtsOtaUpdateResponse();
     _success = res.status == 3? kSuccess : kFailure;
   } else {

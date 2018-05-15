@@ -648,7 +648,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           _otaStatusCode = msg.status;
           
           if(_otaStatusCode != 2 && _otaStatusCode != 1) {
-            printf("ota status code: %d\n", _otaStatusCode);
+            printf("\nota status code: %d\n", _otaStatusCode);
           }
           
           if(_otaStatusCode == 2) {
