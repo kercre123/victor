@@ -277,7 +277,9 @@ void manage_life_tests() {
   if (gLifeTesting.flash) {
   }
   if (gLifeTesting.motors ) {
-    start_motor_test(false);
+    if (!gMotorTestCycles) {
+      start_motor_test(false);
+    }
   }
   if (gLifeTesting.screen) {
     screen_test();
@@ -290,14 +292,14 @@ void manage_life_tests() {
 
 #define BATTERY_SCALE (2.8/2048)
 #define BAT_CHARGED_THRESHOLD ((uint16_t)(4.1 / BATTERY_SCALE))
-#define BAT_DISCHARGED_THRESHOLD ((uint16_t)(3.7 / BATTERY_SCALE))
+#define BAT_DISCHARGED_THRESHOLD ((uint16_t)(3.6 / BATTERY_SCALE))
 
 void check_battery_discharge(struct BodyToHead*  bodyData) {
   static uint32_t charge_cycles = 0;
   if (gLifeTesting.battery) {
     charge_cycles++;
 
-    if ((charge_cycles & 0x7F)==0) { printf("battery is %d\n", bodyData->battery.battery); }
+    if ((charge_cycles & 0x7F)==0) { printf("battery is %.2fV\r", bodyData->battery.battery * BATTERY_SCALE); }
 
     if (bodyData->battery.battery > BAT_CHARGED_THRESHOLD) {
       if (!gLifeTesting.do_discharge) {
@@ -574,6 +576,7 @@ int main(int argc, const char* argv[])
   hal_send_frame(PAYLOAD_DATA_FRAME, &gHeadData, sizeof(gHeadData));
 
 
+
   while (!shouldexit)
   {
     draw_menus();
@@ -583,11 +586,9 @@ int main(int argc, const char* argv[])
     if (!hdr) {
       if (++badcomms > 100)
       {
+        printf("can't get frame\n");
         exit(1);
       }
-      /* printf("miss\n"); */
-      /* struct BodyToHead fakeData = {0}; */
-      /* process_incoming_frame(&fakeData); */
     }
     else {
       badcomms = 0;
