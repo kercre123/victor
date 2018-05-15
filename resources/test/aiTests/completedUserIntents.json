@@ -53,6 +53,14 @@
 
     "meet_victor": {
       "type": "meet_victor"
+    },
+
+    "be_quiet": {
+      "type": "imperative_quiet"
+    },
+
+    "shut_up": {
+      "type": "imperative_shutup"
     }
   }
 

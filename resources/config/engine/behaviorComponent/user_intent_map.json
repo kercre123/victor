@@ -6,7 +6,13 @@
     },
     {
       "cloud_intent": "intent_imperative_quiet",
+      "app_intent": "intent_imperative_quiet",
       "user_intent": "imperative_quiet"
+    },
+    {
+      "cloud_intent": "intent_imperative_shutup",
+      "app_intent": "intent_imperative_shutup",
+      "user_intent": "imperative_shutup"
     },
     {
       "cloud_intent": "intent_imperative_come",

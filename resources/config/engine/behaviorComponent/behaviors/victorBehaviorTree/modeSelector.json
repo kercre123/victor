@@ -1,0 +1,12 @@
+{
+  "behaviorID" : "ModeSelector",
+  "behaviorClass" : "DispatcherStrictPriority",
+
+  "interruptActiveBehavior": true,
+
+  "behaviors": [
+    "ShutUpMode",
+    "QuietMode",
+    "CoordinateGlobalInterrupts"
+  ]
+}

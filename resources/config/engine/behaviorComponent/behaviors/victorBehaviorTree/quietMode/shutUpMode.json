@@ -1,0 +1,30 @@
+{
+  "behaviorID": "ShutUpMode",
+  "behaviorClass": "QuietModeCoordinator",
+
+  "associatedActiveFeature": "ShutUp",
+
+  "respondToUserIntents": [
+    { "type": "imperative_shutup" }
+  ],
+
+  "emotionEventOnActivated": "BeQuietVoiceCommand",
+
+  "activeTime_s": 3600.0,
+
+  "behaviors": [
+    {
+      "behavior": "QuietModeLowBatteryGoHome",
+      "audioAllowed": false
+    },
+    {
+      "behavior": "TriggerWordDetected",
+      "audioAllowed": true
+    },
+    // todo: TimerUtilityCoordinator?
+    {
+      "behavior": "ShutUpAnim",
+      "audioAllowed": false
+    }
+  ]
+}

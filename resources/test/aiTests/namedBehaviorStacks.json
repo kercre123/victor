@@ -8,6 +8,7 @@
     "stackIsForTestOnly" : false,
     "stack" : [
       "DevBaseBehavior",
+      "ModeSelector",
       "CoordinateGlobalInterrupts",
       "GlobalInterruptions",
       "HighLevelAI"   
@@ -17,6 +18,7 @@
     "stackIsForTestOnly" : false,
     "stack" : [
     "DevBaseBehavior",
+    "ModeSelector",
     "CoordinateGlobalInterrupts",
     "GlobalInterruptions",
     "HighLevelAI",

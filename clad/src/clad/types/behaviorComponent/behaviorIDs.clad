@@ -93,7 +93,6 @@ enum uint_8 BehaviorID {
   Exploring,
   ExploringDispatcher,
   ExploringExamineObstacle,
-  ExploringFindCharger,
   ExploringVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates
@@ -183,6 +182,16 @@ enum uint_8 BehaviorID {
   DoATrickVoiceCommand,
   FistBumpVoiceCommand,
   KeepawayVoiceCommand,
+
+  // victorBehaviorTree
+  ModeSelector,
+
+  // victorBehaviorTree/quietMode
+  BeQuietAnim,
+  QuietMode,
+  QuietModeLowBatteryGoHome,
+  ShutUpAnim,
+  ShutUpMode,
 
   // victorBehaviorTree
   ReactToTouchPetting,

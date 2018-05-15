@@ -106,6 +106,22 @@ TEST_INTENT(UserIntentsTransitions, MeetVictor, "meet_victor")
   const bool res = IntentHelper( intent, BehaviorID::EnrollFace );
   EXPECT_TRUE(res);
 }
+  
+TEST_INTENT(UserIntentsTransitions, BeQuiet, "be_quiet")
+{
+  UserIntent intent;
+  intent.Set_imperative_quiet({});
+  const bool res = IntentHelper( intent, BehaviorID::BeQuietAnim );
+  EXPECT_TRUE(res);
+}
+  
+TEST_INTENT(UserIntentsTransitions, ShutUp, "shut_up")
+{
+  UserIntent intent;
+  intent.Set_imperative_shutup({});
+  const bool res = IntentHelper( intent, BehaviorID::ShutUpAnim );
+  EXPECT_TRUE(res);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // the testing of the tests

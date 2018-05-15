@@ -124,6 +124,9 @@ public:
   // emotion events. By default, it listens for any actions that complete, but this function can be used to
   // enable or disable listening for specific actions
   void SetEnableMoodEventOnCompletion(u32 actionTag, bool enable);
+  
+  void SetEmotionFixed(EmotionType emotionType, bool fixed) { _fixedEmotions[(size_t)emotionType] = fixed; }
+  bool IsEmotionFixed(EmotionType emotionType) const { return _fixedEmotions[(size_t)emotionType]; }
 
   
   // ==================== GetEmotion... ====================
@@ -218,6 +221,8 @@ private:
   SEND_MOOD_TO_VIZ_DEBUG_ONLY( std::vector<std::string> _eventNames; )
   Robot*          _robot = nullptr;
   float           _lastUpdateTime;
+  
+  std::array<bool,(size_t)EmotionType::Count> _fixedEmotions;
 
   // maps from (action type, action result category) -> emotion event
   using ActionCompletedEventMap = std::map< std::pair< RobotActionType, ActionResultCategory >, std::string >;

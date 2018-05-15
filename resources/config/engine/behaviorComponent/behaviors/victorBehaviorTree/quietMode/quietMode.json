@@ -1,0 +1,30 @@
+{
+  "behaviorID": "QuietMode",
+  "behaviorClass": "QuietModeCoordinator",
+
+  "associatedActiveFeature": "BeQuiet",
+
+  "respondToUserIntents": [
+    { "type": "imperative_quiet" }
+  ],
+
+  "emotionEventOnActivated": "BeQuietVoiceCommand",
+
+  "activeTime_s": 1800.0,
+
+  "behaviors": [
+    {
+      "behavior": "QuietModeLowBatteryGoHome",
+      "audioAllowed": false
+    },
+    {
+      "behavior": "TriggerWordDetected",
+      "audioAllowed": true
+    },
+    // todo: TimerUtilityCoordinator?
+    {
+      "behavior": "BeQuietAnim",
+      "audioAllowed": false
+    }
+  ]
+}
