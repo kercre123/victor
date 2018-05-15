@@ -973,7 +973,7 @@
   },
   {
     "CladEvent": "TimerCancelTimer",
-    "AnimName": "ag_timer_timecancel"
+    "AnimName": "ag_timer_timecancel_getin"
   },
   {
     "CladEvent": "TimerSetGetIn",
