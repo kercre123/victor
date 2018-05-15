@@ -1,4 +1,10 @@
 ----------------
+Release v104.8
+----------------
+
+Changes CE fixture BODYCOLOR to "4" - for 2018's "Blue" model Limited Edition.
+
+----------------
 Release j104.7
 ----------------
 
