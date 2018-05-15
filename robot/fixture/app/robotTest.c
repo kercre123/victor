@@ -34,6 +34,7 @@ enum {
   BODYCOLOR_M1_RESERVED       = 1,
   BODYCOLOR_M2_WHITE          = 2,  //standard white (v1.5 and later)
   BODYCOLOR_M3_CE_LM          = 3,  //Collectors edition, Liquid Metal
+  BODYCOLOR_M3_LE_BLUE        = 4,  //Limited edition, "Blue" Sneaker (2018)
   BODYCOLOR_END,
 };
 
@@ -147,7 +148,7 @@ static void WriteBodyColor(void)
   if( g_fixtureType == FIXTURE_ROBOT3_TEST )
     setBodycolor( BODYCOLOR_M2_WHITE );
   if( g_fixtureType == FIXTURE_ROBOT3_CE_TEST )
-    setBodycolor( BODYCOLOR_M3_CE_LM );
+    setBodycolor( BODYCOLOR_M3_LE_BLUE );
 }
 
 static void VerifyBodyColor(void)
@@ -156,7 +157,7 @@ static void VerifyBodyColor(void)
   
   if( g_fixtureType == FIXTURE_PACKOUT_TEST && m_bodyColor != BODYCOLOR_M2_WHITE )
     throw ERROR_BODYCOLOR_INVALID;
-  if( g_fixtureType == FIXTURE_PACKOUT_CE_TEST && m_bodyColor != BODYCOLOR_M3_CE_LM )
+  if( g_fixtureType == FIXTURE_PACKOUT_CE_TEST && m_bodyColor != BODYCOLOR_M3_LE_BLUE )
     throw ERROR_BODYCOLOR_INVALID;
 }
 
