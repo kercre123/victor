@@ -7,12 +7,10 @@ fi
 
 GIT_PROJ_ROOT=`git rev-parse --show-toplevel`
 
-if [ -z "${ANDROID_NDK+x}" ]; then
-  ANDROID_NDK=`${GIT_PROJ_ROOT}/tools/build/tools/ankibuild/android.py`
-fi
+ADDR2LINE=`${GIT_PROJ_ROOT}/project/victor/scripts/vicos_which.sh addr2line`
 
 configuration=Release
 shared_library=$1
 shift
 
-${ANDROID_NDK}/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-addr2line -p -e ${GIT_PROJ_ROOT}/_build/android/${configuration}/lib/${shared_library}.full -a $@
+${ADDR2LINE} -e ${GIT_PROJ_ROOT}/_build/vicos/${configuration}/lib/${shared_library}.full -a $@
