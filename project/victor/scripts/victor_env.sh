@@ -30,6 +30,7 @@ robot_sh ()
         return 1
     fi
     ssh ${ANKI_ROBOT_USER}@${ANKI_ROBOT_HOST} $*
+    return $?
 }
 
 robot_cp ()
@@ -50,6 +51,7 @@ robot_cp ()
     DST=$ANKI_ROBOT_USER@$ANKI_ROBOT_HOST:"$2"
 
     scp ${ARGS} ${SRC} ${DST}
+    return $?
 }
 
 robot_cp_from ()
@@ -70,6 +72,7 @@ robot_cp_from ()
     DST="$2"
 
     scp ${ARGS} ${SRC} ${DST}
+    return $?
 }
 
 ADB=adb                                                                                             

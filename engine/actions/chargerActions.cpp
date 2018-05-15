@@ -144,7 +144,7 @@ ActionResult MountChargerAction::ConfigureMountAction()
   // Play the driving Start anim if necessary
   if (_playDrivingAnimation) {
     _mountAction->AddAction(new WaitForLambdaAction([](Robot& robot) {
-      robot.GetDrivingAnimationHandler().PlayStartAnim();
+      robot.GetDrivingAnimationHandler().StartDrivingAnim();
       return true;
     }));
   }
@@ -156,11 +156,11 @@ ActionResult MountChargerAction::ConfigureMountAction()
   // Play the driving End anim if necessary
   if (_playDrivingAnimation) {
     _mountAction->AddAction(new WaitForLambdaAction([](Robot& robot) {
-      if (robot.GetDrivingAnimationHandler().HasFinishedEndAnim()) {
+      if (robot.GetDrivingAnimationHandler().HasFinishedDrivingEndAnim()) {
         return true;
       }
-      if (!robot.GetDrivingAnimationHandler().IsPlayingEndAnim()) {
-        robot.GetDrivingAnimationHandler().PlayEndAnim();
+      if (!robot.GetDrivingAnimationHandler().IsPlayingDrivingEndAnim()) {
+        robot.GetDrivingAnimationHandler().EndDrivingAnim();
       }
       return false;
     }));

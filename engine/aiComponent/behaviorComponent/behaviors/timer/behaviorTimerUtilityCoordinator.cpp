@@ -536,7 +536,7 @@ TimerUtility& BehaviorTimerUtilityCoordinator::GetTimerUtility() const
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions() const
+void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions()
 {
   auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
   
@@ -546,79 +546,74 @@ void BehaviorTimerUtilityCoordinator::SetupTimerBehaviorFunctions() const
 
   _iParams.setTimerBehavior->SetShowClockCallback(startTimerCallback);
 
-  std::map<Vision::SpriteBoxName, std::function<int()>> timerFuncs;
-  // Tens Digit (left of colon)
-  {
-    auto tenMinsFunc = [&timerUtility](){
-      if(auto timerHandle = timerUtility.GetTimerHandle()){
-        if(timerHandle->GetDisplayHoursRemaining() > 0){
-          const int hoursRemaining = timerHandle->GetDisplayHoursRemaining();
-          return hoursRemaining/10;
+  _iParams.setTimerBehavior->SetGetDigitFunction(BuildTimerFunction());
+  _iParams.timerAnticBehavior->SetGetDigitFunction(BuildTimerFunction());
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorProceduralClock::GetDigitsFunction BehaviorTimerUtilityCoordinator::BuildTimerFunction() const
+{
+  auto& timerUtility = GetBEI().GetAIComponent().GetComponent<TimerUtility>();
+  return [&timerUtility](const int offset){
+    std::map<Vision::SpriteBoxName, int> outMap;
+    if(auto timerHandle = timerUtility.GetTimerHandle()){
+      const bool displayingHoursOnScreen = timerHandle->GetDisplayHoursRemaining() > 0;
+      const int timeRemaining_s = timerHandle->GetTimeRemaining_s() - offset;
+      
+      const int hoursRemaining = TimerHandle::SecondsToDisplayHours(timeRemaining_s);
+      const int minsRemaining = TimerHandle::SecondsToDisplayMinutes(timeRemaining_s);
+      const int secsRemaining = TimerHandle::SecondsToDisplaySeconds(timeRemaining_s);
+
+      // Tens Digit (left of colon)
+      {
+        int tensDigit = 0;
+        if(displayingHoursOnScreen){
+          tensDigit =  hoursRemaining/10;
         }else{
-          const int minsRemaining = timerHandle->GetDisplayMinutesRemaining();
-          return minsRemaining/10;
+          tensDigit = minsRemaining/10;
         }
-      }else{
-        return 0;
+        outMap.emplace(std::make_pair(Vision::SpriteBoxName::TensLeftOfColon, tensDigit));
       }
-    };
-    timerFuncs.emplace(std::make_pair(Vision::SpriteBoxName::TensLeftOfColon, tenMinsFunc));
-  }
-  // Ones Digit (left of colon)
-  {
-    auto oneMinsFunc = [&timerUtility](){
-      if(auto timerHandle = timerUtility.GetTimerHandle()){
-        if(timerHandle->GetDisplayHoursRemaining() > 0){
-          const int hoursRemaining = timerHandle->GetDisplayHoursRemaining();
-          return hoursRemaining % 10;
+      
+      // Ones Digit (left of colon)
+      {
+        int onesDigit = 0;
+        if(displayingHoursOnScreen){
+          onesDigit = hoursRemaining % 10;
         }else{
-          const int minsRemaining = timerHandle->GetDisplayMinutesRemaining();
-          return minsRemaining % 10;
+          onesDigit = minsRemaining % 10;
         }
-      }else{
-        return 0;
+        outMap.emplace(std::make_pair(Vision::SpriteBoxName::OnesLeftOfColon, onesDigit));
       }
-    };
-    timerFuncs.emplace(std::make_pair(Vision::SpriteBoxName::OnesLeftOfColon, oneMinsFunc));
-  }
-  // Tens Digit (right of colon)
-  {
-    auto tenSecsFunc = [&timerUtility](){
-      if(auto timerHandle = timerUtility.GetTimerHandle()){
-        if(timerHandle->GetDisplayHoursRemaining() > 0){
-          const int minsRemaining = timerHandle->GetDisplayMinutesRemaining();
-          return minsRemaining/10;
+
+      // Tens Digit (right of colon)
+      {
+        int tensDigit = 0;
+        if(displayingHoursOnScreen){
+          tensDigit = minsRemaining/10;
         }else{
-          const int secsRemaining = timerHandle->GetDisplaySecondsRemaining();
-          return secsRemaining/10;
+          tensDigit = secsRemaining/10;
         }
-      }else{
-        return 0;
+        outMap.emplace(std::make_pair(Vision::SpriteBoxName::TensRightOfColon, tensDigit));
       }
-    };
-    timerFuncs.emplace(std::make_pair(Vision::SpriteBoxName::TensRightOfColon, tenSecsFunc));
-  }
-  // Ones Digit (right of colon)
-  {
-    auto oneSecsFunc = [&timerUtility](){
-      if(auto timerHandle = timerUtility.GetTimerHandle()){
-        if(timerHandle->GetDisplayHoursRemaining() > 0){
-          const int minsRemaining = timerHandle->GetDisplayMinutesRemaining();
-          return minsRemaining % 10;
+
+      // Ones Digit (right of colon)
+      {
+        int onesDigit = 0;
+        if(displayingHoursOnScreen){
+          onesDigit = minsRemaining % 10;
         }else{
-          const int secsRemaining = timerHandle->GetDisplaySecondsRemaining();
-          return secsRemaining % 10;
+          onesDigit = secsRemaining % 10;
         }
-      }else{
-        return 0;
+        outMap.emplace(std::make_pair(Vision::SpriteBoxName::OnesRightOfColon, onesDigit));
       }
-    };
-    timerFuncs.emplace(std::make_pair(Vision::SpriteBoxName::OnesRightOfColon, oneSecsFunc));
-  }
-  
-  auto intentionalCopy = timerFuncs;
-  _iParams.setTimerBehavior->SetDigitFunctions(std::move(timerFuncs));
-  _iParams.timerAnticBehavior->SetDigitFunctions(std::move(intentionalCopy));
+
+      return outMap;
+    }else{
+      return outMap;
+    }
+  };
 }
 
 

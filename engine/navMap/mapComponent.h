@@ -119,6 +119,12 @@ public:
 
   void AddProxData(const Poly2f& poly, const MemoryMapData& data);
   
+  // Remove all prox obstacles from the map.
+  // CAUTION: This will entirely remove _all_ information about prox
+  // obstacles. This should almost never be necessary. Is this really
+  // what you want??
+  void RemoveAllProxObstacles();
+  
   ////////////////////////////////////////////////////////////////////////////////
   // Accessors
   ////////////////////////////////////////////////////////////////////////////////

@@ -76,6 +76,7 @@ float MoodManager::GetCurrentTimeInSeconds()
 MoodManager::MoodManager()
 : IDependencyManagedComponent(this, RobotComponentID::MoodManager)
 , _lastUpdateTime(0.0f)
+, _fixedEmotions{}
 {
 }
 
@@ -494,30 +495,41 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
     const float timeSinceLastOccurrence = UpdateLatestEventTimeAndGetTimeElapsedInSeconds(eventName, currentTimeInSeconds);
     const auto& defaultPenalty = GetStaticMoodData().GetDefaultRepetitionPenalty();
     const float repetitionPenalty = emotionEvent->CalculateRepetitionPenalty(timeSinceLastOccurrence, defaultPenalty);
+    
+    bool modified = false;
 
     const std::vector<EmotionAffector>& emotionAffectors = emotionEvent->GetAffectors();
     for (const EmotionAffector& emotionAffector : emotionAffectors)
     {
       const float penalizedDeltaValue = emotionAffector.GetValue() * repetitionPenalty;
-      GetEmotion(emotionAffector.GetType()).Add(penalizedDeltaValue);
+      if( !IsEmotionFixed( emotionAffector.GetType() ) ) {
+        modified = true;
+        GetEmotion(emotionAffector.GetType()).Add(penalizedDeltaValue);
+      } else {
+        PRINT_CH_INFO("Mood", "MoodManager.TriggerFixedEmotion",
+                      "Skipping TriggerEmotionEvent for emotion '%s' since it's fixed",
+                      EmotionTypeToString(emotionAffector.GetType()));
+      }
     }
 
-    if( _robot ) {
-      // update audio now instead of waiting for the next natural update
-      SendEmotionsToAudio(_robot->GetComponent<Audio::EngineRobotAudioClient>());
-    }
+    if( modified ) {
+      if( _robot ) {
+        // update audio now instead of waiting for the next natural update
+        SendEmotionsToAudio(_robot->GetComponent<Audio::EngineRobotAudioClient>());
+      }
 
-    SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(eventName.c_str()) );
+      SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(eventName.c_str()) );
 
-    // Trying to answer the question of why emotions are changing
-    std::ostringstream stream;
-    std::for_each(_emotions, _emotions+((size_t)(EmotionType::Count)),
-                  [&stream](const Emotion &iter){ stream<<iter.GetValue(); stream<<","; });
-    Anki::Util::sInfo("robot.mood_values", {{DDATA,eventName.c_str()}}, stream.str().c_str());
+      // Trying to answer the question of why emotions are changing
+      std::ostringstream stream;
+      std::for_each(_emotions, _emotions+((size_t)(EmotionType::Count)),
+                    [&stream](const Emotion &iter){ stream<<iter.GetValue(); stream<<","; });
+      Anki::Util::sInfo("robot.mood_values", {{DDATA,eventName.c_str()}}, stream.str().c_str());
 
-    // and update webviz after, with the name of the event that happened
-    if( ANKI_DEV_CHEATS && kMoodManager_WebVizPeriod_s >= 0.0f && nullptr != _robot ) {
-      SendMoodToWebViz(_robot->GetContext(), eventName);
+      // and update webviz after, with the name of the event that happened
+      if( ANKI_DEV_CHEATS && kMoodManager_WebVizPeriod_s >= 0.0f && nullptr != _robot ) {
+        SendMoodToWebViz(_robot->GetContext(), eventName);
+      }
     }
   }
   else
@@ -529,10 +541,16 @@ void MoodManager::TriggerEmotionEvent(const std::string& eventName, float curren
 
 void MoodManager::AddToEmotion(EmotionType emotionType, float baseValue, const char* uniqueIdString, float currentTimeInSeconds)
 {
-  const float repetitionPenalty = UpdateEventTimeAndCalculateRepetitionPenalty(uniqueIdString, currentTimeInSeconds);
-  const float penalizedDeltaValue = baseValue * repetitionPenalty;
-  GetEmotion(emotionType).Add(penalizedDeltaValue);
-  SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(uniqueIdString) );
+  if( !IsEmotionFixed( emotionType ) ) {
+    const float repetitionPenalty = UpdateEventTimeAndCalculateRepetitionPenalty(uniqueIdString, currentTimeInSeconds);
+    const float penalizedDeltaValue = baseValue * repetitionPenalty;
+    GetEmotion(emotionType).Add(penalizedDeltaValue);
+    SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(uniqueIdString) );
+  } else {
+    PRINT_CH_INFO("Mood", "MoodManager.AddToFixedEmotion",
+                  "Skipping AddToEmotion since emotion '%s' is fixed",
+                  EmotionTypeToString(emotionType));
+  }
 }
 
 
@@ -540,13 +558,27 @@ void MoodManager::AddToEmotions(EmotionType emotionType1, float baseValue1,
                                 EmotionType emotionType2, float baseValue2, const char* uniqueIdString, float currentTimeInSeconds)
 {
   const float repetitionPenalty = UpdateEventTimeAndCalculateRepetitionPenalty(uniqueIdString, currentTimeInSeconds);
-  const float penalizedDeltaValue1 = baseValue1 * repetitionPenalty;
-  const float penalizedDeltaValue2 = baseValue2 * repetitionPenalty;
+  bool modified = false;
+  if( !IsEmotionFixed( emotionType1 ) ) {
+    modified = true;
+    const float penalizedDeltaValue1 = baseValue1 * repetitionPenalty;
+    GetEmotion(emotionType1).Add(penalizedDeltaValue1);
+  }
+  
+  if( !IsEmotionFixed( emotionType2 ) ) {
+    modified = true;
+    const float penalizedDeltaValue2 = baseValue2 * repetitionPenalty;
+    GetEmotion(emotionType2).Add(penalizedDeltaValue2);
+  }
 
-  GetEmotion(emotionType1).Add(penalizedDeltaValue1);
-  GetEmotion(emotionType2).Add(penalizedDeltaValue2);
-
-  SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(uniqueIdString) );
+  if( modified ) {
+    SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(uniqueIdString) );
+  } else {
+    PRINT_CH_INFO("Mood", "MoodManager.AddToFixedEmotions2",
+                  "AddToEmotions use with emotions '%s' and '%s' that are fixed= %d,%d",
+                  EmotionTypeToString(emotionType1), EmotionTypeToString(emotionType2),
+                  IsEmotionFixed(emotionType1), IsEmotionFixed(emotionType2));
+  }
 }
 
 
@@ -555,15 +587,33 @@ void MoodManager::AddToEmotions(EmotionType emotionType1, float baseValue1,
                                 EmotionType emotionType3, float baseValue3, const char* uniqueIdString, float currentTimeInSeconds)
 {
   const float repetitionPenalty = UpdateEventTimeAndCalculateRepetitionPenalty(uniqueIdString, currentTimeInSeconds);
-  const float penalizedDeltaValue1 = baseValue1 * repetitionPenalty;
-  const float penalizedDeltaValue2 = baseValue2 * repetitionPenalty;
-  const float penalizedDeltaValue3 = baseValue3 * repetitionPenalty;
+  bool modified = false;
+  if( !IsEmotionFixed( emotionType1 ) ) {
+    modified = true;
+    const float penalizedDeltaValue1 = baseValue1 * repetitionPenalty;
+    GetEmotion(emotionType1).Add(penalizedDeltaValue1);
+  }
+  
+  if( !IsEmotionFixed( emotionType2 ) ) {
+    modified = true;
+    const float penalizedDeltaValue2 = baseValue2 * repetitionPenalty;
+    GetEmotion(emotionType2).Add(penalizedDeltaValue2);
+  }
+  
+  if( !IsEmotionFixed( emotionType3 ) ) {
+    modified = true;
+    const float penalizedDeltaValue3 = baseValue3 * repetitionPenalty;
+    GetEmotion(emotionType3).Add(penalizedDeltaValue3);
+  }
 
-  GetEmotion(emotionType1).Add(penalizedDeltaValue1);
-  GetEmotion(emotionType2).Add(penalizedDeltaValue2);
-  GetEmotion(emotionType3).Add(penalizedDeltaValue3);
-
-  SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(uniqueIdString) );
+  if( modified ) {
+    SEND_MOOD_TO_VIZ_DEBUG_ONLY( AddEvent(uniqueIdString) );
+  } else {
+    PRINT_CH_INFO("Mood", "MoodManager.AddToFixedEmotions3",
+                  "AddToEmotions use with emotions '%s','%s','%s' that are fixed = %d,%d,%d",
+                  EmotionTypeToString(emotionType1), EmotionTypeToString(emotionType2), EmotionTypeToString(emotionType3),
+                  IsEmotionFixed(emotionType1), IsEmotionFixed(emotionType2), IsEmotionFixed(emotionType3));
+  }
 }
 
 

@@ -1,0 +1,9 @@
+{
+  "behaviorID"       : "BeQuietAnim",
+  "behaviorClass"    : "AnimGetInLoop",
+  "getIn"            : "BeQuiet_GetIn",
+  "loopAnimation"    : "BeQuiet_Loop",
+  "getOut"           : "BeQuiet_GetOut",
+  "shouldCheckEndCondDuringAnim": false,
+  "lockTreads"       : true
+}

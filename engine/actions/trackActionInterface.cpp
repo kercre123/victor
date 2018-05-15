@@ -332,7 +332,7 @@ ActionResult ITrackAction::Init()
   if((ActionResult::SUCCESS == result) && 
      _shouldPlayDrivingAnimation)
   {
-    GetRobot().GetDrivingAnimationHandler().PlayStartAnim();
+    GetRobot().GetDrivingAnimationHandler().StartDrivingAnim();
   }
   return result;
 }
@@ -356,7 +356,7 @@ ActionResult ITrackAction::CheckIfDoneReturnHelper(ActionResult result, bool sto
       return result;
     }
     
-    GetRobot().GetDrivingAnimationHandler().PlayEndAnim();
+    GetRobot().GetDrivingAnimationHandler().EndDrivingAnim();
     _finalActionResult = result; // This will get returned once the end anim completes
     return ActionResult::RUNNING;
   }
@@ -371,11 +371,11 @@ ActionResult ITrackAction::CheckIfDone()
 {
   if(_shouldPlayDrivingAnimation)
   {
-    if(GetRobot().GetDrivingAnimationHandler().IsPlayingEndAnim())
+    if(GetRobot().GetDrivingAnimationHandler().IsPlayingDrivingEndAnim())
     {
       return ActionResult::RUNNING;
     }
-    else if(GetRobot().GetDrivingAnimationHandler().HasFinishedEndAnim())
+    else if(GetRobot().GetDrivingAnimationHandler().HasFinishedDrivingEndAnim())
     {
       DEV_ASSERT(_finalActionResult != ActionResult::NOT_STARTED, "ITrackAction.CheckIfDone.FinalActionResultNotSet");
       return _finalActionResult;
@@ -501,7 +501,7 @@ ActionResult ITrackAction::CheckIfDone()
           }
           
           // Specify a fixed duration to reach the goal and compute speed from it
-          const f32 wheelspeed_mmps = std::min(MAX_WHEEL_SPEED_MMPS, distance_mm / _timeToReachTarget_sec);
+          const f32 wheelspeed_mmps = std::min(MAX_SAFE_WHEEL_SPEED_MMPS, distance_mm / _timeToReachTarget_sec);
           const f32 accel = MAX_WHEEL_ACCEL_MMPS2; // Expose?
           
           if(DEBUG_TRACKING_ACTIONS) {

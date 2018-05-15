@@ -203,13 +203,7 @@ namespace Cozmo {
                                    const f32 minGain,
                                    const f32 maxGain,
                                    const GammaCurve& gammaCurve);
-
-    // Parameters for how we compute new exposure from image data
-    Result SetAutoExposureParams(const s32 subSample,
-                                 const u8  midValue,
-                                 const f32 midPercentile,
-                                 const f32 maxChangeFraction);
-    
+   
     // Just specify what the current values are (don't actually change the robot's camera)
     Result SetNextCameraExposure(s32 exposure_ms, f32 gain);
     Result SetNextCameraWhiteBalance(f32 whiteBalanceGainR, 
@@ -372,6 +366,9 @@ namespace Cozmo {
     Result EnableMode(VisionMode whichMode, bool enabled);
 
     Result SaveSensorData() const;
+    
+    // Populates whiteBalanceGains in _currentResult with adjusted values
+    Result CheckWhiteBalance(const Vision::ImageRGB& img);
     
     // Contrast-limited adaptive histogram equalization (CLAHE)
     cv::Ptr<cv::CLAHE> _clahe;

@@ -10,7 +10,7 @@
   "shouldTurnToFace"  : true,
 
   "clockLayout" : [{  
-    "layerName" : "Layer_4",
+    "layerName" : "Clock_Display",
     "spriteBoxLayout" : [
       {
         "spriteBoxName": "TensLeftOfColon",

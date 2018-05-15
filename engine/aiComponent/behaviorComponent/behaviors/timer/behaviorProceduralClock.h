@@ -26,8 +26,16 @@ namespace Cozmo {
 class BehaviorProceduralClock : public ICozmoBehavior
 {
 public:
+  // List of digit display boxes for external systems to specify
+  // the time to put in each box
+  static const std::vector<Vision::SpriteBoxName> DigitDisplayList;
+
+  // Determine the digit to put in a given sprite box
+  // offset specifies a time offset so that values can be pre-computed 
+  using GetDigitsFunction = std::function<std::map<Vision::SpriteBoxName, int>(const int offset)>;
+  
   // Specify how each digit on the face should be calculated - must set all 4 values in map
-  void SetDigitFunctions(std::map<Vision::SpriteBoxName, std::function<int()>>&& functions);
+  void SetGetDigitFunction(GetDigitsFunction&& function);
   // Specify a callback which should be called when the clock is shown on the robot's face
   void SetShowClockCallback(std::function<void()>&& callback)
   {
@@ -65,21 +73,26 @@ private:
 
   struct InstanceParams{
     std::unique_ptr<Vision::CompositeImage> compImg;
-    std::map<Vision::SpriteBoxName, Vision::SpriteName> staticElements;
-    // TODO: transition these maps to fullyEnumeratedArrays
-    std::map<Vision::SpriteBoxName, std::function<int()>> getDigitFunctions; 
-    std::map<int, Vision::SpriteName> intsToImages;
+    
+    // User facing properties
     AnimationTrigger getInAnim;
     AnimationTrigger getOutAnim;
-    int totalTimeDisplayClock;
     bool shouldTurnToFace = false;
-    std::function<void()> showClockCallback; 
     Json::Value layout;
+    int totalTimeDisplayClock;
+
+    // Asset properties
+    Vision::CompositeImageLayer::ImageMap staticImageMap;
+    std::map<Vision::SpriteBoxName, Vision::SpriteName> staticElements;
+    std::map<int, Vision::SpriteName> intsToImages;
+
+    // Playback properties
+    GetDigitsFunction getDigitFunction;
+    std::function<void()> showClockCallback; 
   };
 
   struct LifetimeParams{
     int timeShowClockStarted = 0;
-    int nextUpdateTime_s = 0;
     BehaviorState currentState = BehaviorState::TurnToFace;
     SmartFaceID targetFaceID;
     bool hasBaseImageBeenSent = false;
@@ -91,7 +104,7 @@ private:
 
   // Function which builds and displays the proceduralClock - adds the 4 core digits on top
   // of any quadrant images passed into the function
-  void BuildAndDisplayProceduralClock(Vision::CompositeImageLayer::ImageMap&& imageMap);
+  void BuildAndDisplayProceduralClock(const int clockOffset_s = 0, const int displayOffset_ms = 0);
 
   // Updates the target face within lifetime params - returns the member face for checking success inline
   SmartFaceID UpdateTargetFace();

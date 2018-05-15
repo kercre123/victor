@@ -63,7 +63,7 @@
     "LowPercentile"             : 0.10,  // [0.0, 1.0]  (Near 0.0)
     "MidPercentile"             : 0.50,  // [0.0, 1.0]  (B/w low and high, higher to prefer under exposure)
     "HighPercentile"            : 0.90,  // [0.0, 1.0]  (Near 1.0)
-    "MaxChangeFraction"         : 0.80,  // [0.0, 1.0]  (Amount we can change current exposure/gain each update)
+    "MaxChangeFraction"         : 0.80,  // [0.0, 1.0]  (Relative amount we can change current exposure/gain/wb each update)
     "SubSample"                 : 3,     // >= 1
     "MeterFromDetections"       : true,  // Base auto-exposure on detected markers, faces, etc, if any
 

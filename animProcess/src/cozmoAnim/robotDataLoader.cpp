@@ -152,8 +152,7 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
   
   animLoader.LoadAnimationIntoContainer(path, _cannedAnimations.get());
 
-  
-  const auto animName = Util::FileUtils::GetFileName(path);
+  const auto animName = Util::FileUtils::GetFileName(path, true, true);
   const auto* anim = _cannedAnimations->GetAnimation(animName);
   NotifyAnimAdded(animName, anim->GetLastKeyFrameEndTime_ms());
 }

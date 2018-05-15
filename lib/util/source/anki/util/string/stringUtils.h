@@ -81,6 +81,14 @@ std::vector<std::string> StringSplit(const std::string& string, char delim=',');
   
 void StringReplace( std::string& toChange, const std::string& oldStr, const std::string& newStr );
 
+// @return bool indicating weather the epoch time was set
+// posix Epoch time in struct form (time since Jan 1, 1970, midnight UTC) based on
+// the passed in date string format
+// If the date format is not valid, returns UINT32_MAX (distant future).
+bool EpochFromDateString(const std::string& dateString, 
+                         const std::string& formatString,
+                         struct tm& outEpoch);
+
 // @return posix Epoch time in seconds (time since Jan 1, 1970, midnight UTC) based on
 // the specified date string in ISO8601 format: `YYYY-MM-DDTHH:MM:SSZ`.
 // If the date format is not valid, returns UINT32_MAX (distant future).

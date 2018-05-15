@@ -1124,6 +1124,24 @@ void MapComponent::AddProxData(const Poly2f& poly, const MemoryMapData& data)
     UpdateBroadcastFlags(currentMap->Insert(poly, trfm));
   }
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MapComponent::RemoveAllProxObstacles()
+{
+  INavMap* currentNavMemoryMap = GetCurrentMemoryMap();
+  if (currentNavMemoryMap) {
+    NodeTransformFunction proxObstacles =
+    [] (MemoryMapDataPtr data) -> MemoryMapDataPtr {
+      const EContentType nodeType = data->type;
+      if (EContentType::ObstacleProx == nodeType) {
+        return MemoryMapDataPtr();
+      }
+      return data;
+    };
+    
+    UpdateBroadcastFlags(currentNavMemoryMap->TransformContent(proxObstacles));
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::InsertData(const Poly2f& polyWRTOrigin, const MemoryMapData& data)

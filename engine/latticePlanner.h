@@ -62,6 +62,8 @@ public:
                            const PathMotionProfile* motionProfile = nullptr) override;
 
   virtual EPlannerStatus CheckPlanningStatus() const override;
+  
+  virtual EPlannerErrorType GetErrorType() const override;
 
   // by default, this planner will run in a thread. If it is set to be synchronous, it will not
   void SetIsSynchronous(bool val);

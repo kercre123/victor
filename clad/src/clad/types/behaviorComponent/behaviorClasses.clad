@@ -45,6 +45,7 @@ enum uint_8 BehaviorClass {
 
   // coordinators
   CoordinateGlobalInterrupts,
+  QuietModeCoordinator,
 
   // devBehaviors
   DevBatteryLogging,
@@ -168,6 +169,7 @@ enum uint_8 BehaviorClass {
   TrackCube,
 
   // weather
+  CoordinateWeather,
   DisplayWeather,
 }
 

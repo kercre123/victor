@@ -274,10 +274,40 @@ void TestBehaviorFramework::AddDelegateToStack(IBehavior* delegate)
   // something
   auto& delegationComponent = GetBehaviorExternalInterface().GetDelegationComponent();
   delegationComponent.CancelDelegates(topOfStack);
-  
+
+  // Apply special cases to system
+  ApplyAdditionalRequirementsBeforeDelegation(delegate);
+
   delegate->WantsToBeActivated();
   bsm.Delegate(topOfStack, delegate);
 }
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehaviorFramework::ApplyAdditionalRequirementsBeforeDelegation(IBehavior* delegate)
+{
+  auto& bsm = GetBehaviorSystemManager();
+  IBehavior* topOfStack = bsm._behaviorStack->GetTopOfStack();
+
+  // Special case logic for weather
+  {
+    ICozmoBehavior* delCozPtr = dynamic_cast<ICozmoBehavior*>(delegate);
+    const bool delegatingToWeather = (delCozPtr != nullptr) &&
+                                     (delCozPtr->GetID() == BehaviorID::WeatherResponses);
+
+    ICozmoBehavior* topWeatherPtr = dynamic_cast<ICozmoBehavior*>(topOfStack);
+    const bool delegatingFromWeather = (topWeatherPtr != nullptr) &&
+                                         (topWeatherPtr->GetID() == BehaviorID::WeatherResponses);
+    if(delegatingToWeather || delegatingFromWeather){
+      auto& uic = GetBehaviorExternalInterface().GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
+
+      UserIntent_WeatherResponse weatherResponse;
+      UserIntent intent = UserIntent::Createweather_response(std::move(weatherResponse));
+      uic.SetUserIntentPending(std::move(intent));
+    }
+  }
+}
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::vector<IBehavior*> TestBehaviorFramework::GetNamedBehaviorStack(const std::string& stackName)
@@ -303,6 +333,7 @@ void TestBehaviorFramework::SetBehaviorStackByName(const std::string& stackName)
   ReplaceBehaviorStack(_namedBehaviorStacks[stackName]);
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorFramework::FullTreeWalk(std::map<IBehavior*,std::set<IBehavior*>>& delegateMap,
                                          std::function<void(void)> evaluateTreeCallback)
@@ -310,6 +341,8 @@ void TestBehaviorFramework::FullTreeWalk(std::map<IBehavior*,std::set<IBehavior*
   FullTreeWalk(delegateMap, [&](bool leaf){ evaluateTreeCallback(); });
 }
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void TestBehaviorFramework::FullTreeWalk(std::map<IBehavior*,std::set<IBehavior*>>& delegateMap,
                                          std::function<void(bool)> evaluateTreeCallback)
 {

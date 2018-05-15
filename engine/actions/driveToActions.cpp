@@ -578,11 +578,13 @@ namespace Anki {
       if(!HasRobot()){
         return;
       }
+      
+      auto& pathComponent = GetRobot().GetPathComponent();
 
       // If we are not running anymore, for any reason, clear the path and its
       // visualization
-      if( GetRobot().GetPathComponent().IsActive() ) {
-        GetRobot().GetPathComponent().Abort();
+      if( pathComponent.IsActive() ) {
+        pathComponent.Abort();
       }
 
       GetRobot().GetContext()->GetVizManager()->EraseAllPlannerObstacles(true);
@@ -697,7 +699,7 @@ namespace Anki {
         *_selectedGoalIndex = 0;
         
         pathComponent.SetCanReplanningChangeGoal( !_mustUseOriginalGoal );
-                
+        
         planningResult = pathComponent.StartDrivingToPose(_goalPoses,
                                                           _selectedGoalIndex);
         
@@ -730,21 +732,24 @@ namespace Anki {
       ActionResult result = ActionResult::RUNNING;
       
       // Still running while the drivingEnd animation is playing
-      if(GetRobot().GetDrivingAnimationHandler().IsPlayingEndAnim())
+      if(GetRobot().GetDrivingAnimationHandler().IsPlayingDrivingEndAnim())
       {
         return ActionResult::RUNNING;
       }
       
       switch( GetRobot().GetPathComponent().GetDriveToPoseStatus() ) {
         case ERobotDriveToPoseStatus::Failed:
+        {
           PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.Failure", "Robot driving to pose failed");
           _timeToAbortPlanning = -1.0f;
           result = ActionResult::PATH_PLANNING_FAILED_ABORT;
+        }
           break;
-          
-        case ERobotDriveToPoseStatus::ComputingPath: {
+        
+        case ERobotDriveToPoseStatus::ComputingPath:
+        {
           const float currTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-          
+
           // handle aborting the plan. If we don't have a timeout set, set one now
           if( _timeToAbortPlanning < 0.0f ) {
             _timeToAbortPlanning = currTime + _maxPlanningTime;
@@ -757,18 +762,19 @@ namespace Anki {
             result = ActionResult::PATH_PLANNING_FAILED_ABORT;
             _timeToAbortPlanning = -1.0f;
           }
-          break;
         }
+          break;
           
-        case ERobotDriveToPoseStatus::FollowingPath: {
-        
+        case ERobotDriveToPoseStatus::FollowingPath:
+        {
+
           // If we are following a path start playing driving animations
           // Won't do anything if DrivingAnimationHandler has already been inited
-          GetRobot().GetDrivingAnimationHandler().PlayStartAnim();
-        
+          GetRobot().GetDrivingAnimationHandler().StartDrivingAnim();
+
           // clear abort timing, since we got a path
           _timeToAbortPlanning = -1.0f;
-          
+
           if(_debugPrintCtr++ % 10 == 0) {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.WaitingForPathCompletion",
                              "[%d] Waiting for robot to complete its path traversal (%d), "
@@ -779,10 +785,11 @@ namespace Anki {
                              GetRobot().GetPathComponent().GetLastSentPathID(),
                              GetRobot().GetPathComponent().GetLastRecvdPathID());
           }
-          break;
         }
-          
-        case ERobotDriveToPoseStatus::Ready: {
+          break;
+         
+        case ERobotDriveToPoseStatus::Ready:
+        {
           // clear abort timing, since we had a path
           _timeToAbortPlanning = -1.0f;
           
@@ -826,10 +833,11 @@ namespace Anki {
           // and it is no longer executing it, but we appear to not be in position
           else if (GetRobot().GetPathComponent().GetLastSentPathID() == GetRobot().GetPathComponent().GetLastRecvdPathID()) {
             PRINT_NAMED_INFO("DriveToPoseAction.CheckIfDone.DoneNotInPlace",
-                             "[%d] Robot is done traversing path, but is not in position (dist=%.1fmm). lastPathID=%d"
+                             "[%d] Robot is done traversing path, but is not in position (dist=%.1fmm). lastReceivedPathID=%d lastSentPathID=%d"
                              " goal %d (%f, %f, %f, %fdeg), actual (%f, %f, %f, %fdeg), threshold (%f, %f)",
                              GetTag(),
                              Tdiff.Length(), GetRobot().GetPathComponent().GetLastRecvdPathID(),
+                             GetRobot().GetPathComponent().GetLastSentPathID(),
                              (int) *_selectedGoalIndex,
                              _goalPoses[*_selectedGoalIndex].GetTranslation().x(),
                              _goalPoses[*_selectedGoalIndex].GetTranslation().y(),
@@ -851,8 +859,8 @@ namespace Anki {
                               "Robot is not at the goal and did not receive the last path");
             result = ActionResult::FOLLOWING_PATH_BUT_NOT_TRAVERSING;
           }
-          break;
         }
+          break;
 
         case ERobotDriveToPoseStatus::WaitingToBeginPath:         
         case ERobotDriveToPoseStatus::WaitingToCancelPath:
@@ -867,7 +875,7 @@ namespace Anki {
       if(result != ActionResult::RUNNING &&
          result != ActionResult::PATH_PLANNING_FAILED_ABORT &&
          result != ActionResult::PATH_PLANNING_FAILED_RETRY &&
-         GetRobot().GetDrivingAnimationHandler().PlayEndAnim())
+         GetRobot().GetDrivingAnimationHandler().EndDrivingAnim())
       {
         result = ActionResult::RUNNING;
       }
