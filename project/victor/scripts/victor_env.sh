@@ -1,5 +1,5 @@
 #
-# This file is intended to be included in other scripts that require the ANDROID_SDK or ADB
+# This file is intended to be included in other scripts that need to communicate with the robot
 #
 
 #
@@ -73,32 +73,4 @@ robot_cp_from ()
 
     scp ${ARGS} ${SRC} ${DST}
     return $?
-}
-
-ADB=adb                                                                                             
-if [ -e $TOPLEVEL/local.properties ]; then                                                          
-    ANDROID_HOME=`egrep sdk.dir $TOPLEVEL/local.properties | awk -F= '{print $2;}'`                 
-    ADB=$ANDROID_HOME/platform-tools/adb                                                            
-    if [ ! -x $ADB ]; then                                                                          
-        ADB=adb                                                               
-    fi                                                                                              
-fi                                                                                                  
-
-# echo "ADB: $ADB"
-
-function adb_shell {
-    CMD='$ADB'
-    CMD+=" shell '"
-    CMD+="$1; echo "
-    CMD+='$?'
-    CMD+=" | tr -d [:space:]"
-    CMD+="'"
-
-    # uncomment for debugging   
-    # set -x
-    RC=$(eval $CMD)
-    # set +x
-    # echo "RC = $RC"
-
-    [[ $RC == "0" ]]
 }
