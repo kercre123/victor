@@ -85,6 +85,10 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
     _outputLayerNames = {"detection_scores", "detection_classes", "detection_boxes", "num_detections"};
     _useFloatInput = false;
     _outputType = OutputType::SSD_Boxes;
+
+    if(config.isMember("output_type")) {
+      std::cout << "Ignoring output_type and using 'SSD_Boxes' because architecture='ssd_mobilenet' was specified" << std::endl;
+    }
   }
   else if(("mobilenet" == _params.architecture) || ("mobilenet_v1" == _params.architecture))
   { 
@@ -92,6 +96,10 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
     _outputLayerNames = {"MobilenetV1/Predictions/Softmax"};
     _useFloatInput = true;
     _outputType = OutputType::Classification;
+
+    if(config.isMember("output_type")) {
+      std::cout << "Ignoring output_type and using 'Classification' because architecture='mobilenet' was specified" << std::endl;
+    }
   }
   else if("custom" == _params.architecture)
   {
@@ -117,10 +125,14 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
 
     std::string output_type_str;
     SetFromConfigHelper(config["output_type"], output_type_str);
-    const std::map<std::string, OutputType> kOutputTypeMap{
-      {"classification",        OutputType::Classification}, 
-      {"binary_localization",   OutputType::BinaryLocalization},
-      {"ssd_boxes",             OutputType::SSD_Boxes},
+    struct OutputTypeEntry {
+      OutputType type;
+      int        numOutputs;
+    };
+    const std::map<std::string, OutputTypeEntry> kOutputTypeMap{
+      {"classification",        {OutputType::Classification,     1} }, 
+      {"binary_localization",   {OutputType::BinaryLocalization, 1} },
+      {"ssd_boxes",             {OutputType::SSD_Boxes,          4} },
     };
 
     auto iter = kOutputTypeMap.find(output_type_str);
@@ -130,11 +142,19 @@ Result ObjectDetector::LoadModel(const std::string& modelPath, const Json::Value
         validKeys += entry.first;
         validKeys += " ";
       }
-      PRINT_NAMED_ERROR("ObjectDetector.LoadModel.BadOutputType", "Valid keys: %s", validKeys.c_str());
+      PRINT_NAMED_ERROR("ObjectDetector.LoadModel.BadOutputType", "Valid types: %s", validKeys.c_str());
       return RESULT_FAIL;
     }
     else {
-      _outputType = iter->second;
+
+      if(_outputLayerNames.size() != iter->second.numOutputs)
+      {
+        PRINT_NAMED_ERROR("ObjectDetector.LoadModel.WrongNumberOfOutputs", 
+                          "OutputType %s requires %d outputs (%d provided)", 
+                          iter->first.c_str(), iter->second.numOutputs, (int)_outputLayerNames.size());
+        return RESULT_FAIL;
+      }
+      _outputType = iter->second.type;
     }
 
     if(config.isMember("use_grayscale"))
