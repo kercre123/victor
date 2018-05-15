@@ -279,6 +279,9 @@ namespace Cozmo {
   }
 
   CONSOLE_FUNC(CaptureFace, "ProceduralFace", optional const char* filename, optional int numFrames);
+
+  CONSOLE_VAR(bool, kShouldDisplayPlaybackTime, "AnimationStreamer", false);
+
   } // namespace
   
   AnimationStreamer::AnimationStreamer(const AnimContext* context)
@@ -1178,6 +1181,30 @@ namespace Cozmo {
 
       static const int kExpectedNumChunks = static_cast<int>(std::ceilf( (f32)FACE_DISPLAY_NUM_PIXELS / kMaxPixelsPerMsg ));
       DEV_ASSERT_MSG(chunkCount == kExpectedNumChunks, "AnimationComponent.DisplayFaceImage.UnexpectedNumChunks", "%d", chunkCount);
+    }
+
+    if(kShouldDisplayPlaybackTime){
+      // Build display str secs:ms
+      const auto secs = _relativeStreamTime_ms/1000;
+      const auto ms = _relativeStreamTime_ms % 1000;
+      std::string playbackTime = std::to_string(secs) + ":" + std::to_string(ms);
+
+      // Estimate if animation process is running slowly and display this on the screen
+      const auto estimatedRealTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp() - _startTime_ms;
+      const auto timeDrift = estimatedRealTime - _relativeStreamTime_ms;
+
+      ColorRGBA color = NamedColors::GREEN;
+      if(timeDrift > (2*ANIM_TIME_STEP_MS) ){
+        color = NamedColors::RED;
+
+        const auto realSecs = estimatedRealTime/1000;
+        const auto realMS = estimatedRealTime % 1000;
+        playbackTime += ("/" + std::to_string(realSecs) + ":" + std::to_string(realMS));
+      }
+
+      const Point2f pos(20,20);
+      const float scale = 0.5f;
+      faceImg565.DrawText(pos, playbackTime, color, scale);
     }
 
     FaceDisplay::getInstance()->DrawToFace(faceImg565);
