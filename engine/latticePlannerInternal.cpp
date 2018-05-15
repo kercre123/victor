@@ -418,6 +418,23 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
     };
     static_assert(MemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithCliff),
       "This array does not define all types once and only once.");
+    
+    constexpr MemoryMapTypes::FullContentArray typesToCalculateBordersWithCharger =
+    {
+      {MemoryMapTypes::EContentType::Unknown               , true},
+      {MemoryMapTypes::EContentType::ClearOfObstacle       , true},
+      {MemoryMapTypes::EContentType::ClearOfCliff          , true},
+      {MemoryMapTypes::EContentType::ObstacleObservable    , true},
+      {MemoryMapTypes::EContentType::ObstacleCharger       , false},
+      {MemoryMapTypes::EContentType::ObstacleChargerRemoved, true},
+      {MemoryMapTypes::EContentType::ObstacleProx          , true},
+      {MemoryMapTypes::EContentType::ObstacleUnrecognized  , true},
+      {MemoryMapTypes::EContentType::Cliff                 , true},
+      {MemoryMapTypes::EContentType::InterestingEdge       , true},
+      {MemoryMapTypes::EContentType::NotInterestingEdge    , true}
+    };
+    static_assert(MemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithCharger),
+                  "This array does not define all types once and only once.");
 
     // GetNavMap Polys
     std::vector<ConvexPolygon> convexHulls;
@@ -427,8 +444,9 @@ void LatticePlannerInternal::ImportBlockworldObstaclesIfNeeded(const bool isRepl
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, convexHulls);
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithProx, MemoryMapTypes::EContentType::ObstacleProx, convexHulls);
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithCliff, MemoryMapTypes::EContentType::Cliff, convexHulls);
-
-    // todo (VIC-2323): make the charger an obstacle 
+    
+    // todo (VIC-2323): make the charger a ObservableObject and use its boundingPoly as done below
+    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithCharger, MemoryMapTypes::EContentType::ObstacleCharger, convexHulls);
 
     MemoryMapTypes::MemoryMapDataConstList observableObjectData;
     MemoryMapTypes::NodePredicate pred =
