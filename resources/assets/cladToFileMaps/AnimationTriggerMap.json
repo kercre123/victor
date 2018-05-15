@@ -1072,6 +1072,10 @@
     "AnimName": "ag_vc_laser_lookdown"
   },
   {
+    "CladEvent": "ReactToPutDown",
+    "AnimName": "ag_generic_look_up_idle"
+  },
+  {
     "CladEvent": "ANTICIPATED_ReactToSoundOffChargerAsleepAmbient",
     "AnimName": "ag_rtsound_offcharger_asleep_ambient"
   },

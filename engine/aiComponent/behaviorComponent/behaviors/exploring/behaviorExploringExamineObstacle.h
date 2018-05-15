@@ -23,8 +23,6 @@ class BehaviorExploringExamineObstacle : public ICozmoBehavior
 public: 
   virtual ~BehaviorExploringExamineObstacle();
   
-  // if set true, this behavior may choose to drive up to a new obstacle instead of just turning
-  void SetCanVisitObstacle( bool canVisit ) { _dVars.persistent.canVisitObstacle = canVisit; }
   // if set true, this behavior may want to activate when there are obstacles on its side, in which
   // case it will turn towards them
   void SetCanSeeAndTurnToSideObstacles( bool canSee ) { _dVars.persistent.canSeeSideObstacle = canSee; }
@@ -60,7 +58,7 @@ private:
   
   enum class State : uint8_t {
     Initial=0,
-    DriveToObstacle, // only runs if canVisitObstacle was set
+    DriveToObstacle,
     FirstTurn,
     ReturnToCenter,
     SecondTurn,
@@ -81,7 +79,6 @@ private:
     float initialPoseAngle_rad;
     
     struct Persistent {
-      bool canVisitObstacle;
       bool canSeeSideObstacle;
       bool seesFrontObstacle;
       bool seesSideObstacle;

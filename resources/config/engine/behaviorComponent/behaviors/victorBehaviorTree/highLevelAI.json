@@ -50,7 +50,14 @@
     },
     {
       "name": "Exploring",
-      "behavior": "ExploringDispatcher"
+      "behavior": "Exploring",
+      "getInBehavior": "DriveOffCharger"
+    },
+    {
+      "name": "ExploringVoiceCommand",
+      "behavior": "ExploringVoiceCommand",
+      "getInBehavior": "DriveOffCharger",
+      "clearIntent": "explore_start"
     },
     {
       "name": "Socializing",
@@ -89,6 +96,10 @@
     {
       "name": "BoredOfObserving",
       "begin_s": 1100.0
+    },
+    {
+      "name": "BoredOfExploring",
+      "begin_s": 600.0
     },
     {
       "name": "NoLongerRecentlyPlaced",
@@ -326,6 +337,15 @@
               }
             ]
           }
+        },
+        {
+          // recently put down (we can't consider picked up since an interruption handles that)
+          "to": "Observing",
+          "condition": {
+            "conditionType": "OffTreadsState",
+            "targetState": "OnTreads",
+            "maxTimeSinceChange_ms": 3100 // fragile: the put down behavior lasts 3000.
+          }
         }
       ],
       "nonInterruptingTransitions": [
@@ -343,9 +363,25 @@
 
     {
       "from": [
+        "ExploringVoiceCommand", 
+        "Exploring" // stimulation decay should happen before this, but just in case it's continually stimulated while exploring
+      ],
+      "nonInterruptingTransitions": [
+        {
+          "to": "Observing",
+          "condition": {
+            "customCondition": "BoredOfExploring"
+          }
+        }
+      ]
+    },
+
+    {
+      "from": [
         "Socializing",
         "PlayingWithCube",
-        "Exploring"
+        "Exploring",
+        "ExploringVoiceCommand"
       ],
       "exitTransitions": [
         {
@@ -537,7 +573,8 @@
         "Observing",
         "ReturningToCharger", // to avoid unclaimed intent
         "Socializing",
-        "Exploring"
+        "Exploring",
+        "ExploringVoiceCommand"
       ],
       "interruptingTransitions": [
         {
@@ -581,7 +618,8 @@
         "ReturningToCharger",
         "FailedToFindCharger",
         "PlayingWithCube",
-        "Exploring"
+        "Exploring",
+        "ExploringVoiceCommand"
       ],
       "interruptingTransitions": [
         {
@@ -653,11 +691,12 @@
         "ReturningToCharger",
         "FailedToFindCharger",
         "PlayingWithCube",
-        "Exploring"
+        "Exploring",
+        "ExploringVoiceCommand"
       ],
       "interruptingTransitions": [
         {
-          "to": "Exploring",
+          "to": "ExploringVoiceCommand",
           "condition": {
             "conditionType": "UserIntentPending",
             "list": [

@@ -132,6 +132,7 @@ enum int_32 AnimationTrigger
   ReactToCliffDetectorStop,
   ReactToObstacle,
   ReactToMotorCalibration,
+  ReactToPutDown,
   ReactToSoundOffChargerAsleepFront,
   ReactToSoundOffChargerAsleepFrontLeft,
   ReactToSoundOffChargerAsleepFrontRight,

@@ -62,8 +62,6 @@ namespace {
   const float kMinPathCompleteForPitStop = 0.3f; // >= this % of the distance followed
   const float kMaxPathCompleteForPitStop = 0.7f; // <= this % of the distance followed
   
-  const float kRadiansIndicatesTurn = DEG_TO_RAD(10.0f);
-  
   const float kChargerRadius_mm = 68.89f; // radius of circle that circumscribes the charger
   
   const char* const kDebugName = "BehaviorExploring";
@@ -129,7 +127,6 @@ BehaviorExploring::DynamicVariables::DynamicVariables()
   posesHaveBeenPruned = false;
   distToGoal_mm = -1.0f;
   
-  angleAtArrival_rad = 0.0f;
   numDriveAttemps = 0;
   hasTakenPitStop = false;
   timeFinishedConfirmCharger_s = -1.0f;
@@ -288,18 +285,6 @@ void BehaviorExploring::BehaviorUpdate()
     AdjustCachedPoses();
   }
   
-  // tell our examine delegate if it's allowed to want to approach an obstacle it sees when we've
-  // arrive at a spot and are spinning. we wait until we're spinning so that a robot that just drove to and
-  // stopped at a pose doesn't immediately start driving forward again, and will only approach a
-  // new obstacle if it sees it while turning.
-  // It might make sense to do the memory map checks here and delegate accordingly, instead of depending
-  // on this behavior's WantsToBeActivated, but this way all memory map checks (aside from sampling) are
-  // in one behavior
-  const bool stateIsAtSamplePoint = _dVars.state == State::Arrived;
-  Radians currAngle = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>();
-  const bool hasStartedTurning = (currAngle - _dVars.angleAtArrival_rad).getAbsoluteVal() > kRadiansIndicatesTurn;
-  _iConfig.examineBehavior->SetCanVisitObstacle( stateIsAtSamplePoint && hasStartedTurning );
-  
   // tell our examine delegate that it's ok to stop mid path if an unexplored obstacle is passed. this
   // is allowed when the robot is driving a long path and is about halfway to the goal (as the bird flies). otherwise,
   // it looks a bit silly that a robot plans a path around something it hasn't examined up close yet
@@ -447,7 +432,6 @@ void BehaviorExploring::TransitionToArrived()
   _dVars.sampledPoses.clear();
   _dVars.distToGoal_mm = -1.0f;
   _dVars.numDriveAttemps = 0;
-  _dVars.angleAtArrival_rad = GetBEI().GetRobotInfo().GetPose().GetRotationAngle<'Z'>().ToFloat();
   
   // turn a random angle
   const float angleChange = GetRNG().RandDblInRange( kMinScanAngle, kMaxScanAngle );
@@ -525,7 +509,7 @@ void BehaviorExploring::SampleVisitLocationsOpenSpace( const INavMap* memoryMap,
   
   float r1;
   float r2;
-  if( tooFarFromCharger ) {
+  if( !tooFarFromCharger ) {
     r1 = M_TO_MM(_iConfig.minSearchRadius_m);
     r2 = M_TO_MM(_iConfig.maxSearchRadius_m);
   } else {

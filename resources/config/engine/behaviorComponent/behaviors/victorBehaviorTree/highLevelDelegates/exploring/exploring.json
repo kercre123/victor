@@ -1,11 +1,20 @@
 {
   "behaviorID": "Exploring",
-  "behaviorClass": "DispatcherQueue",
+  "behaviorClass": "DispatcherStrictPriorityWithCooldown",
 
-  "behaviors": 
-  [
-    "DriveOffCharger",
-    "ExploringInternal"    // doesn't want to activate without a charger
+  "interruptActiveBehavior": true,
+
+  "associatedActiveFeature": "Exploring",
+
+  "behaviors": [    
+    {
+      "behavior": "ReactToMotion",
+      "cooldown_s": 10.0
+    },
+    {
+      "behavior": "ExploringInternal",
+      "cooldown_s": 0.0
+    }
   ],
 
   "anonymousBehaviors": [
@@ -14,7 +23,7 @@
       "behaviorClass": "Exploring",
 
       "minSearchRadius_m": 0.25,
-      "maxSearchRadius_m": 0.75,
+      "maxSearchRadius_m": 1.0,
       "maxChargerDistance_m": 2.0,
       "pAcceptKnownAreas": 0.4,
 
