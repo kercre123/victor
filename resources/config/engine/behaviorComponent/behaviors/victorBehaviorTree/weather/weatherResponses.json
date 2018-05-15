@@ -1,19 +1,36 @@
 {
   "behaviorID" : "WeatherResponses",
-  "behaviorClass" : "DispatcherStrictPriority",
-
+  "behaviorClass" : "CoordinateWeather",
   "associatedActiveFeature": "Weather",
-  
-  "linkScope": true,
-  "interruptActiveBehavior": true,
 
-  "behaviors": [
-    "WeatherCloudyGeneric",
-    "WeatherColdClearGeneric",
-    "WeatherRainGeneric",
-    "WeatherSnowGeneric",
-    "WeatherStarsGeneric",
-    "WeatherSunnyGeneric",
-    "WeatherWindyGeneric"
+  "responseMap" : [
+    {
+      "CladType"   : "Cloudy",
+      "BehaviorID" : "WeatherCloudyGeneric"
+    },
+    {
+      "CladType"   : "Cold",
+      "BehaviorID" : "WeatherColdClearGeneric"
+    },
+    {
+      "CladType"   : "Rain",
+      "BehaviorID" : "WeatherRainGeneric"
+    },
+    {
+      "CladType"   : "Snow",
+      "BehaviorID" : "WeatherSnowGeneric"
+    },
+    {
+      "CladType"   : "Stars",
+      "BehaviorID" : "WeatherStarsGeneric"
+    },
+    {
+      "CladType"   : "Sunny",
+      "BehaviorID" : "WeatherSunnyGeneric"
+    },
+    {
+      "CladType"   : "Windy",
+      "BehaviorID" : "WeatherWindyGeneric"
+    }
   ]
 }

@@ -61,8 +61,6 @@ private:
     std::vector<Vision::SpriteName> temperatureAssets;
     // layouts stored least -> greatest pos followed by least -> greatest neg
     std::vector<Vision::CompositeImage> temperatureLayouts;
-
-    bool devIsRunnable = false; 
   };
 
   struct DynamicVariables {

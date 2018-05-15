@@ -28,9 +28,17 @@ structure UserIntent_TimeInSeconds
 structure UserIntent_WeatherResponse
 {
   string  city,
+  string  state,
+  string  country,
+
   string  condition,
+
   uint_32 temperature,
-  string  temperatureUnit
+  string  temperatureUnit,
+
+  string  wordIfForecast,
+  string  dateTime,
+
 }
 
 structure UserIntent_RecordMessage
@@ -68,22 +76,24 @@ union dupes_allowed UserIntent
   // PLEASE KEEP ALPHABETIZED 
   // thank you in advance for caring
 
-  UserIntent_Void          explore_start,
-  UserIntent_Void          greeting_goodbye,
-  UserIntent_Void          greeting_goodmorning,
-  UserIntent_Void          greeting_goodnight,
-  UserIntent_Void          greeting_hello,
-  UserIntent_Void          imperative_come,
-  UserIntent_Void          imperative_quiet,
-  UserIntent_Void          imperative_shutup,
-  UserIntent_MeetVictor    meet_victor, 
-  UserIntent_Void          play_anytrick,
-  UserIntent_PlaySpecific  play_specific,
-  UserIntent_Void          cancel_timer,
-  UserIntent_TimeInSeconds set_timer,
-  UserIntent_Void          system_charger,
-  UserIntent_Void          status_feeling,
-  UserIntent_Void          system_sleep,
+
+  UserIntent_Void             explore_start,
+  UserIntent_Void             greeting_goodbye,
+  UserIntent_Void             greeting_goodmorning,
+  UserIntent_Void             greeting_goodnight,
+  UserIntent_Void             greeting_hello,
+  UserIntent_Void             imperative_come,
+  UserIntent_Void             imperative_quiet,
+  UserIntent_Void             imperative_shutup,
+  UserIntent_MeetVictor       meet_victor, 
+  UserIntent_Void             play_anytrick,
+  UserIntent_PlaySpecific     play_specific,
+  UserIntent_Void             cancel_timer,
+  UserIntent_TimeInSeconds    set_timer,
+  UserIntent_WeatherResponse  weather_response,
+  UserIntent_Void             system_charger,
+  UserIntent_Void             status_feeling,
+  UserIntent_Void             system_sleep,
   UserIntent_RecordMessage    message_record,
   UserIntent_PlaybackMessage  message_playback,
 

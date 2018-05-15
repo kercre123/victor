@@ -15,17 +15,20 @@
 
 #include "engine/components/animationComponent.h"
 #include "engine/components/dataAccessorComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/aiComponent/behaviorComponent/weatherIntentParser.h"
+
 #include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
 #include "cannedAnimLib/proceduralFace/proceduralFace.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/shared/compositeImage/compositeImage.h"
 
+#include "clad/types/behaviorComponent/userIntent.h"
+
 namespace Anki {
 namespace Cozmo {
   
 namespace{
-const char* kConsoleVarGroup    = "WeatherBehavior";
-
 const char* kImageLayoutListKey = "imageLayouts";
 const char* kImageMapListKey    = "imageMaps";
 const char* kAnimationNameKey   = "animationName";
@@ -58,8 +61,6 @@ const std::vector<Vision::CompositeImageLayout> kNegTemperatureLayouts  = {
 };
 
 }
-CONSOLE_VAR_RANGED(int, kTestTemperature, kConsoleVarGroup, 0, -150, 150);
-CONSOLE_VAR(bool, kTestTempIsFahrenheit, kConsoleVarGroup, true);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDisplayWeather::InstanceConfig::InstanceConfig(const Json::Value& layoutConfig,
@@ -78,6 +79,8 @@ BehaviorDisplayWeather::DynamicVariables::DynamicVariables()
 BehaviorDisplayWeather::BehaviorDisplayWeather(const Json::Value& config)
 : ICozmoBehavior(config)
 {
+  AddWaitForUserIntent(USER_INTENT(weather_response));
+  
   if(config.isMember(kImageLayoutListKey) && config.isMember(kImageMapListKey)){
     _iConfig =  std::make_unique<InstanceConfig>(config[kImageLayoutListKey], config[kImageMapListKey]);
     _iConfig->animationName = JsonTools::ParseString(config, kAnimationNameKey, "BehaviorDisplayWeather.Constructor.MissingAnimName");
@@ -86,9 +89,7 @@ BehaviorDisplayWeather::BehaviorDisplayWeather(const Json::Value& config)
     PRINT_NAMED_ERROR("BehaviorDisplayWeather.Constructor.MissingConfigKeys",
                       "Behavior %s does not have all layout keys defined",
                       GetDebugLabel().c_str());
-  }
-  
-  MakeMemberTunable(_iConfig->devIsRunnable, "isRunnable", kConsoleVarGroup);
+  }  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -99,7 +100,7 @@ BehaviorDisplayWeather::~BehaviorDisplayWeather()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDisplayWeather::WantsToBeActivatedBehavior() const
 {
-  return _iConfig->devIsRunnable;
+  return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -216,9 +217,14 @@ void BehaviorDisplayWeather::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWeather::OnBehaviorActivated() 
 {
+  const UserIntent& intent = GetTriggeringUserIntent();
+
+  const auto& weatherResponse = intent.Get_weather_response();
+
   // reset dynamic variables
   _dVars = DynamicVariables();
-  
+
+
   auto animationCallback = [this](const AnimationComponent::AnimResult res){
     CancelSelf();
   };
@@ -232,8 +238,9 @@ void BehaviorDisplayWeather::OnBehaviorActivated()
                                                           shouldInterrupt,
                                                           animationCallback);
   
-  const auto temperature = _iConfig->devIsRunnable ? kTestTemperature : 0;
-  const auto success = GenerateTemperatureImage(temperature, kTestTempIsFahrenheit, _dVars.temperatureImg);
+  const auto temperature = weatherResponse.temperature;
+  const bool isFahrenheit = WeatherIntentParser::IsFahrenheit(weatherResponse);
+  const auto success = GenerateTemperatureImage(temperature, isFahrenheit, _dVars.temperatureImg);
   if(!success){
     return;
   }

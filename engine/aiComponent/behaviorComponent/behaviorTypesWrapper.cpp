@@ -18,6 +18,7 @@
 #include "clad/types/behaviorComponent/behaviorTypes.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "util/logging/logging.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -25,7 +26,13 @@ namespace BehaviorTypesWrapper {
 
 BehaviorID BehaviorIDFromString(const std::string& name)
 {
-  return Anki::Cozmo::BehaviorIDFromString(name);
+  BehaviorID id;
+  const bool success = Anki::Cozmo::BehaviorIDFromString(name, id);
+  ANKI_VERIFY(success, 
+              "BehaviorTypesWrapper.BehaviorIDFromString.FailedToParse",
+              "Unable to find behaviorID for %s",
+              name.c_str());
+  return id;
 }
 
 BehaviorClass BehaviorClassFromString(const std::string& name)

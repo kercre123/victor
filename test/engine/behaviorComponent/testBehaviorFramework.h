@@ -117,6 +117,10 @@ public:
   static bool CanStackOccurDuringFreeplay(const std::vector<IBehavior*>& stackToBuild);
 
 private:
+  // There are some special case delegations where behaviors require certain
+  // properties of the system to be true before delegation - this is a place to
+  // maintain the special case logic required
+  void ApplyAdditionalRequirementsBeforeDelegation(IBehavior* delegate);
 
   // Called once during init to load the namedBehaviorStack map from Json
   void LoadNamedBehaviorStacks();

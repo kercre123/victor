@@ -53,6 +53,21 @@
       "cloud_numerics": ["timer_duration"]
     },
     {
+      "cloud_intent" : "intent_weather",
+      "user_intent"  : "weather_response",
+      "cloud_substitutions" : {
+        "geo_city"     : "city",
+        "geo_state_us" : "state",
+        "geo_country"  : "country",
+
+        "temperature_unit"      : "temperatureUnit",
+        
+        "entity_forecast_words" : "isForecast",
+        "date_time"             : "dateTime"
+      },
+      "cloud_numerics": ["temperature"]
+    },
+    {
       "cloud_intent": "intent_system_charger",
       "app_intent": "intent_system_charger",
       "user_intent": "system_charger"
