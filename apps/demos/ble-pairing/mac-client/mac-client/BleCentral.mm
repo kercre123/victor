@@ -7,11 +7,15 @@
 //
 
 #import <Foundation/Foundation.h>
+
 #include "BleCentral.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <ifaddrs.h>
+#include <arpa/inet.h>
 
 #include <readline/readline.h>
 #include <readline/history.h>
@@ -55,6 +59,35 @@ BleCentral* centralContext;
   _verbose = enabled;
 }
 
+- (void)setDownload:(bool)enabled {
+  _download = enabled;
+}
+
+- (void)devDownloadOta {
+  NSFileManager* fileManager = [NSFileManager defaultManager];
+  
+  NSArray* pathParts = [NSArray arrayWithObjects:NSHomeDirectory(), @"Downloads", @"mac-client-ota", nil];
+  NSString* otaName = @"latest.ota";
+  NSString* dirPath = [NSString pathWithComponents:pathParts];
+  NSString* filePath = [NSString pathWithComponents:@[dirPath, otaName]];
+  
+  (void)[fileManager createDirectoryAtPath:dirPath withIntermediateDirectories:true attributes:nil error:nil];
+  
+  std::string cmdCurl = "curl http://ota-cdn.anki.com/vic/dev/werih2382df23ij/full/latest.ota --output " + std::string(filePath.UTF8String) + "; ";
+  
+  if(!_download) {
+    cmdCurl = "";
+  }
+
+  NSString *s = [NSString stringWithFormat: @"tell application \"Terminal\" to do script \"%spushd %@; python -m SimpleHTTPServer; popd\"", cmdCurl.c_str(), dirPath];
+
+  NSAppleScript *as = [[NSAppleScript alloc] initWithSource: s];
+  [as executeAndReturnError:nil];
+  
+  // Move to wifi-ap mode
+  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiAccessPointRequest>(self, _commVersion, true);
+}
+
 - (id)init {
   self = [super init];
   
@@ -92,6 +125,7 @@ BleCentral* centralContext;
     _filter = @"";
     _readyForNextCommand = true;
     _commandQueue = dispatch_queue_create("commands", NULL);
+    _requestQueue = dispatch_queue_create("requests", NULL);
     _commVersion = 0;
     
     _colorArray = @[ @32, @33, @34, @35, @36 ];
@@ -375,21 +409,24 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         }
         case Anki::Victor::ExternalComms::RtsConnection_1Tag::RtsWifiConnectResponse: {
           Anki::Victor::ExternalComms::RtsWifiConnectResponse msg = rtsMsg.Get_RtsWifiConnectResponse();
-          switch(msg.wifiState) {
-            case 1:
-              printf("Vector is connected to the internet.\n");
-              break;
-            case 0:
-              printf("Unknown connection status.\n");
-              break;
-            case 2:
-              printf("Vector is connected without internet.\n");
-              break;
-            case 3:
-              printf("Vector is not connected to a network.\n");
-              break;
-            default:
-              break;
+          
+          if(_currentCommand == "wifi-connect") {
+            switch(msg.wifiState) {
+              case 1:
+                printf("Vector is connected to the internet.\n");
+                break;
+              case 0:
+                printf("Unknown connection status.\n");
+                break;
+              case 2:
+                printf("Vector is connected without internet.\n");
+                break;
+              case 3:
+                printf("Vector is not connected to a network.\n");
+                break;
+              default:
+                break;
+            }
           }
           
           if(_currentCommand == "wifi-connect" && !_readyForNextCommand) {
@@ -452,6 +489,10 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
            * Commenting out for visibility because in next pass, going
            * to use this code again to show OTA progress bar.
            */
+          if(_otaStatusCode != 2 && _otaStatusCode != 1) {
+            printf("ota status code: %d\n", _otaStatusCode);
+          }
+          
           if(_currentCommand == "ota-progress" && !_readyForNextCommand) {
             if(_otaStatusCode != 2) {
               _readyForNextCommand = true;
@@ -490,6 +531,9 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     if(extComms.GetTag() == Anki::Victor::ExternalComms::ExternalCommsTag::RtsConnection) {
       Anki::Victor::ExternalComms::RtsConnection rtsContainer = extComms.Get_RtsConnection();
       Anki::Victor::ExternalComms::RtsConnection_2 rtsMsg = rtsContainer.Get_RtsConnection_2();
+      
+      // Handle requests
+      [self handleRequest:rtsMsg];
       
       switch(rtsMsg.GetTag()) {
         case Anki::Victor::ExternalComms::RtsConnection_2Tag::Error:
@@ -603,6 +647,10 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
           Anki::Victor::ExternalComms::RtsOtaUpdateResponse msg = rtsMsg.Get_RtsOtaUpdateResponse();
           _otaStatusCode = msg.status;
           
+          if(_otaStatusCode != 2 && _otaStatusCode != 1) {
+            printf("ota status code: %d\n", _otaStatusCode);
+          }
+          
           if(_otaStatusCode == 2) {
             _otaProgress = msg.current == 0? _otaProgress : msg.current;
           } else {
@@ -701,6 +749,39 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       }
     }
   }
+}
+
+- (void) handleRequest:(Anki::Victor::ExternalComms::RtsConnection_2)msg {
+  dispatch_async(_requestQueue, ^(){
+    RequestId rid = kUnknown;
+    
+    switch(msg.GetTag()) {
+      case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsStatusResponse_2:
+        rid = kStatus;
+        break;
+      case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiScanResponse_2:
+        rid = kWifiScan;
+        break;
+      case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiConnectResponse:
+        rid = kWifiConnect;
+        break;
+      case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiIpResponse:
+        rid = kWifiIp;
+        break;
+      case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsWifiAccessPointResponse:
+        rid = kWifiAp;
+        break;
+      case Anki::Victor::ExternalComms::RtsConnection_2Tag::RtsOtaUpdateResponse:
+        rid = kOta;
+        break;
+      default:
+        break;
+    }
+    
+    if(_delegate != nullptr) {
+      [_delegate handleResponse:rid message:msg];
+    }
+  });
 }
 
 - (void) SendSshPublicKey:(std::string)filename {
@@ -936,8 +1017,47 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   return words;
 }
 
+- (void) async_WifiScanRequest {
+  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiScanRequest>(self, _commVersion);
+}
+
+- (void) async_StatusRequest {
+  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsStatusRequest>(self, _commVersion);
+}
+
+- (void) async_WifiConnectRequest:(std::string)ssid password:(std::string)pw hidden:(bool)hid auth:(uint8_t)authType {
+  uint8_t requestTimeout_s = 15;
+  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiConnectRequest>(self, _commVersion,
+                                                                           [self hexStr:(char*)ssid.c_str() length:(int)ssid.length()], pw, requestTimeout_s, authType, hid);
+}
+
+- (void) async_WifiIpRequest {
+  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiIpRequest>(self, _commVersion);
+}
+
+- (void) async_WifiApRequest:(bool)enabled {
+  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiAccessPointRequest>(self, _commVersion, enabled);
+}
+
+- (void) async_otaStart:(std::string)url {
+  Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsOtaUpdateRequest>(self, _commVersion, url);
+}
+
+- (void) async_otaCancel {
+  Clad::SendRtsMessage_2<Anki::Victor::ExternalComms::RtsOtaCancelRequest>(self, _commVersion);
+}
+
+- (void) async_otaProgress {
+  //
+}
+
 - (void) HandleChallengeSuccessMessage:(const Anki::Victor::ExternalComms::RtsChallengeSuccessMessage&)msg {
   if(_verbose) [self printSuccess:"### Successfully Created Encrypted Channel ###"];
+  
+  if(_syncdelegate != nullptr) {
+    [_syncdelegate performSelector:@selector(onFullyConnected)];
+    return;
+  }
   
   dispatch_async(_commandQueue, [self]{
     char* input;
@@ -973,7 +1093,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
       _currentCommand = words[0];
       
       if(strcmp(words[0].c_str(), "wifi-scan") == 0) {
-        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsWifiScanRequest>(self, _commVersion);
+        [self async_WifiScanRequest];
       } else if(strcmp(words[0].c_str(), "wifi-connect") == 0) {
         if(words.size() < 3) {
           continue;
@@ -1024,7 +1144,7 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
         _readyForNextCommand = false;
         _currentCommand = "ota-progress";
       } else if(strcmp(words[0].c_str(), "status") == 0) {
-        Clad::SendRtsMessage<Anki::Victor::ExternalComms::RtsStatusRequest>(self, _commVersion);
+        [self async_StatusRequest];
       } else if(strcmp(words[0].c_str(), "logs") == 0) {
         if(_commVersion < 2) {
           printf("logs not supported in version %d\n", _commVersion);
@@ -1078,6 +1198,11 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 
 - (void) HandleWifiScanResponse:(const Anki::Victor::ExternalComms::RtsWifiScanResponse&)msg {
   printf("Wifi scan results...\n");
+  
+  if(msg.statusCode != 0) {
+    printf("Error code: %d\n", msg.statusCode);
+  }
+  
   printf("Signal      Security      SSID\n");
   _wifiAuth = [[NSMutableDictionary alloc] init];
   _wifiHidden = [[NSMutableSet alloc] init];
@@ -1128,53 +1253,60 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 }
 
 - (void) HandleWifiScanResponse_2:(const Anki::Victor::ExternalComms::RtsWifiScanResponse_2&)msg {
-  printf("Wifi scan results...\n");
-  printf("Signal      Security      SSID\n");
-  _wifiAuth = [[NSMutableDictionary alloc] init];
-  _wifiHidden = [[NSMutableSet alloc] init];
-  
-  for(int i = 0; i < msg.scanResult.size(); i++) {
-    std::string sec = "none";
+  if(_currentCommand == "wifi-scan") {
+    printf("Wifi scan results...\n");
     
-    switch(msg.scanResult[i].authType) {
-      case 0:
-        sec = "none";
-        break;
-      case 1:
-        sec = "WEP ";
-        break;
-      case 2:
-        sec = "WEPS";
-        break;
-      case 3:
-        sec = "IEEE";
-        break;
-      case 4:
-        sec = "PSKo";
-        break;
-      case 5:
-        sec = "EAPo";
-        break;
-      case 6:
-        sec = "PSK ";
-        break;
-      case 7:
-        sec = "EAP";
-        break;
-      default:
-        break;
+    if(msg.statusCode != 0) {
+      printf("Error code: %d\n", msg.statusCode);
     }
     
-    std::string ssidAscii = [self asciiStr:(char*)msg.scanResult[i].wifiSsidHex.c_str() length:(int)msg.scanResult[i].wifiSsidHex.length()];
+    printf("Signal      Security      SSID\n");
+    _wifiAuth = [[NSMutableDictionary alloc] init];
+    _wifiHidden = [[NSMutableSet alloc] init];
     
-    printf("%d           %s          %s %s\n", msg.scanResult[i].signalStrength, sec.c_str(), ssidAscii.c_str(), msg.scanResult[i].hidden? "H" : "_");
-    
-    NSString* ssidStr = [NSString stringWithUTF8String:ssidAscii.c_str()];
-    [_wifiAuth setValue:[NSNumber numberWithInt:msg.scanResult[i].authType] forKey:ssidStr];
-    
-    if(msg.scanResult[i].hidden) {
-      NSString* ssid = [NSString stringWithUTF8String:msg.scanResult[i].wifiSsidHex.c_str()];
-      [_wifiHidden addObject:ssid];
+    for(int i = 0; i < msg.scanResult.size(); i++) {
+      std::string sec = "none";
+      
+      switch(msg.scanResult[i].authType) {
+        case 0:
+          sec = "none";
+          break;
+        case 1:
+          sec = "WEP ";
+          break;
+        case 2:
+          sec = "WEPS";
+          break;
+        case 3:
+          sec = "IEEE";
+          break;
+        case 4:
+          sec = "PSKo";
+          break;
+        case 5:
+          sec = "EAPo";
+          break;
+        case 6:
+          sec = "PSK ";
+          break;
+        case 7:
+          sec = "EAP";
+          break;
+        default:
+          break;
+      }
+      
+      std::string ssidAscii = [self asciiStr:(char*)msg.scanResult[i].wifiSsidHex.c_str() length:(int)msg.scanResult[i].wifiSsidHex.length()];
+      
+      printf("%d           %s          %s %s\n", msg.scanResult[i].signalStrength, sec.c_str(), ssidAscii.c_str(), msg.scanResult[i].hidden? "H" : "_");
+      
+      NSString* ssidStr = [NSString stringWithUTF8String:ssidAscii.c_str()];
+      [_wifiAuth setValue:[NSNumber numberWithInt:msg.scanResult[i].authType] forKey:ssidStr];
+      
+      if(msg.scanResult[i].hidden) {
+        NSString* ssid = [NSString stringWithUTF8String:msg.scanResult[i].wifiSsidHex.c_str()];
+        [_wifiHidden addObject:ssid];
+      }
     }
   }
   
@@ -1184,8 +1316,9 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
 }
 
 - (void) HandleReceiveAccessPointResponse:(const Anki::Victor::ExternalComms::RtsWifiAccessPointResponse&)msg {
-  NSLog(@"Access point enabled with SSID: [%s] PW: [%s]", msg.ssid.c_str(), msg.password.c_str());
+  
   if(_currentCommand == "wifi-ap" && !_readyForNextCommand) {
+    NSLog(@"Access point enabled with SSID: [%s] PW: [%s]", msg.ssid.c_str(), msg.password.c_str());
     _readyForNextCommand = true;
   }
 }
