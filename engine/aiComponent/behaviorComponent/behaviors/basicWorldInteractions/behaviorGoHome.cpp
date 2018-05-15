@@ -166,6 +166,12 @@ void BehaviorGoHome::OnBehaviorActivated()
   
   _dVars.chargerID = object->GetID();
   
+  // Clear all of the prox obstacles since stale/old prox obstacles
+  // can wreak havoc on the robot's ability to get home. Hopefully
+  // we can find a more elegant way to clear prox obstacles that are
+  // causing the robot to fail to plan a path to the charger (VIC-2978)
+  GetBEI().GetMapComponent().RemoveAllProxObstacles();
+  
   // Check here if we're carrying an object and put it down next to the charger if so
   const auto& robotInfo = GetBEI().GetRobotInfo();
   if (robotInfo.GetCarryingComponent().IsCarryingObject()) {
