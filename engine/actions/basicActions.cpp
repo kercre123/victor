@@ -21,6 +21,7 @@
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/carryingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/visionComponent.h"
@@ -679,6 +680,11 @@ namespace Anki {
       const f32 x_end = x_start + _dist_mm * std::cos(heading.ToFloat());
       const f32 y_end = y_start + _dist_mm * std::sin(heading.ToFloat());
       
+      // Clip speed to cliff-safe range
+      bool isCarryingObject = GetRobot().GetCarryingComponent().IsCarryingObject();
+      f32 maxSpeed = isCarryingObject ? MAX_SAFE_WHILE_CARRYING_WHEEL_SPEED_MMPS : MAX_SAFE_WHEEL_SPEED_MMPS;
+      _speed_mmps = CLIP(_speed_mmps, -maxSpeed, maxSpeed);
+
       Planning::Path path;
       if(false  == path.AppendLine(x_start, y_start, x_end, y_end,
                                    _speed_mmps, _accel_mmps2, _decel_mmps2))

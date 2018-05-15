@@ -215,6 +215,14 @@ namespace Cozmo {
   const f32 MAX_WHEEL_SPEED_MMPS = 220.f;
   const f32 MAX_WHEEL_ACCEL_MMPS2 = 10000.f;  // TODO: Actually measure this!
   
+  // How fast (in mm/sec) can the robot drive without falling off 
+  // (most) straight edge cliffs
+  const f32 MAX_SAFE_WHEEL_SPEED_MMPS = 170.f;
+
+  // How fast (in mm/sec) can the robot drive without falling off 
+  // (most) straight edge cliffs while carrying a cube
+  const f32 MAX_SAFE_WHILE_CARRYING_WHEEL_SPEED_MMPS = 60.f;
+
   // Maximum angular velocity
   // Determined experimentally by turning robot in place at max speed.
   // It can actually spin closer to 360 deg/s, but we use a conservative limit to be sure
