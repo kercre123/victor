@@ -239,54 +239,24 @@ Result VisionSystem::Init(const Json::Value& config)
     return petTrackerInitResult;
   }
   
+  if(!config.isMember("ObjectDetector"))
   {
     if(!config.isMember("ObjectDetector"))
     {
-      if(!config.isMember("ObjectDetector"))
-      {
-        PRINT_NAMED_ERROR("VisionSystem.Init.MissingObjectDetectorConfigField", "");
-        return RESULT_FAIL;
-      }
-      
-      const std::string modelPath = Util::FileUtils::FullFilePath({dataPath, "dnn_models"});
-      if(Util::FileUtils::DirectoryExists(modelPath)) // TODO: Remove once DNN models are checked in somewhere (VIC-1071)
-      {
-        const Json::Value& objDetectorConfig = config["ObjectDetector"];
-        
-#       ifdef VICOS
-        // Until /data becomes fast tmpfs partition, use /run (VIC-XXXX)
-        const std::string dnnCachePath = "/run/vision/object_detector";
-#       else
-        const std::string dnnCachePath = Util::FileUtils::FullFilePath({cachePath, "object_detector"});
-#       endif
-        Result objDetectorResult = _generalObjectDetector->Init(modelPath,
-                                                                dnnCachePath,
-                                                                objDetectorConfig);
-        if(RESULT_OK != objDetectorResult)
-        {
-          PRINT_NAMED_ERROR("VisionSystem.Init.ObjectDetectorInitFailed", "");
-        }
-      }
-    }
-    
-    // Default processing modes should are set in vision_config.json
-    if(!config.isMember("InitialVisionModes"))
-    {
-      PRINT_NAMED_ERROR("VisionSystem.Init.MissingInitialVisionModesConfigField", "");
+      PRINT_NAMED_ERROR("VisionSystem.Init.MissingObjectDetectorConfigField", "");
       return RESULT_FAIL;
     }
-    
     
     const std::string modelPath = Util::FileUtils::FullFilePath({dataPath, "dnn_models"});
     if(Util::FileUtils::DirectoryExists(modelPath)) // TODO: Remove once DNN models are checked in somewhere (VIC-1071)
     {
       const Json::Value& objDetectorConfig = config["ObjectDetector"];
-        
+      
 #     ifdef VICOS
       // Until /data becomes fast tmpfs partition, use /run (VIC-XXXX)
       const std::string dnnCachePath = "/run/vision/object_detector";
-#     elif
-      const std::string dnnCachePath = Util::FileUtils::FullFilePath({cachePath, "object_detector");
+#     else
+      const std::string dnnCachePath = Util::FileUtils::FullFilePath({cachePath, "object_detector"});
 #     endif
       Result objDetectorResult = _generalObjectDetector->Init(modelPath,
                                                               dnnCachePath,
@@ -297,7 +267,7 @@ Result VisionSystem::Init(const Json::Value& config)
       }
     }
   }
-  
+    
   // Default processing modes should are set in vision_config.json
   if(!config.isMember("InitialVisionModes"))
   {
